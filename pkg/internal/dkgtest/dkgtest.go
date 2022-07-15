@@ -6,13 +6,14 @@ import (
 	"context"
 	"crypto/rand"
 	"fmt"
-	"github.com/keep-network/keep-core/pkg/chain"
-	"github.com/keep-network/keep-core/pkg/chain/local_v1"
 	"math"
 	"math/big"
 	"sync"
 	"testing"
 	"time"
+
+	"github.com/keep-network/keep-core/pkg/chain"
+	"github.com/keep-network/keep-core/pkg/chain/local_v1"
 
 	beaconchain "github.com/keep-network/keep-core/pkg/beacon/chain"
 	"github.com/keep-network/keep-core/pkg/beacon/dkg"
@@ -24,8 +25,6 @@ import (
 	netLocal "github.com/keep-network/keep-core/pkg/net/local"
 	"github.com/keep-network/keep-core/pkg/operator"
 )
-
-var minimumStake = big.NewInt(20)
 
 // Result of a DKG test execution.
 type Result struct {
@@ -76,7 +75,6 @@ func RunTest(
 	localChain := local_v1.ConnectWithKey(
 		groupSize,
 		honestThreshold,
-		minimumStake,
 		operatorPrivateKey,
 	)
 

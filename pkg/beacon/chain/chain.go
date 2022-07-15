@@ -3,10 +3,11 @@ package chain
 import (
 	"bytes"
 	"fmt"
+	"math/big"
+
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/operator"
 	"github.com/keep-network/keep-core/pkg/sortition"
-	"math/big"
 
 	"github.com/keep-network/keep-core/pkg/beacon/event"
 	"github.com/keep-network/keep-core/pkg/subscription"
@@ -118,8 +119,6 @@ type Interface interface {
 	BlockCounter() (chain.BlockCounter, error)
 	// Signing returns the chain's signer.
 	Signing() chain.Signing
-	// StakeMonitor returns the chain's stake monitor.
-	StakeMonitor() (chain.StakeMonitor, error)
 	// OperatorKeyPair returns the key pair of the operator assigned to this
 	// chain handle.
 	OperatorKeyPair() (*operator.PrivateKey, *operator.PublicKey, error)

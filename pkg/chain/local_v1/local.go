@@ -46,23 +46,16 @@ type localChain struct {
 	resultSubmissionHandlers map[int]func(submission *event.DKGResultSubmission)
 
 	simulatedHeight uint64
-	stakeMonitor    chain.StakeMonitor
 	blockCounter    chain.BlockCounter
 
 	relayEntryTimeoutReportsMutex sync.Mutex
 	relayEntryTimeoutReports      []uint64
 
 	operatorPrivateKey *operator.PrivateKey
-
-	minimumStake *big.Int
 }
 
 func (c *localChain) BlockCounter() (chain.BlockCounter, error) {
 	return c.blockCounter, nil
-}
-
-func (c *localChain) StakeMonitor() (chain.StakeMonitor, error) {
-	return c.stakeMonitor, nil
 }
 
 func (c *localChain) Signing() chain.Signing {
@@ -165,14 +158,13 @@ func (c *localChain) OnGroupRegistered(
 func Connect(
 	groupSize int,
 	honestThreshold int,
-	minimumStake *big.Int,
 ) *localChain {
 	operatorPrivateKey, _, err := operator.GenerateKeyPair(DefaultCurve)
 	if err != nil {
 		panic(err)
 	}
 
-	return ConnectWithKey(groupSize, honestThreshold, minimumStake, operatorPrivateKey)
+	return ConnectWithKey(groupSize, honestThreshold, operatorPrivateKey)
 }
 
 // ConnectWithKey initializes a local stub implementation of the chain
@@ -180,7 +172,6 @@ func Connect(
 func ConnectWithKey(
 	groupSize int,
 	honestThreshold int,
-	minimumStake *big.Int,
 	operatorPrivateKey *operator.PrivateKey,
 ) *localChain {
 	bc, _ := BlockCounter()
@@ -206,10 +197,8 @@ func ConnectWithKey(
 		dkgStartedHandlers:       make(map[int]func(submission *event.DKGStarted)),
 		resultSubmissionHandlers: make(map[int]func(submission *event.DKGResultSubmission)),
 		blockCounter:             bc,
-		stakeMonitor:             NewStakeMonitor(minimumStake),
 		groups:                   []localGroup{group},
 		operatorPrivateKey:       operatorPrivateKey,
-		minimumStake:             minimumStake,
 	}
 }
 
@@ -384,10 +373,6 @@ func (c *localChain) CurrentRequestGroupPublicKey() ([]byte, error) {
 
 func (c *localChain) GetRelayEntryTimeoutReports() []uint64 {
 	return c.relayEntryTimeoutReports
-}
-
-func (c *localChain) MinimumStake() (*big.Int, error) {
-	return c.minimumStake, nil
 }
 
 // CalculateDKGResultHash calculates a 256-bit hash of the DKG result.

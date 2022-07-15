@@ -3,11 +3,12 @@ package registry
 import (
 	"bytes"
 	"encoding/hex"
-	"github.com/keep-network/keep-core/pkg/chain"
-	"github.com/keep-network/keep-core/pkg/chain/local_v1"
 	"math/big"
 	"reflect"
 	"testing"
+
+	"github.com/keep-network/keep-core/pkg/chain"
+	"github.com/keep-network/keep-core/pkg/chain/local_v1"
 
 	bn256 "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
 	"github.com/keep-network/keep-common/pkg/persistence"
@@ -57,7 +58,7 @@ var (
 )
 
 func TestRegisterGroup(t *testing.T) {
-	localChain := local_v1.Connect(5, 3, big.NewInt(200))
+	localChain := local_v1.Connect(5, 3)
 
 	gr := NewGroupRegistry(localChain, persistenceMock)
 
@@ -81,7 +82,7 @@ func TestRegisterGroup(t *testing.T) {
 }
 
 func TestLoadGroup(t *testing.T) {
-	localChain := local_v1.Connect(5, 3, big.NewInt(200))
+	localChain := local_v1.Connect(5, 3)
 	gr := NewGroupRegistry(localChain, persistenceMock)
 
 	if len(gr.myGroups) != 0 {

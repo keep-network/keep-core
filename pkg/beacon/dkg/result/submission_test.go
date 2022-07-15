@@ -2,7 +2,6 @@ package result
 
 import (
 	"github.com/keep-network/keep-core/pkg/chain/local_v1"
-	"math/big"
 	"testing"
 
 	beaconchain "github.com/keep-network/keep-core/pkg/beacon/chain"
@@ -221,7 +220,7 @@ func initChainHandle(honestThreshold int, groupSize int) (
 	uint64,
 	error,
 ) {
-	chainHandle := local_v1.Connect(groupSize, honestThreshold, big.NewInt(200))
+	chainHandle := local_v1.Connect(groupSize, honestThreshold)
 
 	blockCounter, err := chainHandle.BlockCounter()
 	if err != nil {

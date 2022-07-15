@@ -25,8 +25,6 @@ import (
 	netLocal "github.com/keep-network/keep-core/pkg/net/local"
 )
 
-var minimumStake = big.NewInt(20)
-
 // Result of the relay entry signing protocol execution.
 type Result struct {
 	entry          []byte
@@ -74,7 +72,7 @@ func RunTest(
 		rules,
 	)
 
-	localChain := local_v1.ConnectWithKey(len(signers), threshold, minimumStake, operatorPrivateKey)
+	localChain := local_v1.ConnectWithKey(len(signers), threshold, operatorPrivateKey)
 
 	blockCounter, err := localChain.BlockCounter()
 	if err != nil {

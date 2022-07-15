@@ -1,7 +1,6 @@
 package ethereum
 
 import (
-	"bytes"
 	"context"
 	"encoding/binary"
 	"fmt"
@@ -20,6 +19,7 @@ import (
 	"github.com/keep-network/keep-common/pkg/chain/ethereum"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/chain/ethereum/beacon/gen/contract"
+	"github.com/keep-network/keep-core/pkg/operator"
 )
 
 // Definitions of contract names.
@@ -129,16 +129,13 @@ func (bc *BeaconChain) OperatorToStakingProvider() (chain.Address, bool, error) 
 	stakingProvider, err := bc.randomBeacon.OperatorToStakingProvider(bc.key.Address)
 	if err != nil {
 		return "", false, fmt.Errorf(
-			"failed to map operator %v to a staking provider: [%v]",
+			"failed to map operator [%v] to a staking provider: [%v]",
 			bc.key.Address,
 			err,
 		)
 	}
 
-	if bytes.Equal(
-		stakingProvider.Bytes(),
-		bytes.Repeat([]byte{0}, common.AddressLength),
-	) {
+	if (stakingProvider == common.Address{}) {
 		return "", false, nil
 	}
 
@@ -297,6 +294,53 @@ func (bc *BeaconChain) CalculateDKGResultHash(
 	// Encode DKG result to the format matched with Solidity keccak256(abi.encodePacked(...))
 	hash := crypto.Keccak256(dkgResult.GroupPublicKey, dkgResult.Misbehaved)
 	return beaconchain.DKGResultHashFromBytes(hash)
+}
+
+// IsRecognized checks whether the given operator is recognized by the BeaconChain
+// as eligible to join the network. If the operator has a stake delegation or
+// had a stake delegation in the past, it will be recognized.
+func (bc *BeaconChain) IsRecognized(operatorPublicKey *operator.PublicKey) (bool, error) {
+	operatorAddress, err := operatorPublicKeyToChainAddress(operatorPublicKey)
+	if err != nil {
+		return false, fmt.Errorf(
+			"cannot convert from operator key to chain address: [%v]",
+			err,
+		)
+	}
+
+	stakingProvider, err := bc.randomBeacon.OperatorToStakingProvider(
+		operatorAddress,
+	)
+	if err != nil {
+		return false, fmt.Errorf(
+			"failed to map operator [%v] to a staking provider: [%v]",
+			operatorAddress,
+			err,
+		)
+	}
+
+	if (stakingProvider == common.Address{}) {
+		return false, nil
+	}
+
+	// Check if the staking provider has an owner. This check ensures that there
+	// is/was a stake delegation for the given staking provider.
+	_, _, _, hasStakeDelegation, err := bc.Chain.RolesOf(
+		chain.Address(stakingProvider.Hex()),
+	)
+	if err != nil {
+		return false, fmt.Errorf(
+			"failed to check stake delegation for staking provider [%v]: [%v]",
+			stakingProvider,
+			err,
+		)
+	}
+
+	if !hasStakeDelegation {
+		return false, nil
+	}
+
+	return true, nil
 }
 
 // TODO: Implement a real SubmitRelayEntry function.

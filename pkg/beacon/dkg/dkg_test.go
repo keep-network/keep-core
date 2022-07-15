@@ -2,11 +2,12 @@ package dkg
 
 import (
 	"fmt"
-	beaconchain "github.com/keep-network/keep-core/pkg/beacon/chain"
-	"github.com/keep-network/keep-core/pkg/chain/local_v1"
 	"math/big"
 	"reflect"
 	"testing"
+
+	beaconchain "github.com/keep-network/keep-core/pkg/beacon/chain"
+	"github.com/keep-network/keep-core/pkg/chain/local_v1"
 
 	bn256 "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
 	"github.com/keep-network/keep-core/pkg/beacon/event"
@@ -31,7 +32,7 @@ func setup() {
 	gjkrResult = &gjkr.Result{GroupPublicKey: groupPublicKey}
 	dkgResultChannel = make(chan *event.DKGResultSubmission, 1)
 	startPublicationBlockHeight = uint64(0)
-	localChain := local_v1.Connect(5, 3, big.NewInt(10))
+	localChain := local_v1.Connect(5, 3)
 	beaconChain = localChain
 	blockCounter, _ = beaconChain.BlockCounter()
 }
