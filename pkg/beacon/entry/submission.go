@@ -59,14 +59,14 @@ func (res *relayEntrySubmitter) submitRelayEntry(
 
 			err := res.chain.SubmitRelayEntry(newEntry)
 			if err != nil {
-				isEntryInProgress, err := res.chain.IsEntryInProgress()
-				if err != nil {
+				isEntryInProgress, statusCheckErr := res.chain.IsEntryInProgress()
+				if statusCheckErr != nil {
 					logger.Errorf(
 						"[member:%v] could not check entry status "+
 							"after relay entry submission error: [%v]; "+
 							"original error will be returned",
 						res.index,
-						err,
+						statusCheckErr,
 					)
 					return err
 				}
@@ -81,6 +81,13 @@ func (res *relayEntrySubmitter) submitRelayEntry(
 					)
 					return nil
 				}
+
+				logger.Errorf(
+					"[member:%v] could not submit relay entry: [%v]",
+					res.index,
+					err,
+				)
+				return err
 			}
 
 			logger.Infof(
