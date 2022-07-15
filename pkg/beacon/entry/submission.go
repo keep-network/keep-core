@@ -49,8 +49,8 @@ func (res *relayEntrySubmitter) submitRelayEntry(
 		select {
 		case blockNumber := <-eligibleToSubmitWaiter:
 			logger.Infof(
-				"[member:%v] firing relay entry [0x%x] submission "+
-					"on behalf of group [0x%x] at block [%v]",
+				"[member:%v] submitting relay entry [0x%x] on "+
+					"behalf of group [0x%x] at block [%v]",
 				res.index,
 				newEntry,
 				groupPublicKey,
@@ -84,8 +84,8 @@ func (res *relayEntrySubmitter) submitRelayEntry(
 			}
 
 			logger.Infof(
-				"[member:%v] successfully fired relay entry "+
-					"submission at block: [%v]",
+				"[member:%v] successfully submitted relay entry " +
+					"transaction to the mempool at block [%v]",
 				res.index,
 				blockNumber,
 			)
