@@ -19,7 +19,7 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
 
   if (hre.network.tags.tenderly) {
     await hre.tenderly.verify({
-      name: "SortitionPool",
+      name: "EcdsaSortitionPool",
       address: SortitionPool.address,
     })
   }
