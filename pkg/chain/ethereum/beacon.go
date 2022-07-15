@@ -123,7 +123,7 @@ func (bc *BeaconChain) GetConfig() *beaconchain.Config {
 }
 
 // OperatorToStakingProvider returns the staking provider address for the
-// current operator. If the staking provider has not been registered for the
+// operator. If the staking provider has not been registered for the
 // operator, the returned address is empty and the boolean flag is set to false
 // If the staking provider has been registered, the address is not empty and the
 // boolean flag indicates true.
@@ -169,7 +169,7 @@ func (bc *BeaconChain) IsPoolLocked() (bool, error) {
 	return bc.sortitionPool.IsLocked()
 }
 
-// IsOperatorInPool returns true if the current operator is registered in the
+// IsOperatorInPool returns true if the operator is registered in the
 // sortition pool.
 func (bc *BeaconChain) IsOperatorInPool() (bool, error) {
 	return bc.randomBeacon.IsOperatorInPool(bc.key.Address)
@@ -185,17 +185,35 @@ func (bc *BeaconChain) IsOperatorUpToDate() (bool, error) {
 	return bc.randomBeacon.IsOperatorUpToDate(bc.key.Address)
 }
 
-// JoinSortitionPool executes a transaction to have the current operator join
-// the sortition pool.
+// JoinSortitionPool executes a transaction to have the operator join the
+// sortition pool.
 func (bc *BeaconChain) JoinSortitionPool() error {
 	_, err := bc.randomBeacon.JoinSortitionPool()
 	return err
 }
 
-// UpdateOperatorStatus executes a transaction to update the current
-// operator's state in the sortition pool.
+// UpdateOperatorStatus executes a transaction to update the operator's state in
+// the sortition pool.
 func (bc *BeaconChain) UpdateOperatorStatus() error {
 	_, err := bc.randomBeacon.UpdateOperatorStatus(bc.key.Address)
+	return err
+}
+
+// IsEligibleForRewards checks whether the operator is eligible for rewards or
+// not.
+func (bc *BeaconChain) IsEligibleForRewards() (bool, error) {
+	return bc.sortitionPool.IsEligibleForRewards(bc.key.Address)
+}
+
+// Checks whether the operator is able to restore their eligibility for rewards
+// right away.
+func (bc *BeaconChain) CanRestoreRewardEligibility() (bool, error) {
+	return bc.sortitionPool.CanRestoreRewardEligibility(bc.key.Address)
+}
+
+// Restores reward eligibility for the operator.
+func (bc *BeaconChain) RestoreRewardEligibility() error {
+	_, err := bc.sortitionPool.RestoreRewardEligibility(bc.key.Address)
 	return err
 }
 
