@@ -77,6 +77,7 @@ jobs:
           target: gobuild
           tags: go-build-env
           build-args: |
+            CONTRACTS_NPM_PACKAGE_TAG=${{ github.event.inputs.environment }}
             REVISION=${{ github.sha }}
           # VERSION= ? TODO: Configure version, sample: 1.7.6
           load: true # load image to local registry to use it in next steps
@@ -113,8 +114,6 @@ jobs:
         env:
           IMAGE_NAME: 'keep-client'
         with:
-          build-args: |
-            CONTRACTS_NPM_PACKAGE_TAG=${{ github.event.inputs.environment }}
           tags: ${{ env.GCR_REGISTRY_URL }}/${{ env.GOOGLE_PROJECT_ID }}/${{ env.IMAGE_NAME }}:${{ github.event.inputs.environment }}
           labels: |
             revision=${{ github.sha }}
