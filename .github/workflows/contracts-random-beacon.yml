@@ -182,7 +182,7 @@ jobs:
         run: yarn install --network-concurrency 1 --frozen-lockfile
 
       - name: Get upstream packages versions
-        uses: keep-network/ci/actions/upstream-builds-query@v1
+        uses: keep-network/ci/actions/upstream-builds-query@v2
         id: upstream-builds-query
         with:
           upstream-builds: ${{ github.event.inputs.upstream_builds }}
@@ -221,10 +221,8 @@ jobs:
         # TODO: remove `--dry-run` before merge to main
         run: npm publish --access=public --tag ${{ github.event.inputs.environment }} --network=${{ github.event.inputs.environment }} --dry-run
 
-      # TODO: restore commented out `uses` config before merge to `main``
       - name: Notify CI about completion of the workflow
-        # uses: keep-network/ci/actions/notify-workflow-completed@v1
-        uses: keep-network/ci/actions/notify-workflow-completed@ci-goerli
+        uses: keep-network/ci/actions/notify-workflow-completed@v2
         env:
           GITHUB_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
         with:
