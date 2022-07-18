@@ -89,15 +89,20 @@ non-default ports configured, firewall rules will need to be adjusted accordingl
 The client expects parameters to be configured in a config file or passed as environment
 variables.
 
-Application configuration can be stored in a `.toml` file and passed to the application
+Application configuration can be stored in a file and passed to the application
 run command with the `--config` flag. Example:
 [source,bash]
 ----
 ./keep-client --config /path/to/your/config.toml start
 ----
 
-====== Parameters
+====== Operator's Ethereum Key File
 
+Ethereum Key File is expected to be encrypted with a password. The password has
+to be provided in prompt after the client starts or configured as environment
+variable `KEEP_ETHEREUM_PASSWORD`.
+
+====== Parameters
 
 [%header,cols="m,5,^m,^,^m"]
 |===
@@ -105,7 +110,7 @@ run command with the `--config` flag. Example:
 |Description
 |Default
 |Required
-|Environment Variable
+|Flag
 
 5+h|`ethereum`
 
@@ -113,13 +118,7 @@ run command with the `--config` flag. Example:
 |The Ethereum host your client will connect to.  Websocket protocol/port.
 |""
 |Yes
-|KEEP_ETHEREUM_URL
-
-|URLRPC
-|The Ethereum host your client will connect to.  HTTP protocol/port.
-|""
-|Yes
-|KEEP_ETHEREUM_URLRPC
+|--ethereum.url
 
 5+h|`ethereum.account`
 
@@ -127,7 +126,7 @@ run command with the `--config` flag. Example:
 |The local filesystem path to your Keep operator Ethereum account keyfile.
 |""
 |Yes
-|KEEP_ETHEREUM_KEYFILE
+|--ethereum.key
 
 5+h|`ethereum.ContractAddresses`
 5+a|The contracts addresses are embedded into the client. Use configuration
@@ -137,28 +136,28 @@ only if you want to overwrite the defaults.
 |Hex-encoded address of the RandomBeacon contract.
 |
 |No
-|KEEP_ETHEREUM_CONTRACTS_RANDOMBEACON
+|--ethereum.contracts.randombeacon
 
-5+h|`LibP2P`
+5+h|`Network`
 
 |Peers
 |Comma separated list of network peers to bootstrap against. See list of <<bootstrap-peers-mainnet,bootstrap peers>>.
 |[""]
 |Yes
-|KEEP_PEERS
+|--network.peers
 
 |Port
 |The port to run your instance of Keep on.
 |3919
 |Yes
-|KEEP_PORT
+|--network.port
 
 |AnnouncedAddresses
 |Multiaddr formatted hostnames or addresses announced to the Keep Network.
 More on multiaddr format https://docs.libp2p.io/reference/glossary/#multiaddr[in the libp2p reference].
 |[""]
 |No
-|KEEP_ANNOUNCED_ADDRESSES
+|--network.announced-addresses
 
 5+h|`Storage`
 
@@ -166,7 +165,7 @@ More on multiaddr format https://docs.libp2p.io/reference/glossary/#multiaddr[in
 |Location to store the Keep nodes group membership details.
 |".storage/"
 |Yes
-|KEEP_STORAGE_DIR
+|--datadir
 
 |===
 
