@@ -68,6 +68,17 @@ type Diagnostics struct {
 	Port int
 }
 
+func init() {
+	initEnvVars()
+}
+
+// initEnvVars initializes environment variables for the client configuration.
+func initEnvVars() {
+	if err := viper.BindEnv("ethereum.account.keyfilepassword", ethereumPasswordEnvVariable); err != nil {
+		logger.Fatal(err)
+	}
+}
+
 // InitFlags initializes command-line flags for the client configuration.
 func InitFlags(command *cobra.Command) {
 	command.PersistentFlags().StringP(
@@ -79,10 +90,6 @@ func InitFlags(command *cobra.Command) {
 
 	command.Flags().String(ethereumKeyFlag, "", "operator's Ethereum Key File path")
 	viper.BindPFlag("ethereum.account.keyfile", command.Flags().Lookup(ethereumKeyFlag))
-
-	if err := viper.BindEnv("ethereum.account.keyfilepassword", ethereumPasswordEnvVariable); err != nil {
-		logger.Fatal(err)
-	}
 
 	command.Flags().String(dataDirFlag, registry.DefaultStoragePath, "path to the storage directory")
 	viper.BindPFlag("storage.datadir", command.Flags().Lookup(dataDirFlag))
