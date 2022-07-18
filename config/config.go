@@ -13,6 +13,7 @@ import (
 	ethereumBeaconGen "github.com/keep-network/keep-core/pkg/chain/ethereum/beacon/gen"
 	"github.com/keep-network/keep-core/pkg/net/libp2p"
 	"github.com/mitchellh/mapstructure"
+	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"golang.org/x/crypto/ssh/terminal"
 )
@@ -24,21 +25,27 @@ var logger = log.Logger("keep-config")
 // `viper.AutomaticEnv()` function. For example instead of expecting
 // `KEEP_ETHEREUM_ACCOUNT_KEYFILEPASSWORD` we expect `KEEP_ETHEREUM_PASSWORD`.
 const (
+	// Environment Variables
 	// #nosec G101 (look for hardcoded credentials)
 	// This line doesn't contain any credentials.
 	// It's just the name of the environment variable.
-	ethereumPasswordEnvVariable         = "KEEP_ETHEREUM_PASSWORD"
-	ethereumKeyFileEnvVariable          = "KEEP_ETHEREUM_KEYFILE"
-	libp2pPeersEnvVariable              = "KEEP_PEERS"
-	libp2pPortEnvVariable               = "KEEP_PORT"
-	libp2pAnnouncedAddressesEnvVariable = "KEEP_ANNOUNCED_ADDRESSES"
-	storageDataDirEnvVariable           = "KEEP_STORAGE_DIR"
+	ethereumPasswordEnvVariable = "KEEP_ETHEREUM_PASSWORD"
+
+	configFilePathFlag = "config"
+
+	// Command Line Flags
+	dataDirFlag                 = "datadir"
+	ethereumKeyFlag             = "ethereum.key"
+	ethereumContractsPrefixFlag = "ethereum.contracts"
+	portFlag                    = "network.port"
+	peersFlag                   = "network.peers"
+	announcedAddressesFlag      = "network.announced-addresses"
 )
 
 // Config is the top level config structure.
 type Config struct {
 	Ethereum    ethereumCommon.Config
-	LibP2P      libp2p.Config
+	LibP2P      libp2p.Config `mapstructure:"Network"`
 	Storage     Storage
 	Metrics     Metrics
 	Diagnostics Diagnostics
@@ -61,18 +68,79 @@ type Diagnostics struct {
 	Port int
 }
 
-var (
-	// KeepOpts contains global application settings
-	KeepOpts Config
-)
+// InitFlags initializes command-line flags for the client configuration.
+func InitFlags(command *cobra.Command) {
+	command.PersistentFlags().StringP(
+		configFilePathFlag,
+		"c",
+		"",
+		"path to the configuration file",
+	)
+
+	command.Flags().String(ethereumKeyFlag, "", "operator's Ethereum Key File path")
+	viper.BindPFlag("ethereum.account.keyfile", command.Flags().Lookup(ethereumKeyFlag))
+
+	if err := viper.BindEnv("ethereum.account.keyfilepassword", ethereumPasswordEnvVariable); err != nil {
+		logger.Fatal(err)
+	}
+
+	command.Flags().String(dataDirFlag, registry.DefaultStoragePath, "path to the storage directory")
+	viper.BindPFlag("storage.datadir", command.Flags().Lookup(dataDirFlag))
+
+	command.Flags().IntP(portFlag, "p", libp2p.DefaultPort, "port at which client will be exposed")
+	viper.BindPFlag("network.port", command.Flags().Lookup(portFlag))
+
+	// TODO: Read default peers from a file.
+	command.Flags().StringSlice(peersFlag, []string{}, "peers")
+	viper.BindPFlag("network.peers", command.Flags().Lookup(peersFlag))
+
+	command.Flags().StringSlice(announcedAddressesFlag, []string{}, "announced addresses")
+	viper.BindPFlag("network.announcedaddresses", command.Flags().Lookup(announcedAddressesFlag))
+
+	// Configure default contract addresses.
+	bindEthereumContract := func(contractName string, defaultAddress string) (err error) {
+		flag := fmt.Sprintf(
+			"%s.%s",
+			ethereumContractsPrefixFlag,
+			strings.ToLower(contractName),
+		)
+		configKey := fmt.Sprintf("Ethereum.ContractAddresses.%s", contractName)
+
+		command.Flags().String(
+			flag,
+			defaultAddress,
+			fmt.Sprintf(
+				"address of the %s contract",
+				contractName,
+			),
+		)
+		viper.BindPFlag(configKey, command.Flags().Lookup(flag))
+
+		return
+	}
+	if err := bindEthereumContract(
+		ethereumChain.RandomBeaconContractName,
+		ethereumBeaconGen.RandomBeaconAddress,
+	); err != nil {
+		logger.Fatal(err)
+	}
+}
 
 // ReadConfig reads in the configuration file at `filePath` and returns the
 // valid config stored there, or an error if something fails while reading the
 // file or the config is invalid in a known way.
-func ReadConfig(filePath string) (*Config, error) {
+func ReadConfig(configFilePath string) (*Config, error) {
+	// Read configuration from a file if the config file path is set.
+	if configFilePath != "" {
+		if err := readConfigFile(configFilePath); err != nil {
+			return nil, fmt.Errorf("unable to load config (file: [%s]): [%w]", configFilePath, err)
+		}
+	}
+
+	// Unmarshal config based on loaded config file and command-line flags.
 	config := &Config{}
-	if err := loadConfig(filePath, config); err != nil {
-		return nil, fmt.Errorf("unable to load config (file: [%s]): [%w]", filePath, err)
+	if err := unmarshalConfig(config); err != nil {
+		return nil, fmt.Errorf("unable to unmarshal config", err)
 	}
 
 	if config.Ethereum.Account.KeyFile == "" {
@@ -80,11 +148,21 @@ func ReadConfig(filePath string) (*Config, error) {
 	}
 
 	if config.LibP2P.Port == 0 {
-		return nil, fmt.Errorf("missing value for port; see node section in config file or use --port flag")
+		return nil, fmt.Errorf(
+			fmt.Sprintf(
+				"missing value for port; see network section in config file or use --%s flag",
+				portFlag,
+			),
+		)
 	}
 
 	if config.Storage.DataDir == "" {
-		return nil, fmt.Errorf("missing value for storage directory data")
+		return nil, fmt.Errorf(
+			fmt.Sprintf(
+				"missing value for storage directory; see storage section in config file or use --%s flag",
+				dataDirFlag,
+			),
+		)
 	}
 
 	if strings.TrimSpace(config.Ethereum.Account.KeyFilePassword) == "" {
@@ -127,90 +205,28 @@ func ReadEthereumConfig(filePath string) (ethereum.Config, error) {
 	return config.Ethereum, nil
 }
 
-// loadConfig uses viper to load configuration from a TOML config file or environment
-// variables. If the config file is not found it fallbacks to the environment variables.
-// The environment variables are preferred over the values set in the config file.
-func loadConfig(configFilePath string, config *Config) error {
-	v := viper.New()
-
-	// Read configuration from a TOML file, located in `configFilePath`.
-	v.SetConfigFile(configFilePath)
-
-	// Environment variables are expected to be prefixed with `KEEP_` and use `_`
-	// as levels delimiter (but they are accessible in viper with `.`). For example,
-	// environment variable `KEEP_ETHEREUM_URL` is resolved to the `Ethereum.URL`
-	// config property.
-	v.AutomaticEnv()
-	v.SetEnvPrefix("KEEP")
-	v.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
-
-	// Configure Ethereum.
-	if err := v.BindEnv("Ethereum.URL"); err != nil {
-		return err
-	}
-	if err := v.BindEnv("Ethereum.URLRPC"); err != nil {
-		return err
-	}
-	if err := v.BindEnv("Ethereum.Account.KeyFilePassword", ethereumPasswordEnvVariable); err != nil {
-		return err
-	}
-	if err := v.BindEnv("Ethereum.Account.KeyFile", ethereumKeyFileEnvVariable); err != nil {
-		return err
-	}
-
-	// Configure default contract addresses.
-	bindEnvContractAddress := func(contractName string, defaultAddress string) (err error) {
-		configProperty := fmt.Sprintf("Ethereum.ContractAddresses.%s", contractName)
-		err = v.BindEnv(
-			configProperty,
-			strings.ToUpper(
-				fmt.Sprintf("KEEP_ETHEREUM_CONTRACTS_%s", contractName),
-			),
-		)
-		v.SetDefault(configProperty, defaultAddress)
-
-		return
-	}
-
-	if err := bindEnvContractAddress(
-		ethereumChain.RandomBeaconContractName,
-		ethereumBeaconGen.RandomBeaconAddress,
-	); err != nil {
-		return err
-	}
-
-	// Configure LibP2P.
-	if err := v.BindEnv("LibP2P.Peers", libp2pPeersEnvVariable); err != nil {
-		return err
-	}
-
-	if err := v.BindEnv("LibP2P.Port", libp2pPortEnvVariable); err != nil {
-		return err
-	}
-	v.SetDefault("LibP2P.Port", libp2p.DefaultPort)
-
-	if err := v.BindEnv("LibP2P.AnnouncedAddresses", libp2pAnnouncedAddressesEnvVariable); err != nil {
-		return err
-	}
-
-	// Configure Storage.
-	if err := v.BindEnv("Storage.DataDir", storageDataDirEnvVariable); err != nil {
-		return err
-	}
-	v.SetDefault("Storage.DataDir", registry.DefaultStoragePath)
-
-	// TODO: Add support for command line flags.
+// readConfigFile uses viper to read configuration from a config file. The config file
+// is not mandatory, if the path is
+func readConfigFile(configFilePath string) error {
+	// Read configuration from a file, located in `configFilePath`.
+	viper.SetConfigFile(configFilePath)
 
 	// Read configuration.
-	if err := v.ReadInConfig(); err != nil {
-		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
-			logger.Warningf("config file not found: %s", configFilePath)
-		} else {
-			return fmt.Errorf("failed to read configuration: %w", err)
-		}
+	if err := viper.ReadInConfig(); err != nil {
+		return fmt.Errorf(
+			"failed to read configuration from file [%s]: %w",
+			configFilePath,
+			err,
+		)
 	}
 
-	if err := v.Unmarshal(
+	return nil
+}
+
+// unmarshalConfig unmarshals config with viper from config file and command-line
+// flags into a struct.
+func unmarshalConfig(config *Config) error {
+	if err := viper.Unmarshal(
 		&config,
 		viper.DecodeHook(
 			mapstructure.ComposeDecodeHookFunc(
@@ -226,7 +242,7 @@ func loadConfig(configFilePath string, config *Config) error {
 	return nil
 }
 
-// ReadPassword prompts a user to enter a password.   The read password uses
+// readPassword prompts a user to enter a password. The read password uses
 // the system password reading call that helps to prevent key loggers from
 // capturing the password.
 func readPassword(prompt string) (string, error) {

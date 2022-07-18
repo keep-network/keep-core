@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/keep-network/keep-core/config"
 	"github.com/keep-network/keep-core/pkg/chain/ethereum"
 	"github.com/keep-network/keep-core/pkg/diagnostics"
 	"github.com/keep-network/keep-core/pkg/metrics"
@@ -12,54 +13,50 @@ import (
 
 	"github.com/ipfs/go-log"
 	"github.com/keep-network/keep-common/pkg/persistence"
-	"github.com/keep-network/keep-core/config"
 	"github.com/keep-network/keep-core/pkg/beacon"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/firewall"
 	"github.com/keep-network/keep-core/pkg/net/libp2p"
 	"github.com/keep-network/keep-core/pkg/net/retransmission"
-	"github.com/urfave/cli"
+
+	"github.com/spf13/cobra"
 )
 
-// StartCommand contains the definition of the start command-line subcommand.
 var (
-	StartCommand cli.Command
-	logger       = log.Logger("keep-start")
+	// StartCommand contains the definition of the start command-line subcommand.
+	StartCommand = &cobra.Command{
+		Use:   "start",
+		Short: "Starts the Keep Client",
+		Long:  startDescription,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if err := start(cmd); err != nil {
+				logger.Fatal(err)
+			}
+			return nil
+		},
+	}
+
+	logger = log.Logger("keep-start")
 )
 
-const (
-	portFlag  = "port"
-	portShort = "p"
-)
-
-const startDescription = `Starts the Keep client in the foreground`
+const startDescription = `Starts the Keep Client in the foreground`
 
 func init() {
-	StartCommand =
-		cli.Command{
-			Name:        "start",
-			Usage:       `Starts the Keep client in the foreground`,
-			Description: startDescription,
-			Action:      Start,
-			Flags: []cli.Flag{
-				&cli.IntFlag{
-					Name: portFlag + "," + portShort,
-				},
-			},
-		}
+	config.InitFlags(StartCommand)
 }
 
-// Start starts a node; if it's not a bootstrap node it will get the node.URLs
-// from the config file
-func Start(c *cli.Context) error {
+// start starts a node
+func start(cmd *cobra.Command) error {
 	ctx := context.Background()
 
-	config, err := config.ReadConfig(c.GlobalString("config"))
+	filePath, err := cmd.Flags().GetString("config")
+	if err != nil {
+		return fmt.Errorf("error getting config flag: %w", err)
+	}
+
+	config, err := config.ReadConfig(filePath)
 	if err != nil {
 		return fmt.Errorf("error reading config: %w", err)
-	}
-	if c.Int(portFlag) > 0 {
-		config.LibP2P.Port = c.Int(portFlag)
 	}
 
 	beaconChain, _, err := ethereum.Connect(ctx, config.Ethereum)
