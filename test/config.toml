@@ -4,7 +4,6 @@
 
 [ethereum]
 	URL                     = "ws://192.168.0.158:8546"
-	URLRPC                  = "http://192.168.0.158:8545"
 	MaxGasFeeCap            = "140 Gwei"
 	BalanceAlertThreshold   = "2.5 ether"
 
@@ -14,7 +13,7 @@
 [ethereum.ContractAddresses]
 	RandomBeacon = "0xcf64c2a367341170cb4e09cf8c0ed137d8473ceb"
 
-[libp2p]
+[network]
 	Port = 27001
 	Peers = ["/ip4/127.0.0.1/tcp/27001/ipfs/12D3KooWKRyzVWW6ChFjQjK4miCty85Niy49tpPV95XdKu1BcvMA"]
 
