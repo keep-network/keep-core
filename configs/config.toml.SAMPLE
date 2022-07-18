@@ -4,7 +4,6 @@
 
 [ethereum]
 	URL                = "ws://127.0.0.1:8546"
-	URLRPC             = "http://127.0.0.1:8545"
 	# Uncomment to override the defaults for transaction status monitoring.
 	#
 	# MiningCheckInterval is the interval in which transaction
@@ -54,12 +53,7 @@
 [ethereum.ContractAddresses]
 	RandomBeacon = "0xBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB"
 
-    # Legacy v1 contracts, do not have to be set. Soon to be removed.
-	KeepRandomBeaconOperator = "0xCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC"
-	TokenStaking = "0xCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC"
-	KeepRandomBeaconService = "0xCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC"
-
-[LibP2P]
+[network]
  	Peers = ["/ip4/127.0.0.1/tcp/3919/ipfs/16Uiu2HAmFRJtCWfdXhZEZHWb4tUpH1QMMgzH1oiamCfUuK6NgqWX"]
  	Port = 3920
 	#
@@ -76,7 +70,7 @@
 	#
 	# DisseminationTime = 90
 
-[Storage]
+[storage]
   DataDir = "/my/secure/location"
 
 # Uncomment to enable the metrics module which collects and exposes information
