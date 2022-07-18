@@ -22,6 +22,7 @@ require (
 	github.com/libp2p/go-libp2p-pubsub v0.7.0
 	github.com/mitchellh/mapstructure v1.5.0
 	github.com/multiformats/go-multiaddr v0.5.0
+	github.com/spf13/cobra v1.5.0
 	github.com/spf13/viper v1.12.0
 	github.com/urfave/cli v1.22.2
 	golang.org/x/crypto v0.0.0-20220525230936-793ad666bf5e
@@ -57,6 +58,7 @@ require (
 	github.com/hashicorp/golang-lru v0.5.5-0.20210104140557-80c98217689d // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
 	github.com/huin/goupnp v1.0.3 // indirect
+	github.com/inconshreveable/mousetrap v1.0.0 // indirect
 	github.com/ipfs/bbloom v0.0.4 // indirect
 	github.com/ipfs/go-block-format v0.0.3 // indirect
 	github.com/ipfs/go-blockservice v0.3.0 // indirect
