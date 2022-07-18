@@ -65,9 +65,6 @@ Default port mappings.
 |Egress
 |Port
 
-|Ethereum Network
-| TCP: `8545` / `8546`
-
 |Keep Network
 | TCP: `3919`
 |===
