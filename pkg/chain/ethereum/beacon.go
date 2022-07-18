@@ -530,9 +530,9 @@ func (mrb *mockRandomBeacon) OnRelayEntryRequested(
 		for {
 			select {
 			case block := <-blocksChan:
-				// Generate an event every 25th block, if there is no other
+				// Generate an event every 100th block, if there is no other
 				// request in progress.
-				if block%25 == 0 {
+				if block%100 == 0 {
 					mrb.activeGroupMutex.RLock()
 					mrb.currentRequestMutex.Lock()
 
