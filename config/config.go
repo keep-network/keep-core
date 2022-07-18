@@ -140,7 +140,7 @@ func ReadConfig(configFilePath string) (*Config, error) {
 	// Unmarshal config based on loaded config file and command-line flags.
 	config := &Config{}
 	if err := unmarshalConfig(config); err != nil {
-		return nil, fmt.Errorf("unable to unmarshal config", err)
+		return nil, fmt.Errorf("unable to unmarshal config: %w", err)
 	}
 
 	if config.Ethereum.Account.KeyFile == "" {
