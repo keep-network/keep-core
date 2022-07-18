@@ -4,4 +4,5 @@ import "github.com/ipfs/go-log"
 
 var logger = log.Logger("keep-registry")
 
-const DefaultStoragePath = ".storage/"
+// DefaultStoragePath default path to store the application data.
+const DefaultStoragePath = "storage/"

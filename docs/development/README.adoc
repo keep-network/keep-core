@@ -135,7 +135,7 @@ More on multiaddr format https://docs.libp2p.io/reference/glossary/#multiaddr[in
 
 |DataDir
 |Location to store the Keep nodes group membership details.
-|".storage/"
+|"storage/"
 |Yes
 |--datadir
 
