@@ -414,8 +414,12 @@ type mockRandomBeacon struct {
 	dkgResultSubmissionHandlersMutex sync.Mutex
 	dkgResultSubmissionHandlers      map[int]func(submission *event.DKGResultSubmission)
 
-	activeGroupMutex sync.RWMutex
-	activeGroup      []byte
+	currentDkgMutex      sync.RWMutex
+	currentDkgStartBlock *big.Int
+
+	activeGroupMutex         sync.RWMutex
+	activeGroup              []byte
+	activeGroupOperableBlock *big.Int
 
 	currentRequestMutex         sync.RWMutex
 	currentRequestStartBlock    *big.Int
@@ -446,16 +450,24 @@ func (mrb *mockRandomBeacon) OnDKGStarted(
 			case block := <-blocksChan:
 				// Generate an event every 500th block.
 				if block%500 == 0 {
-					// The seed is keccak256(block).
-					blockBytes := make([]byte, 8)
-					binary.BigEndian.PutUint64(blockBytes, block)
-					seedBytes := crypto.Keccak256(blockBytes)
-					seed := new(big.Int).SetBytes(seedBytes)
+					mrb.currentDkgMutex.Lock()
 
-					handler(&event.DKGStarted{
-						Seed:        seed,
-						BlockNumber: block,
-					})
+					if mrb.currentDkgStartBlock == nil {
+						// The seed is keccak256(block).
+						blockBytes := make([]byte, 8)
+						binary.BigEndian.PutUint64(blockBytes, block)
+						seedBytes := crypto.Keccak256(blockBytes)
+						seed := new(big.Int).SetBytes(seedBytes)
+
+						mrb.currentDkgStartBlock = big.NewInt(int64(block))
+
+						go handler(&event.DKGStarted{
+							Seed:        seed,
+							BlockNumber: block,
+						})
+					}
+
+					mrb.currentDkgMutex.Unlock()
 				}
 			case <-ctx.Done():
 				return
@@ -496,8 +508,16 @@ func (mrb *mockRandomBeacon) SubmitDKGResult(
 	mrb.dkgResultSubmissionHandlersMutex.Lock()
 	defer mrb.dkgResultSubmissionHandlersMutex.Unlock()
 
+	mrb.currentDkgMutex.Lock()
+	defer mrb.currentDkgMutex.Unlock()
+
 	mrb.activeGroupMutex.Lock()
 	defer mrb.activeGroupMutex.Unlock()
+
+	// Abort if there is no DKG in progress.
+	if mrb.currentDkgStartBlock == nil {
+		return nil
+	}
 
 	blockNumber, err := mrb.blockCounter.CurrentBlock()
 	if err != nil {
@@ -516,6 +536,11 @@ func (mrb *mockRandomBeacon) SubmitDKGResult(
 	}
 
 	mrb.activeGroup = dkgResult.GroupPublicKey
+	mrb.activeGroupOperableBlock = new(big.Int).Add(
+		mrb.currentDkgStartBlock,
+		big.NewInt(150),
+	)
+	mrb.currentDkgStartBlock = nil
 
 	return nil
 }
@@ -530,28 +555,31 @@ func (mrb *mockRandomBeacon) OnRelayEntryRequested(
 		for {
 			select {
 			case block := <-blocksChan:
-				// Generate an event every 100th block, if there is no other
+				// Generate an event every 50 block, if there is no other
 				// request in progress.
-				if block%100 == 0 {
+				if block%50 == 0 {
 					mrb.activeGroupMutex.RLock()
 					mrb.currentRequestMutex.Lock()
 
 					if mrb.currentRequestStartBlock == nil && len(mrb.activeGroup) > 0 {
-						blockBytes := make([]byte, 8)
-						binary.BigEndian.PutUint64(blockBytes, block)
-						blockHashBytes := crypto.Keccak256(blockBytes)
-						blockHash := new(big.Int).SetBytes(blockHashBytes)
-						previousEntry := new(bn256.G1).ScalarBaseMult(blockHash)
+						// If the active group is ready to receive the request.
+						if big.NewInt(int64(block)).Cmp(mrb.activeGroupOperableBlock) >= 0 {
+							blockBytes := make([]byte, 8)
+							binary.BigEndian.PutUint64(blockBytes, block)
+							blockHashBytes := crypto.Keccak256(blockBytes)
+							blockHash := new(big.Int).SetBytes(blockHashBytes)
+							previousEntry := new(bn256.G1).ScalarBaseMult(blockHash)
 
-						mrb.currentRequestStartBlock = big.NewInt(int64(block))
-						mrb.currentRequestPreviousEntry = previousEntry.Marshal()
-						mrb.currentRequestGroup = mrb.activeGroup
+							mrb.currentRequestStartBlock = big.NewInt(int64(block))
+							mrb.currentRequestPreviousEntry = previousEntry.Marshal()
+							mrb.currentRequestGroup = mrb.activeGroup
 
-						go handler(&event.RelayEntryRequested{
-							PreviousEntry:  mrb.currentRequestPreviousEntry,
-							GroupPublicKey: mrb.currentRequestGroup,
-							BlockNumber:    mrb.currentRequestStartBlock.Uint64(),
-						})
+							go handler(&event.RelayEntryRequested{
+								PreviousEntry:  mrb.currentRequestPreviousEntry,
+								GroupPublicKey: mrb.currentRequestGroup,
+								BlockNumber:    mrb.currentRequestStartBlock.Uint64(),
+							})
+						}
 					}
 
 					mrb.currentRequestMutex.Unlock()
@@ -596,6 +624,11 @@ func (mrb *mockRandomBeacon) SubmitRelayEntry(
 
 	mrb.currentRequestMutex.Lock()
 	defer mrb.currentRequestMutex.Unlock()
+
+	// Abort if there is no request in progress.
+	if mrb.currentRequestStartBlock == nil {
+		return nil
+	}
 
 	blockNumber, err := mrb.blockCounter.CurrentBlock()
 	if err != nil {
