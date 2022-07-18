@@ -36,6 +36,7 @@ const (
 	// Command Line Flags
 	dataDirFlag                 = "datadir"
 	ethereumKeyFlag             = "ethereum.key"
+	ethereumUrlFlag             = "ethereum.url"
 	ethereumContractsPrefixFlag = "ethereum.contracts"
 	portFlag                    = "network.port"
 	peersFlag                   = "network.peers"
@@ -90,6 +91,9 @@ func InitFlags(command *cobra.Command) {
 
 	command.Flags().String(ethereumKeyFlag, "", "operator's Ethereum Key File path")
 	viper.BindPFlag("ethereum.account.keyfile", command.Flags().Lookup(ethereumKeyFlag))
+
+	command.Flags().String(ethereumUrlFlag, "", "Ethereum API URL")
+	viper.BindPFlag("ethereum.url", command.Flags().Lookup(ethereumUrlFlag))
 
 	command.Flags().String(dataDirFlag, registry.DefaultStoragePath, "path to the storage directory")
 	viper.BindPFlag("storage.datadir", command.Flags().Lookup(dataDirFlag))
