@@ -56,31 +56,6 @@ TBD
 
 ==== Configuration
 
-===== Network
-
-Default port mappings.
-
-[%header,cols=2*]
-|===
-|Egress
-|Port
-
-|Keep Network
-| TCP: `3919`
-|===
-
-[%header,cols=2*]
-|===
-|Ingress
-|Port
-
-|Keep Network
-|`3919`
-|===
-
-If you set a different `port` in your configuration, or configure `peers` with
-non-default ports configured, firewall rules will need to be adjusted accordingly.
-
 ===== Application
 
 The client expects parameters to be configured in a config file or passed as environment
@@ -174,6 +149,31 @@ More on multiaddr format https://docs.libp2p.io/reference/glossary/#multiaddr[in
 ----
 include::../../configs/config.toml.SAMPLE[]
 ----
+
+===== Network
+
+Default port mappings.
+
+[%header,cols=2*]
+|===
+|Egress
+|Port
+
+|Keep Network
+| TCP: `3919`
+|===
+
+[%header,cols=2*]
+|===
+|Ingress
+|Port
+
+|Keep Network
+|`3919`
+|===
+
+If you set a different `port` in your configuration, or configure `peers` with
+non-default ports configured, firewall rules will need to be adjusted accordingly.
 
 == Development Guidelines
 
