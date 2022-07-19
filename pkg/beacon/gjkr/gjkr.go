@@ -12,7 +12,7 @@ import (
 	"github.com/keep-network/keep-core/pkg/protocol/state"
 )
 
-var logger = log.Logger("keep-gjkr")
+var logger = log.Logger("keep-beacon-gjkr")
 
 // RegisterUnmarshallers initializes the given broadcast channel to be able to
 // perform DKG protocol interactions by registering all the required protocol

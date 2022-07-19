@@ -16,7 +16,7 @@ import (
 	"github.com/keep-network/keep-core/pkg/net"
 )
 
-var logger = log.Logger("keep-dkg")
+var logger = log.Logger("keep-beacon-dkg")
 
 // ExecuteDKG runs the full distributed key generation lifecycle.
 func ExecuteDKG(
