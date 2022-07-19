@@ -1,13 +1,18 @@
 package ethereum
 
 import (
+	"context"
+	"encoding/binary"
 	"fmt"
-
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/keep-network/keep-common/pkg/chain/ethereum"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/chain/ethereum/ecdsa/gen/contract"
 	"github.com/keep-network/keep-core/pkg/operator"
+	"github.com/keep-network/keep-core/pkg/subscription"
+	"github.com/keep-network/keep-core/pkg/tbtc"
+	"math/big"
 )
 
 // Definitions of contract names.
@@ -20,6 +25,8 @@ type TbtcChain struct {
 	*Chain
 
 	walletRegistry *contract.WalletRegistry
+
+	mockWalletRegistry *mockWalletRegistry
 }
 
 // NewTbtcChain construct a new instance of the TBTC-specific Ethereum
@@ -56,9 +63,21 @@ func newTbtcChain(
 	}
 
 	return &TbtcChain{
-		Chain:          baseChain,
-		walletRegistry: walletRegistry,
+		Chain:              baseChain,
+		walletRegistry:     walletRegistry,
+		mockWalletRegistry: newMockWalletRegistry(baseChain.blockCounter),
 	}, nil
+}
+
+// GetConfig returns the expected configuration of the TBTC module.
+func (tc *TbtcChain) GetConfig() *tbtc.ChainConfig {
+	groupSize := 100
+	honestThreshold := 51
+
+	return &tbtc.ChainConfig{
+		GroupSize:       groupSize,
+		HonestThreshold: honestThreshold,
+	}
 }
 
 // IsRecognized checks whether the given operator is recognized by the TbtcChain
@@ -106,4 +125,110 @@ func (tc *TbtcChain) IsRecognized(operatorPublicKey *operator.PublicKey) (bool, 
 	}
 
 	return true, nil
+}
+
+func (tc *TbtcChain) OperatorToStakingProvider() (chain.Address, bool, error) {
+	//TODO: Implementation.
+	panic("not implemented yet")
+}
+
+func (tc *TbtcChain) EligibleStake(stakingProvider chain.Address) (*big.Int, error) {
+	//TODO: Implementation.
+	panic("not implemented yet")
+}
+
+func (tc *TbtcChain) IsPoolLocked() (bool, error) {
+	//TODO: Implementation.
+	panic("not implemented yet")
+}
+
+func (tc *TbtcChain) IsOperatorInPool() (bool, error) {
+	//TODO: Implementation.
+	panic("not implemented yet")
+}
+
+func (tc *TbtcChain) IsOperatorUpToDate() (bool, error) {
+	//TODO: Implementation.
+	panic("not implemented yet")
+}
+
+func (tc *TbtcChain) JoinSortitionPool() error {
+	//TODO: Implementation.
+	panic("not implemented yet")
+}
+
+func (tc *TbtcChain) UpdateOperatorStatus() error {
+	//TODO: Implementation.
+	panic("not implemented yet")
+}
+
+// TODO: Implement a real SelectGroup function.
+func (tc *TbtcChain) SelectGroup(seed *big.Int) ([]chain.Address, error) {
+	_, operatorPublicKey, err := tc.OperatorKeyPair()
+	if err != nil {
+		return nil, err
+	}
+
+	operatorAddress, err := tc.Signing().PublicKeyToAddress(operatorPublicKey)
+	if err != nil {
+		return nil, err
+	}
+
+	groupOperators := make([]chain.Address, tc.GetConfig().GroupSize)
+	for i := range groupOperators {
+		groupOperators[i] = operatorAddress
+	}
+
+	return groupOperators, nil
+}
+
+// TODO: Implement a real OnDKGStarted function.
+func (tc *TbtcChain) OnDKGStarted(
+	handler func(event *tbtc.DKGStartedEvent),
+) subscription.EventSubscription {
+	return tc.mockWalletRegistry.OnDKGStarted(handler)
+}
+
+// TODO: Temporary mock that simulates the behavior of the WalletRegistry
+//       contract. Should be removed eventually.
+type mockWalletRegistry struct {
+	blockCounter chain.BlockCounter
+}
+
+func newMockWalletRegistry(blockCounter chain.BlockCounter) *mockWalletRegistry {
+	return &mockWalletRegistry{blockCounter: blockCounter}
+}
+
+func (mwr *mockWalletRegistry) OnDKGStarted(
+	handler func(event *tbtc.DKGStartedEvent),
+) subscription.EventSubscription {
+	ctx, cancelCtx := context.WithCancel(context.Background())
+	blocksChan := mwr.blockCounter.WatchBlocks(ctx)
+
+	go func() {
+		for {
+			select {
+			case block := <-blocksChan:
+				// Generate an event every 500th block.
+				if block%500 == 0 {
+					// The seed is keccak256(block).
+					blockBytes := make([]byte, 8)
+					binary.BigEndian.PutUint64(blockBytes, block)
+					seedBytes := crypto.Keccak256(blockBytes)
+					seed := new(big.Int).SetBytes(seedBytes)
+
+					go handler(&tbtc.DKGStartedEvent{
+						Seed:        seed,
+						BlockNumber: block,
+					})
+				}
+			case <-ctx.Done():
+				return
+			}
+		}
+	}()
+
+	return subscription.NewEventSubscription(func() {
+		cancelCtx()
+	})
 }

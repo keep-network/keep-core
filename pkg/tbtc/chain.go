@@ -37,8 +37,8 @@ type DKGStartedEvent struct {
 // Chain represents the interface that the TBTC module expects to interact
 // with the anchoring blockchain on.
 type Chain interface {
-	// GetConfig returns the expected configuration of the random beacon.
-	GetConfig() *Config
+	// GetConfig returns the expected configuration of the TBTC module.
+	GetConfig() *ChainConfig
 	// BlockCounter returns the chain's block counter.
 	BlockCounter() (chain.BlockCounter, error)
 	// Signing returns the chain's signer.
@@ -52,8 +52,8 @@ type Chain interface {
 	DistributedKeyGenerationChain
 }
 
-// Config contains the config data needed for the TBTC to operate.
-type Config struct {
+// ChainConfig contains the config data needed for the TBTC to operate.
+type ChainConfig struct {
 	// GroupSize is the size of a group in TBTC.
 	GroupSize int
 	// HonestThreshold is the minimum number of active participants behaving
@@ -64,6 +64,6 @@ type Config struct {
 // DishonestThreshold is the maximum number of misbehaving participants for
 // which it is still possible to generate a signature.
 // Misbehaviour is any misconduct to the protocol, including inactivity.
-func (c *Config) DishonestThreshold() int {
-	return c.GroupSize - c.HonestThreshold
+func (cc *ChainConfig) DishonestThreshold() int {
+	return cc.GroupSize - cc.HonestThreshold
 }

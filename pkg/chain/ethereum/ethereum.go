@@ -58,10 +58,10 @@ type Chain struct {
 func Connect(
 	ctx context.Context,
 	config ethereum.Config,
-) (*BeaconChain, *TbtcChain, error) {
+) (*BeaconChain, *TbtcChain, *Chain, error) {
 	client, err := ethclient.Dial(config.URL)
 	if err != nil {
-		return nil, nil, fmt.Errorf(
+		return nil, nil, nil, fmt.Errorf(
 			"error Connecting to Ethereum Server: %s [%v]",
 			config.URL,
 			err,
@@ -70,20 +70,20 @@ func Connect(
 
 	baseChain, err := newChain(ctx, config, client)
 	if err != nil {
-		return nil, nil, fmt.Errorf("could not create base chain handle: [%v]", err)
+		return nil, nil, nil, fmt.Errorf("could not create base chain handle: [%v]", err)
 	}
 
 	beaconChain, err := newBeaconChain(config, baseChain)
 	if err != nil {
-		return nil, nil, fmt.Errorf("could not create beacon chain handle: [%v]", err)
+		return nil, nil, nil, fmt.Errorf("could not create beacon chain handle: [%v]", err)
 	}
 
 	tbtcChain, err := newTbtcChain(config, baseChain)
 	if err != nil {
-		return nil, nil, fmt.Errorf("could not create TBTC chain handle: [%v]", err)
+		return nil, nil, nil, fmt.Errorf("could not create TBTC chain handle: [%v]", err)
 	}
 
-	return beaconChain, tbtcChain, nil
+	return beaconChain, tbtcChain, baseChain, nil
 }
 
 // newChain construct a new instance of the Ethereum chain handle.

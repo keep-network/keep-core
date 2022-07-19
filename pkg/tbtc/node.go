@@ -80,8 +80,8 @@ func (n *node) joinDKGIfEligible(seed *big.Int, startBlockNumber uint64) {
 		}
 	}
 
-	// create temporary broadcast channel name for DKG using the
-	// group selection seed
+	// Create temporary broadcast channel name for DKG using the
+	// group selection seed.
 	channelName := seed.Text(16)
 
 	if len(indexes) > 0 {
@@ -136,6 +136,8 @@ func (n *node) joinDKGIfEligible(seed *big.Int, startBlockNumber uint64) {
 					logger.Errorf("failed to execute dkg: [%v]", err)
 					return
 				}
+
+				// TODO: Submit the result using the chain layer.
 
 				// TODO: Use the result to create a signer and persist the
 				//       key material using the persistence layer.
