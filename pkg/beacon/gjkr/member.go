@@ -234,7 +234,7 @@ func NewMember(
 	return &LocalMember{
 		memberCore: &memberCore{
 			memberID,
-			group.NewDkgGroup(dishonestThreshold, groupSize),
+			group.NewGroup(dishonestThreshold, groupSize),
 			membershipValidator,
 			newDkgEvidenceLog(),
 			newProtocolParameters(seed),
