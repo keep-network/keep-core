@@ -12,6 +12,7 @@ import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
 import type { ContractTransaction } from "ethers"
 import type { DkgResult } from "./utils/dkg"
 import type {
+  IRandomBeacon,
   IWalletOwner,
   WalletRegistry,
   WalletRegistryStub,
@@ -52,12 +53,13 @@ const validTestData = [
 
 describe("WalletRegistry - Wallets", async () => {
   let walletRegistry: WalletRegistryStub & WalletRegistry
+  let randomBeacon: FakeContract<IRandomBeacon>
   let walletOwner: FakeContract<IWalletOwner>
   let thirdParty: SignerWithAddress
 
   before("load test fixture", async () => {
     // eslint-disable-next-line @typescript-eslint/no-extra-semi
-    ;({ walletRegistry, walletOwner, thirdParty } =
+    ;({ walletRegistry, randomBeacon, walletOwner, thirdParty } =
       await walletRegistryFixture())
   })
 
@@ -73,6 +75,7 @@ describe("WalletRegistry - Wallets", async () => {
             ;({ walletID, dkgResult } = await createNewWallet(
               walletRegistry,
               walletOwner.wallet,
+              randomBeacon,
               test.publicKey
             ))
           })
@@ -134,6 +137,7 @@ describe("WalletRegistry - Wallets", async () => {
                 createNewWallet(
                   walletRegistry,
                   walletOwner.wallet,
+                  randomBeacon,
                   test.publicKey
                 )
               ).to.be.revertedWith(test.expectedError)
@@ -152,6 +156,7 @@ describe("WalletRegistry - Wallets", async () => {
         await createNewWallet(
           walletRegistry,
           walletOwner.wallet,
+          randomBeacon,
           walletPublicKey
         )
       })
@@ -171,7 +176,12 @@ describe("WalletRegistry - Wallets", async () => {
 
         it("should revert", async () => {
           await expect(
-            createNewWallet(walletRegistry, walletOwner.wallet, walletPublicKey)
+            createNewWallet(
+              walletRegistry,
+              walletOwner.wallet,
+              randomBeacon,
+              walletPublicKey
+            )
           ).to.be.revertedWith(
             "Wallet with the given public key already exists"
           )
@@ -192,6 +202,7 @@ describe("WalletRegistry - Wallets", async () => {
             createNewWallet(
               walletRegistry,
               walletOwner.wallet,
+              randomBeacon,
               ecdsaData.group2.publicKey
             )
           ).to.not.be.reverted
@@ -218,7 +229,8 @@ describe("WalletRegistry - Wallets", async () => {
         await createSnapshot()
         ;({ walletID } = await createNewWallet(
           walletRegistry,
-          walletOwner.wallet
+          walletOwner.wallet,
+          randomBeacon
         ))
       })
 
@@ -252,6 +264,7 @@ describe("WalletRegistry - Wallets", async () => {
           ;({ walletID } = await createNewWallet(
             walletRegistry,
             walletOwner.wallet,
+            randomBeacon,
             walletPublicKey
           ))
         })
@@ -285,7 +298,8 @@ describe("WalletRegistry - Wallets", async () => {
       await createSnapshot()
       ;({ walletID } = await createNewWallet(
         walletRegistry,
-        walletOwner.wallet
+        walletOwner.wallet,
+        randomBeacon
       ))
     })
 
@@ -379,7 +393,8 @@ describe("WalletRegistry - Wallets", async () => {
       let members: Operator[]
       ;({ walletID, members } = await createNewWallet(
         walletRegistry,
-        walletOwner.wallet
+        walletOwner.wallet,
+        randomBeacon
       ))
 
       walletMembersIDs = members.map((member) => member.id)

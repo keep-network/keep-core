@@ -2,9 +2,8 @@ package local
 
 import (
 	"encoding/hex"
+	"github.com/keep-network/keep-core/pkg/operator"
 	"math/rand"
-
-	"github.com/keep-network/keep-core/pkg/net/key"
 )
 
 var letterRunes = [52]rune{'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j',
@@ -29,6 +28,10 @@ func randomLocalIdentifier() localIdentifier {
 	return localIdentifier(runes)
 }
 
-func createLocalIdentifier(staticKey *key.NetworkPublic) localIdentifier {
-	return localIdentifier(hex.EncodeToString(key.Marshal(staticKey)))
+func createLocalIdentifier(
+	operatorPublicKey *operator.PublicKey,
+) (localIdentifier, error) {
+	operatorPublicKeyBytes := operator.MarshalUncompressed(operatorPublicKey)
+
+	return localIdentifier(hex.EncodeToString(operatorPublicKeyBytes)), nil
 }

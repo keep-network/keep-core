@@ -3,6 +3,7 @@ import moment from "moment"
 import {
   createManagedGrantContractInstance,
   getContractDeploymentBlockNumber,
+  Keep,
 } from "../contracts"
 import { ContractsLoaded, Web3Loaded } from "../contracts"
 import {
@@ -141,6 +142,24 @@ const getDelegations = async (
       )
     }
 
+    const thresholdTokenStakingContractAddress =
+      Keep.thresholdStakingContract.address
+
+    const isTStakingContractAuthorized = await Keep.stakingContract.methods
+      .isAuthorizedForOperator(
+        operatorAddress,
+        thresholdTokenStakingContractAddress
+      )
+      .call()
+
+    const keepToTStakedEvents =
+      await Keep.keepToTStaking.getStakedEventsByOperator(operatorAddress)
+
+    const operatorsStakedToT = keepToTStakedEvents.reduce((map, _) => {
+      map[_.returnValues.stakingProvider] = { ..._.returnValues }
+      return map
+    }, {})
+
     const operatorData = {
       undelegatedAt,
       amount,
@@ -153,6 +172,8 @@ const getDelegations = async (
       isManagedGrant,
       managedGrantContractInstance,
       isCopiedStake,
+      isTStakingContractAuthorized,
+      isStakedToT: operatorsStakedToT.hasOwnProperty(operatorAddress),
     }
     const balance = web3Utils.toBN(amount)
 

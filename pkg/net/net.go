@@ -2,10 +2,9 @@ package net
 
 import (
 	"context"
-	"crypto/ecdsa"
+	"github.com/keep-network/keep-core/pkg/operator"
 
 	"github.com/gogo/protobuf/proto"
-	"github.com/keep-network/keep-core/pkg/net/key"
 )
 
 // TransportIdentifier represents a protocol-level identifier. It is an opaque
@@ -46,12 +45,6 @@ type Provider interface {
 	// Type gives an information about provider type.
 	Type() string
 
-	// UnicastChannelWith provides a unicast channel instance with given peer.
-	UnicastChannelWith(peerID TransportIdentifier) (UnicastChannel, error)
-	// OnUnicastChannelOpened allows to register a channel handler which will
-	// be invoked when a new unicast channel will be opened.
-	OnUnicastChannelOpened(handler func(channel UnicastChannel))
-
 	// BroadcastChannelFor provides a broadcast channel instance for given
 	// channel name.
 	BroadcastChannelFor(name string) (BroadcastChannel, error)
@@ -60,8 +53,10 @@ type Provider interface {
 	ConnectionManager() ConnectionManager
 
 	// CreateTransportIdentifier creates a transport identifier based on the
-	// provided public key.
-	CreateTransportIdentifier(publicKey ecdsa.PublicKey) (TransportIdentifier, error)
+	// provided operator public key.
+	CreateTransportIdentifier(
+		operatorPublicKey *operator.PublicKey,
+	) (TransportIdentifier, error)
 
 	// BroadcastChannelForwarderFor creates a message relay for given channel name.
 	BroadcastChannelForwarderFor(name string)
@@ -72,7 +67,7 @@ type Provider interface {
 // from any given connected peer.
 type ConnectionManager interface {
 	ConnectedPeers() []string
-	GetPeerPublicKey(connectedPeer string) (*key.NetworkPublic, error)
+	GetPeerPublicKey(connectedPeer string) (*operator.PublicKey, error)
 	DisconnectPeer(connectedPeer string)
 
 	// AddrStrings returns all listen addresses of the provider.
@@ -88,35 +83,6 @@ type ConnectionManager interface {
 type TaggedUnmarshaler interface {
 	proto.Unmarshaler
 	Type() string
-}
-
-// UnicastChannel represents a bidirectional communication channel between two
-// network peers.
-//
-// Every implementation must fulfill the following guarantees:
-// 1. If the channel was opened without errors, the communication is possible.
-// 2. Communication is performed through a direct connection.
-// 3. If a message was sent with no errors, it was received by the remote peer
-// 	  on the network level. Though, it does not guarantee that the remote peer
-// 	  handled that message.
-type UnicastChannel interface {
-	// Send function publishes a message m to the channel. Message m needs to
-	// conform to the marshalling interface.
-	Send(m TaggedMarshaler) error
-	// Recv installs a message handler that will receive messages from the
-	// channel for the entire lifetime of the provided context.
-	// When the context is done, handler is automatically unregistered and
-	// receives no more messages.
-	Recv(ctx context.Context, handler func(m Message))
-	// SetUnmarshaler set an unmarshaler that will unmarshal a given
-	// type to a concrete object that can be passed to and understood by any
-	// registered message handling functions. The unmarshaler should be a
-	// function that returns a fresh object of type proto.TaggedUnmarshaler,
-	// ready to read in the bytes for an object marked as tpe.
-	//
-	// The string type associated with the unmarshaler is the result of calling
-	// Type() on a raw unmarshaler.
-	SetUnmarshaler(unmarshaler func() TaggedUnmarshaler)
 }
 
 // BroadcastChannel represents a named pubsub channel. It allows group members
@@ -155,7 +121,7 @@ type BroadcastChannel interface {
 // message should be processed by the receivers. It takes the message author's
 // public key as its argument and returns true if the message should be
 // processed or false otherwise.
-type BroadcastChannelFilter func(*ecdsa.PublicKey) bool
+type BroadcastChannelFilter func(*operator.PublicKey) bool
 
 // Firewall represents a set of rules the remote peer has to conform to so that
 // a connection with that peer can be approved.
@@ -166,5 +132,5 @@ type Firewall interface {
 	// approved.
 	// If expectations are not met, this function should return an error
 	// describing what is wrong.
-	Validate(remotePeerPublicKey *ecdsa.PublicKey) error
+	Validate(remotePeerPublicKey *operator.PublicKey) error
 }

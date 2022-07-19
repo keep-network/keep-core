@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"context"
-	"crypto/ecdsa"
 	"encoding/json"
 	"fmt"
 	"math/big"
@@ -11,13 +10,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/ethereum/go-ethereum/accounts/keystore"
-	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/crypto/secp256k1"
-	"github.com/google/uuid"
 	"github.com/keep-network/keep-core/pkg/firewall"
 	"github.com/keep-network/keep-core/pkg/net"
-	"github.com/keep-network/keep-core/pkg/net/key"
 	"github.com/keep-network/keep-core/pkg/net/libp2p"
 	"github.com/keep-network/keep-core/pkg/net/retransmission"
 	"github.com/keep-network/keep-core/pkg/operator"
@@ -67,11 +62,11 @@ func pingRequest(c *cli.Context) error {
 	var (
 		libp2pConfig = libp2p.Config{Peers: bootstrapPeers}
 		ctx          = context.Background()
-		privKey      *key.NetworkPrivate
+		privKey      *operator.PrivateKey
 	)
 
-	bootstrapPeerPrivKey, _ := getBootstrapPeerNetworkKey()
-	standardPeerPrivKey, _ := getStandardPeerNetworkKey()
+	bootstrapPeerPrivKey, _ := getBootstrapPeerOperatorKey()
+	standardPeerPrivKey, _ := getStandardPeerOperatorKey()
 
 	if isBootstrapNode {
 		privKey = bootstrapPeerPrivKey
@@ -307,40 +302,40 @@ func (pm *PongMessage) Unmarshal(bytes []byte) error {
 	return nil
 }
 
-// getBootstrapPeerNetworkKey returns hardcoded public and private network key
-// of the bootstrap peer. We hardcode those values because we need to initialize
-// stakes on both sides of the connection using the local, stubbed `StakeMonitor`.
-func getBootstrapPeerNetworkKey() (*key.NetworkPrivate, *key.NetworkPublic) {
-	return getPeerNetworkKey(big.NewInt(128838122312))
-}
-
-// getStandardPeerNetworkKey returns hardcoded public and private network key
-// of the standard peer. We hardcode those values because we need to initialize
-// stake on both sides of the connection using local, stubbed `StakeMonitor`.
-func getStandardPeerNetworkKey() (*key.NetworkPrivate, *key.NetworkPublic) {
-	return getPeerNetworkKey(big.NewInt(6743262236222))
-}
-
-func getPeerNetworkKey(privateEcdsaKey *big.Int) (
-	*key.NetworkPrivate,
-	*key.NetworkPublic,
+// getBootstrapPeerOperatorKey returns hardcoded public and private operator key
+// of the bootstrap peer.
+func getBootstrapPeerOperatorKey() (
+	*operator.PrivateKey,
+	*operator.PublicKey,
 ) {
-	curve := secp256k1.S256()
+	return getPeerOperatorKey(big.NewInt(128838122312))
+}
 
-	ecdsaKey := new(ecdsa.PrivateKey)
-	ecdsaKey.PublicKey.Curve = curve
-	ecdsaKey.D = privateEcdsaKey
-	ecdsaKey.PublicKey.X, ecdsaKey.PublicKey.Y = curve.ScalarBaseMult(
-		ecdsaKey.D.Bytes(),
-	)
+// getStandardPeerOperatorKey returns hardcoded public and private operator key
+// of the standard peer.
+func getStandardPeerOperatorKey() (
+	*operator.PrivateKey,
+	*operator.PublicKey,
+) {
+	return getPeerOperatorKey(big.NewInt(6743262236222))
+}
 
-	ethereumKey := &keystore.Key{
-		Id:         uuid.New(),
-		Address:    crypto.PubkeyToAddress(ecdsaKey.PublicKey),
-		PrivateKey: ecdsaKey,
+func getPeerOperatorKey(privateEcdsaKey *big.Int) (
+	*operator.PrivateKey,
+	*operator.PublicKey,
+) {
+	x, y := secp256k1.S256().ScalarBaseMult(privateEcdsaKey.Bytes())
+
+	operatorPublicKey := operator.PublicKey{
+		Curve: operator.Secp256k1,
+		X:     x,
+		Y:     y,
 	}
 
-	return key.OperatorKeyToNetworkKey(
-		operator.ChainKeyToOperatorKey(ethereumKey),
-	)
+	operatorPrivateKey := operator.PrivateKey{
+		PublicKey: operatorPublicKey,
+		D:         privateEcdsaKey,
+	}
+
+	return &operatorPrivateKey, &operatorPublicKey
 }

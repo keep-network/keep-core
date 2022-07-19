@@ -83,6 +83,7 @@ export { ReactComponent as ArrowTopRight } from "../static/svg/arrow-top-right.s
 export { ReactComponent as QuestionFill } from "../static/svg/question-fill.svg"
 export { ReactComponent as EarnThresholdTokens } from "../static/svg/earn-threshold-tokens.svg"
 export { ReactComponent as Money } from "../static/svg/money.svg"
+export { ReactComponent as CovKeep } from "../static/svg/keep-symbol.svg"
 
 const Badge = ({ height, width }) => (
   <svg
@@ -250,7 +251,7 @@ const OK = ({ color }) => (
 )
 
 OK.defaultProps = {
-  color: colors.black,
+  color: colors.night,
 }
 
 const OKBadge = ({ bgColor, color }) => (

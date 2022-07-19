@@ -1,494 +1,226 @@
 package ethereum
 
 import (
+	"context"
 	"fmt"
+	"github.com/keep-network/keep-core/pkg/operator"
 	"math/big"
-	"time"
+	"sync"
+
+	"github.com/ethereum/go-ethereum/accounts/keystore"
+	"github.com/ethereum/go-ethereum/ethclient"
+	"github.com/keep-network/keep-common/pkg/chain/ethlike"
 
 	"github.com/ipfs/go-log"
-
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/keep-network/keep-common/pkg/chain/ethereum"
 	"github.com/keep-network/keep-common/pkg/chain/ethereum/ethutil"
-	relayChain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
-	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
-	"github.com/keep-network/keep-core/pkg/chain"
-	"github.com/keep-network/keep-core/pkg/gen/async"
-	"github.com/keep-network/keep-core/pkg/operator"
-	"github.com/keep-network/keep-core/pkg/subscription"
+	"github.com/keep-network/keep-common/pkg/rate"
+	"github.com/keep-network/keep-core/pkg/chain/ethereum/threshold/gen/contract"
+)
+
+// Definitions of contract names.
+const (
+	TokenStakingContractName = "TokenStaking"
 )
 
 var logger = log.Logger("keep-chain-ethereum")
 
-// ThresholdRelay converts from ethereumChain to beacon.ChainInterface.
-func (ec *ethereumChain) ThresholdRelay() relayChain.Interface {
-	return ec
+// Chain represents a base, non-application-specific chain handle. It
+// provides the implementation of generic features like balance monitor,
+// block counter and similar.
+type Chain struct {
+	key     *keystore.Key
+	client  ethutil.EthereumClient
+	chainID *big.Int
+
+	blockCounter *ethlike.BlockCounter
+	nonceManager *ethlike.NonceManager
+	miningWaiter *ethutil.MiningWaiter
+
+	// transactionMutex allows interested parties to forcibly serialize
+	// transaction submission.
+	//
+	// When transactions are submitted, they require a valid nonce. The nonce is
+	// equal to the count of transactions the account has submitted so far, and
+	// for a transaction to be accepted it should be monotonically greater than
+	// any previous submitted transaction. To do this, transaction submission
+	// asks the Ethereum client it is connected to for the next pending nonce,
+	// and uses that value for the transaction. Unfortunately, if multiple
+	// transactions are submitted in short order, they may all get the same
+	// nonce. Serializing submission ensures that each nonce is requested after
+	// a previous transaction has been submitted.
+	transactionMutex *sync.Mutex
+
+	tokenStaking *contract.TokenStaking
 }
 
-func (ec *ethereumChain) GetKeys() (*operator.PrivateKey, *operator.PublicKey) {
-	return operator.ChainKeyToOperatorKey(ec.accountKey)
-}
-
-func (ec *ethereumChain) Signing() chain.Signing {
-	return ethutil.NewSigner(ec.accountKey.PrivateKey)
-}
-
-func (ec *ethereumChain) GetConfig() *relayChain.Config {
-	return ec.chainConfig
-}
-
-func (ec *ethereumChain) MinimumStake() (*big.Int, error) {
-	return ec.stakingContract.MinimumStake()
-}
-
-// HasMinimumStake returns true if the specified address is staked.  False will
-// be returned if not staked.  If err != nil then it was not possible to determine
-// if the address is staked or not.
-func (ec *ethereumChain) HasMinimumStake(address common.Address) (bool, error) {
-	return ec.keepRandomBeaconOperatorContract.HasMinimumStake(address)
-}
-
-func (ec *ethereumChain) SubmitTicket(ticket *relayChain.Ticket) *async.EventGroupTicketSubmissionPromise {
-	submittedTicketPromise := &async.EventGroupTicketSubmissionPromise{}
-
-	failPromise := func(err error) {
-		failErr := submittedTicketPromise.Fail(err)
-		if failErr != nil {
-			logger.Errorf(
-				"failing promise because of: [%v] failed with: [%v].",
-				err,
-				failErr,
-			)
-		}
-	}
-
-	ticketBytes := ec.packTicket(ticket)
-
-	_, err := ec.keepRandomBeaconOperatorContract.SubmitTicket(
-		ticketBytes,
-		ethutil.TransactionOptions{
-			GasLimit: 250000,
-		},
-	)
+// Connect creates Random Beacon and TBTC Ethereum chain handles.
+func Connect(
+	ctx context.Context,
+	config ethereum.Config,
+) (*BeaconChain, *TbtcChain, error) {
+	client, err := ethclient.Dial(config.URL)
 	if err != nil {
-		failPromise(err)
+		return nil, nil, fmt.Errorf(
+			"error Connecting to Ethereum Server: %s [%v]",
+			config.URL,
+			err,
+		)
 	}
 
-	// TODO: fulfill when submitted
-
-	return submittedTicketPromise
-}
-
-func (ec *ethereumChain) packTicket(ticket *relayChain.Ticket) [32]uint8 {
-	ticketBytes := []uint8{}
-	ticketBytes = append(ticketBytes, ticket.Value[:]...)
-	ticketBytes = append(ticketBytes, common.LeftPadBytes(ticket.Proof.StakerValue.Bytes(), 20)[0:20]...)
-	ticketBytes = append(ticketBytes, common.LeftPadBytes(ticket.Proof.VirtualStakerIndex.Bytes(), 4)[0:4]...)
-
-	ticketFixedArray := [32]uint8{}
-	copy(ticketFixedArray[:], ticketBytes[:32])
-
-	return ticketFixedArray
-}
-
-func (ec *ethereumChain) GetSubmittedTickets() ([]uint64, error) {
-	return ec.keepRandomBeaconOperatorContract.SubmittedTickets()
-}
-
-func (ec *ethereumChain) GetSelectedParticipants() ([]relayChain.StakerAddress, error) {
-	var stakerAddresses []relayChain.StakerAddress
-	fetchParticipants := func() error {
-		participants, err := ec.keepRandomBeaconOperatorContract.SelectedParticipants()
-		if err != nil {
-			return err
-		}
-
-		stakerAddresses = make([]relayChain.StakerAddress, len(participants))
-		for i, participant := range participants {
-			stakerAddresses[i] = participant.Bytes()
-		}
-
-		return nil
+	baseChain, err := newChain(ctx, config, client)
+	if err != nil {
+		return nil, nil, fmt.Errorf("could not create base chain handle: [%v]", err)
 	}
 
-	// The reason behind a retry functionality is Infura's load balancer synchronization
-	// problem. Whenever a Keep client is connected to Infura, it might experience
-	// a slight delay with block updates between ethereum clients. One or more
-	// clients might stay behind and report a block number 'n-1', whereas the
-	// actual block number is already 'n'. This delay results in error triggering
-	// a new group selection. To mitigate Infura's sync issue, a Keep client will
-	// retry calling for selected participants up to 4 times.
-	// Synchronization issue can occur on any setup where we have more than one
-	// Ethereum clients behind a load balancer.
-	const numberOfRetries = 10
-	const delay = time.Second
-
-	for i := 1; ; i++ {
-		err := fetchParticipants()
-		if err != nil {
-			if i == numberOfRetries {
-				return nil, err
-			}
-			time.Sleep(delay)
-			logger.Infof(
-				"Retrying getting selected participants; attempt [%v]",
-				i,
-			)
-		} else {
-			return stakerAddresses, nil
-		}
+	beaconChain, err := newBeaconChain(config, baseChain)
+	if err != nil {
+		return nil, nil, fmt.Errorf("could not create beacon chain handle: [%v]", err)
 	}
+
+	tbtcChain, err := newTbtcChain(config, baseChain)
+	if err != nil {
+		return nil, nil, fmt.Errorf("could not create TBTC chain handle: [%v]", err)
+	}
+
+	return beaconChain, tbtcChain, nil
 }
 
-func (ec *ethereumChain) SubmitRelayEntry(
-	entry []byte,
-) *async.EventEntrySubmittedPromise {
-	relayEntryPromise := &async.EventEntrySubmittedPromise{}
-
-	failPromise := func(err error) {
-		failErr := relayEntryPromise.Fail(err)
-		if failErr != nil {
-			logger.Errorf(
-				"failed to fail promise for [%v]: [%v]",
-				err,
-				failErr,
-			)
-		}
+// newChain construct a new instance of the Ethereum chain handle.
+func newChain(
+	ctx context.Context,
+	config ethereum.Config,
+	client *ethclient.Client,
+) (*Chain, error) {
+	chainID, err := client.ChainID(ctx)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"failed to resolve Ethereum chain id: [%v]",
+			err,
+		)
 	}
 
-	generatedEntry := make(chan *event.EntrySubmitted)
+	key, err := decryptKey(config)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"failed to decrypt Ethereum key: [%v]",
+			err,
+		)
+	}
 
-	subscription := ec.OnRelayEntrySubmitted(
-		func(onChainEvent *event.EntrySubmitted) {
-			generatedEntry <- onChainEvent
-		},
+	clientWithAddons := wrapClientAddons(config, client)
+
+	blockCounter, err := ethutil.NewBlockCounter(clientWithAddons)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"failed to create Ethereum blockcounter: [%v]",
+			err,
+		)
+	}
+
+	nonceManager := ethutil.NewNonceManager(
+		clientWithAddons,
+		key.Address,
 	)
 
-	go func() {
-		for {
-			select {
-			case event, success := <-generatedEntry:
-				// Channel is closed when SubmitRelayEntry failed.
-				// When this happens, event is nil.
-				if !success {
-					return
-				}
+	miningWaiter := ethutil.NewMiningWaiter(clientWithAddons, config)
 
-				subscription.Unsubscribe()
-				close(generatedEntry)
+	transactionMutex := &sync.Mutex{}
 
-				err := relayEntryPromise.Fulfill(event)
-				if err != nil {
-					logger.Errorf(
-						"failed to fulfill promise: [%v]",
-						err,
-					)
-				}
+	// TODO: Consider adding the balance monitoring.
 
-				return
-			}
-		}
-	}()
-
-	gasEstimate, err := ec.keepRandomBeaconOperatorContract.RelayEntryGasEstimate(entry)
+	tokenStakingAddress, err := config.ContractAddress(TokenStakingContractName)
 	if err != nil {
-		logger.Errorf("failed to estimate gas [%v]", err)
+		return nil, fmt.Errorf(
+			"failed to resolve %s contract address: [%v]",
+			TokenStakingContractName,
+			err,
+		)
 	}
 
-	gasEstimateWithMargin := float64(gasEstimate) * float64(1.2) // 20% more than original
-	_, err = ec.keepRandomBeaconOperatorContract.RelayEntry(
-		entry,
-		ethutil.TransactionOptions{
-			GasLimit: uint64(gasEstimateWithMargin),
-		},
-	)
+	tokenStaking, err :=
+		contract.NewTokenStaking(
+			tokenStakingAddress,
+			chainID,
+			key,
+			client,
+			nonceManager,
+			miningWaiter,
+			blockCounter,
+			transactionMutex,
+		)
 	if err != nil {
-		subscription.Unsubscribe()
-		close(generatedEntry)
-		failPromise(err)
+		return nil, fmt.Errorf(
+			"failed to attach to TokenStaking contract: [%v]",
+			err,
+		)
 	}
 
-	return relayEntryPromise
+	return &Chain{
+		key:              key,
+		client:           clientWithAddons,
+		chainID:          chainID,
+		blockCounter:     blockCounter,
+		nonceManager:     nonceManager,
+		miningWaiter:     miningWaiter,
+		transactionMutex: transactionMutex,
+		tokenStaking:     tokenStaking,
+	}, nil
 }
 
-func (ec *ethereumChain) OnRelayEntrySubmitted(
-	handle func(entry *event.EntrySubmitted),
-) subscription.EventSubscription {
-	onEvent := func(blockNumber uint64) {
-		handle(&event.EntrySubmitted{
-			BlockNumber: blockNumber,
-		})
-	}
-
-	subscription := ec.keepRandomBeaconOperatorContract.RelayEntrySubmitted(
-		nil,
-	).OnEvent(onEvent)
-
-	return subscription
-}
-
-func (ec *ethereumChain) OnRelayEntryRequested(
-	handle func(request *event.Request),
-) subscription.EventSubscription {
-	onEvent := func(
-		previousEntry []byte,
-		groupPublicKey []byte,
-		blockNumber uint64,
-	) {
-		handle(&event.Request{
-			PreviousEntry:  previousEntry,
-			GroupPublicKey: groupPublicKey,
-			BlockNumber:    blockNumber,
-		})
-	}
-
-	subscription := ec.keepRandomBeaconOperatorContract.RelayEntryRequested(
-		nil,
-	).OnEvent(onEvent)
-
-	return subscription
-}
-
-func (ec *ethereumChain) OnGroupSelectionStarted(
-	handle func(groupSelectionStart *event.GroupSelectionStart),
-) subscription.EventSubscription {
-	onEvent := func(
-		newEntry *big.Int,
-		blockNumber uint64,
-	) {
-		handle(&event.GroupSelectionStart{
-			NewEntry:    newEntry,
-			BlockNumber: blockNumber,
-		})
-	}
-
-	subscription := ec.keepRandomBeaconOperatorContract.GroupSelectionStarted(
-		nil,
-	).OnEvent(onEvent)
-
-	return subscription
-}
-
-func (ec *ethereumChain) OnGroupRegistered(
-	handle func(groupRegistration *event.GroupRegistration),
-) subscription.EventSubscription {
-	onEvent := func(
-		memberIndex *big.Int,
-		groupPublicKey []byte,
-		misbehaved []byte,
-		blockNumber uint64,
-	) {
-		handle(&event.GroupRegistration{
-			GroupPublicKey: groupPublicKey,
-			BlockNumber:    blockNumber,
-		})
-	}
-
-	subscription := ec.keepRandomBeaconOperatorContract.DkgResultSubmittedEvent(
-		nil,
-	).OnEvent(onEvent)
-
-	return subscription
-}
-
-func (ec *ethereumChain) IsGroupRegistered(groupPublicKey []byte) (bool, error) {
-	return ec.keepRandomBeaconOperatorContract.IsGroupRegistered(groupPublicKey)
-}
-
-func (ec *ethereumChain) IsStaleGroup(groupPublicKey []byte) (bool, error) {
-	return ec.keepRandomBeaconOperatorContract.IsStaleGroup(groupPublicKey)
-}
-
-func (ec *ethereumChain) GetGroupMembers(groupPublicKey []byte) (
-	[]relayChain.StakerAddress,
+// OperatorKeyPair returns the key pair of the operator assigned to this
+// chain handle.
+func (c *Chain) OperatorKeyPair() (
+	*operator.PrivateKey,
+	*operator.PublicKey,
 	error,
 ) {
-	members, err := ec.keepRandomBeaconOperatorContract.GetGroupMembers(
-		groupPublicKey,
+	privateKey, publicKey, err := ChainPrivateKeyToOperatorKeyPair(
+		c.key.PrivateKey,
 	)
 	if err != nil {
-		return nil, err
+		return nil, nil, fmt.Errorf(
+			"cannot convert chain private key to operator key pair: [%v]",
+			err,
+		)
 	}
 
-	stakerAddresses := make([]relayChain.StakerAddress, len(members))
-	for i, member := range members {
-		stakerAddresses[i] = member.Bytes()
+	return privateKey, publicKey, nil
+}
+
+// wrapClientAddons wraps the client instance with add-ons like logging, rate
+// limiting and so on.
+func wrapClientAddons(
+	config ethereum.Config,
+	client ethutil.EthereumClient,
+) ethutil.EthereumClient {
+	loggingClient := ethutil.WrapCallLogging(logger, client)
+
+	if config.RequestsPerSecondLimit > 0 || config.ConcurrencyLimit > 0 {
+		logger.Infof(
+			"enabled ethereum client request rate limiter; "+
+				"rps limit [%v]; "+
+				"concurrency limit [%v]",
+			config.RequestsPerSecondLimit,
+			config.ConcurrencyLimit,
+		)
+
+		return ethutil.WrapRateLimiting(
+			loggingClient,
+			&rate.LimiterConfig{
+				RequestsPerSecondLimit: config.RequestsPerSecondLimit,
+				ConcurrencyLimit:       config.ConcurrencyLimit,
+			},
+		)
 	}
 
-	return stakerAddresses, nil
+	return loggingClient
 }
 
-func (ec *ethereumChain) OnDKGResultSubmitted(
-	handler func(dkgResultPublication *event.DKGResultSubmission),
-) subscription.EventSubscription {
-	onEvent := func(
-		memberIndex *big.Int,
-		groupPublicKey []byte,
-		misbehaved []byte,
-		blockNumber uint64,
-	) {
-		handler(&event.DKGResultSubmission{
-			MemberIndex:    uint32(memberIndex.Uint64()),
-			GroupPublicKey: groupPublicKey,
-			Misbehaved:     misbehaved,
-			BlockNumber:    blockNumber,
-		})
-	}
-
-	subscription := ec.keepRandomBeaconOperatorContract.DkgResultSubmittedEvent(
-		nil,
-	).OnEvent(onEvent)
-
-	return subscription
-}
-
-func (ec *ethereumChain) ReportRelayEntryTimeout() error {
-	_, err := ec.keepRandomBeaconOperatorContract.ReportRelayEntryTimeout()
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (ec *ethereumChain) IsEntryInProgress() (bool, error) {
-	return ec.keepRandomBeaconOperatorContract.IsEntryInProgress()
-}
-
-func (ec *ethereumChain) CurrentRequestStartBlock() (*big.Int, error) {
-	return ec.keepRandomBeaconOperatorContract.CurrentRequestStartBlock()
-}
-
-func (ec *ethereumChain) CurrentRequestPreviousEntry() ([]byte, error) {
-	return ec.keepRandomBeaconOperatorContract.CurrentRequestPreviousEntry()
-}
-
-func (ec *ethereumChain) CurrentRequestGroupPublicKey() ([]byte, error) {
-	currentRequestGroupIndex, err := ec.keepRandomBeaconOperatorContract.CurrentRequestGroupIndex()
-	if err != nil {
-		return nil, err
-	}
-
-	return ec.keepRandomBeaconOperatorContract.GetGroupPublicKey(currentRequestGroupIndex)
-}
-
-func (ec *ethereumChain) SubmitDKGResult(
-	participantIndex relayChain.GroupMemberIndex,
-	result *relayChain.DKGResult,
-	signatures map[relayChain.GroupMemberIndex][]byte,
-) *async.EventDKGResultSubmissionPromise {
-	resultPublicationPromise := &async.EventDKGResultSubmissionPromise{}
-
-	failPromise := func(err error) {
-		failErr := resultPublicationPromise.Fail(err)
-		if failErr != nil {
-			logger.Errorf(
-				"failed to fail promise for [%v]: [%v]",
-				err,
-				failErr,
-			)
-		}
-	}
-
-	publishedResult := make(chan *event.DKGResultSubmission)
-
-	subscription := ec.OnDKGResultSubmitted(
-		func(onChainEvent *event.DKGResultSubmission) {
-			publishedResult <- onChainEvent
-		},
+// decryptKey decrypts the chain key pointed by the config.
+func decryptKey(config ethereum.Config) (*keystore.Key, error) {
+	return ethutil.DecryptKeyFile(
+		config.Account.KeyFile,
+		config.Account.KeyFilePassword,
 	)
-
-	go func() {
-		for {
-			select {
-			case event, success := <-publishedResult:
-				// Channel is closed when SubmitDKGResult failed.
-				// When this happens, event is nil.
-				if !success {
-					return
-				}
-
-				subscription.Unsubscribe()
-				close(publishedResult)
-
-				err := resultPublicationPromise.Fulfill(event)
-				if err != nil {
-					logger.Errorf(
-						"failed to fulfill promise: [%v]",
-						err,
-					)
-				}
-
-				return
-			}
-		}
-	}()
-
-	membersIndicesOnChainFormat, signaturesOnChainFormat, err :=
-		convertSignaturesToChainFormat(signatures)
-	if err != nil {
-		close(publishedResult)
-		failPromise(fmt.Errorf("converting signatures failed [%v]", err))
-		return resultPublicationPromise
-	}
-
-	if _, err = ec.keepRandomBeaconOperatorContract.SubmitDkgResult(
-		big.NewInt(int64(participantIndex)),
-		result.GroupPublicKey,
-		result.Misbehaved,
-		signaturesOnChainFormat,
-		membersIndicesOnChainFormat,
-	); err != nil {
-		subscription.Unsubscribe()
-		close(publishedResult)
-		failPromise(err)
-	}
-
-	return resultPublicationPromise
-}
-
-// convertSignaturesToChainFormat converts signatures map to two slices. First
-// slice contains indices of members from the map, second slice is a slice of
-// concatenated signatures. Signatures and member indices are returned in the
-// matching order. It requires each signature to be exactly 65-byte long.
-func convertSignaturesToChainFormat(
-	signatures map[relayChain.GroupMemberIndex][]byte,
-) ([]*big.Int, []byte, error) {
-	var membersIndices []*big.Int
-	var signaturesSlice []byte
-
-	for memberIndex, signature := range signatures {
-		if len(signatures[memberIndex]) != ethutil.SignatureSize {
-			return nil, nil, fmt.Errorf(
-				"invalid signature size for member [%v] got [%d]-bytes but required [%d]-bytes",
-				memberIndex,
-				len(signatures[memberIndex]),
-				ethutil.SignatureSize,
-			)
-		}
-		membersIndices = append(membersIndices, big.NewInt(int64(memberIndex)))
-		signaturesSlice = append(signaturesSlice, signature...)
-	}
-
-	return membersIndices, signaturesSlice, nil
-}
-
-// CalculateDKGResultHash calculates Keccak-256 hash of the DKG result. Operation
-// is performed off-chain.
-//
-// It first encodes the result using solidity ABI and then calculates Keccak-256
-// hash over it. This corresponds to the DKG result hash calculation on-chain.
-// Hashes calculated off-chain and on-chain must always match.
-func (ec *ethereumChain) CalculateDKGResultHash(
-	dkgResult *relayChain.DKGResult,
-) (relayChain.DKGResultHash, error) {
-
-	// Encode DKG result to the format matched with Solidity keccak256(abi.encodePacked(...))
-	hash := crypto.Keccak256(dkgResult.GroupPublicKey, dkgResult.Misbehaved)
-
-	return relayChain.DKGResultHashFromBytes(hash)
-}
-
-func (ec *ethereumChain) Address() common.Address {
-	return ec.accountKey.Address
 }

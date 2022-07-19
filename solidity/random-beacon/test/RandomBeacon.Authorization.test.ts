@@ -3,7 +3,7 @@ import { ethers, helpers } from "hardhat"
 import { smock } from "@defi-wonderland/smock"
 import { expect } from "chai"
 
-import { constants, params, testDeployment } from "./fixtures"
+import { constants, params, randomBeaconDeployment } from "./fixtures"
 
 import type { FakeContract } from "@defi-wonderland/smock"
 import type { BigNumber, BigNumberish, ContractTransaction } from "ethers"
@@ -47,7 +47,7 @@ describe("RandomBeacon - Authorization", () => {
   let minimumAuthorization: BigNumber
 
   before("load test fixture", async () => {
-    const contracts = await testDeployment()
+    const contracts = await randomBeaconDeployment()
 
     t = contracts.t as T
     randomBeacon = contracts.randomBeacon as RandomBeacon

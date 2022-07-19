@@ -44,7 +44,7 @@ const MetricsSection = ({
       <section className={`metrics__reward-rate ${classes.rewardRate || ""}`}>
         <MetricsTile className="bg-mint-10">
           <MetricsTile.Tooltip direction={TOOLTIP_DIRECTION.TOP}>
-            The rate of rewards that you will receive annually.
+            Estimated rate of rewards that you will receive annually.
           </MetricsTile.Tooltip>
           <APY
             apy={rewardRate}

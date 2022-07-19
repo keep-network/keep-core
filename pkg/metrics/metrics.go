@@ -93,12 +93,11 @@ func ObserveConnectedBootstrapCount(
 func ObserveEthConnectivity(
 	ctx context.Context,
 	registry *metrics.Registry,
-	stakeMonitor chain.StakeMonitor,
-	address string,
+	blockCounter chain.BlockCounter,
 	tick time.Duration,
 ) {
 	input := func() float64 {
-		_, err := stakeMonitor.HasMinimumStake(address)
+		_, err := blockCounter.CurrentBlock()
 
 		if err != nil {
 			return 0

@@ -154,10 +154,20 @@
   background-color: @color-black !important;
   font-variant: none;
   text-transform: none;
+  border-radius: 8px !important;
 
   &--arrow-right {
     &::after {
       left: 89% !important;
+    }
+  }
+
+  &--stay-on-hover {
+    pointer-events: auto !important;
+
+    &:hover {
+      visibility: visible !important;
+      opacity: 1 !important;
     }
   }
 }

@@ -2,11 +2,11 @@ package local
 
 import (
 	"context"
+	"github.com/keep-network/keep-core/pkg/operator"
 	"sync"
 	"time"
 
 	"github.com/keep-network/keep-core/pkg/net"
-	"github.com/keep-network/keep-core/pkg/net/key"
 	"github.com/keep-network/keep-core/pkg/net/retransmission"
 )
 
@@ -18,7 +18,10 @@ var broadcastChannels map[string][]*localChannel
 // receive channels. RecvChan on a LocalChannel creates a new receive channel
 // that is returned to the caller, so that all receive channels can receive
 // the message.
-func getBroadcastChannel(name string, staticKey *key.NetworkPublic) net.BroadcastChannel {
+func getBroadcastChannel(
+	name string,
+	operatorPublicKey *operator.PublicKey,
+) net.BroadcastChannel {
 	broadcastChannelsMutex.Lock()
 	defer broadcastChannelsMutex.Unlock()
 	if broadcastChannels == nil {
@@ -35,7 +38,7 @@ func getBroadcastChannel(name string, staticKey *key.NetworkPublic) net.Broadcas
 	channel := &localChannel{
 		name:                 name,
 		identifier:           &identifier,
-		staticKey:            staticKey,
+		operatorPublicKey:    operatorPublicKey,
 		messageHandlersMutex: sync.Mutex{},
 		messageHandlers:      make([]*messageHandler, 0),
 		unmarshalersMutex:    sync.Mutex{},

@@ -2,7 +2,7 @@
 import { waffle, helpers } from "hardhat"
 import { expect } from "chai"
 
-import { constants, testDeployment } from "./fixtures"
+import { constants, randomBeaconDeployment } from "./fixtures"
 import { registerOperators } from "./utils/operators"
 import { createGroup } from "./utils/groups"
 import { signOperatorInactivityClaim } from "./utils/inactivity"
@@ -21,7 +21,7 @@ const { createSnapshot, restoreSnapshot } = helpers.snapshot
 const { to1e18 } = helpers.number
 
 const fixture = async () => {
-  const contracts = await testDeployment()
+  const contracts = await randomBeaconDeployment()
 
   // Accounts offset provided to slice getUnnamedSigners have to include number
   // of unnamed accounts that were already used.

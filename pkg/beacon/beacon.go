@@ -3,19 +3,17 @@ package beacon
 import (
 	"context"
 	"encoding/hex"
+	"fmt"
 	"time"
+
+	"github.com/keep-network/keep-core/pkg/sortition"
 
 	"github.com/ipfs/go-log"
 
 	"github.com/keep-network/keep-common/pkg/persistence"
-	"github.com/keep-network/keep-core/pkg/beacon/relay"
-	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
-	dkgresult "github.com/keep-network/keep-core/pkg/beacon/relay/dkg/result"
-	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
-	"github.com/keep-network/keep-core/pkg/beacon/relay/gjkr"
-	"github.com/keep-network/keep-core/pkg/beacon/relay/groupselection"
-	"github.com/keep-network/keep-core/pkg/beacon/relay/registry"
-	"github.com/keep-network/keep-core/pkg/chain"
+	beaconchain "github.com/keep-network/keep-core/pkg/beacon/chain"
+	"github.com/keep-network/keep-core/pkg/beacon/event"
+	"github.com/keep-network/keep-core/pkg/beacon/registry"
 	"github.com/keep-network/keep-core/pkg/net"
 )
 
@@ -27,59 +25,35 @@ var logger = log.Logger("keep-beacon")
 // otherwise enters a blocked loop.
 func Initialize(
 	ctx context.Context,
-	stakingID string,
-	chainHandle chain.Handle,
+	beaconChain beaconchain.Interface,
 	netProvider net.Provider,
 	persistence persistence.Handle,
 ) error {
-	relayChain := chainHandle.ThresholdRelay()
-	chainConfig := relayChain.GetConfig()
-
-	stakeMonitor, err := chainHandle.StakeMonitor()
+	_, operatorPublicKey, err := beaconChain.OperatorKeyPair()
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to get operator key pair: [%v]", err)
 	}
 
-	staker, err := stakeMonitor.StakerFor(stakingID)
-	if err != nil {
-		return err
-	}
-
-	blockCounter, err := chainHandle.BlockCounter()
-	if err != nil {
-		return err
-	}
-
-	signing := chainHandle.Signing()
-
-	groupRegistry := registry.NewGroupRegistry(relayChain, persistence)
+	groupRegistry := registry.NewGroupRegistry(beaconChain, persistence)
 	groupRegistry.LoadExistingGroups()
 
-	node := relay.NewNode(
-		staker,
+	node := newNode(
+		operatorPublicKey,
 		netProvider,
-		blockCounter,
-		chainConfig,
+		beaconChain,
 		groupRegistry,
 	)
 
-	// We need to calculate group selection duration here as we can't do it
-	// inside the deduplicator due to import cycles. We don't include the
-	// time needed for publication as we are interested about the minimum
-	// possible off-chain group create protocol duration.
-	minGroupCreationDurationBlocks :=
-		chainConfig.TicketSubmissionTimeout +
-			gjkr.ProtocolBlocks() +
-			dkgresult.PrePublicationBlocks()
+	err = sortition.MonitorPool(ctx, beaconChain, sortition.DefaultStatusCheckTick)
+	if err != nil {
+		return fmt.Errorf("could not set up sortition pool monitoring: [%v]", err)
+	}
 
-	eventDeduplicator := event.NewDeduplicator(
-		relayChain,
-		minGroupCreationDurationBlocks,
-	)
+	eventDeduplicator := event.NewDeduplicator(beaconChain)
 
-	node.ResumeSigningIfEligible(relayChain, signing)
+	node.ResumeSigningIfEligible()
 
-	_ = relayChain.OnRelayEntryRequested(func(request *event.Request) {
+	_ = beaconChain.OnRelayEntryRequested(func(request *event.RelayEntryRequested) {
 		onConfirmed := func() {
 			if node.IsInGroup(request.GroupPublicKey) {
 				go func() {
@@ -120,8 +94,6 @@ func Initialize(
 
 					node.GenerateRelayEntry(
 						request.PreviousEntry,
-						relayChain,
-						signing,
 						request.GroupPublicKey,
 						request.BlockNumber,
 					)
@@ -131,9 +103,7 @@ func Initialize(
 			}
 
 			go node.MonitorRelayEntry(
-				relayChain,
 				request.BlockNumber,
-				chainConfig,
 			)
 		}
 
@@ -142,65 +112,42 @@ func Initialize(
 
 		confirmCurrentRelayRequest(
 			request.BlockNumber,
-			relayChain,
+			beaconChain,
 			onConfirmed,
 			currentRelayRequestConfirmationRetries,
 			currentRelayRequestConfirmationDelay,
 		)
 	})
 
-	_ = relayChain.OnGroupSelectionStarted(func(event *event.GroupSelectionStart) {
-		onGroupSelected := func(group *groupselection.Result) {
-			for index, staker := range group.SelectedStakers {
-				logger.Infof(
-					"new candidate group member [0x%v] with index [%v]",
-					hex.EncodeToString(staker),
-					index,
-				)
-			}
-			node.JoinGroupIfEligible(
-				relayChain,
-				signing,
-				group,
-				event.NewEntry,
-			)
-		}
-
+	_ = beaconChain.OnDKGStarted(func(event *event.DKGStarted) {
 		go func() {
-			if ok := eventDeduplicator.NotifyGroupSelectionStarted(
-				event.BlockNumber,
+			if ok := eventDeduplicator.NotifyDKGStarted(
+				event.Seed,
 			); !ok {
 				logger.Warningf(
-					"group selection event with seed [0x%x] and "+
+					"DKG started event with seed [0x%x] and "+
 						"starting block [%v] has been already processed",
-					event.NewEntry,
+					event.Seed,
 					event.BlockNumber,
 				)
 				return
 			}
 
 			logger.Infof(
-				"group selection started with seed [0x%x] at block [%v]",
-				event.NewEntry,
+				"DKG started with seed [0x%x] at block [%v]",
+				event.Seed,
 				event.BlockNumber,
 			)
 
-			err = groupselection.CandidateToNewGroup(
-				relayChain,
-				blockCounter,
-				chainConfig,
-				staker,
-				event.NewEntry,
+			node.JoinDKGIfEligible(
+				event.Seed,
 				event.BlockNumber,
-				onGroupSelected,
 			)
-			if err != nil {
-				logger.Errorf("tickets submission failed: [%v]", err)
-			}
 		}()
 	})
 
-	_ = relayChain.OnGroupRegistered(func(registration *event.GroupRegistration) {
+	// TODO: Adjust to v2 requirements.
+	_ = beaconChain.OnGroupRegistered(func(registration *event.GroupRegistration) {
 		logger.Infof(
 			"new group with public key [0x%x] registered on-chain at block [%v]",
 			registration.GroupPublicKey,
@@ -229,7 +176,7 @@ func Initialize(
 // not have their state in sync yet.
 func confirmCurrentRelayRequest(
 	expectedRequestStartBlock uint64,
-	chain relaychain.RelayEntryInterface,
+	chain beaconchain.RelayEntryInterface,
 	onConfirmed func(),
 	maxRetries int,
 	delay time.Duration,

@@ -98,7 +98,7 @@ jobs:
         with:
           labels: revision=${{ github.sha }}
           push: false
-      
+
       - name: Login to Google Container Registry
         if: github.event_name == 'workflow_dispatch'
         uses: docker/login-action@v1
@@ -119,7 +119,7 @@ jobs:
           tags: ${{ env.GCR_REGISTRY_URL }}/${{ env.GOOGLE_PROJECT_ID }}/${{ env.IMAGE_NAME }}
           labels: revision=${{ github.sha }}
           push: true
-      
+
       - name: Notify CI about completion of the workflow
         if: github.event_name == 'workflow_dispatch'
         uses: keep-network/ci/actions/notify-workflow-completed@v1
@@ -156,10 +156,13 @@ jobs:
       - uses: securego/gosec@master
         with:
           args: |
-            -exclude-dir=pkg/chain/gen
+            -exclude-dir=pkg/chain/ethereum/beacon/gen
+            -exclude-dir=pkg/chain/ethereum/ecdsa/gen
+            -exclude-dir=pkg/chain/ethereum/threshold/gen
+            -exclude-dir=pkg/chain/ethereum/tbtc/gen
             ./...
 
-  client-lint:
+  client-format:
     needs: client-detect-changes
     if: |
       github.event_name == 'push'
@@ -168,5 +171,5 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      - name: Lint Go
-        uses: keep-network/golint-action@v1.0.2
+      - name: Go format
+        uses: Jerome1337/gofmt-action@v1.0.4

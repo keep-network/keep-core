@@ -2,7 +2,7 @@ name: Solidity v1
 
 on:
   schedule:
-    - cron: '0 0 * * *'
+    - cron: "0 0 * * *"
   push:
     branches:
       - main
@@ -13,16 +13,16 @@ on:
   workflow_dispatch:
     inputs:
       environment:
-        description: 'Environment for workflow execution'
+        description: "Environment for workflow execution"
         required: false
-        default: 'dev'
+        default: "dev"
       upstream_builds:
-        description: 'Upstream builds'
+        description: "Upstream builds"
         required: false
       upstream_ref:
-        description: 'Git reference to checkout (e.g. branch name)'
+        description: "Git reference to checkout (e.g. branch name)"
         required: false
-        default: 'main'
+        default: "main"
 
 jobs:
   contracts-detect-changes:
@@ -55,10 +55,16 @@ jobs:
 
       - uses: actions/setup-node@v2
         with:
-          node-version: "14.x"
+          node-version: "16"
           cache: "npm"
           cache-dependency-path: solidity-v1/package-lock.json
-            
+
+      # This step forces Git to download dependencies using `https://` protocol,
+      # even if `package-lock.json` refers to some package via `git://`. Using
+      # `git://` is no longer supported by GH.
+      - name: Configure git to don't use unauthenticated protocol
+        run: git config --global url."https://".insteadOf git://
+
       - name: Install dependencies
         run: npm ci
 
@@ -82,7 +88,7 @@ jobs:
 
       - uses: actions/setup-node@v2
         with:
-          node-version: "14.x"
+          node-version: "16"
           cache: "npm"
           cache-dependency-path: solidity-v1/package-lock.json
 
@@ -111,14 +117,14 @@ jobs:
 
       - uses: actions/setup-node@v2
         with:
-          node-version: "14.x"
+          node-version: "16"
           cache: "npm"
           cache-dependency-path: solidity-v1/package-lock.json
           registry-url: "https://registry.npmjs.org"
 
       - name: Install dependencies
         run: npm ci
-      
+
       - name: Migrate contracts on Ethereum
         if: github.event.inputs.environment != 'alfajores'
         env:
@@ -127,14 +133,6 @@ jobs:
             ${{ secrets.KEEP_TEST_ETH_CONTRACT_OWNER_PRIVATE_KEY }}
         run: npx truffle migrate --reset --network $TRUFFLE_NETWORK
 
-      - name: Migrate contracts on Celo
-        if: github.event.inputs.environment == 'alfajores'
-        env:
-          CHAIN_API_URL: ${{ secrets.KEEP_TEST_CELO_HOSTNAME }}
-          CONTRACT_OWNER_ACCOUNT_PRIVATE_KEY: |
-            ${{ secrets.KEEP_TEST_CELO_CONTRACT_OWNER_PRIVATE_KEY }}
-        run: npx truffle migrate --reset --network $TRUFFLE_NETWORK
-      
       - name: Copy artifacts
         run: |
           mkdir -p artifacts
@@ -233,7 +231,7 @@ jobs:
           push: true
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,dest=/tmp/.buildx-cache-new
-      
+
       - name: Notify CI about completion of the workflow
         uses: keep-network/ci/actions/notify-workflow-completed@v1
         env:
@@ -279,7 +277,7 @@ jobs:
 
       - uses: actions/setup-node@v2
         with:
-          node-version: "14.x"
+          node-version: "16"
           cache: "npm"
           cache-dependency-path: solidity-v1/package-lock.json
 
