@@ -8,8 +8,8 @@ import (
 
 	bn256 "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
 	"github.com/keep-network/keep-core/pkg/beacon/dkg"
-	"github.com/keep-network/keep-core/pkg/protocol/group"
 	"github.com/keep-network/keep-core/pkg/internal/pbutils"
+	"github.com/keep-network/keep-core/pkg/protocol/group"
 )
 
 func TestMembershipRoundtrip(t *testing.T) {

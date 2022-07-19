@@ -8,9 +8,9 @@ import (
 	"testing"
 
 	"github.com/keep-network/keep-core/pkg/chain"
-	"github.com/keep-network/keep-core/pkg/protocol/group"
 	"github.com/keep-network/keep-core/pkg/net"
 	netLocal "github.com/keep-network/keep-core/pkg/net/local"
+	"github.com/keep-network/keep-core/pkg/protocol/group"
 )
 
 var testLog map[uint64][]string
