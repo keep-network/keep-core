@@ -51,7 +51,8 @@ func (skgm *symmetricKeyGeneratingMember) generateSymmetricKeys(
 	for _, ephemeralPubKeyMessage := range ephemeralPubKeyMessages {
 		otherMember := ephemeralPubKeyMessage.senderID
 
-		// TODO: What should we do with that?
+		// TODO: What should we do with that? Do we want to use accuse & resolve
+		//       phases?
 		if !skgm.isValidEphemeralPublicKeyMessage(ephemeralPubKeyMessage) {
 			logger.Warningf(
 				"[member:%v] member [%v] disqualified because of "+
@@ -119,3 +120,6 @@ func (skgm *symmetricKeyGeneratingMember) isValidEphemeralPublicKeyMessage(
 
 	return true
 }
+
+// TODO: Implement other phases of the protocol that involve actual
+//       key generation.

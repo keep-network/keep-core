@@ -122,6 +122,7 @@ type finalizingMember struct {
 // generation process or a notification of failure.
 func (fm *finalizingMember) Result() *Result {
 	return &Result{
-		// TODO: Implementation.
+		// TODO: Temporary result. Add real items.
+		SymmetricKeys: fm.symmetricKeys,
 	}
 }
