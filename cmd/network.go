@@ -78,7 +78,7 @@ func pingRequest(c *cli.Context) error {
 		ctx,
 		libp2pConfig,
 		privKey,
-		libp2p.ProtocolBeacon,
+		libp2p.ProtocolKeep,
 		firewall.Disabled,
 		retransmission.NewTimeTicker(ctx, 50*time.Millisecond),
 	)

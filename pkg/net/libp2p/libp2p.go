@@ -57,8 +57,7 @@ const (
 
 // Keep Network protocol identifiers
 const (
-	ProtocolBeacon = "keep-beacon"
-	ProtocolECDSA  = "keep-ecdsa"
+	ProtocolKeep = "keep"
 )
 
 // MaximumDisseminationTime is the maximum dissemination time of messages in
