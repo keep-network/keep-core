@@ -1,3 +1,6 @@
+// Package state contains a generic state machine implementation that is
+// meant to be used with interactive protocols which require a synchronization
+// mechanism between protocol members.
 package state
 
 import (
@@ -5,13 +8,13 @@ import (
 
 	"github.com/ipfs/go-log"
 
-	"github.com/keep-network/keep-core/pkg/protocol/group"
 	"github.com/keep-network/keep-core/pkg/net"
+	"github.com/keep-network/keep-core/pkg/protocol/group"
 )
 
-var logger = log.Logger("keep-relay-state")
+var logger = log.Logger("keep-protocol-state")
 
-// State is and interface against which relay states should be implemented.
+// State is and interface that should be implemented by protocol states.
 type State interface {
 	// DelayBlocks returns the number of blocks for which the current state
 	// initialization is delayed. We delay the initialization to give all other
@@ -38,7 +41,7 @@ type State interface {
 	// messages.
 	Receive(msg net.Message) error
 
-	// NextState performs a state transition to the next state of the protocol.
+	// Next performs a state transition to the next state of the protocol.
 	// If the current state is the last one, nextState returns `nil`.
 	Next() State
 

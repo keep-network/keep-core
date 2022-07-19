@@ -9,8 +9,8 @@ import (
 	"github.com/keep-network/keep-core/pkg/beacon/dkg"
 	"github.com/keep-network/keep-core/pkg/beacon/entry"
 	"github.com/keep-network/keep-core/pkg/beacon/event"
-	"github.com/keep-network/keep-core/pkg/protocol/group"
 	"github.com/keep-network/keep-core/pkg/operator"
+	"github.com/keep-network/keep-core/pkg/protocol/group"
 	"math/big"
 
 	"github.com/keep-network/keep-core/pkg/beacon/registry"
@@ -117,7 +117,7 @@ func (n *node) JoinDKGIfEligible(
 			return
 		}
 
-		membershipValidator := group.NewStakersMembershipValidator(
+		membershipValidator := group.NewOperatorsMembershipValidator(
 			groupMembers,
 			signing,
 		)
@@ -342,7 +342,7 @@ func (n *node) GenerateRelayEntry(
 		return
 	}
 
-	membershipValidator := group.NewStakersMembershipValidator(
+	membershipValidator := group.NewOperatorsMembershipValidator(
 		groupMembers,
 		n.beaconChain.Signing(),
 	)

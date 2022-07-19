@@ -9,13 +9,10 @@ import (
 	"github.com/keep-network/keep-core/pkg/protocol/group"
 )
 
-// MemberIndex is represented as uint8 in gjkr. Protobuf does not have uint8
-// type so we are using uint32. When unmarshalling message, we need to make
-// sure we do not overflow.
-const maxMemberIndex = 255
-
 func validateMemberIndex(protoIndex uint32) error {
-	if protoIndex > maxMemberIndex {
+	// Protobuf does not have uint8 type so we are using uint32. When
+	// unmarshalling message, we need to make sure we do not overflow.
+	if protoIndex > group.MaxMemberIndex {
 		return fmt.Errorf("Invalid member index value: [%v]", protoIndex)
 	}
 	return nil

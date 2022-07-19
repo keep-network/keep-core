@@ -34,13 +34,13 @@ func TestFilterInactiveMembers(t *testing.T) {
 
 	for testName, test := range tests {
 		t.Run(testName, func(t *testing.T) {
-			dkgGroup := &Group{
+			group := &Group{
 				memberIDs: test.groupMembers,
 			}
 
 			filter := &InactiveMemberFilter{
 				selfMemberID:       test.selfMemberID,
-				group:              dkgGroup,
+				group:              group,
 				phaseActiveMembers: make([]MemberIndex, 0),
 			}
 

@@ -25,19 +25,19 @@ func TestIsInGroup(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	validator := NewStakersMembershipValidator(
+	validator := NewOperatorsMembershipValidator(
 		[]chain.Address{address1, address2, address2},
 		signing,
 	)
 
 	if !validator.IsInGroup(publicKey1) {
-		t.Errorf("staker with public key 1 has been selected")
+		t.Errorf("operator with public key 1 has been selected")
 	}
 	if !validator.IsInGroup(publicKey2) {
-		t.Errorf("staker with public key 2 has been selected")
+		t.Errorf("operator with public key 2 has been selected")
 	}
 	if validator.IsInGroup(publicKey3) {
-		t.Errorf("staker with public key 2 has not been selected")
+		t.Errorf("operator with public key 2 has not been selected")
 	}
 }
 
@@ -52,25 +52,25 @@ func TestIsValidMembership(t *testing.T) {
 	address1 := signing.PublicKeyBytesToAddress(publicKey1)
 	address2 := signing.PublicKeyBytesToAddress(publicKey2)
 
-	validator := NewStakersMembershipValidator(
+	validator := NewOperatorsMembershipValidator(
 		[]chain.Address{address2, address1, address2},
 		signing,
 	)
 
 	if !validator.IsValidMembership(1, publicKey2) {
-		t.Errorf("staker with public key 2 has been selected at index [0]")
+		t.Errorf("operator with public key 2 has been selected at index [0]")
 	}
 	if !validator.IsValidMembership(2, publicKey1) {
-		t.Errorf("staker with public key 1 has been selected at index [1]")
+		t.Errorf("operator with public key 1 has been selected at index [1]")
 	}
 	if !validator.IsValidMembership(3, publicKey2) {
-		t.Errorf("staker with public key 2 has been selected at index [2]")
+		t.Errorf("operator with public key 2 has been selected at index [2]")
 	}
 	if validator.IsValidMembership(4, publicKey2) {
-		t.Errorf("staker with public key 2 has not been selected at index [2]")
+		t.Errorf("operator with public key 2 has not been selected at index [2]")
 	}
 	if validator.IsValidMembership(5, publicKey3) {
-		t.Errorf("staker with public key 3 has not been selected")
+		t.Errorf("operator with public key 3 has not been selected")
 	}
 }
 

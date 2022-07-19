@@ -1,11 +1,5 @@
 package group
 
-import (
-	"github.com/ipfs/go-log"
-)
-
-var logger = log.Logger("keep-message-filter")
-
 // MessageFiltering interface defines method allowing to filter out messages
 // from members that are not part of the group or were marked as IA or DQ.
 type MessageFiltering interface {
@@ -22,14 +16,14 @@ type MessageFiltering interface {
 	IsSenderValid(senderID MemberIndex, senderPublicKey []byte) bool
 }
 
-// ProtocolMessage is a common interface for all messages of GJKR DKG protocol.
+// ProtocolMessage is a common interface for all messages of the protocol.
 type ProtocolMessage interface {
 	// SenderID returns protocol-level identifier of the message sender.
 	SenderID() MemberIndex
 }
 
 // InactiveMemberFilter is a proxy facilitates filtering out inactive members
-// in the given phase and registering their final list in DKG Group.
+// in the given phase and registering their final list in the Group.
 type InactiveMemberFilter struct {
 	selfMemberID MemberIndex
 	group        *Group
@@ -59,7 +53,7 @@ func (mf *InactiveMemberFilter) MarkMemberAsActive(memberID MemberIndex) {
 }
 
 // FlushInactiveMembers takes all members who were not previously marked as
-// active and flushes them to DKG group as inactive members.
+// active and flushes them to the group as inactive members.
 func (mf *InactiveMemberFilter) FlushInactiveMembers() {
 	isActive := func(id MemberIndex) bool {
 		if id == mf.selfMemberID {

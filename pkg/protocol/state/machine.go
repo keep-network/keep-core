@@ -16,7 +16,7 @@ import (
 // in the same moment.
 const receiveBuffer = 128
 
-// Machine is a state machine that executes over states implemented from State
+// Machine is a state machine that executes states implementing the State
 // interface.
 type Machine struct {
 	channel      net.BroadcastChannel
@@ -24,8 +24,9 @@ type Machine struct {
 	initialState State // first state from which execution starts
 }
 
-// NewMachine returns a new state machine. It requires a broadcast channel and
-// an initialization function for the channel to be able to perform interactions.
+// NewMachine returns a new protocol state machine. It requires a broadcast
+// channel and an initialization function for the channel to be able to
+// perform interactions between protocol parties.
 func NewMachine(
 	channel net.BroadcastChannel,
 	blockCounter chain.BlockCounter,
