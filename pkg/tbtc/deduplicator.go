@@ -1,4 +1,4 @@
-package ecdsa
+package tbtc
 
 import "math/big"
 

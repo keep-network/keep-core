@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"github.com/ipfs/go-log"
 	"github.com/keep-network/keep-common/pkg/persistence"
-	"github.com/keep-network/keep-core/pkg/ecdsa"
 	"github.com/keep-network/keep-core/pkg/net"
+	"github.com/keep-network/keep-core/pkg/sortition"
 )
 
 var logger = log.Logger("keep-tbtc")
@@ -20,25 +20,40 @@ func Initialize(
 	netProvider net.Provider,
 	persistence persistence.Handle,
 ) error {
-	ecdsaNode, err := ecdsa.Initialize(ctx, chain, netProvider, persistence)
+	node := newNode(chain, netProvider, persistence)
+	deduplicator := newDeduplicator()
+
+	err := sortition.MonitorPool(ctx, chain, sortition.DefaultStatusCheckTick)
 	if err != nil {
-		return fmt.Errorf("cannot initialize ECDSA node: [%v]", err)
+		return fmt.Errorf(
+			"could not set up sortition pool monitoring: [%v]",
+			err,
+		)
 	}
 
-	tbtcNode := newNode(chain, netProvider, persistence, ecdsaNode)
-
-	_ = chain.OnNewWalletRegistered(func(event *NewWalletRegisteredEvent) {
+	_ = chain.OnDKGStarted(func(event *DKGStartedEvent) {
 		go func() {
-			// TODO: Deduplication.
+			if ok := deduplicator.notifyDKGStarted(
+				event.Seed,
+			); !ok {
+				logger.Warningf(
+					"DKG started event with seed [0x%x] and "+
+						"starting block [%v] has been already processed",
+					event.Seed,
+					event.BlockNumber,
+				)
+				return
+			}
 
 			logger.Infof(
-				"New wallet with ID [0x%x] registered",
-				event.WalletID,
+				"DKG started with seed [0x%x] at block [%v]",
+				event.Seed,
+				event.BlockNumber,
 			)
 
-			tbtcNode.registerNewWallet(
-				event.WalletID,
-				event.WalletPubKeyHash,
+			node.joinDKGIfEligible(
+				event.Seed,
+				event.BlockNumber,
 			)
 		}()
 	})

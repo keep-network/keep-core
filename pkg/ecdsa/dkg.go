@@ -1,0 +1,5 @@
+package ecdsa
+
+func StartDKG() {
+
+}
