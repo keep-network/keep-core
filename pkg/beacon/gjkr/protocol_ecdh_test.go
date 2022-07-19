@@ -7,7 +7,7 @@ import (
 	"testing"
 
 	"github.com/keep-network/keep-core/pkg/crypto/ephemeral"
-	"github.com/keep-network/keep-core/pkg/group"
+	"github.com/keep-network/keep-core/pkg/protocol/group"
 )
 
 func TestSaveEphemeralKeyMessagesForEvidence(t *testing.T) {

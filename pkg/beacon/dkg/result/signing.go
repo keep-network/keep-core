@@ -6,7 +6,7 @@ import (
 	"github.com/keep-network/keep-core/pkg/chain"
 
 	beaconchain "github.com/keep-network/keep-core/pkg/beacon/chain"
-	"github.com/keep-network/keep-core/pkg/group"
+	"github.com/keep-network/keep-core/pkg/protocol/group"
 )
 
 type dkgResultSignature = []byte

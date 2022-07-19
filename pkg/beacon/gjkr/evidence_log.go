@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/keep-network/keep-core/pkg/group"
+	"github.com/keep-network/keep-core/pkg/protocol/group"
 )
 
 // For complaint resolution, group members need to have access to messages

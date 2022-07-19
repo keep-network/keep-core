@@ -13,7 +13,7 @@ import (
 	bn256 "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
 	"github.com/keep-network/keep-core/pkg/beacon/gjkr"
 	"github.com/keep-network/keep-core/pkg/bls"
-	"github.com/keep-network/keep-core/pkg/group"
+	"github.com/keep-network/keep-core/pkg/protocol/group"
 
 	"github.com/keep-network/keep-core/pkg/internal/dkgtest"
 	"github.com/keep-network/keep-core/pkg/internal/entrytest"

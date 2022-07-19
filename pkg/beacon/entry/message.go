@@ -1,7 +1,7 @@
 package entry
 
 import (
-	"github.com/keep-network/keep-core/pkg/group"
+	"github.com/keep-network/keep-core/pkg/protocol/group"
 )
 
 // SignatureShareMessage is a message payload that carries the sender's

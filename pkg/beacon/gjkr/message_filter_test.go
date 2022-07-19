@@ -3,7 +3,7 @@ package gjkr
 import (
 	"testing"
 
-	"github.com/keep-network/keep-core/pkg/group"
+	"github.com/keep-network/keep-core/pkg/protocol/group"
 )
 
 func TestFilterSymmetricKeyGeneratingMembers(t *testing.T) {

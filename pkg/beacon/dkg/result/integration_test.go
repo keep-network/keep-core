@@ -6,9 +6,9 @@ import (
 	"testing"
 
 	"github.com/keep-network/keep-core/pkg/beacon/dkg/result"
-	"github.com/keep-network/keep-core/pkg/group"
 	"github.com/keep-network/keep-core/pkg/internal/dkgtest"
 	"github.com/keep-network/keep-core/pkg/net"
+	"github.com/keep-network/keep-core/pkg/protocol/group"
 )
 
 func TestExecute_IA_members24_phase13(t *testing.T) {

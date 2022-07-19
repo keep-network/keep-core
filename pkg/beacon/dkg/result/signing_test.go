@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	beaconchain "github.com/keep-network/keep-core/pkg/beacon/chain"
-	"github.com/keep-network/keep-core/pkg/group"
+	"github.com/keep-network/keep-core/pkg/protocol/group"
 	"github.com/keep-network/keep-core/pkg/operator"
 )
 

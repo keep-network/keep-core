@@ -1,6 +1,6 @@
 package gjkr
 
-import "github.com/keep-network/keep-core/pkg/group"
+import "github.com/keep-network/keep-core/pkg/protocol/group"
 
 // MarkInactiveMembers takes all messages from the previous DKG protocol
 // execution phase and marks all member who did not send a message as IA.

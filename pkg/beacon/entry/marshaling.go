@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/keep-network/keep-core/pkg/beacon/entry/gen/pb"
-	"github.com/keep-network/keep-core/pkg/group"
+	"github.com/keep-network/keep-core/pkg/protocol/group"
 )
 
 // MemberIndex is represented as uint8 in gjkr. Protobuf does not have uint8
