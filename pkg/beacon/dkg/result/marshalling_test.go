@@ -6,7 +6,7 @@ import (
 
 	fuzz "github.com/google/gofuzz"
 	"github.com/keep-network/keep-core/pkg/beacon/chain"
-	"github.com/keep-network/keep-core/pkg/beacon/group"
+	"github.com/keep-network/keep-core/pkg/group"
 
 	"github.com/keep-network/keep-core/pkg/internal/pbutils"
 )

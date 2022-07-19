@@ -3,7 +3,7 @@ package gjkr
 import (
 	"testing"
 
-	"github.com/keep-network/keep-core/pkg/beacon/group"
+	"github.com/keep-network/keep-core/pkg/group"
 )
 
 func TestFilterSymmetricKeyGeneratingMembers(t *testing.T) {

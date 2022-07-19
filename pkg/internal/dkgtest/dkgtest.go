@@ -19,7 +19,7 @@ import (
 	dkgResult "github.com/keep-network/keep-core/pkg/beacon/dkg/result"
 	"github.com/keep-network/keep-core/pkg/beacon/event"
 	"github.com/keep-network/keep-core/pkg/beacon/gjkr"
-	"github.com/keep-network/keep-core/pkg/beacon/group"
+	"github.com/keep-network/keep-core/pkg/group"
 	"github.com/keep-network/keep-core/pkg/internal/interception"
 	netLocal "github.com/keep-network/keep-core/pkg/net/local"
 	"github.com/keep-network/keep-core/pkg/operator"

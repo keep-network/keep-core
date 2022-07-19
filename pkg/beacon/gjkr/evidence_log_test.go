@@ -5,7 +5,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/keep-network/keep-core/pkg/beacon/group"
+	"github.com/keep-network/keep-core/pkg/group"
 )
 
 func TestPutEphemeralPubKeyEvidenceLog(t *testing.T) {

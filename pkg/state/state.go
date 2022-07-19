@@ -5,7 +5,7 @@ import (
 
 	"github.com/ipfs/go-log"
 
-	"github.com/keep-network/keep-core/pkg/beacon/group"
+	"github.com/keep-network/keep-core/pkg/group"
 	"github.com/keep-network/keep-core/pkg/net"
 )
 

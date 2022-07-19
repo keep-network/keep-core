@@ -9,7 +9,6 @@ var logger = log.Logger("keep-message-filter")
 // MessageFiltering interface defines method allowing to filter out messages
 // from members that are not part of the group or were marked as IA or DQ.
 type MessageFiltering interface {
-
 	// IsSenderAccepted returns true if the message from the given sender should be
 	// accepted for further processing. Otherwise, function returns false.
 	// Message from the given sender is allowed only if that member is a properly

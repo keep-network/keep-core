@@ -2,7 +2,7 @@ package result
 
 import (
 	"github.com/keep-network/keep-core/pkg/beacon/chain"
-	"github.com/keep-network/keep-core/pkg/beacon/group"
+	"github.com/keep-network/keep-core/pkg/group"
 )
 
 // DKGResultHashSignatureMessage is a message payload that carries a hash of

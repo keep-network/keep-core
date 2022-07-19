@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/keep-network/keep-core/pkg/beacon/dkg/result"
-	"github.com/keep-network/keep-core/pkg/beacon/group"
+	"github.com/keep-network/keep-core/pkg/group"
 	"github.com/keep-network/keep-core/pkg/internal/dkgtest"
 	"github.com/keep-network/keep-core/pkg/net"
 )

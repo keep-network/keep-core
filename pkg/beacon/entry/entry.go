@@ -10,9 +10,9 @@ import (
 	"github.com/ipfs/go-log"
 	beaconchain "github.com/keep-network/keep-core/pkg/beacon/chain"
 	"github.com/keep-network/keep-core/pkg/beacon/dkg"
-	"github.com/keep-network/keep-core/pkg/beacon/group"
 	"github.com/keep-network/keep-core/pkg/bls"
 	"github.com/keep-network/keep-core/pkg/chain"
+	"github.com/keep-network/keep-core/pkg/group"
 	"github.com/keep-network/keep-core/pkg/net"
 )
 
