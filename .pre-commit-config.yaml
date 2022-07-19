@@ -4,7 +4,7 @@ repos:
    hooks:
     - id: go-imports
     - id: go-vet
-    - id: go-lint
+    - id: go-fmt
  - repo: https://github.com/keep-network/pre-commit-hooks.git
    rev: 63e729f
    hooks:

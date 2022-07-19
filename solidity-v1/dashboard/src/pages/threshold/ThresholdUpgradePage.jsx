@@ -20,6 +20,7 @@ import TokenAmountSkeleton from "../../components/skeletons/TokenAmountSkeleton"
 import ResourceTooltip from "../../components/ResourceTooltip"
 import useUpdatePendingUndelegations from "../../hooks/useUpdatePendingUndelegations"
 import useUpdateInitializedDelegations from "../../hooks/useUpdateInitializedDelegations"
+import HowItWorksPage from "./HowItWorksPage"
 
 const ThresholdUpgradePage = () => {
   const { isConnected } = useWeb3Context()
@@ -129,7 +130,7 @@ const ThresholdUpgradePage = () => {
           </h3>
         </header>
         <NavLink
-          to="/threshold/how-it-works"
+          to={HowItWorksPage.route.path}
           className="btn btn-secondary btn-md explanation__upgrade-btn"
         >
           learn more

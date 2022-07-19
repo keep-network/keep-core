@@ -11,16 +11,17 @@ import { SubmitButton } from "./Button"
 import { connect } from "react-redux"
 import web3Utils from "web3-utils"
 import useUpdateInitializedDelegations from "../hooks/useUpdateInitializedDelegations"
+import * as Icons from "./Icons"
 
 const DelegatedTokensTable = ({
-  delegatedTokens,
+  delegations,
   cancelStakeSuccessCallback,
   keepTokenBalance,
   grants,
   addKeep,
   undelegationPeriod,
 }) => {
-  useUpdateInitializedDelegations(delegatedTokens)
+  useUpdateInitializedDelegations(delegations)
   const getAvailableToStakeFromGrant = useCallback(
     (grantId) => {
       const grant = grants.find(({ id }) => id === grantId)
@@ -57,7 +58,7 @@ const DelegatedTokensTable = ({
     <Tile>
       <DataTable
         title="Delegations"
-        data={delegatedTokens}
+        data={delegations}
         itemFieldId="operatorAddress"
         noDataMessage="No delegated tokens."
         centered
@@ -127,8 +128,8 @@ const DelegatedTokensTable = ({
           )}
         />
         <Column
-          headerStyle={{ width: "25%" }}
-          header=""
+          headerStyle={{ width: "25%", textAlign: "right" }}
+          header="actions"
           field=""
           renderContent={(delegation) =>
             delegation.isCopiedStake ? (
@@ -138,14 +139,14 @@ const DelegatedTokensTable = ({
                 text="stake copied"
               />
             ) : (
-              <div className="flex row center space-evenly">
-                <div className={"ml-a"}>
+              <div className="flex row center justify-right">
+                <div>
                   <UndelegateStakeButton
                     isInInitializationPeriod={
                       delegation.isInInitializationPeriod
                     }
                     isFromGrant={delegation.isFromGrant}
-                    btnClassName="btn btn-sm btn-secondary"
+                    btnClassName="btn btn-semi-sm btn-secondary"
                     operator={delegation.operatorAddress}
                     amount={delegation.amount}
                     authorizer={delegation.authorizerAddress}
@@ -156,17 +157,24 @@ const DelegatedTokensTable = ({
                         ? cancelStakeSuccessCallback
                         : () => {}
                     }
+                    disabled={
+                      delegation.isTStakingContractAuthorized &&
+                      delegation.isStakedToT
+                    }
                   />
                 </div>
-                <div className={"ml-a"}>
+                <div className={"ml-2"}>
                   <SubmitButton
-                    className="btn btn-secondary btn-sm"
+                    className="btn btn-secondary btn-semi-sm"
                     onSubmitAction={(awaitingPromise) =>
                       onTopUpBtn(delegation, awaitingPromise)
                     }
                     disabled={isAddKeepBtnDisabled(delegation)}
                   >
-                    add keep
+                    <span className={"flex row center"}>
+                      <Icons.KeepBlackGreen width={12} height={12} />
+                      &nbsp;add keep
+                    </span>
                   </SubmitButton>
                 </div>
               </div>

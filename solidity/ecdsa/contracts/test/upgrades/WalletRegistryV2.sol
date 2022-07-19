@@ -659,6 +659,7 @@ contract WalletRegistryV2 is
     ///      `\x19Ethereum signed message:\n${keccak256(groupPubKey,misbehavedIndices,startBlock)}`
     /// @param dkgResult DKG result.
     function submitDkgResult(DKG.Result calldata dkgResult) external {
+        wallets.validatePublicKey(dkgResult.groupPubKey);
         dkg.submitResult(dkgResult);
     }
 

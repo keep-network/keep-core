@@ -4,15 +4,14 @@ package watchtower
 
 import (
 	"context"
-	"crypto/ecdsa"
 	"fmt"
+	"github.com/keep-network/keep-core/pkg/operator"
 	"sync"
 	"time"
 
 	"github.com/ipfs/go-log"
 
 	"github.com/keep-network/keep-core/pkg/net"
-	"github.com/keep-network/keep-core/pkg/net/key"
 )
 
 var logger = log.Logger("keep-net-watchtower")
@@ -125,7 +124,7 @@ func (g *Guard) checkFirewallRules(peer string) {
 	}
 }
 
-func (g *Guard) getPeerPublicKey(peer string) (*ecdsa.PublicKey, error) {
+func (g *Guard) getPeerPublicKey(peer string) (*operator.PublicKey, error) {
 	peerPublicKey, err := g.connectionManager.GetPeerPublicKey(peer)
 	if err != nil {
 		return nil, err
@@ -136,5 +135,5 @@ func (g *Guard) getPeerPublicKey(peer string) (*ecdsa.PublicKey, error) {
 			"failed to resolve valid public key for peer [%s]", peer,
 		)
 	}
-	return key.NetworkKeyToECDSAKey(peerPublicKey), nil
+	return peerPublicKey, nil
 }

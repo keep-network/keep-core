@@ -4,13 +4,11 @@
 package local
 
 import (
-	"context"
-	"crypto/ecdsa"
+	"github.com/keep-network/keep-core/pkg/operator"
 	"sync"
 
 	"github.com/ipfs/go-log"
 	"github.com/keep-network/keep-core/pkg/net"
-	"github.com/keep-network/keep-core/pkg/net/key"
 )
 
 var logger = log.Logger("keep-net-local")
@@ -22,51 +20,38 @@ type Provider interface {
 
 	// AddPeer allows the simulation of adding a peer to the client's local
 	// registry of peers.
-	AddPeer(peerID string, pubKey *key.NetworkPublic)
+	AddPeer(peerID string, publicKey *operator.PublicKey)
 }
 
 type localProvider struct {
-	id                    localIdentifier
-	staticKey             *key.NetworkPublic
-	connectionManager     *localConnectionManager
-	unicastChannelManager *unicastChannelManager
+	id                localIdentifier
+	operatorPublicKey *operator.PublicKey
+	connectionManager *localConnectionManager
 }
 
 func (lp *localProvider) ID() net.TransportIdentifier {
 	return lp.id
 }
 
-func (lp *localProvider) UnicastChannelWith(peerID net.TransportIdentifier) (
-	net.UnicastChannel,
-	error,
-) {
-	return lp.unicastChannelManager.UnicastChannelWith(peerID)
-}
-
-func (lp *localProvider) OnUnicastChannelOpened(
-	handler func(channel net.UnicastChannel),
-) {
-	lp.unicastChannelManager.OnUnicastChannelOpened(context.Background(), handler)
-}
-
 func (lp *localProvider) BroadcastChannelFor(name string) (net.BroadcastChannel, error) {
-	return getBroadcastChannel(name, lp.staticKey), nil
+	return getBroadcastChannel(name, lp.operatorPublicKey), nil
 }
 
 func (lp *localProvider) Type() string {
 	return "local"
 }
 
-func (lp *localProvider) AddPeer(peerID string, pubKey *key.NetworkPublic) {
-	lp.connectionManager.peers[peerID] = pubKey
+func (lp *localProvider) AddPeer(peerID string, publicKey *operator.PublicKey) {
+	lp.connectionManager.peers[peerID] = publicKey
 }
 
-func (lp *localProvider) CreateTransportIdentifier(publicKey ecdsa.PublicKey) (
+func (lp *localProvider) CreateTransportIdentifier(
+	operatorPublicKey *operator.PublicKey,
+) (
 	net.TransportIdentifier,
 	error,
 ) {
-	networkPublicKey := key.NetworkPublic(publicKey)
-	return createLocalIdentifier(&networkPublicKey), nil
+	return createLocalIdentifier(operatorPublicKey)
 }
 
 func (lp *localProvider) BroadcastChannelForwarderFor(name string) {
@@ -76,23 +61,22 @@ func (lp *localProvider) BroadcastChannelForwarderFor(name string) {
 // Connect returns a local instance of a net provider that does not go over the
 // network.
 func Connect() Provider {
-	_, staticKey, err := key.GenerateStaticNetworkKey()
+	_, operatorPublicKey, err := operator.GenerateKeyPair(DefaultCurve)
 	if err != nil {
 		panic(err)
 	}
 
-	return ConnectWithKey(staticKey)
+	return ConnectWithKey(operatorPublicKey)
 }
 
 // ConnectWithKey returns a local instance of net provider that does not go
 // over the network. The returned instance uses the provided network key to
 // identify network messages.
-func ConnectWithKey(staticKey *key.NetworkPublic) Provider {
+func ConnectWithKey(operatorPublicKey *operator.PublicKey) Provider {
 	return &localProvider{
-		id:                    randomLocalIdentifier(),
-		staticKey:             staticKey,
-		connectionManager:     &localConnectionManager{peers: make(map[string]*key.NetworkPublic)},
-		unicastChannelManager: newUnicastChannelManager(staticKey),
+		id:                randomLocalIdentifier(),
+		operatorPublicKey: operatorPublicKey,
+		connectionManager: &localConnectionManager{peers: make(map[string]*operator.PublicKey)},
 	}
 }
 
@@ -103,7 +87,7 @@ func (lp *localProvider) ConnectionManager() net.ConnectionManager {
 type localConnectionManager struct {
 	mutex sync.Mutex
 
-	peers map[string]*key.NetworkPublic
+	peers map[string]*operator.PublicKey
 }
 
 func (lcm *localConnectionManager) ConnectedPeers() []string {
@@ -118,7 +102,7 @@ func (lcm *localConnectionManager) ConnectedPeers() []string {
 
 func (lcm *localConnectionManager) GetPeerPublicKey(
 	connectedPeer string,
-) (*key.NetworkPublic, error) {
+) (*operator.PublicKey, error) {
 	lcm.mutex.Lock()
 	defer lcm.mutex.Unlock()
 

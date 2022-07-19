@@ -44,6 +44,7 @@ export const LINK = {
     "https://keep-network.gitbook.io/staking-documentation/",
   coveragePools: {
     docs: "https://github.com/keep-network/coverage-pools/blob/main/docs/design.adoc",
+    covKeepAddress: "0x2aa24dac5e494e7b028ed43023530e5769df5d8b",
   },
   tbtcMigration: {
     docs: "https://coda.io/@keep-network/how-to-mint-tbtc-v2-with-etherscan",

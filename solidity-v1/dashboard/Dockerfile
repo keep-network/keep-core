@@ -14,6 +14,9 @@ COPY package.json /app/package.json
 COPY package-lock.json /app/package-lock.json
 COPY .env* /app/
 
+# Use `https://` instead of unauthenticated `git://` protocol
+RUN git config --global url."https://".insteadOf git://
+
 # Install from lockfile.
 RUN npm ci --ignore-scripts
 

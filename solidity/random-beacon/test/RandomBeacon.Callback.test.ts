@@ -8,6 +8,7 @@ import { constants, params, randomBeaconDeployment } from "./fixtures"
 import { createGroup } from "./utils/groups"
 import { registerOperators } from "./utils/operators"
 
+import type { RandomBeaconGovernance } from "../typechain/RandomBeaconGovernance"
 import type { DeployedContracts } from "./fixtures"
 import type {
   RandomBeaconStub,
@@ -25,6 +26,7 @@ const fixture = async () => {
 
   const contracts: DeployedContracts = {
     randomBeacon: deployment.randomBeacon,
+    randomBeaconGovernance: deployment.randomBeaconGovernance,
     t: deployment.t,
     callbackContractStub: await (
       await ethers.getContractFactory("CallbackContractStub")
@@ -51,23 +53,30 @@ const fixture = async () => {
 describe("RandomBeacon - Callback", () => {
   let requester: SignerWithAddress
   let submitter: SignerWithAddress
+  let governance: SignerWithAddress
 
   let randomBeacon: RandomBeaconStub
+  let randomBeaconGovernance: RandomBeaconGovernance
   let t: T
   let callbackContract: CallbackContractStub
   let callbackContract1: CallbackContractStub
 
   before(async () => {
     ;[requester, submitter] = await helpers.signers.getUnnamedSigners()
+    ;({ governance } = await helpers.signers.getNamedSigners())
 
     const { contracts } = await waffle.loadFixture(fixture)
 
     randomBeacon = contracts.randomBeacon as RandomBeaconStub
+    randomBeaconGovernance =
+      contracts.randomBeaconGovernance as RandomBeaconGovernance
     t = contracts.t as T
     callbackContract = contracts.callbackContractStub as CallbackContractStub
     callbackContract1 = contracts.callbackContractStub1 as CallbackContractStub
 
-    await randomBeacon.setRequesterAuthorization(requester.address, true)
+    await randomBeaconGovernance
+      .connect(governance)
+      .setRequesterAuthorization(requester.address, true)
   })
 
   describe("requestRelayEntry", () => {
@@ -176,11 +185,14 @@ describe("RandomBeacon - Callback", () => {
         it("should emit a callback failed event because of the gas limit", async () => {
           await createSnapshot()
 
-          await randomBeacon.updateRelayEntryParameters(
-            params.relayEntrySoftTimeout,
-            params.relayEntryHardTimeout,
-            40000
-          )
+          await randomBeaconGovernance
+            .connect(governance)
+            .beginCallbackGasLimitUpdate(40000)
+          await helpers.time.increaseTime(params.governanceDelay)
+          await randomBeaconGovernance
+            .connect(governance)
+            .finalizeCallbackGasLimitUpdate()
+
           await randomBeacon
             .connect(requester)
             .requestRelayEntry(callbackContract.address)

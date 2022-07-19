@@ -1,6 +1,6 @@
 import React from "react"
 import { Provider } from "react-redux"
-import { BrowserRouter as Router, Link } from "react-router-dom"
+import { BrowserRouter as Router } from "react-router-dom"
 import store from "./store"
 import Web3ContextProvider from "./components/Web3ContextProvider"
 import Routing from "./components/Routing"
@@ -13,6 +13,7 @@ import useAutoConnect from "./hooks/useAutoConnect"
 import useAutoWalletAddressInjectIntoUrl from "./hooks/useAutoWalletAddressInjectIntoUrl"
 import useModalWindowForMobileUsers from "./hooks/useModalWindowForMobileUsers"
 import { ModalRoot } from "./components/modal"
+import NavLink from "./components/NavLink"
 
 const App = () => (
   <Provider store={store}>
@@ -39,7 +40,6 @@ const AppLayout = () => {
       <section className="app__content">
         <Routing />
       </section>
-      <Footer className="app__footer" />
     </>
   )
 }
@@ -47,10 +47,11 @@ const AppLayout = () => {
 const AppHeader = () => {
   return (
     <header className="app__header">
-      <Link to="/" className="app-logo">
+      <NavLink to="/overview" className="app-logo">
         <Icons.KeepDashboardLogo />
-      </Link>
+      </NavLink>
       <SideMenu />
+      <Footer className="app__footer" />
     </header>
   )
 }

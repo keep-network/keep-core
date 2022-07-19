@@ -1,7 +1,6 @@
 import React, { useMemo } from "react"
 import TokenAmount from "./TokenAmount"
 import * as Icons from "./Icons"
-import { Link } from "react-router-dom"
 import { colors } from "../constants/colors"
 import { add, percentageOf } from "../utils/arithmetics.utils"
 import Divider from "./Divider"
@@ -14,6 +13,7 @@ import { useWeb3Context } from "./WithWeb3Context"
 import resourceTooltipProps from "../constants/tooltips"
 import DelegationPage from "../pages/delegation"
 import { formatValue } from "../utils/general.utils"
+import NavLink from "./NavLink"
 
 const TokenOverview = ({
   totalKeepTokenBalance,
@@ -167,13 +167,13 @@ const TokenBalance = ({
       <span className="text-small text-grey-40">
         {isConnected ? inPercentage : "-"}% Staked
       </span>
-      <Link
+      <NavLink
         to={`${DelegationPage.route.path}/${type}`}
         className="btn btn-secondary btn-lg mt-2"
         style={{ width: "100%" }}
       >
         stake
-      </Link>
+      </NavLink>
     </section>
   )
 }
