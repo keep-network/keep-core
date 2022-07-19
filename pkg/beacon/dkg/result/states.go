@@ -6,9 +6,9 @@ import (
 
 	beaconchain "github.com/keep-network/keep-core/pkg/beacon/chain"
 	"github.com/keep-network/keep-core/pkg/beacon/group"
-	"github.com/keep-network/keep-core/pkg/beacon/state"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/net"
+	"github.com/keep-network/keep-core/pkg/state"
 )
 
 // represents a given state in the state machine for signing dkg results

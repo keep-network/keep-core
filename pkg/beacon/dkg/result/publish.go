@@ -6,9 +6,9 @@ import (
 	beaconchain "github.com/keep-network/keep-core/pkg/beacon/chain"
 	"github.com/keep-network/keep-core/pkg/beacon/gjkr"
 	"github.com/keep-network/keep-core/pkg/beacon/group"
-	"github.com/keep-network/keep-core/pkg/beacon/state"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/net"
+	"github.com/keep-network/keep-core/pkg/state"
 )
 
 // RegisterUnmarshallers initializes the given broadcast channel to be able to

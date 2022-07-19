@@ -4,8 +4,8 @@ import (
 	"context"
 
 	"github.com/keep-network/keep-core/pkg/beacon/group"
-	"github.com/keep-network/keep-core/pkg/beacon/state"
 	"github.com/keep-network/keep-core/pkg/net"
+	"github.com/keep-network/keep-core/pkg/state"
 )
 
 type keyGenerationState = state.State
