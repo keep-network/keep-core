@@ -6,8 +6,8 @@ import (
 	"testing"
 
 	beaconchain "github.com/keep-network/keep-core/pkg/beacon/chain"
-	"github.com/keep-network/keep-core/pkg/protocol/group"
 	"github.com/keep-network/keep-core/pkg/operator"
+	"github.com/keep-network/keep-core/pkg/protocol/group"
 )
 
 // TestResultSigningAndVerificationRoundTrip simulates Phase 13 execution when
@@ -310,7 +310,7 @@ func initializeSigningMembers(groupSize int) (
 	honestThreshold := groupSize/2 + 1
 	dishonestThreshold := groupSize - honestThreshold
 
-	dkgGroup := group.NewDkgGroup(dishonestThreshold, groupSize)
+	dkgGroup := group.NewGroup(dishonestThreshold, groupSize)
 
 	members := make([]*SigningMember, groupSize)
 	beaconChains := make([]beaconchain.Interface, groupSize)

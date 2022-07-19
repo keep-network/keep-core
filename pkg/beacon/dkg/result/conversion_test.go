@@ -25,7 +25,7 @@ func TestConvertResult(t *testing.T) {
 			inactiveMemberIDs:     []group.MemberIndex{},
 			gjkrResult: &gjkr.Result{
 				GroupPublicKey: nil,
-				Group:          group.NewDkgGroup(32, 64),
+				Group:          group.NewGroup(32, 64),
 			},
 			expectedResult: &beaconchain.DKGResult{
 				GroupPublicKey: []byte{},
@@ -37,7 +37,7 @@ func TestConvertResult(t *testing.T) {
 			inactiveMemberIDs:     []group.MemberIndex{},
 			gjkrResult: &gjkr.Result{
 				GroupPublicKey: publicKey,
-				Group:          group.NewDkgGroup(32, 64),
+				Group:          group.NewGroup(32, 64),
 			},
 			expectedResult: &beaconchain.DKGResult{
 				GroupPublicKey: marshalledPublicKey,
@@ -49,7 +49,7 @@ func TestConvertResult(t *testing.T) {
 			inactiveMemberIDs:     []group.MemberIndex{5, 3, 50},
 			gjkrResult: &gjkr.Result{
 				GroupPublicKey: publicKey,
-				Group:          group.NewDkgGroup(32, 64),
+				Group:          group.NewGroup(32, 64),
 			},
 			expectedResult: &beaconchain.DKGResult{
 				GroupPublicKey: marshalledPublicKey,
@@ -61,7 +61,7 @@ func TestConvertResult(t *testing.T) {
 			inactiveMemberIDs:     []group.MemberIndex{5},
 			gjkrResult: &gjkr.Result{
 				GroupPublicKey: publicKey,
-				Group:          group.NewDkgGroup(32, 64),
+				Group:          group.NewGroup(32, 64),
 			},
 			expectedResult: &beaconchain.DKGResult{
 				GroupPublicKey: marshalledPublicKey,
@@ -73,7 +73,7 @@ func TestConvertResult(t *testing.T) {
 			inactiveMemberIDs:     []group.MemberIndex{},
 			gjkrResult: &gjkr.Result{
 				GroupPublicKey: publicKey,
-				Group:          group.NewDkgGroup(32, 64),
+				Group:          group.NewGroup(32, 64),
 			},
 			expectedResult: &beaconchain.DKGResult{
 				GroupPublicKey: marshalledPublicKey,
