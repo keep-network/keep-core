@@ -15,29 +15,12 @@ import (
 )
 
 func TestLocalSubmitRelayEntry(t *testing.T) {
-	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
-	defer cancel()
-
 	chainHandle := Connect(10, 4)
 
-	relayEntryPromise := chainHandle.SubmitRelayEntry(big.NewInt(19).Bytes())
-
-	done := make(chan *event.RelayEntrySubmitted)
-	relayEntryPromise.OnSuccess(func(entry *event.RelayEntrySubmitted) {
-		done <- entry
-	}).OnFailure(func(err error) {
-		if err != nil {
-			t.Fatal(err)
-		}
-	})
-
-	select {
-	case <-done:
-		// expected
-	case <-ctx.Done():
-		t.Fatal(ctx.Err())
+	err := chainHandle.SubmitRelayEntry(big.NewInt(19).Bytes())
+	if err != nil {
+		t.Fatal(err)
 	}
-
 }
 
 func TestLocalOnEntrySubmitted(t *testing.T) {
@@ -56,7 +39,10 @@ func TestLocalOnEntrySubmitted(t *testing.T) {
 
 	defer subscription.Unsubscribe()
 
-	chainHandle.SubmitRelayEntry(big.NewInt(20).Bytes())
+	err := chainHandle.SubmitRelayEntry(big.NewInt(20).Bytes())
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	select {
 	case <-eventFired:
@@ -82,7 +68,10 @@ func TestLocalOnEntrySubmittedUnsubscribed(t *testing.T) {
 
 	subscription.Unsubscribe()
 
-	chainHandle.SubmitRelayEntry(big.NewInt(1).Bytes())
+	err := chainHandle.SubmitRelayEntry(big.NewInt(1).Bytes())
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	select {
 	case event := <-eventFired:
