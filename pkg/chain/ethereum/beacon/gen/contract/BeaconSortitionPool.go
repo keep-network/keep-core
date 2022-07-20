@@ -1656,7 +1656,7 @@ func (bsp *BeaconSortitionPool) WithdrawRewardsGasEstimate(
 // ----- Const Methods ------
 
 func (bsp *BeaconSortitionPool) CanRestoreRewardEligibility(
-	arg_operator uint32,
+	arg_operator common.Address,
 ) (bool, error) {
 	result, err := bsp.contract.CanRestoreRewardEligibility(
 		bsp.callerOptions,
@@ -1677,7 +1677,7 @@ func (bsp *BeaconSortitionPool) CanRestoreRewardEligibility(
 }
 
 func (bsp *BeaconSortitionPool) CanRestoreRewardEligibilityAtBlock(
-	arg_operator uint32,
+	arg_operator common.Address,
 	blockNumber *big.Int,
 ) (bool, error) {
 	var result bool
@@ -1951,7 +1951,7 @@ func (bsp *BeaconSortitionPool) IneligibleEarnedRewardsAtBlock(
 }
 
 func (bsp *BeaconSortitionPool) IsEligibleForRewards(
-	arg_operator uint32,
+	arg_operator common.Address,
 ) (bool, error) {
 	result, err := bsp.contract.IsEligibleForRewards(
 		bsp.callerOptions,
@@ -1972,7 +1972,7 @@ func (bsp *BeaconSortitionPool) IsEligibleForRewards(
 }
 
 func (bsp *BeaconSortitionPool) IsEligibleForRewardsAtBlock(
-	arg_operator uint32,
+	arg_operator common.Address,
 	blockNumber *big.Int,
 ) (bool, error) {
 	var result bool
@@ -2313,7 +2313,7 @@ func (bsp *BeaconSortitionPool) RewardTokenAtBlock(
 }
 
 func (bsp *BeaconSortitionPool) RewardsEligibilityRestorableAt(
-	arg_operator uint32,
+	arg_operator common.Address,
 ) (*big.Int, error) {
 	result, err := bsp.contract.RewardsEligibilityRestorableAt(
 		bsp.callerOptions,
@@ -2334,7 +2334,7 @@ func (bsp *BeaconSortitionPool) RewardsEligibilityRestorableAt(
 }
 
 func (bsp *BeaconSortitionPool) RewardsEligibilityRestorableAtAtBlock(
-	arg_operator uint32,
+	arg_operator common.Address,
 	blockNumber *big.Int,
 ) (*big.Int, error) {
 	var result *big.Int

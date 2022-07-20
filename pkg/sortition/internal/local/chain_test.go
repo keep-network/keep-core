@@ -240,3 +240,107 @@ func TestUpdateOperatorStatus(t *testing.T) {
 		t.Fatal("expected the operator to be up to date")
 	}
 }
+
+func TestIsEligibleForRewards_EligibleOperator(t *testing.T) {
+	localChain := Connect(testOperatorAddress)
+
+	isEligibileForRewards, err := localChain.IsEligibleForRewards()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if !isEligibileForRewards {
+		t.Fatal("expected the operator to be eligible for rewards")
+	}
+}
+
+func TestIsEligibleForRewards_NotEligibleOperator(t *testing.T) {
+	localChain := Connect(testOperatorAddress)
+	localChain.SetRewardIneligibility(big.NewInt(1))
+
+	isEligibileForRewards, err := localChain.IsEligibleForRewards()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if isEligibileForRewards {
+		t.Fatal("expected the operator not to be eligible for rewards")
+	}
+}
+
+func TestCanRestoreRewardEligibility_Eligible(t *testing.T) {
+	localChain := Connect(testOperatorAddress)
+	localChain.SetRewardIneligibility(big.NewInt(1))
+	localChain.SetCurrentTimestamp(big.NewInt(2))
+
+	canRestoreRewardEligibility, err := localChain.CanRestoreRewardEligibility()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if !canRestoreRewardEligibility {
+		t.Fatal("expected the operator can restore reward eligibility")
+	}
+}
+
+func TestCanRestoreRewardEligibility_NotEligible(t *testing.T) {
+	localChain := Connect(testOperatorAddress)
+	localChain.SetRewardIneligibility(big.NewInt(1))
+	localChain.SetCurrentTimestamp(big.NewInt(1))
+
+	canRestoreRewardEligibility, err := localChain.CanRestoreRewardEligibility()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if canRestoreRewardEligibility {
+		t.Fatal("expected the operator cannot restore reward eligibility")
+	}
+}
+
+func TestRestoreRewardEligibility_Restore(t *testing.T) {
+	localChain := Connect(testOperatorAddress)
+	localChain.SetRewardIneligibility(big.NewInt(1))
+	localChain.SetCurrentTimestamp(big.NewInt(2))
+
+	isEligibileForRewards, err := localChain.IsEligibleForRewards()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if isEligibileForRewards {
+		t.Fatal("expected the operator not to be eligible for rewards")
+	}
+
+	err = localChain.RestoreRewardEligibility()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	isEligibileForRewards, err = localChain.IsEligibleForRewards()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if !isEligibileForRewards {
+		t.Fatal("expected the operator to be eligible for rewards")
+	}
+}
+
+func TestRestoreRewardEligibility_CannotRestore(t *testing.T) {
+	localChain := Connect(testOperatorAddress)
+	localChain.SetRewardIneligibility(big.NewInt(2))
+	localChain.SetCurrentTimestamp(big.NewInt(1))
+
+	isEligibileForRewards, err := localChain.IsEligibleForRewards()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if isEligibileForRewards {
+		t.Fatal("expected the operator to not be eligible for rewards")
+	}
+
+	err = localChain.RestoreRewardEligibility()
+	testutils.AssertErrorsEqual(t, errOperatorStillIneligibleForRewards, err)
+}
