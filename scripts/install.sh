@@ -10,6 +10,7 @@ KEEP_CORE_PATH=$PWD
 
 KEEP_BEACON_SOL_PATH="$KEEP_CORE_PATH/solidity/random-beacon"
 TBTC_PATH="$KEEP_CORE_PATH/tbtc-v2"
+TMP_TBTC="$KEEP_CORE_PATH/tmp-tbtc"
 
 # Defaults, can be overwritten by env variables/input parameters
 NETWORK_DEFAULT="development"
@@ -114,8 +115,8 @@ yarn install
 if [ "$SKIP_TBTC_DEPLOYMENT" = false ] ; then
   if [ "$TBTC_PATH" = "" ] ; then
     printf "${LOG_START}Cloning tbtc...${LOG_END}"
-    # if dir is present, remove a temporary cloned tbtc project for a fresh installation
-    rm -rf tmp_tbtc && mkdir tmp_tbtc && cd tmp_tbtc
+    # recreate a temporary tbtc dir for fresh installation
+    rm -rf $TMP_TBTC && mkdir $TMP_TBTC && cd $TMP_TBTC
     # clone project from the repository
     git clone https://github.com/keep-network/tbtc-v2.git
     cd "tbtc-v2/solidity"
@@ -131,6 +132,8 @@ if [ "$SKIP_TBTC_DEPLOYMENT" = false ] ; then
   printf "${LOG_START}Deploying contracts for tbtc...${LOG_END}"
 
   npx hardhat deploy --reset --export export.json --network $NETWORK
+
+  rm -rf $TMP_TBTC
 fi
     
 if [ "$SKIP_CLIENT_BUILD" = false ] ; then
