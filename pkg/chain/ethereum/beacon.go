@@ -451,22 +451,18 @@ func (mrb *mockRandomBeacon) OnDKGStarted(
 				// Generate an event every 500th block.
 				if block%500 == 0 {
 					mrb.currentDkgMutex.Lock()
+					// The seed is keccak256(block).
+					blockBytes := make([]byte, 8)
+					binary.BigEndian.PutUint64(blockBytes, block)
+					seedBytes := crypto.Keccak256(blockBytes)
+					seed := new(big.Int).SetBytes(seedBytes)
 
-					if mrb.currentDkgStartBlock == nil {
-						// The seed is keccak256(block).
-						blockBytes := make([]byte, 8)
-						binary.BigEndian.PutUint64(blockBytes, block)
-						seedBytes := crypto.Keccak256(blockBytes)
-						seed := new(big.Int).SetBytes(seedBytes)
+					mrb.currentDkgStartBlock = big.NewInt(int64(block))
 
-						mrb.currentDkgStartBlock = big.NewInt(int64(block))
-
-						go handler(&event.DKGStarted{
-							Seed:        seed,
-							BlockNumber: block,
-						})
-					}
-
+					go handler(&event.DKGStarted{
+						Seed:        seed,
+						BlockNumber: block,
+					})
 					mrb.currentDkgMutex.Unlock()
 				}
 			case <-ctx.Done():
