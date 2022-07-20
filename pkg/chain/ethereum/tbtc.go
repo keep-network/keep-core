@@ -162,6 +162,21 @@ func (tc *TbtcChain) UpdateOperatorStatus() error {
 	panic("not implemented yet")
 }
 
+func (tc *TbtcChain) IsEligibleForRewards() (bool, error) {
+	//TODO: Implementation.
+	panic("not implemented yet")
+}
+
+func (tc *TbtcChain) CanRestoreRewardEligibility() (bool, error) {
+	//TODO: Implementation.
+	panic("not implemented yet")
+}
+
+func (tc *TbtcChain) RestoreRewardEligibility() error {
+	//TODO: Implementation.
+	panic("not implemented yet")
+}
+
 // TODO: Implement a real SelectGroup function.
 func (tc *TbtcChain) SelectGroup(seed *big.Int) ([]chain.Address, error) {
 	_, operatorPublicKey, err := tc.OperatorKeyPair()
