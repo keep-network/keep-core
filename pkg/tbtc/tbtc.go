@@ -2,9 +2,11 @@ package tbtc
 
 import (
 	"context"
+	"fmt"
 	"github.com/ipfs/go-log"
 	"github.com/keep-network/keep-common/pkg/persistence"
 	"github.com/keep-network/keep-core/pkg/net"
+	"github.com/keep-network/keep-core/pkg/sortition"
 )
 
 var logger = log.Logger("keep-tbtc")
@@ -21,14 +23,13 @@ func Initialize(
 	node := newNode(chain, netProvider, persistence)
 	deduplicator := newDeduplicator()
 
-	// TODO: Uncomment once https://github.com/keep-network/keep-core/pull/3094 is merged.
-	// err := sortition.MonitorPool(ctx, chain, sortition.DefaultStatusCheckTick)
-	// if err != nil {
-	// 	return fmt.Errorf(
-	// 		"could not set up sortition pool monitoring: [%v]",
-	// 		err,
-	// 	)
-	// }
+	err := sortition.MonitorPool(ctx, chain, sortition.DefaultStatusCheckTick)
+	if err != nil {
+		return fmt.Errorf(
+			"could not set up sortition pool monitoring: [%v]",
+			err,
+		)
+	}
 
 	_ = chain.OnDKGStarted(func(event *DKGStartedEvent) {
 		go func() {
