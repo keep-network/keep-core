@@ -2,9 +2,10 @@ package beacon
 
 import (
 	"fmt"
-	"github.com/keep-network/keep-core/pkg/chain/local_v1"
 	"math/big"
 	"testing"
+
+	"github.com/keep-network/keep-core/pkg/chain/local_v1"
 )
 
 var address = "0x65ea55c1f10491038425725dc00dffeab2a1e28a"
@@ -41,14 +42,15 @@ func TestMonitorRelayEntryOnChain_EntrySubmitted(t *testing.T) {
 		)
 	}
 
-	localChain.SubmitRelayEntry(big.NewInt(1).Bytes()).
-		OnFailure(func(err error) {
-			if err != nil {
-				t.Fatal(err)
-			}
-		})
+	err = localChain.SubmitRelayEntry(big.NewInt(1).Bytes())
+	if err != nil {
+		t.Fatal(err)
+	}
 
-	blockCounter.WaitForBlockHeight(startBlockHeight + relayEntryTimeout)
+	err = blockCounter.WaitForBlockHeight(startBlockHeight + relayEntryTimeout)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	timeoutsReport := localChain.GetRelayEntryTimeoutReports()
 	numberOfReports := len(timeoutsReport)

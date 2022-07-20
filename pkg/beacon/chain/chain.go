@@ -3,13 +3,13 @@ package chain
 import (
 	"bytes"
 	"fmt"
+	"math/big"
+
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/operator"
 	"github.com/keep-network/keep-core/pkg/sortition"
-	"math/big"
 
 	"github.com/keep-network/keep-core/pkg/beacon/event"
-	"github.com/keep-network/keep-core/pkg/gen/async"
 	"github.com/keep-network/keep-core/pkg/subscription"
 )
 
@@ -21,11 +21,8 @@ type GroupMemberIndex = uint8
 // pertains specifically to submission and retrieval of relay requests and
 // entries.
 type RelayEntryInterface interface {
-	// SubmitRelayEntry submits an entry in the random beacon and returns a
-	// promise to track the submission progress. The promise is fulfilled when
-	// the entry has been successfully submitted to the on-chain, or failed if
-	// the entry submission failed.
-	SubmitRelayEntry(entry []byte) *async.EventRelayEntrySubmittedPromise
+	// SubmitRelayEntry submits a newly created relay entry to the chain.
+	SubmitRelayEntry(entry []byte) error
 	// OnRelayEntrySubmitted is a callback that is invoked when an on-chain
 	// notification of a new, valid relay entry is seen.
 	OnRelayEntrySubmitted(
@@ -76,9 +73,6 @@ type GroupRegistrationInterface interface {
 	// in the past. Stale group is never selected by the chain to any new
 	// operation.
 	IsStaleGroup(groupPublicKey []byte) (bool, error)
-	// GetGroupMembers returns `GroupSize` slice of addresses of
-	// participants which have been selected to the group with given public key.
-	GetGroupMembers(groupPublicKey []byte) ([]chain.Address, error)
 }
 
 // GroupInterface defines the subset of the beacon chain interface that pertains
