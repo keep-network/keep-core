@@ -8,6 +8,8 @@ import (
 	"math/big"
 )
 
+// TODO: Unit tests for `node.go`.
+
 // node represents the current state of an ECDSA node.
 type node struct {
 	chain       Chain

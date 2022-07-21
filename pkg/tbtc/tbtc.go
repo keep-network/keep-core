@@ -7,6 +7,8 @@ import (
 	"github.com/keep-network/keep-core/pkg/net"
 )
 
+// TODO: Unit tests for `tbtc.go`.
+
 var logger = log.Logger("keep-tbtc")
 
 // Initialize kicks off the TBTC by initializing internal state, ensuring
