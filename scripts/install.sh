@@ -9,6 +9,7 @@ DONE_END='\n\n\e[0m'    # new line + reset
 KEEP_CORE_PATH=$PWD
 
 KEEP_BEACON_SOL_PATH="$KEEP_CORE_PATH/solidity/random-beacon"
+KEEP_ECDSA_SOL_PATH="$KEEP_CORE_PATH/solidity/ecdsa"
 TBTC_PATH="$KEEP_CORE_PATH/tbtc-v2"
 TMP_TBTC="$KEEP_CORE_PATH/tmp-tbtc"
 
@@ -21,7 +22,7 @@ help()
    echo -e "\nUsage: ENV_VAR(S) $0"\
            "--network <network>"\
            "--tbtc-path <tbtc-path>"\
-           "--skip-beacon-deployment"\
+           "--skip-ecdsa-deployment"\
            "--skip-tbtc-deployment"\
            "--skip-client-build"
    echo -e "\nEnvironment variables:\n"
@@ -32,8 +33,8 @@ help()
                         "Available networks and settings are specified in the 'hardhat.config.ts'"
    echo -e "\t--tbtc-path: 'Local' tbtc project's path. A temporary folder with tbtc is created and removed "\
                            "upon installation if the path is not provided"
-   echo -e "\t--skip-beacon-deployment: When set to true the old artifacts from the '/deployments' dir are used. Default is false"
-   echo -e "\t--skip-tbtc-deployment: When set to true the old artifacts from the '/deployments' dir are used. Default is false"
+   echo -e "\t--skip-ecdsa-deployment: This option skips ecdsa and tbtc deployment. Default is false"
+   echo -e "\t--skip-tbtc-deployment: This option skips tbtc deployment. Default is false"
    echo -e "\t--skip-client-build: Should execute contracts part only. Client installation will not be executed\n"
    exit 1 # Exit script after printing help
 }
@@ -42,13 +43,13 @@ help()
 for arg in "$@"; do
   shift
   case "$arg" in
-    "--network")                    set -- "$@" "-n" ;;
-    "--tbtc-path")                  set -- "$@" "-t" ;;
-    "--skip-beacon-deployment")     set -- "$@" "-d" ;;
-    "--skip-tbtc-deployment")       set -- "$@" "-e" ;;
-    "--skip-client-build")          set -- "$@" "-b" ;;
-    "--help")                       set -- "$@" "-h" ;;
-    *)                              set -- "$@" "$arg"
+    "--network")                set -- "$@" "-n" ;;
+    "--tbtc-path")              set -- "$@" "-t" ;;
+    "--skip-ecdsa-deployment")  set -- "$@" "-d" ;;
+    "--skip-tbtc-deployment")   set -- "$@" "-e" ;;
+    "--skip-client-build")      set -- "$@" "-b" ;;
+    "--help")                   set -- "$@" "-h" ;;
+    *)                          set -- "$@" "$arg"
   esac
 done
 
@@ -59,7 +60,7 @@ do
    case "$opt" in
       n ) network="$OPTARG" ;;
       t ) tbtc_path="$OPTARG" ;;
-      d ) skip_beacon_deployment=${OPTARG:-true} ;;
+      d ) skip_ecdsa_deployment=${OPTARG:-true} ;;
       e ) skip_tbtc_deployment=${OPTARG:-true} ;;
       b ) skip_client_build=${OPTARG:-true} ;;
       h ) help ;;
@@ -71,7 +72,7 @@ shift $(expr $OPTIND - 1) # remove options from positional parameters
 # Overwrite default properties
 NETWORK=${network:-$NETWORK_DEFAULT}
 TBTC_PATH=${tbtc_path:-""}
-SKIP_BEACON_DEPLOYMENT=${skip_beacon_deployment:-false}
+SKIP_ECDSA_DEPLOYMENT=${skip_ecdsa_deployment:-false}
 SKIP_TBTC_DEPLOYMENT=${skip_tbtc_deployment:-false}
 SKIP_CLIENT_BUILD=${skip_client_build:-false}
 
@@ -91,52 +92,49 @@ if [ "$NETWORK" == "development" ]; then
         npx hardhat unlock-accounts --network $NETWORK
 fi
 
-# Skip the beacon deployment if none of the skip-* options are passed and
-# deploy TBTC which include the beacon contracts.
-if [ "$SKIP_BEACON_DEPLOYMENT" = false ] && [ "$SKIP_TBTC_DEPLOYMENT" = false ]; then
-  SKIP_BEACON_DEPLOYMENT=true
-fi
-
-if [ "$SKIP_BEACON_DEPLOYMENT" = false ] ; then
-  printf "${LOG_START}Building beacon contracts...${LOG_END}"
-  yarn clean
-  yarn build
+if [ "$SKIP_ECDSA_DEPLOYMENT" = true ]; then 
+  # deploy beacon
+  printf "${LOG_START}Building beacon...${LOG_END}"
+  yarn clean && yarn build
 
   printf "${LOG_START}Deploying contracts for beacon...${LOG_END}"
-
   npx hardhat deploy --reset --export export.json --network $NETWORK
-fi
+elif [ "$SKIP_TBTC_DEPLOYMENT" = true ]; then
+  # deploy ecdsa (includes beacon)
+  cd $KEEP_ECDSA_SOL_PATH
 
-cd $KEEP_CORE_PATH
+  printf "${LOG_START}Building ecdsa...${LOG_END}"
+  yarn clean && yarn build
 
-printf "${LOG_START}Installing tbtc YARN dependencies...${LOG_END}"
-yarn install
+  printf "${LOG_START}Deploying contracts for beacon and ecdsa...${LOG_END}"
+  npx hardhat deploy --reset --export export.json --network $NETWORK
+else
+  # deploy tbtc (includes beacon and ecdsa)
+  cd $KEEP_CORE_PATH
 
-if [ "$SKIP_TBTC_DEPLOYMENT" = false ] ; then
-  if [ "$TBTC_PATH" = "" ] ; then
+  if [ "$TBTC_PATH" = "" ]; then
     printf "${LOG_START}Cloning tbtc...${LOG_END}"
     # recreate a temporary tbtc dir for fresh installation
     rm -rf $TMP_TBTC && mkdir $TMP_TBTC && cd $TMP_TBTC
     # clone project from the repository
     git clone https://github.com/keep-network/tbtc-v2.git
+    
+    printf "${LOG_START}Building tbtc contracts...${LOG_END}"
     cd "tbtc-v2/solidity"
+    yarn install && yarn build
   else
     printf "${LOG_START}Installing tbtc from the local directory...${LOG_END}"
     cd "$TBTC_PATH/solidity"
   fi
 
-  printf "${LOG_START}Building tbtc contracts...${LOG_END}"
-  yarn install
-  yarn build
-
   printf "${LOG_START}Deploying contracts for tbtc...${LOG_END}"
-
   npx hardhat deploy --reset --export export.json --network $NETWORK
 
+  # remove tmp dir after contracts deployment
   rm -rf $TMP_TBTC
 fi
-    
-if [ "$SKIP_CLIENT_BUILD" = false ] ; then
+
+if [ "$SKIP_CLIENT_BUILD" = false ]; then
    printf "${LOG_START}Building beacon client...${LOG_END}"
 
    cd $KEEP_CORE_PATH
