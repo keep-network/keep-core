@@ -29,7 +29,7 @@ var (
 func setup() {
 	playerIndex = group.MemberIndex(1)
 	groupPublicKey = new(bn256.G2).ScalarBaseMult(big.NewInt(10))
-	dkgGroup := group.NewDkgGroup(4, 10)
+	dkgGroup := group.NewGroup(4, 10)
 	gjkrResult = &gjkr.Result{
 		GroupPublicKey: groupPublicKey,
 		Group:          dkgGroup,
