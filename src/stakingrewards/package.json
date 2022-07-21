@@ -1,9 +1,8 @@
 {
-  "name": "@manumonti/staking-rewards-calculation",
+  "name": "stakingrewards",
   "version": "1.0.45",
   "description": "Staking rewards calculation in Threshold Network",
-  "type": "module",
-  "main": "index",
+  "main": "stakingrewards.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
