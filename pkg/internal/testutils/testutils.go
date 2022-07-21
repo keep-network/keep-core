@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"math/big"
+	"reflect"
 	"testing"
 
 	crand "crypto/rand"
@@ -14,7 +15,7 @@ import (
 // AssertErrorsEqual checks if two errors are equal. If not, it reports a test
 // failure.
 func AssertErrorsEqual(t *testing.T, expected error, actual error) {
-	if expected != actual {
+	if !reflect.DeepEqual(expected, actual) {
 		t.Errorf(
 			"unexpected error\nexpected: %v\nactual:   %v\n",
 			expected,
