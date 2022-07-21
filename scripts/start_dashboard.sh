@@ -33,7 +33,7 @@ yarn link
 
 printf "${LOG_START}Migrating contracts for keep-ecdsa...${LOG_END}"
 cd "$KEEP_ECDSA_PATH"
-./scripts/install_keep_core_v1.sh --network local --contracts-only
+./scripts/install-v1.sh --network local
 
 printf "${LOG_START}Migrating contracts for tBTC...${LOG_END}"
 cd "$TBTC_PATH"
