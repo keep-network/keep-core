@@ -3,7 +3,7 @@ import { task, types } from "hardhat/config"
 import type { BigNumber } from "ethers"
 import type { HardhatRuntimeEnvironment } from "hardhat/types"
 
-task("stake", "Increases authorization and registers the operator ")
+task("stake", "Stakes T token")
   .addParam("owner", "Stake Owner address", undefined, types.string)
   .addParam("provider", "Staking Provider", undefined, types.string)
   .addOptionalParam("beneficiary", "Stake Beneficiary", undefined, types.string)

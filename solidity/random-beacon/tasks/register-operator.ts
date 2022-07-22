@@ -2,11 +2,16 @@ import { task, types } from "hardhat/config"
 
 import type { HardhatRuntimeEnvironment } from "hardhat/types"
 
-task("register-operator", "Increases authorization and registers the operator ")
+task("register-operator", "Registers an operator")
   .addParam("owner", "Stake Owner address", undefined, types.string)
   .addParam("provider", "Staking Provider", undefined, types.string)
   .addParam("operator", "Staking Operator", undefined, types.string)
-  .addParam("application", "Name of Application Contract", undefined, types.string)
+  .addParam(
+    "application",
+    "Name of Application Contract",
+    undefined,
+    types.string
+  )
   .setAction(async (args, hre) => {
     await setup(hre, args)
   })

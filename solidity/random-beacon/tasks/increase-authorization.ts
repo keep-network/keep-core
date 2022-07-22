@@ -6,7 +6,12 @@ import type { HardhatRuntimeEnvironment } from "hardhat/types"
 task("increase-authorization", "Increases authorization")
   .addParam("owner", "Stake Owner address", undefined, types.string)
   .addParam("provider", "Staking Provider", undefined, types.string)
-  .addParam("application", "Name of Application Contract", undefined, types.string)
+  .addParam(
+    "application",
+    "Name of Application Contract",
+    undefined,
+    types.string
+  )
   .addOptionalParam("authorizer", "Stake Authorizer", undefined, types.string)
   .addOptionalParam(
     "authorization",
@@ -57,7 +62,11 @@ async function setup(
   await (
     await staking
       .connect(authorizerSigner)
-      .increaseAuthorization(provider, applicationContract.address, authorization)
+      .increaseAuthorization(
+        provider,
+        applicationContract.address,
+        authorization
+      )
   ).wait()
 
   const authorizedStaked = await staking.authorizedStake(
