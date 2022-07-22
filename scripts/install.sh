@@ -31,7 +31,7 @@ help()
    echo -e "\nCommand line arguments:\n"
    echo -e "\t--network: Ethereum network for keep-core client(s)."\
                         "Available networks and settings are specified in the 'hardhat.config.ts'"
-   echo -e "\t--tbtc-path: 'Local' tbtc project's path. A temporary folder with tbtc is created and removed "\
+   echo -e "\t--tbtc-path: 'Local' tbtc project's path. A temporary folder with tbtc is created and removed"\
                            "upon installation if the path is not provided"
    echo -e "\t--skip-ecdsa-deployment: This option skips ecdsa and tbtc deployment. Default is false"
    echo -e "\t--skip-tbtc-deployment: This option skips tbtc deployment. Default is false"
@@ -104,7 +104,7 @@ elif [ "$SKIP_TBTC_DEPLOYMENT" = true ]; then
   cd $KEEP_ECDSA_SOL_PATH
 
   printf "${LOG_START}Building ecdsa...${LOG_END}"
-  yarn clean && yarn build
+  yarn && yarn clean && yarn build
 
   printf "${LOG_START}Deploying contracts for beacon and ecdsa...${LOG_END}"
   npx hardhat deploy --reset --export export.json --network $NETWORK
@@ -129,9 +129,6 @@ else
 
   printf "${LOG_START}Deploying contracts for tbtc...${LOG_END}"
   npx hardhat deploy --reset --export export.json --network $NETWORK
-
-  # remove tmp dir after contracts deployment
-  rm -rf $TMP_TBTC
 fi
 
 if [ "$SKIP_CLIENT_BUILD" = false ]; then
