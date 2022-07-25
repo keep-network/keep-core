@@ -126,6 +126,7 @@ func (n *node) joinDKGIfEligible(seed *big.Int, startBlockNumber uint64) {
 
 			go func() {
 				result, _, err := dkg.Execute(
+					seed,
 					startBlockNumber,
 					memberIndex,
 					chainConfig.GroupSize,

@@ -2,8 +2,8 @@ package dkg
 
 import (
 	"fmt"
-	"github.com/keep-network/keep-core/pkg/beacon/gjkr/gen/pb"
 	"github.com/keep-network/keep-core/pkg/crypto/ephemeral"
+	"github.com/keep-network/keep-core/pkg/ecdsa/dkg/gen/pb"
 	"github.com/keep-network/keep-core/pkg/protocol/group"
 )
 
@@ -26,13 +26,13 @@ func (epkm *ephemeralPublicKeyMessage) SenderID() group.MemberIndex {
 	return epkm.senderID
 }
 
-// Type returns a string describing an EphemeralPublicKeyMessage type for
+// Type returns a string describing an ephemeralPublicKeyMessage type for
 // marshaling purposes.
 func (epkm *ephemeralPublicKeyMessage) Type() string {
-	return messageTypePrefix + "ephemeral_public_key"
+	return messageTypePrefix + "ephemeral_public_key_message"
 }
 
-// Marshal converts this EphemeralPublicKeyMessage to a byte array suitable for
+// Marshal converts this ephemeralPublicKeyMessage to a byte array suitable for
 // network communication.
 func (epkm *ephemeralPublicKeyMessage) Marshal() ([]byte, error) {
 	ephemeralPublicKeys, err := marshalPublicKeyMap(epkm.ephemeralPublicKeys)
@@ -40,16 +40,16 @@ func (epkm *ephemeralPublicKeyMessage) Marshal() ([]byte, error) {
 		return nil, err
 	}
 
-	return (&pb.EphemeralPublicKey{
+	return (&pb.EphemeralPublicKeyMessage{
 		SenderID:            uint32(epkm.senderID),
 		EphemeralPublicKeys: ephemeralPublicKeys,
 	}).Marshal()
 }
 
 // Unmarshal converts a byte array produced by Marshal to
-// an EphemeralPublicKeyMessage
+// an ephemeralPublicKeyMessage
 func (epkm *ephemeralPublicKeyMessage) Unmarshal(bytes []byte) error {
-	pbMsg := pb.EphemeralPublicKey{}
+	pbMsg := pb.EphemeralPublicKeyMessage{}
 	if err := pbMsg.Unmarshal(bytes); err != nil {
 		return err
 	}
@@ -65,6 +65,54 @@ func (epkm *ephemeralPublicKeyMessage) Unmarshal(bytes []byte) error {
 	}
 
 	epkm.ephemeralPublicKeys = ephemeralPublicKeys
+
+	return nil
+}
+
+// tssRoundOneMessage is a message payload that carries the sender's TSS
+// commitments and Paillier public keys generated for all other group members.
+type tssRoundOneMessage struct {
+	senderID group.MemberIndex
+
+	payload   []byte
+	sessionID string
+}
+
+// SenderID returns protocol-level identifier of the message sender.
+func (trom *tssRoundOneMessage) SenderID() group.MemberIndex {
+	return trom.senderID
+}
+
+// Type returns a string describing an tssRoundOneMessage type for
+// marshaling purposes.
+func (trom *tssRoundOneMessage) Type() string {
+	return messageTypePrefix + "tss_round_one_message"
+}
+
+// Marshal converts this tssRoundOneMessage to a byte array suitable for
+// network communication.
+func (trom *tssRoundOneMessage) Marshal() ([]byte, error) {
+	return (&pb.TSSRoundOneMessage{
+		SenderID:  uint32(trom.senderID),
+		Payload:   trom.payload,
+		SessionID: trom.sessionID,
+	}).Marshal()
+}
+
+// Unmarshal converts a byte array produced by Marshal to an tssRoundOneMessage.
+func (trom *tssRoundOneMessage) Unmarshal(bytes []byte) error {
+	pbMsg := pb.TSSRoundOneMessage{}
+	if err := pbMsg.Unmarshal(bytes); err != nil {
+		return err
+	}
+
+	if err := validateMemberIndex(pbMsg.SenderID); err != nil {
+		return err
+	}
+
+	trom.senderID = group.MemberIndex(pbMsg.SenderID)
+	trom.payload = pbMsg.Payload
+	trom.sessionID = pbMsg.SessionID
 
 	return nil
 }

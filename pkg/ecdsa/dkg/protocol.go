@@ -1,12 +1,13 @@
 package dkg
 
 import (
+	"context"
 	"fmt"
 	"github.com/keep-network/keep-core/pkg/crypto/ephemeral"
 	"github.com/keep-network/keep-core/pkg/protocol/group"
 )
 
-// GenerateEphemeralKeyPair takes the group member list and generates an
+// generateEphemeralKeyPair takes the group member list and generates an
 // ephemeral ECDH keypair for every other group member. Generated public
 // ephemeral keys are broadcasted within the group.
 func (ekpgm *ephemeralKeyPairGeneratingMember) generateEphemeralKeyPair() (
@@ -40,7 +41,7 @@ func (ekpgm *ephemeralKeyPairGeneratingMember) generateEphemeralKeyPair() (
 	}, nil
 }
 
-// GenerateSymmetricKeys attempts to generate symmetric keys for all remote group
+// generateSymmetricKeys attempts to generate symmetric keys for all remote group
 // members via ECDH. It generates this symmetric key for each remote group member
 // by doing an ECDH between the ephemeral private key generated for a remote
 // group member, and the public key for this member, generated and broadcasted by
@@ -115,6 +116,42 @@ func (skgm *symmetricKeyGeneratingMember) isValidEphemeralPublicKeyMessage(
 	}
 
 	return true
+}
+
+// tssRoundOne starts the TSS process by executing its first round. The
+// outcome of that round is a message containing commitments and Paillier
+// public keys for all other group members.
+func (trom *tssRoundOneMember) tssRoundOne(
+	ctx context.Context,
+) (*tssRoundOneMessage, error) {
+	if err := trom.tssParty.Start(); err != nil {
+		return nil, fmt.Errorf(
+			"failed to start TSS round one: [%v]",
+			err,
+		)
+	}
+
+	// We expect exactly one TSS message to be produced in this phase.
+	select {
+	case tssMessage := <-trom.tssOutgoingMessageChan:
+		tssMessageBytes, _, err := tssMessage.WireBytes()
+		if err != nil {
+			return nil, fmt.Errorf(
+				"failed to encode TSS round one message: [%v]",
+				err,
+			)
+		}
+
+		return &tssRoundOneMessage{
+			senderID:  trom.id,
+			payload:   tssMessageBytes,
+			sessionID: trom.sessionID,
+		}, nil
+	case <-ctx.Done():
+		return nil, fmt.Errorf(
+			"TSS round one outgoing message was not generated on time",
+		)
+	}
 }
 
 // TODO: Implement other phases of the protocol that involve actual

@@ -1,8 +1,12 @@
 package dkg
 
 import (
+	"github.com/binance-chain/tss-lib/ecdsa/keygen"
+	"github.com/binance-chain/tss-lib/tss"
 	"github.com/keep-network/keep-core/pkg/crypto/ephemeral"
 	"github.com/keep-network/keep-core/pkg/protocol/group"
+	"math/big"
+	"strconv"
 )
 
 // Member represents a DKG protocol member.
@@ -14,6 +18,8 @@ type member struct {
 	// Validator allowing to check public key and member index against
 	// group members
 	membershipValidator group.MembershipValidator
+	// Identifier of the particular DKG session this member is part of.
+	sessionID string
 }
 
 // newMember creates a new member in an initial state
@@ -22,11 +28,13 @@ func newMember(
 	groupSize,
 	dishonestThreshold int,
 	membershipValidator group.MembershipValidator,
+	sessionID string,
 ) *member {
 	return &member{
 		id:                  memberID,
 		group:               group.NewGroup(dishonestThreshold, groupSize),
 		membershipValidator: membershipValidator,
+		sessionID:           sessionID,
 	}
 }
 
@@ -105,9 +113,45 @@ func (skgm *symmetricKeyGeneratingMember) MarkInactiveMembers(
 	filter.FlushInactiveMembers()
 }
 
-// initializeFinalization returns a member to perform next protocol operations.
-func (skgm *symmetricKeyGeneratingMember) initializeFinalization() *finalizingMember {
-	return &finalizingMember{symmetricKeyGeneratingMember: skgm}
+// initializeTssRoundOne returns a member to perform next protocol operations.
+func (skgm *symmetricKeyGeneratingMember) initializeTssRoundOne() *tssRoundOneMember {
+	tssPartyID, groupTssPartiesIDs := generateTssPartiesIDs(
+		skgm.id,
+		skgm.group.MemberIDs(),
+	)
+
+	tssParameters := tss.NewParameters(
+		tss.EC(),
+		tss.NewPeerContext(tss.SortPartyIDs(groupTssPartiesIDs)),
+		tssPartyID,
+		len(groupTssPartiesIDs),
+		skgm.group.DishonestThreshold(),
+	)
+
+	tssOutgoingMessageChan := make(chan tss.Message, len(groupTssPartiesIDs))
+	tssResultChan := make(chan keygen.LocalPartySaveData)
+
+	// TODO: Use pre-computed pre-params.
+	tssParty := keygen.NewLocalParty(
+		tssParameters,
+		tssOutgoingMessageChan,
+		tssResultChan,
+	)
+
+	return &tssRoundOneMember{
+		symmetricKeyGeneratingMember: skgm,
+		tssParty:                     tssParty,
+	}
+}
+
+// tssRoundOneMember represents one member in a distributed key generating
+// group performing the first round of the TSS keygen.
+type tssRoundOneMember struct {
+	*symmetricKeyGeneratingMember
+
+	tssParty               tss.Party
+	tssOutgoingMessageChan <-chan tss.Message
+	tssResultChan          <-chan keygen.LocalPartySaveData
 }
 
 // finalizingMember represents one member of the given group, after it
@@ -125,4 +169,28 @@ func (fm *finalizingMember) Result() *Result {
 		// TODO: Temporary result. Add real items.
 		SymmetricKeys: fm.symmetricKeys,
 	}
+}
+
+func generateTssPartiesIDs(
+	memberID group.MemberIndex,
+	groupMembersIDs []group.MemberIndex,
+) (*tss.PartyID, []*tss.PartyID) {
+	var partyID *tss.PartyID
+	var groupPartiesIDs []*tss.PartyID
+
+	for _, groupMemberID := range groupMembersIDs {
+		newPartyID := tss.NewPartyID(
+			strconv.Itoa(int(groupMemberID)),
+			"",
+			big.NewInt(int64(groupMemberID)),
+		)
+
+		if memberID == groupMemberID {
+			partyID = newPartyID
+		}
+
+		groupPartiesIDs = append(groupPartiesIDs, newPartyID)
+	}
+
+	return partyID, groupPartiesIDs
 }

@@ -14,13 +14,28 @@ const (
 
 	ephemeralKeyPairStateDelayBlocks  = 1
 	ephemeralKeyPairStateActiveBlocks = 5
+
+	tssRoundOneStateDelayBlocks  = 1
+	tssRoundOneStateActiveBlocks = 5
+
+	tssRoundTwoStateDelayBlocks  = 1
+	tssRoundTwoStateActiveBlocks = 5
+
+	tssRoundThreeStateDelayBlocks  = 1
+	tssRoundThreeStateActiveBlocks = 5
 )
 
 // ProtocolBlocks returns the total number of blocks it takes to execute
 // all the required work defined by the DKG protocol.
 func ProtocolBlocks() uint64 {
 	return ephemeralKeyPairStateDelayBlocks +
-		ephemeralKeyPairStateActiveBlocks
+		ephemeralKeyPairStateActiveBlocks +
+		tssRoundOneStateDelayBlocks +
+		tssRoundOneStateActiveBlocks +
+		tssRoundTwoStateDelayBlocks +
+		tssRoundTwoStateActiveBlocks +
+		tssRoundThreeStateDelayBlocks +
+		tssRoundThreeStateActiveBlocks
 }
 
 // ephemeralKeyPairGenerationState is the state during which members broadcast
@@ -106,14 +121,129 @@ func (skgs *symmetricKeyGenerationState) Receive(msg net.Message) error {
 }
 
 func (skgs *symmetricKeyGenerationState) Next() state.State {
-	return &finalizationState{
+	return &tssRoundOneState{
 		channel: skgs.channel,
-		member:  skgs.member.initializeFinalization(),
+		member:  skgs.member.initializeTssRoundOne(),
 	}
 }
 
 func (skgs *symmetricKeyGenerationState) MemberIndex() group.MemberIndex {
 	return skgs.member.id
+}
+
+// tssRoundOneState is the state during which members broadcast TSS
+// commitments and Paillier public keys generated for other members of
+// the group.
+// `tssRoundOneMessage`s are valid in this state.
+type tssRoundOneState struct {
+	channel net.BroadcastChannel
+	member  *tssRoundOneMember
+
+	phaseMessages []*tssRoundOneMessage
+}
+
+func (tros *tssRoundOneState) DelayBlocks() uint64 {
+	return tssRoundOneStateDelayBlocks
+}
+
+func (tros *tssRoundOneState) ActiveBlocks() uint64 {
+	return tssRoundOneStateActiveBlocks
+}
+
+func (tros *tssRoundOneState) Initiate(ctx context.Context) error {
+	message, err := tros.member.tssRoundOne(ctx)
+	if err != nil {
+		return err
+	}
+
+	if err := tros.channel.Send(ctx, message); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (tros *tssRoundOneState) Receive(msg net.Message) error {
+	switch phaseMessage := msg.Payload().(type) {
+	case *tssRoundOneMessage:
+		if !group.IsMessageFromSelf(tros.member.id, phaseMessage) &&
+			group.IsSenderValid(tros.member, phaseMessage, msg.SenderPublicKey()) &&
+			group.IsSenderAccepted(tros.member, phaseMessage) {
+			tros.phaseMessages = append(tros.phaseMessages, phaseMessage)
+		}
+	}
+
+	return nil
+}
+
+func (tros *tssRoundOneState) Next() state.State {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (tros *tssRoundOneState) MemberIndex() group.MemberIndex {
+	return tros.member.id
+}
+
+type tssRoundTwoState struct {
+}
+
+func (trts *tssRoundTwoState) DelayBlocks() uint64 {
+	return tssRoundTwoStateDelayBlocks
+}
+
+func (trts *tssRoundTwoState) ActiveBlocks() uint64 {
+	return tssRoundTwoStateActiveBlocks
+}
+
+func (trts *tssRoundTwoState) Initiate(ctx context.Context) error {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (trts *tssRoundTwoState) Receive(msg net.Message) error {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (trts *tssRoundTwoState) Next() state.State {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (trts *tssRoundTwoState) MemberIndex() group.MemberIndex {
+	//TODO implement me
+	panic("implement me")
+}
+
+type tssRoundThreeState struct {
+}
+
+func (trts *tssRoundThreeState) DelayBlocks() uint64 {
+	return tssRoundThreeStateDelayBlocks
+}
+
+func (trts *tssRoundThreeState) ActiveBlocks() uint64 {
+	return tssRoundThreeStateActiveBlocks
+}
+
+func (trts *tssRoundThreeState) Initiate(ctx context.Context) error {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (trts *tssRoundThreeState) Receive(msg net.Message) error {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (trts *tssRoundThreeState) Next() state.State {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (trts *tssRoundThreeState) MemberIndex() group.MemberIndex {
+	//TODO implement me
+	panic("implement me")
 }
 
 // finalizationState is the last state of the DKG protocol - in this state,

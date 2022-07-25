@@ -3,6 +3,7 @@ package dkg
 import (
 	"fmt"
 	"github.com/ipfs/go-log"
+	"math/big"
 
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/net"
@@ -17,6 +18,7 @@ var logger = log.Logger("keep-ecdsa-dkg")
 // a member index to use in the group, dishonest threshold, and block height
 // when DKG protocol should start.
 func Execute(
+	seed *big.Int,
 	startBlockNumber uint64,
 	memberIndex group.MemberIndex,
 	groupSize int,
@@ -34,6 +36,7 @@ func Execute(
 		groupSize,
 		dishonestThreshold,
 		membershipValidator,
+		seed.Text(16), // TODO: Should change on retry.
 	)
 
 	initialState := &ephemeralKeyPairGenerationState{
