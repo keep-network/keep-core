@@ -11,6 +11,8 @@ import (
 var errOperatorUnknown = fmt.Errorf("operator not registered for the staking provider")
 var errAuthorizationBelowMinimum = fmt.Errorf("authorization below the minimum")
 var errOperatorAlreadyRegisteredInPool = fmt.Errorf("operator is already registered in the pool")
+var errOperatorAlreadyEligibleForRewards = fmt.Errorf("operator already eligible")
+var errOperatorStillIneligibleForRewards = fmt.Errorf("operator still ineligible")
 
 type Chain struct {
 	operatorAddress chain.Address
@@ -27,7 +29,11 @@ type Chain struct {
 	eligibleStake      map[chain.Address]*big.Int
 	eligibleStakeMutex sync.RWMutex
 
-	isPoolLocked bool
+	ineligibleForRewardsUntil      map[chain.Address]*big.Int
+	ineligibleForRewardsUntilMutex sync.RWMutex
+
+	isPoolLocked     bool
+	currentTimestamp *big.Int
 }
 
 func Connect(operatorAddress chain.Address) *Chain {
@@ -36,6 +42,7 @@ func Connect(operatorAddress chain.Address) *Chain {
 		operatorToStakingProvider: make(map[chain.Address]chain.Address),
 		sortitionPool:             make(map[chain.Address]*big.Int),
 		eligibleStake:             make(map[chain.Address]*big.Int),
+		ineligibleForRewardsUntil: make(map[chain.Address]*big.Int),
 	}
 }
 
@@ -153,4 +160,57 @@ func (c *Chain) UpdateOperatorStatus() error {
 	c.sortitionPool[c.operatorAddress] = eligibleStake
 
 	return nil
+}
+
+func (c *Chain) IsEligibleForRewards() (bool, error) {
+	c.ineligibleForRewardsUntilMutex.RLock()
+	defer c.ineligibleForRewardsUntilMutex.RUnlock()
+
+	_, isIneligible := c.ineligibleForRewardsUntil[c.operatorAddress]
+	return !isIneligible, nil
+}
+
+func (c *Chain) CanRestoreRewardEligibility() (bool, error) {
+	c.ineligibleForRewardsUntilMutex.RLock()
+	defer c.ineligibleForRewardsUntilMutex.RUnlock()
+
+	return c.canRestoreRewardEligibility()
+}
+
+func (c *Chain) canRestoreRewardEligibility() (bool, error) {
+	ineligibleUntil, isIneligible := c.ineligibleForRewardsUntil[c.operatorAddress]
+	if !isIneligible {
+		return false, errOperatorAlreadyEligibleForRewards
+	}
+
+	return ineligibleUntil.Cmp(c.currentTimestamp) == -1, nil
+}
+
+func (c *Chain) RestoreRewardEligibility() error {
+	c.ineligibleForRewardsUntilMutex.Lock()
+	defer c.ineligibleForRewardsUntilMutex.Unlock()
+
+	canRestore, err := c.canRestoreRewardEligibility()
+	if err != nil {
+		return err
+	}
+
+	if !canRestore {
+		return errOperatorStillIneligibleForRewards
+	}
+
+	delete(c.ineligibleForRewardsUntil, c.operatorAddress)
+
+	return nil
+}
+
+func (c *Chain) SetCurrentTimestamp(currentTimestamp *big.Int) {
+	c.currentTimestamp = currentTimestamp
+}
+
+func (c *Chain) SetRewardIneligibility(until *big.Int) {
+	c.ineligibleForRewardsUntilMutex.Lock()
+	defer c.ineligibleForRewardsUntilMutex.Unlock()
+
+	c.ineligibleForRewardsUntil[c.operatorAddress] = until
 }

@@ -59,7 +59,7 @@ func start(cmd *cobra.Command) error {
 		return fmt.Errorf("error reading config: %w", err)
 	}
 
-	beaconChain, _, err := ethereum.Connect(ctx, config.Ethereum)
+	beaconChain, tbtcChain, err := ethereum.Connect(ctx, config.Ethereum)
 	if err != nil {
 		return fmt.Errorf("error connecting to Ethereum node: [%v]", err)
 	}
@@ -74,13 +74,16 @@ func start(cmd *cobra.Command) error {
 		return fmt.Errorf("failed to get block counter: [%v]", err)
 	}
 
+	firewall := firewall.AnyApplicationPolicy(
+		[]firewall.Application{beaconChain, tbtcChain},
+	)
+
 	netProvider, err := libp2p.Connect(
 		ctx,
 		config.LibP2P,
 		operatorPrivateKey,
 		libp2p.ProtocolBeacon,
-		// TODO: Use the firewall policy developed in https://github.com/keep-network/keep-core/pull/3060
-		firewall.Disabled,
+		firewall,
 		retransmission.NewTicker(blockCounter.WatchBlocks(ctx)),
 	)
 	if err != nil {

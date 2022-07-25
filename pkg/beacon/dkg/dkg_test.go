@@ -2,11 +2,12 @@ package dkg
 
 import (
 	"fmt"
-	beaconchain "github.com/keep-network/keep-core/pkg/beacon/chain"
-	"github.com/keep-network/keep-core/pkg/chain/local_v1"
 	"math/big"
 	"reflect"
 	"testing"
+
+	beaconchain "github.com/keep-network/keep-core/pkg/beacon/chain"
+	"github.com/keep-network/keep-core/pkg/chain/local_v1"
 
 	bn256 "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
 	"github.com/keep-network/keep-core/pkg/beacon/event"
@@ -28,10 +29,14 @@ var (
 func setup() {
 	playerIndex = group.MemberIndex(1)
 	groupPublicKey = new(bn256.G2).ScalarBaseMult(big.NewInt(10))
-	gjkrResult = &gjkr.Result{GroupPublicKey: groupPublicKey}
+	dkgGroup := group.NewDkgGroup(4, 10)
+	gjkrResult = &gjkr.Result{
+		GroupPublicKey: groupPublicKey,
+		Group:          dkgGroup,
+	}
 	dkgResultChannel = make(chan *event.DKGResultSubmission, 1)
 	startPublicationBlockHeight = uint64(0)
-	localChain := local_v1.Connect(5, 3, big.NewInt(10))
+	localChain := local_v1.Connect(5, 3)
 	beaconChain = localChain
 	blockCounter, _ = beaconChain.BlockCounter()
 }
@@ -41,10 +46,10 @@ func TestDecideMemberFate_HappyPath(t *testing.T) {
 
 	dkgResultChannel <- &event.DKGResultSubmission{
 		GroupPublicKey: groupPublicKey.Marshal(),
-		Misbehaved:     []byte{},
+		Misbehaved:     []byte{7, 10},
 	}
 
-	err := decideMemberFate(
+	operatingMemberIDs, err := decideMemberFate(
 		playerIndex,
 		gjkrResult,
 		dkgResultChannel,
@@ -52,12 +57,20 @@ func TestDecideMemberFate_HappyPath(t *testing.T) {
 		beaconChain,
 		blockCounter,
 	)
-
 	if err != nil {
 		t.Errorf(
 			"unexpected error\nexpected: %v\nactual:   %v\n",
 			nil,
 			err,
+		)
+	}
+
+	expectedOperatingMemberIDs := []group.MemberIndex{1, 2, 3, 4, 5, 6, 8, 9}
+	if !reflect.DeepEqual(expectedOperatingMemberIDs, operatingMemberIDs) {
+		t.Errorf(
+			"unexpected operating members\nexpected: %v\nactual:   %v\n",
+			expectedOperatingMemberIDs,
+			operatingMemberIDs,
 		)
 	}
 }
@@ -71,7 +84,7 @@ func TestDecideMemberFate_NotSameGroupPublicKey(t *testing.T) {
 		Misbehaved:     []byte{},
 	}
 
-	err := decideMemberFate(
+	_, err := decideMemberFate(
 		playerIndex,
 		gjkrResult,
 		dkgResultChannel,
@@ -102,7 +115,7 @@ func TestDecideMemberFate_MemberIsMisbehaved(t *testing.T) {
 		Misbehaved:     []byte{playerIndex},
 	}
 
-	err := decideMemberFate(
+	_, err := decideMemberFate(
 		playerIndex,
 		gjkrResult,
 		dkgResultChannel,
@@ -128,7 +141,7 @@ func TestDecideMemberFate_MemberIsMisbehaved(t *testing.T) {
 func TestDecideMemberFate_Timeout(t *testing.T) {
 	setup()
 
-	err := decideMemberFate(
+	_, err := decideMemberFate(
 		playerIndex,
 		gjkrResult,
 		dkgResultChannel,
@@ -144,5 +157,74 @@ func TestDecideMemberFate_Timeout(t *testing.T) {
 			expectedError,
 			err,
 		)
+	}
+}
+
+func TestResolveGroupOperators(t *testing.T) {
+	beaconConfig := &beaconchain.Config{
+		GroupSize:       5,
+		HonestThreshold: 3,
+	}
+
+	selectedOperators := []chain.Address{
+		"0xAA",
+		"0xBB",
+		"0xCC",
+		"0xDD",
+		"0xEE",
+	}
+
+	var tests = map[string]struct {
+		selectedOperators        []chain.Address
+		operatingGroupMembersIDs []group.MemberIndex
+		expectedGroupOperators   []chain.Address
+		expectedError            error
+	}{
+		"selected operators count not equal to the group size": {
+			selectedOperators:        selectedOperators[:4],
+			operatingGroupMembersIDs: []group.MemberIndex{1, 2, 3, 4, 5},
+			expectedError:            fmt.Errorf("invalid input parameters"),
+		},
+		"all selected operators are operating": {
+			selectedOperators:        selectedOperators,
+			operatingGroupMembersIDs: []group.MemberIndex{5, 4, 3, 2, 1},
+			expectedGroupOperators:   selectedOperators,
+		},
+		"honest majority of selected operators are operating": {
+			selectedOperators:        selectedOperators,
+			operatingGroupMembersIDs: []group.MemberIndex{5, 1, 3},
+			expectedGroupOperators:   []chain.Address{"0xAA", "0xCC", "0xEE"},
+		},
+		"less than honest majority of selected operators are operating": {
+			selectedOperators:        selectedOperators,
+			operatingGroupMembersIDs: []group.MemberIndex{5, 1},
+			expectedError:            fmt.Errorf("invalid input parameters"),
+		},
+	}
+
+	for testName, test := range tests {
+		t.Run(testName, func(t *testing.T) {
+			actualGroupOperators, err := resolveGroupOperators(
+				test.selectedOperators,
+				test.operatingGroupMembersIDs,
+				beaconConfig,
+			)
+
+			if !reflect.DeepEqual(test.expectedError, err) {
+				t.Errorf(
+					"unexpected error\nexpected: %v\nactual:   %v\n",
+					test.expectedError,
+					err,
+				)
+			}
+
+			if !reflect.DeepEqual(test.expectedGroupOperators, actualGroupOperators) {
+				t.Errorf(
+					"unexpected group operators\nexpected: %v\nactual:   %v\n",
+					test.expectedGroupOperators,
+					actualGroupOperators,
+				)
+			}
+		})
 	}
 }

@@ -2,7 +2,6 @@ package result
 
 import (
 	"github.com/keep-network/keep-core/pkg/chain/local_v1"
-	"math/big"
 	"reflect"
 	"testing"
 
@@ -310,7 +309,6 @@ func initializeSigningMembers(groupSize int) (
 ) {
 	honestThreshold := groupSize/2 + 1
 	dishonestThreshold := groupSize - honestThreshold
-	minimumStake := big.NewInt(200)
 
 	dkgGroup := group.NewDkgGroup(dishonestThreshold, groupSize)
 
@@ -334,7 +332,6 @@ func initializeSigningMembers(groupSize int) (
 		localChain := local_v1.ConnectWithKey(
 			groupSize,
 			honestThreshold,
-			minimumStake,
 			operatorPrivateKey,
 		)
 

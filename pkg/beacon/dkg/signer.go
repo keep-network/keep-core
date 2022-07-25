@@ -1,6 +1,7 @@
 package dkg
 
 import (
+	"github.com/keep-network/keep-core/pkg/chain"
 	"math/big"
 
 	bn256 "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
@@ -19,6 +20,7 @@ type ThresholdSigner struct {
 	groupPublicKey       *bn256.G2
 	groupPrivateKeyShare *big.Int
 	groupPublicKeyShares map[group.MemberIndex]*bn256.G2
+	groupOperators       []chain.Address
 }
 
 // NewThresholdSigner returns a new ThresholdSigner
@@ -27,12 +29,14 @@ func NewThresholdSigner(
 	groupPublicKey *bn256.G2,
 	groupPrivateKeyShare *big.Int,
 	groupPublicKeyShares map[group.MemberIndex]*bn256.G2,
+	groupOperators []chain.Address,
 ) *ThresholdSigner {
 	return &ThresholdSigner{
 		memberIndex:          memberIndex,
 		groupPublicKey:       groupPublicKey,
 		groupPrivateKeyShare: groupPrivateKeyShare,
 		groupPublicKeyShares: groupPublicKeyShares,
+		groupOperators:       groupOperators,
 	}
 }
 
@@ -75,4 +79,9 @@ func (ts *ThresholdSigner) CompleteSignature(
 // individual member of the group.
 func (ts *ThresholdSigner) GroupPublicKeyShares() map[group.MemberIndex]*bn256.G2 {
 	return ts.groupPublicKeyShares
+}
+
+// GroupOperators returns operators being members of the group.
+func (ts *ThresholdSigner) GroupOperators() []chain.Address {
+	return ts.groupOperators
 }
