@@ -383,7 +383,7 @@ func (bc *BeaconChain) OnRelayEntryRequested(
 
 // TODO: Implement a real ReportRelayEntryTimeout function.
 func (bc *BeaconChain) ReportRelayEntryTimeout() error {
-	return nil
+	return bc.mockRandomBeacon.ReportRelayEntryTimeout()
 }
 
 // TODO: Implement a real IsEntryInProgress function.
@@ -640,6 +640,17 @@ func (mrb *mockRandomBeacon) SubmitRelayEntry(
 	mrb.currentRequestStartBlock = nil
 	mrb.currentRequestPreviousEntry = nil
 	mrb.currentRequestGroup = nil
+
+	return nil
+}
+
+func (mrb *mockRandomBeacon) ReportRelayEntryTimeout() error {
+	mrb.currentRequestMutex.Lock()
+	defer mrb.currentRequestMutex.Unlock()
+
+	// Set the current request start block to nil, so that a new relay entry
+	// request can begin.
+	mrb.currentRequestStartBlock = nil
 
 	return nil
 }
