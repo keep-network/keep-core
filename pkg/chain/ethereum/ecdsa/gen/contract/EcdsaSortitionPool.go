@@ -1656,7 +1656,7 @@ func (esp *EcdsaSortitionPool) WithdrawRewardsGasEstimate(
 // ----- Const Methods ------
 
 func (esp *EcdsaSortitionPool) CanRestoreRewardEligibility(
-	arg_operator uint32,
+	arg_operator common.Address,
 ) (bool, error) {
 	result, err := esp.contract.CanRestoreRewardEligibility(
 		esp.callerOptions,
@@ -1677,7 +1677,7 @@ func (esp *EcdsaSortitionPool) CanRestoreRewardEligibility(
 }
 
 func (esp *EcdsaSortitionPool) CanRestoreRewardEligibilityAtBlock(
-	arg_operator uint32,
+	arg_operator common.Address,
 	blockNumber *big.Int,
 ) (bool, error) {
 	var result bool
@@ -1951,7 +1951,7 @@ func (esp *EcdsaSortitionPool) IneligibleEarnedRewardsAtBlock(
 }
 
 func (esp *EcdsaSortitionPool) IsEligibleForRewards(
-	arg_operator uint32,
+	arg_operator common.Address,
 ) (bool, error) {
 	result, err := esp.contract.IsEligibleForRewards(
 		esp.callerOptions,
@@ -1972,7 +1972,7 @@ func (esp *EcdsaSortitionPool) IsEligibleForRewards(
 }
 
 func (esp *EcdsaSortitionPool) IsEligibleForRewardsAtBlock(
-	arg_operator uint32,
+	arg_operator common.Address,
 	blockNumber *big.Int,
 ) (bool, error) {
 	var result bool
@@ -2313,7 +2313,7 @@ func (esp *EcdsaSortitionPool) RewardTokenAtBlock(
 }
 
 func (esp *EcdsaSortitionPool) RewardsEligibilityRestorableAt(
-	arg_operator uint32,
+	arg_operator common.Address,
 ) (*big.Int, error) {
 	result, err := esp.contract.RewardsEligibilityRestorableAt(
 		esp.callerOptions,
@@ -2334,7 +2334,7 @@ func (esp *EcdsaSortitionPool) RewardsEligibilityRestorableAt(
 }
 
 func (esp *EcdsaSortitionPool) RewardsEligibilityRestorableAtAtBlock(
-	arg_operator uint32,
+	arg_operator common.Address,
 	blockNumber *big.Int,
 ) (*big.Int, error) {
 	var result *big.Int

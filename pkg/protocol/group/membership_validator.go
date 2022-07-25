@@ -21,7 +21,7 @@ type MembershipValidator interface {
 // a party that was selected. This is used to validate messages sent by that
 // party to all other group members.
 type OperatorsMembershipValidator struct {
-	members map[string][]int // staker address -> staker positions in group
+	members map[string][]int // operator address -> operator positions in group
 	signing chain.Signing
 }
 

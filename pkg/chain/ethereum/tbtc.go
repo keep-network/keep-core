@@ -108,6 +108,53 @@ func (tc *TbtcChain) GetConfig() *tbtc.ChainConfig {
 	}
 }
 
+// IsRecognized checks whether the given operator is recognized by the TbtcChain
+// as eligible to join the network. If the operator has a stake delegation or
+// had a stake delegation in the past, it will be recognized.
+func (tc *TbtcChain) IsRecognized(operatorPublicKey *operator.PublicKey) (bool, error) {
+	operatorAddress, err := operatorPublicKeyToChainAddress(operatorPublicKey)
+	if err != nil {
+		return false, fmt.Errorf(
+			"cannot convert from operator key to chain address: [%v]",
+			err,
+		)
+	}
+
+	stakingProvider, err := tc.walletRegistry.OperatorToStakingProvider(
+		operatorAddress,
+	)
+	if err != nil {
+		return false, fmt.Errorf(
+			"failed to map operator [%v] to a staking provider: [%v]",
+			operatorAddress,
+			err,
+		)
+	}
+
+	if (stakingProvider == common.Address{}) {
+		return false, nil
+	}
+
+	// Check if the staking provider has an owner. This check ensures that there
+	// is/was a stake delegation for the given staking provider.
+	_, _, _, hasStakeDelegation, err := tc.Chain.RolesOf(
+		chain.Address(stakingProvider.Hex()),
+	)
+	if err != nil {
+		return false, fmt.Errorf(
+			"failed to check stake delegation for staking provider [%v]: [%v]",
+			stakingProvider,
+			err,
+		)
+	}
+
+	if !hasStakeDelegation {
+		return false, nil
+	}
+
+	return true, nil
+}
+
 // OperatorToStakingProvider returns the staking provider address for the
 // operator. If the staking provider has not been registered for the
 // operator, the returned address is empty and the boolean flag is set to
@@ -187,51 +234,22 @@ func (tc *TbtcChain) UpdateOperatorStatus() error {
 	return err
 }
 
-// IsRecognized checks whether the given operator is recognized by the TbtcChain
-// as eligible to join the network. If the operator has a stake delegation or
-// had a stake delegation in the past, it will be recognized.
-func (tc *TbtcChain) IsRecognized(operatorPublicKey *operator.PublicKey) (bool, error) {
-	operatorAddress, err := operatorPublicKeyToChainAddress(operatorPublicKey)
-	if err != nil {
-		return false, fmt.Errorf(
-			"cannot convert from operator key to chain address: [%v]",
-			err,
-		)
-	}
+// IsEligibleForRewards checks whether the operator is eligible for rewards
+// or not.
+func (tc *TbtcChain) IsEligibleForRewards() (bool, error) {
+	return tc.sortitionPool.IsEligibleForRewards(tc.key.Address)
+}
 
-	stakingProvider, err := tc.walletRegistry.OperatorToStakingProvider(
-		operatorAddress,
-	)
-	if err != nil {
-		return false, fmt.Errorf(
-			"failed to map operator [%v] to a staking provider: [%v]",
-			operatorAddress,
-			err,
-		)
-	}
+// Checks whether the operator is able to restore their eligibility for
+// rewards right away.
+func (tc *TbtcChain) CanRestoreRewardEligibility() (bool, error) {
+	return tc.sortitionPool.CanRestoreRewardEligibility(tc.key.Address)
+}
 
-	if (stakingProvider == common.Address{}) {
-		return false, nil
-	}
-
-	// Check if the staking provider has an owner. This check ensures that there
-	// is/was a stake delegation for the given staking provider.
-	_, _, _, hasStakeDelegation, err := tc.Chain.RolesOf(
-		chain.Address(stakingProvider.Hex()),
-	)
-	if err != nil {
-		return false, fmt.Errorf(
-			"failed to check stake delegation for staking provider [%v]: [%v]",
-			stakingProvider,
-			err,
-		)
-	}
-
-	if !hasStakeDelegation {
-		return false, nil
-	}
-
-	return true, nil
+// Restores reward eligibility for the operator.
+func (tc *TbtcChain) RestoreRewardEligibility() error {
+	_, err := tc.sortitionPool.RestoreRewardEligibility(tc.key.Address)
+	return err
 }
 
 // TODO: Implement a real SelectGroup function.
