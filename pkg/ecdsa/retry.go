@@ -21,7 +21,11 @@ func EvaluateRetryParticipantsForSigning(
 	quantity uint,
 ) ([]chain.Address, error) {
 	if int(quantity) > len(groupMembers) {
-		return nil, fmt.Errorf("Asked for too many seats. %d seats were requested, but there are only %d available.", quantity, len(groupMembers))
+		return nil, fmt.Errorf(
+			"Asked for too many seats. %d seats were requested, but there are only %d available.",
+			quantity,
+			len(groupMembers),
+		)
 	}
 	operatorToSeatCount := make(map[chain.Address]uint)
 	for _, operator := range groupMembers {
