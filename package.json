@@ -17,18 +17,21 @@
     "chai": "^4.3.6",
     "dotenv": "^16.0.0",
     "ethereum-waffle": "^3.4.0",
-    "ethers": "^5.6.1",
+    "ethers": "^5.6.9",
     "fast-check": "^2.23.2",
     "hardhat": "^2.9.9",
     "hardhat-deploy": "^0.11.1",
     "hardhat-deploy-ethers": "^0.3.0-beta.13",
     "hardhat-gas-reporter": "^1.0.8",
     "keccak256": "^1.0.6",
-    "merkletreejs": "^0.2.31"
+    "merkletreejs": "^0.2.32"
   },
   "dependencies": {
     "@thesis/solidity-contracts": "github:thesis/solidity-contracts#4985bcf",
+    "@urql/core": "^2.6.0",
+    "bignumber.js": "^9.0.2",
     "ganache-cli": "^6.12.2",
+    "isomorphic-unfetch": "^3.1.0",
     "solidity-coverage": "^0.7.21"
   }
 }

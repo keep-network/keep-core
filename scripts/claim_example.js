@@ -61,7 +61,13 @@ async function main() {
     (await token.balanceOf(beneficiary)).toString()
   )
 
-  await cumulativeMerkle.claim(account, beneficiary, amount, merkleRoot, merkleProof)
+  await cumulativeMerkle.claim(
+    account,
+    beneficiary,
+    amount,
+    merkleRoot,
+    merkleProof
+  )
   console.log(
     "Balance of account after claim:",
     (await token.balanceOf(account)).toString()
