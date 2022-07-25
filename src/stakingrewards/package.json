@@ -1,6 +1,6 @@
 {
   "name": "stakingrewards",
-  "version": "1.0.45",
+  "version": "1.0.0",
   "description": "Staking rewards calculation in Threshold Network",
   "main": "stakingrewards.js",
   "scripts": {

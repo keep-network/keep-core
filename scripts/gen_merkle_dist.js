@@ -16,9 +16,7 @@ async function main() {
     startTime,
     endTime
   )
-  const bonusRewards = await stakingRewards.getBonusMerkleInput(
-    "https://api.studio.thegraph.com/query/24143/main-threshold-subgraph/0.0.6"
-  )
+  const bonusRewards = await stakingRewards.getBonusMerkleInput(graphqlApi)
   const merkleInput = stakingRewards.combineMerkleInputs(
     ongoingRewards,
     bonusRewards
@@ -45,6 +43,6 @@ async function main() {
   console.log("Total amount of rewards: ", merkleDist.totalAmount)
 }
 
-(async () => {
+;(async () => {
   await main()
 })()

@@ -11,7 +11,8 @@ const PROOF_PATH = "distributions/2022-07-15/MerkleDist.json"
 function verifyProof(wallet, beneficiary, amount, proof, root) {
   amount = BigNumber(amount)
   const tree = new MerkleTree([], keccak256, { sortPairs: true })
-  const element = wallet + beneficiary.substr(2) + amount.toString(16).padStart(64, "0")
+  const element =
+    wallet + beneficiary.substr(2) + amount.toString(16).padStart(64, "0")
   const node = MerkleTree.bufferToHex(keccak256(element))
   return tree.verify(proof, node, root)
 }
@@ -24,7 +25,7 @@ function main() {
 
   const merkleRoot = json.merkleRoot
   const claims = json.claims
-  Object.keys(claims).forEach( stakingProvider => {
+  Object.keys(claims).forEach((stakingProvider) => {
     const beneficiary = claims[stakingProvider].beneficiary
     const amount = claims[stakingProvider].amount
     const proof = claims[stakingProvider].proof
