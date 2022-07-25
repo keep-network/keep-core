@@ -25,7 +25,7 @@ THRESHOLD_CONTRACTS_PATH="$PWD/../solidity-contracts"
 
 printf "${LOG_START}Migrating contracts for keep-core...${LOG_END}"
 cd "$KEEP_CORE_PATH"
-./scripts/install.sh --network local --contracts-only
+./scripts/install-v1.sh --network local
 cd "$KEEP_CORE_SOL_PATH"
 # Link keep-core contracts via `yarn`- the threshold solidity contracts repo
 # uses the `yarn` so we need to link keep-core package with `yarn` as well.
@@ -33,7 +33,7 @@ yarn link
 
 printf "${LOG_START}Migrating contracts for keep-ecdsa...${LOG_END}"
 cd "$KEEP_ECDSA_PATH"
-./scripts/install-v1.sh --network local
+./scripts/install.sh --network local --contracts-only
 
 printf "${LOG_START}Migrating contracts for tBTC...${LOG_END}"
 cd "$TBTC_PATH"
