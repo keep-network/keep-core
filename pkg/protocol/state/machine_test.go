@@ -4,13 +4,14 @@ import (
 	"context"
 	"fmt"
 	"github.com/keep-network/keep-core/pkg/chain/local_v1"
+	"github.com/keep-network/keep-core/pkg/internal/testutils"
 	"reflect"
 	"testing"
 
-	"github.com/keep-network/keep-core/pkg/beacon/group"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/net"
 	netLocal "github.com/keep-network/keep-core/pkg/net/local"
+	"github.com/keep-network/keep-core/pkg/protocol/group"
 )
 
 var testLog map[uint64][]string
@@ -53,7 +54,7 @@ func TestExecute(t *testing.T) {
 		channel:     channel,
 	}
 
-	stateMachine := NewMachine(channel, blockCounter, initialState)
+	stateMachine := NewMachine(&testutils.MockLogger{}, channel, blockCounter, initialState)
 
 	finalState, endBlockHeight, err := stateMachine.Execute(1)
 	if err != nil {

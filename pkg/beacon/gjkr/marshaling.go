@@ -5,17 +5,14 @@ import (
 
 	bn256 "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
 	"github.com/keep-network/keep-core/pkg/beacon/gjkr/gen/pb"
-	"github.com/keep-network/keep-core/pkg/beacon/group"
 	"github.com/keep-network/keep-core/pkg/crypto/ephemeral"
+	"github.com/keep-network/keep-core/pkg/protocol/group"
 )
 
-// MemberIndex is represented as uint8 in gjkr. Protobuf does not have uint8
-// type so we are using uint32. When unmarshalling message, we need to make
-// sure we do not overflow.
-const maxMemberIndex = 255
-
 func validateMemberIndex(protoIndex uint32) error {
-	if protoIndex > maxMemberIndex {
+	// Protobuf does not have uint8 type so we are using uint32. When
+	// unmarshalling message, we need to make sure we do not overflow.
+	if protoIndex > group.MaxMemberIndex {
 		return fmt.Errorf("Invalid member index value: [%v]", protoIndex)
 	}
 	return nil

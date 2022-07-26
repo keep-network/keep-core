@@ -29,7 +29,7 @@ const (
 
 // BeaconChain represents a beacon-specific chain handle.
 type BeaconChain struct {
-	*Chain
+	*baseChain
 
 	randomBeacon  *contract.RandomBeacon
 	sortitionPool *contract.BeaconSortitionPool
@@ -41,7 +41,7 @@ type BeaconChain struct {
 // chain handle.
 func newBeaconChain(
 	config ethereum.Config,
-	baseChain *Chain,
+	baseChain *baseChain,
 ) (*BeaconChain, error) {
 	randomBeaconAddress, err := config.ContractAddress(RandomBeaconContractName)
 	if err != nil {
@@ -97,7 +97,7 @@ func newBeaconChain(
 	}
 
 	return &BeaconChain{
-		Chain:            baseChain,
+		baseChain:        baseChain,
 		randomBeacon:     randomBeacon,
 		sortitionPool:    sortitionPool,
 		mockRandomBeacon: newMockRandomBeacon(baseChain.blockCounter),
@@ -342,7 +342,7 @@ func (bc *BeaconChain) IsRecognized(operatorPublicKey *operator.PublicKey) (bool
 
 	// Check if the staking provider has an owner. This check ensures that there
 	// is/was a stake delegation for the given staking provider.
-	_, _, _, hasStakeDelegation, err := bc.Chain.RolesOf(
+	_, _, _, hasStakeDelegation, err := bc.baseChain.RolesOf(
 		chain.Address(stakingProvider.Hex()),
 	)
 	if err != nil {
