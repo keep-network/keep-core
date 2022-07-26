@@ -20,8 +20,8 @@ import (
 
 	"github.com/ipfs/go-log"
 
+	"github.com/keep-network/keep-common/pkg/chain/ethereum"
 	chainutil "github.com/keep-network/keep-common/pkg/chain/ethereum/ethutil"
-	"github.com/keep-network/keep-common/pkg/chain/ethlike"
 	"github.com/keep-network/keep-common/pkg/subscription"
 	"github.com/keep-network/keep-core/pkg/chain/ethereum/ecdsa/gen/abi"
 )
@@ -40,9 +40,9 @@ type WalletRegistry struct {
 	callerOptions     *bind.CallOpts
 	transactorOptions *bind.TransactOpts
 	errorResolver     *chainutil.ErrorResolver
-	nonceManager      *ethlike.NonceManager
+	nonceManager      *ethereum.NonceManager
 	miningWaiter      *chainutil.MiningWaiter
-	blockCounter      *ethlike.BlockCounter
+	blockCounter      *ethereum.BlockCounter
 
 	transactionMutex *sync.Mutex
 }
@@ -52,19 +52,16 @@ func NewWalletRegistry(
 	chainId *big.Int,
 	accountKey *keystore.Key,
 	backend bind.ContractBackend,
-	nonceManager *ethlike.NonceManager,
+	nonceManager *ethereum.NonceManager,
 	miningWaiter *chainutil.MiningWaiter,
-	blockCounter *ethlike.BlockCounter,
+	blockCounter *ethereum.BlockCounter,
 	transactionMutex *sync.Mutex,
 ) (*WalletRegistry, error) {
 	callerOptions := &bind.CallOpts{
 		From: accountKey.Address,
 	}
 
-	// FIXME Switch to bind.NewKeyedTransactorWithChainID when
-	// FIXME celo-org/celo-blockchain merges in changes from upstream
-	// FIXME ethereum/go-ethereum beyond v1.9.25.
-	transactorOptions, err := chainutil.NewKeyedTransactorWithChainID(
+	transactorOptions, err := bind.NewKeyedTransactorWithChainID(
 		accountKey.PrivateKey,
 		chainId,
 	)
@@ -5543,11 +5540,11 @@ func (wr *WalletRegistry) WalletOwnerAtBlock(
 // ------ Events -------
 
 func (wr *WalletRegistry) AuthorizationDecreaseApprovedEvent(
-	opts *ethlike.SubscribeOpts,
+	opts *ethereum.SubscribeOpts,
 	stakingProviderFilter []common.Address,
 ) *WrAuthorizationDecreaseApprovedSubscription {
 	if opts == nil {
-		opts = new(ethlike.SubscribeOpts)
+		opts = new(ethereum.SubscribeOpts)
 	}
 	if opts.Tick == 0 {
 		opts.Tick = chainutil.DefaultSubscribeOptsTick
@@ -5565,7 +5562,7 @@ func (wr *WalletRegistry) AuthorizationDecreaseApprovedEvent(
 
 type WrAuthorizationDecreaseApprovedSubscription struct {
 	contract              *WalletRegistry
-	opts                  *ethlike.SubscribeOpts
+	opts                  *ethereum.SubscribeOpts
 	stakingProviderFilter []common.Address
 }
 
@@ -5731,12 +5728,12 @@ func (wr *WalletRegistry) PastAuthorizationDecreaseApprovedEvents(
 }
 
 func (wr *WalletRegistry) AuthorizationDecreaseRequestedEvent(
-	opts *ethlike.SubscribeOpts,
+	opts *ethereum.SubscribeOpts,
 	stakingProviderFilter []common.Address,
 	operatorFilter []common.Address,
 ) *WrAuthorizationDecreaseRequestedSubscription {
 	if opts == nil {
-		opts = new(ethlike.SubscribeOpts)
+		opts = new(ethereum.SubscribeOpts)
 	}
 	if opts.Tick == 0 {
 		opts.Tick = chainutil.DefaultSubscribeOptsTick
@@ -5755,7 +5752,7 @@ func (wr *WalletRegistry) AuthorizationDecreaseRequestedEvent(
 
 type WrAuthorizationDecreaseRequestedSubscription struct {
 	contract              *WalletRegistry
-	opts                  *ethlike.SubscribeOpts
+	opts                  *ethereum.SubscribeOpts
 	stakingProviderFilter []common.Address
 	operatorFilter        []common.Address
 }
@@ -5936,12 +5933,12 @@ func (wr *WalletRegistry) PastAuthorizationDecreaseRequestedEvents(
 }
 
 func (wr *WalletRegistry) AuthorizationIncreasedEvent(
-	opts *ethlike.SubscribeOpts,
+	opts *ethereum.SubscribeOpts,
 	stakingProviderFilter []common.Address,
 	operatorFilter []common.Address,
 ) *WrAuthorizationIncreasedSubscription {
 	if opts == nil {
-		opts = new(ethlike.SubscribeOpts)
+		opts = new(ethereum.SubscribeOpts)
 	}
 	if opts.Tick == 0 {
 		opts.Tick = chainutil.DefaultSubscribeOptsTick
@@ -5960,7 +5957,7 @@ func (wr *WalletRegistry) AuthorizationIncreasedEvent(
 
 type WrAuthorizationIncreasedSubscription struct {
 	contract              *WalletRegistry
-	opts                  *ethlike.SubscribeOpts
+	opts                  *ethereum.SubscribeOpts
 	stakingProviderFilter []common.Address
 	operatorFilter        []common.Address
 }
@@ -6139,10 +6136,10 @@ func (wr *WalletRegistry) PastAuthorizationIncreasedEvents(
 }
 
 func (wr *WalletRegistry) AuthorizationParametersUpdatedEvent(
-	opts *ethlike.SubscribeOpts,
+	opts *ethereum.SubscribeOpts,
 ) *WrAuthorizationParametersUpdatedSubscription {
 	if opts == nil {
-		opts = new(ethlike.SubscribeOpts)
+		opts = new(ethereum.SubscribeOpts)
 	}
 	if opts.Tick == 0 {
 		opts.Tick = chainutil.DefaultSubscribeOptsTick
@@ -6159,7 +6156,7 @@ func (wr *WalletRegistry) AuthorizationParametersUpdatedEvent(
 
 type WrAuthorizationParametersUpdatedSubscription struct {
 	contract *WalletRegistry
-	opts     *ethlike.SubscribeOpts
+	opts     *ethereum.SubscribeOpts
 }
 
 type walletRegistryAuthorizationParametersUpdatedFunc func(
@@ -6322,11 +6319,11 @@ func (wr *WalletRegistry) PastAuthorizationParametersUpdatedEvents(
 }
 
 func (wr *WalletRegistry) DkgMaliciousResultSlashedEvent(
-	opts *ethlike.SubscribeOpts,
+	opts *ethereum.SubscribeOpts,
 	resultHashFilter [][32]byte,
 ) *WrDkgMaliciousResultSlashedSubscription {
 	if opts == nil {
-		opts = new(ethlike.SubscribeOpts)
+		opts = new(ethereum.SubscribeOpts)
 	}
 	if opts.Tick == 0 {
 		opts.Tick = chainutil.DefaultSubscribeOptsTick
@@ -6344,7 +6341,7 @@ func (wr *WalletRegistry) DkgMaliciousResultSlashedEvent(
 
 type WrDkgMaliciousResultSlashedSubscription struct {
 	contract         *WalletRegistry
-	opts             *ethlike.SubscribeOpts
+	opts             *ethereum.SubscribeOpts
 	resultHashFilter [][32]byte
 }
 
@@ -6514,11 +6511,11 @@ func (wr *WalletRegistry) PastDkgMaliciousResultSlashedEvents(
 }
 
 func (wr *WalletRegistry) DkgMaliciousResultSlashingFailedEvent(
-	opts *ethlike.SubscribeOpts,
+	opts *ethereum.SubscribeOpts,
 	resultHashFilter [][32]byte,
 ) *WrDkgMaliciousResultSlashingFailedSubscription {
 	if opts == nil {
-		opts = new(ethlike.SubscribeOpts)
+		opts = new(ethereum.SubscribeOpts)
 	}
 	if opts.Tick == 0 {
 		opts.Tick = chainutil.DefaultSubscribeOptsTick
@@ -6536,7 +6533,7 @@ func (wr *WalletRegistry) DkgMaliciousResultSlashingFailedEvent(
 
 type WrDkgMaliciousResultSlashingFailedSubscription struct {
 	contract         *WalletRegistry
-	opts             *ethlike.SubscribeOpts
+	opts             *ethereum.SubscribeOpts
 	resultHashFilter [][32]byte
 }
 
@@ -6706,10 +6703,10 @@ func (wr *WalletRegistry) PastDkgMaliciousResultSlashingFailedEvents(
 }
 
 func (wr *WalletRegistry) DkgParametersUpdatedEvent(
-	opts *ethlike.SubscribeOpts,
+	opts *ethereum.SubscribeOpts,
 ) *WrDkgParametersUpdatedSubscription {
 	if opts == nil {
-		opts = new(ethlike.SubscribeOpts)
+		opts = new(ethereum.SubscribeOpts)
 	}
 	if opts.Tick == 0 {
 		opts.Tick = chainutil.DefaultSubscribeOptsTick
@@ -6726,7 +6723,7 @@ func (wr *WalletRegistry) DkgParametersUpdatedEvent(
 
 type WrDkgParametersUpdatedSubscription struct {
 	contract *WalletRegistry
-	opts     *ethlike.SubscribeOpts
+	opts     *ethereum.SubscribeOpts
 }
 
 type walletRegistryDkgParametersUpdatedFunc func(
@@ -6891,12 +6888,12 @@ func (wr *WalletRegistry) PastDkgParametersUpdatedEvents(
 }
 
 func (wr *WalletRegistry) DkgResultApprovedEvent(
-	opts *ethlike.SubscribeOpts,
+	opts *ethereum.SubscribeOpts,
 	resultHashFilter [][32]byte,
 	approverFilter []common.Address,
 ) *WrDkgResultApprovedSubscription {
 	if opts == nil {
-		opts = new(ethlike.SubscribeOpts)
+		opts = new(ethereum.SubscribeOpts)
 	}
 	if opts.Tick == 0 {
 		opts.Tick = chainutil.DefaultSubscribeOptsTick
@@ -6915,7 +6912,7 @@ func (wr *WalletRegistry) DkgResultApprovedEvent(
 
 type WrDkgResultApprovedSubscription struct {
 	contract         *WalletRegistry
-	opts             *ethlike.SubscribeOpts
+	opts             *ethereum.SubscribeOpts
 	resultHashFilter [][32]byte
 	approverFilter   []common.Address
 }
@@ -7090,12 +7087,12 @@ func (wr *WalletRegistry) PastDkgResultApprovedEvents(
 }
 
 func (wr *WalletRegistry) DkgResultChallengedEvent(
-	opts *ethlike.SubscribeOpts,
+	opts *ethereum.SubscribeOpts,
 	resultHashFilter [][32]byte,
 	challengerFilter []common.Address,
 ) *WrDkgResultChallengedSubscription {
 	if opts == nil {
-		opts = new(ethlike.SubscribeOpts)
+		opts = new(ethereum.SubscribeOpts)
 	}
 	if opts.Tick == 0 {
 		opts.Tick = chainutil.DefaultSubscribeOptsTick
@@ -7114,7 +7111,7 @@ func (wr *WalletRegistry) DkgResultChallengedEvent(
 
 type WrDkgResultChallengedSubscription struct {
 	contract         *WalletRegistry
-	opts             *ethlike.SubscribeOpts
+	opts             *ethereum.SubscribeOpts
 	resultHashFilter [][32]byte
 	challengerFilter []common.Address
 }
@@ -7291,12 +7288,12 @@ func (wr *WalletRegistry) PastDkgResultChallengedEvents(
 }
 
 func (wr *WalletRegistry) DkgResultSubmittedEvent(
-	opts *ethlike.SubscribeOpts,
+	opts *ethereum.SubscribeOpts,
 	resultHashFilter [][32]byte,
 	seedFilter []*big.Int,
 ) *WrDkgResultSubmittedSubscription {
 	if opts == nil {
-		opts = new(ethlike.SubscribeOpts)
+		opts = new(ethereum.SubscribeOpts)
 	}
 	if opts.Tick == 0 {
 		opts.Tick = chainutil.DefaultSubscribeOptsTick
@@ -7315,7 +7312,7 @@ func (wr *WalletRegistry) DkgResultSubmittedEvent(
 
 type WrDkgResultSubmittedSubscription struct {
 	contract         *WalletRegistry
-	opts             *ethlike.SubscribeOpts
+	opts             *ethereum.SubscribeOpts
 	resultHashFilter [][32]byte
 	seedFilter       []*big.Int
 }
@@ -7492,10 +7489,10 @@ func (wr *WalletRegistry) PastDkgResultSubmittedEvents(
 }
 
 func (wr *WalletRegistry) DkgSeedTimedOutEvent(
-	opts *ethlike.SubscribeOpts,
+	opts *ethereum.SubscribeOpts,
 ) *WrDkgSeedTimedOutSubscription {
 	if opts == nil {
-		opts = new(ethlike.SubscribeOpts)
+		opts = new(ethereum.SubscribeOpts)
 	}
 	if opts.Tick == 0 {
 		opts.Tick = chainutil.DefaultSubscribeOptsTick
@@ -7512,7 +7509,7 @@ func (wr *WalletRegistry) DkgSeedTimedOutEvent(
 
 type WrDkgSeedTimedOutSubscription struct {
 	contract *WalletRegistry
-	opts     *ethlike.SubscribeOpts
+	opts     *ethereum.SubscribeOpts
 }
 
 type walletRegistryDkgSeedTimedOutFunc func(
@@ -7669,11 +7666,11 @@ func (wr *WalletRegistry) PastDkgSeedTimedOutEvents(
 }
 
 func (wr *WalletRegistry) DkgStartedEvent(
-	opts *ethlike.SubscribeOpts,
+	opts *ethereum.SubscribeOpts,
 	seedFilter []*big.Int,
 ) *WrDkgStartedSubscription {
 	if opts == nil {
-		opts = new(ethlike.SubscribeOpts)
+		opts = new(ethereum.SubscribeOpts)
 	}
 	if opts.Tick == 0 {
 		opts.Tick = chainutil.DefaultSubscribeOptsTick
@@ -7691,7 +7688,7 @@ func (wr *WalletRegistry) DkgStartedEvent(
 
 type WrDkgStartedSubscription struct {
 	contract   *WalletRegistry
-	opts       *ethlike.SubscribeOpts
+	opts       *ethereum.SubscribeOpts
 	seedFilter []*big.Int
 }
 
@@ -7857,10 +7854,10 @@ func (wr *WalletRegistry) PastDkgStartedEvents(
 }
 
 func (wr *WalletRegistry) DkgStateLockedEvent(
-	opts *ethlike.SubscribeOpts,
+	opts *ethereum.SubscribeOpts,
 ) *WrDkgStateLockedSubscription {
 	if opts == nil {
-		opts = new(ethlike.SubscribeOpts)
+		opts = new(ethereum.SubscribeOpts)
 	}
 	if opts.Tick == 0 {
 		opts.Tick = chainutil.DefaultSubscribeOptsTick
@@ -7877,7 +7874,7 @@ func (wr *WalletRegistry) DkgStateLockedEvent(
 
 type WrDkgStateLockedSubscription struct {
 	contract *WalletRegistry
-	opts     *ethlike.SubscribeOpts
+	opts     *ethereum.SubscribeOpts
 }
 
 type walletRegistryDkgStateLockedFunc func(
@@ -8034,10 +8031,10 @@ func (wr *WalletRegistry) PastDkgStateLockedEvents(
 }
 
 func (wr *WalletRegistry) DkgTimedOutEvent(
-	opts *ethlike.SubscribeOpts,
+	opts *ethereum.SubscribeOpts,
 ) *WrDkgTimedOutSubscription {
 	if opts == nil {
-		opts = new(ethlike.SubscribeOpts)
+		opts = new(ethereum.SubscribeOpts)
 	}
 	if opts.Tick == 0 {
 		opts.Tick = chainutil.DefaultSubscribeOptsTick
@@ -8054,7 +8051,7 @@ func (wr *WalletRegistry) DkgTimedOutEvent(
 
 type WrDkgTimedOutSubscription struct {
 	contract *WalletRegistry
-	opts     *ethlike.SubscribeOpts
+	opts     *ethereum.SubscribeOpts
 }
 
 type walletRegistryDkgTimedOutFunc func(
@@ -8211,10 +8208,10 @@ func (wr *WalletRegistry) PastDkgTimedOutEvents(
 }
 
 func (wr *WalletRegistry) GasParametersUpdatedEvent(
-	opts *ethlike.SubscribeOpts,
+	opts *ethereum.SubscribeOpts,
 ) *WrGasParametersUpdatedSubscription {
 	if opts == nil {
-		opts = new(ethlike.SubscribeOpts)
+		opts = new(ethereum.SubscribeOpts)
 	}
 	if opts.Tick == 0 {
 		opts.Tick = chainutil.DefaultSubscribeOptsTick
@@ -8231,7 +8228,7 @@ func (wr *WalletRegistry) GasParametersUpdatedEvent(
 
 type WrGasParametersUpdatedSubscription struct {
 	contract *WalletRegistry
-	opts     *ethlike.SubscribeOpts
+	opts     *ethereum.SubscribeOpts
 }
 
 type walletRegistryGasParametersUpdatedFunc func(
@@ -8398,10 +8395,10 @@ func (wr *WalletRegistry) PastGasParametersUpdatedEvents(
 }
 
 func (wr *WalletRegistry) GovernanceTransferredEvent(
-	opts *ethlike.SubscribeOpts,
+	opts *ethereum.SubscribeOpts,
 ) *WrGovernanceTransferredSubscription {
 	if opts == nil {
-		opts = new(ethlike.SubscribeOpts)
+		opts = new(ethereum.SubscribeOpts)
 	}
 	if opts.Tick == 0 {
 		opts.Tick = chainutil.DefaultSubscribeOptsTick
@@ -8418,7 +8415,7 @@ func (wr *WalletRegistry) GovernanceTransferredEvent(
 
 type WrGovernanceTransferredSubscription struct {
 	contract *WalletRegistry
-	opts     *ethlike.SubscribeOpts
+	opts     *ethereum.SubscribeOpts
 }
 
 type walletRegistryGovernanceTransferredFunc func(
@@ -8579,11 +8576,11 @@ func (wr *WalletRegistry) PastGovernanceTransferredEvents(
 }
 
 func (wr *WalletRegistry) InactivityClaimedEvent(
-	opts *ethlike.SubscribeOpts,
+	opts *ethereum.SubscribeOpts,
 	walletIDFilter [][32]byte,
 ) *WrInactivityClaimedSubscription {
 	if opts == nil {
-		opts = new(ethlike.SubscribeOpts)
+		opts = new(ethereum.SubscribeOpts)
 	}
 	if opts.Tick == 0 {
 		opts.Tick = chainutil.DefaultSubscribeOptsTick
@@ -8601,7 +8598,7 @@ func (wr *WalletRegistry) InactivityClaimedEvent(
 
 type WrInactivityClaimedSubscription struct {
 	contract       *WalletRegistry
-	opts           *ethlike.SubscribeOpts
+	opts           *ethereum.SubscribeOpts
 	walletIDFilter [][32]byte
 }
 
@@ -8771,10 +8768,10 @@ func (wr *WalletRegistry) PastInactivityClaimedEvents(
 }
 
 func (wr *WalletRegistry) InitializedEvent(
-	opts *ethlike.SubscribeOpts,
+	opts *ethereum.SubscribeOpts,
 ) *WrInitializedSubscription {
 	if opts == nil {
-		opts = new(ethlike.SubscribeOpts)
+		opts = new(ethereum.SubscribeOpts)
 	}
 	if opts.Tick == 0 {
 		opts.Tick = chainutil.DefaultSubscribeOptsTick
@@ -8791,7 +8788,7 @@ func (wr *WalletRegistry) InitializedEvent(
 
 type WrInitializedSubscription struct {
 	contract *WalletRegistry
-	opts     *ethlike.SubscribeOpts
+	opts     *ethereum.SubscribeOpts
 }
 
 type walletRegistryInitializedFunc func(
@@ -8950,12 +8947,12 @@ func (wr *WalletRegistry) PastInitializedEvents(
 }
 
 func (wr *WalletRegistry) InvoluntaryAuthorizationDecreaseFailedEvent(
-	opts *ethlike.SubscribeOpts,
+	opts *ethereum.SubscribeOpts,
 	stakingProviderFilter []common.Address,
 	operatorFilter []common.Address,
 ) *WrInvoluntaryAuthorizationDecreaseFailedSubscription {
 	if opts == nil {
-		opts = new(ethlike.SubscribeOpts)
+		opts = new(ethereum.SubscribeOpts)
 	}
 	if opts.Tick == 0 {
 		opts.Tick = chainutil.DefaultSubscribeOptsTick
@@ -8974,7 +8971,7 @@ func (wr *WalletRegistry) InvoluntaryAuthorizationDecreaseFailedEvent(
 
 type WrInvoluntaryAuthorizationDecreaseFailedSubscription struct {
 	contract              *WalletRegistry
-	opts                  *ethlike.SubscribeOpts
+	opts                  *ethereum.SubscribeOpts
 	stakingProviderFilter []common.Address
 	operatorFilter        []common.Address
 }
@@ -9153,12 +9150,12 @@ func (wr *WalletRegistry) PastInvoluntaryAuthorizationDecreaseFailedEvents(
 }
 
 func (wr *WalletRegistry) OperatorJoinedSortitionPoolEvent(
-	opts *ethlike.SubscribeOpts,
+	opts *ethereum.SubscribeOpts,
 	stakingProviderFilter []common.Address,
 	operatorFilter []common.Address,
 ) *WrOperatorJoinedSortitionPoolSubscription {
 	if opts == nil {
-		opts = new(ethlike.SubscribeOpts)
+		opts = new(ethereum.SubscribeOpts)
 	}
 	if opts.Tick == 0 {
 		opts.Tick = chainutil.DefaultSubscribeOptsTick
@@ -9177,7 +9174,7 @@ func (wr *WalletRegistry) OperatorJoinedSortitionPoolEvent(
 
 type WrOperatorJoinedSortitionPoolSubscription struct {
 	contract              *WalletRegistry
-	opts                  *ethlike.SubscribeOpts
+	opts                  *ethereum.SubscribeOpts
 	stakingProviderFilter []common.Address
 	operatorFilter        []common.Address
 }
@@ -9352,12 +9349,12 @@ func (wr *WalletRegistry) PastOperatorJoinedSortitionPoolEvents(
 }
 
 func (wr *WalletRegistry) OperatorRegisteredEvent(
-	opts *ethlike.SubscribeOpts,
+	opts *ethereum.SubscribeOpts,
 	stakingProviderFilter []common.Address,
 	operatorFilter []common.Address,
 ) *WrOperatorRegisteredSubscription {
 	if opts == nil {
-		opts = new(ethlike.SubscribeOpts)
+		opts = new(ethereum.SubscribeOpts)
 	}
 	if opts.Tick == 0 {
 		opts.Tick = chainutil.DefaultSubscribeOptsTick
@@ -9376,7 +9373,7 @@ func (wr *WalletRegistry) OperatorRegisteredEvent(
 
 type WrOperatorRegisteredSubscription struct {
 	contract              *WalletRegistry
-	opts                  *ethlike.SubscribeOpts
+	opts                  *ethereum.SubscribeOpts
 	stakingProviderFilter []common.Address
 	operatorFilter        []common.Address
 }
@@ -9551,12 +9548,12 @@ func (wr *WalletRegistry) PastOperatorRegisteredEvents(
 }
 
 func (wr *WalletRegistry) OperatorStatusUpdatedEvent(
-	opts *ethlike.SubscribeOpts,
+	opts *ethereum.SubscribeOpts,
 	stakingProviderFilter []common.Address,
 	operatorFilter []common.Address,
 ) *WrOperatorStatusUpdatedSubscription {
 	if opts == nil {
-		opts = new(ethlike.SubscribeOpts)
+		opts = new(ethereum.SubscribeOpts)
 	}
 	if opts.Tick == 0 {
 		opts.Tick = chainutil.DefaultSubscribeOptsTick
@@ -9575,7 +9572,7 @@ func (wr *WalletRegistry) OperatorStatusUpdatedEvent(
 
 type WrOperatorStatusUpdatedSubscription struct {
 	contract              *WalletRegistry
-	opts                  *ethlike.SubscribeOpts
+	opts                  *ethereum.SubscribeOpts
 	stakingProviderFilter []common.Address
 	operatorFilter        []common.Address
 }
@@ -9750,10 +9747,10 @@ func (wr *WalletRegistry) PastOperatorStatusUpdatedEvents(
 }
 
 func (wr *WalletRegistry) RandomBeaconUpgradedEvent(
-	opts *ethlike.SubscribeOpts,
+	opts *ethereum.SubscribeOpts,
 ) *WrRandomBeaconUpgradedSubscription {
 	if opts == nil {
-		opts = new(ethlike.SubscribeOpts)
+		opts = new(ethereum.SubscribeOpts)
 	}
 	if opts.Tick == 0 {
 		opts.Tick = chainutil.DefaultSubscribeOptsTick
@@ -9770,7 +9767,7 @@ func (wr *WalletRegistry) RandomBeaconUpgradedEvent(
 
 type WrRandomBeaconUpgradedSubscription struct {
 	contract *WalletRegistry
-	opts     *ethlike.SubscribeOpts
+	opts     *ethereum.SubscribeOpts
 }
 
 type walletRegistryRandomBeaconUpgradedFunc func(
@@ -9929,10 +9926,10 @@ func (wr *WalletRegistry) PastRandomBeaconUpgradedEvents(
 }
 
 func (wr *WalletRegistry) ReimbursementPoolUpdatedEvent(
-	opts *ethlike.SubscribeOpts,
+	opts *ethereum.SubscribeOpts,
 ) *WrReimbursementPoolUpdatedSubscription {
 	if opts == nil {
-		opts = new(ethlike.SubscribeOpts)
+		opts = new(ethereum.SubscribeOpts)
 	}
 	if opts.Tick == 0 {
 		opts.Tick = chainutil.DefaultSubscribeOptsTick
@@ -9949,7 +9946,7 @@ func (wr *WalletRegistry) ReimbursementPoolUpdatedEvent(
 
 type WrReimbursementPoolUpdatedSubscription struct {
 	contract *WalletRegistry
-	opts     *ethlike.SubscribeOpts
+	opts     *ethereum.SubscribeOpts
 }
 
 type walletRegistryReimbursementPoolUpdatedFunc func(
@@ -10108,10 +10105,10 @@ func (wr *WalletRegistry) PastReimbursementPoolUpdatedEvents(
 }
 
 func (wr *WalletRegistry) RewardParametersUpdatedEvent(
-	opts *ethlike.SubscribeOpts,
+	opts *ethereum.SubscribeOpts,
 ) *WrRewardParametersUpdatedSubscription {
 	if opts == nil {
-		opts = new(ethlike.SubscribeOpts)
+		opts = new(ethereum.SubscribeOpts)
 	}
 	if opts.Tick == 0 {
 		opts.Tick = chainutil.DefaultSubscribeOptsTick
@@ -10128,7 +10125,7 @@ func (wr *WalletRegistry) RewardParametersUpdatedEvent(
 
 type WrRewardParametersUpdatedSubscription struct {
 	contract *WalletRegistry
-	opts     *ethlike.SubscribeOpts
+	opts     *ethereum.SubscribeOpts
 }
 
 type walletRegistryRewardParametersUpdatedFunc func(
@@ -10289,11 +10286,11 @@ func (wr *WalletRegistry) PastRewardParametersUpdatedEvents(
 }
 
 func (wr *WalletRegistry) RewardsWithdrawnEvent(
-	opts *ethlike.SubscribeOpts,
+	opts *ethereum.SubscribeOpts,
 	stakingProviderFilter []common.Address,
 ) *WrRewardsWithdrawnSubscription {
 	if opts == nil {
-		opts = new(ethlike.SubscribeOpts)
+		opts = new(ethereum.SubscribeOpts)
 	}
 	if opts.Tick == 0 {
 		opts.Tick = chainutil.DefaultSubscribeOptsTick
@@ -10311,7 +10308,7 @@ func (wr *WalletRegistry) RewardsWithdrawnEvent(
 
 type WrRewardsWithdrawnSubscription struct {
 	contract              *WalletRegistry
-	opts                  *ethlike.SubscribeOpts
+	opts                  *ethereum.SubscribeOpts
 	stakingProviderFilter []common.Address
 }
 
@@ -10479,10 +10476,10 @@ func (wr *WalletRegistry) PastRewardsWithdrawnEvents(
 }
 
 func (wr *WalletRegistry) SlashingParametersUpdatedEvent(
-	opts *ethlike.SubscribeOpts,
+	opts *ethereum.SubscribeOpts,
 ) *WrSlashingParametersUpdatedSubscription {
 	if opts == nil {
-		opts = new(ethlike.SubscribeOpts)
+		opts = new(ethereum.SubscribeOpts)
 	}
 	if opts.Tick == 0 {
 		opts.Tick = chainutil.DefaultSubscribeOptsTick
@@ -10499,7 +10496,7 @@ func (wr *WalletRegistry) SlashingParametersUpdatedEvent(
 
 type WrSlashingParametersUpdatedSubscription struct {
 	contract *WalletRegistry
-	opts     *ethlike.SubscribeOpts
+	opts     *ethereum.SubscribeOpts
 }
 
 type walletRegistrySlashingParametersUpdatedFunc func(
@@ -10658,11 +10655,11 @@ func (wr *WalletRegistry) PastSlashingParametersUpdatedEvents(
 }
 
 func (wr *WalletRegistry) WalletClosedEvent(
-	opts *ethlike.SubscribeOpts,
+	opts *ethereum.SubscribeOpts,
 	walletIDFilter [][32]byte,
 ) *WrWalletClosedSubscription {
 	if opts == nil {
-		opts = new(ethlike.SubscribeOpts)
+		opts = new(ethereum.SubscribeOpts)
 	}
 	if opts.Tick == 0 {
 		opts.Tick = chainutil.DefaultSubscribeOptsTick
@@ -10680,7 +10677,7 @@ func (wr *WalletRegistry) WalletClosedEvent(
 
 type WrWalletClosedSubscription struct {
 	contract       *WalletRegistry
-	opts           *ethlike.SubscribeOpts
+	opts           *ethereum.SubscribeOpts
 	walletIDFilter [][32]byte
 }
 
@@ -10846,12 +10843,12 @@ func (wr *WalletRegistry) PastWalletClosedEvents(
 }
 
 func (wr *WalletRegistry) WalletCreatedEvent(
-	opts *ethlike.SubscribeOpts,
+	opts *ethereum.SubscribeOpts,
 	walletIDFilter [][32]byte,
 	dkgResultHashFilter [][32]byte,
 ) *WrWalletCreatedSubscription {
 	if opts == nil {
-		opts = new(ethlike.SubscribeOpts)
+		opts = new(ethereum.SubscribeOpts)
 	}
 	if opts.Tick == 0 {
 		opts.Tick = chainutil.DefaultSubscribeOptsTick
@@ -10870,7 +10867,7 @@ func (wr *WalletRegistry) WalletCreatedEvent(
 
 type WrWalletCreatedSubscription struct {
 	contract            *WalletRegistry
-	opts                *ethlike.SubscribeOpts
+	opts                *ethereum.SubscribeOpts
 	walletIDFilter      [][32]byte
 	dkgResultHashFilter [][32]byte
 }
@@ -11045,10 +11042,10 @@ func (wr *WalletRegistry) PastWalletCreatedEvents(
 }
 
 func (wr *WalletRegistry) WalletOwnerUpdatedEvent(
-	opts *ethlike.SubscribeOpts,
+	opts *ethereum.SubscribeOpts,
 ) *WrWalletOwnerUpdatedSubscription {
 	if opts == nil {
-		opts = new(ethlike.SubscribeOpts)
+		opts = new(ethereum.SubscribeOpts)
 	}
 	if opts.Tick == 0 {
 		opts.Tick = chainutil.DefaultSubscribeOptsTick
@@ -11065,7 +11062,7 @@ func (wr *WalletRegistry) WalletOwnerUpdatedEvent(
 
 type WrWalletOwnerUpdatedSubscription struct {
 	contract *WalletRegistry
-	opts     *ethlike.SubscribeOpts
+	opts     *ethereum.SubscribeOpts
 }
 
 type walletRegistryWalletOwnerUpdatedFunc func(

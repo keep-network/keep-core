@@ -20,8 +20,8 @@ import (
 
 	"github.com/ipfs/go-log"
 
+	"github.com/keep-network/keep-common/pkg/chain/ethereum"
 	chainutil "github.com/keep-network/keep-common/pkg/chain/ethereum/ethutil"
-	"github.com/keep-network/keep-common/pkg/chain/ethlike"
 	"github.com/keep-network/keep-common/pkg/subscription"
 	"github.com/keep-network/keep-core/pkg/chain/ethereum/beacon/gen/abi"
 )
@@ -40,9 +40,9 @@ type BeaconSortitionPool struct {
 	callerOptions     *bind.CallOpts
 	transactorOptions *bind.TransactOpts
 	errorResolver     *chainutil.ErrorResolver
-	nonceManager      *ethlike.NonceManager
+	nonceManager      *ethereum.NonceManager
 	miningWaiter      *chainutil.MiningWaiter
-	blockCounter      *ethlike.BlockCounter
+	blockCounter      *ethereum.BlockCounter
 
 	transactionMutex *sync.Mutex
 }
@@ -52,19 +52,16 @@ func NewBeaconSortitionPool(
 	chainId *big.Int,
 	accountKey *keystore.Key,
 	backend bind.ContractBackend,
-	nonceManager *ethlike.NonceManager,
+	nonceManager *ethereum.NonceManager,
 	miningWaiter *chainutil.MiningWaiter,
-	blockCounter *ethlike.BlockCounter,
+	blockCounter *ethereum.BlockCounter,
 	transactionMutex *sync.Mutex,
 ) (*BeaconSortitionPool, error) {
 	callerOptions := &bind.CallOpts{
 		From: accountKey.Address,
 	}
 
-	// FIXME Switch to bind.NewKeyedTransactorWithChainID when
-	// FIXME celo-org/celo-blockchain merges in changes from upstream
-	// FIXME ethereum/go-ethereum beyond v1.9.25.
-	transactorOptions, err := chainutil.NewKeyedTransactorWithChainID(
+	transactorOptions, err := bind.NewKeyedTransactorWithChainID(
 		accountKey.PrivateKey,
 		chainId,
 	)
@@ -2443,10 +2440,10 @@ func (bsp *BeaconSortitionPool) TotalWeightAtBlock(
 // ------ Events -------
 
 func (bsp *BeaconSortitionPool) IneligibleForRewardsEvent(
-	opts *ethlike.SubscribeOpts,
+	opts *ethereum.SubscribeOpts,
 ) *BspIneligibleForRewardsSubscription {
 	if opts == nil {
-		opts = new(ethlike.SubscribeOpts)
+		opts = new(ethereum.SubscribeOpts)
 	}
 	if opts.Tick == 0 {
 		opts.Tick = chainutil.DefaultSubscribeOptsTick
@@ -2463,7 +2460,7 @@ func (bsp *BeaconSortitionPool) IneligibleForRewardsEvent(
 
 type BspIneligibleForRewardsSubscription struct {
 	contract *BeaconSortitionPool
-	opts     *ethlike.SubscribeOpts
+	opts     *ethereum.SubscribeOpts
 }
 
 type beaconSortitionPoolIneligibleForRewardsFunc func(
@@ -2624,12 +2621,12 @@ func (bsp *BeaconSortitionPool) PastIneligibleForRewardsEvents(
 }
 
 func (bsp *BeaconSortitionPool) OwnershipTransferredEvent(
-	opts *ethlike.SubscribeOpts,
+	opts *ethereum.SubscribeOpts,
 	previousOwnerFilter []common.Address,
 	newOwnerFilter []common.Address,
 ) *BspOwnershipTransferredSubscription {
 	if opts == nil {
-		opts = new(ethlike.SubscribeOpts)
+		opts = new(ethereum.SubscribeOpts)
 	}
 	if opts.Tick == 0 {
 		opts.Tick = chainutil.DefaultSubscribeOptsTick
@@ -2648,7 +2645,7 @@ func (bsp *BeaconSortitionPool) OwnershipTransferredEvent(
 
 type BspOwnershipTransferredSubscription struct {
 	contract            *BeaconSortitionPool
-	opts                *ethlike.SubscribeOpts
+	opts                *ethereum.SubscribeOpts
 	previousOwnerFilter []common.Address
 	newOwnerFilter      []common.Address
 }
@@ -2823,12 +2820,12 @@ func (bsp *BeaconSortitionPool) PastOwnershipTransferredEvents(
 }
 
 func (bsp *BeaconSortitionPool) RewardEligibilityRestoredEvent(
-	opts *ethlike.SubscribeOpts,
+	opts *ethereum.SubscribeOpts,
 	operatorFilter []common.Address,
 	idFilter []uint32,
 ) *BspRewardEligibilityRestoredSubscription {
 	if opts == nil {
-		opts = new(ethlike.SubscribeOpts)
+		opts = new(ethereum.SubscribeOpts)
 	}
 	if opts.Tick == 0 {
 		opts.Tick = chainutil.DefaultSubscribeOptsTick
@@ -2847,7 +2844,7 @@ func (bsp *BeaconSortitionPool) RewardEligibilityRestoredEvent(
 
 type BspRewardEligibilityRestoredSubscription struct {
 	contract       *BeaconSortitionPool
-	opts           *ethlike.SubscribeOpts
+	opts           *ethereum.SubscribeOpts
 	operatorFilter []common.Address
 	idFilter       []uint32
 }
