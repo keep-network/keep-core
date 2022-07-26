@@ -1,4 +1,4 @@
-package ecdsa
+package retry
 
 import (
 	"fmt"
