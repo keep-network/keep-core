@@ -127,7 +127,7 @@ func affectedByRetryCount(t *testing.T, groupMembers []chain.Address, quantity u
 	}
 }
 
-func assertInvariants( t *testing.T, groupMembers []chain.Address, subset []chain.Address, quantity uint) {
+func assertInvariants(t *testing.T, groupMembers []chain.Address, subset []chain.Address, quantity uint) {
 	isSubset(t, groupMembers, subset)
 	isStable(t, groupMembers, subset, quantity)
 	isLargeEnough(t, subset, quantity)
