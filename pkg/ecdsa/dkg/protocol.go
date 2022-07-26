@@ -53,9 +53,7 @@ func (skgm *symmetricKeyGeneratingMember) generateSymmetricKeys(
 
 		if !skgm.isValidEphemeralPublicKeyMessage(ephemeralPubKeyMessage) {
 			return fmt.Errorf(
-				"[member:%v] member [%v] sent invalid ephemeral "+
-					"public key message",
-				skgm.id,
+				"member [%v] sent invalid ephemeral public key message",
 				otherMember,
 			)
 		}
@@ -65,7 +63,7 @@ func (skgm *symmetricKeyGeneratingMember) generateSymmetricKeys(
 		ephemeralKeyPair, ok := skgm.ephemeralKeyPairs[otherMember]
 		if !ok {
 			return fmt.Errorf(
-				"ephemeral key pair does not exist for member %v",
+				"ephemeral key pair does not exist for member [%v]",
 				otherMember,
 			)
 		}
