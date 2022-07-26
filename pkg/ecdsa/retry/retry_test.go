@@ -13,7 +13,7 @@ func TestEvaluateRetryParticipantsForSigning_100DifferentOperators(t *testing.T)
 		groupMembers[i] = chain.Address(fmt.Sprintf("Operator-%d", i))
 	}
 	subset, _ := EvaluateRetryParticipantsForSigning(groupMembers, int64(123), 0, 51)
-	assertInvariants(groupMembers, subset, 51, t)
+	assertInvariants(t, groupMembers, subset, 51)
 }
 
 func TestEvaluateRetryParticipantsForSigning_FewOperators(t *testing.T) {
@@ -22,10 +22,10 @@ func TestEvaluateRetryParticipantsForSigning_FewOperators(t *testing.T) {
 		groupMembers[i] = chain.Address(fmt.Sprintf("Operator-%d", i%3))
 	}
 	subset, _ := EvaluateRetryParticipantsForSigning(groupMembers, int64(456), 0, 51)
-	assertInvariants(groupMembers, subset, 51, t)
+	assertInvariants(t, groupMembers, subset, 51)
 }
 
-func isSubset(groupMembers []chain.Address, subset []chain.Address, t *testing.T) {
+func isSubset(t *testing.T, groupMembers []chain.Address, subset []chain.Address) {
 	memberMap := make(map[chain.Address]struct{})
 	for _, operator := range groupMembers {
 		memberMap[operator] = struct{}{}
@@ -49,7 +49,7 @@ func testEq(a, b []chain.Address) bool {
 	return true
 }
 
-func isStable(groupMembers []chain.Address, subset []chain.Address, quantity uint, t *testing.T) {
+func isStable(t *testing.T, groupMembers []chain.Address, subset []chain.Address, quantity uint) {
 	for i := 0; i < 30; i++ {
 		newSubset, _ := EvaluateRetryParticipantsForSigning(groupMembers, int64(123), 0, quantity)
 		if ok := testEq(subset, newSubset); !ok {
@@ -62,7 +62,7 @@ func isStable(groupMembers []chain.Address, subset []chain.Address, quantity uin
 	}
 }
 
-func isLargeEnough(subset []chain.Address, quantity uint, t *testing.T) {
+func isLargeEnough(t *testing.T, subset []chain.Address, quantity uint) {
 	if len(subset) < int(quantity) {
 		t.Errorf(
 			"Subset isn't large enough\nexpected: [%d+]\nactual:   [%d]",
@@ -73,7 +73,7 @@ func isLargeEnough(subset []chain.Address, quantity uint, t *testing.T) {
 }
 
 // They don't all have to be different, but they shouldn't all be the same!
-func affectedBySeed(groupMembers []chain.Address, subset []chain.Address, quantity uint, t *testing.T) {
+func affectedBySeed(t *testing.T, groupMembers []chain.Address, subset []chain.Address, quantity uint) {
 	allTheSame := true
 	for seed := int64(0); seed < 30 && allTheSame; seed++ {
 		newSubset, _ := EvaluateRetryParticipantsForSigning(groupMembers, seed, 0, quantity)
@@ -85,7 +85,7 @@ func affectedBySeed(groupMembers []chain.Address, subset []chain.Address, quanti
 }
 
 // They don't all have to be different, but they shouldn't all be the same!
-func affectedByRetryCount(groupMembers []chain.Address, quantity uint, t *testing.T) {
+func affectedByRetryCount(t *testing.T, groupMembers []chain.Address, quantity uint) {
 	allTheSame := true
 	subset, _ := EvaluateRetryParticipantsForSigning(groupMembers, int64(72312), uint(0), quantity)
 	for retryCount := uint(1); retryCount < 30 && allTheSame; retryCount++ {
@@ -97,10 +97,10 @@ func affectedByRetryCount(groupMembers []chain.Address, quantity uint, t *testin
 	}
 }
 
-func assertInvariants(groupMembers []chain.Address, subset []chain.Address, quantity uint, t *testing.T) {
-	isSubset(groupMembers, subset, t)
-	isStable(groupMembers, subset, quantity, t)
-	isLargeEnough(subset, quantity, t)
-	affectedBySeed(groupMembers, subset, quantity, t)
-	affectedByRetryCount(groupMembers, quantity, t)
+func assertInvariants( t *testing.T, groupMembers []chain.Address, subset []chain.Address, quantity uint) {
+	isSubset(t, groupMembers, subset)
+	isStable(t, groupMembers, subset, quantity)
+	isLargeEnough(t, subset, quantity)
+	affectedBySeed(t, groupMembers, subset, quantity)
+	affectedByRetryCount(t, groupMembers, quantity)
 }
