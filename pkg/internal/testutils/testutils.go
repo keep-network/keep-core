@@ -11,9 +11,10 @@ import (
 	crand "crypto/rand"
 )
 
-// AssertErrorsEqual checks if two errors are equal. If not, it reports a test
-// failure.
-func AssertErrorsEqual(t *testing.T, expected error, actual error) {
+// AssertErrorsSame checks if two errors are the same error. If not, it reports
+// a test failure. Note that this function doesn't check errors deep equality
+// but just checks whether both arguments point to the same underlying instance.
+func AssertErrorsSame(t *testing.T, expected error, actual error) {
 	if expected != actual {
 		t.Errorf(
 			"unexpected error\nexpected: %v\nactual:   %v\n",
@@ -23,7 +24,7 @@ func AssertErrorsEqual(t *testing.T, expected error, actual error) {
 	}
 }
 
-// AssertErrorsEqual checks if any error in the error chain matches the target.
+// AssertAnyErrorInChainMatchesTarget checks if any error in the error chain matches the target.
 // If not, it reports a test failure.
 func AssertAnyErrorInChainMatchesTarget(t *testing.T, target error, actual error) {
 	if !errors.Is(actual, target) {
@@ -97,6 +98,32 @@ func testBytesEqual(expectedBytes []byte, actualBytes []byte) error {
 	}
 
 	return nil
+}
+
+// AssertIntsEqual checks if two integers are equal. If not, it reports a test
+// failure.
+func AssertIntsEqual(t *testing.T, description string, expected int, actual int) {
+	if expected != actual {
+		t.Errorf(
+			"unexpected %s\nexpected: %v\nactual:   %v\n",
+			description,
+			expected,
+			actual,
+		)
+	}
+}
+
+// AssertBoolsEqual checks if two booleans are equal. If not, it reports a test
+// failure.
+func AssertBoolsEqual(t *testing.T, description string, expected bool, actual bool) {
+	if expected != actual {
+		t.Errorf(
+			"unexpected %s\nexpected: %v\nactual:   %v\n",
+			description,
+			expected,
+			actual,
+		)
+	}
 }
 
 // NewRandInt generates a random value in range [0, max), different from the

@@ -14,10 +14,10 @@ import (
 	"github.com/keep-network/keep-core/pkg/net"
 )
 
-var logger = log.Logger("keep-net-watchtower")
-
 // Guard contains the state necessary to make connection pruning decisions.
 type Guard struct {
+	logger log.StandardLogger
+
 	duration time.Duration
 
 	firewall net.Firewall
@@ -33,11 +33,13 @@ type Guard struct {
 // background for the lifetime of the client.
 func NewGuard(
 	ctx context.Context,
+	logger log.StandardLogger,
 	duration time.Duration,
 	firewall net.Firewall,
 	connectionManager net.ConnectionManager,
 ) *Guard {
 	guard := &Guard{
+		logger:            logger,
 		duration:          duration,
 		firewall:          firewall,
 		connectionManager: connectionManager,
@@ -77,7 +79,7 @@ func (g *Guard) start(ctx context.Context) {
 		case <-ctx.Done():
 			return
 		case <-ticker.C:
-			logger.Debugf("starting firewall guard round")
+			g.logger.Debugf("starting firewall guard round")
 
 			connectedPeers := g.connectionManager.ConnectedPeers()
 
@@ -102,7 +104,7 @@ func (g *Guard) checkFirewallRules(peer string) {
 	if err != nil {
 		// if we error while getting the peer's public key, the peer's id
 		// or key may be malformed/unknown; disconnect them immediately.
-		logger.Errorf(
+		g.logger.Errorf(
 			"dropping the connection; "+
 				"could not get public key for peer [%v]: [%v]",
 			peer,
@@ -113,8 +115,7 @@ func (g *Guard) checkFirewallRules(peer string) {
 	}
 
 	if err := g.firewall.Validate(peerPublicKey); err != nil {
-
-		logger.Warningf(
+		g.logger.Warningf(
 			"dropping the connection; "+
 				"firewall rules not satisfied for peer [%v]: [%v] ",
 			peer,

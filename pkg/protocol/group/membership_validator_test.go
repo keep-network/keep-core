@@ -1,6 +1,7 @@
 package group
 
 import (
+	"github.com/keep-network/keep-core/pkg/internal/testutils"
 	"testing"
 
 	"github.com/keep-network/keep-core/pkg/chain"
@@ -26,7 +27,8 @@ func TestIsInGroup(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	validator := NewOperatorsMembershipValidator(
+	validator := NewMembershipValidator(
+		&testutils.MockLogger{},
 		[]chain.Address{address1, address2, address2},
 		signing,
 	)
@@ -53,7 +55,8 @@ func TestIsValidMembership(t *testing.T) {
 	address1 := signing.PublicKeyBytesToAddress(publicKey1)
 	address2 := signing.PublicKeyBytesToAddress(publicKey2)
 
-	validator := NewOperatorsMembershipValidator(
+	validator := NewMembershipValidator(
+		&testutils.MockLogger{},
 		[]chain.Address{address2, address1, address2},
 		signing,
 	)

@@ -1,13 +1,13 @@
 package gjkr
 
-import "github.com/keep-network/keep-core/pkg/beacon/group"
+import "github.com/keep-network/keep-core/pkg/protocol/group"
 
 // MarkInactiveMembers takes all messages from the previous DKG protocol
 // execution phase and marks all member who did not send a message as IA.
 func (em *SymmetricKeyGeneratingMember) MarkInactiveMembers(
 	ephemeralPubKeyMessages []*EphemeralPublicKeyMessage,
 ) {
-	filter := em.messageFilter()
+	filter := em.inactiveMemberFilter()
 	for _, message := range ephemeralPubKeyMessages {
 		filter.MarkMemberAsActive(message.senderID)
 	}
@@ -21,7 +21,7 @@ func (cvm *CommitmentsVerifyingMember) MarkInactiveMembers(
 	sharesMessages []*PeerSharesMessage,
 	commitmentsMessages []*MemberCommitmentsMessage,
 ) {
-	filter := cvm.messageFilter()
+	filter := cvm.inactiveMemberFilter()
 	for _, sharesMessage := range sharesMessages {
 		for _, commitmentsMessage := range commitmentsMessages {
 			if sharesMessage.senderID == commitmentsMessage.senderID {
@@ -39,7 +39,7 @@ func (cvm *CommitmentsVerifyingMember) MarkInactiveMembers(
 func (cvm *SharesJustifyingMember) MarkInactiveMembers(
 	sharesAccusationsMessages []*SecretSharesAccusationsMessage,
 ) {
-	filter := cvm.messageFilter()
+	filter := cvm.inactiveMemberFilter()
 	for _, message := range sharesAccusationsMessages {
 		filter.MarkMemberAsActive(message.senderID)
 	}
@@ -52,7 +52,7 @@ func (cvm *SharesJustifyingMember) MarkInactiveMembers(
 func (sm *SharingMember) MarkInactiveMembers(
 	keySharePointsMessages []*MemberPublicKeySharePointsMessage,
 ) {
-	filter := sm.messageFilter()
+	filter := sm.inactiveMemberFilter()
 	for _, message := range keySharePointsMessages {
 		filter.MarkMemberAsActive(message.senderID)
 	}
@@ -65,7 +65,7 @@ func (sm *SharingMember) MarkInactiveMembers(
 func (cvm *PointsJustifyingMember) MarkInactiveMembers(
 	pointsAccusationsMessages []*PointsAccusationsMessage,
 ) {
-	filter := cvm.messageFilter()
+	filter := cvm.inactiveMemberFilter()
 	for _, message := range pointsAccusationsMessages {
 		filter.MarkMemberAsActive(message.senderID)
 	}
@@ -78,7 +78,7 @@ func (cvm *PointsJustifyingMember) MarkInactiveMembers(
 func (rm *ReconstructingMember) MarkInactiveMembers(
 	messages []*MisbehavedEphemeralKeysMessage,
 ) {
-	filter := rm.messageFilter()
+	filter := rm.inactiveMemberFilter()
 	for _, message := range messages {
 		filter.MarkMemberAsActive(message.senderID)
 	}
@@ -86,17 +86,23 @@ func (rm *ReconstructingMember) MarkInactiveMembers(
 	filter.FlushInactiveMembers()
 }
 
-func (mc *memberCore) messageFilter() *group.InactiveMemberFilter {
-	return group.NewInactiveMemberFilter(mc.ID, mc.group)
+// inactiveMemberFilter returns a new instance of the inactive member filter.
+func (mc *memberCore) inactiveMemberFilter() *group.InactiveMemberFilter {
+	return group.NewInactiveMemberFilter(mc.logger, mc.ID, mc.group)
 }
 
-func (mc *memberCore) IsSenderAccepted(senderID group.MemberIndex) bool {
-	return mc.group.IsOperating(senderID)
-}
-
-func (mc *memberCore) IsSenderValid(
+// shouldAcceptMessage indicates whether the given member should accept
+// a message from the given sender.
+func (mc *memberCore) shouldAcceptMessage(
 	senderID group.MemberIndex,
 	senderPublicKey []byte,
 ) bool {
-	return mc.membershipValidator.IsValidMembership(senderID, senderPublicKey)
+	isMessageFromSelf := senderID == mc.ID
+	isSenderValid := mc.membershipValidator.IsValidMembership(
+		senderID,
+		senderPublicKey,
+	)
+	isSenderAccepted := mc.group.IsOperating(senderID)
+
+	return !isMessageFromSelf && isSenderValid && isSenderAccepted
 }
