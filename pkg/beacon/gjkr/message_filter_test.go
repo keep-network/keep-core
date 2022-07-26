@@ -3,14 +3,17 @@ package gjkr
 import (
 	"testing"
 
+	"github.com/keep-network/keep-core/pkg/internal/testutils"
+
 	"github.com/keep-network/keep-core/pkg/protocol/group"
 )
 
 func TestFilterSymmetricKeyGeneratingMembers(t *testing.T) {
 	member := (&LocalMember{
 		memberCore: &memberCore{
-			ID:    13,
-			group: group.NewGroup(8, 15),
+			logger: &testutils.MockLogger{},
+			ID:     13,
+			group:  group.NewGroup(8, 15),
 		},
 	}).InitializeEphemeralKeysGeneration().
 		InitializeSymmetricKeyGeneration()
@@ -32,8 +35,9 @@ func TestFilterSymmetricKeyGeneratingMembers(t *testing.T) {
 func TestFilterCommitmentsVefiryingMembers(t *testing.T) {
 	member := (&LocalMember{
 		memberCore: &memberCore{
-			ID:    93,
-			group: group.NewGroup(49, 96),
+			logger: &testutils.MockLogger{},
+			ID:     93,
+			group:  group.NewGroup(49, 96),
 		},
 	}).InitializeEphemeralKeysGeneration().
 		InitializeSymmetricKeyGeneration().
@@ -74,8 +78,9 @@ func TestFilterCommitmentsVefiryingMembers(t *testing.T) {
 func TestFilterSharingMembers(t *testing.T) {
 	member := (&LocalMember{
 		memberCore: &memberCore{
-			ID:    24,
-			group: group.NewGroup(13, 24),
+			logger: &testutils.MockLogger{},
+			ID:     24,
+			group:  group.NewGroup(13, 24),
 		},
 	}).InitializeEphemeralKeysGeneration().
 		InitializeSymmetricKeyGeneration().
@@ -101,8 +106,9 @@ func TestFilterSharingMembers(t *testing.T) {
 func TestFilterReconstructingMember(t *testing.T) {
 	member := (&LocalMember{
 		memberCore: &memberCore{
-			ID:    44,
-			group: group.NewGroup(23, 44),
+			logger: &testutils.MockLogger{},
+			ID:     44,
+			group:  group.NewGroup(23, 44),
 		},
 	}).InitializeEphemeralKeysGeneration().
 		InitializeSymmetricKeyGeneration().
