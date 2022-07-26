@@ -173,17 +173,18 @@ func (sm *SigningMember) VerifyDKGResultSignatures(
 	return receivedValidResultSignatures, nil
 }
 
-// IsSenderAccepted determines if sender of the message is accepted by group
-// (not marked as inactive or disqualified).
-func (sm *SigningMember) IsSenderAccepted(senderID group.MemberIndex) bool {
-	return sm.group.IsOperating(senderID)
-}
-
-// IsSenderValid checks if sender of the provided ProtocolMessage is in the
-// group and uses appropriate group member index.
-func (sm *SigningMember) IsSenderValid(
+// shouldAcceptMessage indicates whether the given member should accept
+// a message from the given sender.
+func (sm *SigningMember) shouldAcceptMessage(
 	senderID group.MemberIndex,
 	senderPublicKey []byte,
 ) bool {
-	return sm.membershipValidator.IsValidMembership(senderID, senderPublicKey)
+	isMessageFromSelf := senderID == sm.index
+	isSenderValid := sm.membershipValidator.IsValidMembership(
+		senderID,
+		senderPublicKey,
+	)
+	isSenderAccepted := sm.group.IsOperating(senderID)
+
+	return !isMessageFromSelf && isSenderValid && isSenderAccepted
 }

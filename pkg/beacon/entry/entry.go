@@ -85,7 +85,7 @@ func SignAndSubmit(
 		select {
 		case netMessage := <-receiveChannel:
 			message, ok := netMessage.Payload().(*SignatureShareMessage)
-			if !ok || group.IsMessageFromSelf(signer.MemberID(), message) {
+			if !ok || signer.MemberID() == message.SenderID() {
 				continue
 			}
 

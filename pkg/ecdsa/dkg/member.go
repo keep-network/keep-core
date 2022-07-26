@@ -35,24 +35,25 @@ func newMember(
 	}
 }
 
-// messageFilter returns a new instance of the message filter.
-func (m *member) messageFilter() *group.InactiveMemberFilter {
+// inactiveMemberFilter returns a new instance of the inactive member filter.
+func (m *member) inactiveMemberFilter() *group.InactiveMemberFilter {
 	return group.NewInactiveMemberFilter(m.logger, m.id, m.group)
 }
 
-// IsSenderAccepted returns true if sender with the given index is accepted
-// as an operating group member.
-func (m *member) IsSenderAccepted(senderID group.MemberIndex) bool {
-	return m.group.IsOperating(senderID)
-}
-
-// IsSenderValid returns true if sender with the given index is considered
-// a valid member of the given group.
-func (m *member) IsSenderValid(
+// shouldAcceptMessage indicates whether the given member should accept
+// a message from the given sender.
+func (m *member) shouldAcceptMessage(
 	senderID group.MemberIndex,
 	senderPublicKey []byte,
 ) bool {
-	return m.membershipValidator.IsValidMembership(senderID, senderPublicKey)
+	isMessageFromSelf := senderID == m.id
+	isSenderValid := m.membershipValidator.IsValidMembership(
+		senderID,
+		senderPublicKey,
+	)
+	isSenderAccepted := m.group.IsOperating(senderID)
+
+	return !isMessageFromSelf && isSenderValid && isSenderAccepted
 }
 
 // initializeEphemeralKeysGeneration performs a transition of a member state
@@ -102,7 +103,7 @@ type symmetricKeyGeneratingMember struct {
 func (skgm *symmetricKeyGeneratingMember) MarkInactiveMembers(
 	ephemeralPubKeyMessages []*ephemeralPublicKeyMessage,
 ) {
-	filter := skgm.messageFilter()
+	filter := skgm.inactiveMemberFilter()
 	for _, message := range ephemeralPubKeyMessages {
 		filter.MarkMemberAsActive(message.senderID)
 	}

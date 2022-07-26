@@ -85,10 +85,10 @@ func (rss *resultSigningState) Receive(msg net.Message) error {
 
 	switch signedMessage := msg.Payload().(type) {
 	case *DKGResultHashSignatureMessage:
-		if !group.IsMessageFromSelf(rss.member.index, signedMessage) &&
-			group.IsSenderValid(rss.member, signedMessage, msg.SenderPublicKey()) &&
-			group.IsSenderAccepted(rss.member, signedMessage) &&
-			isValidKeyUsed(signedMessage) {
+		if rss.member.shouldAcceptMessage(
+			signedMessage.SenderID(),
+			msg.SenderPublicKey(),
+		) && isValidKeyUsed(signedMessage) {
 			rss.signatureMessages = append(rss.signatureMessages, signedMessage)
 		}
 	}

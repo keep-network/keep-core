@@ -22,11 +22,11 @@ func TestFilterSymmetricKeyGeneratingMembers(t *testing.T) {
 
 	member.MarkInactiveMembers(messages)
 
-	assertAcceptsFrom(member, 13, t) // should accept from self
-	assertAcceptsFrom(member, 11, t)
-	assertAcceptsFrom(member, 14, t)
-	assertNotAcceptFrom(member, 12, t)
-	assertNotAcceptFrom(member, 15, t)
+	assertAcceptsFrom(member.memberCore, 13, t) // should accept from self
+	assertAcceptsFrom(member.memberCore, 11, t)
+	assertAcceptsFrom(member.memberCore, 14, t)
+	assertNotAcceptFrom(member.memberCore, 12, t)
+	assertNotAcceptFrom(member.memberCore, 15, t)
 }
 
 func TestFilterCommitmentsVefiryingMembers(t *testing.T) {
@@ -55,20 +55,20 @@ func TestFilterCommitmentsVefiryingMembers(t *testing.T) {
 	member.MarkInactiveMembers(sharesMessages, commitmentsMessages)
 
 	// should accept from self
-	assertAcceptsFrom(member, 93, t)
+	assertAcceptsFrom(member.memberCore, 93, t)
 
 	// 92 and 94 sent both shares message and commitments message
-	assertAcceptsFrom(member, 92, t)
-	assertAcceptsFrom(member, 94, t)
+	assertAcceptsFrom(member.memberCore, 92, t)
+	assertAcceptsFrom(member.memberCore, 94, t)
 
 	// 95 did not send shares message
-	assertNotAcceptFrom(member, 95, t)
+	assertNotAcceptFrom(member.memberCore, 95, t)
 
 	// 91 did not send commitments message
-	assertNotAcceptFrom(member, 91, t)
+	assertNotAcceptFrom(member.memberCore, 91, t)
 
 	// 96 did not send shares message nor commitments message
-	assertNotAcceptFrom(member, 96, t)
+	assertNotAcceptFrom(member.memberCore, 96, t)
 }
 
 func TestFilterSharingMembers(t *testing.T) {
@@ -92,10 +92,10 @@ func TestFilterSharingMembers(t *testing.T) {
 
 	member.MarkInactiveMembers(messages)
 
-	assertAcceptsFrom(member, 24, t) // should accept from self
-	assertAcceptsFrom(member, 21, t)
-	assertAcceptsFrom(member, 23, t)
-	assertNotAcceptFrom(member, 22, t)
+	assertAcceptsFrom(member.memberCore, 24, t) // should accept from self
+	assertAcceptsFrom(member.memberCore, 21, t)
+	assertAcceptsFrom(member.memberCore, 23, t)
+	assertNotAcceptFrom(member.memberCore, 22, t)
 }
 
 func TestFilterReconstructingMember(t *testing.T) {
@@ -121,20 +121,20 @@ func TestFilterReconstructingMember(t *testing.T) {
 
 	member.MarkInactiveMembers(messages)
 
-	assertAcceptsFrom(member, 44, t) // should accept from self
-	assertAcceptsFrom(member, 41, t)
-	assertNotAcceptFrom(member, 42, t)
-	assertNotAcceptFrom(member, 43, t)
+	assertAcceptsFrom(member.memberCore, 44, t) // should accept from self
+	assertAcceptsFrom(member.memberCore, 41, t)
+	assertNotAcceptFrom(member.memberCore, 42, t)
+	assertNotAcceptFrom(member.memberCore, 43, t)
 }
 
-func assertAcceptsFrom(member group.MessageFiltering, senderID group.MemberIndex, t *testing.T) {
-	if !member.IsSenderAccepted(senderID) {
+func assertAcceptsFrom(member *memberCore, senderID group.MemberIndex, t *testing.T) {
+	if !member.group.IsOperating(senderID) {
 		t.Errorf("member should accept messages from [%v]", senderID)
 	}
 }
 
-func assertNotAcceptFrom(member group.MessageFiltering, senderID group.MemberIndex, t *testing.T) {
-	if member.IsSenderAccepted(senderID) {
+func assertNotAcceptFrom(member *memberCore, senderID group.MemberIndex, t *testing.T) {
+	if member.group.IsOperating(senderID) {
 		t.Errorf("member should not accept messages from [%v]", senderID)
 	}
 }

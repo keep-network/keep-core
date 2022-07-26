@@ -56,9 +56,10 @@ func (ekpgs *ephemeralKeyPairGenerationState) Initiate(ctx context.Context) erro
 func (ekpgs *ephemeralKeyPairGenerationState) Receive(msg net.Message) error {
 	switch phaseMessage := msg.Payload().(type) {
 	case *ephemeralPublicKeyMessage:
-		if !group.IsMessageFromSelf(ekpgs.member.id, phaseMessage) &&
-			group.IsSenderValid(ekpgs.member, phaseMessage, msg.SenderPublicKey()) &&
-			group.IsSenderAccepted(ekpgs.member, phaseMessage) {
+		if ekpgs.member.shouldAcceptMessage(
+			phaseMessage.SenderID(),
+			msg.SenderPublicKey(),
+		) {
 			ekpgs.phaseMessages = append(ekpgs.phaseMessages, phaseMessage)
 		}
 	}
