@@ -48,7 +48,7 @@ func EvaluateRetryParticipantsForSigning(
 ) ([]chain.Address, error) {
 	if int(retryParticipantsCount) > len(groupMembers) {
 		return nil, fmt.Errorf(
-			"Asked for too many seats. %d seats were requested, but there are only %d available.",
+			"asked for too many seats. [%d] seats were requested, but there are only [%d] available.",
 			retryParticipantsCount,
 			len(groupMembers),
 		)
