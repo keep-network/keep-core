@@ -13,7 +13,7 @@ func TestEvaluateRetryParticipantsForSigning_100DifferentOperators(t *testing.T)
 		groupMembers[i] = chain.Address(fmt.Sprintf("Operator-%d", i))
 	}
 	subset, _ := EvaluateRetryParticipantsForSigning(groupMembers, int64(123), 0, 51)
-	invariants(groupMembers, subset, 51, t)
+	assertInvariants(groupMembers, subset, 51, t)
 }
 
 func TestEvaluateRetryParticipantsForSigning_FewOperators(t *testing.T) {
@@ -22,7 +22,7 @@ func TestEvaluateRetryParticipantsForSigning_FewOperators(t *testing.T) {
 		groupMembers[i] = chain.Address(fmt.Sprintf("Operator-%d", i%3))
 	}
 	subset, _ := EvaluateRetryParticipantsForSigning(groupMembers, int64(456), 0, 51)
-	invariants(groupMembers, subset, 51, t)
+	assertInvariants(groupMembers, subset, 51, t)
 }
 
 func isSubset(groupMembers []chain.Address, subset []chain.Address, t *testing.T) {
@@ -97,7 +97,7 @@ func affectedByRetryCount(groupMembers []chain.Address, quantity uint, t *testin
 	}
 }
 
-func invariants(groupMembers []chain.Address, subset []chain.Address, quantity uint, t *testing.T) {
+func assertInvariants(groupMembers []chain.Address, subset []chain.Address, quantity uint, t *testing.T) {
 	isSubset(groupMembers, subset, t)
 	isStable(groupMembers, subset, quantity, t)
 	isLargeEnough(subset, quantity, t)
