@@ -28,7 +28,6 @@ func TestProviderReturnsType(t *testing.T) {
 		ctx,
 		generateDeterministicNetworkConfig(),
 		operatorPrivateKey,
-		ProtocolKeep,
 		firewall.Disabled,
 		idleTicker(),
 	)
@@ -59,7 +58,6 @@ func TestProviderReturnsChannel(t *testing.T) {
 		ctx,
 		generateDeterministicNetworkConfig(),
 		operatorPrivateKey,
-		ProtocolKeep,
 		firewall.Disabled,
 		idleTicker(),
 	)
@@ -104,7 +102,6 @@ func TestSendReceive(t *testing.T) {
 		ctx,
 		config,
 		operatorPrivateKey,
-		ProtocolKeep,
 		firewall.Disabled,
 		idleTicker(),
 	)
@@ -178,7 +175,6 @@ func TestProviderSetAnnouncedAddresses(t *testing.T) {
 		ctx,
 		config,
 		operatorPrivateKey,
-		ProtocolKeep,
 		firewall.Disabled,
 		idleTicker(),
 	)
