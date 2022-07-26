@@ -218,7 +218,13 @@ func TestGenerateSymmetricKeys_InvalidEphemeralPublicKeyMessage(t *testing.T) {
 			)
 		}
 
-		testutils.AssertErrorsEqual(t, expectedErr, err)
+		if !reflect.DeepEqual(expectedErr, err) {
+			t.Errorf(
+				"unexpected error\nexpected: %v\nactual:   %v\n",
+				expectedErr,
+				err,
+			)
+		}
 	}
 }
 
@@ -233,8 +239,9 @@ func initializeEphemeralKeyPairGeneratingMembersGroup(
 		id := group.MemberIndex(i)
 		members = append(members, &ephemeralKeyPairGeneratingMember{
 			member: &member{
-				id:    id,
-				group: dkgGroup,
+				logger: &testutils.MockLogger{},
+				id:     id,
+				group:  dkgGroup,
 			},
 			ephemeralKeyPairs: make(map[group.MemberIndex]*ephemeral.KeyPair),
 		})

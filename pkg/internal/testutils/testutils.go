@@ -6,16 +6,16 @@ import (
 	"errors"
 	"fmt"
 	"math/big"
-	"reflect"
 	"testing"
 
 	crand "crypto/rand"
 )
 
-// AssertErrorsEqual checks if two errors are equal. If not, it reports a test
-// failure.
-func AssertErrorsEqual(t *testing.T, expected error, actual error) {
-	if !reflect.DeepEqual(expected, actual) {
+// AssertErrorsSame checks if two errors are equal. If not, it reports a test
+// failure. Note that this function doesn't check errors deep equality but
+// just checks whether both arguments point to the same underlying instance.
+func AssertErrorsSame(t *testing.T, expected error, actual error) {
+	if expected != actual {
 		t.Errorf(
 			"unexpected error\nexpected: %v\nactual:   %v\n",
 			expected,
@@ -24,7 +24,7 @@ func AssertErrorsEqual(t *testing.T, expected error, actual error) {
 	}
 }
 
-// AssertErrorsEqual checks if any error in the error chain matches the target.
+// AssertErrorsSame checks if any error in the error chain matches the target.
 // If not, it reports a test failure.
 func AssertAnyErrorInChainMatchesTarget(t *testing.T, target error, actual error) {
 	if !errors.Is(actual, target) {

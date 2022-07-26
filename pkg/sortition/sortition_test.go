@@ -41,7 +41,7 @@ func TestMonitorPool_NotRegisteredOperator(t *testing.T) {
 	localChain := local.Connect(testOperatorAddress)
 
 	err := MonitorPool(ctx, &testutils.MockLogger{}, localChain, statusCheckTick)
-	testutils.AssertErrorsEqual(t, errOperatorUnknown, err)
+	testutils.AssertErrorsSame(t, errOperatorUnknown, err)
 }
 
 func TestMonitorPool_NoStake(t *testing.T) {
