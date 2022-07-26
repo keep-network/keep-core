@@ -36,6 +36,10 @@ func calculateSeatCount(groupMembers []chain.Address) map[chain.Address]uint {
 // The `seed` param needs to vary on a per-message basis but must be the same
 // seed between all operators for each invocation. This can be the hash of the
 // message since cryptographically secure randomness isn't important.
+//
+// The `retryCount` denotes the number of the given retry, so that should be
+// incremented after each attempt while the `seed` stays consistent on a
+// per-message basis.
 func EvaluateRetryParticipantsForSigning(
 	groupMembers []chain.Address,
 	seed int64,
