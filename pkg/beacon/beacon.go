@@ -19,6 +19,9 @@ import (
 
 var logger = log.Logger("keep-beacon")
 
+// ProtocolName denotes the name of the protocol defined by this package.
+const ProtocolName = "beacon"
+
 // Initialize kicks off the random beacon by initializing internal state,
 // ensuring preconditions like staking are met, and then kicking off the
 // internal random beacon implementation. Returns an error if this failed,

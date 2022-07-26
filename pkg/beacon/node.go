@@ -98,9 +98,9 @@ func (n *node) JoinDKGIfEligible(
 		}
 	}
 
-	// create temporary broadcast channel name for DKG using the
-	// group selection seed
-	channelName := dkgSeed.Text(16)
+	// Create temporary broadcast channel name for DKG using the
+	// group selection seed with the protocol name as prefix.
+	channelName := fmt.Sprintf("%s-%s", ProtocolName, dkgSeed.Text(16))
 
 	if len(indexes) > 0 {
 		logger.Infof(

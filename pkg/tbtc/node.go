@@ -1,6 +1,7 @@
 package tbtc
 
 import (
+	"fmt"
 	"github.com/keep-network/keep-common/pkg/persistence"
 	"github.com/keep-network/keep-core/pkg/ecdsa/dkg"
 	"github.com/keep-network/keep-core/pkg/net"
@@ -83,8 +84,8 @@ func (n *node) joinDKGIfEligible(seed *big.Int, startBlockNumber uint64) {
 	}
 
 	// Create temporary broadcast channel name for DKG using the
-	// group selection seed.
-	channelName := seed.Text(16)
+	// group selection seed with the protocol name as prefix.
+	channelName := fmt.Sprintf("%s-%s", ProtocolName, seed.Text(16))
 
 	if len(indexes) > 0 {
 		logger.Infof(
