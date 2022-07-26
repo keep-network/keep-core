@@ -29,22 +29,16 @@ func Initialize(
 	netProvider net.Provider,
 	persistence persistence.Handle,
 ) error {
-	_, operatorPublicKey, err := beaconChain.OperatorKeyPair()
-	if err != nil {
-		return fmt.Errorf("failed to get operator key pair: [%v]", err)
-	}
-
 	groupRegistry := registry.NewGroupRegistry(beaconChain, persistence)
 	groupRegistry.LoadExistingGroups()
 
 	node := newNode(
-		operatorPublicKey,
-		netProvider,
 		beaconChain,
+		netProvider,
 		groupRegistry,
 	)
 
-	err = sortition.MonitorPool(ctx, beaconChain, sortition.DefaultStatusCheckTick)
+	err := sortition.MonitorPool(ctx, beaconChain, sortition.DefaultStatusCheckTick)
 	if err != nil {
 		return fmt.Errorf("could not set up sortition pool monitoring: [%v]", err)
 	}

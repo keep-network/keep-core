@@ -11,7 +11,6 @@ import (
 	"github.com/keep-network/keep-core/pkg/beacon/dkg"
 	"github.com/keep-network/keep-core/pkg/beacon/entry"
 	"github.com/keep-network/keep-core/pkg/beacon/event"
-	"github.com/keep-network/keep-core/pkg/operator"
 	"github.com/keep-network/keep-core/pkg/protocol/group"
 
 	"github.com/keep-network/keep-core/pkg/beacon/registry"
@@ -20,28 +19,22 @@ import (
 
 // node represents the current state of a beacon node.
 type node struct {
-	operatorPublicKey *operator.PublicKey
-
-	// External interactors.
-	netProvider net.Provider
-	beaconChain beaconchain.Interface
-
+	beaconChain   beaconchain.Interface
+	netProvider   net.Provider
 	groupRegistry *registry.Groups
 }
 
 // newNode returns an empty node with no group, zero group count, and a nil last
 // seen entry, tied to the given net.Provider.
 func newNode(
-	operatorPublicKey *operator.PublicKey,
-	netProvider net.Provider,
 	beaconChain beaconchain.Interface,
+	netProvider net.Provider,
 	groupRegistry *registry.Groups,
 ) *node {
 	return &node{
-		operatorPublicKey: operatorPublicKey,
-		netProvider:       netProvider,
-		beaconChain:       beaconChain,
-		groupRegistry:     groupRegistry,
+		beaconChain:   beaconChain,
+		netProvider:   netProvider,
+		groupRegistry: groupRegistry,
 	}
 }
 
@@ -85,7 +78,13 @@ func (n *node) JoinDKGIfEligible(
 
 	signing := n.beaconChain.Signing()
 
-	operatorAddress, err := signing.PublicKeyToAddress(n.operatorPublicKey)
+	_, operatorPublicKey, err := n.beaconChain.OperatorKeyPair()
+	if err != nil {
+		logger.Errorf("failed to get operator public key: [%v]", err)
+		return
+	}
+
+	operatorAddress, err := signing.PublicKeyToAddress(operatorPublicKey)
 	if err != nil {
 		logger.Errorf("failed to get operator address: [%v]", err)
 		return
