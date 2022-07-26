@@ -7,6 +7,24 @@ import (
 	"github.com/keep-network/keep-core/pkg/chain"
 )
 
+func TestEvaluateRetryParticipantsForSigning_100DifferentOperators(t *testing.T) {
+	groupMembers := make([]chain.Address, 100)
+	for i := 0; i < 100; i++ {
+		groupMembers[i] = chain.Address(fmt.Sprintf("Operator-%d", i))
+	}
+	subset, _ := EvaluateRetryParticipantsForSigning(groupMembers, int64(123), 0, 51)
+	invariants(groupMembers, subset, 51, t)
+}
+
+func TestEvaluateRetryParticipantsForSigning_FewOperators(t *testing.T) {
+	groupMembers := make([]chain.Address, 100)
+	for i := 0; i < 100; i++ {
+		groupMembers[i] = chain.Address(fmt.Sprintf("Operator-%d", i%3))
+	}
+	subset, _ := EvaluateRetryParticipantsForSigning(groupMembers, int64(456), 0, 51)
+	invariants(groupMembers, subset, 51, t)
+}
+
 func isSubset(groupMembers []chain.Address, subset []chain.Address, t *testing.T) {
 	memberMap := make(map[chain.Address]struct{})
 	for _, operator := range groupMembers {
@@ -85,22 +103,4 @@ func invariants(groupMembers []chain.Address, subset []chain.Address, quantity u
 	isLargeEnough(subset, quantity, t)
 	affectedBySeed(groupMembers, subset, quantity, t)
 	affectedByRetryCount(groupMembers, quantity, t)
-}
-
-func TestEvaluateRetryParticipantsForSigning_100DifferentOperators(t *testing.T) {
-	groupMembers := make([]chain.Address, 100)
-	for i := 0; i < 100; i++ {
-		groupMembers[i] = chain.Address(fmt.Sprintf("Operator-%d", i))
-	}
-	subset, _ := EvaluateRetryParticipantsForSigning(groupMembers, int64(123), 0, 51)
-	invariants(groupMembers, subset, 51, t)
-}
-
-func TestEvaluateRetryParticipantsForSigning_FewOperators(t *testing.T) {
-	groupMembers := make([]chain.Address, 100)
-	for i := 0; i < 100; i++ {
-		groupMembers[i] = chain.Address(fmt.Sprintf("Operator-%d", i%3))
-	}
-	subset, _ := EvaluateRetryParticipantsForSigning(groupMembers, int64(456), 0, 51)
-	invariants(groupMembers, subset, 51, t)
 }
