@@ -109,7 +109,7 @@ func Start(c *cli.Context) error {
 		ctx,
 		tbtcChain,
 		netProvider,
-		encryptedPersistence,
+		nil, // TODO: Pass a proper persistence handle.
 	)
 	if err != nil {
 		return fmt.Errorf("error initializing TBTC: [%v]", err)
