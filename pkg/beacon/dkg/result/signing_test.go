@@ -304,6 +304,98 @@ func TestVerifyDKGResultSignatures(t *testing.T) {
 	}
 }
 
+func TestShouldAcceptMessage(t *testing.T) {
+	groupSize := 5
+	honestThreshold := 3
+
+	localChain := local_v1.Connect(groupSize, honestThreshold)
+
+	operatorsAddresses := make([]chain.Address, groupSize)
+	operatorsPublicKeys := make([][]byte, groupSize)
+	for i := range operatorsAddresses {
+		_, operatorPublicKey, err := operator.GenerateKeyPair(
+			local_v1.DefaultCurve,
+		)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		operatorAddress, err := localChain.Signing().PublicKeyToAddress(
+			operatorPublicKey,
+		)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		operatorsAddresses[i] = operatorAddress
+		operatorsPublicKeys[i] = operator.MarshalUncompressed(operatorPublicKey)
+	}
+
+	tests := map[string]struct {
+		senderID           group.MemberIndex
+		senderPublicKey    []byte
+		inactiveMembersIDs []group.MemberIndex
+		expectedResult     bool
+	}{
+		"message from another valid and operating member": {
+			senderID:           group.MemberIndex(2),
+			senderPublicKey:    operatorsPublicKeys[1],
+			inactiveMembersIDs: []group.MemberIndex{},
+			expectedResult:     true,
+		},
+		"message from another valid but non-operating member": {
+			senderID:           group.MemberIndex(2),
+			senderPublicKey:    operatorsPublicKeys[1],
+			inactiveMembersIDs: []group.MemberIndex{2}, // 2 is inactive
+			expectedResult:     false,
+		},
+		"message from self": {
+			senderID:           group.MemberIndex(1),
+			senderPublicKey:    operatorsPublicKeys[0],
+			inactiveMembersIDs: []group.MemberIndex{},
+			expectedResult:     false,
+		},
+		"message from another invalid member": {
+			senderID:           group.MemberIndex(2),
+			senderPublicKey:    operatorsPublicKeys[3],
+			inactiveMembersIDs: []group.MemberIndex{},
+			expectedResult:     false,
+		},
+	}
+
+	for testName, test := range tests {
+		t.Run(testName, func(t *testing.T) {
+			dkgGroup := group.NewGroup(groupSize-honestThreshold, groupSize)
+
+			membershipValdator := group.NewMembershipValidator(
+				&testutils.MockLogger{},
+				operatorsAddresses,
+				localChain.Signing(),
+			)
+
+			member := NewSigningMember(
+				&testutils.MockLogger{},
+				group.MemberIndex(1),
+				dkgGroup,
+				membershipValdator,
+			)
+
+			for _, inactiveMemberID := range test.inactiveMembersIDs {
+				dkgGroup.MarkMemberAsInactive(inactiveMemberID)
+			}
+
+			result := member.shouldAcceptMessage(test.senderID, test.senderPublicKey)
+
+			testutils.AssertBoolsEqual(
+				t,
+				"result from message validator",
+				test.expectedResult,
+				result,
+			)
+		})
+	}
+}
+
 func initializeSigningMembers(groupSize int) (
 	[]*SigningMember,
 	[]beaconchain.Interface,
