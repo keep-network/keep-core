@@ -13,7 +13,10 @@ func TestEvaluateRetryParticipantsForSigning_100DifferentOperators(t *testing.T)
 	for i := 0; i < 100; i++ {
 		groupMembers[i] = chain.Address(fmt.Sprintf("Operator-%d", i))
 	}
-	subset, _ := EvaluateRetryParticipantsForSigning(groupMembers, int64(123), 0, 51)
+	subset, err := EvaluateRetryParticipantsForSigning(groupMembers, int64(123), 0, 51)
+	if err != nil {
+		t.Fatalf("unexpected error: [%s]", err)
+	}
 	assertInvariants(t, groupMembers, subset, 51)
 }
 
@@ -22,7 +25,10 @@ func TestEvaluateRetryParticipantsForSigning_FewOperators(t *testing.T) {
 	for i := 0; i < 100; i++ {
 		groupMembers[i] = chain.Address(fmt.Sprintf("Operator-%d", i%3))
 	}
-	subset, _ := EvaluateRetryParticipantsForSigning(groupMembers, int64(456), 0, 51)
+	subset, err := EvaluateRetryParticipantsForSigning(groupMembers, int64(456), 0, 51)
+	if err != nil {
+		t.Fatalf("unexpected error: [%s]", err)
+	}
 	assertInvariants(t, groupMembers, subset, 51)
 }
 
