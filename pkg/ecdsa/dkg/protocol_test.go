@@ -271,8 +271,6 @@ func initializeSymmetricKeyGeneratingMembersGroup(
 
 		members = append(members, member.initializeSymmetricKeyGeneration())
 		messages = append(messages, message)
-
-		fmt.Printf("m %v s %v\n", member.id, message.senderID)
 	}
 
 	return members, messages, nil
