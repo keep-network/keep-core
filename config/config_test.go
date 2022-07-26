@@ -30,10 +30,6 @@ func TestReadConfigFromFile(t *testing.T) {
 			readValueFunc: func(c *Config) interface{} { return c.Ethereum.URL },
 			expectedValue: "ws://192.168.0.158:8546",
 		},
-		"Ethereum.URLRPC": {
-			readValueFunc: func(c *Config) interface{} { return c.Ethereum.URLRPC },
-			expectedValue: "http://192.168.0.158:8545",
-		},
 		"Ethereum.ContractAddresses": {
 			readValueFunc: func(c *Config) interface{} { return c.Ethereum.ContractAddresses },
 			expectedValue: map[string]string{
