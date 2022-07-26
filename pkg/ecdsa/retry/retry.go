@@ -22,6 +22,19 @@ func calculateSeatCount(groupMembers []chain.Address) map[chain.Address]uint {
 	return operatorToSeatCount
 }
 
+// EvaluateRetryParticipantsForSigning takes in a slice of `groupMembers` and
+// returns a subslice of those same members of length >= `quantity` randomly
+// according to the provided `seed` and `retryCount`.
+//
+// This function is intended to be called during a signing protocol after a
+// signing event has failed but *not* due to inactivity. Assuming that some of
+// the `groupMembers` are sending corrupted information, either on purpose or
+// accidentally, we keep trying to find a subset of `groupMembers` that is as
+// small as possible, yet still larger than `quantity`.
+//
+// The `seed` param needs to vary on a per-message basis but must be the same
+// seed between all operators for each invocation. This can be the hash of the
+// message since cryptographically secure randomness isn't important.
 func EvaluateRetryParticipantsForSigning(
 	groupMembers []chain.Address,
 	seed int64,
