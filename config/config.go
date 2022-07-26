@@ -81,7 +81,7 @@ func initEnvVars() {
 }
 
 // InitFlags initializes command-line flags for the client configuration.
-func InitFlags(command *cobra.Command) {
+func InitFlags(command *cobra.Command) error {
 	command.PersistentFlags().StringP(
 		configFilePathFlag,
 		"c",
@@ -90,23 +90,35 @@ func InitFlags(command *cobra.Command) {
 	)
 
 	command.Flags().String(ethereumKeyFlag, "", "operator's Ethereum Key File path")
-	viper.BindPFlag("ethereum.account.keyfile", command.Flags().Lookup(ethereumKeyFlag))
+	if err := viper.BindPFlag("ethereum.account.keyfile", command.Flags().Lookup(ethereumKeyFlag)); err != nil {
+		return fmt.Errorf("failed to bind %s command-line flag: %w", ethereumKeyFlag, err)
+	}
 
 	command.Flags().String(ethereumUrlFlag, "", "Ethereum API URL")
-	viper.BindPFlag("ethereum.url", command.Flags().Lookup(ethereumUrlFlag))
+	if err := viper.BindPFlag("ethereum.url", command.Flags().Lookup(ethereumUrlFlag)); err != nil {
+		return fmt.Errorf("failed to bind %s command-line flag: %w", ethereumUrlFlag, err)
+	}
 
 	command.Flags().String(dataDirFlag, registry.DefaultStoragePath, "path to the storage directory")
-	viper.BindPFlag("storage.datadir", command.Flags().Lookup(dataDirFlag))
+	if err := viper.BindPFlag("storage.datadir", command.Flags().Lookup(dataDirFlag)); err != nil {
+		return fmt.Errorf("failed to bind %s command-line flag: %w", dataDirFlag, err)
+	}
 
 	command.Flags().IntP(portFlag, "p", libp2p.DefaultPort, "port at which client will be exposed")
-	viper.BindPFlag("network.port", command.Flags().Lookup(portFlag))
+	if err := viper.BindPFlag("network.port", command.Flags().Lookup(portFlag)); err != nil {
+		return fmt.Errorf("failed to bind %s command-line flag: %w", portFlag, err)
+	}
 
 	// TODO: Read default peers from a file.
 	command.Flags().StringSlice(peersFlag, []string{}, "peers")
-	viper.BindPFlag("network.peers", command.Flags().Lookup(peersFlag))
+	if err := viper.BindPFlag("network.peers", command.Flags().Lookup(peersFlag)); err != nil {
+		return fmt.Errorf("failed to bind %s command-line flag: %w", peersFlag, err)
+	}
 
 	command.Flags().StringSlice(announcedAddressesFlag, []string{}, "announced addresses")
-	viper.BindPFlag("network.announcedaddresses", command.Flags().Lookup(announcedAddressesFlag))
+	if err := viper.BindPFlag("network.announcedaddresses", command.Flags().Lookup(announcedAddressesFlag)); err != nil {
+		return fmt.Errorf("failed to bind %s command-line flag: %w", announcedAddressesFlag, err)
+	}
 
 	// Configure default contract addresses.
 	bindEthereumContract := func(contractName string, defaultAddress string) (err error) {
@@ -125,16 +137,25 @@ func InitFlags(command *cobra.Command) {
 				contractName,
 			),
 		)
-		viper.BindPFlag(configKey, command.Flags().Lookup(flag))
+		if err := viper.BindPFlag(configKey, command.Flags().Lookup(flag)); err != nil {
+			return fmt.Errorf(
+				"failed to bind command-line flag for %s address: %w",
+				contractName,
+				err,
+			)
+		}
 
 		return
 	}
+
 	if err := bindEthereumContract(
 		ethereumChain.RandomBeaconContractName,
 		ethereumBeaconGen.RandomBeaconAddress,
 	); err != nil {
-		logger.Fatal(err)
+		return fmt.Errorf("failed to bind ethereum contract: %w", err)
 	}
+
+	return nil
 }
 
 // ReadConfig reads in the configuration file at `filePath` and returns the

@@ -42,7 +42,9 @@ var (
 const startDescription = `Starts the Keep Client in the foreground`
 
 func init() {
-	config.InitFlags(StartCommand)
+	if err := config.InitFlags(StartCommand); err != nil {
+		logger.Fatal("failed to initialize config: %v", err)
+	}
 }
 
 // start starts a node
