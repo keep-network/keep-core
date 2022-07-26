@@ -86,7 +86,6 @@ func Start(c *cli.Context) error {
 		ctx,
 		config.LibP2P,
 		operatorPrivateKey,
-		libp2p.ProtocolKeep,
 		firewall,
 		retransmission.NewTicker(blockCounter.WatchBlocks(ctx)),
 	)

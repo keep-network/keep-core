@@ -57,7 +57,7 @@ const (
 
 // Keep Network protocol identifiers
 const (
-	ProtocolKeep = "keep"
+	protocolKeep = "keep"
 )
 
 // MaximumDisseminationTime is the maximum dissemination time of messages in
@@ -269,7 +269,6 @@ func Connect(
 	ctx context.Context,
 	config Config,
 	operatorPrivateKey *operator.PrivateKey,
-	protocol string,
 	firewall net.Firewall,
 	ticker *retransmission.Ticker,
 	options ...ConnectOption,
@@ -298,7 +297,6 @@ func Connect(
 		ctx,
 		identity,
 		config.Port,
-		protocol,
 		config.AnnouncedAddresses,
 		firewall,
 	)
@@ -360,7 +358,6 @@ func discoverAndListen(
 	ctx context.Context,
 	identity *identity,
 	port int,
-	protocol string,
 	announcedAddresses []string,
 	firewall net.Firewall,
 ) (host.Host, error) {
@@ -374,7 +371,7 @@ func discoverAndListen(
 
 	transport, err := newEncryptedAuthenticatedTransport(
 		identity.privKey,
-		protocol,
+		protocolKeep,
 		firewall,
 	)
 	if err != nil {
