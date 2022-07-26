@@ -116,6 +116,7 @@ func (n *node) JoinDKGIfEligible(
 		}
 
 		membershipValidator := group.NewMembershipValidator(
+			logger,
 			selectedOperators,
 			signing,
 		)
@@ -136,6 +137,7 @@ func (n *node) JoinDKGIfEligible(
 
 			go func() {
 				signer, err := dkg.ExecuteDKG(
+					logger,
 					dkgSeed,
 					memberIndex,
 					dkgStartBlockNumber,
@@ -333,6 +335,7 @@ func (n *node) GenerateRelayEntry(
 		GroupOperators()
 
 	membershipValidator := group.NewMembershipValidator(
+		logger,
 		groupMembers,
 		n.beaconChain.Signing(),
 	)
@@ -357,6 +360,7 @@ func (n *node) GenerateRelayEntry(
 	for _, member := range memberships {
 		go func(member *registry.Membership) {
 			err = entry.SignAndSubmit(
+				logger,
 				blockCounter,
 				channel,
 				n.beaconChain,

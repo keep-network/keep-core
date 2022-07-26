@@ -3,6 +3,7 @@ package result
 import (
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/chain/local_v1"
+	"github.com/keep-network/keep-core/pkg/internal/testutils"
 	"reflect"
 	"testing"
 
@@ -340,6 +341,7 @@ func initializeSigningMembers(groupSize int) (
 	}
 
 	membershipValidator := group.NewMembershipValidator(
+		&testutils.MockLogger{},
 		operatorsAddresses,
 		beaconChains[0].Signing(),
 	)
@@ -348,6 +350,7 @@ func initializeSigningMembers(groupSize int) (
 		memberIndex := group.MemberIndex(i + 1)
 
 		members[i] = NewSigningMember(
+			&testutils.MockLogger{},
 			memberIndex,
 			dkgGroup,
 			membershipValidator,

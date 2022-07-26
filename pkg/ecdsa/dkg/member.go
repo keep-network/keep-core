@@ -1,12 +1,15 @@
 package dkg
 
 import (
+	"github.com/ipfs/go-log"
 	"github.com/keep-network/keep-core/pkg/crypto/ephemeral"
 	"github.com/keep-network/keep-core/pkg/protocol/group"
 )
 
 // Member represents a DKG protocol member.
 type member struct {
+	// Logger used to produce log messages.
+	logger log.StandardLogger
 	// id of this group member.
 	id group.MemberIndex
 	// Group to which this member belongs.
@@ -18,12 +21,14 @@ type member struct {
 
 // newMember creates a new member in an initial state
 func newMember(
+	logger log.StandardLogger,
 	memberID group.MemberIndex,
 	groupSize,
 	dishonestThreshold int,
 	membershipValidator *group.MembershipValidator,
 ) *member {
 	return &member{
+		logger:              logger,
 		id:                  memberID,
 		group:               group.NewGroup(dishonestThreshold, groupSize),
 		membershipValidator: membershipValidator,
@@ -32,7 +37,7 @@ func newMember(
 
 // messageFilter returns a new instance of the message filter.
 func (m *member) messageFilter() *group.InactiveMemberFilter {
-	return group.NewInactiveMemberFilter(m.id, m.group)
+	return group.NewInactiveMemberFilter(m.logger, m.id, m.group)
 }
 
 // IsSenderAccepted returns true if sender with the given index is accepted

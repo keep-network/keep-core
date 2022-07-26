@@ -28,7 +28,7 @@ import (
 	ma "github.com/multiformats/go-multiaddr"
 )
 
-var logger = log.Logger("keep-net-libp2p")
+var logger = log.Logger("keep-libp2p")
 
 // Defaults from ipfs
 const (
@@ -346,6 +346,7 @@ func Connect(
 	// Instantiates and starts the connection management background process.
 	watchtower.NewGuard(
 		ctx,
+		logger,
 		FirewallCheckTick,
 		firewall,
 		provider.connectionManager,

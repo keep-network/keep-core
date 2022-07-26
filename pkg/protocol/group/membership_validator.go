@@ -1,9 +1,9 @@
 package group
 
 import (
-	"github.com/keep-network/keep-core/pkg/operator"
-
+	"github.com/ipfs/go-log"
 	"github.com/keep-network/keep-core/pkg/chain"
+	"github.com/keep-network/keep-core/pkg/operator"
 )
 
 // MembershipValidator operates on a group selection result and lets to
@@ -14,6 +14,7 @@ import (
 // a party that was selected. This is used to validate messages sent by that
 // party to all other group members.
 type MembershipValidator struct {
+	logger  log.StandardLogger
 	members map[string][]int // operator address -> operator positions in group
 	signing chain.Signing
 }
@@ -21,6 +22,7 @@ type MembershipValidator struct {
 // NewMembershipValidator creates a validator for the provided group selection
 // result.
 func NewMembershipValidator(
+	logger log.StandardLogger,
 	operatorsAddresses []chain.Address,
 	signing chain.Signing,
 ) *MembershipValidator {
@@ -37,6 +39,7 @@ func NewMembershipValidator(
 	}
 
 	return &MembershipValidator{
+		logger:  logger,
 		members: members,
 		signing: signing,
 	}
@@ -49,7 +52,7 @@ func (mv *MembershipValidator) IsInGroup(
 ) bool {
 	address, err := mv.signing.PublicKeyToAddress(publicKey)
 	if err != nil {
-		logger.Errorf("cannot convert public key to chain address: [%v]", err)
+		mv.logger.Errorf("cannot convert public key to chain address: [%v]", err)
 		return false
 	}
 

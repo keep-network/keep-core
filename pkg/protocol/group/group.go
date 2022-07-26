@@ -2,10 +2,6 @@
 // and auxiliary tools that help during group-related operations.
 package group
 
-import "github.com/ipfs/go-log"
-
-var logger = log.Logger("keep-protocol-group")
-
 // MemberIndex is an index of a member in a group. The maximum member index
 // value is 255.
 type MemberIndex = uint8

@@ -3,6 +3,7 @@ package registry
 import (
 	"bytes"
 	"encoding/hex"
+	"github.com/keep-network/keep-core/pkg/internal/testutils"
 	"math/big"
 	"reflect"
 	"testing"
@@ -60,7 +61,7 @@ var (
 func TestRegisterGroup(t *testing.T) {
 	localChain := local_v1.Connect(5, 3)
 
-	gr := NewGroupRegistry(localChain, persistenceMock)
+	gr := NewGroupRegistry(&testutils.MockLogger{}, localChain, persistenceMock)
 
 	gr.RegisterGroup(signer1, channelName1)
 
@@ -83,7 +84,7 @@ func TestRegisterGroup(t *testing.T) {
 
 func TestLoadGroup(t *testing.T) {
 	localChain := local_v1.Connect(5, 3)
-	gr := NewGroupRegistry(localChain, persistenceMock)
+	gr := NewGroupRegistry(&testutils.MockLogger{}, localChain, persistenceMock)
 
 	if len(gr.myGroups) != 0 {
 		t.Fatalf(
@@ -128,7 +129,7 @@ func TestUnregisterStaleGroups(t *testing.T) {
 		groupsCheckedIfStale: make(map[string]bool),
 	}
 
-	gr := NewGroupRegistry(mockChain, persistenceMock)
+	gr := NewGroupRegistry(&testutils.MockLogger{}, mockChain, persistenceMock)
 
 	gr.RegisterGroup(signer1, channelName1)
 	gr.RegisterGroup(signer2, channelName1)
@@ -164,7 +165,7 @@ func TestUnregisterStaleGroupsSkipLastGroupCheck(t *testing.T) {
 		groupsCheckedIfStale: make(map[string]bool),
 	}
 
-	gr := NewGroupRegistry(mockChain, persistenceMock)
+	gr := NewGroupRegistry(&testutils.MockLogger{}, mockChain, persistenceMock)
 
 	gr.RegisterGroup(signer1, channelName1)
 	gr.RegisterGroup(signer2, channelName1)

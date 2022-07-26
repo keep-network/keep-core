@@ -87,7 +87,7 @@ func (rm *ReconstructingMember) MarkInactiveMembers(
 }
 
 func (mc *memberCore) messageFilter() *group.InactiveMemberFilter {
-	return group.NewInactiveMemberFilter(mc.ID, mc.group)
+	return group.NewInactiveMemberFilter(mc.logger, mc.ID, mc.group)
 }
 
 func (mc *memberCore) IsSenderAccepted(senderID group.MemberIndex) bool {

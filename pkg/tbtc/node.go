@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/keep-network/keep-common/pkg/persistence"
 	"github.com/keep-network/keep-core/pkg/ecdsa/dkg"
+	"github.com/keep-network/keep-core/pkg/internal/testutils"
 	"github.com/keep-network/keep-core/pkg/net"
 	"github.com/keep-network/keep-core/pkg/protocol/group"
 	"math/big"
@@ -101,6 +102,7 @@ func (n *node) joinDKGIfEligible(seed *big.Int, startBlockNumber uint64) {
 		}
 
 		membershipValidator := group.NewMembershipValidator(
+			&testutils.MockLogger{},
 			groupMembers,
 			signing,
 		)
@@ -127,6 +129,7 @@ func (n *node) joinDKGIfEligible(seed *big.Int, startBlockNumber uint64) {
 
 			go func() {
 				result, _, err := dkg.Execute(
+					logger,
 					startBlockNumber,
 					memberIndex,
 					chainConfig.GroupSize,

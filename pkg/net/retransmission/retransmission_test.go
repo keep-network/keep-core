@@ -2,6 +2,7 @@ package retransmission
 
 import (
 	"context"
+	"github.com/keep-network/keep-core/pkg/internal/testutils"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -16,6 +17,7 @@ func TestRetransmitExpectedNumberOfTimes(t *testing.T) {
 	var retransmissionsCount uint64
 	ScheduleRetransmissions(
 		ctx,
+		&testutils.MockLogger{},
 		NewTimeTicker(ctx, 50*time.Millisecond),
 		func() error {
 			atomic.AddUint64(&retransmissionsCount, 1)

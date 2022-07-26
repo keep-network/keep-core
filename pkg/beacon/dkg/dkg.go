@@ -17,10 +17,9 @@ import (
 	"github.com/keep-network/keep-core/pkg/protocol/group"
 )
 
-var logger = log.Logger("keep-beacon-dkg")
-
 // ExecuteDKG runs the full distributed key generation lifecycle.
 func ExecuteDKG(
+	logger log.StandardLogger,
 	seed *big.Int,
 	memberIndex group.MemberIndex,
 	startBlockHeight uint64,
@@ -40,6 +39,7 @@ func ExecuteDKG(
 	dkgResult.RegisterUnmarshallers(channel)
 
 	gjkrResult, gjkrEndBlockHeight, err := gjkr.Execute(
+		logger,
 		memberIndex,
 		beaconConfig.GroupSize,
 		blockCounter,
@@ -70,6 +70,7 @@ func ExecuteDKG(
 	defer dkgResultSubscription.Unsubscribe()
 
 	err = dkgResult.Publish(
+		logger,
 		memberIndex,
 		gjkrResult.Group,
 		membershipValidator,

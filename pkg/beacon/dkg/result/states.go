@@ -167,7 +167,7 @@ func (svs *signaturesVerificationState) Next() signingState {
 		channel:      svs.channel,
 		beaconChain:  svs.beaconChain,
 		blockCounter: svs.blockCounter,
-		member:       NewSubmittingMember(svs.member.index),
+		member:       NewSubmittingMember(svs.member.logger, svs.member.index),
 		result:       svs.result,
 		signatures:   svs.validSignatures,
 		submissionStartBlockHeight: svs.verificationStartBlockHeight +

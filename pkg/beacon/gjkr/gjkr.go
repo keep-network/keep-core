@@ -12,8 +12,6 @@ import (
 	"github.com/keep-network/keep-core/pkg/protocol/state"
 )
 
-var logger = log.Logger("keep-beacon-gjkr")
-
 // RegisterUnmarshallers initializes the given broadcast channel to be able to
 // perform DKG protocol interactions by registering all the required protocol
 // message unmarshallers.
@@ -56,6 +54,7 @@ func RegisterUnmarshallers(channel net.BroadcastChannel) {
 // can participate in the signing group; if the generation fails, it returns an
 // error.
 func Execute(
+	logger log.StandardLogger,
 	memberIndex group.MemberIndex,
 	groupSize int,
 	blockCounter chain.BlockCounter,
@@ -68,6 +67,7 @@ func Execute(
 	logger.Debugf("[member:%v] initializing member", memberIndex)
 
 	member, err := NewMember(
+		logger,
 		memberIndex,
 		groupSize,
 		dishonestThreshold,
@@ -83,7 +83,7 @@ func Execute(
 		member:  member.InitializeEphemeralKeysGeneration(),
 	}
 
-	stateMachine := state.NewMachine(channel, blockCounter, initialState)
+	stateMachine := state.NewMachine(logger, channel, blockCounter, initialState)
 
 	lastState, endBlockHeight, err := stateMachine.Execute(startBlockHeight)
 	if err != nil {

@@ -32,7 +32,7 @@ func Initialize(
 	netProvider net.Provider,
 	persistence persistence.Handle,
 ) error {
-	groupRegistry := registry.NewGroupRegistry(beaconChain, persistence)
+	groupRegistry := registry.NewGroupRegistry(logger, beaconChain, persistence)
 	groupRegistry.LoadExistingGroups()
 
 	node := newNode(
@@ -41,7 +41,7 @@ func Initialize(
 		groupRegistry,
 	)
 
-	err := sortition.MonitorPool(ctx, beaconChain, sortition.DefaultStatusCheckTick)
+	err := sortition.MonitorPool(ctx, logger, beaconChain, sortition.DefaultStatusCheckTick)
 	if err != nil {
 		return fmt.Errorf("could not set up sortition pool monitoring: [%v]", err)
 	}

@@ -1,6 +1,7 @@
 package gjkr
 
 import (
+	"github.com/ipfs/go-log"
 	"math/big"
 
 	bn256 "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
@@ -9,6 +10,9 @@ import (
 )
 
 type memberCore struct {
+	// Logger used to produce log messages.
+	logger log.StandardLogger
+
 	// ID of this group member.
 	ID group.MemberIndex
 
@@ -225,6 +229,7 @@ type FinalizingMember struct {
 
 // NewMember creates a new member in an initial state
 func NewMember(
+	logger log.StandardLogger,
 	memberID group.MemberIndex,
 	groupSize,
 	dishonestThreshold int,
@@ -233,6 +238,7 @@ func NewMember(
 ) (*LocalMember, error) {
 	return &LocalMember{
 		memberCore: &memberCore{
+			logger,
 			memberID,
 			group.NewGroup(dishonestThreshold, groupSize),
 			membershipValidator,

@@ -24,7 +24,7 @@ const (
 	TokenStakingContractName = "TokenStaking"
 )
 
-var logger = log.Logger("keep-chain-ethereum")
+var logger = log.Logger("keep-ethereum")
 
 // baseChain represents a base, non-application-specific chain handle. It
 // provides the implementation of generic features like balance monitor,

@@ -2,6 +2,7 @@ package result
 
 import (
 	"fmt"
+	"github.com/ipfs/go-log"
 
 	"github.com/keep-network/keep-core/pkg/chain"
 
@@ -9,11 +10,11 @@ import (
 	"github.com/keep-network/keep-core/pkg/protocol/group"
 )
 
-type dkgResultSignature = []byte
-
 // SigningMember represents a group member sharing their preferred DKG result hash
 // and signature (over this hash) with other peer members.
 type SigningMember struct {
+	logger log.StandardLogger
+
 	index group.MemberIndex
 
 	// Group to which this member belongs.
@@ -31,11 +32,13 @@ type SigningMember struct {
 
 // NewSigningMember creates a member to execute signing DKG result hash.
 func NewSigningMember(
+	logger log.StandardLogger,
 	memberIndex group.MemberIndex,
 	dkgGroup *group.Group,
 	membershipValidator *group.MembershipValidator,
 ) *SigningMember {
 	return &SigningMember{
+		logger:              logger,
 		index:               memberIndex,
 		group:               dkgGroup,
 		membershipValidator: membershipValidator,
@@ -118,7 +121,7 @@ func (sm *SigningMember) VerifyDKGResultSignatures(
 
 		// Check if sender sent multiple messages.
 		if duplicatedMessagesFromSender(message.senderIndex) {
-			logger.Infof(
+			sm.logger.Infof(
 				"[member: %v] received multiple messages from sender: [%d]",
 				sm.index,
 				message.senderIndex,
@@ -129,7 +132,7 @@ func (sm *SigningMember) VerifyDKGResultSignatures(
 		// Sender's preferred DKG result hash doesn't match current member's
 		// preferred DKG result hash.
 		if message.resultHash != sm.preferredDKGResultHash {
-			logger.Infof(
+			sm.logger.Infof(
 				"[member: %v] signature from sender [%d] supports result different than preferred",
 				sm.index,
 				message.senderIndex,
@@ -144,7 +147,7 @@ func (sm *SigningMember) VerifyDKGResultSignatures(
 			message.publicKey,
 		)
 		if err != nil {
-			logger.Infof(
+			sm.logger.Infof(
 				"[member: %v] verification of signature from sender [%d] failed: [%v]",
 				sm.index,
 				message.senderIndex,
@@ -153,7 +156,7 @@ func (sm *SigningMember) VerifyDKGResultSignatures(
 			continue
 		}
 		if !ok {
-			logger.Infof(
+			sm.logger.Infof(
 				"[member: %v] sender [%d] provided invalid signature",
 				sm.index,
 				message.senderIndex,
