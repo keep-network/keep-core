@@ -56,13 +56,13 @@ func EvaluateRetryParticipantsForSigning(
 	operatorToSeatCount := calculateSeatCount(groupMembers)
 	rand.Seed(seed + int64(retryCount))
 
-	operators := make(byAddress, len(operatorToSeatCount))
+	operators := make([]chain.Address, len(operatorToSeatCount))
 	i := 0
 	for operator := range operatorToSeatCount {
 		operators[i] = operator
 		i++
 	}
-	sort.Sort(operators)
+	sort.Sort(byAddress(operators))
 	rand.Shuffle(len(operators), func(i, j int) {
 		operators[i], operators[j] = operators[j], operators[i]
 	})
