@@ -130,13 +130,14 @@ func (n *node) JoinDKGIfEligible(
 		}
 
 		for _, index := range indexes {
-			// Capture the player index for the goroutine.
-			playerIndex := index
+			// Capture the member index for the goroutine. The group member
+			// index should be in range [1, groupSize] so we need to add 1.
+			memberIndex := index + 1
 
 			go func() {
 				signer, err := dkg.ExecuteDKG(
 					dkgSeed,
-					playerIndex,
+					memberIndex,
 					dkgStartBlockNumber,
 					n.beaconChain,
 					broadcastChannel,

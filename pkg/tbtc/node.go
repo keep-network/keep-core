@@ -121,7 +121,7 @@ func (n *node) joinDKGIfEligible(seed *big.Int, startBlockNumber uint64) {
 		}
 
 		for _, index := range indexes {
-			// Capture the player index for the goroutine. The group member
+			// Capture the member index for the goroutine. The group member
 			// index should be in range [1, groupSize] so we need to add 1.
 			memberIndex := index + 1
 

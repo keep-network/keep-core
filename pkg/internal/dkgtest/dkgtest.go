@@ -155,11 +155,11 @@ func executeDKG(
 	)
 
 	for i := 0; i < beaconConfig.GroupSize; i++ {
-		i := i // capture for goroutine
+		memberIndex := group.MemberIndex(i + 1) // capture for goroutine
 		go func() {
 			signer, err := dkg.ExecuteDKG(
 				seed,
-				uint8(i),
+				memberIndex,
 				startBlockHeight,
 				beaconChain,
 				broadcastChannel,
