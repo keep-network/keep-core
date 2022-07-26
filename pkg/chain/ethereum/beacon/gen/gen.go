@@ -12,6 +12,6 @@ var (
 	//go:embed _address/RandomBeacon
 	randomBeaconAddressFileContent string
 
-	// RandomBeaconAddress is a WalletRegistry contract's address read from the NPM package.
+	// RandomBeaconAddress is a Random Beacon contract's address read from the NPM package.
 	RandomBeaconAddress string = strings.TrimSpace(randomBeaconAddressFileContent)
 )
