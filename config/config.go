@@ -76,7 +76,7 @@ func init() {
 // initEnvVars initializes environment variables for the client configuration.
 func initEnvVars() {
 	if err := viper.BindEnv("ethereum.account.keyfilepassword", ethereumPasswordEnvVariable); err != nil {
-		logger.Fatal(err)
+		logger.Fatalf("failed to bind %s env variable", ethereumPasswordEnvVariable, err)
 	}
 }
 
@@ -176,24 +176,23 @@ func ReadConfig(configFilePath string) (*Config, error) {
 	}
 
 	if config.Ethereum.Account.KeyFile == "" {
-		return nil, fmt.Errorf("missing value for ethereum key file")
+		return nil, fmt.Errorf(
+			"missing value for ethereum key file; see ethereum section in config file or use --%s flag",
+			ethereumKeyFlag,
+		)
 	}
 
 	if config.LibP2P.Port == 0 {
 		return nil, fmt.Errorf(
-			fmt.Sprintf(
-				"missing value for port; see network section in config file or use --%s flag",
-				portFlag,
-			),
+			"missing value for port; see network section in config file or use --%s flag",
+			portFlag,
 		)
 	}
 
 	if config.Storage.DataDir == "" {
 		return nil, fmt.Errorf(
-			fmt.Sprintf(
-				"missing value for storage directory; see storage section in config file or use --%s flag",
-				dataDirFlag,
-			),
+			"missing value for storage directory; see storage section in config file or use --%s flag",
+			dataDirFlag,
 		)
 	}
 
