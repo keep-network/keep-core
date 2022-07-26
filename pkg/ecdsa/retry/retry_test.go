@@ -2,6 +2,7 @@ package retry
 
 import (
 	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/keep-network/keep-core/pkg/chain"
@@ -23,6 +24,29 @@ func TestEvaluateRetryParticipantsForSigning_FewOperators(t *testing.T) {
 	}
 	subset, _ := EvaluateRetryParticipantsForSigning(groupMembers, int64(456), 0, 51)
 	assertInvariants(t, groupMembers, subset, 51)
+}
+
+func TestEvaluateRetryParticipantsForSigning_NotEnoughOperators(t *testing.T) {
+	groupMembers := make([]chain.Address, 50)
+	for i := 0; i < 50; i++ {
+		groupMembers[i] = chain.Address(fmt.Sprintf("Operator-%d", i))
+	}
+	_, err := EvaluateRetryParticipantsForSigning(groupMembers, int64(123), 0, 51)
+	expectation := "asked for too many seats"
+	if err == nil {
+		t.Fatalf(
+			"unexpected error\nexpected: [%s]\nactual:   [%v]",
+			fmt.Sprintf("%s...", expectation),
+			nil,
+		)
+	}
+	if !strings.HasPrefix(err.Error(), expectation) {
+		t.Fatalf(
+			"unexpected error\nexpected: [%s]\nactual:   [%s]",
+			fmt.Sprintf("%s...", expectation),
+			err.Error(),
+		)
+	}
 }
 
 func isSubset(t *testing.T, groupMembers []chain.Address, subset []chain.Address) {
