@@ -23,7 +23,7 @@ func Execute(
 	dishonestThreshold int,
 	blockCounter chain.BlockCounter,
 	channel net.BroadcastChannel,
-	membershipValidator group.MembershipValidator,
+	membershipValidator *group.MembershipValidator,
 ) (*Result, uint64, error) {
 	logger.Debugf("[member:%v] initializing member", memberIndex)
 

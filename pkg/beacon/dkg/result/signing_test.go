@@ -1,6 +1,7 @@
 package result
 
 import (
+	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/chain/local_v1"
 	"reflect"
 	"testing"
@@ -315,15 +316,9 @@ func initializeSigningMembers(groupSize int) (
 	members := make([]*SigningMember, groupSize)
 	beaconChains := make([]beaconchain.Interface, groupSize)
 
+	operatorsAddresses := make([]chain.Address, groupSize)
+
 	for i := 0; i < groupSize; i++ {
-		memberIndex := group.MemberIndex(i + 1)
-
-		members[i] = NewSigningMember(
-			memberIndex,
-			dkgGroup,
-			&mockMembershipValidator{},
-		)
-
 		operatorPrivateKey, _, err := operator.GenerateKeyPair(local_v1.DefaultCurve)
 		if err != nil {
 			return nil, nil, err
@@ -335,23 +330,29 @@ func initializeSigningMembers(groupSize int) (
 			operatorPrivateKey,
 		)
 
+		operatorAddress, err := localChain.Signing().PublicKeyToAddress(&operatorPrivateKey.PublicKey)
+		if err != nil {
+			return nil, nil, err
+		}
+
 		beaconChains[i] = localChain
+		operatorsAddresses[i] = operatorAddress
+	}
+
+	membershipValidator := group.NewMembershipValidator(
+		operatorsAddresses,
+		beaconChains[0].Signing(),
+	)
+
+	for i := 0; i < groupSize; i++ {
+		memberIndex := group.MemberIndex(i + 1)
+
+		members[i] = NewSigningMember(
+			memberIndex,
+			dkgGroup,
+			membershipValidator,
+		)
 	}
 
 	return members, beaconChains, nil
-}
-
-type mockMembershipValidator struct{}
-
-func (mmv *mockMembershipValidator) IsInGroup(
-	publicKey *operator.PublicKey,
-) bool {
-	return true
-}
-
-func (mmv *mockMembershipValidator) IsValidMembership(
-	memberID group.MemberIndex,
-	publicKey []byte,
-) bool {
-	return true
 }

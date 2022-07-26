@@ -99,7 +99,7 @@ func (n *node) joinDKGIfEligible(seed *big.Int, startBlockNumber uint64) {
 			return
 		}
 
-		membershipValidator := group.NewOperatorsMembershipValidator(
+		membershipValidator := group.NewMembershipValidator(
 			groupMembers,
 			signing,
 		)

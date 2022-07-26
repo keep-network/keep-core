@@ -149,7 +149,7 @@ func executeDKG(
 	gjkr.RegisterUnmarshallers(broadcastChannel)
 	dkgResult.RegisterUnmarshallers(broadcastChannel)
 
-	membershipValidator := group.NewOperatorsMembershipValidator(
+	membershipValidator := group.NewMembershipValidator(
 		selectedOperators,
 		beaconChain.Signing(),
 	)

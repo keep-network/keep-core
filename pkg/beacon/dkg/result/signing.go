@@ -21,7 +21,7 @@ type SigningMember struct {
 
 	// Validator allowing to check public key and member index
 	// against group members
-	membershipValidator group.MembershipValidator
+	membershipValidator *group.MembershipValidator
 
 	// Hash of DKG result preferred by the current participant.
 	preferredDKGResultHash beaconchain.DKGResultHash
@@ -33,7 +33,7 @@ type SigningMember struct {
 func NewSigningMember(
 	memberIndex group.MemberIndex,
 	dkgGroup *group.Group,
-	membershipValidator group.MembershipValidator,
+	membershipValidator *group.MembershipValidator,
 ) *SigningMember {
 	return &SigningMember{
 		index:               memberIndex,

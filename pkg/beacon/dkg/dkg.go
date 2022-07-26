@@ -26,7 +26,7 @@ func ExecuteDKG(
 	startBlockHeight uint64,
 	beaconChain beaconchain.Interface,
 	channel net.BroadcastChannel,
-	membershipValidator group.MembershipValidator,
+	membershipValidator *group.MembershipValidator,
 	selectedOperators []chain.Address,
 ) (*ThresholdSigner, error) {
 	beaconConfig := beaconChain.GetConfig()

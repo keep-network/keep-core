@@ -29,7 +29,7 @@ func RegisterUnmarshallers(channel net.BroadcastChannel) {
 func Publish(
 	memberIndex group.MemberIndex,
 	dkgGroup *group.Group,
-	membershipValidator group.MembershipValidator,
+	membershipValidator *group.MembershipValidator,
 	result *gjkr.Result,
 	channel net.BroadcastChannel,
 	beaconChain beaconchain.Interface,

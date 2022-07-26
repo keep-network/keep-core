@@ -13,7 +13,7 @@ type member struct {
 	group *group.Group
 	// Validator allowing to check public key and member index against
 	// group members
-	membershipValidator group.MembershipValidator
+	membershipValidator *group.MembershipValidator
 }
 
 // newMember creates a new member in an initial state
@@ -21,7 +21,7 @@ func newMember(
 	memberID group.MemberIndex,
 	groupSize,
 	dishonestThreshold int,
-	membershipValidator group.MembershipValidator,
+	membershipValidator *group.MembershipValidator,
 ) *member {
 	return &member{
 		id:                  memberID,

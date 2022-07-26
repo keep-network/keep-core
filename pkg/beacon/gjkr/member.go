@@ -17,7 +17,7 @@ type memberCore struct {
 
 	// Validator allowing to check public key and member index
 	// against group members
-	membershipValidator group.MembershipValidator
+	membershipValidator *group.MembershipValidator
 
 	// Evidence log provides access to messages from earlier protocol phases
 	// for the sake of compliant resolution.
@@ -228,7 +228,7 @@ func NewMember(
 	memberID group.MemberIndex,
 	groupSize,
 	dishonestThreshold int,
-	membershipValidator group.MembershipValidator,
+	membershipValidator *group.MembershipValidator,
 	seed *big.Int,
 ) (*LocalMember, error) {
 	return &LocalMember{
