@@ -23,14 +23,15 @@ func calculateSeatCount(groupMembers []chain.Address) map[chain.Address]uint {
 }
 
 // EvaluateRetryParticipantsForSigning takes in a slice of `groupMembers` and
-// returns a subslice of those same members of length >= `quantity` randomly
-// according to the provided `seed` and `retryCount`.
+// returns a subslice of those same members of length >=
+// `retryParticipantsCount` randomly according to the provided `seed` and
+// `retryCount`.
 //
 // This function is intended to be called during a signing protocol after a
 // signing event has failed but *not* due to inactivity. Assuming that some of
 // the `groupMembers` are sending corrupted information, either on purpose or
 // accidentally, we keep trying to find a subset of `groupMembers` that is as
-// small as possible, yet still larger than `quantity`.
+// small as possible, yet still larger than `retryParticipantsCount`.
 //
 // The `seed` param needs to vary on a per-message basis but must be the same
 // seed between all operators for each invocation. This can be the hash of the
@@ -39,12 +40,12 @@ func EvaluateRetryParticipantsForSigning(
 	groupMembers []chain.Address,
 	seed int64,
 	retryCount uint,
-	quantity uint,
+	retryParticipantsCount uint,
 ) ([]chain.Address, error) {
-	if int(quantity) > len(groupMembers) {
+	if int(retryParticipantsCount) > len(groupMembers) {
 		return nil, fmt.Errorf(
 			"Asked for too many seats. %d seats were requested, but there are only %d available.",
-			quantity,
+			retryParticipantsCount,
 			len(groupMembers),
 		)
 	}
@@ -64,7 +65,7 @@ func EvaluateRetryParticipantsForSigning(
 
 	seatCount := uint(0)
 	acceptedOperators := make(map[chain.Address]bool)
-	for j := 0; seatCount < quantity; j++ {
+	for j := 0; seatCount < retryParticipantsCount; j++ {
 		operator := operators[j]
 		seatCount += operatorToSeatCount[operator]
 		acceptedOperators[operator] = true
