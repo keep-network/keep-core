@@ -11,9 +11,9 @@ import (
 	crand "crypto/rand"
 )
 
-// AssertErrorsSame checks if two errors are equal. If not, it reports a test
-// failure. Note that this function doesn't check errors deep equality but
-// just checks whether both arguments point to the same underlying instance.
+// AssertErrorsSame checks if two errors are the same error. If not, it reports
+// a test failure. Note that this function doesn't check errors deep equality
+// but just checks whether both arguments point to the same underlying instance.
 func AssertErrorsSame(t *testing.T, expected error, actual error) {
 	if expected != actual {
 		t.Errorf(
@@ -24,7 +24,7 @@ func AssertErrorsSame(t *testing.T, expected error, actual error) {
 	}
 }
 
-// AssertErrorsSame checks if any error in the error chain matches the target.
+// AssertAnyErrorInChainMatchesTarget checks if any error in the error chain matches the target.
 // If not, it reports a test failure.
 func AssertAnyErrorInChainMatchesTarget(t *testing.T, target error, actual error) {
 	if !errors.Is(actual, target) {
