@@ -4,8 +4,8 @@ import (
 	"testing"
 
 	"github.com/keep-network/keep-core/pkg/altbn128"
-	"github.com/keep-network/keep-core/pkg/beacon/group"
 	"github.com/keep-network/keep-core/pkg/internal/testutils"
+	"github.com/keep-network/keep-core/pkg/protocol/group"
 )
 
 // AssertDkgResultPublished checks if DKG result has been published to the

@@ -53,7 +53,7 @@ else
 endif
 
 contract/%.go cmd/%.go: abi/%.abi abi/%.go _address/% ${artifacts_dir}/%.json
-	go run github.com/keep-network/keep-common/tools/generators/ethlike $< contract/$*.go cmd/$*.go
+	go run github.com/keep-network/keep-common/tools/generators/ethereum $< contract/$*.go cmd/$*.go
 
 # Don't remove intermediate files that got generated.
 .PRECIOUS: abi/%.abi abi/%.go _address/%

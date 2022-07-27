@@ -11,7 +11,7 @@ import (
 	"github.com/keep-network/keep-core/pkg/net"
 )
 
-var logger = log.Logger("keep-net-local")
+var logger = log.Logger("keep-netlocal")
 
 // Provider is an extension of net.Provider. This interface exposes additional
 // functions useful for testing.

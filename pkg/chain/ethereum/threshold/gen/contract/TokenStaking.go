@@ -20,8 +20,8 @@ import (
 
 	"github.com/ipfs/go-log"
 
+	"github.com/keep-network/keep-common/pkg/chain/ethereum"
 	chainutil "github.com/keep-network/keep-common/pkg/chain/ethereum/ethutil"
-	"github.com/keep-network/keep-common/pkg/chain/ethlike"
 	"github.com/keep-network/keep-common/pkg/subscription"
 	"github.com/keep-network/keep-core/pkg/chain/ethereum/threshold/gen/abi"
 )
@@ -40,9 +40,9 @@ type TokenStaking struct {
 	callerOptions     *bind.CallOpts
 	transactorOptions *bind.TransactOpts
 	errorResolver     *chainutil.ErrorResolver
-	nonceManager      *ethlike.NonceManager
+	nonceManager      *ethereum.NonceManager
 	miningWaiter      *chainutil.MiningWaiter
-	blockCounter      *ethlike.BlockCounter
+	blockCounter      *ethereum.BlockCounter
 
 	transactionMutex *sync.Mutex
 }
@@ -52,19 +52,16 @@ func NewTokenStaking(
 	chainId *big.Int,
 	accountKey *keystore.Key,
 	backend bind.ContractBackend,
-	nonceManager *ethlike.NonceManager,
+	nonceManager *ethereum.NonceManager,
 	miningWaiter *chainutil.MiningWaiter,
-	blockCounter *ethlike.BlockCounter,
+	blockCounter *ethereum.BlockCounter,
 	transactionMutex *sync.Mutex,
 ) (*TokenStaking, error) {
 	callerOptions := &bind.CallOpts{
 		From: accountKey.Address,
 	}
 
-	// FIXME Switch to bind.NewKeyedTransactorWithChainID when
-	// FIXME celo-org/celo-blockchain merges in changes from upstream
-	// FIXME ethereum/go-ethereum beyond v1.9.25.
-	transactorOptions, err := chainutil.NewKeyedTransactorWithChainID(
+	transactorOptions, err := bind.NewKeyedTransactorWithChainID(
 		accountKey.PrivateKey,
 		chainId,
 	)
@@ -6105,12 +6102,12 @@ func (ts *TokenStaking) StakesAtBlock(
 // ------ Events -------
 
 func (ts *TokenStaking) ApplicationStatusChangedEvent(
-	opts *ethlike.SubscribeOpts,
+	opts *ethereum.SubscribeOpts,
 	applicationFilter []common.Address,
 	newStatusFilter []uint8,
 ) *TsApplicationStatusChangedSubscription {
 	if opts == nil {
-		opts = new(ethlike.SubscribeOpts)
+		opts = new(ethereum.SubscribeOpts)
 	}
 	if opts.Tick == 0 {
 		opts.Tick = chainutil.DefaultSubscribeOptsTick
@@ -6129,7 +6126,7 @@ func (ts *TokenStaking) ApplicationStatusChangedEvent(
 
 type TsApplicationStatusChangedSubscription struct {
 	contract          *TokenStaking
-	opts              *ethlike.SubscribeOpts
+	opts              *ethereum.SubscribeOpts
 	applicationFilter []common.Address
 	newStatusFilter   []uint8
 }
@@ -6304,10 +6301,10 @@ func (ts *TokenStaking) PastApplicationStatusChangedEvents(
 }
 
 func (ts *TokenStaking) AuthorizationCeilingSetEvent(
-	opts *ethlike.SubscribeOpts,
+	opts *ethereum.SubscribeOpts,
 ) *TsAuthorizationCeilingSetSubscription {
 	if opts == nil {
-		opts = new(ethlike.SubscribeOpts)
+		opts = new(ethereum.SubscribeOpts)
 	}
 	if opts.Tick == 0 {
 		opts.Tick = chainutil.DefaultSubscribeOptsTick
@@ -6324,7 +6321,7 @@ func (ts *TokenStaking) AuthorizationCeilingSetEvent(
 
 type TsAuthorizationCeilingSetSubscription struct {
 	contract *TokenStaking
-	opts     *ethlike.SubscribeOpts
+	opts     *ethereum.SubscribeOpts
 }
 
 type tokenStakingAuthorizationCeilingSetFunc func(
@@ -6483,12 +6480,12 @@ func (ts *TokenStaking) PastAuthorizationCeilingSetEvents(
 }
 
 func (ts *TokenStaking) AuthorizationDecreaseApprovedEvent(
-	opts *ethlike.SubscribeOpts,
+	opts *ethereum.SubscribeOpts,
 	stakingProviderFilter []common.Address,
 	applicationFilter []common.Address,
 ) *TsAuthorizationDecreaseApprovedSubscription {
 	if opts == nil {
-		opts = new(ethlike.SubscribeOpts)
+		opts = new(ethereum.SubscribeOpts)
 	}
 	if opts.Tick == 0 {
 		opts.Tick = chainutil.DefaultSubscribeOptsTick
@@ -6507,7 +6504,7 @@ func (ts *TokenStaking) AuthorizationDecreaseApprovedEvent(
 
 type TsAuthorizationDecreaseApprovedSubscription struct {
 	contract              *TokenStaking
-	opts                  *ethlike.SubscribeOpts
+	opts                  *ethereum.SubscribeOpts
 	stakingProviderFilter []common.Address
 	applicationFilter     []common.Address
 }
@@ -6686,12 +6683,12 @@ func (ts *TokenStaking) PastAuthorizationDecreaseApprovedEvents(
 }
 
 func (ts *TokenStaking) AuthorizationDecreaseRequestedEvent(
-	opts *ethlike.SubscribeOpts,
+	opts *ethereum.SubscribeOpts,
 	stakingProviderFilter []common.Address,
 	applicationFilter []common.Address,
 ) *TsAuthorizationDecreaseRequestedSubscription {
 	if opts == nil {
-		opts = new(ethlike.SubscribeOpts)
+		opts = new(ethereum.SubscribeOpts)
 	}
 	if opts.Tick == 0 {
 		opts.Tick = chainutil.DefaultSubscribeOptsTick
@@ -6710,7 +6707,7 @@ func (ts *TokenStaking) AuthorizationDecreaseRequestedEvent(
 
 type TsAuthorizationDecreaseRequestedSubscription struct {
 	contract              *TokenStaking
-	opts                  *ethlike.SubscribeOpts
+	opts                  *ethereum.SubscribeOpts
 	stakingProviderFilter []common.Address
 	applicationFilter     []common.Address
 }
@@ -6889,12 +6886,12 @@ func (ts *TokenStaking) PastAuthorizationDecreaseRequestedEvents(
 }
 
 func (ts *TokenStaking) AuthorizationIncreasedEvent(
-	opts *ethlike.SubscribeOpts,
+	opts *ethereum.SubscribeOpts,
 	stakingProviderFilter []common.Address,
 	applicationFilter []common.Address,
 ) *TsAuthorizationIncreasedSubscription {
 	if opts == nil {
-		opts = new(ethlike.SubscribeOpts)
+		opts = new(ethereum.SubscribeOpts)
 	}
 	if opts.Tick == 0 {
 		opts.Tick = chainutil.DefaultSubscribeOptsTick
@@ -6913,7 +6910,7 @@ func (ts *TokenStaking) AuthorizationIncreasedEvent(
 
 type TsAuthorizationIncreasedSubscription struct {
 	contract              *TokenStaking
-	opts                  *ethlike.SubscribeOpts
+	opts                  *ethereum.SubscribeOpts
 	stakingProviderFilter []common.Address
 	applicationFilter     []common.Address
 }
@@ -7092,13 +7089,13 @@ func (ts *TokenStaking) PastAuthorizationIncreasedEvents(
 }
 
 func (ts *TokenStaking) AuthorizationInvoluntaryDecreasedEvent(
-	opts *ethlike.SubscribeOpts,
+	opts *ethereum.SubscribeOpts,
 	stakingProviderFilter []common.Address,
 	applicationFilter []common.Address,
 	successfulCallFilter []bool,
 ) *TsAuthorizationInvoluntaryDecreasedSubscription {
 	if opts == nil {
-		opts = new(ethlike.SubscribeOpts)
+		opts = new(ethereum.SubscribeOpts)
 	}
 	if opts.Tick == 0 {
 		opts.Tick = chainutil.DefaultSubscribeOptsTick
@@ -7118,7 +7115,7 @@ func (ts *TokenStaking) AuthorizationInvoluntaryDecreasedEvent(
 
 type TsAuthorizationInvoluntaryDecreasedSubscription struct {
 	contract              *TokenStaking
-	opts                  *ethlike.SubscribeOpts
+	opts                  *ethereum.SubscribeOpts
 	stakingProviderFilter []common.Address
 	applicationFilter     []common.Address
 	successfulCallFilter  []bool
@@ -7306,13 +7303,13 @@ func (ts *TokenStaking) PastAuthorizationInvoluntaryDecreasedEvents(
 }
 
 func (ts *TokenStaking) DelegateChangedEvent(
-	opts *ethlike.SubscribeOpts,
+	opts *ethereum.SubscribeOpts,
 	delegatorFilter []common.Address,
 	fromDelegateFilter []common.Address,
 	toDelegateFilter []common.Address,
 ) *TsDelegateChangedSubscription {
 	if opts == nil {
-		opts = new(ethlike.SubscribeOpts)
+		opts = new(ethereum.SubscribeOpts)
 	}
 	if opts.Tick == 0 {
 		opts.Tick = chainutil.DefaultSubscribeOptsTick
@@ -7332,7 +7329,7 @@ func (ts *TokenStaking) DelegateChangedEvent(
 
 type TsDelegateChangedSubscription struct {
 	contract           *TokenStaking
-	opts               *ethlike.SubscribeOpts
+	opts               *ethereum.SubscribeOpts
 	delegatorFilter    []common.Address
 	fromDelegateFilter []common.Address
 	toDelegateFilter   []common.Address
@@ -7516,11 +7513,11 @@ func (ts *TokenStaking) PastDelegateChangedEvents(
 }
 
 func (ts *TokenStaking) DelegateVotesChangedEvent(
-	opts *ethlike.SubscribeOpts,
+	opts *ethereum.SubscribeOpts,
 	delegateFilter []common.Address,
 ) *TsDelegateVotesChangedSubscription {
 	if opts == nil {
-		opts = new(ethlike.SubscribeOpts)
+		opts = new(ethereum.SubscribeOpts)
 	}
 	if opts.Tick == 0 {
 		opts.Tick = chainutil.DefaultSubscribeOptsTick
@@ -7538,7 +7535,7 @@ func (ts *TokenStaking) DelegateVotesChangedEvent(
 
 type TsDelegateVotesChangedSubscription struct {
 	contract       *TokenStaking
-	opts           *ethlike.SubscribeOpts
+	opts           *ethereum.SubscribeOpts
 	delegateFilter []common.Address
 }
 
@@ -7708,10 +7705,10 @@ func (ts *TokenStaking) PastDelegateVotesChangedEvents(
 }
 
 func (ts *TokenStaking) GovernanceTransferredEvent(
-	opts *ethlike.SubscribeOpts,
+	opts *ethereum.SubscribeOpts,
 ) *TsGovernanceTransferredSubscription {
 	if opts == nil {
-		opts = new(ethlike.SubscribeOpts)
+		opts = new(ethereum.SubscribeOpts)
 	}
 	if opts.Tick == 0 {
 		opts.Tick = chainutil.DefaultSubscribeOptsTick
@@ -7728,7 +7725,7 @@ func (ts *TokenStaking) GovernanceTransferredEvent(
 
 type TsGovernanceTransferredSubscription struct {
 	contract *TokenStaking
-	opts     *ethlike.SubscribeOpts
+	opts     *ethereum.SubscribeOpts
 }
 
 type tokenStakingGovernanceTransferredFunc func(
@@ -7889,10 +7886,10 @@ func (ts *TokenStaking) PastGovernanceTransferredEvents(
 }
 
 func (ts *TokenStaking) MinimumStakeAmountSetEvent(
-	opts *ethlike.SubscribeOpts,
+	opts *ethereum.SubscribeOpts,
 ) *TsMinimumStakeAmountSetSubscription {
 	if opts == nil {
-		opts = new(ethlike.SubscribeOpts)
+		opts = new(ethereum.SubscribeOpts)
 	}
 	if opts.Tick == 0 {
 		opts.Tick = chainutil.DefaultSubscribeOptsTick
@@ -7909,7 +7906,7 @@ func (ts *TokenStaking) MinimumStakeAmountSetEvent(
 
 type TsMinimumStakeAmountSetSubscription struct {
 	contract *TokenStaking
-	opts     *ethlike.SubscribeOpts
+	opts     *ethereum.SubscribeOpts
 }
 
 type tokenStakingMinimumStakeAmountSetFunc func(
@@ -8068,10 +8065,10 @@ func (ts *TokenStaking) PastMinimumStakeAmountSetEvents(
 }
 
 func (ts *TokenStaking) NotificationRewardPushedEvent(
-	opts *ethlike.SubscribeOpts,
+	opts *ethereum.SubscribeOpts,
 ) *TsNotificationRewardPushedSubscription {
 	if opts == nil {
-		opts = new(ethlike.SubscribeOpts)
+		opts = new(ethereum.SubscribeOpts)
 	}
 	if opts.Tick == 0 {
 		opts.Tick = chainutil.DefaultSubscribeOptsTick
@@ -8088,7 +8085,7 @@ func (ts *TokenStaking) NotificationRewardPushedEvent(
 
 type TsNotificationRewardPushedSubscription struct {
 	contract *TokenStaking
-	opts     *ethlike.SubscribeOpts
+	opts     *ethereum.SubscribeOpts
 }
 
 type tokenStakingNotificationRewardPushedFunc func(
@@ -8247,10 +8244,10 @@ func (ts *TokenStaking) PastNotificationRewardPushedEvents(
 }
 
 func (ts *TokenStaking) NotificationRewardSetEvent(
-	opts *ethlike.SubscribeOpts,
+	opts *ethereum.SubscribeOpts,
 ) *TsNotificationRewardSetSubscription {
 	if opts == nil {
-		opts = new(ethlike.SubscribeOpts)
+		opts = new(ethereum.SubscribeOpts)
 	}
 	if opts.Tick == 0 {
 		opts.Tick = chainutil.DefaultSubscribeOptsTick
@@ -8267,7 +8264,7 @@ func (ts *TokenStaking) NotificationRewardSetEvent(
 
 type TsNotificationRewardSetSubscription struct {
 	contract *TokenStaking
-	opts     *ethlike.SubscribeOpts
+	opts     *ethereum.SubscribeOpts
 }
 
 type tokenStakingNotificationRewardSetFunc func(
@@ -8426,10 +8423,10 @@ func (ts *TokenStaking) PastNotificationRewardSetEvents(
 }
 
 func (ts *TokenStaking) NotificationRewardWithdrawnEvent(
-	opts *ethlike.SubscribeOpts,
+	opts *ethereum.SubscribeOpts,
 ) *TsNotificationRewardWithdrawnSubscription {
 	if opts == nil {
-		opts = new(ethlike.SubscribeOpts)
+		opts = new(ethereum.SubscribeOpts)
 	}
 	if opts.Tick == 0 {
 		opts.Tick = chainutil.DefaultSubscribeOptsTick
@@ -8446,7 +8443,7 @@ func (ts *TokenStaking) NotificationRewardWithdrawnEvent(
 
 type TsNotificationRewardWithdrawnSubscription struct {
 	contract *TokenStaking
-	opts     *ethlike.SubscribeOpts
+	opts     *ethereum.SubscribeOpts
 }
 
 type tokenStakingNotificationRewardWithdrawnFunc func(
@@ -8607,11 +8604,11 @@ func (ts *TokenStaking) PastNotificationRewardWithdrawnEvents(
 }
 
 func (ts *TokenStaking) NotifierRewardedEvent(
-	opts *ethlike.SubscribeOpts,
+	opts *ethereum.SubscribeOpts,
 	notifierFilter []common.Address,
 ) *TsNotifierRewardedSubscription {
 	if opts == nil {
-		opts = new(ethlike.SubscribeOpts)
+		opts = new(ethereum.SubscribeOpts)
 	}
 	if opts.Tick == 0 {
 		opts.Tick = chainutil.DefaultSubscribeOptsTick
@@ -8629,7 +8626,7 @@ func (ts *TokenStaking) NotifierRewardedEvent(
 
 type TsNotifierRewardedSubscription struct {
 	contract       *TokenStaking
-	opts           *ethlike.SubscribeOpts
+	opts           *ethereum.SubscribeOpts
 	notifierFilter []common.Address
 }
 
@@ -8797,13 +8794,13 @@ func (ts *TokenStaking) PastNotifierRewardedEvents(
 }
 
 func (ts *TokenStaking) OwnerRefreshedEvent(
-	opts *ethlike.SubscribeOpts,
+	opts *ethereum.SubscribeOpts,
 	stakingProviderFilter []common.Address,
 	oldOwnerFilter []common.Address,
 	newOwnerFilter []common.Address,
 ) *TsOwnerRefreshedSubscription {
 	if opts == nil {
-		opts = new(ethlike.SubscribeOpts)
+		opts = new(ethereum.SubscribeOpts)
 	}
 	if opts.Tick == 0 {
 		opts.Tick = chainutil.DefaultSubscribeOptsTick
@@ -8823,7 +8820,7 @@ func (ts *TokenStaking) OwnerRefreshedEvent(
 
 type TsOwnerRefreshedSubscription struct {
 	contract              *TokenStaking
-	opts                  *ethlike.SubscribeOpts
+	opts                  *ethereum.SubscribeOpts
 	stakingProviderFilter []common.Address
 	oldOwnerFilter        []common.Address
 	newOwnerFilter        []common.Address
@@ -9007,12 +9004,12 @@ func (ts *TokenStaking) PastOwnerRefreshedEvents(
 }
 
 func (ts *TokenStaking) PanicButtonSetEvent(
-	opts *ethlike.SubscribeOpts,
+	opts *ethereum.SubscribeOpts,
 	applicationFilter []common.Address,
 	panicButtonFilter []common.Address,
 ) *TsPanicButtonSetSubscription {
 	if opts == nil {
-		opts = new(ethlike.SubscribeOpts)
+		opts = new(ethereum.SubscribeOpts)
 	}
 	if opts.Tick == 0 {
 		opts.Tick = chainutil.DefaultSubscribeOptsTick
@@ -9031,7 +9028,7 @@ func (ts *TokenStaking) PanicButtonSetEvent(
 
 type TsPanicButtonSetSubscription struct {
 	contract          *TokenStaking
-	opts              *ethlike.SubscribeOpts
+	opts              *ethereum.SubscribeOpts
 	applicationFilter []common.Address
 	panicButtonFilter []common.Address
 }
@@ -9206,11 +9203,11 @@ func (ts *TokenStaking) PastPanicButtonSetEvents(
 }
 
 func (ts *TokenStaking) SlashingProcessedEvent(
-	opts *ethlike.SubscribeOpts,
+	opts *ethereum.SubscribeOpts,
 	callerFilter []common.Address,
 ) *TsSlashingProcessedSubscription {
 	if opts == nil {
-		opts = new(ethlike.SubscribeOpts)
+		opts = new(ethereum.SubscribeOpts)
 	}
 	if opts.Tick == 0 {
 		opts.Tick = chainutil.DefaultSubscribeOptsTick
@@ -9228,7 +9225,7 @@ func (ts *TokenStaking) SlashingProcessedEvent(
 
 type TsSlashingProcessedSubscription struct {
 	contract     *TokenStaking
-	opts         *ethlike.SubscribeOpts
+	opts         *ethereum.SubscribeOpts
 	callerFilter []common.Address
 }
 
@@ -9398,10 +9395,10 @@ func (ts *TokenStaking) PastSlashingProcessedEvents(
 }
 
 func (ts *TokenStaking) StakeDiscrepancyPenaltySetEvent(
-	opts *ethlike.SubscribeOpts,
+	opts *ethereum.SubscribeOpts,
 ) *TsStakeDiscrepancyPenaltySetSubscription {
 	if opts == nil {
-		opts = new(ethlike.SubscribeOpts)
+		opts = new(ethereum.SubscribeOpts)
 	}
 	if opts.Tick == 0 {
 		opts.Tick = chainutil.DefaultSubscribeOptsTick
@@ -9418,7 +9415,7 @@ func (ts *TokenStaking) StakeDiscrepancyPenaltySetEvent(
 
 type TsStakeDiscrepancyPenaltySetSubscription struct {
 	contract *TokenStaking
-	opts     *ethlike.SubscribeOpts
+	opts     *ethereum.SubscribeOpts
 }
 
 type tokenStakingStakeDiscrepancyPenaltySetFunc func(
@@ -9579,13 +9576,13 @@ func (ts *TokenStaking) PastStakeDiscrepancyPenaltySetEvents(
 }
 
 func (ts *TokenStaking) StakedEvent(
-	opts *ethlike.SubscribeOpts,
+	opts *ethereum.SubscribeOpts,
 	stakeTypeFilter []uint8,
 	ownerFilter []common.Address,
 	stakingProviderFilter []common.Address,
 ) *TsStakedSubscription {
 	if opts == nil {
-		opts = new(ethlike.SubscribeOpts)
+		opts = new(ethereum.SubscribeOpts)
 	}
 	if opts.Tick == 0 {
 		opts.Tick = chainutil.DefaultSubscribeOptsTick
@@ -9605,7 +9602,7 @@ func (ts *TokenStaking) StakedEvent(
 
 type TsStakedSubscription struct {
 	contract              *TokenStaking
-	opts                  *ethlike.SubscribeOpts
+	opts                  *ethereum.SubscribeOpts
 	stakeTypeFilter       []uint8
 	ownerFilter           []common.Address
 	stakingProviderFilter []common.Address
@@ -9795,12 +9792,12 @@ func (ts *TokenStaking) PastStakedEvents(
 }
 
 func (ts *TokenStaking) TokensSeizedEvent(
-	opts *ethlike.SubscribeOpts,
+	opts *ethereum.SubscribeOpts,
 	stakingProviderFilter []common.Address,
 	discrepancyFilter []bool,
 ) *TsTokensSeizedSubscription {
 	if opts == nil {
-		opts = new(ethlike.SubscribeOpts)
+		opts = new(ethereum.SubscribeOpts)
 	}
 	if opts.Tick == 0 {
 		opts.Tick = chainutil.DefaultSubscribeOptsTick
@@ -9819,7 +9816,7 @@ func (ts *TokenStaking) TokensSeizedEvent(
 
 type TsTokensSeizedSubscription struct {
 	contract              *TokenStaking
-	opts                  *ethlike.SubscribeOpts
+	opts                  *ethereum.SubscribeOpts
 	stakingProviderFilter []common.Address
 	discrepancyFilter     []bool
 }
@@ -9996,11 +9993,11 @@ func (ts *TokenStaking) PastTokensSeizedEvents(
 }
 
 func (ts *TokenStaking) ToppedUpEvent(
-	opts *ethlike.SubscribeOpts,
+	opts *ethereum.SubscribeOpts,
 	stakingProviderFilter []common.Address,
 ) *TsToppedUpSubscription {
 	if opts == nil {
-		opts = new(ethlike.SubscribeOpts)
+		opts = new(ethereum.SubscribeOpts)
 	}
 	if opts.Tick == 0 {
 		opts.Tick = chainutil.DefaultSubscribeOptsTick
@@ -10018,7 +10015,7 @@ func (ts *TokenStaking) ToppedUpEvent(
 
 type TsToppedUpSubscription struct {
 	contract              *TokenStaking
-	opts                  *ethlike.SubscribeOpts
+	opts                  *ethereum.SubscribeOpts
 	stakingProviderFilter []common.Address
 }
 
@@ -10186,11 +10183,11 @@ func (ts *TokenStaking) PastToppedUpEvents(
 }
 
 func (ts *TokenStaking) UnstakedEvent(
-	opts *ethlike.SubscribeOpts,
+	opts *ethereum.SubscribeOpts,
 	stakingProviderFilter []common.Address,
 ) *TsUnstakedSubscription {
 	if opts == nil {
-		opts = new(ethlike.SubscribeOpts)
+		opts = new(ethereum.SubscribeOpts)
 	}
 	if opts.Tick == 0 {
 		opts.Tick = chainutil.DefaultSubscribeOptsTick
@@ -10208,7 +10205,7 @@ func (ts *TokenStaking) UnstakedEvent(
 
 type TsUnstakedSubscription struct {
 	contract              *TokenStaking
-	opts                  *ethlike.SubscribeOpts
+	opts                  *ethereum.SubscribeOpts
 	stakingProviderFilter []common.Address
 }
 

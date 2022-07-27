@@ -14,8 +14,6 @@ import (
 	"github.com/keep-network/keep-core/pkg/net"
 )
 
-var logger = log.Logger("keep-net-retransmission")
-
 // ScheduleRetransmissions takes the provided message and retransmits it
 // for every new tick received from the provided Ticker for the entire lifetime
 // of the Context calling the provided retransmit function. The retransmit
@@ -23,6 +21,7 @@ var logger = log.Logger("keep-net-retransmission")
 // with the same sequence number.
 func ScheduleRetransmissions(
 	ctx context.Context,
+	logger log.StandardLogger,
 	ticker *Ticker,
 	retransmit func() error,
 ) {

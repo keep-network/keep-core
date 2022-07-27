@@ -28,7 +28,7 @@ func TestValidate_OperatorNotRecognized_NoApplications(t *testing.T) {
 	}
 
 	err = policy.Validate(peerOperatorPublicKey)
-	testutils.AssertErrorsEqual(t, errNotRecognized, err)
+	testutils.AssertErrorsSame(t, errNotRecognized, err)
 }
 
 func TestValidate_OperatorNotRecognized_MultipleApplications(t *testing.T) {
@@ -48,7 +48,7 @@ func TestValidate_OperatorNotRecognized_MultipleApplications(t *testing.T) {
 	}
 
 	err = policy.Validate(peerOperatorPublicKey)
-	testutils.AssertErrorsEqual(t, errNotRecognized, err)
+	testutils.AssertErrorsSame(t, errNotRecognized, err)
 }
 
 func TestValidate_OperatorRecognized_FirstApplicationRecognizes(t *testing.T) {
@@ -217,7 +217,7 @@ func TestValidate_OperatorNotRecognized_CacheEmptied(t *testing.T) {
 	time.Sleep(cachingPeriod)
 
 	err = policy.Validate(peerOperatorPublicKey)
-	testutils.AssertErrorsEqual(t, errNotRecognized, err)
+	testutils.AssertErrorsSame(t, errNotRecognized, err)
 }
 
 func TestValidate_OperatorNotRecognized_Cached(t *testing.T) {
@@ -241,7 +241,7 @@ func TestValidate_OperatorNotRecognized_Cached(t *testing.T) {
 	}
 
 	err = policy.Validate(peerOperatorPublicKey)
-	testutils.AssertErrorsEqual(t, errNotRecognized, err)
+	testutils.AssertErrorsSame(t, errNotRecognized, err)
 
 	// Ensure the application recognizes the operator, but the validation should
 	// fail since the result from the previous call has been cached.
@@ -251,7 +251,7 @@ func TestValidate_OperatorNotRecognized_Cached(t *testing.T) {
 	})
 
 	err = policy.Validate(peerOperatorPublicKey)
-	testutils.AssertErrorsEqual(t, errNotRecognized, err)
+	testutils.AssertErrorsSame(t, errNotRecognized, err)
 }
 
 func TestValidate_OperatorRecognized_CacheEmptied(t *testing.T) {
@@ -275,7 +275,7 @@ func TestValidate_OperatorRecognized_CacheEmptied(t *testing.T) {
 	}
 
 	err = policy.Validate(peerOperatorPublicKey)
-	testutils.AssertErrorsEqual(t, errNotRecognized, err)
+	testutils.AssertErrorsSame(t, errNotRecognized, err)
 
 	// Ensure the application recognizes the operator. Wait for the caching
 	// period to elapse. The validation should pass since the result from the

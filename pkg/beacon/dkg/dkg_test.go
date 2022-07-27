@@ -12,8 +12,8 @@ import (
 	bn256 "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
 	"github.com/keep-network/keep-core/pkg/beacon/event"
 	"github.com/keep-network/keep-core/pkg/beacon/gjkr"
-	"github.com/keep-network/keep-core/pkg/beacon/group"
 	"github.com/keep-network/keep-core/pkg/chain"
+	"github.com/keep-network/keep-core/pkg/protocol/group"
 )
 
 var (
@@ -29,7 +29,7 @@ var (
 func setup() {
 	playerIndex = group.MemberIndex(1)
 	groupPublicKey = new(bn256.G2).ScalarBaseMult(big.NewInt(10))
-	dkgGroup := group.NewDkgGroup(4, 10)
+	dkgGroup := group.NewGroup(4, 10)
 	gjkrResult = &gjkr.Result{
 		GroupPublicKey: groupPublicKey,
 		Group:          dkgGroup,

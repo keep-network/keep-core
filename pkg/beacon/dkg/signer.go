@@ -1,13 +1,14 @@
 package dkg
 
 import (
-	"github.com/keep-network/keep-core/pkg/chain"
 	"math/big"
+
+	"github.com/keep-network/keep-core/pkg/chain"
 
 	bn256 "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
 	"github.com/keep-network/keep-core/pkg/altbn128"
-	"github.com/keep-network/keep-core/pkg/beacon/group"
 	"github.com/keep-network/keep-core/pkg/bls"
+	"github.com/keep-network/keep-core/pkg/protocol/group"
 )
 
 // ThresholdSigner is created from GJKR group Member when DKG protocol completed
