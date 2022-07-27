@@ -183,9 +183,9 @@ func generateTssPartiesIDs(
 	groupMembersIDs []group.MemberIndex,
 ) (*tss.PartyID, []*tss.PartyID) {
 	var partyID *tss.PartyID
-	var groupPartiesIDs []*tss.PartyID
+	groupPartiesIDs := make([]*tss.PartyID, len(groupMembersIDs))
 
-	for _, groupMemberID := range groupMembersIDs {
+	for i, groupMemberID := range groupMembersIDs {
 		newPartyID := tss.NewPartyID(
 			strconv.Itoa(int(groupMemberID)),
 			"",
@@ -196,7 +196,7 @@ func generateTssPartiesIDs(
 			partyID = newPartyID
 		}
 
-		groupPartiesIDs = append(groupPartiesIDs, newPartyID)
+		groupPartiesIDs[i] = newPartyID
 	}
 
 	return partyID, groupPartiesIDs
