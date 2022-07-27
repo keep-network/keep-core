@@ -196,7 +196,7 @@ func (tros *tssRoundOneState) MemberIndex() group.MemberIndex {
 
 // tssRoundOneState is the state during which members broadcast TSS
 // shares and de-commitments generated for other members of the group.
-// `tssRoundOneMessage`s are valid in this state.
+// `tssRoundTwoMessage`s are valid in this state.
 type tssRoundTwoState struct {
 	channel net.BroadcastChannel
 	member  *tssRoundTwoMember
@@ -247,15 +247,27 @@ func (trts *tssRoundTwoState) Receive(msg net.Message) error {
 }
 
 func (trts *tssRoundTwoState) Next() state.State {
-	//TODO implement me
-	panic("implement me")
+	return &tssRoundThreeState{
+		channel:               trts.channel,
+		member:                trts.member.initializeTssRoundThree(),
+		previousPhaseMessages: trts.phaseMessages,
+	}
 }
 
 func (trts *tssRoundTwoState) MemberIndex() group.MemberIndex {
 	return trts.member.id
 }
 
+// tssRoundOneState is the state during which members broadcast TSS Paillier
+// proofs generated for other members of the group.
+// `tssRoundThreeMessage`s are valid in this state.
 type tssRoundThreeState struct {
+	channel net.BroadcastChannel
+	member  *tssRoundThreeMember
+
+	previousPhaseMessages []*tssRoundTwoMessage
+
+	phaseMessages []*tssRoundThreeMessage
 }
 
 func (trts *tssRoundThreeState) DelayBlocks() uint64 {
@@ -267,23 +279,46 @@ func (trts *tssRoundThreeState) ActiveBlocks() uint64 {
 }
 
 func (trts *tssRoundThreeState) Initiate(ctx context.Context) error {
-	//TODO implement me
-	panic("implement me")
+	trts.member.MarkInactiveMembers(trts.previousPhaseMessages)
+
+	// TODO: If inactive members exist, there is no point to continue.
+	//       We should fail and retry.
+
+	message, err := trts.member.tssRoundThree(ctx, trts.previousPhaseMessages)
+	if err != nil {
+		return err
+	}
+
+	if err := trts.channel.Send(ctx, message); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (trts *tssRoundThreeState) Receive(msg net.Message) error {
-	//TODO implement me
-	panic("implement me")
+	switch phaseMessage := msg.Payload().(type) {
+	case *tssRoundThreeMessage:
+		if trts.member.shouldAcceptMessage(
+			phaseMessage.SenderID(),
+			msg.SenderPublicKey(),
+		) && trts.member.sessionID == phaseMessage.sessionID {
+			trts.phaseMessages = append(trts.phaseMessages, phaseMessage)
+		}
+	}
+
+	return nil
 }
 
 func (trts *tssRoundThreeState) Next() state.State {
-	//TODO implement me
-	panic("implement me")
+	return &finalizationState{
+		channel: trts.channel,
+		member:  trts.member.initializeFinalization(),
+	}
 }
 
 func (trts *tssRoundThreeState) MemberIndex() group.MemberIndex {
-	//TODO implement me
-	panic("implement me")
+	return trts.member.id
 }
 
 // finalizationState is the last state of the DKG protocol - in this state,

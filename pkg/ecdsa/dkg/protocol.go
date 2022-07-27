@@ -163,29 +163,28 @@ func (trtm *tssRoundTwoMember) tssRoundTwo(
 	// Use messages from round one to update the local party and advance
 	// to round two.
 	for _, tssRoundOneMessage := range tssRoundOneMessages {
+		senderID := tssRoundOneMessage.SenderID()
 		sortedPartiesIDs := trtm.tssParameters.Parties().IDs()
-		senderPartyIDKey := memberIDToTssPartyIDKey(
-			tssRoundOneMessage.SenderID(),
-		)
+		senderPartyIDKey := memberIDToTssPartyIDKey(senderID)
 		senderPartyID := sortedPartiesIDs.FindByKey(senderPartyIDKey)
 
-		_, err := trtm.tssParty.UpdateFromBytes(
+		_, tssErr := trtm.tssParty.UpdateFromBytes(
 			tssRoundOneMessage.payload,
 			senderPartyID,
 			true,
 		)
-		if err != nil {
+		if tssErr != nil {
 			return nil, fmt.Errorf(
 				"cannot update using TSS round one message "+
 					"from member [%v]: [%v]",
-				tssRoundOneMessage.SenderID(),
-				err,
+				senderID,
+				tssErr,
 			)
 		}
 	}
 
 	// We check that all expected messages were received at the state level.
-	// Just in case, check everything is good and we actually advanced
+	// Just in case, check everything is good, and we actually advanced
 	// to round two on the local party.
 	if len(trtm.tssParty.WaitingFor()) > 0 {
 		return nil, fmt.Errorf("missing TSS round one messages detected")
@@ -282,5 +281,108 @@ outgoingMessagesLoop:
 	return compositeMessage, nil
 }
 
-// TODO: Implement other phases of the protocol that involve actual
-//       key generation.
+// tssRoundThree performs the third round of the TSS process. The outcome of
+// that round is a message containing Paillier proofs for all other group
+// members.
+func (trtm *tssRoundTwoMember) tssRoundThree(
+	ctx context.Context,
+	tssRoundTwoMessages []*tssRoundTwoMessage,
+) (*tssRoundThreeMessage, error) {
+	// Use messages from round two to update the local party and advance
+	// to round three.
+	for _, tssRoundTwoMessage := range tssRoundTwoMessages {
+		senderID := tssRoundTwoMessage.SenderID()
+		sortedPartiesIDs := trtm.tssParameters.Parties().IDs()
+		senderPartyIDKey := memberIDToTssPartyIDKey(senderID)
+		senderPartyID := sortedPartiesIDs.FindByKey(senderPartyIDKey)
+
+		// Update the local TSS party using the broadcast part of the message
+		// produced in round two.
+		_, tssErr := trtm.tssParty.UpdateFromBytes(
+			tssRoundTwoMessage.broadcastPayload,
+			senderPartyID,
+			true,
+		)
+		if tssErr != nil {
+			return nil, fmt.Errorf(
+				"cannot update using the broadcast part of the "+
+					"TSS round two message from member [%v]: [%v]",
+				senderID,
+				tssErr,
+			)
+		}
+
+		// Check if the sender produced a P2P part of the TSS round two message
+		// for this member.
+		encryptedPeerPayload, ok := tssRoundTwoMessage.peersPayload[trtm.id]
+		if !ok {
+			return nil, fmt.Errorf(
+				"no P2P part in the TSS round two message from member [%v]",
+				senderID,
+			)
+		}
+		// Get the symmetric key with the sender. If the symmetric key
+		// cannot be found, something awful happened.
+		symmetricKey, ok := trtm.symmetricKeys[senderID]
+		if !ok {
+			return nil, fmt.Errorf(
+				"cannot get symmetric key with member [%v]",
+				senderID,
+			)
+		}
+		// Decrypt the P2P part of the TSS round two message.
+		peerPayload, err := symmetricKey.Decrypt(encryptedPeerPayload)
+		if err != nil {
+			return nil, fmt.Errorf(
+				"cannot decrypt P2P part of the TSS round two "+
+					"message from member [%v]: [%v]",
+				senderID,
+				err,
+			)
+		}
+		// Update the local TSS party using the P2P part of the message
+		// produced in round two.
+		_, tssErr = trtm.tssParty.UpdateFromBytes(
+			peerPayload,
+			senderPartyID,
+			false,
+		)
+		if tssErr != nil {
+			return nil, fmt.Errorf(
+				"cannot update using the P2P part of the TSS round "+
+					"two message from member [%v]: [%v]",
+				senderID,
+				err,
+			)
+		}
+	}
+
+	// We check that all expected messages were received at the state level.
+	// Just in case, check everything is good, and we actually advanced
+	// to round three on the local party.
+	if len(trtm.tssParty.WaitingFor()) > 0 {
+		return nil, fmt.Errorf("missing TSS round two messages detected")
+	}
+
+	// We expect exactly one TSS message to be produced in this phase.
+	select {
+	case tssMessage := <-trtm.tssOutgoingMessagesChan:
+		tssMessageBytes, _, err := tssMessage.WireBytes()
+		if err != nil {
+			return nil, fmt.Errorf(
+				"failed to encode TSS round one message: [%v]",
+				err,
+			)
+		}
+
+		return &tssRoundThreeMessage{
+			senderID:  trtm.id,
+			payload:   tssMessageBytes,
+			sessionID: trtm.sessionID,
+		}, nil
+	case <-ctx.Done():
+		return nil, fmt.Errorf(
+			"TSS round three outgoing message was not generated on time",
+		)
+	}
+}

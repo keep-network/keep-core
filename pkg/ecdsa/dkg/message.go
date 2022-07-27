@@ -70,3 +70,23 @@ func (trtm *tssRoundTwoMessage) SenderID() group.MemberIndex {
 func (trtm *tssRoundTwoMessage) Type() string {
 	return messageTypePrefix + "tss_round_two_message"
 }
+
+// tssRoundThreeMessage is a message payload that carries the sender's TSS
+// Paillier proofs generated for all other group members.
+type tssRoundThreeMessage struct {
+	senderID group.MemberIndex
+
+	payload   []byte
+	sessionID string
+}
+
+// SenderID returns protocol-level identifier of the message sender.
+func (trtm *tssRoundThreeMessage) SenderID() group.MemberIndex {
+	return trtm.senderID
+}
+
+// Type returns a string describing an tssRoundThreeMessage type for
+// marshaling purposes.
+func (trtm *tssRoundThreeMessage) Type() string {
+	return messageTypePrefix + "tss_round_three_message"
+}

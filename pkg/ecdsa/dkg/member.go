@@ -165,7 +165,7 @@ type tssRoundOneMember struct {
 	tssResultChan           <-chan keygen.LocalPartySaveData
 }
 
-// initializeTssRoundOne returns a member to perform next protocol operations.
+// initializeTssRoundTwo returns a member to perform next protocol operations.
 func (trom *tssRoundOneMember) initializeTssRoundTwo() *tssRoundTwoMember {
 	return &tssRoundTwoMember{
 		tssRoundOneMember: trom,
@@ -191,12 +191,45 @@ func (trtm *tssRoundTwoMember) MarkInactiveMembers(
 	filter.FlushInactiveMembers()
 }
 
+// initializeTssRoundThree returns a member to perform next protocol operations.
+func (trtm *tssRoundTwoMember) initializeTssRoundThree() *tssRoundThreeMember {
+	return &tssRoundThreeMember{
+		tssRoundTwoMember: trtm,
+	}
+}
+
+// tssRoundThreeMember represents one member in a distributed key generating
+// group performing the third round of the TSS keygen.
+type tssRoundThreeMember struct {
+	*tssRoundTwoMember
+}
+
+// MarkInactiveMembers takes all messages from the previous DKG protocol
+// execution phase and marks all member who did not send a message as IA.
+func (trtm *tssRoundThreeMember) MarkInactiveMembers(
+	tssRoundTwoMessages []*tssRoundTwoMessage,
+) {
+	filter := trtm.inactiveMemberFilter()
+	for _, message := range tssRoundTwoMessages {
+		filter.MarkMemberAsActive(message.senderID)
+	}
+
+	filter.FlushInactiveMembers()
+}
+
+// initializeFinalization returns a member to perform next protocol operations.
+func (trtm *tssRoundThreeMember) initializeFinalization() *finalizingMember {
+	return &finalizingMember{
+		tssRoundThreeMember: trtm,
+	}
+}
+
 // finalizingMember represents one member of the given group, after it
 // completed the distributed key generation process.
 //
 // Prepares a result to publish in the last phase of the protocol.
 type finalizingMember struct {
-	*symmetricKeyGeneratingMember
+	*tssRoundThreeMember
 }
 
 // Result can be either the successful computation of the distributed key
