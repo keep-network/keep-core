@@ -82,6 +82,7 @@ func TestShouldAcceptMessage(t *testing.T) {
 				groupSize,
 				groupSize-honestThreshold,
 				membershipValdator,
+				"1",
 			)
 
 			filter := member.inactiveMemberFilter()

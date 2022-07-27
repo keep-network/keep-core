@@ -166,9 +166,10 @@ func (tros *tssRoundOneState) Initiate(ctx context.Context) error {
 func (tros *tssRoundOneState) Receive(msg net.Message) error {
 	switch phaseMessage := msg.Payload().(type) {
 	case *tssRoundOneMessage:
-		if !group.IsMessageFromSelf(tros.member.id, phaseMessage) &&
-			group.IsSenderValid(tros.member, phaseMessage, msg.SenderPublicKey()) &&
-			group.IsSenderAccepted(tros.member, phaseMessage) {
+		if tros.member.shouldAcceptMessage(
+			phaseMessage.SenderID(),
+			msg.SenderPublicKey(),
+		) {
 			tros.phaseMessages = append(tros.phaseMessages, phaseMessage)
 		}
 	}
