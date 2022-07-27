@@ -37,7 +37,7 @@ async function setup(
   const { owner, provider, application } = args
   let { authorizer, authorization } = args
 
-  const { to1e18 } = helpers.number
+  const { to1e18, from1e18 } = helpers.number
   const staking = await helpers.contracts.getContract("TokenStaking")
   const applicationContract = await helpers.contracts.getContract(application)
 
@@ -56,7 +56,7 @@ async function setup(
   const authorizerSigner = await ethers.getSigner(authorizer)
 
   console.log(
-    `Increasing authorization ${authorization.toString()} for the ${application.toString()}...`
+    `Increasing authorization ${from1e18(authorization)} for the ${application.toString()}...`
   )
 
   await (

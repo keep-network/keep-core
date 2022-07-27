@@ -21,14 +21,14 @@ async function setup(
   const { owner, amount } = args
 
   const { deployer } = await helpers.signers.getNamedSigners()
-  const { to1e18 } = helpers.number
+  const { to1e18, from1e18 } = helpers.number
   const t = await helpers.contracts.getContract("T")
   const staking = await helpers.contracts.getContract("TokenStaking")
 
   const toMintAndApprove = to1e18(amount)
 
   console.log(
-    `Minting ${toMintAndApprove.toString()} T for the ${owner} and approving for staking...`
+    `Minting ${from1e18(toMintAndApprove)} T for the ${owner} and approving for staking...`
   )
 
   await (await t.connect(deployer).mint(owner, toMintAndApprove)).wait()
