@@ -135,19 +135,22 @@ func (skgm *symmetricKeyGeneratingMember) initializeTssRoundOne() *tssRoundOneMe
 		skgm.group.DishonestThreshold(),
 	)
 
-	tssOutgoingMessageChan := make(chan tss.Message, len(groupTssPartiesIDs))
+	tssOutgoingMessagesChan := make(chan tss.Message, len(groupTssPartiesIDs))
 	tssResultChan := make(chan keygen.LocalPartySaveData)
 
 	// TODO: Use pre-computed pre-params.
 	tssParty := keygen.NewLocalParty(
 		tssParameters,
-		tssOutgoingMessageChan,
+		tssOutgoingMessagesChan,
 		tssResultChan,
 	)
 
 	return &tssRoundOneMember{
 		symmetricKeyGeneratingMember: skgm,
 		tssParty:                     tssParty,
+		tssParameters:                tssParameters,
+		tssOutgoingMessagesChan:      tssOutgoingMessagesChan,
+		tssResultChan:                tssResultChan,
 	}
 }
 
@@ -156,9 +159,36 @@ func (skgm *symmetricKeyGeneratingMember) initializeTssRoundOne() *tssRoundOneMe
 type tssRoundOneMember struct {
 	*symmetricKeyGeneratingMember
 
-	tssParty               tss.Party
-	tssOutgoingMessageChan <-chan tss.Message
-	tssResultChan          <-chan keygen.LocalPartySaveData
+	tssParty                tss.Party
+	tssParameters           *tss.Parameters
+	tssOutgoingMessagesChan <-chan tss.Message
+	tssResultChan           <-chan keygen.LocalPartySaveData
+}
+
+// initializeTssRoundOne returns a member to perform next protocol operations.
+func (trom *tssRoundOneMember) initializeTssRoundTwo() *tssRoundTwoMember {
+	return &tssRoundTwoMember{
+		tssRoundOneMember: trom,
+	}
+}
+
+// tssRoundTwoMember represents one member in a distributed key generating
+// group performing the second round of the TSS keygen.
+type tssRoundTwoMember struct {
+	*tssRoundOneMember
+}
+
+// MarkInactiveMembers takes all messages from the previous DKG protocol
+// execution phase and marks all member who did not send a message as IA.
+func (trtm *tssRoundTwoMember) MarkInactiveMembers(
+	tssRoundOneMessages []*tssRoundOneMessage,
+) {
+	filter := trtm.inactiveMemberFilter()
+	for _, message := range tssRoundOneMessages {
+		filter.MarkMemberAsActive(message.senderID)
+	}
+
+	filter.FlushInactiveMembers()
 }
 
 // finalizingMember represents one member of the given group, after it
@@ -178,6 +208,8 @@ func (fm *finalizingMember) Result() *Result {
 	}
 }
 
+// generateTssPartiesIDs converts group member ID to parties ID suitable for
+// the TSS protocol execution.
 func generateTssPartiesIDs(
 	memberID group.MemberIndex,
 	groupMembersIDs []group.MemberIndex,
@@ -186,11 +218,7 @@ func generateTssPartiesIDs(
 	groupPartiesIDs := make([]*tss.PartyID, len(groupMembersIDs))
 
 	for i, groupMemberID := range groupMembersIDs {
-		newPartyID := tss.NewPartyID(
-			strconv.Itoa(int(groupMemberID)),
-			"",
-			big.NewInt(int64(groupMemberID)),
-		)
+		newPartyID := memberIDToTssPartyID(groupMemberID)
 
 		if memberID == groupMemberID {
 			partyID = newPartyID
@@ -200,4 +228,25 @@ func generateTssPartiesIDs(
 	}
 
 	return partyID, groupPartiesIDs
+}
+
+// memberIDToTssPartyID converts a single group member ID to a party ID suitable
+// for the TSS protocol execution.
+func memberIDToTssPartyID(memberID group.MemberIndex) *tss.PartyID {
+	return tss.NewPartyID(
+		strconv.Itoa(int(memberID)),
+		"",
+		memberIDToTssPartyIDKey(memberID),
+	)
+}
+
+// memberIDToTssPartyIDKey converts a single group member ID to a key that
+// can be used to create a TSS party ID.
+func memberIDToTssPartyIDKey(memberID group.MemberIndex) *big.Int {
+	return big.NewInt(int64(memberID))
+}
+
+// tssPartyIDToMemberID converts a single TSS party ID to a group member ID.
+func tssPartyIDToMemberID(partyID *tss.PartyID) group.MemberIndex {
+	return group.MemberIndex(partyID.KeyInt().Int64())
 }

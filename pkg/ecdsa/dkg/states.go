@@ -114,6 +114,10 @@ func (skgs *symmetricKeyGenerationState) ActiveBlocks() uint64 {
 
 func (skgs *symmetricKeyGenerationState) Initiate(ctx context.Context) error {
 	skgs.member.MarkInactiveMembers(skgs.previousPhaseMessages)
+
+	// TODO: If inactive members exist, there is no point to continue.
+	//       We should fail and retry.
+
 	return skgs.member.generateSymmetricKeys(skgs.previousPhaseMessages)
 }
 
@@ -160,6 +164,7 @@ func (tros *tssRoundOneState) Initiate(ctx context.Context) error {
 	if err := tros.channel.Send(ctx, message); err != nil {
 		return err
 	}
+
 	return nil
 }
 
@@ -169,7 +174,7 @@ func (tros *tssRoundOneState) Receive(msg net.Message) error {
 		if tros.member.shouldAcceptMessage(
 			phaseMessage.SenderID(),
 			msg.SenderPublicKey(),
-		) {
+		) && tros.member.sessionID == phaseMessage.sessionID {
 			tros.phaseMessages = append(tros.phaseMessages, phaseMessage)
 		}
 	}
@@ -178,15 +183,27 @@ func (tros *tssRoundOneState) Receive(msg net.Message) error {
 }
 
 func (tros *tssRoundOneState) Next() state.State {
-	//TODO implement me
-	panic("implement me")
+	return &tssRoundTwoState{
+		channel:               tros.channel,
+		member:                tros.member.initializeTssRoundTwo(),
+		previousPhaseMessages: tros.phaseMessages,
+	}
 }
 
 func (tros *tssRoundOneState) MemberIndex() group.MemberIndex {
 	return tros.member.id
 }
 
+// tssRoundOneState is the state during which members broadcast TSS
+// shares and de-commitments generated for other members of the group.
+// `tssRoundOneMessage`s are valid in this state.
 type tssRoundTwoState struct {
+	channel net.BroadcastChannel
+	member  *tssRoundTwoMember
+
+	previousPhaseMessages []*tssRoundOneMessage
+
+	phaseMessages []*tssRoundTwoMessage
 }
 
 func (trts *tssRoundTwoState) DelayBlocks() uint64 {
@@ -198,13 +215,35 @@ func (trts *tssRoundTwoState) ActiveBlocks() uint64 {
 }
 
 func (trts *tssRoundTwoState) Initiate(ctx context.Context) error {
-	//TODO implement me
-	panic("implement me")
+	trts.member.MarkInactiveMembers(trts.previousPhaseMessages)
+
+	// TODO: If inactive members exist, there is no point to continue.
+	//       We should fail and retry.
+
+	message, err := trts.member.tssRoundTwo(ctx, trts.previousPhaseMessages)
+	if err != nil {
+		return err
+	}
+
+	if err := trts.channel.Send(ctx, message); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (trts *tssRoundTwoState) Receive(msg net.Message) error {
-	//TODO implement me
-	panic("implement me")
+	switch phaseMessage := msg.Payload().(type) {
+	case *tssRoundTwoMessage:
+		if trts.member.shouldAcceptMessage(
+			phaseMessage.SenderID(),
+			msg.SenderPublicKey(),
+		) && trts.member.sessionID == phaseMessage.sessionID {
+			trts.phaseMessages = append(trts.phaseMessages, phaseMessage)
+		}
+	}
+
+	return nil
 }
 
 func (trts *tssRoundTwoState) Next() state.State {
@@ -213,8 +252,7 @@ func (trts *tssRoundTwoState) Next() state.State {
 }
 
 func (trts *tssRoundTwoState) MemberIndex() group.MemberIndex {
-	//TODO implement me
-	panic("implement me")
+	return trts.member.id
 }
 
 type tssRoundThreeState struct {

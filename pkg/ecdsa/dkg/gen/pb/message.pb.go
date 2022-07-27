@@ -28,7 +28,7 @@ const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
 type EphemeralPublicKeyMessage struct {
 	SenderID            uint32            `protobuf:"varint,1,opt,name=senderID,proto3" json:"senderID,omitempty"`
-	EphemeralPublicKeys map[uint32][]byte `protobuf:"bytes,3,rep,name=ephemeralPublicKeys,proto3" json:"ephemeralPublicKeys,omitempty" protobuf_key:"varint,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
+	EphemeralPublicKeys map[uint32][]byte `protobuf:"bytes,2,rep,name=ephemeralPublicKeys,proto3" json:"ephemeralPublicKeys,omitempty" protobuf_key:"varint,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
 }
 
 func (m *EphemeralPublicKeyMessage) Reset()      { *m = EphemeralPublicKeyMessage{} }
@@ -136,34 +136,108 @@ func (m *TSSRoundOneMessage) GetSessionID() string {
 	return ""
 }
 
+type TSSRoundTwoMessage struct {
+	SenderID         uint32            `protobuf:"varint,1,opt,name=senderID,proto3" json:"senderID,omitempty"`
+	BroadcastPayload []byte            `protobuf:"bytes,2,opt,name=broadcastPayload,proto3" json:"broadcastPayload,omitempty"`
+	PeersPayload     map[uint32][]byte `protobuf:"bytes,3,rep,name=peersPayload,proto3" json:"peersPayload,omitempty" protobuf_key:"varint,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
+	SessionID        string            `protobuf:"bytes,4,opt,name=sessionID,proto3" json:"sessionID,omitempty"`
+}
+
+func (m *TSSRoundTwoMessage) Reset()      { *m = TSSRoundTwoMessage{} }
+func (*TSSRoundTwoMessage) ProtoMessage() {}
+func (*TSSRoundTwoMessage) Descriptor() ([]byte, []int) {
+	return fileDescriptor_8447775385e7eb85, []int{2}
+}
+func (m *TSSRoundTwoMessage) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *TSSRoundTwoMessage) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_TSSRoundTwoMessage.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *TSSRoundTwoMessage) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_TSSRoundTwoMessage.Merge(m, src)
+}
+func (m *TSSRoundTwoMessage) XXX_Size() int {
+	return m.Size()
+}
+func (m *TSSRoundTwoMessage) XXX_DiscardUnknown() {
+	xxx_messageInfo_TSSRoundTwoMessage.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_TSSRoundTwoMessage proto.InternalMessageInfo
+
+func (m *TSSRoundTwoMessage) GetSenderID() uint32 {
+	if m != nil {
+		return m.SenderID
+	}
+	return 0
+}
+
+func (m *TSSRoundTwoMessage) GetBroadcastPayload() []byte {
+	if m != nil {
+		return m.BroadcastPayload
+	}
+	return nil
+}
+
+func (m *TSSRoundTwoMessage) GetPeersPayload() map[uint32][]byte {
+	if m != nil {
+		return m.PeersPayload
+	}
+	return nil
+}
+
+func (m *TSSRoundTwoMessage) GetSessionID() string {
+	if m != nil {
+		return m.SessionID
+	}
+	return ""
+}
+
 func init() {
 	proto.RegisterType((*EphemeralPublicKeyMessage)(nil), "dkg.EphemeralPublicKeyMessage")
 	proto.RegisterMapType((map[uint32][]byte)(nil), "dkg.EphemeralPublicKeyMessage.EphemeralPublicKeysEntry")
 	proto.RegisterType((*TSSRoundOneMessage)(nil), "dkg.TSSRoundOneMessage")
+	proto.RegisterType((*TSSRoundTwoMessage)(nil), "dkg.TSSRoundTwoMessage")
+	proto.RegisterMapType((map[uint32][]byte)(nil), "dkg.TSSRoundTwoMessage.PeersPayloadEntry")
 }
 
 func init() { proto.RegisterFile("pb/message.proto", fileDescriptor_8447775385e7eb85) }
 
 var fileDescriptor_8447775385e7eb85 = []byte{
-	// 288 bytes of a gzipped FileDescriptorProto
+	// 359 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xe2, 0x12, 0x28, 0x48, 0xd2, 0xcf,
 	0x4d, 0x2d, 0x2e, 0x4e, 0x4c, 0x4f, 0xd5, 0x2b, 0x28, 0xca, 0x2f, 0xc9, 0x17, 0x62, 0x4e, 0xc9,
 	0x4e, 0x57, 0x7a, 0xc5, 0xc8, 0x25, 0xe9, 0x5a, 0x90, 0x91, 0x9a, 0x9b, 0x5a, 0x94, 0x98, 0x13,
 	0x50, 0x9a, 0x94, 0x93, 0x99, 0xec, 0x9d, 0x5a, 0xe9, 0x0b, 0x51, 0x28, 0x24, 0xc5, 0xc5, 0x51,
 	0x9c, 0x9a, 0x97, 0x92, 0x5a, 0xe4, 0xe9, 0x22, 0xc1, 0xa8, 0xc0, 0xa8, 0xc1, 0x1b, 0x04, 0xe7,
-	0x0b, 0x65, 0x72, 0x09, 0xa7, 0x62, 0x68, 0x2c, 0x96, 0x60, 0x56, 0x60, 0xd6, 0xe0, 0x36, 0x32,
+	0x0b, 0x65, 0x72, 0x09, 0xa7, 0x62, 0x68, 0x2c, 0x96, 0x60, 0x52, 0x60, 0xd6, 0xe0, 0x36, 0x32,
 	0xd7, 0x4b, 0xc9, 0x4e, 0xd7, 0xc3, 0x69, 0x30, 0x16, 0x99, 0x62, 0xd7, 0xbc, 0x92, 0xa2, 0xca,
 	0x20, 0x6c, 0x66, 0x4a, 0xb9, 0x71, 0x49, 0xe0, 0xd2, 0x20, 0x24, 0xc0, 0xc5, 0x9c, 0x9d, 0x5a,
 	0x09, 0x75, 0x1d, 0x88, 0x29, 0x24, 0xc2, 0xc5, 0x5a, 0x96, 0x98, 0x53, 0x9a, 0x2a, 0xc1, 0xa4,
 	0xc0, 0xa8, 0xc1, 0x13, 0x04, 0xe1, 0x58, 0x31, 0x59, 0x30, 0x2a, 0x65, 0x70, 0x09, 0x85, 0x04,
 	0x07, 0x07, 0xe5, 0x97, 0xe6, 0xa5, 0xf8, 0xe7, 0xa5, 0x12, 0xe3, 0x49, 0x09, 0x2e, 0xf6, 0x82,
 	0xc4, 0xca, 0x9c, 0xfc, 0xc4, 0x14, 0xa8, 0x69, 0x30, 0xae, 0x90, 0x0c, 0x17, 0x67, 0x71, 0x6a,
-	0x71, 0x71, 0x66, 0x7e, 0x9e, 0xa7, 0x8b, 0x04, 0xb3, 0x02, 0xa3, 0x06, 0x67, 0x10, 0x42, 0xc0,
-	0xc9, 0xe2, 0xc2, 0x43, 0x39, 0x86, 0x1b, 0x0f, 0xe5, 0x18, 0x3e, 0x3c, 0x94, 0x63, 0x6c, 0x78,
-	0x24, 0xc7, 0xb8, 0xe2, 0x91, 0x1c, 0xe3, 0x89, 0x47, 0x72, 0x8c, 0x17, 0x1e, 0xc9, 0x31, 0x3e,
-	0x78, 0x24, 0xc7, 0xf8, 0xe2, 0x91, 0x1c, 0xc3, 0x87, 0x47, 0x72, 0x8c, 0x13, 0x1e, 0xcb, 0x31,
-	0x5c, 0x78, 0x2c, 0xc7, 0x70, 0xe3, 0xb1, 0x1c, 0x43, 0x14, 0x53, 0x41, 0x52, 0x12, 0x1b, 0x38,
-	0x72, 0x8c, 0x01, 0x01, 0x00, 0x00, 0xff, 0xff, 0x12, 0x89, 0x1e, 0xb9, 0xb0, 0x01, 0x00, 0x00,
+	0x71, 0x71, 0x66, 0x7e, 0x9e, 0xa7, 0x8b, 0x04, 0xb3, 0x02, 0xa3, 0x06, 0x67, 0x10, 0x42, 0x40,
+	0xa9, 0x8b, 0x09, 0x61, 0x55, 0x48, 0x79, 0x3e, 0x31, 0x56, 0x69, 0x71, 0x09, 0x24, 0x15, 0xe5,
+	0x27, 0xa6, 0x24, 0x27, 0x16, 0x97, 0x04, 0xa0, 0xd8, 0x89, 0x21, 0x2e, 0xe4, 0xcb, 0xc5, 0x53,
+	0x90, 0x9a, 0x5a, 0x54, 0x0c, 0x53, 0xc7, 0x0c, 0x0e, 0x74, 0x4d, 0x70, 0xa0, 0x63, 0x5a, 0xab,
+	0x17, 0x80, 0xa4, 0x16, 0x12, 0xcc, 0x28, 0xda, 0x51, 0xfd, 0xc2, 0x82, 0xe6, 0x17, 0x29, 0x7b,
+	0x2e, 0x41, 0x0c, 0x03, 0x48, 0x09, 0x76, 0x27, 0x8b, 0x0b, 0x0f, 0xe5, 0x18, 0x6e, 0x3c, 0x94,
+	0x63, 0xf8, 0xf0, 0x50, 0x8e, 0xb1, 0xe1, 0x91, 0x1c, 0xe3, 0x8a, 0x47, 0x72, 0x8c, 0x27, 0x1e,
+	0xc9, 0x31, 0x5e, 0x78, 0x24, 0xc7, 0xf8, 0xe0, 0x91, 0x1c, 0xe3, 0x8b, 0x47, 0x72, 0x0c, 0x1f,
+	0x1e, 0xc9, 0x31, 0x4e, 0x78, 0x2c, 0xc7, 0x70, 0xe1, 0xb1, 0x1c, 0xc3, 0x8d, 0xc7, 0x72, 0x0c,
+	0x51, 0x4c, 0x05, 0x49, 0x49, 0x6c, 0xe0, 0x94, 0x6a, 0x0c, 0x08, 0x00, 0x00, 0xff, 0xff, 0x9f,
+	0x2f, 0x36, 0x46, 0xbd, 0x02, 0x00, 0x00,
 }
 
 func (this *EphemeralPublicKeyMessage) Equal(that interface{}) bool {
@@ -228,6 +302,44 @@ func (this *TSSRoundOneMessage) Equal(that interface{}) bool {
 	}
 	return true
 }
+func (this *TSSRoundTwoMessage) Equal(that interface{}) bool {
+	if that == nil {
+		return this == nil
+	}
+
+	that1, ok := that.(*TSSRoundTwoMessage)
+	if !ok {
+		that2, ok := that.(TSSRoundTwoMessage)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
+	}
+	if that1 == nil {
+		return this == nil
+	} else if this == nil {
+		return false
+	}
+	if this.SenderID != that1.SenderID {
+		return false
+	}
+	if !bytes.Equal(this.BroadcastPayload, that1.BroadcastPayload) {
+		return false
+	}
+	if len(this.PeersPayload) != len(that1.PeersPayload) {
+		return false
+	}
+	for i := range this.PeersPayload {
+		if !bytes.Equal(this.PeersPayload[i], that1.PeersPayload[i]) {
+			return false
+		}
+	}
+	if this.SessionID != that1.SessionID {
+		return false
+	}
+	return true
+}
 func (this *EphemeralPublicKeyMessage) GoString() string {
 	if this == nil {
 		return "nil"
@@ -259,6 +371,31 @@ func (this *TSSRoundOneMessage) GoString() string {
 	s = append(s, "&pb.TSSRoundOneMessage{")
 	s = append(s, "SenderID: "+fmt.Sprintf("%#v", this.SenderID)+",\n")
 	s = append(s, "Payload: "+fmt.Sprintf("%#v", this.Payload)+",\n")
+	s = append(s, "SessionID: "+fmt.Sprintf("%#v", this.SessionID)+",\n")
+	s = append(s, "}")
+	return strings.Join(s, "")
+}
+func (this *TSSRoundTwoMessage) GoString() string {
+	if this == nil {
+		return "nil"
+	}
+	s := make([]string, 0, 8)
+	s = append(s, "&pb.TSSRoundTwoMessage{")
+	s = append(s, "SenderID: "+fmt.Sprintf("%#v", this.SenderID)+",\n")
+	s = append(s, "BroadcastPayload: "+fmt.Sprintf("%#v", this.BroadcastPayload)+",\n")
+	keysForPeersPayload := make([]uint32, 0, len(this.PeersPayload))
+	for k, _ := range this.PeersPayload {
+		keysForPeersPayload = append(keysForPeersPayload, k)
+	}
+	github_com_gogo_protobuf_sortkeys.Uint32s(keysForPeersPayload)
+	mapStringForPeersPayload := "map[uint32][]byte{"
+	for _, k := range keysForPeersPayload {
+		mapStringForPeersPayload += fmt.Sprintf("%#v: %#v,", k, this.PeersPayload[k])
+	}
+	mapStringForPeersPayload += "}"
+	if this.PeersPayload != nil {
+		s = append(s, "PeersPayload: "+mapStringForPeersPayload+",\n")
+	}
 	s = append(s, "SessionID: "+fmt.Sprintf("%#v", this.SessionID)+",\n")
 	s = append(s, "}")
 	return strings.Join(s, "")
@@ -307,7 +444,7 @@ func (m *EphemeralPublicKeyMessage) MarshalToSizedBuffer(dAtA []byte) (int, erro
 			dAtA[i] = 0x8
 			i = encodeVarintMessage(dAtA, i, uint64(baseI-i))
 			i--
-			dAtA[i] = 0x1a
+			dAtA[i] = 0x12
 		}
 	}
 	if m.SenderID != 0 {
@@ -349,6 +486,67 @@ func (m *TSSRoundOneMessage) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 		i -= len(m.Payload)
 		copy(dAtA[i:], m.Payload)
 		i = encodeVarintMessage(dAtA, i, uint64(len(m.Payload)))
+		i--
+		dAtA[i] = 0x12
+	}
+	if m.SenderID != 0 {
+		i = encodeVarintMessage(dAtA, i, uint64(m.SenderID))
+		i--
+		dAtA[i] = 0x8
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *TSSRoundTwoMessage) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *TSSRoundTwoMessage) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *TSSRoundTwoMessage) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if len(m.SessionID) > 0 {
+		i -= len(m.SessionID)
+		copy(dAtA[i:], m.SessionID)
+		i = encodeVarintMessage(dAtA, i, uint64(len(m.SessionID)))
+		i--
+		dAtA[i] = 0x22
+	}
+	if len(m.PeersPayload) > 0 {
+		for k := range m.PeersPayload {
+			v := m.PeersPayload[k]
+			baseI := i
+			if len(v) > 0 {
+				i -= len(v)
+				copy(dAtA[i:], v)
+				i = encodeVarintMessage(dAtA, i, uint64(len(v)))
+				i--
+				dAtA[i] = 0x12
+			}
+			i = encodeVarintMessage(dAtA, i, uint64(k))
+			i--
+			dAtA[i] = 0x8
+			i = encodeVarintMessage(dAtA, i, uint64(baseI-i))
+			i--
+			dAtA[i] = 0x1a
+		}
+	}
+	if len(m.BroadcastPayload) > 0 {
+		i -= len(m.BroadcastPayload)
+		copy(dAtA[i:], m.BroadcastPayload)
+		i = encodeVarintMessage(dAtA, i, uint64(len(m.BroadcastPayload)))
 		i--
 		dAtA[i] = 0x12
 	}
@@ -415,6 +613,38 @@ func (m *TSSRoundOneMessage) Size() (n int) {
 	return n
 }
 
+func (m *TSSRoundTwoMessage) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if m.SenderID != 0 {
+		n += 1 + sovMessage(uint64(m.SenderID))
+	}
+	l = len(m.BroadcastPayload)
+	if l > 0 {
+		n += 1 + l + sovMessage(uint64(l))
+	}
+	if len(m.PeersPayload) > 0 {
+		for k, v := range m.PeersPayload {
+			_ = k
+			_ = v
+			l = 0
+			if len(v) > 0 {
+				l = 1 + len(v) + sovMessage(uint64(len(v)))
+			}
+			mapEntrySize := 1 + sovMessage(uint64(k)) + l
+			n += mapEntrySize + 1 + sovMessage(uint64(mapEntrySize))
+		}
+	}
+	l = len(m.SessionID)
+	if l > 0 {
+		n += 1 + l + sovMessage(uint64(l))
+	}
+	return n
+}
+
 func sovMessage(x uint64) (n int) {
 	return (math_bits.Len64(x|1) + 6) / 7
 }
@@ -449,6 +679,29 @@ func (this *TSSRoundOneMessage) String() string {
 	s := strings.Join([]string{`&TSSRoundOneMessage{`,
 		`SenderID:` + fmt.Sprintf("%v", this.SenderID) + `,`,
 		`Payload:` + fmt.Sprintf("%v", this.Payload) + `,`,
+		`SessionID:` + fmt.Sprintf("%v", this.SessionID) + `,`,
+		`}`,
+	}, "")
+	return s
+}
+func (this *TSSRoundTwoMessage) String() string {
+	if this == nil {
+		return "nil"
+	}
+	keysForPeersPayload := make([]uint32, 0, len(this.PeersPayload))
+	for k, _ := range this.PeersPayload {
+		keysForPeersPayload = append(keysForPeersPayload, k)
+	}
+	github_com_gogo_protobuf_sortkeys.Uint32s(keysForPeersPayload)
+	mapStringForPeersPayload := "map[uint32][]byte{"
+	for _, k := range keysForPeersPayload {
+		mapStringForPeersPayload += fmt.Sprintf("%v: %v,", k, this.PeersPayload[k])
+	}
+	mapStringForPeersPayload += "}"
+	s := strings.Join([]string{`&TSSRoundTwoMessage{`,
+		`SenderID:` + fmt.Sprintf("%v", this.SenderID) + `,`,
+		`BroadcastPayload:` + fmt.Sprintf("%v", this.BroadcastPayload) + `,`,
+		`PeersPayload:` + mapStringForPeersPayload + `,`,
 		`SessionID:` + fmt.Sprintf("%v", this.SessionID) + `,`,
 		`}`,
 	}, "")
@@ -510,7 +763,7 @@ func (m *EphemeralPublicKeyMessage) Unmarshal(dAtA []byte) error {
 					break
 				}
 			}
-		case 3:
+		case 2:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field EphemeralPublicKeys", wireType)
 			}
@@ -728,6 +981,255 @@ func (m *TSSRoundOneMessage) Unmarshal(dAtA []byte) error {
 			}
 			iNdEx = postIndex
 		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field SessionID", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowMessage
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthMessage
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthMessage
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.SessionID = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipMessage(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthMessage
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *TSSRoundTwoMessage) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowMessage
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: TSSRoundTwoMessage: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: TSSRoundTwoMessage: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field SenderID", wireType)
+			}
+			m.SenderID = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowMessage
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.SenderID |= uint32(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field BroadcastPayload", wireType)
+			}
+			var byteLen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowMessage
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				byteLen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if byteLen < 0 {
+				return ErrInvalidLengthMessage
+			}
+			postIndex := iNdEx + byteLen
+			if postIndex < 0 {
+				return ErrInvalidLengthMessage
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.BroadcastPayload = append(m.BroadcastPayload[:0], dAtA[iNdEx:postIndex]...)
+			if m.BroadcastPayload == nil {
+				m.BroadcastPayload = []byte{}
+			}
+			iNdEx = postIndex
+		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field PeersPayload", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowMessage
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthMessage
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthMessage
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.PeersPayload == nil {
+				m.PeersPayload = make(map[uint32][]byte)
+			}
+			var mapkey uint32
+			mapvalue := []byte{}
+			for iNdEx < postIndex {
+				entryPreIndex := iNdEx
+				var wire uint64
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return ErrIntOverflowMessage
+					}
+					if iNdEx >= l {
+						return io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					wire |= uint64(b&0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
+				fieldNum := int32(wire >> 3)
+				if fieldNum == 1 {
+					for shift := uint(0); ; shift += 7 {
+						if shift >= 64 {
+							return ErrIntOverflowMessage
+						}
+						if iNdEx >= l {
+							return io.ErrUnexpectedEOF
+						}
+						b := dAtA[iNdEx]
+						iNdEx++
+						mapkey |= uint32(b&0x7F) << shift
+						if b < 0x80 {
+							break
+						}
+					}
+				} else if fieldNum == 2 {
+					var mapbyteLen uint64
+					for shift := uint(0); ; shift += 7 {
+						if shift >= 64 {
+							return ErrIntOverflowMessage
+						}
+						if iNdEx >= l {
+							return io.ErrUnexpectedEOF
+						}
+						b := dAtA[iNdEx]
+						iNdEx++
+						mapbyteLen |= uint64(b&0x7F) << shift
+						if b < 0x80 {
+							break
+						}
+					}
+					intMapbyteLen := int(mapbyteLen)
+					if intMapbyteLen < 0 {
+						return ErrInvalidLengthMessage
+					}
+					postbytesIndex := iNdEx + intMapbyteLen
+					if postbytesIndex < 0 {
+						return ErrInvalidLengthMessage
+					}
+					if postbytesIndex > l {
+						return io.ErrUnexpectedEOF
+					}
+					mapvalue = make([]byte, mapbyteLen)
+					copy(mapvalue, dAtA[iNdEx:postbytesIndex])
+					iNdEx = postbytesIndex
+				} else {
+					iNdEx = entryPreIndex
+					skippy, err := skipMessage(dAtA[iNdEx:])
+					if err != nil {
+						return err
+					}
+					if (skippy < 0) || (iNdEx+skippy) < 0 {
+						return ErrInvalidLengthMessage
+					}
+					if (iNdEx + skippy) > postIndex {
+						return io.ErrUnexpectedEOF
+					}
+					iNdEx += skippy
+				}
+			}
+			m.PeersPayload[mapkey] = mapvalue
+			iNdEx = postIndex
+		case 4:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field SessionID", wireType)
 			}

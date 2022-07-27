@@ -3,7 +3,7 @@ package dkg
 import (
 	"context"
 	"fmt"
-
+	"github.com/binance-chain/tss-lib/tss"
 	"github.com/keep-network/keep-core/pkg/crypto/ephemeral"
 	"github.com/keep-network/keep-core/pkg/protocol/group"
 )
@@ -132,7 +132,7 @@ func (trom *tssRoundOneMember) tssRoundOne(
 
 	// We expect exactly one TSS message to be produced in this phase.
 	select {
-	case tssMessage := <-trom.tssOutgoingMessageChan:
+	case tssMessage := <-trom.tssOutgoingMessagesChan:
 		tssMessageBytes, _, err := tssMessage.WireBytes()
 		if err != nil {
 			return nil, fmt.Errorf(
@@ -151,6 +151,135 @@ func (trom *tssRoundOneMember) tssRoundOne(
 			"TSS round one outgoing message was not generated on time",
 		)
 	}
+}
+
+// tssRoundTwo performs the second round of the TSS process. The outcome of
+// that round is a message containing shares and de-commitments for all other
+// group members.
+func (trtm *tssRoundTwoMember) tssRoundTwo(
+	ctx context.Context,
+	tssRoundOneMessages []*tssRoundOneMessage,
+) (*tssRoundTwoMessage, error) {
+	// Use messages from round one to update the local party and advance
+	// to round two.
+	for _, tssRoundOneMessage := range tssRoundOneMessages {
+		sortedPartiesIDs := trtm.tssParameters.Parties().IDs()
+		senderPartyIDKey := memberIDToTssPartyIDKey(
+			tssRoundOneMessage.SenderID(),
+		)
+		senderPartyID := sortedPartiesIDs.FindByKey(senderPartyIDKey)
+
+		_, err := trtm.tssParty.UpdateFromBytes(
+			tssRoundOneMessage.payload,
+			senderPartyID,
+			true,
+		)
+		if err != nil {
+			return nil, fmt.Errorf(
+				"cannot update using TSS round one message "+
+					"from member [%v]: [%v]",
+				tssRoundOneMessage.SenderID(),
+				err,
+			)
+		}
+	}
+
+	// We check that all expected messages were received at the state level.
+	// Just in case, check everything is good and we actually advanced
+	// to round two on the local party.
+	if len(trtm.tssParty.WaitingFor()) > 0 {
+		return nil, fmt.Errorf("missing TSS round one messages detected")
+	}
+
+	// Listen for TSS outgoing messages. We expect groupSize-1 P2P messages
+	// carrying shares and 1 broadcast message holding the de-commitments.
+	var tssMessages []tss.Message
+outgoingMessagesLoop:
+	for {
+		select {
+		case tssMessage := <-trtm.tssOutgoingMessagesChan:
+			tssMessages = append(tssMessages, tssMessage)
+
+			if len(tssMessages) == trtm.group.GroupSize() {
+				break outgoingMessagesLoop
+			}
+		case <-ctx.Done():
+			return nil, fmt.Errorf(
+				"TSS round two outgoing messages were not " +
+					"generated on time",
+			)
+		}
+	}
+
+	// Assemble all TSS outgoing messages into a single composite message.
+	compositeMessage := &tssRoundTwoMessage{
+		senderID:         trtm.id,
+		broadcastPayload: nil,
+		peersPayload:     make(map[group.MemberIndex][]byte),
+		sessionID:        trtm.sessionID,
+	}
+	for _, tssMessage := range tssMessages {
+		tssMessageBytes, tssMessageRouting, err := tssMessage.WireBytes()
+		if err != nil {
+			return nil, fmt.Errorf(
+				"failed to encode TSS round two message: [%v]",
+				err,
+			)
+		}
+
+		if tssMessageRouting.IsBroadcast {
+			// We expect only one broadcast message. Any other case is an error.
+			if len(compositeMessage.broadcastPayload) > 0 {
+				return nil, fmt.Errorf(
+					"multiple TSS round two broadcast messages detected",
+				)
+			}
+
+			compositeMessage.broadcastPayload = tssMessageBytes
+		} else {
+			// We expect that each P2P message targets only a single member.
+			// Any other case is an error.
+			if len(tssMessageRouting.To) == 1 {
+				return nil, fmt.Errorf(
+					"TSS round two multi-receiver P2P message detected",
+				)
+			}
+			// Get the single receiver ID.
+			receiverID := tssPartyIDToMemberID(tssMessageRouting.To[0])
+			// Get the symmetric key with the receiver. If the symmetric key
+			// cannot be found, something awful happened.
+			symmetricKey, ok := trtm.symmetricKeys[receiverID]
+			if !ok {
+				return nil, fmt.Errorf(
+					"cannot get symmetric key with member [%v]",
+					receiverID,
+				)
+			}
+			// Encrypt the payload using the receiver symmetric key.
+			encryptedTssMessageBytes, err := symmetricKey.Encrypt(
+				tssMessageBytes,
+			)
+			if err != nil {
+				return nil, fmt.Errorf(
+					"cannot encrypt TSS round two "+
+						"P2P message for member [%v]: [%v]",
+					receiverID,
+					err,
+				)
+			}
+
+			compositeMessage.peersPayload[receiverID] = encryptedTssMessageBytes
+		}
+	}
+
+	// Just a sanity check at the end of processing.
+	isMessageOk := len(compositeMessage.broadcastPayload) > 0 &&
+		len(compositeMessage.peersPayload) == trtm.group.GroupSize()-1
+	if !isMessageOk {
+		return nil, fmt.Errorf("cannot produce a proper TSS round two message")
+	}
+
+	return compositeMessage, nil
 }
 
 // TODO: Implement other phases of the protocol that involve actual

@@ -67,4 +67,10 @@ func registerUnmarshallers(channel net.BroadcastChannel) {
 	channel.SetUnmarshaler(func() net.TaggedUnmarshaler {
 		return &ephemeralPublicKeyMessage{}
 	})
+	channel.SetUnmarshaler(func() net.TaggedUnmarshaler {
+		return &tssRoundOneMessage{}
+	})
+	channel.SetUnmarshaler(func() net.TaggedUnmarshaler {
+		return &tssRoundTwoMessage{}
+	})
 }

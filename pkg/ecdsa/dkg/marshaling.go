@@ -72,6 +72,50 @@ func (trom *tssRoundOneMessage) Unmarshal(bytes []byte) error {
 	return nil
 }
 
+// Marshal converts this tssRoundTwoMessage to a byte array suitable for
+// network communication.
+func (trtm *tssRoundTwoMessage) Marshal() ([]byte, error) {
+	peersPayload := make(map[uint32][]byte, len(trtm.peersPayload))
+	for receiverID, payload := range trtm.peersPayload {
+		peersPayload[uint32(receiverID)] = payload
+	}
+
+	return (&pb.TSSRoundTwoMessage{
+		SenderID:         uint32(trtm.senderID),
+		BroadcastPayload: trtm.broadcastPayload,
+		PeersPayload:     peersPayload,
+		SessionID:        trtm.sessionID,
+	}).Marshal()
+}
+
+// Unmarshal converts a byte array produced by Marshal to an tssRoundTwoMessage.
+func (trtm *tssRoundTwoMessage) Unmarshal(bytes []byte) error {
+	pbMsg := pb.TSSRoundTwoMessage{}
+	if err := pbMsg.Unmarshal(bytes); err != nil {
+		return err
+	}
+
+	if err := validateMemberIndex(pbMsg.SenderID); err != nil {
+		return err
+	}
+
+	peersPayload := make(map[group.MemberIndex][]byte, len(pbMsg.PeersPayload))
+	for receiverID, payload := range pbMsg.PeersPayload {
+		if err := validateMemberIndex(receiverID); err != nil {
+			return err
+		}
+
+		peersPayload[group.MemberIndex(receiverID)] = payload
+	}
+
+	trtm.senderID = group.MemberIndex(pbMsg.SenderID)
+	trtm.broadcastPayload = pbMsg.BroadcastPayload
+	trtm.peersPayload = peersPayload
+	trtm.sessionID = pbMsg.SessionID
+
+	return nil
+}
+
 func validateMemberIndex(protoIndex uint32) error {
 	// Protobuf does not have uint8 type, so we are using uint32. When
 	// unmarshalling message, we need to make sure we do not overflow.

@@ -49,3 +49,24 @@ func (trom *tssRoundOneMessage) SenderID() group.MemberIndex {
 func (trom *tssRoundOneMessage) Type() string {
 	return messageTypePrefix + "tss_round_one_message"
 }
+
+// tssRoundTwoMessage is a message payload that carries the sender's TSS
+// shares and de-commitments generated for all other group members.
+type tssRoundTwoMessage struct {
+	senderID group.MemberIndex
+
+	broadcastPayload []byte
+	peersPayload     map[group.MemberIndex][]byte
+	sessionID        string
+}
+
+// SenderID returns protocol-level identifier of the message sender.
+func (trtm *tssRoundTwoMessage) SenderID() group.MemberIndex {
+	return trtm.senderID
+}
+
+// Type returns a string describing an tssRoundTwoMessage type for
+// marshaling purposes.
+func (trtm *tssRoundTwoMessage) Type() string {
+	return messageTypePrefix + "tss_round_two_message"
+}
