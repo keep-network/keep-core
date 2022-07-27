@@ -6,8 +6,10 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/keep-network/keep-core/pkg/beacon/group"
+	"github.com/keep-network/keep-core/pkg/internal/testutils"
+
 	"github.com/keep-network/keep-core/pkg/crypto/ephemeral"
+	"github.com/keep-network/keep-core/pkg/protocol/group"
 )
 
 func TestSaveEphemeralKeyMessagesForEvidence(t *testing.T) {
@@ -142,7 +144,7 @@ func initializeEphemeralKeyPairMembersGroup(
 	dishonestThreshold int,
 	groupSize int,
 ) []*EphemeralKeyPairGeneratingMember {
-	dkgGroup := group.NewDkgGroup(dishonestThreshold, groupSize)
+	dkgGroup := group.NewGroup(dishonestThreshold, groupSize)
 
 	protocolParameters := newProtocolParameters(big.NewInt(18313131145))
 
@@ -152,6 +154,7 @@ func initializeEphemeralKeyPairMembersGroup(
 		members = append(members, &EphemeralKeyPairGeneratingMember{
 			LocalMember: &LocalMember{
 				memberCore: &memberCore{
+					logger:             &testutils.MockLogger{},
 					ID:                 id,
 					group:              dkgGroup,
 					evidenceLog:        newDkgEvidenceLog(),

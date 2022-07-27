@@ -2,12 +2,13 @@ package dkg
 
 import (
 	"fmt"
-	"github.com/keep-network/keep-core/pkg/chain"
 	"math/big"
 
+	"github.com/keep-network/keep-core/pkg/chain"
+
 	bn256 "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
-	"github.com/keep-network/keep-core/pkg/beacon/group"
 	"github.com/keep-network/keep-core/pkg/beacon/registry/gen/pb"
+	"github.com/keep-network/keep-core/pkg/protocol/group"
 )
 
 // Marshal converts ThresholdSigner to byte array.
