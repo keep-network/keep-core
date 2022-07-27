@@ -28,7 +28,9 @@ async function setup(
   const toMintAndApprove = to1e18(amount)
 
   console.log(
-    `Minting ${from1e18(toMintAndApprove)} T for the ${owner} and approving for staking...`
+    `Minting ${from1e18(
+      toMintAndApprove
+    )} T for the ${owner} and approving for staking...`
   )
 
   await (await t.connect(deployer).mint(owner, toMintAndApprove)).wait()
