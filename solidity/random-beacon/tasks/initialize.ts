@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import { task, types } from "hardhat/config"
 
 import type { BigNumber } from "ethers"
