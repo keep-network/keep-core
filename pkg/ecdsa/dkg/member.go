@@ -1,6 +1,7 @@
 package dkg
 
 import (
+	"crypto/elliptic"
 	"math/big"
 	"strconv"
 
@@ -230,6 +231,21 @@ func (trtm *tssRoundThreeMember) initializeFinalization() *finalizingMember {
 // Prepares a result to publish in the last phase of the protocol.
 type finalizingMember struct {
 	*tssRoundThreeMember
+
+	tssResult keygen.LocalPartySaveData
+}
+
+// MarkInactiveMembers takes all messages from the previous DKG protocol
+// execution phase and marks all member who did not send a message as IA.
+func (fm *finalizingMember) MarkInactiveMembers(
+	tssRoundThreeMessages []*tssRoundThreeMessage,
+) {
+	filter := fm.inactiveMemberFilter()
+	for _, message := range tssRoundThreeMessages {
+		filter.MarkMemberAsActive(message.senderID)
+	}
+
+	filter.FlushInactiveMembers()
 }
 
 // Result can be either the successful computation of the distributed key
@@ -237,7 +253,11 @@ type finalizingMember struct {
 func (fm *finalizingMember) Result() *Result {
 	return &Result{
 		// TODO: Temporary result. Add real items.
-		SymmetricKeys: fm.symmetricKeys,
+		GroupPublicKey: elliptic.Marshal(
+			tss.EC(),
+			fm.tssResult.ECDSAPub.X(),
+			fm.tssResult.ECDSAPub.Y(),
+		),
 	}
 }
 

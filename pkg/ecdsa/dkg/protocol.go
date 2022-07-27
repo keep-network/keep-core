@@ -386,3 +386,49 @@ func (trtm *tssRoundTwoMember) tssRoundThree(
 		)
 	}
 }
+
+// tssFinalize finalizes the TSS process by producing a result.
+func (fm *finalizingMember) tssFinalize(
+	ctx context.Context,
+	tssRoundThreeMessages []*tssRoundThreeMessage,
+) error {
+	// Use messages from round three to update the local party and get the
+	// result.
+	for _, tssRoundThreeMessage := range tssRoundThreeMessages {
+		senderID := tssRoundThreeMessage.SenderID()
+		sortedPartiesIDs := fm.tssParameters.Parties().IDs()
+		senderPartyIDKey := memberIDToTssPartyIDKey(senderID)
+		senderPartyID := sortedPartiesIDs.FindByKey(senderPartyIDKey)
+
+		_, tssErr := fm.tssParty.UpdateFromBytes(
+			tssRoundThreeMessage.payload,
+			senderPartyID,
+			true,
+		)
+		if tssErr != nil {
+			return fmt.Errorf(
+				"cannot update using TSS round three message "+
+					"from member [%v]: [%v]",
+				senderID,
+				tssErr,
+			)
+		}
+	}
+
+	// We check that all expected messages were received at the state level.
+	// Just in case, check everything is good, and we actually advanced
+	// to the result stage.
+	if len(fm.tssParty.WaitingFor()) > 0 {
+		return fmt.Errorf("missing TSS round three messages detected")
+	}
+
+	select {
+	case tssResult := <-fm.tssResultChan:
+		fm.tssResult = tssResult
+		return nil
+	case <-ctx.Done():
+		return fmt.Errorf(
+			"TSS result was not generated on time",
+		)
+	}
+}

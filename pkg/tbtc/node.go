@@ -154,9 +154,9 @@ func (n *node) joinDKGIfEligible(seed *big.Int, startBlockNumber uint64) {
 				// TODO: Use the result to create a signer and persist the
 				//       key material using the persistence layer.
 				logger.Infof(
-					"[member:%v] generated [%v] symmetric keys",
+					"[member:%v] generated group [0x%x]",
 					memberIndex,
-					len(result.SymmetricKeys),
+					result.GroupPublicKey,
 				)
 			}()
 		}

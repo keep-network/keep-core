@@ -312,8 +312,9 @@ func (trts *tssRoundThreeState) Receive(msg net.Message) error {
 
 func (trts *tssRoundThreeState) Next() state.State {
 	return &finalizationState{
-		channel: trts.channel,
-		member:  trts.member.initializeFinalization(),
+		channel:               trts.channel,
+		member:                trts.member.initializeFinalization(),
+		previousPhaseMessages: trts.phaseMessages,
 	}
 }
 
@@ -328,6 +329,8 @@ func (trts *tssRoundThreeState) MemberIndex() group.MemberIndex {
 type finalizationState struct {
 	channel net.BroadcastChannel
 	member  *finalizingMember
+
+	previousPhaseMessages []*tssRoundThreeMessage
 }
 
 func (fs *finalizationState) DelayBlocks() uint64 {
@@ -339,7 +342,12 @@ func (fs *finalizationState) ActiveBlocks() uint64 {
 }
 
 func (fs *finalizationState) Initiate(ctx context.Context) error {
-	return nil
+	fs.member.MarkInactiveMembers(fs.previousPhaseMessages)
+
+	// TODO: If inactive members exist, there is no point to continue.
+	//       We should fail and retry.
+
+	return fs.member.tssFinalize(ctx, fs.previousPhaseMessages)
 }
 
 func (fs *finalizationState) Receive(msg net.Message) error {
