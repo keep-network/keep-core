@@ -5,7 +5,7 @@ package dkg;
 
 message EphemeralPublicKeyMessage {
     uint32 senderID = 1;
-    map<uint32, bytes> ephemeralPublicKeys = 3;
+    map<uint32, bytes> ephemeralPublicKeys = 2;
 }
 
 message TSSRoundOneMessage {
