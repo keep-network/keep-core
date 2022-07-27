@@ -68,7 +68,6 @@ async function mint(
   const { ethers, helpers } = hre
   const { owner, amount } = args
 
-  const { deployer } = await helpers.signers.getNamedSigners()
   const { to1e18, from1e18 } = helpers.number
   const t = await helpers.contracts.getContract("T")
   const staking = await helpers.contracts.getContract("TokenStaking")
@@ -133,7 +132,6 @@ async function stake(
   const authorizer = args.authorizer ?? owner
 
   const { to1e18, from1e18 } = helpers.number
-  const t = await helpers.contracts.getContract("T")
   const staking = await helpers.contracts.getContract("TokenStaking")
 
   const stakedAmount = to1e18(args.amount)
@@ -182,7 +180,6 @@ async function authorize(
   const authorizer = args.authorizer ?? owner
 
   const { to1e18, from1e18 } = helpers.number
-  const t = await helpers.contracts.getContract("T")
   const staking = await helpers.contracts.getContract("TokenStaking")
 
   const authorization = args.authorization
