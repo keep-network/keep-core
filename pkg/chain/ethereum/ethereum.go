@@ -15,6 +15,12 @@ import (
 	"github.com/keep-network/keep-common/pkg/chain/ethereum"
 	"github.com/keep-network/keep-common/pkg/chain/ethereum/ethutil"
 	"github.com/keep-network/keep-common/pkg/rate"
+	"github.com/keep-network/keep-core/pkg/chain/ethereum/threshold/gen/contract"
+)
+
+// Definitions of contract names.
+const (
+	TokenStakingContractName = "TokenStaking"
 )
 
 var logger = log.Logger("keep-chain-ethereum")
@@ -44,6 +50,8 @@ type Chain struct {
 	// nonce. Serializing submission ensures that each nonce is requested after
 	// a previous transaction has been submitted.
 	transactionMutex *sync.Mutex
+
+	tokenStaking *contract.TokenStaking
 }
 
 // Connect creates Random Beacon and TBTC Ethereum chain handles.
@@ -70,7 +78,7 @@ func Connect(
 		return nil, nil, fmt.Errorf("could not create beacon chain handle: [%v]", err)
 	}
 
-	tbtcChain, err := newTbtcChain(baseChain)
+	tbtcChain, err := newTbtcChain(config, baseChain)
 	if err != nil {
 		return nil, nil, fmt.Errorf("could not create TBTC chain handle: [%v]", err)
 	}
@@ -117,7 +125,36 @@ func newChain(
 
 	miningWaiter := ethutil.NewMiningWaiter(clientWithAddons, config)
 
+	transactionMutex := &sync.Mutex{}
+
 	// TODO: Consider adding the balance monitoring.
+
+	tokenStakingAddress, err := config.ContractAddress(TokenStakingContractName)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"failed to resolve %s contract address: [%v]",
+			TokenStakingContractName,
+			err,
+		)
+	}
+
+	tokenStaking, err :=
+		contract.NewTokenStaking(
+			tokenStakingAddress,
+			chainID,
+			key,
+			client,
+			nonceManager,
+			miningWaiter,
+			blockCounter,
+			transactionMutex,
+		)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"failed to attach to TokenStaking contract: [%v]",
+			err,
+		)
+	}
 
 	return &Chain{
 		key:              key,
@@ -126,7 +163,8 @@ func newChain(
 		blockCounter:     blockCounter,
 		nonceManager:     nonceManager,
 		miningWaiter:     miningWaiter,
-		transactionMutex: &sync.Mutex{},
+		transactionMutex: transactionMutex,
+		tokenStaking:     tokenStaking,
 	}, nil
 }
 
