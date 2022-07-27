@@ -28,7 +28,7 @@ async function setup(
   let { beneficiary, authorizer } = args
 
   const { deployer } = await helpers.signers.getNamedSigners()
-  const { to1e18 } = helpers.number
+  const { to1e18, from1e18 } = helpers.number
   const t = await helpers.contracts.getContract("T")
   const staking = await helpers.contracts.getContract("TokenStaking")
 
@@ -53,7 +53,7 @@ async function setup(
   }
 
   console.log(
-    `Staking ${stakedAmount.toString()} to the staking provider ${provider}...`
+    `Staking ${from1e18(stakedAmount)} T to the staking provider ${provider}...`
   )
 
   await (
