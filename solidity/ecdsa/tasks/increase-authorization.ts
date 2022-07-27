@@ -56,7 +56,7 @@ async function setup(
   const authorizerSigner = await ethers.getSigner(authorizer)
 
   console.log(
-    `Increasing authorization ${authorization.toString()} for the ${application.toString()} ...`
+    `Increasing authorization ${authorization.toString()} for the ${application.toString()}...`
   )
 
   await (

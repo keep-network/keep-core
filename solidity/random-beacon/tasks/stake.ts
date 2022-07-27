@@ -53,7 +53,7 @@ async function setup(
   }
 
   console.log(
-    `Staking ${stakedAmount.toString()} to the staking provider ${provider} ...`
+    `Staking ${stakedAmount.toString()} to the staking provider ${provider}...`
   )
 
   await (

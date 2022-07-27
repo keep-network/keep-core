@@ -31,7 +31,7 @@ async function setup(
   const applicationContract = await helpers.contracts.getContract(application)
 
   console.log(
-    `Registering operator ${operator.toString()} for a staking provider ${provider.toString()} ...`
+    `Registering operator ${operator.toString()} for a staking provider ${provider.toString()}...`
   )
 
   const stakingProviderSigner = await ethers.getSigner(provider)
