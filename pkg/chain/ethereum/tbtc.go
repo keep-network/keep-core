@@ -22,7 +22,7 @@ const (
 
 // TbtcChain represents a TBTC-specific chain handle.
 type TbtcChain struct {
-	*Chain
+	*baseChain
 
 	walletRegistry *contract.WalletRegistry
 
@@ -34,7 +34,7 @@ type TbtcChain struct {
 // chain handle.
 func newTbtcChain(
 	config ethereum.Config,
-	baseChain *Chain,
+	baseChain *baseChain,
 ) (*TbtcChain, error) {
 	walletRegistryAddress, err := config.ContractAddress(WalletRegistryContractName)
 	if err != nil {
@@ -90,7 +90,7 @@ func newTbtcChain(
 	}
 
 	return &TbtcChain{
-		Chain:              baseChain,
+		baseChain:          baseChain,
 		walletRegistry:     walletRegistry,
 		mockWalletRegistry: newMockWalletRegistry(baseChain.blockCounter),
 		sortitionPool:      sortitionPool,
@@ -137,7 +137,7 @@ func (tc *TbtcChain) IsRecognized(operatorPublicKey *operator.PublicKey) (bool, 
 
 	// Check if the staking provider has an owner. This check ensures that there
 	// is/was a stake delegation for the given staking provider.
-	_, _, _, hasStakeDelegation, err := tc.Chain.RolesOf(
+	_, _, _, hasStakeDelegation, err := tc.baseChain.RolesOf(
 		chain.Address(stakingProvider.Hex()),
 	)
 	if err != nil {

@@ -6,13 +6,9 @@ package state
 import (
 	"context"
 
-	"github.com/ipfs/go-log"
-
 	"github.com/keep-network/keep-core/pkg/net"
 	"github.com/keep-network/keep-core/pkg/protocol/group"
 )
-
-var logger = log.Logger("keep-protocol-state")
 
 // State is and interface that should be implemented by protocol states.
 type State interface {

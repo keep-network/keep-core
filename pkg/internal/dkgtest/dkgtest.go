@@ -6,6 +6,7 @@ import (
 	"context"
 	"crypto/rand"
 	"fmt"
+	"github.com/keep-network/keep-core/pkg/internal/testutils"
 	"math"
 	"math/big"
 	"sync"
@@ -149,17 +150,19 @@ func executeDKG(
 	gjkr.RegisterUnmarshallers(broadcastChannel)
 	dkgResult.RegisterUnmarshallers(broadcastChannel)
 
-	membershipValidator := group.NewOperatorsMembershipValidator(
+	membershipValidator := group.NewMembershipValidator(
+		&testutils.MockLogger{},
 		selectedOperators,
 		beaconChain.Signing(),
 	)
 
 	for i := 0; i < beaconConfig.GroupSize; i++ {
-		i := i // capture for goroutine
+		memberIndex := group.MemberIndex(i + 1) // capture for goroutine
 		go func() {
 			signer, err := dkg.ExecuteDKG(
+				&testutils.MockLogger{},
 				seed,
-				uint8(i),
+				memberIndex,
 				startBlockHeight,
 				beaconChain,
 				broadcastChannel,

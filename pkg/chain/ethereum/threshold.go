@@ -9,10 +9,10 @@ import (
 // specified staking provider address. If the owner is set, the function considers
 // the staking provider to have a stake delegation and returns the boolean flag
 // set to true.
-func (ec *Chain) RolesOf(stakingProvider chain.Address) (
+func (bc *baseChain) RolesOf(stakingProvider chain.Address) (
 	owner, beneficiary, authorizer chain.Address, hasStake bool, err error,
 ) {
-	rolesOf, err := ec.tokenStaking.RolesOf(
+	rolesOf, err := bc.tokenStaking.RolesOf(
 		common.HexToAddress(stakingProvider.String()),
 	)
 

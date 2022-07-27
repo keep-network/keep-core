@@ -63,19 +63,10 @@ func Start(c *cli.Context) error {
 		config.LibP2P.Port = c.Int(portFlag)
 	}
 
-	beaconChain, tbtcChain, baseChain, err := ethereum.Connect(ctx, config.Ethereum)
+	beaconChain, tbtcChain, blockCounter, signing, operatorPrivateKey, err :=
+		ethereum.Connect(ctx, config.Ethereum)
 	if err != nil {
 		return fmt.Errorf("error connecting to Ethereum node: [%v]", err)
-	}
-
-	operatorPrivateKey, _, err := baseChain.OperatorKeyPair()
-	if err != nil {
-		return fmt.Errorf("failed to get operator key pair: [%v]", err)
-	}
-
-	blockCounter, err := baseChain.BlockCounter()
-	if err != nil {
-		return fmt.Errorf("failed to get block counter: [%v]", err)
 	}
 
 	firewall := firewall.AnyApplicationPolicy(
@@ -86,7 +77,6 @@ func Start(c *cli.Context) error {
 		ctx,
 		config.LibP2P,
 		operatorPrivateKey,
-		libp2p.ProtocolKeep,
 		firewall,
 		retransmission.NewTicker(blockCounter.WatchBlocks(ctx)),
 	)
@@ -119,14 +109,14 @@ func Start(c *cli.Context) error {
 		ctx,
 		tbtcChain,
 		netProvider,
-		encryptedPersistence,
+		nil, // TODO: Pass a proper persistence handle.
 	)
 	if err != nil {
 		return fmt.Errorf("error initializing TBTC: [%v]", err)
 	}
 
 	initializeMetrics(ctx, config, netProvider, blockCounter)
-	initializeDiagnostics(ctx, config, netProvider, baseChain.Signing())
+	initializeDiagnostics(ctx, config, netProvider, signing)
 
 	select {
 	case <-ctx.Done():

@@ -17,16 +17,15 @@ import (
 	"github.com/keep-network/keep-core/pkg/protocol/group"
 )
 
-var logger = log.Logger("keep-beacon-dkg")
-
 // ExecuteDKG runs the full distributed key generation lifecycle.
 func ExecuteDKG(
+	logger log.StandardLogger,
 	seed *big.Int,
-	index uint8, // starts with 0
+	memberIndex group.MemberIndex,
 	startBlockHeight uint64,
 	beaconChain beaconchain.Interface,
 	channel net.BroadcastChannel,
-	membershipValidator group.MembershipValidator,
+	membershipValidator *group.MembershipValidator,
 	selectedOperators []chain.Address,
 ) (*ThresholdSigner, error) {
 	beaconConfig := beaconChain.GetConfig()
@@ -36,14 +35,12 @@ func ExecuteDKG(
 		return nil, fmt.Errorf("failed to get block counter: [%v]", err)
 	}
 
-	// The group member index should begin with 1.
-	playerIndex := group.MemberIndex(index + 1)
-
 	gjkr.RegisterUnmarshallers(channel)
 	dkgResult.RegisterUnmarshallers(channel)
 
 	gjkrResult, gjkrEndBlockHeight, err := gjkr.Execute(
-		playerIndex,
+		logger,
+		memberIndex,
 		beaconConfig.GroupSize,
 		blockCounter,
 		channel,
@@ -55,7 +52,7 @@ func ExecuteDKG(
 	if err != nil {
 		return nil, fmt.Errorf(
 			"[member:%v] GJKR execution failed [%v]",
-			playerIndex,
+			memberIndex,
 			err,
 		)
 	}
@@ -73,7 +70,8 @@ func ExecuteDKG(
 	defer dkgResultSubscription.Unsubscribe()
 
 	err = dkgResult.Publish(
-		playerIndex,
+		logger,
+		memberIndex,
 		gjkrResult.Group,
 		membershipValidator,
 		gjkrResult,
@@ -91,12 +89,12 @@ func ExecuteDKG(
 		// or drop our membership.
 		logger.Warningf(
 			"[member:%v] DKG result publication process failed [%v]",
-			playerIndex,
+			memberIndex,
 			err,
 		)
 
 		if operatingMemberIDs, err = decideMemberFate(
-			playerIndex,
+			memberIndex,
 			gjkrResult,
 			dkgResultChannel,
 			startPublicationBlockHeight,
@@ -117,7 +115,7 @@ func ExecuteDKG(
 	}
 
 	return &ThresholdSigner{
-		memberIndex:          playerIndex,
+		memberIndex:          memberIndex,
 		groupPublicKey:       gjkrResult.GroupPublicKey,
 		groupPrivateKeyShare: gjkrResult.GroupPrivateKeyShare,
 		groupPublicKeyShares: gjkrResult.GroupPublicKeyShares(),

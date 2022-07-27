@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/keep-network/keep-core/pkg/chain/local_v1"
+	"github.com/keep-network/keep-core/pkg/internal/testutils"
 	"reflect"
 	"testing"
 
@@ -53,7 +54,7 @@ func TestExecute(t *testing.T) {
 		channel:     channel,
 	}
 
-	stateMachine := NewMachine(channel, blockCounter, initialState)
+	stateMachine := NewMachine(&testutils.MockLogger{}, channel, blockCounter, initialState)
 
 	finalState, endBlockHeight, err := stateMachine.Execute(1)
 	if err != nil {

@@ -13,6 +13,9 @@ import (
 
 var logger = log.Logger("keep-tbtc")
 
+// ProtocolName denotes the name of the protocol defined by this package.
+const ProtocolName = "tbtc"
+
 // Initialize kicks off the TBTC by initializing internal state, ensuring
 // preconditions like staking are met, and then kicking off the internal TBTC
 // implementation. Returns an error if this failed.
@@ -25,7 +28,7 @@ func Initialize(
 	node := newNode(chain, netProvider, persistence)
 	deduplicator := newDeduplicator()
 
-	err := sortition.MonitorPool(ctx, chain, sortition.DefaultStatusCheckTick)
+	err := sortition.MonitorPool(ctx, logger, chain, sortition.DefaultStatusCheckTick)
 	if err != nil {
 		return fmt.Errorf(
 			"could not set up sortition pool monitoring: [%v]",

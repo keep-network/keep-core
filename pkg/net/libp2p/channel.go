@@ -97,7 +97,7 @@ func (c *channel) Send(ctx context.Context, message net.TaggedMarshaler) error {
 		return c.publish(messageProto)
 	}
 
-	retransmission.ScheduleRetransmissions(ctx, c.retransmissionTicker, doSend)
+	retransmission.ScheduleRetransmissions(ctx, logger, c.retransmissionTicker, doSend)
 
 	return doSend()
 }

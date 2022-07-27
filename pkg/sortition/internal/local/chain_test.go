@@ -77,7 +77,7 @@ func TestOperatorUpToDate_NotRegisteredOperator(t *testing.T) {
 	localChain := Connect(testOperatorAddress)
 
 	_, err := localChain.IsOperatorUpToDate()
-	testutils.AssertErrorsEqual(t, errOperatorUnknown, err)
+	testutils.AssertErrorsSame(t, errOperatorUnknown, err)
 }
 
 func TestOperatorUpToDate_NoStake(t *testing.T) {
@@ -167,7 +167,7 @@ func TestJoinSortitionPool_NotRegisteredOperator(t *testing.T) {
 	localChain := Connect(testOperatorAddress)
 
 	err := localChain.JoinSortitionPool()
-	testutils.AssertErrorsEqual(t, errOperatorUnknown, err)
+	testutils.AssertErrorsSame(t, errOperatorUnknown, err)
 }
 
 func TestJoinSortitionPool_AuthorizationBelowMinimum(t *testing.T) {
@@ -175,7 +175,7 @@ func TestJoinSortitionPool_AuthorizationBelowMinimum(t *testing.T) {
 	localChain.RegisterOperator(testStakingProviderAddress, testOperatorAddress)
 
 	err := localChain.JoinSortitionPool()
-	testutils.AssertErrorsEqual(t, errAuthorizationBelowMinimum, err)
+	testutils.AssertErrorsSame(t, errAuthorizationBelowMinimum, err)
 }
 
 func TestJoinSortitionPool(t *testing.T) {
@@ -200,14 +200,14 @@ func TestJoinSortitionPool_OperatorAlreadyInPool(t *testing.T) {
 	}
 
 	err = localChain.JoinSortitionPool()
-	testutils.AssertErrorsEqual(t, errOperatorAlreadyRegisteredInPool, err)
+	testutils.AssertErrorsSame(t, errOperatorAlreadyRegisteredInPool, err)
 }
 
 func TestUpdateOperatorStatus_NotRegisteredOperator(t *testing.T) {
 	localChain := Connect(testOperatorAddress)
 
 	err := localChain.UpdateOperatorStatus()
-	testutils.AssertErrorsEqual(t, errOperatorUnknown, err)
+	testutils.AssertErrorsSame(t, errOperatorUnknown, err)
 }
 
 func TestUpdateOperatorStatus(t *testing.T) {
@@ -342,5 +342,5 @@ func TestRestoreRewardEligibility_CannotRestore(t *testing.T) {
 	}
 
 	err = localChain.RestoreRewardEligibility()
-	testutils.AssertErrorsEqual(t, errOperatorStillIneligibleForRewards, err)
+	testutils.AssertErrorsSame(t, errOperatorStillIneligibleForRewards, err)
 }

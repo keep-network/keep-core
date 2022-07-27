@@ -1,8 +1,10 @@
 package result
 
 import (
-	"github.com/keep-network/keep-core/pkg/chain/local_v1"
 	"testing"
+
+	"github.com/keep-network/keep-core/pkg/chain/local_v1"
+	"github.com/keep-network/keep-core/pkg/internal/testutils"
 
 	beaconchain "github.com/keep-network/keep-core/pkg/beacon/chain"
 	"github.com/keep-network/keep-core/pkg/chain"
@@ -52,7 +54,8 @@ func TestSubmitDKGResult(t *testing.T) {
 	for testName, test := range tests {
 		t.Run(testName, func(t *testing.T) {
 			member := &SubmittingMember{
-				index: group.MemberIndex(test.memberIndex),
+				logger: &testutils.MockLogger{},
+				index:  group.MemberIndex(test.memberIndex),
 			}
 
 			// Reinitialize chain to reset block counter
@@ -112,10 +115,12 @@ func TestConcurrentPublishResult(t *testing.T) {
 	groupSize := 5
 
 	member1 := &SubmittingMember{
-		index: group.MemberIndex(1), // P1
+		logger: &testutils.MockLogger{},
+		index:  group.MemberIndex(1), // P1
 	}
 	member2 := &SubmittingMember{
-		index: group.MemberIndex(4), // P4
+		logger: &testutils.MockLogger{},
+		index:  group.MemberIndex(4), // P4
 	}
 
 	signatures := map[group.MemberIndex][]byte{
