@@ -152,7 +152,7 @@ async function stake(
 task(TASK_AUTHORIZE, "Sets authorization")
   .addParam("owner", "Stake Owner address", undefined, types.string)
   .addParam("provider", "Staking Provider", undefined, types.string)
-  .addOptionalParam("beneficiary", "Stake Beneficiary", undefined, types.string)
+  .addOptionalParam("authorizer", "Stake Authorizer", undefined, types.string)
   .addOptionalParam(
     "authorization",
     "Authorization amount (default: minimumAuthorization)",
