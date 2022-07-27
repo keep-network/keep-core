@@ -75,6 +75,6 @@ async function setup(
   )
 
   console.log(
-    `Staked authorization ${authorizedStaked.toString()} was increased for the ${application.toString()}`
+    `Authorization for ${application.toString()} was increased to ${authorizedStaked.toString()}`
   )
 }
