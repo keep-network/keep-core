@@ -79,6 +79,9 @@ async function mint(
   const tokenContractOwner = await t.owner()
 
   const currentBalance: BigNumber = await t.balanceOf(owner)
+
+  console.log(`Account ${owner} balance is ${from1e18(currentBalance)} T`)
+
   if (currentBalance.lt(stakeAmount)) {
     const mintAmount = stakeAmount.sub(currentBalance)
 
@@ -89,8 +92,6 @@ async function mint(
         .connect(await ethers.getSigner(tokenContractOwner))
         .mint(owner, mintAmount)
     ).wait()
-  } else {
-    console.log(`Account ${owner} already holds ${from1e18(currentBalance)} T`)
   }
 
   console.log(`Approving ${from1e18(stakeAmount)} T for ${staking.address}...`)
