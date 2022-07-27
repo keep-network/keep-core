@@ -2,6 +2,7 @@ package dkg
 
 import (
 	"crypto/elliptic"
+	"fmt"
 	"math/big"
 	"strconv"
 
@@ -25,6 +26,8 @@ type member struct {
 	membershipValidator *group.MembershipValidator
 	// Identifier of the particular DKG session this member is part of.
 	sessionID string
+	// TSS pre-parameters.
+	tssPreParams *keygen.LocalPreParams
 }
 
 // newMember creates a new member in an initial state
@@ -35,6 +38,7 @@ func newMember(
 	dishonestThreshold int,
 	membershipValidator *group.MembershipValidator,
 	sessionID string,
+	tssPreParams *keygen.LocalPreParams,
 ) *member {
 	return &member{
 		logger:              logger,
@@ -42,6 +46,7 @@ func newMember(
 		group:               group.NewGroup(dishonestThreshold, groupSize),
 		membershipValidator: membershipValidator,
 		sessionID:           sessionID,
+		tssPreParams:        tssPreParams,
 	}
 }
 
@@ -139,11 +144,11 @@ func (skgm *symmetricKeyGeneratingMember) initializeTssRoundOne() *tssRoundOneMe
 	tssOutgoingMessagesChan := make(chan tss.Message, len(groupTssPartiesIDs))
 	tssResultChan := make(chan keygen.LocalPartySaveData)
 
-	// TODO: Use pre-computed pre-params.
 	tssParty := keygen.NewLocalParty(
 		tssParameters,
 		tssOutgoingMessagesChan,
 		tssResultChan,
+		*skgm.tssPreParams,
 	)
 
 	return &tssRoundOneMember{
@@ -288,7 +293,7 @@ func generateTssPartiesIDs(
 func memberIDToTssPartyID(memberID group.MemberIndex) *tss.PartyID {
 	return tss.NewPartyID(
 		strconv.Itoa(int(memberID)),
-		"",
+		fmt.Sprintf("member-%v", memberID),
 		memberIDToTssPartyIDKey(memberID),
 	)
 }

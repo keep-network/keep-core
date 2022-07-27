@@ -3,6 +3,7 @@ package tbtc
 import (
 	"fmt"
 	"math/big"
+	"time"
 
 	"github.com/keep-network/keep-common/pkg/persistence"
 	"github.com/keep-network/keep-core/pkg/ecdsa/dkg"
@@ -17,6 +18,7 @@ import (
 type node struct {
 	chain       Chain
 	netProvider net.Provider
+	dkgExecutor *dkg.Executor
 
 	// TODO: Persistence layer.
 }
@@ -26,9 +28,16 @@ func newNode(
 	netProvider net.Provider,
 	persistence persistence.Handle,
 ) *node {
+	// TODO: Pass TSS pre-parameters pool config from the outside.
+	dkgExecutor := dkg.NewExecutor(logger, &dkg.ExecutorConfig{
+		TssPreParamsPoolSize:              20,
+		TssPreParamsPoolGenerationTimeout: 2 * time.Minute,
+	})
+
 	return &node{
 		chain:       chain,
 		netProvider: netProvider,
+		dkgExecutor: dkgExecutor,
 	}
 }
 
@@ -129,8 +138,7 @@ func (n *node) joinDKGIfEligible(seed *big.Int, startBlockNumber uint64) {
 			memberIndex := index + 1
 
 			go func() {
-				result, _, err := dkg.Execute(
-					logger,
+				result, _, err := n.dkgExecutor.Execute(
 					seed,
 					startBlockNumber,
 					memberIndex,
