@@ -20,8 +20,8 @@ import (
 
 	"github.com/ipfs/go-log"
 
+	"github.com/keep-network/keep-common/pkg/chain/ethereum"
 	chainutil "github.com/keep-network/keep-common/pkg/chain/ethereum/ethutil"
-	"github.com/keep-network/keep-common/pkg/chain/ethlike"
 	"github.com/keep-network/keep-common/pkg/subscription"
 	"github.com/keep-network/keep-core/pkg/chain/ethereum/beacon/gen/abi"
 )
@@ -40,9 +40,9 @@ type RandomBeacon struct {
 	callerOptions     *bind.CallOpts
 	transactorOptions *bind.TransactOpts
 	errorResolver     *chainutil.ErrorResolver
-	nonceManager      *ethlike.NonceManager
+	nonceManager      *ethereum.NonceManager
 	miningWaiter      *chainutil.MiningWaiter
-	blockCounter      *ethlike.BlockCounter
+	blockCounter      *ethereum.BlockCounter
 
 	transactionMutex *sync.Mutex
 }
@@ -52,19 +52,16 @@ func NewRandomBeacon(
 	chainId *big.Int,
 	accountKey *keystore.Key,
 	backend bind.ContractBackend,
-	nonceManager *ethlike.NonceManager,
+	nonceManager *ethereum.NonceManager,
 	miningWaiter *chainutil.MiningWaiter,
-	blockCounter *ethlike.BlockCounter,
+	blockCounter *ethereum.BlockCounter,
 	transactionMutex *sync.Mutex,
 ) (*RandomBeacon, error) {
 	callerOptions := &bind.CallOpts{
 		From: accountKey.Address,
 	}
 
-	// FIXME Switch to bind.NewKeyedTransactorWithChainID when
-	// FIXME celo-org/celo-blockchain merges in changes from upstream
-	// FIXME ethereum/go-ethereum beyond v1.9.25.
-	transactorOptions, err := chainutil.NewKeyedTransactorWithChainID(
+	transactorOptions, err := bind.NewKeyedTransactorWithChainID(
 		accountKey.PrivateKey,
 		chainId,
 	)
@@ -5574,11 +5571,11 @@ func (rb *RandomBeacon) TTokenAtBlock(
 // ------ Events -------
 
 func (rb *RandomBeacon) AuthorizationDecreaseApprovedEvent(
-	opts *ethlike.SubscribeOpts,
+	opts *ethereum.SubscribeOpts,
 	stakingProviderFilter []common.Address,
 ) *RbAuthorizationDecreaseApprovedSubscription {
 	if opts == nil {
-		opts = new(ethlike.SubscribeOpts)
+		opts = new(ethereum.SubscribeOpts)
 	}
 	if opts.Tick == 0 {
 		opts.Tick = chainutil.DefaultSubscribeOptsTick
@@ -5596,7 +5593,7 @@ func (rb *RandomBeacon) AuthorizationDecreaseApprovedEvent(
 
 type RbAuthorizationDecreaseApprovedSubscription struct {
 	contract              *RandomBeacon
-	opts                  *ethlike.SubscribeOpts
+	opts                  *ethereum.SubscribeOpts
 	stakingProviderFilter []common.Address
 }
 
@@ -5762,12 +5759,12 @@ func (rb *RandomBeacon) PastAuthorizationDecreaseApprovedEvents(
 }
 
 func (rb *RandomBeacon) AuthorizationDecreaseRequestedEvent(
-	opts *ethlike.SubscribeOpts,
+	opts *ethereum.SubscribeOpts,
 	stakingProviderFilter []common.Address,
 	operatorFilter []common.Address,
 ) *RbAuthorizationDecreaseRequestedSubscription {
 	if opts == nil {
-		opts = new(ethlike.SubscribeOpts)
+		opts = new(ethereum.SubscribeOpts)
 	}
 	if opts.Tick == 0 {
 		opts.Tick = chainutil.DefaultSubscribeOptsTick
@@ -5786,7 +5783,7 @@ func (rb *RandomBeacon) AuthorizationDecreaseRequestedEvent(
 
 type RbAuthorizationDecreaseRequestedSubscription struct {
 	contract              *RandomBeacon
-	opts                  *ethlike.SubscribeOpts
+	opts                  *ethereum.SubscribeOpts
 	stakingProviderFilter []common.Address
 	operatorFilter        []common.Address
 }
@@ -5967,12 +5964,12 @@ func (rb *RandomBeacon) PastAuthorizationDecreaseRequestedEvents(
 }
 
 func (rb *RandomBeacon) AuthorizationIncreasedEvent(
-	opts *ethlike.SubscribeOpts,
+	opts *ethereum.SubscribeOpts,
 	stakingProviderFilter []common.Address,
 	operatorFilter []common.Address,
 ) *RbAuthorizationIncreasedSubscription {
 	if opts == nil {
-		opts = new(ethlike.SubscribeOpts)
+		opts = new(ethereum.SubscribeOpts)
 	}
 	if opts.Tick == 0 {
 		opts.Tick = chainutil.DefaultSubscribeOptsTick
@@ -5991,7 +5988,7 @@ func (rb *RandomBeacon) AuthorizationIncreasedEvent(
 
 type RbAuthorizationIncreasedSubscription struct {
 	contract              *RandomBeacon
-	opts                  *ethlike.SubscribeOpts
+	opts                  *ethereum.SubscribeOpts
 	stakingProviderFilter []common.Address
 	operatorFilter        []common.Address
 }
@@ -6170,10 +6167,10 @@ func (rb *RandomBeacon) PastAuthorizationIncreasedEvents(
 }
 
 func (rb *RandomBeacon) AuthorizationParametersUpdatedEvent(
-	opts *ethlike.SubscribeOpts,
+	opts *ethereum.SubscribeOpts,
 ) *RbAuthorizationParametersUpdatedSubscription {
 	if opts == nil {
-		opts = new(ethlike.SubscribeOpts)
+		opts = new(ethereum.SubscribeOpts)
 	}
 	if opts.Tick == 0 {
 		opts.Tick = chainutil.DefaultSubscribeOptsTick
@@ -6190,7 +6187,7 @@ func (rb *RandomBeacon) AuthorizationParametersUpdatedEvent(
 
 type RbAuthorizationParametersUpdatedSubscription struct {
 	contract *RandomBeacon
-	opts     *ethlike.SubscribeOpts
+	opts     *ethereum.SubscribeOpts
 }
 
 type randomBeaconAuthorizationParametersUpdatedFunc func(
@@ -6353,10 +6350,10 @@ func (rb *RandomBeacon) PastAuthorizationParametersUpdatedEvents(
 }
 
 func (rb *RandomBeacon) CallbackFailedEvent(
-	opts *ethlike.SubscribeOpts,
+	opts *ethereum.SubscribeOpts,
 ) *RbCallbackFailedSubscription {
 	if opts == nil {
-		opts = new(ethlike.SubscribeOpts)
+		opts = new(ethereum.SubscribeOpts)
 	}
 	if opts.Tick == 0 {
 		opts.Tick = chainutil.DefaultSubscribeOptsTick
@@ -6373,7 +6370,7 @@ func (rb *RandomBeacon) CallbackFailedEvent(
 
 type RbCallbackFailedSubscription struct {
 	contract *RandomBeacon
-	opts     *ethlike.SubscribeOpts
+	opts     *ethereum.SubscribeOpts
 }
 
 type randomBeaconCallbackFailedFunc func(
@@ -6534,11 +6531,11 @@ func (rb *RandomBeacon) PastCallbackFailedEvents(
 }
 
 func (rb *RandomBeacon) DkgMaliciousResultSlashedEvent(
-	opts *ethlike.SubscribeOpts,
+	opts *ethereum.SubscribeOpts,
 	resultHashFilter [][32]byte,
 ) *RbDkgMaliciousResultSlashedSubscription {
 	if opts == nil {
-		opts = new(ethlike.SubscribeOpts)
+		opts = new(ethereum.SubscribeOpts)
 	}
 	if opts.Tick == 0 {
 		opts.Tick = chainutil.DefaultSubscribeOptsTick
@@ -6556,7 +6553,7 @@ func (rb *RandomBeacon) DkgMaliciousResultSlashedEvent(
 
 type RbDkgMaliciousResultSlashedSubscription struct {
 	contract         *RandomBeacon
-	opts             *ethlike.SubscribeOpts
+	opts             *ethereum.SubscribeOpts
 	resultHashFilter [][32]byte
 }
 
@@ -6726,11 +6723,11 @@ func (rb *RandomBeacon) PastDkgMaliciousResultSlashedEvents(
 }
 
 func (rb *RandomBeacon) DkgMaliciousResultSlashingFailedEvent(
-	opts *ethlike.SubscribeOpts,
+	opts *ethereum.SubscribeOpts,
 	resultHashFilter [][32]byte,
 ) *RbDkgMaliciousResultSlashingFailedSubscription {
 	if opts == nil {
-		opts = new(ethlike.SubscribeOpts)
+		opts = new(ethereum.SubscribeOpts)
 	}
 	if opts.Tick == 0 {
 		opts.Tick = chainutil.DefaultSubscribeOptsTick
@@ -6748,7 +6745,7 @@ func (rb *RandomBeacon) DkgMaliciousResultSlashingFailedEvent(
 
 type RbDkgMaliciousResultSlashingFailedSubscription struct {
 	contract         *RandomBeacon
-	opts             *ethlike.SubscribeOpts
+	opts             *ethereum.SubscribeOpts
 	resultHashFilter [][32]byte
 }
 
@@ -6918,12 +6915,12 @@ func (rb *RandomBeacon) PastDkgMaliciousResultSlashingFailedEvents(
 }
 
 func (rb *RandomBeacon) DkgResultApprovedEvent(
-	opts *ethlike.SubscribeOpts,
+	opts *ethereum.SubscribeOpts,
 	resultHashFilter [][32]byte,
 	approverFilter []common.Address,
 ) *RbDkgResultApprovedSubscription {
 	if opts == nil {
-		opts = new(ethlike.SubscribeOpts)
+		opts = new(ethereum.SubscribeOpts)
 	}
 	if opts.Tick == 0 {
 		opts.Tick = chainutil.DefaultSubscribeOptsTick
@@ -6942,7 +6939,7 @@ func (rb *RandomBeacon) DkgResultApprovedEvent(
 
 type RbDkgResultApprovedSubscription struct {
 	contract         *RandomBeacon
-	opts             *ethlike.SubscribeOpts
+	opts             *ethereum.SubscribeOpts
 	resultHashFilter [][32]byte
 	approverFilter   []common.Address
 }
@@ -7117,12 +7114,12 @@ func (rb *RandomBeacon) PastDkgResultApprovedEvents(
 }
 
 func (rb *RandomBeacon) DkgResultChallengedEvent(
-	opts *ethlike.SubscribeOpts,
+	opts *ethereum.SubscribeOpts,
 	resultHashFilter [][32]byte,
 	challengerFilter []common.Address,
 ) *RbDkgResultChallengedSubscription {
 	if opts == nil {
-		opts = new(ethlike.SubscribeOpts)
+		opts = new(ethereum.SubscribeOpts)
 	}
 	if opts.Tick == 0 {
 		opts.Tick = chainutil.DefaultSubscribeOptsTick
@@ -7141,7 +7138,7 @@ func (rb *RandomBeacon) DkgResultChallengedEvent(
 
 type RbDkgResultChallengedSubscription struct {
 	contract         *RandomBeacon
-	opts             *ethlike.SubscribeOpts
+	opts             *ethereum.SubscribeOpts
 	resultHashFilter [][32]byte
 	challengerFilter []common.Address
 }
@@ -7318,12 +7315,12 @@ func (rb *RandomBeacon) PastDkgResultChallengedEvents(
 }
 
 func (rb *RandomBeacon) DkgResultSubmittedEvent(
-	opts *ethlike.SubscribeOpts,
+	opts *ethereum.SubscribeOpts,
 	resultHashFilter [][32]byte,
 	seedFilter []*big.Int,
 ) *RbDkgResultSubmittedSubscription {
 	if opts == nil {
-		opts = new(ethlike.SubscribeOpts)
+		opts = new(ethereum.SubscribeOpts)
 	}
 	if opts.Tick == 0 {
 		opts.Tick = chainutil.DefaultSubscribeOptsTick
@@ -7342,7 +7339,7 @@ func (rb *RandomBeacon) DkgResultSubmittedEvent(
 
 type RbDkgResultSubmittedSubscription struct {
 	contract         *RandomBeacon
-	opts             *ethlike.SubscribeOpts
+	opts             *ethereum.SubscribeOpts
 	resultHashFilter [][32]byte
 	seedFilter       []*big.Int
 }
@@ -7519,10 +7516,10 @@ func (rb *RandomBeacon) PastDkgResultSubmittedEvents(
 }
 
 func (rb *RandomBeacon) DkgSeedTimedOutEvent(
-	opts *ethlike.SubscribeOpts,
+	opts *ethereum.SubscribeOpts,
 ) *RbDkgSeedTimedOutSubscription {
 	if opts == nil {
-		opts = new(ethlike.SubscribeOpts)
+		opts = new(ethereum.SubscribeOpts)
 	}
 	if opts.Tick == 0 {
 		opts.Tick = chainutil.DefaultSubscribeOptsTick
@@ -7539,7 +7536,7 @@ func (rb *RandomBeacon) DkgSeedTimedOutEvent(
 
 type RbDkgSeedTimedOutSubscription struct {
 	contract *RandomBeacon
-	opts     *ethlike.SubscribeOpts
+	opts     *ethereum.SubscribeOpts
 }
 
 type randomBeaconDkgSeedTimedOutFunc func(
@@ -7696,11 +7693,11 @@ func (rb *RandomBeacon) PastDkgSeedTimedOutEvents(
 }
 
 func (rb *RandomBeacon) DkgStartedEvent(
-	opts *ethlike.SubscribeOpts,
+	opts *ethereum.SubscribeOpts,
 	seedFilter []*big.Int,
 ) *RbDkgStartedSubscription {
 	if opts == nil {
-		opts = new(ethlike.SubscribeOpts)
+		opts = new(ethereum.SubscribeOpts)
 	}
 	if opts.Tick == 0 {
 		opts.Tick = chainutil.DefaultSubscribeOptsTick
@@ -7718,7 +7715,7 @@ func (rb *RandomBeacon) DkgStartedEvent(
 
 type RbDkgStartedSubscription struct {
 	contract   *RandomBeacon
-	opts       *ethlike.SubscribeOpts
+	opts       *ethereum.SubscribeOpts
 	seedFilter []*big.Int
 }
 
@@ -7884,10 +7881,10 @@ func (rb *RandomBeacon) PastDkgStartedEvents(
 }
 
 func (rb *RandomBeacon) DkgStateLockedEvent(
-	opts *ethlike.SubscribeOpts,
+	opts *ethereum.SubscribeOpts,
 ) *RbDkgStateLockedSubscription {
 	if opts == nil {
-		opts = new(ethlike.SubscribeOpts)
+		opts = new(ethereum.SubscribeOpts)
 	}
 	if opts.Tick == 0 {
 		opts.Tick = chainutil.DefaultSubscribeOptsTick
@@ -7904,7 +7901,7 @@ func (rb *RandomBeacon) DkgStateLockedEvent(
 
 type RbDkgStateLockedSubscription struct {
 	contract *RandomBeacon
-	opts     *ethlike.SubscribeOpts
+	opts     *ethereum.SubscribeOpts
 }
 
 type randomBeaconDkgStateLockedFunc func(
@@ -8061,10 +8058,10 @@ func (rb *RandomBeacon) PastDkgStateLockedEvents(
 }
 
 func (rb *RandomBeacon) DkgTimedOutEvent(
-	opts *ethlike.SubscribeOpts,
+	opts *ethereum.SubscribeOpts,
 ) *RbDkgTimedOutSubscription {
 	if opts == nil {
-		opts = new(ethlike.SubscribeOpts)
+		opts = new(ethereum.SubscribeOpts)
 	}
 	if opts.Tick == 0 {
 		opts.Tick = chainutil.DefaultSubscribeOptsTick
@@ -8081,7 +8078,7 @@ func (rb *RandomBeacon) DkgTimedOutEvent(
 
 type RbDkgTimedOutSubscription struct {
 	contract *RandomBeacon
-	opts     *ethlike.SubscribeOpts
+	opts     *ethereum.SubscribeOpts
 }
 
 type randomBeaconDkgTimedOutFunc func(
@@ -8238,10 +8235,10 @@ func (rb *RandomBeacon) PastDkgTimedOutEvents(
 }
 
 func (rb *RandomBeacon) GasParametersUpdatedEvent(
-	opts *ethlike.SubscribeOpts,
+	opts *ethereum.SubscribeOpts,
 ) *RbGasParametersUpdatedSubscription {
 	if opts == nil {
-		opts = new(ethlike.SubscribeOpts)
+		opts = new(ethereum.SubscribeOpts)
 	}
 	if opts.Tick == 0 {
 		opts.Tick = chainutil.DefaultSubscribeOptsTick
@@ -8258,7 +8255,7 @@ func (rb *RandomBeacon) GasParametersUpdatedEvent(
 
 type RbGasParametersUpdatedSubscription struct {
 	contract *RandomBeacon
-	opts     *ethlike.SubscribeOpts
+	opts     *ethereum.SubscribeOpts
 }
 
 type randomBeaconGasParametersUpdatedFunc func(
@@ -8423,10 +8420,10 @@ func (rb *RandomBeacon) PastGasParametersUpdatedEvents(
 }
 
 func (rb *RandomBeacon) GovernanceTransferredEvent(
-	opts *ethlike.SubscribeOpts,
+	opts *ethereum.SubscribeOpts,
 ) *RbGovernanceTransferredSubscription {
 	if opts == nil {
-		opts = new(ethlike.SubscribeOpts)
+		opts = new(ethereum.SubscribeOpts)
 	}
 	if opts.Tick == 0 {
 		opts.Tick = chainutil.DefaultSubscribeOptsTick
@@ -8443,7 +8440,7 @@ func (rb *RandomBeacon) GovernanceTransferredEvent(
 
 type RbGovernanceTransferredSubscription struct {
 	contract *RandomBeacon
-	opts     *ethlike.SubscribeOpts
+	opts     *ethereum.SubscribeOpts
 }
 
 type randomBeaconGovernanceTransferredFunc func(
@@ -8604,10 +8601,10 @@ func (rb *RandomBeacon) PastGovernanceTransferredEvents(
 }
 
 func (rb *RandomBeacon) GroupCreationParametersUpdatedEvent(
-	opts *ethlike.SubscribeOpts,
+	opts *ethereum.SubscribeOpts,
 ) *RbGroupCreationParametersUpdatedSubscription {
 	if opts == nil {
-		opts = new(ethlike.SubscribeOpts)
+		opts = new(ethereum.SubscribeOpts)
 	}
 	if opts.Tick == 0 {
 		opts.Tick = chainutil.DefaultSubscribeOptsTick
@@ -8624,7 +8621,7 @@ func (rb *RandomBeacon) GroupCreationParametersUpdatedEvent(
 
 type RbGroupCreationParametersUpdatedSubscription struct {
 	contract *RandomBeacon
-	opts     *ethlike.SubscribeOpts
+	opts     *ethereum.SubscribeOpts
 }
 
 type randomBeaconGroupCreationParametersUpdatedFunc func(
@@ -8791,12 +8788,12 @@ func (rb *RandomBeacon) PastGroupCreationParametersUpdatedEvents(
 }
 
 func (rb *RandomBeacon) GroupRegisteredEvent(
-	opts *ethlike.SubscribeOpts,
+	opts *ethereum.SubscribeOpts,
 	groupIdFilter []uint64,
 	groupPubKeyFilter [][]byte,
 ) *RbGroupRegisteredSubscription {
 	if opts == nil {
-		opts = new(ethlike.SubscribeOpts)
+		opts = new(ethereum.SubscribeOpts)
 	}
 	if opts.Tick == 0 {
 		opts.Tick = chainutil.DefaultSubscribeOptsTick
@@ -8815,7 +8812,7 @@ func (rb *RandomBeacon) GroupRegisteredEvent(
 
 type RbGroupRegisteredSubscription struct {
 	contract          *RandomBeacon
-	opts              *ethlike.SubscribeOpts
+	opts              *ethereum.SubscribeOpts
 	groupIdFilter     []uint64
 	groupPubKeyFilter [][]byte
 }
@@ -8990,11 +8987,11 @@ func (rb *RandomBeacon) PastGroupRegisteredEvents(
 }
 
 func (rb *RandomBeacon) InactivityClaimedEvent(
-	opts *ethlike.SubscribeOpts,
+	opts *ethereum.SubscribeOpts,
 	groupIdFilter []uint64,
 ) *RbInactivityClaimedSubscription {
 	if opts == nil {
-		opts = new(ethlike.SubscribeOpts)
+		opts = new(ethereum.SubscribeOpts)
 	}
 	if opts.Tick == 0 {
 		opts.Tick = chainutil.DefaultSubscribeOptsTick
@@ -9012,7 +9009,7 @@ func (rb *RandomBeacon) InactivityClaimedEvent(
 
 type RbInactivityClaimedSubscription struct {
 	contract      *RandomBeacon
-	opts          *ethlike.SubscribeOpts
+	opts          *ethereum.SubscribeOpts
 	groupIdFilter []uint64
 }
 
@@ -9182,12 +9179,12 @@ func (rb *RandomBeacon) PastInactivityClaimedEvents(
 }
 
 func (rb *RandomBeacon) InvoluntaryAuthorizationDecreaseFailedEvent(
-	opts *ethlike.SubscribeOpts,
+	opts *ethereum.SubscribeOpts,
 	stakingProviderFilter []common.Address,
 	operatorFilter []common.Address,
 ) *RbInvoluntaryAuthorizationDecreaseFailedSubscription {
 	if opts == nil {
-		opts = new(ethlike.SubscribeOpts)
+		opts = new(ethereum.SubscribeOpts)
 	}
 	if opts.Tick == 0 {
 		opts.Tick = chainutil.DefaultSubscribeOptsTick
@@ -9206,7 +9203,7 @@ func (rb *RandomBeacon) InvoluntaryAuthorizationDecreaseFailedEvent(
 
 type RbInvoluntaryAuthorizationDecreaseFailedSubscription struct {
 	contract              *RandomBeacon
-	opts                  *ethlike.SubscribeOpts
+	opts                  *ethereum.SubscribeOpts
 	stakingProviderFilter []common.Address
 	operatorFilter        []common.Address
 }
@@ -9385,12 +9382,12 @@ func (rb *RandomBeacon) PastInvoluntaryAuthorizationDecreaseFailedEvents(
 }
 
 func (rb *RandomBeacon) OperatorJoinedSortitionPoolEvent(
-	opts *ethlike.SubscribeOpts,
+	opts *ethereum.SubscribeOpts,
 	stakingProviderFilter []common.Address,
 	operatorFilter []common.Address,
 ) *RbOperatorJoinedSortitionPoolSubscription {
 	if opts == nil {
-		opts = new(ethlike.SubscribeOpts)
+		opts = new(ethereum.SubscribeOpts)
 	}
 	if opts.Tick == 0 {
 		opts.Tick = chainutil.DefaultSubscribeOptsTick
@@ -9409,7 +9406,7 @@ func (rb *RandomBeacon) OperatorJoinedSortitionPoolEvent(
 
 type RbOperatorJoinedSortitionPoolSubscription struct {
 	contract              *RandomBeacon
-	opts                  *ethlike.SubscribeOpts
+	opts                  *ethereum.SubscribeOpts
 	stakingProviderFilter []common.Address
 	operatorFilter        []common.Address
 }
@@ -9584,12 +9581,12 @@ func (rb *RandomBeacon) PastOperatorJoinedSortitionPoolEvents(
 }
 
 func (rb *RandomBeacon) OperatorRegisteredEvent(
-	opts *ethlike.SubscribeOpts,
+	opts *ethereum.SubscribeOpts,
 	stakingProviderFilter []common.Address,
 	operatorFilter []common.Address,
 ) *RbOperatorRegisteredSubscription {
 	if opts == nil {
-		opts = new(ethlike.SubscribeOpts)
+		opts = new(ethereum.SubscribeOpts)
 	}
 	if opts.Tick == 0 {
 		opts.Tick = chainutil.DefaultSubscribeOptsTick
@@ -9608,7 +9605,7 @@ func (rb *RandomBeacon) OperatorRegisteredEvent(
 
 type RbOperatorRegisteredSubscription struct {
 	contract              *RandomBeacon
-	opts                  *ethlike.SubscribeOpts
+	opts                  *ethereum.SubscribeOpts
 	stakingProviderFilter []common.Address
 	operatorFilter        []common.Address
 }
@@ -9783,12 +9780,12 @@ func (rb *RandomBeacon) PastOperatorRegisteredEvents(
 }
 
 func (rb *RandomBeacon) OperatorStatusUpdatedEvent(
-	opts *ethlike.SubscribeOpts,
+	opts *ethereum.SubscribeOpts,
 	stakingProviderFilter []common.Address,
 	operatorFilter []common.Address,
 ) *RbOperatorStatusUpdatedSubscription {
 	if opts == nil {
-		opts = new(ethlike.SubscribeOpts)
+		opts = new(ethereum.SubscribeOpts)
 	}
 	if opts.Tick == 0 {
 		opts.Tick = chainutil.DefaultSubscribeOptsTick
@@ -9807,7 +9804,7 @@ func (rb *RandomBeacon) OperatorStatusUpdatedEvent(
 
 type RbOperatorStatusUpdatedSubscription struct {
 	contract              *RandomBeacon
-	opts                  *ethlike.SubscribeOpts
+	opts                  *ethereum.SubscribeOpts
 	stakingProviderFilter []common.Address
 	operatorFilter        []common.Address
 }
@@ -9982,10 +9979,10 @@ func (rb *RandomBeacon) PastOperatorStatusUpdatedEvents(
 }
 
 func (rb *RandomBeacon) ReimbursementPoolUpdatedEvent(
-	opts *ethlike.SubscribeOpts,
+	opts *ethereum.SubscribeOpts,
 ) *RbReimbursementPoolUpdatedSubscription {
 	if opts == nil {
-		opts = new(ethlike.SubscribeOpts)
+		opts = new(ethereum.SubscribeOpts)
 	}
 	if opts.Tick == 0 {
 		opts.Tick = chainutil.DefaultSubscribeOptsTick
@@ -10002,7 +9999,7 @@ func (rb *RandomBeacon) ReimbursementPoolUpdatedEvent(
 
 type RbReimbursementPoolUpdatedSubscription struct {
 	contract *RandomBeacon
-	opts     *ethlike.SubscribeOpts
+	opts     *ethereum.SubscribeOpts
 }
 
 type randomBeaconReimbursementPoolUpdatedFunc func(
@@ -10161,11 +10158,11 @@ func (rb *RandomBeacon) PastReimbursementPoolUpdatedEvents(
 }
 
 func (rb *RandomBeacon) RelayEntryDelaySlashedEvent(
-	opts *ethlike.SubscribeOpts,
+	opts *ethereum.SubscribeOpts,
 	requestIdFilter []*big.Int,
 ) *RbRelayEntryDelaySlashedSubscription {
 	if opts == nil {
-		opts = new(ethlike.SubscribeOpts)
+		opts = new(ethereum.SubscribeOpts)
 	}
 	if opts.Tick == 0 {
 		opts.Tick = chainutil.DefaultSubscribeOptsTick
@@ -10183,7 +10180,7 @@ func (rb *RandomBeacon) RelayEntryDelaySlashedEvent(
 
 type RbRelayEntryDelaySlashedSubscription struct {
 	contract        *RandomBeacon
-	opts            *ethlike.SubscribeOpts
+	opts            *ethereum.SubscribeOpts
 	requestIdFilter []*big.Int
 }
 
@@ -10353,11 +10350,11 @@ func (rb *RandomBeacon) PastRelayEntryDelaySlashedEvents(
 }
 
 func (rb *RandomBeacon) RelayEntryDelaySlashingFailedEvent(
-	opts *ethlike.SubscribeOpts,
+	opts *ethereum.SubscribeOpts,
 	requestIdFilter []*big.Int,
 ) *RbRelayEntryDelaySlashingFailedSubscription {
 	if opts == nil {
-		opts = new(ethlike.SubscribeOpts)
+		opts = new(ethereum.SubscribeOpts)
 	}
 	if opts.Tick == 0 {
 		opts.Tick = chainutil.DefaultSubscribeOptsTick
@@ -10375,7 +10372,7 @@ func (rb *RandomBeacon) RelayEntryDelaySlashingFailedEvent(
 
 type RbRelayEntryDelaySlashingFailedSubscription struct {
 	contract        *RandomBeacon
-	opts            *ethlike.SubscribeOpts
+	opts            *ethereum.SubscribeOpts
 	requestIdFilter []*big.Int
 }
 
@@ -10545,10 +10542,10 @@ func (rb *RandomBeacon) PastRelayEntryDelaySlashingFailedEvents(
 }
 
 func (rb *RandomBeacon) RelayEntryParametersUpdatedEvent(
-	opts *ethlike.SubscribeOpts,
+	opts *ethereum.SubscribeOpts,
 ) *RbRelayEntryParametersUpdatedSubscription {
 	if opts == nil {
-		opts = new(ethlike.SubscribeOpts)
+		opts = new(ethereum.SubscribeOpts)
 	}
 	if opts.Tick == 0 {
 		opts.Tick = chainutil.DefaultSubscribeOptsTick
@@ -10565,7 +10562,7 @@ func (rb *RandomBeacon) RelayEntryParametersUpdatedEvent(
 
 type RbRelayEntryParametersUpdatedSubscription struct {
 	contract *RandomBeacon
-	opts     *ethlike.SubscribeOpts
+	opts     *ethereum.SubscribeOpts
 }
 
 type randomBeaconRelayEntryParametersUpdatedFunc func(
@@ -10728,11 +10725,11 @@ func (rb *RandomBeacon) PastRelayEntryParametersUpdatedEvents(
 }
 
 func (rb *RandomBeacon) RelayEntryRequestedEvent(
-	opts *ethlike.SubscribeOpts,
+	opts *ethereum.SubscribeOpts,
 	requestIdFilter []*big.Int,
 ) *RbRelayEntryRequestedSubscription {
 	if opts == nil {
-		opts = new(ethlike.SubscribeOpts)
+		opts = new(ethereum.SubscribeOpts)
 	}
 	if opts.Tick == 0 {
 		opts.Tick = chainutil.DefaultSubscribeOptsTick
@@ -10750,7 +10747,7 @@ func (rb *RandomBeacon) RelayEntryRequestedEvent(
 
 type RbRelayEntryRequestedSubscription struct {
 	contract        *RandomBeacon
-	opts            *ethlike.SubscribeOpts
+	opts            *ethereum.SubscribeOpts
 	requestIdFilter []*big.Int
 }
 
@@ -10920,11 +10917,11 @@ func (rb *RandomBeacon) PastRelayEntryRequestedEvents(
 }
 
 func (rb *RandomBeacon) RelayEntrySubmittedEvent(
-	opts *ethlike.SubscribeOpts,
+	opts *ethereum.SubscribeOpts,
 	requestIdFilter []*big.Int,
 ) *RbRelayEntrySubmittedSubscription {
 	if opts == nil {
-		opts = new(ethlike.SubscribeOpts)
+		opts = new(ethereum.SubscribeOpts)
 	}
 	if opts.Tick == 0 {
 		opts.Tick = chainutil.DefaultSubscribeOptsTick
@@ -10942,7 +10939,7 @@ func (rb *RandomBeacon) RelayEntrySubmittedEvent(
 
 type RbRelayEntrySubmittedSubscription struct {
 	contract        *RandomBeacon
-	opts            *ethlike.SubscribeOpts
+	opts            *ethereum.SubscribeOpts
 	requestIdFilter []*big.Int
 }
 
@@ -11112,11 +11109,11 @@ func (rb *RandomBeacon) PastRelayEntrySubmittedEvents(
 }
 
 func (rb *RandomBeacon) RelayEntryTimedOutEvent(
-	opts *ethlike.SubscribeOpts,
+	opts *ethereum.SubscribeOpts,
 	requestIdFilter []*big.Int,
 ) *RbRelayEntryTimedOutSubscription {
 	if opts == nil {
-		opts = new(ethlike.SubscribeOpts)
+		opts = new(ethereum.SubscribeOpts)
 	}
 	if opts.Tick == 0 {
 		opts.Tick = chainutil.DefaultSubscribeOptsTick
@@ -11134,7 +11131,7 @@ func (rb *RandomBeacon) RelayEntryTimedOutEvent(
 
 type RbRelayEntryTimedOutSubscription struct {
 	contract        *RandomBeacon
-	opts            *ethlike.SubscribeOpts
+	opts            *ethereum.SubscribeOpts
 	requestIdFilter []*big.Int
 }
 
@@ -11302,11 +11299,11 @@ func (rb *RandomBeacon) PastRelayEntryTimedOutEvents(
 }
 
 func (rb *RandomBeacon) RelayEntryTimeoutSlashedEvent(
-	opts *ethlike.SubscribeOpts,
+	opts *ethereum.SubscribeOpts,
 	requestIdFilter []*big.Int,
 ) *RbRelayEntryTimeoutSlashedSubscription {
 	if opts == nil {
-		opts = new(ethlike.SubscribeOpts)
+		opts = new(ethereum.SubscribeOpts)
 	}
 	if opts.Tick == 0 {
 		opts.Tick = chainutil.DefaultSubscribeOptsTick
@@ -11324,7 +11321,7 @@ func (rb *RandomBeacon) RelayEntryTimeoutSlashedEvent(
 
 type RbRelayEntryTimeoutSlashedSubscription struct {
 	contract        *RandomBeacon
-	opts            *ethlike.SubscribeOpts
+	opts            *ethereum.SubscribeOpts
 	requestIdFilter []*big.Int
 }
 
@@ -11494,11 +11491,11 @@ func (rb *RandomBeacon) PastRelayEntryTimeoutSlashedEvents(
 }
 
 func (rb *RandomBeacon) RelayEntryTimeoutSlashingFailedEvent(
-	opts *ethlike.SubscribeOpts,
+	opts *ethereum.SubscribeOpts,
 	requestIdFilter []*big.Int,
 ) *RbRelayEntryTimeoutSlashingFailedSubscription {
 	if opts == nil {
-		opts = new(ethlike.SubscribeOpts)
+		opts = new(ethereum.SubscribeOpts)
 	}
 	if opts.Tick == 0 {
 		opts.Tick = chainutil.DefaultSubscribeOptsTick
@@ -11516,7 +11513,7 @@ func (rb *RandomBeacon) RelayEntryTimeoutSlashingFailedEvent(
 
 type RbRelayEntryTimeoutSlashingFailedSubscription struct {
 	contract        *RandomBeacon
-	opts            *ethlike.SubscribeOpts
+	opts            *ethereum.SubscribeOpts
 	requestIdFilter []*big.Int
 }
 
@@ -11686,11 +11683,11 @@ func (rb *RandomBeacon) PastRelayEntryTimeoutSlashingFailedEvents(
 }
 
 func (rb *RandomBeacon) RequesterAuthorizationUpdatedEvent(
-	opts *ethlike.SubscribeOpts,
+	opts *ethereum.SubscribeOpts,
 	requesterFilter []common.Address,
 ) *RbRequesterAuthorizationUpdatedSubscription {
 	if opts == nil {
-		opts = new(ethlike.SubscribeOpts)
+		opts = new(ethereum.SubscribeOpts)
 	}
 	if opts.Tick == 0 {
 		opts.Tick = chainutil.DefaultSubscribeOptsTick
@@ -11708,7 +11705,7 @@ func (rb *RandomBeacon) RequesterAuthorizationUpdatedEvent(
 
 type RbRequesterAuthorizationUpdatedSubscription struct {
 	contract        *RandomBeacon
-	opts            *ethlike.SubscribeOpts
+	opts            *ethereum.SubscribeOpts
 	requesterFilter []common.Address
 }
 
@@ -11876,10 +11873,10 @@ func (rb *RandomBeacon) PastRequesterAuthorizationUpdatedEvents(
 }
 
 func (rb *RandomBeacon) RewardParametersUpdatedEvent(
-	opts *ethlike.SubscribeOpts,
+	opts *ethereum.SubscribeOpts,
 ) *RbRewardParametersUpdatedSubscription {
 	if opts == nil {
-		opts = new(ethlike.SubscribeOpts)
+		opts = new(ethereum.SubscribeOpts)
 	}
 	if opts.Tick == 0 {
 		opts.Tick = chainutil.DefaultSubscribeOptsTick
@@ -11896,7 +11893,7 @@ func (rb *RandomBeacon) RewardParametersUpdatedEvent(
 
 type RbRewardParametersUpdatedSubscription struct {
 	contract *RandomBeacon
-	opts     *ethlike.SubscribeOpts
+	opts     *ethereum.SubscribeOpts
 }
 
 type randomBeaconRewardParametersUpdatedFunc func(
@@ -12061,11 +12058,11 @@ func (rb *RandomBeacon) PastRewardParametersUpdatedEvents(
 }
 
 func (rb *RandomBeacon) RewardsWithdrawnEvent(
-	opts *ethlike.SubscribeOpts,
+	opts *ethereum.SubscribeOpts,
 	stakingProviderFilter []common.Address,
 ) *RbRewardsWithdrawnSubscription {
 	if opts == nil {
-		opts = new(ethlike.SubscribeOpts)
+		opts = new(ethereum.SubscribeOpts)
 	}
 	if opts.Tick == 0 {
 		opts.Tick = chainutil.DefaultSubscribeOptsTick
@@ -12083,7 +12080,7 @@ func (rb *RandomBeacon) RewardsWithdrawnEvent(
 
 type RbRewardsWithdrawnSubscription struct {
 	contract              *RandomBeacon
-	opts                  *ethlike.SubscribeOpts
+	opts                  *ethereum.SubscribeOpts
 	stakingProviderFilter []common.Address
 }
 
@@ -12251,10 +12248,10 @@ func (rb *RandomBeacon) PastRewardsWithdrawnEvents(
 }
 
 func (rb *RandomBeacon) SlashingParametersUpdatedEvent(
-	opts *ethlike.SubscribeOpts,
+	opts *ethereum.SubscribeOpts,
 ) *RbSlashingParametersUpdatedSubscription {
 	if opts == nil {
-		opts = new(ethlike.SubscribeOpts)
+		opts = new(ethereum.SubscribeOpts)
 	}
 	if opts.Tick == 0 {
 		opts.Tick = chainutil.DefaultSubscribeOptsTick
@@ -12271,7 +12268,7 @@ func (rb *RandomBeacon) SlashingParametersUpdatedEvent(
 
 type RbSlashingParametersUpdatedSubscription struct {
 	contract *RandomBeacon
-	opts     *ethlike.SubscribeOpts
+	opts     *ethereum.SubscribeOpts
 }
 
 type randomBeaconSlashingParametersUpdatedFunc func(
@@ -12434,11 +12431,11 @@ func (rb *RandomBeacon) PastSlashingParametersUpdatedEvents(
 }
 
 func (rb *RandomBeacon) UnauthorizedSigningSlashedEvent(
-	opts *ethlike.SubscribeOpts,
+	opts *ethereum.SubscribeOpts,
 	groupIdFilter []uint64,
 ) *RbUnauthorizedSigningSlashedSubscription {
 	if opts == nil {
-		opts = new(ethlike.SubscribeOpts)
+		opts = new(ethereum.SubscribeOpts)
 	}
 	if opts.Tick == 0 {
 		opts.Tick = chainutil.DefaultSubscribeOptsTick
@@ -12456,7 +12453,7 @@ func (rb *RandomBeacon) UnauthorizedSigningSlashedEvent(
 
 type RbUnauthorizedSigningSlashedSubscription struct {
 	contract      *RandomBeacon
-	opts          *ethlike.SubscribeOpts
+	opts          *ethereum.SubscribeOpts
 	groupIdFilter []uint64
 }
 
@@ -12626,11 +12623,11 @@ func (rb *RandomBeacon) PastUnauthorizedSigningSlashedEvents(
 }
 
 func (rb *RandomBeacon) UnauthorizedSigningSlashingFailedEvent(
-	opts *ethlike.SubscribeOpts,
+	opts *ethereum.SubscribeOpts,
 	groupIdFilter []uint64,
 ) *RbUnauthorizedSigningSlashingFailedSubscription {
 	if opts == nil {
-		opts = new(ethlike.SubscribeOpts)
+		opts = new(ethereum.SubscribeOpts)
 	}
 	if opts.Tick == 0 {
 		opts.Tick = chainutil.DefaultSubscribeOptsTick
@@ -12648,7 +12645,7 @@ func (rb *RandomBeacon) UnauthorizedSigningSlashingFailedEvent(
 
 type RbUnauthorizedSigningSlashingFailedSubscription struct {
 	contract      *RandomBeacon
-	opts          *ethlike.SubscribeOpts
+	opts          *ethereum.SubscribeOpts
 	groupIdFilter []uint64
 }
 

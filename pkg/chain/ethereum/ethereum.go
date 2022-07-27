@@ -3,14 +3,14 @@ package ethereum
 import (
 	"context"
 	"fmt"
-	"github.com/keep-network/keep-core/pkg/chain"
-	"github.com/keep-network/keep-core/pkg/operator"
 	"math/big"
 	"sync"
 
+	"github.com/keep-network/keep-core/pkg/chain"
+	"github.com/keep-network/keep-core/pkg/operator"
+
 	"github.com/ethereum/go-ethereum/accounts/keystore"
 	"github.com/ethereum/go-ethereum/ethclient"
-	"github.com/keep-network/keep-common/pkg/chain/ethlike"
 
 	"github.com/ipfs/go-log"
 	"github.com/keep-network/keep-common/pkg/chain/ethereum"
@@ -34,8 +34,8 @@ type baseChain struct {
 	client  ethutil.EthereumClient
 	chainID *big.Int
 
-	blockCounter *ethlike.BlockCounter
-	nonceManager *ethlike.NonceManager
+	blockCounter *ethereum.BlockCounter
+	nonceManager *ethereum.NonceManager
 	miningWaiter *ethutil.MiningWaiter
 
 	// transactionMutex allows interested parties to forcibly serialize
