@@ -1,11 +1,14 @@
 package tbtc
 
 import (
+	"fmt"
+	"math/big"
+
 	"github.com/keep-network/keep-common/pkg/persistence"
 	"github.com/keep-network/keep-core/pkg/ecdsa/dkg"
+	"github.com/keep-network/keep-core/pkg/internal/testutils"
 	"github.com/keep-network/keep-core/pkg/net"
 	"github.com/keep-network/keep-core/pkg/protocol/group"
-	"math/big"
 )
 
 // TODO: Unit tests for `node.go`.
@@ -83,8 +86,8 @@ func (n *node) joinDKGIfEligible(seed *big.Int, startBlockNumber uint64) {
 	}
 
 	// Create temporary broadcast channel name for DKG using the
-	// group selection seed.
-	channelName := seed.Text(16)
+	// group selection seed with the protocol name as prefix.
+	channelName := fmt.Sprintf("%s-%s", ProtocolName, seed.Text(16))
 
 	if len(indexes) > 0 {
 		logger.Infof(
@@ -99,7 +102,8 @@ func (n *node) joinDKGIfEligible(seed *big.Int, startBlockNumber uint64) {
 			return
 		}
 
-		membershipValidator := group.NewOperatorsMembershipValidator(
+		membershipValidator := group.NewMembershipValidator(
+			&testutils.MockLogger{},
 			groupMembers,
 			signing,
 		)
@@ -120,12 +124,13 @@ func (n *node) joinDKGIfEligible(seed *big.Int, startBlockNumber uint64) {
 		}
 
 		for _, index := range indexes {
-			// Capture the player index for the goroutine. The group member
+			// Capture the member index for the goroutine. The group member
 			// index should be in range [1, groupSize] so we need to add 1.
 			memberIndex := index + 1
 
 			go func() {
 				result, _, err := dkg.Execute(
+					logger,
 					seed,
 					startBlockNumber,
 					memberIndex,
@@ -136,7 +141,11 @@ func (n *node) joinDKGIfEligible(seed *big.Int, startBlockNumber uint64) {
 					membershipValidator,
 				)
 				if err != nil {
-					logger.Errorf("failed to execute dkg: [%v]", err)
+					logger.Errorf(
+						"[member:%v] failed to execute dkg: [%v]",
+						memberIndex,
+						err,
+					)
 					return
 				}
 

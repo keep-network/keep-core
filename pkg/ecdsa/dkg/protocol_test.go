@@ -39,16 +39,15 @@ func TestGenerateEphemeralKeyPair(t *testing.T) {
 		// Assert the right key pairs count is stored in the member's state.
 		expectedKeyPairsCount := groupSize - 1
 		actualKeyPairsCount := len(member.ephemeralKeyPairs)
-		if expectedKeyPairsCount != actualKeyPairsCount {
-			t.Fatalf(
-				"[member:%v] wrong number of stored ephemeral key pairs\n"+
-					"expected: [%v]\n"+
-					"actual:   [%v]",
+		testutils.AssertIntsEqual(
+			t,
+			fmt.Sprintf(
+				"number of stored ephemeral key pairs for member [%v]",
 				member.id,
-				expectedKeyPairsCount,
-				actualKeyPairsCount,
-			)
-		}
+			),
+			expectedKeyPairsCount,
+			actualKeyPairsCount,
+		)
 
 		// Assert the member does not hold a key pair with itself.
 		_, ok := member.ephemeralKeyPairs[member.id]
@@ -132,16 +131,15 @@ func TestGenerateSymmetricKeys(t *testing.T) {
 		// Assert the right keys count is stored in the member's state.
 		expectedKeysCount := groupSize - 1
 		actualKeysCount := len(member.symmetricKeys)
-		if expectedKeysCount != actualKeysCount {
-			t.Fatalf(
-				"[member:%v] wrong number of stored symmetric keys\n"+
-					"expected: [%v]\n"+
-					"actual:   [%v]",
+		testutils.AssertIntsEqual(
+			t,
+			fmt.Sprintf(
+				"number of stored symmetric keys for member [%v]",
 				member.id,
-				expectedKeysCount,
-				actualKeysCount,
-			)
-		}
+			),
+			expectedKeysCount,
+			actualKeysCount,
+		)
 
 		// Assert all symmetric keys stored by this member are correct.
 		for otherMemberID, actualKey := range member.symmetricKeys {
@@ -214,14 +212,19 @@ func TestGenerateSymmetricKeys_InvalidEphemeralPublicKeyMessage(t *testing.T) {
 		// The misbehaved member should not get an error.
 		if member.id != misbehavingMemberID {
 			expectedErr = fmt.Errorf(
-				"[member:%v] member [%v] sent invalid ephemeral "+
+				"member [%v] sent invalid ephemeral "+
 					"public key message",
-				member.id,
 				misbehavingMemberID,
 			)
 		}
 
-		testutils.AssertErrorsEqual(t, expectedErr, err)
+		if !reflect.DeepEqual(expectedErr, err) {
+			t.Errorf(
+				"unexpected error\nexpected: %v\nactual:   %v\n",
+				expectedErr,
+				err,
+			)
+		}
 	}
 }
 
@@ -236,8 +239,9 @@ func initializeEphemeralKeyPairGeneratingMembersGroup(
 		id := group.MemberIndex(i)
 		members = append(members, &ephemeralKeyPairGeneratingMember{
 			member: &member{
-				id:    id,
-				group: dkgGroup,
+				logger: &testutils.MockLogger{},
+				id:     id,
+				group:  dkgGroup,
 			},
 			ephemeralKeyPairs: make(map[group.MemberIndex]*ephemeral.KeyPair),
 		})
@@ -271,8 +275,6 @@ func initializeSymmetricKeyGeneratingMembersGroup(
 
 		members = append(members, member.initializeSymmetricKeyGeneration())
 		messages = append(messages, message)
-
-		fmt.Printf("m %v s %v\n", member.id, message.senderID)
 	}
 
 	return members, messages, nil

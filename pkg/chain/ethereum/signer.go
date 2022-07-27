@@ -42,6 +42,6 @@ func (s *signer) PublicKeyBytesToAddress(publicKey []byte) chain.Address {
 	return chain.Address(common.BytesToAddress(addressBytes).String())
 }
 
-func (c *Chain) Signing() chain.Signing {
-	return newSigner(c.key)
+func (bc *baseChain) Signing() chain.Signing {
+	return newSigner(bc.key)
 }

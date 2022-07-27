@@ -3,6 +3,7 @@ package dkg
 import (
 	"context"
 	"fmt"
+
 	"github.com/keep-network/keep-core/pkg/crypto/ephemeral"
 	"github.com/keep-network/keep-core/pkg/protocol/group"
 )
@@ -54,9 +55,7 @@ func (skgm *symmetricKeyGeneratingMember) generateSymmetricKeys(
 
 		if !skgm.isValidEphemeralPublicKeyMessage(ephemeralPubKeyMessage) {
 			return fmt.Errorf(
-				"[member:%v] member [%v] sent invalid ephemeral "+
-					"public key message",
-				skgm.id,
+				"member [%v] sent invalid ephemeral public key message",
 				otherMember,
 			)
 		}
@@ -66,7 +65,7 @@ func (skgm *symmetricKeyGeneratingMember) generateSymmetricKeys(
 		ephemeralKeyPair, ok := skgm.ephemeralKeyPairs[otherMember]
 		if !ok {
 			return fmt.Errorf(
-				"ephemeral key pair does not exist for member %v",
+				"ephemeral key pair does not exist for member [%v]",
 				otherMember,
 			)
 		}
@@ -104,7 +103,7 @@ func (skgm *symmetricKeyGeneratingMember) isValidEphemeralPublicKeyMessage(
 		}
 
 		if _, ok := message.ephemeralPublicKeys[memberID]; !ok {
-			logger.Warningf(
+			skgm.logger.Warningf(
 				"[member:%v] ephemeral public key message from member [%v] "+
 					"does not contain public key for member [%v]",
 				skgm.id,

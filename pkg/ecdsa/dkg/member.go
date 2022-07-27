@@ -1,36 +1,42 @@
 package dkg
 
 import (
-	"github.com/binance-chain/tss-lib/ecdsa/keygen"
-	"github.com/binance-chain/tss-lib/tss"
-	"github.com/keep-network/keep-core/pkg/crypto/ephemeral"
-	"github.com/keep-network/keep-core/pkg/protocol/group"
 	"math/big"
 	"strconv"
+
+	"github.com/binance-chain/tss-lib/ecdsa/keygen"
+	"github.com/binance-chain/tss-lib/tss"
+	"github.com/ipfs/go-log"
+	"github.com/keep-network/keep-core/pkg/crypto/ephemeral"
+	"github.com/keep-network/keep-core/pkg/protocol/group"
 )
 
 // Member represents a DKG protocol member.
 type member struct {
+	// Logger used to produce log messages.
+	logger log.StandardLogger
 	// id of this group member.
 	id group.MemberIndex
 	// Group to which this member belongs.
 	group *group.Group
 	// Validator allowing to check public key and member index against
 	// group members
-	membershipValidator group.MembershipValidator
+	membershipValidator *group.MembershipValidator
 	// Identifier of the particular DKG session this member is part of.
 	sessionID string
 }
 
 // newMember creates a new member in an initial state
 func newMember(
+	logger log.StandardLogger,
 	memberID group.MemberIndex,
 	groupSize,
 	dishonestThreshold int,
-	membershipValidator group.MembershipValidator,
+	membershipValidator *group.MembershipValidator,
 	sessionID string,
 ) *member {
 	return &member{
+		logger:              logger,
 		id:                  memberID,
 		group:               group.NewGroup(dishonestThreshold, groupSize),
 		membershipValidator: membershipValidator,
@@ -38,24 +44,25 @@ func newMember(
 	}
 }
 
-// messageFilter returns a new instance of the message filter.
-func (m *member) messageFilter() *group.InactiveMemberFilter {
-	return group.NewInactiveMemberFilter(m.id, m.group)
+// inactiveMemberFilter returns a new instance of the inactive member filter.
+func (m *member) inactiveMemberFilter() *group.InactiveMemberFilter {
+	return group.NewInactiveMemberFilter(m.logger, m.id, m.group)
 }
 
-// IsSenderAccepted returns true if sender with the given index is accepted
-// as an operating group member.
-func (m *member) IsSenderAccepted(senderID group.MemberIndex) bool {
-	return m.group.IsOperating(senderID)
-}
-
-// IsSenderValid returns true if sender with the given index is considered
-// a valid member of the given group.
-func (m *member) IsSenderValid(
+// shouldAcceptMessage indicates whether the given member should accept
+// a message from the given sender.
+func (m *member) shouldAcceptMessage(
 	senderID group.MemberIndex,
 	senderPublicKey []byte,
 ) bool {
-	return m.membershipValidator.IsValidMembership(senderID, senderPublicKey)
+	isMessageFromSelf := senderID == m.id
+	isSenderValid := m.membershipValidator.IsValidMembership(
+		senderID,
+		senderPublicKey,
+	)
+	isSenderAccepted := m.group.IsOperating(senderID)
+
+	return !isMessageFromSelf && isSenderValid && isSenderAccepted
 }
 
 // initializeEphemeralKeysGeneration performs a transition of a member state
@@ -105,7 +112,7 @@ type symmetricKeyGeneratingMember struct {
 func (skgm *symmetricKeyGeneratingMember) MarkInactiveMembers(
 	ephemeralPubKeyMessages []*ephemeralPublicKeyMessage,
 ) {
-	filter := skgm.messageFilter()
+	filter := skgm.inactiveMemberFilter()
 	for _, message := range ephemeralPubKeyMessages {
 		filter.MarkMemberAsActive(message.senderID)
 	}

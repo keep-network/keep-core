@@ -12,8 +12,6 @@ const (
 	DefaultStatusCheckTick = 6 * time.Hour
 )
 
-var logger = log.Logger("keep-sortition")
-
 var errOperatorUnknown = fmt.Errorf("operator not registered for the staking provider, check Threshold dashboard")
 
 // MonitorPool periodically checks the status of the operator in the sortition
@@ -23,6 +21,7 @@ var errOperatorUnknown = fmt.Errorf("operator not registered for the staking pro
 // function attempts to update the operator's status in the pool.
 func MonitorPool(
 	ctx context.Context,
+	logger log.StandardLogger,
 	chain Chain,
 	tick time.Duration,
 ) error {
@@ -35,7 +34,7 @@ func MonitorPool(
 		return errOperatorUnknown
 	}
 
-	err = checkOperatorStatus(chain)
+	err = checkOperatorStatus(logger, chain)
 	if err != nil {
 		logger.Errorf("could not check operator sortition pool status: [%v]", err)
 	}
@@ -49,7 +48,7 @@ func MonitorPool(
 				ticker.Stop()
 				return
 			case <-ticker.C:
-				err = checkOperatorStatus(chain)
+				err = checkOperatorStatus(logger, chain)
 				if err != nil {
 					logger.Errorf("could not check operator sortition pool status: [%v]", err)
 					continue
@@ -61,7 +60,7 @@ func MonitorPool(
 	return nil
 }
 
-func checkOperatorStatus(chain Chain) error {
+func checkOperatorStatus(logger log.StandardLogger, chain Chain) error {
 	logger.Info("checking sortition pool operator status")
 
 	isOperatorInPool, err := chain.IsOperatorInPool()
@@ -77,7 +76,7 @@ func checkOperatorStatus(chain Chain) error {
 	if isOperatorInPool {
 		logger.Info("operator is in the sortition pool")
 
-		err = checkRewardsEligibility(chain)
+		err = checkRewardsEligibility(logger, chain)
 		if err != nil {
 			logger.Errorf("could not check for rewards eligibility: [%v]", err)
 		}
@@ -122,7 +121,7 @@ func checkOperatorStatus(chain Chain) error {
 	return nil
 }
 
-func checkRewardsEligibility(chain Chain) error {
+func checkRewardsEligibility(logger log.StandardLogger, chain Chain) error {
 	isEligibleForRewards, err := chain.IsEligibleForRewards()
 	if err != nil {
 		return err

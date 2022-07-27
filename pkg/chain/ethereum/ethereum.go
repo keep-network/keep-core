@@ -3,6 +3,7 @@ package ethereum
 import (
 	"context"
 	"fmt"
+	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/operator"
 	"math/big"
 	"sync"
@@ -23,12 +24,12 @@ const (
 	TokenStakingContractName = "TokenStaking"
 )
 
-var logger = log.Logger("keep-chain-ethereum")
+var logger = log.Logger("keep-ethereum")
 
-// Chain represents a base, non-application-specific chain handle. It
+// baseChain represents a base, non-application-specific chain handle. It
 // provides the implementation of generic features like balance monitor,
 // block counter and similar.
-type Chain struct {
+type baseChain struct {
 	key     *keystore.Key
 	client  ethutil.EthereumClient
 	chainID *big.Int
@@ -58,40 +59,69 @@ type Chain struct {
 func Connect(
 	ctx context.Context,
 	config ethereum.Config,
-) (*BeaconChain, *TbtcChain, *Chain, error) {
+) (
+	*BeaconChain,
+	*TbtcChain,
+	chain.BlockCounter,
+	chain.Signing,
+	*operator.PrivateKey,
+	error,
+) {
 	client, err := ethclient.Dial(config.URL)
 	if err != nil {
-		return nil, nil, nil, fmt.Errorf(
+		return nil, nil, nil, nil, nil, fmt.Errorf(
 			"error Connecting to Ethereum Server: %s [%v]",
 			config.URL,
 			err,
 		)
 	}
 
-	baseChain, err := newChain(ctx, config, client)
+	baseChain, err := newBaseChain(ctx, config, client)
 	if err != nil {
-		return nil, nil, nil, fmt.Errorf("could not create base chain handle: [%v]", err)
+		return nil, nil, nil, nil, nil, fmt.Errorf(
+			"could not create base chain handle: [%v]",
+			err,
+		)
 	}
 
 	beaconChain, err := newBeaconChain(config, baseChain)
 	if err != nil {
-		return nil, nil, nil, fmt.Errorf("could not create beacon chain handle: [%v]", err)
+		return nil, nil, nil, nil, nil, fmt.Errorf(
+			"could not create beacon chain handle: [%v]",
+			err,
+		)
 	}
 
 	tbtcChain, err := newTbtcChain(config, baseChain)
 	if err != nil {
-		return nil, nil, nil, fmt.Errorf("could not create TBTC chain handle: [%v]", err)
+		return nil, nil, nil, nil, nil, fmt.Errorf(
+			"could not create TBTC chain handle: [%v]",
+			err,
+		)
 	}
 
-	return beaconChain, tbtcChain, baseChain, nil
+	operatorPrivateKey, _, err := baseChain.OperatorKeyPair()
+	if err != nil {
+		return nil, nil, nil, nil, nil, fmt.Errorf(
+			"could not get operator key pair: [%v]",
+			err,
+		)
+	}
+
+	return beaconChain,
+		tbtcChain,
+		baseChain.blockCounter,
+		baseChain.Signing(),
+		operatorPrivateKey,
+		nil
 }
 
 // newChain construct a new instance of the Ethereum chain handle.
-func newChain(
+func newBaseChain(
 	ctx context.Context,
 	config ethereum.Config,
 	client *ethclient.Client,
-) (*Chain, error) {
+) (*baseChain, error) {
 	chainID, err := client.ChainID(ctx)
 	if err != nil {
 		return nil, fmt.Errorf(
@@ -156,7 +186,7 @@ func newChain(
 		)
 	}
 
-	return &Chain{
+	return &baseChain{
 		key:              key,
 		client:           clientWithAddons,
 		chainID:          chainID,
@@ -170,13 +200,13 @@ func newChain(
 
 // OperatorKeyPair returns the key pair of the operator assigned to this
 // chain handle.
-func (c *Chain) OperatorKeyPair() (
+func (bc *baseChain) OperatorKeyPair() (
 	*operator.PrivateKey,
 	*operator.PublicKey,
 	error,
 ) {
 	privateKey, publicKey, err := ChainPrivateKeyToOperatorKeyPair(
-		c.key.PrivateKey,
+		bc.key.PrivateKey,
 	)
 	if err != nil {
 		return nil, nil, fmt.Errorf(

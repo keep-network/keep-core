@@ -2,8 +2,9 @@ package dkg
 
 import (
 	"fmt"
-	"github.com/ipfs/go-log"
 	"math/big"
+
+	"github.com/ipfs/go-log"
 
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/net"
@@ -11,13 +12,12 @@ import (
 	"github.com/keep-network/keep-core/pkg/protocol/state"
 )
 
-var logger = log.Logger("keep-ecdsa-dkg")
-
 // Execute runs the ECDSA distributed key generation protocol, given a
 // broadcast channel to mediate with, a block counter used for time tracking,
 // a member index to use in the group, dishonest threshold, and block height
 // when DKG protocol should start.
 func Execute(
+	logger log.StandardLogger,
 	seed *big.Int,
 	startBlockNumber uint64,
 	memberIndex group.MemberIndex,
@@ -25,13 +25,14 @@ func Execute(
 	dishonestThreshold int,
 	blockCounter chain.BlockCounter,
 	channel net.BroadcastChannel,
-	membershipValidator group.MembershipValidator,
+	membershipValidator *group.MembershipValidator,
 ) (*Result, uint64, error) {
 	logger.Debugf("[member:%v] initializing member", memberIndex)
 
 	registerUnmarshallers(channel)
 
 	member := newMember(
+		logger,
 		memberIndex,
 		groupSize,
 		dishonestThreshold,
@@ -44,7 +45,7 @@ func Execute(
 		member:  member.initializeEphemeralKeysGeneration(),
 	}
 
-	stateMachine := state.NewMachine(channel, blockCounter, initialState)
+	stateMachine := state.NewMachine(logger, channel, blockCounter, initialState)
 
 	lastState, endBlockNumber, err := stateMachine.Execute(startBlockNumber)
 	if err != nil {

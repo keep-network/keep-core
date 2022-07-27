@@ -2,6 +2,7 @@ package entry
 
 import (
 	"fmt"
+	"github.com/ipfs/go-log"
 	"math/big"
 
 	beaconchain "github.com/keep-network/keep-core/pkg/beacon/chain"
@@ -10,6 +11,7 @@ import (
 )
 
 type relayEntrySubmitter struct {
+	logger       log.StandardLogger
 	chain        beaconchain.Interface
 	blockCounter chain.BlockCounter
 
@@ -48,7 +50,7 @@ func (res *relayEntrySubmitter) submitRelayEntry(
 	for {
 		select {
 		case blockNumber := <-eligibleToSubmitWaiter:
-			logger.Infof(
+			res.logger.Infof(
 				"[member:%v] submitting relay entry [0x%x] on "+
 					"behalf of group [0x%x] at block [%v]",
 				res.index,
@@ -61,7 +63,7 @@ func (res *relayEntrySubmitter) submitRelayEntry(
 			if err != nil {
 				isEntryInProgress, statusCheckErr := res.chain.IsEntryInProgress()
 				if statusCheckErr != nil {
-					logger.Errorf(
+					res.logger.Errorf(
 						"[member:%v] could not check entry status "+
 							"after relay entry submission error: [%v]; "+
 							"original error will be returned",
@@ -75,14 +77,14 @@ func (res *relayEntrySubmitter) submitRelayEntry(
 				// meantime or because something wrong happened with
 				// our transaction.
 				if !isEntryInProgress {
-					logger.Infof(
+					res.logger.Infof(
 						"[member:%v] relay entry already submitted",
 						res.index,
 					)
 					return nil
 				}
 
-				logger.Errorf(
+				res.logger.Errorf(
 					"[member:%v] could not submit relay entry: [%v]",
 					res.index,
 					err,
@@ -90,7 +92,7 @@ func (res *relayEntrySubmitter) submitRelayEntry(
 				return err
 			}
 
-			logger.Infof(
+			res.logger.Infof(
 				"[member:%v] successfully submitted relay entry "+
 					"transaction to the mempool at block [%v]",
 				res.index,
@@ -102,7 +104,7 @@ func (res *relayEntrySubmitter) submitRelayEntry(
 			// but is still monitoring for relay entry submission confirmation
 			// or timeout
 		case blockNumber := <-relayEntrySubmittedChannel:
-			logger.Infof(
+			res.logger.Infof(
 				"[member:%v] leaving submitter; "+
 					"relay entry submitted at block [%v]",
 				res.index,
@@ -147,7 +149,7 @@ func (res *relayEntrySubmitter) waitForSubmissionEligibility(
 	blockWaitTime := submissionQueueIndex * blockStep
 
 	eligibleBlockHeight := startBlockHeight + blockWaitTime
-	logger.Infof(
+	res.logger.Infof(
 		"[member:%v] waiting for block [%v] to submit",
 		res.index,
 		eligibleBlockHeight,

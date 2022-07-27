@@ -1,14 +1,12 @@
-package gjkr
+package dkg
 
 import (
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/chain/local_v1"
 	"github.com/keep-network/keep-core/pkg/internal/testutils"
 	"github.com/keep-network/keep-core/pkg/operator"
-	"math/big"
-	"testing"
-
 	"github.com/keep-network/keep-core/pkg/protocol/group"
+	"testing"
 )
 
 func TestShouldAcceptMessage(t *testing.T) {
@@ -78,17 +76,13 @@ func TestShouldAcceptMessage(t *testing.T) {
 				localChain.Signing(),
 			)
 
-			member, err := NewMember(
+			member := newMember(
 				&testutils.MockLogger{},
 				group.MemberIndex(1),
 				groupSize,
 				groupSize-honestThreshold,
 				membershipValdator,
-				big.NewInt(100),
 			)
-			if err != nil {
-				t.Fatal(err)
-			}
 
 			filter := member.inactiveMemberFilter()
 			for _, activeMemberID := range test.activeMembersIDs {

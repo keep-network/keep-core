@@ -11,6 +11,9 @@ import (
 
 var logger = log.Logger("keep-tbtc")
 
+// ProtocolName denotes the name of the protocol defined by this package.
+const ProtocolName = "tbtc"
+
 // Initialize kicks off the TBTC by initializing internal state, ensuring
 // preconditions like staking are met, and then kicking off the internal TBTC
 // implementation. Returns an error if this failed.

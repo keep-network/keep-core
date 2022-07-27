@@ -3,6 +3,8 @@ package group
 import (
 	"reflect"
 	"testing"
+
+	"github.com/keep-network/keep-core/pkg/internal/testutils"
 )
 
 func TestFilterInactiveMembers(t *testing.T) {
@@ -39,6 +41,7 @@ func TestFilterInactiveMembers(t *testing.T) {
 			}
 
 			filter := &InactiveMemberFilter{
+				logger:             &testutils.MockLogger{},
 				selfMemberID:       test.selfMemberID,
 				group:              group,
 				phaseActiveMembers: make([]MemberIndex, 0),

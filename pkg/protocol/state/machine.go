@@ -3,7 +3,7 @@ package state
 import (
 	"context"
 	"fmt"
-
+	"github.com/ipfs/go-log"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/net"
 )
@@ -19,6 +19,7 @@ const receiveBuffer = 128
 // Machine is a state machine that executes states implementing the State
 // interface.
 type Machine struct {
+	logger       log.StandardLogger
 	channel      net.BroadcastChannel
 	blockCounter chain.BlockCounter
 	initialState State // first state from which execution starts
@@ -28,11 +29,13 @@ type Machine struct {
 // channel and an initialization function for the channel to be able to
 // perform interactions between protocol parties.
 func NewMachine(
+	logger log.StandardLogger,
 	channel net.BroadcastChannel,
 	blockCounter chain.BlockCounter,
 	initialState State,
 ) *Machine {
 	return &Machine{
+		logger:       logger,
 		channel:      channel,
 		blockCounter: blockCounter,
 		initialState: initialState,
@@ -51,7 +54,7 @@ func (m *Machine) Execute(startBlockHeight uint64) (State, uint64, error) {
 	ctx, cancelCtx := context.WithCancel(context.Background())
 	m.channel.Recv(ctx, handler)
 
-	logger.Infof(
+	m.logger.Infof(
 		"[member:%v,channel:%s] waiting for block %v to start execution",
 		currentState.MemberIndex(),
 		m.channel.Name()[:5],
@@ -66,6 +69,7 @@ func (m *Machine) Execute(startBlockHeight uint64) (State, uint64, error) {
 
 	blockWaiter, err := stateTransition(
 		ctx,
+		m.logger,
 		currentState,
 		lastStateEndBlockHeight,
 		m.blockCounter,
@@ -81,7 +85,7 @@ func (m *Machine) Execute(startBlockHeight uint64) (State, uint64, error) {
 		case msg := <-recvChan:
 			err := currentState.Receive(msg)
 			if err != nil {
-				logger.Errorf(
+				m.logger.Errorf(
 					"[member:%v,channel:%s, state: %T] failed to receive a message: [%v]",
 					currentState.MemberIndex(),
 					m.channel.Name()[:5],
@@ -94,7 +98,7 @@ func (m *Machine) Execute(startBlockHeight uint64) (State, uint64, error) {
 			cancelCtx()
 			nextState := currentState.Next()
 			if nextState == nil {
-				logger.Infof(
+				m.logger.Infof(
 					"[member:%v,channel:%s,state:%T] reached final state at block: [%v]",
 					currentState.MemberIndex(),
 					m.channel.Name()[:5],
@@ -110,6 +114,7 @@ func (m *Machine) Execute(startBlockHeight uint64) (State, uint64, error) {
 
 			blockWaiter, err = stateTransition(
 				ctx,
+				m.logger,
 				currentState,
 				lastStateEndBlockHeight,
 				m.blockCounter,
@@ -127,6 +132,7 @@ func (m *Machine) Execute(startBlockHeight uint64) (State, uint64, error) {
 
 func stateTransition(
 	ctx context.Context,
+	logger log.StandardLogger,
 	currentState State,
 	lastStateEndBlockHeight uint64,
 	blockCounter chain.BlockCounter,

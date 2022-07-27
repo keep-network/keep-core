@@ -90,9 +90,10 @@ func (ekpgs *ephemeralKeyPairGenerationState) Initiate(ctx context.Context) erro
 func (ekpgs *ephemeralKeyPairGenerationState) Receive(msg net.Message) error {
 	switch phaseMessage := msg.Payload().(type) {
 	case *EphemeralPublicKeyMessage:
-		if !group.IsMessageFromSelf(ekpgs.member.ID, phaseMessage) &&
-			group.IsSenderValid(ekpgs.member, phaseMessage, msg.SenderPublicKey()) &&
-			group.IsSenderAccepted(ekpgs.member, phaseMessage) {
+		if ekpgs.member.shouldAcceptMessage(
+			phaseMessage.SenderID(),
+			msg.SenderPublicKey(),
+		) {
 			ekpgs.phaseMessages = append(ekpgs.phaseMessages, phaseMessage)
 		}
 	}
@@ -194,16 +195,18 @@ func (cs *commitmentState) Initiate(ctx context.Context) error {
 func (cs *commitmentState) Receive(msg net.Message) error {
 	switch phaseMessage := msg.Payload().(type) {
 	case *PeerSharesMessage:
-		if !group.IsMessageFromSelf(cs.member.ID, phaseMessage) &&
-			group.IsSenderValid(cs.member, phaseMessage, msg.SenderPublicKey()) &&
-			group.IsSenderAccepted(cs.member, phaseMessage) {
+		if cs.member.shouldAcceptMessage(
+			phaseMessage.SenderID(),
+			msg.SenderPublicKey(),
+		) {
 			cs.phaseSharesMessages = append(cs.phaseSharesMessages, phaseMessage)
 		}
 
 	case *MemberCommitmentsMessage:
-		if !group.IsMessageFromSelf(cs.member.ID, phaseMessage) &&
-			group.IsSenderValid(cs.member, phaseMessage, msg.SenderPublicKey()) &&
-			group.IsSenderAccepted(cs.member, phaseMessage) {
+		if cs.member.shouldAcceptMessage(
+			phaseMessage.SenderID(),
+			msg.SenderPublicKey(),
+		) {
 			cs.phaseCommitmentsMessages = append(
 				cs.phaseCommitmentsMessages,
 				phaseMessage,
@@ -274,9 +277,10 @@ func (cvs *commitmentsVerificationState) Initiate(ctx context.Context) error {
 func (cvs *commitmentsVerificationState) Receive(msg net.Message) error {
 	switch phaseMessage := msg.Payload().(type) {
 	case *SecretSharesAccusationsMessage:
-		if !group.IsMessageFromSelf(cvs.member.ID, phaseMessage) &&
-			group.IsSenderValid(cvs.member, phaseMessage, msg.SenderPublicKey()) &&
-			group.IsSenderAccepted(cvs.member, phaseMessage) {
+		if cvs.member.shouldAcceptMessage(
+			phaseMessage.SenderID(),
+			msg.SenderPublicKey(),
+		) {
 			cvs.phaseAccusationsMessages = append(
 				cvs.phaseAccusationsMessages,
 				phaseMessage,
@@ -418,9 +422,10 @@ func (pss *pointsShareState) Initiate(ctx context.Context) error {
 func (pss *pointsShareState) Receive(msg net.Message) error {
 	switch phaseMessage := msg.Payload().(type) {
 	case *MemberPublicKeySharePointsMessage:
-		if !group.IsMessageFromSelf(pss.member.ID, phaseMessage) &&
-			group.IsSenderValid(pss.member, phaseMessage, msg.SenderPublicKey()) &&
-			group.IsSenderAccepted(pss.member, phaseMessage) {
+		if pss.member.shouldAcceptMessage(
+			phaseMessage.SenderID(),
+			msg.SenderPublicKey(),
+		) {
 			pss.phaseMessages = append(pss.phaseMessages, phaseMessage)
 		}
 	}
@@ -482,9 +487,10 @@ func (pvs *pointsValidationState) Initiate(ctx context.Context) error {
 func (pvs *pointsValidationState) Receive(msg net.Message) error {
 	switch phaseMessage := msg.Payload().(type) {
 	case *PointsAccusationsMessage:
-		if !group.IsMessageFromSelf(pvs.member.ID, phaseMessage) &&
-			group.IsSenderValid(pvs.member, phaseMessage, msg.SenderPublicKey()) &&
-			group.IsSenderAccepted(pvs.member, phaseMessage) {
+		if pvs.member.shouldAcceptMessage(
+			phaseMessage.SenderID(),
+			msg.SenderPublicKey(),
+		) {
 			pvs.phaseMessages = append(pvs.phaseMessages, phaseMessage)
 		}
 	}
@@ -589,9 +595,10 @@ func (rs *keyRevealState) Initiate(ctx context.Context) error {
 func (rs *keyRevealState) Receive(msg net.Message) error {
 	switch phaseMessage := msg.Payload().(type) {
 	case *MisbehavedEphemeralKeysMessage:
-		if !group.IsMessageFromSelf(rs.member.ID, phaseMessage) &&
-			group.IsSenderValid(rs.member, phaseMessage, msg.SenderPublicKey()) &&
-			group.IsSenderAccepted(rs.member, phaseMessage) {
+		if rs.member.shouldAcceptMessage(
+			phaseMessage.SenderID(),
+			msg.SenderPublicKey(),
+		) {
 			rs.phaseMessages = append(rs.phaseMessages, phaseMessage)
 		}
 	}

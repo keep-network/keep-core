@@ -68,6 +68,7 @@ func (lc *localChannel) Send(ctx context.Context, message net.TaggedMarshaler) e
 
 	retransmission.ScheduleRetransmissions(
 		ctx,
+		logger,
 		lc.retransmissionTicker,
 		func() error {
 			return broadcastMessage(lc.name, netMessage)

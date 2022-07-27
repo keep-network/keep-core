@@ -2,10 +2,6 @@
 // and auxiliary tools that help during group-related operations.
 package group
 
-import "github.com/ipfs/go-log"
-
-var logger = log.Logger("keep-protocol-group")
-
 // MemberIndex is an index of a member in a group. The maximum member index
 // value is 255.
 type MemberIndex = uint8
@@ -141,15 +137,4 @@ func (g *Group) isDisqualified(memberID MemberIndex) bool {
 	}
 
 	return false
-}
-
-func (g *Group) eliminatedMembersCount() int {
-	return len(g.disqualifiedMemberIDs) + len(g.inactiveMemberIDs)
-}
-
-// isThresholdSatisfied checks number of disqualified and inactive members in
-// the group. If the number is less or equal half of dishonest threshold,
-// returns true.
-func (g *Group) isThresholdSatisfied() bool {
-	return g.eliminatedMembersCount() <= g.dishonestThreshold/2
 }

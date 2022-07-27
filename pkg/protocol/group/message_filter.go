@@ -1,30 +1,12 @@
 package group
 
-// MessageFiltering interface defines method allowing to filter out messages
-// from members that are not part of the group or were marked as IA or DQ.
-type MessageFiltering interface {
-	// IsSenderAccepted returns true if the message from the given sender should be
-	// accepted for further processing. Otherwise, function returns false.
-	// Message from the given sender is allowed only if that member is a properly
-	// operating group member - it was not DQ or IA so far.
-	IsSenderAccepted(senderID MemberIndex) bool
-
-	// IsSenderValid returns true if the message from the given sender should be
-	// accepted for further processing. Otherwise, function returns false.
-	// IsSenderValid checks if sender of the provided ProtocolMessage is in the
-	// group and uses appropriate group member index.
-	IsSenderValid(senderID MemberIndex, senderPublicKey []byte) bool
-}
-
-// ProtocolMessage is a common interface for all messages of the protocol.
-type ProtocolMessage interface {
-	// SenderID returns protocol-level identifier of the message sender.
-	SenderID() MemberIndex
-}
+import "github.com/ipfs/go-log"
 
 // InactiveMemberFilter is a proxy facilitates filtering out inactive members
 // in the given phase and registering their final list in the Group.
 type InactiveMemberFilter struct {
+	logger log.StandardLogger
+
 	selfMemberID MemberIndex
 	group        *Group
 
@@ -36,10 +18,12 @@ type InactiveMemberFilter struct {
 // filtering out other group members for inactivity) and the reference to Group
 // to which all those members belong.
 func NewInactiveMemberFilter(
+	logger log.StandardLogger,
 	selfMemberIndex MemberIndex,
 	group *Group,
 ) *InactiveMemberFilter {
 	return &InactiveMemberFilter{
+		logger:             logger,
 		selfMemberID:       selfMemberIndex,
 		group:              group,
 		phaseActiveMembers: make([]MemberIndex, 0),
@@ -71,7 +55,7 @@ func (mf *InactiveMemberFilter) FlushInactiveMembers() {
 
 	for _, operatingMemberID := range mf.group.OperatingMemberIDs() {
 		if !isActive(operatingMemberID) {
-			logger.Warningf(
+			mf.logger.Warningf(
 				"[member:%v] marking member [%v] as inactive",
 				mf.selfMemberID,
 				operatingMemberID,
@@ -79,30 +63,4 @@ func (mf *InactiveMemberFilter) FlushInactiveMembers() {
 			mf.group.MarkMemberAsInactive(operatingMemberID)
 		}
 	}
-}
-
-// IsMessageFromSelf is an auxiliary function determining whether the given
-// ProtocolMessage is from the current member itself.
-func IsMessageFromSelf(memberIndex MemberIndex, message ProtocolMessage) bool {
-	if message.SenderID() == memberIndex {
-		return true
-	}
-
-	return false
-}
-
-// IsSenderValid checks if sender of the provided ProtocolMessage is in the
-// group and uses appropriate group member index.
-func IsSenderValid(
-	filter MessageFiltering,
-	message ProtocolMessage,
-	senderPublicKey []byte,
-) bool {
-	return filter.IsSenderValid(message.SenderID(), senderPublicKey)
-}
-
-// IsSenderAccepted determines if sender of the given ProtocoLMessage is
-// accepted by group (not marked as inactive or disqualified).
-func IsSenderAccepted(filter MessageFiltering, message ProtocolMessage) bool {
-	return filter.IsSenderAccepted(message.SenderID())
 }

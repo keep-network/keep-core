@@ -2,6 +2,7 @@ package result
 
 import (
 	"fmt"
+	"github.com/ipfs/go-log"
 
 	beaconchain "github.com/keep-network/keep-core/pkg/beacon/chain"
 	"github.com/keep-network/keep-core/pkg/beacon/event"
@@ -13,16 +14,20 @@ import (
 // blockchain along with signatures received from other group members supporting
 // the result.
 type SubmittingMember struct {
+	logger log.StandardLogger
+
 	// Represents the member's position for submission.
 	index group.MemberIndex
 }
 
 // NewSubmittingMember creates a member to execute submitting the DKG result hash.
 func NewSubmittingMember(
+	logger log.StandardLogger,
 	memberIndex group.MemberIndex,
 ) *SubmittingMember {
 	return &SubmittingMember{
-		index: memberIndex,
+		logger: logger,
+		index:  memberIndex,
 	}
 }
 
@@ -115,7 +120,7 @@ func (sm *SubmittingMember) SubmitDKGResult(
 			subscription.Unsubscribe()
 			close(onSubmittedResultChan)
 
-			logger.Infof(
+			sm.logger.Infof(
 				"[member:%v] submitting DKG result with public key [0x%x] and "+
 					"[%v] supporting member signatures at block [%v]",
 				sm.index,
@@ -130,7 +135,7 @@ func (sm *SubmittingMember) SubmitDKGResult(
 				signatures,
 			)
 		case blockNumber := <-onSubmittedResultChan:
-			logger.Infof(
+			sm.logger.Infof(
 				"[member:%v] leaving; DKG result submitted by other member at block [%v]",
 				sm.index,
 				blockNumber,
@@ -154,7 +159,7 @@ func (sm *SubmittingMember) waitForSubmissionEligibility(
 	blockWaitTime := (uint64(sm.index) - 1) * blockStep
 
 	eligibleBlockHeight := startBlockHeight + blockWaitTime
-	logger.Infof(
+	sm.logger.Infof(
 		"[member:%v] waiting for block [%v] to submit",
 		sm.index,
 		eligibleBlockHeight,
