@@ -114,7 +114,7 @@ else
 
   if [ "$TBTC_PATH" = "" ]; then
     printf "${LOG_START}Cloning tbtc...${LOG_END}"
-    # recreate a temporary tbtc dir for fresh installation
+    # create a temporary tbtc dir for fresh installation
     rm -rf $TMP_TBTC && mkdir $TMP_TBTC && cd $TMP_TBTC
     # clone project from the repository
     git clone https://github.com/keep-network/tbtc-v2.git
