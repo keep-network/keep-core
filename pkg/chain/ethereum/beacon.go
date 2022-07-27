@@ -383,7 +383,7 @@ func (bc *BeaconChain) OnRelayEntryRequested(
 
 // TODO: Implement a real ReportRelayEntryTimeout function.
 func (bc *BeaconChain) ReportRelayEntryTimeout() error {
-	return nil
+	return bc.mockRandomBeacon.ReportRelayEntryTimeout()
 }
 
 // TODO: Implement a real IsEntryInProgress function.
@@ -451,22 +451,18 @@ func (mrb *mockRandomBeacon) OnDKGStarted(
 				// Generate an event every 500th block.
 				if block%500 == 0 {
 					mrb.currentDkgMutex.Lock()
+					// The seed is keccak256(block).
+					blockBytes := make([]byte, 8)
+					binary.BigEndian.PutUint64(blockBytes, block)
+					seedBytes := crypto.Keccak256(blockBytes)
+					seed := new(big.Int).SetBytes(seedBytes)
 
-					if mrb.currentDkgStartBlock == nil {
-						// The seed is keccak256(block).
-						blockBytes := make([]byte, 8)
-						binary.BigEndian.PutUint64(blockBytes, block)
-						seedBytes := crypto.Keccak256(blockBytes)
-						seed := new(big.Int).SetBytes(seedBytes)
+					mrb.currentDkgStartBlock = big.NewInt(int64(block))
 
-						mrb.currentDkgStartBlock = big.NewInt(int64(block))
-
-						go handler(&event.DKGStarted{
-							Seed:        seed,
-							BlockNumber: block,
-						})
-					}
-
+					go handler(&event.DKGStarted{
+						Seed:        seed,
+						BlockNumber: block,
+					})
 					mrb.currentDkgMutex.Unlock()
 				}
 			case <-ctx.Done():
@@ -513,11 +509,6 @@ func (mrb *mockRandomBeacon) SubmitDKGResult(
 
 	mrb.activeGroupMutex.Lock()
 	defer mrb.activeGroupMutex.Unlock()
-
-	// Abort if there is no DKG in progress.
-	if mrb.currentDkgStartBlock == nil {
-		return nil
-	}
 
 	blockNumber, err := mrb.blockCounter.CurrentBlock()
 	if err != nil {
@@ -644,6 +635,17 @@ func (mrb *mockRandomBeacon) SubmitRelayEntry(
 	mrb.currentRequestStartBlock = nil
 	mrb.currentRequestPreviousEntry = nil
 	mrb.currentRequestGroup = nil
+
+	return nil
+}
+
+func (mrb *mockRandomBeacon) ReportRelayEntryTimeout() error {
+	mrb.currentRequestMutex.Lock()
+	defer mrb.currentRequestMutex.Unlock()
+
+	// Set the current request start block to nil, so that a new relay entry
+	// request can begin.
+	mrb.currentRequestStartBlock = nil
 
 	return nil
 }
