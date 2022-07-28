@@ -12,13 +12,13 @@ import (
 
 	"github.com/ipfs/go-log"
 	"github.com/keep-network/keep-common/pkg/persistence"
-	"github.com/keep-network/keep-core/config"
 	"github.com/keep-network/keep-core/pkg/beacon"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/firewall"
 	"github.com/keep-network/keep-core/pkg/net/libp2p"
 	"github.com/keep-network/keep-core/pkg/net/retransmission"
-	"github.com/urfave/cli"
+	"github.com/urfave/cli/v2"
+	"github.com/urfave/cli/v2/altsrc"
 )
 
 // StartCommand contains the definition of the start command-line subcommand.
@@ -35,34 +35,39 @@ const (
 const startDescription = `Starts the Keep client in the foreground`
 
 func init() {
+	flags := append(
+		[]cli.Flag{
+			ConfigFileFlag,
+			altsrc.NewPathFlag(StorageDataDirFlag),
+		},
+		EthereumFlags...,
+	)
+
+	flags = append(flags, NetworkFlags...)
+
 	StartCommand =
 		cli.Command{
 			Name:        "start",
 			Usage:       `Starts the Keep client in the foreground`,
 			Description: startDescription,
 			Action:      Start,
-			Flags: []cli.Flag{
-				&cli.IntFlag{
-					Name: portFlag + "," + portShort,
-				},
-			},
+			Before:      altsrc.InitInputSourceWithContext(flags, altsrc.NewTomlSourceFromFlagFunc("config")),
+			Flags:       flags,
 		}
 }
 
 // Start starts a node; if it's not a bootstrap node it will get the node.URLs
 // from the config file
 func Start(c *cli.Context) error {
+	if err := clientConfig.Validate(); err != nil {
+		return err
+	}
+
 	ctx := context.Background()
 
-	config, err := config.ReadConfig(c.GlobalString("config"))
-	if err != nil {
-		return fmt.Errorf("error reading config file: %v", err)
-	}
-	if c.Int(portFlag) > 0 {
-		config.LibP2P.Port = c.Int(portFlag)
-	}
+	logger.Infof("TEST PEERS %v", clientConfig.LibP2P.Peers)
 
-	beaconChain, tbtcChain, err := ethereum.Connect(ctx, config.Ethereum)
+	beaconChain, tbtcChain, err := ethereum.Connect(ctx, clientConfig.Ethereum)
 	if err != nil {
 		return fmt.Errorf("error connecting to Ethereum node: [%v]", err)
 	}
@@ -83,7 +88,7 @@ func Start(c *cli.Context) error {
 
 	netProvider, err := libp2p.Connect(
 		ctx,
-		config.LibP2P,
+		clientConfig.LibP2P,
 		operatorPrivateKey,
 		libp2p.ProtocolBeacon,
 		firewall,
@@ -93,15 +98,15 @@ func Start(c *cli.Context) error {
 		return fmt.Errorf("failed while creating the network provider: [%v]", err)
 	}
 
-	nodeHeader(netProvider.ConnectionManager().AddrStrings(), config.LibP2P.Port)
+	nodeHeader(netProvider.ConnectionManager().AddrStrings(), clientConfig.LibP2P.Port)
 
-	handle, err := persistence.NewDiskHandle(config.Storage.DataDir)
+	handle, err := persistence.NewDiskHandle(clientConfig.Storage.DataDir)
 	if err != nil {
 		return fmt.Errorf("failed while creating a storage disk handler: [%v]", err)
 	}
 	encryptedPersistence := persistence.NewEncryptedPersistence(
 		handle,
-		config.Ethereum.Account.KeyFilePassword,
+		clientConfig.Ethereum.Account.KeyFilePassword,
 	)
 
 	err = beacon.Initialize(
@@ -114,8 +119,8 @@ func Start(c *cli.Context) error {
 		return fmt.Errorf("error initializing beacon: [%v]", err)
 	}
 
-	initializeMetrics(ctx, config, netProvider, blockCounter)
-	initializeDiagnostics(ctx, config, netProvider, beaconChain.Signing())
+	initializeMetrics(ctx, netProvider, blockCounter)
+	initializeDiagnostics(ctx, netProvider, beaconChain.Signing())
 
 	select {
 	case <-ctx.Done():
@@ -129,12 +134,11 @@ func Start(c *cli.Context) error {
 
 func initializeMetrics(
 	ctx context.Context,
-	config *config.Config,
 	netProvider net.Provider,
 	blockCounter chain.BlockCounter,
 ) {
 	registry, isConfigured := metrics.Initialize(
-		config.Metrics.Port,
+		clientConfig.Metrics.Port,
 	)
 	if !isConfigured {
 		logger.Infof("metrics are not configured")
@@ -143,40 +147,39 @@ func initializeMetrics(
 
 	logger.Infof(
 		"enabled metrics on port [%v]",
-		config.Metrics.Port,
+		clientConfig.Metrics.Port,
 	)
 
 	metrics.ObserveConnectedPeersCount(
 		ctx,
 		registry,
 		netProvider,
-		time.Duration(config.Metrics.NetworkMetricsTick)*time.Second,
+		time.Duration(clientConfig.Metrics.NetworkMetricsTick)*time.Second,
 	)
 
 	metrics.ObserveConnectedBootstrapCount(
 		ctx,
 		registry,
 		netProvider,
-		config.LibP2P.Peers,
-		time.Duration(config.Metrics.NetworkMetricsTick)*time.Second,
+		clientConfig.LibP2P.Peers,
+		time.Duration(clientConfig.Metrics.NetworkMetricsTick)*time.Second,
 	)
 
 	metrics.ObserveEthConnectivity(
 		ctx,
 		registry,
 		blockCounter,
-		time.Duration(config.Metrics.EthereumMetricsTick)*time.Second,
+		time.Duration(clientConfig.Metrics.EthereumMetricsTick)*time.Second,
 	)
 }
 
 func initializeDiagnostics(
 	ctx context.Context,
-	config *config.Config,
 	netProvider net.Provider,
 	signing chain.Signing,
 ) {
 	registry, isConfigured := diagnostics.Initialize(
-		config.Diagnostics.Port,
+		clientConfig.Diagnostics.Port,
 	)
 	if !isConfigured {
 		logger.Infof("diagnostics are not configured")
@@ -185,7 +188,7 @@ func initializeDiagnostics(
 
 	logger.Infof(
 		"enabled diagnostics on port [%v]",
-		config.Diagnostics.Port,
+		clientConfig.Diagnostics.Port,
 	)
 
 	diagnostics.RegisterConnectedPeersSource(registry, netProvider, signing)

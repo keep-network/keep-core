@@ -15,7 +15,17 @@ import (
 // #nosec G101 (look for hardcoded credentials)
 // This line doesn't contain any credentials.
 // It's just the name of the environment variable.
-const passwordEnvVariable = "KEEP_ETHEREUM_PASSWORD"
+const EthereumPasswordEnvVariable = "KEEP_ETHEREUM_PASSWORD"
+
+// func NewConfig() *Config {
+// 	return &Config{
+// 		Ethereum: ethereum.Config{
+// 			// MaxGasFeeCap:          &ethereum.Wei{},
+// 			// BalanceAlertThreshold: &ethereum.Wei{},
+// 		},
+// 		LibP2P: libp2p.Config{},
+// 	}
+// }
 
 // Config is the top level config structure.
 type Config struct {
@@ -57,7 +67,7 @@ func ReadConfig(filePath string) (*Config, error) {
 		return nil, fmt.Errorf("unable to decode .toml file [%s] error [%s]", filePath, err)
 	}
 
-	envPassword := os.Getenv(passwordEnvVariable)
+	envPassword := os.Getenv(EthereumPasswordEnvVariable)
 	if envPassword == "prompt" {
 		var (
 			password string
@@ -76,16 +86,12 @@ func ReadConfig(filePath string) (*Config, error) {
 			"password is required; set in the config file, set environment "+
 				"variable %v to the password, or set the same environment "+
 				"variable to 'prompt' to be prompted for the password at startup",
-			passwordEnvVariable,
+			EthereumPasswordEnvVariable,
 		)
 	}
 
-	if config.LibP2P.Port == 0 {
-		return nil, fmt.Errorf("missing value for port; see node section in config file or use --port flag")
-	}
-
-	if config.Storage.DataDir == "" {
-		return nil, fmt.Errorf("missing value for storage directory data")
+	if err := config.Validate(); err != nil {
+		return nil, err
 	}
 
 	return config, nil
@@ -106,6 +112,18 @@ func ReadEthereumConfig(filePath string) (ethereum.Config, error) {
 	}
 
 	return config.Ethereum, nil
+}
+
+func (c *Config) Validate() error {
+	if c.LibP2P.Port == 0 {
+		return fmt.Errorf("missing value for port; see node section in config file or use --port flag")
+	}
+
+	if c.Storage.DataDir == "" {
+		return fmt.Errorf("missing value for storage directory data")
+	}
+
+	return nil
 }
 
 // ReadPassword prompts a user to enter a password.   The read password uses

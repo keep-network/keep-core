@@ -10,16 +10,12 @@ import (
 	"github.com/ipfs/go-log"
 	"github.com/keep-network/keep-common/pkg/logging"
 	"github.com/keep-network/keep-core/cmd"
-	"github.com/urfave/cli"
+	"github.com/urfave/cli/v2"
 )
-
-const defaultConfigPath = "./config.toml"
 
 var (
 	version  string
 	revision string
-
-	configPath string
 
 	logger = log.Logger("keep-main")
 )
@@ -42,25 +38,21 @@ func main() {
 	app.Usage = "CLI for The Keep Network"
 	app.Description = "Command line interface (CLI) for running a Keep provider"
 	app.Compiled = time.Now()
-	app.Authors = []cli.Author{
-		{
-			Name:  "Keep Network",
-			Email: "info@keep.network",
-		},
-	}
+	// app.Authors = []cli.Author{
+	// 	{
+	// 		Name:  "Keep Network",
+	// 		Email: "info@keep.network",
+	// 	},
+	// }
 	app.Version = fmt.Sprintf("%s (revision %s)", version, revision)
+
 	app.Flags = []cli.Flag{
-		cli.StringFlag{
-			Name:        "config,c",
-			Value:       defaultConfigPath,
-			Destination: &configPath,
-			Usage:       "full path to the configuration file",
-		},
+		cmd.ConfigFileFlag,
 	}
-	app.Commands = []cli.Command{
-		cmd.StartCommand,
-		cmd.PingCommand,
-		cmd.EthereumCommand,
+	app.Commands = []*cli.Command{
+		&cmd.StartCommand,
+		// cmd.PingCommand,
+		// cmd.EthereumCommand,
 	}
 
 	cli.AppHelpTemplate = fmt.Sprintf(`%s
