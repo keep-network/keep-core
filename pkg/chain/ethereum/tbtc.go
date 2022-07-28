@@ -299,8 +299,11 @@ func (mwr *mockWalletRegistry) OnDKGStarted(
 		for {
 			select {
 			case block := <-blocksChan:
-				// Generate an event every 500th block.
-				if block%500 == 0 {
+				// Generate an event every 500th block starting from block 250.
+				// The shift is done in order to avoid overlapping with beacon
+				// DKG test loop.
+				shift := uint64(250)
+				if block >= shift && (block-shift)%500 == 0 {
 					// The seed is keccak256(block).
 					blockBytes := make([]byte, 8)
 					binary.BigEndian.PutUint64(blockBytes, block)
