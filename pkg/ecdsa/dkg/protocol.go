@@ -164,13 +164,10 @@ func (trtm *tssRoundTwoMember) tssRoundTwo(
 	// to round two.
 	for _, tssRoundOneMessage := range tssRoundOneMessages {
 		senderID := tssRoundOneMessage.SenderID()
-		sortedPartiesIDs := trtm.tssParameters.Parties().IDs()
-		senderPartyIDKey := memberIDToTssPartyIDKey(senderID)
-		senderPartyID := sortedPartiesIDs.FindByKey(senderPartyIDKey)
 
 		_, tssErr := trtm.tssParty.UpdateFromBytes(
 			tssRoundOneMessage.payload,
-			senderPartyID,
+			resolveSortedTssPartyID(trtm.tssParameters, senderID),
 			true,
 		)
 		if tssErr != nil {
@@ -285,15 +282,13 @@ func (trtm *tssRoundTwoMember) tssRoundThree(
 	// to round three.
 	for _, tssRoundTwoMessage := range tssRoundTwoMessages {
 		senderID := tssRoundTwoMessage.SenderID()
-		sortedPartiesIDs := trtm.tssParameters.Parties().IDs()
-		senderPartyIDKey := memberIDToTssPartyIDKey(senderID)
-		senderPartyID := sortedPartiesIDs.FindByKey(senderPartyIDKey)
+		senderTssPartyID := resolveSortedTssPartyID(trtm.tssParameters, senderID)
 
 		// Update the local TSS party using the broadcast part of the message
 		// produced in round two.
 		_, tssErr := trtm.tssParty.UpdateFromBytes(
 			tssRoundTwoMessage.broadcastPayload,
-			senderPartyID,
+			senderTssPartyID,
 			true,
 		)
 		if tssErr != nil {
@@ -337,7 +332,7 @@ func (trtm *tssRoundTwoMember) tssRoundThree(
 		// produced in round two.
 		_, tssErr = trtm.tssParty.UpdateFromBytes(
 			peerPayload,
-			senderPartyID,
+			senderTssPartyID,
 			false,
 		)
 		if tssErr != nil {
@@ -382,13 +377,10 @@ func (fm *finalizingMember) tssFinalize(
 	// result.
 	for _, tssRoundThreeMessage := range tssRoundThreeMessages {
 		senderID := tssRoundThreeMessage.SenderID()
-		sortedPartiesIDs := fm.tssParameters.Parties().IDs()
-		senderPartyIDKey := memberIDToTssPartyIDKey(senderID)
-		senderPartyID := sortedPartiesIDs.FindByKey(senderPartyIDKey)
 
 		_, tssErr := fm.tssParty.UpdateFromBytes(
 			tssRoundThreeMessage.payload,
-			senderPartyID,
+			resolveSortedTssPartyID(fm.tssParameters, senderID),
 			true,
 		)
 		if tssErr != nil {
