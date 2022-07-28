@@ -200,7 +200,7 @@ func readConfigFile(configFilePath string) error {
 // flags into a struct.
 func unmarshalConfig(config *Config) error {
 	if err := viper.Unmarshal(
-		&config,
+		config,
 		viper.DecodeHook(
 			mapstructure.ComposeDecodeHookFunc(
 				mapstructure.StringToTimeDurationHookFunc(),
