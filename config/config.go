@@ -73,7 +73,7 @@ func bindFlags(flagSet *pflag.FlagSet) error {
 // ReadConfig reads in the configuration file at `filePath` and returns the
 // valid config stored there, or an error if something fails while reading the
 // file or the config is invalid in a known way.
-func ReadConfig(configFilePath string) (*Config, error) {
+func (c *Config) ReadConfig(configFilePath string, flagSet *pflag.FlagSet) error {
 	initializeContractAddressesAliases()
 
 	if flagSet != nil {
@@ -83,18 +83,18 @@ func ReadConfig(configFilePath string) (*Config, error) {
 	// Read configuration from a file if the config file path is set.
 	if configFilePath != "" {
 		if err := readConfigFile(configFilePath); err != nil {
-			return nil, fmt.Errorf("unable to load config (file: [%s]): [%w]", configFilePath, err)
+			return fmt.Errorf(
+				"unable to load config (file: [%s]): [%w]",
+				configFilePath,
+				err,
+			)
 		}
 	}
 
 	// Unmarshal config based on loaded config file and command-line flags.
-	config := &Config{}
-	if err := unmarshalConfig(config); err != nil {
-		return nil, fmt.Errorf("unable to unmarshal config: %w", err)
+	if err := unmarshalConfig(c); err != nil {
+		return fmt.Errorf("unable to unmarshal config: %w", err)
 	}
-
-
-	
 
 	// Validate configuration.
 	if err := validateConfig(c); err != nil {
@@ -107,7 +107,7 @@ func ReadConfig(configFilePath string) (*Config, error) {
 		c.Ethereum.Account.KeyFilePassword = os.Getenv(EthereumPasswordEnvVariable)
 	}
 
-	if strings.TrimSpace(config.Ethereum.Account.KeyFilePassword) == "" {
+	if strings.TrimSpace(c.Ethereum.Account.KeyFilePassword) == "" {
 		var (
 			password string
 			err      error
@@ -120,14 +120,14 @@ func ReadConfig(configFilePath string) (*Config, error) {
 
 		for strings.TrimSpace(password) == "" {
 			if password, err = readPassword("Enter Ethereum Account Password: "); err != nil {
-				return nil, err
+				return err
 			}
 		}
 
-		config.Ethereum.Account.KeyFilePassword = password
+		c.Ethereum.Account.KeyFilePassword = password
 	}
 
-	return config, nil
+	return nil
 }
 
 func validateConfig(config *Config) error {
@@ -169,7 +169,8 @@ func validateConfig(config *Config) error {
 // to interact solely with Ethereum and are therefore independent of the rest of
 // the config structure.
 func ReadEthereumConfig(filePath string) (ethereum.Config, error) {
-	config, err := ReadConfig(filePath)
+	config := &Config{}
+	err := config.ReadConfig(filePath, nil)
 	if err != nil {
 		return ethereum.Config{}, err
 	}
