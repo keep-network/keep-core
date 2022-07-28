@@ -74,7 +74,7 @@ type Config struct {
 	Peers              []string
 	Port               int
 	AnnouncedAddresses []string
-	DisseminationTime  int
+	DisseminationTime  int // TODO: Convert to time.Duration
 }
 
 type provider struct {
