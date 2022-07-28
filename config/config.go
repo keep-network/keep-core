@@ -37,7 +37,7 @@ const (
 // Config is the top level config structure.
 type Config struct {
 	Ethereum    ethereumCommon.Config
-	LibP2P      libp2p.Config `mapstructure:"Network"`
+	LibP2P      libp2p.Config `mapstructure:"network"`
 	Storage     Storage
 	Metrics     Metrics
 	Diagnostics Diagnostics
