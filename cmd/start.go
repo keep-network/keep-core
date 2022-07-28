@@ -25,45 +25,38 @@ import (
 
 var (
 	// StartCommand contains the definition of the start command-line subcommand.
-	StartCommand = &cobra.Command{
-		Use:   "start",
-		Short: "Starts the Keep Client",
-		Long:  startDescription,
-		RunE: func(cmd *cobra.Command, args []string) error {
-			if err := start(cmd); err != nil {
-				logger.Fatal(err)
-			}
-			return nil
-		},
-	}
+	StartCommand *cobra.Command
 
 	logger = log.Logger("keep-start")
 )
 
-const startDescription = `Starts the Keep Client in the foreground`
-
 func init() {
-	if err := config.InitFlags(StartCommand); err != nil {
-		logger.Fatal("failed to initialize config: %v", err)
+	StartCommand = &cobra.Command{
+		Use:   "start",
+		Short: "Starts the Keep Client",
+		Long:  "Starts the Keep Client in the foreground",
+		PreRun: func(cmd *cobra.Command, args []string) {
+			if err := clientConfig.ReadConfig(configFilePath, cmd.Flags()); err != nil {
+				logger.Fatalf("error reading config: %v", err)
+			}
+
+		},
+		Run: func(cmd *cobra.Command, args []string) {
+			if err := start(cmd); err != nil {
+				logger.Fatal(err)
+			}
+		},
 	}
+
+
 }
 
 // start starts a node
 func start(cmd *cobra.Command) error {
 	ctx := context.Background()
 
-	filePath, err := cmd.Flags().GetString("config")
-	if err != nil {
-		return fmt.Errorf("error getting config flag: %w", err)
-	}
-
-	config, err := config.ReadConfig(filePath)
-	if err != nil {
-		return fmt.Errorf("error reading config: %w", err)
-	}
-
 	beaconChain, tbtcChain, blockCounter, signing, operatorPrivateKey, err :=
-		ethereum.Connect(ctx, config.Ethereum)
+		ethereum.Connect(ctx, clientConfig.Ethereum)
 	if err != nil {
 		return fmt.Errorf("error connecting to Ethereum node: [%v]", err)
 	}
@@ -74,7 +67,7 @@ func start(cmd *cobra.Command) error {
 
 	netProvider, err := libp2p.Connect(
 		ctx,
-		config.LibP2P,
+		clientConfig.LibP2P,
 		operatorPrivateKey,
 		firewall,
 		retransmission.NewTicker(blockCounter.WatchBlocks(ctx)),
@@ -83,15 +76,15 @@ func start(cmd *cobra.Command) error {
 		return fmt.Errorf("failed while creating the network provider: [%v]", err)
 	}
 
-	nodeHeader(netProvider.ConnectionManager().AddrStrings(), config.LibP2P.Port)
+	nodeHeader(netProvider.ConnectionManager().AddrStrings(), clientConfig.LibP2P.Port)
 
-	handle, err := persistence.NewDiskHandle(config.Storage.DataDir)
+	handle, err := persistence.NewDiskHandle(clientConfig.Storage.DataDir)
 	if err != nil {
 		return fmt.Errorf("failed while creating a storage disk handler: [%v]", err)
 	}
 	encryptedPersistence := persistence.NewEncryptedPersistence(
 		handle,
-		config.Ethereum.Account.KeyFilePassword,
+		clientConfig.Ethereum.Account.KeyFilePassword,
 	)
 
 	err = beacon.Initialize(
@@ -114,8 +107,8 @@ func start(cmd *cobra.Command) error {
 		return fmt.Errorf("error initializing TBTC: [%v]", err)
 	}
 
-	initializeMetrics(ctx, config, netProvider, blockCounter)
-	initializeDiagnostics(ctx, config, netProvider, signing)
+	initializeMetrics(ctx, clientConfig, netProvider, blockCounter)
+	initializeDiagnostics(ctx, clientConfig, netProvider, signing)
 
 	select {
 	case <-ctx.Done():
