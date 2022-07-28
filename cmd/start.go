@@ -49,6 +49,17 @@ func init() {
 	}
 
 
+	StartCommand.SetUsageTemplate(
+		fmt.Sprintf(`%s
+Environment variables:
+    %s    Password for Keep operator account keyfile decryption.
+    %s                 Space-delimited set of log level directives; set to "help" for help.
+`,
+			StartCommand.UsageString(),
+			config.EthereumPasswordEnvVariable,
+			config.LogLevelEnvVariable,
+		),
+	)
 }
 
 // start starts a node

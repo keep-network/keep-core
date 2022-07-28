@@ -47,18 +47,6 @@ func main() {
 		// cmd.EthereumCommand,
 	)
 
-	rootCmd.SetHelpTemplate(
-		fmt.Sprintf(`%s
-Environment variables:
-   KEEP_ETHEREUM_PASSWORD    ethereum key password
-   LOG_LEVEL                 space-delimited set of log level directives; set to
-                             "help" for help
-
-`,
-			rootCmd.HelpTemplate(),
-		),
-	)
-
 	if err := rootCmd.Execute(); err != nil {
 		logger.Fatal(err)
 	}
