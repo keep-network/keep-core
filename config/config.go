@@ -2,18 +2,18 @@ package config
 
 import (
 	"fmt"
+	"os"
 	"strings"
 	"syscall"
 
+	"github.com/hashicorp/go-multierror"
 	"github.com/ipfs/go-log"
 	"github.com/keep-network/keep-common/pkg/chain/ethereum"
 	ethereumCommon "github.com/keep-network/keep-common/pkg/chain/ethereum"
-	"github.com/keep-network/keep-core/pkg/beacon/registry"
-	ethereumChain "github.com/keep-network/keep-core/pkg/chain/ethereum"
-	ethereumBeaconGen "github.com/keep-network/keep-core/pkg/chain/ethereum/beacon/gen"
+
 	"github.com/keep-network/keep-core/pkg/net/libp2p"
 	"github.com/mitchellh/mapstructure"
-	"github.com/spf13/cobra"
+	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 	"golang.org/x/crypto/ssh/terminal"
 )
