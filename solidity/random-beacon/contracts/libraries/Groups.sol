@@ -61,14 +61,14 @@ library Groups {
         internal
         view
     {
+        require(groupPubKey.length == 128, "Invalid length of the public key");
+
         bytes32 groupPubKeyHash = keccak256(groupPubKey);
 
         require(
             self.groupsData[groupPubKeyHash].registrationBlockNumber == 0,
             "Group with this public key was already registered"
         );
-
-        require(groupPubKey.length == 128, "Invalid length of the public key");
     }
 
     /// @notice Adds a new candidate group. The group is stored with group public
