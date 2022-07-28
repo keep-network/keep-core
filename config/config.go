@@ -93,25 +93,12 @@ func ReadConfig(configFilePath string) (*Config, error) {
 		return nil, fmt.Errorf("unable to unmarshal config: %w", err)
 	}
 
-	if config.Ethereum.Account.KeyFile == "" {
-		return nil, fmt.Errorf(
-			"missing value for ethereum key file; see ethereum section in config file or use --%s flag",
-			ethereumKeyFlag,
-		)
-	}
 
-	if config.LibP2P.Port == 0 {
-		return nil, fmt.Errorf(
-			"missing value for port; see network section in config file or use --%s flag",
-			portFlag,
-		)
-	}
+	
 
-	if config.Storage.DataDir == "" {
-		return nil, fmt.Errorf(
-			"missing value for storage directory; see storage section in config file or use --%s flag",
-			dataDirFlag,
-		)
+	// Validate configuration.
+	if err := validateConfig(c); err != nil {
+		return fmt.Errorf("validation failed: %w", err)
 	}
 
 	// Don't use viper.BindEnv for password reading as it's too sensitive value
@@ -141,6 +128,36 @@ func ReadConfig(configFilePath string) (*Config, error) {
 	}
 
 	return config, nil
+}
+
+func validateConfig(config *Config) error {
+	var result *multierror.Error
+
+	if config.Ethereum.URL == "" {
+		result = multierror.Append(result, fmt.Errorf(
+			"missing value for ethereum.url; see ethereum section in configuration",
+		))
+	}
+
+	if config.Ethereum.Account.KeyFile == "" {
+		result = multierror.Append(result, fmt.Errorf(
+			"missing value for ethereum.keyFile; see ethereum section in configuration",
+		))
+	}
+
+	if config.LibP2P.Port == 0 {
+		result = multierror.Append(result, fmt.Errorf(
+			"missing value for network.port; see network section in configuration",
+		))
+	}
+
+	if config.Storage.DataDir == "" {
+		result = multierror.Append(result, fmt.Errorf(
+			"missing value for storage.dataDir; see storage section in configuration",
+		))
+	}
+
+	return result.ErrorOrNil()
 }
 
 // ReadEthereumConfig reads in the configuration file at `filePath` and returns
