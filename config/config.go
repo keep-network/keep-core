@@ -95,6 +95,8 @@ func bindFlags(flagSet *pflag.FlagSet) error {
 // valid config stored there, or an error if something fails while reading the
 // file or the config is invalid in a known way.
 func ReadConfig(configFilePath string) (*Config, error) {
+	initializeContractAddressesAliases()
+
 	if flagSet != nil {
 		bindFlags(flagSet)
 	}

@@ -1,12 +1,20 @@
 package cmd
 
 import (
+	"fmt"
+
 	"github.com/keep-network/keep-common/pkg/chain/ethereum"
 	"github.com/keep-network/keep-common/pkg/chain/ethereum/ethutil"
 	"github.com/keep-network/keep-core/cmd/flag"
 	"github.com/keep-network/keep-core/config"
 	"github.com/keep-network/keep-core/pkg/net/libp2p"
 	"github.com/spf13/cobra"
+
+	chainEthereum "github.com/keep-network/keep-core/pkg/chain/ethereum"
+
+	ethereumBeacon "github.com/keep-network/keep-core/pkg/chain/ethereum/beacon/gen"
+	ethereumEcdsa "github.com/keep-network/keep-core/pkg/chain/ethereum/ecdsa/gen"
+	ethereumThreshold "github.com/keep-network/keep-core/pkg/chain/ethereum/threshold/gen"
 )
 
 type category int
@@ -58,7 +66,7 @@ func initFlags(
 			initDiagnosticsFlags(cmd, cfg)
 			break
 		case Developer:
-			config.InitializeContractsAddressesFlags(cmd)
+			initDeveloperFlags(cmd)
 			break
 		}
 	}
@@ -206,5 +214,34 @@ func initDiagnosticsFlags(cmd *cobra.Command, cfg *config.Config) {
 		"diagnostics.port",
 		8081,
 		"Diagnostics HTTP server listening port.",
+	)
+}
+
+// Initialize flags for Developer configuration.
+func initDeveloperFlags(command *cobra.Command) {
+	initContractAddressFlag := func(contractName string, defaultAddress string) {
+		command.Flags().String(
+			config.GetDeveloperContractAddressKey(contractName),
+			defaultAddress,
+			fmt.Sprintf(
+				"Address of the %s smart contract",
+				contractName,
+			),
+		)
+	}
+
+	initContractAddressFlag(
+		chainEthereum.RandomBeaconContractName,
+		ethereumBeacon.RandomBeaconAddress,
+	)
+
+	initContractAddressFlag(
+		chainEthereum.TokenStakingContractName,
+		ethereumThreshold.TokenStakingAddress,
+	)
+
+	initContractAddressFlag(
+		chainEthereum.WalletRegistryContractName,
+		ethereumEcdsa.WalletRegistryAddress,
 	)
 }
