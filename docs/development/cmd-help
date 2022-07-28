@@ -5,7 +5,7 @@ Usage:
   start [flags]
 
 Flags:
-  -c, --config string                            Path to the configuration file.
+  -c, --config string                            Path to the configuration file. Supported formats: TOML, YAML, JSON.
       --ethereum.url string                      WS connection URL for Ethereum client.
       --ethereum.keyFile string                  The local filesystem path to Keep operator account keyfile.
       --ethereum.miningCheckInterval duration    The time interval in seconds in which transaction mining status is checked. If the transaction is not mined within this time, the gas price is increased and transaction is resubmitted. (default 1m0s)

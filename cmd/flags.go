@@ -84,7 +84,7 @@ func initConfigFlags(cmd *cobra.Command, configFilePath *string) {
 		"config",
 		"c",
 		"", // Don't define default value as it would fail configuration reading.
-		"Path to the configuration file.",
+		"Path to the configuration file. Supported formats: TOML, YAML, JSON.",
 	)
 }
 
