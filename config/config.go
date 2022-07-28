@@ -71,7 +71,9 @@ func (c *Config) ReadConfig(configFilePath string, flagSet *pflag.FlagSet) error
 	initializeContractAddressesAliases()
 
 	if flagSet != nil {
-		bindFlags(flagSet)
+		if err := bindFlags(flagSet); err != nil {
+			return fmt.Errorf("unable to bind the flags: %w", err)
+		}
 	}
 
 	// Read configuration from a file if the config file path is set.
