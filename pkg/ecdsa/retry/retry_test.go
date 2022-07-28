@@ -2,6 +2,7 @@ package retry
 
 import (
 	"fmt"
+	"reflect"
 	"strings"
 	"testing"
 
@@ -67,22 +68,10 @@ func isSubset(t *testing.T, groupMembers []chain.Address, subset []chain.Address
 	}
 }
 
-func testEq(a, b []chain.Address) bool {
-	if len(a) != len(b) {
-		return false
-	}
-	for i := range a {
-		if a[i] != b[i] {
-			return false
-		}
-	}
-	return true
-}
-
 func isStable(t *testing.T, groupMembers []chain.Address, subset []chain.Address, quantity uint) {
 	for i := 0; i < 30; i++ {
 		newSubset, _ := EvaluateRetryParticipantsForSigning(groupMembers, int64(123), 0, quantity)
-		if ok := testEq(subset, newSubset); !ok {
+		if ok := reflect.DeepEqual(subset, newSubset); !ok {
 			t.Errorf(
 				"The subsets changed\nexpected: [%v]\nactual:   [%v]",
 				subset,
@@ -107,7 +96,7 @@ func affectedBySeed(t *testing.T, groupMembers []chain.Address, subset []chain.A
 	allTheSame := true
 	for seed := int64(0); seed < 30 && allTheSame; seed++ {
 		newSubset, _ := EvaluateRetryParticipantsForSigning(groupMembers, seed, 0, quantity)
-		allTheSame = allTheSame && testEq(subset, newSubset)
+		allTheSame = allTheSame && reflect.DeepEqual(subset, newSubset)
 	}
 	if allTheSame {
 		t.Error("The seed did not affect the subset generation. All subsets were the same.")
@@ -120,7 +109,7 @@ func affectedByRetryCount(t *testing.T, groupMembers []chain.Address, quantity u
 	subset, _ := EvaluateRetryParticipantsForSigning(groupMembers, int64(72312), uint(0), quantity)
 	for retryCount := uint(1); retryCount < 30 && allTheSame; retryCount++ {
 		newSubset, _ := EvaluateRetryParticipantsForSigning(groupMembers, int64(72312), retryCount, quantity)
-		allTheSame = allTheSame && testEq(subset, newSubset)
+		allTheSame = allTheSame && reflect.DeepEqual(subset, newSubset)
 	}
 	if allTheSame {
 		t.Error("The seed did not affect the subset generation. All subsets were the same.")
