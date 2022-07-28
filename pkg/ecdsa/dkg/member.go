@@ -142,7 +142,7 @@ func (skgm *symmetricKeyGeneratingMember) initializeTssRoundOne() *tssRoundOneMe
 	)
 
 	tssOutgoingMessagesChan := make(chan tss.Message, len(groupTssPartiesIDs))
-	tssResultChan := make(chan keygen.LocalPartySaveData)
+	tssResultChan := make(chan keygen.LocalPartySaveData, 1)
 
 	tssParty := keygen.NewLocalParty(
 		tssParameters,
