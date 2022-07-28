@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"fmt"
+	"math/big"
 
 	"github.com/keep-network/keep-common/pkg/chain/ethereum"
 	"github.com/keep-network/keep-common/pkg/chain/ethereum/ethutil"
@@ -136,7 +137,7 @@ func initEthereumFlags(cmd *cobra.Command, cfg *config.Config) {
 		cmd.Flags(),
 		&cfg.Ethereum.BalanceAlertThreshold,
 		"ethereum.balanceAlertThreshold",
-		ethereum.WeiFromString("0.5 ether"),
+		*ethereum.WrapWei(big.NewInt(500000000000000000)), // 0.5 ether
 		"The minimum balance of operator account below which client starts reporting errors in logs.",
 	)
 }
