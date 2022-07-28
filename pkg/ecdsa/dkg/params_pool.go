@@ -75,7 +75,7 @@ func (t *tssPreParamsPool) pumpPool() {
 }
 
 // get returns TSS pre parameters from the pool. It pumps the pool after getting
-// and entry. If the pool is empty it will wait for a new entry to be generated.
+// an entry. If the pool is empty it will wait for a new entry to be generated.
 func (t *tssPreParamsPool) get() *keygen.LocalPreParams {
 	return <-t.pool
 }

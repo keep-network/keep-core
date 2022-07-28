@@ -185,7 +185,7 @@ type tssRoundTwoMember struct {
 }
 
 // MarkInactiveMembers takes all messages from the previous DKG protocol
-// execution phase and marks all member who did not send a message as IA.
+// execution phase and marks all member who did not send a message as inactive.
 func (trtm *tssRoundTwoMember) MarkInactiveMembers(
 	tssRoundOneMessages []*tssRoundOneMessage,
 ) {
