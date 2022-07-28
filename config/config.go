@@ -60,18 +60,6 @@ type Diagnostics struct {
 	Port int
 }
 
-func init() {
-	initEnvVars()
-}
-
-// initEnvVars initializes environment variables for the client configuration.
-func initEnvVars() {
-	if err := viper.BindEnv("ethereum.account.keyfilepassword", ethereumPasswordEnvVariable); err != nil {
-		logger.Fatalf("failed to bind %s env variable", ethereumPasswordEnvVariable, err)
-	}
-}
-
-
 // Bind the flags to the viper configuration. Viper reads configuration from
 // command-line flags, environment variables and config file.
 func bindFlags(flagSet *pflag.FlagSet) error {
@@ -124,6 +112,12 @@ func ReadConfig(configFilePath string) (*Config, error) {
 			"missing value for storage directory; see storage section in config file or use --%s flag",
 			dataDirFlag,
 		)
+	}
+
+	// Don't use viper.BindEnv for password reading as it's too sensitive value
+	// to read it with an external library.
+	if c.Ethereum.Account.KeyFilePassword == "" {
+		c.Ethereum.Account.KeyFilePassword = os.Getenv(EthereumPasswordEnvVariable)
 	}
 
 	if strings.TrimSpace(config.Ethereum.Account.KeyFilePassword) == "" {
