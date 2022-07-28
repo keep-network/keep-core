@@ -58,8 +58,9 @@ TBD
 
 ===== Application
 
-The client expects parameters to be configured in a config file or passed as environment
-variables.
+The client expects configuration options to be specified in a config file or passed
+as parameters. If you specify an option by using a parameter on the command line,
+it overrides the value from the configuration file.
 
 Application configuration can be stored in a file and passed to the application
 run command with the `--config` flag. Example:
@@ -74,74 +75,12 @@ Ethereum Key File is expected to be encrypted with a password. The password has
 to be provided in prompt after the client starts or configured as environment
 variable `KEEP_ETHEREUM_PASSWORD`.
 
-====== Parameters
+====== Command-line Options
 
-[%header,cols="m,5,^m,^,^m"]
-|===
-|Property
-|Description
-|Default
-|Required
-|Flag
-
-5+h|`ethereum`
-
-|URL
-|The Ethereum host your client will connect to.  Websocket protocol/port.
-|""
-|Yes
-|--ethereum.url
-
-5+h|`ethereum.account`
-
-|KeyFile
-|The local filesystem path to your Keep operator Ethereum account keyfile.
-|""
-|Yes
-|--ethereum.key
-
-5+h|`ethereum.ContractAddresses`
-5+a|The contracts addresses are embedded into the client. Use configuration
-only if you want to overwrite the defaults.
-
-|RandomBeacon
-|Hex-encoded address of the RandomBeacon contract.
-|
-|No
-|--ethereum.contracts.randombeacon
-
-5+h|`Network`
-
-|Peers
-|Comma separated list of network peers to bootstrap against. See list of <<bootstrap-peers-mainnet,bootstrap peers>>.
-|[""]
-|Yes
-|--network.peers
-
-|Port
-|The port to run your instance of Keep on.
-|3919
-|Yes
-|--network.port
-
-|AnnouncedAddresses
-|Multiaddr formatted hostnames or addresses announced to the Keep Network.
-More on multiaddr format https://docs.libp2p.io/reference/glossary/#multiaddr[in the libp2p reference].
-|[""]
-|No
-|--network.announced-addresses
-
-5+h|`Storage`
-
-|DataDir
-|Location to store the Keep nodes group membership details.
-|"storage/"
-|Yes
-|--datadir
-
-|===
-
-// TODO: Update the parameters list.
+[source,bash,role=small]
+----
+include::cmd-help[]
+----
 
 ====== Sample Config File
 
