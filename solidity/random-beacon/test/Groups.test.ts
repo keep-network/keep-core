@@ -35,6 +35,25 @@ describe("Groups", () => {
     groups = await waffle.loadFixture(fixture)
   })
 
+  describe("validatePublicKey", async () => {
+    beforeEach(async () => {
+      await groups.addGroup(
+        groupPublicKey,
+        hashDKGMembers(members, noMisbehaved)
+      )
+    })
+
+    context("when group is already registered", async () => {
+      it("should revert with 'Group with this public key was already registered' error", async () => {
+        await expect(
+          groups.validatePublicKey(groupPublicKey)
+        ).to.be.revertedWith(
+          "Group with this public key was already registered"
+        )
+      })
+    })
+  })
+
   describe("addGroup", async () => {
     context("when no groups are registered", async () => {
       let tx: ContractTransaction
@@ -166,21 +185,6 @@ describe("Groups", () => {
         )
 
         existingGroup = await groups.getGroup(existingGroupPublicKey)
-      })
-
-      context("with the same group public key", async () => {
-        const newGroupPublicKey = existingGroupPublicKey
-
-        it("should revert with 'Group with this public key was already registered' error", async () => {
-          await expect(
-            groups.addGroup(
-              newGroupPublicKey,
-              hashDKGMembers(newGroupMembers, noMisbehaved)
-            )
-          ).to.be.revertedWith(
-            "Group with this public key was already registered"
-          )
-        })
       })
 
       context("with unique group public key", async () => {
