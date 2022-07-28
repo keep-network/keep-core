@@ -183,13 +183,6 @@ func (trtm *tssRoundTwoMember) tssRoundTwo(
 		}
 	}
 
-	// We check that all expected messages were received at the state level.
-	// Just in case, check everything is good, and we actually advanced
-	// to round two on the local party.
-	if len(trtm.tssParty.WaitingFor()) > 0 {
-		return nil, fmt.Errorf("missing TSS round one messages detected")
-	}
-
 	// Listen for TSS outgoing messages. We expect groupSize-1 P2P messages
 	// carrying shares and 1 broadcast message holding the de-commitments.
 	var tssMessages []tss.Message
@@ -357,13 +350,6 @@ func (trtm *tssRoundTwoMember) tssRoundThree(
 		}
 	}
 
-	// We check that all expected messages were received at the state level.
-	// Just in case, check everything is good, and we actually advanced
-	// to round three on the local party.
-	if len(trtm.tssParty.WaitingFor()) > 0 {
-		return nil, fmt.Errorf("missing TSS round two messages detected")
-	}
-
 	// We expect exactly one TSS message to be produced in this phase.
 	select {
 	case tssMessage := <-trtm.tssOutgoingMessagesChan:
@@ -413,13 +399,6 @@ func (fm *finalizingMember) tssFinalize(
 				tssErr,
 			)
 		}
-	}
-
-	// We check that all expected messages were received at the state level.
-	// Just in case, check everything is good, and we actually advanced
-	// to the result stage.
-	if len(fm.tssParty.WaitingFor()) > 0 {
-		return fmt.Errorf("missing TSS round three messages detected")
 	}
 
 	select {
