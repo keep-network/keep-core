@@ -149,6 +149,7 @@ func (n *node) joinDKGIfEligible(seed *big.Int, startBlockNumber uint64) {
 					membershipValidator,
 				)
 				if err != nil {
+					// TODO: Add retries into the mix.
 					logger.Errorf(
 						"[member:%v] failed to execute dkg: [%v]",
 						memberIndex,

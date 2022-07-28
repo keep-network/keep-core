@@ -2,6 +2,7 @@ package dkg
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/keep-network/keep-core/pkg/net"
 	"github.com/keep-network/keep-core/pkg/protocol/group"
@@ -115,8 +116,9 @@ func (skgs *symmetricKeyGenerationState) ActiveBlocks() uint64 {
 func (skgs *symmetricKeyGenerationState) Initiate(ctx context.Context) error {
 	skgs.member.MarkInactiveMembers(skgs.previousPhaseMessages)
 
-	// TODO: If inactive members exist, there is no point to continue.
-	//       We should fail and retry.
+	if len(skgs.member.group.OperatingMemberIDs()) != skgs.member.group.GroupSize() {
+		return fmt.Errorf("inactive members detected")
+	}
 
 	return skgs.member.generateSymmetricKeys(skgs.previousPhaseMessages)
 }
@@ -217,8 +219,9 @@ func (trts *tssRoundTwoState) ActiveBlocks() uint64 {
 func (trts *tssRoundTwoState) Initiate(ctx context.Context) error {
 	trts.member.MarkInactiveMembers(trts.previousPhaseMessages)
 
-	// TODO: If inactive members exist, there is no point to continue.
-	//       We should fail and retry.
+	if len(trts.member.group.OperatingMemberIDs()) != trts.member.group.GroupSize() {
+		return fmt.Errorf("inactive members detected")
+	}
 
 	message, err := trts.member.tssRoundTwo(ctx, trts.previousPhaseMessages)
 	if err != nil {
@@ -281,8 +284,9 @@ func (trts *tssRoundThreeState) ActiveBlocks() uint64 {
 func (trts *tssRoundThreeState) Initiate(ctx context.Context) error {
 	trts.member.MarkInactiveMembers(trts.previousPhaseMessages)
 
-	// TODO: If inactive members exist, there is no point to continue.
-	//       We should fail and retry.
+	if len(trts.member.group.OperatingMemberIDs()) != trts.member.group.GroupSize() {
+		return fmt.Errorf("inactive members detected")
+	}
 
 	message, err := trts.member.tssRoundThree(ctx, trts.previousPhaseMessages)
 	if err != nil {
@@ -344,8 +348,9 @@ func (fs *finalizationState) ActiveBlocks() uint64 {
 func (fs *finalizationState) Initiate(ctx context.Context) error {
 	fs.member.MarkInactiveMembers(fs.previousPhaseMessages)
 
-	// TODO: If inactive members exist, there is no point to continue.
-	//       We should fail and retry.
+	if len(fs.member.group.OperatingMemberIDs()) != fs.member.group.GroupSize() {
+		return fmt.Errorf("inactive members detected")
+	}
 
 	return fs.member.tssFinalize(ctx, fs.previousPhaseMessages)
 }
