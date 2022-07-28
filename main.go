@@ -9,6 +9,7 @@ import (
 	"github.com/ipfs/go-log"
 	"github.com/keep-network/keep-common/pkg/logging"
 	"github.com/keep-network/keep-core/cmd"
+	"github.com/keep-network/keep-core/config"
 	"github.com/spf13/cobra"
 )
 
@@ -27,7 +28,7 @@ func main() {
 		revision = "unknown"
 	}
 
-	err := logging.Configure(os.Getenv("LOG_LEVEL"))
+	err := logging.Configure(os.Getenv(config.LogLevelEnvVariable))
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "failed to configure logging: [%v]\n", err)
 	}

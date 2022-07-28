@@ -29,18 +29,9 @@ const (
 	// #nosec G101 (look for hardcoded credentials)
 	// This line doesn't contain any credentials.
 	// It's just the name of the environment variable.
-	ethereumPasswordEnvVariable = "KEEP_ETHEREUM_PASSWORD"
+	EthereumPasswordEnvVariable = "KEEP_ETHEREUM_PASSWORD"
 
-	configFilePathFlag = "config"
-
-	// Command Line Flags
-	dataDirFlag                 = "datadir"
-	ethereumKeyFlag             = "ethereum.key"
-	ethereumUrlFlag             = "ethereum.url"
-	ethereumContractsPrefixFlag = "ethereum.contracts"
-	portFlag                    = "network.port"
-	peersFlag                   = "network.peers"
-	announcedAddressesFlag      = "network.announced-addresses"
+	LogLevelEnvVariable = "LOG_LEVEL"
 )
 
 // Config is the top level config structure.
@@ -143,7 +134,7 @@ func ReadConfig(configFilePath string) (*Config, error) {
 		fmt.Printf(
 			"Ethereum Account Password has to be set for the configured Ethereum Key File.\n"+
 				"Please set %s environment variable, or set it in the config file, or provide it in the prompt below.\n",
-			ethereumPasswordEnvVariable,
+			EthereumPasswordEnvVariable,
 		)
 
 		for strings.TrimSpace(password) == "" {
