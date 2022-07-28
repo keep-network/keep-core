@@ -30,7 +30,7 @@ func newNode(
 ) *node {
 	// TODO: Pass TSS pre-parameters pool config from the outside.
 	dkgExecutor := dkg.NewExecutor(logger, &dkg.ExecutorConfig{
-		TssPreParamsPoolSize:              20,
+		TssPreParamsPoolSize:              50,
 		TssPreParamsPoolGenerationTimeout: 2 * time.Minute,
 	})
 
