@@ -48,6 +48,7 @@ func init() {
 		},
 	}
 
+	initFlags(StartCommand, allCategories, &configFilePath, clientConfig)
 
 	StartCommand.SetUsageTemplate(
 		fmt.Sprintf(`%s

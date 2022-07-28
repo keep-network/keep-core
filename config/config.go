@@ -80,88 +80,25 @@ func initEnvVars() {
 	}
 }
 
-// InitFlags initializes command-line flags for the client configuration.
-func InitFlags(command *cobra.Command) error {
-	command.PersistentFlags().StringP(
-		configFilePathFlag,
-		"c",
-		"",
-		"path to the configuration file",
-	)
 
-	command.Flags().String(ethereumKeyFlag, "", "operator's Ethereum Key File path")
-	if err := viper.BindPFlag("ethereum.account.keyfile", command.Flags().Lookup(ethereumKeyFlag)); err != nil {
-		return fmt.Errorf("failed to bind %s command-line flag: %w", ethereumKeyFlag, err)
+// Bind the flags to the viper configuration. Viper reads configuration from
+// command-line flags, environment variables and config file.
+func bindFlags(flagSet *pflag.FlagSet) error {
+	if err := viper.BindPFlags(flagSet); err != nil {
+		return err
 	}
-
-	command.Flags().String(ethereumUrlFlag, "", "Ethereum API URL")
-	if err := viper.BindPFlag("ethereum.url", command.Flags().Lookup(ethereumUrlFlag)); err != nil {
-		return fmt.Errorf("failed to bind %s command-line flag: %w", ethereumUrlFlag, err)
-	}
-
-	command.Flags().String(dataDirFlag, registry.DefaultStoragePath, "path to the storage directory")
-	if err := viper.BindPFlag("storage.datadir", command.Flags().Lookup(dataDirFlag)); err != nil {
-		return fmt.Errorf("failed to bind %s command-line flag: %w", dataDirFlag, err)
-	}
-
-	command.Flags().IntP(portFlag, "p", libp2p.DefaultPort, "port at which client will be exposed")
-	if err := viper.BindPFlag("network.port", command.Flags().Lookup(portFlag)); err != nil {
-		return fmt.Errorf("failed to bind %s command-line flag: %w", portFlag, err)
-	}
-
-	// TODO: Read default peers from a file.
-	command.Flags().StringSlice(peersFlag, []string{}, "peers")
-	if err := viper.BindPFlag("network.peers", command.Flags().Lookup(peersFlag)); err != nil {
-		return fmt.Errorf("failed to bind %s command-line flag: %w", peersFlag, err)
-	}
-
-	command.Flags().StringSlice(announcedAddressesFlag, []string{}, "announced addresses")
-	if err := viper.BindPFlag("network.announcedaddresses", command.Flags().Lookup(announcedAddressesFlag)); err != nil {
-		return fmt.Errorf("failed to bind %s command-line flag: %w", announcedAddressesFlag, err)
-	}
-
-	// Configure default contract addresses.
-	bindEthereumContract := func(contractName string, defaultAddress string) (err error) {
-		flag := fmt.Sprintf(
-			"%s.%s",
-			ethereumContractsPrefixFlag,
-			strings.ToLower(contractName),
-		)
-		configKey := fmt.Sprintf("Ethereum.ContractAddresses.%s", contractName)
-
-		command.Flags().String(
-			flag,
-			defaultAddress,
-			fmt.Sprintf(
-				"address of the %s contract",
-				contractName,
-			),
-		)
-		if err := viper.BindPFlag(configKey, command.Flags().Lookup(flag)); err != nil {
-			return fmt.Errorf(
-				"failed to bind command-line flag for %s address: %w",
-				contractName,
-				err,
-			)
-		}
-
-		return
-	}
-
-	if err := bindEthereumContract(
-		ethereumChain.RandomBeaconContractName,
-		ethereumBeaconGen.RandomBeaconAddress,
-	); err != nil {
-		return fmt.Errorf("failed to bind ethereum contract: %w", err)
-	}
-
 	return nil
 }
+
 
 // ReadConfig reads in the configuration file at `filePath` and returns the
 // valid config stored there, or an error if something fails while reading the
 // file or the config is invalid in a known way.
 func ReadConfig(configFilePath string) (*Config, error) {
+	if flagSet != nil {
+		bindFlags(flagSet)
+	}
+
 	// Read configuration from a file if the config file path is set.
 	if configFilePath != "" {
 		if err := readConfigFile(configFilePath); err != nil {
