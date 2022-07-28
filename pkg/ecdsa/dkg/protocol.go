@@ -231,7 +231,7 @@ outgoingMessagesLoop:
 		} else {
 			// We expect that each P2P message targets only a single member.
 			// Any other case is an error.
-			if len(tssMessageRouting.To) == 1 {
+			if len(tssMessageRouting.To) != 1 {
 				return nil, fmt.Errorf(
 					"TSS round two multi-receiver P2P message detected",
 				)
