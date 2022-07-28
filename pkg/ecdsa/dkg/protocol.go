@@ -345,7 +345,7 @@ func (trtm *tssRoundTwoMember) tssRoundThree(
 				"cannot update using the P2P part of the TSS round "+
 					"two message from member [%v]: [%v]",
 				senderID,
-				err,
+				tssErr,
 			)
 		}
 	}
