@@ -6,6 +6,7 @@ import (
 
 	"github.com/keep-network/keep-common/pkg/chain/ethereum"
 	"github.com/keep-network/keep-common/pkg/chain/ethereum/ethutil"
+	"github.com/keep-network/keep-common/pkg/rate"
 	"github.com/keep-network/keep-core/cmd/flag"
 	"github.com/keep-network/keep-core/config"
 	"github.com/keep-network/keep-core/pkg/net/libp2p"
@@ -122,14 +123,14 @@ func initEthereumFlags(cmd *cobra.Command, cfg *config.Config) {
 	cmd.Flags().IntVar(
 		&cfg.Ethereum.RequestsPerSecondLimit,
 		"ethereum.requestPerSecondLimit",
-		150, // TODO: Can it be read from some place?
+		rate.DefaultRequestsPerSecondLimit,
 		"Request per second limit for all types of Ethereum client requests.",
 	)
 
 	cmd.Flags().IntVar(
 		&cfg.Ethereum.ConcurrencyLimit,
 		"ethereum.concurrencyLimit",
-		30, // TODO: Can it be read from some place?
+		rate.DefaultConcurrencyLimit,
 		"The maximum number of concurrent requests which can be executed against Ethereum client.",
 	)
 
