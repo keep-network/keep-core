@@ -9,16 +9,19 @@ import (
 	"github.com/keep-network/keep-core/pkg/chain"
 )
 
+type groupMemberRandomizer func(
+	[]chain.Address,
+	int64,
+	uint,
+	uint,
+) ([]chain.Address, error)
+
 func TestEvaluateRetryParticipantsForSigning_100DifferentOperators(t *testing.T) {
 	groupMembers := make([]chain.Address, 100)
 	for i := 0; i < 100; i++ {
 		groupMembers[i] = chain.Address(fmt.Sprintf("Operator-%d", i))
 	}
-	subset, err := EvaluateRetryParticipantsForSigning(groupMembers, int64(123), 0, 51)
-	if err != nil {
-		t.Fatalf("unexpected error: [%s]", err)
-	}
-	assertInvariants(t, groupMembers, subset, 51)
+	assertInvariants(t, EvaluateRetryParticipantsForSigning, groupMembers, int64(123), 0, 51)
 }
 
 func TestEvaluateRetryParticipantsForSigning_FewOperators(t *testing.T) {
@@ -26,11 +29,7 @@ func TestEvaluateRetryParticipantsForSigning_FewOperators(t *testing.T) {
 	for i := 0; i < 100; i++ {
 		groupMembers[i] = chain.Address(fmt.Sprintf("Operator-%d", i%3))
 	}
-	subset, err := EvaluateRetryParticipantsForSigning(groupMembers, int64(456), 0, 51)
-	if err != nil {
-		t.Fatalf("unexpected error: [%s]", err)
-	}
-	assertInvariants(t, groupMembers, subset, 51)
+	assertInvariants(t, EvaluateRetryParticipantsForSigning, groupMembers, int64(456), 0, 51)
 }
 
 func TestEvaluateRetryParticipantsForSigning_NotEnoughOperators(t *testing.T) {
@@ -56,7 +55,18 @@ func TestEvaluateRetryParticipantsForSigning_NotEnoughOperators(t *testing.T) {
 	}
 }
 
-func isSubset(t *testing.T, groupMembers []chain.Address, subset []chain.Address) {
+func isSubset(
+	t *testing.T,
+	groupMemberRandomizer groupMemberRandomizer,
+	groupMembers []chain.Address,
+	seed int64,
+	retryCount uint,
+	retryParticipantsCount uint,
+) {
+	subset, err := groupMemberRandomizer(groupMembers, seed, retryCount, retryParticipantsCount)
+	if err != nil {
+		t.Fatalf("unexpected error: [%s]", err)
+	}
 	memberMap := make(map[chain.Address]struct{})
 	for _, operator := range groupMembers {
 		memberMap[operator] = struct{}{}
@@ -68,9 +78,23 @@ func isSubset(t *testing.T, groupMembers []chain.Address, subset []chain.Address
 	}
 }
 
-func isStable(t *testing.T, groupMembers []chain.Address, subset []chain.Address, quantity uint) {
+func isStable(
+	t *testing.T,
+	groupMemberRandomizer groupMemberRandomizer,
+	groupMembers []chain.Address,
+	seed int64,
+	retryCount uint,
+	retryParticipantsCount uint,
+) {
+	subset, err := groupMemberRandomizer(groupMembers, seed, retryCount, retryParticipantsCount)
+	if err != nil {
+		t.Fatalf("unexpected error: [%s]", err)
+	}
 	for i := 0; i < 30; i++ {
-		newSubset, _ := EvaluateRetryParticipantsForSigning(groupMembers, int64(123), 0, quantity)
+		newSubset, err := groupMemberRandomizer(groupMembers, seed, retryCount, retryParticipantsCount)
+		if err != nil {
+			t.Fatalf("unexpected error: [%s]", err)
+		}
 		if ok := reflect.DeepEqual(subset, newSubset); !ok {
 			t.Errorf(
 				"The subsets changed\nexpected: [%v]\nactual:   [%v]",
@@ -81,21 +105,43 @@ func isStable(t *testing.T, groupMembers []chain.Address, subset []chain.Address
 	}
 }
 
-func isLargeEnough(t *testing.T, subset []chain.Address, quantity uint) {
-	if len(subset) < int(quantity) {
+func isLargeEnough(
+	t *testing.T,
+	groupMemberRandomizer groupMemberRandomizer,
+	groupMembers []chain.Address,
+	seed int64,
+	retryCount uint,
+	retryParticipantsCount uint,
+) {
+	subset, err := groupMemberRandomizer(groupMembers, seed, retryCount, retryParticipantsCount)
+	if err != nil {
+		t.Fatalf("unexpected error: [%s]", err)
+	}
+	if len(subset) < int(retryParticipantsCount) {
 		t.Errorf(
 			"Subset isn't large enough\nexpected: [%d+]\nactual:   [%d]",
-			quantity,
+			retryParticipantsCount,
 			len(subset),
 		)
 	}
 }
 
 // They don't all have to be different, but they shouldn't all be the same!
-func affectedBySeed(t *testing.T, groupMembers []chain.Address, subset []chain.Address, quantity uint) {
+func affectedBySeed(
+	t *testing.T,
+	groupMemberRandomizer groupMemberRandomizer,
+	groupMembers []chain.Address,
+	originalSeed int64,
+	retryCount uint,
+	retryParticipantsCount uint,
+) {
 	allTheSame := true
+	subset, err := groupMemberRandomizer(groupMembers, originalSeed, retryCount, retryParticipantsCount)
+	if err != nil {
+		t.Fatalf("unexpected error: [%s]", err)
+	}
 	for seed := int64(0); seed < 30 && allTheSame; seed++ {
-		newSubset, _ := EvaluateRetryParticipantsForSigning(groupMembers, seed, 0, quantity)
+		newSubset, _ := groupMemberRandomizer(groupMembers, seed, retryCount, retryParticipantsCount)
 		allTheSame = allTheSame && reflect.DeepEqual(subset, newSubset)
 	}
 	if allTheSame {
@@ -104,11 +150,21 @@ func affectedBySeed(t *testing.T, groupMembers []chain.Address, subset []chain.A
 }
 
 // They don't all have to be different, but they shouldn't all be the same!
-func affectedByRetryCount(t *testing.T, groupMembers []chain.Address, quantity uint) {
+func affectedByRetryCount(
+	t *testing.T,
+	groupMemberRandomizer groupMemberRandomizer,
+	groupMembers []chain.Address,
+	seed int64,
+	originalRetryCount uint,
+	retryParticipantsCount uint,
+) {
 	allTheSame := true
-	subset, _ := EvaluateRetryParticipantsForSigning(groupMembers, int64(72312), uint(0), quantity)
+	subset, err := groupMemberRandomizer(groupMembers, seed, originalRetryCount, retryParticipantsCount)
+	if err != nil {
+		t.Fatalf("unexpected error: [%s]", err)
+	}
 	for retryCount := uint(1); retryCount < 30 && allTheSame; retryCount++ {
-		newSubset, _ := EvaluateRetryParticipantsForSigning(groupMembers, int64(72312), retryCount, quantity)
+		newSubset, _ := groupMemberRandomizer(groupMembers, seed, retryCount, retryParticipantsCount)
 		allTheSame = allTheSame && reflect.DeepEqual(subset, newSubset)
 	}
 	if allTheSame {
@@ -116,10 +172,17 @@ func affectedByRetryCount(t *testing.T, groupMembers []chain.Address, quantity u
 	}
 }
 
-func assertInvariants(t *testing.T, groupMembers []chain.Address, subset []chain.Address, quantity uint) {
-	isSubset(t, groupMembers, subset)
-	isStable(t, groupMembers, subset, quantity)
-	isLargeEnough(t, subset, quantity)
-	affectedBySeed(t, groupMembers, subset, quantity)
-	affectedByRetryCount(t, groupMembers, quantity)
+func assertInvariants(
+	t *testing.T,
+	groupMemberRandomizer groupMemberRandomizer,
+	groupMembers []chain.Address,
+	seed int64,
+	retryCount uint,
+	retryParticipantsCount uint,
+) {
+	isSubset(t, groupMemberRandomizer, groupMembers, seed, retryCount, retryParticipantsCount)
+	isStable(t, groupMemberRandomizer, groupMembers, seed, retryCount, retryParticipantsCount)
+	isLargeEnough(t, groupMemberRandomizer, groupMembers, seed, retryCount, retryParticipantsCount)
+	affectedBySeed(t, groupMemberRandomizer, groupMembers, seed, retryCount, retryParticipantsCount)
+	affectedByRetryCount(t, groupMemberRandomizer, groupMembers, seed, retryCount, retryParticipantsCount)
 }
