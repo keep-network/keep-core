@@ -9,6 +9,7 @@ import (
 	"github.com/keep-network/keep-common/pkg/rate"
 	"github.com/keep-network/keep-core/cmd/flag"
 	"github.com/keep-network/keep-core/config"
+	"github.com/keep-network/keep-core/pkg/metrics"
 	"github.com/keep-network/keep-core/pkg/net/libp2p"
 	"github.com/spf13/cobra"
 
@@ -194,17 +195,17 @@ func initMetricsFlags(cmd *cobra.Command, cfg *config.Config) {
 		"Metrics HTTP server listening port.",
 	)
 
-	cmd.Flags().IntVar(
+	cmd.Flags().DurationVar(
 		&cfg.Metrics.NetworkMetricsTick,
 		"metrics.networkMetricsTick",
-		60,
+		metrics.DefaultNetworkMetricsTick,
 		"Network metrics check tick in seconds.",
 	)
 
-	cmd.Flags().IntVar(
+	cmd.Flags().DurationVar(
 		&cfg.Metrics.EthereumMetricsTick,
 		"metrics.ethereumMetricsTick",
-		60,
+		metrics.DefaultEthereumMetricsTick,
 		"Ethereum metrics check tick in seconds.",
 	)
 }

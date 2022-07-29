@@ -5,6 +5,7 @@ import (
 	"os"
 	"strings"
 	"syscall"
+	"time"
 
 	"github.com/hashicorp/go-multierror"
 	"github.com/ipfs/go-log"
@@ -47,8 +48,8 @@ type Storage struct {
 // Metrics stores meta-info about metrics.
 type Metrics struct {
 	Port                int
-	NetworkMetricsTick  int // TODO: Change to time.Duration
-	EthereumMetricsTick int // TODO: Change to time.Duration
+	NetworkMetricsTick  time.Duration
+	EthereumMetricsTick time.Duration
 }
 
 // Diagnostics stores diagnostics-related configuration.

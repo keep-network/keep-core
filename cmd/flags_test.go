@@ -151,16 +151,16 @@ var cmdFlagsTests = map[string]struct {
 	"metrics.networkMetricsTick": {
 		readValueFunc:         func(c *config.Config) interface{} { return c.Metrics.NetworkMetricsTick },
 		flagName:              "--metrics.networkMetricsTick",
-		flagValue:             "189",
-		expectedValueFromFlag: 189,
-		defaultValue:          60,
+		flagValue:             "3m9s",
+		expectedValueFromFlag: 189 * time.Second,
+		defaultValue:          1 * time.Minute,
 	},
 	"metrics.ethereumMetricsTick": {
 		readValueFunc:         func(c *config.Config) interface{} { return c.Metrics.EthereumMetricsTick },
 		flagName:              "--metrics.ethereumMetricsTick",
-		flagValue:             "76",
-		expectedValueFromFlag: 76,
-		defaultValue:          60,
+		flagValue:             "1m16s",
+		expectedValueFromFlag: 76 * time.Second,
+		defaultValue:          10 * time.Minute,
 	},
 	"diagnostics.port": {
 		readValueFunc:         func(c *config.Config) interface{} { return c.Diagnostics.Port },

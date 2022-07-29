@@ -118,11 +118,11 @@ func TestReadConfigFromFile(t *testing.T) {
 		},
 		"Metrics.NetworkMetricsTick": {
 			readValueFunc: func(c *Config) interface{} { return c.Metrics.NetworkMetricsTick },
-			expectedValue: 43,
+			expectedValue: 43 * time.Second,
 		},
 		"Metrics.EthereumMetricsTick": {
 			readValueFunc: func(c *Config) interface{} { return c.Metrics.EthereumMetricsTick },
-			expectedValue: 27,
+			expectedValue: 87 * time.Second,
 		},
 		"Diagnostics.Port": {
 			readValueFunc: func(c *Config) interface{} { return c.Diagnostics.Port },

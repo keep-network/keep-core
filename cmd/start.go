@@ -3,8 +3,8 @@ package cmd
 import (
 	"context"
 	"fmt"
+
 	"github.com/keep-network/keep-core/pkg/tbtc"
-	"time"
 
 	"github.com/keep-network/keep-core/config"
 	"github.com/keep-network/keep-core/pkg/chain/ethereum"
@@ -155,7 +155,7 @@ func initializeMetrics(
 		ctx,
 		registry,
 		netProvider,
-		time.Duration(config.Metrics.NetworkMetricsTick)*time.Second,
+		config.Metrics.NetworkMetricsTick,
 	)
 
 	metrics.ObserveConnectedBootstrapCount(
@@ -163,14 +163,14 @@ func initializeMetrics(
 		registry,
 		netProvider,
 		config.LibP2P.Peers,
-		time.Duration(config.Metrics.NetworkMetricsTick)*time.Second,
+		config.Metrics.NetworkMetricsTick,
 	)
 
 	metrics.ObserveEthConnectivity(
 		ctx,
 		registry,
 		blockCounter,
-		time.Duration(config.Metrics.EthereumMetricsTick)*time.Second,
+		config.Metrics.EthereumMetricsTick,
 	)
 }
 
