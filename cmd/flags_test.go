@@ -226,7 +226,7 @@ func TestFlags_ReadConfigFromFlagsWithDefaults(t *testing.T) {
 	}
 }
 
-// In this test we test a combination of properties defined in command-line and flags.
+// In this test we test a combination of properties defined in a config file and flags.
 func TestFlags_Mixed(t *testing.T) {
 	testCommand, testConfig, _ := initTestCommand()
 
