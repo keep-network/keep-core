@@ -299,8 +299,8 @@ contract WalletRegistry is
         // Authorization decrease change period is 45 days. It means pending
         // authorization decrease can be overwriten all the time.
         authorization.setMinimumAuthorization(40_000e18);
-        authorization.setAuthorizationDecreaseDelay(3_888_000);
-        authorization.setAuthorizationDecreaseChangePeriod(3_888_000);
+        authorization.setAuthorizationDecreaseDelay(180);
+        authorization.setAuthorizationDecreaseChangePeriod(180);
 
         // Malicious DKG result slashing amount is set initially to 1% of the
         // minimum authorization (400 T). This values needs to be increased

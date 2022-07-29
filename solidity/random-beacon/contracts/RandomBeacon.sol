@@ -392,7 +392,7 @@ contract RandomBeacon is IRandomBeacon, IApplication, Governable, Reimbursable {
         //
         // Authorization decrease change period is 45 days. It means pending
         // authorization decrease can be overwriten all the time.
-        authorization.setParameters(40_000e18, 3_888_000, 3_888_000);
+        authorization.setParameters(40_000e18, 180, 180);
 
         // Malicious DKG result slashing amount is set initially to 1% of the
         // minimum authorization (400 T). This values needs to be increased
