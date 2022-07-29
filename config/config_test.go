@@ -210,7 +210,7 @@ func TestReadConfig_ReadPassword(t *testing.T) {
 					"unable to read password, error [operation not supported by device]",
 					"unable to read password, error [inappropriate ioctl for device]",
 				}
-				if slices.Contains(expectedErrors, err.Error()) {
+				if !slices.Contains(expectedErrors, err.Error()) {
 					t.Errorf(
 						"unexpected error\nexpected: %v\nactual:   %v\n",
 						fmt.Sprintf(
