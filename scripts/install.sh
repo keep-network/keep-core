@@ -91,24 +91,35 @@ if [ "$NETWORK" == "development" ]; then
         npx hardhat unlock-accounts --network $NETWORK
 fi
 
-if [ "$SKIP_ECDSA_DEPLOYMENT" = true ]; then 
-  # deploy beacon
-  printf "${LOG_START}Building beacon...${LOG_END}"
-  yarn clean && yarn build
+# deploy beacon
+printf "${LOG_START}Building beacon...${LOG_END}"
+yarn clean && yarn build
 
-  printf "${LOG_START}Deploying contracts for beacon...${LOG_END}"
-  npx hardhat deploy --reset --export export.json --network $NETWORK
-elif [ "$SKIP_TBTC_DEPLOYMENT" = true ]; then
-  # deploy ecdsa (includes beacon)
+printf "${LOG_START}Deploying contracts for beacon...${LOG_END}"
+USE_EXTERNAL_DEPLOY=true npx hardhat deploy --reset --export export.json --network $NETWORK
+
+# create link to random-beacon
+yarn link
+
+if [ "$SKIP_ECDSA_DEPLOYMENT" = false ] && [ "$SKIP_TBTC_DEPLOYMENT" = false ]; then
   cd $KEEP_ECDSA_SOL_PATH
 
   printf "${LOG_START}Building ecdsa...${LOG_END}"
   yarn && yarn clean && yarn build
 
-  printf "${LOG_START}Deploying contracts for beacon and ecdsa...${LOG_END}"
+  # link random-beacon
+  yarn link @keep-network/random-beacon
+
+  # deploy ecdsa
+  printf "${LOG_START}Deploying ecdsa contracts...${LOG_END}"
   npx hardhat deploy --reset --export export.json --network $NETWORK
-else
-  # deploy tbtc (includes beacon and ecdsa)
+  
+  # create a link to ecdsa
+  yarn link
+
+  # create export folder
+  yarn prepack
+
   cd $KEEP_CORE_PATH
 
   if [ "$TBTC_PATH" = "" ]; then
@@ -126,12 +137,31 @@ else
     cd "$TBTC_PATH/solidity"
   fi
 
-  printf "${LOG_START}Deploying contracts for tbtc...${LOG_END}"
+  # link random-beacon contracts
+  yarn link @keep-network/random-beacon
+  # link ecdsa contracts
+  yarn link @keep-network/ecdsa
+
+  # deploy tbtc
+  printf "${LOG_START}Deploying tbtc contracts...${LOG_END}"
+  npx hardhat deploy --reset --export export.json --network $NETWORK
+
+elif [ "$SKIP_ECDSA_DEPLOYMENT" = false ] && [ "$SKIP_TBTC_DEPLOYMENT" = true ]; then
+  # deploy ecdsa
+  cd $KEEP_ECDSA_SOL_PATH
+
+  printf "${LOG_START}Building ecdsa...${LOG_END}"
+  yarn && yarn clean && yarn build
+
+  # link random-beacon
+  yarn link @keep-network/random-beacon
+
+  printf "${LOG_START}Deploying ecdsa contracts...${LOG_END}"
   npx hardhat deploy --reset --export export.json --network $NETWORK
 fi
 
 if [ "$SKIP_CLIENT_BUILD" = false ]; then
-   printf "${LOG_START}Building beacon client...${LOG_END}"
+   printf "${LOG_START}Building client...${LOG_END}"
 
    cd $KEEP_CORE_PATH
    go generate ./...
