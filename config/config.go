@@ -73,7 +73,7 @@ func (c *Config) ReadConfig(configFilePath string, flagSet *pflag.FlagSet) error
 
 	if flagSet != nil {
 		if err := bindFlags(flagSet); err != nil {
-			return fmt.Errorf("unable to bind the flags: %w", err)
+			return fmt.Errorf("unable to bind the flags: [%w]", err)
 		}
 	}
 
