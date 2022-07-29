@@ -52,25 +52,18 @@ func initFlags(
 		switch category {
 		case General:
 			initConfigFlags(cmd, configFilePath)
-			break
 		case Ethereum:
 			initEthereumFlags(cmd, cfg)
-			break
 		case Network:
 			initNetworkFlags(cmd, cfg)
-			break
 		case Storage:
 			initStorageFlags(cmd, cfg)
-			break
 		case Metrics:
 			initMetricsFlags(cmd, cfg)
-			break
 		case Diagnostics:
 			initDiagnosticsFlags(cmd, cfg)
-			break
 		case Developer:
 			initDeveloperFlags(cmd)
-			break
 		}
 	}
 
