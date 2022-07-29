@@ -31,7 +31,7 @@ func (epkm *ephemeralPublicKeyMessage) Type() string {
 }
 
 // tssRoundOneMessage is a message payload that carries the sender's TSS
-// commitments and Paillier public keys generated for all other group members.
+// commitments and the Paillier public key.
 type tssRoundOneMessage struct {
 	senderID group.MemberIndex
 
@@ -51,7 +51,7 @@ func (trom *tssRoundOneMessage) Type() string {
 }
 
 // tssRoundTwoMessage is a message payload that carries the sender's TSS
-// shares and de-commitments generated for all other group members.
+// shares and de-commitments.
 type tssRoundTwoMessage struct {
 	senderID group.MemberIndex
 
@@ -72,7 +72,7 @@ func (trtm *tssRoundTwoMessage) Type() string {
 }
 
 // tssRoundThreeMessage is a message payload that carries the sender's TSS
-// Paillier proofs generated for all other group members.
+// Paillier proof.
 type tssRoundThreeMessage struct {
 	senderID group.MemberIndex
 

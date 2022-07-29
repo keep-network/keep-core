@@ -139,8 +139,7 @@ func (skgs *symmetricKeyGenerationState) MemberIndex() group.MemberIndex {
 }
 
 // tssRoundOneState is the state during which members broadcast TSS
-// commitments and Paillier public keys generated for other members of
-// the group.
+// commitments and the Paillier public key.
 // `tssRoundOneMessage`s are valid in this state.
 type tssRoundOneState struct {
 	channel net.BroadcastChannel
@@ -197,7 +196,7 @@ func (tros *tssRoundOneState) MemberIndex() group.MemberIndex {
 }
 
 // tssRoundOneState is the state during which members broadcast TSS
-// shares and de-commitments generated for other members of the group.
+// shares and de-commitments.
 // `tssRoundTwoMessage`s are valid in this state.
 type tssRoundTwoState struct {
 	channel net.BroadcastChannel
@@ -261,8 +260,8 @@ func (trts *tssRoundTwoState) MemberIndex() group.MemberIndex {
 	return trts.member.id
 }
 
-// tssRoundOneState is the state during which members broadcast TSS Paillier
-// proofs generated for other members of the group.
+// tssRoundOneState is the state during which members broadcast the TSS Paillier
+// proof.
 // `tssRoundThreeMessage`s are valid in this state.
 type tssRoundThreeState struct {
 	channel net.BroadcastChannel
