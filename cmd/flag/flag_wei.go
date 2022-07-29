@@ -7,8 +7,6 @@ import (
 
 // WeiVarFlag is a custom flag to handle `ethereum.Wei` type, that is not supported
 // by `pflag.FlagSet`.
-// TODO: Check if this implementation can be improved and chained to pflag.FlagSet
-// to use it same as other flags in `flags.go`.
 func WeiVarFlag(f *pflag.FlagSet, p *ethereum.Wei, name string, value ethereum.Wei, usage string) {
 	f.Var(newWeiValue(value, p), name, usage)
 }
