@@ -1,7 +1,7 @@
 /* eslint-disable no-console */
 import { task, types } from "hardhat/config"
 
-import type { BigNumber } from "ethers"
+import type { BigNumberish, BigNumber } from "ethers"
 import type { HardhatRuntimeEnvironment } from "hardhat/types"
 
 const TASK_INITIALIZE = "initialize"
@@ -23,7 +23,6 @@ task(TASK_INITIALIZE, "Initializes staking for an operator")
     undefined,
     types.int
   )
-  .addOptionalParam("force", "Force initialization", false, types.boolean)
   .setAction(async (args, hre) => {
     await initialize(hre, args)
   })
@@ -36,17 +35,20 @@ async function initialize(
     operator: string
     beneficiary: string
     authorizer: string
-    amount: BigNumber
-    authorization: BigNumber
-    force: boolean
+    amount: BigNumberish
+    authorization: BigNumberish
   }
 ) {
-  if (await isAlreadyStaked(hre, args.operator)) {
-    console.log(`Operator ${args.operator} is already staked`)
-    return
+  const tokensToMint = await calculateTokensNeededForStake(
+    hre,
+    args.provider,
+    args.amount
+  )
+
+  if (!tokensToMint.isZero()) {
+    await hre.run(TASK_MINT, { ...args, amount: tokensToMint.toNumber() })
   }
 
-  await hre.run(TASK_MINT, args)
   await hre.run(TASK_STAKE, args)
   await hre.run(TASK_AUTHORIZE, args)
   await hre.run(TASK_REGISTER, args)
@@ -63,19 +65,17 @@ async function mint(
   hre: HardhatRuntimeEnvironment,
   args: {
     owner: string
-    amount: BigNumber
+    amount: BigNumberish
   }
 ) {
   const { ethers, helpers } = hre
-  const { owner, amount } = args
-
   const { to1e18, from1e18 } = helpers.number
+  const owner = ethers.utils.getAddress(args.owner)
+  const stakeAmount = to1e18(args.amount)
+
   const t = await helpers.contracts.getContract("T")
   const staking = await helpers.contracts.getContract("TokenStaking")
 
-  const stakeAmount = to1e18(amount)
-
-  // TODO: Check if he already have tokens
   const tokenContractOwner = await t.owner()
 
   const currentBalance: BigNumber = await t.balanceOf(owner)
@@ -94,12 +94,24 @@ async function mint(
     ).wait()
   }
 
-  console.log(`Approving ${from1e18(stakeAmount)} T for ${staking.address}...`)
-  await (
-    await t
-      .connect(await ethers.getSigner(owner))
-      .approve(staking.address, stakeAmount)
-  ).wait()
+  const currentAllowance: BigNumber = await t.allowance(owner, staking.address)
+
+  console.log(
+    `Account ${owner} allowance for ${staking.address} is ${from1e18(
+      currentAllowance
+    )} T`
+  )
+
+  if (currentAllowance.lt(stakeAmount)) {
+    console.log(
+      `Approving ${from1e18(stakeAmount)} T for ${staking.address}...`
+    )
+    await (
+      await t
+        .connect(await ethers.getSigner(owner))
+        .approve(staking.address, stakeAmount)
+    ).wait()
+  }
 }
 
 task(TASK_STAKE, "Stakes T tokens")
@@ -119,34 +131,60 @@ async function stake(
     provider: string
     beneficiary: string
     authorizer: string
-    amount: BigNumber
+    amount: BigNumberish
   }
 ) {
   const { ethers, helpers } = hre
-  const { owner, provider } = args
+  const { to1e18, from1e18 } = helpers.number
+  const owner = ethers.utils.getAddress(args.owner)
+  const provider = ethers.utils.getAddress(args.provider)
+  const stakeAmount = to1e18(args.amount)
 
   // Beneficiary can equal to the owner if not set otherwise. This simplification
   // is used for development purposes.
-  const beneficiary = args.beneficiary ?? owner
+  const beneficiary = args.beneficiary
+    ? ethers.utils.getAddress(args.beneficiary)
+    : owner
 
   // Authorizer can equal to the owner if not set otherwise. This simplification
   // is used for development purposes.
-  const authorizer = args.authorizer ?? owner
+  const authorizer = args.authorizer
+    ? ethers.utils.getAddress(args.authorizer)
+    : owner
 
-  const { to1e18, from1e18 } = helpers.number
   const staking = await helpers.contracts.getContract("TokenStaking")
 
-  const stakedAmount = to1e18(args.amount)
+  const { tStake: currentStake } = await staking.callStatic.stakes(provider)
 
-  console.log(
-    `Staking ${from1e18(stakedAmount)} T to the staking provider ${provider}...`
-  )
+  console.log(`Current stake for ${provider} is ${from1e18(currentStake)} T`)
 
-  await (
-    await staking
-      .connect(await ethers.getSigner(owner))
-      .stake(provider, beneficiary, authorizer, stakedAmount)
-  ).wait()
+  if (currentStake.eq(0)) {
+    console.log(
+      `Staking ${from1e18(
+        stakeAmount
+      )} T to the staking provider ${provider}...`
+    )
+
+    await (
+      await staking
+        .connect(await ethers.getSigner(owner))
+        .stake(provider, beneficiary, authorizer, stakeAmount)
+    ).wait()
+  } else if (currentStake.lt(stakeAmount)) {
+    const topUpAmount = stakeAmount.sub(currentStake)
+
+    console.log(
+      `Topping up ${from1e18(
+        topUpAmount
+      )} T to the staking provider ${provider}...`
+    )
+
+    await (
+      await staking
+        .connect(await ethers.getSigner(owner))
+        .topUp(provider, topUpAmount)
+    ).wait()
+  }
 }
 
 task(TASK_AUTHORIZE, "Sets authorization")
@@ -169,17 +207,20 @@ async function authorize(
     owner: string
     provider: string
     authorizer: string
-    authorization: BigNumber
+    authorization: BigNumberish
   }
 ) {
   const { ethers, helpers } = hre
-  const { owner, provider } = args
+  const owner = ethers.utils.getAddress(args.owner)
+  const provider = ethers.utils.getAddress(args.provider)
 
   const randomBeacon = await helpers.contracts.getContract("RandomBeacon")
 
   // Authorizer can equal to the owner if not set otherwise. This simplification
   // is used for development purposes.
-  const authorizer = args.authorizer ?? owner
+  const authorizer = args.authorizer
+    ? ethers.utils.getAddress(args.authorizer)
+    : owner
 
   const { to1e18, from1e18 } = helpers.number
   const staking = await helpers.contracts.getContract("TokenStaking")
@@ -232,53 +273,61 @@ async function register(
   }
 ) {
   const { ethers, helpers } = hre
-  const { provider, operator } = args
+
+  const provider = ethers.utils.getAddress(args.provider)
+  const operator = ethers.utils.getAddress(args.operator)
 
   const randomBeacon = await helpers.contracts.getContract("RandomBeacon")
 
-  console.log(
-    `Registering operator ${operator.toString()} for a staking provider ${provider.toString()}...`
+  const currentProvider = ethers.utils.getAddress(
+    await randomBeacon.callStatic.operatorToStakingProvider(operator)
   )
 
-  await (
-    await randomBeacon
-      .connect(await ethers.getSigner(provider))
-      .registerOperator(operator)
-  ).wait()
+  switch (currentProvider) {
+    case provider: {
+      console.log(
+        `Current staking provider for operator ${operator} is ${currentProvider}`
+      )
+      return
+    }
+    case ethers.constants.AddressZero: {
+      console.log(
+        `Registering operator ${operator} for a staking provider ${provider}...`
+      )
+
+      await (
+        await randomBeacon
+          .connect(await ethers.getSigner(provider))
+          .registerOperator(operator)
+      ).wait()
+
+      break
+    }
+    default: {
+      throw new Error(
+        `Operator [${operator}] has already been registered for another staking provider [${currentProvider}]`
+      )
+    }
+  }
 }
 
-async function isAlreadyStaked(
+async function calculateTokensNeededForStake(
   hre: HardhatRuntimeEnvironment,
-  operator: string
-): Promise<boolean> {
+  provider: string,
+  amount: BigNumberish
+): Promise<BigNumber> {
   const { ethers, helpers } = hre
-  const { from1e18 } = helpers.number
+  const { to1e18, from1e18 } = helpers.number
 
-  const randomBeacon = await helpers.contracts.getContract("RandomBeacon")
+  const stakeAmount = to1e18(amount)
+
   const staking = await helpers.contracts.getContract("TokenStaking")
 
-  const currentStakingProvider =
-    await randomBeacon.callStatic.operatorToStakingProvider(operator)
-  console.log(
-    `Current staking provider for operator ${operator} is ${currentStakingProvider}`
-  )
+  const { tStake: currentStake } = await staking.callStatic.stakes(provider)
 
-  if (currentStakingProvider === ethers.constants.AddressZero) {
-    return false
+  if (currentStake.lt(stakeAmount)) {
+    return ethers.BigNumber.from(from1e18(stakeAmount.sub(currentStake)))
   }
 
-  const currentAuthorization = await staking.authorizedStake(
-    currentStakingProvider,
-    randomBeacon.address
-  )
-  console.log(
-    `Current authorization for ${
-      randomBeacon.address
-    } application is ${from1e18(currentAuthorization)} T`
-  )
-  if (currentAuthorization === 0) {
-    return false
-  }
-
-  return true
+  return ethers.constants.Zero
 }
