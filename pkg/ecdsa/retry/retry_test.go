@@ -55,6 +55,45 @@ func TestEvaluateRetryParticipantsForSigning_NotEnoughOperators(t *testing.T) {
 	}
 }
 
+func TestEvaluateRetryParticipantsForKeyGeneration_100DifferentOperators(t *testing.T) {
+	groupMembers := make([]chain.Address, 100)
+	for i := 0; i < 100; i++ {
+		groupMembers[i] = chain.Address(fmt.Sprintf("Operator-%d", i))
+	}
+	assertInvariants(t, EvaluateRetryParticipantsForKeyGeneration, groupMembers, int64(123), 0, 90)
+}
+
+func TestEvaluateRetryParticipantsForKeyGeneration_FewOperators(t *testing.T) {
+	groupMembers := make([]chain.Address, 100)
+	for i := 0; i < 100; i++ {
+		groupMembers[i] = chain.Address(fmt.Sprintf("Operator-%d", i%20))
+	}
+	assertInvariants(t, EvaluateRetryParticipantsForKeyGeneration, groupMembers, int64(456), 0, 90)
+}
+
+func TestEvaluateRetryParticipantsForKeyGeneration_NotEnoughOperators(t *testing.T) {
+	groupMembers := make([]chain.Address, 50)
+	for i := 0; i < 50; i++ {
+		groupMembers[i] = chain.Address(fmt.Sprintf("Operator-%d", i))
+	}
+	_, err := EvaluateRetryParticipantsForKeyGeneration(groupMembers, int64(123), 0, 90)
+	expectation := "asked for too many seats"
+	if err == nil {
+		t.Fatalf(
+			"unexpected error\nexpected: [%s]\nactual:   [%v]",
+			fmt.Sprintf("%s...", expectation),
+			nil,
+		)
+	}
+	if !strings.HasPrefix(err.Error(), expectation) {
+		t.Fatalf(
+			"unexpected error\nexpected: [%s]\nactual:   [%s]",
+			fmt.Sprintf("%s...", expectation),
+			err.Error(),
+		)
+	}
+}
+
 func isSubset(
 	t *testing.T,
 	groupMemberRandomizer groupMemberRandomizer,
