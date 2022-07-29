@@ -84,7 +84,7 @@ Port = 8080
 # Diagnostics module exposes the following information:
 # - list of connected peers along with their network id and ethereum operator address
 # - information about the client's network id and ethereum operator address
-[Diagnostics]
+[diagnostics]
 Port = 8081
 
 # Developer options to work with locally deployed contracts
