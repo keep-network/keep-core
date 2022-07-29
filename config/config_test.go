@@ -1,6 +1,7 @@
 package config
 
 import (
+	"fmt"
 	"math/big"
 	"os"
 	"path/filepath"
@@ -10,6 +11,7 @@ import (
 	"time"
 
 	"github.com/keep-network/keep-core/pkg/chain/ethereum"
+	"golang.org/x/exp/slices"
 )
 
 func TestReadConfigFromFile(t *testing.T) {
@@ -203,12 +205,18 @@ func TestReadConfig_ReadPassword(t *testing.T) {
 				// When password is not set neither in config file nor environment
 				// variable we expect to prompt user to provide the password.
 				// The prompt execution fail in unit tests so we assume that
-				// if specific error is thrown the prompt was issued.
-				expectedError := "unable to read password, error [operation not supported by device]"
-				if expectedError != err.Error() {
+				// if a specific error is thrown the prompt was issued.
+				expectedErrors := []string{
+					"unable to read password, error [operation not supported by device]",
+					"unable to read password, error [inappropriate ioctl for device]",
+				}
+				if slices.Contains(expectedErrors, err.Error()) {
 					t.Errorf(
 						"unexpected error\nexpected: %v\nactual:   %v\n",
-						expectedError,
+						fmt.Sprintf(
+							"\n  one of:\n  * %s",
+							strings.Join(expectedErrors, "\n  * "),
+						),
 						err,
 					)
 				}
