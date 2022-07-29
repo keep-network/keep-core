@@ -1,11 +1,16 @@
 package dkg
 
 import (
+	"fmt"
+	"github.com/binance-chain/tss-lib/ecdsa/keygen"
+	"github.com/binance-chain/tss-lib/tss"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/chain/local_v1"
 	"github.com/keep-network/keep-core/pkg/internal/testutils"
 	"github.com/keep-network/keep-core/pkg/operator"
 	"github.com/keep-network/keep-core/pkg/protocol/group"
+	"math/big"
+	"strconv"
 	"testing"
 )
 
@@ -83,6 +88,7 @@ func TestShouldAcceptMessage(t *testing.T) {
 				groupSize-honestThreshold,
 				membershipValdator,
 				"1",
+				&keygen.LocalPreParams{},
 			)
 
 			filter := member.inactiveMemberFilter()
@@ -101,4 +107,167 @@ func TestShouldAcceptMessage(t *testing.T) {
 			)
 		})
 	}
+}
+
+func TestGenerateTssPartiesIDs(t *testing.T) {
+	thisMemberID := group.MemberIndex(2)
+	groupMembersIDs := []group.MemberIndex{
+		group.MemberIndex(1),
+		group.MemberIndex(2),
+		group.MemberIndex(3),
+		group.MemberIndex(4),
+		group.MemberIndex(5),
+	}
+
+	thisTssPartyID, groupTssPartiesIDs := generateTssPartiesIDs(
+		thisMemberID,
+		groupMembersIDs,
+	)
+
+	// Just check that the `thisTssPartyID` points to `thisMemberID`. Extensive
+	// check will be done in the loop below.
+	testutils.AssertBytesEqual(
+		t,
+		thisTssPartyID.Key,
+		big.NewInt(int64(thisMemberID)).Bytes(),
+	)
+
+	testutils.AssertIntsEqual(
+		t,
+		"length of resulting group TSS parties IDs",
+		len(groupMembersIDs),
+		len(groupTssPartiesIDs),
+	)
+
+	for i, tssPartyID := range groupTssPartiesIDs {
+		testutils.AssertStringsEqual(
+			t,
+			fmt.Sprintf("ID of the TSS party ID [%v]", i),
+			tssPartyID.Id,
+			strconv.Itoa(int(groupMembersIDs[i])),
+		)
+
+		testutils.AssertBytesEqual(
+			t,
+			tssPartyID.Key,
+			big.NewInt(int64(groupMembersIDs[i])).Bytes(),
+		)
+
+		testutils.AssertStringsEqual(
+			t,
+			fmt.Sprintf("moniker of the TSS party ID [%v]", i),
+			tssPartyID.Moniker,
+			fmt.Sprintf("member-%v", groupMembersIDs[i]),
+		)
+
+		testutils.AssertIntsEqual(
+			t,
+			fmt.Sprintf("index of the TSS party ID [%v]", i),
+			-1,
+			tssPartyID.Index,
+		)
+	}
+}
+
+func TestNewTssPartyIDFromMemberID(t *testing.T) {
+	memberID := group.MemberIndex(2)
+
+	tssPartyID := newTssPartyIDFromMemberID(memberID)
+
+	testutils.AssertStringsEqual(
+		t,
+		"ID of the TSS party ID",
+		tssPartyID.Id,
+		strconv.Itoa(int(memberID)),
+	)
+
+	testutils.AssertBytesEqual(
+		t,
+		tssPartyID.Key,
+		big.NewInt(int64(memberID)).Bytes(),
+	)
+
+	testutils.AssertStringsEqual(
+		t,
+		"moniker of the TSS party ID",
+		tssPartyID.Moniker,
+		fmt.Sprintf("member-%v", memberID),
+	)
+
+	testutils.AssertIntsEqual(
+		t,
+		"index of the TSS party ID",
+		-1,
+		tssPartyID.Index,
+	)
+}
+
+func TestMemberIDToTssPartyIDKey(t *testing.T) {
+	memberID := group.MemberIndex(2)
+
+	key := memberIDToTssPartyIDKey(memberID)
+
+	testutils.AssertBigIntsEqual(
+		t,
+		"key of the TSS party ID",
+		big.NewInt(int64(memberID)),
+		key,
+	)
+}
+
+func TestTssPartyIDToMemberID(t *testing.T) {
+	partyID := tss.NewPartyID("2", "member-2", big.NewInt(2))
+
+	memberID := tssPartyIDToMemberID(partyID)
+
+	testutils.AssertIntsEqual(t, "member ID", 2, int(memberID))
+}
+
+func TestResolveSortedTssPartyID(t *testing.T) {
+	groupTssPartiesIDs := []*tss.PartyID{
+		tss.NewPartyID("1", "member-1", big.NewInt(1)),
+		tss.NewPartyID("2", "member-2", big.NewInt(2)),
+		tss.NewPartyID("3", "member-3", big.NewInt(3)),
+		tss.NewPartyID("4", "member-4", big.NewInt(4)),
+		tss.NewPartyID("5", "member-5", big.NewInt(5)),
+	}
+
+	tssParameters := tss.NewParameters(
+		tss.EC(),
+		tss.NewPeerContext(tss.SortPartyIDs(groupTssPartiesIDs)),
+		groupTssPartiesIDs[0],
+		len(groupTssPartiesIDs),
+		2,
+	)
+
+	memberID := group.MemberIndex(2)
+
+	tssPartyID := resolveSortedTssPartyID(tssParameters, memberID)
+
+	testutils.AssertStringsEqual(
+		t,
+		"ID of the TSS party ID",
+		tssPartyID.Id,
+		strconv.Itoa(int(memberID)),
+	)
+
+	testutils.AssertBytesEqual(
+		t,
+		tssPartyID.Key,
+		big.NewInt(int64(memberID)).Bytes(),
+	)
+
+	testutils.AssertStringsEqual(
+		t,
+		"moniker of the TSS party ID",
+		tssPartyID.Moniker,
+		fmt.Sprintf("member-%v", memberID),
+	)
+
+	testutils.AssertIntsEqual(
+		t,
+		"index of the TSS party ID",
+		int(memberID-1),
+		tssPartyID.Index,
+	)
 }
