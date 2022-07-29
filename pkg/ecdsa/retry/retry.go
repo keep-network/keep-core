@@ -132,6 +132,7 @@ func EvaluateRetryParticipantsForKeyGeneration(
 		operators[i], operators[j] = operators[j], operators[i]
 	})
 
+	// Try excluding one operator at a time from the operator set.
 	if int(retryCount) < len(operators) {
 		removedOperator := operators[retryCount]
 		usedOperators := make([]chain.Address, 0, len(groupMembers))
@@ -143,6 +144,8 @@ func EvaluateRetryParticipantsForKeyGeneration(
 		return usedOperators, nil
 	} else {
 		retryCount -= uint(len(operators))
+		// Since we're still getting failures after excluding all of the operators
+		// individually, try excluding the pairs of operators.
 		pairIndexes := make([][2]int, 0, len(operators)*len(operators))
 		for i := 0; i < len(operators)-1; i++ {
 			for j := i + 1; j < len(operators); j++ {
@@ -173,6 +176,8 @@ func EvaluateRetryParticipantsForKeyGeneration(
 			return usedOperators, nil
 		} else {
 			retryCount -= uint(len(pairIndexes))
+			// Since we're still getting failures after excluding all of the pairs of
+			// operators, try excluding the triplets of operators.
 			tripletIndexes := make([][3]int, 0, len(operators)*len(operators)*len(operators))
 			for i := 0; i < len(operators)-2; i++ {
 				for j := i + 1; i < len(operators)-1; j++ {
