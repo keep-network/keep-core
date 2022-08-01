@@ -134,7 +134,7 @@ func (skgm *symmetricKeyGeneratingMember) initializeTssRoundOne() *tssRoundOneMe
 	)
 
 	tssParameters := tss.NewParameters(
-		tss.EC(),
+		tss.S256(),
 		tss.NewPeerContext(tss.SortPartyIDs(groupTssPartiesIDs)),
 		tssPartyID,
 		len(groupTssPartiesIDs),
