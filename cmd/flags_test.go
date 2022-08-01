@@ -18,9 +18,9 @@ import (
 )
 
 var cmdFlagsTests = map[string]struct {
-	readValueFunc         func(*config.Config) interface{}
-	flagName              string
-	flagValue             string
+	readValueFunc func(*config.Config) interface{}
+	flagName      string
+	flagValue     string
 	// We provide arguments for flags in `flagValue` as strings, that are unmarshaled
 	// to a Config specific types.
 	expectedValueFromFlag interface{}
