@@ -57,11 +57,7 @@ async function setup(
   await (
     await staking
       .connect(authorizerSigner)
-      .increaseAuthorization(
-        provider,
-        walletRegistry.address,
-        authorization
-      )
+      .increaseAuthorization(provider, walletRegistry.address, authorization)
   ).wait()
 
   const authorizedStaked = await staking.authorizedStake(
