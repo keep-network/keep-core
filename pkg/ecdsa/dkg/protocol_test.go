@@ -945,8 +945,192 @@ func TestTssRoundThree_SymmetricKeyMissing(t *testing.T) {
 	}
 }
 
-// TODO: Unit tests for:
-//       - TSS finalization
+func TestTssFinalize(t *testing.T) {
+	members, tssRoundThreeMessages, err := initializeFinalizingMembersGroup(
+		dishonestThreshold,
+		groupSize,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Perform TSS finalization for each group member.
+	for _, member := range members {
+		var receivedTssRoundThreeMessages []*tssRoundThreeMessage
+		for _, tssRoundThreeMessage := range tssRoundThreeMessages {
+			if tssRoundThreeMessage.senderID != member.id {
+				receivedTssRoundThreeMessages = append(
+					receivedTssRoundThreeMessages,
+					tssRoundThreeMessage,
+				)
+			}
+		}
+
+		ctx, cancelCtx := context.WithTimeout(
+			context.Background(),
+			10*time.Second,
+		)
+
+		err := member.tssFinalize(
+			ctx,
+			receivedTssRoundThreeMessages,
+		)
+		if err != nil {
+			cancelCtx()
+			t.Fatal(err)
+		}
+
+		cancelCtx()
+	}
+
+	groupPublicKeys := make(map[string]bool)
+
+	// Assert that each member has a correct state.
+	for _, member := range members {
+		groupPublicKey := member.Result().GroupPublicKey
+
+		testutils.AssertIntsEqual(
+			t,
+			"length of the group public key",
+			65,
+			len(groupPublicKey),
+		)
+
+		groupPublicKeys[hex.EncodeToString(groupPublicKey)] = true
+	}
+
+	testutils.AssertIntsEqual(
+		t,
+		"count of distinct group public keys produced by the group",
+		1,
+		len(groupPublicKeys),
+	)
+}
+
+func TestTssFinalize_IncomingMessageCorrupted_WrongPayload(t *testing.T) {
+	members, messages, err := initializeFinalizingMembersGroup(
+		dishonestThreshold,
+		groupSize,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	corruptedPayload, err := hex.DecodeString("ffeeaabb")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Perform TSS round two for each group member.
+	for _, member := range members {
+		var receivedMessages []*tssRoundThreeMessage
+		for _, message := range messages {
+			if message.senderID != member.id {
+				// Corrupt the message's payload.
+				message.payload = corruptedPayload
+				receivedMessages = append(receivedMessages, message)
+			}
+		}
+
+		ctx, cancelCtx := context.WithTimeout(context.Background(), 10*time.Second)
+
+		err := member.tssFinalize(ctx, receivedMessages)
+
+		if !strings.Contains(
+			err.Error(),
+			"cannot update using TSS round three message",
+		) {
+			t.Errorf("wrong error for member [%v]: [%v]", member.id, err)
+		}
+
+		cancelCtx()
+	}
+}
+
+func TestTssFinalize_IncomingMessageMissing(t *testing.T) {
+	members, messages, err := initializeFinalizingMembersGroup(
+		dishonestThreshold,
+		groupSize,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Perform TSS round two for each group member.
+	for _, member := range members {
+		var receivedMessages []*tssRoundThreeMessage
+		for _, message := range messages {
+			if message.senderID != member.id {
+				receivedMessages = append(receivedMessages, message)
+			}
+		}
+
+		ctx, cancelCtx := context.WithTimeout(context.Background(), 1*time.Second)
+		// Pass only one incoming message from TSS round three for processing.
+		err := member.tssFinalize(ctx, receivedMessages[:1])
+
+		expectedErr := fmt.Errorf(
+			"TSS result was not generated on time",
+		)
+		if !reflect.DeepEqual(expectedErr, err) {
+			t.Errorf(
+				"unexpected error for member [%v]\n"+
+					"expected: %v\n"+
+					"actual:   %v\n",
+				member.id,
+				expectedErr,
+				err,
+			)
+		}
+
+		cancelCtx()
+	}
+}
+
+func TestTssFinalize_ResultTimeout(t *testing.T) {
+	members, messages, err := initializeFinalizingMembersGroup(
+		dishonestThreshold,
+		groupSize,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Perform TSS finalization for each group member.
+	for _, member := range members {
+		var receivedMessages []*tssRoundThreeMessage
+		for _, message := range messages {
+			if message.senderID != member.id {
+				receivedMessages = append(receivedMessages, message)
+			}
+		}
+
+		// To simulate the outgoing message timeout we do two things:
+		// - we pass an already cancelled context
+		// - we make sure no result is emitted from the channel by overwriting
+		//   the existing channel with a new one that won't receive the
+		//   result from the underlying TSS local party
+		ctx, cancelCtx := context.WithCancel(context.Background())
+		cancelCtx()
+		member.tssResultChan = make(<-chan keygen.LocalPartySaveData)
+
+		err := member.tssFinalize(ctx, receivedMessages)
+
+		expectedErr := fmt.Errorf(
+			"TSS result was not generated on time",
+		)
+		if !reflect.DeepEqual(expectedErr, err) {
+			t.Errorf(
+				"unexpected error for member [%v]\n"+
+					"expected: %v\n"+
+					"actual:   %v\n",
+				member.id,
+				expectedErr,
+				err,
+			)
+		}
+	}
+}
 
 func initializeEphemeralKeyPairGeneratingMembersGroup(
 	dishonestThreshold int,
@@ -1137,7 +1321,7 @@ func initializeTssRoundThreeMembersGroup(
 		)
 	if err != nil {
 		return nil, nil, fmt.Errorf(
-			"cannot generate TSS round one members group: [%v]",
+			"cannot generate TSS round two members group: [%v]",
 			err,
 		)
 	}
@@ -1165,7 +1349,7 @@ func initializeTssRoundThreeMembersGroup(
 		if err != nil {
 			cancelCtx()
 			return nil, nil, fmt.Errorf(
-				"cannot do TSS round one for member [%v]: [%v]",
+				"cannot do TSS round two for member [%v]: [%v]",
 				member.id,
 				err,
 			)
@@ -1181,6 +1365,70 @@ func initializeTssRoundThreeMembersGroup(
 	}
 
 	return tssRoundThreeMembers, tssRoundTwoMessages, nil
+}
+
+func initializeFinalizingMembersGroup(
+	dishonestThreshold int,
+	groupSize int,
+) (
+	[]*finalizingMember,
+	[]*tssRoundThreeMessage,
+	error,
+) {
+	var finalizingMembers []*finalizingMember
+	var tssRoundThreeMessages []*tssRoundThreeMessage
+
+	tssRoundThreeMembers, tssRoundTwoMessages, err :=
+		initializeTssRoundThreeMembersGroup(
+			dishonestThreshold,
+			groupSize,
+		)
+	if err != nil {
+		return nil, nil, fmt.Errorf(
+			"cannot generate TSS round three members group: [%v]",
+			err,
+		)
+	}
+
+	for _, member := range tssRoundThreeMembers {
+		var receivedTssRoundTwoMessages []*tssRoundTwoMessage
+		for _, tssRoundTwoMessage := range tssRoundTwoMessages {
+			if tssRoundTwoMessage.senderID != member.id {
+				receivedTssRoundTwoMessages = append(
+					receivedTssRoundTwoMessages,
+					tssRoundTwoMessage,
+				)
+			}
+		}
+
+		ctx, cancelCtx := context.WithTimeout(
+			context.Background(),
+			10*time.Second,
+		)
+
+		tssRoundThreeMessage, err := member.tssRoundThree(
+			ctx,
+			receivedTssRoundTwoMessages,
+		)
+		if err != nil {
+			cancelCtx()
+			return nil, nil, fmt.Errorf(
+				"cannot do TSS round three for member [%v]: [%v]",
+				member.id,
+				err,
+			)
+		}
+
+		finalizingMembers = append(
+			finalizingMembers,
+			member.initializeFinalization(),
+		)
+		tssRoundThreeMessages = append(tssRoundThreeMessages, tssRoundThreeMessage)
+
+		cancelCtx()
+	}
+
+	return finalizingMembers, tssRoundThreeMessages, nil
 }
 
 func generateMembersTssPreParams(
