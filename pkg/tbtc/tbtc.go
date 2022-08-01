@@ -7,6 +7,7 @@ import (
 	"github.com/keep-network/keep-common/pkg/persistence"
 	"github.com/keep-network/keep-core/pkg/net"
 	"github.com/keep-network/keep-core/pkg/sortition"
+	tbtcchain "github.com/keep-network/keep-core/pkg/tbtc/chain"
 )
 
 // TODO: Unit tests for `tbtc.go`.
@@ -21,7 +22,7 @@ const ProtocolName = "tbtc"
 // implementation. Returns an error if this failed.
 func Initialize(
 	ctx context.Context,
-	chain Chain,
+	chain tbtcchain.Chain,
 	netProvider net.Provider,
 	persistence persistence.Handle,
 ) error {
@@ -36,7 +37,7 @@ func Initialize(
 		)
 	}
 
-	_ = chain.OnDKGStarted(func(event *DKGStartedEvent) {
+	_ = chain.OnDKGStarted(func(event *tbtcchain.DKGStartedEvent) {
 		go func() {
 			if ok := deduplicator.notifyDKGStarted(
 				event.Seed,

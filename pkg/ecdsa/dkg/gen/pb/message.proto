@@ -26,3 +26,10 @@ message TSSRoundThreeMessage {
     bytes payload = 2;
     string sessionID = 3;
 }
+
+message DKGResultHashSignature {
+    uint32 senderIndex = 1;
+    bytes resultHash = 2;
+    bytes signature = 3;
+    bytes publicKey = 4;
+  }

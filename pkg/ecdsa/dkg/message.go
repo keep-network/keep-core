@@ -3,6 +3,7 @@ package dkg
 import (
 	"github.com/keep-network/keep-core/pkg/crypto/ephemeral"
 	"github.com/keep-network/keep-core/pkg/protocol/group"
+	tbtcchain "github.com/keep-network/keep-core/pkg/tbtc/chain"
 )
 
 const messageTypePrefix = "ecdsa_dkg/"
@@ -89,4 +90,31 @@ func (trtm *tssRoundThreeMessage) SenderID() group.MemberIndex {
 // marshaling purposes.
 func (trtm *tssRoundThreeMessage) Type() string {
 	return messageTypePrefix + "tss_round_three_message"
+}
+
+// DKGResultHashSignatureMessage is a message payload that carries a hash of
+// the DKG result and a signature over this hash for a DKG result.
+//
+// It is expected to be broadcast within the group.
+type DKGResultHashSignatureMessage struct {
+	// Index of the sender in the group.
+	senderIndex group.MemberIndex
+	// Hash of the DKG result preferred by the sender.
+	resultHash tbtcchain.DKGResultHash
+	// Signature over the DKG result hash calculated by the sender.
+	signature []byte
+	// Public key of the sender. It will be used to verify the signature by
+	// the receiver.
+	publicKey []byte
+}
+
+// SenderID returns protocol-level identifier of the message sender.
+func (drhsm *DKGResultHashSignatureMessage) SenderID() group.MemberIndex {
+	return drhsm.senderIndex
+}
+
+// Type returns a string describing an DKGResultHashSignatureMessage type for
+// marshaling purposes.
+func (drhsm *DKGResultHashSignatureMessage) Type() string {
+	return messageTypePrefix + "dkg_result_hash_signature_message"
 }

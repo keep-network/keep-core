@@ -4,6 +4,10 @@ import (
 	"context"
 	"encoding/binary"
 	"fmt"
+	"math/big"
+	"math/rand"
+	"sync"
+
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/keep-network/keep-common/pkg/chain/ethereum"
@@ -11,8 +15,7 @@ import (
 	"github.com/keep-network/keep-core/pkg/chain/ethereum/ecdsa/gen/contract"
 	"github.com/keep-network/keep-core/pkg/operator"
 	"github.com/keep-network/keep-core/pkg/subscription"
-	"github.com/keep-network/keep-core/pkg/tbtc"
-	"math/big"
+	tbtcchain "github.com/keep-network/keep-core/pkg/tbtc/chain"
 )
 
 // Definitions of contract names.
@@ -98,11 +101,11 @@ func newTbtcChain(
 }
 
 // GetConfig returns the expected configuration of the TBTC module.
-func (tc *TbtcChain) GetConfig() *tbtc.ChainConfig {
+func (tc *TbtcChain) GetConfig() *tbtcchain.ChainConfig {
 	groupSize := 100
 	honestThreshold := 51
 
-	return &tbtc.ChainConfig{
+	return &tbtcchain.ChainConfig{
 		GroupSize:       groupSize,
 		HonestThreshold: honestThreshold,
 	}
@@ -287,15 +290,81 @@ func (tc *TbtcChain) SelectGroup(seed *big.Int) ([]chain.Address, error) {
 
 // TODO: Implement a real OnDKGStarted function.
 func (tc *TbtcChain) OnDKGStarted(
-	handler func(event *tbtc.DKGStartedEvent),
+	handler func(event *tbtcchain.DKGStartedEvent),
 ) subscription.EventSubscription {
 	return tc.mockWalletRegistry.OnDKGStarted(handler)
+}
+
+// TODO: Implement a real SubmitDKGResult action. The current implementation
+//       just creates and pipes the DKG submission event to the handlers
+//       registered in the dkgResultSubmissionHandlers map.
+func (tc *TbtcChain) SubmitDKGResult(
+	participantIndex tbtcchain.GroupMemberIndex,
+	dkgResult *tbtcchain.DKGResult,
+	signatures map[tbtcchain.GroupMemberIndex][]byte,
+) error {
+	return tc.mockWalletRegistry.SubmitDKGResult(
+		participantIndex,
+		dkgResult,
+		signatures,
+	)
+}
+
+// TODO: Implement a real OnDKGResultSubmitted event subscription. The current
+//       implementation just pipes the DKG submission event generated within
+//       SubmitDKGResult to the handlers registered in the
+//       dkgResultSubmissionHandlers map.
+func (tc *TbtcChain) OnDKGResultSubmitted(
+	handler func(event *tbtcchain.DKGResultSubmissionEvent),
+) subscription.EventSubscription {
+	return tc.mockWalletRegistry.OnDKGResultSubmitted(handler)
+}
+
+// CalculateDKGResultHash calculates Keccak-256 hash of the DKG result. Operation
+// is performed off-chain.
+//
+// It first encodes the result using solidity ABI and then calculates Keccak-256
+// hash over it. This corresponds to the DKG result hash calculation on-chain.
+// Hashes calculated off-chain and on-chain must always match.
+func (tc *TbtcChain) CalculateDKGResultHash(
+	dkgResult *tbtcchain.DKGResult,
+) (tbtcchain.DKGResultHash, error) {
+	// Encode DKG result to the format matched with Solidity keccak256(abi.encodePacked(...))
+	hash := crypto.Keccak256(dkgResult.GroupPublicKey, dkgResult.Misbehaved)
+	return tbtcchain.DKGResultHashFromBytes(hash)
+}
+
+// TODO: Implement a real OnGroupRegistered function.
+func (tc *TbtcChain) OnGroupRegistered(
+	handler func(groupRegistration *tbtcchain.GroupRegistrationEvent),
+) subscription.EventSubscription {
+	return subscription.NewEventSubscription(func() {})
+}
+
+// TODO: Implement a real IsGroupRegistered function.
+func (tc *TbtcChain) IsGroupRegistered(groupPublicKey []byte) (bool, error) {
+	return false, nil
+}
+
+// TODO: Implement a real IsStaleGroup function.
+func (tc *TbtcChain) IsStaleGroup(groupPublicKey []byte) (bool, error) {
+	return false, nil
 }
 
 // TODO: Temporary mock that simulates the behavior of the WalletRegistry
 //       contract. Should be removed eventually.
 type mockWalletRegistry struct {
 	blockCounter chain.BlockCounter
+
+	dkgResultSubmissionHandlersMutex sync.Mutex
+	dkgResultSubmissionHandlers      map[int]func(submission *tbtcchain.DKGResultSubmissionEvent)
+
+	currentDkgMutex      sync.RWMutex
+	currentDkgStartBlock *big.Int
+
+	activeGroupMutex         sync.RWMutex
+	activeGroup              []byte
+	activeGroupOperableBlock *big.Int
 }
 
 func newMockWalletRegistry(blockCounter chain.BlockCounter) *mockWalletRegistry {
@@ -303,7 +372,7 @@ func newMockWalletRegistry(blockCounter chain.BlockCounter) *mockWalletRegistry 
 }
 
 func (mwr *mockWalletRegistry) OnDKGStarted(
-	handler func(event *tbtc.DKGStartedEvent),
+	handler func(event *tbtcchain.DKGStartedEvent),
 ) subscription.EventSubscription {
 	ctx, cancelCtx := context.WithCancel(context.Background())
 	blocksChan := mwr.blockCounter.WatchBlocks(ctx)
@@ -323,7 +392,7 @@ func (mwr *mockWalletRegistry) OnDKGStarted(
 					seedBytes := crypto.Keccak256(blockBytes)
 					seed := new(big.Int).SetBytes(seedBytes)
 
-					go handler(&tbtc.DKGStartedEvent{
+					go handler(&tbtcchain.DKGStartedEvent{
 						Seed:        seed,
 						BlockNumber: block,
 					})
@@ -337,4 +406,71 @@ func (mwr *mockWalletRegistry) OnDKGStarted(
 	return subscription.NewEventSubscription(func() {
 		cancelCtx()
 	})
+}
+
+func (mwr *mockWalletRegistry) OnDKGResultSubmitted(
+	handler func(event *tbtcchain.DKGResultSubmissionEvent),
+) subscription.EventSubscription {
+	mwr.dkgResultSubmissionHandlersMutex.Lock()
+	defer mwr.dkgResultSubmissionHandlersMutex.Unlock()
+
+	// #nosec G404 (insecure random number source (rand))
+	// Temporary test implementation doesn't require secure randomness.
+	handlerID := rand.Int()
+
+	mwr.dkgResultSubmissionHandlers[handlerID] = handler
+
+	return subscription.NewEventSubscription(func() {
+		mwr.dkgResultSubmissionHandlersMutex.Lock()
+		defer mwr.dkgResultSubmissionHandlersMutex.Unlock()
+
+		delete(mwr.dkgResultSubmissionHandlers, handlerID)
+	})
+}
+
+func (mwr *mockWalletRegistry) SubmitDKGResult(
+	participantIndex tbtcchain.GroupMemberIndex,
+	dkgResult *tbtcchain.DKGResult,
+	signatures map[tbtcchain.GroupMemberIndex][]byte,
+) error {
+	mwr.dkgResultSubmissionHandlersMutex.Lock()
+	defer mwr.dkgResultSubmissionHandlersMutex.Unlock()
+
+	mwr.currentDkgMutex.Lock()
+	defer mwr.currentDkgMutex.Unlock()
+
+	mwr.activeGroupMutex.Lock()
+	defer mwr.activeGroupMutex.Unlock()
+
+	// Abort if there is no DKG in progress. This check is needed to handle a
+	// situation in which two operators of the same client attempt to submit
+	// the DKG result.
+	if mwr.currentDkgStartBlock == nil {
+		return nil
+	}
+
+	blockNumber, err := mwr.blockCounter.CurrentBlock()
+	if err != nil {
+		return fmt.Errorf("failed to get the current block")
+	}
+
+	for _, handler := range mwr.dkgResultSubmissionHandlers {
+		go func(handler func(*tbtcchain.DKGResultSubmissionEvent)) {
+			handler(&tbtcchain.DKGResultSubmissionEvent{
+				MemberIndex:    uint32(participantIndex),
+				GroupPublicKey: dkgResult.GroupPublicKey,
+				Misbehaved:     dkgResult.Misbehaved,
+				BlockNumber:    blockNumber,
+			})
+		}(handler)
+	}
+
+	mwr.activeGroup = dkgResult.GroupPublicKey
+	mwr.activeGroupOperableBlock = new(big.Int).Add(
+		mwr.currentDkgStartBlock,
+		big.NewInt(150),
+	)
+	mwr.currentDkgStartBlock = nil
+
+	return nil
 }

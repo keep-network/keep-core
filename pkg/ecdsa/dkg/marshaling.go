@@ -5,6 +5,7 @@ import (
 	"github.com/keep-network/keep-core/pkg/crypto/ephemeral"
 	"github.com/keep-network/keep-core/pkg/ecdsa/dkg/gen/pb"
 	"github.com/keep-network/keep-core/pkg/protocol/group"
+	tbtcchain "github.com/keep-network/keep-core/pkg/tbtc/chain"
 )
 
 // Marshal converts this ephemeralPublicKeyMessage to a byte array suitable for
@@ -186,4 +187,40 @@ func unmarshalPublicKeyMap(
 	}
 
 	return unmarshalled, nil
+}
+
+// Marshal converts this DKGResultHashSignatureMessage to a byte array suitable
+// for network communication.
+func (d *DKGResultHashSignatureMessage) Marshal() ([]byte, error) {
+	return (&pb.DKGResultHashSignature{
+		SenderIndex: uint32(d.senderIndex),
+		ResultHash:  d.resultHash[:],
+		Signature:   d.signature,
+		PublicKey:   d.publicKey,
+	}).Marshal()
+}
+
+// Unmarshal converts a byte array produced by Marshal to a
+// DKGResultHashSignatureMessage.
+func (d *DKGResultHashSignatureMessage) Unmarshal(bytes []byte) error {
+	pbMsg := pb.DKGResultHashSignature{}
+	if err := pbMsg.Unmarshal(bytes); err != nil {
+		return err
+	}
+
+	if err := validateMemberIndex(pbMsg.SenderIndex); err != nil {
+		return err
+	}
+	d.senderIndex = group.MemberIndex(pbMsg.SenderIndex)
+
+	resultHash, err := tbtcchain.DKGResultHashFromBytes(pbMsg.ResultHash)
+	if err != nil {
+		return err
+	}
+	d.resultHash = resultHash
+
+	d.signature = pbMsg.Signature
+	d.publicKey = pbMsg.PublicKey
+
+	return nil
 }
