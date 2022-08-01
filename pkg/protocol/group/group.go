@@ -2,6 +2,10 @@
 // and auxiliary tools that help during group-related operations.
 package group
 
+// TODO: Adjust the nomenclature to be about `memberIndex` not `memberID`.
+//       Rename all public functions as well. See:
+//       https://github.com/keep-network/keep-core/pull/3112#discussion_r933165274
+
 // MemberIndex is an index of a member in a group. The maximum member index
 // value is 255.
 type MemberIndex = uint8
