@@ -138,7 +138,7 @@ func (skgm *symmetricKeyGeneratingMember) initializeTssRoundOne() *tssRoundOneMe
 		tss.NewPeerContext(tss.SortPartyIDs(groupTssPartiesIDs)),
 		tssPartyID,
 		len(groupTssPartiesIDs),
-		skgm.group.DishonestThreshold(),
+		skgm.group.HonestThreshold()-1,
 	)
 
 	tssOutgoingMessagesChan := make(chan tss.Message, len(groupTssPartiesIDs))

@@ -57,6 +57,12 @@ func (g *Group) DishonestThreshold() int {
 	return g.dishonestThreshold
 }
 
+// HonestThreshold returns value of the honest members threshold as set
+// for the group.
+func (g *Group) HonestThreshold() int {
+	return g.GroupSize() - g.DishonestThreshold()
+}
+
 // DisqualifiedMemberIDs returns indexes of all group members that have been
 // disqualified during the protocol execution.
 func (g *Group) DisqualifiedMemberIDs() []MemberIndex {
