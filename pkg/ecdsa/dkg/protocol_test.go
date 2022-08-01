@@ -25,7 +25,7 @@ import (
 
 const (
 	groupSize          = 3
-	dishonestThreshold = 2
+	dishonestThreshold = 0
 	sessionID          = "session-1"
 )
 
