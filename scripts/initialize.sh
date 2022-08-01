@@ -7,10 +7,8 @@ DONE_START='\n\e[1;32m' # new line + bold + green
 DONE_END='\n\n\e[0m'    # new line + reset
 
 KEEP_CORE_PATH=$PWD
-TMP_TBTC="$KEEP_CORE_PATH/tmp-tbtc"
 KEEP_BEACON_SOL_PATH="$KEEP_CORE_PATH/solidity/random-beacon"
 KEEP_ECDSA_SOL_PATH="$KEEP_CORE_PATH/solidity/ecdsa"
-KEEP_TBTC_SOL_PATH="$TMP_TBTC/tbtc-v2/solidity"
 
 # Defaults, can be overwritten by env variables/input parameters
 NETWORK_DEFAULT="development"
@@ -37,10 +35,7 @@ help()
    echo -e "\t--authorizer: Staking authorizer address"
    echo -e "\t--stake-amount: Staking amount"
    echo -e "\t--authorization-amount: Authorization amount"
-   echo -e "\t--tbtc-path: 'Local' tbtc project's path. A temporary folder with tbtc is created and removed"\
-                           "upon installation if the path is not provided"
-   echo -e "\t--skip-ecdsa-deployment: This option skips ecdsa and tbtc deployment. Default is false"
-   echo -e "\t--skip-tbtc-deployment: This option skips tbtc deployment. Default is false\n"
+   echo -e "\t--skip-ecdsa-initialization: This option skips ecdsa initialization. Default is false"
    exit 1 # Exit script after printing help
 }
 
@@ -56,9 +51,7 @@ for arg in "$@"; do
     "--authorizer")           set -- "$@" "-a" ;;
     "--stake-amount")         set -- "$@" "-s" ;;
     "--authorization-amount") set -- "$@" "-k" ;;
-    "--tbtc-path")              set -- "$@" "-p" ;;
-    "--skip-ecdsa-deployment")  set -- "$@" "-e" ;;
-    "--skip-tbtc-deployment")   set -- "$@" "-t" ;;
+    "--skip-ecdsa-initialization")  set -- "$@" "-e" ;;
     "--help")                 set -- "$@" "-h" ;;
     *)                        set -- "$@" "$arg"
   esac
@@ -77,9 +70,7 @@ do
       a ) authorizer="$OPTARG" ;;
       s ) stake_amount="$OPTARG" ;;
       k ) authorization_amount="$OPTARG" ;;
-      p ) tbtc_path="$OPTARG" ;;
-      e ) skip_ecdsa_deployment=${OPTARG:-true} ;;
-      t ) skip_tbtc_deployment=${OPTARG:-true} ;;
+      e ) skip_ecdsa_initialization=${OPTARG:-true} ;;
       h ) help ;;
       ? ) help ;; # Print help in case parameter is non-existent
    esac
@@ -93,9 +84,6 @@ fi
 
 # Overwrite default properties
 NETWORK=${network:-$NETWORK_DEFAULT}
-TBTC_PATH=${tbtc_path:-""}
-SKIP_ECDSA_DEPLOYMENT=${skip_ecdsa_deployment:-false}
-SKIP_TBTC_DEPLOYMENT=${skip_tbtc_deployment:-false}
 
 if [ -z "$staking_provider" ]; then
    staking_provider=${stake_owner}
@@ -130,34 +118,21 @@ stake="npx hardhat stake --network $NETWORK --owner ${stake_owner} --provider ${
 increase_authorization="npx hardhat increase-authorization --network $NETWORK --owner ${stake_owner} --provider ${staking_provider} --authorizer ${authorizer}"
 register_operator="npx hardhat register-operator --network $NETWORK --owner ${stake_owner} --provider ${staking_provider} --operator ${operator}"
 
-application="--application RandomBeacon"
-
-if [ "$SKIP_ECDSA_DEPLOYMENT" = true ]; then
-   cd $KEEP_BEACON_SOL_PATH
-   # go to beacon
-elif [ "$SKIP_TBTC_DEPLOYMENT" = true ]; then
-   # go to ecdsa (includes beacon contracts)
-   cd $KEEP_ECDSA_SOL_PATH
-else
-   # go to tbtc (includes beacon and ecdsa contracts)
-   if [ "$TBTC_PATH" = "" ]; then
-      cd "$KEEP_TBTC_SOL_PATH"  
-   else
-      cd "$TBTC_PATH/solidity"
-   fi
-fi
+# go to beacon
+cd $KEEP_BEACON_SOL_PATH
 
 eval ${mint} ${stake_amount_opt}
 eval ${stake} ${stake_amount_opt}
+eval ${increase_authorization} ${authorization_amount_opt}
+eval ${register_operator}
 
-application="--application RandomBeacon"
-eval ${increase_authorization} ${application} ${authorization_amount_opt}
-eval ${register_operator} ${application} 
+skip_ecdsa_initialization=${skip_ecdsa_initialization:-false}
+if [ "$skip_ecdsa_initialization" = false ]; then
+   # go to ecdsa
+   cd $KEEP_ECDSA_SOL_PATH
 
-if [ "$SKIP_ECDSA_DEPLOYMENT" = false ]; then
-   application="--application WalletRegistry"
-   eval ${increase_authorization} ${application} ${authorization_amount_opt}
-   eval ${register_operator} ${application}
+   eval ${increase_authorization} ${authorization_amount_opt}
+   eval ${register_operator}
 fi
 
 printf "${DONE_START}Initialization completed!${DONE_END}"
