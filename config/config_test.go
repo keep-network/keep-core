@@ -10,7 +10,11 @@ import (
 	"testing"
 	"time"
 
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/keep-network/keep-core/pkg/chain/ethereum"
+	ethereumBeacon "github.com/keep-network/keep-core/pkg/chain/ethereum/beacon/gen"
+	ethereumEcdsa "github.com/keep-network/keep-core/pkg/chain/ethereum/ecdsa/gen"
+	ethereumThreshold "github.com/keep-network/keep-core/pkg/chain/ethereum/threshold/gen"
 	"golang.org/x/exp/slices"
 )
 
@@ -221,6 +225,75 @@ func TestReadConfig_ReadPassword(t *testing.T) {
 					)
 				}
 			}
+		})
+	}
+}
+
+func TestReadConfig_ReadContracts(t *testing.T) {
+	if err := os.Setenv(EthereumPasswordEnvVariable, "password from env var"); err != nil {
+		t.Fatal(err)
+	}
+
+	ethereumBeacon.RandomBeaconAddress = "0xd1640b381327c2d5425d6d3d605539a3db72f857"
+	ethereumEcdsa.WalletRegistryAddress = "0xdb3dd6d4f43d39c996d0afeb6fbabc284f9ffb1a"
+	ethereumThreshold.TokenStakingAddress = "0xaa7b41039ea8f9ec2d89bbe96e19f97b6c267a27"
+
+	var configReadTests = map[string]struct {
+		configFilePath string
+
+		expectedRandomBeaconAddress   string
+		expectedWalletRegistryAddress string
+		expectedTokenStakingAddress   string
+	}{
+		"no developer contracts addresses configured": {
+			configFilePath:                "../test/config_no_contracts.toml",
+			expectedRandomBeaconAddress:   "0xd1640b381327c2d5425d6d3d605539a3db72f857",
+			expectedWalletRegistryAddress: "0xdb3dd6d4f43d39c996d0afeb6fbabc284f9ffb1a",
+			expectedTokenStakingAddress:   "0xaa7b41039ea8f9ec2d89bbe96e19f97b6c267a27",
+		},
+		"developer contracts addresses configured": {
+			configFilePath:                "../test/config.toml",
+			expectedRandomBeaconAddress:   "0xcf64c2a367341170cb4e09cf8c0ed137d8473ceb",
+			expectedWalletRegistryAddress: "0x143ba24e66fce8bca22f7d739f9a932c519b1c76",
+			expectedTokenStakingAddress:   "0xa363a197f1bbb8877f50350234e3f15fb4175457",
+		},
+		"mxied contracts addresses configured": {
+			configFilePath:                "../test/config_mixed_contracts.toml",
+			expectedRandomBeaconAddress:   "0xd1640b381327c2d5425d6d3d605539a3db72f857",
+			expectedWalletRegistryAddress: "0x143ba24e66fce8bca22f7d739f9a932c519b1c76",
+			expectedTokenStakingAddress:   "0xaa7b41039ea8f9ec2d89bbe96e19f97b6c267a27",
+		},
+	}
+
+	for testName, test := range configReadTests {
+
+		t.Run(testName, func(t *testing.T) {
+			cfg := &Config{}
+
+			validate := func(contractName string, expectedAddress string) {
+				actualAddress, err := cfg.Ethereum.ContractAddress(contractName)
+				if err != nil {
+					t.Fatalf("failed to get %s address: [%v]", contractName, err)
+				}
+
+				if actualAddress != common.HexToAddress(expectedAddress) {
+					t.Errorf(
+						"invalid %s address\nexpected: %s\nactual:   %s",
+						contractName,
+						expectedAddress,
+						actualAddress,
+					)
+				}
+
+			}
+
+			if err := cfg.ReadConfig(test.configFilePath, nil); err != nil {
+				t.Fatalf("failed to read test config: [%v]", err)
+			}
+
+			validate(ethereum.RandomBeaconContractName, test.expectedRandomBeaconAddress)
+			validate(ethereum.WalletRegistryContractName, test.expectedWalletRegistryAddress)
+			validate(ethereum.TokenStakingContractName, test.expectedTokenStakingAddress)
 		})
 	}
 }

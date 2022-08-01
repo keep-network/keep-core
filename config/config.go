@@ -93,6 +93,9 @@ func (c *Config) ReadConfig(configFilePath string, flagSet *pflag.FlagSet) error
 		return fmt.Errorf("unable to unmarshal config: %w", err)
 	}
 
+	// Resolve contracts addresses.
+	c.resolveContractsAddresses()
+
 	// Validate configuration.
 	if err := validateConfig(c); err != nil {
 		return fmt.Errorf("validation failed: %w", err)
