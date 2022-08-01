@@ -3,9 +3,10 @@ package cmd
 import (
 	"context"
 	"fmt"
-	"github.com/keep-network/keep-core/pkg/tbtc"
-	"time"
 
+	"github.com/keep-network/keep-core/pkg/tbtc"
+
+	"github.com/keep-network/keep-core/config"
 	"github.com/keep-network/keep-core/pkg/chain/ethereum"
 	"github.com/keep-network/keep-core/pkg/diagnostics"
 	"github.com/keep-network/keep-core/pkg/metrics"
@@ -13,58 +14,61 @@ import (
 
 	"github.com/ipfs/go-log"
 	"github.com/keep-network/keep-common/pkg/persistence"
-	"github.com/keep-network/keep-core/config"
 	"github.com/keep-network/keep-core/pkg/beacon"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/firewall"
 	"github.com/keep-network/keep-core/pkg/net/libp2p"
 	"github.com/keep-network/keep-core/pkg/net/retransmission"
-	"github.com/urfave/cli"
+
+	"github.com/spf13/cobra"
 )
 
-// StartCommand contains the definition of the start command-line subcommand.
 var (
-	StartCommand cli.Command
-	logger       = log.Logger("keep-start")
-)
+	// StartCommand contains the definition of the start command-line subcommand.
+	StartCommand *cobra.Command
 
-const (
-	portFlag  = "port"
-	portShort = "p"
+	logger = log.Logger("keep-start")
 )
-
-const startDescription = `Starts the Keep client in the foreground`
 
 func init() {
-	StartCommand =
-		cli.Command{
-			Name:        "start",
-			Usage:       `Starts the Keep client in the foreground`,
-			Description: startDescription,
-			Action:      Start,
-			Flags: []cli.Flag{
-				&cli.IntFlag{
-					Name: portFlag + "," + portShort,
-				},
-			},
-		}
+	StartCommand = &cobra.Command{
+		Use:   "start",
+		Short: "Starts the Keep Client",
+		Long:  "Starts the Keep Client in the foreground",
+		PreRun: func(cmd *cobra.Command, args []string) {
+			if err := clientConfig.ReadConfig(configFilePath, cmd.Flags()); err != nil {
+				logger.Fatalf("error reading config: %v", err)
+			}
+
+		},
+		Run: func(cmd *cobra.Command, args []string) {
+			if err := start(cmd); err != nil {
+				logger.Fatal(err)
+			}
+		},
+	}
+
+	initFlags(StartCommand, allCategories, &configFilePath, clientConfig)
+
+	StartCommand.SetUsageTemplate(
+		fmt.Sprintf(`%s
+Environment variables:
+    %s    Password for Keep operator account keyfile decryption.
+    %s                 Space-delimited set of log level directives; set to "help" for help.
+`,
+			StartCommand.UsageString(),
+			config.EthereumPasswordEnvVariable,
+			config.LogLevelEnvVariable,
+		),
+	)
 }
 
-// Start starts a node; if it's not a bootstrap node it will get the node.URLs
-// from the config file
-func Start(c *cli.Context) error {
+// start starts a node
+func start(cmd *cobra.Command) error {
 	ctx := context.Background()
 
-	config, err := config.ReadConfig(c.GlobalString("config"))
-	if err != nil {
-		return fmt.Errorf("error reading config file: %v", err)
-	}
-	if c.Int(portFlag) > 0 {
-		config.LibP2P.Port = c.Int(portFlag)
-	}
-
 	beaconChain, tbtcChain, blockCounter, signing, operatorPrivateKey, err :=
-		ethereum.Connect(ctx, config.Ethereum)
+		ethereum.Connect(ctx, clientConfig.Ethereum)
 	if err != nil {
 		return fmt.Errorf("error connecting to Ethereum node: [%v]", err)
 	}
@@ -75,7 +79,7 @@ func Start(c *cli.Context) error {
 
 	netProvider, err := libp2p.Connect(
 		ctx,
-		config.LibP2P,
+		clientConfig.LibP2P,
 		operatorPrivateKey,
 		firewall,
 		retransmission.NewTicker(blockCounter.WatchBlocks(ctx)),
@@ -84,15 +88,15 @@ func Start(c *cli.Context) error {
 		return fmt.Errorf("failed while creating the network provider: [%v]", err)
 	}
 
-	nodeHeader(netProvider.ConnectionManager().AddrStrings(), config.LibP2P.Port)
+	nodeHeader(netProvider.ConnectionManager().AddrStrings(), clientConfig.LibP2P.Port)
 
-	handle, err := persistence.NewDiskHandle(config.Storage.DataDir)
+	handle, err := persistence.NewDiskHandle(clientConfig.Storage.DataDir)
 	if err != nil {
 		return fmt.Errorf("failed while creating a storage disk handler: [%v]", err)
 	}
 	encryptedPersistence := persistence.NewEncryptedPersistence(
 		handle,
-		config.Ethereum.Account.KeyFilePassword,
+		clientConfig.Ethereum.Account.KeyFilePassword,
 	)
 
 	err = beacon.Initialize(
@@ -115,8 +119,8 @@ func Start(c *cli.Context) error {
 		return fmt.Errorf("error initializing TBTC: [%v]", err)
 	}
 
-	initializeMetrics(ctx, config, netProvider, blockCounter)
-	initializeDiagnostics(ctx, config, netProvider, signing)
+	initializeMetrics(ctx, clientConfig, netProvider, blockCounter)
+	initializeDiagnostics(ctx, clientConfig, netProvider, signing)
 
 	select {
 	case <-ctx.Done():
@@ -151,7 +155,7 @@ func initializeMetrics(
 		ctx,
 		registry,
 		netProvider,
-		time.Duration(config.Metrics.NetworkMetricsTick)*time.Second,
+		config.Metrics.NetworkMetricsTick,
 	)
 
 	metrics.ObserveConnectedBootstrapCount(
@@ -159,14 +163,14 @@ func initializeMetrics(
 		registry,
 		netProvider,
 		config.LibP2P.Peers,
-		time.Duration(config.Metrics.NetworkMetricsTick)*time.Second,
+		config.Metrics.NetworkMetricsTick,
 	)
 
 	metrics.ObserveEthConnectivity(
 		ctx,
 		registry,
 		blockCounter,
-		time.Duration(config.Metrics.EthereumMetricsTick)*time.Second,
+		config.Metrics.EthereumMetricsTick,
 	)
 }
 

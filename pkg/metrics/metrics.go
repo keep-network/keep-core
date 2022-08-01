@@ -129,6 +129,8 @@ func observe(
 	}
 
 	observer.Observe(ctx, tick)
+
+	logger.Infof("observing %s with [%s] tick", name, tick)
 }
 
 func validateTick(tick time.Duration, defaultTick time.Duration) time.Duration {
