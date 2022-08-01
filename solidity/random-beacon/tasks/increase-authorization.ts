@@ -6,12 +6,6 @@ import type { HardhatRuntimeEnvironment } from "hardhat/types"
 task("increase-authorization", "Increases authorization")
   .addParam("owner", "Stake Owner address", undefined, types.string)
   .addParam("provider", "Staking Provider", undefined, types.string)
-  .addParam(
-    "application",
-    "Name of Application Contract",
-    undefined,
-    types.string
-  )
   .addOptionalParam("authorizer", "Stake Authorizer", undefined, types.string)
   .addOptionalParam(
     "authorization",
@@ -28,18 +22,17 @@ async function setup(
   args: {
     owner: string
     provider: string
-    application: string
     authorizer: string
     authorization: BigNumber
   }
 ) {
   const { ethers, helpers } = hre
-  const { owner, provider, application } = args
+  const { owner, provider } = args
   let { authorizer, authorization } = args
 
   const { to1e18, from1e18 } = helpers.number
   const staking = await helpers.contracts.getContract("TokenStaking")
-  const applicationContract = await helpers.contracts.getContract(application)
+  const randomBeacon = await helpers.contracts.getContract("RandomBeacon")
 
   // If not set, authorizer can be the owner. This simplification is used for
   // development purposes.
@@ -50,7 +43,7 @@ async function setup(
   if (authorization) {
     authorization = to1e18(authorization)
   } else {
-    authorization = await applicationContract.minimumAuthorization()
+    authorization = await randomBeacon.minimumAuthorization()
   }
 
   const authorizerSigner = await ethers.getSigner(authorizer)
@@ -58,25 +51,21 @@ async function setup(
   console.log(
     `Increasing authorization ${from1e18(
       authorization
-    )} for the ${application.toString()}...`
+    )} for the Random Beacon...`
   )
 
   await (
     await staking
       .connect(authorizerSigner)
-      .increaseAuthorization(
-        provider,
-        applicationContract.address,
-        authorization
-      )
+      .increaseAuthorization(provider, randomBeacon.address, authorization)
   ).wait()
 
   const authorizedStaked = await staking.authorizedStake(
     provider,
-    applicationContract.address
+    randomBeacon.address
   )
 
   console.log(
-    `Authorization for ${application.toString()} was increased to ${authorizedStaked.toString()}`
+    `Authorization for Random Beacon was increased to ${authorizedStaked.toString()}`
   )
 }
