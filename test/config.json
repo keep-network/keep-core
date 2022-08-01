@@ -26,8 +26,8 @@
     },
     "Metrics": {
         "Port": 3498,
-        "NetworkMetricsTick": 43,
-        "EthereumMetricsTick": 27
+        "NetworkMetricsTick": "43s",
+        "EthereumMetricsTick": "1m27s"
     },
     "Diagnostics": {
         "Port": 9723
