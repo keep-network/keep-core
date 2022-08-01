@@ -3,6 +3,7 @@ package dkg
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/keep-network/keep-core/pkg/net"
 	"github.com/keep-network/keep-core/pkg/protocol/group"
@@ -24,6 +25,9 @@ const (
 
 	tssRoundThreeStateDelayBlocks  = 1
 	tssRoundThreeStateActiveBlocks = 5
+
+	finalizationStateDelayBlocks  = 1
+	finalizationStateActiveBlocks = 2
 )
 
 // ProtocolBlocks returns the total number of blocks it takes to execute
@@ -36,7 +40,9 @@ func ProtocolBlocks() uint64 {
 		tssRoundTwoStateDelayBlocks +
 		tssRoundTwoStateActiveBlocks +
 		tssRoundThreeStateDelayBlocks +
-		tssRoundThreeStateActiveBlocks
+		tssRoundThreeStateActiveBlocks +
+		finalizationStateDelayBlocks +
+		finalizationStateActiveBlocks
 }
 
 // ephemeralKeyPairGenerationState is the state during which members broadcast
@@ -157,7 +163,22 @@ func (tros *tssRoundOneState) ActiveBlocks() uint64 {
 }
 
 func (tros *tssRoundOneState) Initiate(ctx context.Context) error {
-	message, err := tros.member.tssRoundOne(ctx)
+	// The ctx instance passed as Initiate argument is scoped to the lifetime
+	// of the current state. However, the Initiate method is blocking and the
+	// ctx instance is cancelled properly only after Initiate returns. Because
+	// of that, we cannot use ctx as round timeout signal as Initiate would
+	// hang forever if something goes wrong. To avoid such a resource leak,
+	// we set a round timeout based on state block duration and an average
+	// block time. The exact duration doesn't need to be super-accurate because
+	// if the timeout is hit, the execution will fail anyway. We just want
+	// to give enough time for round computation and make sure the round
+	// terminates regardless of the result.
+	stateBlocks := tros.DelayBlocks() + tros.ActiveBlocks()
+	stateDuration := 15 * time.Duration(stateBlocks)
+	roundCtx, roundCtxCancel := context.WithTimeout(ctx, stateDuration)
+	defer roundCtxCancel()
+
+	message, err := tros.member.tssRoundOne(roundCtx)
 	if err != nil {
 		return err
 	}
@@ -222,7 +243,22 @@ func (trts *tssRoundTwoState) Initiate(ctx context.Context) error {
 		return fmt.Errorf("inactive members detected")
 	}
 
-	message, err := trts.member.tssRoundTwo(ctx, trts.previousPhaseMessages)
+	// The ctx instance passed as Initiate argument is scoped to the lifetime
+	// of the current state. However, the Initiate method is blocking and the
+	// ctx instance is cancelled properly only after Initiate returns. Because
+	// of that, we cannot use ctx as round timeout signal as Initiate would
+	// hang forever if something goes wrong. To avoid such a resource leak,
+	// we set a round timeout based on state block duration and an average
+	// block time. The exact duration doesn't need to be super-accurate because
+	// if the timeout is hit, the execution will fail anyway. We just want
+	// to give enough time for round computation and make sure the round
+	// terminates regardless of the result.
+	stateBlocks := trts.DelayBlocks() + trts.ActiveBlocks()
+	stateDuration := 15 * time.Duration(stateBlocks)
+	roundCtx, roundCtxCancel := context.WithTimeout(ctx, stateDuration)
+	defer roundCtxCancel()
+
+	message, err := trts.member.tssRoundTwo(roundCtx, trts.previousPhaseMessages)
 	if err != nil {
 		return err
 	}
@@ -287,7 +323,22 @@ func (trts *tssRoundThreeState) Initiate(ctx context.Context) error {
 		return fmt.Errorf("inactive members detected")
 	}
 
-	message, err := trts.member.tssRoundThree(ctx, trts.previousPhaseMessages)
+	// The ctx instance passed as Initiate argument is scoped to the lifetime
+	// of the current state. However, the Initiate method is blocking and the
+	// ctx instance is cancelled properly only after Initiate returns. Because
+	// of that, we cannot use ctx as round timeout signal as Initiate would
+	// hang forever if something goes wrong. To avoid such a resource leak,
+	// we set a round timeout based on state block duration and an average
+	// block time. The exact duration doesn't need to be super-accurate because
+	// if the timeout is hit, the execution will fail anyway. We just want
+	// to give enough time for round computation and make sure the round
+	// terminates regardless of the result.
+	stateBlocks := trts.DelayBlocks() + trts.ActiveBlocks()
+	stateDuration := 15 * time.Duration(stateBlocks)
+	roundCtx, roundCtxCancel := context.WithTimeout(ctx, stateDuration)
+	defer roundCtxCancel()
+
+	message, err := trts.member.tssRoundThree(roundCtx, trts.previousPhaseMessages)
 	if err != nil {
 		return err
 	}
@@ -337,11 +388,11 @@ type finalizationState struct {
 }
 
 func (fs *finalizationState) DelayBlocks() uint64 {
-	return silentStateDelayBlocks
+	return finalizationStateDelayBlocks
 }
 
 func (fs *finalizationState) ActiveBlocks() uint64 {
-	return silentStateActiveBlocks
+	return finalizationStateActiveBlocks
 }
 
 func (fs *finalizationState) Initiate(ctx context.Context) error {
@@ -351,7 +402,22 @@ func (fs *finalizationState) Initiate(ctx context.Context) error {
 		return fmt.Errorf("inactive members detected")
 	}
 
-	return fs.member.tssFinalize(ctx, fs.previousPhaseMessages)
+	// The ctx instance passed as Initiate argument is scoped to the lifetime
+	// of the current state. However, the Initiate method is blocking and the
+	// ctx instance is cancelled properly only after Initiate returns. Because
+	// of that, we cannot use ctx as round timeout signal as Initiate would
+	// hang forever if something goes wrong. To avoid such a resource leak,
+	// we set a round timeout based on state block duration and an average
+	// block time. The exact duration doesn't need to be super-accurate because
+	// if the timeout is hit, the execution will fail anyway. We just want
+	// to give enough time for round computation and make sure the round
+	// terminates regardless of the result.
+	stateBlocks := fs.DelayBlocks() + fs.ActiveBlocks()
+	stateDuration := 15 * time.Duration(stateBlocks)
+	roundCtx, roundCtxCancel := context.WithTimeout(ctx, stateDuration)
+	defer roundCtxCancel()
+
+	return fs.member.tssFinalize(roundCtx, fs.previousPhaseMessages)
 }
 
 func (fs *finalizationState) Receive(msg net.Message) error {
