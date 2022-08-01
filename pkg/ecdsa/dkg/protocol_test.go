@@ -593,7 +593,7 @@ func TestTssRoundTwo_SymmetricKeyMissing(t *testing.T) {
 		// Cleanup symmetric key cache.
 		member.symmetricKeys = make(map[group.MemberIndex]ephemeral.SymmetricKey)
 
-		ctx, cancelCtx := context.WithTimeout(context.Background(), 1*time.Second)
+		ctx, cancelCtx := context.WithTimeout(context.Background(), 10*time.Second)
 
 		_, err := member.tssRoundTwo(ctx, receivedMessages)
 
@@ -930,7 +930,7 @@ func TestTssRoundThree_SymmetricKeyMissing(t *testing.T) {
 		// Cleanup symmetric key cache.
 		member.symmetricKeys = make(map[group.MemberIndex]ephemeral.SymmetricKey)
 
-		ctx, cancelCtx := context.WithTimeout(context.Background(), 1*time.Second)
+		ctx, cancelCtx := context.WithTimeout(context.Background(), 10*time.Second)
 
 		_, err := member.tssRoundThree(ctx, receivedMessages)
 
