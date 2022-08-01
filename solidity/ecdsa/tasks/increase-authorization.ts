@@ -6,12 +6,6 @@ import type { HardhatRuntimeEnvironment } from "hardhat/types"
 task("increase-authorization", "Increases authorization")
   .addParam("owner", "Stake Owner address", undefined, types.string)
   .addParam("provider", "Staking Provider", undefined, types.string)
-  .addParam(
-    "application",
-    "Name of Application Contract",
-    undefined,
-    types.string
-  )
   .addOptionalParam("authorizer", "Stake Authorizer", undefined, types.string)
   .addOptionalParam(
     "authorization",
@@ -28,18 +22,17 @@ async function setup(
   args: {
     owner: string
     provider: string
-    application: string
     authorizer: string
     authorization: BigNumber
   }
 ) {
   const { ethers, helpers } = hre
-  const { owner, provider, application } = args
+  const { owner, provider } = args
   let { authorizer, authorization } = args
 
   const { to1e18, from1e18 } = helpers.number
   const staking = await helpers.contracts.getContract("TokenStaking")
-  const applicationContract = await helpers.contracts.getContract(application)
+  const walletRegistry = await helpers.contracts.getContract("WalletRegistry")
 
   // If not set, authorizer can be the owner. This simplification is used for
   // development purposes.
@@ -50,7 +43,7 @@ async function setup(
   if (authorization) {
     authorization = to1e18(authorization)
   } else {
-    authorization = await applicationContract.minimumAuthorization()
+    authorization = await walletRegistry.minimumAuthorization()
   }
 
   const authorizerSigner = await ethers.getSigner(authorizer)
@@ -58,7 +51,7 @@ async function setup(
   console.log(
     `Increasing authorization ${from1e18(
       authorization
-    )} for the ${application.toString()}...`
+    )} for the Wallet Registry...`
   )
 
   await (
@@ -66,17 +59,17 @@ async function setup(
       .connect(authorizerSigner)
       .increaseAuthorization(
         provider,
-        applicationContract.address,
+        walletRegistry.address,
         authorization
       )
   ).wait()
 
   const authorizedStaked = await staking.authorizedStake(
     provider,
-    applicationContract.address
+    walletRegistry.address
   )
 
   console.log(
-    `Authorization for ${application.toString()} was increased to ${authorizedStaked.toString()}`
+    `Authorization for Wallet Registry was increased to ${authorizedStaked.toString()}`
   )
 }

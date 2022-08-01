@@ -6,12 +6,6 @@ task("register-operator", "Registers an operator")
   .addParam("owner", "Stake Owner address", undefined, types.string)
   .addParam("provider", "Staking Provider", undefined, types.string)
   .addParam("operator", "Staking Operator", undefined, types.string)
-  .addParam(
-    "application",
-    "Name of Application Contract",
-    undefined,
-    types.string
-  )
   .setAction(async (args, hre) => {
     await setup(hre, args)
   })
@@ -22,13 +16,12 @@ async function setup(
     owner: string
     provider: string
     operator: string
-    application: string
   }
 ) {
   const { ethers, helpers } = hre
-  const { provider, operator, application } = args
+  const { provider, operator } = args
 
-  const applicationContract = await helpers.contracts.getContract(application)
+  const walletRegistry = await helpers.contracts.getContract("WalletRegistry")
 
   console.log(
     `Registering operator ${operator.toString()} for a staking provider ${provider.toString()}...`
@@ -36,7 +29,7 @@ async function setup(
 
   const stakingProviderSigner = await ethers.getSigner(provider)
   await (
-    await applicationContract
+    await walletRegistry
       .connect(stakingProviderSigner)
       .registerOperator(operator)
   ).wait()
