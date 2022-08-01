@@ -53,7 +53,7 @@ contract BeaconDkgValidator {
     ///      DKG result.
     uint256 public constant signatureByteSize = 65;
 
-    SortitionPool public sortitionPool;
+    SortitionPool public immutable sortitionPool;
 
     constructor(SortitionPool _sortitionPool) {
         require(
