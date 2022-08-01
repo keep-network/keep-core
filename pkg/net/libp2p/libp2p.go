@@ -32,6 +32,8 @@ var logger = log.Logger("keep-libp2p")
 
 // Defaults from ipfs
 const (
+	// DefaultPort is the default value for the connection port.
+	DefaultPort = 3919
 	// DefaultConnMgrHighWater is the default value for the connection managers
 	// 'high water' mark
 	DefaultConnMgrHighWater = 900
@@ -72,7 +74,7 @@ type Config struct {
 	Peers              []string
 	Port               int
 	AnnouncedAddresses []string
-	DisseminationTime  int
+	DisseminationTime  int // TODO: Convert to time.Duration
 }
 
 type provider struct {

@@ -13,13 +13,14 @@ import {
   signAndSubmitUnrecoverableDkgResult,
   hashDKGMembers,
   expectDkgResultSubmittedEvent,
+  signDkgResult,
 } from "./utils/dkg"
 import { registerOperators } from "./utils/operators"
 import { selectGroup, createGroup, hashUint32Array } from "./utils/groups"
 import { fakeTokenStaking } from "./mocks/staking"
 
 import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
-import type { BigNumber, ContractTransaction, Signer } from "ethers"
+import type { BigNumber, BytesLike, ContractTransaction } from "ethers"
 import type { Operator } from "./utils/operators"
 import type { BeaconDkg as DKG } from "../typechain/RandomBeaconStub"
 import type { FakeContract } from "@defi-wonderland/smock"
@@ -34,6 +35,10 @@ const { createSnapshot, restoreSnapshot } = helpers.snapshot
 // we declare a new type instead of using `RandomBeaconStub & RandomBeacon` intersection.
 type RandomBeaconTest = RandomBeacon & {
   getDkgData: () => Promise<DKG.DataStructOutput>
+  roughlyAddGroup: (
+    groupPubKey: BytesLike,
+    groupMembersHash: BytesLike
+  ) => Promise<ContractTransaction>
 }
 
 const fixture = async () => {
@@ -1226,6 +1231,88 @@ describe("RandomBeacon - Group Creation", () => {
                     })
                   })
                 }
+              )
+            })
+          })
+
+          context("with a public key of invalid length", async () => {
+            it("should revert", async () => {
+              const invalidPublicKey = groupPublicKey.slice(0, -2) // remove the last byte
+              const { members, signingMembersIndices, signaturesBytes } =
+                await signDkgResult(
+                  signers,
+                  invalidPublicKey,
+                  noMisbehaved,
+                  startBlock,
+                  constants.groupThreshold
+                )
+
+              const submitterIndex = 1
+              // submitter has index 1 and we need to -1 it
+              // given the array is indexed from 0
+              const submitter = signers[0].signer
+
+              const membersHash = hashDKGMembers(members, noMisbehaved)
+              const dkgResult: DKG.ResultStruct = {
+                submitterMemberIndex: submitterIndex,
+                groupPubKey: invalidPublicKey,
+                misbehavedMembersIndices: noMisbehaved,
+                signatures: signaturesBytes,
+                signingMembersIndices,
+                members,
+                membersHash,
+              }
+
+              await expect(
+                randomBeacon.connect(submitter).submitDkgResult(dkgResult)
+              ).to.be.revertedWith("Invalid length of the public key")
+            })
+          })
+
+          context("with a group already registered", async () => {
+            before(async () => {
+              await createSnapshot()
+              await randomBeacon.roughlyAddGroup(
+                groupPublicKey,
+                // group members do not matter for this test
+                "0x0000000000000000000000000000000000000000000000000000000000000000"
+              )
+            })
+
+            after(async () => {
+              await restoreSnapshot()
+            })
+
+            it("should revert", async () => {
+              const { members, signingMembersIndices, signaturesBytes } =
+                await signDkgResult(
+                  signers,
+                  groupPublicKey,
+                  noMisbehaved,
+                  startBlock,
+                  constants.groupThreshold
+                )
+
+              const submitterIndex = 1
+              // submitter has index 1 and we need to -1 it
+              // given the array is indexed from 0
+              const submitter = signers[0].signer
+
+              const membersHash = hashDKGMembers(members, noMisbehaved)
+              const dkgResult: DKG.ResultStruct = {
+                submitterMemberIndex: submitterIndex,
+                groupPubKey: groupPublicKey,
+                misbehavedMembersIndices: noMisbehaved,
+                signatures: signaturesBytes,
+                signingMembersIndices,
+                members,
+                membersHash,
+              }
+
+              await expect(
+                randomBeacon.connect(submitter).submitDkgResult(dkgResult)
+              ).to.be.revertedWith(
+                "Group with this public key was already registered"
               )
             })
           })

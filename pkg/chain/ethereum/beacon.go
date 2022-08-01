@@ -510,6 +510,13 @@ func (mrb *mockRandomBeacon) SubmitDKGResult(
 	mrb.activeGroupMutex.Lock()
 	defer mrb.activeGroupMutex.Unlock()
 
+	// Abort if there is no DKG in progress. This check is needed to handle a
+	// situation in which two operators of the same client attempt to submit
+	// the DKG result.
+	if mrb.currentDkgStartBlock == nil {
+		return nil
+	}
+
 	blockNumber, err := mrb.blockCounter.CurrentBlock()
 	if err != nil {
 		return fmt.Errorf("failed to get the current block")

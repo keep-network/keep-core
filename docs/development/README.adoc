@@ -54,6 +54,68 @@ then run this script 3 times with a different `<address>`.
 
 TBD
 
+==== Configuration
+
+===== Application
+
+The client expects configuration options to be specified in a config file or passed
+as parameters. If you specify an option by using a parameter on the command line,
+it overrides the value from the configuration file.
+
+Application configuration can be stored in a file and passed to the application
+run command with the `--config` flag. Example:
+[source,bash]
+----
+./keep-client --config /path/to/your/config.toml start
+----
+
+Configuration files in formats TOML, YAML and JSON are supported.
+
+====== Operator's Ethereum Key File
+
+Ethereum Key File is expected to be encrypted with a password. The password has
+to be provided in prompt after the client starts or configured as environment
+variable `KEEP_ETHEREUM_PASSWORD`.
+
+====== Command-line Options
+
+[source,bash,role=small]
+----
+include::cmd-help[]
+----
+
+====== Sample Config File
+
+[source,toml,role=small]
+----
+include::../../configs/config.toml.SAMPLE[]
+----
+
+===== Network
+
+Default port mappings.
+
+[%header,cols=2*]
+|===
+|Egress
+|Port
+
+|Keep Network
+| TCP: `3919`
+|===
+
+[%header,cols=2*]
+|===
+|Ingress
+|Port
+
+|Keep Network
+|`3919`
+|===
+
+If you set a different `port` in your configuration, or configure `peers` with
+non-default ports configured, firewall rules will need to be adjusted accordingly.
+
 == Development Guidelines
 
 There are two primary languages in the T code right now:
