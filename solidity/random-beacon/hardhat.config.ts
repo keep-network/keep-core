@@ -116,16 +116,17 @@ const config: HardhatUserConfig = {
     },
   },
   external: {
-    contracts: process.env.USE_EXTERNAL_DEPLOY === "true"
-    ? [
-        {
-          artifacts:
-            "node_modules/@threshold-network/solidity-contracts/export/artifacts",
-          deploy:
-            "node_modules/@threshold-network/solidity-contracts/export/deploy",
-        },
-      ]
-    : undefined,
+    contracts:
+      process.env.USE_EXTERNAL_DEPLOY === "true"
+        ? [
+            {
+              artifacts:
+                "node_modules/@threshold-network/solidity-contracts/export/artifacts",
+              deploy:
+                "node_modules/@threshold-network/solidity-contracts/export/deploy",
+            },
+          ]
+        : undefined,
     // deployments: {
     //   // For hardhat environment we can fork the mainnet, so we need to point it
     //   // to the contract artifacts.
