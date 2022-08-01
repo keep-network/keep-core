@@ -22,11 +22,10 @@ describe("ReimbursementPool", () => {
 
   // prettier-ignore
   before(async () => {
+    const signers = (await ethers.getSigners()).slice(3)
     const { deployer } = await helpers.signers.getNamedSigners()
     owner = deployer
-    thirdParty = (await ethers.getSigners())[3]
-    thirdPartyContract = (await ethers.getSigners())[4]
-    refundee = (await ethers.getSigners())[5]
+    ;[thirdParty, thirdPartyContract, refundee] = signers
   })
 
   beforeEach("load test fixture", async () => {
