@@ -84,6 +84,117 @@ func EvaluateRetryParticipantsForSigning(
 	return seats, nil
 }
 
+func excludeSingleOperator(
+	rng *rand.Rand,
+	groupMembers []chain.Address,
+	index int,
+	operatorToSeatCount map[chain.Address]uint,
+	operators []chain.Address,
+) ([]chain.Address, int, bool) {
+	if index < len(operators) {
+		rng.Shuffle(len(operators), func(i, j int) {
+			operators[i], operators[j] = operators[j], operators[i]
+		})
+		removedOperator := operators[index]
+		usedOperators := make([]chain.Address, 0, len(groupMembers))
+		for _, operator := range groupMembers {
+			if operator != removedOperator {
+				usedOperators = append(usedOperators, operator)
+			}
+		}
+		return usedOperators, 0, true
+	} else {
+		return nil, len(operators), false
+	}
+}
+
+func excludeOperatorPairs(
+	rng *rand.Rand,
+	groupMembers []chain.Address,
+	index int,
+	operatorToSeatCount map[chain.Address]uint,
+	operators []chain.Address,
+	retryParticipantsCount int,
+) ([]chain.Address, int, bool) {
+	pairIndexes := make([][2]int, 0, len(operators)*len(operators))
+	for i := 0; i < len(operators)-1; i++ {
+		for j := i + 1; j < len(operators); j++ {
+			leftOperator := operators[i]
+			rightOperator := operators[j]
+			count := len(groupMembers) -
+				int(operatorToSeatCount[leftOperator]) -
+				int(operatorToSeatCount[rightOperator])
+
+			if count >= int(retryParticipantsCount) {
+				pairIndexes = append(pairIndexes, [2]int{i, j})
+			}
+		}
+	}
+	if index < len(pairIndexes) {
+		rng.Shuffle(len(pairIndexes), func(i, j int) {
+			pairIndexes[i], pairIndexes[j] = pairIndexes[j], pairIndexes[i]
+		})
+		pair := pairIndexes[index]
+		leftOperator := operators[pair[0]]
+		rightOperator := operators[pair[1]]
+		usedOperators := make([]chain.Address, 0, len(groupMembers))
+		for _, operator := range groupMembers {
+			if operator != leftOperator && operator != rightOperator {
+				usedOperators = append(usedOperators, operator)
+			}
+		}
+		return usedOperators, 0, true
+	} else {
+		return nil, len(pairIndexes), false
+	}
+}
+
+func excludeOperatorTriplets(
+	rng *rand.Rand,
+	groupMembers []chain.Address,
+	index int,
+	operatorToSeatCount map[chain.Address]uint,
+	operators []chain.Address,
+	retryParticipantsCount int,
+) ([]chain.Address, int, bool) {
+	tripletIndexes := make([][3]int, 0, len(operators)*len(operators)*len(operators))
+	for i := 0; i < len(operators)-2; i++ {
+		for j := i + 1; j < len(operators)-1; j++ {
+			for k := j + 1; k < len(operators); k++ {
+				leftOperator := operators[i]
+				middleOperator := operators[j]
+				rightOperator := operators[j]
+				count := len(groupMembers) -
+					int(operatorToSeatCount[leftOperator]) -
+					int(operatorToSeatCount[middleOperator]) -
+					int(operatorToSeatCount[rightOperator])
+
+				if count >= int(retryParticipantsCount) {
+					tripletIndexes = append(tripletIndexes, [3]int{i, j, k})
+				}
+			}
+		}
+	}
+	if index < len(tripletIndexes) {
+		rng.Shuffle(len(tripletIndexes), func(i, j int) {
+			tripletIndexes[i], tripletIndexes[j] = tripletIndexes[j], tripletIndexes[i]
+		})
+		triplet := tripletIndexes[index]
+		leftOperator := operators[triplet[0]]
+		middleOperator := operators[triplet[1]]
+		rightOperator := operators[triplet[2]]
+		usedOperators := make([]chain.Address, 0, len(groupMembers))
+		for _, operator := range groupMembers {
+			if operator != leftOperator && operator != middleOperator && operator != rightOperator {
+				usedOperators = append(usedOperators, operator)
+			}
+		}
+		return usedOperators, 0, true
+	} else {
+		return nil, len(tripletIndexes), false
+	}
+}
+
 // EvaluateRetryParticipantsForKeyGeneration takes in a slice of `groupMembers`
 // and returns a subslice of those same members of length >=
 // `retryParticipantsCount` randomly according to the provided `seed` and
@@ -119,7 +230,8 @@ func EvaluateRetryParticipantsForKeyGeneration(
 		)
 	}
 	operatorToSeatCount := calculateSeatCount(groupMembers)
-	rand.Seed(seed)
+	source := rand.NewSource(seed)
+	rng := rand.New(source)
 
 	operators := make([]chain.Address, 0, len(operatorToSeatCount))
 	for operator := range operatorToSeatCount {
@@ -128,97 +240,51 @@ func EvaluateRetryParticipantsForKeyGeneration(
 		}
 	}
 	sort.Sort(byAddress(operators))
-	rand.Shuffle(len(operators), func(i, j int) {
-		operators[i], operators[j] = operators[j], operators[i]
-	})
 
-	// Try excluding one operator at a time from the operator set.
-	if int(retryCount) < len(operators) {
-		removedOperator := operators[retryCount]
-		usedOperators := make([]chain.Address, 0, len(groupMembers))
-		for _, operator := range groupMembers {
-			if operator != removedOperator {
-				usedOperators = append(usedOperators, operator)
-			}
-		}
+	usedOperators, tries, ok := excludeSingleOperator(
+		rng,
+		groupMembers,
+		int(retryCount),
+		operatorToSeatCount,
+		operators,
+	)
+	if ok {
 		return usedOperators, nil
 	} else {
-		retryCount -= uint(len(operators))
-		// Since we're still getting failures after excluding all of the operators
-		// individually, try excluding the pairs of operators.
-		pairIndexes := make([][2]int, 0, len(operators)*len(operators))
-		for i := 0; i < len(operators)-1; i++ {
-			for j := i + 1; j < len(operators); j++ {
-				leftOperator := operators[i]
-				rightOperator := operators[j]
-				count := len(groupMembers) -
-					int(operatorToSeatCount[leftOperator]) -
-					int(operatorToSeatCount[rightOperator])
+		retryCount -= uint(tries)
+	}
 
-				if count >= int(retryParticipantsCount) {
-					pairIndexes = append(pairIndexes, [2]int{i, j})
-				}
-			}
-		}
-		if retryCount < uint(len(pairIndexes)) {
-			rand.Shuffle(len(pairIndexes), func(i, j int) {
-				pairIndexes[i], pairIndexes[j] = pairIndexes[j], pairIndexes[i]
-			})
-			pair := pairIndexes[retryCount]
-			leftOperator := operators[pair[0]]
-			rightOperator := operators[pair[1]]
-			usedOperators := make([]chain.Address, 0, len(groupMembers))
-			for _, operator := range groupMembers {
-				if operator != leftOperator && operator != rightOperator {
-					usedOperators = append(usedOperators, operator)
-				}
-			}
-			return usedOperators, nil
-		} else {
-			retryCount -= uint(len(pairIndexes))
-			// Since we're still getting failures after excluding all of the pairs of
-			// operators, try excluding the triplets of operators.
-			tripletIndexes := make([][3]int, 0, len(operators)*len(operators)*len(operators))
-			for i := 0; i < len(operators)-2; i++ {
-				for j := i + 1; i < len(operators)-1; j++ {
-					for k := j + 1; j < len(operators); k++ {
-						leftOperator := operators[i]
-						middleOperator := operators[j]
-						rightOperator := operators[j]
-						count := len(groupMembers) -
-							int(operatorToSeatCount[leftOperator]) -
-							int(operatorToSeatCount[middleOperator]) -
-							int(operatorToSeatCount[rightOperator])
+	usedOperators, tries, ok = excludeOperatorPairs(
+		rng,
+		groupMembers,
+		int(retryCount),
+		operatorToSeatCount,
+		operators,
+		int(retryParticipantsCount),
+	)
+	if ok {
+		return usedOperators, nil
+	} else {
+		retryCount -= uint(tries)
+	}
 
-						if count >= int(retryParticipantsCount) {
-							tripletIndexes = append(tripletIndexes, [3]int{i, j, k})
-						}
-					}
-				}
-			}
-			if retryCount < uint(len(tripletIndexes)) {
-				rand.Shuffle(len(tripletIndexes), func(i, j int) {
-					tripletIndexes[i], tripletIndexes[j] = tripletIndexes[j], tripletIndexes[i]
-				})
-				triplet := tripletIndexes[retryCount]
-				leftOperator := operators[triplet[0]]
-				middleOperator := operators[triplet[1]]
-				rightOperator := operators[triplet[2]]
-				usedOperators := make([]chain.Address, 0, len(groupMembers))
-				for _, operator := range groupMembers {
-					if operator != leftOperator && operator != middleOperator && operator != rightOperator {
-						usedOperators = append(usedOperators, operator)
-					}
-				}
-				return usedOperators, nil
-			} else {
-				return nil, fmt.Errorf(
-					"the retry count [%d] was too large to handle! "+
-						"Tried every single, pair, and triplet, but still needed [%d] more.",
-					originalRetryCount,
-					retryCount,
-				)
-			}
-		}
+	usedOperators, tries, ok = excludeOperatorTriplets(
+		rng,
+		groupMembers,
+		int(retryCount),
+		operatorToSeatCount,
+		operators,
+		int(retryParticipantsCount),
+	)
+	if ok {
+		return usedOperators, nil
+	} else {
+		retryCount -= uint(tries)
+		return nil, fmt.Errorf(
+			"the retry count [%d] was too large to handle! "+
+				"Tried every single, pair, and triplet, but still needed [%d] more.",
+			originalRetryCount,
+			retryCount,
+		)
 	}
 }

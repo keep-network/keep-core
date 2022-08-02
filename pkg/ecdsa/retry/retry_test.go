@@ -68,7 +68,7 @@ func TestEvaluateRetryParticipantsForKeyGeneration_FewOperators(t *testing.T) {
 	for i := 0; i < 100; i++ {
 		groupMembers[i] = chain.Address(fmt.Sprintf("Operator-%d", i%20))
 	}
-	assertInvariants(t, EvaluateRetryParticipantsForKeyGeneration, groupMembers, int64(456), 0, 90)
+	assertInvariants(t, EvaluateRetryParticipantsForKeyGeneration, groupMembers, int64(456), 800, 80)
 }
 
 func TestEvaluateRetryParticipantsForKeyGeneration_NotEnoughOperators(t *testing.T) {
