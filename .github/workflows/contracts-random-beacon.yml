@@ -157,7 +157,7 @@ jobs:
         run: yarn install --network-concurrency 1 --frozen-lockfile
 
       - name: Deploy contracts
-        run: yarn deploy
+        run: yarn deploy:test
 
   contracts-deployment-testnet:
     needs: [contracts-detect-changes, contracts-build-and-test]
