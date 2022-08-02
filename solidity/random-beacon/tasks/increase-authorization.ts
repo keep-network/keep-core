@@ -1,9 +1,9 @@
 import { task, types } from "hardhat/config"
 
-import type { BigNumber } from "ethers"
+import type { BigNumberish } from "ethers"
 import type { HardhatRuntimeEnvironment } from "hardhat/types"
 
-task("increase-authorization", "Increases authorization")
+task("initialize:authorize", "Sets authorization")
   .addParam("owner", "Stake Owner address", undefined, types.string)
   .addParam("provider", "Staking Provider", undefined, types.string)
   .addOptionalParam("authorizer", "Stake Authorizer", undefined, types.string)
@@ -14,58 +14,62 @@ task("increase-authorization", "Increases authorization")
     types.int
   )
   .setAction(async (args, hre) => {
-    await setup(hre, args)
+    await increaseAuthorization(hre, args)
   })
 
-async function setup(
+async function increaseAuthorization(
   hre: HardhatRuntimeEnvironment,
   args: {
     owner: string
     provider: string
     authorizer: string
-    authorization: BigNumber
+    authorization: BigNumberish
   }
 ) {
   const { ethers, helpers } = hre
-  const { owner, provider } = args
-  let { authorizer, authorization } = args
+  const owner = ethers.utils.getAddress(args.owner)
+  const provider = ethers.utils.getAddress(args.provider)
+
+  const randomBeacon = await helpers.contracts.getContract("RandomBeacon")
+
+  // Authorizer can equal to the owner if not set otherwise. This simplification
+  // is used for development purposes.
+  const authorizer = args.authorizer
+    ? ethers.utils.getAddress(args.authorizer)
+    : owner
 
   const { to1e18, from1e18 } = helpers.number
   const staking = await helpers.contracts.getContract("TokenStaking")
-  const randomBeacon = await helpers.contracts.getContract("RandomBeacon")
 
-  // If not set, authorizer can be the owner. This simplification is used for
-  // development purposes.
-  if (!authorizer) {
-    authorizer = owner
-  }
+  const authorization = args.authorization
+    ? to1e18(args.authorization)
+    : await randomBeacon.minimumAuthorization()
 
-  if (authorization) {
-    authorization = to1e18(authorization)
-  } else {
-    authorization = await randomBeacon.minimumAuthorization()
-  }
-
-  const authorizerSigner = await ethers.getSigner(authorizer)
-
-  console.log(
-    `Increasing authorization ${from1e18(
-      authorization
-    )} for the Random Beacon...`
-  )
-
-  await (
-    await staking
-      .connect(authorizerSigner)
-      .increaseAuthorization(provider, randomBeacon.address, authorization)
-  ).wait()
-
-  const authorizedStaked = await staking.authorizedStake(
+  const currentAuthorization = await staking.authorizedStake(
     provider,
     randomBeacon.address
   )
 
+  if (currentAuthorization.gte(authorization)) {
+    console.log(
+      `Authorized stake for the Random Beacon is ${from1e18(
+        currentAuthorization
+      )} T`
+    )
+    return
+  }
+
+  const increaseAmount = authorization.sub(currentAuthorization)
+
   console.log(
-    `Authorization for Random Beacon was increased to ${authorizedStaked.toString()}`
+    `Increasing Random Beacon's authorization by ${from1e18(
+      increaseAmount
+    )} T to ${from1e18(authorization)} T...`
   )
+
+  await (
+    await staking
+      .connect(await ethers.getSigner(authorizer))
+      .increaseAuthorization(provider, randomBeacon.address, increaseAmount)
+  ).wait()
 }
