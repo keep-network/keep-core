@@ -23,7 +23,7 @@ import (
 var WalletRegistryCommand cli.Command
 
 var walletRegistryDescription = `The wallet-registry command allows calling the WalletRegistry contract on an
-	ETH-like network. It has subcommands corresponding to each contract method,
+	Ethereum network. It has subcommands corresponding to each contract method,
 	which respectively each take parameters based on the contract method's
 	parameters.
 

@@ -51,6 +51,26 @@ library Groups {
 
     event GroupRegistered(uint64 indexed groupId, bytes indexed groupPubKey);
 
+    /// @notice Performs preliminary validation of a new group public key.
+    ///         The group public key must be unique and have 128 bytes in length.
+    ///         If the validation fails, the function reverts. This function
+    ///         must be called first for a public key of a group added with
+    ///         `addGroup` function.
+    /// @param groupPubKey Candidate group public key
+    function validatePublicKey(Data storage self, bytes calldata groupPubKey)
+        internal
+        view
+    {
+        require(groupPubKey.length == 128, "Invalid length of the public key");
+
+        bytes32 groupPubKeyHash = keccak256(groupPubKey);
+
+        require(
+            self.groupsData[groupPubKeyHash].registrationBlockNumber == 0,
+            "Group with this public key was already registered"
+        );
+    }
+
     /// @notice Adds a new candidate group. The group is stored with group public
     ///         key and group members, but is not yet activated.
     /// @dev The group members list is stored with all misbehaved members filtered out.
@@ -64,16 +84,6 @@ library Groups {
         bytes32 membersHash
     ) internal {
         bytes32 groupPubKeyHash = keccak256(groupPubKey);
-
-        require(
-            self.groupsData[groupPubKeyHash].registrationBlockNumber == 0,
-            "Group with this public key was already registered"
-        );
-
-        require(
-            self.groupsRegistry.length <= type(uint64).max,
-            "Max number of registered groups reached"
-        );
 
         // We use group from storage that is assumed to be a struct set to the
         // default values. We need to remember to overwrite fields in case a

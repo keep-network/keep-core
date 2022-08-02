@@ -20,8 +20,8 @@ import (
 
 	"github.com/ipfs/go-log"
 
+	"github.com/keep-network/keep-common/pkg/chain/ethereum"
 	chainutil "github.com/keep-network/keep-common/pkg/chain/ethereum/ethutil"
-	"github.com/keep-network/keep-common/pkg/chain/ethlike"
 	"github.com/keep-network/keep-common/pkg/subscription"
 	"github.com/keep-network/keep-core/pkg/chain/ethereum/tbtc/gen/abi"
 )
@@ -40,9 +40,9 @@ type Bridge struct {
 	callerOptions     *bind.CallOpts
 	transactorOptions *bind.TransactOpts
 	errorResolver     *chainutil.ErrorResolver
-	nonceManager      *ethlike.NonceManager
+	nonceManager      *ethereum.NonceManager
 	miningWaiter      *chainutil.MiningWaiter
-	blockCounter      *ethlike.BlockCounter
+	blockCounter      *ethereum.BlockCounter
 
 	transactionMutex *sync.Mutex
 }
@@ -52,19 +52,16 @@ func NewBridge(
 	chainId *big.Int,
 	accountKey *keystore.Key,
 	backend bind.ContractBackend,
-	nonceManager *ethlike.NonceManager,
+	nonceManager *ethereum.NonceManager,
 	miningWaiter *chainutil.MiningWaiter,
-	blockCounter *ethlike.BlockCounter,
+	blockCounter *ethereum.BlockCounter,
 	transactionMutex *sync.Mutex,
 ) (*Bridge, error) {
 	callerOptions := &bind.CallOpts{
 		From: accountKey.Address,
 	}
 
-	// FIXME Switch to bind.NewKeyedTransactorWithChainID when
-	// FIXME celo-org/celo-blockchain merges in changes from upstream
-	// FIXME ethereum/go-ethereum beyond v1.9.25.
-	transactorOptions, err := chainutil.NewKeyedTransactorWithChainID(
+	transactorOptions, err := bind.NewKeyedTransactorWithChainID(
 		accountKey.PrivateKey,
 		chainId,
 	)
@@ -5903,10 +5900,10 @@ func (b *Bridge) WalletsAtBlock(
 // ------ Events -------
 
 func (b *Bridge) DepositParametersUpdatedEvent(
-	opts *ethlike.SubscribeOpts,
+	opts *ethereum.SubscribeOpts,
 ) *BDepositParametersUpdatedSubscription {
 	if opts == nil {
-		opts = new(ethlike.SubscribeOpts)
+		opts = new(ethereum.SubscribeOpts)
 	}
 	if opts.Tick == 0 {
 		opts.Tick = chainutil.DefaultSubscribeOptsTick
@@ -5923,7 +5920,7 @@ func (b *Bridge) DepositParametersUpdatedEvent(
 
 type BDepositParametersUpdatedSubscription struct {
 	contract *Bridge
-	opts     *ethlike.SubscribeOpts
+	opts     *ethereum.SubscribeOpts
 }
 
 type bridgeDepositParametersUpdatedFunc func(
@@ -6086,12 +6083,12 @@ func (b *Bridge) PastDepositParametersUpdatedEvents(
 }
 
 func (b *Bridge) DepositRevealedEvent(
-	opts *ethlike.SubscribeOpts,
+	opts *ethereum.SubscribeOpts,
 	depositorFilter []common.Address,
 	walletPubKeyHashFilter [][20]byte,
 ) *BDepositRevealedSubscription {
 	if opts == nil {
-		opts = new(ethlike.SubscribeOpts)
+		opts = new(ethereum.SubscribeOpts)
 	}
 	if opts.Tick == 0 {
 		opts.Tick = chainutil.DefaultSubscribeOptsTick
@@ -6110,7 +6107,7 @@ func (b *Bridge) DepositRevealedEvent(
 
 type BDepositRevealedSubscription struct {
 	contract               *Bridge
-	opts                   *ethlike.SubscribeOpts
+	opts                   *ethereum.SubscribeOpts
 	depositorFilter        []common.Address
 	walletPubKeyHashFilter [][20]byte
 }
@@ -6299,10 +6296,10 @@ func (b *Bridge) PastDepositRevealedEvents(
 }
 
 func (b *Bridge) DepositsSweptEvent(
-	opts *ethlike.SubscribeOpts,
+	opts *ethereum.SubscribeOpts,
 ) *BDepositsSweptSubscription {
 	if opts == nil {
-		opts = new(ethlike.SubscribeOpts)
+		opts = new(ethereum.SubscribeOpts)
 	}
 	if opts.Tick == 0 {
 		opts.Tick = chainutil.DefaultSubscribeOptsTick
@@ -6319,7 +6316,7 @@ func (b *Bridge) DepositsSweptEvent(
 
 type BDepositsSweptSubscription struct {
 	contract *Bridge
-	opts     *ethlike.SubscribeOpts
+	opts     *ethereum.SubscribeOpts
 }
 
 type bridgeDepositsSweptFunc func(
@@ -6480,11 +6477,11 @@ func (b *Bridge) PastDepositsSweptEvents(
 }
 
 func (b *Bridge) FraudChallengeDefeatTimedOutEvent(
-	opts *ethlike.SubscribeOpts,
+	opts *ethereum.SubscribeOpts,
 	walletPubKeyHashFilter [][20]byte,
 ) *BFraudChallengeDefeatTimedOutSubscription {
 	if opts == nil {
-		opts = new(ethlike.SubscribeOpts)
+		opts = new(ethereum.SubscribeOpts)
 	}
 	if opts.Tick == 0 {
 		opts.Tick = chainutil.DefaultSubscribeOptsTick
@@ -6502,7 +6499,7 @@ func (b *Bridge) FraudChallengeDefeatTimedOutEvent(
 
 type BFraudChallengeDefeatTimedOutSubscription struct {
 	contract               *Bridge
-	opts                   *ethlike.SubscribeOpts
+	opts                   *ethereum.SubscribeOpts
 	walletPubKeyHashFilter [][20]byte
 }
 
@@ -6670,11 +6667,11 @@ func (b *Bridge) PastFraudChallengeDefeatTimedOutEvents(
 }
 
 func (b *Bridge) FraudChallengeDefeatedEvent(
-	opts *ethlike.SubscribeOpts,
+	opts *ethereum.SubscribeOpts,
 	walletPubKeyHashFilter [][20]byte,
 ) *BFraudChallengeDefeatedSubscription {
 	if opts == nil {
-		opts = new(ethlike.SubscribeOpts)
+		opts = new(ethereum.SubscribeOpts)
 	}
 	if opts.Tick == 0 {
 		opts.Tick = chainutil.DefaultSubscribeOptsTick
@@ -6692,7 +6689,7 @@ func (b *Bridge) FraudChallengeDefeatedEvent(
 
 type BFraudChallengeDefeatedSubscription struct {
 	contract               *Bridge
-	opts                   *ethlike.SubscribeOpts
+	opts                   *ethereum.SubscribeOpts
 	walletPubKeyHashFilter [][20]byte
 }
 
@@ -6860,11 +6857,11 @@ func (b *Bridge) PastFraudChallengeDefeatedEvents(
 }
 
 func (b *Bridge) FraudChallengeSubmittedEvent(
-	opts *ethlike.SubscribeOpts,
+	opts *ethereum.SubscribeOpts,
 	walletPubKeyHashFilter [][20]byte,
 ) *BFraudChallengeSubmittedSubscription {
 	if opts == nil {
-		opts = new(ethlike.SubscribeOpts)
+		opts = new(ethereum.SubscribeOpts)
 	}
 	if opts.Tick == 0 {
 		opts.Tick = chainutil.DefaultSubscribeOptsTick
@@ -6882,7 +6879,7 @@ func (b *Bridge) FraudChallengeSubmittedEvent(
 
 type BFraudChallengeSubmittedSubscription struct {
 	contract               *Bridge
-	opts                   *ethlike.SubscribeOpts
+	opts                   *ethereum.SubscribeOpts
 	walletPubKeyHashFilter [][20]byte
 }
 
@@ -7056,10 +7053,10 @@ func (b *Bridge) PastFraudChallengeSubmittedEvents(
 }
 
 func (b *Bridge) FraudParametersUpdatedEvent(
-	opts *ethlike.SubscribeOpts,
+	opts *ethereum.SubscribeOpts,
 ) *BFraudParametersUpdatedSubscription {
 	if opts == nil {
-		opts = new(ethlike.SubscribeOpts)
+		opts = new(ethereum.SubscribeOpts)
 	}
 	if opts.Tick == 0 {
 		opts.Tick = chainutil.DefaultSubscribeOptsTick
@@ -7076,7 +7073,7 @@ func (b *Bridge) FraudParametersUpdatedEvent(
 
 type BFraudParametersUpdatedSubscription struct {
 	contract *Bridge
-	opts     *ethlike.SubscribeOpts
+	opts     *ethereum.SubscribeOpts
 }
 
 type bridgeFraudParametersUpdatedFunc func(
@@ -7241,10 +7238,10 @@ func (b *Bridge) PastFraudParametersUpdatedEvents(
 }
 
 func (b *Bridge) GovernanceTransferredEvent(
-	opts *ethlike.SubscribeOpts,
+	opts *ethereum.SubscribeOpts,
 ) *BGovernanceTransferredSubscription {
 	if opts == nil {
-		opts = new(ethlike.SubscribeOpts)
+		opts = new(ethereum.SubscribeOpts)
 	}
 	if opts.Tick == 0 {
 		opts.Tick = chainutil.DefaultSubscribeOptsTick
@@ -7261,7 +7258,7 @@ func (b *Bridge) GovernanceTransferredEvent(
 
 type BGovernanceTransferredSubscription struct {
 	contract *Bridge
-	opts     *ethlike.SubscribeOpts
+	opts     *ethereum.SubscribeOpts
 }
 
 type bridgeGovernanceTransferredFunc func(
@@ -7422,10 +7419,10 @@ func (b *Bridge) PastGovernanceTransferredEvents(
 }
 
 func (b *Bridge) InitializedEvent(
-	opts *ethlike.SubscribeOpts,
+	opts *ethereum.SubscribeOpts,
 ) *BInitializedSubscription {
 	if opts == nil {
-		opts = new(ethlike.SubscribeOpts)
+		opts = new(ethereum.SubscribeOpts)
 	}
 	if opts.Tick == 0 {
 		opts.Tick = chainutil.DefaultSubscribeOptsTick
@@ -7442,7 +7439,7 @@ func (b *Bridge) InitializedEvent(
 
 type BInitializedSubscription struct {
 	contract *Bridge
-	opts     *ethlike.SubscribeOpts
+	opts     *ethereum.SubscribeOpts
 }
 
 type bridgeInitializedFunc func(
@@ -7601,11 +7598,11 @@ func (b *Bridge) PastInitializedEvents(
 }
 
 func (b *Bridge) MovedFundsSweepTimedOutEvent(
-	opts *ethlike.SubscribeOpts,
+	opts *ethereum.SubscribeOpts,
 	walletPubKeyHashFilter [][20]byte,
 ) *BMovedFundsSweepTimedOutSubscription {
 	if opts == nil {
-		opts = new(ethlike.SubscribeOpts)
+		opts = new(ethereum.SubscribeOpts)
 	}
 	if opts.Tick == 0 {
 		opts.Tick = chainutil.DefaultSubscribeOptsTick
@@ -7623,7 +7620,7 @@ func (b *Bridge) MovedFundsSweepTimedOutEvent(
 
 type BMovedFundsSweepTimedOutSubscription struct {
 	contract               *Bridge
-	opts                   *ethlike.SubscribeOpts
+	opts                   *ethereum.SubscribeOpts
 	walletPubKeyHashFilter [][20]byte
 }
 
@@ -7793,11 +7790,11 @@ func (b *Bridge) PastMovedFundsSweepTimedOutEvents(
 }
 
 func (b *Bridge) MovedFundsSweptEvent(
-	opts *ethlike.SubscribeOpts,
+	opts *ethereum.SubscribeOpts,
 	walletPubKeyHashFilter [][20]byte,
 ) *BMovedFundsSweptSubscription {
 	if opts == nil {
-		opts = new(ethlike.SubscribeOpts)
+		opts = new(ethereum.SubscribeOpts)
 	}
 	if opts.Tick == 0 {
 		opts.Tick = chainutil.DefaultSubscribeOptsTick
@@ -7815,7 +7812,7 @@ func (b *Bridge) MovedFundsSweptEvent(
 
 type BMovedFundsSweptSubscription struct {
 	contract               *Bridge
-	opts                   *ethlike.SubscribeOpts
+	opts                   *ethereum.SubscribeOpts
 	walletPubKeyHashFilter [][20]byte
 }
 
@@ -7983,11 +7980,11 @@ func (b *Bridge) PastMovedFundsSweptEvents(
 }
 
 func (b *Bridge) MovingFundsBelowDustReportedEvent(
-	opts *ethlike.SubscribeOpts,
+	opts *ethereum.SubscribeOpts,
 	walletPubKeyHashFilter [][20]byte,
 ) *BMovingFundsBelowDustReportedSubscription {
 	if opts == nil {
-		opts = new(ethlike.SubscribeOpts)
+		opts = new(ethereum.SubscribeOpts)
 	}
 	if opts.Tick == 0 {
 		opts.Tick = chainutil.DefaultSubscribeOptsTick
@@ -8005,7 +8002,7 @@ func (b *Bridge) MovingFundsBelowDustReportedEvent(
 
 type BMovingFundsBelowDustReportedSubscription struct {
 	contract               *Bridge
-	opts                   *ethlike.SubscribeOpts
+	opts                   *ethereum.SubscribeOpts
 	walletPubKeyHashFilter [][20]byte
 }
 
@@ -8171,11 +8168,11 @@ func (b *Bridge) PastMovingFundsBelowDustReportedEvents(
 }
 
 func (b *Bridge) MovingFundsCommitmentSubmittedEvent(
-	opts *ethlike.SubscribeOpts,
+	opts *ethereum.SubscribeOpts,
 	walletPubKeyHashFilter [][20]byte,
 ) *BMovingFundsCommitmentSubmittedSubscription {
 	if opts == nil {
-		opts = new(ethlike.SubscribeOpts)
+		opts = new(ethereum.SubscribeOpts)
 	}
 	if opts.Tick == 0 {
 		opts.Tick = chainutil.DefaultSubscribeOptsTick
@@ -8193,7 +8190,7 @@ func (b *Bridge) MovingFundsCommitmentSubmittedEvent(
 
 type BMovingFundsCommitmentSubmittedSubscription struct {
 	contract               *Bridge
-	opts                   *ethlike.SubscribeOpts
+	opts                   *ethereum.SubscribeOpts
 	walletPubKeyHashFilter [][20]byte
 }
 
@@ -8363,11 +8360,11 @@ func (b *Bridge) PastMovingFundsCommitmentSubmittedEvents(
 }
 
 func (b *Bridge) MovingFundsCompletedEvent(
-	opts *ethlike.SubscribeOpts,
+	opts *ethereum.SubscribeOpts,
 	walletPubKeyHashFilter [][20]byte,
 ) *BMovingFundsCompletedSubscription {
 	if opts == nil {
-		opts = new(ethlike.SubscribeOpts)
+		opts = new(ethereum.SubscribeOpts)
 	}
 	if opts.Tick == 0 {
 		opts.Tick = chainutil.DefaultSubscribeOptsTick
@@ -8385,7 +8382,7 @@ func (b *Bridge) MovingFundsCompletedEvent(
 
 type BMovingFundsCompletedSubscription struct {
 	contract               *Bridge
-	opts                   *ethlike.SubscribeOpts
+	opts                   *ethereum.SubscribeOpts
 	walletPubKeyHashFilter [][20]byte
 }
 
@@ -8553,10 +8550,10 @@ func (b *Bridge) PastMovingFundsCompletedEvents(
 }
 
 func (b *Bridge) MovingFundsParametersUpdatedEvent(
-	opts *ethlike.SubscribeOpts,
+	opts *ethereum.SubscribeOpts,
 ) *BMovingFundsParametersUpdatedSubscription {
 	if opts == nil {
-		opts = new(ethlike.SubscribeOpts)
+		opts = new(ethereum.SubscribeOpts)
 	}
 	if opts.Tick == 0 {
 		opts.Tick = chainutil.DefaultSubscribeOptsTick
@@ -8573,7 +8570,7 @@ func (b *Bridge) MovingFundsParametersUpdatedEvent(
 
 type BMovingFundsParametersUpdatedSubscription struct {
 	contract *Bridge
-	opts     *ethlike.SubscribeOpts
+	opts     *ethereum.SubscribeOpts
 }
 
 type bridgeMovingFundsParametersUpdatedFunc func(
@@ -8750,11 +8747,11 @@ func (b *Bridge) PastMovingFundsParametersUpdatedEvents(
 }
 
 func (b *Bridge) MovingFundsTimedOutEvent(
-	opts *ethlike.SubscribeOpts,
+	opts *ethereum.SubscribeOpts,
 	walletPubKeyHashFilter [][20]byte,
 ) *BMovingFundsTimedOutSubscription {
 	if opts == nil {
-		opts = new(ethlike.SubscribeOpts)
+		opts = new(ethereum.SubscribeOpts)
 	}
 	if opts.Tick == 0 {
 		opts.Tick = chainutil.DefaultSubscribeOptsTick
@@ -8772,7 +8769,7 @@ func (b *Bridge) MovingFundsTimedOutEvent(
 
 type BMovingFundsTimedOutSubscription struct {
 	contract               *Bridge
-	opts                   *ethlike.SubscribeOpts
+	opts                   *ethereum.SubscribeOpts
 	walletPubKeyHashFilter [][20]byte
 }
 
@@ -8938,11 +8935,11 @@ func (b *Bridge) PastMovingFundsTimedOutEvents(
 }
 
 func (b *Bridge) MovingFundsTimeoutResetEvent(
-	opts *ethlike.SubscribeOpts,
+	opts *ethereum.SubscribeOpts,
 	walletPubKeyHashFilter [][20]byte,
 ) *BMovingFundsTimeoutResetSubscription {
 	if opts == nil {
-		opts = new(ethlike.SubscribeOpts)
+		opts = new(ethereum.SubscribeOpts)
 	}
 	if opts.Tick == 0 {
 		opts.Tick = chainutil.DefaultSubscribeOptsTick
@@ -8960,7 +8957,7 @@ func (b *Bridge) MovingFundsTimeoutResetEvent(
 
 type BMovingFundsTimeoutResetSubscription struct {
 	contract               *Bridge
-	opts                   *ethlike.SubscribeOpts
+	opts                   *ethereum.SubscribeOpts
 	walletPubKeyHashFilter [][20]byte
 }
 
@@ -9126,12 +9123,12 @@ func (b *Bridge) PastMovingFundsTimeoutResetEvents(
 }
 
 func (b *Bridge) NewWalletRegisteredEvent(
-	opts *ethlike.SubscribeOpts,
+	opts *ethereum.SubscribeOpts,
 	ecdsaWalletIDFilter [][32]byte,
 	walletPubKeyHashFilter [][20]byte,
 ) *BNewWalletRegisteredSubscription {
 	if opts == nil {
-		opts = new(ethlike.SubscribeOpts)
+		opts = new(ethereum.SubscribeOpts)
 	}
 	if opts.Tick == 0 {
 		opts.Tick = chainutil.DefaultSubscribeOptsTick
@@ -9150,7 +9147,7 @@ func (b *Bridge) NewWalletRegisteredEvent(
 
 type BNewWalletRegisteredSubscription struct {
 	contract               *Bridge
-	opts                   *ethlike.SubscribeOpts
+	opts                   *ethereum.SubscribeOpts
 	ecdsaWalletIDFilter    [][32]byte
 	walletPubKeyHashFilter [][20]byte
 }
@@ -9325,10 +9322,10 @@ func (b *Bridge) PastNewWalletRegisteredEvents(
 }
 
 func (b *Bridge) NewWalletRequestedEvent(
-	opts *ethlike.SubscribeOpts,
+	opts *ethereum.SubscribeOpts,
 ) *BNewWalletRequestedSubscription {
 	if opts == nil {
-		opts = new(ethlike.SubscribeOpts)
+		opts = new(ethereum.SubscribeOpts)
 	}
 	if opts.Tick == 0 {
 		opts.Tick = chainutil.DefaultSubscribeOptsTick
@@ -9345,7 +9342,7 @@ func (b *Bridge) NewWalletRequestedEvent(
 
 type BNewWalletRequestedSubscription struct {
 	contract *Bridge
-	opts     *ethlike.SubscribeOpts
+	opts     *ethereum.SubscribeOpts
 }
 
 type bridgeNewWalletRequestedFunc func(
@@ -9502,10 +9499,10 @@ func (b *Bridge) PastNewWalletRequestedEvents(
 }
 
 func (b *Bridge) RedemptionParametersUpdatedEvent(
-	opts *ethlike.SubscribeOpts,
+	opts *ethereum.SubscribeOpts,
 ) *BRedemptionParametersUpdatedSubscription {
 	if opts == nil {
-		opts = new(ethlike.SubscribeOpts)
+		opts = new(ethereum.SubscribeOpts)
 	}
 	if opts.Tick == 0 {
 		opts.Tick = chainutil.DefaultSubscribeOptsTick
@@ -9522,7 +9519,7 @@ func (b *Bridge) RedemptionParametersUpdatedEvent(
 
 type BRedemptionParametersUpdatedSubscription struct {
 	contract *Bridge
-	opts     *ethlike.SubscribeOpts
+	opts     *ethereum.SubscribeOpts
 }
 
 type bridgeRedemptionParametersUpdatedFunc func(
@@ -9693,12 +9690,12 @@ func (b *Bridge) PastRedemptionParametersUpdatedEvents(
 }
 
 func (b *Bridge) RedemptionRequestedEvent(
-	opts *ethlike.SubscribeOpts,
+	opts *ethereum.SubscribeOpts,
 	walletPubKeyHashFilter [][20]byte,
 	redeemerFilter []common.Address,
 ) *BRedemptionRequestedSubscription {
 	if opts == nil {
-		opts = new(ethlike.SubscribeOpts)
+		opts = new(ethereum.SubscribeOpts)
 	}
 	if opts.Tick == 0 {
 		opts.Tick = chainutil.DefaultSubscribeOptsTick
@@ -9717,7 +9714,7 @@ func (b *Bridge) RedemptionRequestedEvent(
 
 type BRedemptionRequestedSubscription struct {
 	contract               *Bridge
-	opts                   *ethlike.SubscribeOpts
+	opts                   *ethereum.SubscribeOpts
 	walletPubKeyHashFilter [][20]byte
 	redeemerFilter         []common.Address
 }
@@ -9900,11 +9897,11 @@ func (b *Bridge) PastRedemptionRequestedEvents(
 }
 
 func (b *Bridge) RedemptionTimedOutEvent(
-	opts *ethlike.SubscribeOpts,
+	opts *ethereum.SubscribeOpts,
 	walletPubKeyHashFilter [][20]byte,
 ) *BRedemptionTimedOutSubscription {
 	if opts == nil {
-		opts = new(ethlike.SubscribeOpts)
+		opts = new(ethereum.SubscribeOpts)
 	}
 	if opts.Tick == 0 {
 		opts.Tick = chainutil.DefaultSubscribeOptsTick
@@ -9922,7 +9919,7 @@ func (b *Bridge) RedemptionTimedOutEvent(
 
 type BRedemptionTimedOutSubscription struct {
 	contract               *Bridge
-	opts                   *ethlike.SubscribeOpts
+	opts                   *ethereum.SubscribeOpts
 	walletPubKeyHashFilter [][20]byte
 }
 
@@ -10090,11 +10087,11 @@ func (b *Bridge) PastRedemptionTimedOutEvents(
 }
 
 func (b *Bridge) RedemptionsCompletedEvent(
-	opts *ethlike.SubscribeOpts,
+	opts *ethereum.SubscribeOpts,
 	walletPubKeyHashFilter [][20]byte,
 ) *BRedemptionsCompletedSubscription {
 	if opts == nil {
-		opts = new(ethlike.SubscribeOpts)
+		opts = new(ethereum.SubscribeOpts)
 	}
 	if opts.Tick == 0 {
 		opts.Tick = chainutil.DefaultSubscribeOptsTick
@@ -10112,7 +10109,7 @@ func (b *Bridge) RedemptionsCompletedEvent(
 
 type BRedemptionsCompletedSubscription struct {
 	contract               *Bridge
-	opts                   *ethlike.SubscribeOpts
+	opts                   *ethereum.SubscribeOpts
 	walletPubKeyHashFilter [][20]byte
 }
 
@@ -10280,11 +10277,11 @@ func (b *Bridge) PastRedemptionsCompletedEvents(
 }
 
 func (b *Bridge) SpvMaintainerStatusUpdatedEvent(
-	opts *ethlike.SubscribeOpts,
+	opts *ethereum.SubscribeOpts,
 	spvMaintainerFilter []common.Address,
 ) *BSpvMaintainerStatusUpdatedSubscription {
 	if opts == nil {
-		opts = new(ethlike.SubscribeOpts)
+		opts = new(ethereum.SubscribeOpts)
 	}
 	if opts.Tick == 0 {
 		opts.Tick = chainutil.DefaultSubscribeOptsTick
@@ -10302,7 +10299,7 @@ func (b *Bridge) SpvMaintainerStatusUpdatedEvent(
 
 type BSpvMaintainerStatusUpdatedSubscription struct {
 	contract            *Bridge
-	opts                *ethlike.SubscribeOpts
+	opts                *ethereum.SubscribeOpts
 	spvMaintainerFilter []common.Address
 }
 
@@ -10470,11 +10467,11 @@ func (b *Bridge) PastSpvMaintainerStatusUpdatedEvents(
 }
 
 func (b *Bridge) VaultStatusUpdatedEvent(
-	opts *ethlike.SubscribeOpts,
+	opts *ethereum.SubscribeOpts,
 	vaultFilter []common.Address,
 ) *BVaultStatusUpdatedSubscription {
 	if opts == nil {
-		opts = new(ethlike.SubscribeOpts)
+		opts = new(ethereum.SubscribeOpts)
 	}
 	if opts.Tick == 0 {
 		opts.Tick = chainutil.DefaultSubscribeOptsTick
@@ -10492,7 +10489,7 @@ func (b *Bridge) VaultStatusUpdatedEvent(
 
 type BVaultStatusUpdatedSubscription struct {
 	contract    *Bridge
-	opts        *ethlike.SubscribeOpts
+	opts        *ethereum.SubscribeOpts
 	vaultFilter []common.Address
 }
 
@@ -10660,12 +10657,12 @@ func (b *Bridge) PastVaultStatusUpdatedEvents(
 }
 
 func (b *Bridge) WalletClosedEvent(
-	opts *ethlike.SubscribeOpts,
+	opts *ethereum.SubscribeOpts,
 	ecdsaWalletIDFilter [][32]byte,
 	walletPubKeyHashFilter [][20]byte,
 ) *BWalletClosedSubscription {
 	if opts == nil {
-		opts = new(ethlike.SubscribeOpts)
+		opts = new(ethereum.SubscribeOpts)
 	}
 	if opts.Tick == 0 {
 		opts.Tick = chainutil.DefaultSubscribeOptsTick
@@ -10684,7 +10681,7 @@ func (b *Bridge) WalletClosedEvent(
 
 type BWalletClosedSubscription struct {
 	contract               *Bridge
-	opts                   *ethlike.SubscribeOpts
+	opts                   *ethereum.SubscribeOpts
 	ecdsaWalletIDFilter    [][32]byte
 	walletPubKeyHashFilter [][20]byte
 }
@@ -10859,12 +10856,12 @@ func (b *Bridge) PastWalletClosedEvents(
 }
 
 func (b *Bridge) WalletClosingEvent(
-	opts *ethlike.SubscribeOpts,
+	opts *ethereum.SubscribeOpts,
 	ecdsaWalletIDFilter [][32]byte,
 	walletPubKeyHashFilter [][20]byte,
 ) *BWalletClosingSubscription {
 	if opts == nil {
-		opts = new(ethlike.SubscribeOpts)
+		opts = new(ethereum.SubscribeOpts)
 	}
 	if opts.Tick == 0 {
 		opts.Tick = chainutil.DefaultSubscribeOptsTick
@@ -10883,7 +10880,7 @@ func (b *Bridge) WalletClosingEvent(
 
 type BWalletClosingSubscription struct {
 	contract               *Bridge
-	opts                   *ethlike.SubscribeOpts
+	opts                   *ethereum.SubscribeOpts
 	ecdsaWalletIDFilter    [][32]byte
 	walletPubKeyHashFilter [][20]byte
 }
@@ -11058,12 +11055,12 @@ func (b *Bridge) PastWalletClosingEvents(
 }
 
 func (b *Bridge) WalletMovingFundsEvent(
-	opts *ethlike.SubscribeOpts,
+	opts *ethereum.SubscribeOpts,
 	ecdsaWalletIDFilter [][32]byte,
 	walletPubKeyHashFilter [][20]byte,
 ) *BWalletMovingFundsSubscription {
 	if opts == nil {
-		opts = new(ethlike.SubscribeOpts)
+		opts = new(ethereum.SubscribeOpts)
 	}
 	if opts.Tick == 0 {
 		opts.Tick = chainutil.DefaultSubscribeOptsTick
@@ -11082,7 +11079,7 @@ func (b *Bridge) WalletMovingFundsEvent(
 
 type BWalletMovingFundsSubscription struct {
 	contract               *Bridge
-	opts                   *ethlike.SubscribeOpts
+	opts                   *ethereum.SubscribeOpts
 	ecdsaWalletIDFilter    [][32]byte
 	walletPubKeyHashFilter [][20]byte
 }
@@ -11257,10 +11254,10 @@ func (b *Bridge) PastWalletMovingFundsEvents(
 }
 
 func (b *Bridge) WalletParametersUpdatedEvent(
-	opts *ethlike.SubscribeOpts,
+	opts *ethereum.SubscribeOpts,
 ) *BWalletParametersUpdatedSubscription {
 	if opts == nil {
-		opts = new(ethlike.SubscribeOpts)
+		opts = new(ethereum.SubscribeOpts)
 	}
 	if opts.Tick == 0 {
 		opts.Tick = chainutil.DefaultSubscribeOptsTick
@@ -11277,7 +11274,7 @@ func (b *Bridge) WalletParametersUpdatedEvent(
 
 type BWalletParametersUpdatedSubscription struct {
 	contract *Bridge
-	opts     *ethlike.SubscribeOpts
+	opts     *ethereum.SubscribeOpts
 }
 
 type bridgeWalletParametersUpdatedFunc func(
@@ -11448,12 +11445,12 @@ func (b *Bridge) PastWalletParametersUpdatedEvents(
 }
 
 func (b *Bridge) WalletTerminatedEvent(
-	opts *ethlike.SubscribeOpts,
+	opts *ethereum.SubscribeOpts,
 	ecdsaWalletIDFilter [][32]byte,
 	walletPubKeyHashFilter [][20]byte,
 ) *BWalletTerminatedSubscription {
 	if opts == nil {
-		opts = new(ethlike.SubscribeOpts)
+		opts = new(ethereum.SubscribeOpts)
 	}
 	if opts.Tick == 0 {
 		opts.Tick = chainutil.DefaultSubscribeOptsTick
@@ -11472,7 +11469,7 @@ func (b *Bridge) WalletTerminatedEvent(
 
 type BWalletTerminatedSubscription struct {
 	contract               *Bridge
-	opts                   *ethlike.SubscribeOpts
+	opts                   *ethereum.SubscribeOpts
 	ecdsaWalletIDFilter    [][32]byte
 	walletPubKeyHashFilter [][20]byte
 }

@@ -23,7 +23,7 @@ import (
 var RandomBeaconCommand cli.Command
 
 var randomBeaconDescription = `The random-beacon command allows calling the RandomBeacon contract on an
-	ETH-like network. It has subcommands corresponding to each contract method,
+	Ethereum network. It has subcommands corresponding to each contract method,
 	which respectively each take parameters based on the contract method's
 	parameters.
 

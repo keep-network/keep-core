@@ -1,15 +1,16 @@
 package dkg
 
 import (
-	"github.com/keep-network/keep-core/pkg/chain"
 	"reflect"
 	"testing"
+
+	"github.com/keep-network/keep-core/pkg/chain"
 
 	"math/big"
 
 	bn256 "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
-	"github.com/keep-network/keep-core/pkg/beacon/group"
 	"github.com/keep-network/keep-core/pkg/internal/pbutils"
+	"github.com/keep-network/keep-core/pkg/protocol/group"
 )
 
 func TestThresholdSignerRoundtrip(t *testing.T) {

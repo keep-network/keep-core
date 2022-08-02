@@ -1,4 +1,14 @@
+// Package group contains an implementation of a generic protocol group
+// and auxiliary tools that help during group-related operations.
 package group
+
+// MemberIndex is an index of a member in a group. The maximum member index
+// value is 255.
+type MemberIndex = uint8
+
+// MaxMemberIndex denotes the maximum value of the MemberIndex type. That type
+// is represented as uint8 so the maximum member index is 255.
+const MaxMemberIndex = 255
 
 // Group is protocol's members group.
 type Group struct {
@@ -13,9 +23,9 @@ type Group struct {
 	memberIDs []MemberIndex
 }
 
-// NewDkgGroup creates a new Group with the provided dishonest threshold, member
+// NewGroup creates a new Group with the provided dishonest threshold, member
 // identifiers, and empty IA and DQ members list.
-func NewDkgGroup(dishonestThreshold int, size int) *Group {
+func NewGroup(dishonestThreshold int, size int) *Group {
 	memberIDs := make([]MemberIndex, size)
 	for i := 0; i < size; i++ {
 		memberIDs[i] = MemberIndex(i + 1)
@@ -48,13 +58,13 @@ func (g *Group) DishonestThreshold() int {
 }
 
 // DisqualifiedMemberIDs returns indexes of all group members that have been
-// disqualified during DKG protocol execution.
+// disqualified during the protocol execution.
 func (g *Group) DisqualifiedMemberIDs() []MemberIndex {
 	return g.disqualifiedMemberIDs
 }
 
 // InactiveMemberIDs returns indexes of all group members that have been marked
-// as inactive during DKG protocol execution.
+// as inactive during the protocol execution.
 func (g *Group) InactiveMemberIDs() []MemberIndex {
 	return g.inactiveMemberIDs
 }
@@ -127,15 +137,4 @@ func (g *Group) isDisqualified(memberID MemberIndex) bool {
 	}
 
 	return false
-}
-
-func (g *Group) eliminatedMembersCount() int {
-	return len(g.disqualifiedMemberIDs) + len(g.inactiveMemberIDs)
-}
-
-// isThresholdSatisfied checks number of disqualified and inactive members in
-// the group. If the number is less or equal half of dishonest threshold,
-// returns true.
-func (g *Group) isThresholdSatisfied() bool {
-	return g.eliminatedMembersCount() <= g.dishonestThreshold/2
 }

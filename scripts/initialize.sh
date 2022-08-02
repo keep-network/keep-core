@@ -113,10 +113,25 @@ fi
 
 printf "${LOG_START}Setting up staking...${LOG_END}"
 
-mint="npx hardhat mint --network $NETWORK --owner ${stake_owner}"
-stake="npx hardhat stake --network $NETWORK --owner ${stake_owner} --provider ${staking_provider} --beneficiary ${beneficiary} --authorizer ${authorizer} "
-increase_authorization="npx hardhat increase-authorization --network $NETWORK --owner ${stake_owner} --provider ${staking_provider} --authorizer ${authorizer}"
-register_operator="npx hardhat register-operator --network $NETWORK --owner ${stake_owner} --provider ${staking_provider} --operator ${operator}"
+mint="npx hardhat mint 
+   --network $NETWORK \
+   --owner ${stake_owner}"
+stake="npx hardhat stake 
+   --network $NETWORK \
+   --owner ${stake_owner} \
+   --provider ${staking_provider} \
+   --beneficiary ${beneficiary} \
+   --authorizer ${authorizer}"
+increase_authorization="npx hardhat increase-authorization 
+   --network $NETWORK \
+   --owner ${stake_owner} \
+   --provider ${staking_provider} 
+   --authorizer ${authorizer}"
+register_operator="npx hardhat register-operator 
+   --network $NETWORK \
+   --owner ${stake_owner} \
+   --provider ${staking_provider} \
+   --operator ${operator}"
 
 # go to beacon
 cd $KEEP_BEACON_SOL_PATH
