@@ -3,20 +3,17 @@ package entry
 import (
 	"context"
 	"fmt"
-
 	"github.com/keep-network/keep-core/pkg/beacon/event"
 
 	bn256 "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
 	"github.com/ipfs/go-log"
 	beaconchain "github.com/keep-network/keep-core/pkg/beacon/chain"
 	"github.com/keep-network/keep-core/pkg/beacon/dkg"
-	"github.com/keep-network/keep-core/pkg/beacon/group"
 	"github.com/keep-network/keep-core/pkg/bls"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/net"
+	"github.com/keep-network/keep-core/pkg/protocol/group"
 )
-
-var logger = log.Logger("keep-entry")
 
 // RegisterUnmarshallers initializes the given broadcast channel to be able to
 // perform relay entry signing protocol interactions by registering all the
@@ -32,6 +29,7 @@ func RegisterUnmarshallers(channel net.BroadcastChannel) {
 // previous relay entry and publishes the signature to the chain as
 // a new relay entry.
 func SignAndSubmit(
+	logger log.StandardLogger,
 	blockCounter chain.BlockCounter,
 	channel net.BroadcastChannel,
 	beaconChain beaconchain.Interface,
@@ -68,7 +66,7 @@ func SignAndSubmit(
 
 	selfShare := signer.CalculateSignatureShare(previousEntry)
 
-	go broadcastShare(ctx, signer.MemberID(), selfShare, channel)
+	go broadcastShare(ctx, logger, signer.MemberID(), selfShare, channel)
 
 	receiveChannel := make(chan net.Message, 64)
 	channel.Recv(ctx, func(netMessage net.Message) {
@@ -87,7 +85,7 @@ func SignAndSubmit(
 		select {
 		case netMessage := <-receiveChannel:
 			message, ok := netMessage.Payload().(*SignatureShareMessage)
-			if !ok || group.IsMessageFromSelf(signer.MemberID(), message) {
+			if !ok || signer.MemberID() == message.SenderID() {
 				continue
 			}
 
@@ -131,12 +129,13 @@ func SignAndSubmit(
 		}
 	}
 
-	signature, err := completeSignature(signer, receivedValidShares, honestThreshold)
+	signature, err := completeSignature(logger, signer, receivedValidShares, honestThreshold)
 	if err != nil {
 		return err
 	}
 
 	submitter := &relayEntrySubmitter{
+		logger:       logger,
 		chain:        beaconChain,
 		blockCounter: blockCounter,
 		index:        signer.MemberID(),
@@ -158,6 +157,7 @@ func SignAndSubmit(
 
 func broadcastShare(
 	ctx context.Context,
+	logger log.StandardLogger,
 	memberID group.MemberIndex,
 	share *bn256.G1,
 	channel net.BroadcastChannel,
@@ -206,6 +206,7 @@ func extractAndValidateShare(
 }
 
 func completeSignature(
+	logger log.StandardLogger,
 	signer *dkg.ThresholdSigner,
 	shares map[group.MemberIndex]*bn256.G1,
 	honestThreshold int,

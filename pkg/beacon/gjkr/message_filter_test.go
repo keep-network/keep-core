@@ -1,140 +1,109 @@
 package gjkr
 
 import (
+	"github.com/keep-network/keep-core/pkg/chain"
+	"github.com/keep-network/keep-core/pkg/chain/local_v1"
+	"github.com/keep-network/keep-core/pkg/internal/testutils"
+	"github.com/keep-network/keep-core/pkg/operator"
+	"math/big"
 	"testing"
 
-	"github.com/keep-network/keep-core/pkg/beacon/group"
+	"github.com/keep-network/keep-core/pkg/protocol/group"
 )
 
-func TestFilterSymmetricKeyGeneratingMembers(t *testing.T) {
-	member := (&LocalMember{
-		memberCore: &memberCore{
-			ID:    13,
-			group: group.NewDkgGroup(8, 15),
+func TestShouldAcceptMessage(t *testing.T) {
+	groupSize := 5
+	honestThreshold := 3
+
+	localChain := local_v1.Connect(groupSize, honestThreshold)
+
+	operatorsAddresses := make([]chain.Address, groupSize)
+	operatorsPublicKeys := make([][]byte, groupSize)
+	for i := range operatorsAddresses {
+		_, operatorPublicKey, err := operator.GenerateKeyPair(
+			local_v1.DefaultCurve,
+		)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		operatorAddress, err := localChain.Signing().PublicKeyToAddress(
+			operatorPublicKey,
+		)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		operatorsAddresses[i] = operatorAddress
+		operatorsPublicKeys[i] = operator.MarshalUncompressed(operatorPublicKey)
+	}
+
+	tests := map[string]struct {
+		senderID         group.MemberIndex
+		senderPublicKey  []byte
+		activeMembersIDs []group.MemberIndex
+		expectedResult   bool
+	}{
+		"message from another valid and operating member": {
+			senderID:         group.MemberIndex(2),
+			senderPublicKey:  operatorsPublicKeys[1],
+			activeMembersIDs: []group.MemberIndex{1, 2, 3, 4, 5},
+			expectedResult:   true,
 		},
-	}).InitializeEphemeralKeysGeneration().
-		InitializeSymmetricKeyGeneration()
-
-	messages := []*EphemeralPublicKeyMessage{
-		&EphemeralPublicKeyMessage{senderID: 11},
-		&EphemeralPublicKeyMessage{senderID: 14},
-	}
-
-	member.MarkInactiveMembers(messages)
-
-	assertAcceptsFrom(member, 13, t) // should accept from self
-	assertAcceptsFrom(member, 11, t)
-	assertAcceptsFrom(member, 14, t)
-	assertNotAcceptFrom(member, 12, t)
-	assertNotAcceptFrom(member, 15, t)
-}
-
-func TestFilterCommitmentsVefiryingMembers(t *testing.T) {
-	member := (&LocalMember{
-		memberCore: &memberCore{
-			ID:    93,
-			group: group.NewDkgGroup(49, 96),
+		"message from another valid but non-operating member": {
+			senderID:         group.MemberIndex(2),
+			senderPublicKey:  operatorsPublicKeys[1],
+			activeMembersIDs: []group.MemberIndex{1, 3, 4, 5}, // 2 is inactive
+			expectedResult:   false,
 		},
-	}).InitializeEphemeralKeysGeneration().
-		InitializeSymmetricKeyGeneration().
-		InitializeCommitting().
-		InitializeCommitmentsVerification()
-
-	sharesMessages := []*PeerSharesMessage{
-		&PeerSharesMessage{senderID: 91},
-		&PeerSharesMessage{senderID: 92},
-		&PeerSharesMessage{senderID: 94},
-	}
-
-	commitmentsMessages := []*MemberCommitmentsMessage{
-		&MemberCommitmentsMessage{senderID: 92},
-		&MemberCommitmentsMessage{senderID: 94},
-		&MemberCommitmentsMessage{senderID: 95},
-	}
-
-	member.MarkInactiveMembers(sharesMessages, commitmentsMessages)
-
-	// should accept from self
-	assertAcceptsFrom(member, 93, t)
-
-	// 92 and 94 sent both shares message and commitments message
-	assertAcceptsFrom(member, 92, t)
-	assertAcceptsFrom(member, 94, t)
-
-	// 95 did not send shares message
-	assertNotAcceptFrom(member, 95, t)
-
-	// 91 did not send commitments message
-	assertNotAcceptFrom(member, 91, t)
-
-	// 96 did not send shares message nor commitments message
-	assertNotAcceptFrom(member, 96, t)
-}
-
-func TestFilterSharingMembers(t *testing.T) {
-	member := (&LocalMember{
-		memberCore: &memberCore{
-			ID:    24,
-			group: group.NewDkgGroup(13, 24),
+		"message from self": {
+			senderID:         group.MemberIndex(1),
+			senderPublicKey:  operatorsPublicKeys[0],
+			activeMembersIDs: []group.MemberIndex{1, 2, 3, 4, 5},
+			expectedResult:   false,
 		},
-	}).InitializeEphemeralKeysGeneration().
-		InitializeSymmetricKeyGeneration().
-		InitializeCommitting().
-		InitializeCommitmentsVerification().
-		InitializeSharesJustification().
-		InitializeQualified().
-		InitializeSharing()
-
-	messages := []*MemberPublicKeySharePointsMessage{
-		&MemberPublicKeySharePointsMessage{senderID: 21},
-		&MemberPublicKeySharePointsMessage{senderID: 23},
-	}
-
-	member.MarkInactiveMembers(messages)
-
-	assertAcceptsFrom(member, 24, t) // should accept from self
-	assertAcceptsFrom(member, 21, t)
-	assertAcceptsFrom(member, 23, t)
-	assertNotAcceptFrom(member, 22, t)
-}
-
-func TestFilterReconstructingMember(t *testing.T) {
-	member := (&LocalMember{
-		memberCore: &memberCore{
-			ID:    44,
-			group: group.NewDkgGroup(23, 44),
+		"message from another invalid member": {
+			senderID:         group.MemberIndex(2),
+			senderPublicKey:  operatorsPublicKeys[3],
+			activeMembersIDs: []group.MemberIndex{1, 2, 3, 4, 5},
+			expectedResult:   false,
 		},
-	}).InitializeEphemeralKeysGeneration().
-		InitializeSymmetricKeyGeneration().
-		InitializeCommitting().
-		InitializeCommitmentsVerification().
-		InitializeSharesJustification().
-		InitializeQualified().
-		InitializeSharing().
-		InitializePointsJustification().
-		InitializeRevealing().
-		InitializeReconstruction()
-
-	messages := []*MisbehavedEphemeralKeysMessage{
-		{senderID: 41},
 	}
 
-	member.MarkInactiveMembers(messages)
+	for testName, test := range tests {
+		t.Run(testName, func(t *testing.T) {
+			membershipValdator := group.NewMembershipValidator(
+				&testutils.MockLogger{},
+				operatorsAddresses,
+				localChain.Signing(),
+			)
 
-	assertAcceptsFrom(member, 44, t) // should accept from self
-	assertAcceptsFrom(member, 41, t)
-	assertNotAcceptFrom(member, 42, t)
-	assertNotAcceptFrom(member, 43, t)
-}
+			member, err := NewMember(
+				&testutils.MockLogger{},
+				group.MemberIndex(1),
+				groupSize,
+				groupSize-honestThreshold,
+				membershipValdator,
+				big.NewInt(100),
+			)
+			if err != nil {
+				t.Fatal(err)
+			}
 
-func assertAcceptsFrom(member group.MessageFiltering, senderID group.MemberIndex, t *testing.T) {
-	if !member.IsSenderAccepted(senderID) {
-		t.Errorf("member should accept messages from [%v]", senderID)
-	}
-}
+			filter := member.inactiveMemberFilter()
+			for _, activeMemberID := range test.activeMembersIDs {
+				filter.MarkMemberAsActive(activeMemberID)
+			}
+			filter.FlushInactiveMembers()
 
-func assertNotAcceptFrom(member group.MessageFiltering, senderID group.MemberIndex, t *testing.T) {
-	if member.IsSenderAccepted(senderID) {
-		t.Errorf("member should not accept messages from [%v]", senderID)
+			result := member.shouldAcceptMessage(test.senderID, test.senderPublicKey)
+
+			testutils.AssertBoolsEqual(
+				t,
+				"result from message validator",
+				test.expectedResult,
+				result,
+			)
+		})
 	}
 }

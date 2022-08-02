@@ -15,11 +15,12 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
     from: deployer,
     args: [T.address, POOL_WEIGHT_DIVISOR],
     log: true,
+    waitConfirmations: 1,
   })
 
   if (hre.network.tags.tenderly) {
     await hre.tenderly.verify({
-      name: "SortitionPool",
+      name: "EcdsaSortitionPool",
       address: SortitionPool.address,
     })
   }

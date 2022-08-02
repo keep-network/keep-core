@@ -47,12 +47,13 @@ library Wallets {
         internal
         view
     {
+        require(publicKey.length == 64, "Invalid length of the public key");
+
         bytes32 walletID = keccak256(publicKey);
         require(
             self.registry[walletID].publicKeyX == bytes32(0),
             "Wallet with the given public key already exists"
         );
-        require(publicKey.length == 64, "Invalid length of the public key");
 
         bytes32 publicKeyX = bytes32(publicKey[:32]);
         require(publicKeyX != bytes32(0), "Wallet public key must be non-zero");

@@ -15,7 +15,7 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
 
   await deployments.execute(
     "RandomBeacon",
-    { from: deployer },
+    { from: deployer, log: true, waitConfirmations: 1 },
     "transferGovernance",
     RandomBeaconGovernance.address
   )

@@ -52,7 +52,7 @@ export const params = {
   authorizationDecreaseChangePeriod: 403200,
   reimbursementPoolStaticGas: 40800,
   reimbursementPoolMaxGasPrice: ethers.utils.parseUnits("500", "gwei"),
-  dkgResultSubmissionGas: 235000,
+  dkgResultSubmissionGas: 237650,
   dkgResultApprovalGasOffset: 41500,
   notifyOperatorInactivityGasOffset: 54500,
   relayEntrySubmissionGasOffset: 11250,

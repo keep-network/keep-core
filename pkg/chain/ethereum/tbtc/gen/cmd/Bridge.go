@@ -23,7 +23,7 @@ import (
 var BridgeCommand cli.Command
 
 var bridgeDescription = `The bridge command allows calling the Bridge contract on an
-	ETH-like network. It has subcommands corresponding to each contract method,
+	Ethereum network. It has subcommands corresponding to each contract method,
 	which respectively each take parameters based on the contract method's
 	parameters.
 

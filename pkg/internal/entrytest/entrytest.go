@@ -10,6 +10,7 @@ import (
 	beaconchain "github.com/keep-network/keep-core/pkg/beacon/chain"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/chain/local_v1"
+	"github.com/keep-network/keep-core/pkg/internal/testutils"
 	"math/big"
 	"sync"
 	"time"
@@ -140,6 +141,7 @@ func executeSigning(
 	for _, signer := range signers {
 		go func(signer *dkg.ThresholdSigner) {
 			err := entry.SignAndSubmit(
+				&testutils.MockLogger{},
 				blockCounter,
 				broadcastChannel,
 				beaconChain,
