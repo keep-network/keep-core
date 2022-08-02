@@ -12,6 +12,7 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
       from: deployer,
       args: [dao, esdm],
       log: true,
+      waitConfirmations: 1,
     }
   )
 
@@ -19,12 +20,14 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
 
   const proxyAdmin = await upgrades.admin.getInstance()
 
-  await proxyAdmin
-    .connect(await ethers.getSigner(esdm))
-    .changeProxyAdmin(
-      WalletRegistry.address,
-      WalletRegistryProxyAdminWithDeputy.address
-    )
+  await (
+    await proxyAdmin
+      .connect(await ethers.getSigner(esdm))
+      .changeProxyAdmin(
+        WalletRegistry.address,
+        WalletRegistryProxyAdminWithDeputy.address
+      )
+  ).wait()
 }
 
 export default func
