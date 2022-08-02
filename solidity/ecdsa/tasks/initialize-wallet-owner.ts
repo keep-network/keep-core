@@ -24,7 +24,7 @@ async function initializeWalletOwner(
 
   const tx = await deployments.execute(
     "WalletRegistryGovernance",
-    { from: governance },
+    { from: governance, log: true, waitConfirmations: 1 },
     "initializeWalletOwner",
     walletOwnerAddress
   )

@@ -87,23 +87,23 @@ const config: HardhatUserConfig = {
           testConfig.nonStakingAccountsCount +
           testConfig.stakingRolesCount * testConfig.operatorsCount,
       },
-      tags: ["allowStubs"],
       // we use higher gas price for tests to obtain more realistic results
       // for gas refund tests than when the default hardhat ~1 gwei gas price is
       // used
-      gasPrice: 200000000000, // 200 gwei,
+      gasPrice: 200000000000, // 200 gwei
       // Ignore contract size on deployment to hardhat network, to be able to
       // deploy stub contracts in tests.
       allowUnlimitedContractSize: process.env.TEST_USE_STUBS_ECDSA === "true",
+      tags: ["allowStubs"],
     },
     development: {
       url: "http://localhost:8545",
       chainId: 1101,
       tags: ["allowStubs"],
     },
-    ropsten: {
+    goerli: {
       url: process.env.CHAIN_API_URL || "",
-      chainId: 3,
+      chainId: 5,
       accounts: process.env.CONTRACT_OWNER_ACCOUNT_PRIVATE_KEY
         ? [process.env.CONTRACT_OWNER_ACCOUNT_PRIVATE_KEY]
         : undefined,
@@ -119,14 +119,17 @@ const config: HardhatUserConfig = {
   namedAccounts: {
     deployer: {
       default: 1, // take the second account
+      goerli: 0,
       // mainnet: ""
     },
     governance: {
       default: 2,
+      goerli: 0,
       // mainnet: ""
     },
     esdm: {
       default: 3,
+      goerli: 0,
       // mainnet: ""
     },
   },
@@ -148,16 +151,19 @@ const config: HardhatUserConfig = {
           ]
         : undefined,
     deployments: {
-      //   // For hardhat environment we can fork the mainnet, so we need to point it
-      //   // to the contract artifacts.
-      //   hardhat: process.env.FORKING_URL ? ["./external/mainnet"] : [],
-      //   // For development environment we expect the local dependencies to be linked
-      //   // with `yarn link` command.
+      // For hardhat environment we can fork the mainnet, so we need to point it
+      // to the contract artifacts.
+      // hardhat: process.env.FORKING_URL ? ["./external/mainnet"] : [],
+      // For development environment we expect the local dependencies to be linked
+      // with `yarn link` command.
       development: [
         "node_modules/@keep-network/random-beacon/deployments/development",
       ],
-      //   ropsten: ["node_modules/@keep-network/keep-core/artifacts"],
-      //   mainnet: ["./external/mainnet"],
+      goerli: [
+        "node_modules/@threshold-network/solidity-contracts/artifacts",
+        "node_modules/@keep-network/random-beacon/artifacts",
+      ],
+      // mainnet: ["./external/mainnet"],
     },
   },
   dependencyCompiler:
