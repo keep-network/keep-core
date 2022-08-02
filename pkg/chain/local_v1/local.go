@@ -12,13 +12,12 @@ import (
 	beaconchain "github.com/keep-network/keep-core/pkg/beacon/chain"
 	"github.com/keep-network/keep-core/pkg/beacon/event"
 	"github.com/keep-network/keep-core/pkg/chain"
-	"github.com/keep-network/keep-core/pkg/gen/async"
 	"github.com/keep-network/keep-core/pkg/operator"
 	"github.com/keep-network/keep-core/pkg/subscription"
 	"golang.org/x/crypto/sha3"
 )
 
-var logger = log.Logger("keep-chain-local")
+var logger = log.Logger("keep-chainlocal")
 
 var seedGroupPublicKey = []byte("seed to group public key")
 var seedRelayEntry = big.NewInt(123456789)
@@ -47,23 +46,16 @@ type localChain struct {
 	resultSubmissionHandlers map[int]func(submission *event.DKGResultSubmission)
 
 	simulatedHeight uint64
-	stakeMonitor    chain.StakeMonitor
 	blockCounter    chain.BlockCounter
 
 	relayEntryTimeoutReportsMutex sync.Mutex
 	relayEntryTimeoutReports      []uint64
 
 	operatorPrivateKey *operator.PrivateKey
-
-	minimumStake *big.Int
 }
 
 func (c *localChain) BlockCounter() (chain.BlockCounter, error) {
 	return c.blockCounter, nil
-}
-
-func (c *localChain) StakeMonitor() (chain.StakeMonitor, error) {
-	return c.stakeMonitor, nil
 }
 
 func (c *localChain) Signing() chain.Signing {
@@ -78,19 +70,10 @@ func (c *localChain) GetConfig() *beaconchain.Config {
 	return c.relayConfig
 }
 
-func (c *localChain) SubmitRelayEntry(newEntry []byte) *async.EventRelayEntrySubmittedPromise {
-	relayEntryPromise := &async.EventRelayEntrySubmittedPromise{}
-
+func (c *localChain) SubmitRelayEntry(newEntry []byte) error {
 	currentBlock, err := c.blockCounter.CurrentBlock()
 	if err != nil {
-		failErr := relayEntryPromise.Fail(
-			fmt.Errorf("cannot read current block: [%v]", err),
-		)
-		if failErr != nil {
-			logger.Errorf("failed to fail promise: [%v]", failErr)
-		}
-
-		return relayEntryPromise
+		return fmt.Errorf("cannot read current block: [%v]", err)
 	}
 
 	entry := &event.RelayEntrySubmitted{
@@ -105,14 +88,9 @@ func (c *localChain) SubmitRelayEntry(newEntry []byte) *async.EventRelayEntrySub
 	}
 	c.handlerMutex.Unlock()
 
-	err = relayEntryPromise.Fulfill(entry)
-	if err != nil {
-		logger.Errorf("failed to fulfill promise: [%v]", err)
-	}
-
 	c.lastSubmittedRelayEntry = newEntry
 
-	return relayEntryPromise
+	return nil
 }
 
 func (c *localChain) OnRelayEntrySubmitted(
@@ -180,14 +158,13 @@ func (c *localChain) OnGroupRegistered(
 func Connect(
 	groupSize int,
 	honestThreshold int,
-	minimumStake *big.Int,
 ) *localChain {
 	operatorPrivateKey, _, err := operator.GenerateKeyPair(DefaultCurve)
 	if err != nil {
 		panic(err)
 	}
 
-	return ConnectWithKey(groupSize, honestThreshold, minimumStake, operatorPrivateKey)
+	return ConnectWithKey(groupSize, honestThreshold, operatorPrivateKey)
 }
 
 // ConnectWithKey initializes a local stub implementation of the chain
@@ -195,7 +172,6 @@ func Connect(
 func ConnectWithKey(
 	groupSize int,
 	honestThreshold int,
-	minimumStake *big.Int,
 	operatorPrivateKey *operator.PrivateKey,
 ) *localChain {
 	bc, _ := BlockCounter()
@@ -221,10 +197,8 @@ func ConnectWithKey(
 		dkgStartedHandlers:       make(map[int]func(submission *event.DKGStarted)),
 		resultSubmissionHandlers: make(map[int]func(submission *event.DKGResultSubmission)),
 		blockCounter:             bc,
-		stakeMonitor:             NewStakeMonitor(minimumStake),
 		groups:                   []localGroup{group},
 		operatorPrivateKey:       operatorPrivateKey,
-		minimumStake:             minimumStake,
 	}
 }
 
@@ -260,13 +234,6 @@ func (c *localChain) IsStaleGroup(groupPublicKey []byte) (bool, error) {
 	}
 
 	return true, nil
-}
-
-func (c *localChain) GetGroupMembers(groupPublicKey []byte) (
-	[]chain.Address,
-	error,
-) {
-	return nil, nil // no-op
 }
 
 func (c *localChain) IsGroupRegistered(groupPublicKey []byte) (bool, error) {
@@ -408,10 +375,6 @@ func (c *localChain) GetRelayEntryTimeoutReports() []uint64 {
 	return c.relayEntryTimeoutReports
 }
 
-func (c *localChain) MinimumStake() (*big.Int, error) {
-	return c.minimumStake, nil
-}
-
 // CalculateDKGResultHash calculates a 256-bit hash of the DKG result.
 func (c *localChain) CalculateDKGResultHash(
 	dkgResult *beaconchain.DKGResult,
@@ -449,6 +412,18 @@ func (c *localChain) JoinSortitionPool() error {
 }
 
 func (c *localChain) UpdateOperatorStatus() error {
+	panic("unsupported")
+}
+
+func (c *localChain) IsEligibleForRewards() (bool, error) {
+	panic("unsupported")
+}
+
+func (c *localChain) CanRestoreRewardEligibility() (bool, error) {
+	panic("unsupported")
+}
+
+func (c *localChain) RestoreRewardEligibility() error {
 	panic("unsupported")
 }
 

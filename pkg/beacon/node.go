@@ -3,46 +3,38 @@ package beacon
 import (
 	"encoding/hex"
 	"fmt"
+	"math/big"
+
 	bn256 "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
 	"github.com/keep-network/keep-core/pkg/altbn128"
 	beaconchain "github.com/keep-network/keep-core/pkg/beacon/chain"
 	"github.com/keep-network/keep-core/pkg/beacon/dkg"
 	"github.com/keep-network/keep-core/pkg/beacon/entry"
 	"github.com/keep-network/keep-core/pkg/beacon/event"
-	"github.com/keep-network/keep-core/pkg/beacon/group"
-	"github.com/keep-network/keep-core/pkg/operator"
-	"math/big"
+	"github.com/keep-network/keep-core/pkg/protocol/group"
 
 	"github.com/keep-network/keep-core/pkg/beacon/registry"
 	"github.com/keep-network/keep-core/pkg/net"
 )
 
-const maxGroupSize = 255
-
 // node represents the current state of a beacon node.
 type node struct {
-	operatorPublicKey *operator.PublicKey
-
-	// External interactors.
-	netProvider net.Provider
-	beaconChain beaconchain.Interface
-
+	beaconChain   beaconchain.Interface
+	netProvider   net.Provider
 	groupRegistry *registry.Groups
 }
 
 // newNode returns an empty node with no group, zero group count, and a nil last
 // seen entry, tied to the given net.Provider.
 func newNode(
-	operatorPublicKey *operator.PublicKey,
-	netProvider net.Provider,
 	beaconChain beaconchain.Interface,
+	netProvider net.Provider,
 	groupRegistry *registry.Groups,
 ) *node {
 	return &node{
-		operatorPublicKey: operatorPublicKey,
-		netProvider:       netProvider,
-		beaconChain:       beaconChain,
-		groupRegistry:     groupRegistry,
+		beaconChain:   beaconChain,
+		netProvider:   netProvider,
+		groupRegistry: groupRegistry,
 	}
 }
 
@@ -66,7 +58,7 @@ func (n *node) JoinDKGIfEligible(
 		dkgSeed,
 	)
 
-	groupMembers, err := n.beaconChain.SelectGroup(dkgSeed)
+	selectedOperators, err := n.beaconChain.SelectGroup(dkgSeed)
 	if err != nil {
 		logger.Errorf(
 			"failed to select group with seed [0x%x]: [%v]",
@@ -76,33 +68,39 @@ func (n *node) JoinDKGIfEligible(
 		return
 	}
 
-	if len(groupMembers) > maxGroupSize {
+	if len(selectedOperators) > n.beaconChain.GetConfig().GroupSize {
 		logger.Errorf(
 			"group size larger than supported: [%v]",
-			len(groupMembers),
+			len(selectedOperators),
 		)
 		return
 	}
 
 	signing := n.beaconChain.Signing()
 
-	operatorAddress, err := signing.PublicKeyToAddress(n.operatorPublicKey)
+	_, operatorPublicKey, err := n.beaconChain.OperatorKeyPair()
+	if err != nil {
+		logger.Errorf("failed to get operator public key: [%v]", err)
+		return
+	}
+
+	operatorAddress, err := signing.PublicKeyToAddress(operatorPublicKey)
 	if err != nil {
 		logger.Errorf("failed to get operator address: [%v]", err)
 		return
 	}
 
 	indexes := make([]uint8, 0)
-	for index, groupMember := range groupMembers {
+	for index, selectedOperator := range selectedOperators {
 		// See if we are amongst those chosen
-		if groupMember == operatorAddress {
+		if selectedOperator == operatorAddress {
 			indexes = append(indexes, uint8(index))
 		}
 	}
 
-	// create temporary broadcast channel name for DKG using the
-	// group selection seed
-	channelName := dkgSeed.Text(16)
+	// Create temporary broadcast channel name for DKG using the
+	// group selection seed with the protocol name as prefix.
+	channelName := fmt.Sprintf("%s-%s", ProtocolName, dkgSeed.Text(16))
 
 	if len(indexes) > 0 {
 		logger.Infof(
@@ -117,8 +115,9 @@ func (n *node) JoinDKGIfEligible(
 			return
 		}
 
-		membershipValidator := group.NewStakersMembershipValidator(
-			groupMembers,
+		membershipValidator := group.NewMembershipValidator(
+			logger,
+			selectedOperators,
 			signing,
 		)
 
@@ -131,29 +130,21 @@ func (n *node) JoinDKGIfEligible(
 			)
 		}
 
-		blockCounter, err := n.beaconChain.BlockCounter()
-		if err != nil {
-			logger.Errorf("failed to get block counter: [%v]", err)
-			return
-		}
-
-		chainConfig := n.beaconChain.GetConfig()
-
 		for _, index := range indexes {
-			// Capture the player index for the goroutine.
-			playerIndex := index
+			// Capture the member index for the goroutine. The group member
+			// index should be in range [1, groupSize] so we need to add 1.
+			memberIndex := index + 1
 
 			go func() {
 				signer, err := dkg.ExecuteDKG(
+					logger,
 					dkgSeed,
-					playerIndex,
-					chainConfig.GroupSize,
-					chainConfig.DishonestThreshold(),
-					membershipValidator,
+					memberIndex,
 					dkgStartBlockNumber,
-					blockCounter,
 					n.beaconChain,
 					broadcastChannel,
+					membershipValidator,
+					selectedOperators,
 				)
 				if err != nil {
 					logger.Errorf("failed to execute dkg: [%v]", err)
@@ -336,13 +327,15 @@ func (n *node) GenerateRelayEntry(
 
 	entry.RegisterUnmarshallers(channel)
 
-	groupMembers, err := n.beaconChain.GetGroupMembers(groupPublicKey)
-	if err != nil {
-		logger.Errorf("could not get group members: [%v]", err)
-		return
-	}
+	// Each signer of the given group should have the same picture of other
+	// group operators. Otherwise, they would not be in the group registry.
+	// That said, take the group operators from the first signer.
+	groupMembers := n.groupRegistry.GetGroup(groupPublicKey)[0].
+		Signer.
+		GroupOperators()
 
-	membershipValidator := group.NewStakersMembershipValidator(
+	membershipValidator := group.NewMembershipValidator(
+		logger,
 		groupMembers,
 		n.beaconChain.Signing(),
 	)
@@ -367,6 +360,7 @@ func (n *node) GenerateRelayEntry(
 	for _, member := range memberships {
 		go func(member *registry.Membership) {
 			err = entry.SignAndSubmit(
+				logger,
 				blockCounter,
 				channel,
 				n.beaconChain,

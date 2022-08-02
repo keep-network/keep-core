@@ -19,6 +19,9 @@ import (
 
 var logger = log.Logger("keep-beacon")
 
+// ProtocolName denotes the name of the protocol defined by this package.
+const ProtocolName = "beacon"
+
 // Initialize kicks off the random beacon by initializing internal state,
 // ensuring preconditions like staking are met, and then kicking off the
 // internal random beacon implementation. Returns an error if this failed,
@@ -29,22 +32,16 @@ func Initialize(
 	netProvider net.Provider,
 	persistence persistence.Handle,
 ) error {
-	_, operatorPublicKey, err := beaconChain.OperatorKeyPair()
-	if err != nil {
-		return fmt.Errorf("failed to get operator key pair: [%v]", err)
-	}
-
-	groupRegistry := registry.NewGroupRegistry(beaconChain, persistence)
+	groupRegistry := registry.NewGroupRegistry(logger, beaconChain, persistence)
 	groupRegistry.LoadExistingGroups()
 
 	node := newNode(
-		operatorPublicKey,
-		netProvider,
 		beaconChain,
+		netProvider,
 		groupRegistry,
 	)
 
-	err = sortition.MonitorPool(ctx, beaconChain, sortition.DefaultStatusCheckTick)
+	err := sortition.MonitorPool(ctx, logger, beaconChain, sortition.DefaultStatusCheckTick)
 	if err != nil {
 		return fmt.Errorf("could not set up sortition pool monitoring: [%v]", err)
 	}

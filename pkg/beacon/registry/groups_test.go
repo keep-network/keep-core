@@ -3,17 +3,19 @@ package registry
 import (
 	"bytes"
 	"encoding/hex"
-	"github.com/keep-network/keep-core/pkg/chain"
-	"github.com/keep-network/keep-core/pkg/chain/local_v1"
+	"github.com/keep-network/keep-core/pkg/internal/testutils"
 	"math/big"
 	"reflect"
 	"testing"
+
+	"github.com/keep-network/keep-core/pkg/chain"
+	"github.com/keep-network/keep-core/pkg/chain/local_v1"
 
 	bn256 "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
 	"github.com/keep-network/keep-common/pkg/persistence"
 	"github.com/keep-network/keep-core/pkg/beacon/dkg"
 	"github.com/keep-network/keep-core/pkg/beacon/event"
-	"github.com/keep-network/keep-core/pkg/beacon/group"
+	"github.com/keep-network/keep-core/pkg/protocol/group"
 	"github.com/keep-network/keep-core/pkg/subscription"
 )
 
@@ -24,37 +26,42 @@ var (
 	persistenceMock = &persistenceHandleMock{}
 
 	groupPublicKeyShares = make(map[group.MemberIndex]*bn256.G2)
+	groupOperators       = []chain.Address{"address1", "address2"}
 
 	signer1 = dkg.NewThresholdSigner(
 		group.MemberIndex(1),
 		new(bn256.G2).ScalarBaseMult(big.NewInt(10)),
 		big.NewInt(1),
 		groupPublicKeyShares,
+		groupOperators,
 	)
 	signer2 = dkg.NewThresholdSigner(
 		group.MemberIndex(2),
 		new(bn256.G2).ScalarBaseMult(big.NewInt(20)),
 		big.NewInt(2),
 		groupPublicKeyShares,
+		groupOperators,
 	)
 	signer3 = dkg.NewThresholdSigner(
 		group.MemberIndex(3),
 		new(bn256.G2).ScalarBaseMult(big.NewInt(30)),
 		big.NewInt(3),
 		groupPublicKeyShares,
+		groupOperators,
 	)
 	signer4 = dkg.NewThresholdSigner(
 		group.MemberIndex(3),
 		new(bn256.G2).ScalarBaseMult(big.NewInt(20)),
 		big.NewInt(2),
 		groupPublicKeyShares,
+		groupOperators,
 	)
 )
 
 func TestRegisterGroup(t *testing.T) {
-	localChain := local_v1.Connect(5, 3, big.NewInt(200))
+	localChain := local_v1.Connect(5, 3)
 
-	gr := NewGroupRegistry(localChain, persistenceMock)
+	gr := NewGroupRegistry(&testutils.MockLogger{}, localChain, persistenceMock)
 
 	gr.RegisterGroup(signer1, channelName1)
 
@@ -76,8 +83,8 @@ func TestRegisterGroup(t *testing.T) {
 }
 
 func TestLoadGroup(t *testing.T) {
-	localChain := local_v1.Connect(5, 3, big.NewInt(200))
-	gr := NewGroupRegistry(localChain, persistenceMock)
+	localChain := local_v1.Connect(5, 3)
+	gr := NewGroupRegistry(&testutils.MockLogger{}, localChain, persistenceMock)
 
 	if len(gr.myGroups) != 0 {
 		t.Fatalf(
@@ -122,7 +129,7 @@ func TestUnregisterStaleGroups(t *testing.T) {
 		groupsCheckedIfStale: make(map[string]bool),
 	}
 
-	gr := NewGroupRegistry(mockChain, persistenceMock)
+	gr := NewGroupRegistry(&testutils.MockLogger{}, mockChain, persistenceMock)
 
 	gr.RegisterGroup(signer1, channelName1)
 	gr.RegisterGroup(signer2, channelName1)
@@ -158,7 +165,7 @@ func TestUnregisterStaleGroupsSkipLastGroupCheck(t *testing.T) {
 		groupsCheckedIfStale: make(map[string]bool),
 	}
 
-	gr := NewGroupRegistry(mockChain, persistenceMock)
+	gr := NewGroupRegistry(&testutils.MockLogger{}, mockChain, persistenceMock)
 
 	gr.RegisterGroup(signer1, channelName1)
 	gr.RegisterGroup(signer2, channelName1)
@@ -211,12 +218,6 @@ func (mgri *mockGroupRegistrationInterface) IsStaleGroup(groupPublicKey []byte) 
 		}
 	}
 	return false, nil
-}
-
-func (mgri *mockGroupRegistrationInterface) GetGroupMembers(
-	groupPublicKey []byte,
-) ([]chain.Address, error) {
-	return nil, nil // no-op
 }
 
 type persistenceHandleMock struct {
