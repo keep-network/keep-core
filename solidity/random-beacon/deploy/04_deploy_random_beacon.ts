@@ -1,5 +1,5 @@
 import type { HardhatRuntimeEnvironment } from "hardhat/types"
-import type { DeployFunction } from "hardhat-deploy/types"
+import type { DeployFunction, DeployOptions } from "hardhat-deploy/types"
 
 const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   const { getNamedAccounts, deployments, helpers } = hre
@@ -11,32 +11,31 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   const BeaconSortitionPool = await deployments.get("BeaconSortitionPool")
   const BeaconDkgValidator = await deployments.get("BeaconDkgValidator")
 
-  const BLS = await deployments.deploy("BLS", {
+  const deployOptions: DeployOptions = {
     from: deployer,
     log: true,
-  })
+    waitConfirmations: 1,
+  }
 
-  const BeaconAuthorization = await deployments.deploy("BeaconAuthorization", {
-    from: deployer,
-    log: true,
-  })
+  const BLS = await deployments.deploy("BLS", deployOptions)
 
-  const BeaconDkg = await deployments.deploy("BeaconDkg", {
-    from: deployer,
-    log: true,
-  })
+  const BeaconAuthorization = await deployments.deploy(
+    "BeaconAuthorization",
+    deployOptions
+  )
 
-  const BeaconInactivity = await deployments.deploy("BeaconInactivity", {
-    from: deployer,
-    log: true,
-  })
+  const BeaconDkg = await deployments.deploy("BeaconDkg", deployOptions)
+
+  const BeaconInactivity = await deployments.deploy(
+    "BeaconInactivity",
+    deployOptions
+  )
 
   const RandomBeacon = await deployments.deploy("RandomBeacon", {
     contract:
       process.env.TEST_USE_STUBS_BEACON === "true"
         ? "RandomBeaconStub"
         : undefined,
-    from: deployer,
     args: [
       BeaconSortitionPool.address,
       T.address,
@@ -50,7 +49,7 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
       BeaconDkg: BeaconDkg.address,
       BeaconInactivity: BeaconInactivity.address,
     },
-    log: true,
+    ...deployOptions,
   })
 
   await helpers.ownable.transferOwnership(
