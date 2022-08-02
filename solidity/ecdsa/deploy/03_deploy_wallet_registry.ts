@@ -14,6 +14,7 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   const EcdsaInactivity = await deployments.deploy("EcdsaInactivity", {
     from: deployer,
     log: true,
+    waitConfirmations: 1,
   })
 
   const walletRegistry = await helpers.upgrades.deployProxy("WalletRegistry", {

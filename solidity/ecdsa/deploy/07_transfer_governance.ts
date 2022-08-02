@@ -17,7 +17,7 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
 
   await deployments.execute(
     "WalletRegistry",
-    { from: deployer },
+    { from: deployer, log: true, waitConfirmations: 1 },
     "transferGovernance",
     WalletRegistryGovernance.address
   )
