@@ -113,23 +113,22 @@ fi
 
 printf "${LOG_START}Setting up staking...${LOG_END}"
 
-mint="npx hardhat mint 
+mint="npx hardhat initialize:mint 
    --network $NETWORK \
    --owner ${stake_owner}"
-stake="npx hardhat stake 
+stake="npx hardhat initialize:stake 
    --network $NETWORK \
    --owner ${stake_owner} \
    --provider ${staking_provider} \
    --beneficiary ${beneficiary} \
    --authorizer ${authorizer}"
-increase_authorization="npx hardhat increase-authorization 
+increase_authorization="npx hardhat initialize:authorize 
    --network $NETWORK \
    --owner ${stake_owner} \
    --provider ${staking_provider} 
    --authorizer ${authorizer}"
-register_operator="npx hardhat register-operator 
+register_operator="npx hardhat initialize:register 
    --network $NETWORK \
-   --owner ${stake_owner} \
    --provider ${staking_provider} \
    --operator ${operator}"
 

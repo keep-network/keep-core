@@ -46,9 +46,9 @@ async function mint(
   const currentAllowance: BigNumber = await t.allowance(owner, staking.address)
 
   console.log(
-    `Account ${owner} allowance for ${staking.address} is ${from1e18(
-      currentAllowance
-    )} T`
+    `Account ${owner} allowance in staking contract ${
+      staking.address
+    } is ${from1e18(currentAllowance)} T`
   )
 
   if (currentAllowance.lt(stakeAmount)) {
