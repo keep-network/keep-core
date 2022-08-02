@@ -163,9 +163,7 @@ jobs:
 
   contracts-deployment-testnet:
     needs: [contracts-detect-changes, contracts-build-and-test]
-    if: |
-      github.event_name == 'workflow_dispatch'
-        && github.event.inputs.environment == 'goerli'
+    if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     defaults:
       run:
