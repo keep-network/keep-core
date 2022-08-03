@@ -92,7 +92,7 @@ if [ "$SKIP_DEPLOYMENT" != true ]; then
 
   # deploy beacon
   printf "${LOG_START}Deploying random-beacon contracts...${LOG_END}"
-  USE_EXTERNAL_DEPLOY=true npx hardhat deploy --reset --export export.json --network $NETWORK
+  yarn deploy --reset --network $NETWORK
 
   printf "${LOG_START}Creating random-beacon link...${LOG_END}"
   yarn link
@@ -109,7 +109,7 @@ if [ "$SKIP_DEPLOYMENT" != true ]; then
 
   # deploy ecdsa
   printf "${LOG_START}Deploying ecdsa contracts...${LOG_END}"
-  npx hardhat deploy --reset --export export.json --network $NETWORK
+  yarn deploy --reset --network $NETWORK
   
   printf "${LOG_START}Creating ecdsa link...${LOG_END}"
   yarn link
@@ -141,7 +141,7 @@ if [ "$SKIP_DEPLOYMENT" != true ]; then
 
   # deploy tbtc
   printf "${LOG_START}Deploying tbtc contracts...${LOG_END}"
-  npx hardhat deploy --reset --export export.json --network $NETWORK
+  yarn deploy --reset --network $NETWORK
 fi
 
 if [ "$SKIP_CLIENT_BUILD" = false ]; then
