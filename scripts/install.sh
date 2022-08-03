@@ -149,8 +149,7 @@ if [ "$SKIP_CLIENT_BUILD" = false ]; then
    printf "${LOG_START}Building client...${LOG_END}"
 
    cd $KEEP_CORE_PATH
-   go generate ./...
-   go build -a -o keep-core .
+   make
 fi
 
 printf "${DONE_START}Installation completed!${DONE_END}"
