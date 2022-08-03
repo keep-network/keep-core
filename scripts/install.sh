@@ -10,7 +10,7 @@ KEEP_CORE_PATH=$PWD
 
 KEEP_BEACON_SOL_PATH="$KEEP_CORE_PATH/solidity/random-beacon"
 KEEP_ECDSA_SOL_PATH="$KEEP_CORE_PATH/solidity/ecdsa"
-TMP_TBTC="$KEEP_CORE_PATH/tmp"
+TMP="$KEEP_CORE_PATH/tmp"
 
 # Defaults, can be overwritten by env variables/input parameters
 NETWORK_DEFAULT="development"
@@ -87,6 +87,30 @@ if [ "$NETWORK" == "development" ]; then
 fi
 
 if [ "$SKIP_DEPLOYMENT" != true ]; then
+
+  # create tmp/ dir for fresh installations
+  rm -rf $TMP && mkdir $TMP && cd $TMP
+
+  # clone solidity-contracts as a dependency for beacon, ecdsa and tbtc
+  git clone https://github.com/threshold-network/solidity-contracts.git
+  cd solidity-contracts
+
+  printf "${LOG_START}Building solidity-contracts...${LOG_END}"
+  yarn && yarn clean && yarn build
+
+  # deploy solidity-contracts
+  printf "${LOG_START}Deploying solidity-contracts contracts...${LOG_END}"
+  yarn deploy --reset --network $NETWORK
+
+  yarn link
+  # create export folder
+  yarn prepack
+
+  cd $KEEP_BEACON_SOL_PATH
+
+  printf "${LOG_START}Linking solidity-contracts...${LOG_END}"
+  yarn link @threshold-network/solidity-contracts
+
   printf "${LOG_START}Building random-beacon...${LOG_END}"
   yarn clean && yarn build
 
@@ -100,6 +124,9 @@ if [ "$SKIP_DEPLOYMENT" != true ]; then
   yarn prepack
 
   cd $KEEP_ECDSA_SOL_PATH
+
+  printf "${LOG_START}Linking solidity-contracts...${LOG_END}"
+  yarn link @threshold-network/solidity-contracts
 
   printf "${LOG_START}Linking random-beacon...${LOG_END}"
   yarn link @keep-network/random-beacon
@@ -116,16 +143,11 @@ if [ "$SKIP_DEPLOYMENT" != true ]; then
   # create export folder
   yarn prepack
 
-  cd $KEEP_CORE_PATH
-
   if [ "$TBTC_PATH" = "" ]; then
+    cd $TMP
     printf "${LOG_START}Cloning tbtc...${LOG_END}"
-    # create a temporary tbtc dir for fresh installation
-    rm -rf $TMP_TBTC && mkdir $TMP_TBTC && cd $TMP_TBTC
-    # clone project from the repository
     git clone https://github.com/keep-network/tbtc-v2.git
     
-    printf "${LOG_START}Building tbtc contracts...${LOG_END}"
     cd "tbtc-v2/solidity"
   else
     printf "${LOG_START}Installing tbtc from the local directory...${LOG_END}"
@@ -134,12 +156,16 @@ if [ "$SKIP_DEPLOYMENT" != true ]; then
 
   yarn
 
+  printf "${LOG_START}Linking solidity-contracts...${LOG_END}"
+  yarn link @threshold-network/solidity-contracts
+
   printf "${LOG_START}Linking random-beacon...${LOG_END}"
   yarn link @keep-network/random-beacon
 
   printf "${LOG_START}Linking ecdsa...${LOG_END}"
   yarn link @keep-network/ecdsa
 
+  printf "${LOG_START}Building tbtc contracts...${LOG_END}"
   yarn build && yarn prepack
 
   # deploy tbtc
