@@ -5,7 +5,7 @@ import (
 	"sort"
 
 	"github.com/keep-network/keep-core/pkg/beacon/gjkr"
-	"github.com/keep-network/keep-core/pkg/beacon/group"
+	"github.com/keep-network/keep-core/pkg/protocol/group"
 )
 
 // convertGjkrResult transforms GJKR protocol execution result to a chain

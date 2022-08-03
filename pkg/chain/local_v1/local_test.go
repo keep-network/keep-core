@@ -15,36 +15,19 @@ import (
 )
 
 func TestLocalSubmitRelayEntry(t *testing.T) {
-	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
-	defer cancel()
+	chainHandle := Connect(10, 4)
 
-	chainHandle := Connect(10, 4, big.NewInt(200))
-
-	relayEntryPromise := chainHandle.SubmitRelayEntry(big.NewInt(19).Bytes())
-
-	done := make(chan *event.RelayEntrySubmitted)
-	relayEntryPromise.OnSuccess(func(entry *event.RelayEntrySubmitted) {
-		done <- entry
-	}).OnFailure(func(err error) {
-		if err != nil {
-			t.Fatal(err)
-		}
-	})
-
-	select {
-	case <-done:
-		// expected
-	case <-ctx.Done():
-		t.Fatal(ctx.Err())
+	err := chainHandle.SubmitRelayEntry(big.NewInt(19).Bytes())
+	if err != nil {
+		t.Fatal(err)
 	}
-
 }
 
 func TestLocalOnEntrySubmitted(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
 	defer cancel()
 
-	chainHandle := Connect(10, 4, big.NewInt(200))
+	chainHandle := Connect(10, 4)
 
 	eventFired := make(chan *event.RelayEntrySubmitted)
 
@@ -56,7 +39,10 @@ func TestLocalOnEntrySubmitted(t *testing.T) {
 
 	defer subscription.Unsubscribe()
 
-	chainHandle.SubmitRelayEntry(big.NewInt(20).Bytes())
+	err := chainHandle.SubmitRelayEntry(big.NewInt(20).Bytes())
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	select {
 	case <-eventFired:
@@ -70,7 +56,7 @@ func TestLocalOnEntrySubmittedUnsubscribed(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
 	defer cancel()
 
-	chainHandle := Connect(10, 4, big.NewInt(200))
+	chainHandle := Connect(10, 4)
 
 	eventFired := make(chan *event.RelayEntrySubmitted)
 
@@ -82,7 +68,10 @@ func TestLocalOnEntrySubmittedUnsubscribed(t *testing.T) {
 
 	subscription.Unsubscribe()
 
-	chainHandle.SubmitRelayEntry(big.NewInt(1).Bytes())
+	err := chainHandle.SubmitRelayEntry(big.NewInt(1).Bytes())
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	select {
 	case event := <-eventFired:
@@ -96,7 +85,7 @@ func TestLocalOnGroupRegistered(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
 	defer cancel()
 
-	chainHandle := Connect(10, 4, big.NewInt(200))
+	chainHandle := Connect(10, 4)
 
 	eventFired := make(chan *event.GroupRegistration)
 
@@ -145,7 +134,7 @@ func TestLocalOnGroupRegisteredUnsubscribed(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
 	defer cancel()
 
-	chainHandle := Connect(10, 4, big.NewInt(200))
+	chainHandle := Connect(10, 4)
 
 	eventFired := make(chan *event.GroupRegistration)
 
@@ -184,7 +173,7 @@ func TestLocalOnDKGResultSubmitted(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
 	defer cancel()
 
-	chainHandle := Connect(10, 4, big.NewInt(200))
+	chainHandle := Connect(10, 4)
 
 	eventFired := make(chan *event.DKGResultSubmission)
 
@@ -234,7 +223,7 @@ func TestLocalOnDKGResultSubmittedUnsubscribed(t *testing.T) {
 	ctx, cancel := newTestContext()
 	defer cancel()
 
-	chainHandle := Connect(10, 4, big.NewInt(200))
+	chainHandle := Connect(10, 4)
 
 	eventFired := make(chan *event.DKGResultSubmission)
 
@@ -270,7 +259,7 @@ func TestLocalOnDKGResultSubmittedUnsubscribed(t *testing.T) {
 }
 
 func TestWatchBlocks(t *testing.T) {
-	c := Connect(10, 4, big.NewInt(100))
+	c := Connect(10, 4)
 	blockCounter, err := c.BlockCounter()
 	if err != nil {
 		t.Fatal(err)
@@ -315,7 +304,7 @@ func TestWatchBlocksNonBlocking(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 1100*time.Millisecond)
 	defer cancel()
 
-	c := Connect(10, 4, big.NewInt(100))
+	c := Connect(10, 4)
 	blockCounter, err := c.BlockCounter()
 	if err != nil {
 		t.Fatal(err)
@@ -364,7 +353,7 @@ func TestLocalBlockHeightWaiter(t *testing.T) {
 		test := test
 		t.Run(testName, func(t *testing.T) {
 			t.Parallel()
-			c := Connect(10, 4, big.NewInt(100))
+			c := Connect(10, 4)
 
 			blockCounter, err := c.BlockCounter()
 			if err != nil {
@@ -490,7 +479,7 @@ func TestLocalIsGroupStale(t *testing.T) {
 }
 
 func TestLocalSubmitDKGResult(t *testing.T) {
-	chainHandle := Connect(10, 4, big.NewInt(200))
+	chainHandle := Connect(10, 4)
 
 	memberIndex := beaconchain.GroupMemberIndex(1)
 	result := &beaconchain.DKGResult{
@@ -523,7 +512,7 @@ func TestLocalSubmitDKGResultWithSignatures(t *testing.T) {
 	groupSize := 5
 	honestThreshold := 3
 
-	chainHandle := Connect(groupSize, honestThreshold, big.NewInt(200))
+	chainHandle := Connect(groupSize, honestThreshold)
 
 	var tests = map[string]struct {
 		signatures    map[beaconchain.GroupMemberIndex][]byte

@@ -465,7 +465,7 @@ contract RandomBeacon is IRandomBeacon, IApplication, Governable, Reimbursable {
         // Gas parameters were adjusted based on Ethereum state in April 2022.
         // If the cost of EVM opcodes change over time, these parameters will
         // have to be updated.
-        _dkgResultSubmissionGas = 235_000;
+        _dkgResultSubmissionGas = 237_650;
         _dkgResultApprovalGasOffset = 41_500;
         _notifyOperatorInactivityGasOffset = 54_500;
         _relayEntrySubmissionGasOffset = 11_250;
@@ -854,6 +854,7 @@ contract RandomBeacon is IRandomBeacon, IApplication, Governable, Reimbursable {
     ///      `\x19Ethereum signed message:\n${keccak256(groupPubKey,misbehaved,startBlock)}`
     /// @param dkgResult DKG result.
     function submitDkgResult(DKG.Result calldata dkgResult) external {
+        groups.validatePublicKey(dkgResult.groupPubKey);
         dkg.submitResult(dkgResult);
     }
 

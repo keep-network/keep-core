@@ -10,6 +10,10 @@ contract GroupsStub {
 
     event GroupRegistered(uint64 indexed groupId, bytes indexed groupPubKey);
 
+    function validatePublicKey(bytes calldata groupPubKey) external view {
+        groups.validatePublicKey(groupPubKey);
+    }
+
     function addGroup(bytes calldata groupPubKey, bytes32 membersHash)
         external
     {

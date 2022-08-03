@@ -10,6 +10,7 @@ import (
 	beaconchain "github.com/keep-network/keep-core/pkg/beacon/chain"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/chain/local_v1"
+	"github.com/keep-network/keep-core/pkg/internal/testutils"
 	"math/big"
 	"sync"
 	"time"
@@ -24,8 +25,6 @@ import (
 
 	netLocal "github.com/keep-network/keep-core/pkg/net/local"
 )
-
-var minimumStake = big.NewInt(20)
 
 // Result of the relay entry signing protocol execution.
 type Result struct {
@@ -74,7 +73,7 @@ func RunTest(
 		rules,
 	)
 
-	localChain := local_v1.ConnectWithKey(len(signers), threshold, minimumStake, operatorPrivateKey)
+	localChain := local_v1.ConnectWithKey(len(signers), threshold, operatorPrivateKey)
 
 	blockCounter, err := localChain.BlockCounter()
 	if err != nil {
@@ -142,6 +141,7 @@ func executeSigning(
 	for _, signer := range signers {
 		go func(signer *dkg.ThresholdSigner) {
 			err := entry.SignAndSubmit(
+				&testutils.MockLogger{},
 				blockCounter,
 				broadcastChannel,
 				beaconChain,

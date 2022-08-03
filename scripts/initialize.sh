@@ -111,9 +111,13 @@ cd $KEEP_BEACON_SOL_PATH
     
 printf "${LOG_START}Setting up staking...${LOG_END}"
 
-stake="npx hardhat stake --network $NETWORK --owner ${stake_owner} \
-    --provider ${staking_provider} --operator ${operator} \
-    --beneficiary ${beneficiary} --authorizer ${authorizer} "
+stake="npx hardhat initialize \
+    --network $NETWORK \
+    --owner ${stake_owner} \
+    --provider ${staking_provider} \
+    --operator ${operator} \
+    --beneficiary ${beneficiary} \
+    --authorizer ${authorizer}"
 
 eval ${stake} ${stake_amount_opt} ${authorization_amount_opt}
 

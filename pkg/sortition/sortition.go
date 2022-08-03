@@ -9,10 +9,8 @@ import (
 )
 
 const (
-	DefaultStatusCheckTick = 10 * time.Second
+	DefaultStatusCheckTick = 6 * time.Hour
 )
-
-var logger = log.Logger("keep-sortition")
 
 var errOperatorUnknown = fmt.Errorf("operator not registered for the staking provider, check Threshold dashboard")
 
@@ -23,19 +21,20 @@ var errOperatorUnknown = fmt.Errorf("operator not registered for the staking pro
 // function attempts to update the operator's status in the pool.
 func MonitorPool(
 	ctx context.Context,
+	logger log.StandardLogger,
 	chain Chain,
 	tick time.Duration,
 ) error {
 	_, isRegistered, err := chain.OperatorToStakingProvider()
 	if err != nil {
-		return fmt.Errorf("could not resolve staking provider: [%v]", err)
+		return fmt.Errorf("could not resolve staking provider: [%w]", err)
 	}
 
 	if !isRegistered {
 		return errOperatorUnknown
 	}
 
-	err = checkOperatorStatus(chain)
+	err = checkOperatorStatus(logger, chain)
 	if err != nil {
 		logger.Errorf("could not check operator sortition pool status: [%v]", err)
 	}
@@ -49,7 +48,7 @@ func MonitorPool(
 				ticker.Stop()
 				return
 			case <-ticker.C:
-				err = checkOperatorStatus(chain)
+				err = checkOperatorStatus(logger, chain)
 				if err != nil {
 					logger.Errorf("could not check operator sortition pool status: [%v]", err)
 					continue
@@ -61,7 +60,7 @@ func MonitorPool(
 	return nil
 }
 
-func checkOperatorStatus(chain Chain) error {
+func checkOperatorStatus(logger log.StandardLogger, chain Chain) error {
 	logger.Info("checking sortition pool operator status")
 
 	isOperatorInPool, err := chain.IsOperatorInPool()
@@ -69,20 +68,25 @@ func checkOperatorStatus(chain Chain) error {
 		return err
 	}
 
-	if isOperatorInPool {
-		logger.Info("operator is in the sortition pool")
-	} else {
-		logger.Info("operator is not in the sortition pool")
-	}
-
 	isOperatorUpToDate, err := chain.IsOperatorUpToDate()
 	if err != nil {
 		return err
 	}
 
+	if isOperatorInPool {
+		logger.Info("operator is in the sortition pool")
+
+		err = checkRewardsEligibility(logger, chain)
+		if err != nil {
+			logger.Errorf("could not check for rewards eligibility: [%v]", err)
+		}
+	} else {
+		logger.Info("operator is not in the sortition pool")
+	}
+
 	if isOperatorUpToDate {
 		if isOperatorInPool {
-			logger.Infof("sortition pool operator status is up to date")
+			logger.Info("sortition pool operator weight is up to date")
 		} else {
 			logger.Info("please inspect staking providers's authorization for the Random Beacon")
 		}
@@ -96,21 +100,52 @@ func checkOperatorStatus(chain Chain) error {
 	}
 
 	if isLocked {
-		logger.Infof("sortition pool state is locked, waiting with the update")
+		logger.Info("sortition pool state is locked, waiting with the update")
 		return nil
 	}
 
-	if !isOperatorInPool {
-		logger.Infof("joining the sortition pool")
+	if isOperatorInPool {
+		logger.Info("updating operator status in the sortition pool")
+		err := chain.UpdateOperatorStatus()
+		if err != nil {
+			logger.Errorf("could not update the sortition pool: [%v]", err)
+		}
+	} else {
+		logger.Info("joining the sortition pool")
 		err := chain.JoinSortitionPool()
 		if err != nil {
 			logger.Errorf("could not join the sortition pool: [%v]", err)
 		}
+	}
+
+	return nil
+}
+
+func checkRewardsEligibility(logger log.StandardLogger, chain Chain) error {
+	isEligibleForRewards, err := chain.IsEligibleForRewards()
+	if err != nil {
+		return err
+	}
+
+	if isEligibleForRewards {
+		logger.Info("operator is eligible for rewards")
 	} else {
-		logger.Infof("updating operator status in the sortition pool")
-		err := chain.UpdateOperatorStatus()
+		logger.Info("operator is marked as ineligible for rewards")
+
+		canRestoreRewardEligibility, err := chain.CanRestoreRewardEligibility()
 		if err != nil {
-			logger.Errorf("could not update the sortition pool: [%v]", err)
+			return err
+		}
+
+		if canRestoreRewardEligibility {
+			logger.Info("restoring eligibility for rewards")
+
+			err = chain.RestoreRewardEligibility()
+			if err != nil {
+				return err
+			}
+		} else {
+			logger.Info("cannot restore eligibility for rewards yet")
 		}
 	}
 

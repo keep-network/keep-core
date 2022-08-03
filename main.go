@@ -2,24 +2,20 @@ package main
 
 import (
 	"os"
+	"path"
 
 	"fmt"
-	"path"
-	"time"
 
 	"github.com/ipfs/go-log"
 	"github.com/keep-network/keep-common/pkg/logging"
 	"github.com/keep-network/keep-core/cmd"
-	"github.com/urfave/cli"
+	"github.com/keep-network/keep-core/config"
+	"github.com/spf13/cobra"
 )
-
-const defaultConfigPath = "./config.toml"
 
 var (
 	version  string
 	revision string
-
-	configPath string
 
 	logger = log.Logger("keep-main")
 )
@@ -32,47 +28,27 @@ func main() {
 		revision = "unknown"
 	}
 
-	err := logging.Configure(os.Getenv("LOG_LEVEL"))
+	err := logging.Configure(os.Getenv(config.LogLevelEnvVariable))
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "failed to configure logging: [%v]\n", err)
 	}
 
-	app := cli.NewApp()
-	app.Name = path.Base(os.Args[0])
-	app.Usage = "CLI for The Keep Network"
-	app.Description = "Command line interface (CLI) for running a Keep provider"
-	app.Compiled = time.Now()
-	app.Authors = []cli.Author{
-		{
-			Name:  "Keep Network",
-			Email: "info@keep.network",
-		},
-	}
-	app.Version = fmt.Sprintf("%s (revision %s)", version, revision)
-	app.Flags = []cli.Flag{
-		cli.StringFlag{
-			Name:        "config,c",
-			Value:       defaultConfigPath,
-			Destination: &configPath,
-			Usage:       "full path to the configuration file",
-		},
-	}
-	app.Commands = []cli.Command{
+	var rootCmd = &cobra.Command{}
+
+	rootCmd.Use = path.Base(os.Args[0])
+	rootCmd.Short = "CLI for The Keep Network"
+	rootCmd.Long = "Command line interface (CLI) for running a Keep provider"
+	rootCmd.Version = fmt.Sprintf("%s (revision %s)", version, revision)
+
+	rootCmd.AddCommand(
 		cmd.StartCommand,
-		cmd.PingCommand,
-		cmd.EthereumCommand,
-	}
+		// TODO: Refactor PingCommand and EthereumCommand to register them in the root
+		// command.
+		// cmd.PingCommand,
+		// cmd.EthereumCommand,
+	)
 
-	cli.AppHelpTemplate = fmt.Sprintf(`%s
-ENVIRONMENT VARIABLES:
-   KEEP_ETHEREUM_PASSWORD    keep client password
-   LOG_LEVEL                 space-delimited set of log level directives; set to
-                             "help" for help
-
-`, cli.AppHelpTemplate)
-
-	err = app.Run(os.Args)
-	if err != nil {
+	if err := rootCmd.Execute(); err != nil {
 		logger.Fatal(err)
 	}
 }
