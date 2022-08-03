@@ -3,8 +3,11 @@ import {
   TASK_INITIALIZE,
   TASK_AUTHORIZE,
   TASK_REGISTER,
-} from "@keep-network/random-beacon/tasks/initialize"
-import { authorize, register } from "@keep-network/random-beacon/tasks/utils"
+} from "@keep-network/random-beacon/export/tasks/initialize"
+import {
+  authorize,
+  register,
+} from "@keep-network/random-beacon/export/tasks/utils"
 
 import type { HardhatRuntimeEnvironment } from "hardhat/types"
 
