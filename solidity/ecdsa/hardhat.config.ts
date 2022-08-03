@@ -157,6 +157,7 @@ const config: HardhatUserConfig = {
       // For development environment we expect the local dependencies to be linked
       // with `yarn link` command.
       development: [
+        "node_modules/@threshold-network/solidity-contracts/deployments/development",
         "node_modules/@keep-network/random-beacon/deployments/development",
       ],
       goerli: [
