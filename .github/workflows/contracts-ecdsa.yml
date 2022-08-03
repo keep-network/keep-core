@@ -347,7 +347,7 @@ jobs:
       - name: Deploy contracts
         env:
           CHAIN_API_URL: ${{ secrets.GOERLI_ETH_HOSTNAME_HTTP }}
-          ACCOUNTS_PRIVATE_KEYS: ${{ secrets.GOERLI_ETH_CONTRACT_OWNER_PRIVATE_KEY }}
+          ACCOUNTS_PRIVATE_KEYS: ${{ secrets.DAPP_DEV_GOERLI_ETH_CONTRACT_OWNER_PRIVATE_KEY }}
         run: yarn deploy --network ${{ github.event.inputs.environment }}
 
       - name: Bump up package version
