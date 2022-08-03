@@ -20,8 +20,8 @@ import (
 
 	"github.com/ipfs/go-log"
 
+	"github.com/keep-network/keep-common/pkg/chain/ethereum"
 	chainutil "github.com/keep-network/keep-common/pkg/chain/ethereum/ethutil"
-	"github.com/keep-network/keep-common/pkg/chain/ethlike"
 	"github.com/keep-network/keep-common/pkg/subscription"
 	"github.com/keep-network/keep-core/pkg/chain/ethereum/ecdsa/gen/abi"
 )
@@ -40,9 +40,9 @@ type EcdsaSortitionPool struct {
 	callerOptions     *bind.CallOpts
 	transactorOptions *bind.TransactOpts
 	errorResolver     *chainutil.ErrorResolver
-	nonceManager      *ethlike.NonceManager
+	nonceManager      *ethereum.NonceManager
 	miningWaiter      *chainutil.MiningWaiter
-	blockCounter      *ethlike.BlockCounter
+	blockCounter      *ethereum.BlockCounter
 
 	transactionMutex *sync.Mutex
 }
@@ -52,19 +52,16 @@ func NewEcdsaSortitionPool(
 	chainId *big.Int,
 	accountKey *keystore.Key,
 	backend bind.ContractBackend,
-	nonceManager *ethlike.NonceManager,
+	nonceManager *ethereum.NonceManager,
 	miningWaiter *chainutil.MiningWaiter,
-	blockCounter *ethlike.BlockCounter,
+	blockCounter *ethereum.BlockCounter,
 	transactionMutex *sync.Mutex,
 ) (*EcdsaSortitionPool, error) {
 	callerOptions := &bind.CallOpts{
 		From: accountKey.Address,
 	}
 
-	// FIXME Switch to bind.NewKeyedTransactorWithChainID when
-	// FIXME celo-org/celo-blockchain merges in changes from upstream
-	// FIXME ethereum/go-ethereum beyond v1.9.25.
-	transactorOptions, err := chainutil.NewKeyedTransactorWithChainID(
+	transactorOptions, err := bind.NewKeyedTransactorWithChainID(
 		accountKey.PrivateKey,
 		chainId,
 	)
@@ -1656,7 +1653,7 @@ func (esp *EcdsaSortitionPool) WithdrawRewardsGasEstimate(
 // ----- Const Methods ------
 
 func (esp *EcdsaSortitionPool) CanRestoreRewardEligibility(
-	arg_operator uint32,
+	arg_operator common.Address,
 ) (bool, error) {
 	result, err := esp.contract.CanRestoreRewardEligibility(
 		esp.callerOptions,
@@ -1677,7 +1674,7 @@ func (esp *EcdsaSortitionPool) CanRestoreRewardEligibility(
 }
 
 func (esp *EcdsaSortitionPool) CanRestoreRewardEligibilityAtBlock(
-	arg_operator uint32,
+	arg_operator common.Address,
 	blockNumber *big.Int,
 ) (bool, error) {
 	var result bool
@@ -1951,7 +1948,7 @@ func (esp *EcdsaSortitionPool) IneligibleEarnedRewardsAtBlock(
 }
 
 func (esp *EcdsaSortitionPool) IsEligibleForRewards(
-	arg_operator uint32,
+	arg_operator common.Address,
 ) (bool, error) {
 	result, err := esp.contract.IsEligibleForRewards(
 		esp.callerOptions,
@@ -1972,7 +1969,7 @@ func (esp *EcdsaSortitionPool) IsEligibleForRewards(
 }
 
 func (esp *EcdsaSortitionPool) IsEligibleForRewardsAtBlock(
-	arg_operator uint32,
+	arg_operator common.Address,
 	blockNumber *big.Int,
 ) (bool, error) {
 	var result bool
@@ -2313,7 +2310,7 @@ func (esp *EcdsaSortitionPool) RewardTokenAtBlock(
 }
 
 func (esp *EcdsaSortitionPool) RewardsEligibilityRestorableAt(
-	arg_operator uint32,
+	arg_operator common.Address,
 ) (*big.Int, error) {
 	result, err := esp.contract.RewardsEligibilityRestorableAt(
 		esp.callerOptions,
@@ -2334,7 +2331,7 @@ func (esp *EcdsaSortitionPool) RewardsEligibilityRestorableAt(
 }
 
 func (esp *EcdsaSortitionPool) RewardsEligibilityRestorableAtAtBlock(
-	arg_operator uint32,
+	arg_operator common.Address,
 	blockNumber *big.Int,
 ) (*big.Int, error) {
 	var result *big.Int
@@ -2443,10 +2440,10 @@ func (esp *EcdsaSortitionPool) TotalWeightAtBlock(
 // ------ Events -------
 
 func (esp *EcdsaSortitionPool) IneligibleForRewardsEvent(
-	opts *ethlike.SubscribeOpts,
+	opts *ethereum.SubscribeOpts,
 ) *EspIneligibleForRewardsSubscription {
 	if opts == nil {
-		opts = new(ethlike.SubscribeOpts)
+		opts = new(ethereum.SubscribeOpts)
 	}
 	if opts.Tick == 0 {
 		opts.Tick = chainutil.DefaultSubscribeOptsTick
@@ -2463,7 +2460,7 @@ func (esp *EcdsaSortitionPool) IneligibleForRewardsEvent(
 
 type EspIneligibleForRewardsSubscription struct {
 	contract *EcdsaSortitionPool
-	opts     *ethlike.SubscribeOpts
+	opts     *ethereum.SubscribeOpts
 }
 
 type ecdsaSortitionPoolIneligibleForRewardsFunc func(
@@ -2624,12 +2621,12 @@ func (esp *EcdsaSortitionPool) PastIneligibleForRewardsEvents(
 }
 
 func (esp *EcdsaSortitionPool) OwnershipTransferredEvent(
-	opts *ethlike.SubscribeOpts,
+	opts *ethereum.SubscribeOpts,
 	previousOwnerFilter []common.Address,
 	newOwnerFilter []common.Address,
 ) *EspOwnershipTransferredSubscription {
 	if opts == nil {
-		opts = new(ethlike.SubscribeOpts)
+		opts = new(ethereum.SubscribeOpts)
 	}
 	if opts.Tick == 0 {
 		opts.Tick = chainutil.DefaultSubscribeOptsTick
@@ -2648,7 +2645,7 @@ func (esp *EcdsaSortitionPool) OwnershipTransferredEvent(
 
 type EspOwnershipTransferredSubscription struct {
 	contract            *EcdsaSortitionPool
-	opts                *ethlike.SubscribeOpts
+	opts                *ethereum.SubscribeOpts
 	previousOwnerFilter []common.Address
 	newOwnerFilter      []common.Address
 }
@@ -2823,12 +2820,12 @@ func (esp *EcdsaSortitionPool) PastOwnershipTransferredEvents(
 }
 
 func (esp *EcdsaSortitionPool) RewardEligibilityRestoredEvent(
-	opts *ethlike.SubscribeOpts,
+	opts *ethereum.SubscribeOpts,
 	operatorFilter []common.Address,
 	idFilter []uint32,
 ) *EspRewardEligibilityRestoredSubscription {
 	if opts == nil {
-		opts = new(ethlike.SubscribeOpts)
+		opts = new(ethereum.SubscribeOpts)
 	}
 	if opts.Tick == 0 {
 		opts.Tick = chainutil.DefaultSubscribeOptsTick
@@ -2847,7 +2844,7 @@ func (esp *EcdsaSortitionPool) RewardEligibilityRestoredEvent(
 
 type EspRewardEligibilityRestoredSubscription struct {
 	contract       *EcdsaSortitionPool
-	opts           *ethlike.SubscribeOpts
+	opts           *ethereum.SubscribeOpts
 	operatorFilter []common.Address
 	idFilter       []uint32
 }

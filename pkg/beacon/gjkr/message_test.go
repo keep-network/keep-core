@@ -6,8 +6,8 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/keep-network/keep-core/pkg/beacon/group"
 	"github.com/keep-network/keep-core/pkg/crypto/ephemeral"
+	"github.com/keep-network/keep-core/pkg/protocol/group"
 )
 
 func TestAddAndDecryptSharesFromMessage(t *testing.T) {

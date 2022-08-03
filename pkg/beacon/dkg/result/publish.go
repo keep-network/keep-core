@@ -2,13 +2,14 @@ package result
 
 import (
 	"fmt"
+	"github.com/ipfs/go-log"
 
 	beaconchain "github.com/keep-network/keep-core/pkg/beacon/chain"
 	"github.com/keep-network/keep-core/pkg/beacon/gjkr"
-	"github.com/keep-network/keep-core/pkg/beacon/group"
-	"github.com/keep-network/keep-core/pkg/beacon/state"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/net"
+	"github.com/keep-network/keep-core/pkg/protocol/group"
+	"github.com/keep-network/keep-core/pkg/protocol/state"
 )
 
 // RegisterUnmarshallers initializes the given broadcast channel to be able to
@@ -27,9 +28,10 @@ func RegisterUnmarshallers(channel net.BroadcastChannel) {
 // our own result and added to the list of votes. Finally, we submit the result
 // along with everyone's votes.
 func Publish(
+	logger log.StandardLogger,
 	memberIndex group.MemberIndex,
 	dkgGroup *group.Group,
-	membershipValidator group.MembershipValidator,
+	membershipValidator *group.MembershipValidator,
 	result *gjkr.Result,
 	channel net.BroadcastChannel,
 	beaconChain beaconchain.Interface,
@@ -40,13 +42,13 @@ func Publish(
 		channel:                 channel,
 		beaconChain:             beaconChain,
 		blockCounter:            blockCounter,
-		member:                  NewSigningMember(memberIndex, dkgGroup, membershipValidator),
+		member:                  NewSigningMember(logger, memberIndex, dkgGroup, membershipValidator),
 		result:                  convertGjkrResult(result),
 		signatureMessages:       make([]*DKGResultHashSignatureMessage, 0),
 		signingStartBlockHeight: startBlockHeight,
 	}
 
-	stateMachine := state.NewMachine(channel, blockCounter, initialState)
+	stateMachine := state.NewMachine(logger, channel, blockCounter, initialState)
 
 	lastState, _, err := stateMachine.Execute(startBlockHeight)
 	if err != nil {

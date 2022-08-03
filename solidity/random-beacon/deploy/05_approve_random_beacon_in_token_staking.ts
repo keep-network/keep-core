@@ -8,6 +8,8 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
 
   const RandomBeacon = await deployments.get("RandomBeacon")
 
+  deployments.log("approving the RandomBeacon in the TokenStaking")
+
   await execute(
     "TokenStaking",
     { from: deployer },

@@ -24,7 +24,7 @@ import (
 var EcdsaSortitionPoolCommand cli.Command
 
 var ecdsaSortitionPoolDescription = `The ecdsa-sortition-pool command allows calling the EcdsaSortitionPool contract on an
-	ETH-like network. It has subcommands corresponding to each contract method,
+	Ethereum network. It has subcommands corresponding to each contract method,
 	which respectively each take parameters based on the contract method's
 	parameters.
 
@@ -52,6 +52,13 @@ func init() {
 		Usage:       `Provides access to the EcdsaSortitionPool contract.`,
 		Description: ecdsaSortitionPoolDescription,
 		Subcommands: []cli.Command{{
+			Name:      "can-restore-reward-eligibility",
+			Usage:     "Calls the view method canRestoreRewardEligibility on the EcdsaSortitionPool contract.",
+			ArgsUsage: "[arg_operator] ",
+			Action:    espCanRestoreRewardEligibility,
+			Before:    cmd.ArgCountChecker(1),
+			Flags:     cmd.ConstFlags,
+		}, {
 			Name:      "get-available-rewards",
 			Usage:     "Calls the view method getAvailableRewards on the EcdsaSortitionPool contract.",
 			ArgsUsage: "[arg_operator] ",
@@ -78,6 +85,13 @@ func init() {
 			ArgsUsage: "",
 			Action:    espIneligibleEarnedRewards,
 			Before:    cmd.ArgCountChecker(0),
+			Flags:     cmd.ConstFlags,
+		}, {
+			Name:      "is-eligible-for-rewards",
+			Usage:     "Calls the view method isEligibleForRewards on the EcdsaSortitionPool contract.",
+			ArgsUsage: "[arg_operator] ",
+			Action:    espIsEligibleForRewards,
+			Before:    cmd.ArgCountChecker(1),
 			Flags:     cmd.ConstFlags,
 		}, {
 			Name:      "is-locked",
@@ -134,6 +148,13 @@ func init() {
 			ArgsUsage: "",
 			Action:    espRewardToken,
 			Before:    cmd.ArgCountChecker(0),
+			Flags:     cmd.ConstFlags,
+		}, {
+			Name:      "rewards-eligibility-restorable-at",
+			Usage:     "Calls the view method rewardsEligibilityRestorableAt on the EcdsaSortitionPool contract.",
+			ArgsUsage: "[arg_operator] ",
+			Action:    espRewardsEligibilityRestorableAt,
+			Before:    cmd.ArgCountChecker(1),
 			Flags:     cmd.ConstFlags,
 		}, {
 			Name:      "total-weight",
@@ -217,6 +238,34 @@ func init() {
 }
 
 /// ------------------- Const methods -------------------
+
+func espCanRestoreRewardEligibility(c *cli.Context) error {
+	contract, err := initializeEcdsaSortitionPool(c)
+	if err != nil {
+		return err
+	}
+	arg_operator, err := chainutil.AddressFromHex(c.Args()[0])
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter arg_operator, a address, from passed value %v",
+			c.Args()[0],
+		)
+	}
+
+	result, err := contract.CanRestoreRewardEligibilityAtBlock(
+		arg_operator,
+
+		cmd.BlockFlagValue.Uint,
+	)
+
+	if err != nil {
+		return err
+	}
+
+	cmd.PrintOutput(result)
+
+	return nil
+}
 
 func espGetAvailableRewards(c *cli.Context) error {
 	contract, err := initializeEcdsaSortitionPool(c)
@@ -309,6 +358,34 @@ func espIneligibleEarnedRewards(c *cli.Context) error {
 	}
 
 	result, err := contract.IneligibleEarnedRewardsAtBlock(
+
+		cmd.BlockFlagValue.Uint,
+	)
+
+	if err != nil {
+		return err
+	}
+
+	cmd.PrintOutput(result)
+
+	return nil
+}
+
+func espIsEligibleForRewards(c *cli.Context) error {
+	contract, err := initializeEcdsaSortitionPool(c)
+	if err != nil {
+		return err
+	}
+	arg_operator, err := chainutil.AddressFromHex(c.Args()[0])
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter arg_operator, a address, from passed value %v",
+			c.Args()[0],
+		)
+	}
+
+	result, err := contract.IsEligibleForRewardsAtBlock(
+		arg_operator,
 
 		cmd.BlockFlagValue.Uint,
 	)
@@ -502,6 +579,34 @@ func espRewardToken(c *cli.Context) error {
 	}
 
 	result, err := contract.RewardTokenAtBlock(
+
+		cmd.BlockFlagValue.Uint,
+	)
+
+	if err != nil {
+		return err
+	}
+
+	cmd.PrintOutput(result)
+
+	return nil
+}
+
+func espRewardsEligibilityRestorableAt(c *cli.Context) error {
+	contract, err := initializeEcdsaSortitionPool(c)
+	if err != nil {
+		return err
+	}
+	arg_operator, err := chainutil.AddressFromHex(c.Args()[0])
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter arg_operator, a address, from passed value %v",
+			c.Args()[0],
+		)
+	}
+
+	result, err := contract.RewardsEligibilityRestorableAtAtBlock(
+		arg_operator,
 
 		cmd.BlockFlagValue.Uint,
 	)

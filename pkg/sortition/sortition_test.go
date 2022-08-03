@@ -40,8 +40,8 @@ func TestMonitorPool_NotRegisteredOperator(t *testing.T) {
 
 	localChain := local.Connect(testOperatorAddress)
 
-	err := MonitorPool(ctx, localChain, statusCheckTick)
-	testutils.AssertErrorsEqual(t, errOperatorUnknown, err)
+	err := MonitorPool(ctx, &testutils.MockLogger{}, localChain, statusCheckTick)
+	testutils.AssertErrorsSame(t, errOperatorUnknown, err)
 }
 
 func TestMonitorPool_NoStake(t *testing.T) {
@@ -51,7 +51,7 @@ func TestMonitorPool_NoStake(t *testing.T) {
 	localChain := local.Connect(testOperatorAddress)
 	localChain.RegisterOperator(testStakingProviderAddress, testOperatorAddress)
 
-	err := MonitorPool(ctx, localChain, statusCheckTick)
+	err := MonitorPool(ctx, &testutils.MockLogger{}, localChain, statusCheckTick)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -74,7 +74,7 @@ func TestMonitor_JoinPool(t *testing.T) {
 	localChain.RegisterOperator(testStakingProviderAddress, testOperatorAddress)
 	localChain.SetEligibleStake(testStakingProviderAddress, big.NewInt(100))
 
-	err := MonitorPool(ctx, localChain, statusCheckTick)
+	err := MonitorPool(ctx, &testutils.MockLogger{}, localChain, statusCheckTick)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -100,7 +100,7 @@ func TestMonitor_UpdatePool(t *testing.T) {
 
 	localChain.SetEligibleStake(testStakingProviderAddress, big.NewInt(101))
 
-	err := MonitorPool(ctx, localChain, statusCheckTick)
+	err := MonitorPool(ctx, &testutils.MockLogger{}, localChain, statusCheckTick)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -121,7 +121,7 @@ func TestMonitor_JoinPool_WithDelay(t *testing.T) {
 	localChain := local.Connect(testOperatorAddress)
 	localChain.RegisterOperator(testStakingProviderAddress, testOperatorAddress)
 
-	err := MonitorPool(ctx, localChain, statusCheckTick)
+	err := MonitorPool(ctx, &testutils.MockLogger{}, localChain, statusCheckTick)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -157,7 +157,7 @@ func TestMonitor_UpdatePool_WithDelay(t *testing.T) {
 	localChain.SetEligibleStake(testStakingProviderAddress, big.NewInt(100))
 	localChain.JoinSortitionPool()
 
-	err := MonitorPool(ctx, localChain, statusCheckTick)
+	err := MonitorPool(ctx, &testutils.MockLogger{}, localChain, statusCheckTick)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -180,5 +180,94 @@ func TestMonitor_UpdatePool_WithDelay(t *testing.T) {
 	}
 	if !isOperatorUpToDate {
 		t.Fatal("expected the operator to be up to date")
+	}
+}
+
+func TestMonitor_CannotRestoreRewardsEligibility_TimeNotPassed(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	localChain := local.Connect(testOperatorAddress)
+	localChain.RegisterOperator(testStakingProviderAddress, testOperatorAddress)
+	localChain.SetEligibleStake(testStakingProviderAddress, big.NewInt(100))
+	localChain.JoinSortitionPool()
+
+	// Operator is ineligible for rewards and eligibility can
+	// not be restored yet
+	localChain.SetRewardIneligibility(big.NewInt(1))
+	localChain.SetCurrentTimestamp(big.NewInt(0))
+
+	err := MonitorPool(ctx, &testutils.MockLogger{}, localChain, statusCheckTick)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	isEligibleForRewards, err := localChain.IsEligibleForRewards()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if isEligibleForRewards {
+		t.Fatal("expected the operator not to be eligible for rewards")
+	}
+}
+
+func TestMonitor_CanRestoreRewardsEligibility(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	localChain := local.Connect(testOperatorAddress)
+	localChain.RegisterOperator(testStakingProviderAddress, testOperatorAddress)
+	localChain.SetEligibleStake(testStakingProviderAddress, big.NewInt(100))
+	localChain.JoinSortitionPool()
+
+	// Operator is ineligible for rewards and eligibility can
+	// be restored at this point
+	localChain.SetRewardIneligibility(big.NewInt(1))
+	localChain.SetCurrentTimestamp(big.NewInt(2))
+
+	err := MonitorPool(ctx, &testutils.MockLogger{}, localChain, statusCheckTick)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	isEligibleForRewards, err := localChain.IsEligibleForRewards()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !isEligibleForRewards {
+		t.Fatal("expected the operator to be restored for rewards")
+	}
+}
+
+func TestMonitor_CanRestoreRewardsEligibility_WithDelay(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	localChain := local.Connect(testOperatorAddress)
+	localChain.RegisterOperator(testStakingProviderAddress, testOperatorAddress)
+	localChain.SetEligibleStake(testStakingProviderAddress, big.NewInt(100))
+	localChain.JoinSortitionPool()
+
+	// Operator is ineligible for rewards and eligibility can
+	// not be restored yet
+	localChain.SetRewardIneligibility(big.NewInt(1))
+	localChain.SetCurrentTimestamp(big.NewInt(0))
+
+	err := MonitorPool(ctx, &testutils.MockLogger{}, localChain, statusCheckTick)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Eligibility can now be restored
+	localChain.SetCurrentTimestamp(big.NewInt(2))
+	// Let's give some time for the monitoring loop to react...
+	time.Sleep(50 * time.Millisecond)
+
+	isEligibleForRewards, err := localChain.IsEligibleForRewards()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !isEligibleForRewards {
+		t.Fatal("expected the operator to be restored for rewards")
 	}
 }

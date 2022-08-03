@@ -24,7 +24,7 @@ import (
 var TokenStakingCommand cli.Command
 
 var tokenStakingDescription = `The token-staking command allows calling the TokenStaking contract on an
-	ETH-like network. It has subcommands corresponding to each contract method,
+	Ethereum network. It has subcommands corresponding to each contract method,
 	which respectively each take parameters based on the contract method's
 	parameters.
 

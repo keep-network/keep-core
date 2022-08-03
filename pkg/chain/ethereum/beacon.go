@@ -1,7 +1,6 @@
 package ethereum
 
 import (
-	"bytes"
 	"context"
 	"encoding/binary"
 	"fmt"
@@ -9,16 +8,18 @@ import (
 	"math/rand"
 	"sync"
 
+	bn256 "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
+
 	"github.com/ethereum/go-ethereum/crypto"
 	beaconchain "github.com/keep-network/keep-core/pkg/beacon/chain"
 	"github.com/keep-network/keep-core/pkg/beacon/event"
-	"github.com/keep-network/keep-core/pkg/gen/async"
 	"github.com/keep-network/keep-core/pkg/subscription"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/keep-network/keep-common/pkg/chain/ethereum"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/chain/ethereum/beacon/gen/contract"
+	"github.com/keep-network/keep-core/pkg/operator"
 )
 
 // Definitions of contract names.
@@ -28,22 +29,19 @@ const (
 
 // BeaconChain represents a beacon-specific chain handle.
 type BeaconChain struct {
-	*Chain
+	*baseChain
 
 	randomBeacon  *contract.RandomBeacon
 	sortitionPool *contract.BeaconSortitionPool
 
-	// TODO: Temporary helper map. Should be removed once real-world DKG
-	//       result submission is implemented.
-	dkgResultSubmissionHandlersMutex sync.Mutex
-	dkgResultSubmissionHandlers      map[int]func(submission *event.DKGResultSubmission)
+	mockRandomBeacon *mockRandomBeacon
 }
 
 // newBeaconChain construct a new instance of the beacon-specific Ethereum
 // chain handle.
 func newBeaconChain(
 	config ethereum.Config,
-	baseChain *Chain,
+	baseChain *baseChain,
 ) (*BeaconChain, error) {
 	randomBeaconAddress, err := config.ContractAddress(RandomBeaconContractName)
 	if err != nil {
@@ -99,10 +97,10 @@ func newBeaconChain(
 	}
 
 	return &BeaconChain{
-		Chain:                       baseChain,
-		randomBeacon:                randomBeacon,
-		sortitionPool:               sortitionPool,
-		dkgResultSubmissionHandlers: make(map[int]func(submission *event.DKGResultSubmission)),
+		baseChain:        baseChain,
+		randomBeacon:     randomBeacon,
+		sortitionPool:    sortitionPool,
+		mockRandomBeacon: newMockRandomBeacon(baseChain.blockCounter),
 	}, nil
 }
 
@@ -111,7 +109,7 @@ func newBeaconChain(
 func (bc *BeaconChain) GetConfig() *beaconchain.Config {
 	groupSize := 64
 	honestThreshold := 33
-	resultPublicationBlockStep := 6
+	resultPublicationBlockStep := 1
 	relayEntryTimeout := groupSize * resultPublicationBlockStep
 
 	return &beaconchain.Config{
@@ -123,7 +121,7 @@ func (bc *BeaconChain) GetConfig() *beaconchain.Config {
 }
 
 // OperatorToStakingProvider returns the staking provider address for the
-// current operator. If the staking provider has not been registered for the
+// operator. If the staking provider has not been registered for the
 // operator, the returned address is empty and the boolean flag is set to false
 // If the staking provider has been registered, the address is not empty and the
 // boolean flag indicates true.
@@ -131,16 +129,13 @@ func (bc *BeaconChain) OperatorToStakingProvider() (chain.Address, bool, error) 
 	stakingProvider, err := bc.randomBeacon.OperatorToStakingProvider(bc.key.Address)
 	if err != nil {
 		return "", false, fmt.Errorf(
-			"failed to map operator %v to a staking provider: [%v]",
+			"failed to map operator [%v] to a staking provider: [%v]",
 			bc.key.Address,
 			err,
 		)
 	}
 
-	if bytes.Equal(
-		stakingProvider.Bytes(),
-		bytes.Repeat([]byte{0}, common.AddressLength),
-	) {
+	if (stakingProvider == common.Address{}) {
 		return "", false, nil
 	}
 
@@ -172,7 +167,7 @@ func (bc *BeaconChain) IsPoolLocked() (bool, error) {
 	return bc.sortitionPool.IsLocked()
 }
 
-// IsOperatorInPool returns true if the current operator is registered in the
+// IsOperatorInPool returns true if the operator is registered in the
 // sortition pool.
 func (bc *BeaconChain) IsOperatorInPool() (bool, error) {
 	return bc.randomBeacon.IsOperatorInPool(bc.key.Address)
@@ -188,17 +183,35 @@ func (bc *BeaconChain) IsOperatorUpToDate() (bool, error) {
 	return bc.randomBeacon.IsOperatorUpToDate(bc.key.Address)
 }
 
-// JoinSortitionPool executes a transaction to have the current operator join
-// the sortition pool.
+// JoinSortitionPool executes a transaction to have the operator join the
+// sortition pool.
 func (bc *BeaconChain) JoinSortitionPool() error {
 	_, err := bc.randomBeacon.JoinSortitionPool()
 	return err
 }
 
-// UpdateOperatorStatus executes a transaction to update the current
-// operator's state in the sortition pool.
+// UpdateOperatorStatus executes a transaction to update the operator's state in
+// the sortition pool.
 func (bc *BeaconChain) UpdateOperatorStatus() error {
 	_, err := bc.randomBeacon.UpdateOperatorStatus(bc.key.Address)
+	return err
+}
+
+// IsEligibleForRewards checks whether the operator is eligible for rewards or
+// not.
+func (bc *BeaconChain) IsEligibleForRewards() (bool, error) {
+	return bc.sortitionPool.IsEligibleForRewards(bc.key.Address)
+}
+
+// Checks whether the operator is able to restore their eligibility for rewards
+// right away.
+func (bc *BeaconChain) CanRestoreRewardEligibility() (bool, error) {
+	return bc.sortitionPool.CanRestoreRewardEligibility(bc.key.Address)
+}
+
+// Restores reward eligibility for the operator.
+func (bc *BeaconChain) RestoreRewardEligibility() error {
+	_, err := bc.sortitionPool.RestoreRewardEligibility(bc.key.Address)
 	return err
 }
 
@@ -252,79 +265,28 @@ func (bc *BeaconChain) IsStaleGroup(groupPublicKey []byte) (bool, error) {
 	return false, nil
 }
 
-// TODO: Implement a real GetGroupMembers function.
-func (bc *BeaconChain) GetGroupMembers(
-	groupPublicKey []byte,
-) ([]chain.Address, error) {
-	return []chain.Address{}, nil
-}
-
 // TODO: Implement a real OnDKGStarted event subscription. The current
 //       implementation generates a fake event every 500th block where the
 //       seed is the keccak256 of the block number.
 func (bc *BeaconChain) OnDKGStarted(
 	handler func(event *event.DKGStarted),
 ) subscription.EventSubscription {
-	ctx, cancelCtx := context.WithCancel(context.Background())
-	blocksChan := bc.blockCounter.WatchBlocks(ctx)
-
-	go func() {
-		for {
-			select {
-			case block := <-blocksChan:
-				// Generate an event every 500th block.
-				if block%500 == 0 {
-					// The seed is keccak256(block).
-					blockBytes := make([]byte, 8)
-					binary.BigEndian.PutUint64(blockBytes, block)
-					seedBytes := crypto.Keccak256(blockBytes)
-					seed := new(big.Int).SetBytes(seedBytes)
-
-					handler(&event.DKGStarted{
-						Seed:        seed,
-						BlockNumber: block,
-					})
-				}
-			case <-ctx.Done():
-				return
-			}
-		}
-	}()
-
-	return subscription.NewEventSubscription(func() {
-		cancelCtx()
-	})
+	return bc.mockRandomBeacon.OnDKGStarted(handler)
 }
 
 // TODO: Implement a real SubmitDKGResult action. The current implementation
 //       just creates and pipes the DKG submission event to the handlers
-//       registered in the dkgResultSubmissionHandlers map. Consider getting
-//       rid of the result promise in favor of the fire-and-forget style.
+//       registered in the dkgResultSubmissionHandlers map.
 func (bc *BeaconChain) SubmitDKGResult(
 	participantIndex beaconchain.GroupMemberIndex,
 	dkgResult *beaconchain.DKGResult,
 	signatures map[beaconchain.GroupMemberIndex][]byte,
 ) error {
-	bc.dkgResultSubmissionHandlersMutex.Lock()
-	defer bc.dkgResultSubmissionHandlersMutex.Unlock()
-
-	blockNumber, err := bc.blockCounter.CurrentBlock()
-	if err != nil {
-		return fmt.Errorf("failed to get the current block")
-	}
-
-	for _, handler := range bc.dkgResultSubmissionHandlers {
-		go func(handler func(*event.DKGResultSubmission)) {
-			handler(&event.DKGResultSubmission{
-				MemberIndex:    uint32(participantIndex),
-				GroupPublicKey: dkgResult.GroupPublicKey,
-				Misbehaved:     dkgResult.Misbehaved,
-				BlockNumber:    blockNumber,
-			})
-		}(handler)
-	}
-
-	return nil
+	return bc.mockRandomBeacon.SubmitDKGResult(
+		participantIndex,
+		dkgResult,
+		signatures,
+	)
 }
 
 // TODO: Implement a real OnDKGResultSubmitted event subscription. The current
@@ -334,21 +296,7 @@ func (bc *BeaconChain) SubmitDKGResult(
 func (bc *BeaconChain) OnDKGResultSubmitted(
 	handler func(event *event.DKGResultSubmission),
 ) subscription.EventSubscription {
-	bc.dkgResultSubmissionHandlersMutex.Lock()
-	defer bc.dkgResultSubmissionHandlersMutex.Unlock()
-
-	// #nosec G404 (insecure random number source (rand))
-	// Temporary test implementation doesn't require secure randomness.
-	handlerID := rand.Int()
-
-	bc.dkgResultSubmissionHandlers[handlerID] = handler
-
-	return subscription.NewEventSubscription(func() {
-		bc.dkgResultSubmissionHandlersMutex.Lock()
-		defer bc.dkgResultSubmissionHandlersMutex.Unlock()
-
-		delete(bc.dkgResultSubmissionHandlers, handlerID)
-	})
+	return bc.mockRandomBeacon.OnDKGResultSubmitted(handler)
 }
 
 // CalculateDKGResultHash calculates Keccak-256 hash of the DKG result. Operation
@@ -365,57 +313,374 @@ func (bc *BeaconChain) CalculateDKGResultHash(
 	return beaconchain.DKGResultHashFromBytes(hash)
 }
 
+// IsRecognized checks whether the given operator is recognized by the BeaconChain
+// as eligible to join the network. If the operator has a stake delegation or
+// had a stake delegation in the past, it will be recognized.
+func (bc *BeaconChain) IsRecognized(operatorPublicKey *operator.PublicKey) (bool, error) {
+	operatorAddress, err := operatorPublicKeyToChainAddress(operatorPublicKey)
+	if err != nil {
+		return false, fmt.Errorf(
+			"cannot convert from operator key to chain address: [%v]",
+			err,
+		)
+	}
+
+	stakingProvider, err := bc.randomBeacon.OperatorToStakingProvider(
+		operatorAddress,
+	)
+	if err != nil {
+		return false, fmt.Errorf(
+			"failed to map operator [%v] to a staking provider: [%v]",
+			operatorAddress,
+			err,
+		)
+	}
+
+	if (stakingProvider == common.Address{}) {
+		return false, nil
+	}
+
+	// Check if the staking provider has an owner. This check ensures that there
+	// is/was a stake delegation for the given staking provider.
+	_, _, _, hasStakeDelegation, err := bc.baseChain.RolesOf(
+		chain.Address(stakingProvider.Hex()),
+	)
+	if err != nil {
+		return false, fmt.Errorf(
+			"failed to check stake delegation for staking provider [%v]: [%v]",
+			stakingProvider,
+			err,
+		)
+	}
+
+	if !hasStakeDelegation {
+		return false, nil
+	}
+
+	return true, nil
+}
+
 // TODO: Implement a real SubmitRelayEntry function.
 func (bc *BeaconChain) SubmitRelayEntry(
 	entry []byte,
-) *async.EventRelayEntrySubmittedPromise {
-	relayEntryPromise := &async.EventRelayEntrySubmittedPromise{}
-
-	err := relayEntryPromise.Fulfill(&event.RelayEntrySubmitted{
-		BlockNumber: 0,
-	})
-	if err != nil {
-		panic(err)
-	}
-
-	return relayEntryPromise
+) error {
+	return bc.mockRandomBeacon.SubmitRelayEntry(entry)
 }
 
 // TODO: Implement a real OnRelayEntrySubmitted function.
 func (bc *BeaconChain) OnRelayEntrySubmitted(
 	handler func(entry *event.RelayEntrySubmitted),
 ) subscription.EventSubscription {
-	return subscription.NewEventSubscription(func() {})
+	return bc.mockRandomBeacon.OnRelayEntrySubmitted(handler)
 }
 
 // TODO: Implement a real OnRelayEntryRequested function.
 func (bc *BeaconChain) OnRelayEntryRequested(
 	handler func(request *event.RelayEntryRequested),
 ) subscription.EventSubscription {
-	return subscription.NewEventSubscription(func() {})
+	return bc.mockRandomBeacon.OnRelayEntryRequested(handler)
 }
 
 // TODO: Implement a real ReportRelayEntryTimeout function.
 func (bc *BeaconChain) ReportRelayEntryTimeout() error {
-	return nil
+	return bc.mockRandomBeacon.ReportRelayEntryTimeout()
 }
 
 // TODO: Implement a real IsEntryInProgress function.
 func (bc *BeaconChain) IsEntryInProgress() (bool, error) {
-	return false, nil
+	return bc.mockRandomBeacon.IsEntryInProgress()
 }
 
 // TODO: Implement a real CurrentRequestStartBlock function.
 func (bc *BeaconChain) CurrentRequestStartBlock() (*big.Int, error) {
-	return big.NewInt(0), nil
+	return bc.mockRandomBeacon.CurrentRequestStartBlock()
 }
 
 // TODO: Implement a real CurrentRequestPreviousEntry function.
 func (bc *BeaconChain) CurrentRequestPreviousEntry() ([]byte, error) {
-	return []byte{}, nil
+	return bc.mockRandomBeacon.CurrentRequestPreviousEntry()
 }
 
 // TODO: Implement a real CurrentRequestGroupPublicKey function.
 func (bc *BeaconChain) CurrentRequestGroupPublicKey() ([]byte, error) {
-	return []byte{}, nil
+	return bc.mockRandomBeacon.CurrentRequestGroupPublicKey()
+}
+
+// TODO: Temporary mock that simulates the behavior of the RandomBeacon
+//       contract. Should be removed eventually.
+type mockRandomBeacon struct {
+	blockCounter chain.BlockCounter
+
+	dkgResultSubmissionHandlersMutex sync.Mutex
+	dkgResultSubmissionHandlers      map[int]func(submission *event.DKGResultSubmission)
+
+	currentDkgMutex      sync.RWMutex
+	currentDkgStartBlock *big.Int
+
+	activeGroupMutex         sync.RWMutex
+	activeGroup              []byte
+	activeGroupOperableBlock *big.Int
+
+	currentRequestMutex         sync.RWMutex
+	currentRequestStartBlock    *big.Int
+	currentRequestPreviousEntry []byte
+	currentRequestGroup         []byte
+
+	relayEntrySubmissionHandlersMutex sync.Mutex
+	relayEntrySubmissionHandlers      map[int]func(submission *event.RelayEntrySubmitted)
+}
+
+func newMockRandomBeacon(blockCounter chain.BlockCounter) *mockRandomBeacon {
+	return &mockRandomBeacon{
+		blockCounter:                 blockCounter,
+		dkgResultSubmissionHandlers:  make(map[int]func(submission *event.DKGResultSubmission)),
+		relayEntrySubmissionHandlers: make(map[int]func(submission *event.RelayEntrySubmitted)),
+	}
+}
+
+func (mrb *mockRandomBeacon) OnDKGStarted(
+	handler func(event *event.DKGStarted),
+) subscription.EventSubscription {
+	ctx, cancelCtx := context.WithCancel(context.Background())
+	blocksChan := mrb.blockCounter.WatchBlocks(ctx)
+
+	go func() {
+		for {
+			select {
+			case block := <-blocksChan:
+				// Generate an event every 500th block.
+				if block%500 == 0 {
+					mrb.currentDkgMutex.Lock()
+					// The seed is keccak256(block).
+					blockBytes := make([]byte, 8)
+					binary.BigEndian.PutUint64(blockBytes, block)
+					seedBytes := crypto.Keccak256(blockBytes)
+					seed := new(big.Int).SetBytes(seedBytes)
+
+					mrb.currentDkgStartBlock = big.NewInt(int64(block))
+
+					go handler(&event.DKGStarted{
+						Seed:        seed,
+						BlockNumber: block,
+					})
+					mrb.currentDkgMutex.Unlock()
+				}
+			case <-ctx.Done():
+				return
+			}
+		}
+	}()
+
+	return subscription.NewEventSubscription(func() {
+		cancelCtx()
+	})
+}
+
+func (mrb *mockRandomBeacon) OnDKGResultSubmitted(
+	handler func(event *event.DKGResultSubmission),
+) subscription.EventSubscription {
+	mrb.dkgResultSubmissionHandlersMutex.Lock()
+	defer mrb.dkgResultSubmissionHandlersMutex.Unlock()
+
+	// #nosec G404 (insecure random number source (rand))
+	// Temporary test implementation doesn't require secure randomness.
+	handlerID := rand.Int()
+
+	mrb.dkgResultSubmissionHandlers[handlerID] = handler
+
+	return subscription.NewEventSubscription(func() {
+		mrb.dkgResultSubmissionHandlersMutex.Lock()
+		defer mrb.dkgResultSubmissionHandlersMutex.Unlock()
+
+		delete(mrb.dkgResultSubmissionHandlers, handlerID)
+	})
+}
+
+func (mrb *mockRandomBeacon) SubmitDKGResult(
+	participantIndex beaconchain.GroupMemberIndex,
+	dkgResult *beaconchain.DKGResult,
+	signatures map[beaconchain.GroupMemberIndex][]byte,
+) error {
+	mrb.dkgResultSubmissionHandlersMutex.Lock()
+	defer mrb.dkgResultSubmissionHandlersMutex.Unlock()
+
+	mrb.currentDkgMutex.Lock()
+	defer mrb.currentDkgMutex.Unlock()
+
+	mrb.activeGroupMutex.Lock()
+	defer mrb.activeGroupMutex.Unlock()
+
+	// Abort if there is no DKG in progress. This check is needed to handle a
+	// situation in which two operators of the same client attempt to submit
+	// the DKG result.
+	if mrb.currentDkgStartBlock == nil {
+		return nil
+	}
+
+	blockNumber, err := mrb.blockCounter.CurrentBlock()
+	if err != nil {
+		return fmt.Errorf("failed to get the current block")
+	}
+
+	for _, handler := range mrb.dkgResultSubmissionHandlers {
+		go func(handler func(*event.DKGResultSubmission)) {
+			handler(&event.DKGResultSubmission{
+				MemberIndex:    uint32(participantIndex),
+				GroupPublicKey: dkgResult.GroupPublicKey,
+				Misbehaved:     dkgResult.Misbehaved,
+				BlockNumber:    blockNumber,
+			})
+		}(handler)
+	}
+
+	mrb.activeGroup = dkgResult.GroupPublicKey
+	mrb.activeGroupOperableBlock = new(big.Int).Add(
+		mrb.currentDkgStartBlock,
+		big.NewInt(150),
+	)
+	mrb.currentDkgStartBlock = nil
+
+	return nil
+}
+
+func (mrb *mockRandomBeacon) OnRelayEntryRequested(
+	handler func(request *event.RelayEntryRequested),
+) subscription.EventSubscription {
+	ctx, cancelCtx := context.WithCancel(context.Background())
+	blocksChan := mrb.blockCounter.WatchBlocks(ctx)
+
+	go func() {
+		for {
+			select {
+			case block := <-blocksChan:
+				// Generate an event every 50 block, if there is no other
+				// request in progress.
+				if block%50 == 0 {
+					mrb.activeGroupMutex.RLock()
+					mrb.currentRequestMutex.Lock()
+
+					if mrb.currentRequestStartBlock == nil && len(mrb.activeGroup) > 0 {
+						// If the active group is ready to receive the request.
+						if big.NewInt(int64(block)).Cmp(mrb.activeGroupOperableBlock) >= 0 {
+							blockBytes := make([]byte, 8)
+							binary.BigEndian.PutUint64(blockBytes, block)
+							blockHashBytes := crypto.Keccak256(blockBytes)
+							blockHash := new(big.Int).SetBytes(blockHashBytes)
+							previousEntry := new(bn256.G1).ScalarBaseMult(blockHash)
+
+							mrb.currentRequestStartBlock = big.NewInt(int64(block))
+							mrb.currentRequestPreviousEntry = previousEntry.Marshal()
+							mrb.currentRequestGroup = mrb.activeGroup
+
+							go handler(&event.RelayEntryRequested{
+								PreviousEntry:  mrb.currentRequestPreviousEntry,
+								GroupPublicKey: mrb.currentRequestGroup,
+								BlockNumber:    mrb.currentRequestStartBlock.Uint64(),
+							})
+						}
+					}
+
+					mrb.currentRequestMutex.Unlock()
+					mrb.activeGroupMutex.RUnlock()
+				}
+			case <-ctx.Done():
+				return
+			}
+		}
+	}()
+
+	return subscription.NewEventSubscription(func() {
+		cancelCtx()
+	})
+}
+
+func (mrb *mockRandomBeacon) OnRelayEntrySubmitted(
+	handler func(entry *event.RelayEntrySubmitted),
+) subscription.EventSubscription {
+	mrb.relayEntrySubmissionHandlersMutex.Lock()
+	defer mrb.relayEntrySubmissionHandlersMutex.Unlock()
+
+	// #nosec G404 (insecure random number source (rand))
+	// Temporary test implementation doesn't require secure randomness.
+	handlerID := rand.Int()
+
+	mrb.relayEntrySubmissionHandlers[handlerID] = handler
+
+	return subscription.NewEventSubscription(func() {
+		mrb.relayEntrySubmissionHandlersMutex.Lock()
+		defer mrb.relayEntrySubmissionHandlersMutex.Unlock()
+
+		delete(mrb.relayEntrySubmissionHandlers, handlerID)
+	})
+}
+
+func (mrb *mockRandomBeacon) SubmitRelayEntry(
+	entry []byte,
+) error {
+	mrb.relayEntrySubmissionHandlersMutex.Lock()
+	defer mrb.relayEntrySubmissionHandlersMutex.Unlock()
+
+	mrb.currentRequestMutex.Lock()
+	defer mrb.currentRequestMutex.Unlock()
+
+	// Abort if there is no request in progress.
+	if mrb.currentRequestStartBlock == nil {
+		return nil
+	}
+
+	blockNumber, err := mrb.blockCounter.CurrentBlock()
+	if err != nil {
+		return fmt.Errorf("failed to get block counter: [%v]", err)
+	}
+
+	for _, handler := range mrb.relayEntrySubmissionHandlers {
+		go func(handler func(submitted *event.RelayEntrySubmitted)) {
+			handler(&event.RelayEntrySubmitted{BlockNumber: blockNumber})
+		}(handler)
+	}
+
+	mrb.currentRequestStartBlock = nil
+	mrb.currentRequestPreviousEntry = nil
+	mrb.currentRequestGroup = nil
+
+	return nil
+}
+
+func (mrb *mockRandomBeacon) ReportRelayEntryTimeout() error {
+	mrb.currentRequestMutex.Lock()
+	defer mrb.currentRequestMutex.Unlock()
+
+	// Set the current request start block to nil, so that a new relay entry
+	// request can begin.
+	mrb.currentRequestStartBlock = nil
+
+	return nil
+}
+
+func (mrb *mockRandomBeacon) IsEntryInProgress() (bool, error) {
+	mrb.currentRequestMutex.RLock()
+	defer mrb.currentRequestMutex.RUnlock()
+
+	return mrb.currentRequestStartBlock != nil, nil
+}
+
+func (mrb *mockRandomBeacon) CurrentRequestStartBlock() (*big.Int, error) {
+	mrb.currentRequestMutex.RLock()
+	defer mrb.currentRequestMutex.RUnlock()
+
+	return mrb.currentRequestStartBlock, nil
+}
+
+func (mrb *mockRandomBeacon) CurrentRequestPreviousEntry() ([]byte, error) {
+	mrb.currentRequestMutex.RLock()
+	defer mrb.currentRequestMutex.RUnlock()
+
+	return mrb.currentRequestPreviousEntry, nil
+}
+
+func (mrb *mockRandomBeacon) CurrentRequestGroupPublicKey() ([]byte, error) {
+	mrb.currentRequestMutex.RLock()
+	defer mrb.currentRequestMutex.RUnlock()
+
+	return mrb.currentRequestGroup, nil
 }
