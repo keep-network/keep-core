@@ -59,7 +59,7 @@ done
 
 # Parse short options
 OPTIND=1
-while getopts "n:o:p:d:b:a:s:k:p:eth" opt
+while getopts "n:o:p:d:b:a:s:k:eh" opt
 do
    case "$opt" in
       n ) network="$OPTARG" ;;
