@@ -1,13 +1,12 @@
 import { task, types } from "hardhat/config"
-
 import {
   TASK_INITIALIZE,
   TASK_AUTHORIZE,
   TASK_REGISTER,
 } from "@keep-network/random-beacon/tasks/initialize"
-import type { HardhatRuntimeEnvironment } from "hardhat/types"
-
 import { authorize, register } from "@keep-network/random-beacon/tasks/utils"
+
+import type { HardhatRuntimeEnvironment } from "hardhat/types"
 
 const TASK_AUTHORIZE_ECDSA = `${TASK_AUTHORIZE}:ecdsa`
 const TASK_REGISTER_ECDSA = `${TASK_REGISTER}:ecdsa`
@@ -45,7 +44,11 @@ task(
     await register(hre, "WalletRegistry", args)
   })
 
-export async function initializeEcdsa(hre: HardhatRuntimeEnvironment, args) {
+// eslint-disable-next-line import/prefer-default-export
+export async function initializeEcdsa(
+  hre: HardhatRuntimeEnvironment,
+  args
+): Promise<void> {
   await hre.run(TASK_AUTHORIZE_ECDSA, args)
   await hre.run(TASK_REGISTER_ECDSA, args)
 }

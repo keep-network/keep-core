@@ -2,13 +2,14 @@
 import type { BigNumberish, BigNumber } from "ethers"
 import type { HardhatRuntimeEnvironment } from "hardhat/types"
 
+// eslint-disable-next-line import/prefer-default-export
 export async function mint(
   hre: HardhatRuntimeEnvironment,
   args: {
     owner: string
     amount: BigNumberish
   }
-) {
+): Promise<void> {
   const { ethers, helpers } = hre
   const { to1e18, from1e18 } = helpers.number
   const owner = ethers.utils.getAddress(args.owner)

@@ -1,6 +1,7 @@
 /* eslint-disable no-console */
 import type { HardhatRuntimeEnvironment } from "hardhat/types"
 
+// eslint-disable-next-line import/prefer-default-export
 export async function register(
   hre: HardhatRuntimeEnvironment,
   deploymentName: string,
@@ -8,7 +9,7 @@ export async function register(
     provider: string
     operator: string
   }
-) {
+): Promise<void> {
   const { ethers, helpers } = hre
 
   const provider = ethers.utils.getAddress(args.provider)

@@ -11,7 +11,7 @@ export async function stake(
     authorizer: string
     amount: BigNumberish
   }
-) {
+): Promise<void> {
   const { ethers, helpers } = hre
   const { to1e18, from1e18 } = helpers.number
   const owner = ethers.utils.getAddress(args.owner)

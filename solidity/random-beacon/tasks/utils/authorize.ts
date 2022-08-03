@@ -1,7 +1,8 @@
 /* eslint-disable no-console */
-import type { BigNumberish, BigNumber } from "ethers"
+import type { BigNumberish } from "ethers"
 import type { HardhatRuntimeEnvironment } from "hardhat/types"
 
+// eslint-disable-next-line import/prefer-default-export
 export async function authorize(
   hre: HardhatRuntimeEnvironment,
   deploymentName: string, // TODO: Change to IApplication
@@ -11,7 +12,7 @@ export async function authorize(
     authorizer: string
     authorization: BigNumberish
   }
-) {
+): Promise<void> {
   const { ethers, helpers } = hre
   const owner = ethers.utils.getAddress(args.owner)
   const provider = ethers.utils.getAddress(args.provider)

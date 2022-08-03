@@ -1,6 +1,4 @@
 import { task, types } from "hardhat/config"
-import type { BigNumberish } from "ethers"
-import type { HardhatRuntimeEnvironment } from "hardhat/types"
 
 import {
   calculateTokensNeededForStake,
@@ -9,6 +7,9 @@ import {
   authorize,
   register,
 } from "./utils"
+
+import type { BigNumberish } from "ethers"
+import type { HardhatRuntimeEnvironment } from "hardhat/types"
 
 export const TASK_INITIALIZE = "initialize"
 export const TASK_MINT = `${TASK_INITIALIZE}:mint`
@@ -92,7 +93,7 @@ export async function initializeStake(
     amount: BigNumberish
     authorization: BigNumberish
   }
-) {
+): Promise<void> {
   const tokensToMint = await calculateTokensNeededForStake(
     hre,
     args.provider,
@@ -117,7 +118,7 @@ async function initializeBeacon(
     amount: BigNumberish
     authorization: BigNumberish
   }
-) {
+): Promise<void> {
   await hre.run(TASK_AUTHORIZE_BEACON, args)
   await hre.run(TASK_REGISTER_BEACON, args)
 }
