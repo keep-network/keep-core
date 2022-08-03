@@ -132,13 +132,15 @@ if [ "$SKIP_DEPLOYMENT" != true ]; then
     cd "$TBTC_PATH/solidity"
   fi
 
+  yarn
+
   printf "${LOG_START}Linking random-beacon...${LOG_END}"
   yarn link @keep-network/random-beacon
 
   printf "${LOG_START}Linking ecdsa...${LOG_END}"
   yarn link @keep-network/ecdsa
 
-  yarn && yarn build && yarn prepack
+  yarn build && yarn prepack
 
   # deploy tbtc
   printf "${LOG_START}Deploying tbtc contracts...${LOG_END}"
