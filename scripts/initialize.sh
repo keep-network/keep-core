@@ -135,6 +135,8 @@ register_operator="npx hardhat initialize:register
 # go to beacon
 cd $KEEP_BEACON_SOL_PATH
 
+# 'eval' command is used because of the optional params that can be pased to the
+# Hardhat tasks
 eval ${mint} ${stake_amount_opt}
 eval ${stake} ${stake_amount_opt}
 eval ${increase_authorization} ${authorization_amount_opt}
