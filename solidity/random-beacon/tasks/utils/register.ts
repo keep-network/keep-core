@@ -5,49 +5,47 @@ import type { HardhatRuntimeEnvironment } from "hardhat/types"
 export async function register(
   hre: HardhatRuntimeEnvironment,
   deploymentName: string,
-  args: {
-    provider: string
-    operator: string
-  }
+  provider: string,
+  operator: string
 ): Promise<void> {
   const { ethers, helpers } = hre
 
-  const provider = ethers.utils.getAddress(args.provider)
-  const operator = ethers.utils.getAddress(args.operator)
+  const providerAddress = ethers.utils.getAddress(provider)
+  const operatorAddress = ethers.utils.getAddress(operator)
 
   const application = await helpers.contracts.getContract(deploymentName)
 
   console.log(
-    `Registering operator ${operator} in ${deploymentName} application (${application.address})`
+    `Registering operator ${operatorAddress} in ${deploymentName} application (${application.address})`
   )
 
   const currentProvider = ethers.utils.getAddress(
-    await application.callStatic.operatorToStakingProvider(operator)
+    await application.callStatic.operatorToStakingProvider(operatorAddress)
   )
 
   switch (currentProvider) {
-    case provider: {
+    case providerAddress: {
       console.log(
-        `Current staking provider for operator ${operator} is ${currentProvider}`
+        `Current staking provider for operator ${operatorAddress} is ${currentProvider}`
       )
       return
     }
     case ethers.constants.AddressZero: {
       console.log(
-        `Registering operator ${operator} for a staking provider ${provider}...`
+        `Registering operator ${operatorAddress} for a staking provider ${providerAddress}...`
       )
 
       await (
         await application
-          .connect(await ethers.getSigner(provider))
-          .registerOperator(operator)
+          .connect(await ethers.getSigner(providerAddress))
+          .registerOperator(operatorAddress)
       ).wait()
 
       break
     }
     default: {
       throw new Error(
-        `Operator [${operator}] has already been registered for another staking provider [${currentProvider}]`
+        `Operator [${operatorAddress}] has already been registered for another staking provider [${currentProvider}]`
       )
     }
   }

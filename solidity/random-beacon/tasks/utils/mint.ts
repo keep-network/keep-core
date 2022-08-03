@@ -5,41 +5,44 @@ import type { HardhatRuntimeEnvironment } from "hardhat/types"
 // eslint-disable-next-line import/prefer-default-export
 export async function mint(
   hre: HardhatRuntimeEnvironment,
-  args: {
-    owner: string
-    amount: BigNumberish
-  }
+  owner: string,
+  amount: BigNumberish
 ): Promise<void> {
   const { ethers, helpers } = hre
   const { to1e18, from1e18 } = helpers.number
-  const owner = ethers.utils.getAddress(args.owner)
-  const stakeAmount = to1e18(args.amount)
+  const ownerAddress = ethers.utils.getAddress(owner)
+  const stakeAmount = to1e18(amount)
 
   const t = await helpers.contracts.getContract("T")
   const staking = await helpers.contracts.getContract("TokenStaking")
 
   const tokenContractOwner = await t.owner()
 
-  const currentBalance: BigNumber = await t.balanceOf(owner)
+  const currentBalance: BigNumber = await t.balanceOf(ownerAddress)
 
-  console.log(`Account ${owner} balance is ${from1e18(currentBalance)} T`)
+  console.log(
+    `Account ${ownerAddress} balance is ${from1e18(currentBalance)} T`
+  )
 
   if (currentBalance.lt(stakeAmount)) {
     const mintAmount = stakeAmount.sub(currentBalance)
 
-    console.log(`Minting ${from1e18(mintAmount)} T for ${owner}...`)
+    console.log(`Minting ${from1e18(mintAmount)} T for ${ownerAddress}...`)
 
     await (
       await t
         .connect(await ethers.getSigner(tokenContractOwner))
-        .mint(owner, mintAmount)
+        .mint(ownerAddress, mintAmount)
     ).wait()
   }
 
-  const currentAllowance: BigNumber = await t.allowance(owner, staking.address)
+  const currentAllowance: BigNumber = await t.allowance(
+    ownerAddress,
+    staking.address
+  )
 
   console.log(
-    `Account ${owner} allowance for ${staking.address} is ${from1e18(
+    `Account ${ownerAddress} allowance for ${staking.address} is ${from1e18(
       currentAllowance
     )} T`
   )
@@ -50,7 +53,7 @@ export async function mint(
     )
     await (
       await t
-        .connect(await ethers.getSigner(owner))
+        .connect(await ethers.getSigner(ownerAddress))
         .approve(staking.address, stakeAmount)
     ).wait()
   }

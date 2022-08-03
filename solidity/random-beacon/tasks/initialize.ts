@@ -45,7 +45,7 @@ task(TASK_MINT, "Mints T tokens")
   .addParam("owner", "Stake Owner address", undefined, types.string)
   .addOptionalParam("amount", "Stake amount", 1_000_000, types.int)
   .setAction(async (args, hre) => {
-    await mint(hre, args)
+    await mint(hre, args.owner, args.amount)
   })
 
 task(TASK_STAKE, "Stakes T tokens")
@@ -55,7 +55,14 @@ task(TASK_STAKE, "Stakes T tokens")
   .addOptionalParam("authorizer", "Stake Authorizer", undefined, types.string)
   .addOptionalParam("amount", "Stake amount", 1_000_000, types.int)
   .setAction(async (args, hre) => {
-    await stake(hre, args)
+    await stake(
+      hre,
+      args.owner,
+      args.provider,
+      args.amount,
+      args.beneficiary,
+      args.authorizer
+    )
   })
 
 task(TASK_AUTHORIZE_BEACON, "Sets authorization for Beacon")
@@ -69,7 +76,14 @@ task(TASK_AUTHORIZE_BEACON, "Sets authorization for Beacon")
     types.int
   )
   .setAction(async (args, hre) => {
-    await authorize(hre, "RandomBeacon", args)
+    await authorize(
+      hre,
+      "RandomBeacon",
+      args.owner,
+      args.provider,
+      args.authorizer,
+      args.authorization
+    )
   })
 
 task(
@@ -79,7 +93,7 @@ task(
   .addParam("provider", "Staking Provider", undefined, types.string)
   .addParam("operator", "Staking Operator", undefined, types.string)
   .setAction(async (args, hre) => {
-    await register(hre, "RandomBeacon", args)
+    await register(hre, "RandomBeacon", args.provider, args.owner)
   })
 
 export async function initializeStake(

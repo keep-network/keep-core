@@ -4,49 +4,56 @@ import type { HardhatRuntimeEnvironment } from "hardhat/types"
 
 export async function stake(
   hre: HardhatRuntimeEnvironment,
-  args: {
-    owner: string
-    provider: string
-    beneficiary: string
-    authorizer: string
-    amount: BigNumberish
-  }
+  owner: string,
+  provider: string,
+  amount: BigNumberish,
+  beneficiary?: string,
+  authorizer?: string
 ): Promise<void> {
   const { ethers, helpers } = hre
   const { to1e18, from1e18 } = helpers.number
-  const owner = ethers.utils.getAddress(args.owner)
-  const provider = ethers.utils.getAddress(args.provider)
-  const stakeAmount = to1e18(args.amount)
+  const ownerAddress = ethers.utils.getAddress(owner)
+  const providerAddress = ethers.utils.getAddress(provider)
+  const stakeAmount = to1e18(amount)
 
   // Beneficiary can equal to the owner if not set otherwise. This simplification
   // is used for development purposes.
-  const beneficiary = args.beneficiary
-    ? ethers.utils.getAddress(args.beneficiary)
-    : owner
+  const beneficiaryAddress = beneficiary
+    ? ethers.utils.getAddress(beneficiary)
+    : ownerAddress
 
   // Authorizer can equal to the owner if not set otherwise. This simplification
   // is used for development purposes.
-  const authorizer = args.authorizer
-    ? ethers.utils.getAddress(args.authorizer)
-    : owner
+  const authorizerAddress = authorizer
+    ? ethers.utils.getAddress(authorizer)
+    : ownerAddress
 
   const staking = await helpers.contracts.getContract("TokenStaking")
 
-  const { tStake: currentStake } = await staking.callStatic.stakes(provider)
+  const { tStake: currentStake } = await staking.callStatic.stakes(
+    providerAddress
+  )
 
-  console.log(`Current stake for ${provider} is ${from1e18(currentStake)} T`)
+  console.log(
+    `Current stake for ${providerAddress} is ${from1e18(currentStake)} T`
+  )
 
   if (currentStake.eq(0)) {
     console.log(
       `Staking ${from1e18(
         stakeAmount
-      )} T to the staking provider ${provider}...`
+      )} T to the staking provider ${providerAddress}...`
     )
 
     await (
       await staking
-        .connect(await ethers.getSigner(owner))
-        .stake(provider, beneficiary, authorizer, stakeAmount)
+        .connect(await ethers.getSigner(ownerAddress))
+        .stake(
+          providerAddress,
+          beneficiaryAddress,
+          authorizerAddress,
+          stakeAmount
+        )
     ).wait()
   } else if (currentStake.lt(stakeAmount)) {
     const topUpAmount = stakeAmount.sub(currentStake)
@@ -54,13 +61,13 @@ export async function stake(
     console.log(
       `Topping up ${from1e18(
         topUpAmount
-      )} T to the staking provider ${provider}...`
+      )} T to the staking provider ${providerAddress}...`
     )
 
     await (
       await staking
-        .connect(await ethers.getSigner(owner))
-        .topUp(provider, topUpAmount)
+        .connect(await ethers.getSigner(ownerAddress))
+        .topUp(providerAddress, topUpAmount)
     ).wait()
   }
 }
