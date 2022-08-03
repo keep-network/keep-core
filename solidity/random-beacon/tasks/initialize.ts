@@ -10,11 +10,13 @@ import {
   register,
 } from "./utils"
 
-const TASK_INITIALIZE = "initialize"
-const TASK_MINT = `${TASK_INITIALIZE}:mint`
-const TASK_STAKE = `${TASK_INITIALIZE}:stake`
-const TASK_AUTHORIZE = `${TASK_INITIALIZE}:authorize`
-const TASK_REGISTER = `${TASK_INITIALIZE}:register`
+export const TASK_INITIALIZE = "initialize"
+export const TASK_MINT = `${TASK_INITIALIZE}:mint`
+export const TASK_STAKE = `${TASK_INITIALIZE}:stake`
+export const TASK_AUTHORIZE = `${TASK_INITIALIZE}:authorize`
+export const TASK_REGISTER = `${TASK_INITIALIZE}:register`
+const TASK_AUTHORIZE_BEACON = `${TASK_AUTHORIZE}:beacon`
+const TASK_REGISTER_BEACON = `${TASK_REGISTER}:beacon`
 
 task(TASK_INITIALIZE, "Initializes staking for an operator")
   .addParam("owner", "Stake Owner address", undefined, types.string)
@@ -29,36 +31,14 @@ task(TASK_INITIALIZE, "Initializes staking for an operator")
     undefined,
     types.int
   )
+  .addFlag("skipBeacon", "Skip initialization for the Random Beacon contract")
   .setAction(async (args, hre) => {
-    await initialize(hre, args)
+    await initializeStake(hre, args)
+
+    if (!args.skipBeacon) {
+      await initializeBeacon(hre, args)
+    }
   })
-
-async function initialize(
-  hre: HardhatRuntimeEnvironment,
-  args: {
-    owner: string
-    provider: string
-    operator: string
-    beneficiary: string
-    authorizer: string
-    amount: BigNumberish
-    authorization: BigNumberish
-  }
-) {
-  const tokensToMint = await calculateTokensNeededForStake(
-    hre,
-    args.provider,
-    args.amount
-  )
-
-  if (!tokensToMint.isZero()) {
-    await hre.run(TASK_MINT, { ...args, amount: tokensToMint.toNumber() })
-  }
-
-  await hre.run(TASK_STAKE, args)
-  await hre.run(TASK_AUTHORIZE, args)
-  await hre.run(TASK_REGISTER, args)
-}
 
 task(TASK_MINT, "Mints T tokens")
   .addParam("owner", "Stake Owner address", undefined, types.string)
@@ -100,3 +80,44 @@ task(
   .setAction(async (args, hre) => {
     await register(hre, "RandomBeacon", args)
   })
+
+export async function initializeStake(
+  hre: HardhatRuntimeEnvironment,
+  args: {
+    owner: string
+    provider: string
+    operator: string
+    beneficiary: string
+    authorizer: string
+    amount: BigNumberish
+    authorization: BigNumberish
+  }
+) {
+  const tokensToMint = await calculateTokensNeededForStake(
+    hre,
+    args.provider,
+    args.amount
+  )
+
+  if (!tokensToMint.isZero()) {
+    await hre.run(TASK_MINT, { ...args, amount: tokensToMint.toNumber() })
+  }
+
+  await hre.run(TASK_STAKE, args)
+}
+
+async function initializeBeacon(
+  hre: HardhatRuntimeEnvironment,
+  args: {
+    owner: string
+    provider: string
+    operator: string
+    beneficiary: string
+    authorizer: string
+    amount: BigNumberish
+    authorization: BigNumberish
+  }
+) {
+  await hre.run(TASK_AUTHORIZE_BEACON, args)
+  await hre.run(TASK_REGISTER_BEACON, args)
+}
