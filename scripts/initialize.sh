@@ -140,8 +140,7 @@ eval ${stake} ${stake_amount_opt}
 eval ${increase_authorization} ${authorization_amount_opt}
 eval ${register_operator}
 
-skip_ecdsa_initialization=${skip_ecdsa_initialization:-false}
-if [ "$skip_ecdsa_initialization" = false ]; then
+if [ "$skip_ecdsa_initialization" != true ]; then
    # go to ecdsa
    cd $KEEP_ECDSA_SOL_PATH
 
