@@ -1,5 +1,5 @@
 #!/bin/bash
-set -e
+set -eou pipefail
 
 LOG_START='\n\e[1;36m' # new line + bold + color
 LOG_END='\n\e[0m' # new line + reset color
@@ -21,8 +21,7 @@ help()
    echo -e "\nUsage: ENV_VAR(S) $0"\
            "--network <network>"\
            "--tbtc-path <tbtc-path>"\
-           "--skip-ecdsa-deployment"\
-           "--skip-tbtc-deployment"\
+           "--skip-deployment"\
            "--skip-client-build"
    echo -e "\nEnvironment variables:\n"
    echo -e "\tKEEP_ETHEREUM_PASSWORD: The password to unlock local Ethereum accounts to set up delegations."\
@@ -32,8 +31,7 @@ help()
                         "Available networks and settings are specified in the 'hardhat.config.ts'"
    echo -e "\t--tbtc-path: 'Local' tbtc project's path. 'tbtc' is cloned to a temporary directory"\
                            "upon installation if the path is not provided"
-   echo -e "\t--skip-ecdsa-deployment: This option skips ecdsa and tbtc deployment. Default is false"
-   echo -e "\t--skip-tbtc-deployment: This option skips tbtc deployment. Default is false"
+   echo -e "\t--skip-deployment: This option skips all the contracts deployment. Default is false"
    echo -e "\t--skip-client-build: Should execute contracts part only. Client installation will not be executed\n"
    exit 1 # Exit script after printing help
 }
@@ -42,25 +40,23 @@ help()
 for arg in "$@"; do
   shift
   case "$arg" in
-    "--network")                set -- "$@" "-n" ;;
-    "--tbtc-path")              set -- "$@" "-t" ;;
-    "--skip-ecdsa-deployment")  set -- "$@" "-d" ;;
-    "--skip-tbtc-deployment")   set -- "$@" "-e" ;;
-    "--skip-client-build")      set -- "$@" "-b" ;;
-    "--help")                   set -- "$@" "-h" ;;
-    *)                          set -- "$@" "$arg"
+    "--network")           set -- "$@" "-n" ;;
+    "--tbtc-path")         set -- "$@" "-t" ;;
+    "--skip-deployment")   set -- "$@" "-e" ;;
+    "--skip-client-build") set -- "$@" "-b" ;;
+    "--help")              set -- "$@" "-h" ;;
+    *)                     set -- "$@" "$arg"
   esac
 done
 
 # Parse short options
 OPTIND=1
-while getopts "n:t:debh" opt
+while getopts "n:t:ebh" opt
 do
    case "$opt" in
       n ) network="$OPTARG" ;;
       t ) tbtc_path="$OPTARG" ;;
-      d ) skip_ecdsa_deployment=${OPTARG:-true} ;;
-      e ) skip_tbtc_deployment=${OPTARG:-true} ;;
+      e ) skip_deployment=${OPTARG:-true} ;;
       b ) skip_client_build=${OPTARG:-true} ;;
       h ) help ;;
       ? ) help ;; # Print help in case parameter is non-existent
@@ -71,8 +67,7 @@ shift $(expr $OPTIND - 1) # remove options from positional parameters
 # Overwrite default properties
 NETWORK=${network:-$NETWORK_DEFAULT}
 TBTC_PATH=${tbtc_path:-""}
-SKIP_ECDSA_DEPLOYMENT=${skip_ecdsa_deployment:-false}
-SKIP_TBTC_DEPLOYMENT=${skip_tbtc_deployment:-false}
+SKIP_DEPLOYMENT=${skip_deployment:-false}
 SKIP_CLIENT_BUILD=${skip_client_build:-false}
 
 # Run script
@@ -83,7 +78,7 @@ printf "Network: $NETWORK\n"
 cd $KEEP_BEACON_SOL_PATH
 
 printf "${LOG_START}Installing beacon YARN dependencies...${LOG_END}"
-yarn install
+yarn
 
 if [ "$NETWORK" == "development" ]; then
     printf "${LOG_START}Unlocking ethereum accounts...${LOG_END}"
@@ -91,32 +86,33 @@ if [ "$NETWORK" == "development" ]; then
         npx hardhat unlock-accounts --network $NETWORK
 fi
 
-# deploy beacon
-printf "${LOG_START}Building beacon...${LOG_END}"
-yarn clean && yarn build
+if [ "$SKIP_DEPLOYMENT" != true ]; then
+  printf "${LOG_START}Building random-beacon...${LOG_END}"
+  yarn clean && yarn build
 
-printf "${LOG_START}Deploying contracts for beacon...${LOG_END}"
-USE_EXTERNAL_DEPLOY=true npx hardhat deploy --reset --export export.json --network $NETWORK
+  # deploy beacon
+  printf "${LOG_START}Deploying random-beacon contracts...${LOG_END}"
+  USE_EXTERNAL_DEPLOY=true npx hardhat deploy --reset --export export.json --network $NETWORK
 
-# create link to random-beacon
-yarn link
+  printf "${LOG_START}Creating random-beacon link...${LOG_END}"
+  yarn link
+  # create export folder
+  yarn prepack
 
-if [ "$SKIP_ECDSA_DEPLOYMENT" = false ] && [ "$SKIP_TBTC_DEPLOYMENT" = false ]; then
   cd $KEEP_ECDSA_SOL_PATH
+
+  printf "${LOG_START}Linking random-beacon...${LOG_END}"
+  yarn link @keep-network/random-beacon
 
   printf "${LOG_START}Building ecdsa...${LOG_END}"
   yarn && yarn clean && yarn build
-
-  # link random-beacon
-  yarn link @keep-network/random-beacon
 
   # deploy ecdsa
   printf "${LOG_START}Deploying ecdsa contracts...${LOG_END}"
   npx hardhat deploy --reset --export export.json --network $NETWORK
   
-  # create a link to ecdsa
+  printf "${LOG_START}Creating ecdsa link...${LOG_END}"
   yarn link
-
   # create export folder
   yarn prepack
 
@@ -131,32 +127,20 @@ if [ "$SKIP_ECDSA_DEPLOYMENT" = false ] && [ "$SKIP_TBTC_DEPLOYMENT" = false ]; 
     
     printf "${LOG_START}Building tbtc contracts...${LOG_END}"
     cd "tbtc-v2/solidity"
-    yarn install && yarn build
+    yarn && yarn build && yarn prepack
   else
     printf "${LOG_START}Installing tbtc from the local directory...${LOG_END}"
     cd "$TBTC_PATH/solidity"
   fi
 
-  # link random-beacon contracts
+  printf "${LOG_START}Linking random-beacon...${LOG_END}"
   yarn link @keep-network/random-beacon
-  # link ecdsa contracts
+
+  printf "${LOG_START}Linking ecdsa...${LOG_END}"
   yarn link @keep-network/ecdsa
 
   # deploy tbtc
   printf "${LOG_START}Deploying tbtc contracts...${LOG_END}"
-  npx hardhat deploy --reset --export export.json --network $NETWORK
-
-elif [ "$SKIP_ECDSA_DEPLOYMENT" = false ] && [ "$SKIP_TBTC_DEPLOYMENT" = true ]; then
-  # deploy ecdsa
-  cd $KEEP_ECDSA_SOL_PATH
-
-  printf "${LOG_START}Building ecdsa...${LOG_END}"
-  yarn && yarn clean && yarn build
-
-  # link random-beacon
-  yarn link @keep-network/random-beacon
-
-  printf "${LOG_START}Deploying ecdsa contracts...${LOG_END}"
   npx hardhat deploy --reset --export export.json --network $NETWORK
 fi
 
