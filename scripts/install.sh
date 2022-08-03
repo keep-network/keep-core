@@ -10,7 +10,7 @@ KEEP_CORE_PATH=$PWD
 
 KEEP_BEACON_SOL_PATH="$KEEP_CORE_PATH/solidity/random-beacon"
 KEEP_ECDSA_SOL_PATH="$KEEP_CORE_PATH/solidity/ecdsa"
-TMP_TBTC="$KEEP_CORE_PATH/tmp-tbtc"
+TMP_TBTC="$KEEP_CORE_PATH/tmp"
 
 # Defaults, can be overwritten by env variables/input parameters
 NETWORK_DEFAULT="development"
