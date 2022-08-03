@@ -68,7 +68,31 @@ func TestEvaluateRetryParticipantsForKeyGeneration_FewOperators(t *testing.T) {
 	for i := 0; i < 100; i++ {
 		groupMembers[i] = chain.Address(fmt.Sprintf("Operator-%d", i%20))
 	}
-	assertInvariants(t, EvaluateRetryParticipantsForKeyGeneration, groupMembers, int64(456), 800, 80)
+	// There are 20 unique operators, and any 3 of them can be excluded while
+	// still being above the lower bound of 80 since each operator controls 5
+	// seats. Thus, there are 20 single exclusions, 20 choose 2 = 190 pairs, and
+	// 20 choose 3 = 1140 triplets for a total of 20 + 190 + 1140 = 1350 total
+	// exclusions.
+
+	// Single exclusion
+	assertInvariants(t, EvaluateRetryParticipantsForKeyGeneration, groupMembers, int64(456), 15, 80)
+
+	// Pair Exclusion
+	assertInvariants(t, EvaluateRetryParticipantsForKeyGeneration, groupMembers, int64(456), 170, 80)
+
+	// Triplet Exclusion
+	assertInvariants(t, EvaluateRetryParticipantsForKeyGeneration, groupMembers, int64(456), 1000, 80)
+
+	// Too many!
+	_, err := EvaluateRetryParticipantsForKeyGeneration(groupMembers, int64(456), 1350, 80)
+	expectation := "the retry count [1350] was too large to handle! Tried every single, pair, and triplet, but still needed [0] more."
+	if err.Error() != expectation {
+		t.Errorf(
+			"unexpected error\nexpected: [%s]\nactual:   [%s]",
+			expectation,
+			err.Error(),
+		)
+	}
 }
 
 func TestEvaluateRetryParticipantsForKeyGeneration_NotEnoughOperators(t *testing.T) {
