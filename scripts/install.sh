@@ -127,7 +127,6 @@ if [ "$SKIP_DEPLOYMENT" != true ]; then
     
     printf "${LOG_START}Building tbtc contracts...${LOG_END}"
     cd "tbtc-v2/solidity"
-    yarn && yarn build && yarn prepack
   else
     printf "${LOG_START}Installing tbtc from the local directory...${LOG_END}"
     cd "$TBTC_PATH/solidity"
@@ -138,6 +137,8 @@ if [ "$SKIP_DEPLOYMENT" != true ]; then
 
   printf "${LOG_START}Linking ecdsa...${LOG_END}"
   yarn link @keep-network/ecdsa
+
+  yarn && yarn build && yarn prepack
 
   # deploy tbtc
   printf "${LOG_START}Deploying tbtc contracts...${LOG_END}"
