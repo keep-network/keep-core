@@ -122,12 +122,12 @@ stake="npx hardhat initialize:stake
    --provider ${staking_provider} \
    --beneficiary ${beneficiary} \
    --authorizer ${authorizer}"
-increase_authorization="npx hardhat initialize:authorize 
+authorize="npx hardhat initialize:authorize 
    --network $NETWORK \
    --owner ${stake_owner} \
    --provider ${staking_provider} 
    --authorizer ${authorizer}"
-register_operator="npx hardhat initialize:register 
+register="npx hardhat initialize:register 
    --network $NETWORK \
    --provider ${staking_provider} \
    --operator ${operator}"
@@ -139,15 +139,15 @@ cd $KEEP_BEACON_SOL_PATH
 # Hardhat tasks
 eval ${mint} ${stake_amount_opt}
 eval ${stake} ${stake_amount_opt}
-eval ${increase_authorization} ${authorization_amount_opt}
-eval ${register_operator}
+eval ${authorize} ${authorization_amount_opt}
+eval ${register}
 
 if [ "$skip_ecdsa_initialization" != true ]; then
    # go to ecdsa
    cd $KEEP_ECDSA_SOL_PATH
 
-   eval ${increase_authorization} ${authorization_amount_opt}
-   eval ${register_operator}
+   eval ${authorize} ${authorization_amount_opt}
+   eval ${register}
 fi
 
 printf "${DONE_START}Initialization completed!${DONE_END}"
