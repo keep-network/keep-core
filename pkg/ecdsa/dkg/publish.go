@@ -17,7 +17,7 @@ func Publish(
 	memberIndex group.MemberIndex,
 	dkgGroup *group.Group,
 	membershipValidator *group.MembershipValidator,
-	result *tbtcchain.DKGResult,
+	result *Result,
 	channel net.BroadcastChannel,
 	tbtcChain tbtcchain.Chain,
 	blockCounter chain.BlockCounter,
@@ -28,8 +28,8 @@ func Publish(
 		tbtcChain:               tbtcChain,
 		blockCounter:            blockCounter,
 		member:                  NewSigningMember(logger, memberIndex, dkgGroup, membershipValidator),
-		result:                  result,
-		signatureMessages:       make([]*DKGResultHashSignatureMessage, 0),
+		result:                  convertToChainResult(result),
+		signatureMessages:       make([]*dkgResultHashSignatureMessage, 0),
 		signingStartBlockHeight: startBlockHeight,
 	}
 

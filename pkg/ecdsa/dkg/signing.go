@@ -47,13 +47,11 @@ func NewSigningMember(
 
 // SignDKGResult calculates hash of DKG result and member's signature over this
 // hash. It packs the hash and signature into a broadcast message.
-//
-// See Phase 13 of the protocol specification.
 func (sm *SigningMember) SignDKGResult(
 	dkgResult *tbtcchain.DKGResult,
 	tbtcChain tbtcchain.Chain,
 ) (
-	*DKGResultHashSignatureMessage,
+	*dkgResultHashSignatureMessage,
 	error,
 ) {
 	resultHash, err := tbtcChain.CalculateDKGResultHash(dkgResult)
@@ -72,11 +70,11 @@ func (sm *SigningMember) SignDKGResult(
 	// Register self signature.
 	sm.selfDKGResultSignature = signature
 
-	return &DKGResultHashSignatureMessage{
-		senderIndex: sm.index,
-		resultHash:  resultHash,
-		signature:   signature,
-		publicKey:   signing.PublicKey(),
+	return &dkgResultHashSignatureMessage{
+		senderID:   sm.index,
+		resultHash: resultHash,
+		signature:  signature,
+		publicKey:  signing.PublicKey(),
 	}, nil
 }
 
@@ -92,16 +90,14 @@ func (sm *SigningMember) SignDKGResult(
 // The function assumes that the public key presented in the message is the
 // correct one. This key needs to be compared against the one used by network
 // client earlier, before this function is called.
-//
-// See Phase 13 of the protocol specification.
 func (sm *SigningMember) VerifyDKGResultSignatures(
-	messages []*DKGResultHashSignatureMessage,
+	messages []*dkgResultHashSignatureMessage,
 	signing chain.Signing,
 ) (map[group.MemberIndex][]byte, error) {
-	duplicatedMessagesFromSender := func(senderIndex group.MemberIndex) bool {
+	duplicatedMessagesFromSender := func(senderID group.MemberIndex) bool {
 		messageFromSenderAlreadySeen := false
 		for _, message := range messages {
-			if message.senderIndex == senderIndex {
+			if message.senderID == senderID {
 				if messageFromSenderAlreadySeen {
 					return true
 				}
@@ -115,16 +111,16 @@ func (sm *SigningMember) VerifyDKGResultSignatures(
 
 	for _, message := range messages {
 		// Check if message from self.
-		if message.senderIndex == sm.index {
+		if message.senderID == sm.index {
 			continue
 		}
 
 		// Check if sender sent multiple messages.
-		if duplicatedMessagesFromSender(message.senderIndex) {
+		if duplicatedMessagesFromSender(message.senderID) {
 			sm.logger.Infof(
 				"[member: %v] received multiple messages from sender: [%d]",
 				sm.index,
-				message.senderIndex,
+				message.senderID,
 			)
 			continue
 		}
@@ -135,7 +131,7 @@ func (sm *SigningMember) VerifyDKGResultSignatures(
 			sm.logger.Infof(
 				"[member: %v] signature from sender [%d] supports result different than preferred",
 				sm.index,
-				message.senderIndex,
+				message.senderID,
 			)
 			continue
 		}
@@ -150,7 +146,7 @@ func (sm *SigningMember) VerifyDKGResultSignatures(
 			sm.logger.Infof(
 				"[member: %v] verification of signature from sender [%d] failed: [%v]",
 				sm.index,
-				message.senderIndex,
+				message.senderID,
 				err,
 			)
 			continue
@@ -159,12 +155,12 @@ func (sm *SigningMember) VerifyDKGResultSignatures(
 			sm.logger.Infof(
 				"[member: %v] sender [%d] provided invalid signature",
 				sm.index,
-				message.senderIndex,
+				message.senderID,
 			)
 			continue
 		}
 
-		receivedValidResultSignatures[message.senderIndex] = message.signature
+		receivedValidResultSignatures[message.senderID] = message.signature
 	}
 
 	// Register member's self signature.

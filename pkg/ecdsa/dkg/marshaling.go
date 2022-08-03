@@ -189,29 +189,29 @@ func unmarshalPublicKeyMap(
 	return unmarshalled, nil
 }
 
-// Marshal converts this DKGResultHashSignatureMessage to a byte array suitable
+// Marshal converts this dkgResultHashSignatureMessage to a byte array suitable
 // for network communication.
-func (d *DKGResultHashSignatureMessage) Marshal() ([]byte, error) {
+func (d *dkgResultHashSignatureMessage) Marshal() ([]byte, error) {
 	return (&pb.DKGResultHashSignature{
-		SenderIndex: uint32(d.senderIndex),
-		ResultHash:  d.resultHash[:],
-		Signature:   d.signature,
-		PublicKey:   d.publicKey,
+		SenderID:   uint32(d.senderID),
+		ResultHash: d.resultHash[:],
+		Signature:  d.signature,
+		PublicKey:  d.publicKey,
 	}).Marshal()
 }
 
 // Unmarshal converts a byte array produced by Marshal to a
-// DKGResultHashSignatureMessage.
-func (d *DKGResultHashSignatureMessage) Unmarshal(bytes []byte) error {
+// dkgResultHashSignatureMessage.
+func (d *dkgResultHashSignatureMessage) Unmarshal(bytes []byte) error {
 	pbMsg := pb.DKGResultHashSignature{}
 	if err := pbMsg.Unmarshal(bytes); err != nil {
 		return err
 	}
 
-	if err := validateMemberIndex(pbMsg.SenderIndex); err != nil {
+	if err := validateMemberIndex(pbMsg.SenderID); err != nil {
 		return err
 	}
-	d.senderIndex = group.MemberIndex(pbMsg.SenderIndex)
+	d.senderID = group.MemberIndex(pbMsg.SenderID)
 
 	resultHash, err := tbtcchain.DKGResultHashFromBytes(pbMsg.ResultHash)
 	if err != nil {

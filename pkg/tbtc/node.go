@@ -10,14 +10,14 @@ import (
 	"github.com/keep-network/keep-core/pkg/internal/testutils"
 	"github.com/keep-network/keep-core/pkg/net"
 	"github.com/keep-network/keep-core/pkg/protocol/group"
-	"github.com/keep-network/keep-core/pkg/tbtc/chain"
+	tbtcchain "github.com/keep-network/keep-core/pkg/tbtc/chain"
 )
 
 // TODO: Unit tests for `node.go`.
 
 // node represents the current state of an ECDSA node.
 type node struct {
-	chain       chain.Chain
+	chain       tbtcchain.Chain
 	netProvider net.Provider
 	dkgExecutor *dkg.Executor
 
@@ -25,7 +25,7 @@ type node struct {
 }
 
 func newNode(
-	chain chain.Chain,
+	chain tbtcchain.Chain,
 	netProvider net.Provider,
 	persistence persistence.Handle,
 ) *node {
@@ -139,7 +139,7 @@ func (n *node) joinDKGIfEligible(seed *big.Int, startBlockNumber uint64) {
 			memberIndex := index + 1
 
 			go func() {
-				result, _, err := n.dkgExecutor.Execute(
+				result, endBlockHeight, err := n.dkgExecutor.Execute(
 					seed,
 					startBlockNumber,
 					memberIndex,
@@ -157,6 +157,23 @@ func (n *node) joinDKGIfEligible(seed *big.Int, startBlockNumber uint64) {
 						err,
 					)
 					return
+				}
+
+				startPublicationBlockHeight := endBlockHeight
+
+				err = dkg.Publish(
+					logger,
+					memberIndex,
+					result.Group,
+					membershipValidator,
+					result,
+					broadcastChannel,
+					n.chain,
+					blockCounter,
+					startPublicationBlockHeight,
+				)
+				if err != nil {
+					// TODO: Handle unsuccessful result publishing
 				}
 
 				// TODO: Use the result to create a signer and persist the

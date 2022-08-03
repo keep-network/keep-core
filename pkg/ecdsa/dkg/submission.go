@@ -48,8 +48,6 @@ func NewSubmittingMember(
 // It returns the on-chain block height of the moment when the result was
 // successfully submitted on chain by the member. In case of failure or result
 // already submitted by another member it returns `0`.
-//
-// See Phase 14 of the protocol specification.
 func (sm *SubmittingMember) SubmitDKGResult(
 	result *tbtcchain.DKGResult,
 	signatures map[group.MemberIndex][]byte,

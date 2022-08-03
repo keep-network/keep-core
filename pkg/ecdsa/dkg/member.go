@@ -258,6 +258,7 @@ func (fm *finalizingMember) MarkInactiveMembers(
 func (fm *finalizingMember) Result() *Result {
 	return &Result{
 		// TODO: Temporary result. Add real items.
+		Group: fm.group, // TODO: Make sure the group data if properly filled
 		GroupPublicKey: elliptic.Marshal(
 			tss.EC(),
 			fm.tssResult.ECDSAPub.X(),
