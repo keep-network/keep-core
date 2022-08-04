@@ -1,6 +1,37 @@
 .PHONY: all
 
-all: generate build cmd-help 
+# environment is used as a tag of the npm packages for contracts artifacts. If
+# not overwritten it defaults to `development`.
+environment = development
+
+all: download_artifacts generate build cmd-help
+
+# List of NPM packages containing contracts needed by the client contracts bindings
+# generation.
+npm_packages := @keep-network/random-beacon \
+	@keep-network/ecdsa \
+	@threshold-network/solidity-contracts \
+	@keep-network/tbtc-v2
+
+# Working directory where contracts artifacts should be fetched to.
+contracts_dir := tmp/contracts
+
+# It requires npm of at least 7.x version to support `pack-destination` flag.
+define get_npm_package
+$(eval npm_package_tag := $(1))
+$(eval npm_package_name := $(2))
+$(eval destination_dir := ${contracts_dir}/${npm_package_tag}/${npm_package_name})
+@rm -rf ${destination_dir}
+@mkdir -p ${destination_dir}
+@npm pack --silent \
+	--pack-destination=${destination_dir} \
+	$(shell npm view ${npm_package_name}@${npm_package_tag} _id) \
+	| xargs -I{} tar -zxvf ${destination_dir}/{} -C ${destination_dir} --strip-components 1 package/artifacts
+$(info Downloaded NPM package ${npm_package_name}@${npm_package_tag} to ${contracts_dir})
+endef
+
+download_artifacts:
+	$(foreach package,$(npm_packages),$(call get_npm_package,$(environment),$(package)))
 
 generate:
 	go generate ./...
@@ -11,5 +42,3 @@ build:
 cmd-help: build
 	@echo '$$ keep-client start --help' > docs/development/cmd-help
 	./keep-client start --help >> docs/development/cmd-help
-
-# TODO: Consider extracting `download_artifacts` step from go generate command.

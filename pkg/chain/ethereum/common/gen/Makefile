@@ -1,13 +1,9 @@
-
-# Tag of the npm package version for contracts artifacts. If not set by the 
-# `CONTRACTS_NPM_PACKAGE_TAG` environment variable it defaults to `development`.
-npm_package_tag:=$(CONTRACTS_NPM_PACKAGE_TAG)
-ifndef npm_package_tag
-	npm_package_tag=development
+ifndef environment
+	$(error environment not defined)
 endif
 
-contracts_dir =_contracts
-artifacts_dir = $(realpath ${contracts_dir}/package/artifacts)
+root_dir := $(realpath ../../../../..)
+artifacts_dir := ${root_dir}/tmp/contracts/${environment}/${npm_package_name}/artifacts
 
 # Go bindings generated for the solidity contracts.
 contract_files = $(addprefix contract/,$(addsuffix .go,${required_contracts}))
@@ -25,14 +21,6 @@ clean:
 	rm -rf cmd/*
 	mv tmp/* cmd && rm -rf tmp
 
-# It requires npm of at least 7.x version to support `pack-destination` flag.
-download_artifacts:
-	rm -rf ${contracts_dir} && mkdir ${contracts_dir}
-	npm pack --silent \
-		--pack-destination=${contracts_dir} \
-		$(shell npm view ${npm_package_name}@${npm_package_tag} _id) \
-		| xargs -I{} tar -zxf ${contracts_dir}/{} -C ${contracts_dir}
-
 gen_contract_go: ${contract_files}
 
 abi/%.abi: ${artifacts_dir}/%.json
@@ -45,7 +33,7 @@ abi/%.go: abi/%.abi
 # with `development` tag are not accessible on developers' environments, so we
 # replace them with zeros.
 _address/%: ${artifacts_dir}/%.json
-ifeq ($(npm_package_tag), development)
+ifeq ($(environment), development)
 	@echo "Skipping address extraction for development package"
 	@echo "0x0000000000000000000000000000000000000000" > _address/$*
 else
