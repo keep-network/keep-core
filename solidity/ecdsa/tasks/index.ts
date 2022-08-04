@@ -1,3 +1,3 @@
 import "./initialize-wallet-owner"
-import "./increase-authorization"
-import "./register-operator"
+import "./initialize"
+import "@keep-network/random-beacon/export/tasks/unlock-eth-accounts"
