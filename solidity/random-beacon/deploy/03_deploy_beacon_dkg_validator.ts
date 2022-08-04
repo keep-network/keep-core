@@ -11,6 +11,7 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
     from: deployer,
     args: [BeaconSortitionPool.address],
     log: true,
+    waitConfirmations: 1,
   })
 
   if (hre.network.tags.tenderly) {
