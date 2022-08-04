@@ -1,5 +1,3 @@
-.PHONY: all
-
 # environment is used as a tag of the npm packages for contracts artifacts. If
 # not overwritten it defaults to `development`.
 environment = development
@@ -54,3 +52,5 @@ build:
 cmd-help: build
 	@echo '$$ keep-client start --help' > docs/development/cmd-help
 	./keep-client start --help >> docs/development/cmd-help
+
+.PHONY: all
