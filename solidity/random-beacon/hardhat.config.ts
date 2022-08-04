@@ -135,7 +135,9 @@ const config: HardhatUserConfig = {
       hardhat: process.env.FORKING_URL ? ["./external/mainnet"] : [],
       // For development environment we expect the local dependencies to be linked
       // with `yarn link` command.
-      // development: ["node_modules/@keep-network/keep-core/artifacts"],
+      development: [
+        "node_modules/@threshold-network/solidity-contracts/deployments/development",
+      ],
       goerli: ["node_modules/@threshold-network/solidity-contracts/artifacts"],
       // mainnet: ["./external/mainnet"],
     },
