@@ -36,7 +36,7 @@ $(eval destination_dir := ${contracts_dir}/${npm_package_tag}/${npm_package_name
 @npm pack --silent \
 	--pack-destination=${destination_dir} \
 	$(shell npm view ${npm_package_name}@${npm_package_tag} _id) \
-	| xargs -I{} tar -zxvf ${destination_dir}/{} -C ${destination_dir} --strip-components 1 package/artifacts
+	| xargs -I{} tar -zxf ${destination_dir}/{} -C ${destination_dir} --strip-components 1 package/artifacts
 $(info Downloaded NPM package ${npm_package_name}@${npm_package_tag} to ${contracts_dir})
 endef
 
