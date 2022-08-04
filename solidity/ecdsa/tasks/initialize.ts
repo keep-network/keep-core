@@ -35,7 +35,14 @@ task(TASK_AUTHORIZE_ECDSA, "Sets authorization for ECDSA")
     types.int
   )
   .setAction(async (args, hre) => {
-    await authorize(hre, "WalletRegistry", args)
+    await authorize(
+      hre,
+      "WalletRegistry",
+      args.owner,
+      args.provider,
+      args.authorizer,
+      args.authorization
+    )
   })
 
 task(
@@ -45,7 +52,7 @@ task(
   .addParam("provider", "Staking Provider", undefined, types.string)
   .addParam("operator", "Staking Operator", undefined, types.string)
   .setAction(async (args, hre) => {
-    await register(hre, "WalletRegistry", args)
+    await register(hre, "WalletRegistry", args.provider, args.operator)
   })
 
 // eslint-disable-next-line import/prefer-default-export
