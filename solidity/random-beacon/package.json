@@ -10,7 +10,7 @@
     "!**/test/",
     "deploy/",
     "export/",
-    "utils/",
+    "tasks/",
     "export.json"
   ],
   "scripts": {

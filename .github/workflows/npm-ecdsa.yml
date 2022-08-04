@@ -39,7 +39,7 @@ jobs:
       # Deploy contracts to a local network to generate deployment artifacts that
       # are required by dashboard and client compilation.
       - name: Deploy contracts
-        run: yarn deploy --network hardhat --write true
+        run: yarn deploy:test --network hardhat --write true
 
       - name: Bump up package version
         id: npm-version-bump
