@@ -48,7 +48,7 @@ func EvaluateRetryParticipantsForSigning(
 ) ([]chain.Address, error) {
 	if int(retryParticipantsCount) > len(groupMembers) {
 		return nil, fmt.Errorf(
-			"asked for too many seats. [%d] seats were requested, but there are only [%d] available.",
+			"asked for too many seats; [%d] seats were requested, but there are only [%d] available.",
 			retryParticipantsCount,
 			len(groupMembers),
 		)
@@ -112,7 +112,7 @@ func EvaluateRetryParticipantsForKeyGeneration(
 	remainingTries := retryCount
 	if int(retryParticipantsCount) > len(groupMembers) {
 		return nil, fmt.Errorf(
-			"asked for too many seats. [%d] seats were requested, "+
+			"asked for too many seats; [%d] seats were requested, "+
 				"but there are only [%d] available.",
 			retryParticipantsCount,
 			len(groupMembers),
@@ -172,8 +172,8 @@ func EvaluateRetryParticipantsForKeyGeneration(
 	} else {
 		remainingTries -= uint(tries)
 		return nil, fmt.Errorf(
-			"the retry count [%d] was too large to handle! "+
-				"Tried every single, pair, and triplet, but still needed [%d] more.",
+			"the retry count [%d] was too large to handle; "+
+				"tried every single, pair, and triplet, but still needed [%d] more.",
 			retryCount,
 			remainingTries,
 		)
