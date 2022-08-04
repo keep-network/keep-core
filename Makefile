@@ -34,9 +34,11 @@ download_artifacts:
 	$(foreach package,$(npm_packages),$(call get_npm_package,$(environment),$(package)))
 
 generate:
+	$(info Running Go code generator)
 	go generate ./...
 
 build:
+	$(info Building Go code)
 	go build -o keep-client -a . 
 
 cmd-help: build
