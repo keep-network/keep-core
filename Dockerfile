@@ -59,7 +59,6 @@ COPY ./config $APP_DIR/config
 RUN make generate environment=$ENVIRONMENT
 
 COPY ./ $APP_DIR/
-RUN go generate ./pkg/gen
 
 # Client Versioning.
 ARG VERSION
