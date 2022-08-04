@@ -35,7 +35,6 @@ help()
    echo -e "\t--authorizer: Staking authorizer address"
    echo -e "\t--stake-amount: Staking amount"
    echo -e "\t--authorization-amount: Authorization amount"
-   echo -e "\t--skip-ecdsa-initialization: This option skips ecdsa initialization. Default is false"
    exit 1 # Exit script after printing help
 }
 
@@ -51,7 +50,6 @@ for arg in "$@"; do
     "--authorizer")           set -- "$@" "-a" ;;
     "--stake-amount")         set -- "$@" "-s" ;;
     "--authorization-amount") set -- "$@" "-k" ;;
-    "--skip-ecdsa-initialization")  set -- "$@" "-e" ;;
     "--help")                 set -- "$@" "-h" ;;
     *)                        set -- "$@" "$arg"
   esac
@@ -59,7 +57,7 @@ done
 
 # Parse short options
 OPTIND=1
-while getopts "n:o:p:d:b:a:s:k:eh" opt
+while getopts "n:o:p:d:b:a:s:k:h" opt
 do
    case "$opt" in
       n ) network="$OPTARG" ;;
@@ -70,7 +68,6 @@ do
       a ) authorizer="$OPTARG" ;;
       s ) stake_amount="$OPTARG" ;;
       k ) authorization_amount="$OPTARG" ;;
-      e ) skip_ecdsa_initialization=${OPTARG:-true} ;;
       h ) help ;;
       ? ) help ;; # Print help in case parameter is non-existent
    esac
@@ -142,12 +139,10 @@ eval ${stake} ${stake_amount_opt}
 eval ${authorize} ${authorization_amount_opt}
 eval ${register}
 
-if [ "$skip_ecdsa_initialization" != true ]; then
-   # go to ecdsa
-   cd $KEEP_ECDSA_SOL_PATH
+# go to ecdsa
+cd $KEEP_ECDSA_SOL_PATH
 
-   eval ${authorize} ${authorization_amount_opt}
-   eval ${register}
-fi
+eval ${authorize} ${authorization_amount_opt}
+eval ${register}
 
 printf "${DONE_START}Initialization completed!${DONE_END}"
