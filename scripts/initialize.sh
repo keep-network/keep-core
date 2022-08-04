@@ -108,41 +108,26 @@ if [ ! -z "$authorization_amount" ]; then
    authorization_amount_opt="--authorization ${authorization_amount}"
 fi
 
-printf "${LOG_START}Setting up staking...${LOG_END}"
+printf "${LOG_START}Initializing beacon and ecdsa...${LOG_END}"
 
-mint="npx hardhat initialize:mint 
-   --network $NETWORK \
-   --owner ${stake_owner}"
-stake="npx hardhat initialize:stake 
+initialize="npx hardhat initialize 
    --network $NETWORK \
    --owner ${stake_owner} \
    --provider ${staking_provider} \
+   --operator ${operator} \
    --beneficiary ${beneficiary} \
    --authorizer ${authorizer}"
-authorize="npx hardhat initialize:authorize 
-   --network $NETWORK \
-   --owner ${stake_owner} \
-   --provider ${staking_provider} 
-   --authorizer ${authorizer}"
-register="npx hardhat initialize:register 
-   --network $NETWORK \
-   --provider ${staking_provider} \
-   --operator ${operator}"
 
+# TODO: remove?
 # go to beacon
-cd $KEEP_BEACON_SOL_PATH
-
-# 'eval' command is used because of the optional params that can be pased to the
-# Hardhat tasks
-eval ${mint} ${stake_amount_opt}
-eval ${stake} ${stake_amount_opt}
-eval ${authorize} ${authorization_amount_opt}
-eval ${register}
+# cd $KEEP_BEACON_SOL_PATH
+# eval ${initialize} ${stake_amount_opt} ${authorization_amount_opt}
 
 # go to ecdsa
 cd $KEEP_ECDSA_SOL_PATH
 
-eval ${authorize} ${authorization_amount_opt}
-eval ${register}
+# Initalization for beacon and ecdsa can be executed from ecdsa, because in
+# the current version of ecdsa's task:initialize handles both applications.
+eval ${initialize} ${stake_amount_opt} ${authorization_amount_opt}
 
 printf "${DONE_START}Initialization completed!${DONE_END}"
