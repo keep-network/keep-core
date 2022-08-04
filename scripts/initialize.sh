@@ -22,7 +22,7 @@ help()
            "--operator <operator address>"\
            "--beneficiary <beneficiary address>"\
            "--authorizer <authorizer address>"\
-           "--staking-amount <staking amount>"\
+           "--stake-amount <stake amount>"\
            "--authorization-amount <authorization amount>"
    echo -e "\nMandatory line arguments:\n"
    echo -e "\t--stake-owner: Stake owner address"
@@ -33,7 +33,7 @@ help()
    echo -e "\t--operator: Operator address"
    echo -e "\t--beneficiary: Staking beneficiary address"
    echo -e "\t--authorizer: Staking authorizer address"
-   echo -e "\t--stake-amount: Staking amount"
+   echo -e "\t--stake-amount: Stake amount"
    echo -e "\t--authorization-amount: Authorization amount"
    exit 1 # Exit script after printing help
 }
