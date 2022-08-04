@@ -11,7 +11,7 @@ contract_files = $(addprefix contract/,$(addsuffix .go,${required_contracts}))
 # Files containing addresses extracted from the artifacts.
 address_files = $(addprefix _address/,${required_contracts})
 
-all: clean ${address_files} gen_contract_go
+all: clean check_artifacts ${address_files} gen_contract_go
 
 clean:
 	rm -rf _address/*
@@ -20,6 +20,11 @@ clean:
 	mkdir tmp && mv cmd/cmd*.go tmp
 	rm -rf cmd/*
 	mv tmp/* cmd && rm -rf tmp
+
+# Check if artifacts directory exists. If the directory doesn't exists it is
+# likely a problem inside a fetched contracts package.
+check_artifacts:
+	@[ -d "$(artifacts_dir)" ] || { echo "$(artifacts_dir) does not exist!"; exit 1; }
 
 gen_contract_go: ${contract_files}
 
