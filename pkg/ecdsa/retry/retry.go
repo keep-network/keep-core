@@ -109,7 +109,7 @@ func EvaluateRetryParticipantsForKeyGeneration(
 	retryCount uint,
 	retryParticipantsCount uint,
 ) ([]chain.Address, error) {
-	originalRetryCount := retryCount
+	remainingTries := retryCount
 	if int(retryParticipantsCount) > len(groupMembers) {
 		return nil, fmt.Errorf(
 			"asked for too many seats. [%d] seats were requested, "+
@@ -135,20 +135,20 @@ func EvaluateRetryParticipantsForKeyGeneration(
 	usedOperators, tries, ok := excludeSingleOperator(
 		rng,
 		groupMembers,
-		int(retryCount),
+		int(remainingTries),
 		operatorToSeatCount,
 		operators,
 	)
 	if ok {
 		return usedOperators, nil
 	} else {
-		retryCount -= uint(tries)
+		remainingTries -= uint(tries)
 	}
 
 	usedOperators, tries, ok = excludeOperatorPairs(
 		rng,
 		groupMembers,
-		int(retryCount),
+		int(remainingTries),
 		operatorToSeatCount,
 		operators,
 		int(retryParticipantsCount),
@@ -156,13 +156,13 @@ func EvaluateRetryParticipantsForKeyGeneration(
 	if ok {
 		return usedOperators, nil
 	} else {
-		retryCount -= uint(tries)
+		remainingTries -= uint(tries)
 	}
 
 	usedOperators, tries, ok = excludeOperatorTriplets(
 		rng,
 		groupMembers,
-		int(retryCount),
+		int(remainingTries),
 		operatorToSeatCount,
 		operators,
 		int(retryParticipantsCount),
@@ -170,12 +170,12 @@ func EvaluateRetryParticipantsForKeyGeneration(
 	if ok {
 		return usedOperators, nil
 	} else {
-		retryCount -= uint(tries)
+		remainingTries -= uint(tries)
 		return nil, fmt.Errorf(
 			"the retry count [%d] was too large to handle! "+
 				"Tried every single, pair, and triplet, but still needed [%d] more.",
-			originalRetryCount,
 			retryCount,
+			remainingTries,
 		)
 	}
 }
