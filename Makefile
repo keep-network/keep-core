@@ -4,6 +4,16 @@
 # not overwritten it defaults to `development`.
 environment = development
 
+development:
+	make all environment=development
+
+goerli:
+	make all environment=goerli
+
+# TODO: Mainnet packages have not been published yet.
+# mainnet:
+# 	make all environment=mainnet
+
 all: download_artifacts generate build cmd-help
 
 # List of NPM packages containing contracts needed by the client contracts bindings
