@@ -165,11 +165,13 @@ if [ "$SKIP_DEPLOYMENT" != true ]; then
   yarn link @keep-network/ecdsa
 
   printf "${LOG_START}Building tbtc contracts...${LOG_END}"
-  yarn build && yarn prepack
+  yarn build
 
   # deploy tbtc
   printf "${LOG_START}Deploying tbtc contracts...${LOG_END}"
   yarn deploy --reset --network $NETWORK
+  # create export folder
+  yarn prepack
 fi
 
 if [ "$SKIP_CLIENT_BUILD" = false ]; then
