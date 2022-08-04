@@ -85,7 +85,7 @@ func TestEvaluateRetryParticipantsForKeyGeneration_FewOperators(t *testing.T) {
 
 	// Too many!
 	_, err := EvaluateRetryParticipantsForKeyGeneration(groupMembers, int64(456), 1350, 80)
-	expectation := "the retry count [1350] was too large to handle! Tried every single, pair, and triplet, but still needed [0] more."
+	expectation := "the retry count [1350] was too large to handle; tried every single, pair, and triplet, but still needed [0] more."
 	if err.Error() != expectation {
 		t.Errorf(
 			"unexpected error\nexpected: [%s]\nactual:   [%s]",
