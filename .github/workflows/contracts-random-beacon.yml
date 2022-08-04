@@ -262,13 +262,11 @@ jobs:
       - name: Install needed dependencies
         run: yarn install --frozen-lockfile
 
-      # If we don't remove the contracts from `node-modules`, the
+      # If we don't remove the artifacts from `node-modules`, the
       # `etherscan-verify` plugins tries to verify them, which is not desired.
       - name: Prepare for verification on Etherscan
         run: |
-          rm -rf ./node_modules/@keep-network/keep-core
-          rm -rf ./node_modules/@keep-network/sortition-pools
-          rm -rf ./node_modules/@threshold-network/solidity-contracts
+          rm -rf ./node_modules/@threshold-network/solidity-contracts/artifacts
           rm -rf ./external/npm
 
       - name: Verify contracts on Etherscan
