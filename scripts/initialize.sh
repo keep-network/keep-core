@@ -118,11 +118,6 @@ initialize="npx hardhat initialize
    --beneficiary ${beneficiary} \
    --authorizer ${authorizer}"
 
-# TODO: remove?
-# go to beacon
-# cd $KEEP_BEACON_SOL_PATH
-# eval ${initialize} ${stake_amount_opt} ${authorization_amount_opt}
-
 # go to ecdsa
 cd $KEEP_ECDSA_SOL_PATH
 
