@@ -11,6 +11,7 @@ import {
 
 import type { HardhatRuntimeEnvironment } from "hardhat/types"
 
+// Tasks for the ECDSA application.
 const TASK_AUTHORIZE_ECDSA = `${TASK_AUTHORIZE}:ecdsa`
 const TASK_REGISTER_ECDSA = `${TASK_REGISTER}:ecdsa`
 

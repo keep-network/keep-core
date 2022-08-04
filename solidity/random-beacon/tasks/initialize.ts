@@ -11,11 +11,15 @@ import {
 import type { BigNumberish } from "ethers"
 import type { HardhatRuntimeEnvironment } from "hardhat/types"
 
+// Main task executing all child tasks.
 export const TASK_INITIALIZE = "initialize"
+// Common task.
 export const TASK_MINT = `${TASK_INITIALIZE}:mint`
 export const TASK_STAKE = `${TASK_INITIALIZE}:stake`
+// Name prefix that should be used in tasks implementation for specific application.
 export const TASK_AUTHORIZE = `${TASK_INITIALIZE}:authorize`
 export const TASK_REGISTER = `${TASK_INITIALIZE}:register`
+// Subtask for the Random Beacon application.
 const TASK_AUTHORIZE_BEACON = `${TASK_AUTHORIZE}:beacon`
 const TASK_REGISTER_BEACON = `${TASK_REGISTER}:beacon`
 
