@@ -94,7 +94,9 @@ func EvaluateRetryParticipantsForSigning(
 // sending corrupted information, either on purpose or accidentally, we keep
 // trying to find a subset of `groupMembers` that is as large as possible by
 // first excluding single operators, then pairs of operators, then triplets of
-// operators.
+// operators. We use the `seed` param to generate randomness to shuffle the
+// singles/pairs/triplets of operators to exclude and then use the `retryCount`
+// param to select which single/pair/triplet to exclude.
 //
 // The `seed` param needs to vary on a per-message basis but must be the same
 // seed between all operators for each invocation. This can be the hash of the
@@ -120,7 +122,10 @@ func EvaluateRetryParticipantsForKeyGeneration(
 	}
 	operatorToSeatCount := calculateSeatCount(groupMembers)
 	// #nosec G404 (insecure random number source (rand))
-	// Shuffling operators for retries does not require secure randomness.
+	// Shuffling operators for retries does not require secure randomness. Unlike
+	// EvaluateRetryParticipantsForSigning above, we only want to use the seed as
+	// a source of randomness. The `retryCount` is used to select which operators
+	// to exclude after we shuffle them.
 	rng := rand.New(rand.NewSource(seed))
 
 	operators := make([]chain.Address, 0, len(operatorToSeatCount))
