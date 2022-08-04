@@ -130,6 +130,8 @@ func EvaluateRetryParticipantsForKeyGeneration(
 
 	operators := make([]chain.Address, 0, len(operatorToSeatCount))
 	for operator := range operatorToSeatCount {
+		// Only include the operators that have few enough seats such that if they
+		// were excluded we still have at least `retryParticipantsCount` seats.
 		if len(groupMembers)-int(operatorToSeatCount[operator]) >= int(retryParticipantsCount) {
 			operators = append(operators, operator)
 		}
@@ -221,10 +223,13 @@ func excludeOperatorPairs(
 		for j := i + 1; j < len(operators); j++ {
 			leftOperator := operators[i]
 			rightOperator := operators[j]
+
+			// Only include the operators pairs that have few enough seats such that
+			// if they were excluded we still have at least `retryParticipantsCount`
+			// seats.
 			count := len(groupMembers) -
 				int(operatorToSeatCount[leftOperator]) -
 				int(operatorToSeatCount[rightOperator])
-
 			if count >= int(retryParticipantsCount) {
 				pairIndexes = append(pairIndexes, [2]int{i, j})
 			}
@@ -264,11 +269,14 @@ func excludeOperatorTriplets(
 				leftOperator := operators[i]
 				middleOperator := operators[j]
 				rightOperator := operators[j]
+
+				// Only include the operators triples that have few enough seats such
+				// that if they were excluded we still have at least
+				// `retryParticipantsCount` seats.
 				count := len(groupMembers) -
 					int(operatorToSeatCount[leftOperator]) -
 					int(operatorToSeatCount[middleOperator]) -
 					int(operatorToSeatCount[rightOperator])
-
 				if count >= int(retryParticipantsCount) {
 					tripletIndexes = append(tripletIndexes, [3]int{i, j, k})
 				}
