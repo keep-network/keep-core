@@ -89,15 +89,16 @@ if [ "$SKIP_DEPLOYMENT" != true ]; then
   # create tmp/ dir for fresh installations
   rm -rf $TMP && mkdir $TMP && cd $TMP
 
-  # clone solidity-contracts as a dependency for beacon, ecdsa and tbtc
+  # clone threshold-network/solidity-contracts as a dependency for beacon, ecdsa
+  # and tbtc
   git clone https://github.com/threshold-network/solidity-contracts.git
   cd solidity-contracts
 
-  printf "${LOG_START}Building solidity-contracts...${LOG_END}"
+  printf "${LOG_START}Building threshold-network/solidity-contracts...${LOG_END}"
   yarn install && yarn clean && yarn build
 
-  # deploy solidity-contracts
-  printf "${LOG_START}Deploying solidity-contracts contracts...${LOG_END}"
+  # deploy threshold-network/solidity-contracts
+  printf "${LOG_START}Deploying threshold-network/solidity-contracts contracts...${LOG_END}"
   yarn deploy --reset --network $NETWORK
 
   yarn link
@@ -106,7 +107,7 @@ if [ "$SKIP_DEPLOYMENT" != true ]; then
 
   cd $KEEP_BEACON_SOL_PATH
 
-  printf "${LOG_START}Linking solidity-contracts...${LOG_END}"
+  printf "${LOG_START}Linking threshold-network/solidity-contracts...${LOG_END}"
   yarn link @threshold-network/solidity-contracts
 
   printf "${LOG_START}Building random-beacon...${LOG_END}"
@@ -154,7 +155,7 @@ if [ "$SKIP_DEPLOYMENT" != true ]; then
 
   yarn install
 
-  printf "${LOG_START}Linking solidity-contracts...${LOG_END}"
+  printf "${LOG_START}Linking threshold-network/solidity-contracts...${LOG_END}"
   yarn link @threshold-network/solidity-contracts
 
   printf "${LOG_START}Linking random-beacon...${LOG_END}"
