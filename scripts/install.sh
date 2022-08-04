@@ -115,7 +115,8 @@ if [ "$SKIP_DEPLOYMENT" != true ]; then
   printf "${LOG_START}Deploying threshold-network/solidity-contracts contracts...${LOG_END}"
   yarn deploy --reset --network $NETWORK
 
-  yarn link
+  # Link the package. Replace existing link (see: https://github.com/yarnpkg/yarn/issues/7216) 
+  yarn unlink || true && yarn link
   # create export folder
   yarn prepack
 
@@ -132,7 +133,8 @@ if [ "$SKIP_DEPLOYMENT" != true ]; then
   yarn deploy --reset --network $NETWORK
 
   printf "${LOG_START}Creating random-beacon link...${LOG_END}"
-  yarn link
+  # Link the package. Replace existing link (see: https://github.com/yarnpkg/yarn/issues/7216) 
+  yarn unlink || true && yarn link
   # create export folder
   yarn prepack
 
@@ -152,7 +154,8 @@ if [ "$SKIP_DEPLOYMENT" != true ]; then
   yarn deploy --reset --network $NETWORK
 
   printf "${LOG_START}Creating ecdsa link...${LOG_END}"
-  yarn link
+  # Link the package. Replace existing link (see: https://github.com/yarnpkg/yarn/issues/7216) 
+  yarn unlink || true && yarn link
   # create export folder
   yarn prepack
 
