@@ -84,6 +84,102 @@ func EvaluateRetryParticipantsForSigning(
 	return seats, nil
 }
 
+// EvaluateRetryParticipantsForKeyGeneration takes in a slice of `groupMembers`
+// and returns a subslice of those same members of length >=
+// `retryParticipantsCount` randomly according to the provided `seed` and
+// `retryCount`.
+//
+// This function is intended to be called during key generation after a failure
+// *not* due to inactivity. Assuming that some of the `groupMembers` are
+// sending corrupted information, either on purpose or accidentally, we keep
+// trying to find a subset of `groupMembers` that is as large as possible by
+// first excluding single operators, then pairs of operators, then triplets of
+// operators.
+//
+// The `seed` param needs to vary on a per-message basis but must be the same
+// seed between all operators for each invocation. This can be the hash of the
+// message since cryptographically secure randomness isn't important.
+//
+// The `retryCount` denotes the number of the given retry, so that should be
+// incremented after each attempt while the `seed` stays consistent on a
+// per-message basis.
+func EvaluateRetryParticipantsForKeyGeneration(
+	groupMembers []chain.Address,
+	seed int64,
+	retryCount uint,
+	retryParticipantsCount uint,
+) ([]chain.Address, error) {
+	originalRetryCount := retryCount
+	if int(retryParticipantsCount) > len(groupMembers) {
+		return nil, fmt.Errorf(
+			"asked for too many seats. [%d] seats were requested, "+
+				"but there are only [%d] available.",
+			retryParticipantsCount,
+			len(groupMembers),
+		)
+	}
+	operatorToSeatCount := calculateSeatCount(groupMembers)
+	source := rand.NewSource(seed)
+	// #nosec G404 (insecure random number source (rand))
+	// Shuffling operators for retries does not require secure randomness.
+	rng := rand.New(source)
+
+	operators := make([]chain.Address, 0, len(operatorToSeatCount))
+	for operator := range operatorToSeatCount {
+		if len(groupMembers)-int(operatorToSeatCount[operator]) >= int(retryParticipantsCount) {
+			operators = append(operators, operator)
+		}
+	}
+	sort.Sort(byAddress(operators))
+
+	usedOperators, tries, ok := excludeSingleOperator(
+		rng,
+		groupMembers,
+		int(retryCount),
+		operatorToSeatCount,
+		operators,
+	)
+	if ok {
+		return usedOperators, nil
+	} else {
+		retryCount -= uint(tries)
+	}
+
+	usedOperators, tries, ok = excludeOperatorPairs(
+		rng,
+		groupMembers,
+		int(retryCount),
+		operatorToSeatCount,
+		operators,
+		int(retryParticipantsCount),
+	)
+	if ok {
+		return usedOperators, nil
+	} else {
+		retryCount -= uint(tries)
+	}
+
+	usedOperators, tries, ok = excludeOperatorTriplets(
+		rng,
+		groupMembers,
+		int(retryCount),
+		operatorToSeatCount,
+		operators,
+		int(retryParticipantsCount),
+	)
+	if ok {
+		return usedOperators, nil
+	} else {
+		retryCount -= uint(tries)
+		return nil, fmt.Errorf(
+			"the retry count [%d] was too large to handle! "+
+				"Tried every single, pair, and triplet, but still needed [%d] more.",
+			originalRetryCount,
+			retryCount,
+		)
+	}
+}
+
 func excludeSingleOperator(
 	rng *rand.Rand,
 	groupMembers []chain.Address,
@@ -192,101 +288,5 @@ func excludeOperatorTriplets(
 		return usedOperators, 0, true
 	} else {
 		return nil, len(tripletIndexes), false
-	}
-}
-
-// EvaluateRetryParticipantsForKeyGeneration takes in a slice of `groupMembers`
-// and returns a subslice of those same members of length >=
-// `retryParticipantsCount` randomly according to the provided `seed` and
-// `retryCount`.
-//
-// This function is intended to be called during key generation after a failure
-// *not* due to inactivity. Assuming that some of the `groupMembers` are
-// sending corrupted information, either on purpose or accidentally, we keep
-// trying to find a subset of `groupMembers` that is as large as possible by
-// first excluding single operators, then pairs of operators, then triplets of
-// operators.
-//
-// The `seed` param needs to vary on a per-message basis but must be the same
-// seed between all operators for each invocation. This can be the hash of the
-// message since cryptographically secure randomness isn't important.
-//
-// The `retryCount` denotes the number of the given retry, so that should be
-// incremented after each attempt while the `seed` stays consistent on a
-// per-message basis.
-func EvaluateRetryParticipantsForKeyGeneration(
-	groupMembers []chain.Address,
-	seed int64,
-	retryCount uint,
-	retryParticipantsCount uint,
-) ([]chain.Address, error) {
-	originalRetryCount := retryCount
-	if int(retryParticipantsCount) > len(groupMembers) {
-		return nil, fmt.Errorf(
-			"asked for too many seats. [%d] seats were requested, "+
-				"but there are only [%d] available.",
-			retryParticipantsCount,
-			len(groupMembers),
-		)
-	}
-	operatorToSeatCount := calculateSeatCount(groupMembers)
-	source := rand.NewSource(seed)
-	// #nosec G404 (insecure random number source (rand))
-	// Shuffling operators for retries does not require secure randomness.
-	rng := rand.New(source)
-
-	operators := make([]chain.Address, 0, len(operatorToSeatCount))
-	for operator := range operatorToSeatCount {
-		if len(groupMembers)-int(operatorToSeatCount[operator]) >= int(retryParticipantsCount) {
-			operators = append(operators, operator)
-		}
-	}
-	sort.Sort(byAddress(operators))
-
-	usedOperators, tries, ok := excludeSingleOperator(
-		rng,
-		groupMembers,
-		int(retryCount),
-		operatorToSeatCount,
-		operators,
-	)
-	if ok {
-		return usedOperators, nil
-	} else {
-		retryCount -= uint(tries)
-	}
-
-	usedOperators, tries, ok = excludeOperatorPairs(
-		rng,
-		groupMembers,
-		int(retryCount),
-		operatorToSeatCount,
-		operators,
-		int(retryParticipantsCount),
-	)
-	if ok {
-		return usedOperators, nil
-	} else {
-		retryCount -= uint(tries)
-	}
-
-	usedOperators, tries, ok = excludeOperatorTriplets(
-		rng,
-		groupMembers,
-		int(retryCount),
-		operatorToSeatCount,
-		operators,
-		int(retryParticipantsCount),
-	)
-	if ok {
-		return usedOperators, nil
-	} else {
-		retryCount -= uint(tries)
-		return nil, fmt.Errorf(
-			"the retry count [%d] was too large to handle! "+
-				"Tried every single, pair, and triplet, but still needed [%d] more.",
-			originalRetryCount,
-			retryCount,
-		)
 	}
 }
