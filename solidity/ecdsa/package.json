@@ -26,9 +26,9 @@
     "lint:config:fix": "prettier --write '**/*.@(json|yaml)'",
     "clean": "hardhat clean && rm -rf cache/ export/ external/npm export.json",
     "build": "hardhat compile",
-    "test": "TEST_USE_STUBS_ECDSA=true hardhat test",
+    "test": "USE_EXTERNAL_DEPLOY=true TEST_USE_STUBS_ECDSA=true hardhat test",
     "deploy": "hardhat deploy --export export.json",
-    "deploy:test": "TEST_USE_STUBS_ECDSA=true npm run deploy",
+    "deploy:test": "USE_EXTERNAL_DEPLOY=true TEST_USE_STUBS_ECDSA=true npm run deploy",
     "prepack": "tsc -p tsconfig.export.json && hardhat export-artifacts --including-no-public-functions export/artifacts",
     "prepublishOnly": "hardhat prepare-artifacts --network $npm_config_network"
   },
