@@ -186,6 +186,17 @@ func EvaluateRetryParticipantsForKeyGeneration(
 	}
 }
 
+// excludeSingleOperator randomly excludes all of an operator's seats from a
+// given `groupMembers`. It needs a pre-seeded random generator `rng`, and an
+// `index`, which is expected to be inferred from a `retryCount`.
+//
+// It does this by shuffling a list of eligible-for-exclusion operators
+// according to `rng`, selecting the operator according to `index`, and then
+// filtering that operator out of `groupMembers`.
+//
+// In the case that `index` is larger than the number of eligible operators, it
+// skips shuffling and returns the number of eligible operators, which is
+// useful for determining the index of the operator pair to ignore.
 func excludeSingleOperator(
 	rng *rand.Rand,
 	groupMembers []chain.Address,
@@ -210,6 +221,18 @@ func excludeSingleOperator(
 	}
 }
 
+// excludeOperatorPairs randomly excludes all of a pair of operator's seats from a
+// given `groupMembers`. It needs a pre-seeded random generator `rng`, and an
+// `index`, which is expected to be inferred from a `retryCount`.
+//
+// It does this by shuffling a list of eligable-for-exclusion operators
+// according to `rng`, selecting the operator according to `index`, and then
+// filtering that operator pair out of `groupMembers`.
+//
+// In the case that `index` is larger than the number of eligible operator
+// pairs, it skips shuffling and returns the number of eligible operators
+// pairs, which is useful for determining the index of the operator triplet to
+// ignore.
 func excludeOperatorPairs(
 	rng *rand.Rand,
 	groupMembers []chain.Address,
@@ -254,6 +277,17 @@ func excludeOperatorPairs(
 	}
 }
 
+// excludeOperatorTriplets randomly excludes all of a triplet of operator's seats from a
+// given `groupMembers`. It needs a pre-seeded random generator `rng`, and an
+// `index`, which is expected to be inferred from a `retryCount`.
+//
+// It does this by shuffling a list of eligable-for-exclusion operators
+// according to `rng`, selecting the operator according to `index`, and then
+// filtering that operator triplet out of `groupMembers`.
+//
+// In the case that `index` is larger than the number of eligible operator
+// triplets, it skips shuffling and returns the number of eligible operators
+// triplets, which is useful for logging errors.
 func excludeOperatorTriplets(
 	rng *rand.Rand,
 	groupMembers []chain.Address,
