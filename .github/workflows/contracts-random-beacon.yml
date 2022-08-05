@@ -223,7 +223,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
         with:
-          module: "github.com/keep-network/keep-core/solidity/random-beacon"
+          module: "github.com/keep-network/keep-core/random-beacon"
           url: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
           environment: ${{ github.event.inputs.environment }}
           upstream_builds: ${{ github.event.inputs.upstream_builds }}
@@ -252,6 +252,7 @@ jobs:
         uses: actions/download-artifact@v2
         with:
           name: Artifacts for etherscan verifcation
+          path: ./solidity/random-beacon
 
       - uses: actions/setup-node@v2
         with:
