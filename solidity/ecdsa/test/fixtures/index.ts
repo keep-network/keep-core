@@ -26,8 +26,8 @@ export const constants = {
   groupSize: 100,
   groupThreshold: 51,
   poolWeightDivisor: to1e18(1),
-  tokenStakingNotificationReward: to1e18(10000), // 10k T
-  governanceDelay: 604800, // 1 week
+  tokenStakingNotificationReward: to1e18(10_000), // 10k T
+  governanceDelay: 604_800, // 1 week
 }
 
 export const dkgState = {
@@ -38,14 +38,15 @@ export const dkgState = {
 }
 
 export const params = {
-  minimumAuthorization: to1e18(40000),
-  authorizationDecreaseDelay: 3888000,
-  authorizationDecreaseChangePeriod: 3888000,
+  minimumAuthorization: to1e18(40_000),
+  authorizationDecreaseDelay: 3_888_000,
+  authorizationDecreaseChangePeriod: 3_888_000,
   dkgSeedTimeout: 8,
   dkgResultChallengePeriodLength: 10,
   dkgResultSubmissionTimeout: 30,
   dkgSubmitterPrecedencePeriodLength: 5,
-  sortitionPoolRewardsBanDuration: 1209600, // 14 days
+  dkgResultChallengeExtraGas: 50_000,
+  sortitionPoolRewardsBanDuration: 1_209_600, // 14 days
 }
 
 export const walletRegistryFixture = deployments.createFixture(

@@ -46,6 +46,9 @@ library EcdsaDkg {
         // approve it. Once this period ends and the submitter have not approved
         // the result, anyone can do it.
         uint256 submitterPrecedencePeriodLength;
+        // Extra gas required to be left at the end of the challenge DKG result
+        // transaction.
+        uint256 resultChallengeExtraGas;
         // This struct doesn't contain `__gap` property as the structure is
         // stored inside `Data` struct, that already have a gap that can be used
         // on upgrade.
@@ -444,6 +447,24 @@ library EcdsaDkg {
         return (maliciousResultHash, maliciousSubmitter);
     }
 
+    /// @notice Due to EIP150, 1/64 of the gas is not forwarded to the call, and
+    ///         will be kept to execute the remaining operations in the function
+    ///         after the call inside the try-catch.
+    ///
+    ///         To ensure there is no way for the caller to manipulate gas limit
+    ///         in such a way that the call inside try-catch fails with out-of-gas
+    ///         and the rest of the function is executed with the remaining
+    ///         1/64 of gas, we require an extra gas amount to be left at the
+    ///         end of the call to the function challenging DKG result and
+    ///         wrapping the call to EcdsaDkgValidator in TokenStaking contract
+    ///         inside a try-catch.
+    function requireChallengeExtraGas(Data storage self) internal view {
+        require(
+            gasleft() >= self.parameters.resultChallengeExtraGas,
+            "Not enough extra gas left"
+        );
+    }
+
     /// @notice Checks if DKG result is valid for the current DKG.
     /// @param result DKG result.
     /// @return True if the result is valid. If the result is invalid it returns
@@ -517,6 +538,16 @@ library EcdsaDkg {
         self
             .parameters
             .submitterPrecedencePeriodLength = newSubmitterPrecedencePeriodLength;
+    }
+
+    /// @notice Set resultChallengeExtraGas parameter.
+    function setResultChallengeExtraGas(
+        Data storage self,
+        uint256 newResultChallengeExtraGas
+    ) internal {
+        require(currentState(self) == State.IDLE, "Current state is not IDLE");
+
+        self.parameters.resultChallengeExtraGas = newResultChallengeExtraGas;
     }
 
     /// @notice Completes DKG by cleaning up state.

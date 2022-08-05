@@ -182,7 +182,8 @@ contract WalletRegistry is
         uint256 seedTimeout,
         uint256 resultChallengePeriodLength,
         uint256 resultSubmissionTimeout,
-        uint256 resultSubmitterPrecedencePeriodLength
+        uint256 resultSubmitterPrecedencePeriodLength,
+        uint256 resultChallengeExtraGas
     );
 
     event GasParametersUpdated(
@@ -334,6 +335,7 @@ contract WalletRegistry is
         dkg.setResultChallengePeriodLength(11_520);
         dkg.setResultSubmissionTimeout(100 * 20);
         dkg.setSubmitterPrecedencePeriodLength(20);
+        dkg.setResultChallengeExtraGas(50_000);
 
         // Gas parameters were adjusted based on Ethereum state in April 2022.
         // If the cost of EVM opcodes change over time, these parameters will
@@ -561,11 +563,14 @@ contract WalletRegistry is
     /// @param _resultSubmissionTimeout New DKG result submission timeout
     /// @param _submitterPrecedencePeriodLength New submitter precedence period
     ///        length
+    /// @param _resultChallengeExtraGas New extra gas value required to be left
+    ///        at the end of the DKG result challenge transaction.
     function updateDkgParameters(
         uint256 _seedTimeout,
         uint256 _resultChallengePeriodLength,
         uint256 _resultSubmissionTimeout,
-        uint256 _submitterPrecedencePeriodLength
+        uint256 _submitterPrecedencePeriodLength,
+        uint256 _resultChallengeExtraGas
     ) external onlyGovernance {
         dkg.setSeedTimeout(_seedTimeout);
         dkg.setResultChallengePeriodLength(_resultChallengePeriodLength);
@@ -573,13 +578,15 @@ contract WalletRegistry is
         dkg.setSubmitterPrecedencePeriodLength(
             _submitterPrecedencePeriodLength
         );
+        dkg.setResultChallengeExtraGas(_resultChallengeExtraGas);
 
         // slither-disable-next-line reentrancy-events
         emit DkgParametersUpdated(
             _seedTimeout,
             _resultChallengePeriodLength,
             _resultSubmissionTimeout,
-            _submitterPrecedencePeriodLength
+            _submitterPrecedencePeriodLength,
+            _resultChallengeExtraGas
         );
     }
 
@@ -821,6 +828,17 @@ contract WalletRegistry is
                 maliciousDkgResultSubmitterAddress
             );
         }
+
+        // Due to EIP150, 1/64 of the gas is not forwarded to the call, and
+        // will be kept to execute the remaining operations in the function
+        // after the call inside the try-catch.
+        //
+        // To ensure there is no way for the caller to manipulate gas limit in
+        // such a way that the call inside try-catch fails with out-of-gas and
+        // the rest of the function is executed with the remaining 1/64 of gas,
+        // we require an extra gas amount to be left at the end of the call to
+        // `challengeDkgResult`.
+        dkg.requireChallengeExtraGas();
     }
 
     /// @notice Notifies about operators who are inactive. Using this function,
