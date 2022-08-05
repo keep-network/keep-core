@@ -2,12 +2,14 @@ package tbtc
 
 import (
 	"fmt"
+	"math/big"
+	"time"
+
 	"github.com/keep-network/keep-common/pkg/persistence"
 	"github.com/keep-network/keep-core/pkg/ecdsa/dkg"
 	"github.com/keep-network/keep-core/pkg/internal/testutils"
 	"github.com/keep-network/keep-core/pkg/net"
 	"github.com/keep-network/keep-core/pkg/protocol/group"
-	"math/big"
 )
 
 // TODO: Unit tests for `node.go`.
@@ -16,6 +18,7 @@ import (
 type node struct {
 	chain       Chain
 	netProvider net.Provider
+	dkgExecutor *dkg.Executor
 
 	// TODO: Persistence layer.
 }
@@ -25,9 +28,16 @@ func newNode(
 	netProvider net.Provider,
 	persistence persistence.Handle,
 ) *node {
+	// TODO: Pass TSS pre-parameters pool config from the outside.
+	dkgExecutor := dkg.NewExecutor(logger, &dkg.ExecutorConfig{
+		TssPreParamsPoolSize:              50,
+		TssPreParamsPoolGenerationTimeout: 2 * time.Minute,
+	})
+
 	return &node{
 		chain:       chain,
 		netProvider: netProvider,
+		dkgExecutor: dkgExecutor,
 	}
 }
 
@@ -128,8 +138,8 @@ func (n *node) joinDKGIfEligible(seed *big.Int, startBlockNumber uint64) {
 			memberIndex := index + 1
 
 			go func() {
-				result, _, err := dkg.Execute(
-					logger,
+				result, _, err := n.dkgExecutor.Execute(
+					seed,
 					startBlockNumber,
 					memberIndex,
 					chainConfig.GroupSize,
@@ -139,6 +149,7 @@ func (n *node) joinDKGIfEligible(seed *big.Int, startBlockNumber uint64) {
 					membershipValidator,
 				)
 				if err != nil {
+					// TODO: Add retries into the mix.
 					logger.Errorf(
 						"[member:%v] failed to execute dkg: [%v]",
 						memberIndex,
@@ -152,9 +163,9 @@ func (n *node) joinDKGIfEligible(seed *big.Int, startBlockNumber uint64) {
 				// TODO: Use the result to create a signer and persist the
 				//       key material using the persistence layer.
 				logger.Infof(
-					"[member:%v] generated [%v] symmetric keys",
+					"[member:%v] generated group [0x%x]",
 					memberIndex,
-					len(result.SymmetricKeys),
+					result.GroupPublicKey,
 				)
 			}()
 		}
