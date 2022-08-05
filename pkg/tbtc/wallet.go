@@ -22,18 +22,15 @@ type wallet struct {
 	// that is just the element's list index incremented by one (e.g.
 	// element with index 0 has the group.MemberIndex equal to 1 and so on).
 	signingGroupOperators []chain.Address
-	// signingGroupMemberships is the list of the wallet's signing group
-	// members that are under control of this node's operator.
-	// For example, if the wallet's signing group consists of 100 members
-	// and this node's operator controls members 10 and 35, this list will
-	// contain two signers having their own share of the wallet's private key.
-	signingGroupMemberships []*signer
 }
 
 // signer represents a threshold signer of a tBTC wallet. A signer holds
 // a wallet tECDSA private key share and is able to participate in the
 // signing process.
 type signer struct {
+	// wallet points to the tBTC wallet this signer belongs to.
+	wallet *wallet
+
 	// signingGroupMemberIndex indicates the signer position (seat) in the
 	// wallet signing group. The value of this index is in the [1, groupSize]
 	// range.
