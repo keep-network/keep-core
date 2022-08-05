@@ -35,9 +35,6 @@ import "@keep-network/random-beacon/contracts/Governable.sol";
 import "@threshold-network/solidity-contracts/contracts/staking/IApplication.sol";
 import "@threshold-network/solidity-contracts/contracts/staking/IStaking.sol";
 
-// TODO: We used RC version of @openzeppelin/contracts-upgradeable to use `reinitializer`
-// in upgrades. We should revisit this part before mainnet deployment and use
-// a final release package if it's ready.
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
 contract WalletRegistryV2MissingSlot is
