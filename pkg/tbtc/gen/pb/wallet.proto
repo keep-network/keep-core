@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+option go_package = "pb";
+package tbtc;
+
+message Wallet {
+    bytes publicKey = 1;
+    repeated string signingGroupOperators = 2;
+}
+
+message Signer {
+    bytes wallet = 1;
+    uint32 signingGroupMemberIndex = 2;
+    bytes privateKeyShare = 3;
+}
