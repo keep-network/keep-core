@@ -1,0 +1,45 @@
+package tbtc
+
+import (
+	"crypto/ecdsa"
+	"github.com/keep-network/keep-core/pkg/chain"
+	"github.com/keep-network/keep-core/pkg/protocol/group"
+	"github.com/keep-network/keep-core/pkg/tecdsa"
+)
+
+// wallet represents a tBTC wallet. A wallet is one of the basic building
+// blocks of the system that takes BTC under custody during the deposit
+// process and gives that BTC back during redemptions.
+type wallet struct {
+	// publicKey is the unique ECDSA public key that identifies the
+	// given wallet. This public key is also used to derive contract-specific
+	// wallet identifiers (e.g. the Bridge contract identifies the wallet using
+	// the SHA-256+RIPEMD-160 hash computed over the compressed ECDSA public key)
+	publicKey *ecdsa.PublicKey
+	// signingGroupOperators is the list holding operators' addresses that
+	// form the whole wallet's signing group. Each item in this list represents
+	// the given signing group member (seat) and has a group.MemberIndex
+	// that is just the element's list index incremented by one (e.g.
+	// element with index 0 has the group.MemberIndex equal to 1 and so on).
+	signingGroupOperators []chain.Address
+	// signingGroupMemberships is the list of the wallet's signing group
+	// members that are under control of this node's operator.
+	// For example, if the wallet's signing group consists of 100 members
+	// and this node's operator controls members 10 and 35, this list will
+	// contain two signers having their own share of the wallet's private key.
+	signingGroupMemberships []*signer
+}
+
+// signer represents a threshold signer of a tBTC wallet. A signer holds
+// a wallet tECDSA private key share and is able to participate in the
+// signing process.
+type signer struct {
+	// signingGroupMemberIndex indicates the signer position (seat) in the
+	// wallet signing group. The value of this index is in the [1, groupSize]
+	// range.
+	signingGroupMemberIndex group.MemberIndex
+
+	// privateKeyShare is the tECDSA private key share required to participate
+	// in the signing process.
+	privateKeyShare *tecdsa.PrivateKeyShare
+}
