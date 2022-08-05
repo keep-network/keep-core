@@ -40,15 +40,15 @@ library EcdsaDkg {
         uint256 seedTimeout;
         // Time in blocks during which a submitted result can be challenged.
         uint256 resultChallengePeriodLength;
+        // Extra gas required to be left at the end of the challenge DKG result
+        // transaction.
+        uint256 resultChallengeExtraGas;
         // Time in blocks during which a result is expected to be submitted.
         uint256 resultSubmissionTimeout;
         // Time in blocks during which only the result submitter is allowed to
         // approve it. Once this period ends and the submitter have not approved
         // the result, anyone can do it.
         uint256 submitterPrecedencePeriodLength;
-        // Extra gas required to be left at the end of the challenge DKG result
-        // transaction.
-        uint256 resultChallengeExtraGas;
         // This struct doesn't contain `__gap` property as the structure is
         // stored inside `Data` struct, that already have a gap that can be used
         // on upgrade.
@@ -507,6 +507,16 @@ library EcdsaDkg {
             .resultChallengePeriodLength = newResultChallengePeriodLength;
     }
 
+    /// @notice Set resultChallengeExtraGas parameter.
+    function setResultChallengeExtraGas(
+        Data storage self,
+        uint256 newResultChallengeExtraGas
+    ) internal {
+        require(currentState(self) == State.IDLE, "Current state is not IDLE");
+
+        self.parameters.resultChallengeExtraGas = newResultChallengeExtraGas;
+    }
+
     /// @notice Set resultSubmissionTimeout parameter.
     function setResultSubmissionTimeout(
         Data storage self,
@@ -538,16 +548,6 @@ library EcdsaDkg {
         self
             .parameters
             .submitterPrecedencePeriodLength = newSubmitterPrecedencePeriodLength;
-    }
-
-    /// @notice Set resultChallengeExtraGas parameter.
-    function setResultChallengeExtraGas(
-        Data storage self,
-        uint256 newResultChallengeExtraGas
-    ) internal {
-        require(currentState(self) == State.IDLE, "Current state is not IDLE");
-
-        self.parameters.resultChallengeExtraGas = newResultChallengeExtraGas;
     }
 
     /// @notice Completes DKG by cleaning up state.

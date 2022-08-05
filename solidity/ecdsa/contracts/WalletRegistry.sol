@@ -181,9 +181,9 @@ contract WalletRegistry is
     event DkgParametersUpdated(
         uint256 seedTimeout,
         uint256 resultChallengePeriodLength,
+        uint256 resultChallengeExtraGas,
         uint256 resultSubmissionTimeout,
-        uint256 resultSubmitterPrecedencePeriodLength,
-        uint256 resultChallengeExtraGas
+        uint256 resultSubmitterPrecedencePeriodLength
     );
 
     event GasParametersUpdated(
@@ -333,9 +333,9 @@ contract WalletRegistry is
         dkg.init(sortitionPool, _ecdsaDkgValidator);
         dkg.setSeedTimeout(11_520);
         dkg.setResultChallengePeriodLength(11_520);
+        dkg.setResultChallengeExtraGas(50_000);
         dkg.setResultSubmissionTimeout(100 * 20);
         dkg.setSubmitterPrecedencePeriodLength(20);
-        dkg.setResultChallengeExtraGas(50_000);
 
         // Gas parameters were adjusted based on Ethereum state in April 2022.
         // If the cost of EVM opcodes change over time, these parameters will
@@ -557,36 +557,36 @@ contract WalletRegistry is
     /// @dev Can be called only by the contract guvnor, which should be the
     ///      wallet registry governance contract. The caller is responsible for
     ///      validating parameters.
-    /// @param _seedTimeout New seed timeout.
+    /// @param _seedTimeout New seed timeout
     /// @param _resultChallengePeriodLength New DKG result challenge period
     ///        length
+    /// @param _resultChallengeExtraGas New extra gas value required to be left
+    ///        at the end of the DKG result challenge transaction
     /// @param _resultSubmissionTimeout New DKG result submission timeout
     /// @param _submitterPrecedencePeriodLength New submitter precedence period
     ///        length
-    /// @param _resultChallengeExtraGas New extra gas value required to be left
-    ///        at the end of the DKG result challenge transaction.
     function updateDkgParameters(
         uint256 _seedTimeout,
         uint256 _resultChallengePeriodLength,
+        uint256 _resultChallengeExtraGas,
         uint256 _resultSubmissionTimeout,
-        uint256 _submitterPrecedencePeriodLength,
-        uint256 _resultChallengeExtraGas
+        uint256 _submitterPrecedencePeriodLength
     ) external onlyGovernance {
         dkg.setSeedTimeout(_seedTimeout);
         dkg.setResultChallengePeriodLength(_resultChallengePeriodLength);
+        dkg.setResultChallengeExtraGas(_resultChallengeExtraGas);
         dkg.setResultSubmissionTimeout(_resultSubmissionTimeout);
         dkg.setSubmitterPrecedencePeriodLength(
             _submitterPrecedencePeriodLength
         );
-        dkg.setResultChallengeExtraGas(_resultChallengeExtraGas);
 
         // slither-disable-next-line reentrancy-events
         emit DkgParametersUpdated(
             _seedTimeout,
             _resultChallengePeriodLength,
+            _resultChallengeExtraGas,
             _resultSubmissionTimeout,
-            _submitterPrecedencePeriodLength,
-            _resultChallengeExtraGas
+            _submitterPrecedencePeriodLength
         );
     }
 

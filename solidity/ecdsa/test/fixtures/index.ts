@@ -43,9 +43,9 @@ export const params = {
   authorizationDecreaseChangePeriod: 3_888_000,
   dkgSeedTimeout: 8,
   dkgResultChallengePeriodLength: 10,
+  dkgResultChallengeExtraGas: 50_000,
   dkgResultSubmissionTimeout: 30,
   dkgSubmitterPrecedencePeriodLength: 5,
-  dkgResultChallengeExtraGas: 50_000,
   sortitionPoolRewardsBanDuration: 1_209_600, // 14 days
 }
 
