@@ -1,0 +1,8 @@
+# Hidden files and directories.
+.*
+
+# Documentation
+docs/
+
+# Node
+node_modules/

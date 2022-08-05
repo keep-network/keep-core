@@ -161,6 +161,31 @@ jobs:
       - name: Deploy contracts
         run: yarn deploy:test
 
+      - name: Tar artifacts for docker container build
+        working-directory: ${{ github.workspace }}
+        run: |
+          tar -cvf ecdsa.tar \
+          --exclude='node_modules/' \
+          --exclude='.yarn/' \
+          ./solidity/ecdsa
+
+      - name: Upload artifacts for docker container build
+        uses: actions/upload-artifact@v3
+        with:
+          name: ecdsa-contracts-deployment-dry-run-artifacts
+          path: ecdsa.tar
+
+  docker-build-dry-run:
+    needs: contracts-deployment-dry-run
+    uses: ./.github/workflows/common-docker.yml
+    with:
+      download-artifact-name: ecdsa-contracts-deployment-dry-run-artifacts
+      download-artifact-path: ecdsa.tar
+      download-artifact-tar: true
+      image-name: keep-ecdsa-hardhat
+      image-push: false
+      image-context: ./solidity/ecdsa
+
   contracts-deployment-testnet:
     needs: [contracts-detect-changes, contracts-build-and-test]
     if: github.event_name == 'workflow_dispatch'
@@ -204,3 +229,31 @@ jobs:
         run: npm publish --access=public --tag ${{ github.event.inputs.environment }} --network=${{ github.event.inputs.environment }}
 
       # TODO: Notify CI about completion of the workflow
+
+      - name: Tar artifacts for docker container build
+        working-directory: ${{ github.workspace }}
+        run: |
+          tar -cvf ecdsa.tar \
+          --exclude='node_modules/' \
+          --exclude='.yarn/' \
+          ./solidity/ecdsa
+
+      - name: Upload content for docker container build
+        uses: actions/upload-artifact@v3
+        with:
+          name: ecdsa-contracts-deployment-testnet-artifacts
+          path: ecdsa.tar
+
+  docker-build-and-publish-testnet:
+    needs: [contracts-deployment-testnet]
+    uses: ./.github/workflows/common-docker.yml
+    with:
+      environment: ${{ github.event.inputs.environment }}
+      download-artifact-name: ecdsa-contracts-deployment-testnet-artifacts
+      download-artifact-path: ecdsa.tar
+      download-artifact-tar: true
+      image-name: keep-ecdsa-hardhat
+      image-push: true
+      image-context: ./solidity/ecdsa
+    secrets:
+      gcr-json-key: ${{ secrets.KEEP_TEST_GCR_JSON_KEY }}

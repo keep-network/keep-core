@@ -12,20 +12,12 @@ ENV WORK_DIR=/ecdsa
 RUN mkdir -p $WORK_DIR
 WORKDIR $WORK_DIR
 
-# Use `https://` instead of unauthenticated `git://` protocol
+# Use `https://` instead of unauthenticated `git://` protocol.
 RUN git config --global url."https://".insteadOf git://
 
 COPY package*.json yarn.lock ./
-
 RUN yarn install
 
-COPY tsconfig.json ./
-COPY hardhat.config.ts ./
-COPY contracts/ ./contracts/
-COPY tasks/ ./tasks/
-
-RUN yarn build
-
-COPY deployments/ ./deployments/
+COPY . ./
 
 ENTRYPOINT ["npx", "hardhat"]
