@@ -528,11 +528,11 @@ contract WalletRegistry is
     /// @dev Can be called only by the contract guvnor, which should be the
     ///      wallet registry governance contract. The caller is responsible for
     ///      validating parameters.
-    /// @param _minimumAuthorization New minimum authorization amount
+    /// @param _minimumAuthorization New minimum authorization amount.
     /// @param _authorizationDecreaseDelay New authorization decrease delay in
-    ///        seconds
+    ///        seconds.
     /// @param _authorizationDecreaseChangePeriod New authorization decrease
-    ///        change period in seconds
+    ///        change period in seconds.
     function updateAuthorizationParameters(
         uint96 _minimumAuthorization,
         uint64 _authorizationDecreaseDelay,
@@ -557,14 +557,14 @@ contract WalletRegistry is
     /// @dev Can be called only by the contract guvnor, which should be the
     ///      wallet registry governance contract. The caller is responsible for
     ///      validating parameters.
-    /// @param _seedTimeout New seed timeout
+    /// @param _seedTimeout New seed timeout.
     /// @param _resultChallengePeriodLength New DKG result challenge period
-    ///        length
+    ///        length.
     /// @param _resultChallengeExtraGas New extra gas value required to be left
-    ///        at the end of the DKG result challenge transaction
-    /// @param _resultSubmissionTimeout New DKG result submission timeout
+    ///        at the end of the DKG result challenge transaction.
+    /// @param _resultSubmissionTimeout New DKG result submission timeout.
     /// @param _submitterPrecedencePeriodLength New submitter precedence period
-    ///        length
+    ///        length.
     function updateDkgParameters(
         uint256 _seedTimeout,
         uint256 _resultChallengePeriodLength,
@@ -615,7 +615,7 @@ contract WalletRegistry is
     ///      wallet registry governance contract. The caller is responsible for
     ///      validating parameters.
     /// @param maliciousDkgResultSlashingAmount New malicious DKG result
-    ///        slashing amount
+    ///        slashing amount.
     function updateSlashingParameters(uint96 maliciousDkgResultSlashingAmount)
         external
         onlyGovernance
@@ -628,14 +628,14 @@ contract WalletRegistry is
     /// @dev Can be called only by the contract guvnor, which should be the
     ///      wallet registry governance contract. The caller is responsible for
     ///      validating parameters.
-    /// @param dkgResultSubmissionGas New DKG result submission gas
-    /// @param dkgResultApprovalGasOffset New DKG result approval gas offset
+    /// @param dkgResultSubmissionGas New DKG result submission gas.
+    /// @param dkgResultApprovalGasOffset New DKG result approval gas offset.
     /// @param notifyOperatorInactivityGasOffset New operator inactivity
-    ///        notification gas offset
+    ///        notification gas offset.
     /// @param notifySeedTimeoutGasOffset New seed for DKG delivery timeout
-    ///        notification gas offset
+    ///        notification gas offset.
     /// @param notifyDkgTimeoutNegativeGasOffset New DKG timeout notification gas
-    ///        offset
+    ///        offset.
     function updateGasParameters(
         uint256 dkgResultSubmissionGas,
         uint256 dkgResultApprovalGasOffset,
@@ -856,10 +856,10 @@ contract WalletRegistry is
     ///         function and provide new signatures.
     ///         The sender of the claim must be one of the claim signers. This
     ///         function can be called only for registered wallets
-    /// @param claim Operator inactivity claim
+    /// @param claim Operator inactivity claim.
     /// @param nonce Current inactivity claim nonce for the given wallet signing
-    ///              group. Must be the same as the stored one
-    /// @param groupMembers Identifiers of the wallet signing group members
+    ///              group. Must be the same as the stored one.
+    /// @param groupMembers Identifiers of the wallet signing group members.
     function notifyOperatorInactivity(
         Inactivity.Claim calldata claim,
         uint256 nonce,
@@ -917,12 +917,12 @@ contract WalletRegistry is
     ///         contract. The notifier will receive reward per each group member
     ///         from the staking contract notifiers treasury. The reward is
     ///         scaled by the `rewardMultiplier` provided as a parameter.
-    /// @param amount Amount of tokens to seize from each signing group member
+    /// @param amount Amount of tokens to seize from each signing group member.
     /// @param rewardMultiplier Fraction of the staking contract notifiers
-    ///        reward the notifier should receive; should be between [0, 100]
-    /// @param notifier Address of the misbehavior notifier
-    /// @param walletID ID of the wallet
-    /// @param walletMembersIDs Identifiers of the wallet signing group members
+    ///        reward the notifier should receive; should be between [0, 100].
+    /// @param notifier Address of the misbehavior notifier.
+    /// @param walletID ID of the wallet.
+    /// @param walletMembersIDs Identifiers of the wallet signing group members.
     /// @dev Requirements:
     ///      - The expression `keccak256(abi.encode(walletMembersIDs))` must
     ///        be exactly the same as the hash stored under `membersIdsHash`
@@ -985,11 +985,11 @@ contract WalletRegistry is
 
     /// @notice Checks whether the given operator is a member of the given
     ///         wallet signing group.
-    /// @param walletID ID of the wallet
-    /// @param walletMembersIDs Identifiers of the wallet signing group members
-    /// @param operator Address of the checked operator
+    /// @param walletID ID of the wallet.
+    /// @param walletMembersIDs Identifiers of the wallet signing group members.
+    /// @param operator Address of the checked operator.
     /// @param walletMemberIndex Position of the operator in the wallet signing
-    ///        group members list
+    ///        group members list.
     /// @return True - if the operator is a member of the given wallet signing
     ///         group. False - otherwise.
     /// @dev Requirements:

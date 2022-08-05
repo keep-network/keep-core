@@ -977,7 +977,7 @@ contract WalletRegistryGovernance is Ownable {
         newDkgResultChallengePeriodLength = 0;
     }
 
-    /// @notice Begins the DKG result challenge extra gas update process.    .
+    /// @notice Begins the DKG result challenge extra gas update process.
     /// @dev Can be called only by the contract owner.
     /// @param _newDkgResultChallengeExtraGas New DKG result challenge extra gas
     function beginDkgResultChallengeExtraGasUpdate(
