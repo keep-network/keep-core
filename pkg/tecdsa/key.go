@@ -12,6 +12,12 @@ type PrivateKeyShare struct {
 	data keygen.LocalPartySaveData
 }
 
+// NewPrivateKeyShare constructs a new instance of the tECDSA public key
+// share based on the DKG result.
+func NewPrivateKeyShare(data keygen.LocalPartySaveData) *PrivateKeyShare {
+	return &PrivateKeyShare{data}
+}
+
 // PublicKey returns the ECDSA public key corresponding to the given tECDSA
 // private key share.
 func (pks *PrivateKeyShare) PublicKey() *ecdsa.PublicKey {

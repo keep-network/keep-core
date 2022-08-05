@@ -1,6 +1,7 @@
 package tbtc
 
 import (
+	"crypto/elliptic"
 	"fmt"
 	"math/big"
 	"time"
@@ -158,6 +159,14 @@ func (n *node) joinDKGIfEligible(seed *big.Int, startBlockNumber uint64) {
 					return
 				}
 
+				signingGroupPrivateKeyShare := result.PrivateKeyShare
+				signingGroupPublicKey := signingGroupPrivateKeyShare.PublicKey()
+				signingGroupPublicKeyBytes := elliptic.Marshal(
+					signingGroupPublicKey.Curve,
+					signingGroupPublicKey.X,
+					signingGroupPublicKey.Y,
+				)
+
 				// TODO: Submit the result using the chain layer.
 
 				// TODO: Use the result to create a signer and persist the
@@ -165,7 +174,7 @@ func (n *node) joinDKGIfEligible(seed *big.Int, startBlockNumber uint64) {
 				logger.Infof(
 					"[member:%v] generated group [0x%x]",
 					memberIndex,
-					result.GroupPublicKey,
+					signingGroupPublicKeyBytes,
 				)
 			}()
 		}

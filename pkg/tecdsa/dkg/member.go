@@ -1,8 +1,8 @@
 package dkg
 
 import (
-	"crypto/elliptic"
 	"fmt"
+	"github.com/keep-network/keep-core/pkg/tecdsa"
 	"math/big"
 	"strconv"
 
@@ -257,12 +257,7 @@ func (fm *finalizingMember) MarkInactiveMembers(
 // generation process or a notification of failure.
 func (fm *finalizingMember) Result() *Result {
 	return &Result{
-		// TODO: Temporary result. Add real items.
-		GroupPublicKey: elliptic.Marshal(
-			tss.EC(),
-			fm.tssResult.ECDSAPub.X(),
-			fm.tssResult.ECDSAPub.Y(),
-		),
+		PrivateKeyShare: tecdsa.NewPrivateKeyShare(fm.tssResult),
 	}
 }
 
