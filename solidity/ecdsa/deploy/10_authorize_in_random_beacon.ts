@@ -10,7 +10,7 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
 
   await execute(
     "RandomBeaconGovernance",
-    { from: governance },
+    { from: governance, log: true, waitConfirmations: 1 },
     "setRequesterAuthorization",
     WalletRegistry.address,
     true
