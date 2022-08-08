@@ -2,6 +2,7 @@ package dkg
 
 import (
 	"context"
+	"crypto/elliptic"
 	"encoding/hex"
 	"fmt"
 	"github.com/binance-chain/tss-lib/crypto/paillier"
@@ -987,16 +988,21 @@ func TestTssFinalize(t *testing.T) {
 
 	// Assert that each member has a correct state.
 	for _, member := range members {
-		groupPublicKey := member.Result().GroupPublicKey
+		groupPublicKey := member.Result().PrivateKeyShare.PublicKey()
+		groupPublicKeyBytes := elliptic.Marshal(
+			groupPublicKey.Curve,
+			groupPublicKey.X,
+			groupPublicKey.Y,
+		)
 
 		testutils.AssertIntsEqual(
 			t,
 			"length of the group public key",
 			65,
-			len(groupPublicKey),
+			len(groupPublicKeyBytes),
 		)
 
-		groupPublicKeys[hex.EncodeToString(groupPublicKey)] = true
+		groupPublicKeys[hex.EncodeToString(groupPublicKeyBytes)] = true
 	}
 
 	testutils.AssertIntsEqual(
