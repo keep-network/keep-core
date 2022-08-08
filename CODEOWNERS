@@ -31,3 +31,5 @@
 /solidity-v1/contracts/utils/PercentUtils.sol @Shadowfiend @pdyraga
 /solidity-v1/contracts/utils/UIntArrayUtils.sol @Shadowfiend @pdyraga
 /solidity-v1/package.json @Shadowfiend @pdyraga
+/solidity/ecdsa/contracts/ @pdyraga @nkuba @lukasz-zimnoch @dimpar @tomaszslabon
+/solidity/random-beacon/contracts/ @pdyraga @nkuba @lukasz-zimnoch @dimpar @tomaszslabon

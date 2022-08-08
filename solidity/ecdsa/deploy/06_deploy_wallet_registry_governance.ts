@@ -15,6 +15,7 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
       from: deployer,
       args: [WalletRegistry.address, GOVERNANCE_DELAY],
       log: true,
+      waitConfirmations: 1,
     }
   )
 

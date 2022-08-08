@@ -10,7 +10,7 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
 
   await execute(
     "ReimbursementPool",
-    { from: deployer },
+    { from: deployer, log: true, waitConfirmations: 1 },
     "authorize",
     WalletRegistry.address
   )

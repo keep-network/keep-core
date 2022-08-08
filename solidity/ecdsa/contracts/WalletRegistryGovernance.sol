@@ -59,6 +59,9 @@ contract WalletRegistryGovernance is Ownable {
     uint256 public newDkgResultChallengePeriodLength;
     uint256 public dkgResultChallengePeriodLengthChangeInitiated;
 
+    uint256 public newDkgResultChallengeExtraGas;
+    uint256 public dkgResultChallengeExtraGasChangeInitiated;
+
     uint256 public newDkgResultSubmissionTimeout;
     uint256 public dkgResultSubmissionTimeoutChangeInitiated;
 
@@ -162,6 +165,12 @@ contract WalletRegistryGovernance is Ownable {
     event DkgResultChallengePeriodLengthUpdated(
         uint256 dkgResultChallengePeriodLength
     );
+
+    event DkgResultChallengeExtraGasUpdateStarted(
+        uint256 dkgResultChallengeExtraGas,
+        uint256 timestamp
+    );
+    event DkgResultChallengeExtraGasUpdated(uint256 dkgResultChallengeExtraGas);
 
     event DkgResultSubmissionTimeoutUpdateStarted(
         uint256 dkgResultSubmissionTimeout,
@@ -916,6 +925,7 @@ contract WalletRegistryGovernance is Ownable {
         walletRegistry.updateDkgParameters(
             newDkgSeedTimeout,
             walletRegistry.dkgParameters().resultChallengePeriodLength,
+            walletRegistry.dkgParameters().resultChallengeExtraGas,
             walletRegistry.dkgParameters().resultSubmissionTimeout,
             walletRegistry.dkgParameters().submitterPrecedencePeriodLength
         );
@@ -959,11 +969,49 @@ contract WalletRegistryGovernance is Ownable {
         walletRegistry.updateDkgParameters(
             walletRegistry.dkgParameters().seedTimeout,
             newDkgResultChallengePeriodLength,
+            walletRegistry.dkgParameters().resultChallengeExtraGas,
             walletRegistry.dkgParameters().resultSubmissionTimeout,
             walletRegistry.dkgParameters().submitterPrecedencePeriodLength
         );
         dkgResultChallengePeriodLengthChangeInitiated = 0;
         newDkgResultChallengePeriodLength = 0;
+    }
+
+    /// @notice Begins the DKG result challenge extra gas update process.
+    /// @dev Can be called only by the contract owner.
+    /// @param _newDkgResultChallengeExtraGas New DKG result challenge extra gas
+    function beginDkgResultChallengeExtraGasUpdate(
+        uint256 _newDkgResultChallengeExtraGas
+    ) external onlyOwner {
+        /* solhint-disable not-rely-on-time */
+        newDkgResultChallengeExtraGas = _newDkgResultChallengeExtraGas;
+        dkgResultChallengeExtraGasChangeInitiated = block.timestamp;
+        emit DkgResultChallengeExtraGasUpdateStarted(
+            _newDkgResultChallengeExtraGas,
+            block.timestamp
+        );
+        /* solhint-enable not-rely-on-time */
+    }
+
+    /// @notice Finalizes the DKG result challenge extra gas update process.
+    /// @dev Can be called only by the contract owner, after the governance
+    ///      delay elapses.
+    function finalizeDkgResultChallengeExtraGasUpdate()
+        external
+        onlyOwner
+        onlyAfterGovernanceDelay(dkgResultChallengeExtraGasChangeInitiated)
+    {
+        emit DkgResultChallengeExtraGasUpdated(newDkgResultChallengeExtraGas);
+        // slither-disable-next-line reentrancy-no-eth
+        walletRegistry.updateDkgParameters(
+            walletRegistry.dkgParameters().seedTimeout,
+            walletRegistry.dkgParameters().resultChallengePeriodLength,
+            newDkgResultChallengeExtraGas,
+            walletRegistry.dkgParameters().resultSubmissionTimeout,
+            walletRegistry.dkgParameters().submitterPrecedencePeriodLength
+        );
+        dkgResultChallengeExtraGasChangeInitiated = 0;
+        newDkgResultChallengeExtraGas = 0;
     }
 
     /// @notice Begins the DKG result submission timeout update
@@ -1002,6 +1050,7 @@ contract WalletRegistryGovernance is Ownable {
         walletRegistry.updateDkgParameters(
             walletRegistry.dkgParameters().seedTimeout,
             walletRegistry.dkgParameters().resultChallengePeriodLength,
+            walletRegistry.dkgParameters().resultChallengeExtraGas,
             newDkgResultSubmissionTimeout,
             walletRegistry.dkgParameters().submitterPrecedencePeriodLength
         );
@@ -1009,7 +1058,8 @@ contract WalletRegistryGovernance is Ownable {
         newDkgResultSubmissionTimeout = 0;
     }
 
-    /// @notice Begins the DKG submitter precedence period length.
+    /// @notice Begins the DKG submitter precedence period length update
+    ///         process.
     /// @dev Can be called only by the contract owner.
     /// @param _newSubmitterPrecedencePeriodLength New DKG submitter precedence
     ///        period length in blocks
@@ -1030,7 +1080,8 @@ contract WalletRegistryGovernance is Ownable {
         /* solhint-enable not-rely-on-time */
     }
 
-    /// @notice Finalizes the DKG submitter precedence period length.
+    /// @notice Finalizes the DKG submitter precedence period length update
+    ///         process.
     /// @dev Can be called only by the contract owner, after the governance
     ///      delay elapses.
     function finalizeDkgSubmitterPrecedencePeriodLengthUpdate()
@@ -1047,6 +1098,7 @@ contract WalletRegistryGovernance is Ownable {
         walletRegistry.updateDkgParameters(
             walletRegistry.dkgParameters().seedTimeout,
             walletRegistry.dkgParameters().resultChallengePeriodLength,
+            walletRegistry.dkgParameters().resultChallengeExtraGas,
             walletRegistry.dkgParameters().resultSubmissionTimeout,
             newSubmitterPrecedencePeriodLength
         );
@@ -1187,6 +1239,15 @@ contract WalletRegistryGovernance is Ownable {
             );
     }
 
+    function getRemainingDkgResultChallengeExtraGasUpdateTime()
+        external
+        view
+        returns (uint256)
+    {
+        return
+            getRemainingChangeTime(dkgResultChallengeExtraGasChangeInitiated);
+    }
+
     /// @notice Get the time remaining until the DKG result submission timeout
     ///         can be updated.
     /// @return Remaining time in seconds.
@@ -1211,7 +1272,7 @@ contract WalletRegistryGovernance is Ownable {
 
     /// @notice Get the time remaining until the wallet owner can be updated.
     /// @return Remaining time in seconds.
-    function getRemainingSubmitterPrecedencePeriodLengthUpdateTime()
+    function getRemainingDkgSubmitterPrecedencePeriodLengthUpdateTime()
         external
         view
         returns (uint256)
