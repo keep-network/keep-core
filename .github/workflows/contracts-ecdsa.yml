@@ -29,7 +29,7 @@ jobs:
     outputs:
       path-filter: ${{ steps.filter.outputs.path-filter }}
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         if: github.event_name == 'pull_request'
 
       - uses: dorny/paths-filter@v2
@@ -50,7 +50,7 @@ jobs:
       run:
         working-directory: ./solidity/ecdsa
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
       - uses: actions/setup-node@v3
         with:
@@ -77,7 +77,7 @@ jobs:
       run:
         working-directory: ./solidity/ecdsa
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
       - uses: actions/setup-node@v3
         with:
@@ -120,7 +120,7 @@ jobs:
       run:
         working-directory: ./solidity/ecdsa
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
       - uses: actions/setup-node@v3
         with:
@@ -147,7 +147,7 @@ jobs:
       run:
         working-directory: ./solidity/ecdsa
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
       - uses: actions/setup-node@v3
         with:
@@ -169,7 +169,7 @@ jobs:
       run:
         working-directory: ./solidity/ecdsa
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
       - uses: actions/setup-node@v3
         with:
