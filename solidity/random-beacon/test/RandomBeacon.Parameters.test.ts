@@ -247,6 +247,14 @@ describe("RandomBeacon - Parameters", () => {
         )
       })
 
+      it("should update the DKG result challenge extra gas", async () => {
+        const { dkgResultChallengeExtraGas } =
+          await randomBeacon.groupCreationParameters()
+        expect(dkgResultChallengeExtraGas).to.be.equal(
+          newDkgResultChallengeExtraGas
+        )
+      })
+
       it("should update the DKG result submission timeout", async () => {
         const { dkgResultSubmissionTimeout } =
           await randomBeacon.groupCreationParameters()
