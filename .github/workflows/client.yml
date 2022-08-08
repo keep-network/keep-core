@@ -34,7 +34,7 @@ jobs:
     outputs:
       path-filter: ${{ steps.filter.outputs.path-filter }}
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         if: github.event_name == 'pull_request'
 
       - uses: dorny/paths-filter@v2
@@ -52,7 +52,7 @@ jobs:
         || needs.client-detect-changes.outputs.path-filter == 'true'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
       - name: Load environment variables
         uses: keep-network/ci/actions/load-env-variables@v1
@@ -152,7 +152,7 @@ jobs:
     env:
       GO111MODULE: on
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - uses: securego/gosec@master
         with:
           args: |
@@ -169,7 +169,7 @@ jobs:
         || needs.client-detect-changes.outputs.path-filter == 'true'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
       - name: Go format
         uses: Jerome1337/gofmt-action@v1.0.4
