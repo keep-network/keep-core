@@ -35,42 +35,42 @@ runs:
           ${{ runner.os }}-buildx-
 
     - name: Load environment variables
-      if: env.PUSH == 'true'
+      if: inputs.push == 'true'
       uses: keep-network/ci/actions/load-env-variables@v2
       with:
-        environment: ${{ env.ENVIRONMENT }}
+        environment: ${{ inputs.environment }}
 
     - name: Login to Google Container Registry
-      if: env.PUSH == 'true'
+      if: inputs.push == 'true'
       uses: docker/login-action@v2
       with:
         registry: ${{ env.GCR_REGISTRY_URL }}
         username: _json_key
-        password: ${{ env.GCR_JSON_KEY }}
+        password: ${{ inputs.gcrJsonKey }}
 
     - name: Set Docker image name
       shell: bash
-      if: env.PUSH != 'true'
+      if: inputs.push != 'true'
       run: |
-        echo "IMAGE_NAME=${{ env.IMAGE_NAME }}" >> $GITHUB_ENV
+        echo "IMAGE_NAME=${{ inputs.imageName }}" >> $GITHUB_ENV
 
     - name: Set Docker image name for GCR
       shell: bash
-      if: env.PUSH == 'true'
+      if: inputs.push == 'true'
       run: |
-        echo "IMAGE_NAME=${{ env.GCR_REGISTRY_URL }}/${{ env.GOOGLE_PROJECT_ID }}/${{ env.IMAGE_NAME }}" >> $GITHUB_ENV
+        echo "IMAGE_NAME=${{ env.GCR_REGISTRY_URL }}/${{ env.GOOGLE_PROJECT_ID }}/${{ inputs.imageName }}" >> $GITHUB_ENV
 
     - name: Build and push image
       uses: docker/build-push-action@v3
       with:
-        context: ${{ env.CONTEXT }}
+        context: ${{ inputs.context }}
         # GCR image should be named according to following convention:
         # HOSTNAME/PROJECT-ID/IMAGE:TAG
         # We don't use TAG yet, will be added at later stages of work on RFC-18.
-        tags: ${{ env.IMAGE_NAME }}
+        tags: ${{ inputs.imageName }}
         labels: |
           revision=${{ github.sha }}
-        push: ${{ env.PUSH == 'true' }}
+        push: ${{ inputs.push == 'true' }}
         cache-from: type=local,src=/tmp/.buildx-cache
         cache-to: type=local,dest=/tmp/.buildx-cache-new
 
