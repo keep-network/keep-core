@@ -11,7 +11,7 @@ KEEP_CORE_PATH=$PWD
 KEEP_BEACON_SOL_PATH="$KEEP_CORE_PATH/solidity/random-beacon"
 KEEP_ECDSA_SOL_PATH="$KEEP_CORE_PATH/solidity/ecdsa"
 TMP="$KEEP_CORE_PATH/tmp"
-OPENZEPPELIN_MANIFEST=".openzeppelin/*-1101.json"
+OPENZEPPELIN_MANIFEST=".openzeppelin/unknown-*.json"
 
 # Defaults, can be overwritten by env variables/input parameters
 NETWORK_DEFAULT="development"
