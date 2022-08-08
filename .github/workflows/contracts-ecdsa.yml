@@ -281,4 +281,4 @@ jobs:
           CHAIN_API_URL: ${{ secrets.GOERLI_ETH_HOSTNAME_HTTP }}
         run: |
           yarn run hardhat --network ${{ github.event.inputs.environment }} \
-            etherscan-verify --license GPL-3.0 --force-license
+            etherscan-verify
