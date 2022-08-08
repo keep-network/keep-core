@@ -79,3 +79,5 @@ spec:
       targetPort: 30303
       name: udp-30303
       protocol: UDP
+  type: LoadBalancer
+  loadBalancerIP: "35.238.111.174"
