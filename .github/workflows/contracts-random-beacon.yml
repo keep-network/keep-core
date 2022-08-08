@@ -196,7 +196,7 @@ jobs:
       - name: Configure tenderly
         env:
           TENDERLY_TOKEN: ${{ secrets.TENDERLY_TOKEN }}
-        uses: ./.github/actions/docker-build-push
+        uses: ./.github/actions/tenderly-config
         with:
           token: ${{ secrets.TENDERLY_TOKEN }}
 

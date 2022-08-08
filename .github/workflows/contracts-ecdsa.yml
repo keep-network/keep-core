@@ -198,7 +198,7 @@ jobs:
             @keep-network/sortition-pools
 
       - name: Configure tenderly
-        uses: ./.github/actions/docker-build-push
+        uses: ./.github/actions/tenderly-config
         with:
           token: ${{ secrets.TENDERLY_TOKEN }}
 
