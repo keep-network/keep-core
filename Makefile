@@ -53,4 +53,4 @@ cmd-help: build
 	@echo '$$ keep-client start --help' > docs/development/cmd-help
 	./keep-client start --help >> docs/development/cmd-help
 
-.PHONY: all
+.PHONY: all development goerli download_artifacts generate build cmd-help
