@@ -61,7 +61,7 @@ runs:
         echo "IMAGE_NAME=${{ env.GCR_REGISTRY_URL }}/${{ env.GOOGLE_PROJECT_ID }}/${{ env.IMAGE_NAME }}" >> $GITHUB_ENV
 
     - name: Build and push image
-      uses: docker/build-push-action@v2
+      uses: docker/build-push-action@v3
       with:
         context: ${{ env.CONTEXT }}
         # GCR image should be named according to following convention:
