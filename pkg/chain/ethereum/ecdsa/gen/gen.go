@@ -5,7 +5,6 @@ import (
 	"strings"
 )
 
-//go:generate make download_artifacts
 //go:generate make
 
 var (
