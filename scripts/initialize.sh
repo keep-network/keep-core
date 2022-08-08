@@ -8,6 +8,7 @@ DONE_END='\n\n\e[0m'    # new line + reset
 
 KEEP_CORE_PATH=$PWD
 KEEP_BEACON_SOL_PATH="$KEEP_CORE_PATH/solidity/random-beacon"
+KEEP_ECDSA_SOL_PATH="$KEEP_CORE_PATH/solidity/ecdsa"
 
 # Defaults, can be overwritten by env variables/input parameters
 NETWORK_DEFAULT="development"
@@ -21,7 +22,7 @@ help()
            "--operator <operator address>"\
            "--beneficiary <beneficiary address>"\
            "--authorizer <authorizer address>"\
-           "--staking-amount <staking amount>"\
+           "--stake-amount <stake amount>"\
            "--authorization-amount <authorization amount>"
    echo -e "\nMandatory line arguments:\n"
    echo -e "\t--stake-owner: Stake owner address"
@@ -32,8 +33,8 @@ help()
    echo -e "\t--operator: Operator address"
    echo -e "\t--beneficiary: Staking beneficiary address"
    echo -e "\t--authorizer: Staking authorizer address"
-   echo -e "\t--stake-amount: Staking amount"
-   echo -e "\t--authorization-amount: Authorization amount\n"
+   echo -e "\t--stake-amount: Stake amount"
+   echo -e "\t--authorization-amount: Authorization amount"
    exit 1 # Exit script after printing help
 }
 
@@ -107,18 +108,21 @@ if [ ! -z "$authorization_amount" ]; then
    authorization_amount_opt="--authorization ${authorization_amount}"
 fi
 
-cd $KEEP_BEACON_SOL_PATH
-    
-printf "${LOG_START}Setting up staking...${LOG_END}"
+printf "${LOG_START}Initializing beacon and ecdsa...${LOG_END}"
 
-stake="npx hardhat initialize \
-    --network $NETWORK \
-    --owner ${stake_owner} \
-    --provider ${staking_provider} \
-    --operator ${operator} \
-    --beneficiary ${beneficiary} \
-    --authorizer ${authorizer}"
+initialize="npx hardhat initialize 
+   --network $NETWORK \
+   --owner ${stake_owner} \
+   --provider ${staking_provider} \
+   --operator ${operator} \
+   --beneficiary ${beneficiary} \
+   --authorizer ${authorizer}"
 
-eval ${stake} ${stake_amount_opt} ${authorization_amount_opt}
+# go to ecdsa
+cd $KEEP_ECDSA_SOL_PATH
+
+# Initalization for beacon and ecdsa can be executed from ecdsa, because in
+# the current version of ecdsa's task:initialize handles both applications.
+eval ${initialize} ${stake_amount_opt} ${authorization_amount_opt}
 
 printf "${DONE_START}Initialization completed!${DONE_END}"

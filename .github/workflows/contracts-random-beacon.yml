@@ -29,7 +29,7 @@ jobs:
     outputs:
       path-filter: ${{ steps.filter.outputs.path-filter }}
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         if: github.event_name == 'pull_request'
 
       - uses: dorny/paths-filter@v2
@@ -50,9 +50,9 @@ jobs:
       run:
         working-directory: ./solidity/random-beacon
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
-      - uses: actions/setup-node@v2
+      - uses: actions/setup-node@v3
         with:
           node-version: "14.x"
           cache: "yarn"
@@ -77,9 +77,9 @@ jobs:
       run:
         working-directory: ./solidity/random-beacon
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
-      - uses: actions/setup-node@v2
+      - uses: actions/setup-node@v3
         with:
           node-version: "14.x"
           cache: "yarn"
@@ -118,9 +118,9 @@ jobs:
       run:
         working-directory: ./solidity/random-beacon
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
-      - uses: actions/setup-node@v2
+      - uses: actions/setup-node@v3
         with:
           node-version: "14.x"
           cache: "yarn"
@@ -145,9 +145,9 @@ jobs:
       run:
         working-directory: ./solidity/random-beacon
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
-      - uses: actions/setup-node@v2
+      - uses: actions/setup-node@v3
         with:
           node-version: "14.x"
           cache: "yarn"
@@ -159,6 +159,13 @@ jobs:
       - name: Deploy contracts
         run: yarn deploy:test
 
+      - name: Build Docker Image
+        uses: ./.github/actions/docker-build-push
+        with:
+          imageName: keep-random-beacon-hardhat
+          context: ./solidity/random-beacon
+          push: false
+
   contracts-deployment-testnet:
     needs: [contracts-detect-changes, contracts-build-and-test]
     if: github.event_name == 'workflow_dispatch'
@@ -167,9 +174,9 @@ jobs:
       run:
         working-directory: ./solidity/random-beacon
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
-      - uses: actions/setup-node@v2
+      - uses: actions/setup-node@v3
         with:
           node-version: "14.x"
           cache: "yarn"
@@ -217,6 +224,15 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: npm publish --access=public --tag ${{ github.event.inputs.environment }} --network=${{ github.event.inputs.environment }}
+
+      - name: Build and Publish Docker image
+        uses: ./.github/actions/docker-build-push
+        with:
+          environment: ${{ github.event.inputs.environment }}
+          imageName: keep-random-beacon-hardhat
+          context: ./solidity/random-beacon
+          push: true
+          gcrJsonKey: ${{ secrets.KEEP_TEST_GCR_JSON_KEY }}
 
       - name: Notify CI about completion of the workflow
         uses: keep-network/ci/actions/notify-workflow-completed@v2

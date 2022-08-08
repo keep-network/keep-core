@@ -18,6 +18,7 @@ RUN apk add --update --no-cache \
 	npm \
 	bash \
 	python3 \
+	tar \
 	jq && \
 	rm -rf /var/cache/apk/ && mkdir /var/cache/apk/ && \
 	rm -rf /usr/share/man
@@ -46,16 +47,18 @@ COPY ./pkg/beacon/gjkr/gen $APP_DIR/pkg/beacon/gjkr/gen
 COPY ./pkg/beacon/dkg/result/gen $APP_DIR/pkg/beacon/dkg/result/gen
 COPY ./pkg/beacon/registry/gen $APP_DIR/pkg/beacon/registry/gen
 
-# If CONTRACTS_NPM_PACKAGE_TAG is not set it will download NPM packages versions
+# If ENVIRONMENT is not set it will download NPM packages versions
 # published and tagged as `development`.
-ARG CONTRACTS_NPM_PACKAGE_TAG
+ARG ENVIRONMENT=development
+
+COPY ./Makefile $APP_DIR/Makefile
+RUN make download_artifacts environment=$ENVIRONMENT
 
 # Need this to resolve imports in generated Ethereum commands.
 COPY ./config $APP_DIR/config
-RUN go generate ./.../gen
+RUN make generate environment=$ENVIRONMENT
 
 COPY ./ $APP_DIR/
-RUN go generate ./pkg/gen
 
 # Client Versioning.
 ARG VERSION

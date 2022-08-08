@@ -185,7 +185,8 @@ describe("RandomBeacon - Parameters", () => {
     const newGroupCreationFrequency = 100
     const newGroupLifetime = 200
     const newDkgResultChallengePeriodLength = 300
-    const newDkgResultSubmissionTimeout = 400
+    const newDkgResultChallengeExtraGas = 400
+    const newDkgResultSubmissionTimeout = 500
     const newDkgSubmitterPrecedencePeriodLength = 200
 
     context("when the caller is not the governance", () => {
@@ -197,6 +198,7 @@ describe("RandomBeacon - Parameters", () => {
               newGroupCreationFrequency,
               newGroupLifetime,
               newDkgResultChallengePeriodLength,
+              newDkgResultChallengeExtraGas,
               newDkgResultSubmissionTimeout,
               newDkgSubmitterPrecedencePeriodLength
             )
@@ -216,6 +218,7 @@ describe("RandomBeacon - Parameters", () => {
             newGroupCreationFrequency,
             newGroupLifetime,
             newDkgResultChallengePeriodLength,
+            newDkgResultChallengeExtraGas,
             newDkgResultSubmissionTimeout,
             newDkgSubmitterPrecedencePeriodLength
           )
@@ -244,6 +247,14 @@ describe("RandomBeacon - Parameters", () => {
         )
       })
 
+      it("should update the DKG result challenge extra gas", async () => {
+        const { dkgResultChallengeExtraGas } =
+          await randomBeacon.groupCreationParameters()
+        expect(dkgResultChallengeExtraGas).to.be.equal(
+          newDkgResultChallengeExtraGas
+        )
+      })
+
       it("should update the DKG result submission timeout", async () => {
         const { dkgResultSubmissionTimeout } =
           await randomBeacon.groupCreationParameters()
@@ -267,6 +278,7 @@ describe("RandomBeacon - Parameters", () => {
             newGroupCreationFrequency,
             newGroupLifetime,
             newDkgResultChallengePeriodLength,
+            newDkgResultChallengeExtraGas,
             newDkgResultSubmissionTimeout,
             newDkgSubmitterPrecedencePeriodLength
           )
@@ -287,6 +299,7 @@ describe("RandomBeacon - Parameters", () => {
                     newGroupCreationFrequency,
                     newGroupLifetime,
                     newDkgResultChallengePeriodLength,
+                    newDkgResultChallengeExtraGas,
                     newDkgResultSubmissionTimeout,
                     invalidDkgSubmitterPrecedencePeriodLength
                   )
@@ -311,6 +324,7 @@ describe("RandomBeacon - Parameters", () => {
                     newGroupCreationFrequency,
                     newGroupLifetime,
                     newDkgResultChallengePeriodLength,
+                    newDkgResultChallengeExtraGas,
                     newDkgResultSubmissionTimeout,
                     invalidDkgSubmitterPrecedencePeriodLength
                   )

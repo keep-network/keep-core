@@ -2,19 +2,50 @@ package dkg
 
 import (
 	"fmt"
+	"math/big"
+	"time"
+
 	"github.com/ipfs/go-log"
+
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/net"
 	"github.com/keep-network/keep-core/pkg/protocol/group"
 	"github.com/keep-network/keep-core/pkg/protocol/state"
 )
 
+// ExecutorConfig carries the config for an Executor.
+type ExecutorConfig struct {
+	TssPreParamsPoolSize              int
+	TssPreParamsPoolGenerationTimeout time.Duration
+}
+
+// Executor represents an ECDSA distributed key generation process executor.
+type Executor struct {
+	logger           log.StandardLogger
+	tssPreParamsPool *tssPreParamsPool
+}
+
+// NewExecutor creates a new Executor instance.
+func NewExecutor(
+	logger log.StandardLogger,
+	config *ExecutorConfig,
+) *Executor {
+	return &Executor{
+		logger: logger,
+		tssPreParamsPool: newTssPreParamsPool(
+			logger,
+			config.TssPreParamsPoolSize,
+			config.TssPreParamsPoolGenerationTimeout,
+		),
+	}
+}
+
 // Execute runs the ECDSA distributed key generation protocol, given a
 // broadcast channel to mediate with, a block counter used for time tracking,
 // a member index to use in the group, dishonest threshold, and block height
 // when DKG protocol should start.
-func Execute(
-	logger log.StandardLogger,
+func (e *Executor) Execute(
+	seed *big.Int,
 	startBlockNumber uint64,
 	memberIndex group.MemberIndex,
 	groupSize int,
@@ -23,16 +54,18 @@ func Execute(
 	channel net.BroadcastChannel,
 	membershipValidator *group.MembershipValidator,
 ) (*Result, uint64, error) {
-	logger.Debugf("[member:%v] initializing member", memberIndex)
+	e.logger.Debugf("[member:%v] initializing member", memberIndex)
 
 	registerUnmarshallers(channel)
 
 	member := newMember(
-		logger,
+		e.logger,
 		memberIndex,
 		groupSize,
 		dishonestThreshold,
 		membershipValidator,
+		seed.Text(16), // TODO: Should change on retry.,
+		e.tssPreParamsPool.get(),
 	)
 
 	initialState := &ephemeralKeyPairGenerationState{
@@ -40,7 +73,7 @@ func Execute(
 		member:  member.initializeEphemeralKeysGeneration(),
 	}
 
-	stateMachine := state.NewMachine(logger, channel, blockCounter, initialState)
+	stateMachine := state.NewMachine(e.logger, channel, blockCounter, initialState)
 
 	lastState, endBlockNumber, err := stateMachine.Execute(startBlockNumber)
 	if err != nil {
@@ -61,5 +94,14 @@ func Execute(
 func registerUnmarshallers(channel net.BroadcastChannel) {
 	channel.SetUnmarshaler(func() net.TaggedUnmarshaler {
 		return &ephemeralPublicKeyMessage{}
+	})
+	channel.SetUnmarshaler(func() net.TaggedUnmarshaler {
+		return &tssRoundOneMessage{}
+	})
+	channel.SetUnmarshaler(func() net.TaggedUnmarshaler {
+		return &tssRoundTwoMessage{}
+	})
+	channel.SetUnmarshaler(func() net.TaggedUnmarshaler {
+		return &tssRoundThreeMessage{}
 	})
 }
