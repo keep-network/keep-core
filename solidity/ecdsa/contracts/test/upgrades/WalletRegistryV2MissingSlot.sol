@@ -1143,7 +1143,7 @@ contract WalletRegistryV2MissingSlot is
     ///         delay end, during which the pending authorization decrease
     ///         request can be overwritten.
     ///         If set to 0, pending authorization decrease request can not be
-    ///         overwritten until the endire `authorizationDecreaseDelay` ends.
+    ///         overwritten until the entire `authorizationDecreaseDelay` ends.
     ///         If set to value equal `authorizationDecreaseDelay`, request can
     ///         always be overwritten.
     function authorizationParameters()
@@ -1208,7 +1208,7 @@ contract WalletRegistryV2MissingSlot is
     ///         call the DKG approve function.
     /// @return dkgResultApprovalGasOffset Gas that is meant to balance the DKG
     ///         result approval's overall cost. It can be updated by the
-    ///         governace based on the current market conditions.
+    ///         governance based on the current market conditions.
     /// @return notifyOperatorInactivityGasOffset Gas that is meant to balance
     ///         the notification of an operator inactivity. It can be updated by
     ///         the governance based on the current market conditions.

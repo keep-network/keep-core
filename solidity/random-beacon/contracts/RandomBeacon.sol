@@ -1430,7 +1430,7 @@ contract RandomBeacon is IRandomBeacon, IApplication, Governable, Reimbursable {
     ///        delay end, during which the pending authorization decrease
     ///        request can be overwritten.
     ///        If set to 0, pending authorization decrease request can not be
-    ///        overwritten until the endire `authorizationDecreaseDelay` ends.
+    ///        overwritten until the entire `authorizationDecreaseDelay` ends.
     ///        If set to value equal `authorizationDecreaseDelay`, request can
     ///        always be overwritten.
     function authorizationParameters()
