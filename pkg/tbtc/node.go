@@ -17,11 +17,10 @@ import (
 
 // node represents the current state of an ECDSA node.
 type node struct {
-	chain       Chain
-	netProvider net.Provider
-	dkgExecutor *dkg.Executor
-
-	// TODO: Persistence layer.
+	chain         Chain
+	netProvider   net.Provider
+	walletStorage *walletStorage
+	dkgExecutor   *dkg.Executor
 }
 
 func newNode(
@@ -29,6 +28,8 @@ func newNode(
 	netProvider net.Provider,
 	persistence persistence.Handle,
 ) *node {
+	walletStorage := connectWalletStorage(persistence)
+
 	// TODO: Pass TSS pre-parameters pool config from the outside.
 	dkgExecutor := dkg.NewExecutor(logger, &dkg.ExecutorConfig{
 		TssPreParamsPoolSize:              50,
@@ -36,9 +37,10 @@ func newNode(
 	})
 
 	return &node{
-		chain:       chain,
-		netProvider: netProvider,
-		dkgExecutor: dkgExecutor,
+		chain:         chain,
+		netProvider:   netProvider,
+		walletStorage: walletStorage,
+		dkgExecutor:   dkgExecutor,
 	}
 }
 
@@ -53,7 +55,7 @@ func (n *node) joinDKGIfEligible(seed *big.Int, startBlockNumber uint64) {
 		seed,
 	)
 
-	groupMembers, err := n.chain.SelectGroup(seed)
+	selectedSigningGroupOperators, err := n.chain.SelectGroup(seed)
 	if err != nil {
 		logger.Errorf(
 			"failed to select group with seed [0x%x]: [%v]",
@@ -65,10 +67,10 @@ func (n *node) joinDKGIfEligible(seed *big.Int, startBlockNumber uint64) {
 
 	chainConfig := n.chain.GetConfig()
 
-	if len(groupMembers) > chainConfig.GroupSize {
+	if len(selectedSigningGroupOperators) > chainConfig.GroupSize {
 		logger.Errorf(
 			"group size larger than supported: [%v]",
-			len(groupMembers),
+			len(selectedSigningGroupOperators),
 		)
 		return
 	}
@@ -88,9 +90,9 @@ func (n *node) joinDKGIfEligible(seed *big.Int, startBlockNumber uint64) {
 	}
 
 	indexes := make([]uint8, 0)
-	for index, groupMember := range groupMembers {
+	for index, operator := range selectedSigningGroupOperators {
 		// See if we are amongst those chosen
-		if groupMember == operatorAddress {
+		if operator == operatorAddress {
 			indexes = append(indexes, uint8(index))
 		}
 	}
@@ -114,7 +116,7 @@ func (n *node) joinDKGIfEligible(seed *big.Int, startBlockNumber uint64) {
 
 		membershipValidator := group.NewMembershipValidator(
 			&testutils.MockLogger{},
-			groupMembers,
+			selectedSigningGroupOperators,
 			signing,
 		)
 
@@ -159,22 +161,40 @@ func (n *node) joinDKGIfEligible(seed *big.Int, startBlockNumber uint64) {
 					return
 				}
 
-				signingGroupPrivateKeyShare := result.PrivateKeyShare
-				signingGroupPublicKey := signingGroupPrivateKeyShare.PublicKey()
-				signingGroupPublicKeyBytes := elliptic.Marshal(
-					signingGroupPublicKey.Curve,
-					signingGroupPublicKey.X,
-					signingGroupPublicKey.Y,
-				)
-
 				// TODO: Submit the result using the chain layer.
 
-				// TODO: Use the result to create a signer and persist the
-				//       key material using the persistence layer.
-				logger.Infof(
-					"[member:%v] generated group [0x%x]",
+				signingGroupPrivateKeyShare := result.PrivateKeyShare
+				signingGroupPublicKey := signingGroupPrivateKeyShare.PublicKey()
+
+				// TODO: The final `signingGroupOperators` may differ from
+				//       the original `selectedSigningGroupOperators`.
+				//       Consider that when integrating the retry algorithm.
+				signer := newSigner(
+					signingGroupPublicKey,
+					selectedSigningGroupOperators,
 					memberIndex,
-					signingGroupPublicKeyBytes,
+					signingGroupPrivateKeyShare,
+				)
+
+				err = n.walletStorage.saveSigner(signer)
+				if err != nil {
+					logger.Errorf(
+						"[member:%v] failed to save wallet's "+
+							"signing group membership: [%v]",
+						memberIndex,
+						err,
+					)
+					return
+				}
+
+				logger.Infof(
+					"[member:%v] generated wallet's signing group [0x%x]",
+					memberIndex,
+					elliptic.Marshal(
+						signingGroupPublicKey.Curve,
+						signingGroupPublicKey.X,
+						signingGroupPublicKey.Y,
+					),
 				)
 			}()
 		}

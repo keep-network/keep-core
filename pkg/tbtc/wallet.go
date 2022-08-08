@@ -40,3 +40,22 @@ type signer struct {
 	// in the signing process.
 	privateKeyShare *tecdsa.PrivateKeyShare
 }
+
+// newSigner constructs a new instance of the wallet's signer.
+func newSigner(
+	walletPublicKey *ecdsa.PublicKey,
+	walletSigningGroupOperators []chain.Address,
+	signingGroupMemberIndex group.MemberIndex,
+	privateKeyShare *tecdsa.PrivateKeyShare,
+) *signer {
+	wallet := &wallet{
+		publicKey:             walletPublicKey,
+		signingGroupOperators: walletSigningGroupOperators,
+	}
+
+	return &signer{
+		wallet:                  wallet,
+		signingGroupMemberIndex: signingGroupMemberIndex,
+		privateKeyShare:         privateKeyShare,
+	}
+}
