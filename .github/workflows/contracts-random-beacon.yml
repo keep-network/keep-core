@@ -196,8 +196,10 @@ jobs:
       - name: Configure tenderly
         env:
           TENDERLY_TOKEN: ${{ secrets.TENDERLY_TOKEN }}
-        run: ./config_tenderly.sh
-      
+        uses: ./.github/actions/docker-build-push
+        with:
+          token: ${{ secrets.TENDERLY_TOKEN }}
+
       - name: Deploy contracts
         env:
           CHAIN_API_URL: ${{ secrets.GOERLI_ETH_HOSTNAME_HTTP }}
