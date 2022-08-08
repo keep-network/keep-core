@@ -298,7 +298,7 @@ contract WalletRegistry is
         // Authorization decrease delay is 45 days.
         //
         // Authorization decrease change period is 45 days. It means pending
-        // authorization decrease can be overwriten all the time.
+        // authorization decrease can be overwritten all the time.
         authorization.setMinimumAuthorization(40_000e18);
         authorization.setAuthorizationDecreaseDelay(3_888_000);
         authorization.setAuthorizationDecreaseChangePeriod(3_888_000);

@@ -425,7 +425,7 @@ library BeaconDkg {
         return (maliciousResultHash, maliciousSubmitter);
     }
 
-    /// @notice Updates DKG-related parmaeters
+    /// @notice Updates DKG-related parameters
     /// @param _resultChallengePeriodLength New value of the result challenge
     ///        period length. It is the number of blocks for which a DKG result
     ///        can be challenged.
