@@ -174,7 +174,7 @@ func (tros *tssRoundOneState) Initiate(ctx context.Context) error {
 	// to give enough time for round computation and make sure the round
 	// terminates regardless of the result.
 	stateBlocks := tros.DelayBlocks() + tros.ActiveBlocks()
-	stateDuration := 15 * time.Duration(stateBlocks)
+	stateDuration := 15 * time.Second * time.Duration(stateBlocks)
 	roundCtx, roundCtxCancel := context.WithTimeout(ctx, stateDuration)
 	defer roundCtxCancel()
 
@@ -254,7 +254,7 @@ func (trts *tssRoundTwoState) Initiate(ctx context.Context) error {
 	// to give enough time for round computation and make sure the round
 	// terminates regardless of the result.
 	stateBlocks := trts.DelayBlocks() + trts.ActiveBlocks()
-	stateDuration := 15 * time.Duration(stateBlocks)
+	stateDuration := 15 * time.Second * time.Duration(stateBlocks)
 	roundCtx, roundCtxCancel := context.WithTimeout(ctx, stateDuration)
 	defer roundCtxCancel()
 
@@ -334,7 +334,7 @@ func (trts *tssRoundThreeState) Initiate(ctx context.Context) error {
 	// to give enough time for round computation and make sure the round
 	// terminates regardless of the result.
 	stateBlocks := trts.DelayBlocks() + trts.ActiveBlocks()
-	stateDuration := 15 * time.Duration(stateBlocks)
+	stateDuration := 15 * time.Second * time.Duration(stateBlocks)
 	roundCtx, roundCtxCancel := context.WithTimeout(ctx, stateDuration)
 	defer roundCtxCancel()
 
@@ -413,7 +413,7 @@ func (fs *finalizationState) Initiate(ctx context.Context) error {
 	// to give enough time for round computation and make sure the round
 	// terminates regardless of the result.
 	stateBlocks := fs.DelayBlocks() + fs.ActiveBlocks()
-	stateDuration := 15 * time.Duration(stateBlocks)
+	stateDuration := 15 * time.Second * time.Duration(stateBlocks)
 	roundCtx, roundCtxCancel := context.WithTimeout(ctx, stateDuration)
 	defer roundCtxCancel()
 
