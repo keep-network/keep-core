@@ -21,7 +21,7 @@ npm_packages := @keep-network/random-beacon \
 	@threshold-network/solidity-contracts \
 	@keep-network/tbtc-v2
 
-# Working directory where contracts artifacts should be fetched to.
+# Working directory where contracts artifacts should be stored.
 contracts_dir := tmp/contracts
 
 # It requires npm of at least 7.x version to support `pack-destination` flag.
