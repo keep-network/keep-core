@@ -53,7 +53,7 @@ contract RandomBeacon is IRandomBeacon, IApplication, Governable, Reimbursable {
 
     /// @notice Seed value used for the genesis group selection.
     /// https://www.wolframalpha.com/input/?i=pi+to+78+digits
-    uint256 public constant genesisSeed =
+    uint256 internal constant genesisSeed =
         31415926535897932384626433832795028841971693993751058209749445923078164062862;
 
     // Governable parameters
@@ -178,6 +178,7 @@ contract RandomBeacon is IRandomBeacon, IApplication, Governable, Reimbursable {
         uint256 groupCreationFrequency,
         uint256 groupLifetime,
         uint256 dkgResultChallengePeriodLength,
+        uint256 dkgResultChallengeExtraGas,
         uint256 dkgResultSubmissionTimeout,
         uint256 dkgResultSubmitterPrecedencePeriodLength
     );
@@ -429,6 +430,8 @@ contract RandomBeacon is IRandomBeacon, IApplication, Governable, Reimbursable {
         // DKG result challenge period length is set to 48h, assuming
         // 15s block time.
         //
+        // The extra gas required for DKG result challenge is 50k units.
+        //
         // DKG result submission timeout, gives each member 20 blocks to submit
         // the result. Assuming 15s block time, it is ~8h to submit the result
         // in the pessimistic case.
@@ -438,7 +441,7 @@ contract RandomBeacon is IRandomBeacon, IApplication, Governable, Reimbursable {
         //
         // With these parameters, the happy path takes no more than 56 hours.
         // In practice, it should take about 48 hours (just the challenge time).
-        dkg.setParameters(11_520, 1_280, 20);
+        dkg.setParameters(11_520, 50_000, 1_280, 20);
 
         // Relay entry soft timeot gives each of 64 members 20 blocks to submit
         // the result.
@@ -541,6 +544,7 @@ contract RandomBeacon is IRandomBeacon, IApplication, Governable, Reimbursable {
     /// @param groupLifetime New group lifetime in blocks
     /// @param dkgResultChallengePeriodLength New DKG result challenge period
     ///        length
+    /// @param dkgResultChallengeExtraGas New DKG result challenge extra gas
     /// @param dkgResultSubmissionTimeout New DKG result submission timeout
     /// @param dkgSubmitterPrecedencePeriodLength New DKG result submitter
     ///        precedence period length
@@ -548,6 +552,7 @@ contract RandomBeacon is IRandomBeacon, IApplication, Governable, Reimbursable {
         uint256 groupCreationFrequency,
         uint256 groupLifetime,
         uint256 dkgResultChallengePeriodLength,
+        uint256 dkgResultChallengeExtraGas,
         uint256 dkgResultSubmissionTimeout,
         uint256 dkgSubmitterPrecedencePeriodLength
     ) external onlyGovernance {
@@ -555,6 +560,7 @@ contract RandomBeacon is IRandomBeacon, IApplication, Governable, Reimbursable {
         groups.setGroupLifetime(groupLifetime);
         dkg.setParameters(
             dkgResultChallengePeriodLength,
+            dkgResultChallengeExtraGas,
             dkgResultSubmissionTimeout,
             dkgSubmitterPrecedencePeriodLength
         );
@@ -563,6 +569,7 @@ contract RandomBeacon is IRandomBeacon, IApplication, Governable, Reimbursable {
             groupCreationFrequency,
             groupLifetime,
             dkgResultChallengePeriodLength,
+            dkgResultChallengeExtraGas,
             dkgResultSubmissionTimeout,
             dkgSubmitterPrecedencePeriodLength
         );
@@ -904,6 +911,12 @@ contract RandomBeacon is IRandomBeacon, IApplication, Governable, Reimbursable {
     ///         the DKG result submission.
     /// @param dkgResult Result to challenge. Must match the submitted result
     ///        stored during `submitDkgResult`.
+    /// @dev Due to EIP-150 1/64 of the gas is not forwarded to the call, and
+    ///      will be kept to execute the remaining operations in the function
+    ///      after the call inside the try-catch. To eliminate a class of
+    ///      attacks related to the gas limit manipulation, this function
+    ///      requires an extra amount of gas to be left at the end of the
+    ///      execution.
     function challengeDkgResult(DKG.Result calldata dkgResult) external {
         (bytes32 maliciousResultHash, uint32 maliciousSubmitter) = dkg
             .challengeResult(dkgResult);
@@ -941,6 +954,17 @@ contract RandomBeacon is IRandomBeacon, IApplication, Governable, Reimbursable {
                 maliciousSubmitterAddresses
             );
         }
+
+        // Due to EIP-150, 1/64 of the gas is not forwarded to the call, and
+        // will be kept to execute the remaining operations in the function
+        // after the call inside the try-catch.
+        //
+        // To ensure there is no way for the caller to manipulate gas limit in
+        // such a way that the call inside try-catch fails with out-of-gas and
+        // the rest of the function is executed with the remaining 1/64 of gas,
+        // we require an extra gas amount to be left at the end of the call to
+        // `challengeDkgResult`.
+        dkg.requireChallengeExtraGas();
     }
 
     /// @notice Check current group creation state.
@@ -1270,10 +1294,7 @@ contract RandomBeacon is IRandomBeacon, IApplication, Governable, Reimbursable {
 
         require(nonce == inactivityClaimNonce[groupId], "Invalid nonce");
 
-        require(
-            groups.isGroupActive(groupId),
-            "Group must be active and non-terminated"
-        );
+        require(groups.isGroupActive(groupId), "Group is not active");
 
         Groups.Group storage group = groups.getGroup(groupId);
 
@@ -1494,6 +1515,8 @@ contract RandomBeacon is IRandomBeacon, IApplication, Governable, Reimbursable {
     ///         accepted and the group registered in the pool of active groups.
     ///         If the challenge gets accepted, all operators who signed the
     ///         malicious result get slashed for and the notifier gets rewarded.
+    /// @return dkgResultChallengeExtraGas The extra gas required to be left at
+    ///         the end of the challenge DKG result transaction.
     /// @return dkgResultSubmissionTimeout Timeout in blocks for a group to
     ///         submit the DKG result. All members are eligible to submit the
     ///         DKG result. If `dkgResultSubmissionTimeout` passes without the
@@ -1510,6 +1533,7 @@ contract RandomBeacon is IRandomBeacon, IApplication, Governable, Reimbursable {
             uint256 groupCreationFrequency,
             uint256 groupLifetime,
             uint256 dkgResultChallengePeriodLength,
+            uint256 dkgResultChallengeExtraGas,
             uint256 dkgResultSubmissionTimeout,
             uint256 dkgSubmitterPrecedencePeriodLength
         )
@@ -1518,6 +1542,7 @@ contract RandomBeacon is IRandomBeacon, IApplication, Governable, Reimbursable {
             _groupCreationFrequency,
             groups.groupLifetime,
             dkg.parameters.resultChallengePeriodLength,
+            dkg.parameters.resultChallengeExtraGas,
             dkg.parameters.resultSubmissionTimeout,
             dkg.parameters.submitterPrecedencePeriodLength
         );

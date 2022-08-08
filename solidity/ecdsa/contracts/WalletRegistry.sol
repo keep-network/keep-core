@@ -790,6 +790,12 @@ contract WalletRegistry is
     ///         invalid it reverts the DKG back to the result submission phase.
     /// @param dkgResult Result to challenge. Must match the submitted result
     ///        stored during `submitDkgResult`.
+    /// @dev Due to EIP-150 1/64 of the gas is not forwarded to the call, and
+    ///      will be kept to execute the remaining operations in the function
+    ///      after the call inside the try-catch. To eliminate a class of
+    ///      attacks related to the gas limit manipulation, this function
+    ///      requires an extra amount of gas to be left at the end of the
+    ///      execution.
     function challengeDkgResult(DKG.Result calldata dkgResult) external {
         (
             bytes32 maliciousDkgResultHash,
@@ -829,7 +835,7 @@ contract WalletRegistry is
             );
         }
 
-        // Due to EIP150, 1/64 of the gas is not forwarded to the call, and
+        // Due to EIP-150, 1/64 of the gas is not forwarded to the call, and
         // will be kept to execute the remaining operations in the function
         // after the call inside the try-catch.
         //

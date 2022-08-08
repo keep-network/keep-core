@@ -185,7 +185,8 @@ describe("RandomBeacon - Parameters", () => {
     const newGroupCreationFrequency = 100
     const newGroupLifetime = 200
     const newDkgResultChallengePeriodLength = 300
-    const newDkgResultSubmissionTimeout = 400
+    const newDkgResultChallengeExtraGas = 400
+    const newDkgResultSubmissionTimeout = 500
     const newDkgSubmitterPrecedencePeriodLength = 200
 
     context("when the caller is not the governance", () => {
@@ -197,6 +198,7 @@ describe("RandomBeacon - Parameters", () => {
               newGroupCreationFrequency,
               newGroupLifetime,
               newDkgResultChallengePeriodLength,
+              newDkgResultChallengeExtraGas,
               newDkgResultSubmissionTimeout,
               newDkgSubmitterPrecedencePeriodLength
             )
@@ -216,6 +218,7 @@ describe("RandomBeacon - Parameters", () => {
             newGroupCreationFrequency,
             newGroupLifetime,
             newDkgResultChallengePeriodLength,
+            newDkgResultChallengeExtraGas,
             newDkgResultSubmissionTimeout,
             newDkgSubmitterPrecedencePeriodLength
           )
@@ -267,6 +270,7 @@ describe("RandomBeacon - Parameters", () => {
             newGroupCreationFrequency,
             newGroupLifetime,
             newDkgResultChallengePeriodLength,
+            newDkgResultChallengeExtraGas,
             newDkgResultSubmissionTimeout,
             newDkgSubmitterPrecedencePeriodLength
           )
@@ -287,6 +291,7 @@ describe("RandomBeacon - Parameters", () => {
                     newGroupCreationFrequency,
                     newGroupLifetime,
                     newDkgResultChallengePeriodLength,
+                    newDkgResultChallengeExtraGas,
                     newDkgResultSubmissionTimeout,
                     invalidDkgSubmitterPrecedencePeriodLength
                   )
@@ -311,6 +316,7 @@ describe("RandomBeacon - Parameters", () => {
                     newGroupCreationFrequency,
                     newGroupLifetime,
                     newDkgResultChallengePeriodLength,
+                    newDkgResultChallengeExtraGas,
                     newDkgResultSubmissionTimeout,
                     invalidDkgSubmitterPrecedencePeriodLength
                   )
