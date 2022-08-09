@@ -1,8 +1,6 @@
 package dkg
 
 import (
-	"fmt"
-	"github.com/keep-network/keep-core/pkg/beacon/gjkr/gen/pb"
 	"github.com/keep-network/keep-core/pkg/crypto/ephemeral"
 	"github.com/keep-network/keep-core/pkg/protocol/group"
 )
@@ -26,89 +24,69 @@ func (epkm *ephemeralPublicKeyMessage) SenderID() group.MemberIndex {
 	return epkm.senderID
 }
 
-// Type returns a string describing an EphemeralPublicKeyMessage type for
+// Type returns a string describing an ephemeralPublicKeyMessage type for
 // marshaling purposes.
 func (epkm *ephemeralPublicKeyMessage) Type() string {
-	return messageTypePrefix + "ephemeral_public_key"
+	return messageTypePrefix + "ephemeral_public_key_message"
 }
 
-// Marshal converts this EphemeralPublicKeyMessage to a byte array suitable for
-// network communication.
-func (epkm *ephemeralPublicKeyMessage) Marshal() ([]byte, error) {
-	ephemeralPublicKeys, err := marshalPublicKeyMap(epkm.ephemeralPublicKeys)
-	if err != nil {
-		return nil, err
-	}
+// tssRoundOneMessage is a message payload that carries the sender's TSS
+// commitments and the Paillier public key.
+type tssRoundOneMessage struct {
+	senderID group.MemberIndex
 
-	return (&pb.EphemeralPublicKey{
-		SenderID:            uint32(epkm.senderID),
-		EphemeralPublicKeys: ephemeralPublicKeys,
-	}).Marshal()
+	payload   []byte
+	sessionID string
 }
 
-// Unmarshal converts a byte array produced by Marshal to
-// an EphemeralPublicKeyMessage
-func (epkm *ephemeralPublicKeyMessage) Unmarshal(bytes []byte) error {
-	pbMsg := pb.EphemeralPublicKey{}
-	if err := pbMsg.Unmarshal(bytes); err != nil {
-		return err
-	}
-
-	if err := validateMemberIndex(pbMsg.SenderID); err != nil {
-		return err
-	}
-	epkm.senderID = group.MemberIndex(pbMsg.SenderID)
-
-	ephemeralPublicKeys, err := unmarshalPublicKeyMap(pbMsg.EphemeralPublicKeys)
-	if err != nil {
-		return err
-	}
-
-	epkm.ephemeralPublicKeys = ephemeralPublicKeys
-
-	return nil
+// SenderID returns protocol-level identifier of the message sender.
+func (trom *tssRoundOneMessage) SenderID() group.MemberIndex {
+	return trom.senderID
 }
 
-func validateMemberIndex(protoIndex uint32) error {
-	// Protobuf does not have uint8 type, so we are using uint32. When
-	// unmarshalling message, we need to make sure we do not overflow.
-	if protoIndex > group.MaxMemberIndex {
-		return fmt.Errorf("invalid member index value: [%v]", protoIndex)
-	}
-	return nil
+// Type returns a string describing an tssRoundOneMessage type for
+// marshaling purposes.
+func (trom *tssRoundOneMessage) Type() string {
+	return messageTypePrefix + "tss_round_one_message"
 }
 
-func marshalPublicKeyMap(
-	publicKeys map[group.MemberIndex]*ephemeral.PublicKey,
-) (map[uint32][]byte, error) {
-	marshalled := make(map[uint32][]byte, len(publicKeys))
-	for id, publicKey := range publicKeys {
-		if publicKey == nil {
-			return nil, fmt.Errorf("nil public key for member [%v]", id)
-		}
+// tssRoundTwoMessage is a message payload that carries the sender's TSS
+// shares and de-commitments.
+type tssRoundTwoMessage struct {
+	senderID group.MemberIndex
 
-		marshalled[uint32(id)] = publicKey.Marshal()
-	}
-	return marshalled, nil
+	broadcastPayload []byte
+	peersPayload     map[group.MemberIndex][]byte
+	sessionID        string
 }
 
-func unmarshalPublicKeyMap(
-	publicKeys map[uint32][]byte,
-) (map[group.MemberIndex]*ephemeral.PublicKey, error) {
-	var unmarshalled = make(map[group.MemberIndex]*ephemeral.PublicKey, len(publicKeys))
-	for memberID, publicKeyBytes := range publicKeys {
-		if err := validateMemberIndex(memberID); err != nil {
-			return nil, err
-		}
+// SenderID returns protocol-level identifier of the message sender.
+func (trtm *tssRoundTwoMessage) SenderID() group.MemberIndex {
+	return trtm.senderID
+}
 
-		publicKey, err := ephemeral.UnmarshalPublicKey(publicKeyBytes)
-		if err != nil {
-			return nil, fmt.Errorf("could not unmarshal public key [%v]", err)
-		}
+// Type returns a string describing an tssRoundTwoMessage type for
+// marshaling purposes.
+func (trtm *tssRoundTwoMessage) Type() string {
+	return messageTypePrefix + "tss_round_two_message"
+}
 
-		unmarshalled[group.MemberIndex(memberID)] = publicKey
+// tssRoundThreeMessage is a message payload that carries the sender's TSS
+// Paillier proof.
+type tssRoundThreeMessage struct {
+	senderID group.MemberIndex
 
-	}
+	payload   []byte
+	sessionID string
+}
 
-	return unmarshalled, nil
+// SenderID returns protocol-level identifier of the message sender.
+func (trtm *tssRoundThreeMessage) SenderID() group.MemberIndex {
+	return trtm.senderID
+}
+
+// Type returns a string describing an tssRoundThreeMessage type for
+// marshaling purposes.
+func (trtm *tssRoundThreeMessage) Type() string {
+	return messageTypePrefix + "tss_round_three_message"
 }

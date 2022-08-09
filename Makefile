@@ -36,7 +36,7 @@ local_ecdsa_path := ./solidity/ecdsa
 local_threshold_path := ../../threshold-network/solidity-contracts
 local_tbtc_path := ../tbtc-v2/solidity
 
-# Working directory where contracts artifacts should be fetched to.
+# Working directory where contracts artifacts should be stored.
 contracts_dir := tmp/contracts
 
 # It requires npm of at least 7.x version to support `pack-destination` flag.
@@ -84,4 +84,4 @@ cmd-help: build
 	@echo '$$ keep-client start --help' > docs/development/cmd-help
 	./keep-client start --help >> docs/development/cmd-help
 
-.PHONY: all
+.PHONY: all development goerli download_artifacts generate build cmd-help

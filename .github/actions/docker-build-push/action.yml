@@ -1,0 +1,84 @@
+name: Build and Push Docker Image
+description: "Build and push a Docker image"
+inputs:
+  environment:
+    description: Environment (network) for workflow execution
+    required: false
+  imageName:
+    description: Name for the image
+    required: true
+  context:
+    description: Context for docker build execution
+    required: true
+  push:
+    description: True if the image should be published
+    required: true
+    default: "false"
+  gcrJsonKey:
+    description: JSON key for Google Container Registry service account (required if push is true)
+    required: false
+
+runs:
+  using: "composite"
+  steps:
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v2
+
+    - name: Cache Docker layers
+      uses: actions/cache@v3
+      with:
+        path: /tmp/.buildx-cache
+        key: ${{ runner.os }}-buildx-${{ github.sha }}
+        restore-keys: |
+          ${{ runner.os }}-buildx-
+
+    - name: Load environment variables
+      if: inputs.push == 'true'
+      uses: keep-network/ci/actions/load-env-variables@v2
+      with:
+        environment: ${{ inputs.environment }}
+
+    - name: Login to Google Container Registry
+      if: inputs.push == 'true'
+      uses: docker/login-action@v2
+      with:
+        registry: ${{ env.GCR_REGISTRY_URL }}
+        username: _json_key
+        password: ${{ inputs.gcrJsonKey }}
+
+    - name: Set Docker image name
+      shell: bash
+      if: inputs.push != 'true'
+      run: |
+        echo "IMAGE_NAME=${{ inputs.imageName }}" >> $GITHUB_ENV
+
+    - name: Set Docker image name for GCR
+      shell: bash
+      if: inputs.push == 'true'
+      run: |
+        echo "IMAGE_NAME=${{ env.GCR_REGISTRY_URL }}/${{ env.GOOGLE_PROJECT_ID }}/${{ inputs.imageName }}" >> $GITHUB_ENV
+
+    - name: Build and push image
+      uses: docker/build-push-action@v3
+      with:
+        context: ${{ inputs.context }}
+        # GCR image should be named according to following convention:
+        # HOSTNAME/PROJECT-ID/IMAGE:TAG
+        # We don't use TAG yet, will be added at later stages of work on RFC-18.
+        tags: ${{ env.IMAGE_NAME }}
+        labels: |
+          revision=${{ github.sha }}
+        push: ${{ inputs.push == 'true' }}
+        cache-from: type=local,src=/tmp/.buildx-cache
+        cache-to: type=local,dest=/tmp/.buildx-cache-new
+
+    - # Temp fix - move cache instead of copying (added below step and
+      # modified value of `cache-to`).
+      # https://github.com/docker/build-push-action/issues/252
+      # https://github.com/moby/buildkit/issues/1896
+      # Without the change some jobs were failing with `no space left on device`
+      name: Move cache
+      shell: bash
+      run: |
+        rm -rf /tmp/.buildx-cache
+        mv /tmp/.buildx-cache-new /tmp/.buildx-cache

@@ -1323,6 +1323,147 @@ describe("RandomBeaconGovernance", () => {
     )
   })
 
+  describe("beginDkgResultChallengeExtraGasUpdate", () => {
+    context("when the caller is not the owner", () => {
+      it("should revert", async () => {
+        await expect(
+          randomBeaconGovernance
+            .connect(thirdParty)
+            .beginDkgResultChallengeExtraGasUpdate(1337)
+        ).to.be.revertedWith("Ownable: caller is not the owner")
+      })
+    })
+
+    context("when the caller is the owner", () => {
+      let tx: ContractTransaction
+
+      before(async () => {
+        await createSnapshot()
+
+        tx = await randomBeaconGovernance
+          .connect(governance)
+          .beginDkgResultChallengeExtraGasUpdate(1337)
+      })
+
+      after(async () => {
+        await restoreSnapshot()
+      })
+
+      it("should not update the DKG result challenge extra gas", async () => {
+        const { dkgResultChallengeExtraGas } =
+          await randomBeacon.groupCreationParameters()
+        expect(dkgResultChallengeExtraGas).to.be.equal(
+          params.dkgResultChallengeExtraGas
+        )
+      })
+
+      it("should start the governance delay timer", async () => {
+        expect(
+          await randomBeaconGovernance.getRemainingDkgResultChallengeExtraGasUpdateTime()
+        ).to.be.equal(governanceDelay)
+      })
+
+      it("should emit the DkgResultChallengeExtraGasUpdateStarted event", async () => {
+        const blockTimestamp = (await ethers.provider.getBlock(tx.blockNumber))
+          .timestamp
+        await expect(tx)
+          .to.emit(
+            randomBeaconGovernance,
+            "DkgResultChallengeExtraGasUpdateStarted"
+          )
+          .withArgs(1337, blockTimestamp)
+      })
+    })
+  })
+
+  describe("finalizeDkgResultChallengeExtraGasUpdate", () => {
+    context("when the caller is not the owner", () => {
+      it("should revert", async () => {
+        await expect(
+          randomBeaconGovernance
+            .connect(thirdParty)
+            .finalizeDkgResultChallengeExtraGasUpdate()
+        ).to.be.revertedWith("Ownable: caller is not the owner")
+      })
+    })
+
+    context("when the update process is not initialized", () => {
+      it("should revert", async () => {
+        await expect(
+          randomBeaconGovernance
+            .connect(governance)
+            .finalizeDkgResultChallengeExtraGasUpdate()
+        ).to.be.revertedWith("Change not initiated")
+      })
+    })
+
+    context("when the governance delay has not passed", () => {
+      it("should revert", async () => {
+        await createSnapshot()
+
+        await randomBeaconGovernance
+          .connect(governance)
+          .beginDkgResultChallengeExtraGasUpdate(1337)
+
+        await helpers.time.increaseTime(governanceDelay - 60) // -1min
+
+        await expect(
+          randomBeaconGovernance
+            .connect(governance)
+            .finalizeDkgResultChallengeExtraGasUpdate()
+        ).to.be.revertedWith("Governance delay has not elapsed")
+
+        await restoreSnapshot()
+      })
+    })
+
+    context(
+      "when the update process is initialized and governance delay passed",
+      () => {
+        let tx: ContractTransaction
+
+        before(async () => {
+          await createSnapshot()
+
+          await randomBeaconGovernance
+            .connect(governance)
+            .beginDkgResultChallengeExtraGasUpdate(1337)
+
+          await helpers.time.increaseTime(governanceDelay)
+
+          tx = await randomBeaconGovernance
+            .connect(governance)
+            .finalizeDkgResultChallengeExtraGasUpdate()
+        })
+
+        after(async () => {
+          await restoreSnapshot()
+        })
+
+        it("should update the DKG result challenge extra gas", async () => {
+          const { dkgResultChallengeExtraGas } =
+            await randomBeacon.groupCreationParameters()
+          expect(dkgResultChallengeExtraGas).to.be.equal(1337)
+        })
+
+        it("should emit DkgResultChallengeExtraGasUpdated event", async () => {
+          await expect(tx)
+            .to.emit(
+              randomBeaconGovernance,
+              "DkgResultChallengeExtraGasUpdated"
+            )
+            .withArgs(1337)
+        })
+
+        it("should reset the governance delay timer", async () => {
+          await expect(
+            randomBeaconGovernance.getRemainingDkgResultChallengeExtraGasUpdateTime()
+          ).to.be.revertedWith("Change not initiated")
+        })
+      }
+    )
+  })
+
   describe("beginDkgResultSubmissionTimeoutUpdate", () => {
     context("when the caller is not the owner", () => {
       it("should revert", async () => {

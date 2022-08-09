@@ -30,7 +30,7 @@ jobs:
     outputs:
       path-filter: ${{ steps.filter.outputs.path-filter }}
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         if: github.event_name == 'pull_request'
 
       - uses: dorny/paths-filter@v2
@@ -51,9 +51,9 @@ jobs:
       run:
         working-directory: ./solidity-v1
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
-      - uses: actions/setup-node@v2
+      - uses: actions/setup-node@v3
         with:
           node-version: "16"
           cache: "npm"
@@ -84,9 +84,9 @@ jobs:
       run:
         working-directory: ./solidity-v1
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
-      - uses: actions/setup-node@v2
+      - uses: actions/setup-node@v3
         with:
           node-version: "16"
           cache: "npm"
@@ -108,14 +108,14 @@ jobs:
     outputs:
       version: ${{ steps.npm-version-bump.outputs.version }}
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
       - name: Load environment variables
         uses: keep-network/ci/actions/load-env-variables@v1
         with:
           environment: ${{ github.event.inputs.environment }}
 
-      - uses: actions/setup-node@v2
+      - uses: actions/setup-node@v3
         with:
           node-version: "16"
           cache: "npm"
@@ -185,7 +185,7 @@ jobs:
     if: needs.contracts-migrate-and-publish.result == 'success'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
       - name: Load environment variables
         uses: keep-network/ci/actions/load-env-variables@v1
@@ -262,7 +262,7 @@ jobs:
       run:
         working-directory: ./solidity-v1
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
       - name: Download files needed for etherscan verification
         uses: actions/download-artifact@v2
@@ -275,7 +275,7 @@ jobs:
         with:
           environment: ${{ github.event.inputs.environment }}
 
-      - uses: actions/setup-node@v2
+      - uses: actions/setup-node@v3
         with:
           node-version: "16"
           cache: "npm"

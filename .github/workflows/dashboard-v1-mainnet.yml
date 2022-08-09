@@ -15,7 +15,7 @@ jobs:
   build-docker:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v1
@@ -56,9 +56,9 @@ jobs:
       run:
         working-directory: solidity-v1/dashboard
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Use Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v2
+        uses: actions/setup-node@v3
         with:
           node-version: ${{ matrix.node-version }}
       # This step forces Git to download dependencies using `https://` protocol,
