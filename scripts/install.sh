@@ -8,9 +8,11 @@ DONE_END='\n\n\e[0m'    # new line + reset
 
 KEEP_CORE_PATH=$PWD
 
-KEEP_BEACON_SOL_PATH="$KEEP_CORE_PATH/solidity/random-beacon"
-KEEP_ECDSA_SOL_PATH="$KEEP_CORE_PATH/solidity/ecdsa"
+LOCAL_BEACON_SOL_PATH="$KEEP_CORE_PATH/solidity/random-beacon"
+LOCAL_ECDSA_SOL_PATH="$KEEP_CORE_PATH/solidity/ecdsa"
 TMP="$KEEP_CORE_PATH/tmp"
+LOCAL_THRESHOLD_NETWORK_PATH="$TMP/solidity-contracts"
+LOCAL_TBTC_SOL_PATH="$TMP/tbtc-v2/solidity"
 OPENZEPPELIN_MANIFEST=".openzeppelin/unknown-*.json"
 
 # Defaults, can be overwritten by env variables/input parameters
@@ -70,8 +72,8 @@ shift $(expr $OPTIND - 1) # remove options from positional parameters
 
 # Overwrite default properties
 NETWORK=${network:-$NETWORK_DEFAULT}
-TBTC_PATH=${tbtc_path:-""}
-THRESHOLD_NETWORK_PATH=${threshold_network_path:-""}
+TBTC_PATH=${tbtc_path:-"$LOCAL_TBTC_SOL_PATH"}
+THRESHOLD_NETWORK_PATH=${threshold_network_path:-"$LOCAL_THRESHOLD_NETWORK_PATH"}
 SKIP_DEPLOYMENT=${skip_deployment:-false}
 SKIP_CLIENT_BUILD=${skip_client_build:-false}
 
@@ -80,7 +82,7 @@ printf "${LOG_START}Starting installation...${LOG_END}"
 
 printf "Network: $NETWORK\n"
 
-cd $KEEP_BEACON_SOL_PATH
+cd $LOCAL_BEACON_SOL_PATH
 
 printf "${LOG_START}Installing beacon YARN dependencies...${LOG_END}"
 yarn install
@@ -96,18 +98,18 @@ if [ "$SKIP_DEPLOYMENT" != true ]; then
   # create tmp/ dir for fresh installations
   rm -rf $TMP && mkdir $TMP
 
-  if [ "$THRESHOLD_NETWORK_PATH" = "" ]; then
+  if [ "$THRESHOLD_NETWORK_PATH" = "$LOCAL_THRESHOLD_NETWORK_PATH" ]; then
     cd $TMP
     printf "${LOG_START}Cloning threshold-network/solidity-contracts...${LOG_END}"
     # clone threshold-network/solidity-contracts as a dependency for beacon, ecdsa
     # and tbtc
     git clone https://github.com/threshold-network/solidity-contracts.git
-
-    cd solidity-contracts
   else
-    printf "${LOG_START}Installing threshold-network/solidity-contracts from the local directory...${LOG_END}"
-    cd "$THRESHOLD_NETWORK_PATH"
+    printf "${LOG_START}Installing threshold-network/solidity-contracts from the existing local directory...${LOG_END}"
+    LOCAL_THRESHOLD_NETWORK_PATH="$THRESHOLD_NETWORK_PATH"
   fi
+
+  cd "$LOCAL_THRESHOLD_NETWORK_PATH"
 
   printf "${LOG_START}Building threshold-network/solidity-contracts...${LOG_END}"
   yarn install && yarn clean && yarn build
@@ -116,12 +118,12 @@ if [ "$SKIP_DEPLOYMENT" != true ]; then
   printf "${LOG_START}Deploying threshold-network/solidity-contracts contracts...${LOG_END}"
   yarn deploy --reset --network $NETWORK
 
-  # Link the package. Replace existing link (see: https://github.com/yarnpkg/yarn/issues/7216) 
+  # Link the package. Replace existing link (see: https://github.com/yarnpkg/yarn/issues/7216)
   yarn unlink || true && yarn link
   # create export folder
   yarn prepack
 
-  cd $KEEP_BEACON_SOL_PATH
+  cd $LOCAL_BEACON_SOL_PATH
 
   printf "${LOG_START}Linking threshold-network/solidity-contracts...${LOG_END}"
   yarn link @threshold-network/solidity-contracts
@@ -134,12 +136,12 @@ if [ "$SKIP_DEPLOYMENT" != true ]; then
   yarn deploy --reset --network $NETWORK
 
   printf "${LOG_START}Creating random-beacon link...${LOG_END}"
-  # Link the package. Replace existing link (see: https://github.com/yarnpkg/yarn/issues/7216) 
+  # Link the package. Replace existing link (see: https://github.com/yarnpkg/yarn/issues/7216)
   yarn unlink || true && yarn link
   # create export folder
   yarn prepack
 
-  cd $KEEP_ECDSA_SOL_PATH
+  cd $LOCAL_ECDSA_SOL_PATH
   # remove openzeppelin manifest for fresh installation
   rm -rf $OPENZEPPELIN_MANIFEST
 
@@ -157,21 +159,22 @@ if [ "$SKIP_DEPLOYMENT" != true ]; then
   yarn deploy --reset --network $NETWORK
 
   printf "${LOG_START}Creating ecdsa link...${LOG_END}"
-  # Link the package. Replace existing link (see: https://github.com/yarnpkg/yarn/issues/7216) 
+  # Link the package. Replace existing link (see: https://github.com/yarnpkg/yarn/issues/7216)
   yarn unlink || true && yarn link
   # create export folder
   yarn prepack
 
-  if [ "$TBTC_PATH" = "" ]; then
+  if [ "$TBTC_PATH" = "$LOCAL_TBTC_SOL_PATH" ]; then
     cd $TMP
     printf "${LOG_START}Cloning tbtc...${LOG_END}"
     git clone https://github.com/keep-network/tbtc-v2.git
-
-    cd "tbtc-v2/solidity"
   else
-    printf "${LOG_START}Installing tbtc from the local directory...${LOG_END}"
-    cd "$TBTC_PATH/solidity"
+    printf "${LOG_START}Installing tbtc from the existing local directory...${LOG_END}"
+
+    LOCAL_TBTC_SOL_PATH="$TBTC_PATH/solidity"
   fi
+
+  cd "$LOCAL_TBTC_SOL_PATH"
 
   yarn install
 
@@ -198,7 +201,11 @@ if [ "$SKIP_CLIENT_BUILD" = false ]; then
   printf "${LOG_START}Building client...${LOG_END}"
 
   cd $KEEP_CORE_PATH
-  make
+  make local \
+    local_beacon_path=$LOCAL_BEACON_SOL_PATH \
+    local_ecdsa_path=$LOCAL_ECDSA_SOL_PATH \
+    local_threshold_path=$LOCAL_THRESHOLD_NETWORK_PATH \
+    local_tbtc_path=$LOCAL_TBTC_SOL_PATH
 fi
 
 printf "${DONE_START}Installation completed!${DONE_END}"
