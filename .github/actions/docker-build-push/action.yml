@@ -67,7 +67,7 @@ runs:
         # GCR image should be named according to following convention:
         # HOSTNAME/PROJECT-ID/IMAGE:TAG
         # We don't use TAG yet, will be added at later stages of work on RFC-18.
-        tags: ${{ inputs.imageName }}
+        tags: ${{ env.IMAGE_NAME }}
         labels: |
           revision=${{ github.sha }}
         push: ${{ inputs.push == 'true' }}
