@@ -456,8 +456,8 @@ library EcdsaDkg {
     ///         and the rest of the function is executed with the remaining
     ///         1/64 of gas, we require an extra gas amount to be left at the
     ///         end of the call to the function challenging DKG result and
-    ///         wrapping the call to EcdsaDkgValidator in TokenStaking contract
-    ///         inside a try-catch.
+    ///         wrapping the call to EcdsaDkgValidator and TokenStaking
+    ///         contracts inside a try-catch.
     function requireChallengeExtraGas(Data storage self) internal view {
         require(
             gasleft() >= self.parameters.resultChallengeExtraGas,
