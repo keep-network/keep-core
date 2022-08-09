@@ -1,7 +1,23 @@
-% TIP: To generate PDF file run `pdflatex filename.tikz`. To generate PNG file
-% run `convert -density 300 filename.pdf -resize 50% filename.png` (requires
-% intallation of `imagemagick` tool). The http://www.tlhiv.org/ltxpreview/ can
-% be used to quickly view a graphic representation of this file.
+% TIP: To generate `.pdf` file out of this `.tikz` file run:
+% `pdflatex filename.tikz`.
+% To install `pdflatex` on MacOS either run `brew install --cask mactex` (not
+% recommended, downloads 4GB of data) or install `basictex` distribution plus
+% needed packages (recommended, downloads only essential packages):
+% ```
+% brew install --cask basictex
+% sudo tlmgr update --self
+% sudo tlmgr install standalone
+% sudo tlmgr install comment
+% pdflatex <filename>.tikz
+%```
+% 
+% To generate `.png` file out of `.pdf` on MacOS run:
+% `convert -density 300 <filename>.pdf -resize 50% <filename>.png`.
+% This requires installation of the `imagemagick` tool:
+% `brew install imagemagick`.
+%
+% The http://www.tlhiv.org/ltxpreview/ can be used to quickly view a graphic
+% representation of this file.
 
 \documentclass{standalone}%
 \usepackage{tikz}%
