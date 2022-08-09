@@ -158,5 +158,7 @@ func getWalletStorageKey(walletPublicKey *ecdsa.PublicKey) string {
 		walletPublicKey.Y,
 	)
 
-	return hex.EncodeToString(walletPublicKeyBytes)
+	// Strip the 04 prefix to limit the key length to 128 characters in order
+	// to make it usable as a directory name.
+	return hex.EncodeToString(walletPublicKeyBytes)[2:]
 }
