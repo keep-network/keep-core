@@ -8,6 +8,7 @@ message ThresholdSigner {
     bytes groupPublicKey = 2;
     string groupPrivateKeyShare = 3;
     map<uint32, bytes> groupPublicKeyShares = 4;
+    repeated string groupOperators = 5;
 }
 
 message Membership {

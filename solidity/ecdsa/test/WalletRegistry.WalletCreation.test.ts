@@ -2381,7 +2381,7 @@ describe("WalletRegistry - Wallet Creation", async () => {
                   })
 
                   it("should use close to 1 820 000 gas", async () => {
-                    await assertGasUsed(challengeTx, 1_820_000, 30_000)
+                    await assertGasUsed(challengeTx, 1_820_000, 40_000)
                   })
                 })
               })

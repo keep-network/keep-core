@@ -3,6 +3,7 @@ package watchtower
 import (
 	"context"
 	"fmt"
+	"github.com/keep-network/keep-core/pkg/internal/testutils"
 	"github.com/keep-network/keep-core/pkg/operator"
 	"testing"
 	"time"
@@ -29,11 +30,11 @@ func TestDisconnect(t *testing.T) {
 
 	// setup the first peer
 	peer1Provider := localNetwork.Connect()
-	_ = NewGuard(ctx, 1*time.Second, firewall, peer1Provider.ConnectionManager())
+	_ = NewGuard(ctx, &testutils.MockLogger{}, 1*time.Second, firewall, peer1Provider.ConnectionManager())
 
 	// setup the second peer
 	peer2Provider := localNetwork.Connect()
-	_ = NewGuard(ctx, 1*time.Second, firewall, peer2Provider.ConnectionManager())
+	_ = NewGuard(ctx, &testutils.MockLogger{}, 1*time.Second, firewall, peer2Provider.ConnectionManager())
 
 	// connect them with each other
 	peer1Provider.AddPeer(peer2Provider.ID().String(), peer2OperatorPublicKey)

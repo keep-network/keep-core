@@ -4,10 +4,10 @@ import (
 	"bytes"
 	"encoding/hex"
 	"fmt"
+	"github.com/ipfs/go-log"
 	beaconchain "github.com/keep-network/keep-core/pkg/beacon/chain"
-	"sync"
-
 	"github.com/keep-network/keep-core/pkg/beacon/dkg"
+	"sync"
 
 	"github.com/keep-network/keep-common/pkg/persistence"
 )
@@ -16,6 +16,8 @@ import (
 // client is a member.
 type Groups struct {
 	mutex sync.Mutex
+
+	logger log.StandardLogger
 
 	// key is group public key in uncompressed form
 	myGroups map[string][]*Membership
@@ -33,10 +35,12 @@ type Membership struct {
 
 // NewGroupRegistry returns an empty GroupRegistry.
 func NewGroupRegistry(
+	logger log.StandardLogger,
 	beaconChain beaconchain.GroupRegistrationInterface,
 	persistence persistence.Handle,
 ) *Groups {
 	return &Groups{
+		logger:      logger,
 		myGroups:    make(map[string][]*Membership),
 		beaconChain: beaconChain,
 		storage:     newStorage(persistence),
@@ -91,7 +95,7 @@ func (g *Groups) UnregisterStaleGroups(latestGroupPublicKey []byte) {
 	for publicKey, memberships := range g.myGroups {
 		publicKeyBytes, err := groupKeyFromString(publicKey)
 		if err != nil {
-			logger.Errorf(
+			g.logger.Errorf(
 				"error occurred while decoding public key into bytes: [%v]",
 				err,
 			)
@@ -105,7 +109,7 @@ func (g *Groups) UnregisterStaleGroups(latestGroupPublicKey []byte) {
 		if !bytes.Equal(latestGroupPublicKey, publicKeyBytes) {
 			isStaleGroup, err := g.beaconChain.IsStaleGroup(publicKeyBytes)
 			if err != nil {
-				logger.Errorf(
+				g.logger.Errorf(
 					"failed to check if stale for group with public key [%s]: [%v]",
 					publicKey,
 					err,
@@ -115,7 +119,7 @@ func (g *Groups) UnregisterStaleGroups(latestGroupPublicKey []byte) {
 
 			if isStaleGroup {
 				if len(memberships) == 0 {
-					logger.Errorf(
+					g.logger.Errorf(
 						"inconsistent state; group with public key [%s] has no members",
 						publicKey,
 					)
@@ -125,14 +129,14 @@ func (g *Groups) UnregisterStaleGroups(latestGroupPublicKey []byte) {
 				compressedPublicKey := memberships[0].Signer.GroupPublicKeyBytesCompressed()
 				err = g.storage.archive(compressedPublicKey)
 				if err != nil {
-					logger.Errorf("failed to archive group with compressed public key [%s]: [%v]",
+					g.logger.Errorf("failed to archive group with compressed public key [%s]: [%v]",
 						hex.EncodeToString(compressedPublicKey),
 						err,
 					)
 					continue
 				}
 
-				logger.Infof(
+				g.logger.Infof(
 					"archived group with compressed public key [%s]",
 					hex.EncodeToString(compressedPublicKey),
 				)
@@ -175,7 +179,7 @@ func (g *Groups) LoadExistingGroups() {
 
 	go func() {
 		for err := range errorsChannel {
-			logger.Errorf(
+			g.logger.Errorf(
 				"could not load membership from disk: [%v]",
 				err,
 			)
@@ -191,7 +195,7 @@ func (g *Groups) LoadExistingGroups() {
 
 func (g *Groups) printMemberships() {
 	for group, memberships := range g.myGroups {
-		logger.Infof("group [0x%v] loaded with [%v] members", group, len(memberships))
+		g.logger.Infof("group [0x%v] loaded with [%v] members", group, len(memberships))
 	}
 }
 

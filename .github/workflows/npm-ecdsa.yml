@@ -20,9 +20,9 @@ jobs:
       run:
         working-directory: ./solidity/ecdsa
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
-      - uses: actions/setup-node@v2
+      - uses: actions/setup-node@v3
         with:
           node-version: "14.x"
           registry-url: "https://registry.npmjs.org"
@@ -39,7 +39,7 @@ jobs:
       # Deploy contracts to a local network to generate deployment artifacts that
       # are required by dashboard and client compilation.
       - name: Deploy contracts
-        run: yarn deploy --network hardhat --write true
+        run: yarn deploy:test --network hardhat --write true
 
       - name: Bump up package version
         id: npm-version-bump

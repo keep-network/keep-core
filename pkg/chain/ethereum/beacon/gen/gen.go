@@ -2,10 +2,15 @@ package gen
 
 import (
 	_ "embed"
+	"strings"
 )
 
-//go:generate make download_artifacts
 //go:generate make
 
-//go:embed _address/RandomBeacon
-var RandomBeaconAddress string
+var (
+	//go:embed _address/RandomBeacon
+	randomBeaconAddressFileContent string
+
+	// RandomBeaconAddress is a Random Beacon contract's address read from the NPM package.
+	RandomBeaconAddress string = strings.TrimSpace(randomBeaconAddressFileContent)
+)

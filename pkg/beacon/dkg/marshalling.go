@@ -4,9 +4,11 @@ import (
 	"fmt"
 	"math/big"
 
+	"github.com/keep-network/keep-core/pkg/chain"
+
 	bn256 "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
-	"github.com/keep-network/keep-core/pkg/beacon/group"
 	"github.com/keep-network/keep-core/pkg/beacon/registry/gen/pb"
+	"github.com/keep-network/keep-core/pkg/protocol/group"
 )
 
 // Marshal converts ThresholdSigner to byte array.
@@ -16,6 +18,7 @@ func (ts *ThresholdSigner) Marshal() ([]byte, error) {
 		GroupPublicKey:       ts.groupPublicKey.Marshal(),
 		GroupPrivateKeyShare: ts.groupPrivateKeyShare.String(),
 		GroupPublicKeyShares: marshalGroupPublicKeyShares(ts.groupPublicKeyShares),
+		GroupOperators:       marshalGroupOperators(ts.groupOperators),
 	}).Marshal()
 }
 
@@ -26,6 +29,16 @@ func marshalGroupPublicKeyShares(
 
 	for id, share := range shares {
 		marshalled[uint32(id)] = share.Marshal()
+	}
+
+	return marshalled
+}
+
+func marshalGroupOperators(groupOperators []chain.Address) []string {
+	marshalled := make([]string, len(groupOperators))
+
+	for index := range marshalled {
+		marshalled[index] = groupOperators[index].String()
 	}
 
 	return marshalled
@@ -61,6 +74,7 @@ func (ts *ThresholdSigner) Unmarshal(bytes []byte) error {
 	ts.groupPublicKey = groupPublicKey
 	ts.groupPrivateKeyShare = privateKeyShare
 	ts.groupPublicKeyShares = groupPublicKeyShares
+	ts.groupOperators = unmarshalGroupOperators(pbThresholdSigner.GetGroupOperators())
 
 	return nil
 }
@@ -81,4 +95,14 @@ func unmarshalGroupPublicKeyShares(
 	}
 
 	return unmarshalled, nil
+}
+
+func unmarshalGroupOperators(groupOperators []string) []chain.Address {
+	unmarshalled := make([]chain.Address, len(groupOperators))
+
+	for index := range unmarshalled {
+		unmarshalled[index] = chain.Address(groupOperators[index])
+	}
+
+	return unmarshalled
 }

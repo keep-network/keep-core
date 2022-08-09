@@ -4,11 +4,13 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/keep-network/keep-core/pkg/chain"
+
 	"math/big"
 
 	bn256 "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
-	"github.com/keep-network/keep-core/pkg/beacon/group"
 	"github.com/keep-network/keep-core/pkg/internal/pbutils"
+	"github.com/keep-network/keep-core/pkg/protocol/group"
 )
 
 func TestThresholdSignerRoundtrip(t *testing.T) {
@@ -20,6 +22,7 @@ func TestThresholdSignerRoundtrip(t *testing.T) {
 			group.MemberIndex(1): new(bn256.G2).ScalarBaseMult(big.NewInt(10)),
 			group.MemberIndex(2): new(bn256.G2).ScalarBaseMult(big.NewInt(11)),
 		},
+		groupOperators: []chain.Address{"address1", "address2"},
 	}
 
 	unmarshaled := &ThresholdSigner{}

@@ -2,10 +2,15 @@ package gen
 
 import (
 	_ "embed"
+	"strings"
 )
 
-//go:generate make download_artifacts
 //go:generate make
 
-//go:embed _address/Bridge
-var BridgeAddress string
+var (
+	//go:embed _address/Bridge
+	bridgeAddressFileContent string
+
+	// BridgeAddress is a Bridge contract's address read from the NPM package.
+	BridgeAddress string = strings.TrimSpace(bridgeAddressFileContent)
+)

@@ -31,31 +31,32 @@ export const dkgState = {
 }
 
 export const params = {
-  governanceDelay: 604800, // 1 week
+  governanceDelay: 604_800, // 1 week
   relayEntrySoftTimeout: 35,
   relayEntryHardTimeout: 100,
-  callbackGasLimit: 200000,
+  callbackGasLimit: 200_000,
   groupCreationFrequency: 10,
   groupLifetime: 5761, // 1 day in blocks assuming 15s block time
   dkgResultChallengePeriodLength: 100,
+  dkgResultChallengeExtraGas: 50_000,
   dkgResultSubmissionTimeout: 30,
   dkgSubmitterPrecedencePeriodLength: 5,
-  sortitionPoolRewardsBanDuration: 1209600, // 2 weeks
+  sortitionPoolRewardsBanDuration: 1_209_600, // 2 weeks
   relayEntrySubmissionFailureSlashingAmount: to1e18(1000),
-  maliciousDkgResultSlashingAmount: to1e18(50000),
+  maliciousDkgResultSlashingAmount: to1e18(50_000),
   relayEntryTimeoutNotificationRewardMultiplier: 40,
   unauthorizedSigningNotificationRewardMultiplier: 50,
   dkgMaliciousResultNotificationRewardMultiplier: 100,
-  unauthorizedSigningSlashingAmount: to1e18(100000),
-  minimumAuthorization: to1e18(200000),
-  authorizationDecreaseDelay: 403200,
-  authorizationDecreaseChangePeriod: 403200,
-  reimbursementPoolStaticGas: 40800,
+  unauthorizedSigningSlashingAmount: to1e18(100_000),
+  minimumAuthorization: to1e18(200_000),
+  authorizationDecreaseDelay: 403_200,
+  authorizationDecreaseChangePeriod: 403_200,
+  reimbursementPoolStaticGas: 40_800,
   reimbursementPoolMaxGasPrice: ethers.utils.parseUnits("500", "gwei"),
-  dkgResultSubmissionGas: 235000,
-  dkgResultApprovalGasOffset: 41500,
-  notifyOperatorInactivityGasOffset: 54500,
-  relayEntrySubmissionGasOffset: 11250,
+  dkgResultSubmissionGas: 237_650,
+  dkgResultApprovalGasOffset: 41_500,
+  notifyOperatorInactivityGasOffset: 54_500,
+  relayEntrySubmissionGasOffset: 11_250,
 }
 
 export interface DeployedContracts {

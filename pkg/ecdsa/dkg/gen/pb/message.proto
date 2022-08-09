@@ -1,0 +1,28 @@
+syntax = "proto3";
+
+option go_package = "pb";
+package dkg;
+
+message EphemeralPublicKeyMessage {
+    uint32 senderID = 1;
+    map<uint32, bytes> ephemeralPublicKeys = 2;
+}
+
+message TSSRoundOneMessage {
+    uint32 senderID = 1;
+    bytes payload = 2;
+    string sessionID = 3;
+}
+
+message TSSRoundTwoMessage {
+    uint32 senderID = 1;
+    bytes broadcastPayload = 2;
+    map<uint32, bytes> peersPayload = 3;
+    string sessionID = 4;
+}
+
+message TSSRoundThreeMessage {
+    uint32 senderID = 1;
+    bytes payload = 2;
+    string sessionID = 3;
+}
