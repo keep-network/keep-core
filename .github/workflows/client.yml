@@ -118,6 +118,8 @@ jobs:
           # We don't use TAG yet, will be added at later stages of work on RFC-18.
           tags: ${{ env.GCR_REGISTRY_URL }}/${{ env.GOOGLE_PROJECT_ID }}/${{ env.IMAGE_NAME }}
           labels: revision=${{ github.sha }}
+          build-args: |
+            ENVIRONMENT=${{ github.event.inputs.environment }}
           push: true
 
       - name: Notify CI about completion of the workflow
