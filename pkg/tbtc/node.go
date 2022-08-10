@@ -161,6 +161,9 @@ func (n *node) joinDKGIfEligible(seed *big.Int, startBlockNumber uint64) {
 					return
 				}
 
+				// TODO: Snapshot the key material before doing on-chain result
+				//       submission.
+
 				// TODO: Submit the result using the chain layer.
 
 				signingGroupPrivateKeyShare := result.PrivateKeyShare
