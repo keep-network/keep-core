@@ -181,6 +181,7 @@ contract WalletRegistry is
     event DkgParametersUpdated(
         uint256 seedTimeout,
         uint256 resultChallengePeriodLength,
+        uint256 resultChallengeExtraGas,
         uint256 resultSubmissionTimeout,
         uint256 resultSubmitterPrecedencePeriodLength
     );
@@ -297,7 +298,7 @@ contract WalletRegistry is
         // Authorization decrease delay is 45 days.
         //
         // Authorization decrease change period is 45 days. It means pending
-        // authorization decrease can be overwriten all the time.
+        // authorization decrease can be overwritten all the time.
         authorization.setMinimumAuthorization(40_000e18);
         authorization.setAuthorizationDecreaseDelay(3_888_000);
         authorization.setAuthorizationDecreaseChangePeriod(3_888_000);
@@ -332,6 +333,7 @@ contract WalletRegistry is
         dkg.init(sortitionPool, _ecdsaDkgValidator);
         dkg.setSeedTimeout(11_520);
         dkg.setResultChallengePeriodLength(11_520);
+        dkg.setResultChallengeExtraGas(50_000);
         dkg.setResultSubmissionTimeout(100 * 20);
         dkg.setSubmitterPrecedencePeriodLength(20);
 
@@ -526,11 +528,11 @@ contract WalletRegistry is
     /// @dev Can be called only by the contract guvnor, which should be the
     ///      wallet registry governance contract. The caller is responsible for
     ///      validating parameters.
-    /// @param _minimumAuthorization New minimum authorization amount
+    /// @param _minimumAuthorization New minimum authorization amount.
     /// @param _authorizationDecreaseDelay New authorization decrease delay in
-    ///        seconds
+    ///        seconds.
     /// @param _authorizationDecreaseChangePeriod New authorization decrease
-    ///        change period in seconds
+    ///        change period in seconds.
     function updateAuthorizationParameters(
         uint96 _minimumAuthorization,
         uint64 _authorizationDecreaseDelay,
@@ -557,18 +559,22 @@ contract WalletRegistry is
     ///      validating parameters.
     /// @param _seedTimeout New seed timeout.
     /// @param _resultChallengePeriodLength New DKG result challenge period
-    ///        length
-    /// @param _resultSubmissionTimeout New DKG result submission timeout
+    ///        length.
+    /// @param _resultChallengeExtraGas New extra gas value required to be left
+    ///        at the end of the DKG result challenge transaction.
+    /// @param _resultSubmissionTimeout New DKG result submission timeout.
     /// @param _submitterPrecedencePeriodLength New submitter precedence period
-    ///        length
+    ///        length.
     function updateDkgParameters(
         uint256 _seedTimeout,
         uint256 _resultChallengePeriodLength,
+        uint256 _resultChallengeExtraGas,
         uint256 _resultSubmissionTimeout,
         uint256 _submitterPrecedencePeriodLength
     ) external onlyGovernance {
         dkg.setSeedTimeout(_seedTimeout);
         dkg.setResultChallengePeriodLength(_resultChallengePeriodLength);
+        dkg.setResultChallengeExtraGas(_resultChallengeExtraGas);
         dkg.setResultSubmissionTimeout(_resultSubmissionTimeout);
         dkg.setSubmitterPrecedencePeriodLength(
             _submitterPrecedencePeriodLength
@@ -578,6 +584,7 @@ contract WalletRegistry is
         emit DkgParametersUpdated(
             _seedTimeout,
             _resultChallengePeriodLength,
+            _resultChallengeExtraGas,
             _resultSubmissionTimeout,
             _submitterPrecedencePeriodLength
         );
@@ -608,7 +615,7 @@ contract WalletRegistry is
     ///      wallet registry governance contract. The caller is responsible for
     ///      validating parameters.
     /// @param maliciousDkgResultSlashingAmount New malicious DKG result
-    ///        slashing amount
+    ///        slashing amount.
     function updateSlashingParameters(uint96 maliciousDkgResultSlashingAmount)
         external
         onlyGovernance
@@ -621,14 +628,14 @@ contract WalletRegistry is
     /// @dev Can be called only by the contract guvnor, which should be the
     ///      wallet registry governance contract. The caller is responsible for
     ///      validating parameters.
-    /// @param dkgResultSubmissionGas New DKG result submission gas
-    /// @param dkgResultApprovalGasOffset New DKG result approval gas offset
+    /// @param dkgResultSubmissionGas New DKG result submission gas.
+    /// @param dkgResultApprovalGasOffset New DKG result approval gas offset.
     /// @param notifyOperatorInactivityGasOffset New operator inactivity
-    ///        notification gas offset
+    ///        notification gas offset.
     /// @param notifySeedTimeoutGasOffset New seed for DKG delivery timeout
-    ///        notification gas offset
+    ///        notification gas offset.
     /// @param notifyDkgTimeoutNegativeGasOffset New DKG timeout notification gas
-    ///        offset
+    ///        offset.
     function updateGasParameters(
         uint256 dkgResultSubmissionGas,
         uint256 dkgResultApprovalGasOffset,
@@ -783,6 +790,12 @@ contract WalletRegistry is
     ///         invalid it reverts the DKG back to the result submission phase.
     /// @param dkgResult Result to challenge. Must match the submitted result
     ///        stored during `submitDkgResult`.
+    /// @dev Due to EIP-150 1/64 of the gas is not forwarded to the call, and
+    ///      will be kept to execute the remaining operations in the function
+    ///      after the call inside the try-catch. To eliminate a class of
+    ///      attacks related to the gas limit manipulation, this function
+    ///      requires an extra amount of gas to be left at the end of the
+    ///      execution.
     function challengeDkgResult(DKG.Result calldata dkgResult) external {
         (
             bytes32 maliciousDkgResultHash,
@@ -821,6 +834,17 @@ contract WalletRegistry is
                 maliciousDkgResultSubmitterAddress
             );
         }
+
+        // Due to EIP-150, 1/64 of the gas is not forwarded to the call, and
+        // will be kept to execute the remaining operations in the function
+        // after the call inside the try-catch.
+        //
+        // To ensure there is no way for the caller to manipulate gas limit in
+        // such a way that the call inside try-catch fails with out-of-gas and
+        // the rest of the function is executed with the remaining 1/64 of gas,
+        // we require an extra gas amount to be left at the end of the call to
+        // `challengeDkgResult`.
+        dkg.requireChallengeExtraGas();
     }
 
     /// @notice Notifies about operators who are inactive. Using this function,
@@ -838,10 +862,10 @@ contract WalletRegistry is
     ///         function and provide new signatures.
     ///         The sender of the claim must be one of the claim signers. This
     ///         function can be called only for registered wallets
-    /// @param claim Operator inactivity claim
+    /// @param claim Operator inactivity claim.
     /// @param nonce Current inactivity claim nonce for the given wallet signing
-    ///              group. Must be the same as the stored one
-    /// @param groupMembers Identifiers of the wallet signing group members
+    ///              group. Must be the same as the stored one.
+    /// @param groupMembers Identifiers of the wallet signing group members.
     function notifyOperatorInactivity(
         Inactivity.Claim calldata claim,
         uint256 nonce,
@@ -899,12 +923,12 @@ contract WalletRegistry is
     ///         contract. The notifier will receive reward per each group member
     ///         from the staking contract notifiers treasury. The reward is
     ///         scaled by the `rewardMultiplier` provided as a parameter.
-    /// @param amount Amount of tokens to seize from each signing group member
+    /// @param amount Amount of tokens to seize from each signing group member.
     /// @param rewardMultiplier Fraction of the staking contract notifiers
-    ///        reward the notifier should receive; should be between [0, 100]
-    /// @param notifier Address of the misbehavior notifier
-    /// @param walletID ID of the wallet
-    /// @param walletMembersIDs Identifiers of the wallet signing group members
+    ///        reward the notifier should receive; should be between [0, 100].
+    /// @param notifier Address of the misbehavior notifier.
+    /// @param walletID ID of the wallet.
+    /// @param walletMembersIDs Identifiers of the wallet signing group members.
     /// @dev Requirements:
     ///      - The expression `keccak256(abi.encode(walletMembersIDs))` must
     ///        be exactly the same as the hash stored under `membersIdsHash`
@@ -967,11 +991,11 @@ contract WalletRegistry is
 
     /// @notice Checks whether the given operator is a member of the given
     ///         wallet signing group.
-    /// @param walletID ID of the wallet
-    /// @param walletMembersIDs Identifiers of the wallet signing group members
-    /// @param operator Address of the checked operator
+    /// @param walletID ID of the wallet.
+    /// @param walletMembersIDs Identifiers of the wallet signing group members.
+    /// @param operator Address of the checked operator.
     /// @param walletMemberIndex Position of the operator in the wallet signing
-    ///        group members list
+    ///        group members list.
     /// @return True - if the operator is a member of the given wallet signing
     ///         group. False - otherwise.
     /// @dev Requirements:
@@ -1173,7 +1197,7 @@ contract WalletRegistry is
     ///         delay end, during which the pending authorization decrease
     ///         request can be overwritten.
     ///         If set to 0, pending authorization decrease request can not be
-    ///         overwritten until the endire `authorizationDecreaseDelay` ends.
+    ///         overwritten until the entire `authorizationDecreaseDelay` ends.
     ///         If set to value equal `authorizationDecreaseDelay`, request can
     ///         always be overwritten.
     function authorizationParameters()
@@ -1241,7 +1265,7 @@ contract WalletRegistry is
     ///         call the DKG approve function.
     /// @return dkgResultApprovalGasOffset Gas that is meant to balance the DKG
     ///         result approval's overall cost. It can be updated by the
-    ///         governace based on the current market conditions.
+    ///         governance based on the current market conditions.
     /// @return notifyOperatorInactivityGasOffset Gas that is meant to balance
     ///         the notification of an operator inactivity. It can be updated by
     ///         the governance based on the current market conditions.

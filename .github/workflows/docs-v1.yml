@@ -1,4 +1,4 @@
-name: Docs
+name: Docs v1
 
 on:
   push:
@@ -17,7 +17,7 @@ jobs:
     outputs:
       path-filter: ${{ steps.filter.outputs.path-filter }}
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         if: github.event_name == 'pull_request' 
       - uses: dorny/paths-filter@v2
         if: github.event_name == 'pull_request' 
@@ -40,7 +40,7 @@ jobs:
     env:
       DOCS_DIR: ${{ github.workspace }}/tmp/docs-v1
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
       # Step generates files based on Makefile config. Current config produces
       # a number of .png files, which are then used to generate 
@@ -83,7 +83,7 @@ jobs:
     env:
       SOLIDITY_DOCS_DIR: ${{ github.workspace }}/docs-v1/solidity-v1
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
       - name: Generate solidity docs
         working-directory: ./solidity-v1
@@ -107,7 +107,7 @@ jobs:
         && (github.event_name != 'pull_request'
         || needs.docs-detect-changes.outputs.path-filter == 'true')
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
       - name: Download Solidity Docs Artifact
         uses: actions/download-artifact@v2
@@ -153,7 +153,7 @@ jobs:
         && (github.event_name != 'pull_request'
         || needs.docs-detect-changes.outputs.path-filter == 'true')
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
       - name: Download a Build Artifact
         uses: actions/download-artifact@v2

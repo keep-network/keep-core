@@ -43,7 +43,7 @@ jobs:
     outputs:
       path-filter: ${{ steps.filter.outputs.path-filter }}
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         if: github.event_name == 'pull_request'
 
       - uses: dorny/paths-filter@v2
@@ -64,9 +64,9 @@ jobs:
       run:
         working-directory: ./solidity/random-beacon
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
-      - uses: actions/setup-node@v2
+      - uses: actions/setup-node@v3
         with:
           node-version: "14.x"
           cache: "yarn"
@@ -91,9 +91,9 @@ jobs:
       run:
         working-directory: ./solidity/random-beacon
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
-      - uses: actions/setup-node@v2
+      - uses: actions/setup-node@v3
         with:
           node-version: "14.x"
           cache: "yarn"
@@ -132,9 +132,9 @@ jobs:
       run:
         working-directory: ./solidity/random-beacon
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
-      - uses: actions/setup-node@v2
+      - uses: actions/setup-node@v3
         with:
           node-version: "14.x"
           cache: "yarn"
@@ -160,9 +160,9 @@ jobs:
       run:
         working-directory: ./solidity/random-beacon
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
-      - uses: actions/setup-node@v2
+      - uses: actions/setup-node@v3
         with:
           node-version: "14.x"
           cache: "yarn"
@@ -174,6 +174,13 @@ jobs:
       - name: Deploy contracts
         run: yarn deploy:test
 
+      - name: Build Docker Image
+        uses: ./.github/actions/docker-build-push
+        with:
+          imageName: keep-random-beacon-hardhat
+          context: ./solidity/random-beacon
+          push: false
+
   contracts-deployment-testnet:
     needs: [contracts-build-and-test]
     if: |
@@ -184,9 +191,9 @@ jobs:
       run:
         working-directory: ./solidity/random-beacon
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
-      - uses: actions/setup-node@v2
+      - uses: actions/setup-node@v3
         with:
           node-version: "14.x"
           cache: "yarn"
@@ -202,12 +209,12 @@ jobs:
         with:
           upstream-builds: ${{ github.event.inputs.upstream_builds }}
           query: |
-            solidity-contracts-version = github.com/threshold-network/solidity-contracts#version
+            threshold-contracts-version = github.com/threshold-network/solidity-contracts#version
 
       - name: Resolve latest contracts
         run: |
           yarn upgrade \
-            @threshold-network/solidity-contracts@${{ steps.upstream-builds-query.outputs.solidity-contracts-version }} \
+            @threshold-network/solidity-contracts@${{ steps.upstream-builds-query.outputs.threshold-contracts-version }} \
             @keep-network/sortition-pools
 
       - name: Configure tenderly
@@ -235,12 +242,21 @@ jobs:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: npm publish --access=public --tag ${{ github.event.inputs.environment }} --network=${{ github.event.inputs.environment }}
 
+      - name: Build and Publish Docker image
+        uses: ./.github/actions/docker-build-push
+        with:
+          environment: ${{ github.event.inputs.environment }}
+          imageName: keep-random-beacon-hardhat
+          context: ./solidity/random-beacon
+          push: true
+          gcrJsonKey: ${{ secrets.KEEP_TEST_GCR_JSON_KEY }}
+
       - name: Notify CI about completion of the workflow
         uses: keep-network/ci/actions/notify-workflow-completed@v2
         env:
           GITHUB_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
         with:
-          module: "github.com/keep-network/keep-core/solidity/random-beacon"
+          module: "github.com/keep-network/keep-core/random-beacon"
           url: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
           environment: ${{ github.event.inputs.environment }}
           upstream_builds: ${{ github.event.inputs.upstream_builds }}
@@ -269,6 +285,7 @@ jobs:
         uses: actions/download-artifact@v2
         with:
           name: Artifacts for etherscan verifcation
+          path: ./solidity/random-beacon
 
       - uses: actions/setup-node@v2
         with:
@@ -279,13 +296,11 @@ jobs:
       - name: Install needed dependencies
         run: yarn install --frozen-lockfile
 
-      # If we don't remove the contracts from `node-modules`, the
+      # If we don't remove the artifacts from `node-modules`, the
       # `etherscan-verify` plugins tries to verify them, which is not desired.
       - name: Prepare for verification on Etherscan
         run: |
-          rm -rf ./node_modules/@keep-network/keep-core
-          rm -rf ./node_modules/@keep-network/sortition-pools
-          rm -rf ./node_modules/@threshold-network/solidity-contracts
+          rm -rf ./node_modules/@threshold-network/solidity-contracts/artifacts
           rm -rf ./external/npm
 
       - name: Verify contracts on Etherscan
@@ -294,7 +309,7 @@ jobs:
           CHAIN_API_URL: ${{ secrets.GOERLI_ETH_HOSTNAME_HTTP }}
         run: |
           yarn run hardhat --network ${{ github.event.inputs.environment }} \
-            etherscan-verify --license GPL-3.0 --force-license
+            etherscan-verify
 
   # This job is responsible for publishing packackes with slightly modified
   # contracts. The modifications are there to help with the process of testing
