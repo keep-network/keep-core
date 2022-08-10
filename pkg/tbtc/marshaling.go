@@ -10,8 +10,16 @@ import (
 	"github.com/keep-network/keep-core/pkg/tecdsa"
 )
 
+var errIncompatiblePublicKey = fmt.Errorf(
+	"public key is not tECDSA compatible and will cause unmarshaling error",
+)
+
 // Marshal converts the signer to a byte array.
 func (s *signer) Marshal() ([]byte, error) {
+	if s.wallet.publicKey.Curve.Params().Name != tecdsa.Curve.Params().Name {
+		return nil, errIncompatiblePublicKey
+	}
+
 	walletPublicKey := elliptic.Marshal(
 		s.wallet.publicKey.Curve,
 		s.wallet.publicKey.X,

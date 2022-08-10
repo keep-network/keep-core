@@ -2,9 +2,11 @@ package tbtc
 
 import (
 	"crypto/ecdsa"
+	"crypto/elliptic"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/internal/pbutils"
 	"github.com/keep-network/keep-core/pkg/internal/tecdsatest"
+	"github.com/keep-network/keep-core/pkg/internal/testutils"
 	"github.com/keep-network/keep-core/pkg/protocol/group"
 	"github.com/keep-network/keep-core/pkg/tecdsa"
 	"reflect"
@@ -22,6 +24,23 @@ func TestSignerMarshalling(t *testing.T) {
 	if !reflect.DeepEqual(marshaled, unmarshaled) {
 		t.Fatal("unexpected content of unmarshaled signer")
 	}
+}
+
+func TestSignerMarshalling_NonTECDSAKey(t *testing.T) {
+	signer := sampleSigner(t)
+
+	p256 := elliptic.P256()
+
+	// Use a non-secp256k1 based key to cause the expected failure.
+	signer.wallet.publicKey = &ecdsa.PublicKey{
+		Curve: p256,
+		X:     p256.Params().Gx,
+		Y:     p256.Params().Gy,
+	}
+
+	_, err := signer.Marshal()
+
+	testutils.AssertErrorsSame(t, errIncompatiblePublicKey, err)
 }
 
 func sampleSigner(t *testing.T) *signer {
@@ -49,7 +68,7 @@ func sampleSigner(t *testing.T) *signer {
 	privateKeyShare := tecdsa.NewPrivateKeyShare(share)
 
 	marshaled := &signer{
-		wallet:                  wallet{
+		wallet: wallet{
 			publicKey:             walletPublicKey,
 			signingGroupOperators: walletSigningGroupOperators,
 		},
