@@ -99,7 +99,7 @@ jobs:
           cache: "yarn"
           cache-dependency-path: solidity/ecdsa/yarn.lock
 
-      - uses: actions/setup-python@v2
+      - uses: actions/setup-python@v4
         with:
           python-version: 3.8.5
 
@@ -268,7 +268,7 @@ jobs:
           version: ${{ steps.npm-version-bump.outputs.version }}
 
       - name: Upload files needed for etherscan verification
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: Artifacts for etherscan verifcation
           path: |
@@ -283,15 +283,15 @@ jobs:
       run:
         working-directory: ./solidity/ecdsa
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
       - name: Download files needed for etherscan verification
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v3
         with:
           name: Artifacts for etherscan verifcation
           path: ./solidity/ecdsa
 
-      - uses: actions/setup-node@v2
+      - uses: actions/setup-node@v3
         with:
           node-version: "14.x"
           cache: "yarn"
@@ -331,9 +331,9 @@ jobs:
       run:
         working-directory: ./solidity/ecdsa
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
-      - uses: actions/setup-node@v2
+      - uses: actions/setup-node@v3
         with:
           node-version: "14.x"
           cache: "yarn"

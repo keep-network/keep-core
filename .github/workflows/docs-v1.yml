@@ -94,7 +94,7 @@ jobs:
           node scripts/generate-api-docs.js > $SOLIDITY_DOCS_DIR/index.adoc
 
       - name: Upload Solidity Docs Artifact
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: Solidity Docs
           path: ${{ env.SOLIDITY_DOCS_DIR }}/index.adoc
@@ -110,7 +110,7 @@ jobs:
       - uses: actions/checkout@v3
 
       - name: Download Solidity Docs Artifact
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v3
         continue-on-error: true
         with:
           name: Solidity Docs
@@ -156,7 +156,7 @@ jobs:
       - uses: actions/checkout@v3
 
       - name: Download a Build Artifact
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v3
         continue-on-error: true
         with:
           name: Solidity Docs
