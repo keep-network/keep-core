@@ -9,8 +9,19 @@ import (
 	"math/big"
 )
 
+// ErrIncompatiblePublicKey indicates that the given public key is not
+// compatible with the tECDSA, i.e. uses a different elliptic curve.
+// Such a key cannot be marshalled and unmarshalled.
+var ErrIncompatiblePublicKey = fmt.Errorf(
+	"public key is not tECDSA compatible and will cause unmarshaling error",
+)
+
 // Marshal converts the PrivateKeyShare to a byte array.
 func (pks *PrivateKeyShare) Marshal() ([]byte, error) {
+	if pks.PublicKey().Curve.Params().Name != Curve.Params().Name {
+		return nil, ErrIncompatiblePublicKey
+	}
+
 	localPreParams := &pb.LocalPartySaveData_LocalPreParams{
 		PaillierSK: &pb.LocalPartySaveData_LocalPreParams_PrivateKey{
 			PublicKey: pks.data.LocalPreParams.PaillierSK.PublicKey.N.Bytes(),
