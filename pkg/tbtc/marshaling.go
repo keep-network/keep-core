@@ -93,7 +93,7 @@ func (s *signer) Unmarshal(bytes []byte) error {
 		return fmt.Errorf("cannot unmarshal private key share: [%w]", err)
 	}
 
-	s.wallet = wallet
+	s.wallet = *wallet
 	s.signingGroupMemberIndex = group.MemberIndex(pbSigner.SigningGroupMemberIndex)
 	s.privateKeyShare = privateKeyShare
 

@@ -29,7 +29,7 @@ type wallet struct {
 // signing process.
 type signer struct {
 	// wallet points to the tBTC wallet this signer belongs to.
-	wallet *wallet
+	wallet wallet
 
 	// signingGroupMemberIndex indicates the signer position (seat) in the
 	// wallet signing group. The value of this index is in the [1, groupSize]
@@ -48,7 +48,7 @@ func newSigner(
 	signingGroupMemberIndex group.MemberIndex,
 	privateKeyShare *tecdsa.PrivateKeyShare,
 ) *signer {
-	wallet := &wallet{
+	wallet := wallet{
 		publicKey:             walletPublicKey,
 		signingGroupOperators: walletSigningGroupOperators,
 	}

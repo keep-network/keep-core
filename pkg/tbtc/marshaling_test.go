@@ -74,8 +74,10 @@ func sampleSigner(t *testing.T) *signer {
 
 	privateKeyShare := tecdsa.NewPrivateKeyShare(testData[0])
 
+	wallet := sampleWallet()
+
 	marshaled := &signer{
-		wallet:                  sampleWallet(),
+		wallet:                  *wallet,
 		signingGroupMemberIndex: group.MemberIndex(1),
 		privateKeyShare:         privateKeyShare,
 	}
