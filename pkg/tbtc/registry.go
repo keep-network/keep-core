@@ -95,7 +95,8 @@ func newWalletStorage(persistence persistence.Handle) *walletStorage {
 }
 
 // saveSigner saves the given signer using the underlying persistence layer
-// of the walletStorage.
+// of the walletStorage. It does not add the signer to any in-memory cache
+// and should not be called from any other place than walletRegistry.
 func (ws *walletStorage) saveSigner(signer *signer) error {
 	signerBytes, err := signer.Marshal()
 	if err != nil {
@@ -119,6 +120,7 @@ func (ws *walletStorage) saveSigner(signer *signer) error {
 }
 
 // loadSigners loads all signers stored using the underlying persistence layer.
+// This function should not be called from any other place than walletRegistry.
 func (ws *walletStorage) loadSigners() map[string][]*signer {
 	signersByWallet := make(map[string][]*signer)
 
