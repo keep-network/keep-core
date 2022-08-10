@@ -86,7 +86,7 @@ printf "${LOG_START}Starting installation...${LOG_END}"
 
 printf "Network: $NETWORK\n"
 
-printf "${LOG_WARNING_START}Make sure you have at least ${RECOMMENDED_ACCOUNTS_NUMBER} accounts${LOG_WARNING_END}"
+printf "${LOG_WARNING_START}Make sure you have at least ${RECOMMENDED_ACCOUNTS_NUMBER} ethereum accounts${LOG_WARNING_END}"
 
 cd $KEEP_BEACON_SOL_PATH
 
