@@ -99,7 +99,7 @@ contract RandomBeaconGovernance is Ownable {
     uint256 public newRelayEntrySubmissionGasOffset;
     uint256 public relayEntrySubmissionGasOffsetChangeInitiated;
 
-    RandomBeacon public randomBeacon;
+    RandomBeacon public immutable randomBeacon;
 
     uint256 public governanceDelay;
 
