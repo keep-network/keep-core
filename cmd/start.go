@@ -90,12 +90,12 @@ func start(cmd *cobra.Command) error {
 
 	nodeHeader(netProvider.ConnectionManager().AddrStrings(), clientConfig.LibP2P.Port)
 
-	beaconPersistence, err := initializePersistence(clientConfig, beacon.ProtocolName)
+	beaconPersistence, err := initializePersistence(clientConfig, "beacon")
 	if err != nil {
 		return fmt.Errorf("cannot initialize beacon persistence: [%w]", err)
 	}
 
-	tbtcPersistence, err := initializePersistence(clientConfig, tbtc.ProtocolName)
+	tbtcPersistence, err := initializePersistence(clientConfig, "tbtc")
 	if err != nil {
 		return fmt.Errorf("cannot initialize tbtc persistence: [%w]", err)
 	}
