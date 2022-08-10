@@ -125,6 +125,10 @@ spec:
         - $(KEEP_CLIENT_ETH_ADDRESS)
         - --operator
         - $(KEEP_CLIENT_ETH_ADDRESS)
+        - --amount
+        - "800000"
+        - --authorization
+        - "800000"
 ---
 apiVersion: v1
 kind: Service
@@ -282,6 +286,10 @@ spec:
         - $(KEEP_CLIENT_ETH_ADDRESS)
         - --operator
         - $(KEEP_CLIENT_ETH_ADDRESS)
+        - --amount
+        - "800000"
+        - --authorization
+        - "800000"
 ---
 apiVersion: v1
 kind: Service
@@ -439,6 +447,10 @@ spec:
         - $(KEEP_CLIENT_ETH_ADDRESS)
         - --operator
         - $(KEEP_CLIENT_ETH_ADDRESS)
+        - --amount
+        - "800000"
+        - --authorization
+        - "800000"
 ---
 apiVersion: v1
 kind: Service
@@ -596,6 +608,10 @@ spec:
         - $(KEEP_CLIENT_ETH_ADDRESS)
         - --operator
         - $(KEEP_CLIENT_ETH_ADDRESS)
+        - --amount
+        - "800000"
+        - --authorization
+        - "800000"
 ---
 apiVersion: v1
 kind: Service
@@ -753,6 +769,10 @@ spec:
         - $(KEEP_CLIENT_ETH_ADDRESS)
         - --operator
         - $(KEEP_CLIENT_ETH_ADDRESS)
+        - --amount
+        - "800000"
+        - --authorization
+        - "800000"
 ---
 apiVersion: v1
 kind: Service
@@ -910,6 +930,10 @@ spec:
         - $(KEEP_CLIENT_ETH_ADDRESS)
         - --operator
         - $(KEEP_CLIENT_ETH_ADDRESS)
+        - --amount
+        - "800000"
+        - --authorization
+        - "800000"
 ---
 apiVersion: v1
 kind: Service
@@ -1067,6 +1091,10 @@ spec:
         - $(KEEP_CLIENT_ETH_ADDRESS)
         - --operator
         - $(KEEP_CLIENT_ETH_ADDRESS)
+        - --amount
+        - "800000"
+        - --authorization
+        - "800000"
 ---
 apiVersion: v1
 kind: Service
@@ -1224,6 +1252,10 @@ spec:
         - $(KEEP_CLIENT_ETH_ADDRESS)
         - --operator
         - $(KEEP_CLIENT_ETH_ADDRESS)
+        - --amount
+        - "800000"
+        - --authorization
+        - "800000"
 ---
 apiVersion: v1
 kind: Service
@@ -1381,6 +1413,10 @@ spec:
         - $(KEEP_CLIENT_ETH_ADDRESS)
         - --operator
         - $(KEEP_CLIENT_ETH_ADDRESS)
+        - --amount
+        - "800000"
+        - --authorization
+        - "800000"
 ---
 apiVersion: v1
 kind: Service
@@ -1538,6 +1574,10 @@ spec:
         - $(KEEP_CLIENT_ETH_ADDRESS)
         - --operator
         - $(KEEP_CLIENT_ETH_ADDRESS)
+        - --amount
+        - "800000"
+        - --authorization
+        - "800000"
 ---
 apiVersion: v1
 kind: Service

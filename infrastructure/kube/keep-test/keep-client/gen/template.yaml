@@ -124,17 +124,22 @@ spec:
                   name: eth-account-info
                   key: #@ account() + "-address"
           args:
-            [
-              "initialize",
-              "--network",
-              "goerli",
-              "--owner",
-              "$(KEEP_CLIENT_ETH_ADDRESS)",
-              "--provider",
-              "$(KEEP_CLIENT_ETH_ADDRESS)",
-              "--operator",
-              "$(KEEP_CLIENT_ETH_ADDRESS)",
-            ]
+            - "initialize"
+            - "--network"
+            - "goerli"
+            - "--owner"
+            - "$(KEEP_CLIENT_ETH_ADDRESS)"
+            - "--provider"
+            - "$(KEEP_CLIENT_ETH_ADDRESS)"
+            - "--operator"
+            - "$(KEEP_CLIENT_ETH_ADDRESS)"
+            #@ if client.stakeAmount:
+            - "--amount"
+            -  #@ str(client.stakeAmount)
+            - "--authorization"
+            -  #@ str(client.stakeAmount)
+            #@ end
+
             #! TODO: Ensure the KEEP_CLIENT_ETH_ADDRESS is funded with ether.
 ---
 apiVersion: v1
