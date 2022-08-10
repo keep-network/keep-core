@@ -23,6 +23,11 @@ async function main() {
   )
   const merkleDist = stakingRewards.genMerkleDist(merkleInput)
 
+  fs.mkdir(distribution_path, (err) => {
+    if (err) {
+      return console.error(err)
+    }
+  })
   fs.writeFileSync(
     distribution_path + "/MerkleInputOngoingRewards.json",
     JSON.stringify(ongoingRewards, null, 4)
