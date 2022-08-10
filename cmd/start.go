@@ -90,20 +90,21 @@ func start(cmd *cobra.Command) error {
 
 	nodeHeader(netProvider.ConnectionManager().AddrStrings(), clientConfig.LibP2P.Port)
 
-	handle, err := persistence.NewDiskHandle(clientConfig.Storage.DataDir)
+	beaconPersistence, err := initializePersistence(clientConfig, "beacon")
 	if err != nil {
-		return fmt.Errorf("failed while creating a storage disk handler: [%v]", err)
+		return fmt.Errorf("cannot initialize beacon persistence: [%w]", err)
 	}
-	encryptedPersistence := persistence.NewEncryptedPersistence(
-		handle,
-		clientConfig.Ethereum.Account.KeyFilePassword,
-	)
+
+	tbtcPersistence, err := initializePersistence(clientConfig, "tbtc")
+	if err != nil {
+		return fmt.Errorf("cannot initialize tbtc persistence: [%w]", err)
+	}
 
 	err = beacon.Initialize(
 		ctx,
 		beaconChain,
 		netProvider,
-		encryptedPersistence,
+		beaconPersistence,
 	)
 	if err != nil {
 		return fmt.Errorf("error initializing beacon: [%v]", err)
@@ -113,7 +114,7 @@ func start(cmd *cobra.Command) error {
 		ctx,
 		tbtcChain,
 		netProvider,
-		nil, // TODO: Pass a proper persistence handle.
+		tbtcPersistence,
 	)
 	if err != nil {
 		return fmt.Errorf("error initializing TBTC: [%v]", err)
@@ -130,6 +131,27 @@ func start(cmd *cobra.Command) error {
 
 		return fmt.Errorf("uh-oh, we went boom boom for no reason")
 	}
+}
+
+func initializePersistence(clientConfig *config.Config, application string) (
+	persistence.Handle,
+	error,
+) {
+	path := fmt.Sprintf("%s/%s", clientConfig.Storage.DataDir, application)
+
+	diskHandle, err := persistence.NewDiskHandle(path)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"cannot create [%v] disk handle: [%w]",
+			application,
+			err,
+		)
+	}
+
+	return persistence.NewEncryptedPersistence(
+		diskHandle,
+		clientConfig.Ethereum.Account.KeyFilePassword,
+	), nil
 }
 
 func initializeMetrics(
