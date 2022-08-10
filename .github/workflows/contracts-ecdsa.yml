@@ -185,9 +185,10 @@ jobs:
 
   contracts-deployment-testnet:
     needs: [contracts-build-and-test]
+    # TODO: Remove ` && github.ref != 'refs/heads/ci-dapp-dev-test'` befpre merge to main
     if: |
       github.event_name == 'workflow_dispatch'
-        && github.ref != 'refs/heads/dapp-development'
+        && github.ref != 'refs/heads/dapp-development' && github.ref != 'refs/heads/ci-dapp-dev-test'
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -323,9 +324,10 @@ jobs:
   # `dapp-development`.
   contracts-dapp-development-deployment-testnet:
     needs: [contracts-build-and-test]
+    # TODO: Remove ` || github.ref == 'refs/heads/ci-dapp-dev-test'` before merge to main
     if: |
       github.event_name == 'workflow_dispatch'
-        && github.ref == 'refs/heads/dapp-development'
+        && (github.ref == 'refs/heads/dapp-development' || github.ref == 'refs/heads/ci-dapp-dev-test')
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -384,7 +386,8 @@ jobs:
         uses: ./.github/actions/docker-build-push
         with:
           environment: ${{ github.event.inputs.environment }}
-          imageName: keep-ecdsa-hardhat-dapp-dev
+          # TODO: remove `-wip` suffix before merge to main
+          imageName: keep-ecdsa-hardhat-dapp-dev-wip
           context: ./solidity/ecdsa
           push: true
           gcrJsonKey: ${{ secrets.KEEP_TEST_GCR_JSON_KEY }}
