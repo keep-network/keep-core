@@ -124,6 +124,12 @@ func (ws *walletStorage) loadSigners() map[string][]*signer {
 
 	descriptorsChan, errorsChan := ws.persistence.ReadAll()
 
+	// Two goroutines read from descriptors and errors channels and either
+	// add the signer to the result map or outputs a log error.
+	// The reason for using two goroutines at the same time - one for
+	// descriptors and one for errors - is that channels do not have to be
+	// buffered, and we do not know in what order the information is written to
+	// channels.
 	var wg sync.WaitGroup
 	wg.Add(2)
 
