@@ -121,7 +121,7 @@ initialize="npx hardhat initialize
 # go to ecdsa
 cd $KEEP_ECDSA_SOL_PATH
 
-# Initalization for beacon and ecdsa can be executed from ecdsa, because in
+# Initialization for beacon and ecdsa can be executed from ecdsa, because in
 # the current version of ecdsa's task:initialize handles both applications.
 eval ${initialize} ${stake_amount_opt} ${authorization_amount_opt}
 
