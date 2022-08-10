@@ -988,18 +988,19 @@ func TestTssFinalize(t *testing.T) {
 
 	// Assert that each member has a correct state.
 	for _, member := range members {
+		if member.Result().PrivateKeyShare == nil {
+			t.Fatalf(
+				"member [%v] has not produced a private key share",
+				member.id,
+			)
+		}
+
 		groupPublicKey := member.Result().PrivateKeyShare.PublicKey()
+
 		groupPublicKeyBytes := elliptic.Marshal(
 			groupPublicKey.Curve,
 			groupPublicKey.X,
 			groupPublicKey.Y,
-		)
-
-		testutils.AssertIntsEqual(
-			t,
-			"length of the group public key",
-			65,
-			len(groupPublicKeyBytes),
 		)
 
 		groupPublicKeys[hex.EncodeToString(groupPublicKeyBytes)] = true
