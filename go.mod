@@ -16,7 +16,7 @@ require (
 	github.com/ipfs/go-ipfs-config v0.16.0
 	github.com/ipfs/go-log v1.0.5
 	github.com/jbenet/goprocess v0.1.4
-	github.com/keep-network/keep-common v1.7.1-0.20220801100557-fa6fbdfeb792
+	github.com/keep-network/keep-common v1.7.1-0.20220809113029-7f46d29d4eaa
 	github.com/libp2p/go-addr-util v0.2.0
 	github.com/libp2p/go-libp2p v0.20.1
 	github.com/libp2p/go-libp2p-core v0.16.1

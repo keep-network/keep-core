@@ -86,7 +86,7 @@ contract WalletRegistryGovernance is Ownable {
     address payable public newReimbursementPool;
     uint256 public reimbursementPoolChangeInitiated;
 
-    WalletRegistry public walletRegistry;
+    WalletRegistry public immutable walletRegistry;
 
     uint256 public governanceDelay;
 

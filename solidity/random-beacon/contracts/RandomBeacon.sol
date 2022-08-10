@@ -392,7 +392,7 @@ contract RandomBeacon is IRandomBeacon, IApplication, Governable, Reimbursable {
         // Authorization decrease delay is 45 days.
         //
         // Authorization decrease change period is 45 days. It means pending
-        // authorization decrease can be overwriten all the time.
+        // authorization decrease can be overwritten all the time.
         authorization.setParameters(40_000e18, 3_888_000, 3_888_000);
 
         // Malicious DKG result slashing amount is set initially to 1% of the
@@ -443,7 +443,7 @@ contract RandomBeacon is IRandomBeacon, IApplication, Governable, Reimbursable {
         // In practice, it should take about 48 hours (just the challenge time).
         dkg.setParameters(11_520, 50_000, 1_280, 20);
 
-        // Relay entry soft timeot gives each of 64 members 20 blocks to submit
+        // Relay entry soft timeout gives each of 64 members 20 blocks to submit
         // the result.
         //
         // Relay entry hard timeout is set to ~48h assuming 15s block time.
