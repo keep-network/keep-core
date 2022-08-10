@@ -1,22 +1,33 @@
+#@ load("@ytt:data", "data")
+
+#@ for client in data.values.clients:
+
+#@ def labels():
+app: keep
+type: client
+id: #@ str(client.id)
+network: goerli
+#@ end
+
+#@ def name():
+#@   return "keep-client-" + str(client.id)
+#@ end
+
+#@ def account():
+#@   return "account-" + str(client.id)
+#@ end
 ---
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
-  name: keep-client-0
+  name: #@ name()
   namespace: default
-  labels:
-    app: keep
-    type: client
-    id: "0"
-    network: goerli
+  labels: #@ labels()
 spec:
   replicas: 1
   selector:
-    matchLabels:
-      app: keep
-      type: client
-      id: "0"
-  serviceName: keep-client-0
+    matchLabels: #@ labels()
+  serviceName: #@ name()
   volumeClaimTemplates:
     - metadata:
         name: keep-client-data
@@ -27,11 +38,7 @@ spec:
             storage: 512Mi
   template:
     metadata:
-      labels:
-        app: keep
-        type: client
-        id: "0"
-        network: goerli
+      labels: #@ labels()
     spec:
       volumes:
         - name: keep-client-data
@@ -41,11 +48,11 @@ spec:
           configMap:
             name: eth-account-info
             items:
-              - key: account-0-keyfile
-                path: account-0-keyfile
+              - key: #@ account() + "-keyfile"
+                path: #@ account() + "-keyfile"
       containers:
         - name: keep-client
-          image: gcr.io/keep-test-f3e0/keep-client:latest
+          image: "gcr.io/keep-test-f3e0/keep-client:latest"
           imagePullPolicy: Always
           ports:
             - containerPort: 3919
@@ -54,8 +61,8 @@ spec:
               valueFrom:
                 secretKeyRef:
                   name: eth-account-passphrases
-                  key: account-0
-            # Read secret to env variable to use it as arg.
+                  key: #@ account()
+            #! Read secret to env variable to use it as arg.
             - name: ETH_WS_URL
               valueFrom:
                 secretKeyRef:
@@ -70,24 +77,25 @@ spec:
             - name: eth-account-keyfile
               mountPath: /mnt/keep-client/keyfile
           command: ["keep-client", "start"]
-          args: [
-              "--ethereum.url",
-              "$(ETH_WS_URL)",
-              "--ethereum.keyFile",
-              "/mnt/keep-client/keyfile/account-0-keyfile",
-              "--storage.dataDir",
-              "/mnt/keep-client/data",
-              "--network.port",
-              "3919",
-              "--network.announcedAddresses",
-              "/dns4/keep-client-0.default.svc.cluster.local/tcp/3919",
-              # "--network.peers",
-              # "/dns4/bootstrap-1.core.keep.test.boar.network/tcp/3001/ipfs/16Uiu2HAkuTUKNh6HkfvWBEkftZbqZHPHi3Kak5ZUygAxvsdQ2UgG",
-              "--metrics.port",
-              "9601",
-              "--diagnostics.port",
-              "9701",
-            ]
+          args:
+            - --ethereum.url
+            - $(ETH_WS_URL)
+            - "--ethereum.keyFile"
+            -  #@ "/mnt/keep-client/keyfile/" + account() + "-keyfile"
+            - "--storage.dataDir"
+            - "/mnt/keep-client/data"
+            - "--network.port"
+            - "3919"
+            - "--network.announcedAddresses"
+            -  #@ "/dns4/" + name() + ".default.svc.cluster.local/tcp/3919"
+            #@ if client.networkPeers:
+            - "--network.peers"
+            -  #@ client.networkPeers
+            #@ end
+            - "--metrics.port"
+            - "9601"
+            - "--diagnostics.port"
+            - "9701"
       initContainers:
         - name: initcontainer
           image: gcr.io/keep-test-f3e0/keep-ecdsa-hardhat:latest
@@ -107,14 +115,14 @@ spec:
               valueFrom:
                 secretKeyRef:
                   name: eth-account-privatekeys
-                  key: account-0
+                  key: #@ account()
             - name: ACCOUNTS_PRIVATE_KEYS
               value: $(CONTRACT_OWNER_ETH_PRIVATE_KEY),$(KEEP_CLIENT_ETH_PRIVATE_KEY)
             - name: KEEP_CLIENT_ETH_ADDRESS
               valueFrom:
                 configMapKeyRef:
                   name: eth-account-info
-                  key: account-0-address
+                  key: #@ account() + "-address"
           args:
             [
               "initialize",
@@ -127,17 +135,14 @@ spec:
               "--operator",
               "$(KEEP_CLIENT_ETH_ADDRESS)",
             ]
-            # TODO: Ensure the KEEP_CLIENT_ETH_ADDRESS is funded with ether.
+            #! TODO: Ensure the KEEP_CLIENT_ETH_ADDRESS is funded with ether.
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: keep-client-0
+  name: #@ name()
   namespace: default
-  labels:
-    app: keep
-    type: client
-    id: "0"
+  labels: #@ labels()
 spec:
   type: LoadBalancer
   ports:
@@ -150,7 +155,5 @@ spec:
     - port: 9701
       targetPort: 9701
       name: tcp-9701
-  selector:
-    app: keep
-    type: client
-    id: "0"
+  selector: #@ labels()
+#@ end

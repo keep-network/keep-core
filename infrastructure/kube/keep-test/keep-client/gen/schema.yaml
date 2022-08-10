@@ -1,0 +1,6 @@
+#@data/values-schema
+---
+clients:
+  - id: 0
+    #@schema/nullable
+    networkPeers: ""

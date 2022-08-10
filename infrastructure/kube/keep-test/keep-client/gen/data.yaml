@@ -1,0 +1,22 @@
+#@data/values
+---
+clients:
+  - id: 0
+  - id: 1
+    networkPeers: /dns4/keep-client-0.default.svc.cluster.local/tcp/3919/ipfs/16Uiu2HAmCcfVpHwfBKNFbQuhvGuFXHVLQ65gB4sJm7HyrcZuLttH
+  - id: 2
+    networkPeers: /dns4/keep-client-1.default.svc.cluster.local/tcp/3919/ipfs/16Uiu2HAm3eJtyFKAttzJ85NLMromHuRg4yyum3CREMf6CHBBV6KY
+  - id: 3
+    networkPeers: /dns4/keep-client-2.default.svc.cluster.local/tcp/3919/ipfs/16Uiu2HAmNNuCp45z5bgB8KiTHv1vHTNAVbBgxxtTFGAndageo9Dp
+  - id: 4
+    networkPeers: /dns4/keep-client-3.default.svc.cluster.local/tcp/3919/ipfs/16Uiu2HAm8KJX32kr3eYUhDuzwTucSfAfspnjnXNf9veVhB12t6Vf
+  - id: 5
+    networkPeers: /dns4/keep-client-4.default.svc.cluster.local/tcp/3919/ipfs/16Uiu2HAkxRTeySEWZfW9C83GPFpQUXvrygmZryCN6DL4piZrbAv4
+  - id: 6
+    networkPeers: /dns4/keep-client-5.default.svc.cluster.local/tcp/3919/ipfs/16Uiu2HAm7Vq3Xf8xnSQDyj2j3AAEDjJk9Hp1RemTXNKmQwHm8cFt
+  - id: 7
+    networkPeers: /dns4/keep-client-6.default.svc.cluster.local/tcp/3919/ipfs/16Uiu2HAmNT1E8Hepthx6sgoHXb7WDpCk9ecPTN7J1FvaD76SvvPG
+  - id: 8
+    networkPeers: /dns4/keep-client-7.default.svc.cluster.local/tcp/3919/ipfs/16Uiu2HAmNnbEQy4wi9KNoyoGh3nZy5urkbf5oUKrw69XmVrKeowd
+  - id: 9
+    networkPeers: /dns4/keep-client-8.default.svc.cluster.local/tcp/3919/ipfs/16Uiu2HAmCJ9iupUiWed9NmpsPG7W2EiccEceuDrKZuQe7mkyAQxv
