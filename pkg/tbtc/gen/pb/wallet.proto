@@ -9,7 +9,7 @@ message Wallet {
 }
 
 message Signer {
-    bytes wallet = 1;
+    Wallet wallet = 1;
     uint32 signingGroupMemberIndex = 2;
     bytes privateKeyShare = 3;
 }

@@ -10,58 +10,26 @@ import (
 	"github.com/keep-network/keep-core/pkg/tecdsa"
 )
 
-// Marshal converts the wallet to a byte array.
-func (w *wallet) Marshal() ([]byte, error) {
-	publicKey := elliptic.Marshal(
-		w.publicKey.Curve,
-		w.publicKey.X,
-		w.publicKey.Y,
-	)
-
-	signingGroupOperators := make([]string, len(w.signingGroupOperators))
-	for i := range signingGroupOperators {
-		signingGroupOperators[i] = w.signingGroupOperators[i].String()
-	}
-
-	return (&pb.Wallet{
-		PublicKey:             publicKey,
-		SigningGroupOperators: signingGroupOperators,
-	}).Marshal()
-}
-
-// Unmarshal converts a byte array back to the wallet.
-func (w *wallet) Unmarshal(bytes []byte) error {
-	pbWallet := &pb.Wallet{}
-	if err := pbWallet.Unmarshal(bytes); err != nil {
-		return fmt.Errorf("cannot unmarshal wallet: [%w]", err)
-	}
-
-	publicKeyX, publicKeyY := elliptic.Unmarshal(tecdsa.Curve, pbWallet.PublicKey)
-	publicKey := &ecdsa.PublicKey{
-		Curve: tecdsa.Curve,
-		X:     publicKeyX,
-		Y:     publicKeyY,
-	}
-
-	signingGroupOperators := make(
-		[]chain.Address,
-		len(pbWallet.SigningGroupOperators),
-	)
-	for i := range signingGroupOperators {
-		signingGroupOperators[i] = chain.Address(pbWallet.SigningGroupOperators[i])
-	}
-
-	w.publicKey = publicKey
-	w.signingGroupOperators = signingGroupOperators
-
-	return nil
-}
-
 // Marshal converts the signer to a byte array.
 func (s *signer) Marshal() ([]byte, error) {
-	wallet, err := s.wallet.Marshal()
-	if err != nil {
-		return nil, fmt.Errorf("cannot marshal wallet: [%w]", err)
+	walletPublicKey := elliptic.Marshal(
+		s.wallet.publicKey.Curve,
+		s.wallet.publicKey.X,
+		s.wallet.publicKey.Y,
+	)
+
+	walletSigningGroupOperators := make(
+		[]string,
+		len(s.wallet.signingGroupOperators),
+	)
+	for i := range walletSigningGroupOperators {
+		walletSigningGroupOperators[i] =
+			s.wallet.signingGroupOperators[i].String()
+	}
+
+	pbWallet := &pb.Wallet{
+		PublicKey:             walletPublicKey,
+		SigningGroupOperators: walletSigningGroupOperators,
 	}
 
 	privateKeyShare, err := s.privateKeyShare.Marshal()
@@ -70,7 +38,7 @@ func (s *signer) Marshal() ([]byte, error) {
 	}
 
 	return (&pb.Signer{
-		Wallet:                  wallet,
+		Wallet:                  pbWallet,
 		SigningGroupMemberIndex: uint32(s.signingGroupMemberIndex),
 		PrivateKeyShare:         privateKeyShare,
 	}).Marshal()
@@ -83,9 +51,23 @@ func (s *signer) Unmarshal(bytes []byte) error {
 		return fmt.Errorf("cannot unmarshal signer: [%w]", err)
 	}
 
-	wallet := &wallet{}
-	if err := wallet.Unmarshal(pbSigner.Wallet); err != nil {
-		return fmt.Errorf("cannot unmarshal wallet: [%w]", err)
+	walletPublicKeyX, walletPublicKeyY := elliptic.Unmarshal(
+		tecdsa.Curve,
+		pbSigner.Wallet.PublicKey,
+	)
+	walletPublicKey := &ecdsa.PublicKey{
+		Curve: tecdsa.Curve,
+		X:     walletPublicKeyX,
+		Y:     walletPublicKeyY,
+	}
+
+	walletSigningGroupOperators := make(
+		[]chain.Address,
+		len(pbSigner.Wallet.SigningGroupOperators),
+	)
+	for i := range walletSigningGroupOperators {
+		walletSigningGroupOperators[i] =
+			chain.Address(pbSigner.Wallet.SigningGroupOperators[i])
 	}
 
 	privateKeyShare := &tecdsa.PrivateKeyShare{}
@@ -93,7 +75,10 @@ func (s *signer) Unmarshal(bytes []byte) error {
 		return fmt.Errorf("cannot unmarshal private key share: [%w]", err)
 	}
 
-	s.wallet = *wallet
+	s.wallet = wallet{
+		publicKey:             walletPublicKey,
+		signingGroupOperators: walletSigningGroupOperators,
+	}
 	s.signingGroupMemberIndex = group.MemberIndex(pbSigner.SigningGroupMemberIndex)
 	s.privateKeyShare = privateKeyShare
 
