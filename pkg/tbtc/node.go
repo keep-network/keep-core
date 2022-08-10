@@ -1,7 +1,6 @@
 package tbtc
 
 import (
-	"crypto/elliptic"
 	"fmt"
 	"math/big"
 	"time"
@@ -17,10 +16,10 @@ import (
 
 // node represents the current state of an ECDSA node.
 type node struct {
-	chain         Chain
-	netProvider   net.Provider
-	walletStorage *walletStorage
-	dkgExecutor   *dkg.Executor
+	chain          Chain
+	netProvider    net.Provider
+	walletRegistry *walletRegistry
+	dkgExecutor    *dkg.Executor
 }
 
 func newNode(
@@ -28,7 +27,7 @@ func newNode(
 	netProvider net.Provider,
 	persistence persistence.Handle,
 ) *node {
-	walletStorage := connectWalletStorage(persistence)
+	walletRegistry := newWalletRegistry(persistence)
 
 	// TODO: Pass TSS pre-parameters pool config from the outside.
 	dkgExecutor := dkg.NewExecutor(logger, &dkg.ExecutorConfig{
@@ -37,10 +36,10 @@ func newNode(
 	})
 
 	return &node{
-		chain:         chain,
-		netProvider:   netProvider,
-		walletStorage: walletStorage,
-		dkgExecutor:   dkgExecutor,
+		chain:          chain,
+		netProvider:    netProvider,
+		walletRegistry: walletRegistry,
+		dkgExecutor:    dkgExecutor,
 	}
 }
 
@@ -166,39 +165,27 @@ func (n *node) joinDKGIfEligible(seed *big.Int, startBlockNumber uint64) {
 
 				// TODO: Submit the result using the chain layer.
 
-				signingGroupPrivateKeyShare := result.PrivateKeyShare
-				signingGroupPublicKey := signingGroupPrivateKeyShare.PublicKey()
-
 				// TODO: The final `signingGroupOperators` may differ from
 				//       the original `selectedSigningGroupOperators`.
 				//       Consider that when integrating the retry algorithm.
 				signer := newSigner(
-					signingGroupPublicKey,
+					result.PrivateKeyShare.PublicKey(),
 					selectedSigningGroupOperators,
 					memberIndex,
-					signingGroupPrivateKeyShare,
+					result.PrivateKeyShare,
 				)
 
-				err = n.walletStorage.saveSigner(signer)
+				err = n.walletRegistry.registerSigner(signer)
 				if err != nil {
 					logger.Errorf(
-						"[member:%v] failed to save wallet's "+
-							"signing group membership: [%v]",
-						memberIndex,
+						"failed to register %s: [%v]",
+						signer,
 						err,
 					)
 					return
 				}
 
-				logger.Infof(
-					"[member:%v] generated wallet's signing group [0x%x]",
-					memberIndex,
-					elliptic.Marshal(
-						signingGroupPublicKey.Curve,
-						signingGroupPublicKey.X,
-						signingGroupPublicKey.Y,
-					),
-				)
+				logger.Infof("registered %s", signer)
 			}()
 		}
 	} else {

@@ -2,6 +2,8 @@ package tbtc
 
 import (
 	"crypto/ecdsa"
+	"crypto/elliptic"
+	"fmt"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/protocol/group"
 	"github.com/keep-network/keep-core/pkg/tecdsa"
@@ -22,6 +24,16 @@ type wallet struct {
 	// that is just the element's list index incremented by one (e.g.
 	// element with index 0 has the group.MemberIndex equal to 1 and so on).
 	signingGroupOperators []chain.Address
+}
+
+func (w *wallet) String() string {
+	publicKey := elliptic.Marshal(
+		w.publicKey.Curve,
+		w.publicKey.X,
+		w.publicKey.Y,
+	)
+
+	return fmt.Sprintf("wallet [0x%x]", publicKey)
 }
 
 // signer represents a threshold signer of a tBTC wallet. A signer holds
@@ -58,4 +70,12 @@ func newSigner(
 		signingGroupMemberIndex: signingGroupMemberIndex,
 		privateKeyShare:         privateKeyShare,
 	}
+}
+
+func (s *signer) String() string {
+	return fmt.Sprintf(
+		"signer with index [%v] of %s",
+		s.signingGroupMemberIndex,
+		&s.wallet,
+	)
 }
