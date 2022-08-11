@@ -24,7 +24,12 @@ func newTssPreParamsPool(
 	generationTimeout time.Duration,
 	generationConcurrency int,
 ) *tssPreParamsPool {
-	logger.Infof("TSS pre-parameters target pool size is [%v]", poolSize)
+	logger.Infof(
+		"TSS pre-parameters target pool size is [%v], generation timeout is [%v], and concurrency level is [%v]",
+		poolSize,
+		generationTimeout,
+		generationConcurrency,
+	)
 
 	newPreParamsFn := func() (*keygen.LocalPreParams, error) {
 		preParams, err := keygen.GeneratePreParams(
