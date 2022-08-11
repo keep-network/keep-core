@@ -51,6 +51,8 @@ spec:
         imagePullPolicy: Always
         ports:
         - containerPort: 3919
+        - containerPort: 9601
+        - containerPort: 9701
         env:
         - name: KEEP_ETHEREUM_PASSWORD
           valueFrom:
@@ -210,6 +212,8 @@ spec:
         imagePullPolicy: Always
         ports:
         - containerPort: 3919
+        - containerPort: 9601
+        - containerPort: 9701
         env:
         - name: KEEP_ETHEREUM_PASSWORD
           valueFrom:
@@ -371,6 +375,8 @@ spec:
         imagePullPolicy: Always
         ports:
         - containerPort: 3919
+        - containerPort: 9601
+        - containerPort: 9701
         env:
         - name: KEEP_ETHEREUM_PASSWORD
           valueFrom:
@@ -532,6 +538,8 @@ spec:
         imagePullPolicy: Always
         ports:
         - containerPort: 3919
+        - containerPort: 9601
+        - containerPort: 9701
         env:
         - name: KEEP_ETHEREUM_PASSWORD
           valueFrom:
@@ -693,6 +701,8 @@ spec:
         imagePullPolicy: Always
         ports:
         - containerPort: 3919
+        - containerPort: 9601
+        - containerPort: 9701
         env:
         - name: KEEP_ETHEREUM_PASSWORD
           valueFrom:
@@ -854,6 +864,8 @@ spec:
         imagePullPolicy: Always
         ports:
         - containerPort: 3919
+        - containerPort: 9601
+        - containerPort: 9701
         env:
         - name: KEEP_ETHEREUM_PASSWORD
           valueFrom:
@@ -1015,6 +1027,8 @@ spec:
         imagePullPolicy: Always
         ports:
         - containerPort: 3919
+        - containerPort: 9601
+        - containerPort: 9701
         env:
         - name: KEEP_ETHEREUM_PASSWORD
           valueFrom:
@@ -1176,6 +1190,8 @@ spec:
         imagePullPolicy: Always
         ports:
         - containerPort: 3919
+        - containerPort: 9601
+        - containerPort: 9701
         env:
         - name: KEEP_ETHEREUM_PASSWORD
           valueFrom:
@@ -1337,6 +1353,8 @@ spec:
         imagePullPolicy: Always
         ports:
         - containerPort: 3919
+        - containerPort: 9601
+        - containerPort: 9701
         env:
         - name: KEEP_ETHEREUM_PASSWORD
           valueFrom:
@@ -1498,6 +1516,8 @@ spec:
         imagePullPolicy: Always
         ports:
         - containerPort: 3919
+        - containerPort: 9601
+        - containerPort: 9701
         env:
         - name: KEEP_ETHEREUM_PASSWORD
           valueFrom:
