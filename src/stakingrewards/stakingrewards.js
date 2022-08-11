@@ -308,12 +308,15 @@ exports.getOngoingMekleInput = async function (
           ? parseInt(epochStake.epochDuration)
           : currentTime - epochStake.epochTimestamp
 
-        // If the operator was confirmed in the middle of this epoch...
         if (
+          // If the operator was confirmed in the middle of this epoch...
           opConfTimestamp > epochTimestamp &&
           opConfTimestamp <= epochTimestamp + epochDuration
         ) {
           epochDuration = epochTimestamp + epochDuration - opConfTimestamp
+        } else if (opConfTimestamp >= epochTimestamp + epochDuration) {
+          // No rewards if the operator was not yet confirmed
+          epochDuration = 0
         }
 
         epochReward = stakeAmount
