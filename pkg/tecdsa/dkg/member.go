@@ -1,8 +1,8 @@
 package dkg
 
 import (
-	"crypto/elliptic"
 	"fmt"
+	"github.com/keep-network/keep-core/pkg/tecdsa"
 	"math/big"
 	"sort"
 	"strconv"
@@ -136,7 +136,7 @@ func (skgm *symmetricKeyGeneratingMember) initializeTssRoundOne() *tssRoundOneMe
 	)
 
 	tssParameters := tss.NewParameters(
-		tss.S256(),
+		tecdsa.Curve,
 		tss.NewPeerContext(tss.SortPartyIDs(groupTssPartiesIDs)),
 		tssPartyID,
 		len(groupTssPartiesIDs),
@@ -295,11 +295,13 @@ func (fm *finalizingMember) Result() *Result {
 			fm.group.InactiveMemberIDs(),
 			fm.group.DisqualifiedMemberIDs(),
 		),
-		GroupPublicKey: elliptic.Marshal(
-			tss.EC(),
-			fm.tssResult.ECDSAPub.X(),
-			fm.tssResult.ECDSAPub.Y(),
-		),
+		// GroupPublicKey: elliptic.Marshal(
+		// 	tss.EC(),
+		// 	fm.tssResult.ECDSAPub.X(),
+		// 	fm.tssResult.ECDSAPub.Y(),
+		// ),
+		GroupPublicKey:  make([]byte, 1000), // TODO: Obtain public key bytes
+		PrivateKeyShare: tecdsa.NewPrivateKeyShare(fm.tssResult),
 	}
 }
 

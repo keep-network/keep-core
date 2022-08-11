@@ -4,11 +4,11 @@ import (
 	"math/big"
 
 	"github.com/keep-network/keep-core/pkg/chain"
-	"github.com/keep-network/keep-core/pkg/ecdsa/dkg"
 	"github.com/keep-network/keep-core/pkg/operator"
 	"github.com/keep-network/keep-core/pkg/protocol/group"
 	"github.com/keep-network/keep-core/pkg/sortition"
 	"github.com/keep-network/keep-core/pkg/subscription"
+	"github.com/keep-network/keep-core/pkg/tecdsa/dkg"
 )
 
 // GroupSelectionChain defines the subset of the TBTC chain interface that
