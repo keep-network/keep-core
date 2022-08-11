@@ -4,9 +4,12 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+
+	commonEthereum "github.com/keep-network/keep-common/pkg/chain/ethereum"
+	chainEthereum "github.com/keep-network/keep-core/pkg/chain/ethereum"
 )
 
-func nodeHeader(addrStrings []string, port int) {
+func nodeHeader(addrStrings []string, port int, ethereumConfig commonEthereum.Config) {
 	header := ` 
 
 ▓▓▌ ▓▓ ▐▓▓ ▓▓▓▓▓▓▓▓▓▓▌▐▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓ ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓ ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▄
@@ -45,6 +48,7 @@ Trust math, not hardware.
 		buildLine(maxLineLength, prefix, suffix, fmt.Sprintf("Port: %d", port)),
 		buildMultiLine(maxLineLength, prefix, suffix, "IPs : ", addrStrings),
 		buildLine(maxLineLength, prefix, suffix, ""),
+		buildContractAddresses(maxLineLength, prefix, suffix, ethereumConfig),
 		dashes,
 		"\n",
 	)
@@ -72,4 +76,24 @@ func buildMultiLine(lineLength int, prefix, suffix, startPrefix string, lines []
 	}
 
 	return combinedLines
+}
+
+func buildContractAddresses(lineLength int, prefix, suffix string, ethereumConfig commonEthereum.Config) string {
+	firstLine := buildLine(lineLength, prefix, suffix, "Contracts: ")
+
+	contractNames := []string{
+		chainEthereum.RandomBeaconContractName,
+		chainEthereum.WalletRegistryContractName,
+		chainEthereum.TokenStakingContractName,
+	}
+
+	entries := []string{}
+	for _, contractName := range contractNames {
+		contractAddress, err := ethereumConfig.ContractAddress(contractName)
+		if err != nil {
+			logger.Fatal(err)
+		}
+		entries = append(entries, fmt.Sprintf("%-15s: %s", contractName, contractAddress))
+	}
+	return firstLine + buildMultiLine(lineLength, prefix, suffix, "", entries)
 }
