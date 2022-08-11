@@ -163,7 +163,7 @@ func stateTransition(
 
 	err = currentState.Initiate(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("failed to initiate new state [%v]", err)
+		return nil, fmt.Errorf("failed to initiate new state [%w]", err)
 	}
 
 	blockWaiter, err := blockCounter.BlockHeightWaiter(
