@@ -1,5 +1,13 @@
 #@ load("@ytt:data", "data")
 
+#@ def envChainApiUrl():
+name: CHAIN_API_URL
+valueFrom:
+  secretKeyRef:
+    name: eth-network-goerli
+    key: http-url
+#@ end
+
 #@ for client in data.values.clients:
 
 #@ def labels():
@@ -7,6 +15,22 @@ app: keep
 type: client
 id: #@ str(client.id)
 network: goerli
+#@ end
+
+#@ def envKeepClientEthPrivateKey():
+name: KEEP_CLIENT_ETH_PRIVATE_KEY
+valueFrom:
+  secretKeyRef:
+    name: eth-account-privatekeys
+    key: #@ account()
+#@ end
+
+#@ def envKeepClientEthAddress():
+name: KEEP_CLIENT_ETH_ADDRESS
+valueFrom:
+  configMapKeyRef:
+    name: eth-account-info
+    key: #@ account() + "-address"
 #@ end
 
 #@ def name():
@@ -99,33 +123,41 @@ spec:
             - "--diagnostics.port"
             - "9701"
       initContainers:
+        - name: initcontainer-fund
+          image: gcr.io/keep-test-f3e0/keep-random-beacon-hardhat:latest
+          imagePullPolicy: Always
+          env:
+            -  #@ envChainApiUrl()
+            - name: PURSE_ETH_PRIVATE_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: eth-network-goerli
+                  key: purse-eth-account-private-key
+            - #@ envKeepClientEthPrivateKey()
+            - name: ACCOUNTS_PRIVATE_KEYS
+              value: $(PURSE_ETH_PRIVATE_KEY),$(KEEP_CLIENT_ETH_PRIVATE_KEY)
+            - #@ envKeepClientEthAddress()
+          args:
+            - "ensure-eth-balance"
+            - "--network"
+            - "goerli"
+            - "0.5 ether"
+            - "$(KEEP_CLIENT_ETH_ADDRESS)"
         #@ for/end initcontainer in data.values.initContainers:
         - name: #@ initcontainer.name
           image: #@ initcontainer.image
           imagePullPolicy: Always
           env:
-            - name: CHAIN_API_URL
-              valueFrom:
-                secretKeyRef:
-                  name: eth-network-goerli
-                  key: http-url
+            -  #@ envChainApiUrl()
             - name: CONTRACT_OWNER_ETH_PRIVATE_KEY
               valueFrom:
                 secretKeyRef:
                   name: eth-network-goerli
                   key: contract-owner-eth-account-private-key
-            - name: KEEP_CLIENT_ETH_PRIVATE_KEY
-              valueFrom:
-                secretKeyRef:
-                  name: eth-account-privatekeys
-                  key: #@ account()
+            - #@ envKeepClientEthPrivateKey()
             - name: ACCOUNTS_PRIVATE_KEYS
               value: $(CONTRACT_OWNER_ETH_PRIVATE_KEY),$(KEEP_CLIENT_ETH_PRIVATE_KEY)
-            - name: KEEP_CLIENT_ETH_ADDRESS
-              valueFrom:
-                configMapKeyRef:
-                  name: eth-account-info
-                  key: #@ account() + "-address"
+            - #@ envKeepClientEthAddress()
           args:
             - "initialize"
             - "--network"
