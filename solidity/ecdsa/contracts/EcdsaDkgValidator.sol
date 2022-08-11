@@ -109,7 +109,7 @@ contract EcdsaDkgValidator {
     /// @return errorMsg validation error message; empty for a valid result
     function validateFields(EcdsaDkg.Result calldata result)
         public
-        view
+        pure
         returns (bool isValid, string memory errorMsg)
     {
         if (result.groupPubKey.length != publicKeyByteSize) {
@@ -263,7 +263,7 @@ contract EcdsaDkgValidator {
     /// one that is challenged.
     function validateMembersHash(EcdsaDkg.Result calldata result)
         public
-        view
+        pure
         returns (bool)
     {
         if (result.misbehavedMembersIndices.length > 0) {

@@ -5,7 +5,7 @@ import (
 	"github.com/keep-network/keep-core/pkg/protocol/group"
 )
 
-const messageTypePrefix = "ecdsa_dkg/"
+const messageTypePrefix = "tecdsa_dkg/"
 
 // ephemeralPublicKeyMessage is a message payload that carries the sender's
 // ephemeral public keys generated for all other group members.

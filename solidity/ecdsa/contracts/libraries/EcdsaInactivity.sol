@@ -169,7 +169,7 @@ library EcdsaInactivity {
     function validateMembersIndices(
         uint256[] calldata indices,
         uint256 groupSize
-    ) internal view {
+    ) internal pure {
         require(
             indices.length > 0 && indices.length <= groupSize,
             "Corrupted members indices"
