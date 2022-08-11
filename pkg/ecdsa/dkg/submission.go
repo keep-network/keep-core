@@ -70,7 +70,7 @@ func NewSubmittingMember(
 // successfully submitted on chain by the member. In case of failure or result
 // already submitted by another member it returns `0`.
 func (sm *SubmittingMember) SubmitDKGResult(
-	result *DKGResult,
+	result *Result,
 	signatures map[group.MemberIndex][]byte,
 	chainRelay Chain,
 	blockCounter chain.BlockCounter,

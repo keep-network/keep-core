@@ -98,7 +98,7 @@ func (trtm *tssRoundThreeMessage) Type() string {
 type dkgResultHashSignatureMessage struct {
 	senderID group.MemberIndex
 
-	resultHash DKGResultHash
+	resultHash ResultHash
 	signature  []byte
 	publicKey  []byte
 }

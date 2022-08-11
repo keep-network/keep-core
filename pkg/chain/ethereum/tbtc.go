@@ -301,12 +301,12 @@ func (tc *TbtcChain) OnDKGStarted(
 //       registered in the dkgResultSubmissionHandlers map.
 func (tc *TbtcChain) SubmitDKGResult(
 	participantIndex tbtc.GroupMemberIndex,
-	dkgResult *dkg.DKGResult,
+	result *dkg.Result,
 	signatures map[tbtc.GroupMemberIndex][]byte,
 ) error {
 	return tc.mockWalletRegistry.SubmitDKGResult(
 		participantIndex,
-		dkgResult,
+		result,
 		signatures,
 	)
 }
@@ -328,11 +328,11 @@ func (tc *TbtcChain) OnDKGResultSubmitted(
 // hash over it. This corresponds to the DKG result hash calculation on-chain.
 // Hashes calculated off-chain and on-chain must always match.
 func (tc *TbtcChain) CalculateDKGResultHash(
-	dkgResult *dkg.DKGResult,
-) (dkg.DKGResultHash, error) {
+	result *dkg.Result,
+) (dkg.ResultHash, error) {
 	// Encode DKG result to the format matched with Solidity keccak256(abi.encodePacked(...))
-	hash := crypto.Keccak256(dkgResult.GroupPublicKey, dkgResult.Misbehaved)
-	return dkg.DKGResultHashFromBytes(hash)
+	hash := crypto.Keccak256(result.GroupPublicKey, result.Misbehaved)
+	return dkg.ResultHashFromBytes(hash)
 }
 
 // TODO: Implement a real OnGroupRegistered function.
@@ -431,7 +431,7 @@ func (mwr *mockWalletRegistry) OnDKGResultSubmitted(
 
 func (mwr *mockWalletRegistry) SubmitDKGResult(
 	participantIndex tbtc.GroupMemberIndex,
-	dkgResult *dkg.DKGResult,
+	result *dkg.Result,
 	signatures map[tbtc.GroupMemberIndex][]byte,
 ) error {
 	mwr.dkgResultSubmissionHandlersMutex.Lock()
@@ -459,14 +459,14 @@ func (mwr *mockWalletRegistry) SubmitDKGResult(
 		go func(handler func(*dkg.DKGResultSubmissionEvent)) {
 			handler(&dkg.DKGResultSubmissionEvent{
 				MemberIndex:    uint32(participantIndex),
-				GroupPublicKey: dkgResult.GroupPublicKey,
-				Misbehaved:     dkgResult.Misbehaved,
+				GroupPublicKey: result.GroupPublicKey,
+				Misbehaved:     result.Misbehaved,
 				BlockNumber:    blockNumber,
 			})
 		}(handler)
 	}
 
-	mwr.activeGroup = dkgResult.GroupPublicKey
+	mwr.activeGroup = result.GroupPublicKey
 	mwr.activeGroupOperableBlock = new(big.Int).Add(
 		mwr.currentDkgStartBlock,
 		big.NewInt(150),

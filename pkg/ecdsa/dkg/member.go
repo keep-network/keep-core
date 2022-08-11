@@ -4,6 +4,7 @@ import (
 	"crypto/elliptic"
 	"fmt"
 	"math/big"
+	"sort"
 	"strconv"
 
 	"github.com/binance-chain/tss-lib/ecdsa/keygen"
@@ -256,9 +257,43 @@ func (fm *finalizingMember) MarkInactiveMembers(
 // Result can be either the successful computation of the distributed key
 // generation process or a notification of failure.
 func (fm *finalizingMember) Result() *Result {
+	misbehavedMembersAsBytes := func(
+		inactive []group.MemberIndex,
+		disqualified []group.MemberIndex,
+	) []byte {
+		// merge IA and DQ into 'misbehaved' set
+		misbehaving := make(map[group.MemberIndex]bool)
+		for _, ia := range inactive {
+			misbehaving[ia] = true
+		}
+		for _, dq := range disqualified {
+			misbehaving[dq] = true
+		}
+
+		// convert 'misbehaved' set into sorted list
+		var sorted []group.MemberIndex
+		for m := range misbehaving {
+			sorted = append(sorted, m)
+		}
+		sort.Slice(sorted[:], func(i, j int) bool {
+			return sorted[i] < sorted[j]
+		})
+
+		// convert sorted list of member indexes into bytes
+		bytes := make([]byte, len(sorted))
+		for i, m := range sorted {
+			bytes[i] = byte(m)
+		}
+
+		return bytes
+	}
+
 	return &Result{
-		// TODO: Temporary result. Add real items.
-		Group: fm.group, // TODO: Make sure the group data if properly filled
+		Group: fm.group,
+		Misbehaved: misbehavedMembersAsBytes(
+			fm.group.InactiveMemberIDs(),
+			fm.group.DisqualifiedMemberIDs(),
+		),
 		GroupPublicKey: elliptic.Marshal(
 			tss.EC(),
 			fm.tssResult.ECDSAPub.X(),

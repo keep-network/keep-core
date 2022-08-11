@@ -212,7 +212,7 @@ func (d *dkgResultHashSignatureMessage) Unmarshal(bytes []byte) error {
 	}
 	d.senderID = group.MemberIndex(pbMsg.SenderID)
 
-	resultHash, err := DKGResultHashFromBytes(pbMsg.ResultHash)
+	resultHash, err := ResultHashFromBytes(pbMsg.ResultHash)
 	if err != nil {
 		return err
 	}

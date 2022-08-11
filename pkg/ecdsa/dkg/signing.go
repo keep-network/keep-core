@@ -30,7 +30,7 @@ type SigningMember struct {
 	config *SubmissionConfig
 
 	// Hash of DKG result preferred by the current participant.
-	preferredDKGResultHash DKGResultHash
+	preferredDKGResultHash ResultHash
 	// Signature over preferredDKGResultHash calculated by the member.
 	selfDKGResultSignature []byte
 }
@@ -55,7 +55,7 @@ func NewSigningMember(
 // SignDKGResult calculates hash of DKG result and member's signature over this
 // hash. It packs the hash and signature into a broadcast message.
 func (sm *SigningMember) SignDKGResult(
-	dkgResult *DKGResult,
+	dkgResult *Result,
 	chain Chain,
 ) (
 	*dkgResultHashSignatureMessage,

@@ -38,7 +38,7 @@ type DistributedKeyGenerationChain interface {
 	// member index.
 	SubmitDKGResult(
 		participantIndex GroupMemberIndex,
-		dkgResult *dkg.DKGResult,
+		dkgResult *dkg.Result,
 		signatures map[GroupMemberIndex][]byte,
 	) error
 	// OnDKGResultSubmitted registers a callback that is invoked when an on-chain
@@ -48,7 +48,7 @@ type DistributedKeyGenerationChain interface {
 	) subscription.EventSubscription
 	// CalculateDKGResultHash calculates 256-bit hash of DKG result in standard
 	// specific for the chain. Operation is performed off-chain.
-	CalculateDKGResultHash(dkgResult *dkg.DKGResult) (dkg.DKGResultHash, error)
+	CalculateDKGResultHash(result *dkg.Result) (dkg.ResultHash, error)
 }
 
 // GroupSelectionInterface defines the subset of the beacon chain interface that

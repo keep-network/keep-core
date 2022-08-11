@@ -456,7 +456,7 @@ type resultSigningState struct {
 
 	member *SigningMember
 
-	result *DKGResult
+	result *Result
 
 	signatureMessages []*dkgResultHashSignatureMessage
 
@@ -544,7 +544,7 @@ type signaturesVerificationState struct {
 
 	member *SigningMember
 
-	result *DKGResult
+	result *Result
 
 	signatureMessages []*dkgResultHashSignatureMessage
 	validSignatures   map[group.MemberIndex][]byte
@@ -605,7 +605,7 @@ type resultSubmissionState struct {
 
 	member *SubmittingMember
 
-	result     *DKGResult
+	result     *Result
 	signatures map[group.MemberIndex][]byte
 
 	submissionStartBlockHeight uint64
