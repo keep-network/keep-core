@@ -99,8 +99,9 @@ spec:
             - "--diagnostics.port"
             - "9701"
       initContainers:
-        - name: initcontainer
-          image: gcr.io/keep-test-f3e0/keep-ecdsa-hardhat:latest
+        #@ for/end initcontainer in data.values.initContainers:
+        - name: #@ initcontainer.name
+          image: #@ initcontainer.image
           imagePullPolicy: Always
           env:
             - name: CHAIN_API_URL
