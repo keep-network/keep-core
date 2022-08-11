@@ -52,7 +52,7 @@ COPY ./pkg/beacon/registry/gen $APP_DIR/pkg/beacon/registry/gen
 ARG ENVIRONMENT=development
 
 COPY ./Makefile $APP_DIR/Makefile
-RUN make download_artifacts environment=$ENVIRONMENT
+RUN make get_artifacts environment=$ENVIRONMENT
 
 # Need this to resolve imports in generated Ethereum commands.
 COPY ./config $APP_DIR/config
