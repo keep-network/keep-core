@@ -10,6 +10,7 @@ import (
 	"github.com/binance-chain/tss-lib/ecdsa/keygen"
 	"github.com/binance-chain/tss-lib/tss"
 	"github.com/ipfs/go-log"
+	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/crypto/ephemeral"
 	"github.com/keep-network/keep-core/pkg/protocol/group"
 )
@@ -300,6 +301,324 @@ func (fm *finalizingMember) Result() *Result {
 			fm.tssResult.ECDSAPub.Y(),
 		),
 	}
+}
+
+// signingMember represents a group member sharing their preferred DKG result hash
+// and signature (over this hash) with other peer members.
+type signingMember struct {
+	logger log.StandardLogger
+	index  group.MemberIndex
+	// Group to which this member belongs.
+	group *group.Group
+	// Validator allowing to check public key and member index
+	// against group members
+	membershipValidator *group.MembershipValidator
+	// DKG result submission configuration
+	config *SubmissionConfig
+	// Hash of DKG result preferred by the current participant.
+	preferredDKGResultHash ResultHash
+	// Signature over preferredDKGResultHash calculated by the member.
+	selfDKGResultSignature []byte
+}
+
+// SignDKGResult calculates hash of DKG result and member's signature over this
+// hash. It packs the hash and signature into a broadcast message.
+func (sm *signingMember) SignDKGResult(
+	dkgResult *Result,
+	chain Chain,
+) (
+	*dkgResultHashSignatureMessage,
+	error,
+) {
+	resultHash, err := chain.CalculateDKGResultHash(dkgResult)
+	if err != nil {
+		return nil, fmt.Errorf("dkg result hash calculation failed [%v]", err)
+	}
+	sm.preferredDKGResultHash = resultHash
+
+	signing := chain.Signing()
+
+	signature, err := signing.Sign(resultHash[:])
+	if err != nil {
+		return nil, fmt.Errorf("dkg result hash signing failed [%v]", err)
+	}
+
+	// Register self signature.
+	sm.selfDKGResultSignature = signature
+
+	return &dkgResultHashSignatureMessage{
+		senderID:   sm.index,
+		resultHash: resultHash,
+		signature:  signature,
+		publicKey:  signing.PublicKey(),
+	}, nil
+}
+
+// VerifyDKGResultSignatures verifies signatures received in messages from other
+// group members.
+// It collects signatures supporting only the same DKG result hash as the one
+// preferred by the current member.
+// Each member is allowed to broadcast only one signature over a preferred DKG
+// result hash.
+// The function assumes that the public key presented in the message is the
+// correct one. This key needs to be compared against the one used by network
+// client earlier, before this function is called.
+func (sm *signingMember) VerifyDKGResultSignatures(
+	messages []*dkgResultHashSignatureMessage,
+	signing chain.Signing,
+) (map[group.MemberIndex][]byte, error) {
+	duplicatedMessagesFromSender := func(senderID group.MemberIndex) bool {
+		messageFromSenderAlreadySeen := false
+		for _, message := range messages {
+			if message.senderID == senderID {
+				if messageFromSenderAlreadySeen {
+					return true
+				}
+				messageFromSenderAlreadySeen = true
+			}
+		}
+		return false
+	}
+
+	receivedValidResultSignatures := make(map[group.MemberIndex][]byte)
+
+	for _, message := range messages {
+		// Check if message from self.
+		if message.senderID == sm.index {
+			continue
+		}
+
+		// Check if sender sent multiple messages.
+		if duplicatedMessagesFromSender(message.senderID) {
+			sm.logger.Infof(
+				"[member: %v] received multiple messages from sender: [%d]",
+				sm.index,
+				message.senderID,
+			)
+			continue
+		}
+
+		// Sender's preferred DKG result hash doesn't match current member's
+		// preferred DKG result hash.
+		if message.resultHash != sm.preferredDKGResultHash {
+			sm.logger.Infof(
+				"[member: %v] signature from sender [%d] supports result different than preferred",
+				sm.index,
+				message.senderID,
+			)
+			continue
+		}
+
+		// Check if the signature is valid.
+		ok, err := signing.VerifyWithPublicKey(
+			message.resultHash[:],
+			message.signature,
+			message.publicKey,
+		)
+		if err != nil {
+			sm.logger.Infof(
+				"[member: %v] verification of signature from sender [%d] failed: [%v]",
+				sm.index,
+				message.senderID,
+				err,
+			)
+			continue
+		}
+		if !ok {
+			sm.logger.Infof(
+				"[member: %v] sender [%d] provided invalid signature",
+				sm.index,
+				message.senderID,
+			)
+			continue
+		}
+
+		receivedValidResultSignatures[message.senderID] = message.signature
+	}
+
+	// Register member's self signature.
+	receivedValidResultSignatures[sm.index] = sm.selfDKGResultSignature
+
+	return receivedValidResultSignatures, nil
+}
+
+// shouldAcceptMessage indicates whether the given member should accept
+// a message from the given sender.
+func (sm *signingMember) shouldAcceptMessage(
+	senderID group.MemberIndex,
+	senderPublicKey []byte,
+) bool {
+	isMessageFromSelf := senderID == sm.index
+	isSenderValid := sm.membershipValidator.IsValidMembership(
+		senderID,
+		senderPublicKey,
+	)
+	isSenderAccepted := sm.group.IsOperating(senderID)
+
+	return !isMessageFromSelf && isSenderValid && isSenderAccepted
+}
+
+// TODO: Move as much logic related to submission to the tbtc package
+
+type SubmissionConfig struct { // TODO: Remove
+	// GroupSize is the size of a group in TBTC.
+	GroupSize int
+	// HonestThreshold is the minimum number of active participants behaving
+	// according to the protocol needed to generate a signature.
+	HonestThreshold int
+	// ResultPublicationBlockStep is the duration (in blocks) that has to pass
+	// before group member with the given index is eligible to submit the
+	// result.
+	// Nth player becomes eligible to submit the result after
+	// T_dkg + (N-1) * T_step
+	// where T_dkg is time for phases 1-12 to complete and T_step is the result
+	// publication block step.
+	ResultPublicationBlockStep uint64
+}
+
+// SubmittingMember represents a member submitting a DKG result to the
+// blockchain along with signatures received from other group members supporting
+// the result.
+type submittingMember struct {
+	logger log.StandardLogger
+
+	// Represents the member's position for submission.
+	index  group.MemberIndex
+	config *SubmissionConfig
+}
+
+// SubmitDKGResult sends a result, which contains the group public key and
+// signatures, to the chain.
+// It checks if the result has already been published to the blockchain by
+// checking if a group with the given public key is already registered. If not,
+// it determines if the current member is eligible to submit a result.
+// If allowed, it submits the result to the chain.
+// A user's turn to publish is determined based on the user's index and block
+// step.
+// If a result is submitted by another member and it's accepted by the chain,
+// the current member finishes the phase immediately, without submitting
+// their own result.
+// It returns the on-chain block height of the moment when the result was
+// successfully submitted on chain by the member. In case of failure or result
+// already submitted by another member it returns `0`.
+func (sm *submittingMember) SubmitDKGResult(
+	result *Result,
+	signatures map[group.MemberIndex][]byte,
+	chainRelay Chain,
+	blockCounter chain.BlockCounter,
+	startBlockHeight uint64,
+) error {
+	// Chain rejects the result if it has less than 25% safety margin.
+	// If there are not enough signatures to preserve the margin, it does not
+	// make sense to submit the result.
+	signatureThreshold := sm.config.HonestThreshold + (sm.config.GroupSize-sm.config.HonestThreshold)/2
+	if len(signatures) < signatureThreshold {
+		return fmt.Errorf(
+			"could not submit result with [%v] signatures for signature threshold [%v]",
+			len(signatures),
+			signatureThreshold,
+		)
+	}
+
+	onSubmittedResultChan := make(chan uint64)
+
+	subscription := chainRelay.OnDKGResultSubmitted(
+		func(event *DKGResultSubmissionEvent) {
+			onSubmittedResultChan <- event.BlockNumber
+		},
+	)
+
+	returnWithError := func(err error) error {
+		subscription.Unsubscribe()
+		close(onSubmittedResultChan)
+		return err
+	}
+
+	alreadySubmitted, err := chainRelay.IsGroupRegistered(result.GroupPublicKey)
+	if err != nil {
+		return returnWithError(
+			fmt.Errorf(
+				"could not check if the result is already submitted: [%v]",
+				err,
+			),
+		)
+	}
+
+	// Someone who was ahead of us in the queue submitted the result. Giving up.
+	if alreadySubmitted {
+		return returnWithError(nil)
+	}
+
+	// Wait until the current member is eligible to submit the result.
+	eligibleToSubmitWaiter, err := sm.waitForSubmissionEligibility(
+		blockCounter,
+		startBlockHeight,
+		sm.config.ResultPublicationBlockStep,
+	)
+	if err != nil {
+		return returnWithError(
+			fmt.Errorf("wait for eligibility failure: [%v]", err),
+		)
+	}
+
+	for {
+		select {
+		case blockNumber := <-eligibleToSubmitWaiter:
+			// Member becomes eligible to submit the result.
+			subscription.Unsubscribe()
+			close(onSubmittedResultChan)
+
+			sm.logger.Infof(
+				"[member:%v] submitting DKG result with public key [0x%x] and "+
+					"[%v] supporting member signatures at block [%v]",
+				sm.index,
+				result.GroupPublicKey,
+				len(signatures),
+				blockNumber,
+			)
+
+			return chainRelay.SubmitDKGResult(
+				sm.index,
+				result,
+				signatures,
+			)
+		case blockNumber := <-onSubmittedResultChan:
+			sm.logger.Infof(
+				"[member:%v] leaving; DKG result submitted by other member at block [%v]",
+				sm.index,
+				blockNumber,
+			)
+			// A result has been submitted by other member. Leave without
+			// publishing the result.
+			return returnWithError(nil)
+		}
+	}
+}
+
+// waitForSubmissionEligibility waits until the current member is eligible to
+// submit a result to the blockchain. First member is eligible to submit straight
+// away, each following member is eligible after pre-defined block step.
+func (sm *submittingMember) waitForSubmissionEligibility(
+	blockCounter chain.BlockCounter,
+	startBlockHeight uint64,
+	blockStep uint64,
+) (<-chan uint64, error) {
+	// T_init + (member_index - 1) * T_step
+	blockWaitTime := (uint64(sm.index) - 1) * blockStep
+
+	eligibleBlockHeight := startBlockHeight + blockWaitTime
+	sm.logger.Infof(
+		"[member:%v] waiting for block [%v] to submit",
+		sm.index,
+		eligibleBlockHeight,
+	)
+
+	waiter, err := blockCounter.BlockHeightWaiter(eligibleBlockHeight)
+	if err != nil {
+		return nil, fmt.Errorf("block height waiter failure [%v]", err)
+	}
+
+	return waiter, err
 }
 
 // generateTssPartiesIDs converts group member ID to parties ID suitable for

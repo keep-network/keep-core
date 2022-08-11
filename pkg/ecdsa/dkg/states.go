@@ -454,7 +454,7 @@ type resultSigningState struct {
 	chain        Chain
 	blockCounter chain.BlockCounter
 
-	member *SigningMember
+	member *signingMember
 
 	result *Result
 
@@ -542,7 +542,7 @@ type signaturesVerificationState struct {
 	chain        Chain
 	blockCounter chain.BlockCounter
 
-	member *SigningMember
+	member *signingMember
 
 	result *Result
 
@@ -582,14 +582,17 @@ func (svs *signaturesVerificationState) Next() signingState {
 		channel:      svs.channel,
 		chain:        svs.chain,
 		blockCounter: svs.blockCounter,
-		member:       NewSubmittingMember(svs.member.logger, svs.member.index, svs.member.config),
-		result:       svs.result,
-		signatures:   svs.validSignatures,
+		member: &submittingMember{
+			logger: svs.member.logger,
+			index:  svs.member.index,
+			config: svs.member.config,
+		},
+		result:     svs.result,
+		signatures: svs.validSignatures,
 		submissionStartBlockHeight: svs.verificationStartBlockHeight +
 			svs.DelayBlocks() +
 			svs.ActiveBlocks(),
 	}
-
 }
 
 func (svs *signaturesVerificationState) MemberIndex() group.MemberIndex {
@@ -603,7 +606,7 @@ type resultSubmissionState struct {
 	chain        Chain
 	blockCounter chain.BlockCounter
 
-	member *SubmittingMember
+	member *submittingMember
 
 	result     *Result
 	signatures map[group.MemberIndex][]byte

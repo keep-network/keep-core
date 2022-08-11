@@ -70,19 +70,17 @@ func Publish(
 	blockCounter chain.BlockCounter,
 	startBlockHeight uint64,
 ) error {
-	signingMember := NewSigningMember(
-		logger,
-		memberIndex,
-		dkgGroup,
-		membershipValidator,
-		submissionConfig,
-	)
-
 	initialState := &resultSigningState{
-		channel:                 channel,
-		chain:                   chain,
-		blockCounter:            blockCounter,
-		member:                  signingMember,
+		channel:      channel,
+		chain:        chain,
+		blockCounter: blockCounter,
+		member: &signingMember{
+			logger:              logger,
+			index:               memberIndex,
+			group:               dkgGroup,
+			membershipValidator: membershipValidator,
+			config:              submissionConfig,
+		},
 		result:                  result,
 		signatureMessages:       make([]*dkgResultHashSignatureMessage, 0),
 		signingStartBlockHeight: startBlockHeight,
