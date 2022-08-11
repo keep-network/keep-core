@@ -3,12 +3,12 @@ package tbtc
 import (
 	"fmt"
 	"math/big"
-	"time"
 
 	"github.com/keep-network/keep-common/pkg/persistence"
 	"github.com/keep-network/keep-core/pkg/internal/testutils"
 	"github.com/keep-network/keep-core/pkg/net"
 	"github.com/keep-network/keep-core/pkg/protocol/group"
+	"github.com/keep-network/keep-core/pkg/tecdsa"
 	"github.com/keep-network/keep-core/pkg/tecdsa/dkg"
 )
 
@@ -26,15 +26,16 @@ func newNode(
 	chain Chain,
 	netProvider net.Provider,
 	persistence persistence.Handle,
+	tecdsaConfig tecdsa.Config,
 ) *node {
 	walletRegistry := newWalletRegistry(persistence)
 
-	// TODO: Pass TSS pre-parameters pool config from the outside.
-	dkgExecutor := dkg.NewExecutor(logger, &dkg.ExecutorConfig{
-		TssPreParamsPoolSize:              50,
-		TssPreParamsGenerationTimeout:     2 * time.Minute,
-		TssPreParamsGenerationConcurrency: 1,
-	})
+	dkgExecutor := dkg.NewExecutor(
+		logger,
+		tecdsaConfig.PreParamsPoolSize,
+		tecdsaConfig.PreParamsGenerationTimeout,
+		tecdsaConfig.PreParamsGenerationConcurrency,
+	)
 
 	return &node{
 		chain:          chain,

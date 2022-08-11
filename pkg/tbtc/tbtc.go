@@ -3,10 +3,12 @@ package tbtc
 import (
 	"context"
 	"fmt"
+
 	"github.com/ipfs/go-log"
 	"github.com/keep-network/keep-common/pkg/persistence"
 	"github.com/keep-network/keep-core/pkg/net"
 	"github.com/keep-network/keep-core/pkg/sortition"
+	"github.com/keep-network/keep-core/pkg/tecdsa"
 )
 
 // TODO: Unit tests for `tbtc.go`.
@@ -24,8 +26,9 @@ func Initialize(
 	chain Chain,
 	netProvider net.Provider,
 	persistence persistence.Handle,
+	tecdsaConfig tecdsa.Config,
 ) error {
-	node := newNode(chain, netProvider, persistence)
+	node := newNode(chain, netProvider, persistence, tecdsaConfig)
 	deduplicator := newDeduplicator()
 
 	err := sortition.MonitorPool(ctx, logger, chain, sortition.DefaultStatusCheckTick)

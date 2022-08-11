@@ -11,6 +11,7 @@ import (
 	"github.com/keep-network/keep-core/config"
 	"github.com/keep-network/keep-core/pkg/metrics"
 	"github.com/keep-network/keep-core/pkg/net/libp2p"
+	"github.com/keep-network/keep-core/pkg/tecdsa"
 	"github.com/spf13/cobra"
 
 	chainEthereum "github.com/keep-network/keep-core/pkg/chain/ethereum"
@@ -25,6 +26,7 @@ const (
 	Storage
 	Metrics
 	Diagnostics
+	Tecdsa
 	Developer
 )
 
@@ -35,6 +37,7 @@ var allCategories = []category{
 	Storage,
 	Metrics,
 	Diagnostics,
+	Tecdsa,
 	Developer,
 }
 
@@ -58,6 +61,8 @@ func initFlags(
 			initMetricsFlags(cmd, cfg)
 		case Diagnostics:
 			initDiagnosticsFlags(cmd, cfg)
+		case Tecdsa:
+			initTecdsaFlags(cmd, cfg)
 		case Developer:
 			initDeveloperFlags(cmd)
 		}
@@ -206,6 +211,29 @@ func initDiagnosticsFlags(cmd *cobra.Command, cfg *config.Config) {
 		"diagnostics.port",
 		8081,
 		"Diagnostics HTTP server listening port.",
+	)
+}
+
+func initTecdsaFlags(cmd *cobra.Command, cfg *config.Config) {
+	cmd.Flags().IntVar(
+		&cfg.Tecdsa.PreParamsPoolSize,
+		"tecdsa.preParamsPoolSize",
+		tecdsa.DefaultPreParamsPoolSize,
+		"tECDSA pre-parameters pool size.",
+	)
+
+	cmd.Flags().DurationVar(
+		&cfg.Tecdsa.PreParamsGenerationTimeout,
+		"tecdsa.preParamsGenerationTimeout",
+		tecdsa.DefaultPreParamsGenerationTimeout,
+		"tECDSA pre-parameters generation timeout.",
+	)
+
+	cmd.Flags().IntVar(
+		&cfg.Tecdsa.PreParamsGenerationConcurrency,
+		"tecdsa.preParamsGenerationConcurrency",
+		tecdsa.DefaultPreParamsGenerationConcurrency,
+		"tECDSA pre-parameters generation concurrency.",
 	)
 }
 
