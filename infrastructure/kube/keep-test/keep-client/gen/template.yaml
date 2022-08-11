@@ -141,8 +141,6 @@ spec:
             - "--authorization"
             -  #@ str(client.stakeAmount)
             #@ end
-
-            #! TODO: Ensure the KEEP_CLIENT_ETH_ADDRESS is funded with ether.
 ---
 apiVersion: v1
 kind: Service
