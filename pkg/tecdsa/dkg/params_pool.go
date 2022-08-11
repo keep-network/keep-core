@@ -2,9 +2,10 @@ package dkg
 
 import (
 	"fmt"
+	"time"
+
 	"github.com/binance-chain/tss-lib/ecdsa/keygen"
 	"github.com/ipfs/go-log"
-	"time"
 )
 
 // tssPreParamsPool is a pool holding TSS pre parameters. It autogenerates
@@ -21,11 +22,15 @@ func newTssPreParamsPool(
 	logger log.StandardLogger,
 	poolSize int,
 	generationTimeout time.Duration,
+	generationConcurrency int,
 ) *tssPreParamsPool {
 	logger.Infof("TSS pre-parameters target pool size is [%v]", poolSize)
 
 	newPreParamsFn := func() (*keygen.LocalPreParams, error) {
-		preParams, err := keygen.GeneratePreParams(generationTimeout)
+		preParams, err := keygen.GeneratePreParams(
+			generationTimeout,
+			generationConcurrency,
+		)
 		if err != nil {
 			return nil, fmt.Errorf(
 				"failed to generate TSS pre-params: [%v]",

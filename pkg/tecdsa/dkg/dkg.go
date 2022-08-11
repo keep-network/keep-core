@@ -16,7 +16,8 @@ import (
 // ExecutorConfig carries the config for an Executor.
 type ExecutorConfig struct {
 	TssPreParamsPoolSize              int
-	TssPreParamsPoolGenerationTimeout time.Duration
+	TssPreParamsGenerationTimeout     time.Duration
+	TssPreParamsGenerationConcurrency int
 }
 
 // Executor represents an ECDSA distributed key generation process executor.
@@ -35,7 +36,8 @@ func NewExecutor(
 		tssPreParamsPool: newTssPreParamsPool(
 			logger,
 			config.TssPreParamsPoolSize,
-			config.TssPreParamsPoolGenerationTimeout,
+			config.TssPreParamsGenerationTimeout,
+			config.TssPreParamsGenerationConcurrency,
 		),
 	}
 }
