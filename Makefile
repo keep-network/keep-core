@@ -2,16 +2,20 @@
 # not overwritten it defaults to `development`.
 environment = development
 
+# Build with contract packages published to the NPM registry and tagged `development`.
 development:
 	make all environment=development
 
+# Build with contract packages published to the NPM registry and tagged `goerli`.
 goerli:
 	make all environment=goerli
 
 # TODO: Mainnet packages have not been published yet.
+# Build with contract packages published to the NPM registry and tagged `mainnet`.
 # mainnet:
 # 	make all environment=mainnet
 
+# Build with contract packages deployed locally.
 local:
 	make all environment=local
 
