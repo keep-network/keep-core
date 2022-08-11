@@ -325,18 +325,18 @@ type signingMember struct {
 // hash. It packs the hash and signature into a broadcast message.
 func (sm *signingMember) SignDKGResult(
 	dkgResult *Result,
-	chain Chain,
+	resultSigner ResultSigner,
 ) (
 	*dkgResultHashSignatureMessage,
 	error,
 ) {
-	resultHash, err := chain.CalculateDKGResultHash(dkgResult)
+	resultHash, err := resultSigner.CalculateDKGResultHash(dkgResult)
 	if err != nil {
 		return nil, fmt.Errorf("dkg result hash calculation failed [%v]", err)
 	}
 	sm.preferredDKGResultHash = resultHash
 
-	signing := chain.Signing()
+	signing := resultSigner.Signing()
 
 	signature, err := signing.Sign(resultHash[:])
 	if err != nil {
@@ -504,7 +504,7 @@ type submittingMember struct {
 func (sm *submittingMember) SubmitDKGResult(
 	result *Result,
 	signatures map[group.MemberIndex][]byte,
-	chain Chain,
+	resultSubmitter ResultSubmitter,
 	blockCounter chain.BlockCounter,
 	startBlockHeight uint64,
 ) error {
@@ -522,7 +522,7 @@ func (sm *submittingMember) SubmitDKGResult(
 
 	onSubmittedResultChan := make(chan uint64)
 
-	subscription := chain.OnDKGResultSubmitted(
+	subscription := resultSubmitter.OnDKGResultSubmitted(
 		func(event *DKGResultSubmissionEvent) {
 			onSubmittedResultChan <- event.BlockNumber
 		},
@@ -534,7 +534,10 @@ func (sm *submittingMember) SubmitDKGResult(
 		return err
 	}
 
-	alreadySubmitted, err := chain.IsGroupRegistered(result.GroupPublicKey)
+	alreadySubmitted, err := resultSubmitter.IsGroupRegistered(
+		result.GroupPublicKey,
+	)
+
 	if err != nil {
 		return returnWithError(
 			fmt.Errorf(
@@ -577,7 +580,7 @@ func (sm *submittingMember) SubmitDKGResult(
 				blockNumber,
 			)
 
-			return chain.SubmitDKGResult(
+			return resultSubmitter.SubmitDKGResult(
 				sm.index,
 				result,
 				signatures,

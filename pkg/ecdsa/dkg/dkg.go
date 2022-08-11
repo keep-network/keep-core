@@ -109,7 +109,7 @@ type DKGResultSubmissionEvent struct {
 
 // TODO: Replace the Chain interface with smaller interfaces, e.g. ResultSigner, ResultSubmitter
 
-type Chain interface {
+type ResultSubmitter interface {
 	// SubmitDKGResult sends DKG result to a chain, along with signatures over
 	// result hash from group participants supporting the result.
 	// Signatures over DKG result hash are collected in a map keyed by signer's
@@ -127,11 +127,19 @@ type Chain interface {
 	OnDKGResultSubmitted(
 		func(event *DKGResultSubmissionEvent),
 	) subscription.EventSubscription
+}
+
+type ResultSigner interface {
 	// Signing returns the chain's signer.
 	Signing() chain.Signing
 	// CalculateDKGResultHash calculates 256-bit hash of DKG result in standard
 	// specific for the chain. Operation is performed off-chain.
 	CalculateDKGResultHash(result *Result) (ResultHash, error)
+}
+
+type ResultHandler interface {
+	ResultSigner
+	ResultSubmitter
 }
 
 // TODO: Description
@@ -142,14 +150,14 @@ func Publish(
 	submissionConfig *SubmissionConfig,
 	result *Result,
 	channel net.BroadcastChannel,
-	chain Chain,
+	resultHandler ResultHandler,
 	blockCounter chain.BlockCounter,
 	startBlockHeight uint64,
 ) error {
 	initialState := &resultSigningState{
-		channel:      channel,
-		chain:        chain,
-		blockCounter: blockCounter,
+		channel:       channel,
+		resultHandler: resultHandler,
+		blockCounter:  blockCounter,
 		member: &signingMember{
 			logger:              logger,
 			index:               memberIndex,
