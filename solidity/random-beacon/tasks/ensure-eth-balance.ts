@@ -2,7 +2,7 @@ import { task, types } from "hardhat/config"
 
 import { parseValue, TASK_SEND_ETH } from "./send-eth"
 
-export const TASK_ENSURE_ETH_BALANCE = "ensure-eth-balance"
+const TASK_ENSURE_ETH_BALANCE = "ensure-eth-balance"
 
 task(
   TASK_ENSURE_ETH_BALANCE,
@@ -35,7 +35,8 @@ task(
       Array.from(args.addresses).map(hre.helpers.address.validate)
     )
 
-    for (let address of addresses) {
+    // eslint-disable-next-line no-restricted-syntax
+    for (const address of addresses) {
       const expectedBalance = parseValue(args.balance, hre)
       const currentBalance = await ethers.provider.getBalance(address)
 

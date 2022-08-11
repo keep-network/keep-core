@@ -1,9 +1,10 @@
-import { BigNumber, Signer } from "ethers"
 import { task, types } from "hardhat/config"
-import { HardhatRuntimeEnvironment } from "hardhat/types"
 
+import type { BigNumber, Signer } from "ethers"
+import type { HardhatRuntimeEnvironment } from "hardhat/types"
 import type { TransactionResponse } from "@ethersproject/abstract-provider"
 
+// eslint-disable-next-line import/prefer-default-export
 export const TASK_SEND_ETH = "send-eth"
 
 task(TASK_SEND_ETH, "Send ether to an address")
@@ -32,8 +33,8 @@ task(TASK_SEND_ETH, "Send ether to an address")
     const to = hre.helpers.address.validate(args.to)
 
     const tx: TransactionResponse = await from.sendTransaction({
-      to: to,
-      value: value,
+      to,
+      value,
     })
 
     console.log(
@@ -51,7 +52,7 @@ export function parseValue(
 ): BigNumber {
   const parsed = String(value).trim().split(" ")
 
-  if (parsed.length == 0 || parsed.length > 2) {
+  if (parsed.length === 0 || parsed.length > 2) {
     throw new Error(`invalid value: ${value}`)
   }
 
