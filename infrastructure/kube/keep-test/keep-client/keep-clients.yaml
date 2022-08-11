@@ -145,13 +145,13 @@ spec:
   ports:
   - port: 3919
     targetPort: 3919
-    name: tcp-3919
+    name: network
   - port: 9601
     targetPort: 9601
-    name: tcp-9601
+    name: metrics
   - port: 9701
     targetPort: 9701
-    name: tcp-9701
+    name: diagnostics
   selector:
     app: keep
     type: client
@@ -306,13 +306,13 @@ spec:
   ports:
   - port: 3919
     targetPort: 3919
-    name: tcp-3919
+    name: network
   - port: 9601
     targetPort: 9601
-    name: tcp-9601
+    name: metrics
   - port: 9701
     targetPort: 9701
-    name: tcp-9701
+    name: diagnostics
   selector:
     app: keep
     type: client
@@ -467,13 +467,13 @@ spec:
   ports:
   - port: 3919
     targetPort: 3919
-    name: tcp-3919
+    name: network
   - port: 9601
     targetPort: 9601
-    name: tcp-9601
+    name: metrics
   - port: 9701
     targetPort: 9701
-    name: tcp-9701
+    name: diagnostics
   selector:
     app: keep
     type: client
@@ -628,13 +628,13 @@ spec:
   ports:
   - port: 3919
     targetPort: 3919
-    name: tcp-3919
+    name: network
   - port: 9601
     targetPort: 9601
-    name: tcp-9601
+    name: metrics
   - port: 9701
     targetPort: 9701
-    name: tcp-9701
+    name: diagnostics
   selector:
     app: keep
     type: client
@@ -789,13 +789,13 @@ spec:
   ports:
   - port: 3919
     targetPort: 3919
-    name: tcp-3919
+    name: network
   - port: 9601
     targetPort: 9601
-    name: tcp-9601
+    name: metrics
   - port: 9701
     targetPort: 9701
-    name: tcp-9701
+    name: diagnostics
   selector:
     app: keep
     type: client
@@ -950,13 +950,13 @@ spec:
   ports:
   - port: 3919
     targetPort: 3919
-    name: tcp-3919
+    name: network
   - port: 9601
     targetPort: 9601
-    name: tcp-9601
+    name: metrics
   - port: 9701
     targetPort: 9701
-    name: tcp-9701
+    name: diagnostics
   selector:
     app: keep
     type: client
@@ -1111,13 +1111,13 @@ spec:
   ports:
   - port: 3919
     targetPort: 3919
-    name: tcp-3919
+    name: network
   - port: 9601
     targetPort: 9601
-    name: tcp-9601
+    name: metrics
   - port: 9701
     targetPort: 9701
-    name: tcp-9701
+    name: diagnostics
   selector:
     app: keep
     type: client
@@ -1272,13 +1272,13 @@ spec:
   ports:
   - port: 3919
     targetPort: 3919
-    name: tcp-3919
+    name: network
   - port: 9601
     targetPort: 9601
-    name: tcp-9601
+    name: metrics
   - port: 9701
     targetPort: 9701
-    name: tcp-9701
+    name: diagnostics
   selector:
     app: keep
     type: client
@@ -1433,13 +1433,13 @@ spec:
   ports:
   - port: 3919
     targetPort: 3919
-    name: tcp-3919
+    name: network
   - port: 9601
     targetPort: 9601
-    name: tcp-9601
+    name: metrics
   - port: 9701
     targetPort: 9701
-    name: tcp-9701
+    name: diagnostics
   selector:
     app: keep
     type: client
@@ -1594,13 +1594,13 @@ spec:
   ports:
   - port: 3919
     targetPort: 3919
-    name: tcp-3919
+    name: network
   - port: 9601
     targetPort: 9601
-    name: tcp-9601
+    name: metrics
   - port: 9701
     targetPort: 9701
-    name: tcp-9701
+    name: diagnostics
   selector:
     app: keep
     type: client
