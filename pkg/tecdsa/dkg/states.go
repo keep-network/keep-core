@@ -2,7 +2,6 @@ package dkg
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"github.com/keep-network/keep-core/pkg/net"
@@ -122,8 +121,8 @@ func (skgs *symmetricKeyGenerationState) ActiveBlocks() uint64 {
 func (skgs *symmetricKeyGenerationState) Initiate(ctx context.Context) error {
 	skgs.member.MarkInactiveMembers(skgs.previousPhaseMessages)
 
-	if len(skgs.member.group.OperatingMemberIDs()) != skgs.member.group.GroupSize() {
-		return fmt.Errorf("inactive members detected")
+	if len(skgs.member.group.InactiveMemberIDs()) > 0 {
+		return newInactiveMembersError(skgs.member.group.InactiveMemberIDs())
 	}
 
 	return skgs.member.generateSymmetricKeys(skgs.previousPhaseMessages)
@@ -239,8 +238,8 @@ func (trts *tssRoundTwoState) ActiveBlocks() uint64 {
 func (trts *tssRoundTwoState) Initiate(ctx context.Context) error {
 	trts.member.MarkInactiveMembers(trts.previousPhaseMessages)
 
-	if len(trts.member.group.OperatingMemberIDs()) != trts.member.group.GroupSize() {
-		return fmt.Errorf("inactive members detected")
+	if len(trts.member.group.InactiveMemberIDs()) > 0 {
+		return newInactiveMembersError(trts.member.group.InactiveMemberIDs())
 	}
 
 	// The ctx instance passed as Initiate argument is scoped to the lifetime
@@ -319,8 +318,8 @@ func (trts *tssRoundThreeState) ActiveBlocks() uint64 {
 func (trts *tssRoundThreeState) Initiate(ctx context.Context) error {
 	trts.member.MarkInactiveMembers(trts.previousPhaseMessages)
 
-	if len(trts.member.group.OperatingMemberIDs()) != trts.member.group.GroupSize() {
-		return fmt.Errorf("inactive members detected")
+	if len(trts.member.group.InactiveMemberIDs()) > 0 {
+		return newInactiveMembersError(trts.member.group.InactiveMemberIDs())
 	}
 
 	// The ctx instance passed as Initiate argument is scoped to the lifetime
@@ -398,8 +397,8 @@ func (fs *finalizationState) ActiveBlocks() uint64 {
 func (fs *finalizationState) Initiate(ctx context.Context) error {
 	fs.member.MarkInactiveMembers(fs.previousPhaseMessages)
 
-	if len(fs.member.group.OperatingMemberIDs()) != fs.member.group.GroupSize() {
-		return fmt.Errorf("inactive members detected")
+	if len(fs.member.group.InactiveMemberIDs()) > 0 {
+		return newInactiveMembersError(fs.member.group.InactiveMemberIDs())
 	}
 
 	// The ctx instance passed as Initiate argument is scoped to the lifetime
