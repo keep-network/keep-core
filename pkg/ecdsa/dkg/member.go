@@ -504,7 +504,7 @@ type submittingMember struct {
 func (sm *submittingMember) SubmitDKGResult(
 	result *Result,
 	signatures map[group.MemberIndex][]byte,
-	chainRelay Chain,
+	chain Chain,
 	blockCounter chain.BlockCounter,
 	startBlockHeight uint64,
 ) error {
@@ -522,7 +522,7 @@ func (sm *submittingMember) SubmitDKGResult(
 
 	onSubmittedResultChan := make(chan uint64)
 
-	subscription := chainRelay.OnDKGResultSubmitted(
+	subscription := chain.OnDKGResultSubmitted(
 		func(event *DKGResultSubmissionEvent) {
 			onSubmittedResultChan <- event.BlockNumber
 		},
@@ -534,7 +534,7 @@ func (sm *submittingMember) SubmitDKGResult(
 		return err
 	}
 
-	alreadySubmitted, err := chainRelay.IsGroupRegistered(result.GroupPublicKey)
+	alreadySubmitted, err := chain.IsGroupRegistered(result.GroupPublicKey)
 	if err != nil {
 		return returnWithError(
 			fmt.Errorf(
@@ -577,7 +577,7 @@ func (sm *submittingMember) SubmitDKGResult(
 				blockNumber,
 			)
 
-			return chainRelay.SubmitDKGResult(
+			return chain.SubmitDKGResult(
 				sm.index,
 				result,
 				signatures,

@@ -170,7 +170,6 @@ func (n *node) joinDKGIfEligible(seed *big.Int, startBlockNumber uint64) {
 				err = dkg.Publish(
 					logger,
 					memberIndex,
-					result.Group,
 					membershipValidator,
 					submissionConfig,
 					result,
