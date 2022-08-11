@@ -10,14 +10,13 @@ import (
 	"github.com/keep-network/keep-core/pkg/internal/testutils"
 	"github.com/keep-network/keep-core/pkg/net"
 	"github.com/keep-network/keep-core/pkg/protocol/group"
-	tbtcchain "github.com/keep-network/keep-core/pkg/tbtc/chain"
 )
 
 // TODO: Unit tests for `node.go`.
 
 // node represents the current state of an ECDSA node.
 type node struct {
-	chain       tbtcchain.Chain
+	chain       Chain
 	netProvider net.Provider
 	dkgExecutor *dkg.Executor
 
@@ -25,7 +24,7 @@ type node struct {
 }
 
 func newNode(
-	chain tbtcchain.Chain,
+	chain Chain,
 	netProvider net.Provider,
 	persistence persistence.Handle,
 ) *node {
@@ -161,11 +160,19 @@ func (n *node) joinDKGIfEligible(seed *big.Int, startBlockNumber uint64) {
 
 				startPublicationBlockHeight := endBlockHeight
 
+				// TODO: Remove. This is temporary solution.
+				submissionConfig := &dkg.SubmissionConfig{
+					GroupSize:                  n.chain.GetConfig().GroupSize,
+					HonestThreshold:            n.chain.GetConfig().HonestThreshold,
+					ResultPublicationBlockStep: n.chain.GetConfig().ResultPublicationBlockStep,
+				}
+
 				err = dkg.Publish(
 					logger,
 					memberIndex,
 					result.Group,
 					membershipValidator,
+					submissionConfig,
 					result,
 					broadcastChannel,
 					n.chain,

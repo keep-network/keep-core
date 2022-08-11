@@ -7,8 +7,10 @@ import (
 	"github.com/keep-network/keep-core/pkg/chain"
 
 	"github.com/keep-network/keep-core/pkg/protocol/group"
-	tbtcchain "github.com/keep-network/keep-core/pkg/tbtc/chain"
 )
+
+// TODO: Remove this file. The logic of result signing should be moved to
+//       the tbtc package.
 
 // SigningMember represents a group member sharing their preferred DKG result hash
 // and signature (over this hash) with other peer members.
@@ -24,8 +26,11 @@ type SigningMember struct {
 	// against group members
 	membershipValidator *group.MembershipValidator
 
+	// DKG result submission configuration
+	config *SubmissionConfig
+
 	// Hash of DKG result preferred by the current participant.
-	preferredDKGResultHash tbtcchain.DKGResultHash
+	preferredDKGResultHash DKGResultHash
 	// Signature over preferredDKGResultHash calculated by the member.
 	selfDKGResultSignature []byte
 }
@@ -36,31 +41,33 @@ func NewSigningMember(
 	memberIndex group.MemberIndex,
 	dkgGroup *group.Group,
 	membershipValidator *group.MembershipValidator,
+	config *SubmissionConfig,
 ) *SigningMember {
 	return &SigningMember{
 		logger:              logger,
 		index:               memberIndex,
 		group:               dkgGroup,
 		membershipValidator: membershipValidator,
+		config:              config,
 	}
 }
 
 // SignDKGResult calculates hash of DKG result and member's signature over this
 // hash. It packs the hash and signature into a broadcast message.
 func (sm *SigningMember) SignDKGResult(
-	dkgResult *tbtcchain.DKGResult,
-	tbtcChain tbtcchain.Chain,
+	dkgResult *DKGResult,
+	chain Chain,
 ) (
 	*dkgResultHashSignatureMessage,
 	error,
 ) {
-	resultHash, err := tbtcChain.CalculateDKGResultHash(dkgResult)
+	resultHash, err := chain.CalculateDKGResultHash(dkgResult)
 	if err != nil {
 		return nil, fmt.Errorf("dkg result hash calculation failed [%v]", err)
 	}
 	sm.preferredDKGResultHash = resultHash
 
-	signing := tbtcChain.Signing()
+	signing := chain.Signing()
 
 	signature, err := signing.Sign(resultHash[:])
 	if err != nil {

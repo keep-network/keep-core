@@ -4,7 +4,6 @@ import (
 	"sort"
 
 	"github.com/keep-network/keep-core/pkg/protocol/group"
-	tbtcchain "github.com/keep-network/keep-core/pkg/tbtc/chain"
 )
 
 // Result of distributed key generation protocol.
@@ -17,7 +16,7 @@ type Result struct {
 }
 
 // TODO: Consider removing and using just one DKG result type.
-func convertToChainResult(result *Result) *tbtcchain.DKGResult {
+func convertToChainResult(result *Result) *DKGResult {
 	convertToMisbehaved := func(
 		inactive []group.MemberIndex,
 		disqualified []group.MemberIndex,
@@ -49,7 +48,7 @@ func convertToChainResult(result *Result) *tbtcchain.DKGResult {
 		return bytes
 	}
 
-	return &tbtcchain.DKGResult{
+	return &DKGResult{
 		// TODO: Check if GroupPublicKey needs further conversion
 		GroupPublicKey: result.GroupPublicKey,
 		Misbehaved: convertToMisbehaved(

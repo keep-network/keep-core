@@ -3,7 +3,6 @@ package dkg
 import (
 	"github.com/keep-network/keep-core/pkg/crypto/ephemeral"
 	"github.com/keep-network/keep-core/pkg/protocol/group"
-	tbtcchain "github.com/keep-network/keep-core/pkg/tbtc/chain"
 )
 
 const messageTypePrefix = "ecdsa_dkg/"
@@ -99,7 +98,7 @@ func (trtm *tssRoundThreeMessage) Type() string {
 type dkgResultHashSignatureMessage struct {
 	senderID group.MemberIndex
 
-	resultHash tbtcchain.DKGResultHash
+	resultHash DKGResultHash
 	signature  []byte
 	publicKey  []byte
 }

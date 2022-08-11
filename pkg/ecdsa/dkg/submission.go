@@ -6,8 +6,26 @@ import (
 
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/protocol/group"
-	tbtcchain "github.com/keep-network/keep-core/pkg/tbtc/chain"
 )
+
+// TODO: Remove this file. The logic of result submission should be moved to
+//       the tbtc package.
+
+type SubmissionConfig struct {
+	// GroupSize is the size of a group in TBTC.
+	GroupSize int
+	// HonestThreshold is the minimum number of active participants behaving
+	// according to the protocol needed to generate a signature.
+	HonestThreshold int
+	// ResultPublicationBlockStep is the duration (in blocks) that has to pass
+	// before group member with the given index is eligible to submit the
+	// result.
+	// Nth player becomes eligible to submit the result after
+	// T_dkg + (N-1) * T_step
+	// where T_dkg is time for phases 1-12 to complete and T_step is the result
+	// publication block step.
+	ResultPublicationBlockStep uint64
+}
 
 // SubmittingMember represents a member submitting a DKG result to the
 // blockchain along with signatures received from other group members supporting
@@ -16,17 +34,20 @@ type SubmittingMember struct {
 	logger log.StandardLogger
 
 	// Represents the member's position for submission.
-	index group.MemberIndex
+	index  group.MemberIndex
+	config *SubmissionConfig
 }
 
 // NewSubmittingMember creates a member to execute submitting the DKG result hash.
 func NewSubmittingMember(
 	logger log.StandardLogger,
 	memberIndex group.MemberIndex,
+	submissionConfig *SubmissionConfig,
 ) *SubmittingMember {
 	return &SubmittingMember{
 		logger: logger,
 		index:  memberIndex,
+		config: submissionConfig,
 	}
 }
 
@@ -49,18 +70,16 @@ func NewSubmittingMember(
 // successfully submitted on chain by the member. In case of failure or result
 // already submitted by another member it returns `0`.
 func (sm *SubmittingMember) SubmitDKGResult(
-	result *tbtcchain.DKGResult,
+	result *DKGResult,
 	signatures map[group.MemberIndex][]byte,
-	chainRelay tbtcchain.Chain,
+	chainRelay Chain,
 	blockCounter chain.BlockCounter,
 	startBlockHeight uint64,
 ) error {
-	config := chainRelay.GetConfig()
-
 	// Chain rejects the result if it has less than 25% safety margin.
 	// If there are not enough signatures to preserve the margin, it does not
 	// make sense to submit the result.
-	signatureThreshold := config.HonestThreshold + (config.GroupSize-config.HonestThreshold)/2
+	signatureThreshold := sm.config.HonestThreshold + (sm.config.GroupSize-sm.config.HonestThreshold)/2
 	if len(signatures) < signatureThreshold {
 		return fmt.Errorf(
 			"could not submit result with [%v] signatures for signature threshold [%v]",
@@ -72,7 +91,7 @@ func (sm *SubmittingMember) SubmitDKGResult(
 	onSubmittedResultChan := make(chan uint64)
 
 	subscription := chainRelay.OnDKGResultSubmitted(
-		func(event *tbtcchain.DKGResultSubmissionEvent) {
+		func(event *DKGResultSubmissionEvent) {
 			onSubmittedResultChan <- event.BlockNumber
 		},
 	)
@@ -102,7 +121,7 @@ func (sm *SubmittingMember) SubmitDKGResult(
 	eligibleToSubmitWaiter, err := sm.waitForSubmissionEligibility(
 		blockCounter,
 		startBlockHeight,
-		config.ResultPublicationBlockStep,
+		sm.config.ResultPublicationBlockStep,
 	)
 	if err != nil {
 		return returnWithError(

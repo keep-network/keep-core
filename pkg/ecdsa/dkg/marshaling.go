@@ -5,7 +5,6 @@ import (
 	"github.com/keep-network/keep-core/pkg/crypto/ephemeral"
 	"github.com/keep-network/keep-core/pkg/ecdsa/dkg/gen/pb"
 	"github.com/keep-network/keep-core/pkg/protocol/group"
-	tbtcchain "github.com/keep-network/keep-core/pkg/tbtc/chain"
 )
 
 // Marshal converts this ephemeralPublicKeyMessage to a byte array suitable for
@@ -213,7 +212,7 @@ func (d *dkgResultHashSignatureMessage) Unmarshal(bytes []byte) error {
 	}
 	d.senderID = group.MemberIndex(pbMsg.SenderID)
 
-	resultHash, err := tbtcchain.DKGResultHashFromBytes(pbMsg.ResultHash)
+	resultHash, err := DKGResultHashFromBytes(pbMsg.ResultHash)
 	if err != nil {
 		return err
 	}

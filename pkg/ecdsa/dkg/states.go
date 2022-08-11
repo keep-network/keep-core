@@ -10,7 +10,6 @@ import (
 	"github.com/keep-network/keep-core/pkg/net"
 	"github.com/keep-network/keep-core/pkg/protocol/group"
 	"github.com/keep-network/keep-core/pkg/protocol/state"
-	tbtcchain "github.com/keep-network/keep-core/pkg/tbtc/chain"
 )
 
 // represents a given state in the state machine for signing DKG results
@@ -452,12 +451,12 @@ func (fs *finalizationState) result() *Result {
 // result), and share this over the broadcast channel.
 type resultSigningState struct {
 	channel      net.BroadcastChannel
-	tbtcChain    tbtcchain.Chain
+	chain        Chain
 	blockCounter chain.BlockCounter
 
 	member *SigningMember
 
-	result *tbtcchain.DKGResult
+	result *DKGResult
 
 	signatureMessages []*dkgResultHashSignatureMessage
 
@@ -473,7 +472,7 @@ func (rss *resultSigningState) ActiveBlocks() uint64 {
 }
 
 func (rss *resultSigningState) Initiate(ctx context.Context) error {
-	message, err := rss.member.SignDKGResult(rss.result, rss.tbtcChain)
+	message, err := rss.member.SignDKGResult(rss.result, rss.chain)
 	if err != nil {
 		return err
 	}
@@ -519,7 +518,7 @@ func (rss *resultSigningState) Receive(msg net.Message) error {
 func (rss *resultSigningState) Next() signingState {
 	return &signaturesVerificationState{
 		channel:           rss.channel,
-		tbtcChain:         rss.tbtcChain,
+		chain:             rss.chain,
 		blockCounter:      rss.blockCounter,
 		member:            rss.member,
 		result:            rss.result,
@@ -540,12 +539,12 @@ func (rss *resultSigningState) MemberIndex() group.MemberIndex {
 // the previous state. Valid validSignatures are added to the state.
 type signaturesVerificationState struct {
 	channel      net.BroadcastChannel
-	tbtcChain    tbtcchain.Chain
+	chain        Chain
 	blockCounter chain.BlockCounter
 
 	member *SigningMember
 
-	result *tbtcchain.DKGResult
+	result *DKGResult
 
 	signatureMessages []*dkgResultHashSignatureMessage
 	validSignatures   map[group.MemberIndex][]byte
@@ -564,7 +563,7 @@ func (svs *signaturesVerificationState) ActiveBlocks() uint64 {
 func (svs *signaturesVerificationState) Initiate(ctx context.Context) error {
 	signatures, err := svs.member.VerifyDKGResultSignatures(
 		svs.signatureMessages,
-		svs.tbtcChain.Signing(),
+		svs.chain.Signing(),
 	)
 	if err != nil {
 		return err
@@ -581,9 +580,9 @@ func (svs *signaturesVerificationState) Receive(msg net.Message) error {
 func (svs *signaturesVerificationState) Next() signingState {
 	return &resultSubmissionState{
 		channel:      svs.channel,
-		tbtcChain:    svs.tbtcChain,
+		chain:        svs.chain,
 		blockCounter: svs.blockCounter,
-		member:       NewSubmittingMember(svs.member.logger, svs.member.index),
+		member:       NewSubmittingMember(svs.member.logger, svs.member.index, svs.member.config),
 		result:       svs.result,
 		signatures:   svs.validSignatures,
 		submissionStartBlockHeight: svs.verificationStartBlockHeight +
@@ -601,12 +600,12 @@ func (svs *signaturesVerificationState) MemberIndex() group.MemberIndex {
 // result to the chain. This state concludes the DKG protocol.
 type resultSubmissionState struct {
 	channel      net.BroadcastChannel
-	tbtcChain    tbtcchain.Chain
+	chain        Chain
 	blockCounter chain.BlockCounter
 
 	member *SubmittingMember
 
-	result     *tbtcchain.DKGResult
+	result     *DKGResult
 	signatures map[group.MemberIndex][]byte
 
 	submissionStartBlockHeight uint64
@@ -628,7 +627,7 @@ func (rss *resultSubmissionState) Initiate(ctx context.Context) error {
 	return rss.member.SubmitDKGResult(
 		rss.result,
 		rss.signatures,
-		rss.tbtcChain,
+		rss.chain,
 		rss.blockCounter,
 		rss.submissionStartBlockHeight,
 	)
