@@ -7,12 +7,12 @@ on:
     branches:
       - main
     paths-ignore:
+      - "docs-v1/**"
       - "docs/**"
       - "infrastructure/**"
       - "scripts/**"
+      - "solidity-v1/**"
       - "token-stakedrop/**"
-      - "solidity-v1/dashboard/**"
-      - "solidity/**"
   pull_request:
   workflow_dispatch:
     inputs:
@@ -43,7 +43,7 @@ jobs:
         with:
           filters: |
             path-filter:
-              - './!((docs|infrastructure|scripts|token-stakedrop|(solidity-v1/dashboard)|solidity)/**)'
+              - './!((docs-v1|docs|infrastructure|scripts|solidity-v1|token-stakedrop)/**)'
 
   client-build-test-publish:
     needs: client-detect-changes
@@ -55,7 +55,7 @@ jobs:
       - uses: actions/checkout@v3
 
       - name: Load environment variables
-        uses: keep-network/ci/actions/load-env-variables@v1
+        uses: keep-network/ci/actions/load-env-variables@v2
         if: github.event_name == 'workflow_dispatch'
         with:
           environment: ${{ github.event.inputs.environment }}
@@ -124,11 +124,11 @@ jobs:
 
       - name: Notify CI about completion of the workflow
         if: github.event_name == 'workflow_dispatch'
-        uses: keep-network/ci/actions/notify-workflow-completed@v1
+        uses: keep-network/ci/actions/notify-workflow-completed@v2
         env:
           GITHUB_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
         with:
-          module: "github.com/keep-network/keep-core"
+          module: "github.com/keep-network/keep-core/client"
           url: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
           environment: ${{ github.event.inputs.environment }}
           upstream_builds: ${{ github.event.inputs.upstream_builds }}
