@@ -1,18 +1,11 @@
 #!/bin/bash
-set -e
+set -eou pipefail
 
 # Dafault inputs.
-KEEP_ETHEREUM_PASSWORD_DEFAULT="password"
 LOG_LEVEL_DEFAULT="info"
 KEEP_CORE_PATH=$PWD
 CONFIG_DIR_PATH_DEFAULT="$KEEP_CORE_PATH/configs"
-
-# FIXME: set this value as env var when calling this script. Approach should
-# stay consistent between 'install.sh' & 'start.sh' scripts.
-#
-# Read user inputs.
-read -p "Enter ethereum accounts password [$KEEP_ETHEREUM_PASSWORD_DEFAULT]: " ethereum_password
-KEEP_ETHEREUM_PASSWORD=${ethereum_password:-$KEEP_ETHEREUM_PASSWORD_DEFAULT}
+KEEP_ETHEREUM_PASSWORD=${KEEP_ETHEREUM_PASSWORD:-"password"}
 
 # Transform long options to short ones
 for arg in "$@"; do
@@ -91,4 +84,4 @@ printf "${LOG_START}Starting keep-core client...${LOG_END}"
 cd $KEEP_CORE_PATH
 KEEP_ETHEREUM_PASSWORD=$KEEP_ETHEREUM_PASSWORD \
     LOG_LEVEL=${LOG_LEVEL} \
-    ./keep-core --config $KEEP_CORE_CONFIG_FILE_PATH start
+    ./keep-client --config $KEEP_CORE_CONFIG_FILE_PATH start
