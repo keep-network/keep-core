@@ -32,19 +32,15 @@ type DKGResultSubmissionEvent struct {
 	BlockNumber uint64
 }
 
-// GroupMemberIndex is an index of a wallet registry group member.
-// Maximum value accepted by the chain is 255.
-type GroupMemberIndex = uint8
-
 type Chain interface {
 	// SubmitDKGResult sends DKG result to a chain, along with signatures over
 	// result hash from group participants supporting the result.
 	// Signatures over DKG result hash are collected in a map keyed by signer's
 	// member index.
 	SubmitDKGResult(
-		participantIndex GroupMemberIndex,
+		participantIndex group.MemberIndex,
 		result *Result,
-		signatures map[GroupMemberIndex][]byte,
+		signatures map[group.MemberIndex][]byte,
 	) error
 	// IsGroupRegistered checks if group with the given public key is registered
 	// on-chain.

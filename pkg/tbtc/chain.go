@@ -6,13 +6,10 @@ import (
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/ecdsa/dkg"
 	"github.com/keep-network/keep-core/pkg/operator"
+	"github.com/keep-network/keep-core/pkg/protocol/group"
 	"github.com/keep-network/keep-core/pkg/sortition"
 	"github.com/keep-network/keep-core/pkg/subscription"
 )
-
-// GroupMemberIndex is an index of a wallet registry group member.
-// Maximum value accepted by the chain is 255.
-type GroupMemberIndex = uint8
 
 // GroupSelectionChain defines the subset of the TBTC chain interface that
 // pertains to the group selection activities.
@@ -37,9 +34,9 @@ type DistributedKeyGenerationChain interface {
 	// Signatures over DKG result hash are collected in a map keyed by signer's
 	// member index.
 	SubmitDKGResult(
-		participantIndex GroupMemberIndex,
+		participantIndex group.MemberIndex,
 		dkgResult *dkg.Result,
-		signatures map[GroupMemberIndex][]byte,
+		signatures map[group.MemberIndex][]byte,
 	) error
 	// OnDKGResultSubmitted registers a callback that is invoked when an on-chain
 	// notification of a new, valid submitted result is seen.

@@ -15,6 +15,7 @@ import (
 	"github.com/keep-network/keep-core/pkg/chain/ethereum/ecdsa/gen/contract"
 	"github.com/keep-network/keep-core/pkg/ecdsa/dkg"
 	"github.com/keep-network/keep-core/pkg/operator"
+	"github.com/keep-network/keep-core/pkg/protocol/group"
 	"github.com/keep-network/keep-core/pkg/subscription"
 	"github.com/keep-network/keep-core/pkg/tbtc"
 )
@@ -300,9 +301,9 @@ func (tc *TbtcChain) OnDKGStarted(
 //       just creates and pipes the DKG submission event to the handlers
 //       registered in the dkgResultSubmissionHandlers map.
 func (tc *TbtcChain) SubmitDKGResult(
-	participantIndex tbtc.GroupMemberIndex,
+	participantIndex group.MemberIndex,
 	result *dkg.Result,
-	signatures map[tbtc.GroupMemberIndex][]byte,
+	signatures map[group.MemberIndex][]byte,
 ) error {
 	return tc.mockWalletRegistry.SubmitDKGResult(
 		participantIndex,
@@ -430,9 +431,9 @@ func (mwr *mockWalletRegistry) OnDKGResultSubmitted(
 }
 
 func (mwr *mockWalletRegistry) SubmitDKGResult(
-	participantIndex tbtc.GroupMemberIndex,
+	participantIndex group.MemberIndex,
 	result *dkg.Result,
-	signatures map[tbtc.GroupMemberIndex][]byte,
+	signatures map[group.MemberIndex][]byte,
 ) error {
 	mwr.dkgResultSubmissionHandlersMutex.Lock()
 	defer mwr.dkgResultSubmissionHandlersMutex.Unlock()
