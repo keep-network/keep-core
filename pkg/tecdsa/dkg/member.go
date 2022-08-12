@@ -1,6 +1,7 @@
 package dkg
 
 import (
+	"crypto/elliptic"
 	"fmt"
 	"github.com/keep-network/keep-core/pkg/tecdsa"
 	"math/big"
@@ -289,19 +290,21 @@ func (fm *finalizingMember) Result() *Result {
 		return bytes
 	}
 
+	privateKeyShare := tecdsa.NewPrivateKeyShare(fm.tssResult)
+	publicKey := privateKeyShare.PublicKey()
+
 	return &Result{
 		Group: fm.group,
 		Misbehaved: misbehavedMembersAsBytes(
 			fm.group.InactiveMemberIDs(),
 			fm.group.DisqualifiedMemberIDs(),
 		),
-		// GroupPublicKey: elliptic.Marshal(
-		// 	tss.EC(),
-		// 	fm.tssResult.ECDSAPub.X(),
-		// 	fm.tssResult.ECDSAPub.Y(),
-		// ),
-		GroupPublicKey:  make([]byte, 1000), // TODO: Obtain public key bytes
-		PrivateKeyShare: tecdsa.NewPrivateKeyShare(fm.tssResult),
+		GroupPublicKeyBytes: elliptic.Marshal(
+			publicKey.Curve,
+			publicKey.X,
+			publicKey.Y,
+		),
+		PrivateKeyShare: privateKeyShare,
 	}
 }
 
@@ -537,7 +540,7 @@ func (sm *submittingMember) SubmitDKGResult(
 	}
 
 	alreadySubmitted, err := resultSubmitter.IsGroupRegistered(
-		result.GroupPublicKey,
+		result.GroupPublicKeyBytes,
 	)
 
 	if err != nil {
@@ -577,7 +580,7 @@ func (sm *submittingMember) SubmitDKGResult(
 				"[member:%v] submitting DKG result with public key [0x%x] and "+
 					"[%v] supporting member signatures at block [%v]",
 				sm.index,
-				result.GroupPublicKey,
+				result.GroupPublicKeyBytes,
 				len(signatures),
 				blockNumber,
 			)

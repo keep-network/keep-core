@@ -106,10 +106,12 @@ func newTbtcChain(
 func (tc *TbtcChain) GetConfig() *tbtc.ChainConfig {
 	groupSize := 100
 	honestThreshold := 51
+	resultPublicationBlockStep := 1
 
 	return &tbtc.ChainConfig{
-		GroupSize:       groupSize,
-		HonestThreshold: honestThreshold,
+		GroupSize:                  groupSize,
+		HonestThreshold:            honestThreshold,
+		ResultPublicationBlockStep: uint64(resultPublicationBlockStep),
 	}
 }
 
@@ -332,7 +334,7 @@ func (tc *TbtcChain) CalculateDKGResultHash(
 	result *dkg.Result,
 ) (dkg.ResultHash, error) {
 	// Encode DKG result to the format matched with Solidity keccak256(abi.encodePacked(...))
-	hash := crypto.Keccak256(result.GroupPublicKey, result.Misbehaved)
+	hash := crypto.Keccak256(result.GroupPublicKeyBytes, result.Misbehaved)
 	return dkg.ResultHashFromBytes(hash)
 }
 
@@ -460,14 +462,14 @@ func (mwr *mockWalletRegistry) SubmitDKGResult(
 		go func(handler func(*dkg.DKGResultSubmissionEvent)) {
 			handler(&dkg.DKGResultSubmissionEvent{
 				MemberIndex:    uint32(participantIndex),
-				GroupPublicKey: result.GroupPublicKey,
+				GroupPublicKey: result.GroupPublicKeyBytes,
 				Misbehaved:     result.Misbehaved,
 				BlockNumber:    blockNumber,
 			})
 		}(handler)
 	}
 
-	mwr.activeGroup = result.GroupPublicKey
+	mwr.activeGroup = result.GroupPublicKeyBytes
 	mwr.activeGroupOperableBlock = new(big.Int).Add(
 		mwr.currentDkgStartBlock,
 		big.NewInt(150),
