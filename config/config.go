@@ -13,6 +13,7 @@ import (
 	ethereumCommon "github.com/keep-network/keep-common/pkg/chain/ethereum"
 
 	"github.com/keep-network/keep-core/pkg/net/libp2p"
+	"github.com/keep-network/keep-core/pkg/tbtc"
 	"github.com/mitchellh/mapstructure"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
@@ -38,6 +39,7 @@ type Config struct {
 	Storage     Storage
 	Metrics     Metrics
 	Diagnostics Diagnostics
+	Tbtc        tbtc.Config
 }
 
 // Storage stores meta-info about keeping data on disk
