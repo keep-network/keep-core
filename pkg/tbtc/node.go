@@ -8,7 +8,6 @@ import (
 	"github.com/keep-network/keep-core/pkg/internal/testutils"
 	"github.com/keep-network/keep-core/pkg/net"
 	"github.com/keep-network/keep-core/pkg/protocol/group"
-	"github.com/keep-network/keep-core/pkg/tecdsa"
 	"github.com/keep-network/keep-core/pkg/tecdsa/dkg"
 )
 
@@ -26,15 +25,15 @@ func newNode(
 	chain Chain,
 	netProvider net.Provider,
 	persistence persistence.Handle,
-	tecdsaConfig tecdsa.Config,
+	config Config,
 ) *node {
 	walletRegistry := newWalletRegistry(persistence)
 
 	dkgExecutor := dkg.NewExecutor(
 		logger,
-		tecdsaConfig.PreParamsPoolSize,
-		tecdsaConfig.PreParamsGenerationTimeout,
-		tecdsaConfig.PreParamsGenerationConcurrency,
+		config.PreParamsPoolSize,
+		config.PreParamsGenerationTimeout,
+		config.PreParamsGenerationConcurrency,
 	)
 
 	return &node{

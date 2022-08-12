@@ -119,7 +119,7 @@ func start(cmd *cobra.Command) error {
 		tbtcChain,
 		netProvider,
 		tbtcPersistence,
-		clientConfig.Tecdsa,
+		clientConfig.Tbtc,
 	)
 	if err != nil {
 		return fmt.Errorf("error initializing TBTC: [%v]", err)

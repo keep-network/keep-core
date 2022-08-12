@@ -141,23 +141,23 @@ var cmdFlagsTests = map[string]struct {
 		expectedValueFromFlag: 6089,
 		defaultValue:          8081,
 	},
-	"tecdsa.preParamsPoolSize": {
-		readValueFunc:         func(c *config.Config) interface{} { return c.Tecdsa.PreParamsPoolSize },
-		flagName:              "--tecdsa.preParamsPoolSize",
+	"tbtc.preParamsPoolSize": {
+		readValueFunc:         func(c *config.Config) interface{} { return c.Tbtc.PreParamsPoolSize },
+		flagName:              "--tbtc.preParamsPoolSize",
 		flagValue:             "75",
 		expectedValueFromFlag: 75,
 		defaultValue:          50,
 	},
-	"tecdsa.preParamsGenerationTimeout": {
-		readValueFunc:         func(c *config.Config) interface{} { return c.Tecdsa.PreParamsGenerationTimeout },
-		flagName:              "--tecdsa.preParamsGenerationTimeout",
+	"tbtc.preParamsGenerationTimeout": {
+		readValueFunc:         func(c *config.Config) interface{} { return c.Tbtc.PreParamsGenerationTimeout },
+		flagName:              "--tbtc.preParamsGenerationTimeout",
 		flagValue:             "2m30s",
 		expectedValueFromFlag: 150 * time.Second,
 		defaultValue:          120 * time.Second,
 	},
-	"tecdsa.preParamsGenerationConcurrency": {
-		readValueFunc:         func(c *config.Config) interface{} { return c.Tecdsa.PreParamsGenerationConcurrency },
-		flagName:              "--tecdsa.preParamsGenerationConcurrency",
+	"tbtc.preParamsGenerationConcurrency": {
+		readValueFunc:         func(c *config.Config) interface{} { return c.Tbtc.PreParamsGenerationConcurrency },
+		flagName:              "--tbtc.preParamsGenerationConcurrency",
 		flagValue:             "2",
 		expectedValueFromFlag: 2,
 		defaultValue:          1,
