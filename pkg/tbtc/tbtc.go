@@ -37,7 +37,7 @@ func Initialize(
 		)
 	}
 
-	_ = chain.OnDKGStarted(func(event *dkg.DKGStartedEvent) {
+	_ = chain.OnDKGStarted(func(event *dkg.StartedDKGEvent) {
 		go func() {
 			if ok := deduplicator.notifyDKGStarted(
 				event.Seed,

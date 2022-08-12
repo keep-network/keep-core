@@ -299,6 +299,7 @@ func (fm *finalizingMember) Result() *Result {
 			fm.group.InactiveMemberIDs(),
 			fm.group.DisqualifiedMemberIDs(),
 		),
+		// TODO: Check how the public key should be obtained
 		GroupPublicKeyBytes: elliptic.Marshal(
 			publicKey.Curve,
 			publicKey.X,
@@ -335,6 +336,8 @@ func (sm *signingMember) SignDKGResult(
 	*dkgResultHashSignatureMessage,
 	error,
 ) {
+	// TODO: Consider moving the whole implementation to the resultSigner
+	//       interface
 	resultHash, err := resultSigner.CalculateDKGResultHash(dkgResult)
 	if err != nil {
 		return nil, fmt.Errorf("dkg result hash calculation failed [%v]", err)
@@ -372,6 +375,9 @@ func (sm *signingMember) VerifyDKGResultSignatures(
 	messages []*dkgResultHashSignatureMessage,
 	signing chain.Signing,
 ) (map[group.MemberIndex][]byte, error) {
+	// TODO: Consider moving the whole implementation to the resultSigner
+	//       interface
+
 	duplicatedMessagesFromSender := func(senderID group.MemberIndex) bool {
 		messageFromSenderAlreadySeen := false
 		for _, message := range messages {
@@ -463,9 +469,8 @@ func (sm *signingMember) shouldAcceptMessage(
 	return !isMessageFromSelf && isSenderValid && isSenderAccepted
 }
 
-// TODO: Move as much logic related to submission to the tbtc package
-
-type SubmissionConfig struct { // TODO: Remove
+// SubmissionConfig contains parameters describing DKG submission process.
+type SubmissionConfig struct {
 	// GroupSize is the size of a group in TBTC.
 	GroupSize int
 	// HonestThreshold is the minimum number of active participants behaving
@@ -513,6 +518,9 @@ func (sm *submittingMember) SubmitDKGResult(
 	blockCounter chain.BlockCounter,
 	startBlockHeight uint64,
 ) error {
+	// TODO: Consider moving the whole implementation to the resultSubmitter
+	//       interface
+
 	// Chain rejects the result if it has less than 25% safety margin.
 	// If there are not enough signatures to preserve the margin, it does not
 	// make sense to submit the result.
@@ -528,7 +536,7 @@ func (sm *submittingMember) SubmitDKGResult(
 	onSubmittedResultChan := make(chan uint64)
 
 	subscription := resultSubmitter.OnDKGResultSubmitted(
-		func(event *DKGResultSubmissionEvent) {
+		func(event *ResultSubmissionEvent) {
 			onSubmittedResultChan <- event.BlockNumber
 		},
 	)

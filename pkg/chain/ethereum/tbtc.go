@@ -294,7 +294,7 @@ func (tc *TbtcChain) SelectGroup(seed *big.Int) ([]chain.Address, error) {
 
 // TODO: Implement a real OnDKGStarted function.
 func (tc *TbtcChain) OnDKGStarted(
-	handler func(event *dkg.DKGStartedEvent),
+	handler func(event *dkg.StartedDKGEvent),
 ) subscription.EventSubscription {
 	return tc.mockWalletRegistry.OnDKGStarted(handler)
 }
@@ -319,7 +319,7 @@ func (tc *TbtcChain) SubmitDKGResult(
 //       SubmitDKGResult to the handlers registered in the
 //       dkgResultSubmissionHandlers map.
 func (tc *TbtcChain) OnDKGResultSubmitted(
-	handler func(event *dkg.DKGResultSubmissionEvent),
+	handler func(event *dkg.ResultSubmissionEvent),
 ) subscription.EventSubscription {
 	return tc.mockWalletRegistry.OnDKGResultSubmitted(handler)
 }
@@ -361,7 +361,7 @@ type mockWalletRegistry struct {
 	blockCounter chain.BlockCounter
 
 	dkgResultSubmissionHandlersMutex sync.Mutex
-	dkgResultSubmissionHandlers      map[int]func(submission *dkg.DKGResultSubmissionEvent)
+	dkgResultSubmissionHandlers      map[int]func(submission *dkg.ResultSubmissionEvent)
 
 	currentDkgMutex      sync.RWMutex
 	currentDkgStartBlock *big.Int
@@ -376,7 +376,7 @@ func newMockWalletRegistry(blockCounter chain.BlockCounter) *mockWalletRegistry 
 }
 
 func (mwr *mockWalletRegistry) OnDKGStarted(
-	handler func(event *dkg.DKGStartedEvent),
+	handler func(event *dkg.StartedDKGEvent),
 ) subscription.EventSubscription {
 	ctx, cancelCtx := context.WithCancel(context.Background())
 	blocksChan := mwr.blockCounter.WatchBlocks(ctx)
@@ -396,7 +396,7 @@ func (mwr *mockWalletRegistry) OnDKGStarted(
 					seedBytes := crypto.Keccak256(blockBytes)
 					seed := new(big.Int).SetBytes(seedBytes)
 
-					go handler(&dkg.DKGStartedEvent{
+					go handler(&dkg.StartedDKGEvent{
 						Seed:        seed,
 						BlockNumber: block,
 					})
@@ -413,7 +413,7 @@ func (mwr *mockWalletRegistry) OnDKGStarted(
 }
 
 func (mwr *mockWalletRegistry) OnDKGResultSubmitted(
-	handler func(event *dkg.DKGResultSubmissionEvent),
+	handler func(event *dkg.ResultSubmissionEvent),
 ) subscription.EventSubscription {
 	mwr.dkgResultSubmissionHandlersMutex.Lock()
 	defer mwr.dkgResultSubmissionHandlersMutex.Unlock()
@@ -459,8 +459,8 @@ func (mwr *mockWalletRegistry) SubmitDKGResult(
 	}
 
 	for _, handler := range mwr.dkgResultSubmissionHandlers {
-		go func(handler func(*dkg.DKGResultSubmissionEvent)) {
-			handler(&dkg.DKGResultSubmissionEvent{
+		go func(handler func(*dkg.ResultSubmissionEvent)) {
+			handler(&dkg.ResultSubmissionEvent{
 				MemberIndex:    uint32(participantIndex),
 				GroupPublicKey: result.GroupPublicKeyBytes,
 				Misbehaved:     result.Misbehaved,

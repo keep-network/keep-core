@@ -161,8 +161,6 @@ func (n *node) joinDKGIfEligible(seed *big.Int, startBlockNumber uint64) {
 				}
 
 				startPublicationBlockHeight := endBlockHeight
-
-				// TODO: Remove. This is temporary solution.
 				submissionConfig := &dkg.SubmissionConfig{
 					GroupSize:                  n.chain.GetConfig().GroupSize,
 					HonestThreshold:            n.chain.GetConfig().HonestThreshold,

@@ -89,25 +89,23 @@ func (e *Executor) Execute(
 	return finalizationState.result(), endBlockNumber, nil
 }
 
-// DKGStartedEvent represents a DKG start event.
-type DKGStartedEvent struct {
+// StartedDKGEvent represents a DKG start event.
+type StartedDKGEvent struct {
 	Seed        *big.Int
 	BlockNumber uint64
 }
 
-// DKGResultSubmissionEvent represents a DKG result submission event. It is emitted
+// ResultSubmissionEvent represents a DKG result submission event. It is emitted
 // after a submitted DKG result is positively validated on the chain. It contains
 // the index of the member who submitted the result and a final public key of
 // the group.
-type DKGResultSubmissionEvent struct {
+type ResultSubmissionEvent struct {
 	MemberIndex    uint32
 	GroupPublicKey []byte
 	Misbehaved     []uint8
 
 	BlockNumber uint64
 }
-
-// TODO: Replace the Chain interface with smaller interfaces, e.g. ResultSigner, ResultSubmitter
 
 type ResultSubmitter interface {
 	// SubmitDKGResult sends DKG result to a chain, along with signatures over
@@ -125,7 +123,7 @@ type ResultSubmitter interface {
 	// OnDKGResultSubmitted registers a callback that is invoked when an on-chain
 	// notification of a new, valid submitted result is seen.
 	OnDKGResultSubmitted(
-		func(event *DKGResultSubmissionEvent),
+		func(event *ResultSubmissionEvent),
 	) subscription.EventSubscription
 }
 
@@ -142,7 +140,8 @@ type ResultHandler interface {
 	ResultSubmitter
 }
 
-// TODO: Description
+// Publish signs the DKG result for the given group member, collects signatures
+// from other members and verifies them, and submits the DKG result.
 func Publish(
 	logger log.StandardLogger,
 	memberIndex group.MemberIndex,
