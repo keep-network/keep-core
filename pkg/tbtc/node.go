@@ -1,11 +1,14 @@
 package tbtc
 
 import (
+	"bytes"
 	"fmt"
 	"math/big"
+	"sort"
 	"time"
 
 	"github.com/keep-network/keep-common/pkg/persistence"
+	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/internal/testutils"
 	"github.com/keep-network/keep-core/pkg/net"
 	"github.com/keep-network/keep-core/pkg/protocol/group"
@@ -167,6 +170,16 @@ func (n *node) joinDKGIfEligible(seed *big.Int, startBlockNumber uint64) {
 					ResultPublicationBlockStep: n.chain.GetConfig().ResultPublicationBlockStep,
 				}
 
+				operatingMemberIDs := result.Group.OperatingMemberIDs()
+				dkgResultChannel := make(chan *dkg.ResultSubmissionEvent)
+
+				dkgResultSubscription := n.chain.OnDKGResultSubmitted(
+					func(event *dkg.ResultSubmissionEvent) {
+						dkgResultChannel <- event
+					},
+				)
+				defer dkgResultSubscription.Unsubscribe()
+
 				err = dkg.Publish(
 					logger,
 					memberIndex,
@@ -179,7 +192,42 @@ func (n *node) joinDKGIfEligible(seed *big.Int, startBlockNumber uint64) {
 					startPublicationBlockHeight,
 				)
 				if err != nil {
-					// TODO: Handle unsuccessful result publishing
+					// Result publication failed. It means that either the result this
+					// member proposed is not supported by the majority of group members or
+					// that the chain interaction failed. In either case, we observe the
+					// chain for the result published by any other group member and based
+					// on that, we decide whether we should stay in the final group
+					// or drop our membership.
+					logger.Warningf(
+						"[member:%v] DKG result publication process failed [%v]",
+						memberIndex,
+						err,
+					)
+
+					if operatingMemberIDs, err = n.decideMemberFate(
+						memberIndex,
+						result,
+						dkgResultChannel,
+						startPublicationBlockHeight,
+					); err != nil {
+						logger.Errorf(
+							"failed to handle DKG result publishing failure: [%v]",
+							err,
+						)
+						return
+					}
+				}
+
+				signingGroupOperators, err := n.resolveGroupOperators(
+					selectedSigningGroupOperators,
+					operatingMemberIDs,
+				)
+				if err != nil {
+					logger.Errorf(
+						"failed to resolve group operators: [%v]",
+						err,
+					)
+					return
 				}
 
 				// TODO: Snapshot the key material before doing on-chain result
@@ -190,7 +238,7 @@ func (n *node) joinDKGIfEligible(seed *big.Int, startBlockNumber uint64) {
 				//       Consider that when integrating the retry algorithm.
 				signer := newSigner(
 					result.PrivateKeyShare.PublicKey(),
-					selectedSigningGroupOperators,
+					signingGroupOperators,
 					memberIndex,
 					result.PrivateKeyShare,
 				)
@@ -211,4 +259,135 @@ func (n *node) joinDKGIfEligible(seed *big.Int, startBlockNumber uint64) {
 	} else {
 		logger.Infof("not eligible for DKG with seed [0x%x]", seed)
 	}
+}
+
+// decideMemberFate decides what the member will do in case it failed to publish
+// its DKG result. Member can stay in the group if it supports the same group
+// public key as the one registered on-chain and the member is not considered as
+// misbehaving by the group.
+func (n *node) decideMemberFate(
+	playerIndex group.MemberIndex,
+	result *dkg.Result,
+	dkgResultChannel chan *dkg.ResultSubmissionEvent,
+	startPublicationBlockHeight uint64,
+) ([]group.MemberIndex, error) {
+	dkgResultEvent, err := n.waitForDkgResultEvent(
+		dkgResultChannel,
+		startPublicationBlockHeight,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	groupPublicKeyBytes, err := result.GetGroupPublicKeyBytes()
+	if err != nil {
+		return nil, err
+	}
+
+	// If member doesn't support the same group public key, it could not stay
+	// in the group.
+	if !bytes.Equal(groupPublicKeyBytes, dkgResultEvent.GroupPublicKeyBytes) {
+		return nil, fmt.Errorf(
+			"[member:%v] could not stay in the group because "+
+				"member do not support the same group public key",
+			playerIndex,
+		)
+	}
+
+	misbehavedSet := make(map[group.MemberIndex]struct{})
+	for _, misbehavedID := range dkgResultEvent.Misbehaved {
+		misbehavedSet[misbehavedID] = struct{}{}
+	}
+
+	// If member is considered as misbehaved, it could not stay in the group.
+	if _, isMisbehaved := misbehavedSet[playerIndex]; isMisbehaved {
+		return nil, fmt.Errorf(
+			"[member:%v] could not stay in the group because "+
+				"member is considered as misbehaving",
+			playerIndex,
+		)
+	}
+
+	// Construct a new view of the operating members according to the accepted
+	// DKG result.
+	operatingMemberIDs := make([]group.MemberIndex, 0)
+	for _, memberID := range result.Group.MemberIDs() {
+		if _, isMisbehaved := misbehavedSet[memberID]; !isMisbehaved {
+			operatingMemberIDs = append(operatingMemberIDs, memberID)
+		}
+	}
+
+	return operatingMemberIDs, nil
+}
+
+func (n *node) waitForDkgResultEvent(
+	dkgResultChannel chan *dkg.ResultSubmissionEvent,
+	startPublicationBlockHeight uint64,
+) (*dkg.ResultSubmissionEvent, error) {
+	config := n.chain.GetConfig()
+
+	timeoutBlock := startPublicationBlockHeight + dkg.PrePublicationBlocks() +
+		(uint64(config.GroupSize) * config.ResultPublicationBlockStep)
+
+	blockCounter, err := n.chain.BlockCounter()
+	if err != nil {
+		return nil, err
+	}
+
+	timeoutBlockChannel, err := blockCounter.BlockHeightWaiter(timeoutBlock)
+	if err != nil {
+		return nil, err
+	}
+
+	select {
+	case dkgResultEvent := <-dkgResultChannel:
+		return dkgResultEvent, nil
+	case <-timeoutBlockChannel:
+		return nil, fmt.Errorf("DKG result publication timed out")
+	}
+}
+
+// resolveGroupOperators takes two parameters:
+// - selectedOperators: Contains addresses of all selected operators. Slice
+//   length equals to the groupSize. Each element with index N corresponds
+//   to the group member with ID N+1.
+// - operatingGroupMembersIDs: Contains group members IDs that were neither
+//   disqualified nor marked as inactive. Slice length is lesser than or equal
+//   to the groupSize.
+//
+// Using those parameters, this function transforms the selectedOperators
+// slice into another slice that contains addresses of all operators
+// that were neither disqualified nor marked as inactive. This way, the
+// resulting slice has only addresses of properly operating operators
+// who form the resulting group.
+//
+// Example:
+// selectedOperators: [member1, member2, member3, member4, member5]
+// operatingGroupMembersIDs: [5, 1, 3]
+// groupOperators: [member1, member3, member5]
+func (n *node) resolveGroupOperators(
+	selectedOperators []chain.Address,
+	operatingGroupMembersIDs []group.MemberIndex,
+) ([]chain.Address, error) {
+	config := n.chain.GetConfig()
+
+	if len(selectedOperators) != config.GroupSize ||
+		len(operatingGroupMembersIDs) < config.HonestThreshold {
+		return nil, fmt.Errorf("invalid input parameters")
+	}
+
+	sort.Slice(operatingGroupMembersIDs, func(i, j int) bool {
+		return operatingGroupMembersIDs[i] < operatingGroupMembersIDs[j]
+	})
+
+	groupOperators := make(
+		[]chain.Address,
+		len(operatingGroupMembersIDs),
+	)
+
+	for i, operatingMemberID := range operatingGroupMembersIDs {
+		groupOperators[i] = selectedOperators[operatingMemberID-1]
+	}
+
+	return groupOperators, nil
 }

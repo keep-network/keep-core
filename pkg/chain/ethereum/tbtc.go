@@ -461,10 +461,10 @@ func (mwr *mockWalletRegistry) SubmitDKGResult(
 	for _, handler := range mwr.dkgResultSubmissionHandlers {
 		go func(handler func(*dkg.ResultSubmissionEvent)) {
 			handler(&dkg.ResultSubmissionEvent{
-				MemberIndex:    uint32(participantIndex),
-				GroupPublicKey: result.GroupPublicKeyBytes,
-				Misbehaved:     result.Misbehaved,
-				BlockNumber:    blockNumber,
+				MemberIndex:         uint32(participantIndex),
+				GroupPublicKeyBytes: result.GroupPublicKeyBytes,
+				Misbehaved:          result.Misbehaved,
+				BlockNumber:         blockNumber,
 			})
 		}(handler)
 	}

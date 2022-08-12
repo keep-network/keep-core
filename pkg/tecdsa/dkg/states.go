@@ -55,6 +55,14 @@ func ProtocolBlocks() uint64 {
 		resultSigningStateActiveBlocks
 }
 
+// PrePublicationBlocks returns the total number of blocks it takes to execute
+// all the required work to get ready for the result publication or to decide
+// to skip the publication because there are not enough supporters of
+// the given result.
+func PrePublicationBlocks() uint64 {
+	return resultSigningStateDelayBlocks + resultSigningStateActiveBlocks
+}
+
 // ephemeralKeyPairGenerationState is the state during which members broadcast
 // public ephemeral keys generated for other members of the group.
 // `ephemeralPublicKeyMessage`s are valid in this state.

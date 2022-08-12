@@ -24,6 +24,14 @@ type Result struct {
 	PrivateKeyShare *tecdsa.PrivateKeyShare
 }
 
+func (r *Result) GetGroupPublicKeyBytes() ([]byte, error) {
+	if r.GroupPublicKeyBytes == nil {
+		return nil, fmt.Errorf("group public key is nil")
+	}
+
+	return r.GroupPublicKeyBytes, nil
+}
+
 const hashByteSize = 32
 
 // ResultHash is a 256-bit hash of DKG Result. The hashing algorithm should

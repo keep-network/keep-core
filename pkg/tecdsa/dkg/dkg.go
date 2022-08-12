@@ -100,9 +100,9 @@ type StartedDKGEvent struct {
 // the index of the member who submitted the result and a final public key of
 // the group.
 type ResultSubmissionEvent struct {
-	MemberIndex    uint32
-	GroupPublicKey []byte
-	Misbehaved     []uint8
+	MemberIndex         uint32
+	GroupPublicKeyBytes []byte
+	Misbehaved          []uint8
 
 	BlockNumber uint64
 }
