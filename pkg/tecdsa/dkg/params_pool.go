@@ -25,7 +25,7 @@ func newTssPreParamsPool(
 	generationConcurrency int,
 ) *tssPreParamsPool {
 	logger.Infof(
-		"TSS pre-parameters target pool size is [%v], generation timeout is [%v], and concurrency level is [%v]",
+		"TSS pre-parameters target pool size is [%d], generation timeout is [%s], and concurrency level is [%d]",
 		poolSize,
 		generationTimeout,
 		generationConcurrency,
