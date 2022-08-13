@@ -7,6 +7,7 @@ DONE_START='\n\e[1;32m' # new line + bold + green
 DONE_END='\n\n\e[0m'    # new line + reset
 
 KEEP_CORE_PATH=$PWD
+CONFIG_DIR_PATH_DEFAULT="$KEEP_CORE_PATH/configs"
 KEEP_BEACON_SOL_PATH="$KEEP_CORE_PATH/solidity/random-beacon"
 KEEP_ECDSA_SOL_PATH="$KEEP_CORE_PATH/solidity/ecdsa"
 
@@ -43,6 +44,7 @@ for arg in "$@"; do
   shift
   case "$arg" in
     "--network")              set -- "$@" "-n" ;;
+    "--config-dir-path")      set -- "$@" "-c" ;;
     "--stake-owner")          set -- "$@" "-o" ;;
     "--staking-provider")     set -- "$@" "-p" ;;
     "--operator")             set -- "$@" "-d" ;;
@@ -57,10 +59,11 @@ done
 
 # Parse short options
 OPTIND=1
-while getopts "n:o:p:d:b:a:s:k:h" opt
+while getopts "n:c:o:p:d:b:a:s:k:h" opt
 do
    case "$opt" in
       n ) network="$OPTARG" ;;
+      c ) config_dir_path="$OPTARG" ;;
       o ) stake_owner="$OPTARG" ;;
       p ) staking_provider="$OPTARG" ;;
       d ) operator="$OPTARG" ;;
@@ -74,9 +77,46 @@ do
 done
 shift $(expr $OPTIND - 1) # remove options from positional parameters
 
+CONFIG_DIR_PATH=${config_dir_path:-$CONFIG_DIR_PATH_DEFAULT}
+
+# read from the config file if a stake_owner is not provided as parameter
 if [ -z "$stake_owner" ]; then
-   echo 'Stake owner address must be provided. See --help'
-   exit 1
+   printf "\nReading stake owner address from the config file..."
+
+   # read from the config file when the stake owner is not provided
+   config_files=($CONFIG_DIR_PATH/*.toml)
+   config_files_count=${#config_files[@]}
+   while :; do
+      printf "\nSelect client config file: \n"
+      i=1
+      for o in "${config_files[@]}"; do
+         echo "$i) ${o##*/}"
+         let i++
+      done
+
+      read reply
+      if [ "$reply" -ge 1 ] && [ "$reply" -le $config_files_count ]; then
+         CONFIG_FILE_PATH=${config_files["$reply" - 1]}
+         break
+      else
+         printf "\nInvalid choice. Please choose an existing option number.\n"
+      fi
+   done
+
+   sed -n -e '/^keyFile -/p' $CONFIG_FILE_PATH
+
+   key_file_str=$(grep "^keyFile" $CONFIG_FILE_PATH)
+   # internal field separator, creates array from key_file separated by '"' sign
+   # array[1] is the key file path
+   IFS='"' read -r -a array <<< "$key_file_str"
+
+   # find address:<address> in the key file
+   address_str=$(grep -Eo '"address":.*?[^\\]"' "${array[1]}")
+   # address_array[3] is the ethereum address
+   IFS='"' read -r -a address_array <<< "$address_str"
+   printf "\nStake owner address: ${address_array[3]} \n"
+
+   stake_owner="${address_array[3]}"
 fi
 
 # Overwrite default properties
