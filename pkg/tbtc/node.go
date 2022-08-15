@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"math/big"
 	"sort"
-	"time"
 
 	"github.com/keep-network/keep-common/pkg/persistence"
 	"github.com/keep-network/keep-core/pkg/chain"
@@ -29,14 +28,16 @@ func newNode(
 	chain Chain,
 	netProvider net.Provider,
 	persistence persistence.Handle,
+	config Config,
 ) *node {
 	walletRegistry := newWalletRegistry(persistence)
 
-	// TODO: Pass TSS pre-parameters pool config from the outside.
-	dkgExecutor := dkg.NewExecutor(logger, &dkg.ExecutorConfig{
-		TssPreParamsPoolSize:              50,
-		TssPreParamsPoolGenerationTimeout: 2 * time.Minute,
-	})
+	dkgExecutor := dkg.NewExecutor(
+		logger,
+		config.PreParamsPoolSize,
+		config.PreParamsGenerationTimeout,
+		config.PreParamsGenerationConcurrency,
+	)
 
 	return &node{
 		chain:          chain,

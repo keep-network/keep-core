@@ -62,8 +62,24 @@ func AssertBigIntsEqual(t *testing.T, description string, expected *big.Int, act
 	}
 }
 
-// AssertBytesEqual takes a testing.T and two byte slices and reports an error
-// if the two bytes are not equal.
+// AssertBigIntNonZero checks if the provided not-nil big integer is non-zero.
+// If the provided big integer is zero, it reports a test failure.
+func AssertBigIntNonZero(t *testing.T, description string, actual *big.Int) {
+	if actual.Cmp(big.NewInt(0)) == 0 {
+		t.Errorf("expected %s to be non-zero", description)
+	}
+}
+
+// AssertBigIntsNotEqual checks if two not-nil big integers are not equal.
+// If they are equal, reports a test failure.
+func AssertBigIntsNotEqual(t *testing.T, description string, a *big.Int, b *big.Int) {
+	if a.Cmp(b) == 0 {
+		t.Errorf("expected %s to not be equal", description)
+	}
+}
+
+// AssertBytesEqual checks if the two bytes array are equal. If not, it reports
+// a test failure.
 func AssertBytesEqual(t *testing.T, expectedBytes []byte, actualBytes []byte) {
 	err := testBytesEqual(expectedBytes, actualBytes)
 

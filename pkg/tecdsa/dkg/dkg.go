@@ -14,12 +14,6 @@ import (
 	"github.com/keep-network/keep-core/pkg/subscription"
 )
 
-// ExecutorConfig carries the config for an Executor.
-type ExecutorConfig struct {
-	TssPreParamsPoolSize              int
-	TssPreParamsPoolGenerationTimeout time.Duration
-}
-
 // Executor represents an ECDSA distributed key generation process executor.
 type Executor struct {
 	logger           log.StandardLogger
@@ -29,14 +23,17 @@ type Executor struct {
 // NewExecutor creates a new Executor instance.
 func NewExecutor(
 	logger log.StandardLogger,
-	config *ExecutorConfig,
+	preParamsPoolSize int,
+	preParamsGenerationTimeout time.Duration,
+	preParamsGenerationConcurrency int,
 ) *Executor {
 	return &Executor{
 		logger: logger,
 		tssPreParamsPool: newTssPreParamsPool(
 			logger,
-			config.TssPreParamsPoolSize,
-			config.TssPreParamsPoolGenerationTimeout,
+			preParamsPoolSize,
+			preParamsGenerationTimeout,
+			preParamsGenerationConcurrency,
 		),
 	}
 }
