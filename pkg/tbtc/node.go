@@ -144,7 +144,7 @@ func (n *node) joinDKGIfEligible(seed *big.Int, startBlockNumber uint64) {
 			memberIndex := index + 1
 
 			go func() {
-				result, endBlockHeight, err := n.dkgExecutor.Execute(
+				result, endBlockNumber, err := n.dkgExecutor.Execute(
 					seed,
 					startBlockNumber,
 					memberIndex,
@@ -164,7 +164,7 @@ func (n *node) joinDKGIfEligible(seed *big.Int, startBlockNumber uint64) {
 					return
 				}
 
-				startPublicationBlockHeight := endBlockHeight
+				startPublicationBlockHeight := endBlockNumber
 				submissionConfig := &dkg.SubmissionConfig{
 					GroupSize:                  n.chain.GetConfig().GroupSize,
 					HonestThreshold:            n.chain.GetConfig().HonestThreshold,
@@ -219,7 +219,7 @@ func (n *node) joinDKGIfEligible(seed *big.Int, startBlockNumber uint64) {
 					}
 				}
 
-				signingGroupOperators, err := n.resolveGroupOperators(
+				signingGroupOperators, err := n.resolveSigningGroupOperators(
 					selectedSigningGroupOperators,
 					operatingMemberIDs,
 				)
@@ -267,7 +267,7 @@ func (n *node) joinDKGIfEligible(seed *big.Int, startBlockNumber uint64) {
 // public key as the one registered on-chain and the member is not considered as
 // misbehaving by the group.
 func (n *node) decideMemberFate(
-	playerIndex group.MemberIndex,
+	memberIndex group.MemberIndex,
 	result *dkg.Result,
 	dkgResultChannel chan *dkg.ResultSubmissionEvent,
 	startPublicationBlockHeight uint64,
@@ -290,8 +290,8 @@ func (n *node) decideMemberFate(
 	if !bytes.Equal(groupPublicKeyBytes, dkgResultEvent.GroupPublicKeyBytes) {
 		return nil, fmt.Errorf(
 			"[member:%v] could not stay in the group because "+
-				"member do not support the same group public key",
-			playerIndex,
+				"the member do not support the same group public key",
+			memberIndex,
 		)
 	}
 
@@ -301,11 +301,11 @@ func (n *node) decideMemberFate(
 	}
 
 	// If member is considered as misbehaved, it could not stay in the group.
-	if _, isMisbehaved := misbehavedSet[playerIndex]; isMisbehaved {
+	if _, isMisbehaved := misbehavedSet[memberIndex]; isMisbehaved {
 		return nil, fmt.Errorf(
 			"[member:%v] could not stay in the group because "+
-				"member is considered as misbehaving",
-			playerIndex,
+				"the member is considered as misbehaving",
+			memberIndex,
 		)
 	}
 
@@ -321,6 +321,8 @@ func (n *node) decideMemberFate(
 	return operatingMemberIDs, nil
 }
 
+// waitForDkgResultEvent waits for the DKG result submission event. It times out
+// and returns error if the DKG result event is not emitted on time.
 func (n *node) waitForDkgResultEvent(
 	dkgResultChannel chan *dkg.ResultSubmissionEvent,
 	startPublicationBlockHeight uint64,
@@ -344,11 +346,11 @@ func (n *node) waitForDkgResultEvent(
 	case dkgResultEvent := <-dkgResultChannel:
 		return dkgResultEvent, nil
 	case <-timeoutBlockChannel:
-		return nil, fmt.Errorf("DKG result publication timed out")
+		return nil, fmt.Errorf("ECDSA DKG result publication timed out")
 	}
 }
 
-// resolveGroupOperators takes two parameters:
+// resolveSigningGroupOperators takes two parameters:
 // - selectedOperators: Contains addresses of all selected operators. Slice
 //   length equals to the groupSize. Each element with index N corresponds
 //   to the group member with ID N+1.
@@ -365,8 +367,8 @@ func (n *node) waitForDkgResultEvent(
 // Example:
 // selectedOperators: [member1, member2, member3, member4, member5]
 // operatingGroupMembersIDs: [5, 1, 3]
-// groupOperators: [member1, member3, member5]
-func (n *node) resolveGroupOperators(
+// signingGroupOperators: [member1, member3, member5]
+func (n *node) resolveSigningGroupOperators(
 	selectedOperators []chain.Address,
 	operatingGroupMembersIDs []group.MemberIndex,
 ) ([]chain.Address, error) {
@@ -381,14 +383,14 @@ func (n *node) resolveGroupOperators(
 		return operatingGroupMembersIDs[i] < operatingGroupMembersIDs[j]
 	})
 
-	groupOperators := make(
+	signingGroupOperators := make(
 		[]chain.Address,
 		len(operatingGroupMembersIDs),
 	)
 
 	for i, operatingMemberID := range operatingGroupMembersIDs {
-		groupOperators[i] = selectedOperators[operatingMemberID-1]
+		signingGroupOperators[i] = selectedOperators[operatingMemberID-1]
 	}
 
-	return groupOperators, nil
+	return signingGroupOperators, nil
 }

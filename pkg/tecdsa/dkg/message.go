@@ -111,5 +111,5 @@ func (drhsm *dkgResultHashSignatureMessage) SenderID() group.MemberIndex {
 // Type returns a string describing an dkgResultHashSignatureMessage type for
 // marshaling purposes.
 func (drhsm *dkgResultHashSignatureMessage) Type() string {
-	return messageTypePrefix + "dkg_result_hash_signature_message"
+	return messageTypePrefix + "result_hash_signature_message"
 }

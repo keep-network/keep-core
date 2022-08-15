@@ -12,9 +12,6 @@ import (
 	"github.com/keep-network/keep-core/pkg/protocol/state"
 )
 
-// represents a given state in the state machine for signing DKG results
-type signingState = state.State
-
 const (
 	silentStateDelayBlocks  = 0
 	silentStateActiveBlocks = 0
@@ -50,9 +47,7 @@ func ProtocolBlocks() uint64 {
 		tssRoundThreeStateDelayBlocks +
 		tssRoundThreeStateActiveBlocks +
 		finalizationStateDelayBlocks +
-		finalizationStateActiveBlocks +
-		resultSigningStateDelayBlocks +
-		resultSigningStateActiveBlocks
+		finalizationStateActiveBlocks
 }
 
 // PrePublicationBlocks returns the total number of blocks it takes to execute
@@ -523,7 +518,7 @@ func (rss *resultSigningState) Receive(msg net.Message) error {
 	return nil
 }
 
-func (rss *resultSigningState) Next() signingState {
+func (rss *resultSigningState) Next() state.State {
 	return &signaturesVerificationState{
 		channel:           rss.channel,
 		resultHandler:     rss.resultHandler,
@@ -585,7 +580,7 @@ func (svs *signaturesVerificationState) Receive(msg net.Message) error {
 	return nil
 }
 
-func (svs *signaturesVerificationState) Next() signingState {
+func (svs *signaturesVerificationState) Next() state.State {
 	return &resultSubmissionState{
 		channel:       svs.channel,
 		resultHandler: svs.resultHandler,
@@ -648,7 +643,7 @@ func (rss *resultSubmissionState) Receive(msg net.Message) error {
 	return nil
 }
 
-func (rss *resultSubmissionState) Next() signingState {
+func (rss *resultSubmissionState) Next() state.State {
 	// returning nil represents this is the final state
 	return nil
 }
