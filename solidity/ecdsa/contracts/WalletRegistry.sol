@@ -750,6 +750,16 @@ contract WalletRegistry is
         );
     }
 
+    function mock__createWallet(
+        bytes32 ecdsaWalletID,
+        bytes32 publicKeyX,
+        bytes32 publicKeyY
+    ) external {
+        wallets.registry[ecdsaWalletID].publicKeyX = publicKeyX;
+        wallets.registry[ecdsaWalletID].publicKeyY = publicKeyY;
+        emit WalletCreated(ecdsaWalletID, 0x0);
+    }
+
     /// @notice Notifies about seed for DKG delivery timeout. It is expected
     ///         that a seed is delivered by the Random Beacon as a relay entry in a
     ///         callback function.
