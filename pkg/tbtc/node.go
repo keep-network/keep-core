@@ -147,39 +147,37 @@ func (n *node) joinDKGIfEligible(seed *big.Int, startBlockNumber uint64) {
 			go func() {
 				retryLoop := newDkgRetryLoop(
 					seed,
+					startBlockNumber,
 					memberIndex,
 					selectedSigningGroupOperators,
 					chainConfig,
 				)
 
 				result, err := retryLoop.start(
-					func(
-						attemptCounter uint,
-						excludedMembers []group.MemberIndex,
-					) (*dkg.Result, error) {
+					func(attempt *dkgAttemptParams) (*dkg.Result, error) {
 						logger.Infof(
 							"[member:%v] starting dkg attempt [%v] "+
 								"with [%v] group members (excluded: [%v])",
 							memberIndex,
-							attemptCounter,
-							chainConfig.GroupSize-len(excludedMembers),
-							excludedMembers,
+							attempt.index,
+							chainConfig.GroupSize-len(attempt.excludedMembers),
+							attempt.excludedMembers,
 						)
 
 						// sessionID must be different for each attempt.
 						sessionID := fmt.Sprintf(
 							"%v-%v",
 							seed.Text(16),
-							attemptCounter,
+							attempt.index,
 						)
 
 						result, _, err := n.dkgExecutor.Execute(
 							sessionID,
-							startBlockNumber,
+							attempt.startBlock,
 							memberIndex,
 							chainConfig.GroupSize,
 							chainConfig.DishonestThreshold(),
-							excludedMembers,
+							attempt.excludedMembers,
 							blockCounter,
 							broadcastChannel,
 							membershipValidator,
@@ -189,7 +187,7 @@ func (n *node) joinDKGIfEligible(seed *big.Int, startBlockNumber uint64) {
 								"[member:%v] dkg attempt [%v] "+
 									"failed: [%v]",
 								memberIndex,
-								attemptCounter,
+								attempt.index,
 								err,
 							)
 
@@ -243,6 +241,7 @@ func (n *node) joinDKGIfEligible(seed *big.Int, startBlockNumber uint64) {
 
 // dkgRetryLoop is a struct that encapsulates the DKG retry logic.
 type dkgRetryLoop struct {
+	initialStartBlock    uint64
 	memberIndex          group.MemberIndex
 	selectedOperators    chain.Addresses
 	inactiveOperatorsSet map[chain.Address]bool
@@ -254,6 +253,7 @@ type dkgRetryLoop struct {
 
 func newDkgRetryLoop(
 	seed *big.Int,
+	initialStartBlock uint64,
 	memberIndex group.MemberIndex,
 	selectedOperators chain.Addresses,
 	chainConfig *ChainConfig,
@@ -266,6 +266,7 @@ func newDkgRetryLoop(
 	randomRetrySeed := int64(binary.BigEndian.Uint64(seedSha256[:8]))
 
 	return &dkgRetryLoop{
+		initialStartBlock:    initialStartBlock,
 		memberIndex:          memberIndex,
 		selectedOperators:    selectedOperators,
 		inactiveOperatorsSet: make(map[chain.Address]bool),
@@ -276,14 +277,18 @@ func newDkgRetryLoop(
 	}
 }
 
-// dkgRetryFn represents a function performing a DKG attempt.
-type dkgRetryFn func(
-	attemptCounter uint,
-	excludedMembers []group.MemberIndex,
-) (*dkg.Result, error)
+// dkgAttemptParams represents parameters of a DKG attempt.
+type dkgAttemptParams struct {
+	index           uint
+	startBlock      uint64
+	excludedMembers []group.MemberIndex
+}
 
-// start begins the DKG retry loop.
-func (drl *dkgRetryLoop) start(dkgRetryFn dkgRetryFn) (*dkg.Result, error) {
+// dkgAttemptFn represents a function performing a DKG attempt.
+type dkgAttemptFn func(*dkgAttemptParams) (*dkg.Result, error)
+
+// start begins the DKG retry loop using the given DKG attempt function.
+func (drl *dkgRetryLoop) start(dkgAttemptFn dkgAttemptFn) (*dkg.Result, error) {
 	// All selected operators should be qualified for the first attempt.
 	qualifiedOperatorsSet := drl.selectedOperators.Set()
 
@@ -300,9 +305,32 @@ func (drl *dkgRetryLoop) start(dkgRetryFn dkgRetryFn) (*dkg.Result, error) {
 			}
 		}
 
+		// In order to start the given attempt in the right place, we need to
+		// determine how many blocks were taken by previous attempts. We assume
+		// the worst case that each attempt failed at the end of the DKG
+		// protocol. That said, we need to shift by the multiplication of the
+		// previous attempts count and the duration of a single attempt.
+		blocksShift := uint64(drl.attemptCounter-1) * dkg.ProtocolBlocks()
+		// We also need to add a small fixed delay in order to mitigate all
+		// corner cases where the actual attempt duration was slightly longer
+		// than the expected duration determined by the dkg.ProtocolBlocks
+		// function. For example, the attempt may fail at the end of the
+		// protocol but the error is returned after some time and more
+		// blocks than expected are mined in the meantime. Additionally,
+		// we want to strongly extend the delay period periodically
+		// in order to give some additional time for nodes to recover and
+		// re-fill their internal TSS pre-parameters pools.
+		delayBlocks := uint64(5)
+		if drl.attemptCounter%100 == 0 {
+			delayBlocks = 100
+		}
+
 		// TODO: What if the executing member is among the excluded members?
-		// TODO: Synchronize retries between members.
-		result, err := dkgRetryFn(drl.attemptCounter, excludedMembers)
+		result, err := dkgAttemptFn(&dkgAttemptParams{
+			index:           drl.attemptCounter,
+			startBlock:      drl.initialStartBlock + blocksShift + delayBlocks,
+			excludedMembers: excludedMembers,
+		})
 		if err != nil {
 			var imErr *dkg.InactiveMembersError
 			if errors.As(err, &imErr) {
