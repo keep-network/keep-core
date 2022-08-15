@@ -1,6 +1,7 @@
 package tbtc
 
 import (
+	"context"
 	"crypto/sha256"
 	"encoding/binary"
 	"errors"
@@ -153,7 +154,18 @@ func (n *node) joinDKGIfEligible(seed *big.Int, startBlockNumber uint64) {
 					chainConfig,
 				)
 
+				// TODO: For this client iteration, the retry loop is started
+				//       with a 2h timeout. Once the WalletRegistry is
+				//       integrated, the stop signal should be generated
+				//       by observing the DKG result submission or timeout.
+				loopCtx, loopCancelCtx := context.WithTimeout(
+					context.Background(),
+					2*time.Hour,
+				)
+				defer loopCancelCtx()
+
 				result, err := retryLoop.start(
+					loopCtx,
 					func(attempt *dkgAttemptParams) (*dkg.Result, error) {
 						logger.Infof(
 							"[member:%v] starting dkg attempt [%v] "+
@@ -288,13 +300,25 @@ type dkgAttemptParams struct {
 type dkgAttemptFn func(*dkgAttemptParams) (*dkg.Result, error)
 
 // start begins the DKG retry loop using the given DKG attempt function.
-func (drl *dkgRetryLoop) start(dkgAttemptFn dkgAttemptFn) (*dkg.Result, error) {
+// The retry loop terminates when the DKG result is produced or the ctx
+// parameter is done, whatever comes first.
+func (drl *dkgRetryLoop) start(
+	ctx context.Context,
+	dkgAttemptFn dkgAttemptFn,
+) (*dkg.Result, error) {
 	// All selected operators should be qualified for the first attempt.
 	qualifiedOperatorsSet := drl.selectedOperators.Set()
 
-	// TODO: Other stop conditions for that loop (e.g result submitted on-chain).
 	for {
 		drl.attemptCounter++
+
+		// Check the loop stop signal.
+		if ctx.Err() != nil {
+			return nil, fmt.Errorf(
+				"dkg retry loop received stop signal on attempt [%v]",
+				drl.attemptCounter,
+			)
+		}
 
 		// In order to start the given attempt in the right place, we need to
 		// determine how many blocks were taken by previous attempts. We assume
