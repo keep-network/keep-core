@@ -18,6 +18,7 @@ func (epkm *ephemeralPublicKeyMessage) Marshal() ([]byte, error) {
 	return (&pb.EphemeralPublicKeyMessage{
 		SenderID:            uint32(epkm.senderID),
 		EphemeralPublicKeys: ephemeralPublicKeys,
+		SessionID:           epkm.sessionID,
 	}).Marshal()
 }
 
@@ -40,6 +41,7 @@ func (epkm *ephemeralPublicKeyMessage) Unmarshal(bytes []byte) error {
 	}
 
 	epkm.ephemeralPublicKeys = ephemeralPublicKeys
+	epkm.sessionID = pbMsg.SessionID
 
 	return nil
 }

@@ -39,6 +39,7 @@ func (ekpgm *ephemeralKeyPairGeneratingMember) generateEphemeralKeyPair() (
 	return &ephemeralPublicKeyMessage{
 		senderID:            ekpgm.id,
 		ephemeralPublicKeys: ephemeralKeys,
+		sessionID:           ekpgm.sessionID,
 	}, nil
 }
 

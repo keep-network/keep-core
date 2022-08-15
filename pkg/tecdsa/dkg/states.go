@@ -80,7 +80,7 @@ func (ekpgs *ephemeralKeyPairGenerationState) Receive(msg net.Message) error {
 		if ekpgs.member.shouldAcceptMessage(
 			phaseMessage.SenderID(),
 			msg.SenderPublicKey(),
-		) {
+		) && ekpgs.member.sessionID == phaseMessage.sessionID {
 			ekpgs.phaseMessages = append(ekpgs.phaseMessages, phaseMessage)
 		}
 	}
