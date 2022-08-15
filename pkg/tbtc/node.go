@@ -296,15 +296,6 @@ func (drl *dkgRetryLoop) start(dkgAttemptFn dkgAttemptFn) (*dkg.Result, error) {
 	for {
 		drl.attemptCounter++
 
-		// Exclude all members controlled by the operators that were not
-		// qualified for the current attempt.
-		excludedMembers := make([]group.MemberIndex, 0)
-		for i, operator := range drl.selectedOperators {
-			if !qualifiedOperatorsSet[operator] {
-				excludedMembers = append(excludedMembers, group.MemberIndex(i+1))
-			}
-		}
-
 		// In order to start the given attempt in the right place, we need to
 		// determine how many blocks were taken by previous attempts. We assume
 		// the worst case that each attempt failed at the end of the DKG
@@ -325,26 +316,51 @@ func (drl *dkgRetryLoop) start(dkgAttemptFn dkgAttemptFn) (*dkg.Result, error) {
 			delayBlocks = 100
 		}
 
-		// TODO: What if the executing member is among the excluded members?
-		result, err := dkgAttemptFn(&dkgAttemptParams{
-			index:           drl.attemptCounter,
-			startBlock:      drl.initialStartBlock + blocksShift + delayBlocks,
-			excludedMembers: excludedMembers,
-		})
-		if err != nil {
-			var imErr *dkg.InactiveMembersError
-			if errors.As(err, &imErr) {
-				for _, memberIndex := range imErr.InactiveMembersIndexes {
-					operator := drl.selectedOperators[memberIndex-1]
-					drl.inactiveOperatorsSet[operator] = true
+		// Exclude all members controlled by the operators that were not
+		// qualified for the current attempt.
+		excludedMembers := make([]group.MemberIndex, 0)
+		attemptSkipped := false
+		for i, operator := range drl.selectedOperators {
+			if !qualifiedOperatorsSet[operator] {
+				memberIndex := group.MemberIndex(i + 1)
+				excludedMembers = append(excludedMembers, memberIndex)
+
+				// If the given member was not qualified for the given attempt,
+				// mark this attempt as skipped in order to skip the execution
+				// and set up the next attempt properly.
+				if memberIndex == drl.memberIndex {
+					attemptSkipped = true
 				}
 			}
+		}
 
+		var result *dkg.Result
+		var attemptErr error
+
+		if !attemptSkipped {
+			result, attemptErr = dkgAttemptFn(&dkgAttemptParams{
+				index:           drl.attemptCounter,
+				startBlock:      drl.initialStartBlock + blocksShift + delayBlocks,
+				excludedMembers: excludedMembers,
+			})
+			if attemptErr != nil {
+				var imErr *dkg.InactiveMembersError
+				if errors.As(attemptErr, &imErr) {
+					for _, memberIndex := range imErr.InactiveMembersIndexes {
+						operator := drl.selectedOperators[memberIndex-1]
+						drl.inactiveOperatorsSet[operator] = true
+					}
+				}
+			}
+		}
+
+		if attemptSkipped || attemptErr != nil {
+			var err error
 			qualifiedOperatorsSet, err = drl.qualifiedOperatorsSet()
 			if err != nil {
 				return nil, fmt.Errorf(
-					"cannot recover after failed dkg attempt [%v]: [%w]",
-					drl.attemptCounter,
+					"cannot get qualified operators for attempt [%v]: [%w]",
+					drl.attemptCounter+1,
 					err,
 				)
 			}

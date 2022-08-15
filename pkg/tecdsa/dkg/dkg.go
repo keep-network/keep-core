@@ -75,7 +75,9 @@ func (e *Executor) Execute(
 	// Mark excluded members as disqualified in order to not exchange messages
 	// with them and have them recorded as misbehaving in the final result.
 	for _, excludedMember := range excludedMembers {
-		member.group.MarkMemberAsDisqualified(excludedMember)
+		if excludedMember != member.id {
+			member.group.MarkMemberAsDisqualified(excludedMember)
+		}
 	}
 
 	initialState := &ephemeralKeyPairGenerationState{
