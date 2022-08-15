@@ -24,6 +24,7 @@ Flags:
       --diagnostics.port int                       Diagnostics HTTP server listening port. (default 8081)
       --tbtc.preParamsPoolSize int                 tECDSA pre-parameters pool size. (default 50)
       --tbtc.preParamsGenerationTimeout duration   tECDSA pre-parameters generation timeout. (default 2m0s)
+      --tbtc.preParamsGenerationDelay duration     tECDSA pre-parameters generation delay. (default 10s)
       --tbtc.preParamsGenerationConcurrency int    tECDSA pre-parameters generation concurrency. (default 1)
       --developer.randomBeaconAddress string       Address of the RandomBeacon smart contract
       --developer.tokenStakingAddress string       Address of the TokenStaking smart contract
