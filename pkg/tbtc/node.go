@@ -1,7 +1,12 @@
 package tbtc
 
 import (
+	"crypto/sha256"
+	"encoding/binary"
+	"errors"
 	"fmt"
+	"github.com/keep-network/keep-core/pkg/chain"
+	"github.com/keep-network/keep-core/pkg/tecdsa/retry"
 	"math/big"
 	"time"
 
@@ -140,18 +145,61 @@ func (n *node) joinDKGIfEligible(seed *big.Int, startBlockNumber uint64) {
 			memberIndex := index + 1
 
 			go func() {
-				result, _, err := n.dkgExecutor.Execute(
+				retryLoop := newDkgRetryLoop(
 					seed,
-					startBlockNumber,
 					memberIndex,
-					chainConfig.GroupSize,
-					chainConfig.DishonestThreshold(),
-					blockCounter,
-					broadcastChannel,
-					membershipValidator,
+					selectedSigningGroupOperators,
+					chainConfig,
+				)
+
+				result, err := retryLoop.start(
+					func(
+						attemptCounter uint,
+						excludedMembers []group.MemberIndex,
+					) (*dkg.Result, error) {
+						logger.Infof(
+							"[member:%v] starting dkg attempt [%v] "+
+								"with [%v] group members (excluded: [%v])",
+							memberIndex,
+							attemptCounter,
+							chainConfig.GroupSize-len(excludedMembers),
+							excludedMembers,
+						)
+
+						// sessionID must be different for each attempt.
+						sessionID := fmt.Sprintf(
+							"%v-%v",
+							seed.Text(16),
+							attemptCounter,
+						)
+
+						result, _, err := n.dkgExecutor.Execute(
+							sessionID,
+							startBlockNumber,
+							memberIndex,
+							chainConfig.GroupSize,
+							chainConfig.DishonestThreshold(),
+							excludedMembers,
+							blockCounter,
+							broadcastChannel,
+							membershipValidator,
+						)
+						if err != nil {
+							logger.Errorf(
+								"[member:%v] dkg attempt [%v] "+
+									"failed: [%v]",
+								memberIndex,
+								attemptCounter,
+								err,
+							)
+
+							return nil, err
+						}
+
+						return result, nil
+					},
 				)
 				if err != nil {
-					// TODO: Add retries into the mix.
 					logger.Errorf(
 						"[member:%v] failed to execute dkg: [%v]",
 						memberIndex,
@@ -191,4 +239,131 @@ func (n *node) joinDKGIfEligible(seed *big.Int, startBlockNumber uint64) {
 	} else {
 		logger.Infof("not eligible for DKG with seed [0x%x]", seed)
 	}
+}
+
+// dkgRetryLoop is a struct that encapsulates the DKG retry logic.
+type dkgRetryLoop struct {
+	memberIndex          group.MemberIndex
+	selectedOperators    chain.Addresses
+	inactiveOperatorsSet map[chain.Address]bool
+	chainConfig          *ChainConfig
+	attemptCounter       uint
+	randomRetryCounter   uint
+	randomRetrySeed      int64
+}
+
+func newDkgRetryLoop(
+	seed *big.Int,
+	memberIndex group.MemberIndex,
+	selectedOperators chain.Addresses,
+	chainConfig *ChainConfig,
+) *dkgRetryLoop {
+	// Pre-compute the 8-byte seed that may be needed for the random
+	// retry algorithm. Since the original DKG seed passed as parameter
+	// can have a variable length, it is safer to take the first 8 bytes
+	// of sha256(seed) as the randomRetrySeed.
+	seedSha256 := sha256.Sum256(seed.Bytes())
+	randomRetrySeed := int64(binary.BigEndian.Uint64(seedSha256[:8]))
+
+	return &dkgRetryLoop{
+		memberIndex:          memberIndex,
+		selectedOperators:    selectedOperators,
+		inactiveOperatorsSet: make(map[chain.Address]bool),
+		chainConfig:          chainConfig,
+		attemptCounter:       0,
+		randomRetryCounter:   0,
+		randomRetrySeed:      randomRetrySeed,
+	}
+}
+
+// dkgRetryFn represents a function performing a DKG attempt.
+type dkgRetryFn func(
+	attemptCounter uint,
+	excludedMembers []group.MemberIndex,
+) (*dkg.Result, error)
+
+// start begins the DKG retry loop.
+func (drl *dkgRetryLoop) start(dkgRetryFn dkgRetryFn) (*dkg.Result, error) {
+	// All selected operators should be qualified for the first attempt.
+	qualifiedOperatorsSet := drl.selectedOperators.Set()
+
+	// TODO: Other stop conditions for that loop (e.g result submitted on-chain).
+	for {
+		drl.attemptCounter++
+
+		// Exclude all members controlled by the operators that were not
+		// qualified for the current attempt.
+		excludedMembers := make([]group.MemberIndex, 0)
+		for i, operator := range drl.selectedOperators {
+			if !qualifiedOperatorsSet[operator] {
+				excludedMembers = append(excludedMembers, group.MemberIndex(i+1))
+			}
+		}
+
+		// TODO: What if the executing member is among the excluded members?
+		// TODO: Synchronize retries between members.
+		result, err := dkgRetryFn(drl.attemptCounter, excludedMembers)
+		if err != nil {
+			var imErr *dkg.InactiveMembersError
+			if errors.As(err, &imErr) {
+				for _, memberIndex := range imErr.InactiveMembersIndexes {
+					operator := drl.selectedOperators[memberIndex-1]
+					drl.inactiveOperatorsSet[operator] = true
+				}
+			}
+
+			qualifiedOperatorsSet, err = drl.qualifiedOperatorsSet()
+			if err != nil {
+				return nil, fmt.Errorf(
+					"cannot recover after failed dkg attempt [%v]: [%w]",
+					drl.attemptCounter,
+					err,
+				)
+			}
+
+			continue
+		}
+
+		return result, nil
+	}
+}
+
+// qualifiedOperatorsSet returns a set of operators qualified to participate
+// in the given DKG attempt.
+func (drl *dkgRetryLoop) qualifiedOperatorsSet() (map[chain.Address]bool, error) {
+	// If this is one of the first attempts and random retries were not started
+	// yet, check if there are known inactive operators. If the group quorum
+	// can be maintained, just exclude the members controlled by the inactive
+	// operators from the qualified set.
+	if drl.attemptCounter <= 5 &&
+		drl.randomRetryCounter == 0 &&
+		len(drl.inactiveOperatorsSet) > 0 {
+		qualifiedOperators := make(chain.Addresses, 0)
+		for _, operator := range drl.selectedOperators {
+			if !drl.inactiveOperatorsSet[operator] {
+				qualifiedOperators = append(qualifiedOperators, operator)
+			}
+		}
+
+		if len(qualifiedOperators) >= drl.chainConfig.GroupQuorum {
+			return qualifiedOperators.Set(), nil
+		}
+	}
+
+	// In any other case, try to make a random retry.
+	qualifiedOperators, err := retry.EvaluateRetryParticipantsForKeyGeneration(
+		drl.selectedOperators,
+		drl.randomRetrySeed,
+		drl.randomRetryCounter,
+		uint(drl.chainConfig.GroupQuorum),
+	)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"random operator selection failed: [%w]",
+			err,
+		)
+	}
+
+	drl.randomRetryCounter++
+	return chain.Addresses(qualifiedOperators).Set(), nil
 }
