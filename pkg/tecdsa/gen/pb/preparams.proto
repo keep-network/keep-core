@@ -3,7 +3,15 @@ syntax = "proto3";
 option go_package = "pb";
 package tecdsa;
 
+message PreParams {
+  LocalPreParams data = 1;
+}
+
 message LocalPreParams {
+  // PrivateKey is not present for pre-params generated before DKG and is
+  // filled when DKG finishes work. That being said, this message will be
+  // empty in PreParams message and non-empty in PrivateKeyShare message
+  // (see key.proto).
   message PrivateKey {
     bytes publicKey = 1;
     bytes lambdaN = 2;
