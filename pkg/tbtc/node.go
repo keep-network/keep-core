@@ -160,11 +160,11 @@ func (n *node) joinDKGIfEligible(seed *big.Int, startBlockNumber uint64) {
 				//       with a 2h timeout. Once the WalletRegistry is
 				//       integrated, the stop signal should be generated
 				//       by observing the DKG result submission or timeout.
-				loopCtx, loopCancelCtx := context.WithTimeout(
+				loopCtx, cancelLoopCtx := context.WithTimeout(
 					context.Background(),
 					2*time.Hour,
 				)
-				defer loopCancelCtx()
+				defer cancelLoopCtx()
 
 				result, err := retryLoop.start(
 					loopCtx,
