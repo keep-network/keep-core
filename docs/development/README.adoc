@@ -4,26 +4,64 @@
 
 toc::[]
 
-== <<local-t-network.adoc,Setting up local T network>>
+== Quick installation
+To quickly install and start a client use the following scripts.
 
+=== Pre-requirements
+* <<local-t-network.adoc,Set up local T network>> 
 For development purposes, it is convenient to set up a local Ethereum client with
 a group of connected peers. A note-taken walkthrough covers the entire process
 including setting up a local Ethereum client, deploying T contracts and
 configuring T peers.
 
-== Quick installation
+=== Starting a client
 
-To quickly install and start a client use the following scripts.
+Run from the project root:
 
-=== Install scripts
+* `./scripts/install.sh`
+* `./scripts/initialize.sh`
+* `./scrtips/start.sh`
 
-The `+install.sh+` script will:
+=== Installation scripts explained
 
-* install yarn dependencies
-* unlock accounts
-* build contracts
-* deploy contracts
-* build client
+The `+install.sh+` needs to be run only once and it will:
+
+* install yarn dependencies across the projects
+* unlock ethereum accounts 
+* build `threshold-network/solidity-contracts`, `random-beacon`, `ecdsa` and `tbtc-v2` contracts
+* deploy `threshold-network/solidity-contracts`, `random-beacon`, `ecdsa` and `tbtc-v2` contracts 
+* build a client
+
+For more info please refer to `./scripts/install.sh --help`
+
+```
+Usage: ENV_VAR(S) ./scripts/install.sh --network <network> --tbtc-path <tbtc-path> --threshold-network-path <threshold-network-path> --skip-deployment --skip-client-build
+
+Environment variables:
+
+        KEEP_ETHEREUM_PASSWORD: The password to unlock local Ethereum accounts to set up delegations. Required only for 'local' network. Default value is 'password'
+
+Command line arguments:
+
+        --network: Ethereum network for keep-core client(s). Available networks and settings are specified in the 'hardhat.config.ts'
+        --tbtc-path: 'Local' tbtc project's path. 'tbtc' is cloned to a temporary directory upon installation if the path is not provided
+        --threshold-network-path: 'Local' threshold network project's path. 'threshold-network/solidity-contracts' is cloned to a temporary directory upon installation if the path is not provided
+        --skip-deployment: This option skips all the contracts deployment. Default is false
+        --skip-client-build: Should execute contracts part only. Client installation will not be executed
+```
+
+The `./scripts/initialize.sh --stake-owner <address>` needs to be run for each 
+client. Default setup assumes that the staking provider, operator, beneficiary,
+and the authorizer all have the same addresses as the stake owner. Only the
+`stake-owner` has to be unique for the default setup. The default stake amount is
+`1,000,000 T` tokens. The default authorization amount is the minimum authorization
+amount +
+Ex. if you need to initialize a network with 3 clients using the default setup,
+then this script needs to be run 3 times with a different `--stake-owner` address
+like so: +
+- `initialize.sh --stake-owner <address1>` +
+- `initialize.sh --stake-owner <address2>` +
+- `initialize.sh --stake-owner <address3>`
 
 The `+initialize.sh+` script will:
 
@@ -32,27 +70,27 @@ The `+initialize.sh+` script will:
 * increase authorization for `RandomBeacon` and `WalletRegistry` applications
 * register operator for `RandomBeacon` and `WalletRegistry` applications
 
-Please refer to the script's `help` for available command arguments and environment
-variables. `./install.sh --help` or `./initialize.sh --help`. Accounts unlocking
-and initialization can be run outside of these scripts as standalone hardhat tasks.
+For more info please refer to `./scripts/initialize.sh --help`
 
-To deploy and initialize contracts:
+```
+Usage: ./scripts/initialize.sh --network <network> --stake-owner <stake owner address> --staking-provider <staking provider address> --operator <operator address> --beneficiary <beneficiary address> --authorizer <authorizer address> --stake-amount <stake amount> --authorization-amount <authorization amount>
 
-* run `./scripts/install.sh`. You need to run it only once.
+Mandatory line arguments:
 
-* run `./scripts/initialize.sh --stake-owner <address>` for the default setup for
-each client. Default setup assumes that the staking provider, operator, beneficiary,
-and the authorizer all have the same addresses as the stake owner. Only the
-`stake-owner` has to be unique for the default setup. The default stake amount is
-`1,000,000 T` tokens. The default authorization amount is the minimum authorization
-amount +
-Ex. if you need to initialize a network with 3 clients using the default setup,
-then run this script 3 times with a different `--stake-owner <address>`.
+        --stake-owner: Stake owner address
 
+Optional line arguments:
 
-=== Starting a client
+        --network: Ethereum network for keep-core client. Available networks and settings are specified in the 'hardhat.config.ts'
+        --staking-provider: Staking provider address
+        --operator: Operator address
+        --beneficiary: Staking beneficiary address
+        --authorizer: Staking authorizer address
+        --stake-amount: Stake amount
+        --authorization-amount: Authorization amount
+```
 
-TBD
+TODO: add description for `start.sh``
 
 ==== Configuration
 
