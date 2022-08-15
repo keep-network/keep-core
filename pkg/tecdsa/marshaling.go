@@ -2,11 +2,12 @@ package tecdsa
 
 import (
 	"fmt"
+	"math/big"
+
 	"github.com/binance-chain/tss-lib/crypto"
 	"github.com/binance-chain/tss-lib/crypto/paillier"
 	"github.com/binance-chain/tss-lib/ecdsa/keygen"
 	"github.com/keep-network/keep-core/pkg/tecdsa/gen/pb"
-	"math/big"
 )
 
 // ErrIncompatiblePublicKey indicates that the given public key is not
@@ -22,8 +23,8 @@ func (pks *PrivateKeyShare) Marshal() ([]byte, error) {
 		return nil, ErrIncompatiblePublicKey
 	}
 
-	localPreParams := &pb.LocalPartySaveData_LocalPreParams{
-		PaillierSK: &pb.LocalPartySaveData_LocalPreParams_PrivateKey{
+	localPreParams := &pb.LocalPreParams{
+		PaillierSK: &pb.LocalPreParams_PrivateKey{
 			PublicKey: pks.data.LocalPreParams.PaillierSK.PublicKey.N.Bytes(),
 			LambdaN:   pks.data.LocalPreParams.PaillierSK.LambdaN.Bytes(),
 			PhiN:      pks.data.LocalPreParams.PaillierSK.PhiN.Bytes(),

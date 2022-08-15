@@ -7,24 +7,24 @@ message PrivateKeyShare {
   LocalPartySaveData data = 1;
 }
 
-message LocalPartySaveData {
-  message LocalPreParams {
-    message PrivateKey {
-      bytes publicKey = 1;
-      bytes lambdaN = 2;
-      bytes phiN = 3;
-    }
-
-    PrivateKey paillierSK = 1;
-    bytes nTilde = 2;
-    bytes h1i = 3;
-    bytes h2i = 4;
-    bytes alpha = 5;
-    bytes beta = 6;
-    bytes p = 7;
-    bytes q = 8;
+message LocalPreParams {
+  message PrivateKey {
+    bytes publicKey = 1;
+    bytes lambdaN = 2;
+    bytes phiN = 3;
   }
 
+  PrivateKey paillierSK = 1;
+  bytes nTilde = 2;
+  bytes h1i = 3;
+  bytes h2i = 4;
+  bytes alpha = 5;
+  bytes beta = 6;
+  bytes p = 7;
+  bytes q = 8;
+}
+
+message LocalPartySaveData {
   message LocalSecrets {
     bytes xi = 1;
     bytes shareID = 2;
