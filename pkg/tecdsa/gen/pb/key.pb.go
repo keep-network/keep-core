@@ -70,15 +70,15 @@ func (m *PrivateKeyShare) GetData() *LocalPartySaveData {
 }
 
 type LocalPartySaveData struct {
-	LocalPreParams *LocalPreParams                  `protobuf:"bytes,1,opt,name=localPreParams,proto3" json:"localPreParams,omitempty"`
-	LocalSecrets   *LocalPartySaveData_LocalSecrets `protobuf:"bytes,2,opt,name=localSecrets,proto3" json:"localSecrets,omitempty"`
-	Ks             [][]byte                         `protobuf:"bytes,3,rep,name=ks,proto3" json:"ks,omitempty"`
-	NTildej        [][]byte                         `protobuf:"bytes,4,rep,name=nTildej,proto3" json:"nTildej,omitempty"`
-	H1J            [][]byte                         `protobuf:"bytes,5,rep,name=h1j,proto3" json:"h1j,omitempty"`
-	H2J            [][]byte                         `protobuf:"bytes,6,rep,name=h2j,proto3" json:"h2j,omitempty"`
-	BigXj          []*LocalPartySaveData_ECPoint    `protobuf:"bytes,7,rep,name=bigXj,proto3" json:"bigXj,omitempty"`
-	PaillierPKs    [][]byte                         `protobuf:"bytes,8,rep,name=paillierPKs,proto3" json:"paillierPKs,omitempty"`
-	EcdsaPub       *LocalPartySaveData_ECPoint      `protobuf:"bytes,9,opt,name=ecdsaPub,proto3" json:"ecdsaPub,omitempty"`
+	LocalPreParams *LocalPartySaveData_LocalPreParams `protobuf:"bytes,1,opt,name=localPreParams,proto3" json:"localPreParams,omitempty"`
+	LocalSecrets   *LocalPartySaveData_LocalSecrets   `protobuf:"bytes,2,opt,name=localSecrets,proto3" json:"localSecrets,omitempty"`
+	Ks             [][]byte                           `protobuf:"bytes,3,rep,name=ks,proto3" json:"ks,omitempty"`
+	NTildej        [][]byte                           `protobuf:"bytes,4,rep,name=nTildej,proto3" json:"nTildej,omitempty"`
+	H1J            [][]byte                           `protobuf:"bytes,5,rep,name=h1j,proto3" json:"h1j,omitempty"`
+	H2J            [][]byte                           `protobuf:"bytes,6,rep,name=h2j,proto3" json:"h2j,omitempty"`
+	BigXj          []*LocalPartySaveData_ECPoint      `protobuf:"bytes,7,rep,name=bigXj,proto3" json:"bigXj,omitempty"`
+	PaillierPKs    [][]byte                           `protobuf:"bytes,8,rep,name=paillierPKs,proto3" json:"paillierPKs,omitempty"`
+	EcdsaPub       *LocalPartySaveData_ECPoint        `protobuf:"bytes,9,opt,name=ecdsaPub,proto3" json:"ecdsaPub,omitempty"`
 }
 
 func (m *LocalPartySaveData) Reset()      { *m = LocalPartySaveData{} }
@@ -113,7 +113,7 @@ func (m *LocalPartySaveData) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_LocalPartySaveData proto.InternalMessageInfo
 
-func (m *LocalPartySaveData) GetLocalPreParams() *LocalPreParams {
+func (m *LocalPartySaveData) GetLocalPreParams() *LocalPartySaveData_LocalPreParams {
 	if m != nil {
 		return m.LocalPreParams
 	}
@@ -176,6 +176,166 @@ func (m *LocalPartySaveData) GetEcdsaPub() *LocalPartySaveData_ECPoint {
 	return nil
 }
 
+type LocalPartySaveData_LocalPreParams struct {
+	PaillierSK *LocalPartySaveData_LocalPreParams_PrivateKey `protobuf:"bytes,1,opt,name=paillierSK,proto3" json:"paillierSK,omitempty"`
+	NTilde     []byte                                        `protobuf:"bytes,2,opt,name=nTilde,proto3" json:"nTilde,omitempty"`
+	H1I        []byte                                        `protobuf:"bytes,3,opt,name=h1i,proto3" json:"h1i,omitempty"`
+	H2I        []byte                                        `protobuf:"bytes,4,opt,name=h2i,proto3" json:"h2i,omitempty"`
+	Alpha      []byte                                        `protobuf:"bytes,5,opt,name=alpha,proto3" json:"alpha,omitempty"`
+	Beta       []byte                                        `protobuf:"bytes,6,opt,name=beta,proto3" json:"beta,omitempty"`
+	P          []byte                                        `protobuf:"bytes,7,opt,name=p,proto3" json:"p,omitempty"`
+	Q          []byte                                        `protobuf:"bytes,8,opt,name=q,proto3" json:"q,omitempty"`
+}
+
+func (m *LocalPartySaveData_LocalPreParams) Reset()      { *m = LocalPartySaveData_LocalPreParams{} }
+func (*LocalPartySaveData_LocalPreParams) ProtoMessage() {}
+func (*LocalPartySaveData_LocalPreParams) Descriptor() ([]byte, []int) {
+	return fileDescriptor_9f1f823154058c62, []int{1, 0}
+}
+func (m *LocalPartySaveData_LocalPreParams) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *LocalPartySaveData_LocalPreParams) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_LocalPartySaveData_LocalPreParams.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *LocalPartySaveData_LocalPreParams) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_LocalPartySaveData_LocalPreParams.Merge(m, src)
+}
+func (m *LocalPartySaveData_LocalPreParams) XXX_Size() int {
+	return m.Size()
+}
+func (m *LocalPartySaveData_LocalPreParams) XXX_DiscardUnknown() {
+	xxx_messageInfo_LocalPartySaveData_LocalPreParams.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_LocalPartySaveData_LocalPreParams proto.InternalMessageInfo
+
+func (m *LocalPartySaveData_LocalPreParams) GetPaillierSK() *LocalPartySaveData_LocalPreParams_PrivateKey {
+	if m != nil {
+		return m.PaillierSK
+	}
+	return nil
+}
+
+func (m *LocalPartySaveData_LocalPreParams) GetNTilde() []byte {
+	if m != nil {
+		return m.NTilde
+	}
+	return nil
+}
+
+func (m *LocalPartySaveData_LocalPreParams) GetH1I() []byte {
+	if m != nil {
+		return m.H1I
+	}
+	return nil
+}
+
+func (m *LocalPartySaveData_LocalPreParams) GetH2I() []byte {
+	if m != nil {
+		return m.H2I
+	}
+	return nil
+}
+
+func (m *LocalPartySaveData_LocalPreParams) GetAlpha() []byte {
+	if m != nil {
+		return m.Alpha
+	}
+	return nil
+}
+
+func (m *LocalPartySaveData_LocalPreParams) GetBeta() []byte {
+	if m != nil {
+		return m.Beta
+	}
+	return nil
+}
+
+func (m *LocalPartySaveData_LocalPreParams) GetP() []byte {
+	if m != nil {
+		return m.P
+	}
+	return nil
+}
+
+func (m *LocalPartySaveData_LocalPreParams) GetQ() []byte {
+	if m != nil {
+		return m.Q
+	}
+	return nil
+}
+
+type LocalPartySaveData_LocalPreParams_PrivateKey struct {
+	PublicKey []byte `protobuf:"bytes,1,opt,name=publicKey,proto3" json:"publicKey,omitempty"`
+	LambdaN   []byte `protobuf:"bytes,2,opt,name=lambdaN,proto3" json:"lambdaN,omitempty"`
+	PhiN      []byte `protobuf:"bytes,3,opt,name=phiN,proto3" json:"phiN,omitempty"`
+}
+
+func (m *LocalPartySaveData_LocalPreParams_PrivateKey) Reset() {
+	*m = LocalPartySaveData_LocalPreParams_PrivateKey{}
+}
+func (*LocalPartySaveData_LocalPreParams_PrivateKey) ProtoMessage() {}
+func (*LocalPartySaveData_LocalPreParams_PrivateKey) Descriptor() ([]byte, []int) {
+	return fileDescriptor_9f1f823154058c62, []int{1, 0, 0}
+}
+func (m *LocalPartySaveData_LocalPreParams_PrivateKey) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *LocalPartySaveData_LocalPreParams_PrivateKey) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_LocalPartySaveData_LocalPreParams_PrivateKey.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *LocalPartySaveData_LocalPreParams_PrivateKey) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_LocalPartySaveData_LocalPreParams_PrivateKey.Merge(m, src)
+}
+func (m *LocalPartySaveData_LocalPreParams_PrivateKey) XXX_Size() int {
+	return m.Size()
+}
+func (m *LocalPartySaveData_LocalPreParams_PrivateKey) XXX_DiscardUnknown() {
+	xxx_messageInfo_LocalPartySaveData_LocalPreParams_PrivateKey.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_LocalPartySaveData_LocalPreParams_PrivateKey proto.InternalMessageInfo
+
+func (m *LocalPartySaveData_LocalPreParams_PrivateKey) GetPublicKey() []byte {
+	if m != nil {
+		return m.PublicKey
+	}
+	return nil
+}
+
+func (m *LocalPartySaveData_LocalPreParams_PrivateKey) GetLambdaN() []byte {
+	if m != nil {
+		return m.LambdaN
+	}
+	return nil
+}
+
+func (m *LocalPartySaveData_LocalPreParams_PrivateKey) GetPhiN() []byte {
+	if m != nil {
+		return m.PhiN
+	}
+	return nil
+}
+
 type LocalPartySaveData_LocalSecrets struct {
 	Xi      []byte `protobuf:"bytes,1,opt,name=xi,proto3" json:"xi,omitempty"`
 	ShareID []byte `protobuf:"bytes,2,opt,name=shareID,proto3" json:"shareID,omitempty"`
@@ -184,7 +344,7 @@ type LocalPartySaveData_LocalSecrets struct {
 func (m *LocalPartySaveData_LocalSecrets) Reset()      { *m = LocalPartySaveData_LocalSecrets{} }
 func (*LocalPartySaveData_LocalSecrets) ProtoMessage() {}
 func (*LocalPartySaveData_LocalSecrets) Descriptor() ([]byte, []int) {
-	return fileDescriptor_9f1f823154058c62, []int{1, 0}
+	return fileDescriptor_9f1f823154058c62, []int{1, 1}
 }
 func (m *LocalPartySaveData_LocalSecrets) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -235,7 +395,7 @@ type LocalPartySaveData_ECPoint struct {
 func (m *LocalPartySaveData_ECPoint) Reset()      { *m = LocalPartySaveData_ECPoint{} }
 func (*LocalPartySaveData_ECPoint) ProtoMessage() {}
 func (*LocalPartySaveData_ECPoint) Descriptor() ([]byte, []int) {
-	return fileDescriptor_9f1f823154058c62, []int{1, 1}
+	return fileDescriptor_9f1f823154058c62, []int{1, 2}
 }
 func (m *LocalPartySaveData_ECPoint) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -281,6 +441,8 @@ func (m *LocalPartySaveData_ECPoint) GetY() []byte {
 func init() {
 	proto.RegisterType((*PrivateKeyShare)(nil), "tecdsa.PrivateKeyShare")
 	proto.RegisterType((*LocalPartySaveData)(nil), "tecdsa.LocalPartySaveData")
+	proto.RegisterType((*LocalPartySaveData_LocalPreParams)(nil), "tecdsa.LocalPartySaveData.LocalPreParams")
+	proto.RegisterType((*LocalPartySaveData_LocalPreParams_PrivateKey)(nil), "tecdsa.LocalPartySaveData.LocalPreParams.PrivateKey")
 	proto.RegisterType((*LocalPartySaveData_LocalSecrets)(nil), "tecdsa.LocalPartySaveData.LocalSecrets")
 	proto.RegisterType((*LocalPartySaveData_ECPoint)(nil), "tecdsa.LocalPartySaveData.ECPoint")
 }
@@ -288,33 +450,40 @@ func init() {
 func init() { proto.RegisterFile("pb/key.proto", fileDescriptor_9f1f823154058c62) }
 
 var fileDescriptor_9f1f823154058c62 = []byte{
-	// 409 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x8c, 0x92, 0xbf, 0x8e, 0xd3, 0x40,
-	0x10, 0xc6, 0xbd, 0x76, 0xfe, 0xb1, 0xb1, 0x02, 0xda, 0x02, 0xad, 0x5c, 0xac, 0xac, 0x48, 0x88,
-	0x54, 0x8e, 0x30, 0x4d, 0xaa, 0x48, 0x40, 0x28, 0x50, 0x52, 0x58, 0x0e, 0x05, 0xa2, 0x5b, 0x27,
-	0x2b, 0xb2, 0x8e, 0x89, 0xad, 0xf5, 0x12, 0xd9, 0x1d, 0x8f, 0xc0, 0x63, 0xf0, 0x28, 0x94, 0x29,
-	0x53, 0x12, 0xa7, 0xa1, 0xa0, 0xc8, 0x23, 0x9c, 0xbc, 0x76, 0x4e, 0x97, 0x9c, 0xee, 0x74, 0x9d,
-	0xe7, 0x37, 0xdf, 0xf7, 0x79, 0x66, 0x6c, 0x68, 0x26, 0xc1, 0x70, 0xcd, 0x72, 0x27, 0x11, 0xb1,
-	0x8c, 0x51, 0x4b, 0xb2, 0xc5, 0x32, 0xa5, 0x16, 0x4a, 0x82, 0x61, 0x22, 0x58, 0x42, 0x05, 0xfd,
-	0x9e, 0x56, 0xbd, 0xfe, 0x3b, 0xf8, 0xdc, 0x13, 0x7c, 0x4b, 0x25, 0x9b, 0xb2, 0x7c, 0xbe, 0xa2,
-	0x82, 0x21, 0x07, 0x36, 0x96, 0x54, 0x52, 0x0c, 0x6c, 0x30, 0xe8, 0xba, 0x96, 0x53, 0xb9, 0x9d,
-	0x59, 0xbc, 0xa0, 0x91, 0x47, 0x85, 0xcc, 0xe7, 0x74, 0xcb, 0x26, 0x54, 0x52, 0x5f, 0xe9, 0xfa,
-	0xff, 0x0d, 0x88, 0xee, 0x37, 0xd1, 0x18, 0xf6, 0x22, 0x45, 0x05, 0xf3, 0xd4, 0x1b, 0xeb, 0xc0,
-	0x97, 0x97, 0x81, 0xe7, 0xae, 0x7f, 0xa5, 0x46, 0x53, 0x68, 0x2a, 0x32, 0x67, 0x0b, 0xc1, 0x64,
-	0x8a, 0x75, 0xe5, 0x7e, 0xfd, 0xf0, 0x38, 0x15, 0xaa, 0xe5, 0xfe, 0x85, 0x19, 0xf5, 0xa0, 0xbe,
-	0x4e, 0xb1, 0x61, 0x1b, 0x03, 0xd3, 0xd7, 0xd7, 0x29, 0xc2, 0xb0, 0xbd, 0xf9, 0xcc, 0xa3, 0x25,
-	0x0b, 0x71, 0x43, 0xc1, 0x73, 0x89, 0x5e, 0x40, 0x63, 0xf5, 0x26, 0xc4, 0x4d, 0x45, 0xcb, 0x47,
-	0x45, 0xdc, 0x10, 0xb7, 0x6a, 0xe2, 0x86, 0x68, 0x04, 0x9b, 0x01, 0xff, 0xf6, 0x25, 0xc4, 0x6d,
-	0xdb, 0x18, 0x74, 0xdd, 0xfe, 0x23, 0x33, 0x7d, 0xfc, 0xe0, 0xc5, 0x7c, 0x23, 0xfd, 0xca, 0x80,
-	0x6c, 0xd8, 0x4d, 0x28, 0x8f, 0x22, 0xce, 0x84, 0x37, 0x4d, 0x71, 0x47, 0x65, 0xde, 0x45, 0x68,
-	0x0c, 0x3b, 0x2a, 0xcc, 0xfb, 0x11, 0xe0, 0x67, 0x6a, 0xe5, 0xa7, 0xc4, 0xdf, 0x7a, 0xac, 0x11,
-	0x34, 0x67, 0x57, 0x9b, 0x67, 0x5c, 0x9d, 0xde, 0xf4, 0xf5, 0x8c, 0x97, 0x9b, 0xa7, 0xe5, 0x67,
-	0xfe, 0x34, 0x51, 0x17, 0x35, 0xfd, 0x73, 0x69, 0xbd, 0x82, 0xed, 0x3a, 0x0e, 0x99, 0x10, 0x64,
-	0xb5, 0x07, 0x64, 0x65, 0x95, 0xd7, 0x62, 0x90, 0xbf, 0x1f, 0xed, 0x0e, 0x44, 0xdb, 0x1f, 0x88,
-	0x76, 0x3a, 0x10, 0xf0, 0xb3, 0x20, 0xe0, 0x77, 0x41, 0xc0, 0x9f, 0x82, 0x80, 0x5d, 0x41, 0xc0,
-	0xdf, 0x82, 0x80, 0x7f, 0x05, 0xd1, 0x4e, 0x05, 0x01, 0xbf, 0x8e, 0x44, 0xdb, 0x1d, 0x89, 0xb6,
-	0x3f, 0x12, 0xed, 0xab, 0x9e, 0x04, 0x41, 0x4b, 0xfd, 0x72, 0x6f, 0x6f, 0x02, 0x00, 0x00, 0xff,
-	0xff, 0x6b, 0x3e, 0xf1, 0x18, 0x9e, 0x02, 0x00, 0x00,
+	// 525 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x8c, 0x93, 0xc1, 0x6e, 0xd3, 0x4c,
+	0x10, 0xc7, 0xbd, 0x76, 0xe2, 0xa4, 0x13, 0x2b, 0xdf, 0xa7, 0x15, 0x42, 0x2b, 0x0b, 0xad, 0xa2,
+	0x48, 0x88, 0x70, 0x31, 0xc2, 0x70, 0xc8, 0x09, 0x09, 0x28, 0x07, 0xe4, 0xaa, 0x32, 0x4e, 0x0f,
+	0x15, 0xb7, 0x75, 0xb2, 0x22, 0xeb, 0xb8, 0x8d, 0x6b, 0xbb, 0x55, 0x7c, 0xe3, 0x11, 0x78, 0x0c,
+	0x9e, 0x03, 0x71, 0xe0, 0x98, 0x63, 0x8f, 0xc4, 0xb9, 0x70, 0xec, 0x23, 0x20, 0xaf, 0xd7, 0xa4,
+	0x2d, 0x02, 0x7a, 0x9b, 0xff, 0xcf, 0x33, 0x7f, 0xcf, 0xce, 0xec, 0x82, 0x95, 0x84, 0x4f, 0x16,
+	0xbc, 0x70, 0x92, 0x74, 0x99, 0x2f, 0xb1, 0x99, 0xf3, 0xe9, 0x2c, 0x63, 0xc3, 0x97, 0xf0, 0x9f,
+	0x9f, 0x8a, 0x0b, 0x96, 0x73, 0x8f, 0x17, 0x93, 0x39, 0x4b, 0x39, 0x76, 0xa0, 0x35, 0x63, 0x39,
+	0x23, 0x68, 0x80, 0x46, 0x3d, 0xd7, 0x76, 0xea, 0x4c, 0xe7, 0x60, 0x39, 0x65, 0xb1, 0xcf, 0xd2,
+	0xbc, 0x98, 0xb0, 0x0b, 0xbe, 0xcf, 0x72, 0x16, 0xc8, 0xbc, 0xe1, 0x57, 0x13, 0xf0, 0xef, 0x1f,
+	0xf1, 0x3b, 0xe8, 0xc7, 0x92, 0xa6, 0xdc, 0x67, 0x29, 0x3b, 0xc9, 0x94, 0xe1, 0xe3, 0x3f, 0x1b,
+	0x2a, 0xd4, 0x14, 0x04, 0xb7, 0x0c, 0xb0, 0x07, 0x96, 0x24, 0x13, 0x3e, 0x4d, 0x79, 0x9e, 0x11,
+	0x5d, 0x1a, 0x3e, 0xfa, 0x97, 0xa1, 0x4a, 0x0f, 0x6e, 0x14, 0xe3, 0x3e, 0xe8, 0x8b, 0x8c, 0x18,
+	0x03, 0x63, 0x64, 0x05, 0xfa, 0x22, 0xc3, 0x04, 0x3a, 0xa7, 0x47, 0x22, 0x9e, 0xf1, 0x88, 0xb4,
+	0x24, 0x6c, 0x24, 0xfe, 0x1f, 0x8c, 0xf9, 0xd3, 0x88, 0xb4, 0x25, 0xad, 0x42, 0x49, 0xdc, 0x88,
+	0x98, 0x8a, 0xb8, 0x11, 0x1e, 0x43, 0x3b, 0x14, 0x1f, 0x8e, 0x23, 0xd2, 0x19, 0x18, 0xa3, 0x9e,
+	0x3b, 0xfc, 0x4b, 0x4f, 0x6f, 0x5e, 0xfb, 0x4b, 0x71, 0x9a, 0x07, 0x75, 0x01, 0x1e, 0x40, 0x2f,
+	0x61, 0x22, 0x8e, 0x05, 0x4f, 0x7d, 0x2f, 0x23, 0x5d, 0xe9, 0x79, 0x1d, 0xe1, 0x17, 0xd0, 0x95,
+	0x66, 0xfe, 0x79, 0x48, 0xf6, 0xe4, 0x91, 0xef, 0x62, 0xff, 0xab, 0xc6, 0xfe, 0xa2, 0x43, 0xff,
+	0xe6, 0x64, 0xf1, 0x11, 0x40, 0xf3, 0x87, 0x89, 0xa7, 0x16, 0xf3, 0xfc, 0xce, 0x8b, 0x71, 0x76,
+	0x57, 0x26, 0xb8, 0xe6, 0x83, 0xef, 0x83, 0x59, 0xcf, 0x4c, 0x6e, 0xc6, 0x0a, 0x94, 0xaa, 0x07,
+	0x28, 0x88, 0x21, 0x61, 0x15, 0xd6, 0x03, 0x14, 0xa4, 0xa5, 0x88, 0x2b, 0xf0, 0x3d, 0x68, 0xb3,
+	0x38, 0x99, 0x33, 0xd2, 0x96, 0xac, 0x16, 0x18, 0x43, 0x2b, 0xe4, 0x39, 0x23, 0xa6, 0x84, 0x32,
+	0xc6, 0x16, 0xa0, 0x84, 0x74, 0x24, 0x40, 0x49, 0xa5, 0xce, 0x48, 0xb7, 0x56, 0x67, 0xf6, 0x31,
+	0xc0, 0xae, 0x37, 0xfc, 0x00, 0xf6, 0x92, 0xf3, 0x30, 0x16, 0x53, 0x8f, 0x17, 0xf2, 0x90, 0x56,
+	0xb0, 0x03, 0xd5, 0xc2, 0x63, 0x76, 0x12, 0xce, 0xd8, 0xa1, 0x6a, 0xb7, 0x91, 0xd5, 0x5f, 0x93,
+	0xb9, 0x38, 0x54, 0x0d, 0xcb, 0xd8, 0x1e, 0x83, 0x75, 0x70, 0xeb, 0xfa, 0xac, 0x84, 0x32, 0xd5,
+	0x57, 0xa2, 0x72, 0xcb, 0xaa, 0xe7, 0xf3, 0x76, 0xbf, 0x71, 0x53, 0xd2, 0x7e, 0x08, 0x1d, 0xb5,
+	0x93, 0xaa, 0xd9, 0x95, 0xaa, 0x41, 0xab, 0x4a, 0x15, 0x2a, 0x19, 0x15, 0xaf, 0xc6, 0xeb, 0x0d,
+	0xd5, 0x2e, 0x37, 0x54, 0xbb, 0xda, 0x50, 0xf4, 0xb1, 0xa4, 0xe8, 0x73, 0x49, 0xd1, 0xb7, 0x92,
+	0xa2, 0x75, 0x49, 0xd1, 0xf7, 0x92, 0xa2, 0x1f, 0x25, 0xd5, 0xae, 0x4a, 0x8a, 0x3e, 0x6d, 0xa9,
+	0xb6, 0xde, 0x52, 0xed, 0x72, 0x4b, 0xb5, 0xf7, 0x7a, 0x12, 0x86, 0xa6, 0x7c, 0xd2, 0xcf, 0x7e,
+	0x06, 0x00, 0x00, 0xff, 0xff, 0x77, 0x64, 0x77, 0xf7, 0xe2, 0x03, 0x00, 0x00,
 }
 
 func (this *PrivateKeyShare) Equal(that interface{}) bool {
@@ -419,6 +588,81 @@ func (this *LocalPartySaveData) Equal(that interface{}) bool {
 	}
 	return true
 }
+func (this *LocalPartySaveData_LocalPreParams) Equal(that interface{}) bool {
+	if that == nil {
+		return this == nil
+	}
+
+	that1, ok := that.(*LocalPartySaveData_LocalPreParams)
+	if !ok {
+		that2, ok := that.(LocalPartySaveData_LocalPreParams)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
+	}
+	if that1 == nil {
+		return this == nil
+	} else if this == nil {
+		return false
+	}
+	if !this.PaillierSK.Equal(that1.PaillierSK) {
+		return false
+	}
+	if !bytes.Equal(this.NTilde, that1.NTilde) {
+		return false
+	}
+	if !bytes.Equal(this.H1I, that1.H1I) {
+		return false
+	}
+	if !bytes.Equal(this.H2I, that1.H2I) {
+		return false
+	}
+	if !bytes.Equal(this.Alpha, that1.Alpha) {
+		return false
+	}
+	if !bytes.Equal(this.Beta, that1.Beta) {
+		return false
+	}
+	if !bytes.Equal(this.P, that1.P) {
+		return false
+	}
+	if !bytes.Equal(this.Q, that1.Q) {
+		return false
+	}
+	return true
+}
+func (this *LocalPartySaveData_LocalPreParams_PrivateKey) Equal(that interface{}) bool {
+	if that == nil {
+		return this == nil
+	}
+
+	that1, ok := that.(*LocalPartySaveData_LocalPreParams_PrivateKey)
+	if !ok {
+		that2, ok := that.(LocalPartySaveData_LocalPreParams_PrivateKey)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
+	}
+	if that1 == nil {
+		return this == nil
+	} else if this == nil {
+		return false
+	}
+	if !bytes.Equal(this.PublicKey, that1.PublicKey) {
+		return false
+	}
+	if !bytes.Equal(this.LambdaN, that1.LambdaN) {
+		return false
+	}
+	if !bytes.Equal(this.PhiN, that1.PhiN) {
+		return false
+	}
+	return true
+}
 func (this *LocalPartySaveData_LocalSecrets) Equal(that interface{}) bool {
 	if that == nil {
 		return this == nil
@@ -508,6 +752,37 @@ func (this *LocalPartySaveData) GoString() string {
 	if this.EcdsaPub != nil {
 		s = append(s, "EcdsaPub: "+fmt.Sprintf("%#v", this.EcdsaPub)+",\n")
 	}
+	s = append(s, "}")
+	return strings.Join(s, "")
+}
+func (this *LocalPartySaveData_LocalPreParams) GoString() string {
+	if this == nil {
+		return "nil"
+	}
+	s := make([]string, 0, 12)
+	s = append(s, "&pb.LocalPartySaveData_LocalPreParams{")
+	if this.PaillierSK != nil {
+		s = append(s, "PaillierSK: "+fmt.Sprintf("%#v", this.PaillierSK)+",\n")
+	}
+	s = append(s, "NTilde: "+fmt.Sprintf("%#v", this.NTilde)+",\n")
+	s = append(s, "H1I: "+fmt.Sprintf("%#v", this.H1I)+",\n")
+	s = append(s, "H2I: "+fmt.Sprintf("%#v", this.H2I)+",\n")
+	s = append(s, "Alpha: "+fmt.Sprintf("%#v", this.Alpha)+",\n")
+	s = append(s, "Beta: "+fmt.Sprintf("%#v", this.Beta)+",\n")
+	s = append(s, "P: "+fmt.Sprintf("%#v", this.P)+",\n")
+	s = append(s, "Q: "+fmt.Sprintf("%#v", this.Q)+",\n")
+	s = append(s, "}")
+	return strings.Join(s, "")
+}
+func (this *LocalPartySaveData_LocalPreParams_PrivateKey) GoString() string {
+	if this == nil {
+		return "nil"
+	}
+	s := make([]string, 0, 7)
+	s = append(s, "&pb.LocalPartySaveData_LocalPreParams_PrivateKey{")
+	s = append(s, "PublicKey: "+fmt.Sprintf("%#v", this.PublicKey)+",\n")
+	s = append(s, "LambdaN: "+fmt.Sprintf("%#v", this.LambdaN)+",\n")
+	s = append(s, "PhiN: "+fmt.Sprintf("%#v", this.PhiN)+",\n")
 	s = append(s, "}")
 	return strings.Join(s, "")
 }
@@ -694,6 +969,134 @@ func (m *LocalPartySaveData) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	return len(dAtA) - i, nil
 }
 
+func (m *LocalPartySaveData_LocalPreParams) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *LocalPartySaveData_LocalPreParams) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *LocalPartySaveData_LocalPreParams) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if len(m.Q) > 0 {
+		i -= len(m.Q)
+		copy(dAtA[i:], m.Q)
+		i = encodeVarintKey(dAtA, i, uint64(len(m.Q)))
+		i--
+		dAtA[i] = 0x42
+	}
+	if len(m.P) > 0 {
+		i -= len(m.P)
+		copy(dAtA[i:], m.P)
+		i = encodeVarintKey(dAtA, i, uint64(len(m.P)))
+		i--
+		dAtA[i] = 0x3a
+	}
+	if len(m.Beta) > 0 {
+		i -= len(m.Beta)
+		copy(dAtA[i:], m.Beta)
+		i = encodeVarintKey(dAtA, i, uint64(len(m.Beta)))
+		i--
+		dAtA[i] = 0x32
+	}
+	if len(m.Alpha) > 0 {
+		i -= len(m.Alpha)
+		copy(dAtA[i:], m.Alpha)
+		i = encodeVarintKey(dAtA, i, uint64(len(m.Alpha)))
+		i--
+		dAtA[i] = 0x2a
+	}
+	if len(m.H2I) > 0 {
+		i -= len(m.H2I)
+		copy(dAtA[i:], m.H2I)
+		i = encodeVarintKey(dAtA, i, uint64(len(m.H2I)))
+		i--
+		dAtA[i] = 0x22
+	}
+	if len(m.H1I) > 0 {
+		i -= len(m.H1I)
+		copy(dAtA[i:], m.H1I)
+		i = encodeVarintKey(dAtA, i, uint64(len(m.H1I)))
+		i--
+		dAtA[i] = 0x1a
+	}
+	if len(m.NTilde) > 0 {
+		i -= len(m.NTilde)
+		copy(dAtA[i:], m.NTilde)
+		i = encodeVarintKey(dAtA, i, uint64(len(m.NTilde)))
+		i--
+		dAtA[i] = 0x12
+	}
+	if m.PaillierSK != nil {
+		{
+			size, err := m.PaillierSK.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintKey(dAtA, i, uint64(size))
+		}
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *LocalPartySaveData_LocalPreParams_PrivateKey) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *LocalPartySaveData_LocalPreParams_PrivateKey) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *LocalPartySaveData_LocalPreParams_PrivateKey) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if len(m.PhiN) > 0 {
+		i -= len(m.PhiN)
+		copy(dAtA[i:], m.PhiN)
+		i = encodeVarintKey(dAtA, i, uint64(len(m.PhiN)))
+		i--
+		dAtA[i] = 0x1a
+	}
+	if len(m.LambdaN) > 0 {
+		i -= len(m.LambdaN)
+		copy(dAtA[i:], m.LambdaN)
+		i = encodeVarintKey(dAtA, i, uint64(len(m.LambdaN)))
+		i--
+		dAtA[i] = 0x12
+	}
+	if len(m.PublicKey) > 0 {
+		i -= len(m.PublicKey)
+		copy(dAtA[i:], m.PublicKey)
+		i = encodeVarintKey(dAtA, i, uint64(len(m.PublicKey)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
 func (m *LocalPartySaveData_LocalSecrets) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
@@ -849,6 +1252,68 @@ func (m *LocalPartySaveData) Size() (n int) {
 	return n
 }
 
+func (m *LocalPartySaveData_LocalPreParams) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if m.PaillierSK != nil {
+		l = m.PaillierSK.Size()
+		n += 1 + l + sovKey(uint64(l))
+	}
+	l = len(m.NTilde)
+	if l > 0 {
+		n += 1 + l + sovKey(uint64(l))
+	}
+	l = len(m.H1I)
+	if l > 0 {
+		n += 1 + l + sovKey(uint64(l))
+	}
+	l = len(m.H2I)
+	if l > 0 {
+		n += 1 + l + sovKey(uint64(l))
+	}
+	l = len(m.Alpha)
+	if l > 0 {
+		n += 1 + l + sovKey(uint64(l))
+	}
+	l = len(m.Beta)
+	if l > 0 {
+		n += 1 + l + sovKey(uint64(l))
+	}
+	l = len(m.P)
+	if l > 0 {
+		n += 1 + l + sovKey(uint64(l))
+	}
+	l = len(m.Q)
+	if l > 0 {
+		n += 1 + l + sovKey(uint64(l))
+	}
+	return n
+}
+
+func (m *LocalPartySaveData_LocalPreParams_PrivateKey) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.PublicKey)
+	if l > 0 {
+		n += 1 + l + sovKey(uint64(l))
+	}
+	l = len(m.LambdaN)
+	if l > 0 {
+		n += 1 + l + sovKey(uint64(l))
+	}
+	l = len(m.PhiN)
+	if l > 0 {
+		n += 1 + l + sovKey(uint64(l))
+	}
+	return n
+}
+
 func (m *LocalPartySaveData_LocalSecrets) Size() (n int) {
 	if m == nil {
 		return 0
@@ -909,7 +1374,7 @@ func (this *LocalPartySaveData) String() string {
 	}
 	repeatedStringForBigXj += "}"
 	s := strings.Join([]string{`&LocalPartySaveData{`,
-		`LocalPreParams:` + strings.Replace(fmt.Sprintf("%v", this.LocalPreParams), "LocalPreParams", "LocalPreParams", 1) + `,`,
+		`LocalPreParams:` + strings.Replace(fmt.Sprintf("%v", this.LocalPreParams), "LocalPartySaveData_LocalPreParams", "LocalPartySaveData_LocalPreParams", 1) + `,`,
 		`LocalSecrets:` + strings.Replace(fmt.Sprintf("%v", this.LocalSecrets), "LocalPartySaveData_LocalSecrets", "LocalPartySaveData_LocalSecrets", 1) + `,`,
 		`Ks:` + fmt.Sprintf("%v", this.Ks) + `,`,
 		`NTildej:` + fmt.Sprintf("%v", this.NTildej) + `,`,
@@ -918,6 +1383,35 @@ func (this *LocalPartySaveData) String() string {
 		`BigXj:` + repeatedStringForBigXj + `,`,
 		`PaillierPKs:` + fmt.Sprintf("%v", this.PaillierPKs) + `,`,
 		`EcdsaPub:` + strings.Replace(fmt.Sprintf("%v", this.EcdsaPub), "LocalPartySaveData_ECPoint", "LocalPartySaveData_ECPoint", 1) + `,`,
+		`}`,
+	}, "")
+	return s
+}
+func (this *LocalPartySaveData_LocalPreParams) String() string {
+	if this == nil {
+		return "nil"
+	}
+	s := strings.Join([]string{`&LocalPartySaveData_LocalPreParams{`,
+		`PaillierSK:` + strings.Replace(fmt.Sprintf("%v", this.PaillierSK), "LocalPartySaveData_LocalPreParams_PrivateKey", "LocalPartySaveData_LocalPreParams_PrivateKey", 1) + `,`,
+		`NTilde:` + fmt.Sprintf("%v", this.NTilde) + `,`,
+		`H1I:` + fmt.Sprintf("%v", this.H1I) + `,`,
+		`H2I:` + fmt.Sprintf("%v", this.H2I) + `,`,
+		`Alpha:` + fmt.Sprintf("%v", this.Alpha) + `,`,
+		`Beta:` + fmt.Sprintf("%v", this.Beta) + `,`,
+		`P:` + fmt.Sprintf("%v", this.P) + `,`,
+		`Q:` + fmt.Sprintf("%v", this.Q) + `,`,
+		`}`,
+	}, "")
+	return s
+}
+func (this *LocalPartySaveData_LocalPreParams_PrivateKey) String() string {
+	if this == nil {
+		return "nil"
+	}
+	s := strings.Join([]string{`&LocalPartySaveData_LocalPreParams_PrivateKey{`,
+		`PublicKey:` + fmt.Sprintf("%v", this.PublicKey) + `,`,
+		`LambdaN:` + fmt.Sprintf("%v", this.LambdaN) + `,`,
+		`PhiN:` + fmt.Sprintf("%v", this.PhiN) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -1097,7 +1591,7 @@ func (m *LocalPartySaveData) Unmarshal(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.LocalPreParams == nil {
-				m.LocalPreParams = &LocalPreParams{}
+				m.LocalPreParams = &LocalPartySaveData_LocalPreParams{}
 			}
 			if err := m.LocalPreParams.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
@@ -1367,6 +1861,482 @@ func (m *LocalPartySaveData) Unmarshal(dAtA []byte) error {
 			}
 			if err := m.EcdsaPub.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipKey(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthKey
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *LocalPartySaveData_LocalPreParams) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowKey
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: LocalPreParams: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: LocalPreParams: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field PaillierSK", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowKey
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthKey
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthKey
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.PaillierSK == nil {
+				m.PaillierSK = &LocalPartySaveData_LocalPreParams_PrivateKey{}
+			}
+			if err := m.PaillierSK.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field NTilde", wireType)
+			}
+			var byteLen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowKey
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				byteLen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if byteLen < 0 {
+				return ErrInvalidLengthKey
+			}
+			postIndex := iNdEx + byteLen
+			if postIndex < 0 {
+				return ErrInvalidLengthKey
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.NTilde = append(m.NTilde[:0], dAtA[iNdEx:postIndex]...)
+			if m.NTilde == nil {
+				m.NTilde = []byte{}
+			}
+			iNdEx = postIndex
+		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field H1I", wireType)
+			}
+			var byteLen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowKey
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				byteLen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if byteLen < 0 {
+				return ErrInvalidLengthKey
+			}
+			postIndex := iNdEx + byteLen
+			if postIndex < 0 {
+				return ErrInvalidLengthKey
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.H1I = append(m.H1I[:0], dAtA[iNdEx:postIndex]...)
+			if m.H1I == nil {
+				m.H1I = []byte{}
+			}
+			iNdEx = postIndex
+		case 4:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field H2I", wireType)
+			}
+			var byteLen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowKey
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				byteLen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if byteLen < 0 {
+				return ErrInvalidLengthKey
+			}
+			postIndex := iNdEx + byteLen
+			if postIndex < 0 {
+				return ErrInvalidLengthKey
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.H2I = append(m.H2I[:0], dAtA[iNdEx:postIndex]...)
+			if m.H2I == nil {
+				m.H2I = []byte{}
+			}
+			iNdEx = postIndex
+		case 5:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Alpha", wireType)
+			}
+			var byteLen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowKey
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				byteLen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if byteLen < 0 {
+				return ErrInvalidLengthKey
+			}
+			postIndex := iNdEx + byteLen
+			if postIndex < 0 {
+				return ErrInvalidLengthKey
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Alpha = append(m.Alpha[:0], dAtA[iNdEx:postIndex]...)
+			if m.Alpha == nil {
+				m.Alpha = []byte{}
+			}
+			iNdEx = postIndex
+		case 6:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Beta", wireType)
+			}
+			var byteLen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowKey
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				byteLen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if byteLen < 0 {
+				return ErrInvalidLengthKey
+			}
+			postIndex := iNdEx + byteLen
+			if postIndex < 0 {
+				return ErrInvalidLengthKey
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Beta = append(m.Beta[:0], dAtA[iNdEx:postIndex]...)
+			if m.Beta == nil {
+				m.Beta = []byte{}
+			}
+			iNdEx = postIndex
+		case 7:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field P", wireType)
+			}
+			var byteLen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowKey
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				byteLen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if byteLen < 0 {
+				return ErrInvalidLengthKey
+			}
+			postIndex := iNdEx + byteLen
+			if postIndex < 0 {
+				return ErrInvalidLengthKey
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.P = append(m.P[:0], dAtA[iNdEx:postIndex]...)
+			if m.P == nil {
+				m.P = []byte{}
+			}
+			iNdEx = postIndex
+		case 8:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Q", wireType)
+			}
+			var byteLen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowKey
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				byteLen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if byteLen < 0 {
+				return ErrInvalidLengthKey
+			}
+			postIndex := iNdEx + byteLen
+			if postIndex < 0 {
+				return ErrInvalidLengthKey
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Q = append(m.Q[:0], dAtA[iNdEx:postIndex]...)
+			if m.Q == nil {
+				m.Q = []byte{}
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipKey(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthKey
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *LocalPartySaveData_LocalPreParams_PrivateKey) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowKey
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: PrivateKey: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: PrivateKey: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field PublicKey", wireType)
+			}
+			var byteLen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowKey
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				byteLen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if byteLen < 0 {
+				return ErrInvalidLengthKey
+			}
+			postIndex := iNdEx + byteLen
+			if postIndex < 0 {
+				return ErrInvalidLengthKey
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.PublicKey = append(m.PublicKey[:0], dAtA[iNdEx:postIndex]...)
+			if m.PublicKey == nil {
+				m.PublicKey = []byte{}
+			}
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field LambdaN", wireType)
+			}
+			var byteLen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowKey
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				byteLen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if byteLen < 0 {
+				return ErrInvalidLengthKey
+			}
+			postIndex := iNdEx + byteLen
+			if postIndex < 0 {
+				return ErrInvalidLengthKey
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.LambdaN = append(m.LambdaN[:0], dAtA[iNdEx:postIndex]...)
+			if m.LambdaN == nil {
+				m.LambdaN = []byte{}
+			}
+			iNdEx = postIndex
+		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field PhiN", wireType)
+			}
+			var byteLen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowKey
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				byteLen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if byteLen < 0 {
+				return ErrInvalidLengthKey
+			}
+			postIndex := iNdEx + byteLen
+			if postIndex < 0 {
+				return ErrInvalidLengthKey
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.PhiN = append(m.PhiN[:0], dAtA[iNdEx:postIndex]...)
+			if m.PhiN == nil {
+				m.PhiN = []byte{}
 			}
 			iNdEx = postIndex
 		default:

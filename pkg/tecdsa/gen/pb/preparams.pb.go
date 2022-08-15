@@ -27,7 +27,7 @@ var _ = math.Inf
 const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
 type PreParams struct {
-	Data *LocalPreParams `protobuf:"bytes,1,opt,name=data,proto3" json:"data,omitempty"`
+	Data *PreParams_LocalPreParams `protobuf:"bytes,1,opt,name=data,proto3" json:"data,omitempty"`
 }
 
 func (m *PreParams) Reset()      { *m = PreParams{} }
@@ -62,35 +62,34 @@ func (m *PreParams) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_PreParams proto.InternalMessageInfo
 
-func (m *PreParams) GetData() *LocalPreParams {
+func (m *PreParams) GetData() *PreParams_LocalPreParams {
 	if m != nil {
 		return m.Data
 	}
 	return nil
 }
 
-type LocalPreParams struct {
-	PaillierSK *LocalPreParams_PrivateKey `protobuf:"bytes,1,opt,name=paillierSK,proto3" json:"paillierSK,omitempty"`
-	NTilde     []byte                     `protobuf:"bytes,2,opt,name=nTilde,proto3" json:"nTilde,omitempty"`
-	H1I        []byte                     `protobuf:"bytes,3,opt,name=h1i,proto3" json:"h1i,omitempty"`
-	H2I        []byte                     `protobuf:"bytes,4,opt,name=h2i,proto3" json:"h2i,omitempty"`
-	Alpha      []byte                     `protobuf:"bytes,5,opt,name=alpha,proto3" json:"alpha,omitempty"`
-	Beta       []byte                     `protobuf:"bytes,6,opt,name=beta,proto3" json:"beta,omitempty"`
-	P          []byte                     `protobuf:"bytes,7,opt,name=p,proto3" json:"p,omitempty"`
-	Q          []byte                     `protobuf:"bytes,8,opt,name=q,proto3" json:"q,omitempty"`
+type PreParams_LocalPreParams struct {
+	NTilde []byte `protobuf:"bytes,2,opt,name=nTilde,proto3" json:"nTilde,omitempty"`
+	H1I    []byte `protobuf:"bytes,3,opt,name=h1i,proto3" json:"h1i,omitempty"`
+	H2I    []byte `protobuf:"bytes,4,opt,name=h2i,proto3" json:"h2i,omitempty"`
+	Alpha  []byte `protobuf:"bytes,5,opt,name=alpha,proto3" json:"alpha,omitempty"`
+	Beta   []byte `protobuf:"bytes,6,opt,name=beta,proto3" json:"beta,omitempty"`
+	P      []byte `protobuf:"bytes,7,opt,name=p,proto3" json:"p,omitempty"`
+	Q      []byte `protobuf:"bytes,8,opt,name=q,proto3" json:"q,omitempty"`
 }
 
-func (m *LocalPreParams) Reset()      { *m = LocalPreParams{} }
-func (*LocalPreParams) ProtoMessage() {}
-func (*LocalPreParams) Descriptor() ([]byte, []int) {
-	return fileDescriptor_fd924d802897c3eb, []int{1}
+func (m *PreParams_LocalPreParams) Reset()      { *m = PreParams_LocalPreParams{} }
+func (*PreParams_LocalPreParams) ProtoMessage() {}
+func (*PreParams_LocalPreParams) Descriptor() ([]byte, []int) {
+	return fileDescriptor_fd924d802897c3eb, []int{0, 0}
 }
-func (m *LocalPreParams) XXX_Unmarshal(b []byte) error {
+func (m *PreParams_LocalPreParams) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *LocalPreParams) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *PreParams_LocalPreParams) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_LocalPreParams.Marshal(b, m, deterministic)
+		return xxx_messageInfo_PreParams_LocalPreParams.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -100,168 +99,92 @@ func (m *LocalPreParams) XXX_Marshal(b []byte, deterministic bool) ([]byte, erro
 		return b[:n], nil
 	}
 }
-func (m *LocalPreParams) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_LocalPreParams.Merge(m, src)
+func (m *PreParams_LocalPreParams) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_PreParams_LocalPreParams.Merge(m, src)
 }
-func (m *LocalPreParams) XXX_Size() int {
+func (m *PreParams_LocalPreParams) XXX_Size() int {
 	return m.Size()
 }
-func (m *LocalPreParams) XXX_DiscardUnknown() {
-	xxx_messageInfo_LocalPreParams.DiscardUnknown(m)
+func (m *PreParams_LocalPreParams) XXX_DiscardUnknown() {
+	xxx_messageInfo_PreParams_LocalPreParams.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_LocalPreParams proto.InternalMessageInfo
+var xxx_messageInfo_PreParams_LocalPreParams proto.InternalMessageInfo
 
-func (m *LocalPreParams) GetPaillierSK() *LocalPreParams_PrivateKey {
-	if m != nil {
-		return m.PaillierSK
-	}
-	return nil
-}
-
-func (m *LocalPreParams) GetNTilde() []byte {
+func (m *PreParams_LocalPreParams) GetNTilde() []byte {
 	if m != nil {
 		return m.NTilde
 	}
 	return nil
 }
 
-func (m *LocalPreParams) GetH1I() []byte {
+func (m *PreParams_LocalPreParams) GetH1I() []byte {
 	if m != nil {
 		return m.H1I
 	}
 	return nil
 }
 
-func (m *LocalPreParams) GetH2I() []byte {
+func (m *PreParams_LocalPreParams) GetH2I() []byte {
 	if m != nil {
 		return m.H2I
 	}
 	return nil
 }
 
-func (m *LocalPreParams) GetAlpha() []byte {
+func (m *PreParams_LocalPreParams) GetAlpha() []byte {
 	if m != nil {
 		return m.Alpha
 	}
 	return nil
 }
 
-func (m *LocalPreParams) GetBeta() []byte {
+func (m *PreParams_LocalPreParams) GetBeta() []byte {
 	if m != nil {
 		return m.Beta
 	}
 	return nil
 }
 
-func (m *LocalPreParams) GetP() []byte {
+func (m *PreParams_LocalPreParams) GetP() []byte {
 	if m != nil {
 		return m.P
 	}
 	return nil
 }
 
-func (m *LocalPreParams) GetQ() []byte {
+func (m *PreParams_LocalPreParams) GetQ() []byte {
 	if m != nil {
 		return m.Q
 	}
 	return nil
 }
 
-// PrivateKey is not present for pre-params generated before DKG and is
-// filled when DKG finishes work. That being said, this message will be
-// empty in PreParams message and non-empty in PrivateKeyShare message
-// (see key.proto).
-type LocalPreParams_PrivateKey struct {
-	PublicKey []byte `protobuf:"bytes,1,opt,name=publicKey,proto3" json:"publicKey,omitempty"`
-	LambdaN   []byte `protobuf:"bytes,2,opt,name=lambdaN,proto3" json:"lambdaN,omitempty"`
-	PhiN      []byte `protobuf:"bytes,3,opt,name=phiN,proto3" json:"phiN,omitempty"`
-}
-
-func (m *LocalPreParams_PrivateKey) Reset()      { *m = LocalPreParams_PrivateKey{} }
-func (*LocalPreParams_PrivateKey) ProtoMessage() {}
-func (*LocalPreParams_PrivateKey) Descriptor() ([]byte, []int) {
-	return fileDescriptor_fd924d802897c3eb, []int{1, 0}
-}
-func (m *LocalPreParams_PrivateKey) XXX_Unmarshal(b []byte) error {
-	return m.Unmarshal(b)
-}
-func (m *LocalPreParams_PrivateKey) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	if deterministic {
-		return xxx_messageInfo_LocalPreParams_PrivateKey.Marshal(b, m, deterministic)
-	} else {
-		b = b[:cap(b)]
-		n, err := m.MarshalToSizedBuffer(b)
-		if err != nil {
-			return nil, err
-		}
-		return b[:n], nil
-	}
-}
-func (m *LocalPreParams_PrivateKey) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_LocalPreParams_PrivateKey.Merge(m, src)
-}
-func (m *LocalPreParams_PrivateKey) XXX_Size() int {
-	return m.Size()
-}
-func (m *LocalPreParams_PrivateKey) XXX_DiscardUnknown() {
-	xxx_messageInfo_LocalPreParams_PrivateKey.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_LocalPreParams_PrivateKey proto.InternalMessageInfo
-
-func (m *LocalPreParams_PrivateKey) GetPublicKey() []byte {
-	if m != nil {
-		return m.PublicKey
-	}
-	return nil
-}
-
-func (m *LocalPreParams_PrivateKey) GetLambdaN() []byte {
-	if m != nil {
-		return m.LambdaN
-	}
-	return nil
-}
-
-func (m *LocalPreParams_PrivateKey) GetPhiN() []byte {
-	if m != nil {
-		return m.PhiN
-	}
-	return nil
-}
-
 func init() {
 	proto.RegisterType((*PreParams)(nil), "tecdsa.PreParams")
-	proto.RegisterType((*LocalPreParams)(nil), "tecdsa.LocalPreParams")
-	proto.RegisterType((*LocalPreParams_PrivateKey)(nil), "tecdsa.LocalPreParams.PrivateKey")
+	proto.RegisterType((*PreParams_LocalPreParams)(nil), "tecdsa.PreParams.LocalPreParams")
 }
 
 func init() { proto.RegisterFile("pb/preparams.proto", fileDescriptor_fd924d802897c3eb) }
 
 var fileDescriptor_fd924d802897c3eb = []byte{
-	// 328 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x6c, 0x91, 0xbf, 0x4e, 0x32, 0x41,
-	0x14, 0xc5, 0x77, 0xf8, 0xb3, 0x7c, 0xdc, 0x8f, 0x18, 0x33, 0x31, 0x64, 0x62, 0xcc, 0x0d, 0x52,
-	0x11, 0x8b, 0x35, 0x62, 0xa1, 0xad, 0xb6, 0x18, 0x42, 0x56, 0x0b, 0x63, 0x77, 0x97, 0x9d, 0x84,
-	0x49, 0x06, 0x19, 0x86, 0xd5, 0x84, 0xce, 0x47, 0xf0, 0x31, 0xec, 0x7c, 0x0d, 0x4b, 0x4a, 0x4a,
-	0x19, 0x1a, 0x4b, 0x1e, 0xc1, 0x30, 0xac, 0xa2, 0x89, 0xdd, 0x39, 0xbf, 0x7b, 0xe6, 0xce, 0x99,
-	0x0c, 0x70, 0x93, 0x1c, 0x1b, 0x2b, 0x0d, 0x59, 0x1a, 0x4e, 0x22, 0x63, 0x47, 0xd9, 0x88, 0x87,
-	0x99, 0xec, 0xa7, 0x13, 0x6a, 0x9e, 0x41, 0xb5, 0x67, 0x65, 0xcf, 0x8f, 0xf8, 0x11, 0x94, 0x52,
-	0xca, 0x48, 0xb0, 0x06, 0x6b, 0xfd, 0x6f, 0xd7, 0xa3, 0x4d, 0x26, 0xba, 0x1a, 0xf5, 0x49, 0x7f,
-	0xa7, 0x62, 0x9f, 0x69, 0xbe, 0x16, 0x60, 0xe7, 0xf7, 0x80, 0x5f, 0x00, 0x18, 0x52, 0x5a, 0x2b,
-	0x69, 0xaf, 0x3b, 0xf9, 0x92, 0xc3, 0xbf, 0x97, 0x44, 0x3d, 0xab, 0x1e, 0x29, 0x93, 0x1d, 0x39,
-	0x8d, 0x7f, 0x1c, 0xe2, 0x75, 0x08, 0xef, 0x6f, 0x94, 0x4e, 0xa5, 0x28, 0x34, 0x58, 0xab, 0x16,
-	0xe7, 0x8e, 0xef, 0x42, 0x71, 0x70, 0xa2, 0x44, 0xd1, 0xc3, 0xb5, 0xf4, 0xa4, 0xad, 0x44, 0x29,
-	0x27, 0x6d, 0xc5, 0xf7, 0xa0, 0x4c, 0xda, 0x0c, 0x48, 0x94, 0x3d, 0xdb, 0x18, 0xce, 0xa1, 0x94,
-	0xc8, 0x8c, 0x44, 0xe8, 0xa1, 0xd7, 0xbc, 0x06, 0xcc, 0x88, 0x8a, 0x07, 0xcc, 0xac, 0xdd, 0x58,
-	0xfc, 0xdb, 0xb8, 0xf1, 0xfe, 0x2d, 0xc0, 0xb6, 0x1b, 0x3f, 0x80, 0xaa, 0x79, 0x48, 0xb4, 0xea,
-	0x77, 0xe4, 0xd4, 0xbf, 0xa8, 0x16, 0x6f, 0x01, 0x17, 0x50, 0xd1, 0x34, 0x4c, 0x52, 0xea, 0xe6,
-	0x75, 0xbf, 0xec, 0xfa, 0x56, 0x33, 0x50, 0xdd, 0xbc, 0xb0, 0xd7, 0x97, 0xe7, 0xb3, 0x05, 0x06,
-	0xf3, 0x05, 0x06, 0xab, 0x05, 0xb2, 0x27, 0x87, 0xec, 0xc5, 0x21, 0x7b, 0x73, 0xc8, 0x66, 0x0e,
-	0xd9, 0xbb, 0x43, 0xf6, 0xe1, 0x30, 0x58, 0x39, 0x64, 0xcf, 0x4b, 0x0c, 0x66, 0x4b, 0x0c, 0xe6,
-	0x4b, 0x0c, 0xee, 0x0a, 0x26, 0x49, 0x42, 0xff, 0x67, 0xa7, 0x9f, 0x01, 0x00, 0x00, 0xff, 0xff,
-	0xe3, 0x86, 0x7b, 0x22, 0xc9, 0x01, 0x00, 0x00,
+	// 253 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x54, 0x90, 0xb1, 0x4a, 0xc3, 0x50,
+	0x14, 0x86, 0xef, 0x69, 0xd3, 0xa8, 0xd7, 0x22, 0x72, 0x10, 0xb9, 0x38, 0x1c, 0x82, 0x53, 0xa7,
+	0x88, 0xd1, 0xc1, 0xd9, 0xd9, 0xa1, 0x14, 0x27, 0xb7, 0x93, 0xe6, 0x42, 0x03, 0xd1, 0xdc, 0xa6,
+	0x79, 0x00, 0x1f, 0x41, 0x7c, 0x0a, 0x1f, 0xc5, 0x31, 0x93, 0x74, 0x34, 0x37, 0x8b, 0x63, 0x1f,
+	0x41, 0x7a, 0x52, 0x0a, 0xdd, 0xce, 0xf7, 0xfd, 0xdf, 0x74, 0x34, 0xba, 0xf4, 0xc6, 0x55, 0xd6,
+	0x71, 0xc5, 0xaf, 0xab, 0xd8, 0x55, 0x65, 0x5d, 0x62, 0x58, 0xdb, 0x79, 0xb6, 0xe2, 0xeb, 0x1f,
+	0xd0, 0x27, 0xd3, 0xca, 0x4e, 0x65, 0xc3, 0x7b, 0x1d, 0x64, 0x5c, 0xb3, 0x81, 0x08, 0x26, 0xa7,
+	0x49, 0x14, 0xf7, 0x51, 0xbc, 0x0f, 0xe2, 0xa7, 0x72, 0xce, 0xc5, 0x1e, 0x67, 0x52, 0x5f, 0x7d,
+	0x82, 0x3e, 0x3b, 0x1c, 0xf0, 0x52, 0x87, 0x6f, 0xcf, 0x79, 0x91, 0x59, 0x33, 0x88, 0x60, 0x32,
+	0x9e, 0xed, 0x08, 0xcf, 0xf5, 0x70, 0x71, 0x9b, 0x9b, 0xa1, 0xc8, 0xed, 0x29, 0x26, 0xc9, 0x4d,
+	0xb0, 0x33, 0x49, 0x8e, 0x17, 0x7a, 0xc4, 0x85, 0x5b, 0xb0, 0x19, 0x89, 0xeb, 0x01, 0x51, 0x07,
+	0xa9, 0xad, 0xd9, 0x84, 0x22, 0xe5, 0xc6, 0xb1, 0x06, 0x67, 0x8e, 0x44, 0x80, 0xdb, 0xd2, 0xd2,
+	0x1c, 0xf7, 0xb4, 0x7c, 0x7c, 0x68, 0x5a, 0x52, 0xeb, 0x96, 0xd4, 0xa6, 0x25, 0x78, 0xf7, 0x04,
+	0x5f, 0x9e, 0xe0, 0xdb, 0x13, 0x34, 0x9e, 0xe0, 0xd7, 0x13, 0xfc, 0x79, 0x52, 0x1b, 0x4f, 0xf0,
+	0xd1, 0x91, 0x6a, 0x3a, 0x52, 0xeb, 0x8e, 0xd4, 0xcb, 0xc0, 0xa5, 0x69, 0x28, 0x1f, 0xba, 0xfb,
+	0x0f, 0x00, 0x00, 0xff, 0xff, 0xae, 0x8e, 0x8b, 0xa1, 0x37, 0x01, 0x00, 0x00,
 }
 
 func (this *PreParams) Equal(that interface{}) bool {
@@ -288,14 +211,14 @@ func (this *PreParams) Equal(that interface{}) bool {
 	}
 	return true
 }
-func (this *LocalPreParams) Equal(that interface{}) bool {
+func (this *PreParams_LocalPreParams) Equal(that interface{}) bool {
 	if that == nil {
 		return this == nil
 	}
 
-	that1, ok := that.(*LocalPreParams)
+	that1, ok := that.(*PreParams_LocalPreParams)
 	if !ok {
-		that2, ok := that.(LocalPreParams)
+		that2, ok := that.(PreParams_LocalPreParams)
 		if ok {
 			that1 = &that2
 		} else {
@@ -305,9 +228,6 @@ func (this *LocalPreParams) Equal(that interface{}) bool {
 	if that1 == nil {
 		return this == nil
 	} else if this == nil {
-		return false
-	}
-	if !this.PaillierSK.Equal(that1.PaillierSK) {
 		return false
 	}
 	if !bytes.Equal(this.NTilde, that1.NTilde) {
@@ -333,36 +253,6 @@ func (this *LocalPreParams) Equal(that interface{}) bool {
 	}
 	return true
 }
-func (this *LocalPreParams_PrivateKey) Equal(that interface{}) bool {
-	if that == nil {
-		return this == nil
-	}
-
-	that1, ok := that.(*LocalPreParams_PrivateKey)
-	if !ok {
-		that2, ok := that.(LocalPreParams_PrivateKey)
-		if ok {
-			that1 = &that2
-		} else {
-			return false
-		}
-	}
-	if that1 == nil {
-		return this == nil
-	} else if this == nil {
-		return false
-	}
-	if !bytes.Equal(this.PublicKey, that1.PublicKey) {
-		return false
-	}
-	if !bytes.Equal(this.LambdaN, that1.LambdaN) {
-		return false
-	}
-	if !bytes.Equal(this.PhiN, that1.PhiN) {
-		return false
-	}
-	return true
-}
 func (this *PreParams) GoString() string {
 	if this == nil {
 		return "nil"
@@ -375,15 +265,12 @@ func (this *PreParams) GoString() string {
 	s = append(s, "}")
 	return strings.Join(s, "")
 }
-func (this *LocalPreParams) GoString() string {
+func (this *PreParams_LocalPreParams) GoString() string {
 	if this == nil {
 		return "nil"
 	}
-	s := make([]string, 0, 12)
-	s = append(s, "&pb.LocalPreParams{")
-	if this.PaillierSK != nil {
-		s = append(s, "PaillierSK: "+fmt.Sprintf("%#v", this.PaillierSK)+",\n")
-	}
+	s := make([]string, 0, 11)
+	s = append(s, "&pb.PreParams_LocalPreParams{")
 	s = append(s, "NTilde: "+fmt.Sprintf("%#v", this.NTilde)+",\n")
 	s = append(s, "H1I: "+fmt.Sprintf("%#v", this.H1I)+",\n")
 	s = append(s, "H2I: "+fmt.Sprintf("%#v", this.H2I)+",\n")
@@ -391,18 +278,6 @@ func (this *LocalPreParams) GoString() string {
 	s = append(s, "Beta: "+fmt.Sprintf("%#v", this.Beta)+",\n")
 	s = append(s, "P: "+fmt.Sprintf("%#v", this.P)+",\n")
 	s = append(s, "Q: "+fmt.Sprintf("%#v", this.Q)+",\n")
-	s = append(s, "}")
-	return strings.Join(s, "")
-}
-func (this *LocalPreParams_PrivateKey) GoString() string {
-	if this == nil {
-		return "nil"
-	}
-	s := make([]string, 0, 7)
-	s = append(s, "&pb.LocalPreParams_PrivateKey{")
-	s = append(s, "PublicKey: "+fmt.Sprintf("%#v", this.PublicKey)+",\n")
-	s = append(s, "LambdaN: "+fmt.Sprintf("%#v", this.LambdaN)+",\n")
-	s = append(s, "PhiN: "+fmt.Sprintf("%#v", this.PhiN)+",\n")
 	s = append(s, "}")
 	return strings.Join(s, "")
 }
@@ -449,7 +324,7 @@ func (m *PreParams) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	return len(dAtA) - i, nil
 }
 
-func (m *LocalPreParams) Marshal() (dAtA []byte, err error) {
+func (m *PreParams_LocalPreParams) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -459,12 +334,12 @@ func (m *LocalPreParams) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *LocalPreParams) MarshalTo(dAtA []byte) (int, error) {
+func (m *PreParams_LocalPreParams) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *LocalPreParams) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *PreParams_LocalPreParams) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
@@ -518,62 +393,6 @@ func (m *LocalPreParams) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 		i--
 		dAtA[i] = 0x12
 	}
-	if m.PaillierSK != nil {
-		{
-			size, err := m.PaillierSK.MarshalToSizedBuffer(dAtA[:i])
-			if err != nil {
-				return 0, err
-			}
-			i -= size
-			i = encodeVarintPreparams(dAtA, i, uint64(size))
-		}
-		i--
-		dAtA[i] = 0xa
-	}
-	return len(dAtA) - i, nil
-}
-
-func (m *LocalPreParams_PrivateKey) Marshal() (dAtA []byte, err error) {
-	size := m.Size()
-	dAtA = make([]byte, size)
-	n, err := m.MarshalToSizedBuffer(dAtA[:size])
-	if err != nil {
-		return nil, err
-	}
-	return dAtA[:n], nil
-}
-
-func (m *LocalPreParams_PrivateKey) MarshalTo(dAtA []byte) (int, error) {
-	size := m.Size()
-	return m.MarshalToSizedBuffer(dAtA[:size])
-}
-
-func (m *LocalPreParams_PrivateKey) MarshalToSizedBuffer(dAtA []byte) (int, error) {
-	i := len(dAtA)
-	_ = i
-	var l int
-	_ = l
-	if len(m.PhiN) > 0 {
-		i -= len(m.PhiN)
-		copy(dAtA[i:], m.PhiN)
-		i = encodeVarintPreparams(dAtA, i, uint64(len(m.PhiN)))
-		i--
-		dAtA[i] = 0x1a
-	}
-	if len(m.LambdaN) > 0 {
-		i -= len(m.LambdaN)
-		copy(dAtA[i:], m.LambdaN)
-		i = encodeVarintPreparams(dAtA, i, uint64(len(m.LambdaN)))
-		i--
-		dAtA[i] = 0x12
-	}
-	if len(m.PublicKey) > 0 {
-		i -= len(m.PublicKey)
-		copy(dAtA[i:], m.PublicKey)
-		i = encodeVarintPreparams(dAtA, i, uint64(len(m.PublicKey)))
-		i--
-		dAtA[i] = 0xa
-	}
 	return len(dAtA) - i, nil
 }
 
@@ -601,16 +420,12 @@ func (m *PreParams) Size() (n int) {
 	return n
 }
 
-func (m *LocalPreParams) Size() (n int) {
+func (m *PreParams_LocalPreParams) Size() (n int) {
 	if m == nil {
 		return 0
 	}
 	var l int
 	_ = l
-	if m.PaillierSK != nil {
-		l = m.PaillierSK.Size()
-		n += 1 + l + sovPreparams(uint64(l))
-	}
 	l = len(m.NTilde)
 	if l > 0 {
 		n += 1 + l + sovPreparams(uint64(l))
@@ -642,27 +457,6 @@ func (m *LocalPreParams) Size() (n int) {
 	return n
 }
 
-func (m *LocalPreParams_PrivateKey) Size() (n int) {
-	if m == nil {
-		return 0
-	}
-	var l int
-	_ = l
-	l = len(m.PublicKey)
-	if l > 0 {
-		n += 1 + l + sovPreparams(uint64(l))
-	}
-	l = len(m.LambdaN)
-	if l > 0 {
-		n += 1 + l + sovPreparams(uint64(l))
-	}
-	l = len(m.PhiN)
-	if l > 0 {
-		n += 1 + l + sovPreparams(uint64(l))
-	}
-	return n
-}
-
 func sovPreparams(x uint64) (n int) {
 	return (math_bits.Len64(x|1) + 6) / 7
 }
@@ -674,17 +468,16 @@ func (this *PreParams) String() string {
 		return "nil"
 	}
 	s := strings.Join([]string{`&PreParams{`,
-		`Data:` + strings.Replace(this.Data.String(), "LocalPreParams", "LocalPreParams", 1) + `,`,
+		`Data:` + strings.Replace(fmt.Sprintf("%v", this.Data), "PreParams_LocalPreParams", "PreParams_LocalPreParams", 1) + `,`,
 		`}`,
 	}, "")
 	return s
 }
-func (this *LocalPreParams) String() string {
+func (this *PreParams_LocalPreParams) String() string {
 	if this == nil {
 		return "nil"
 	}
-	s := strings.Join([]string{`&LocalPreParams{`,
-		`PaillierSK:` + strings.Replace(fmt.Sprintf("%v", this.PaillierSK), "LocalPreParams_PrivateKey", "LocalPreParams_PrivateKey", 1) + `,`,
+	s := strings.Join([]string{`&PreParams_LocalPreParams{`,
 		`NTilde:` + fmt.Sprintf("%v", this.NTilde) + `,`,
 		`H1I:` + fmt.Sprintf("%v", this.H1I) + `,`,
 		`H2I:` + fmt.Sprintf("%v", this.H2I) + `,`,
@@ -692,18 +485,6 @@ func (this *LocalPreParams) String() string {
 		`Beta:` + fmt.Sprintf("%v", this.Beta) + `,`,
 		`P:` + fmt.Sprintf("%v", this.P) + `,`,
 		`Q:` + fmt.Sprintf("%v", this.Q) + `,`,
-		`}`,
-	}, "")
-	return s
-}
-func (this *LocalPreParams_PrivateKey) String() string {
-	if this == nil {
-		return "nil"
-	}
-	s := strings.Join([]string{`&LocalPreParams_PrivateKey{`,
-		`PublicKey:` + fmt.Sprintf("%v", this.PublicKey) + `,`,
-		`LambdaN:` + fmt.Sprintf("%v", this.LambdaN) + `,`,
-		`PhiN:` + fmt.Sprintf("%v", this.PhiN) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -775,7 +556,7 @@ func (m *PreParams) Unmarshal(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.Data == nil {
-				m.Data = &LocalPreParams{}
+				m.Data = &PreParams_LocalPreParams{}
 			}
 			if err := m.Data.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
@@ -802,7 +583,7 @@ func (m *PreParams) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *LocalPreParams) Unmarshal(dAtA []byte) error {
+func (m *PreParams_LocalPreParams) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -831,42 +612,6 @@ func (m *LocalPreParams) Unmarshal(dAtA []byte) error {
 			return fmt.Errorf("proto: LocalPreParams: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
-		case 1:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field PaillierSK", wireType)
-			}
-			var msglen int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowPreparams
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				msglen |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			if msglen < 0 {
-				return ErrInvalidLengthPreparams
-			}
-			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthPreparams
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			if m.PaillierSK == nil {
-				m.PaillierSK = &LocalPreParams_PrivateKey{}
-			}
-			if err := m.PaillierSK.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
-				return err
-			}
-			iNdEx = postIndex
 		case 2:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field NTilde", wireType)
@@ -1103,158 +848,6 @@ func (m *LocalPreParams) Unmarshal(dAtA []byte) error {
 			m.Q = append(m.Q[:0], dAtA[iNdEx:postIndex]...)
 			if m.Q == nil {
 				m.Q = []byte{}
-			}
-			iNdEx = postIndex
-		default:
-			iNdEx = preIndex
-			skippy, err := skipPreparams(dAtA[iNdEx:])
-			if err != nil {
-				return err
-			}
-			if (skippy < 0) || (iNdEx+skippy) < 0 {
-				return ErrInvalidLengthPreparams
-			}
-			if (iNdEx + skippy) > l {
-				return io.ErrUnexpectedEOF
-			}
-			iNdEx += skippy
-		}
-	}
-
-	if iNdEx > l {
-		return io.ErrUnexpectedEOF
-	}
-	return nil
-}
-func (m *LocalPreParams_PrivateKey) Unmarshal(dAtA []byte) error {
-	l := len(dAtA)
-	iNdEx := 0
-	for iNdEx < l {
-		preIndex := iNdEx
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if shift >= 64 {
-				return ErrIntOverflowPreparams
-			}
-			if iNdEx >= l {
-				return io.ErrUnexpectedEOF
-			}
-			b := dAtA[iNdEx]
-			iNdEx++
-			wire |= uint64(b&0x7F) << shift
-			if b < 0x80 {
-				break
-			}
-		}
-		fieldNum := int32(wire >> 3)
-		wireType := int(wire & 0x7)
-		if wireType == 4 {
-			return fmt.Errorf("proto: PrivateKey: wiretype end group for non-group")
-		}
-		if fieldNum <= 0 {
-			return fmt.Errorf("proto: PrivateKey: illegal tag %d (wire type %d)", fieldNum, wire)
-		}
-		switch fieldNum {
-		case 1:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field PublicKey", wireType)
-			}
-			var byteLen int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowPreparams
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				byteLen |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			if byteLen < 0 {
-				return ErrInvalidLengthPreparams
-			}
-			postIndex := iNdEx + byteLen
-			if postIndex < 0 {
-				return ErrInvalidLengthPreparams
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.PublicKey = append(m.PublicKey[:0], dAtA[iNdEx:postIndex]...)
-			if m.PublicKey == nil {
-				m.PublicKey = []byte{}
-			}
-			iNdEx = postIndex
-		case 2:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field LambdaN", wireType)
-			}
-			var byteLen int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowPreparams
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				byteLen |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			if byteLen < 0 {
-				return ErrInvalidLengthPreparams
-			}
-			postIndex := iNdEx + byteLen
-			if postIndex < 0 {
-				return ErrInvalidLengthPreparams
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.LambdaN = append(m.LambdaN[:0], dAtA[iNdEx:postIndex]...)
-			if m.LambdaN == nil {
-				m.LambdaN = []byte{}
-			}
-			iNdEx = postIndex
-		case 3:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field PhiN", wireType)
-			}
-			var byteLen int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowPreparams
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				byteLen |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			if byteLen < 0 {
-				return ErrInvalidLengthPreparams
-			}
-			postIndex := iNdEx + byteLen
-			if postIndex < 0 {
-				return ErrInvalidLengthPreparams
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.PhiN = append(m.PhiN[:0], dAtA[iNdEx:postIndex]...)
-			if m.PhiN == nil {
-				m.PhiN = []byte{}
 			}
 			iNdEx = postIndex
 		default:

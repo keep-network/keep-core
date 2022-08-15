@@ -19,7 +19,7 @@ var ErrIncompatiblePublicKey = fmt.Errorf(
 
 // Marshal converts the PreParams to a byte array.
 func (pp *PreParams) Marshal() ([]byte, error) {
-	localPreParams := &pb.LocalPreParams{
+	localPreParams := &pb.PreParams_LocalPreParams{
 		NTilde: pp.data.NTildei.Bytes(),
 		H1I:    pp.data.H1i.Bytes(),
 		H2I:    pp.data.H2i.Bytes(),
@@ -60,8 +60,8 @@ func (pks *PrivateKeyShare) Marshal() ([]byte, error) {
 		return nil, ErrIncompatiblePublicKey
 	}
 
-	localPreParams := &pb.LocalPreParams{
-		PaillierSK: &pb.LocalPreParams_PrivateKey{
+	localPreParams := &pb.LocalPartySaveData_LocalPreParams{
+		PaillierSK: &pb.LocalPartySaveData_LocalPreParams_PrivateKey{
 			PublicKey: pks.data.LocalPreParams.PaillierSK.PublicKey.N.Bytes(),
 			LambdaN:   pks.data.LocalPreParams.PaillierSK.LambdaN.Bytes(),
 			PhiN:      pks.data.LocalPreParams.PaillierSK.PhiN.Bytes(),
