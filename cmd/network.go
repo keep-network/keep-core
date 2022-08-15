@@ -16,11 +16,11 @@ import (
 	"github.com/keep-network/keep-core/pkg/net/libp2p"
 	"github.com/keep-network/keep-core/pkg/net/retransmission"
 	"github.com/keep-network/keep-core/pkg/operator"
-	"github.com/urfave/cli"
+	"github.com/spf13/cobra"
 )
 
 // PingCommand contains the definition of the ping command-line subcommand.
-var PingCommand cli.Command
+var PingCommand *cobra.Command
 
 const (
 	ping         = "PING"
@@ -34,22 +34,21 @@ const pingDescription = `The ping command conducts a simple peer-to-peer test
    corresponding "PONG". Notably, this does not exercise peer discovery.`
 
 func init() {
-	PingCommand =
-		cli.Command{
-			Name:        "ping",
-			Usage:       `bidirectional send between two peers to test the network`,
-			ArgsUsage:   "[multiaddr]",
-			Description: pingDescription,
-			Action:      pingRequest,
-		}
+	PingCommand = &cobra.Command{
+		Use:                   "ping [multiaddr]...",
+		Short:                 `bidirectional send between two peers to test the network`,
+		Long:                  pingDescription,
+		DisableFlagsInUseLine: true,
+		RunE:                  pingRequest,
+	}
 }
 
-func isBootstrapNode(args cli.Args) (bool, []string) {
+func isBootstrapNode(args []string) (bool, []string) {
 	var bootstrapPeers []string
 
 	// Not a bootstrap node
 	if len(args) > 0 {
-		bootstrapPeers = append(bootstrapPeers, args.Get(0))
+		bootstrapPeers = append(bootstrapPeers, args[0])
 	}
 
 	return len(bootstrapPeers) == 0, bootstrapPeers
@@ -57,8 +56,8 @@ func isBootstrapNode(args cli.Args) (bool, []string) {
 
 // pingRequest tests the functionality and availability of Keep's libp2p
 // network layer.
-func pingRequest(c *cli.Context) error {
-	isBootstrapNode, bootstrapPeers := isBootstrapNode(c.Args())
+func pingRequest(cmd *cobra.Command, args []string) error {
+	isBootstrapNode, bootstrapPeers := isBootstrapNode(args)
 	var (
 		libp2pConfig = libp2p.Config{Peers: bootstrapPeers}
 		ctx          = context.Background()
@@ -95,8 +94,8 @@ func pingRequest(c *cli.Context) error {
 		}
 
 		fmt.Printf("You can ping this node using:\n"+
-			"    %s ping %s\n\n",
-			c.App.Name,
+			"    %s %s\n\n",
+			cmd.CommandPath(),
 			bootstrapAddr,
 		)
 	}

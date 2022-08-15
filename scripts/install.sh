@@ -1,10 +1,12 @@
 #!/bin/bash
 set -eou pipefail
 
-LOG_START='\n\e[1;36m'  # new line + bold + color
-LOG_END='\n\e[0m'       # new line + reset color
-DONE_START='\n\e[1;32m' # new line + bold + green
-DONE_END='\n\n\e[0m'    # new line + reset
+LOG_START='\n\e[1;36m'           # new line + bold + color
+LOG_END='\n\e[0m'                # new line + reset color
+LOG_WARNING_START='\n\e\033[33m' # new line + bold + warning color
+LOG_WARNING_END='\n\e\033[0m'    # new line + reset
+DONE_START='\n\e[1;32m'          # new line + bold + green
+DONE_END='\n\n\e[0m'             # new line + reset
 
 KEEP_CORE_PATH=$PWD
 
@@ -12,6 +14,10 @@ KEEP_BEACON_SOL_PATH="$KEEP_CORE_PATH/solidity/random-beacon"
 KEEP_ECDSA_SOL_PATH="$KEEP_CORE_PATH/solidity/ecdsa"
 TMP="$KEEP_CORE_PATH/tmp"
 OPENZEPPELIN_MANIFEST=".openzeppelin/unknown-*.json"
+# This number should be no less than the highest index assigned to a named account
+# specified in `hardhat.config.ts` configs across all the used projects. Note that
+# account indices start from 0.
+REQUIRED_ACCOUNTS_NUMBER=8
 
 # Defaults, can be overwritten by env variables/input parameters
 NETWORK_DEFAULT="development"
@@ -80,6 +86,8 @@ printf "${LOG_START}Starting installation...${LOG_END}"
 
 printf "Network: $NETWORK\n"
 
+printf "${LOG_WARNING_START}Make sure you have at least ${REQUIRED_ACCOUNTS_NUMBER} ethereum accounts${LOG_WARNING_END}"
+
 cd $KEEP_BEACON_SOL_PATH
 
 printf "${LOG_START}Installing beacon YARN dependencies...${LOG_END}"
@@ -116,7 +124,7 @@ if [ "$SKIP_DEPLOYMENT" != true ]; then
   printf "${LOG_START}Deploying threshold-network/solidity-contracts contracts...${LOG_END}"
   yarn deploy --reset --network $NETWORK
 
-  # Link the package. Replace existing link (see: https://github.com/yarnpkg/yarn/issues/7216) 
+  # Link the package. Replace existing link (see: https://github.com/yarnpkg/yarn/issues/7216)
   yarn unlink || true && yarn link
   # create export folder
   yarn prepack
@@ -134,7 +142,7 @@ if [ "$SKIP_DEPLOYMENT" != true ]; then
   yarn deploy --reset --network $NETWORK
 
   printf "${LOG_START}Creating random-beacon link...${LOG_END}"
-  # Link the package. Replace existing link (see: https://github.com/yarnpkg/yarn/issues/7216) 
+  # Link the package. Replace existing link (see: https://github.com/yarnpkg/yarn/issues/7216)
   yarn unlink || true && yarn link
   # create export folder
   yarn prepack
@@ -157,7 +165,7 @@ if [ "$SKIP_DEPLOYMENT" != true ]; then
   yarn deploy --reset --network $NETWORK
 
   printf "${LOG_START}Creating ecdsa link...${LOG_END}"
-  # Link the package. Replace existing link (see: https://github.com/yarnpkg/yarn/issues/7216) 
+  # Link the package. Replace existing link (see: https://github.com/yarnpkg/yarn/issues/7216)
   yarn unlink || true && yarn link
   # create export folder
   yarn prepack

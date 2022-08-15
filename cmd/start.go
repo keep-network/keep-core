@@ -88,7 +88,11 @@ func start(cmd *cobra.Command) error {
 		return fmt.Errorf("failed while creating the network provider: [%v]", err)
 	}
 
-	nodeHeader(netProvider.ConnectionManager().AddrStrings(), clientConfig.LibP2P.Port)
+	nodeHeader(
+		netProvider.ConnectionManager().AddrStrings(),
+		clientConfig.LibP2P.Port,
+		clientConfig.Ethereum,
+	)
 
 	beaconPersistence, err := initializePersistence(clientConfig, "beacon")
 	if err != nil {
@@ -115,6 +119,7 @@ func start(cmd *cobra.Command) error {
 		tbtcChain,
 		netProvider,
 		tbtcPersistence,
+		clientConfig.Tbtc,
 	)
 	if err != nil {
 		return fmt.Errorf("error initializing TBTC: [%v]", err)
