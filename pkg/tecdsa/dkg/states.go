@@ -566,7 +566,7 @@ func (svs *signaturesVerificationState) ActiveBlocks() uint64 {
 func (svs *signaturesVerificationState) Initiate(ctx context.Context) error {
 	signatures, err := svs.member.VerifyDKGResultSignatures(
 		svs.signatureMessages,
-		svs.resultHandler.Signing(),
+		svs.resultHandler,
 	)
 	if err != nil {
 		return err

@@ -43,9 +43,6 @@ type DistributedKeyGenerationChain interface {
 	OnDKGResultSubmitted(
 		func(event *dkg.ResultSubmissionEvent),
 	) subscription.EventSubscription
-	// CalculateDKGResultHash calculates 256-bit hash of DKG result in standard
-	// specific for the chain. Operation is performed off-chain.
-	CalculateDKGResultHash(result *dkg.Result) (dkg.ResultHash, error)
 }
 
 // GroupRegistrationInterface defines the subset of the TBTC chain interface
@@ -85,6 +82,12 @@ type Chain interface {
 	BlockCounter() (chain.BlockCounter, error)
 	// Signing returns the chain's signer.
 	Signing() chain.Signing
+	// SignResult signs the provided DKG result. It returns the public key used
+	// during the signing, the resulting signature and the result hash.
+	SignResult(result *dkg.Result) ([]byte, []byte, dkg.ResultHash, error)
+	// VerifySignature verifies if the signature was generated from the provided
+	// message using the provided public key.
+	VerifySignature(message []byte, signature []byte, publicKey []byte) (bool, error)
 	// OperatorKeyPair returns the key pair of the operator assigned to this
 	// chain handle.
 	OperatorKeyPair() (*operator.PrivateKey, *operator.PublicKey, error)

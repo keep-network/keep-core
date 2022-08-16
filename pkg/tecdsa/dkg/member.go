@@ -336,29 +336,20 @@ func (sm *signingMember) SignDKGResult(
 	*dkgResultHashSignatureMessage,
 	error,
 ) {
-	// TODO: Consider moving the whole implementation to the resultSigner
-	//       interface
-	resultHash, err := resultSigner.CalculateDKGResultHash(dkgResult)
+	publicKey, signature, resultHash, err := resultSigner.SignResult(dkgResult)
 	if err != nil {
-		return nil, fmt.Errorf("dkg result hash calculation failed [%v]", err)
-	}
-	sm.preferredDKGResultHash = resultHash
-
-	signing := resultSigner.Signing()
-
-	signature, err := signing.Sign(resultHash[:])
-	if err != nil {
-		return nil, fmt.Errorf("dkg result hash signing failed [%v]", err)
+		return nil, fmt.Errorf("failed to sign DKG result [%v]", err)
 	}
 
-	// Register self signature.
+	// Register self signature and result hash.
 	sm.selfDKGResultSignature = signature
+	sm.preferredDKGResultHash = resultHash
 
 	return &dkgResultHashSignatureMessage{
 		senderID:   sm.memberIndex,
 		resultHash: resultHash,
 		signature:  signature,
-		publicKey:  signing.PublicKey(),
+		publicKey:  publicKey,
 	}, nil
 }
 
@@ -373,11 +364,8 @@ func (sm *signingMember) SignDKGResult(
 // client earlier, before this function is called.
 func (sm *signingMember) VerifyDKGResultSignatures(
 	messages []*dkgResultHashSignatureMessage,
-	signing chain.Signing,
+	resultSigner ResultSigner,
 ) (map[group.MemberIndex][]byte, error) {
-	// TODO: Consider moving the whole implementation to the resultSigner
-	//       interface
-
 	duplicatedMessagesFromSender := func(senderID group.MemberIndex) bool {
 		messageFromSenderAlreadySeen := false
 		for _, message := range messages {
@@ -421,7 +409,7 @@ func (sm *signingMember) VerifyDKGResultSignatures(
 		}
 
 		// Check if the signature is valid.
-		ok, err := signing.VerifyWithPublicKey(
+		ok, err := resultSigner.VerifySignature(
 			message.resultHash[:],
 			message.signature,
 			message.publicKey,

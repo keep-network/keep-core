@@ -324,18 +324,38 @@ func (tc *TbtcChain) OnDKGResultSubmitted(
 	return tc.mockWalletRegistry.OnDKGResultSubmitted(handler)
 }
 
-// CalculateDKGResultHash calculates Keccak-256 hash of the DKG result. Operation
-// is performed off-chain.
-//
-// It first encodes the result using solidity ABI and then calculates Keccak-256
-// hash over it. This corresponds to the DKG result hash calculation on-chain.
-// Hashes calculated off-chain and on-chain must always match.
-func (tc *TbtcChain) CalculateDKGResultHash(
-	result *dkg.Result,
-) (dkg.ResultHash, error) {
-	// Encode DKG result to the format matched with Solidity keccak256(abi.encodePacked(...))
-	hash := crypto.Keccak256(result.GroupPublicKeyBytes, result.Misbehaved)
-	return dkg.ResultHashFromBytes(hash)
+// SignResult signs the provided DKG result. It returns the public key used
+// during the signing, the resulting signature and the result hash.
+func (tc *TbtcChain) SignResult(result *dkg.Result) ([]byte, []byte, dkg.ResultHash, error) {
+	resultHash, err := tc.calculateDKGResultHash(result)
+	if err != nil {
+		return nil, nil, dkg.ResultHash{}, fmt.Errorf(
+			"dkg result hash calculation failed [%v]",
+			err,
+		)
+	}
+
+	signature, err := tc.Signing().Sign(resultHash[:])
+	if err != nil {
+		return nil, nil, dkg.ResultHash{}, fmt.Errorf(
+			"dkg result hash signing failed [%v]",
+			err,
+		)
+	}
+
+	// TODO: Check if the public key can be obtained without returning it from
+	//       this function
+	return tc.Signing().PublicKey(), signature, resultHash, nil
+}
+
+// VerifySignature verifies if the signature was generated from the provided
+// message using the provided public key.
+func (tc *TbtcChain) VerifySignature(
+	message []byte,
+	signature []byte,
+	publicKey []byte,
+) (bool, error) {
+	return tc.Signing().VerifyWithPublicKey(message, signature, publicKey)
 }
 
 // TODO: Implement a real OnGroupRegistered function.
@@ -353,6 +373,20 @@ func (tc *TbtcChain) IsGroupRegistered(groupPublicKey []byte) (bool, error) {
 // TODO: Implement a real IsStaleGroup function.
 func (tc *TbtcChain) IsStaleGroup(groupPublicKey []byte) (bool, error) {
 	return false, nil
+}
+
+// calculateDKGResultHash calculates Keccak-256 hash of the DKG result. Operation
+// is performed off-chain.
+//
+// It first encodes the result using solidity ABI and then calculates Keccak-256
+// hash over it. This corresponds to the DKG result hash calculation on-chain.
+// Hashes calculated off-chain and on-chain must always match.
+func (tc *TbtcChain) calculateDKGResultHash(
+	result *dkg.Result,
+) (dkg.ResultHash, error) {
+	// Encode DKG result to the format matched with Solidity keccak256(abi.encodePacked(...))
+	hash := crypto.Keccak256(result.GroupPublicKeyBytes, result.Misbehaved)
+	return dkg.ResultHashFromBytes(hash)
 }
 
 // TODO: Temporary mock that simulates the behavior of the WalletRegistry
