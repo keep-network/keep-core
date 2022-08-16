@@ -90,7 +90,26 @@ Optional line arguments:
         --authorization-amount: Authorization amount
 ```
 
-TODO: add description for `start.sh``
+=== Starting a client
+
+Afer executing `install.sh` and `initialize.sh` now you can run `./scripts/start.sh`
+to start a client. It will prompt you to chose from the available config files that
+should match the one chosen for `./scripts/initialize.sh`. Please refer to
+`./scripts/start.sh --help` for more info
+
+```
+./scripts/start.sh --help
+
+Usage: ENV_VAR(S) ./scripts/start.sh --config-dir-path <path-to-configuration-files>
+
+Environment variables:
+
+        KEEP_ETHEREUM_PASSWORD: Ethereum account password. Required only for 'local' network. Default value is 'password'
+
+Command line arguments:
+
+        --config-dir-path: Path to a client configuration files
+```
 
 ==== Configuration
 
