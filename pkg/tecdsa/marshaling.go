@@ -17,43 +17,6 @@ var ErrIncompatiblePublicKey = fmt.Errorf(
 	"public key is not tECDSA compatible and will cause unmarshaling error",
 )
 
-// Marshal converts the PreParams to a byte array.
-func (pp *PreParams) Marshal() ([]byte, error) {
-	localPreParams := &pb.PreParams_LocalPreParams{
-		NTilde: pp.data.NTildei.Bytes(),
-		H1I:    pp.data.H1i.Bytes(),
-		H2I:    pp.data.H2i.Bytes(),
-		Alpha:  pp.data.Alpha.Bytes(),
-		Beta:   pp.data.Beta.Bytes(),
-		P:      pp.data.P.Bytes(),
-		Q:      pp.data.Q.Bytes(),
-	}
-
-	return (&pb.PreParams{
-		Data: localPreParams,
-	}).Marshal()
-}
-
-// Unmarshal converts a byte array back to the PreParams.
-func (pp *PreParams) Unmarshal(bytes []byte) error {
-	pbPreParams := pb.PreParams{}
-	if err := pbPreParams.Unmarshal(bytes); err != nil {
-		return fmt.Errorf("failed to unmarshal pre params: [%v]", err)
-	}
-
-	pp.data = keygen.LocalPreParams{
-		NTildei: new(big.Int).SetBytes(pbPreParams.Data.GetNTilde()),
-		H1i:     new(big.Int).SetBytes(pbPreParams.Data.GetH1I()),
-		H2i:     new(big.Int).SetBytes(pbPreParams.Data.GetH2I()),
-		Alpha:   new(big.Int).SetBytes(pbPreParams.Data.GetAlpha()),
-		Beta:    new(big.Int).SetBytes(pbPreParams.Data.GetBeta()),
-		P:       new(big.Int).SetBytes(pbPreParams.Data.GetP()),
-		Q:       new(big.Int).SetBytes(pbPreParams.Data.GetQ()),
-	}
-
-	return nil
-}
-
 // Marshal converts the PrivateKeyShare to a byte array.
 func (pks *PrivateKeyShare) Marshal() ([]byte, error) {
 	if pks.PublicKey().Curve.Params().Name != Curve.Params().Name {

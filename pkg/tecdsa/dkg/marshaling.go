@@ -2,6 +2,9 @@ package dkg
 
 import (
 	"fmt"
+	"math/big"
+
+	"github.com/binance-chain/tss-lib/ecdsa/keygen"
 	"github.com/keep-network/keep-core/pkg/crypto/ephemeral"
 	"github.com/keep-network/keep-core/pkg/protocol/group"
 	"github.com/keep-network/keep-core/pkg/tecdsa/dkg/gen/pb"
@@ -186,4 +189,41 @@ func unmarshalPublicKeyMap(
 	}
 
 	return unmarshalled, nil
+}
+
+// Marshal converts the PreParams to a byte array.
+func (pp *PreParams) Marshal() ([]byte, error) {
+	localPreParams := &pb.PreParams_LocalPreParams{
+		NTilde: pp.data.NTildei.Bytes(),
+		H1I:    pp.data.H1i.Bytes(),
+		H2I:    pp.data.H2i.Bytes(),
+		Alpha:  pp.data.Alpha.Bytes(),
+		Beta:   pp.data.Beta.Bytes(),
+		P:      pp.data.P.Bytes(),
+		Q:      pp.data.Q.Bytes(),
+	}
+
+	return (&pb.PreParams{
+		Data: localPreParams,
+	}).Marshal()
+}
+
+// Unmarshal converts a byte array back to the PreParams.
+func (pp *PreParams) Unmarshal(bytes []byte) error {
+	pbPreParams := pb.PreParams{}
+	if err := pbPreParams.Unmarshal(bytes); err != nil {
+		return fmt.Errorf("failed to unmarshal pre params: [%v]", err)
+	}
+
+	pp.data = keygen.LocalPreParams{
+		NTildei: new(big.Int).SetBytes(pbPreParams.Data.GetNTilde()),
+		H1i:     new(big.Int).SetBytes(pbPreParams.Data.GetH1I()),
+		H2i:     new(big.Int).SetBytes(pbPreParams.Data.GetH2I()),
+		Alpha:   new(big.Int).SetBytes(pbPreParams.Data.GetAlpha()),
+		Beta:    new(big.Int).SetBytes(pbPreParams.Data.GetBeta()),
+		P:       new(big.Int).SetBytes(pbPreParams.Data.GetP()),
+		Q:       new(big.Int).SetBytes(pbPreParams.Data.GetQ()),
+	}
+
+	return nil
 }

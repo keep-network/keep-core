@@ -8,6 +8,18 @@ import (
 	"github.com/keep-network/keep-core/pkg/miner"
 )
 
+// PreParams represents tECDSA DKG pre-parameters that were not yet consumed
+// by DKG protocol execution.
+type PreParams struct {
+	data keygen.LocalPreParams
+}
+
+// NewPreParams constructs a new instance of tECDSA DKG pre-parameters based on
+// the generated numbers.
+func NewPreParams(data keygen.LocalPreParams) *PreParams {
+	return &PreParams{data}
+}
+
 // tssPreParamsPool is a pool holding TSS pre parameters. It autogenerates
 // entries up to the pool size. When an entry is pulled from the pool it
 // will generate a new entry.
