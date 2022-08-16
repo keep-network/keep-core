@@ -229,6 +229,13 @@ func initTbtcFlags(cmd *cobra.Command, cfg *config.Config) {
 		"tECDSA pre-parameters generation timeout.",
 	)
 
+	cmd.Flags().DurationVar(
+		&cfg.Tbtc.PreParamsGenerationDelay,
+		"tbtc.preParamsGenerationDelay",
+		tbtc.DefaultPreParamsGenerationDelay,
+		"tECDSA pre-parameters generation delay.",
+	)
+
 	cmd.Flags().IntVar(
 		&cfg.Tbtc.PreParamsGenerationConcurrency,
 		"tbtc.preParamsGenerationConcurrency",

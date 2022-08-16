@@ -22,12 +22,14 @@ func newTssPreParamsPool(
 	logger log.StandardLogger,
 	poolSize int,
 	generationTimeout time.Duration,
+	generationDelay time.Duration,
 	generationConcurrency int,
 ) *tssPreParamsPool {
 	logger.Infof(
-		"TSS pre-parameters target pool size is [%d], generation timeout is [%s], and concurrency level is [%d]",
+		"TSS pre-parameters target pool size is [%d], generation timeout is [%s], generation delay is [%v], and concurrency level is [%d]",
 		poolSize,
 		generationTimeout,
+		generationDelay,
 		generationConcurrency,
 	)
 
@@ -52,12 +54,12 @@ func newTssPreParamsPool(
 		newPreParamsFn: newPreParamsFn,
 	}
 
-	go tssPreParamsPool.pumpPool()
+	go tssPreParamsPool.pumpPool(generationDelay)
 
 	return tssPreParamsPool
 }
 
-func (t *tssPreParamsPool) pumpPool() {
+func (t *tssPreParamsPool) pumpPool(generationDelay time.Duration) {
 	for {
 		t.logger.Info("generating new tss pre parameters")
 
@@ -81,6 +83,11 @@ func (t *tssPreParamsPool) pumpPool() {
 		)
 
 		t.pool <- params
+
+		// Wait some time after delivering the result regardless if the delivery
+		// took some time or not. We want to ensure all other processes of the
+		// client receive access to CPU.
+		time.Sleep(generationDelay)
 	}
 }
 
