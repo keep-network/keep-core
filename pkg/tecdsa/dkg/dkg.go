@@ -153,7 +153,7 @@ func Publish(
 			membershipValidator,
 		),
 		result:                  result,
-		signatureMessages:       make([]*dkgResultHashSignatureMessage, 0),
+		signatureMessages:       make([]*resultSignatureMessage, 0),
 		signingStartBlockHeight: publicationStartBlock,
 	}
 

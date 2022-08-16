@@ -27,7 +27,7 @@ message TSSRoundThreeMessage {
     string sessionID = 3;
 }
 
-message DKGResultHashSignature {
+message ResultSignatureMessage {
     uint32 senderID = 1;
     bytes resultHash = 2;
     bytes signature = 3;

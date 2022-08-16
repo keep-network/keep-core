@@ -91,11 +91,11 @@ func (trtm *tssRoundThreeMessage) Type() string {
 	return messageTypePrefix + "tss_round_three_message"
 }
 
-// dkgResultHashSignatureMessage is a message payload that carries a hash of
+// resultSignatureMessage is a message payload that carries a hash of
 // the DKG result and a signature over this hash for a DKG result.
 //
 // It is expected to be broadcast within the group.
-type dkgResultHashSignatureMessage struct {
+type resultSignatureMessage struct {
 	senderID group.MemberIndex
 
 	resultHash ResultHash
@@ -104,12 +104,12 @@ type dkgResultHashSignatureMessage struct {
 }
 
 // SenderID returns protocol-level identifier of the message sender.
-func (drhsm *dkgResultHashSignatureMessage) SenderID() group.MemberIndex {
+func (drhsm *resultSignatureMessage) SenderID() group.MemberIndex {
 	return drhsm.senderID
 }
 
-// Type returns a string describing an dkgResultHashSignatureMessage type for
+// Type returns a string describing an resultSignatureMessage type for
 // marshaling purposes.
-func (drhsm *dkgResultHashSignatureMessage) Type() string {
+func (drhsm *resultSignatureMessage) Type() string {
 	return messageTypePrefix + "result_hash_signature_message"
 }

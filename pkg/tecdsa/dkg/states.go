@@ -461,7 +461,7 @@ type resultSigningState struct {
 
 	result *Result
 
-	signatureMessages []*dkgResultHashSignatureMessage
+	signatureMessages []*resultSignatureMessage
 
 	signingStartBlockHeight uint64
 }
@@ -501,12 +501,12 @@ func (rss *resultSigningState) Receive(msg net.Message) error {
 	// produce a signature over the DKG result hash. If the keys don't match,
 	// it means that an incorrect key was used to sign DKG result hash and
 	// the message should be rejected.
-	isValidKeyUsed := func(phaseMessage *dkgResultHashSignatureMessage) bool {
+	isValidKeyUsed := func(phaseMessage *resultSignatureMessage) bool {
 		return bytes.Compare(phaseMessage.publicKey, msg.SenderPublicKey()) == 0
 	}
 
 	switch signedMessage := msg.Payload().(type) {
-	case *dkgResultHashSignatureMessage:
+	case *resultSignatureMessage:
 		if rss.member.shouldAcceptMessage(
 			signedMessage.SenderID(),
 			msg.SenderPublicKey(),
@@ -549,7 +549,7 @@ type signaturesVerificationState struct {
 
 	result *Result
 
-	signatureMessages []*dkgResultHashSignatureMessage
+	signatureMessages []*resultSignatureMessage
 	validSignatures   map[group.MemberIndex][]byte
 
 	verificationStartBlockHeight uint64

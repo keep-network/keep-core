@@ -330,7 +330,7 @@ func (sm *signingMember) SignDKGResult(
 	dkgResult *Result,
 	resultSigner ResultSigner,
 ) (
-	*dkgResultHashSignatureMessage,
+	*resultSignatureMessage,
 	error,
 ) {
 	publicKey, signature, resultHash, err := resultSigner.SignResult(dkgResult)
@@ -342,7 +342,7 @@ func (sm *signingMember) SignDKGResult(
 	sm.selfDKGResultSignature = signature
 	sm.preferredDKGResultHash = resultHash
 
-	return &dkgResultHashSignatureMessage{
+	return &resultSignatureMessage{
 		senderID:   sm.memberIndex,
 		resultHash: resultHash,
 		signature:  signature,
@@ -360,7 +360,7 @@ func (sm *signingMember) SignDKGResult(
 // correct one. This key needs to be compared against the one used by network
 // client earlier, before this function is called.
 func (sm *signingMember) VerifyDKGResultSignatures(
-	messages []*dkgResultHashSignatureMessage,
+	messages []*resultSignatureMessage,
 	resultSigner ResultSigner,
 ) (map[group.MemberIndex][]byte, error) {
 	duplicatedMessagesFromSender := func(senderID group.MemberIndex) bool {

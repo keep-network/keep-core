@@ -188,10 +188,10 @@ func unmarshalPublicKeyMap(
 	return unmarshalled, nil
 }
 
-// Marshal converts this dkgResultHashSignatureMessage to a byte array suitable
+// Marshal converts this resultSignatureMessage to a byte array suitable
 // for network communication.
-func (d *dkgResultHashSignatureMessage) Marshal() ([]byte, error) {
-	return (&pb.DKGResultHashSignature{
+func (d *resultSignatureMessage) Marshal() ([]byte, error) {
+	return (&pb.ResultSignatureMessage{
 		SenderID:   uint32(d.senderID),
 		ResultHash: d.resultHash[:],
 		Signature:  d.signature,
@@ -200,9 +200,9 @@ func (d *dkgResultHashSignatureMessage) Marshal() ([]byte, error) {
 }
 
 // Unmarshal converts a byte array produced by Marshal to a
-// dkgResultHashSignatureMessage.
-func (d *dkgResultHashSignatureMessage) Unmarshal(bytes []byte) error {
-	pbMsg := pb.DKGResultHashSignature{}
+// resultSignatureMessage.
+func (d *resultSignatureMessage) Unmarshal(bytes []byte) error {
+	pbMsg := pb.ResultSignatureMessage{}
 	if err := pbMsg.Unmarshal(bytes); err != nil {
 		return err
 	}
