@@ -11,7 +11,6 @@ import (
 	"github.com/binance-chain/tss-lib/ecdsa/keygen"
 	"github.com/binance-chain/tss-lib/tss"
 	"github.com/ipfs/go-log"
-	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/crypto/ephemeral"
 	"github.com/keep-network/keep-core/pkg/protocol/group"
 )
@@ -514,128 +513,15 @@ type submittingMember struct {
 func (sm *submittingMember) SubmitDKGResult(
 	result *Result,
 	signatures map[group.MemberIndex][]byte,
+	startBlockNumber uint64,
 	resultSubmitter ResultSubmitter,
-	blockCounter chain.BlockCounter,
-	startBlockHeight uint64,
 ) error {
-	// TODO: Consider moving the whole implementation to the resultSubmitter
-	//       interface
-
-	// Chain rejects the result if it has less than 25% safety margin.
-	// If there are not enough signatures to preserve the margin, it does not
-	// make sense to submit the result.
-	signatureThreshold := sm.submissionConfig.HonestThreshold +
-		(sm.submissionConfig.GroupSize-sm.submissionConfig.HonestThreshold)/2
-	if len(signatures) < signatureThreshold {
-		return fmt.Errorf(
-			"could not submit result with [%v] signatures for signature threshold [%v]",
-			len(signatures),
-			signatureThreshold,
-		)
-	}
-
-	onSubmittedResultChan := make(chan uint64)
-
-	subscription := resultSubmitter.OnDKGResultSubmitted(
-		func(event *ResultSubmissionEvent) {
-			onSubmittedResultChan <- event.BlockNumber
-		},
-	)
-
-	returnWithError := func(err error) error {
-		subscription.Unsubscribe()
-		close(onSubmittedResultChan)
-		return err
-	}
-
-	alreadySubmitted, err := resultSubmitter.IsGroupRegistered(
-		result.GroupPublicKeyBytes,
-	)
-
-	if err != nil {
-		return returnWithError(
-			fmt.Errorf(
-				"could not check if the result is already submitted: [%v]",
-				err,
-			),
-		)
-	}
-
-	// Someone who was ahead of us in the queue submitted the result. Giving up.
-	if alreadySubmitted {
-		return returnWithError(nil)
-	}
-
-	// Wait until the current member is eligible to submit the result.
-	eligibleToSubmitWaiter, err := sm.waitForSubmissionEligibility(
-		blockCounter,
-		startBlockHeight,
-		sm.submissionConfig.ResultPublicationBlockStep,
-	)
-	if err != nil {
-		return returnWithError(
-			fmt.Errorf("wait for eligibility failure: [%v]", err),
-		)
-	}
-
-	for {
-		select {
-		case blockNumber := <-eligibleToSubmitWaiter:
-			// Member becomes eligible to submit the result.
-			subscription.Unsubscribe()
-			close(onSubmittedResultChan)
-
-			sm.logger.Infof(
-				"[member:%v] submitting DKG result with public key [0x%x] and "+
-					"[%v] supporting member signatures at block [%v]",
-				sm.memberIndex,
-				result.GroupPublicKeyBytes,
-				len(signatures),
-				blockNumber,
-			)
-
-			return resultSubmitter.SubmitDKGResult(
-				sm.memberIndex,
-				result,
-				signatures,
-			)
-		case blockNumber := <-onSubmittedResultChan:
-			sm.logger.Infof(
-				"[member:%v] leaving; DKG result submitted by other member at block [%v]",
-				sm.memberIndex,
-				blockNumber,
-			)
-			// A result has been submitted by other member. Leave without
-			// publishing the result.
-			return returnWithError(nil)
-		}
-	}
-}
-
-// waitForSubmissionEligibility waits until the current member is eligible to
-// submit a result to the blockchain. First member is eligible to submit straight
-// away, each following member is eligible after pre-defined block step.
-func (sm *submittingMember) waitForSubmissionEligibility(
-	blockCounter chain.BlockCounter,
-	startBlockHeight uint64,
-	blockStep uint64,
-) (<-chan uint64, error) {
-	// T_init + (member_index - 1) * T_step
-	blockWaitTime := (uint64(sm.memberIndex) - 1) * blockStep
-
-	eligibleBlockHeight := startBlockHeight + blockWaitTime
-	sm.logger.Infof(
-		"[member:%v] waiting for block [%v] to submit",
+	return resultSubmitter.SubmitResult(
+		result,
+		signatures,
+		startBlockNumber,
 		sm.memberIndex,
-		eligibleBlockHeight,
 	)
-
-	waiter, err := blockCounter.BlockHeightWaiter(eligibleBlockHeight)
-	if err != nil {
-		return nil, fmt.Errorf("block height waiter failure [%v]", err)
-	}
-
-	return waiter, err
 }
 
 // newSubmittingMember creates a new submittingMember in the initial state.

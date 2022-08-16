@@ -299,21 +299,6 @@ func (tc *TbtcChain) OnDKGStarted(
 	return tc.mockWalletRegistry.OnDKGStarted(handler)
 }
 
-// TODO: Implement a real SubmitDKGResult action. The current implementation
-//       just creates and pipes the DKG submission event to the handlers
-//       registered in the dkgResultSubmissionHandlers map.
-func (tc *TbtcChain) SubmitDKGResult(
-	participantIndex group.MemberIndex,
-	result *dkg.Result,
-	signatures map[group.MemberIndex][]byte,
-) error {
-	return tc.mockWalletRegistry.SubmitDKGResult(
-		participantIndex,
-		result,
-		signatures,
-	)
-}
-
 // TODO: Implement a real OnDKGResultSubmitted event subscription. The current
 //       implementation just pipes the DKG submission event generated within
 //       SubmitDKGResult to the handlers registered in the
@@ -358,6 +343,103 @@ func (tc *TbtcChain) VerifySignature(
 	return tc.Signing().VerifyWithPublicKey(message, signature, publicKey)
 }
 
+func (tc *TbtcChain) SubmitResult(
+	result *dkg.Result,
+	signatures map[group.MemberIndex][]byte,
+	startBlockNumber uint64,
+	participantIndex group.MemberIndex,
+) error {
+	config := tc.GetConfig()
+
+	// Chain rejects the result if it has less than 25% safety margin.
+	// If there are not enough signatures to preserve the margin, it does not
+	// make sense to submit the result.
+	signatureThreshold := config.HonestThreshold +
+		(config.GroupSize-config.HonestThreshold)/2
+	if len(signatures) < signatureThreshold {
+		return fmt.Errorf(
+			"could not submit result with [%v] signatures for signature threshold [%v]",
+			len(signatures),
+			signatureThreshold,
+		)
+	}
+
+	onSubmittedResultChan := make(chan uint64)
+
+	subscription := tc.OnDKGResultSubmitted(
+		func(event *dkg.ResultSubmissionEvent) {
+			onSubmittedResultChan <- event.BlockNumber
+		},
+	)
+
+	returnWithError := func(err error) error {
+		subscription.Unsubscribe()
+		close(onSubmittedResultChan)
+		return err
+	}
+
+	alreadySubmitted, err := tc.IsGroupRegistered(result.GroupPublicKeyBytes)
+	if err != nil {
+		return returnWithError(
+			fmt.Errorf(
+				"could not check if the result is already submitted: [%v]",
+				err,
+			),
+		)
+	}
+
+	// Someone who was ahead of us in the queue submitted the result. Giving up.
+	if alreadySubmitted {
+		return returnWithError(nil)
+	}
+
+	// Wait until the current member is eligible to submit the result.
+	eligibleToSubmitWaiter, err := tc.waitForSubmissionEligibility(
+		startBlockNumber,
+		participantIndex,
+	)
+	if err != nil {
+		return returnWithError(
+			fmt.Errorf("wait for eligibility failure: [%v]", err),
+		)
+	}
+
+	for {
+		select {
+		case /*blockNumber :=*/ <-eligibleToSubmitWaiter:
+			// Member becomes eligible to submit the result.
+			subscription.Unsubscribe()
+			close(onSubmittedResultChan)
+
+			// TODO: What to do with logging?
+			// sm.logger.Infof(
+			// 	"[member:%v] submitting DKG result with public key [0x%x] and "+
+			// 		"[%v] supporting member signatures at block [%v]",
+			// 	sm.memberIndex,
+			// 	result.GroupPublicKeyBytes,
+			// 	len(signatures),
+			// 	blockNumber,
+			// )
+
+			return tc.submitDKGResult(
+				participantIndex,
+				result,
+				signatures,
+			)
+		case /*blockNumber :=*/ <-onSubmittedResultChan:
+			// TODO: What to do with logging
+			// sm.logger.Infof(
+			// 	"[member:%v] leaving; DKG result submitted by other member at block [%v]",
+			// 	sm.memberIndex,
+			// 	blockNumber,
+			// )
+			// A result has been submitted by other member. Leave without
+			// publishing the result.
+			return returnWithError(nil)
+		}
+	}
+}
+
 // TODO: Implement a real OnGroupRegistered function.
 func (tc *TbtcChain) OnGroupRegistered(
 	handler func(groupRegistration *tbtc.GroupRegistrationEvent),
@@ -387,6 +469,21 @@ func (tc *TbtcChain) calculateDKGResultHash(
 	// Encode DKG result to the format matched with Solidity keccak256(abi.encodePacked(...))
 	hash := crypto.Keccak256(result.GroupPublicKeyBytes, result.Misbehaved)
 	return dkg.ResultHashFromBytes(hash)
+}
+
+// TODO: Implement a real submitDKGResult action. The current implementation
+//       just creates and pipes the DKG submission event to the handlers
+//       registered in the dkgResultSubmissionHandlers map.
+func (tc *TbtcChain) submitDKGResult(
+	participantIndex group.MemberIndex,
+	result *dkg.Result,
+	signatures map[group.MemberIndex][]byte,
+) error {
+	return tc.mockWalletRegistry.SubmitDKGResult(
+		participantIndex,
+		result,
+		signatures,
+	)
 }
 
 // TODO: Temporary mock that simulates the behavior of the WalletRegistry
@@ -511,4 +608,39 @@ func (mwr *mockWalletRegistry) SubmitDKGResult(
 	mwr.currentDkgStartBlock = nil
 
 	return nil
+}
+
+// waitForSubmissionEligibility waits until the current member is eligible to
+// submit a result to the blockchain. First member is eligible to submit straight
+// away, each following member is eligible after pre-defined block step.
+func (tc *TbtcChain) waitForSubmissionEligibility(
+	startBlockNumber uint64,
+	participantIndex group.MemberIndex,
+) (<-chan uint64, error) {
+	// T_init + (member_index - 1) * T_step
+	blockWaitTime := (uint64(participantIndex) - 1) *
+		tc.GetConfig().ResultPublicationBlockStep
+
+	eligibleBlockHeight := startBlockNumber + blockWaitTime
+
+	// TODO: What should we do about the logging? Do not log?
+	//       Pass the logger? Return the logging messages?
+
+	// sm.logger.Infof(
+	// 	"[member:%v] waiting for block [%v] to submit",
+	// 	participantIndex,
+	// 	eligibleBlockHeight,
+	// )
+
+	blockCounter, err := tc.BlockCounter()
+	if err != nil {
+		return nil, fmt.Errorf("could not get block counter [%v]", err)
+	}
+
+	waiter, err := blockCounter.BlockHeightWaiter(eligibleBlockHeight)
+	if err != nil {
+		return nil, fmt.Errorf("block height waiter failure [%v]", err)
+	}
+
+	return waiter, err
 }

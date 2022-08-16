@@ -633,9 +633,8 @@ func (rss *resultSubmissionState) Initiate(ctx context.Context) error {
 	return rss.member.SubmitDKGResult(
 		rss.result,
 		rss.signatures,
-		rss.resultHandler,
-		rss.blockCounter,
 		rss.submissionStartBlockHeight,
+		rss.resultHandler,
 	)
 }
 

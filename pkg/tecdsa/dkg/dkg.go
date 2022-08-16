@@ -11,7 +11,6 @@ import (
 	"github.com/keep-network/keep-core/pkg/net"
 	"github.com/keep-network/keep-core/pkg/protocol/group"
 	"github.com/keep-network/keep-core/pkg/protocol/state"
-	"github.com/keep-network/keep-core/pkg/subscription"
 )
 
 // Executor represents an ECDSA distributed key generation process executor.
@@ -118,23 +117,12 @@ type ResultSigner interface {
 // ResultSubmitter is the interface that provides ability to submit the DKG
 // result to the chain.
 type ResultSubmitter interface {
-	// SubmitDKGResult sends DKG result to a chain, along with signatures over
-	// result hash from group participants supporting the result.
-	// Signatures over DKG result hash are collected in a map keyed by signer's
-	// member index.
-	SubmitDKGResult(
-		participantIndex group.MemberIndex,
+	SubmitResult(
 		result *Result,
 		signatures map[group.MemberIndex][]byte,
+		startBlockNumber uint64,
+		participantIndex group.MemberIndex,
 	) error
-	// IsGroupRegistered checks if group with the given public key is registered
-	// on-chain.
-	IsGroupRegistered(groupPublicKey []byte) (bool, error)
-	// OnDKGResultSubmitted registers a callback that is invoked when an on-chain
-	// notification of a new, valid submitted result is seen.
-	OnDKGResultSubmitted(
-		func(event *ResultSubmissionEvent),
-	) subscription.EventSubscription
 }
 
 type ResultHandler interface {

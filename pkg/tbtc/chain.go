@@ -29,20 +29,15 @@ type DistributedKeyGenerationChain interface {
 	OnDKGStarted(
 		func(event *dkg.StartedDKGEvent),
 	) subscription.EventSubscription
-	// SubmitDKGResult sends DKG result to a chain, along with signatures over
-	// result hash from group participants supporting the result.
-	// Signatures over DKG result hash are collected in a map keyed by signer's
-	// member index.
-	SubmitDKGResult(
-		participantIndex group.MemberIndex,
-		dkgResult *dkg.Result,
-		signatures map[group.MemberIndex][]byte,
-	) error
-	// OnDKGResultSubmitted registers a callback that is invoked when an on-chain
-	// notification of a new, valid submitted result is seen.
 	OnDKGResultSubmitted(
 		func(event *dkg.ResultSubmissionEvent),
 	) subscription.EventSubscription
+	SubmitResult(
+		result *dkg.Result,
+		signatures map[group.MemberIndex][]byte,
+		startBlockNumber uint64,
+		participantIndex group.MemberIndex,
+	) error
 }
 
 // GroupRegistrationInterface defines the subset of the TBTC chain interface
