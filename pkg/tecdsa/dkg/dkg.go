@@ -57,6 +57,11 @@ func (e *Executor) Execute(
 
 	registerUnmarshallers(channel)
 
+	preParams, err := e.tssPreParamsPool.Get()
+	if err != nil {
+		return nil, 0, fmt.Errorf("failed fetching pre-params: [%v]", err)
+	}
+
 	member := newMember(
 		e.logger,
 		memberIndex,
@@ -64,7 +69,7 @@ func (e *Executor) Execute(
 		dishonestThreshold,
 		membershipValidator,
 		seed.Text(16), // TODO: Should change on retry.,
-		e.tssPreParamsPool.get(),
+		preParams,
 	)
 
 	initialState := &ephemeralKeyPairGenerationState{
