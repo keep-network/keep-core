@@ -104,6 +104,18 @@ type ResultSubmissionEvent struct {
 	BlockNumber uint64
 }
 
+// ResultSigner is the interface that provides ability to sign the DKG result
+// and verify the results received from other group members.
+type ResultSigner interface {
+	// Signing returns the chain's signer.
+	Signing() chain.Signing
+	// CalculateDKGResultHash calculates 256-bit hash of DKG result in standard
+	// specific for the chain. Operation is performed off-chain.
+	CalculateDKGResultHash(result *Result) (ResultHash, error)
+}
+
+// ResultSubmitter is the interface that provides ability to submit the DKG
+// result to the chain.
 type ResultSubmitter interface {
 	// SubmitDKGResult sends DKG result to a chain, along with signatures over
 	// result hash from group participants supporting the result.
@@ -122,14 +134,6 @@ type ResultSubmitter interface {
 	OnDKGResultSubmitted(
 		func(event *ResultSubmissionEvent),
 	) subscription.EventSubscription
-}
-
-type ResultSigner interface {
-	// Signing returns the chain's signer.
-	Signing() chain.Signing
-	// CalculateDKGResultHash calculates 256-bit hash of DKG result in standard
-	// specific for the chain. Operation is performed off-chain.
-	CalculateDKGResultHash(result *Result) (ResultHash, error)
 }
 
 type ResultHandler interface {
