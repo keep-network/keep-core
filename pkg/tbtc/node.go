@@ -255,12 +255,12 @@ func (n *node) joinDKGIfEligible(seed *big.Int, startBlockNumber uint64) {
 
 // dkgRetryLoop is a struct that encapsulates the DKG retry logic.
 type dkgRetryLoop struct {
-	initialStartBlock    uint64
 	memberIndex          group.MemberIndex
 	selectedOperators    chain.Addresses
 	inactiveOperatorsSet map[chain.Address]bool
 	chainConfig          *ChainConfig
 	attemptCounter       uint
+	attemptStartBlock    uint64
 	randomRetryCounter   uint
 	randomRetrySeed      int64
 }
@@ -280,12 +280,12 @@ func newDkgRetryLoop(
 	randomRetrySeed := int64(binary.BigEndian.Uint64(seedSha256[:8]))
 
 	return &dkgRetryLoop{
-		initialStartBlock:    initialStartBlock,
 		memberIndex:          memberIndex,
 		selectedOperators:    selectedOperators,
 		inactiveOperatorsSet: make(map[chain.Address]bool),
 		chainConfig:          chainConfig,
 		attemptCounter:       0,
+		attemptStartBlock:    initialStartBlock,
 		randomRetryCounter:   0,
 		randomRetrySeed:      randomRetrySeed,
 	}
@@ -322,24 +322,29 @@ func (drl *dkgRetryLoop) start(
 			)
 		}
 
-		// In order to start the given attempt in the right place, we need to
+		// In order to start attempts >1 in the right place, we need to
 		// determine how many blocks were taken by previous attempts. We assume
 		// the worst case that each attempt failed at the end of the DKG
-		// protocol. That said, we need to shift by the multiplication of the
-		// previous attempts count and the duration of a single attempt.
-		blocksShift := uint64(drl.attemptCounter-1) * dkg.ProtocolBlocks()
-		// We also need to add a small fixed delay in order to mitigate all
-		// corner cases where the actual attempt duration was slightly longer
-		// than the expected duration determined by the dkg.ProtocolBlocks
-		// function. For example, the attempt may fail at the end of the
-		// protocol but the error is returned after some time and more
-		// blocks than expected are mined in the meantime. Additionally,
-		// we want to strongly extend the delay period periodically
-		// in order to give some additional time for nodes to recover and
-		// re-fill their internal TSS pre-parameters pools.
-		delayBlocks := uint64(5)
-		if drl.attemptCounter%100 == 0 {
-			delayBlocks = 100
+		// protocol. That said, we need to increment the previous attempt start
+		// block by the number of blocks equal to the protocol duration and
+		// by some additional delay blocks. We need a small fixed delay in
+		// order to mitigate all corner cases where the actual attempt duration
+		// was slightly longer than the expected duration determined by the
+		// dkg.ProtocolBlocks function. For example, the attempt may fail at
+		// the end of the protocol but the error is returned after some time
+		// and more blocks than expected are mined in the meantime.
+		// Additionally, we want to strongly extend the delay period
+		// periodically in order to give some additional time for nodes to
+		// recover and re-fill their internal TSS pre-parameters pools.
+		if drl.attemptCounter > 1 {
+			delayBlocks := uint64(5)
+			if drl.attemptCounter%100 == 0 {
+				delayBlocks = 100
+			}
+
+			drl.attemptStartBlock = drl.attemptStartBlock +
+				dkg.ProtocolBlocks() +
+				delayBlocks
 		}
 
 		// Exclude all members controlled by the operators that were not
@@ -366,7 +371,7 @@ func (drl *dkgRetryLoop) start(
 		if !attemptSkipped {
 			result, attemptErr = dkgAttemptFn(&dkgAttemptParams{
 				index:           drl.attemptCounter,
-				startBlock:      drl.initialStartBlock + blocksShift + delayBlocks,
+				startBlock:      drl.attemptStartBlock,
 				excludedMembers: excludedMembers,
 			})
 			if attemptErr != nil {
