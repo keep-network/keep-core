@@ -312,15 +312,15 @@ func (fm *finalizingMember) Result() *Result {
 // signingMember represents a group member sharing their preferred DKG result hash
 // and signature (over this hash) with other peer members.
 type signingMember struct {
-	logger log.StandardLogger
-	index  group.MemberIndex
+	logger      log.StandardLogger
+	memberIndex group.MemberIndex
 	// Group to which this member belongs.
 	group *group.Group
 	// Validator allowing to check public key and member index
 	// against group members
 	membershipValidator *group.MembershipValidator
 	// DKG result submission configuration
-	config *SubmissionConfig
+	submissionConfig *SubmissionConfig
 	// Hash of DKG result preferred by the current participant.
 	preferredDKGResultHash ResultHash
 	// Signature over preferredDKGResultHash calculated by the member.
@@ -355,7 +355,7 @@ func (sm *signingMember) SignDKGResult(
 	sm.selfDKGResultSignature = signature
 
 	return &dkgResultHashSignatureMessage{
-		senderID:   sm.index,
+		senderID:   sm.memberIndex,
 		resultHash: resultHash,
 		signature:  signature,
 		publicKey:  signing.PublicKey(),
@@ -395,7 +395,7 @@ func (sm *signingMember) VerifyDKGResultSignatures(
 
 	for _, message := range messages {
 		// Check if message from self.
-		if message.senderID == sm.index {
+		if message.senderID == sm.memberIndex {
 			continue
 		}
 
@@ -403,7 +403,7 @@ func (sm *signingMember) VerifyDKGResultSignatures(
 		if duplicatedMessagesFromSender(message.senderID) {
 			sm.logger.Infof(
 				"[member: %v] received multiple messages from sender: [%d]",
-				sm.index,
+				sm.memberIndex,
 				message.senderID,
 			)
 			continue
@@ -414,7 +414,7 @@ func (sm *signingMember) VerifyDKGResultSignatures(
 		if message.resultHash != sm.preferredDKGResultHash {
 			sm.logger.Infof(
 				"[member: %v] signature from sender [%d] supports result different than preferred",
-				sm.index,
+				sm.memberIndex,
 				message.senderID,
 			)
 			continue
@@ -429,7 +429,7 @@ func (sm *signingMember) VerifyDKGResultSignatures(
 		if err != nil {
 			sm.logger.Infof(
 				"[member: %v] verification of signature from sender [%d] failed: [%v]",
-				sm.index,
+				sm.memberIndex,
 				message.senderID,
 				err,
 			)
@@ -438,7 +438,7 @@ func (sm *signingMember) VerifyDKGResultSignatures(
 		if !ok {
 			sm.logger.Infof(
 				"[member: %v] sender [%d] provided invalid signature",
-				sm.index,
+				sm.memberIndex,
 				message.senderID,
 			)
 			continue
@@ -448,7 +448,7 @@ func (sm *signingMember) VerifyDKGResultSignatures(
 	}
 
 	// Register member's self signature.
-	receivedValidResultSignatures[sm.index] = sm.selfDKGResultSignature
+	receivedValidResultSignatures[sm.memberIndex] = sm.selfDKGResultSignature
 
 	return receivedValidResultSignatures, nil
 }
@@ -459,7 +459,7 @@ func (sm *signingMember) shouldAcceptMessage(
 	senderID group.MemberIndex,
 	senderPublicKey []byte,
 ) bool {
-	isMessageFromSelf := senderID == sm.index
+	isMessageFromSelf := senderID == sm.memberIndex
 	isSenderValid := sm.membershipValidator.IsValidMembership(
 		senderID,
 		senderPublicKey,
@@ -467,6 +467,23 @@ func (sm *signingMember) shouldAcceptMessage(
 	isSenderAccepted := sm.group.IsOperating(senderID)
 
 	return !isMessageFromSelf && isSenderValid && isSenderAccepted
+}
+
+// newSigningMember creates a new signingMember in the initial state.
+func newSigningMember(
+	logger log.StandardLogger,
+	memberIndex group.MemberIndex,
+	group *group.Group,
+	membershipValidator *group.MembershipValidator,
+	submissionConfig *SubmissionConfig,
+) *signingMember {
+	return &signingMember{
+		logger:              logger,
+		memberIndex:         memberIndex,
+		group:               group,
+		membershipValidator: membershipValidator,
+		submissionConfig:    submissionConfig,
+	}
 }
 
 // SubmissionConfig contains parameters describing DKG submission process.
@@ -488,8 +505,8 @@ type submittingMember struct {
 	logger log.StandardLogger
 
 	// Represents the member's position for submission.
-	index  group.MemberIndex
-	config *SubmissionConfig
+	memberIndex      group.MemberIndex
+	submissionConfig *SubmissionConfig
 }
 
 // SubmitDKGResult sends a result, which contains the group public key and
@@ -519,7 +536,8 @@ func (sm *submittingMember) SubmitDKGResult(
 	// Chain rejects the result if it has less than 25% safety margin.
 	// If there are not enough signatures to preserve the margin, it does not
 	// make sense to submit the result.
-	signatureThreshold := sm.config.HonestThreshold + (sm.config.GroupSize-sm.config.HonestThreshold)/2
+	signatureThreshold := sm.submissionConfig.HonestThreshold +
+		(sm.submissionConfig.GroupSize-sm.submissionConfig.HonestThreshold)/2
 	if len(signatures) < signatureThreshold {
 		return fmt.Errorf(
 			"could not submit result with [%v] signatures for signature threshold [%v]",
@@ -564,7 +582,7 @@ func (sm *submittingMember) SubmitDKGResult(
 	eligibleToSubmitWaiter, err := sm.waitForSubmissionEligibility(
 		blockCounter,
 		startBlockHeight,
-		sm.config.ResultPublicationBlockStep,
+		sm.submissionConfig.ResultPublicationBlockStep,
 	)
 	if err != nil {
 		return returnWithError(
@@ -582,21 +600,21 @@ func (sm *submittingMember) SubmitDKGResult(
 			sm.logger.Infof(
 				"[member:%v] submitting DKG result with public key [0x%x] and "+
 					"[%v] supporting member signatures at block [%v]",
-				sm.index,
+				sm.memberIndex,
 				result.GroupPublicKeyBytes,
 				len(signatures),
 				blockNumber,
 			)
 
 			return resultSubmitter.SubmitDKGResult(
-				sm.index,
+				sm.memberIndex,
 				result,
 				signatures,
 			)
 		case blockNumber := <-onSubmittedResultChan:
 			sm.logger.Infof(
 				"[member:%v] leaving; DKG result submitted by other member at block [%v]",
-				sm.index,
+				sm.memberIndex,
 				blockNumber,
 			)
 			// A result has been submitted by other member. Leave without
@@ -615,12 +633,12 @@ func (sm *submittingMember) waitForSubmissionEligibility(
 	blockStep uint64,
 ) (<-chan uint64, error) {
 	// T_init + (member_index - 1) * T_step
-	blockWaitTime := (uint64(sm.index) - 1) * blockStep
+	blockWaitTime := (uint64(sm.memberIndex) - 1) * blockStep
 
 	eligibleBlockHeight := startBlockHeight + blockWaitTime
 	sm.logger.Infof(
 		"[member:%v] waiting for block [%v] to submit",
-		sm.index,
+		sm.memberIndex,
 		eligibleBlockHeight,
 	)
 
@@ -630,6 +648,19 @@ func (sm *submittingMember) waitForSubmissionEligibility(
 	}
 
 	return waiter, err
+}
+
+// newSubmittingMember creates a new submittingMember in the initial state.
+func newSubmittingMember(
+	logger log.StandardLogger,
+	memberIndex group.MemberIndex,
+	submissionConfig *SubmissionConfig,
+) *submittingMember {
+	return &submittingMember{
+		logger:           logger,
+		memberIndex:      memberIndex,
+		submissionConfig: submissionConfig,
+	}
 }
 
 // generateTssPartiesIDs converts group member ID to parties ID suitable for

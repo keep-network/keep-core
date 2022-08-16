@@ -534,7 +534,7 @@ func (rss *resultSigningState) Next() state.State {
 }
 
 func (rss *resultSigningState) MemberIndex() group.MemberIndex {
-	return rss.member.index
+	return rss.member.memberIndex
 }
 
 // signaturesVerificationState is the state during which group members verify
@@ -585,11 +585,11 @@ func (svs *signaturesVerificationState) Next() state.State {
 		channel:       svs.channel,
 		resultHandler: svs.resultHandler,
 		blockCounter:  svs.blockCounter,
-		member: &submittingMember{
-			logger: svs.member.logger,
-			index:  svs.member.index,
-			config: svs.member.config,
-		},
+		member: newSubmittingMember(
+			svs.member.logger,
+			svs.member.memberIndex,
+			svs.member.submissionConfig,
+		),
 		result:     svs.result,
 		signatures: svs.validSignatures,
 		submissionStartBlockHeight: svs.verificationStartBlockHeight +
@@ -599,7 +599,7 @@ func (svs *signaturesVerificationState) Next() state.State {
 }
 
 func (svs *signaturesVerificationState) MemberIndex() group.MemberIndex {
-	return svs.member.index
+	return svs.member.memberIndex
 }
 
 // resultSubmissionState is the state during which group members submit the dkg
@@ -649,5 +649,5 @@ func (rss *resultSubmissionState) Next() state.State {
 }
 
 func (rss *resultSubmissionState) MemberIndex() group.MemberIndex {
-	return rss.member.index
+	return rss.member.memberIndex
 }
