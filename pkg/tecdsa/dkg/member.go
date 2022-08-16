@@ -318,8 +318,6 @@ type signingMember struct {
 	// Validator allowing to check public key and member index
 	// against group members
 	membershipValidator *group.MembershipValidator
-	// DKG result submission configuration
-	submissionConfig *SubmissionConfig
 	// Hash of DKG result preferred by the current participant.
 	preferredDKGResultHash ResultHash
 	// Signature over preferredDKGResultHash calculated by the member.
@@ -462,27 +460,13 @@ func newSigningMember(
 	memberIndex group.MemberIndex,
 	group *group.Group,
 	membershipValidator *group.MembershipValidator,
-	submissionConfig *SubmissionConfig,
 ) *signingMember {
 	return &signingMember{
 		logger:              logger,
 		memberIndex:         memberIndex,
 		group:               group,
 		membershipValidator: membershipValidator,
-		submissionConfig:    submissionConfig,
 	}
-}
-
-// SubmissionConfig contains parameters describing DKG submission process.
-type SubmissionConfig struct {
-	// GroupSize is the size of a group in TBTC.
-	GroupSize int
-	// HonestThreshold is the minimum number of active participants behaving
-	// according to the protocol needed to generate a signature.
-	HonestThreshold int
-	// ResultPublicationBlockStep is the duration (in blocks) that has to pass
-	// between publication attempts made by individual members.
-	ResultPublicationBlockStep uint64
 }
 
 // SubmittingMember represents a member submitting a DKG result to the
@@ -492,8 +476,7 @@ type submittingMember struct {
 	logger log.StandardLogger
 
 	// Represents the member's position for submission.
-	memberIndex      group.MemberIndex
-	submissionConfig *SubmissionConfig
+	memberIndex group.MemberIndex
 }
 
 // SubmitDKGResult sends a result, which contains the group public key and
@@ -528,12 +511,10 @@ func (sm *submittingMember) SubmitDKGResult(
 func newSubmittingMember(
 	logger log.StandardLogger,
 	memberIndex group.MemberIndex,
-	submissionConfig *SubmissionConfig,
 ) *submittingMember {
 	return &submittingMember{
-		logger:           logger,
-		memberIndex:      memberIndex,
-		submissionConfig: submissionConfig,
+		logger:      logger,
+		memberIndex: memberIndex,
 	}
 }
 

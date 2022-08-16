@@ -165,12 +165,6 @@ func (n *node) joinDKGIfEligible(seed *big.Int, startBlockNumber uint64) {
 				}
 
 				publicationStartBlock := endBlock
-				submissionConfig := &dkg.SubmissionConfig{
-					GroupSize:                  n.chain.GetConfig().GroupSize,
-					HonestThreshold:            n.chain.GetConfig().HonestThreshold,
-					ResultPublicationBlockStep: n.chain.GetConfig().ResultPublicationBlockStep,
-				}
-
 				operatingMemberIDs := result.Group.OperatingMemberIDs()
 				dkgResultChannel := make(chan *dkg.ResultSubmissionEvent)
 
@@ -188,7 +182,6 @@ func (n *node) joinDKGIfEligible(seed *big.Int, startBlockNumber uint64) {
 					blockCounter,
 					broadcastChannel,
 					membershipValidator,
-					submissionConfig,
 					n.chain,
 					result,
 				)

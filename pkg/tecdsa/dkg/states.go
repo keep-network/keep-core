@@ -588,7 +588,6 @@ func (svs *signaturesVerificationState) Next() state.State {
 		member: newSubmittingMember(
 			svs.member.logger,
 			svs.member.memberIndex,
-			svs.member.submissionConfig,
 		),
 		result:     svs.result,
 		signatures: svs.validSignatures,

@@ -139,7 +139,6 @@ func Publish(
 	blockCounter chain.BlockCounter,
 	channel net.BroadcastChannel,
 	membershipValidator *group.MembershipValidator,
-	submissionConfig *SubmissionConfig,
 	resultHandler ResultHandler,
 	result *Result,
 ) error {
@@ -152,7 +151,6 @@ func Publish(
 			memberIndex,
 			result.Group,
 			membershipValidator,
-			submissionConfig,
 		),
 		result:                  result,
 		signatureMessages:       make([]*dkgResultHashSignatureMessage, 0),
