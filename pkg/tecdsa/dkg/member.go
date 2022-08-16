@@ -477,12 +477,7 @@ type SubmissionConfig struct {
 	// according to the protocol needed to generate a signature.
 	HonestThreshold int
 	// ResultPublicationBlockStep is the duration (in blocks) that has to pass
-	// before group member with the given index is eligible to submit the
-	// result.
-	// Nth player becomes eligible to submit the result after
-	// T_dkg + (N-1) * T_step
-	// where T_dkg is time for phases 1-12 to complete and T_step is the result
-	// publication block step.
+	// between publication attempts made by individual members.
 	ResultPublicationBlockStep uint64
 }
 

@@ -144,7 +144,7 @@ func (n *node) joinDKGIfEligible(seed *big.Int, startBlockNumber uint64) {
 			memberIndex := index + 1
 
 			go func() {
-				result, endBlockNumber, err := n.dkgExecutor.Execute(
+				result, endBlock, err := n.dkgExecutor.Execute(
 					seed,
 					startBlockNumber,
 					memberIndex,
@@ -164,7 +164,7 @@ func (n *node) joinDKGIfEligible(seed *big.Int, startBlockNumber uint64) {
 					return
 				}
 
-				startPublicationBlockHeight := endBlockNumber
+				publicationStartBlock := endBlock
 				submissionConfig := &dkg.SubmissionConfig{
 					GroupSize:                  n.chain.GetConfig().GroupSize,
 					HonestThreshold:            n.chain.GetConfig().HonestThreshold,
@@ -190,7 +190,7 @@ func (n *node) joinDKGIfEligible(seed *big.Int, startBlockNumber uint64) {
 					broadcastChannel,
 					n.chain,
 					blockCounter,
-					startPublicationBlockHeight,
+					publicationStartBlock,
 				)
 				if err != nil {
 					// Result publication failed. It means that either the result this
@@ -209,7 +209,7 @@ func (n *node) joinDKGIfEligible(seed *big.Int, startBlockNumber uint64) {
 						memberIndex,
 						result,
 						dkgResultChannel,
-						startPublicationBlockHeight,
+						publicationStartBlock,
 					); err != nil {
 						logger.Errorf(
 							"failed to handle DKG result publishing failure: [%v]",
@@ -270,11 +270,11 @@ func (n *node) decideMemberFate(
 	memberIndex group.MemberIndex,
 	result *dkg.Result,
 	dkgResultChannel chan *dkg.ResultSubmissionEvent,
-	startPublicationBlockHeight uint64,
+	publicationStartBlock uint64,
 ) ([]group.MemberIndex, error) {
 	dkgResultEvent, err := n.waitForDkgResultEvent(
 		dkgResultChannel,
-		startPublicationBlockHeight,
+		publicationStartBlock,
 	)
 	if err != nil {
 		return nil, err
@@ -325,11 +325,11 @@ func (n *node) decideMemberFate(
 // and returns error if the DKG result event is not emitted on time.
 func (n *node) waitForDkgResultEvent(
 	dkgResultChannel chan *dkg.ResultSubmissionEvent,
-	startPublicationBlockHeight uint64,
+	publicationStartBlock uint64,
 ) (*dkg.ResultSubmissionEvent, error) {
 	config := n.chain.GetConfig()
 
-	timeoutBlock := startPublicationBlockHeight + dkg.PrePublicationBlocks() +
+	timeoutBlock := publicationStartBlock + dkg.PrePublicationBlocks() +
 		(uint64(config.GroupSize) * config.ResultPublicationBlockStep)
 
 	blockCounter, err := n.chain.BlockCounter()
