@@ -258,11 +258,18 @@ type dkgRetryLoop struct {
 	memberIndex          group.MemberIndex
 	selectedOperators    chain.Addresses
 	inactiveOperatorsSet map[chain.Address]bool
-	chainConfig          *ChainConfig
-	attemptCounter       uint
-	attemptStartBlock    uint64
-	randomRetryCounter   uint
-	randomRetrySeed      int64
+
+	chainConfig *ChainConfig
+
+	attemptCounter    uint
+	attemptStartBlock uint64
+
+	randomRetryCounter uint
+	randomRetrySeed    int64
+
+	delayBlocks              uint64
+	delayBlocksBumpFrequency uint
+	delayBlocksBumpFactor    uint64
 }
 
 func newDkgRetryLoop(
@@ -280,14 +287,17 @@ func newDkgRetryLoop(
 	randomRetrySeed := int64(binary.BigEndian.Uint64(seedSha256[:8]))
 
 	return &dkgRetryLoop{
-		memberIndex:          memberIndex,
-		selectedOperators:    selectedOperators,
-		inactiveOperatorsSet: make(map[chain.Address]bool),
-		chainConfig:          chainConfig,
-		attemptCounter:       0,
-		attemptStartBlock:    initialStartBlock,
-		randomRetryCounter:   0,
-		randomRetrySeed:      randomRetrySeed,
+		memberIndex:              memberIndex,
+		selectedOperators:        selectedOperators,
+		inactiveOperatorsSet:     make(map[chain.Address]bool),
+		chainConfig:              chainConfig,
+		attemptCounter:           0,
+		attemptStartBlock:        initialStartBlock,
+		randomRetryCounter:       0,
+		randomRetrySeed:          randomRetrySeed,
+		delayBlocks:              5,
+		delayBlocksBumpFrequency: 100,
+		delayBlocksBumpFactor:    20,
 	}
 }
 
@@ -337,9 +347,9 @@ func (drl *dkgRetryLoop) start(
 		// periodically in order to give some additional time for nodes to
 		// recover and re-fill their internal TSS pre-parameters pools.
 		if drl.attemptCounter > 1 {
-			delayBlocks := uint64(5)
-			if drl.attemptCounter%100 == 0 {
-				delayBlocks = 100
+			delayBlocks := drl.delayBlocks
+			if drl.attemptCounter%drl.delayBlocksBumpFrequency == 0 {
+				delayBlocks *= drl.delayBlocksBumpFactor
 			}
 
 			drl.attemptStartBlock = drl.attemptStartBlock +
