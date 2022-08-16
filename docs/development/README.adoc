@@ -8,11 +8,11 @@ toc::[]
 To quickly install and start a client use the following scripts.
 
 === Pre-requirements
-* <<local-t-network.adoc,Set up local T network>> 
-For development purposes, it is convenient to set up a local Ethereum client with
-a group of connected peers. A note-taken walkthrough covers the entire process
+For development purposes, it is convenient to set up a local Ethereum client with a group of connected peers. A note-taken walkthrough <<local-t-network.adoc,[set up local T network]>>  covers the entire process
 including setting up a local Ethereum client, deploying T contracts and
-configuring T peers.
+configuring T peers. +
+
+Additionaly, to start a client we need to provide config options either by creating a config file or passing the required parameters. For simple installation using a config file please refer to a <<sample_config_file,sample configuration>> file that is placed under `/configs/` dir.
 
 === Starting a client
 
@@ -90,8 +90,6 @@ Optional line arguments:
         --authorization-amount: Authorization amount
 ```
 
-=== Starting a client
-
 Afer executing `install.sh` and `initialize.sh` now you can run `./scripts/start.sh`
 to start a client. It will prompt you to chose from the available config files that
 should match the one chosen for `./scripts/initialize.sh`. Please refer to
@@ -111,9 +109,9 @@ Command line arguments:
         --config-dir-path: Path to a client configuration files
 ```
 
-==== Configuration
+=== Configuration
 
-===== Application
+==== Application
 
 The client expects configuration options to be specified in a config file or passed
 as parameters. If you specify an option by using a parameter on the command line,
@@ -128,27 +126,27 @@ run command with the `--config` flag. Example:
 
 Configuration files in formats TOML, YAML and JSON are supported.
 
-====== Operator's Ethereum Key File
+==== Operator's Ethereum Key File
 
 Ethereum Key File is expected to be encrypted with a password. The password has
 to be provided in prompt after the client starts or configured as environment
 variable `KEEP_ETHEREUM_PASSWORD`.
 
-====== Command-line Options
+==== Command-line Options
 
 [source,bash,role=small]
 ----
 include::cmd-help[]
 ----
 
-====== Sample Config File
+==== Sample Config File [[sample_config_file]]
 
 [source,toml,role=small]
 ----
 include::../../configs/config.toml.SAMPLE[]
 ----
 
-===== Network
+=== Network
 
 Default port mappings.
 
