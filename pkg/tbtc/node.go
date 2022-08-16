@@ -183,14 +183,14 @@ func (n *node) joinDKGIfEligible(seed *big.Int, startBlockNumber uint64) {
 
 				err = dkg.Publish(
 					logger,
+					publicationStartBlock,
 					memberIndex,
+					blockCounter,
+					broadcastChannel,
 					membershipValidator,
 					submissionConfig,
-					result,
-					broadcastChannel,
 					n.chain,
-					blockCounter,
-					publicationStartBlock,
+					result,
 				)
 				if err != nil {
 					// Result publication failed. It means that either the result this

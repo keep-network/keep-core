@@ -141,14 +141,14 @@ type ResultHandler interface {
 // from other members and verifies them, and submits the DKG result.
 func Publish(
 	logger log.StandardLogger,
+	publicationStartBlock uint64,
 	memberIndex group.MemberIndex,
+	blockCounter chain.BlockCounter,
+	channel net.BroadcastChannel,
 	membershipValidator *group.MembershipValidator,
 	submissionConfig *SubmissionConfig,
-	result *Result,
-	channel net.BroadcastChannel,
 	resultHandler ResultHandler,
-	blockCounter chain.BlockCounter,
-	startBlockHeight uint64,
+	result *Result,
 ) error {
 	initialState := &resultSigningState{
 		channel:       channel,
@@ -163,12 +163,12 @@ func Publish(
 		),
 		result:                  result,
 		signatureMessages:       make([]*dkgResultHashSignatureMessage, 0),
-		signingStartBlockHeight: startBlockHeight,
+		signingStartBlockHeight: publicationStartBlock,
 	}
 
 	stateMachine := state.NewMachine(logger, channel, blockCounter, initialState)
 
-	lastState, _, err := stateMachine.Execute(startBlockHeight)
+	lastState, _, err := stateMachine.Execute(publicationStartBlock)
 	if err != nil {
 		return err
 	}
