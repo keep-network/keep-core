@@ -11,12 +11,12 @@ import (
 // PreParams represents tECDSA DKG pre-parameters that were not yet consumed
 // by DKG protocol execution.
 type PreParams struct {
-	data keygen.LocalPreParams
+	data *keygen.LocalPreParams
 }
 
 // NewPreParams constructs a new instance of tECDSA DKG pre-parameters based on
 // the generated numbers.
-func NewPreParams(data keygen.LocalPreParams) *PreParams {
+func NewPreParams(data *keygen.LocalPreParams) *PreParams {
 	return &PreParams{data}
 }
 
@@ -24,7 +24,7 @@ func NewPreParams(data keygen.LocalPreParams) *PreParams {
 // entries up to the pool size. When an entry is pulled from the pool it
 // will generate a new entry.
 type tssPreParamsPool struct {
-	*miner.ParameterPool[keygen.LocalPreParams]
+	*miner.ParameterPool[PreParams]
 	logger log.StandardLogger
 }
 
@@ -45,7 +45,7 @@ func newTssPreParamsPool(
 		generationConcurrency,
 	)
 
-	newPreParamsFn := func() *keygen.LocalPreParams {
+	newPreParamsFn := func() *PreParams {
 		preParams, err := keygen.GeneratePreParams(
 			generationTimeout,
 			generationConcurrency,
@@ -54,11 +54,11 @@ func newTssPreParamsPool(
 			logger.Errorf("failed to generate TSS pre-params: [%v]", err)
 		}
 
-		return preParams
+		return &PreParams{preParams}
 	}
 
 	return &tssPreParamsPool{
-		miner.NewParameterPool[keygen.LocalPreParams](
+		miner.NewParameterPool[PreParams](
 			logger,
 			&miner.Miner{},   // TODO: pass as a parameter
 			&noPersistence{}, // TODO: replace with a real persistence
@@ -73,12 +73,12 @@ func newTssPreParamsPool(
 // TODO: temporary solution, will be replaced with a real persistence
 type noPersistence struct{}
 
-func (np *noPersistence) Save(pp *keygen.LocalPreParams) error {
+func (np *noPersistence) Save(pp *PreParams) error {
 	return nil
 }
-func (np *noPersistence) Delete(pp *keygen.LocalPreParams) error {
+func (np *noPersistence) Delete(pp *PreParams) error {
 	return nil
 }
-func (np *noPersistence) ReadAll() ([]*keygen.LocalPreParams, error) {
-	return []*keygen.LocalPreParams{}, nil
+func (np *noPersistence) ReadAll() ([]*PreParams, error) {
+	return []*PreParams{}, nil
 }

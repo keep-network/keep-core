@@ -215,7 +215,7 @@ func (pp *PreParams) Unmarshal(bytes []byte) error {
 		return fmt.Errorf("failed to unmarshal pre params: [%v]", err)
 	}
 
-	pp.data = keygen.LocalPreParams{
+	pp.data = &keygen.LocalPreParams{
 		NTildei: new(big.Int).SetBytes(pbPreParams.Data.GetNTilde()),
 		H1i:     new(big.Int).SetBytes(pbPreParams.Data.GetH1I()),
 		H2i:     new(big.Int).SetBytes(pbPreParams.Data.GetH2I()),

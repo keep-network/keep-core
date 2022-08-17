@@ -231,7 +231,7 @@ func TestPreParamsMarshalling(t *testing.T) {
 	// for LocalPreParams not used yet in DKG
 	localPreParams.PaillierSK = nil
 
-	preParams := NewPreParams(localPreParams)
+	preParams := NewPreParams(&localPreParams)
 
 	unmarshaled := &PreParams{}
 

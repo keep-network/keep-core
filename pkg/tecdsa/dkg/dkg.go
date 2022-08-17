@@ -69,7 +69,7 @@ func (e *Executor) Execute(
 		dishonestThreshold,
 		membershipValidator,
 		seed.Text(16), // TODO: Should change on retry.,
-		preParams,
+		preParams.data,
 	)
 
 	initialState := &ephemeralKeyPairGenerationState{
