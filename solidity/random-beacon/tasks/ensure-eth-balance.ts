@@ -1,6 +1,7 @@
 import { task, types } from "hardhat/config"
 
-import { parseValue, TASK_SEND_ETH } from "./send-eth"
+import { TASK_SEND_ETH } from "./send-eth"
+import { parseValue } from "./utils"
 
 const TASK_ENSURE_ETH_BALANCE = "ensure-eth-balance"
 
