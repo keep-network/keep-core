@@ -1,10 +1,11 @@
 package dkg
 
 import (
-	"github.com/keep-network/keep-core/pkg/internal/testutils"
 	"sync"
 	"testing"
 	"time"
+
+	"github.com/keep-network/keep-core/pkg/internal/testutils"
 
 	"github.com/binance-chain/tss-lib/ecdsa/keygen"
 )
@@ -18,7 +19,7 @@ func TestTSSPreParamsPool(t *testing.T) {
 	testutils.AssertIntsEqual(t, "init length", 0, len(tssPool.pool))
 
 	// Initial pool pump.
-	go tssPool.pumpPool()
+	go tssPool.pumpPool(0)
 	time.Sleep(100 * time.Millisecond)
 
 	testutils.AssertIntsEqual(t, "start length", poolSize, len(tssPool.pool))
@@ -55,7 +56,7 @@ func TestTSSPreParamsPoolEmpty(t *testing.T) {
 		// for an entry.
 		time.Sleep(100 * time.Millisecond)
 
-		tssPool.pumpPool()
+		tssPool.pumpPool(0)
 	}()
 
 	// Get entry from pool.
@@ -96,7 +97,7 @@ func TestTSSPreParamsPoolConcurrent(t *testing.T) {
 
 	time.Sleep(100 * time.Millisecond)
 
-	go tssPool.pumpPool()
+	go tssPool.pumpPool(0)
 
 	waitGroup.Wait()
 

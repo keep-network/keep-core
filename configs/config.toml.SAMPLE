@@ -87,6 +87,14 @@ Port = 8080
 [diagnostics]
 Port = 8081
 
+# Uncomment to overwrite default values for TBTC config.
+#
+# [tbtc]
+# PreParamsPoolSize = 50
+# PreParamsGenerationTimeout = "2m"
+# PreParamsGenerationDelay = "10s"
+# PreParamsGenerationConcurrency = 1
+
 # Developer options to work with locally deployed contracts
 #
 # [developer]

@@ -73,36 +73,6 @@ var cmdFlagsTests = map[string]struct {
 		expectedValueFromFlag: big.NewInt(1250000000000000000),
 		defaultValue:          big.NewInt(500000000000000000),
 	},
-	"developer.randomBeaconAddress": {
-		readValueFunc: func(c *config.Config) interface{} {
-			address, _ := c.Ethereum.ContractAddress(ethereum.RandomBeaconContractName)
-			return address.String()
-		},
-		flagName:              "--developer.randomBeaconAddress",
-		flagValue:             "0x3b292d36468bc7fd481987818ef2e4d28202a0ed",
-		expectedValueFromFlag: "0x3B292D36468bC7fd481987818ef2E4d28202A0eD",
-		defaultValue:          ethereumBeacon.RandomBeaconAddress,
-	},
-	"developer.walletRegistryAddress": {
-		readValueFunc: func(c *config.Config) interface{} {
-			address, _ := c.Ethereum.ContractAddress(ethereum.WalletRegistryContractName)
-			return address.String()
-		},
-		flagName:              "--developer.walletRegistryAddress",
-		flagValue:             "0xb76707515c3f908411b5211863a7581589a1e31f",
-		expectedValueFromFlag: "0xB76707515C3f908411B5211863A7581589a1E31F",
-		defaultValue:          ethereumEcdsa.WalletRegistryAddress,
-	},
-	"developer.tokenStakingAddress": {
-		readValueFunc: func(c *config.Config) interface{} {
-			address, _ := c.Ethereum.ContractAddress(ethereum.TokenStakingContractName)
-			return address.String()
-		},
-		flagName:              "--developer.tokenStakingAddress",
-		flagValue:             "0x861b021462e7864a7413edf0113030b892978617",
-		expectedValueFromFlag: "0x861b021462e7864a7413edF0113030B892978617",
-		defaultValue:          ethereumThreshold.TokenStakingAddress,
-	},
 	"network.port": {
 		readValueFunc:         func(c *config.Config) interface{} { return c.LibP2P.Port },
 		flagName:              "--network.port",
@@ -170,6 +140,64 @@ var cmdFlagsTests = map[string]struct {
 		flagValue:             "6089",
 		expectedValueFromFlag: 6089,
 		defaultValue:          8081,
+	},
+	"tbtc.preParamsPoolSize": {
+		readValueFunc:         func(c *config.Config) interface{} { return c.Tbtc.PreParamsPoolSize },
+		flagName:              "--tbtc.preParamsPoolSize",
+		flagValue:             "75",
+		expectedValueFromFlag: 75,
+		defaultValue:          50,
+	},
+	"tbtc.preParamsGenerationTimeout": {
+		readValueFunc:         func(c *config.Config) interface{} { return c.Tbtc.PreParamsGenerationTimeout },
+		flagName:              "--tbtc.preParamsGenerationTimeout",
+		flagValue:             "2m30s",
+		expectedValueFromFlag: 150 * time.Second,
+		defaultValue:          120 * time.Second,
+	},
+	"tbtc.preParamsGenerationDelay": {
+		readValueFunc:         func(c *config.Config) interface{} { return c.Tbtc.PreParamsGenerationDelay },
+		flagName:              "--tbtc.preParamsGenerationDelay",
+		flagValue:             "1m",
+		expectedValueFromFlag: 60 * time.Second,
+		defaultValue:          10 * time.Second,
+	},
+	"tbtc.preParamsGenerationConcurrency": {
+		readValueFunc:         func(c *config.Config) interface{} { return c.Tbtc.PreParamsGenerationConcurrency },
+		flagName:              "--tbtc.preParamsGenerationConcurrency",
+		flagValue:             "2",
+		expectedValueFromFlag: 2,
+		defaultValue:          1,
+	},
+	"developer.randomBeaconAddress": {
+		readValueFunc: func(c *config.Config) interface{} {
+			address, _ := c.Ethereum.ContractAddress(ethereum.RandomBeaconContractName)
+			return address.String()
+		},
+		flagName:              "--developer.randomBeaconAddress",
+		flagValue:             "0x3b292d36468bc7fd481987818ef2e4d28202a0ed",
+		expectedValueFromFlag: "0x3B292D36468bC7fd481987818ef2E4d28202A0eD",
+		defaultValue:          ethereumBeacon.RandomBeaconAddress,
+	},
+	"developer.walletRegistryAddress": {
+		readValueFunc: func(c *config.Config) interface{} {
+			address, _ := c.Ethereum.ContractAddress(ethereum.WalletRegistryContractName)
+			return address.String()
+		},
+		flagName:              "--developer.walletRegistryAddress",
+		flagValue:             "0xb76707515c3f908411b5211863a7581589a1e31f",
+		expectedValueFromFlag: "0xB76707515C3f908411B5211863A7581589a1E31F",
+		defaultValue:          ethereumEcdsa.WalletRegistryAddress,
+	},
+	"developer.tokenStakingAddress": {
+		readValueFunc: func(c *config.Config) interface{} {
+			address, _ := c.Ethereum.ContractAddress(ethereum.TokenStakingContractName)
+			return address.String()
+		},
+		flagName:              "--developer.tokenStakingAddress",
+		flagValue:             "0x861b021462e7864a7413edf0113030b892978617",
+		expectedValueFromFlag: "0x861b021462e7864a7413edF0113030B892978617",
+		defaultValue:          ethereumThreshold.TokenStakingAddress,
 	},
 }
 

@@ -2,9 +2,10 @@ package dkg
 
 import (
 	"fmt"
+	"time"
+
 	"github.com/binance-chain/tss-lib/ecdsa/keygen"
 	"github.com/ipfs/go-log"
-	"time"
 )
 
 // tssPreParamsPool is a pool holding TSS pre parameters. It autogenerates
@@ -21,11 +22,22 @@ func newTssPreParamsPool(
 	logger log.StandardLogger,
 	poolSize int,
 	generationTimeout time.Duration,
+	generationDelay time.Duration,
+	generationConcurrency int,
 ) *tssPreParamsPool {
-	logger.Infof("TSS pre-parameters target pool size is [%v]", poolSize)
+	logger.Infof(
+		"TSS pre-parameters target pool size is [%d], generation timeout is [%s], generation delay is [%v], and concurrency level is [%d]",
+		poolSize,
+		generationTimeout,
+		generationDelay,
+		generationConcurrency,
+	)
 
 	newPreParamsFn := func() (*keygen.LocalPreParams, error) {
-		preParams, err := keygen.GeneratePreParams(generationTimeout)
+		preParams, err := keygen.GeneratePreParams(
+			generationTimeout,
+			generationConcurrency,
+		)
 		if err != nil {
 			return nil, fmt.Errorf(
 				"failed to generate TSS pre-params: [%v]",
@@ -42,12 +54,12 @@ func newTssPreParamsPool(
 		newPreParamsFn: newPreParamsFn,
 	}
 
-	go tssPreParamsPool.pumpPool()
+	go tssPreParamsPool.pumpPool(generationDelay)
 
 	return tssPreParamsPool
 }
 
-func (t *tssPreParamsPool) pumpPool() {
+func (t *tssPreParamsPool) pumpPool(generationDelay time.Duration) {
 	for {
 		t.logger.Info("generating new tss pre parameters")
 
@@ -71,6 +83,11 @@ func (t *tssPreParamsPool) pumpPool() {
 		)
 
 		t.pool <- params
+
+		// Wait some time after delivering the result regardless if the delivery
+		// took some time or not. We want to ensure all other processes of the
+		// client receive access to CPU.
+		time.Sleep(generationDelay)
 	}
 }
 
