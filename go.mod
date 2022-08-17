@@ -5,7 +5,7 @@ go 1.18
 replace github.com/urfave/cli => github.com/keep-network/cli v1.20.0
 
 require (
-	github.com/binance-chain/tss-lib v1.3.3
+	github.com/bnb-chain/tss-lib v1.3.4-0.20220817120442-2f5f2e4fb79e
 	github.com/btcsuite/btcd v0.22.1
 	github.com/btcsuite/btcd/btcec/v2 v2.2.0
 	github.com/ethereum/go-ethereum v1.10.19

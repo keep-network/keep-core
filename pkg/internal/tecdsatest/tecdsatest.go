@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 	"runtime"
 
-	"github.com/binance-chain/tss-lib/ecdsa/keygen"
+	"github.com/bnb-chain/tss-lib/ecdsa/keygen"
 )
 
 const (
@@ -17,9 +17,12 @@ const (
 
 // LoadPrivateKeyShareTestFixtures loads tECDSA private key share test data.
 // Code copied from:
-//   https://github.com/bnb-chain/tss-lib/blob/v1.3.3/ecdsa/keygen/test_utils.go#L36
+//
+//	https://github.com/bnb-chain/tss-lib/blob/v1.3.3/ecdsa/keygen/test_utils.go#L36
+//
 // Test data JSON files copied from:
-//   https://github.com/bnb-chain/tss-lib/tree/v1.3.3/test/_ecdsa_fixtures
+//
+//	https://github.com/bnb-chain/tss-lib/tree/v1.3.3/test/_ecdsa_fixtures
 func LoadPrivateKeyShareTestFixtures(count int) (
 	[]keygen.LocalPartySaveData,
 	error,

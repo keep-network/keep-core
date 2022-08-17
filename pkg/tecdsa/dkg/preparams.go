@@ -3,7 +3,7 @@ package dkg
 import (
 	"time"
 
-	"github.com/binance-chain/tss-lib/ecdsa/keygen"
+	"github.com/bnb-chain/tss-lib/ecdsa/keygen"
 	"github.com/ipfs/go-log"
 	"github.com/keep-network/keep-core/pkg/miner"
 )
