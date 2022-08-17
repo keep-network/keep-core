@@ -12,7 +12,7 @@ on:
   # We intend to use `workflow dispatch` in two different situations/paths:
   # 1. If a workflow will be manually dispatched from branch named
   #    `dapp-development`, workflow will deploy the contracts on the selected
-  #    testnet and publish them to NPM registry with `dappdev<environment>`
+  #    testnet and publish them to NPM registry with `dapp-dev-<environment>`
   #    suffix and `dapp-development-<environment>` tag. Such packages are meant
   #    to be used locally by the team developing Threshold Token dApp and may
   #    contain contracts that have different values from the ones used on
@@ -364,7 +364,7 @@ jobs:
         uses: keep-network/npm-version-bump@v2
         with:
           work-dir: solidity/random-beacon
-          environment: dappdev${{ github.event.inputs.environment }}
+          environment: dapp-dev-${{ github.event.inputs.environment }}
           branch: ${{ github.ref }}
           commit: ${{ github.sha }}
 
