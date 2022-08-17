@@ -125,11 +125,6 @@ type ResultSubmitter interface {
 	) error
 }
 
-type ResultHandler interface {
-	ResultSigner
-	ResultSubmitter
-}
-
 // Publish signs the DKG result for the given group member, collects signatures
 // from other members and verifies them, and submits the DKG result.
 func Publish(
@@ -139,13 +134,15 @@ func Publish(
 	blockCounter chain.BlockCounter,
 	channel net.BroadcastChannel,
 	membershipValidator *group.MembershipValidator,
-	resultHandler ResultHandler,
+	resultSigner ResultSigner,
+	resultSubmitter ResultSubmitter,
 	result *Result,
 ) error {
 	initialState := &resultSigningState{
-		channel:       channel,
-		resultHandler: resultHandler,
-		blockCounter:  blockCounter,
+		channel:         channel,
+		resultSigner:    resultSigner,
+		resultSubmitter: resultSubmitter,
+		blockCounter:    blockCounter,
 		member: newSigningMember(
 			logger,
 			memberIndex,

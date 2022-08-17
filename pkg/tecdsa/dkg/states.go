@@ -453,9 +453,10 @@ func (fs *finalizationState) result() *Result {
 // preferred DKG result (by hashing their DKG result, and then signing the
 // result), and share this over the broadcast channel.
 type resultSigningState struct {
-	channel       net.BroadcastChannel
-	resultHandler ResultHandler
-	blockCounter  chain.BlockCounter
+	channel         net.BroadcastChannel
+	resultSigner    ResultSigner
+	resultSubmitter ResultSubmitter
+	blockCounter    chain.BlockCounter
 
 	member *signingMember
 
@@ -475,7 +476,7 @@ func (rss *resultSigningState) ActiveBlocks() uint64 {
 }
 
 func (rss *resultSigningState) Initiate(ctx context.Context) error {
-	message, err := rss.member.SignDKGResult(rss.result, rss.resultHandler)
+	message, err := rss.member.SignDKGResult(rss.result, rss.resultSigner)
 	if err != nil {
 		return err
 	}
@@ -521,7 +522,8 @@ func (rss *resultSigningState) Receive(msg net.Message) error {
 func (rss *resultSigningState) Next() state.State {
 	return &signaturesVerificationState{
 		channel:           rss.channel,
-		resultHandler:     rss.resultHandler,
+		resultSigner:      rss.resultSigner,
+		resultSubmitter:   rss.resultSubmitter,
 		blockCounter:      rss.blockCounter,
 		member:            rss.member,
 		result:            rss.result,
@@ -541,9 +543,10 @@ func (rss *resultSigningState) MemberIndex() group.MemberIndex {
 // all validSignatures that valid submitters sent over the broadcast channel in
 // the previous state. Valid validSignatures are added to the state.
 type signaturesVerificationState struct {
-	channel       net.BroadcastChannel
-	resultHandler ResultHandler
-	blockCounter  chain.BlockCounter
+	channel         net.BroadcastChannel
+	resultSigner    ResultSigner
+	resultSubmitter ResultSubmitter
+	blockCounter    chain.BlockCounter
 
 	member *signingMember
 
@@ -566,7 +569,7 @@ func (svs *signaturesVerificationState) ActiveBlocks() uint64 {
 func (svs *signaturesVerificationState) Initiate(ctx context.Context) error {
 	signatures, err := svs.member.VerifyDKGResultSignatures(
 		svs.signatureMessages,
-		svs.resultHandler,
+		svs.resultSigner,
 	)
 	if err != nil {
 		return err
@@ -582,9 +585,9 @@ func (svs *signaturesVerificationState) Receive(msg net.Message) error {
 
 func (svs *signaturesVerificationState) Next() state.State {
 	return &resultSubmissionState{
-		channel:       svs.channel,
-		resultHandler: svs.resultHandler,
-		blockCounter:  svs.blockCounter,
+		channel:         svs.channel,
+		resultSubmitter: svs.resultSubmitter,
+		blockCounter:    svs.blockCounter,
 		member: newSubmittingMember(
 			svs.member.logger,
 			svs.member.memberIndex,
@@ -604,9 +607,9 @@ func (svs *signaturesVerificationState) MemberIndex() group.MemberIndex {
 // resultSubmissionState is the state during which group members submit the dkg
 // result to the chain. This state concludes the DKG protocol.
 type resultSubmissionState struct {
-	channel       net.BroadcastChannel
-	resultHandler ResultHandler
-	blockCounter  chain.BlockCounter
+	channel         net.BroadcastChannel
+	resultSubmitter ResultSubmitter
+	blockCounter    chain.BlockCounter
 
 	member *submittingMember
 
@@ -633,7 +636,7 @@ func (rss *resultSubmissionState) Initiate(ctx context.Context) error {
 		rss.result,
 		rss.signatures,
 		rss.submissionStartBlockHeight,
-		rss.resultHandler,
+		rss.resultSubmitter,
 	)
 }
 

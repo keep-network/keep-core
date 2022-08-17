@@ -183,6 +183,7 @@ func (n *node) joinDKGIfEligible(seed *big.Int, startBlockNumber uint64) {
 					broadcastChannel,
 					membershipValidator,
 					n.chain,
+					n.chain,
 					result,
 				)
 				if err != nil {
