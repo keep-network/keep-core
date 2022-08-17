@@ -454,6 +454,14 @@ func (sm *signingMember) shouldAcceptMessage(
 	return !isMessageFromSelf && isSenderValid && isSenderAccepted
 }
 
+// initializeSubmittingMember performs a transition of a member state to the
+// next phase of the protocol.
+func (sm *signingMember) initializeSubmittingMember() *submittingMember {
+	return &submittingMember{
+		signingMember: sm,
+	}
+}
+
 // newSigningMember creates a new signingMember in the initial state.
 func newSigningMember(
 	logger log.StandardLogger,
@@ -469,14 +477,11 @@ func newSigningMember(
 	}
 }
 
-// SubmittingMember represents a member submitting a DKG result to the
+// submittingMember represents a member submitting a DKG result to the
 // blockchain along with signatures received from other group members supporting
 // the result.
 type submittingMember struct {
-	logger log.StandardLogger
-
-	// Represents the member's position for submission.
-	memberIndex group.MemberIndex
+	*signingMember
 }
 
 // SubmitDKGResult sends a result, which contains the group public key and
@@ -505,17 +510,6 @@ func (sm *submittingMember) SubmitDKGResult(
 		startBlockNumber,
 		sm.memberIndex,
 	)
-}
-
-// newSubmittingMember creates a new submittingMember in the initial state.
-func newSubmittingMember(
-	logger log.StandardLogger,
-	memberIndex group.MemberIndex,
-) *submittingMember {
-	return &submittingMember{
-		logger:      logger,
-		memberIndex: memberIndex,
-	}
 }
 
 // generateTssPartiesIDs converts group member ID to parties ID suitable for

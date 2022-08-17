@@ -588,12 +588,9 @@ func (svs *signaturesVerificationState) Next() state.State {
 		channel:         svs.channel,
 		resultSubmitter: svs.resultSubmitter,
 		blockCounter:    svs.blockCounter,
-		member: newSubmittingMember(
-			svs.member.logger,
-			svs.member.memberIndex,
-		),
-		result:     svs.result,
-		signatures: svs.validSignatures,
+		member:          svs.member.initializeSubmittingMember(),
+		result:          svs.result,
+		signatures:      svs.validSignatures,
 		submissionStartBlockHeight: svs.verificationStartBlockHeight +
 			svs.DelayBlocks() +
 			svs.ActiveBlocks(),
