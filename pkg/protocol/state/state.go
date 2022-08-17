@@ -39,7 +39,7 @@ type State interface {
 
 	// Next performs a state transition to the next state of the protocol.
 	// If the current state is the last one, nextState returns `nil`.
-	Next() State
+	Next() (State, error)
 
 	// MemberIndex returns the index of member associated with the current state.
 	MemberIndex() group.MemberIndex

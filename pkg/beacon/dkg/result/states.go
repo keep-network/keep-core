@@ -96,7 +96,7 @@ func (rss *resultSigningState) Receive(msg net.Message) error {
 	return nil
 }
 
-func (rss *resultSigningState) Next() signingState {
+func (rss *resultSigningState) Next() (state.State, error) {
 	// set up the verification state, phase 13 part 2
 	return &signaturesVerificationState{
 		channel:           rss.channel,
@@ -109,7 +109,7 @@ func (rss *resultSigningState) Next() signingState {
 		verificationStartBlockHeight: rss.signingStartBlockHeight +
 			rss.DelayBlocks() +
 			rss.ActiveBlocks(),
-	}
+	}, nil
 
 }
 
@@ -162,7 +162,7 @@ func (svs *signaturesVerificationState) Receive(msg net.Message) error {
 	return nil
 }
 
-func (svs *signaturesVerificationState) Next() signingState {
+func (svs *signaturesVerificationState) Next() (state.State, error) {
 	return &resultSubmissionState{
 		channel:      svs.channel,
 		beaconChain:  svs.beaconChain,
@@ -173,7 +173,7 @@ func (svs *signaturesVerificationState) Next() signingState {
 		submissionStartBlockHeight: svs.verificationStartBlockHeight +
 			svs.DelayBlocks() +
 			svs.ActiveBlocks(),
-	}
+	}, nil
 
 }
 
@@ -224,9 +224,9 @@ func (rss *resultSubmissionState) Receive(msg net.Message) error {
 	return nil
 }
 
-func (rss *resultSubmissionState) Next() signingState {
+func (rss *resultSubmissionState) Next() (state.State, error) {
 	// returning nil represents this is the final state
-	return nil
+	return nil, nil
 }
 
 func (rss *resultSubmissionState) MemberIndex() group.MemberIndex {
