@@ -1,0 +1,15 @@
+name: Configure Tenderly
+description: "Configures Tenderly token in a config file"
+inputs:
+  token:
+    description: Tenderly Access Key
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - name: Configure Tenderly
+      shell: bash
+      run: |
+        mkdir $HOME/.tenderly && touch $HOME/.tenderly/config.yaml
+        echo 'access_key: ${{ inputs.token }}' > $HOME/.tenderly/config.yaml
