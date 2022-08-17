@@ -15,8 +15,8 @@ task(TASK_SEND_ETH, "Send ether to an address")
     types.string
   )
   .addParam(
-    "value",
-    'Value to transfer with unit, e.g. "0.5 ether", "100 gwei"',
+    "amount",
+    'Amount to transfer with unit, e.g. "0.5 ether", "100 gwei"',
     undefined,
     types.string
   )
@@ -26,7 +26,7 @@ task(TASK_SEND_ETH, "Send ether to an address")
       ? await hre.ethers.getSigner(args.from)
       : (await hre.ethers.getSigners())[0]
 
-    const value: BigNumber = parseValue(args.value, hre)
+    const amount: BigNumber = parseValue(args.amount, hre)
 
     // FIXME: `validate` will fail for badly checksummed addresses
     // see: https://github.com/ethers-io/ethers.js/discussions/3261
@@ -34,11 +34,11 @@ task(TASK_SEND_ETH, "Send ether to an address")
 
     const tx: TransactionResponse = await from.sendTransaction({
       to,
-      value,
+      value: amount,
     })
 
     console.log(
-      `sending ${value} wei from ${await from.getAddress()} to ${to} in tx ${
+      `sending ${amount} wei from ${await from.getAddress()} to ${to} in tx ${
         tx.hash
       }...`
     )
