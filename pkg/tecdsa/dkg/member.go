@@ -326,10 +326,7 @@ type signingMember struct {
 func (sm *signingMember) SignDKGResult(
 	dkgResult *Result,
 	resultSigner ResultSigner,
-) (
-	*resultSignatureMessage,
-	error,
-) {
+) (*resultSignatureMessage, error) {
 	publicKey, signature, resultHash, err := resultSigner.SignResult(dkgResult)
 	if err != nil {
 		return nil, fmt.Errorf("failed to sign DKG result [%v]", err)
