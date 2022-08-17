@@ -35,9 +35,10 @@ task(
       Array.from(args.addresses).map(hre.helpers.address.validate)
     )
 
+    const expectedBalance = parseValue(args.targetBalance, hre)
+
     // eslint-disable-next-line no-restricted-syntax
     for (const address of addresses) {
-      const expectedBalance = parseValue(args.targetBalance, hre)
       const currentBalance = await ethers.provider.getBalance(address)
 
       console.log(
