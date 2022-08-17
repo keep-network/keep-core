@@ -28,7 +28,6 @@ on:
       environment:
         description: "Environment (network) for workflow execution, e.g. `goerli`"
         required: false
-        default: "dev"
       upstream_builds:
         description: "Upstream builds"
         required: false
