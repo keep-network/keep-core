@@ -4,15 +4,11 @@ import (
 	"crypto/elliptic"
 	"fmt"
 
-	"github.com/keep-network/keep-core/pkg/protocol/group"
 	"github.com/keep-network/keep-core/pkg/tecdsa"
 )
 
 // Result of distributed key generation protocol.
 type Result struct {
-	// Group represents the group state, including members, disqualified,
-	// and inactive members.
-	Group *group.Group
 	// Misbehaved members are all members either inactive or disqualified.
 	// Misbehaved members are represented as a slice of bytes for optimizing
 	// on-chain storage. Each byte is an inactive or disqualified member index.

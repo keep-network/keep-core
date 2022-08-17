@@ -254,6 +254,12 @@ func (fm *finalizingMember) MarkInactiveMembers(
 	filter.FlushInactiveMembers()
 }
 
+// Group returns information on the members group, including all the group
+// member IDs and the misbehaving members.
+func (fm *finalizingMember) Group() *group.Group {
+	return fm.group
+}
+
 // Result can be either the successful computation of the distributed key
 // generation process or a notification of failure.
 func (fm *finalizingMember) Result() *Result {
@@ -289,7 +295,6 @@ func (fm *finalizingMember) Result() *Result {
 	}
 
 	return &Result{
-		Group: fm.group,
 		Misbehaved: misbehavedMembersAsBytes(
 			fm.group.InactiveMemberIDs(),
 			fm.group.DisqualifiedMemberIDs(),

@@ -144,7 +144,7 @@ func (n *node) joinDKGIfEligible(seed *big.Int, startBlockNumber uint64) {
 			memberIndex := index + 1
 
 			go func() {
-				result, endBlock, err := n.dkgExecutor.Execute(
+				result, group, endBlock, err := n.dkgExecutor.Execute(
 					seed,
 					startBlockNumber,
 					memberIndex,
@@ -165,7 +165,7 @@ func (n *node) joinDKGIfEligible(seed *big.Int, startBlockNumber uint64) {
 				}
 
 				publicationStartBlock := endBlock
-				operatingMemberIDs := result.Group.OperatingMemberIDs()
+				operatingMemberIDs := group.OperatingMemberIDs()
 				dkgResultChannel := make(chan *DKGResultSubmittedEvent)
 
 				dkgResultSubscription := n.chain.OnDKGResultSubmitted(
@@ -184,6 +184,7 @@ func (n *node) joinDKGIfEligible(seed *big.Int, startBlockNumber uint64) {
 					membershipValidator,
 					n.chain,
 					n.chain,
+					group,
 					result,
 				)
 				if err != nil {
@@ -201,9 +202,10 @@ func (n *node) joinDKGIfEligible(seed *big.Int, startBlockNumber uint64) {
 
 					if operatingMemberIDs, err = n.decideMemberFate(
 						memberIndex,
-						result,
 						dkgResultChannel,
 						publicationStartBlock,
+						group,
+						result,
 					); err != nil {
 						logger.Errorf(
 							"failed to handle DKG result publishing failure: [%v]",
@@ -262,9 +264,10 @@ func (n *node) joinDKGIfEligible(seed *big.Int, startBlockNumber uint64) {
 // misbehaving by the group.
 func (n *node) decideMemberFate(
 	memberIndex group.MemberIndex,
-	result *dkg.Result,
 	dkgResultChannel chan *DKGResultSubmittedEvent,
 	publicationStartBlock uint64,
+	membersGroup *group.Group,
+	result *dkg.Result,
 ) ([]group.MemberIndex, error) {
 	dkgResultEvent, err := n.waitForDkgResultEvent(
 		dkgResultChannel,
@@ -306,7 +309,7 @@ func (n *node) decideMemberFate(
 	// Construct a new view of the operating members according to the accepted
 	// DKG result.
 	operatingMemberIDs := make([]group.MemberIndex, 0)
-	for _, memberID := range result.Group.MemberIDs() {
+	for _, memberID := range membersGroup.MemberIDs() {
 		if _, isMisbehaved := misbehavedSet[memberID]; !isMisbehaved {
 			operatingMemberIDs = append(operatingMemberIDs, memberID)
 		}
