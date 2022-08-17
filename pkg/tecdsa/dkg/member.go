@@ -1,7 +1,6 @@
 package dkg
 
 import (
-	"crypto/elliptic"
 	"fmt"
 	"github.com/keep-network/keep-core/pkg/tecdsa"
 	"math/big"
@@ -289,22 +288,13 @@ func (fm *finalizingMember) Result() *Result {
 		return bytes
 	}
 
-	privateKeyShare := tecdsa.NewPrivateKeyShare(fm.tssResult)
-	publicKey := privateKeyShare.PublicKey()
-
 	return &Result{
 		Group: fm.group,
 		Misbehaved: misbehavedMembersAsBytes(
 			fm.group.InactiveMemberIDs(),
 			fm.group.DisqualifiedMemberIDs(),
 		),
-		// TODO: Check how the public key should be obtained
-		GroupPublicKeyBytes: elliptic.Marshal(
-			publicKey.Curve,
-			publicKey.X,
-			publicKey.Y,
-		),
-		PrivateKeyShare: privateKeyShare,
+		PrivateKeyShare: tecdsa.NewPrivateKeyShare(fm.tssResult),
 	}
 }
 
