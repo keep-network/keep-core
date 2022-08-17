@@ -36,6 +36,7 @@ func newNode(
 		logger,
 		config.PreParamsPoolSize,
 		config.PreParamsGenerationTimeout,
+		config.PreParamsGenerationDelay,
 		config.PreParamsGenerationConcurrency,
 	)
 

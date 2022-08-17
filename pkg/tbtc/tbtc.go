@@ -21,6 +21,7 @@ const ProtocolName = "tbtc"
 const (
 	DefaultPreParamsPoolSize              = 50
 	DefaultPreParamsGenerationTimeout     = 2 * time.Minute
+	DefaultPreParamsGenerationDelay       = 10 * time.Second
 	DefaultPreParamsGenerationConcurrency = 1
 )
 
@@ -30,6 +31,8 @@ type Config struct {
 	PreParamsPoolSize int
 	// Timeout for pre-parameters generation for tECDSA.
 	PreParamsGenerationTimeout time.Duration
+	// The delay between generating new pre-params for tECDSA.
+	PreParamsGenerationDelay time.Duration
 	// Concurrency level for pre-parameters generation for tECDSA.
 	PreParamsGenerationConcurrency int
 }

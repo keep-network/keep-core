@@ -24,6 +24,7 @@ func NewExecutor(
 	logger log.StandardLogger,
 	preParamsPoolSize int,
 	preParamsGenerationTimeout time.Duration,
+	preParamsGenerationDelay time.Duration,
 	preParamsGenerationConcurrency int,
 ) *Executor {
 	return &Executor{
@@ -32,6 +33,7 @@ func NewExecutor(
 			logger,
 			preParamsPoolSize,
 			preParamsGenerationTimeout,
+			preParamsGenerationDelay,
 			preParamsGenerationConcurrency,
 		),
 	}
