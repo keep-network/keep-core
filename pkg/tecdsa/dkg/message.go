@@ -111,5 +111,5 @@ func (drhsm *resultSignatureMessage) SenderID() group.MemberIndex {
 // Type returns a string describing an resultSignatureMessage type for
 // marshaling purposes.
 func (drhsm *resultSignatureMessage) Type() string {
-	return messageTypePrefix + "result_hash_signature_message"
+	return messageTypePrefix + "result_signature_message"
 }
