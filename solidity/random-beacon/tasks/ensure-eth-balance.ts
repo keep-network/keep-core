@@ -15,8 +15,8 @@ task(
     types.string
   )
   .addPositionalParam(
-    "balance",
-    'Minimum ether balance the addresses are expected to hold, e.g. "0.5 ether", "100 gwei"',
+    "target-balance",
+    'Expected target balances of the addresses, e.g. "0.5 ether", "100 gwei"',
     undefined,
     types.string
   )
@@ -37,7 +37,7 @@ task(
 
     // eslint-disable-next-line no-restricted-syntax
     for (const address of addresses) {
-      const expectedBalance = parseValue(args.balance, hre)
+      const expectedBalance = parseValue(args.targetBalance, hre)
       const currentBalance = await ethers.provider.getBalance(address)
 
       console.log(
