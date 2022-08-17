@@ -85,24 +85,6 @@ func (e *Executor) Execute(
 	return finalizationState.result(), endBlockNumber, nil
 }
 
-// StartedDKGEvent represents a DKG start event.
-type StartedDKGEvent struct {
-	Seed        *big.Int
-	BlockNumber uint64
-}
-
-// ResultSubmissionEvent represents a DKG result submission event. It is emitted
-// after a submitted DKG result is positively validated on the chain. It contains
-// the index of the member who submitted the result and a final public key of
-// the group.
-type ResultSubmissionEvent struct {
-	MemberIndex         uint32
-	GroupPublicKeyBytes []byte
-	Misbehaved          []uint8
-
-	BlockNumber uint64
-}
-
 // ResultSigner is the interface that provides ability to sign the DKG result
 // and verify the results received from other group members.
 type ResultSigner interface {

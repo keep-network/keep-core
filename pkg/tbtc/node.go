@@ -166,10 +166,10 @@ func (n *node) joinDKGIfEligible(seed *big.Int, startBlockNumber uint64) {
 
 				publicationStartBlock := endBlock
 				operatingMemberIDs := result.Group.OperatingMemberIDs()
-				dkgResultChannel := make(chan *dkg.ResultSubmissionEvent)
+				dkgResultChannel := make(chan *DKGResultSubmittedEvent)
 
 				dkgResultSubscription := n.chain.OnDKGResultSubmitted(
-					func(event *dkg.ResultSubmissionEvent) {
+					func(event *DKGResultSubmittedEvent) {
 						dkgResultChannel <- event
 					},
 				)
@@ -263,7 +263,7 @@ func (n *node) joinDKGIfEligible(seed *big.Int, startBlockNumber uint64) {
 func (n *node) decideMemberFate(
 	memberIndex group.MemberIndex,
 	result *dkg.Result,
-	dkgResultChannel chan *dkg.ResultSubmissionEvent,
+	dkgResultChannel chan *DKGResultSubmittedEvent,
 	publicationStartBlock uint64,
 ) ([]group.MemberIndex, error) {
 	dkgResultEvent, err := n.waitForDkgResultEvent(
@@ -318,9 +318,9 @@ func (n *node) decideMemberFate(
 // waitForDkgResultEvent waits for the DKG result submission event. It times out
 // and returns error if the DKG result event is not emitted on time.
 func (n *node) waitForDkgResultEvent(
-	dkgResultChannel chan *dkg.ResultSubmissionEvent,
+	dkgResultChannel chan *DKGResultSubmittedEvent,
 	publicationStartBlock uint64,
-) (*dkg.ResultSubmissionEvent, error) {
+) (*DKGResultSubmittedEvent, error) {
 	config := n.chain.GetConfig()
 
 	timeoutBlock := publicationStartBlock + dkg.PrePublicationBlocks() +

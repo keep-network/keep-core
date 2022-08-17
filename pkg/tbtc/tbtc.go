@@ -9,7 +9,6 @@ import (
 	"github.com/keep-network/keep-common/pkg/persistence"
 	"github.com/keep-network/keep-core/pkg/net"
 	"github.com/keep-network/keep-core/pkg/sortition"
-	"github.com/keep-network/keep-core/pkg/tecdsa/dkg"
 )
 
 // TODO: Unit tests for `tbtc.go`.
@@ -56,7 +55,7 @@ func Initialize(
 		)
 	}
 
-	_ = chain.OnDKGStarted(func(event *dkg.StartedDKGEvent) {
+	_ = chain.OnDKGStarted(func(event *DKGStartedEvent) {
 		go func() {
 			if ok := deduplicator.notifyDKGStarted(
 				event.Seed,

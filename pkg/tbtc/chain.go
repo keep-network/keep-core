@@ -27,10 +27,10 @@ type DistributedKeyGenerationChain interface {
 	// OnDKGStarted registers a callback that is invoked when an on-chain
 	// notification of the DKG process start is seen.
 	OnDKGStarted(
-		func(event *dkg.StartedDKGEvent),
+		func(event *DKGStartedEvent),
 	) subscription.EventSubscription
 	OnDKGResultSubmitted(
-		func(event *dkg.ResultSubmissionEvent),
+		func(event *DKGResultSubmittedEvent),
 	) subscription.EventSubscription
 	SubmitResult(
 		result *dkg.Result,
@@ -38,6 +38,24 @@ type DistributedKeyGenerationChain interface {
 		startBlockNumber uint64,
 		participantIndex group.MemberIndex,
 	) error
+}
+
+// DKGStartedEvent represents a DKG start event.
+type DKGStartedEvent struct {
+	Seed        *big.Int
+	BlockNumber uint64
+}
+
+// DKGResultSubmittedEvent represents a DKG result submission event. It is emitted
+// after a submitted DKG result is positively validated on the chain. It contains
+// the index of the member who submitted the result and a final public key of
+// the group.
+type DKGResultSubmittedEvent struct {
+	MemberIndex         uint32
+	GroupPublicKeyBytes []byte
+	Misbehaved          []uint8
+
+	BlockNumber uint64
 }
 
 // GroupRegistrationInterface defines the subset of the TBTC chain interface
