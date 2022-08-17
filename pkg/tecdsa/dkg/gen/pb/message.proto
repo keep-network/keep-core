@@ -32,4 +32,5 @@ message ResultSignatureMessage {
     bytes resultHash = 2;
     bytes signature = 3;
     bytes publicKey = 4;
+    string sessionID = 5;
 }

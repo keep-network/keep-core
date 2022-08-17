@@ -313,6 +313,8 @@ type signingMember struct {
 	// Validator allowing to check public key and member index
 	// against group members
 	membershipValidator *group.MembershipValidator
+	// Identifier of the particular DKG session this member is part of.
+	sessionID string
 	// Hash of DKG result preferred by the current participant.
 	preferredDKGResultHash ResultHash
 	// Signature over preferredDKGResultHash calculated by the member.
@@ -342,6 +344,7 @@ func (sm *signingMember) SignDKGResult(
 		resultHash: resultHash,
 		signature:  signature,
 		publicKey:  publicKey,
+		sessionID:  sm.sessionID,
 	}, nil
 }
 
@@ -463,12 +466,14 @@ func newSigningMember(
 	memberIndex group.MemberIndex,
 	group *group.Group,
 	membershipValidator *group.MembershipValidator,
+	sessionID string,
 ) *signingMember {
 	return &signingMember{
 		logger:              logger,
 		memberIndex:         memberIndex,
 		group:               group,
 		membershipValidator: membershipValidator,
+		sessionID:           sessionID,
 	}
 }
 

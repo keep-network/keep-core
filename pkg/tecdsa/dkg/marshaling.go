@@ -190,18 +190,19 @@ func unmarshalPublicKeyMap(
 
 // Marshal converts this resultSignatureMessage to a byte array suitable
 // for network communication.
-func (d *resultSignatureMessage) Marshal() ([]byte, error) {
+func (rsm *resultSignatureMessage) Marshal() ([]byte, error) {
 	return (&pb.ResultSignatureMessage{
-		SenderID:   uint32(d.senderID),
-		ResultHash: d.resultHash[:],
-		Signature:  d.signature,
-		PublicKey:  d.publicKey,
+		SenderID:   uint32(rsm.senderID),
+		ResultHash: rsm.resultHash[:],
+		Signature:  rsm.signature,
+		PublicKey:  rsm.publicKey,
+		SessionID:  rsm.sessionID,
 	}).Marshal()
 }
 
 // Unmarshal converts a byte array produced by Marshal to a
 // resultSignatureMessage.
-func (d *resultSignatureMessage) Unmarshal(bytes []byte) error {
+func (rsm *resultSignatureMessage) Unmarshal(bytes []byte) error {
 	pbMsg := pb.ResultSignatureMessage{}
 	if err := pbMsg.Unmarshal(bytes); err != nil {
 		return err
@@ -210,16 +211,17 @@ func (d *resultSignatureMessage) Unmarshal(bytes []byte) error {
 	if err := validateMemberIndex(pbMsg.SenderID); err != nil {
 		return err
 	}
-	d.senderID = group.MemberIndex(pbMsg.SenderID)
+	rsm.senderID = group.MemberIndex(pbMsg.SenderID)
 
 	resultHash, err := ResultHashFromBytes(pbMsg.ResultHash)
 	if err != nil {
 		return err
 	}
-	d.resultHash = resultHash
+	rsm.resultHash = resultHash
 
-	d.signature = pbMsg.Signature
-	d.publicKey = pbMsg.PublicKey
+	rsm.signature = pbMsg.Signature
+	rsm.publicKey = pbMsg.PublicKey
+	rsm.sessionID = pbMsg.SessionID
 
 	return nil
 }

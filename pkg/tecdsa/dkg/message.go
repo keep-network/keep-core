@@ -101,6 +101,7 @@ type resultSignatureMessage struct {
 	resultHash ResultHash
 	signature  []byte
 	publicKey  []byte
+	sessionID  string
 }
 
 // SenderID returns protocol-level identifier of the message sender.
