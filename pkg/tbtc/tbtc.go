@@ -3,6 +3,8 @@ package tbtc
 import (
 	"context"
 	"fmt"
+	"time"
+
 	"github.com/ipfs/go-log"
 	"github.com/keep-network/keep-common/pkg/persistence"
 	"github.com/keep-network/keep-core/pkg/net"
@@ -16,6 +18,25 @@ var logger = log.Logger("keep-tbtc")
 // ProtocolName denotes the name of the protocol defined by this package.
 const ProtocolName = "tbtc"
 
+const (
+	DefaultPreParamsPoolSize              = 50
+	DefaultPreParamsGenerationTimeout     = 2 * time.Minute
+	DefaultPreParamsGenerationDelay       = 10 * time.Second
+	DefaultPreParamsGenerationConcurrency = 1
+)
+
+// Config carries the config for tBTC protocol.
+type Config struct {
+	// The size of the pre-parameters pool for tECDSA.
+	PreParamsPoolSize int
+	// Timeout for pre-parameters generation for tECDSA.
+	PreParamsGenerationTimeout time.Duration
+	// The delay between generating new pre-params for tECDSA.
+	PreParamsGenerationDelay time.Duration
+	// Concurrency level for pre-parameters generation for tECDSA.
+	PreParamsGenerationConcurrency int
+}
+
 // Initialize kicks off the TBTC by initializing internal state, ensuring
 // preconditions like staking are met, and then kicking off the internal TBTC
 // implementation. Returns an error if this failed.
@@ -24,8 +45,9 @@ func Initialize(
 	chain Chain,
 	netProvider net.Provider,
 	persistence persistence.Handle,
+	config Config,
 ) error {
-	node := newNode(chain, netProvider, persistence)
+	node := newNode(chain, netProvider, persistence, config)
 	deduplicator := newDeduplicator()
 
 	err := sortition.MonitorPool(ctx, logger, chain, sortition.DefaultStatusCheckTick)

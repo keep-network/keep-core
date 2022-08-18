@@ -2,32 +2,46 @@ package tbtc
 
 import (
 	"fmt"
+	"math/big"
+
 	"github.com/keep-network/keep-common/pkg/persistence"
-	"github.com/keep-network/keep-core/pkg/ecdsa/dkg"
 	"github.com/keep-network/keep-core/pkg/internal/testutils"
 	"github.com/keep-network/keep-core/pkg/net"
 	"github.com/keep-network/keep-core/pkg/protocol/group"
-	"math/big"
+	"github.com/keep-network/keep-core/pkg/tecdsa/dkg"
 )
 
 // TODO: Unit tests for `node.go`.
 
 // node represents the current state of an ECDSA node.
 type node struct {
-	chain       Chain
-	netProvider net.Provider
-
-	// TODO: Persistence layer.
+	chain          Chain
+	netProvider    net.Provider
+	walletRegistry *walletRegistry
+	dkgExecutor    *dkg.Executor
 }
 
 func newNode(
 	chain Chain,
 	netProvider net.Provider,
 	persistence persistence.Handle,
+	config Config,
 ) *node {
+	walletRegistry := newWalletRegistry(persistence)
+
+	dkgExecutor := dkg.NewExecutor(
+		logger,
+		config.PreParamsPoolSize,
+		config.PreParamsGenerationTimeout,
+		config.PreParamsGenerationDelay,
+		config.PreParamsGenerationConcurrency,
+	)
+
 	return &node{
-		chain:       chain,
-		netProvider: netProvider,
+		chain:          chain,
+		netProvider:    netProvider,
+		walletRegistry: walletRegistry,
+		dkgExecutor:    dkgExecutor,
 	}
 }
 
@@ -42,7 +56,7 @@ func (n *node) joinDKGIfEligible(seed *big.Int, startBlockNumber uint64) {
 		seed,
 	)
 
-	groupMembers, err := n.chain.SelectGroup(seed)
+	selectedSigningGroupOperators, err := n.chain.SelectGroup(seed)
 	if err != nil {
 		logger.Errorf(
 			"failed to select group with seed [0x%x]: [%v]",
@@ -54,10 +68,10 @@ func (n *node) joinDKGIfEligible(seed *big.Int, startBlockNumber uint64) {
 
 	chainConfig := n.chain.GetConfig()
 
-	if len(groupMembers) > chainConfig.GroupSize {
+	if len(selectedSigningGroupOperators) > chainConfig.GroupSize {
 		logger.Errorf(
 			"group size larger than supported: [%v]",
-			len(groupMembers),
+			len(selectedSigningGroupOperators),
 		)
 		return
 	}
@@ -77,9 +91,9 @@ func (n *node) joinDKGIfEligible(seed *big.Int, startBlockNumber uint64) {
 	}
 
 	indexes := make([]uint8, 0)
-	for index, groupMember := range groupMembers {
+	for index, operator := range selectedSigningGroupOperators {
 		// See if we are amongst those chosen
-		if groupMember == operatorAddress {
+		if operator == operatorAddress {
 			indexes = append(indexes, uint8(index))
 		}
 	}
@@ -103,7 +117,7 @@ func (n *node) joinDKGIfEligible(seed *big.Int, startBlockNumber uint64) {
 
 		membershipValidator := group.NewMembershipValidator(
 			&testutils.MockLogger{},
-			groupMembers,
+			selectedSigningGroupOperators,
 			signing,
 		)
 
@@ -128,8 +142,8 @@ func (n *node) joinDKGIfEligible(seed *big.Int, startBlockNumber uint64) {
 			memberIndex := index + 1
 
 			go func() {
-				result, _, err := dkg.Execute(
-					logger,
+				result, _, err := n.dkgExecutor.Execute(
+					seed,
 					startBlockNumber,
 					memberIndex,
 					chainConfig.GroupSize,
@@ -139,6 +153,7 @@ func (n *node) joinDKGIfEligible(seed *big.Int, startBlockNumber uint64) {
 					membershipValidator,
 				)
 				if err != nil {
+					// TODO: Add retries into the mix.
 					logger.Errorf(
 						"[member:%v] failed to execute dkg: [%v]",
 						memberIndex,
@@ -147,15 +162,32 @@ func (n *node) joinDKGIfEligible(seed *big.Int, startBlockNumber uint64) {
 					return
 				}
 
+				// TODO: Snapshot the key material before doing on-chain result
+				//       submission.
+
 				// TODO: Submit the result using the chain layer.
 
-				// TODO: Use the result to create a signer and persist the
-				//       key material using the persistence layer.
-				logger.Infof(
-					"[member:%v] generated [%v] symmetric keys",
+				// TODO: The final `signingGroupOperators` may differ from
+				//       the original `selectedSigningGroupOperators`.
+				//       Consider that when integrating the retry algorithm.
+				signer := newSigner(
+					result.PrivateKeyShare.PublicKey(),
+					selectedSigningGroupOperators,
 					memberIndex,
-					len(result.SymmetricKeys),
+					result.PrivateKeyShare,
 				)
+
+				err = n.walletRegistry.registerSigner(signer)
+				if err != nil {
+					logger.Errorf(
+						"failed to register %s: [%v]",
+						signer,
+						err,
+					)
+					return
+				}
+
+				logger.Infof("registered %s", signer)
 			}()
 		}
 	} else {

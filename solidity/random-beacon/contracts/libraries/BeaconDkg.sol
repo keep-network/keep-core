@@ -26,6 +26,9 @@ library BeaconDkg {
     struct Parameters {
         // Time in blocks during which a submitted result can be challenged.
         uint256 resultChallengePeriodLength;
+        // Extra gas required to be left at the end of the challenge DKG result
+        // transaction.
+        uint256 resultChallengeExtraGas;
         // Time in blocks during which a result is expected to be submitted.
         uint256 resultSubmissionTimeout;
         // Time in blocks during which only the result submitter is allowed to
@@ -425,10 +428,31 @@ library BeaconDkg {
         return (maliciousResultHash, maliciousSubmitter);
     }
 
-    /// @notice Updates DKG-related parmaeters
+    /// @notice Due to EIP150, 1/64 of the gas is not forwarded to the call, and
+    ///         will be kept to execute the remaining operations in the function
+    ///         after the call inside the try-catch.
+    ///
+    ///         To ensure there is no way for the caller to manipulate gas limit
+    ///         in such a way that the call inside try-catch fails with out-of-gas
+    ///         and the rest of the function is executed with the remaining
+    ///         1/64 of gas, we require an extra gas amount to be left at the
+    ///         end of the call to the function challenging DKG result and
+    ///         wrapping the call to BeaconDkgValidator and TokenStaking
+    ///         contracts inside a try-catch.
+    function requireChallengeExtraGas(Data storage self) internal view {
+        require(
+            gasleft() >= self.parameters.resultChallengeExtraGas,
+            "Not enough extra gas left"
+        );
+    }
+
+    /// @notice Updates DKG-related parameters
     /// @param _resultChallengePeriodLength New value of the result challenge
     ///        period length. It is the number of blocks for which a DKG result
     ///        can be challenged.
+    /// @param _resultChallengeExtraGas New value of the result challenge extra
+    ///        gas. It is the extra gas required to be left at the end of the
+    ///        challenge DKG result transaction.
     /// @param _resultSubmissionTimeout New value of the result submission
     ///        timeout in seconds. It is a timeout for a group to provide a DKG
     ///        result.
@@ -438,6 +462,7 @@ library BeaconDkg {
     function setParameters(
         Data storage self,
         uint256 _resultChallengePeriodLength,
+        uint256 _resultChallengeExtraGas,
         uint256 _resultSubmissionTimeout,
         uint256 _submitterPrecedencePeriodLength
     ) internal {
@@ -459,6 +484,7 @@ library BeaconDkg {
         self
             .parameters
             .resultChallengePeriodLength = _resultChallengePeriodLength;
+        self.parameters.resultChallengeExtraGas = _resultChallengeExtraGas;
         self.parameters.resultSubmissionTimeout = _resultSubmissionTimeout;
         self
             .parameters

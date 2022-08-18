@@ -46,6 +46,9 @@ contract RandomBeaconGovernance is Ownable {
     uint256 public newDkgResultChallengePeriodLength;
     uint256 public dkgResultChallengePeriodLengthChangeInitiated;
 
+    uint256 public newDkgResultChallengeExtraGas;
+    uint256 public dkgResultChallengeExtraGasChangeInitiated;
+
     uint256 public newDkgResultSubmissionTimeout;
     uint256 public dkgResultSubmissionTimeoutChangeInitiated;
 
@@ -96,7 +99,7 @@ contract RandomBeaconGovernance is Ownable {
     uint256 public newRelayEntrySubmissionGasOffset;
     uint256 public relayEntrySubmissionGasOffsetChangeInitiated;
 
-    RandomBeacon public randomBeacon;
+    RandomBeacon public immutable randomBeacon;
 
     uint256 public governanceDelay;
 
@@ -146,6 +149,12 @@ contract RandomBeaconGovernance is Ownable {
     event DkgResultChallengePeriodLengthUpdated(
         uint256 dkgResultChallengePeriodLength
     );
+
+    event DkgResultChallengeExtraGasUpdateStarted(
+        uint256 dkgResultChallengeExtraGas,
+        uint256 timestamp
+    );
+    event DkgResultChallengeExtraGasUpdated(uint256 dkgResultChallengeExtraGas);
 
     event DkgResultSubmissionTimeoutUpdateStarted(
         uint256 dkgResultSubmissionTimeout,
@@ -515,6 +524,7 @@ contract RandomBeaconGovernance is Ownable {
             ,
             uint256 groupLifetime,
             uint256 dkgResultChallengePeriodLength,
+            uint256 dkgResultChallengeExtraGas,
             uint256 dkgResultSubmissionTimeout,
             uint256 dkgSubmitterPrecedencePeriodLength
         ) = randomBeacon.groupCreationParameters();
@@ -523,6 +533,7 @@ contract RandomBeaconGovernance is Ownable {
             newGroupCreationFrequency,
             groupLifetime,
             dkgResultChallengePeriodLength,
+            dkgResultChallengeExtraGas,
             dkgResultSubmissionTimeout,
             dkgSubmitterPrecedencePeriodLength
         );
@@ -562,6 +573,7 @@ contract RandomBeaconGovernance is Ownable {
             uint256 groupCreationFrequency,
             ,
             uint256 dkgResultChallengePeriodLength,
+            uint256 dkgResultChallengeExtraGas,
             uint256 dkgResultSubmissionTimeout,
             uint256 dkgSubmitterPrecedencePeriodLength
         ) = randomBeacon.groupCreationParameters();
@@ -570,6 +582,7 @@ contract RandomBeaconGovernance is Ownable {
             groupCreationFrequency,
             newGroupLifetime,
             dkgResultChallengePeriodLength,
+            dkgResultChallengeExtraGas,
             dkgResultSubmissionTimeout,
             dkgSubmitterPrecedencePeriodLength
         );
@@ -613,6 +626,7 @@ contract RandomBeaconGovernance is Ownable {
             uint256 groupCreationFrequency,
             uint256 groupLifetime,
             ,
+            uint256 dkgResultChallengeExtraGas,
             uint256 dkgResultSubmissionTimeout,
             uint256 dkgSubmitterPrecedencePeriodLength
         ) = randomBeacon.groupCreationParameters();
@@ -621,11 +635,58 @@ contract RandomBeaconGovernance is Ownable {
             groupCreationFrequency,
             groupLifetime,
             newDkgResultChallengePeriodLength,
+            dkgResultChallengeExtraGas,
             dkgResultSubmissionTimeout,
             dkgSubmitterPrecedencePeriodLength
         );
         dkgResultChallengePeriodLengthChangeInitiated = 0;
         newDkgResultChallengePeriodLength = 0;
+    }
+
+    /// @notice Begins the DKG result challenge extra gas update process.
+    /// @dev Can be called only by the contract owner.
+    /// @param _newDkgResultChallengeExtraGas New DKG result challenge extra gas
+    function beginDkgResultChallengeExtraGasUpdate(
+        uint256 _newDkgResultChallengeExtraGas
+    ) external onlyOwner {
+        /* solhint-disable not-rely-on-time */
+        newDkgResultChallengeExtraGas = _newDkgResultChallengeExtraGas;
+        dkgResultChallengeExtraGasChangeInitiated = block.timestamp;
+        emit DkgResultChallengeExtraGasUpdateStarted(
+            _newDkgResultChallengeExtraGas,
+            block.timestamp
+        );
+        /* solhint-enable not-rely-on-time */
+    }
+
+    /// @notice Finalizes the DKG result challenge extra gas update process.
+    /// @dev Can be called only by the contract owner, after the governance
+    ///      delay elapses.
+    function finalizeDkgResultChallengeExtraGasUpdate()
+        external
+        onlyOwner
+        onlyAfterGovernanceDelay(dkgResultChallengeExtraGasChangeInitiated)
+    {
+        emit DkgResultChallengeExtraGasUpdated(newDkgResultChallengeExtraGas);
+        (
+            uint256 groupCreationFrequency,
+            uint256 groupLifetime,
+            uint256 dkgResultChallengePeriodLength,
+            ,
+            uint256 dkgResultSubmissionTimeout,
+            uint256 dkgSubmitterPrecedencePeriodLength
+        ) = randomBeacon.groupCreationParameters();
+        // slither-disable-next-line reentrancy-no-eth
+        randomBeacon.updateGroupCreationParameters(
+            groupCreationFrequency,
+            groupLifetime,
+            dkgResultChallengePeriodLength,
+            newDkgResultChallengeExtraGas,
+            dkgResultSubmissionTimeout,
+            dkgSubmitterPrecedencePeriodLength
+        );
+        dkgResultChallengeExtraGasChangeInitiated = 0;
+        newDkgResultChallengeExtraGas = 0;
     }
 
     /// @notice Begins the DKG result submission timeout update
@@ -664,6 +725,7 @@ contract RandomBeaconGovernance is Ownable {
             uint256 groupCreationFrequency,
             uint256 groupLifetime,
             uint256 dkgResultChallengePeriodLength,
+            uint256 dkgResultChallengeExtraGas,
             ,
             uint256 dkgSubmitterPrecedencePeriodLength
         ) = randomBeacon.groupCreationParameters();
@@ -672,6 +734,7 @@ contract RandomBeaconGovernance is Ownable {
             groupCreationFrequency,
             groupLifetime,
             dkgResultChallengePeriodLength,
+            dkgResultChallengeExtraGas,
             newDkgResultSubmissionTimeout,
             dkgSubmitterPrecedencePeriodLength
         );
@@ -717,6 +780,7 @@ contract RandomBeaconGovernance is Ownable {
             uint256 groupCreationFrequency,
             uint256 groupLifetime,
             uint256 dkgResultChallengePeriodLength,
+            uint256 dkgResultChallengeExtraGas,
             uint256 dkgResultSubmissionTimeout,
 
         ) = randomBeacon.groupCreationParameters();
@@ -725,6 +789,7 @@ contract RandomBeaconGovernance is Ownable {
             groupCreationFrequency,
             groupLifetime,
             dkgResultChallengePeriodLength,
+            dkgResultChallengeExtraGas,
             dkgResultSubmissionTimeout,
             newDkgSubmitterPrecedencePeriodLength
         );
@@ -1488,6 +1553,18 @@ contract RandomBeaconGovernance is Ownable {
             getRemainingChangeTime(
                 dkgResultChallengePeriodLengthChangeInitiated
             );
+    }
+
+    /// @notice Get the time remaining until the DKG result challenge extra
+    ///         gas can be updated.
+    /// @return Remaining time in seconds.
+    function getRemainingDkgResultChallengeExtraGasUpdateTime()
+        external
+        view
+        returns (uint256)
+    {
+        return
+            getRemainingChangeTime(dkgResultChallengeExtraGasChangeInitiated);
     }
 
     /// @notice Get the time remaining until the DKG result submission timeout

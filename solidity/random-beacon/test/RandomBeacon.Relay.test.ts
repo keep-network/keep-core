@@ -1924,7 +1924,7 @@ describe("RandomBeacon - Relay", () => {
         })
       })
 
-      context("when group is active but terminated", () => {
+      context("when group was active but got terminated", () => {
         before(async () => {
           await createSnapshot()
 
@@ -1950,7 +1950,7 @@ describe("RandomBeacon - Relay", () => {
               0,
               membersIDs
             )
-          ).to.be.revertedWith("Group must be active and non-terminated")
+          ).to.be.revertedWith("Group is not active")
         })
       })
 
@@ -1989,7 +1989,7 @@ describe("RandomBeacon - Relay", () => {
               0,
               membersIDs
             )
-          ).to.be.revertedWith("Group must be active and non-terminated")
+          ).to.be.revertedWith("Group is not active")
         })
       })
     })

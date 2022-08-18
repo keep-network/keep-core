@@ -1,5 +1,3 @@
-/* eslint-disable no-await-in-loop */
-
 import { ethers, waffle } from "hardhat"
 import { expect } from "chai"
 import { BigNumber } from "ethers"
@@ -29,7 +27,10 @@ export async function genesis(
     ethers.utils.keccak256(
       ethers.utils.solidityPack(
         ["uint256", "uint256"],
-        [await randomBeacon.genesisSeed(), tx.blockNumber]
+        [
+          "31415926535897932384626433832795028841971693993751058209749445923078164062862",
+          tx.blockNumber,
+        ]
       )
     )
   )

@@ -29,12 +29,12 @@ The `+initialize.sh+` script will:
 
 * mint & approve `T` tokens
 * stake `T` tokens
-* increase authorization for `RandomBeacon`
-* register operator
+* increase authorization for `RandomBeacon` and `WalletRegistry` applications
+* register operator for `RandomBeacon` and `WalletRegistry` applications
 
-Please refer to the scripts `help` for available command arguments and environment
+Please refer to the script's `help` for available command arguments and environment
 variables. `./install.sh --help` or `./initialize.sh --help`. Accounts unlocking
-and staking can be run outside of these scripts as standalone hardhat tasks.
+and initialization can be run outside of these scripts as standalone hardhat tasks.
 
 To deploy and initialize contracts:
 
@@ -46,8 +46,8 @@ and the authorizer all have the same addresses as the stake owner. Only the
 `stake-owner` has to be unique for the default setup. The default stake amount is
 `1,000,000 T` tokens. The default authorization amount is the minimum authorization
 amount +
-Ex. if you need to initialize a network with 3 clients with the default setup,
-then run this script 3 times with a different `<address>`.
+Ex. if you need to initialize a network with 3 clients using the default setup,
+then run this script 3 times with a different `--stake-owner <address>`.
 
 
 === Starting a client

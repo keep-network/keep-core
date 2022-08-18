@@ -31,7 +31,7 @@ spec:
         storageClassName: geth-goerli
         resources:
           requests:
-            storage: 100Gi
+            storage: 200Gi
   selector:
     matchLabels:
       app: geth
@@ -52,7 +52,13 @@ spec:
           volumeMounts:
             - name: geth-goerli
               mountPath: /root/.ethereum
-          args: ["--http", "--http.addr=0.0.0.0", "--ws", "-ws.addr=0.0.0.0", "--goerli", "--syncmode=snap"]
+          args:
+            - "--http"
+            - "--http.addr=0.0.0.0"
+            - "--ws"
+            - "--ws.addr=0.0.0.0"
+            - "--goerli"
+            - "--syncmode=snap"
 ---
 apiVersion: v1
 kind: Service
@@ -79,3 +85,5 @@ spec:
       targetPort: 30303
       name: udp-30303
       protocol: UDP
+  type: LoadBalancer
+  loadBalancerIP: "35.238.111.174"

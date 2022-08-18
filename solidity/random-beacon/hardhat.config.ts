@@ -2,6 +2,7 @@ import "@keep-network/hardhat-local-networks-config"
 import "@keep-network/hardhat-helpers"
 import "@nomiclabs/hardhat-ethers"
 import "hardhat-deploy"
+import "@nomiclabs/hardhat-etherscan"
 import "@tenderly/hardhat-tenderly"
 import "@nomiclabs/hardhat-waffle"
 import "hardhat-gas-reporter"
@@ -106,6 +107,9 @@ const config: HardhatUserConfig = {
     username: "thesis",
     project: "",
   },
+  etherscan: {
+    apiKey: process.env.ETHERSCAN_API_KEY,
+  },
   namedAccounts: {
     deployer: {
       default: 1,
@@ -135,7 +139,9 @@ const config: HardhatUserConfig = {
       hardhat: process.env.FORKING_URL ? ["./external/mainnet"] : [],
       // For development environment we expect the local dependencies to be linked
       // with `yarn link` command.
-      // development: ["node_modules/@keep-network/keep-core/artifacts"],
+      development: [
+        "node_modules/@threshold-network/solidity-contracts/deployments/development",
+      ],
       goerli: ["node_modules/@threshold-network/solidity-contracts/artifacts"],
       // mainnet: ["./external/mainnet"],
     },
