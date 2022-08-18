@@ -6,8 +6,8 @@ import (
 
 	"github.com/keep-network/keep-common/pkg/chain/ethereum"
 	"github.com/keep-network/keep-common/pkg/chain/ethereum/ethutil"
+	"github.com/keep-network/keep-common/pkg/cmd/flag"
 	"github.com/keep-network/keep-common/pkg/rate"
-	"github.com/keep-network/keep-core/cmd/flag"
 	"github.com/keep-network/keep-core/config"
 	"github.com/keep-network/keep-core/pkg/metrics"
 	"github.com/keep-network/keep-core/pkg/net/libp2p"
