@@ -14,11 +14,11 @@ import (
 var EthereumCommand *cobra.Command
 
 const ethereumDescription = `The ethereum command allows interacting with Keep's Ethereum
-	contracts directly. Each subcommand corresponds to one contract, and has
-	subcommands corresponding to each method on that contract, which respectively
-	each take parameters based on the contract method's parameters.
+contracts directly. Each subcommand corresponds to one contract, and has subcommands 
+corresponding to each method on that contract, which respectively each take parameters 
+based on the contract method's parameters.
 
-    See the subcommand help for additional details.`
+See the subcommand help for additional details.`
 
 func init() {
 	EthereumCommand = &cobra.Command{
