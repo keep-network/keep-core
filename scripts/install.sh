@@ -10,11 +10,11 @@ DONE_END='\n\n\e[0m'             # new line + reset
 
 KEEP_CORE_PATH=$PWD
 
-LOCAL_BEACON_SOL_PATH="$KEEP_CORE_PATH/solidity/random-beacon"
-LOCAL_ECDSA_SOL_PATH="$KEEP_CORE_PATH/solidity/ecdsa"
+BEACON_SOL_PATH="$KEEP_CORE_PATH/solidity/random-beacon"
+ECDSA_SOL_PATH="$KEEP_CORE_PATH/solidity/ecdsa"
 TMP="$KEEP_CORE_PATH/tmp"
-LOCAL_THRESHOLD_NETWORK_PATH="$TMP/solidity-contracts"
-LOCAL_TBTC_SOL_PATH="$TMP/tbtc-v2/solidity"
+TMP_THRESHOLD_PATH="$TMP/solidity-contracts"
+TMP_TBTC_PATH="$TMP/tbtc-v2"
 OPENZEPPELIN_MANIFEST=".openzeppelin/unknown-*.json"
 # This number should be no less than the highest index assigned to a named account
 # specified in `hardhat.config.ts` configs across all the used projects. Note that
@@ -78,8 +78,8 @@ shift $(expr $OPTIND - 1) # remove options from positional parameters
 
 # Overwrite default properties
 NETWORK=${network:-$NETWORK_DEFAULT}
-TBTC_PATH=${tbtc_path:-"$LOCAL_TBTC_SOL_PATH"}
-THRESHOLD_NETWORK_PATH=${threshold_network_path:-"$LOCAL_THRESHOLD_NETWORK_PATH"}
+TBTC_PATH=${tbtc_path:-""}
+THRESHOLD_PATH=${threshold_network_path:-""}
 SKIP_DEPLOYMENT=${skip_deployment:-false}
 SKIP_CLIENT_BUILD=${skip_client_build:-false}
 
@@ -90,7 +90,7 @@ printf "${LOG_WARNING_START}Make sure you have at least ${REQUIRED_ACCOUNTS_NUMB
 
 printf "Network: $NETWORK\n"
 
-cd $LOCAL_BEACON_SOL_PATH
+cd $BEACON_SOL_PATH
 
 printf "${LOG_START}Installing beacon YARN dependencies...${LOG_END}"
 yarn install
@@ -106,18 +106,20 @@ if [ "$SKIP_DEPLOYMENT" != true ]; then
   # create tmp/ dir for fresh installations
   rm -rf $TMP && mkdir $TMP
 
-  if [ "$THRESHOLD_NETWORK_PATH" = "$LOCAL_THRESHOLD_NETWORK_PATH" ]; then
+  if [ "$THRESHOLD_PATH" = "" ]; then
     cd $TMP
     printf "${LOG_START}Cloning threshold-network/solidity-contracts...${LOG_END}"
     # clone threshold-network/solidity-contracts as a dependency for beacon, ecdsa
     # and tbtc
     git clone https://github.com/threshold-network/solidity-contracts.git
+
+    THRESHOLD_SOL_PATH="$(realpath ./solidity-contracts)"
   else
     printf "${LOG_START}Installing threshold-network/solidity-contracts from the existing local directory...${LOG_END}"
-    LOCAL_THRESHOLD_NETWORK_PATH="$THRESHOLD_NETWORK_PATH"
+    THRESHOLD_SOL_PATH="$THRESHOLD_PATH"
   fi
 
-  cd "$LOCAL_THRESHOLD_NETWORK_PATH"
+  cd "$THRESHOLD_SOL_PATH"
 
   printf "${LOG_START}Building threshold-network/solidity-contracts...${LOG_END}"
   yarn install && yarn clean && yarn build
@@ -131,7 +133,7 @@ if [ "$SKIP_DEPLOYMENT" != true ]; then
   # create export folder
   yarn prepack
 
-  cd $LOCAL_BEACON_SOL_PATH
+  cd $BEACON_SOL_PATH
 
   printf "${LOG_START}Linking threshold-network/solidity-contracts...${LOG_END}"
   yarn link @threshold-network/solidity-contracts
@@ -149,7 +151,7 @@ if [ "$SKIP_DEPLOYMENT" != true ]; then
   # create export folder
   yarn prepack
 
-  cd $LOCAL_ECDSA_SOL_PATH
+  cd $ECDSA_SOL_PATH
   # remove openzeppelin manifest for fresh installation
   rm -rf $OPENZEPPELIN_MANIFEST
 
@@ -172,17 +174,19 @@ if [ "$SKIP_DEPLOYMENT" != true ]; then
   # create export folder
   yarn prepack
 
-  if [ "$TBTC_PATH" = "$LOCAL_TBTC_SOL_PATH" ]; then
+  if [ "$TBTC_PATH" = "" ]; then
     cd $TMP
     printf "${LOG_START}Cloning tbtc...${LOG_END}"
     git clone https://github.com/keep-network/tbtc-v2.git
+
+    TBTC_SOL_PATH="$(realpath ./tbtc-v2/solidity)"
   else
     printf "${LOG_START}Installing tbtc from the existing local directory...${LOG_END}"
 
-    LOCAL_TBTC_SOL_PATH="$TBTC_PATH/solidity"
+    TBTC_SOL_PATH="$TBTC_PATH/solidity"
   fi
 
-  cd "$LOCAL_TBTC_SOL_PATH"
+  cd "$TBTC_SOL_PATH"
 
   yarn install
 
@@ -210,10 +214,10 @@ if [ "$SKIP_CLIENT_BUILD" = false ]; then
 
   cd $KEEP_CORE_PATH
   make local \
-    local_beacon_path=$LOCAL_BEACON_SOL_PATH \
-    local_ecdsa_path=$LOCAL_ECDSA_SOL_PATH \
-    local_threshold_path=$LOCAL_THRESHOLD_NETWORK_PATH \
-    local_tbtc_path=$LOCAL_TBTC_SOL_PATH
+    local_beacon_path=$BEACON_SOL_PATH \
+    local_ecdsa_path=$ECDSA_SOL_PATH \
+    local_threshold_path=$TMP_THRESHOLD_PATH \
+    local_tbtc_path=$TBTC_SOL_PATH
 fi
 
 printf "${DONE_START}Installation completed!${DONE_END}"
