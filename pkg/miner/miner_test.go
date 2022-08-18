@@ -105,6 +105,9 @@ func TestMineStopResume(t *testing.T) {
 	)
 }
 
+// TestMineStopResumeReentrant is similar to TestMineStopResume except that it
+// ensures the same number of calls to Resume() has to be made as the number
+// of calls to Stop() to resume the work.
 func TestMineStopResumeReentrant(t *testing.T) {
 	miner := new(Miner)
 	defer miner.Stop()
