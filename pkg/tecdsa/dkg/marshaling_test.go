@@ -217,3 +217,57 @@ func TestFuzzTssRoundThreeMessage_MarshalingRoundtrip(t *testing.T) {
 func TestFuzzTssRoundThreeMessage_Unmarshaler(t *testing.T) {
 	pbutils.FuzzUnmarshaler(&tssRoundThreeMessage{})
 }
+
+func TestResultSignatureMessage_MarshalingRoundtrip(t *testing.T) {
+	msg := &resultSignatureMessage{
+		senderID:   123,
+		resultHash: [32]byte{0: 11, 10: 22, 31: 33},
+		signature:  []byte("signature"),
+		publicKey:  []byte("pubkey"),
+		sessionID:  "session-1",
+	}
+	unmarshaled := &resultSignatureMessage{}
+
+	err := pbutils.RoundTrip(msg, unmarshaled)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if !reflect.DeepEqual(msg, unmarshaled) {
+		t.Fatalf("unexpected content of unmarshaled message")
+	}
+}
+
+func TestFuzzResultSignatureMessage_MarshalingRoundtrip(t *testing.T) {
+	for i := 0; i < 10; i++ {
+		var (
+			senderID   group.MemberIndex
+			resultHash ResultHash
+			signature  []byte
+			publicKey  []byte
+			sessionID  string
+		)
+
+		f := fuzz.New().NilChance(0.1).NumElements(0, 512)
+
+		f.Fuzz(&senderID)
+		f.Fuzz(&resultHash)
+		f.Fuzz(&signature)
+		f.Fuzz(&publicKey)
+		f.Fuzz(&sessionID)
+
+		message := &resultSignatureMessage{
+			senderID:   senderID,
+			resultHash: resultHash,
+			signature:  signature,
+			publicKey:  publicKey,
+			sessionID:  sessionID,
+		}
+
+		_ = pbutils.RoundTrip(message, &resultSignatureMessage{})
+	}
+}
+
+func TestFuzzResultSignatureMessage_Unmarshaler(t *testing.T) {
+	pbutils.FuzzUnmarshaler(&resultSignatureMessage{})
+}
