@@ -58,34 +58,6 @@ type DKGResultSubmittedEvent struct {
 	BlockNumber uint64
 }
 
-// GroupRegistrationInterface defines the subset of the TBTC chain interface
-// that pertains to the group registration activities.
-type GroupRegistrationInterface interface {
-	// OnGroupRegistered is a callback that is invoked when an on-chain
-	// notification of a new, valid group being registered is seen.
-	OnGroupRegistered(
-		func(groupRegistration *GroupRegistrationEvent),
-	) subscription.EventSubscription
-	// IsGroupRegistered checks if group with the given public key is registered
-	// on-chain.
-	IsGroupRegistered(groupPublicKey []byte) (bool, error)
-	// IsStaleGroup checks if a group with the given public key is considered
-	// as stale on-chain. Group is considered as stale if it is expired and when
-	// its expiration time and potentially executed operation timeout are both
-	// in the past. Stale group is never selected by the chain to any new
-	// operation.
-	IsStaleGroup(groupPublicKey []byte) (bool, error)
-}
-
-// GroupRegistrationEvent represents an event of registering a new group with the
-// given public key.
-// TODO: Adjust to the v2 WalletRegistry contract and rename to GroupRegistered.
-type GroupRegistrationEvent struct {
-	GroupPublicKey []byte
-
-	BlockNumber uint64
-}
-
 // Chain represents the interface that the TBTC module expects to interact
 // with the anchoring blockchain on.
 type Chain interface {
@@ -107,7 +79,6 @@ type Chain interface {
 
 	sortition.Chain
 	GroupSelectionChain
-	GroupRegistrationInterface
 	DistributedKeyGenerationChain
 }
 
