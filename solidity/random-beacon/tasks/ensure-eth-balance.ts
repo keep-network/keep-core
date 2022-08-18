@@ -11,7 +11,7 @@ task(
 )
   .addOptionalParam(
     "from",
-    "Address to send value from",
+    "Address to send the ether from",
     undefined,
     types.string
   )
