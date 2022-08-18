@@ -75,7 +75,7 @@ func initFlags(
 
 // Initialize flag for configuration file path.
 func initConfigFlags(cmd *cobra.Command, configFilePath *string) {
-	cmd.Flags().StringVarP(
+	cmd.PersistentFlags().StringVarP(
 		configFilePath,
 		"config",
 		"c",
