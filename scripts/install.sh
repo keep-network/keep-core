@@ -13,8 +13,6 @@ KEEP_CORE_PATH=$PWD
 BEACON_SOL_PATH="$KEEP_CORE_PATH/solidity/random-beacon"
 ECDSA_SOL_PATH="$KEEP_CORE_PATH/solidity/ecdsa"
 TMP="$KEEP_CORE_PATH/tmp"
-TMP_THRESHOLD_PATH="$TMP/solidity-contracts"
-TMP_TBTC_PATH="$TMP/tbtc-v2"
 OPENZEPPELIN_MANIFEST=".openzeppelin/unknown-*.json"
 # This number should be no less than the highest index assigned to a named account
 # specified in `hardhat.config.ts` configs across all the used projects. Note that
@@ -216,7 +214,7 @@ if [ "$SKIP_CLIENT_BUILD" = false ]; then
   make local \
     local_beacon_path=$BEACON_SOL_PATH \
     local_ecdsa_path=$ECDSA_SOL_PATH \
-    local_threshold_path=$TMP_THRESHOLD_PATH \
+    local_threshold_path=$THRESHOLD_SOL_PATH \
     local_tbtc_path=$TBTC_SOL_PATH
 fi
 
