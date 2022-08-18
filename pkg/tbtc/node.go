@@ -20,6 +20,7 @@ type node struct {
 	netProvider    net.Provider
 	walletRegistry *walletRegistry
 	dkgExecutor    *dkg.Executor
+	protocolLatch  *generator.ProtocolLatch
 }
 
 func newNode(
@@ -40,11 +41,15 @@ func newNode(
 		config.PreParamsGenerationConcurrency,
 	)
 
+	latch := generator.NewProtocolLatch()
+	scheduler.RegisterProtocol(latch)
+
 	return &node{
 		chain:          chain,
 		netProvider:    netProvider,
 		walletRegistry: walletRegistry,
 		dkgExecutor:    dkgExecutor,
+		protocolLatch:  latch,
 	}
 }
 
@@ -145,6 +150,9 @@ func (n *node) joinDKGIfEligible(seed *big.Int, startBlockNumber uint64) {
 			memberIndex := index + 1
 
 			go func() {
+				n.protocolLatch.Lock()
+				defer n.protocolLatch.Unlock()
+
 				result, _, err := n.dkgExecutor.Execute(
 					seed,
 					startBlockNumber,

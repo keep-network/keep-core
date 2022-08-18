@@ -112,6 +112,7 @@ func start(cmd *cobra.Command) error {
 		beaconChain,
 		netProvider,
 		beaconPersistence,
+		scheduler,
 	)
 	if err != nil {
 		return fmt.Errorf("error initializing beacon: [%v]", err)
