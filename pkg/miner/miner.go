@@ -1,6 +1,7 @@
 package miner
 
 import (
+	"context"
 	"sync"
 
 	"github.com/ipfs/go-log"
@@ -31,8 +32,8 @@ const (
 type Miner struct {
 	state   state
 	latch   sync.WaitGroup
-	workers []func()
-	stops   []chan interface{}
+	workers []func(context.Context)
+	stops   []func()
 
 	mutex sync.Mutex
 }
@@ -40,7 +41,10 @@ type Miner struct {
 // Mine takes the worker function and starts the computations in a separate
 // goroutine if the miner status is "working". Otherwise, when the miner status
 // is "stopped", the worker function is scheduled for execution later.
-func (m *Miner) Mine(miningFn func()) {
+// The function accepts the context and is required to stop the execution if
+// the context is done. The function will be called in a loop until the
+// miner is stopped.
+func (m *Miner) Mine(miningFn func(context.Context)) {
 	m.mutex.Lock()
 	defer m.mutex.Unlock()
 
@@ -51,9 +55,9 @@ func (m *Miner) Mine(miningFn func()) {
 	}
 }
 
-// Stop asks all worker functions to stop their work. Note that there is no
-// guarantee the worker function will stop immediately but the miner will not
-// call the worker function again until the miner's work is resumed.
+// Stop asks all worker functions to stop their work. The context passed to
+// the function is cancelled and no further calls to the function are done
+// until the miner work is resumed.
 // Stop can be called multiple times. Each call increases a count on the
 // internal latch by one. To resume the work, Resume() function needs to be as
 // many times as Stop(). This way, several goroutines can stop the computations
@@ -75,7 +79,7 @@ func (m *Miner) Stop() {
 	m.state = stopped
 
 	for _, stop := range m.stops {
-		stop <- struct{}{}
+		stop()
 	}
 	m.stops = nil
 }
@@ -107,17 +111,16 @@ func (m *Miner) Resume() {
 	}
 }
 
-func (m *Miner) startWorker(miningFn func()) {
-	stopChan := make(chan interface{})
-	m.stops = append(m.stops, stopChan)
+func (m *Miner) startWorker(miningFn func(context.Context)) {
+	ctx, cancelFn := context.WithCancel(context.Background())
+	m.stops = append(m.stops, cancelFn)
 
 	go func() {
 		for {
-			select {
-			case <-stopChan:
-				return
-			default:
-				miningFn()
+			// do the iteration step only if the context is not yet done, no
+			// matter the reason (cancelled or timed out)
+			if ctx.Err() == nil {
+				miningFn(ctx)
 			}
 		}
 	}()

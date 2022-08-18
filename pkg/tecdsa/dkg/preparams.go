@@ -1,6 +1,7 @@
 package dkg
 
 import (
+	"context"
 	"time"
 
 	"github.com/bnb-chain/tss-lib/ecdsa/keygen"
@@ -45,9 +46,12 @@ func newTssPreParamsPool(
 		generationConcurrency,
 	)
 
-	newPreParamsFn := func() *PreParams {
-		preParams, err := keygen.GeneratePreParams(
-			generationTimeout,
+	newPreParamsFn := func(ctx context.Context) *PreParams {
+		timingOutCtx, cancel := context.WithTimeout(ctx, generationTimeout)
+		defer cancel()
+
+		preParams, err := keygen.GeneratePreParamsWithContext(
+			timingOutCtx,
 			generationConcurrency,
 		)
 		if err != nil {

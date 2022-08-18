@@ -1,6 +1,7 @@
 package miner
 
 import (
+	"context"
 	"math/big"
 	"testing"
 	"time"
@@ -20,10 +21,10 @@ func TestMineStop(t *testing.T) {
 	number1 := big.NewInt(0)
 	number2 := big.NewInt(0)
 
-	miner.Mine(func() {
+	miner.Mine(func(context.Context) {
 		number1.Add(number1, one)
 	})
-	miner.Mine(func() {
+	miner.Mine(func(context.Context) {
 		number2.Add(number2, one)
 	})
 
@@ -59,6 +60,42 @@ func TestMineStop(t *testing.T) {
 	)
 }
 
+// TestMineStopContext covers the same situation as TestMineStop except that
+// it ensures if the context passed to the function is cancelled when the work
+// is stopped.
+func TestMineStopContext(t *testing.T) {
+	miner := new(Miner)
+
+	cancelled1 := false
+	cancelled2 := false
+
+	miner.Mine(func(ctx context.Context) {
+		// this simulates a long-running task
+		<-ctx.Done()
+		cancelled1 = true
+	})
+	miner.Mine(func(ctx context.Context) {
+		// this simulates a long-running task
+		<-ctx.Done()
+		cancelled2 = true
+	})
+
+	// give some time for the miner to perform computations
+	time.Sleep(10 * time.Millisecond)
+
+	// send the stop signal and give the miner some time to stop computations
+	miner.Stop()
+	time.Sleep(100 * time.Millisecond)
+
+	// ensure context got cancelled
+	if !cancelled1 {
+		t.Errorf("expected context to be cancelled")
+	}
+	if !cancelled2 {
+		t.Errorf("expected context to be cancelled")
+	}
+}
+
 // TestMineStopResume tests the situation when two new worker functions are
 // added to a miner in a working state. Then, the miner is stopped and after
 // some time its work is resumed. The test ensures the worker functions resume
@@ -70,10 +107,10 @@ func TestMineStopResume(t *testing.T) {
 	number1 := big.NewInt(0)
 	number2 := big.NewInt(0)
 
-	miner.Mine(func() {
+	miner.Mine(func(context.Context) {
 		number1.Add(number1, one)
 	})
-	miner.Mine(func() {
+	miner.Mine(func(context.Context) {
 		number2.Add(number2, one)
 	})
 
@@ -115,10 +152,10 @@ func TestMineStopResumeReentrant(t *testing.T) {
 	number1 := big.NewInt(0)
 	number2 := big.NewInt(0)
 
-	miner.Mine(func() {
+	miner.Mine(func(context.Context) {
 		number1.Add(number1, one)
 	})
-	miner.Mine(func() {
+	miner.Mine(func(context.Context) {
 		number2.Add(number2, one)
 	})
 
@@ -182,10 +219,10 @@ func TestMineStopResumeStop(t *testing.T) {
 	number1 := big.NewInt(0)
 	number2 := big.NewInt(0)
 
-	miner.Mine(func() {
+	miner.Mine(func(context.Context) {
 		number1.Add(number1, one)
 	})
-	miner.Mine(func() {
+	miner.Mine(func(context.Context) {
 		number2.Add(number2, one)
 	})
 
@@ -227,10 +264,10 @@ func TestStopMineResume(t *testing.T) {
 	number1 := big.NewInt(0)
 	number2 := big.NewInt(0)
 
-	miner.Mine(func() {
+	miner.Mine(func(context.Context) {
 		number1.Add(number1, one)
 	})
-	miner.Mine(func() {
+	miner.Mine(func(context.Context) {
 		number2.Add(number2, one)
 	})
 
@@ -239,8 +276,10 @@ func TestStopMineResume(t *testing.T) {
 	testutils.AssertBigIntsEqual(t, "computation result", big.NewInt(0), number2)
 
 	miner.Resume()
-	// give some time for the miner to perform computations
-	time.Sleep(10 * time.Millisecond)
+	// give some time for the miner to perform computations;
+	// given the goroutines are started after Resume call, we are giving this
+	// test a bit more time than others
+	time.Sleep(250 * time.Millisecond)
 
 	// ensure computations started
 	testutils.AssertBigIntNonZero(t, "computation result", number1)

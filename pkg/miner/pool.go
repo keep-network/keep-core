@@ -1,6 +1,7 @@
 package miner
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -34,7 +35,7 @@ func NewParameterPool[T any](
 	miner *Miner,
 	persistence Persistence[T],
 	targetSize int,
-	generateFn func() *T,
+	generateFn func(context.Context) *T,
 	generateDelay time.Duration,
 ) *ParameterPool[T] {
 	pool := make(chan *T, targetSize)
@@ -47,10 +48,10 @@ func NewParameterPool[T any](
 		pool <- parameter
 	}
 
-	miner.Mine(func() {
+	miner.Mine(func(ctx context.Context) {
 		start := time.Now()
 
-		generated := generateFn()
+		generated := generateFn(ctx)
 
 		err := persistence.Save(generated)
 		if err != nil {
