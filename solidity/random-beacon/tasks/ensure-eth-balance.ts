@@ -15,7 +15,7 @@ task(
     undefined,
     types.string
   )
-  .addPositionalParam(
+  .addParam(
     "target-balance",
     'Expected target balances of the addresses, e.g. "0.5 ether", "100 gwei"',
     undefined,
