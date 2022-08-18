@@ -3,7 +3,8 @@ package dkg
 import (
 	"context"
 	"fmt"
-	"github.com/binance-chain/tss-lib/tss"
+
+	"github.com/bnb-chain/tss-lib/tss"
 	"github.com/keep-network/keep-core/pkg/crypto/ephemeral"
 	"github.com/keep-network/keep-core/pkg/protocol/group"
 )

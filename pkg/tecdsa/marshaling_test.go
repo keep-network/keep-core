@@ -5,7 +5,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/binance-chain/tss-lib/crypto"
+	"github.com/bnb-chain/tss-lib/crypto"
 	"github.com/keep-network/keep-core/pkg/internal/pbutils"
 	"github.com/keep-network/keep-core/pkg/internal/tecdsatest"
 	"github.com/keep-network/keep-core/pkg/internal/testutils"
