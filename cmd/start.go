@@ -12,7 +12,6 @@ import (
 	"github.com/keep-network/keep-core/pkg/metrics"
 	"github.com/keep-network/keep-core/pkg/net"
 
-	"github.com/ipfs/go-log"
 	"github.com/keep-network/keep-common/pkg/persistence"
 	"github.com/keep-network/keep-core/pkg/beacon"
 	"github.com/keep-network/keep-core/pkg/chain"
@@ -23,12 +22,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var (
-	// StartCommand contains the definition of the start command-line subcommand.
-	StartCommand *cobra.Command
-
-	logger = log.Logger("keep-start")
-)
+// StartCommand contains the definition of the start command-line subcommand.
+var StartCommand *cobra.Command
 
 func init() {
 	StartCommand = &cobra.Command{
