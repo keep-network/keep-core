@@ -1,4 +1,3 @@
-/* eslint-disable no-await-in-loop */
 import { task } from "hardhat/config"
 
 import type { HttpNetworkConfig } from "hardhat/types"
