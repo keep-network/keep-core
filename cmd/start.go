@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/keep-network/keep-core/pkg/generator"
 	"github.com/keep-network/keep-core/pkg/tbtc"
 
 	"github.com/keep-network/keep-core/config"
@@ -104,6 +105,9 @@ func start(cmd *cobra.Command) error {
 		return fmt.Errorf("cannot initialize tbtc persistence: [%w]", err)
 	}
 
+	// TODO: pass actual protocol implementations
+	scheduler := generator.StartScheduler([]generator.Protocol{})
+
 	err = beacon.Initialize(
 		ctx,
 		beaconChain,
@@ -119,6 +123,7 @@ func start(cmd *cobra.Command) error {
 		tbtcChain,
 		netProvider,
 		tbtcPersistence,
+		scheduler,
 		clientConfig.Tbtc,
 	)
 	if err != nil {

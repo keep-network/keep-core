@@ -8,6 +8,7 @@ import (
 	"github.com/ipfs/go-log"
 
 	"github.com/keep-network/keep-core/pkg/chain"
+	"github.com/keep-network/keep-core/pkg/generator"
 	"github.com/keep-network/keep-core/pkg/net"
 	"github.com/keep-network/keep-core/pkg/protocol/group"
 	"github.com/keep-network/keep-core/pkg/protocol/state"
@@ -22,6 +23,7 @@ type Executor struct {
 // NewExecutor creates a new Executor instance.
 func NewExecutor(
 	logger log.StandardLogger,
+	scheduler *generator.Scheduler,
 	preParamsPoolSize int,
 	preParamsGenerationTimeout time.Duration,
 	preParamsGenerationDelay time.Duration,
@@ -31,6 +33,7 @@ func NewExecutor(
 		logger: logger,
 		tssPreParamsPool: newTssPreParamsPool(
 			logger,
+			scheduler,
 			preParamsPoolSize,
 			preParamsGenerationTimeout,
 			preParamsGenerationDelay,

@@ -1,4 +1,4 @@
-package miner
+package generator
 
 import (
 	"context"
@@ -22,8 +22,8 @@ type Persistence[T any] interface {
 // function up to the pool size. Parameters are stored in the cache and
 // persisted using the provided persistence layer to survive client restarts.
 // When a parameter is pulled from the pool, the pool starts generating a new
-// parameter automatically. The pool submits the work to the provided miner
-// instance and can be controlled by the miner.
+// parameter automatically. The pool submits the work to the provided scheduler
+// instance and can be controlled by the scheduler.
 type ParameterPool[T any] struct {
 	persistence Persistence[T]
 	pool        chan *T
@@ -32,7 +32,7 @@ type ParameterPool[T any] struct {
 // NewParameterPool creates a new instance of ParameterPool.
 func NewParameterPool[T any](
 	logger log.StandardLogger,
-	miner *Miner,
+	scheduler *Scheduler,
 	persistence Persistence[T],
 	targetSize int,
 	generateFn func(context.Context) *T,
@@ -48,7 +48,7 @@ func NewParameterPool[T any](
 		pool <- parameter
 	}
 
-	miner.Mine(func(ctx context.Context) {
+	scheduler.compute(func(ctx context.Context) {
 		start := time.Now()
 
 		generated := generateFn(ctx)

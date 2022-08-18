@@ -7,6 +7,7 @@ import (
 
 	"github.com/ipfs/go-log"
 	"github.com/keep-network/keep-common/pkg/persistence"
+	"github.com/keep-network/keep-core/pkg/generator"
 	"github.com/keep-network/keep-core/pkg/net"
 	"github.com/keep-network/keep-core/pkg/sortition"
 )
@@ -45,9 +46,10 @@ func Initialize(
 	chain Chain,
 	netProvider net.Provider,
 	persistence persistence.Handle,
+	scheduler *generator.Scheduler,
 	config Config,
 ) error {
-	node := newNode(chain, netProvider, persistence, config)
+	node := newNode(chain, netProvider, persistence, scheduler, config)
 	deduplicator := newDeduplicator()
 
 	err := sortition.MonitorPool(ctx, logger, chain, sortition.DefaultStatusCheckTick)

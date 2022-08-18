@@ -5,6 +5,7 @@ import (
 	"math/big"
 
 	"github.com/keep-network/keep-common/pkg/persistence"
+	"github.com/keep-network/keep-core/pkg/generator"
 	"github.com/keep-network/keep-core/pkg/internal/testutils"
 	"github.com/keep-network/keep-core/pkg/net"
 	"github.com/keep-network/keep-core/pkg/protocol/group"
@@ -25,12 +26,14 @@ func newNode(
 	chain Chain,
 	netProvider net.Provider,
 	persistence persistence.Handle,
+	scheduler *generator.Scheduler,
 	config Config,
 ) *node {
 	walletRegistry := newWalletRegistry(persistence)
 
 	dkgExecutor := dkg.NewExecutor(
 		logger,
+		scheduler,
 		config.PreParamsPoolSize,
 		config.PreParamsGenerationTimeout,
 		config.PreParamsGenerationDelay,
