@@ -21,6 +21,13 @@ const (
 	DefaultEthereumMetricsTick = 10 * time.Minute
 )
 
+// Config stores meta-info about metrics.
+type Config struct {
+	Port                int
+	NetworkMetricsTick  time.Duration
+	EthereumMetricsTick time.Duration
+}
+
 // Initialize set up the metrics registry and enables metrics server.
 func Initialize(
 	port int,

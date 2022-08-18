@@ -5,13 +5,15 @@ import (
 	"os"
 	"strings"
 	"syscall"
-	"time"
 
 	"github.com/hashicorp/go-multierror"
 	"github.com/ipfs/go-log"
 	"github.com/keep-network/keep-common/pkg/chain/ethereum"
 	ethereumCommon "github.com/keep-network/keep-common/pkg/chain/ethereum"
 
+	"github.com/keep-network/keep-core/pkg/beacon/registry"
+	"github.com/keep-network/keep-core/pkg/diagnostics"
+	"github.com/keep-network/keep-core/pkg/metrics"
 	"github.com/keep-network/keep-core/pkg/net/libp2p"
 	"github.com/keep-network/keep-core/pkg/tbtc"
 	"github.com/mitchellh/mapstructure"
@@ -36,27 +38,10 @@ const (
 type Config struct {
 	Ethereum    ethereumCommon.Config
 	LibP2P      libp2p.Config `mapstructure:"network"`
-	Storage     Storage
-	Metrics     Metrics
-	Diagnostics Diagnostics
+	Storage     registry.Config
+	Metrics     metrics.Config
+	Diagnostics diagnostics.Config
 	Tbtc        tbtc.Config
-}
-
-// Storage stores meta-info about keeping data on disk
-type Storage struct {
-	DataDir string
-}
-
-// Metrics stores meta-info about metrics.
-type Metrics struct {
-	Port                int
-	NetworkMetricsTick  time.Duration
-	EthereumMetricsTick time.Duration
-}
-
-// Diagnostics stores diagnostics-related configuration.
-type Diagnostics struct {
-	Port int
 }
 
 // Bind the flags to the viper configuration. Viper reads configuration from
