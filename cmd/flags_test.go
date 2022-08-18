@@ -319,14 +319,14 @@ func initTestCommand() (*cobra.Command, *config.Config, *string) {
 	testCommand := &cobra.Command{
 		Use: "Test",
 		PreRun: func(cmd *cobra.Command, args []string) {
-			if err := testConfig.ReadConfig(testConfigFilePath, cmd.Flags()); err != nil {
+			if err := testConfig.ReadConfig(testConfigFilePath, cmd.Flags(), config.AllCategories...); err != nil {
 				logger.Fatalf("error reading config: %v", err)
 			}
 		},
 		Run: func(cmd *cobra.Command, args []string) {},
 	}
 
-	initFlags(testCommand, allCategories, &testConfigFilePath, testConfig)
+	initFlags(testCommand, &testConfigFilePath, testConfig, config.AllCategories...)
 
 	return testCommand, testConfig, &testConfigFilePath
 }

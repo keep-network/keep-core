@@ -17,53 +17,29 @@ import (
 	chainEthereum "github.com/keep-network/keep-core/pkg/chain/ethereum"
 )
 
-type category int
-
-const (
-	General category = iota
-	Ethereum
-	Network
-	Storage
-	Metrics
-	Diagnostics
-	Tbtc
-	Developer
-)
-
-var allCategories = []category{
-	General,
-	Ethereum,
-	Network,
-	Storage,
-	Metrics,
-	Diagnostics,
-	Tbtc,
-	Developer,
-}
-
 func initFlags(
 	cmd *cobra.Command,
-	categories []category,
 	configFilePath *string,
 	cfg *config.Config,
+	categories ...config.Category,
 ) {
 	for _, category := range categories {
 		switch category {
-		case General:
+		case config.General:
 			initConfigFlags(cmd, configFilePath)
-		case Ethereum:
+		case config.Ethereum:
 			initEthereumFlags(cmd, cfg)
-		case Network:
+		case config.Network:
 			initNetworkFlags(cmd, cfg)
-		case Storage:
+		case config.Storage:
 			initStorageFlags(cmd, cfg)
-		case Metrics:
+		case config.Metrics:
 			initMetricsFlags(cmd, cfg)
-		case Diagnostics:
+		case config.Diagnostics:
 			initDiagnosticsFlags(cmd, cfg)
-		case Tbtc:
+		case config.Tbtc:
 			initTbtcFlags(cmd, cfg)
-		case Developer:
+		case config.Developer:
 			initDeveloperFlags(cmd)
 		}
 	}

@@ -55,7 +55,7 @@ func bindFlags(flagSet *pflag.FlagSet) error {
 
 // ReadConfig reads in the configuration file at `configFilePath` and flags defined in
 // the `flagSet`.
-func (c *Config) ReadConfig(configFilePath string, flagSet *pflag.FlagSet) error {
+func (c *Config) ReadConfig(configFilePath string, flagSet *pflag.FlagSet, categories ...Category) error {
 	initializeContractAddressesAliases()
 
 	if flagSet != nil {
@@ -84,7 +84,7 @@ func (c *Config) ReadConfig(configFilePath string, flagSet *pflag.FlagSet) error
 	c.resolveContractsAddresses()
 
 	// Validate configuration.
-	if err := validateConfig(c); err != nil {
+	if err := validateConfig(c, categories...); err != nil {
 		return fmt.Errorf("validation failed: %w", err)
 	}
 
@@ -117,31 +117,36 @@ func (c *Config) ReadConfig(configFilePath string, flagSet *pflag.FlagSet) error
 	return nil
 }
 
-func validateConfig(config *Config) error {
+func validateConfig(config *Config, categories ...Category) error {
 	var result *multierror.Error
 
-	if config.Ethereum.URL == "" {
-		result = multierror.Append(result, fmt.Errorf(
-			"missing value for ethereum.url; see ethereum section in configuration",
-		))
-	}
+	for _, category := range categories {
+		switch category {
+		case Ethereum:
+			if config.Ethereum.URL == "" {
+				result = multierror.Append(result, fmt.Errorf(
+					"missing value for ethereum.url; see ethereum section in configuration",
+				))
+			}
 
-	if config.Ethereum.Account.KeyFile == "" {
-		result = multierror.Append(result, fmt.Errorf(
-			"missing value for ethereum.keyFile; see ethereum section in configuration",
-		))
-	}
-
-	if config.LibP2P.Port == 0 {
-		result = multierror.Append(result, fmt.Errorf(
-			"missing value for network.port; see network section in configuration",
-		))
-	}
-
-	if config.Storage.DataDir == "" {
-		result = multierror.Append(result, fmt.Errorf(
-			"missing value for storage.dataDir; see storage section in configuration",
-		))
+			if config.Ethereum.Account.KeyFile == "" {
+				result = multierror.Append(result, fmt.Errorf(
+					"missing value for ethereum.keyFile; see ethereum section in configuration",
+				))
+			}
+		case Network:
+			if config.LibP2P.Port == 0 {
+				result = multierror.Append(result, fmt.Errorf(
+					"missing value for network.port; see network section in configuration",
+				))
+			}
+		case Storage:
+			if config.Storage.DataDir == "" {
+				result = multierror.Append(result, fmt.Errorf(
+					"missing value for storage.dataDir; see storage section in configuration",
+				))
+			}
+		}
 	}
 
 	return result.ErrorOrNil()
