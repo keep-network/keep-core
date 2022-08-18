@@ -1,18 +1,4 @@
 ---
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: grafana-pvc
-  labels:
-    name: grafana
-spec:
-  storageClassName: monitoring-storage
-  accessModes:
-    - ReadWriteOnce
-  resources:
-    requests:
-      storage: 1Gi
----
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -29,9 +15,12 @@ spec:
       labels:
         app: grafana
     spec:
+      securityContext:
+          runAsUser: 472
+          fsGroup: 472
       containers:
         - name: grafana
-          image: grafana/grafana::9.0.5
+          image: grafana/grafana:9.0.5
           ports:
             - name: grafana
               containerPort: 3000
@@ -39,20 +28,42 @@ spec:
             limits:
               memory: "1Gi"
               cpu: "1000m"
-            requests: 
+            requests:
               memory: 500M
               cpu: "500m"
           volumeMounts:
-            - mountPath: /var/lib/grafana
-              name: grafana-storage
-            - mountPath: /etc/grafana/provisioning/datasources
-              name: grafana-datasources
+            - name: grafana-storage
+              mountPath: /var/lib/grafana
+            - name: grafana-dashboards-files
+              mountPath: /var/lib/grafana/dashboards
+            - name: grafana-datasources
+              mountPath: /etc/grafana/provisioning/datasources
+              readOnly: false
+            - name: grafana-dashboards
+              mountPath: /etc/grafana/provisioning/dashboards
               readOnly: false
       volumes:
         - name: grafana-storage
           persistentVolumeClaim:
             claimName: grafana-pvc
+        - name: grafana-dashboards-files
+          configMap:
+            name: grafana
+            defaultMode: 420
+            items:
+              - key: clients-dashboard.json
+                path: clients-dashboard.json
         - name: grafana-datasources
           configMap:
+            name: grafana
             defaultMode: 420
-            name: grafana-datasources
+            items:
+              - key: prometheus.yaml
+                path: prometheus.yaml
+        - name: grafana-dashboards
+          configMap:
+            name: grafana
+            defaultMode: 420
+            items:
+              - key: dashboards.yaml
+                path: dashboards.yaml

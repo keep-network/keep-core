@@ -3,9 +3,9 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   namespace: monitoring
-  name: prometheus-server-conf
+  name: prometheus-conf
   labels:
-    name: prometheus-server-conf
+    name: prometheus-conf
 data:
   prometheus.rules: |-
     groups:
@@ -41,7 +41,6 @@ data:
           action: keep
 
       - job_name: 'kubernetes-apiservers'
-
         kubernetes_sd_configs:
         - role: endpoints
         scheme: https
@@ -56,7 +55,6 @@ data:
           regex: default;kubernetes;https
 
       - job_name: 'kubernetes-nodes'
-
         scheme: https
 
         tls_config:
@@ -65,7 +63,6 @@ data:
 
         kubernetes_sd_configs:
         - role: node
-
         relabel_configs:
         - action: labelmap
           regex: __meta_kubernetes_node_label_(.+)
@@ -77,23 +74,56 @@ data:
           replacement: /api/v1/nodes/${1}/proxy/metrics     
 
       - job_name: 'kubernetes-pods'
-
         kubernetes_sd_configs:
         - role: pod
-
         relabel_configs:
-        - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_scrape]
+        - source_labels: [__meta_kubernetes_pod_label_app]
+          regex: (geth|keep|grafana|prometheus)
           action: keep
-          regex: true
         - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_path]
           action: replace
           target_label: __metrics_path__
           regex: (.+)
-        - source_labels: [__address__, __meta_kubernetes_pod_annotation_prometheus_io_port]
+        - action: labelmap
+          regex: __meta_kubernetes_pod_label_(.+)
+        - source_labels: [__meta_kubernetes_namespace]
           action: replace
-          regex: ([^:]+)(?::\d+)?;(\d+)
-          replacement: $1:$2
-          target_label: __address__
+          target_label: kubernetes_namespace
+        - source_labels: [__meta_kubernetes_pod_name]
+          action: replace
+          target_label: kubernetes_pod_name
+
+      - job_name: 'grafana'
+        kubernetes_sd_configs:
+        - role: pod
+        relabel_configs:
+        - source_labels: [__meta_kubernetes_pod_label_app]
+          regex: grafana.*
+          action: keep
+        - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_path]
+          action: replace
+          target_label: __metrics_path__
+          regex: (.+)
+        - action: labelmap
+          regex: __meta_kubernetes_pod_label_(.+)
+        - source_labels: [__meta_kubernetes_namespace]
+          action: replace
+          target_label: kubernetes_namespace
+        - source_labels: [__meta_kubernetes_pod_name]
+          action: replace
+          target_label: kubernetes_pod_name
+
+      - job_name: 'prometheus'
+        kubernetes_sd_configs:
+        - role: pod
+        relabel_configs:
+        - source_labels: [__meta_kubernetes_pod_label_app]
+          regex: prometheus.*
+          action: keep
+        - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_path]
+          action: replace
+          target_label: __metrics_path__
+          regex: (.+)
         - action: labelmap
           regex: __meta_kubernetes_pod_label_(.+)
         - source_labels: [__meta_kubernetes_namespace]
@@ -108,7 +138,6 @@ data:
           - targets: ['kube-state-metrics.kube-system.svc.cluster.local:8080']
 
       - job_name: 'kubernetes-cadvisor'
-
         scheme: https
 
         tls_config:
@@ -117,7 +146,6 @@ data:
 
         kubernetes_sd_configs:
         - role: node
-
         relabel_configs:
         - action: labelmap
           regex: __meta_kubernetes_node_label_(.+)
@@ -129,10 +157,8 @@ data:
           replacement: /api/v1/nodes/${1}/proxy/metrics/cadvisor
 
       - job_name: 'kubernetes-service-endpoints'
-
         kubernetes_sd_configs:
         - role: endpoints
-
         relabel_configs:
         - source_labels: [__meta_kubernetes_service_annotation_prometheus_io_scrape]
           action: keep
@@ -158,3 +184,473 @@ data:
         - source_labels: [__meta_kubernetes_service_name]
           action: replace
           target_label: kubernetes_name
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana
+  namespace: monitoring
+data:
+  prometheus.yaml: |-
+    {
+      "apiVersion": 1,
+      "datasources": [
+          {
+            "access":"proxy",
+            "editable": true,
+            "name": "prometheus",
+            "orgId": 1,
+            "type": "prometheus",
+            "url": "http://prometheus.monitoring.svc.cluster.local:9090",
+            "version": 1
+          }
+      ]
+    }
+  dashboards.yaml: |-
+    {
+      "apiVersion": 1,
+      "providers": [
+        {
+          "name": "dashboards-provider",
+          "type": "file",
+          "disableDeletion": true,
+          "editable": false,
+          "updateIntervalSeconds": 10,
+          "allowUiUpdates": false,
+          "options": {
+            "path": "/var/lib/grafana/dashboards"
+          }
+        }
+      ]
+    }
+  clients-dashboard.json: |-
+    {
+      "annotations": {
+        "list": [
+          {
+            "builtIn": 1,
+            "datasource": "-- Grafana --",
+            "enable": true,
+            "hide": true,
+            "iconColor": "rgba(0, 211, 255, 1)",
+            "name": "Annotations & Alerts",
+            "type": "dashboard"
+          }
+        ]
+      },
+      "editable": false,
+      "gnetId": null,
+      "graphTooltip": 0,
+      "id": 1,
+      "iteration": 1592220277626,
+      "links": [],
+      "panels": [
+        {
+          "datasource": "prometheus",
+          "fieldConfig": {
+            "defaults": {
+              "custom": {},
+              "mappings": [
+                {
+                  "from": "",
+                  "id": 0,
+                  "operator": "",
+                  "text": "Down",
+                  "to": "",
+                  "type": 1,
+                  "value": "0"
+                },
+                {
+                  "from": "",
+                  "id": 1,
+                  "operator": "",
+                  "text": "Up",
+                  "to": "",
+                  "type": 1,
+                  "value": "1"
+                }
+              ],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "dark-yellow",
+                    "value": null
+                  },
+                  {
+                    "color": "dark-red",
+                    "value": 0
+                  },
+                  {
+                    "color": "dark-green",
+                    "value": 1
+                  }
+                ]
+              }
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 5,
+            "w": 12,
+            "x": 0,
+            "y": 0
+          },
+          "id": 12,
+          "options": {
+            "colorMode": "value",
+            "graphMode": "area",
+            "justifyMode": "auto",
+            "orientation": "auto",
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ],
+              "fields": "",
+              "values": false
+            }
+          },
+          "pluginVersion": "7.0.3",
+          "targets": [
+            {
+              "expr": "up{instance=~\"$client\",job=\"clients\"}",
+              "interval": "",
+              "legendFormat": "",
+              "refId": "A"
+            }
+          ],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "Client health",
+          "transformations": [],
+          "type": "stat"
+        },
+        {
+          "datasource": "prometheus",
+          "fieldConfig": {
+            "defaults": {
+              "custom": {},
+              "mappings": [
+                {
+                  "from": "",
+                  "id": 0,
+                  "operator": "",
+                  "text": "Down",
+                  "to": "",
+                  "type": 1,
+                  "value": "0"
+                },
+                {
+                  "from": "",
+                  "id": 1,
+                  "operator": "",
+                  "text": "Up",
+                  "to": "",
+                  "type": 1,
+                  "value": "1"
+                }
+              ],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "dark-yellow",
+                    "value": null
+                  },
+                  {
+                    "color": "dark-red",
+                    "value": 0
+                  },
+                  {
+                    "color": "dark-green",
+                    "value": 1
+                  }
+                ]
+              }
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 5,
+            "w": 12,
+            "x": 12,
+            "y": 0
+          },
+          "id": 10,
+          "options": {
+            "colorMode": "value",
+            "graphMode": "area",
+            "justifyMode": "auto",
+            "orientation": "auto",
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ],
+              "fields": "",
+              "values": false
+            }
+          },
+          "pluginVersion": "7.0.3",
+          "targets": [
+            {
+              "expr": "eth_connectivity{instance=~\"$client\",job=\"clients\"}",
+              "interval": "",
+              "legendFormat": "",
+              "refId": "A"
+            }
+          ],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "Ethereum node connectivity",
+          "transformations": [],
+          "type": "stat"
+        },
+        {
+          "aliasColors": {},
+          "bars": false,
+          "dashLength": 10,
+          "dashes": false,
+          "datasource": "prometheus",
+          "fieldConfig": {
+            "defaults": {
+              "custom": {}
+            },
+            "overrides": []
+          },
+          "fill": 1,
+          "fillGradient": 0,
+          "gridPos": {
+            "h": 9,
+            "w": 12,
+            "x": 0,
+            "y": 5
+          },
+          "hiddenSeries": false,
+          "id": 2,
+          "legend": {
+            "avg": false,
+            "current": false,
+            "max": false,
+            "min": false,
+            "show": true,
+            "total": false,
+            "values": false
+          },
+          "lines": true,
+          "linewidth": 2,
+          "nullPointMode": "null",
+          "options": {
+            "dataLinks": []
+          },
+          "percentage": false,
+          "pointradius": 2,
+          "points": false,
+          "renderer": "flot",
+          "seriesOverrides": [],
+          "spaceLength": 10,
+          "stack": false,
+          "steppedLine": false,
+          "targets": [
+            {
+              "expr": "connected_peers_count{instance=~\"$client\",job=\"clients\"}",
+              "interval": "",
+              "legendFormat": "",
+              "refId": "A"
+            }
+          ],
+          "thresholds": [],
+          "timeFrom": null,
+          "timeRegions": [],
+          "timeShift": null,
+          "title": "Connected peers count ",
+          "tooltip": {
+            "shared": true,
+            "sort": 0,
+            "value_type": "individual"
+          },
+          "transformations": [],
+          "type": "graph",
+          "xaxis": {
+            "buckets": null,
+            "mode": "time",
+            "name": null,
+            "show": true,
+            "values": []
+          },
+          "yaxes": [
+            {
+              "decimals": 0,
+              "format": "none",
+              "label": "",
+              "logBase": 1,
+              "max": null,
+              "min": "0",
+              "show": true
+            },
+            {
+              "format": "short",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            }
+          ],
+          "yaxis": {
+            "align": false,
+            "alignLevel": null
+          }
+        },
+        {
+          "aliasColors": {},
+          "bars": false,
+          "dashLength": 10,
+          "dashes": false,
+          "datasource": "prometheus",
+          "fieldConfig": {
+            "defaults": {
+              "custom": {}
+            },
+            "overrides": []
+          },
+          "fill": 1,
+          "fillGradient": 0,
+          "gridPos": {
+            "h": 9,
+            "w": 12,
+            "x": 12,
+            "y": 5
+          },
+          "hiddenSeries": false,
+          "id": 6,
+          "legend": {
+            "avg": false,
+            "current": false,
+            "max": false,
+            "min": false,
+            "show": true,
+            "total": false,
+            "values": false
+          },
+          "lines": true,
+          "linewidth": 1,
+          "nullPointMode": "null",
+          "options": {
+            "dataLinks": []
+          },
+          "percentage": false,
+          "pointradius": 2,
+          "points": false,
+          "renderer": "flot",
+          "seriesOverrides": [],
+          "spaceLength": 10,
+          "stack": false,
+          "steppedLine": false,
+          "targets": [
+            {
+              "expr": "connected_bootstrap_count{instance=~\"$client\",job=\"clients\"}",
+              "interval": "",
+              "legendFormat": "",
+              "refId": "A"
+            }
+          ],
+          "thresholds": [],
+          "timeFrom": null,
+          "timeRegions": [],
+          "timeShift": null,
+          "title": "Connected bootstrap count ",
+          "tooltip": {
+            "shared": true,
+            "sort": 0,
+            "value_type": "individual"
+          },
+          "transformations": [],
+          "type": "graph",
+          "xaxis": {
+            "buckets": null,
+            "mode": "time",
+            "name": null,
+            "show": true,
+            "values": []
+          },
+          "yaxes": [
+            {
+              "decimals": 0,
+              "format": "none",
+              "label": "",
+              "logBase": 1,
+              "max": null,
+              "min": "0",
+              "show": true
+            },
+            {
+              "format": "short",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            }
+          ],
+          "yaxis": {
+            "align": false,
+            "alignLevel": null
+          }
+        }
+      ],
+      "refresh": "5s",
+      "schemaVersion": 25,
+      "style": "dark",
+      "tags": [],
+      "templating": {
+        "list": [
+          {
+            "allValue": null,
+            "current": {
+              "selected": true,
+              "text": "bootstrap-1.core.keep.test.boar.network:9601",
+              "value": "bootstrap-1.core.keep.test.boar.network:9601"
+            },
+            "datasource": "prometheus",
+            "definition": "label_values({job=\"clients\"}, instance)",
+            "hide": 0,
+            "includeAll": false,
+            "label": null,
+            "multi": false,
+            "name": "client",
+            "options": [],
+            "query": "label_values({job=\"clients\"}, instance)",
+            "refresh": 1,
+            "regex": "",
+            "skipUrlSync": false,
+            "sort": 1,
+            "tagValuesQuery": "",
+            "tags": [],
+            "tagsQuery": "",
+            "type": "query",
+            "useTags": false
+          }
+        ]
+      },
+      "time": {
+        "from": "now-6h",
+        "to": "now"
+      },
+      "timepicker": {
+        "refresh_intervals": [
+          "10s",
+          "30s",
+          "1m",
+          "5m",
+          "15m",
+          "30m",
+          "1h",
+          "2h",
+          "1d"
+        ]
+      },
+      "timezone": "utc",
+      "title": "clients-dashboard",
+      "uid": "q3ZeGbmGk",
+      "version": 29
+    }

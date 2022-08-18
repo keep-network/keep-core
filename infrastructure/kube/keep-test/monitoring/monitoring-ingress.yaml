@@ -15,13 +15,19 @@ spec:
       http:
         paths:
           - path: /prom
+            pathType: Prefix
             backend:
-              serviceName: prometheus-service
-              servicePort: 9090
+              service:
+                name: prometheus
+                port:
+                  number: 9090
           - path: /grafana
+            pathType: Prefix
             backend:
-              serviceName: grafana-service
-              servicePort: 3000
+              service:
+                name: grafana
+                port:
+                  number: 3000
 #   tls:
 #     - hosts:
 #         - monitoring.test.keep.network
