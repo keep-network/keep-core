@@ -2,11 +2,12 @@ package tecdsa
 
 import (
 	"fmt"
-	"github.com/binance-chain/tss-lib/crypto"
-	"github.com/binance-chain/tss-lib/crypto/paillier"
-	"github.com/binance-chain/tss-lib/ecdsa/keygen"
-	"github.com/keep-network/keep-core/pkg/tecdsa/gen/pb"
 	"math/big"
+
+	"github.com/bnb-chain/tss-lib/crypto"
+	"github.com/bnb-chain/tss-lib/crypto/paillier"
+	"github.com/bnb-chain/tss-lib/ecdsa/keygen"
+	"github.com/keep-network/keep-core/pkg/tecdsa/gen/pb"
 )
 
 // ErrIncompatiblePublicKey indicates that the given public key is not

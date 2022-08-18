@@ -1084,9 +1084,9 @@
   integrity sha512-xgWZYaPlrEOQo3cBj97Ufiuv79SPd8Brh4GcFYhPgb6WvAq4ppz8dWKL6h+jLAK01rUqMRp/TS9AdXgAeNvCLA==
 
 "@openzeppelin/contracts@^4.1.0", "@openzeppelin/contracts@^4.3.2", "@openzeppelin/contracts@^4.6.0":
-  version "4.7.1"
-  resolved "https://registry.yarnpkg.com/@openzeppelin/contracts/-/contracts-4.7.1.tgz#33d0a857b76b18d313e6bb6ed28cdaf367e90cfe"
-  integrity sha512-UXmAjKARsXORHlHZu5GCD7ZbRKm6nU8UHnbuT/QJJa2JEOEcbvV/X8w/sUk62Sl9VZuuljM1akrZLyAtzUgsxw==
+  version "4.7.2"
+  resolved "https://registry.yarnpkg.com/@openzeppelin/contracts/-/contracts-4.7.2.tgz#7587416fe2d35abf574193515b8971bfe9f64bc7"
+  integrity sha512-4n/JL9izql8303mPqPdubuna/DWEMbmOzWYUWyCPhjhiEr2w3nQrjE7vZz1fBF+wzzP6dZbIcsgqACk53c9FGA==
 
 "@openzeppelin/contracts@~4.5.0":
   version "4.5.0"
@@ -1354,9 +1354,9 @@
     fs-extra "^9.0.1"
     js-yaml "^3.14.0"
 
-"@thesis-co/eslint-config@github:thesis/eslint-config":
-  version "0.1.0"
-  resolved "https://codeload.github.com/thesis/eslint-config/tar.gz/778365bbebb6b056bf973d25c57b8b466d21cbcf"
+"@thesis-co/eslint-config@github:thesis/eslint-config#v0.2.0":
+  version "0.2.0"
+  resolved "https://codeload.github.com/thesis/eslint-config/tar.gz/e63608fab2a1ad5c8fe89873bf0d4d4f9ef4a081"
   dependencies:
     "@thesis-co/prettier-config" "github:thesis/prettier-config"
     "@typescript-eslint/eslint-plugin" "^4.32.0"
@@ -1367,6 +1367,7 @@
     eslint-config-prettier "^8.3.0"
     eslint-plugin-import "^2.23.4"
     eslint-plugin-jsx-a11y "^6.4.1"
+    eslint-plugin-no-only-tests "^2.6.0"
     eslint-plugin-prettier "^4.0.0"
     eslint-plugin-react "^7.25.2"
     eslint-plugin-react-hooks "^4.2.0"
@@ -4333,6 +4334,11 @@ eslint-plugin-jsx-a11y@^6.4.1:
     has "^1.0.3"
     jsx-ast-utils "^3.1.0"
     language-tags "^1.0.5"
+
+eslint-plugin-no-only-tests@^2.6.0:
+  version "2.6.0"
+  resolved "https://registry.yarnpkg.com/eslint-plugin-no-only-tests/-/eslint-plugin-no-only-tests-2.6.0.tgz#19f6c9620bda02b9b9221b436c5f070e42628d76"
+  integrity sha512-T9SmE/g6UV1uZo1oHAqOvL86XWl7Pl2EpRpnLI8g/bkJu+h7XBCB+1LnubRZ2CUQXj805vh4/CYZdnqtVaEo2Q==
 
 eslint-plugin-prettier@^4.0.0:
   version "4.0.0"

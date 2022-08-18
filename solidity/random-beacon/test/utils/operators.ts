@@ -1,5 +1,3 @@
-/* eslint-disable no-await-in-loop */
-
 import { ethers, helpers } from "hardhat"
 
 import { params } from "../fixtures"

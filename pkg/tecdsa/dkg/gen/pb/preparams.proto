@@ -1,0 +1,19 @@
+syntax = "proto3";
+
+option go_package = "pb";
+package dkg;
+
+message PreParams {
+  message LocalPreParams {
+    bytes nTilde = 2;
+    bytes h1i = 3;
+    bytes h2i = 4;
+    bytes alpha = 5;
+    bytes beta = 6;
+    bytes p = 7;
+    bytes q = 8;
+  }
+
+  LocalPreParams data = 1;
+}
+

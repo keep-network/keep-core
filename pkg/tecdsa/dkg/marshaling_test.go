@@ -1,12 +1,14 @@
 package dkg
 
 import (
+	"reflect"
+	"testing"
+
 	fuzz "github.com/google/gofuzz"
 	"github.com/keep-network/keep-core/pkg/crypto/ephemeral"
 	"github.com/keep-network/keep-core/pkg/internal/pbutils"
+	"github.com/keep-network/keep-core/pkg/internal/tecdsatest"
 	"github.com/keep-network/keep-core/pkg/protocol/group"
-	"reflect"
-	"testing"
 )
 
 func TestEphemeralPublicKeyMessage_MarshalingRoundtrip(t *testing.T) {
@@ -216,4 +218,27 @@ func TestFuzzTssRoundThreeMessage_MarshalingRoundtrip(t *testing.T) {
 
 func TestFuzzTssRoundThreeMessage_Unmarshaler(t *testing.T) {
 	pbutils.FuzzUnmarshaler(&tssRoundThreeMessage{})
+}
+
+func TestPreParamsMarshalling(t *testing.T) {
+	testData, err := tecdsatest.LoadPrivateKeyShareTestFixtures(1)
+	if err != nil {
+		t.Fatalf("failed to load test data: [%v]", err)
+	}
+
+	localPreParams := testData[0].LocalPreParams
+	// we do not serialize PaillierSK for PreParams because it is empty
+	// for LocalPreParams not used yet in DKG
+	localPreParams.PaillierSK = nil
+
+	preParams := NewPreParams(&localPreParams)
+
+	unmarshaled := &PreParams{}
+
+	if err := pbutils.RoundTrip(preParams, unmarshaled); err != nil {
+		t.Fatal(err)
+	}
+	if !reflect.DeepEqual(preParams, unmarshaled) {
+		t.Fatal("unexpected content of unmarshaled pre-params")
+	}
 }
