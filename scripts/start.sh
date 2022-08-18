@@ -30,7 +30,7 @@ done
 
 # Parse short options
 OPTIND=1
-while getopts "c:" opt; do
+while getopts "c:h" opt; do
     case "$opt" in
     c) config_dir_path="$OPTARG" ;;
     h) help ;;
