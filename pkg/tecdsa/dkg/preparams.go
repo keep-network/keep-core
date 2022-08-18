@@ -54,8 +54,16 @@ func newTssPreParamsPool(
 			timingOutCtx,
 			generationConcurrency,
 		)
-		if err != nil {
-			logger.Errorf("failed to generate TSS pre-params: [%v]", err)
+		// tss-lib returns generic errors saying "timeout or error while ...".
+		// There are three possibilities:
+		// 1. Pool canceled the parent `ctx`. This is normal and we should not
+		//    log anything in this case.
+		// 2. `timingOutCtx` timed out. It means the machine is not fast enough
+		//    or that it was just unlucky. We should log a warning.
+		// 3. There is some error from tss-lib generator. We log it as a warning
+		//    because we'll re-attempt to generate parameters again.
+		if err != nil && ctx.Err() == nil {
+			logger.Warnf("failed to generate TSS pre-params: [%v]", err)
 		}
 
 		return &PreParams{preParams}
