@@ -1139,6 +1139,97 @@ func TestTssFinalize_ResultTimeout(t *testing.T) {
 	}
 }
 
+func TestSignDKGResult(t *testing.T) {
+	signingMember := initializeSigningMember()
+	result := &Result{}
+
+	publicKey := []byte("publicKey")
+	signature := []byte("signature")
+	resultHash := ResultHash{0: 11, 6: 22, 31: 33}
+
+	resultSigner := newTestResultSigner(publicKey)
+	resultSigner.setSigningResult(result, &signingData{
+		signature:  signature,
+		resultHash: resultHash,
+		err:        nil,
+	})
+
+	actualSignatureMessage, err := signingMember.SignDKGResult(
+		result,
+		resultSigner,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	expectedSignatureMessage := &resultSignatureMessage{
+		senderID:   signingMember.memberIndex,
+		resultHash: resultHash,
+		signature:  signature,
+		publicKey:  publicKey,
+		sessionID:  sessionID,
+	}
+
+	if !reflect.DeepEqual(
+		expectedSignatureMessage,
+		actualSignatureMessage,
+	) {
+		t.Errorf(
+			"unexpected signature message \nexpected: %v\nactual:   %v\n",
+			expectedSignatureMessage,
+			actualSignatureMessage,
+		)
+	}
+
+	if !reflect.DeepEqual(
+		signature,
+		signingMember.selfDKGResultSignature,
+	) {
+		t.Errorf(
+			"unexpected self DKG result signature\nexpected: %v\nactual:   %v\n",
+			signature,
+			signingMember.selfDKGResultSignature,
+		)
+	}
+
+	if !reflect.DeepEqual(
+		resultHash,
+		signingMember.preferredDKGResultHash,
+	) {
+		t.Errorf(
+			"unexpected preferred DKG result hash\nexpected: %v\nactual:   %v\n",
+			resultHash,
+			signingMember.preferredDKGResultHash,
+		)
+	}
+}
+
+func TestSignDKGResult_ErrorDuringSigning(t *testing.T) {
+	signingMember := initializeSigningMember()
+	result := &Result{}
+
+	resultSigner := newTestResultSigner([]byte("publicKey"))
+	resultSigner.setSigningResult(result, &signingData{
+		signature:  []byte("signature"),
+		resultHash: ResultHash{0: 11, 6: 22, 31: 33},
+		err:        fmt.Errorf("dummy error"),
+	})
+
+	_, err := signingMember.SignDKGResult(
+		result,
+		resultSigner,
+	)
+
+	expectedErr := fmt.Errorf("failed to sign DKG result [dummy error]")
+	if !reflect.DeepEqual(expectedErr, err) {
+		t.Errorf(
+			"unexpected error\nexpected: %v\nactual:   %v\n",
+			expectedErr,
+			err,
+		)
+	}
+}
+
 func initializeEphemeralKeyPairGeneratingMembersGroup(
 	dishonestThreshold int,
 	groupSize int,
@@ -1438,6 +1529,15 @@ func initializeFinalizingMembersGroup(
 	return finalizingMembers, tssRoundThreeMessages, nil
 }
 
+func initializeSigningMember() *signingMember {
+	dkgGroup := group.NewGroup(dishonestThreshold, groupSize)
+	return &signingMember{
+		memberIndex: 1,
+		group:       dkgGroup,
+		sessionID:   sessionID,
+	}
+}
+
 func generateMembersTssPreParams(
 	groupSize int,
 ) (map[group.MemberIndex]*keygen.LocalPreParams, error) {
@@ -1539,5 +1639,41 @@ func newTssPreParams(
 		Beta:    newBigInt(beta),
 		P:       newBigInt(p),
 		Q:       newBigInt(q),
+	}
+}
+
+type signingData struct {
+	signature  []byte
+	resultHash ResultHash
+	err        error
+}
+
+type testResultSigner struct {
+	publicKey      []byte
+	signingResults map[*Result]*signingData
+}
+
+func (trs *testResultSigner) setSigningResult(result *Result, data *signingData) {
+	trs.signingResults[result] = data
+}
+
+func (trs *testResultSigner) SignResult(result *Result) ([]byte, []byte, ResultHash, error) {
+	if data, ok := trs.signingResults[result]; ok {
+		return trs.publicKey, data.signature, data.resultHash, data.err
+	}
+
+	return nil, nil, ResultHash{}, fmt.Errorf(
+		"could not find singing data for the result",
+	)
+}
+
+func (trs *testResultSigner) VerifySignature(message []byte, signature []byte, publicKey []byte) (bool, error) {
+	return false, nil
+}
+
+func newTestResultSigner(publicKey []byte) *testResultSigner {
+	return &testResultSigner{
+		publicKey:      publicKey,
+		signingResults: make(map[*Result]*signingData),
 	}
 }

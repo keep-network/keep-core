@@ -403,3 +403,27 @@ func (fm *finalizingMember) tssFinalize(
 		)
 	}
 }
+
+// SignDKGResult signs the provided DKG result and prepares an appropriate
+// result signature message.
+func (sm *signingMember) SignDKGResult(
+	dkgResult *Result,
+	resultSigner ResultSigner,
+) (*resultSignatureMessage, error) {
+	publicKey, signature, resultHash, err := resultSigner.SignResult(dkgResult)
+	if err != nil {
+		return nil, fmt.Errorf("failed to sign DKG result [%v]", err)
+	}
+
+	// Register self signature and result hash.
+	sm.selfDKGResultSignature = signature
+	sm.preferredDKGResultHash = resultHash
+
+	return &resultSignatureMessage{
+		senderID:   sm.memberIndex,
+		resultHash: resultHash,
+		signature:  signature,
+		publicKey:  publicKey,
+		sessionID:  sm.sessionID,
+	}, nil
+}

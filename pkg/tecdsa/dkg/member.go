@@ -280,30 +280,6 @@ type signingMember struct {
 	selfDKGResultSignature []byte
 }
 
-// SignDKGResult calculates hash of DKG result and member's signature over this
-// hash. It packs the hash and signature into a broadcast message.
-func (sm *signingMember) SignDKGResult(
-	dkgResult *Result,
-	resultSigner ResultSigner,
-) (*resultSignatureMessage, error) {
-	publicKey, signature, resultHash, err := resultSigner.SignResult(dkgResult)
-	if err != nil {
-		return nil, fmt.Errorf("failed to sign DKG result [%v]", err)
-	}
-
-	// Register self signature and result hash.
-	sm.selfDKGResultSignature = signature
-	sm.preferredDKGResultHash = resultHash
-
-	return &resultSignatureMessage{
-		senderID:   sm.memberIndex,
-		resultHash: resultHash,
-		signature:  signature,
-		publicKey:  publicKey,
-		sessionID:  sm.sessionID,
-	}, nil
-}
-
 // VerifyDKGResultSignatures verifies signatures received in messages from other
 // group members.
 // It collects signatures supporting only the same DKG result hash as the one
