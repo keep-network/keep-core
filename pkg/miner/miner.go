@@ -24,8 +24,13 @@ const (
 // way, the client that would normally be idle, can spend CPU cycles on
 // computationally heavy operations and stop these operations when CPU cycles
 // are needed elsewhere.
+//
+// There are two requirements for goroutines using the miner:
+// 1. Always call Stop() before Resume(),
+// 2. Never forget to call Resume().
 type Miner struct {
 	state   state
+	latch   sync.WaitGroup
 	workers []func()
 	stops   []chan interface{}
 
@@ -49,11 +54,24 @@ func (m *Miner) Mine(miningFn func()) {
 // Stop asks all worker functions to stop their work. Note that there is no
 // guarantee the worker function will stop immediately but the miner will not
 // call the worker function again until the miner's work is resumed.
+// Stop can be called multiple times. Each call increases a count on the
+// internal latch by one. To resume the work, Resume() function needs to be as
+// many times as Stop(). This way, several goroutines can stop the computations
+// and they all need to agree on resuming them.
+//
+// Requirement:
+// Each goroutine calling Stop() must call Resume() once it is done.
 func (m *Miner) Stop() {
+	m.latch.Add(1)
+
 	m.mutex.Lock()
 	defer m.mutex.Unlock()
 
-	logger.Info("stopping computations")
+	if m.state == stopped {
+		return
+	}
+
+	logger.Info("stopping computations\n")
 	m.state = stopped
 
 	for _, stop := range m.stops {
@@ -63,12 +81,25 @@ func (m *Miner) Stop() {
 }
 
 // Resume resumes the work of all worker functions, each in a separate
-// goroutine.
+// goroutine. If Stop() has been called multiple times, Resume() needs to be
+// called the same number of times. Resume() blocks until the work can be
+// resumed. The function panics if all requirements are not met.
+//
+// Requirements:
+// Each goroutine calling Resume() must have had Stop() called before.
+// Each goroutine must call Stop() and Resume() only one time.
 func (m *Miner) Resume() {
+	m.latch.Done()
+	m.latch.Wait()
+
 	m.mutex.Lock()
 	defer m.mutex.Unlock()
 
-	logger.Info("resuming computations")
+	if m.state == working {
+		return
+	}
+
+	logger.Info("resuming computations\n")
 	m.state = working
 
 	for _, worker := range m.workers {
