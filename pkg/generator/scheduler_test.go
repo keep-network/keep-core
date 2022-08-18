@@ -218,3 +218,197 @@ func TestStopComputeResume(t *testing.T) {
 	testutils.AssertBigIntNonZero(t, "computation result", number1)
 	testutils.AssertBigIntNonZero(t, "computation result", number2)
 }
+
+// TestCheckProtocols_NoProtocols ensures the execution of checkProtocols
+// does not stop the scheduler if there are no protocols registered.
+func TestCheckProtocols_NoProtocols(t *testing.T) {
+	scheduler := new(Scheduler)
+	defer scheduler.stop()
+
+	number1 := big.NewInt(0)
+	number2 := big.NewInt(0)
+
+	scheduler.compute(func(context.Context) {
+		number1.Add(number1, one)
+	})
+	scheduler.compute(func(context.Context) {
+		number2.Add(number2, one)
+	})
+
+	// give some time to perform computations
+	time.Sleep(10 * time.Millisecond)
+
+	scheduler.checkProtocols()
+
+	// there are no protocols executed, nothing can stop the scheduler;
+	// ensure the computations are performed
+	intermediateResult1 := new(big.Int).Set(number1)
+	intermediateResult2 := new(big.Int).Set(number2)
+
+	time.Sleep(20 * time.Millisecond)
+	testutils.AssertBigIntsNotEqual(
+		t,
+		"computation result after stop signal",
+		intermediateResult1,
+		number1,
+	)
+	testutils.AssertBigIntsNotEqual(
+		t,
+		"computation result after stop signal",
+		intermediateResult2,
+		number2,
+	)
+}
+
+// TestCheckProtocols_ProtocolNotExecuting ensures the execution of checkProtocols
+// does not stop the scheduler if there are protocols registered but they are
+// not executing.
+func TestCheckProtocols_ProtocolNotExecuting(t *testing.T) {
+	scheduler := new(Scheduler)
+	defer scheduler.stop()
+
+	number1 := big.NewInt(0)
+	number2 := big.NewInt(0)
+
+	scheduler.compute(func(context.Context) {
+		number1.Add(number1, one)
+	})
+	scheduler.compute(func(context.Context) {
+		number2.Add(number2, one)
+	})
+
+	protocol1 := &mockProtocol{}
+	protocol2 := &mockProtocol{}
+	scheduler.RegisterProtocol(protocol1)
+	scheduler.RegisterProtocol(protocol2)
+
+	// give some time to perform computations
+	time.Sleep(10 * time.Millisecond)
+
+	scheduler.checkProtocols()
+
+	// there are two protocols but they are not executing;
+	// ensure the computations are performed
+	intermediateResult1 := new(big.Int).Set(number1)
+	intermediateResult2 := new(big.Int).Set(number2)
+
+	time.Sleep(20 * time.Millisecond)
+	testutils.AssertBigIntsNotEqual(
+		t,
+		"computation result after stop signal",
+		intermediateResult1,
+		number1,
+	)
+	testutils.AssertBigIntsNotEqual(
+		t,
+		"computation result after stop signal",
+		intermediateResult2,
+		number2,
+	)
+}
+
+// TestCheckProtocols_ProtocolExecuting ensures the execution of checkProtocols
+// does stop the scheduler if at least of the registered protocols is executing.
+func TestCheckProtocols_ProtocolExecuting(t *testing.T) {
+	scheduler := new(Scheduler)
+	defer scheduler.stop()
+
+	number1 := big.NewInt(0)
+	number2 := big.NewInt(0)
+
+	scheduler.compute(func(context.Context) {
+		number1.Add(number1, one)
+	})
+	scheduler.compute(func(context.Context) {
+		number2.Add(number2, one)
+	})
+
+	protocol1 := &mockProtocol{}
+	protocol2 := &mockProtocol{}
+	scheduler.RegisterProtocol(protocol1)
+	scheduler.RegisterProtocol(protocol2)
+
+	// give some time to perform computations
+	time.Sleep(10 * time.Millisecond)
+
+	protocol2.isExecuting = true
+	scheduler.checkProtocols()
+
+	// there are two protocols and the second one is executing
+	// ensure the computations are stopped
+	intermediateResult1 := new(big.Int).Set(number1)
+	intermediateResult2 := new(big.Int).Set(number2)
+
+	time.Sleep(20 * time.Millisecond)
+	testutils.AssertBigIntsEqual(
+		t,
+		"computation result after stop signal",
+		intermediateResult1,
+		number1,
+	)
+	testutils.AssertBigIntsEqual(
+		t,
+		"computation result after stop signal",
+		intermediateResult2,
+		number2,
+	)
+}
+
+// TestCheckProtocols_ProtocolFinishedExecution ensures the execution of
+// checkProtocols resumes the work of the scheduler if the protocol that was
+// previously executing finished the work.
+func TestCheckProtocols_ProtocolFinishedExecution(t *testing.T) {
+	scheduler := new(Scheduler)
+	defer scheduler.stop()
+
+	number1 := big.NewInt(0)
+	number2 := big.NewInt(0)
+
+	scheduler.compute(func(context.Context) {
+		number1.Add(number1, one)
+	})
+	scheduler.compute(func(context.Context) {
+		number2.Add(number2, one)
+	})
+
+	protocol1 := &mockProtocol{}
+	protocol2 := &mockProtocol{}
+	scheduler.RegisterProtocol(protocol1)
+	scheduler.RegisterProtocol(protocol2)
+
+	// give some time to perform computations
+	time.Sleep(10 * time.Millisecond)
+
+	protocol2.isExecuting = true
+	scheduler.checkProtocols()
+
+	protocol2.isExecuting = false
+	scheduler.checkProtocols()
+
+	// there are two protocols, the second one was executing, but it has
+	// finished; ensure the computations are resumed
+	intermediateResult1 := new(big.Int).Set(number1)
+	intermediateResult2 := new(big.Int).Set(number2)
+
+	time.Sleep(20 * time.Millisecond)
+	testutils.AssertBigIntsNotEqual(
+		t,
+		"computation result after stop signal",
+		intermediateResult1,
+		number1,
+	)
+	testutils.AssertBigIntsNotEqual(
+		t,
+		"computation result after stop signal",
+		intermediateResult2,
+		number2,
+	)
+}
+
+type mockProtocol struct {
+	isExecuting bool
+}
+
+func (mp *mockProtocol) IsExecuting() bool {
+	return mp.isExecuting
+}

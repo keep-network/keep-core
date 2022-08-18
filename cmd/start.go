@@ -105,8 +105,7 @@ func start(cmd *cobra.Command) error {
 		return fmt.Errorf("cannot initialize tbtc persistence: [%w]", err)
 	}
 
-	// TODO: pass actual protocol implementations
-	scheduler := generator.StartScheduler([]generator.Protocol{})
+	scheduler := generator.StartScheduler()
 
 	err = beacon.Initialize(
 		ctx,
