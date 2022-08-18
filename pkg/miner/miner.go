@@ -117,9 +117,10 @@ func (m *Miner) startWorker(miningFn func(context.Context)) {
 
 	go func() {
 		for {
-			// do the iteration step only if the context is not yet done, no
-			// matter the reason (cancelled or timed out)
-			if ctx.Err() == nil {
+			select {
+			case <-ctx.Done():
+				return
+			default:
 				miningFn(ctx)
 			}
 		}
