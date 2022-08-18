@@ -378,7 +378,7 @@ func (tc *TbtcChain) SubmitResult(
 		return err
 	}
 
-	groupPublicKeyBytes, err := result.GetGroupPublicKeyBytes()
+	groupPublicKeyBytes, err := result.GroupPublicKeyBytes()
 	if err != nil {
 		return returnWithError(
 			fmt.Errorf(
@@ -476,13 +476,13 @@ func (tc *TbtcChain) IsStaleGroup(groupPublicKey []byte) (bool, error) {
 func (tc *TbtcChain) calculateDKGResultHash(
 	result *dkg.Result,
 ) (dkg.ResultHash, error) {
-	groupPublicKeyBytes, err := result.GetGroupPublicKeyBytes()
+	groupPublicKeyBytes, err := result.GroupPublicKeyBytes()
 	if err != nil {
 		return dkg.ResultHash{}, err
 	}
 
 	// Encode DKG result to the format matched with Solidity keccak256(abi.encodePacked(...))
-	hash := crypto.Keccak256(groupPublicKeyBytes, result.Misbehaved)
+	hash := crypto.Keccak256(groupPublicKeyBytes, result.MisbehavedMembersBytes())
 	return dkg.ResultHashFromBytes(hash)
 }
 
@@ -604,7 +604,7 @@ func (mwr *mockWalletRegistry) SubmitDKGResult(
 		return fmt.Errorf("failed to get the current block")
 	}
 
-	groupPublicKeyBytes, err := result.GetGroupPublicKeyBytes()
+	groupPublicKeyBytes, err := result.GroupPublicKeyBytes()
 	if err != nil {
 		return fmt.Errorf(
 			"failed to extract group public key bytes from the result [%v]",
@@ -617,7 +617,7 @@ func (mwr *mockWalletRegistry) SubmitDKGResult(
 			handler(&tbtc.DKGResultSubmittedEvent{
 				MemberIndex:         uint32(participantIndex),
 				GroupPublicKeyBytes: groupPublicKeyBytes,
-				Misbehaved:          result.Misbehaved,
+				Misbehaved:          result.MisbehavedMembersBytes(),
 				BlockNumber:         blockNumber,
 			})
 		}(handler)

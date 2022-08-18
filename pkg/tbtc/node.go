@@ -145,7 +145,7 @@ func (n *node) joinDKGIfEligible(seed *big.Int, startBlockNumber uint64) {
 			memberIndex := index + 1
 
 			go func() {
-				result, group, endBlock, err := n.dkgExecutor.Execute(
+				result, endBlock, err := n.dkgExecutor.Execute(
 					seed,
 					startBlockNumber,
 					memberIndex,
@@ -166,7 +166,7 @@ func (n *node) joinDKGIfEligible(seed *big.Int, startBlockNumber uint64) {
 				}
 
 				publicationStartBlock := endBlock
-				operatingMemberIDs := group.OperatingMemberIDs()
+				operatingMemberIDs := result.Group.OperatingMemberIDs()
 				dkgResultChannel := make(chan *DKGResultSubmittedEvent)
 
 				dkgResultSubscription := n.chain.OnDKGResultSubmitted(
@@ -186,7 +186,6 @@ func (n *node) joinDKGIfEligible(seed *big.Int, startBlockNumber uint64) {
 					membershipValidator,
 					n.chain,
 					n.chain,
-					group,
 					result,
 				)
 				if err != nil {
@@ -206,7 +205,6 @@ func (n *node) joinDKGIfEligible(seed *big.Int, startBlockNumber uint64) {
 						memberIndex,
 						dkgResultChannel,
 						publicationStartBlock,
-						group,
 						result,
 					); err != nil {
 						logger.Errorf(
@@ -268,7 +266,6 @@ func (n *node) decideMemberFate(
 	memberIndex group.MemberIndex,
 	dkgResultChannel chan *DKGResultSubmittedEvent,
 	publicationStartBlock uint64,
-	membersGroup *group.Group,
 	result *dkg.Result,
 ) ([]group.MemberIndex, error) {
 	dkgResultEvent, err := n.waitForDkgResultEvent(
@@ -279,7 +276,7 @@ func (n *node) decideMemberFate(
 		return nil, err
 	}
 
-	groupPublicKeyBytes, err := result.GetGroupPublicKeyBytes()
+	groupPublicKeyBytes, err := result.GroupPublicKeyBytes()
 	if err != nil {
 		return nil, err
 	}
@@ -311,7 +308,7 @@ func (n *node) decideMemberFate(
 	// Construct a new view of the operating members according to the accepted
 	// DKG result.
 	operatingMemberIDs := make([]group.MemberIndex, 0)
-	for _, memberID := range membersGroup.MemberIDs() {
+	for _, memberID := range result.Group.MemberIDs() {
 		if _, isMisbehaved := misbehavedSet[memberID]; !isMisbehaved {
 			operatingMemberIDs = append(operatingMemberIDs, memberID)
 		}

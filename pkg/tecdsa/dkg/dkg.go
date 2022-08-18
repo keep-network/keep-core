@@ -52,7 +52,7 @@ func (e *Executor) Execute(
 	blockCounter chain.BlockCounter,
 	channel net.BroadcastChannel,
 	membershipValidator *group.MembershipValidator,
-) (*Result, *group.Group, uint64, error) {
+) (*Result, uint64, error) {
 	e.logger.Debugf("[member:%v] initializing member", memberIndex)
 
 	registerUnmarshallers(channel)
@@ -76,15 +76,15 @@ func (e *Executor) Execute(
 
 	lastState, endBlockNumber, err := stateMachine.Execute(startBlockNumber)
 	if err != nil {
-		return nil, nil, 0, err
+		return nil, 0, err
 	}
 
 	finalizationState, ok := lastState.(*finalizationState)
 	if !ok {
-		return nil, nil, 0, fmt.Errorf("execution ended on state: %T", lastState)
+		return nil, 0, fmt.Errorf("execution ended on state: %T", lastState)
 	}
 
-	return finalizationState.result(), finalizationState.group(), endBlockNumber, nil
+	return finalizationState.result(), endBlockNumber, nil
 }
 
 // ResultSigner is the interface that provides ability to sign the DKG result
@@ -121,7 +121,6 @@ func Publish(
 	membershipValidator *group.MembershipValidator,
 	resultSigner ResultSigner,
 	resultSubmitter ResultSubmitter,
-	group *group.Group,
 	result *Result,
 ) error {
 	initialState := &resultSigningState{
@@ -132,7 +131,7 @@ func Publish(
 		member: newSigningMember(
 			logger,
 			memberIndex,
-			group,
+			result.Group,
 			membershipValidator,
 			seed.Text(16),
 		),

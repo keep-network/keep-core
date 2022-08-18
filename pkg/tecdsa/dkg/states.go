@@ -445,10 +445,6 @@ func (fs *finalizationState) MemberIndex() group.MemberIndex {
 	return fs.member.id
 }
 
-func (fs *finalizationState) group() *group.Group {
-	return fs.member.Group()
-}
-
 func (fs *finalizationState) result() *Result {
 	return fs.member.Result()
 }

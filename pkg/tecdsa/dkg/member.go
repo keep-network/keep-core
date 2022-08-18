@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"github.com/keep-network/keep-core/pkg/tecdsa"
 	"math/big"
-	"sort"
 	"strconv"
 
 	"github.com/binance-chain/tss-lib/ecdsa/keygen"
@@ -254,51 +253,11 @@ func (fm *finalizingMember) MarkInactiveMembers(
 	filter.FlushInactiveMembers()
 }
 
-// Group returns information on the members group, including all the group
-// member IDs and the misbehaving members.
-func (fm *finalizingMember) Group() *group.Group {
-	return fm.group
-}
-
 // Result can be either the successful computation of the distributed key
 // generation process or a notification of failure.
 func (fm *finalizingMember) Result() *Result {
-	misbehavedMembersAsBytes := func(
-		inactive []group.MemberIndex,
-		disqualified []group.MemberIndex,
-	) []byte {
-		// merge IA and DQ into 'misbehaved' set
-		misbehaving := make(map[group.MemberIndex]bool)
-		for _, ia := range inactive {
-			misbehaving[ia] = true
-		}
-		for _, dq := range disqualified {
-			misbehaving[dq] = true
-		}
-
-		// convert 'misbehaved' set into sorted list
-		var sorted []group.MemberIndex
-		for m := range misbehaving {
-			sorted = append(sorted, m)
-		}
-		sort.Slice(sorted[:], func(i, j int) bool {
-			return sorted[i] < sorted[j]
-		})
-
-		// convert sorted list of member indexes into bytes
-		bytes := make([]byte, len(sorted))
-		for i, m := range sorted {
-			bytes[i] = byte(m)
-		}
-
-		return bytes
-	}
-
 	return &Result{
-		Misbehaved: misbehavedMembersAsBytes(
-			fm.group.InactiveMemberIDs(),
-			fm.group.DisqualifiedMemberIDs(),
-		),
+		Group:           fm.group,
 		PrivateKeyShare: tecdsa.NewPrivateKeyShare(fm.tssResult),
 	}
 }
