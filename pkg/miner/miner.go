@@ -33,7 +33,7 @@ type Miner struct {
 	state   state
 	latch   sync.WaitGroup
 	workers []func(context.Context)
-	stops   []func()
+	stops   []context.CancelFunc
 
 	mutex sync.Mutex
 }
