@@ -1,44 +1,26 @@
 ---
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: prometheus-pvc
-  labels:
-    name: prometheus-server
-spec:
-  storageClassName: monitoring-storage
-  accessModes:
-    - ReadWriteOnce
-  resources:
-    requests:
-      storage: 1Gi
----
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: prometheus-deployment
+  name: prometheus
   namespace: monitoring
   labels:
-    app: prometheus-server
+    app: prometheus
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: prometheus-server
-  volumeClaimTemplates:
-    - metadata:
-        name: monitoring-storage
-      spec:
-        accessModes: [ReadWriteOnce]
-        storageClassName: prom-storage
-        resources:
-          requests:
-            storage: 2Gi
+      app: prometheus
   template:
     metadata:
       labels:
-        app: prometheus-server
+        app: prometheus
     spec:
+      securityContext:
+        fsGroup: 65534
+        runAsGroup: 0
+        runAsNonRoot: false
+        runAsUser: 0
       containers:
         - name: prometheus
           image: prom/prometheus:v2.37.0
@@ -64,7 +46,7 @@ spec:
         - name: prometheus-config-volume
           configMap:
             defaultMode: 420
-            name: prometheus-server-conf
+            name: prometheus-conf
         - name: prometheus-storage-volume
           persistentVolumeClaim:
             claimName: prometheus-pvc
