@@ -3,7 +3,6 @@ package cmd
 import (
 	"context"
 	"fmt"
-
 	"github.com/keep-network/keep-core/pkg/tbtc"
 
 	"github.com/keep-network/keep-core/config"
@@ -142,6 +141,19 @@ func initializePersistence(clientConfig *config.Config, application string) (
 	persistence.Handle,
 	error,
 ) {
+	err := persistence.EnsureDirectoryExists(
+		clientConfig.Storage.DataDir,
+		application,
+	)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"cannot create storage directory for "+
+				"application [%v]: [%w]",
+			application,
+			err,
+		)
+	}
+
 	path := fmt.Sprintf("%s/%s", clientConfig.Storage.DataDir, application)
 
 	diskHandle, err := persistence.NewDiskHandle(path)
