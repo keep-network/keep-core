@@ -381,30 +381,30 @@ func (tc *TbtcChain) SubmitResult(
 	// TODO: Check if DKG was already submitted.
 	// Add IsDKGResultSubmitted() function to the interface?
 
-	// groupPublicKeyBytes, err := result.GroupPublicKeyBytes()
-	// if err != nil {
-	// 	return returnWithError(
-	// 		fmt.Errorf(
-	// 			"could not extract public key bytes from the result: [%v]",
-	// 			err,
-	// 		),
-	// 	)
-	// }
+	groupPublicKeyBytes, err := result.GroupPublicKeyBytes()
+	if err != nil {
+		return returnWithError(
+			fmt.Errorf(
+				"could not extract public key bytes from the result: [%v]",
+				err,
+			),
+		)
+	}
 
-	// alreadySubmitted, err := tc.IsGroupRegistered(groupPublicKeyBytes)
-	// if err != nil {
-	// 	return returnWithError(
-	// 		fmt.Errorf(
-	// 			"could not check if the result is already submitted: [%v]",
-	// 			err,
-	// 		),
-	// 	)
-	// }
+	alreadySubmitted, err := tc.isDKGResultSubmitted(groupPublicKeyBytes)
+	if err != nil {
+		return returnWithError(
+			fmt.Errorf(
+				"could not check if the result is already submitted: [%v]",
+				err,
+			),
+		)
+	}
 
-	// // Someone who was ahead of us in the queue submitted the result. Giving up.
-	// if alreadySubmitted {
-	// 	return returnWithError(nil)
-	// }
+	// Someone who was ahead of us in the queue submitted the result. Giving up.
+	if alreadySubmitted {
+		return returnWithError(nil)
+	}
 
 	// Wait until the current member is eligible to submit the result.
 	eligibleToSubmitWaiter, err := tc.waitForSubmissionEligibility(
@@ -453,15 +453,11 @@ func (tc *TbtcChain) SubmitResult(
 	}
 }
 
-// // TODO: Implement a real IsGroupRegistered function.
-// func (tc *TbtcChain) IsGroupRegistered(groupPublicKey []byte) (bool, error) {
-// 	return false, nil
-// }
-
-// // TODO: Implement a real IsStaleGroup function.
-// func (tc *TbtcChain) IsStaleGroup(groupPublicKey []byte) (bool, error) {
-// 	return false, nil
-// }
+// TODO: Implement a real isDKGResultSubmitted function.
+// TODO: Check what the argument should be.
+func (tc *TbtcChain) isDKGResultSubmitted(groupPublicKey []byte) (bool, error) {
+	return false, nil
+}
 
 // calculateDKGResultHash calculates Keccak-256 hash of the DKG result. Operation
 // is performed off-chain.
