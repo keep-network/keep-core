@@ -17,10 +17,12 @@ type ProtocolLatch struct {
 	mutex   sync.RWMutex
 }
 
+// NewProtocolLatch returns a new instance of the latch with 0 counter value.
 func NewProtocolLatch() *ProtocolLatch {
 	return &ProtocolLatch{}
 }
 
+// Lock increases the counter on the latch by one.
 func (pl *ProtocolLatch) Lock() {
 	pl.mutex.Lock()
 	defer pl.mutex.Unlock()
@@ -28,6 +30,8 @@ func (pl *ProtocolLatch) Lock() {
 	pl.counter++
 }
 
+// Unlock decreases the counter on the latch by one. Unlock panics if no Lock
+// was called before.
 func (pl *ProtocolLatch) Unlock() {
 	pl.mutex.Lock()
 	defer pl.mutex.Unlock()
@@ -39,6 +43,8 @@ func (pl *ProtocolLatch) Unlock() {
 	pl.counter--
 }
 
+// IsExecuting returns true if the latch counter is 0. This is happening when
+// the same number of Unlock and Lock happened.
 func (pl *ProtocolLatch) IsExecuting() bool {
 	pl.mutex.RLock()
 	defer pl.mutex.RUnlock()
