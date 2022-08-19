@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"math/big"
+	"net/http"
 	"reflect"
 	"strings"
 	"testing"
@@ -17,6 +18,8 @@ import (
 	"github.com/keep-network/keep-core/pkg/crypto/ephemeral"
 	"github.com/keep-network/keep-core/pkg/internal/testutils"
 	"github.com/keep-network/keep-core/pkg/protocol/group"
+
+	_ "net/http/pprof"
 )
 
 // TODO: This file contains unit tests that stress each protocol phase
@@ -342,6 +345,10 @@ func TestTssRoundOne_OutgoingMessageTimeout(t *testing.T) {
 }
 
 func TestTssRoundTwo(t *testing.T) {
+	go func() {
+		fmt.Println(http.ListenAndServe("localhost:6060", nil))
+	}()
+
 	members, tssRoundOneMessages, err := initializeTssRoundTwoMembersGroup(
 		dishonestThreshold,
 		groupSize,
