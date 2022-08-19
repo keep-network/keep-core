@@ -39,6 +39,12 @@ type Scheduler struct {
 	protocolsMutex sync.Mutex
 }
 
+// RegisterProtocol adds the provided protocol to the list that will be
+// inspected periodically by the Scheduler. The Scheduler checks if at least one
+// of the registered protocols is running and if so, it stops the computations.
+// Computations are automatically resumed once none of the protocols is
+// executing. If there are no protocols registered, the scheduler continues to
+// work.
 func (s *Scheduler) RegisterProtocol(protocol Protocol) {
 	s.protocolsMutex.Lock()
 	defer s.protocolsMutex.Unlock()
@@ -103,6 +109,7 @@ func (s *Scheduler) resume() {
 
 // StartWorker takes the provided worker function, creates for it an individual
 // context and starts executing it in the loop until the context is done.
+// This function should be executed only be the Scheduler.
 func (s *Scheduler) startWorker(workerFn func(context.Context)) {
 	ctx, cancelFn := context.WithCancel(context.Background())
 	s.stops = append(s.stops, cancelFn)
@@ -122,7 +129,7 @@ func (s *Scheduler) startWorker(workerFn func(context.Context)) {
 // CheckProtocol executed a check loop over all registered protocols. If at
 // least one of the protocols is currently executing, the scheduler stops all
 // computations. Computations are automatically resumed once none of the
-// protocols is executing. If there are no protocols registered, scheduler
+// protocols is executing. If there are no protocols registered, the scheduler
 // continues to work.
 func (s *Scheduler) checkProtocols() {
 	s.protocolsMutex.Lock()
