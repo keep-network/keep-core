@@ -68,11 +68,11 @@
     "typescript": "^4.5.4"
   },
   "dependencies": {
-    "@keep-network/random-beacon": "development",
+    "@keep-network/random-beacon": "dapp-development-goerli",
     "@keep-network/sortition-pools": "^2.0.0-pre.13",
     "@openzeppelin/contracts": "^4.6.0",
     "@openzeppelin/contracts-upgradeable": "^4.6.0",
-    "@threshold-network/solidity-contracts": "development"
+    "@threshold-network/solidity-contracts": "dapp-development-goerli"
   },
   "engines": {
     "node": ">= 14.0.0"
