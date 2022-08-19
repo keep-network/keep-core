@@ -109,7 +109,8 @@ func (s *Scheduler) resume() {
 
 // StartWorker takes the provided worker function, creates for it an individual
 // context and starts executing it in the loop until the context is done.
-// This function should be executed only be the Scheduler.
+// This function should be executed only be the Scheduler and when the
+// workMutex is locked.
 func (s *Scheduler) startWorker(workerFn func(context.Context)) {
 	ctx, cancelFn := context.WithCancel(context.Background())
 	s.stops = append(s.stops, cancelFn)
