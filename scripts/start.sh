@@ -4,17 +4,17 @@ set -eou pipefail
 # Dafault inputs.
 LOG_LEVEL_DEFAULT="info"
 KEEP_CORE_PATH=$PWD
-CONFIG_DIR_PATH_DEFAULT="$KEEP_CORE_PATH/configs"
+CONFIG_DIR_DEFAULT="$KEEP_CORE_PATH/configs"
 KEEP_ETHEREUM_PASSWORD=${KEEP_ETHEREUM_PASSWORD:-"password"}
 
 help() {
     echo -e "\nUsage: ENV_VAR(S) $0" \
-        "--config-dir-path <path-to-configuration-files>"
+        "--config-dir <path-to-configuration-files>"
     echo -e "\nEnvironment variables:\n"
     echo -e "\tKEEP_ETHEREUM_PASSWORD: Ethereum account password." \
         "Required only for 'local' network. Default value is 'password'"
     echo -e "\nCommand line arguments:\n"
-    echo -e "\t--config-dir-path: Path to a client configuration files\n"
+    echo -e "\t--config-dir: Path to a client configuration files\n"
     exit 1 # Exit script after printing help
 }
 
@@ -22,7 +22,7 @@ help() {
 for arg in "$@"; do
     shift
     case "$arg" in
-    "--config-dir-path") set -- "$@" "-c" ;;
+    "--config-dir") set -- "$@" "-c" ;;
     "--help") set -- "$@" "-h" ;;
     *) set -- "$@" "$arg" ;;
     esac
@@ -30,18 +30,18 @@ done
 
 # Parse short options
 OPTIND=1
-while getopts "c:" opt; do
+while getopts "c:h" opt; do
     case "$opt" in
-    c) config_dir_path="$OPTARG" ;;
+    c) config_dir="$OPTARG" ;;
     h) help ;;
     ?) help ;; # Print help in case parameter is non-existent
     esac
 done
 shift $(expr $OPTIND - 1) # remove options from positional parameters
 
-CONFIG_DIR_PATH=${config_dir_path:-$CONFIG_DIR_PATH_DEFAULT}
+CONFIG_DIR=${config_dir:-$CONFIG_DIR_DEFAULT}
 
-config_files=($CONFIG_DIR_PATH/*.toml)
+config_files=($CONFIG_DIR/*.toml)
 config_files_count=${#config_files[@]}
 while :; do
     printf "\nSelect client config file: \n"
