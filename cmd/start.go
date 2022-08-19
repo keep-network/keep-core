@@ -3,6 +3,8 @@ package cmd
 import (
 	"context"
 	"fmt"
+
+	"github.com/keep-network/keep-core/pkg/generator"
 	"github.com/keep-network/keep-core/pkg/tbtc"
 
 	"github.com/keep-network/keep-core/config"
@@ -103,11 +105,14 @@ func start(cmd *cobra.Command) error {
 		return fmt.Errorf("cannot initialize tbtc persistence: [%w]", err)
 	}
 
+	scheduler := generator.StartScheduler()
+
 	err = beacon.Initialize(
 		ctx,
 		beaconChain,
 		netProvider,
 		beaconPersistence,
+		scheduler,
 	)
 	if err != nil {
 		return fmt.Errorf("error initializing beacon: [%v]", err)
@@ -118,6 +123,7 @@ func start(cmd *cobra.Command) error {
 		tbtcChain,
 		netProvider,
 		tbtcPersistence,
+		scheduler,
 		clientConfig.Tbtc,
 	)
 	if err != nil {
@@ -141,19 +147,6 @@ func initializePersistence(clientConfig *config.Config, application string) (
 	persistence.Handle,
 	error,
 ) {
-	err := persistence.EnsureDirectoryExists(
-		clientConfig.Storage.DataDir,
-		application,
-	)
-	if err != nil {
-		return nil, fmt.Errorf(
-			"cannot create storage directory for "+
-				"application [%v]: [%w]",
-			application,
-			err,
-		)
-	}
-
 	path := fmt.Sprintf("%s/%s", clientConfig.Storage.DataDir, application)
 
 	diskHandle, err := persistence.NewDiskHandle(path)

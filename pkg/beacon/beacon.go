@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/keep-network/keep-core/pkg/generator"
 	"github.com/keep-network/keep-core/pkg/sortition"
 
 	"github.com/ipfs/go-log"
@@ -31,6 +32,7 @@ func Initialize(
 	beaconChain beaconchain.Interface,
 	netProvider net.Provider,
 	persistence persistence.Handle,
+	scheduler *generator.Scheduler,
 ) error {
 	groupRegistry := registry.NewGroupRegistry(logger, beaconChain, persistence)
 	groupRegistry.LoadExistingGroups()
@@ -39,6 +41,7 @@ func Initialize(
 		beaconChain,
 		netProvider,
 		groupRegistry,
+		scheduler,
 	)
 
 	err := sortition.MonitorPool(ctx, logger, beaconChain, sortition.DefaultStatusCheckTick)
