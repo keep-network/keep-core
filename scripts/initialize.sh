@@ -104,9 +104,11 @@ if [ -z "$stake_owner" ]; then
 
    key_file_path=$(awk '/keyFile ?=(.*)$/{print $3}' $CONFIG_FILE_PATH | xargs)
 
+   printf "Reading an address from the key file: ${key_file_path}\n"
+
    stake_owner=`cat $key_file_path | jq -jr .address`
 
-   printf "\n Stake owner address: $stake_owner \n"
+   printf "Discovered the address: ${stake_owner}\n"
 fi
 
 # Overwrite default properties
