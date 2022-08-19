@@ -240,6 +240,9 @@ func TestCheckProtocols_NoProtocols(t *testing.T) {
 
 	scheduler.checkProtocols()
 
+	// give some time to potentially stop computations (shouldn't happen)
+	time.Sleep(100 * time.Millisecond)
+
 	// there are no protocols executed, nothing can stop the scheduler;
 	// ensure the computations are performed
 	intermediateResult1 := new(big.Int).Set(number1)
@@ -287,6 +290,9 @@ func TestCheckProtocols_ProtocolNotExecuting(t *testing.T) {
 
 	scheduler.checkProtocols()
 
+	// give some time to potentially stop computations (shouldn't happen)
+	time.Sleep(100 * time.Millisecond)
+
 	// there are two protocols but they are not executing;
 	// ensure the computations are performed
 	intermediateResult1 := new(big.Int).Set(number1)
@@ -333,6 +339,9 @@ func TestCheckProtocols_ProtocolExecuting(t *testing.T) {
 
 	protocol2.isExecuting = true
 	scheduler.checkProtocols()
+
+	// give some time to stop computations
+	time.Sleep(100 * time.Millisecond)
 
 	// there are two protocols and the second one is executing
 	// ensure the computations are stopped
@@ -382,8 +391,14 @@ func TestCheckProtocols_ProtocolFinishedExecution(t *testing.T) {
 	protocol2.isExecuting = true
 	scheduler.checkProtocols()
 
+	// give some time to stop computations
+	time.Sleep(100 * time.Millisecond)
+
 	protocol2.isExecuting = false
 	scheduler.checkProtocols()
+
+	// give some time to resume computations
+	time.Sleep(100 * time.Millisecond)
 
 	// there are two protocols, the second one was executing, but it has
 	// finished; ensure the computations are resumed
