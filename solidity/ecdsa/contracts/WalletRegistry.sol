@@ -764,7 +764,6 @@ contract WalletRegistry is
     ) external {
         wallets.registry[ecdsaWalletID].publicKeyX = publicKeyX;
         wallets.registry[ecdsaWalletID].publicKeyY = publicKeyY;
-        emit WalletCreated(ecdsaWalletID, 0x0);
     }
 
     /// @notice Notifies about seed for DKG delivery timeout. It is expected
