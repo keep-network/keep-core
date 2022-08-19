@@ -102,20 +102,11 @@ if [ -z "$stake_owner" ]; then
       fi
    done
 
-   sed -n -e '/^keyFile -/p' $CONFIG_FILE_PATH
+   key_file_path=$(awk '/keyFile ?=(.*)$/{print $3}' $CONFIG_FILE_PATH | xargs)
 
-   key_file_str=$(grep "^keyFile" $CONFIG_FILE_PATH)
-   # internal field separator, creates array from key_file separated by '"' sign
-   # array[1] is the key file path
-   IFS='"' read -r -a array <<<"$key_file_str"
+   stake_owner=`cat $key_file_path | jq -jr .address`
 
-   # find address:<address> in the key file
-   address_str=$(grep -Eo '"address":.*?[^\\]"' "${array[1]}")
-   # address_array[3] is the ethereum address
-   IFS='"' read -r -a address_array <<<"$address_str"
-   printf "\nStake owner address: ${address_array[3]} \n"
-
-   stake_owner="${address_array[3]}"
+   printf "\n Stake owner address: $stake_owner \n"
 fi
 
 # Overwrite default properties
