@@ -1,6 +1,7 @@
 package dkg
 
 import (
+	"bytes"
 	"context"
 	"crypto/elliptic"
 	"encoding/hex"
@@ -1182,10 +1183,7 @@ func TestSignDKGResult(t *testing.T) {
 		)
 	}
 
-	if !reflect.DeepEqual(
-		signature,
-		signingMember.selfDKGResultSignature,
-	) {
+	if !bytes.Equal(signature, signingMember.selfDKGResultSignature) {
 		t.Errorf(
 			"unexpected self DKG result signature\nexpected: %v\nactual:   %v\n",
 			signature,
@@ -1193,10 +1191,7 @@ func TestSignDKGResult(t *testing.T) {
 		)
 	}
 
-	if !reflect.DeepEqual(
-		resultHash,
-		signingMember.preferredDKGResultHash,
-	) {
+	if resultHash != signingMember.preferredDKGResultHash {
 		t.Errorf(
 			"unexpected preferred DKG result hash\nexpected: %v\nactual:   %v\n",
 			resultHash,
