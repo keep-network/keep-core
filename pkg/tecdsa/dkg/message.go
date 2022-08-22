@@ -105,12 +105,12 @@ type resultSignatureMessage struct {
 }
 
 // SenderID returns protocol-level identifier of the message sender.
-func (drhsm *resultSignatureMessage) SenderID() group.MemberIndex {
-	return drhsm.senderID
+func (rsm *resultSignatureMessage) SenderID() group.MemberIndex {
+	return rsm.senderID
 }
 
 // Type returns a string describing an resultSignatureMessage type for
 // marshaling purposes.
-func (drhsm *resultSignatureMessage) Type() string {
+func (rsm *resultSignatureMessage) Type() string {
 	return messageTypePrefix + "result_signature_message"
 }
