@@ -102,7 +102,7 @@ if [ -z "$stake_owner" ]; then
       fi
    done
 
-   key_file_path=$(awk '/keyFile ?=(.*)$/{print $3}' $CONFIG_FILE_PATH | xargs)
+   key_file_path=$(awk '/[k|K]eyFile ?=(.*)$/{print $3}' $CONFIG_FILE_PATH | xargs)
 
    printf "Reading an address from the key file: ${key_file_path}\n"
 
