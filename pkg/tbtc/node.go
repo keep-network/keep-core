@@ -241,9 +241,6 @@ func (n *node) joinDKGIfEligible(seed *big.Int, startBlockNumber uint64) {
 				// TODO: Snapshot the key material before doing on-chain result
 				//       submission.
 
-				// TODO: The final `signingGroupOperators` may differ from
-				//       the original `selectedSigningGroupOperators`.
-				//       Consider that when integrating the retry algorithm.
 				signer := newSigner(
 					result.PrivateKeyShare.PublicKey(),
 					signingGroupOperators,
