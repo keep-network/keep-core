@@ -204,11 +204,19 @@ jobs:
             @keep-network/random-beacon@${{ steps.upstream-builds-query.outputs.random-beacon-version }} \
             @keep-network/sortition-pools
 
+      # TODO: Remove this step. We replace sortition pools for deployment on testnet
+      # with forked contracts that were tweaked to make operators joining the pool
+      # easier. This should never be used outside of the test environment. On
+      # test environment it should be used temporarily only.
+      - name: Use Sortition Pool forked contracts
+        run: |
+          yarn upgrade github:keep-network/sortition-pools#test-fork
+
       - name: Configure tenderly
         env:
           TENDERLY_TOKEN: ${{ secrets.TENDERLY_TOKEN }}
         run: ./config_tenderly.sh
-      
+
       - name: Deploy contracts
         env:
           CHAIN_API_URL: ${{ secrets.GOERLI_ETH_HOSTNAME_HTTP }}
