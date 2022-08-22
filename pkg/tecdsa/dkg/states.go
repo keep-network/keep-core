@@ -623,10 +623,6 @@ func (rss *resultSubmissionState) DelayBlocks() uint64 {
 }
 
 func (rss *resultSubmissionState) ActiveBlocks() uint64 {
-	// We do not exchange any messages in this phase. We publish result to the
-	// chain but it is an action blocking all group members for the same time
-	// - members exit when the first valid result is accepted by the chain.
-	// How long it takes depends on the block step and group size.
 	return state.SilentStateActiveBlocks
 }
 
