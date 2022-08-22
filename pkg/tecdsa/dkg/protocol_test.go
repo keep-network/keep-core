@@ -1148,8 +1148,8 @@ func TestSignDKGResult(t *testing.T) {
 	signature := []byte("signature")
 	resultHash := ResultHash{0: 11, 6: 22, 31: 33}
 
-	resultSigner := newTestResultSigner(publicKey)
-	resultSigner.setSigningResult(result, &signingData{
+	resultSigner := newMockResultSigner(publicKey)
+	resultSigner.setSigningOutcome(result, &signingOutcome{
 		signature:  signature,
 		resultHash: resultHash,
 		err:        nil,
@@ -1209,8 +1209,8 @@ func TestSignDKGResult_ErrorDuringSigning(t *testing.T) {
 	signingMember := initializeSigningMember()
 	result := &Result{}
 
-	resultSigner := newTestResultSigner([]byte("publicKey"))
-	resultSigner.setSigningResult(result, &signingData{
+	resultSigner := newMockResultSigner([]byte("publicKey"))
+	resultSigner.setSigningOutcome(result, &signingOutcome{
 		signature:  []byte("signature"),
 		resultHash: ResultHash{0: 11, 6: 22, 31: 33},
 		err:        fmt.Errorf("dummy error"),
@@ -1643,38 +1643,38 @@ func newTssPreParams(
 	}
 }
 
-type signingData struct {
+type signingOutcome struct {
 	signature  []byte
 	resultHash ResultHash
 	err        error
 }
 
-type testResultSigner struct {
-	publicKey      []byte
-	signingResults map[*Result]*signingData
+type mockResultSigner struct {
+	publicKey       []byte
+	signingOutcomes map[*Result]*signingOutcome
 }
 
-func (trs *testResultSigner) setSigningResult(result *Result, data *signingData) {
-	trs.signingResults[result] = data
+func newMockResultSigner(publicKey []byte) *mockResultSigner {
+	return &mockResultSigner{
+		publicKey:       publicKey,
+		signingOutcomes: make(map[*Result]*signingOutcome),
+	}
 }
 
-func (trs *testResultSigner) SignResult(result *Result) ([]byte, []byte, ResultHash, error) {
-	if data, ok := trs.signingResults[result]; ok {
-		return trs.publicKey, data.signature, data.resultHash, data.err
+func (mrs *mockResultSigner) setSigningOutcome(result *Result, outcome *signingOutcome) {
+	mrs.signingOutcomes[result] = outcome
+}
+
+func (mrs *mockResultSigner) SignResult(result *Result) ([]byte, []byte, ResultHash, error) {
+	if outcome, ok := mrs.signingOutcomes[result]; ok {
+		return mrs.publicKey, outcome.signature, outcome.resultHash, outcome.err
 	}
 
 	return nil, nil, ResultHash{}, fmt.Errorf(
-		"could not find singing data for the result",
+		"could not find singing outcome for the result",
 	)
 }
 
-func (trs *testResultSigner) VerifySignature(message []byte, signature []byte, publicKey []byte) (bool, error) {
+func (mrs *mockResultSigner) VerifySignature(message []byte, signature []byte, publicKey []byte) (bool, error) {
 	return false, nil
-}
-
-func newTestResultSigner(publicKey []byte) *testResultSigner {
-	return &testResultSigner{
-		publicKey:      publicKey,
-		signingResults: make(map[*Result]*signingData),
-	}
 }
