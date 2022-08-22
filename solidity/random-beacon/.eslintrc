@@ -16,6 +16,7 @@
         "groups": ["builtin", "external", "parent", "sibling", "index", "type"],
         "newlines-between": "always"
       }
-    ]
+    ],
+    "no-await-in-loop": "off"
   }
 }

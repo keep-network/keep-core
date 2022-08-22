@@ -2,8 +2,9 @@ package tecdsa
 
 import (
 	"crypto/ecdsa"
-	"github.com/binance-chain/tss-lib/ecdsa/keygen"
-	"github.com/binance-chain/tss-lib/tss"
+
+	"github.com/bnb-chain/tss-lib/ecdsa/keygen"
+	"github.com/bnb-chain/tss-lib/tss"
 )
 
 // Curve is the curve implementation used across the tecdsa package.

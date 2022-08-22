@@ -2,12 +2,13 @@ package dkg
 
 import (
 	"fmt"
-	"github.com/keep-network/keep-core/pkg/tecdsa"
 	"math/big"
 	"strconv"
 
-	"github.com/binance-chain/tss-lib/ecdsa/keygen"
-	"github.com/binance-chain/tss-lib/tss"
+	"github.com/keep-network/keep-core/pkg/tecdsa"
+
+	"github.com/bnb-chain/tss-lib/ecdsa/keygen"
+	"github.com/bnb-chain/tss-lib/tss"
 	"github.com/ipfs/go-log"
 	"github.com/keep-network/keep-core/pkg/crypto/ephemeral"
 	"github.com/keep-network/keep-core/pkg/protocol/group"

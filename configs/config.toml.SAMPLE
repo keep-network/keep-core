@@ -92,6 +92,7 @@ Port = 8081
 # [tbtc]
 # PreParamsPoolSize = 50
 # PreParamsGenerationTimeout = "2m"
+# PreParamsGenerationDelay = "10s"
 # PreParamsGenerationConcurrency = 1
 
 # Developer options to work with locally deployed contracts

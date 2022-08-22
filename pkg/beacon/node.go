@@ -11,6 +11,7 @@ import (
 	"github.com/keep-network/keep-core/pkg/beacon/dkg"
 	"github.com/keep-network/keep-core/pkg/beacon/entry"
 	"github.com/keep-network/keep-core/pkg/beacon/event"
+	"github.com/keep-network/keep-core/pkg/generator"
 	"github.com/keep-network/keep-core/pkg/protocol/group"
 
 	"github.com/keep-network/keep-core/pkg/beacon/registry"
@@ -22,6 +23,7 @@ type node struct {
 	beaconChain   beaconchain.Interface
 	netProvider   net.Provider
 	groupRegistry *registry.Groups
+	protocolLatch *generator.ProtocolLatch
 }
 
 // newNode returns an empty node with no group, zero group count, and a nil last
@@ -30,11 +32,16 @@ func newNode(
 	beaconChain beaconchain.Interface,
 	netProvider net.Provider,
 	groupRegistry *registry.Groups,
+	scheduler *generator.Scheduler,
 ) *node {
+	latch := generator.NewProtocolLatch()
+	scheduler.RegisterProtocol(latch)
+
 	return &node{
 		beaconChain:   beaconChain,
 		netProvider:   netProvider,
 		groupRegistry: groupRegistry,
+		protocolLatch: latch,
 	}
 }
 
@@ -136,6 +143,9 @@ func (n *node) JoinDKGIfEligible(
 			memberIndex := index + 1
 
 			go func() {
+				n.protocolLatch.Lock()
+				defer n.protocolLatch.Unlock()
+
 				signer, err := dkg.ExecuteDKG(
 					logger,
 					dkgSeed,
@@ -359,6 +369,9 @@ func (n *node) GenerateRelayEntry(
 
 	for _, member := range memberships {
 		go func(member *registry.Membership) {
+			n.protocolLatch.Lock()
+			defer n.protocolLatch.Unlock()
+
 			err = entry.SignAndSubmit(
 				logger,
 				blockCounter,

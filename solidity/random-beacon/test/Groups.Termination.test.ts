@@ -1,5 +1,3 @@
-/* eslint-disable no-await-in-loop */
-
 import { ethers, waffle, helpers } from "hardhat"
 import { expect } from "chai"
 
