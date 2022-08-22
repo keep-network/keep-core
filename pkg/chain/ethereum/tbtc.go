@@ -347,7 +347,7 @@ func (tc *TbtcChain) SubmitResult(
 	result *dkg.Result,
 	signatures map[group.MemberIndex][]byte,
 	startBlockNumber uint64,
-	participantIndex group.MemberIndex,
+	memberIndex group.MemberIndex,
 ) error {
 	config := tc.GetConfig()
 
@@ -406,7 +406,7 @@ func (tc *TbtcChain) SubmitResult(
 	// Wait until the current member is eligible to submit the result.
 	eligibleToSubmitWaiter, err := tc.waitForSubmissionEligibility(
 		startBlockNumber,
-		participantIndex,
+		memberIndex,
 	)
 	if err != nil {
 		return returnWithError(
@@ -432,7 +432,7 @@ func (tc *TbtcChain) SubmitResult(
 			// )
 
 			return tc.submitDKGResult(
-				participantIndex,
+				memberIndex,
 				result,
 				signatures,
 			)
@@ -479,12 +479,12 @@ func (tc *TbtcChain) calculateDKGResultHash(
 //       just creates and pipes the DKG submission event to the handlers
 //       registered in the dkgResultSubmissionHandlers map.
 func (tc *TbtcChain) submitDKGResult(
-	participantIndex group.MemberIndex,
+	memberIndex group.MemberIndex,
 	result *dkg.Result,
 	signatures map[group.MemberIndex][]byte,
 ) error {
 	return tc.mockWalletRegistry.SubmitDKGResult(
-		participantIndex,
+		memberIndex,
 		result,
 		signatures,
 	)
@@ -568,7 +568,7 @@ func (mwr *mockWalletRegistry) OnDKGResultSubmitted(
 }
 
 func (mwr *mockWalletRegistry) SubmitDKGResult(
-	participantIndex group.MemberIndex,
+	memberIndex group.MemberIndex,
 	result *dkg.Result,
 	signatures map[group.MemberIndex][]byte,
 ) error {
@@ -604,7 +604,7 @@ func (mwr *mockWalletRegistry) SubmitDKGResult(
 	for _, handler := range mwr.dkgResultSubmissionHandlers {
 		go func(handler func(*tbtc.DKGResultSubmittedEvent)) {
 			handler(&tbtc.DKGResultSubmittedEvent{
-				MemberIndex:         uint32(participantIndex),
+				MemberIndex:         uint32(memberIndex),
 				GroupPublicKeyBytes: groupPublicKeyBytes,
 				Misbehaved:          result.MisbehavedMembersBytes(),
 				BlockNumber:         blockNumber,
@@ -627,10 +627,10 @@ func (mwr *mockWalletRegistry) SubmitDKGResult(
 // away, each following member is eligible after pre-defined block step.
 func (tc *TbtcChain) waitForSubmissionEligibility(
 	startBlockNumber uint64,
-	participantIndex group.MemberIndex,
+	memberIndex group.MemberIndex,
 ) (<-chan uint64, error) {
 	// T_init + (member_index - 1) * T_step
-	blockWaitTime := (uint64(participantIndex) - 1) *
+	blockWaitTime := (uint64(memberIndex) - 1) *
 		tc.GetConfig().ResultPublicationBlockStep
 
 	eligibleBlockHeight := startBlockNumber + blockWaitTime

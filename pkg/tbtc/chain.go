@@ -36,7 +36,7 @@ type DistributedKeyGenerationChain interface {
 		result *dkg.Result,
 		signatures map[group.MemberIndex][]byte,
 		startBlockNumber uint64,
-		participantIndex group.MemberIndex,
+		memberIndex group.MemberIndex,
 	) error
 }
 
