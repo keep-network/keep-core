@@ -156,7 +156,7 @@ func (n *node) joinDKGIfEligible(seed *big.Int, startBlockNumber uint64) {
 				n.protocolLatch.Lock()
 				defer n.protocolLatch.Unlock()
 
-				result, endBlock, err := n.dkgExecutor.Execute(
+				result, executionEndBlock, err := n.dkgExecutor.Execute(
 					seed,
 					startBlockNumber,
 					memberIndex,
@@ -176,8 +176,8 @@ func (n *node) joinDKGIfEligible(seed *big.Int, startBlockNumber uint64) {
 					return
 				}
 
-				publicationStartBlock := endBlock
-				operatingMemberIDs := result.Group.OperatingMemberIDs()
+				publicationStartBlock := executionEndBlock
+				operatingMemberIndexes := result.Group.OperatingMemberIDs()
 				dkgResultChannel := make(chan *DKGResultSubmittedEvent)
 
 				dkgResultSubscription := n.chain.OnDKGResultSubmitted(
@@ -212,7 +212,7 @@ func (n *node) joinDKGIfEligible(seed *big.Int, startBlockNumber uint64) {
 						err,
 					)
 
-					if operatingMemberIDs, err = n.decideMemberFate(
+					if operatingMemberIndexes, err = n.decideSigningGroupMemberFate(
 						memberIndex,
 						dkgResultChannel,
 						publicationStartBlock,
@@ -226,9 +226,9 @@ func (n *node) joinDKGIfEligible(seed *big.Int, startBlockNumber uint64) {
 					}
 				}
 
-				signingGroupOperators, err := n.resolveSigningGroupOperators(
+				signingGroupOperators, err := n.resolveFinalSigningGroupOperators(
 					selectedSigningGroupOperators,
-					operatingMemberIDs,
+					operatingMemberIndexes,
 				)
 				if err != nil {
 					logger.Errorf(
@@ -266,11 +266,11 @@ func (n *node) joinDKGIfEligible(seed *big.Int, startBlockNumber uint64) {
 	}
 }
 
-// decideMemberFate decides what the member will do in case it failed to publish
-// its DKG result. Member can stay in the group if it supports the same group
-// public key as the one registered on-chain and the member is not considered as
-// misbehaving by the group.
-func (n *node) decideMemberFate(
+// decideSigningGroupMemberFate decides what the member will do in case it
+// failed to publish its DKG result. Member can stay in the group if it supports
+// the same group public key as the one registered on-chain and the member is
+// not considered as misbehaving by the group.
+func (n *node) decideSigningGroupMemberFate(
 	memberIndex group.MemberIndex,
 	dkgResultChannel chan *DKGResultSubmittedEvent,
 	publicationStartBlock uint64,
@@ -315,14 +315,14 @@ func (n *node) decideMemberFate(
 
 	// Construct a new view of the operating members according to the accepted
 	// DKG result.
-	operatingMemberIDs := make([]group.MemberIndex, 0)
+	operatingMemberIndexes := make([]group.MemberIndex, 0)
 	for _, memberID := range result.Group.MemberIDs() {
 		if _, isMisbehaved := misbehavedSet[memberID]; !isMisbehaved {
-			operatingMemberIDs = append(operatingMemberIDs, memberID)
+			operatingMemberIndexes = append(operatingMemberIndexes, memberID)
 		}
 	}
 
-	return operatingMemberIDs, nil
+	return operatingMemberIndexes, nil
 }
 
 // waitForDkgResultEvent waits for the DKG result submission event. It times out
@@ -354,11 +354,11 @@ func (n *node) waitForDkgResultEvent(
 	}
 }
 
-// resolveSigningGroupOperators takes two parameters:
+// resolveFinalSigningGroupOperators takes two parameters:
 // - selectedOperators: Contains addresses of all selected operators. Slice
 //   length equals to the groupSize. Each element with index N corresponds
 //   to the group member with ID N+1.
-// - operatingGroupMembersIDs: Contains group members IDs that were neither
+// - operatingMembersIndexes: Contains group members indexes that were neither
 //   disqualified nor marked as inactive. Slice length is lesser than or equal
 //   to the groupSize.
 //
@@ -370,29 +370,30 @@ func (n *node) waitForDkgResultEvent(
 //
 // Example:
 // selectedOperators: [member1, member2, member3, member4, member5]
-// operatingGroupMembersIDs: [5, 1, 3]
+// operatingMembersIndexes: [5, 1, 3]
 // signingGroupOperators: [member1, member3, member5]
-func (n *node) resolveSigningGroupOperators(
+func (n *node) resolveFinalSigningGroupOperators(
 	selectedOperators []chain.Address,
-	operatingGroupMembersIDs []group.MemberIndex,
+	operatingMembersIndexes []group.MemberIndex,
 ) ([]chain.Address, error) {
 	config := n.chain.GetConfig()
 
+	// TODO: Use `GroupQuorum` parameter instead of `HonestThreshold`
 	if len(selectedOperators) != config.GroupSize ||
-		len(operatingGroupMembersIDs) < config.HonestThreshold {
+		len(operatingMembersIndexes) < config.HonestThreshold {
 		return nil, fmt.Errorf("invalid input parameters")
 	}
 
-	sort.Slice(operatingGroupMembersIDs, func(i, j int) bool {
-		return operatingGroupMembersIDs[i] < operatingGroupMembersIDs[j]
+	sort.Slice(operatingMembersIndexes, func(i, j int) bool {
+		return operatingMembersIndexes[i] < operatingMembersIndexes[j]
 	})
 
 	signingGroupOperators := make(
 		[]chain.Address,
-		len(operatingGroupMembersIDs),
+		len(operatingMembersIndexes),
 	)
 
-	for i, operatingMemberID := range operatingGroupMembersIDs {
+	for i, operatingMemberID := range operatingMembersIndexes {
 		signingGroupOperators[i] = selectedOperators[operatingMemberID-1]
 	}
 
