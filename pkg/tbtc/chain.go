@@ -29,9 +29,15 @@ type DistributedKeyGenerationChain interface {
 	OnDKGStarted(
 		func(event *DKGStartedEvent),
 	) subscription.EventSubscription
+
+	// OnDKGResultSubmitted registers a callback that is invoked when an on-chain
+	// notification of the DKG result submission is seen.
 	OnDKGResultSubmitted(
 		func(event *DKGResultSubmittedEvent),
 	) subscription.EventSubscription
+
+	// SubmitResult submits the DKG result to the chain, along with signatures
+	// over result hash from group participants supporting the result.
 	SubmitResult(
 		result *dkg.Result,
 		signatures map[group.MemberIndex][]byte,

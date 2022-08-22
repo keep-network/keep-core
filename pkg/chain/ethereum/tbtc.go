@@ -343,6 +343,8 @@ func (tc *TbtcChain) VerifySignature(
 	return tc.Signing().VerifyWithPublicKey(message, signature, publicKey)
 }
 
+// SubmitResult submits the DKG result to the chain, along with signatures
+// over result hash from group participants supporting the result.
 func (tc *TbtcChain) SubmitResult(
 	result *dkg.Result,
 	signatures map[group.MemberIndex][]byte,
