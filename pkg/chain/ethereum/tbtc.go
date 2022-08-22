@@ -309,12 +309,12 @@ func (tc *TbtcChain) OnDKGResultSubmitted(
 	return tc.mockWalletRegistry.OnDKGResultSubmitted(handler)
 }
 
-// SignResult signs the provided DKG result. It returns the public key used
-// during the signing, the resulting signature and the result hash.
-func (tc *TbtcChain) SignResult(result *dkg.Result) ([]byte, []byte, dkg.ResultHash, error) {
+// SignResult signs the provided DKG result. It returns the information
+// pertaining to the signing process: public key, signature, result hash.
+func (tc *TbtcChain) SignResult(result *dkg.Result) (*dkg.SignedResult, error) {
 	resultHash, err := tc.calculateDKGResultHash(result)
 	if err != nil {
-		return nil, nil, dkg.ResultHash{}, fmt.Errorf(
+		return nil, fmt.Errorf(
 			"dkg result hash calculation failed [%v]",
 			err,
 		)
@@ -322,25 +322,27 @@ func (tc *TbtcChain) SignResult(result *dkg.Result) ([]byte, []byte, dkg.ResultH
 
 	signature, err := tc.Signing().Sign(resultHash[:])
 	if err != nil {
-		return nil, nil, dkg.ResultHash{}, fmt.Errorf(
+		return nil, fmt.Errorf(
 			"dkg result hash signing failed [%v]",
 			err,
 		)
 	}
 
-	// TODO: Check if the public key can be obtained without returning it from
-	//       this function
-	return tc.Signing().PublicKey(), signature, resultHash, nil
+	return &dkg.SignedResult{
+		PublicKey:  tc.Signing().PublicKey(),
+		Signature:  signature,
+		ResultHash: resultHash,
+	}, nil
 }
 
 // VerifySignature verifies if the signature was generated from the provided
-// message using the provided public key.
-func (tc *TbtcChain) VerifySignature(
-	message []byte,
-	signature []byte,
-	publicKey []byte,
-) (bool, error) {
-	return tc.Signing().VerifyWithPublicKey(message, signature, publicKey)
+// DKG result has using the provided public key.
+func (tc *TbtcChain) VerifySignature(signedResult *dkg.SignedResult) (bool, error) {
+	return tc.Signing().VerifyWithPublicKey(
+		signedResult.ResultHash[:],
+		signedResult.Signature,
+		signedResult.PublicKey,
+	)
 }
 
 // SubmitResult submits the DKG result to the chain, along with signatures

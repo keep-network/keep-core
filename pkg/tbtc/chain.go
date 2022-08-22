@@ -73,12 +73,12 @@ type Chain interface {
 	BlockCounter() (chain.BlockCounter, error)
 	// Signing returns the chain's signer.
 	Signing() chain.Signing
-	// SignResult signs the provided DKG result. It returns the public key used
-	// during the signing, the resulting signature and the result hash.
-	SignResult(result *dkg.Result) ([]byte, []byte, dkg.ResultHash, error)
+	// SignResult signs the provided DKG result. It returns the information
+	// pertaining to the signing process: public key, signature, result hash.
+	SignResult(result *dkg.Result) (*dkg.SignedResult, error)
 	// VerifySignature verifies if the signature was generated from the provided
-	// message using the provided public key.
-	VerifySignature(message []byte, signature []byte, publicKey []byte) (bool, error)
+	// DKG result has using the provided public key.
+	VerifySignature(signedResult *dkg.SignedResult) (bool, error)
 	// OperatorKeyPair returns the key pair of the operator assigned to this
 	// chain handle.
 	OperatorKeyPair() (*operator.PrivateKey, *operator.PublicKey, error)

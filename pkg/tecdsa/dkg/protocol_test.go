@@ -1660,16 +1660,20 @@ func (mrs *mockResultSigner) setSigningOutcome(result *Result, outcome *signingO
 	mrs.signingOutcomes[result] = outcome
 }
 
-func (mrs *mockResultSigner) SignResult(result *Result) ([]byte, []byte, ResultHash, error) {
+func (mrs *mockResultSigner) SignResult(result *Result) (*SignedResult, error) {
 	if outcome, ok := mrs.signingOutcomes[result]; ok {
-		return mrs.publicKey, outcome.signature, outcome.resultHash, outcome.err
+		return &SignedResult{
+			PublicKey:  mrs.publicKey,
+			Signature:  outcome.signature,
+			ResultHash: outcome.resultHash,
+		}, outcome.err
 	}
 
-	return nil, nil, ResultHash{}, fmt.Errorf(
+	return nil, fmt.Errorf(
 		"could not find singing outcome for the result",
 	)
 }
 
-func (mrs *mockResultSigner) VerifySignature(message []byte, signature []byte, publicKey []byte) (bool, error) {
+func (mrs *mockResultSigner) VerifySignature(signedResult *SignedResult) (bool, error) {
 	return false, nil
 }

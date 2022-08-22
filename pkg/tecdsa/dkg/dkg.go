@@ -95,15 +95,24 @@ func (e *Executor) Execute(
 	return finalizationState.result(), endBlockNumber, nil
 }
 
+// SignedResult represents information pertaining to the process of signing
+// a DKG result: the public key used during signing, the resulting signature and
+// the hash of the DKG result that was used during signing.
+type SignedResult struct {
+	PublicKey  []byte
+	Signature  []byte
+	ResultHash ResultHash
+}
+
 // ResultSigner is the interface that provides ability to sign the DKG result
 // and verify the results received from other group members.
 type ResultSigner interface {
-	// SignResult signs the provided DKG result. It returns the public key used
-	// during the signing, the resulting signature and the result hash.
-	SignResult(result *Result) ([]byte, []byte, ResultHash, error)
+	// SignResult signs the provided DKG result. It returns the information
+	// pertaining to the signing process: public key, signature, result hash.
+	SignResult(result *Result) (*SignedResult, error)
 	// VerifySignature verifies if the signature was generated from the provided
-	// message using the provided public key.
-	VerifySignature(message []byte, signature []byte, publicKey []byte) (bool, error)
+	// DKG result has using the provided public key.
+	VerifySignature(signedResult *SignedResult) (bool, error)
 }
 
 // ResultSubmitter is the interface that provides ability to submit the DKG

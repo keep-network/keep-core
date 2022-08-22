@@ -405,26 +405,26 @@ func (fm *finalizingMember) tssFinalize(
 	}
 }
 
-// SignDKGResult signs the provided DKG result and prepares an appropriate
+// SignDKGResult signs the provided DKG result and prepares the appropriate
 // result signature message.
 func (sm *signingMember) SignDKGResult(
 	dkgResult *Result,
 	resultSigner ResultSigner,
 ) (*resultSignatureMessage, error) {
-	publicKey, signature, resultHash, err := resultSigner.SignResult(dkgResult)
+	signedResult, err := resultSigner.SignResult(dkgResult)
 	if err != nil {
 		return nil, fmt.Errorf("failed to sign DKG result [%v]", err)
 	}
 
 	// Register self signature and result hash.
-	sm.selfDKGResultSignature = signature
-	sm.preferredDKGResultHash = resultHash
+	sm.selfDKGResultSignature = signedResult.Signature
+	sm.preferredDKGResultHash = signedResult.ResultHash
 
 	return &resultSignatureMessage{
 		senderID:   sm.memberIndex,
-		resultHash: resultHash,
-		signature:  signature,
-		publicKey:  publicKey,
+		resultHash: signedResult.ResultHash,
+		signature:  signedResult.Signature,
+		publicKey:  signedResult.PublicKey,
 		sessionID:  sm.sessionID,
 	}, nil
 }
@@ -486,9 +486,11 @@ func (sm *signingMember) VerifyDKGResultSignatures( // TODO: Unit tests
 
 		// Check if the signature is valid.
 		ok, err := resultSigner.VerifySignature(
-			message.resultHash[:],
-			message.signature,
-			message.publicKey,
+			&SignedResult{
+				ResultHash: message.resultHash,
+				Signature:  message.signature,
+				PublicKey:  message.publicKey,
+			},
 		)
 		if err != nil {
 			sm.logger.Infof(
