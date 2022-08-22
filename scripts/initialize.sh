@@ -108,6 +108,8 @@ if [ -z "$stake_owner" ]; then
 
    stake_owner=`cat $key_file_path | jq -jr .address`
 
+   [[ $stake_owner == 0x* ]] || stake_owner="0x$stake_owner"
+
    printf "Discovered the address: ${stake_owner}\n"
 fi
 
