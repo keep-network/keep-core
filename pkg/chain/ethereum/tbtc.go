@@ -475,7 +475,7 @@ func (tc *TbtcChain) calculateDKGResultHash(
 	}
 
 	// Encode DKG result to the format matched with Solidity keccak256(abi.encodePacked(...))
-	hash := crypto.Keccak256(groupPublicKeyBytes, result.MisbehavedMembersBytes())
+	hash := crypto.Keccak256(groupPublicKeyBytes, result.MisbehavedMembersIndexes())
 	return dkg.ResultHashFromBytes(hash)
 }
 
@@ -610,7 +610,7 @@ func (mwr *mockWalletRegistry) SubmitDKGResult(
 			handler(&tbtc.DKGResultSubmittedEvent{
 				MemberIndex:         uint32(memberIndex),
 				GroupPublicKeyBytes: groupPublicKeyBytes,
-				Misbehaved:          result.MisbehavedMembersBytes(),
+				Misbehaved:          result.MisbehavedMembersIndexes(),
 				BlockNumber:         blockNumber,
 			})
 		}(handler)

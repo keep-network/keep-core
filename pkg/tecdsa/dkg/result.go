@@ -37,9 +37,9 @@ func (r *Result) GroupPublicKeyBytes() ([]byte, error) {
 	), nil
 }
 
-// MisbehavedMembersBytes returns the indexes of group members that misbehaved
-// during the DKG procedure. The indexes are sorted and returned as bytes.
-func (r *Result) MisbehavedMembersBytes() []byte {
+// MisbehavedMembersIndexes returns the indexes of group members that misbehaved
+// during the DKG procedure. The indexes are sorted.
+func (r *Result) MisbehavedMembersIndexes() []group.MemberIndex {
 	// Merge inactive and disqualified member indexes into 'misbehaved' set.
 	misbehaving := make(map[group.MemberIndex]bool)
 	for _, inactiveMemberIndex := range r.Group.InactiveMemberIDs() {
@@ -58,13 +58,7 @@ func (r *Result) MisbehavedMembersBytes() []byte {
 		return sorted[i] < sorted[j]
 	})
 
-	// Convert sorted list of member indexes into bytes.
-	bytes := make([]byte, len(sorted))
-	for i, m := range sorted {
-		bytes[i] = byte(m)
-	}
-
-	return bytes
+	return sorted
 }
 
 const ResultHashByteSize = 32
