@@ -6,7 +6,7 @@ import (
 
 	"github.com/bnb-chain/tss-lib/ecdsa/keygen"
 	"github.com/ipfs/go-log"
-	"github.com/keep-network/keep-core/pkg/miner"
+	"github.com/keep-network/keep-core/pkg/generator"
 )
 
 // PreParams represents tECDSA DKG pre-parameters that were not yet consumed
@@ -25,13 +25,14 @@ func NewPreParams(data *keygen.LocalPreParams) *PreParams {
 // entries up to the pool size. When an entry is pulled from the pool it
 // will generate a new entry.
 type tssPreParamsPool struct {
-	*miner.ParameterPool[PreParams]
+	*generator.ParameterPool[PreParams]
 	logger log.StandardLogger
 }
 
 // newTssPreParamsPool initializes a new TSS pre-parameters pool.
 func newTssPreParamsPool(
 	logger log.StandardLogger,
+	scheduler *generator.Scheduler,
 	poolSize int,
 	generationTimeout time.Duration,
 	generationDelay time.Duration,
@@ -70,9 +71,9 @@ func newTssPreParamsPool(
 	}
 
 	return &tssPreParamsPool{
-		miner.NewParameterPool[PreParams](
+		generator.NewParameterPool[PreParams](
 			logger,
-			&miner.Miner{},   // TODO: pass as a parameter
+			scheduler,
 			&noPersistence{}, // TODO: replace with a real persistence
 			poolSize,
 			newPreParamsFn,
