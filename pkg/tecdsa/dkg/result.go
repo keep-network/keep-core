@@ -67,22 +67,21 @@ func (r *Result) MisbehavedMembersBytes() []byte {
 	return bytes
 }
 
-const hashByteSize = 32
+const ResultHashByteSize = 32
 
-// ResultHash is a 256-bit hash of DKG Result. The hashing algorithm should
-// be the same as the one used on-chain.
-type ResultHash [hashByteSize]byte
-
-// ResultsVotes is a map of votes for each DKG Result.
-type ResultsVotes map[ResultHash]int
+// ResultHash is a 256-bit hash of DKG Result. The hashing algorithm used
+// depends on the client code.
+type ResultHash [ResultHashByteSize]byte
 
 // ResultHashFromBytes converts bytes slice to DKG Result Hash. It requires
 // provided bytes slice size to be exactly 32 bytes.
 func ResultHashFromBytes(bytes []byte) (ResultHash, error) {
 	var hash ResultHash
 
-	if len(bytes) != hashByteSize {
-		return hash, fmt.Errorf("bytes length is not equal %v", hashByteSize)
+	if len(bytes) != ResultHashByteSize {
+		return hash, fmt.Errorf(
+			"bytes length is not equal %v", ResultHashByteSize,
+		)
 	}
 	copy(hash[:], bytes[:])
 
