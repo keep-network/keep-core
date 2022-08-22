@@ -329,34 +329,6 @@ type submittingMember struct {
 	*signingMember
 }
 
-// SubmitDKGResult sends a result, which contains the group public key and
-// signatures, to the chain.
-// It checks if the result has already been published to the blockchain by
-// checking if a group with the given public key is already registered. If not,
-// it determines if the current member is eligible to submit a result.
-// If allowed, it submits the result to the chain.
-// A user's turn to publish is determined based on the user's index and block
-// step.
-// If a result is submitted by another member and it's accepted by the chain,
-// the current member finishes the phase immediately, without submitting
-// their own result.
-// It returns the on-chain block height of the moment when the result was
-// successfully submitted on chain by the member. In case of failure or result
-// already submitted by another member it returns `0`.
-func (sm *submittingMember) SubmitDKGResult(
-	result *Result,
-	signatures map[group.MemberIndex][]byte,
-	startBlockNumber uint64,
-	resultSubmitter ResultSubmitter,
-) error {
-	return resultSubmitter.SubmitResult(
-		result,
-		signatures,
-		startBlockNumber,
-		sm.memberIndex,
-	)
-}
-
 // generateTssPartiesIDs converts group member ID to parties ID suitable for
 // the TSS protocol execution.
 func generateTssPartiesIDs(
