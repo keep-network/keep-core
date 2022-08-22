@@ -378,9 +378,6 @@ func (tc *TbtcChain) SubmitResult(
 		return err
 	}
 
-	// TODO: Check if DKG was already submitted.
-	// Add IsDKGResultSubmitted() function to the interface?
-
 	groupPublicKeyBytes, err := result.GroupPublicKeyBytes()
 	if err != nil {
 		return returnWithError(
