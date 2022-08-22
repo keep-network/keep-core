@@ -130,7 +130,7 @@ type ResultSubmitter interface {
 // from other members and verifies them, and submits the DKG result.
 func Publish(
 	logger log.StandardLogger,
-	seed *big.Int,
+	sessionID string,
 	publicationStartBlock uint64,
 	memberIndex group.MemberIndex,
 	blockCounter chain.BlockCounter,
@@ -150,7 +150,7 @@ func Publish(
 			memberIndex,
 			result.Group,
 			membershipValidator,
-			seed.Text(16),
+			sessionID,
 		),
 		result:                  result,
 		signatureMessages:       make([]*resultSignatureMessage, 0),
