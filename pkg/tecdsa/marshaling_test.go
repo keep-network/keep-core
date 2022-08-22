@@ -5,34 +5,11 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/binance-chain/tss-lib/crypto"
+	"github.com/bnb-chain/tss-lib/crypto"
 	"github.com/keep-network/keep-core/pkg/internal/pbutils"
 	"github.com/keep-network/keep-core/pkg/internal/tecdsatest"
 	"github.com/keep-network/keep-core/pkg/internal/testutils"
 )
-
-func TestPreParamsMarshalling(t *testing.T) {
-	testData, err := tecdsatest.LoadPrivateKeyShareTestFixtures(1)
-	if err != nil {
-		t.Fatalf("failed to load test data: [%v]", err)
-	}
-
-	localPreParams := testData[0].LocalPreParams
-	// we do not serialize PaillierSK for PreParams because it is empty
-	// for LocalPreParams not used yet in DKG
-	localPreParams.PaillierSK = nil
-
-	preParams := NewPreParams(localPreParams)
-
-	unmarshaled := &PreParams{}
-
-	if err := pbutils.RoundTrip(preParams, unmarshaled); err != nil {
-		t.Fatal(err)
-	}
-	if !reflect.DeepEqual(preParams, unmarshaled) {
-		t.Fatal("unexpected content of unmarshaled pre-params")
-	}
-}
 
 func TestPrivateKeyShareMarshalling(t *testing.T) {
 	testData, err := tecdsatest.LoadPrivateKeyShareTestFixtures(1)

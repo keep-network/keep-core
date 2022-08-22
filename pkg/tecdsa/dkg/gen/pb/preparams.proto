@@ -1,7 +1,7 @@
 syntax = "proto3";
 
 option go_package = "pb";
-package tecdsa;
+package dkg;
 
 message PreParams {
   message LocalPreParams {

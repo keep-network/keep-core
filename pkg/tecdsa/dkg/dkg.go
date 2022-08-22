@@ -8,6 +8,7 @@ import (
 	"github.com/ipfs/go-log"
 
 	"github.com/keep-network/keep-core/pkg/chain"
+	"github.com/keep-network/keep-core/pkg/generator"
 	"github.com/keep-network/keep-core/pkg/net"
 	"github.com/keep-network/keep-core/pkg/protocol/group"
 	"github.com/keep-network/keep-core/pkg/protocol/state"
@@ -22,6 +23,7 @@ type Executor struct {
 // NewExecutor creates a new Executor instance.
 func NewExecutor(
 	logger log.StandardLogger,
+	scheduler *generator.Scheduler,
 	preParamsPoolSize int,
 	preParamsGenerationTimeout time.Duration,
 	preParamsGenerationDelay time.Duration,
@@ -31,6 +33,7 @@ func NewExecutor(
 		logger: logger,
 		tssPreParamsPool: newTssPreParamsPool(
 			logger,
+			scheduler,
 			preParamsPoolSize,
 			preParamsGenerationTimeout,
 			preParamsGenerationDelay,
@@ -57,6 +60,11 @@ func (e *Executor) Execute(
 
 	registerUnmarshallers(channel)
 
+	preParams, err := e.tssPreParamsPool.Get()
+	if err != nil {
+		return nil, 0, fmt.Errorf("failed fetching pre-params: [%v]", err)
+	}
+
 	member := newMember(
 		e.logger,
 		memberIndex,
@@ -64,7 +72,7 @@ func (e *Executor) Execute(
 		dishonestThreshold,
 		membershipValidator,
 		seed.Text(16), // TODO: Should change on retry.,
-		e.tssPreParamsPool.get(),
+		preParams.data,
 	)
 
 	initialState := &ephemeralKeyPairGenerationState{
