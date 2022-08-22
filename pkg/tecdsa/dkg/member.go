@@ -281,6 +281,23 @@ type signingMember struct {
 	selfDKGResultSignature []byte
 }
 
+// newSigningMember creates a new signingMember in the initial state.
+func newSigningMember(
+	logger log.StandardLogger,
+	memberIndex group.MemberIndex,
+	group *group.Group,
+	membershipValidator *group.MembershipValidator,
+	sessionID string,
+) *signingMember {
+	return &signingMember{
+		logger:              logger,
+		memberIndex:         memberIndex,
+		group:               group,
+		membershipValidator: membershipValidator,
+		sessionID:           sessionID,
+	}
+}
+
 // shouldAcceptMessage indicates whether the given member should accept
 // a message from the given sender.
 func (sm *signingMember) shouldAcceptMessage(
@@ -302,23 +319,6 @@ func (sm *signingMember) shouldAcceptMessage(
 func (sm *signingMember) initializeSubmittingMember() *submittingMember {
 	return &submittingMember{
 		signingMember: sm,
-	}
-}
-
-// newSigningMember creates a new signingMember in the initial state.
-func newSigningMember(
-	logger log.StandardLogger,
-	memberIndex group.MemberIndex,
-	group *group.Group,
-	membershipValidator *group.MembershipValidator,
-	sessionID string,
-) *signingMember {
-	return &signingMember{
-		logger:              logger,
-		memberIndex:         memberIndex,
-		group:               group,
-		membershipValidator: membershipValidator,
-		sessionID:           sessionID,
 	}
 }
 
