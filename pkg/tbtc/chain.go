@@ -36,14 +36,21 @@ type DistributedKeyGenerationChain interface {
 		func(event *DKGResultSubmittedEvent),
 	) subscription.EventSubscription
 
-	// SubmitResult submits the DKG result to the chain, along with signatures
+	// SubmitDKGResult submits the DKG result to the chain, along with signatures
 	// over result hash from group participants supporting the result.
-	SubmitResult(
+	SubmitDKGResult(
+		memberIndex group.MemberIndex,
 		result *dkg.Result,
 		signatures map[group.MemberIndex][]byte,
-		startBlockNumber uint64,
-		memberIndex group.MemberIndex,
 	) error
+
+	// TODO: Check what should be the argument for this function.
+	// IsDKGResultSubmitted checks whether the DKG result was already submitted.
+	IsDKGResultSubmitted(groupPublicKeyBytes []byte) (bool, error)
+
+	// CalculateDKGResultHash calculates 256-bit hash of DKG result in standard
+	// specific for the chain. Operation is performed off-chain.
+	CalculateDKGResultHash(result *dkg.Result) (dkg.ResultHash, error)
 }
 
 // DKGStartedEvent represents a DKG start event.
@@ -73,12 +80,6 @@ type Chain interface {
 	BlockCounter() (chain.BlockCounter, error)
 	// Signing returns the chain's signer.
 	Signing() chain.Signing
-	// SignResult signs the provided DKG result. It returns the information
-	// pertaining to the signing process: public key, signature, result hash.
-	SignResult(result *dkg.Result) (*dkg.SignedResult, error)
-	// VerifySignature verifies if the signature was generated from the provided
-	// DKG result has using the provided public key.
-	VerifySignature(signedResult *dkg.SignedResult) (bool, error)
 	// OperatorKeyPair returns the key pair of the operator assigned to this
 	// chain handle.
 	OperatorKeyPair() (*operator.PrivateKey, *operator.PublicKey, error)
