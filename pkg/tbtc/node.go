@@ -65,6 +65,9 @@ func (drs *dkgResultSigner) VerifySignature(signedResult *dkg.SignedResult) (boo
 	)
 }
 
+// TODO: Revisit the waitForSubmissionEligibility function. The RFC mentions
+// we should start submitting from a random member, not the first one.
+
 // dkgResultSubmitter is responsible for submitting the DKG result to the chain.
 type dkgResultSubmitter struct {
 	chain Chain
@@ -211,6 +214,7 @@ func (drs *dkgResultSubmitter) waitForSubmissionEligibility(
 }
 
 // TODO: Unit tests for `node.go`.
+// TODO: Extract the DKG-specific code into a separate file `pkg/tbtc/dkg.go`
 
 // node represents the current state of an ECDSA node.
 type node struct {
@@ -250,8 +254,6 @@ func newNode(
 		protocolLatch:  latch,
 	}
 }
-
-// TODO: Extract the DKG-specific code into a separate file `pkg/tbtc/dkg.go`
 
 // joinDKGIfEligible takes a seed value and undergoes the process of the
 // distributed key generation if this node's operator proves to be eligible for
