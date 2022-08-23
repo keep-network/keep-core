@@ -59,7 +59,7 @@ class KeepToTStaking {
 
     const amountOfKeepTokensStakedInBN = new BigNumber(keepInTStake)
 
-    return !amountOfKeepTokensStakedInBN.eq("0")
+    return amountOfKeepTokensStakedInBN.gt("0")
   }
 
   getOperatorConfirmedEvents = async (operatorAddresses) => {
