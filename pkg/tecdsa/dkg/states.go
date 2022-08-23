@@ -135,8 +135,7 @@ func (skgs *symmetricKeyGenerationState) Next() (state.State, error) {
 	return &tssRoundOneState{
 		channel:     skgs.channel,
 		member:      skgs.member.initializeTssRoundOne(),
-		successChan: make(chan struct{}),
-		errChan:     make(chan error),
+		outcomeChan: make(chan error),
 	}, nil
 }
 
@@ -151,8 +150,7 @@ type tssRoundOneState struct {
 	channel net.BroadcastChannel
 	member  *tssRoundOneMember
 
-	successChan chan struct{}
-	errChan     chan error
+	outcomeChan chan error
 
 	phaseMessages []*tssRoundOneMessage
 }
@@ -175,16 +173,16 @@ func (tros *tssRoundOneState) Initiate(ctx context.Context) error {
 	go func() {
 		message, err := tros.member.tssRoundOne(ctx)
 		if err != nil {
-			tros.errChan <- err
+			tros.outcomeChan <- err
 			return
 		}
 
 		if err := tros.channel.Send(ctx, message); err != nil {
-			tros.errChan <- err
+			tros.outcomeChan <- err
 			return
 		}
 
-		close(tros.successChan)
+		close(tros.outcomeChan)
 	}()
 
 	return nil
@@ -205,19 +203,15 @@ func (tros *tssRoundOneState) Receive(msg net.Message) error {
 }
 
 func (tros *tssRoundOneState) Next() (state.State, error) {
-	select {
-	case <-tros.successChan:
-	case err := <-tros.errChan:
-		if err != nil {
-			return nil, fmt.Errorf("state raised an error: [%w]", err)
-		}
+	err := <-tros.outcomeChan
+	if err != nil {
+		return nil, fmt.Errorf("state raised an error: [%w]", err)
 	}
 
 	return &tssRoundTwoState{
 		channel:               tros.channel,
 		member:                tros.member.initializeTssRoundTwo(),
-		successChan:           make(chan struct{}),
-		errChan:               make(chan error),
+		outcomeChan:           make(chan error),
 		previousPhaseMessages: tros.phaseMessages,
 	}, nil
 }
@@ -233,8 +227,7 @@ type tssRoundTwoState struct {
 	channel net.BroadcastChannel
 	member  *tssRoundTwoMember
 
-	successChan chan struct{}
-	errChan     chan error
+	outcomeChan chan error
 
 	previousPhaseMessages []*tssRoundOneMessage
 
@@ -265,16 +258,16 @@ func (trts *tssRoundTwoState) Initiate(ctx context.Context) error {
 	go func() {
 		message, err := trts.member.tssRoundTwo(ctx, trts.previousPhaseMessages)
 		if err != nil {
-			trts.errChan <- err
+			trts.outcomeChan <- err
 			return
 		}
 
 		if err := trts.channel.Send(ctx, message); err != nil {
-			trts.errChan <- err
+			trts.outcomeChan <- err
 			return
 		}
 
-		close(trts.successChan)
+		close(trts.outcomeChan)
 	}()
 
 	return nil
@@ -295,19 +288,15 @@ func (trts *tssRoundTwoState) Receive(msg net.Message) error {
 }
 
 func (trts *tssRoundTwoState) Next() (state.State, error) {
-	select {
-	case <-trts.successChan:
-	case err := <-trts.errChan:
-		if err != nil {
-			return nil, fmt.Errorf("state raised an error: [%w]", err)
-		}
+	err := <-trts.outcomeChan
+	if err != nil {
+		return nil, fmt.Errorf("state raised an error: [%w]", err)
 	}
 
 	return &tssRoundThreeState{
 		channel:               trts.channel,
 		member:                trts.member.initializeTssRoundThree(),
-		successChan:           make(chan struct{}),
-		errChan:               make(chan error),
+		outcomeChan:           make(chan error),
 		previousPhaseMessages: trts.phaseMessages,
 	}, nil
 }
@@ -323,8 +312,7 @@ type tssRoundThreeState struct {
 	channel net.BroadcastChannel
 	member  *tssRoundThreeMember
 
-	successChan chan struct{}
-	errChan     chan error
+	outcomeChan chan error
 
 	previousPhaseMessages []*tssRoundTwoMessage
 
@@ -355,16 +343,16 @@ func (trts *tssRoundThreeState) Initiate(ctx context.Context) error {
 	go func() {
 		message, err := trts.member.tssRoundThree(ctx, trts.previousPhaseMessages)
 		if err != nil {
-			trts.errChan <- err
+			trts.outcomeChan <- err
 			return
 		}
 
 		if err := trts.channel.Send(ctx, message); err != nil {
-			trts.errChan <- err
+			trts.outcomeChan <- err
 			return
 		}
 
-		close(trts.successChan)
+		close(trts.outcomeChan)
 	}()
 
 	return nil
@@ -385,19 +373,15 @@ func (trts *tssRoundThreeState) Receive(msg net.Message) error {
 }
 
 func (trts *tssRoundThreeState) Next() (state.State, error) {
-	select {
-	case <-trts.successChan:
-	case err := <-trts.errChan:
-		if err != nil {
-			return nil, fmt.Errorf("state raised an error: [%w]", err)
-		}
+	err := <-trts.outcomeChan
+	if err != nil {
+		return nil, fmt.Errorf("state raised an error: [%w]", err)
 	}
 
 	return &finalizationState{
 		channel:               trts.channel,
 		member:                trts.member.initializeFinalization(),
-		successChan:           make(chan struct{}),
-		errChan:               make(chan error),
+		outcomeChan:           make(chan error),
 		previousPhaseMessages: trts.phaseMessages,
 	}, nil
 }
@@ -414,8 +398,7 @@ type finalizationState struct {
 	channel net.BroadcastChannel
 	member  *finalizingMember
 
-	successChan chan struct{}
-	errChan     chan error
+	outcomeChan chan error
 
 	previousPhaseMessages []*tssRoundThreeMessage
 }
@@ -444,11 +427,11 @@ func (fs *finalizationState) Initiate(ctx context.Context) error {
 	go func() {
 		err := fs.member.tssFinalize(ctx, fs.previousPhaseMessages)
 		if err != nil {
-			fs.errChan <- err
+			fs.outcomeChan <- err
 			return
 		}
 
-		close(fs.successChan)
+		close(fs.outcomeChan)
 	}()
 
 	return nil
@@ -459,12 +442,9 @@ func (fs *finalizationState) Receive(msg net.Message) error {
 }
 
 func (fs *finalizationState) Next() (state.State, error) {
-	select {
-	case <-fs.successChan:
-	case err := <-fs.errChan:
-		if err != nil {
-			return nil, fmt.Errorf("state raised an error: [%w]", err)
-		}
+	err := <-fs.outcomeChan
+	if err != nil {
+		return nil, fmt.Errorf("state raised an error: [%w]", err)
 	}
 
 	return nil, nil
