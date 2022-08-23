@@ -5,6 +5,7 @@ import (
 	"math/big"
 
 	"github.com/keep-network/keep-common/pkg/persistence"
+	"github.com/keep-network/keep-core/pkg/generator"
 	"github.com/keep-network/keep-core/pkg/internal/testutils"
 	"github.com/keep-network/keep-core/pkg/net"
 	"github.com/keep-network/keep-core/pkg/protocol/group"
@@ -19,28 +20,36 @@ type node struct {
 	netProvider    net.Provider
 	walletRegistry *walletRegistry
 	dkgExecutor    *dkg.Executor
+	protocolLatch  *generator.ProtocolLatch
 }
 
 func newNode(
 	chain Chain,
 	netProvider net.Provider,
 	persistence persistence.Handle,
+	scheduler *generator.Scheduler,
 	config Config,
 ) *node {
 	walletRegistry := newWalletRegistry(persistence)
 
 	dkgExecutor := dkg.NewExecutor(
 		logger,
+		scheduler,
 		config.PreParamsPoolSize,
 		config.PreParamsGenerationTimeout,
+		config.PreParamsGenerationDelay,
 		config.PreParamsGenerationConcurrency,
 	)
+
+	latch := generator.NewProtocolLatch()
+	scheduler.RegisterProtocol(latch)
 
 	return &node{
 		chain:          chain,
 		netProvider:    netProvider,
 		walletRegistry: walletRegistry,
 		dkgExecutor:    dkgExecutor,
+		protocolLatch:  latch,
 	}
 }
 
@@ -141,6 +150,9 @@ func (n *node) joinDKGIfEligible(seed *big.Int, startBlockNumber uint64) {
 			memberIndex := index + 1
 
 			go func() {
+				n.protocolLatch.Lock()
+				defer n.protocolLatch.Unlock()
+
 				result, _, err := n.dkgExecutor.Execute(
 					seed,
 					startBlockNumber,

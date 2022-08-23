@@ -146,7 +146,7 @@ var cmdFlagsTests = map[string]struct {
 		flagName:              "--tbtc.preParamsPoolSize",
 		flagValue:             "75",
 		expectedValueFromFlag: 75,
-		defaultValue:          50,
+		defaultValue:          3000,
 	},
 	"tbtc.preParamsGenerationTimeout": {
 		readValueFunc:         func(c *config.Config) interface{} { return c.Tbtc.PreParamsGenerationTimeout },
@@ -154,6 +154,13 @@ var cmdFlagsTests = map[string]struct {
 		flagValue:             "2m30s",
 		expectedValueFromFlag: 150 * time.Second,
 		defaultValue:          120 * time.Second,
+	},
+	"tbtc.preParamsGenerationDelay": {
+		readValueFunc:         func(c *config.Config) interface{} { return c.Tbtc.PreParamsGenerationDelay },
+		flagName:              "--tbtc.preParamsGenerationDelay",
+		flagValue:             "1m",
+		expectedValueFromFlag: 60 * time.Second,
+		defaultValue:          10 * time.Second,
 	},
 	"tbtc.preParamsGenerationConcurrency": {
 		readValueFunc:         func(c *config.Config) interface{} { return c.Tbtc.PreParamsGenerationConcurrency },
