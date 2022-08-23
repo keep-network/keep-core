@@ -65,8 +65,8 @@ func (drs *dkgResultSigner) VerifySignature(signedResult *dkg.SignedResult) (boo
 	)
 }
 
-// TODO: Revisit the waitForSubmissionEligibility function. The RFC mentions
-// we should start submitting from a random member, not the first one.
+// TODO: Revisit the setupEligibilityQueue function. The RFC mentions we should
+// start submitting from a random member, not the first one.
 
 // dkgResultSubmitter is responsible for submitting the DKG result to the chain.
 type dkgResultSubmitter struct {
@@ -104,11 +104,11 @@ func (drs *dkgResultSubmitter) SubmitResult(
 		)
 	}
 
-	onSubmittedResultChan := make(chan uint64)
+	resultSubmittedChan := make(chan uint64)
 
 	subscription := drs.chain.OnDKGResultSubmitted(
 		func(event *DKGResultSubmittedEvent) {
-			onSubmittedResultChan <- event.BlockNumber
+			resultSubmittedChan <- event.BlockNumber
 		},
 	)
 	defer subscription.Unsubscribe()
@@ -132,25 +132,25 @@ func (drs *dkgResultSubmitter) SubmitResult(
 	// Someone who was ahead of us in the queue submitted the result. Giving up.
 	if alreadySubmitted {
 		logger.Infof(
-			"[member:%v] DKG is no longer awaiting the result; " +
-			"aborting DKG result submission",
+			"[member:%v] DKG is no longer awaiting the result; "+
+				"aborting DKG result submission",
 			memberIndex,
 		)
 		return nil
 	}
 
 	// Wait until the current member is eligible to submit the result.
-	eligibleToSubmitWaiter, err := drs.waitForSubmissionEligibility(
+	submitterEligibleChan, err := drs.setupEligibilityQueue(
 		startBlockNumber,
 		memberIndex,
 	)
 	if err != nil {
-		return fmt.Errorf("wait for eligibility failure: [%w]", err)
+		return fmt.Errorf("cannot set up eligibility queue: [%w]", err)
 	}
 
 	for {
 		select {
-		case blockNumber := <-eligibleToSubmitWaiter:
+		case blockNumber := <-submitterEligibleChan:
 			// Member becomes eligible to submit the result.
 			subscription.Unsubscribe()
 
@@ -168,9 +168,10 @@ func (drs *dkgResultSubmitter) SubmitResult(
 				result,
 				signatures,
 			)
-		case blockNumber := <-onSubmittedResultChan:
+		case blockNumber := <-resultSubmittedChan:
 			logger.Infof(
-				"[member:%v] leaving; DKG result submitted by other member at block [%v]",
+				"[member:%v] leaving; DKG result submitted by other member "+
+					"at block [%v]",
 				memberIndex,
 				blockNumber,
 			)
@@ -181,10 +182,10 @@ func (drs *dkgResultSubmitter) SubmitResult(
 	}
 }
 
-// waitForSubmissionEligibility waits until the current member is eligible to
+// setupEligibilityQueue waits until the current member is eligible to
 // submit a result to the blockchain. First member is eligible to submit straight
 // away, each following member is eligible after pre-defined block step.
-func (drs *dkgResultSubmitter) waitForSubmissionEligibility(
+func (drs *dkgResultSubmitter) setupEligibilityQueue(
 	startBlockNumber uint64,
 	memberIndex group.MemberIndex,
 ) (<-chan uint64, error) {
