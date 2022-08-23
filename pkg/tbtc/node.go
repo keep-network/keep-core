@@ -188,7 +188,6 @@ func (drs *dkgResultSubmitter) waitForSubmissionEligibility(
 	startBlockNumber uint64,
 	memberIndex group.MemberIndex,
 ) (<-chan uint64, error) {
-	// T_init + (member_index - 1) * T_step
 	blockWaitTime := (uint64(memberIndex) - 1) *
 		drs.chain.GetConfig().ResultPublicationBlockStep
 
