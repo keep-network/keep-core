@@ -205,7 +205,7 @@ func (tros *tssRoundOneState) Receive(msg net.Message) error {
 func (tros *tssRoundOneState) Next() (state.State, error) {
 	err := <-tros.outcomeChan
 	if err != nil {
-		return nil, fmt.Errorf("state raised an error: [%w]", err)
+		return nil, err
 	}
 
 	return &tssRoundTwoState{
@@ -290,7 +290,7 @@ func (trts *tssRoundTwoState) Receive(msg net.Message) error {
 func (trts *tssRoundTwoState) Next() (state.State, error) {
 	err := <-trts.outcomeChan
 	if err != nil {
-		return nil, fmt.Errorf("state raised an error: [%w]", err)
+		return nil, err
 	}
 
 	return &tssRoundThreeState{
@@ -375,7 +375,7 @@ func (trts *tssRoundThreeState) Receive(msg net.Message) error {
 func (trts *tssRoundThreeState) Next() (state.State, error) {
 	err := <-trts.outcomeChan
 	if err != nil {
-		return nil, fmt.Errorf("state raised an error: [%w]", err)
+		return nil, err
 	}
 
 	return &finalizationState{
@@ -444,7 +444,7 @@ func (fs *finalizationState) Receive(msg net.Message) error {
 func (fs *finalizationState) Next() (state.State, error) {
 	err := <-fs.outcomeChan
 	if err != nil {
-		return nil, fmt.Errorf("state raised an error: [%w]", err)
+		return nil, err
 	}
 
 	return nil, nil
