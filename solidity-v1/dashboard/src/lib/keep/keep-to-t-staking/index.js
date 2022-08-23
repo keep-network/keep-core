@@ -29,6 +29,39 @@ class KeepToTStaking {
     })
   }
 
+  /**
+   * Returns all tokens staked by the operator in T Network
+   *
+   * @param {string} operatorAddress
+   * @returns {Promise} Tokens staked in T Network as object:
+   * {
+   *    tStake: string,
+   *    keepInTStake: string,
+   *    nuInTStake: string,
+   * }
+   */
+  tokensStakedInTNetwork = async (operatorAddress) => {
+    return await this.thresholdStakingContract.makeCall(
+      "stakes",
+      operatorAddress
+    )
+  }
+
+  /**
+   * Checks if the operator has Keep tokens staked in T Network
+   *
+   * @param {string} operatorAddress
+   * @returns {Promise<boolean>} true if the operator has Keep tokens staked in
+   * T Network and false otherwise
+   */
+  hasKeepTokensStakedInTNetwork = async (operatorAddress) => {
+    const { keepInTStake } = await this.tokensStakedInTNetwork(operatorAddress)
+
+    const amountOfKeepTokensStakedInBN = new BigNumber(keepInTStake)
+
+    return !amountOfKeepTokensStakedInBN.eq("0")
+  }
+
   getOperatorConfirmedEvents = async (operatorAddresses) => {
     return await this.simplePREApplicationContract.getPastEvents(
       "OperatorConfirmed",
