@@ -128,6 +128,11 @@ func (drs *dkgResultSubmitter) SubmitResult(
 
 	// Someone who was ahead of us in the queue submitted the result. Giving up.
 	if alreadySubmitted {
+		logger.Infof(
+			"[member:%v] DKG is no longer awaiting the result; " +
+			"aborting DKG result submission",
+			memberIndex,
+		)
 		return nil
 	}
 
