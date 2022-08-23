@@ -521,16 +521,20 @@ func (sm *signingMember) VerifyDKGResultSignatures( // TODO: Unit tests
 
 // SubmitDKGResult submits the DKG result along with the supporting signatures
 // to the provided result submitter.
-func (sm *submittingMember) SubmitDKGResult( // TODO: Unit tests
+func (sm *submittingMember) SubmitDKGResult(
 	result *Result,
 	signatures map[group.MemberIndex][]byte,
 	startBlockNumber uint64,
 	resultSubmitter ResultSubmitter,
 ) error {
-	return resultSubmitter.SubmitResult(
+	if err := resultSubmitter.SubmitResult(
 		result,
 		signatures,
 		startBlockNumber,
 		sm.memberIndex,
-	)
+	); err != nil {
+		return fmt.Errorf("failed to submit DKG result [%v]", err)
+	}
+
+	return nil
 }

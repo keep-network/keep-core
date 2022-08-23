@@ -1226,6 +1226,61 @@ func TestSignDKGResult_ErrorDuringSigning(t *testing.T) {
 	}
 }
 
+func TestSubmitDKGResult(t *testing.T) {
+	submittingMember := initializeSubmittingMember()
+
+	result := &Result{}
+	signatures := map[group.MemberIndex][]byte{
+		11: []byte("signature 11"),
+		22: []byte("signature 22"),
+		33: []byte("signature 33"),
+	}
+	startBlockNumber := 123
+
+	resultSubmitter := newMockResultSubmitter()
+	resultSubmitter.setSubmittingOutcome(result, nil)
+
+	err := submittingMember.SubmitDKGResult(
+		result,
+		signatures,
+		uint64(startBlockNumber),
+		resultSubmitter,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestSubmitDKGResult_ErrorDuringSubmitting(t *testing.T) {
+	submittingMember := initializeSubmittingMember()
+
+	result := &Result{}
+	signatures := map[group.MemberIndex][]byte{
+		11: []byte("signature 11"),
+		22: []byte("signature 22"),
+		33: []byte("signature 33"),
+	}
+	startBlockNumber := 123
+
+	resultSubmitter := newMockResultSubmitter()
+	resultSubmitter.setSubmittingOutcome(result, fmt.Errorf("dummy error"))
+
+	err := submittingMember.SubmitDKGResult(
+		result,
+		signatures,
+		uint64(startBlockNumber),
+		resultSubmitter,
+	)
+	expectedErr := fmt.Errorf("failed to submit DKG result [dummy error]")
+	if !reflect.DeepEqual(expectedErr, err) {
+		t.Errorf(
+			"unexpected error\nexpected: %v\nactual:   %v\n",
+			expectedErr,
+			err,
+		)
+	}
+}
+
 func initializeEphemeralKeyPairGeneratingMembersGroup(
 	dishonestThreshold int,
 	groupSize int,
@@ -1534,6 +1589,11 @@ func initializeSigningMember() *signingMember {
 	}
 }
 
+func initializeSubmittingMember() *submittingMember {
+	signingMember := initializeSigningMember()
+	return signingMember.initializeSubmittingMember()
+}
+
 func generateMembersTssPreParams(
 	groupSize int,
 ) (map[group.MemberIndex]*keygen.LocalPreParams, error) {
@@ -1676,4 +1736,33 @@ func (mrs *mockResultSigner) SignResult(result *Result) (*SignedResult, error) {
 
 func (mrs *mockResultSigner) VerifySignature(signedResult *SignedResult) (bool, error) {
 	return false, nil
+}
+
+type mockResultSubmitter struct {
+	submittingOutcomes map[*Result]error
+}
+
+func newMockResultSubmitter() *mockResultSubmitter {
+	return &mockResultSubmitter{
+		submittingOutcomes: make(map[*Result]error),
+	}
+}
+
+func (mrs *mockResultSubmitter) setSubmittingOutcome(result *Result, err error) {
+	mrs.submittingOutcomes[result] = err
+}
+
+func (mrs *mockResultSubmitter) SubmitResult(
+	result *Result,
+	signatures map[group.MemberIndex][]byte,
+	startBlockNumber uint64,
+	memberIndex group.MemberIndex,
+) error {
+	if err, ok := mrs.submittingOutcomes[result]; ok {
+		return err
+	}
+
+	return fmt.Errorf(
+		"could not find submitting outcome for the result",
+	)
 }
