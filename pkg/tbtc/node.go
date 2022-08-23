@@ -33,7 +33,7 @@ func (drs *dkgResultSigner) SignResult(result *dkg.Result) (*dkg.SignedResult, e
 	resultHash, err := drs.chain.CalculateDKGResultHash(result)
 	if err != nil {
 		return nil, fmt.Errorf(
-			"dkg result hash calculation failed [%v]",
+			"dkg result hash calculation failed [%w]",
 			err,
 		)
 	}
@@ -43,7 +43,7 @@ func (drs *dkgResultSigner) SignResult(result *dkg.Result) (*dkg.SignedResult, e
 	signature, err := signing.Sign(resultHash[:])
 	if err != nil {
 		return nil, fmt.Errorf(
-			"dkg result hash signing failed [%v]",
+			"dkg result hash signing failed [%w]",
 			err,
 		)
 	}
@@ -119,7 +119,7 @@ func (drs *dkgResultSubmitter) SubmitResult(
 	if err != nil {
 		return returnWithError(
 			fmt.Errorf(
-				"could not extract public key bytes from the result: [%v]",
+				"could not extract public key bytes from the result: [%w]",
 				err,
 			),
 		)
@@ -129,7 +129,7 @@ func (drs *dkgResultSubmitter) SubmitResult(
 	if err != nil {
 		return returnWithError(
 			fmt.Errorf(
-				"could not check if the result is already submitted: [%v]",
+				"could not check if the result is already submitted: [%w]",
 				err,
 			),
 		)
@@ -147,7 +147,7 @@ func (drs *dkgResultSubmitter) SubmitResult(
 	)
 	if err != nil {
 		return returnWithError(
-			fmt.Errorf("wait for eligibility failure: [%v]", err),
+			fmt.Errorf("wait for eligibility failure: [%w]", err),
 		)
 	}
 
@@ -206,12 +206,12 @@ func (drs *dkgResultSubmitter) waitForSubmissionEligibility(
 
 	blockCounter, err := drs.chain.BlockCounter()
 	if err != nil {
-		return nil, fmt.Errorf("could not get block counter [%v]", err)
+		return nil, fmt.Errorf("could not get block counter [%w]", err)
 	}
 
 	waiter, err := blockCounter.BlockHeightWaiter(eligibleBlockHeight)
 	if err != nil {
-		return nil, fmt.Errorf("block height waiter failure [%v]", err)
+		return nil, fmt.Errorf("block height waiter failure [%w]", err)
 	}
 
 	return waiter, err
