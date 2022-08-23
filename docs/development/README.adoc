@@ -50,18 +50,33 @@ Command line arguments:
         --skip-client-build: Should execute contracts part only. Client installation will not be executed
 ```
 
-The `./scripts/initialize.sh --stake-owner <address>` needs to be run for each 
-client. Default setup assumes that the staking provider, operator, beneficiary,
-and the authorizer all have the same addresses as the stake owner. Only the
-`stake-owner` has to be unique for the default setup. The default stake amount is
-`1,000,000 T` tokens. The default authorization amount is the minimum authorization
-amount +
-Ex. if you need to initialize a network with 3 clients using the default setup,
-then this script needs to be run 3 times with a different `--stake-owner` address
-like so: +
-- `initialize.sh --stake-owner <address1>` +
-- `initialize.sh --stake-owner <address2>` +
-- `initialize.sh --stake-owner <address3>`
+The `./scripts/initialize.sh` has to be run for each 
+client and if the `--stake-owner <address>` is not set, then it will prompt you to select a configuration file that will be used to fetch the stake owner's address from. Default setup assumes that the staking provider, operator, beneficiary, and the authorizer all have the same addresses as the stake owner. Only the `stake-owner` has to be unique for the default setup. The default stake amount is `1,000,000 T` tokens. The default authorization amount is the minimum authorization amount +
+Ex. if you need to initialize a network with 3 clients using the default setup, then this script needs to be run 3 times with a different selected config file like so: +
+```
+./scripts/initialize.sh
+
+Select client config file:
+1) config.toml <--
+2) config1.toml
+3) config2.toml
+```
+```
+./scripts/initialize.sh
+
+Select client config file:
+1) config.toml
+2) config1.toml <--
+3) config2.toml
+``` 
+```
+./scripts/initialize.sh
+
+Select client config file:
+1) config.toml
+2) config1.toml
+3) config2.toml <--
+``` 
 
 The `+initialize.sh+` script will:
 
@@ -75,13 +90,10 @@ For more info please refer to `./scripts/initialize.sh --help`
 ```
 Usage: ./scripts/initialize.sh --network <network> --stake-owner <stake owner address> --staking-provider <staking provider address> --operator <operator address> --beneficiary <beneficiary address> --authorizer <authorizer address> --stake-amount <stake amount> --authorization-amount <authorization amount>
 
-Mandatory line arguments:
-
-        --stake-owner: Stake owner address
-
 Optional line arguments:
 
         --network: Ethereum network for keep-core client. Available networks and settings are specified in the 'hardhat.config.ts'
+        --stake-owner: Stake owner address
         --staking-provider: Staking provider address
         --operator: Operator address
         --beneficiary: Staking beneficiary address
@@ -90,15 +102,39 @@ Optional line arguments:
         --authorization-amount: Authorization amount
 ```
 
-Afer executing `install.sh` and `initialize.sh` now you can run `./scripts/start.sh`
-to start a client. It will prompt you to chose from the available config files that
-should match the one chosen for `./scripts/initialize.sh`. Please refer to
+Afer executing `install.sh` and `initialize.sh` now you can run `./scripts/start.sh` to start a client. It will prompt you to chose from the available config files that should match the one chosen for `./scripts/initialize.sh`. 
+```
+./scripts/start.sh
+
+Select client config file:
+1) config.toml <--
+2) config1.toml
+3) config2.toml
+```
+```
+./scripts/start.sh
+
+Select client config file:
+1) config.toml
+2) config1.toml <--
+3) config2.toml
+``` 
+```
+./scripts/start.sh
+
+Select client config file:
+1) config.toml
+2) config1.toml
+3) config2.toml <--
+```
+
+Please refer to
 `./scripts/start.sh --help` for more info
 
 ```
 ./scripts/start.sh --help
 
-Usage: ENV_VAR(S) ./scripts/start.sh --config-dir-path <path-to-configuration-files>
+Usage: ENV_VAR(S) ./scripts/start.sh --config-dir <path-to-configuration-files>
 
 Environment variables:
 
@@ -106,7 +142,7 @@ Environment variables:
 
 Command line arguments:
 
-        --config-dir-path: Path to a client configuration files
+        --config-dir: Path to a client configuration files
 ```
 
 === Configuration
