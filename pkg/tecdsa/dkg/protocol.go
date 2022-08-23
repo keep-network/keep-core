@@ -528,10 +528,10 @@ func (sm *submittingMember) SubmitDKGResult(
 	resultSubmitter ResultSubmitter,
 ) error {
 	if err := resultSubmitter.SubmitResult(
+		sm.memberIndex,
 		result,
 		signatures,
 		startBlockNumber,
-		sm.memberIndex,
 	); err != nil {
 		return fmt.Errorf("failed to submit DKG result [%v]", err)
 	}

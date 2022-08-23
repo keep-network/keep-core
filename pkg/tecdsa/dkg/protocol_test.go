@@ -1753,10 +1753,10 @@ func (mrs *mockResultSubmitter) setSubmittingOutcome(result *Result, err error) 
 }
 
 func (mrs *mockResultSubmitter) SubmitResult(
+	memberIndex group.MemberIndex,
 	result *Result,
 	signatures map[group.MemberIndex][]byte,
 	startBlockNumber uint64,
-	memberIndex group.MemberIndex,
 ) error {
 	if err, ok := mrs.submittingOutcomes[result]; ok {
 		return err

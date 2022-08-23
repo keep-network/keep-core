@@ -84,10 +84,10 @@ func newDkgResultSubmitter(chain Chain) *dkgResultSubmitter {
 // the required threshold, whether the result was already submitted and waits
 // until the member is eligible for DKG result submission.
 func (drs *dkgResultSubmitter) SubmitResult(
+	memberIndex group.MemberIndex,
 	result *dkg.Result,
 	signatures map[group.MemberIndex][]byte,
 	startBlockNumber uint64,
-	memberIndex group.MemberIndex,
 ) error {
 	config := drs.chain.GetConfig()
 

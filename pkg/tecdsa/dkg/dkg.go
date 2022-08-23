@@ -118,11 +118,12 @@ type ResultSigner interface {
 // ResultSubmitter is the interface that provides ability to submit the DKG
 // result to the chain.
 type ResultSubmitter interface {
+	// SubmitResult submits the DKG result along with the supporting signatures.
 	SubmitResult(
+		memberIndex group.MemberIndex,
 		result *Result,
 		signatures map[group.MemberIndex][]byte,
 		startBlockNumber uint64,
-		memberIndex group.MemberIndex,
 	) error
 }
 
