@@ -5,10 +5,9 @@
 toc::[]
 
 == Quick installation
-To quickly install and start a client use the following scripts.
 
 === Pre-requirements
-For development purposes, it is convenient to set up a local Ethereum client with a group of connected peers. A note-taken walkthrough <<local-t-network.adoc,[set up local T network]>>  covers the entire process
+For development purposes, it is convenient to set up a local Ethereum client with a group of connected peers. A note-taken walkthrough link:local-t-network.adoc[set up local T network] covers the entire process
 including setting up a local Ethereum client, deploying T contracts and
 configuring T peers. +
 
@@ -16,7 +15,7 @@ Additionaly, to start a client we need to provide config options either by creat
 
 === Starting a client
 
-Run from the project root:
+To quickly setup and start a client use the following scripts from the project root:
 
 * `./scripts/install.sh`
 * `./scripts/initialize.sh`
@@ -102,7 +101,7 @@ Optional line arguments:
         --authorization-amount: Authorization amount
 ```
 
-Afer executing `install.sh` and `initialize.sh` now you can run `./scripts/start.sh` to start a client. It will prompt you to chose from the available config files that should match the one chosen for `./scripts/initialize.sh`. 
+Afer executing `install.sh` and `initialize.sh` now you can run `./scripts/start.sh` to start a client. It will prompt you to chose from the available config files (that should match the one chosen for `./scripts/initialize.sh`) and the log level. 
 ```
 ./scripts/start.sh
 
@@ -110,6 +109,12 @@ Select client config file:
 1) config.toml <--
 2) config1.toml
 3) config2.toml
+1
+
+Select log level [info]:
+1) info
+2) debug
+3) custom...
 ```
 ```
 ./scripts/start.sh
@@ -118,6 +123,12 @@ Select client config file:
 1) config.toml
 2) config1.toml <--
 3) config2.toml
+2
+
+Select log level [info]:
+1) info
+2) debug
+3) custom...
 ``` 
 ```
 ./scripts/start.sh
@@ -126,6 +137,12 @@ Select client config file:
 1) config.toml
 2) config1.toml
 3) config2.toml <--
+3
+
+Select log level [info]:
+1) info
+2) debug
+3) custom...
 ```
 
 Please refer to
