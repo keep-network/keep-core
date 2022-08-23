@@ -91,16 +91,13 @@ func (drs *dkgResultSubmitter) SubmitResult(
 ) error {
 	config := drs.chain.GetConfig()
 
-	// Chain rejects the result if it has less than 25% safety margin.
-	// If there are not enough signatures to preserve the margin, it does not
-	// make sense to submit the result.
-	signatureThreshold := config.HonestThreshold +
-		(config.GroupSize-config.HonestThreshold)/2
-	if len(signatures) < signatureThreshold {
+	// TODO: Compare signatures to the GroupQuorum parameter
+	if len(signatures) < config.HonestThreshold {
 		return fmt.Errorf(
-			"could not submit result with [%v] signatures for signature threshold [%v]",
+			"could not submit result with [%v] signatures for signature "+
+				"honest threshold [%v]",
 			len(signatures),
-			signatureThreshold,
+			config.HonestThreshold,
 		)
 	}
 
