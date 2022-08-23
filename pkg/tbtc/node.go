@@ -108,36 +108,27 @@ func (drs *dkgResultSubmitter) SubmitResult(
 			onSubmittedResultChan <- event.BlockNumber
 		},
 	)
-
-	returnWithError := func(err error) error {
-		subscription.Unsubscribe()
-		close(onSubmittedResultChan)
-		return err
-	}
+	defer subscription.Unsubscribe()
 
 	groupPublicKeyBytes, err := result.GroupPublicKeyBytes()
 	if err != nil {
-		return returnWithError(
-			fmt.Errorf(
-				"could not extract public key bytes from the result: [%w]",
-				err,
-			),
+		return fmt.Errorf(
+			"could not extract public key bytes from the result: [%w]",
+			err,
 		)
 	}
 
 	alreadySubmitted, err := drs.chain.IsDKGResultSubmitted(groupPublicKeyBytes)
 	if err != nil {
-		return returnWithError(
-			fmt.Errorf(
-				"could not check if the result is already submitted: [%w]",
-				err,
-			),
+		return fmt.Errorf(
+			"could not check if the result is already submitted: [%w]",
+			err,
 		)
 	}
 
 	// Someone who was ahead of us in the queue submitted the result. Giving up.
 	if alreadySubmitted {
-		return returnWithError(nil)
+		return nil
 	}
 
 	// Wait until the current member is eligible to submit the result.
@@ -146,9 +137,7 @@ func (drs *dkgResultSubmitter) SubmitResult(
 		memberIndex,
 	)
 	if err != nil {
-		return returnWithError(
-			fmt.Errorf("wait for eligibility failure: [%w]", err),
-		)
+		return fmt.Errorf("wait for eligibility failure: [%w]", err)
 	}
 
 	for {
@@ -156,7 +145,6 @@ func (drs *dkgResultSubmitter) SubmitResult(
 		case blockNumber := <-eligibleToSubmitWaiter:
 			// Member becomes eligible to submit the result.
 			subscription.Unsubscribe()
-			close(onSubmittedResultChan)
 
 			logger.Infof(
 				"[member:%v] submitting DKG result with public key [0x%x] and "+
@@ -180,7 +168,7 @@ func (drs *dkgResultSubmitter) SubmitResult(
 			)
 			// A result has been submitted by other member. Leave without
 			// publishing the result.
-			return returnWithError(nil)
+			return nil
 		}
 	}
 }
