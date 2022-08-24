@@ -348,12 +348,16 @@ func (drl *dkgRetryLoop) start(
 		// In order to start attempts >1 in the right place, we need to
 		// determine how many blocks were taken by previous attempts. We assume
 		// the worst case that each attempt failed at the end of the DKG
-		// protocol. That said, we need to increment the previous attempt start
+		// protocol.
+		//
+		// That said, we need to increment the previous attempt start
 		// block by the number of blocks equal to the protocol duration and
 		// by some additional delay blocks. We need a small fixed delay in
 		// order to mitigate all corner cases where the actual attempt duration
 		// was slightly longer than the expected duration determined by the
-		// dkg.ProtocolBlocks function. For example, the attempt may fail at
+		// dkg.ProtocolBlocks function.
+		//
+		// For example, the attempt may fail at
 		// the end of the protocol but the error is returned after some time
 		// and more blocks than expected are mined in the meantime.
 		// Additionally, we want to strongly extend the delay period
