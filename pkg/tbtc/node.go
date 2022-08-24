@@ -448,6 +448,10 @@ func (drl *dkgRetryLoop) qualifiedOperatorsSet() (map[chain.Address]bool, error)
 			}
 		}
 
+		// If this attempt pushes us below the group quorum we are falling
+		// back to the random retry algorithm that excludes specific members
+		// from the original group selection result returned by the sortition
+		// pool.
 		if len(qualifiedOperators) >= drl.chainConfig.GroupQuorum {
 			return qualifiedOperators.Set(), nil
 		}
