@@ -344,6 +344,9 @@ func (tc *TbtcChain) CalculateDKGResultHash(
 	}
 
 	// Encode DKG result to the format matched with Solidity keccak256(abi.encodePacked(...))
+	// TODO: Adjust the message structure to the format needed by the wallet
+	//       registry contract:
+	//       \x19Ethereum signed message:\n${keccak256(groupPubKey,misbehavedIndices,startBlock)}
 	hash := crypto.Keccak256(groupPublicKeyBytes, result.MisbehavedMembersIndexes())
 	return dkg.ResultHashFromBytes(hash)
 }
