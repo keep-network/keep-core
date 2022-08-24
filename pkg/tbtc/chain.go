@@ -58,7 +58,7 @@ type ChainConfig struct {
 	GroupSize int
 	// GroupQuorum is the minimum number of active participants behaving
 	// according to the protocol needed to generate a group in TBTC. This value
-	// is lesser than the GroupSize and bigger than the HonestThreshold.
+	// is smaller than the GroupSize and bigger than the HonestThreshold.
 	GroupQuorum int
 	// HonestThreshold is the minimum number of active participants behaving
 	// according to the protocol needed to generate a signature.
