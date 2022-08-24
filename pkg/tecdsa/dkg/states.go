@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"time"
 
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/net"
@@ -102,12 +101,12 @@ func (ekpgs *ephemeralKeyPairGenerationState) Receive(msg net.Message) error {
 	return nil
 }
 
-func (ekpgs *ephemeralKeyPairGenerationState) Next() state.State {
+func (ekpgs *ephemeralKeyPairGenerationState) Next() (state.State, error) {
 	return &symmetricKeyGenerationState{
 		channel:               ekpgs.channel,
 		member:                ekpgs.member.initializeSymmetricKeyGeneration(),
 		previousPhaseMessages: ekpgs.phaseMessages,
-	}
+	}, nil
 }
 
 func (ekpgs *ephemeralKeyPairGenerationState) MemberIndex() group.MemberIndex {
@@ -146,11 +145,12 @@ func (skgs *symmetricKeyGenerationState) Receive(msg net.Message) error {
 	return nil
 }
 
-func (skgs *symmetricKeyGenerationState) Next() state.State {
+func (skgs *symmetricKeyGenerationState) Next() (state.State, error) {
 	return &tssRoundOneState{
-		channel: skgs.channel,
-		member:  skgs.member.initializeTssRoundOne(),
-	}
+		channel:     skgs.channel,
+		member:      skgs.member.initializeTssRoundOne(),
+		outcomeChan: make(chan error),
+	}, nil
 }
 
 func (skgs *symmetricKeyGenerationState) MemberIndex() group.MemberIndex {
@@ -164,6 +164,8 @@ type tssRoundOneState struct {
 	channel net.BroadcastChannel
 	member  *tssRoundOneMember
 
+	outcomeChan chan error
+
 	phaseMessages []*tssRoundOneMessage
 }
 
@@ -176,29 +178,26 @@ func (tros *tssRoundOneState) ActiveBlocks() uint64 {
 }
 
 func (tros *tssRoundOneState) Initiate(ctx context.Context) error {
-	// The ctx instance passed as Initiate argument is scoped to the lifetime
-	// of the current state. However, the Initiate method is blocking and the
-	// ctx instance is cancelled properly only after Initiate returns. Because
-	// of that, we cannot use ctx as round timeout signal as Initiate would
-	// hang forever if something goes wrong. To avoid such a resource leak,
-	// we set a round timeout based on state block duration and an average
-	// block time. The exact duration doesn't need to be super-accurate because
-	// if the timeout is hit, the execution will fail anyway. We just want
-	// to give enough time for round computation and make sure the round
-	// terminates regardless of the result.
-	stateBlocks := tros.DelayBlocks() + tros.ActiveBlocks()
-	stateDuration := 15 * time.Second * time.Duration(stateBlocks)
-	roundCtx, roundCtxCancel := context.WithTimeout(ctx, stateDuration)
-	defer roundCtxCancel()
+	// TSS computations can be time-consuming and can exceed the current
+	// state's time window. The ctx parameter is scoped to the lifetime of
+	// the current state so, it can be used as a timeout signal. However,
+	// that ctx is cancelled upon state's end only after Initiate returns.
+	// In order to make that working, Initiate must trigger the computations
+	// in a separate goroutine and return before the end of the state.
+	go func() {
+		message, err := tros.member.tssRoundOne(ctx)
+		if err != nil {
+			tros.outcomeChan <- err
+			return
+		}
 
-	message, err := tros.member.tssRoundOne(roundCtx)
-	if err != nil {
-		return err
-	}
+		if err := tros.channel.Send(ctx, message); err != nil {
+			tros.outcomeChan <- err
+			return
+		}
 
-	if err := tros.channel.Send(ctx, message); err != nil {
-		return err
-	}
+		close(tros.outcomeChan)
+	}()
 
 	return nil
 }
@@ -217,12 +216,18 @@ func (tros *tssRoundOneState) Receive(msg net.Message) error {
 	return nil
 }
 
-func (tros *tssRoundOneState) Next() state.State {
+func (tros *tssRoundOneState) Next() (state.State, error) {
+	err := <-tros.outcomeChan
+	if err != nil {
+		return nil, err
+	}
+
 	return &tssRoundTwoState{
 		channel:               tros.channel,
 		member:                tros.member.initializeTssRoundTwo(),
+		outcomeChan:           make(chan error),
 		previousPhaseMessages: tros.phaseMessages,
-	}
+	}, nil
 }
 
 func (tros *tssRoundOneState) MemberIndex() group.MemberIndex {
@@ -235,6 +240,8 @@ func (tros *tssRoundOneState) MemberIndex() group.MemberIndex {
 type tssRoundTwoState struct {
 	channel net.BroadcastChannel
 	member  *tssRoundTwoMember
+
+	outcomeChan chan error
 
 	previousPhaseMessages []*tssRoundOneMessage
 
@@ -256,29 +263,26 @@ func (trts *tssRoundTwoState) Initiate(ctx context.Context) error {
 		return fmt.Errorf("inactive members detected")
 	}
 
-	// The ctx instance passed as Initiate argument is scoped to the lifetime
-	// of the current state. However, the Initiate method is blocking and the
-	// ctx instance is cancelled properly only after Initiate returns. Because
-	// of that, we cannot use ctx as round timeout signal as Initiate would
-	// hang forever if something goes wrong. To avoid such a resource leak,
-	// we set a round timeout based on state block duration and an average
-	// block time. The exact duration doesn't need to be super-accurate because
-	// if the timeout is hit, the execution will fail anyway. We just want
-	// to give enough time for round computation and make sure the round
-	// terminates regardless of the result.
-	stateBlocks := trts.DelayBlocks() + trts.ActiveBlocks()
-	stateDuration := 15 * time.Second * time.Duration(stateBlocks)
-	roundCtx, roundCtxCancel := context.WithTimeout(ctx, stateDuration)
-	defer roundCtxCancel()
+	// TSS computations can be time-consuming and can exceed the current
+	// state's time window. The ctx parameter is scoped to the lifetime of
+	// the current state so, it can be used as a timeout signal. However,
+	// that ctx is cancelled upon state's end only after Initiate returns.
+	// In order to make that working, Initiate must trigger the computations
+	// in a separate goroutine and return before the end of the state.
+	go func() {
+		message, err := trts.member.tssRoundTwo(ctx, trts.previousPhaseMessages)
+		if err != nil {
+			trts.outcomeChan <- err
+			return
+		}
 
-	message, err := trts.member.tssRoundTwo(roundCtx, trts.previousPhaseMessages)
-	if err != nil {
-		return err
-	}
+		if err := trts.channel.Send(ctx, message); err != nil {
+			trts.outcomeChan <- err
+			return
+		}
 
-	if err := trts.channel.Send(ctx, message); err != nil {
-		return err
-	}
+		close(trts.outcomeChan)
+	}()
 
 	return nil
 }
@@ -297,12 +301,18 @@ func (trts *tssRoundTwoState) Receive(msg net.Message) error {
 	return nil
 }
 
-func (trts *tssRoundTwoState) Next() state.State {
+func (trts *tssRoundTwoState) Next() (state.State, error) {
+	err := <-trts.outcomeChan
+	if err != nil {
+		return nil, err
+	}
+
 	return &tssRoundThreeState{
 		channel:               trts.channel,
 		member:                trts.member.initializeTssRoundThree(),
+		outcomeChan:           make(chan error),
 		previousPhaseMessages: trts.phaseMessages,
-	}
+	}, nil
 }
 
 func (trts *tssRoundTwoState) MemberIndex() group.MemberIndex {
@@ -315,6 +325,8 @@ func (trts *tssRoundTwoState) MemberIndex() group.MemberIndex {
 type tssRoundThreeState struct {
 	channel net.BroadcastChannel
 	member  *tssRoundThreeMember
+
+	outcomeChan chan error
 
 	previousPhaseMessages []*tssRoundTwoMessage
 
@@ -336,29 +348,26 @@ func (trts *tssRoundThreeState) Initiate(ctx context.Context) error {
 		return fmt.Errorf("inactive members detected")
 	}
 
-	// The ctx instance passed as Initiate argument is scoped to the lifetime
-	// of the current state. However, the Initiate method is blocking and the
-	// ctx instance is cancelled properly only after Initiate returns. Because
-	// of that, we cannot use ctx as round timeout signal as Initiate would
-	// hang forever if something goes wrong. To avoid such a resource leak,
-	// we set a round timeout based on state block duration and an average
-	// block time. The exact duration doesn't need to be super-accurate because
-	// if the timeout is hit, the execution will fail anyway. We just want
-	// to give enough time for round computation and make sure the round
-	// terminates regardless of the result.
-	stateBlocks := trts.DelayBlocks() + trts.ActiveBlocks()
-	stateDuration := 15 * time.Second * time.Duration(stateBlocks)
-	roundCtx, roundCtxCancel := context.WithTimeout(ctx, stateDuration)
-	defer roundCtxCancel()
+	// TSS computations can be time-consuming and can exceed the current
+	// state's time window. The ctx parameter is scoped to the lifetime of
+	// the current state so, it can be used as a timeout signal. However,
+	// that ctx is cancelled upon state's end only after Initiate returns.
+	// In order to make that working, Initiate must trigger the computations
+	// in a separate goroutine and return before the end of the state.
+	go func() {
+		message, err := trts.member.tssRoundThree(ctx, trts.previousPhaseMessages)
+		if err != nil {
+			trts.outcomeChan <- err
+			return
+		}
 
-	message, err := trts.member.tssRoundThree(roundCtx, trts.previousPhaseMessages)
-	if err != nil {
-		return err
-	}
+		if err := trts.channel.Send(ctx, message); err != nil {
+			trts.outcomeChan <- err
+			return
+		}
 
-	if err := trts.channel.Send(ctx, message); err != nil {
-		return err
-	}
+		close(trts.outcomeChan)
+	}()
 
 	return nil
 }
@@ -377,12 +386,18 @@ func (trts *tssRoundThreeState) Receive(msg net.Message) error {
 	return nil
 }
 
-func (trts *tssRoundThreeState) Next() state.State {
+func (trts *tssRoundThreeState) Next() (state.State, error) {
+	err := <-trts.outcomeChan
+	if err != nil {
+		return nil, err
+	}
+
 	return &finalizationState{
 		channel:               trts.channel,
 		member:                trts.member.initializeFinalization(),
+		outcomeChan:           make(chan error),
 		previousPhaseMessages: trts.phaseMessages,
-	}
+	}, nil
 }
 
 func (trts *tssRoundThreeState) MemberIndex() group.MemberIndex {
@@ -396,6 +411,8 @@ func (trts *tssRoundThreeState) MemberIndex() group.MemberIndex {
 type finalizationState struct {
 	channel net.BroadcastChannel
 	member  *finalizingMember
+
+	outcomeChan chan error
 
 	previousPhaseMessages []*tssRoundThreeMessage
 }
@@ -415,30 +432,36 @@ func (fs *finalizationState) Initiate(ctx context.Context) error {
 		return fmt.Errorf("inactive members detected")
 	}
 
-	// The ctx instance passed as Initiate argument is scoped to the lifetime
-	// of the current state. However, the Initiate method is blocking and the
-	// ctx instance is cancelled properly only after Initiate returns. Because
-	// of that, we cannot use ctx as round timeout signal as Initiate would
-	// hang forever if something goes wrong. To avoid such a resource leak,
-	// we set a round timeout based on state block duration and an average
-	// block time. The exact duration doesn't need to be super-accurate because
-	// if the timeout is hit, the execution will fail anyway. We just want
-	// to give enough time for round computation and make sure the round
-	// terminates regardless of the result.
-	stateBlocks := fs.DelayBlocks() + fs.ActiveBlocks()
-	stateDuration := 15 * time.Second * time.Duration(stateBlocks)
-	roundCtx, roundCtxCancel := context.WithTimeout(ctx, stateDuration)
-	defer roundCtxCancel()
+	// TSS computations can be time-consuming and can exceed the current
+	// state's time window. The ctx parameter is scoped to the lifetime of
+	// the current state so, it can be used as a timeout signal. However,
+	// that ctx is cancelled upon state's end only after Initiate returns.
+	// In order to make that working, Initiate must trigger the computations
+	// in a separate goroutine and return before the end of the state.
+	go func() {
+		err := fs.member.tssFinalize(ctx, fs.previousPhaseMessages)
+		if err != nil {
+			fs.outcomeChan <- err
+			return
+		}
 
-	return fs.member.tssFinalize(roundCtx, fs.previousPhaseMessages)
+		close(fs.outcomeChan)
+	}()
+
+	return nil
 }
 
 func (fs *finalizationState) Receive(msg net.Message) error {
 	return nil
 }
 
-func (fs *finalizationState) Next() state.State {
-	return nil
+func (fs *finalizationState) Next() (state.State, error) {
+	err := <-fs.outcomeChan
+	if err != nil {
+		return nil, err
+	}
+
+	return nil, nil
 }
 
 func (fs *finalizationState) MemberIndex() group.MemberIndex {
@@ -521,7 +544,7 @@ func (rss *resultSigningState) Receive(msg net.Message) error {
 	return nil
 }
 
-func (rss *resultSigningState) Next() state.State {
+func (rss *resultSigningState) Next() (state.State, error) {
 	return &signaturesVerificationState{
 		channel:           rss.channel,
 		resultSigner:      rss.resultSigner,
@@ -534,7 +557,7 @@ func (rss *resultSigningState) Next() state.State {
 		verificationStartBlockHeight: rss.signingStartBlockHeight +
 			rss.DelayBlocks() +
 			rss.ActiveBlocks(),
-	}
+	}, nil
 }
 
 func (rss *resultSigningState) MemberIndex() group.MemberIndex {
@@ -585,7 +608,7 @@ func (svs *signaturesVerificationState) Receive(msg net.Message) error {
 	return nil
 }
 
-func (svs *signaturesVerificationState) Next() state.State {
+func (svs *signaturesVerificationState) Next() (state.State, error) {
 	return &resultSubmissionState{
 		channel:         svs.channel,
 		resultSubmitter: svs.resultSubmitter,
@@ -596,7 +619,7 @@ func (svs *signaturesVerificationState) Next() state.State {
 		submissionStartBlockHeight: svs.verificationStartBlockHeight +
 			svs.DelayBlocks() +
 			svs.ActiveBlocks(),
-	}
+	}, nil
 }
 
 func (svs *signaturesVerificationState) MemberIndex() group.MemberIndex {
@@ -639,9 +662,9 @@ func (rss *resultSubmissionState) Receive(msg net.Message) error {
 	return nil
 }
 
-func (rss *resultSubmissionState) Next() state.State {
+func (rss *resultSubmissionState) Next() (state.State, error) {
 	// returning nil represents this is the final state
-	return nil
+	return nil, nil
 }
 
 func (rss *resultSubmissionState) MemberIndex() group.MemberIndex {
