@@ -521,9 +521,14 @@ func (drs *dkgResultSubmitter) SubmitResult(
 	for {
 		select {
 		case blockNumber := <-submitterEligibleChan:
-			// Member becomes eligible to submit the result.
-			// Unsubscribe before submitting the result to avoid starting a
-			// goroutine with a handler for this member.
+			// Member becomes eligible to submit the result. Result submission
+ 			// would trigger the sender side of the result submission event
+ 			// listener but also cause the receiver side (this select)
+ 			// termination that will result with a dangling goroutine blocked
+ 			// forever on the `onSubmittedResultChan` channel. This would
+ 			// cause a resource leak. In order to avoid that, we should
+ 			// unsubscribe from the result submission event listener before
+ 			// submitting the result.
 			subscription.Unsubscribe()
 
 			publicKeyBytes, err := result.GroupPublicKeyBytes()
