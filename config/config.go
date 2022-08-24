@@ -165,7 +165,11 @@ func ReadEthereumConfig(flagSet *pflag.FlagSet) (ethereum.Config, error) {
 
 	configPath, err := flagSet.GetString("config")
 	if err != nil {
-		return ethereum.Config{}, fmt.Errorf("failed to read config file path from command flag: %w", err)
+		return ethereum.Config{},
+			fmt.Errorf(
+				"failed to read config file path from command flag: %w",
+				err,
+			)
 	}
 
 	if err := config.ReadConfig(configPath, flagSet, Ethereum); err != nil {
