@@ -525,13 +525,20 @@ func (drs *dkgResultSubmitter) SubmitResult(
 		select {
 		case blockNumber := <-submitterEligibleChan:
 			// Member becomes eligible to submit the result.
+			// Unsubscribe before submitting the result to avoid starting a
+			// goroutine with a handler for this member.
 			subscription.Unsubscribe()
+
+			publicKeyBytes, err := result.GroupPublicKeyBytes()
+			if err != nil {
+				return fmt.Errorf("cannot get public key bytes [%w]", err)
+			}
 
 			logger.Infof(
 				"[member:%v] submitting DKG result with public key [0x%x] and "+
 					"[%v] supporting member signatures at block [%v]",
 				memberIndex,
-				result.GroupPublicKeyBytes,
+				publicKeyBytes,
 				len(signatures),
 				blockNumber,
 			)
