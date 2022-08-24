@@ -452,9 +452,6 @@ func (drs *dkgResultSigner) VerifySignature(signedResult *dkg.SignedResult) (boo
 	)
 }
 
-// TODO: Revisit the setupEligibilityQueue function. The RFC mentions we should
-// start submitting from a random member, not the first one.
-
 // dkgResultSubmitter is responsible for submitting the DKG result to the chain.
 type dkgResultSubmitter struct { // TODO: Add unit tests
 	chain Chain
@@ -565,6 +562,8 @@ func (drs *dkgResultSubmitter) SubmitResult(
 // setupEligibilityQueue waits until the current member is eligible to
 // submit a result to the blockchain. First member is eligible to submit straight
 // away, each following member is eligible after pre-defined block step.
+// TODO: Revisit the setupEligibilityQueue function. The RFC mentions we should
+//       start submitting from a random member, not the first one.
 func (drs *dkgResultSubmitter) setupEligibilityQueue(
 	startBlockNumber uint64,
 	memberIndex group.MemberIndex,
