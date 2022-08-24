@@ -388,6 +388,7 @@ func (drl *dkgRetryLoop) start(
 				// and set up the next attempt properly.
 				if memberIndex == drl.memberIndex {
 					attemptSkipped = true
+					break
 				}
 			}
 		}
