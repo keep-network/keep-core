@@ -30,6 +30,8 @@ type ParameterPool[T any] struct {
 }
 
 // NewParameterPool creates a new instance of ParameterPool.
+// The generateFn may return nil when the context passed to it has been
+// cancelled or timed out during computations.
 func NewParameterPool[T any](
 	logger log.StandardLogger,
 	scheduler *Scheduler,
@@ -52,6 +54,12 @@ func NewParameterPool[T any](
 		start := time.Now()
 
 		generated := generateFn(ctx)
+
+		// The generateFn returns nil when the context is done. We should not
+		// add nil element to the pool.
+		if generated == nil {
+			return
+		}
 
 		err := persistence.Save(generated)
 		if err != nil {
