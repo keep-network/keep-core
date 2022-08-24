@@ -497,24 +497,13 @@ func (drs *dkgResultSubmitter) SubmitResult(
 	)
 	defer subscription.Unsubscribe()
 
-	groupPublicKeyBytes, err := result.GroupPublicKeyBytes()
+	dkgState, err := drs.chain.GetDKGState()
 	if err != nil {
-		return fmt.Errorf(
-			"could not extract public key bytes from the result: [%w]",
-			err,
-		)
+		return fmt.Errorf("could not check DKG state: [%w]", err)
 	}
 
-	alreadySubmitted, err := drs.chain.IsDKGResultSubmitted(groupPublicKeyBytes)
-	if err != nil {
-		return fmt.Errorf(
-			"could not check if the result is already submitted: [%w]",
-			err,
-		)
-	}
-
-	// Someone who was ahead of us in the queue submitted the result. Giving up.
-	if alreadySubmitted {
+	if dkgState != AwaitingResult {
+		// Someone who was ahead of us in the queue submitted the result. Giving up.
 		logger.Infof(
 			"[member:%v] DKG is no longer awaiting the result; "+
 				"aborting DKG result submission",

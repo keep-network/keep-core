@@ -324,9 +324,9 @@ func (tc *TbtcChain) SubmitDKGResult(
 	)
 }
 
-// TODO: Implement a real IsDKGResultSubmitted function.
-func (tc *TbtcChain) IsDKGResultSubmitted(groupPublicKey []byte) (bool, error) {
-	return false, nil
+// TODO: Implement a real GetDKGState function.
+func (tc *TbtcChain) GetDKGState() (tbtc.DKGState, error) {
+	return tbtc.AwaitingResult, nil
 }
 
 // CalculateDKGResultHash calculates Keccak-256 hash of the DKG result. Operation

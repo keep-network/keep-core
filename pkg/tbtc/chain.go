@@ -11,6 +11,15 @@ import (
 	"github.com/keep-network/keep-core/pkg/tecdsa/dkg"
 )
 
+type DKGState int
+
+const (
+	Idle DKGState = iota
+	AwaitingSeed
+	AwaitingResult
+	Challenge
+)
+
 // GroupSelectionChain defines the subset of the TBTC chain interface that
 // pertains to the group selection activities.
 type GroupSelectionChain interface {
@@ -44,9 +53,8 @@ type DistributedKeyGenerationChain interface {
 		signatures map[group.MemberIndex][]byte,
 	) error
 
-	// TODO: Check what should be the argument for this function.
-	// IsDKGResultSubmitted checks whether the DKG result was already submitted.
-	IsDKGResultSubmitted(groupPublicKeyBytes []byte) (bool, error)
+	// GetDKGState returns the current state of the DKG procedure.
+	GetDKGState() (DKGState, error)
 
 	// CalculateDKGResultHash calculates 256-bit hash of DKG result in standard
 	// specific for the chain. Operation is performed off-chain.
