@@ -51,7 +51,7 @@ func (ekpgm *ephemeralKeyPairGeneratingMember) generateEphemeralKeyPair() (
 func (skgm *symmetricKeyGeneratingMember) generateSymmetricKeys(
 	ephemeralPubKeyMessages []*ephemeralPublicKeyMessage,
 ) error {
-	for _, ephemeralPubKeyMessage := range ephemeralPubKeyMessages {
+	for _, ephemeralPubKeyMessage := range deduplicateBySender(ephemeralPubKeyMessages) {
 		otherMember := ephemeralPubKeyMessage.senderID
 
 		if !skgm.isValidEphemeralPublicKeyMessage(ephemeralPubKeyMessage) {
@@ -163,7 +163,7 @@ func (trtm *tssRoundTwoMember) tssRoundTwo(
 ) (*tssRoundTwoMessage, error) {
 	// Use messages from round one to update the local party and advance
 	// to round two.
-	for _, tssRoundOneMessage := range tssRoundOneMessages {
+	for _, tssRoundOneMessage := range deduplicateBySender(tssRoundOneMessages) {
 		senderID := tssRoundOneMessage.SenderID()
 
 		_, tssErr := trtm.tssParty.UpdateFromBytes(
@@ -281,7 +281,7 @@ func (trtm *tssRoundTwoMember) tssRoundThree(
 ) (*tssRoundThreeMessage, error) {
 	// Use messages from round two to update the local party and advance
 	// to round three.
-	for _, tssRoundTwoMessage := range tssRoundTwoMessages {
+	for _, tssRoundTwoMessage := range deduplicateBySender(tssRoundTwoMessages) {
 		senderID := tssRoundTwoMessage.SenderID()
 		senderTssPartyID := resolveSortedTssPartyID(trtm.tssParameters, senderID)
 
@@ -376,7 +376,7 @@ func (fm *finalizingMember) tssFinalize(
 ) error {
 	// Use messages from round three to update the local party and get the
 	// result.
-	for _, tssRoundThreeMessage := range tssRoundThreeMessages {
+	for _, tssRoundThreeMessage := range deduplicateBySender(tssRoundThreeMessages) {
 		senderID := tssRoundThreeMessage.SenderID()
 
 		_, tssErr := fm.tssParty.UpdateFromBytes(
@@ -537,4 +537,23 @@ func (sm *submittingMember) SubmitDKGResult(
 	}
 
 	return nil
+}
+
+// deduplicateBySender removes duplicated items for the given sender.
+// It always takes the first item that occurs for the given sender
+// and ignores the subsequent ones.
+func deduplicateBySender[T interface{ SenderID() group.MemberIndex }](
+	list []T,
+) []T {
+	senders := make(map[group.MemberIndex]bool)
+	result := make([]T, 0)
+
+	for _, item := range list {
+		if _, exists := senders[item.SenderID()]; !exists {
+			senders[item.SenderID()] = true
+			result = append(result, item)
+		}
+	}
+
+	return result
 }

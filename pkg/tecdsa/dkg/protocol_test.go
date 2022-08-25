@@ -1281,6 +1281,66 @@ func TestSubmitDKGResult_ErrorDuringSubmitting(t *testing.T) {
 	}
 }
 
+func TestDeduplicateBySender(t *testing.T) {
+	tests := map[string]struct {
+		inputItems          []*mockSenderItem
+		expectedOutputItems []*mockSenderItem
+	}{
+		"no duplicates": {
+			inputItems: []*mockSenderItem{
+				{1},
+				{2},
+				{3},
+				{4},
+				{5},
+			},
+			expectedOutputItems: []*mockSenderItem{
+				{1},
+				{2},
+				{3},
+				{4},
+				{5},
+			},
+		},
+		"duplicates": {
+			inputItems: []*mockSenderItem{
+				{1},
+				{2},
+				{2},
+				{3},
+				{4},
+				{1},
+				{5},
+			},
+			expectedOutputItems: []*mockSenderItem{
+				{1},
+				{2},
+				{3},
+				{4},
+				{5},
+			},
+		},
+		"empty input list": {
+			inputItems:          []*mockSenderItem{},
+			expectedOutputItems: []*mockSenderItem{},
+		},
+		"nil input list": {
+			inputItems:          nil,
+			expectedOutputItems: []*mockSenderItem{},
+		},
+	}
+
+	for testName, test := range tests {
+		t.Run(testName, func(t *testing.T) {
+			actualOutputItems := deduplicateBySender(test.inputItems)
+
+			if !reflect.DeepEqual(test.expectedOutputItems, actualOutputItems) {
+				t.Errorf("unexpected output items")
+			}
+		})
+	}
+}
+
 func initializeEphemeralKeyPairGeneratingMembersGroup(
 	dishonestThreshold int,
 	groupSize int,
@@ -1765,4 +1825,12 @@ func (mrs *mockResultSubmitter) SubmitResult(
 	return fmt.Errorf(
 		"could not find submitting outcome for the result",
 	)
+}
+
+type mockSenderItem struct {
+	senderID group.MemberIndex
+}
+
+func (msi *mockSenderItem) SenderID() group.MemberIndex {
+	return msi.senderID
 }
