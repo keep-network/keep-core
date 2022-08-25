@@ -104,6 +104,12 @@ func (c *Config) ReadConfig(configFilePath string, flagSet *pflag.FlagSet, categ
 	// Resolve contracts addresses.
 	c.resolveContractsAddresses()
 
+	// Resolve network peers.
+	err := c.resolvePeers()
+	if err != nil {
+		return fmt.Errorf("failed to resolve peers: %w", err)
+	}
+
 	// Validate configuration.
 	if err := validateConfig(c, categories...); err != nil {
 		return fmt.Errorf("validation failed: %w", err)
