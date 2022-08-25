@@ -438,7 +438,8 @@ func (sm *signingMember) SignDKGResult(
 // The function assumes that the public key presented in the message is the
 // correct one. This key needs to be compared against the one used by network
 // client earlier, before this function is called.
-func (sm *signingMember) VerifyDKGResultSignatures( // TODO: Unit tests
+// TODO: Add unit tests.
+func (sm *signingMember) VerifyDKGResultSignatures(
 	messages []*resultSignatureMessage,
 	resultSigner ResultSigner,
 ) (map[group.MemberIndex][]byte, error) {
