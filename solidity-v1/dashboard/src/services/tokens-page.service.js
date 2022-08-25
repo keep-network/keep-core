@@ -152,13 +152,8 @@ const getDelegations = async (
       )
       .call()
 
-    const keepToTStakedEvents =
-      await Keep.keepToTStaking.getStakedEventsByOperator(operatorAddress)
-
-    const operatorsStakedToT = keepToTStakedEvents.reduce((map, _) => {
-      map[_.returnValues.stakingProvider] = { ..._.returnValues }
-      return map
-    }, {})
+    const hasKeepTokensStakedInTNetwork =
+      await Keep.keepToTStaking.hasKeepTokensStakedInTNetwork(operatorAddress)
 
     const operatorData = {
       undelegatedAt,
@@ -173,7 +168,7 @@ const getDelegations = async (
       managedGrantContractInstance,
       isCopiedStake,
       isTStakingContractAuthorized,
-      isStakedToT: operatorsStakedToT.hasOwnProperty(operatorAddress),
+      isStakedToT: hasKeepTokensStakedInTNetwork,
     }
     const balance = web3Utils.toBN(amount)
 
