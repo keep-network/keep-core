@@ -130,6 +130,18 @@ func newBaseChain(
 		)
 	}
 
+	if config.Network != ethereum.Developer &&
+		big.NewInt(config.Network.ChainID()).Cmp(chainID) != 0 {
+		return nil, fmt.Errorf(
+			"chain id returned from ethereum api [%s] "+
+				"doesn't match the expected chain id for [%s] network [%d]; "+
+				"please verify the configured ethereum.url",
+			chainID.String(),
+			config.Network,
+			config.Network.ChainID(),
+		)
+	}
+
 	key, err := decryptKey(config)
 	if err != nil {
 		return nil, fmt.Errorf(
