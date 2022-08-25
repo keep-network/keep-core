@@ -3,7 +3,6 @@ package dkg
 import (
 	"bytes"
 	"context"
-	"fmt"
 
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/net"
@@ -93,7 +92,7 @@ func (ekpgs *ephemeralKeyPairGenerationState) Receive(msg net.Message) error {
 		if ekpgs.member.shouldAcceptMessage(
 			phaseMessage.SenderID(),
 			msg.SenderPublicKey(),
-		) {
+		) && ekpgs.member.sessionID == phaseMessage.sessionID {
 			ekpgs.phaseMessages = append(ekpgs.phaseMessages, phaseMessage)
 		}
 	}
@@ -134,8 +133,8 @@ func (skgs *symmetricKeyGenerationState) ActiveBlocks() uint64 {
 func (skgs *symmetricKeyGenerationState) Initiate(ctx context.Context) error {
 	skgs.member.MarkInactiveMembers(skgs.previousPhaseMessages)
 
-	if len(skgs.member.group.OperatingMemberIDs()) != skgs.member.group.GroupSize() {
-		return fmt.Errorf("inactive members detected")
+	if len(skgs.member.group.InactiveMemberIDs()) > 0 {
+		return newInactiveMembersError(skgs.member.group.InactiveMemberIDs())
 	}
 
 	return skgs.member.generateSymmetricKeys(skgs.previousPhaseMessages)
@@ -259,8 +258,8 @@ func (trts *tssRoundTwoState) ActiveBlocks() uint64 {
 func (trts *tssRoundTwoState) Initiate(ctx context.Context) error {
 	trts.member.MarkInactiveMembers(trts.previousPhaseMessages)
 
-	if len(trts.member.group.OperatingMemberIDs()) != trts.member.group.GroupSize() {
-		return fmt.Errorf("inactive members detected")
+	if len(trts.member.group.InactiveMemberIDs()) > 0 {
+		return newInactiveMembersError(trts.member.group.InactiveMemberIDs())
 	}
 
 	// TSS computations can be time-consuming and can exceed the current
@@ -344,8 +343,8 @@ func (trts *tssRoundThreeState) ActiveBlocks() uint64 {
 func (trts *tssRoundThreeState) Initiate(ctx context.Context) error {
 	trts.member.MarkInactiveMembers(trts.previousPhaseMessages)
 
-	if len(trts.member.group.OperatingMemberIDs()) != trts.member.group.GroupSize() {
-		return fmt.Errorf("inactive members detected")
+	if len(trts.member.group.InactiveMemberIDs()) > 0 {
+		return newInactiveMembersError(trts.member.group.InactiveMemberIDs())
 	}
 
 	// TSS computations can be time-consuming and can exceed the current
@@ -428,8 +427,8 @@ func (fs *finalizationState) ActiveBlocks() uint64 {
 func (fs *finalizationState) Initiate(ctx context.Context) error {
 	fs.member.MarkInactiveMembers(fs.previousPhaseMessages)
 
-	if len(fs.member.group.OperatingMemberIDs()) != fs.member.group.GroupSize() {
-		return fmt.Errorf("inactive members detected")
+	if len(fs.member.group.InactiveMemberIDs()) > 0 {
+		return newInactiveMembersError(fs.member.group.InactiveMemberIDs())
 	}
 
 	// TSS computations can be time-consuming and can exceed the current
