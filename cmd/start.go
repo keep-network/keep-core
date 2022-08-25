@@ -13,7 +13,6 @@ import (
 	"github.com/keep-network/keep-core/pkg/metrics"
 	"github.com/keep-network/keep-core/pkg/net"
 
-	"github.com/ipfs/go-log"
 	"github.com/keep-network/keep-common/pkg/persistence"
 	"github.com/keep-network/keep-core/pkg/beacon"
 	"github.com/keep-network/keep-core/pkg/chain"
@@ -24,12 +23,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var (
-	// StartCommand contains the definition of the start command-line subcommand.
-	StartCommand *cobra.Command
-
-	logger = log.Logger("keep-start")
-)
+// StartCommand contains the definition of the start command-line subcommand.
+var StartCommand *cobra.Command
 
 func init() {
 	StartCommand = &cobra.Command{
@@ -37,7 +32,7 @@ func init() {
 		Short: "Starts the Keep Client",
 		Long:  "Starts the Keep Client in the foreground",
 		PreRun: func(cmd *cobra.Command, args []string) {
-			if err := clientConfig.ReadConfig(configFilePath, cmd.Flags()); err != nil {
+			if err := clientConfig.ReadConfig(configFilePath, cmd.Flags(), config.AllCategories...); err != nil {
 				logger.Fatalf("error reading config: %v", err)
 			}
 
@@ -49,7 +44,7 @@ func init() {
 		},
 	}
 
-	initFlags(StartCommand, allCategories, &configFilePath, clientConfig)
+	initFlags(StartCommand, &configFilePath, clientConfig, config.AllCategories...)
 
 	StartCommand.SetUsageTemplate(
 		fmt.Sprintf(`%s

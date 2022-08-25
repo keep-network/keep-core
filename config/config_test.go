@@ -137,7 +137,7 @@ func TestReadConfigFromFile(t *testing.T) {
 	for _, filePath := range filePaths {
 		t.Run(strings.TrimPrefix(filepath.Ext(filePath), "."), func(t *testing.T) {
 			cfg := &Config{}
-			if err := cfg.ReadConfig(filePath, nil); err != nil {
+			if err := cfg.ReadConfig(filePath, nil, AllCategories...); err != nil {
 				t.Fatalf("failed to read test config: [%v]", err)
 			}
 
@@ -191,7 +191,7 @@ func TestReadConfig_ReadPassword(t *testing.T) {
 			}
 
 			cfg := &Config{}
-			err := cfg.ReadConfig(test.configFilePath, nil)
+			err := cfg.ReadConfig(test.configFilePath, nil, AllCategories...)
 
 			if test.expectedPassword != expectToPrompt {
 				if err != nil {
@@ -287,7 +287,7 @@ func TestReadConfig_ReadContracts(t *testing.T) {
 
 			}
 
-			if err := cfg.ReadConfig(test.configFilePath, nil); err != nil {
+			if err := cfg.ReadConfig(test.configFilePath, nil, AllCategories...); err != nil {
 				t.Fatalf("failed to read test config: [%v]", err)
 			}
 
