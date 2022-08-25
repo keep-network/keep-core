@@ -5,10 +5,15 @@ const { MerkleTree } = require("merkletreejs")
 const keccak256 = require("keccak256")
 const BigNumber = require("bignumber.js")
 
+// The Graph limits GraphQL queries to 1000 results max
+const RESULTS_PER_QUERY = 1000
 const SECONDS_IN_YEAR = 31536000
 
 async function getEpochById(gqlClient, epochId) {
-  let data
+  let epoch
+  let lastId = ""
+  let epochStakes = []
+  let data = []
 
   const FIRST_EPOCH_QUERY = gql`
     query FirstEpoch($id: String) {
@@ -17,10 +22,26 @@ async function getEpochById(gqlClient, epochId) {
         timestamp
         duration
         totalAmount
-        stakes(first: 1000) {
-          stakingProvider
-          owner
-          amount
+      }
+    }
+  `
+
+  const EPOCH_STAKES_QUERY = gql`
+    query EpochStakes(
+      $epochIds: [String!]
+      $resultsPerQuery: Int
+      $lastId: String
+    ) {
+      epochStakes(
+        first: $resultsPerQuery
+        where: { epoch_in: $epochIds, id_gt: $lastId }
+      ) {
+        id
+        owner
+        stakingProvider
+        amount
+        epoch {
+          id
         }
       }
     }
@@ -30,62 +51,143 @@ async function getEpochById(gqlClient, epochId) {
     .query(FIRST_EPOCH_QUERY, { id: epochId.toString() })
     .toPromise()
     .then((result) => {
-      data = result.data.epoch
+      if (result.error) console.error(result.error)
+      epoch = result.data.epoch
     })
 
-  return data
+    const epochIds = [epoch.id]
+
+  do {
+    await gqlClient
+      .query(EPOCH_STAKES_QUERY, {
+        epochIds: epochIds,
+        resultsPerQuery: RESULTS_PER_QUERY,
+        lastId: lastId,
+      })
+      .toPromise()
+      .then((result) => {
+        if (result.error) console.error(result.error)
+        data = result.data?.epochStakes
+        if (data.length > 0) {
+          epochStakes = epochStakes.concat(data)
+          lastId = data[data.length - 1].id
+        }
+      })
+  } while (data.length > 0)
+
+  epoch.stakes = epochStakes
+
+  return epoch
 }
 
 async function getEpochsBetweenDates(gqlClient, startTimestamp, endTimestamp) {
-  let data
+  let lastTimestamp = startTimestamp - 1
+  let lastId = ""
+  let epochs = []
+  let epochStakes = []
+  let data = []
 
-  // TODO: Max amount of items you can get in a query is 100.
-  // adding 'first: 1000' is a WA to get more than 100 stakes,
-  // but the most correct option is to use GraphQL pagination.
-  const ONGOING_STAKES_QUERY = gql`
-    query OngoingStakes($startTimestamp: String, $endTimestamp: String) {
+  const EPOCHS_QUERY = gql`
+    query Epochs(
+      $lastTimestamp: String
+      $endTimestamp: String
+      $resultsPerQuery: Int
+    ) {
       epoches(
-        first: 1000
+        first: $resultsPerQuery
         orderBy: timestamp
-        where: { timestamp_gte: $startTimestamp, timestamp_lte: $endTimestamp }
+        where: { timestamp_gt: $lastTimestamp, timestamp_lte: $endTimestamp }
       ) {
         id
         timestamp
         duration
         totalAmount
-        stakes(first: 1000) {
-          stakingProvider
-          owner
-          amount
+      }
+    }
+  `
+
+  const EPOCH_STAKES_QUERY = gql`
+    query EpochStakes(
+      $epochIds: [String!]
+      $resultsPerQuery: Int
+      $lastId: String
+    ) {
+      epochStakes(
+        first: $resultsPerQuery
+        where: { epoch_in: $epochIds, id_gt: $lastId }
+      ) {
+        id
+        owner
+        stakingProvider
+        amount
+        epoch {
+          id
         }
       }
     }
   `
 
-  await gqlClient
-    .query(ONGOING_STAKES_QUERY, {
-      startTimestamp: startTimestamp.toString(),
-      endTimestamp: endTimestamp.toString(),
-    })
-    .toPromise()
-    .then((result) => {
-      data = result.data.epoches
-    })
+  do {
+    await gqlClient
+      .query(EPOCHS_QUERY, {
+        lastTimestamp: lastTimestamp.toString(),
+        endTimestamp: endTimestamp.toString(),
+        resultsPerQuery: RESULTS_PER_QUERY,
+      })
+      .toPromise()
+      .then((result) => {
+        if (result.error) console.error(result.error)
+        data = result.data?.epoches
+        if (data.length > 0) {
+          epochs = epochs.concat(data)
+          lastTimestamp = data[data.length - 1].timestamp
+        }
+      })
+  } while (data.length > 0)
 
-  return data
+  const epochIds = epochs.map((epoch) => epoch.id)
+
+  do {
+    await gqlClient
+      .query(EPOCH_STAKES_QUERY, {
+        epochIds: epochIds,
+        resultsPerQuery: RESULTS_PER_QUERY,
+        lastId: lastId,
+      })
+      .toPromise()
+      .then((result) => {
+        if (result.error) console.error(result.error)
+        data = result.data?.epochStakes
+        if (data.length > 0) {
+          epochStakes = epochStakes.concat(data)
+          lastId = data[data.length - 1].id
+        }
+      })
+  } while (data.length > 0)
+
+  epochs.forEach((epoch) => (epoch.stakes = []))
+  epochStakes.forEach((epochStake) => {
+    const i = epochIds.findIndex((epochId) => epochId === epochStake.epoch.id)
+    epochs[i].stakes.push(epochStake)
+  })
+
+  return epochs
 }
 
 async function getOperatorsConfirmedBeforeDate(gqlClient, timestamp) {
-  let data
+  let lastId = ""
+  let operators = []
+  let data = []
 
-  // TODO: Max amount of items you can get in a query is 100.
-  // adding 'first: 1000' is a WA to get more than 100 stakes,
-  // but the most correct option is to use GraphQL pagination.
   const OPS_CONF_BETWEEN_DATES = gql`
-    query SimplePREApplications($timestamp: String) {
+    query SimplePREApplications(
+      $timestamp: String
+      $resultsPerQuery: Int
+      $lastId: String
+    ) {
       simplePREApplications(
-        first: 1000
-        where: { confirmedTimestamp_lte: $timestamp }
+        first: $resultsPerQuery
+        where: { confirmedTimestamp_lte: $timestamp, id_gt: $lastId }
       ) {
         bondedTimestamp
         confirmedTimestamp
@@ -95,27 +197,35 @@ async function getOperatorsConfirmedBeforeDate(gqlClient, timestamp) {
     }
   `
 
-  await gqlClient
-    .query(OPS_CONF_BETWEEN_DATES, {
-      timestamp: timestamp.toString(),
-    })
-    .toPromise()
-    .then((result) => {
-      data = result.data?.simplePREApplications
-    })
+  do {
+    await gqlClient
+      .query(OPS_CONF_BETWEEN_DATES, {
+        timestamp: timestamp.toString(),
+        resultsPerQuery: RESULTS_PER_QUERY,
+        lastId: lastId,
+      })
+      .toPromise()
+      .then((result) => {
+        if (result.error) console.error(result.error)
+        data = result.data?.simplePREApplications
+        if (data.length > 0) {
+          operators = operators.concat(data)
+          lastId = data[data.length - 1].id
+        }
+      })
+  } while (data.length > 0)
 
-  return data
+  return operators
 }
 
 async function getStakeDatasInfo(gqlClient) {
-  let data
+  let lastId = ""
+  let stakeDatas = []
+  let data = []
 
-  // TODO: Max amount of items you can get in a query is 100.
-  // adding 'first: 1000' is a WA to get more than 100 stakes,
-  // but the most correct option is to use GraphQL pagination.
   const STAKES_DATA_INFO = gql`
-    query stakeDatasInfo {
-      stakeDatas(first: 1000) {
+    query stakeDatasInfo($resultsPerQuery: Int, $lastId: String) {
+      stakeDatas(first: $resultsPerQuery, where: { id_gt: $lastId }) {
         beneficiary
         id
         authorizer
@@ -126,14 +236,24 @@ async function getStakeDatasInfo(gqlClient) {
     }
   `
 
-  await gqlClient
-    .query(STAKES_DATA_INFO)
-    .toPromise()
-    .then((result) => {
-      data = result.data?.stakeDatas
-    })
+  do {
+    await gqlClient
+      .query(STAKES_DATA_INFO, {
+        resultsPerQuery: RESULTS_PER_QUERY,
+        lastId: lastId,
+      })
+      .toPromise()
+      .then((result) => {
+        if (result.error) console.error(result.error)
+        data = result.data?.stakeDatas
+        if (data.length > 0) {
+          stakeDatas = stakeDatas.concat(data)
+          lastId = data[data.length - 1].id
+        }
+      })
+  } while (data.length > 0)
 
-  return data
+  return stakeDatas
 }
 
 /**

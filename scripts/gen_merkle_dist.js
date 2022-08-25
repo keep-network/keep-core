@@ -4,7 +4,7 @@ const fs = require("fs")
 const stakingRewards = require("../src/stakingrewards/stakingrewards.js")
 
 const graphqlApi =
-  "https://api.studio.thegraph.com/query/24143/main-threshold-subgraph/0.0.6"
+  "https://api.studio.thegraph.com/query/24143/main-threshold-subgraph/0.0.7"
 const startTime = 1654041600  // Jun 1st 2022 00:00:00 GMT
 const endTime = 1664496000    // Sep 30th 2022 00:00:00 GMT
 const endTimeDate = new Date(endTime * 1000).toISOString().slice(0, 10)
