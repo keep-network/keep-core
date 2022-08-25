@@ -52,6 +52,24 @@ func bindFlags(flagSet *pflag.FlagSet) error {
 	return nil
 }
 
+// Resolve ethereum network based on the set boolean flags.
+func (c *Config) resolveEthereumNetwork(flagSet *pflag.FlagSet) error {
+	var err error
+
+	c.Ethereum.Network, err = func() (ethereumCommon.Network,error) {
+		if ok, err := flagSet.GetBool(ethereumCommon.Goerli.String()); ok {
+			return ethereumCommon.Goerli, err
+		}
+		if ok, err := flagSet.GetBool(ethereumCommon.Developer.String()); ok {
+			return ethereumCommon.Developer, err
+		}
+
+		return ethereumCommon.Mainnet, nil
+	}()
+
+	return err
+}
+
 // ReadConfig reads in the configuration file at `configFilePath` and flags defined in
 // the `flagSet`.
 func (c *Config) ReadConfig(configFilePath string, flagSet *pflag.FlagSet, categories ...Category) error {
@@ -60,6 +78,10 @@ func (c *Config) ReadConfig(configFilePath string, flagSet *pflag.FlagSet, categ
 	if flagSet != nil {
 		if err := bindFlags(flagSet); err != nil {
 			return fmt.Errorf("unable to bind the flags: [%w]", err)
+		}
+
+		if  err := c.resolveEthereumNetwork(flagSet); err != nil {
+			return fmt.Errorf("unable to resolve ethereum network: [%w]", err)
 		}
 	}
 
