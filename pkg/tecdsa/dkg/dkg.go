@@ -46,9 +46,9 @@ func NewExecutor(
 // a member index to use in the group, dishonest threshold, and block height
 // when DKG protocol should start.
 //
-// This function also allows to perform a DKG execution with just a subset of
-// the selected group by passing a non-empty excludedMembers slice holding the
-// members that should be excluded.
+// This function also supports DKG execution with a subset of the selected
+// group by passing a non-empty excludedMembers slice holding the members that
+// should be excluded.
 func (e *Executor) Execute(
 	sessionID string,
 	startBlockNumber uint64,
