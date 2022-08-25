@@ -84,7 +84,7 @@ func (sm *SubmittingMember) SubmitDKGResult(
 	alreadySubmitted, err := chainRelay.IsGroupRegistered(result.GroupPublicKey)
 	if err != nil {
 		return fmt.Errorf(
-			"could not check if the result is already submitted: [%v]",
+			"could not check if the result is already submitted: [%w]",
 			err,
 		)
 	}
@@ -101,7 +101,7 @@ func (sm *SubmittingMember) SubmitDKGResult(
 		config.ResultPublicationBlockStep,
 	)
 	if err != nil {
-		return fmt.Errorf("wait for eligibility failure: [%v]", err)
+		return fmt.Errorf("wait for eligibility failure: [%w]", err)
 	}
 
 	for {
@@ -164,7 +164,7 @@ func (sm *SubmittingMember) waitForSubmissionEligibility(
 
 	waiter, err := blockCounter.BlockHeightWaiter(eligibleBlockHeight)
 	if err != nil {
-		return nil, fmt.Errorf("block height waiter failure [%v]", err)
+		return nil, fmt.Errorf("block height waiter failure [%w]", err)
 	}
 
 	return waiter, err
