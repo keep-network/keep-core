@@ -8,7 +8,6 @@ import (
 
 	"github.com/hashicorp/go-multierror"
 	"github.com/ipfs/go-log"
-	"github.com/keep-network/keep-common/pkg/chain/ethereum"
 	ethereumCommon "github.com/keep-network/keep-common/pkg/chain/ethereum"
 
 	"github.com/keep-network/keep-core/pkg/beacon/registry"
@@ -160,12 +159,12 @@ func validateConfig(config *Config, categories ...Category) error {
 // from the returned config, but is available for external functions that expect
 // to interact solely with Ethereum and are therefore independent of the rest of
 // the config structure.
-func ReadEthereumConfig(flagSet *pflag.FlagSet) (ethereum.Config, error) {
+func ReadEthereumConfig(flagSet *pflag.FlagSet) (ethereumCommon.Config, error) {
 	config := Config{}
 
 	configPath, err := flagSet.GetString("config")
 	if err != nil {
-		return ethereum.Config{},
+		return ethereumCommon.Config{},
 			fmt.Errorf(
 				"failed to read config file path from command flag: %w",
 				err,
@@ -173,7 +172,7 @@ func ReadEthereumConfig(flagSet *pflag.FlagSet) (ethereum.Config, error) {
 	}
 
 	if err := config.ReadConfig(configPath, flagSet, Ethereum); err != nil {
-		return ethereum.Config{}, err
+		return ethereumCommon.Config{}, err
 	}
 
 	return config.Ethereum, nil
