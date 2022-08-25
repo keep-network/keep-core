@@ -430,54 +430,26 @@ func (sm *signingMember) SignDKGResult(
 }
 
 // VerifyDKGResultSignatures verifies signatures received in messages from other
-// group members.
-// It collects signatures supporting only the same DKG result hash as the one
-// preferred by the current member.
-// Each member is allowed to broadcast only one signature over a preferred DKG
-// result hash.
-// The function assumes that the public key presented in the message is the
-// correct one. This key needs to be compared against the one used by network
-// client earlier, before this function is called.
+// group members. It collects signatures supporting only the same DKG result
+// hash as the one preferred by the current member. Each member is allowed to
+// broadcast only one signature over a preferred DKG result hash. The function
+// assumes that the input messages list does not contain a message from self and
+// that the public key presented in each message is the correct one.
+// This key needs to be compared against the one used by network client earlier,
+// before this function is called.
 func (sm *signingMember) VerifyDKGResultSignatures( // TODO: Unit tests
 	messages []*resultSignatureMessage,
 	resultSigner ResultSigner,
 ) (map[group.MemberIndex][]byte, error) {
-	duplicatedMessagesFromSender := func(senderID group.MemberIndex) bool {
-		messageFromSenderAlreadySeen := false
-		for _, message := range messages {
-			if message.senderID == senderID {
-				if messageFromSenderAlreadySeen {
-					return true
-				}
-				messageFromSenderAlreadySeen = true
-			}
-		}
-		return false
-	}
-
 	receivedValidResultSignatures := make(map[group.MemberIndex][]byte)
 
-	for _, message := range messages {
-		// Check if message from self.
-		if message.senderID == sm.memberIndex {
-			continue
-		}
-
-		// Check if sender sent multiple messages.
-		if duplicatedMessagesFromSender(message.senderID) {
-			sm.logger.Infof(
-				"[member: %v] received multiple messages from sender: [%d]",
-				sm.memberIndex,
-				message.senderID,
-			)
-			continue
-		}
-
+	for _, message := range deduplicateBySender(messages) {
 		// Sender's preferred DKG result hash doesn't match current member's
 		// preferred DKG result hash.
 		if message.resultHash != sm.preferredDKGResultHash {
 			sm.logger.Infof(
-				"[member: %v] signature from sender [%d] supports result different than preferred",
+				"[member: %v] signature from sender [%d] supports " +
+					"result different than preferred",
 				sm.memberIndex,
 				message.senderID,
 			)
@@ -494,7 +466,8 @@ func (sm *signingMember) VerifyDKGResultSignatures( // TODO: Unit tests
 		)
 		if err != nil {
 			sm.logger.Infof(
-				"[member: %v] verification of signature from sender [%d] failed: [%v]",
+				"[member: %v] verification of signature " +
+					"from sender [%d] failed: [%v]",
 				sm.memberIndex,
 				message.senderID,
 				err,
