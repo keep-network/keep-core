@@ -4,6 +4,8 @@ import (
 	"context"
 	"encoding/binary"
 	"fmt"
+	"math/big"
+
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/keep-network/keep-common/pkg/chain/ethereum"
@@ -12,7 +14,6 @@ import (
 	"github.com/keep-network/keep-core/pkg/operator"
 	"github.com/keep-network/keep-core/pkg/subscription"
 	"github.com/keep-network/keep-core/pkg/tbtc"
-	"math/big"
 )
 
 // Definitions of contract names.
@@ -106,6 +107,20 @@ func (tc *TbtcChain) GetConfig() *tbtc.ChainConfig {
 		GroupSize:       groupSize,
 		HonestThreshold: honestThreshold,
 	}
+}
+
+// Staking returns address of the TokenStaking contract the WalletRegistry is
+// connected to.
+func (tc *TbtcChain) Staking() (chain.Address, error) {
+	stakingContractAddress, err := tc.walletRegistry.Staking()
+	if err != nil {
+		return "", fmt.Errorf(
+			"failed to get the token staking address: [%w]",
+			err,
+		)
+	}
+
+	return chain.Address(stakingContractAddress.String()), nil
 }
 
 // IsRecognized checks whether the given operator is recognized by the TbtcChain
