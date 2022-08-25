@@ -1156,7 +1156,7 @@ func TestSignDKGResult(t *testing.T) {
 		err:        nil,
 	})
 
-	actualSignatureMessage, err := signingMember.SignDKGResult(
+	actualSignatureMessage, err := signingMember.signDKGResult(
 		result,
 		resultSigner,
 	)
@@ -1211,7 +1211,7 @@ func TestSignDKGResult_ErrorDuringSigning(t *testing.T) {
 		err:        fmt.Errorf("dummy error"),
 	})
 
-	_, err := signingMember.SignDKGResult(
+	_, err := signingMember.signDKGResult(
 		result,
 		resultSigner,
 	)
@@ -1240,7 +1240,7 @@ func TestSubmitDKGResult(t *testing.T) {
 	resultSubmitter := newMockResultSubmitter()
 	resultSubmitter.setSubmittingOutcome(result, nil)
 
-	err := submittingMember.SubmitDKGResult(
+	err := submittingMember.submitDKGResult(
 		result,
 		signatures,
 		uint64(startBlockNumber),
@@ -1265,7 +1265,7 @@ func TestSubmitDKGResult_ErrorDuringSubmitting(t *testing.T) {
 	resultSubmitter := newMockResultSubmitter()
 	resultSubmitter.setSubmittingOutcome(result, fmt.Errorf("dummy error"))
 
-	err := submittingMember.SubmitDKGResult(
+	err := submittingMember.submitDKGResult(
 		result,
 		signatures,
 		uint64(startBlockNumber),

@@ -405,9 +405,9 @@ func (fm *finalizingMember) tssFinalize(
 	}
 }
 
-// SignDKGResult signs the provided DKG result and prepares the appropriate
+// signDKGResult signs the provided DKG result and prepares the appropriate
 // result signature message.
-func (sm *signingMember) SignDKGResult(
+func (sm *signingMember) signDKGResult(
 	dkgResult *Result,
 	resultSigner ResultSigner,
 ) (*resultSignatureMessage, error) {
@@ -429,7 +429,7 @@ func (sm *signingMember) SignDKGResult(
 	}, nil
 }
 
-// VerifyDKGResultSignatures verifies signatures received in messages from other
+// verifyDKGResultSignatures verifies signatures received in messages from other
 // group members. It collects signatures supporting only the same DKG result
 // hash as the one preferred by the current member. Each member is allowed to
 // broadcast only one signature over a preferred DKG result hash. The function
@@ -437,7 +437,7 @@ func (sm *signingMember) SignDKGResult(
 // that the public key presented in each message is the correct one.
 // This key needs to be compared against the one used by network client earlier,
 // before this function is called.
-func (sm *signingMember) VerifyDKGResultSignatures( // TODO: Unit tests
+func (sm *signingMember) verifyDKGResultSignatures( // TODO: Unit tests
 	messages []*resultSignatureMessage,
 	resultSigner ResultSigner,
 ) (map[group.MemberIndex][]byte, error) {
@@ -492,9 +492,9 @@ func (sm *signingMember) VerifyDKGResultSignatures( // TODO: Unit tests
 	return receivedValidResultSignatures, nil
 }
 
-// SubmitDKGResult submits the DKG result along with the supporting signatures
+// submitDKGResult submits the DKG result along with the supporting signatures
 // to the provided result submitter.
-func (sm *submittingMember) SubmitDKGResult(
+func (sm *submittingMember) submitDKGResult(
 	result *Result,
 	signatures map[group.MemberIndex][]byte,
 	startBlockNumber uint64,
