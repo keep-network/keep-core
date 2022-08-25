@@ -9,12 +9,11 @@ import (
 	"github.com/keep-network/keep-common/pkg/cmd/flag"
 	"github.com/keep-network/keep-common/pkg/rate"
 	"github.com/keep-network/keep-core/config"
+	chainEthereum "github.com/keep-network/keep-core/pkg/chain/ethereum"
 	"github.com/keep-network/keep-core/pkg/metrics"
 	"github.com/keep-network/keep-core/pkg/net/libp2p"
 	"github.com/keep-network/keep-core/pkg/tbtc"
 	"github.com/spf13/cobra"
-
-	chainEthereum "github.com/keep-network/keep-core/pkg/chain/ethereum"
 )
 
 func initFlags(
@@ -28,6 +27,7 @@ func initFlags(
 		case config.General:
 			initConfigFlags(cmd, configFilePath)
 		case config.Ethereum:
+			initEthereumNetworkFlags(cmd)
 			initEthereumFlags(cmd, cfg)
 		case config.Network:
 			initNetworkFlags(cmd, cfg)
@@ -57,6 +57,38 @@ func initConfigFlags(cmd *cobra.Command, configFilePath *string) {
 		"c",
 		"", // Don't define default value as it would fail configuration reading.
 		"Path to the configuration file. Supported formats: TOML, YAML, JSON.",
+	)
+}
+
+// Initializes boolean flags for Ethereum network configuration. The flags can be used
+// to run a client for a specific Ethereum network, e.g. add `--goerli` to the client
+// start command to run the client against Görli Ethereum network. Only one flag
+// from this set is allowed.
+func initEthereumNetworkFlags(cmd *cobra.Command) {
+	// TODO: Consider removing `--mainnet` flag. For now it's here to reduce a confusion
+	// when developing and testing the client.
+	cmd.Flags().Bool(
+		ethereum.Mainnet.String(),
+		false,
+		"Mainnet network",
+	)
+
+	cmd.Flags().Bool(
+		ethereum.Goerli.String(),
+		false,
+		"Görli network",
+	)
+
+	cmd.Flags().Bool(
+		ethereum.Developer.String(),
+		false,
+		"Developer network",
+	)
+
+	cmd.MarkFlagsMutuallyExclusive(
+		ethereum.Mainnet.String(),
+		ethereum.Goerli.String(),
+		ethereum.Developer.String(),
 	)
 }
 
