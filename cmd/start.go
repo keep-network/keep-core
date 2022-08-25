@@ -35,7 +35,6 @@ func init() {
 			if err := clientConfig.ReadConfig(configFilePath, cmd.Flags(), config.AllCategories...); err != nil {
 				logger.Fatalf("error reading config: %v", err)
 			}
-
 		},
 		Run: func(cmd *cobra.Command, args []string) {
 			if err := start(cmd); err != nil {
@@ -62,6 +61,11 @@ Environment variables:
 // start starts a node
 func start(cmd *cobra.Command) error {
 	ctx := context.Background()
+
+	logger.Infof(
+		"Starting the client against [%s] ethereum network...",
+		clientConfig.Ethereum.Network,
+	)
 
 	beaconChain, tbtcChain, blockCounter, signing, operatorPrivateKey, err :=
 		ethereum.Connect(ctx, clientConfig.Ethereum)
