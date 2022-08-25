@@ -43,8 +43,7 @@ func main() {
 	rootCmd.AddCommand(
 		cmd.StartCommand,
 		cmd.PingCommand,
-		// TODO: Refactor EthereumCommand to register them in the root command.
-		// cmd.EthereumCommand,
+		cmd.EthereumCommand,
 	)
 
 	if err := rootCmd.Execute(); err != nil {

@@ -9,19 +9,19 @@ import (
 	"math/big"
 	"sync"
 
-	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/core/types"
+	"github.com/ethereum/go-ethereum/ethclient"
 
 	chainutil "github.com/keep-network/keep-common/pkg/chain/ethereum/ethutil"
 	"github.com/keep-network/keep-common/pkg/cmd"
 	"github.com/keep-network/keep-core/config"
 	"github.com/keep-network/keep-core/pkg/chain/ethereum/beacon/gen/contract"
 
-	"github.com/urfave/cli"
+	"github.com/spf13/cobra"
 )
 
-var BeaconSortitionPoolCommand cli.Command
+var BeaconSortitionPoolCommand *cobra.Command
 
 var beaconSortitionPoolDescription = `The beacon-sortition-pool command allows calling the BeaconSortitionPool contract on an
 	Ethereum network. It has subcommands corresponding to each contract method,
@@ -34,10 +34,6 @@ var beaconSortitionPoolDescription = `The beacon-sortition-pool command allows c
 	All subcommands can be called against a specific block by passing the
 	-b/--block flag.
 
-	All subcommands can be used to investigate the result of a previous
-	transaction that called that same method by passing the -t/--transaction
-	flag with the transaction hash.
-
 	Subcommands for mutating methods may be submitted as a mutating transaction
 	by passing the -s/--submit flag. In this mode, this command will terminate
 	successfully once the transaction has been submitted, but will not wait for
@@ -47,215 +43,77 @@ var beaconSortitionPoolDescription = `The beacon-sortition-pool command allows c
 	be changed by passing the -v/--value flag.`
 
 func init() {
-	AvailableCommands = append(AvailableCommands, cli.Command{
-		Name:        "beacon-sortition-pool",
-		Usage:       `Provides access to the BeaconSortitionPool contract.`,
-		Description: beaconSortitionPoolDescription,
-		Subcommands: []cli.Command{{
-			Name:      "can-restore-reward-eligibility",
-			Usage:     "Calls the view method canRestoreRewardEligibility on the BeaconSortitionPool contract.",
-			ArgsUsage: "[arg_operator] ",
-			Action:    bspCanRestoreRewardEligibility,
-			Before:    cmd.ArgCountChecker(1),
-			Flags:     cmd.ConstFlags,
-		}, {
-			Name:      "get-available-rewards",
-			Usage:     "Calls the view method getAvailableRewards on the BeaconSortitionPool contract.",
-			ArgsUsage: "[arg_operator] ",
-			Action:    bspGetAvailableRewards,
-			Before:    cmd.ArgCountChecker(1),
-			Flags:     cmd.ConstFlags,
-		}, {
-			Name:      "get-operator-i-d",
-			Usage:     "Calls the view method getOperatorID on the BeaconSortitionPool contract.",
-			ArgsUsage: "[arg_operator] ",
-			Action:    bspGetOperatorID,
-			Before:    cmd.ArgCountChecker(1),
-			Flags:     cmd.ConstFlags,
-		}, {
-			Name:      "get-pool-weight",
-			Usage:     "Calls the view method getPoolWeight on the BeaconSortitionPool contract.",
-			ArgsUsage: "[arg_operator] ",
-			Action:    bspGetPoolWeight,
-			Before:    cmd.ArgCountChecker(1),
-			Flags:     cmd.ConstFlags,
-		}, {
-			Name:      "ineligible-earned-rewards",
-			Usage:     "Calls the view method ineligibleEarnedRewards on the BeaconSortitionPool contract.",
-			ArgsUsage: "",
-			Action:    bspIneligibleEarnedRewards,
-			Before:    cmd.ArgCountChecker(0),
-			Flags:     cmd.ConstFlags,
-		}, {
-			Name:      "is-eligible-for-rewards",
-			Usage:     "Calls the view method isEligibleForRewards on the BeaconSortitionPool contract.",
-			ArgsUsage: "[arg_operator] ",
-			Action:    bspIsEligibleForRewards,
-			Before:    cmd.ArgCountChecker(1),
-			Flags:     cmd.ConstFlags,
-		}, {
-			Name:      "is-locked",
-			Usage:     "Calls the view method isLocked on the BeaconSortitionPool contract.",
-			ArgsUsage: "",
-			Action:    bspIsLocked,
-			Before:    cmd.ArgCountChecker(0),
-			Flags:     cmd.ConstFlags,
-		}, {
-			Name:      "is-operator-in-pool",
-			Usage:     "Calls the view method isOperatorInPool on the BeaconSortitionPool contract.",
-			ArgsUsage: "[arg_operator] ",
-			Action:    bspIsOperatorInPool,
-			Before:    cmd.ArgCountChecker(1),
-			Flags:     cmd.ConstFlags,
-		}, {
-			Name:      "is-operator-registered",
-			Usage:     "Calls the view method isOperatorRegistered on the BeaconSortitionPool contract.",
-			ArgsUsage: "[arg_operator] ",
-			Action:    bspIsOperatorRegistered,
-			Before:    cmd.ArgCountChecker(1),
-			Flags:     cmd.ConstFlags,
-		}, {
-			Name:      "is-operator-up-to-date",
-			Usage:     "Calls the view method isOperatorUpToDate on the BeaconSortitionPool contract.",
-			ArgsUsage: "[arg_operator] [arg_authorizedStake] ",
-			Action:    bspIsOperatorUpToDate,
-			Before:    cmd.ArgCountChecker(2),
-			Flags:     cmd.ConstFlags,
-		}, {
-			Name:      "operators-in-pool",
-			Usage:     "Calls the view method operatorsInPool on the BeaconSortitionPool contract.",
-			ArgsUsage: "",
-			Action:    bspOperatorsInPool,
-			Before:    cmd.ArgCountChecker(0),
-			Flags:     cmd.ConstFlags,
-		}, {
-			Name:      "owner",
-			Usage:     "Calls the view method owner on the BeaconSortitionPool contract.",
-			ArgsUsage: "",
-			Action:    bspOwner,
-			Before:    cmd.ArgCountChecker(0),
-			Flags:     cmd.ConstFlags,
-		}, {
-			Name:      "pool-weight-divisor",
-			Usage:     "Calls the view method poolWeightDivisor on the BeaconSortitionPool contract.",
-			ArgsUsage: "",
-			Action:    bspPoolWeightDivisor,
-			Before:    cmd.ArgCountChecker(0),
-			Flags:     cmd.ConstFlags,
-		}, {
-			Name:      "reward-token",
-			Usage:     "Calls the view method rewardToken on the BeaconSortitionPool contract.",
-			ArgsUsage: "",
-			Action:    bspRewardToken,
-			Before:    cmd.ArgCountChecker(0),
-			Flags:     cmd.ConstFlags,
-		}, {
-			Name:      "rewards-eligibility-restorable-at",
-			Usage:     "Calls the view method rewardsEligibilityRestorableAt on the BeaconSortitionPool contract.",
-			ArgsUsage: "[arg_operator] ",
-			Action:    bspRewardsEligibilityRestorableAt,
-			Before:    cmd.ArgCountChecker(1),
-			Flags:     cmd.ConstFlags,
-		}, {
-			Name:      "total-weight",
-			Usage:     "Calls the view method totalWeight on the BeaconSortitionPool contract.",
-			ArgsUsage: "",
-			Action:    bspTotalWeight,
-			Before:    cmd.ArgCountChecker(0),
-			Flags:     cmd.ConstFlags,
-		}, {
-			Name:      "insert-operator",
-			Usage:     "Calls the nonpayable method insertOperator on the BeaconSortitionPool contract.",
-			ArgsUsage: "[arg_operator] [arg_authorizedStake] ",
-			Action:    bspInsertOperator,
-			Before:    cli.BeforeFunc(cmd.NonConstArgsChecker.AndThen(cmd.ArgCountChecker(2))),
-			Flags:     cmd.NonConstFlags,
-		}, {
-			Name:      "lock",
-			Usage:     "Calls the nonpayable method lock on the BeaconSortitionPool contract.",
-			ArgsUsage: "",
-			Action:    bspLock,
-			Before:    cli.BeforeFunc(cmd.NonConstArgsChecker.AndThen(cmd.ArgCountChecker(0))),
-			Flags:     cmd.NonConstFlags,
-		}, {
-			Name:      "receive-approval",
-			Usage:     "Calls the nonpayable method receiveApproval on the BeaconSortitionPool contract.",
-			ArgsUsage: "[arg_sender] [arg_amount] [arg_token] [arg3] ",
-			Action:    bspReceiveApproval,
-			Before:    cli.BeforeFunc(cmd.NonConstArgsChecker.AndThen(cmd.ArgCountChecker(4))),
-			Flags:     cmd.NonConstFlags,
-		}, {
-			Name:      "renounce-ownership",
-			Usage:     "Calls the nonpayable method renounceOwnership on the BeaconSortitionPool contract.",
-			ArgsUsage: "",
-			Action:    bspRenounceOwnership,
-			Before:    cli.BeforeFunc(cmd.NonConstArgsChecker.AndThen(cmd.ArgCountChecker(0))),
-			Flags:     cmd.NonConstFlags,
-		}, {
-			Name:      "restore-reward-eligibility",
-			Usage:     "Calls the nonpayable method restoreRewardEligibility on the BeaconSortitionPool contract.",
-			ArgsUsage: "[arg_operator] ",
-			Action:    bspRestoreRewardEligibility,
-			Before:    cli.BeforeFunc(cmd.NonConstArgsChecker.AndThen(cmd.ArgCountChecker(1))),
-			Flags:     cmd.NonConstFlags,
-		}, {
-			Name:      "transfer-ownership",
-			Usage:     "Calls the nonpayable method transferOwnership on the BeaconSortitionPool contract.",
-			ArgsUsage: "[arg_newOwner] ",
-			Action:    bspTransferOwnership,
-			Before:    cli.BeforeFunc(cmd.NonConstArgsChecker.AndThen(cmd.ArgCountChecker(1))),
-			Flags:     cmd.NonConstFlags,
-		}, {
-			Name:      "unlock",
-			Usage:     "Calls the nonpayable method unlock on the BeaconSortitionPool contract.",
-			ArgsUsage: "",
-			Action:    bspUnlock,
-			Before:    cli.BeforeFunc(cmd.NonConstArgsChecker.AndThen(cmd.ArgCountChecker(0))),
-			Flags:     cmd.NonConstFlags,
-		}, {
-			Name:      "update-operator-status",
-			Usage:     "Calls the nonpayable method updateOperatorStatus on the BeaconSortitionPool contract.",
-			ArgsUsage: "[arg_operator] [arg_authorizedStake] ",
-			Action:    bspUpdateOperatorStatus,
-			Before:    cli.BeforeFunc(cmd.NonConstArgsChecker.AndThen(cmd.ArgCountChecker(2))),
-			Flags:     cmd.NonConstFlags,
-		}, {
-			Name:      "withdraw-ineligible",
-			Usage:     "Calls the nonpayable method withdrawIneligible on the BeaconSortitionPool contract.",
-			ArgsUsage: "[arg_recipient] ",
-			Action:    bspWithdrawIneligible,
-			Before:    cli.BeforeFunc(cmd.NonConstArgsChecker.AndThen(cmd.ArgCountChecker(1))),
-			Flags:     cmd.NonConstFlags,
-		}, {
-			Name:      "withdraw-rewards",
-			Usage:     "Calls the nonpayable method withdrawRewards on the BeaconSortitionPool contract.",
-			ArgsUsage: "[arg_operator] [arg_beneficiary] ",
-			Action:    bspWithdrawRewards,
-			Before:    cli.BeforeFunc(cmd.NonConstArgsChecker.AndThen(cmd.ArgCountChecker(2))),
-			Flags:     cmd.NonConstFlags,
-		}},
-	})
+	BeaconSortitionPoolCommand := &cobra.Command{
+		Use:   "beacon-sortition-pool",
+		Short: `Provides access to the BeaconSortitionPool contract.`,
+		Long:  beaconSortitionPoolDescription,
+	}
+
+	BeaconSortitionPoolCommand.AddCommand(
+		bspCanRestoreRewardEligibilityCommand(),
+		bspGetAvailableRewardsCommand(),
+		bspGetOperatorIDCommand(),
+		bspGetPoolWeightCommand(),
+		bspIneligibleEarnedRewardsCommand(),
+		bspIsEligibleForRewardsCommand(),
+		bspIsLockedCommand(),
+		bspIsOperatorInPoolCommand(),
+		bspIsOperatorRegisteredCommand(),
+		bspIsOperatorUpToDateCommand(),
+		bspOperatorsInPoolCommand(),
+		bspOwnerCommand(),
+		bspPoolWeightDivisorCommand(),
+		bspRewardTokenCommand(),
+		bspRewardsEligibilityRestorableAtCommand(),
+		bspTotalWeightCommand(),
+		bspInsertOperatorCommand(),
+		bspLockCommand(),
+		bspReceiveApprovalCommand(),
+		bspRenounceOwnershipCommand(),
+		bspRestoreRewardEligibilityCommand(),
+		bspTransferOwnershipCommand(),
+		bspUnlockCommand(),
+		bspUpdateOperatorStatusCommand(),
+		bspWithdrawIneligibleCommand(),
+		bspWithdrawRewardsCommand(),
+	)
+
+	Command.AddCommand(BeaconSortitionPoolCommand)
 }
 
 /// ------------------- Const methods -------------------
 
-func bspCanRestoreRewardEligibility(c *cli.Context) error {
+func bspCanRestoreRewardEligibilityCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "can-restore-reward-eligibility [arg_operator]",
+		Short:                 "Calls the view method canRestoreRewardEligibility on the BeaconSortitionPool contract.",
+		Args:                  cmd.ArgCountChecker(1),
+		RunE:                  bspCanRestoreRewardEligibility,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	cmd.InitConstFlags(c)
+
+	return c
+}
+
+func bspCanRestoreRewardEligibility(c *cobra.Command, args []string) error {
 	contract, err := initializeBeaconSortitionPool(c)
 	if err != nil {
 		return err
 	}
-	arg_operator, err := chainutil.AddressFromHex(c.Args()[0])
+	arg_operator, err := chainutil.AddressFromHex(args[0])
 	if err != nil {
 		return fmt.Errorf(
 			"couldn't parse parameter arg_operator, a address, from passed value %v",
-			c.Args()[0],
+			args[0],
 		)
 	}
 
 	result, err := contract.CanRestoreRewardEligibilityAtBlock(
 		arg_operator,
-
-		cmd.BlockFlagValue.Uint,
+		cmd.BlockFlagValue.Int,
 	)
 
 	if err != nil {
@@ -267,23 +125,37 @@ func bspCanRestoreRewardEligibility(c *cli.Context) error {
 	return nil
 }
 
-func bspGetAvailableRewards(c *cli.Context) error {
+func bspGetAvailableRewardsCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "get-available-rewards [arg_operator]",
+		Short:                 "Calls the view method getAvailableRewards on the BeaconSortitionPool contract.",
+		Args:                  cmd.ArgCountChecker(1),
+		RunE:                  bspGetAvailableRewards,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	cmd.InitConstFlags(c)
+
+	return c
+}
+
+func bspGetAvailableRewards(c *cobra.Command, args []string) error {
 	contract, err := initializeBeaconSortitionPool(c)
 	if err != nil {
 		return err
 	}
-	arg_operator, err := chainutil.AddressFromHex(c.Args()[0])
+	arg_operator, err := chainutil.AddressFromHex(args[0])
 	if err != nil {
 		return fmt.Errorf(
 			"couldn't parse parameter arg_operator, a address, from passed value %v",
-			c.Args()[0],
+			args[0],
 		)
 	}
 
 	result, err := contract.GetAvailableRewardsAtBlock(
 		arg_operator,
-
-		cmd.BlockFlagValue.Uint,
+		cmd.BlockFlagValue.Int,
 	)
 
 	if err != nil {
@@ -295,23 +167,37 @@ func bspGetAvailableRewards(c *cli.Context) error {
 	return nil
 }
 
-func bspGetOperatorID(c *cli.Context) error {
+func bspGetOperatorIDCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "get-operator-i-d [arg_operator]",
+		Short:                 "Calls the view method getOperatorID on the BeaconSortitionPool contract.",
+		Args:                  cmd.ArgCountChecker(1),
+		RunE:                  bspGetOperatorID,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	cmd.InitConstFlags(c)
+
+	return c
+}
+
+func bspGetOperatorID(c *cobra.Command, args []string) error {
 	contract, err := initializeBeaconSortitionPool(c)
 	if err != nil {
 		return err
 	}
-	arg_operator, err := chainutil.AddressFromHex(c.Args()[0])
+	arg_operator, err := chainutil.AddressFromHex(args[0])
 	if err != nil {
 		return fmt.Errorf(
 			"couldn't parse parameter arg_operator, a address, from passed value %v",
-			c.Args()[0],
+			args[0],
 		)
 	}
 
 	result, err := contract.GetOperatorIDAtBlock(
 		arg_operator,
-
-		cmd.BlockFlagValue.Uint,
+		cmd.BlockFlagValue.Int,
 	)
 
 	if err != nil {
@@ -323,23 +209,37 @@ func bspGetOperatorID(c *cli.Context) error {
 	return nil
 }
 
-func bspGetPoolWeight(c *cli.Context) error {
+func bspGetPoolWeightCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "get-pool-weight [arg_operator]",
+		Short:                 "Calls the view method getPoolWeight on the BeaconSortitionPool contract.",
+		Args:                  cmd.ArgCountChecker(1),
+		RunE:                  bspGetPoolWeight,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	cmd.InitConstFlags(c)
+
+	return c
+}
+
+func bspGetPoolWeight(c *cobra.Command, args []string) error {
 	contract, err := initializeBeaconSortitionPool(c)
 	if err != nil {
 		return err
 	}
-	arg_operator, err := chainutil.AddressFromHex(c.Args()[0])
+	arg_operator, err := chainutil.AddressFromHex(args[0])
 	if err != nil {
 		return fmt.Errorf(
 			"couldn't parse parameter arg_operator, a address, from passed value %v",
-			c.Args()[0],
+			args[0],
 		)
 	}
 
 	result, err := contract.GetPoolWeightAtBlock(
 		arg_operator,
-
-		cmd.BlockFlagValue.Uint,
+		cmd.BlockFlagValue.Int,
 	)
 
 	if err != nil {
@@ -351,15 +251,29 @@ func bspGetPoolWeight(c *cli.Context) error {
 	return nil
 }
 
-func bspIneligibleEarnedRewards(c *cli.Context) error {
+func bspIneligibleEarnedRewardsCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "ineligible-earned-rewards",
+		Short:                 "Calls the view method ineligibleEarnedRewards on the BeaconSortitionPool contract.",
+		Args:                  cmd.ArgCountChecker(0),
+		RunE:                  bspIneligibleEarnedRewards,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	cmd.InitConstFlags(c)
+
+	return c
+}
+
+func bspIneligibleEarnedRewards(c *cobra.Command, args []string) error {
 	contract, err := initializeBeaconSortitionPool(c)
 	if err != nil {
 		return err
 	}
 
 	result, err := contract.IneligibleEarnedRewardsAtBlock(
-
-		cmd.BlockFlagValue.Uint,
+		cmd.BlockFlagValue.Int,
 	)
 
 	if err != nil {
@@ -371,23 +285,37 @@ func bspIneligibleEarnedRewards(c *cli.Context) error {
 	return nil
 }
 
-func bspIsEligibleForRewards(c *cli.Context) error {
+func bspIsEligibleForRewardsCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "is-eligible-for-rewards [arg_operator]",
+		Short:                 "Calls the view method isEligibleForRewards on the BeaconSortitionPool contract.",
+		Args:                  cmd.ArgCountChecker(1),
+		RunE:                  bspIsEligibleForRewards,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	cmd.InitConstFlags(c)
+
+	return c
+}
+
+func bspIsEligibleForRewards(c *cobra.Command, args []string) error {
 	contract, err := initializeBeaconSortitionPool(c)
 	if err != nil {
 		return err
 	}
-	arg_operator, err := chainutil.AddressFromHex(c.Args()[0])
+	arg_operator, err := chainutil.AddressFromHex(args[0])
 	if err != nil {
 		return fmt.Errorf(
 			"couldn't parse parameter arg_operator, a address, from passed value %v",
-			c.Args()[0],
+			args[0],
 		)
 	}
 
 	result, err := contract.IsEligibleForRewardsAtBlock(
 		arg_operator,
-
-		cmd.BlockFlagValue.Uint,
+		cmd.BlockFlagValue.Int,
 	)
 
 	if err != nil {
@@ -399,15 +327,29 @@ func bspIsEligibleForRewards(c *cli.Context) error {
 	return nil
 }
 
-func bspIsLocked(c *cli.Context) error {
+func bspIsLockedCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "is-locked",
+		Short:                 "Calls the view method isLocked on the BeaconSortitionPool contract.",
+		Args:                  cmd.ArgCountChecker(0),
+		RunE:                  bspIsLocked,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	cmd.InitConstFlags(c)
+
+	return c
+}
+
+func bspIsLocked(c *cobra.Command, args []string) error {
 	contract, err := initializeBeaconSortitionPool(c)
 	if err != nil {
 		return err
 	}
 
 	result, err := contract.IsLockedAtBlock(
-
-		cmd.BlockFlagValue.Uint,
+		cmd.BlockFlagValue.Int,
 	)
 
 	if err != nil {
@@ -419,23 +361,37 @@ func bspIsLocked(c *cli.Context) error {
 	return nil
 }
 
-func bspIsOperatorInPool(c *cli.Context) error {
+func bspIsOperatorInPoolCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "is-operator-in-pool [arg_operator]",
+		Short:                 "Calls the view method isOperatorInPool on the BeaconSortitionPool contract.",
+		Args:                  cmd.ArgCountChecker(1),
+		RunE:                  bspIsOperatorInPool,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	cmd.InitConstFlags(c)
+
+	return c
+}
+
+func bspIsOperatorInPool(c *cobra.Command, args []string) error {
 	contract, err := initializeBeaconSortitionPool(c)
 	if err != nil {
 		return err
 	}
-	arg_operator, err := chainutil.AddressFromHex(c.Args()[0])
+	arg_operator, err := chainutil.AddressFromHex(args[0])
 	if err != nil {
 		return fmt.Errorf(
 			"couldn't parse parameter arg_operator, a address, from passed value %v",
-			c.Args()[0],
+			args[0],
 		)
 	}
 
 	result, err := contract.IsOperatorInPoolAtBlock(
 		arg_operator,
-
-		cmd.BlockFlagValue.Uint,
+		cmd.BlockFlagValue.Int,
 	)
 
 	if err != nil {
@@ -447,23 +403,37 @@ func bspIsOperatorInPool(c *cli.Context) error {
 	return nil
 }
 
-func bspIsOperatorRegistered(c *cli.Context) error {
+func bspIsOperatorRegisteredCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "is-operator-registered [arg_operator]",
+		Short:                 "Calls the view method isOperatorRegistered on the BeaconSortitionPool contract.",
+		Args:                  cmd.ArgCountChecker(1),
+		RunE:                  bspIsOperatorRegistered,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	cmd.InitConstFlags(c)
+
+	return c
+}
+
+func bspIsOperatorRegistered(c *cobra.Command, args []string) error {
 	contract, err := initializeBeaconSortitionPool(c)
 	if err != nil {
 		return err
 	}
-	arg_operator, err := chainutil.AddressFromHex(c.Args()[0])
+	arg_operator, err := chainutil.AddressFromHex(args[0])
 	if err != nil {
 		return fmt.Errorf(
 			"couldn't parse parameter arg_operator, a address, from passed value %v",
-			c.Args()[0],
+			args[0],
 		)
 	}
 
 	result, err := contract.IsOperatorRegisteredAtBlock(
 		arg_operator,
-
-		cmd.BlockFlagValue.Uint,
+		cmd.BlockFlagValue.Int,
 	)
 
 	if err != nil {
@@ -475,32 +445,46 @@ func bspIsOperatorRegistered(c *cli.Context) error {
 	return nil
 }
 
-func bspIsOperatorUpToDate(c *cli.Context) error {
+func bspIsOperatorUpToDateCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "is-operator-up-to-date [arg_operator] [arg_authorizedStake]",
+		Short:                 "Calls the view method isOperatorUpToDate on the BeaconSortitionPool contract.",
+		Args:                  cmd.ArgCountChecker(2),
+		RunE:                  bspIsOperatorUpToDate,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	cmd.InitConstFlags(c)
+
+	return c
+}
+
+func bspIsOperatorUpToDate(c *cobra.Command, args []string) error {
 	contract, err := initializeBeaconSortitionPool(c)
 	if err != nil {
 		return err
 	}
-	arg_operator, err := chainutil.AddressFromHex(c.Args()[0])
+	arg_operator, err := chainutil.AddressFromHex(args[0])
 	if err != nil {
 		return fmt.Errorf(
 			"couldn't parse parameter arg_operator, a address, from passed value %v",
-			c.Args()[0],
+			args[0],
 		)
 	}
 
-	arg_authorizedStake, err := hexutil.DecodeBig(c.Args()[1])
+	arg_authorizedStake, err := hexutil.DecodeBig(args[1])
 	if err != nil {
 		return fmt.Errorf(
 			"couldn't parse parameter arg_authorizedStake, a uint256, from passed value %v",
-			c.Args()[1],
+			args[1],
 		)
 	}
 
 	result, err := contract.IsOperatorUpToDateAtBlock(
 		arg_operator,
 		arg_authorizedStake,
-
-		cmd.BlockFlagValue.Uint,
+		cmd.BlockFlagValue.Int,
 	)
 
 	if err != nil {
@@ -512,15 +496,29 @@ func bspIsOperatorUpToDate(c *cli.Context) error {
 	return nil
 }
 
-func bspOperatorsInPool(c *cli.Context) error {
+func bspOperatorsInPoolCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "operators-in-pool",
+		Short:                 "Calls the view method operatorsInPool on the BeaconSortitionPool contract.",
+		Args:                  cmd.ArgCountChecker(0),
+		RunE:                  bspOperatorsInPool,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	cmd.InitConstFlags(c)
+
+	return c
+}
+
+func bspOperatorsInPool(c *cobra.Command, args []string) error {
 	contract, err := initializeBeaconSortitionPool(c)
 	if err != nil {
 		return err
 	}
 
 	result, err := contract.OperatorsInPoolAtBlock(
-
-		cmd.BlockFlagValue.Uint,
+		cmd.BlockFlagValue.Int,
 	)
 
 	if err != nil {
@@ -532,15 +530,29 @@ func bspOperatorsInPool(c *cli.Context) error {
 	return nil
 }
 
-func bspOwner(c *cli.Context) error {
+func bspOwnerCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "owner",
+		Short:                 "Calls the view method owner on the BeaconSortitionPool contract.",
+		Args:                  cmd.ArgCountChecker(0),
+		RunE:                  bspOwner,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	cmd.InitConstFlags(c)
+
+	return c
+}
+
+func bspOwner(c *cobra.Command, args []string) error {
 	contract, err := initializeBeaconSortitionPool(c)
 	if err != nil {
 		return err
 	}
 
 	result, err := contract.OwnerAtBlock(
-
-		cmd.BlockFlagValue.Uint,
+		cmd.BlockFlagValue.Int,
 	)
 
 	if err != nil {
@@ -552,15 +564,29 @@ func bspOwner(c *cli.Context) error {
 	return nil
 }
 
-func bspPoolWeightDivisor(c *cli.Context) error {
+func bspPoolWeightDivisorCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "pool-weight-divisor",
+		Short:                 "Calls the view method poolWeightDivisor on the BeaconSortitionPool contract.",
+		Args:                  cmd.ArgCountChecker(0),
+		RunE:                  bspPoolWeightDivisor,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	cmd.InitConstFlags(c)
+
+	return c
+}
+
+func bspPoolWeightDivisor(c *cobra.Command, args []string) error {
 	contract, err := initializeBeaconSortitionPool(c)
 	if err != nil {
 		return err
 	}
 
 	result, err := contract.PoolWeightDivisorAtBlock(
-
-		cmd.BlockFlagValue.Uint,
+		cmd.BlockFlagValue.Int,
 	)
 
 	if err != nil {
@@ -572,15 +598,29 @@ func bspPoolWeightDivisor(c *cli.Context) error {
 	return nil
 }
 
-func bspRewardToken(c *cli.Context) error {
+func bspRewardTokenCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "reward-token",
+		Short:                 "Calls the view method rewardToken on the BeaconSortitionPool contract.",
+		Args:                  cmd.ArgCountChecker(0),
+		RunE:                  bspRewardToken,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	cmd.InitConstFlags(c)
+
+	return c
+}
+
+func bspRewardToken(c *cobra.Command, args []string) error {
 	contract, err := initializeBeaconSortitionPool(c)
 	if err != nil {
 		return err
 	}
 
 	result, err := contract.RewardTokenAtBlock(
-
-		cmd.BlockFlagValue.Uint,
+		cmd.BlockFlagValue.Int,
 	)
 
 	if err != nil {
@@ -592,23 +632,37 @@ func bspRewardToken(c *cli.Context) error {
 	return nil
 }
 
-func bspRewardsEligibilityRestorableAt(c *cli.Context) error {
+func bspRewardsEligibilityRestorableAtCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "rewards-eligibility-restorable-at [arg_operator]",
+		Short:                 "Calls the view method rewardsEligibilityRestorableAt on the BeaconSortitionPool contract.",
+		Args:                  cmd.ArgCountChecker(1),
+		RunE:                  bspRewardsEligibilityRestorableAt,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	cmd.InitConstFlags(c)
+
+	return c
+}
+
+func bspRewardsEligibilityRestorableAt(c *cobra.Command, args []string) error {
 	contract, err := initializeBeaconSortitionPool(c)
 	if err != nil {
 		return err
 	}
-	arg_operator, err := chainutil.AddressFromHex(c.Args()[0])
+	arg_operator, err := chainutil.AddressFromHex(args[0])
 	if err != nil {
 		return fmt.Errorf(
 			"couldn't parse parameter arg_operator, a address, from passed value %v",
-			c.Args()[0],
+			args[0],
 		)
 	}
 
 	result, err := contract.RewardsEligibilityRestorableAtAtBlock(
 		arg_operator,
-
-		cmd.BlockFlagValue.Uint,
+		cmd.BlockFlagValue.Int,
 	)
 
 	if err != nil {
@@ -620,15 +674,29 @@ func bspRewardsEligibilityRestorableAt(c *cli.Context) error {
 	return nil
 }
 
-func bspTotalWeight(c *cli.Context) error {
+func bspTotalWeightCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "total-weight",
+		Short:                 "Calls the view method totalWeight on the BeaconSortitionPool contract.",
+		Args:                  cmd.ArgCountChecker(0),
+		RunE:                  bspTotalWeight,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	cmd.InitConstFlags(c)
+
+	return c
+}
+
+func bspTotalWeight(c *cobra.Command, args []string) error {
 	contract, err := initializeBeaconSortitionPool(c)
 	if err != nil {
 		return err
 	}
 
 	result, err := contract.TotalWeightAtBlock(
-
-		cmd.BlockFlagValue.Uint,
+		cmd.BlockFlagValue.Int,
 	)
 
 	if err != nil {
@@ -642,25 +710,41 @@ func bspTotalWeight(c *cli.Context) error {
 
 /// ------------------- Non-const methods -------------------
 
-func bspInsertOperator(c *cli.Context) error {
+func bspInsertOperatorCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "insert-operator [arg_operator] [arg_authorizedStake]",
+		Short:                 "Calls the nonpayable method insertOperator on the BeaconSortitionPool contract.",
+		Args:                  cmd.ArgCountChecker(2),
+		RunE:                  bspInsertOperator,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	c.PreRunE = cmd.NonConstArgsChecker
+	cmd.InitNonConstFlags(c)
+
+	return c
+}
+
+func bspInsertOperator(c *cobra.Command, args []string) error {
 	contract, err := initializeBeaconSortitionPool(c)
 	if err != nil {
 		return err
 	}
 
-	arg_operator, err := chainutil.AddressFromHex(c.Args()[0])
+	arg_operator, err := chainutil.AddressFromHex(args[0])
 	if err != nil {
 		return fmt.Errorf(
 			"couldn't parse parameter arg_operator, a address, from passed value %v",
-			c.Args()[0],
+			args[0],
 		)
 	}
 
-	arg_authorizedStake, err := hexutil.DecodeBig(c.Args()[1])
+	arg_authorizedStake, err := hexutil.DecodeBig(args[1])
 	if err != nil {
 		return fmt.Errorf(
 			"couldn't parse parameter arg_authorizedStake, a uint256, from passed value %v",
-			c.Args()[1],
+			args[1],
 		)
 	}
 
@@ -668,7 +752,7 @@ func bspInsertOperator(c *cli.Context) error {
 		transaction *types.Transaction
 	)
 
-	if c.Bool(cmd.SubmitFlag) {
+	if shouldSubmit, _ := c.Flags().GetBool(cmd.SubmitFlag); shouldSubmit {
 		// Do a regular submission. Take payable into account.
 		transaction, err = contract.InsertOperator(
 			arg_operator,
@@ -678,25 +762,41 @@ func bspInsertOperator(c *cli.Context) error {
 			return err
 		}
 
-		cmd.PrintOutput(transaction.Hash)
+		cmd.PrintOutput(transaction.Hash())
 	} else {
 		// Do a call.
 		err = contract.CallInsertOperator(
 			arg_operator,
 			arg_authorizedStake,
-			cmd.BlockFlagValue.Uint,
+			cmd.BlockFlagValue.Int,
 		)
 		if err != nil {
 			return err
 		}
 
-		cmd.PrintOutput(nil)
+		cmd.PrintOutput("success")
 	}
 
 	return nil
 }
 
-func bspLock(c *cli.Context) error {
+func bspLockCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "lock",
+		Short:                 "Calls the nonpayable method lock on the BeaconSortitionPool contract.",
+		Args:                  cmd.ArgCountChecker(0),
+		RunE:                  bspLock,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	c.PreRunE = cmd.NonConstArgsChecker
+	cmd.InitNonConstFlags(c)
+
+	return c
+}
+
+func bspLock(c *cobra.Command, args []string) error {
 	contract, err := initializeBeaconSortitionPool(c)
 	if err != nil {
 		return err
@@ -706,64 +806,80 @@ func bspLock(c *cli.Context) error {
 		transaction *types.Transaction
 	)
 
-	if c.Bool(cmd.SubmitFlag) {
+	if shouldSubmit, _ := c.Flags().GetBool(cmd.SubmitFlag); shouldSubmit {
 		// Do a regular submission. Take payable into account.
 		transaction, err = contract.Lock()
 		if err != nil {
 			return err
 		}
 
-		cmd.PrintOutput(transaction.Hash)
+		cmd.PrintOutput(transaction.Hash())
 	} else {
 		// Do a call.
 		err = contract.CallLock(
-			cmd.BlockFlagValue.Uint,
+			cmd.BlockFlagValue.Int,
 		)
 		if err != nil {
 			return err
 		}
 
-		cmd.PrintOutput(nil)
+		cmd.PrintOutput("success")
 	}
 
 	return nil
 }
 
-func bspReceiveApproval(c *cli.Context) error {
+func bspReceiveApprovalCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "receive-approval [arg_sender] [arg_amount] [arg_token] [arg3]",
+		Short:                 "Calls the nonpayable method receiveApproval on the BeaconSortitionPool contract.",
+		Args:                  cmd.ArgCountChecker(4),
+		RunE:                  bspReceiveApproval,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	c.PreRunE = cmd.NonConstArgsChecker
+	cmd.InitNonConstFlags(c)
+
+	return c
+}
+
+func bspReceiveApproval(c *cobra.Command, args []string) error {
 	contract, err := initializeBeaconSortitionPool(c)
 	if err != nil {
 		return err
 	}
 
-	arg_sender, err := chainutil.AddressFromHex(c.Args()[0])
+	arg_sender, err := chainutil.AddressFromHex(args[0])
 	if err != nil {
 		return fmt.Errorf(
 			"couldn't parse parameter arg_sender, a address, from passed value %v",
-			c.Args()[0],
+			args[0],
 		)
 	}
 
-	arg_amount, err := hexutil.DecodeBig(c.Args()[1])
+	arg_amount, err := hexutil.DecodeBig(args[1])
 	if err != nil {
 		return fmt.Errorf(
 			"couldn't parse parameter arg_amount, a uint256, from passed value %v",
-			c.Args()[1],
+			args[1],
 		)
 	}
 
-	arg_token, err := chainutil.AddressFromHex(c.Args()[2])
+	arg_token, err := chainutil.AddressFromHex(args[2])
 	if err != nil {
 		return fmt.Errorf(
 			"couldn't parse parameter arg_token, a address, from passed value %v",
-			c.Args()[2],
+			args[2],
 		)
 	}
 
-	arg3, err := hexutil.Decode(c.Args()[3])
+	arg3, err := hexutil.Decode(args[3])
 	if err != nil {
 		return fmt.Errorf(
 			"couldn't parse parameter arg3, a bytes, from passed value %v",
-			c.Args()[3],
+			args[3],
 		)
 	}
 
@@ -771,7 +887,7 @@ func bspReceiveApproval(c *cli.Context) error {
 		transaction *types.Transaction
 	)
 
-	if c.Bool(cmd.SubmitFlag) {
+	if shouldSubmit, _ := c.Flags().GetBool(cmd.SubmitFlag); shouldSubmit {
 		// Do a regular submission. Take payable into account.
 		transaction, err = contract.ReceiveApproval(
 			arg_sender,
@@ -783,7 +899,7 @@ func bspReceiveApproval(c *cli.Context) error {
 			return err
 		}
 
-		cmd.PrintOutput(transaction.Hash)
+		cmd.PrintOutput(transaction.Hash())
 	} else {
 		// Do a call.
 		err = contract.CallReceiveApproval(
@@ -791,19 +907,35 @@ func bspReceiveApproval(c *cli.Context) error {
 			arg_amount,
 			arg_token,
 			arg3,
-			cmd.BlockFlagValue.Uint,
+			cmd.BlockFlagValue.Int,
 		)
 		if err != nil {
 			return err
 		}
 
-		cmd.PrintOutput(nil)
+		cmd.PrintOutput("success")
 	}
 
 	return nil
 }
 
-func bspRenounceOwnership(c *cli.Context) error {
+func bspRenounceOwnershipCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "renounce-ownership",
+		Short:                 "Calls the nonpayable method renounceOwnership on the BeaconSortitionPool contract.",
+		Args:                  cmd.ArgCountChecker(0),
+		RunE:                  bspRenounceOwnership,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	c.PreRunE = cmd.NonConstArgsChecker
+	cmd.InitNonConstFlags(c)
+
+	return c
+}
+
+func bspRenounceOwnership(c *cobra.Command, args []string) error {
 	contract, err := initializeBeaconSortitionPool(c)
 	if err != nil {
 		return err
@@ -813,40 +945,56 @@ func bspRenounceOwnership(c *cli.Context) error {
 		transaction *types.Transaction
 	)
 
-	if c.Bool(cmd.SubmitFlag) {
+	if shouldSubmit, _ := c.Flags().GetBool(cmd.SubmitFlag); shouldSubmit {
 		// Do a regular submission. Take payable into account.
 		transaction, err = contract.RenounceOwnership()
 		if err != nil {
 			return err
 		}
 
-		cmd.PrintOutput(transaction.Hash)
+		cmd.PrintOutput(transaction.Hash())
 	} else {
 		// Do a call.
 		err = contract.CallRenounceOwnership(
-			cmd.BlockFlagValue.Uint,
+			cmd.BlockFlagValue.Int,
 		)
 		if err != nil {
 			return err
 		}
 
-		cmd.PrintOutput(nil)
+		cmd.PrintOutput("success")
 	}
 
 	return nil
 }
 
-func bspRestoreRewardEligibility(c *cli.Context) error {
+func bspRestoreRewardEligibilityCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "restore-reward-eligibility [arg_operator]",
+		Short:                 "Calls the nonpayable method restoreRewardEligibility on the BeaconSortitionPool contract.",
+		Args:                  cmd.ArgCountChecker(1),
+		RunE:                  bspRestoreRewardEligibility,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	c.PreRunE = cmd.NonConstArgsChecker
+	cmd.InitNonConstFlags(c)
+
+	return c
+}
+
+func bspRestoreRewardEligibility(c *cobra.Command, args []string) error {
 	contract, err := initializeBeaconSortitionPool(c)
 	if err != nil {
 		return err
 	}
 
-	arg_operator, err := chainutil.AddressFromHex(c.Args()[0])
+	arg_operator, err := chainutil.AddressFromHex(args[0])
 	if err != nil {
 		return fmt.Errorf(
 			"couldn't parse parameter arg_operator, a address, from passed value %v",
-			c.Args()[0],
+			args[0],
 		)
 	}
 
@@ -854,7 +1002,7 @@ func bspRestoreRewardEligibility(c *cli.Context) error {
 		transaction *types.Transaction
 	)
 
-	if c.Bool(cmd.SubmitFlag) {
+	if shouldSubmit, _ := c.Flags().GetBool(cmd.SubmitFlag); shouldSubmit {
 		// Do a regular submission. Take payable into account.
 		transaction, err = contract.RestoreRewardEligibility(
 			arg_operator,
@@ -863,34 +1011,50 @@ func bspRestoreRewardEligibility(c *cli.Context) error {
 			return err
 		}
 
-		cmd.PrintOutput(transaction.Hash)
+		cmd.PrintOutput(transaction.Hash())
 	} else {
 		// Do a call.
 		err = contract.CallRestoreRewardEligibility(
 			arg_operator,
-			cmd.BlockFlagValue.Uint,
+			cmd.BlockFlagValue.Int,
 		)
 		if err != nil {
 			return err
 		}
 
-		cmd.PrintOutput(nil)
+		cmd.PrintOutput("success")
 	}
 
 	return nil
 }
 
-func bspTransferOwnership(c *cli.Context) error {
+func bspTransferOwnershipCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "transfer-ownership [arg_newOwner]",
+		Short:                 "Calls the nonpayable method transferOwnership on the BeaconSortitionPool contract.",
+		Args:                  cmd.ArgCountChecker(1),
+		RunE:                  bspTransferOwnership,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	c.PreRunE = cmd.NonConstArgsChecker
+	cmd.InitNonConstFlags(c)
+
+	return c
+}
+
+func bspTransferOwnership(c *cobra.Command, args []string) error {
 	contract, err := initializeBeaconSortitionPool(c)
 	if err != nil {
 		return err
 	}
 
-	arg_newOwner, err := chainutil.AddressFromHex(c.Args()[0])
+	arg_newOwner, err := chainutil.AddressFromHex(args[0])
 	if err != nil {
 		return fmt.Errorf(
 			"couldn't parse parameter arg_newOwner, a address, from passed value %v",
-			c.Args()[0],
+			args[0],
 		)
 	}
 
@@ -898,7 +1062,7 @@ func bspTransferOwnership(c *cli.Context) error {
 		transaction *types.Transaction
 	)
 
-	if c.Bool(cmd.SubmitFlag) {
+	if shouldSubmit, _ := c.Flags().GetBool(cmd.SubmitFlag); shouldSubmit {
 		// Do a regular submission. Take payable into account.
 		transaction, err = contract.TransferOwnership(
 			arg_newOwner,
@@ -907,24 +1071,40 @@ func bspTransferOwnership(c *cli.Context) error {
 			return err
 		}
 
-		cmd.PrintOutput(transaction.Hash)
+		cmd.PrintOutput(transaction.Hash())
 	} else {
 		// Do a call.
 		err = contract.CallTransferOwnership(
 			arg_newOwner,
-			cmd.BlockFlagValue.Uint,
+			cmd.BlockFlagValue.Int,
 		)
 		if err != nil {
 			return err
 		}
 
-		cmd.PrintOutput(nil)
+		cmd.PrintOutput("success")
 	}
 
 	return nil
 }
 
-func bspUnlock(c *cli.Context) error {
+func bspUnlockCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "unlock",
+		Short:                 "Calls the nonpayable method unlock on the BeaconSortitionPool contract.",
+		Args:                  cmd.ArgCountChecker(0),
+		RunE:                  bspUnlock,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	c.PreRunE = cmd.NonConstArgsChecker
+	cmd.InitNonConstFlags(c)
+
+	return c
+}
+
+func bspUnlock(c *cobra.Command, args []string) error {
 	contract, err := initializeBeaconSortitionPool(c)
 	if err != nil {
 		return err
@@ -934,48 +1114,64 @@ func bspUnlock(c *cli.Context) error {
 		transaction *types.Transaction
 	)
 
-	if c.Bool(cmd.SubmitFlag) {
+	if shouldSubmit, _ := c.Flags().GetBool(cmd.SubmitFlag); shouldSubmit {
 		// Do a regular submission. Take payable into account.
 		transaction, err = contract.Unlock()
 		if err != nil {
 			return err
 		}
 
-		cmd.PrintOutput(transaction.Hash)
+		cmd.PrintOutput(transaction.Hash())
 	} else {
 		// Do a call.
 		err = contract.CallUnlock(
-			cmd.BlockFlagValue.Uint,
+			cmd.BlockFlagValue.Int,
 		)
 		if err != nil {
 			return err
 		}
 
-		cmd.PrintOutput(nil)
+		cmd.PrintOutput("success")
 	}
 
 	return nil
 }
 
-func bspUpdateOperatorStatus(c *cli.Context) error {
+func bspUpdateOperatorStatusCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "update-operator-status [arg_operator] [arg_authorizedStake]",
+		Short:                 "Calls the nonpayable method updateOperatorStatus on the BeaconSortitionPool contract.",
+		Args:                  cmd.ArgCountChecker(2),
+		RunE:                  bspUpdateOperatorStatus,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	c.PreRunE = cmd.NonConstArgsChecker
+	cmd.InitNonConstFlags(c)
+
+	return c
+}
+
+func bspUpdateOperatorStatus(c *cobra.Command, args []string) error {
 	contract, err := initializeBeaconSortitionPool(c)
 	if err != nil {
 		return err
 	}
 
-	arg_operator, err := chainutil.AddressFromHex(c.Args()[0])
+	arg_operator, err := chainutil.AddressFromHex(args[0])
 	if err != nil {
 		return fmt.Errorf(
 			"couldn't parse parameter arg_operator, a address, from passed value %v",
-			c.Args()[0],
+			args[0],
 		)
 	}
 
-	arg_authorizedStake, err := hexutil.DecodeBig(c.Args()[1])
+	arg_authorizedStake, err := hexutil.DecodeBig(args[1])
 	if err != nil {
 		return fmt.Errorf(
 			"couldn't parse parameter arg_authorizedStake, a uint256, from passed value %v",
-			c.Args()[1],
+			args[1],
 		)
 	}
 
@@ -983,7 +1179,7 @@ func bspUpdateOperatorStatus(c *cli.Context) error {
 		transaction *types.Transaction
 	)
 
-	if c.Bool(cmd.SubmitFlag) {
+	if shouldSubmit, _ := c.Flags().GetBool(cmd.SubmitFlag); shouldSubmit {
 		// Do a regular submission. Take payable into account.
 		transaction, err = contract.UpdateOperatorStatus(
 			arg_operator,
@@ -993,35 +1189,51 @@ func bspUpdateOperatorStatus(c *cli.Context) error {
 			return err
 		}
 
-		cmd.PrintOutput(transaction.Hash)
+		cmd.PrintOutput(transaction.Hash())
 	} else {
 		// Do a call.
 		err = contract.CallUpdateOperatorStatus(
 			arg_operator,
 			arg_authorizedStake,
-			cmd.BlockFlagValue.Uint,
+			cmd.BlockFlagValue.Int,
 		)
 		if err != nil {
 			return err
 		}
 
-		cmd.PrintOutput(nil)
+		cmd.PrintOutput("success")
 	}
 
 	return nil
 }
 
-func bspWithdrawIneligible(c *cli.Context) error {
+func bspWithdrawIneligibleCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "withdraw-ineligible [arg_recipient]",
+		Short:                 "Calls the nonpayable method withdrawIneligible on the BeaconSortitionPool contract.",
+		Args:                  cmd.ArgCountChecker(1),
+		RunE:                  bspWithdrawIneligible,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	c.PreRunE = cmd.NonConstArgsChecker
+	cmd.InitNonConstFlags(c)
+
+	return c
+}
+
+func bspWithdrawIneligible(c *cobra.Command, args []string) error {
 	contract, err := initializeBeaconSortitionPool(c)
 	if err != nil {
 		return err
 	}
 
-	arg_recipient, err := chainutil.AddressFromHex(c.Args()[0])
+	arg_recipient, err := chainutil.AddressFromHex(args[0])
 	if err != nil {
 		return fmt.Errorf(
 			"couldn't parse parameter arg_recipient, a address, from passed value %v",
-			c.Args()[0],
+			args[0],
 		)
 	}
 
@@ -1029,7 +1241,7 @@ func bspWithdrawIneligible(c *cli.Context) error {
 		transaction *types.Transaction
 	)
 
-	if c.Bool(cmd.SubmitFlag) {
+	if shouldSubmit, _ := c.Flags().GetBool(cmd.SubmitFlag); shouldSubmit {
 		// Do a regular submission. Take payable into account.
 		transaction, err = contract.WithdrawIneligible(
 			arg_recipient,
@@ -1038,42 +1250,58 @@ func bspWithdrawIneligible(c *cli.Context) error {
 			return err
 		}
 
-		cmd.PrintOutput(transaction.Hash)
+		cmd.PrintOutput(transaction.Hash())
 	} else {
 		// Do a call.
 		err = contract.CallWithdrawIneligible(
 			arg_recipient,
-			cmd.BlockFlagValue.Uint,
+			cmd.BlockFlagValue.Int,
 		)
 		if err != nil {
 			return err
 		}
 
-		cmd.PrintOutput(nil)
+		cmd.PrintOutput("success")
 	}
 
 	return nil
 }
 
-func bspWithdrawRewards(c *cli.Context) error {
+func bspWithdrawRewardsCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "withdraw-rewards [arg_operator] [arg_beneficiary]",
+		Short:                 "Calls the nonpayable method withdrawRewards on the BeaconSortitionPool contract.",
+		Args:                  cmd.ArgCountChecker(2),
+		RunE:                  bspWithdrawRewards,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	c.PreRunE = cmd.NonConstArgsChecker
+	cmd.InitNonConstFlags(c)
+
+	return c
+}
+
+func bspWithdrawRewards(c *cobra.Command, args []string) error {
 	contract, err := initializeBeaconSortitionPool(c)
 	if err != nil {
 		return err
 	}
 
-	arg_operator, err := chainutil.AddressFromHex(c.Args()[0])
+	arg_operator, err := chainutil.AddressFromHex(args[0])
 	if err != nil {
 		return fmt.Errorf(
 			"couldn't parse parameter arg_operator, a address, from passed value %v",
-			c.Args()[0],
+			args[0],
 		)
 	}
 
-	arg_beneficiary, err := chainutil.AddressFromHex(c.Args()[1])
+	arg_beneficiary, err := chainutil.AddressFromHex(args[1])
 	if err != nil {
 		return fmt.Errorf(
 			"couldn't parse parameter arg_beneficiary, a address, from passed value %v",
-			c.Args()[1],
+			args[1],
 		)
 	}
 
@@ -1082,7 +1310,7 @@ func bspWithdrawRewards(c *cli.Context) error {
 		result      *big.Int
 	)
 
-	if c.Bool(cmd.SubmitFlag) {
+	if shouldSubmit, _ := c.Flags().GetBool(cmd.SubmitFlag); shouldSubmit {
 		// Do a regular submission. Take payable into account.
 		transaction, err = contract.WithdrawRewards(
 			arg_operator,
@@ -1092,13 +1320,13 @@ func bspWithdrawRewards(c *cli.Context) error {
 			return err
 		}
 
-		cmd.PrintOutput(transaction.Hash)
+		cmd.PrintOutput(transaction.Hash())
 	} else {
 		// Do a call.
 		result, err = contract.CallWithdrawRewards(
 			arg_operator,
 			arg_beneficiary,
-			cmd.BlockFlagValue.Uint,
+			cmd.BlockFlagValue.Int,
 		)
 		if err != nil {
 			return err
@@ -1112,13 +1340,13 @@ func bspWithdrawRewards(c *cli.Context) error {
 
 /// ------------------- Initialization -------------------
 
-func initializeBeaconSortitionPool(c *cli.Context) (*contract.BeaconSortitionPool, error) {
-	config, err := config.ReadEthereumConfig(c.GlobalString("config"))
+func initializeBeaconSortitionPool(c *cobra.Command) (*contract.BeaconSortitionPool, error) {
+	cfg, err := config.ReadEthereumConfig(c.Flags())
 	if err != nil {
 		return nil, fmt.Errorf("error reading config from file: [%v]", err)
 	}
 
-	client, _, _, err := chainutil.ConnectClients(config.URL, config.URLRPC)
+	client, err := ethclient.Dial(cfg.URL)
 	if err != nil {
 		return nil, fmt.Errorf("error connecting to host chain node: [%v]", err)
 	}
@@ -1132,18 +1360,18 @@ func initializeBeaconSortitionPool(c *cli.Context) (*contract.BeaconSortitionPoo
 	}
 
 	key, err := chainutil.DecryptKeyFile(
-		config.Account.KeyFile,
-		config.Account.KeyFilePassword,
+		cfg.Account.KeyFile,
+		cfg.Account.KeyFilePassword,
 	)
 	if err != nil {
 		return nil, fmt.Errorf(
 			"failed to read KeyFile: %s: [%v]",
-			config.Account.KeyFile,
+			cfg.Account.KeyFile,
 			err,
 		)
 	}
 
-	miningWaiter := chainutil.NewMiningWaiter(client, config)
+	miningWaiter := chainutil.NewMiningWaiter(client, cfg)
 
 	blockCounter, err := chainutil.NewBlockCounter(client)
 	if err != nil {
@@ -1153,7 +1381,14 @@ func initializeBeaconSortitionPool(c *cli.Context) (*contract.BeaconSortitionPoo
 		)
 	}
 
-	address := common.HexToAddress(config.ContractAddresses["BeaconSortitionPool"])
+	address, err := cfg.ContractAddress("BeaconSortitionPool")
+	if err != nil {
+		return nil, fmt.Errorf(
+			"failed to get %s address: [%w]",
+			"BeaconSortitionPool",
+			err,
+		)
+	}
 
 	return contract.NewBeaconSortitionPool(
 		address,

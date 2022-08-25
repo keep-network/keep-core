@@ -3135,6 +3135,7 @@ func (rb *RandomBeacon) UpdateGroupCreationParameters(
 	arg_groupCreationFrequency *big.Int,
 	arg_groupLifetime *big.Int,
 	arg_dkgResultChallengePeriodLength *big.Int,
+	arg_dkgResultChallengeExtraGas *big.Int,
 	arg_dkgResultSubmissionTimeout *big.Int,
 	arg_dkgSubmitterPrecedencePeriodLength *big.Int,
 
@@ -3147,6 +3148,7 @@ func (rb *RandomBeacon) UpdateGroupCreationParameters(
 			arg_groupCreationFrequency,
 			arg_groupLifetime,
 			arg_dkgResultChallengePeriodLength,
+			arg_dkgResultChallengeExtraGas,
 			arg_dkgResultSubmissionTimeout,
 			arg_dkgSubmitterPrecedencePeriodLength,
 		),
@@ -3179,6 +3181,7 @@ func (rb *RandomBeacon) UpdateGroupCreationParameters(
 		arg_groupCreationFrequency,
 		arg_groupLifetime,
 		arg_dkgResultChallengePeriodLength,
+		arg_dkgResultChallengeExtraGas,
 		arg_dkgResultSubmissionTimeout,
 		arg_dkgSubmitterPrecedencePeriodLength,
 	)
@@ -3191,6 +3194,7 @@ func (rb *RandomBeacon) UpdateGroupCreationParameters(
 			arg_groupCreationFrequency,
 			arg_groupLifetime,
 			arg_dkgResultChallengePeriodLength,
+			arg_dkgResultChallengeExtraGas,
 			arg_dkgResultSubmissionTimeout,
 			arg_dkgSubmitterPrecedencePeriodLength,
 		)
@@ -3221,6 +3225,7 @@ func (rb *RandomBeacon) UpdateGroupCreationParameters(
 				arg_groupCreationFrequency,
 				arg_groupLifetime,
 				arg_dkgResultChallengePeriodLength,
+				arg_dkgResultChallengeExtraGas,
 				arg_dkgResultSubmissionTimeout,
 				arg_dkgSubmitterPrecedencePeriodLength,
 			)
@@ -3233,6 +3238,7 @@ func (rb *RandomBeacon) UpdateGroupCreationParameters(
 					arg_groupCreationFrequency,
 					arg_groupLifetime,
 					arg_dkgResultChallengePeriodLength,
+					arg_dkgResultChallengeExtraGas,
 					arg_dkgResultSubmissionTimeout,
 					arg_dkgSubmitterPrecedencePeriodLength,
 				)
@@ -3258,6 +3264,7 @@ func (rb *RandomBeacon) CallUpdateGroupCreationParameters(
 	arg_groupCreationFrequency *big.Int,
 	arg_groupLifetime *big.Int,
 	arg_dkgResultChallengePeriodLength *big.Int,
+	arg_dkgResultChallengeExtraGas *big.Int,
 	arg_dkgResultSubmissionTimeout *big.Int,
 	arg_dkgSubmitterPrecedencePeriodLength *big.Int,
 	blockNumber *big.Int,
@@ -3276,6 +3283,7 @@ func (rb *RandomBeacon) CallUpdateGroupCreationParameters(
 		arg_groupCreationFrequency,
 		arg_groupLifetime,
 		arg_dkgResultChallengePeriodLength,
+		arg_dkgResultChallengeExtraGas,
 		arg_dkgResultSubmissionTimeout,
 		arg_dkgSubmitterPrecedencePeriodLength,
 	)
@@ -3287,6 +3295,7 @@ func (rb *RandomBeacon) UpdateGroupCreationParametersGasEstimate(
 	arg_groupCreationFrequency *big.Int,
 	arg_groupLifetime *big.Int,
 	arg_dkgResultChallengePeriodLength *big.Int,
+	arg_dkgResultChallengeExtraGas *big.Int,
 	arg_dkgResultSubmissionTimeout *big.Int,
 	arg_dkgSubmitterPrecedencePeriodLength *big.Int,
 ) (uint64, error) {
@@ -3301,6 +3310,7 @@ func (rb *RandomBeacon) UpdateGroupCreationParametersGasEstimate(
 		arg_groupCreationFrequency,
 		arg_groupLifetime,
 		arg_dkgResultChallengePeriodLength,
+		arg_dkgResultChallengeExtraGas,
 		arg_dkgResultSubmissionTimeout,
 		arg_dkgSubmitterPrecedencePeriodLength,
 	)
@@ -4562,43 +4572,6 @@ func (rb *RandomBeacon) GasParametersAtBlock(
 	return result, err
 }
 
-func (rb *RandomBeacon) GenesisSeed() (*big.Int, error) {
-	result, err := rb.contract.GenesisSeed(
-		rb.callerOptions,
-	)
-
-	if err != nil {
-		return result, rb.errorResolver.ResolveError(
-			err,
-			rb.callerOptions.From,
-			nil,
-			"genesisSeed",
-		)
-	}
-
-	return result, err
-}
-
-func (rb *RandomBeacon) GenesisSeedAtBlock(
-	blockNumber *big.Int,
-) (*big.Int, error) {
-	var result *big.Int
-
-	err := chainutil.CallAtBlock(
-		rb.callerOptions.From,
-		blockNumber,
-		nil,
-		rb.contractABI,
-		rb.caller,
-		rb.errorResolver,
-		rb.contractAddress,
-		"genesisSeed",
-		&result,
-	)
-
-	return result, err
-}
-
 func (rb *RandomBeacon) GetGroup(
 	arg_groupId uint64,
 ) (abi.GroupsGroup, error) {
@@ -4800,6 +4773,7 @@ type groupCreationParameters struct {
 	GroupCreationFrequency             *big.Int
 	GroupLifetime                      *big.Int
 	DkgResultChallengePeriodLength     *big.Int
+	DkgResultChallengeExtraGas         *big.Int
 	DkgResultSubmissionTimeout         *big.Int
 	DkgSubmitterPrecedencePeriodLength *big.Int
 }
@@ -8628,6 +8602,7 @@ type randomBeaconGroupCreationParametersUpdatedFunc func(
 	GroupCreationFrequency *big.Int,
 	GroupLifetime *big.Int,
 	DkgResultChallengePeriodLength *big.Int,
+	DkgResultChallengeExtraGas *big.Int,
 	DkgResultSubmissionTimeout *big.Int,
 	DkgResultSubmitterPrecedencePeriodLength *big.Int,
 	blockNumber uint64,
@@ -8649,6 +8624,7 @@ func (gcpus *RbGroupCreationParametersUpdatedSubscription) OnEvent(
 					event.GroupCreationFrequency,
 					event.GroupLifetime,
 					event.DkgResultChallengePeriodLength,
+					event.DkgResultChallengeExtraGas,
 					event.DkgResultSubmissionTimeout,
 					event.DkgResultSubmitterPrecedencePeriodLength,
 					event.Raw.BlockNumber,
