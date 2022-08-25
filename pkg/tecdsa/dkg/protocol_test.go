@@ -691,7 +691,7 @@ func TestTssRoundThree(t *testing.T) {
 	}
 }
 
-func TestTssRoundTwo_IncomingMessageCorrupted_WrongBroadcastPayload(t *testing.T) {
+func TestTssRoundThree_IncomingMessageCorrupted_WrongBroadcastPayload(t *testing.T) {
 	members, messages, err := initializeTssRoundThreeMembersGroup(
 		dishonestThreshold,
 		groupSize,
@@ -731,7 +731,7 @@ func TestTssRoundTwo_IncomingMessageCorrupted_WrongBroadcastPayload(t *testing.T
 	}
 }
 
-func TestTssRoundTwo_IncomingMessageCorrupted_UndecryptablePeerPayload(t *testing.T) {
+func TestTssRoundThree_IncomingMessageCorrupted_UndecryptablePeerPayload(t *testing.T) {
 	members, messages, err := initializeTssRoundThreeMembersGroup(
 		dishonestThreshold,
 		groupSize,
@@ -776,7 +776,7 @@ func TestTssRoundTwo_IncomingMessageCorrupted_UndecryptablePeerPayload(t *testin
 	}
 }
 
-func TestTssRoundTwo_IncomingMessageCorrupted_WrongPeerPayload(t *testing.T) {
+func TestTssRoundThree_IncomingMessageCorrupted_WrongPeerPayload(t *testing.T) {
 	members, messages, err := initializeTssRoundThreeMembersGroup(
 		dishonestThreshold,
 		groupSize,

@@ -129,9 +129,12 @@ func (skgm *symmetricKeyGeneratingMember) MarkInactiveMembers(
 
 // initializeTssRoundOne returns a member to perform next protocol operations.
 func (skgm *symmetricKeyGeneratingMember) initializeTssRoundOne() *tssRoundOneMember {
+	// Set up the local TSS party using only operating members. This effectively
+	// removes all excluded members who were marked as disqualified at the
+	// beginning of the protocol.
 	tssPartyID, groupTssPartiesIDs := generateTssPartiesIDs(
 		skgm.id,
-		skgm.group.MemberIDs(),
+		skgm.group.OperatingMemberIDs(),
 	)
 
 	tssParameters := tss.NewParameters(

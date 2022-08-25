@@ -100,10 +100,12 @@ func newTbtcChain(
 // GetConfig returns the expected configuration of the TBTC module.
 func (tc *TbtcChain) GetConfig() *tbtc.ChainConfig {
 	groupSize := 100
+	groupQuorum := 90
 	honestThreshold := 51
 
 	return &tbtc.ChainConfig{
 		GroupSize:       groupSize,
+		GroupQuorum:     groupQuorum,
 		HonestThreshold: honestThreshold,
 	}
 }
@@ -293,7 +295,8 @@ func (tc *TbtcChain) OnDKGStarted(
 }
 
 // TODO: Temporary mock that simulates the behavior of the WalletRegistry
-//       contract. Should be removed eventually.
+//
+//	contract. Should be removed eventually.
 type mockWalletRegistry struct {
 	blockCounter chain.BlockCounter
 }

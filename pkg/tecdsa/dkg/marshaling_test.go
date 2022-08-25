@@ -29,6 +29,7 @@ func TestEphemeralPublicKeyMessage_MarshalingRoundtrip(t *testing.T) {
 	msg := &ephemeralPublicKeyMessage{
 		senderID:            group.MemberIndex(38),
 		ephemeralPublicKeys: publicKeys,
+		sessionID:           "session-1",
 	}
 	unmarshaled := &ephemeralPublicKeyMessage{}
 
@@ -47,6 +48,7 @@ func TestFuzzEphemeralPublicKeyMessage_MarshalingRoundtrip(t *testing.T) {
 		var (
 			senderID            group.MemberIndex
 			ephemeralPublicKeys map[group.MemberIndex]*ephemeral.PublicKey
+			sessionID           string
 		)
 
 		f := fuzz.New().NilChance(0.1).
@@ -55,10 +57,12 @@ func TestFuzzEphemeralPublicKeyMessage_MarshalingRoundtrip(t *testing.T) {
 
 		f.Fuzz(&senderID)
 		f.Fuzz(&ephemeralPublicKeys)
+		f.Fuzz(&sessionID)
 
 		message := &ephemeralPublicKeyMessage{
 			senderID:            senderID,
 			ephemeralPublicKeys: ephemeralPublicKeys,
+			sessionID:           sessionID,
 		}
 
 		_ = pbutils.RoundTrip(message, &ephemeralPublicKeyMessage{})

@@ -266,8 +266,9 @@ func (bc *BeaconChain) IsStaleGroup(groupPublicKey []byte) (bool, error) {
 }
 
 // TODO: Implement a real OnDKGStarted event subscription. The current
-//       implementation generates a fake event every 500th block where the
-//       seed is the keccak256 of the block number.
+//
+//	implementation generates a fake event every 500th block where the
+//	seed is the keccak256 of the block number.
 func (bc *BeaconChain) OnDKGStarted(
 	handler func(event *event.DKGStarted),
 ) subscription.EventSubscription {
@@ -275,8 +276,9 @@ func (bc *BeaconChain) OnDKGStarted(
 }
 
 // TODO: Implement a real SubmitDKGResult action. The current implementation
-//       just creates and pipes the DKG submission event to the handlers
-//       registered in the dkgResultSubmissionHandlers map.
+//
+//	just creates and pipes the DKG submission event to the handlers
+//	registered in the dkgResultSubmissionHandlers map.
 func (bc *BeaconChain) SubmitDKGResult(
 	participantIndex beaconchain.GroupMemberIndex,
 	dkgResult *beaconchain.DKGResult,
@@ -290,9 +292,10 @@ func (bc *BeaconChain) SubmitDKGResult(
 }
 
 // TODO: Implement a real OnDKGResultSubmitted event subscription. The current
-//       implementation just pipes the DKG submission event generated within
-//       SubmitDKGResult to the handlers registered in the
-//       dkgResultSubmissionHandlers map.
+//
+//	implementation just pipes the DKG submission event generated within
+//	SubmitDKGResult to the handlers registered in the
+//	dkgResultSubmissionHandlers map.
 func (bc *BeaconChain) OnDKGResultSubmitted(
 	handler func(event *event.DKGResultSubmission),
 ) subscription.EventSubscription {
@@ -407,7 +410,8 @@ func (bc *BeaconChain) CurrentRequestGroupPublicKey() ([]byte, error) {
 }
 
 // TODO: Temporary mock that simulates the behavior of the RandomBeacon
-//       contract. Should be removed eventually.
+//
+//	contract. Should be removed eventually.
 type mockRandomBeacon struct {
 	blockCounter chain.BlockCounter
 

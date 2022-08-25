@@ -2,7 +2,6 @@ package dkg
 
 import (
 	"fmt"
-	"math/big"
 	"time"
 
 	"github.com/ipfs/go-log"
@@ -42,16 +41,21 @@ func NewExecutor(
 	}
 }
 
-// Execute runs the ECDSA distributed key generation protocol, given a
+// Execute runs the tECDSA distributed key generation protocol, given a
 // broadcast channel to mediate with, a block counter used for time tracking,
 // a member index to use in the group, dishonest threshold, and block height
 // when DKG protocol should start.
+//
+// This function also supports DKG execution with a subset of the selected
+// group by passing a non-empty excludedMembers slice holding the members that
+// should be excluded.
 func (e *Executor) Execute(
-	seed *big.Int,
+	sessionID string,
 	startBlockNumber uint64,
 	memberIndex group.MemberIndex,
 	groupSize int,
 	dishonestThreshold int,
+	excludedMembers []group.MemberIndex,
 	blockCounter chain.BlockCounter,
 	channel net.BroadcastChannel,
 	membershipValidator *group.MembershipValidator,
@@ -71,9 +75,17 @@ func (e *Executor) Execute(
 		groupSize,
 		dishonestThreshold,
 		membershipValidator,
-		seed.Text(16), // TODO: Should change on retry.,
+		sessionID,
 		preParams.data,
 	)
+
+	// Mark excluded members as disqualified in order to not exchange messages
+	// with them and have them recorded as misbehaving in the final result.
+	for _, excludedMember := range excludedMembers {
+		if excludedMember != member.id {
+			member.group.MarkMemberAsDisqualified(excludedMember)
+		}
+	}
 
 	initialState := &ephemeralKeyPairGenerationState{
 		channel: channel,

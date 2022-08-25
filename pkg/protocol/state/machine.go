@@ -3,6 +3,7 @@ package state
 import (
 	"context"
 	"fmt"
+
 	"github.com/ipfs/go-log"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/net"
@@ -173,7 +174,7 @@ func stateTransition(
 
 	err = currentState.Initiate(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("failed to initiate new state [%v]", err)
+		return nil, fmt.Errorf("failed to initiate new state [%w]", err)
 	}
 
 	blockWaiter, err := blockCounter.BlockHeightWaiter(

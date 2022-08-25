@@ -17,6 +17,7 @@ type ephemeralPublicKeyMessage struct {
 	senderID group.MemberIndex
 
 	ephemeralPublicKeys map[group.MemberIndex]*ephemeral.PublicKey
+	sessionID           string
 }
 
 // SenderID returns protocol-level identifier of the message sender.
