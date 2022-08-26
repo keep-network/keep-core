@@ -8,8 +8,7 @@ import (
 
 	"github.com/hashicorp/go-multierror"
 	"github.com/ipfs/go-log"
-	ethereumCommon "github.com/keep-network/keep-common/pkg/chain/ethereum"
-
+	commonEthereum "github.com/keep-network/keep-common/pkg/chain/ethereum"
 	"github.com/keep-network/keep-core/pkg/beacon/registry"
 	"github.com/keep-network/keep-core/pkg/diagnostics"
 	"github.com/keep-network/keep-core/pkg/metrics"
@@ -35,7 +34,7 @@ const (
 
 // Config is the top level config structure.
 type Config struct {
-	Ethereum    ethereumCommon.Config
+	Ethereum    commonEthereum.Config
 	LibP2P      libp2p.Config `mapstructure:"network"`
 	Storage     registry.Config
 	Metrics     metrics.Config
@@ -56,15 +55,15 @@ func bindFlags(flagSet *pflag.FlagSet) error {
 func (c *Config) resolveEthereumNetwork(flagSet *pflag.FlagSet) error {
 	var err error
 
-	c.Ethereum.Network, err = func() (ethereumCommon.Network,error) {
-		if ok, err := flagSet.GetBool(ethereumCommon.Goerli.String()); ok {
-			return ethereumCommon.Goerli, err
+	c.Ethereum.Network, err = func() (commonEthereum.Network, error) {
+		if ok, err := flagSet.GetBool(commonEthereum.Goerli.String()); ok {
+			return commonEthereum.Goerli, err
 		}
-		if ok, err := flagSet.GetBool(ethereumCommon.Developer.String()); ok {
-			return ethereumCommon.Developer, err
+		if ok, err := flagSet.GetBool(commonEthereum.Developer.String()); ok {
+			return commonEthereum.Developer, err
 		}
 
-		return ethereumCommon.Mainnet, nil
+		return commonEthereum.Mainnet, nil
 	}()
 
 	return err
@@ -80,7 +79,7 @@ func (c *Config) ReadConfig(configFilePath string, flagSet *pflag.FlagSet, categ
 			return fmt.Errorf("unable to bind the flags: [%w]", err)
 		}
 
-		if  err := c.resolveEthereumNetwork(flagSet); err != nil {
+		if err := c.resolveEthereumNetwork(flagSet); err != nil {
 			return fmt.Errorf("unable to resolve ethereum network: [%w]", err)
 		}
 	}
@@ -187,12 +186,12 @@ func validateConfig(config *Config, categories ...Category) error {
 // from the returned config, but is available for external functions that expect
 // to interact solely with Ethereum and are therefore independent of the rest of
 // the config structure.
-func ReadEthereumConfig(flagSet *pflag.FlagSet) (ethereumCommon.Config, error) {
+func ReadEthereumConfig(flagSet *pflag.FlagSet) (commonEthereum.Config, error) {
 	config := Config{}
 
 	configPath, err := flagSet.GetString("config")
 	if err != nil {
-		return ethereumCommon.Config{},
+		return commonEthereum.Config{},
 			fmt.Errorf(
 				"failed to read config file path from command flag: %w",
 				err,
@@ -200,7 +199,7 @@ func ReadEthereumConfig(flagSet *pflag.FlagSet) (ethereumCommon.Config, error) {
 	}
 
 	if err := config.ReadConfig(configPath, flagSet, Ethereum); err != nil {
-		return ethereumCommon.Config{}, err
+		return commonEthereum.Config{}, err
 	}
 
 	return config.Ethereum, nil

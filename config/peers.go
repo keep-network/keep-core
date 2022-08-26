@@ -5,14 +5,14 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/keep-network/keep-common/pkg/chain/ethereum"
+	commonEthereum "github.com/keep-network/keep-common/pkg/chain/ethereum"
 )
 
 //go:embed _peers/*
 var peersData embed.FS
 
 // readPeers reads peers from an embedded file for the given ethereum `network`.
-func readPeers(network ethereum.Network) ([]string, error) {
+func readPeers(network commonEthereum.Network) ([]string, error) {
 	peers, err := peersData.ReadFile(fmt.Sprintf("_peers/%s", network))
 	if err != nil {
 		return nil, err

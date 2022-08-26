@@ -4,7 +4,9 @@ import (
 	"fmt"
 	"math/big"
 
-	"github.com/keep-network/keep-common/pkg/chain/ethereum"
+	"github.com/spf13/cobra"
+
+	commonEthereum "github.com/keep-network/keep-common/pkg/chain/ethereum"
 	"github.com/keep-network/keep-common/pkg/chain/ethereum/ethutil"
 	"github.com/keep-network/keep-common/pkg/cmd/flag"
 	"github.com/keep-network/keep-common/pkg/rate"
@@ -13,7 +15,6 @@ import (
 	"github.com/keep-network/keep-core/pkg/metrics"
 	"github.com/keep-network/keep-core/pkg/net/libp2p"
 	"github.com/keep-network/keep-core/pkg/tbtc"
-	"github.com/spf13/cobra"
 )
 
 func initFlags(
@@ -68,27 +69,27 @@ func initEthereumNetworkFlags(cmd *cobra.Command) {
 	// TODO: Consider removing `--mainnet` flag. For now it's here to reduce a confusion
 	// when developing and testing the client.
 	cmd.Flags().Bool(
-		ethereum.Mainnet.String(),
+		commonEthereum.Mainnet.String(),
 		false,
 		"Mainnet network",
 	)
 
 	cmd.Flags().Bool(
-		ethereum.Goerli.String(),
+		commonEthereum.Goerli.String(),
 		false,
 		"Görli network",
 	)
 
 	cmd.Flags().Bool(
-		ethereum.Developer.String(),
+		commonEthereum.Developer.String(),
 		false,
 		"Developer network",
 	)
 
 	cmd.MarkFlagsMutuallyExclusive(
-		ethereum.Mainnet.String(),
-		ethereum.Goerli.String(),
-		ethereum.Developer.String(),
+		commonEthereum.Mainnet.String(),
+		commonEthereum.Goerli.String(),
+		commonEthereum.Developer.String(),
 	)
 }
 
@@ -141,7 +142,7 @@ func initEthereumFlags(cmd *cobra.Command, cfg *config.Config) {
 		cmd.Flags(),
 		&cfg.Ethereum.BalanceAlertThreshold,
 		"ethereum.balanceAlertThreshold",
-		*ethereum.WrapWei(big.NewInt(500000000000000000)), // 0.5 ether
+		*commonEthereum.WrapWei(big.NewInt(500000000000000000)), // 0.5 ether
 		"The minimum balance of operator account below which client starts reporting errors in logs.",
 	)
 }
