@@ -140,6 +140,7 @@ const addStakeToAuthData = (
     isStakedToT: false,
     isFromGrant: _isFromGrant,
     canBeMovedToT: !_isFromGrant,
+    isInInitializationPeriod: true,
   }
 
   const updatedAuthData = [...authData, newStake]

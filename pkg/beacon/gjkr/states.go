@@ -101,12 +101,12 @@ func (ekpgs *ephemeralKeyPairGenerationState) Receive(msg net.Message) error {
 	return nil
 }
 
-func (ekpgs *ephemeralKeyPairGenerationState) Next() keyGenerationState {
+func (ekpgs *ephemeralKeyPairGenerationState) Next() (state.State, error) {
 	return &symmetricKeyGenerationState{
 		channel:               ekpgs.channel,
 		member:                ekpgs.member.InitializeSymmetricKeyGeneration(),
 		previousPhaseMessages: ekpgs.phaseMessages,
-	}
+	}, nil
 }
 
 func (ekpgs *ephemeralKeyPairGenerationState) MemberIndex() group.MemberIndex {
@@ -142,11 +142,11 @@ func (skgs *symmetricKeyGenerationState) Receive(msg net.Message) error {
 	return nil
 }
 
-func (skgs *symmetricKeyGenerationState) Next() keyGenerationState {
+func (skgs *symmetricKeyGenerationState) Next() (state.State, error) {
 	return &commitmentState{
 		channel: skgs.channel,
 		member:  skgs.member.InitializeCommitting(),
-	}
+	}, nil
 }
 
 func (skgs *symmetricKeyGenerationState) MemberIndex() group.MemberIndex {
@@ -217,14 +217,14 @@ func (cs *commitmentState) Receive(msg net.Message) error {
 	return nil
 }
 
-func (cs *commitmentState) Next() keyGenerationState {
+func (cs *commitmentState) Next() (state.State, error) {
 	return &commitmentsVerificationState{
 		channel: cs.channel,
 		member:  cs.member.InitializeCommitmentsVerification(),
 
 		previousPhaseSharesMessages:      cs.phaseSharesMessages,
 		previousPhaseCommitmentsMessages: cs.phaseCommitmentsMessages,
-	}
+	}, nil
 }
 
 func (cs *commitmentState) MemberIndex() group.MemberIndex {
@@ -291,13 +291,13 @@ func (cvs *commitmentsVerificationState) Receive(msg net.Message) error {
 	return nil
 }
 
-func (cvs *commitmentsVerificationState) Next() keyGenerationState {
+func (cvs *commitmentsVerificationState) Next() (state.State, error) {
 	return &sharesJustificationState{
 		channel: cvs.channel,
 		member:  cvs.member.InitializeSharesJustification(),
 
 		previousPhaseAccusationsMessages: cvs.phaseAccusationsMessages,
-	}
+	}, nil
 }
 
 func (cvs *commitmentsVerificationState) MemberIndex() group.MemberIndex {
@@ -341,11 +341,11 @@ func (sjs *sharesJustificationState) Receive(msg net.Message) error {
 	return nil
 }
 
-func (sjs *sharesJustificationState) Next() keyGenerationState {
+func (sjs *sharesJustificationState) Next() (state.State, error) {
 	return &qualificationState{
 		channel: sjs.channel,
 		member:  sjs.member.InitializeQualified(),
-	}
+	}, nil
 }
 
 func (sjs *sharesJustificationState) MemberIndex() group.MemberIndex {
@@ -379,11 +379,11 @@ func (qs *qualificationState) Receive(msg net.Message) error {
 	return nil
 }
 
-func (qs *qualificationState) Next() keyGenerationState {
+func (qs *qualificationState) Next() (state.State, error) {
 	return &pointsShareState{
 		channel: qs.channel,
 		member:  qs.member.InitializeSharing(),
-	}
+	}, nil
 }
 
 func (qs *qualificationState) MemberIndex() group.MemberIndex {
@@ -433,13 +433,13 @@ func (pss *pointsShareState) Receive(msg net.Message) error {
 	return nil
 }
 
-func (pss *pointsShareState) Next() keyGenerationState {
+func (pss *pointsShareState) Next() (state.State, error) {
 	return &pointsValidationState{
 		channel: pss.channel,
 		member:  pss.member,
 
 		previousPhaseMessages: pss.phaseMessages,
-	}
+	}, nil
 }
 
 func (pss *pointsShareState) MemberIndex() group.MemberIndex {
@@ -498,13 +498,13 @@ func (pvs *pointsValidationState) Receive(msg net.Message) error {
 	return nil
 }
 
-func (pvs *pointsValidationState) Next() keyGenerationState {
+func (pvs *pointsValidationState) Next() (state.State, error) {
 	return &pointsJustificationState{
 		channel: pvs.channel,
 		member:  pvs.member.InitializePointsJustification(),
 
 		previousPhaseMessages: pvs.phaseMessages,
-	}
+	}, nil
 }
 
 func (pvs *pointsValidationState) MemberIndex() group.MemberIndex {
@@ -548,11 +548,11 @@ func (pjs *pointsJustificationState) Receive(msg net.Message) error {
 	return nil
 }
 
-func (pjs *pointsJustificationState) Next() keyGenerationState {
+func (pjs *pointsJustificationState) Next() (state.State, error) {
 	return &keyRevealState{
 		channel: pjs.channel,
 		member:  pjs.member.InitializeRevealing(),
-	}
+	}, nil
 }
 
 func (pjs *pointsJustificationState) MemberIndex() group.MemberIndex {
@@ -606,12 +606,12 @@ func (rs *keyRevealState) Receive(msg net.Message) error {
 	return nil
 }
 
-func (rs *keyRevealState) Next() keyGenerationState {
+func (rs *keyRevealState) Next() (state.State, error) {
 	return &reconstructionState{
 		channel:               rs.channel,
 		member:                rs.member.InitializeReconstruction(),
 		previousPhaseMessages: rs.phaseMessages,
-	}
+	}, nil
 }
 
 func (rs *keyRevealState) MemberIndex() group.MemberIndex {
@@ -653,11 +653,11 @@ func (rs *reconstructionState) Receive(msg net.Message) error {
 	return nil
 }
 
-func (rs *reconstructionState) Next() keyGenerationState {
+func (rs *reconstructionState) Next() (state.State, error) {
 	return &combinationState{
 		channel: rs.channel,
 		member:  rs.member.InitializeCombining(),
-	}
+	}, nil
 }
 
 func (rs *reconstructionState) MemberIndex() group.MemberIndex {
@@ -692,11 +692,11 @@ func (cs *combinationState) Receive(msg net.Message) error {
 	return nil
 }
 
-func (cs *combinationState) Next() keyGenerationState {
+func (cs *combinationState) Next() (state.State, error) {
 	return &finalizationState{
 		channel: cs.channel,
 		member:  cs.member.InitializeFinalization(),
-	}
+	}, nil
 }
 
 func (cs *combinationState) MemberIndex() group.MemberIndex {
@@ -729,8 +729,8 @@ func (fs *finalizationState) Receive(msg net.Message) error {
 	return nil
 }
 
-func (fs *finalizationState) Next() keyGenerationState {
-	return nil
+func (fs *finalizationState) Next() (state.State, error) {
+	return nil, nil
 }
 
 func (fs *finalizationState) MemberIndex() group.MemberIndex {

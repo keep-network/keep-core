@@ -7,6 +7,7 @@ DONE_START='\n\e[1;32m' # new line + bold + green
 DONE_END='\n\n\e[0m'    # new line + reset
 
 KEEP_CORE_PATH=$PWD
+CONFIG_DIR_DEFAULT="$KEEP_CORE_PATH/configs"
 KEEP_BEACON_SOL_PATH="$KEEP_CORE_PATH/solidity/random-beacon"
 KEEP_ECDSA_SOL_PATH="$KEEP_CORE_PATH/solidity/ecdsa"
 
@@ -16,6 +17,7 @@ NETWORK_DEFAULT="development"
 help() {
    echo -e "\nUsage: $0" \
       "--network <network>" \
+      "--config-dir <path to configuration files>" \
       "--stake-owner <stake owner address>" \
       "--staking-provider <staking provider address>" \
       "--operator <operator address>" \
@@ -23,9 +25,9 @@ help() {
       "--authorizer <authorizer address>" \
       "--stake-amount <stake amount>" \
       "--authorization-amount <authorization amount>"
-   echo -e "\nMandatory line arguments:\n"
-   echo -e "\t--stake-owner: Stake owner address"
    echo -e "\nOptional line arguments:\n"
+   echo -e "\t--stake-owner: Stake owner address"
+   echo -e "\t--config-dir: Path to configuration files. Default /configs"
    echo -e "\t--network: Ethereum network for keep-core client." \
       "Available networks and settings are specified in the 'hardhat.config.ts'"
    echo -e "\t--staking-provider: Staking provider address"
@@ -42,6 +44,7 @@ for arg in "$@"; do
    shift
    case "$arg" in
    "--network") set -- "$@" "-n" ;;
+   "--config-dir") set -- "$@" "-c" ;;
    "--stake-owner") set -- "$@" "-o" ;;
    "--staking-provider") set -- "$@" "-p" ;;
    "--operator") set -- "$@" "-d" ;;
@@ -56,9 +59,10 @@ done
 
 # Parse short options
 OPTIND=1
-while getopts "n:o:p:d:b:a:s:k:h" opt; do
+while getopts "n:c:o:p:d:b:a:s:k:h" opt; do
    case "$opt" in
    n) network="$OPTARG" ;;
+   c) config_dir="$OPTARG" ;;
    o) stake_owner="$OPTARG" ;;
    p) staking_provider="$OPTARG" ;;
    d) operator="$OPTARG" ;;
@@ -72,9 +76,41 @@ while getopts "n:o:p:d:b:a:s:k:h" opt; do
 done
 shift $(expr $OPTIND - 1) # remove options from positional parameters
 
+CONFIG_DIR=${config_dir:-$CONFIG_DIR_DEFAULT}
+
+# read from the config file if a stake_owner is not provided as parameter
 if [ -z "$stake_owner" ]; then
-   echo 'Stake owner address must be provided. See --help'
-   exit 1
+   printf "\nReading stake owner address from the config file..."
+
+   # read from the config file when the stake owner is not provided
+   config_files=($CONFIG_DIR/*.toml)
+   config_files_count=${#config_files[@]}
+   while :; do
+      printf "\nSelect client config file: \n"
+      i=1
+      for o in "${config_files[@]}"; do
+         echo "$i) ${o##*/}"
+         let i++
+      done
+
+      read reply
+      if [ "$reply" -ge 1 ] && [ "$reply" -le $config_files_count ]; then
+         CONFIG_FILE_PATH=${config_files["$reply" - 1]}
+         break
+      else
+         printf "\nInvalid choice. Please choose an existing option number.\n"
+      fi
+   done
+
+   key_file_path=$(awk '/[k|K]eyFile ?=(.*)$/{print $3}' $CONFIG_FILE_PATH | xargs)
+
+   printf "Reading an address from the key file: ${key_file_path}\n"
+
+   stake_owner=`cat $key_file_path | jq -jr .address`
+
+   [[ $stake_owner == 0x* ]] || stake_owner="0x$stake_owner"
+
+   printf "Discovered the address: ${stake_owner}\n"
 fi
 
 # Overwrite default properties

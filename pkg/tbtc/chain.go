@@ -99,8 +99,12 @@ type Chain interface {
 
 // ChainConfig contains the config data needed for the TBTC to operate.
 type ChainConfig struct {
-	// GroupSize is the size of a group in TBTC.
+	// GroupSize is the target size of a group in TBTC.
 	GroupSize int
+	// GroupQuorum is the minimum number of active participants behaving
+	// according to the protocol needed to generate a group in TBTC. This value
+	// is smaller than the GroupSize and bigger than the HonestThreshold.
+	GroupQuorum int
 	// HonestThreshold is the minimum number of active participants behaving
 	// according to the protocol needed to generate a signature.
 	HonestThreshold int

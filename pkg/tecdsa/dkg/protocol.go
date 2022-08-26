@@ -40,6 +40,7 @@ func (ekpgm *ephemeralKeyPairGeneratingMember) generateEphemeralKeyPair() (
 	return &ephemeralPublicKeyMessage{
 		senderID:            ekpgm.id,
 		ephemeralPublicKeys: ephemeralKeys,
+		sessionID:           ekpgm.sessionID,
 	}, nil
 }
 
@@ -181,8 +182,9 @@ func (trtm *tssRoundTwoMember) tssRoundTwo(
 		}
 	}
 
-	// Listen for TSS outgoing messages. We expect groupSize-1 P2P messages
-	// carrying shares and 1 broadcast message holding the de-commitments.
+	// Listen for TSS outgoing messages. We expect N-1 P2P messages (where N
+	// is the number of properly operating members) carrying shares and 1
+	// broadcast message holding the de-commitments.
 	var tssMessages []tss.Message
 outgoingMessagesLoop:
 	for {
@@ -190,7 +192,7 @@ outgoingMessagesLoop:
 		case tssMessage := <-trtm.tssOutgoingMessagesChan:
 			tssMessages = append(tssMessages, tssMessage)
 
-			if len(tssMessages) == trtm.group.GroupSize() {
+			if len(tssMessages) == len(trtm.group.OperatingMemberIDs()) {
 				break outgoingMessagesLoop
 			}
 		case <-ctx.Done():
@@ -264,7 +266,7 @@ outgoingMessagesLoop:
 
 	// Just a sanity check at the end of processing.
 	isMessageOk := len(compositeMessage.broadcastPayload) > 0 &&
-		len(compositeMessage.peersPayload) == trtm.group.GroupSize()-1
+		len(compositeMessage.peersPayload) == len(trtm.group.OperatingMemberIDs())-1
 	if !isMessageOk {
 		return nil, fmt.Errorf("cannot produce a proper TSS round two message")
 	}
@@ -437,7 +439,9 @@ func (sm *signingMember) signDKGResult(
 // that the public key presented in each message is the correct one.
 // This key needs to be compared against the one used by network client earlier,
 // before this function is called.
-func (sm *signingMember) verifyDKGResultSignatures( // TODO: Unit tests
+//
+// TODO: Add unit tests.
+func (sm *signingMember) verifyDKGResultSignatures(
 	messages []*resultSignatureMessage,
 	resultSigner ResultSigner,
 ) (map[group.MemberIndex][]byte, error) {
@@ -448,7 +452,7 @@ func (sm *signingMember) verifyDKGResultSignatures( // TODO: Unit tests
 		// preferred DKG result hash.
 		if message.resultHash != sm.preferredDKGResultHash {
 			sm.logger.Infof(
-				"[member: %v] signature from sender [%d] supports " +
+				"[member: %v] signature from sender [%d] supports "+
 					"result different than preferred",
 				sm.memberIndex,
 				message.senderID,
@@ -466,7 +470,7 @@ func (sm *signingMember) verifyDKGResultSignatures( // TODO: Unit tests
 		)
 		if err != nil {
 			sm.logger.Infof(
-				"[member: %v] verification of signature " +
+				"[member: %v] verification of signature "+
 					"from sender [%d] failed: [%v]",
 				sm.memberIndex,
 				message.senderID,
