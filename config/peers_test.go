@@ -1,38 +1,32 @@
 package config
 
 import (
-	"fmt"
 	"reflect"
 	"testing"
 
-	ethereumCommon "github.com/keep-network/keep-common/pkg/chain/ethereum"
+	commonEthereum "github.com/keep-network/keep-common/pkg/chain/ethereum"
 )
 
 func TestResolvePeers(t *testing.T) {
 	var tests = map[string]struct {
-		network       ethereumCommon.Network
+		network       commonEthereum.Network
 		expectedPeers []string
 		expectedError error
 	}{
 		// TODO: Add mainnet support
 		// "mainnet network": {},
 		"goerli network": {
-			network: ethereumCommon.Goerli,
+			network: commonEthereum.Goerli,
 			expectedPeers: []string{
 				"/dns4/bootstrap-0.test.keep.network/tcp/3919/ipfs/16Uiu2HAmCcfVpHwfBKNFbQuhvGuFXHVLQ65gB4sJm7HyrcZuLttH",
 				"/dns4/bootstrap-1.test.keep.network/tcp/3919/ipfs/16Uiu2HAm3eJtyFKAttzJ85NLMromHuRg4yyum3CREMf6CHBBV6KY",
 			},
 		},
 		"developer network": {
-			network: ethereumCommon.Developer,
+			network: commonEthereum.Developer,
 		},
 		"unknown network": {
-			network:       ethereumCommon.Unknown,
-			expectedError: fmt.Errorf("failed to read default peers: [open _peers/unknown: file does not exist]"),
-		},
-		"not supported network": {
-			network:       ethereumCommon.Network(999),
-			expectedError: fmt.Errorf("failed to read default peers: [open _peers/unknown: file does not exist]"),
+			network: commonEthereum.Unknown,
 		},
 	}
 
