@@ -400,6 +400,8 @@ func (mwr *mockWalletRegistry) OnDKGStarted(
 					seedBytes := crypto.Keccak256(blockBytes)
 					seed := new(big.Int).SetBytes(seedBytes)
 
+					mwr.currentDkgStartBlock = big.NewInt(int64(block))
+
 					go handler(&tbtc.DKGStartedEvent{
 						Seed:        seed,
 						BlockNumber: block,
