@@ -212,12 +212,12 @@ func waitForDkgResultEvent(
 }
 
 // resolveGroupOperators takes two parameters:
-//   - selectedOperators: Contains addresses of all selected operators. Slice
-//     length equals to the groupSize. Each element with index N corresponds
-//     to the group member with ID N+1.
-//   - operatingGroupMembersIDs: Contains group members IDs that were neither
-//     disqualified nor marked as inactive. Slice length is lesser than or equal
-//     to the groupSize.
+// - selectedOperators: Contains addresses of all selected operators. Slice
+//   length equals to the groupSize. Each element with index N corresponds
+//   to the group member with ID N+1.
+// - operatingGroupMembersIDs: Contains group members IDs that were neither
+//   disqualified nor marked as inactive. Slice length is lesser than or equal
+//   to the groupSize.
 //
 // Using those parameters, this function transforms the selectedOperators
 // slice into another slice that contains addresses of all operators

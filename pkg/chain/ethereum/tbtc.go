@@ -295,8 +295,7 @@ func (tc *TbtcChain) OnDKGStarted(
 }
 
 // TODO: Temporary mock that simulates the behavior of the WalletRegistry
-//
-//	contract. Should be removed eventually.
+//	     contract. Should be removed eventually.
 type mockWalletRegistry struct {
 	blockCounter chain.BlockCounter
 }
