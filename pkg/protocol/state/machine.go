@@ -3,6 +3,7 @@ package state
 import (
 	"context"
 	"fmt"
+
 	"github.com/ipfs/go-log"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/net"
@@ -62,6 +63,7 @@ func (m *Machine) Execute(startBlockHeight uint64) (State, uint64, error) {
 	)
 	err := m.blockCounter.WaitForBlockHeight(startBlockHeight)
 	if err != nil {
+		cancelCtx()
 		return nil, 0, fmt.Errorf("failed to wait for the execution start block")
 	}
 
@@ -96,7 +98,16 @@ func (m *Machine) Execute(startBlockHeight uint64) (State, uint64, error) {
 
 		case lastStateEndBlockHeight := <-blockWaiter:
 			cancelCtx()
-			nextState := currentState.Next()
+
+			nextState, err := currentState.Next()
+			if err != nil {
+				return nil, 0, fmt.Errorf(
+					"failed to complete state [%T]: [%w]",
+					currentState,
+					err,
+				)
+			}
+
 			if nextState == nil {
 				m.logger.Infof(
 					"[member:%v,channel:%s,state:%T] reached final state at block: [%v]",
@@ -163,7 +174,7 @@ func stateTransition(
 
 	err = currentState.Initiate(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("failed to initiate new state [%v]", err)
+		return nil, fmt.Errorf("failed to initiate new state [%w]", err)
 	}
 
 	blockWaiter, err := blockCounter.BlockHeightWaiter(

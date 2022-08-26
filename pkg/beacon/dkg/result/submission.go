@@ -79,26 +79,19 @@ func (sm *SubmittingMember) SubmitDKGResult(
 			onSubmittedResultChan <- event.BlockNumber
 		},
 	)
-
-	returnWithError := func(err error) error {
-		subscription.Unsubscribe()
-		close(onSubmittedResultChan)
-		return err
-	}
+	defer subscription.Unsubscribe()
 
 	alreadySubmitted, err := chainRelay.IsGroupRegistered(result.GroupPublicKey)
 	if err != nil {
-		return returnWithError(
-			fmt.Errorf(
-				"could not check if the result is already submitted: [%v]",
-				err,
-			),
+		return fmt.Errorf(
+			"could not check if the result is already submitted: [%w]",
+			err,
 		)
 	}
 
 	// Someone who was ahead of us in the queue submitted the result. Giving up.
 	if alreadySubmitted {
-		return returnWithError(nil)
+		return nil
 	}
 
 	// Wait until the current member is eligible to submit the result.
@@ -108,17 +101,21 @@ func (sm *SubmittingMember) SubmitDKGResult(
 		config.ResultPublicationBlockStep,
 	)
 	if err != nil {
-		return returnWithError(
-			fmt.Errorf("wait for eligibility failure: [%v]", err),
-		)
+		return fmt.Errorf("wait for eligibility failure: [%w]", err)
 	}
 
 	for {
 		select {
 		case blockNumber := <-eligibleToSubmitWaiter:
-			// Member becomes eligible to submit the result.
+			// Member becomes eligible to submit the result. Result submission
+			// would trigger the sender side of the result submission event
+			// listener but also cause the receiver side (this select)
+			// termination that will result with a dangling goroutine blocked
+			// forever on the `onSubmittedResultChan` channel. This would
+			// cause a resource leak. In order to avoid that, we should
+			// unsubscribe from the result submission event listener before
+			// submitting the result.
 			subscription.Unsubscribe()
-			close(onSubmittedResultChan)
 
 			sm.logger.Infof(
 				"[member:%v] submitting DKG result with public key [0x%x] and "+
@@ -142,7 +139,7 @@ func (sm *SubmittingMember) SubmitDKGResult(
 			)
 			// A result has been submitted by other member. Leave without
 			// publishing the result.
-			return returnWithError(nil)
+			return nil
 		}
 	}
 }
@@ -167,7 +164,7 @@ func (sm *SubmittingMember) waitForSubmissionEligibility(
 
 	waiter, err := blockCounter.BlockHeightWaiter(eligibleBlockHeight)
 	if err != nil {
-		return nil, fmt.Errorf("block height waiter failure [%v]", err)
+		return nil, fmt.Errorf("block height waiter failure [%w]", err)
 	}
 
 	return waiter, err

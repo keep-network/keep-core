@@ -105,11 +105,13 @@ func newTbtcChain(
 // GetConfig returns the expected configuration of the TBTC module.
 func (tc *TbtcChain) GetConfig() *tbtc.ChainConfig {
 	groupSize := 100
+	groupQuorum := 90
 	honestThreshold := 51
 	resultPublicationBlockStep := 1
 
 	return &tbtc.ChainConfig{
 		GroupSize:                  groupSize,
+		GroupQuorum:                groupQuorum,
 		HonestThreshold:            honestThreshold,
 		ResultPublicationBlockStep: uint64(resultPublicationBlockStep),
 	}
@@ -344,12 +346,16 @@ func (tc *TbtcChain) CalculateDKGResultHash(
 	}
 
 	// Encode DKG result to the format matched with Solidity keccak256(abi.encodePacked(...))
+	// TODO: Adjust the message structure to the format needed by the wallet
+	//       registry contract:
+	//       \x19Ethereum signed message:\n${keccak256(groupPubKey,misbehavedIndices,startBlock)}
 	hash := crypto.Keccak256(groupPublicKeyBytes, result.MisbehavedMembersIndexes())
 	return dkg.ResultHashFromBytes(hash)
 }
 
 // TODO: Temporary mock that simulates the behavior of the WalletRegistry
-//       contract. Should be removed eventually.
+//
+//	contract. Should be removed eventually.
 type mockWalletRegistry struct {
 	blockCounter chain.BlockCounter
 

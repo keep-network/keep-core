@@ -124,7 +124,7 @@ func (ts testState1) Receive(msg net.Message) error {
 	)
 	return nil
 }
-func (ts testState1) Next() State                    { return &testState2{ts} }
+func (ts testState1) Next() (State, error)           { return &testState2{ts}, nil }
 func (ts testState1) MemberIndex() group.MemberIndex { return ts.memberIndex }
 
 type testState2 struct {
@@ -144,7 +144,7 @@ func (ts testState2) Receive(msg net.Message) error {
 	)
 	return nil
 }
-func (ts testState2) Next() State                    { return &testState3{ts} }
+func (ts testState2) Next() (State, error)           { return &testState3{ts}, nil }
 func (ts testState2) MemberIndex() group.MemberIndex { return ts.memberIndex }
 
 type testState3 struct {
@@ -167,7 +167,7 @@ func (ts testState3) Receive(msg net.Message) error {
 	return nil
 }
 
-func (ts testState3) Next() State                    { return &testState4{ts} }
+func (ts testState3) Next() (State, error)           { return &testState4{ts}, nil }
 func (ts testState3) MemberIndex() group.MemberIndex { return ts.memberIndex }
 
 type testState4 struct {
@@ -187,7 +187,7 @@ func (ts testState4) Receive(msg net.Message) error {
 	)
 	return nil
 }
-func (ts testState4) Next() State                    { return &testState5{ts} }
+func (ts testState4) Next() (State, error)           { return &testState5{ts}, nil }
 func (ts testState4) MemberIndex() group.MemberIndex { return ts.memberIndex }
 
 type testState5 struct {
@@ -207,7 +207,7 @@ func (ts testState5) Receive(msg net.Message) error {
 	)
 	return nil
 }
-func (ts testState5) Next() State                    { return nil }
+func (ts testState5) Next() (State, error)           { return nil, nil }
 func (ts testState5) MemberIndex() group.MemberIndex { return ts.memberIndex }
 
 type TestMessage struct {
