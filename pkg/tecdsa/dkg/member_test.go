@@ -90,6 +90,7 @@ func TestShouldAcceptMessage(t *testing.T) {
 				membershipValdator,
 				"1",
 				&keygen.LocalPreParams{},
+				1,
 			)
 
 			filter := member.inactiveMemberFilter()

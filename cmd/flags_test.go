@@ -4,6 +4,7 @@ import (
 	"math/big"
 	"os"
 	"reflect"
+	"runtime"
 	"testing"
 	"time"
 
@@ -168,6 +169,13 @@ var cmdFlagsTests = map[string]struct {
 		flagValue:             "2",
 		expectedValueFromFlag: 2,
 		defaultValue:          1,
+	},
+	"tbtc.keyGenConcurrency": {
+		readValueFunc:         func(c *config.Config) interface{} { return c.Tbtc.KeyGenerationConcurrency },
+		flagName:              "--tbtc.keyGenerationConcurrency",
+		flagValue:             "101",
+		expectedValueFromFlag: 101,
+		defaultValue:          runtime.GOMAXPROCS(0),
 	},
 	"developer.randomBeaconAddress": {
 		readValueFunc: func(c *config.Config) interface{} {

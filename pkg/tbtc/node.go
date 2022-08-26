@@ -47,6 +47,7 @@ func newNode(
 		config.PreParamsGenerationTimeout,
 		config.PreParamsGenerationDelay,
 		config.PreParamsGenerationConcurrency,
+		config.KeyGenerationConcurrency,
 	)
 
 	latch := generator.NewProtocolLatch()

@@ -218,6 +218,13 @@ func initTbtcFlags(cmd *cobra.Command, cfg *config.Config) {
 		tbtc.DefaultPreParamsGenerationConcurrency,
 		"tECDSA pre-parameters generation concurrency.",
 	)
+
+	cmd.Flags().IntVar(
+		&cfg.Tbtc.KeyGenerationConcurrency,
+		"tbtc.keyGenerationConcurrency",
+		tbtc.DefaultKeyGenerationConcurrency,
+		"tECDSA key generation concurrency.",
+	)
 }
 
 // Initialize flags for Developer configuration.
