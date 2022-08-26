@@ -405,11 +405,11 @@ func TestFinalSigningGroup(t *testing.T) {
 	}
 
 	var tests = map[string]struct {
-		selectedOperators                  []chain.Address
-		operatingMembersIndexes            []group.MemberIndex
-		expectedSigningGroupOperators      []chain.Address
-		expectedSigningGroupMembersIndexes map[group.MemberIndex]group.MemberIndex
-		expectedError                      error
+		selectedOperators           []chain.Address
+		operatingMembersIndexes     []group.MemberIndex
+		expectedFinalOperators      []chain.Address
+		expectedFinalMembersIndexes map[group.MemberIndex]group.MemberIndex
+		expectedError               error
 	}{
 		"selected operators count not equal to the group size": {
 			selectedOperators:       selectedOperators[:4],
@@ -417,16 +417,16 @@ func TestFinalSigningGroup(t *testing.T) {
 			expectedError:           fmt.Errorf("invalid input parameters"),
 		},
 		"all selected operators are operating": {
-			selectedOperators:                  selectedOperators,
-			operatingMembersIndexes:            []group.MemberIndex{5, 4, 3, 2, 1},
-			expectedSigningGroupOperators:      selectedOperators,
-			expectedSigningGroupMembersIndexes: map[group.MemberIndex]group.MemberIndex{1: 1, 2: 2, 3: 3, 4: 4, 5: 5},
+			selectedOperators:           selectedOperators,
+			operatingMembersIndexes:     []group.MemberIndex{5, 4, 3, 2, 1},
+			expectedFinalOperators:      selectedOperators,
+			expectedFinalMembersIndexes: map[group.MemberIndex]group.MemberIndex{1: 1, 2: 2, 3: 3, 4: 4, 5: 5},
 		},
 		"honest majority of selected operators are operating": {
-			selectedOperators:                  selectedOperators,
-			operatingMembersIndexes:            []group.MemberIndex{5, 1, 3},
-			expectedSigningGroupOperators:      []chain.Address{"0xAA", "0xCC", "0xEE"},
-			expectedSigningGroupMembersIndexes: map[group.MemberIndex]group.MemberIndex{1: 1, 3: 2, 5: 3},
+			selectedOperators:           selectedOperators,
+			operatingMembersIndexes:     []group.MemberIndex{5, 1, 3},
+			expectedFinalOperators:      []chain.Address{"0xAA", "0xCC", "0xEE"},
+			expectedFinalMembersIndexes: map[group.MemberIndex]group.MemberIndex{1: 1, 3: 2, 5: 3},
 		},
 		"less than honest majority of selected operators are operating": {
 			selectedOperators:       selectedOperators,
@@ -437,7 +437,7 @@ func TestFinalSigningGroup(t *testing.T) {
 
 	for testName, test := range tests {
 		t.Run(testName, func(t *testing.T) {
-			actualGroupOperators, actualSigningGroupMembersIndexes, err :=
+			actualFinalOperators, actualFinalMembersIndexes, err :=
 				finalSigningGroup(
 					test.selectedOperators,
 					test.operatingMembersIndexes,
@@ -455,28 +455,28 @@ func TestFinalSigningGroup(t *testing.T) {
 			}
 
 			if !reflect.DeepEqual(
-				test.expectedSigningGroupOperators,
-				actualGroupOperators,
+				test.expectedFinalOperators,
+				actualFinalOperators,
 			) {
 				t.Errorf(
-					"unexpected group operators\n"+
+					"unexpected final operators\n"+
 						"expected: %v\n"+
 						"actual:   %v\n",
-					test.expectedSigningGroupOperators,
-					actualGroupOperators,
+					test.expectedFinalOperators,
+					actualFinalOperators,
 				)
 			}
 
 			if !reflect.DeepEqual(
-				test.expectedSigningGroupMembersIndexes,
-				actualSigningGroupMembersIndexes,
+				test.expectedFinalMembersIndexes,
+				actualFinalMembersIndexes,
 			) {
 				t.Errorf(
-					"unexpected group members indexes\n"+
+					"unexpected final members indexes\n"+
 						"expected: %v\n"+
 						"actual:   %v\n",
-					test.expectedSigningGroupMembersIndexes,
-					actualSigningGroupMembersIndexes,
+					test.expectedFinalMembersIndexes,
+					actualFinalMembersIndexes,
 				)
 			}
 		})

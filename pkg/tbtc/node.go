@@ -158,7 +158,7 @@ func (n *node) joinDKGIfEligible(seed *big.Int, startBlockNumber uint64) {
 		for _, index := range indexes {
 			// Capture the member index for the goroutine. The group member
 			// index should be in range [1, groupSize] so we need to add 1.
-			dkgMemberIndex := index + 1
+			memberIndex := index + 1
 
 			go func() {
 				n.protocolLatch.Lock()
@@ -167,7 +167,7 @@ func (n *node) joinDKGIfEligible(seed *big.Int, startBlockNumber uint64) {
 				retryLoop := newDkgRetryLoop(
 					seed,
 					startBlockNumber,
-					dkgMemberIndex,
+					memberIndex,
 					selectedSigningGroupOperators,
 					chainConfig,
 				)
@@ -188,7 +188,7 @@ func (n *node) joinDKGIfEligible(seed *big.Int, startBlockNumber uint64) {
 						logger.Infof(
 							"[member:%v] starting dkg attempt [%v] "+
 								"with [%v] group members (excluded: [%v])",
-							dkgMemberIndex,
+							memberIndex,
 							attempt.index,
 							chainConfig.GroupSize-len(attempt.excludedMembers),
 							attempt.excludedMembers,
@@ -204,7 +204,7 @@ func (n *node) joinDKGIfEligible(seed *big.Int, startBlockNumber uint64) {
 						result, executionEndBlock, err := n.dkgExecutor.Execute(
 							sessionID,
 							attempt.startBlock,
-							dkgMemberIndex,
+							memberIndex,
 							chainConfig.GroupSize,
 							chainConfig.DishonestThreshold(),
 							attempt.excludedMembers,
@@ -216,7 +216,7 @@ func (n *node) joinDKGIfEligible(seed *big.Int, startBlockNumber uint64) {
 							logger.Errorf(
 								"[member:%v] dkg attempt [%v] "+
 									"failed: [%v]",
-								dkgMemberIndex,
+								memberIndex,
 								attempt.index,
 								err,
 							)
@@ -230,7 +230,7 @@ func (n *node) joinDKGIfEligible(seed *big.Int, startBlockNumber uint64) {
 				if err != nil {
 					logger.Errorf(
 						"[member:%v] failed to execute dkg: [%v]",
-						dkgMemberIndex,
+						memberIndex,
 						err,
 					)
 					return
@@ -254,7 +254,7 @@ func (n *node) joinDKGIfEligible(seed *big.Int, startBlockNumber uint64) {
 					logger,
 					seed.Text(16),
 					publicationStartBlock,
-					dkgMemberIndex,
+					memberIndex,
 					blockCounter,
 					broadcastChannel,
 					membershipValidator,
@@ -272,12 +272,12 @@ func (n *node) joinDKGIfEligible(seed *big.Int, startBlockNumber uint64) {
 					// drop our membership.
 					logger.Warningf(
 						"[member:%v] DKG result publication process failed [%v]",
-						dkgMemberIndex,
+						memberIndex,
 						err,
 					)
 
 					if operatingMemberIndexes, err = n.decideSigningGroupMemberFate(
-						dkgMemberIndex,
+						memberIndex,
 						dkgResultChannel,
 						publicationStartBlock,
 						result,
@@ -285,7 +285,7 @@ func (n *node) joinDKGIfEligible(seed *big.Int, startBlockNumber uint64) {
 						logger.Errorf(
 							"[member:%v] failed to handle DKG result "+
 								"publishing failure: [%v]",
-							dkgMemberIndex,
+							memberIndex,
 							err,
 						)
 						return
@@ -296,7 +296,7 @@ func (n *node) joinDKGIfEligible(seed *big.Int, startBlockNumber uint64) {
 				// group outputted by the sortition protocol. One need to
 				// determine the final signing group based on the selected
 				// group members who behaved correctly during DKG protocol.
-				signingGroupOperators, signingGroupMembersIndexes, err :=
+				finalSigningGroupOperators, finalSigningGroupMembersIndexes, err :=
 					finalSigningGroup(
 						selectedSigningGroupOperators,
 						operatingMemberIndexes,
@@ -304,9 +304,9 @@ func (n *node) joinDKGIfEligible(seed *big.Int, startBlockNumber uint64) {
 					)
 				if err != nil {
 					logger.Errorf(
-						"[member:%v] failed to get final signing "+
+						"[member:%v] failed to resolve final signing "+
 							"group: [%v]",
-						dkgMemberIndex,
+						memberIndex,
 						err,
 					)
 					return
@@ -316,40 +316,35 @@ func (n *node) joinDKGIfEligible(seed *big.Int, startBlockNumber uint64) {
 				// member index used during the DKG protocol may differ
 				// from the final signing group member index as well.
 				// We need to remap it.
-				signingGroupMemberIndex, ok :=
-					signingGroupMembersIndexes[dkgMemberIndex]
+				finalSigningGroupMemberIndex, ok :=
+					finalSigningGroupMembersIndexes[memberIndex]
 				if !ok {
 					logger.Errorf(
-						"[member:%v] failed to get final signing "+
+						"[member:%v] failed to resolve final signing "+
 							"group member index",
-						dkgMemberIndex,
+						memberIndex,
 					)
 					return
 				}
 
 				signer := newSigner(
 					result.PrivateKeyShare.PublicKey(),
-					signingGroupOperators,
-					signingGroupMemberIndex,
+					finalSigningGroupOperators,
+					finalSigningGroupMemberIndex,
 					result.PrivateKeyShare,
 				)
 
 				err = n.walletRegistry.registerSigner(signer)
 				if err != nil {
 					logger.Errorf(
-						"[member:%v] failed to register %s: [%v]",
-						dkgMemberIndex,
+						"failed to register %s: [%v]",
 						signer,
 						err,
 					)
 					return
 				}
 
-				logger.Infof(
-					"[member:%v] registered %s",
-					dkgMemberIndex,
-					signer,
-				)
+				logger.Infof("registered %s", signer)
 			}()
 		}
 	} else {
@@ -469,8 +464,8 @@ func (n *node) waitForDkgResultEvent(
 // Example:
 // selectedOperators: [0xAA, 0xBB, 0xCC, 0xDD, 0xEE]
 // operatingMembersIndexes: [5, 1, 3]
-// signingGroupOperators: [0xAA, 0xCC, 0xEE]
-// signingGroupMembersIndexes: [1:1, 3:2, 5:3]
+// finalOperators: [0xAA, 0xCC, 0xEE]
+// finalMembersIndexes: [1:1, 3:2, 5:3]
 func finalSigningGroup(
 	selectedOperators []chain.Address,
 	operatingMembersIndexes []group.MemberIndex,
@@ -490,21 +485,21 @@ func finalSigningGroup(
 		return operatingMembersIndexes[i] < operatingMembersIndexes[j]
 	})
 
-	signingGroupOperators := make(
+	finalOperators := make(
 		[]chain.Address,
 		len(operatingMembersIndexes),
 	)
-	signingGroupMembersIndexes := make(
+	finalMembersIndexes := make(
 		map[group.MemberIndex]group.MemberIndex,
 		len(operatingMembersIndexes),
 	)
 
 	for i, operatingMemberID := range operatingMembersIndexes {
-		signingGroupOperators[i] = selectedOperators[operatingMemberID-1]
-		signingGroupMembersIndexes[operatingMemberID] = group.MemberIndex(i + 1)
+		finalOperators[i] = selectedOperators[operatingMemberID-1]
+		finalMembersIndexes[operatingMemberID] = group.MemberIndex(i + 1)
 	}
 
-	return signingGroupOperators, signingGroupMembersIndexes, nil
+	return finalOperators, finalMembersIndexes, nil
 }
 
 // dkgResultSigner is responsible for signing the DKG result and verification of
