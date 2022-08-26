@@ -5,7 +5,7 @@ go 1.18
 // Temporary replacement until the fix to tss-lib is merged.
 // This fix allows groups of 100 to be generated on dev machines.
 // https://github.com/bnb-chain/tss-lib/pull/203
-replace github.com/bnb-chain/tss-lib => github.com/keep-network/tss-lib v1.3.3-0.20220825144442-4ba50f5b5dd3
+replace github.com/bnb-chain/tss-lib => github.com/keep-network/tss-lib v1.3.3-0.20220826121242-73ee9558285f
 
 require (
 	github.com/bnb-chain/tss-lib v1.3.4-0.20220817120442-2f5f2e4fb79e
