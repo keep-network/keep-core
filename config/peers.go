@@ -46,9 +46,9 @@ func (c *Config) resolvePeers() error {
 		return nil
 	}
 
-	// For developer network we don't expect the default peers to be embedded in
-	// the client. The user should configure them in the config file.
-	if network == ethereum.Developer {
+	// For unknown and developer networks we don't expect the default peers to be
+	// embedded in the client. The user should configure them in the config file.
+	if network == commonEthereum.Developer || network == commonEthereum.Unknown {
 		logger.Warnf(
 			"peers were not configured for [%s] network; "+
 				"see network section in configuration",
