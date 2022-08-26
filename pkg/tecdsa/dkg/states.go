@@ -25,7 +25,7 @@ const (
 	tssRoundThreeStateActiveBlocks = 5
 
 	finalizationStateDelayBlocks  = 1
-	finalizationStateActiveBlocks = 2
+	finalizationStateActiveBlocks = 5
 )
 
 // ProtocolBlocks returns the total number of blocks it takes to execute
