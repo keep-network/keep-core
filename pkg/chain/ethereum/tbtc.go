@@ -371,7 +371,12 @@ type mockWalletRegistry struct {
 }
 
 func newMockWalletRegistry(blockCounter chain.BlockCounter) *mockWalletRegistry {
-	return &mockWalletRegistry{blockCounter: blockCounter}
+	return &mockWalletRegistry{
+		blockCounter: blockCounter,
+		dkgResultSubmissionHandlers: make(
+			map[int]func(submission *tbtc.DKGResultSubmittedEvent),
+		),
+	}
 }
 
 func (mwr *mockWalletRegistry) OnDKGStarted(
