@@ -583,7 +583,7 @@ func (drs *dkgResultSubmitter) SubmitResult(
 ) error {
 	config := drs.chain.GetConfig()
 
-	// TODO: Compare signatures to the GroupQuorum parameter
+	// TODO: Compare signatures count to the GroupQuorum parameter
 	if len(signatures) < config.HonestThreshold {
 		return fmt.Errorf(
 			"could not submit result with [%v] signatures for signature "+
@@ -677,8 +677,7 @@ func (drs *dkgResultSubmitter) SubmitResult(
 // away, each following member is eligible after pre-defined block step.
 //
 // TODO: Revisit the setupEligibilityQueue function. The RFC mentions we should
-//
-//	start submitting from a random member, not the first one.
+//	     start submitting from a random member, not the first one.
 func (drs *dkgResultSubmitter) setupEligibilityQueue(
 	startBlockNumber uint64,
 	memberIndex group.MemberIndex,
