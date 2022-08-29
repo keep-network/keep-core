@@ -62,7 +62,7 @@ func (c *Config) resolveEthereumNetwork(flagSet *pflag.FlagSet) error {
 			return commonEthereum.Unknown, err
 		}
 		if isGoerli {
-			return commonEthereum.Goerli, err
+			return commonEthereum.Goerli, nil
 		}
 
 		isDeveloper, err := flagSet.GetBool(commonEthereum.Developer.String())
@@ -70,7 +70,7 @@ func (c *Config) resolveEthereumNetwork(flagSet *pflag.FlagSet) error {
 			return commonEthereum.Unknown, err
 		}
 		if isDeveloper {
-			return commonEthereum.Developer, err
+			return commonEthereum.Developer, nil
 		}
 
 		return commonEthereum.Mainnet, nil
