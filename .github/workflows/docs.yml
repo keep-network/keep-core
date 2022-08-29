@@ -60,5 +60,5 @@ jobs:
           service-key: ${{ secrets.DOCS_KEEP_NETWORK_UPLOADER_SERVICE_KEY_JSON }}
           project: cfc-production
           bucket-name: docs.keep.network
-          bucket-path: ./${{ github.head_ref }}
+          bucket-path: ${{ github.head_ref }}
           build-folder: ${{ steps.html.outputs.asciidoctor-artifacts }}/docs
