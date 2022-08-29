@@ -8,18 +8,17 @@ import (
 
 	"github.com/hashicorp/go-multierror"
 	"github.com/ipfs/go-log"
-	"github.com/keep-network/keep-common/pkg/chain/ethereum"
-	ethereumCommon "github.com/keep-network/keep-common/pkg/chain/ethereum"
+	"github.com/mitchellh/mapstructure"
+	"github.com/spf13/pflag"
+	"github.com/spf13/viper"
+	"golang.org/x/crypto/ssh/terminal"
 
+	commonEthereum "github.com/keep-network/keep-common/pkg/chain/ethereum"
 	"github.com/keep-network/keep-core/pkg/beacon/registry"
 	"github.com/keep-network/keep-core/pkg/diagnostics"
 	"github.com/keep-network/keep-core/pkg/metrics"
 	"github.com/keep-network/keep-core/pkg/net/libp2p"
 	"github.com/keep-network/keep-core/pkg/tbtc"
-	"github.com/mitchellh/mapstructure"
-	"github.com/spf13/pflag"
-	"github.com/spf13/viper"
-	"golang.org/x/crypto/ssh/terminal"
 )
 
 var logger = log.Logger("keep-config")
@@ -36,7 +35,7 @@ const (
 
 // Config is the top level config structure.
 type Config struct {
-	Ethereum    ethereumCommon.Config
+	Ethereum    commonEthereum.Config
 	LibP2P      libp2p.Config `mapstructure:"network"`
 	Storage     registry.Config
 	Metrics     metrics.Config
@@ -53,6 +52,33 @@ func bindFlags(flagSet *pflag.FlagSet) error {
 	return nil
 }
 
+// Resolve ethereum network based on the set boolean flags.
+func (c *Config) resolveEthereumNetwork(flagSet *pflag.FlagSet) error {
+	var err error
+
+	c.Ethereum.Network, err = func() (commonEthereum.Network, error) {
+		isGoerli, err := flagSet.GetBool(commonEthereum.Goerli.String())
+		if err != nil {
+			return commonEthereum.Unknown, err
+		}
+		if isGoerli {
+			return commonEthereum.Goerli, nil
+		}
+
+		isDeveloper, err := flagSet.GetBool(commonEthereum.Developer.String())
+		if err != nil {
+			return commonEthereum.Unknown, err
+		}
+		if isDeveloper {
+			return commonEthereum.Developer, nil
+		}
+
+		return commonEthereum.Mainnet, nil
+	}()
+
+	return err
+}
+
 // ReadConfig reads in the configuration file at `configFilePath` and flags defined in
 // the `flagSet`.
 func (c *Config) ReadConfig(configFilePath string, flagSet *pflag.FlagSet, categories ...Category) error {
@@ -61,6 +87,10 @@ func (c *Config) ReadConfig(configFilePath string, flagSet *pflag.FlagSet, categ
 	if flagSet != nil {
 		if err := bindFlags(flagSet); err != nil {
 			return fmt.Errorf("unable to bind the flags: [%w]", err)
+		}
+
+		if err := c.resolveEthereumNetwork(flagSet); err != nil {
+			return fmt.Errorf("unable to resolve ethereum network: [%w]", err)
 		}
 	}
 
@@ -82,6 +112,12 @@ func (c *Config) ReadConfig(configFilePath string, flagSet *pflag.FlagSet, categ
 
 	// Resolve contracts addresses.
 	c.resolveContractsAddresses()
+
+	// Resolve network peers.
+	err := c.resolvePeers()
+	if err != nil {
+		return fmt.Errorf("failed to resolve peers: %w", err)
+	}
 
 	// Validate configuration.
 	if err := validateConfig(c, categories...); err != nil {
@@ -160,12 +196,12 @@ func validateConfig(config *Config, categories ...Category) error {
 // from the returned config, but is available for external functions that expect
 // to interact solely with Ethereum and are therefore independent of the rest of
 // the config structure.
-func ReadEthereumConfig(flagSet *pflag.FlagSet) (ethereum.Config, error) {
+func ReadEthereumConfig(flagSet *pflag.FlagSet) (commonEthereum.Config, error) {
 	config := Config{}
 
 	configPath, err := flagSet.GetString("config")
 	if err != nil {
-		return ethereum.Config{},
+		return commonEthereum.Config{},
 			fmt.Errorf(
 				"failed to read config file path from command flag: %w",
 				err,
@@ -173,7 +209,7 @@ func ReadEthereumConfig(flagSet *pflag.FlagSet) (ethereum.Config, error) {
 	}
 
 	if err := config.ReadConfig(configPath, flagSet, Ethereum); err != nil {
-		return ethereum.Config{}, err
+		return commonEthereum.Config{}, err
 	}
 
 	return config.Ethereum, nil

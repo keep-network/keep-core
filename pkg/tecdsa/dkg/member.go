@@ -266,8 +266,75 @@ func (fm *finalizingMember) MarkInactiveMembers(
 // generation process or a notification of failure.
 func (fm *finalizingMember) Result() *Result {
 	return &Result{
+		Group:           fm.group,
 		PrivateKeyShare: tecdsa.NewPrivateKeyShare(fm.tssResult),
 	}
+}
+
+// signingMember represents a group member sharing their preferred DKG result hash
+// and signature (over this hash) with other peer members.
+type signingMember struct {
+	logger      log.StandardLogger
+	memberIndex group.MemberIndex
+	// Group to which this member belongs.
+	group *group.Group
+	// Validator allowing to check public key and member index
+	// against group members
+	membershipValidator *group.MembershipValidator
+	// Identifier of the particular DKG session this member is part of.
+	sessionID string
+	// Hash of DKG result preferred by the current participant.
+	preferredDKGResultHash ResultHash
+	// Signature over preferredDKGResultHash calculated by the member.
+	selfDKGResultSignature []byte
+}
+
+// newSigningMember creates a new signingMember in the initial state.
+func newSigningMember(
+	logger log.StandardLogger,
+	memberIndex group.MemberIndex,
+	group *group.Group,
+	membershipValidator *group.MembershipValidator,
+	sessionID string,
+) *signingMember {
+	return &signingMember{
+		logger:              logger,
+		memberIndex:         memberIndex,
+		group:               group,
+		membershipValidator: membershipValidator,
+		sessionID:           sessionID,
+	}
+}
+
+// shouldAcceptMessage indicates whether the given member should accept
+// a message from the given sender.
+func (sm *signingMember) shouldAcceptMessage(
+	senderID group.MemberIndex,
+	senderPublicKey []byte,
+) bool {
+	isMessageFromSelf := senderID == sm.memberIndex
+	isSenderValid := sm.membershipValidator.IsValidMembership(
+		senderID,
+		senderPublicKey,
+	)
+	isSenderAccepted := sm.group.IsOperating(senderID)
+
+	return !isMessageFromSelf && isSenderValid && isSenderAccepted
+}
+
+// initializeSubmittingMember performs a transition of a member state to the
+// next phase of the protocol.
+func (sm *signingMember) initializeSubmittingMember() *submittingMember {
+	return &submittingMember{
+		signingMember: sm,
+	}
+}
+
+// submittingMember represents a member submitting a DKG result to the
+// blockchain along with signatures received from other group members supporting
+// the result.
+type submittingMember struct {
+	*signingMember
 }
 
 // generateTssPartiesIDs converts group member ID to parties ID suitable for

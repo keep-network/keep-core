@@ -33,6 +33,8 @@ func TestDkgRetryLoop(t *testing.T) {
 		"address-8",
 	}
 
+	const dkgExecutionLength = 300
+
 	testData, err := tecdsatest.LoadPrivateKeyShareTestFixtures(1)
 	if err != nil {
 		t.Fatalf("failed to load test data: [%v]", err)
@@ -43,23 +45,25 @@ func TestDkgRetryLoop(t *testing.T) {
 	}
 
 	var tests = map[string]struct {
-		memberIndex         group.MemberIndex
-		ctxFn               func() (context.Context, context.CancelFunc)
-		dkgAttemptFn        dkgAttemptFn
-		expectedErr         error
-		expectedResult      *dkg.Result
-		expectedLastAttempt *dkgAttemptParams
+		memberIndex               group.MemberIndex
+		ctxFn                     func() (context.Context, context.CancelFunc)
+		dkgAttemptFn              dkgAttemptFn
+		expectedErr               error
+		expectedExecutionEndBlock uint64
+		expectedResult            *dkg.Result
+		expectedLastAttempt       *dkgAttemptParams
 	}{
 		"success on initial attempt": {
 			memberIndex: 1,
 			ctxFn: func() (context.Context, context.CancelFunc) {
 				return context.WithCancel(context.Background())
 			},
-			dkgAttemptFn: func(*dkgAttemptParams) (*dkg.Result, error) {
-				return testResult, nil
+			dkgAttemptFn: func(attempt *dkgAttemptParams) (*dkg.Result, uint64, error) {
+				return testResult, attempt.startBlock + dkgExecutionLength, nil
 			},
-			expectedErr:    nil,
-			expectedResult: testResult,
+			expectedErr:               nil,
+			expectedExecutionEndBlock: 500,
+			expectedResult:            testResult,
 			expectedLastAttempt: &dkgAttemptParams{
 				index:           1,
 				startBlock:      200,
@@ -71,23 +75,24 @@ func TestDkgRetryLoop(t *testing.T) {
 			ctxFn: func() (context.Context, context.CancelFunc) {
 				return context.WithCancel(context.Background())
 			},
-			dkgAttemptFn: func(attempt *dkgAttemptParams) (*dkg.Result, error) {
+			dkgAttemptFn: func(attempt *dkgAttemptParams) (*dkg.Result, uint64, error) {
 				if attempt.index == 1 {
-					return nil, &dkg.InactiveMembersError{
+					return nil, 0, &dkg.InactiveMembersError{
 						InactiveMembersIndexes: []group.MemberIndex{4},
 					}
 				}
 
 				if attempt.index == 2 {
-					return nil, &dkg.InactiveMembersError{
+					return nil, 0, &dkg.InactiveMembersError{
 						InactiveMembersIndexes: []group.MemberIndex{6},
 					}
 				}
 
-				return testResult, nil
+				return testResult, attempt.startBlock + dkgExecutionLength, nil
 			},
-			expectedErr:    nil,
-			expectedResult: testResult,
+			expectedErr:               nil,
+			expectedExecutionEndBlock: 574,
+			expectedResult:            testResult,
 			// Members 4 and 6 should be excluded in the last attempt as
 			// they were inactive.
 			expectedLastAttempt: &dkgAttemptParams{
@@ -101,19 +106,20 @@ func TestDkgRetryLoop(t *testing.T) {
 			ctxFn: func() (context.Context, context.CancelFunc) {
 				return context.WithCancel(context.Background())
 			},
-			dkgAttemptFn: func(attempt *dkgAttemptParams) (*dkg.Result, error) {
+			dkgAttemptFn: func(attempt *dkgAttemptParams) (*dkg.Result, uint64, error) {
 				// Member 3 is controlled by an operator that controls 3 members
 				// in total. Excluding that operator will break the group quorum.
 				if attempt.index == 1 {
-					return nil, &dkg.InactiveMembersError{
+					return nil, 0, &dkg.InactiveMembersError{
 						InactiveMembersIndexes: []group.MemberIndex{3},
 					}
 				}
 
-				return testResult, nil
+				return testResult, attempt.startBlock + dkgExecutionLength, nil
 			},
-			expectedErr:    nil,
-			expectedResult: testResult,
+			expectedErr:               nil,
+			expectedExecutionEndBlock: 537,
+			expectedResult:            testResult,
 			// Member 3 was inactive but excluding their operator drops the
 			// group size below the quorum. We fall back to the random algorithm
 			// that excludes member 4 for the given seed.
@@ -128,15 +134,16 @@ func TestDkgRetryLoop(t *testing.T) {
 			ctxFn: func() (context.Context, context.CancelFunc) {
 				return context.WithCancel(context.Background())
 			},
-			dkgAttemptFn: func(attempt *dkgAttemptParams) (*dkg.Result, error) {
+			dkgAttemptFn: func(attempt *dkgAttemptParams) (*dkg.Result, uint64, error) {
 				if attempt.index == 1 || attempt.index == 2 {
-					return nil, fmt.Errorf("invalid data")
+					return nil, 0, fmt.Errorf("invalid data")
 				}
 
-				return testResult, nil
+				return testResult, attempt.startBlock + dkgExecutionLength, nil
 			},
-			expectedErr:    nil,
-			expectedResult: testResult,
+			expectedErr:               nil,
+			expectedExecutionEndBlock: 574,
+			expectedResult:            testResult,
 			// Since the error is not related with inactive members, we
 			// use the random algorithm from the very beginning. It
 			// excludes members 2 and 5 (same operator) for the given
@@ -152,21 +159,22 @@ func TestDkgRetryLoop(t *testing.T) {
 			ctxFn: func() (context.Context, context.CancelFunc) {
 				return context.WithCancel(context.Background())
 			},
-			dkgAttemptFn: func(attempt *dkgAttemptParams) (*dkg.Result, error) {
+			dkgAttemptFn: func(attempt *dkgAttemptParams) (*dkg.Result, uint64, error) {
 				if attempt.index == 1 {
-					return nil, fmt.Errorf("invalid data")
+					return nil, 0, fmt.Errorf("invalid data")
 				}
 
 				if attempt.index == 2 {
-					return nil, &dkg.InactiveMembersError{
+					return nil, 0, &dkg.InactiveMembersError{
 						InactiveMembersIndexes: []group.MemberIndex{3},
 					}
 				}
 
-				return testResult, nil
+				return testResult, attempt.startBlock + dkgExecutionLength, nil
 			},
-			expectedErr:    nil,
-			expectedResult: testResult,
+			expectedErr:               nil,
+			expectedExecutionEndBlock: 574,
+			expectedResult:            testResult,
 			// The random algorithm was used first so subsequent errors related
 			// to inactive members are not taken into account. The random
 			// algorithm excludes members 2 and 5 (same operator) for the given
@@ -182,21 +190,22 @@ func TestDkgRetryLoop(t *testing.T) {
 			ctxFn: func() (context.Context, context.CancelFunc) {
 				return context.WithCancel(context.Background())
 			},
-			dkgAttemptFn: func(attempt *dkgAttemptParams) (*dkg.Result, error) {
+			dkgAttemptFn: func(attempt *dkgAttemptParams) (*dkg.Result, uint64, error) {
 				inactiveQueue := []group.MemberIndex{1, 4, 6, 7, 9}
 
 				if attempt.index <= 5 {
-					return nil, &dkg.InactiveMembersError{
+					return nil, 0, &dkg.InactiveMembersError{
 						InactiveMembersIndexes: []group.MemberIndex{
 							inactiveQueue[attempt.index-1],
 						},
 					}
 				}
 
-				return testResult, nil
+				return testResult, attempt.startBlock + dkgExecutionLength, nil
 			},
-			expectedErr:    nil,
-			expectedResult: testResult,
+			expectedErr:               nil,
+			expectedExecutionEndBlock: 685,
+			expectedResult:            testResult,
 			// 5 attempts failed due to different single members who were inactive.
 			// The 6th attempt should be made using the random retry that
 			// returns member 9 for the given seed.
@@ -211,21 +220,22 @@ func TestDkgRetryLoop(t *testing.T) {
 			ctxFn: func() (context.Context, context.CancelFunc) {
 				return context.WithCancel(context.Background())
 			},
-			dkgAttemptFn: func(attempt *dkgAttemptParams) (*dkg.Result, error) {
+			dkgAttemptFn: func(attempt *dkgAttemptParams) (*dkg.Result, uint64, error) {
 				if attempt.index == 1 {
-					return nil, &dkg.InactiveMembersError{
+					return nil, 0, &dkg.InactiveMembersError{
 						InactiveMembersIndexes: []group.MemberIndex{2},
 					}
 				}
 
 				if attempt.index == 2 {
-					return nil, fmt.Errorf("invalid data")
+					return nil, 0, fmt.Errorf("invalid data")
 				}
 
-				return testResult, nil
+				return testResult, attempt.startBlock + dkgExecutionLength, nil
 			},
-			expectedErr:    nil,
-			expectedResult: testResult,
+			expectedErr:               nil,
+			expectedExecutionEndBlock: 574,
+			expectedResult:            testResult,
 			// First attempt fail due to member 2 who is inactive but the second
 			// attempt fail due to another error so the random algorithm
 			// should be used eventually and return members 2 and 5
@@ -241,15 +251,16 @@ func TestDkgRetryLoop(t *testing.T) {
 			ctxFn: func() (context.Context, context.CancelFunc) {
 				return context.WithCancel(context.Background())
 			},
-			dkgAttemptFn: func(attempt *dkgAttemptParams) (*dkg.Result, error) {
+			dkgAttemptFn: func(attempt *dkgAttemptParams) (*dkg.Result, uint64, error) {
 				if attempt.index <= 15 {
-					return nil, fmt.Errorf("invalid data")
+					return nil, 0, fmt.Errorf("invalid data")
 				}
 
-				return testResult, nil
+				return testResult, attempt.startBlock + dkgExecutionLength, nil
 			},
-			expectedErr:    nil,
-			expectedResult: testResult,
+			expectedErr:               nil,
+			expectedExecutionEndBlock: 1150,
+			expectedResult:            testResult,
 			// Random algorithm is used from the very beginning. We also
 			// observe a delay blocks bump on the 10th attempt which is
 			// 100 blocks instead of 5. That said, the start block for the 16th
@@ -269,15 +280,16 @@ func TestDkgRetryLoop(t *testing.T) {
 			ctxFn: func() (context.Context, context.CancelFunc) {
 				return context.WithCancel(context.Background())
 			},
-			dkgAttemptFn: func(attempt *dkgAttemptParams) (*dkg.Result, error) {
+			dkgAttemptFn: func(attempt *dkgAttemptParams) (*dkg.Result, uint64, error) {
 				if attempt.index <= 5 {
-					return nil, fmt.Errorf("invalid data")
+					return nil, 0, fmt.Errorf("invalid data")
 				}
 
-				return testResult, nil
+				return testResult, attempt.startBlock + dkgExecutionLength, nil
 			},
-			expectedErr:    nil,
-			expectedResult: testResult,
+			expectedErr:               nil,
+			expectedExecutionEndBlock: 722,
+			expectedResult:            testResult,
 			// Member 6 is the executing one. First 5 attempts fail and are
 			// retried using the random algorithm. The 6th attempt does not
 			// return an error but member 6 is excluded for this attempt so,
@@ -296,12 +308,13 @@ func TestDkgRetryLoop(t *testing.T) {
 				cancelCtx()
 				return ctx, cancelCtx
 			},
-			dkgAttemptFn: func(attempt *dkgAttemptParams) (*dkg.Result, error) {
-				return nil, fmt.Errorf("invalid data")
+			dkgAttemptFn: func(attempt *dkgAttemptParams) (*dkg.Result, uint64, error) {
+				return nil, 0, fmt.Errorf("invalid data")
 			},
-			expectedErr:         fmt.Errorf("dkg retry loop received stop signal on attempt [1]"),
-			expectedResult:      nil,
-			expectedLastAttempt: nil,
+			expectedErr:               fmt.Errorf("dkg retry loop received stop signal on attempt [1]"),
+			expectedResult:            nil,
+			expectedExecutionEndBlock: 0,
+			expectedLastAttempt:       nil,
 		},
 	}
 
@@ -325,9 +338,9 @@ func TestDkgRetryLoop(t *testing.T) {
 
 			var lastAttempt *dkgAttemptParams
 
-			result, err := retryLoop.start(
+			result, executionEndBlock, err := retryLoop.start(
 				ctx,
-				func(params *dkgAttemptParams) (*dkg.Result, error) {
+				func(params *dkgAttemptParams) (*dkg.Result, uint64, error) {
 					lastAttempt = params
 					return test.dkgAttemptFn(params)
 				},
@@ -340,6 +353,16 @@ func TestDkgRetryLoop(t *testing.T) {
 						"actual:   [%+v]",
 					test.expectedErr,
 					err,
+				)
+			}
+
+			if test.expectedExecutionEndBlock != executionEndBlock {
+				t.Errorf(
+					"unexpected execution end block\n"+
+						"expected: [%+v]\n"+
+						"actual:   [%+v]",
+					test.expectedExecutionEndBlock,
+					executionEndBlock,
 				)
 			}
 

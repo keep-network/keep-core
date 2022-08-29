@@ -1,18 +1,22 @@
 package cmd
 
 import (
+	"bufio"
+	"fmt"
 	"math/big"
 	"os"
 	"reflect"
 	"runtime"
+	"strings"
 	"testing"
 	"time"
 
-	"github.com/keep-network/keep-core/config"
-	"github.com/keep-network/keep-core/pkg/chain/ethereum"
 	"github.com/spf13/cobra"
 	"golang.org/x/exp/slices"
 
+	commonEthereum "github.com/keep-network/keep-common/pkg/chain/ethereum"
+	"github.com/keep-network/keep-core/config"
+	chainEthereum "github.com/keep-network/keep-core/pkg/chain/ethereum"
 	ethereumBeacon "github.com/keep-network/keep-core/pkg/chain/ethereum/beacon/gen"
 	ethereumEcdsa "github.com/keep-network/keep-core/pkg/chain/ethereum/ecdsa/gen"
 	ethereumThreshold "github.com/keep-network/keep-core/pkg/chain/ethereum/threshold/gen"
@@ -89,7 +93,7 @@ var cmdFlagsTests = map[string]struct {
 			"/ip4/127.0.0.1/tcp/5001/ipfs/3w6C4TFVo",
 			"/dns4/domain.local/tcp/3819/ipfs/16xtuKXdTd",
 		},
-		defaultValue: []string{},
+		defaultValue: readPeers(commonEthereum.Mainnet),
 	},
 	"network.announcedAddresses": {
 		readValueFunc: func(c *config.Config) interface{} { return c.LibP2P.AnnouncedAddresses },
@@ -179,7 +183,7 @@ var cmdFlagsTests = map[string]struct {
 	},
 	"developer.randomBeaconAddress": {
 		readValueFunc: func(c *config.Config) interface{} {
-			address, _ := c.Ethereum.ContractAddress(ethereum.RandomBeaconContractName)
+			address, _ := c.Ethereum.ContractAddress(chainEthereum.RandomBeaconContractName)
 			return address.String()
 		},
 		flagName:              "--developer.randomBeaconAddress",
@@ -189,7 +193,7 @@ var cmdFlagsTests = map[string]struct {
 	},
 	"developer.walletRegistryAddress": {
 		readValueFunc: func(c *config.Config) interface{} {
-			address, _ := c.Ethereum.ContractAddress(ethereum.WalletRegistryContractName)
+			address, _ := c.Ethereum.ContractAddress(chainEthereum.WalletRegistryContractName)
 			return address.String()
 		},
 		flagName:              "--developer.walletRegistryAddress",
@@ -199,7 +203,7 @@ var cmdFlagsTests = map[string]struct {
 	},
 	"developer.tokenStakingAddress": {
 		readValueFunc: func(c *config.Config) interface{} {
-			address, _ := c.Ethereum.ContractAddress(ethereum.TokenStakingContractName)
+			address, _ := c.Ethereum.ContractAddress(chainEthereum.TokenStakingContractName)
 			return address.String()
 		},
 		flagName:              "--developer.tokenStakingAddress",
@@ -344,4 +348,28 @@ func initTestCommand() (*cobra.Command, *config.Config, *string) {
 	initFlags(testCommand, &testConfigFilePath, testConfig, config.AllCategories...)
 
 	return testCommand, testConfig, &testConfigFilePath
+}
+
+func readPeers(network commonEthereum.Network) []string {
+	file, err := os.Open(fmt.Sprintf("../config/_peers/%s", network))
+	if err != nil {
+		panic(err)
+	}
+	defer file.Close()
+
+	scanner := bufio.NewScanner(file)
+	result := []string{}
+	for scanner.Scan() {
+		str := scanner.Text()
+		if str == "" || strings.HasPrefix(str, "#") {
+			continue
+		}
+		result = append(result, str)
+	}
+
+	if err := scanner.Err(); err != nil {
+		panic(err)
+	}
+
+	return result
 }
