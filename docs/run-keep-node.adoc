@@ -148,7 +148,7 @@ The minimum required configuration for the client to start covers setting:
 
 == Build from Source
 
-See our link:development/README.adoc#build-client[developer docs].
+See our xref:development/README.adoc#build-client[developer docs].
 
 == Docker
 
