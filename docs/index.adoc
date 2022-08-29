@@ -2,6 +2,6 @@
 
 *Table of Contents*
 
-* link:./registration.adoc[Registration]
-* link:./run-keep-node.adoc[Run Keep Client Node]
-* link:./development/README.adoc[Developers]
+* link:./registration.html[Registration]
+* link:./run-keep-node.html[Run Keep Client Node]
+* link:./development/README.html[Developers]
