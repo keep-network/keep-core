@@ -1,8 +1,11 @@
-:toc: macro
+:toc: left
+:toclevels: 3
+:sectanchors: true
+:sectids: true
+:source-highlighter: rouge
+:icons: font
 
 = T developer documentation
-
-toc::[]
 
 == <<local-t-network.adoc,Setting up local T network>>
 
