@@ -104,4 +104,4 @@ printf "${LOG_START}Starting keep-core client...${LOG_END}"
 cd $KEEP_CORE_PATH
 KEEP_ETHEREUM_PASSWORD=$KEEP_ETHEREUM_PASSWORD \
     LOG_LEVEL=${LOG_LEVEL} \
-    ./keep-client --config $KEEP_CORE_CONFIG_FILE_PATH start
+    ./keep-client --config $KEEP_CORE_CONFIG_FILE_PATH start --developer

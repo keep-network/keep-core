@@ -4,17 +4,17 @@ import (
 	"fmt"
 	"math/big"
 
-	"github.com/keep-network/keep-common/pkg/chain/ethereum"
+	"github.com/spf13/cobra"
+
+	commonEthereum "github.com/keep-network/keep-common/pkg/chain/ethereum"
 	"github.com/keep-network/keep-common/pkg/chain/ethereum/ethutil"
 	"github.com/keep-network/keep-common/pkg/cmd/flag"
 	"github.com/keep-network/keep-common/pkg/rate"
 	"github.com/keep-network/keep-core/config"
+	chainEthereum "github.com/keep-network/keep-core/pkg/chain/ethereum"
 	"github.com/keep-network/keep-core/pkg/metrics"
 	"github.com/keep-network/keep-core/pkg/net/libp2p"
 	"github.com/keep-network/keep-core/pkg/tbtc"
-	"github.com/spf13/cobra"
-
-	chainEthereum "github.com/keep-network/keep-core/pkg/chain/ethereum"
 )
 
 func initFlags(
@@ -28,6 +28,7 @@ func initFlags(
 		case config.General:
 			initConfigFlags(cmd, configFilePath)
 		case config.Ethereum:
+			initEthereumNetworkFlags(cmd)
 			initEthereumFlags(cmd, cfg)
 		case config.Network:
 			initNetworkFlags(cmd, cfg)
@@ -57,6 +58,38 @@ func initConfigFlags(cmd *cobra.Command, configFilePath *string) {
 		"c",
 		"", // Don't define default value as it would fail configuration reading.
 		"Path to the configuration file. Supported formats: TOML, YAML, JSON.",
+	)
+}
+
+// Initializes boolean flags for Ethereum network configuration. The flags can be used
+// to run a client for a specific Ethereum network, e.g. add `--goerli` to the client
+// start command to run the client against Görli Ethereum network. Only one flag
+// from this set is allowed.
+func initEthereumNetworkFlags(cmd *cobra.Command) {
+	// TODO: Consider removing `--mainnet` flag. For now it's here to reduce a confusion
+	// when developing and testing the client.
+	cmd.Flags().Bool(
+		commonEthereum.Mainnet.String(),
+		false,
+		"Mainnet network",
+	)
+
+	cmd.Flags().Bool(
+		commonEthereum.Goerli.String(),
+		false,
+		"Görli network",
+	)
+
+	cmd.Flags().Bool(
+		commonEthereum.Developer.String(),
+		false,
+		"Developer network",
+	)
+
+	cmd.MarkFlagsMutuallyExclusive(
+		commonEthereum.Mainnet.String(),
+		commonEthereum.Goerli.String(),
+		commonEthereum.Developer.String(),
 	)
 }
 
@@ -109,7 +142,7 @@ func initEthereumFlags(cmd *cobra.Command, cfg *config.Config) {
 		cmd.Flags(),
 		&cfg.Ethereum.BalanceAlertThreshold,
 		"ethereum.balanceAlertThreshold",
-		*ethereum.WrapWei(big.NewInt(500000000000000000)), // 0.5 ether
+		*commonEthereum.WrapWei(big.NewInt(500000000000000000)), // 0.5 ether
 		"The minimum balance of operator account below which client starts reporting errors in logs.",
 	)
 }
