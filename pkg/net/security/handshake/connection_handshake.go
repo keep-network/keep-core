@@ -13,20 +13,20 @@
 // responder exchange messages. The entire handshake procedure can be described
 // with the following diagram:
 //
-// # INITIATOR                             RESPONDER
+//
+// INITIATOR                             RESPONDER
 //
 // [Act 1]
 // nonce1 = random_nonce()
 // act1Message{nonce1, protocol_id1} ---->
-//
-//	[Act 2]
-//	nonce2 = random_nonce()
-//	challenge = sha256(nonce1 || nonce2)
-//	<---- act2Message{challenge, nonce2, protocol_id2}
-//
+//                                       [Act 2]
+//                                       nonce2 = random_nonce()
+//                                       challenge = sha256(nonce1 || nonce2)
+//                                       <---- act2Message{challenge, nonce2, protocol_id2}
 // [Act 3]
 // challenge = sha256(nonce1 || nonce2)
 // act3Message{challenge} ---->
+//
 //
 // act1Message, act2Message, and act3Message are messages exchanged between
 // initiator and responder in acts one, two, and three of the handshake,
@@ -41,7 +41,7 @@
 // state before receiving the first message, there is no representation for
 // responder state in the act one.
 //
-//	[RFC]: /docs/rfc/rfc-2-network-security-implementation.adoc
+//     [RFC]: /docs/rfc/rfc-2-network-security-implementation.adoc
 package handshake
 
 import (
