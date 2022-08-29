@@ -5,6 +5,9 @@ Usage:
   start [flags]
 
 Flags:
+      --mainnet                                    Mainnet network
+      --goerli                                     Görli network
+      --developer                                  Developer network
   -c, --config string                              Path to the configuration file. Supported formats: TOML, YAML, JSON.
       --ethereum.url string                        WS connection URL for Ethereum client.
       --ethereum.keyFile string                    The local filesystem path to Keep operator account keyfile.

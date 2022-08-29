@@ -21,6 +21,7 @@ func (epkm *ephemeralPublicKeyMessage) Marshal() ([]byte, error) {
 	return (&pb.EphemeralPublicKeyMessage{
 		SenderID:            uint32(epkm.senderID),
 		EphemeralPublicKeys: ephemeralPublicKeys,
+		SessionID:           epkm.sessionID,
 	}).Marshal()
 }
 
@@ -43,6 +44,7 @@ func (epkm *ephemeralPublicKeyMessage) Unmarshal(bytes []byte) error {
 	}
 
 	epkm.ephemeralPublicKeys = ephemeralPublicKeys
+	epkm.sessionID = pbMsg.SessionID
 
 	return nil
 }
@@ -189,6 +191,44 @@ func unmarshalPublicKeyMap(
 	}
 
 	return unmarshalled, nil
+}
+
+// Marshal converts this resultSignatureMessage to a byte array suitable
+// for network communication.
+func (rsm *resultSignatureMessage) Marshal() ([]byte, error) {
+	return (&pb.ResultSignatureMessage{
+		SenderID:   uint32(rsm.senderID),
+		ResultHash: rsm.resultHash[:],
+		Signature:  rsm.signature,
+		PublicKey:  rsm.publicKey,
+		SessionID:  rsm.sessionID,
+	}).Marshal()
+}
+
+// Unmarshal converts a byte array produced by Marshal to a
+// resultSignatureMessage.
+func (rsm *resultSignatureMessage) Unmarshal(bytes []byte) error {
+	pbMsg := pb.ResultSignatureMessage{}
+	if err := pbMsg.Unmarshal(bytes); err != nil {
+		return err
+	}
+
+	if err := validateMemberIndex(pbMsg.SenderID); err != nil {
+		return err
+	}
+	rsm.senderID = group.MemberIndex(pbMsg.SenderID)
+
+	resultHash, err := ResultHashFromBytes(pbMsg.ResultHash)
+	if err != nil {
+		return err
+	}
+	rsm.resultHash = resultHash
+
+	rsm.signature = pbMsg.Signature
+	rsm.publicKey = pbMsg.PublicKey
+	rsm.sessionID = pbMsg.SessionID
+
+	return nil
 }
 
 // Marshal converts the PreParams to a byte array.

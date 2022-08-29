@@ -75,7 +75,7 @@ ENV APP_NAME=keep-client \
 COPY --from=gobuild $BIN_PATH/$APP_NAME $BIN_PATH
 
 # ENTRYPOINT cant handle ENV variables.
-ENTRYPOINT ["keep-client", "-config", "/keepclient/config.toml"]
+ENTRYPOINT ["keep-client"]
 
 # docker caches more when using CMD [] resulting in a faster build.
 CMD []
