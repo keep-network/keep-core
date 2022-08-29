@@ -15,7 +15,6 @@ import (
 )
 
 // TODO: Unit tests for `node.go`.
-// TODO: Extract the DKG-specific code into a separate file `pkg/tbtc/dkg.go`
 
 // node represents the current state of an ECDSA node.
 type node struct {
