@@ -1,6 +1,7 @@
 package dkg
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -12,6 +13,12 @@ import (
 	"github.com/keep-network/keep-core/pkg/protocol/group"
 	"github.com/keep-network/keep-core/pkg/protocol/state"
 )
+
+// preParamsGetTimeout determines how long a specific DKG member will wait
+// for a TSS pre-parameters set in case the pool is empty. If the member
+// does not receive a pre-parameters set within that time, it exits with
+// an error.
+const preParamsGetTimeout = 1 * time.Minute
 
 // Executor represents an ECDSA distributed key generation process executor.
 type Executor struct {
@@ -64,7 +71,13 @@ func (e *Executor) Execute(
 
 	registerUnmarshallers(channel)
 
-	preParams, err := e.tssPreParamsPool.Get()
+	preParamsCtx, cancelPreParamsCtx := context.WithTimeout(
+		context.Background(),
+		preParamsGetTimeout,
+	)
+	defer cancelPreParamsCtx()
+
+	preParams, err := e.tssPreParamsPool.Get(preParamsCtx)
 	if err != nil {
 		return nil, 0, fmt.Errorf("failed fetching pre-params: [%v]", err)
 	}

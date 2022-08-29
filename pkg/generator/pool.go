@@ -90,13 +90,21 @@ func NewParameterPool[T any](
 
 // Get returns a new parameter. It is fetched from the pool or generated if the
 // pool is empty.
-func (pp *ParameterPool[T]) Get() (*T, error) {
-	generated := <-pp.pool
-	err := pp.persistence.Delete(generated)
-	if err != nil {
-		return nil, fmt.Errorf("could not delete persisted parameter: [%w]", err)
+func (pp *ParameterPool[T]) Get(ctx context.Context) (*T, error) {
+	select {
+	case generated := <-pp.pool:
+		err := pp.persistence.Delete(generated)
+		if err != nil {
+			return nil, fmt.Errorf(
+				"could not delete persisted parameter: [%w]",
+				err,
+			)
+		}
+
+		return generated, nil
+	case <-ctx.Done():
+		return nil, fmt.Errorf("context is done")
 	}
-	return generated, nil
 }
 
 // CurrentSize returns the current size of the pool - the number of available

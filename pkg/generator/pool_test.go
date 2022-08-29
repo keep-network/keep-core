@@ -2,7 +2,9 @@ package generator
 
 import (
 	"context"
+	"fmt"
 	"math/big"
+	"reflect"
 	"sort"
 	"sync"
 	"testing"
@@ -21,13 +23,43 @@ func TestGet(t *testing.T) {
 	defer scheduler.stop()
 
 	for i := 0; i < 70; i++ {
-		e, err := pool.Get()
+		e, err := pool.Get(context.Background())
 		if err != nil {
 			t.Errorf("unexpected error: [%v]", err)
 		}
 		if e == nil {
 			t.Errorf("expected not-nil parameter")
 		}
+	}
+}
+
+// TestGet_ContextCancelled covers the basic unhappy path when the context
+// argument got cancelled and the `Get` function should break the execution
+// and return an appropriate error.
+func TestGet_ContextCancelled(t *testing.T) {
+	pool, scheduler, _ := newTestPool(
+		5,
+		func(ctx context.Context) *big.Int {
+			<-ctx.Done()
+			return nil
+		},
+	)
+	defer scheduler.stop()
+
+	ctx, cancelCtx := context.WithCancel(context.Background())
+	cancelCtx()
+
+	_, err := pool.Get(ctx)
+
+	expectedErr := fmt.Errorf("context is done")
+	if !reflect.DeepEqual(expectedErr, err) {
+		t.Errorf(
+			"unexpected error\n"+
+				"expected: [%v]\n"+
+				"actual:   [%v]",
+			expectedErr,
+			err,
+		)
 	}
 }
 
@@ -100,13 +132,13 @@ func TestReadAll(t *testing.T) {
 	pool, scheduler := newTestPoolWithPersistence(100, persistence)
 	defer scheduler.stop()
 
-	e, err := pool.Get()
+	e, err := pool.Get(context.Background())
 	if err != nil {
 		t.Errorf("unexpected error: [%v]", err)
 	}
 	testutils.AssertBigIntsEqual(t, "parameter value", big.NewInt(100), e)
 
-	e, err = pool.Get()
+	e, err = pool.Get(context.Background())
 	if err != nil {
 		t.Errorf("unexpected error: [%v]", err)
 	}
@@ -124,7 +156,7 @@ func TestDelete(t *testing.T) {
 	pool, scheduler := newTestPoolWithPersistence(100, persistence)
 	defer scheduler.stop()
 
-	e, err := pool.Get()
+	e, err := pool.Get(context.Background())
 	if err != nil {
 		t.Errorf("unexpected error: [%v]", err)
 	}
