@@ -68,19 +68,19 @@ func initConfigFlags(cmd *cobra.Command, configFilePath *string) {
 func initEthereumNetworkFlags(cmd *cobra.Command) {
 	// TODO: Consider removing `--mainnet` flag. For now it's here to reduce a confusion
 	// when developing and testing the client.
-	cmd.Flags().Bool(
+	cmd.PersistentFlags().Bool(
 		commonEthereum.Mainnet.String(),
 		false,
 		"Mainnet network",
 	)
 
-	cmd.Flags().Bool(
+	cmd.PersistentFlags().Bool(
 		commonEthereum.Goerli.String(),
 		false,
 		"Görli network",
 	)
 
-	cmd.Flags().Bool(
+	cmd.PersistentFlags().Bool(
 		commonEthereum.Developer.String(),
 		false,
 		"Developer network",
@@ -95,14 +95,14 @@ func initEthereumNetworkFlags(cmd *cobra.Command) {
 
 // Initialize flags for Ethereum configuration.
 func initEthereumFlags(cmd *cobra.Command, cfg *config.Config) {
-	cmd.Flags().StringVar(
+	cmd.PersistentFlags().StringVar(
 		&cfg.Ethereum.URL,
 		"ethereum.url",
 		"",
 		"WS connection URL for Ethereum client.",
 	)
 
-	cmd.Flags().StringVar(
+	cmd.PersistentFlags().StringVar(
 		&cfg.Ethereum.Account.KeyFile,
 		"ethereum.keyFile",
 		"",
