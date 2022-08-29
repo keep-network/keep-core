@@ -345,12 +345,12 @@ jobs:
         with:
           upstream-builds: ${{ github.event.inputs.upstream_builds }}
           query: |
-            solidity-contracts-version = github.com/threshold-network/solidity-contracts#version
+            threshold-contracts-version = github.com/threshold-network/solidity-contracts#version
 
       - name: Resolve latest contracts
         run: |
           yarn upgrade \
-            @threshold-network/solidity-contracts@${{ steps.upstream-builds-query.outputs.solidity-contracts-version }} \
+            @threshold-network/solidity-contracts@${{ steps.upstream-builds-query.outputs.threshold-contracts-version }} \
             @keep-network/sortition-pools
       
       - name: Deploy contracts
