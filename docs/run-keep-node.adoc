@@ -1,0 +1,238 @@
+:toc: left
+:toclevels: 3
+:sectanchors: true
+:sectids: true
+:source-highlighter: rouge
+:icons: font
+
+= Run Keep Node
+
+[#system-considerations]
+== System Considerations
+
+The Keep Network expects certain capabilities for each node running on the network.
+To help attain these capabilities consider the following criteria:
+
+- It is paramount that Keep nodes remain available to the Keep Network. We strongly encourage a
+  stable and redundant internet connection.
+- A connection to a production grade self-hosted or third party Ethereum node deployment.
+- Persistent and redundant storage that will survive a VM or container rotation, and disk failure.
+- Each node running on the network requires a unique Ethereum operator account.
+- Each node running on the network requires a unique IP address or a unique
+  application port running under the same IP.
+
+=== Recommended Machine Types
+
+Your operating environment will ultimately dictate what machine type to go with.  This is
+particularly relevant if you're running a containerized solution where multiple applications
+are sharing VM resources.  The below types are sufficient for running at least one instance of the
+Keep Node.
+
+// TODO: Replace TBDs with recommendations.
+[%header,cols=2*]
+|===
+|Cloud Provider
+|Machine Type
+
+|Google Cloud
+|TBD
+
+|AWS
+|TBD
+
+|Azure
+|TBD
+
+|Self-hosted
+|TBD
+|===
+
+// TODO: == Gas Costs
+
+== Starting a Client
+
+=== Configuration
+
+The client expects configuration options to be specified in a <<config-file,config file>> 
+or passed as <<cli,CLI flags>>. If you specify an option by using a parameter on 
+the command line, it will override the value read from the configuration file.
+
+[#ethereum-key]
+==== Operator's Ethereum Key File
+
+Ethereum Key File is expected to be encrypted with a password. The password has
+to be provided in prompt after the client starts or configured as a `KEEP_ETHEREUM_PASSWORD`
+environment variable `KEEP_ETHEREUM_PASSWORD`.
+
+[#ethereum-api]
+==== Ethereum API
+
+A Keep Node requires a connection to a WebSocket Ethereum API. You should obtain
+a WS API URL from a service provider 
+(e.g. link:https://www.alchemy.com/[Alchemy], link:https://www.infura.io/[Infura]) 
+or run your own Ethereum node
+(e.g. link:https://geth.ethereum.org/[Geth]).
+
+[#cli]
+==== CLI Options
+
+[source,bash,role=small]
+----
+include::./resources/client-start-help[]
+----
+
+[#config-file]
+==== Config File
+
+Application configuration can be stored in a file and passed to the application
+with the `--config` flag. 
+
+Example:
+[source,bash]
+----
+./keep-client --config /path/to/your/config.toml start
+----
+
+Configuration files in formats TOML, YAML and JSON are supported.
+
+Sample configuration file:
+
+[source,toml,role=small]
+----
+include::../configs/config.toml.SAMPLE[]
+----
+
+[#storage]
+==== Persistance
+
+A client will produce and store data on disk. It is crucial to ensure the data directory 
+is persisted and backed on a regular basis. The directory should be provided to
+the client under `storage.DataDir` (flag: `--storage.dataDir`) configuration property.
+
+==== Network
+
+Default port mappings.
+
+[%header,cols=2*]
+|===
+|Egress
+|Port
+
+|Keep Network
+| TCP: `3919`
+|===
+
+[%header,cols=2*]
+|===
+|Ingress
+|Port
+
+|Keep Network
+|`3919`
+|===
+
+If you set a different `port` in your configuration, or configure `peers` with
+non-default ports configured, firewall rules will need to be adjusted accordingly.
+
+// TODO: Add Metrics and Diagnostics
+
+==== Minimum Required Configuration
+
+The minimum required configuration for the client to start covers setting:
+
+- `KEEP_ETHEREUM_PASSWORD` environment variable (see: <<ethereum-key>> section),
+- `ethereum.url` config property (see: <<ethereum-api>> section),
+- `ethereum.keyFile` config property (see: <<ethereum-key>> section),
+- `storage.dataDir` config property (see: <<storage>> section).
+
+
+== Build from Source
+
+See our link:development/README.adoc#build-client[developer docs].
+
+== Docker
+
+// TODO: Update with mainnet Docker image details
+
+// [source,shell,role=small]
+// ----
+// include::resources/docker-run-mainnet-sample[]
+// ----
+
+== Logging
+
+=== Configuration
+
+Logging can be configured with environment variables.
+Please see sample settings:
+
+[source,bash]
+----
+LOG_LEVEL=DEBUG
+IPFS_LOGGING_FMT=nocolor
+GOLOG_FILE=/var/log/keep/keep.log
+GOLOG_TRACING_FILE=/var/log/keep/trace.json
+----
+
+=== Startup
+
+Below are some of the key things to look out for to make sure you're booted and connected to the
+network:
+
+== Testnet
+
+The Keep Network Testnet environment is running against Ethereum Görli Testnet.
+To run the client connected to the Testnet add `--goerli` flag to the start command.
+
+A Docker image for Testnet is published under:
+`us-docker.pkg.dev/keep-test-f3e0/public/keep-client:latest` +
+See <<docker-testnet>> section for details.
+
+[#testnet-bootstrap,Testnet Bootstrap Nodes]
+=== Bootstrap Nodes
+
+A client running on testnet establishes connection to the following bootstrap nodes:
+
+[source]
+----
+include::../config/_peers/goerli[]
+----
+
+[#testnet-contracts,Testnet Contracts]
+=== Contracts
+
+// TODO: List contracts addresses
+
+[#docker-testnet,Docker Testnet]
+=== Docker
+
+==== Get Image
+
+*Latest:*
+`us-docker.pkg.dev/keep-test-f3e0/public/keep-client`
+
+*Tag:*
+`us-docker.pkg.dev/keep-test-f3e0/public/keep-client:<tag-version>`
+
+==== Run Image
+
+This is a sample run command for illustration purposes only.
+
+[source,shell,role=small]
+----
+include::resources/docker-run-testnet-sample[]
+----
+
+== Kubernetes
+
+At Keep we run on GCP + Kubernetes. To accommodate the aforementioned <<system-considerations>>
+we use the following pattern for each of our environments:
+
+- Regional Kubernetes cluster.
+- 10 Keep clients.
+- A LoadBalancer Service for each client.
+- A StatefulSet for each client.
+
+You can see our Testnet Kubernetes configurations link:../infrastructure/kube/keep-test[here]
+
+// TODO: Add more from run-random-beacon.adoc

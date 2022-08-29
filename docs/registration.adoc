@@ -1,0 +1,103 @@
+:toc: left
+:toclevels: 3
+:sectanchors: true
+:sectids: true
+:source-highlighter: rouge
+:icons: font
+
+= Registration
+
+== Stake
+
+Stake T tokens to the Staking Provider account according to the instructions
+received from your Staking Provider or 
+the link:https://docs.threshold.network/guides/migrating-legacy-stakes[Threshold Network Staking Guide].
+
+== Authorize Applications
+
+Authorize the Random Beacon and TBTC applications.
+
+// TODO: Add instruction
+
+[#register-operator]
+== Register Operator
+
+Once the tokens are staked the one controlling the Staking Provider account has to
+register an operator for the Random Beacon and TBTC applications.
+
+If a Key File for the Staking Provider account is available the registration
+can be performed from the <<register-operator-client>>.
+
+Another way is registration from the <<register-operator-web>>.
+
+NOTE: For the Keep Legacy stakes the Staking Provider account and Operator account are
+the same.
+
+[#register-operator-client]
+=== Keep Client
+
+An operator registering transaction can be submitted with the Keep Client.
+
+The commands that should be used are provided below.
+You need to replace few values in the commands:
+
+* `STAKING_PROVIDER_KEY_FILE_ACCOUNT_PASSWORD` - a password used for the Staking Provider
+Ethereum Key File encryption,
+
+* `STAKING_PROVIDER_KEY_FILE_PATH` - a path to the Staking Provider Ethereum
+Key File,
+
+* `ETHEREUM_API_WS_URL` - an URL to the Ethereum WebSocket API,
+
+* `OPERATOR_ADDRESS` - an Operator address that will be running the Keep Client.
+
+
+Command templates for the supported applications:
+
+* Random Beacon application (`RandomBeacon` contract)
+
+[source,bash]
+----
+export KEEP_ETHEREUM_PASSWORD=<STAKING_PROVIDER_KEY_FILE_ACCOUNT_PASSWORD>
+
+keep-client ethereum \
+    --ethereum.url <ETHEREUM_API_WS_URL>
+    --ethereum.keyFile <STAKING_PROVIDER_KEY_FILE_PATH> \
+    beacon random-beacon register-operator --submit
+    <OPERATOR_ADDRESS>
+----
+
+* TBTC application (`WalletRegistry` contract)
+
+[source,bash]
+----
+export KEEP_ETHEREUM_PASSWORD=<STAKING_PROVIDER_KEY_FILE_ACCOUNT_PASSWORD>
+
+keep-client ethereum \
+    --ethereum.url <ETHEREUM_API_WS_URL>
+    --ethereum.keyFile <STAKING_PROVIDER_KEY_FILE_PATH> \
+    ecdsa wallet-registry register-operator --submit
+    <OPERATOR_ADDRESS>
+----
+
+[#register-operator-web]
+=== Web Browser
+
+An operator registering transactions can be submitted with Etherscan.
+
+For each of the `RandomBeacon` and `WalletRegistry` contracts perform the following steps:
+
+1. Find the address of the contract and open it on Etherscan (see below).
+
+2. Go to `Contract` -> `Write Contract` tab.
+
+3. Connect your wallet with `Connect to Web3` button.
+
+4. Submit the `registerOperator` function with your Operator address as an argument.
+
+Please see the 
+link:https://docs.threshold.network/extras/contract-addresses#keep-network-contracts[Keep Network Contract Addresses]
+page for the recent Mainnet addresses of the contracts.
+// TODO: Add section with the Keep Network contracts addresses to the Threshold Network docs.
+
+For Testnet contracts please visit the link:./run-keep-node.adoc#testnet-contracts[link].
