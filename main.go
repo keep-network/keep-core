@@ -39,6 +39,7 @@ func main() {
 	rootCmd.Short = "CLI for The Keep Network"
 	rootCmd.Long = "Command line interface (CLI) for running a Keep provider"
 	rootCmd.Version = fmt.Sprintf("%s (revision %s)", version, revision)
+	rootCmd.TraverseChildren = true
 
 	rootCmd.AddCommand(
 		cmd.StartCommand,
