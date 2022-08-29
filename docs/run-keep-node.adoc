@@ -105,9 +105,11 @@ include::../configs/config.toml.SAMPLE[]
 [#storage]
 ==== Persistance
 
-A client will produce and store data on disk. It is crucial to ensure the data directory 
-is persisted and backed on a regular basis. The directory should be provided to
+A client will produce and store data on disk. The directory should be provided to
 the client under `storage.DataDir` (flag: `--storage.dataDir`) configuration property.
+
+IMPORTANT: It is crucial to ensure the data directory is persisted and backed up on
+a regular basis.
 
 ==== Network
 
