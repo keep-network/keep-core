@@ -85,7 +85,7 @@ build:
 	go build -o keep-client -a . 
 
 cmd-help: build
-	@echo '$$ keep-client start --help' > docs/development/cmd-help
-	./keep-client start --help >> docs/development/cmd-help
+	@echo '$$ keep-client start --help' > docs/resources/client-start-help
+	./keep-client start --help >> docs/resources/client-start-help
 
 .PHONY: all development goerli download_artifacts generate build cmd-help
