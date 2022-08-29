@@ -406,3 +406,138 @@ func (fm *finalizingMember) tssFinalize(
 		)
 	}
 }
+
+// SignDKGResult signs the provided DKG result and prepares the appropriate
+// result signature message.
+func (sm *signingMember) SignDKGResult(
+	dkgResult *Result,
+	resultSigner ResultSigner,
+) (*resultSignatureMessage, error) {
+	signedResult, err := resultSigner.SignResult(dkgResult)
+	if err != nil {
+		return nil, fmt.Errorf("failed to sign DKG result [%v]", err)
+	}
+
+	// Register self signature and result hash.
+	sm.selfDKGResultSignature = signedResult.Signature
+	sm.preferredDKGResultHash = signedResult.ResultHash
+
+	return &resultSignatureMessage{
+		senderID:   sm.memberIndex,
+		resultHash: signedResult.ResultHash,
+		signature:  signedResult.Signature,
+		publicKey:  signedResult.PublicKey,
+		sessionID:  sm.sessionID,
+	}, nil
+}
+
+// VerifyDKGResultSignatures verifies signatures received in messages from other
+// group members.
+// It collects signatures supporting only the same DKG result hash as the one
+// preferred by the current member.
+// Each member is allowed to broadcast only one signature over a preferred DKG
+// result hash.
+// The function assumes that the public key presented in the message is the
+// correct one. This key needs to be compared against the one used by network
+// client earlier, before this function is called.
+// TODO: Add unit tests.
+func (sm *signingMember) VerifyDKGResultSignatures(
+	messages []*resultSignatureMessage,
+	resultSigner ResultSigner,
+) (map[group.MemberIndex][]byte, error) {
+	duplicatedMessagesFromSender := func(senderID group.MemberIndex) bool {
+		messageFromSenderAlreadySeen := false
+		for _, message := range messages {
+			if message.senderID == senderID {
+				if messageFromSenderAlreadySeen {
+					return true
+				}
+				messageFromSenderAlreadySeen = true
+			}
+		}
+		return false
+	}
+
+	receivedValidResultSignatures := make(map[group.MemberIndex][]byte)
+
+	for _, message := range messages {
+		// Check if message from self.
+		if message.senderID == sm.memberIndex {
+			continue
+		}
+
+		// Check if sender sent multiple messages.
+		if duplicatedMessagesFromSender(message.senderID) {
+			sm.logger.Infof(
+				"[member: %v] received multiple messages from sender: [%d]",
+				sm.memberIndex,
+				message.senderID,
+			)
+			continue
+		}
+
+		// Sender's preferred DKG result hash doesn't match current member's
+		// preferred DKG result hash.
+		if message.resultHash != sm.preferredDKGResultHash {
+			sm.logger.Infof(
+				"[member: %v] signature from sender [%d] supports result different than preferred",
+				sm.memberIndex,
+				message.senderID,
+			)
+			continue
+		}
+
+		// Check if the signature is valid.
+		ok, err := resultSigner.VerifySignature(
+			&SignedResult{
+				ResultHash: message.resultHash,
+				Signature:  message.signature,
+				PublicKey:  message.publicKey,
+			},
+		)
+		if err != nil {
+			sm.logger.Infof(
+				"[member: %v] verification of signature from sender [%d] failed: [%v]",
+				sm.memberIndex,
+				message.senderID,
+				err,
+			)
+			continue
+		}
+		if !ok {
+			sm.logger.Infof(
+				"[member: %v] sender [%d] provided invalid signature",
+				sm.memberIndex,
+				message.senderID,
+			)
+			continue
+		}
+
+		receivedValidResultSignatures[message.senderID] = message.signature
+	}
+
+	// Register member's self signature.
+	receivedValidResultSignatures[sm.memberIndex] = sm.selfDKGResultSignature
+
+	return receivedValidResultSignatures, nil
+}
+
+// SubmitDKGResult submits the DKG result along with the supporting signatures
+// to the provided result submitter.
+func (sm *submittingMember) SubmitDKGResult(
+	result *Result,
+	signatures map[group.MemberIndex][]byte,
+	startBlockNumber uint64,
+	resultSubmitter ResultSubmitter,
+) error {
+	if err := resultSubmitter.SubmitResult(
+		sm.memberIndex,
+		result,
+		signatures,
+		startBlockNumber,
+	); err != nil {
+		return fmt.Errorf("failed to submit DKG result [%v]", err)
+	}
+
+	return nil
+}

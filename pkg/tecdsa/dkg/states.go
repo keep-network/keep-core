@@ -1,8 +1,10 @@
 package dkg
 
 import (
+	"bytes"
 	"context"
 
+	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/net"
 	"github.com/keep-network/keep-core/pkg/protocol/group"
 	"github.com/keep-network/keep-core/pkg/protocol/state"
@@ -26,6 +28,9 @@ const (
 
 	finalizationStateDelayBlocks  = 1
 	finalizationStateActiveBlocks = 2
+
+	resultSigningStateDelayBlocks  = 1
+	resultSigningStateActiveBlocks = 5
 )
 
 // ProtocolBlocks returns the total number of blocks it takes to execute
@@ -41,6 +46,14 @@ func ProtocolBlocks() uint64 {
 		tssRoundThreeStateActiveBlocks +
 		finalizationStateDelayBlocks +
 		finalizationStateActiveBlocks
+}
+
+// PrePublicationBlocks returns the total number of blocks it takes to execute
+// all the required work to get ready for the result publication or to decide
+// to skip the publication because there are not enough supporters of
+// the given result.
+func PrePublicationBlocks() uint64 {
+	return resultSigningStateDelayBlocks + resultSigningStateActiveBlocks
 }
 
 // ephemeralKeyPairGenerationState is the state during which members broadcast
@@ -456,4 +469,203 @@ func (fs *finalizationState) MemberIndex() group.MemberIndex {
 
 func (fs *finalizationState) result() *Result {
 	return fs.member.Result()
+}
+
+// resultSigningState is the state during which group members sign their
+// preferred DKG result (by hashing their DKG result, and then signing the
+// result), and share this over the broadcast channel.
+type resultSigningState struct {
+	channel         net.BroadcastChannel
+	resultSigner    ResultSigner
+	resultSubmitter ResultSubmitter
+	blockCounter    chain.BlockCounter
+
+	member *signingMember
+
+	result *Result
+
+	signatureMessages []*resultSignatureMessage
+
+	signingStartBlockHeight uint64
+}
+
+func (rss *resultSigningState) DelayBlocks() uint64 {
+	return resultSigningStateDelayBlocks
+}
+
+func (rss *resultSigningState) ActiveBlocks() uint64 {
+	return resultSigningStateActiveBlocks
+}
+
+func (rss *resultSigningState) Initiate(ctx context.Context) error {
+	message, err := rss.member.SignDKGResult(rss.result, rss.resultSigner)
+	if err != nil {
+		return err
+	}
+	if err := rss.channel.Send(ctx, message); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (rss *resultSigningState) Receive(msg net.Message) error {
+	// The network layer determines the message sender's public key based on
+	// the network client's pinned identity. The sender can not use any other
+	// public key than the one it is identified with in the network.
+	// Furthermore, the sender must possess the associated private key - each
+	// network message is signed with it.
+	//
+	// The network layer rejects any message with an incorrect signature or
+	// altered public key. By this point, we've conducted enough checks to
+	// be very certain that the sender' public key presented in the network
+	// net.Message is the correct one.
+	//
+	// In this final step, we compare the pinned network key with one used to
+	// produce a signature over the DKG result hash. If the keys don't match,
+	// it means that an incorrect key was used to sign DKG result hash and
+	// the message should be rejected.
+	isValidKeyUsed := func(phaseMessage *resultSignatureMessage) bool {
+		return bytes.Compare(phaseMessage.publicKey, msg.SenderPublicKey()) == 0
+	}
+
+	switch signedMessage := msg.Payload().(type) {
+	case *resultSignatureMessage:
+		if rss.member.shouldAcceptMessage(
+			signedMessage.SenderID(),
+			msg.SenderPublicKey(),
+		) && isValidKeyUsed(
+			signedMessage,
+		) && rss.member.sessionID == signedMessage.sessionID {
+			rss.signatureMessages = append(rss.signatureMessages, signedMessage)
+		}
+	}
+
+	return nil
+}
+
+func (rss *resultSigningState) Next() (state.State, error) {
+	return &signaturesVerificationState{
+		channel:           rss.channel,
+		resultSigner:      rss.resultSigner,
+		resultSubmitter:   rss.resultSubmitter,
+		blockCounter:      rss.blockCounter,
+		member:            rss.member,
+		result:            rss.result,
+		signatureMessages: rss.signatureMessages,
+		validSignatures:   make(map[group.MemberIndex][]byte),
+		verificationStartBlockHeight: rss.signingStartBlockHeight +
+			rss.DelayBlocks() +
+			rss.ActiveBlocks(),
+	}, nil
+}
+
+func (rss *resultSigningState) MemberIndex() group.MemberIndex {
+	return rss.member.memberIndex
+}
+
+// signaturesVerificationState is the state during which group members verify
+// all validSignatures that valid submitters sent over the broadcast channel in
+// the previous state. Valid validSignatures are added to the state.
+type signaturesVerificationState struct {
+	channel         net.BroadcastChannel
+	resultSigner    ResultSigner
+	resultSubmitter ResultSubmitter
+	blockCounter    chain.BlockCounter
+
+	member *signingMember
+
+	result *Result
+
+	signatureMessages []*resultSignatureMessage
+	validSignatures   map[group.MemberIndex][]byte
+
+	verificationStartBlockHeight uint64
+}
+
+func (svs *signaturesVerificationState) DelayBlocks() uint64 {
+	return state.SilentStateDelayBlocks
+}
+
+func (svs *signaturesVerificationState) ActiveBlocks() uint64 {
+	return state.SilentStateActiveBlocks
+}
+
+func (svs *signaturesVerificationState) Initiate(ctx context.Context) error {
+	signatures, err := svs.member.VerifyDKGResultSignatures(
+		svs.signatureMessages,
+		svs.resultSigner,
+	)
+	if err != nil {
+		return err
+	}
+
+	svs.validSignatures = signatures
+	return nil
+}
+
+func (svs *signaturesVerificationState) Receive(msg net.Message) error {
+	return nil
+}
+
+func (svs *signaturesVerificationState) Next() (state.State, error) {
+	return &resultSubmissionState{
+		channel:         svs.channel,
+		resultSubmitter: svs.resultSubmitter,
+		blockCounter:    svs.blockCounter,
+		member:          svs.member.initializeSubmittingMember(),
+		result:          svs.result,
+		signatures:      svs.validSignatures,
+		submissionStartBlockHeight: svs.verificationStartBlockHeight +
+			svs.DelayBlocks() +
+			svs.ActiveBlocks(),
+	}, nil
+}
+
+func (svs *signaturesVerificationState) MemberIndex() group.MemberIndex {
+	return svs.member.memberIndex
+}
+
+// resultSubmissionState is the state during which group members submit the dkg
+// result to the chain. This state concludes the DKG protocol.
+type resultSubmissionState struct {
+	channel         net.BroadcastChannel
+	resultSubmitter ResultSubmitter
+	blockCounter    chain.BlockCounter
+
+	member *submittingMember
+
+	result     *Result
+	signatures map[group.MemberIndex][]byte
+
+	submissionStartBlockHeight uint64
+}
+
+func (rss *resultSubmissionState) DelayBlocks() uint64 {
+	return state.SilentStateDelayBlocks
+}
+
+func (rss *resultSubmissionState) ActiveBlocks() uint64 {
+	return state.SilentStateActiveBlocks
+}
+
+func (rss *resultSubmissionState) Initiate(ctx context.Context) error {
+	return rss.member.SubmitDKGResult(
+		rss.result,
+		rss.signatures,
+		rss.submissionStartBlockHeight,
+		rss.resultSubmitter,
+	)
+}
+
+func (rss *resultSubmissionState) Receive(msg net.Message) error {
+	return nil
+}
+
+func (rss *resultSubmissionState) Next() (state.State, error) {
+	// returning nil represents this is the final state
+	return nil, nil
+}
+
+func (rss *resultSubmissionState) MemberIndex() group.MemberIndex {
+	return rss.member.memberIndex
 }

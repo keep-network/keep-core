@@ -27,3 +27,11 @@ message TSSRoundThreeMessage {
     bytes payload = 2;
     string sessionID = 3;
 }
+
+message ResultSignatureMessage {
+    uint32 senderID = 1;
+    bytes resultHash = 2;
+    bytes signature = 3;
+    bytes publicKey = 4;
+    string sessionID = 5;
+}
