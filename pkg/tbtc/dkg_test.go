@@ -393,7 +393,8 @@ func TestDkgRetryLoop(t *testing.T) {
 func TestFinalSigningGroup(t *testing.T) {
 	chainConfig := &ChainConfig{
 		GroupSize:       5,
-		HonestThreshold: 3,
+		GroupQuorum:     3,
+		HonestThreshold: 2,
 	}
 
 	selectedOperators := []chain.Address{
