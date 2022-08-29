@@ -391,7 +391,7 @@ func TestDkgRetryLoop(t *testing.T) {
 }
 
 func TestFinalSigningGroup(t *testing.T) {
-	beaconConfig := &ChainConfig{
+	chainConfig := &ChainConfig{
 		GroupSize:       5,
 		HonestThreshold: 3,
 	}
@@ -441,7 +441,7 @@ func TestFinalSigningGroup(t *testing.T) {
 				finalSigningGroup(
 					test.selectedOperators,
 					test.operatingMembersIndexes,
-					beaconConfig,
+					chainConfig,
 				)
 
 			if !reflect.DeepEqual(test.expectedError, err) {
