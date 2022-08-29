@@ -24,16 +24,16 @@ func readPeers(network commonEthereum.Network) ([]string, error) {
 // cleanStrings iterates over entires in a slice and trims spaces from the beginning
 // and the end of a string. It also removes empty entries or entries commented with `#`.
 func cleanStrings(s []string) []string {
-	var r []string
+	var peers []string
 	for _, str := range s {
 		str = strings.TrimSpace(str)
 		if str == "" || strings.HasPrefix(str, "#") {
 			continue
 		}
 
-		r = append(r, str)
+		peers = append(peers, str)
 	}
-	return r
+	return peers
 }
 
 // resolvePeers checks if peers are already set. If the peers list is empty it
