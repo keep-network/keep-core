@@ -182,10 +182,9 @@ jobs:
 
   contracts-deployment-testnet:
     needs: [contracts-build-and-test]
-    # TODO: Remove ` && github.ref != 'refs/heads/ci-dapp-dev-test'` befpre merge to main
     if: |
       github.event_name == 'workflow_dispatch'
-        && github.ref != 'refs/heads/dapp-development' && github.ref != 'refs/heads/ci-dapp-dev-test'
+        && github.ref != 'refs/heads/dapp-development'
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -318,10 +317,9 @@ jobs:
   # `dapp-development`.
   contracts-dapp-development-deployment-testnet:
     needs: [contracts-build-and-test]
-    # TODO: Remove ` || github.ref == 'refs/heads/ci-dapp-dev-test'` before merge to main
     if: |
       github.event_name == 'workflow_dispatch'
-        && (github.ref == 'refs/heads/dapp-development' || github.ref == 'refs/heads/ci-dapp-dev-test')
+        && github.ref == 'refs/heads/dapp-development'
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -371,15 +369,13 @@ jobs:
       - name: Publish to npm
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-        # TODO: remove `--dry-run` before merge to main
-        run: npm publish --access=public --tag dapp-development-${{ github.event.inputs.environment }} --network=${{ github.event.inputs.environment }} --dry-run
+        run: npm publish --access=public --tag dapp-development-${{ github.event.inputs.environment }} --network=${{ github.event.inputs.environment }}
 
       - name: Build and Publish Docker image
         uses: ./.github/actions/docker-build-push
         with:
           environment: ${{ github.event.inputs.environment }}
-          # TODO: remove `-wip` suffix before merge to main
-          imageName: keep-random-beacon-hardhat-dapp-dev-wip
+          imageName: keep-random-beacon-hardhat-dapp-dev
           context: ./solidity/random-beacon
           push: true
           gcrJsonKey: ${{ secrets.KEEP_TEST_GCR_JSON_KEY }}
