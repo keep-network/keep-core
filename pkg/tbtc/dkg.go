@@ -351,9 +351,8 @@ func finalSigningGroup(
 	map[group.MemberIndex]group.MemberIndex,
 	error,
 ) {
-	// TODO: Use `GroupQuorum` parameter instead of `HonestThreshold`
 	if len(selectedOperators) != chainConfig.GroupSize ||
-		len(operatingMembersIndexes) < chainConfig.HonestThreshold {
+		len(operatingMembersIndexes) < chainConfig.GroupQuorum {
 		return nil, nil, fmt.Errorf("invalid input parameters")
 	}
 
@@ -454,7 +453,6 @@ func (drs *dkgResultSubmitter) SubmitResult(
 ) error {
 	config := drs.chain.GetConfig()
 
-	// TODO: Compare signatures count to the GroupQuorum parameter
 	if len(signatures) < config.HonestThreshold {
 		return fmt.Errorf(
 			"could not submit result with [%v] signatures for signature "+
