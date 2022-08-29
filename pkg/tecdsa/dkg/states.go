@@ -498,7 +498,7 @@ func (rss *resultSigningState) ActiveBlocks() uint64 {
 }
 
 func (rss *resultSigningState) Initiate(ctx context.Context) error {
-	message, err := rss.member.SignDKGResult(rss.result, rss.resultSigner)
+	message, err := rss.member.signDKGResult(rss.result, rss.resultSigner)
 	if err != nil {
 		return err
 	}
@@ -591,7 +591,7 @@ func (svs *signaturesVerificationState) ActiveBlocks() uint64 {
 }
 
 func (svs *signaturesVerificationState) Initiate(ctx context.Context) error {
-	signatures, err := svs.member.VerifyDKGResultSignatures(
+	signatures, err := svs.member.verifyDKGResultSignatures(
 		svs.signatureMessages,
 		svs.resultSigner,
 	)
@@ -649,7 +649,7 @@ func (rss *resultSubmissionState) ActiveBlocks() uint64 {
 }
 
 func (rss *resultSubmissionState) Initiate(ctx context.Context) error {
-	return rss.member.SubmitDKGResult(
+	return rss.member.submitDKGResult(
 		rss.result,
 		rss.signatures,
 		rss.submissionStartBlockHeight,
