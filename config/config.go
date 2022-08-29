@@ -8,16 +8,17 @@ import (
 
 	"github.com/hashicorp/go-multierror"
 	"github.com/ipfs/go-log"
+	"github.com/mitchellh/mapstructure"
+	"github.com/spf13/pflag"
+	"github.com/spf13/viper"
+	"golang.org/x/crypto/ssh/terminal"
+
 	commonEthereum "github.com/keep-network/keep-common/pkg/chain/ethereum"
 	"github.com/keep-network/keep-core/pkg/beacon/registry"
 	"github.com/keep-network/keep-core/pkg/diagnostics"
 	"github.com/keep-network/keep-core/pkg/metrics"
 	"github.com/keep-network/keep-core/pkg/net/libp2p"
 	"github.com/keep-network/keep-core/pkg/tbtc"
-	"github.com/mitchellh/mapstructure"
-	"github.com/spf13/pflag"
-	"github.com/spf13/viper"
-	"golang.org/x/crypto/ssh/terminal"
 )
 
 var logger = log.Logger("keep-config")
