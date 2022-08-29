@@ -56,10 +56,19 @@ func (c *Config) resolveEthereumNetwork(flagSet *pflag.FlagSet) error {
 	var err error
 
 	c.Ethereum.Network, err = func() (commonEthereum.Network, error) {
-		if ok, err := flagSet.GetBool(commonEthereum.Goerli.String()); ok {
+		isGoerli, err := flagSet.GetBool(commonEthereum.Goerli.String())
+		if err != nil {
+			return commonEthereum.Unknown, err
+		}
+		if isGoerli {
 			return commonEthereum.Goerli, err
 		}
-		if ok, err := flagSet.GetBool(commonEthereum.Developer.String()); ok {
+
+		isDeveloper, err := flagSet.GetBool(commonEthereum.Developer.String())
+		if err != nil {
+			return commonEthereum.Unknown, err
+		}
+		if isDeveloper {
 			return commonEthereum.Developer, err
 		}
 
