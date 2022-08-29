@@ -16,9 +16,9 @@ jobs:
       path-filter: ${{ steps.filter.outputs.path-filter }}
     steps:
       - uses: actions/checkout@v3
-        if: github.event_name == 'pull_request' 
+        if: github.event_name == 'pull_request'
       - uses: dorny/paths-filter@v2
-        if: github.event_name == 'pull_request' 
+        if: github.event_name == 'pull_request'
         id: filter
         with:
           filters: |
@@ -36,7 +36,7 @@ jobs:
 
       - name: Build HTML docs
         id: html
-        uses: thesis/asciidoctor-action@v1.0.1
+        uses: thesis/asciidoctor-action@v1.1
         with:
           files: 'docs/*.adoc docs/**/*.adoc'
           args: '-a revdate=`date +%Y-%m-%d` --failure-level=ERROR'
