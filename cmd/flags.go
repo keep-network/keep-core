@@ -29,7 +29,8 @@ func initFlags(
 			initConfigFlags(cmd, configFilePath)
 		case config.Ethereum:
 			initEthereumNetworkFlags(cmd)
-			initEthereumFlags(cmd, cfg)
+			initEthereumGlobalFlags(cmd, cfg)
+			initEthereumLocalFlags(cmd, cfg)
 		case config.Network:
 			initNetworkFlags(cmd, cfg)
 		case config.Storage:
@@ -93,8 +94,9 @@ func initEthereumNetworkFlags(cmd *cobra.Command) {
 	)
 }
 
-// Initialize flags for Ethereum configuration.
-func initEthereumFlags(cmd *cobra.Command, cfg *config.Config) {
+// Initialize flags for global Ethereum configuration. The flags are defined for the
+// scope of the current command and all its children.
+func initEthereumGlobalFlags(cmd *cobra.Command, cfg *config.Config) {
 	cmd.PersistentFlags().StringVar(
 		&cfg.Ethereum.URL,
 		"ethereum.url",
@@ -108,7 +110,11 @@ func initEthereumFlags(cmd *cobra.Command, cfg *config.Config) {
 		"",
 		"The local filesystem path to Keep operator account keyfile.",
 	)
+}
 
+// Initialize flags for local Ethereum configuration. The flags are defined for the
+// scope of the current command only.
+func initEthereumLocalFlags(cmd *cobra.Command, cfg *config.Config) {
 	cmd.Flags().DurationVar(
 		&cfg.Ethereum.MiningCheckInterval,
 		"ethereum.miningCheckInterval",
