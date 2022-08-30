@@ -164,15 +164,24 @@ See our xref:development/README.adoc#build-client[developer docs].
 
 === Run
 
-Sample command to run the Keep Client:
+Sample commands to run the Keep Client.
+
+TIP: Instead of passing the configuration properties as command arguments you can
+point to a configuration file with `--config` flag. See <<config-file>> section for details.
+
+==== Binary
 
 [source,shell,role=small]
 ----
 include::resources/client-start-mainnet-sample[]
 ----
 
-TIP: Instead of passing the configuration properties as command arguments you can
-point to a configuration file with `--config` flag. See <<config-file>> section for details.
+==== Docker
+
+[source,shell,role=small]
+----
+include::resources/docker-start-mainnet-sample[]
+----
 
 == Logging
 
