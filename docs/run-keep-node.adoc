@@ -244,7 +244,7 @@ The client exposes the following metrics:
 - connected bootstraps count,
 - Ethereum client connectivity status (if a simple read-only CALL can be executed).
 
-Metrics can be enabled in the configuration `.toml` file. It is possible to customize port at which
+Metrics are enabled once the client starts. It is possible to customize port at which
 metrics endpoint is exposed as well as the frequency with which the metrics are collected.
 
 Exposed metrics contain the value and timestamp at which they were collected.
@@ -269,7 +269,7 @@ The client exposes the following diagnostics:
 - list of connected peers along with their network id and Ethereum operator address,
 - information about the client's network id and Ethereum operator address.
 
-Diagnostics can be enabled in the configuration `.toml` file. It is possible to customize port at which
+Diagnostics are enabled once the client starts. It is possible to customize port at which
 diagnostics endpoint is exposed.
 
 Example diagnostics endpoint call result:
