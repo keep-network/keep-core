@@ -52,7 +52,7 @@ func (ekpgm *ephemeralKeyPairGeneratingMember) generateEphemeralKeyPair() (
 func (skgm *symmetricKeyGeneratingMember) generateSymmetricKeys(
 	ephemeralPubKeyMessages []*ephemeralPublicKeyMessage,
 ) error {
-	for _, ephemeralPubKeyMessage := range ephemeralPubKeyMessages {
+	for _, ephemeralPubKeyMessage := range deduplicateBySender(ephemeralPubKeyMessages) {
 		otherMember := ephemeralPubKeyMessage.senderID
 
 		if !skgm.isValidEphemeralPublicKeyMessage(ephemeralPubKeyMessage) {
@@ -164,7 +164,7 @@ func (trtm *tssRoundTwoMember) tssRoundTwo(
 ) (*tssRoundTwoMessage, error) {
 	// Use messages from round one to update the local party and advance
 	// to round two.
-	for _, tssRoundOneMessage := range tssRoundOneMessages {
+	for _, tssRoundOneMessage := range deduplicateBySender(tssRoundOneMessages) {
 		senderID := tssRoundOneMessage.SenderID()
 
 		_, tssErr := trtm.tssParty.UpdateFromBytes(
@@ -283,7 +283,7 @@ func (trtm *tssRoundTwoMember) tssRoundThree(
 ) (*tssRoundThreeMessage, error) {
 	// Use messages from round two to update the local party and advance
 	// to round three.
-	for _, tssRoundTwoMessage := range tssRoundTwoMessages {
+	for _, tssRoundTwoMessage := range deduplicateBySender(tssRoundTwoMessages) {
 		senderID := tssRoundTwoMessage.SenderID()
 		senderTssPartyID := resolveSortedTssPartyID(trtm.tssParameters, senderID)
 
@@ -378,7 +378,7 @@ func (fm *finalizingMember) tssFinalize(
 ) error {
 	// Use messages from round three to update the local party and get the
 	// result.
-	for _, tssRoundThreeMessage := range tssRoundThreeMessages {
+	for _, tssRoundThreeMessage := range deduplicateBySender(tssRoundThreeMessages) {
 		senderID := tssRoundThreeMessage.SenderID()
 
 		_, tssErr := fm.tssParty.UpdateFromBytes(
@@ -407,9 +407,9 @@ func (fm *finalizingMember) tssFinalize(
 	}
 }
 
-// SignDKGResult signs the provided DKG result and prepares the appropriate
+// signDKGResult signs the provided DKG result and prepares the appropriate
 // result signature message.
-func (sm *signingMember) SignDKGResult(
+func (sm *signingMember) signDKGResult(
 	dkgResult *Result,
 	resultSigner ResultSigner,
 ) (*resultSignatureMessage, error) {
@@ -431,56 +431,29 @@ func (sm *signingMember) SignDKGResult(
 	}, nil
 }
 
-// VerifyDKGResultSignatures verifies signatures received in messages from other
-// group members.
-// It collects signatures supporting only the same DKG result hash as the one
-// preferred by the current member.
-// Each member is allowed to broadcast only one signature over a preferred DKG
-// result hash.
-// The function assumes that the public key presented in the message is the
-// correct one. This key needs to be compared against the one used by network
-// client earlier, before this function is called.
+// verifyDKGResultSignatures verifies signatures received in messages from other
+// group members. It collects signatures supporting only the same DKG result
+// hash as the one preferred by the current member. Each member is allowed to
+// broadcast only one signature over a preferred DKG result hash. The function
+// assumes that the input messages list does not contain a message from self and
+// that the public key presented in each message is the correct one.
+// This key needs to be compared against the one used by network client earlier,
+// before this function is called.
+//
 // TODO: Add unit tests.
-func (sm *signingMember) VerifyDKGResultSignatures(
+func (sm *signingMember) verifyDKGResultSignatures(
 	messages []*resultSignatureMessage,
 	resultSigner ResultSigner,
 ) (map[group.MemberIndex][]byte, error) {
-	duplicatedMessagesFromSender := func(senderID group.MemberIndex) bool {
-		messageFromSenderAlreadySeen := false
-		for _, message := range messages {
-			if message.senderID == senderID {
-				if messageFromSenderAlreadySeen {
-					return true
-				}
-				messageFromSenderAlreadySeen = true
-			}
-		}
-		return false
-	}
-
 	receivedValidResultSignatures := make(map[group.MemberIndex][]byte)
 
-	for _, message := range messages {
-		// Check if message from self.
-		if message.senderID == sm.memberIndex {
-			continue
-		}
-
-		// Check if sender sent multiple messages.
-		if duplicatedMessagesFromSender(message.senderID) {
-			sm.logger.Infof(
-				"[member: %v] received multiple messages from sender: [%d]",
-				sm.memberIndex,
-				message.senderID,
-			)
-			continue
-		}
-
+	for _, message := range deduplicateBySender(messages) {
 		// Sender's preferred DKG result hash doesn't match current member's
 		// preferred DKG result hash.
 		if message.resultHash != sm.preferredDKGResultHash {
 			sm.logger.Infof(
-				"[member: %v] signature from sender [%d] supports result different than preferred",
+				"[member: %v] signature from sender [%d] supports "+
+					"result different than preferred",
 				sm.memberIndex,
 				message.senderID,
 			)
@@ -497,7 +470,8 @@ func (sm *signingMember) VerifyDKGResultSignatures(
 		)
 		if err != nil {
 			sm.logger.Infof(
-				"[member: %v] verification of signature from sender [%d] failed: [%v]",
+				"[member: %v] verification of signature "+
+					"from sender [%d] failed: [%v]",
 				sm.memberIndex,
 				message.senderID,
 				err,
@@ -522,9 +496,9 @@ func (sm *signingMember) VerifyDKGResultSignatures(
 	return receivedValidResultSignatures, nil
 }
 
-// SubmitDKGResult submits the DKG result along with the supporting signatures
+// submitDKGResult submits the DKG result along with the supporting signatures
 // to the provided result submitter.
-func (sm *submittingMember) SubmitDKGResult(
+func (sm *submittingMember) submitDKGResult(
 	result *Result,
 	signatures map[group.MemberIndex][]byte,
 	startBlockNumber uint64,
@@ -540,4 +514,23 @@ func (sm *submittingMember) SubmitDKGResult(
 	}
 
 	return nil
+}
+
+// deduplicateBySender removes duplicated items for the given sender.
+// It always takes the first item that occurs for the given sender
+// and ignores the subsequent ones.
+func deduplicateBySender[T interface{ SenderID() group.MemberIndex }](
+	list []T,
+) []T {
+	senders := make(map[group.MemberIndex]bool)
+	result := make([]T, 0)
+
+	for _, item := range list {
+		if _, exists := senders[item.SenderID()]; !exists {
+			senders[item.SenderID()] = true
+			result = append(result, item)
+		}
+	}
+
+	return result
 }

@@ -4,23 +4,21 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/keep-network/keep-core/pkg/generator"
-	"github.com/keep-network/keep-core/pkg/tbtc"
-
-	"github.com/keep-network/keep-core/config"
-	"github.com/keep-network/keep-core/pkg/chain/ethereum"
-	"github.com/keep-network/keep-core/pkg/diagnostics"
-	"github.com/keep-network/keep-core/pkg/metrics"
-	"github.com/keep-network/keep-core/pkg/net"
+	"github.com/spf13/cobra"
 
 	"github.com/keep-network/keep-common/pkg/persistence"
+	"github.com/keep-network/keep-core/config"
 	"github.com/keep-network/keep-core/pkg/beacon"
 	"github.com/keep-network/keep-core/pkg/chain"
+	"github.com/keep-network/keep-core/pkg/chain/ethereum"
+	"github.com/keep-network/keep-core/pkg/diagnostics"
 	"github.com/keep-network/keep-core/pkg/firewall"
+	"github.com/keep-network/keep-core/pkg/generator"
+	"github.com/keep-network/keep-core/pkg/metrics"
+	"github.com/keep-network/keep-core/pkg/net"
 	"github.com/keep-network/keep-core/pkg/net/libp2p"
 	"github.com/keep-network/keep-core/pkg/net/retransmission"
-
-	"github.com/spf13/cobra"
+	"github.com/keep-network/keep-core/pkg/tbtc"
 )
 
 // StartCommand contains the definition of the start command-line subcommand.
@@ -35,7 +33,6 @@ func init() {
 			if err := clientConfig.ReadConfig(configFilePath, cmd.Flags(), config.AllCategories...); err != nil {
 				logger.Fatalf("error reading config: %v", err)
 			}
-
 		},
 		Run: func(cmd *cobra.Command, args []string) {
 			if err := start(cmd); err != nil {
@@ -62,6 +59,11 @@ Environment variables:
 // start starts a node
 func start(cmd *cobra.Command) error {
 	ctx := context.Background()
+
+	logger.Infof(
+		"Starting the client against [%s] ethereum network...",
+		clientConfig.Ethereum.Network,
+	)
 
 	beaconChain, tbtcChain, blockCounter, signing, operatorPrivateKey, err :=
 		ethereum.Connect(ctx, clientConfig.Ethereum)

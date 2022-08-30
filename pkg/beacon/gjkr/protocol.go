@@ -3,11 +3,11 @@
 //
 // See http://docs.keep.network/random-beacon/dkg.html
 //
-//	[GJKR 99]: Gennaro R., Jarecki S., Krawczyk H., Rabin T. (1999) Secure
-//	    Distributed Key Generation for Discrete-Log Based Cryptosystems. In:
-//	    Stern J. (eds) Advances in Cryptology — EUROCRYPT ’99. EUROCRYPT 1999.
-//	    Lecture Notes in Computer Science, vol 1592. Springer, Berlin, Heidelberg
-//	    http://groups.csail.mit.edu/cis/pubs/stasio/vss.ps.gz
+//     [GJKR 99]: Gennaro R., Jarecki S., Krawczyk H., Rabin T. (1999) Secure
+//         Distributed Key Generation for Discrete-Log Based Cryptosystems. In:
+//         Stern J. (eds) Advances in Cryptology — EUROCRYPT ’99. EUROCRYPT 1999.
+//         Lecture Notes in Computer Science, vol 1592. Springer, Berlin, Heidelberg
+//         http://groups.csail.mit.edu/cis/pubs/stasio/vss.ps.gz
 package gjkr
 
 import (
@@ -543,13 +543,13 @@ func (cm *CommittingMember) areSharesValidAgainstCommitments(
 // should never happen.
 //
 // Accuser is disqualified if:
-//   - accused the current member
-//   - the revealed private key does not match the public key previously broadcast
-//     by the accuser
-//   - accused inactive or already disqualified member and as a result, we do not
-//     have enough information to resolve that accusation
-//   - shares of the accused member are valid against commitments
-//   - accused member ID does not exist
+// - accused the current member
+// - the revealed private key does not match the public key previously broadcast
+//   by the accuser
+// - accused inactive or already disqualified member and as a result, we do not
+//   have enough information to resolve that accusation
+// - shares of the accused member are valid against commitments
+// - accused member ID does not exist
 //
 // Accused member is disqualified if:
 // - shares of the accused member can not be decrypted
@@ -758,14 +758,14 @@ func (sjm *SharesJustifyingMember) discardReceivedShares(
 // present in that message.
 //
 // There are two assumptions made here:
-//  1. If the given sender did not deliver ephemeral public key message in phase
-//     1, it should be marked as inactive, hence, this function should never be
-//     called for that sender ID,
-//  2. If the given sender delivered ephemeral public key message in phase 1
-//     but that message did not contain a public key for all group members
-//     including the one passed as receiver to this function, sender should be
-//     disqualified in phase 2, and this function should never be called for that
-//     sender ID.
+// 1. If the given sender did not deliver ephemeral public key message in phase
+//    1, it should be marked as inactive, hence, this function should never be
+//    called for that sender ID,
+// 2. If the given sender delivered ephemeral public key message in phase 1
+//    but that message did not contain a public key for all group members
+//    including the one passed as receiver to this function, sender should be
+//    disqualified in phase 2, and this function should never be called for that
+//    sender ID.
 func findPublicKey(
 	logger log.StandardLogger,
 	evidenceLog evidenceLog,
@@ -981,15 +981,15 @@ func (sm *SharingMember) publicKeyShare(
 // should never happen.
 //
 // Accuser is disqualified if:
-//   - accused the current member
-//   - the revealed private key does not match the public key previously broadcast
-//     by the accuser
-//   - accused inactive or already disqualified member and as a result, we do not
-//     have enough information to resolve that accusation
-//   - shares of the accused member are valid against public key share points
-//   - shares of the accused member can not be decrypted and the accuser didn't
-//     complain about this fact in phase 4 (protocol violation)
-//   - accused member ID does not exist
+// - accused the current member
+// - the revealed private key does not match the public key previously broadcast
+//   by the accuser
+// - accused inactive or already disqualified member and as a result, we do not
+//   have enough information to resolve that accusation
+// - shares of the accused member are valid against public key share points
+// - shares of the accused member can not be decrypted and the accuser didn't
+//   complain about this fact in phase 4 (protocol violation)
+// - accused member ID does not exist
 //
 // Accused member is disqualified if:
 // - shares of the accused member can not be decrypted
@@ -1684,13 +1684,13 @@ func pow(id group.MemberIndex, y int) *big.Int {
 //
 // This function combines individual public keys of all Qualified Members who were
 // approved for Phase 6. Three categories of individual public keys are considered:
-//  1. Current member's individual public key.
-//  2. Peer members' individual public keys - for members who passed a public key
-//     share points validation in Phase 8 and accusations resolution in Phase 9 and
-//     are still active group members.
-//  3. Misbehaved members' individual public keys - for QUAL members who were
-//     marked as disqualified or inactive and theirs individual private and
-//     public keys were reconstructed in Phase 11.
+// 1. Current member's individual public key.
+// 2. Peer members' individual public keys - for members who passed a public key
+//    share points validation in Phase 8 and accusations resolution in Phase 9 and
+//    are still active group members.
+// 3. Misbehaved members' individual public keys - for QUAL members who were
+//    marked as disqualified or inactive and theirs individual private and
+//    public keys were reconstructed in Phase 11.
 //
 // See Phase 12 of the protocol specification.
 func (cm *CombiningMember) CombineGroupPublicKey() {

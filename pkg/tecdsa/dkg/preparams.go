@@ -67,6 +67,13 @@ func newTssPreParamsPool(
 			logger.Warnf("failed to generate TSS pre-params: [%v]", err)
 		}
 
+		// If the context is done, GeneratePreParamsWithContext that got
+		// interrupted returns nil result. We do not want to wrap nil inside
+		// PreParams structure, so we return nil here.
+		if preParams == nil {
+			return nil
+		}
+
 		return &PreParams{preParams}
 	}
 

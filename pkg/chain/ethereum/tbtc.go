@@ -354,8 +354,7 @@ func (tc *TbtcChain) CalculateDKGResultHash(
 }
 
 // TODO: Temporary mock that simulates the behavior of the WalletRegistry
-//
-//	contract. Should be removed eventually.
+//	     contract. Should be removed eventually.
 type mockWalletRegistry struct {
 	blockCounter chain.BlockCounter
 
@@ -371,7 +370,12 @@ type mockWalletRegistry struct {
 }
 
 func newMockWalletRegistry(blockCounter chain.BlockCounter) *mockWalletRegistry {
-	return &mockWalletRegistry{blockCounter: blockCounter}
+	return &mockWalletRegistry{
+		blockCounter: blockCounter,
+		dkgResultSubmissionHandlers: make(
+			map[int]func(submission *tbtc.DKGResultSubmittedEvent),
+		),
+	}
 }
 
 func (mwr *mockWalletRegistry) OnDKGStarted(
@@ -394,6 +398,8 @@ func (mwr *mockWalletRegistry) OnDKGStarted(
 					binary.BigEndian.PutUint64(blockBytes, block)
 					seedBytes := crypto.Keccak256(blockBytes)
 					seed := new(big.Int).SetBytes(seedBytes)
+
+					mwr.currentDkgStartBlock = big.NewInt(int64(block))
 
 					go handler(&tbtc.DKGStartedEvent{
 						Seed:        seed,
