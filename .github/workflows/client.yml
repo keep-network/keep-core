@@ -145,6 +145,22 @@ jobs:
           rm -rf /tmp/.buildx-cache
           mv /tmp/.buildx-cache-new /tmp/.buildx-cache
 
+  # This is a job that tests if the client binary can be build for multiple platforms.
+  # TODO: Integrate into the publication process and publish the binaries.
+  client-binaries-build:
+    needs: [client-detect-changes, client-build-test-publish]
+    if: |
+      github.event_name != 'pull_request'
+        || needs.client-detect-changes.outputs.path-filter == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-go@v3
+        with:
+          go-version-file: "go.mod"
+      - name: Build Binaries
+        run: make build-all
+
   client-scan:
     needs: client-detect-changes
     if: |
