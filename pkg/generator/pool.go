@@ -88,9 +88,9 @@ func NewParameterPool[T any](
 	}
 }
 
-// Get returns a new parameter. It is fetched from the pool or generated if the
-// pool is empty.
-func (pp *ParameterPool[T]) Get(ctx context.Context) (*T, error) {
+// GetNow returns a new parameter. It is fetched from the pool or an error is
+// returned when the pool is empty.
+func (pp *ParameterPool[T]) GetNow() (*T, error) {
 	select {
 	case generated := <-pp.pool:
 		err := pp.persistence.Delete(generated)
@@ -102,8 +102,8 @@ func (pp *ParameterPool[T]) Get(ctx context.Context) (*T, error) {
 		}
 
 		return generated, nil
-	case <-ctx.Done():
-		return nil, fmt.Errorf("context is done")
+	default:
+		return nil, fmt.Errorf("pool is empty")
 	}
 }
 

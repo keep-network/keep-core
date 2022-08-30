@@ -13,17 +13,21 @@ import (
 	"github.com/keep-network/keep-core/pkg/internal/testutils"
 )
 
-// TestGet covers the most basic path - calling `Get()` function multiple times
-// and making sure result is always returned, assuming there are no errors from
-// the persistence layer. The pool size is lower than the number of parameters
-// fetched from the pool so this test also ensures the pool does not stop
-// generating numbers for future `Get()` calls.
-func TestGet(t *testing.T) {
+// TestGetNow covers the most basic path - calling `GetNow()` function multiple
+// times and making sure result is always returned, assuming there are no errors
+// from the persistence layer.
+func TestGetNow(t *testing.T) {
 	pool, scheduler, _ := newTestPool(5)
 	defer scheduler.stop()
 
-	for i := 0; i < 70; i++ {
-		e, err := pool.Get(context.Background())
+	for {
+		if pool.CurrentSize() == 5 {
+			break
+		}
+	}
+
+	for i := 0; i < 5; i++ {
+		e, err := pool.GetNow()
 		if err != nil {
 			t.Errorf("unexpected error: [%v]", err)
 		}
@@ -33,10 +37,10 @@ func TestGet(t *testing.T) {
 	}
 }
 
-// TestGet_ContextCancelled covers the basic unhappy path when the context
-// argument got cancelled and the `Get` function should break the execution
+// TestGetNow_EmptyPool covers the basic unhappy path when the parameter
+// pool is empty and the `GetNow` function should break the execution
 // and return an appropriate error.
-func TestGet_ContextCancelled(t *testing.T) {
+func TestGetNow_EmptyPool(t *testing.T) {
 	pool, scheduler, _ := newTestPool(
 		5,
 		func(ctx context.Context) *big.Int {
@@ -46,12 +50,9 @@ func TestGet_ContextCancelled(t *testing.T) {
 	)
 	defer scheduler.stop()
 
-	ctx, cancelCtx := context.WithCancel(context.Background())
-	cancelCtx()
+	_, err := pool.GetNow()
 
-	_, err := pool.Get(ctx)
-
-	expectedErr := fmt.Errorf("context is done")
+	expectedErr := fmt.Errorf("pool is empty")
 	if !reflect.DeepEqual(expectedErr, err) {
 		t.Errorf(
 			"unexpected error\n"+
@@ -132,13 +133,13 @@ func TestReadAll(t *testing.T) {
 	pool, scheduler := newTestPoolWithPersistence(100, persistence)
 	defer scheduler.stop()
 
-	e, err := pool.Get(context.Background())
+	e, err := pool.GetNow()
 	if err != nil {
 		t.Errorf("unexpected error: [%v]", err)
 	}
 	testutils.AssertBigIntsEqual(t, "parameter value", big.NewInt(100), e)
 
-	e, err = pool.Get(context.Background())
+	e, err = pool.GetNow()
 	if err != nil {
 		t.Errorf("unexpected error: [%v]", err)
 	}
@@ -156,7 +157,7 @@ func TestDelete(t *testing.T) {
 	pool, scheduler := newTestPoolWithPersistence(100, persistence)
 	defer scheduler.stop()
 
-	e, err := pool.Get(context.Background())
+	e, err := pool.GetNow()
 	if err != nil {
 		t.Errorf("unexpected error: [%v]", err)
 	}
