@@ -16,7 +16,7 @@ To help attain these capabilities consider the following criteria:
 - It is paramount that Keep nodes remain available to the Keep Network. We strongly encourage a
   stable and redundant internet connection.
 - A connection to a production grade self-hosted or third party Ethereum node deployment.
-- Persistent and redundant storage that will survive a VM or container rotation, and disk failure.
+- Persistent and redundant storage that will survive a VM or container rotation, and a disk failure.
 - Each node running on the network requires a unique Ethereum operator account.
 - Each node running on the network requires a unique IP address or a unique
   application port running under the same IP.
@@ -62,8 +62,8 @@ the command line, it will override the value read from the configuration file.
 ==== Operator's Ethereum Key File
 
 Ethereum Key File is expected to be encrypted with a password. The password has
-to be provided in prompt after the client starts or configured as a `KEEP_ETHEREUM_PASSWORD`
-environment variable `KEEP_ETHEREUM_PASSWORD`.
+to be provided in a prompt after the client starts or configured as a `KEEP_ETHEREUM_PASSWORD`
+environment variable.
 
 [#ethereum-api]
 ==== Ethereum API

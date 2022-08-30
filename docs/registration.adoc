@@ -37,12 +37,12 @@ NOTE: For the Keep Legacy stakes the Staking Provider account and Operator accou
 the same.
 
 [#register-operator-client]
-=== Keep Client
+=== Via Keep Client
 
-An operator registering transaction can be submitted with the Keep Client.
+An operator-registering transaction can be submitted with the Keep Client.
 
 The commands that should be used are provided below.
-You need to replace few values in the commands:
+You need to replace a few values in the commands:
 
 * `KEEP_CLIENT_ETHEREUM_WS_URL` - an URL to the Ethereum WebSocket API,
 
@@ -106,9 +106,9 @@ docker run \
 NOTE: icon:flask[] For Testnet add `--goerli` flag to the commands executed above.
 
 [#register-operator-web]
-=== Web Browser
+=== Via Web Browser
 
-An operator registering transactions can be submitted with Etherscan.
+An operator-registering transactions can be submitted with Etherscan.
 
 For each of the `RandomBeacon` and `WalletRegistry` contracts perform the following steps:
 
