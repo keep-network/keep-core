@@ -44,16 +44,15 @@ An operator registering transaction can be submitted with the Keep Client.
 The commands that should be used are provided below.
 You need to replace few values in the commands:
 
-* `STAKING_PROVIDER_KEY_FILE_ACCOUNT_PASSWORD` - a password used for the Staking Provider
+* `KEEP_CLIENT_ETHEREUM_WS_URL` - an URL to the Ethereum WebSocket API,
+
+* `STAKING_PROVIDER_KEY_FILE_PASSWORD` - a password used for the Staking Provider
 Ethereum Key File encryption,
 
-* `STAKING_PROVIDER_KEY_FILE_PATH` - a path to the Staking Provider Ethereum
-Key File,
-
-* `ETHEREUM_API_WS_URL` - an URL to the Ethereum WebSocket API,
+* `STAKING_PROVIDER_KEY_FILE_NAME` - a name of the Staking Provider Ethereum
+Key File, that is expected to be placed inside the `KEEP_CLIENT_CONFIG_DIR` (`config/` directory).
 
 * `OPERATOR_ADDRESS` - an Operator address that will be running the Keep Client.
-
 
 Command templates for the supported applications:
 
@@ -65,12 +64,13 @@ export KEEP_CLIENT_CONFIG_DIR=$(pwd)/config
 
 export KEEP_CLIENT_ETHEREUM_WS_URL="<Ethereum API WS URL>"
 
-export KEEP_CLIENT_ETHEREUM_PASSWORD="<Staking Provider Account Key File Password>"
+export STAKING_PROVIDER_KEY_FILE_PASSWORD="<Staking Provider Account Key File Password>"
 export STAKING_PROVIDER_KEY_FILE_NAME="<Staking Provider Account Key File Name>"
 export OPERATOR_ADDRESS="<Operator Account Address>"
 
 docker run \
     --volume $KEEP_CLIENT_CONFIG_DIR:/mnt/keep-client/config \
+    --env KEEP_CLIENT_ETHEREUM_PASSWORD=$STAKING_PROVIDER_KEY_FILE_PASSWORD
     us-docker.pkg.dev/keep-test-f3e0/public/keep-client:latest \
     ethereum \
     --ethereum.url $KEEP_CLIENT_ETHEREUM_WS_URL \
@@ -88,12 +88,13 @@ export KEEP_CLIENT_CONFIG_DIR=$(pwd)/config
 
 export KEEP_CLIENT_ETHEREUM_WS_URL="<Ethereum API WS URL>"
 
-export KEEP_CLIENT_ETHEREUM_PASSWORD="<Staking Provider Account Key File Password>"
+export STAKING_PROVIDER_KEY_FILE_PASSWORD="<Staking Provider Account Key File Password>"
 export STAKING_PROVIDER_KEY_FILE_NAME="<Staking Provider Account Key File Name>"
 export OPERATOR_ADDRESS="<Operator Account Address>"
 
 docker run \
     --volume $KEEP_CLIENT_CONFIG_DIR:/mnt/keep-client/config \
+    --env KEEP_CLIENT_ETHEREUM_PASSWORD=$STAKING_PROVIDER_KEY_FILE_PASSWORD
     us-docker.pkg.dev/keep-test-f3e0/public/keep-client:latest \
     ethereum \
     --ethereum.url $KEEP_CLIENT_ETHEREUM_WS_URL \
