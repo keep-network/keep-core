@@ -59,15 +59,7 @@ func (s *signer) Unmarshal(bytes []byte) error {
 		return fmt.Errorf("cannot unmarshal signer: [%w]", err)
 	}
 
-	walletPublicKeyX, walletPublicKeyY := elliptic.Unmarshal(
-		tecdsa.Curve,
-		pbSigner.Wallet.PublicKey,
-	)
-	walletPublicKey := &ecdsa.PublicKey{
-		Curve: tecdsa.Curve,
-		X:     walletPublicKeyX,
-		Y:     walletPublicKeyY,
-	}
+	walletPublicKey := unmarshalPublicKey(pbSigner.Wallet.PublicKey)
 
 	walletSigningGroupOperators := make(
 		[]chain.Address,
@@ -91,4 +83,18 @@ func (s *signer) Unmarshal(bytes []byte) error {
 	s.privateKeyShare = privateKeyShare
 
 	return nil
+}
+
+// unmarshalPublicKey converts a byte array to an ECDSA public key.
+func unmarshalPublicKey(bytes []byte) *ecdsa.PublicKey {
+	x, y := elliptic.Unmarshal(
+		tecdsa.Curve,
+		bytes,
+	)
+
+	return &ecdsa.PublicKey{
+		Curve: tecdsa.Curve,
+		X:     x,
+		Y:     y,
+	}
 }

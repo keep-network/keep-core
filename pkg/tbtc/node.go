@@ -2,6 +2,7 @@ package tbtc
 
 import (
 	"context"
+	"crypto/ecdsa"
 	"fmt"
 	"github.com/keep-network/keep-common/pkg/persistence"
 	"github.com/keep-network/keep-core/pkg/generator"
@@ -341,5 +342,42 @@ func (n *node) joinDKGIfEligible(seed *big.Int, startBlockNumber uint64) {
 		}
 	} else {
 		logger.Infof("not eligible for DKG with seed [0x%x]", seed)
+	}
+}
+
+// joinSigningIfEligible takes a message and undergoes the process of tECDSA
+// signing if this node's operator proves to control some signers of the
+// requested wallet. This is an interactive process, and joinSigningIfEligible
+// can block for an extended period of time while it completes the operation.
+func (n *node) joinSigningIfEligible(
+	message *big.Int,
+	walletPublicKey *ecdsa.PublicKey,
+	startBlockNumber uint64,
+) {
+	logger.Infof(
+		"checking eligibility for signature of message [%v]",
+		message,
+	)
+
+	if signers := n.walletRegistry.getSigners(walletPublicKey); len(signers) > 0 {
+		logger.Infof(
+			"joining signature of message [%v] and " +
+				"controlling [%v] signers",
+			message,
+			len(signers),
+		)
+
+		for _, signer := range signers {
+			currentSigner := signer
+
+			go func() {
+				logger.Infof("%v started signing", currentSigner)
+			}()
+		}
+	} else {
+		logger.Infof(
+			"not eligible for signature of message [%v]",
+			message,
+		)
 	}
 }
