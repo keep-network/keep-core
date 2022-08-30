@@ -84,10 +84,17 @@ version = $(shell git describe --tags --match "v[0-9]*" HEAD)
 revision = $(shell git rev-parse --short HEAD)
 
 go_build_cmd = go build -ldflags "-X main.version=$(version) -X main.revision=$(revision)" -a -o $(1) .
+go_build_platform_cmd = GOOS=$(1) GOARCH=$(2) $(call go_build_cmd,bin/keep-client-$(1)-$(2)-$(version))
 
 build:
 	$(info Building Go code)
 	$(call go_build_cmd,keep-client)
+
+# TODO: Test and add more platforms.
+build-all:
+	$(call go_build_platform_cmd,linux,386)
+	$(call go_build_platform_cmd,linux,amd64)
+	$(call go_build_platform_cmd,darwin,amd64)
 
 cmd-help: build
 	@echo '$$ keep-client start --help' > docs/development/cmd-help
