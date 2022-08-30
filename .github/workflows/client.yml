@@ -2,7 +2,7 @@ name: Go
 
 on:
   schedule:
-    - cron: '0 0 * * *'
+    - cron: "0 0 * * *"
   push:
     branches:
       - main
@@ -17,16 +17,16 @@ on:
   workflow_dispatch:
     inputs:
       environment:
-        description: 'Environment for workflow execution'
+        description: "Environment for workflow execution"
         required: false
-        default: 'dev'
+        default: "dev"
       upstream_builds:
-        description: 'Upstream builds'
+        description: "Upstream builds"
         required: false
       upstream_ref:
-        description: 'Git reference to checkout (e.g. branch name)'
+        description: "Git reference to checkout (e.g. branch name)"
         required: false
-        default: 'main'
+        default: "main"
 
 jobs:
   client-detect-changes:
@@ -53,6 +53,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+        with:
+          # Fetch the whole history for the `git describe` command to work.
+          fetch-depth: 0
 
       - name: Resolve versions
         run: |
@@ -116,7 +119,7 @@ jobs:
         if: github.event_name == 'workflow_dispatch'
         uses: docker/build-push-action@v2
         env:
-          IMAGE_NAME: 'keep-client'
+          IMAGE_NAME: "keep-client"
         with:
           # GCR image should be named according to following convention:
           # HOSTNAME/PROJECT-ID/IMAGE:TAG
