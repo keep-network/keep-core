@@ -51,6 +51,7 @@ Keep Node.
 
 == Starting a Client
 
+[#configuration]
 === Configuration
 
 The client expects configuration options to be specified in a <<config-file,config file>> 
@@ -145,19 +146,33 @@ The minimum required configuration for the client to start covers setting:
 - `ethereum.keyFile` config property (see: <<ethereum-key>> section),
 - `storage.dataDir` config property (see: <<storage>> section).
 
+=== Installation
 
-== Build from Source
+// TODO: Add binaries once release process is ready.
+// ==== Binaries
+
+// TODO: Update with mainnet Docker image details
+// ==== Docker
+// [source,shell,role=small]
+// ----
+// include::resources/docker-start-mainnet-sample[]
+// ----
+
+==== Build from Source
 
 See our xref:development/README.adoc#build-client[developer docs].
 
-== Docker
+=== Run
 
-// TODO: Update with mainnet Docker image details
+Sample command to run the Keep Client:
 
-// [source,shell,role=small]
-// ----
-// include::resources/docker-run-mainnet-sample[]
-// ----
+[source,shell,role=small]
+----
+include::resources/client-start-mainnet-sample[]
+----
+
+TIP: Instead of passing the configuration properties as command arguments you can
+point to a configuration file with `--config` flag. See <<config-file>> section for details.
 
 == Logging
 
@@ -212,8 +227,6 @@ TIP: If you want to share your LibP2P address with others you can get it from th
 startup log.  When sharing remember to substitute the `/ipv4/` address with the public facing IP of your client if you're running on a private machine, or replace the entire
 `/ipv4/` segment with a DNS entry if you're using a hostname.
 
-
-
 == Metrics
 
 The client exposes the following metrics:
@@ -267,15 +280,17 @@ $ curl localhost:8081/diagnostics
 }
 ```
 
-== Testnet
+[#testnet]
+== icon:flask[] Testnet
 
 The Keep Network Testnet environment is running against Ethereum Görli Testnet.
 To run the client connected to the Testnet add `--goerli` flag to the start command.
 
 A Docker image for Testnet is published under:
 `us-docker.pkg.dev/keep-test-f3e0/public/keep-client:latest` +
-See <<docker-testnet>> section for details.
+See <<testnet-docker>> section for details.
 
+// TODO: Add faucet details once ready.
 // === Faucet
 
 [#testnet-bootstrap,Testnet Bootstrap Nodes]
@@ -307,24 +322,26 @@ include::../config/_peers/goerli[]
 
 |===
 
-[#docker-testnet,Docker Testnet]
-=== Docker
+=== Installation
 
-==== Get Image
+[#testnet-docker,Docker Testnet]
+==== Docker
 
-*Latest:*
-`us-docker.pkg.dev/keep-test-f3e0/public/keep-client`
+To get the Docker image run one of the following commands:
 
-*Tag:*
-`us-docker.pkg.dev/keep-test-f3e0/public/keep-client:<tag-version>`
+* *Latest:* `us-docker.pkg.dev/keep-test-f3e0/public/keep-client`
 
-==== Run Image
+* *Tagged:* `us-docker.pkg.dev/keep-test-f3e0/public/keep-client:<tag-version>`
 
-This is a sample run command for illustration purposes only.
+=== Run
+
+==== Docker
+
+This is a sample run command for illustration purposes only:
 
 [source,shell,role=small]
 ----
-include::resources/docker-run-testnet-sample[]
+include::resources/docker-start-testnet-sample[]
 ----
 
 == Kubernetes
