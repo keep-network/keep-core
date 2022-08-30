@@ -7,7 +7,7 @@
 
 = T developer documentation
 
-== <<local-t-network.adoc,Setting up local T network>>
+== xref:development/local-t-network.adoc[Setting up local T network]
 
 For development purposes, it is convenient to set up a local Ethereum client with
 a group of connected peers. A note-taken walkthrough covers the entire process
