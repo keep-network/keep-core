@@ -73,7 +73,7 @@ func (e *Executor) Execute(
 
 	preParams, err := e.tssPreParamsPool.GetNow()
 	if err != nil {
-		return nil, 0, fmt.Errorf("failed fetching pre-params: [%v]", err)
+		return nil, 0, fmt.Errorf("failed fetching pre-params: [%w]", err)
 	}
 
 	member := newMember(
