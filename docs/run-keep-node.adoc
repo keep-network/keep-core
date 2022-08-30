@@ -28,23 +28,23 @@ particularly relevant if you're running a containerized solution where multiple 
 are sharing VM resources.  The below types are sufficient for running at least one instance of the
 Keep Node.
 
-// TODO: Replace TBDs with recommendations.
+// TODO: Revisit the recommendations before launch.
 [%header,cols=2*]
 |===
 |Cloud Provider
 |Machine Type
 
 |Google Cloud
-|TBD
+|n2-highcpu-2
 
 |AWS
-|TBD
+|c5.large
 
 |Azure
-|TBD
+|F2s v2
 
 |Self-hosted
-|TBD
+|2 vCPU / 2 GiB RAM / 1 GiB Persistent Storage
 |===
 
 // TODO: == Gas Costs
