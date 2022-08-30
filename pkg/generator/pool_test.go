@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"math/big"
 	"reflect"
+	"runtime"
 	"sort"
 	"sync"
 	"testing"
@@ -24,6 +25,7 @@ func TestGetNow(t *testing.T) {
 		if pool.CurrentSize() == 5 {
 			break
 		}
+		runtime.Gosched()
 	}
 
 	for i := 0; i < 5; i++ {
