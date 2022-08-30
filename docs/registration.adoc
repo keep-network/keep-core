@@ -58,27 +58,48 @@ Command templates for the supported applications:
 
 [source,bash]
 ----
-export KEEP_ETHEREUM_PASSWORD=<STAKING_PROVIDER_KEY_FILE_ACCOUNT_PASSWORD>
+export KEEP_CLIENT_CONFIG_DIR=$(pwd)/config
 
-keep-client ethereum \
-    --ethereum.url <ETHEREUM_API_WS_URL>
-    --ethereum.keyFile <STAKING_PROVIDER_KEY_FILE_PATH> \
-    beacon random-beacon register-operator --submit
-    <OPERATOR_ADDRESS>
+export KEEP_CLIENT_ETHEREUM_WS_URL="<Ethereum API WS URL>"
+
+export KEEP_CLIENT_ETHEREUM_PASSWORD="<Staking Provider Account Key File Password>"
+export STAKING_PROVIDER_KEY_FILE_NAME="<Staking Provider Account Key File Name>"
+export OPERATOR_ADDRESS="<Operator Account Address>"
+
+docker run \
+    --volume $KEEP_CLIENT_CONFIG_DIR:/mnt/keep-client/config \
+    us-docker.pkg.dev/keep-test-f3e0/public/keep-client:latest \
+    ethereum \
+    --ethereum.url $KEEP_CLIENT_ETHEREUM_WS_URL \
+    --ethereum.keyFile /mnt/keep-client/config/$STAKING_PROVIDER_KEY_FILE_NAME \
+    beacon random-beacon register-operator --submit \
+    $OPERATOR_ADDRESS
 ----
+
 
 * TBTC application (`WalletRegistry` contract)
 
 [source,bash]
 ----
-export KEEP_ETHEREUM_PASSWORD=<STAKING_PROVIDER_KEY_FILE_ACCOUNT_PASSWORD>
+export KEEP_CLIENT_CONFIG_DIR=$(pwd)/config
 
-keep-client ethereum \
-    --ethereum.url <ETHEREUM_API_WS_URL>
-    --ethereum.keyFile <STAKING_PROVIDER_KEY_FILE_PATH> \
+export KEEP_CLIENT_ETHEREUM_WS_URL="<Ethereum API WS URL>"
+
+export KEEP_CLIENT_ETHEREUM_PASSWORD="<Staking Provider Account Key File Password>"
+export STAKING_PROVIDER_KEY_FILE_NAME="<Staking Provider Account Key File Name>"
+export OPERATOR_ADDRESS="<Operator Account Address>"
+
+docker run \
+    --volume $KEEP_CLIENT_CONFIG_DIR:/mnt/keep-client/config \
+    us-docker.pkg.dev/keep-test-f3e0/public/keep-client:latest \
+    ethereum \
+    --ethereum.url $KEEP_CLIENT_ETHEREUM_WS_URL \
+    --ethereum.keyFile /mnt/keep-client/config/$STAKING_PROVIDER_KEY_FILE_NAME \
     ecdsa wallet-registry register-operator --submit
-    <OPERATOR_ADDRESS>
+    $OPERATOR_ADDRESS
 ----
+
+NOTE: icon:flask[] For Testnet add `--goerli` flag to the commands executed above.
 
 [#register-operator-web]
 === Web Browser
@@ -100,4 +121,5 @@ link:https://docs.threshold.network/extras/contract-addresses#keep-network-contr
 page for the recent Mainnet addresses of the contracts.
 // TODO: Add section with the Keep Network contracts addresses to the Threshold Network docs.
 
-For Testnet contracts please visit the xref:./run-keep-node.adoc#testnet-contracts[link].
+
+NOTE: icon:flask[] For Testnet contracts please visit the xref:./run-keep-node.adoc#testnet-contracts[link].
