@@ -64,6 +64,7 @@ docker run \
     --rm \
     --env "CHAIN_API_URL=$CHAIN_API_URL" \
     --env "ACCOUNTS_PRIVATE_KEYS=$GOERLI_DEPLOYER_PRIVATE_KEY,$ACCOUNT_PRIVATE_KEY" \
+    --platform linux/amd64 \
     gcr.io/keep-test-f3e0/keep-random-beacon-hardhat:latest \
     initialize:staking \
     --network goerli \
@@ -76,6 +77,7 @@ docker run \
     --rm \
     --env "CHAIN_API_URL=$CHAIN_API_URL" \
     --env "ACCOUNTS_PRIVATE_KEYS=$GOERLI_DEPLOYER_PRIVATE_KEY,$ACCOUNT_PRIVATE_KEY" \
+    --platform linux/amd64 \
     gcr.io/keep-test-f3e0/keep-random-beacon-hardhat:latest \
     authorize:beacon \
     --network goerli \
@@ -88,6 +90,7 @@ docker run \
     --rm \
     --env "CHAIN_API_URL=$CHAIN_API_URL" \
     --env "ACCOUNTS_PRIVATE_KEYS=$GOERLI_DEPLOYER_PRIVATE_KEY,$ACCOUNT_PRIVATE_KEY" \
+    --platform linux/amd64 \
     gcr.io/keep-test-f3e0/keep-ecdsa-hardhat:latest \
     authorize:ecdsa \
     --network goerli \
