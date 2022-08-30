@@ -12,6 +12,15 @@ where they will receive stakes from their customers.
 
 == Scripts
 
+=== Prerequisites
+
+The scripts require the following tools to be installed:
+
+- `npx` - link:https://nodejs.org/en/download/package-manager/#macos[macOS install]
+- `geth` -  link:https://geth.ethereum.org/docs/install-and-build/installing-geth#macos-via-homebrew[macOS install]
+- `asciidoctor` - link:https://asciidoctor.org/docs/install-asciidoctor-macos/#homebrew-procedure[macOS install]
+- `docker` - link:https://docs.docker.com/desktop/install/mac-install/[macOS install]
+
 === Create New Bundle
 
 To create a new bundle run:
