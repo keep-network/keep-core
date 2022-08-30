@@ -1,0 +1,81 @@
+:toc: left
+:toclevels: 3
+:sectanchors: true
+:sectids: true
+:source-highlighter: rouge
+:icons: font
+
+= Keep Network Private Testnet Bundle
+
+Use this bundle to setup Keep Network node running on Keep Network Private Testnet.
+The Keep Network Private Testnet is running against the 
+link:https://goerli.net/[Ethereum Görli Testnet].
+
+This is a quickstart guide, for the full documentation please visit
+link:https://docs.keep.network/run-keep-node.html[Run Keep Node documentation].
+
+== Stake and Register
+
+This bundle comes with an Provider Ethereum Account that was already staked and
+authorized, similar to what a staker would do in the production.
+
+IMPORTANT: Delivering the Provider Account details in the bundle is a simplification
+for this bundle. In the production the Staking Provider will have to provide the
+address for the Staker. See <<#provider-account>> section.
+
+[#provider-account]
+=== Provider Account
+
+A Staking Provider is responsible for providing a Staker with a Provider Account
+address where the stake should be delegated to.
+
+The Provider account is controlled by the Staking Provider.
+
+The Provider account can be an Ethereum account managed by any kind of a wallet,
+that can sign transactions (i.e. it doesn't have to be a Key File). 
+
+=== Operator Account
+
+The Operator account is an Ethereum account that the Keep Client runs with. The
+client requires an encrypted Ethereum Key File along with the Password for the
+Operator account to run.
+
+The Operator account is controlled by the Staking Provider.
+
+The Staking Provider has to register an Operator address for the stake delegation
+received to the Provider account.
+
+To generate an Ethereum Account Key File you can use `geth account new` command.
+
+[source,shell]
+----
+geth account new --keystore ./keystore
+----
+
+Keep the password used for the Key File encryption as it will
+have to be passed to the Keep Client start command.
+
+Once the Operator address is known it should be registered with a transaction
+submitted from the Provider account, please refer to
+link:https://docs.keep.network/registration.html#register-operator[Register Operator]
+documentation.
+
+== Configuration
+
+For details on the Keep Client Node configuration visit
+link:https://docs.keep.network/run-keep-node.html#configuration[Configuration documentation].
+
+== Running
+
+For details on running the Keep Client Node on Testnet visit 
+link:https://docs.keep.network/run-keep-node.html#testnet[Testnet documentation].
+
+=== Validate
+
+To validate the running client check the metrics for the number of connected peers.
+The client should connect to the bootstrap nodes (at least 2) and other nodes that
+are working in the network. There should be at least 10 connections.
+
+```
+curl localhost:8081/metrics
+```

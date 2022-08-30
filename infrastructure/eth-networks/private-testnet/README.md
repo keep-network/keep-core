@@ -1,0 +1,29 @@
+# Keep Network Private Testnet
+
+We set up a Keep Network Private Testnet that is accessible by the permitted parties.
+Here we hold the code helping us to create a bundles for the parties.
+
+The network runs against the link:https://goerli.net/[Ethereum Görli Testnet].
+
+The generated bundles contains a preinitialized Ethereum Account details. The account
+receives a stake delegation to the `provider` account with authorized `beacon` and
+`tbtc` application. This is a production-like experience for the Staking Providers,
+where they will receive stakes from their customers.
+
+## Scripts
+
+### Create New Bundle
+
+To create a new bundle run:
+
+```bash
+./scripts/new-bundle.sh
+```
+
+### Initialize Provider
+
+To simulate a Staker delegation to a Provider and authorize the applications run:
+
+```bash
+./scripts/init-provider.sh
+```
