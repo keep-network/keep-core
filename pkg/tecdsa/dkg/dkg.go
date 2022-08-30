@@ -71,7 +71,7 @@ func (e *Executor) Execute(
 
 	registerUnmarshallers(channel)
 
-	preParams, err := e.tssPreParamsPool.Get()
+	preParams, err := e.tssPreParamsPool.GetNow()
 	if err != nil {
 		return nil, 0, fmt.Errorf("failed fetching pre-params: [%v]", err)
 	}
