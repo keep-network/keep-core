@@ -337,6 +337,7 @@ func initTestCommand() (*cobra.Command, *config.Config, *string) {
 		Run: func(cmd *cobra.Command, args []string) {},
 	}
 
+	initGlobalFlags(testCommand, &testConfigFilePath)
 	initFlags(testCommand, &testConfigFilePath, testConfig, config.AllCategories...)
 
 	return testCommand, testConfig, &testConfigFilePath
