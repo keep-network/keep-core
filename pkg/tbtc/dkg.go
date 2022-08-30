@@ -234,12 +234,14 @@ func decideSigningGroupMemberFate(
 	dkgResultChannel chan *DKGResultSubmittedEvent,
 	publicationStartBlock uint64,
 	result *dkg.Result,
-	chain Chain,
+	chainConfig *ChainConfig,
+	blockCounter chain.BlockCounter,
 ) ([]group.MemberIndex, error) {
 	dkgResultEvent, err := waitForDkgResultEvent(
 		dkgResultChannel,
 		publicationStartBlock,
-		chain,
+		chainConfig,
+		blockCounter,
 	)
 	if err != nil {
 		return nil, err
@@ -255,7 +257,7 @@ func decideSigningGroupMemberFate(
 	if !bytes.Equal(groupPublicKeyBytes, dkgResultEvent.GroupPublicKeyBytes) {
 		return nil, fmt.Errorf(
 			"[member:%v] could not stay in the group because "+
-				"the member do not support the same group public key",
+				"the member does not support the same group public key",
 			memberIndex,
 		)
 	}
@@ -291,17 +293,11 @@ func decideSigningGroupMemberFate(
 func waitForDkgResultEvent(
 	dkgResultChannel chan *DKGResultSubmittedEvent,
 	publicationStartBlock uint64,
-	chain Chain,
+	chainConfig *ChainConfig,
+	blockCounter chain.BlockCounter,
 ) (*DKGResultSubmittedEvent, error) {
-	config := chain.GetConfig()
-
 	timeoutBlock := publicationStartBlock + dkg.PrePublicationBlocks() +
-		(uint64(config.GroupSize) * config.ResultPublicationBlockStep)
-
-	blockCounter, err := chain.BlockCounter()
-	if err != nil {
-		return nil, err
-	}
+		(uint64(chainConfig.GroupSize) * chainConfig.ResultPublicationBlockStep)
 
 	timeoutBlockChannel, err := blockCounter.BlockHeightWaiter(timeoutBlock)
 	if err != nil {

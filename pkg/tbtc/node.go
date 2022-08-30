@@ -271,7 +271,8 @@ func (n *node) joinDKGIfEligible(seed *big.Int, startBlockNumber uint64) {
 						dkgResultChannel,
 						publicationStartBlock,
 						result,
-						n.chain,
+						chainConfig,
+						blockCounter,
 					); err != nil {
 						logger.Errorf(
 							"[member:%v] failed to handle DKG result "+
