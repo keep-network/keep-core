@@ -1,0 +1,20 @@
+name: Build and Push Docker Image
+description: "Build and push a Docker image"
+inputs:
+  environment:
+    description: Environment (network) for workflow execution
+    required: false
+  version:
+    description: Client Version
+    required: false
+  revision:
+    description: Client Revision
+    required: false
+
+runs:
+  using: "docker"
+  image: "Dockerfile"
+  args:
+    - ${{ inputs.environment }}
+    - ${{ inputs.version }}
+    - ${{ inputs.revision }}
