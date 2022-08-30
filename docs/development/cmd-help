@@ -25,10 +25,11 @@ Flags:
       --metrics.networkMetricsTick duration        Network metrics check tick in seconds. (default 1m0s)
       --metrics.ethereumMetricsTick duration       Ethereum metrics check tick in seconds. (default 10m0s)
       --diagnostics.port int                       Diagnostics HTTP server listening port. (default 8081)
-      --tbtc.preParamsPoolSize int                 tECDSA pre-parameters pool size. (default 50)
+      --tbtc.preParamsPoolSize int                 tECDSA pre-parameters pool size. (default 3000)
       --tbtc.preParamsGenerationTimeout duration   tECDSA pre-parameters generation timeout. (default 2m0s)
       --tbtc.preParamsGenerationDelay duration     tECDSA pre-parameters generation delay. (default 10s)
       --tbtc.preParamsGenerationConcurrency int    tECDSA pre-parameters generation concurrency. (default 1)
+      --tbtc.keyGenerationConcurrency int          tECDSA key generation concurrency. (default 10)
       --developer.randomBeaconAddress string       Address of the RandomBeacon smart contract
       --developer.tokenStakingAddress string       Address of the TokenStaking smart contract
       --developer.walletRegistryAddress string     Address of the WalletRegistry smart contract
