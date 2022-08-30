@@ -64,7 +64,7 @@ COPY ./ $APP_DIR/
 ARG VERSION
 ARG REVISION
 
-RUN GOOS=linux go build -ldflags "-X main.version=$VERSION -X main.revision=$REVISION" -a -o $APP_NAME ./ && \
+RUN GOOS=linux make build version=$VERSION revision=$REVISION && \
 	mv $APP_NAME $BIN_PATH
 
 FROM alpine:3.16
