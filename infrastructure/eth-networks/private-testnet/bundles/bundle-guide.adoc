@@ -16,34 +16,34 @@ link:https://docs.keep.network/run-keep-node.html[Run Keep Node documentation].
 
 == Stake and Register
 
-This bundle comes with an Provider Ethereum Account that was already staked and
+This bundle comes with an Staking Provider Ethereum Account that was already staked and
 authorized, similar to what a staker would do in the production.
 
-IMPORTANT: Delivering the Provider Account details in the bundle is a simplification
-for this bundle. In the production the Staking Provider will have to provide the
-address for the Staker. See <<#provider-account>> section.
+IMPORTANT: Delivering the Staking Provider Account details in the bundle is a
+simplification for this bundle. In the production the Staking Provider will have
+to provide the address for the Staker. See <<#staking-provider-account>> section.
 
-[#provider-account]
-=== Provider Account
+[#staking-provider-account]
+=== Staking Provider Account
 
-A Staking Provider is responsible for providing a Staker with a Provider Account
-address where the stake should be delegated to.
+A Staking Provider is responsible for providing a Staker with a Staking Provider
+Account address where the stake should be delegated to.
 
-The Provider account is controlled by the Staking Provider.
+The Staking Provider Account is controlled by the Staking Provider.
 
-The Provider account can be an Ethereum account managed by any kind of a wallet,
-that can sign transactions (i.e. it doesn't have to be a Key File). 
+The Staking Provider account can be an Ethereum account managed by any kind of
+a wallet, that can sign transactions (i.e. it doesn't have to be a Key File). 
 
 === Operator Account
 
-The Operator account is an Ethereum account that the Keep Client runs with. The
+The Operator Account is an Ethereum account that the Keep Client runs with. The
 client requires an encrypted Ethereum Key File along with the Password for the
-Operator account to run.
+Operator Account to run.
 
-The Operator account is controlled by the Staking Provider.
+The Operator Account is controlled by the Staking Provider.
 
-The Staking Provider has to register an Operator address for the stake delegation
-received to the Provider account.
+The Staking Provider has to register an Operator Account address for the stake delegation
+received to the Staking Provider Account.
 
 To generate an Ethereum Account Key File you can use `geth account new` command.
 
@@ -55,8 +55,8 @@ geth account new --keystore ./keystore
 Keep the password used for the Key File encryption as it will
 have to be passed to the Keep Client start command.
 
-Once the Operator address is known it should be registered with a transaction
-submitted from the Provider account, please refer to
+Once the Operator Account address is known it should be registered with a transaction
+submitted from the Staking Provider Account, please refer to
 link:https://docs.keep.network/registration.html#register-operator[Register Operator]
 documentation.
 

@@ -32,9 +32,9 @@ fi
 CONFIG_DIR="$STAKING_PROVIDER_DIR/config"
 SECRETS_DIR="$STAKING_PROVIDER_DIR/secret"
 
-KEY_FILE_PATH="$CONFIG_DIR/provider-eth-account-key-file.json"
-KEY_FILE_PASSWORD_PATH="$SECRETS_DIR/provider-eth-account-password"
-PRIVATE_KEY_FILE_PATH="$SECRETS_DIR/provider-eth-account-private-key"
+KEY_FILE_PATH="$CONFIG_DIR/staking-provider-eth-account-key-file.json"
+KEY_FILE_PASSWORD_PATH="$SECRETS_DIR/staking-provider-eth-account-password"
+PRIVATE_KEY_FILE_PATH="$SECRETS_DIR/staking-provider-eth-account-private-key"
 
 mkdir $STAKING_PROVIDER_DIR
 mkdir $SECRETS_DIR

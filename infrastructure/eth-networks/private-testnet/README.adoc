@@ -6,7 +6,7 @@ Here we hold the code helping us to create a bundles for the parties.
 The network runs against the link:https://goerli.net/[Ethereum Görli Testnet].
 
 The generated bundles contains a preinitialized Ethereum Account details. The account
-receives a stake delegation to the `provider` account with authorized `beacon` and
+receives a stake delegation to the Staking Provider Account with authorized `beacon` and
 `tbtc` application. This is a production-like experience for the Staking Providers,
 where they will receive stakes from their customers.
 
@@ -20,9 +20,9 @@ To create a new bundle run:
 ./scripts/new-bundle.sh
 ```
 
-=== Initialize Provider
+=== Initialize Staking Provider
 
-To simulate a Staker delegation to a Provider and authorize the applications run:
+To simulate a Staker delegation to a Staking Provider and authorize the applications run:
 
 ```bash
 ./scripts/init-provider.sh

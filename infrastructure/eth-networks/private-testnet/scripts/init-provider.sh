@@ -30,23 +30,23 @@ fi
 CONFIG_DIR="$STAKING_PROVIDER_DIR/config"
 SECRETS_DIR="$STAKING_PROVIDER_DIR/secret"
 
-KEY_FILE_PATH="$CONFIG_DIR/provider-eth-account-key-file.json"
-KEY_FILE_PASSWORD_PATH="$SECRETS_DIR/provider-eth-account-password"
-PRIVATE_KEY_FILE_PATH="$SECRETS_DIR/provider-eth-account-private-key"
+KEY_FILE_PATH="$CONFIG_DIR/staking-provider-eth-account-key-file.json"
+KEY_FILE_PASSWORD_PATH="$SECRETS_DIR/staking-provider-eth-account-password"
+PRIVATE_KEY_FILE_PATH="$SECRETS_DIR/staking-provider-eth-account-private-key"
 
 ACCOUNT_ADDRESS=$(jq -jr .address $KEY_FILE_PATH)
 ACCOUNT_PRIVATE_KEY=$(cat $PRIVATE_KEY_FILE_PATH)
 
 [[ $ACCOUNT_ADDRESS == 0x* ]] || ACCOUNT_ADDRESS="0x$ACCOUNT_ADDRESS"
 
-printf "Provider Address: $ACCOUNT_ADDRESS\n"
+printf "Staking Provider Account Address: $ACCOUNT_ADDRESS\n"
 
 printf "Pull the latest images...\n"
 
 docker pull gcr.io/keep-test-f3e0/keep-random-beacon-hardhat:latest
 docker pull gcr.io/keep-test-f3e0/keep-ecdsa-hardhat:latest
 
-printf "Fund provider address with ether from purse...\n"
+printf "Fund Staking Provider Account Address with ether from purse...\n"
 
 docker run \
     --rm \
