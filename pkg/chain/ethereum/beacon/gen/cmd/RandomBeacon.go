@@ -14,7 +14,6 @@ import (
 
 	chainutil "github.com/keep-network/keep-common/pkg/chain/ethereum/ethutil"
 	"github.com/keep-network/keep-common/pkg/cmd"
-	"github.com/keep-network/keep-core/config"
 	"github.com/keep-network/keep-core/pkg/chain/ethereum/beacon/gen/contract"
 
 	"github.com/spf13/cobra"
@@ -94,7 +93,7 @@ func init() {
 		rbWithdrawRewardsCommand(),
 	)
 
-	Command.AddCommand(RandomBeaconCommand)
+	ModuleCommand.AddCommand(RandomBeaconCommand)
 }
 
 /// ------------------- Const methods -------------------
@@ -2159,10 +2158,7 @@ func rbWithdrawRewards(c *cobra.Command, args []string) error {
 /// ------------------- Initialization -------------------
 
 func initializeRandomBeacon(c *cobra.Command) (*contract.RandomBeacon, error) {
-	cfg, err := config.ReadEthereumConfig(c.Flags())
-	if err != nil {
-		return nil, fmt.Errorf("error reading config from file: [%v]", err)
-	}
+	cfg := *ModuleCommand.GetConfig()
 
 	client, err := ethclient.Dial(cfg.URL)
 	if err != nil {
