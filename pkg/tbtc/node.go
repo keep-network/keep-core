@@ -236,6 +236,9 @@ func (n *node) joinDKGIfEligible(seed *big.Int, startBlockNumber uint64) {
 					return
 				}
 
+				// TODO: Snapshot the key material before doing on-chain result
+				//       submission.
+
 				publicationStartBlock := executionEndBlock
 				operatingMemberIndexes := result.Group.OperatingMemberIDs()
 				dkgResultChannel := make(chan *DKGResultSubmittedEvent)
@@ -280,32 +283,54 @@ func (n *node) joinDKGIfEligible(seed *big.Int, startBlockNumber uint64) {
 						result,
 					); err != nil {
 						logger.Errorf(
-							"failed to handle DKG result publishing failure: [%v]",
+							"[member:%v] failed to handle DKG result "+
+								"publishing failure: [%v]",
+							memberIndex,
 							err,
 						)
 						return
 					}
 				}
 
-				signingGroupOperators, err := n.resolveFinalSigningGroupOperators(
-					selectedSigningGroupOperators,
-					operatingMemberIndexes,
-				)
+				// Final signing group may differ from the original DKG
+				// group outputted by the sortition protocol. One need to
+				// determine the final signing group based on the selected
+				// group members who behaved correctly during DKG protocol.
+				finalSigningGroupOperators, finalSigningGroupMembersIndexes, err :=
+					finalSigningGroup(
+						selectedSigningGroupOperators,
+						operatingMemberIndexes,
+						chainConfig,
+					)
 				if err != nil {
 					logger.Errorf(
-						"failed to resolve group operators: [%v]",
+						"[member:%v] failed to resolve final signing "+
+							"group: [%v]",
+						memberIndex,
 						err,
 					)
 					return
 				}
 
-				// TODO: Snapshot the key material before doing on-chain result
-				//       submission.
+				// Just like the final and original group may differ, the
+				// member index used during the DKG protocol may differ
+				// from the final signing group member index as well.
+				// We need to remap it.
+				finalSigningGroupMemberIndex, ok :=
+					finalSigningGroupMembersIndexes[memberIndex]
+				if !ok {
+					logger.Errorf(
+						"[member:%v] failed to resolve final signing "+
+							"group member index",
+						memberIndex,
+					)
+					return
+				}
 
 				signer := newSigner(
 					result.PrivateKeyShare.PublicKey(),
-					signingGroupOperators,
-					memberIndex,
+					finalSigningGroupOperators,
+					finalSigningGroupMemberIndex,
 					result.PrivateKeyShare,
 				)
 
@@ -415,13 +440,14 @@ func (n *node) waitForDkgResultEvent(
 	}
 }
 
-// resolveFinalSigningGroupOperators takes two parameters:
-// - selectedOperators: Contains addresses of all selected operators. Slice
-//   length equals to the groupSize. Each element with index N corresponds
-//   to the group member with ID N+1.
-// - operatingMembersIndexes: Contains group members indexes that were neither
-//   disqualified nor marked as inactive. Slice length is lesser than or equal
-//   to the groupSize.
+// finalSigningGroup takes three parameters:
+//   - selectedOperators: Contains addresses of all selected operators. Slice
+//     length equals to the groupSize. Each element with index N corresponds
+//     to the group member with ID N+1.
+//   - operatingMembersIndexes: Contains group members indexes that were neither
+//     disqualified nor marked as inactive. Slice length is lesser than or equal
+//     to the groupSize.
+//   - chainConfig: The tBTC chain's configuration
 //
 // Using those parameters, this function transforms the selectedOperators
 // slice into another slice that contains addresses of all operators
@@ -429,36 +455,51 @@ func (n *node) waitForDkgResultEvent(
 // resulting slice has only addresses of properly operating operators
 // who form the resulting group.
 //
+// Apart from that, this function returns a map that holds the final signing
+// group members indexes that should be used by particular members who behaved
+// correctly during the DKG protocol execution. The key of this map is the
+// member index used during DKG protocol and the value is the new member
+// index that should be used in the context of the final signing group.
+//
 // Example:
-// selectedOperators: [member1, member2, member3, member4, member5]
+// selectedOperators: [0xAA, 0xBB, 0xCC, 0xDD, 0xEE]
 // operatingMembersIndexes: [5, 1, 3]
-// signingGroupOperators: [member1, member3, member5]
-func (n *node) resolveFinalSigningGroupOperators(
+// finalOperators: [0xAA, 0xCC, 0xEE]
+// finalMembersIndexes: [1:1, 3:2, 5:3]
+func finalSigningGroup(
 	selectedOperators []chain.Address,
 	operatingMembersIndexes []group.MemberIndex,
-) ([]chain.Address, error) {
-	config := n.chain.GetConfig()
-
+	chainConfig *ChainConfig,
+) (
+	[]chain.Address,
+	map[group.MemberIndex]group.MemberIndex,
+	error,
+) {
 	// TODO: Use `GroupQuorum` parameter instead of `HonestThreshold`
-	if len(selectedOperators) != config.GroupSize ||
-		len(operatingMembersIndexes) < config.HonestThreshold {
-		return nil, fmt.Errorf("invalid input parameters")
+	if len(selectedOperators) != chainConfig.GroupSize ||
+		len(operatingMembersIndexes) < chainConfig.HonestThreshold {
+		return nil, nil, fmt.Errorf("invalid input parameters")
 	}
 
 	sort.Slice(operatingMembersIndexes, func(i, j int) bool {
 		return operatingMembersIndexes[i] < operatingMembersIndexes[j]
 	})
 
-	signingGroupOperators := make(
+	finalOperators := make(
 		[]chain.Address,
+		len(operatingMembersIndexes),
+	)
+	finalMembersIndexes := make(
+		map[group.MemberIndex]group.MemberIndex,
 		len(operatingMembersIndexes),
 	)
 
 	for i, operatingMemberID := range operatingMembersIndexes {
-		signingGroupOperators[i] = selectedOperators[operatingMemberID-1]
+		finalOperators[i] = selectedOperators[operatingMemberID-1]
+		finalMembersIndexes[operatingMemberID] = group.MemberIndex(i + 1)
 	}
 
-	return signingGroupOperators, nil
+	return finalOperators, finalMembersIndexes, nil
 }
 
 // dkgResultSigner is responsible for signing the DKG result and verification of
@@ -537,7 +578,7 @@ func (drs *dkgResultSubmitter) SubmitResult(
 ) error {
 	config := drs.chain.GetConfig()
 
-	// TODO: Compare signatures to the GroupQuorum parameter
+	// TODO: Compare signatures count to the GroupQuorum parameter
 	if len(signatures) < config.HonestThreshold {
 		return fmt.Errorf(
 			"could not submit result with [%v] signatures for signature "+
@@ -629,8 +670,9 @@ func (drs *dkgResultSubmitter) SubmitResult(
 // setupEligibilityQueue waits until the current member is eligible to
 // submit a result to the blockchain. First member is eligible to submit straight
 // away, each following member is eligible after pre-defined block step.
+//
 // TODO: Revisit the setupEligibilityQueue function. The RFC mentions we should
-//       start submitting from a random member, not the first one.
+//	     start submitting from a random member, not the first one.
 func (drs *dkgResultSubmitter) setupEligibilityQueue(
 	startBlockNumber uint64,
 	memberIndex group.MemberIndex,

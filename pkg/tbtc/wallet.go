@@ -19,10 +19,16 @@ type wallet struct {
 	// the SHA-256+RIPEMD-160 hash computed over the compressed ECDSA public key)
 	publicKey *ecdsa.PublicKey
 	// signingGroupOperators is the list holding operators' addresses that
-	// form the whole wallet's signing group. Each item in this list represents
-	// the given signing group member (seat) and has a group.MemberIndex
-	// that is just the element's list index incremented by one (e.g.
-	// element with index 0 has the group.MemberIndex equal to 1 and so on).
+	// form the whole wallet's signing group. This list may differ from the
+	// original list outputted by the sortition protocol as it contains only
+	// those signing group members who behaved properly during the DKG
+	// protocol so all misbehaved members are not included here.
+	// This list's size is always in the range [GroupQuorum, GroupSize].
+	//
+	// Each item in this list represents the given signing group member (seat)
+	// and has a group.MemberIndex that is just the element's list index
+	// incremented by one (e.g. element with index 0 has the group.MemberIndex
+	// equal to 1 and so on).
 	signingGroupOperators []chain.Address
 }
 
@@ -33,7 +39,11 @@ func (w *wallet) String() string {
 		w.publicKey.Y,
 	)
 
-	return fmt.Sprintf("wallet [0x%x]", publicKey)
+	return fmt.Sprintf(
+		"wallet [0x%x] with a signing group of [%v]",
+		publicKey,
+		len(w.signingGroupOperators),
+	)
 }
 
 // signer represents a threshold signer of a tBTC wallet. A signer holds
@@ -44,8 +54,12 @@ type signer struct {
 	wallet wallet
 
 	// signingGroupMemberIndex indicates the signer position (seat) in the
-	// wallet signing group. The value of this index is in the [1, groupSize]
-	// range.
+	// wallet signing group. Since the final wallet signing group may differ
+	// from the original group outputted by the sortition protocol
+	// (see wallet.signingGroupOperators documentation for reference), the
+	// signingGroupMemberIndex may differ from the member index using
+	// during the DKG protocol as well. The value of this index is in the
+	// [1, len(wallet.signingGroupOperators)] range.
 	signingGroupMemberIndex group.MemberIndex
 
 	// privateKeyShare is the tECDSA private key share required to participate
