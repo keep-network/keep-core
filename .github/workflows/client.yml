@@ -148,20 +148,19 @@ jobs:
   # This is a job that tests if the client binary can be build for multiple platforms.
   # TODO: Integrate into the publication process and publish the binaries.
   client-binaries-build:
-    needs: [client-detect-changes, client-build-test-publish]
-    if: |
-      github.event_name != 'pull_request'
-        || needs.client-detect-changes.outputs.path-filter == 'true'
+    # TODO: UNCOMMENT
+    # needs: [client-detect-changes, client-build-test-publish]
+    # if: |
+    #   github.event_name != 'pull_request'
+    #     || needs.client-detect-changes.outputs.path-filter == 'true'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-go@v3
+      - uses: ./.github/actions/client-build-binaries
         with:
-          go-version-file: "go.mod"
-      - name: Generate Code
-        run: make get_artifacts generate
-      - name: Build Binaries
-        run: make build-all
+          # TODO: UPDATE VALUES
+          environment: development
+          version: 2.0.0-dev
+          revision: ${{ github.sha }}
 
   client-scan:
     needs: client-detect-changes
