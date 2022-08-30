@@ -1,11 +1,11 @@
 = Keep Network Private Testnet
 
 We set up a Keep Network Private Testnet that is accessible by the permitted parties.
-Here we hold the code helping us to create a bundles for the parties.
+Here we hold the code helping us to create bundles for the parties.
 
 The network runs against the link:https://goerli.net/[Ethereum Görli Testnet].
 
-The generated bundles contains a preinitialized Ethereum Account details. The account
+The generated bundles contain a preinitialized Ethereum Account details. The account
 receives a stake delegation to the Staking Provider Account with authorized `beacon` and
 `tbtc` application. This is a production-like experience for the Staking Providers,
 where they will receive stakes from their customers.

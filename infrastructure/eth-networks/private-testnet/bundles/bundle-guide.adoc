@@ -16,8 +16,8 @@ link:https://docs.keep.network/run-keep-node.html[Run Keep Node documentation].
 
 == Stake and Register
 
-This bundle comes with an Staking Provider Ethereum Account that was already staked and
-authorized, similar to what a staker would do in the production.
+This bundle comes with a Staking Provider Ethereum Account that was already staked and
+authorized, similar to what a Staker would do in the production.
 
 IMPORTANT: Delivering the Staking Provider Account details in the bundle is a
 simplification for this bundle. In the production the Staking Provider will have
@@ -31,8 +31,8 @@ Account address where the stake should be delegated to.
 
 The Staking Provider Account is controlled by the Staking Provider.
 
-The Staking Provider account can be an Ethereum account managed by any kind of
-a wallet, that can sign transactions (i.e. it doesn't have to be a Key File). 
+The Staking Provider Account can be an Ethereum account managed by any kind of
+a wallet that can sign transactions (i.e. it doesn't have to be a Key File). 
 
 === Operator Account
 
