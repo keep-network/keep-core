@@ -52,6 +52,7 @@ docker run \
     --rm \
     --env "CHAIN_API_URL=$CHAIN_API_URL" \
     --env "ACCOUNTS_PRIVATE_KEYS=$PURSE_PRIVATE_KEY" \
+    --platform linux/amd64 \
     gcr.io/keep-test-f3e0/keep-random-beacon-hardhat:latest \
     ensure-eth-balance \
     --network goerli \
