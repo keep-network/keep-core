@@ -1,15 +1,15 @@
-export KEEP_CLIENT_ETHEREUM_WS_URL="<Ethereum API WS URL>"
-export KEEP_CLIENT_ETHEREUM_PASSWORD="<Ethereum Key File Password>"
+export ETHEREUM_WS_URL="<Ethereum API WS URL>"
+export KEEP_ETHEREUM_PASSWORD="<Ethereum Key File Password>"
 
-export KEEP_CLIENT_CONFIG_DIR=$(pwd)/config
-export KEEP_CLIENT_PERSISTENCE_DIR=$(pwd)/persistence
+export KEEP_CONFIG_DIR=$(pwd)/config
+export KEEP_STORAGE_DIR=$(pwd)/storage
 
 export OPERATOR_KEY_FILE_NAME="<Operator Key File Name>"
 
 docker run \
-    --volume $KEEP_CLIENT_CONFIG_DIR:/mnt/keep-client/config \
-    --volume $KEEP_CLIENT_PERSISTENCE_DIR:/mnt/keep-client/persistence \
-    --env KEEP_ETHEREUM_PASSWORD=$KEEP_CLIENT_ETHEREUM_PASSWORD \
+    --volume $KEEP_CONFIG_DIR:/mnt/keep/config \
+    --volume $KEEP_STORAGE_DIR:/mnt/keep/storage \
+    --env KEEP_ETHEREUM_PASSWORD=$KEEP_ETHEREUM_PASSWORD \
     --env LOG_LEVEL=debug \
     --log-opt max-size=100m \
     --log-opt max-file=3 \
@@ -18,6 +18,6 @@ docker run \
     -p 8081:8081 \
     keepnetwork/keep-client:latest \
     start \
-    --ethereum.url $KEEP_CLIENT_ETHEREUM_WS_URL \
-    --ethereum.keyFile /mnt/keep-client/config/$OPERATOR_KEY_FILE_NAME \
-    --storage.dataDir /mnt/keep-client/persistence
+    --ethereum.url $ETHEREUM_WS_URL \
+    --ethereum.keyFile /mnt/keep/config/$OPERATOR_KEY_FILE_NAME \
+    --storage.dataDir /mnt/keep/storage
