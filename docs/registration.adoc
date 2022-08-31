@@ -1,0 +1,129 @@
+:toc: left
+:toclevels: 3
+:sectanchors: true
+:sectids: true
+:source-highlighter: rouge
+:icons: font
+
+= Registration
+
+== Stake
+
+Stake T tokens to the Staking Provider account according to the instructions
+received from your Staking Provider or 
+the link:https://docs.threshold.network/guides/migrating-legacy-stakes[Threshold Network Staking Guide].
+
+== Authorize Applications
+
+Authorize the Random Beacon and TBTC applications.
+
+// TODO: Add instruction
+
+[#register-operator]
+== Register Operator
+
+Once the tokens are staked the one controlling the Staking Provider account has to
+register an operator for the Random Beacon and TBTC applications.
+
+CAUTION: An Operator for the Provider registration can be submitted just once. The
+Operator address assignment cannot be updated.
+
+If a Key File for the Staking Provider account is available the registration
+can be performed from the <<register-operator-client>>.
+
+Another way is registration from the <<register-operator-web>>.
+
+NOTE: For the Keep Legacy stakes the Staking Provider account and Operator account are
+the same.
+
+[#register-operator-client]
+=== Via Keep Client
+
+An operator-registering transaction can be submitted with the Keep Client.
+
+The commands that should be used are provided below.
+You need to replace a few values in the commands:
+
+* `KEEP_CLIENT_ETHEREUM_WS_URL` - an URL to the Ethereum WebSocket API,
+
+* `STAKING_PROVIDER_KEY_FILE_PASSWORD` - a password used for the Staking Provider
+Ethereum Key File encryption,
+
+* `STAKING_PROVIDER_KEY_FILE_NAME` - a name of the Staking Provider Ethereum
+Key File, that is expected to be placed inside the `KEEP_CLIENT_CONFIG_DIR` (`config/` directory).
+
+* `OPERATOR_ADDRESS` - an Operator address that will be running the Keep Client.
+
+Command templates for the supported applications:
+
+* Random Beacon application (`RandomBeacon` contract)
+
+[source,bash]
+----
+export KEEP_CLIENT_CONFIG_DIR=$(pwd)/config
+
+export KEEP_CLIENT_ETHEREUM_WS_URL="<Ethereum API WS URL>"
+
+export STAKING_PROVIDER_KEY_FILE_PASSWORD="<Staking Provider Account Key File Password>"
+export STAKING_PROVIDER_KEY_FILE_NAME="<Staking Provider Account Key File Name>"
+export OPERATOR_ADDRESS="<Operator Account Address>"
+
+docker run \
+    --volume $KEEP_CLIENT_CONFIG_DIR:/mnt/keep-client/config \
+    --env KEEP_CLIENT_ETHEREUM_PASSWORD=$STAKING_PROVIDER_KEY_FILE_PASSWORD
+    us-docker.pkg.dev/keep-test-f3e0/public/keep-client:latest \
+    ethereum \
+    --ethereum.url $KEEP_CLIENT_ETHEREUM_WS_URL \
+    --ethereum.keyFile /mnt/keep-client/config/$STAKING_PROVIDER_KEY_FILE_NAME \
+    beacon random-beacon register-operator --submit \
+    $OPERATOR_ADDRESS
+----
+
+
+* TBTC application (`WalletRegistry` contract)
+
+[source,bash]
+----
+export KEEP_CLIENT_CONFIG_DIR=$(pwd)/config
+
+export KEEP_CLIENT_ETHEREUM_WS_URL="<Ethereum API WS URL>"
+
+export STAKING_PROVIDER_KEY_FILE_PASSWORD="<Staking Provider Account Key File Password>"
+export STAKING_PROVIDER_KEY_FILE_NAME="<Staking Provider Account Key File Name>"
+export OPERATOR_ADDRESS="<Operator Account Address>"
+
+docker run \
+    --volume $KEEP_CLIENT_CONFIG_DIR:/mnt/keep-client/config \
+    --env KEEP_CLIENT_ETHEREUM_PASSWORD=$STAKING_PROVIDER_KEY_FILE_PASSWORD
+    us-docker.pkg.dev/keep-test-f3e0/public/keep-client:latest \
+    ethereum \
+    --ethereum.url $KEEP_CLIENT_ETHEREUM_WS_URL \
+    --ethereum.keyFile /mnt/keep-client/config/$STAKING_PROVIDER_KEY_FILE_NAME \
+    ecdsa wallet-registry register-operator --submit
+    $OPERATOR_ADDRESS
+----
+
+NOTE: icon:flask[] For Testnet add `--goerli` flag to the commands executed above.
+
+[#register-operator-web]
+=== Via Web Browser
+
+An operator-registering transactions can be submitted with Etherscan.
+
+For each of the `RandomBeacon` and `WalletRegistry` contracts perform the following steps:
+
+1. Find the address of the contract and open it on Etherscan (see below).
+
+2. Go to `Contract` -> `Write Contract` tab.
+
+3. Connect your wallet with `Connect to Web3` button.
+
+4. Submit the `registerOperator` function with your Operator address as an argument.
+
+Please see the 
+link:https://docs.threshold.network/extras/contract-addresses#keep-network-contracts[Keep Network Contract Addresses]
+page for the recent Mainnet addresses of the contracts.
+// TODO: Add section with the Keep Network contracts addresses to the Threshold Network docs.
+
+
+NOTE: icon:flask[] For Testnet contracts please visit the xref:./run-keep-node.adoc#testnet-contracts[link].
