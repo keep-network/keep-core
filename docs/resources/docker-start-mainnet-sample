@@ -14,8 +14,8 @@ docker run \
     --log-opt max-size=100m \
     --log-opt max-file=3 \
     -p 3919:3919 \
-    -p 8080:8080 \
-    -p 8081:8081 \
+    -p 9601:9601 \
+    -p 9701:9701 \
     keepnetwork/keep-client:latest \
     start \
     --ethereum.url $ETHEREUM_WS_URL \

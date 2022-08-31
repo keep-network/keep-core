@@ -199,7 +199,7 @@ func initMetricsFlags(cmd *cobra.Command, cfg *config.Config) {
 	cmd.Flags().IntVar(
 		&cfg.Metrics.Port,
 		"metrics.port",
-		8080,
+		9601,
 		"Metrics HTTP server listening port.",
 	)
 
@@ -223,7 +223,7 @@ func initDiagnosticsFlags(cmd *cobra.Command, cfg *config.Config) {
 	cmd.Flags().IntVar(
 		&cfg.Diagnostics.Port,
 		"diagnostics.port",
-		8081,
+		9701,
 		"Diagnostics HTTP server listening port.",
 	)
 }
