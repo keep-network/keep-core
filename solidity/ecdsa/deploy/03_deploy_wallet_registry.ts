@@ -17,34 +17,51 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
     waitConfirmations: 1,
   })
 
-  const walletRegistry = await helpers.upgrades.deployProxy("WalletRegistry", {
-    contractName:
-      process.env.TEST_USE_STUBS_ECDSA === "true"
-        ? "WalletRegistryStub"
-        : undefined,
-    initializerArgs: [
-      EcdsaDkgValidator.address,
-      RandomBeacon.address,
-      ReimbursementPool.address,
-    ],
-    factoryOpts: {
-      signer: await ethers.getSigner(deployer),
-      libraries: {
-        EcdsaInactivity: EcdsaInactivity.address,
+  const [walletRegistry, proxyDeployment] = await helpers.upgrades.deployProxy(
+    "WalletRegistry",
+    {
+      contractName:
+        process.env.TEST_USE_STUBS_ECDSA === "true"
+          ? "WalletRegistryStub"
+          : undefined,
+      initializerArgs: [
+        EcdsaDkgValidator.address,
+        RandomBeacon.address,
+        ReimbursementPool.address,
+      ],
+      factoryOpts: {
+        signer: await ethers.getSigner(deployer),
+        libraries: {
+          EcdsaInactivity: EcdsaInactivity.address,
+        },
       },
-    },
-    proxyOpts: {
-      constructorArgs: [SortitionPool.address, TokenStaking.address],
-      unsafeAllow: ["external-library-linking"],
-      kind: "transparent",
-    },
-  })
+      proxyOpts: {
+        constructorArgs: [SortitionPool.address, TokenStaking.address],
+        unsafeAllow: ["external-library-linking"],
+        kind: "transparent",
+      },
+    }
+  )
 
   await helpers.ownable.transferOwnership(
     "EcdsaSortitionPool",
     walletRegistry.address,
     deployer
   )
+
+  if (hre.network.tags.etherscan) {
+    if (hre.network.tags.etherscan) {
+      await helpers.etherscan.verify(EcdsaInactivity)
+    }
+
+    // We use `verify` instead of `verify:verify` as the `verify` task is defined
+    // in "@openzeppelin/hardhat-upgrades" to perform Etherscan verification
+    // of Proxy and Implementation contracts.
+    await hre.run("verify", {
+      address: proxyDeployment.address,
+      constructorArgsParams: proxyDeployment.args,
+    })
+  }
 
   if (hre.network.tags.tenderly) {
     await hre.tenderly.verify({
