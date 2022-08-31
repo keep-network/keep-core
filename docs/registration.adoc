@@ -60,13 +60,13 @@ Command templates for the supported applications:
 
 [source,bash]
 ----
-export KEEP_CLIENT_CONFIG_DIR=$(pwd)/config
-
 export KEEP_CLIENT_ETHEREUM_WS_URL="<Ethereum API WS URL>"
-
-export STAKING_PROVIDER_KEY_FILE_PASSWORD="<Staking Provider Account Key File Password>"
-export STAKING_PROVIDER_KEY_FILE_NAME="<Staking Provider Account Key File Name>"
 export OPERATOR_ADDRESS="<Operator Account Address>"
+
+export KEEP_CLIENT_CONFIG_DIR="<Path to the directory containing the Staking Provider Key File>"
+
+export STAKING_PROVIDER_KEY_FILE_NAME="<Staking Provider Account Key File Name>"
+export STAKING_PROVIDER_KEY_FILE_PASSWORD="<Staking Provider Account Key File Password>"
 
 docker run \
     --volume $KEEP_CLIENT_CONFIG_DIR:/mnt/keep-client/config \
@@ -84,13 +84,13 @@ docker run \
 
 [source,bash]
 ----
-export KEEP_CLIENT_CONFIG_DIR=$(pwd)/config
-
 export KEEP_CLIENT_ETHEREUM_WS_URL="<Ethereum API WS URL>"
-
-export STAKING_PROVIDER_KEY_FILE_PASSWORD="<Staking Provider Account Key File Password>"
-export STAKING_PROVIDER_KEY_FILE_NAME="<Staking Provider Account Key File Name>"
 export OPERATOR_ADDRESS="<Operator Account Address>"
+
+export KEEP_CLIENT_CONFIG_DIR="<Path to the directory containing the Staking Provider Key File>"
+
+export STAKING_PROVIDER_KEY_FILE_NAME="<Staking Provider Account Key File Name>"
+export STAKING_PROVIDER_KEY_FILE_PASSWORD="<Staking Provider Account Key File Password>"
 
 docker run \
     --volume $KEEP_CLIENT_CONFIG_DIR:/mnt/keep-client/config \
