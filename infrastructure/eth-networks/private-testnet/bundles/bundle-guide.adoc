@@ -20,7 +20,7 @@ This bundle comes with a Staking Provider Ethereum Account that was already stak
 authorized, similar to what a Staker would do in the production.
 
 IMPORTANT: Delivering the Staking Provider Account details in the bundle is a
-simplification for this bundle. In the production the Staking Provider will have
+simplification for testnet. On mainnet, the Staking Provider will have
 to provide the address for the Staker. See <<#staking-provider-account>> section.
 
 [#staking-provider-account]
