@@ -30,3 +30,24 @@ func (epkm *ephemeralPublicKeyMessage) SenderID() group.MemberIndex {
 func (epkm *ephemeralPublicKeyMessage) Type() string {
 	return messageTypePrefix + "ephemeral_public_key_message"
 }
+
+// tssRoundOneMessage is a message payload that carries the sender's
+// TSS round one components.
+type tssRoundOneMessage struct {
+	senderID group.MemberIndex
+
+	broadcastPayload []byte
+	peersPayload     map[group.MemberIndex][]byte
+	sessionID        string
+}
+
+// SenderID returns protocol-level identifier of the message sender.
+func (trom *tssRoundOneMessage) SenderID() group.MemberIndex {
+	return trom.senderID
+}
+
+// Type returns a string describing an tssRoundOneMessage type for
+// marshaling purposes.
+func (trom *tssRoundOneMessage) Type() string {
+	return messageTypePrefix + "tss_round_one_message"
+}

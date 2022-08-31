@@ -44,6 +44,8 @@ func Execute(
 		dishonestThreshold,
 		membershipValidator,
 		sessionID,
+		message,
+		privateKeyShare,
 	)
 
 	// Mark excluded members as disqualified in order to not exchange messages
@@ -66,7 +68,7 @@ func Execute(
 		return nil, err
 	}
 
-	_, ok := lastState.(*symmetricKeyGenerationState)
+	_, ok := lastState.(*tssRoundOneState)
 	if !ok {
 		return nil, fmt.Errorf("execution ended on state: %T", lastState)
 	}
@@ -86,5 +88,8 @@ func Execute(
 func registerUnmarshallers(channel net.BroadcastChannel) {
 	channel.SetUnmarshaler(func() net.TaggedUnmarshaler {
 		return &ephemeralPublicKeyMessage{}
+	})
+	channel.SetUnmarshaler(func() net.TaggedUnmarshaler {
+		return &tssRoundOneMessage{}
 	})
 }

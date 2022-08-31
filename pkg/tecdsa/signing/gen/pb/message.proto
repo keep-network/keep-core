@@ -9,3 +9,9 @@ message EphemeralPublicKeyMessage {
     string sessionID = 3;
 }
 
+message TSSRoundOneMessage {
+    uint32 senderID = 1;
+    bytes broadcastPayload = 2;
+    map<uint32, bytes> peersPayload = 3;
+    string sessionID = 4;
+}

@@ -13,13 +13,18 @@ const (
 
 	ephemeralKeyPairStateDelayBlocks  = 1
 	ephemeralKeyPairStateActiveBlocks = 5
+
+	tssRoundOneStateDelayBlocks  = 1
+	tssRoundOneStateActiveBlocks = 5
 )
 
 // ProtocolBlocks returns the total number of blocks it takes to execute
 // all the required work defined by the signing protocol.
 func ProtocolBlocks() uint64 {
 	return ephemeralKeyPairStateDelayBlocks +
-		ephemeralKeyPairStateActiveBlocks
+		ephemeralKeyPairStateActiveBlocks +
+		tssRoundOneStateDelayBlocks +
+		tssRoundOneStateActiveBlocks
 }
 
 // ephemeralKeyPairGenerationState is the state during which members broadcast
@@ -111,9 +116,85 @@ func (skgs *symmetricKeyGenerationState) Receive(msg net.Message) error {
 }
 
 func (skgs *symmetricKeyGenerationState) Next() (state.State, error) {
-	return nil, nil
+	return &tssRoundOneState{
+		channel:     skgs.channel,
+		member:      skgs.member.initializeTssRoundOne(),
+		outcomeChan: make(chan error),
+	}, nil
 }
 
 func (skgs *symmetricKeyGenerationState) MemberIndex() group.MemberIndex {
 	return skgs.member.id
+}
+
+// tssRoundOneState is the state during which members broadcast TSS
+// round one messages.
+// `tssRoundOneMessage`s are valid in this state.
+type tssRoundOneState struct {
+	channel net.BroadcastChannel
+	member  *tssRoundOneMember
+
+	outcomeChan chan error
+
+	phaseMessages []*tssRoundOneMessage
+}
+
+func (tros *tssRoundOneState) DelayBlocks() uint64 {
+	return tssRoundOneStateDelayBlocks
+}
+
+func (tros *tssRoundOneState) ActiveBlocks() uint64 {
+	return tssRoundOneStateActiveBlocks
+}
+
+func (tros *tssRoundOneState) Initiate(ctx context.Context) error {
+	// TSS computations can be time-consuming and can exceed the current
+	// state's time window. The ctx parameter is scoped to the lifetime of
+	// the current state so, it can be used as a timeout signal. However,
+	// that ctx is cancelled upon state's end only after Initiate returns.
+	// In order to make that working, Initiate must trigger the computations
+	// in a separate goroutine and return before the end of the state.
+	go func() {
+		message, err := tros.member.tssRoundOne(ctx)
+		if err != nil {
+			tros.outcomeChan <- err
+			return
+		}
+
+		if err := tros.channel.Send(ctx, message); err != nil {
+			tros.outcomeChan <- err
+			return
+		}
+
+		close(tros.outcomeChan)
+	}()
+
+	return nil
+}
+
+func (tros *tssRoundOneState) Receive(msg net.Message) error {
+	switch phaseMessage := msg.Payload().(type) {
+	case *tssRoundOneMessage:
+		if tros.member.shouldAcceptMessage(
+			phaseMessage.SenderID(),
+			msg.SenderPublicKey(),
+		) && tros.member.sessionID == phaseMessage.sessionID {
+			tros.phaseMessages = append(tros.phaseMessages, phaseMessage)
+		}
+	}
+
+	return nil
+}
+
+func (tros *tssRoundOneState) Next() (state.State, error) {
+	err := <-tros.outcomeChan
+	if err != nil {
+		return nil, err
+	}
+
+	return nil, nil
+}
+
+func (tros *tssRoundOneState) MemberIndex() group.MemberIndex {
+	return tros.member.id
 }

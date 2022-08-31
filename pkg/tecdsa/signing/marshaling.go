@@ -46,6 +46,8 @@ func (epkm *ephemeralPublicKeyMessage) Unmarshal(bytes []byte) error {
 	return nil
 }
 
+// TODO: Marshaling and unmarshaling of tssRoundOneMessage and unit tests.
+
 func validateMemberIndex(protoIndex uint32) error {
 	// Protobuf does not have uint8 type, so we are using uint32. When
 	// unmarshalling message, we need to make sure we do not overflow.

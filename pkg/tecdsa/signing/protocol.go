@@ -1,6 +1,7 @@
 package signing
 
 import (
+	"context"
 	"fmt"
 	"github.com/keep-network/keep-core/pkg/crypto/ephemeral"
 	"github.com/keep-network/keep-core/pkg/protocol/group"
@@ -114,6 +115,15 @@ func (skgm *symmetricKeyGeneratingMember) isValidEphemeralPublicKeyMessage(
 	}
 
 	return true
+}
+
+// tssRoundOne starts the TSS process by executing its first round. The
+// outcome of that round is a message containing TSS round one components.
+func (trom *tssRoundOneMember) tssRoundOne(
+	ctx context.Context,
+) (*tssRoundOneMessage, error) {
+	// TODO: Implementation and unit tests.
+	return nil, nil
 }
 
 // deduplicateBySender removes duplicated items for the given sender.
