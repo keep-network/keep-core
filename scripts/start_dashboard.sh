@@ -74,7 +74,7 @@ yarn link @keep-network/keep-core
 ./scripts/prepare-dependencies.sh
 printf "${LOG_START}Deploying contracts for threshold solidity contracts...${LOG_START}"
 yarn deploy --network development --reset
-./scripts/prepare-artifacts.sh --network development
+yarn hardhat prepare-artifacts --network development
 npm link
 
 printf "${LOG_START}Installing Keep Token Dashboard...${LOG_END}"

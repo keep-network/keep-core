@@ -1121,6 +1121,154 @@ func (wr *WalletRegistry) CloseWalletGasEstimate(
 }
 
 // Transaction submission.
+func (wr *WalletRegistry) ForceAddWallet(
+	arg_groupPubKey []byte,
+	arg_membersIdsHash [32]byte,
+
+	transactionOptions ...chainutil.TransactionOptions,
+) (*types.Transaction, error) {
+	wrLogger.Debug(
+		"submitting transaction forceAddWallet",
+		" params: ",
+		fmt.Sprint(
+			arg_groupPubKey,
+			arg_membersIdsHash,
+		),
+	)
+
+	wr.transactionMutex.Lock()
+	defer wr.transactionMutex.Unlock()
+
+	// create a copy
+	transactorOptions := new(bind.TransactOpts)
+	*transactorOptions = *wr.transactorOptions
+
+	if len(transactionOptions) > 1 {
+		return nil, fmt.Errorf(
+			"could not process multiple transaction options sets",
+		)
+	} else if len(transactionOptions) > 0 {
+		transactionOptions[0].Apply(transactorOptions)
+	}
+
+	nonce, err := wr.nonceManager.CurrentNonce()
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve account nonce: %v", err)
+	}
+
+	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
+
+	transaction, err := wr.contract.ForceAddWallet(
+		transactorOptions,
+		arg_groupPubKey,
+		arg_membersIdsHash,
+	)
+	if err != nil {
+		return transaction, wr.errorResolver.ResolveError(
+			err,
+			wr.transactorOptions.From,
+			nil,
+			"forceAddWallet",
+			arg_groupPubKey,
+			arg_membersIdsHash,
+		)
+	}
+
+	wrLogger.Infof(
+		"submitted transaction forceAddWallet with id: [%s] and nonce [%v]",
+		transaction.Hash(),
+		transaction.Nonce(),
+	)
+
+	go wr.miningWaiter.ForceMining(
+		transaction,
+		transactorOptions,
+		func(newTransactorOptions *bind.TransactOpts) (*types.Transaction, error) {
+			// If original transactor options has a non-zero gas limit, that
+			// means the client code set it on their own. In that case, we
+			// should rewrite the gas limit from the original transaction
+			// for each resubmission. If the gas limit is not set by the client
+			// code, let the the submitter re-estimate the gas limit on each
+			// resubmission.
+			if transactorOptions.GasLimit != 0 {
+				newTransactorOptions.GasLimit = transactorOptions.GasLimit
+			}
+
+			transaction, err := wr.contract.ForceAddWallet(
+				newTransactorOptions,
+				arg_groupPubKey,
+				arg_membersIdsHash,
+			)
+			if err != nil {
+				return nil, wr.errorResolver.ResolveError(
+					err,
+					wr.transactorOptions.From,
+					nil,
+					"forceAddWallet",
+					arg_groupPubKey,
+					arg_membersIdsHash,
+				)
+			}
+
+			wrLogger.Infof(
+				"submitted transaction forceAddWallet with id: [%s] and nonce [%v]",
+				transaction.Hash(),
+				transaction.Nonce(),
+			)
+
+			return transaction, nil
+		},
+	)
+
+	wr.nonceManager.IncrementNonce()
+
+	return transaction, err
+}
+
+// Non-mutating call, not a transaction submission.
+func (wr *WalletRegistry) CallForceAddWallet(
+	arg_groupPubKey []byte,
+	arg_membersIdsHash [32]byte,
+	blockNumber *big.Int,
+) error {
+	var result interface{} = nil
+
+	err := chainutil.CallAtBlock(
+		wr.transactorOptions.From,
+		blockNumber, nil,
+		wr.contractABI,
+		wr.caller,
+		wr.errorResolver,
+		wr.contractAddress,
+		"forceAddWallet",
+		&result,
+		arg_groupPubKey,
+		arg_membersIdsHash,
+	)
+
+	return err
+}
+
+func (wr *WalletRegistry) ForceAddWalletGasEstimate(
+	arg_groupPubKey []byte,
+	arg_membersIdsHash [32]byte,
+) (uint64, error) {
+	var result uint64
+
+	result, err := chainutil.EstimateGas(
+		wr.callerOptions.From,
+		wr.contractAddress,
+		"forceAddWallet",
+		wr.contractABI,
+		wr.transactor,
+		arg_groupPubKey,
+		arg_membersIdsHash,
+	)
+
+	return result, err
+}
+
+// Transaction submission.
 func (wr *WalletRegistry) Initialize(
 	arg__ecdsaDkgValidator common.Address,
 	arg__randomBeacon common.Address,
@@ -2844,6 +2992,7 @@ func (wr *WalletRegistry) UpdateAuthorizationParametersGasEstimate(
 func (wr *WalletRegistry) UpdateDkgParameters(
 	arg__seedTimeout *big.Int,
 	arg__resultChallengePeriodLength *big.Int,
+	arg__resultChallengeExtraGas *big.Int,
 	arg__resultSubmissionTimeout *big.Int,
 	arg__submitterPrecedencePeriodLength *big.Int,
 
@@ -2855,6 +3004,7 @@ func (wr *WalletRegistry) UpdateDkgParameters(
 		fmt.Sprint(
 			arg__seedTimeout,
 			arg__resultChallengePeriodLength,
+			arg__resultChallengeExtraGas,
 			arg__resultSubmissionTimeout,
 			arg__submitterPrecedencePeriodLength,
 		),
@@ -2886,6 +3036,7 @@ func (wr *WalletRegistry) UpdateDkgParameters(
 		transactorOptions,
 		arg__seedTimeout,
 		arg__resultChallengePeriodLength,
+		arg__resultChallengeExtraGas,
 		arg__resultSubmissionTimeout,
 		arg__submitterPrecedencePeriodLength,
 	)
@@ -2897,6 +3048,7 @@ func (wr *WalletRegistry) UpdateDkgParameters(
 			"updateDkgParameters",
 			arg__seedTimeout,
 			arg__resultChallengePeriodLength,
+			arg__resultChallengeExtraGas,
 			arg__resultSubmissionTimeout,
 			arg__submitterPrecedencePeriodLength,
 		)
@@ -2926,6 +3078,7 @@ func (wr *WalletRegistry) UpdateDkgParameters(
 				newTransactorOptions,
 				arg__seedTimeout,
 				arg__resultChallengePeriodLength,
+				arg__resultChallengeExtraGas,
 				arg__resultSubmissionTimeout,
 				arg__submitterPrecedencePeriodLength,
 			)
@@ -2937,6 +3090,7 @@ func (wr *WalletRegistry) UpdateDkgParameters(
 					"updateDkgParameters",
 					arg__seedTimeout,
 					arg__resultChallengePeriodLength,
+					arg__resultChallengeExtraGas,
 					arg__resultSubmissionTimeout,
 					arg__submitterPrecedencePeriodLength,
 				)
@@ -2961,6 +3115,7 @@ func (wr *WalletRegistry) UpdateDkgParameters(
 func (wr *WalletRegistry) CallUpdateDkgParameters(
 	arg__seedTimeout *big.Int,
 	arg__resultChallengePeriodLength *big.Int,
+	arg__resultChallengeExtraGas *big.Int,
 	arg__resultSubmissionTimeout *big.Int,
 	arg__submitterPrecedencePeriodLength *big.Int,
 	blockNumber *big.Int,
@@ -2978,6 +3133,7 @@ func (wr *WalletRegistry) CallUpdateDkgParameters(
 		&result,
 		arg__seedTimeout,
 		arg__resultChallengePeriodLength,
+		arg__resultChallengeExtraGas,
 		arg__resultSubmissionTimeout,
 		arg__submitterPrecedencePeriodLength,
 	)
@@ -2988,6 +3144,7 @@ func (wr *WalletRegistry) CallUpdateDkgParameters(
 func (wr *WalletRegistry) UpdateDkgParametersGasEstimate(
 	arg__seedTimeout *big.Int,
 	arg__resultChallengePeriodLength *big.Int,
+	arg__resultChallengeExtraGas *big.Int,
 	arg__resultSubmissionTimeout *big.Int,
 	arg__submitterPrecedencePeriodLength *big.Int,
 ) (uint64, error) {
@@ -3001,6 +3158,7 @@ func (wr *WalletRegistry) UpdateDkgParametersGasEstimate(
 		wr.transactor,
 		arg__seedTimeout,
 		arg__resultChallengePeriodLength,
+		arg__resultChallengeExtraGas,
 		arg__resultSubmissionTimeout,
 		arg__submitterPrecedencePeriodLength,
 	)
@@ -4507,6 +4665,43 @@ func (wr *WalletRegistry) GasParametersAtBlock(
 		wr.errorResolver,
 		wr.contractAddress,
 		"gasParameters",
+		&result,
+	)
+
+	return result, err
+}
+
+func (wr *WalletRegistry) GetDkgData() (abi.EcdsaDkgData, error) {
+	result, err := wr.contract.GetDkgData(
+		wr.callerOptions,
+	)
+
+	if err != nil {
+		return result, wr.errorResolver.ResolveError(
+			err,
+			wr.callerOptions.From,
+			nil,
+			"getDkgData",
+		)
+	}
+
+	return result, err
+}
+
+func (wr *WalletRegistry) GetDkgDataAtBlock(
+	blockNumber *big.Int,
+) (abi.EcdsaDkgData, error) {
+	var result abi.EcdsaDkgData
+
+	err := chainutil.CallAtBlock(
+		wr.callerOptions.From,
+		blockNumber,
+		nil,
+		wr.contractABI,
+		wr.caller,
+		wr.errorResolver,
+		wr.contractAddress,
+		"getDkgData",
 		&result,
 	)
 
@@ -6729,6 +6924,7 @@ type WrDkgParametersUpdatedSubscription struct {
 type walletRegistryDkgParametersUpdatedFunc func(
 	SeedTimeout *big.Int,
 	ResultChallengePeriodLength *big.Int,
+	ResultChallengeExtraGas *big.Int,
 	ResultSubmissionTimeout *big.Int,
 	ResultSubmitterPrecedencePeriodLength *big.Int,
 	blockNumber uint64,
@@ -6749,6 +6945,7 @@ func (dpus *WrDkgParametersUpdatedSubscription) OnEvent(
 				handler(
 					event.SeedTimeout,
 					event.ResultChallengePeriodLength,
+					event.ResultChallengeExtraGas,
 					event.ResultSubmissionTimeout,
 					event.ResultSubmitterPrecedencePeriodLength,
 					event.Raw.BlockNumber,

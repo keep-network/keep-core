@@ -10,6 +10,7 @@
   ],
   "compilerOptions": {
     "esModuleInterop": true,
-    "noImplicitAny": true
+    "noImplicitAny": true,
+    "downlevelIteration": true
   }
 }

@@ -1,17 +1,23 @@
 #!/bin/bash
 set -eou pipefail
 
-LOG_START='\n\e[1;36m'  # new line + bold + color
-LOG_END='\n\e[0m'       # new line + reset color
-DONE_START='\n\e[1;32m' # new line + bold + green
-DONE_END='\n\n\e[0m'    # new line + reset
+LOG_START='\n\e[1;36m'           # new line + bold + color
+LOG_END='\n\e[0m'                # new line + reset color
+LOG_WARNING_START='\n\e\033[33m' # new line + bold + warning color
+LOG_WARNING_END='\n\e\033[0m'    # new line + reset
+DONE_START='\n\e[1;32m'          # new line + bold + green
+DONE_END='\n\n\e[0m'             # new line + reset
 
 KEEP_CORE_PATH=$PWD
 
-KEEP_BEACON_SOL_PATH="$KEEP_CORE_PATH/solidity/random-beacon"
-KEEP_ECDSA_SOL_PATH="$KEEP_CORE_PATH/solidity/ecdsa"
+BEACON_SOL_PATH="$KEEP_CORE_PATH/solidity/random-beacon"
+ECDSA_SOL_PATH="$KEEP_CORE_PATH/solidity/ecdsa"
 TMP="$KEEP_CORE_PATH/tmp"
 OPENZEPPELIN_MANIFEST=".openzeppelin/unknown-*.json"
+# This number should be no less than the highest index assigned to a named account
+# specified in `hardhat.config.ts` configs across all the used projects. Note that
+# account indices start from 0.
+REQUIRED_ACCOUNTS_NUMBER=8
 
 # Defaults, can be overwritten by env variables/input parameters
 NETWORK_DEFAULT="development"
@@ -71,16 +77,18 @@ shift $(expr $OPTIND - 1) # remove options from positional parameters
 # Overwrite default properties
 NETWORK=${network:-$NETWORK_DEFAULT}
 TBTC_PATH=${tbtc_path:-""}
-THRESHOLD_NETWORK_PATH=${threshold_network_path:-""}
+THRESHOLD_PATH=${threshold_network_path:-""}
 SKIP_DEPLOYMENT=${skip_deployment:-false}
 SKIP_CLIENT_BUILD=${skip_client_build:-false}
 
 # Run script
 printf "${LOG_START}Starting installation...${LOG_END}"
 
+printf "${LOG_WARNING_START}Make sure you have at least ${REQUIRED_ACCOUNTS_NUMBER} ethereum accounts${LOG_WARNING_END}"
+
 printf "Network: $NETWORK\n"
 
-cd $KEEP_BEACON_SOL_PATH
+cd $BEACON_SOL_PATH
 
 printf "${LOG_START}Installing beacon YARN dependencies...${LOG_END}"
 yarn install
@@ -96,18 +104,20 @@ if [ "$SKIP_DEPLOYMENT" != true ]; then
   # create tmp/ dir for fresh installations
   rm -rf $TMP && mkdir $TMP
 
-  if [ "$THRESHOLD_NETWORK_PATH" = "" ]; then
+  if [ "$THRESHOLD_PATH" = "" ]; then
     cd $TMP
     printf "${LOG_START}Cloning threshold-network/solidity-contracts...${LOG_END}"
     # clone threshold-network/solidity-contracts as a dependency for beacon, ecdsa
     # and tbtc
     git clone https://github.com/threshold-network/solidity-contracts.git
 
-    cd solidity-contracts
+    THRESHOLD_SOL_PATH="$(realpath ./solidity-contracts)"
   else
-    printf "${LOG_START}Installing threshold-network/solidity-contracts from the local directory...${LOG_END}"
-    cd "$THRESHOLD_NETWORK_PATH"
+    printf "${LOG_START}Installing threshold-network/solidity-contracts from the existing local directory...${LOG_END}"
+    THRESHOLD_SOL_PATH="$THRESHOLD_PATH"
   fi
+
+  cd "$THRESHOLD_SOL_PATH"
 
   printf "${LOG_START}Building threshold-network/solidity-contracts...${LOG_END}"
   yarn install && yarn clean && yarn build
@@ -116,12 +126,12 @@ if [ "$SKIP_DEPLOYMENT" != true ]; then
   printf "${LOG_START}Deploying threshold-network/solidity-contracts contracts...${LOG_END}"
   yarn deploy --reset --network $NETWORK
 
-  # Link the package. Replace existing link (see: https://github.com/yarnpkg/yarn/issues/7216) 
+  # Link the package. Replace existing link (see: https://github.com/yarnpkg/yarn/issues/7216)
   yarn unlink || true && yarn link
   # create export folder
   yarn prepack
 
-  cd $KEEP_BEACON_SOL_PATH
+  cd $BEACON_SOL_PATH
 
   printf "${LOG_START}Linking threshold-network/solidity-contracts...${LOG_END}"
   yarn link @threshold-network/solidity-contracts
@@ -134,12 +144,12 @@ if [ "$SKIP_DEPLOYMENT" != true ]; then
   yarn deploy --reset --network $NETWORK
 
   printf "${LOG_START}Creating random-beacon link...${LOG_END}"
-  # Link the package. Replace existing link (see: https://github.com/yarnpkg/yarn/issues/7216) 
+  # Link the package. Replace existing link (see: https://github.com/yarnpkg/yarn/issues/7216)
   yarn unlink || true && yarn link
   # create export folder
   yarn prepack
 
-  cd $KEEP_ECDSA_SOL_PATH
+  cd $ECDSA_SOL_PATH
   # remove openzeppelin manifest for fresh installation
   rm -rf $OPENZEPPELIN_MANIFEST
 
@@ -157,7 +167,7 @@ if [ "$SKIP_DEPLOYMENT" != true ]; then
   yarn deploy --reset --network $NETWORK
 
   printf "${LOG_START}Creating ecdsa link...${LOG_END}"
-  # Link the package. Replace existing link (see: https://github.com/yarnpkg/yarn/issues/7216) 
+  # Link the package. Replace existing link (see: https://github.com/yarnpkg/yarn/issues/7216)
   yarn unlink || true && yarn link
   # create export folder
   yarn prepack
@@ -167,11 +177,14 @@ if [ "$SKIP_DEPLOYMENT" != true ]; then
     printf "${LOG_START}Cloning tbtc...${LOG_END}"
     git clone https://github.com/keep-network/tbtc-v2.git
 
-    cd "tbtc-v2/solidity"
+    TBTC_SOL_PATH="$(realpath ./tbtc-v2/solidity)"
   else
-    printf "${LOG_START}Installing tbtc from the local directory...${LOG_END}"
-    cd "$TBTC_PATH/solidity"
+    printf "${LOG_START}Installing tbtc from the existing local directory...${LOG_END}"
+
+    TBTC_SOL_PATH="$TBTC_PATH/solidity"
   fi
+
+  cd "$TBTC_SOL_PATH"
 
   yarn install
 
@@ -198,7 +211,11 @@ if [ "$SKIP_CLIENT_BUILD" = false ]; then
   printf "${LOG_START}Building client...${LOG_END}"
 
   cd $KEEP_CORE_PATH
-  make
+  make local \
+    local_beacon_path=$BEACON_SOL_PATH \
+    local_ecdsa_path=$ECDSA_SOL_PATH \
+    local_threshold_path=$THRESHOLD_SOL_PATH \
+    local_tbtc_path=$TBTC_SOL_PATH
 fi
 
 printf "${DONE_START}Installation completed!${DONE_END}"

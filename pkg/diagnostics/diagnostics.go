@@ -2,6 +2,7 @@ package diagnostics
 
 import (
 	"encoding/json"
+
 	"github.com/keep-network/keep-core/pkg/chain"
 
 	"github.com/ipfs/go-log"
@@ -10,6 +11,11 @@ import (
 )
 
 var logger = log.Logger("keep-diagnostics")
+
+// Config stores diagnostics-related configuration.
+type Config struct {
+	Port int
+}
 
 // Initialize sets up the diagnostics registry and enables diagnostics server.
 func Initialize(port int) (*diagnostics.Registry, bool) {

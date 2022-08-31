@@ -2,32 +2,51 @@
 # not overwritten it defaults to `development`.
 environment = development
 
+# Build with contract packages published to the NPM registry and tagged `development`.
 development:
 	make all environment=development
 
+# Build with contract packages published to the NPM registry and tagged `goerli`.
 goerli:
 	make all environment=goerli
 
 # TODO: Mainnet packages have not been published yet.
+# Build with contract packages published to the NPM registry and tagged `mainnet`.
 # mainnet:
 # 	make all environment=mainnet
 
-all: download_artifacts generate build cmd-help
+# Build with contract packages deployed locally.
+local:
+	make all environment=local
 
-# List of NPM packages containing contracts needed by the client contracts bindings
-# generation.
-npm_packages := @keep-network/random-beacon \
-	@keep-network/ecdsa \
-	@threshold-network/solidity-contracts \
-	@keep-network/tbtc-v2
+all: get_artifacts generate build cmd-help
+
+modules := beacon \
+	ecdsa \
+	threshold \
+	tbtc
+
+# Required by get_npm_package function.
+npm_beacon_package := @keep-network/random-beacon
+npm_ecdsa_package := @keep-network/ecdsa
+npm_threshold_package := @threshold-network/solidity-contracts
+npm_tbtc_package := @keep-network/tbtc-v2
+
+# Required by get_local_package function. The paths can be overwritten when calling
+# the make command, e.g.:
+#   make local local_threshold_path=/other/path/threshold
+local_beacon_path := ./solidity/random-beacon
+local_ecdsa_path := ./solidity/ecdsa
+local_threshold_path := ../../threshold-network/solidity-contracts
+local_tbtc_path := ../tbtc-v2/solidity
 
 # Working directory where contracts artifacts should be stored.
 contracts_dir := tmp/contracts
 
 # It requires npm of at least 7.x version to support `pack-destination` flag.
 define get_npm_package
-$(eval npm_package_tag := $(1))
-$(eval npm_package_name := $(2))
+$(eval npm_package_name := $(npm_$(1)_package))
+$(eval npm_package_tag := $(2))
 $(eval destination_dir := ${contracts_dir}/${npm_package_tag}/${npm_package_name})
 @rm -rf ${destination_dir}
 @mkdir -p ${destination_dir}
@@ -38,8 +57,24 @@ $(eval destination_dir := ${contracts_dir}/${npm_package_tag}/${npm_package_name
 $(info Downloaded NPM package ${npm_package_name}@${npm_package_tag} to ${contracts_dir})
 endef
 
-download_artifacts:
-	$(foreach package,$(npm_packages),$(call get_npm_package,$(environment),$(package)))
+define get_local_package
+$(eval module := $(1))
+$(eval local_solidity_path := $(local_$(module)_path))
+$(eval npm_package_name := $(npm_$(module)_package))
+$(eval destination_dir := ${contracts_dir}/local/${npm_package_name})
+@[ -d "$(local_solidity_path)" ] || { echo "$(module) path [$(local_solidity_path)] does not exist!"; exit 1; }
+@rm -rf ${destination_dir}
+@mkdir -p ${destination_dir}
+$(info Fetching local package ${module} from path ${local_solidity_path})
+rsync -a $(local_solidity_path)/deployments/development/ ${destination_dir}/artifacts
+endef
+
+get_artifacts:
+ifeq ($(environment), local)
+	$(foreach module,$(modules),$(call get_local_package,$(module)))
+else
+	$(foreach module,$(modules),$(call get_npm_package,$(module),$(environment)))
+endif
 
 generate:
 	$(info Running Go code generator)

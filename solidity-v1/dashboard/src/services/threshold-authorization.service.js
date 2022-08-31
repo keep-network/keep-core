@@ -10,6 +10,7 @@ import {
   TOKEN_GRANT_CONTRACT_NAME,
 } from "../constants/constants"
 import { Keep } from "../contracts"
+import moment from "moment"
 
 const fetchThresholdAuthorizationData = async (address) => {
   if (!address) {
@@ -61,13 +62,29 @@ const fetchThresholdAuthorizationData = async (address) => {
     const { operator, beneficiary, authorizer } =
       keepOperatorStakedEvents[i].returnValues
 
-    const { amount: stakeAmount, undelegatedAt } = await stakingContract.methods
-      .getDelegationInfo(operator)
+    const {
+      amount: stakeAmount,
+      undelegatedAt,
+      createdAt,
+    } = await stakingContract.methods.getDelegationInfo(operator).call()
+
+    const initializationPeriod = await stakingContract.methods
+      .initializationPeriod()
       .call()
+
+    const initializationOverAt = moment
+      .unix(createdAt)
+      .add(initializationPeriod, "seconds")
+
+    const isInInitializationPeriod =
+      moment().isSameOrBefore(initializationOverAt)
 
     // If stake is undelegated we won't display it, because undelegated stakes
     // can't be staked to Threshold
     if (undelegatedAt !== "0") continue
+
+    // If stake has the amount of 0 we won't display it
+    if (stakeAmount === "0") continue
 
     const isThresholdTokenStakingContractAuthorized =
       await stakingContract.methods
@@ -94,6 +111,7 @@ const fetchThresholdAuthorizationData = async (address) => {
       // can't be moved to T
       canBeMovedToT: !isCodeValid(code),
       isPRESetUp: operatorConfirmedEvents.hasOwnProperty(operator),
+      isInInitializationPeriod,
     }
 
     authorizationData.push(authorizerOperator)

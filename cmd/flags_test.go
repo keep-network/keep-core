@@ -1,17 +1,21 @@
 package cmd
 
 import (
+	"bufio"
+	"fmt"
 	"math/big"
 	"os"
 	"reflect"
+	"strings"
 	"testing"
 	"time"
 
-	"github.com/keep-network/keep-core/config"
-	"github.com/keep-network/keep-core/pkg/chain/ethereum"
 	"github.com/spf13/cobra"
 	"golang.org/x/exp/slices"
 
+	commonEthereum "github.com/keep-network/keep-common/pkg/chain/ethereum"
+	"github.com/keep-network/keep-core/config"
+	chainEthereum "github.com/keep-network/keep-core/pkg/chain/ethereum"
 	ethereumBeacon "github.com/keep-network/keep-core/pkg/chain/ethereum/beacon/gen"
 	ethereumEcdsa "github.com/keep-network/keep-core/pkg/chain/ethereum/ecdsa/gen"
 	ethereumThreshold "github.com/keep-network/keep-core/pkg/chain/ethereum/threshold/gen"
@@ -73,36 +77,6 @@ var cmdFlagsTests = map[string]struct {
 		expectedValueFromFlag: big.NewInt(1250000000000000000),
 		defaultValue:          big.NewInt(500000000000000000),
 	},
-	"developer.randomBeaconAddress": {
-		readValueFunc: func(c *config.Config) interface{} {
-			address, _ := c.Ethereum.ContractAddress(ethereum.RandomBeaconContractName)
-			return address.String()
-		},
-		flagName:              "--developer.randomBeaconAddress",
-		flagValue:             "0x3b292d36468bc7fd481987818ef2e4d28202a0ed",
-		expectedValueFromFlag: "0x3B292D36468bC7fd481987818ef2E4d28202A0eD",
-		defaultValue:          ethereumBeacon.RandomBeaconAddress,
-	},
-	"developer.walletRegistryAddress": {
-		readValueFunc: func(c *config.Config) interface{} {
-			address, _ := c.Ethereum.ContractAddress(ethereum.WalletRegistryContractName)
-			return address.String()
-		},
-		flagName:              "--developer.walletRegistryAddress",
-		flagValue:             "0xb76707515c3f908411b5211863a7581589a1e31f",
-		expectedValueFromFlag: "0xB76707515C3f908411B5211863A7581589a1E31F",
-		defaultValue:          ethereumEcdsa.WalletRegistryAddress,
-	},
-	"developer.tokenStakingAddress": {
-		readValueFunc: func(c *config.Config) interface{} {
-			address, _ := c.Ethereum.ContractAddress(ethereum.TokenStakingContractName)
-			return address.String()
-		},
-		flagName:              "--developer.tokenStakingAddress",
-		flagValue:             "0x861b021462e7864a7413edf0113030b892978617",
-		expectedValueFromFlag: "0x861b021462e7864a7413edF0113030B892978617",
-		defaultValue:          ethereumThreshold.TokenStakingAddress,
-	},
 	"network.port": {
 		readValueFunc:         func(c *config.Config) interface{} { return c.LibP2P.Port },
 		flagName:              "--network.port",
@@ -118,7 +92,7 @@ var cmdFlagsTests = map[string]struct {
 			"/ip4/127.0.0.1/tcp/5001/ipfs/3w6C4TFVo",
 			"/dns4/domain.local/tcp/3819/ipfs/16xtuKXdTd",
 		},
-		defaultValue: []string{},
+		defaultValue: readPeers(commonEthereum.Mainnet),
 	},
 	"network.announcedAddresses": {
 		readValueFunc: func(c *config.Config) interface{} { return c.LibP2P.AnnouncedAddresses },
@@ -170,6 +144,64 @@ var cmdFlagsTests = map[string]struct {
 		flagValue:             "6089",
 		expectedValueFromFlag: 6089,
 		defaultValue:          8081,
+	},
+	"tbtc.preParamsPoolSize": {
+		readValueFunc:         func(c *config.Config) interface{} { return c.Tbtc.PreParamsPoolSize },
+		flagName:              "--tbtc.preParamsPoolSize",
+		flagValue:             "75",
+		expectedValueFromFlag: 75,
+		defaultValue:          3000,
+	},
+	"tbtc.preParamsGenerationTimeout": {
+		readValueFunc:         func(c *config.Config) interface{} { return c.Tbtc.PreParamsGenerationTimeout },
+		flagName:              "--tbtc.preParamsGenerationTimeout",
+		flagValue:             "2m30s",
+		expectedValueFromFlag: 150 * time.Second,
+		defaultValue:          120 * time.Second,
+	},
+	"tbtc.preParamsGenerationDelay": {
+		readValueFunc:         func(c *config.Config) interface{} { return c.Tbtc.PreParamsGenerationDelay },
+		flagName:              "--tbtc.preParamsGenerationDelay",
+		flagValue:             "1m",
+		expectedValueFromFlag: 60 * time.Second,
+		defaultValue:          10 * time.Second,
+	},
+	"tbtc.preParamsGenerationConcurrency": {
+		readValueFunc:         func(c *config.Config) interface{} { return c.Tbtc.PreParamsGenerationConcurrency },
+		flagName:              "--tbtc.preParamsGenerationConcurrency",
+		flagValue:             "2",
+		expectedValueFromFlag: 2,
+		defaultValue:          1,
+	},
+	"developer.randomBeaconAddress": {
+		readValueFunc: func(c *config.Config) interface{} {
+			address, _ := c.Ethereum.ContractAddress(chainEthereum.RandomBeaconContractName)
+			return address.String()
+		},
+		flagName:              "--developer.randomBeaconAddress",
+		flagValue:             "0x3b292d36468bc7fd481987818ef2e4d28202a0ed",
+		expectedValueFromFlag: "0x3B292D36468bC7fd481987818ef2E4d28202A0eD",
+		defaultValue:          ethereumBeacon.RandomBeaconAddress,
+	},
+	"developer.walletRegistryAddress": {
+		readValueFunc: func(c *config.Config) interface{} {
+			address, _ := c.Ethereum.ContractAddress(chainEthereum.WalletRegistryContractName)
+			return address.String()
+		},
+		flagName:              "--developer.walletRegistryAddress",
+		flagValue:             "0xb76707515c3f908411b5211863a7581589a1e31f",
+		expectedValueFromFlag: "0xB76707515C3f908411B5211863A7581589a1E31F",
+		defaultValue:          ethereumEcdsa.WalletRegistryAddress,
+	},
+	"developer.tokenStakingAddress": {
+		readValueFunc: func(c *config.Config) interface{} {
+			address, _ := c.Ethereum.ContractAddress(chainEthereum.TokenStakingContractName)
+			return address.String()
+		},
+		flagName:              "--developer.tokenStakingAddress",
+		flagValue:             "0x861b021462e7864a7413edf0113030b892978617",
+		expectedValueFromFlag: "0x861b021462e7864a7413edF0113030B892978617",
+		defaultValue:          ethereumThreshold.TokenStakingAddress,
 	},
 }
 
@@ -298,14 +330,38 @@ func initTestCommand() (*cobra.Command, *config.Config, *string) {
 	testCommand := &cobra.Command{
 		Use: "Test",
 		PreRun: func(cmd *cobra.Command, args []string) {
-			if err := testConfig.ReadConfig(testConfigFilePath, cmd.Flags()); err != nil {
+			if err := testConfig.ReadConfig(testConfigFilePath, cmd.Flags(), config.AllCategories...); err != nil {
 				logger.Fatalf("error reading config: %v", err)
 			}
 		},
 		Run: func(cmd *cobra.Command, args []string) {},
 	}
 
-	initFlags(testCommand, allCategories, &testConfigFilePath, testConfig)
+	initFlags(testCommand, &testConfigFilePath, testConfig, config.AllCategories...)
 
 	return testCommand, testConfig, &testConfigFilePath
+}
+
+func readPeers(network commonEthereum.Network) []string {
+	file, err := os.Open(fmt.Sprintf("../config/_peers/%s", network))
+	if err != nil {
+		panic(err)
+	}
+	defer file.Close()
+
+	scanner := bufio.NewScanner(file)
+	result := []string{}
+	for scanner.Scan() {
+		str := scanner.Text()
+		if str == "" || strings.HasPrefix(str, "#") {
+			continue
+		}
+		result = append(result, str)
+	}
+
+	if err := scanner.Err(); err != nil {
+		panic(err)
+	}
+
+	return result
 }

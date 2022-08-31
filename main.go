@@ -42,10 +42,8 @@ func main() {
 
 	rootCmd.AddCommand(
 		cmd.StartCommand,
-		// TODO: Refactor PingCommand and EthereumCommand to register them in the root
-		// command.
-		// cmd.PingCommand,
-		// cmd.EthereumCommand,
+		cmd.PingCommand,
+		cmd.EthereumCommand,
 	)
 
 	if err := rootCmd.Execute(); err != nil {
