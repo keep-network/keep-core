@@ -1,10 +1,12 @@
 package signing
 
 import (
+	"fmt"
 	"github.com/ipfs/go-log"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/net"
 	"github.com/keep-network/keep-core/pkg/protocol/group"
+	"github.com/keep-network/keep-core/pkg/protocol/state"
 	"github.com/keep-network/keep-core/pkg/tecdsa"
 	"math/big"
 )
@@ -31,10 +33,58 @@ func Execute(
 	channel net.BroadcastChannel,
 	membershipValidator *group.MembershipValidator,
 ) (*Result, error) {
-	// TODO: Implementation.
+	logger.Debugf("[member:%v] initializing member", memberIndex)
+
+	registerUnmarshallers(channel)
+
+	member := newMember(
+		logger,
+		memberIndex,
+		groupSize,
+		dishonestThreshold,
+		membershipValidator,
+		sessionID,
+	)
+
+	// Mark excluded members as disqualified in order to not exchange messages
+	// with them.
+	for _, excludedMember := range excludedMembers {
+		if excludedMember != member.id {
+			member.group.MarkMemberAsDisqualified(excludedMember)
+		}
+	}
+
+	initialState := &ephemeralKeyPairGenerationState{
+		channel: channel,
+		member:  member.initializeEphemeralKeysGeneration(),
+	}
+
+	stateMachine := state.NewMachine(logger, channel, blockCounter, initialState)
+
+	lastState, _, err := stateMachine.Execute(startBlockNumber)
+	if err != nil {
+		return nil, err
+	}
+
+	_, ok := lastState.(*symmetricKeyGenerationState)
+	if !ok {
+		return nil, fmt.Errorf("execution ended on state: %T", lastState)
+	}
+
+	// TODO: Temporary result. Eventually, take the result from the
+	//       finalization state.
 	return &Result{
 		R:          new(big.Int).Add(message, big.NewInt(1)),
 		S:          new(big.Int).Add(message, big.NewInt(2)),
 		RecoveryID: 1,
 	}, nil
+}
+
+// registerUnmarshallers initializes the given broadcast channel to be able to
+// perform signing protocol interactions by registering all the required
+// protocol message unmarshallers.
+func registerUnmarshallers(channel net.BroadcastChannel) {
+	channel.SetUnmarshaler(func() net.TaggedUnmarshaler {
+		return &ephemeralPublicKeyMessage{}
+	})
 }
