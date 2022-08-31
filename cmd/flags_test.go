@@ -304,7 +304,7 @@ func TestFlags_Mixed(t *testing.T) {
 		// Properties not provided in the config file nor set with flags. Use defaults.
 		"diagnostics.port": {
 			readValueFunc: func(c *config.Config) interface{} { return c.Diagnostics.Port },
-			expectedValue: 8081,
+			expectedValue: 9701,
 		},
 	}
 
