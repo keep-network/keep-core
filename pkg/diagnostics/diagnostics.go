@@ -80,6 +80,7 @@ func RegisterClientInfoSource(
 	registry *diagnostics.Registry,
 	netProvider net.Provider,
 	signing chain.Signing,
+	clientVersion string,
 ) {
 	registry.RegisterSource("client_info", func() string {
 		connectionManager := netProvider.ConnectionManager()
@@ -102,6 +103,7 @@ func RegisterClientInfoSource(
 		clientInfo := map[string]interface{}{
 			"network_id":    clientID,
 			"chain_address": clientChainAddress.String(),
+			"version": clientVersion,
 		}
 
 		bytes, err := json.Marshal(clientInfo)

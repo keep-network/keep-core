@@ -57,6 +57,7 @@ Environment variables:
 // start starts a node
 func start(cmd *cobra.Command) error {
 	ctx := context.Background()
+	rootCmd := cmd.Root()
 
 	logger.Infof(
 		"Starting the client against [%s] ethereum network...",
@@ -126,7 +127,7 @@ func start(cmd *cobra.Command) error {
 	}
 
 	initializeMetrics(ctx, clientConfig, netProvider, blockCounter)
-	initializeDiagnostics(ctx, clientConfig, netProvider, signing)
+	initializeDiagnostics(clientConfig, netProvider, signing, rootCmd.Version)
 
 	select {
 	case <-ctx.Done():
@@ -215,10 +216,10 @@ func initializeMetrics(
 }
 
 func initializeDiagnostics(
-	ctx context.Context,
 	config *config.Config,
 	netProvider net.Provider,
 	signing chain.Signing,
+	clientVersion string,
 ) {
 	registry, isConfigured := diagnostics.Initialize(
 		config.Diagnostics.Port,
@@ -234,5 +235,5 @@ func initializeDiagnostics(
 	)
 
 	diagnostics.RegisterConnectedPeersSource(registry, netProvider, signing)
-	diagnostics.RegisterClientInfoSource(registry, netProvider, signing)
+	diagnostics.RegisterClientInfoSource(registry, netProvider, signing, clientVersion)
 }
