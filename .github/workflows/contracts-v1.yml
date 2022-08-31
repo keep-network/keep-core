@@ -166,13 +166,13 @@ jobs:
           npm publish --access=public --tag ${{ github.event.inputs.environment }}
 
       - name: Upload keep-core contracts for initcontainer build
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: Contracts
           path: ./solidity-v1/build/contracts/*
 
       - name: Upload files needed for etherscan verification
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: Artifacts for etherscan verifcation
           path: |
@@ -193,7 +193,7 @@ jobs:
           environment: ${{ github.event.inputs.environment }}
 
       - name: Download migrated contracts artifacts
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v3
         with:
           name: Contracts
           path: ./infrastructure/kube/templates/keep-client/initcontainer/provision-keep-client/
@@ -265,7 +265,7 @@ jobs:
       - uses: actions/checkout@v3
 
       - name: Download files needed for etherscan verification
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v3
         with:
           name: Artifacts for etherscan verifcation
           path: ./solidity-v1
