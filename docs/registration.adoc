@@ -70,7 +70,7 @@ export OPERATOR_ADDRESS="<Operator Account Address>"
 
 docker run \
     --volume $KEEP_CLIENT_CONFIG_DIR:/mnt/keep-client/config \
-    --env KEEP_CLIENT_ETHEREUM_PASSWORD=$STAKING_PROVIDER_KEY_FILE_PASSWORD
+    --env KEEP_ETHEREUM_PASSWORD=$STAKING_PROVIDER_KEY_FILE_PASSWORD \
     us-docker.pkg.dev/keep-test-f3e0/public/keep-client:latest \
     ethereum \
     --ethereum.url $KEEP_CLIENT_ETHEREUM_WS_URL \
@@ -94,12 +94,12 @@ export OPERATOR_ADDRESS="<Operator Account Address>"
 
 docker run \
     --volume $KEEP_CLIENT_CONFIG_DIR:/mnt/keep-client/config \
-    --env KEEP_CLIENT_ETHEREUM_PASSWORD=$STAKING_PROVIDER_KEY_FILE_PASSWORD
+    --env KEEP_ETHEREUM_PASSWORD=$STAKING_PROVIDER_KEY_FILE_PASSWORD \
     us-docker.pkg.dev/keep-test-f3e0/public/keep-client:latest \
     ethereum \
     --ethereum.url $KEEP_CLIENT_ETHEREUM_WS_URL \
     --ethereum.keyFile /mnt/keep-client/config/$STAKING_PROVIDER_KEY_FILE_NAME \
-    ecdsa wallet-registry register-operator --submit
+    ecdsa wallet-registry register-operator --submit \
     $OPERATOR_ADDRESS
 ----
 
