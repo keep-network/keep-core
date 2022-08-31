@@ -122,7 +122,7 @@ var cmdFlagsTests = map[string]struct {
 		flagName:              "--metrics.port",
 		flagValue:             "9870",
 		expectedValueFromFlag: 9870,
-		defaultValue:          8080,
+		defaultValue:          9601,
 	},
 	"metrics.networkMetricsTick": {
 		readValueFunc:         func(c *config.Config) interface{} { return c.Metrics.NetworkMetricsTick },
@@ -143,7 +143,7 @@ var cmdFlagsTests = map[string]struct {
 		flagName:              "--diagnostics.port",
 		flagValue:             "6089",
 		expectedValueFromFlag: 6089,
-		defaultValue:          8081,
+		defaultValue:          9701,
 	},
 	"tbtc.preParamsPoolSize": {
 		readValueFunc:         func(c *config.Config) interface{} { return c.Tbtc.PreParamsPoolSize },
