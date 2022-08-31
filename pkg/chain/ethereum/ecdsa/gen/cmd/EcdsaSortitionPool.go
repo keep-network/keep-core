@@ -9,19 +9,19 @@ import (
 	"math/big"
 	"sync"
 
-	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/core/types"
+	"github.com/ethereum/go-ethereum/ethclient"
 
 	chainutil "github.com/keep-network/keep-common/pkg/chain/ethereum/ethutil"
 	"github.com/keep-network/keep-common/pkg/cmd"
 	"github.com/keep-network/keep-core/config"
 	"github.com/keep-network/keep-core/pkg/chain/ethereum/ecdsa/gen/contract"
 
-	"github.com/urfave/cli"
+	"github.com/spf13/cobra"
 )
 
-var EcdsaSortitionPoolCommand cli.Command
+var EcdsaSortitionPoolCommand *cobra.Command
 
 var ecdsaSortitionPoolDescription = `The ecdsa-sortition-pool command allows calling the EcdsaSortitionPool contract on an
 	Ethereum network. It has subcommands corresponding to each contract method,
@@ -34,10 +34,6 @@ var ecdsaSortitionPoolDescription = `The ecdsa-sortition-pool command allows cal
 	All subcommands can be called against a specific block by passing the
 	-b/--block flag.
 
-	All subcommands can be used to investigate the result of a previous
-	transaction that called that same method by passing the -t/--transaction
-	flag with the transaction hash.
-
 	Subcommands for mutating methods may be submitted as a mutating transaction
 	by passing the -s/--submit flag. In this mode, this command will terminate
 	successfully once the transaction has been submitted, but will not wait for
@@ -47,215 +43,77 @@ var ecdsaSortitionPoolDescription = `The ecdsa-sortition-pool command allows cal
 	be changed by passing the -v/--value flag.`
 
 func init() {
-	AvailableCommands = append(AvailableCommands, cli.Command{
-		Name:        "ecdsa-sortition-pool",
-		Usage:       `Provides access to the EcdsaSortitionPool contract.`,
-		Description: ecdsaSortitionPoolDescription,
-		Subcommands: []cli.Command{{
-			Name:      "can-restore-reward-eligibility",
-			Usage:     "Calls the view method canRestoreRewardEligibility on the EcdsaSortitionPool contract.",
-			ArgsUsage: "[arg_operator] ",
-			Action:    espCanRestoreRewardEligibility,
-			Before:    cmd.ArgCountChecker(1),
-			Flags:     cmd.ConstFlags,
-		}, {
-			Name:      "get-available-rewards",
-			Usage:     "Calls the view method getAvailableRewards on the EcdsaSortitionPool contract.",
-			ArgsUsage: "[arg_operator] ",
-			Action:    espGetAvailableRewards,
-			Before:    cmd.ArgCountChecker(1),
-			Flags:     cmd.ConstFlags,
-		}, {
-			Name:      "get-operator-i-d",
-			Usage:     "Calls the view method getOperatorID on the EcdsaSortitionPool contract.",
-			ArgsUsage: "[arg_operator] ",
-			Action:    espGetOperatorID,
-			Before:    cmd.ArgCountChecker(1),
-			Flags:     cmd.ConstFlags,
-		}, {
-			Name:      "get-pool-weight",
-			Usage:     "Calls the view method getPoolWeight on the EcdsaSortitionPool contract.",
-			ArgsUsage: "[arg_operator] ",
-			Action:    espGetPoolWeight,
-			Before:    cmd.ArgCountChecker(1),
-			Flags:     cmd.ConstFlags,
-		}, {
-			Name:      "ineligible-earned-rewards",
-			Usage:     "Calls the view method ineligibleEarnedRewards on the EcdsaSortitionPool contract.",
-			ArgsUsage: "",
-			Action:    espIneligibleEarnedRewards,
-			Before:    cmd.ArgCountChecker(0),
-			Flags:     cmd.ConstFlags,
-		}, {
-			Name:      "is-eligible-for-rewards",
-			Usage:     "Calls the view method isEligibleForRewards on the EcdsaSortitionPool contract.",
-			ArgsUsage: "[arg_operator] ",
-			Action:    espIsEligibleForRewards,
-			Before:    cmd.ArgCountChecker(1),
-			Flags:     cmd.ConstFlags,
-		}, {
-			Name:      "is-locked",
-			Usage:     "Calls the view method isLocked on the EcdsaSortitionPool contract.",
-			ArgsUsage: "",
-			Action:    espIsLocked,
-			Before:    cmd.ArgCountChecker(0),
-			Flags:     cmd.ConstFlags,
-		}, {
-			Name:      "is-operator-in-pool",
-			Usage:     "Calls the view method isOperatorInPool on the EcdsaSortitionPool contract.",
-			ArgsUsage: "[arg_operator] ",
-			Action:    espIsOperatorInPool,
-			Before:    cmd.ArgCountChecker(1),
-			Flags:     cmd.ConstFlags,
-		}, {
-			Name:      "is-operator-registered",
-			Usage:     "Calls the view method isOperatorRegistered on the EcdsaSortitionPool contract.",
-			ArgsUsage: "[arg_operator] ",
-			Action:    espIsOperatorRegistered,
-			Before:    cmd.ArgCountChecker(1),
-			Flags:     cmd.ConstFlags,
-		}, {
-			Name:      "is-operator-up-to-date",
-			Usage:     "Calls the view method isOperatorUpToDate on the EcdsaSortitionPool contract.",
-			ArgsUsage: "[arg_operator] [arg_authorizedStake] ",
-			Action:    espIsOperatorUpToDate,
-			Before:    cmd.ArgCountChecker(2),
-			Flags:     cmd.ConstFlags,
-		}, {
-			Name:      "operators-in-pool",
-			Usage:     "Calls the view method operatorsInPool on the EcdsaSortitionPool contract.",
-			ArgsUsage: "",
-			Action:    espOperatorsInPool,
-			Before:    cmd.ArgCountChecker(0),
-			Flags:     cmd.ConstFlags,
-		}, {
-			Name:      "owner",
-			Usage:     "Calls the view method owner on the EcdsaSortitionPool contract.",
-			ArgsUsage: "",
-			Action:    espOwner,
-			Before:    cmd.ArgCountChecker(0),
-			Flags:     cmd.ConstFlags,
-		}, {
-			Name:      "pool-weight-divisor",
-			Usage:     "Calls the view method poolWeightDivisor on the EcdsaSortitionPool contract.",
-			ArgsUsage: "",
-			Action:    espPoolWeightDivisor,
-			Before:    cmd.ArgCountChecker(0),
-			Flags:     cmd.ConstFlags,
-		}, {
-			Name:      "reward-token",
-			Usage:     "Calls the view method rewardToken on the EcdsaSortitionPool contract.",
-			ArgsUsage: "",
-			Action:    espRewardToken,
-			Before:    cmd.ArgCountChecker(0),
-			Flags:     cmd.ConstFlags,
-		}, {
-			Name:      "rewards-eligibility-restorable-at",
-			Usage:     "Calls the view method rewardsEligibilityRestorableAt on the EcdsaSortitionPool contract.",
-			ArgsUsage: "[arg_operator] ",
-			Action:    espRewardsEligibilityRestorableAt,
-			Before:    cmd.ArgCountChecker(1),
-			Flags:     cmd.ConstFlags,
-		}, {
-			Name:      "total-weight",
-			Usage:     "Calls the view method totalWeight on the EcdsaSortitionPool contract.",
-			ArgsUsage: "",
-			Action:    espTotalWeight,
-			Before:    cmd.ArgCountChecker(0),
-			Flags:     cmd.ConstFlags,
-		}, {
-			Name:      "insert-operator",
-			Usage:     "Calls the nonpayable method insertOperator on the EcdsaSortitionPool contract.",
-			ArgsUsage: "[arg_operator] [arg_authorizedStake] ",
-			Action:    espInsertOperator,
-			Before:    cli.BeforeFunc(cmd.NonConstArgsChecker.AndThen(cmd.ArgCountChecker(2))),
-			Flags:     cmd.NonConstFlags,
-		}, {
-			Name:      "lock",
-			Usage:     "Calls the nonpayable method lock on the EcdsaSortitionPool contract.",
-			ArgsUsage: "",
-			Action:    espLock,
-			Before:    cli.BeforeFunc(cmd.NonConstArgsChecker.AndThen(cmd.ArgCountChecker(0))),
-			Flags:     cmd.NonConstFlags,
-		}, {
-			Name:      "receive-approval",
-			Usage:     "Calls the nonpayable method receiveApproval on the EcdsaSortitionPool contract.",
-			ArgsUsage: "[arg_sender] [arg_amount] [arg_token] [arg3] ",
-			Action:    espReceiveApproval,
-			Before:    cli.BeforeFunc(cmd.NonConstArgsChecker.AndThen(cmd.ArgCountChecker(4))),
-			Flags:     cmd.NonConstFlags,
-		}, {
-			Name:      "renounce-ownership",
-			Usage:     "Calls the nonpayable method renounceOwnership on the EcdsaSortitionPool contract.",
-			ArgsUsage: "",
-			Action:    espRenounceOwnership,
-			Before:    cli.BeforeFunc(cmd.NonConstArgsChecker.AndThen(cmd.ArgCountChecker(0))),
-			Flags:     cmd.NonConstFlags,
-		}, {
-			Name:      "restore-reward-eligibility",
-			Usage:     "Calls the nonpayable method restoreRewardEligibility on the EcdsaSortitionPool contract.",
-			ArgsUsage: "[arg_operator] ",
-			Action:    espRestoreRewardEligibility,
-			Before:    cli.BeforeFunc(cmd.NonConstArgsChecker.AndThen(cmd.ArgCountChecker(1))),
-			Flags:     cmd.NonConstFlags,
-		}, {
-			Name:      "transfer-ownership",
-			Usage:     "Calls the nonpayable method transferOwnership on the EcdsaSortitionPool contract.",
-			ArgsUsage: "[arg_newOwner] ",
-			Action:    espTransferOwnership,
-			Before:    cli.BeforeFunc(cmd.NonConstArgsChecker.AndThen(cmd.ArgCountChecker(1))),
-			Flags:     cmd.NonConstFlags,
-		}, {
-			Name:      "unlock",
-			Usage:     "Calls the nonpayable method unlock on the EcdsaSortitionPool contract.",
-			ArgsUsage: "",
-			Action:    espUnlock,
-			Before:    cli.BeforeFunc(cmd.NonConstArgsChecker.AndThen(cmd.ArgCountChecker(0))),
-			Flags:     cmd.NonConstFlags,
-		}, {
-			Name:      "update-operator-status",
-			Usage:     "Calls the nonpayable method updateOperatorStatus on the EcdsaSortitionPool contract.",
-			ArgsUsage: "[arg_operator] [arg_authorizedStake] ",
-			Action:    espUpdateOperatorStatus,
-			Before:    cli.BeforeFunc(cmd.NonConstArgsChecker.AndThen(cmd.ArgCountChecker(2))),
-			Flags:     cmd.NonConstFlags,
-		}, {
-			Name:      "withdraw-ineligible",
-			Usage:     "Calls the nonpayable method withdrawIneligible on the EcdsaSortitionPool contract.",
-			ArgsUsage: "[arg_recipient] ",
-			Action:    espWithdrawIneligible,
-			Before:    cli.BeforeFunc(cmd.NonConstArgsChecker.AndThen(cmd.ArgCountChecker(1))),
-			Flags:     cmd.NonConstFlags,
-		}, {
-			Name:      "withdraw-rewards",
-			Usage:     "Calls the nonpayable method withdrawRewards on the EcdsaSortitionPool contract.",
-			ArgsUsage: "[arg_operator] [arg_beneficiary] ",
-			Action:    espWithdrawRewards,
-			Before:    cli.BeforeFunc(cmd.NonConstArgsChecker.AndThen(cmd.ArgCountChecker(2))),
-			Flags:     cmd.NonConstFlags,
-		}},
-	})
+	EcdsaSortitionPoolCommand := &cobra.Command{
+		Use:   "ecdsa-sortition-pool",
+		Short: `Provides access to the EcdsaSortitionPool contract.`,
+		Long:  ecdsaSortitionPoolDescription,
+	}
+
+	EcdsaSortitionPoolCommand.AddCommand(
+		espCanRestoreRewardEligibilityCommand(),
+		espGetAvailableRewardsCommand(),
+		espGetOperatorIDCommand(),
+		espGetPoolWeightCommand(),
+		espIneligibleEarnedRewardsCommand(),
+		espIsEligibleForRewardsCommand(),
+		espIsLockedCommand(),
+		espIsOperatorInPoolCommand(),
+		espIsOperatorRegisteredCommand(),
+		espIsOperatorUpToDateCommand(),
+		espOperatorsInPoolCommand(),
+		espOwnerCommand(),
+		espPoolWeightDivisorCommand(),
+		espRewardTokenCommand(),
+		espRewardsEligibilityRestorableAtCommand(),
+		espTotalWeightCommand(),
+		espInsertOperatorCommand(),
+		espLockCommand(),
+		espReceiveApprovalCommand(),
+		espRenounceOwnershipCommand(),
+		espRestoreRewardEligibilityCommand(),
+		espTransferOwnershipCommand(),
+		espUnlockCommand(),
+		espUpdateOperatorStatusCommand(),
+		espWithdrawIneligibleCommand(),
+		espWithdrawRewardsCommand(),
+	)
+
+	Command.AddCommand(EcdsaSortitionPoolCommand)
 }
 
 /// ------------------- Const methods -------------------
 
-func espCanRestoreRewardEligibility(c *cli.Context) error {
+func espCanRestoreRewardEligibilityCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "can-restore-reward-eligibility [arg_operator]",
+		Short:                 "Calls the view method canRestoreRewardEligibility on the EcdsaSortitionPool contract.",
+		Args:                  cmd.ArgCountChecker(1),
+		RunE:                  espCanRestoreRewardEligibility,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	cmd.InitConstFlags(c)
+
+	return c
+}
+
+func espCanRestoreRewardEligibility(c *cobra.Command, args []string) error {
 	contract, err := initializeEcdsaSortitionPool(c)
 	if err != nil {
 		return err
 	}
-	arg_operator, err := chainutil.AddressFromHex(c.Args()[0])
+	arg_operator, err := chainutil.AddressFromHex(args[0])
 	if err != nil {
 		return fmt.Errorf(
 			"couldn't parse parameter arg_operator, a address, from passed value %v",
-			c.Args()[0],
+			args[0],
 		)
 	}
 
 	result, err := contract.CanRestoreRewardEligibilityAtBlock(
 		arg_operator,
-
-		cmd.BlockFlagValue.Uint,
+		cmd.BlockFlagValue.Int,
 	)
 
 	if err != nil {
@@ -267,23 +125,37 @@ func espCanRestoreRewardEligibility(c *cli.Context) error {
 	return nil
 }
 
-func espGetAvailableRewards(c *cli.Context) error {
+func espGetAvailableRewardsCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "get-available-rewards [arg_operator]",
+		Short:                 "Calls the view method getAvailableRewards on the EcdsaSortitionPool contract.",
+		Args:                  cmd.ArgCountChecker(1),
+		RunE:                  espGetAvailableRewards,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	cmd.InitConstFlags(c)
+
+	return c
+}
+
+func espGetAvailableRewards(c *cobra.Command, args []string) error {
 	contract, err := initializeEcdsaSortitionPool(c)
 	if err != nil {
 		return err
 	}
-	arg_operator, err := chainutil.AddressFromHex(c.Args()[0])
+	arg_operator, err := chainutil.AddressFromHex(args[0])
 	if err != nil {
 		return fmt.Errorf(
 			"couldn't parse parameter arg_operator, a address, from passed value %v",
-			c.Args()[0],
+			args[0],
 		)
 	}
 
 	result, err := contract.GetAvailableRewardsAtBlock(
 		arg_operator,
-
-		cmd.BlockFlagValue.Uint,
+		cmd.BlockFlagValue.Int,
 	)
 
 	if err != nil {
@@ -295,23 +167,37 @@ func espGetAvailableRewards(c *cli.Context) error {
 	return nil
 }
 
-func espGetOperatorID(c *cli.Context) error {
+func espGetOperatorIDCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "get-operator-i-d [arg_operator]",
+		Short:                 "Calls the view method getOperatorID on the EcdsaSortitionPool contract.",
+		Args:                  cmd.ArgCountChecker(1),
+		RunE:                  espGetOperatorID,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	cmd.InitConstFlags(c)
+
+	return c
+}
+
+func espGetOperatorID(c *cobra.Command, args []string) error {
 	contract, err := initializeEcdsaSortitionPool(c)
 	if err != nil {
 		return err
 	}
-	arg_operator, err := chainutil.AddressFromHex(c.Args()[0])
+	arg_operator, err := chainutil.AddressFromHex(args[0])
 	if err != nil {
 		return fmt.Errorf(
 			"couldn't parse parameter arg_operator, a address, from passed value %v",
-			c.Args()[0],
+			args[0],
 		)
 	}
 
 	result, err := contract.GetOperatorIDAtBlock(
 		arg_operator,
-
-		cmd.BlockFlagValue.Uint,
+		cmd.BlockFlagValue.Int,
 	)
 
 	if err != nil {
@@ -323,23 +209,37 @@ func espGetOperatorID(c *cli.Context) error {
 	return nil
 }
 
-func espGetPoolWeight(c *cli.Context) error {
+func espGetPoolWeightCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "get-pool-weight [arg_operator]",
+		Short:                 "Calls the view method getPoolWeight on the EcdsaSortitionPool contract.",
+		Args:                  cmd.ArgCountChecker(1),
+		RunE:                  espGetPoolWeight,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	cmd.InitConstFlags(c)
+
+	return c
+}
+
+func espGetPoolWeight(c *cobra.Command, args []string) error {
 	contract, err := initializeEcdsaSortitionPool(c)
 	if err != nil {
 		return err
 	}
-	arg_operator, err := chainutil.AddressFromHex(c.Args()[0])
+	arg_operator, err := chainutil.AddressFromHex(args[0])
 	if err != nil {
 		return fmt.Errorf(
 			"couldn't parse parameter arg_operator, a address, from passed value %v",
-			c.Args()[0],
+			args[0],
 		)
 	}
 
 	result, err := contract.GetPoolWeightAtBlock(
 		arg_operator,
-
-		cmd.BlockFlagValue.Uint,
+		cmd.BlockFlagValue.Int,
 	)
 
 	if err != nil {
@@ -351,15 +251,29 @@ func espGetPoolWeight(c *cli.Context) error {
 	return nil
 }
 
-func espIneligibleEarnedRewards(c *cli.Context) error {
+func espIneligibleEarnedRewardsCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "ineligible-earned-rewards",
+		Short:                 "Calls the view method ineligibleEarnedRewards on the EcdsaSortitionPool contract.",
+		Args:                  cmd.ArgCountChecker(0),
+		RunE:                  espIneligibleEarnedRewards,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	cmd.InitConstFlags(c)
+
+	return c
+}
+
+func espIneligibleEarnedRewards(c *cobra.Command, args []string) error {
 	contract, err := initializeEcdsaSortitionPool(c)
 	if err != nil {
 		return err
 	}
 
 	result, err := contract.IneligibleEarnedRewardsAtBlock(
-
-		cmd.BlockFlagValue.Uint,
+		cmd.BlockFlagValue.Int,
 	)
 
 	if err != nil {
@@ -371,23 +285,37 @@ func espIneligibleEarnedRewards(c *cli.Context) error {
 	return nil
 }
 
-func espIsEligibleForRewards(c *cli.Context) error {
+func espIsEligibleForRewardsCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "is-eligible-for-rewards [arg_operator]",
+		Short:                 "Calls the view method isEligibleForRewards on the EcdsaSortitionPool contract.",
+		Args:                  cmd.ArgCountChecker(1),
+		RunE:                  espIsEligibleForRewards,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	cmd.InitConstFlags(c)
+
+	return c
+}
+
+func espIsEligibleForRewards(c *cobra.Command, args []string) error {
 	contract, err := initializeEcdsaSortitionPool(c)
 	if err != nil {
 		return err
 	}
-	arg_operator, err := chainutil.AddressFromHex(c.Args()[0])
+	arg_operator, err := chainutil.AddressFromHex(args[0])
 	if err != nil {
 		return fmt.Errorf(
 			"couldn't parse parameter arg_operator, a address, from passed value %v",
-			c.Args()[0],
+			args[0],
 		)
 	}
 
 	result, err := contract.IsEligibleForRewardsAtBlock(
 		arg_operator,
-
-		cmd.BlockFlagValue.Uint,
+		cmd.BlockFlagValue.Int,
 	)
 
 	if err != nil {
@@ -399,15 +327,29 @@ func espIsEligibleForRewards(c *cli.Context) error {
 	return nil
 }
 
-func espIsLocked(c *cli.Context) error {
+func espIsLockedCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "is-locked",
+		Short:                 "Calls the view method isLocked on the EcdsaSortitionPool contract.",
+		Args:                  cmd.ArgCountChecker(0),
+		RunE:                  espIsLocked,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	cmd.InitConstFlags(c)
+
+	return c
+}
+
+func espIsLocked(c *cobra.Command, args []string) error {
 	contract, err := initializeEcdsaSortitionPool(c)
 	if err != nil {
 		return err
 	}
 
 	result, err := contract.IsLockedAtBlock(
-
-		cmd.BlockFlagValue.Uint,
+		cmd.BlockFlagValue.Int,
 	)
 
 	if err != nil {
@@ -419,23 +361,37 @@ func espIsLocked(c *cli.Context) error {
 	return nil
 }
 
-func espIsOperatorInPool(c *cli.Context) error {
+func espIsOperatorInPoolCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "is-operator-in-pool [arg_operator]",
+		Short:                 "Calls the view method isOperatorInPool on the EcdsaSortitionPool contract.",
+		Args:                  cmd.ArgCountChecker(1),
+		RunE:                  espIsOperatorInPool,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	cmd.InitConstFlags(c)
+
+	return c
+}
+
+func espIsOperatorInPool(c *cobra.Command, args []string) error {
 	contract, err := initializeEcdsaSortitionPool(c)
 	if err != nil {
 		return err
 	}
-	arg_operator, err := chainutil.AddressFromHex(c.Args()[0])
+	arg_operator, err := chainutil.AddressFromHex(args[0])
 	if err != nil {
 		return fmt.Errorf(
 			"couldn't parse parameter arg_operator, a address, from passed value %v",
-			c.Args()[0],
+			args[0],
 		)
 	}
 
 	result, err := contract.IsOperatorInPoolAtBlock(
 		arg_operator,
-
-		cmd.BlockFlagValue.Uint,
+		cmd.BlockFlagValue.Int,
 	)
 
 	if err != nil {
@@ -447,23 +403,37 @@ func espIsOperatorInPool(c *cli.Context) error {
 	return nil
 }
 
-func espIsOperatorRegistered(c *cli.Context) error {
+func espIsOperatorRegisteredCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "is-operator-registered [arg_operator]",
+		Short:                 "Calls the view method isOperatorRegistered on the EcdsaSortitionPool contract.",
+		Args:                  cmd.ArgCountChecker(1),
+		RunE:                  espIsOperatorRegistered,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	cmd.InitConstFlags(c)
+
+	return c
+}
+
+func espIsOperatorRegistered(c *cobra.Command, args []string) error {
 	contract, err := initializeEcdsaSortitionPool(c)
 	if err != nil {
 		return err
 	}
-	arg_operator, err := chainutil.AddressFromHex(c.Args()[0])
+	arg_operator, err := chainutil.AddressFromHex(args[0])
 	if err != nil {
 		return fmt.Errorf(
 			"couldn't parse parameter arg_operator, a address, from passed value %v",
-			c.Args()[0],
+			args[0],
 		)
 	}
 
 	result, err := contract.IsOperatorRegisteredAtBlock(
 		arg_operator,
-
-		cmd.BlockFlagValue.Uint,
+		cmd.BlockFlagValue.Int,
 	)
 
 	if err != nil {
@@ -475,32 +445,46 @@ func espIsOperatorRegistered(c *cli.Context) error {
 	return nil
 }
 
-func espIsOperatorUpToDate(c *cli.Context) error {
+func espIsOperatorUpToDateCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "is-operator-up-to-date [arg_operator] [arg_authorizedStake]",
+		Short:                 "Calls the view method isOperatorUpToDate on the EcdsaSortitionPool contract.",
+		Args:                  cmd.ArgCountChecker(2),
+		RunE:                  espIsOperatorUpToDate,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	cmd.InitConstFlags(c)
+
+	return c
+}
+
+func espIsOperatorUpToDate(c *cobra.Command, args []string) error {
 	contract, err := initializeEcdsaSortitionPool(c)
 	if err != nil {
 		return err
 	}
-	arg_operator, err := chainutil.AddressFromHex(c.Args()[0])
+	arg_operator, err := chainutil.AddressFromHex(args[0])
 	if err != nil {
 		return fmt.Errorf(
 			"couldn't parse parameter arg_operator, a address, from passed value %v",
-			c.Args()[0],
+			args[0],
 		)
 	}
 
-	arg_authorizedStake, err := hexutil.DecodeBig(c.Args()[1])
+	arg_authorizedStake, err := hexutil.DecodeBig(args[1])
 	if err != nil {
 		return fmt.Errorf(
 			"couldn't parse parameter arg_authorizedStake, a uint256, from passed value %v",
-			c.Args()[1],
+			args[1],
 		)
 	}
 
 	result, err := contract.IsOperatorUpToDateAtBlock(
 		arg_operator,
 		arg_authorizedStake,
-
-		cmd.BlockFlagValue.Uint,
+		cmd.BlockFlagValue.Int,
 	)
 
 	if err != nil {
@@ -512,15 +496,29 @@ func espIsOperatorUpToDate(c *cli.Context) error {
 	return nil
 }
 
-func espOperatorsInPool(c *cli.Context) error {
+func espOperatorsInPoolCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "operators-in-pool",
+		Short:                 "Calls the view method operatorsInPool on the EcdsaSortitionPool contract.",
+		Args:                  cmd.ArgCountChecker(0),
+		RunE:                  espOperatorsInPool,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	cmd.InitConstFlags(c)
+
+	return c
+}
+
+func espOperatorsInPool(c *cobra.Command, args []string) error {
 	contract, err := initializeEcdsaSortitionPool(c)
 	if err != nil {
 		return err
 	}
 
 	result, err := contract.OperatorsInPoolAtBlock(
-
-		cmd.BlockFlagValue.Uint,
+		cmd.BlockFlagValue.Int,
 	)
 
 	if err != nil {
@@ -532,15 +530,29 @@ func espOperatorsInPool(c *cli.Context) error {
 	return nil
 }
 
-func espOwner(c *cli.Context) error {
+func espOwnerCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "owner",
+		Short:                 "Calls the view method owner on the EcdsaSortitionPool contract.",
+		Args:                  cmd.ArgCountChecker(0),
+		RunE:                  espOwner,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	cmd.InitConstFlags(c)
+
+	return c
+}
+
+func espOwner(c *cobra.Command, args []string) error {
 	contract, err := initializeEcdsaSortitionPool(c)
 	if err != nil {
 		return err
 	}
 
 	result, err := contract.OwnerAtBlock(
-
-		cmd.BlockFlagValue.Uint,
+		cmd.BlockFlagValue.Int,
 	)
 
 	if err != nil {
@@ -552,15 +564,29 @@ func espOwner(c *cli.Context) error {
 	return nil
 }
 
-func espPoolWeightDivisor(c *cli.Context) error {
+func espPoolWeightDivisorCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "pool-weight-divisor",
+		Short:                 "Calls the view method poolWeightDivisor on the EcdsaSortitionPool contract.",
+		Args:                  cmd.ArgCountChecker(0),
+		RunE:                  espPoolWeightDivisor,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	cmd.InitConstFlags(c)
+
+	return c
+}
+
+func espPoolWeightDivisor(c *cobra.Command, args []string) error {
 	contract, err := initializeEcdsaSortitionPool(c)
 	if err != nil {
 		return err
 	}
 
 	result, err := contract.PoolWeightDivisorAtBlock(
-
-		cmd.BlockFlagValue.Uint,
+		cmd.BlockFlagValue.Int,
 	)
 
 	if err != nil {
@@ -572,15 +598,29 @@ func espPoolWeightDivisor(c *cli.Context) error {
 	return nil
 }
 
-func espRewardToken(c *cli.Context) error {
+func espRewardTokenCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "reward-token",
+		Short:                 "Calls the view method rewardToken on the EcdsaSortitionPool contract.",
+		Args:                  cmd.ArgCountChecker(0),
+		RunE:                  espRewardToken,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	cmd.InitConstFlags(c)
+
+	return c
+}
+
+func espRewardToken(c *cobra.Command, args []string) error {
 	contract, err := initializeEcdsaSortitionPool(c)
 	if err != nil {
 		return err
 	}
 
 	result, err := contract.RewardTokenAtBlock(
-
-		cmd.BlockFlagValue.Uint,
+		cmd.BlockFlagValue.Int,
 	)
 
 	if err != nil {
@@ -592,23 +632,37 @@ func espRewardToken(c *cli.Context) error {
 	return nil
 }
 
-func espRewardsEligibilityRestorableAt(c *cli.Context) error {
+func espRewardsEligibilityRestorableAtCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "rewards-eligibility-restorable-at [arg_operator]",
+		Short:                 "Calls the view method rewardsEligibilityRestorableAt on the EcdsaSortitionPool contract.",
+		Args:                  cmd.ArgCountChecker(1),
+		RunE:                  espRewardsEligibilityRestorableAt,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	cmd.InitConstFlags(c)
+
+	return c
+}
+
+func espRewardsEligibilityRestorableAt(c *cobra.Command, args []string) error {
 	contract, err := initializeEcdsaSortitionPool(c)
 	if err != nil {
 		return err
 	}
-	arg_operator, err := chainutil.AddressFromHex(c.Args()[0])
+	arg_operator, err := chainutil.AddressFromHex(args[0])
 	if err != nil {
 		return fmt.Errorf(
 			"couldn't parse parameter arg_operator, a address, from passed value %v",
-			c.Args()[0],
+			args[0],
 		)
 	}
 
 	result, err := contract.RewardsEligibilityRestorableAtAtBlock(
 		arg_operator,
-
-		cmd.BlockFlagValue.Uint,
+		cmd.BlockFlagValue.Int,
 	)
 
 	if err != nil {
@@ -620,15 +674,29 @@ func espRewardsEligibilityRestorableAt(c *cli.Context) error {
 	return nil
 }
 
-func espTotalWeight(c *cli.Context) error {
+func espTotalWeightCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "total-weight",
+		Short:                 "Calls the view method totalWeight on the EcdsaSortitionPool contract.",
+		Args:                  cmd.ArgCountChecker(0),
+		RunE:                  espTotalWeight,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	cmd.InitConstFlags(c)
+
+	return c
+}
+
+func espTotalWeight(c *cobra.Command, args []string) error {
 	contract, err := initializeEcdsaSortitionPool(c)
 	if err != nil {
 		return err
 	}
 
 	result, err := contract.TotalWeightAtBlock(
-
-		cmd.BlockFlagValue.Uint,
+		cmd.BlockFlagValue.Int,
 	)
 
 	if err != nil {
@@ -642,25 +710,41 @@ func espTotalWeight(c *cli.Context) error {
 
 /// ------------------- Non-const methods -------------------
 
-func espInsertOperator(c *cli.Context) error {
+func espInsertOperatorCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "insert-operator [arg_operator] [arg_authorizedStake]",
+		Short:                 "Calls the nonpayable method insertOperator on the EcdsaSortitionPool contract.",
+		Args:                  cmd.ArgCountChecker(2),
+		RunE:                  espInsertOperator,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	c.PreRunE = cmd.NonConstArgsChecker
+	cmd.InitNonConstFlags(c)
+
+	return c
+}
+
+func espInsertOperator(c *cobra.Command, args []string) error {
 	contract, err := initializeEcdsaSortitionPool(c)
 	if err != nil {
 		return err
 	}
 
-	arg_operator, err := chainutil.AddressFromHex(c.Args()[0])
+	arg_operator, err := chainutil.AddressFromHex(args[0])
 	if err != nil {
 		return fmt.Errorf(
 			"couldn't parse parameter arg_operator, a address, from passed value %v",
-			c.Args()[0],
+			args[0],
 		)
 	}
 
-	arg_authorizedStake, err := hexutil.DecodeBig(c.Args()[1])
+	arg_authorizedStake, err := hexutil.DecodeBig(args[1])
 	if err != nil {
 		return fmt.Errorf(
 			"couldn't parse parameter arg_authorizedStake, a uint256, from passed value %v",
-			c.Args()[1],
+			args[1],
 		)
 	}
 
@@ -668,7 +752,7 @@ func espInsertOperator(c *cli.Context) error {
 		transaction *types.Transaction
 	)
 
-	if c.Bool(cmd.SubmitFlag) {
+	if shouldSubmit, _ := c.Flags().GetBool(cmd.SubmitFlag); shouldSubmit {
 		// Do a regular submission. Take payable into account.
 		transaction, err = contract.InsertOperator(
 			arg_operator,
@@ -678,25 +762,41 @@ func espInsertOperator(c *cli.Context) error {
 			return err
 		}
 
-		cmd.PrintOutput(transaction.Hash)
+		cmd.PrintOutput(transaction.Hash())
 	} else {
 		// Do a call.
 		err = contract.CallInsertOperator(
 			arg_operator,
 			arg_authorizedStake,
-			cmd.BlockFlagValue.Uint,
+			cmd.BlockFlagValue.Int,
 		)
 		if err != nil {
 			return err
 		}
 
-		cmd.PrintOutput(nil)
+		cmd.PrintOutput("success")
 	}
 
 	return nil
 }
 
-func espLock(c *cli.Context) error {
+func espLockCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "lock",
+		Short:                 "Calls the nonpayable method lock on the EcdsaSortitionPool contract.",
+		Args:                  cmd.ArgCountChecker(0),
+		RunE:                  espLock,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	c.PreRunE = cmd.NonConstArgsChecker
+	cmd.InitNonConstFlags(c)
+
+	return c
+}
+
+func espLock(c *cobra.Command, args []string) error {
 	contract, err := initializeEcdsaSortitionPool(c)
 	if err != nil {
 		return err
@@ -706,64 +806,80 @@ func espLock(c *cli.Context) error {
 		transaction *types.Transaction
 	)
 
-	if c.Bool(cmd.SubmitFlag) {
+	if shouldSubmit, _ := c.Flags().GetBool(cmd.SubmitFlag); shouldSubmit {
 		// Do a regular submission. Take payable into account.
 		transaction, err = contract.Lock()
 		if err != nil {
 			return err
 		}
 
-		cmd.PrintOutput(transaction.Hash)
+		cmd.PrintOutput(transaction.Hash())
 	} else {
 		// Do a call.
 		err = contract.CallLock(
-			cmd.BlockFlagValue.Uint,
+			cmd.BlockFlagValue.Int,
 		)
 		if err != nil {
 			return err
 		}
 
-		cmd.PrintOutput(nil)
+		cmd.PrintOutput("success")
 	}
 
 	return nil
 }
 
-func espReceiveApproval(c *cli.Context) error {
+func espReceiveApprovalCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "receive-approval [arg_sender] [arg_amount] [arg_token] [arg3]",
+		Short:                 "Calls the nonpayable method receiveApproval on the EcdsaSortitionPool contract.",
+		Args:                  cmd.ArgCountChecker(4),
+		RunE:                  espReceiveApproval,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	c.PreRunE = cmd.NonConstArgsChecker
+	cmd.InitNonConstFlags(c)
+
+	return c
+}
+
+func espReceiveApproval(c *cobra.Command, args []string) error {
 	contract, err := initializeEcdsaSortitionPool(c)
 	if err != nil {
 		return err
 	}
 
-	arg_sender, err := chainutil.AddressFromHex(c.Args()[0])
+	arg_sender, err := chainutil.AddressFromHex(args[0])
 	if err != nil {
 		return fmt.Errorf(
 			"couldn't parse parameter arg_sender, a address, from passed value %v",
-			c.Args()[0],
+			args[0],
 		)
 	}
 
-	arg_amount, err := hexutil.DecodeBig(c.Args()[1])
+	arg_amount, err := hexutil.DecodeBig(args[1])
 	if err != nil {
 		return fmt.Errorf(
 			"couldn't parse parameter arg_amount, a uint256, from passed value %v",
-			c.Args()[1],
+			args[1],
 		)
 	}
 
-	arg_token, err := chainutil.AddressFromHex(c.Args()[2])
+	arg_token, err := chainutil.AddressFromHex(args[2])
 	if err != nil {
 		return fmt.Errorf(
 			"couldn't parse parameter arg_token, a address, from passed value %v",
-			c.Args()[2],
+			args[2],
 		)
 	}
 
-	arg3, err := hexutil.Decode(c.Args()[3])
+	arg3, err := hexutil.Decode(args[3])
 	if err != nil {
 		return fmt.Errorf(
 			"couldn't parse parameter arg3, a bytes, from passed value %v",
-			c.Args()[3],
+			args[3],
 		)
 	}
 
@@ -771,7 +887,7 @@ func espReceiveApproval(c *cli.Context) error {
 		transaction *types.Transaction
 	)
 
-	if c.Bool(cmd.SubmitFlag) {
+	if shouldSubmit, _ := c.Flags().GetBool(cmd.SubmitFlag); shouldSubmit {
 		// Do a regular submission. Take payable into account.
 		transaction, err = contract.ReceiveApproval(
 			arg_sender,
@@ -783,7 +899,7 @@ func espReceiveApproval(c *cli.Context) error {
 			return err
 		}
 
-		cmd.PrintOutput(transaction.Hash)
+		cmd.PrintOutput(transaction.Hash())
 	} else {
 		// Do a call.
 		err = contract.CallReceiveApproval(
@@ -791,19 +907,35 @@ func espReceiveApproval(c *cli.Context) error {
 			arg_amount,
 			arg_token,
 			arg3,
-			cmd.BlockFlagValue.Uint,
+			cmd.BlockFlagValue.Int,
 		)
 		if err != nil {
 			return err
 		}
 
-		cmd.PrintOutput(nil)
+		cmd.PrintOutput("success")
 	}
 
 	return nil
 }
 
-func espRenounceOwnership(c *cli.Context) error {
+func espRenounceOwnershipCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "renounce-ownership",
+		Short:                 "Calls the nonpayable method renounceOwnership on the EcdsaSortitionPool contract.",
+		Args:                  cmd.ArgCountChecker(0),
+		RunE:                  espRenounceOwnership,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	c.PreRunE = cmd.NonConstArgsChecker
+	cmd.InitNonConstFlags(c)
+
+	return c
+}
+
+func espRenounceOwnership(c *cobra.Command, args []string) error {
 	contract, err := initializeEcdsaSortitionPool(c)
 	if err != nil {
 		return err
@@ -813,40 +945,56 @@ func espRenounceOwnership(c *cli.Context) error {
 		transaction *types.Transaction
 	)
 
-	if c.Bool(cmd.SubmitFlag) {
+	if shouldSubmit, _ := c.Flags().GetBool(cmd.SubmitFlag); shouldSubmit {
 		// Do a regular submission. Take payable into account.
 		transaction, err = contract.RenounceOwnership()
 		if err != nil {
 			return err
 		}
 
-		cmd.PrintOutput(transaction.Hash)
+		cmd.PrintOutput(transaction.Hash())
 	} else {
 		// Do a call.
 		err = contract.CallRenounceOwnership(
-			cmd.BlockFlagValue.Uint,
+			cmd.BlockFlagValue.Int,
 		)
 		if err != nil {
 			return err
 		}
 
-		cmd.PrintOutput(nil)
+		cmd.PrintOutput("success")
 	}
 
 	return nil
 }
 
-func espRestoreRewardEligibility(c *cli.Context) error {
+func espRestoreRewardEligibilityCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "restore-reward-eligibility [arg_operator]",
+		Short:                 "Calls the nonpayable method restoreRewardEligibility on the EcdsaSortitionPool contract.",
+		Args:                  cmd.ArgCountChecker(1),
+		RunE:                  espRestoreRewardEligibility,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	c.PreRunE = cmd.NonConstArgsChecker
+	cmd.InitNonConstFlags(c)
+
+	return c
+}
+
+func espRestoreRewardEligibility(c *cobra.Command, args []string) error {
 	contract, err := initializeEcdsaSortitionPool(c)
 	if err != nil {
 		return err
 	}
 
-	arg_operator, err := chainutil.AddressFromHex(c.Args()[0])
+	arg_operator, err := chainutil.AddressFromHex(args[0])
 	if err != nil {
 		return fmt.Errorf(
 			"couldn't parse parameter arg_operator, a address, from passed value %v",
-			c.Args()[0],
+			args[0],
 		)
 	}
 
@@ -854,7 +1002,7 @@ func espRestoreRewardEligibility(c *cli.Context) error {
 		transaction *types.Transaction
 	)
 
-	if c.Bool(cmd.SubmitFlag) {
+	if shouldSubmit, _ := c.Flags().GetBool(cmd.SubmitFlag); shouldSubmit {
 		// Do a regular submission. Take payable into account.
 		transaction, err = contract.RestoreRewardEligibility(
 			arg_operator,
@@ -863,34 +1011,50 @@ func espRestoreRewardEligibility(c *cli.Context) error {
 			return err
 		}
 
-		cmd.PrintOutput(transaction.Hash)
+		cmd.PrintOutput(transaction.Hash())
 	} else {
 		// Do a call.
 		err = contract.CallRestoreRewardEligibility(
 			arg_operator,
-			cmd.BlockFlagValue.Uint,
+			cmd.BlockFlagValue.Int,
 		)
 		if err != nil {
 			return err
 		}
 
-		cmd.PrintOutput(nil)
+		cmd.PrintOutput("success")
 	}
 
 	return nil
 }
 
-func espTransferOwnership(c *cli.Context) error {
+func espTransferOwnershipCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "transfer-ownership [arg_newOwner]",
+		Short:                 "Calls the nonpayable method transferOwnership on the EcdsaSortitionPool contract.",
+		Args:                  cmd.ArgCountChecker(1),
+		RunE:                  espTransferOwnership,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	c.PreRunE = cmd.NonConstArgsChecker
+	cmd.InitNonConstFlags(c)
+
+	return c
+}
+
+func espTransferOwnership(c *cobra.Command, args []string) error {
 	contract, err := initializeEcdsaSortitionPool(c)
 	if err != nil {
 		return err
 	}
 
-	arg_newOwner, err := chainutil.AddressFromHex(c.Args()[0])
+	arg_newOwner, err := chainutil.AddressFromHex(args[0])
 	if err != nil {
 		return fmt.Errorf(
 			"couldn't parse parameter arg_newOwner, a address, from passed value %v",
-			c.Args()[0],
+			args[0],
 		)
 	}
 
@@ -898,7 +1062,7 @@ func espTransferOwnership(c *cli.Context) error {
 		transaction *types.Transaction
 	)
 
-	if c.Bool(cmd.SubmitFlag) {
+	if shouldSubmit, _ := c.Flags().GetBool(cmd.SubmitFlag); shouldSubmit {
 		// Do a regular submission. Take payable into account.
 		transaction, err = contract.TransferOwnership(
 			arg_newOwner,
@@ -907,24 +1071,40 @@ func espTransferOwnership(c *cli.Context) error {
 			return err
 		}
 
-		cmd.PrintOutput(transaction.Hash)
+		cmd.PrintOutput(transaction.Hash())
 	} else {
 		// Do a call.
 		err = contract.CallTransferOwnership(
 			arg_newOwner,
-			cmd.BlockFlagValue.Uint,
+			cmd.BlockFlagValue.Int,
 		)
 		if err != nil {
 			return err
 		}
 
-		cmd.PrintOutput(nil)
+		cmd.PrintOutput("success")
 	}
 
 	return nil
 }
 
-func espUnlock(c *cli.Context) error {
+func espUnlockCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "unlock",
+		Short:                 "Calls the nonpayable method unlock on the EcdsaSortitionPool contract.",
+		Args:                  cmd.ArgCountChecker(0),
+		RunE:                  espUnlock,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	c.PreRunE = cmd.NonConstArgsChecker
+	cmd.InitNonConstFlags(c)
+
+	return c
+}
+
+func espUnlock(c *cobra.Command, args []string) error {
 	contract, err := initializeEcdsaSortitionPool(c)
 	if err != nil {
 		return err
@@ -934,48 +1114,64 @@ func espUnlock(c *cli.Context) error {
 		transaction *types.Transaction
 	)
 
-	if c.Bool(cmd.SubmitFlag) {
+	if shouldSubmit, _ := c.Flags().GetBool(cmd.SubmitFlag); shouldSubmit {
 		// Do a regular submission. Take payable into account.
 		transaction, err = contract.Unlock()
 		if err != nil {
 			return err
 		}
 
-		cmd.PrintOutput(transaction.Hash)
+		cmd.PrintOutput(transaction.Hash())
 	} else {
 		// Do a call.
 		err = contract.CallUnlock(
-			cmd.BlockFlagValue.Uint,
+			cmd.BlockFlagValue.Int,
 		)
 		if err != nil {
 			return err
 		}
 
-		cmd.PrintOutput(nil)
+		cmd.PrintOutput("success")
 	}
 
 	return nil
 }
 
-func espUpdateOperatorStatus(c *cli.Context) error {
+func espUpdateOperatorStatusCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "update-operator-status [arg_operator] [arg_authorizedStake]",
+		Short:                 "Calls the nonpayable method updateOperatorStatus on the EcdsaSortitionPool contract.",
+		Args:                  cmd.ArgCountChecker(2),
+		RunE:                  espUpdateOperatorStatus,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	c.PreRunE = cmd.NonConstArgsChecker
+	cmd.InitNonConstFlags(c)
+
+	return c
+}
+
+func espUpdateOperatorStatus(c *cobra.Command, args []string) error {
 	contract, err := initializeEcdsaSortitionPool(c)
 	if err != nil {
 		return err
 	}
 
-	arg_operator, err := chainutil.AddressFromHex(c.Args()[0])
+	arg_operator, err := chainutil.AddressFromHex(args[0])
 	if err != nil {
 		return fmt.Errorf(
 			"couldn't parse parameter arg_operator, a address, from passed value %v",
-			c.Args()[0],
+			args[0],
 		)
 	}
 
-	arg_authorizedStake, err := hexutil.DecodeBig(c.Args()[1])
+	arg_authorizedStake, err := hexutil.DecodeBig(args[1])
 	if err != nil {
 		return fmt.Errorf(
 			"couldn't parse parameter arg_authorizedStake, a uint256, from passed value %v",
-			c.Args()[1],
+			args[1],
 		)
 	}
 
@@ -983,7 +1179,7 @@ func espUpdateOperatorStatus(c *cli.Context) error {
 		transaction *types.Transaction
 	)
 
-	if c.Bool(cmd.SubmitFlag) {
+	if shouldSubmit, _ := c.Flags().GetBool(cmd.SubmitFlag); shouldSubmit {
 		// Do a regular submission. Take payable into account.
 		transaction, err = contract.UpdateOperatorStatus(
 			arg_operator,
@@ -993,35 +1189,51 @@ func espUpdateOperatorStatus(c *cli.Context) error {
 			return err
 		}
 
-		cmd.PrintOutput(transaction.Hash)
+		cmd.PrintOutput(transaction.Hash())
 	} else {
 		// Do a call.
 		err = contract.CallUpdateOperatorStatus(
 			arg_operator,
 			arg_authorizedStake,
-			cmd.BlockFlagValue.Uint,
+			cmd.BlockFlagValue.Int,
 		)
 		if err != nil {
 			return err
 		}
 
-		cmd.PrintOutput(nil)
+		cmd.PrintOutput("success")
 	}
 
 	return nil
 }
 
-func espWithdrawIneligible(c *cli.Context) error {
+func espWithdrawIneligibleCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "withdraw-ineligible [arg_recipient]",
+		Short:                 "Calls the nonpayable method withdrawIneligible on the EcdsaSortitionPool contract.",
+		Args:                  cmd.ArgCountChecker(1),
+		RunE:                  espWithdrawIneligible,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	c.PreRunE = cmd.NonConstArgsChecker
+	cmd.InitNonConstFlags(c)
+
+	return c
+}
+
+func espWithdrawIneligible(c *cobra.Command, args []string) error {
 	contract, err := initializeEcdsaSortitionPool(c)
 	if err != nil {
 		return err
 	}
 
-	arg_recipient, err := chainutil.AddressFromHex(c.Args()[0])
+	arg_recipient, err := chainutil.AddressFromHex(args[0])
 	if err != nil {
 		return fmt.Errorf(
 			"couldn't parse parameter arg_recipient, a address, from passed value %v",
-			c.Args()[0],
+			args[0],
 		)
 	}
 
@@ -1029,7 +1241,7 @@ func espWithdrawIneligible(c *cli.Context) error {
 		transaction *types.Transaction
 	)
 
-	if c.Bool(cmd.SubmitFlag) {
+	if shouldSubmit, _ := c.Flags().GetBool(cmd.SubmitFlag); shouldSubmit {
 		// Do a regular submission. Take payable into account.
 		transaction, err = contract.WithdrawIneligible(
 			arg_recipient,
@@ -1038,42 +1250,58 @@ func espWithdrawIneligible(c *cli.Context) error {
 			return err
 		}
 
-		cmd.PrintOutput(transaction.Hash)
+		cmd.PrintOutput(transaction.Hash())
 	} else {
 		// Do a call.
 		err = contract.CallWithdrawIneligible(
 			arg_recipient,
-			cmd.BlockFlagValue.Uint,
+			cmd.BlockFlagValue.Int,
 		)
 		if err != nil {
 			return err
 		}
 
-		cmd.PrintOutput(nil)
+		cmd.PrintOutput("success")
 	}
 
 	return nil
 }
 
-func espWithdrawRewards(c *cli.Context) error {
+func espWithdrawRewardsCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "withdraw-rewards [arg_operator] [arg_beneficiary]",
+		Short:                 "Calls the nonpayable method withdrawRewards on the EcdsaSortitionPool contract.",
+		Args:                  cmd.ArgCountChecker(2),
+		RunE:                  espWithdrawRewards,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	c.PreRunE = cmd.NonConstArgsChecker
+	cmd.InitNonConstFlags(c)
+
+	return c
+}
+
+func espWithdrawRewards(c *cobra.Command, args []string) error {
 	contract, err := initializeEcdsaSortitionPool(c)
 	if err != nil {
 		return err
 	}
 
-	arg_operator, err := chainutil.AddressFromHex(c.Args()[0])
+	arg_operator, err := chainutil.AddressFromHex(args[0])
 	if err != nil {
 		return fmt.Errorf(
 			"couldn't parse parameter arg_operator, a address, from passed value %v",
-			c.Args()[0],
+			args[0],
 		)
 	}
 
-	arg_beneficiary, err := chainutil.AddressFromHex(c.Args()[1])
+	arg_beneficiary, err := chainutil.AddressFromHex(args[1])
 	if err != nil {
 		return fmt.Errorf(
 			"couldn't parse parameter arg_beneficiary, a address, from passed value %v",
-			c.Args()[1],
+			args[1],
 		)
 	}
 
@@ -1082,7 +1310,7 @@ func espWithdrawRewards(c *cli.Context) error {
 		result      *big.Int
 	)
 
-	if c.Bool(cmd.SubmitFlag) {
+	if shouldSubmit, _ := c.Flags().GetBool(cmd.SubmitFlag); shouldSubmit {
 		// Do a regular submission. Take payable into account.
 		transaction, err = contract.WithdrawRewards(
 			arg_operator,
@@ -1092,13 +1320,13 @@ func espWithdrawRewards(c *cli.Context) error {
 			return err
 		}
 
-		cmd.PrintOutput(transaction.Hash)
+		cmd.PrintOutput(transaction.Hash())
 	} else {
 		// Do a call.
 		result, err = contract.CallWithdrawRewards(
 			arg_operator,
 			arg_beneficiary,
-			cmd.BlockFlagValue.Uint,
+			cmd.BlockFlagValue.Int,
 		)
 		if err != nil {
 			return err
@@ -1112,13 +1340,13 @@ func espWithdrawRewards(c *cli.Context) error {
 
 /// ------------------- Initialization -------------------
 
-func initializeEcdsaSortitionPool(c *cli.Context) (*contract.EcdsaSortitionPool, error) {
-	config, err := config.ReadEthereumConfig(c.GlobalString("config"))
+func initializeEcdsaSortitionPool(c *cobra.Command) (*contract.EcdsaSortitionPool, error) {
+	cfg, err := config.ReadEthereumConfig(c.Flags())
 	if err != nil {
 		return nil, fmt.Errorf("error reading config from file: [%v]", err)
 	}
 
-	client, _, _, err := chainutil.ConnectClients(config.URL, config.URLRPC)
+	client, err := ethclient.Dial(cfg.URL)
 	if err != nil {
 		return nil, fmt.Errorf("error connecting to host chain node: [%v]", err)
 	}
@@ -1132,18 +1360,18 @@ func initializeEcdsaSortitionPool(c *cli.Context) (*contract.EcdsaSortitionPool,
 	}
 
 	key, err := chainutil.DecryptKeyFile(
-		config.Account.KeyFile,
-		config.Account.KeyFilePassword,
+		cfg.Account.KeyFile,
+		cfg.Account.KeyFilePassword,
 	)
 	if err != nil {
 		return nil, fmt.Errorf(
 			"failed to read KeyFile: %s: [%v]",
-			config.Account.KeyFile,
+			cfg.Account.KeyFile,
 			err,
 		)
 	}
 
-	miningWaiter := chainutil.NewMiningWaiter(client, config)
+	miningWaiter := chainutil.NewMiningWaiter(client, cfg)
 
 	blockCounter, err := chainutil.NewBlockCounter(client)
 	if err != nil {
@@ -1153,7 +1381,14 @@ func initializeEcdsaSortitionPool(c *cli.Context) (*contract.EcdsaSortitionPool,
 		)
 	}
 
-	address := common.HexToAddress(config.ContractAddresses["EcdsaSortitionPool"])
+	address, err := cfg.ContractAddress("EcdsaSortitionPool")
+	if err != nil {
+		return nil, fmt.Errorf(
+			"failed to get %s address: [%w]",
+			"EcdsaSortitionPool",
+			err,
+		)
+	}
 
 	return contract.NewEcdsaSortitionPool(
 		address,

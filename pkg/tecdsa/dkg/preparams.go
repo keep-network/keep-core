@@ -1,11 +1,12 @@
 package dkg
 
 import (
+	"context"
 	"time"
 
 	"github.com/bnb-chain/tss-lib/ecdsa/keygen"
 	"github.com/ipfs/go-log"
-	"github.com/keep-network/keep-core/pkg/miner"
+	"github.com/keep-network/keep-core/pkg/generator"
 )
 
 // PreParams represents tECDSA DKG pre-parameters that were not yet consumed
@@ -24,13 +25,14 @@ func NewPreParams(data *keygen.LocalPreParams) *PreParams {
 // entries up to the pool size. When an entry is pulled from the pool it
 // will generate a new entry.
 type tssPreParamsPool struct {
-	*miner.ParameterPool[PreParams]
+	*generator.ParameterPool[PreParams]
 	logger log.StandardLogger
 }
 
 // newTssPreParamsPool initializes a new TSS pre-parameters pool.
 func newTssPreParamsPool(
 	logger log.StandardLogger,
+	scheduler *generator.Scheduler,
 	poolSize int,
 	generationTimeout time.Duration,
 	generationDelay time.Duration,
@@ -45,22 +47,40 @@ func newTssPreParamsPool(
 		generationConcurrency,
 	)
 
-	newPreParamsFn := func() *PreParams {
-		preParams, err := keygen.GeneratePreParams(
-			generationTimeout,
+	newPreParamsFn := func(ctx context.Context) *PreParams {
+		timingOutCtx, cancel := context.WithTimeout(ctx, generationTimeout)
+		defer cancel()
+
+		preParams, err := keygen.GeneratePreParamsWithContext(
+			timingOutCtx,
 			generationConcurrency,
 		)
-		if err != nil {
-			logger.Errorf("failed to generate TSS pre-params: [%v]", err)
+		// tss-lib returns generic errors saying "timeout or error while ...".
+		// There are three possibilities:
+		// 1. Pool canceled the parent `ctx`. This is normal and we should not
+		//    log anything in this case.
+		// 2. `timingOutCtx` timed out. It means the machine is not fast enough
+		//    or that it was just unlucky. We should log a warning.
+		// 3. There is some error from tss-lib generator. We log it as a warning
+		//    because we'll re-attempt to generate parameters again.
+		if err != nil && ctx.Err() == nil {
+			logger.Warnf("failed to generate TSS pre-params: [%v]", err)
+		}
+
+		// If the context is done, GeneratePreParamsWithContext that got
+		// interrupted returns nil result. We do not want to wrap nil inside
+		// PreParams structure, so we return nil here.
+		if preParams == nil {
+			return nil
 		}
 
 		return &PreParams{preParams}
 	}
 
 	return &tssPreParamsPool{
-		miner.NewParameterPool[PreParams](
+		generator.NewParameterPool[PreParams](
 			logger,
-			&miner.Miner{},   // TODO: pass as a parameter
+			scheduler,
 			&noPersistence{}, // TODO: replace with a real persistence
 			poolSize,
 			newPreParamsFn,

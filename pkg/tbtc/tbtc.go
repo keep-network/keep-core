@@ -7,6 +7,7 @@ import (
 
 	"github.com/ipfs/go-log"
 	"github.com/keep-network/keep-common/pkg/persistence"
+	"github.com/keep-network/keep-core/pkg/generator"
 	"github.com/keep-network/keep-core/pkg/net"
 	"github.com/keep-network/keep-core/pkg/sortition"
 )
@@ -19,7 +20,7 @@ var logger = log.Logger("keep-tbtc")
 const ProtocolName = "tbtc"
 
 const (
-	DefaultPreParamsPoolSize              = 50
+	DefaultPreParamsPoolSize              = 3000
 	DefaultPreParamsGenerationTimeout     = 2 * time.Minute
 	DefaultPreParamsGenerationDelay       = 10 * time.Second
 	DefaultPreParamsGenerationConcurrency = 1
@@ -45,9 +46,10 @@ func Initialize(
 	chain Chain,
 	netProvider net.Provider,
 	persistence persistence.Handle,
+	scheduler *generator.Scheduler,
 	config Config,
 ) error {
-	node := newNode(chain, netProvider, persistence, config)
+	node := newNode(chain, netProvider, persistence, scheduler, config)
 	deduplicator := newDeduplicator()
 
 	err := sortition.MonitorPool(ctx, logger, chain, sortition.DefaultStatusCheckTick)

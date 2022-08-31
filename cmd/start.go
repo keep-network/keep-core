@@ -4,31 +4,25 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/keep-network/keep-core/pkg/tbtc"
+	"github.com/spf13/cobra"
 
-	"github.com/keep-network/keep-core/config"
-	"github.com/keep-network/keep-core/pkg/chain/ethereum"
-	"github.com/keep-network/keep-core/pkg/diagnostics"
-	"github.com/keep-network/keep-core/pkg/metrics"
-	"github.com/keep-network/keep-core/pkg/net"
-
-	"github.com/ipfs/go-log"
 	"github.com/keep-network/keep-common/pkg/persistence"
+	"github.com/keep-network/keep-core/config"
 	"github.com/keep-network/keep-core/pkg/beacon"
 	"github.com/keep-network/keep-core/pkg/chain"
+	"github.com/keep-network/keep-core/pkg/chain/ethereum"
+	"github.com/keep-network/keep-core/pkg/diagnostics"
 	"github.com/keep-network/keep-core/pkg/firewall"
+	"github.com/keep-network/keep-core/pkg/generator"
+	"github.com/keep-network/keep-core/pkg/metrics"
+	"github.com/keep-network/keep-core/pkg/net"
 	"github.com/keep-network/keep-core/pkg/net/libp2p"
 	"github.com/keep-network/keep-core/pkg/net/retransmission"
-
-	"github.com/spf13/cobra"
+	"github.com/keep-network/keep-core/pkg/tbtc"
 )
 
-var (
-	// StartCommand contains the definition of the start command-line subcommand.
-	StartCommand *cobra.Command
-
-	logger = log.Logger("keep-start")
-)
+// StartCommand contains the definition of the start command-line subcommand.
+var StartCommand *cobra.Command
 
 func init() {
 	StartCommand = &cobra.Command{
@@ -36,10 +30,9 @@ func init() {
 		Short: "Starts the Keep Client",
 		Long:  "Starts the Keep Client in the foreground",
 		PreRun: func(cmd *cobra.Command, args []string) {
-			if err := clientConfig.ReadConfig(configFilePath, cmd.Flags()); err != nil {
+			if err := clientConfig.ReadConfig(configFilePath, cmd.Flags(), config.AllCategories...); err != nil {
 				logger.Fatalf("error reading config: %v", err)
 			}
-
 		},
 		Run: func(cmd *cobra.Command, args []string) {
 			if err := start(cmd); err != nil {
@@ -48,7 +41,7 @@ func init() {
 		},
 	}
 
-	initFlags(StartCommand, allCategories, &configFilePath, clientConfig)
+	initFlags(StartCommand, &configFilePath, clientConfig, config.AllCategories...)
 
 	StartCommand.SetUsageTemplate(
 		fmt.Sprintf(`%s
@@ -66,6 +59,11 @@ Environment variables:
 // start starts a node
 func start(cmd *cobra.Command) error {
 	ctx := context.Background()
+
+	logger.Infof(
+		"Starting the client against [%s] ethereum network...",
+		clientConfig.Ethereum.Network,
+	)
 
 	beaconChain, tbtcChain, blockCounter, signing, operatorPrivateKey, err :=
 		ethereum.Connect(ctx, clientConfig.Ethereum)
@@ -104,11 +102,14 @@ func start(cmd *cobra.Command) error {
 		return fmt.Errorf("cannot initialize tbtc persistence: [%w]", err)
 	}
 
+	scheduler := generator.StartScheduler()
+
 	err = beacon.Initialize(
 		ctx,
 		beaconChain,
 		netProvider,
 		beaconPersistence,
+		scheduler,
 	)
 	if err != nil {
 		return fmt.Errorf("error initializing beacon: [%v]", err)
@@ -119,6 +120,7 @@ func start(cmd *cobra.Command) error {
 		tbtcChain,
 		netProvider,
 		tbtcPersistence,
+		scheduler,
 		clientConfig.Tbtc,
 	)
 	if err != nil {
@@ -142,6 +144,19 @@ func initializePersistence(clientConfig *config.Config, application string) (
 	persistence.Handle,
 	error,
 ) {
+	err := persistence.EnsureDirectoryExists(
+		clientConfig.Storage.DataDir,
+		application,
+	)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"cannot create storage directory for "+
+				"application [%v]: [%w]",
+			application,
+			err,
+		)
+	}
+
 	path := fmt.Sprintf("%s/%s", clientConfig.Storage.DataDir, application)
 
 	diskHandle, err := persistence.NewDiskHandle(path)

@@ -53,7 +53,7 @@ task(
 
         await hre.run(TASK_SEND_ETH, {
           from: args.from,
-          value: topUpAmount.toString(),
+          amount: topUpAmount.toString(),
           to: address,
         })
       }

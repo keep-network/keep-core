@@ -8,19 +8,19 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/core/types"
+	"github.com/ethereum/go-ethereum/ethclient"
 
 	chainutil "github.com/keep-network/keep-common/pkg/chain/ethereum/ethutil"
 	"github.com/keep-network/keep-common/pkg/cmd"
 	"github.com/keep-network/keep-core/config"
 	"github.com/keep-network/keep-core/pkg/chain/ethereum/tbtc/gen/contract"
 
-	"github.com/urfave/cli"
+	"github.com/spf13/cobra"
 )
 
-var BridgeCommand cli.Command
+var BridgeCommand *cobra.Command
 
 var bridgeDescription = `The bridge command allows calling the Bridge contract on an
 	Ethereum network. It has subcommands corresponding to each contract method,
@@ -33,10 +33,6 @@ var bridgeDescription = `The bridge command allows calling the Bridge contract o
 	All subcommands can be called against a specific block by passing the
 	-b/--block flag.
 
-	All subcommands can be used to investigate the result of a previous
-	transaction that called that same method by passing the -t/--transaction
-	flag with the transaction hash.
-
 	Subcommands for mutating methods may be submitted as a mutating transaction
 	by passing the -s/--submit flag. In this mode, this command will terminate
 	successfully once the transaction has been submitted, but will not wait for
@@ -46,172 +42,64 @@ var bridgeDescription = `The bridge command allows calling the Bridge contract o
 	be changed by passing the -v/--value flag.`
 
 func init() {
-	AvailableCommands = append(AvailableCommands, cli.Command{
-		Name:        "bridge",
-		Usage:       `Provides access to the Bridge contract.`,
-		Description: bridgeDescription,
-		Subcommands: []cli.Command{{
-			Name:      "active-wallet-pub-key-hash",
-			Usage:     "Calls the view method activeWalletPubKeyHash on the Bridge contract.",
-			ArgsUsage: "",
-			Action:    bActiveWalletPubKeyHash,
-			Before:    cmd.ArgCountChecker(0),
-			Flags:     cmd.ConstFlags,
-		}, {
-			Name:      "contract-references",
-			Usage:     "Calls the view method contractReferences on the Bridge contract.",
-			ArgsUsage: "",
-			Action:    bContractReferences,
-			Before:    cmd.ArgCountChecker(0),
-			Flags:     cmd.ConstFlags,
-		}, {
-			Name:      "deposit-parameters",
-			Usage:     "Calls the view method depositParameters on the Bridge contract.",
-			ArgsUsage: "",
-			Action:    bDepositParameters,
-			Before:    cmd.ArgCountChecker(0),
-			Flags:     cmd.ConstFlags,
-		}, {
-			Name:      "deposits",
-			Usage:     "Calls the view method deposits on the Bridge contract.",
-			ArgsUsage: "[arg_depositKey] ",
-			Action:    bDeposits,
-			Before:    cmd.ArgCountChecker(1),
-			Flags:     cmd.ConstFlags,
-		}, {
-			Name:      "fraud-challenges",
-			Usage:     "Calls the view method fraudChallenges on the Bridge contract.",
-			ArgsUsage: "[arg_challengeKey] ",
-			Action:    bFraudChallenges,
-			Before:    cmd.ArgCountChecker(1),
-			Flags:     cmd.ConstFlags,
-		}, {
-			Name:      "fraud-parameters",
-			Usage:     "Calls the view method fraudParameters on the Bridge contract.",
-			ArgsUsage: "",
-			Action:    bFraudParameters,
-			Before:    cmd.ArgCountChecker(0),
-			Flags:     cmd.ConstFlags,
-		}, {
-			Name:      "governance",
-			Usage:     "Calls the view method governance on the Bridge contract.",
-			ArgsUsage: "",
-			Action:    bGovernance,
-			Before:    cmd.ArgCountChecker(0),
-			Flags:     cmd.ConstFlags,
-		}, {
-			Name:      "is-vault-trusted",
-			Usage:     "Calls the view method isVaultTrusted on the Bridge contract.",
-			ArgsUsage: "[arg_vault] ",
-			Action:    bIsVaultTrusted,
-			Before:    cmd.ArgCountChecker(1),
-			Flags:     cmd.ConstFlags,
-		}, {
-			Name:      "live-wallets-count",
-			Usage:     "Calls the view method liveWalletsCount on the Bridge contract.",
-			ArgsUsage: "",
-			Action:    bLiveWalletsCount,
-			Before:    cmd.ArgCountChecker(0),
-			Flags:     cmd.ConstFlags,
-		}, {
-			Name:      "moved-funds-sweep-requests",
-			Usage:     "Calls the view method movedFundsSweepRequests on the Bridge contract.",
-			ArgsUsage: "[arg_requestKey] ",
-			Action:    bMovedFundsSweepRequests,
-			Before:    cmd.ArgCountChecker(1),
-			Flags:     cmd.ConstFlags,
-		}, {
-			Name:      "moving-funds-parameters",
-			Usage:     "Calls the view method movingFundsParameters on the Bridge contract.",
-			ArgsUsage: "",
-			Action:    bMovingFundsParameters,
-			Before:    cmd.ArgCountChecker(0),
-			Flags:     cmd.ConstFlags,
-		}, {
-			Name:      "pending-redemptions",
-			Usage:     "Calls the view method pendingRedemptions on the Bridge contract.",
-			ArgsUsage: "[arg_redemptionKey] ",
-			Action:    bPendingRedemptions,
-			Before:    cmd.ArgCountChecker(1),
-			Flags:     cmd.ConstFlags,
-		}, {
-			Name:      "redemption-parameters",
-			Usage:     "Calls the view method redemptionParameters on the Bridge contract.",
-			ArgsUsage: "",
-			Action:    bRedemptionParameters,
-			Before:    cmd.ArgCountChecker(0),
-			Flags:     cmd.ConstFlags,
-		}, {
-			Name:      "spent-main-u-t-x-os",
-			Usage:     "Calls the view method spentMainUTXOs on the Bridge contract.",
-			ArgsUsage: "[arg_utxoKey] ",
-			Action:    bSpentMainUTXOs,
-			Before:    cmd.ArgCountChecker(1),
-			Flags:     cmd.ConstFlags,
-		}, {
-			Name:      "timed-out-redemptions",
-			Usage:     "Calls the view method timedOutRedemptions on the Bridge contract.",
-			ArgsUsage: "[arg_redemptionKey] ",
-			Action:    bTimedOutRedemptions,
-			Before:    cmd.ArgCountChecker(1),
-			Flags:     cmd.ConstFlags,
-		}, {
-			Name:      "treasury",
-			Usage:     "Calls the view method treasury on the Bridge contract.",
-			ArgsUsage: "",
-			Action:    bTreasury,
-			Before:    cmd.ArgCountChecker(0),
-			Flags:     cmd.ConstFlags,
-		}, {
-			Name:      "tx-proof-difficulty-factor",
-			Usage:     "Calls the view method txProofDifficultyFactor on the Bridge contract.",
-			ArgsUsage: "",
-			Action:    bTxProofDifficultyFactor,
-			Before:    cmd.ArgCountChecker(0),
-			Flags:     cmd.ConstFlags,
-		}, {
-			Name:      "wallet-parameters",
-			Usage:     "Calls the view method walletParameters on the Bridge contract.",
-			ArgsUsage: "",
-			Action:    bWalletParameters,
-			Before:    cmd.ArgCountChecker(0),
-			Flags:     cmd.ConstFlags,
-		}, {
-			Name:      "defeat-fraud-challenge-with-heartbeat",
-			Usage:     "Calls the nonpayable method defeatFraudChallengeWithHeartbeat on the Bridge contract.",
-			ArgsUsage: "[arg_walletPublicKey] [arg_heartbeatMessage] ",
-			Action:    bDefeatFraudChallengeWithHeartbeat,
-			Before:    cli.BeforeFunc(cmd.NonConstArgsChecker.AndThen(cmd.ArgCountChecker(2))),
-			Flags:     cmd.NonConstFlags,
-		}, {
-			Name:      "receive-balance-approval",
-			Usage:     "Calls the nonpayable method receiveBalanceApproval on the Bridge contract.",
-			ArgsUsage: "[arg_balanceOwner] [arg_amount] [arg_redemptionData] ",
-			Action:    bReceiveBalanceApproval,
-			Before:    cli.BeforeFunc(cmd.NonConstArgsChecker.AndThen(cmd.ArgCountChecker(3))),
-			Flags:     cmd.NonConstFlags,
-		}, {
-			Name:      "transfer-governance",
-			Usage:     "Calls the nonpayable method transferGovernance on the Bridge contract.",
-			ArgsUsage: "[arg_newGovernance] ",
-			Action:    bTransferGovernance,
-			Before:    cli.BeforeFunc(cmd.NonConstArgsChecker.AndThen(cmd.ArgCountChecker(1))),
-			Flags:     cmd.NonConstFlags,
-		}},
-	})
+	BridgeCommand := &cobra.Command{
+		Use:   "bridge",
+		Short: `Provides access to the Bridge contract.`,
+		Long:  bridgeDescription,
+	}
+
+	BridgeCommand.AddCommand(
+		bActiveWalletPubKeyHashCommand(),
+		bContractReferencesCommand(),
+		bDepositParametersCommand(),
+		bDepositsCommand(),
+		bFraudChallengesCommand(),
+		bFraudParametersCommand(),
+		bGovernanceCommand(),
+		bIsVaultTrustedCommand(),
+		bLiveWalletsCountCommand(),
+		bMovedFundsSweepRequestsCommand(),
+		bMovingFundsParametersCommand(),
+		bPendingRedemptionsCommand(),
+		bRedemptionParametersCommand(),
+		bSpentMainUTXOsCommand(),
+		bTimedOutRedemptionsCommand(),
+		bTreasuryCommand(),
+		bTxProofDifficultyFactorCommand(),
+		bWalletParametersCommand(),
+		bDefeatFraudChallengeWithHeartbeatCommand(),
+		bReceiveBalanceApprovalCommand(),
+		bTransferGovernanceCommand(),
+	)
+
+	Command.AddCommand(BridgeCommand)
 }
 
 /// ------------------- Const methods -------------------
 
-func bActiveWalletPubKeyHash(c *cli.Context) error {
+func bActiveWalletPubKeyHashCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "active-wallet-pub-key-hash",
+		Short:                 "Calls the view method activeWalletPubKeyHash on the Bridge contract.",
+		Args:                  cmd.ArgCountChecker(0),
+		RunE:                  bActiveWalletPubKeyHash,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	cmd.InitConstFlags(c)
+
+	return c
+}
+
+func bActiveWalletPubKeyHash(c *cobra.Command, args []string) error {
 	contract, err := initializeBridge(c)
 	if err != nil {
 		return err
 	}
 
 	result, err := contract.ActiveWalletPubKeyHashAtBlock(
-
-		cmd.BlockFlagValue.Uint,
+		cmd.BlockFlagValue.Int,
 	)
 
 	if err != nil {
@@ -223,15 +111,29 @@ func bActiveWalletPubKeyHash(c *cli.Context) error {
 	return nil
 }
 
-func bContractReferences(c *cli.Context) error {
+func bContractReferencesCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "contract-references",
+		Short:                 "Calls the view method contractReferences on the Bridge contract.",
+		Args:                  cmd.ArgCountChecker(0),
+		RunE:                  bContractReferences,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	cmd.InitConstFlags(c)
+
+	return c
+}
+
+func bContractReferences(c *cobra.Command, args []string) error {
 	contract, err := initializeBridge(c)
 	if err != nil {
 		return err
 	}
 
 	result, err := contract.ContractReferencesAtBlock(
-
-		cmd.BlockFlagValue.Uint,
+		cmd.BlockFlagValue.Int,
 	)
 
 	if err != nil {
@@ -243,15 +145,29 @@ func bContractReferences(c *cli.Context) error {
 	return nil
 }
 
-func bDepositParameters(c *cli.Context) error {
+func bDepositParametersCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "deposit-parameters",
+		Short:                 "Calls the view method depositParameters on the Bridge contract.",
+		Args:                  cmd.ArgCountChecker(0),
+		RunE:                  bDepositParameters,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	cmd.InitConstFlags(c)
+
+	return c
+}
+
+func bDepositParameters(c *cobra.Command, args []string) error {
 	contract, err := initializeBridge(c)
 	if err != nil {
 		return err
 	}
 
 	result, err := contract.DepositParametersAtBlock(
-
-		cmd.BlockFlagValue.Uint,
+		cmd.BlockFlagValue.Int,
 	)
 
 	if err != nil {
@@ -263,23 +179,37 @@ func bDepositParameters(c *cli.Context) error {
 	return nil
 }
 
-func bDeposits(c *cli.Context) error {
+func bDepositsCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "deposits [arg_depositKey]",
+		Short:                 "Calls the view method deposits on the Bridge contract.",
+		Args:                  cmd.ArgCountChecker(1),
+		RunE:                  bDeposits,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	cmd.InitConstFlags(c)
+
+	return c
+}
+
+func bDeposits(c *cobra.Command, args []string) error {
 	contract, err := initializeBridge(c)
 	if err != nil {
 		return err
 	}
-	arg_depositKey, err := hexutil.DecodeBig(c.Args()[0])
+	arg_depositKey, err := hexutil.DecodeBig(args[0])
 	if err != nil {
 		return fmt.Errorf(
 			"couldn't parse parameter arg_depositKey, a uint256, from passed value %v",
-			c.Args()[0],
+			args[0],
 		)
 	}
 
 	result, err := contract.DepositsAtBlock(
 		arg_depositKey,
-
-		cmd.BlockFlagValue.Uint,
+		cmd.BlockFlagValue.Int,
 	)
 
 	if err != nil {
@@ -291,23 +221,37 @@ func bDeposits(c *cli.Context) error {
 	return nil
 }
 
-func bFraudChallenges(c *cli.Context) error {
+func bFraudChallengesCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "fraud-challenges [arg_challengeKey]",
+		Short:                 "Calls the view method fraudChallenges on the Bridge contract.",
+		Args:                  cmd.ArgCountChecker(1),
+		RunE:                  bFraudChallenges,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	cmd.InitConstFlags(c)
+
+	return c
+}
+
+func bFraudChallenges(c *cobra.Command, args []string) error {
 	contract, err := initializeBridge(c)
 	if err != nil {
 		return err
 	}
-	arg_challengeKey, err := hexutil.DecodeBig(c.Args()[0])
+	arg_challengeKey, err := hexutil.DecodeBig(args[0])
 	if err != nil {
 		return fmt.Errorf(
 			"couldn't parse parameter arg_challengeKey, a uint256, from passed value %v",
-			c.Args()[0],
+			args[0],
 		)
 	}
 
 	result, err := contract.FraudChallengesAtBlock(
 		arg_challengeKey,
-
-		cmd.BlockFlagValue.Uint,
+		cmd.BlockFlagValue.Int,
 	)
 
 	if err != nil {
@@ -319,15 +263,29 @@ func bFraudChallenges(c *cli.Context) error {
 	return nil
 }
 
-func bFraudParameters(c *cli.Context) error {
+func bFraudParametersCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "fraud-parameters",
+		Short:                 "Calls the view method fraudParameters on the Bridge contract.",
+		Args:                  cmd.ArgCountChecker(0),
+		RunE:                  bFraudParameters,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	cmd.InitConstFlags(c)
+
+	return c
+}
+
+func bFraudParameters(c *cobra.Command, args []string) error {
 	contract, err := initializeBridge(c)
 	if err != nil {
 		return err
 	}
 
 	result, err := contract.FraudParametersAtBlock(
-
-		cmd.BlockFlagValue.Uint,
+		cmd.BlockFlagValue.Int,
 	)
 
 	if err != nil {
@@ -339,15 +297,29 @@ func bFraudParameters(c *cli.Context) error {
 	return nil
 }
 
-func bGovernance(c *cli.Context) error {
+func bGovernanceCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "governance",
+		Short:                 "Calls the view method governance on the Bridge contract.",
+		Args:                  cmd.ArgCountChecker(0),
+		RunE:                  bGovernance,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	cmd.InitConstFlags(c)
+
+	return c
+}
+
+func bGovernance(c *cobra.Command, args []string) error {
 	contract, err := initializeBridge(c)
 	if err != nil {
 		return err
 	}
 
 	result, err := contract.GovernanceAtBlock(
-
-		cmd.BlockFlagValue.Uint,
+		cmd.BlockFlagValue.Int,
 	)
 
 	if err != nil {
@@ -359,23 +331,37 @@ func bGovernance(c *cli.Context) error {
 	return nil
 }
 
-func bIsVaultTrusted(c *cli.Context) error {
+func bIsVaultTrustedCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "is-vault-trusted [arg_vault]",
+		Short:                 "Calls the view method isVaultTrusted on the Bridge contract.",
+		Args:                  cmd.ArgCountChecker(1),
+		RunE:                  bIsVaultTrusted,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	cmd.InitConstFlags(c)
+
+	return c
+}
+
+func bIsVaultTrusted(c *cobra.Command, args []string) error {
 	contract, err := initializeBridge(c)
 	if err != nil {
 		return err
 	}
-	arg_vault, err := chainutil.AddressFromHex(c.Args()[0])
+	arg_vault, err := chainutil.AddressFromHex(args[0])
 	if err != nil {
 		return fmt.Errorf(
 			"couldn't parse parameter arg_vault, a address, from passed value %v",
-			c.Args()[0],
+			args[0],
 		)
 	}
 
 	result, err := contract.IsVaultTrustedAtBlock(
 		arg_vault,
-
-		cmd.BlockFlagValue.Uint,
+		cmd.BlockFlagValue.Int,
 	)
 
 	if err != nil {
@@ -387,15 +373,29 @@ func bIsVaultTrusted(c *cli.Context) error {
 	return nil
 }
 
-func bLiveWalletsCount(c *cli.Context) error {
+func bLiveWalletsCountCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "live-wallets-count",
+		Short:                 "Calls the view method liveWalletsCount on the Bridge contract.",
+		Args:                  cmd.ArgCountChecker(0),
+		RunE:                  bLiveWalletsCount,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	cmd.InitConstFlags(c)
+
+	return c
+}
+
+func bLiveWalletsCount(c *cobra.Command, args []string) error {
 	contract, err := initializeBridge(c)
 	if err != nil {
 		return err
 	}
 
 	result, err := contract.LiveWalletsCountAtBlock(
-
-		cmd.BlockFlagValue.Uint,
+		cmd.BlockFlagValue.Int,
 	)
 
 	if err != nil {
@@ -407,23 +407,37 @@ func bLiveWalletsCount(c *cli.Context) error {
 	return nil
 }
 
-func bMovedFundsSweepRequests(c *cli.Context) error {
+func bMovedFundsSweepRequestsCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "moved-funds-sweep-requests [arg_requestKey]",
+		Short:                 "Calls the view method movedFundsSweepRequests on the Bridge contract.",
+		Args:                  cmd.ArgCountChecker(1),
+		RunE:                  bMovedFundsSweepRequests,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	cmd.InitConstFlags(c)
+
+	return c
+}
+
+func bMovedFundsSweepRequests(c *cobra.Command, args []string) error {
 	contract, err := initializeBridge(c)
 	if err != nil {
 		return err
 	}
-	arg_requestKey, err := hexutil.DecodeBig(c.Args()[0])
+	arg_requestKey, err := hexutil.DecodeBig(args[0])
 	if err != nil {
 		return fmt.Errorf(
 			"couldn't parse parameter arg_requestKey, a uint256, from passed value %v",
-			c.Args()[0],
+			args[0],
 		)
 	}
 
 	result, err := contract.MovedFundsSweepRequestsAtBlock(
 		arg_requestKey,
-
-		cmd.BlockFlagValue.Uint,
+		cmd.BlockFlagValue.Int,
 	)
 
 	if err != nil {
@@ -435,15 +449,29 @@ func bMovedFundsSweepRequests(c *cli.Context) error {
 	return nil
 }
 
-func bMovingFundsParameters(c *cli.Context) error {
+func bMovingFundsParametersCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "moving-funds-parameters",
+		Short:                 "Calls the view method movingFundsParameters on the Bridge contract.",
+		Args:                  cmd.ArgCountChecker(0),
+		RunE:                  bMovingFundsParameters,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	cmd.InitConstFlags(c)
+
+	return c
+}
+
+func bMovingFundsParameters(c *cobra.Command, args []string) error {
 	contract, err := initializeBridge(c)
 	if err != nil {
 		return err
 	}
 
 	result, err := contract.MovingFundsParametersAtBlock(
-
-		cmd.BlockFlagValue.Uint,
+		cmd.BlockFlagValue.Int,
 	)
 
 	if err != nil {
@@ -455,23 +483,37 @@ func bMovingFundsParameters(c *cli.Context) error {
 	return nil
 }
 
-func bPendingRedemptions(c *cli.Context) error {
+func bPendingRedemptionsCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "pending-redemptions [arg_redemptionKey]",
+		Short:                 "Calls the view method pendingRedemptions on the Bridge contract.",
+		Args:                  cmd.ArgCountChecker(1),
+		RunE:                  bPendingRedemptions,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	cmd.InitConstFlags(c)
+
+	return c
+}
+
+func bPendingRedemptions(c *cobra.Command, args []string) error {
 	contract, err := initializeBridge(c)
 	if err != nil {
 		return err
 	}
-	arg_redemptionKey, err := hexutil.DecodeBig(c.Args()[0])
+	arg_redemptionKey, err := hexutil.DecodeBig(args[0])
 	if err != nil {
 		return fmt.Errorf(
 			"couldn't parse parameter arg_redemptionKey, a uint256, from passed value %v",
-			c.Args()[0],
+			args[0],
 		)
 	}
 
 	result, err := contract.PendingRedemptionsAtBlock(
 		arg_redemptionKey,
-
-		cmd.BlockFlagValue.Uint,
+		cmd.BlockFlagValue.Int,
 	)
 
 	if err != nil {
@@ -483,15 +525,29 @@ func bPendingRedemptions(c *cli.Context) error {
 	return nil
 }
 
-func bRedemptionParameters(c *cli.Context) error {
+func bRedemptionParametersCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "redemption-parameters",
+		Short:                 "Calls the view method redemptionParameters on the Bridge contract.",
+		Args:                  cmd.ArgCountChecker(0),
+		RunE:                  bRedemptionParameters,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	cmd.InitConstFlags(c)
+
+	return c
+}
+
+func bRedemptionParameters(c *cobra.Command, args []string) error {
 	contract, err := initializeBridge(c)
 	if err != nil {
 		return err
 	}
 
 	result, err := contract.RedemptionParametersAtBlock(
-
-		cmd.BlockFlagValue.Uint,
+		cmd.BlockFlagValue.Int,
 	)
 
 	if err != nil {
@@ -503,23 +559,37 @@ func bRedemptionParameters(c *cli.Context) error {
 	return nil
 }
 
-func bSpentMainUTXOs(c *cli.Context) error {
+func bSpentMainUTXOsCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "spent-main-u-t-x-os [arg_utxoKey]",
+		Short:                 "Calls the view method spentMainUTXOs on the Bridge contract.",
+		Args:                  cmd.ArgCountChecker(1),
+		RunE:                  bSpentMainUTXOs,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	cmd.InitConstFlags(c)
+
+	return c
+}
+
+func bSpentMainUTXOs(c *cobra.Command, args []string) error {
 	contract, err := initializeBridge(c)
 	if err != nil {
 		return err
 	}
-	arg_utxoKey, err := hexutil.DecodeBig(c.Args()[0])
+	arg_utxoKey, err := hexutil.DecodeBig(args[0])
 	if err != nil {
 		return fmt.Errorf(
 			"couldn't parse parameter arg_utxoKey, a uint256, from passed value %v",
-			c.Args()[0],
+			args[0],
 		)
 	}
 
 	result, err := contract.SpentMainUTXOsAtBlock(
 		arg_utxoKey,
-
-		cmd.BlockFlagValue.Uint,
+		cmd.BlockFlagValue.Int,
 	)
 
 	if err != nil {
@@ -531,23 +601,37 @@ func bSpentMainUTXOs(c *cli.Context) error {
 	return nil
 }
 
-func bTimedOutRedemptions(c *cli.Context) error {
+func bTimedOutRedemptionsCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "timed-out-redemptions [arg_redemptionKey]",
+		Short:                 "Calls the view method timedOutRedemptions on the Bridge contract.",
+		Args:                  cmd.ArgCountChecker(1),
+		RunE:                  bTimedOutRedemptions,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	cmd.InitConstFlags(c)
+
+	return c
+}
+
+func bTimedOutRedemptions(c *cobra.Command, args []string) error {
 	contract, err := initializeBridge(c)
 	if err != nil {
 		return err
 	}
-	arg_redemptionKey, err := hexutil.DecodeBig(c.Args()[0])
+	arg_redemptionKey, err := hexutil.DecodeBig(args[0])
 	if err != nil {
 		return fmt.Errorf(
 			"couldn't parse parameter arg_redemptionKey, a uint256, from passed value %v",
-			c.Args()[0],
+			args[0],
 		)
 	}
 
 	result, err := contract.TimedOutRedemptionsAtBlock(
 		arg_redemptionKey,
-
-		cmd.BlockFlagValue.Uint,
+		cmd.BlockFlagValue.Int,
 	)
 
 	if err != nil {
@@ -559,15 +643,29 @@ func bTimedOutRedemptions(c *cli.Context) error {
 	return nil
 }
 
-func bTreasury(c *cli.Context) error {
+func bTreasuryCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "treasury",
+		Short:                 "Calls the view method treasury on the Bridge contract.",
+		Args:                  cmd.ArgCountChecker(0),
+		RunE:                  bTreasury,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	cmd.InitConstFlags(c)
+
+	return c
+}
+
+func bTreasury(c *cobra.Command, args []string) error {
 	contract, err := initializeBridge(c)
 	if err != nil {
 		return err
 	}
 
 	result, err := contract.TreasuryAtBlock(
-
-		cmd.BlockFlagValue.Uint,
+		cmd.BlockFlagValue.Int,
 	)
 
 	if err != nil {
@@ -579,15 +677,29 @@ func bTreasury(c *cli.Context) error {
 	return nil
 }
 
-func bTxProofDifficultyFactor(c *cli.Context) error {
+func bTxProofDifficultyFactorCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "tx-proof-difficulty-factor",
+		Short:                 "Calls the view method txProofDifficultyFactor on the Bridge contract.",
+		Args:                  cmd.ArgCountChecker(0),
+		RunE:                  bTxProofDifficultyFactor,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	cmd.InitConstFlags(c)
+
+	return c
+}
+
+func bTxProofDifficultyFactor(c *cobra.Command, args []string) error {
 	contract, err := initializeBridge(c)
 	if err != nil {
 		return err
 	}
 
 	result, err := contract.TxProofDifficultyFactorAtBlock(
-
-		cmd.BlockFlagValue.Uint,
+		cmd.BlockFlagValue.Int,
 	)
 
 	if err != nil {
@@ -599,15 +711,29 @@ func bTxProofDifficultyFactor(c *cli.Context) error {
 	return nil
 }
 
-func bWalletParameters(c *cli.Context) error {
+func bWalletParametersCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "wallet-parameters",
+		Short:                 "Calls the view method walletParameters on the Bridge contract.",
+		Args:                  cmd.ArgCountChecker(0),
+		RunE:                  bWalletParameters,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	cmd.InitConstFlags(c)
+
+	return c
+}
+
+func bWalletParameters(c *cobra.Command, args []string) error {
 	contract, err := initializeBridge(c)
 	if err != nil {
 		return err
 	}
 
 	result, err := contract.WalletParametersAtBlock(
-
-		cmd.BlockFlagValue.Uint,
+		cmd.BlockFlagValue.Int,
 	)
 
 	if err != nil {
@@ -621,25 +747,41 @@ func bWalletParameters(c *cli.Context) error {
 
 /// ------------------- Non-const methods -------------------
 
-func bDefeatFraudChallengeWithHeartbeat(c *cli.Context) error {
+func bDefeatFraudChallengeWithHeartbeatCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "defeat-fraud-challenge-with-heartbeat [arg_walletPublicKey] [arg_heartbeatMessage]",
+		Short:                 "Calls the nonpayable method defeatFraudChallengeWithHeartbeat on the Bridge contract.",
+		Args:                  cmd.ArgCountChecker(2),
+		RunE:                  bDefeatFraudChallengeWithHeartbeat,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	c.PreRunE = cmd.NonConstArgsChecker
+	cmd.InitNonConstFlags(c)
+
+	return c
+}
+
+func bDefeatFraudChallengeWithHeartbeat(c *cobra.Command, args []string) error {
 	contract, err := initializeBridge(c)
 	if err != nil {
 		return err
 	}
 
-	arg_walletPublicKey, err := hexutil.Decode(c.Args()[0])
+	arg_walletPublicKey, err := hexutil.Decode(args[0])
 	if err != nil {
 		return fmt.Errorf(
 			"couldn't parse parameter arg_walletPublicKey, a bytes, from passed value %v",
-			c.Args()[0],
+			args[0],
 		)
 	}
 
-	arg_heartbeatMessage, err := hexutil.Decode(c.Args()[1])
+	arg_heartbeatMessage, err := hexutil.Decode(args[1])
 	if err != nil {
 		return fmt.Errorf(
 			"couldn't parse parameter arg_heartbeatMessage, a bytes, from passed value %v",
-			c.Args()[1],
+			args[1],
 		)
 	}
 
@@ -647,7 +789,7 @@ func bDefeatFraudChallengeWithHeartbeat(c *cli.Context) error {
 		transaction *types.Transaction
 	)
 
-	if c.Bool(cmd.SubmitFlag) {
+	if shouldSubmit, _ := c.Flags().GetBool(cmd.SubmitFlag); shouldSubmit {
 		// Do a regular submission. Take payable into account.
 		transaction, err = contract.DefeatFraudChallengeWithHeartbeat(
 			arg_walletPublicKey,
@@ -657,51 +799,67 @@ func bDefeatFraudChallengeWithHeartbeat(c *cli.Context) error {
 			return err
 		}
 
-		cmd.PrintOutput(transaction.Hash)
+		cmd.PrintOutput(transaction.Hash())
 	} else {
 		// Do a call.
 		err = contract.CallDefeatFraudChallengeWithHeartbeat(
 			arg_walletPublicKey,
 			arg_heartbeatMessage,
-			cmd.BlockFlagValue.Uint,
+			cmd.BlockFlagValue.Int,
 		)
 		if err != nil {
 			return err
 		}
 
-		cmd.PrintOutput(nil)
+		cmd.PrintOutput("success")
 	}
 
 	return nil
 }
 
-func bReceiveBalanceApproval(c *cli.Context) error {
+func bReceiveBalanceApprovalCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "receive-balance-approval [arg_balanceOwner] [arg_amount] [arg_redemptionData]",
+		Short:                 "Calls the nonpayable method receiveBalanceApproval on the Bridge contract.",
+		Args:                  cmd.ArgCountChecker(3),
+		RunE:                  bReceiveBalanceApproval,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	c.PreRunE = cmd.NonConstArgsChecker
+	cmd.InitNonConstFlags(c)
+
+	return c
+}
+
+func bReceiveBalanceApproval(c *cobra.Command, args []string) error {
 	contract, err := initializeBridge(c)
 	if err != nil {
 		return err
 	}
 
-	arg_balanceOwner, err := chainutil.AddressFromHex(c.Args()[0])
+	arg_balanceOwner, err := chainutil.AddressFromHex(args[0])
 	if err != nil {
 		return fmt.Errorf(
 			"couldn't parse parameter arg_balanceOwner, a address, from passed value %v",
-			c.Args()[0],
+			args[0],
 		)
 	}
 
-	arg_amount, err := hexutil.DecodeBig(c.Args()[1])
+	arg_amount, err := hexutil.DecodeBig(args[1])
 	if err != nil {
 		return fmt.Errorf(
 			"couldn't parse parameter arg_amount, a uint256, from passed value %v",
-			c.Args()[1],
+			args[1],
 		)
 	}
 
-	arg_redemptionData, err := hexutil.Decode(c.Args()[2])
+	arg_redemptionData, err := hexutil.Decode(args[2])
 	if err != nil {
 		return fmt.Errorf(
 			"couldn't parse parameter arg_redemptionData, a bytes, from passed value %v",
-			c.Args()[2],
+			args[2],
 		)
 	}
 
@@ -709,7 +867,7 @@ func bReceiveBalanceApproval(c *cli.Context) error {
 		transaction *types.Transaction
 	)
 
-	if c.Bool(cmd.SubmitFlag) {
+	if shouldSubmit, _ := c.Flags().GetBool(cmd.SubmitFlag); shouldSubmit {
 		// Do a regular submission. Take payable into account.
 		transaction, err = contract.ReceiveBalanceApproval(
 			arg_balanceOwner,
@@ -720,36 +878,52 @@ func bReceiveBalanceApproval(c *cli.Context) error {
 			return err
 		}
 
-		cmd.PrintOutput(transaction.Hash)
+		cmd.PrintOutput(transaction.Hash())
 	} else {
 		// Do a call.
 		err = contract.CallReceiveBalanceApproval(
 			arg_balanceOwner,
 			arg_amount,
 			arg_redemptionData,
-			cmd.BlockFlagValue.Uint,
+			cmd.BlockFlagValue.Int,
 		)
 		if err != nil {
 			return err
 		}
 
-		cmd.PrintOutput(nil)
+		cmd.PrintOutput("success")
 	}
 
 	return nil
 }
 
-func bTransferGovernance(c *cli.Context) error {
+func bTransferGovernanceCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "transfer-governance [arg_newGovernance]",
+		Short:                 "Calls the nonpayable method transferGovernance on the Bridge contract.",
+		Args:                  cmd.ArgCountChecker(1),
+		RunE:                  bTransferGovernance,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	c.PreRunE = cmd.NonConstArgsChecker
+	cmd.InitNonConstFlags(c)
+
+	return c
+}
+
+func bTransferGovernance(c *cobra.Command, args []string) error {
 	contract, err := initializeBridge(c)
 	if err != nil {
 		return err
 	}
 
-	arg_newGovernance, err := chainutil.AddressFromHex(c.Args()[0])
+	arg_newGovernance, err := chainutil.AddressFromHex(args[0])
 	if err != nil {
 		return fmt.Errorf(
 			"couldn't parse parameter arg_newGovernance, a address, from passed value %v",
-			c.Args()[0],
+			args[0],
 		)
 	}
 
@@ -757,7 +931,7 @@ func bTransferGovernance(c *cli.Context) error {
 		transaction *types.Transaction
 	)
 
-	if c.Bool(cmd.SubmitFlag) {
+	if shouldSubmit, _ := c.Flags().GetBool(cmd.SubmitFlag); shouldSubmit {
 		// Do a regular submission. Take payable into account.
 		transaction, err = contract.TransferGovernance(
 			arg_newGovernance,
@@ -766,18 +940,18 @@ func bTransferGovernance(c *cli.Context) error {
 			return err
 		}
 
-		cmd.PrintOutput(transaction.Hash)
+		cmd.PrintOutput(transaction.Hash())
 	} else {
 		// Do a call.
 		err = contract.CallTransferGovernance(
 			arg_newGovernance,
-			cmd.BlockFlagValue.Uint,
+			cmd.BlockFlagValue.Int,
 		)
 		if err != nil {
 			return err
 		}
 
-		cmd.PrintOutput(nil)
+		cmd.PrintOutput("success")
 	}
 
 	return nil
@@ -785,13 +959,13 @@ func bTransferGovernance(c *cli.Context) error {
 
 /// ------------------- Initialization -------------------
 
-func initializeBridge(c *cli.Context) (*contract.Bridge, error) {
-	config, err := config.ReadEthereumConfig(c.GlobalString("config"))
+func initializeBridge(c *cobra.Command) (*contract.Bridge, error) {
+	cfg, err := config.ReadEthereumConfig(c.Flags())
 	if err != nil {
 		return nil, fmt.Errorf("error reading config from file: [%v]", err)
 	}
 
-	client, _, _, err := chainutil.ConnectClients(config.URL, config.URLRPC)
+	client, err := ethclient.Dial(cfg.URL)
 	if err != nil {
 		return nil, fmt.Errorf("error connecting to host chain node: [%v]", err)
 	}
@@ -805,18 +979,18 @@ func initializeBridge(c *cli.Context) (*contract.Bridge, error) {
 	}
 
 	key, err := chainutil.DecryptKeyFile(
-		config.Account.KeyFile,
-		config.Account.KeyFilePassword,
+		cfg.Account.KeyFile,
+		cfg.Account.KeyFilePassword,
 	)
 	if err != nil {
 		return nil, fmt.Errorf(
 			"failed to read KeyFile: %s: [%v]",
-			config.Account.KeyFile,
+			cfg.Account.KeyFile,
 			err,
 		)
 	}
 
-	miningWaiter := chainutil.NewMiningWaiter(client, config)
+	miningWaiter := chainutil.NewMiningWaiter(client, cfg)
 
 	blockCounter, err := chainutil.NewBlockCounter(client)
 	if err != nil {
@@ -826,7 +1000,14 @@ func initializeBridge(c *cli.Context) (*contract.Bridge, error) {
 		)
 	}
 
-	address := common.HexToAddress(config.ContractAddresses["Bridge"])
+	address, err := cfg.ContractAddress("Bridge")
+	if err != nil {
+		return nil, fmt.Errorf(
+			"failed to get %s address: [%w]",
+			"Bridge",
+			err,
+		)
+	}
 
 	return contract.NewBridge(
 		address,
