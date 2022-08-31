@@ -60,6 +60,9 @@ submitted from the Staking Provider Account, please refer to
 link:https://docs.keep.network/registration.html#register-operator[Register Operator]
 documentation.
 
+IMPORTANT: The Operator Account has to be funded with Goerli ETH (GöETH) so the
+client can submit transactions to the Ethereum chain.
+
 == Configuration
 
 For details on the Keep Client Node configuration visit
