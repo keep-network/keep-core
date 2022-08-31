@@ -76,6 +76,7 @@ spec:
         - keep-client
         - start
         args:
+        - --goerli
         - --ethereum.url
         - $(ETH_WS_URL)
         - --ethereum.keyFile
@@ -277,6 +278,7 @@ spec:
         - keep-client
         - start
         args:
+        - --goerli
         - --ethereum.url
         - $(ETH_WS_URL)
         - --ethereum.keyFile
@@ -480,6 +482,7 @@ spec:
         - keep-client
         - start
         args:
+        - --goerli
         - --ethereum.url
         - $(ETH_WS_URL)
         - --ethereum.keyFile
@@ -683,6 +686,7 @@ spec:
         - keep-client
         - start
         args:
+        - --goerli
         - --ethereum.url
         - $(ETH_WS_URL)
         - --ethereum.keyFile
@@ -886,6 +890,7 @@ spec:
         - keep-client
         - start
         args:
+        - --goerli
         - --ethereum.url
         - $(ETH_WS_URL)
         - --ethereum.keyFile
@@ -1089,6 +1094,7 @@ spec:
         - keep-client
         - start
         args:
+        - --goerli
         - --ethereum.url
         - $(ETH_WS_URL)
         - --ethereum.keyFile
@@ -1292,6 +1298,7 @@ spec:
         - keep-client
         - start
         args:
+        - --goerli
         - --ethereum.url
         - $(ETH_WS_URL)
         - --ethereum.keyFile
@@ -1495,6 +1502,7 @@ spec:
         - keep-client
         - start
         args:
+        - --goerli
         - --ethereum.url
         - $(ETH_WS_URL)
         - --ethereum.keyFile
@@ -1698,6 +1706,7 @@ spec:
         - keep-client
         - start
         args:
+        - --goerli
         - --ethereum.url
         - $(ETH_WS_URL)
         - --ethereum.keyFile
@@ -1901,6 +1910,7 @@ spec:
         - keep-client
         - start
         args:
+        - --goerli
         - --ethereum.url
         - $(ETH_WS_URL)
         - --ethereum.keyFile

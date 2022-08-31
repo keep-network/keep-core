@@ -80,6 +80,7 @@ spec:
               mountPath: /mnt/keep-client/keyfile
           command: ["keep-client", "start"]
           args:
+            - --goerli
             - --ethereum.url
             - $(ETH_WS_URL)
             - "--ethereum.keyFile"
