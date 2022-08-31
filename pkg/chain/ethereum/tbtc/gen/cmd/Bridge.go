@@ -14,7 +14,6 @@ import (
 
 	chainutil "github.com/keep-network/keep-common/pkg/chain/ethereum/ethutil"
 	"github.com/keep-network/keep-common/pkg/cmd"
-	"github.com/keep-network/keep-core/config"
 	"github.com/keep-network/keep-core/pkg/chain/ethereum/tbtc/gen/contract"
 
 	"github.com/spf13/cobra"
@@ -72,7 +71,7 @@ func init() {
 		bTransferGovernanceCommand(),
 	)
 
-	Command.AddCommand(BridgeCommand)
+	ModuleCommand.AddCommand(BridgeCommand)
 }
 
 /// ------------------- Const methods -------------------
@@ -960,10 +959,7 @@ func bTransferGovernance(c *cobra.Command, args []string) error {
 /// ------------------- Initialization -------------------
 
 func initializeBridge(c *cobra.Command) (*contract.Bridge, error) {
-	cfg, err := config.ReadEthereumConfig(c.Flags())
-	if err != nil {
-		return nil, fmt.Errorf("error reading config from file: [%v]", err)
-	}
+	cfg := *ModuleCommand.GetConfig()
 
 	client, err := ethclient.Dial(cfg.URL)
 	if err != nil {
