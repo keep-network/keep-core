@@ -114,6 +114,9 @@ a regular basis.
 
 ==== Network
 
+
+===== Port
+
 Default port mappings.
 
 [%header,cols=2*]
@@ -134,8 +137,21 @@ Default port mappings.
 |`3919`
 |===
 
-If you set a different `port` in your configuration, or configure `peers` with
-non-default ports configured, firewall rules will need to be adjusted accordingly.
+The port has to be exposed publicly, so the peers can connect to your node.
+Please update your firewall rules if necessary.
+
+==== Announced Addresses
+
+An Announced Address is a layered addressing information (`multiaddress`/`multiaddr`)
+announced to the Keep Network that is used by peers to connect with your node, e.g.:
+`/dns4/bootstrap-0.test.keep.network/tcp/3919` or `/ip4/104.154.61.116/tcp/3919`.
+
+You should set the `network.AnnouncedAddresses` (flag: `--network.announcedAddresses`)
+configuration property to the addresses under which your node is reachable for the
+public.
+
+To read more about `multiaddress` see the
+link:https://docs.libp2p.io/reference/glossary/#multiaddr[libp2p docummentation].
 
 ==== Minimum Required Configuration
 
