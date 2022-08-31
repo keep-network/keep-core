@@ -357,7 +357,7 @@ jobs:
           upstream-builds: ${{ github.event.inputs.upstream_builds }}
           query: |
             threshold-contracts-version = github.com/threshold-network/solidity-contracts#version
-            random-beacon-version = github.com/keep-network/keep-core/solidity/random-beacon#version
+            random-beacon-version = github.com/keep-network/keep-core/random-beacon#version
 
       - name: Resolve latest contracts
         run: |
