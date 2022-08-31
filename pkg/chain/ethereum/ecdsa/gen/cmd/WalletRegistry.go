@@ -14,7 +14,6 @@ import (
 
 	chainutil "github.com/keep-network/keep-common/pkg/chain/ethereum/ethutil"
 	"github.com/keep-network/keep-common/pkg/cmd"
-	"github.com/keep-network/keep-core/config"
 	"github.com/keep-network/keep-core/pkg/chain/ethereum/ecdsa/gen/contract"
 
 	"github.com/spf13/cobra"
@@ -94,7 +93,7 @@ func init() {
 		wrWithdrawRewardsCommand(),
 	)
 
-	Command.AddCommand(WalletRegistryCommand)
+	ModuleCommand.AddCommand(WalletRegistryCommand)
 }
 
 /// ------------------- Const methods -------------------
@@ -2174,10 +2173,7 @@ func wrWithdrawRewards(c *cobra.Command, args []string) error {
 /// ------------------- Initialization -------------------
 
 func initializeWalletRegistry(c *cobra.Command) (*contract.WalletRegistry, error) {
-	cfg, err := config.ReadEthereumConfig(c.Flags())
-	if err != nil {
-		return nil, fmt.Errorf("error reading config from file: [%v]", err)
-	}
+	cfg := *ModuleCommand.GetConfig()
 
 	client, err := ethclient.Dial(cfg.URL)
 	if err != nil {
