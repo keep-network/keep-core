@@ -57,7 +57,7 @@ npx eth-helper extract-private-key \
 
 asciidoctor ../bundle-guide.adoc -o index.html --doctype book
 
-tar -zcvf keep-test-bundle-$STAKING_PROVIDER.tgz .
+tar -zcvf keep-test-bundle-$STAKING_PROVIDER.tgz --exclude *.tgz .
 
 printf "A bundle was saved: keep-test-bundle-$STAKING_PROVIDER.tgz"
 
