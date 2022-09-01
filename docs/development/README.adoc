@@ -7,8 +7,6 @@
 
 = T developer documentation
 
-toc::[]
-
 == Quick installation
 
 === Pre-requirements
@@ -26,7 +24,7 @@ To quickly setup and start a client use the following scripts from the project r
 * `./scripts/initialize.sh`
 * `./scrtips/start.sh`
 
-=== Installation scripts explained
+== Installation scripts explained
 
 The `+install.sh+` needs to be run only once and it will:
 
