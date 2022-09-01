@@ -3,9 +3,12 @@ package signing
 import (
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/chain/local_v1"
+	"github.com/keep-network/keep-core/pkg/internal/tecdsatest"
 	"github.com/keep-network/keep-core/pkg/internal/testutils"
 	"github.com/keep-network/keep-core/pkg/operator"
 	"github.com/keep-network/keep-core/pkg/protocol/group"
+	"github.com/keep-network/keep-core/pkg/tecdsa"
+	"math/big"
 	"testing"
 )
 
@@ -14,6 +17,11 @@ func TestShouldAcceptMessage(t *testing.T) {
 	honestThreshold := 3
 
 	localChain := local_v1.Connect(groupSize, honestThreshold)
+
+	testData, err := tecdsatest.LoadPrivateKeyShareTestFixtures(1)
+	if err != nil {
+		t.Fatalf("failed to load test data: [%v]", err)
+	}
 
 	operatorsAddresses := make([]chain.Address, groupSize)
 	operatorsPublicKeys := make([][]byte, groupSize)
@@ -83,6 +91,8 @@ func TestShouldAcceptMessage(t *testing.T) {
 				groupSize-honestThreshold,
 				membershipValdator,
 				"1",
+				big.NewInt(100),
+				tecdsa.NewPrivateKeyShare(testData[0]),
 			)
 
 			filter := member.inactiveMemberFilter()
