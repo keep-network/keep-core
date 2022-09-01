@@ -3,12 +3,12 @@ ETHEREUM_WS_URL="<Ethereum API WS URL>"
 OPERATOR_KEY_FILE_NAME="<Operator Key File Name>"
 OPERATOR_KEY_FILE_PASSWORD="<Ethereum Key File Password>"
 
-KEEP_CONFIG_DIR=$(pwd)/config
-KEEP_STORAGE_DIR=$(pwd)/storage
+CONFIG_DIR=$(pwd)/config
+STORAGE_DIR=$(pwd)/storage
 
 docker run \
-    --volume $KEEP_CONFIG_DIR:/mnt/keep/config \
-    --volume $KEEP_STORAGE_DIR:/mnt/keep/storage \
+    --volume $CONFIG_DIR:/mnt/keep/config \
+    --volume $STORAGE_DIR:/mnt/keep/storage \
     --env KEEP_ETHEREUM_PASSWORD=$OPERATOR_KEY_FILE_PASSWORD \
     --env LOG_LEVEL=debug \
     --log-opt max-size=100m \
