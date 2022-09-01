@@ -27,7 +27,6 @@ const (
 	DefaultPreParamsGenerationConcurrency = 1
 )
 
-// TODO: Can we move it to constants?
 var DefaultKeyGenerationConcurrency = runtime.GOMAXPROCS(0)
 
 // Config carries the config for tBTC protocol.
