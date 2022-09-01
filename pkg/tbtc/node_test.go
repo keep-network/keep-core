@@ -61,7 +61,7 @@ func TestDkgRetryLoop(t *testing.T) {
 				return testResult, attempt.startBlock + dkg.ProtocolBlocks(), nil
 			},
 			expectedErr:               nil,
-			expectedExecutionEndBlock: 310, // 200 + 110
+			expectedExecutionEndBlock: 325, // 200 + 125
 			expectedResult:            testResult,
 			expectedLastAttempt: &dkgAttemptParams{
 				index:           1,
@@ -90,13 +90,13 @@ func TestDkgRetryLoop(t *testing.T) {
 				return testResult, attempt.startBlock + dkg.ProtocolBlocks(), nil
 			},
 			expectedErr:               nil,
-			expectedExecutionEndBlock: 540, // 430 + 110 = 540
+			expectedExecutionEndBlock: 585, // 460 + 125
 			expectedResult:            testResult,
 			// Members 4 and 6 should be excluded in the last attempt as
 			// they were inactive.
 			expectedLastAttempt: &dkgAttemptParams{
 				index:           3,
-				startBlock:      430, // 200 + 110 + 5 + 110 + 5
+				startBlock:      460, // 200 + 125 + 5 + 125 + 5
 				excludedMembers: []group.MemberIndex{4, 6},
 			},
 		},
@@ -117,14 +117,14 @@ func TestDkgRetryLoop(t *testing.T) {
 				return testResult, attempt.startBlock + dkg.ProtocolBlocks(), nil
 			},
 			expectedErr:               nil,
-			expectedExecutionEndBlock: 425, // 315 + 110
+			expectedExecutionEndBlock: 455, // 330 + 125
 			expectedResult:            testResult,
 			// Member 3 was inactive but excluding their operator drops the
 			// group size below the quorum. We fall back to the random algorithm
 			// that excludes member 4 for the given seed.
 			expectedLastAttempt: &dkgAttemptParams{
 				index:           2,
-				startBlock:      315, // 200 + 110 + 5
+				startBlock:      330, // 200 + 125 + 5
 				excludedMembers: []group.MemberIndex{4},
 			},
 		},
@@ -141,7 +141,7 @@ func TestDkgRetryLoop(t *testing.T) {
 				return testResult, attempt.startBlock + dkg.ProtocolBlocks(), nil
 			},
 			expectedErr:               nil,
-			expectedExecutionEndBlock: 540, // 430 + 110
+			expectedExecutionEndBlock: 585, // 460 + 125
 			expectedResult:            testResult,
 			// Since the error is not related with inactive members, we
 			// use the random algorithm from the very beginning. It
@@ -149,7 +149,7 @@ func TestDkgRetryLoop(t *testing.T) {
 			// seed.
 			expectedLastAttempt: &dkgAttemptParams{
 				index:           3,
-				startBlock:      430, // 200 + 110 + 5 + 110 + 5
+				startBlock:      460, // 200 + 125 + 5 + 125 + 5
 				excludedMembers: []group.MemberIndex{2, 5},
 			},
 		},
@@ -172,7 +172,7 @@ func TestDkgRetryLoop(t *testing.T) {
 				return testResult, attempt.startBlock + dkg.ProtocolBlocks(), nil
 			},
 			expectedErr:               nil,
-			expectedExecutionEndBlock: 540, // 430 + 110
+			expectedExecutionEndBlock: 585, // 460 + 125
 			expectedResult:            testResult,
 			// The random algorithm was used first so subsequent errors related
 			// to inactive members are not taken into account. The random
@@ -180,7 +180,7 @@ func TestDkgRetryLoop(t *testing.T) {
 			// seed.
 			expectedLastAttempt: &dkgAttemptParams{
 				index:           3,
-				startBlock:      430, // 200 + 110 + 5 + 110 + 5
+				startBlock:      460, // 200 + 125 + 5 + 125 + 5
 				excludedMembers: []group.MemberIndex{2, 5},
 			},
 		},
@@ -203,14 +203,14 @@ func TestDkgRetryLoop(t *testing.T) {
 				return testResult, attempt.startBlock + dkg.ProtocolBlocks(), nil
 			},
 			expectedErr:               nil,
-			expectedExecutionEndBlock: 885, // 775 + 110
+			expectedExecutionEndBlock: 975, // 850 + 125
 			expectedResult:            testResult,
 			// 5 attempts failed due to different single members who were inactive.
 			// The 6th attempt should be made using the random retry that
 			// returns member 9 for the given seed.
 			expectedLastAttempt: &dkgAttemptParams{
 				index:           6,
-				startBlock:      775, // 200 + 5 * (110 + 5)
+				startBlock:      850, // 200 + 5 * (125 + 5)
 				excludedMembers: []group.MemberIndex{9},
 			},
 		},
@@ -233,7 +233,7 @@ func TestDkgRetryLoop(t *testing.T) {
 				return testResult, attempt.startBlock + dkg.ProtocolBlocks(), nil
 			},
 			expectedErr:               nil,
-			expectedExecutionEndBlock: 540, // 430 + 110
+			expectedExecutionEndBlock: 585, // 460 + 125
 			expectedResult:            testResult,
 			// First attempt fail due to member 2 who is inactive but the second
 			// attempt fail due to another error so the random algorithm
@@ -241,7 +241,7 @@ func TestDkgRetryLoop(t *testing.T) {
 			// (same operator) for the given seed.
 			expectedLastAttempt: &dkgAttemptParams{
 				index:           3,
-				startBlock:      430, // 200 + 110 + 5 + 110 + 5
+				startBlock:      460, // 200 + 125 + 5 + 125 + 5
 				excludedMembers: []group.MemberIndex{2, 5},
 			},
 		},
@@ -258,19 +258,19 @@ func TestDkgRetryLoop(t *testing.T) {
 				return testResult, attempt.startBlock + dkg.ProtocolBlocks(), nil
 			},
 			expectedErr:               nil,
-			expectedExecutionEndBlock: 2130, // 2020 + 110
+			expectedExecutionEndBlock: 2370, // 2245 + 125
 			expectedResult:            testResult,
 			// Random algorithm is used from the very beginning. We also
 			// observe a delay blocks bump on the 10th attempt which is
 			// 100 blocks instead of 5. That said, the start block for the 16th
 			// attempt can be calculated as follows:
-			// 200 + 115 + 115 + 115 + 115 + 115 + 115 + 115 + 115 + 210 + 115 + 115 + 115 + 115 + 115 + 115
-			// where all 115 denotes a duration of a normal attempt (110 blocks
-			// plus 5 delay blocks) and 210 is the duration of the 10th attempt
-			// (110 + 100 bumped delay blocks).
+			// 200 + 130 + 130 + 130 + 130 + 130 + 130 + 130 + 130 + 225 + 130 + 130 + 130 + 130 + 130 + 130
+			// where all 130 denotes a duration of a normal attempt (125 blocks
+			// plus 5 delay blocks) and 225 is the duration of the 10th attempt
+			// (125 + 100 bumped delay blocks).
 			expectedLastAttempt: &dkgAttemptParams{
 				index:           16,
-				startBlock:      2020,
+				startBlock:      2245,
 				excludedMembers: []group.MemberIndex{7, 9},
 			},
 		},
@@ -287,7 +287,7 @@ func TestDkgRetryLoop(t *testing.T) {
 				return testResult, attempt.startBlock + dkg.ProtocolBlocks(), nil
 			},
 			expectedErr:               nil,
-			expectedExecutionEndBlock: 1000, // 775+110+5+110
+			expectedExecutionEndBlock: 1105, // 850 + 125 + 5 + 125
 			expectedResult:            testResult,
 			// Member 6 is the executing one. First 5 attempts fail and are
 			// retried using the random algorithm. The 6th attempt does not
@@ -295,7 +295,7 @@ func TestDkgRetryLoop(t *testing.T) {
 			// member 6 skips attempt 6 and succeeds on attempt 7.
 			expectedLastAttempt: &dkgAttemptParams{
 				index:           7,
-				startBlock:      890, // 200 + 6 * (110 + 5)
+				startBlock:      980, // 200 + 6 * (125 + 5)
 				excludedMembers: []group.MemberIndex{7},
 			},
 		},

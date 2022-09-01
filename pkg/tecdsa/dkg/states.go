@@ -21,7 +21,7 @@ const (
 	tssRoundOneStateActiveBlocks = 5
 
 	tssRoundTwoStateDelayBlocks  = 1
-	tssRoundTwoStateActiveBlocks = 85
+	tssRoundTwoStateActiveBlocks = 100
 
 	tssRoundThreeStateDelayBlocks  = 1
 	tssRoundThreeStateActiveBlocks = 5
