@@ -13,13 +13,23 @@
 The Keep Network expects certain capabilities for each node running on the network.
 To help attain these capabilities consider the following criteria:
 
-- It is paramount that Keep nodes remain available to the Keep Network. We strongly encourage a
-  stable and redundant internet connection.
+- It is paramount that Keep nodes remain available to the Keep Network. 
+We strongly encourage a stable and redundant internet connection.
+See <<config-network>> section.
+
 - A connection to a production grade self-hosted or third party Ethereum node deployment.
+See <<config-ethereum-api>> section.
+
 - Persistent and redundant storage that will survive a VM or container rotation, and a disk failure.
-- Each node running on the network requires a unique Ethereum operator account.
+See <<config-persistance>> section.
+
+- Each node running on the network requires a unique Ethereum Operator Account.
+The account has to maintain a positive Ether balance at all times.
+See <<config-operator-account>> section.
+
 - Each node running on the network requires a unique IP address or a unique
-  application port running under the same IP.
+application port running under the same IP.
+See <<config-network>> section.
 
 === Recommended Machine Types
 
@@ -58,14 +68,23 @@ The client expects configuration options to be specified in a <<config-file,conf
 or passed as <<cli,CLI flags>>. If you specify an option by using a parameter on 
 the command line, it will override the value read from the configuration file.
 
-[#ethereum-key]
-==== Operator's Ethereum Key File
+[#config-operator-account]
+==== Operator Account
 
-Ethereum Key File is expected to be encrypted with a password. The password has
+The client requires an Ethereum Key File of an Operator Account to connect to the
+Ethereum chain. 
+
+The Ethereum Key File is expected to be encrypted with a password. The password has
 to be provided in a prompt after the client starts or configured as a `KEEP_ETHEREUM_PASSWORD`
 environment variable.
 
-[#ethereum-api]
+The Operator Account has to maintain a positive Ether balance at all times.
+We strongly advice you monitor the account and top-up when its balance gets below
+0,5 Ether. 
+
+// TODO: Link to a reimbursements documentation.
+
+[#config-ethereum-api]
 ==== Ethereum API
 
 A Keep Node requires a connection to a WebSocket Ethereum API. You should obtain
@@ -103,7 +122,7 @@ Sample configuration file:
 include::../configs/config.toml.SAMPLE[]
 ----
 
-[#storage]
+[#config-persistance]
 ==== Persistance
 
 A client will produce and store data on disk. The directory should be provided to
@@ -112,35 +131,52 @@ the client under `storage.DataDir` (flag: `--storage.dataDir`) configuration pro
 IMPORTANT: It is crucial to ensure the data directory is persisted and backed up on
 a regular basis.
 
+[#config-network]
 ==== Network
 
+The node has to be accessible publicly to establish and maintain connections with
+bootstrap nodes and discovered peers.
 
-===== Port
+The node exposes <<metrics,metrics>> and <<diagnostics,diagnostics>> services for
+monitoring.
 
-Default port mappings.
+===== Ports
 
-[%header,cols=2*]
+A *Network* Port has to be exposed publicly, so the peers can connect to your node.
+// TODO: Add link to the Rewards Allocation documentation.
+A *Diagnostics* Port has to be exposed publicly, for the Rewards Allocation. 
+
+IMPORTANT: Please update your firewall rules if necessary.
+
+[%header,cols="1,1m,1,1,1m"]
 |===
+|Name
+|Config Property
+|Direction
+|Type
+|Default
+
+|<<config-network,Network>>
+|network.port
+|Egress/Ingress
+|TCP
+|3919
+
+|<<metrics,Metrics>>
+|metrics.port
 |Egress
-|Port
+|TCP
+|9601
 
-|Keep Network
-| TCP: `3919`
+|<<diagnostics,Diagnostics>>
+|diagnostics.port
+|Egress
+|TCP
+|9701
+
 |===
 
-[%header,cols=2*]
-|===
-|Ingress
-|Port
-
-|Keep Network
-|`3919`
-|===
-
-The port has to be exposed publicly, so the peers can connect to your node.
-Please update your firewall rules if necessary.
-
-==== Announced Addresses
+===== Announced Addresses
 
 An Announced Address is a layered addressing information (`multiaddress`/`multiaddr`)
 announced to the Keep Network that is used by peers to connect with your node, e.g.:
@@ -158,10 +194,10 @@ link:https://docs.libp2p.io/reference/glossary/#multiaddr[libp2p docummentation]
 
 The minimum required configuration for the client to start covers setting:
 
-- `KEEP_ETHEREUM_PASSWORD` environment variable (see: <<ethereum-key>> section),
-- `ethereum.url` config property (see: <<ethereum-api>> section),
-- `ethereum.keyFile` config property (see: <<ethereum-key>> section),
-- `storage.dataDir` config property (see: <<storage>> section).
+- `KEEP_ETHEREUM_PASSWORD` environment variable (see: <<config-operator-account>> section),
+- `ethereum.url` config property (see: <<config-ethereum-api>> section),
+- `ethereum.keyFile` config property (see: <<config-operator-account>> section),
+- `storage.dataDir` config property (see: <<config-persistance>> section).
 
 === Installation
 
@@ -236,6 +272,8 @@ Trust math, not hardware.
 ------------------------------------------------------------------------------------------------
 | Keep Client Node                                                                             |
 |                                                                                              |
+| Operator: 0x6299496199d99941193Fdd2d717ef585F431eA05                                         |
+|                                                                                              |
 | Port: 3919                                                                                   |
 | IPs : /ip4/127.0.0.1/tcp/3919/ipfs/16Uiu2HAmM2WfE4uwymj9n1EsaN5jL38cG79jCCSXLX49KoL18aZQ     |
 |       /ip6/::1/tcp/3919/ipfs/16Uiu2HAmM2WfE4uwymj9n1EsaN5jL38cG79jCCSXLX49KoL18aZQ           |
@@ -253,6 +291,7 @@ TIP: If you want to share your LibP2P address with others you can get it from th
 startup log.  When sharing remember to substitute the `/ipv4/` address with the public facing IP of your client if you're running on a private machine, or replace the entire
 `/ipv4/` segment with a DNS entry if you're using a hostname.
 
+[#metrics]
 == Metrics
 
 The client exposes the following metrics:
@@ -280,6 +319,7 @@ connected_bootstrap_count 10 1623235129569
 eth_connectivity 1 1623235129789
 ```
 
+[#diagnostics]
 == Diagnostics
 
 The client exposes the following diagnostics:

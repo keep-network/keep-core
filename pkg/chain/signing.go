@@ -5,6 +5,9 @@ import "github.com/keep-network/keep-core/pkg/operator"
 // Signing is an interface that provides ability to sign and verify
 // signatures using operator's key associated with the chain.
 type Signing interface {
+	// Address returns operator's address.
+	Address() Address
+
 	// PublicKey returns operator's public key in a serialized format.
 	// The returned public key is used to Sign messages and can be later used
 	// for verification.

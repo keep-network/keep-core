@@ -36,16 +36,20 @@ RUN go mod download
 # Install code generators.
 RUN cd /go/pkg/mod/github.com/gogo/protobuf@v1.3.2/protoc-gen-gogoslick && go install .
 
-COPY ./pkg/net/gen $APP_DIR/pkg/net/gen
-COPY ./pkg/chain/ethereum/common/gen $APP_DIR/pkg/chain/ethereum/common/gen
-COPY ./pkg/chain/ethereum/ecdsa/gen $APP_DIR/pkg/chain/ethereum/ecdsa/gen
-COPY ./pkg/chain/ethereum/beacon/gen $APP_DIR/pkg/chain/ethereum/beacon/gen
-COPY ./pkg/chain/ethereum/tbtc/gen $APP_DIR/pkg/chain/ethereum/tbtc/gen
-COPY ./pkg/chain/ethereum/threshold/gen $APP_DIR/pkg/chain/ethereum/threshold/gen
+# Copy source code for generation.
+COPY ./pkg/beacon/dkg/result/gen $APP_DIR/pkg/beacon/dkg/result/gen
 COPY ./pkg/beacon/entry/gen $APP_DIR/pkg/beacon/entry/gen
 COPY ./pkg/beacon/gjkr/gen $APP_DIR/pkg/beacon/gjkr/gen
-COPY ./pkg/beacon/dkg/result/gen $APP_DIR/pkg/beacon/dkg/result/gen
 COPY ./pkg/beacon/registry/gen $APP_DIR/pkg/beacon/registry/gen
+COPY ./pkg/chain/ethereum/beacon/gen $APP_DIR/pkg/chain/ethereum/beacon/gen
+COPY ./pkg/chain/ethereum/common/gen $APP_DIR/pkg/chain/ethereum/common/gen
+COPY ./pkg/chain/ethereum/ecdsa/gen $APP_DIR/pkg/chain/ethereum/ecdsa/gen
+COPY ./pkg/chain/ethereum/tbtc/gen $APP_DIR/pkg/chain/ethereum/tbtc/gen
+COPY ./pkg/chain/ethereum/threshold/gen $APP_DIR/pkg/chain/ethereum/threshold/gen
+COPY ./pkg/net/gen $APP_DIR/pkg/net/gen
+COPY ./pkg/tbtc/gen $APP_DIR/pkg/tbtc/gen
+COPY ./pkg/tecdsa/dkg/gen $APP_DIR/pkg/tecdsa/dkg/gen
+COPY ./pkg/tecdsa/gen $APP_DIR/pkg/tecdsa/gen
 
 # If ENVIRONMENT is not set it will download NPM packages versions
 # published and tagged as `development`.

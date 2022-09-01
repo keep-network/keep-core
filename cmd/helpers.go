@@ -9,7 +9,7 @@ import (
 	chainEthereum "github.com/keep-network/keep-core/pkg/chain/ethereum"
 )
 
-func nodeHeader(addrStrings []string, port int, ethereumConfig commonEthereum.Config) {
+func nodeHeader(addrStrings []string, operator string, port int, ethereumConfig commonEthereum.Config) {
 	header := ` 
 
 ▓▓▌ ▓▓ ▐▓▓ ▓▓▓▓▓▓▓▓▓▓▌▐▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓ ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓ ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▄
@@ -44,6 +44,8 @@ Trust math, not hardware.
 		header,
 		dashes,
 		buildLine(maxLineLength, prefix, suffix, "Keep Client Node"),
+		buildLine(maxLineLength, prefix, suffix, ""),
+		buildLine(maxLineLength, prefix, suffix, fmt.Sprintf("Operator: %s", operator)),
 		buildLine(maxLineLength, prefix, suffix, ""),
 		buildLine(maxLineLength, prefix, suffix, fmt.Sprintf("Port: %d", port)),
 		buildMultiLine(maxLineLength, prefix, suffix, "IPs : ", addrStrings),
