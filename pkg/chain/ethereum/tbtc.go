@@ -117,6 +117,20 @@ func (tc *TbtcChain) GetConfig() *tbtc.ChainConfig {
 	}
 }
 
+// Staking returns address of the TokenStaking contract the WalletRegistry is
+// connected to.
+func (tc *TbtcChain) Staking() (chain.Address, error) {
+	stakingContractAddress, err := tc.walletRegistry.Staking()
+	if err != nil {
+		return "", fmt.Errorf(
+			"failed to get the token staking address: [%w]",
+			err,
+		)
+	}
+
+	return chain.Address(stakingContractAddress.String()), nil
+}
+
 // IsRecognized checks whether the given operator is recognized by the TbtcChain
 // as eligible to join the network. If the operator has a stake delegation or
 // had a stake delegation in the past, it will be recognized.

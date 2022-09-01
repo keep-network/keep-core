@@ -120,6 +120,20 @@ func (bc *BeaconChain) GetConfig() *beaconchain.Config {
 	}
 }
 
+// Staking returns address of the TokenStaking contract the RandomBeacon is
+// connected to.
+func (bc *BeaconChain) Staking() (chain.Address, error) {
+	stakingContractAddress, err := bc.randomBeacon.Staking()
+	if err != nil {
+		return "", fmt.Errorf(
+			"failed to get the token staking address: [%w]",
+			err,
+		)
+	}
+
+	return chain.Address(stakingContractAddress.String()), nil
+}
+
 // OperatorToStakingProvider returns the staking provider address for the
 // operator. If the staking provider has not been registered for the
 // operator, the returned address is empty and the boolean flag is set to false
