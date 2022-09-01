@@ -1,4 +1,9 @@
-:toc: macro
+:toc: left
+:toclevels: 3
+:sectanchors: true
+:sectids: true
+:source-highlighter: rouge
+:icons: font
 
 = T developer documentation
 
@@ -63,6 +68,7 @@ like so: +
 - `initialize.sh --stake-owner <address2>` +
 - `initialize.sh --stake-owner <address3>`
 
+<<<<<<< HEAD
 The `+initialize.sh+` script will:
 
 * mint & approve `T` tokens
@@ -196,3 +202,22 @@ https://hardhat.org/[Hardhat].
 Navigate to one of the projects `solidity/ecdsa` or `solidity/random-beacon`.
 You can deploy contracts executing `yarn deploy` or run tests against the local
 Hardhat's network `yarn test`.
+
+[#build-client]
+== Build Client
+
+// TODO: Add section
+
+```
+make mainnet
+```
+
+```
+make goerli
+```
+
+Development
+
+```
+make
+```

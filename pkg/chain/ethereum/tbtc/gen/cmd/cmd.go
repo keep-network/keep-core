@@ -1,13 +1,20 @@
 package cmd
 
 import (
-	"github.com/urfave/cli"
+	"github.com/spf13/cobra"
+
+	"github.com/keep-network/keep-core/pkg/chain/ethereum"
 )
 
-// AvailableCommands is the exported list of generated commands that can be
+// ModuleCommand is the exported list of generated commands that can be
 // installed on a CLI app. Generated contract command files set up init
 // functions that add the contract's command and subcommands to this global
 // variable, and any top-level command that wishes to include these commands can
 // reference this variable and expect it to contain all generated contract
 // commands.
-var AvailableCommands []cli.Command
+var ModuleCommand = ethereum.Command{
+	Command: cobra.Command{
+		Use:   "tbtc",
+		Short: `Provides access to Keep TBTCv2 contracts.`,
+	},
+}

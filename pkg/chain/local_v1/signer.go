@@ -3,6 +3,7 @@ package local_v1
 import (
 	"encoding/hex"
 	"fmt"
+
 	commonlocal "github.com/keep-network/keep-common/pkg/chain/local"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/operator"
@@ -22,6 +23,10 @@ func newSigner(operatorPrivateKey *operator.PrivateKey) *signer {
 	return &signer{
 		commonlocal.NewSigner(chainPrivateKey),
 	}
+}
+
+func (s *signer) Address() chain.Address {
+	return s.PublicKeyBytesToAddress(s.PublicKey())
 }
 
 func (s *signer) PublicKeyToAddress(

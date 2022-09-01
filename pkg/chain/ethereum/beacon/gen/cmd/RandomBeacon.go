@@ -8,19 +8,18 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/core/types"
+	"github.com/ethereum/go-ethereum/ethclient"
 
 	chainutil "github.com/keep-network/keep-common/pkg/chain/ethereum/ethutil"
 	"github.com/keep-network/keep-common/pkg/cmd"
-	"github.com/keep-network/keep-core/config"
 	"github.com/keep-network/keep-core/pkg/chain/ethereum/beacon/gen/contract"
 
-	"github.com/urfave/cli"
+	"github.com/spf13/cobra"
 )
 
-var RandomBeaconCommand cli.Command
+var RandomBeaconCommand *cobra.Command
 
 var randomBeaconDescription = `The random-beacon command allows calling the RandomBeacon contract on an
 	Ethereum network. It has subcommands corresponding to each contract method,
@@ -33,10 +32,6 @@ var randomBeaconDescription = `The random-beacon command allows calling the Rand
 	All subcommands can be called against a specific block by passing the
 	-b/--block flag.
 
-	All subcommands can be used to investigate the result of a previous
-	transaction that called that same method by passing the -t/--transaction
-	flag with the transaction hash.
-
 	Subcommands for mutating methods may be submitted as a mutating transaction
 	by passing the -s/--submit flag. In this mode, this command will terminate
 	successfully once the transaction has been submitted, but will not wait for
@@ -46,333 +41,86 @@ var randomBeaconDescription = `The random-beacon command allows calling the Rand
 	be changed by passing the -v/--value flag.`
 
 func init() {
-	AvailableCommands = append(AvailableCommands, cli.Command{
-		Name:        "random-beacon",
-		Usage:       `Provides access to the RandomBeacon contract.`,
-		Description: randomBeaconDescription,
-		Subcommands: []cli.Command{{
-			Name:      "authorization-parameters",
-			Usage:     "Calls the view method authorizationParameters on the RandomBeacon contract.",
-			ArgsUsage: "",
-			Action:    rbAuthorizationParameters,
-			Before:    cmd.ArgCountChecker(0),
-			Flags:     cmd.ConstFlags,
-		}, {
-			Name:      "authorized-requesters",
-			Usage:     "Calls the view method authorizedRequesters on the RandomBeacon contract.",
-			ArgsUsage: "[arg0] ",
-			Action:    rbAuthorizedRequesters,
-			Before:    cmd.ArgCountChecker(1),
-			Flags:     cmd.ConstFlags,
-		}, {
-			Name:      "available-rewards",
-			Usage:     "Calls the view method availableRewards on the RandomBeacon contract.",
-			ArgsUsage: "[arg_stakingProvider] ",
-			Action:    rbAvailableRewards,
-			Before:    cmd.ArgCountChecker(1),
-			Flags:     cmd.ConstFlags,
-		}, {
-			Name:      "eligible-stake",
-			Usage:     "Calls the view method eligibleStake on the RandomBeacon contract.",
-			ArgsUsage: "[arg_stakingProvider] ",
-			Action:    rbEligibleStake,
-			Before:    cmd.ArgCountChecker(1),
-			Flags:     cmd.ConstFlags,
-		}, {
-			Name:      "gas-parameters",
-			Usage:     "Calls the view method gasParameters on the RandomBeacon contract.",
-			ArgsUsage: "",
-			Action:    rbGasParameters,
-			Before:    cmd.ArgCountChecker(0),
-			Flags:     cmd.ConstFlags,
-		}, {
-			Name:      "genesis-seed",
-			Usage:     "Calls the view method genesisSeed on the RandomBeacon contract.",
-			ArgsUsage: "",
-			Action:    rbGenesisSeed,
-			Before:    cmd.ArgCountChecker(0),
-			Flags:     cmd.ConstFlags,
-		}, {
-			Name:      "get-group0",
-			Usage:     "Calls the view method getGroup0 on the RandomBeacon contract.",
-			ArgsUsage: "[arg_groupPubKey] ",
-			Action:    rbGetGroup0,
-			Before:    cmd.ArgCountChecker(1),
-			Flags:     cmd.ConstFlags,
-		}, {
-			Name:      "get-group-creation-state",
-			Usage:     "Calls the view method getGroupCreationState on the RandomBeacon contract.",
-			ArgsUsage: "",
-			Action:    rbGetGroupCreationState,
-			Before:    cmd.ArgCountChecker(0),
-			Flags:     cmd.ConstFlags,
-		}, {
-			Name:      "get-groups-registry",
-			Usage:     "Calls the view method getGroupsRegistry on the RandomBeacon contract.",
-			ArgsUsage: "",
-			Action:    rbGetGroupsRegistry,
-			Before:    cmd.ArgCountChecker(0),
-			Flags:     cmd.ConstFlags,
-		}, {
-			Name:      "governance",
-			Usage:     "Calls the view method governance on the RandomBeacon contract.",
-			ArgsUsage: "",
-			Action:    rbGovernance,
-			Before:    cmd.ArgCountChecker(0),
-			Flags:     cmd.ConstFlags,
-		}, {
-			Name:      "group-creation-parameters",
-			Usage:     "Calls the view method groupCreationParameters on the RandomBeacon contract.",
-			ArgsUsage: "",
-			Action:    rbGroupCreationParameters,
-			Before:    cmd.ArgCountChecker(0),
-			Flags:     cmd.ConstFlags,
-		}, {
-			Name:      "has-dkg-timed-out",
-			Usage:     "Calls the view method hasDkgTimedOut on the RandomBeacon contract.",
-			ArgsUsage: "",
-			Action:    rbHasDkgTimedOut,
-			Before:    cmd.ArgCountChecker(0),
-			Flags:     cmd.ConstFlags,
-		}, {
-			Name:      "is-operator-in-pool",
-			Usage:     "Calls the view method isOperatorInPool on the RandomBeacon contract.",
-			ArgsUsage: "[arg_operator] ",
-			Action:    rbIsOperatorInPool,
-			Before:    cmd.ArgCountChecker(1),
-			Flags:     cmd.ConstFlags,
-		}, {
-			Name:      "is-operator-up-to-date",
-			Usage:     "Calls the view method isOperatorUpToDate on the RandomBeacon contract.",
-			ArgsUsage: "[arg_operator] ",
-			Action:    rbIsOperatorUpToDate,
-			Before:    cmd.ArgCountChecker(1),
-			Flags:     cmd.ConstFlags,
-		}, {
-			Name:      "is-relay-request-in-progress",
-			Usage:     "Calls the view method isRelayRequestInProgress on the RandomBeacon contract.",
-			ArgsUsage: "",
-			Action:    rbIsRelayRequestInProgress,
-			Before:    cmd.ArgCountChecker(0),
-			Flags:     cmd.ConstFlags,
-		}, {
-			Name:      "minimum-authorization",
-			Usage:     "Calls the view method minimumAuthorization on the RandomBeacon contract.",
-			ArgsUsage: "",
-			Action:    rbMinimumAuthorization,
-			Before:    cmd.ArgCountChecker(0),
-			Flags:     cmd.ConstFlags,
-		}, {
-			Name:      "operator-to-staking-provider",
-			Usage:     "Calls the view method operatorToStakingProvider on the RandomBeacon contract.",
-			ArgsUsage: "[arg_operator] ",
-			Action:    rbOperatorToStakingProvider,
-			Before:    cmd.ArgCountChecker(1),
-			Flags:     cmd.ConstFlags,
-		}, {
-			Name:      "pending-authorization-decrease",
-			Usage:     "Calls the view method pendingAuthorizationDecrease on the RandomBeacon contract.",
-			ArgsUsage: "[arg_stakingProvider] ",
-			Action:    rbPendingAuthorizationDecrease,
-			Before:    cmd.ArgCountChecker(1),
-			Flags:     cmd.ConstFlags,
-		}, {
-			Name:      "reimbursement-pool",
-			Usage:     "Calls the view method reimbursementPool on the RandomBeacon contract.",
-			ArgsUsage: "",
-			Action:    rbReimbursementPool,
-			Before:    cmd.ArgCountChecker(0),
-			Flags:     cmd.ConstFlags,
-		}, {
-			Name:      "relay-entry-parameters",
-			Usage:     "Calls the view method relayEntryParameters on the RandomBeacon contract.",
-			ArgsUsage: "",
-			Action:    rbRelayEntryParameters,
-			Before:    cmd.ArgCountChecker(0),
-			Flags:     cmd.ConstFlags,
-		}, {
-			Name:      "remaining-authorization-decrease-delay",
-			Usage:     "Calls the view method remainingAuthorizationDecreaseDelay on the RandomBeacon contract.",
-			ArgsUsage: "[arg_stakingProvider] ",
-			Action:    rbRemainingAuthorizationDecreaseDelay,
-			Before:    cmd.ArgCountChecker(1),
-			Flags:     cmd.ConstFlags,
-		}, {
-			Name:      "reward-parameters",
-			Usage:     "Calls the view method rewardParameters on the RandomBeacon contract.",
-			ArgsUsage: "",
-			Action:    rbRewardParameters,
-			Before:    cmd.ArgCountChecker(0),
-			Flags:     cmd.ConstFlags,
-		}, {
-			Name:      "select-group",
-			Usage:     "Calls the view method selectGroup on the RandomBeacon contract.",
-			ArgsUsage: "",
-			Action:    rbSelectGroup,
-			Before:    cmd.ArgCountChecker(0),
-			Flags:     cmd.ConstFlags,
-		}, {
-			Name:      "slashing-parameters",
-			Usage:     "Calls the view method slashingParameters on the RandomBeacon contract.",
-			ArgsUsage: "",
-			Action:    rbSlashingParameters,
-			Before:    cmd.ArgCountChecker(0),
-			Flags:     cmd.ConstFlags,
-		}, {
-			Name:      "sortition-pool",
-			Usage:     "Calls the view method sortitionPool on the RandomBeacon contract.",
-			ArgsUsage: "",
-			Action:    rbSortitionPool,
-			Before:    cmd.ArgCountChecker(0),
-			Flags:     cmd.ConstFlags,
-		}, {
-			Name:      "staking",
-			Usage:     "Calls the view method staking on the RandomBeacon contract.",
-			ArgsUsage: "",
-			Action:    rbStaking,
-			Before:    cmd.ArgCountChecker(0),
-			Flags:     cmd.ConstFlags,
-		}, {
-			Name:      "staking-provider-to-operator",
-			Usage:     "Calls the view method stakingProviderToOperator on the RandomBeacon contract.",
-			ArgsUsage: "[arg_stakingProvider] ",
-			Action:    rbStakingProviderToOperator,
-			Before:    cmd.ArgCountChecker(1),
-			Flags:     cmd.ConstFlags,
-		}, {
-			Name:      "t-token",
-			Usage:     "Calls the view method tToken on the RandomBeacon contract.",
-			ArgsUsage: "",
-			Action:    rbTToken,
-			Before:    cmd.ArgCountChecker(0),
-			Flags:     cmd.ConstFlags,
-		}, {
-			Name:      "approve-authorization-decrease",
-			Usage:     "Calls the nonpayable method approveAuthorizationDecrease on the RandomBeacon contract.",
-			ArgsUsage: "[arg_stakingProvider] ",
-			Action:    rbApproveAuthorizationDecrease,
-			Before:    cli.BeforeFunc(cmd.NonConstArgsChecker.AndThen(cmd.ArgCountChecker(1))),
-			Flags:     cmd.NonConstFlags,
-		}, {
-			Name:      "genesis",
-			Usage:     "Calls the nonpayable method genesis on the RandomBeacon contract.",
-			ArgsUsage: "",
-			Action:    rbGenesis,
-			Before:    cli.BeforeFunc(cmd.NonConstArgsChecker.AndThen(cmd.ArgCountChecker(0))),
-			Flags:     cmd.NonConstFlags,
-		}, {
-			Name:      "join-sortition-pool",
-			Usage:     "Calls the nonpayable method joinSortitionPool on the RandomBeacon contract.",
-			ArgsUsage: "",
-			Action:    rbJoinSortitionPool,
-			Before:    cli.BeforeFunc(cmd.NonConstArgsChecker.AndThen(cmd.ArgCountChecker(0))),
-			Flags:     cmd.NonConstFlags,
-		}, {
-			Name:      "notify-dkg-timeout",
-			Usage:     "Calls the nonpayable method notifyDkgTimeout on the RandomBeacon contract.",
-			ArgsUsage: "",
-			Action:    rbNotifyDkgTimeout,
-			Before:    cli.BeforeFunc(cmd.NonConstArgsChecker.AndThen(cmd.ArgCountChecker(0))),
-			Flags:     cmd.NonConstFlags,
-		}, {
-			Name:      "register-operator",
-			Usage:     "Calls the nonpayable method registerOperator on the RandomBeacon contract.",
-			ArgsUsage: "[arg_operator] ",
-			Action:    rbRegisterOperator,
-			Before:    cli.BeforeFunc(cmd.NonConstArgsChecker.AndThen(cmd.ArgCountChecker(1))),
-			Flags:     cmd.NonConstFlags,
-		}, {
-			Name:      "request-relay-entry",
-			Usage:     "Calls the nonpayable method requestRelayEntry on the RandomBeacon contract.",
-			ArgsUsage: "[arg_callbackContract] ",
-			Action:    rbRequestRelayEntry,
-			Before:    cli.BeforeFunc(cmd.NonConstArgsChecker.AndThen(cmd.ArgCountChecker(1))),
-			Flags:     cmd.NonConstFlags,
-		}, {
-			Name:      "submit-relay-entry0",
-			Usage:     "Calls the nonpayable method submitRelayEntry0 on the RandomBeacon contract.",
-			ArgsUsage: "[arg_entry] ",
-			Action:    rbSubmitRelayEntry0,
-			Before:    cli.BeforeFunc(cmd.NonConstArgsChecker.AndThen(cmd.ArgCountChecker(1))),
-			Flags:     cmd.NonConstFlags,
-		}, {
-			Name:      "transfer-governance",
-			Usage:     "Calls the nonpayable method transferGovernance on the RandomBeacon contract.",
-			ArgsUsage: "[arg_newGovernance] ",
-			Action:    rbTransferGovernance,
-			Before:    cli.BeforeFunc(cmd.NonConstArgsChecker.AndThen(cmd.ArgCountChecker(1))),
-			Flags:     cmd.NonConstFlags,
-		}, {
-			Name:      "update-gas-parameters",
-			Usage:     "Calls the nonpayable method updateGasParameters on the RandomBeacon contract.",
-			ArgsUsage: "[arg_dkgResultSubmissionGas] [arg_dkgResultApprovalGasOffset] [arg_notifyOperatorInactivityGasOffset] [arg_relayEntrySubmissionGasOffset] ",
-			Action:    rbUpdateGasParameters,
-			Before:    cli.BeforeFunc(cmd.NonConstArgsChecker.AndThen(cmd.ArgCountChecker(4))),
-			Flags:     cmd.NonConstFlags,
-		}, {
-			Name:      "update-group-creation-parameters",
-			Usage:     "Calls the nonpayable method updateGroupCreationParameters on the RandomBeacon contract.",
-			ArgsUsage: "[arg_groupCreationFrequency] [arg_groupLifetime] [arg_dkgResultChallengePeriodLength] [arg_dkgResultSubmissionTimeout] [arg_dkgSubmitterPrecedencePeriodLength] ",
-			Action:    rbUpdateGroupCreationParameters,
-			Before:    cli.BeforeFunc(cmd.NonConstArgsChecker.AndThen(cmd.ArgCountChecker(5))),
-			Flags:     cmd.NonConstFlags,
-		}, {
-			Name:      "update-operator-status",
-			Usage:     "Calls the nonpayable method updateOperatorStatus on the RandomBeacon contract.",
-			ArgsUsage: "[arg_operator] ",
-			Action:    rbUpdateOperatorStatus,
-			Before:    cli.BeforeFunc(cmd.NonConstArgsChecker.AndThen(cmd.ArgCountChecker(1))),
-			Flags:     cmd.NonConstFlags,
-		}, {
-			Name:      "update-reimbursement-pool",
-			Usage:     "Calls the nonpayable method updateReimbursementPool on the RandomBeacon contract.",
-			ArgsUsage: "[arg__reimbursementPool] ",
-			Action:    rbUpdateReimbursementPool,
-			Before:    cli.BeforeFunc(cmd.NonConstArgsChecker.AndThen(cmd.ArgCountChecker(1))),
-			Flags:     cmd.NonConstFlags,
-		}, {
-			Name:      "update-relay-entry-parameters",
-			Usage:     "Calls the nonpayable method updateRelayEntryParameters on the RandomBeacon contract.",
-			ArgsUsage: "[arg_relayEntrySoftTimeout] [arg_relayEntryHardTimeout] [arg_callbackGasLimit] ",
-			Action:    rbUpdateRelayEntryParameters,
-			Before:    cli.BeforeFunc(cmd.NonConstArgsChecker.AndThen(cmd.ArgCountChecker(3))),
-			Flags:     cmd.NonConstFlags,
-		}, {
-			Name:      "update-reward-parameters",
-			Usage:     "Calls the nonpayable method updateRewardParameters on the RandomBeacon contract.",
-			ArgsUsage: "[arg_sortitionPoolRewardsBanDuration] [arg_relayEntryTimeoutNotificationRewardMultiplier] [arg_unauthorizedSigningNotificationRewardMultiplier] [arg_dkgMaliciousResultNotificationRewardMultiplier] ",
-			Action:    rbUpdateRewardParameters,
-			Before:    cli.BeforeFunc(cmd.NonConstArgsChecker.AndThen(cmd.ArgCountChecker(4))),
-			Flags:     cmd.NonConstFlags,
-		}, {
-			Name:      "withdraw-ineligible-rewards",
-			Usage:     "Calls the nonpayable method withdrawIneligibleRewards on the RandomBeacon contract.",
-			ArgsUsage: "[arg_recipient] ",
-			Action:    rbWithdrawIneligibleRewards,
-			Before:    cli.BeforeFunc(cmd.NonConstArgsChecker.AndThen(cmd.ArgCountChecker(1))),
-			Flags:     cmd.NonConstFlags,
-		}, {
-			Name:      "withdraw-rewards",
-			Usage:     "Calls the nonpayable method withdrawRewards on the RandomBeacon contract.",
-			ArgsUsage: "[arg_stakingProvider] ",
-			Action:    rbWithdrawRewards,
-			Before:    cli.BeforeFunc(cmd.NonConstArgsChecker.AndThen(cmd.ArgCountChecker(1))),
-			Flags:     cmd.NonConstFlags,
-		}},
-	})
+	RandomBeaconCommand := &cobra.Command{
+		Use:   "random-beacon",
+		Short: `Provides access to the RandomBeacon contract.`,
+		Long:  randomBeaconDescription,
+	}
+
+	RandomBeaconCommand.AddCommand(
+		rbAuthorizationParametersCommand(),
+		rbAuthorizedRequestersCommand(),
+		rbAvailableRewardsCommand(),
+		rbEligibleStakeCommand(),
+		rbGasParametersCommand(),
+		rbGetGroup0Command(),
+		rbGetGroupCreationStateCommand(),
+		rbGetGroupsRegistryCommand(),
+		rbGovernanceCommand(),
+		rbGroupCreationParametersCommand(),
+		rbHasDkgTimedOutCommand(),
+		rbIsOperatorInPoolCommand(),
+		rbIsOperatorUpToDateCommand(),
+		rbIsRelayRequestInProgressCommand(),
+		rbMinimumAuthorizationCommand(),
+		rbOperatorToStakingProviderCommand(),
+		rbPendingAuthorizationDecreaseCommand(),
+		rbReimbursementPoolCommand(),
+		rbRelayEntryParametersCommand(),
+		rbRemainingAuthorizationDecreaseDelayCommand(),
+		rbRewardParametersCommand(),
+		rbSelectGroupCommand(),
+		rbSlashingParametersCommand(),
+		rbSortitionPoolCommand(),
+		rbStakingCommand(),
+		rbStakingProviderToOperatorCommand(),
+		rbTTokenCommand(),
+		rbApproveAuthorizationDecreaseCommand(),
+		rbGenesisCommand(),
+		rbJoinSortitionPoolCommand(),
+		rbNotifyDkgTimeoutCommand(),
+		rbRegisterOperatorCommand(),
+		rbRequestRelayEntryCommand(),
+		rbSubmitRelayEntry0Command(),
+		rbTransferGovernanceCommand(),
+		rbUpdateGasParametersCommand(),
+		rbUpdateGroupCreationParametersCommand(),
+		rbUpdateOperatorStatusCommand(),
+		rbUpdateReimbursementPoolCommand(),
+		rbUpdateRelayEntryParametersCommand(),
+		rbUpdateRewardParametersCommand(),
+		rbWithdrawIneligibleRewardsCommand(),
+		rbWithdrawRewardsCommand(),
+	)
+
+	ModuleCommand.AddCommand(RandomBeaconCommand)
 }
 
 /// ------------------- Const methods -------------------
 
-func rbAuthorizationParameters(c *cli.Context) error {
+func rbAuthorizationParametersCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "authorization-parameters",
+		Short:                 "Calls the view method authorizationParameters on the RandomBeacon contract.",
+		Args:                  cmd.ArgCountChecker(0),
+		RunE:                  rbAuthorizationParameters,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	cmd.InitConstFlags(c)
+
+	return c
+}
+
+func rbAuthorizationParameters(c *cobra.Command, args []string) error {
 	contract, err := initializeRandomBeacon(c)
 	if err != nil {
 		return err
 	}
 
 	result, err := contract.AuthorizationParametersAtBlock(
-
-		cmd.BlockFlagValue.Uint,
+		cmd.BlockFlagValue.Int,
 	)
 
 	if err != nil {
@@ -384,23 +132,37 @@ func rbAuthorizationParameters(c *cli.Context) error {
 	return nil
 }
 
-func rbAuthorizedRequesters(c *cli.Context) error {
+func rbAuthorizedRequestersCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "authorized-requesters [arg0]",
+		Short:                 "Calls the view method authorizedRequesters on the RandomBeacon contract.",
+		Args:                  cmd.ArgCountChecker(1),
+		RunE:                  rbAuthorizedRequesters,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	cmd.InitConstFlags(c)
+
+	return c
+}
+
+func rbAuthorizedRequesters(c *cobra.Command, args []string) error {
 	contract, err := initializeRandomBeacon(c)
 	if err != nil {
 		return err
 	}
-	arg0, err := chainutil.AddressFromHex(c.Args()[0])
+	arg0, err := chainutil.AddressFromHex(args[0])
 	if err != nil {
 		return fmt.Errorf(
 			"couldn't parse parameter arg0, a address, from passed value %v",
-			c.Args()[0],
+			args[0],
 		)
 	}
 
 	result, err := contract.AuthorizedRequestersAtBlock(
 		arg0,
-
-		cmd.BlockFlagValue.Uint,
+		cmd.BlockFlagValue.Int,
 	)
 
 	if err != nil {
@@ -412,23 +174,37 @@ func rbAuthorizedRequesters(c *cli.Context) error {
 	return nil
 }
 
-func rbAvailableRewards(c *cli.Context) error {
+func rbAvailableRewardsCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "available-rewards [arg_stakingProvider]",
+		Short:                 "Calls the view method availableRewards on the RandomBeacon contract.",
+		Args:                  cmd.ArgCountChecker(1),
+		RunE:                  rbAvailableRewards,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	cmd.InitConstFlags(c)
+
+	return c
+}
+
+func rbAvailableRewards(c *cobra.Command, args []string) error {
 	contract, err := initializeRandomBeacon(c)
 	if err != nil {
 		return err
 	}
-	arg_stakingProvider, err := chainutil.AddressFromHex(c.Args()[0])
+	arg_stakingProvider, err := chainutil.AddressFromHex(args[0])
 	if err != nil {
 		return fmt.Errorf(
 			"couldn't parse parameter arg_stakingProvider, a address, from passed value %v",
-			c.Args()[0],
+			args[0],
 		)
 	}
 
 	result, err := contract.AvailableRewardsAtBlock(
 		arg_stakingProvider,
-
-		cmd.BlockFlagValue.Uint,
+		cmd.BlockFlagValue.Int,
 	)
 
 	if err != nil {
@@ -440,23 +216,37 @@ func rbAvailableRewards(c *cli.Context) error {
 	return nil
 }
 
-func rbEligibleStake(c *cli.Context) error {
+func rbEligibleStakeCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "eligible-stake [arg_stakingProvider]",
+		Short:                 "Calls the view method eligibleStake on the RandomBeacon contract.",
+		Args:                  cmd.ArgCountChecker(1),
+		RunE:                  rbEligibleStake,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	cmd.InitConstFlags(c)
+
+	return c
+}
+
+func rbEligibleStake(c *cobra.Command, args []string) error {
 	contract, err := initializeRandomBeacon(c)
 	if err != nil {
 		return err
 	}
-	arg_stakingProvider, err := chainutil.AddressFromHex(c.Args()[0])
+	arg_stakingProvider, err := chainutil.AddressFromHex(args[0])
 	if err != nil {
 		return fmt.Errorf(
 			"couldn't parse parameter arg_stakingProvider, a address, from passed value %v",
-			c.Args()[0],
+			args[0],
 		)
 	}
 
 	result, err := contract.EligibleStakeAtBlock(
 		arg_stakingProvider,
-
-		cmd.BlockFlagValue.Uint,
+		cmd.BlockFlagValue.Int,
 	)
 
 	if err != nil {
@@ -468,15 +258,29 @@ func rbEligibleStake(c *cli.Context) error {
 	return nil
 }
 
-func rbGasParameters(c *cli.Context) error {
+func rbGasParametersCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "gas-parameters",
+		Short:                 "Calls the view method gasParameters on the RandomBeacon contract.",
+		Args:                  cmd.ArgCountChecker(0),
+		RunE:                  rbGasParameters,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	cmd.InitConstFlags(c)
+
+	return c
+}
+
+func rbGasParameters(c *cobra.Command, args []string) error {
 	contract, err := initializeRandomBeacon(c)
 	if err != nil {
 		return err
 	}
 
 	result, err := contract.GasParametersAtBlock(
-
-		cmd.BlockFlagValue.Uint,
+		cmd.BlockFlagValue.Int,
 	)
 
 	if err != nil {
@@ -488,43 +292,37 @@ func rbGasParameters(c *cli.Context) error {
 	return nil
 }
 
-func rbGenesisSeed(c *cli.Context) error {
-	contract, err := initializeRandomBeacon(c)
-	if err != nil {
-		return err
+func rbGetGroup0Command() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "get-group0 [arg_groupPubKey]",
+		Short:                 "Calls the view method getGroup0 on the RandomBeacon contract.",
+		Args:                  cmd.ArgCountChecker(1),
+		RunE:                  rbGetGroup0,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
 	}
 
-	result, err := contract.GenesisSeedAtBlock(
+	cmd.InitConstFlags(c)
 
-		cmd.BlockFlagValue.Uint,
-	)
-
-	if err != nil {
-		return err
-	}
-
-	cmd.PrintOutput(result)
-
-	return nil
+	return c
 }
 
-func rbGetGroup0(c *cli.Context) error {
+func rbGetGroup0(c *cobra.Command, args []string) error {
 	contract, err := initializeRandomBeacon(c)
 	if err != nil {
 		return err
 	}
-	arg_groupPubKey, err := hexutil.Decode(c.Args()[0])
+	arg_groupPubKey, err := hexutil.Decode(args[0])
 	if err != nil {
 		return fmt.Errorf(
 			"couldn't parse parameter arg_groupPubKey, a bytes, from passed value %v",
-			c.Args()[0],
+			args[0],
 		)
 	}
 
 	result, err := contract.GetGroup0AtBlock(
 		arg_groupPubKey,
-
-		cmd.BlockFlagValue.Uint,
+		cmd.BlockFlagValue.Int,
 	)
 
 	if err != nil {
@@ -536,15 +334,29 @@ func rbGetGroup0(c *cli.Context) error {
 	return nil
 }
 
-func rbGetGroupCreationState(c *cli.Context) error {
+func rbGetGroupCreationStateCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "get-group-creation-state",
+		Short:                 "Calls the view method getGroupCreationState on the RandomBeacon contract.",
+		Args:                  cmd.ArgCountChecker(0),
+		RunE:                  rbGetGroupCreationState,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	cmd.InitConstFlags(c)
+
+	return c
+}
+
+func rbGetGroupCreationState(c *cobra.Command, args []string) error {
 	contract, err := initializeRandomBeacon(c)
 	if err != nil {
 		return err
 	}
 
 	result, err := contract.GetGroupCreationStateAtBlock(
-
-		cmd.BlockFlagValue.Uint,
+		cmd.BlockFlagValue.Int,
 	)
 
 	if err != nil {
@@ -556,15 +368,29 @@ func rbGetGroupCreationState(c *cli.Context) error {
 	return nil
 }
 
-func rbGetGroupsRegistry(c *cli.Context) error {
+func rbGetGroupsRegistryCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "get-groups-registry",
+		Short:                 "Calls the view method getGroupsRegistry on the RandomBeacon contract.",
+		Args:                  cmd.ArgCountChecker(0),
+		RunE:                  rbGetGroupsRegistry,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	cmd.InitConstFlags(c)
+
+	return c
+}
+
+func rbGetGroupsRegistry(c *cobra.Command, args []string) error {
 	contract, err := initializeRandomBeacon(c)
 	if err != nil {
 		return err
 	}
 
 	result, err := contract.GetGroupsRegistryAtBlock(
-
-		cmd.BlockFlagValue.Uint,
+		cmd.BlockFlagValue.Int,
 	)
 
 	if err != nil {
@@ -576,15 +402,29 @@ func rbGetGroupsRegistry(c *cli.Context) error {
 	return nil
 }
 
-func rbGovernance(c *cli.Context) error {
+func rbGovernanceCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "governance",
+		Short:                 "Calls the view method governance on the RandomBeacon contract.",
+		Args:                  cmd.ArgCountChecker(0),
+		RunE:                  rbGovernance,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	cmd.InitConstFlags(c)
+
+	return c
+}
+
+func rbGovernance(c *cobra.Command, args []string) error {
 	contract, err := initializeRandomBeacon(c)
 	if err != nil {
 		return err
 	}
 
 	result, err := contract.GovernanceAtBlock(
-
-		cmd.BlockFlagValue.Uint,
+		cmd.BlockFlagValue.Int,
 	)
 
 	if err != nil {
@@ -596,15 +436,29 @@ func rbGovernance(c *cli.Context) error {
 	return nil
 }
 
-func rbGroupCreationParameters(c *cli.Context) error {
+func rbGroupCreationParametersCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "group-creation-parameters",
+		Short:                 "Calls the view method groupCreationParameters on the RandomBeacon contract.",
+		Args:                  cmd.ArgCountChecker(0),
+		RunE:                  rbGroupCreationParameters,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	cmd.InitConstFlags(c)
+
+	return c
+}
+
+func rbGroupCreationParameters(c *cobra.Command, args []string) error {
 	contract, err := initializeRandomBeacon(c)
 	if err != nil {
 		return err
 	}
 
 	result, err := contract.GroupCreationParametersAtBlock(
-
-		cmd.BlockFlagValue.Uint,
+		cmd.BlockFlagValue.Int,
 	)
 
 	if err != nil {
@@ -616,15 +470,29 @@ func rbGroupCreationParameters(c *cli.Context) error {
 	return nil
 }
 
-func rbHasDkgTimedOut(c *cli.Context) error {
+func rbHasDkgTimedOutCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "has-dkg-timed-out",
+		Short:                 "Calls the view method hasDkgTimedOut on the RandomBeacon contract.",
+		Args:                  cmd.ArgCountChecker(0),
+		RunE:                  rbHasDkgTimedOut,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	cmd.InitConstFlags(c)
+
+	return c
+}
+
+func rbHasDkgTimedOut(c *cobra.Command, args []string) error {
 	contract, err := initializeRandomBeacon(c)
 	if err != nil {
 		return err
 	}
 
 	result, err := contract.HasDkgTimedOutAtBlock(
-
-		cmd.BlockFlagValue.Uint,
+		cmd.BlockFlagValue.Int,
 	)
 
 	if err != nil {
@@ -636,23 +504,37 @@ func rbHasDkgTimedOut(c *cli.Context) error {
 	return nil
 }
 
-func rbIsOperatorInPool(c *cli.Context) error {
+func rbIsOperatorInPoolCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "is-operator-in-pool [arg_operator]",
+		Short:                 "Calls the view method isOperatorInPool on the RandomBeacon contract.",
+		Args:                  cmd.ArgCountChecker(1),
+		RunE:                  rbIsOperatorInPool,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	cmd.InitConstFlags(c)
+
+	return c
+}
+
+func rbIsOperatorInPool(c *cobra.Command, args []string) error {
 	contract, err := initializeRandomBeacon(c)
 	if err != nil {
 		return err
 	}
-	arg_operator, err := chainutil.AddressFromHex(c.Args()[0])
+	arg_operator, err := chainutil.AddressFromHex(args[0])
 	if err != nil {
 		return fmt.Errorf(
 			"couldn't parse parameter arg_operator, a address, from passed value %v",
-			c.Args()[0],
+			args[0],
 		)
 	}
 
 	result, err := contract.IsOperatorInPoolAtBlock(
 		arg_operator,
-
-		cmd.BlockFlagValue.Uint,
+		cmd.BlockFlagValue.Int,
 	)
 
 	if err != nil {
@@ -664,23 +546,37 @@ func rbIsOperatorInPool(c *cli.Context) error {
 	return nil
 }
 
-func rbIsOperatorUpToDate(c *cli.Context) error {
+func rbIsOperatorUpToDateCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "is-operator-up-to-date [arg_operator]",
+		Short:                 "Calls the view method isOperatorUpToDate on the RandomBeacon contract.",
+		Args:                  cmd.ArgCountChecker(1),
+		RunE:                  rbIsOperatorUpToDate,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	cmd.InitConstFlags(c)
+
+	return c
+}
+
+func rbIsOperatorUpToDate(c *cobra.Command, args []string) error {
 	contract, err := initializeRandomBeacon(c)
 	if err != nil {
 		return err
 	}
-	arg_operator, err := chainutil.AddressFromHex(c.Args()[0])
+	arg_operator, err := chainutil.AddressFromHex(args[0])
 	if err != nil {
 		return fmt.Errorf(
 			"couldn't parse parameter arg_operator, a address, from passed value %v",
-			c.Args()[0],
+			args[0],
 		)
 	}
 
 	result, err := contract.IsOperatorUpToDateAtBlock(
 		arg_operator,
-
-		cmd.BlockFlagValue.Uint,
+		cmd.BlockFlagValue.Int,
 	)
 
 	if err != nil {
@@ -692,15 +588,29 @@ func rbIsOperatorUpToDate(c *cli.Context) error {
 	return nil
 }
 
-func rbIsRelayRequestInProgress(c *cli.Context) error {
+func rbIsRelayRequestInProgressCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "is-relay-request-in-progress",
+		Short:                 "Calls the view method isRelayRequestInProgress on the RandomBeacon contract.",
+		Args:                  cmd.ArgCountChecker(0),
+		RunE:                  rbIsRelayRequestInProgress,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	cmd.InitConstFlags(c)
+
+	return c
+}
+
+func rbIsRelayRequestInProgress(c *cobra.Command, args []string) error {
 	contract, err := initializeRandomBeacon(c)
 	if err != nil {
 		return err
 	}
 
 	result, err := contract.IsRelayRequestInProgressAtBlock(
-
-		cmd.BlockFlagValue.Uint,
+		cmd.BlockFlagValue.Int,
 	)
 
 	if err != nil {
@@ -712,15 +622,29 @@ func rbIsRelayRequestInProgress(c *cli.Context) error {
 	return nil
 }
 
-func rbMinimumAuthorization(c *cli.Context) error {
+func rbMinimumAuthorizationCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "minimum-authorization",
+		Short:                 "Calls the view method minimumAuthorization on the RandomBeacon contract.",
+		Args:                  cmd.ArgCountChecker(0),
+		RunE:                  rbMinimumAuthorization,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	cmd.InitConstFlags(c)
+
+	return c
+}
+
+func rbMinimumAuthorization(c *cobra.Command, args []string) error {
 	contract, err := initializeRandomBeacon(c)
 	if err != nil {
 		return err
 	}
 
 	result, err := contract.MinimumAuthorizationAtBlock(
-
-		cmd.BlockFlagValue.Uint,
+		cmd.BlockFlagValue.Int,
 	)
 
 	if err != nil {
@@ -732,23 +656,37 @@ func rbMinimumAuthorization(c *cli.Context) error {
 	return nil
 }
 
-func rbOperatorToStakingProvider(c *cli.Context) error {
+func rbOperatorToStakingProviderCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "operator-to-staking-provider [arg_operator]",
+		Short:                 "Calls the view method operatorToStakingProvider on the RandomBeacon contract.",
+		Args:                  cmd.ArgCountChecker(1),
+		RunE:                  rbOperatorToStakingProvider,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	cmd.InitConstFlags(c)
+
+	return c
+}
+
+func rbOperatorToStakingProvider(c *cobra.Command, args []string) error {
 	contract, err := initializeRandomBeacon(c)
 	if err != nil {
 		return err
 	}
-	arg_operator, err := chainutil.AddressFromHex(c.Args()[0])
+	arg_operator, err := chainutil.AddressFromHex(args[0])
 	if err != nil {
 		return fmt.Errorf(
 			"couldn't parse parameter arg_operator, a address, from passed value %v",
-			c.Args()[0],
+			args[0],
 		)
 	}
 
 	result, err := contract.OperatorToStakingProviderAtBlock(
 		arg_operator,
-
-		cmd.BlockFlagValue.Uint,
+		cmd.BlockFlagValue.Int,
 	)
 
 	if err != nil {
@@ -760,23 +698,37 @@ func rbOperatorToStakingProvider(c *cli.Context) error {
 	return nil
 }
 
-func rbPendingAuthorizationDecrease(c *cli.Context) error {
+func rbPendingAuthorizationDecreaseCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "pending-authorization-decrease [arg_stakingProvider]",
+		Short:                 "Calls the view method pendingAuthorizationDecrease on the RandomBeacon contract.",
+		Args:                  cmd.ArgCountChecker(1),
+		RunE:                  rbPendingAuthorizationDecrease,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	cmd.InitConstFlags(c)
+
+	return c
+}
+
+func rbPendingAuthorizationDecrease(c *cobra.Command, args []string) error {
 	contract, err := initializeRandomBeacon(c)
 	if err != nil {
 		return err
 	}
-	arg_stakingProvider, err := chainutil.AddressFromHex(c.Args()[0])
+	arg_stakingProvider, err := chainutil.AddressFromHex(args[0])
 	if err != nil {
 		return fmt.Errorf(
 			"couldn't parse parameter arg_stakingProvider, a address, from passed value %v",
-			c.Args()[0],
+			args[0],
 		)
 	}
 
 	result, err := contract.PendingAuthorizationDecreaseAtBlock(
 		arg_stakingProvider,
-
-		cmd.BlockFlagValue.Uint,
+		cmd.BlockFlagValue.Int,
 	)
 
 	if err != nil {
@@ -788,15 +740,29 @@ func rbPendingAuthorizationDecrease(c *cli.Context) error {
 	return nil
 }
 
-func rbReimbursementPool(c *cli.Context) error {
+func rbReimbursementPoolCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "reimbursement-pool",
+		Short:                 "Calls the view method reimbursementPool on the RandomBeacon contract.",
+		Args:                  cmd.ArgCountChecker(0),
+		RunE:                  rbReimbursementPool,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	cmd.InitConstFlags(c)
+
+	return c
+}
+
+func rbReimbursementPool(c *cobra.Command, args []string) error {
 	contract, err := initializeRandomBeacon(c)
 	if err != nil {
 		return err
 	}
 
 	result, err := contract.ReimbursementPoolAtBlock(
-
-		cmd.BlockFlagValue.Uint,
+		cmd.BlockFlagValue.Int,
 	)
 
 	if err != nil {
@@ -808,15 +774,29 @@ func rbReimbursementPool(c *cli.Context) error {
 	return nil
 }
 
-func rbRelayEntryParameters(c *cli.Context) error {
+func rbRelayEntryParametersCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "relay-entry-parameters",
+		Short:                 "Calls the view method relayEntryParameters on the RandomBeacon contract.",
+		Args:                  cmd.ArgCountChecker(0),
+		RunE:                  rbRelayEntryParameters,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	cmd.InitConstFlags(c)
+
+	return c
+}
+
+func rbRelayEntryParameters(c *cobra.Command, args []string) error {
 	contract, err := initializeRandomBeacon(c)
 	if err != nil {
 		return err
 	}
 
 	result, err := contract.RelayEntryParametersAtBlock(
-
-		cmd.BlockFlagValue.Uint,
+		cmd.BlockFlagValue.Int,
 	)
 
 	if err != nil {
@@ -828,23 +808,37 @@ func rbRelayEntryParameters(c *cli.Context) error {
 	return nil
 }
 
-func rbRemainingAuthorizationDecreaseDelay(c *cli.Context) error {
+func rbRemainingAuthorizationDecreaseDelayCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "remaining-authorization-decrease-delay [arg_stakingProvider]",
+		Short:                 "Calls the view method remainingAuthorizationDecreaseDelay on the RandomBeacon contract.",
+		Args:                  cmd.ArgCountChecker(1),
+		RunE:                  rbRemainingAuthorizationDecreaseDelay,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	cmd.InitConstFlags(c)
+
+	return c
+}
+
+func rbRemainingAuthorizationDecreaseDelay(c *cobra.Command, args []string) error {
 	contract, err := initializeRandomBeacon(c)
 	if err != nil {
 		return err
 	}
-	arg_stakingProvider, err := chainutil.AddressFromHex(c.Args()[0])
+	arg_stakingProvider, err := chainutil.AddressFromHex(args[0])
 	if err != nil {
 		return fmt.Errorf(
 			"couldn't parse parameter arg_stakingProvider, a address, from passed value %v",
-			c.Args()[0],
+			args[0],
 		)
 	}
 
 	result, err := contract.RemainingAuthorizationDecreaseDelayAtBlock(
 		arg_stakingProvider,
-
-		cmd.BlockFlagValue.Uint,
+		cmd.BlockFlagValue.Int,
 	)
 
 	if err != nil {
@@ -856,15 +850,29 @@ func rbRemainingAuthorizationDecreaseDelay(c *cli.Context) error {
 	return nil
 }
 
-func rbRewardParameters(c *cli.Context) error {
+func rbRewardParametersCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "reward-parameters",
+		Short:                 "Calls the view method rewardParameters on the RandomBeacon contract.",
+		Args:                  cmd.ArgCountChecker(0),
+		RunE:                  rbRewardParameters,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	cmd.InitConstFlags(c)
+
+	return c
+}
+
+func rbRewardParameters(c *cobra.Command, args []string) error {
 	contract, err := initializeRandomBeacon(c)
 	if err != nil {
 		return err
 	}
 
 	result, err := contract.RewardParametersAtBlock(
-
-		cmd.BlockFlagValue.Uint,
+		cmd.BlockFlagValue.Int,
 	)
 
 	if err != nil {
@@ -876,15 +884,29 @@ func rbRewardParameters(c *cli.Context) error {
 	return nil
 }
 
-func rbSelectGroup(c *cli.Context) error {
+func rbSelectGroupCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "select-group",
+		Short:                 "Calls the view method selectGroup on the RandomBeacon contract.",
+		Args:                  cmd.ArgCountChecker(0),
+		RunE:                  rbSelectGroup,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	cmd.InitConstFlags(c)
+
+	return c
+}
+
+func rbSelectGroup(c *cobra.Command, args []string) error {
 	contract, err := initializeRandomBeacon(c)
 	if err != nil {
 		return err
 	}
 
 	result, err := contract.SelectGroupAtBlock(
-
-		cmd.BlockFlagValue.Uint,
+		cmd.BlockFlagValue.Int,
 	)
 
 	if err != nil {
@@ -896,15 +918,29 @@ func rbSelectGroup(c *cli.Context) error {
 	return nil
 }
 
-func rbSlashingParameters(c *cli.Context) error {
+func rbSlashingParametersCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "slashing-parameters",
+		Short:                 "Calls the view method slashingParameters on the RandomBeacon contract.",
+		Args:                  cmd.ArgCountChecker(0),
+		RunE:                  rbSlashingParameters,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	cmd.InitConstFlags(c)
+
+	return c
+}
+
+func rbSlashingParameters(c *cobra.Command, args []string) error {
 	contract, err := initializeRandomBeacon(c)
 	if err != nil {
 		return err
 	}
 
 	result, err := contract.SlashingParametersAtBlock(
-
-		cmd.BlockFlagValue.Uint,
+		cmd.BlockFlagValue.Int,
 	)
 
 	if err != nil {
@@ -916,15 +952,29 @@ func rbSlashingParameters(c *cli.Context) error {
 	return nil
 }
 
-func rbSortitionPool(c *cli.Context) error {
+func rbSortitionPoolCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "sortition-pool",
+		Short:                 "Calls the view method sortitionPool on the RandomBeacon contract.",
+		Args:                  cmd.ArgCountChecker(0),
+		RunE:                  rbSortitionPool,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	cmd.InitConstFlags(c)
+
+	return c
+}
+
+func rbSortitionPool(c *cobra.Command, args []string) error {
 	contract, err := initializeRandomBeacon(c)
 	if err != nil {
 		return err
 	}
 
 	result, err := contract.SortitionPoolAtBlock(
-
-		cmd.BlockFlagValue.Uint,
+		cmd.BlockFlagValue.Int,
 	)
 
 	if err != nil {
@@ -936,15 +986,29 @@ func rbSortitionPool(c *cli.Context) error {
 	return nil
 }
 
-func rbStaking(c *cli.Context) error {
+func rbStakingCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "staking",
+		Short:                 "Calls the view method staking on the RandomBeacon contract.",
+		Args:                  cmd.ArgCountChecker(0),
+		RunE:                  rbStaking,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	cmd.InitConstFlags(c)
+
+	return c
+}
+
+func rbStaking(c *cobra.Command, args []string) error {
 	contract, err := initializeRandomBeacon(c)
 	if err != nil {
 		return err
 	}
 
 	result, err := contract.StakingAtBlock(
-
-		cmd.BlockFlagValue.Uint,
+		cmd.BlockFlagValue.Int,
 	)
 
 	if err != nil {
@@ -956,23 +1020,37 @@ func rbStaking(c *cli.Context) error {
 	return nil
 }
 
-func rbStakingProviderToOperator(c *cli.Context) error {
+func rbStakingProviderToOperatorCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "staking-provider-to-operator [arg_stakingProvider]",
+		Short:                 "Calls the view method stakingProviderToOperator on the RandomBeacon contract.",
+		Args:                  cmd.ArgCountChecker(1),
+		RunE:                  rbStakingProviderToOperator,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	cmd.InitConstFlags(c)
+
+	return c
+}
+
+func rbStakingProviderToOperator(c *cobra.Command, args []string) error {
 	contract, err := initializeRandomBeacon(c)
 	if err != nil {
 		return err
 	}
-	arg_stakingProvider, err := chainutil.AddressFromHex(c.Args()[0])
+	arg_stakingProvider, err := chainutil.AddressFromHex(args[0])
 	if err != nil {
 		return fmt.Errorf(
 			"couldn't parse parameter arg_stakingProvider, a address, from passed value %v",
-			c.Args()[0],
+			args[0],
 		)
 	}
 
 	result, err := contract.StakingProviderToOperatorAtBlock(
 		arg_stakingProvider,
-
-		cmd.BlockFlagValue.Uint,
+		cmd.BlockFlagValue.Int,
 	)
 
 	if err != nil {
@@ -984,15 +1062,29 @@ func rbStakingProviderToOperator(c *cli.Context) error {
 	return nil
 }
 
-func rbTToken(c *cli.Context) error {
+func rbTTokenCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "t-token",
+		Short:                 "Calls the view method tToken on the RandomBeacon contract.",
+		Args:                  cmd.ArgCountChecker(0),
+		RunE:                  rbTToken,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	cmd.InitConstFlags(c)
+
+	return c
+}
+
+func rbTToken(c *cobra.Command, args []string) error {
 	contract, err := initializeRandomBeacon(c)
 	if err != nil {
 		return err
 	}
 
 	result, err := contract.TTokenAtBlock(
-
-		cmd.BlockFlagValue.Uint,
+		cmd.BlockFlagValue.Int,
 	)
 
 	if err != nil {
@@ -1006,17 +1098,33 @@ func rbTToken(c *cli.Context) error {
 
 /// ------------------- Non-const methods -------------------
 
-func rbApproveAuthorizationDecrease(c *cli.Context) error {
+func rbApproveAuthorizationDecreaseCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "approve-authorization-decrease [arg_stakingProvider]",
+		Short:                 "Calls the nonpayable method approveAuthorizationDecrease on the RandomBeacon contract.",
+		Args:                  cmd.ArgCountChecker(1),
+		RunE:                  rbApproveAuthorizationDecrease,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	c.PreRunE = cmd.NonConstArgsChecker
+	cmd.InitNonConstFlags(c)
+
+	return c
+}
+
+func rbApproveAuthorizationDecrease(c *cobra.Command, args []string) error {
 	contract, err := initializeRandomBeacon(c)
 	if err != nil {
 		return err
 	}
 
-	arg_stakingProvider, err := chainutil.AddressFromHex(c.Args()[0])
+	arg_stakingProvider, err := chainutil.AddressFromHex(args[0])
 	if err != nil {
 		return fmt.Errorf(
 			"couldn't parse parameter arg_stakingProvider, a address, from passed value %v",
-			c.Args()[0],
+			args[0],
 		)
 	}
 
@@ -1024,7 +1132,7 @@ func rbApproveAuthorizationDecrease(c *cli.Context) error {
 		transaction *types.Transaction
 	)
 
-	if c.Bool(cmd.SubmitFlag) {
+	if shouldSubmit, _ := c.Flags().GetBool(cmd.SubmitFlag); shouldSubmit {
 		// Do a regular submission. Take payable into account.
 		transaction, err = contract.ApproveAuthorizationDecrease(
 			arg_stakingProvider,
@@ -1033,24 +1141,40 @@ func rbApproveAuthorizationDecrease(c *cli.Context) error {
 			return err
 		}
 
-		cmd.PrintOutput(transaction.Hash)
+		cmd.PrintOutput(transaction.Hash())
 	} else {
 		// Do a call.
 		err = contract.CallApproveAuthorizationDecrease(
 			arg_stakingProvider,
-			cmd.BlockFlagValue.Uint,
+			cmd.BlockFlagValue.Int,
 		)
 		if err != nil {
 			return err
 		}
 
-		cmd.PrintOutput(nil)
+		cmd.PrintOutput("success")
 	}
 
 	return nil
 }
 
-func rbGenesis(c *cli.Context) error {
+func rbGenesisCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "genesis",
+		Short:                 "Calls the nonpayable method genesis on the RandomBeacon contract.",
+		Args:                  cmd.ArgCountChecker(0),
+		RunE:                  rbGenesis,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	c.PreRunE = cmd.NonConstArgsChecker
+	cmd.InitNonConstFlags(c)
+
+	return c
+}
+
+func rbGenesis(c *cobra.Command, args []string) error {
 	contract, err := initializeRandomBeacon(c)
 	if err != nil {
 		return err
@@ -1060,30 +1184,46 @@ func rbGenesis(c *cli.Context) error {
 		transaction *types.Transaction
 	)
 
-	if c.Bool(cmd.SubmitFlag) {
+	if shouldSubmit, _ := c.Flags().GetBool(cmd.SubmitFlag); shouldSubmit {
 		// Do a regular submission. Take payable into account.
 		transaction, err = contract.Genesis()
 		if err != nil {
 			return err
 		}
 
-		cmd.PrintOutput(transaction.Hash)
+		cmd.PrintOutput(transaction.Hash())
 	} else {
 		// Do a call.
 		err = contract.CallGenesis(
-			cmd.BlockFlagValue.Uint,
+			cmd.BlockFlagValue.Int,
 		)
 		if err != nil {
 			return err
 		}
 
-		cmd.PrintOutput(nil)
+		cmd.PrintOutput("success")
 	}
 
 	return nil
 }
 
-func rbJoinSortitionPool(c *cli.Context) error {
+func rbJoinSortitionPoolCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "join-sortition-pool",
+		Short:                 "Calls the nonpayable method joinSortitionPool on the RandomBeacon contract.",
+		Args:                  cmd.ArgCountChecker(0),
+		RunE:                  rbJoinSortitionPool,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	c.PreRunE = cmd.NonConstArgsChecker
+	cmd.InitNonConstFlags(c)
+
+	return c
+}
+
+func rbJoinSortitionPool(c *cobra.Command, args []string) error {
 	contract, err := initializeRandomBeacon(c)
 	if err != nil {
 		return err
@@ -1093,30 +1233,46 @@ func rbJoinSortitionPool(c *cli.Context) error {
 		transaction *types.Transaction
 	)
 
-	if c.Bool(cmd.SubmitFlag) {
+	if shouldSubmit, _ := c.Flags().GetBool(cmd.SubmitFlag); shouldSubmit {
 		// Do a regular submission. Take payable into account.
 		transaction, err = contract.JoinSortitionPool()
 		if err != nil {
 			return err
 		}
 
-		cmd.PrintOutput(transaction.Hash)
+		cmd.PrintOutput(transaction.Hash())
 	} else {
 		// Do a call.
 		err = contract.CallJoinSortitionPool(
-			cmd.BlockFlagValue.Uint,
+			cmd.BlockFlagValue.Int,
 		)
 		if err != nil {
 			return err
 		}
 
-		cmd.PrintOutput(nil)
+		cmd.PrintOutput("success")
 	}
 
 	return nil
 }
 
-func rbNotifyDkgTimeout(c *cli.Context) error {
+func rbNotifyDkgTimeoutCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "notify-dkg-timeout",
+		Short:                 "Calls the nonpayable method notifyDkgTimeout on the RandomBeacon contract.",
+		Args:                  cmd.ArgCountChecker(0),
+		RunE:                  rbNotifyDkgTimeout,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	c.PreRunE = cmd.NonConstArgsChecker
+	cmd.InitNonConstFlags(c)
+
+	return c
+}
+
+func rbNotifyDkgTimeout(c *cobra.Command, args []string) error {
 	contract, err := initializeRandomBeacon(c)
 	if err != nil {
 		return err
@@ -1126,40 +1282,56 @@ func rbNotifyDkgTimeout(c *cli.Context) error {
 		transaction *types.Transaction
 	)
 
-	if c.Bool(cmd.SubmitFlag) {
+	if shouldSubmit, _ := c.Flags().GetBool(cmd.SubmitFlag); shouldSubmit {
 		// Do a regular submission. Take payable into account.
 		transaction, err = contract.NotifyDkgTimeout()
 		if err != nil {
 			return err
 		}
 
-		cmd.PrintOutput(transaction.Hash)
+		cmd.PrintOutput(transaction.Hash())
 	} else {
 		// Do a call.
 		err = contract.CallNotifyDkgTimeout(
-			cmd.BlockFlagValue.Uint,
+			cmd.BlockFlagValue.Int,
 		)
 		if err != nil {
 			return err
 		}
 
-		cmd.PrintOutput(nil)
+		cmd.PrintOutput("success")
 	}
 
 	return nil
 }
 
-func rbRegisterOperator(c *cli.Context) error {
+func rbRegisterOperatorCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "register-operator [arg_operator]",
+		Short:                 "Calls the nonpayable method registerOperator on the RandomBeacon contract.",
+		Args:                  cmd.ArgCountChecker(1),
+		RunE:                  rbRegisterOperator,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	c.PreRunE = cmd.NonConstArgsChecker
+	cmd.InitNonConstFlags(c)
+
+	return c
+}
+
+func rbRegisterOperator(c *cobra.Command, args []string) error {
 	contract, err := initializeRandomBeacon(c)
 	if err != nil {
 		return err
 	}
 
-	arg_operator, err := chainutil.AddressFromHex(c.Args()[0])
+	arg_operator, err := chainutil.AddressFromHex(args[0])
 	if err != nil {
 		return fmt.Errorf(
 			"couldn't parse parameter arg_operator, a address, from passed value %v",
-			c.Args()[0],
+			args[0],
 		)
 	}
 
@@ -1167,7 +1339,7 @@ func rbRegisterOperator(c *cli.Context) error {
 		transaction *types.Transaction
 	)
 
-	if c.Bool(cmd.SubmitFlag) {
+	if shouldSubmit, _ := c.Flags().GetBool(cmd.SubmitFlag); shouldSubmit {
 		// Do a regular submission. Take payable into account.
 		transaction, err = contract.RegisterOperator(
 			arg_operator,
@@ -1176,34 +1348,50 @@ func rbRegisterOperator(c *cli.Context) error {
 			return err
 		}
 
-		cmd.PrintOutput(transaction.Hash)
+		cmd.PrintOutput(transaction.Hash())
 	} else {
 		// Do a call.
 		err = contract.CallRegisterOperator(
 			arg_operator,
-			cmd.BlockFlagValue.Uint,
+			cmd.BlockFlagValue.Int,
 		)
 		if err != nil {
 			return err
 		}
 
-		cmd.PrintOutput(nil)
+		cmd.PrintOutput("success")
 	}
 
 	return nil
 }
 
-func rbRequestRelayEntry(c *cli.Context) error {
+func rbRequestRelayEntryCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "request-relay-entry [arg_callbackContract]",
+		Short:                 "Calls the nonpayable method requestRelayEntry on the RandomBeacon contract.",
+		Args:                  cmd.ArgCountChecker(1),
+		RunE:                  rbRequestRelayEntry,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	c.PreRunE = cmd.NonConstArgsChecker
+	cmd.InitNonConstFlags(c)
+
+	return c
+}
+
+func rbRequestRelayEntry(c *cobra.Command, args []string) error {
 	contract, err := initializeRandomBeacon(c)
 	if err != nil {
 		return err
 	}
 
-	arg_callbackContract, err := chainutil.AddressFromHex(c.Args()[0])
+	arg_callbackContract, err := chainutil.AddressFromHex(args[0])
 	if err != nil {
 		return fmt.Errorf(
 			"couldn't parse parameter arg_callbackContract, a address, from passed value %v",
-			c.Args()[0],
+			args[0],
 		)
 	}
 
@@ -1211,7 +1399,7 @@ func rbRequestRelayEntry(c *cli.Context) error {
 		transaction *types.Transaction
 	)
 
-	if c.Bool(cmd.SubmitFlag) {
+	if shouldSubmit, _ := c.Flags().GetBool(cmd.SubmitFlag); shouldSubmit {
 		// Do a regular submission. Take payable into account.
 		transaction, err = contract.RequestRelayEntry(
 			arg_callbackContract,
@@ -1220,34 +1408,50 @@ func rbRequestRelayEntry(c *cli.Context) error {
 			return err
 		}
 
-		cmd.PrintOutput(transaction.Hash)
+		cmd.PrintOutput(transaction.Hash())
 	} else {
 		// Do a call.
 		err = contract.CallRequestRelayEntry(
 			arg_callbackContract,
-			cmd.BlockFlagValue.Uint,
+			cmd.BlockFlagValue.Int,
 		)
 		if err != nil {
 			return err
 		}
 
-		cmd.PrintOutput(nil)
+		cmd.PrintOutput("success")
 	}
 
 	return nil
 }
 
-func rbSubmitRelayEntry0(c *cli.Context) error {
+func rbSubmitRelayEntry0Command() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "submit-relay-entry0 [arg_entry]",
+		Short:                 "Calls the nonpayable method submitRelayEntry0 on the RandomBeacon contract.",
+		Args:                  cmd.ArgCountChecker(1),
+		RunE:                  rbSubmitRelayEntry0,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	c.PreRunE = cmd.NonConstArgsChecker
+	cmd.InitNonConstFlags(c)
+
+	return c
+}
+
+func rbSubmitRelayEntry0(c *cobra.Command, args []string) error {
 	contract, err := initializeRandomBeacon(c)
 	if err != nil {
 		return err
 	}
 
-	arg_entry, err := hexutil.Decode(c.Args()[0])
+	arg_entry, err := hexutil.Decode(args[0])
 	if err != nil {
 		return fmt.Errorf(
 			"couldn't parse parameter arg_entry, a bytes, from passed value %v",
-			c.Args()[0],
+			args[0],
 		)
 	}
 
@@ -1255,7 +1459,7 @@ func rbSubmitRelayEntry0(c *cli.Context) error {
 		transaction *types.Transaction
 	)
 
-	if c.Bool(cmd.SubmitFlag) {
+	if shouldSubmit, _ := c.Flags().GetBool(cmd.SubmitFlag); shouldSubmit {
 		// Do a regular submission. Take payable into account.
 		transaction, err = contract.SubmitRelayEntry0(
 			arg_entry,
@@ -1264,34 +1468,50 @@ func rbSubmitRelayEntry0(c *cli.Context) error {
 			return err
 		}
 
-		cmd.PrintOutput(transaction.Hash)
+		cmd.PrintOutput(transaction.Hash())
 	} else {
 		// Do a call.
 		err = contract.CallSubmitRelayEntry0(
 			arg_entry,
-			cmd.BlockFlagValue.Uint,
+			cmd.BlockFlagValue.Int,
 		)
 		if err != nil {
 			return err
 		}
 
-		cmd.PrintOutput(nil)
+		cmd.PrintOutput("success")
 	}
 
 	return nil
 }
 
-func rbTransferGovernance(c *cli.Context) error {
+func rbTransferGovernanceCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "transfer-governance [arg_newGovernance]",
+		Short:                 "Calls the nonpayable method transferGovernance on the RandomBeacon contract.",
+		Args:                  cmd.ArgCountChecker(1),
+		RunE:                  rbTransferGovernance,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	c.PreRunE = cmd.NonConstArgsChecker
+	cmd.InitNonConstFlags(c)
+
+	return c
+}
+
+func rbTransferGovernance(c *cobra.Command, args []string) error {
 	contract, err := initializeRandomBeacon(c)
 	if err != nil {
 		return err
 	}
 
-	arg_newGovernance, err := chainutil.AddressFromHex(c.Args()[0])
+	arg_newGovernance, err := chainutil.AddressFromHex(args[0])
 	if err != nil {
 		return fmt.Errorf(
 			"couldn't parse parameter arg_newGovernance, a address, from passed value %v",
-			c.Args()[0],
+			args[0],
 		)
 	}
 
@@ -1299,7 +1519,7 @@ func rbTransferGovernance(c *cli.Context) error {
 		transaction *types.Transaction
 	)
 
-	if c.Bool(cmd.SubmitFlag) {
+	if shouldSubmit, _ := c.Flags().GetBool(cmd.SubmitFlag); shouldSubmit {
 		// Do a regular submission. Take payable into account.
 		transaction, err = contract.TransferGovernance(
 			arg_newGovernance,
@@ -1308,58 +1528,74 @@ func rbTransferGovernance(c *cli.Context) error {
 			return err
 		}
 
-		cmd.PrintOutput(transaction.Hash)
+		cmd.PrintOutput(transaction.Hash())
 	} else {
 		// Do a call.
 		err = contract.CallTransferGovernance(
 			arg_newGovernance,
-			cmd.BlockFlagValue.Uint,
+			cmd.BlockFlagValue.Int,
 		)
 		if err != nil {
 			return err
 		}
 
-		cmd.PrintOutput(nil)
+		cmd.PrintOutput("success")
 	}
 
 	return nil
 }
 
-func rbUpdateGasParameters(c *cli.Context) error {
+func rbUpdateGasParametersCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "update-gas-parameters [arg_dkgResultSubmissionGas] [arg_dkgResultApprovalGasOffset] [arg_notifyOperatorInactivityGasOffset] [arg_relayEntrySubmissionGasOffset]",
+		Short:                 "Calls the nonpayable method updateGasParameters on the RandomBeacon contract.",
+		Args:                  cmd.ArgCountChecker(4),
+		RunE:                  rbUpdateGasParameters,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	c.PreRunE = cmd.NonConstArgsChecker
+	cmd.InitNonConstFlags(c)
+
+	return c
+}
+
+func rbUpdateGasParameters(c *cobra.Command, args []string) error {
 	contract, err := initializeRandomBeacon(c)
 	if err != nil {
 		return err
 	}
 
-	arg_dkgResultSubmissionGas, err := hexutil.DecodeBig(c.Args()[0])
+	arg_dkgResultSubmissionGas, err := hexutil.DecodeBig(args[0])
 	if err != nil {
 		return fmt.Errorf(
 			"couldn't parse parameter arg_dkgResultSubmissionGas, a uint256, from passed value %v",
-			c.Args()[0],
+			args[0],
 		)
 	}
 
-	arg_dkgResultApprovalGasOffset, err := hexutil.DecodeBig(c.Args()[1])
+	arg_dkgResultApprovalGasOffset, err := hexutil.DecodeBig(args[1])
 	if err != nil {
 		return fmt.Errorf(
 			"couldn't parse parameter arg_dkgResultApprovalGasOffset, a uint256, from passed value %v",
-			c.Args()[1],
+			args[1],
 		)
 	}
 
-	arg_notifyOperatorInactivityGasOffset, err := hexutil.DecodeBig(c.Args()[2])
+	arg_notifyOperatorInactivityGasOffset, err := hexutil.DecodeBig(args[2])
 	if err != nil {
 		return fmt.Errorf(
 			"couldn't parse parameter arg_notifyOperatorInactivityGasOffset, a uint256, from passed value %v",
-			c.Args()[2],
+			args[2],
 		)
 	}
 
-	arg_relayEntrySubmissionGasOffset, err := hexutil.DecodeBig(c.Args()[3])
+	arg_relayEntrySubmissionGasOffset, err := hexutil.DecodeBig(args[3])
 	if err != nil {
 		return fmt.Errorf(
 			"couldn't parse parameter arg_relayEntrySubmissionGasOffset, a uint256, from passed value %v",
-			c.Args()[3],
+			args[3],
 		)
 	}
 
@@ -1367,7 +1603,7 @@ func rbUpdateGasParameters(c *cli.Context) error {
 		transaction *types.Transaction
 	)
 
-	if c.Bool(cmd.SubmitFlag) {
+	if shouldSubmit, _ := c.Flags().GetBool(cmd.SubmitFlag); shouldSubmit {
 		// Do a regular submission. Take payable into account.
 		transaction, err = contract.UpdateGasParameters(
 			arg_dkgResultSubmissionGas,
@@ -1379,7 +1615,7 @@ func rbUpdateGasParameters(c *cli.Context) error {
 			return err
 		}
 
-		cmd.PrintOutput(transaction.Hash)
+		cmd.PrintOutput(transaction.Hash())
 	} else {
 		// Do a call.
 		err = contract.CallUpdateGasParameters(
@@ -1387,61 +1623,85 @@ func rbUpdateGasParameters(c *cli.Context) error {
 			arg_dkgResultApprovalGasOffset,
 			arg_notifyOperatorInactivityGasOffset,
 			arg_relayEntrySubmissionGasOffset,
-			cmd.BlockFlagValue.Uint,
+			cmd.BlockFlagValue.Int,
 		)
 		if err != nil {
 			return err
 		}
 
-		cmd.PrintOutput(nil)
+		cmd.PrintOutput("success")
 	}
 
 	return nil
 }
 
-func rbUpdateGroupCreationParameters(c *cli.Context) error {
+func rbUpdateGroupCreationParametersCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "update-group-creation-parameters [arg_groupCreationFrequency] [arg_groupLifetime] [arg_dkgResultChallengePeriodLength] [arg_dkgResultChallengeExtraGas] [arg_dkgResultSubmissionTimeout] [arg_dkgSubmitterPrecedencePeriodLength]",
+		Short:                 "Calls the nonpayable method updateGroupCreationParameters on the RandomBeacon contract.",
+		Args:                  cmd.ArgCountChecker(6),
+		RunE:                  rbUpdateGroupCreationParameters,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	c.PreRunE = cmd.NonConstArgsChecker
+	cmd.InitNonConstFlags(c)
+
+	return c
+}
+
+func rbUpdateGroupCreationParameters(c *cobra.Command, args []string) error {
 	contract, err := initializeRandomBeacon(c)
 	if err != nil {
 		return err
 	}
 
-	arg_groupCreationFrequency, err := hexutil.DecodeBig(c.Args()[0])
+	arg_groupCreationFrequency, err := hexutil.DecodeBig(args[0])
 	if err != nil {
 		return fmt.Errorf(
 			"couldn't parse parameter arg_groupCreationFrequency, a uint256, from passed value %v",
-			c.Args()[0],
+			args[0],
 		)
 	}
 
-	arg_groupLifetime, err := hexutil.DecodeBig(c.Args()[1])
+	arg_groupLifetime, err := hexutil.DecodeBig(args[1])
 	if err != nil {
 		return fmt.Errorf(
 			"couldn't parse parameter arg_groupLifetime, a uint256, from passed value %v",
-			c.Args()[1],
+			args[1],
 		)
 	}
 
-	arg_dkgResultChallengePeriodLength, err := hexutil.DecodeBig(c.Args()[2])
+	arg_dkgResultChallengePeriodLength, err := hexutil.DecodeBig(args[2])
 	if err != nil {
 		return fmt.Errorf(
 			"couldn't parse parameter arg_dkgResultChallengePeriodLength, a uint256, from passed value %v",
-			c.Args()[2],
+			args[2],
 		)
 	}
 
-	arg_dkgResultSubmissionTimeout, err := hexutil.DecodeBig(c.Args()[3])
+	arg_dkgResultChallengeExtraGas, err := hexutil.DecodeBig(args[3])
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter arg_dkgResultChallengeExtraGas, a uint256, from passed value %v",
+			args[3],
+		)
+	}
+
+	arg_dkgResultSubmissionTimeout, err := hexutil.DecodeBig(args[4])
 	if err != nil {
 		return fmt.Errorf(
 			"couldn't parse parameter arg_dkgResultSubmissionTimeout, a uint256, from passed value %v",
-			c.Args()[3],
+			args[4],
 		)
 	}
 
-	arg_dkgSubmitterPrecedencePeriodLength, err := hexutil.DecodeBig(c.Args()[4])
+	arg_dkgSubmitterPrecedencePeriodLength, err := hexutil.DecodeBig(args[5])
 	if err != nil {
 		return fmt.Errorf(
 			"couldn't parse parameter arg_dkgSubmitterPrecedencePeriodLength, a uint256, from passed value %v",
-			c.Args()[4],
+			args[5],
 		)
 	}
 
@@ -1449,12 +1709,13 @@ func rbUpdateGroupCreationParameters(c *cli.Context) error {
 		transaction *types.Transaction
 	)
 
-	if c.Bool(cmd.SubmitFlag) {
+	if shouldSubmit, _ := c.Flags().GetBool(cmd.SubmitFlag); shouldSubmit {
 		// Do a regular submission. Take payable into account.
 		transaction, err = contract.UpdateGroupCreationParameters(
 			arg_groupCreationFrequency,
 			arg_groupLifetime,
 			arg_dkgResultChallengePeriodLength,
+			arg_dkgResultChallengeExtraGas,
 			arg_dkgResultSubmissionTimeout,
 			arg_dkgSubmitterPrecedencePeriodLength,
 		)
@@ -1462,38 +1723,55 @@ func rbUpdateGroupCreationParameters(c *cli.Context) error {
 			return err
 		}
 
-		cmd.PrintOutput(transaction.Hash)
+		cmd.PrintOutput(transaction.Hash())
 	} else {
 		// Do a call.
 		err = contract.CallUpdateGroupCreationParameters(
 			arg_groupCreationFrequency,
 			arg_groupLifetime,
 			arg_dkgResultChallengePeriodLength,
+			arg_dkgResultChallengeExtraGas,
 			arg_dkgResultSubmissionTimeout,
 			arg_dkgSubmitterPrecedencePeriodLength,
-			cmd.BlockFlagValue.Uint,
+			cmd.BlockFlagValue.Int,
 		)
 		if err != nil {
 			return err
 		}
 
-		cmd.PrintOutput(nil)
+		cmd.PrintOutput("success")
 	}
 
 	return nil
 }
 
-func rbUpdateOperatorStatus(c *cli.Context) error {
+func rbUpdateOperatorStatusCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "update-operator-status [arg_operator]",
+		Short:                 "Calls the nonpayable method updateOperatorStatus on the RandomBeacon contract.",
+		Args:                  cmd.ArgCountChecker(1),
+		RunE:                  rbUpdateOperatorStatus,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	c.PreRunE = cmd.NonConstArgsChecker
+	cmd.InitNonConstFlags(c)
+
+	return c
+}
+
+func rbUpdateOperatorStatus(c *cobra.Command, args []string) error {
 	contract, err := initializeRandomBeacon(c)
 	if err != nil {
 		return err
 	}
 
-	arg_operator, err := chainutil.AddressFromHex(c.Args()[0])
+	arg_operator, err := chainutil.AddressFromHex(args[0])
 	if err != nil {
 		return fmt.Errorf(
 			"couldn't parse parameter arg_operator, a address, from passed value %v",
-			c.Args()[0],
+			args[0],
 		)
 	}
 
@@ -1501,7 +1779,7 @@ func rbUpdateOperatorStatus(c *cli.Context) error {
 		transaction *types.Transaction
 	)
 
-	if c.Bool(cmd.SubmitFlag) {
+	if shouldSubmit, _ := c.Flags().GetBool(cmd.SubmitFlag); shouldSubmit {
 		// Do a regular submission. Take payable into account.
 		transaction, err = contract.UpdateOperatorStatus(
 			arg_operator,
@@ -1510,34 +1788,50 @@ func rbUpdateOperatorStatus(c *cli.Context) error {
 			return err
 		}
 
-		cmd.PrintOutput(transaction.Hash)
+		cmd.PrintOutput(transaction.Hash())
 	} else {
 		// Do a call.
 		err = contract.CallUpdateOperatorStatus(
 			arg_operator,
-			cmd.BlockFlagValue.Uint,
+			cmd.BlockFlagValue.Int,
 		)
 		if err != nil {
 			return err
 		}
 
-		cmd.PrintOutput(nil)
+		cmd.PrintOutput("success")
 	}
 
 	return nil
 }
 
-func rbUpdateReimbursementPool(c *cli.Context) error {
+func rbUpdateReimbursementPoolCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "update-reimbursement-pool [arg__reimbursementPool]",
+		Short:                 "Calls the nonpayable method updateReimbursementPool on the RandomBeacon contract.",
+		Args:                  cmd.ArgCountChecker(1),
+		RunE:                  rbUpdateReimbursementPool,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	c.PreRunE = cmd.NonConstArgsChecker
+	cmd.InitNonConstFlags(c)
+
+	return c
+}
+
+func rbUpdateReimbursementPool(c *cobra.Command, args []string) error {
 	contract, err := initializeRandomBeacon(c)
 	if err != nil {
 		return err
 	}
 
-	arg__reimbursementPool, err := chainutil.AddressFromHex(c.Args()[0])
+	arg__reimbursementPool, err := chainutil.AddressFromHex(args[0])
 	if err != nil {
 		return fmt.Errorf(
 			"couldn't parse parameter arg__reimbursementPool, a address, from passed value %v",
-			c.Args()[0],
+			args[0],
 		)
 	}
 
@@ -1545,7 +1839,7 @@ func rbUpdateReimbursementPool(c *cli.Context) error {
 		transaction *types.Transaction
 	)
 
-	if c.Bool(cmd.SubmitFlag) {
+	if shouldSubmit, _ := c.Flags().GetBool(cmd.SubmitFlag); shouldSubmit {
 		// Do a regular submission. Take payable into account.
 		transaction, err = contract.UpdateReimbursementPool(
 			arg__reimbursementPool,
@@ -1554,50 +1848,66 @@ func rbUpdateReimbursementPool(c *cli.Context) error {
 			return err
 		}
 
-		cmd.PrintOutput(transaction.Hash)
+		cmd.PrintOutput(transaction.Hash())
 	} else {
 		// Do a call.
 		err = contract.CallUpdateReimbursementPool(
 			arg__reimbursementPool,
-			cmd.BlockFlagValue.Uint,
+			cmd.BlockFlagValue.Int,
 		)
 		if err != nil {
 			return err
 		}
 
-		cmd.PrintOutput(nil)
+		cmd.PrintOutput("success")
 	}
 
 	return nil
 }
 
-func rbUpdateRelayEntryParameters(c *cli.Context) error {
+func rbUpdateRelayEntryParametersCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "update-relay-entry-parameters [arg_relayEntrySoftTimeout] [arg_relayEntryHardTimeout] [arg_callbackGasLimit]",
+		Short:                 "Calls the nonpayable method updateRelayEntryParameters on the RandomBeacon contract.",
+		Args:                  cmd.ArgCountChecker(3),
+		RunE:                  rbUpdateRelayEntryParameters,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	c.PreRunE = cmd.NonConstArgsChecker
+	cmd.InitNonConstFlags(c)
+
+	return c
+}
+
+func rbUpdateRelayEntryParameters(c *cobra.Command, args []string) error {
 	contract, err := initializeRandomBeacon(c)
 	if err != nil {
 		return err
 	}
 
-	arg_relayEntrySoftTimeout, err := hexutil.DecodeBig(c.Args()[0])
+	arg_relayEntrySoftTimeout, err := hexutil.DecodeBig(args[0])
 	if err != nil {
 		return fmt.Errorf(
 			"couldn't parse parameter arg_relayEntrySoftTimeout, a uint256, from passed value %v",
-			c.Args()[0],
+			args[0],
 		)
 	}
 
-	arg_relayEntryHardTimeout, err := hexutil.DecodeBig(c.Args()[1])
+	arg_relayEntryHardTimeout, err := hexutil.DecodeBig(args[1])
 	if err != nil {
 		return fmt.Errorf(
 			"couldn't parse parameter arg_relayEntryHardTimeout, a uint256, from passed value %v",
-			c.Args()[1],
+			args[1],
 		)
 	}
 
-	arg_callbackGasLimit, err := hexutil.DecodeBig(c.Args()[2])
+	arg_callbackGasLimit, err := hexutil.DecodeBig(args[2])
 	if err != nil {
 		return fmt.Errorf(
 			"couldn't parse parameter arg_callbackGasLimit, a uint256, from passed value %v",
-			c.Args()[2],
+			args[2],
 		)
 	}
 
@@ -1605,7 +1915,7 @@ func rbUpdateRelayEntryParameters(c *cli.Context) error {
 		transaction *types.Transaction
 	)
 
-	if c.Bool(cmd.SubmitFlag) {
+	if shouldSubmit, _ := c.Flags().GetBool(cmd.SubmitFlag); shouldSubmit {
 		// Do a regular submission. Take payable into account.
 		transaction, err = contract.UpdateRelayEntryParameters(
 			arg_relayEntrySoftTimeout,
@@ -1616,60 +1926,76 @@ func rbUpdateRelayEntryParameters(c *cli.Context) error {
 			return err
 		}
 
-		cmd.PrintOutput(transaction.Hash)
+		cmd.PrintOutput(transaction.Hash())
 	} else {
 		// Do a call.
 		err = contract.CallUpdateRelayEntryParameters(
 			arg_relayEntrySoftTimeout,
 			arg_relayEntryHardTimeout,
 			arg_callbackGasLimit,
-			cmd.BlockFlagValue.Uint,
+			cmd.BlockFlagValue.Int,
 		)
 		if err != nil {
 			return err
 		}
 
-		cmd.PrintOutput(nil)
+		cmd.PrintOutput("success")
 	}
 
 	return nil
 }
 
-func rbUpdateRewardParameters(c *cli.Context) error {
+func rbUpdateRewardParametersCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "update-reward-parameters [arg_sortitionPoolRewardsBanDuration] [arg_relayEntryTimeoutNotificationRewardMultiplier] [arg_unauthorizedSigningNotificationRewardMultiplier] [arg_dkgMaliciousResultNotificationRewardMultiplier]",
+		Short:                 "Calls the nonpayable method updateRewardParameters on the RandomBeacon contract.",
+		Args:                  cmd.ArgCountChecker(4),
+		RunE:                  rbUpdateRewardParameters,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	c.PreRunE = cmd.NonConstArgsChecker
+	cmd.InitNonConstFlags(c)
+
+	return c
+}
+
+func rbUpdateRewardParameters(c *cobra.Command, args []string) error {
 	contract, err := initializeRandomBeacon(c)
 	if err != nil {
 		return err
 	}
 
-	arg_sortitionPoolRewardsBanDuration, err := hexutil.DecodeBig(c.Args()[0])
+	arg_sortitionPoolRewardsBanDuration, err := hexutil.DecodeBig(args[0])
 	if err != nil {
 		return fmt.Errorf(
 			"couldn't parse parameter arg_sortitionPoolRewardsBanDuration, a uint256, from passed value %v",
-			c.Args()[0],
+			args[0],
 		)
 	}
 
-	arg_relayEntryTimeoutNotificationRewardMultiplier, err := hexutil.DecodeBig(c.Args()[1])
+	arg_relayEntryTimeoutNotificationRewardMultiplier, err := hexutil.DecodeBig(args[1])
 	if err != nil {
 		return fmt.Errorf(
 			"couldn't parse parameter arg_relayEntryTimeoutNotificationRewardMultiplier, a uint256, from passed value %v",
-			c.Args()[1],
+			args[1],
 		)
 	}
 
-	arg_unauthorizedSigningNotificationRewardMultiplier, err := hexutil.DecodeBig(c.Args()[2])
+	arg_unauthorizedSigningNotificationRewardMultiplier, err := hexutil.DecodeBig(args[2])
 	if err != nil {
 		return fmt.Errorf(
 			"couldn't parse parameter arg_unauthorizedSigningNotificationRewardMultiplier, a uint256, from passed value %v",
-			c.Args()[2],
+			args[2],
 		)
 	}
 
-	arg_dkgMaliciousResultNotificationRewardMultiplier, err := hexutil.DecodeBig(c.Args()[3])
+	arg_dkgMaliciousResultNotificationRewardMultiplier, err := hexutil.DecodeBig(args[3])
 	if err != nil {
 		return fmt.Errorf(
 			"couldn't parse parameter arg_dkgMaliciousResultNotificationRewardMultiplier, a uint256, from passed value %v",
-			c.Args()[3],
+			args[3],
 		)
 	}
 
@@ -1677,7 +2003,7 @@ func rbUpdateRewardParameters(c *cli.Context) error {
 		transaction *types.Transaction
 	)
 
-	if c.Bool(cmd.SubmitFlag) {
+	if shouldSubmit, _ := c.Flags().GetBool(cmd.SubmitFlag); shouldSubmit {
 		// Do a regular submission. Take payable into account.
 		transaction, err = contract.UpdateRewardParameters(
 			arg_sortitionPoolRewardsBanDuration,
@@ -1689,7 +2015,7 @@ func rbUpdateRewardParameters(c *cli.Context) error {
 			return err
 		}
 
-		cmd.PrintOutput(transaction.Hash)
+		cmd.PrintOutput(transaction.Hash())
 	} else {
 		// Do a call.
 		err = contract.CallUpdateRewardParameters(
@@ -1697,29 +2023,45 @@ func rbUpdateRewardParameters(c *cli.Context) error {
 			arg_relayEntryTimeoutNotificationRewardMultiplier,
 			arg_unauthorizedSigningNotificationRewardMultiplier,
 			arg_dkgMaliciousResultNotificationRewardMultiplier,
-			cmd.BlockFlagValue.Uint,
+			cmd.BlockFlagValue.Int,
 		)
 		if err != nil {
 			return err
 		}
 
-		cmd.PrintOutput(nil)
+		cmd.PrintOutput("success")
 	}
 
 	return nil
 }
 
-func rbWithdrawIneligibleRewards(c *cli.Context) error {
+func rbWithdrawIneligibleRewardsCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "withdraw-ineligible-rewards [arg_recipient]",
+		Short:                 "Calls the nonpayable method withdrawIneligibleRewards on the RandomBeacon contract.",
+		Args:                  cmd.ArgCountChecker(1),
+		RunE:                  rbWithdrawIneligibleRewards,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	c.PreRunE = cmd.NonConstArgsChecker
+	cmd.InitNonConstFlags(c)
+
+	return c
+}
+
+func rbWithdrawIneligibleRewards(c *cobra.Command, args []string) error {
 	contract, err := initializeRandomBeacon(c)
 	if err != nil {
 		return err
 	}
 
-	arg_recipient, err := chainutil.AddressFromHex(c.Args()[0])
+	arg_recipient, err := chainutil.AddressFromHex(args[0])
 	if err != nil {
 		return fmt.Errorf(
 			"couldn't parse parameter arg_recipient, a address, from passed value %v",
-			c.Args()[0],
+			args[0],
 		)
 	}
 
@@ -1727,7 +2069,7 @@ func rbWithdrawIneligibleRewards(c *cli.Context) error {
 		transaction *types.Transaction
 	)
 
-	if c.Bool(cmd.SubmitFlag) {
+	if shouldSubmit, _ := c.Flags().GetBool(cmd.SubmitFlag); shouldSubmit {
 		// Do a regular submission. Take payable into account.
 		transaction, err = contract.WithdrawIneligibleRewards(
 			arg_recipient,
@@ -1736,34 +2078,50 @@ func rbWithdrawIneligibleRewards(c *cli.Context) error {
 			return err
 		}
 
-		cmd.PrintOutput(transaction.Hash)
+		cmd.PrintOutput(transaction.Hash())
 	} else {
 		// Do a call.
 		err = contract.CallWithdrawIneligibleRewards(
 			arg_recipient,
-			cmd.BlockFlagValue.Uint,
+			cmd.BlockFlagValue.Int,
 		)
 		if err != nil {
 			return err
 		}
 
-		cmd.PrintOutput(nil)
+		cmd.PrintOutput("success")
 	}
 
 	return nil
 }
 
-func rbWithdrawRewards(c *cli.Context) error {
+func rbWithdrawRewardsCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "withdraw-rewards [arg_stakingProvider]",
+		Short:                 "Calls the nonpayable method withdrawRewards on the RandomBeacon contract.",
+		Args:                  cmd.ArgCountChecker(1),
+		RunE:                  rbWithdrawRewards,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	c.PreRunE = cmd.NonConstArgsChecker
+	cmd.InitNonConstFlags(c)
+
+	return c
+}
+
+func rbWithdrawRewards(c *cobra.Command, args []string) error {
 	contract, err := initializeRandomBeacon(c)
 	if err != nil {
 		return err
 	}
 
-	arg_stakingProvider, err := chainutil.AddressFromHex(c.Args()[0])
+	arg_stakingProvider, err := chainutil.AddressFromHex(args[0])
 	if err != nil {
 		return fmt.Errorf(
 			"couldn't parse parameter arg_stakingProvider, a address, from passed value %v",
-			c.Args()[0],
+			args[0],
 		)
 	}
 
@@ -1771,7 +2129,7 @@ func rbWithdrawRewards(c *cli.Context) error {
 		transaction *types.Transaction
 	)
 
-	if c.Bool(cmd.SubmitFlag) {
+	if shouldSubmit, _ := c.Flags().GetBool(cmd.SubmitFlag); shouldSubmit {
 		// Do a regular submission. Take payable into account.
 		transaction, err = contract.WithdrawRewards(
 			arg_stakingProvider,
@@ -1780,18 +2138,18 @@ func rbWithdrawRewards(c *cli.Context) error {
 			return err
 		}
 
-		cmd.PrintOutput(transaction.Hash)
+		cmd.PrintOutput(transaction.Hash())
 	} else {
 		// Do a call.
 		err = contract.CallWithdrawRewards(
 			arg_stakingProvider,
-			cmd.BlockFlagValue.Uint,
+			cmd.BlockFlagValue.Int,
 		)
 		if err != nil {
 			return err
 		}
 
-		cmd.PrintOutput(nil)
+		cmd.PrintOutput("success")
 	}
 
 	return nil
@@ -1799,13 +2157,10 @@ func rbWithdrawRewards(c *cli.Context) error {
 
 /// ------------------- Initialization -------------------
 
-func initializeRandomBeacon(c *cli.Context) (*contract.RandomBeacon, error) {
-	config, err := config.ReadEthereumConfig(c.GlobalString("config"))
-	if err != nil {
-		return nil, fmt.Errorf("error reading config from file: [%v]", err)
-	}
+func initializeRandomBeacon(c *cobra.Command) (*contract.RandomBeacon, error) {
+	cfg := *ModuleCommand.GetConfig()
 
-	client, _, _, err := chainutil.ConnectClients(config.URL, config.URLRPC)
+	client, err := ethclient.Dial(cfg.URL)
 	if err != nil {
 		return nil, fmt.Errorf("error connecting to host chain node: [%v]", err)
 	}
@@ -1819,18 +2174,18 @@ func initializeRandomBeacon(c *cli.Context) (*contract.RandomBeacon, error) {
 	}
 
 	key, err := chainutil.DecryptKeyFile(
-		config.Account.KeyFile,
-		config.Account.KeyFilePassword,
+		cfg.Account.KeyFile,
+		cfg.Account.KeyFilePassword,
 	)
 	if err != nil {
 		return nil, fmt.Errorf(
 			"failed to read KeyFile: %s: [%v]",
-			config.Account.KeyFile,
+			cfg.Account.KeyFile,
 			err,
 		)
 	}
 
-	miningWaiter := chainutil.NewMiningWaiter(client, config)
+	miningWaiter := chainutil.NewMiningWaiter(client, cfg)
 
 	blockCounter, err := chainutil.NewBlockCounter(client)
 	if err != nil {
@@ -1840,7 +2195,14 @@ func initializeRandomBeacon(c *cli.Context) (*contract.RandomBeacon, error) {
 		)
 	}
 
-	address := common.HexToAddress(config.ContractAddresses["RandomBeacon"])
+	address, err := cfg.ContractAddress("RandomBeacon")
+	if err != nil {
+		return nil, fmt.Errorf(
+			"failed to get %s address: [%w]",
+			"RandomBeacon",
+			err,
+		)
+	}
 
 	return contract.NewRandomBeacon(
 		address,

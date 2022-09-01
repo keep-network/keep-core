@@ -3,10 +3,12 @@ package tbtc
 import (
 	"context"
 	"fmt"
+	"runtime"
 	"time"
 
 	"github.com/ipfs/go-log"
 	"github.com/keep-network/keep-common/pkg/persistence"
+	"github.com/keep-network/keep-core/pkg/generator"
 	"github.com/keep-network/keep-core/pkg/net"
 	"github.com/keep-network/keep-core/pkg/sortition"
 )
@@ -19,10 +21,13 @@ var logger = log.Logger("keep-tbtc")
 const ProtocolName = "tbtc"
 
 const (
-	DefaultPreParamsPoolSize              = 50
+	DefaultPreParamsPoolSize              = 3000
 	DefaultPreParamsGenerationTimeout     = 2 * time.Minute
+	DefaultPreParamsGenerationDelay       = 10 * time.Second
 	DefaultPreParamsGenerationConcurrency = 1
 )
+
+var DefaultKeyGenerationConcurrency = runtime.GOMAXPROCS(0)
 
 // Config carries the config for tBTC protocol.
 type Config struct {
@@ -30,8 +35,12 @@ type Config struct {
 	PreParamsPoolSize int
 	// Timeout for pre-parameters generation for tECDSA.
 	PreParamsGenerationTimeout time.Duration
+	// The delay between generating new pre-params for tECDSA.
+	PreParamsGenerationDelay time.Duration
 	// Concurrency level for pre-parameters generation for tECDSA.
 	PreParamsGenerationConcurrency int
+	// Concurrency level for key-generation for tECDSA.
+	KeyGenerationConcurrency int
 }
 
 // Initialize kicks off the TBTC by initializing internal state, ensuring
@@ -42,9 +51,10 @@ func Initialize(
 	chain Chain,
 	netProvider net.Provider,
 	persistence persistence.Handle,
+	scheduler *generator.Scheduler,
 	config Config,
 ) error {
-	node := newNode(chain, netProvider, persistence, config)
+	node := newNode(chain, netProvider, persistence, scheduler, config)
 	deduplicator := newDeduplicator()
 
 	err := sortition.MonitorPool(ctx, logger, chain, sortition.DefaultStatusCheckTick)
@@ -77,6 +87,28 @@ func Initialize(
 
 			node.joinDKGIfEligible(
 				event.Seed,
+				event.BlockNumber,
+			)
+		}()
+	})
+
+	// TODO: This is a temporary signing loop trigger that should be removed
+	//       once the client is integrated with real on-chain contracts.
+	_ = chain.OnSignatureRequested(func(event *SignatureRequestedEvent) {
+		go func() {
+			// There is no need to deduplicate. Test loop events are unique.
+
+			logger.Infof(
+				"signature of message [%v] requested from "+
+					"wallet [0x%x] at block [%v]",
+				event.Message,
+				event.WalletPublicKey,
+				event.BlockNumber,
+			)
+
+			node.joinSigningIfEligible(
+				event.Message,
+				unmarshalPublicKey(event.WalletPublicKey),
 				event.BlockNumber,
 			)
 		}()

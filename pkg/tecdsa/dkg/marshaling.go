@@ -2,6 +2,9 @@ package dkg
 
 import (
 	"fmt"
+	"math/big"
+
+	"github.com/bnb-chain/tss-lib/ecdsa/keygen"
 	"github.com/keep-network/keep-core/pkg/crypto/ephemeral"
 	"github.com/keep-network/keep-core/pkg/protocol/group"
 	"github.com/keep-network/keep-core/pkg/tecdsa/dkg/gen/pb"
@@ -18,6 +21,7 @@ func (epkm *ephemeralPublicKeyMessage) Marshal() ([]byte, error) {
 	return (&pb.EphemeralPublicKeyMessage{
 		SenderID:            uint32(epkm.senderID),
 		EphemeralPublicKeys: ephemeralPublicKeys,
+		SessionID:           epkm.sessionID,
 	}).Marshal()
 }
 
@@ -40,6 +44,7 @@ func (epkm *ephemeralPublicKeyMessage) Unmarshal(bytes []byte) error {
 	}
 
 	epkm.ephemeralPublicKeys = ephemeralPublicKeys
+	epkm.sessionID = pbMsg.SessionID
 
 	return nil
 }
@@ -186,4 +191,79 @@ func unmarshalPublicKeyMap(
 	}
 
 	return unmarshalled, nil
+}
+
+// Marshal converts this resultSignatureMessage to a byte array suitable
+// for network communication.
+func (rsm *resultSignatureMessage) Marshal() ([]byte, error) {
+	return (&pb.ResultSignatureMessage{
+		SenderID:   uint32(rsm.senderID),
+		ResultHash: rsm.resultHash[:],
+		Signature:  rsm.signature,
+		PublicKey:  rsm.publicKey,
+		SessionID:  rsm.sessionID,
+	}).Marshal()
+}
+
+// Unmarshal converts a byte array produced by Marshal to a
+// resultSignatureMessage.
+func (rsm *resultSignatureMessage) Unmarshal(bytes []byte) error {
+	pbMsg := pb.ResultSignatureMessage{}
+	if err := pbMsg.Unmarshal(bytes); err != nil {
+		return err
+	}
+
+	if err := validateMemberIndex(pbMsg.SenderID); err != nil {
+		return err
+	}
+	rsm.senderID = group.MemberIndex(pbMsg.SenderID)
+
+	resultHash, err := ResultHashFromBytes(pbMsg.ResultHash)
+	if err != nil {
+		return err
+	}
+	rsm.resultHash = resultHash
+
+	rsm.signature = pbMsg.Signature
+	rsm.publicKey = pbMsg.PublicKey
+	rsm.sessionID = pbMsg.SessionID
+
+	return nil
+}
+
+// Marshal converts the PreParams to a byte array.
+func (pp *PreParams) Marshal() ([]byte, error) {
+	localPreParams := &pb.PreParams_LocalPreParams{
+		NTilde: pp.data.NTildei.Bytes(),
+		H1I:    pp.data.H1i.Bytes(),
+		H2I:    pp.data.H2i.Bytes(),
+		Alpha:  pp.data.Alpha.Bytes(),
+		Beta:   pp.data.Beta.Bytes(),
+		P:      pp.data.P.Bytes(),
+		Q:      pp.data.Q.Bytes(),
+	}
+
+	return (&pb.PreParams{
+		Data: localPreParams,
+	}).Marshal()
+}
+
+// Unmarshal converts a byte array back to the PreParams.
+func (pp *PreParams) Unmarshal(bytes []byte) error {
+	pbPreParams := pb.PreParams{}
+	if err := pbPreParams.Unmarshal(bytes); err != nil {
+		return fmt.Errorf("failed to unmarshal pre params: [%v]", err)
+	}
+
+	pp.data = &keygen.LocalPreParams{
+		NTildei: new(big.Int).SetBytes(pbPreParams.Data.GetNTilde()),
+		H1i:     new(big.Int).SetBytes(pbPreParams.Data.GetH1I()),
+		H2i:     new(big.Int).SetBytes(pbPreParams.Data.GetH2I()),
+		Alpha:   new(big.Int).SetBytes(pbPreParams.Data.GetAlpha()),
+		Beta:    new(big.Int).SetBytes(pbPreParams.Data.GetBeta()),
+		P:       new(big.Int).SetBytes(pbPreParams.Data.GetP()),
+		Q:       new(big.Int).SetBytes(pbPreParams.Data.GetQ()),
+	}
+
+	return nil
 }

@@ -1,17 +1,22 @@
 package cmd
 
 import (
+	"bufio"
+	"fmt"
 	"math/big"
 	"os"
 	"reflect"
+	"runtime"
+	"strings"
 	"testing"
 	"time"
 
-	"github.com/keep-network/keep-core/config"
-	"github.com/keep-network/keep-core/pkg/chain/ethereum"
 	"github.com/spf13/cobra"
 	"golang.org/x/exp/slices"
 
+	commonEthereum "github.com/keep-network/keep-common/pkg/chain/ethereum"
+	"github.com/keep-network/keep-core/config"
+	chainEthereum "github.com/keep-network/keep-core/pkg/chain/ethereum"
 	ethereumBeacon "github.com/keep-network/keep-core/pkg/chain/ethereum/beacon/gen"
 	ethereumEcdsa "github.com/keep-network/keep-core/pkg/chain/ethereum/ecdsa/gen"
 	ethereumThreshold "github.com/keep-network/keep-core/pkg/chain/ethereum/threshold/gen"
@@ -88,7 +93,7 @@ var cmdFlagsTests = map[string]struct {
 			"/ip4/127.0.0.1/tcp/5001/ipfs/3w6C4TFVo",
 			"/dns4/domain.local/tcp/3819/ipfs/16xtuKXdTd",
 		},
-		defaultValue: []string{},
+		defaultValue: readPeers(commonEthereum.Mainnet),
 	},
 	"network.announcedAddresses": {
 		readValueFunc: func(c *config.Config) interface{} { return c.LibP2P.AnnouncedAddresses },
@@ -118,7 +123,7 @@ var cmdFlagsTests = map[string]struct {
 		flagName:              "--metrics.port",
 		flagValue:             "9870",
 		expectedValueFromFlag: 9870,
-		defaultValue:          8080,
+		defaultValue:          9601,
 	},
 	"metrics.networkMetricsTick": {
 		readValueFunc:         func(c *config.Config) interface{} { return c.Metrics.NetworkMetricsTick },
@@ -139,14 +144,14 @@ var cmdFlagsTests = map[string]struct {
 		flagName:              "--diagnostics.port",
 		flagValue:             "6089",
 		expectedValueFromFlag: 6089,
-		defaultValue:          8081,
+		defaultValue:          9701,
 	},
 	"tbtc.preParamsPoolSize": {
 		readValueFunc:         func(c *config.Config) interface{} { return c.Tbtc.PreParamsPoolSize },
 		flagName:              "--tbtc.preParamsPoolSize",
 		flagValue:             "75",
 		expectedValueFromFlag: 75,
-		defaultValue:          50,
+		defaultValue:          3000,
 	},
 	"tbtc.preParamsGenerationTimeout": {
 		readValueFunc:         func(c *config.Config) interface{} { return c.Tbtc.PreParamsGenerationTimeout },
@@ -155,6 +160,13 @@ var cmdFlagsTests = map[string]struct {
 		expectedValueFromFlag: 150 * time.Second,
 		defaultValue:          120 * time.Second,
 	},
+	"tbtc.preParamsGenerationDelay": {
+		readValueFunc:         func(c *config.Config) interface{} { return c.Tbtc.PreParamsGenerationDelay },
+		flagName:              "--tbtc.preParamsGenerationDelay",
+		flagValue:             "1m",
+		expectedValueFromFlag: 60 * time.Second,
+		defaultValue:          10 * time.Second,
+	},
 	"tbtc.preParamsGenerationConcurrency": {
 		readValueFunc:         func(c *config.Config) interface{} { return c.Tbtc.PreParamsGenerationConcurrency },
 		flagName:              "--tbtc.preParamsGenerationConcurrency",
@@ -162,9 +174,16 @@ var cmdFlagsTests = map[string]struct {
 		expectedValueFromFlag: 2,
 		defaultValue:          1,
 	},
+	"tbtc.keyGenConcurrency": {
+		readValueFunc:         func(c *config.Config) interface{} { return c.Tbtc.KeyGenerationConcurrency },
+		flagName:              "--tbtc.keyGenerationConcurrency",
+		flagValue:             "101",
+		expectedValueFromFlag: 101,
+		defaultValue:          runtime.GOMAXPROCS(0),
+	},
 	"developer.randomBeaconAddress": {
 		readValueFunc: func(c *config.Config) interface{} {
-			address, _ := c.Ethereum.ContractAddress(ethereum.RandomBeaconContractName)
+			address, _ := c.Ethereum.ContractAddress(chainEthereum.RandomBeaconContractName)
 			return address.String()
 		},
 		flagName:              "--developer.randomBeaconAddress",
@@ -174,7 +193,7 @@ var cmdFlagsTests = map[string]struct {
 	},
 	"developer.walletRegistryAddress": {
 		readValueFunc: func(c *config.Config) interface{} {
-			address, _ := c.Ethereum.ContractAddress(ethereum.WalletRegistryContractName)
+			address, _ := c.Ethereum.ContractAddress(chainEthereum.WalletRegistryContractName)
 			return address.String()
 		},
 		flagName:              "--developer.walletRegistryAddress",
@@ -184,7 +203,7 @@ var cmdFlagsTests = map[string]struct {
 	},
 	"developer.tokenStakingAddress": {
 		readValueFunc: func(c *config.Config) interface{} {
-			address, _ := c.Ethereum.ContractAddress(ethereum.TokenStakingContractName)
+			address, _ := c.Ethereum.ContractAddress(chainEthereum.TokenStakingContractName)
 			return address.String()
 		},
 		flagName:              "--developer.tokenStakingAddress",
@@ -293,7 +312,7 @@ func TestFlags_Mixed(t *testing.T) {
 		// Properties not provided in the config file nor set with flags. Use defaults.
 		"diagnostics.port": {
 			readValueFunc: func(c *config.Config) interface{} { return c.Diagnostics.Port },
-			expectedValue: 8081,
+			expectedValue: 9701,
 		},
 	}
 
@@ -319,14 +338,39 @@ func initTestCommand() (*cobra.Command, *config.Config, *string) {
 	testCommand := &cobra.Command{
 		Use: "Test",
 		PreRun: func(cmd *cobra.Command, args []string) {
-			if err := testConfig.ReadConfig(testConfigFilePath, cmd.Flags()); err != nil {
+			if err := testConfig.ReadConfig(testConfigFilePath, cmd.Flags(), config.AllCategories...); err != nil {
 				logger.Fatalf("error reading config: %v", err)
 			}
 		},
 		Run: func(cmd *cobra.Command, args []string) {},
 	}
 
-	initFlags(testCommand, allCategories, &testConfigFilePath, testConfig)
+	initGlobalFlags(testCommand, &testConfigFilePath)
+	initFlags(testCommand, &testConfigFilePath, testConfig, config.AllCategories...)
 
 	return testCommand, testConfig, &testConfigFilePath
+}
+
+func readPeers(network commonEthereum.Network) []string {
+	file, err := os.Open(fmt.Sprintf("../config/_peers/%s", network))
+	if err != nil {
+		panic(err)
+	}
+	defer file.Close()
+
+	scanner := bufio.NewScanner(file)
+	result := []string{}
+	for scanner.Scan() {
+		str := scanner.Text()
+		if str == "" || strings.HasPrefix(str, "#") {
+			continue
+		}
+		result = append(result, str)
+	}
+
+	if err := scanner.Err(); err != nil {
+		panic(err)
+	}
+
+	return result
 }

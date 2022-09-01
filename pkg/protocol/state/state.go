@@ -29,7 +29,10 @@ type State interface {
 
 	// Initiate performs all the required calculations and sends out all the
 	// messages associated with the current state. The context passed to this
-	// function is scoped to the lifetime of the current state.
+	// function is scoped to the lifetime of the current state but is cancelled
+	// upon state's end only after Initiate returns. Because of that,
+	// Initiate should not be blocking for a longer period of time and
+	// should always return before state's end.
 	Initiate(ctx context.Context) error
 
 	// Receive is called each time a new message arrived. Receive is expected to
@@ -39,7 +42,7 @@ type State interface {
 
 	// Next performs a state transition to the next state of the protocol.
 	// If the current state is the last one, nextState returns `nil`.
-	Next() State
+	Next() (State, error)
 
 	// MemberIndex returns the index of member associated with the current state.
 	MemberIndex() group.MemberIndex

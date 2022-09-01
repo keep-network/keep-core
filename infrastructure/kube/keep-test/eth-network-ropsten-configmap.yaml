@@ -1,8 +1,0 @@
-kind: ConfigMap
-apiVersion: v1
-metadata:
-  name: eth-network-ropsten
-  namespace: default
-data:
-  network-id: '3'
-  contract-owner-eth-account-address: '0x923c5dbf353e99394a21aa7b67f3327ca111c67d'

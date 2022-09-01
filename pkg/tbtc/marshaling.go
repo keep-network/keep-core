@@ -16,15 +16,10 @@ var errIncompatiblePublicKey = fmt.Errorf(
 
 // Marshal converts the signer to a byte array.
 func (s *signer) Marshal() ([]byte, error) {
-	if s.wallet.publicKey.Curve.Params().Name != tecdsa.Curve.Params().Name {
-		return nil, errIncompatiblePublicKey
+	walletPublicKey, err := marshalPublicKey(s.wallet.publicKey)
+	if err != nil {
+		return nil, err
 	}
-
-	walletPublicKey := elliptic.Marshal(
-		s.wallet.publicKey.Curve,
-		s.wallet.publicKey.X,
-		s.wallet.publicKey.Y,
-	)
 
 	walletSigningGroupOperators := make(
 		[]string,
@@ -59,15 +54,7 @@ func (s *signer) Unmarshal(bytes []byte) error {
 		return fmt.Errorf("cannot unmarshal signer: [%w]", err)
 	}
 
-	walletPublicKeyX, walletPublicKeyY := elliptic.Unmarshal(
-		tecdsa.Curve,
-		pbSigner.Wallet.PublicKey,
-	)
-	walletPublicKey := &ecdsa.PublicKey{
-		Curve: tecdsa.Curve,
-		X:     walletPublicKeyX,
-		Y:     walletPublicKeyY,
-	}
+	walletPublicKey := unmarshalPublicKey(pbSigner.Wallet.PublicKey)
 
 	walletSigningGroupOperators := make(
 		[]chain.Address,
@@ -91,4 +78,33 @@ func (s *signer) Unmarshal(bytes []byte) error {
 	s.privateKeyShare = privateKeyShare
 
 	return nil
+}
+
+// marshalPublicKey converts an ECDSA public key to a byte
+// array (uncompressed).
+func marshalPublicKey(publicKey *ecdsa.PublicKey) ([]byte, error) {
+	if publicKey.Curve.Params().Name != tecdsa.Curve.Params().Name {
+		return nil, errIncompatiblePublicKey
+	}
+
+	return elliptic.Marshal(
+		publicKey.Curve,
+		publicKey.X,
+		publicKey.Y,
+	), nil
+}
+
+// unmarshalPublicKey converts a byte array (uncompressed) to an ECDSA
+// public key.
+func unmarshalPublicKey(bytes []byte) *ecdsa.PublicKey {
+	x, y := elliptic.Unmarshal(
+		tecdsa.Curve,
+		bytes,
+	)
+
+	return &ecdsa.PublicKey{
+		Curve: tecdsa.Curve,
+		X:     x,
+		Y:     y,
+	}
 }

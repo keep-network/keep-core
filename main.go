@@ -2,15 +2,14 @@ package main
 
 import (
 	"os"
-	"path"
 
 	"fmt"
 
 	"github.com/ipfs/go-log"
+
 	"github.com/keep-network/keep-common/pkg/logging"
 	"github.com/keep-network/keep-core/cmd"
 	"github.com/keep-network/keep-core/config"
-	"github.com/spf13/cobra"
 )
 
 var (
@@ -33,19 +32,7 @@ func main() {
 		fmt.Fprintf(os.Stderr, "failed to configure logging: [%v]\n", err)
 	}
 
-	var rootCmd = &cobra.Command{}
-
-	rootCmd.Use = path.Base(os.Args[0])
-	rootCmd.Short = "CLI for The Keep Network"
-	rootCmd.Long = "Command line interface (CLI) for running a Keep provider"
-	rootCmd.Version = fmt.Sprintf("%s (revision %s)", version, revision)
-
-	rootCmd.AddCommand(
-		cmd.StartCommand,
-		cmd.PingCommand,
-		// TODO: Refactor EthereumCommand to register them in the root command.
-		// cmd.EthereumCommand,
-	)
+	rootCmd := cmd.Initialize(version, revision)
 
 	if err := rootCmd.Execute(); err != nil {
 		logger.Fatal(err)

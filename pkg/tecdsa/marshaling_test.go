@@ -2,12 +2,13 @@ package tecdsa
 
 import (
 	"crypto/elliptic"
-	"github.com/binance-chain/tss-lib/crypto"
+	"reflect"
+	"testing"
+
+	"github.com/bnb-chain/tss-lib/crypto"
 	"github.com/keep-network/keep-core/pkg/internal/pbutils"
 	"github.com/keep-network/keep-core/pkg/internal/tecdsatest"
 	"github.com/keep-network/keep-core/pkg/internal/testutils"
-	"reflect"
-	"testing"
 )
 
 func TestPrivateKeyShareMarshalling(t *testing.T) {
