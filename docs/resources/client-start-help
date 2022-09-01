@@ -30,6 +30,12 @@ Flags:
       --developer.tokenStakingAddress string       Address of the TokenStaking smart contract
       --developer.walletRegistryAddress string     Address of the WalletRegistry smart contract
 
+Global Flags:
+  -c, --config string   Path to the configuration file. Supported formats: TOML, YAML, JSON.
+      --developer       Developer network
+      --goerli          Görli network
+      --mainnet         Mainnet network
+
 Environment variables:
     KEEP_ETHEREUM_PASSWORD    Password for Keep operator account keyfile decryption.
     LOG_LEVEL                 Space-delimited set of log level directives; set to "help" for help.
