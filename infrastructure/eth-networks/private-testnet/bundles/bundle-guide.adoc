@@ -60,10 +60,12 @@ submitted from the Staking Provider Account, please refer to
 link:https://docs.keep.network/registration.html#register-operator[Register Operator]
 documentation.
 
-TIP: When starting the client, remember about running the `keep-client start` command with the `--goerli` flag.
+TIP: When starting the client, remember about running the `keep-client start` 
+command with the `--goerli` flag.
 
 IMPORTANT: The Operator Account has to be funded with Goerli ETH (GöETH) so the
-client can submit transactions to the Ethereum chain.
+client can submit transactions to the Ethereum chain. This bundle doesn't fund
+the account, please do it on your own.
 
 == Configuration
 
