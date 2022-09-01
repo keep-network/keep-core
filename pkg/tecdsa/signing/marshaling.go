@@ -46,7 +46,49 @@ func (epkm *ephemeralPublicKeyMessage) Unmarshal(bytes []byte) error {
 	return nil
 }
 
-// TODO: Marshaling and unmarshaling of tssRoundOneMessage and unit tests.
+// Marshal converts this tssRoundOneMessage to a byte array suitable for
+// network communication.
+func (trom *tssRoundOneMessage) Marshal() ([]byte, error) {
+	peersPayload := make(map[uint32][]byte, len(trom.peersPayload))
+	for receiverID, payload := range trom.peersPayload {
+		peersPayload[uint32(receiverID)] = payload
+	}
+
+	return (&pb.TSSRoundOneMessage{
+		SenderID:         uint32(trom.senderID),
+		BroadcastPayload: trom.broadcastPayload,
+		PeersPayload:     peersPayload,
+		SessionID:        trom.sessionID,
+	}).Marshal()
+}
+
+// Unmarshal converts a byte array produced by Marshal to an tssRoundOneMessage.
+func (trom *tssRoundOneMessage) Unmarshal(bytes []byte) error {
+	pbMsg := pb.TSSRoundOneMessage{}
+	if err := pbMsg.Unmarshal(bytes); err != nil {
+		return err
+	}
+
+	if err := validateMemberIndex(pbMsg.SenderID); err != nil {
+		return err
+	}
+
+	peersPayload := make(map[group.MemberIndex][]byte, len(pbMsg.PeersPayload))
+	for receiverID, payload := range pbMsg.PeersPayload {
+		if err := validateMemberIndex(receiverID); err != nil {
+			return err
+		}
+
+		peersPayload[group.MemberIndex(receiverID)] = payload
+	}
+
+	trom.senderID = group.MemberIndex(pbMsg.SenderID)
+	trom.broadcastPayload = pbMsg.BroadcastPayload
+	trom.peersPayload = peersPayload
+	trom.sessionID = pbMsg.SessionID
+
+	return nil
+}
 
 func validateMemberIndex(protoIndex uint32) error {
 	// Protobuf does not have uint8 type, so we are using uint32. When
