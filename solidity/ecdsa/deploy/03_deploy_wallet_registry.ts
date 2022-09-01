@@ -50,9 +50,7 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   )
 
   if (hre.network.tags.etherscan) {
-    if (hre.network.tags.etherscan) {
-      await helpers.etherscan.verify(EcdsaInactivity)
-    }
+    await helpers.etherscan.verify(EcdsaInactivity)
 
     // We use `verify` instead of `verify:verify` as the `verify` task is defined
     // in "@openzeppelin/hardhat-upgrades" to perform Etherscan verification
