@@ -1,13 +1,14 @@
 package signing
 
 import (
-	"github.com/bnb-chain/tss-lib/common"
+	tsslibcommon "github.com/bnb-chain/tss-lib/common"
 	"github.com/bnb-chain/tss-lib/ecdsa/signing"
 	"github.com/bnb-chain/tss-lib/tss"
 	"github.com/ipfs/go-log"
 	"github.com/keep-network/keep-core/pkg/crypto/ephemeral"
 	"github.com/keep-network/keep-core/pkg/protocol/group"
 	"github.com/keep-network/keep-core/pkg/tecdsa"
+	"github.com/keep-network/keep-core/pkg/tecdsa/common"
 	"math/big"
 )
 
@@ -133,10 +134,7 @@ func (skgm *symmetricKeyGeneratingMember) initializeTssRoundOne() *tssRoundOneMe
 	// Set up the local TSS party using only operating members. This effectively
 	// removes all excluded members who were marked as disqualified at the
 	// beginning of the protocol.
-	//
-	// TODO: Extract commom TSS helpers from pkg/tecdsa/dkg to a
-	//       separate pkg/tecdsa/common (?) package.
-	tssPartyID, groupTssPartiesIDs := generateTssPartiesIDs(
+	tssPartyID, groupTssPartiesIDs := common.GenerateTssPartiesIDs(
 		skgm.id,
 		skgm.group.OperatingMemberIDs(),
 	)
@@ -150,7 +148,7 @@ func (skgm *symmetricKeyGeneratingMember) initializeTssRoundOne() *tssRoundOneMe
 	)
 
 	tssOutgoingMessagesChan := make(chan tss.Message, len(groupTssPartiesIDs))
-	tssResultChan := make(chan common.SignatureData, 1)
+	tssResultChan := make(chan tsslibcommon.SignatureData, 1)
 
 	tssParty := signing.NewLocalParty(
 		skgm.message,
@@ -177,5 +175,5 @@ type tssRoundOneMember struct {
 	tssParty                tss.Party
 	tssParameters           *tss.Parameters
 	tssOutgoingMessagesChan <-chan tss.Message
-	tssResultChan           <-chan common.SignatureData
+	tssResultChan           <-chan tsslibcommon.SignatureData
 }
