@@ -2,9 +2,8 @@ package generator
 
 import (
 	"context"
-	"fmt"
 	"math/big"
-	"reflect"
+	"runtime"
 	"sort"
 	"sync"
 	"testing"
@@ -24,6 +23,9 @@ func TestGetNow(t *testing.T) {
 		if pool.CurrentSize() == 5 {
 			break
 		}
+		// Yield the processor so that the generation goroutines could do their
+		// work. This is here "just in case".
+		runtime.Gosched()
 	}
 
 	for i := 0; i < 5; i++ {
@@ -52,16 +54,7 @@ func TestGetNow_EmptyPool(t *testing.T) {
 
 	_, err := pool.GetNow()
 
-	expectedErr := fmt.Errorf("pool is empty")
-	if !reflect.DeepEqual(expectedErr, err) {
-		t.Errorf(
-			"unexpected error\n"+
-				"expected: [%v]\n"+
-				"actual:   [%v]",
-			expectedErr,
-			err,
-		)
-	}
+	testutils.AssertErrorsSame(t, ErrEmptyPool, err)
 }
 
 // TestStop ensures the pool honors the stop signal send to the scheduler and it

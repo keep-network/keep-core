@@ -23,12 +23,14 @@ type member struct {
 	// Group to which this member belongs.
 	group *group.Group
 	// Validator allowing to check public key and member index against
-	// group members
+	// group members.
 	membershipValidator *group.MembershipValidator
 	// Identifier of the particular DKG session this member is part of.
 	sessionID string
 	// TSS pre-parameters.
 	tssPreParams *keygen.LocalPreParams
+	// Concurrency level of TSS key-generation protocol.
+	keyGenerationConcurrency int
 }
 
 // newMember creates a new member in an initial state
@@ -40,14 +42,16 @@ func newMember(
 	membershipValidator *group.MembershipValidator,
 	sessionID string,
 	tssPreParams *keygen.LocalPreParams,
+	keyGenerationConcurrency int,
 ) *member {
 	return &member{
-		logger:              logger,
-		id:                  memberID,
-		group:               group.NewGroup(dishonestThreshold, groupSize),
-		membershipValidator: membershipValidator,
-		sessionID:           sessionID,
-		tssPreParams:        tssPreParams,
+		logger:                   logger,
+		id:                       memberID,
+		group:                    group.NewGroup(dishonestThreshold, groupSize),
+		membershipValidator:      membershipValidator,
+		sessionID:                sessionID,
+		tssPreParams:             tssPreParams,
+		keyGenerationConcurrency: keyGenerationConcurrency,
 	}
 }
 
@@ -144,6 +148,7 @@ func (skgm *symmetricKeyGeneratingMember) initializeTssRoundOne() *tssRoundOneMe
 		len(groupTssPartiesIDs),
 		skgm.group.HonestThreshold()-1,
 	)
+	tssParameters.SetConcurrency(skgm.keyGenerationConcurrency)
 
 	tssOutgoingMessagesChan := make(chan tss.Message, len(groupTssPartiesIDs))
 	tssResultChan := make(chan keygen.LocalPartySaveData, 1)

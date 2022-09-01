@@ -3,14 +3,15 @@ package tbtc
 import (
 	"context"
 	"fmt"
+	"math/big"
+	"time"
+
 	"github.com/keep-network/keep-common/pkg/persistence"
 	"github.com/keep-network/keep-core/pkg/generator"
 	"github.com/keep-network/keep-core/pkg/internal/testutils"
 	"github.com/keep-network/keep-core/pkg/net"
 	"github.com/keep-network/keep-core/pkg/protocol/group"
 	"github.com/keep-network/keep-core/pkg/tecdsa/dkg"
-	"math/big"
-	"time"
 )
 
 // TODO: Unit tests for `node.go`.
@@ -40,6 +41,7 @@ func newNode(
 		config.PreParamsGenerationTimeout,
 		config.PreParamsGenerationDelay,
 		config.PreParamsGenerationConcurrency,
+		config.KeyGenerationConcurrency,
 	)
 
 	latch := generator.NewProtocolLatch()
@@ -168,7 +170,7 @@ func (n *node) joinDKGIfEligible(seed *big.Int, startBlockNumber uint64) {
 				//       by observing the DKG result submission or timeout.
 				loopCtx, cancelLoopCtx := context.WithTimeout(
 					context.Background(),
-					7 * 24 * time.Hour,
+					7*24*time.Hour,
 				)
 				defer cancelLoopCtx()
 

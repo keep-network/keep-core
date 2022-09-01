@@ -3,6 +3,7 @@ package tbtc
 import (
 	"context"
 	"fmt"
+	"runtime"
 	"time"
 
 	"github.com/ipfs/go-log"
@@ -26,6 +27,8 @@ const (
 	DefaultPreParamsGenerationConcurrency = 1
 )
 
+var DefaultKeyGenerationConcurrency = runtime.GOMAXPROCS(0)
+
 // Config carries the config for tBTC protocol.
 type Config struct {
 	// The size of the pre-parameters pool for tECDSA.
@@ -36,6 +39,8 @@ type Config struct {
 	PreParamsGenerationDelay time.Duration
 	// Concurrency level for pre-parameters generation for tECDSA.
 	PreParamsGenerationConcurrency int
+	// Concurrency level for key-generation for tECDSA.
+	KeyGenerationConcurrency int
 }
 
 // Initialize kicks off the TBTC by initializing internal state, ensuring

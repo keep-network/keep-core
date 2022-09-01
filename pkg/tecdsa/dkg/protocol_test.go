@@ -1361,11 +1361,12 @@ func initializeEphemeralKeyPairGeneratingMembersGroup(
 
 		members = append(members, &ephemeralKeyPairGeneratingMember{
 			member: &member{
-				logger:       &testutils.MockLogger{},
-				id:           id,
-				group:        dkgGroup,
-				sessionID:    sessionID,
-				tssPreParams: tssPreParams[id],
+				logger:                   &testutils.MockLogger{},
+				id:                       id,
+				group:                    dkgGroup,
+				sessionID:                sessionID,
+				tssPreParams:             tssPreParams[id],
+				keyGenerationConcurrency: 10,
 			},
 			ephemeralKeyPairs: make(map[group.MemberIndex]*ephemeral.KeyPair),
 		})
