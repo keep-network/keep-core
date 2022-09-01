@@ -280,7 +280,7 @@ This is a sample run command for illustration purposes only.
 
 [source,bash]
 ----
-export KEEP_ETHEREUM_PASSWORD=$(cat .secrets/eth-account-password.txt)
+export KEEP_CLIENT_ETHEREUM_PASSWORD=$(cat .secrets/eth-account-password.txt)
 export KEEP_CLIENT_CONFIG_DIR=$(pwd)/config
 export KEEP_CLIENT_PERSISTENCE_DIR=$(pwd)/persistence
 
@@ -288,7 +288,7 @@ docker run -d \
 --entrypoint /usr/local/bin/keep-client
 --volume $KEEP_CLIENT_PERSISTENCE_DIR:/mnt/keep-client/persistence \
 --volume $KEEP_CLIENT_CONFIG_DIR:/mnt/keep-client/config \
---env KEEP_ETHEREUM_PASSWORD=$KEEP_ETHEREUM_PASSWORD \
+--env KEEP_ETHEREUM_PASSWORD=$KEEP_CLIENT_ETHEREUM_PASSWORD \
 --env LOG_LEVEL=debug \
 --log-opt max-size=100m \
 --log-opt max-file=3 \
