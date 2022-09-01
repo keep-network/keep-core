@@ -1,6 +1,6 @@
 {
   "name": "@keep-network/ecdsa",
-  "version": "2.0.0-dev",
+  "version": "2.0.0-dapp-dev-goerli",
   "description": "Keep ECDSA Wallet",
   "license": "MIT",
   "files": [
