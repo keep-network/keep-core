@@ -72,5 +72,5 @@ jobs:
               issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body: 'Preview uploaded to https://docs.keep.network/${{ github.head_ref }}/index.html.'
+              body: 'Documentation preview uploaded to https://docs.keep.network/${{ github.head_ref }}/index.html.'
             })
