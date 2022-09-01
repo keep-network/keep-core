@@ -11,16 +11,23 @@ import (
 	"time"
 
 	"github.com/ethereum/go-ethereum/crypto/secp256k1"
+	"github.com/spf13/cobra"
+
 	"github.com/keep-network/keep-core/pkg/firewall"
 	"github.com/keep-network/keep-core/pkg/net"
 	"github.com/keep-network/keep-core/pkg/net/libp2p"
 	"github.com/keep-network/keep-core/pkg/net/retransmission"
 	"github.com/keep-network/keep-core/pkg/operator"
-	"github.com/spf13/cobra"
 )
 
 // PingCommand contains the definition of the ping command-line subcommand.
-var PingCommand *cobra.Command
+var PingCommand = &cobra.Command{
+	Use:                   "ping [multiaddr]...",
+	Short:                 `bidirectional send between two peers to test the network`,
+	Long:                  pingDescription,
+	DisableFlagsInUseLine: true,
+	RunE:                  pingRequest,
+}
 
 const (
 	ping         = "PING"
@@ -32,16 +39,6 @@ const pingDescription = `The ping command conducts a simple peer-to-peer test
    between a bootstrap node and another peer: can known peers communicate over
    a peer-to-peer network. Both peers send a "PING" and expect to receive a
    corresponding "PONG". Notably, this does not exercise peer discovery.`
-
-func init() {
-	PingCommand = &cobra.Command{
-		Use:                   "ping [multiaddr]...",
-		Short:                 `bidirectional send between two peers to test the network`,
-		Long:                  pingDescription,
-		DisableFlagsInUseLine: true,
-		RunE:                  pingRequest,
-	}
-}
 
 func isBootstrapNode(args []string) (bool, []string) {
 	var bootstrapPeers []string

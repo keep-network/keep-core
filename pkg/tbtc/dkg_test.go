@@ -7,6 +7,8 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/keep-network/keep-core/pkg/chain/local_v1"
+
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/internal/tecdsatest"
 	"github.com/keep-network/keep-core/pkg/protocol/group"
@@ -388,10 +390,137 @@ func TestDkgRetryLoop(t *testing.T) {
 	}
 }
 
+func TestDecideSigningGroupMemberFate(t *testing.T) {
+	chainConfig := &ChainConfig{
+		GroupSize:       10,
+		GroupQuorum:     8,
+		HonestThreshold: 6,
+	}
+
+	blockCounter, err := local_v1.BlockCounter()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	testData, err := tecdsatest.LoadPrivateKeyShareTestFixtures(1)
+	if err != nil {
+		t.Fatalf("failed to load test data: [%v]", err)
+	}
+
+	memberIndex := group.MemberIndex(1)
+	publicationStartBlock := uint64(0)
+
+	result := &dkg.Result{
+		Group: group.NewGroup(
+			chainConfig.GroupSize-chainConfig.HonestThreshold,
+			chainConfig.GroupSize,
+		),
+		PrivateKeyShare: tecdsa.NewPrivateKeyShare(testData[0]),
+	}
+
+	resultGroupPublicKeyBytes, err := result.GroupPublicKeyBytes()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var tests = map[string]struct {
+		resultSubmittedEvent           *DKGResultSubmittedEvent
+		expectedOperatingMemberIndexes []group.MemberIndex
+		expectedError                  error
+	}{
+		"member supports the published result": {
+			resultSubmittedEvent: &DKGResultSubmittedEvent{
+				MemberIndex:         2,
+				GroupPublicKeyBytes: resultGroupPublicKeyBytes,
+				Misbehaved:          []byte{7, 10},
+				BlockNumber:         publicationStartBlock + 5,
+			},
+			// should return operating members according to the published result
+			expectedOperatingMemberIndexes: []group.MemberIndex{1, 2, 3, 4, 5, 6, 8, 9},
+		},
+		"member supports different public key": {
+			resultSubmittedEvent: &DKGResultSubmittedEvent{
+				MemberIndex:         2,
+				GroupPublicKeyBytes: []byte{0x00, 0x01}, // different result
+				Misbehaved:          []byte{7, 10},
+				BlockNumber:         publicationStartBlock + 5,
+			},
+			expectedError: fmt.Errorf(
+				"[member:%v] could not stay in the group because the "+
+					"member does not support the same group public key",
+				memberIndex,
+			),
+		},
+		"member considered as misbehaved": {
+			resultSubmittedEvent: &DKGResultSubmittedEvent{
+				MemberIndex:         2,
+				GroupPublicKeyBytes: resultGroupPublicKeyBytes,
+				Misbehaved:          []byte{memberIndex}, // member considered as misbehaved
+				BlockNumber:         publicationStartBlock + 5,
+			},
+			expectedError: fmt.Errorf(
+				"[member:%v] could not stay in the group because the "+
+					"member is considered as misbehaving",
+				memberIndex,
+			),
+		},
+		"publication timeout exceeded": {
+			resultSubmittedEvent: nil, // the result is not published at all
+			expectedError:        fmt.Errorf("ECDSA DKG result publication timed out"),
+		},
+	}
+
+	for testName, test := range tests {
+		t.Run(testName, func(t *testing.T) {
+			dkgResultChannel := make(chan *DKGResultSubmittedEvent, 1)
+
+			if test.resultSubmittedEvent != nil {
+				dkgResultChannel <- test.resultSubmittedEvent
+			}
+
+			operatingMemberIndexes, err := decideSigningGroupMemberFate(
+				memberIndex,
+				dkgResultChannel,
+				publicationStartBlock,
+				result,
+				chainConfig,
+				blockCounter,
+			)
+
+			if !reflect.DeepEqual(
+				test.expectedOperatingMemberIndexes,
+				operatingMemberIndexes,
+			) {
+				t.Errorf(
+					"unexpected operating member indexes\n"+
+						"expected: [%v]\n"+
+						"actual:   [%v]",
+					test.expectedOperatingMemberIndexes,
+					operatingMemberIndexes,
+				)
+			}
+
+			if !reflect.DeepEqual(
+				test.expectedError,
+				err,
+			) {
+				t.Errorf(
+					"unexpected error\n"+
+						"expected: [%v]\n"+
+						"actual:   [%v]",
+					test.expectedError,
+					err,
+				)
+			}
+		})
+	}
+}
+
 func TestFinalSigningGroup(t *testing.T) {
 	chainConfig := &ChainConfig{
 		GroupSize:       5,
-		HonestThreshold: 3,
+		GroupQuorum:     3,
+		HonestThreshold: 2,
 	}
 
 	selectedOperators := []chain.Address{
