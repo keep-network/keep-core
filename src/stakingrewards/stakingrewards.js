@@ -55,7 +55,7 @@ async function getEpochById(gqlClient, epochId) {
       epoch = result.data.epoch
     })
 
-    const epochIds = [epoch.id]
+  const epochIds = [epoch.id]
 
   do {
     await gqlClient
@@ -556,4 +556,149 @@ exports.getBonusMerkleInput = async function (gqlUrl) {
   })
 
   return rewards
+}
+
+/**
+ * Retrieve the information of a particular staker, including the staking history.
+ * @param {string}  gqlURL            Subgraph's GraphQL API URL
+ * @param {string}  stakingProvider   Staking provider address
+ * @return {Object}                   The stake's data
+ */
+exports.getStakingHistory = async function (gqlUrl, stakingProvider) {
+  let lastId = ""
+  let data = []
+  let epochStakes = []
+  let amount = 0
+  let stakeData = {
+    data: {},
+    stake: {},
+    operator: {},
+    stakingHistory: [],
+  }
+
+  const gqlClient = createClient({ url: gqlUrl })
+
+  const STAKE_DATA_QUERY = gql`
+    query StakeData($stakingProvider: String) {
+      stakeData(id: $stakingProvider) {
+        id
+        totalStaked
+        authorizer
+        beneficiary
+        keepInTStake
+        nuInTStake
+        tStake
+        owner {
+          id
+        }
+      }
+    }
+  `
+
+  const OPERATOR_QUERY = gql`
+    query Operator($stakingProvider: String) {
+      simplePREApplication(id: $stakingProvider) {
+        operator
+        bondedTimestamp
+        confirmedTimestamp
+      }
+    }
+  `
+
+  const EPOCH_STAKES_QUERY = gql`
+    query EpochStakes(
+      $stakingProvider: String
+      $resultsPerQuery: Int
+      $lastId: String
+    ) {
+      epochStakes(
+        first: $resultsPerQuery
+        where: { stakingProvider: $stakingProvider, id_gt: $lastId }
+      ) {
+        id
+        amount
+        epoch {
+          id
+          timestamp
+        }
+      }
+    }
+  `
+
+  await gqlClient
+    .query(STAKE_DATA_QUERY, {
+      stakingProvider: stakingProvider.toLowerCase(),
+    })
+    .toPromise()
+    .then((result) => {
+      if (result.error) console.error(result.error)
+      const data = result.data.stakeData
+      stakeData.data.stakingProvider = data.id
+      stakeData.data.owner = data.owner.id
+      stakeData.data.beneficiary = data.beneficiary
+      stakeData.data.authorizer = data.authorizer
+      stakeData.stake.totalStaked = parseInt(data.totalStaked / 10 ** 18)
+      stakeData.stake.tStake = parseInt(data.tStake / 10 ** 18)
+      stakeData.stake.nuInTStake = parseInt(data.nuInTStake / 10 ** 18)
+      stakeData.stake.keepInTStake = parseInt(data.keepInTStake / 10 ** 18)
+    })
+
+  await gqlClient
+    .query(OPERATOR_QUERY, {
+      stakingProvider: stakingProvider.toLowerCase(),
+    })
+    .toPromise()
+    .then((result) => {
+      if (result.error) console.error(result.error)
+      const data = result.data.simplePREApplication
+      stakeData.operator.operator = data.operator
+      stakeData.operator.bondedDate = new Date(
+        data.bondedTimestamp * 1000
+      ).toISOString()
+      stakeData.operator.confirmedDate = new Date(
+        data.confirmedTimestamp * 1000
+      ).toISOString()
+    })
+
+  do {
+    await gqlClient
+      .query(EPOCH_STAKES_QUERY, {
+        stakingProvider: stakingProvider.toLowerCase(),
+        resultsPerQuery: RESULTS_PER_QUERY,
+        lastId: lastId,
+      })
+      .toPromise()
+      .then((result) => {
+        if (result.error) console.error(result.error)
+        data = result.data?.epochStakes
+        if (data.length > 0) {
+          epochStakes = epochStakes.concat(data)
+          lastId = data[data.length - 1].id
+        }
+      })
+  } while (data.length > 0)
+
+  epochStakes = epochStakes.sort((epochA, epochB) => {
+    return parseInt(epochA.epoch.id) - parseInt(epochB.epoch.id)
+  })
+
+  epochStakes.forEach((epoch, index) => {
+    const epochAmount = parseInt(epoch.amount)
+    if (epochAmount !== amount) {
+      const histElem = { epoch: epoch.epoch.id }
+      if (stakeData.stakingHistory.length == 0) {
+        histElem.event = "staked"
+      } else {
+        histElem.event = epochAmount > amount ? "topped-up" : "unstaked"
+      }
+      histElem.staked = (epochAmount / 10 ** 18).toFixed()
+      histElem.timestamp = new Date(
+        epoch.epoch.timestamp * 1000
+      ).toISOString()
+      stakeData.stakingHistory.push(histElem)
+      amount = epochAmount
+    }
+  })
+
+  return stakeData
 }
