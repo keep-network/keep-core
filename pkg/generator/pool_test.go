@@ -23,6 +23,8 @@ func TestGetNow(t *testing.T) {
 		if pool.CurrentSize() == 5 {
 			break
 		}
+		// Yield the processor so that the generation goroutines could do their
+		// work. This is here "just in case".
 		runtime.Gosched()
 	}
 
