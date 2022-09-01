@@ -122,7 +122,7 @@ var cmdFlagsTests = map[string]struct {
 		flagName:              "--metrics.port",
 		flagValue:             "9870",
 		expectedValueFromFlag: 9870,
-		defaultValue:          8080,
+		defaultValue:          9601,
 	},
 	"metrics.networkMetricsTick": {
 		readValueFunc:         func(c *config.Config) interface{} { return c.Metrics.NetworkMetricsTick },
@@ -143,7 +143,7 @@ var cmdFlagsTests = map[string]struct {
 		flagName:              "--diagnostics.port",
 		flagValue:             "6089",
 		expectedValueFromFlag: 6089,
-		defaultValue:          8081,
+		defaultValue:          9701,
 	},
 	"tbtc.preParamsPoolSize": {
 		readValueFunc:         func(c *config.Config) interface{} { return c.Tbtc.PreParamsPoolSize },
@@ -304,7 +304,7 @@ func TestFlags_Mixed(t *testing.T) {
 		// Properties not provided in the config file nor set with flags. Use defaults.
 		"diagnostics.port": {
 			readValueFunc: func(c *config.Config) interface{} { return c.Diagnostics.Port },
-			expectedValue: 8081,
+			expectedValue: 9701,
 		},
 	}
 

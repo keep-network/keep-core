@@ -114,6 +114,9 @@ a regular basis.
 
 ==== Network
 
+
+===== Port
+
 Default port mappings.
 
 [%header,cols=2*]
@@ -134,8 +137,22 @@ Default port mappings.
 |`3919`
 |===
 
-If you set a different `port` in your configuration, or configure `peers` with
-non-default ports configured, firewall rules will need to be adjusted accordingly.
+The port has to be exposed publicly, so the peers can connect to your node.
+Please update your firewall rules if necessary.
+
+==== Announced Addresses
+
+An Announced Address is a layered addressing information (`multiaddress`/`multiaddr`)
+announced to the Keep Network that is used by peers to connect with your node, e.g.:
+`/dns4/bootstrap-0.test.keep.network/tcp/3919` or `/ip4/104.154.61.116/tcp/3919`.
+
+If the machine you're running your node is not exposing a public IP (e.g. it is
+behind NAT) you should set the `network.AnnouncedAddresses` 
+(flag: `--network.announcedAddresses`) configuration property to an addresses 
+(`ip4` or `dns4`) under which your node is reachable for the public.
+
+To read more about `multiaddress` see the
+link:https://docs.libp2p.io/reference/glossary/#multiaddr[libp2p docummentation].
 
 ==== Minimum Required Configuration
 
@@ -252,7 +269,7 @@ Exposed metrics contain the value and timestamp at which they were collected.
 
 Example metrics endpoint call result:
 ```
-$ curl localhost:8080/metrics
+$ curl localhost:9601/metrics
 # TYPE connected_peers_count gauge
 connected_peers_count 108 1623235129569
 
@@ -275,7 +292,7 @@ the port at which diagnostics endpoint is exposed.
 
 Example diagnostics endpoint call result:
 ```
-$ curl localhost:8081/diagnostics
+$ curl localhost:9701/diagnostics
 {
   "client_info" { 
    "ethereum_address":"0xDcd4199e22d09248cA2583cBDD2759b2acD22381",

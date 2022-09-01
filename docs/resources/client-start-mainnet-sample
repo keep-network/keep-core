@@ -1,4 +1,4 @@
-export KEEP_CLIENT_ETHEREUM_PASSWORD="<Ethereum Key File Password>"
+export KEEP_ETHEREUM_PASSWORD="<Ethereum Key File Password>"
 
 keep-client \
     start \
