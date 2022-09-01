@@ -272,6 +272,8 @@ Trust math, not hardware.
 ------------------------------------------------------------------------------------------------
 | Keep Client Node                                                                             |
 |                                                                                              |
+| Operator: 0x6299496199d99941193Fdd2d717ef585F431eA05                                         |
+|                                                                                              |
 | Port: 3919                                                                                   |
 | IPs : /ip4/127.0.0.1/tcp/3919/ipfs/16Uiu2HAmM2WfE4uwymj9n1EsaN5jL38cG79jCCSXLX49KoL18aZQ     |
 |       /ip6/::1/tcp/3919/ipfs/16Uiu2HAmM2WfE4uwymj9n1EsaN5jL38cG79jCCSXLX49KoL18aZQ           |
