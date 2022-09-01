@@ -15,8 +15,9 @@ import (
 
 // Executor represents an ECDSA distributed key generation process executor.
 type Executor struct {
-	logger           log.StandardLogger
-	tssPreParamsPool *tssPreParamsPool
+	logger                   log.StandardLogger
+	tssPreParamsPool         *tssPreParamsPool
+	keyGenerationConcurrency int
 }
 
 // NewExecutor creates a new Executor instance.
@@ -27,7 +28,12 @@ func NewExecutor(
 	preParamsGenerationTimeout time.Duration,
 	preParamsGenerationDelay time.Duration,
 	preParamsGenerationConcurrency int,
+	keyGenerationConcurrency int,
 ) *Executor {
+	logger.Infof(
+		"ECDSA key generation concurrency level is [%d]",
+		keyGenerationConcurrency,
+	)
 	return &Executor{
 		logger: logger,
 		tssPreParamsPool: newTssPreParamsPool(
@@ -38,6 +44,7 @@ func NewExecutor(
 			preParamsGenerationDelay,
 			preParamsGenerationConcurrency,
 		),
+		keyGenerationConcurrency: keyGenerationConcurrency,
 	}
 }
 
@@ -64,9 +71,9 @@ func (e *Executor) Execute(
 
 	registerUnmarshallers(channel)
 
-	preParams, err := e.tssPreParamsPool.Get()
+	preParams, err := e.tssPreParamsPool.GetNow()
 	if err != nil {
-		return nil, 0, fmt.Errorf("failed fetching pre-params: [%v]", err)
+		return nil, 0, fmt.Errorf("failed fetching pre-params: [%w]", err)
 	}
 
 	member := newMember(
@@ -77,6 +84,7 @@ func (e *Executor) Execute(
 		membershipValidator,
 		sessionID,
 		preParams.data,
+		e.keyGenerationConcurrency,
 	)
 
 	// Mark excluded members as disqualified in order to not exchange messages

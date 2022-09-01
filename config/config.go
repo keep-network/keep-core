@@ -188,33 +188,6 @@ func validateConfig(config *Config, categories ...Category) error {
 	return result.ErrorOrNil()
 }
 
-// ReadEthereumConfig reads in the configuration from a file specified by `--config`
-// flag and other flags provided in the `flagSet` and returns its contained Ethereum
-// config, or an error if something fails.
-//
-// This is the same as invoking ReadConfig and reading the Ethereum property
-// from the returned config, but is available for external functions that expect
-// to interact solely with Ethereum and are therefore independent of the rest of
-// the config structure.
-func ReadEthereumConfig(flagSet *pflag.FlagSet) (commonEthereum.Config, error) {
-	config := Config{}
-
-	configPath, err := flagSet.GetString("config")
-	if err != nil {
-		return commonEthereum.Config{},
-			fmt.Errorf(
-				"failed to read config file path from command flag: %w",
-				err,
-			)
-	}
-
-	if err := config.ReadConfig(configPath, flagSet, Ethereum); err != nil {
-		return commonEthereum.Config{}, err
-	}
-
-	return config.Ethereum, nil
-}
-
 // readConfigFile uses viper to read configuration from a config file. The config file
 // is not mandatory, if the path is
 func readConfigFile(configFilePath string) error {

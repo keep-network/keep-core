@@ -5,14 +5,15 @@ import (
 	"crypto/ecdsa"
 	"encoding/hex"
 	"fmt"
+	"math/big"
+	"time"
+
 	"github.com/keep-network/keep-common/pkg/persistence"
 	"github.com/keep-network/keep-core/pkg/generator"
 	"github.com/keep-network/keep-core/pkg/net"
 	"github.com/keep-network/keep-core/pkg/protocol/group"
 	"github.com/keep-network/keep-core/pkg/tecdsa/dkg"
 	"github.com/keep-network/keep-core/pkg/tecdsa/signing"
-	"math/big"
-	"time"
 )
 
 // TODO: Unit tests for `node.go`.
@@ -42,6 +43,7 @@ func newNode(
 		config.PreParamsGenerationTimeout,
 		config.PreParamsGenerationDelay,
 		config.PreParamsGenerationConcurrency,
+		config.KeyGenerationConcurrency,
 	)
 
 	latch := generator.NewProtocolLatch()
@@ -170,7 +172,7 @@ func (n *node) joinDKGIfEligible(seed *big.Int, startBlockNumber uint64) {
 				//       by observing the DKG result submission or timeout.
 				loopCtx, cancelLoopCtx := context.WithTimeout(
 					context.Background(),
-					7 * 24 * time.Hour,
+					7*24*time.Hour,
 				)
 				defer cancelLoopCtx()
 
@@ -368,7 +370,7 @@ func (n *node) joinSigningIfEligible(
 		walletPublicKey,
 	); len(signers) > 0 {
 		logger.Infof(
-			"joining signature of message [%v] and " +
+			"joining signature of message [%v] and "+
 				"controlling [%v] signers",
 			message,
 			len(signers),
@@ -444,7 +446,7 @@ func (n *node) joinSigningIfEligible(
 				}
 
 				logger.Infof(
-					"[member:%v] starting signing attempt [%v] of " +
+					"[member:%v] starting signing attempt [%v] of "+
 						"message [%v] with [%v] group members (excluded: [%v])",
 					signer.signingGroupMemberIndex,
 					attemptIndex,
@@ -475,7 +477,7 @@ func (n *node) joinSigningIfEligible(
 				)
 				if err != nil {
 					logger.Errorf(
-						"[member:%v] signing of message [%v] " +
+						"[member:%v] signing of message [%v] "+
 							"failed: [%v]",
 						signer.signingGroupMemberIndex,
 						message,
@@ -485,7 +487,7 @@ func (n *node) joinSigningIfEligible(
 				}
 
 				logger.Infof(
-					"[member:%v] generated signature [%v] " +
+					"[member:%v] generated signature [%v] "+
 						"for message [%v]",
 					signer.signingGroupMemberIndex,
 					result,

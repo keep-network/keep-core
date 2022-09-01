@@ -21,13 +21,13 @@ const (
 	tssRoundOneStateActiveBlocks = 5
 
 	tssRoundTwoStateDelayBlocks  = 1
-	tssRoundTwoStateActiveBlocks = 10
+	tssRoundTwoStateActiveBlocks = 100
 
 	tssRoundThreeStateDelayBlocks  = 1
 	tssRoundThreeStateActiveBlocks = 5
 
 	finalizationStateDelayBlocks  = 1
-	finalizationStateActiveBlocks = 2
+	finalizationStateActiveBlocks = 5
 
 	resultSigningStateDelayBlocks  = 1
 	resultSigningStateActiveBlocks = 5

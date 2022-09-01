@@ -8,6 +8,9 @@ import (
 	"github.com/ipfs/go-log"
 )
 
+// ErrEmptyPool is returned by GetNow when the pool is empty.
+var ErrEmptyPool = fmt.Errorf("pool is empty")
+
 // Persistence defines the expected interface for storing and loading generated
 // and not-yet-used parameters on persistent storage. Generating parameters is
 // usually a computationally expensive operation and generated parameters should
@@ -88,15 +91,23 @@ func NewParameterPool[T any](
 	}
 }
 
-// Get returns a new parameter. It is fetched from the pool or generated if the
+// GetNow returns a new parameter from the pool. Returns ErrEmptyPool when the
 // pool is empty.
-func (pp *ParameterPool[T]) Get() (*T, error) {
-	generated := <-pp.pool
-	err := pp.persistence.Delete(generated)
-	if err != nil {
-		return nil, fmt.Errorf("could not delete persisted parameter: [%w]", err)
+func (pp *ParameterPool[T]) GetNow() (*T, error) {
+	select {
+	case generated := <-pp.pool:
+		err := pp.persistence.Delete(generated)
+		if err != nil {
+			return nil, fmt.Errorf(
+				"could not delete persisted parameter: [%w]",
+				err,
+			)
+		}
+
+		return generated, nil
+	default:
+		return nil, ErrEmptyPool
 	}
-	return generated, nil
 }
 
 // CurrentSize returns the current size of the pool - the number of available

@@ -22,25 +22,23 @@ import (
 )
 
 // StartCommand contains the definition of the start command-line subcommand.
-var StartCommand *cobra.Command
+var StartCommand = &cobra.Command{
+	Use:   "start",
+	Short: "Starts the Keep Client",
+	Long:  "Starts the Keep Client in the foreground",
+	PreRun: func(cmd *cobra.Command, args []string) {
+		if err := clientConfig.ReadConfig(configFilePath, cmd.Flags(), config.AllCategories...); err != nil {
+			logger.Fatalf("error reading config: %v", err)
+		}
+	},
+	Run: func(cmd *cobra.Command, args []string) {
+		if err := start(cmd); err != nil {
+			logger.Fatal(err)
+		}
+	},
+}
 
 func init() {
-	StartCommand = &cobra.Command{
-		Use:   "start",
-		Short: "Starts the Keep Client",
-		Long:  "Starts the Keep Client in the foreground",
-		PreRun: func(cmd *cobra.Command, args []string) {
-			if err := clientConfig.ReadConfig(configFilePath, cmd.Flags(), config.AllCategories...); err != nil {
-				logger.Fatalf("error reading config: %v", err)
-			}
-		},
-		Run: func(cmd *cobra.Command, args []string) {
-			if err := start(cmd); err != nil {
-				logger.Fatal(err)
-			}
-		},
-	}
-
 	initFlags(StartCommand, &configFilePath, clientConfig, config.AllCategories...)
 
 	StartCommand.SetUsageTemplate(
@@ -88,6 +86,7 @@ func start(cmd *cobra.Command) error {
 
 	nodeHeader(
 		netProvider.ConnectionManager().AddrStrings(),
+		beaconChain.Signing().Address().String(),
 		clientConfig.LibP2P.Port,
 		clientConfig.Ethereum,
 	)

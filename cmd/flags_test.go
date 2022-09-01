@@ -6,6 +6,7 @@ import (
 	"math/big"
 	"os"
 	"reflect"
+	"runtime"
 	"strings"
 	"testing"
 	"time"
@@ -122,7 +123,7 @@ var cmdFlagsTests = map[string]struct {
 		flagName:              "--metrics.port",
 		flagValue:             "9870",
 		expectedValueFromFlag: 9870,
-		defaultValue:          8080,
+		defaultValue:          9601,
 	},
 	"metrics.networkMetricsTick": {
 		readValueFunc:         func(c *config.Config) interface{} { return c.Metrics.NetworkMetricsTick },
@@ -143,7 +144,7 @@ var cmdFlagsTests = map[string]struct {
 		flagName:              "--diagnostics.port",
 		flagValue:             "6089",
 		expectedValueFromFlag: 6089,
-		defaultValue:          8081,
+		defaultValue:          9701,
 	},
 	"tbtc.preParamsPoolSize": {
 		readValueFunc:         func(c *config.Config) interface{} { return c.Tbtc.PreParamsPoolSize },
@@ -172,6 +173,13 @@ var cmdFlagsTests = map[string]struct {
 		flagValue:             "2",
 		expectedValueFromFlag: 2,
 		defaultValue:          1,
+	},
+	"tbtc.keyGenConcurrency": {
+		readValueFunc:         func(c *config.Config) interface{} { return c.Tbtc.KeyGenerationConcurrency },
+		flagName:              "--tbtc.keyGenerationConcurrency",
+		flagValue:             "101",
+		expectedValueFromFlag: 101,
+		defaultValue:          runtime.GOMAXPROCS(0),
 	},
 	"developer.randomBeaconAddress": {
 		readValueFunc: func(c *config.Config) interface{} {
@@ -304,7 +312,7 @@ func TestFlags_Mixed(t *testing.T) {
 		// Properties not provided in the config file nor set with flags. Use defaults.
 		"diagnostics.port": {
 			readValueFunc: func(c *config.Config) interface{} { return c.Diagnostics.Port },
-			expectedValue: 8081,
+			expectedValue: 9701,
 		},
 	}
 
@@ -337,6 +345,7 @@ func initTestCommand() (*cobra.Command, *config.Config, *string) {
 		Run: func(cmd *cobra.Command, args []string) {},
 	}
 
+	initGlobalFlags(testCommand, &testConfigFilePath)
 	initFlags(testCommand, &testConfigFilePath, testConfig, config.AllCategories...)
 
 	return testCommand, testConfig, &testConfigFilePath
