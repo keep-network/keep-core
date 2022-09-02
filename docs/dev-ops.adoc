@@ -1,0 +1,19 @@
+:toc: left
+:toclevels: 3
+:sectanchors: true
+:sectids: true
+:source-highlighter: rouge
+:icons: font
+
+= Kubernetes
+
+At Keep we run on GCP + Kubernetes. To accommodate the aforementioned 
+xref:./run-keep-node.adoc#system-considerations[System Considerations]
+we use the following pattern for each of our environments:
+
+- Regional Kubernetes cluster.
+- 10 Keep clients.
+- A LoadBalancer Service for each client.
+- A StatefulSet for each client.
+
+You can see our Testnet Kubernetes configurations link:https://github.com/keep-network/keep-core/tree/main/infrastructure/kube/keep-test[here].

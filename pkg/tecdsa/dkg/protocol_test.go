@@ -1,6 +1,7 @@
 package dkg
 
 import (
+	"bytes"
 	"context"
 	"crypto/elliptic"
 	"encoding/hex"
@@ -691,7 +692,7 @@ func TestTssRoundThree(t *testing.T) {
 	}
 }
 
-func TestTssRoundTwo_IncomingMessageCorrupted_WrongBroadcastPayload(t *testing.T) {
+func TestTssRoundThree_IncomingMessageCorrupted_WrongBroadcastPayload(t *testing.T) {
 	members, messages, err := initializeTssRoundThreeMembersGroup(
 		dishonestThreshold,
 		groupSize,
@@ -731,7 +732,7 @@ func TestTssRoundTwo_IncomingMessageCorrupted_WrongBroadcastPayload(t *testing.T
 	}
 }
 
-func TestTssRoundTwo_IncomingMessageCorrupted_UndecryptablePeerPayload(t *testing.T) {
+func TestTssRoundThree_IncomingMessageCorrupted_UndecryptablePeerPayload(t *testing.T) {
 	members, messages, err := initializeTssRoundThreeMembersGroup(
 		dishonestThreshold,
 		groupSize,
@@ -776,7 +777,7 @@ func TestTssRoundTwo_IncomingMessageCorrupted_UndecryptablePeerPayload(t *testin
 	}
 }
 
-func TestTssRoundTwo_IncomingMessageCorrupted_WrongPeerPayload(t *testing.T) {
+func TestTssRoundThree_IncomingMessageCorrupted_WrongPeerPayload(t *testing.T) {
 	members, messages, err := initializeTssRoundThreeMembersGroup(
 		dishonestThreshold,
 		groupSize,
@@ -1140,6 +1141,206 @@ func TestTssFinalize_ResultTimeout(t *testing.T) {
 	}
 }
 
+func TestSignDKGResult(t *testing.T) {
+	signingMember := initializeSigningMember()
+	result := &Result{}
+
+	publicKey := []byte("publicKey")
+	signature := []byte("signature")
+	resultHash := ResultHash{0: 11, 6: 22, 31: 33}
+
+	resultSigner := newMockResultSigner(publicKey)
+	resultSigner.setSigningOutcome(result, &signingOutcome{
+		signature:  signature,
+		resultHash: resultHash,
+		err:        nil,
+	})
+
+	actualSignatureMessage, err := signingMember.signDKGResult(
+		result,
+		resultSigner,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	expectedSignatureMessage := &resultSignatureMessage{
+		senderID:   signingMember.memberIndex,
+		resultHash: resultHash,
+		signature:  signature,
+		publicKey:  publicKey,
+		sessionID:  sessionID,
+	}
+
+	if !reflect.DeepEqual(
+		expectedSignatureMessage,
+		actualSignatureMessage,
+	) {
+		t.Errorf(
+			"unexpected signature message \nexpected: %v\nactual:   %v\n",
+			expectedSignatureMessage,
+			actualSignatureMessage,
+		)
+	}
+
+	if !bytes.Equal(signature, signingMember.selfDKGResultSignature) {
+		t.Errorf(
+			"unexpected self DKG result signature\nexpected: %v\nactual:   %v\n",
+			signature,
+			signingMember.selfDKGResultSignature,
+		)
+	}
+
+	if resultHash != signingMember.preferredDKGResultHash {
+		t.Errorf(
+			"unexpected preferred DKG result hash\nexpected: %v\nactual:   %v\n",
+			resultHash,
+			signingMember.preferredDKGResultHash,
+		)
+	}
+}
+
+func TestSignDKGResult_ErrorDuringSigning(t *testing.T) {
+	signingMember := initializeSigningMember()
+	result := &Result{}
+
+	resultSigner := newMockResultSigner([]byte("publicKey"))
+	resultSigner.setSigningOutcome(result, &signingOutcome{
+		signature:  []byte("signature"),
+		resultHash: ResultHash{0: 11, 6: 22, 31: 33},
+		err:        fmt.Errorf("dummy error"),
+	})
+
+	_, err := signingMember.signDKGResult(
+		result,
+		resultSigner,
+	)
+
+	expectedErr := fmt.Errorf("failed to sign DKG result [dummy error]")
+	if !reflect.DeepEqual(expectedErr, err) {
+		t.Errorf(
+			"unexpected error\nexpected: %v\nactual:   %v\n",
+			expectedErr,
+			err,
+		)
+	}
+}
+
+func TestSubmitDKGResult(t *testing.T) {
+	submittingMember := initializeSubmittingMember()
+
+	result := &Result{}
+	signatures := map[group.MemberIndex][]byte{
+		11: []byte("signature 11"),
+		22: []byte("signature 22"),
+		33: []byte("signature 33"),
+	}
+	startBlockNumber := 123
+
+	resultSubmitter := newMockResultSubmitter()
+	resultSubmitter.setSubmittingOutcome(result, nil)
+
+	err := submittingMember.submitDKGResult(
+		result,
+		signatures,
+		uint64(startBlockNumber),
+		resultSubmitter,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestSubmitDKGResult_ErrorDuringSubmitting(t *testing.T) {
+	submittingMember := initializeSubmittingMember()
+
+	result := &Result{}
+	signatures := map[group.MemberIndex][]byte{
+		11: []byte("signature 11"),
+		22: []byte("signature 22"),
+		33: []byte("signature 33"),
+	}
+	startBlockNumber := 123
+
+	resultSubmitter := newMockResultSubmitter()
+	resultSubmitter.setSubmittingOutcome(result, fmt.Errorf("dummy error"))
+
+	err := submittingMember.submitDKGResult(
+		result,
+		signatures,
+		uint64(startBlockNumber),
+		resultSubmitter,
+	)
+	expectedErr := fmt.Errorf("failed to submit DKG result [dummy error]")
+	if !reflect.DeepEqual(expectedErr, err) {
+		t.Errorf(
+			"unexpected error\nexpected: %v\nactual:   %v\n",
+			expectedErr,
+			err,
+		)
+	}
+}
+
+func TestDeduplicateBySender(t *testing.T) {
+	tests := map[string]struct {
+		inputItems          []*mockSenderItem
+		expectedOutputItems []*mockSenderItem
+	}{
+		"no duplicates": {
+			inputItems: []*mockSenderItem{
+				{1},
+				{2},
+				{3},
+				{4},
+				{5},
+			},
+			expectedOutputItems: []*mockSenderItem{
+				{1},
+				{2},
+				{3},
+				{4},
+				{5},
+			},
+		},
+		"duplicates": {
+			inputItems: []*mockSenderItem{
+				{1},
+				{2},
+				{2},
+				{3},
+				{4},
+				{1},
+				{5},
+			},
+			expectedOutputItems: []*mockSenderItem{
+				{1},
+				{2},
+				{3},
+				{4},
+				{5},
+			},
+		},
+		"empty input list": {
+			inputItems:          []*mockSenderItem{},
+			expectedOutputItems: []*mockSenderItem{},
+		},
+		"nil input list": {
+			inputItems:          nil,
+			expectedOutputItems: []*mockSenderItem{},
+		},
+	}
+
+	for testName, test := range tests {
+		t.Run(testName, func(t *testing.T) {
+			actualOutputItems := deduplicateBySender(test.inputItems)
+
+			if !reflect.DeepEqual(test.expectedOutputItems, actualOutputItems) {
+				t.Errorf("unexpected output items")
+			}
+		})
+	}
+}
+
 func initializeEphemeralKeyPairGeneratingMembersGroup(
 	dishonestThreshold int,
 	groupSize int,
@@ -1160,11 +1361,12 @@ func initializeEphemeralKeyPairGeneratingMembersGroup(
 
 		members = append(members, &ephemeralKeyPairGeneratingMember{
 			member: &member{
-				logger:       &testutils.MockLogger{},
-				id:           id,
-				group:        dkgGroup,
-				sessionID:    sessionID,
-				tssPreParams: tssPreParams[id],
+				logger:                   &testutils.MockLogger{},
+				id:                       id,
+				group:                    dkgGroup,
+				sessionID:                sessionID,
+				tssPreParams:             tssPreParams[id],
+				keyGenerationConcurrency: 10,
 			},
 			ephemeralKeyPairs: make(map[group.MemberIndex]*ephemeral.KeyPair),
 		})
@@ -1439,6 +1641,20 @@ func initializeFinalizingMembersGroup(
 	return finalizingMembers, tssRoundThreeMessages, nil
 }
 
+func initializeSigningMember() *signingMember {
+	dkgGroup := group.NewGroup(dishonestThreshold, groupSize)
+	return &signingMember{
+		memberIndex: 1,
+		group:       dkgGroup,
+		sessionID:   sessionID,
+	}
+}
+
+func initializeSubmittingMember() *submittingMember {
+	signingMember := initializeSigningMember()
+	return signingMember.initializeSubmittingMember()
+}
+
 func generateMembersTssPreParams(
 	groupSize int,
 ) (map[group.MemberIndex]*keygen.LocalPreParams, error) {
@@ -1541,4 +1757,81 @@ func newTssPreParams(
 		P:       newBigInt(p),
 		Q:       newBigInt(q),
 	}
+}
+
+type signingOutcome struct {
+	signature  []byte
+	resultHash ResultHash
+	err        error
+}
+
+type mockResultSigner struct {
+	publicKey       []byte
+	signingOutcomes map[*Result]*signingOutcome
+}
+
+func newMockResultSigner(publicKey []byte) *mockResultSigner {
+	return &mockResultSigner{
+		publicKey:       publicKey,
+		signingOutcomes: make(map[*Result]*signingOutcome),
+	}
+}
+
+func (mrs *mockResultSigner) setSigningOutcome(result *Result, outcome *signingOutcome) {
+	mrs.signingOutcomes[result] = outcome
+}
+
+func (mrs *mockResultSigner) SignResult(result *Result) (*SignedResult, error) {
+	if outcome, ok := mrs.signingOutcomes[result]; ok {
+		return &SignedResult{
+			PublicKey:  mrs.publicKey,
+			Signature:  outcome.signature,
+			ResultHash: outcome.resultHash,
+		}, outcome.err
+	}
+
+	return nil, fmt.Errorf(
+		"could not find singing outcome for the result",
+	)
+}
+
+func (mrs *mockResultSigner) VerifySignature(signedResult *SignedResult) (bool, error) {
+	return false, nil
+}
+
+type mockResultSubmitter struct {
+	submittingOutcomes map[*Result]error
+}
+
+func newMockResultSubmitter() *mockResultSubmitter {
+	return &mockResultSubmitter{
+		submittingOutcomes: make(map[*Result]error),
+	}
+}
+
+func (mrs *mockResultSubmitter) setSubmittingOutcome(result *Result, err error) {
+	mrs.submittingOutcomes[result] = err
+}
+
+func (mrs *mockResultSubmitter) SubmitResult(
+	memberIndex group.MemberIndex,
+	result *Result,
+	signatures map[group.MemberIndex][]byte,
+	startBlockNumber uint64,
+) error {
+	if err, ok := mrs.submittingOutcomes[result]; ok {
+		return err
+	}
+
+	return fmt.Errorf(
+		"could not find submitting outcome for the result",
+	)
+}
+
+type mockSenderItem struct {
+	senderID group.MemberIndex
+}
+
+func (msi *mockSenderItem) SenderID() group.MemberIndex {
+	return msi.senderID
 }

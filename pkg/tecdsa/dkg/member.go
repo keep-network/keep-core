@@ -23,12 +23,14 @@ type member struct {
 	// Group to which this member belongs.
 	group *group.Group
 	// Validator allowing to check public key and member index against
-	// group members
+	// group members.
 	membershipValidator *group.MembershipValidator
 	// Identifier of the particular DKG session this member is part of.
 	sessionID string
 	// TSS pre-parameters.
 	tssPreParams *keygen.LocalPreParams
+	// Concurrency level of TSS key-generation protocol.
+	keyGenerationConcurrency int
 }
 
 // newMember creates a new member in an initial state
@@ -40,14 +42,16 @@ func newMember(
 	membershipValidator *group.MembershipValidator,
 	sessionID string,
 	tssPreParams *keygen.LocalPreParams,
+	keyGenerationConcurrency int,
 ) *member {
 	return &member{
-		logger:              logger,
-		id:                  memberID,
-		group:               group.NewGroup(dishonestThreshold, groupSize),
-		membershipValidator: membershipValidator,
-		sessionID:           sessionID,
-		tssPreParams:        tssPreParams,
+		logger:                   logger,
+		id:                       memberID,
+		group:                    group.NewGroup(dishonestThreshold, groupSize),
+		membershipValidator:      membershipValidator,
+		sessionID:                sessionID,
+		tssPreParams:             tssPreParams,
+		keyGenerationConcurrency: keyGenerationConcurrency,
 	}
 }
 
@@ -129,9 +133,12 @@ func (skgm *symmetricKeyGeneratingMember) MarkInactiveMembers(
 
 // initializeTssRoundOne returns a member to perform next protocol operations.
 func (skgm *symmetricKeyGeneratingMember) initializeTssRoundOne() *tssRoundOneMember {
+	// Set up the local TSS party using only operating members. This effectively
+	// removes all excluded members who were marked as disqualified at the
+	// beginning of the protocol.
 	tssPartyID, groupTssPartiesIDs := generateTssPartiesIDs(
 		skgm.id,
-		skgm.group.MemberIDs(),
+		skgm.group.OperatingMemberIDs(),
 	)
 
 	tssParameters := tss.NewParameters(
@@ -141,6 +148,7 @@ func (skgm *symmetricKeyGeneratingMember) initializeTssRoundOne() *tssRoundOneMe
 		len(groupTssPartiesIDs),
 		skgm.group.HonestThreshold()-1,
 	)
+	tssParameters.SetConcurrency(skgm.keyGenerationConcurrency)
 
 	tssOutgoingMessagesChan := make(chan tss.Message, len(groupTssPartiesIDs))
 	tssResultChan := make(chan keygen.LocalPartySaveData, 1)
@@ -258,8 +266,75 @@ func (fm *finalizingMember) MarkInactiveMembers(
 // generation process or a notification of failure.
 func (fm *finalizingMember) Result() *Result {
 	return &Result{
+		Group:           fm.group,
 		PrivateKeyShare: tecdsa.NewPrivateKeyShare(fm.tssResult),
 	}
+}
+
+// signingMember represents a group member sharing their preferred DKG result hash
+// and signature (over this hash) with other peer members.
+type signingMember struct {
+	logger      log.StandardLogger
+	memberIndex group.MemberIndex
+	// Group to which this member belongs.
+	group *group.Group
+	// Validator allowing to check public key and member index
+	// against group members
+	membershipValidator *group.MembershipValidator
+	// Identifier of the particular DKG session this member is part of.
+	sessionID string
+	// Hash of DKG result preferred by the current participant.
+	preferredDKGResultHash ResultHash
+	// Signature over preferredDKGResultHash calculated by the member.
+	selfDKGResultSignature []byte
+}
+
+// newSigningMember creates a new signingMember in the initial state.
+func newSigningMember(
+	logger log.StandardLogger,
+	memberIndex group.MemberIndex,
+	group *group.Group,
+	membershipValidator *group.MembershipValidator,
+	sessionID string,
+) *signingMember {
+	return &signingMember{
+		logger:              logger,
+		memberIndex:         memberIndex,
+		group:               group,
+		membershipValidator: membershipValidator,
+		sessionID:           sessionID,
+	}
+}
+
+// shouldAcceptMessage indicates whether the given member should accept
+// a message from the given sender.
+func (sm *signingMember) shouldAcceptMessage(
+	senderID group.MemberIndex,
+	senderPublicKey []byte,
+) bool {
+	isMessageFromSelf := senderID == sm.memberIndex
+	isSenderValid := sm.membershipValidator.IsValidMembership(
+		senderID,
+		senderPublicKey,
+	)
+	isSenderAccepted := sm.group.IsOperating(senderID)
+
+	return !isMessageFromSelf && isSenderValid && isSenderAccepted
+}
+
+// initializeSubmittingMember performs a transition of a member state to the
+// next phase of the protocol.
+func (sm *signingMember) initializeSubmittingMember() *submittingMember {
+	return &submittingMember{
+		signingMember: sm,
+	}
+}
+
+// submittingMember represents a member submitting a DKG result to the
+// blockchain along with signatures received from other group members supporting
+// the result.
+type submittingMember struct {
+	*signingMember
 }
 
 // generateTssPartiesIDs converts group member ID to parties ID suitable for

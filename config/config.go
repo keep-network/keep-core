@@ -8,16 +8,17 @@ import (
 
 	"github.com/hashicorp/go-multierror"
 	"github.com/ipfs/go-log"
+	"github.com/mitchellh/mapstructure"
+	"github.com/spf13/pflag"
+	"github.com/spf13/viper"
+	"golang.org/x/crypto/ssh/terminal"
+
 	commonEthereum "github.com/keep-network/keep-common/pkg/chain/ethereum"
 	"github.com/keep-network/keep-core/pkg/beacon/registry"
 	"github.com/keep-network/keep-core/pkg/diagnostics"
 	"github.com/keep-network/keep-core/pkg/metrics"
 	"github.com/keep-network/keep-core/pkg/net/libp2p"
 	"github.com/keep-network/keep-core/pkg/tbtc"
-	"github.com/mitchellh/mapstructure"
-	"github.com/spf13/pflag"
-	"github.com/spf13/viper"
-	"golang.org/x/crypto/ssh/terminal"
 )
 
 var logger = log.Logger("keep-config")
@@ -56,11 +57,20 @@ func (c *Config) resolveEthereumNetwork(flagSet *pflag.FlagSet) error {
 	var err error
 
 	c.Ethereum.Network, err = func() (commonEthereum.Network, error) {
-		if ok, err := flagSet.GetBool(commonEthereum.Goerli.String()); ok {
-			return commonEthereum.Goerli, err
+		isGoerli, err := flagSet.GetBool(commonEthereum.Goerli.String())
+		if err != nil {
+			return commonEthereum.Unknown, err
 		}
-		if ok, err := flagSet.GetBool(commonEthereum.Developer.String()); ok {
-			return commonEthereum.Developer, err
+		if isGoerli {
+			return commonEthereum.Goerli, nil
+		}
+
+		isDeveloper, err := flagSet.GetBool(commonEthereum.Developer.String())
+		if err != nil {
+			return commonEthereum.Unknown, err
+		}
+		if isDeveloper {
+			return commonEthereum.Developer, nil
 		}
 
 		return commonEthereum.Mainnet, nil
@@ -176,33 +186,6 @@ func validateConfig(config *Config, categories ...Category) error {
 	}
 
 	return result.ErrorOrNil()
-}
-
-// ReadEthereumConfig reads in the configuration from a file specified by `--config`
-// flag and other flags provided in the `flagSet` and returns its contained Ethereum
-// config, or an error if something fails.
-//
-// This is the same as invoking ReadConfig and reading the Ethereum property
-// from the returned config, but is available for external functions that expect
-// to interact solely with Ethereum and are therefore independent of the rest of
-// the config structure.
-func ReadEthereumConfig(flagSet *pflag.FlagSet) (commonEthereum.Config, error) {
-	config := Config{}
-
-	configPath, err := flagSet.GetString("config")
-	if err != nil {
-		return commonEthereum.Config{},
-			fmt.Errorf(
-				"failed to read config file path from command flag: %w",
-				err,
-			)
-	}
-
-	if err := config.ReadConfig(configPath, flagSet, Ethereum); err != nil {
-		return commonEthereum.Config{}, err
-	}
-
-	return config.Ethereum, nil
 }
 
 // readConfigFile uses viper to read configuration from a config file. The config file

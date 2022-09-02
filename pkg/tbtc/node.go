@@ -1,15 +1,19 @@
 package tbtc
 
 import (
+	"context"
+	"crypto/ecdsa"
+	"encoding/hex"
 	"fmt"
 	"math/big"
+	"time"
 
 	"github.com/keep-network/keep-common/pkg/persistence"
 	"github.com/keep-network/keep-core/pkg/generator"
-	"github.com/keep-network/keep-core/pkg/internal/testutils"
 	"github.com/keep-network/keep-core/pkg/net"
 	"github.com/keep-network/keep-core/pkg/protocol/group"
 	"github.com/keep-network/keep-core/pkg/tecdsa/dkg"
+	"github.com/keep-network/keep-core/pkg/tecdsa/signing"
 )
 
 // TODO: Unit tests for `node.go`.
@@ -39,6 +43,7 @@ func newNode(
 		config.PreParamsGenerationTimeout,
 		config.PreParamsGenerationDelay,
 		config.PreParamsGenerationConcurrency,
+		config.KeyGenerationConcurrency,
 	)
 
 	latch := generator.NewProtocolLatch()
@@ -124,7 +129,7 @@ func (n *node) joinDKGIfEligible(seed *big.Int, startBlockNumber uint64) {
 		}
 
 		membershipValidator := group.NewMembershipValidator(
-			&testutils.MockLogger{},
+			logger,
 			selectedSigningGroupOperators,
 			signing,
 		)
@@ -153,18 +158,70 @@ func (n *node) joinDKGIfEligible(seed *big.Int, startBlockNumber uint64) {
 				n.protocolLatch.Lock()
 				defer n.protocolLatch.Unlock()
 
-				result, _, err := n.dkgExecutor.Execute(
+				retryLoop := newDkgRetryLoop(
 					seed,
 					startBlockNumber,
 					memberIndex,
-					chainConfig.GroupSize,
-					chainConfig.DishonestThreshold(),
-					blockCounter,
-					broadcastChannel,
-					membershipValidator,
+					selectedSigningGroupOperators,
+					chainConfig,
+				)
+
+				// TODO: For this client iteration, the retry loop is started
+				//       with a 168h timeout. Once the WalletRegistry is
+				//       integrated, the stop signal should be generated
+				//       by observing the DKG result submission or timeout.
+				loopCtx, cancelLoopCtx := context.WithTimeout(
+					context.Background(),
+					7*24*time.Hour,
+				)
+				defer cancelLoopCtx()
+
+				result, executionEndBlock, err := retryLoop.start(
+					loopCtx,
+					func(attempt *dkgAttemptParams) (*dkg.Result, uint64, error) {
+						logger.Infof(
+							"[member:%v] starting dkg attempt [%v] "+
+								"with [%v] group members (excluded: [%v])",
+							memberIndex,
+							attempt.index,
+							chainConfig.GroupSize-len(attempt.excludedMembers),
+							attempt.excludedMembers,
+						)
+
+						// sessionID must be different for each attempt.
+						sessionID := fmt.Sprintf(
+							"%v-%v",
+							seed.Text(16),
+							attempt.index,
+						)
+
+						result, executionEndBlock, err := n.dkgExecutor.Execute(
+							sessionID,
+							attempt.startBlock,
+							memberIndex,
+							chainConfig.GroupSize,
+							chainConfig.DishonestThreshold(),
+							attempt.excludedMembers,
+							blockCounter,
+							broadcastChannel,
+							membershipValidator,
+						)
+						if err != nil {
+							logger.Errorf(
+								"[member:%v] dkg attempt [%v] "+
+									"failed: [%v]",
+								memberIndex,
+								attempt.index,
+								err,
+							)
+
+							return nil, 0, err
+						}
+
+						return result, executionEndBlock, nil
+					},
 				)
 				if err != nil {
-					// TODO: Add retries into the mix.
 					logger.Errorf(
 						"[member:%v] failed to execute dkg: [%v]",
 						memberIndex,
@@ -176,15 +233,100 @@ func (n *node) joinDKGIfEligible(seed *big.Int, startBlockNumber uint64) {
 				// TODO: Snapshot the key material before doing on-chain result
 				//       submission.
 
-				// TODO: Submit the result using the chain layer.
+				publicationStartBlock := executionEndBlock
+				operatingMemberIndexes := result.Group.OperatingMemberIDs()
+				dkgResultChannel := make(chan *DKGResultSubmittedEvent)
 
-				// TODO: The final `signingGroupOperators` may differ from
-				//       the original `selectedSigningGroupOperators`.
-				//       Consider that when integrating the retry algorithm.
+				dkgResultSubscription := n.chain.OnDKGResultSubmitted(
+					func(event *DKGResultSubmittedEvent) {
+						dkgResultChannel <- event
+					},
+				)
+				defer dkgResultSubscription.Unsubscribe()
+
+				err = dkg.Publish(
+					logger,
+					seed.Text(16),
+					publicationStartBlock,
+					memberIndex,
+					blockCounter,
+					broadcastChannel,
+					membershipValidator,
+					newDkgResultSigner(n.chain),
+					newDkgResultSubmitter(n.chain),
+					result,
+				)
+				if err != nil {
+					// Result publication failed. It means that either the result
+					// this member proposed is not supported by the majority of
+					// group members or that the chain interaction failed.
+					// In either case, we observe the chain for the result
+					// published by any other group member and based on that,
+					// we decide whether we should stay in the final group or
+					// drop our membership.
+					logger.Warningf(
+						"[member:%v] DKG result publication process failed [%v]",
+						memberIndex,
+						err,
+					)
+
+					if operatingMemberIndexes, err = decideSigningGroupMemberFate(
+						memberIndex,
+						dkgResultChannel,
+						publicationStartBlock,
+						result,
+						chainConfig,
+						blockCounter,
+					); err != nil {
+						logger.Errorf(
+							"[member:%v] failed to handle DKG result "+
+								"publishing failure: [%v]",
+							memberIndex,
+							err,
+						)
+						return
+					}
+				}
+
+				// Final signing group may differ from the original DKG
+				// group outputted by the sortition protocol. One need to
+				// determine the final signing group based on the selected
+				// group members who behaved correctly during DKG protocol.
+				finalSigningGroupOperators, finalSigningGroupMembersIndexes, err :=
+					finalSigningGroup(
+						selectedSigningGroupOperators,
+						operatingMemberIndexes,
+						chainConfig,
+					)
+				if err != nil {
+					logger.Errorf(
+						"[member:%v] failed to resolve final signing "+
+							"group: [%v]",
+						memberIndex,
+						err,
+					)
+					return
+				}
+
+				// Just like the final and original group may differ, the
+				// member index used during the DKG protocol may differ
+				// from the final signing group member index as well.
+				// We need to remap it.
+				finalSigningGroupMemberIndex, ok :=
+					finalSigningGroupMembersIndexes[memberIndex]
+				if !ok {
+					logger.Errorf(
+						"[member:%v] failed to resolve final signing "+
+							"group member index",
+						memberIndex,
+					)
+					return
+				}
+
 				signer := newSigner(
 					result.PrivateKeyShare.PublicKey(),
-					selectedSigningGroupOperators,
-					memberIndex,
+					finalSigningGroupOperators,
+					finalSigningGroupMemberIndex,
 					result.PrivateKeyShare,
 				)
 
@@ -203,5 +345,160 @@ func (n *node) joinDKGIfEligible(seed *big.Int, startBlockNumber uint64) {
 		}
 	} else {
 		logger.Infof("not eligible for DKG with seed [0x%x]", seed)
+	}
+}
+
+// joinSigningIfEligible takes a message and undergoes the process of tECDSA
+// signing if this node's operator proves to control some signers of the
+// requested wallet. This is an interactive process, and joinSigningIfEligible
+// can block for an extended period of time while it completes the operation.
+//
+// TODO: Ultimately, one client will handle multiple signature requests for
+//       multiple wallets. Because of that, logging within that function
+//       must use the context of the given signature request.
+func (n *node) joinSigningIfEligible(
+	message *big.Int,
+	walletPublicKey *ecdsa.PublicKey,
+	startBlockNumber uint64,
+) {
+	logger.Infof(
+		"checking eligibility for signature of message [%v]",
+		message,
+	)
+
+	if signers := n.walletRegistry.getSigners(
+		walletPublicKey,
+	); len(signers) > 0 {
+		logger.Infof(
+			"joining signature of message [%v] and "+
+				"controlling [%v] signers",
+			message,
+			len(signers),
+		)
+
+		// All signers belong to one wallet. Take that wallet from the
+		// first signer.
+		wallet := signers[0].wallet
+		// Actual wallet signing group size may be different from the
+		// `GroupSize` parameter of the chain config.
+		signingGroupSize := len(wallet.signingGroupOperators)
+		// The dishonest threshold for the wallet signing group must be
+		// also calculated using the actual wallet signing group size.
+		signingGroupDishonestThreshold := signingGroupSize -
+			n.chain.GetConfig().HonestThreshold
+
+		walletPublicKeyBytes, err := marshalPublicKey(walletPublicKey)
+		if err != nil {
+			logger.Errorf("cannot marshal wallet public key: [%v]", err)
+			return
+		}
+
+		channelName := fmt.Sprintf(
+			"%s-%s",
+			ProtocolName,
+			hex.EncodeToString(walletPublicKeyBytes),
+		)
+
+		broadcastChannel, err := n.netProvider.BroadcastChannelFor(channelName)
+		if err != nil {
+			logger.Errorf("failed to get broadcast channel: [%v]", err)
+			return
+		}
+
+		membershipValidator := group.NewMembershipValidator(
+			logger,
+			wallet.signingGroupOperators,
+			n.chain.Signing(),
+		)
+
+		err = broadcastChannel.SetFilter(membershipValidator.IsInGroup)
+		if err != nil {
+			logger.Errorf(
+				"could not set filter for channel [%v]: [%v]",
+				broadcastChannel.Name(),
+				err,
+			)
+		}
+
+		blockCounter, err := n.chain.BlockCounter()
+		if err != nil {
+			logger.Errorf("failed to get block counter: [%v]", err)
+			return
+		}
+
+		for _, currentSigner := range signers {
+			go func(signer *signer) {
+				n.protocolLatch.Lock()
+				defer n.protocolLatch.Unlock()
+
+				// TODO: Add retries support and update the following parameters
+				//       on every attempt.
+				attemptIndex := 1
+				// TODO: Temporarily use the first 51 members for signing.
+				excludedMembers := make(
+					[]group.MemberIndex,
+					signingGroupDishonestThreshold,
+				)
+				for i := range excludedMembers {
+					excludedMembers[i] = group.MemberIndex(
+						n.chain.GetConfig().HonestThreshold + i + 1,
+					)
+				}
+
+				logger.Infof(
+					"[member:%v] starting signing attempt [%v] of "+
+						"message [%v] with [%v] group members (excluded: [%v])",
+					signer.signingGroupMemberIndex,
+					attemptIndex,
+					message,
+					signingGroupSize-len(excludedMembers),
+					excludedMembers,
+				)
+
+				sessionID := fmt.Sprintf(
+					"%v-%v",
+					message.Text(16),
+					attemptIndex,
+				)
+
+				result, err := signing.Execute(
+					logger,
+					message,
+					sessionID,
+					startBlockNumber,
+					signer.signingGroupMemberIndex,
+					signer.privateKeyShare,
+					signingGroupSize,
+					signingGroupDishonestThreshold,
+					excludedMembers,
+					blockCounter,
+					broadcastChannel,
+					membershipValidator,
+				)
+				if err != nil {
+					logger.Errorf(
+						"[member:%v] signing of message [%v] "+
+							"failed: [%v]",
+						signer.signingGroupMemberIndex,
+						message,
+						err,
+					)
+					return
+				}
+
+				logger.Infof(
+					"[member:%v] generated signature [%v] "+
+						"for message [%v]",
+					signer.signingGroupMemberIndex,
+					result,
+					message,
+				)
+			}(currentSigner)
+		}
+	} else {
+		logger.Infof(
+			"not eligible for signature of message [%v]",
+			message,
+		)
 	}
 }
