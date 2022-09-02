@@ -1,9 +1,15 @@
 package signing
 
 import (
+	tsslibcommon "github.com/bnb-chain/tss-lib/common"
+	"github.com/bnb-chain/tss-lib/ecdsa/signing"
+	"github.com/bnb-chain/tss-lib/tss"
 	"github.com/ipfs/go-log"
 	"github.com/keep-network/keep-core/pkg/crypto/ephemeral"
 	"github.com/keep-network/keep-core/pkg/protocol/group"
+	"github.com/keep-network/keep-core/pkg/tecdsa"
+	"github.com/keep-network/keep-core/pkg/tecdsa/common"
+	"math/big"
 )
 
 // Member represents a signing protocol member.
@@ -19,6 +25,10 @@ type member struct {
 	membershipValidator *group.MembershipValidator
 	// Identifier of the particular signing session this member is part of.
 	sessionID string
+	// Message that is the subject of the signing process.
+	message *big.Int
+	// tECDSA private key share of the member.
+	privateKeyShare *tecdsa.PrivateKeyShare
 }
 
 // newMember creates a new member in an initial state
@@ -29,6 +39,8 @@ func newMember(
 	dishonestThreshold int,
 	membershipValidator *group.MembershipValidator,
 	sessionID string,
+	message *big.Int,
+	privateKeyShare *tecdsa.PrivateKeyShare,
 ) *member {
 	return &member{
 		logger:              logger,
@@ -36,6 +48,8 @@ func newMember(
 		group:               group.NewGroup(dishonestThreshold, groupSize),
 		membershipValidator: membershipValidator,
 		sessionID:           sessionID,
+		message:             message,
+		privateKeyShare:     privateKeyShare,
 	}
 }
 
@@ -113,4 +127,53 @@ func (skgm *symmetricKeyGeneratingMember) MarkInactiveMembers(
 	}
 
 	filter.FlushInactiveMembers()
+}
+
+// initializeTssRoundOne returns a member to perform next protocol operations.
+func (skgm *symmetricKeyGeneratingMember) initializeTssRoundOne() *tssRoundOneMember {
+	// Set up the local TSS party using only operating members. This effectively
+	// removes all excluded members who were marked as disqualified at the
+	// beginning of the protocol.
+	tssPartyID, groupTssPartiesIDs := common.GenerateTssPartiesIDs(
+		skgm.id,
+		skgm.group.OperatingMemberIDs(),
+	)
+
+	tssParameters := tss.NewParameters(
+		tecdsa.Curve,
+		tss.NewPeerContext(tss.SortPartyIDs(groupTssPartiesIDs)),
+		tssPartyID,
+		len(groupTssPartiesIDs),
+		skgm.group.HonestThreshold()-1,
+	)
+
+	tssOutgoingMessagesChan := make(chan tss.Message, len(groupTssPartiesIDs))
+	tssResultChan := make(chan tsslibcommon.SignatureData, 1)
+
+	tssParty := signing.NewLocalParty(
+		skgm.message,
+		tssParameters,
+		skgm.privateKeyShare.Data(),
+		tssOutgoingMessagesChan,
+		tssResultChan,
+	)
+
+	return &tssRoundOneMember{
+		symmetricKeyGeneratingMember: skgm,
+		tssParty:                     tssParty,
+		tssParameters:                tssParameters,
+		tssOutgoingMessagesChan:      tssOutgoingMessagesChan,
+		tssResultChan:                tssResultChan,
+	}
+}
+
+// tssRoundOneMember represents one member in a signing group performing the
+// first round of the TSS keygen.
+type tssRoundOneMember struct {
+	*symmetricKeyGeneratingMember
+
+	tssParty                tss.Party
+	tssParameters           *tss.Parameters
+	tssOutgoingMessagesChan <-chan tss.Message
+	tssResultChan           <-chan tsslibcommon.SignatureData
 }

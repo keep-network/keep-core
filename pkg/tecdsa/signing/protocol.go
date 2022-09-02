@@ -1,9 +1,12 @@
 package signing
 
 import (
+	"context"
 	"fmt"
+	"github.com/bnb-chain/tss-lib/tss"
 	"github.com/keep-network/keep-core/pkg/crypto/ephemeral"
 	"github.com/keep-network/keep-core/pkg/protocol/group"
+	"github.com/keep-network/keep-core/pkg/tecdsa/common"
 )
 
 // generateEphemeralKeyPair takes the group member list and generates an
@@ -114,6 +117,63 @@ func (skgm *symmetricKeyGeneratingMember) isValidEphemeralPublicKeyMessage(
 	}
 
 	return true
+}
+
+// tssRoundOne starts the TSS process by executing its first round. The
+// outcome of that round is a message containing TSS round one components.
+func (trom *tssRoundOneMember) tssRoundOne(
+	ctx context.Context,
+) (*tssRoundOneMessage, error) {
+	if err := trom.tssParty.Start(); err != nil {
+		return nil, fmt.Errorf(
+			"failed to start TSS round one: [%v]",
+			err,
+		)
+	}
+
+	// Listen for TSS outgoing messages. We expect N-1 P2P messages (where N
+	// is the number of properly operating members) and 1 broadcast message.
+	var tssMessages []tss.Message
+outgoingMessagesLoop:
+	for {
+		select {
+		case tssMessage := <-trom.tssOutgoingMessagesChan:
+			tssMessages = append(tssMessages, tssMessage)
+
+			if len(tssMessages) == len(trom.group.OperatingMemberIDs()) {
+				break outgoingMessagesLoop
+			}
+		case <-ctx.Done():
+			return nil, fmt.Errorf(
+				"TSS round one outgoing messages were not " +
+					"generated on time",
+			)
+		}
+	}
+
+	broadcastPayload, peersPayload, err := common.AggregateTssMessages(
+		tssMessages,
+		trom.symmetricKeys,
+	)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"cannot aggregate TSS round one outgoing messages: [%w]",
+			err,
+		)
+	}
+
+	ok := len(broadcastPayload) > 0 &&
+		len(peersPayload) == len(trom.group.OperatingMemberIDs())-1
+	if !ok {
+		return nil, fmt.Errorf("cannot produce a proper TSS round one message")
+	}
+
+	return &tssRoundOneMessage{
+		senderID:         trom.id,
+		broadcastPayload: broadcastPayload,
+		peersPayload:     peersPayload,
+		sessionID:        trom.sessionID,
+	}, nil
 }
 
 // deduplicateBySender removes duplicated items for the given sender.

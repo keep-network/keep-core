@@ -3,6 +3,7 @@ package dkg
 import (
 	"context"
 	"fmt"
+	"github.com/keep-network/keep-core/pkg/tecdsa/common"
 
 	"github.com/bnb-chain/tss-lib/tss"
 	"github.com/keep-network/keep-core/pkg/crypto/ephemeral"
@@ -169,7 +170,7 @@ func (trtm *tssRoundTwoMember) tssRoundTwo(
 
 		_, tssErr := trtm.tssParty.UpdateFromBytes(
 			tssRoundOneMessage.payload,
-			resolveSortedTssPartyID(trtm.tssParameters, senderID),
+			common.ResolveSortedTssPartyID(trtm.tssParameters, senderID),
 			true,
 		)
 		if tssErr != nil {
@@ -203,75 +204,29 @@ outgoingMessagesLoop:
 		}
 	}
 
-	// Assemble all TSS outgoing messages into a single composite message.
-	compositeMessage := &tssRoundTwoMessage{
-		senderID:         trtm.id,
-		broadcastPayload: nil,
-		peersPayload:     make(map[group.MemberIndex][]byte),
-		sessionID:        trtm.sessionID,
-	}
-	for _, tssMessage := range tssMessages {
-		tssMessageBytes, tssMessageRouting, err := tssMessage.WireBytes()
-		if err != nil {
-			return nil, fmt.Errorf(
-				"failed to encode TSS round two message: [%v]",
-				err,
-			)
-		}
-
-		if tssMessageRouting.IsBroadcast {
-			// We expect only one broadcast message. Any other case is an error.
-			if len(compositeMessage.broadcastPayload) > 0 {
-				return nil, fmt.Errorf(
-					"multiple TSS round two broadcast messages detected",
-				)
-			}
-
-			compositeMessage.broadcastPayload = tssMessageBytes
-		} else {
-			// We expect that each P2P message targets only a single member.
-			// Any other case is an error.
-			if len(tssMessageRouting.To) != 1 {
-				return nil, fmt.Errorf(
-					"TSS round two multi-receiver P2P message detected",
-				)
-			}
-			// Get the single receiver ID.
-			receiverID := tssPartyIDToMemberID(tssMessageRouting.To[0])
-			// Get the symmetric key with the receiver. If the symmetric key
-			// cannot be found, something awful happened.
-			symmetricKey, ok := trtm.symmetricKeys[receiverID]
-			if !ok {
-				return nil, fmt.Errorf(
-					"cannot get symmetric key with member [%v]",
-					receiverID,
-				)
-			}
-			// Encrypt the payload using the receiver symmetric key.
-			encryptedTssMessageBytes, err := symmetricKey.Encrypt(
-				tssMessageBytes,
-			)
-			if err != nil {
-				return nil, fmt.Errorf(
-					"cannot encrypt TSS round two "+
-						"P2P message for member [%v]: [%v]",
-					receiverID,
-					err,
-				)
-			}
-
-			compositeMessage.peersPayload[receiverID] = encryptedTssMessageBytes
-		}
+	broadcastPayload, peersPayload, err := common.AggregateTssMessages(
+		tssMessages,
+		trtm.symmetricKeys,
+	)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"cannot aggregate TSS round two outgoing messages: [%w]",
+			err,
+		)
 	}
 
-	// Just a sanity check at the end of processing.
-	isMessageOk := len(compositeMessage.broadcastPayload) > 0 &&
-		len(compositeMessage.peersPayload) == len(trtm.group.OperatingMemberIDs())-1
-	if !isMessageOk {
+	ok := len(broadcastPayload) > 0 &&
+		len(peersPayload) == len(trtm.group.OperatingMemberIDs())-1
+	if !ok {
 		return nil, fmt.Errorf("cannot produce a proper TSS round two message")
 	}
 
-	return compositeMessage, nil
+	return &tssRoundTwoMessage{
+		senderID:         trtm.id,
+		broadcastPayload: broadcastPayload,
+		peersPayload:     peersPayload,
+		sessionID:        trtm.sessionID,
+	}, nil
 }
 
 // tssRoundThree performs the third round of the TSS process. The outcome of
@@ -285,7 +240,7 @@ func (trtm *tssRoundTwoMember) tssRoundThree(
 	// to round three.
 	for _, tssRoundTwoMessage := range deduplicateBySender(tssRoundTwoMessages) {
 		senderID := tssRoundTwoMessage.SenderID()
-		senderTssPartyID := resolveSortedTssPartyID(trtm.tssParameters, senderID)
+		senderTssPartyID := common.ResolveSortedTssPartyID(trtm.tssParameters, senderID)
 
 		// Update the local TSS party using the broadcast part of the message
 		// produced in round two.
@@ -383,7 +338,7 @@ func (fm *finalizingMember) tssFinalize(
 
 		_, tssErr := fm.tssParty.UpdateFromBytes(
 			tssRoundThreeMessage.payload,
-			resolveSortedTssPartyID(fm.tssParameters, senderID),
+			common.ResolveSortedTssPartyID(fm.tssParameters, senderID),
 			true,
 		)
 		if tssErr != nil {
