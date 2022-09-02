@@ -10,11 +10,18 @@
 == Quick installation
 
 === Pre-requirements
-For development purposes, it is convenient to set up a local Ethereum client with a group of connected peers. A note-taken walkthrough link:local-t-network.adoc[set up local T network] covers the entire process
-including setting up a local Ethereum client, deploying T contracts and
-configuring T peers. +
 
-Additionaly, to start a client we need to provide config options either by creating a config file or passing the required parameters. For simple installation using a config file please refer to a <<sample_config_file,sample configuration>> file that is placed under `/configs/` dir.
+For development purposes, it is convenient to set up a local Ethereum client with
+a group of connected peers. A note-taken walkthrough 
+xref:local-t-network.adoc[set up local T network] covers the entire process
+including setting up a local Ethereum client, deploying T contracts and
+configuring T peers.
+
+Additionally, to start a client we need to provide configuration options. It is
+required to create a config file under `/configs` for each client. You can also
+overwrite the existing config file by passing supported parameters. For simple 
+installation using a config file please refer to the 
+xref:../run-keep-node.adoc#config-file[configuration] section.
 
 === Starting a client
 
@@ -26,24 +33,34 @@ To quickly setup and start a client use the following scripts from the project r
 
 == Installation scripts explained
 
-The `+install.sh+` needs to be run only once and it will:
+=== install.sh
+
+The `./scripts/install.sh` needs to be run only once and it will:
 
 * install yarn dependencies across the projects
 * unlock ethereum accounts 
-* build `threshold-network/solidity-contracts`, `random-beacon`, `ecdsa` and `tbtc-v2` contracts
-* deploy `threshold-network/solidity-contracts`, `random-beacon`, `ecdsa` and `tbtc-v2` contracts 
+* build `threshold-network/solidity-contracts`, `random-beacon`, `ecdsa` and 
+`tbtc-v2` contracts
+* deploy `threshold-network/solidity-contracts`, `random-beacon`, `ecdsa` and 
+`tbtc-v2` contracts 
 * build a client
 
 For more info please refer to `./scripts/install.sh --help`
 
 ```
-Usage: ENV_VAR(S) ./scripts/install.sh --network <network> --tbtc-path <tbtc-path> --threshold-network-path <threshold-network-path> --skip-deployment --skip-client-build
+Usage: 
+  ENV_VAR(S) ./scripts/install.sh \
+  --network <network> \
+  --tbtc-path <tbtc-path> \
+  --threshold-network-path <threshold-network-path> \
+  --skip-deployment \
+  --skip-client-build
 
 Environment variables:
 
         KEEP_ETHEREUM_PASSWORD: The password to unlock local Ethereum accounts to set up delegations. Required only for 'local' network. Default value is 'password'
 
-Command line arguments:
+Optional line arguments:
 
         --network: Ethereum network for keep-core client(s). Available networks and settings are specified in the 'hardhat.config.ts'
         --tbtc-path: 'Local' tbtc project's path. 'tbtc' is cloned to a temporary directory upon installation if the path is not provided
@@ -52,9 +69,22 @@ Command line arguments:
         --skip-client-build: Should execute contracts part only. Client installation will not be executed
 ```
 
-The `./scripts/initialize.sh` has to be run for each 
-client and if the `--stake-owner <address>` is not set, then it will prompt you to select a configuration file that will be used to fetch the stake owner's address from. Default setup assumes that the staking provider, operator, beneficiary, and the authorizer all have the same addresses as the stake owner. Only the `stake-owner` has to be unique for the default setup. The default stake amount is `1,000,000 T` tokens. The default authorization amount is the minimum authorization amount +
-Ex. if you need to initialize a network with 3 clients using the default setup, then this script needs to be run 3 times with a different selected config file like so: +
+=== initialize.sh
+
+The `./scripts/initialize.sh` has to be run for each client instance you wish to
+start. 
+
+If the `--stake-owner <address>` is not set, then it will prompt you to select a
+configuration file that will be used to fetch the stake owner's address from. 
+Default setup assumes that the staking provider, operator, beneficiary, and the 
+authorizer all have the same addresses as the stake owner. Only the `stake-owner` 
+has to be unique for the default setup. The default stake amount is `1,000,000 T` 
+tokens. The default authorization amount is the minimum authorization amount.
+
+Ex. if you need to initialize a network with 3 clients using the default setup, 
+then this script needs to be run 3 times with a different selected config file 
+like so:
+
 ```
 ./scripts/initialize.sh
 
@@ -80,7 +110,7 @@ Select client config file:
 3) config2.toml <--
 ``` 
 
-The `+initialize.sh+` script will:
+The `+./scripts/initialize.sh+` script will:
 
 * mint & approve `T` tokens
 * stake `T` tokens
@@ -90,7 +120,16 @@ The `+initialize.sh+` script will:
 For more info please refer to `./scripts/initialize.sh --help`
 
 ```
-Usage: ./scripts/initialize.sh --network <network> --stake-owner <stake owner address> --staking-provider <staking provider address> --operator <operator address> --beneficiary <beneficiary address> --authorizer <authorizer address> --stake-amount <stake amount> --authorization-amount <authorization amount>
+Usage: 
+./scripts/initialize.sh \
+  --network <network> \
+  --stake-owner <stake owner address> \
+  --staking-provider <staking provider address> \
+  --operator <operator address> \
+  --beneficiary <beneficiary address> \
+  --authorizer <authorizer address> \
+  --stake-amount <stake amount> \
+  --authorization-amount <authorization amount>
 
 Optional line arguments:
 
@@ -104,7 +143,13 @@ Optional line arguments:
         --authorization-amount: Authorization amount
 ```
 
-Afer executing `install.sh` and `initialize.sh` now you can run `./scripts/start.sh` to start a client. It will prompt you to chose from the available config files (that should match the one chosen for `./scripts/initialize.sh`) and the log level. 
+=== start.sh
+
+Afer executing `./scripts/install.sh` and `./scripts/initialize.sh` now you can
+run `./scripts/start.sh` to start a client. It will prompt you to chose from the
+available config files (that should match the one chosen for 
+`./scripts/initialize.sh`) and the log level.
+
 ```
 ./scripts/start.sh
 
