@@ -71,6 +71,14 @@ func TestGenerateEphemeralKeyPair(t *testing.T) {
 
 		// Assert key pairs are non-nil.
 		for otherMemberID, keyPair := range member.ephemeralKeyPairs {
+			if keyPair == nil {
+				t.Errorf(
+					"[member:%v] key pair not set for member [%v]",
+					member.id,
+					otherMemberID,
+				)
+			}
+
 			if keyPair.PrivateKey == nil {
 				t.Errorf(
 					"[member:%v] key pair's private key not set for member [%v]",
@@ -97,6 +105,13 @@ func TestGenerateEphemeralKeyPair(t *testing.T) {
 			"message sender",
 			int(memberID),
 			int(message.senderID),
+		)
+
+		testutils.AssertIntsEqual(
+			t,
+			"ephemeral public keys count",
+			groupSize-1,
+			len(message.ephemeralPublicKeys),
 		)
 
 		// We should not generate an ephemeral key for ourselves.
