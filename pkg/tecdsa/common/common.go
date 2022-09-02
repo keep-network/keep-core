@@ -69,18 +69,19 @@ func ResolveSortedTssPartyID(
 }
 
 // AggregateTssMessages takes a list of TSS messages and build an aggregate
-// consisting of unencrypted broadcast part and encrypted P2P parts intended
-// for specific receivers. The encryption of a specific P2P part is done using
-// a symmetric key taken from the provided symmetricKeys map using the
-// receiver member index as key.
+// consisting of unencrypted broadcast part and encrypted point-to-point parts
+// intended for specific receivers. The encryption of a specific point-to-point
+// part is done using a symmetric key taken from the provided symmetricKeys map
+// using the receiver member index as key.
 //
 // This function has also the following requirements regarding the input
 // tssMessages list and symmetricKeys map:
 // - tssMessages MUST hold 0 or 1 broadcast message
-// - tssMessages MUST hold 0 or N P2P messages. If P2P messages count is >0 then:
-//     - each P2P message MUST target exactly 1 unique receiver
-//     - each P2P message receiver MUST have a corresponding entry in
-//       the symmetricKeys map
+// - tssMessages MUST hold 0 or N point-to-point messages. If point-to-point
+//   messages count is >0 then:
+//     - each point-to-point message MUST target exactly 1 unique receiver
+//     - each point-to-point message receiver MUST have a corresponding entry
+//       in the symmetricKeys map
 func AggregateTssMessages(
 	tssMessages []tss.Message,
 	symmetricKeys map[group.MemberIndex]ephemeral.SymmetricKey,
