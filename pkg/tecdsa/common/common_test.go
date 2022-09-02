@@ -192,15 +192,15 @@ func TestAggregateTssMessages(t *testing.T) {
 				newMockTssMessage([]byte{0x03}, group.MemberIndex(3)),
 			},
 			symmetricKeys: map[group.MemberIndex]ephemeral.SymmetricKey{
-				1: &mockSymmetricKey{[]byte{0x01}},
-				2: &mockSymmetricKey{[]byte{0x02}},
-				3: &mockSymmetricKey{[]byte{0x03}},
+				1: &mockSymmetricKey{[]byte{0x0A}},
+				2: &mockSymmetricKey{[]byte{0x0B}},
+				3: &mockSymmetricKey{[]byte{0x0C}},
 			},
 			expectedBroadcastPayload: []byte{0xAA},
 			expectedPeersPayload: map[group.MemberIndex][]byte{
-				1: {0x01, 0xFF, 0x01},
-				2: {0x02, 0xFF, 0x02},
-				3: {0x03, 0xFF, 0x03},
+				1: {0x01, 0xFF, 0x0A},
+				2: {0x02, 0xFF, 0x0B},
+				3: {0x03, 0xFF, 0x0C},
 			},
 		},
 		"only one broadcast message": {
@@ -217,15 +217,15 @@ func TestAggregateTssMessages(t *testing.T) {
 				newMockTssMessage([]byte{0x03}, group.MemberIndex(3)),
 			},
 			symmetricKeys: map[group.MemberIndex]ephemeral.SymmetricKey{
-				1: &mockSymmetricKey{[]byte{0x01}},
-				2: &mockSymmetricKey{[]byte{0x02}},
-				3: &mockSymmetricKey{[]byte{0x03}},
+				1: &mockSymmetricKey{[]byte{0x0A}},
+				2: &mockSymmetricKey{[]byte{0x0B}},
+				3: &mockSymmetricKey{[]byte{0x0C}},
 			},
 			expectedBroadcastPayload: nil,
 			expectedPeersPayload: map[group.MemberIndex][]byte{
-				1: {0x01, 0xFF, 0x01},
-				2: {0x02, 0xFF, 0x02},
-				3: {0x03, 0xFF, 0x03},
+				1: {0x01, 0xFF, 0x0A},
+				2: {0x02, 0xFF, 0x0B},
+				3: {0x03, 0xFF, 0x0C},
 			},
 		},
 		"multiple broadcast messages": {
@@ -237,9 +237,9 @@ func TestAggregateTssMessages(t *testing.T) {
 				newMockTssMessage([]byte{0x03}, group.MemberIndex(3)),
 			},
 			symmetricKeys: map[group.MemberIndex]ephemeral.SymmetricKey{
-				1: &mockSymmetricKey{[]byte{0x01}},
-				2: &mockSymmetricKey{[]byte{0x02}},
-				3: &mockSymmetricKey{[]byte{0x03}},
+				1: &mockSymmetricKey{[]byte{0x0A}},
+				2: &mockSymmetricKey{[]byte{0x0B}},
+				3: &mockSymmetricKey{[]byte{0x0C}},
 			},
 			expectedErr: fmt.Errorf("multiple TSS broadcast messages detected"),
 		},
@@ -251,9 +251,9 @@ func TestAggregateTssMessages(t *testing.T) {
 				newMockTssMessage([]byte{0x03}, group.MemberIndex(3)),
 			},
 			symmetricKeys: map[group.MemberIndex]ephemeral.SymmetricKey{
-				1: &mockSymmetricKey{[]byte{0x01}},
-				2: &mockSymmetricKey{[]byte{0x02}},
-				3: &mockSymmetricKey{[]byte{0x03}},
+				1: &mockSymmetricKey{[]byte{0x0A}},
+				2: &mockSymmetricKey{[]byte{0x0B}},
+				3: &mockSymmetricKey{[]byte{0x0C}},
 			},
 			expectedErr: fmt.Errorf("multi-receiver TSS P2P message detected"),
 		},
@@ -265,9 +265,9 @@ func TestAggregateTssMessages(t *testing.T) {
 				newMockTssMessage([]byte{0x03}, group.MemberIndex(3)),
 			},
 			symmetricKeys: map[group.MemberIndex]ephemeral.SymmetricKey{
-				1: &mockSymmetricKey{[]byte{0x01}},
-				2: &mockSymmetricKey{[]byte{0x02}},
-				3: &mockSymmetricKey{[]byte{0x03}},
+				1: &mockSymmetricKey{[]byte{0x0A}},
+				2: &mockSymmetricKey{[]byte{0x0B}},
+				3: &mockSymmetricKey{[]byte{0x0C}},
 			},
 			expectedErr: fmt.Errorf("duplicate TSS P2P message for member [2]"),
 		},
@@ -280,8 +280,8 @@ func TestAggregateTssMessages(t *testing.T) {
 			},
 			symmetricKeys: map[group.MemberIndex]ephemeral.SymmetricKey{
 				// missing key for member 1
-				2: &mockSymmetricKey{[]byte{0x02}},
-				3: &mockSymmetricKey{[]byte{0x03}},
+				2: &mockSymmetricKey{[]byte{0x0B}},
+				3: &mockSymmetricKey{[]byte{0x0C}},
 			},
 			expectedErr: fmt.Errorf("cannot get symmetric key with member [1]"),
 		},
@@ -293,8 +293,8 @@ func TestAggregateTssMessages(t *testing.T) {
 				newMockTssMessage([]byte{0x03}, group.MemberIndex(3)),
 			},
 			symmetricKeys: map[group.MemberIndex]ephemeral.SymmetricKey{
-				1: &mockSymmetricKey{[]byte{0x01}},
-				2: &mockSymmetricKey{[]byte{0x02}},
+				1: &mockSymmetricKey{[]byte{0x0A}},
+				2: &mockSymmetricKey{[]byte{0x0B}},
 				3: &mockSymmetricKey{}, // wrong key
 			},
 			expectedErr: fmt.Errorf("cannot encrypt TSS P2P message for member [3]: [wrong key]"),
@@ -302,9 +302,9 @@ func TestAggregateTssMessages(t *testing.T) {
 		"empty tss messages slice": {
 			tssMessages: make([]tss.Message, 0),
 			symmetricKeys: map[group.MemberIndex]ephemeral.SymmetricKey{
-				1: &mockSymmetricKey{[]byte{0x01}},
-				2: &mockSymmetricKey{[]byte{0x02}},
-				3: &mockSymmetricKey{[]byte{0x03}},
+				1: &mockSymmetricKey{[]byte{0x0A}},
+				2: &mockSymmetricKey{[]byte{0x0B}},
+				3: &mockSymmetricKey{[]byte{0x0C}},
 			},
 			expectedBroadcastPayload: nil,
 			expectedPeersPayload: make(map[group.MemberIndex][]byte),
@@ -312,9 +312,9 @@ func TestAggregateTssMessages(t *testing.T) {
 		"nil tss messages slice": {
 			tssMessages: nil,
 			symmetricKeys: map[group.MemberIndex]ephemeral.SymmetricKey{
-				1: &mockSymmetricKey{[]byte{0x01}},
-				2: &mockSymmetricKey{[]byte{0x02}},
-				3: &mockSymmetricKey{[]byte{0x03}},
+				1: &mockSymmetricKey{[]byte{0x0A}},
+				2: &mockSymmetricKey{[]byte{0x0B}},
+				3: &mockSymmetricKey{[]byte{0x0C}},
 			},
 			expectedBroadcastPayload: nil,
 			expectedPeersPayload: make(map[group.MemberIndex][]byte),
