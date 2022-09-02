@@ -76,7 +76,7 @@ func TestGenerateTssPartiesIDs(t *testing.T) {
 func TestNewTssPartyIDFromMemberID(t *testing.T) {
 	memberID := group.MemberIndex(2)
 
-	tssPartyID := NewTssPartyIDFromMemberID(memberID)
+	tssPartyID := newTssPartyIDFromMemberID(memberID)
 
 	testutils.AssertStringsEqual(
 		t,
@@ -109,7 +109,7 @@ func TestNewTssPartyIDFromMemberID(t *testing.T) {
 func TestMemberIDToTssPartyIDKey(t *testing.T) {
 	memberID := group.MemberIndex(2)
 
-	key := MemberIDToTssPartyIDKey(memberID)
+	key := memberIDToTssPartyIDKey(memberID)
 
 	testutils.AssertBigIntsEqual(
 		t,
@@ -122,7 +122,7 @@ func TestMemberIDToTssPartyIDKey(t *testing.T) {
 func TestTssPartyIDToMemberID(t *testing.T) {
 	partyID := tss.NewPartyID("2", "member-2", big.NewInt(2))
 
-	memberID := TssPartyIDToMemberID(partyID)
+	memberID := tssPartyIDToMemberID(partyID)
 
 	testutils.AssertIntsEqual(t, "member ID", 2, int(memberID))
 }
@@ -384,7 +384,7 @@ func newMockTssMessage(
 	var to []*tss.PartyID
 
 	for _, receiver := range receivers {
-		to = append(to, NewTssPartyIDFromMemberID(receiver))
+		to = append(to, newTssPartyIDFromMemberID(receiver))
 	}
 
 	return &mockTssMessage{

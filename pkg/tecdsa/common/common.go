@@ -21,7 +21,7 @@ func GenerateTssPartiesIDs(
 	groupPartiesIDs := make([]*tss.PartyID, len(groupMembersIDs))
 
 	for i, groupMemberID := range groupMembersIDs {
-		newPartyID := NewTssPartyIDFromMemberID(groupMemberID)
+		newPartyID := newTssPartyIDFromMemberID(groupMemberID)
 
 		if memberID == groupMemberID {
 			partyID = newPartyID
@@ -33,25 +33,25 @@ func GenerateTssPartiesIDs(
 	return partyID, groupPartiesIDs
 }
 
-// NewTssPartyIDFromMemberID creates a new instance of a TSS party ID using
+// newTssPartyIDFromMemberID creates a new instance of a TSS party ID using
 // the given member ID. Such a created party ID has an unset index since it
 // does not yet belong to a sorted parties IDs set.
-func NewTssPartyIDFromMemberID(memberID group.MemberIndex) *tss.PartyID {
+func newTssPartyIDFromMemberID(memberID group.MemberIndex) *tss.PartyID {
 	return tss.NewPartyID(
 		strconv.Itoa(int(memberID)),
 		fmt.Sprintf("member-%v", memberID),
-		MemberIDToTssPartyIDKey(memberID),
+		memberIDToTssPartyIDKey(memberID),
 	)
 }
 
-// MemberIDToTssPartyIDKey converts a single group member ID to a key that
+// memberIDToTssPartyIDKey converts a single group member ID to a key that
 // can be used to create a TSS party ID.
-func MemberIDToTssPartyIDKey(memberID group.MemberIndex) *big.Int {
+func memberIDToTssPartyIDKey(memberID group.MemberIndex) *big.Int {
 	return big.NewInt(int64(memberID))
 }
 
-// TssPartyIDToMemberID converts a single TSS party ID to a group member ID.
-func TssPartyIDToMemberID(partyID *tss.PartyID) group.MemberIndex {
+// tssPartyIDToMemberID converts a single TSS party ID to a group member ID.
+func tssPartyIDToMemberID(partyID *tss.PartyID) group.MemberIndex {
 	return group.MemberIndex(partyID.KeyInt().Int64())
 }
 
@@ -64,7 +64,7 @@ func ResolveSortedTssPartyID(
 	memberID group.MemberIndex,
 ) *tss.PartyID {
 	sortedPartiesIDs := tssParameters.Parties().IDs()
-	partyIDKey := MemberIDToTssPartyIDKey(memberID)
+	partyIDKey := memberIDToTssPartyIDKey(memberID)
 	return sortedPartiesIDs.FindByKey(partyIDKey)
 }
 
@@ -119,7 +119,7 @@ func AggregateTssMessages(
 				)
 			}
 			// Get the single receiver ID.
-			receiverID := TssPartyIDToMemberID(tssMessageRouting.To[0])
+			receiverID := tssPartyIDToMemberID(tssMessageRouting.To[0])
 			// Get the symmetric key with the receiver. If the symmetric key
 			// cannot be found, something awful happened.
 			symmetricKey, ok := symmetricKeys[receiverID]
