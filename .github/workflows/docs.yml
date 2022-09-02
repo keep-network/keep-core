@@ -16,9 +16,9 @@ jobs:
       path-filter: ${{ steps.filter.outputs.path-filter }}
     steps:
       - uses: actions/checkout@v3
-        if: github.event_name == 'pull_request' 
+        if: github.event_name == 'pull_request'
       - uses: dorny/paths-filter@v2
-        if: github.event_name == 'pull_request' 
+        if: github.event_name == 'pull_request'
         id: filter
         with:
           filters: |
@@ -36,7 +36,7 @@ jobs:
 
       - name: Build HTML docs
         id: html
-        uses: thesis/asciidoctor-action@v1.0.1
+        uses: thesis/asciidoctor-action@v1.1
         with:
           files: 'docs/*.adoc docs/**/*.adoc'
           args: '-a revdate=`date +%Y-%m-%d` --failure-level=ERROR'
@@ -60,5 +60,17 @@ jobs:
           service-key: ${{ secrets.DOCS_KEEP_NETWORK_UPLOADER_SERVICE_KEY_JSON }}
           project: cfc-production
           bucket-name: docs.keep.network
-          bucket-path: ./${{ github.head_ref }}
+          bucket-path: ${{ github.head_ref }}
           build-folder: ${{ steps.html.outputs.asciidoctor-artifacts }}/docs
+
+      - name: Post preview URL to PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v5
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: 'Documentation preview uploaded to https://docs.keep.network/${{ github.head_ref }}/index.html.'
+            })

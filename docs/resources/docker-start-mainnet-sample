@@ -1,0 +1,23 @@
+ETHEREUM_WS_URL="<Ethereum API WS URL>"
+
+OPERATOR_KEY_FILE_NAME="<Operator Key File Name>"
+OPERATOR_KEY_FILE_PASSWORD="<Ethereum Key File Password>"
+
+CONFIG_DIR=$(pwd)/config
+STORAGE_DIR=$(pwd)/storage
+
+docker run --detach \
+    --volume $CONFIG_DIR:/mnt/keep/config \
+    --volume $STORAGE_DIR:/mnt/keep/storage \
+    --env KEEP_ETHEREUM_PASSWORD=$OPERATOR_KEY_FILE_PASSWORD \
+    --env LOG_LEVEL=debug \
+    --log-opt max-size=100m \
+    --log-opt max-file=3 \
+    -p 3919:3919 \
+    -p 9601:9601 \
+    -p 9701:9701 \
+    keepnetwork/keep-client:latest \
+    start \
+    --ethereum.url $ETHEREUM_WS_URL \
+    --ethereum.keyFile /mnt/keep/config/$OPERATOR_KEY_FILE_NAME \
+    --storage.dataDir /mnt/keep/storage

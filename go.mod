@@ -2,6 +2,11 @@ module github.com/keep-network/keep-core
 
 go 1.18
 
+// Temporary replacement until the fix to tss-lib is merged.
+// This fix allows groups of 100 to be generated on dev machines.
+// https://github.com/bnb-chain/tss-lib/pull/203
+replace github.com/bnb-chain/tss-lib => github.com/keep-network/tss-lib v1.3.3-0.20220826121242-73ee9558285f
+
 require (
 	github.com/bnb-chain/tss-lib v1.3.4-0.20220817120442-2f5f2e4fb79e
 	github.com/btcsuite/btcd v0.22.1
@@ -14,7 +19,7 @@ require (
 	github.com/ipfs/go-ipfs-config v0.16.0
 	github.com/ipfs/go-log v1.0.5
 	github.com/jbenet/goprocess v0.1.4
-	github.com/keep-network/keep-common v1.7.1-0.20220825152535-a0fc42b51b4f
+	github.com/keep-network/keep-common v1.7.1-0.20220829235520-8deccfef39d6
 	github.com/libp2p/go-addr-util v0.2.0
 	github.com/libp2p/go-libp2p v0.20.1
 	github.com/libp2p/go-libp2p-core v0.16.1

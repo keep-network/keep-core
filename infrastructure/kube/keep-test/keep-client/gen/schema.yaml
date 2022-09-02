@@ -1,0 +1,10 @@
+#@data/values-schema
+---
+clients:
+  - id: 0
+    #@schema/nullable
+    networkPeers: ""
+    stakeAmount: 800_000
+initContainers:
+  - name: ""
+    image: ""

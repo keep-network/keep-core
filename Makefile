@@ -80,12 +80,17 @@ generate:
 	$(info Running Go code generator)
 	go generate ./...
 
+version = $(shell git describe --tags --match "v[0-9]*" HEAD)
+revision = $(shell git rev-parse --short HEAD)
+
+go_build_cmd = go build -ldflags "-X main.version=$(version) -X main.revision=$(revision)" -a -o $(1) .
+
 build:
 	$(info Building Go code)
-	go build -o keep-client -a . 
+	$(call go_build_cmd,keep-client)
 
 cmd-help: build
-	@echo '$$ keep-client start --help' > docs/development/cmd-help
-	./keep-client start --help >> docs/development/cmd-help
+	@echo '$$ keep-client start --help' > docs/resources/client-start-help
+	./keep-client start --help >> docs/resources/client-start-help
 
 .PHONY: all development goerli download_artifacts generate build cmd-help

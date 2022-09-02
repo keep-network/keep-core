@@ -1,10 +1,13 @@
-:toc: macro
+:toc: left
+:toclevels: 3
+:sectanchors: true
+:sectids: true
+:source-highlighter: rouge
+:icons: font
+
+:numbered:
 
 = RFC 19: Random Beacon v2
-
-:icons: font
-:numbered:
-toc::[]
 
 == Background
 
