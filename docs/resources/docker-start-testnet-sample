@@ -6,7 +6,7 @@ OPERATOR_KEY_FILE_PASSWORD="<Ethereum Key File Password>"
 CONFIG_DIR=$(pwd)/config
 STORAGE_DIR=$(pwd)/storage
 
-docker run \
+docker run --detach \
     --volume $CONFIG_DIR:/mnt/keep/config \
     --volume $STORAGE_DIR:/mnt/keep/storage \
     --env KEEP_ETHEREUM_PASSWORD=$OPERATOR_KEY_FILE_PASSWORD \
