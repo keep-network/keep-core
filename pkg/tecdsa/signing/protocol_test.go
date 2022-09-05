@@ -2,6 +2,7 @@ package signing
 
 import (
 	"context"
+	"encoding/hex"
 	"fmt"
 	"github.com/bnb-chain/tss-lib/tss"
 	"github.com/keep-network/keep-core/pkg/crypto/ephemeral"
@@ -292,9 +293,22 @@ func TestTssRoundOne(t *testing.T) {
 
 	// Assert that each message is formed correctly.
 	for memberID, message := range messages {
-		assertOutgoingAggregateMessage(
+		assertOutgoingMessageGeneralParameters(
 			t,
-			*message,
+			message.senderID,
+			message.sessionID,
+			memberID,
+		)
+
+		assertOutgoingMessageBroadcastPayload(
+			t,
+			message.broadcastPayload,
+			memberID,
+		)
+
+		assertOutgoingMessagePeersPayload(
+			t,
+			message.peersPayload,
 			memberID,
 			members[memberID-1].symmetricKeys,
 		)
@@ -368,16 +382,332 @@ func TestTssRoundOne_SymmetricKeyMissing(t *testing.T) {
 	}
 }
 
-func assertOutgoingAggregateMessage(
+func TestTssRoundTwo(t *testing.T) {
+	members, tssRoundOneMessages, err := initializeTssRoundTwoMembersGroup(
+		dishonestThreshold,
+		groupSize,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Perform TSS round two for each group member.
+	tssRoundTwoMessages := make(map[group.MemberIndex]*tssRoundTwoMessage)
+	for _, member := range members {
+		var receivedTssRoundOneMessages []*tssRoundOneMessage
+		for _, tssRoundOneMessage := range tssRoundOneMessages {
+			if tssRoundOneMessage.senderID != member.id {
+				receivedTssRoundOneMessages = append(
+					receivedTssRoundOneMessages,
+					tssRoundOneMessage,
+				)
+			}
+		}
+
+		ctx, cancelCtx := context.WithTimeout(
+			context.Background(),
+			10*time.Second,
+		)
+
+		tssRoundTwoMessage, err := member.tssRoundTwo(
+			ctx,
+			receivedTssRoundOneMessages,
+		)
+		if err != nil {
+			cancelCtx()
+			t.Fatal(err)
+		}
+		tssRoundTwoMessages[member.id] = tssRoundTwoMessage
+
+		cancelCtx()
+	}
+
+	// Assert that each member has a correct state.
+	for _, member := range members {
+		if !strings.Contains(member.tssParty.String(), "round: 2") {
+			t.Errorf("wrong round number for member [%v]", member.id)
+		}
+	}
+
+	// Assert that each message is formed correctly.
+	for memberID, message := range tssRoundTwoMessages {
+		assertOutgoingMessageGeneralParameters(
+			t,
+			message.senderID,
+			message.sessionID,
+			memberID,
+		)
+
+		assertOutgoingMessagePeersPayload(
+			t,
+			message.peersPayload,
+			memberID,
+			members[memberID-1].symmetricKeys,
+		)
+	}
+}
+
+func TestTssRoundTwo_IncomingMessageCorrupted_WrongBroadcastPayload(t *testing.T) {
+	members, messages, err := initializeTssRoundTwoMembersGroup(
+		dishonestThreshold,
+		groupSize,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	corruptedPayload, err := hex.DecodeString("ffeeaabb")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Perform TSS round two for each group member.
+	for _, member := range members {
+		var receivedMessages []*tssRoundOneMessage
+		for _, message := range messages {
+			if message.senderID != member.id {
+				// Corrupt the message's broadcast payload.
+				message.broadcastPayload = corruptedPayload
+				receivedMessages = append(receivedMessages, message)
+			}
+		}
+
+		ctx, cancelCtx := context.WithTimeout(context.Background(), 10*time.Second)
+
+		_, err := member.tssRoundTwo(ctx, receivedMessages)
+
+		if !strings.Contains(
+			err.Error(),
+			"cannot update using the broadcast part of the TSS round one message",
+		) {
+			t.Errorf("wrong error for member [%v]: [%v]", member.id, err)
+		}
+
+		cancelCtx()
+	}
+}
+
+func TestTssRoundTwo_IncomingMessageCorrupted_UndecryptablePeerPayload(t *testing.T) {
+	members, messages, err := initializeTssRoundTwoMembersGroup(
+		dishonestThreshold,
+		groupSize,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	corruptedPayload, err := hex.DecodeString("ffeeaabb")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Perform TSS round two for each group member.
+	for _, member := range members {
+		var receivedMessages []*tssRoundOneMessage
+		for _, message := range messages {
+			if message.senderID != member.id {
+				// Make the P2P undecryptable by setting an arbitrary value
+				// as ciphertext.
+				corruptedPeersPayload := make(map[group.MemberIndex][]byte)
+				for receiverID := range message.peersPayload {
+					corruptedPeersPayload[receiverID] = corruptedPayload
+				}
+				message.peersPayload = corruptedPeersPayload
+				receivedMessages = append(receivedMessages, message)
+			}
+		}
+
+		ctx, cancelCtx := context.WithTimeout(context.Background(), 10*time.Second)
+
+		_, err := member.tssRoundTwo(ctx, receivedMessages)
+
+		if !strings.Contains(
+			err.Error(),
+			"cannot decrypt P2P part of the TSS round one message",
+		) {
+			t.Errorf("wrong error for member [%v]: [%v]", member.id, err)
+		}
+
+		cancelCtx()
+	}
+}
+
+func TestTssRoundTwo_IncomingMessageCorrupted_WrongPeerPayload(t *testing.T) {
+	members, messages, err := initializeTssRoundTwoMembersGroup(
+		dishonestThreshold,
+		groupSize,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	corruptedPayload, err := hex.DecodeString("ffeeaabb")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Perform TSS round two for each group member.
+	for _, member := range members {
+		var receivedMessages []*tssRoundOneMessage
+		for _, message := range messages {
+			if message.senderID != member.id {
+				// Corrupt the message's peers payload by encrypting an
+				// arbitrary value.
+				corruptedPeersPayload := make(map[group.MemberIndex][]byte)
+				for receiverID := range message.peersPayload {
+					symmetricKey := members[message.senderID-1].symmetricKeys[receiverID]
+					encryptedCorruptedPayload, err := symmetricKey.Encrypt(corruptedPayload)
+					if err != nil {
+						t.Fatal(err)
+					}
+					corruptedPeersPayload[receiverID] = encryptedCorruptedPayload
+				}
+				message.peersPayload = corruptedPeersPayload
+				receivedMessages = append(receivedMessages, message)
+			}
+		}
+
+		ctx, cancelCtx := context.WithTimeout(context.Background(), 10*time.Second)
+
+		_, err := member.tssRoundTwo(ctx, receivedMessages)
+
+		if !strings.Contains(
+			err.Error(),
+			"cannot update using the P2P part of the TSS round one message",
+		) {
+			t.Errorf("wrong error for member [%v]: [%v]", member.id, err)
+		}
+
+		cancelCtx()
+	}
+}
+
+func TestTssRoundTwo_IncomingMessageMissing(t *testing.T) {
+	members, messages, err := initializeTssRoundTwoMembersGroup(
+		dishonestThreshold,
+		groupSize,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Perform TSS round two for each group member.
+	for _, member := range members {
+		var receivedMessages []*tssRoundOneMessage
+		for _, message := range messages {
+			if message.senderID != member.id {
+				receivedMessages = append(receivedMessages, message)
+			}
+		}
+
+		ctx, cancelCtx := context.WithTimeout(context.Background(), 1*time.Second)
+		// Pass only one incoming message from TSS round one for processing.
+		_, err := member.tssRoundTwo(ctx, receivedMessages[:1])
+
+		expectedErr := fmt.Errorf(
+			"TSS round two outgoing messages were not generated on time",
+		)
+		if !reflect.DeepEqual(expectedErr, err) {
+			t.Errorf(
+				"unexpected error for member [%v]\n"+
+					"expected: %v\n"+
+					"actual:   %v\n",
+				member.id,
+				expectedErr,
+				err,
+			)
+		}
+
+		cancelCtx()
+	}
+}
+
+func TestTssRoundTwo_OutgoingMessageTimeout(t *testing.T) {
+	members, messages, err := initializeTssRoundTwoMembersGroup(
+		dishonestThreshold,
+		groupSize,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Perform TSS round two for each group member.
+	for _, member := range members {
+		var receivedMessages []*tssRoundOneMessage
+		for _, message := range messages {
+			if message.senderID != member.id {
+				receivedMessages = append(receivedMessages, message)
+			}
+		}
+
+		// To simulate the outgoing message timeout we do two things:
+		// - we pass an already cancelled context
+		// - we make sure no message is emitted from the channel by overwriting
+		//   the existing channel with a new one that won't receive any
+		//   messages from the underlying TSS local party
+		ctx, cancelCtx := context.WithCancel(context.Background())
+		cancelCtx()
+		member.tssOutgoingMessagesChan = make(<-chan tss.Message)
+
+		_, err := member.tssRoundTwo(ctx, receivedMessages)
+
+		expectedErr := fmt.Errorf(
+			"TSS round two outgoing messages were not generated on time",
+		)
+		if !reflect.DeepEqual(expectedErr, err) {
+			t.Errorf(
+				"unexpected error for member [%v]\n"+
+					"expected: %v\n"+
+					"actual:   %v\n",
+				member.id,
+				expectedErr,
+				err,
+			)
+		}
+	}
+}
+
+func TestTssRoundTwo_SymmetricKeyMissing(t *testing.T) {
+	members, messages, err := initializeTssRoundTwoMembersGroup(
+		dishonestThreshold,
+		groupSize,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Perform TSS round two for each group member.
+	for _, member := range members {
+		var receivedMessages []*tssRoundOneMessage
+		for _, message := range messages {
+			if message.senderID != member.id {
+				receivedMessages = append(receivedMessages, message)
+			}
+		}
+
+		// Cleanup symmetric key cache.
+		member.symmetricKeys = make(map[group.MemberIndex]ephemeral.SymmetricKey)
+
+		ctx, cancelCtx := context.WithTimeout(context.Background(), 10*time.Second)
+
+		_, err := member.tssRoundTwo(ctx, receivedMessages)
+
+		if !strings.Contains(
+			err.Error(),
+			"cannot get symmetric key with member",
+		) {
+			t.Errorf("wrong error for member [%v]: [%v]", member.id, err)
+		}
+
+		cancelCtx()
+	}
+}
+
+func assertOutgoingMessageGeneralParameters(
 	t *testing.T,
-	message struct{
-		senderID group.MemberIndex
-		broadcastPayload []byte
-	    peersPayload map[group.MemberIndex][]byte
-		sessionID string
-	},
+	messageSenderID group.MemberIndex,
+	messageSessionID string,
 	memberID group.MemberIndex,
-	memberSymmetricKeys map[group.MemberIndex]ephemeral.SymmetricKey,
 ) {
 	// We should always be the sender of our own messages.
 	testutils.AssertIntsEqual(
@@ -387,18 +717,41 @@ func assertOutgoingAggregateMessage(
 			memberID,
 		),
 		int(memberID),
-		int(message.senderID),
+		int(messageSenderID),
 	)
 
-	// We should always generate a broadcast payload.
-	if len(message.broadcastPayload) == 0 {
+	// We should always use the proper session ID.
+	testutils.AssertStringsEqual(
+		t,
+		fmt.Sprintf(
+			"session ID in message generated by member [%v]",
+			memberID,
+		),
+		sessionID,
+		messageSessionID,
+	)
+}
+
+func assertOutgoingMessageBroadcastPayload(
+	t *testing.T,
+	messageBroadcastPayload []byte,
+	memberID group.MemberIndex,
+) {
+	if len(messageBroadcastPayload) == 0 {
 		t.Errorf(
 			"empty broadcast payload in message generated by member [%v]",
 			memberID,
 		)
 	}
+}
 
-	// We should always generate groupSize-1 of peers payloads.
+func assertOutgoingMessagePeersPayload(
+	t *testing.T,
+	messagePeersPayload map[group.MemberIndex][]byte,
+	memberID group.MemberIndex,
+	memberSymmetricKeys map[group.MemberIndex]ephemeral.SymmetricKey,
+) {
+	// We should generate groupSize-1 of peers payloads.
 	testutils.AssertIntsEqual(
 		t,
 		fmt.Sprintf(
@@ -407,11 +760,11 @@ func assertOutgoingAggregateMessage(
 			memberID,
 		),
 		groupSize-1,
-		len(message.peersPayload),
+		len(messagePeersPayload),
 	)
 
 	// Each P2P payload should be encrypted using the proper symmetric key.
-	for receiverID, encryptedPayload := range message.peersPayload {
+	for receiverID, encryptedPayload := range messagePeersPayload {
 		symmetricKey := memberSymmetricKeys[receiverID]
 		if _, err := symmetricKey.Decrypt(encryptedPayload); err != nil {
 			t.Errorf(
@@ -424,17 +777,6 @@ func assertOutgoingAggregateMessage(
 			)
 		}
 	}
-
-	// We should always use the proper session ID.
-	testutils.AssertStringsEqual(
-		t,
-		fmt.Sprintf(
-			"session ID in message generated by member [%v]",
-			memberID,
-		),
-		sessionID,
-		message.sessionID,
-	)
 }
 
 func initializeEphemeralKeyPairGeneratingMembersGroup(
@@ -556,4 +898,55 @@ func initializeTssRoundOneMembersGroup(
 	}
 
 	return tssRoundOneMembers, nil
+}
+
+func initializeTssRoundTwoMembersGroup(
+	dishonestThreshold int,
+	groupSize int,
+) (
+	[]*tssRoundTwoMember,
+	[]*tssRoundOneMessage,
+	error,
+) {
+	var tssRoundTwoMembers []*tssRoundTwoMember
+	var tssRoundOneMessages []*tssRoundOneMessage
+
+	tssRoundOneMembers, err :=
+		initializeTssRoundOneMembersGroup(
+			dishonestThreshold,
+			groupSize,
+		)
+	if err != nil {
+		return nil, nil, fmt.Errorf(
+			"cannot generate TSS round one members group: [%v]",
+			err,
+		)
+	}
+
+	for _, member := range tssRoundOneMembers {
+		ctx, cancelCtx := context.WithTimeout(
+			context.Background(),
+			10*time.Second,
+		)
+
+		message, err := member.tssRoundOne(ctx)
+		if err != nil {
+			cancelCtx()
+			return nil, nil, fmt.Errorf(
+				"cannot do TSS round one for member [%v]: [%v]",
+				member.id,
+				err,
+			)
+		}
+
+		tssRoundTwoMembers = append(
+			tssRoundTwoMembers,
+			member.initializeTssRoundTwo(),
+		)
+		tssRoundOneMessages = append(tssRoundOneMessages, message)
+
+		cancelCtx()
+	}
+
+	return tssRoundTwoMembers, tssRoundOneMessages, nil
 }

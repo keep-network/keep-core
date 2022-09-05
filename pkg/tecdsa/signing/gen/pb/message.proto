@@ -15,3 +15,9 @@ message TSSRoundOneMessage {
     map<uint32, bytes> peersPayload = 3;
     string sessionID = 4;
 }
+
+message TSSRoundTwoMessage {
+    uint32 senderID = 1;
+    map<uint32, bytes> peersPayload = 2;
+    string sessionID = 3;
+}
