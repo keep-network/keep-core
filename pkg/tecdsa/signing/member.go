@@ -177,3 +177,29 @@ type tssRoundOneMember struct {
 	tssOutgoingMessagesChan <-chan tss.Message
 	tssResultChan           <-chan tsslibcommon.SignatureData
 }
+
+// initializeTssRoundTwo returns a member to perform next protocol operations.
+func (trom *tssRoundOneMember) initializeTssRoundTwo() *tssRoundTwoMember {
+	return &tssRoundTwoMember{
+		tssRoundOneMember: trom,
+	}
+}
+
+// tssRoundTwoMember represents one member in a signing group performing the
+// second round of the TSS keygen.
+type tssRoundTwoMember struct {
+	*tssRoundOneMember
+}
+
+// MarkInactiveMembers takes all messages from the previous signing protocol
+// execution phase and marks all member who did not send a message as inactive.
+func (trtm *tssRoundTwoMember) MarkInactiveMembers(
+	tssRoundOneMessages []*tssRoundOneMessage,
+) {
+	filter := trtm.inactiveMemberFilter()
+	for _, message := range tssRoundOneMessages {
+		filter.MarkMemberAsActive(message.senderID)
+	}
+
+	filter.FlushInactiveMembers()
+}

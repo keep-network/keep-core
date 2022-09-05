@@ -176,6 +176,125 @@ outgoingMessagesLoop:
 	}, nil
 }
 
+// tssRoundTwo performs the second round of the TSS process. The outcome of
+// that round is a message containing TSS round two components.
+func (trtm *tssRoundTwoMember) tssRoundTwo(
+	ctx context.Context,
+	tssRoundOneMessages []*tssRoundOneMessage,
+) (*tssRoundTwoMessage, error) {
+	// Use messages from round one to update the local party and advance
+	// to round two.
+	for _, tssRoundOneMessage := range deduplicateBySender(tssRoundOneMessages) {
+		senderID := tssRoundOneMessage.SenderID()
+		senderTssPartyID := common.ResolveSortedTssPartyID(trtm.tssParameters, senderID)
+
+		// Update the local TSS party using the broadcast part of the message
+		// produced in round one.
+		_, tssErr := trtm.tssParty.UpdateFromBytes(
+			tssRoundOneMessage.broadcastPayload,
+			senderTssPartyID,
+			true,
+		)
+		if tssErr != nil {
+			return nil, fmt.Errorf(
+				"cannot update using the broadcast part of the "+
+					"TSS round one message from member [%v]: [%v]",
+				senderID,
+				tssErr,
+			)
+		}
+
+		// Check if the sender produced a P2P part of the TSS round one message
+		// for this member.
+		encryptedPeerPayload, ok := tssRoundOneMessage.peersPayload[trtm.id]
+		if !ok {
+			return nil, fmt.Errorf(
+				"no P2P part in the TSS round one message from member [%v]",
+				senderID,
+			)
+		}
+		// Get the symmetric key with the sender. If the symmetric key
+		// cannot be found, something awful happened.
+		symmetricKey, ok := trtm.symmetricKeys[senderID]
+		if !ok {
+			return nil, fmt.Errorf(
+				"cannot get symmetric key with member [%v]",
+				senderID,
+			)
+		}
+		// Decrypt the P2P part of the TSS round one message.
+		peerPayload, err := symmetricKey.Decrypt(encryptedPeerPayload)
+		if err != nil {
+			return nil, fmt.Errorf(
+				"cannot decrypt P2P part of the TSS round one "+
+					"message from member [%v]: [%v]",
+				senderID,
+				err,
+			)
+		}
+		// Update the local TSS party using the P2P part of the message
+		// produced in round one.
+		_, tssErr = trtm.tssParty.UpdateFromBytes(
+			peerPayload,
+			senderTssPartyID,
+			false,
+		)
+		if tssErr != nil {
+			return nil, fmt.Errorf(
+				"cannot update using the P2P part of the TSS round "+
+					"one message from member [%v]: [%v]",
+				senderID,
+				tssErr,
+			)
+		}
+	}
+
+	// Listen for TSS outgoing messages. We expect N-1 P2P messages (where N
+	// is the number of properly operating members) and 0 broadcast messages.
+	var tssMessages []tss.Message
+outgoingMessagesLoop:
+	for {
+		select {
+		case tssMessage := <-trtm.tssOutgoingMessagesChan:
+			tssMessages = append(tssMessages, tssMessage)
+
+			if len(tssMessages) == len(trtm.group.OperatingMemberIDs())-1 {
+				break outgoingMessagesLoop
+			}
+		case <-ctx.Done():
+			return nil, fmt.Errorf(
+				"TSS round two outgoing messages were not " +
+					"generated on time",
+			)
+		}
+	}
+
+	broadcastPayload, peersPayload, err := common.AggregateTssMessages(
+		tssMessages,
+		trtm.symmetricKeys,
+	)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"cannot aggregate TSS round two outgoing messages: [%w]",
+			err,
+		)
+	}
+
+	// Unlike the previous phase (TSS round 1), we don't expect a broadcast
+	// payload here.
+	ok := len(broadcastPayload) == 0 &&
+		len(peersPayload) == len(trtm.group.OperatingMemberIDs())-1
+	if !ok {
+		return nil, fmt.Errorf("cannot produce a proper TSS round two message")
+	}
+
+	return &tssRoundTwoMessage{
+		senderID:         trtm.id,
+		peersPayload:     peersPayload,
+		sessionID:        trtm.sessionID,
+	}, nil
+}
+
 // deduplicateBySender removes duplicated items for the given sender.
 // It always takes the first item that occurs for the given sender
 // and ignores the subsequent ones.

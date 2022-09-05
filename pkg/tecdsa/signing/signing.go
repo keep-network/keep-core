@@ -68,7 +68,7 @@ func Execute(
 		return nil, err
 	}
 
-	_, ok := lastState.(*tssRoundOneState)
+	_, ok := lastState.(*tssRoundTwoState)
 	if !ok {
 		return nil, fmt.Errorf("execution ended on state: %T", lastState)
 	}
