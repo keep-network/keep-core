@@ -203,3 +203,29 @@ func (trtm *tssRoundTwoMember) MarkInactiveMembers(
 
 	filter.FlushInactiveMembers()
 }
+
+// initializeTssRoundThree returns a member to perform next protocol operations.
+func (trtm *tssRoundTwoMember) initializeTssRoundThree() *tssRoundThreeMember {
+	return &tssRoundThreeMember{
+		tssRoundTwoMember: trtm,
+	}
+}
+
+// tssRoundThreeMember represents one member in a signing group performing the
+// third round of the TSS keygen.
+type tssRoundThreeMember struct {
+	*tssRoundTwoMember
+}
+
+// MarkInactiveMembers takes all messages from the previous DKG protocol
+// execution phase and marks all member who did not send a message as IA.
+func (trtm *tssRoundThreeMember) MarkInactiveMembers(
+	tssRoundTwoMessages []*tssRoundTwoMessage,
+) {
+	filter := trtm.inactiveMemberFilter()
+	for _, message := range tssRoundTwoMessages {
+		filter.MarkMemberAsActive(message.senderID)
+	}
+
+	filter.FlushInactiveMembers()
+}
