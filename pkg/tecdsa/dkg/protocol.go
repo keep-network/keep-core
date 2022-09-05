@@ -232,7 +232,7 @@ outgoingMessagesLoop:
 // tssRoundThree performs the third round of the TSS process. The outcome of
 // that round is a message containing Paillier proofs for all other group
 // members.
-func (trtm *tssRoundTwoMember) tssRoundThree(
+func (trtm *tssRoundThreeMember) tssRoundThree(
 	ctx context.Context,
 	tssRoundTwoMessages []*tssRoundTwoMessage,
 ) (*tssRoundThreeMessage, error) {
@@ -309,7 +309,7 @@ func (trtm *tssRoundTwoMember) tssRoundThree(
 		tssMessageBytes, _, err := tssMessage.WireBytes()
 		if err != nil {
 			return nil, fmt.Errorf(
-				"failed to encode TSS round one message: [%v]",
+				"failed to encode TSS round three message: [%v]",
 				err,
 			)
 		}
