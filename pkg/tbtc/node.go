@@ -343,3 +343,7 @@ func (n *node) joinDKGIfEligible(seed *big.Int, startBlockNumber uint64) {
 		logger.Infof("not eligible for DKG with seed [0x%x]", seed)
 	}
 }
+
+func (n *node) DkgExecutor()(*dkg.Executor) {
+	return n.dkgExecutor
+}

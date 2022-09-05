@@ -48,13 +48,13 @@ func Initialize(
 	persistence persistence.Handle,
 	scheduler *generator.Scheduler,
 	config Config,
-) error {
+) (*node, error) {
 	node := newNode(chain, netProvider, persistence, scheduler, config)
 	deduplicator := newDeduplicator()
 
 	err := sortition.MonitorPool(ctx, logger, chain, sortition.DefaultStatusCheckTick)
 	if err != nil {
-		return fmt.Errorf(
+		return nil, fmt.Errorf(
 			"could not set up sortition pool monitoring: [%v]",
 			err,
 		)
@@ -87,5 +87,5 @@ func Initialize(
 		}()
 	})
 
-	return nil
+	return node, nil
 }

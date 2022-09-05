@@ -19,6 +19,7 @@ import (
 	"github.com/keep-network/keep-core/pkg/net/libp2p"
 	"github.com/keep-network/keep-core/pkg/net/retransmission"
 	"github.com/keep-network/keep-core/pkg/tbtc"
+	"github.com/keep-network/keep-core/pkg/tecdsa/dkg"
 )
 
 // StartCommand contains the definition of the start command-line subcommand.
@@ -114,7 +115,7 @@ func start(cmd *cobra.Command) error {
 		return fmt.Errorf("error initializing beacon: [%v]", err)
 	}
 
-	err = tbtc.Initialize(
+	node, err := tbtc.Initialize(
 		ctx,
 		tbtcChain,
 		netProvider,
@@ -127,7 +128,7 @@ func start(cmd *cobra.Command) error {
 	}
 
 	initializeMetrics(ctx, clientConfig, netProvider, blockCounter)
-	initializeDiagnostics(clientConfig, netProvider, signing, rootCmd.Version)
+	initializeDiagnostics(clientConfig, netProvider, signing, rootCmd.Version, node.DkgExecutor())
 
 	select {
 	case <-ctx.Done():
@@ -220,6 +221,7 @@ func initializeDiagnostics(
 	netProvider net.Provider,
 	signing chain.Signing,
 	clientVersion string,
+	executor *dkg.Executor,
 ) {
 	registry, isConfigured := diagnostics.Initialize(
 		config.Diagnostics.Port,
@@ -235,5 +237,5 @@ func initializeDiagnostics(
 	)
 
 	diagnostics.RegisterConnectedPeersSource(registry, netProvider, signing)
-	diagnostics.RegisterClientInfoSource(registry, netProvider, signing, clientVersion)
+	diagnostics.RegisterClientInfoSource(registry, netProvider, signing, clientVersion, executor)
 }

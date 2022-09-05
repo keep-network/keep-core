@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 
 	"github.com/keep-network/keep-core/pkg/chain"
+	"github.com/keep-network/keep-core/pkg/tecdsa/dkg"
 
 	"github.com/ipfs/go-log"
 	"github.com/keep-network/keep-common/pkg/diagnostics"
@@ -81,6 +82,7 @@ func RegisterClientInfoSource(
 	netProvider net.Provider,
 	signing chain.Signing,
 	clientVersion string,
+	executor *dkg.Executor,
 ) {
 	registry.RegisterSource("client_info", func() string {
 		connectionManager := netProvider.ConnectionManager()
@@ -100,10 +102,13 @@ func RegisterClientInfoSource(
 			return ""
 		}
 
+		preParamsPoolSize := executor.PreParamsPool().CurrentSize()
+
 		clientInfo := map[string]interface{}{
-			"network_id":    clientID,
-			"chain_address": clientChainAddress.String(),
-			"version": clientVersion,
+			"network_id":        clientID,
+			"chain_address":     clientChainAddress.String(),
+			"version":           clientVersion,
+			"preParamsPoolSize": preParamsPoolSize,
 		}
 
 		bytes, err := json.Marshal(clientInfo)
