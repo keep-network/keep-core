@@ -394,12 +394,10 @@ func (sm *signingMember) signDKGResult(
 // that the public key presented in each message is the correct one.
 // This key needs to be compared against the one used by network client earlier,
 // before this function is called.
-//
-// TODO: Add unit tests.
 func (sm *signingMember) verifyDKGResultSignatures(
 	messages []*resultSignatureMessage,
 	resultSigner ResultSigner,
-) (map[group.MemberIndex][]byte, error) {
+) map[group.MemberIndex][]byte {
 	receivedValidResultSignatures := make(map[group.MemberIndex][]byte)
 
 	for _, message := range deduplicateBySender(messages) {
@@ -416,7 +414,7 @@ func (sm *signingMember) verifyDKGResultSignatures(
 		}
 
 		// Check if the signature is valid.
-		ok, err := resultSigner.VerifySignature(
+		isValid, err := resultSigner.VerifySignature(
 			&SignedResult{
 				ResultHash: message.resultHash,
 				Signature:  message.signature,
@@ -433,7 +431,7 @@ func (sm *signingMember) verifyDKGResultSignatures(
 			)
 			continue
 		}
-		if !ok {
+		if !isValid {
 			sm.logger.Infof(
 				"[member: %v] sender [%d] provided invalid signature",
 				sm.memberIndex,
@@ -448,7 +446,7 @@ func (sm *signingMember) verifyDKGResultSignatures(
 	// Register member's self signature.
 	receivedValidResultSignatures[sm.memberIndex] = sm.selfDKGResultSignature
 
-	return receivedValidResultSignatures, nil
+	return receivedValidResultSignatures
 }
 
 // submitDKGResult submits the DKG result along with the supporting signatures
