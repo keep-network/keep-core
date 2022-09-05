@@ -375,6 +375,55 @@ func (trtm *tssRoundThreeMember) tssRoundThree(
 	}
 }
 
+// tssRoundFour performs the fourth round of the TSS process. The outcome of
+// that round is a message containing TSS round four components.
+func (trfm *tssRoundFourMember) tssRoundFour(
+	ctx context.Context,
+	tssRoundThreeMessages []*tssRoundThreeMessage,
+) (*tssRoundFourMessage, error) {
+	// Use messages from round three to update the local party and advance
+	// to round four.
+	for _, tssRoundThreeMessage := range deduplicateBySender(tssRoundThreeMessages) {
+		senderID := tssRoundThreeMessage.SenderID()
+
+		_, tssErr := trfm.tssParty.UpdateFromBytes(
+			tssRoundThreeMessage.payload,
+			common.ResolveSortedTssPartyID(trfm.tssParameters, senderID),
+			true,
+		)
+		if tssErr != nil {
+			return nil, fmt.Errorf(
+				"cannot update using TSS round three message "+
+					"from member [%v]: [%v]",
+				senderID,
+				tssErr,
+			)
+		}
+	}
+
+	// We expect exactly one TSS message to be produced in this phase.
+	select {
+	case tssMessage := <-trfm.tssOutgoingMessagesChan:
+		tssMessageBytes, _, err := tssMessage.WireBytes()
+		if err != nil {
+			return nil, fmt.Errorf(
+				"failed to encode TSS round four message: [%v]",
+				err,
+			)
+		}
+
+		return &tssRoundFourMessage{
+			senderID:  trfm.id,
+			payload:   tssMessageBytes,
+			sessionID: trfm.sessionID,
+		}, nil
+	case <-ctx.Done():
+		return nil, fmt.Errorf(
+			"TSS round four outgoing message was not generated on time",
+		)
+	}
+}
+
 // deduplicateBySender removes duplicated items for the given sender.
 // It always takes the first item that occurs for the given sender
 // and ignores the subsequent ones.

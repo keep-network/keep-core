@@ -91,3 +91,23 @@ func (trtm *tssRoundThreeMessage) SenderID() group.MemberIndex {
 func (trtm *tssRoundThreeMessage) Type() string {
 	return messageTypePrefix + "tss_round_three_message"
 }
+
+// tssRoundFourMessage is a message payload that carries the sender's
+// TSS round four components.
+type tssRoundFourMessage struct {
+	senderID group.MemberIndex
+
+	payload   []byte
+	sessionID string
+}
+
+// SenderID returns protocol-level identifier of the message sender.
+func (trfm *tssRoundFourMessage) SenderID() group.MemberIndex {
+	return trfm.senderID
+}
+
+// Type returns a string describing an tssRoundFourMessage type for
+// marshaling purposes.
+func (trfm *tssRoundFourMessage) Type() string {
+	return messageTypePrefix + "tss_round_four_message"
+}
