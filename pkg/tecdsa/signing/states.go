@@ -113,7 +113,7 @@ func (skgs *symmetricKeyGenerationState) ActiveBlocks() uint64 {
 }
 
 func (skgs *symmetricKeyGenerationState) Initiate(ctx context.Context) error {
-	skgs.member.MarkInactiveMembers(skgs.previousPhaseMessages)
+	skgs.member.markInactiveMembers(skgs.previousPhaseMessages)
 
 	if len(skgs.member.group.InactiveMemberIDs()) > 0 {
 		return newInactiveMembersError(skgs.member.group.InactiveMemberIDs())
@@ -238,7 +238,7 @@ func (trts *tssRoundTwoState) ActiveBlocks() uint64 {
 }
 
 func (trts *tssRoundTwoState) Initiate(ctx context.Context) error {
-	trts.member.MarkInactiveMembers(trts.previousPhaseMessages)
+	trts.member.markInactiveMembers(trts.previousPhaseMessages)
 
 	if len(trts.member.group.InactiveMemberIDs()) > 0 {
 		return newInactiveMembersError(trts.member.group.InactiveMemberIDs())
@@ -323,7 +323,7 @@ func (trts *tssRoundThreeState) ActiveBlocks() uint64 {
 }
 
 func (trts *tssRoundThreeState) Initiate(ctx context.Context) error {
-	trts.member.MarkInactiveMembers(trts.previousPhaseMessages)
+	trts.member.markInactiveMembers(trts.previousPhaseMessages)
 
 	if len(trts.member.group.InactiveMemberIDs()) > 0 {
 		return newInactiveMembersError(trts.member.group.InactiveMemberIDs())
