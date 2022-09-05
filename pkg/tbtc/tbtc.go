@@ -6,7 +6,9 @@ import (
 	"time"
 
 	"github.com/ipfs/go-log"
+	commonDiagnostics "github.com/keep-network/keep-common/pkg/diagnostics"
 	"github.com/keep-network/keep-common/pkg/persistence"
+	"github.com/keep-network/keep-core/pkg/diagnostics"
 	"github.com/keep-network/keep-core/pkg/generator"
 	"github.com/keep-network/keep-core/pkg/net"
 	"github.com/keep-network/keep-core/pkg/sortition"
@@ -48,13 +50,21 @@ func Initialize(
 	persistence persistence.Handle,
 	scheduler *generator.Scheduler,
 	config Config,
-) (*node, error) {
+	registry *commonDiagnostics.Registry,
+) error {
 	node := newNode(chain, netProvider, persistence, scheduler, config)
 	deduplicator := newDeduplicator()
 
+	assembleTbtcDiagnostics := func() map[string]interface{} {
+		return map[string]interface{}{
+			"preParamsPoolSize": node.dkgExecutor.PreParamsPool().CurrentSize(),
+		}
+	}
+	diagnostics.RegisterApplicationSource(registry, "tbtc", assembleTbtcDiagnostics)
+
 	err := sortition.MonitorPool(ctx, logger, chain, sortition.DefaultStatusCheckTick)
 	if err != nil {
-		return nil, fmt.Errorf(
+		return fmt.Errorf(
 			"could not set up sortition pool monitoring: [%v]",
 			err,
 		)
@@ -87,5 +97,5 @@ func Initialize(
 		}()
 	})
 
-	return node, nil
+	return nil
 }

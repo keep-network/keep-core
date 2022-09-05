@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 
 	"github.com/keep-network/keep-core/pkg/chain"
-	"github.com/keep-network/keep-core/pkg/tecdsa/dkg"
 
 	"github.com/ipfs/go-log"
 	"github.com/keep-network/keep-common/pkg/diagnostics"
@@ -82,7 +81,6 @@ func RegisterClientInfoSource(
 	netProvider net.Provider,
 	signing chain.Signing,
 	clientVersion string,
-	executor *dkg.Executor,
 ) {
 	registry.RegisterSource("client_info", func() string {
 		connectionManager := netProvider.ConnectionManager()
@@ -102,18 +100,27 @@ func RegisterClientInfoSource(
 			return ""
 		}
 
-		preParamsPoolSize := executor.PreParamsPool().CurrentSize()
-
 		clientInfo := map[string]interface{}{
-			"network_id":        clientID,
-			"chain_address":     clientChainAddress.String(),
-			"version":           clientVersion,
-			"preParamsPoolSize": preParamsPoolSize,
+			"network_id":    clientID,
+			"chain_address": clientChainAddress.String(),
+			"version":       clientVersion,
 		}
 
 		bytes, err := json.Marshal(clientInfo)
 		if err != nil {
 			logger.Error("error on serializing client info to JSON: [%v]", err)
+			return ""
+		}
+
+		return string(bytes)
+	})
+}
+
+func RegisterApplicationSource(registry *diagnostics.Registry, application string, fetchApplicationDiagnostics func() map[string]interface{}) {
+	registry.RegisterSource(application, func() string {
+		bytes, err := json.Marshal(fetchApplicationDiagnostics())
+		if err != nil {
+			logger.Error("error on serializing peers list to JSON: [%v]", err)
 			return ""
 		}
 
