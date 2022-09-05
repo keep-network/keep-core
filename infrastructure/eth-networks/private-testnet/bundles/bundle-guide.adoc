@@ -5,6 +5,14 @@
 :source-highlighter: rouge
 :icons: font
 
+ifdef::env-github[]
+:tip-caption: :bulb:
+:note-caption: :information_source:
+:important-caption: :heavy_exclamation_mark:
+:caution-caption: :fire:
+:warning-caption: :warning:
+endif::[]
+
 = Keep Network Private Testnet Bundle
 
 Use this bundle to setup Keep Network node running on Keep Network Private Testnet.
