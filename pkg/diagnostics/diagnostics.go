@@ -116,6 +116,8 @@ func RegisterClientInfoSource(
 	})
 }
 
+// RegisterApplicationSource registers the diagnostics source providing
+// information about the application.
 func RegisterApplicationSource(registry *diagnostics.Registry, application string, fetchApplicationDiagnostics func() map[string]interface{}) {
 	registry.RegisterSource(application, func() string {
 		bytes, err := json.Marshal(fetchApplicationDiagnostics())
