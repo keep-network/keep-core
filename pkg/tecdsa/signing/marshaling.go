@@ -163,7 +163,7 @@ func (trtm *tssRoundThreeMessage) Unmarshal(bytes []byte) error {
 // Marshal converts this tssRoundFourMessage to a byte array suitable for
 // network communication.
 func (trfm *tssRoundFourMessage) Marshal() ([]byte, error) {
-	return (&pb.TSSRoundThreeMessage{
+	return (&pb.TSSRoundFourMessage{
 		SenderID:  uint32(trfm.senderID),
 		Payload:   trfm.payload,
 		SessionID: trfm.sessionID,
@@ -172,7 +172,7 @@ func (trfm *tssRoundFourMessage) Marshal() ([]byte, error) {
 
 // Unmarshal converts a byte array produced by Marshal to an tssRoundFourMessage.
 func (trfm *tssRoundFourMessage) Unmarshal(bytes []byte) error {
-	pbMsg := pb.TSSRoundThreeMessage{}
+	pbMsg := pb.TSSRoundFourMessage{}
 	if err := pbMsg.Unmarshal(bytes); err != nil {
 		return err
 	}
