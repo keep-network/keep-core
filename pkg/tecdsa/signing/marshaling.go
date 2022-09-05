@@ -188,6 +188,34 @@ func (trfm *tssRoundFourMessage) Unmarshal(bytes []byte) error {
 	return nil
 }
 
+// Marshal converts this tssRoundFiveMessage to a byte array suitable for
+// network communication.
+func (trfm *tssRoundFiveMessage) Marshal() ([]byte, error) {
+	return (&pb.TSSRoundFiveMessage{
+		SenderID:  uint32(trfm.senderID),
+		Payload:   trfm.payload,
+		SessionID: trfm.sessionID,
+	}).Marshal()
+}
+
+// Unmarshal converts a byte array produced by Marshal to an tssRoundFiveMessage.
+func (trfm *tssRoundFiveMessage) Unmarshal(bytes []byte) error {
+	pbMsg := pb.TSSRoundFiveMessage{}
+	if err := pbMsg.Unmarshal(bytes); err != nil {
+		return err
+	}
+
+	if err := validateMemberIndex(pbMsg.SenderID); err != nil {
+		return err
+	}
+
+	trfm.senderID = group.MemberIndex(pbMsg.SenderID)
+	trfm.payload = pbMsg.Payload
+	trfm.sessionID = pbMsg.SessionID
+
+	return nil
+}
+
 func validateMemberIndex(protoIndex uint32) error {
 	// Protobuf does not have uint8 type, so we are using uint32. When
 	// unmarshalling message, we need to make sure we do not overflow.

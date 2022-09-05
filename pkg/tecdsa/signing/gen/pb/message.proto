@@ -33,3 +33,9 @@ message TSSRoundFourMessage {
     bytes payload = 2;
     string sessionID = 3;
 }
+
+message TSSRoundFiveMessage {
+    uint32 senderID = 1;
+    bytes payload = 2;
+    string sessionID = 3;
+}

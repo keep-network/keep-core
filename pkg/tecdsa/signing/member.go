@@ -246,10 +246,36 @@ type tssRoundFourMember struct {
 // markInactiveMembers takes all messages from the previous signing protocol
 // execution phase and marks all member who did not send a message as inactive.
 func (trtm *tssRoundFourMember) markInactiveMembers(
-	tssRoundTwoMessages []*tssRoundThreeMessage,
+	tssRoundThreeMessages []*tssRoundThreeMessage,
 ) {
 	filter := trtm.inactiveMemberFilter()
-	for _, message := range tssRoundTwoMessages {
+	for _, message := range tssRoundThreeMessages {
+		filter.MarkMemberAsActive(message.senderID)
+	}
+
+	filter.FlushInactiveMembers()
+}
+
+// initializeTssRoundFive returns a member to perform next protocol operations.
+func (trfm *tssRoundFourMember) initializeTssRoundFive() *tssRoundFiveMember {
+	return &tssRoundFiveMember{
+		tssRoundFourMember: trfm,
+	}
+}
+
+// tssRoundFiveMember represents one member in a signing group performing the
+// fifth round of the TSS keygen.
+type tssRoundFiveMember struct {
+	*tssRoundFourMember
+}
+
+// markInactiveMembers takes all messages from the previous signing protocol
+// execution phase and marks all member who did not send a message as inactive.
+func (trfm *tssRoundFiveMember) markInactiveMembers(
+	tssRoundFourMessages []*tssRoundFourMessage,
+) {
+	filter := trfm.inactiveMemberFilter()
+	for _, message := range tssRoundFourMessages {
 		filter.MarkMemberAsActive(message.senderID)
 	}
 

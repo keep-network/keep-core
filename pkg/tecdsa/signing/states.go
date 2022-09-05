@@ -26,6 +26,9 @@ const (
 
 	tssRoundFourStateDelayBlocks  = 1
 	tssRoundFourStateActiveBlocks = 5
+
+	tssRoundFiveStateDelayBlocks  = 1
+	tssRoundFiveStateActiveBlocks = 5
 )
 
 // ProtocolBlocks returns the total number of blocks it takes to execute
@@ -40,7 +43,9 @@ func ProtocolBlocks() uint64 {
 		tssRoundThreeStateDelayBlocks +
 		tssRoundThreeStateActiveBlocks +
 		tssRoundFourStateDelayBlocks +
-		tssRoundFourStateActiveBlocks
+		tssRoundFourStateActiveBlocks +
+		tssRoundFiveStateDelayBlocks +
+		tssRoundFiveStateActiveBlocks
 }
 
 // ephemeralKeyPairGenerationState is the state during which members broadcast
@@ -392,7 +397,7 @@ func (trts *tssRoundThreeState) MemberIndex() group.MemberIndex {
 
 // tssRoundFourState is the state during which members broadcast TSS
 // round four messages.
-// `tssRoundMessage`s are valid in this state.
+// `tssRoundFourMessage`s are valid in this state.
 type tssRoundFourState struct {
 	channel net.BroadcastChannel
 	member  *tssRoundFourMember
@@ -463,9 +468,94 @@ func (trfs *tssRoundFourState) Next() (state.State, error) {
 		return nil, err
 	}
 
-	return nil, nil
+	return &tssRoundFiveState{
+		channel:               trfs.channel,
+		member:                trfs.member.initializeTssRoundFive(),
+		outcomeChan:           make(chan error),
+		previousPhaseMessages: trfs.phaseMessages,
+	}, nil
 }
 
 func (trfs *tssRoundFourState) MemberIndex() group.MemberIndex {
+	return trfs.member.id
+}
+
+// tssRoundFiveState is the state during which members broadcast TSS
+// round five messages.
+// `tssRoundFiveMessage`s are valid in this state.
+type tssRoundFiveState struct {
+	channel net.BroadcastChannel
+	member  *tssRoundFiveMember
+
+	outcomeChan chan error
+
+	previousPhaseMessages []*tssRoundFourMessage
+
+	phaseMessages []*tssRoundFiveMessage
+}
+
+func (trfs *tssRoundFiveState) DelayBlocks() uint64 {
+	return tssRoundFiveStateDelayBlocks
+}
+
+func (trfs *tssRoundFiveState) ActiveBlocks() uint64 {
+	return tssRoundFiveStateActiveBlocks
+}
+
+func (trfs *tssRoundFiveState) Initiate(ctx context.Context) error {
+	trfs.member.markInactiveMembers(trfs.previousPhaseMessages)
+
+	if len(trfs.member.group.InactiveMemberIDs()) > 0 {
+		return newInactiveMembersError(trfs.member.group.InactiveMemberIDs())
+	}
+
+	// TSS computations can be time-consuming and can exceed the current
+	// state's time window. The ctx parameter is scoped to the lifetime of
+	// the current state so, it can be used as a timeout signal. However,
+	// that ctx is cancelled upon state's end only after Initiate returns.
+	// In order to make that working, Initiate must trigger the computations
+	// in a separate goroutine and return before the end of the state.
+	go func() {
+		message, err := trfs.member.tssRoundFive(ctx, trfs.previousPhaseMessages)
+		if err != nil {
+			trfs.outcomeChan <- err
+			return
+		}
+
+		if err := trfs.channel.Send(ctx, message); err != nil {
+			trfs.outcomeChan <- err
+			return
+		}
+
+		close(trfs.outcomeChan)
+	}()
+
+	return nil
+}
+
+func (trfs *tssRoundFiveState) Receive(msg net.Message) error {
+	switch phaseMessage := msg.Payload().(type) {
+	case *tssRoundFiveMessage:
+		if trfs.member.shouldAcceptMessage(
+			phaseMessage.SenderID(),
+			msg.SenderPublicKey(),
+		) && trfs.member.sessionID == phaseMessage.sessionID {
+			trfs.phaseMessages = append(trfs.phaseMessages, phaseMessage)
+		}
+	}
+
+	return nil
+}
+
+func (trfs *tssRoundFiveState) Next() (state.State, error) {
+	err := <-trfs.outcomeChan
+	if err != nil {
+		return nil, err
+	}
+
+	return nil, nil
+}
+
+func (trfs *tssRoundFiveState) MemberIndex() group.MemberIndex {
 	return trfs.member.id
 }
