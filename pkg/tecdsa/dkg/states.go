@@ -233,7 +233,7 @@ func (tros *tssRoundOneState) MemberIndex() group.MemberIndex {
 	return tros.member.id
 }
 
-// tssRoundOneState is the state during which members broadcast TSS
+// tssRoundTwoState is the state during which members broadcast TSS
 // shares and de-commitments.
 // `tssRoundTwoMessage`s are valid in this state.
 type tssRoundTwoState struct {
@@ -318,7 +318,7 @@ func (trts *tssRoundTwoState) MemberIndex() group.MemberIndex {
 	return trts.member.id
 }
 
-// tssRoundOneState is the state during which members broadcast the TSS Paillier
+// tssRoundThreeState is the state during which members broadcast the TSS Paillier
 // proof.
 // `tssRoundThreeMessage`s are valid in this state.
 type tssRoundThreeState struct {
