@@ -113,9 +113,9 @@ var cmdFlagsTests = map[string]struct {
 		expectedValueFromFlag: 486,
 		defaultValue:          0,
 	},
-	"storage.dataDir": {
-		readValueFunc: func(c *config.Config) interface{} { return c.Storage.DataDir },
-		flagName:      "--storage.dataDir",
+	"storage.dir": {
+		readValueFunc: func(c *config.Config) interface{} { return c.Storage.Dir },
+		flagName:      "--storage.dir",
 		flagValue:     "./flagged/location/dude",
 		defaultValue:  "",
 	},
@@ -258,7 +258,7 @@ func TestFlags_ReadConfigFromFlagsWithDefaults(t *testing.T) {
 	args := []string{
 		cmdFlagsTests["ethereum.url"].flagName, cmdFlagsTests["ethereum.url"].flagValue,
 		cmdFlagsTests["ethereum.keyFile"].flagName, cmdFlagsTests["ethereum.keyFile"].flagValue,
-		cmdFlagsTests["storage.dataDir"].flagName, cmdFlagsTests["storage.dataDir"].flagValue,
+		cmdFlagsTests["storage.dir"].flagName, cmdFlagsTests["storage.dir"].flagValue,
 	}
 	testCommand.SetArgs(args)
 
@@ -316,8 +316,8 @@ func TestFlags_Mixed(t *testing.T) {
 			readValueFunc: func(c *config.Config) interface{} { return c.Metrics.Port },
 			expectedValue: 3097,
 		},
-		"storage.dataDir": {
-			readValueFunc: func(c *config.Config) interface{} { return c.Storage.DataDir },
+		"storage.dir": {
+			readValueFunc: func(c *config.Config) interface{} { return c.storage.dir },
 			expectedValue: "/my/secure/location",
 		},
 		// Properties not provided in the config file nor set with flags. Use defaults.

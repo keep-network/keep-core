@@ -126,7 +126,7 @@ include::../configs/config.toml.SAMPLE[]
 ==== Persistance
 
 A client will produce and store data on disk. The directory should be provided to
-the client under `storage.DataDir` (flag: `--storage.dataDir`) configuration property.
+the client under `storage.Dir` (flag: `--storage.dir`) configuration property.
 
 IMPORTANT: It is crucial to ensure the data directory is persisted and backed up on
 a regular basis.
@@ -197,7 +197,7 @@ The minimum required configuration for the client to start covers setting:
 - `KEEP_ETHEREUM_PASSWORD` environment variable (see: <<config-operator-account>> section),
 - `ethereum.url` config property (see: <<config-ethereum-api>> section),
 - `ethereum.keyFile` config property (see: <<config-operator-account>> section),
-- `storage.dataDir` config property (see: <<config-persistance>> section).
+- `storage.dir` config property (see: <<config-persistance>> section).
 
 === Installation
 

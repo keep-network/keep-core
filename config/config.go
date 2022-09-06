@@ -177,9 +177,9 @@ func validateConfig(config *Config, categories ...Category) error {
 				))
 			}
 		case Storage:
-			if config.Storage.DataDir == "" {
+			if config.Storage.Dir == "" {
 				result = multierror.Append(result, fmt.Errorf(
-					"missing value for storage.dataDir; see storage section in configuration",
+					"missing value for storage.dir; see storage section in configuration",
 				))
 			}
 		}

@@ -2,6 +2,6 @@ package storage
 
 // Config stores meta-info about keeping data on disk
 type Config struct {
-	// KeyStoreDir string
-	DataDir string
+	// Path to the persistent storage directory on disk.
+	Dir string
 }
