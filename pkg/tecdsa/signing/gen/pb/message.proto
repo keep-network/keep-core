@@ -51,3 +51,9 @@ message TSSRoundSevenMessage {
     bytes payload = 2;
     string sessionID = 3;
 }
+
+message TSSRoundEightMessage {
+    uint32 senderID = 1;
+    bytes payload = 2;
+    string sessionID = 3;
+}

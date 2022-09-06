@@ -571,6 +571,55 @@ func (trsm *tssRoundSevenMember) tssRoundSeven(
 	}
 }
 
+// tssRoundEight performs the eighth round of the TSS process. The outcome of
+// that round is a message containing TSS round eight components.
+func (trem *tssRoundEightMember) tssRoundEight(
+	ctx context.Context,
+	tssRoundSevenMessages []*tssRoundSevenMessage,
+) (*tssRoundEightMessage, error) {
+	// Use messages from round five to update the local party and advance
+	// to round eight.
+	for _, tssRoundSevenMessage := range deduplicateBySender(tssRoundSevenMessages) {
+		senderID := tssRoundSevenMessage.SenderID()
+
+		_, tssErr := trem.tssParty.UpdateFromBytes(
+			tssRoundSevenMessage.payload,
+			common.ResolveSortedTssPartyID(trem.tssParameters, senderID),
+			true,
+		)
+		if tssErr != nil {
+			return nil, fmt.Errorf(
+				"cannot update using TSS round seven message "+
+					"from member [%v]: [%v]",
+				senderID,
+				tssErr,
+			)
+		}
+	}
+
+	// We expect exactly one TSS message to be produced in this phase.
+	select {
+	case tssMessage := <-trem.tssOutgoingMessagesChan:
+		tssMessageBytes, _, err := tssMessage.WireBytes()
+		if err != nil {
+			return nil, fmt.Errorf(
+				"failed to encode TSS round eight message: [%v]",
+				err,
+			)
+		}
+
+		return &tssRoundEightMessage{
+			senderID:  trem.id,
+			payload:   tssMessageBytes,
+			sessionID: trem.sessionID,
+		}, nil
+	case <-ctx.Done():
+		return nil, fmt.Errorf(
+			"TSS round eight outgoing message was not generated on time",
+		)
+	}
+}
+
 // deduplicateBySender removes duplicated items for the given sender.
 // It always takes the first item that occurs for the given sender
 // and ignores the subsequent ones.
