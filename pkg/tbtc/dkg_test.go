@@ -809,3 +809,165 @@ func TestVerifySignature_VerificationError(t *testing.T) {
 		)
 	}
 }
+
+
+func TestSubmitResult_MemberSubmitsResult(t *testing.T) {
+	chain := Connect(5, 4, 3)
+	dkgResultSubmitter := newDkgResultSubmitter(chain)
+
+	testData, err := tecdsatest.LoadPrivateKeyShareTestFixtures(1)
+	if err != nil {
+		t.Fatalf("failed to load test data: [%v]", err)
+	}
+	result := &dkg.Result{
+		Group:           group.NewGroup(32, 64),
+		PrivateKeyShare: tecdsa.NewPrivateKeyShare(testData[0]),
+	}
+
+	memberIndex := group.MemberIndex(1)
+	signatures := map[group.MemberIndex][]byte{
+		1: []byte("signature 1"),
+		2: []byte("signature 2"),
+		3: []byte("signature 3"),
+	}
+	startBlock := uint64(3)
+
+	err = dkgResultSubmitter.SubmitResult(
+		memberIndex,
+		result,
+		signatures,
+		startBlock,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	expectedActiveWallet, err := result.GroupPublicKeyBytes()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if !reflect.DeepEqual(expectedActiveWallet, chain.activeWallet) {
+		t.Errorf(
+			"unexpected active wallet bytes \nexpected: [0x%x]\nactual:   [0x%x]\n",
+			expectedActiveWallet,
+			chain.activeWallet,
+		)
+	}
+}
+
+func TestSubmitResult_MemberDoesNotSubmitsResult(t *testing.T) {
+	chain := Connect(5, 4, 3)
+	dkgResultSubmitter := newDkgResultSubmitter(chain)
+
+	testData, err := tecdsatest.LoadPrivateKeyShareTestFixtures(1)
+	if err != nil {
+		t.Fatalf("failed to load test data: [%v]", err)
+	}
+	result := &dkg.Result{
+		Group:           group.NewGroup(32, 64),
+		PrivateKeyShare: tecdsa.NewPrivateKeyShare(testData[0]),
+	}
+	signatures := map[group.MemberIndex][]byte{
+		1: []byte("signature 1"),
+		2: []byte("signature 2"),
+		3: []byte("signature 3"),
+	}
+	startBlock := uint64(2)
+
+	secondMemberSubmissionChannel := make(chan error)
+
+	// Attempt to submit result for the second member on a separate goroutine.
+	go func() {
+		secondMemberIndex := group.MemberIndex(2)
+		secondMemberErr := dkgResultSubmitter.SubmitResult(
+			secondMemberIndex,
+			result,
+			signatures,
+			startBlock,
+		)
+		secondMemberSubmissionChannel <- secondMemberErr
+	}()
+
+	// While the second member is waiting for submission eligibility, submit the
+	// result with the first member.
+	firstMemberIndex := group.MemberIndex(1)
+	firstMemberErr := dkgResultSubmitter.SubmitResult(
+		firstMemberIndex,
+		result,
+		signatures,
+		startBlock,
+	)
+	if firstMemberErr != nil {
+		t.Fatal(firstMemberErr)
+	}
+
+	// Check that the second member returned without errors
+	secondMemberErr := <-secondMemberSubmissionChannel
+	if err != nil {
+		t.Fatal(secondMemberErr)
+	}
+
+	if chain.resultSubmitterIndex != firstMemberIndex {
+		t.Errorf(
+			"unexpected result submitter index \nexpected: %v\nactual:   %v\n",
+			firstMemberIndex,
+			chain.resultSubmitterIndex,
+		)
+	}
+
+	expectedActiveWallet, err := result.GroupPublicKeyBytes()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if !reflect.DeepEqual(expectedActiveWallet, chain.activeWallet) {
+		t.Errorf(
+			"unexpected active wallet bytes \nexpected: [0x%x]\nactual:   [0x%x]\n",
+			expectedActiveWallet,
+			chain.activeWallet,
+		)
+	}
+}
+
+func TestSubmitResult_TooFewSignatures(t *testing.T) {
+	chain := Connect(5, 4, 3)
+	dkgResultSubmitter := newDkgResultSubmitter(chain)
+
+	testData, err := tecdsatest.LoadPrivateKeyShareTestFixtures(1)
+	if err != nil {
+		t.Fatalf("failed to load test data: [%v]", err)
+	}
+	result := &dkg.Result{
+		Group:           group.NewGroup(32, 64),
+		PrivateKeyShare: tecdsa.NewPrivateKeyShare(testData[0]),
+	}
+
+	memberIndex := group.MemberIndex(1)
+	signatures := map[group.MemberIndex][]byte{
+		1: []byte("signature 1"),
+		2: []byte("signature 2"),
+	}
+	startBlock := uint64(3)
+
+	err = dkgResultSubmitter.SubmitResult(
+		memberIndex,
+		result,
+		signatures,
+		startBlock,
+	)
+
+	expectedError := fmt.Errorf(
+		"could not submit result with [2] signatures for signature honest " +
+			"threshold [3]",
+	)
+	if !reflect.DeepEqual(expectedError, err) {
+		t.Errorf(
+			"unexpected error\n"+
+				"expected: [%+v]\n"+
+				"actual:   [%+v]",
+			expectedError,
+			err,
+		)
+	}
+}
