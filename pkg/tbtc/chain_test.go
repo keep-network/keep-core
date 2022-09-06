@@ -1,4 +1,3 @@
-// TODO: Decide which package the local Tbtc should be located in
 package tbtc
 
 import (
