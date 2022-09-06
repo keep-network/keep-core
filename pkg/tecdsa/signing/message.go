@@ -151,3 +151,23 @@ func (trsm *tssRoundSixMessage) SenderID() group.MemberIndex {
 func (trfm *tssRoundSixMessage) Type() string {
 	return messageTypePrefix + "tss_round_six_message"
 }
+
+// tssRoundSevenMessage is a message payload that carries the sender's
+// TSS round seven components.
+type tssRoundSevenMessage struct {
+	senderID group.MemberIndex
+
+	payload   []byte
+	sessionID string
+}
+
+// SenderID returns protocol-level identifier of the message sender.
+func (trsm *tssRoundSevenMessage) SenderID() group.MemberIndex {
+	return trsm.senderID
+}
+
+// Type returns a string describing an tssRoundSevenMessage type for
+// marshaling purposes.
+func (trfm *tssRoundSevenMessage) Type() string {
+	return messageTypePrefix + "tss_round_seven_message"
+}
