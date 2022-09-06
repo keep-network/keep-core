@@ -191,3 +191,23 @@ func (trem *tssRoundEightMessage) SenderID() group.MemberIndex {
 func (trem *tssRoundEightMessage) Type() string {
 	return messageTypePrefix + "tss_round_eight_message"
 }
+
+// tssRoundNineMessage is a message payload that carries the sender's
+// TSS round nine components.
+type tssRoundNineMessage struct {
+	senderID group.MemberIndex
+
+	payload   []byte
+	sessionID string
+}
+
+// SenderID returns protocol-level identifier of the message sender.
+func (trnm *tssRoundNineMessage) SenderID() group.MemberIndex {
+	return trnm.senderID
+}
+
+// Type returns a string describing an tssRoundNineMessage type for
+// marshaling purposes.
+func (trnm *tssRoundNineMessage) Type() string {
+	return messageTypePrefix + "tss_round_nine_message"
+}
