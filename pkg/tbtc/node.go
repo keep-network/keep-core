@@ -370,8 +370,7 @@ func (n *node) joinSigningIfEligible(
 		walletPublicKey,
 	); len(signers) > 0 {
 		logger.Infof(
-			"joining signature of message [%v] and "+
-				"controlling [%v] signers",
+			"joining signature of message [%v] controlling [%v] signers",
 			message,
 			len(signers),
 		)

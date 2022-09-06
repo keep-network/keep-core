@@ -1,9 +1,10 @@
+import "@nomiclabs/hardhat-etherscan"
 import "@keep-network/hardhat-helpers"
 import "@keep-network/hardhat-local-networks-config"
 import "@nomiclabs/hardhat-waffle"
+import "@openzeppelin/hardhat-upgrades"
 import "@typechain/hardhat"
 import "hardhat-deploy"
-import "@nomiclabs/hardhat-etherscan"
 import "@tenderly/hardhat-tenderly"
 import "hardhat-contract-sizer"
 import "hardhat-dependency-compiler"
@@ -108,7 +109,7 @@ const config: HardhatUserConfig = {
       accounts: process.env.ACCOUNTS_PRIVATE_KEYS
         ? process.env.ACCOUNTS_PRIVATE_KEYS.split(",")
         : undefined,
-      tags: ["tenderly"],
+      tags: ["etherscan", "tenderly"],
     },
   },
   // // Define local networks configuration file path to load networks from the file.

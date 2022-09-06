@@ -507,6 +507,10 @@ func (mwr *mockWalletRegistry) SubmitDKGResult(
 	mwr.activeWallet = groupPublicKeyBytes
 	mwr.activeWalletOperableBlock = new(big.Int).Add(
 		mwr.currentDkgStartBlock,
+		// We add an arbitrary value that must cover the protocol duration
+		// and some additional time for all clients to submit the DKG
+		// result to their own internal mocked chain. This value is bigger than
+		// the value used in beacon as the tECDSA DKG takes more blocks.
 		big.NewInt(200),
 	)
 	mwr.currentDkgStartBlock = nil
