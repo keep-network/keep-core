@@ -14,6 +14,7 @@ import (
 	"github.com/keep-network/keep-core/pkg/protocol/group"
 	"github.com/keep-network/keep-core/pkg/tecdsa"
 	"github.com/keep-network/keep-core/pkg/tecdsa/dkg"
+	"golang.org/x/crypto/sha3"
 )
 
 func TestDkgRetryLoop(t *testing.T) {
@@ -607,5 +608,90 @@ func TestFinalSigningGroup(t *testing.T) {
 				)
 			}
 		})
+	}
+}
+
+func TestSignResult_SigningSuccessful(t *testing.T) {
+	chain := Connect(5, 4, 3)
+	dkgResultSigner := newDkgResultSigner(chain)
+
+	testData, err := tecdsatest.LoadPrivateKeyShareTestFixtures(1)
+	if err != nil {
+		t.Fatalf("failed to load test data: [%v]", err)
+	}
+	result := &dkg.Result{
+		Group:           group.NewGroup(32, 64),
+		PrivateKeyShare: tecdsa.NewPrivateKeyShare(testData[0]),
+	}
+
+	signedResult, err := dkgResultSigner.SignResult(result)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	expectedPublicKey := chain.Signing().PublicKey()
+	if !reflect.DeepEqual(
+		expectedPublicKey,
+		signedResult.PublicKey,
+	) {
+		t.Errorf(
+			"unexpected public key\n"+
+				"expected: %v\n"+
+				"actual:   %v\n",
+			expectedPublicKey,
+			signedResult.PublicKey,
+		)
+	}
+
+	expectedDKGResultHash := dkg.ResultHash(
+		sha3.Sum256([]byte(fmt.Sprint(result))),
+	)
+	if expectedDKGResultHash != signedResult.ResultHash {
+		t.Errorf(
+			"unexpected result hash\n"+
+				"expected: %v\n"+
+				"actual:   %v\n",
+			expectedDKGResultHash,
+			signedResult.ResultHash,
+		)
+	}
+
+	// Since signature is different on every run (even if the same private key
+	// and result hash are used), simply verify if it's correct
+	signatureVerification, err := chain.Signing().Verify(
+		signedResult.ResultHash[:],
+		signedResult.Signature,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if !signatureVerification {
+		t.Errorf(
+			"Signature [0x%x] was not generated properly for the result hash "+
+				"[0x%x]",
+			signedResult.Signature,
+			signedResult.ResultHash,
+		)
+	}
+}
+
+func TestSignResult_ErrorDuringDkgResultHashCalculation(t *testing.T) {
+	chain := Connect(5, 4, 3)
+	dkgResultSigner := newDkgResultSigner(chain)
+
+	// Use nil as the DKG result to cause hash calculation error
+	_, err := dkgResultSigner.SignResult(nil)
+
+	expectedError := fmt.Errorf(
+		"dkg result hash calculation failed [%w]",
+		errNilDKGResult,
+	)
+	if !reflect.DeepEqual(expectedError, err) {
+		t.Errorf(
+			"unexpected error\nexpected: %v\nactual:   %v\n",
+			expectedError,
+			err,
+		)
 	}
 }
