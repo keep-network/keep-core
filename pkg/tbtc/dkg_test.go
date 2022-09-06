@@ -695,3 +695,117 @@ func TestSignResult_ErrorDuringDkgResultHashCalculation(t *testing.T) {
 		)
 	}
 }
+
+
+func TestVerifySignature_VerificationSuccessful(t *testing.T) {
+	chain := Connect(5, 4, 3)
+	dkgResultSigner := newDkgResultSigner(chain)
+
+	testData, err := tecdsatest.LoadPrivateKeyShareTestFixtures(1)
+	if err != nil {
+		t.Fatalf("failed to load test data: [%v]", err)
+	}
+	result := &dkg.Result{
+		Group:           group.NewGroup(32, 64),
+		PrivateKeyShare: tecdsa.NewPrivateKeyShare(testData[0]),
+	}
+
+	signedResult, err := dkgResultSigner.SignResult(result)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	verificationSuccessful, err := dkgResultSigner.VerifySignature(signedResult)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if !verificationSuccessful {
+		t.Fatal(
+			"Expected successful verification of signature, but it was " +
+				"unsuccessful",
+		)
+	}
+}
+
+func TestVerifySignature_VerificationFailure(t *testing.T) {
+	chain := Connect(5, 4, 3)
+	dkgResultSigner := newDkgResultSigner(chain)
+
+	testData, err := tecdsatest.LoadPrivateKeyShareTestFixtures(1)
+	if err != nil {
+		t.Fatalf("failed to load test data: [%v]", err)
+	}
+
+	result := &dkg.Result{
+		Group:           group.NewGroup(32, 64),
+		PrivateKeyShare: tecdsa.NewPrivateKeyShare(testData[0]),
+	}
+	signedResult, err := dkgResultSigner.SignResult(result)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	anotherResult := &dkg.Result{
+		Group:           group.NewGroup(30, 64),
+		PrivateKeyShare: tecdsa.NewPrivateKeyShare(testData[0]),
+	}
+	anotherSignedResult, err := dkgResultSigner.SignResult(anotherResult)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Assign signature from another result to cause a signature verification
+	// failure
+	signedResult.Signature = anotherSignedResult.Signature
+
+	verificationSuccessful, err := dkgResultSigner.VerifySignature(signedResult)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if verificationSuccessful {
+		t.Fatal(
+			"Expected unsuccessful verification of signature, but it was " +
+				"successful",
+		)
+	}
+}
+
+func TestVerifySignature_VerificationError(t *testing.T) {
+	chain := Connect(5, 4, 3)
+	dkgResultSigner := newDkgResultSigner(chain)
+
+	testData, err := tecdsatest.LoadPrivateKeyShareTestFixtures(1)
+	if err != nil {
+		t.Fatalf("failed to load test data: [%v]", err)
+	}
+
+	result := &dkg.Result{
+		Group:           group.NewGroup(32, 64),
+		PrivateKeyShare: tecdsa.NewPrivateKeyShare(testData[0]),
+	}
+	signedResult, err := dkgResultSigner.SignResult(result)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Drop the last byte of the signature to cause an error during signature
+	// verification
+	signedResult.Signature = signedResult.Signature[:len(signedResult.Signature)-1]
+
+	_, err = dkgResultSigner.VerifySignature(signedResult)
+
+	expectedError := fmt.Errorf(
+		"failed to unmarshal signature: [asn1: syntax error: data truncated]",
+	)
+	if !reflect.DeepEqual(expectedError, err) {
+		t.Errorf(
+			"unexpected error\n"+
+				"expected: [%+v]\n"+
+				"actual:   [%+v]",
+			expectedError,
+			err,
+		)
+	}
+}
