@@ -359,3 +359,29 @@ func (trem *tssRoundEightMember) markInactiveMembers(
 
 	filter.FlushInactiveMembers()
 }
+
+// initializeTssRoundNine returns a member to perform next protocol operations.
+func (trem *tssRoundEightMember) initializeTssRoundNine() *tssRoundNineMember {
+	return &tssRoundNineMember{
+		tssRoundEightMember: trem,
+	}
+}
+
+// tssRoundNineMember represents one member in a signing group performing the
+// ninth round of the TSS keygen.
+type tssRoundNineMember struct {
+	*tssRoundEightMember
+}
+
+// markInactiveMembers takes all messages from the previous signing protocol
+// execution phase and marks all member who did not send a message as inactive.
+func (trnm *tssRoundNineMember) markInactiveMembers(
+	tssRoundEightMessages []*tssRoundEightMessage,
+) {
+	filter := trnm.inactiveMemberFilter()
+	for _, message := range tssRoundEightMessages {
+		filter.MarkMemberAsActive(message.senderID)
+	}
+
+	filter.FlushInactiveMembers()
+}

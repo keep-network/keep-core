@@ -68,7 +68,7 @@ func Execute(
 		return nil, err
 	}
 
-	_, ok := lastState.(*tssRoundEightState)
+	_, ok := lastState.(*tssRoundNineState)
 	if !ok {
 		return nil, fmt.Errorf("execution ended on state: %T", lastState)
 	}
@@ -112,5 +112,8 @@ func registerUnmarshallers(channel net.BroadcastChannel) {
 	})
 	channel.SetUnmarshaler(func() net.TaggedUnmarshaler {
 		return &tssRoundEightMessage{}
+	})
+	channel.SetUnmarshaler(func() net.TaggedUnmarshaler {
+		return &tssRoundNineMessage{}
 	})
 }
