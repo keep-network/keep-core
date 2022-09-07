@@ -5,6 +5,7 @@ import (
 	"crypto/ecdsa"
 	"encoding/hex"
 	"fmt"
+	"golang.org/x/exp/slices"
 	"math/big"
 	"time"
 
@@ -442,6 +443,17 @@ func (n *node) joinSigningIfEligible(
 					excludedMembers[i] = group.MemberIndex(
 						n.chain.GetConfig().HonestThreshold + i + 1,
 					)
+				}
+
+				if slices.Contains(excludedMembers, signer.signingGroupMemberIndex) {
+					logger.Infof(
+						"[member:%v] excluded from signing attempt " +
+							"[%v] of message [%v]; aborting",
+						signer.signingGroupMemberIndex,
+						attemptIndex,
+						message,
+					)
+					return
 				}
 
 				logger.Infof(
