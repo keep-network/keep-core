@@ -68,18 +68,12 @@ func Execute(
 		return nil, err
 	}
 
-	_, ok := lastState.(*tssRoundNineState)
+	finalizationState, ok := lastState.(*finalizationState)
 	if !ok {
 		return nil, fmt.Errorf("execution ended on state: %T", lastState)
 	}
 
-	// TODO: Temporary result. Eventually, take the result from the
-	//       finalization state.
-	return &Result{
-		R:          new(big.Int).Add(message, big.NewInt(1)),
-		S:          new(big.Int).Add(message, big.NewInt(2)),
-		RecoveryID: 1,
-	}, nil
+	return finalizationState.result(), nil
 }
 
 // registerUnmarshallers initializes the given broadcast channel to be able to

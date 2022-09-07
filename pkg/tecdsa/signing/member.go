@@ -385,3 +385,38 @@ func (trnm *tssRoundNineMember) markInactiveMembers(
 
 	filter.FlushInactiveMembers()
 }
+
+// initializeFinalization returns a member to perform next protocol operations.
+func (trnm *tssRoundNineMember) initializeFinalization() *finalizingMember {
+	return &finalizingMember{
+		tssRoundNineMember: trnm,
+	}
+}
+
+// finalizingMember represents one member of the given group, after it
+// completed the signing process.
+//
+// Prepares a result in the last phase of the protocol.
+type finalizingMember struct {
+	*tssRoundNineMember
+
+	tssResult *tsslibcommon.SignatureData
+}
+
+// markInactiveMembers takes all messages from the previous signing protocol
+// execution phase and marks all member who did not send a message as inactive.
+func (fm *finalizingMember) markInactiveMembers(
+	tssRoundNineMessages []*tssRoundNineMessage,
+) {
+	filter := fm.inactiveMemberFilter()
+	for _, message := range tssRoundNineMessages {
+		filter.MarkMemberAsActive(message.senderID)
+	}
+
+	filter.FlushInactiveMembers()
+}
+
+// Result is successful computation of the tECDSA signature.
+func (fm *finalizingMember) Result() *Result {
+	return &Result{Signature: tecdsa.NewSignature(fm.tssResult)}
+}

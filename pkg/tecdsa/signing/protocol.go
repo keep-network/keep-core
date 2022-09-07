@@ -289,9 +289,9 @@ outgoingMessagesLoop:
 	}
 
 	return &tssRoundTwoMessage{
-		senderID:         trtm.id,
-		peersPayload:     peersPayload,
-		sessionID:        trtm.sessionID,
+		senderID:     trtm.id,
+		peersPayload: peersPayload,
+		sessionID:    trtm.sessionID,
 	}, nil
 }
 
@@ -665,6 +665,42 @@ func (trnm *tssRoundNineMember) tssRoundNine(
 	case <-ctx.Done():
 		return nil, fmt.Errorf(
 			"TSS round nine outgoing message was not generated on time",
+		)
+	}
+}
+
+// tssFinalize finalizes the TSS process by producing a result.
+func (fm *finalizingMember) tssFinalize(
+	ctx context.Context,
+	tssRoundNineMessages []*tssRoundNineMessage,
+) error {
+	// Use messages from round nine to update the local party and get the
+	// result.
+	for _, tssRoundNineMessage := range deduplicateBySender(tssRoundNineMessages) {
+		senderID := tssRoundNineMessage.SenderID()
+
+		_, tssErr := fm.tssParty.UpdateFromBytes(
+			tssRoundNineMessage.payload,
+			common.ResolveSortedTssPartyID(fm.tssParameters, senderID),
+			true,
+		)
+		if tssErr != nil {
+			return fmt.Errorf(
+				"cannot update using TSS round nine message "+
+					"from member [%v]: [%v]",
+				senderID,
+				tssErr,
+			)
+		}
+	}
+
+	select {
+	case tssResult := <-fm.tssResultChan:
+		fm.tssResult = &tssResult
+		return nil
+	case <-ctx.Done():
+		return fmt.Errorf(
+			"TSS result was not generated on time",
 		)
 	}
 }

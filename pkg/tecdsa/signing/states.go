@@ -41,6 +41,9 @@ const (
 
 	tssRoundNineStateDelayBlocks  = 1
 	tssRoundNineStateActiveBlocks = 5
+
+	finalizationStateDelayBlocks  = 1
+	finalizationStateActiveBlocks = 5
 )
 
 // ProtocolBlocks returns the total number of blocks it takes to execute
@@ -65,7 +68,9 @@ func ProtocolBlocks() uint64 {
 		tssRoundEightStateDelayBlocks +
 		tssRoundEightStateActiveBlocks +
 		tssRoundNineStateDelayBlocks +
-		tssRoundNineStateActiveBlocks
+		tssRoundNineStateActiveBlocks +
+		finalizationStateDelayBlocks +
+		finalizationStateActiveBlocks
 }
 
 // ephemeralKeyPairGenerationState is the state during which members broadcast
@@ -152,7 +157,7 @@ func (skgs *symmetricKeyGenerationState) Initiate(ctx context.Context) error {
 	return skgs.member.generateSymmetricKeys(skgs.previousPhaseMessages)
 }
 
-func (skgs *symmetricKeyGenerationState) Receive(msg net.Message) error {
+func (skgs *symmetricKeyGenerationState) Receive(net.Message) error {
 	return nil
 }
 
@@ -913,9 +918,82 @@ func (trns *tssRoundNineState) Next() (state.State, error) {
 		return nil, err
 	}
 
-	return nil, nil
+	return &finalizationState{
+		channel:               trns.channel,
+		member:                trns.member.initializeFinalization(),
+		outcomeChan:           make(chan error),
+		previousPhaseMessages: trns.phaseMessages,
+	}, nil
 }
 
 func (trns *tssRoundNineState) MemberIndex() group.MemberIndex {
 	return trns.member.id
+}
+
+// finalizationState is the last state of the signing protocol - in this state,
+// signing is completed. No messages are valid in this state.
+//
+// State prepares a result to that is returned to the caller.
+type finalizationState struct {
+	channel net.BroadcastChannel
+	member  *finalizingMember
+
+	outcomeChan chan error
+
+	previousPhaseMessages []*tssRoundNineMessage
+}
+
+func (fs *finalizationState) DelayBlocks() uint64 {
+	return finalizationStateDelayBlocks
+}
+
+func (fs *finalizationState) ActiveBlocks() uint64 {
+	return finalizationStateActiveBlocks
+}
+
+func (fs *finalizationState) Initiate(ctx context.Context) error {
+	fs.member.markInactiveMembers(fs.previousPhaseMessages)
+
+	if len(fs.member.group.InactiveMemberIDs()) > 0 {
+		return newInactiveMembersError(fs.member.group.InactiveMemberIDs())
+	}
+
+	// TSS computations can be time-consuming and can exceed the current
+	// state's time window. The ctx parameter is scoped to the lifetime of
+	// the current state so, it can be used as a timeout signal. However,
+	// that ctx is cancelled upon state's end only after Initiate returns.
+	// In order to make that working, Initiate must trigger the computations
+	// in a separate goroutine and return before the end of the state.
+	go func() {
+		err := fs.member.tssFinalize(ctx, fs.previousPhaseMessages)
+		if err != nil {
+			fs.outcomeChan <- err
+			return
+		}
+
+		close(fs.outcomeChan)
+	}()
+
+	return nil
+}
+
+func (fs *finalizationState) Receive(net.Message) error {
+	return nil
+}
+
+func (fs *finalizationState) Next() (state.State, error) {
+	err := <-fs.outcomeChan
+	if err != nil {
+		return nil, err
+	}
+
+	return nil, nil
+}
+
+func (fs *finalizationState) MemberIndex() group.MemberIndex {
+	return fs.member.id
+}
+
+func (fs *finalizationState) result() *Result {
+	return fs.member.Result()
 }

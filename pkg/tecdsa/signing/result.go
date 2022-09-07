@@ -1,22 +1,12 @@
 package signing
 
 import (
-	"fmt"
-	"math/big"
+	"github.com/keep-network/keep-core/pkg/tecdsa"
 )
 
 // Result of the tECDSA signing protocol.
 type Result struct {
-	R          *big.Int
-	S          *big.Int
-	RecoveryID int
-}
-
-func (r *Result) String() string {
-	return fmt.Sprintf(
-		"R: %#x, S: %#x, RecoveryID: %d",
-		r.R,
-		r.S,
-		r.RecoveryID,
-	)
+	// Signature is the tECDSA signature produced as result of the tECDSA
+	// signing process.
+	Signature *tecdsa.Signature
 }

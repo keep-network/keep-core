@@ -489,7 +489,7 @@ func (n *node) joinSigningIfEligible(
 					"[member:%v] generated signature [%v] "+
 						"for message [%v]",
 					signer.signingGroupMemberIndex,
-					result,
+					result.Signature,
 					message,
 				)
 			}(currentSigner)
