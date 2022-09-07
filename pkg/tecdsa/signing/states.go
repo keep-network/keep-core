@@ -23,6 +23,9 @@ const (
 
 	tssRoundThreeStateDelayBlocks  = 1
 	tssRoundThreeStateActiveBlocks = 5
+
+	tssRoundFourStateDelayBlocks  = 1
+	tssRoundFourStateActiveBlocks = 5
 )
 
 // ProtocolBlocks returns the total number of blocks it takes to execute
@@ -35,7 +38,9 @@ func ProtocolBlocks() uint64 {
 		tssRoundTwoStateDelayBlocks +
 		tssRoundTwoStateActiveBlocks +
 		tssRoundThreeStateDelayBlocks +
-		tssRoundThreeStateActiveBlocks
+		tssRoundThreeStateActiveBlocks +
+		tssRoundFourStateDelayBlocks +
+		tssRoundFourStateActiveBlocks
 }
 
 // ephemeralKeyPairGenerationState is the state during which members broadcast
@@ -373,9 +378,94 @@ func (trts *tssRoundThreeState) Next() (state.State, error) {
 		return nil, err
 	}
 
-	return nil, nil
+	return &tssRoundFourState{
+		channel:               trts.channel,
+		member:                trts.member.initializeTssRoundFour(),
+		outcomeChan:           make(chan error),
+		previousPhaseMessages: trts.phaseMessages,
+	}, nil
 }
 
 func (trts *tssRoundThreeState) MemberIndex() group.MemberIndex {
 	return trts.member.id
+}
+
+// tssRoundFourState is the state during which members broadcast TSS
+// round four messages.
+// `tssRoundMessage`s are valid in this state.
+type tssRoundFourState struct {
+	channel net.BroadcastChannel
+	member  *tssRoundFourMember
+
+	outcomeChan chan error
+
+	previousPhaseMessages []*tssRoundThreeMessage
+
+	phaseMessages []*tssRoundFourMessage
+}
+
+func (trfs *tssRoundFourState) DelayBlocks() uint64 {
+	return tssRoundFourStateDelayBlocks
+}
+
+func (trfs *tssRoundFourState) ActiveBlocks() uint64 {
+	return tssRoundFourStateActiveBlocks
+}
+
+func (trfs *tssRoundFourState) Initiate(ctx context.Context) error {
+	trfs.member.markInactiveMembers(trfs.previousPhaseMessages)
+
+	if len(trfs.member.group.InactiveMemberIDs()) > 0 {
+		return newInactiveMembersError(trfs.member.group.InactiveMemberIDs())
+	}
+
+	// TSS computations can be time-consuming and can exceed the current
+	// state's time window. The ctx parameter is scoped to the lifetime of
+	// the current state so, it can be used as a timeout signal. However,
+	// that ctx is cancelled upon state's end only after Initiate returns.
+	// In order to make that working, Initiate must trigger the computations
+	// in a separate goroutine and return before the end of the state.
+	go func() {
+		message, err := trfs.member.tssRoundFour(ctx, trfs.previousPhaseMessages)
+		if err != nil {
+			trfs.outcomeChan <- err
+			return
+		}
+
+		if err := trfs.channel.Send(ctx, message); err != nil {
+			trfs.outcomeChan <- err
+			return
+		}
+
+		close(trfs.outcomeChan)
+	}()
+
+	return nil
+}
+
+func (trfs *tssRoundFourState) Receive(msg net.Message) error {
+	switch phaseMessage := msg.Payload().(type) {
+	case *tssRoundFourMessage:
+		if trfs.member.shouldAcceptMessage(
+			phaseMessage.SenderID(),
+			msg.SenderPublicKey(),
+		) && trfs.member.sessionID == phaseMessage.sessionID {
+			trfs.phaseMessages = append(trfs.phaseMessages, phaseMessage)
+		}
+	}
+
+	return nil
+}
+
+func (trfs *tssRoundFourState) Next() (state.State, error) {
+	err := <-trfs.outcomeChan
+	if err != nil {
+		return nil, err
+	}
+
+	return nil, nil
+}
+
+func (trfs *tssRoundFourState) MemberIndex() group.MemberIndex {
+	return trfs.member.id
 }

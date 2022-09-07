@@ -1041,7 +1041,7 @@ func TestTssFinalize_IncomingMessageCorrupted_WrongPayload(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	// Perform TSS round two for each group member.
+	// Perform TSS finalization for each group member.
 	for _, member := range members {
 		var receivedMessages []*tssRoundThreeMessage
 		for _, message := range messages {
@@ -1076,7 +1076,7 @@ func TestTssFinalize_IncomingMessageMissing(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	// Perform TSS round two for each group member.
+	// Perform TSS finalization for each group member.
 	for _, member := range members {
 		var receivedMessages []*tssRoundThreeMessage
 		for _, message := range messages {
