@@ -21,3 +21,9 @@ message TSSRoundTwoMessage {
     map<uint32, bytes> peersPayload = 2;
     string sessionID = 3;
 }
+
+message TSSRoundThreeMessage {
+    uint32 senderID = 1;
+    bytes payload = 2;
+    string sessionID = 3;
+}

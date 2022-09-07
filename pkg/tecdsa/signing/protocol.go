@@ -295,6 +295,86 @@ outgoingMessagesLoop:
 	}, nil
 }
 
+// tssRoundThree performs the third round of the TSS process. The outcome of
+// that round is a message containing TSS round three components.
+func (trtm *tssRoundThreeMember) tssRoundThree(
+	ctx context.Context,
+	tssRoundTwoMessages []*tssRoundTwoMessage,
+) (*tssRoundThreeMessage, error) {
+	// Use messages from round two to update the local party and advance
+	// to round three.
+	for _, tssRoundTwoMessage := range deduplicateBySender(tssRoundTwoMessages) {
+		senderID := tssRoundTwoMessage.SenderID()
+		senderTssPartyID := common.ResolveSortedTssPartyID(trtm.tssParameters, senderID)
+
+		// Check if the sender produced a P2P part of the TSS round two message
+		// for this member.
+		encryptedPeerPayload, ok := tssRoundTwoMessage.peersPayload[trtm.id]
+		if !ok {
+			return nil, fmt.Errorf(
+				"no P2P part in the TSS round two message from member [%v]",
+				senderID,
+			)
+		}
+		// Get the symmetric key with the sender. If the symmetric key
+		// cannot be found, something awful happened.
+		symmetricKey, ok := trtm.symmetricKeys[senderID]
+		if !ok {
+			return nil, fmt.Errorf(
+				"cannot get symmetric key with member [%v]",
+				senderID,
+			)
+		}
+		// Decrypt the P2P part of the TSS round two message.
+		peerPayload, err := symmetricKey.Decrypt(encryptedPeerPayload)
+		if err != nil {
+			return nil, fmt.Errorf(
+				"cannot decrypt P2P part of the TSS round two "+
+					"message from member [%v]: [%v]",
+				senderID,
+				err,
+			)
+		}
+		// Update the local TSS party using the P2P part of the message
+		// produced in round two.
+		_, tssErr := trtm.tssParty.UpdateFromBytes(
+			peerPayload,
+			senderTssPartyID,
+			false,
+		)
+		if tssErr != nil {
+			return nil, fmt.Errorf(
+				"cannot update using the P2P part of the TSS round "+
+					"two message from member [%v]: [%v]",
+				senderID,
+				tssErr,
+			)
+		}
+	}
+
+	// We expect exactly one TSS message to be produced in this phase.
+	select {
+	case tssMessage := <-trtm.tssOutgoingMessagesChan:
+		tssMessageBytes, _, err := tssMessage.WireBytes()
+		if err != nil {
+			return nil, fmt.Errorf(
+				"failed to encode TSS round three message: [%v]",
+				err,
+			)
+		}
+
+		return &tssRoundThreeMessage{
+			senderID:  trtm.id,
+			payload:   tssMessageBytes,
+			sessionID: trtm.sessionID,
+		}, nil
+	case <-ctx.Done():
+		return nil, fmt.Errorf(
+			"TSS round three outgoing message was not generated on time",
+		)
+	}
+}
+
 // deduplicateBySender removes duplicated items for the given sender.
 // It always takes the first item that occurs for the given sender
 // and ignores the subsequent ones.

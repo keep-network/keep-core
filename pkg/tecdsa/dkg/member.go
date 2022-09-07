@@ -115,9 +115,9 @@ type symmetricKeyGeneratingMember struct {
 	symmetricKeys map[group.MemberIndex]ephemeral.SymmetricKey
 }
 
-// MarkInactiveMembers takes all messages from the previous DKG protocol
+// markInactiveMembers takes all messages from the previous DKG protocol
 // execution phase and marks all member who did not send a message as IA.
-func (skgm *symmetricKeyGeneratingMember) MarkInactiveMembers(
+func (skgm *symmetricKeyGeneratingMember) markInactiveMembers(
 	ephemeralPubKeyMessages []*ephemeralPublicKeyMessage,
 ) {
 	filter := skgm.inactiveMemberFilter()
@@ -190,9 +190,9 @@ type tssRoundTwoMember struct {
 	*tssRoundOneMember
 }
 
-// MarkInactiveMembers takes all messages from the previous DKG protocol
+// markInactiveMembers takes all messages from the previous DKG protocol
 // execution phase and marks all member who did not send a message as inactive.
-func (trtm *tssRoundTwoMember) MarkInactiveMembers(
+func (trtm *tssRoundTwoMember) markInactiveMembers(
 	tssRoundOneMessages []*tssRoundOneMessage,
 ) {
 	filter := trtm.inactiveMemberFilter()
@@ -216,9 +216,9 @@ type tssRoundThreeMember struct {
 	*tssRoundTwoMember
 }
 
-// MarkInactiveMembers takes all messages from the previous DKG protocol
+// markInactiveMembers takes all messages from the previous DKG protocol
 // execution phase and marks all member who did not send a message as IA.
-func (trtm *tssRoundThreeMember) MarkInactiveMembers(
+func (trtm *tssRoundThreeMember) markInactiveMembers(
 	tssRoundTwoMessages []*tssRoundTwoMessage,
 ) {
 	filter := trtm.inactiveMemberFilter()
@@ -246,9 +246,9 @@ type finalizingMember struct {
 	tssResult keygen.LocalPartySaveData
 }
 
-// MarkInactiveMembers takes all messages from the previous DKG protocol
+// markInactiveMembers takes all messages from the previous DKG protocol
 // execution phase and marks all member who did not send a message as IA.
-func (fm *finalizingMember) MarkInactiveMembers(
+func (fm *finalizingMember) markInactiveMembers(
 	tssRoundThreeMessages []*tssRoundThreeMessage,
 ) {
 	filter := fm.inactiveMemberFilter()

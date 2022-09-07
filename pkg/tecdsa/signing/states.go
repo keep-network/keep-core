@@ -20,6 +20,9 @@ const (
 
 	tssRoundTwoStateDelayBlocks  = 1
 	tssRoundTwoStateActiveBlocks = 5
+
+	tssRoundThreeStateDelayBlocks  = 1
+	tssRoundThreeStateActiveBlocks = 5
 )
 
 // ProtocolBlocks returns the total number of blocks it takes to execute
@@ -30,7 +33,9 @@ func ProtocolBlocks() uint64 {
 		tssRoundOneStateDelayBlocks +
 		tssRoundOneStateActiveBlocks +
 		tssRoundTwoStateDelayBlocks +
-		tssRoundTwoStateActiveBlocks
+		tssRoundTwoStateActiveBlocks +
+		tssRoundThreeStateDelayBlocks +
+		tssRoundThreeStateActiveBlocks
 }
 
 // ephemeralKeyPairGenerationState is the state during which members broadcast
@@ -108,7 +113,7 @@ func (skgs *symmetricKeyGenerationState) ActiveBlocks() uint64 {
 }
 
 func (skgs *symmetricKeyGenerationState) Initiate(ctx context.Context) error {
-	skgs.member.MarkInactiveMembers(skgs.previousPhaseMessages)
+	skgs.member.markInactiveMembers(skgs.previousPhaseMessages)
 
 	if len(skgs.member.group.InactiveMemberIDs()) > 0 {
 		return newInactiveMembersError(skgs.member.group.InactiveMemberIDs())
@@ -210,7 +215,7 @@ func (tros *tssRoundOneState) MemberIndex() group.MemberIndex {
 	return tros.member.id
 }
 
-// tssRoundOneState is the state during which members broadcast TSS
+// tssRoundTwoState is the state during which members broadcast TSS
 // round two messages.
 // `tssRoundTwoMessage`s are valid in this state.
 type tssRoundTwoState struct {
@@ -233,7 +238,7 @@ func (trts *tssRoundTwoState) ActiveBlocks() uint64 {
 }
 
 func (trts *tssRoundTwoState) Initiate(ctx context.Context) error {
-	trts.member.MarkInactiveMembers(trts.previousPhaseMessages)
+	trts.member.markInactiveMembers(trts.previousPhaseMessages)
 
 	if len(trts.member.group.InactiveMemberIDs()) > 0 {
 		return newInactiveMembersError(trts.member.group.InactiveMemberIDs())
@@ -283,9 +288,94 @@ func (trts *tssRoundTwoState) Next() (state.State, error) {
 		return nil, err
 	}
 
-	return nil, nil
+	return &tssRoundThreeState{
+		channel:               trts.channel,
+		member:                trts.member.initializeTssRoundThree(),
+		outcomeChan:           make(chan error),
+		previousPhaseMessages: trts.phaseMessages,
+	}, nil
 }
 
 func (trts *tssRoundTwoState) MemberIndex() group.MemberIndex {
+	return trts.member.id
+}
+
+// tssRoundThreeState is the state during which members broadcast TSS
+// round three messages.
+// `tssRoundThreeMessage`s are valid in this state.
+type tssRoundThreeState struct {
+	channel net.BroadcastChannel
+	member  *tssRoundThreeMember
+
+	outcomeChan chan error
+
+	previousPhaseMessages []*tssRoundTwoMessage
+
+	phaseMessages []*tssRoundThreeMessage
+}
+
+func (trts *tssRoundThreeState) DelayBlocks() uint64 {
+	return tssRoundThreeStateDelayBlocks
+}
+
+func (trts *tssRoundThreeState) ActiveBlocks() uint64 {
+	return tssRoundThreeStateActiveBlocks
+}
+
+func (trts *tssRoundThreeState) Initiate(ctx context.Context) error {
+	trts.member.markInactiveMembers(trts.previousPhaseMessages)
+
+	if len(trts.member.group.InactiveMemberIDs()) > 0 {
+		return newInactiveMembersError(trts.member.group.InactiveMemberIDs())
+	}
+
+	// TSS computations can be time-consuming and can exceed the current
+	// state's time window. The ctx parameter is scoped to the lifetime of
+	// the current state so, it can be used as a timeout signal. However,
+	// that ctx is cancelled upon state's end only after Initiate returns.
+	// In order to make that working, Initiate must trigger the computations
+	// in a separate goroutine and return before the end of the state.
+	go func() {
+		message, err := trts.member.tssRoundThree(ctx, trts.previousPhaseMessages)
+		if err != nil {
+			trts.outcomeChan <- err
+			return
+		}
+
+		if err := trts.channel.Send(ctx, message); err != nil {
+			trts.outcomeChan <- err
+			return
+		}
+
+		close(trts.outcomeChan)
+	}()
+
+	return nil
+}
+
+func (trts *tssRoundThreeState) Receive(msg net.Message) error {
+	switch phaseMessage := msg.Payload().(type) {
+	case *tssRoundThreeMessage:
+		if trts.member.shouldAcceptMessage(
+			phaseMessage.SenderID(),
+			msg.SenderPublicKey(),
+		) && trts.member.sessionID == phaseMessage.sessionID {
+			trts.phaseMessages = append(trts.phaseMessages, phaseMessage)
+		}
+	}
+
+	return nil
+}
+
+func (trts *tssRoundThreeState) Next() (state.State, error) {
+	err := <-trts.outcomeChan
+	if err != nil {
+		return nil, err
+	}
+
+	return nil, nil
+}
+
+func (trts *tssRoundThreeState) MemberIndex() group.MemberIndex {
 	return trts.member.id
 }

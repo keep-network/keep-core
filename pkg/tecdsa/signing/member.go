@@ -116,9 +116,9 @@ type symmetricKeyGeneratingMember struct {
 	symmetricKeys map[group.MemberIndex]ephemeral.SymmetricKey
 }
 
-// MarkInactiveMembers takes all messages from the previous signing protocol
+// markInactiveMembers takes all messages from the previous signing protocol
 // execution phase and marks all member who did not send a message as IA.
-func (skgm *symmetricKeyGeneratingMember) MarkInactiveMembers(
+func (skgm *symmetricKeyGeneratingMember) markInactiveMembers(
 	ephemeralPubKeyMessages []*ephemeralPublicKeyMessage,
 ) {
 	filter := skgm.inactiveMemberFilter()
@@ -191,13 +191,39 @@ type tssRoundTwoMember struct {
 	*tssRoundOneMember
 }
 
-// MarkInactiveMembers takes all messages from the previous signing protocol
+// markInactiveMembers takes all messages from the previous signing protocol
 // execution phase and marks all member who did not send a message as inactive.
-func (trtm *tssRoundTwoMember) MarkInactiveMembers(
+func (trtm *tssRoundTwoMember) markInactiveMembers(
 	tssRoundOneMessages []*tssRoundOneMessage,
 ) {
 	filter := trtm.inactiveMemberFilter()
 	for _, message := range tssRoundOneMessages {
+		filter.MarkMemberAsActive(message.senderID)
+	}
+
+	filter.FlushInactiveMembers()
+}
+
+// initializeTssRoundThree returns a member to perform next protocol operations.
+func (trtm *tssRoundTwoMember) initializeTssRoundThree() *tssRoundThreeMember {
+	return &tssRoundThreeMember{
+		tssRoundTwoMember: trtm,
+	}
+}
+
+// tssRoundThreeMember represents one member in a signing group performing the
+// third round of the TSS keygen.
+type tssRoundThreeMember struct {
+	*tssRoundTwoMember
+}
+
+// markInactiveMembers takes all messages from the previous signing protocol
+// execution phase and marks all member who did not send a message as inactive.
+func (trtm *tssRoundThreeMember) markInactiveMembers(
+	tssRoundTwoMessages []*tssRoundTwoMessage,
+) {
+	filter := trtm.inactiveMemberFilter()
+	for _, message := range tssRoundTwoMessages {
 		filter.MarkMemberAsActive(message.senderID)
 	}
 
