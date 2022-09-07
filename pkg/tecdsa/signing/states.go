@@ -32,6 +32,9 @@ const (
 
 	tssRoundSixStateDelayBlocks  = 1
 	tssRoundSixStateActiveBlocks = 5
+
+	tssRoundSevenStateDelayBlocks  = 1
+	tssRoundSevenStateActiveBlocks = 5
 )
 
 // ProtocolBlocks returns the total number of blocks it takes to execute
@@ -50,7 +53,9 @@ func ProtocolBlocks() uint64 {
 		tssRoundFiveStateDelayBlocks +
 		tssRoundFiveStateActiveBlocks +
 		tssRoundSixStateDelayBlocks +
-		tssRoundSixStateActiveBlocks
+		tssRoundSixStateActiveBlocks +
+		tssRoundSevenStateDelayBlocks +
+		tssRoundSevenStateActiveBlocks
 }
 
 // ephemeralKeyPairGenerationState is the state during which members broadcast
@@ -643,9 +648,94 @@ func (trss *tssRoundSixState) Next() (state.State, error) {
 		return nil, err
 	}
 
-	return nil, nil
+	return &tssRoundSevenState{
+		channel:               trss.channel,
+		member:                trss.member.initializeTssRoundSeven(),
+		outcomeChan:           make(chan error),
+		previousPhaseMessages: trss.phaseMessages,
+	}, nil
 }
 
 func (trss *tssRoundSixState) MemberIndex() group.MemberIndex {
+	return trss.member.id
+}
+
+// tssRoundSevenState is the state during which members broadcast TSS
+// round seven messages.
+// `tssRoundSevenMessage`s are valid in this state.
+type tssRoundSevenState struct {
+	channel net.BroadcastChannel
+	member  *tssRoundSevenMember
+
+	outcomeChan chan error
+
+	previousPhaseMessages []*tssRoundSixMessage
+
+	phaseMessages []*tssRoundSevenMessage
+}
+
+func (trss *tssRoundSevenState) DelayBlocks() uint64 {
+	return tssRoundSevenStateDelayBlocks
+}
+
+func (trss *tssRoundSevenState) ActiveBlocks() uint64 {
+	return tssRoundSevenStateActiveBlocks
+}
+
+func (trss *tssRoundSevenState) Initiate(ctx context.Context) error {
+	trss.member.markInactiveMembers(trss.previousPhaseMessages)
+
+	if len(trss.member.group.InactiveMemberIDs()) > 0 {
+		return newInactiveMembersError(trss.member.group.InactiveMemberIDs())
+	}
+
+	// TSS computations can be time-consuming and can exceed the current
+	// state's time window. The ctx parameter is scoped to the lifetime of
+	// the current state so, it can be used as a timeout signal. However,
+	// that ctx is cancelled upon state's end only after Initiate returns.
+	// In order to make that working, Initiate must trigger the computations
+	// in a separate goroutine and return before the end of the state.
+	go func() {
+		message, err := trss.member.tssRoundSeven(ctx, trss.previousPhaseMessages)
+		if err != nil {
+			trss.outcomeChan <- err
+			return
+		}
+
+		if err := trss.channel.Send(ctx, message); err != nil {
+			trss.outcomeChan <- err
+			return
+		}
+
+		close(trss.outcomeChan)
+	}()
+
+	return nil
+}
+
+func (trss *tssRoundSevenState) Receive(msg net.Message) error {
+	switch phaseMessage := msg.Payload().(type) {
+	case *tssRoundSevenMessage:
+		if trss.member.shouldAcceptMessage(
+			phaseMessage.SenderID(),
+			msg.SenderPublicKey(),
+		) && trss.member.sessionID == phaseMessage.sessionID {
+			trss.phaseMessages = append(trss.phaseMessages, phaseMessage)
+		}
+	}
+
+	return nil
+}
+
+func (trss *tssRoundSevenState) Next() (state.State, error) {
+	err := <-trss.outcomeChan
+	if err != nil {
+		return nil, err
+	}
+
+	return nil, nil
+}
+
+func (trss *tssRoundSevenState) MemberIndex() group.MemberIndex {
 	return trss.member.id
 }

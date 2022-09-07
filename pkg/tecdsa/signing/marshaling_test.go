@@ -368,3 +368,51 @@ func TestFuzzTssRoundSixMessage_MarshalingRoundtrip(t *testing.T) {
 func TestFuzzTssRoundSixMessage_Unmarshaler(t *testing.T) {
 	pbutils.FuzzUnmarshaler(&tssRoundSixMessage{})
 }
+
+func TestTssRoundSevenMessage_MarshalingRoundtrip(t *testing.T) {
+	msg := &tssRoundSevenMessage{
+		senderID:  group.MemberIndex(50),
+		payload:   []byte{1, 2, 3, 4, 5},
+		sessionID: "session-1",
+	}
+	unmarshaled := &tssRoundSevenMessage{}
+
+	err := pbutils.RoundTrip(msg, unmarshaled)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if !reflect.DeepEqual(msg, unmarshaled) {
+		t.Fatalf("unexpected content of unmarshaled message")
+	}
+}
+
+func TestFuzzTssRoundSevenMessage_MarshalingRoundtrip(t *testing.T) {
+	for i := 0; i < 10; i++ {
+		var (
+			senderID  group.MemberIndex
+			payload   []byte
+			sessionID string
+		)
+
+		f := fuzz.New().NilChance(0.1).
+			NumElements(0, 512).
+			Funcs(pbutils.FuzzFuncs()...)
+
+		f.Fuzz(&senderID)
+		f.Fuzz(&payload)
+		f.Fuzz(&sessionID)
+
+		message := &tssRoundSevenMessage{
+			senderID:  senderID,
+			payload:   payload,
+			sessionID: sessionID,
+		}
+
+		_ = pbutils.RoundTrip(message, &tssRoundSevenMessage{})
+	}
+}
+
+func TestFuzzTssRoundSevenMessage_Unmarshaler(t *testing.T) {
+	pbutils.FuzzUnmarshaler(&tssRoundSevenMessage{})
+}

@@ -1550,6 +1550,195 @@ func TestTssRoundSix_OutgoingMessageTimeout(t *testing.T) {
 	}
 }
 
+func TestTssRoundSeven(t *testing.T) {
+	members, tssRoundSixMessages, err := initializeTssRoundSevenMembersGroup(
+		dishonestThreshold,
+		groupSize,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Perform TSS round seven for each group member.
+	tssRoundSevenMessages := make(map[group.MemberIndex]*tssRoundSevenMessage)
+	for _, member := range members {
+		var receivedTssRoundSixMessages []*tssRoundSixMessage
+		for _, tssRoundSixMessage := range tssRoundSixMessages {
+			if tssRoundSixMessage.senderID != member.id {
+				receivedTssRoundSixMessages = append(
+					receivedTssRoundSixMessages,
+					tssRoundSixMessage,
+				)
+			}
+		}
+
+		ctx, cancelCtx := context.WithTimeout(
+			context.Background(),
+			10*time.Second,
+		)
+
+		tssRoundSevenMessage, err := member.tssRoundSeven(
+			ctx,
+			receivedTssRoundSixMessages,
+		)
+		if err != nil {
+			cancelCtx()
+			t.Fatal(err)
+		}
+		tssRoundSevenMessages[member.id] = tssRoundSevenMessage
+
+		cancelCtx()
+	}
+
+	// Assert that each member has a correct state.
+	for _, member := range members {
+		if !strings.Contains(member.tssParty.String(), "round: 7") {
+			t.Errorf("wrong round number for member [%v]", member.id)
+		}
+	}
+
+	// Assert that each message is formed correctly.
+	for memberID, message := range tssRoundSevenMessages {
+		assertOutgoingMessageGeneralParameters(
+			t,
+			message.senderID,
+			message.sessionID,
+			memberID,
+		)
+
+		assertOutgoingMessageBroadcastPayload(
+			t,
+			message.payload,
+			memberID,
+		)
+	}
+}
+
+func TestTssRoundSeven_IncomingMessageCorrupted_WrongPayload(t *testing.T) {
+	members, messages, err := initializeTssRoundSevenMembersGroup(
+		dishonestThreshold,
+		groupSize,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	corruptedPayload, err := hex.DecodeString("ffeeaabb")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Perform TSS round seven for each group member.
+	for _, member := range members {
+		var receivedMessages []*tssRoundSixMessage
+		for _, message := range messages {
+			if message.senderID != member.id {
+				// Corrupt the message's payload.
+				message.payload = corruptedPayload
+				receivedMessages = append(receivedMessages, message)
+			}
+		}
+
+		ctx, cancelCtx := context.WithTimeout(context.Background(), 10*time.Second)
+
+		_, err := member.tssRoundSeven(ctx, receivedMessages)
+
+		if !strings.Contains(
+			err.Error(),
+			"cannot update using TSS round six message",
+		) {
+			t.Errorf("wrong error for member [%v]: [%v]", member.id, err)
+		}
+
+		cancelCtx()
+	}
+}
+
+func TestTssRoundSeven_IncomingMessageMissing(t *testing.T) {
+	members, messages, err := initializeTssRoundSevenMembersGroup(
+		dishonestThreshold,
+		groupSize,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Perform TSS round seven for each group member.
+	for _, member := range members {
+		var receivedMessages []*tssRoundSixMessage
+		for _, message := range messages {
+			if message.senderID != member.id {
+				receivedMessages = append(receivedMessages, message)
+			}
+		}
+
+		ctx, cancelCtx := context.WithTimeout(context.Background(), 1*time.Second)
+		// Pass only one incoming message from TSS round six for processing.
+		_, err := member.tssRoundSeven(ctx, receivedMessages[:1])
+
+		expectedErr := fmt.Errorf(
+			"TSS round seven outgoing message was not generated on time",
+		)
+		if !reflect.DeepEqual(expectedErr, err) {
+			t.Errorf(
+				"unexpected error for member [%v]\n"+
+					"expected: %v\n"+
+					"actual:   %v\n",
+				member.id,
+				expectedErr,
+				err,
+			)
+		}
+
+		cancelCtx()
+	}
+}
+
+func TestTssRoundSeven_OutgoingMessageTimeout(t *testing.T) {
+	members, messages, err := initializeTssRoundSevenMembersGroup(
+		dishonestThreshold,
+		groupSize,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Perform TSS round seven for each group member.
+	for _, member := range members {
+		var receivedMessages []*tssRoundSixMessage
+		for _, message := range messages {
+			if message.senderID != member.id {
+				receivedMessages = append(receivedMessages, message)
+			}
+		}
+
+		// To simulate the outgoing message timeout we do two things:
+		// - we pass an already cancelled context
+		// - we make sure no message is emitted from the channel by overwriting
+		//   the existing channel with a new one that won't receive any
+		//   messages from the underlying TSS local party
+		ctx, cancelCtx := context.WithCancel(context.Background())
+		cancelCtx()
+		member.tssOutgoingMessagesChan = make(<-chan tss.Message)
+
+		_, err := member.tssRoundSeven(ctx, receivedMessages)
+
+		expectedErr := fmt.Errorf(
+			"TSS round seven outgoing message was not generated on time",
+		)
+		if !reflect.DeepEqual(expectedErr, err) {
+			t.Errorf(
+				"unexpected error for member [%v]\n"+
+					"expected: %v\n"+
+					"actual:   %v\n",
+				member.id,
+				expectedErr,
+				err,
+			)
+		}
+	}
+}
+
 func assertOutgoingMessageGeneralParameters(
 	t *testing.T,
 	messageSenderID group.MemberIndex,
@@ -2052,4 +2241,68 @@ func initializeTssRoundSixMembersGroup(
 	}
 
 	return tssRoundSixMembers, tssRoundFiveMessages, nil
+}
+
+func initializeTssRoundSevenMembersGroup(
+	dishonestThreshold int,
+	groupSize int,
+) (
+	[]*tssRoundSevenMember,
+	[]*tssRoundSixMessage,
+	error,
+) {
+	var tssRoundSevenMembers []*tssRoundSevenMember
+	var tssRoundSixMessages []*tssRoundSixMessage
+
+	tssRoundSixMembers, tssRoundFiveMessages, err :=
+		initializeTssRoundSixMembersGroup(
+			dishonestThreshold,
+			groupSize,
+		)
+	if err != nil {
+		return nil, nil, fmt.Errorf(
+			"cannot generate TSS round six members group: [%v]",
+			err,
+		)
+	}
+
+	for _, member := range tssRoundSixMembers {
+		var receivedTssRoundFiveMessages []*tssRoundFiveMessage
+		for _, tssRoundFiveMessage := range tssRoundFiveMessages {
+			if tssRoundFiveMessage.senderID != member.id {
+				receivedTssRoundFiveMessages = append(
+					receivedTssRoundFiveMessages,
+					tssRoundFiveMessage,
+				)
+			}
+		}
+
+		ctx, cancelCtx := context.WithTimeout(
+			context.Background(),
+			10*time.Second,
+		)
+
+		tssRoundSixMessage, err := member.tssRoundSix(
+			ctx,
+			receivedTssRoundFiveMessages,
+		)
+		if err != nil {
+			cancelCtx()
+			return nil, nil, fmt.Errorf(
+				"cannot do TSS round six for member [%v]: [%v]",
+				member.id,
+				err,
+			)
+		}
+
+		tssRoundSevenMembers = append(
+			tssRoundSevenMembers,
+			member.initializeTssRoundSeven(),
+		)
+		tssRoundSixMessages = append(tssRoundSixMessages, tssRoundSixMessage)
+
+		cancelCtx()
+	}
+
+	return tssRoundSevenMembers, tssRoundSixMessages, nil
 }

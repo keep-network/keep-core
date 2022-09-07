@@ -307,3 +307,29 @@ func (trsm *tssRoundSixMember) markInactiveMembers(
 
 	filter.FlushInactiveMembers()
 }
+
+// initializeTssRoundSeven returns a member to perform next protocol operations.
+func (trsm *tssRoundSixMember) initializeTssRoundSeven() *tssRoundSevenMember {
+	return &tssRoundSevenMember{
+		tssRoundSixMember: trsm,
+	}
+}
+
+// tssRoundSevenMember represents one member in a signing group performing the
+// seventh round of the TSS keygen.
+type tssRoundSevenMember struct {
+	*tssRoundSixMember
+}
+
+// markInactiveMembers takes all messages from the previous signing protocol
+// execution phase and marks all member who did not send a message as inactive.
+func (trsm *tssRoundSevenMember) markInactiveMembers(
+	tssRoundSixMessages []*tssRoundSixMessage,
+) {
+	filter := trsm.inactiveMemberFilter()
+	for _, message := range tssRoundSixMessages {
+		filter.MarkMemberAsActive(message.senderID)
+	}
+
+	filter.FlushInactiveMembers()
+}
