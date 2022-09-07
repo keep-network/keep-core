@@ -188,4 +188,4 @@ jobs:
         with:
           go-version-file: "go.mod"
       - name: gofmt
-        run: gofmt -d -e .
+        run: if [ "$(gofmt -l . | wc -l)" -gt 0 ]; then exit 1; fi
