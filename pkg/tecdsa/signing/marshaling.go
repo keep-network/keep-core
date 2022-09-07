@@ -99,9 +99,9 @@ func (trtm *tssRoundTwoMessage) Marshal() ([]byte, error) {
 	}
 
 	return (&pb.TSSRoundTwoMessage{
-		SenderID:         uint32(trtm.senderID),
-		PeersPayload:     peersPayload,
-		SessionID:        trtm.sessionID,
+		SenderID:     uint32(trtm.senderID),
+		PeersPayload: peersPayload,
+		SessionID:    trtm.sessionID,
 	}).Marshal()
 }
 

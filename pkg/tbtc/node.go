@@ -447,7 +447,7 @@ func (n *node) joinSigningIfEligible(
 
 				if slices.Contains(excludedMembers, signer.signingGroupMemberIndex) {
 					logger.Infof(
-						"[member:%v] excluded from signing attempt " +
+						"[member:%v] excluded from signing attempt "+
 							"[%v] of message [%v]; aborting",
 						signer.signingGroupMemberIndex,
 						attemptIndex,

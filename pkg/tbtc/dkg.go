@@ -570,5 +570,3 @@ func (drs *dkgResultSubmitter) setupEligibilityQueue(
 
 	return waiter, err
 }
-
-

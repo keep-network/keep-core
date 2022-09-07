@@ -128,12 +128,12 @@ func TestFuzzTssRoundOneMessage_Unmarshaler(t *testing.T) {
 
 func TestTssRoundTwoMessage_MarshalingRoundtrip(t *testing.T) {
 	msg := &tssRoundTwoMessage{
-		senderID:     group.MemberIndex(50),
+		senderID: group.MemberIndex(50),
 		peersPayload: map[group.MemberIndex][]byte{
 			1: {6, 7, 8, 9, 10},
 			2: {11, 12, 13, 14, 15},
 		},
-		sessionID:    "session-1",
+		sessionID: "session-1",
 	}
 	unmarshaled := &tssRoundTwoMessage{}
 
@@ -164,9 +164,9 @@ func TestFuzzTssRoundTwoMessage_MarshalingRoundtrip(t *testing.T) {
 		f.Fuzz(&sessionID)
 
 		message := &tssRoundTwoMessage{
-			senderID:         senderID,
-			peersPayload:     peersPayload,
-			sessionID:        sessionID,
+			senderID:     senderID,
+			peersPayload: peersPayload,
+			sessionID:    sessionID,
 		}
 
 		_ = pbutils.RoundTrip(message, &tssRoundTwoMessage{})

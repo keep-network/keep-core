@@ -177,7 +177,7 @@ func TestResolveSortedTssPartyID(t *testing.T) {
 }
 
 func TestAggregateTssMessages(t *testing.T) {
-	var tests = map[string]struct{
+	var tests = map[string]struct {
 		tssMessages              []tss.Message
 		symmetricKeys            map[group.MemberIndex]ephemeral.SymmetricKey
 		expectedBroadcastPayload []byte
@@ -185,7 +185,7 @@ func TestAggregateTssMessages(t *testing.T) {
 		expectedErr              error
 	}{
 		"happy path": {
-			tssMessages: []tss.Message {
+			tssMessages: []tss.Message{
 				newMockTssMessage([]byte{0x02}, group.MemberIndex(2)),
 				newMockTssMessage([]byte{0xAA}), // broadcast message
 				newMockTssMessage([]byte{0x01}, group.MemberIndex(1)),
@@ -204,14 +204,14 @@ func TestAggregateTssMessages(t *testing.T) {
 			},
 		},
 		"only one broadcast message": {
-			tssMessages: []tss.Message {
+			tssMessages: []tss.Message{
 				newMockTssMessage([]byte{0xAA}), // broadcast message
 			},
 			expectedBroadcastPayload: []byte{0xAA},
-			expectedPeersPayload: make(map[group.MemberIndex][]byte),
+			expectedPeersPayload:     make(map[group.MemberIndex][]byte),
 		},
 		"only P2P messages": {
-			tssMessages: []tss.Message {
+			tssMessages: []tss.Message{
 				newMockTssMessage([]byte{0x02}, group.MemberIndex(2)),
 				newMockTssMessage([]byte{0x01}, group.MemberIndex(1)),
 				newMockTssMessage([]byte{0x03}, group.MemberIndex(3)),
@@ -229,7 +229,7 @@ func TestAggregateTssMessages(t *testing.T) {
 			},
 		},
 		"multiple broadcast messages": {
-			tssMessages: []tss.Message {
+			tssMessages: []tss.Message{
 				newMockTssMessage([]byte{0x02}, group.MemberIndex(2)),
 				newMockTssMessage([]byte{0xAA}), // broadcast message
 				newMockTssMessage([]byte{0xBB}), // another broadcast message
@@ -244,9 +244,9 @@ func TestAggregateTssMessages(t *testing.T) {
 			expectedErr: fmt.Errorf("multiple TSS broadcast messages detected"),
 		},
 		"P2P message with multiple receivers": {
-			tssMessages: []tss.Message {
+			tssMessages: []tss.Message{
 				newMockTssMessage([]byte{0x02}, group.MemberIndex(2)),
-				newMockTssMessage([]byte{0xAA}), // broadcast message
+				newMockTssMessage([]byte{0xAA}),                                             // broadcast message
 				newMockTssMessage([]byte{0x01}, group.MemberIndex(1), group.MemberIndex(4)), // multiple receivers
 				newMockTssMessage([]byte{0x03}, group.MemberIndex(3)),
 			},
@@ -258,9 +258,9 @@ func TestAggregateTssMessages(t *testing.T) {
 			expectedErr: fmt.Errorf("multi-receiver TSS P2P message detected"),
 		},
 		"multiple P2P messages for same receiver": {
-			tssMessages: []tss.Message {
+			tssMessages: []tss.Message{
 				newMockTssMessage([]byte{0x02}, group.MemberIndex(2)),
-				newMockTssMessage([]byte{0xAA}), // broadcast message
+				newMockTssMessage([]byte{0xAA}),                       // broadcast message
 				newMockTssMessage([]byte{0x01}, group.MemberIndex(2)), // duplicated P2P message
 				newMockTssMessage([]byte{0x03}, group.MemberIndex(3)),
 			},
@@ -272,7 +272,7 @@ func TestAggregateTssMessages(t *testing.T) {
 			expectedErr: fmt.Errorf("duplicate TSS P2P message for member [2]"),
 		},
 		"missing symmetric key for receiver": {
-			tssMessages: []tss.Message {
+			tssMessages: []tss.Message{
 				newMockTssMessage([]byte{0x02}, group.MemberIndex(2)),
 				newMockTssMessage([]byte{0xAA}), // broadcast message
 				newMockTssMessage([]byte{0x01}, group.MemberIndex(1)),
@@ -286,7 +286,7 @@ func TestAggregateTssMessages(t *testing.T) {
 			expectedErr: fmt.Errorf("cannot get symmetric key with member [1]"),
 		},
 		"encryption error for receiver": {
-			tssMessages: []tss.Message {
+			tssMessages: []tss.Message{
 				newMockTssMessage([]byte{0x02}, group.MemberIndex(2)),
 				newMockTssMessage([]byte{0xAA}), // broadcast message
 				newMockTssMessage([]byte{0x01}, group.MemberIndex(1)),
@@ -307,7 +307,7 @@ func TestAggregateTssMessages(t *testing.T) {
 				3: &mockSymmetricKey{[]byte{0x0C}},
 			},
 			expectedBroadcastPayload: nil,
-			expectedPeersPayload: make(map[group.MemberIndex][]byte),
+			expectedPeersPayload:     make(map[group.MemberIndex][]byte),
 		},
 		"nil tss messages slice": {
 			tssMessages: nil,
@@ -317,41 +317,41 @@ func TestAggregateTssMessages(t *testing.T) {
 				3: &mockSymmetricKey{[]byte{0x0C}},
 			},
 			expectedBroadcastPayload: nil,
-			expectedPeersPayload: make(map[group.MemberIndex][]byte),
+			expectedPeersPayload:     make(map[group.MemberIndex][]byte),
 		},
 		"nil symmetric keys map": {
-			tssMessages: []tss.Message {
+			tssMessages: []tss.Message{
 				newMockTssMessage([]byte{0x02}, group.MemberIndex(2)),
 				newMockTssMessage([]byte{0xAA}), // broadcast message
 				newMockTssMessage([]byte{0x01}, group.MemberIndex(1)),
 				newMockTssMessage([]byte{0x03}, group.MemberIndex(3)),
 			},
 			symmetricKeys: nil,
-			expectedErr: fmt.Errorf("cannot get symmetric key with member [2]"),
+			expectedErr:   fmt.Errorf("cannot get symmetric key with member [2]"),
 		},
 	}
-	
+
 	for testName, test := range tests {
 		t.Run(testName, func(t *testing.T) {
 			broadcastPayload, peersPayload, err := AggregateTssMessages(
-				test.tssMessages, 
+				test.tssMessages,
 				test.symmetricKeys,
 			)
-			
+
 			if !bytes.Equal(test.expectedBroadcastPayload, broadcastPayload) {
 				t.Errorf(
-					"unexpected broadcast payload\n" +
-						"expected: [%v]\n" +
-						"actual:   [%v]", 
-					test.expectedBroadcastPayload, 
+					"unexpected broadcast payload\n"+
+						"expected: [%v]\n"+
+						"actual:   [%v]",
+					test.expectedBroadcastPayload,
 					broadcastPayload,
 				)
 			}
 
 			if !reflect.DeepEqual(test.expectedPeersPayload, peersPayload) {
 				t.Errorf(
-					"unexpected peers payload\n" +
-						"expected: [%v]\n" +
+					"unexpected peers payload\n"+
+						"expected: [%v]\n"+
 						"actual:   [%v]",
 					test.expectedPeersPayload,
 					peersPayload,
@@ -360,8 +360,8 @@ func TestAggregateTssMessages(t *testing.T) {
 
 			if !reflect.DeepEqual(test.expectedErr, err) {
 				t.Errorf(
-					"unexpected error\n" +
-						"expected: [%v]\n" +
+					"unexpected error\n"+
+						"expected: [%v]\n"+
 						"actual:   [%v]",
 					test.expectedErr,
 					err,
@@ -379,7 +379,7 @@ type mockTssMessage struct {
 
 func newMockTssMessage(
 	bytes []byte,
-	receivers... group.MemberIndex,
+	receivers ...group.MemberIndex,
 ) *mockTssMessage {
 	var to []*tss.PartyID
 
@@ -450,5 +450,3 @@ func (msk *mockSymmetricKey) Encrypt(bytes []byte) ([]byte, error) {
 func (msk *mockSymmetricKey) Decrypt(bytes []byte) ([]byte, error) {
 	panic("not implemented")
 }
-
-
