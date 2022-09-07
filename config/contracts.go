@@ -39,6 +39,7 @@ func initializeContractAddressesAliases() {
 	aliasEthereumContract(chainEthereum.RandomBeaconContractName)
 	aliasEthereumContract(chainEthereum.TokenStakingContractName)
 	aliasEthereumContract(chainEthereum.WalletRegistryContractName)
+	aliasEthereumContract(chainEthereum.BridgeContractName)
 }
 
 // resolveContractsAddresses verifies if contracts addresses are configured, if not
