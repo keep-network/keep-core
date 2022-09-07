@@ -102,6 +102,7 @@ func bspCanRestoreRewardEligibility(c *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
+
 	arg_operator, err := chainutil.AddressFromHex(args[0])
 	if err != nil {
 		return fmt.Errorf(
@@ -144,6 +145,7 @@ func bspGetAvailableRewards(c *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
+
 	arg_operator, err := chainutil.AddressFromHex(args[0])
 	if err != nil {
 		return fmt.Errorf(
@@ -186,6 +188,7 @@ func bspGetOperatorID(c *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
+
 	arg_operator, err := chainutil.AddressFromHex(args[0])
 	if err != nil {
 		return fmt.Errorf(
@@ -228,6 +231,7 @@ func bspGetPoolWeight(c *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
+
 	arg_operator, err := chainutil.AddressFromHex(args[0])
 	if err != nil {
 		return fmt.Errorf(
@@ -304,6 +308,7 @@ func bspIsEligibleForRewards(c *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
+
 	arg_operator, err := chainutil.AddressFromHex(args[0])
 	if err != nil {
 		return fmt.Errorf(
@@ -380,6 +385,7 @@ func bspIsOperatorInPool(c *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
+
 	arg_operator, err := chainutil.AddressFromHex(args[0])
 	if err != nil {
 		return fmt.Errorf(
@@ -422,6 +428,7 @@ func bspIsOperatorRegistered(c *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
+
 	arg_operator, err := chainutil.AddressFromHex(args[0])
 	if err != nil {
 		return fmt.Errorf(
@@ -464,6 +471,7 @@ func bspIsOperatorUpToDate(c *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
+
 	arg_operator, err := chainutil.AddressFromHex(args[0])
 	if err != nil {
 		return fmt.Errorf(
@@ -471,7 +479,6 @@ func bspIsOperatorUpToDate(c *cobra.Command, args []string) error {
 			args[0],
 		)
 	}
-
 	arg_authorizedStake, err := hexutil.DecodeBig(args[1])
 	if err != nil {
 		return fmt.Errorf(
@@ -651,6 +658,7 @@ func bspRewardsEligibilityRestorableAt(c *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
+
 	arg_operator, err := chainutil.AddressFromHex(args[0])
 	if err != nil {
 		return fmt.Errorf(
@@ -738,7 +746,6 @@ func bspInsertOperator(c *cobra.Command, args []string) error {
 			args[0],
 		)
 	}
-
 	arg_authorizedStake, err := hexutil.DecodeBig(args[1])
 	if err != nil {
 		return fmt.Errorf(
@@ -857,7 +864,6 @@ func bspReceiveApproval(c *cobra.Command, args []string) error {
 			args[0],
 		)
 	}
-
 	arg_amount, err := hexutil.DecodeBig(args[1])
 	if err != nil {
 		return fmt.Errorf(
@@ -865,7 +871,6 @@ func bspReceiveApproval(c *cobra.Command, args []string) error {
 			args[1],
 		)
 	}
-
 	arg_token, err := chainutil.AddressFromHex(args[2])
 	if err != nil {
 		return fmt.Errorf(
@@ -873,7 +878,6 @@ func bspReceiveApproval(c *cobra.Command, args []string) error {
 			args[2],
 		)
 	}
-
 	arg3, err := hexutil.Decode(args[3])
 	if err != nil {
 		return fmt.Errorf(
@@ -1165,7 +1169,6 @@ func bspUpdateOperatorStatus(c *cobra.Command, args []string) error {
 			args[0],
 		)
 	}
-
 	arg_authorizedStake, err := hexutil.DecodeBig(args[1])
 	if err != nil {
 		return fmt.Errorf(
@@ -1295,7 +1298,6 @@ func bspWithdrawRewards(c *cobra.Command, args []string) error {
 			args[0],
 		)
 	}
-
 	arg_beneficiary, err := chainutil.AddressFromHex(args[1])
 	if err != nil {
 		return fmt.Errorf(

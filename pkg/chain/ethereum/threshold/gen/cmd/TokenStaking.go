@@ -78,22 +78,33 @@ func init() {
 		tsDelegateVotingCommand(),
 		tsDisableApplicationCommand(),
 		tsForceDecreaseAuthorizationCommand(),
+		tsIncreaseAuthorizationCommand(),
 		tsInitializeCommand(),
 		tsNotifyKeepStakeDiscrepancyCommand(),
 		tsNotifyNuStakeDiscrepancyCommand(),
 		tsPauseApplicationCommand(),
 		tsProcessSlashingCommand(),
+		tsPushNotificationRewardCommand(),
 		tsRefreshKeepStakeOwnerCommand(),
+		tsRequestAuthorizationDecreaseCommand(),
 		tsRequestAuthorizationDecrease0Command(),
 		tsSetAuthorizationCeilingCommand(),
+		tsSetMinimumStakeAmountCommand(),
+		tsSetNotificationRewardCommand(),
 		tsSetPanicButtonCommand(),
+		tsSetStakeDiscrepancyPenaltyCommand(),
+		tsStakeCommand(),
 		tsStakeKeepCommand(),
 		tsStakeNuCommand(),
+		tsTopUpCommand(),
 		tsTopUpKeepCommand(),
 		tsTopUpNuCommand(),
 		tsTransferGovernanceCommand(),
 		tsUnstakeAllCommand(),
 		tsUnstakeKeepCommand(),
+		tsUnstakeNuCommand(),
+		tsUnstakeTCommand(),
+		tsWithdrawNotificationRewardCommand(),
 	)
 
 	ModuleCommand.AddCommand(TokenStakingCommand)
@@ -121,6 +132,7 @@ func tsApplicationInfo(c *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
+
 	arg0, err := chainutil.AddressFromHex(args[0])
 	if err != nil {
 		return fmt.Errorf(
@@ -163,6 +175,7 @@ func tsApplications(c *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
+
 	arg0, err := hexutil.DecodeBig(args[0])
 	if err != nil {
 		return fmt.Errorf(
@@ -239,6 +252,7 @@ func tsAuthorizedStake(c *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
+
 	arg_stakingProvider, err := chainutil.AddressFromHex(args[0])
 	if err != nil {
 		return fmt.Errorf(
@@ -246,7 +260,6 @@ func tsAuthorizedStake(c *cobra.Command, args []string) error {
 			args[0],
 		)
 	}
-
 	arg_application, err := chainutil.AddressFromHex(args[1])
 	if err != nil {
 		return fmt.Errorf(
@@ -290,6 +303,7 @@ func tsDelegates(c *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
+
 	arg_account, err := chainutil.AddressFromHex(args[0])
 	if err != nil {
 		return fmt.Errorf(
@@ -366,6 +380,7 @@ func tsGetAvailableToAuthorize(c *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
+
 	arg_stakingProvider, err := chainutil.AddressFromHex(args[0])
 	if err != nil {
 		return fmt.Errorf(
@@ -373,7 +388,6 @@ func tsGetAvailableToAuthorize(c *cobra.Command, args []string) error {
 			args[0],
 		)
 	}
-
 	arg_application, err := chainutil.AddressFromHex(args[1])
 	if err != nil {
 		return fmt.Errorf(
@@ -417,6 +431,7 @@ func tsGetPastTotalSupply(c *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
+
 	arg_blockNumber, err := hexutil.DecodeBig(args[0])
 	if err != nil {
 		return fmt.Errorf(
@@ -459,6 +474,7 @@ func tsGetPastVotes(c *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
+
 	arg_account, err := chainutil.AddressFromHex(args[0])
 	if err != nil {
 		return fmt.Errorf(
@@ -466,7 +482,6 @@ func tsGetPastVotes(c *cobra.Command, args []string) error {
 			args[0],
 		)
 	}
-
 	arg_blockNumber, err := hexutil.DecodeBig(args[1])
 	if err != nil {
 		return fmt.Errorf(
@@ -544,6 +559,7 @@ func tsGetStartStakingTimestamp(c *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
+
 	arg_stakingProvider, err := chainutil.AddressFromHex(args[0])
 	if err != nil {
 		return fmt.Errorf(
@@ -586,6 +602,7 @@ func tsGetVotes(c *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
+
 	arg_account, err := chainutil.AddressFromHex(args[0])
 	if err != nil {
 		return fmt.Errorf(
@@ -764,6 +781,7 @@ func tsNumCheckpoints(c *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
+
 	arg_account, err := chainutil.AddressFromHex(args[0])
 	if err != nil {
 		return fmt.Errorf(
@@ -806,6 +824,7 @@ func tsRolesOf(c *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
+
 	arg_stakingProvider, err := chainutil.AddressFromHex(args[0])
 	if err != nil {
 		return fmt.Errorf(
@@ -848,6 +867,7 @@ func tsSlashingQueue(c *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
+
 	arg0, err := hexutil.DecodeBig(args[0])
 	if err != nil {
 		return fmt.Errorf(
@@ -992,6 +1012,7 @@ func tsStakedNu(c *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
+
 	arg_stakingProvider, err := chainutil.AddressFromHex(args[0])
 	if err != nil {
 		return fmt.Errorf(
@@ -1034,6 +1055,7 @@ func tsStakes(c *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
+
 	arg_stakingProvider, err := chainutil.AddressFromHex(args[0])
 	if err != nil {
 		return fmt.Errorf(
@@ -1208,7 +1230,6 @@ func tsDelegateVoting(c *cobra.Command, args []string) error {
 			args[0],
 		)
 	}
-
 	arg_delegatee, err := chainutil.AddressFromHex(args[1])
 	if err != nil {
 		return fmt.Errorf(
@@ -1338,7 +1359,6 @@ func tsForceDecreaseAuthorization(c *cobra.Command, args []string) error {
 			args[0],
 		)
 	}
-
 	arg_application, err := chainutil.AddressFromHex(args[1])
 	if err != nil {
 		return fmt.Errorf(
@@ -1367,6 +1387,84 @@ func tsForceDecreaseAuthorization(c *cobra.Command, args []string) error {
 		err = contract.CallForceDecreaseAuthorization(
 			arg_stakingProvider,
 			arg_application,
+			cmd.BlockFlagValue.Int,
+		)
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput("success")
+	}
+
+	return nil
+}
+
+func tsIncreaseAuthorizationCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "increase-authorization [arg_stakingProvider] [arg_application] [arg_amount]",
+		Short:                 "Calls the nonpayable method increaseAuthorization on the TokenStaking contract.",
+		Args:                  cmd.ArgCountChecker(3),
+		RunE:                  tsIncreaseAuthorization,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	c.PreRunE = cmd.NonConstArgsChecker
+	cmd.InitNonConstFlags(c)
+
+	return c
+}
+
+func tsIncreaseAuthorization(c *cobra.Command, args []string) error {
+	contract, err := initializeTokenStaking(c)
+	if err != nil {
+		return err
+	}
+
+	arg_stakingProvider, err := chainutil.AddressFromHex(args[0])
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter arg_stakingProvider, a address, from passed value %v",
+			args[0],
+		)
+	}
+	arg_application, err := chainutil.AddressFromHex(args[1])
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter arg_application, a address, from passed value %v",
+			args[1],
+		)
+	}
+	arg_amount, err := hexutil.DecodeBig(args[2])
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter arg_amount, a uint96, from passed value %v",
+			args[2],
+		)
+	}
+
+	var (
+		transaction *types.Transaction
+	)
+
+	if shouldSubmit, _ := c.Flags().GetBool(cmd.SubmitFlag); shouldSubmit {
+		// Do a regular submission. Take payable into account.
+		transaction, err = contract.IncreaseAuthorization(
+			arg_stakingProvider,
+			arg_application,
+			arg_amount,
+		)
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput(transaction.Hash())
+	} else {
+		// Do a call.
+		err = contract.CallIncreaseAuthorization(
+			arg_stakingProvider,
+			arg_application,
+			arg_amount,
 			cmd.BlockFlagValue.Int,
 		)
 		if err != nil {
@@ -1668,6 +1766,66 @@ func tsProcessSlashing(c *cobra.Command, args []string) error {
 	return nil
 }
 
+func tsPushNotificationRewardCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "push-notification-reward [arg_reward]",
+		Short:                 "Calls the nonpayable method pushNotificationReward on the TokenStaking contract.",
+		Args:                  cmd.ArgCountChecker(1),
+		RunE:                  tsPushNotificationReward,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	c.PreRunE = cmd.NonConstArgsChecker
+	cmd.InitNonConstFlags(c)
+
+	return c
+}
+
+func tsPushNotificationReward(c *cobra.Command, args []string) error {
+	contract, err := initializeTokenStaking(c)
+	if err != nil {
+		return err
+	}
+
+	arg_reward, err := hexutil.DecodeBig(args[0])
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter arg_reward, a uint96, from passed value %v",
+			args[0],
+		)
+	}
+
+	var (
+		transaction *types.Transaction
+	)
+
+	if shouldSubmit, _ := c.Flags().GetBool(cmd.SubmitFlag); shouldSubmit {
+		// Do a regular submission. Take payable into account.
+		transaction, err = contract.PushNotificationReward(
+			arg_reward,
+		)
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput(transaction.Hash())
+	} else {
+		// Do a call.
+		err = contract.CallPushNotificationReward(
+			arg_reward,
+			cmd.BlockFlagValue.Int,
+		)
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput("success")
+	}
+
+	return nil
+}
+
 func tsRefreshKeepStakeOwnerCommand() *cobra.Command {
 	c := &cobra.Command{
 		Use:                   "refresh-keep-stake-owner [arg_stakingProvider]",
@@ -1716,6 +1874,84 @@ func tsRefreshKeepStakeOwner(c *cobra.Command, args []string) error {
 		// Do a call.
 		err = contract.CallRefreshKeepStakeOwner(
 			arg_stakingProvider,
+			cmd.BlockFlagValue.Int,
+		)
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput("success")
+	}
+
+	return nil
+}
+
+func tsRequestAuthorizationDecreaseCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "request-authorization-decrease [arg_stakingProvider] [arg_application] [arg_amount]",
+		Short:                 "Calls the nonpayable method requestAuthorizationDecrease on the TokenStaking contract.",
+		Args:                  cmd.ArgCountChecker(3),
+		RunE:                  tsRequestAuthorizationDecrease,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	c.PreRunE = cmd.NonConstArgsChecker
+	cmd.InitNonConstFlags(c)
+
+	return c
+}
+
+func tsRequestAuthorizationDecrease(c *cobra.Command, args []string) error {
+	contract, err := initializeTokenStaking(c)
+	if err != nil {
+		return err
+	}
+
+	arg_stakingProvider, err := chainutil.AddressFromHex(args[0])
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter arg_stakingProvider, a address, from passed value %v",
+			args[0],
+		)
+	}
+	arg_application, err := chainutil.AddressFromHex(args[1])
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter arg_application, a address, from passed value %v",
+			args[1],
+		)
+	}
+	arg_amount, err := hexutil.DecodeBig(args[2])
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter arg_amount, a uint96, from passed value %v",
+			args[2],
+		)
+	}
+
+	var (
+		transaction *types.Transaction
+	)
+
+	if shouldSubmit, _ := c.Flags().GetBool(cmd.SubmitFlag); shouldSubmit {
+		// Do a regular submission. Take payable into account.
+		transaction, err = contract.RequestAuthorizationDecrease(
+			arg_stakingProvider,
+			arg_application,
+			arg_amount,
+		)
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput(transaction.Hash())
+	} else {
+		// Do a call.
+		err = contract.CallRequestAuthorizationDecrease(
+			arg_stakingProvider,
+			arg_application,
+			arg_amount,
 			cmd.BlockFlagValue.Int,
 		)
 		if err != nil {
@@ -1848,6 +2084,126 @@ func tsSetAuthorizationCeiling(c *cobra.Command, args []string) error {
 	return nil
 }
 
+func tsSetMinimumStakeAmountCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "set-minimum-stake-amount [arg_amount]",
+		Short:                 "Calls the nonpayable method setMinimumStakeAmount on the TokenStaking contract.",
+		Args:                  cmd.ArgCountChecker(1),
+		RunE:                  tsSetMinimumStakeAmount,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	c.PreRunE = cmd.NonConstArgsChecker
+	cmd.InitNonConstFlags(c)
+
+	return c
+}
+
+func tsSetMinimumStakeAmount(c *cobra.Command, args []string) error {
+	contract, err := initializeTokenStaking(c)
+	if err != nil {
+		return err
+	}
+
+	arg_amount, err := hexutil.DecodeBig(args[0])
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter arg_amount, a uint96, from passed value %v",
+			args[0],
+		)
+	}
+
+	var (
+		transaction *types.Transaction
+	)
+
+	if shouldSubmit, _ := c.Flags().GetBool(cmd.SubmitFlag); shouldSubmit {
+		// Do a regular submission. Take payable into account.
+		transaction, err = contract.SetMinimumStakeAmount(
+			arg_amount,
+		)
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput(transaction.Hash())
+	} else {
+		// Do a call.
+		err = contract.CallSetMinimumStakeAmount(
+			arg_amount,
+			cmd.BlockFlagValue.Int,
+		)
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput("success")
+	}
+
+	return nil
+}
+
+func tsSetNotificationRewardCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "set-notification-reward [arg_reward]",
+		Short:                 "Calls the nonpayable method setNotificationReward on the TokenStaking contract.",
+		Args:                  cmd.ArgCountChecker(1),
+		RunE:                  tsSetNotificationReward,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	c.PreRunE = cmd.NonConstArgsChecker
+	cmd.InitNonConstFlags(c)
+
+	return c
+}
+
+func tsSetNotificationReward(c *cobra.Command, args []string) error {
+	contract, err := initializeTokenStaking(c)
+	if err != nil {
+		return err
+	}
+
+	arg_reward, err := hexutil.DecodeBig(args[0])
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter arg_reward, a uint96, from passed value %v",
+			args[0],
+		)
+	}
+
+	var (
+		transaction *types.Transaction
+	)
+
+	if shouldSubmit, _ := c.Flags().GetBool(cmd.SubmitFlag); shouldSubmit {
+		// Do a regular submission. Take payable into account.
+		transaction, err = contract.SetNotificationReward(
+			arg_reward,
+		)
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput(transaction.Hash())
+	} else {
+		// Do a call.
+		err = contract.CallSetNotificationReward(
+			arg_reward,
+			cmd.BlockFlagValue.Int,
+		)
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput("success")
+	}
+
+	return nil
+}
+
 func tsSetPanicButtonCommand() *cobra.Command {
 	c := &cobra.Command{
 		Use:                   "set-panic-button [arg_application] [arg_panicButton]",
@@ -1877,7 +2233,6 @@ func tsSetPanicButton(c *cobra.Command, args []string) error {
 			args[0],
 		)
 	}
-
 	arg_panicButton, err := chainutil.AddressFromHex(args[1])
 	if err != nil {
 		return fmt.Errorf(
@@ -1906,6 +2261,162 @@ func tsSetPanicButton(c *cobra.Command, args []string) error {
 		err = contract.CallSetPanicButton(
 			arg_application,
 			arg_panicButton,
+			cmd.BlockFlagValue.Int,
+		)
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput("success")
+	}
+
+	return nil
+}
+
+func tsSetStakeDiscrepancyPenaltyCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "set-stake-discrepancy-penalty [arg_penalty] [arg_rewardMultiplier]",
+		Short:                 "Calls the nonpayable method setStakeDiscrepancyPenalty on the TokenStaking contract.",
+		Args:                  cmd.ArgCountChecker(2),
+		RunE:                  tsSetStakeDiscrepancyPenalty,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	c.PreRunE = cmd.NonConstArgsChecker
+	cmd.InitNonConstFlags(c)
+
+	return c
+}
+
+func tsSetStakeDiscrepancyPenalty(c *cobra.Command, args []string) error {
+	contract, err := initializeTokenStaking(c)
+	if err != nil {
+		return err
+	}
+
+	arg_penalty, err := hexutil.DecodeBig(args[0])
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter arg_penalty, a uint96, from passed value %v",
+			args[0],
+		)
+	}
+	arg_rewardMultiplier, err := hexutil.DecodeBig(args[1])
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter arg_rewardMultiplier, a uint256, from passed value %v",
+			args[1],
+		)
+	}
+
+	var (
+		transaction *types.Transaction
+	)
+
+	if shouldSubmit, _ := c.Flags().GetBool(cmd.SubmitFlag); shouldSubmit {
+		// Do a regular submission. Take payable into account.
+		transaction, err = contract.SetStakeDiscrepancyPenalty(
+			arg_penalty,
+			arg_rewardMultiplier,
+		)
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput(transaction.Hash())
+	} else {
+		// Do a call.
+		err = contract.CallSetStakeDiscrepancyPenalty(
+			arg_penalty,
+			arg_rewardMultiplier,
+			cmd.BlockFlagValue.Int,
+		)
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput("success")
+	}
+
+	return nil
+}
+
+func tsStakeCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "stake [arg_stakingProvider] [arg_beneficiary] [arg_authorizer] [arg_amount]",
+		Short:                 "Calls the nonpayable method stake on the TokenStaking contract.",
+		Args:                  cmd.ArgCountChecker(4),
+		RunE:                  tsStake,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	c.PreRunE = cmd.NonConstArgsChecker
+	cmd.InitNonConstFlags(c)
+
+	return c
+}
+
+func tsStake(c *cobra.Command, args []string) error {
+	contract, err := initializeTokenStaking(c)
+	if err != nil {
+		return err
+	}
+
+	arg_stakingProvider, err := chainutil.AddressFromHex(args[0])
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter arg_stakingProvider, a address, from passed value %v",
+			args[0],
+		)
+	}
+	arg_beneficiary, err := chainutil.AddressFromHex(args[1])
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter arg_beneficiary, a address, from passed value %v",
+			args[1],
+		)
+	}
+	arg_authorizer, err := chainutil.AddressFromHex(args[2])
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter arg_authorizer, a address, from passed value %v",
+			args[2],
+		)
+	}
+	arg_amount, err := hexutil.DecodeBig(args[3])
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter arg_amount, a uint96, from passed value %v",
+			args[3],
+		)
+	}
+
+	var (
+		transaction *types.Transaction
+	)
+
+	if shouldSubmit, _ := c.Flags().GetBool(cmd.SubmitFlag); shouldSubmit {
+		// Do a regular submission. Take payable into account.
+		transaction, err = contract.Stake(
+			arg_stakingProvider,
+			arg_beneficiary,
+			arg_authorizer,
+			arg_amount,
+		)
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput(transaction.Hash())
+	} else {
+		// Do a call.
+		err = contract.CallStake(
+			arg_stakingProvider,
+			arg_beneficiary,
+			arg_authorizer,
+			arg_amount,
 			cmd.BlockFlagValue.Int,
 		)
 		if err != nil {
@@ -2007,7 +2518,6 @@ func tsStakeNu(c *cobra.Command, args []string) error {
 			args[0],
 		)
 	}
-
 	arg_beneficiary, err := chainutil.AddressFromHex(args[1])
 	if err != nil {
 		return fmt.Errorf(
@@ -2015,7 +2525,6 @@ func tsStakeNu(c *cobra.Command, args []string) error {
 			args[1],
 		)
 	}
-
 	arg_authorizer, err := chainutil.AddressFromHex(args[2])
 	if err != nil {
 		return fmt.Errorf(
@@ -2046,6 +2555,75 @@ func tsStakeNu(c *cobra.Command, args []string) error {
 			arg_stakingProvider,
 			arg_beneficiary,
 			arg_authorizer,
+			cmd.BlockFlagValue.Int,
+		)
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput("success")
+	}
+
+	return nil
+}
+
+func tsTopUpCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "top-up [arg_stakingProvider] [arg_amount]",
+		Short:                 "Calls the nonpayable method topUp on the TokenStaking contract.",
+		Args:                  cmd.ArgCountChecker(2),
+		RunE:                  tsTopUp,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	c.PreRunE = cmd.NonConstArgsChecker
+	cmd.InitNonConstFlags(c)
+
+	return c
+}
+
+func tsTopUp(c *cobra.Command, args []string) error {
+	contract, err := initializeTokenStaking(c)
+	if err != nil {
+		return err
+	}
+
+	arg_stakingProvider, err := chainutil.AddressFromHex(args[0])
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter arg_stakingProvider, a address, from passed value %v",
+			args[0],
+		)
+	}
+	arg_amount, err := hexutil.DecodeBig(args[1])
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter arg_amount, a uint96, from passed value %v",
+			args[1],
+		)
+	}
+
+	var (
+		transaction *types.Transaction
+	)
+
+	if shouldSubmit, _ := c.Flags().GetBool(cmd.SubmitFlag); shouldSubmit {
+		// Do a regular submission. Take payable into account.
+		transaction, err = contract.TopUp(
+			arg_stakingProvider,
+			arg_amount,
+		)
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput(transaction.Hash())
+	} else {
+		// Do a call.
+		err = contract.CallTopUp(
+			arg_stakingProvider,
+			arg_amount,
 			cmd.BlockFlagValue.Int,
 		)
 		if err != nil {
@@ -2346,6 +2924,213 @@ func tsUnstakeKeep(c *cobra.Command, args []string) error {
 		// Do a call.
 		err = contract.CallUnstakeKeep(
 			arg_stakingProvider,
+			cmd.BlockFlagValue.Int,
+		)
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput("success")
+	}
+
+	return nil
+}
+
+func tsUnstakeNuCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "unstake-nu [arg_stakingProvider] [arg_amount]",
+		Short:                 "Calls the nonpayable method unstakeNu on the TokenStaking contract.",
+		Args:                  cmd.ArgCountChecker(2),
+		RunE:                  tsUnstakeNu,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	c.PreRunE = cmd.NonConstArgsChecker
+	cmd.InitNonConstFlags(c)
+
+	return c
+}
+
+func tsUnstakeNu(c *cobra.Command, args []string) error {
+	contract, err := initializeTokenStaking(c)
+	if err != nil {
+		return err
+	}
+
+	arg_stakingProvider, err := chainutil.AddressFromHex(args[0])
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter arg_stakingProvider, a address, from passed value %v",
+			args[0],
+		)
+	}
+	arg_amount, err := hexutil.DecodeBig(args[1])
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter arg_amount, a uint96, from passed value %v",
+			args[1],
+		)
+	}
+
+	var (
+		transaction *types.Transaction
+	)
+
+	if shouldSubmit, _ := c.Flags().GetBool(cmd.SubmitFlag); shouldSubmit {
+		// Do a regular submission. Take payable into account.
+		transaction, err = contract.UnstakeNu(
+			arg_stakingProvider,
+			arg_amount,
+		)
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput(transaction.Hash())
+	} else {
+		// Do a call.
+		err = contract.CallUnstakeNu(
+			arg_stakingProvider,
+			arg_amount,
+			cmd.BlockFlagValue.Int,
+		)
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput("success")
+	}
+
+	return nil
+}
+
+func tsUnstakeTCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "unstake-t [arg_stakingProvider] [arg_amount]",
+		Short:                 "Calls the nonpayable method unstakeT on the TokenStaking contract.",
+		Args:                  cmd.ArgCountChecker(2),
+		RunE:                  tsUnstakeT,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	c.PreRunE = cmd.NonConstArgsChecker
+	cmd.InitNonConstFlags(c)
+
+	return c
+}
+
+func tsUnstakeT(c *cobra.Command, args []string) error {
+	contract, err := initializeTokenStaking(c)
+	if err != nil {
+		return err
+	}
+
+	arg_stakingProvider, err := chainutil.AddressFromHex(args[0])
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter arg_stakingProvider, a address, from passed value %v",
+			args[0],
+		)
+	}
+	arg_amount, err := hexutil.DecodeBig(args[1])
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter arg_amount, a uint96, from passed value %v",
+			args[1],
+		)
+	}
+
+	var (
+		transaction *types.Transaction
+	)
+
+	if shouldSubmit, _ := c.Flags().GetBool(cmd.SubmitFlag); shouldSubmit {
+		// Do a regular submission. Take payable into account.
+		transaction, err = contract.UnstakeT(
+			arg_stakingProvider,
+			arg_amount,
+		)
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput(transaction.Hash())
+	} else {
+		// Do a call.
+		err = contract.CallUnstakeT(
+			arg_stakingProvider,
+			arg_amount,
+			cmd.BlockFlagValue.Int,
+		)
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput("success")
+	}
+
+	return nil
+}
+
+func tsWithdrawNotificationRewardCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "withdraw-notification-reward [arg_recipient] [arg_amount]",
+		Short:                 "Calls the nonpayable method withdrawNotificationReward on the TokenStaking contract.",
+		Args:                  cmd.ArgCountChecker(2),
+		RunE:                  tsWithdrawNotificationReward,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	c.PreRunE = cmd.NonConstArgsChecker
+	cmd.InitNonConstFlags(c)
+
+	return c
+}
+
+func tsWithdrawNotificationReward(c *cobra.Command, args []string) error {
+	contract, err := initializeTokenStaking(c)
+	if err != nil {
+		return err
+	}
+
+	arg_recipient, err := chainutil.AddressFromHex(args[0])
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter arg_recipient, a address, from passed value %v",
+			args[0],
+		)
+	}
+	arg_amount, err := hexutil.DecodeBig(args[1])
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter arg_amount, a uint96, from passed value %v",
+			args[1],
+		)
+	}
+
+	var (
+		transaction *types.Transaction
+	)
+
+	if shouldSubmit, _ := c.Flags().GetBool(cmd.SubmitFlag); shouldSubmit {
+		// Do a regular submission. Take payable into account.
+		transaction, err = contract.WithdrawNotificationReward(
+			arg_recipient,
+			arg_amount,
+		)
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput(transaction.Hash())
+	} else {
+		// Do a call.
+		err = contract.CallWithdrawNotificationReward(
+			arg_recipient,
+			arg_amount,
 			cmd.BlockFlagValue.Int,
 		)
 		if err != nil {
