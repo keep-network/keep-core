@@ -5,12 +5,14 @@ import (
 	"fmt"
 	"net"
 
-	keepNet "github.com/keep-network/keep-core/pkg/net"
-	"github.com/keep-network/keep-core/pkg/net/gen/pb"
-	"github.com/keep-network/keep-core/pkg/net/security/handshake"
 	libp2pcrypto "github.com/libp2p/go-libp2p-core/crypto"
 	peer "github.com/libp2p/go-libp2p-core/peer"
 
+	keepNet "github.com/keep-network/keep-core/pkg/net"
+	"github.com/keep-network/keep-core/pkg/net/gen/pb"
+	"github.com/keep-network/keep-core/pkg/net/security/handshake"
+
+	// TODO: Try to replace deprecated github.com/gogo/protobuf with google.golang.org/protobuf
 	protoio "github.com/gogo/protobuf/io"
 )
 
