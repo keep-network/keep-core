@@ -3,19 +3,22 @@ package libp2p
 import (
 	"context"
 	"fmt"
-	"github.com/keep-network/keep-core/pkg/operator"
 	"runtime"
 	"sync"
 	"sync/atomic"
 
-	"github.com/gogo/protobuf/proto"
+	"google.golang.org/protobuf/proto"
+
+	"github.com/keep-network/keep-core/pkg/operator"
+
+	"github.com/libp2p/go-libp2p-core/peer"
+	"github.com/libp2p/go-libp2p-core/peerstore"
+	pubsub "github.com/libp2p/go-libp2p-pubsub"
+
 	"github.com/keep-network/keep-core/pkg/net"
 	"github.com/keep-network/keep-core/pkg/net/gen/pb"
 	"github.com/keep-network/keep-core/pkg/net/internal"
 	"github.com/keep-network/keep-core/pkg/net/retransmission"
-	"github.com/libp2p/go-libp2p-core/peer"
-	"github.com/libp2p/go-libp2p-core/peerstore"
-	pubsub "github.com/libp2p/go-libp2p-pubsub"
 )
 
 var (
@@ -185,7 +188,7 @@ func (c *channel) messageProto(
 }
 
 func (c *channel) publish(message *pb.BroadcastNetworkMessage) error {
-	messageBytes, err := message.Marshal()
+	messageBytes, err := proto.Marshal(message)
 	if err != nil {
 		return err
 	}
