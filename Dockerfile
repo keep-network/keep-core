@@ -34,7 +34,7 @@ COPY go.mod go.sum $APP_DIR/
 RUN go mod download
 
 # Install code generators.
-RUN cd /go/pkg/mod/github.com/gogo/protobuf@v1.3.2/protoc-gen-gogoslick && go install .
+RUN cd /go/pkg/mod/google.golang.org/protobuf@v1.28.1/cmd/protoc-gen-go/ && go install .
 
 # Copy source code for generation.
 COPY ./pkg/beacon/dkg/result/gen $APP_DIR/pkg/beacon/dkg/result/gen
