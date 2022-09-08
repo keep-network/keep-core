@@ -2,8 +2,10 @@ package signing
 
 import (
 	"context"
+	"crypto/ecdsa"
 	"encoding/hex"
 	"fmt"
+	"github.com/bnb-chain/tss-lib/common"
 	"github.com/bnb-chain/tss-lib/tss"
 	"github.com/keep-network/keep-core/pkg/crypto/ephemeral"
 	"github.com/keep-network/keep-core/pkg/internal/tecdsatest"
@@ -2117,6 +2119,224 @@ func TestTssRoundNine_OutgoingMessageTimeout(t *testing.T) {
 	}
 }
 
+func TestTssFinalize(t *testing.T) {
+	members, tssRoundNineMessages, err := initializeFinalizingMembersGroup(
+		dishonestThreshold,
+		groupSize,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Perform TSS finalization for each group member.
+	for _, member := range members {
+		var receivedTssRoundNineMessages []*tssRoundNineMessage
+		for _, tssRoundNineMessage := range tssRoundNineMessages {
+			if tssRoundNineMessage.senderID != member.id {
+				receivedTssRoundNineMessages = append(
+					receivedTssRoundNineMessages,
+					tssRoundNineMessage,
+				)
+			}
+		}
+
+		ctx, cancelCtx := context.WithTimeout(
+			context.Background(),
+			10*time.Second,
+		)
+
+		err := member.tssFinalize(
+			ctx,
+			receivedTssRoundNineMessages,
+		)
+		if err != nil {
+			cancelCtx()
+			t.Fatal(err)
+		}
+
+		cancelCtx()
+	}
+
+	message := members[0].message
+	publicKey := members[0].privateKeyShare.PublicKey()
+	signatures := make(map[string]bool)
+
+	// Assert that each member has a correct state.
+	for _, member := range members {
+		signature := member.Result().Signature
+
+		if signature == nil {
+			t.Errorf(
+				"member [%v] has not produced a signature",
+				member.id,
+			)
+		}
+
+		if signature.R == nil {
+			t.Errorf(
+				"member [%v] has produced a nil R parameter",
+				member.id,
+			)
+		}
+
+		if signature.S == nil {
+			t.Errorf(
+				"member [%v] has produced a nil S parameter",
+				member.id,
+			)
+		}
+
+		// Proper recovery ID is always one of {0, 1, 2, 3}.
+		if signature.RecoveryID < 0 || signature.RecoveryID > 3 {
+			t.Errorf(
+				"member [%v] has produced a wrong recovery ID parameter",
+				member.id,
+			)
+		}
+
+		if !ecdsa.Verify(publicKey, message.Bytes(), signature.R, signature.S) {
+			t.Errorf(
+				"member [%v] signature verification failed",
+				member.id,
+			)
+		}
+
+		signatures[signature.String()] = true
+	}
+
+	testutils.AssertIntsEqual(
+		t,
+		"count of distinct signatures produced by the group",
+		1,
+		len(signatures),
+	)
+}
+
+func TestTssFinalize_IncomingMessageCorrupted_WrongPayload(t *testing.T) {
+	members, messages, err := initializeFinalizingMembersGroup(
+		dishonestThreshold,
+		groupSize,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	corruptedPayload, err := hex.DecodeString("ffeeaabb")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Perform TSS finalization for each group member.
+	for _, member := range members {
+		var receivedMessages []*tssRoundNineMessage
+		for _, message := range messages {
+			if message.senderID != member.id {
+				// Corrupt the message's payload.
+				message.payload = corruptedPayload
+				receivedMessages = append(receivedMessages, message)
+			}
+		}
+
+		ctx, cancelCtx := context.WithTimeout(context.Background(), 10*time.Second)
+
+		err := member.tssFinalize(ctx, receivedMessages)
+
+		if !strings.Contains(
+			err.Error(),
+			"cannot update using TSS round nine message",
+		) {
+			t.Errorf("wrong error for member [%v]: [%v]", member.id, err)
+		}
+
+		cancelCtx()
+	}
+}
+
+func TestTssFinalize_IncomingMessageMissing(t *testing.T) {
+	members, messages, err := initializeFinalizingMembersGroup(
+		dishonestThreshold,
+		groupSize,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Perform TSS finalization for each group member.
+	for _, member := range members {
+		var receivedMessages []*tssRoundNineMessage
+		for _, message := range messages {
+			if message.senderID != member.id {
+				receivedMessages = append(receivedMessages, message)
+			}
+		}
+
+		ctx, cancelCtx := context.WithTimeout(context.Background(), 1*time.Second)
+		// Pass only one incoming message from TSS round nine for processing.
+		err := member.tssFinalize(ctx, receivedMessages[:1])
+
+		expectedErr := fmt.Errorf(
+			"TSS result was not generated on time",
+		)
+		if !reflect.DeepEqual(expectedErr, err) {
+			t.Errorf(
+				"unexpected error for member [%v]\n"+
+					"expected: %v\n"+
+					"actual:   %v\n",
+				member.id,
+				expectedErr,
+				err,
+			)
+		}
+
+		cancelCtx()
+	}
+}
+
+func TestTssFinalize_ResultTimeout(t *testing.T) {
+	members, messages, err := initializeFinalizingMembersGroup(
+		dishonestThreshold,
+		groupSize,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Perform TSS finalization for each group member.
+	for _, member := range members {
+		var receivedMessages []*tssRoundNineMessage
+		for _, message := range messages {
+			if message.senderID != member.id {
+				receivedMessages = append(receivedMessages, message)
+			}
+		}
+
+		// To simulate the outgoing message timeout we do two things:
+		// - we pass an already cancelled context
+		// - we make sure no result is emitted from the channel by overwriting
+		//   the existing channel with a new one that won't receive the
+		//   result from the underlying TSS local party
+		ctx, cancelCtx := context.WithCancel(context.Background())
+		cancelCtx()
+		member.tssResultChan = make(<-chan common.SignatureData)
+
+		err := member.tssFinalize(ctx, receivedMessages)
+
+		expectedErr := fmt.Errorf(
+			"TSS result was not generated on time",
+		)
+		if !reflect.DeepEqual(expectedErr, err) {
+			t.Errorf(
+				"unexpected error for member [%v]\n"+
+					"expected: %v\n"+
+					"actual:   %v\n",
+				member.id,
+				expectedErr,
+				err,
+			)
+		}
+	}
+}
+
 func assertOutgoingMessageGeneralParameters(
 	t *testing.T,
 	messageSenderID group.MemberIndex,
@@ -2811,4 +3031,68 @@ func initializeTssRoundNineMembersGroup(
 	}
 
 	return tssRoundNineMembers, tssRoundEightMessages, nil
+}
+
+func initializeFinalizingMembersGroup(
+	dishonestThreshold int,
+	groupSize int,
+) (
+	[]*finalizingMember,
+	[]*tssRoundNineMessage,
+	error,
+) {
+	var finalizingMembers []*finalizingMember
+	var tssRoundNineMessages []*tssRoundNineMessage
+
+	tssRoundNineMembers, tssRoundEightMessages, err :=
+		initializeTssRoundNineMembersGroup(
+			dishonestThreshold,
+			groupSize,
+		)
+	if err != nil {
+		return nil, nil, fmt.Errorf(
+			"cannot generate TSS round nine members group: [%v]",
+			err,
+		)
+	}
+
+	for _, member := range tssRoundNineMembers {
+		var receivedTssRoundEightMessages []*tssRoundEightMessage
+		for _, tssRoundEightMessage := range tssRoundEightMessages {
+			if tssRoundEightMessage.senderID != member.id {
+				receivedTssRoundEightMessages = append(
+					receivedTssRoundEightMessages,
+					tssRoundEightMessage,
+				)
+			}
+		}
+
+		ctx, cancelCtx := context.WithTimeout(
+			context.Background(),
+			10*time.Second,
+		)
+
+		tssRoundNineMessage, err := member.tssRoundNine(
+			ctx,
+			receivedTssRoundEightMessages,
+		)
+		if err != nil {
+			cancelCtx()
+			return nil, nil, fmt.Errorf(
+				"cannot do TSS round nine for member [%v]: [%v]",
+				member.id,
+				err,
+			)
+		}
+
+		finalizingMembers = append(
+			finalizingMembers,
+			member.initializeFinalization(),
+		)
+		tssRoundNineMessages = append(tssRoundNineMessages, tssRoundNineMessage)
+
+		cancelCtx()
+	}
+
+	return finalizingMembers, tssRoundNineMessages, nil
 }
