@@ -62,13 +62,13 @@ func (ac *authenticatedConnection) initializePipe() {
 }
 
 // Sends a message through the pipe.
-func (mc *pipe) Send(msg proto.Message) (err error) {
+func (mc *pipe) send(msg proto.Message) (err error) {
 	_, err = mc.delimWriter.MarshalTo(mc.writer, msg)
 	return
 }
 
 // Receives a message from the pipe.
-func (mc *pipe) Receive(msg proto.Message) (err error) {
+func (mc *pipe) receive(msg proto.Message) (err error) {
 	err = mc.delimReader.UnmarshalFrom(mc.reader, msg)
 	return
 }
@@ -249,7 +249,7 @@ func (ac *authenticatedConnection) initiatorSendAct1(act1WireMessage []byte) err
 		Signature: signedAct1Message,
 	}
 
-	return ac.pipe.Send(act1Envelope)
+	return ac.pipe.send(act1Envelope)
 }
 
 // initiatorReceiveAct2 unmarshals a pb.HandshakeEnvelope from a responder,
@@ -261,7 +261,7 @@ func (ac *authenticatedConnection) initiatorReceiveAct2() (*handshake.Act2Messag
 		act2Message  = &handshake.Act2Message{}
 	)
 	fmt.Printf("initiator waiting to receive message")
-	if err := ac.pipe.Receive(&act2Envelope); err != nil {
+	if err := ac.pipe.receive(&act2Envelope); err != nil {
 		return nil, err
 	}
 
@@ -296,7 +296,7 @@ func (ac *authenticatedConnection) initiatorSendAct3(act3WireMessage []byte) err
 		Signature: signedAct3Message,
 	}
 
-	return ac.pipe.Send(act3Envelope)
+	return ac.pipe.send(act3Envelope)
 }
 
 func (ac *authenticatedConnection) runHandshakeAsResponder() error {
@@ -355,7 +355,7 @@ func (ac *authenticatedConnection) responderReceiveAct1() (*handshake.Act1Messag
 		act1Message  = &handshake.Act1Message{}
 	)
 	fmt.Println("responder waiting to receive message")
-	if err := ac.pipe.Receive(&act1Envelope); err != nil {
+	if err := ac.pipe.receive(&act1Envelope); err != nil {
 		return nil, err
 	}
 	fmt.Println("got message")
@@ -402,7 +402,7 @@ func (ac *authenticatedConnection) responderSendAct2(act2WireMessage []byte) err
 		Signature: signedAct2Message,
 	}
 
-	return ac.pipe.Send(act2Envelope)
+	return ac.pipe.send(act2Envelope)
 }
 
 // responderReceiveAct3 unmarshals a pb.HandshakeEnvelope from an initiator,
@@ -413,7 +413,7 @@ func (ac *authenticatedConnection) responderReceiveAct3() (*handshake.Act3Messag
 		act3Envelope pb.HandshakeEnvelope
 		act3Message  = &handshake.Act3Message{}
 	)
-	if err := ac.pipe.Receive(&act3Envelope); err != nil {
+	if err := ac.pipe.receive(&act3Envelope); err != nil {
 		return nil, err
 	}
 
