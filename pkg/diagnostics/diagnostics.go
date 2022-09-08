@@ -2,6 +2,7 @@ package diagnostics
 
 import (
 	"encoding/json"
+	"strings"
 
 	"github.com/keep-network/keep-core/pkg/chain"
 
@@ -40,10 +41,25 @@ func RegisterConnectedPeersSource(
 	registry.RegisterSource("connected_peers", func() string {
 		connectionManager := netProvider.ConnectionManager()
 		connectedPeers := connectionManager.ConnectedPeers()
+		connectedPeersAddrInfo := connectionManager.ConnectedPeersAddrInfo()
 
 		peersList := make([]map[string]interface{}, len(connectedPeers))
 		for i := 0; i < len(connectedPeers); i++ {
 			peer := connectedPeers[i]
+			peerAddrInfo := connectedPeersAddrInfo[i].Addrs
+
+			var peerIP string
+			for _, peerAddr := range peerAddrInfo {
+				// Peer contains public and localhost ip4 addresses. We need to fetch a
+				// public address only. Range of local addresses starting from 127.* are
+				// skipped.
+				if strings.Contains(peerAddr.String(), "ip4") && !strings.Contains(peerAddr.String(), "ip4/127.") {
+					// address is formatted as follows /ip4/<ip_address>/tcp/<port>
+					// IP address has 1 index
+					peerIP = strings.Split(strings.Trim(strings.TrimSpace(peerAddr.String()), "/"), "/")[1]
+				}
+			}
+
 			peerPublicKey, err := connectionManager.GetPeerPublicKey(peer)
 			if err != nil {
 				logger.Error("error on getting peer public key: [%v]", err)
@@ -61,6 +77,7 @@ func RegisterConnectedPeersSource(
 			peersList[i] = map[string]interface{}{
 				"network_id":    peer,
 				"chain_address": peerChainAddress.String(),
+				"ip":            peerIP,
 			}
 		}
 

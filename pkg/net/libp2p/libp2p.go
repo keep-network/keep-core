@@ -156,6 +156,14 @@ func (cm *connectionManager) ConnectedPeers() []string {
 	return peers
 }
 
+func (cm *connectionManager) ConnectedPeersAddrInfo() []peer.AddrInfo {
+	var peersAddrInfo []peer.AddrInfo
+	for _, connectedPeer := range cm.Network().Peers() {
+		peersAddrInfo = append(peersAddrInfo, cm.Peerstore().PeerInfo(connectedPeer))
+	}
+	return peersAddrInfo
+}
+
 func (cm *connectionManager) GetPeerPublicKey(connectedPeer string) (*operator.PublicKey, error) {
 	peerID, err := peer.Decode(connectedPeer)
 	if err != nil {

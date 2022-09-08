@@ -3,6 +3,7 @@ package net
 import (
 	"context"
 	"github.com/keep-network/keep-core/pkg/operator"
+	"github.com/libp2p/go-libp2p-core/peer"
 
 	"github.com/gogo/protobuf/proto"
 )
@@ -67,6 +68,7 @@ type Provider interface {
 // from any given connected peer.
 type ConnectionManager interface {
 	ConnectedPeers() []string
+	ConnectedPeersAddrInfo() []peer.AddrInfo
 	GetPeerPublicKey(connectedPeer string) (*operator.PublicKey, error)
 	DisconnectPeer(connectedPeer string)
 
