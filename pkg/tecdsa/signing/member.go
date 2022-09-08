@@ -1,6 +1,7 @@
 package signing
 
 import (
+	"fmt"
 	tsslibcommon "github.com/bnb-chain/tss-lib/common"
 	"github.com/bnb-chain/tss-lib/ecdsa/signing"
 	"github.com/bnb-chain/tss-lib/tss"
@@ -9,6 +10,7 @@ import (
 	"github.com/keep-network/keep-core/pkg/protocol/group"
 	"github.com/keep-network/keep-core/pkg/tecdsa"
 	"github.com/keep-network/keep-core/pkg/tecdsa/common"
+	"golang.org/x/exp/slices"
 	"math/big"
 )
 
@@ -29,6 +31,8 @@ type member struct {
 	message *big.Int
 	// tECDSA private key share of the member.
 	privateKeyShare *tecdsa.PrivateKeyShare
+	// Instance of the member identity converter.
+	identityConverter *identityConverter
 }
 
 // newMember creates a new member in an initial state
@@ -50,6 +54,7 @@ func newMember(
 		sessionID:           sessionID,
 		message:             message,
 		privateKeyShare:     privateKeyShare,
+		identityConverter:   &identityConverter{keys: privateKeyShare.Data().Ks},
 	}
 }
 
@@ -137,6 +142,7 @@ func (skgm *symmetricKeyGeneratingMember) initializeTssRoundOne() *tssRoundOneMe
 	tssPartyID, groupTssPartiesIDs := common.GenerateTssPartiesIDs(
 		skgm.id,
 		skgm.group.OperatingMemberIDs(),
+		skgm.identityConverter,
 	)
 
 	tssParameters := tss.NewParameters(
@@ -419,4 +425,38 @@ func (fm *finalizingMember) markInactiveMembers(
 // Result is successful computation of the tECDSA signature.
 func (fm *finalizingMember) Result() *Result {
 	return &Result{Signature: tecdsa.NewSignature(fm.tssResult)}
+}
+
+// identityConverter implements the common.IdentityConverter for tECDSA signing.
+// It does the conversion using the predefined keys list.
+type identityConverter struct {
+	keys []*big.Int
+}
+
+func (ic *identityConverter) MemberIndexToTssPartyID(
+	memberIndex group.MemberIndex,
+) *tss.PartyID {
+	partyIDKey := ic.MemberIndexToTssPartyIDKey(memberIndex)
+
+	return tss.NewPartyID(
+		partyIDKey.Text(10),
+		fmt.Sprintf("member-%v", memberIndex),
+		partyIDKey,
+	)
+}
+
+func (ic *identityConverter) MemberIndexToTssPartyIDKey(
+	memberIndex group.MemberIndex,
+) *big.Int {
+	return ic.keys[memberIndex-1]
+}
+
+func (ic *identityConverter) TssPartyIDToMemberIndex(
+	partyID *tss.PartyID,
+) group.MemberIndex {
+	index := slices.IndexFunc(ic.keys, func(key *big.Int) bool {
+		return key.Cmp(partyID.KeyInt()) == 0
+	})
+
+	return group.MemberIndex(index + 1)
 }

@@ -2430,12 +2430,13 @@ func initializeEphemeralKeyPairGeneratingMembersGroup(
 
 		members = append(members, &ephemeralKeyPairGeneratingMember{
 			member: &member{
-				logger:          &testutils.MockLogger{},
-				id:              id,
-				group:           signingGroup,
-				sessionID:       sessionID,
-				message:         big.NewInt(100),
-				privateKeyShare: tecdsa.NewPrivateKeyShare(testData[i-1]),
+				logger:            &testutils.MockLogger{},
+				id:                id,
+				group:             signingGroup,
+				sessionID:         sessionID,
+				message:           big.NewInt(100),
+				privateKeyShare:   tecdsa.NewPrivateKeyShare(testData[i-1]),
+				identityConverter: &identityConverter{keys: testData[i-1].Ks},
 			},
 			ephemeralKeyPairs: make(map[group.MemberIndex]*ephemeral.KeyPair),
 		})

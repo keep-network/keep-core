@@ -1822,6 +1822,7 @@ func initializeEphemeralKeyPairGeneratingMembersGroup(
 				sessionID:                sessionID,
 				tssPreParams:             tssPreParams[id],
 				keyGenerationConcurrency: 10,
+				identityConverter:        &identityConverter{seed: big.NewInt(200)},
 			},
 			ephemeralKeyPairs: make(map[group.MemberIndex]*ephemeral.KeyPair),
 		})
