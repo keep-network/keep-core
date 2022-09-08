@@ -40,7 +40,7 @@ func init() {
 
 // Initialize initializes the root command and returns it.
 func Initialize(version, revision string) *cobra.Command {
-	RootCmd.Version = fmt.Sprintf("%s revision %s", version, revision)
+	RootCmd.Version = fmt.Sprintf("%s (revision %s)", version, revision)
 
 	return RootCmd
 }

@@ -2,7 +2,6 @@ package diagnostics
 
 import (
 	"encoding/json"
-	"strings"
 
 	"github.com/keep-network/keep-core/pkg/chain"
 
@@ -82,6 +81,7 @@ func RegisterClientInfoSource(
 	netProvider net.Provider,
 	signing chain.Signing,
 	clientVersion string,
+	clientRevision string,
 ) {
 	registry.RegisterSource("client_info", func() string {
 		connectionManager := netProvider.ConnectionManager()
@@ -101,12 +101,11 @@ func RegisterClientInfoSource(
 			return ""
 		}
 
-		clientVersionArr := strings.Split(clientVersion, "revision")
 		clientInfo := map[string]interface{}{
 			"network_id":    clientID,
 			"chain_address": clientChainAddress.String(),
-			"version": strings.TrimSpace(clientVersionArr[0]),
-			"revision": strings.TrimSpace(clientVersionArr[1]),
+			"version":       clientVersion,
+			"revision":      clientRevision,
 		}
 
 		bytes, err := json.Marshal(clientInfo)
