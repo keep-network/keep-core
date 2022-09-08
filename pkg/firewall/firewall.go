@@ -42,9 +42,18 @@ var errNotRecognized = fmt.Errorf(
 	"remote peer has not been recognized by any application",
 )
 
-func AnyApplicationPolicy(applications []Application) net.Firewall {
+func AnyApplicationPolicy(
+	applications []Application,
+	bootstrapPeersPublicKeys []*operator.PublicKey,
+) net.Firewall {
+	bootstrapPeersKeys := make(map[string]bool, len(bootstrapPeersPublicKeys))
+	for _, key := range bootstrapPeersPublicKeys {
+		bootstrapPeersKeys[key.String()] = true
+	}
+
 	return &anyApplicationPolicy{
 		applications:        applications,
+		bootstrapPeersKeys:  bootstrapPeersKeys,
 		positiveResultCache: cache.NewTimeCache(PositiveIsRecognizedCachePeriod),
 		negativeResultCache: cache.NewTimeCache(NegativeIsRecognizedCachePeriod),
 	}
@@ -52,20 +61,26 @@ func AnyApplicationPolicy(applications []Application) net.Firewall {
 
 type anyApplicationPolicy struct {
 	applications        []Application
+	bootstrapPeersKeys   map[string]bool
 	positiveResultCache *cache.TimeCache
 	negativeResultCache *cache.TimeCache
 }
 
 // Validate checks whether the given operator meets the conditions to join
-// the network. Validate iterates over a list of applications and if any of them
-// recognizes the operator as eligible, it can join the network. Nil is returned
-// on a successful validation, error is returned if none of the applications
-// validates the operator successfully. Due to performance reasons the results
-// of validations are stored in a cache for a certain amount of time.
+// the network. The operator can join the network if it is a bootstrap node
+// or it is a non-bootstrap node, but it is recognized as eligible by any of
+// the applications. Nil is returned on a successful validation, error otherwise.
+// Due to performance reasons the results of validations for non-bootstrap nodes
+//  are stored in a cache for a certain amount of time.
 func (aap *anyApplicationPolicy) Validate(
 	remotePeerPublicKey *operator.PublicKey,
 ) error {
 	remotePeerPublicKeyHex := remotePeerPublicKey.String()
+
+	// If the peer is a bootstrap peer, consider it validated.
+	if aap.bootstrapPeersKeys[remotePeerPublicKeyHex] {
+		return nil
+	}
 
 	// First, check in the in-memory time caches to minimize hits to the ETH client.
 	// If the Keep client with the given chain address is in the positive result

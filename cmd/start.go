@@ -69,8 +69,19 @@ func start(cmd *cobra.Command) error {
 		return fmt.Errorf("error connecting to Ethereum node: [%v]", err)
 	}
 
+	bootstrapPeersPublicKeys, err := libp2p.GetPeersPublicKeys(
+		clientConfig.LibP2P.Peers,
+	)
+	if err != nil {
+		return fmt.Errorf(
+			"error extracting bootstrap peers public keys: [%v]",
+			err,
+		)
+	}
+
 	firewall := firewall.AnyApplicationPolicy(
 		[]firewall.Application{beaconChain, tbtcChain},
+		bootstrapPeersPublicKeys,
 	)
 
 	netProvider, err := libp2p.Connect(
