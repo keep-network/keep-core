@@ -117,7 +117,7 @@ func maliciousInitiatorHijacksHonestRun(t *testing.T, ac *authenticatedConnectio
 		Signature: signedAct3Message,
 	}
 
-	if err := ac.pipe.Send(act3Envelope); err != nil {
+	if err := ac.pipe.send(act3Envelope); err != nil {
 		t.Fatal(err)
 	}
 }
