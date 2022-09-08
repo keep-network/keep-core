@@ -1,8 +1,10 @@
 package libp2p
 
 import (
+	"bufio"
 	"encoding/hex"
 	"fmt"
+	"io"
 	"net"
 
 	libp2pcrypto "github.com/libp2p/go-libp2p-core/crypto"
@@ -12,8 +14,10 @@ import (
 	"github.com/keep-network/keep-core/pkg/net/gen/pb"
 	"github.com/keep-network/keep-core/pkg/net/security/handshake"
 
-	// TODO: Try to replace deprecated github.com/gogo/protobuf with google.golang.org/protobuf
-	protoio "github.com/gogo/protobuf/io"
+	"google.golang.org/protobuf/proto"
+	// TODO: Stop using `dev` version of `google.golang.org/protobuf` once v.1.28.2
+	// is published.
+	protodelim "google.golang.org/protobuf/dev/encoding/protodelim"
 )
 
 // Enough space for a proto-encoded envelope with a message, peer.ID, and sig.
@@ -34,6 +38,39 @@ type authenticatedConnection struct {
 	firewall keepNet.Firewall
 
 	protocol string
+
+	pipe pipe
+}
+
+// pipe is used to send and receive messages over the connection between peers.
+type pipe struct {
+	reader protodelim.Reader
+	writer io.Writer
+
+	delimWriter *protodelim.MarshalOptions
+	delimReader *protodelim.UnmarshalOptions
+}
+
+func (ac *authenticatedConnection) initializePipe() {
+	// The reader has to implement `io.ByteReader` interface so we need to wrap
+	// the `net.Conn` with `bufio`.
+	ac.pipe.reader = bufio.NewReader(ac.Conn)
+	ac.pipe.writer = ac.Conn
+
+	ac.pipe.delimReader = &protodelim.UnmarshalOptions{MaxSize: maxFrameSize}
+	ac.pipe.delimWriter = &protodelim.MarshalOptions{}
+}
+
+// Sends a message through the pipe.
+func (mc *pipe) Send(msg proto.Message) (err error) {
+	_, err = mc.delimWriter.MarshalTo(mc.writer, msg)
+	return
+}
+
+// Receives a message from the pipe.
+func (mc *pipe) Receive(msg proto.Message) (err error) {
+	err = mc.delimReader.UnmarshalFrom(mc.reader, msg)
+	return
 }
 
 // newAuthenticatedInboundConnection is the connection that's formed by
@@ -56,6 +93,8 @@ func newAuthenticatedInboundConnection(
 		firewall:            firewall,
 		protocol:            protocol,
 	}
+
+	ac.initializePipe()
 
 	if err := ac.runHandshakeAsResponder(); err != nil {
 		// close the conn before returning (if it hasn't already)
@@ -109,6 +148,8 @@ func newAuthenticatedOutboundConnection(
 		protocol:            protocol,
 	}
 
+	ac.initializePipe()
+
 	if err := ac.runHandshakeAsInitiator(); err != nil {
 		if closeErr := ac.Close(); closeErr != nil {
 			logger.Debugf("could not close the connection: [%v]", closeErr)
@@ -143,9 +184,6 @@ func (ac *authenticatedConnection) checkFirewallRules() error {
 func (ac *authenticatedConnection) runHandshakeAsInitiator() error {
 	// initiator station
 
-	initiatorConnectionReader := protoio.NewDelimitedReader(ac.Conn, maxFrameSize)
-	initiatorConnectionWriter := protoio.NewDelimitedWriter(ac.Conn)
-
 	//
 	// Act 1
 	//
@@ -160,7 +198,7 @@ func (ac *authenticatedConnection) runHandshakeAsInitiator() error {
 		return err
 	}
 
-	if err := ac.initiatorSendAct1(act1WireMessage, initiatorConnectionWriter); err != nil {
+	if err := ac.initiatorSendAct1(act1WireMessage); err != nil {
 		return err
 	}
 
@@ -170,7 +208,7 @@ func (ac *authenticatedConnection) runHandshakeAsInitiator() error {
 	// Act 2
 	//
 
-	act2Message, err := ac.initiatorReceiveAct2(initiatorConnectionReader)
+	act2Message, err := ac.initiatorReceiveAct2()
 	if err != nil {
 		return err
 	}
@@ -189,7 +227,7 @@ func (ac *authenticatedConnection) runHandshakeAsInitiator() error {
 		return err
 	}
 
-	if err := ac.initiatorSendAct3(act3WireMessage, initiatorConnectionWriter); err != nil {
+	if err := ac.initiatorSendAct3(act3WireMessage); err != nil {
 		return err
 	}
 
@@ -199,10 +237,7 @@ func (ac *authenticatedConnection) runHandshakeAsInitiator() error {
 // initiatorSendAct1 signs a marshaled *handshake.Act1Message, prepares
 // the message in a pb.HandshakeEnvelope, and sends the message to the responder
 // (over the open connection) from the initiator.
-func (ac *authenticatedConnection) initiatorSendAct1(
-	act1WireMessage []byte,
-	initiatorConnectionWriter protoio.WriteCloser,
-) error {
+func (ac *authenticatedConnection) initiatorSendAct1(act1WireMessage []byte) error {
 	signedAct1Message, err := ac.localPeerPrivateKey.Sign(act1WireMessage)
 	if err != nil {
 		return err
@@ -214,24 +249,19 @@ func (ac *authenticatedConnection) initiatorSendAct1(
 		Signature: signedAct1Message,
 	}
 
-	if err := initiatorConnectionWriter.WriteMsg(act1Envelope); err != nil {
-		return err
-	}
-
-	return nil
+	return ac.pipe.Send(act1Envelope)
 }
 
 // initiatorReceiveAct2 unmarshals a pb.HandshakeEnvelope from a responder,
 // verifies that the signed messages matches the expected peer.ID, and returns
 // the handshake.Act2Message for processing by the initiator.
-func (ac *authenticatedConnection) initiatorReceiveAct2(
-	initiatorConnectionReader protoio.ReadCloser,
-) (*handshake.Act2Message, error) {
+func (ac *authenticatedConnection) initiatorReceiveAct2() (*handshake.Act2Message, error) {
 	var (
 		act2Envelope pb.HandshakeEnvelope
 		act2Message  = &handshake.Act2Message{}
 	)
-	if err := initiatorConnectionReader.ReadMsg(&act2Envelope); err != nil {
+	fmt.Printf("initiator waiting to receive message")
+	if err := ac.pipe.Receive(&act2Envelope); err != nil {
 		return nil, err
 	}
 
@@ -254,10 +284,7 @@ func (ac *authenticatedConnection) initiatorReceiveAct2(
 // initiatorSendAct3 signs a marshaled *handshake.Act3Message, prepares the
 // message in a pb.HandshakeEnvelope, and sends the message to the responder
 // (over the open connection) from the initiator.
-func (ac *authenticatedConnection) initiatorSendAct3(
-	act3WireMessage []byte,
-	initiatorConnectionWriter protoio.WriteCloser,
-) error {
+func (ac *authenticatedConnection) initiatorSendAct3(act3WireMessage []byte) error {
 	signedAct3Message, err := ac.localPeerPrivateKey.Sign(act3WireMessage)
 	if err != nil {
 		return err
@@ -269,24 +296,17 @@ func (ac *authenticatedConnection) initiatorSendAct3(
 		Signature: signedAct3Message,
 	}
 
-	if err := initiatorConnectionWriter.WriteMsg(act3Envelope); err != nil {
-		return err
-	}
-
-	return nil
+	return ac.pipe.Send(act3Envelope)
 }
 
 func (ac *authenticatedConnection) runHandshakeAsResponder() error {
 	// responder station
 
-	responderConnectionReader := protoio.NewDelimitedReader(ac.Conn, maxFrameSize)
-	responderConnectionWriter := protoio.NewDelimitedWriter(ac.Conn)
-
 	//
 	// Act 1
 	//
 
-	act1Message, err := ac.responderReceiveAct1(responderConnectionReader)
+	act1Message, err := ac.responderReceiveAct1()
 	if err != nil {
 		return err
 	}
@@ -304,7 +324,7 @@ func (ac *authenticatedConnection) runHandshakeAsResponder() error {
 	if err != nil {
 		return err
 	}
-	if err := ac.responderSendAct2(act2WireMessage, responderConnectionWriter); err != nil {
+	if err := ac.responderSendAct2(act2WireMessage); err != nil {
 		return err
 	}
 
@@ -314,7 +334,7 @@ func (ac *authenticatedConnection) runHandshakeAsResponder() error {
 	// Act 3
 	//
 
-	act3Message, err := ac.responderReceiveAct3(responderConnectionReader)
+	act3Message, err := ac.responderReceiveAct3()
 	if err != nil {
 		return err
 	}
@@ -329,16 +349,16 @@ func (ac *authenticatedConnection) runHandshakeAsResponder() error {
 // responderReceiveAct1 unmarshals a pb.HandshakeEnvelope from an initiator,
 // verifies that the signed messages matches the expected peer.ID, and returns
 // the handshake.Act1Message for processing by the responder.
-func (ac *authenticatedConnection) responderReceiveAct1(
-	responderConnectionReader protoio.ReadCloser,
-) (*handshake.Act1Message, error) {
+func (ac *authenticatedConnection) responderReceiveAct1() (*handshake.Act1Message, error) {
 	var (
 		act1Envelope pb.HandshakeEnvelope
 		act1Message  = &handshake.Act1Message{}
 	)
-	if err := responderConnectionReader.ReadMsg(&act1Envelope); err != nil {
+	fmt.Println("responder waiting to receive message")
+	if err := ac.pipe.Receive(&act1Envelope); err != nil {
 		return nil, err
 	}
+	fmt.Println("got message")
 
 	// In libp2p, the responder doesn't know the identity of the initiator
 	// during the handshake. We overcome this limitation by sending the identity
@@ -370,10 +390,7 @@ func (ac *authenticatedConnection) responderReceiveAct1(
 // responderSendAct2 signs a marshaled *handshake.Act2Message, prepares the
 // message in a pb.HandshakeEnvelope, and sends the message to the initiator
 // (over the open connection) from the responder.
-func (ac *authenticatedConnection) responderSendAct2(
-	act2WireMessage []byte,
-	responderConnectionWriter protoio.WriteCloser,
-) error {
+func (ac *authenticatedConnection) responderSendAct2(act2WireMessage []byte) error {
 	signedAct2Message, err := ac.localPeerPrivateKey.Sign(act2WireMessage)
 	if err != nil {
 		return err
@@ -385,24 +402,18 @@ func (ac *authenticatedConnection) responderSendAct2(
 		Signature: signedAct2Message,
 	}
 
-	if err := responderConnectionWriter.WriteMsg(act2Envelope); err != nil {
-		return err
-	}
-
-	return nil
+	return ac.pipe.Send(act2Envelope)
 }
 
 // responderReceiveAct3 unmarshals a pb.HandshakeEnvelope from an initiator,
 // verifies that the signed messages matches the expected peer.ID, and returns
 // the handshake.Act3Message for processing by the responder.
-func (ac *authenticatedConnection) responderReceiveAct3(
-	responderConnectionReader protoio.ReadCloser,
-) (*handshake.Act3Message, error) {
+func (ac *authenticatedConnection) responderReceiveAct3() (*handshake.Act3Message, error) {
 	var (
 		act3Envelope pb.HandshakeEnvelope
 		act3Message  = &handshake.Act3Message{}
 	)
-	if err := responderConnectionReader.ReadMsg(&act3Envelope); err != nil {
+	if err := ac.pipe.Receive(&act3Envelope); err != nil {
 		return nil, err
 	}
 
