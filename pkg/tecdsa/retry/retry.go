@@ -54,7 +54,7 @@ func EvaluateRetryParticipantsForSigning(
 		)
 	}
 	operatorToSeatCount := calculateSeatCount(groupMembers)
-	rand.Seed(seed + int64(retryCount))
+	rng := rand.New(rand.NewSource(seed + int64(retryCount)))
 
 	operators := make([]chain.Address, len(operatorToSeatCount))
 	i := 0
@@ -63,7 +63,7 @@ func EvaluateRetryParticipantsForSigning(
 		i++
 	}
 	sort.Sort(byAddress(operators))
-	rand.Shuffle(len(operators), func(i, j int) {
+	rng.Shuffle(len(operators), func(i, j int) {
 		operators[i], operators[j] = operators[j], operators[i]
 	})
 
