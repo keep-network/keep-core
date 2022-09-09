@@ -2,196 +2,13 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  namespace: monitoring
-  name: prometheus-conf
-  labels:
-    name: prometheus-conf
-data:
-  prometheus.rules: |-
-    groups:
-    - name: demo alert
-      rules:
-      - alert: High Pod Memory
-        expr: sum(container_memory_usage_bytes) > 1
-        for: 1m
-        labels:
-          severity: slack
-        annotations:
-          summary: High Memory Usage
-  prometheus.yml: |-
-    global:
-      scrape_interval: 5s
-      evaluation_interval: 5s
-    rule_files:
-      - /etc/prometheus/prometheus.rules
-    alerting:
-      alertmanagers:
-      - scheme: http
-        static_configs:
-        - targets:
-          - "alertmanager.monitoring.svc:9093"
-
-    scrape_configs:
-      - job_name: 'node-exporter'
-        kubernetes_sd_configs:
-          - role: endpoints
-        relabel_configs:
-        - source_labels: [__meta_kubernetes_endpoints_name]
-          regex: 'node-exporter'
-          action: keep
-
-      - job_name: 'kubernetes-apiservers'
-        kubernetes_sd_configs:
-        - role: endpoints
-        scheme: https
-
-        tls_config:
-          ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
-        bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
-
-        relabel_configs:
-        - source_labels: [__meta_kubernetes_namespace, __meta_kubernetes_service_name, __meta_kubernetes_endpoint_port_name]
-          action: keep
-          regex: default;kubernetes;https
-
-      - job_name: 'kubernetes-nodes'
-        scheme: https
-
-        tls_config:
-          ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
-        bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
-
-        kubernetes_sd_configs:
-        - role: node
-        relabel_configs:
-        - action: labelmap
-          regex: __meta_kubernetes_node_label_(.+)
-        - target_label: __address__
-          replacement: kubernetes.default.svc:443
-        - source_labels: [__meta_kubernetes_node_name]
-          regex: (.+)
-          target_label: __metrics_path__
-          replacement: /api/v1/nodes/${1}/proxy/metrics     
-
-      - job_name: 'kubernetes-pods'
-        kubernetes_sd_configs:
-        - role: pod
-        relabel_configs:
-        - source_labels: [__meta_kubernetes_pod_label_app]
-          regex: (geth|keep|grafana|prometheus)
-          action: keep
-        - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_path]
-          action: replace
-          target_label: __metrics_path__
-          regex: (.+)
-        - action: labelmap
-          regex: __meta_kubernetes_pod_label_(.+)
-        - source_labels: [__meta_kubernetes_namespace]
-          action: replace
-          target_label: kubernetes_namespace
-        - source_labels: [__meta_kubernetes_pod_name]
-          action: replace
-          target_label: kubernetes_pod_name
-
-      - job_name: 'grafana'
-        kubernetes_sd_configs:
-        - role: pod
-        relabel_configs:
-        - source_labels: [__meta_kubernetes_pod_label_app]
-          regex: grafana.*
-          action: keep
-        - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_path]
-          action: replace
-          target_label: __metrics_path__
-          regex: (.+)
-        - action: labelmap
-          regex: __meta_kubernetes_pod_label_(.+)
-        - source_labels: [__meta_kubernetes_namespace]
-          action: replace
-          target_label: kubernetes_namespace
-        - source_labels: [__meta_kubernetes_pod_name]
-          action: replace
-          target_label: kubernetes_pod_name
-
-      - job_name: 'prometheus'
-        kubernetes_sd_configs:
-        - role: pod
-        relabel_configs:
-        - source_labels: [__meta_kubernetes_pod_label_app]
-          regex: prometheus.*
-          action: keep
-        - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_path]
-          action: replace
-          target_label: __metrics_path__
-          regex: (.+)
-        - action: labelmap
-          regex: __meta_kubernetes_pod_label_(.+)
-        - source_labels: [__meta_kubernetes_namespace]
-          action: replace
-          target_label: kubernetes_namespace
-        - source_labels: [__meta_kubernetes_pod_name]
-          action: replace
-          target_label: kubernetes_pod_name
-
-      - job_name: 'kube-state-metrics'
-        static_configs:
-          - targets: ['kube-state-metrics.kube-system.svc.cluster.local:8080']
-
-      - job_name: 'kubernetes-cadvisor'
-        scheme: https
-
-        tls_config:
-          ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
-        bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
-
-        kubernetes_sd_configs:
-        - role: node
-        relabel_configs:
-        - action: labelmap
-          regex: __meta_kubernetes_node_label_(.+)
-        - target_label: __address__
-          replacement: kubernetes.default.svc:443
-        - source_labels: [__meta_kubernetes_node_name]
-          regex: (.+)
-          target_label: __metrics_path__
-          replacement: /api/v1/nodes/${1}/proxy/metrics/cadvisor
-
-      - job_name: 'kubernetes-service-endpoints'
-        kubernetes_sd_configs:
-        - role: endpoints
-        relabel_configs:
-        - source_labels: [__meta_kubernetes_service_annotation_prometheus_io_scrape]
-          action: keep
-          regex: true
-        - source_labels: [__meta_kubernetes_service_annotation_prometheus_io_scheme]
-          action: replace
-          target_label: __scheme__
-          regex: (https?)
-        - source_labels: [__meta_kubernetes_service_annotation_prometheus_io_path]
-          action: replace
-          target_label: __metrics_path__
-          regex: (.+)
-        - source_labels: [__address__, __meta_kubernetes_service_annotation_prometheus_io_port]
-          action: replace
-          target_label: __address__
-          regex: ([^:]+)(?::\d+)?;(\d+)
-          replacement: $1:$2
-        - action: labelmap
-          regex: __meta_kubernetes_service_label_(.+)
-        - source_labels: [__meta_kubernetes_namespace]
-          action: replace
-          target_label: kubernetes_namespace
-        - source_labels: [__meta_kubernetes_service_name]
-          action: replace
-          target_label: kubernetes_name
----
-apiVersion: v1
-kind: ConfigMap
-metadata:
   name: grafana
   namespace: monitoring
+  labels:
+    name: grafana-conf
+    app: grafana
 data:
-  prometheus.yaml: |-
+  datasources.yaml: |-
     {
       "apiVersion": 1,
       "datasources": [
@@ -313,7 +130,7 @@ data:
           "pluginVersion": "7.0.3",
           "targets": [
             {
-              "expr": "up{instance=~\"$client\",job=\"clients\"}",
+              "expr": "up{instance=~\"$client\",type=\"client\"}",
               "interval": "",
               "legendFormat": "",
               "refId": "A"
@@ -393,7 +210,7 @@ data:
           "pluginVersion": "7.0.3",
           "targets": [
             {
-              "expr": "eth_connectivity{instance=~\"$client\",job=\"clients\"}",
+              "expr": "eth_connectivity{instance=~\"$client\",type=\"client\"}",
               "interval": "",
               "legendFormat": "",
               "refId": "A"
@@ -452,7 +269,7 @@ data:
           "steppedLine": false,
           "targets": [
             {
-              "expr": "connected_peers_count{instance=~\"$client\",job=\"clients\"}",
+              "expr": "connected_peers_count{instance=~\"$client\",type=\"client\"}",
               "interval": "",
               "legendFormat": "",
               "refId": "A"
@@ -548,7 +365,7 @@ data:
           "steppedLine": false,
           "targets": [
             {
-              "expr": "connected_bootstrap_count{instance=~\"$client\",job=\"clients\"}",
+              "expr": "connected_bootstrap_count{instance=~\"$client\",type=\"client\"}",
               "interval": "",
               "legendFormat": "",
               "refId": "A"
@@ -608,18 +425,22 @@ data:
             "allValue": null,
             "current": {
               "selected": true,
-              "text": "bootstrap-1.core.keep.test.boar.network:9601",
-              "value": "bootstrap-1.core.keep.test.boar.network:9601"
+              "text": "keep-client-0.default.svc.cluster.local:9601",
+              "value": "keep-client-0.default.svc.cluster.local:9601",
+              "text": "keep-client-1.default.svc.cluster.local:9601",
+              "value": "keep-client-1.default.svc.cluster.local:9601",
+              "text": "bst-a01.test.keep.boar.network:9601:9601",
+              "value": "bst-a01.test.keep.boar.network:9601:9601"
             },
             "datasource": "prometheus",
-            "definition": "label_values({job=\"clients\"}, instance)",
+            "definition": "label_values({type=\"client\"}, instance)",
             "hide": 0,
             "includeAll": false,
             "label": null,
             "multi": false,
             "name": "client",
             "options": [],
-            "query": "label_values({job=\"clients\"}, instance)",
+            "query": "label_values({type=\"client\"}, instance)",
             "refresh": 1,
             "regex": "",
             "skipUrlSync": false,
