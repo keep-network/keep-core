@@ -5,7 +5,6 @@ import (
 	"crypto/ecdsa"
 	"encoding/hex"
 	"fmt"
-	"golang.org/x/exp/slices"
 	"math/big"
 	"time"
 
@@ -365,7 +364,7 @@ func (n *node) joinSigningIfEligible(
 ) {
 	logger.Infof(
 		"checking eligibility for signature of message [%v]",
-		message,
+		message.Text(16),
 	)
 
 	if signers := n.walletRegistry.getSigners(
@@ -373,7 +372,7 @@ func (n *node) joinSigningIfEligible(
 	); len(signers) > 0 {
 		logger.Infof(
 			"joining signature of message [%v] controlling [%v] signers",
-			message,
+			message.Text(16),
 			len(signers),
 		)
 
@@ -432,67 +431,79 @@ func (n *node) joinSigningIfEligible(
 				n.protocolLatch.Lock()
 				defer n.protocolLatch.Unlock()
 
-				// TODO: Add retries support and update the following parameters
-				//       on every attempt.
-				attemptIndex := 1
-				// TODO: Temporarily use the first 51 members for signing.
-				excludedMembers := make(
-					[]group.MemberIndex,
-					signingGroupDishonestThreshold,
-				)
-				for i := range excludedMembers {
-					excludedMembers[i] = group.MemberIndex(
-						n.chain.GetConfig().HonestThreshold + i + 1,
-					)
-				}
-
-				if slices.Contains(excludedMembers, signer.signingGroupMemberIndex) {
-					logger.Infof(
-						"[member:%v] excluded from signing attempt "+
-							"[%v] of message [%v]; aborting",
-						signer.signingGroupMemberIndex,
-						attemptIndex,
-						message,
-					)
-					return
-				}
-
-				logger.Infof(
-					"[member:%v] starting signing attempt [%v] of "+
-						"message [%v] with [%v] group members (excluded: [%v])",
-					signer.signingGroupMemberIndex,
-					attemptIndex,
+				retryLoop := newSigningRetryLoop(
 					message,
-					signingGroupSize-len(excludedMembers),
-					excludedMembers,
-				)
-
-				sessionID := fmt.Sprintf(
-					"%v-%v",
-					message.Text(16),
-					attemptIndex,
-				)
-
-				result, err := signing.Execute(
-					logger,
-					message,
-					sessionID,
 					startBlockNumber,
 					signer.signingGroupMemberIndex,
-					signer.privateKeyShare,
-					signingGroupSize,
-					signingGroupDishonestThreshold,
-					excludedMembers,
-					blockCounter,
-					broadcastChannel,
-					membershipValidator,
+					wallet.signingGroupOperators,
+					n.chain.GetConfig(),
+				)
+
+				// TODO: For this client iteration, the signing loop is started
+				//       with a 24h timeout. Another cancel signal should
+				//       be used in the final implementation.
+				loopCtx, cancelLoopCtx := context.WithTimeout(
+					context.Background(),
+					24*time.Hour,
+				)
+				defer cancelLoopCtx()
+
+				result, err := retryLoop.start(
+					loopCtx,
+					func(attempt *signingAttemptParams) (*signing.Result, error) {
+						logger.Infof(
+							"[member:%v] starting signing " +
+								"attempt [%v] of message [%v] with [%v] " +
+								"group members (excluded: [%v])",
+							signer.signingGroupMemberIndex,
+							attempt.index,
+							message.Text(16),
+							signingGroupSize-len(attempt.excludedMembers),
+							attempt.excludedMembers,
+						)
+
+						sessionID := fmt.Sprintf(
+							"%v-%v",
+							message.Text(16),
+							attempt.index,
+						)
+
+						result, err := signing.Execute(
+							logger,
+							message,
+							sessionID,
+							attempt.startBlock,
+							signer.signingGroupMemberIndex,
+							signer.privateKeyShare,
+							signingGroupSize,
+							signingGroupDishonestThreshold,
+							attempt.excludedMembers,
+							blockCounter,
+							broadcastChannel,
+							membershipValidator,
+						)
+						if err != nil {
+							logger.Errorf(
+								"[member:%v] signing attempt [%v] " +
+									"of message [%v] failed: [%v]",
+								signer.signingGroupMemberIndex,
+								attempt.index,
+								message.Text(16),
+								err,
+							)
+
+							return nil, err
+						}
+
+						return result, nil
+					},
 				)
 				if err != nil {
 					logger.Errorf(
 						"[member:%v] signing of message [%v] "+
 							"failed: [%v]",
 						signer.signingGroupMemberIndex,
-						message,
+						message.Text(16),
 						err,
 					)
 					return
@@ -503,14 +514,14 @@ func (n *node) joinSigningIfEligible(
 						"for message [%v]",
 					signer.signingGroupMemberIndex,
 					result.Signature,
-					message,
+					message.Text(16),
 				)
 			}(currentSigner)
 		}
 	} else {
 		logger.Infof(
 			"not eligible for signature of message [%v]",
-			message,
+			message.Text(16),
 		)
 	}
 }
