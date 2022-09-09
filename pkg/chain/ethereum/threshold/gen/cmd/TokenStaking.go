@@ -15,6 +15,7 @@ import (
 
 	chainutil "github.com/keep-network/keep-common/pkg/chain/ethereum/ethutil"
 	"github.com/keep-network/keep-common/pkg/cmd"
+	"github.com/keep-network/keep-common/pkg/utils/decode"
 	"github.com/keep-network/keep-core/pkg/chain/ethereum/threshold/gen/contract"
 
 	"github.com/spf13/cobra"
@@ -23,23 +24,23 @@ import (
 var TokenStakingCommand *cobra.Command
 
 var tokenStakingDescription = `The token-staking command allows calling the TokenStaking contract on an
-	Ethereum network. It has subcommands corresponding to each contract method,
-	which respectively each take parameters based on the contract method's
-	parameters.
+    Ethereum network. It has subcommands corresponding to each contract method,
+    which respectively each take parameters based on the contract method's
+    parameters.
 
-	Subcommands will submit a non-mutating call to the network and output the
-	result.
+    Subcommands will submit a non-mutating call to the network and output the
+    result.
 
-	All subcommands can be called against a specific block by passing the
-	-b/--block flag.
+    All subcommands can be called against a specific block by passing the
+    -b/--block flag.
 
-	Subcommands for mutating methods may be submitted as a mutating transaction
-	by passing the -s/--submit flag. In this mode, this command will terminate
-	successfully once the transaction has been submitted, but will not wait for
-	the transaction to be included in a block. They return the transaction hash.
+    Subcommands for mutating methods may be submitted as a mutating transaction
+    by passing the -s/--submit flag. In this mode, this command will terminate
+    successfully once the transaction has been submitted, but will not wait for
+    the transaction to be included in a block. They return the transaction hash.
 
-	Calls that require ether to be paid will get 0 ether by default, which can
-	be changed by passing the -v/--value flag.`
+    Calls that require ether to be paid will get 0 ether by default, which can
+    be changed by passing the -v/--value flag.`
 
 func init() {
 	TokenStakingCommand := &cobra.Command{
@@ -53,9 +54,11 @@ func init() {
 		tsApplicationsCommand(),
 		tsAuthorizationCeilingCommand(),
 		tsAuthorizedStakeCommand(),
+		tsCheckpointsCommand(),
 		tsDelegatesCommand(),
 		tsGetApplicationsLengthCommand(),
 		tsGetAvailableToAuthorizeCommand(),
+		tsGetMinStakedCommand(),
 		tsGetPastTotalSupplyCommand(),
 		tsGetPastVotesCommand(),
 		tsGetSlashingQueueLengthCommand(),
@@ -283,6 +286,57 @@ func tsAuthorizedStake(c *cobra.Command, args []string) error {
 	return nil
 }
 
+func tsCheckpointsCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "checkpoints [arg_account] [arg_pos]",
+		Short:                 "Calls the view method checkpoints on the TokenStaking contract.",
+		Args:                  cmd.ArgCountChecker(2),
+		RunE:                  tsCheckpoints,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	cmd.InitConstFlags(c)
+
+	return c
+}
+
+func tsCheckpoints(c *cobra.Command, args []string) error {
+	contract, err := initializeTokenStaking(c)
+	if err != nil {
+		return err
+	}
+
+	arg_account, err := chainutil.AddressFromHex(args[0])
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter arg_account, a address, from passed value %v",
+			args[0],
+		)
+	}
+	arg_pos, err := decode.ParseUint[uint32](args[1], 32)
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter arg_pos, a uint32, from passed value %v",
+			args[1],
+		)
+	}
+
+	result, err := contract.CheckpointsAtBlock(
+		arg_account,
+		arg_pos,
+		cmd.BlockFlagValue.Int,
+	)
+
+	if err != nil {
+		return err
+	}
+
+	cmd.PrintOutput(result)
+
+	return nil
+}
+
 func tsDelegatesCommand() *cobra.Command {
 	c := &cobra.Command{
 		Use:                   "delegates [arg_account]",
@@ -399,6 +453,57 @@ func tsGetAvailableToAuthorize(c *cobra.Command, args []string) error {
 	result, err := contract.GetAvailableToAuthorizeAtBlock(
 		arg_stakingProvider,
 		arg_application,
+		cmd.BlockFlagValue.Int,
+	)
+
+	if err != nil {
+		return err
+	}
+
+	cmd.PrintOutput(result)
+
+	return nil
+}
+
+func tsGetMinStakedCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "get-min-staked [arg_stakingProvider] [arg_stakeTypes]",
+		Short:                 "Calls the view method getMinStaked on the TokenStaking contract.",
+		Args:                  cmd.ArgCountChecker(2),
+		RunE:                  tsGetMinStaked,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	cmd.InitConstFlags(c)
+
+	return c
+}
+
+func tsGetMinStaked(c *cobra.Command, args []string) error {
+	contract, err := initializeTokenStaking(c)
+	if err != nil {
+		return err
+	}
+
+	arg_stakingProvider, err := chainutil.AddressFromHex(args[0])
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter arg_stakingProvider, a address, from passed value %v",
+			args[0],
+		)
+	}
+	arg_stakeTypes, err := decode.ParseUint[uint8](args[1], 8)
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter arg_stakeTypes, a uint8, from passed value %v",
+			args[1],
+		)
+	}
+
+	result, err := contract.GetMinStakedAtBlock(
+		arg_stakingProvider,
+		arg_stakeTypes,
 		cmd.BlockFlagValue.Int,
 	)
 

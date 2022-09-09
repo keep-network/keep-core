@@ -16,6 +16,7 @@ import (
 
 	chainutil "github.com/keep-network/keep-common/pkg/chain/ethereum/ethutil"
 	"github.com/keep-network/keep-common/pkg/cmd"
+	"github.com/keep-network/keep-common/pkg/utils/decode"
 	"github.com/keep-network/keep-core/pkg/chain/ethereum/tbtc/gen/abi"
 	"github.com/keep-network/keep-core/pkg/chain/ethereum/tbtc/gen/contract"
 
@@ -25,23 +26,23 @@ import (
 var BridgeCommand *cobra.Command
 
 var bridgeDescription = `The bridge command allows calling the Bridge contract on an
-	Ethereum network. It has subcommands corresponding to each contract method,
-	which respectively each take parameters based on the contract method's
-	parameters.
+    Ethereum network. It has subcommands corresponding to each contract method,
+    which respectively each take parameters based on the contract method's
+    parameters.
 
-	Subcommands will submit a non-mutating call to the network and output the
-	result.
+    Subcommands will submit a non-mutating call to the network and output the
+    result.
 
-	All subcommands can be called against a specific block by passing the
-	-b/--block flag.
+    All subcommands can be called against a specific block by passing the
+    -b/--block flag.
 
-	Subcommands for mutating methods may be submitted as a mutating transaction
-	by passing the -s/--submit flag. In this mode, this command will terminate
-	successfully once the transaction has been submitted, but will not wait for
-	the transaction to be included in a block. They return the transaction hash.
+    Subcommands for mutating methods may be submitted as a mutating transaction
+    by passing the -s/--submit flag. In this mode, this command will terminate
+    successfully once the transaction has been submitted, but will not wait for
+    the transaction to be included in a block. They return the transaction hash.
 
-	Calls that require ether to be paid will get 0 ether by default, which can
-	be changed by passing the -v/--value flag.`
+    Calls that require ether to be paid will get 0 ether by default, which can
+    be changed by passing the -v/--value flag.`
 
 func init() {
 	BridgeCommand := &cobra.Command{
@@ -82,6 +83,10 @@ func init() {
 		bSubmitMovedFundsSweepProofCommand(),
 		bTransferGovernanceCommand(),
 		bUpdateDepositParametersCommand(),
+		bUpdateFraudParametersCommand(),
+		bUpdateMovingFundsParametersCommand(),
+		bUpdateRedemptionParametersCommand(),
+		bUpdateWalletParametersCommand(),
 	)
 
 	ModuleCommand.AddCommand(BridgeCommand)
@@ -1655,21 +1660,21 @@ func bUpdateDepositParameters(c *cobra.Command, args []string) error {
 		return err
 	}
 
-	arg_depositDustThreshold, err := strconv.ParseUint(args[0], 10, 64)
+	arg_depositDustThreshold, err := decode.ParseUint[uint64](args[0], 64)
 	if err != nil {
 		return fmt.Errorf(
 			"couldn't parse parameter arg_depositDustThreshold, a uint64, from passed value %v",
 			args[0],
 		)
 	}
-	arg_depositTreasuryFeeDivisor, err := strconv.ParseUint(args[1], 10, 64)
+	arg_depositTreasuryFeeDivisor, err := decode.ParseUint[uint64](args[1], 64)
 	if err != nil {
 		return fmt.Errorf(
 			"couldn't parse parameter arg_depositTreasuryFeeDivisor, a uint64, from passed value %v",
 			args[1],
 		)
 	}
-	arg_depositTxMaxFee, err := strconv.ParseUint(args[2], 10, 64)
+	arg_depositTxMaxFee, err := decode.ParseUint[uint64](args[2], 64)
 	if err != nil {
 		return fmt.Errorf(
 			"couldn't parse parameter arg_depositTxMaxFee, a uint64, from passed value %v",
@@ -1699,6 +1704,462 @@ func bUpdateDepositParameters(c *cobra.Command, args []string) error {
 			arg_depositDustThreshold,
 			arg_depositTreasuryFeeDivisor,
 			arg_depositTxMaxFee,
+			cmd.BlockFlagValue.Int,
+		)
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput("success")
+	}
+
+	return nil
+}
+
+func bUpdateFraudParametersCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "update-fraud-parameters [arg_fraudChallengeDepositAmount] [arg_fraudChallengeDefeatTimeout] [arg_fraudSlashingAmount] [arg_fraudNotifierRewardMultiplier]",
+		Short:                 "Calls the nonpayable method updateFraudParameters on the Bridge contract.",
+		Args:                  cmd.ArgCountChecker(4),
+		RunE:                  bUpdateFraudParameters,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	c.PreRunE = cmd.NonConstArgsChecker
+	cmd.InitNonConstFlags(c)
+
+	return c
+}
+
+func bUpdateFraudParameters(c *cobra.Command, args []string) error {
+	contract, err := initializeBridge(c)
+	if err != nil {
+		return err
+	}
+
+	arg_fraudChallengeDepositAmount, err := hexutil.DecodeBig(args[0])
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter arg_fraudChallengeDepositAmount, a uint96, from passed value %v",
+			args[0],
+		)
+	}
+	arg_fraudChallengeDefeatTimeout, err := decode.ParseUint[uint32](args[1], 32)
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter arg_fraudChallengeDefeatTimeout, a uint32, from passed value %v",
+			args[1],
+		)
+	}
+	arg_fraudSlashingAmount, err := hexutil.DecodeBig(args[2])
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter arg_fraudSlashingAmount, a uint96, from passed value %v",
+			args[2],
+		)
+	}
+	arg_fraudNotifierRewardMultiplier, err := decode.ParseUint[uint32](args[3], 32)
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter arg_fraudNotifierRewardMultiplier, a uint32, from passed value %v",
+			args[3],
+		)
+	}
+
+	var (
+		transaction *types.Transaction
+	)
+
+	if shouldSubmit, _ := c.Flags().GetBool(cmd.SubmitFlag); shouldSubmit {
+		// Do a regular submission. Take payable into account.
+		transaction, err = contract.UpdateFraudParameters(
+			arg_fraudChallengeDepositAmount,
+			arg_fraudChallengeDefeatTimeout,
+			arg_fraudSlashingAmount,
+			arg_fraudNotifierRewardMultiplier,
+		)
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput(transaction.Hash())
+	} else {
+		// Do a call.
+		err = contract.CallUpdateFraudParameters(
+			arg_fraudChallengeDepositAmount,
+			arg_fraudChallengeDefeatTimeout,
+			arg_fraudSlashingAmount,
+			arg_fraudNotifierRewardMultiplier,
+			cmd.BlockFlagValue.Int,
+		)
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput("success")
+	}
+
+	return nil
+}
+
+func bUpdateMovingFundsParametersCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "update-moving-funds-parameters [arg_movingFundsTxMaxTotalFee] [arg_movingFundsDustThreshold] [arg_movingFundsTimeoutResetDelay] [arg_movingFundsTimeout] [arg_movingFundsTimeoutSlashingAmount] [arg_movingFundsTimeoutNotifierRewardMultiplier] [arg_movedFundsSweepTxMaxTotalFee] [arg_movedFundsSweepTimeout] [arg_movedFundsSweepTimeoutSlashingAmount] [arg_movedFundsSweepTimeoutNotifierRewardMultiplier]",
+		Short:                 "Calls the nonpayable method updateMovingFundsParameters on the Bridge contract.",
+		Args:                  cmd.ArgCountChecker(10),
+		RunE:                  bUpdateMovingFundsParameters,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	c.PreRunE = cmd.NonConstArgsChecker
+	cmd.InitNonConstFlags(c)
+
+	return c
+}
+
+func bUpdateMovingFundsParameters(c *cobra.Command, args []string) error {
+	contract, err := initializeBridge(c)
+	if err != nil {
+		return err
+	}
+
+	arg_movingFundsTxMaxTotalFee, err := decode.ParseUint[uint64](args[0], 64)
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter arg_movingFundsTxMaxTotalFee, a uint64, from passed value %v",
+			args[0],
+		)
+	}
+	arg_movingFundsDustThreshold, err := decode.ParseUint[uint64](args[1], 64)
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter arg_movingFundsDustThreshold, a uint64, from passed value %v",
+			args[1],
+		)
+	}
+	arg_movingFundsTimeoutResetDelay, err := decode.ParseUint[uint32](args[2], 32)
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter arg_movingFundsTimeoutResetDelay, a uint32, from passed value %v",
+			args[2],
+		)
+	}
+	arg_movingFundsTimeout, err := decode.ParseUint[uint32](args[3], 32)
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter arg_movingFundsTimeout, a uint32, from passed value %v",
+			args[3],
+		)
+	}
+	arg_movingFundsTimeoutSlashingAmount, err := hexutil.DecodeBig(args[4])
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter arg_movingFundsTimeoutSlashingAmount, a uint96, from passed value %v",
+			args[4],
+		)
+	}
+	arg_movingFundsTimeoutNotifierRewardMultiplier, err := decode.ParseUint[uint32](args[5], 32)
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter arg_movingFundsTimeoutNotifierRewardMultiplier, a uint32, from passed value %v",
+			args[5],
+		)
+	}
+	arg_movedFundsSweepTxMaxTotalFee, err := decode.ParseUint[uint64](args[6], 64)
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter arg_movedFundsSweepTxMaxTotalFee, a uint64, from passed value %v",
+			args[6],
+		)
+	}
+	arg_movedFundsSweepTimeout, err := decode.ParseUint[uint32](args[7], 32)
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter arg_movedFundsSweepTimeout, a uint32, from passed value %v",
+			args[7],
+		)
+	}
+	arg_movedFundsSweepTimeoutSlashingAmount, err := hexutil.DecodeBig(args[8])
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter arg_movedFundsSweepTimeoutSlashingAmount, a uint96, from passed value %v",
+			args[8],
+		)
+	}
+	arg_movedFundsSweepTimeoutNotifierRewardMultiplier, err := decode.ParseUint[uint32](args[9], 32)
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter arg_movedFundsSweepTimeoutNotifierRewardMultiplier, a uint32, from passed value %v",
+			args[9],
+		)
+	}
+
+	var (
+		transaction *types.Transaction
+	)
+
+	if shouldSubmit, _ := c.Flags().GetBool(cmd.SubmitFlag); shouldSubmit {
+		// Do a regular submission. Take payable into account.
+		transaction, err = contract.UpdateMovingFundsParameters(
+			arg_movingFundsTxMaxTotalFee,
+			arg_movingFundsDustThreshold,
+			arg_movingFundsTimeoutResetDelay,
+			arg_movingFundsTimeout,
+			arg_movingFundsTimeoutSlashingAmount,
+			arg_movingFundsTimeoutNotifierRewardMultiplier,
+			arg_movedFundsSweepTxMaxTotalFee,
+			arg_movedFundsSweepTimeout,
+			arg_movedFundsSweepTimeoutSlashingAmount,
+			arg_movedFundsSweepTimeoutNotifierRewardMultiplier,
+		)
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput(transaction.Hash())
+	} else {
+		// Do a call.
+		err = contract.CallUpdateMovingFundsParameters(
+			arg_movingFundsTxMaxTotalFee,
+			arg_movingFundsDustThreshold,
+			arg_movingFundsTimeoutResetDelay,
+			arg_movingFundsTimeout,
+			arg_movingFundsTimeoutSlashingAmount,
+			arg_movingFundsTimeoutNotifierRewardMultiplier,
+			arg_movedFundsSweepTxMaxTotalFee,
+			arg_movedFundsSweepTimeout,
+			arg_movedFundsSweepTimeoutSlashingAmount,
+			arg_movedFundsSweepTimeoutNotifierRewardMultiplier,
+			cmd.BlockFlagValue.Int,
+		)
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput("success")
+	}
+
+	return nil
+}
+
+func bUpdateRedemptionParametersCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "update-redemption-parameters [arg_redemptionDustThreshold] [arg_redemptionTreasuryFeeDivisor] [arg_redemptionTxMaxFee] [arg_redemptionTxMaxTotalFee] [arg_redemptionTimeout] [arg_redemptionTimeoutSlashingAmount] [arg_redemptionTimeoutNotifierRewardMultiplier]",
+		Short:                 "Calls the nonpayable method updateRedemptionParameters on the Bridge contract.",
+		Args:                  cmd.ArgCountChecker(7),
+		RunE:                  bUpdateRedemptionParameters,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	c.PreRunE = cmd.NonConstArgsChecker
+	cmd.InitNonConstFlags(c)
+
+	return c
+}
+
+func bUpdateRedemptionParameters(c *cobra.Command, args []string) error {
+	contract, err := initializeBridge(c)
+	if err != nil {
+		return err
+	}
+
+	arg_redemptionDustThreshold, err := decode.ParseUint[uint64](args[0], 64)
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter arg_redemptionDustThreshold, a uint64, from passed value %v",
+			args[0],
+		)
+	}
+	arg_redemptionTreasuryFeeDivisor, err := decode.ParseUint[uint64](args[1], 64)
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter arg_redemptionTreasuryFeeDivisor, a uint64, from passed value %v",
+			args[1],
+		)
+	}
+	arg_redemptionTxMaxFee, err := decode.ParseUint[uint64](args[2], 64)
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter arg_redemptionTxMaxFee, a uint64, from passed value %v",
+			args[2],
+		)
+	}
+	arg_redemptionTxMaxTotalFee, err := decode.ParseUint[uint64](args[3], 64)
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter arg_redemptionTxMaxTotalFee, a uint64, from passed value %v",
+			args[3],
+		)
+	}
+	arg_redemptionTimeout, err := decode.ParseUint[uint32](args[4], 32)
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter arg_redemptionTimeout, a uint32, from passed value %v",
+			args[4],
+		)
+	}
+	arg_redemptionTimeoutSlashingAmount, err := hexutil.DecodeBig(args[5])
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter arg_redemptionTimeoutSlashingAmount, a uint96, from passed value %v",
+			args[5],
+		)
+	}
+	arg_redemptionTimeoutNotifierRewardMultiplier, err := decode.ParseUint[uint32](args[6], 32)
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter arg_redemptionTimeoutNotifierRewardMultiplier, a uint32, from passed value %v",
+			args[6],
+		)
+	}
+
+	var (
+		transaction *types.Transaction
+	)
+
+	if shouldSubmit, _ := c.Flags().GetBool(cmd.SubmitFlag); shouldSubmit {
+		// Do a regular submission. Take payable into account.
+		transaction, err = contract.UpdateRedemptionParameters(
+			arg_redemptionDustThreshold,
+			arg_redemptionTreasuryFeeDivisor,
+			arg_redemptionTxMaxFee,
+			arg_redemptionTxMaxTotalFee,
+			arg_redemptionTimeout,
+			arg_redemptionTimeoutSlashingAmount,
+			arg_redemptionTimeoutNotifierRewardMultiplier,
+		)
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput(transaction.Hash())
+	} else {
+		// Do a call.
+		err = contract.CallUpdateRedemptionParameters(
+			arg_redemptionDustThreshold,
+			arg_redemptionTreasuryFeeDivisor,
+			arg_redemptionTxMaxFee,
+			arg_redemptionTxMaxTotalFee,
+			arg_redemptionTimeout,
+			arg_redemptionTimeoutSlashingAmount,
+			arg_redemptionTimeoutNotifierRewardMultiplier,
+			cmd.BlockFlagValue.Int,
+		)
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput("success")
+	}
+
+	return nil
+}
+
+func bUpdateWalletParametersCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "update-wallet-parameters [arg_walletCreationPeriod] [arg_walletCreationMinBtcBalance] [arg_walletCreationMaxBtcBalance] [arg_walletClosureMinBtcBalance] [arg_walletMaxAge] [arg_walletMaxBtcTransfer] [arg_walletClosingPeriod]",
+		Short:                 "Calls the nonpayable method updateWalletParameters on the Bridge contract.",
+		Args:                  cmd.ArgCountChecker(7),
+		RunE:                  bUpdateWalletParameters,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	c.PreRunE = cmd.NonConstArgsChecker
+	cmd.InitNonConstFlags(c)
+
+	return c
+}
+
+func bUpdateWalletParameters(c *cobra.Command, args []string) error {
+	contract, err := initializeBridge(c)
+	if err != nil {
+		return err
+	}
+
+	arg_walletCreationPeriod, err := decode.ParseUint[uint32](args[0], 32)
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter arg_walletCreationPeriod, a uint32, from passed value %v",
+			args[0],
+		)
+	}
+	arg_walletCreationMinBtcBalance, err := decode.ParseUint[uint64](args[1], 64)
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter arg_walletCreationMinBtcBalance, a uint64, from passed value %v",
+			args[1],
+		)
+	}
+	arg_walletCreationMaxBtcBalance, err := decode.ParseUint[uint64](args[2], 64)
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter arg_walletCreationMaxBtcBalance, a uint64, from passed value %v",
+			args[2],
+		)
+	}
+	arg_walletClosureMinBtcBalance, err := decode.ParseUint[uint64](args[3], 64)
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter arg_walletClosureMinBtcBalance, a uint64, from passed value %v",
+			args[3],
+		)
+	}
+	arg_walletMaxAge, err := decode.ParseUint[uint32](args[4], 32)
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter arg_walletMaxAge, a uint32, from passed value %v",
+			args[4],
+		)
+	}
+	arg_walletMaxBtcTransfer, err := decode.ParseUint[uint64](args[5], 64)
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter arg_walletMaxBtcTransfer, a uint64, from passed value %v",
+			args[5],
+		)
+	}
+	arg_walletClosingPeriod, err := decode.ParseUint[uint32](args[6], 32)
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter arg_walletClosingPeriod, a uint32, from passed value %v",
+			args[6],
+		)
+	}
+
+	var (
+		transaction *types.Transaction
+	)
+
+	if shouldSubmit, _ := c.Flags().GetBool(cmd.SubmitFlag); shouldSubmit {
+		// Do a regular submission. Take payable into account.
+		transaction, err = contract.UpdateWalletParameters(
+			arg_walletCreationPeriod,
+			arg_walletCreationMinBtcBalance,
+			arg_walletCreationMaxBtcBalance,
+			arg_walletClosureMinBtcBalance,
+			arg_walletMaxAge,
+			arg_walletMaxBtcTransfer,
+			arg_walletClosingPeriod,
+		)
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput(transaction.Hash())
+	} else {
+		// Do a call.
+		err = contract.CallUpdateWalletParameters(
+			arg_walletCreationPeriod,
+			arg_walletCreationMinBtcBalance,
+			arg_walletCreationMaxBtcBalance,
+			arg_walletClosureMinBtcBalance,
+			arg_walletMaxAge,
+			arg_walletMaxBtcTransfer,
+			arg_walletClosingPeriod,
 			cmd.BlockFlagValue.Int,
 		)
 		if err != nil {

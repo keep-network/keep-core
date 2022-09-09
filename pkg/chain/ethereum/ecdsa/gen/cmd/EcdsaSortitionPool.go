@@ -15,6 +15,7 @@ import (
 
 	chainutil "github.com/keep-network/keep-common/pkg/chain/ethereum/ethutil"
 	"github.com/keep-network/keep-common/pkg/cmd"
+	"github.com/keep-network/keep-common/pkg/utils/decode"
 	"github.com/keep-network/keep-core/pkg/chain/ethereum/ecdsa/gen/contract"
 
 	"github.com/spf13/cobra"
@@ -23,23 +24,23 @@ import (
 var EcdsaSortitionPoolCommand *cobra.Command
 
 var ecdsaSortitionPoolDescription = `The ecdsa-sortition-pool command allows calling the EcdsaSortitionPool contract on an
-	Ethereum network. It has subcommands corresponding to each contract method,
-	which respectively each take parameters based on the contract method's
-	parameters.
+    Ethereum network. It has subcommands corresponding to each contract method,
+    which respectively each take parameters based on the contract method's
+    parameters.
 
-	Subcommands will submit a non-mutating call to the network and output the
-	result.
+    Subcommands will submit a non-mutating call to the network and output the
+    result.
 
-	All subcommands can be called against a specific block by passing the
-	-b/--block flag.
+    All subcommands can be called against a specific block by passing the
+    -b/--block flag.
 
-	Subcommands for mutating methods may be submitted as a mutating transaction
-	by passing the -s/--submit flag. In this mode, this command will terminate
-	successfully once the transaction has been submitted, but will not wait for
-	the transaction to be included in a block. They return the transaction hash.
+    Subcommands for mutating methods may be submitted as a mutating transaction
+    by passing the -s/--submit flag. In this mode, this command will terminate
+    successfully once the transaction has been submitted, but will not wait for
+    the transaction to be included in a block. They return the transaction hash.
 
-	Calls that require ether to be paid will get 0 ether by default, which can
-	be changed by passing the -v/--value flag.`
+    Calls that require ether to be paid will get 0 ether by default, which can
+    be changed by passing the -v/--value flag.`
 
 func init() {
 	EcdsaSortitionPoolCommand := &cobra.Command{
@@ -51,6 +52,7 @@ func init() {
 	EcdsaSortitionPoolCommand.AddCommand(
 		espCanRestoreRewardEligibilityCommand(),
 		espGetAvailableRewardsCommand(),
+		espGetIDOperatorCommand(),
 		espGetOperatorIDCommand(),
 		espGetPoolWeightCommand(),
 		espIneligibleEarnedRewardsCommand(),
@@ -156,6 +158,49 @@ func espGetAvailableRewards(c *cobra.Command, args []string) error {
 
 	result, err := contract.GetAvailableRewardsAtBlock(
 		arg_operator,
+		cmd.BlockFlagValue.Int,
+	)
+
+	if err != nil {
+		return err
+	}
+
+	cmd.PrintOutput(result)
+
+	return nil
+}
+
+func espGetIDOperatorCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "get-i-d-operator [arg_id]",
+		Short:                 "Calls the view method getIDOperator on the EcdsaSortitionPool contract.",
+		Args:                  cmd.ArgCountChecker(1),
+		RunE:                  espGetIDOperator,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	cmd.InitConstFlags(c)
+
+	return c
+}
+
+func espGetIDOperator(c *cobra.Command, args []string) error {
+	contract, err := initializeEcdsaSortitionPool(c)
+	if err != nil {
+		return err
+	}
+
+	arg_id, err := decode.ParseUint[uint32](args[0], 32)
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter arg_id, a uint32, from passed value %v",
+			args[0],
+		)
+	}
+
+	result, err := contract.GetIDOperatorAtBlock(
+		arg_id,
 		cmd.BlockFlagValue.Int,
 	)
 

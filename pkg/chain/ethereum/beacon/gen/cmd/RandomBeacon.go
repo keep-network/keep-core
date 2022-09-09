@@ -16,6 +16,7 @@ import (
 
 	chainutil "github.com/keep-network/keep-common/pkg/chain/ethereum/ethutil"
 	"github.com/keep-network/keep-common/pkg/cmd"
+	"github.com/keep-network/keep-common/pkg/utils/decode"
 	"github.com/keep-network/keep-core/pkg/chain/ethereum/beacon/gen/abi"
 	"github.com/keep-network/keep-core/pkg/chain/ethereum/beacon/gen/contract"
 
@@ -25,23 +26,23 @@ import (
 var RandomBeaconCommand *cobra.Command
 
 var randomBeaconDescription = `The random-beacon command allows calling the RandomBeacon contract on an
-	Ethereum network. It has subcommands corresponding to each contract method,
-	which respectively each take parameters based on the contract method's
-	parameters.
+    Ethereum network. It has subcommands corresponding to each contract method,
+    which respectively each take parameters based on the contract method's
+    parameters.
 
-	Subcommands will submit a non-mutating call to the network and output the
-	result.
+    Subcommands will submit a non-mutating call to the network and output the
+    result.
 
-	All subcommands can be called against a specific block by passing the
-	-b/--block flag.
+    All subcommands can be called against a specific block by passing the
+    -b/--block flag.
 
-	Subcommands for mutating methods may be submitted as a mutating transaction
-	by passing the -s/--submit flag. In this mode, this command will terminate
-	successfully once the transaction has been submitted, but will not wait for
-	the transaction to be included in a block. They return the transaction hash.
+    Subcommands for mutating methods may be submitted as a mutating transaction
+    by passing the -s/--submit flag. In this mode, this command will terminate
+    successfully once the transaction has been submitted, but will not wait for
+    the transaction to be included in a block. They return the transaction hash.
 
-	Calls that require ether to be paid will get 0 ether by default, which can
-	be changed by passing the -v/--value flag.`
+    Calls that require ether to be paid will get 0 ether by default, which can
+    be changed by passing the -v/--value flag.`
 
 func init() {
 	RandomBeaconCommand := &cobra.Command{
@@ -330,7 +331,7 @@ func rbGetGroup(c *cobra.Command, args []string) error {
 		return err
 	}
 
-	arg_groupId, err := strconv.ParseUint(args[0], 10, 64)
+	arg_groupId, err := decode.ParseUint[uint64](args[0], 64)
 	if err != nil {
 		return fmt.Errorf(
 			"couldn't parse parameter arg_groupId, a uint64, from passed value %v",
@@ -586,7 +587,7 @@ func rbInactivityClaimNonce(c *cobra.Command, args []string) error {
 		return err
 	}
 
-	arg0, err := strconv.ParseUint(args[0], 10, 64)
+	arg0, err := decode.ParseUint[uint64](args[0], 64)
 	if err != nil {
 		return fmt.Errorf(
 			"couldn't parse parameter arg0, a uint64, from passed value %v",
@@ -2158,14 +2159,14 @@ func rbUpdateAuthorizationParameters(c *cobra.Command, args []string) error {
 			args[0],
 		)
 	}
-	arg__authorizationDecreaseDelay, err := strconv.ParseUint(args[1], 10, 64)
+	arg__authorizationDecreaseDelay, err := decode.ParseUint[uint64](args[1], 64)
 	if err != nil {
 		return fmt.Errorf(
 			"couldn't parse parameter arg__authorizationDecreaseDelay, a uint64, from passed value %v",
 			args[1],
 		)
 	}
-	arg__authorizationDecreaseChangePeriod, err := strconv.ParseUint(args[2], 10, 64)
+	arg__authorizationDecreaseChangePeriod, err := decode.ParseUint[uint64](args[2], 64)
 	if err != nil {
 		return fmt.Errorf(
 			"couldn't parse parameter arg__authorizationDecreaseChangePeriod, a uint64, from passed value %v",
