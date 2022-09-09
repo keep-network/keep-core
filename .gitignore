@@ -1,6 +1,6 @@
 node_modules/
 artifacts/
-build/
+**/gen/**/build/
 vendor/
 _local/
 *.swp
