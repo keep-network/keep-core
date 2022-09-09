@@ -25,23 +25,23 @@ import (
 var WalletRegistryCommand *cobra.Command
 
 var walletRegistryDescription = `The wallet-registry command allows calling the WalletRegistry contract on an
-    Ethereum network. It has subcommands corresponding to each contract method,
-    which respectively each take parameters based on the contract method's
-    parameters.
+	Ethereum network. It has subcommands corresponding to each contract method,
+	which respectively each take parameters based on the contract method's
+	parameters.
 
-    Subcommands will submit a non-mutating call to the network and output the
-    result.
+	Subcommands will submit a non-mutating call to the network and output the
+	result.
 
-    All subcommands can be called against a specific block by passing the
-    -b/--block flag.
+	All subcommands can be called against a specific block by passing the
+	-b/--block flag.
 
-    Subcommands for mutating methods may be submitted as a mutating transaction
-    by passing the -s/--submit flag. In this mode, this command will terminate
-    successfully once the transaction has been submitted, but will not wait for
-    the transaction to be included in a block. They return the transaction hash.
+	Subcommands for mutating methods may be submitted as a mutating transaction
+	by passing the -s/--submit flag. In this mode, this command will terminate
+	successfully once the transaction has been submitted, but will not wait for
+	the transaction to be included in a block. They return the transaction hash.
 
-    Calls that require ether to be paid will get 0 ether by default, which can
-    be changed by passing the -v/--value flag.`
+	Calls that require ether to be paid will get 0 ether by default, which can
+	be changed by passing the -v/--value flag.`
 
 func init() {
 	WalletRegistryCommand := &cobra.Command{
