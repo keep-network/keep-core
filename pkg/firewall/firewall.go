@@ -61,7 +61,7 @@ func AnyApplicationPolicy(
 
 type anyApplicationPolicy struct {
 	applications        []Application
-	bootstrapPeersKeys   map[string]bool
+	bootstrapPeersKeys  map[string]bool
 	positiveResultCache *cache.TimeCache
 	negativeResultCache *cache.TimeCache
 }
