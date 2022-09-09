@@ -10,8 +10,6 @@ metadata:
 spec:
   selector:
     app: prometheus
-  type: NodePort
   ports:
     - port: 9090
-      targetPort: 9090
-      nodePort: 30000
+      targetPort: prometheus

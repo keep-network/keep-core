@@ -20,7 +20,7 @@ spec:
           fsGroup: 472
       containers:
         - name: grafana
-          image: grafana/grafana:9.0.5
+          image: grafana/grafana:9.1.2
           ports:
             - name: grafana
               containerPort: 3000
@@ -38,10 +38,8 @@ spec:
               mountPath: /var/lib/grafana/dashboards
             - name: grafana-datasources
               mountPath: /etc/grafana/provisioning/datasources
-              readOnly: false
             - name: grafana-dashboards
               mountPath: /etc/grafana/provisioning/dashboards
-              readOnly: false
       volumes:
         - name: grafana-storage
           persistentVolumeClaim:
@@ -58,8 +56,8 @@ spec:
             name: grafana
             defaultMode: 420
             items:
-              - key: prometheus.yaml
-                path: prometheus.yaml
+              - key: datasources.yaml
+                path: datasources.yaml
         - name: grafana-dashboards
           configMap:
             name: grafana
