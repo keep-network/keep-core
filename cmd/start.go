@@ -69,7 +69,7 @@ func start(cmd *cobra.Command) error {
 		return fmt.Errorf("error connecting to Ethereum node: [%v]", err)
 	}
 
-	bootstrapPeersPublicKeys, err := libp2p.GetPeersPublicKeys(
+	bootstrapPeersPublicKeys, err := libp2p.ExtractPeersPublicKeys(
 		clientConfig.LibP2P.Peers,
 	)
 	if err != nil {

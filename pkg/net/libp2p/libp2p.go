@@ -524,14 +524,14 @@ func multiaddressWithIdentity(
 	return fmt.Sprintf("%s/ipfs/%s", multiaddress.String(), peerID.String())
 }
 
-// GetPeersPublicKeys returns a list of operator public keys based on the
-// provided list of peer addresses.
-func GetPeersPublicKeys(peerAddresses []string) ([]*operator.PublicKey, error) {
+// ExtractPeersPublicKeys returns a list of operator public keys based on the
+// provided list of peer addresses. Peer addresses must be in the format:
+// <endpoint>/ipfs/<cid>
+func ExtractPeersPublicKeys(peerAddresses []string) ([]*operator.PublicKey, error) {
 	peerInfos, err := extractMultiAddrFromPeers(peerAddresses)
 	if err != nil {
 		return nil, fmt.Errorf(
-			"failed to extract multiaddress from peer addresses [%v]: [%v]",
-			peerAddresses,
+			"failed to extract multiaddress from peer addresses: [%v]",
 			err,
 		)
 	}
