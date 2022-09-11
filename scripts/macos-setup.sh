@@ -2,10 +2,10 @@
 set -e
 
 echo "Installing coreutils requirement..."
-brew list coreutils &> /dev/null || brew install coreutils
+brew list coreutils &>/dev/null || brew install coreutils
 
 echo "Installing golang requirements..."
-brew list golang &> /dev/null || brew install golang
+brew list golang &>/dev/null || brew install golang
 
 echo "Installing ethereum requirements..."
 brew tap ethereum/ethereum
@@ -15,7 +15,7 @@ brew list solidity &>/dev/null || brew install solidity@5
 echo "Installing protobuf requirements..."
 # Protobuf
 brew list protobuf &>/dev/null || brew install protobuf
-go install github.com/gogo/protobuf/protoc-gen-gogoslick@latest
+go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
 
 echo "Installing precommit requirements..."
 brew list pre-commit &>/dev/null || brew install pre-commit
@@ -32,8 +32,8 @@ echo "Installing solidity npm and requirements..."
 brew list npm &>/dev/null || brew install npm
 cd ../solidity-v1 && npm install && cd ../scripts
 
-if ! [ -x "$(command -v protoc-gen-gogoslick)" ]; then
-  echo 'WARNING: protoc-gen-gogoslick command is not available'
+if ! [ -x "$(command -v protoc-gen-go)" ]; then
+  echo 'WARNING: protoc-gen-go command is not available'
   echo 'WARNING: please check whether $GOPATH/bin is added to your $PATH'
 fi
 

@@ -7,6 +7,11 @@ go 1.18
 // https://github.com/bnb-chain/tss-lib/pull/203
 replace github.com/bnb-chain/tss-lib => github.com/keep-network/tss-lib v1.3.3-0.20220826121242-73ee9558285f
 
+replace (
+	google.golang.org/protobuf => google.golang.org/protobuf v1.28.1
+	google.golang.org/protobuf/dev => google.golang.org/protobuf v1.28.2-0.20220831092852-f930b1dc76e8
+)
+
 require (
 	github.com/bnb-chain/tss-lib v1.3.4-0.20220817120442-2f5f2e4fb79e
 	github.com/btcsuite/btcd v0.22.1
@@ -32,6 +37,8 @@ require (
 	github.com/spf13/viper v1.12.0
 	golang.org/x/crypto v0.0.0-20220525230936-793ad666bf5e
 	golang.org/x/exp v0.0.0-20220426173459-3bcf042a4bf5
+	google.golang.org/protobuf v1.28.0
+	google.golang.org/protobuf/dev v0.0.0-00010101000000-000000000000
 )
 
 require (
@@ -173,7 +180,6 @@ require (
 	golang.org/x/time v0.0.0-20210220033141-f8bda1e9f3ba // indirect
 	golang.org/x/tools v0.1.11 // indirect
 	golang.org/x/xerrors v0.0.0-20220517211312-f3a8303e98df // indirect
-	google.golang.org/protobuf v1.28.0 // indirect
 	gopkg.in/ini.v1 v1.66.4 // indirect
 	gopkg.in/natefinch/npipe.v2 v2.0.0-20160621034901-c1b8fa8bdcce // indirect
 	gopkg.in/tomb.v1 v1.0.0-20141024135613-dd632973f1e7 // indirect
