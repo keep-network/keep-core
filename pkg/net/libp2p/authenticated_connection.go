@@ -260,7 +260,7 @@ func (ac *authenticatedConnection) initiatorReceiveAct2() (*handshake.Act2Messag
 		act2Envelope pb.HandshakeEnvelope
 		act2Message  = &handshake.Act2Message{}
 	)
-	fmt.Printf("initiator waiting to receive message")
+
 	if err := ac.pipe.receive(&act2Envelope); err != nil {
 		return nil, err
 	}
@@ -354,11 +354,10 @@ func (ac *authenticatedConnection) responderReceiveAct1() (*handshake.Act1Messag
 		act1Envelope pb.HandshakeEnvelope
 		act1Message  = &handshake.Act1Message{}
 	)
-	fmt.Println("responder waiting to receive message")
+
 	if err := ac.pipe.receive(&act1Envelope); err != nil {
 		return nil, err
 	}
-	fmt.Println("got message")
 
 	// In libp2p, the responder doesn't know the identity of the initiator
 	// during the handshake. We overcome this limitation by sending the identity
