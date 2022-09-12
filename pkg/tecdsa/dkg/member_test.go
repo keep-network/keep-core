@@ -2,9 +2,10 @@ package dkg
 
 import (
 	"fmt"
-	"github.com/bnb-chain/tss-lib/tss"
 	"math/big"
 	"testing"
+
+	"github.com/bnb-chain/tss-lib/tss"
 
 	"github.com/bnb-chain/tss-lib/ecdsa/keygen"
 	"github.com/keep-network/keep-core/pkg/chain"
@@ -42,31 +43,31 @@ func TestShouldAcceptMessage(t *testing.T) {
 	}
 
 	tests := map[string]struct {
-		senderID         group.MemberIndex
+		senderIndex      group.MemberIndex
 		senderPublicKey  []byte
 		activeMembersIDs []group.MemberIndex
 		expectedResult   bool
 	}{
 		"message from another valid and operating member": {
-			senderID:         group.MemberIndex(2),
+			senderIndex:      group.MemberIndex(2),
 			senderPublicKey:  operatorsPublicKeys[1],
 			activeMembersIDs: []group.MemberIndex{1, 2, 3, 4, 5},
 			expectedResult:   true,
 		},
 		"message from another valid but non-operating member": {
-			senderID:         group.MemberIndex(2),
+			senderIndex:      group.MemberIndex(2),
 			senderPublicKey:  operatorsPublicKeys[1],
 			activeMembersIDs: []group.MemberIndex{1, 3, 4, 5}, // 2 is inactive
 			expectedResult:   false,
 		},
 		"message from self": {
-			senderID:         group.MemberIndex(1),
+			senderIndex:      group.MemberIndex(1),
 			senderPublicKey:  operatorsPublicKeys[0],
 			activeMembersIDs: []group.MemberIndex{1, 2, 3, 4, 5},
 			expectedResult:   false,
 		},
 		"message from another invalid member": {
-			senderID:         group.MemberIndex(2),
+			senderIndex:      group.MemberIndex(2),
 			senderPublicKey:  operatorsPublicKeys[3],
 			activeMembersIDs: []group.MemberIndex{1, 2, 3, 4, 5},
 			expectedResult:   false,
@@ -99,7 +100,7 @@ func TestShouldAcceptMessage(t *testing.T) {
 			}
 			filter.FlushInactiveMembers()
 
-			result := member.shouldAcceptMessage(test.senderID, test.senderPublicKey)
+			result := member.shouldAcceptMessage(test.senderIndex, test.senderPublicKey)
 
 			testutils.AssertBoolsEqual(
 				t,
@@ -113,9 +114,9 @@ func TestShouldAcceptMessage(t *testing.T) {
 
 func TestIdentityConverter_MemberIndexToTssPartyID(t *testing.T) {
 	converter := &identityConverter{seed: big.NewInt(300)}
-	memberID := group.MemberIndex(2)
+	memberIndex := group.MemberIndex(2)
 
-	tssPartyID := converter.MemberIndexToTssPartyID(memberID)
+	tssPartyID := converter.MemberIndexToTssPartyID(memberIndex)
 
 	testutils.AssertStringsEqual(
 		t,
@@ -134,7 +135,7 @@ func TestIdentityConverter_MemberIndexToTssPartyID(t *testing.T) {
 		t,
 		"moniker of the TSS party ID",
 		tssPartyID.Moniker,
-		fmt.Sprintf("member-%v", memberID),
+		fmt.Sprintf("member-%v", memberIndex),
 	)
 
 	testutils.AssertIntsEqual(
@@ -147,9 +148,9 @@ func TestIdentityConverter_MemberIndexToTssPartyID(t *testing.T) {
 
 func TestIdentityConverter_MemberIndexToTssPartyIDKey(t *testing.T) {
 	converter := &identityConverter{seed: big.NewInt(300)}
-	memberID := group.MemberIndex(2)
+	memberIndex := group.MemberIndex(2)
 
-	key := converter.MemberIndexToTssPartyIDKey(memberID)
+	key := converter.MemberIndexToTssPartyIDKey(memberIndex)
 
 	testutils.AssertBigIntsEqual(
 		t,
@@ -163,7 +164,18 @@ func TestIdentityConverter_TssPartyIDToMemberIndex(t *testing.T) {
 	converter := &identityConverter{seed: big.NewInt(300)}
 	partyID := tss.NewPartyID("302", "member-2", big.NewInt(302))
 
-	memberID := converter.TssPartyIDToMemberIndex(partyID)
+	memberIndex := converter.TssPartyIDToMemberIndex(partyID)
 
-	testutils.AssertIntsEqual(t, "member ID", 2, int(memberID))
+	testutils.AssertIntsEqual(t, "member ID", 2, int(memberIndex))
+}
+
+func TestIdentityConverter_TssPartyIDToMemberIndex_Corrupted(t *testing.T) {
+	converter := &identityConverter{seed: big.NewInt(303)}
+	partyID := tss.NewPartyID("302", "member-2", big.NewInt(302))
+
+	// seed > member ID; it should never happen, so the party ID is considered
+	// corrupted and MemberIndex(0) is returned.
+	memberIndex := converter.TssPartyIDToMemberIndex(partyID)
+
+	testutils.AssertIntsEqual(t, "member ID", 0, int(memberIndex))
 }

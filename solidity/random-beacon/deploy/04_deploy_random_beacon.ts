@@ -58,6 +58,14 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
     deployer
   )
 
+  if (hre.network.tags.etherscan) {
+    await helpers.etherscan.verify(BLS)
+    await helpers.etherscan.verify(BeaconAuthorization)
+    await helpers.etherscan.verify(BeaconDkg)
+    await helpers.etherscan.verify(BeaconInactivity)
+    await helpers.etherscan.verify(RandomBeacon)
+  }
+
   if (hre.network.tags.tenderly) {
     await hre.tenderly.verify({
       name: "RandomBeacon",

@@ -2,6 +2,8 @@ package dkg
 
 import (
 	"fmt"
+	"math/big"
+
 	"github.com/bnb-chain/tss-lib/ecdsa/keygen"
 	"github.com/bnb-chain/tss-lib/tss"
 	"github.com/ipfs/go-log"
@@ -9,7 +11,6 @@ import (
 	"github.com/keep-network/keep-core/pkg/protocol/group"
 	"github.com/keep-network/keep-core/pkg/tecdsa"
 	"github.com/keep-network/keep-core/pkg/tecdsa/common"
-	"math/big"
 )
 
 // Member represents a DKG protocol member.
@@ -367,6 +368,10 @@ func (ic *identityConverter) MemberIndexToTssPartyIDKey(
 func (ic *identityConverter) TssPartyIDToMemberIndex(
 	partyID *tss.PartyID,
 ) group.MemberIndex {
+	if ic.seed.Cmp(partyID.KeyInt()) > 0 { // is seed > party ID?
+		return group.MemberIndex(0)
+	}
+
 	return group.MemberIndex(
 		new(big.Int).Sub(partyID.KeyInt(), ic.seed).Int64(),
 	)

@@ -2,6 +2,8 @@ package signing
 
 import (
 	"fmt"
+	"math/big"
+
 	tsslibcommon "github.com/bnb-chain/tss-lib/common"
 	"github.com/bnb-chain/tss-lib/ecdsa/signing"
 	"github.com/bnb-chain/tss-lib/tss"
@@ -11,7 +13,6 @@ import (
 	"github.com/keep-network/keep-core/pkg/tecdsa"
 	"github.com/keep-network/keep-core/pkg/tecdsa/common"
 	"golang.org/x/exp/slices"
-	"math/big"
 )
 
 // Member represents a signing protocol member.
@@ -428,7 +429,8 @@ func (fm *finalizingMember) Result() *Result {
 }
 
 // identityConverter implements the common.IdentityConverter for tECDSA signing.
-// It does the conversion using the predefined keys list.
+// It does the conversion using the predefined keys list obtained from Ks
+// party ID array available in TSS key share.
 type identityConverter struct {
 	keys []*big.Int
 }
