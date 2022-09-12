@@ -4,6 +4,8 @@ import (
 	"fmt"
 
 	bn256 "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
+	"google.golang.org/protobuf/proto"
+
 	"github.com/keep-network/keep-core/pkg/beacon/gjkr/gen/pb"
 	"github.com/keep-network/keep-core/pkg/crypto/ephemeral"
 	"github.com/keep-network/keep-core/pkg/protocol/group"
@@ -32,17 +34,17 @@ func (epkm *EphemeralPublicKeyMessage) Marshal() ([]byte, error) {
 		return nil, err
 	}
 
-	return (&pb.EphemeralPublicKey{
+	return proto.Marshal(&pb.EphemeralPublicKey{
 		SenderID:            uint32(epkm.senderID),
 		EphemeralPublicKeys: ephemeralPublicKeys,
-	}).Marshal()
+	})
 }
 
 // Unmarshal converts a byte array produced by Marshal to
 // an EphemeralPublicKeyMessage
 func (epkm *EphemeralPublicKeyMessage) Unmarshal(bytes []byte) error {
 	pbMsg := pb.EphemeralPublicKey{}
-	if err := pbMsg.Unmarshal(bytes); err != nil {
+	if err := proto.Unmarshal(bytes, &pbMsg); err != nil {
 		return err
 	}
 
@@ -75,17 +77,17 @@ func (mcm *MemberCommitmentsMessage) Marshal() ([]byte, error) {
 		commitmentBytes = append(commitmentBytes, commitment.Marshal())
 	}
 
-	return (&pb.MemberCommitments{
+	return proto.Marshal(&pb.MemberCommitments{
 		SenderID:    uint32(mcm.senderID),
 		Commitments: commitmentBytes,
-	}).Marshal()
+	})
 }
 
 // Unmarshal converts a byte array produced by Marshal to
 // a MemberCommitmentsMessage
 func (mcm *MemberCommitmentsMessage) Unmarshal(bytes []byte) error {
 	pbMsg := pb.MemberCommitments{}
-	if err := pbMsg.Unmarshal(bytes); err != nil {
+	if err := proto.Unmarshal(bytes, &pbMsg); err != nil {
 		return err
 	}
 
@@ -132,16 +134,16 @@ func (psm *PeerSharesMessage) Marshal() ([]byte, error) {
 		}
 	}
 
-	return (&pb.PeerShares{
+	return proto.Marshal(&pb.PeerShares{
 		SenderID: uint32(psm.senderID),
 		Shares:   pbShares,
-	}).Marshal()
+	})
 }
 
 // Unmarshal converts a byte array produced by Marshal to a PeerSharesMessage.
 func (psm *PeerSharesMessage) Unmarshal(bytes []byte) error {
 	pbMsg := pb.PeerShares{}
-	if err := pbMsg.Unmarshal(bytes); err != nil {
+	if err := proto.Unmarshal(bytes, &pbMsg); err != nil {
 		return err
 	}
 
@@ -185,17 +187,17 @@ func (ssam *SecretSharesAccusationsMessage) Marshal() ([]byte, error) {
 		return nil, err
 	}
 
-	return (&pb.SecretSharesAccusations{
+	return proto.Marshal(&pb.SecretSharesAccusations{
 		SenderID:           uint32(ssam.senderID),
 		AccusedMembersKeys: accusedMembersKeys,
-	}).Marshal()
+	})
 }
 
 // Unmarshal converts a byte array produced by Marshal to
 // a SecretSharesAccusationsMessage.
 func (ssam *SecretSharesAccusationsMessage) Unmarshal(bytes []byte) error {
 	pbMsg := pb.SecretSharesAccusations{}
-	if err := pbMsg.Unmarshal(bytes); err != nil {
+	if err := proto.Unmarshal(bytes, &pbMsg); err != nil {
 		return err
 	}
 
@@ -232,17 +234,17 @@ func (mpspm *MemberPublicKeySharePointsMessage) Marshal() ([]byte, error) {
 		keySharePoints = append(keySharePoints, keySharePoint.Marshal())
 	}
 
-	return (&pb.MemberPublicKeySharePoints{
+	return proto.Marshal(&pb.MemberPublicKeySharePoints{
 		SenderID:             uint32(mpspm.senderID),
 		PublicKeySharePoints: keySharePoints,
-	}).Marshal()
+	})
 }
 
 // Unmarshal converts a byte array produced by Marshal to
 // a MemberPublicKeySharePointsMessage.
 func (mpspm *MemberPublicKeySharePointsMessage) Unmarshal(bytes []byte) error {
 	pbMsg := pb.MemberPublicKeySharePoints{}
-	if err := pbMsg.Unmarshal(bytes); err != nil {
+	if err := proto.Unmarshal(bytes, &pbMsg); err != nil {
 		return err
 	}
 
@@ -282,17 +284,17 @@ func (pam *PointsAccusationsMessage) Marshal() ([]byte, error) {
 		return nil, err
 	}
 
-	return (&pb.PointsAccusations{
+	return proto.Marshal(&pb.PointsAccusations{
 		SenderID:           uint32(pam.senderID),
 		AccusedMembersKeys: accusedMembersKeys,
-	}).Marshal()
+	})
 }
 
 // Unmarshal converts a byte array produced by Marshal to
 // a PointsAccusationsMessage.
 func (pam *PointsAccusationsMessage) Unmarshal(bytes []byte) error {
 	pbMsg := pb.PointsAccusations{}
-	if err := pbMsg.Unmarshal(bytes); err != nil {
+	if err := proto.Unmarshal(bytes, &pbMsg); err != nil {
 		return err
 	}
 
@@ -325,17 +327,17 @@ func (mekm *MisbehavedEphemeralKeysMessage) Marshal() ([]byte, error) {
 		return nil, err
 	}
 
-	return (&pb.MisbehavedEphemeralKeys{
+	return proto.Marshal(&pb.MisbehavedEphemeralKeys{
 		SenderID:    uint32(mekm.senderID),
 		PrivateKeys: privateKeys,
-	}).Marshal()
+	})
 }
 
 // Unmarshal converts a byte array produced by Marshal to
 // a MisbehavedEphemeralKeysMessage.
 func (mekm *MisbehavedEphemeralKeysMessage) Unmarshal(bytes []byte) error {
 	pbMsg := pb.MisbehavedEphemeralKeys{}
-	if err := pbMsg.Unmarshal(bytes); err != nil {
+	if err := proto.Unmarshal(bytes, &pbMsg); err != nil {
 		return err
 	}
 

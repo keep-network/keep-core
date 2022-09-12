@@ -5,7 +5,9 @@ package cmd
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"strconv"
 	"sync"
 
 	"github.com/ethereum/go-ethereum/common/hexutil"
@@ -14,6 +16,8 @@ import (
 
 	chainutil "github.com/keep-network/keep-common/pkg/chain/ethereum/ethutil"
 	"github.com/keep-network/keep-common/pkg/cmd"
+	"github.com/keep-network/keep-common/pkg/utils/decode"
+	"github.com/keep-network/keep-core/pkg/chain/ethereum/tbtc/gen/abi"
 	"github.com/keep-network/keep-core/pkg/chain/ethereum/tbtc/gen/contract"
 
 	"github.com/spf13/cobra"
@@ -66,9 +70,23 @@ func init() {
 		bTreasuryCommand(),
 		bTxProofDifficultyFactorCommand(),
 		bWalletParametersCommand(),
+		bDefeatFraudChallengeCommand(),
 		bDefeatFraudChallengeWithHeartbeatCommand(),
+		bInitializeCommand(),
 		bReceiveBalanceApprovalCommand(),
+		bRequestNewWalletCommand(),
+		bRevealDepositCommand(),
+		bSetSpvMaintainerStatusCommand(),
+		bSetVaultStatusCommand(),
+		bSubmitDepositSweepProofCommand(),
+		bSubmitFraudChallengeCommand(),
+		bSubmitMovedFundsSweepProofCommand(),
 		bTransferGovernanceCommand(),
+		bUpdateDepositParametersCommand(),
+		bUpdateFraudParametersCommand(),
+		bUpdateMovingFundsParametersCommand(),
+		bUpdateRedemptionParametersCommand(),
+		bUpdateWalletParametersCommand(),
 	)
 
 	ModuleCommand.AddCommand(BridgeCommand)
@@ -198,6 +216,7 @@ func bDeposits(c *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
+
 	arg_depositKey, err := hexutil.DecodeBig(args[0])
 	if err != nil {
 		return fmt.Errorf(
@@ -240,6 +259,7 @@ func bFraudChallenges(c *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
+
 	arg_challengeKey, err := hexutil.DecodeBig(args[0])
 	if err != nil {
 		return fmt.Errorf(
@@ -350,6 +370,7 @@ func bIsVaultTrusted(c *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
+
 	arg_vault, err := chainutil.AddressFromHex(args[0])
 	if err != nil {
 		return fmt.Errorf(
@@ -426,6 +447,7 @@ func bMovedFundsSweepRequests(c *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
+
 	arg_requestKey, err := hexutil.DecodeBig(args[0])
 	if err != nil {
 		return fmt.Errorf(
@@ -502,6 +524,7 @@ func bPendingRedemptions(c *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
+
 	arg_redemptionKey, err := hexutil.DecodeBig(args[0])
 	if err != nil {
 		return fmt.Errorf(
@@ -578,6 +601,7 @@ func bSpentMainUTXOs(c *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
+
 	arg_utxoKey, err := hexutil.DecodeBig(args[0])
 	if err != nil {
 		return fmt.Errorf(
@@ -620,6 +644,7 @@ func bTimedOutRedemptions(c *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
+
 	arg_redemptionKey, err := hexutil.DecodeBig(args[0])
 	if err != nil {
 		return fmt.Errorf(
@@ -746,6 +771,84 @@ func bWalletParameters(c *cobra.Command, args []string) error {
 
 /// ------------------- Non-const methods -------------------
 
+func bDefeatFraudChallengeCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "defeat-fraud-challenge [arg_walletPublicKey] [arg_preimage] [arg_witness]",
+		Short:                 "Calls the nonpayable method defeatFraudChallenge on the Bridge contract.",
+		Args:                  cmd.ArgCountChecker(3),
+		RunE:                  bDefeatFraudChallenge,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	c.PreRunE = cmd.NonConstArgsChecker
+	cmd.InitNonConstFlags(c)
+
+	return c
+}
+
+func bDefeatFraudChallenge(c *cobra.Command, args []string) error {
+	contract, err := initializeBridge(c)
+	if err != nil {
+		return err
+	}
+
+	arg_walletPublicKey, err := hexutil.Decode(args[0])
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter arg_walletPublicKey, a bytes, from passed value %v",
+			args[0],
+		)
+	}
+	arg_preimage, err := hexutil.Decode(args[1])
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter arg_preimage, a bytes, from passed value %v",
+			args[1],
+		)
+	}
+	arg_witness, err := strconv.ParseBool(args[2])
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter arg_witness, a bool, from passed value %v",
+			args[2],
+		)
+	}
+
+	var (
+		transaction *types.Transaction
+	)
+
+	if shouldSubmit, _ := c.Flags().GetBool(cmd.SubmitFlag); shouldSubmit {
+		// Do a regular submission. Take payable into account.
+		transaction, err = contract.DefeatFraudChallenge(
+			arg_walletPublicKey,
+			arg_preimage,
+			arg_witness,
+		)
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput(transaction.Hash())
+	} else {
+		// Do a call.
+		err = contract.CallDefeatFraudChallenge(
+			arg_walletPublicKey,
+			arg_preimage,
+			arg_witness,
+			cmd.BlockFlagValue.Int,
+		)
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput("success")
+	}
+
+	return nil
+}
+
 func bDefeatFraudChallengeWithHeartbeatCommand() *cobra.Command {
 	c := &cobra.Command{
 		Use:                   "defeat-fraud-challenge-with-heartbeat [arg_walletPublicKey] [arg_heartbeatMessage]",
@@ -775,7 +878,6 @@ func bDefeatFraudChallengeWithHeartbeat(c *cobra.Command, args []string) error {
 			args[0],
 		)
 	}
-
 	arg_heartbeatMessage, err := hexutil.Decode(args[1])
 	if err != nil {
 		return fmt.Errorf(
@@ -804,6 +906,102 @@ func bDefeatFraudChallengeWithHeartbeat(c *cobra.Command, args []string) error {
 		err = contract.CallDefeatFraudChallengeWithHeartbeat(
 			arg_walletPublicKey,
 			arg_heartbeatMessage,
+			cmd.BlockFlagValue.Int,
+		)
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput("success")
+	}
+
+	return nil
+}
+
+func bInitializeCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "initialize [arg__bank] [arg__relay] [arg__treasury] [arg__ecdsaWalletRegistry] [arg__txProofDifficultyFactor]",
+		Short:                 "Calls the nonpayable method initialize on the Bridge contract.",
+		Args:                  cmd.ArgCountChecker(5),
+		RunE:                  bInitialize,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	c.PreRunE = cmd.NonConstArgsChecker
+	cmd.InitNonConstFlags(c)
+
+	return c
+}
+
+func bInitialize(c *cobra.Command, args []string) error {
+	contract, err := initializeBridge(c)
+	if err != nil {
+		return err
+	}
+
+	arg__bank, err := chainutil.AddressFromHex(args[0])
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter arg__bank, a address, from passed value %v",
+			args[0],
+		)
+	}
+	arg__relay, err := chainutil.AddressFromHex(args[1])
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter arg__relay, a address, from passed value %v",
+			args[1],
+		)
+	}
+	arg__treasury, err := chainutil.AddressFromHex(args[2])
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter arg__treasury, a address, from passed value %v",
+			args[2],
+		)
+	}
+	arg__ecdsaWalletRegistry, err := chainutil.AddressFromHex(args[3])
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter arg__ecdsaWalletRegistry, a address, from passed value %v",
+			args[3],
+		)
+	}
+	arg__txProofDifficultyFactor, err := hexutil.DecodeBig(args[4])
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter arg__txProofDifficultyFactor, a uint96, from passed value %v",
+			args[4],
+		)
+	}
+
+	var (
+		transaction *types.Transaction
+	)
+
+	if shouldSubmit, _ := c.Flags().GetBool(cmd.SubmitFlag); shouldSubmit {
+		// Do a regular submission. Take payable into account.
+		transaction, err = contract.Initialize(
+			arg__bank,
+			arg__relay,
+			arg__treasury,
+			arg__ecdsaWalletRegistry,
+			arg__txProofDifficultyFactor,
+		)
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput(transaction.Hash())
+	} else {
+		// Do a call.
+		err = contract.CallInitialize(
+			arg__bank,
+			arg__relay,
+			arg__treasury,
+			arg__ecdsaWalletRegistry,
+			arg__txProofDifficultyFactor,
 			cmd.BlockFlagValue.Int,
 		)
 		if err != nil {
@@ -845,7 +1043,6 @@ func bReceiveBalanceApproval(c *cobra.Command, args []string) error {
 			args[0],
 		)
 	}
-
 	arg_amount, err := hexutil.DecodeBig(args[1])
 	if err != nil {
 		return fmt.Errorf(
@@ -853,7 +1050,6 @@ func bReceiveBalanceApproval(c *cobra.Command, args []string) error {
 			args[1],
 		)
 	}
-
 	arg_redemptionData, err := hexutil.Decode(args[2])
 	if err != nil {
 		return fmt.Errorf(
@@ -884,6 +1080,492 @@ func bReceiveBalanceApproval(c *cobra.Command, args []string) error {
 			arg_balanceOwner,
 			arg_amount,
 			arg_redemptionData,
+			cmd.BlockFlagValue.Int,
+		)
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput("success")
+	}
+
+	return nil
+}
+
+func bRequestNewWalletCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "request-new-wallet [arg_activeWalletMainUtxo_json]",
+		Short:                 "Calls the nonpayable method requestNewWallet on the Bridge contract.",
+		Args:                  cmd.ArgCountChecker(1),
+		RunE:                  bRequestNewWallet,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	c.PreRunE = cmd.NonConstArgsChecker
+	cmd.InitNonConstFlags(c)
+
+	return c
+}
+
+func bRequestNewWallet(c *cobra.Command, args []string) error {
+	contract, err := initializeBridge(c)
+	if err != nil {
+		return err
+	}
+
+	arg_activeWalletMainUtxo_json := abi.BitcoinTxUTXO{}
+	if err := json.Unmarshal([]byte(args[0]), &arg_activeWalletMainUtxo_json); err != nil {
+		return fmt.Errorf("failed to unmarshal arg_activeWalletMainUtxo_json to abi.BitcoinTxUTXO: %w", err)
+	}
+
+	var (
+		transaction *types.Transaction
+	)
+
+	if shouldSubmit, _ := c.Flags().GetBool(cmd.SubmitFlag); shouldSubmit {
+		// Do a regular submission. Take payable into account.
+		transaction, err = contract.RequestNewWallet(
+			arg_activeWalletMainUtxo_json,
+		)
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput(transaction.Hash())
+	} else {
+		// Do a call.
+		err = contract.CallRequestNewWallet(
+			arg_activeWalletMainUtxo_json,
+			cmd.BlockFlagValue.Int,
+		)
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput("success")
+	}
+
+	return nil
+}
+
+func bRevealDepositCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "reveal-deposit [arg_fundingTx_json] [arg_reveal_json]",
+		Short:                 "Calls the nonpayable method revealDeposit on the Bridge contract.",
+		Args:                  cmd.ArgCountChecker(2),
+		RunE:                  bRevealDeposit,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	c.PreRunE = cmd.NonConstArgsChecker
+	cmd.InitNonConstFlags(c)
+
+	return c
+}
+
+func bRevealDeposit(c *cobra.Command, args []string) error {
+	contract, err := initializeBridge(c)
+	if err != nil {
+		return err
+	}
+
+	arg_fundingTx_json := abi.BitcoinTxInfo{}
+	if err := json.Unmarshal([]byte(args[0]), &arg_fundingTx_json); err != nil {
+		return fmt.Errorf("failed to unmarshal arg_fundingTx_json to abi.BitcoinTxInfo: %w", err)
+	}
+
+	arg_reveal_json := abi.DepositDepositRevealInfo{}
+	if err := json.Unmarshal([]byte(args[1]), &arg_reveal_json); err != nil {
+		return fmt.Errorf("failed to unmarshal arg_reveal_json to abi.DepositDepositRevealInfo: %w", err)
+	}
+
+	var (
+		transaction *types.Transaction
+	)
+
+	if shouldSubmit, _ := c.Flags().GetBool(cmd.SubmitFlag); shouldSubmit {
+		// Do a regular submission. Take payable into account.
+		transaction, err = contract.RevealDeposit(
+			arg_fundingTx_json,
+			arg_reveal_json,
+		)
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput(transaction.Hash())
+	} else {
+		// Do a call.
+		err = contract.CallRevealDeposit(
+			arg_fundingTx_json,
+			arg_reveal_json,
+			cmd.BlockFlagValue.Int,
+		)
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput("success")
+	}
+
+	return nil
+}
+
+func bSetSpvMaintainerStatusCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "set-spv-maintainer-status [arg_spvMaintainer] [arg_isTrusted]",
+		Short:                 "Calls the nonpayable method setSpvMaintainerStatus on the Bridge contract.",
+		Args:                  cmd.ArgCountChecker(2),
+		RunE:                  bSetSpvMaintainerStatus,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	c.PreRunE = cmd.NonConstArgsChecker
+	cmd.InitNonConstFlags(c)
+
+	return c
+}
+
+func bSetSpvMaintainerStatus(c *cobra.Command, args []string) error {
+	contract, err := initializeBridge(c)
+	if err != nil {
+		return err
+	}
+
+	arg_spvMaintainer, err := chainutil.AddressFromHex(args[0])
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter arg_spvMaintainer, a address, from passed value %v",
+			args[0],
+		)
+	}
+	arg_isTrusted, err := strconv.ParseBool(args[1])
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter arg_isTrusted, a bool, from passed value %v",
+			args[1],
+		)
+	}
+
+	var (
+		transaction *types.Transaction
+	)
+
+	if shouldSubmit, _ := c.Flags().GetBool(cmd.SubmitFlag); shouldSubmit {
+		// Do a regular submission. Take payable into account.
+		transaction, err = contract.SetSpvMaintainerStatus(
+			arg_spvMaintainer,
+			arg_isTrusted,
+		)
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput(transaction.Hash())
+	} else {
+		// Do a call.
+		err = contract.CallSetSpvMaintainerStatus(
+			arg_spvMaintainer,
+			arg_isTrusted,
+			cmd.BlockFlagValue.Int,
+		)
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput("success")
+	}
+
+	return nil
+}
+
+func bSetVaultStatusCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "set-vault-status [arg_vault] [arg_isTrusted]",
+		Short:                 "Calls the nonpayable method setVaultStatus on the Bridge contract.",
+		Args:                  cmd.ArgCountChecker(2),
+		RunE:                  bSetVaultStatus,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	c.PreRunE = cmd.NonConstArgsChecker
+	cmd.InitNonConstFlags(c)
+
+	return c
+}
+
+func bSetVaultStatus(c *cobra.Command, args []string) error {
+	contract, err := initializeBridge(c)
+	if err != nil {
+		return err
+	}
+
+	arg_vault, err := chainutil.AddressFromHex(args[0])
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter arg_vault, a address, from passed value %v",
+			args[0],
+		)
+	}
+	arg_isTrusted, err := strconv.ParseBool(args[1])
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter arg_isTrusted, a bool, from passed value %v",
+			args[1],
+		)
+	}
+
+	var (
+		transaction *types.Transaction
+	)
+
+	if shouldSubmit, _ := c.Flags().GetBool(cmd.SubmitFlag); shouldSubmit {
+		// Do a regular submission. Take payable into account.
+		transaction, err = contract.SetVaultStatus(
+			arg_vault,
+			arg_isTrusted,
+		)
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput(transaction.Hash())
+	} else {
+		// Do a call.
+		err = contract.CallSetVaultStatus(
+			arg_vault,
+			arg_isTrusted,
+			cmd.BlockFlagValue.Int,
+		)
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput("success")
+	}
+
+	return nil
+}
+
+func bSubmitDepositSweepProofCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "submit-deposit-sweep-proof [arg_sweepTx_json] [arg_sweepProof_json] [arg_mainUtxo_json] [arg_vault]",
+		Short:                 "Calls the nonpayable method submitDepositSweepProof on the Bridge contract.",
+		Args:                  cmd.ArgCountChecker(4),
+		RunE:                  bSubmitDepositSweepProof,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	c.PreRunE = cmd.NonConstArgsChecker
+	cmd.InitNonConstFlags(c)
+
+	return c
+}
+
+func bSubmitDepositSweepProof(c *cobra.Command, args []string) error {
+	contract, err := initializeBridge(c)
+	if err != nil {
+		return err
+	}
+
+	arg_sweepTx_json := abi.BitcoinTxInfo{}
+	if err := json.Unmarshal([]byte(args[0]), &arg_sweepTx_json); err != nil {
+		return fmt.Errorf("failed to unmarshal arg_sweepTx_json to abi.BitcoinTxInfo: %w", err)
+	}
+
+	arg_sweepProof_json := abi.BitcoinTxProof{}
+	if err := json.Unmarshal([]byte(args[1]), &arg_sweepProof_json); err != nil {
+		return fmt.Errorf("failed to unmarshal arg_sweepProof_json to abi.BitcoinTxProof: %w", err)
+	}
+
+	arg_mainUtxo_json := abi.BitcoinTxUTXO{}
+	if err := json.Unmarshal([]byte(args[2]), &arg_mainUtxo_json); err != nil {
+		return fmt.Errorf("failed to unmarshal arg_mainUtxo_json to abi.BitcoinTxUTXO: %w", err)
+	}
+	arg_vault, err := chainutil.AddressFromHex(args[3])
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter arg_vault, a address, from passed value %v",
+			args[3],
+		)
+	}
+
+	var (
+		transaction *types.Transaction
+	)
+
+	if shouldSubmit, _ := c.Flags().GetBool(cmd.SubmitFlag); shouldSubmit {
+		// Do a regular submission. Take payable into account.
+		transaction, err = contract.SubmitDepositSweepProof(
+			arg_sweepTx_json,
+			arg_sweepProof_json,
+			arg_mainUtxo_json,
+			arg_vault,
+		)
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput(transaction.Hash())
+	} else {
+		// Do a call.
+		err = contract.CallSubmitDepositSweepProof(
+			arg_sweepTx_json,
+			arg_sweepProof_json,
+			arg_mainUtxo_json,
+			arg_vault,
+			cmd.BlockFlagValue.Int,
+		)
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput("success")
+	}
+
+	return nil
+}
+
+func bSubmitFraudChallengeCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "submit-fraud-challenge [arg_walletPublicKey] [arg_preimageSha256] [arg_signature_json]",
+		Short:                 "Calls the payable method submitFraudChallenge on the Bridge contract.",
+		Args:                  cmd.ArgCountChecker(3),
+		RunE:                  bSubmitFraudChallenge,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	c.PreRunE = cmd.NonConstArgsChecker
+	cmd.InitNonConstFlags(c)
+
+	return c
+}
+
+func bSubmitFraudChallenge(c *cobra.Command, args []string) error {
+	contract, err := initializeBridge(c)
+	if err != nil {
+		return err
+	}
+
+	arg_walletPublicKey, err := hexutil.Decode(args[0])
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter arg_walletPublicKey, a bytes, from passed value %v",
+			args[0],
+		)
+	}
+	arg_preimageSha256, err := hexutil.Decode(args[1])
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter arg_preimageSha256, a bytes, from passed value %v",
+			args[1],
+		)
+	}
+
+	arg_signature_json := abi.BitcoinTxRSVSignature{}
+	if err := json.Unmarshal([]byte(args[2]), &arg_signature_json); err != nil {
+		return fmt.Errorf("failed to unmarshal arg_signature_json to abi.BitcoinTxRSVSignature: %w", err)
+	}
+
+	var (
+		transaction *types.Transaction
+	)
+
+	if shouldSubmit, _ := c.Flags().GetBool(cmd.SubmitFlag); shouldSubmit {
+		// Do a regular submission. Take payable into account.
+		transaction, err = contract.SubmitFraudChallenge(
+			arg_walletPublicKey,
+			arg_preimageSha256,
+			arg_signature_json,
+		)
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput(transaction.Hash())
+	} else {
+		// Do a call.
+		err = contract.CallSubmitFraudChallenge(
+			arg_walletPublicKey,
+			arg_preimageSha256,
+			arg_signature_json,
+			cmd.BlockFlagValue.Int,
+		)
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput("success")
+	}
+
+	return nil
+}
+
+func bSubmitMovedFundsSweepProofCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "submit-moved-funds-sweep-proof [arg_sweepTx_json] [arg_sweepProof_json] [arg_mainUtxo_json]",
+		Short:                 "Calls the nonpayable method submitMovedFundsSweepProof on the Bridge contract.",
+		Args:                  cmd.ArgCountChecker(3),
+		RunE:                  bSubmitMovedFundsSweepProof,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	c.PreRunE = cmd.NonConstArgsChecker
+	cmd.InitNonConstFlags(c)
+
+	return c
+}
+
+func bSubmitMovedFundsSweepProof(c *cobra.Command, args []string) error {
+	contract, err := initializeBridge(c)
+	if err != nil {
+		return err
+	}
+
+	arg_sweepTx_json := abi.BitcoinTxInfo{}
+	if err := json.Unmarshal([]byte(args[0]), &arg_sweepTx_json); err != nil {
+		return fmt.Errorf("failed to unmarshal arg_sweepTx_json to abi.BitcoinTxInfo: %w", err)
+	}
+
+	arg_sweepProof_json := abi.BitcoinTxProof{}
+	if err := json.Unmarshal([]byte(args[1]), &arg_sweepProof_json); err != nil {
+		return fmt.Errorf("failed to unmarshal arg_sweepProof_json to abi.BitcoinTxProof: %w", err)
+	}
+
+	arg_mainUtxo_json := abi.BitcoinTxUTXO{}
+	if err := json.Unmarshal([]byte(args[2]), &arg_mainUtxo_json); err != nil {
+		return fmt.Errorf("failed to unmarshal arg_mainUtxo_json to abi.BitcoinTxUTXO: %w", err)
+	}
+
+	var (
+		transaction *types.Transaction
+	)
+
+	if shouldSubmit, _ := c.Flags().GetBool(cmd.SubmitFlag); shouldSubmit {
+		// Do a regular submission. Take payable into account.
+		transaction, err = contract.SubmitMovedFundsSweepProof(
+			arg_sweepTx_json,
+			arg_sweepProof_json,
+			arg_mainUtxo_json,
+		)
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput(transaction.Hash())
+	} else {
+		// Do a call.
+		err = contract.CallSubmitMovedFundsSweepProof(
+			arg_sweepTx_json,
+			arg_sweepProof_json,
+			arg_mainUtxo_json,
 			cmd.BlockFlagValue.Int,
 		)
 		if err != nil {
@@ -944,6 +1626,540 @@ func bTransferGovernance(c *cobra.Command, args []string) error {
 		// Do a call.
 		err = contract.CallTransferGovernance(
 			arg_newGovernance,
+			cmd.BlockFlagValue.Int,
+		)
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput("success")
+	}
+
+	return nil
+}
+
+func bUpdateDepositParametersCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "update-deposit-parameters [arg_depositDustThreshold] [arg_depositTreasuryFeeDivisor] [arg_depositTxMaxFee]",
+		Short:                 "Calls the nonpayable method updateDepositParameters on the Bridge contract.",
+		Args:                  cmd.ArgCountChecker(3),
+		RunE:                  bUpdateDepositParameters,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	c.PreRunE = cmd.NonConstArgsChecker
+	cmd.InitNonConstFlags(c)
+
+	return c
+}
+
+func bUpdateDepositParameters(c *cobra.Command, args []string) error {
+	contract, err := initializeBridge(c)
+	if err != nil {
+		return err
+	}
+
+	arg_depositDustThreshold, err := decode.ParseUint[uint64](args[0], 64)
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter arg_depositDustThreshold, a uint64, from passed value %v",
+			args[0],
+		)
+	}
+	arg_depositTreasuryFeeDivisor, err := decode.ParseUint[uint64](args[1], 64)
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter arg_depositTreasuryFeeDivisor, a uint64, from passed value %v",
+			args[1],
+		)
+	}
+	arg_depositTxMaxFee, err := decode.ParseUint[uint64](args[2], 64)
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter arg_depositTxMaxFee, a uint64, from passed value %v",
+			args[2],
+		)
+	}
+
+	var (
+		transaction *types.Transaction
+	)
+
+	if shouldSubmit, _ := c.Flags().GetBool(cmd.SubmitFlag); shouldSubmit {
+		// Do a regular submission. Take payable into account.
+		transaction, err = contract.UpdateDepositParameters(
+			arg_depositDustThreshold,
+			arg_depositTreasuryFeeDivisor,
+			arg_depositTxMaxFee,
+		)
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput(transaction.Hash())
+	} else {
+		// Do a call.
+		err = contract.CallUpdateDepositParameters(
+			arg_depositDustThreshold,
+			arg_depositTreasuryFeeDivisor,
+			arg_depositTxMaxFee,
+			cmd.BlockFlagValue.Int,
+		)
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput("success")
+	}
+
+	return nil
+}
+
+func bUpdateFraudParametersCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "update-fraud-parameters [arg_fraudChallengeDepositAmount] [arg_fraudChallengeDefeatTimeout] [arg_fraudSlashingAmount] [arg_fraudNotifierRewardMultiplier]",
+		Short:                 "Calls the nonpayable method updateFraudParameters on the Bridge contract.",
+		Args:                  cmd.ArgCountChecker(4),
+		RunE:                  bUpdateFraudParameters,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	c.PreRunE = cmd.NonConstArgsChecker
+	cmd.InitNonConstFlags(c)
+
+	return c
+}
+
+func bUpdateFraudParameters(c *cobra.Command, args []string) error {
+	contract, err := initializeBridge(c)
+	if err != nil {
+		return err
+	}
+
+	arg_fraudChallengeDepositAmount, err := hexutil.DecodeBig(args[0])
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter arg_fraudChallengeDepositAmount, a uint96, from passed value %v",
+			args[0],
+		)
+	}
+	arg_fraudChallengeDefeatTimeout, err := decode.ParseUint[uint32](args[1], 32)
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter arg_fraudChallengeDefeatTimeout, a uint32, from passed value %v",
+			args[1],
+		)
+	}
+	arg_fraudSlashingAmount, err := hexutil.DecodeBig(args[2])
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter arg_fraudSlashingAmount, a uint96, from passed value %v",
+			args[2],
+		)
+	}
+	arg_fraudNotifierRewardMultiplier, err := decode.ParseUint[uint32](args[3], 32)
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter arg_fraudNotifierRewardMultiplier, a uint32, from passed value %v",
+			args[3],
+		)
+	}
+
+	var (
+		transaction *types.Transaction
+	)
+
+	if shouldSubmit, _ := c.Flags().GetBool(cmd.SubmitFlag); shouldSubmit {
+		// Do a regular submission. Take payable into account.
+		transaction, err = contract.UpdateFraudParameters(
+			arg_fraudChallengeDepositAmount,
+			arg_fraudChallengeDefeatTimeout,
+			arg_fraudSlashingAmount,
+			arg_fraudNotifierRewardMultiplier,
+		)
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput(transaction.Hash())
+	} else {
+		// Do a call.
+		err = contract.CallUpdateFraudParameters(
+			arg_fraudChallengeDepositAmount,
+			arg_fraudChallengeDefeatTimeout,
+			arg_fraudSlashingAmount,
+			arg_fraudNotifierRewardMultiplier,
+			cmd.BlockFlagValue.Int,
+		)
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput("success")
+	}
+
+	return nil
+}
+
+func bUpdateMovingFundsParametersCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "update-moving-funds-parameters [arg_movingFundsTxMaxTotalFee] [arg_movingFundsDustThreshold] [arg_movingFundsTimeoutResetDelay] [arg_movingFundsTimeout] [arg_movingFundsTimeoutSlashingAmount] [arg_movingFundsTimeoutNotifierRewardMultiplier] [arg_movedFundsSweepTxMaxTotalFee] [arg_movedFundsSweepTimeout] [arg_movedFundsSweepTimeoutSlashingAmount] [arg_movedFundsSweepTimeoutNotifierRewardMultiplier]",
+		Short:                 "Calls the nonpayable method updateMovingFundsParameters on the Bridge contract.",
+		Args:                  cmd.ArgCountChecker(10),
+		RunE:                  bUpdateMovingFundsParameters,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	c.PreRunE = cmd.NonConstArgsChecker
+	cmd.InitNonConstFlags(c)
+
+	return c
+}
+
+func bUpdateMovingFundsParameters(c *cobra.Command, args []string) error {
+	contract, err := initializeBridge(c)
+	if err != nil {
+		return err
+	}
+
+	arg_movingFundsTxMaxTotalFee, err := decode.ParseUint[uint64](args[0], 64)
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter arg_movingFundsTxMaxTotalFee, a uint64, from passed value %v",
+			args[0],
+		)
+	}
+	arg_movingFundsDustThreshold, err := decode.ParseUint[uint64](args[1], 64)
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter arg_movingFundsDustThreshold, a uint64, from passed value %v",
+			args[1],
+		)
+	}
+	arg_movingFundsTimeoutResetDelay, err := decode.ParseUint[uint32](args[2], 32)
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter arg_movingFundsTimeoutResetDelay, a uint32, from passed value %v",
+			args[2],
+		)
+	}
+	arg_movingFundsTimeout, err := decode.ParseUint[uint32](args[3], 32)
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter arg_movingFundsTimeout, a uint32, from passed value %v",
+			args[3],
+		)
+	}
+	arg_movingFundsTimeoutSlashingAmount, err := hexutil.DecodeBig(args[4])
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter arg_movingFundsTimeoutSlashingAmount, a uint96, from passed value %v",
+			args[4],
+		)
+	}
+	arg_movingFundsTimeoutNotifierRewardMultiplier, err := decode.ParseUint[uint32](args[5], 32)
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter arg_movingFundsTimeoutNotifierRewardMultiplier, a uint32, from passed value %v",
+			args[5],
+		)
+	}
+	arg_movedFundsSweepTxMaxTotalFee, err := decode.ParseUint[uint64](args[6], 64)
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter arg_movedFundsSweepTxMaxTotalFee, a uint64, from passed value %v",
+			args[6],
+		)
+	}
+	arg_movedFundsSweepTimeout, err := decode.ParseUint[uint32](args[7], 32)
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter arg_movedFundsSweepTimeout, a uint32, from passed value %v",
+			args[7],
+		)
+	}
+	arg_movedFundsSweepTimeoutSlashingAmount, err := hexutil.DecodeBig(args[8])
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter arg_movedFundsSweepTimeoutSlashingAmount, a uint96, from passed value %v",
+			args[8],
+		)
+	}
+	arg_movedFundsSweepTimeoutNotifierRewardMultiplier, err := decode.ParseUint[uint32](args[9], 32)
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter arg_movedFundsSweepTimeoutNotifierRewardMultiplier, a uint32, from passed value %v",
+			args[9],
+		)
+	}
+
+	var (
+		transaction *types.Transaction
+	)
+
+	if shouldSubmit, _ := c.Flags().GetBool(cmd.SubmitFlag); shouldSubmit {
+		// Do a regular submission. Take payable into account.
+		transaction, err = contract.UpdateMovingFundsParameters(
+			arg_movingFundsTxMaxTotalFee,
+			arg_movingFundsDustThreshold,
+			arg_movingFundsTimeoutResetDelay,
+			arg_movingFundsTimeout,
+			arg_movingFundsTimeoutSlashingAmount,
+			arg_movingFundsTimeoutNotifierRewardMultiplier,
+			arg_movedFundsSweepTxMaxTotalFee,
+			arg_movedFundsSweepTimeout,
+			arg_movedFundsSweepTimeoutSlashingAmount,
+			arg_movedFundsSweepTimeoutNotifierRewardMultiplier,
+		)
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput(transaction.Hash())
+	} else {
+		// Do a call.
+		err = contract.CallUpdateMovingFundsParameters(
+			arg_movingFundsTxMaxTotalFee,
+			arg_movingFundsDustThreshold,
+			arg_movingFundsTimeoutResetDelay,
+			arg_movingFundsTimeout,
+			arg_movingFundsTimeoutSlashingAmount,
+			arg_movingFundsTimeoutNotifierRewardMultiplier,
+			arg_movedFundsSweepTxMaxTotalFee,
+			arg_movedFundsSweepTimeout,
+			arg_movedFundsSweepTimeoutSlashingAmount,
+			arg_movedFundsSweepTimeoutNotifierRewardMultiplier,
+			cmd.BlockFlagValue.Int,
+		)
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput("success")
+	}
+
+	return nil
+}
+
+func bUpdateRedemptionParametersCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "update-redemption-parameters [arg_redemptionDustThreshold] [arg_redemptionTreasuryFeeDivisor] [arg_redemptionTxMaxFee] [arg_redemptionTxMaxTotalFee] [arg_redemptionTimeout] [arg_redemptionTimeoutSlashingAmount] [arg_redemptionTimeoutNotifierRewardMultiplier]",
+		Short:                 "Calls the nonpayable method updateRedemptionParameters on the Bridge contract.",
+		Args:                  cmd.ArgCountChecker(7),
+		RunE:                  bUpdateRedemptionParameters,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	c.PreRunE = cmd.NonConstArgsChecker
+	cmd.InitNonConstFlags(c)
+
+	return c
+}
+
+func bUpdateRedemptionParameters(c *cobra.Command, args []string) error {
+	contract, err := initializeBridge(c)
+	if err != nil {
+		return err
+	}
+
+	arg_redemptionDustThreshold, err := decode.ParseUint[uint64](args[0], 64)
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter arg_redemptionDustThreshold, a uint64, from passed value %v",
+			args[0],
+		)
+	}
+	arg_redemptionTreasuryFeeDivisor, err := decode.ParseUint[uint64](args[1], 64)
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter arg_redemptionTreasuryFeeDivisor, a uint64, from passed value %v",
+			args[1],
+		)
+	}
+	arg_redemptionTxMaxFee, err := decode.ParseUint[uint64](args[2], 64)
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter arg_redemptionTxMaxFee, a uint64, from passed value %v",
+			args[2],
+		)
+	}
+	arg_redemptionTxMaxTotalFee, err := decode.ParseUint[uint64](args[3], 64)
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter arg_redemptionTxMaxTotalFee, a uint64, from passed value %v",
+			args[3],
+		)
+	}
+	arg_redemptionTimeout, err := decode.ParseUint[uint32](args[4], 32)
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter arg_redemptionTimeout, a uint32, from passed value %v",
+			args[4],
+		)
+	}
+	arg_redemptionTimeoutSlashingAmount, err := hexutil.DecodeBig(args[5])
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter arg_redemptionTimeoutSlashingAmount, a uint96, from passed value %v",
+			args[5],
+		)
+	}
+	arg_redemptionTimeoutNotifierRewardMultiplier, err := decode.ParseUint[uint32](args[6], 32)
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter arg_redemptionTimeoutNotifierRewardMultiplier, a uint32, from passed value %v",
+			args[6],
+		)
+	}
+
+	var (
+		transaction *types.Transaction
+	)
+
+	if shouldSubmit, _ := c.Flags().GetBool(cmd.SubmitFlag); shouldSubmit {
+		// Do a regular submission. Take payable into account.
+		transaction, err = contract.UpdateRedemptionParameters(
+			arg_redemptionDustThreshold,
+			arg_redemptionTreasuryFeeDivisor,
+			arg_redemptionTxMaxFee,
+			arg_redemptionTxMaxTotalFee,
+			arg_redemptionTimeout,
+			arg_redemptionTimeoutSlashingAmount,
+			arg_redemptionTimeoutNotifierRewardMultiplier,
+		)
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput(transaction.Hash())
+	} else {
+		// Do a call.
+		err = contract.CallUpdateRedemptionParameters(
+			arg_redemptionDustThreshold,
+			arg_redemptionTreasuryFeeDivisor,
+			arg_redemptionTxMaxFee,
+			arg_redemptionTxMaxTotalFee,
+			arg_redemptionTimeout,
+			arg_redemptionTimeoutSlashingAmount,
+			arg_redemptionTimeoutNotifierRewardMultiplier,
+			cmd.BlockFlagValue.Int,
+		)
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput("success")
+	}
+
+	return nil
+}
+
+func bUpdateWalletParametersCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "update-wallet-parameters [arg_walletCreationPeriod] [arg_walletCreationMinBtcBalance] [arg_walletCreationMaxBtcBalance] [arg_walletClosureMinBtcBalance] [arg_walletMaxAge] [arg_walletMaxBtcTransfer] [arg_walletClosingPeriod]",
+		Short:                 "Calls the nonpayable method updateWalletParameters on the Bridge contract.",
+		Args:                  cmd.ArgCountChecker(7),
+		RunE:                  bUpdateWalletParameters,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	c.PreRunE = cmd.NonConstArgsChecker
+	cmd.InitNonConstFlags(c)
+
+	return c
+}
+
+func bUpdateWalletParameters(c *cobra.Command, args []string) error {
+	contract, err := initializeBridge(c)
+	if err != nil {
+		return err
+	}
+
+	arg_walletCreationPeriod, err := decode.ParseUint[uint32](args[0], 32)
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter arg_walletCreationPeriod, a uint32, from passed value %v",
+			args[0],
+		)
+	}
+	arg_walletCreationMinBtcBalance, err := decode.ParseUint[uint64](args[1], 64)
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter arg_walletCreationMinBtcBalance, a uint64, from passed value %v",
+			args[1],
+		)
+	}
+	arg_walletCreationMaxBtcBalance, err := decode.ParseUint[uint64](args[2], 64)
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter arg_walletCreationMaxBtcBalance, a uint64, from passed value %v",
+			args[2],
+		)
+	}
+	arg_walletClosureMinBtcBalance, err := decode.ParseUint[uint64](args[3], 64)
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter arg_walletClosureMinBtcBalance, a uint64, from passed value %v",
+			args[3],
+		)
+	}
+	arg_walletMaxAge, err := decode.ParseUint[uint32](args[4], 32)
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter arg_walletMaxAge, a uint32, from passed value %v",
+			args[4],
+		)
+	}
+	arg_walletMaxBtcTransfer, err := decode.ParseUint[uint64](args[5], 64)
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter arg_walletMaxBtcTransfer, a uint64, from passed value %v",
+			args[5],
+		)
+	}
+	arg_walletClosingPeriod, err := decode.ParseUint[uint32](args[6], 32)
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter arg_walletClosingPeriod, a uint32, from passed value %v",
+			args[6],
+		)
+	}
+
+	var (
+		transaction *types.Transaction
+	)
+
+	if shouldSubmit, _ := c.Flags().GetBool(cmd.SubmitFlag); shouldSubmit {
+		// Do a regular submission. Take payable into account.
+		transaction, err = contract.UpdateWalletParameters(
+			arg_walletCreationPeriod,
+			arg_walletCreationMinBtcBalance,
+			arg_walletCreationMaxBtcBalance,
+			arg_walletClosureMinBtcBalance,
+			arg_walletMaxAge,
+			arg_walletMaxBtcTransfer,
+			arg_walletClosingPeriod,
+		)
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput(transaction.Hash())
+	} else {
+		// Do a call.
+		err = contract.CallUpdateWalletParameters(
+			arg_walletCreationPeriod,
+			arg_walletCreationMinBtcBalance,
+			arg_walletCreationMaxBtcBalance,
+			arg_walletClosureMinBtcBalance,
+			arg_walletMaxAge,
+			arg_walletMaxBtcTransfer,
+			arg_walletClosingPeriod,
 			cmd.BlockFlagValue.Int,
 		)
 		if err != nil {

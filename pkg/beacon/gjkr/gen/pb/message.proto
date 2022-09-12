@@ -1,12 +1,11 @@
 syntax = "proto3";
 
-option go_package = "pb";
+option go_package = "./pb";
 package gjkr;
 
 message EphemeralPublicKey {
     uint32 senderID = 1;
-    uint32 receiverID = 2;
-    map<uint32, bytes> ephemeralPublicKeys = 3;
+    map<uint32, bytes> ephemeralPublicKeys = 2;
 }
 
 message MemberCommitments {

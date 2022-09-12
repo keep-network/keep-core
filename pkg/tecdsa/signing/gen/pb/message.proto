@@ -1,0 +1,65 @@
+syntax = "proto3";
+
+option go_package = "./pb";
+package signing;
+
+message EphemeralPublicKeyMessage {
+    uint32 senderID = 1;
+    map<uint32, bytes> ephemeralPublicKeys = 2;
+    string sessionID = 3;
+}
+
+message TSSRoundOneMessage {
+    uint32 senderID = 1;
+    bytes broadcastPayload = 2;
+    map<uint32, bytes> peersPayload = 3;
+    string sessionID = 4;
+}
+
+message TSSRoundTwoMessage {
+    uint32 senderID = 1;
+    map<uint32, bytes> peersPayload = 2;
+    string sessionID = 3;
+}
+
+message TSSRoundThreeMessage {
+    uint32 senderID = 1;
+    bytes payload = 2;
+    string sessionID = 3;
+}
+
+message TSSRoundFourMessage {
+    uint32 senderID = 1;
+    bytes payload = 2;
+    string sessionID = 3;
+}
+
+message TSSRoundFiveMessage {
+    uint32 senderID = 1;
+    bytes payload = 2;
+    string sessionID = 3;
+}
+
+message TSSRoundSixMessage {
+    uint32 senderID = 1;
+    bytes payload = 2;
+    string sessionID = 3;
+}
+
+message TSSRoundSevenMessage {
+    uint32 senderID = 1;
+    bytes payload = 2;
+    string sessionID = 3;
+}
+
+message TSSRoundEightMessage {
+    uint32 senderID = 1;
+    bytes payload = 2;
+    string sessionID = 3;
+}
+
+message TSSRoundNineMessage {
+    uint32 senderID = 1;
+    bytes payload = 2;
+    string sessionID = 3;
+}

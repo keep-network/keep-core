@@ -7,6 +7,8 @@ import (
 	"github.com/bnb-chain/tss-lib/crypto"
 	"github.com/bnb-chain/tss-lib/crypto/paillier"
 	"github.com/bnb-chain/tss-lib/ecdsa/keygen"
+	"google.golang.org/protobuf/proto"
+
 	"github.com/keep-network/keep-core/pkg/tecdsa/gen/pb"
 )
 
@@ -69,7 +71,7 @@ func (pks *PrivateKeyShare) Marshal() ([]byte, error) {
 		Y: pks.data.ECDSAPub.Y().Bytes(),
 	}
 
-	return (&pb.PrivateKeyShare{
+	return proto.Marshal(&pb.PrivateKeyShare{
 		Data: &pb.LocalPartySaveData{
 			LocalPreParams: localPreParams,
 			LocalSecrets:   localSecrets,
@@ -81,13 +83,13 @@ func (pks *PrivateKeyShare) Marshal() ([]byte, error) {
 			PaillierPKs:    paillierPKs,
 			EcdsaPub:       ecdsaPub,
 		},
-	}).Marshal()
+	})
 }
 
 // Unmarshal converts a byte array back to the PrivateKeyShare.
 func (pks *PrivateKeyShare) Unmarshal(bytes []byte) error {
 	pbPrivateKeyShare := pb.PrivateKeyShare{}
-	if err := pbPrivateKeyShare.Unmarshal(bytes); err != nil {
+	if err := proto.Unmarshal(bytes, &pbPrivateKeyShare); err != nil {
 		return fmt.Errorf("failed to unmarshal private key share: [%v]", err)
 	}
 

@@ -8,6 +8,9 @@ import (
 	"github.com/ipfs/go-log"
 )
 
+// ErrEmptyPool is returned by GetNow when the pool is empty.
+var ErrEmptyPool = fmt.Errorf("pool is empty")
+
 // Persistence defines the expected interface for storing and loading generated
 // and not-yet-used parameters on persistent storage. Generating parameters is
 // usually a computationally expensive operation and generated parameters should
@@ -88,8 +91,8 @@ func NewParameterPool[T any](
 	}
 }
 
-// GetNow returns a new parameter. It is fetched from the pool or an error is
-// returned when the pool is empty.
+// GetNow returns a new parameter from the pool. Returns ErrEmptyPool when the
+// pool is empty.
 func (pp *ParameterPool[T]) GetNow() (*T, error) {
 	select {
 	case generated := <-pp.pool:
@@ -103,7 +106,7 @@ func (pp *ParameterPool[T]) GetNow() (*T, error) {
 
 		return generated, nil
 	default:
-		return nil, fmt.Errorf("pool is empty")
+		return nil, ErrEmptyPool
 	}
 }
 

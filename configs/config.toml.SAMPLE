@@ -90,10 +90,11 @@ Port = 8081
 # Uncomment to overwrite default values for TBTC config.
 #
 # [tbtc]
-# PreParamsPoolSize = 50
+# PreParamsPoolSize = 3000
 # PreParamsGenerationTimeout = "2m"
 # PreParamsGenerationDelay = "10s"
 # PreParamsGenerationConcurrency = 1
+# KeyGenConcurrency = 1
 
 # Developer options to work with locally deployed contracts
 #
@@ -101,3 +102,4 @@ Port = 8081
 # TokenStakingAddress = "0xBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB"
 # RandomBeaconAddress = "0xBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB"
 # WalletRegistryAddress = "0xBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB"
+# BridgeAddress = "0xBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB"

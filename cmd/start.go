@@ -8,6 +8,7 @@ import (
 
 	commonDiagnostics "github.com/keep-network/keep-common/pkg/diagnostics"
 	"github.com/keep-network/keep-common/pkg/persistence"
+	"github.com/keep-network/keep-core/build"
 	"github.com/keep-network/keep-core/config"
 	"github.com/keep-network/keep-core/pkg/beacon"
 	"github.com/keep-network/keep-core/pkg/chain"
@@ -58,7 +59,6 @@ Environment variables:
 // start starts a node
 func start(cmd *cobra.Command) error {
 	ctx := context.Background()
-	rootCmd := cmd.Root()
 
 	logger.Infof(
 		"Starting the client against [%s] ethereum network...",
@@ -88,6 +88,7 @@ func start(cmd *cobra.Command) error {
 
 	nodeHeader(
 		netProvider.ConnectionManager().AddrStrings(),
+		beaconChain.Signing().Address().String(),
 		clientConfig.LibP2P.Port,
 		clientConfig.Ethereum,
 	)
@@ -118,7 +119,7 @@ func start(cmd *cobra.Command) error {
 	initializeMetrics(ctx, clientConfig, netProvider, blockCounter)
 	registry := initializeDiagnostics(clientConfig)
 	diagnostics.RegisterConnectedPeersSource(registry, netProvider, signing)
-	diagnostics.RegisterClientInfoSource(registry, netProvider, signing, rootCmd.Version)
+	diagnostics.RegisterClientInfoSource(registry, netProvider, signing, build.Version, build.Revision)
 
 	err = tbtc.Initialize(
 		ctx,

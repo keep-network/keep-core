@@ -1,0 +1,166 @@
+#@ load("@ytt:data", "data")
+
+#@ for client in data.values.clients:
+
+#@ def labels():
+app: keep
+type: client
+id: #@ str(client.id)
+network: goerli
+#@ end
+
+#@ def name():
+#@   return "keep-client-" + str(client.id)
+#@ end
+
+#@ def account():
+#@   return "account-" + str(client.id)
+#@ end
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: #@ name()
+  namespace: default
+  labels: #@ labels()
+spec:
+  replicas: 1
+  selector:
+    matchLabels: #@ labels()
+  serviceName: #@ name()
+  volumeClaimTemplates:
+    - metadata:
+        name: keep-client-data
+      spec:
+        accessModes: [ReadWriteOnce]
+        resources:
+          requests:
+            storage: 512Mi
+  template:
+    metadata:
+      labels: #@ labels()
+    spec:
+      volumes:
+        - name: keep-client-data
+          persistentVolumeClaim:
+            claimName: keep-client-data
+        - name: eth-account-keyfile
+          configMap:
+            name: eth-account-info
+            items:
+              - key: #@ account() + "-keyfile"
+                path: #@ account() + "-keyfile"
+      containers:
+        - name: keep-client
+          image: "gcr.io/keep-test-f3e0/keep-client:latest"
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 3919
+            - containerPort: 9601
+            - containerPort: 9701
+          env:
+            - name: KEEP_ETHEREUM_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: eth-account-passphrases
+                  key: #@ account()
+            #! Read secret to env variable to use it as arg.
+            - name: ETH_WS_URL
+              valueFrom:
+                secretKeyRef:
+                  name: eth-network-goerli
+                  key: ws-url
+          envFrom:
+            - configMapRef:
+                name: keep-client-config
+          volumeMounts:
+            - name: keep-client-data
+              mountPath: /mnt/keep-client/data
+            - name: eth-account-keyfile
+              mountPath: /mnt/keep-client/keyfile
+          command: ["keep-client", "start"]
+          args:
+            - --goerli
+            - --ethereum.url
+            - $(ETH_WS_URL)
+            - "--ethereum.keyFile"
+            -  #@ "/mnt/keep-client/keyfile/" + account() + "-keyfile"
+            - "--storage.dataDir"
+            - "/mnt/keep-client/data"
+            - "--network.port"
+            - "3919"
+            - "--network.announcedAddresses"
+            -  #@ "/dns4/" + name() + ".default.svc.cluster.local/tcp/3919"
+            #@ if client.networkPeers:
+            - "--network.peers"
+            -  #@ client.networkPeers
+            #@ end
+            - "--metrics.port"
+            - "9601"
+            - "--diagnostics.port"
+            - "9701"
+      initContainers:
+        #@ for/end initcontainer in data.values.initContainers:
+        - name: #@ initcontainer.name
+          image: #@ initcontainer.image
+          imagePullPolicy: Always
+          env:
+            - name: CHAIN_API_URL
+              valueFrom:
+                secretKeyRef:
+                  name: eth-network-goerli
+                  key: http-url
+            - name: CONTRACT_OWNER_ETH_PRIVATE_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: eth-network-goerli
+                  key: contract-owner-eth-account-private-key
+            - name: KEEP_CLIENT_ETH_PRIVATE_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: eth-account-privatekeys
+                  key: #@ account()
+            - name: ACCOUNTS_PRIVATE_KEYS
+              value: $(CONTRACT_OWNER_ETH_PRIVATE_KEY),$(KEEP_CLIENT_ETH_PRIVATE_KEY)
+            - name: KEEP_CLIENT_ETH_ADDRESS
+              valueFrom:
+                configMapKeyRef:
+                  name: eth-account-info
+                  key: #@ account() + "-address"
+          args:
+            - "initialize"
+            - "--network"
+            - "goerli"
+            - "--owner"
+            - "$(KEEP_CLIENT_ETH_ADDRESS)"
+            - "--provider"
+            - "$(KEEP_CLIENT_ETH_ADDRESS)"
+            - "--operator"
+            - "$(KEEP_CLIENT_ETH_ADDRESS)"
+            #@ if client.stakeAmount:
+            - "--amount"
+            -  #@ str(client.stakeAmount)
+            - "--authorization"
+            -  #@ str(client.stakeAmount)
+            #@ end
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: #@ name()
+  namespace: default
+  labels: #@ labels()
+spec:
+  type: LoadBalancer
+  ports:
+    - port: 3919
+      targetPort: 3919
+      name: network
+    - port: 9601
+      targetPort: 9601
+      name: metrics
+    - port: 9701
+      targetPort: 9701
+      name: diagnostics
+  selector: #@ labels()
+#@ end
