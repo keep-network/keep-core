@@ -197,6 +197,7 @@ func (n *node) joinDKGIfEligible(seed *big.Int, startBlockNumber uint64) {
 						)
 
 						result, executionEndBlock, err := n.dkgExecutor.Execute(
+							seed,
 							sessionID,
 							attempt.startBlock,
 							memberIndex,

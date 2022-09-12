@@ -1,6 +1,8 @@
 package signing
 
 import (
+	"fmt"
+	"github.com/bnb-chain/tss-lib/tss"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/chain/local_v1"
 	"github.com/keep-network/keep-core/pkg/internal/tecdsatest"
@@ -111,4 +113,76 @@ func TestShouldAcceptMessage(t *testing.T) {
 			)
 		})
 	}
+}
+
+func TestIdentityConverter_MemberIndexToTssPartyID(t *testing.T) {
+	converter := &identityConverter{keys: []*big.Int{
+		big.NewInt(301),
+		big.NewInt(303),
+		big.NewInt(304),
+		big.NewInt(305),
+	}}
+	memberID := group.MemberIndex(2)
+
+	tssPartyID := converter.MemberIndexToTssPartyID(memberID)
+
+	testutils.AssertStringsEqual(
+		t,
+		"ID of the TSS party ID",
+		tssPartyID.Id,
+		"303",
+	)
+
+	testutils.AssertBytesEqual(
+		t,
+		tssPartyID.Key,
+		big.NewInt(303).Bytes(),
+	)
+
+	testutils.AssertStringsEqual(
+		t,
+		"moniker of the TSS party ID",
+		tssPartyID.Moniker,
+		fmt.Sprintf("member-%v", memberID),
+	)
+
+	testutils.AssertIntsEqual(
+		t,
+		"index of the TSS party ID",
+		-1,
+		tssPartyID.Index,
+	)
+}
+
+func TestIdentityConverter_MemberIndexToTssPartyIDKey(t *testing.T) {
+	converter := &identityConverter{keys: []*big.Int{
+		big.NewInt(301),
+		big.NewInt(303),
+		big.NewInt(304),
+		big.NewInt(305),
+	}}
+	memberID := group.MemberIndex(2)
+
+	key := converter.MemberIndexToTssPartyIDKey(memberID)
+
+	testutils.AssertBigIntsEqual(
+		t,
+		"key of the TSS party ID",
+		big.NewInt(303),
+		key,
+	)
+}
+
+func TestIdentityConverter_TssPartyIDToMemberIndex(t *testing.T) {
+	converter := &identityConverter{keys: []*big.Int{
+		big.NewInt(301),
+		big.NewInt(303),
+		big.NewInt(304),
+		big.NewInt(305),
+	}}
+	partyID := tss.NewPartyID("303", "member-2", big.NewInt(303))
+
+	memberID := converter.TssPartyIDToMemberIndex(partyID)
+
+	testutils.AssertIntsEqual(t, "member ID", 2, int(memberID))
 }
