@@ -49,9 +49,21 @@ func NewParameterPool[T any](
 	if err != nil {
 		logger.Errorf("failed to read parameters from persistence: [%w]", err)
 	}
-	for _, parameter := range all {
+
+	logger.Debugf("read [%d] parameters from persistence", len(all))
+
+	for i, parameter := range all {
+		// Load to the pool only the number of the parameters read from the persistence
+		// that can fit withing pool's target size, to avoid locking on writing to the
+		// channel.
+		if i >= targetSize {
+			break
+		}
+
 		pool <- parameter
 	}
+
+	logger.Infof("loaded [%d] parameters from persistence", len(pool))
 
 	scheduler.compute(func(ctx context.Context) {
 		start := time.Now()
