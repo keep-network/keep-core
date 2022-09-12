@@ -21,8 +21,6 @@ func main() {
 		fmt.Fprintf(os.Stderr, "failed to configure logging: [%v]\n", err)
 	}
 
-	build.LogVersion()
-
 	rootCmd := cmd.Initialize(build.Version, build.Revision)
 
 	if err := rootCmd.Execute(); err != nil {
