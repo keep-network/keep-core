@@ -89,6 +89,9 @@ type IdentityConverter interface {
 
 	// TssPartyIDToMemberIndex converts a single TSS party ID to a group
 	// member index.
+	//
+	// If the provided Party ID does not map to any known member index,
+	// MemberIndex(0) is returned.
 	TssPartyIDToMemberIndex(partyID *tss.PartyID) group.MemberIndex
 }
 

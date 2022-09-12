@@ -168,3 +168,14 @@ func TestIdentityConverter_TssPartyIDToMemberIndex(t *testing.T) {
 
 	testutils.AssertIntsEqual(t, "member ID", 2, int(memberIndex))
 }
+
+func TestIdentityConverter_TssPartyIDToMemberIndex_Corrupted(t *testing.T) {
+	converter := &identityConverter{seed: big.NewInt(303)}
+	partyID := tss.NewPartyID("302", "member-2", big.NewInt(302))
+
+	// seed > member ID; it should never happen, so the party ID is considered
+	// corrupted and MemberIndex(0) is returned.
+	memberIndex := converter.TssPartyIDToMemberIndex(partyID)
+
+	testutils.AssertIntsEqual(t, "member ID", 0, int(memberIndex))
+}

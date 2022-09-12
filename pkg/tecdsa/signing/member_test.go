@@ -187,3 +187,19 @@ func TestIdentityConverter_TssPartyIDToMemberIndex(t *testing.T) {
 
 	testutils.AssertIntsEqual(t, "member ID", 2, int(memberIndex))
 }
+
+func TestIdentityConverter_TssPartyIDToMemberIndex_Corrupted(t *testing.T) {
+	converter := &identityConverter{keys: []*big.Int{
+		big.NewInt(301),
+		big.NewInt(303),
+		big.NewInt(304),
+		big.NewInt(305),
+	}}
+	partyID := tss.NewPartyID("306", "member-5", big.NewInt(306))
+
+	// party ID key is unknown; it should never happen, so the party ID is
+	// considered corrupted and MemberIndex(0) is returned.
+	memberIndex := converter.TssPartyIDToMemberIndex(partyID)
+
+	testutils.AssertIntsEqual(t, "member ID", 0, int(memberIndex))
+}
