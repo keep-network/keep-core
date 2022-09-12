@@ -274,55 +274,6 @@ jobs:
           upstream_ref: ${{ github.event.inputs.upstream_ref }}
           version: ${{ steps.npm-version-bump.outputs.version }}
 
-      - name: Upload files needed for etherscan verification
-        uses: actions/upload-artifact@v3
-        with:
-          name: Artifacts for etherscan verifcation
-          path: |
-            ./solidity/ecdsa/deployments
-            ./solidity/ecdsa/package.json
-            ./solidity/ecdsa/yarn.lock
-
-  contracts-etherscan-verification:
-    needs: [contracts-deployment-testnet]
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: ./solidity/ecdsa
-    steps:
-      - uses: actions/checkout@v3
-
-      - name: Download files needed for etherscan verification
-        uses: actions/download-artifact@v3
-        with:
-          name: Artifacts for etherscan verifcation
-          path: ./solidity/ecdsa
-
-      - uses: actions/setup-node@v3
-        with:
-          node-version: "14.x"
-          cache: "yarn"
-          cache-dependency-path: solidity/ecdsa/yarn.lock
-
-      - name: Install needed dependencies
-        run: yarn install --frozen-lockfile
-
-      # If we don't remove the artifacts from `node-modules`, the
-      # `etherscan-verify` plugins tries to verify them, which is not desired.
-      - name: Prepare for verification on Etherscan
-        run: |
-          rm -rf ./node_modules/@keep-network/random-beacon/artifacts
-          rm -rf ./node_modules/@threshold-network/solidity-contracts/artifacts
-          rm -rf ./external/npm
-
-      - name: Verify contracts on Etherscan
-        env:
-          ETHERSCAN_API_KEY: ${{ secrets.ETHERSCAN_API_KEY }}
-          CHAIN_API_URL: ${{ secrets.GOERLI_ETH_HOSTNAME_HTTP }}
-        run: |
-          yarn run hardhat --network ${{ github.event.inputs.environment }} \
-            etherscan-verify
-
   # This job is responsible for publishing packackes with slightly modified
   # contracts. The modifications are there to help with the process of testing
   # some features on the T Token Dashboard. The job starts only if workflow

@@ -13,6 +13,8 @@ import (
 	"github.com/keep-network/keep-core/config"
 )
 
+//go:generate make gen_proto
+
 var logger = log.Logger("keep-main")
 
 func main() {
@@ -25,6 +27,5 @@ func main() {
 
 	if err := rootCmd.Execute(); err != nil {
 		logger.Fatal(err)
-		logger.Info()
 	}
 }

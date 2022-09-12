@@ -2,7 +2,7 @@ import type { HardhatRuntimeEnvironment } from "hardhat/types"
 import type { DeployFunction } from "hardhat-deploy/types"
 
 const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
-  const { getNamedAccounts, deployments } = hre
+  const { getNamedAccounts, deployments, helpers } = hre
   const { deployer } = await getNamedAccounts()
 
   const SortitionPool = await deployments.get("EcdsaSortitionPool")
@@ -13,6 +13,10 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
     log: true,
     waitConfirmations: 1,
   })
+
+  if (hre.network.tags.etherscan) {
+    await helpers.etherscan.verify(EcdsaDkgValidator)
+  }
 
   if (hre.network.tags.tenderly) {
     await hre.tenderly.verify({

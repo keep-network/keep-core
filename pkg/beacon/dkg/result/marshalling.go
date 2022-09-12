@@ -3,6 +3,8 @@ package result
 import (
 	"fmt"
 
+	"google.golang.org/protobuf/proto"
+
 	"github.com/keep-network/keep-core/pkg/beacon/chain"
 	"github.com/keep-network/keep-core/pkg/beacon/dkg/result/gen/pb"
 	"github.com/keep-network/keep-core/pkg/protocol/group"
@@ -29,19 +31,19 @@ func (d *DKGResultHashSignatureMessage) Type() string {
 // Marshal converts this DKGResultHashSignatureMessage to a byte array suitable
 // for network communication.
 func (d *DKGResultHashSignatureMessage) Marshal() ([]byte, error) {
-	return (&pb.DKGResultHashSignature{
+	return proto.Marshal(&pb.DKGResultHashSignature{
 		SenderIndex: uint32(d.senderIndex),
 		ResultHash:  d.resultHash[:],
 		Signature:   d.signature,
 		PublicKey:   d.publicKey,
-	}).Marshal()
+	})
 }
 
 // Unmarshal converts a byte array produced by Marshal to a
 // DKGResultHashSignatureMessage.
 func (d *DKGResultHashSignatureMessage) Unmarshal(bytes []byte) error {
 	pbMsg := pb.DKGResultHashSignature{}
-	if err := pbMsg.Unmarshal(bytes); err != nil {
+	if err := proto.Unmarshal(bytes, &pbMsg); err != nil {
 		return err
 	}
 

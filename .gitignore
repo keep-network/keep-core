@@ -14,7 +14,7 @@ _local/
 # Executables
 debug
 debug.test
-keep-core
+keep-client
 main
 main.test
 

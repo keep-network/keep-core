@@ -87,6 +87,7 @@ func start(cmd *cobra.Command) error {
 
 	nodeHeader(
 		netProvider.ConnectionManager().AddrStrings(),
+		beaconChain.Signing().Address().String(),
 		clientConfig.LibP2P.Port,
 		clientConfig.Ethereum,
 	)
