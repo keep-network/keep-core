@@ -10,6 +10,8 @@ import (
 	"github.com/keep-network/keep-core/pkg/tecdsa/retry"
 	"github.com/keep-network/keep-core/pkg/tecdsa/signing"
 	"math/big"
+	"math/rand"
+	"sort"
 )
 
 // signingRetryLoop is a struct that encapsulates the signing retry logic.
@@ -21,6 +23,7 @@ type signingRetryLoop struct {
 
 	attemptCounter    uint
 	attemptStartBlock uint64
+	attemptSeed       int64
 
 	randomRetryCounter uint
 	randomRetrySeed    int64
@@ -41,6 +44,10 @@ func newSigningRetryLoop(
 	// of sha256(seed) as the randomRetrySeed.
 	messageSha256 := sha256.Sum256(message.Bytes())
 	randomRetrySeed := int64(binary.BigEndian.Uint64(messageSha256[:8]))
+	// Also, take the next 8 bytes for the attemptSeed that is sometimes
+	// used to trim the qualified members list to the minimum size equal
+	// to the honest threshold.
+	attemptSeed := int64(binary.BigEndian.Uint64(messageSha256[8:16]))
 
 	return &signingRetryLoop{
 		signingGroupMemberIndex: signingGroupMemberIndex,
@@ -48,6 +55,7 @@ func newSigningRetryLoop(
 		chainConfig:             chainConfig,
 		attemptCounter:          0,
 		attemptStartBlock:       initialStartBlock,
+		attemptSeed:             attemptSeed,
 		randomRetryCounter:      0,
 		randomRetrySeed:         randomRetrySeed,
 		delayBlocks:             5,
@@ -115,11 +123,13 @@ func (srl *signingRetryLoop) start(
 
 		// Exclude all members controlled by the operators that were not
 		// qualified for the current attempt.
+		includedMembers := make([]group.MemberIndex, 0)
 		excludedMembers := make([]group.MemberIndex, 0)
 		attemptSkipped := false
 		for i, operator := range srl.signingGroupOperators {
+			memberIndex := group.MemberIndex(i + 1)
+
 			if !qualifiedOperatorsSet[operator] {
-				memberIndex := group.MemberIndex(i + 1)
 				excludedMembers = append(excludedMembers, memberIndex)
 
 				// If the given member was not qualified for the given attempt,
@@ -129,6 +139,8 @@ func (srl *signingRetryLoop) start(
 					attemptSkipped = true
 					break
 				}
+			} else {
+				includedMembers = append(includedMembers, memberIndex)
 			}
 		}
 
@@ -136,6 +148,36 @@ func (srl *signingRetryLoop) start(
 		var attemptErr error
 
 		if !attemptSkipped {
+			// Make sure we always use just the smallest required count of
+			// signing members for performance reasons
+			if len(includedMembers) > srl.chainConfig.HonestThreshold {
+				// #nosec G404 (insecure random number source (rand))
+				// Shuffling does not require secure randomness.
+				rng := rand.New(rand.NewSource(
+					srl.attemptSeed + int64(srl.attemptCounter),
+				))
+				// Sort in ascending order just in case.
+				sort.Slice(includedMembers, func(i, j int) bool {
+					return includedMembers[i] < includedMembers[j]
+				})
+				// Shuffle the included members slice to randomize the
+				// selection of additionally excluded members.
+				rng.Shuffle(len(includedMembers), func(i, j int) {
+					includedMembers[i], includedMembers[j] =
+						includedMembers[j], includedMembers[i]
+				})
+				// Get the surplus of included members and add them to
+				// the excluded members list.
+				excludedMembers = append(
+					excludedMembers,
+					includedMembers[srl.chainConfig.HonestThreshold:]...,
+				)
+				// Sort the resulting excluded members list in ascending order.
+				sort.Slice(excludedMembers, func(i, j int) bool {
+					return excludedMembers[i] < excludedMembers[j]
+				})
+			}
+
 			result, attemptErr = signingAttemptFn(&signingAttemptParams{
 				index:           srl.attemptCounter,
 				startBlock:      srl.attemptStartBlock,
