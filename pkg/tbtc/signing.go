@@ -9,6 +9,7 @@ import (
 	"github.com/keep-network/keep-core/pkg/protocol/group"
 	"github.com/keep-network/keep-core/pkg/tecdsa/retry"
 	"github.com/keep-network/keep-core/pkg/tecdsa/signing"
+	"golang.org/x/exp/slices"
 	"math/big"
 	"math/rand"
 	"sort"
@@ -125,59 +126,55 @@ func (srl *signingRetryLoop) start(
 		// qualified for the current attempt.
 		includedMembers := make([]group.MemberIndex, 0)
 		excludedMembers := make([]group.MemberIndex, 0)
-		attemptSkipped := false
 		for i, operator := range srl.signingGroupOperators {
 			memberIndex := group.MemberIndex(i + 1)
 
 			if !qualifiedOperatorsSet[operator] {
 				excludedMembers = append(excludedMembers, memberIndex)
-
-				// If the given member was not qualified for the given attempt,
-				// mark this attempt as skipped in order to skip the execution
-				// and set up the next attempt properly.
-				if memberIndex == srl.signingGroupMemberIndex {
-					attemptSkipped = true
-					break
-				}
 			} else {
 				includedMembers = append(includedMembers, memberIndex)
 			}
 		}
 
+		// Make sure we always use just the smallest required count of
+		// signing members for performance reasons
+		if len(includedMembers) > srl.chainConfig.HonestThreshold {
+			// #nosec G404 (insecure random number source (rand))
+			// Shuffling does not require secure randomness.
+			rng := rand.New(rand.NewSource(
+				srl.attemptSeed + int64(srl.attemptCounter),
+			))
+			// Sort in ascending order just in case.
+			sort.Slice(includedMembers, func(i, j int) bool {
+				return includedMembers[i] < includedMembers[j]
+			})
+			// Shuffle the included members slice to randomize the
+			// selection of additionally excluded members.
+			rng.Shuffle(len(includedMembers), func(i, j int) {
+				includedMembers[i], includedMembers[j] =
+					includedMembers[j], includedMembers[i]
+			})
+			// Get the surplus of included members and add them to
+			// the excluded members list.
+			excludedMembers = append(
+				excludedMembers,
+				includedMembers[srl.chainConfig.HonestThreshold:]...,
+			)
+			// Sort the resulting excluded members list in ascending order.
+			sort.Slice(excludedMembers, func(i, j int) bool {
+				return excludedMembers[i] < excludedMembers[j]
+			})
+		}
+
+		attemptSkipped := slices.Contains(
+			excludedMembers,
+			srl.signingGroupMemberIndex,
+		)
+
 		var result *signing.Result
 		var attemptErr error
 
 		if !attemptSkipped {
-			// Make sure we always use just the smallest required count of
-			// signing members for performance reasons
-			if len(includedMembers) > srl.chainConfig.HonestThreshold {
-				// #nosec G404 (insecure random number source (rand))
-				// Shuffling does not require secure randomness.
-				rng := rand.New(rand.NewSource(
-					srl.attemptSeed + int64(srl.attemptCounter),
-				))
-				// Sort in ascending order just in case.
-				sort.Slice(includedMembers, func(i, j int) bool {
-					return includedMembers[i] < includedMembers[j]
-				})
-				// Shuffle the included members slice to randomize the
-				// selection of additionally excluded members.
-				rng.Shuffle(len(includedMembers), func(i, j int) {
-					includedMembers[i], includedMembers[j] =
-						includedMembers[j], includedMembers[i]
-				})
-				// Get the surplus of included members and add them to
-				// the excluded members list.
-				excludedMembers = append(
-					excludedMembers,
-					includedMembers[srl.chainConfig.HonestThreshold:]...,
-				)
-				// Sort the resulting excluded members list in ascending order.
-				sort.Slice(excludedMembers, func(i, j int) bool {
-					return excludedMembers[i] < excludedMembers[j]
-				})
-			}
-
 			result, attemptErr = signingAttemptFn(&signingAttemptParams{
 				index:           srl.attemptCounter,
 				startBlock:      srl.attemptStartBlock,
