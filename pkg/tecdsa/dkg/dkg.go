@@ -118,7 +118,7 @@ func (e *Executor) Execute(
 	return finalizationState.result(), endBlockNumber, nil
 }
 
-func (e *Executor) PreParamsPool() (*tssPreParamsPool) {
+func (e *Executor) PreParamsPool() *tssPreParamsPool {
 	return e.tssPreParamsPool
 }
 
