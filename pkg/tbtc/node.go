@@ -180,10 +180,12 @@ func (n *node) joinDKGIfEligible(seed *big.Int, startBlockNumber uint64) {
 					loopCtx,
 					func(attempt *dkgAttemptParams) (*dkg.Result, uint64, error) {
 						logger.Infof(
-							"[member:%v] starting dkg attempt [%v] "+
-								"with [%v] group members (excluded: [%v])",
+							"[member:%v] scheduled dkg attempt [%v] "+
+								"for block [%v] with [%v] group members "+
+								"(excluded: [%v])",
 							memberIndex,
 							attempt.index,
+							attempt.startBlock,
 							chainConfig.GroupSize-len(attempt.excludedMembers),
 							attempt.excludedMembers,
 						)
@@ -452,12 +454,14 @@ func (n *node) joinSigningIfEligible(
 					loopCtx,
 					func(attempt *signingAttemptParams) (*signing.Result, error) {
 						logger.Infof(
-							"[member:%v] starting signing "+
-								"attempt [%v] of message [%v] with [%v] "+
-								"group members (excluded: [%v])",
+							"[member:%v] scheduled signing "+
+								"attempt [%v] of message [%v] for "+
+								"block [%v] with [%v] group "+
+								"members (excluded: [%v])",
 							signer.signingGroupMemberIndex,
 							attempt.index,
 							message.Text(16),
+							attempt.startBlock,
 							signingGroupSize-len(attempt.excludedMembers),
 							attempt.excludedMembers,
 						)
