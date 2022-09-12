@@ -91,14 +91,22 @@ func start(cmd *cobra.Command) error {
 		clientConfig.Ethereum,
 	)
 
-	beaconPersistence, err := initializePersistence(clientConfig, "beacon")
+	storage, err := storage.Initialize(
+		clientConfig.Storage,
+		clientConfig.Ethereum.KeyFilePassword,
+	)
 	if err != nil {
-		return fmt.Errorf("cannot initialize beacon persistence: [%w]", err)
+		return fmt.Errorf("cannot initialize storage: [%w]", err)
 	}
 
-	tbtcPersistence, err := initializePersistence(clientConfig, "tbtc")
+	beaconKeyStorePersistence, err := storage.InitializeKeyStorePersistence("beacon")
 	if err != nil {
-		return fmt.Errorf("cannot initialize tbtc persistence: [%w]", err)
+		return fmt.Errorf("cannot initialize beacon keystore persistence: [%w]", err)
+	}
+
+	tbtcKeyStorePersistence, err := storage.InitializeKeyStorePersistence("tbtc")
+	if err != nil {
+		return fmt.Errorf("cannot initialize tbtc keystore persistence: [%w]", err)
 	}
 
 	scheduler := generator.StartScheduler()
@@ -107,7 +115,7 @@ func start(cmd *cobra.Command) error {
 		ctx,
 		beaconChain,
 		netProvider,
-		beaconPersistence,
+		beaconKeyStorePersistence,
 		scheduler,
 	)
 	if err != nil {
@@ -118,7 +126,7 @@ func start(cmd *cobra.Command) error {
 		ctx,
 		tbtcChain,
 		netProvider,
-		tbtcPersistence,
+		tbtcKeyStorePersistence,
 		scheduler,
 		clientConfig.Tbtc,
 	)
@@ -137,40 +145,6 @@ func start(cmd *cobra.Command) error {
 
 		return fmt.Errorf("uh-oh, we went boom boom for no reason")
 	}
-}
-
-func initializePersistence(clientConfig *config.Config, application string) (
-	persistence.Handle,
-	error,
-) {
-	err := persistence.EnsureDirectoryExists(
-		clientConfig.Storage.DataDir,
-		application,
-	)
-	if err != nil {
-		return nil, fmt.Errorf(
-			"cannot create storage directory for "+
-				"application [%v]: [%w]",
-			application,
-			err,
-		)
-	}
-
-	path := fmt.Sprintf("%s/%s", clientConfig.Storage.DataDir, application)
-
-	diskHandle, err := persistence.NewDiskHandle(path)
-	if err != nil {
-		return nil, fmt.Errorf(
-			"cannot create [%v] disk handle: [%w]",
-			application,
-			err,
-		)
-	}
-
-	return persistence.NewEncryptedPersistence(
-		diskHandle,
-		clientConfig.Ethereum.Account.KeyFilePassword,
-	), nil
 }
 
 func initializeMetrics(
