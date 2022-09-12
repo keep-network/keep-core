@@ -23,6 +23,7 @@ import (
 // Definitions of contract names.
 const (
 	WalletRegistryContractName = "WalletRegistry"
+	BridgeContractName         = "Bridge"
 )
 
 // TbtcChain represents a TBTC-specific chain handle.

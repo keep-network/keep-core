@@ -4,6 +4,9 @@ import (
 	"crypto/ecdsa"
 	"crypto/elliptic"
 	"fmt"
+
+	"google.golang.org/protobuf/proto"
+
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/protocol/group"
 	"github.com/keep-network/keep-core/pkg/tbtc/gen/pb"
@@ -40,17 +43,17 @@ func (s *signer) Marshal() ([]byte, error) {
 		return nil, fmt.Errorf("cannot marshal private key share: [%w]", err)
 	}
 
-	return (&pb.Signer{
+	return proto.Marshal(&pb.Signer{
 		Wallet:                  pbWallet,
 		SigningGroupMemberIndex: uint32(s.signingGroupMemberIndex),
 		PrivateKeyShare:         privateKeyShare,
-	}).Marshal()
+	})
 }
 
 // Unmarshal converts a byte array back to the signer.
 func (s *signer) Unmarshal(bytes []byte) error {
-	pbSigner := &pb.Signer{}
-	if err := pbSigner.Unmarshal(bytes); err != nil {
+	pbSigner := pb.Signer{}
+	if err := proto.Unmarshal(bytes, &pbSigner); err != nil {
 		return fmt.Errorf("cannot unmarshal signer: [%w]", err)
 	}
 

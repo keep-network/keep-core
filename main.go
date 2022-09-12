@@ -12,6 +12,8 @@ import (
 	"github.com/keep-network/keep-core/config"
 )
 
+//go:generate make gen_proto
+
 var (
 	version  string
 	revision string

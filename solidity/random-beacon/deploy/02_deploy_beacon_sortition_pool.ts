@@ -18,6 +18,10 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
     waitConfirmations: 1,
   })
 
+  if (hre.network.tags.etherscan) {
+    await helpers.etherscan.verify(BeaconSortitionPool)
+  }
+
   if (hre.network.tags.tenderly) {
     await hre.tenderly.verify({
       name: "BeaconSortitionPool",
