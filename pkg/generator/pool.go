@@ -62,7 +62,7 @@ func NewParameterPool[T any](
 
 	for i, parameter := range all {
 		// Load to the pool only the number of the parameters read from the persistence
-		// that can fit withing pool's target size, to avoid locking on writing to the
+		// that can fit within the pool's target size, to avoid locking on writing to the
 		// channel.
 		if i >= targetSize {
 			break
