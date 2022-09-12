@@ -6,6 +6,8 @@ import (
 
 	"github.com/bnb-chain/tss-lib/ecdsa/keygen"
 	"github.com/ipfs/go-log"
+
+	"github.com/keep-network/keep-common/pkg/persistence"
 	"github.com/keep-network/keep-core/pkg/generator"
 )
 
@@ -13,12 +15,15 @@ import (
 // by DKG protocol execution.
 type PreParams struct {
 	data *keygen.LocalPreParams
+	// Timestamp of the PreParams creation. The value is used to help the PreParams
+	// storage enforce a First In, First Out algorithm.
+	creationTimestamp time.Time
 }
 
-// NewPreParams constructs a new instance of tECDSA DKG pre-parameters based on
+// newPreParams constructs a new instance of tECDSA DKG pre-parameters based on
 // the generated numbers.
-func NewPreParams(data *keygen.LocalPreParams) *PreParams {
-	return &PreParams{data}
+func newPreParams(data *keygen.LocalPreParams) *PreParams {
+	return &PreParams{data, time.Now().UTC()}
 }
 
 // tssPreParamsPool is a pool holding TSS pre parameters. It autogenerates
@@ -33,6 +38,7 @@ type tssPreParamsPool struct {
 func newTssPreParamsPool(
 	logger log.StandardLogger,
 	scheduler *generator.Scheduler,
+	persistence persistence.Handle,
 	poolSize int,
 	generationTimeout time.Duration,
 	generationDelay time.Duration,
@@ -74,31 +80,20 @@ func newTssPreParamsPool(
 			return nil
 		}
 
-		return &PreParams{preParams}
+		return newPreParams(preParams)
 	}
+
+	tssPreParamsPersistance := newPreParamsStorage(persistence, logger)
 
 	return &tssPreParamsPool{
 		generator.NewParameterPool[PreParams](
 			logger,
 			scheduler,
-			&noPersistence{}, // TODO: replace with a real persistence
+			&tssPreParamsPersistance,
 			poolSize,
 			newPreParamsFn,
 			generationDelay,
 		),
 		logger,
 	}
-}
-
-// TODO: temporary solution, will be replaced with a real persistence
-type noPersistence struct{}
-
-func (np *noPersistence) Save(pp *PreParams) error {
-	return nil
-}
-func (np *noPersistence) Delete(pp *PreParams) error {
-	return nil
-}
-func (np *noPersistence) ReadAll() ([]*PreParams, error) {
-	return []*PreParams{}, nil
 }

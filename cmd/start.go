@@ -109,6 +109,11 @@ func start(cmd *cobra.Command) error {
 		return fmt.Errorf("cannot initialize tbtc keystore persistence: [%w]", err)
 	}
 
+	tbtcDataPersistence, err := storage.InitializeWorkPersistence("tbtc")
+	if err != nil {
+		return fmt.Errorf("cannot initialize tbtc data persistence: [%w]", err)
+	}
+
 	scheduler := generator.StartScheduler()
 
 	err = beacon.Initialize(
@@ -127,6 +132,7 @@ func start(cmd *cobra.Command) error {
 		tbtcChain,
 		netProvider,
 		tbtcKeyStorePersistence,
+		tbtcDataPersistence,
 		scheduler,
 		clientConfig.Tbtc,
 	)

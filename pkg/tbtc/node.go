@@ -5,9 +5,10 @@ import (
 	"crypto/ecdsa"
 	"encoding/hex"
 	"fmt"
-	"golang.org/x/exp/slices"
 	"math/big"
 	"time"
+
+	"golang.org/x/exp/slices"
 
 	"github.com/keep-network/keep-common/pkg/persistence"
 	"github.com/keep-network/keep-core/pkg/generator"
@@ -31,15 +32,17 @@ type node struct {
 func newNode(
 	chain Chain,
 	netProvider net.Provider,
-	persistence persistence.Handle,
+	keyStorePersistance persistence.Handle,
+	workPersistence persistence.Handle,
 	scheduler *generator.Scheduler,
 	config Config,
 ) *node {
-	walletRegistry := newWalletRegistry(persistence)
+	walletRegistry := newWalletRegistry(keyStorePersistance)
 
 	dkgExecutor := dkg.NewExecutor(
 		logger,
 		scheduler,
+		workPersistence,
 		config.PreParamsPoolSize,
 		config.PreParamsGenerationTimeout,
 		config.PreParamsGenerationDelay,
@@ -447,7 +450,7 @@ func (n *node) joinSigningIfEligible(
 
 				if slices.Contains(excludedMembers, signer.signingGroupMemberIndex) {
 					logger.Infof(
-						"[member:%v] excluded from signing attempt " +
+						"[member:%v] excluded from signing attempt "+
 							"[%v] of message [%v]; aborting",
 						signer.signingGroupMemberIndex,
 						attemptIndex,
