@@ -7,6 +7,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/keep-network/keep-common/pkg/persistence"
+	"github.com/keep-network/keep-core/build"
 	"github.com/keep-network/keep-core/config"
 	"github.com/keep-network/keep-core/pkg/beacon"
 	"github.com/keep-network/keep-core/pkg/chain"
@@ -127,7 +128,7 @@ func start(cmd *cobra.Command) error {
 	}
 
 	initializeMetrics(ctx, clientConfig, netProvider, blockCounter)
-	initializeDiagnostics(ctx, clientConfig, netProvider, signing)
+	initializeDiagnostics(clientConfig, netProvider, signing, build.Version, build.Revision)
 
 	select {
 	case <-ctx.Done():
@@ -216,10 +217,11 @@ func initializeMetrics(
 }
 
 func initializeDiagnostics(
-	ctx context.Context,
 	config *config.Config,
 	netProvider net.Provider,
 	signing chain.Signing,
+	clientVersion string,
+	clientRevision string,
 ) {
 	registry, isConfigured := diagnostics.Initialize(
 		config.Diagnostics.Port,
@@ -235,5 +237,5 @@ func initializeDiagnostics(
 	)
 
 	diagnostics.RegisterConnectedPeersSource(registry, netProvider, signing)
-	diagnostics.RegisterClientInfoSource(registry, netProvider, signing)
+	diagnostics.RegisterClientInfoSource(registry, netProvider, signing, clientVersion, clientRevision)
 }
