@@ -114,12 +114,18 @@ func start(cmd *cobra.Command) error {
 
 	scheduler := generator.StartScheduler()
 
+	// TODO: Replace with a `isBootstrapNode` config flag.
+	// Monitor sortition pool only if the node is a non-bootstrap node, i.e.
+	// it has peers that it should connect to.
+	monitorPool := len(clientConfig.LibP2P.Peers) > 0
+
 	err = beacon.Initialize(
 		ctx,
 		beaconChain,
 		netProvider,
 		beaconPersistence,
 		scheduler,
+		monitorPool,
 	)
 	if err != nil {
 		return fmt.Errorf("error initializing beacon: [%v]", err)
@@ -132,6 +138,7 @@ func start(cmd *cobra.Command) error {
 		tbtcPersistence,
 		scheduler,
 		clientConfig.Tbtc,
+		monitorPool,
 	)
 	if err != nil {
 		return fmt.Errorf("error initializing TBTC: [%v]", err)

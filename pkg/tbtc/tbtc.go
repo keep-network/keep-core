@@ -53,16 +53,24 @@ func Initialize(
 	persistence persistence.Handle,
 	scheduler *generator.Scheduler,
 	config Config,
+	monitorPool bool,
 ) error {
 	node := newNode(chain, netProvider, persistence, scheduler, config)
 	deduplicator := newDeduplicator()
 
-	err := sortition.MonitorPool(ctx, logger, chain, sortition.DefaultStatusCheckTick)
-	if err != nil {
-		return fmt.Errorf(
-			"could not set up sortition pool monitoring: [%v]",
-			err,
+	if monitorPool {
+		err := sortition.MonitorPool(
+			ctx,
+			logger,
+			chain,
+			sortition.DefaultStatusCheckTick,
 		)
+		if err != nil {
+			return fmt.Errorf(
+				"could not set up sortition pool monitoring: [%v]",
+				err,
+			)
+		}
 	}
 
 	_ = chain.OnDKGStarted(func(event *DKGStartedEvent) {
