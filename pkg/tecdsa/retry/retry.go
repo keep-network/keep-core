@@ -54,6 +54,9 @@ func EvaluateRetryParticipantsForSigning(
 		)
 	}
 	operatorToSeatCount := calculateSeatCount(groupMembers)
+
+	// #nosec G404 (insecure random number source (rand))
+	// Shuffling operators for retries does not require secure randomness.
 	rng := rand.New(rand.NewSource(seed + int64(retryCount)))
 
 	operators := make([]chain.Address, len(operatorToSeatCount))
