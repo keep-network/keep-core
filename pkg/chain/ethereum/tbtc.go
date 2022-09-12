@@ -529,8 +529,8 @@ func (mwr *mockWalletRegistry) OnSignatureRequested(
 		for {
 			select {
 			case block := <-blocksChan:
-				// Generate an event every 100 block.
-				if block%100 == 0 {
+				// Generate an event every 200 block.
+				if block%200 == 0 {
 					mwr.activeWalletMutex.RLock()
 
 					if len(mwr.activeWallet) > 0 {
