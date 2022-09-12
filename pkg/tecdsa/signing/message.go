@@ -57,8 +57,8 @@ func (trom *tssRoundOneMessage) Type() string {
 type tssRoundTwoMessage struct {
 	senderID group.MemberIndex
 
-	peersPayload     map[group.MemberIndex][]byte
-	sessionID        string
+	peersPayload map[group.MemberIndex][]byte
+	sessionID    string
 }
 
 // SenderID returns protocol-level identifier of the message sender.
