@@ -16,10 +16,10 @@ const (
 	ephemeralKeyPairStateActiveBlocks = 5
 
 	tssRoundOneStateDelayBlocks  = 1
-	tssRoundOneStateActiveBlocks = 5
+	tssRoundOneStateActiveBlocks = 11
 
 	tssRoundTwoStateDelayBlocks  = 1
-	tssRoundTwoStateActiveBlocks = 5
+	tssRoundTwoStateActiveBlocks = 6
 
 	tssRoundThreeStateDelayBlocks  = 1
 	tssRoundThreeStateActiveBlocks = 5
