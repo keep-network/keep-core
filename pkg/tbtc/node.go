@@ -452,8 +452,8 @@ func (n *node) joinSigningIfEligible(
 					loopCtx,
 					func(attempt *signingAttemptParams) (*signing.Result, error) {
 						logger.Infof(
-							"[member:%v] starting signing " +
-								"attempt [%v] of message [%v] with [%v] " +
+							"[member:%v] starting signing "+
+								"attempt [%v] of message [%v] with [%v] "+
 								"group members (excluded: [%v])",
 							signer.signingGroupMemberIndex,
 							attempt.index,
@@ -484,7 +484,7 @@ func (n *node) joinSigningIfEligible(
 						)
 						if err != nil {
 							logger.Errorf(
-								"[member:%v] signing attempt [%v] " +
+								"[member:%v] signing attempt [%v] "+
 									"of message [%v] failed: [%v]",
 								signer.signingGroupMemberIndex,
 								attempt.index,
