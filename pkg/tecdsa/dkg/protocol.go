@@ -170,7 +170,11 @@ func (trtm *tssRoundTwoMember) tssRoundTwo(
 
 		_, tssErr := trtm.tssParty.UpdateFromBytes(
 			tssRoundOneMessage.payload,
-			common.ResolveSortedTssPartyID(trtm.tssParameters, senderID),
+			common.ResolveSortedTssPartyID(
+				trtm.tssParameters,
+				senderID,
+				trtm.identityConverter,
+			),
 			true,
 		)
 		if tssErr != nil {
@@ -207,6 +211,7 @@ outgoingMessagesLoop:
 	broadcastPayload, peersPayload, err := common.AggregateTssMessages(
 		tssMessages,
 		trtm.symmetricKeys,
+		trtm.identityConverter,
 	)
 	if err != nil {
 		return nil, fmt.Errorf(
@@ -240,7 +245,11 @@ func (trtm *tssRoundThreeMember) tssRoundThree(
 	// to round three.
 	for _, tssRoundTwoMessage := range deduplicateBySender(tssRoundTwoMessages) {
 		senderID := tssRoundTwoMessage.SenderID()
-		senderTssPartyID := common.ResolveSortedTssPartyID(trtm.tssParameters, senderID)
+		senderTssPartyID := common.ResolveSortedTssPartyID(
+			trtm.tssParameters,
+			senderID,
+			trtm.identityConverter,
+		)
 
 		// Update the local TSS party using the broadcast part of the message
 		// produced in round two.
@@ -338,7 +347,11 @@ func (fm *finalizingMember) tssFinalize(
 
 		_, tssErr := fm.tssParty.UpdateFromBytes(
 			tssRoundThreeMessage.payload,
-			common.ResolveSortedTssPartyID(fm.tssParameters, senderID),
+			common.ResolveSortedTssPartyID(
+				fm.tssParameters,
+				senderID,
+				fm.identityConverter,
+			),
 			true,
 		)
 		if tssErr != nil {

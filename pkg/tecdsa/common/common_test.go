@@ -26,6 +26,7 @@ func TestGenerateTssPartiesIDs(t *testing.T) {
 	thisTssPartyID, groupTssPartiesIDs := GenerateTssPartiesIDs(
 		thisMemberID,
 		groupMembersIDs,
+		&mockIdentityConverter{},
 	)
 
 	// Just check that the `thisTssPartyID` points to `thisMemberID`. Extensive
@@ -73,60 +74,6 @@ func TestGenerateTssPartiesIDs(t *testing.T) {
 	}
 }
 
-func TestNewTssPartyIDFromMemberID(t *testing.T) {
-	memberID := group.MemberIndex(2)
-
-	tssPartyID := newTssPartyIDFromMemberID(memberID)
-
-	testutils.AssertStringsEqual(
-		t,
-		"ID of the TSS party ID",
-		tssPartyID.Id,
-		strconv.Itoa(int(memberID)),
-	)
-
-	testutils.AssertBytesEqual(
-		t,
-		tssPartyID.Key,
-		big.NewInt(int64(memberID)).Bytes(),
-	)
-
-	testutils.AssertStringsEqual(
-		t,
-		"moniker of the TSS party ID",
-		tssPartyID.Moniker,
-		fmt.Sprintf("member-%v", memberID),
-	)
-
-	testutils.AssertIntsEqual(
-		t,
-		"index of the TSS party ID",
-		-1,
-		tssPartyID.Index,
-	)
-}
-
-func TestMemberIDToTssPartyIDKey(t *testing.T) {
-	memberID := group.MemberIndex(2)
-
-	key := memberIDToTssPartyIDKey(memberID)
-
-	testutils.AssertBigIntsEqual(
-		t,
-		"key of the TSS party ID",
-		big.NewInt(int64(memberID)),
-		key,
-	)
-}
-
-func TestTssPartyIDToMemberID(t *testing.T) {
-	partyID := tss.NewPartyID("2", "member-2", big.NewInt(2))
-
-	memberID := tssPartyIDToMemberID(partyID)
-
-	testutils.AssertIntsEqual(t, "member ID", 2, int(memberID))
-}
-
 func TestResolveSortedTssPartyID(t *testing.T) {
 	groupTssPartiesIDs := []*tss.PartyID{
 		tss.NewPartyID("1", "member-1", big.NewInt(1)),
@@ -146,7 +93,11 @@ func TestResolveSortedTssPartyID(t *testing.T) {
 
 	memberID := group.MemberIndex(2)
 
-	tssPartyID := ResolveSortedTssPartyID(tssParameters, memberID)
+	tssPartyID := ResolveSortedTssPartyID(
+		tssParameters,
+		memberID,
+		&mockIdentityConverter{},
+	)
 
 	testutils.AssertStringsEqual(
 		t,
@@ -336,6 +287,7 @@ func TestAggregateTssMessages(t *testing.T) {
 			broadcastPayload, peersPayload, err := AggregateTssMessages(
 				test.tssMessages, 
 				test.symmetricKeys,
+				&mockIdentityConverter{},
 			)
 			
 			if !bytes.Equal(test.expectedBroadcastPayload, broadcastPayload) {
@@ -382,9 +334,10 @@ func newMockTssMessage(
 	receivers... group.MemberIndex,
 ) *mockTssMessage {
 	var to []*tss.PartyID
+	converter := &mockIdentityConverter{}
 
 	for _, receiver := range receivers {
-		to = append(to, newTssPartyIDFromMemberID(receiver))
+		to = append(to, converter.MemberIndexToTssPartyID(receiver))
 	}
 
 	return &mockTssMessage{
@@ -449,6 +402,32 @@ func (msk *mockSymmetricKey) Encrypt(bytes []byte) ([]byte, error) {
 
 func (msk *mockSymmetricKey) Decrypt(bytes []byte) ([]byte, error) {
 	panic("not implemented")
+}
+
+type mockIdentityConverter struct{}
+
+func (mic *mockIdentityConverter) MemberIndexToTssPartyID(
+	memberIndex group.MemberIndex,
+) *tss.PartyID {
+	partyIDKey := mic.MemberIndexToTssPartyIDKey(memberIndex)
+
+	return tss.NewPartyID(
+		partyIDKey.Text(10),
+		fmt.Sprintf("member-%v", memberIndex),
+		partyIDKey,
+	)
+}
+
+func (mic *mockIdentityConverter) MemberIndexToTssPartyIDKey(
+	memberIndex group.MemberIndex,
+) *big.Int {
+	return big.NewInt(int64(memberIndex))
+}
+
+func (mic *mockIdentityConverter) TssPartyIDToMemberIndex(
+	partyID *tss.PartyID,
+) group.MemberIndex {
+	return group.MemberIndex(partyID.KeyInt().Int64())
 }
 
 

@@ -197,6 +197,7 @@ func (n *node) joinDKGIfEligible(seed *big.Int, startBlockNumber uint64) {
 						)
 
 						result, executionEndBlock, err := n.dkgExecutor.Execute(
+							seed,
 							sessionID,
 							attempt.startBlock,
 							memberIndex,
@@ -447,7 +448,7 @@ func (n *node) joinSigningIfEligible(
 
 				if slices.Contains(excludedMembers, signer.signingGroupMemberIndex) {
 					logger.Infof(
-						"[member:%v] excluded from signing attempt " +
+						"[member:%v] excluded from signing attempt "+
 							"[%v] of message [%v]; aborting",
 						signer.signingGroupMemberIndex,
 						attemptIndex,

@@ -8,22 +8,39 @@ import (
 	"github.com/keep-network/keep-core/pkg/crypto/ephemeral"
 	"github.com/keep-network/keep-core/pkg/protocol/group"
 	"math/big"
-	"strconv"
 )
 
-// GenerateTssPartiesIDs converts group member ID to parties ID suitable for
-// the TSS protocol execution.
+// IdentityConverter takes care of conversions between protocol-agnostic
+// member indexes and TSS-specific party IDs.
+type IdentityConverter interface {
+	// MemberIndexToTssPartyID converts a single group member index to a
+	// detached party ID instance. Such a party ID has an unset index since
+	// it does not yet belong to a sorted parties IDs set.
+	MemberIndexToTssPartyID(memberIndex group.MemberIndex) *tss.PartyID
+
+	// MemberIndexToTssPartyIDKey converts a single group member index to a
+	// TSS party ID key.
+	MemberIndexToTssPartyIDKey(memberIndex group.MemberIndex) *big.Int
+
+	// TssPartyIDToMemberIndex converts a single TSS party ID to a group
+	// member index.
+	TssPartyIDToMemberIndex(partyID *tss.PartyID) group.MemberIndex
+}
+
+// GenerateTssPartiesIDs converts group member indexes to parties ID suitable
+// for the TSS protocol execution.
 func GenerateTssPartiesIDs(
-	memberID group.MemberIndex,
-	groupMembersIDs []group.MemberIndex,
+	memberIndex group.MemberIndex,
+	groupMembersIndexes []group.MemberIndex,
+	converter IdentityConverter,
 ) (*tss.PartyID, []*tss.PartyID) {
 	var partyID *tss.PartyID
-	groupPartiesIDs := make([]*tss.PartyID, len(groupMembersIDs))
+	groupPartiesIDs := make([]*tss.PartyID, len(groupMembersIndexes))
 
-	for i, groupMemberID := range groupMembersIDs {
-		newPartyID := newTssPartyIDFromMemberID(groupMemberID)
+	for i, groupMemberIndex := range groupMembersIndexes {
+		newPartyID := converter.MemberIndexToTssPartyID(groupMemberIndex)
 
-		if memberID == groupMemberID {
+		if memberIndex == groupMemberIndex {
 			partyID = newPartyID
 		}
 
@@ -33,38 +50,17 @@ func GenerateTssPartiesIDs(
 	return partyID, groupPartiesIDs
 }
 
-// newTssPartyIDFromMemberID creates a new instance of a TSS party ID using
-// the given member ID. Such a created party ID has an unset index since it
-// does not yet belong to a sorted parties IDs set.
-func newTssPartyIDFromMemberID(memberID group.MemberIndex) *tss.PartyID {
-	return tss.NewPartyID(
-		strconv.Itoa(int(memberID)),
-		fmt.Sprintf("member-%v", memberID),
-		memberIDToTssPartyIDKey(memberID),
-	)
-}
-
-// memberIDToTssPartyIDKey converts a single group member ID to a key that
-// can be used to create a TSS party ID.
-func memberIDToTssPartyIDKey(memberID group.MemberIndex) *big.Int {
-	return big.NewInt(int64(memberID))
-}
-
-// tssPartyIDToMemberID converts a single TSS party ID to a group member ID.
-func tssPartyIDToMemberID(partyID *tss.PartyID) group.MemberIndex {
-	return group.MemberIndex(partyID.KeyInt().Int64())
-}
-
-// ResolveSortedTssPartyID resolves the TSS party ID for the given member ID
+// ResolveSortedTssPartyID resolves the TSS party ID for the given member index
 // based on the sorted parties IDs stored in the given TSS parameters set. Such
 // a resolved party ID has an index which indicates its position in the parties
 // IDs set.
 func ResolveSortedTssPartyID(
 	tssParameters *tss.Parameters,
-	memberID group.MemberIndex,
+	memberIndex group.MemberIndex,
+	converter IdentityConverter,
 ) *tss.PartyID {
 	sortedPartiesIDs := tssParameters.Parties().IDs()
-	partyIDKey := memberIDToTssPartyIDKey(memberID)
+	partyIDKey := converter.MemberIndexToTssPartyIDKey(memberIndex)
 	return sortedPartiesIDs.FindByKey(partyIDKey)
 }
 
@@ -85,6 +81,7 @@ func ResolveSortedTssPartyID(
 func AggregateTssMessages(
 	tssMessages []tss.Message,
 	symmetricKeys map[group.MemberIndex]ephemeral.SymmetricKey,
+	converter IdentityConverter,
 ) (
 	[]byte,
 	map[group.MemberIndex][]byte,
@@ -120,7 +117,7 @@ func AggregateTssMessages(
 				)
 			}
 			// Get the single receiver ID.
-			receiverID := tssPartyIDToMemberID(tssMessageRouting.To[0])
+			receiverID := converter.TssPartyIDToMemberIndex(tssMessageRouting.To[0])
 			// Get the symmetric key with the receiver. If the symmetric key
 			// cannot be found, something awful happened.
 			symmetricKey, ok := symmetricKeys[receiverID]
