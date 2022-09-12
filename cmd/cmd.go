@@ -22,7 +22,7 @@ var logger = log.Logger("keep-cmd")
 
 // RootCmd contains the definition of the root command-line command.
 var RootCmd = &cobra.Command{
-	Use:              path.Base(os.Args[0]),
+	Use:              		path.Base(os.Args[0]),
 	Short:            "CLI for The Keep Network",
 	Long:             "Command line interface (CLI) for running a Keep provider",
 	TraverseChildren: true,
