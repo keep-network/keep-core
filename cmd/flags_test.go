@@ -317,7 +317,7 @@ func TestFlags_Mixed(t *testing.T) {
 			expectedValue: 3097,
 		},
 		"storage.dir": {
-			readValueFunc: func(c *config.Config) interface{} { return c.storage.dir },
+			readValueFunc: func(c *config.Config) interface{} { return c.Storage.Dir },
 			expectedValue: "/my/secure/location",
 		},
 		// Properties not provided in the config file nor set with flags. Use defaults.

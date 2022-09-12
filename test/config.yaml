@@ -17,7 +17,7 @@ Network:
     - /ip4/80.70.60.50/tcp/3919
   DisseminationTime: 76
 Storage:
-  DataDir: /my/secure/location
+  Dir: /my/secure/location
 Metrics:
   Port: 3498
   NetworkMetricsTick: "43s"
