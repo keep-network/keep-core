@@ -362,17 +362,27 @@ func (n *node) joinSigningIfEligible(
 	walletPublicKey *ecdsa.PublicKey,
 	startBlockNumber uint64,
 ) {
-	logger.Infof(
-		"checking eligibility for signature of message [%v]",
-		message.Text(16),
+	signingLogger := logger.With(
+		zap.String("message", message.Text(16)),
 	)
+
+	walletPublicKeyBytes, err := marshalPublicKey(walletPublicKey)
+	if err != nil {
+		signingLogger.Errorf("cannot marshal wallet public key: [%v]", err)
+		return
+	}
+
+	signingLogger = signingLogger.With(
+		zap.String("wallet", hex.EncodeToString(walletPublicKeyBytes)),
+	)
+
+	signingLogger.Info("checking eligibility for signing")
 
 	if signers := n.walletRegistry.getSigners(
 		walletPublicKey,
 	); len(signers) > 0 {
-		logger.Infof(
-			"joining signature of message [%v] controlling [%v] signers",
-			message.Text(16),
+		signingLogger.Infof(
+			"joining signing; controlling [%v] signers",
 			len(signers),
 		)
 
@@ -387,12 +397,6 @@ func (n *node) joinSigningIfEligible(
 		signingGroupDishonestThreshold := signingGroupSize -
 			n.chain.GetConfig().HonestThreshold
 
-		walletPublicKeyBytes, err := marshalPublicKey(walletPublicKey)
-		if err != nil {
-			logger.Errorf("cannot marshal wallet public key: [%v]", err)
-			return
-		}
-
 		channelName := fmt.Sprintf(
 			"%s-%s",
 			ProtocolName,
@@ -401,19 +405,19 @@ func (n *node) joinSigningIfEligible(
 
 		broadcastChannel, err := n.netProvider.BroadcastChannelFor(channelName)
 		if err != nil {
-			logger.Errorf("failed to get broadcast channel: [%v]", err)
+			signingLogger.Errorf("failed to get broadcast channel: [%v]", err)
 			return
 		}
 
 		membershipValidator := group.NewMembershipValidator(
-			logger,
+			signingLogger,
 			wallet.signingGroupOperators,
 			n.chain.Signing(),
 		)
 
 		err = broadcastChannel.SetFilter(membershipValidator.IsInGroup)
 		if err != nil {
-			logger.Errorf(
+			signingLogger.Errorf(
 				"could not set filter for channel [%v]: [%v]",
 				broadcastChannel.Name(),
 				err,
@@ -422,7 +426,7 @@ func (n *node) joinSigningIfEligible(
 
 		blockCounter, err := n.chain.BlockCounter()
 		if err != nil {
-			logger.Errorf("failed to get block counter: [%v]", err)
+			signingLogger.Errorf("failed to get block counter: [%v]", err)
 			return
 		}
 
@@ -451,15 +455,15 @@ func (n *node) joinSigningIfEligible(
 				result, err := retryLoop.start(
 					loopCtx,
 					func(attempt *signingAttemptParams) (*signing.Result, error) {
-						logger.Infof(
-							"[member:%v] scheduled signing "+
-								"attempt [%v] of message [%v] for "+
-								"block [%v] with [%v] group "+
-								"members (excluded: [%v])",
+						signingAttemptLogger := signingLogger.With(
+							zap.Uint("attempt", attempt.index),
+							zap.Uint64("attemptStartBlock", attempt.startBlock),
+						)
+
+						signingAttemptLogger.Infof(
+							"[member:%v] scheduled signing attempt " +
+								"with [%v] group members (excluded: [%v])",
 							signer.signingGroupMemberIndex,
-							attempt.index,
-							message.Text(16),
-							attempt.startBlock,
 							signingGroupSize-len(attempt.excludedMembers),
 							attempt.excludedMembers,
 						)
@@ -471,7 +475,7 @@ func (n *node) joinSigningIfEligible(
 						)
 
 						result, err := signing.Execute(
-							logger,
+							signingAttemptLogger,
 							message,
 							sessionID,
 							attempt.startBlock,
@@ -485,12 +489,9 @@ func (n *node) joinSigningIfEligible(
 							membershipValidator,
 						)
 						if err != nil {
-							logger.Errorf(
-								"[member:%v] signing attempt [%v] "+
-									"of message [%v] failed: [%v]",
+							signingAttemptLogger.Errorf(
+								"[member:%v] signing attempt failed: [%v]",
 								signer.signingGroupMemberIndex,
-								attempt.index,
-								message.Text(16),
 								err,
 							)
 
@@ -501,29 +502,22 @@ func (n *node) joinSigningIfEligible(
 					},
 				)
 				if err != nil {
-					logger.Errorf(
-						"[member:%v] signing of message [%v] "+
-							"failed: [%v]",
+					signingLogger.Errorf(
+						"[member:%v] signing failed: [%v]",
 						signer.signingGroupMemberIndex,
-						message.Text(16),
 						err,
 					)
 					return
 				}
 
-				logger.Infof(
-					"[member:%v] generated signature [%v] "+
-						"for message [%v]",
+				signingLogger.Infof(
+					"[member:%v] generated signature [%v]",
 					signer.signingGroupMemberIndex,
 					result.Signature,
-					message.Text(16),
 				)
 			}(currentSigner)
 		}
 	} else {
-		logger.Infof(
-			"not eligible for signature of message [%v]",
-			message.Text(16),
-		)
+		signingLogger.Info("not eligible for signing")
 	}
 }
