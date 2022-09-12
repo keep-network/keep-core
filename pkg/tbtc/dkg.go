@@ -7,6 +7,7 @@ import (
 	"encoding/binary"
 	"errors"
 	"fmt"
+	"github.com/ipfs/go-log/v2"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/protocol/group"
 	"github.com/keep-network/keep-core/pkg/tecdsa/dkg"
@@ -427,12 +428,17 @@ func (drs *dkgResultSigner) VerifySignature(signedResult *dkg.SignedResult) (boo
 
 // dkgResultSubmitter is responsible for submitting the DKG result to the chain.
 type dkgResultSubmitter struct {
-	chain Chain
+	dkgLogger log.StandardLogger
+	chain     Chain
 }
 
-func newDkgResultSubmitter(chain Chain) *dkgResultSubmitter {
+func newDkgResultSubmitter(
+	dkgLogger log.StandardLogger,
+	chain Chain,
+) *dkgResultSubmitter {
 	return &dkgResultSubmitter{
-		chain: chain,
+		dkgLogger: dkgLogger,
+		chain:     chain,
 	}
 }
 
@@ -474,7 +480,7 @@ func (drs *dkgResultSubmitter) SubmitResult(
 
 	if dkgState != AwaitingResult {
 		// Someone who was ahead of us in the queue submitted the result. Giving up.
-		logger.Infof(
+		drs.dkgLogger.Infof(
 			"[member:%v] DKG is no longer awaiting the result; "+
 				"aborting DKG result submission",
 			memberIndex,
@@ -509,7 +515,7 @@ func (drs *dkgResultSubmitter) SubmitResult(
 				return fmt.Errorf("cannot get public key bytes [%w]", err)
 			}
 
-			logger.Infof(
+			drs.dkgLogger.Infof(
 				"[member:%v] submitting DKG result with public key [0x%x] and "+
 					"[%v] supporting member signatures at block [%v]",
 				memberIndex,
@@ -524,7 +530,7 @@ func (drs *dkgResultSubmitter) SubmitResult(
 				signatures,
 			)
 		case blockNumber := <-resultSubmittedChan:
-			logger.Infof(
+			drs.dkgLogger.Infof(
 				"[member:%v] leaving; DKG result submitted by other member "+
 					"at block [%v]",
 				memberIndex,
@@ -552,7 +558,7 @@ func (drs *dkgResultSubmitter) setupEligibilityQueue(
 
 	eligibleBlockHeight := startBlockNumber + blockWaitTime
 
-	logger.Infof(
+	drs.dkgLogger.Infof(
 		"[member:%v] waiting for block [%v] to submit",
 		memberIndex,
 		eligibleBlockHeight,

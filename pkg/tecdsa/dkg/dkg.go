@@ -5,7 +5,7 @@ import (
 	"math/big"
 	"time"
 
-	"github.com/ipfs/go-log"
+	"github.com/ipfs/go-log/v2"
 
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/generator"
@@ -16,7 +16,6 @@ import (
 
 // Executor represents an ECDSA distributed key generation process executor.
 type Executor struct {
-	logger                   log.StandardLogger
 	tssPreParamsPool         *tssPreParamsPool
 	keyGenerationConcurrency int
 }
@@ -36,7 +35,6 @@ func NewExecutor(
 		keyGenerationConcurrency,
 	)
 	return &Executor{
-		logger: logger,
 		tssPreParamsPool: newTssPreParamsPool(
 			logger,
 			scheduler,
@@ -58,6 +56,7 @@ func NewExecutor(
 // group by passing a non-empty excludedMembers slice holding the members that
 // should be excluded.
 func (e *Executor) Execute(
+	logger log.StandardLogger,
 	seed *big.Int,
 	sessionID string,
 	startBlockNumber uint64,
@@ -69,7 +68,7 @@ func (e *Executor) Execute(
 	channel net.BroadcastChannel,
 	membershipValidator *group.MembershipValidator,
 ) (*Result, uint64, error) {
-	e.logger.Debugf("[member:%v] initializing member", memberIndex)
+	logger.Debugf("[member:%v] initializing member", memberIndex)
 
 	registerUnmarshallers(channel)
 
@@ -79,7 +78,7 @@ func (e *Executor) Execute(
 	}
 
 	member := newMember(
-		e.logger,
+		logger,
 		seed,
 		memberIndex,
 		groupSize,
@@ -103,7 +102,7 @@ func (e *Executor) Execute(
 		member:  member.initializeEphemeralKeysGeneration(),
 	}
 
-	stateMachine := state.NewMachine(e.logger, channel, blockCounter, initialState)
+	stateMachine := state.NewMachine(logger, channel, blockCounter, initialState)
 
 	lastState, endBlockNumber, err := stateMachine.Execute(startBlockNumber)
 	if err != nil {

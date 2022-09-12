@@ -5,6 +5,7 @@ import (
 	"crypto/ecdsa"
 	"encoding/hex"
 	"fmt"
+	"go.uber.org/zap"
 	"math/big"
 	"time"
 
@@ -64,25 +65,22 @@ func newNode(
 // and joinDKGIfEligible can block for an extended period of time while it
 // completes the on-chain operation.
 func (n *node) joinDKGIfEligible(seed *big.Int, startBlockNumber uint64) {
-	logger.Infof(
-		"checking eligibility for DKG with seed [0x%x]",
-		seed,
+	dkgLogger := logger.With(
+		zap.String("seed", seed.Text(16)),
 	)
+
+	dkgLogger.Info("checking eligibility for DKG")
 
 	selectedSigningGroupOperators, err := n.chain.SelectGroup(seed)
 	if err != nil {
-		logger.Errorf(
-			"failed to select group with seed [0x%x]: [%v]",
-			seed,
-			err,
-		)
+		dkgLogger.Errorf("failed to select group: [%v]", err)
 		return
 	}
 
 	chainConfig := n.chain.GetConfig()
 
 	if len(selectedSigningGroupOperators) > chainConfig.GroupSize {
-		logger.Errorf(
+		dkgLogger.Errorf(
 			"group size larger than supported: [%v]",
 			len(selectedSigningGroupOperators),
 		)
@@ -93,13 +91,13 @@ func (n *node) joinDKGIfEligible(seed *big.Int, startBlockNumber uint64) {
 
 	_, operatorPublicKey, err := n.chain.OperatorKeyPair()
 	if err != nil {
-		logger.Errorf("failed to get operator public key: [%v]", err)
+		dkgLogger.Errorf("failed to get operator public key: [%v]", err)
 		return
 	}
 
 	operatorAddress, err := signing.PublicKeyToAddress(operatorPublicKey)
 	if err != nil {
-		logger.Errorf("failed to get operator address: [%v]", err)
+		dkgLogger.Errorf("failed to get operator address: [%v]", err)
 		return
 	}
 
@@ -116,27 +114,26 @@ func (n *node) joinDKGIfEligible(seed *big.Int, startBlockNumber uint64) {
 	channelName := fmt.Sprintf("%s-%s", ProtocolName, seed.Text(16))
 
 	if len(indexes) > 0 {
-		logger.Infof(
-			"joining DKG with seed [0x%x] and controlling [%v] group members",
-			seed,
+		dkgLogger.Infof(
+			"joining DKG and controlling [%v] group members",
 			len(indexes),
 		)
 
 		broadcastChannel, err := n.netProvider.BroadcastChannelFor(channelName)
 		if err != nil {
-			logger.Errorf("failed to get broadcast channel: [%v]", err)
+			dkgLogger.Errorf("failed to get broadcast channel: [%v]", err)
 			return
 		}
 
 		membershipValidator := group.NewMembershipValidator(
-			logger,
+			dkgLogger,
 			selectedSigningGroupOperators,
 			signing,
 		)
 
 		err = broadcastChannel.SetFilter(membershipValidator.IsInGroup)
 		if err != nil {
-			logger.Errorf(
+			dkgLogger.Errorf(
 				"could not set filter for channel [%v]: [%v]",
 				broadcastChannel.Name(),
 				err,
@@ -145,7 +142,7 @@ func (n *node) joinDKGIfEligible(seed *big.Int, startBlockNumber uint64) {
 
 		blockCounter, err := n.chain.BlockCounter()
 		if err != nil {
-			logger.Errorf("failed to get block counter: [%v]", err)
+			dkgLogger.Errorf("failed to get block counter: [%v]", err)
 			return
 		}
 
@@ -179,13 +176,15 @@ func (n *node) joinDKGIfEligible(seed *big.Int, startBlockNumber uint64) {
 				result, executionEndBlock, err := retryLoop.start(
 					loopCtx,
 					func(attempt *dkgAttemptParams) (*dkg.Result, uint64, error) {
-						logger.Infof(
-							"[member:%v] scheduled dkg attempt [%v] "+
-								"for block [%v] with [%v] group members "+
-								"(excluded: [%v])",
+						dkgAttemptLogger := dkgLogger.With(
+							zap.Uint("attempt", attempt.index),
+							zap.Uint64("attemptStartBlock", attempt.startBlock),
+						)
+
+						dkgAttemptLogger.Infof(
+							"[member:%v] scheduled dkg attempt " +
+								"with [%v] group members (excluded: [%v])",
 							memberIndex,
-							attempt.index,
-							attempt.startBlock,
 							chainConfig.GroupSize-len(attempt.excludedMembers),
 							attempt.excludedMembers,
 						)
@@ -198,6 +197,7 @@ func (n *node) joinDKGIfEligible(seed *big.Int, startBlockNumber uint64) {
 						)
 
 						result, executionEndBlock, err := n.dkgExecutor.Execute(
+							dkgAttemptLogger,
 							seed,
 							sessionID,
 							attempt.startBlock,
@@ -210,11 +210,9 @@ func (n *node) joinDKGIfEligible(seed *big.Int, startBlockNumber uint64) {
 							membershipValidator,
 						)
 						if err != nil {
-							logger.Errorf(
-								"[member:%v] dkg attempt [%v] "+
-									"failed: [%v]",
+							dkgAttemptLogger.Errorf(
+								"[member:%v] dkg attempt failed: [%v]",
 								memberIndex,
-								attempt.index,
 								err,
 							)
 
@@ -225,7 +223,7 @@ func (n *node) joinDKGIfEligible(seed *big.Int, startBlockNumber uint64) {
 					},
 				)
 				if err != nil {
-					logger.Errorf(
+					dkgLogger.Errorf(
 						"[member:%v] failed to execute dkg: [%v]",
 						memberIndex,
 						err,
@@ -248,7 +246,7 @@ func (n *node) joinDKGIfEligible(seed *big.Int, startBlockNumber uint64) {
 				defer dkgResultSubscription.Unsubscribe()
 
 				err = dkg.Publish(
-					logger,
+					dkgLogger,
 					seed.Text(16),
 					publicationStartBlock,
 					memberIndex,
@@ -256,7 +254,7 @@ func (n *node) joinDKGIfEligible(seed *big.Int, startBlockNumber uint64) {
 					broadcastChannel,
 					membershipValidator,
 					newDkgResultSigner(n.chain),
-					newDkgResultSubmitter(n.chain),
+					newDkgResultSubmitter(dkgLogger, n.chain),
 					result,
 				)
 				if err != nil {
@@ -267,7 +265,7 @@ func (n *node) joinDKGIfEligible(seed *big.Int, startBlockNumber uint64) {
 					// published by any other group member and based on that,
 					// we decide whether we should stay in the final group or
 					// drop our membership.
-					logger.Warningf(
+					dkgLogger.Warnf(
 						"[member:%v] DKG result publication process failed [%v]",
 						memberIndex,
 						err,
@@ -281,7 +279,7 @@ func (n *node) joinDKGIfEligible(seed *big.Int, startBlockNumber uint64) {
 						chainConfig,
 						blockCounter,
 					); err != nil {
-						logger.Errorf(
+						dkgLogger.Errorf(
 							"[member:%v] failed to handle DKG result "+
 								"publishing failure: [%v]",
 							memberIndex,
@@ -302,7 +300,7 @@ func (n *node) joinDKGIfEligible(seed *big.Int, startBlockNumber uint64) {
 						chainConfig,
 					)
 				if err != nil {
-					logger.Errorf(
+					dkgLogger.Errorf(
 						"[member:%v] failed to resolve final signing "+
 							"group: [%v]",
 						memberIndex,
@@ -318,7 +316,7 @@ func (n *node) joinDKGIfEligible(seed *big.Int, startBlockNumber uint64) {
 				finalSigningGroupMemberIndex, ok :=
 					finalSigningGroupMembersIndexes[memberIndex]
 				if !ok {
-					logger.Errorf(
+					dkgLogger.Errorf(
 						"[member:%v] failed to resolve final signing "+
 							"group member index",
 						memberIndex,
@@ -335,7 +333,7 @@ func (n *node) joinDKGIfEligible(seed *big.Int, startBlockNumber uint64) {
 
 				err = n.walletRegistry.registerSigner(signer)
 				if err != nil {
-					logger.Errorf(
+					dkgLogger.Errorf(
 						"failed to register %s: [%v]",
 						signer,
 						err,
@@ -343,11 +341,11 @@ func (n *node) joinDKGIfEligible(seed *big.Int, startBlockNumber uint64) {
 					return
 				}
 
-				logger.Infof("registered %s", signer)
+				dkgLogger.Infof("registered %s", signer)
 			}()
 		}
 	} else {
-		logger.Infof("not eligible for DKG with seed [0x%x]", seed)
+		dkgLogger.Infof("not eligible for DKG")
 	}
 }
 
