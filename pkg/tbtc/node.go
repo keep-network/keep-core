@@ -182,7 +182,7 @@ func (n *node) joinDKGIfEligible(seed *big.Int, startBlockNumber uint64) {
 						)
 
 						dkgAttemptLogger.Infof(
-							"[member:%v] scheduled dkg attempt " +
+							"[member:%v] scheduled dkg attempt "+
 								"with [%v] group members (excluded: [%v])",
 							memberIndex,
 							chainConfig.GroupSize-len(attempt.excludedMembers),
@@ -461,7 +461,7 @@ func (n *node) joinSigningIfEligible(
 						)
 
 						signingAttemptLogger.Infof(
-							"[member:%v] scheduled signing attempt " +
+							"[member:%v] scheduled signing attempt "+
 								"with [%v] group members (excluded: [%v])",
 							signer.signingGroupMemberIndex,
 							signingGroupSize-len(attempt.excludedMembers),
