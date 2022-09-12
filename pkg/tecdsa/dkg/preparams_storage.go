@@ -4,18 +4,21 @@ import (
 	"encoding/hex"
 	"fmt"
 	"sync"
-	"time"
 
 	"github.com/ethereum/go-ethereum/crypto"
-
 	"github.com/ipfs/go-log"
 
 	"github.com/keep-network/keep-common/pkg/persistence"
+	"github.com/keep-network/keep-core/pkg/generator"
 )
 
 const (
 	dirName = "preparams"
 )
+
+// PersistedPreParams is an alias for Persisted PreParams used in generator.Persistence
+// interface implementation.
+type PersistedPreParams = generator.Persisted[PreParams]
 
 type preParamsStorage struct {
 	// mutex is a single struct-wide lock that ensures all functions
@@ -37,51 +40,53 @@ func newPreParamsStorage(
 }
 
 // Saves provided PreParams to the storage.
-func (p *preParamsStorage) Save(pp *PreParams) error {
+func (p *preParamsStorage) Save(pp *PreParams) (*PersistedPreParams, error) {
 	p.mutex.Lock()
 	defer p.mutex.Unlock()
 
 	ppBytes, err := pp.Marshal()
 	if err != nil {
-		return fmt.Errorf("marshalling of the preparams failed: [%v]", err)
+		return nil, fmt.Errorf("marshalling of the preparams failed: [%v]", err)
 	}
 
-	fileName := getFileName(ppBytes, pp.creationTimestamp)
+	fileName := fmt.Sprintf(
+		"pp_%d_%s",
+		// Use timestamp in the filename so that when the data are read from the
+		// disk the First In, First Out algorithm applies.
+		pp.creationTimestamp.UnixMilli(),
+		// Add part of the hash for an ultra unlikely scenario that two saves
+		// happen in the exactly the same millisecond.
+		hex.EncodeToString(crypto.Keccak256(ppBytes))[:7],
+	)
 
 	if err := p.persistence.Save(
 		ppBytes,
 		dirName,
 		fileName,
 	); err != nil {
-		return fmt.Errorf("saving preparams failed: [%w]", err)
+		return nil, fmt.Errorf("saving preparams failed: [%w]", err)
 	}
 
-	return nil
+	return &PersistedPreParams{Data: *pp, ID: fileName}, nil
 }
 
 // Deletes provided PreParams from the storage.
-func (p *preParamsStorage) Delete(pp *PreParams) error {
+func (p *preParamsStorage) Delete(pp *PersistedPreParams) error {
 	p.mutex.Lock()
 	defer p.mutex.Unlock()
 
-	ppBytes, err := pp.Marshal()
-	if err != nil {
-		return fmt.Errorf("marshalling of the preparams failed: [%v]", err)
-	}
-	fileName := getFileName(ppBytes, pp.creationTimestamp)
+	p.logger.Debugf("deleting preparams [%s]...", pp.ID)
 
-	p.logger.Debugf("deleting preparams [%s]...", fileName)
-
-	return p.persistence.Delete(dirName, fileName)
+	return p.persistence.Delete(dirName, pp.ID)
 }
 
 // ReadAll reads all the PreParams stored in the storage and returns them as a
 // slice.
-func (p *preParamsStorage) ReadAll() ([]*PreParams, error) {
+func (p *preParamsStorage) ReadAll() ([]*PersistedPreParams, error) {
 	p.mutex.Lock()
 	defer p.mutex.Unlock()
 
-	allPreParams := make([]*PreParams, 0)
+	allPreParams := make([]*PersistedPreParams, 0)
 
 	descriptorsChan, errorsChan := p.persistence.ReadAll()
 
@@ -112,8 +117,8 @@ func (p *preParamsStorage) ReadAll() ([]*PreParams, error) {
 				continue
 			}
 
-			preParams := &PreParams{}
-			if err = preParams.Unmarshal(content); err != nil {
+			persistedPreParams := &PersistedPreParams{}
+			if err = persistedPreParams.Data.Unmarshal(content); err != nil {
 				p.logger.Errorf(
 					"could not unmarshal PreParams from file [%s] in directory [%s]: [%v]",
 					descriptor.Name(),
@@ -122,8 +127,9 @@ func (p *preParamsStorage) ReadAll() ([]*PreParams, error) {
 				)
 				continue
 			}
+			persistedPreParams.ID = descriptor.Name()
 
-			allPreParams = append(allPreParams, preParams)
+			allPreParams = append(allPreParams, persistedPreParams)
 		}
 
 		wg.Done()
@@ -143,16 +149,4 @@ func (p *preParamsStorage) ReadAll() ([]*PreParams, error) {
 	wg.Wait()
 
 	return allPreParams, nil
-}
-
-func getFileName(ppBytes []byte, ppCreationTimestamp time.Time) string {
-	return fmt.Sprintf(
-		"pp_%d_%s",
-		// Use timestamp in the filename so that when the data are read from the
-		// disk the First In, First Out algorithm applies.
-		ppCreationTimestamp.UnixMilli(),
-		// Add part of the hash for an ultra unlikely scenario that two saves
-		// happen in the exactly the same millisecond.
-		hex.EncodeToString(crypto.Keccak256(ppBytes))[:7],
-	)
 }

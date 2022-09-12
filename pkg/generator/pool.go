@@ -16,9 +16,17 @@ var ErrEmptyPool = fmt.Errorf("pool is empty")
 // usually a computationally expensive operation and generated parameters should
 // survive client restarts.
 type Persistence[T any] interface {
-	Save(*T) error
-	Delete(*T) error
-	ReadAll() ([]*T, error)
+	Save(*T) (*Persisted[T], error)
+	Delete(*Persisted[T]) error
+	ReadAll() ([]*Persisted[T], error)
+}
+
+// Persisted is a wrapper for the data that are stored, it adds an identifier.
+// The identifier can be used in `Delete` function implementation to determine
+// which entry should be removed from the persistent storage.
+type Persisted[S any] struct {
+	Data S
+	ID   string
 }
 
 // ParameterPool autogenerates parameters based on the provided generation
@@ -29,7 +37,7 @@ type Persistence[T any] interface {
 // instance and can be controlled by the scheduler.
 type ParameterPool[T any] struct {
 	persistence Persistence[T]
-	pool        chan *T
+	pool        chan *Persisted[T]
 }
 
 // NewParameterPool creates a new instance of ParameterPool.
@@ -43,7 +51,7 @@ func NewParameterPool[T any](
 	generateFn func(context.Context) *T,
 	generateDelay time.Duration,
 ) *ParameterPool[T] {
-	pool := make(chan *T, targetSize)
+	pool := make(chan *Persisted[T], targetSize)
 
 	all, err := persistence.ReadAll()
 	if err != nil {
@@ -76,14 +84,14 @@ func NewParameterPool[T any](
 			return
 		}
 
-		err := persistence.Save(generated)
+		persisted, err := persistence.Save(generated)
 		if err != nil {
 			logger.Errorf(
 				"failed to persist generated parameter: [%w]",
 				err,
 			)
 		}
-		pool <- generated
+		pool <- persisted
 
 		logger.Infof(
 			"generated new parameters, took: [%s] current pool size: [%d]",
@@ -116,7 +124,7 @@ func (pp *ParameterPool[T]) GetNow() (*T, error) {
 			)
 		}
 
-		return generated, nil
+		return &generated.Data, nil
 	default:
 		return nil, ErrEmptyPool
 	}
