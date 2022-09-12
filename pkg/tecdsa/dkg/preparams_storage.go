@@ -3,6 +3,7 @@ package dkg
 import (
 	"encoding/hex"
 	"fmt"
+	"sort"
 	"sync"
 
 	"github.com/ethereum/go-ethereum/crypto"
@@ -131,6 +132,11 @@ func (p *preParamsStorage) ReadAll() ([]*PersistedPreParams, error) {
 
 			allPreParams = append(allPreParams, persistedPreParams)
 		}
+
+		sort.Slice(allPreParams, func(i, j int) bool {
+			return allPreParams[i].Data.creationTimestamp.
+				Before(allPreParams[j].Data.creationTimestamp)
+		})
 
 		wg.Done()
 	}()
