@@ -67,7 +67,13 @@ func Initialize(
 	}
 	diagnostics.RegisterApplicationSource(registry, "tbtc", assembleTbtcDiagnostics)
 
-	err := sortition.MonitorPool(ctx, logger, chain, sortition.DefaultStatusCheckTick)
+	err := sortition.MonitorPool(
+		ctx,
+		logger,
+		chain,
+		sortition.DefaultStatusCheckTick,
+		sortition.UnconditionalJoinPolicy,
+	)
 	if err != nil {
 		return fmt.Errorf(
 			"could not set up sortition pool monitoring: [%v]",
