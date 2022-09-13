@@ -31,7 +31,7 @@ infrastructure/gcp/service-accounts*
 .secrets*
 
 # keys
-keystore
+keystore/
 keep_accounts
 
 # Python and IPython
@@ -40,7 +40,7 @@ __pycache__
 *.pyc
 
 # Configuration files
-configs
+configs/
 !configs/config.toml.SAMPLE
 
 # Private testnet artifacts
