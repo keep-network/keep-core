@@ -10,7 +10,7 @@ import (
 // a recovery ID value in {0, 1, 2, 3}.
 //
 // The signature is chain-agnostic. Some chains (e.g. Ethereum and BTC)
-// requires `v` to start from 27. Please consult the documentation about
+// require `v` to start from 27. Please consult the documentation about
 // what the particular chain expects.
 type Signature struct {
 	R          *big.Int

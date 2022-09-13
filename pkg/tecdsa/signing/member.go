@@ -423,7 +423,7 @@ func (fm *finalizingMember) markInactiveMembers(
 	filter.FlushInactiveMembers()
 }
 
-// Result is successful computation of the tECDSA signature.
+// Result is a successful computation of the tECDSA signature.
 func (fm *finalizingMember) Result() *Result {
 	return &Result{Signature: tecdsa.NewSignature(fm.tssResult)}
 }
