@@ -6,7 +6,6 @@ import (
 
 	"github.com/spf13/cobra"
 
-	commonDiagnostics "github.com/keep-network/keep-common/pkg/diagnostics"
 	"github.com/keep-network/keep-common/pkg/persistence"
 	"github.com/keep-network/keep-core/build"
 	"github.com/keep-network/keep-core/config"
@@ -118,8 +117,8 @@ func start(cmd *cobra.Command) error {
 
 	initializeMetrics(ctx, clientConfig, netProvider, blockCounter)
 	registry := initializeDiagnostics(clientConfig)
-	diagnostics.RegisterConnectedPeersSource(registry, netProvider, signing)
-	diagnostics.RegisterClientInfoSource(registry, netProvider, signing, build.Version, build.Revision)
+	registry.RegisterConnectedPeersSource(netProvider, signing)
+	registry.RegisterClientInfoSource(netProvider, signing, build.Version, build.Revision)
 
 	err = tbtc.Initialize(
 		ctx,
@@ -222,7 +221,7 @@ func initializeMetrics(
 
 func initializeDiagnostics(
 	config *config.Config,
-) *commonDiagnostics.Registry {
+) *diagnostics.Registry {
 	registry, isConfigured := diagnostics.Initialize(
 		config.Diagnostics.Port,
 	)
