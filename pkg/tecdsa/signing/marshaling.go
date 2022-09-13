@@ -65,7 +65,7 @@ func (trom *tssRoundOneMessage) Marshal() ([]byte, error) {
 	})
 }
 
-// Unmarshal converts a byte array produced by Marshal to an tssRoundOneMessage.
+// Unmarshal converts a byte array produced by Marshal to a tssRoundOneMessage.
 func (trom *tssRoundOneMessage) Unmarshal(bytes []byte) error {
 	pbMsg := pb.TSSRoundOneMessage{}
 	if err := proto.Unmarshal(bytes, &pbMsg); err != nil {
@@ -108,7 +108,7 @@ func (trtm *tssRoundTwoMessage) Marshal() ([]byte, error) {
 	})
 }
 
-// Unmarshal converts a byte array produced by Marshal to an tssRoundTwoMessage.
+// Unmarshal converts a byte array produced by Marshal to a tssRoundTwoMessage.
 func (trtm *tssRoundTwoMessage) Unmarshal(bytes []byte) error {
 	pbMsg := pb.TSSRoundTwoMessage{}
 	if err := proto.Unmarshal(bytes, &pbMsg); err != nil {
@@ -145,7 +145,7 @@ func (trtm *tssRoundThreeMessage) Marshal() ([]byte, error) {
 	})
 }
 
-// Unmarshal converts a byte array produced by Marshal to an tssRoundThreeMessage.
+// Unmarshal converts a byte array produced by Marshal to a tssRoundThreeMessage.
 func (trtm *tssRoundThreeMessage) Unmarshal(bytes []byte) error {
 	pbMsg := pb.TSSRoundThreeMessage{}
 	if err := proto.Unmarshal(bytes, &pbMsg); err != nil {
@@ -173,7 +173,7 @@ func (trfm *tssRoundFourMessage) Marshal() ([]byte, error) {
 	})
 }
 
-// Unmarshal converts a byte array produced by Marshal to an tssRoundFourMessage.
+// Unmarshal converts a byte array produced by Marshal to a tssRoundFourMessage.
 func (trfm *tssRoundFourMessage) Unmarshal(bytes []byte) error {
 	pbMsg := pb.TSSRoundFourMessage{}
 	if err := proto.Unmarshal(bytes, &pbMsg); err != nil {
@@ -201,7 +201,7 @@ func (trfm *tssRoundFiveMessage) Marshal() ([]byte, error) {
 	})
 }
 
-// Unmarshal converts a byte array produced by Marshal to an tssRoundFiveMessage.
+// Unmarshal converts a byte array produced by Marshal to a tssRoundFiveMessage.
 func (trfm *tssRoundFiveMessage) Unmarshal(bytes []byte) error {
 	pbMsg := pb.TSSRoundFiveMessage{}
 	if err := proto.Unmarshal(bytes, &pbMsg); err != nil {
@@ -229,7 +229,7 @@ func (trsm *tssRoundSixMessage) Marshal() ([]byte, error) {
 	})
 }
 
-// Unmarshal converts a byte array produced by Marshal to an tssRoundSixMessage.
+// Unmarshal converts a byte array produced by Marshal to a tssRoundSixMessage.
 func (trsm *tssRoundSixMessage) Unmarshal(bytes []byte) error {
 	pbMsg := pb.TSSRoundSixMessage{}
 	if err := proto.Unmarshal(bytes, &pbMsg); err != nil {
@@ -257,7 +257,7 @@ func (trsm *tssRoundSevenMessage) Marshal() ([]byte, error) {
 	})
 }
 
-// Unmarshal converts a byte array produced by Marshal to an tssRoundSevenMessage.
+// Unmarshal converts a byte array produced by Marshal to a tssRoundSevenMessage.
 func (trsm *tssRoundSevenMessage) Unmarshal(bytes []byte) error {
 	pbMsg := pb.TSSRoundSevenMessage{}
 	if err := proto.Unmarshal(bytes, &pbMsg); err != nil {
@@ -285,7 +285,7 @@ func (trem *tssRoundEightMessage) Marshal() ([]byte, error) {
 	})
 }
 
-// Unmarshal converts a byte array produced by Marshal to an tssRoundEightMessage.
+// Unmarshal converts a byte array produced by Marshal to a tssRoundEightMessage.
 func (trem *tssRoundEightMessage) Unmarshal(bytes []byte) error {
 	pbMsg := pb.TSSRoundEightMessage{}
 	if err := proto.Unmarshal(bytes, &pbMsg); err != nil {
@@ -313,7 +313,7 @@ func (trnm *tssRoundNineMessage) Marshal() ([]byte, error) {
 	})
 }
 
-// Unmarshal converts a byte array produced by Marshal to an tssRoundNineMessage.
+// Unmarshal converts a byte array produced by Marshal to a tssRoundNineMessage.
 func (trnm *tssRoundNineMessage) Unmarshal(bytes []byte) error {
 	pbMsg := pb.TSSRoundNineMessage{}
 	if err := proto.Unmarshal(bytes, &pbMsg); err != nil {
