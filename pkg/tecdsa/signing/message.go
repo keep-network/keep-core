@@ -77,8 +77,8 @@ func (trtm *tssRoundTwoMessage) Type() string {
 type tssRoundThreeMessage struct {
 	senderID group.MemberIndex
 
-	payload   []byte
-	sessionID string
+	broadcastPayload []byte
+	sessionID        string
 }
 
 // SenderID returns protocol-level identifier of the message sender.
@@ -97,8 +97,8 @@ func (trtm *tssRoundThreeMessage) Type() string {
 type tssRoundFourMessage struct {
 	senderID group.MemberIndex
 
-	payload   []byte
-	sessionID string
+	broadcastPayload []byte
+	sessionID        string
 }
 
 // SenderID returns protocol-level identifier of the message sender.
@@ -117,8 +117,8 @@ func (trfm *tssRoundFourMessage) Type() string {
 type tssRoundFiveMessage struct {
 	senderID group.MemberIndex
 
-	payload   []byte
-	sessionID string
+	broadcastPayload []byte
+	sessionID        string
 }
 
 // SenderID returns protocol-level identifier of the message sender.
@@ -137,8 +137,8 @@ func (trfm *tssRoundFiveMessage) Type() string {
 type tssRoundSixMessage struct {
 	senderID group.MemberIndex
 
-	payload   []byte
-	sessionID string
+	broadcastPayload []byte
+	sessionID        string
 }
 
 // SenderID returns protocol-level identifier of the message sender.
@@ -157,8 +157,8 @@ func (trfm *tssRoundSixMessage) Type() string {
 type tssRoundSevenMessage struct {
 	senderID group.MemberIndex
 
-	payload   []byte
-	sessionID string
+	broadcastPayload []byte
+	sessionID        string
 }
 
 // SenderID returns protocol-level identifier of the message sender.
@@ -177,8 +177,8 @@ func (trfm *tssRoundSevenMessage) Type() string {
 type tssRoundEightMessage struct {
 	senderID group.MemberIndex
 
-	payload   []byte
-	sessionID string
+	broadcastPayload []byte
+	sessionID        string
 }
 
 // SenderID returns protocol-level identifier of the message sender.
@@ -197,8 +197,8 @@ func (trem *tssRoundEightMessage) Type() string {
 type tssRoundNineMessage struct {
 	senderID group.MemberIndex
 
-	payload   []byte
-	sessionID string
+	broadcastPayload []byte
+	sessionID        string
 }
 
 // SenderID returns protocol-level identifier of the message sender.

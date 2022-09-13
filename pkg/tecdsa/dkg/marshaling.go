@@ -55,9 +55,9 @@ func (epkm *ephemeralPublicKeyMessage) Unmarshal(bytes []byte) error {
 // network communication.
 func (trom *tssRoundOneMessage) Marshal() ([]byte, error) {
 	return proto.Marshal(&pb.TSSRoundOneMessage{
-		SenderID:  uint32(trom.senderID),
-		Payload:   trom.payload,
-		SessionID: trom.sessionID,
+		SenderID:         uint32(trom.senderID),
+		BroadcastPayload: trom.broadcastPayload,
+		SessionID:        trom.sessionID,
 	})
 }
 
@@ -73,7 +73,7 @@ func (trom *tssRoundOneMessage) Unmarshal(bytes []byte) error {
 	}
 
 	trom.senderID = group.MemberIndex(pbMsg.SenderID)
-	trom.payload = pbMsg.Payload
+	trom.broadcastPayload = pbMsg.BroadcastPayload
 	trom.sessionID = pbMsg.SessionID
 
 	return nil
@@ -127,9 +127,9 @@ func (trtm *tssRoundTwoMessage) Unmarshal(bytes []byte) error {
 // network communication.
 func (trtm *tssRoundThreeMessage) Marshal() ([]byte, error) {
 	return proto.Marshal(&pb.TSSRoundThreeMessage{
-		SenderID:  uint32(trtm.senderID),
-		Payload:   trtm.payload,
-		SessionID: trtm.sessionID,
+		SenderID:         uint32(trtm.senderID),
+		BroadcastPayload: trtm.broadcastPayload,
+		SessionID:        trtm.sessionID,
 	})
 }
 
@@ -145,7 +145,7 @@ func (trtm *tssRoundThreeMessage) Unmarshal(bytes []byte) error {
 	}
 
 	trtm.senderID = group.MemberIndex(pbMsg.SenderID)
-	trtm.payload = pbMsg.Payload
+	trtm.broadcastPayload = pbMsg.BroadcastPayload
 	trtm.sessionID = pbMsg.SessionID
 
 	return nil
