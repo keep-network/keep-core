@@ -26,8 +26,8 @@ type member struct {
 	membershipValidator *group.MembershipValidator
 	// Identifier of the particular DKG session this member is part of.
 	sessionID string
-	// TSS pre-parameters.
-	tssPreParams *keygen.LocalPreParams
+	// TSS pre-parameters getter.
+	preParamsFn func() (*PreParams, error)
 	// Concurrency level of TSS key-generation protocol.
 	keyGenerationConcurrency int
 	// Instance of the member identity converter.
@@ -43,7 +43,7 @@ func newMember(
 	dishonestThreshold int,
 	membershipValidator *group.MembershipValidator,
 	sessionID string,
-	tssPreParams *keygen.LocalPreParams,
+	preParamsFn func() (*PreParams, error),
 	keyGenerationConcurrency int,
 ) *member {
 	return &member{
@@ -52,7 +52,7 @@ func newMember(
 		group:                    group.NewGroup(dishonestThreshold, groupSize),
 		membershipValidator:      membershipValidator,
 		sessionID:                sessionID,
-		tssPreParams:             tssPreParams,
+		preParamsFn:              preParamsFn,
 		keyGenerationConcurrency: keyGenerationConcurrency,
 		identityConverter:        &identityConverter{seed: seed},
 	}
@@ -135,7 +135,10 @@ func (skgm *symmetricKeyGeneratingMember) markInactiveMembers(
 }
 
 // initializeTssRoundOne returns a member to perform next protocol operations.
-func (skgm *symmetricKeyGeneratingMember) initializeTssRoundOne() *tssRoundOneMember {
+func (skgm *symmetricKeyGeneratingMember) initializeTssRoundOne() (
+	*tssRoundOneMember,
+	error,
+) {
 	// Set up the local TSS party using only operating members. This effectively
 	// removes all excluded members who were marked as disqualified at the
 	// beginning of the protocol.
@@ -157,11 +160,16 @@ func (skgm *symmetricKeyGeneratingMember) initializeTssRoundOne() *tssRoundOneMe
 	tssOutgoingMessagesChan := make(chan tss.Message, len(groupTssPartiesIDs))
 	tssResultChan := make(chan keygen.LocalPartySaveData, 1)
 
+	preParams, err := skgm.preParamsFn()
+	if err != nil {
+		return nil, fmt.Errorf("failed fetching pre-params: [%w]", err)
+	}
+
 	tssParty := keygen.NewLocalParty(
 		tssParameters,
 		tssOutgoingMessagesChan,
 		tssResultChan,
-		*skgm.tssPreParams,
+		*preParams.data,
 	)
 
 	return &tssRoundOneMember{
@@ -170,7 +178,7 @@ func (skgm *symmetricKeyGeneratingMember) initializeTssRoundOne() *tssRoundOneMe
 		tssParameters:                tssParameters,
 		tssOutgoingMessagesChan:      tssOutgoingMessagesChan,
 		tssResultChan:                tssResultChan,
-	}
+	}, nil
 }
 
 // tssRoundOneMember represents one member in a distributed key generating

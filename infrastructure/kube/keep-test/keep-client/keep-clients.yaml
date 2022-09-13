@@ -81,7 +81,7 @@ spec:
         - $(ETH_WS_URL)
         - --ethereum.keyFile
         - /mnt/keep-client/keyfile/account-0-keyfile
-        - --storage.dataDir
+        - --storage.dir
         - /mnt/keep-client/data
         - --network.port
         - "3919"
@@ -283,7 +283,7 @@ spec:
         - $(ETH_WS_URL)
         - --ethereum.keyFile
         - /mnt/keep-client/keyfile/account-1-keyfile
-        - --storage.dataDir
+        - --storage.dir
         - /mnt/keep-client/data
         - --network.port
         - "3919"
@@ -487,7 +487,7 @@ spec:
         - $(ETH_WS_URL)
         - --ethereum.keyFile
         - /mnt/keep-client/keyfile/account-2-keyfile
-        - --storage.dataDir
+        - --storage.dir
         - /mnt/keep-client/data
         - --network.port
         - "3919"
@@ -691,7 +691,7 @@ spec:
         - $(ETH_WS_URL)
         - --ethereum.keyFile
         - /mnt/keep-client/keyfile/account-3-keyfile
-        - --storage.dataDir
+        - --storage.dir
         - /mnt/keep-client/data
         - --network.port
         - "3919"
@@ -895,7 +895,7 @@ spec:
         - $(ETH_WS_URL)
         - --ethereum.keyFile
         - /mnt/keep-client/keyfile/account-4-keyfile
-        - --storage.dataDir
+        - --storage.dir
         - /mnt/keep-client/data
         - --network.port
         - "3919"
@@ -1099,7 +1099,7 @@ spec:
         - $(ETH_WS_URL)
         - --ethereum.keyFile
         - /mnt/keep-client/keyfile/account-5-keyfile
-        - --storage.dataDir
+        - --storage.dir
         - /mnt/keep-client/data
         - --network.port
         - "3919"
@@ -1303,7 +1303,7 @@ spec:
         - $(ETH_WS_URL)
         - --ethereum.keyFile
         - /mnt/keep-client/keyfile/account-6-keyfile
-        - --storage.dataDir
+        - --storage.dir
         - /mnt/keep-client/data
         - --network.port
         - "3919"
@@ -1507,7 +1507,7 @@ spec:
         - $(ETH_WS_URL)
         - --ethereum.keyFile
         - /mnt/keep-client/keyfile/account-7-keyfile
-        - --storage.dataDir
+        - --storage.dir
         - /mnt/keep-client/data
         - --network.port
         - "3919"
@@ -1711,7 +1711,7 @@ spec:
         - $(ETH_WS_URL)
         - --ethereum.keyFile
         - /mnt/keep-client/keyfile/account-8-keyfile
-        - --storage.dataDir
+        - --storage.dir
         - /mnt/keep-client/data
         - --network.port
         - "3919"
@@ -1915,7 +1915,7 @@ spec:
         - $(ETH_WS_URL)
         - --ethereum.keyFile
         - /mnt/keep-client/keyfile/account-9-keyfile
-        - --storage.dataDir
+        - --storage.dir
         - /mnt/keep-client/data
         - --network.port
         - "3919"
