@@ -90,7 +90,11 @@ func TestShouldAcceptMessage(t *testing.T) {
 				groupSize-honestThreshold,
 				membershipValdator,
 				"1",
-				&keygen.LocalPreParams{},
+				func() (*PreParams, error) {
+					return &PreParams{
+						data: &keygen.LocalPreParams{},
+					}, nil
+				},
 				1,
 			)
 

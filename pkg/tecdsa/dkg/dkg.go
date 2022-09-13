@@ -73,11 +73,6 @@ func (e *Executor) Execute(
 
 	registerUnmarshallers(channel)
 
-	preParams, err := e.tssPreParamsPool.GetNow()
-	if err != nil {
-		return nil, 0, fmt.Errorf("failed fetching pre-params: [%w]", err)
-	}
-
 	member := newMember(
 		e.logger,
 		seed,
@@ -86,7 +81,7 @@ func (e *Executor) Execute(
 		dishonestThreshold,
 		membershipValidator,
 		sessionID,
-		preParams.data,
+		e.tssPreParamsPool.GetNow,
 		e.keyGenerationConcurrency,
 	)
 
