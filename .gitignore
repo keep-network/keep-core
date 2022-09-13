@@ -7,6 +7,9 @@ _local/
 *.abi
 *.account
 
+# Hidden files
+.*
+
 # MacOS
 *.DS_Store
 
@@ -22,9 +25,7 @@ _local/
 *.swo
 
 # Infrastructure
-.terraform
 infrastructure/gcp/service-accounts*
-.secrets*
 
 # keys
 keystore/
