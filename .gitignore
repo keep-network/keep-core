@@ -1,5 +1,3 @@
-*.abi
-
 # Hidden files
 .*
 
@@ -52,6 +50,7 @@ yarn-error.log
 # Go bindings generator
 /pkg/chain/**/gen/_address/
 /pkg/chain/**/gen/_contracts/
+/pkg/chain/**/gen/abi/*.abi
 
 # Temporary directory
 tmp/
