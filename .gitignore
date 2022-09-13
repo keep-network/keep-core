@@ -1,15 +1,14 @@
-node_modules/
 artifacts/
 **/gen/**/build/
 vendor/
 _local/
-*.swp
-*.swo
-*.DS_Store
 ,*
 *.out
 *.abi
 *.account
+
+# MacOS
+*.DS_Store
 
 # Executables
 debug
@@ -21,6 +20,10 @@ main.test
 # IDEs
 .vscode/
 .idea/
+
+# Vim
+*.swp
+*.swo
 
 # Infrastructure
 .terraform
@@ -42,7 +45,9 @@ configs
 
 # Private testnet artifacts
 *-keep-client-deployment-bundle.tar.gz
-keep-client-snapshot.tar
+
+# Node
+node_modules/
 
 # Yarn
 yarn-error.log
