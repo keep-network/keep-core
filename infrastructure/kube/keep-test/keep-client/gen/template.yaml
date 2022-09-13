@@ -85,7 +85,7 @@ spec:
             - $(ETH_WS_URL)
             - "--ethereum.keyFile"
             -  #@ "/mnt/keep-client/keyfile/" + account() + "-keyfile"
-            - "--storage.dataDir"
+            - "--storage.dir"
             - "/mnt/keep-client/data"
             - "--network.port"
             - "3919"

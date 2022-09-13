@@ -187,8 +187,8 @@ func initNetworkFlags(cmd *cobra.Command, cfg *config.Config) {
 // Initialize flags for Storage configuration.
 func initStorageFlags(cmd *cobra.Command, cfg *config.Config) {
 	cmd.Flags().StringVar(
-		&cfg.Storage.DataDir,
-		"storage.dataDir",
+		&cfg.Storage.Dir,
+		"storage.dir",
 		"",
 		"Location to store the Keep client key shares and other sensitive data.",
 	)
