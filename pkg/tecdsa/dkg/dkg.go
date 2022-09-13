@@ -2,6 +2,7 @@ package dkg
 
 import (
 	"fmt"
+	"math/big"
 	"time"
 
 	"github.com/ipfs/go-log"
@@ -57,6 +58,7 @@ func NewExecutor(
 // group by passing a non-empty excludedMembers slice holding the members that
 // should be excluded.
 func (e *Executor) Execute(
+	seed *big.Int,
 	sessionID string,
 	startBlockNumber uint64,
 	memberIndex group.MemberIndex,
@@ -78,6 +80,7 @@ func (e *Executor) Execute(
 
 	member := newMember(
 		e.logger,
+		seed,
 		memberIndex,
 		groupSize,
 		dishonestThreshold,

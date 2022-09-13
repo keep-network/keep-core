@@ -1,14 +1,16 @@
 package dkg
 
 import (
-	"github.com/keep-network/keep-core/pkg/tecdsa"
-	"github.com/keep-network/keep-core/pkg/tecdsa/common"
+	"fmt"
+	"math/big"
 
 	"github.com/bnb-chain/tss-lib/ecdsa/keygen"
 	"github.com/bnb-chain/tss-lib/tss"
 	"github.com/ipfs/go-log"
 	"github.com/keep-network/keep-core/pkg/crypto/ephemeral"
 	"github.com/keep-network/keep-core/pkg/protocol/group"
+	"github.com/keep-network/keep-core/pkg/tecdsa"
+	"github.com/keep-network/keep-core/pkg/tecdsa/common"
 )
 
 // Member represents a DKG protocol member.
@@ -28,11 +30,14 @@ type member struct {
 	tssPreParams *keygen.LocalPreParams
 	// Concurrency level of TSS key-generation protocol.
 	keyGenerationConcurrency int
+	// Instance of the member identity converter.
+	identityConverter *identityConverter
 }
 
 // newMember creates a new member in an initial state
 func newMember(
 	logger log.StandardLogger,
+	seed *big.Int,
 	memberID group.MemberIndex,
 	groupSize,
 	dishonestThreshold int,
@@ -49,6 +54,7 @@ func newMember(
 		sessionID:                sessionID,
 		tssPreParams:             tssPreParams,
 		keyGenerationConcurrency: keyGenerationConcurrency,
+		identityConverter:        &identityConverter{seed: seed},
 	}
 }
 
@@ -136,6 +142,7 @@ func (skgm *symmetricKeyGeneratingMember) initializeTssRoundOne() *tssRoundOneMe
 	tssPartyID, groupTssPartiesIDs := common.GenerateTssPartiesIDs(
 		skgm.id,
 		skgm.group.OperatingMemberIDs(),
+		skgm.identityConverter,
 	)
 
 	tssParameters := tss.NewParameters(
@@ -332,4 +339,40 @@ func (sm *signingMember) initializeSubmittingMember() *submittingMember {
 // the result.
 type submittingMember struct {
 	*signingMember
+}
+
+// identityConverter implements the common.IdentityConverter for tECDSA DKG.
+// It maps every member index to a party ID by adding a constant seed value.
+type identityConverter struct {
+	seed *big.Int
+}
+
+func (ic *identityConverter) MemberIndexToTssPartyID(
+	memberIndex group.MemberIndex,
+) *tss.PartyID {
+	partyIDKey := ic.MemberIndexToTssPartyIDKey(memberIndex)
+
+	return tss.NewPartyID(
+		partyIDKey.Text(10),
+		fmt.Sprintf("member-%v", memberIndex),
+		partyIDKey,
+	)
+}
+
+func (ic *identityConverter) MemberIndexToTssPartyIDKey(
+	memberIndex group.MemberIndex,
+) *big.Int {
+	return new(big.Int).Add(ic.seed, big.NewInt(int64(memberIndex)))
+}
+
+func (ic *identityConverter) TssPartyIDToMemberIndex(
+	partyID *tss.PartyID,
+) group.MemberIndex {
+	if ic.seed.Cmp(partyID.KeyInt()) > 0 { // is seed > party ID?
+		return group.MemberIndex(0)
+	}
+
+	return group.MemberIndex(
+		new(big.Int).Sub(partyID.KeyInt(), ic.seed).Int64(),
+	)
 }

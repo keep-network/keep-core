@@ -91,7 +91,7 @@ generate: gen_proto
 version = $(shell git describe --tags --match "v[0-9]*" HEAD)
 revision = $(shell git rev-parse --short HEAD)
 
-go_build_cmd = go build -ldflags "-X main.version=$(version) -X main.revision=$(revision)" -a -o $(1) .
+go_build_cmd = go build -ldflags "-X github.com/keep-network/keep-core/build.Version=$(version) -X github.com/keep-network/keep-core/build.Revision=$(revision)" -a -o $(1) .
 
 build:
 	$(info Building Go code)
