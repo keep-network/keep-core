@@ -45,6 +45,8 @@ Trust math, not hardware.
 		dashes,
 		buildLine(maxLineLength, prefix, suffix, "Keep Client Node"),
 		buildLine(maxLineLength, prefix, suffix, ""),
+		buildVersion(maxLineLength, prefix, suffix),
+		buildLine(maxLineLength, prefix, suffix, ""),
 		buildLine(maxLineLength, prefix, suffix, fmt.Sprintf("Operator: %s", operator)),
 		buildLine(maxLineLength, prefix, suffix, ""),
 		buildLine(maxLineLength, prefix, suffix, fmt.Sprintf("Port: %d", port)),
@@ -78,6 +80,14 @@ func buildMultiLine(lineLength int, prefix, suffix, startPrefix string, lines []
 	}
 
 	return combinedLines
+}
+
+func buildVersion(lineLength int, prefix, suffix string) string {
+	return buildLine(
+		lineLength,
+		prefix,
+		suffix,
+		fmt.Sprintf("Version: %s (%s)", build.Version, build.Revision))
 }
 
 func buildContractAddresses(lineLength int, prefix, suffix string, ethereumConfig commonEthereum.Config) string {
