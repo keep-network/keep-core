@@ -72,7 +72,10 @@ func Initialize(
 		logger,
 		chain,
 		sortition.DefaultStatusCheckTick,
-		sortition.UnconditionalJoinPolicy,
+		&enoughPreParamsPoolSizePolicy{
+			node:   node,
+			config: config,
+		},
 	)
 	if err != nil {
 		return fmt.Errorf(
@@ -132,3 +135,17 @@ func Initialize(
 
 	return nil
 }
+
+// enoughPreParamsPoolSizePolicy is a policy that enforces the sufficient size
+// of the DKG pre-parameters pool before joining the sortition pool.
+type enoughPreParamsPoolSizePolicy struct {
+	node   *node
+	config Config
+}
+
+func (epppsp *enoughPreParamsPoolSizePolicy) ShouldJoin() bool {
+	actualPoolSize := epppsp.node.dkgExecutor.PreParamsPool().CurrentSize()
+	targetPoolSize := epppsp.config.PreParamsPoolSize
+	return actualPoolSize >= targetPoolSize
+}
+
