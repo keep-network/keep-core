@@ -550,7 +550,7 @@ func (trsm *tssRoundSevenMember) tssRoundSeven(
 	ctx context.Context,
 	tssRoundSixMessages []*tssRoundSixMessage,
 ) (*tssRoundSevenMessage, error) {
-	// Use messages from round five to update the local party and advance
+	// Use messages from round six to update the local party and advance
 	// to round seven.
 	for _, tssRoundSixMessage := range deduplicateBySender(tssRoundSixMessages) {
 		senderID := tssRoundSixMessage.SenderID()
@@ -603,7 +603,7 @@ func (trem *tssRoundEightMember) tssRoundEight(
 	ctx context.Context,
 	tssRoundSevenMessages []*tssRoundSevenMessage,
 ) (*tssRoundEightMessage, error) {
-	// Use messages from round five to update the local party and advance
+	// Use messages from round seven to update the local party and advance
 	// to round eight.
 	for _, tssRoundSevenMessage := range deduplicateBySender(tssRoundSevenMessages) {
 		senderID := tssRoundSevenMessage.SenderID()
@@ -656,7 +656,7 @@ func (trnm *tssRoundNineMember) tssRoundNine(
 	ctx context.Context,
 	tssRoundEightMessages []*tssRoundEightMessage,
 ) (*tssRoundNineMessage, error) {
-	// Use messages from round five to update the local party and advance
+	// Use messages from round eight to update the local party and advance
 	// to round nine.
 	for _, tssRoundEightMessage := range deduplicateBySender(tssRoundEightMessages) {
 		senderID := tssRoundEightMessage.SenderID()
