@@ -1,5 +1,3 @@
-artifacts/
-**/gen/**/build/
 vendor/
 _local/
 ,*
@@ -49,9 +47,11 @@ node_modules/
 # Yarn
 yarn-error.log
 
-# Hardhat
-cache/
-export.json
+# Solidity
+solidity*/**/artifacts/
+solidity*/**/build/
+solidity*/**/cache/
+solidity*/**/export.json
 
 # TypeScript
 typechain/
