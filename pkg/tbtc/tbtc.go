@@ -148,4 +148,3 @@ func (epppsp *enoughPreParamsPoolSizePolicy) ShouldJoin() bool {
 	targetPoolSize := epppsp.config.PreParamsPoolSize
 	return actualPoolSize >= targetPoolSize
 }
-

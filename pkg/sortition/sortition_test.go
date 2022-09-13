@@ -350,7 +350,7 @@ func TestMonitor_CanRestoreRewardsEligibility_WithDelay(t *testing.T) {
 	}
 }
 
-type neverJoinPolicy struct {}
+type neverJoinPolicy struct{}
 
 func (njp *neverJoinPolicy) ShouldJoin() bool {
 	return false
