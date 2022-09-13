@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	commonEthereum "github.com/keep-network/keep-common/pkg/chain/ethereum"
+	"github.com/keep-network/keep-core/build"
 	chainEthereum "github.com/keep-network/keep-core/pkg/chain/ethereum"
 )
 
