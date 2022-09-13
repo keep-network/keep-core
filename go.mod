@@ -7,10 +7,10 @@ go 1.18
 // https://github.com/bnb-chain/tss-lib/pull/203
 replace github.com/bnb-chain/tss-lib => github.com/keep-network/tss-lib v1.3.3-0.20220826121242-73ee9558285f
 
-replace (
-	google.golang.org/protobuf => google.golang.org/protobuf v1.28.1
-	google.golang.org/protobuf/dev => google.golang.org/protobuf v1.28.2-0.20220831092852-f930b1dc76e8
-)
+// Temporary replacement until v1.28.2 is released containing `protodelim` package.
+// See https://github.com/protocolbuffers/protobuf-go/commit/fb0abd915897428ccfdd6b03b48ad8219751ee54
+replace google.golang.org/protobuf/dev => google.golang.org/protobuf v1.28.2-0.20220831092852-f930b1dc76e8
+
 
 require (
 	github.com/bnb-chain/tss-lib v1.3.4-0.20220817120442-2f5f2e4fb79e
@@ -37,7 +37,7 @@ require (
 	github.com/spf13/viper v1.12.0
 	golang.org/x/crypto v0.0.0-20220525230936-793ad666bf5e
 	golang.org/x/exp v0.0.0-20220426173459-3bcf042a4bf5
-	google.golang.org/protobuf v1.28.0
+	google.golang.org/protobuf v1.28.1
 	google.golang.org/protobuf/dev v0.0.0-00010101000000-000000000000
 )
 
