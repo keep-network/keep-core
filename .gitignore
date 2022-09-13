@@ -1,9 +1,4 @@
-vendor/
-_local/
-,*
-*.out
 *.abi
-*.account
 
 # Hidden files
 .*
