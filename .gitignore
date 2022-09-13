@@ -11,11 +11,7 @@ _local/
 *.DS_Store
 
 # Executables
-debug
-debug.test
-keep-client
-main
-main.test
+/keep-client
 
 # IDEs
 .vscode/
