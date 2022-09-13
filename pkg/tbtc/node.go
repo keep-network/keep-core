@@ -112,16 +112,28 @@ func (n *node) joinDKGIfEligible(seed *big.Int, startBlockNumber uint64) {
 		}
 	}
 
-	// Create temporary broadcast channel name for DKG using the
-	// group selection seed with the protocol name as prefix.
-	channelName := fmt.Sprintf("%s-%s", ProtocolName, seed.Text(16))
+	if membersCount := len(indexes); membersCount > 0 {
+		if poolSize := n.dkgExecutor.PreParamsPool().CurrentSize(); membersCount > poolSize {
+			logger.Infof(
+				"cannot join DKG with seed [0x%x] as pre-parameters "+
+					"pool is too small; [%v] pre-parameters is required but "+
+					"only [%v] is available",
+				seed,
+				membersCount,
+				poolSize,
+			)
+			return
+		}
 
-	if len(indexes) > 0 {
 		logger.Infof(
 			"joining DKG with seed [0x%x] and controlling [%v] group members",
 			seed,
-			len(indexes),
+			membersCount,
 		)
+
+		// Create temporary broadcast channel name for DKG using the
+		// group selection seed with the protocol name as prefix.
+		channelName := fmt.Sprintf("%s-%s", ProtocolName, seed.Text(16))
 
 		broadcastChannel, err := n.netProvider.BroadcastChannelFor(channelName)
 		if err != nil {
