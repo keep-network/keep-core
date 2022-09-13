@@ -18,7 +18,7 @@
 *.swo
 
 # Infrastructure
-infrastructure/gcp/service-accounts*
+/infrastructure/gcp/service-accounts*
 
 # keys
 keystore/
@@ -30,8 +30,8 @@ __pycache__
 *.pyc
 
 # Configuration files
-configs/
-!configs/config.toml.SAMPLE
+/configs/
+!/configs/config.toml.SAMPLE
 
 # Private testnet artifacts
 *-keep-client-deployment-bundle.tar.gz
@@ -43,15 +43,15 @@ node_modules/
 yarn-error.log
 
 # Solidity
-solidity*/**/artifacts/
-solidity*/**/build/
-solidity*/**/cache/
-solidity*/**/typechain/
-solidity*/**/export.json
+/solidity*/**/artifacts/
+/solidity*/**/build/
+/solidity*/**/cache/
+/solidity*/**/typechain/
+/solidity*/**/export.json
 
 # Go bindings generator
-pkg/chain/**/gen/_address/
-pkg/chain/**/gen/_contracts/
+/pkg/chain/**/gen/_address/
+/pkg/chain/**/gen/_contracts/
 
 # Temporary directory
 tmp/
