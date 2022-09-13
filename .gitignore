@@ -55,7 +55,8 @@ export.json
 typechain/
 
 # Go bindings generator
-pkg/chain/*/*/gen/_address
+pkg/chain/**/gen/_address/
+pkg/chain/**/gen/_contracts/
 
 # Temporary directory
 tmp/
