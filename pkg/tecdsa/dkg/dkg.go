@@ -113,6 +113,10 @@ func (e *Executor) Execute(
 	return finalizationState.result(), endBlockNumber, nil
 }
 
+func (e *Executor) PreParamsPool() *tssPreParamsPool {
+	return e.tssPreParamsPool
+}
+
 // SignedResult represents information pertaining to the process of signing
 // a DKG result: the public key used during signing, the resulting signature and
 // the hash of the DKG result that was used during signing.

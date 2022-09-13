@@ -17,8 +17,14 @@ type Config struct {
 	Port int
 }
 
+// Registry wraps keep-common registry for internal use of exposed keep-common
+// registry methods.
+type Registry struct {
+	Registry *diagnostics.Registry
+}
+
 // Initialize sets up the diagnostics registry and enables diagnostics server.
-func Initialize(port int) (*diagnostics.Registry, bool) {
+func Initialize(port int) (*Registry, bool) {
 	if port == 0 {
 		return nil, false
 	}
@@ -27,17 +33,20 @@ func Initialize(port int) (*diagnostics.Registry, bool) {
 
 	registry.EnableServer(port)
 
-	return registry, true
+	newRegistry := &Registry{
+		Registry: registry,
+	}
+
+	return newRegistry, true
 }
 
 // RegisterConnectedPeersSource registers the diagnostics source providing
 // information about connected peers.
-func RegisterConnectedPeersSource(
-	registry *diagnostics.Registry,
+func (r *Registry) RegisterConnectedPeersSource(
 	netProvider net.Provider,
 	signing chain.Signing,
 ) {
-	registry.RegisterSource("connected_peers", func() string {
+	r.Registry.RegisterSource("connected_peers", func() string {
 		connectionManager := netProvider.ConnectionManager()
 		connectedPeers := connectionManager.ConnectedPeers()
 
@@ -76,14 +85,13 @@ func RegisterConnectedPeersSource(
 
 // RegisterClientInfoSource registers the diagnostics source providing
 // information about the client itself.
-func RegisterClientInfoSource(
-	registry *diagnostics.Registry,
+func (r *Registry) RegisterClientInfoSource(
 	netProvider net.Provider,
 	signing chain.Signing,
 	clientVersion string,
 	clientRevision string,
 ) {
-	registry.RegisterSource("client_info", func() string {
+	r.Registry.RegisterSource("client_info", func() string {
 		connectionManager := netProvider.ConnectionManager()
 
 		clientID := netProvider.ID().String()
@@ -111,6 +119,20 @@ func RegisterClientInfoSource(
 		bytes, err := json.Marshal(clientInfo)
 		if err != nil {
 			logger.Error("error on serializing client info to JSON: [%v]", err)
+			return ""
+		}
+
+		return string(bytes)
+	})
+}
+
+// RegisterApplicationSource registers the diagnostics source providing
+// information about the application.
+func (r *Registry) RegisterApplicationSource(application string, fetchApplicationDiagnostics func() map[string]interface{}) {
+	r.Registry.RegisterSource(application, func() string {
+		bytes, err := json.Marshal(fetchApplicationDiagnostics())
+		if err != nil {
+			logger.Error("error on serializing peers list to JSON: [%v]", err)
 			return ""
 		}
 

@@ -123,6 +123,11 @@ func start(cmd *cobra.Command) error {
 		return fmt.Errorf("error initializing beacon: [%v]", err)
 	}
 
+	initializeMetrics(ctx, clientConfig, netProvider, blockCounter)
+	registry := initializeDiagnostics(clientConfig)
+	registry.RegisterConnectedPeersSource(netProvider, signing)
+	registry.RegisterClientInfoSource(netProvider, signing, build.Version, build.Revision)
+
 	err = tbtc.Initialize(
 		ctx,
 		tbtcChain,
@@ -130,13 +135,11 @@ func start(cmd *cobra.Command) error {
 		tbtcKeyStorePersistence,
 		scheduler,
 		clientConfig.Tbtc,
+		registry,
 	)
 	if err != nil {
 		return fmt.Errorf("error initializing TBTC: [%v]", err)
 	}
-
-	initializeMetrics(ctx, clientConfig, netProvider, blockCounter)
-	initializeDiagnostics(clientConfig, netProvider, signing, build.Version, build.Revision)
 
 	select {
 	case <-ctx.Done():
@@ -192,17 +195,13 @@ func initializeMetrics(
 
 func initializeDiagnostics(
 	config *config.Config,
-	netProvider net.Provider,
-	signing chain.Signing,
-	clientVersion string,
-	clientRevision string,
-) {
+) *diagnostics.Registry {
 	registry, isConfigured := diagnostics.Initialize(
 		config.Diagnostics.Port,
 	)
 	if !isConfigured {
 		logger.Infof("diagnostics are not configured")
-		return
+		return nil
 	}
 
 	logger.Infof(
@@ -210,6 +209,5 @@ func initializeDiagnostics(
 		config.Diagnostics.Port,
 	)
 
-	diagnostics.RegisterConnectedPeersSource(registry, netProvider, signing)
-	diagnostics.RegisterClientInfoSource(registry, netProvider, signing, clientVersion, clientRevision)
+	return registry
 }
