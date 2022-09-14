@@ -62,3 +62,15 @@ jobs:
           bucket-name: docs.keep.network
           bucket-path: ${{ github.head_ref }}
           build-folder: ${{ steps.html.outputs.asciidoctor-artifacts }}/docs
+
+      - name: Post preview URL to PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v5
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: 'Documentation preview uploaded to https://docs.keep.network/${{ github.head_ref }}/index.html.'
+            })

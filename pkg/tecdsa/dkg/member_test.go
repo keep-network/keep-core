@@ -3,11 +3,11 @@ package dkg
 import (
 	"fmt"
 	"math/big"
-	"strconv"
 	"testing"
 
-	"github.com/bnb-chain/tss-lib/ecdsa/keygen"
 	"github.com/bnb-chain/tss-lib/tss"
+
+	"github.com/bnb-chain/tss-lib/ecdsa/keygen"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/chain/local_v1"
 	"github.com/keep-network/keep-core/pkg/internal/testutils"
@@ -43,31 +43,31 @@ func TestShouldAcceptMessage(t *testing.T) {
 	}
 
 	tests := map[string]struct {
-		senderID         group.MemberIndex
+		senderIndex      group.MemberIndex
 		senderPublicKey  []byte
 		activeMembersIDs []group.MemberIndex
 		expectedResult   bool
 	}{
 		"message from another valid and operating member": {
-			senderID:         group.MemberIndex(2),
+			senderIndex:      group.MemberIndex(2),
 			senderPublicKey:  operatorsPublicKeys[1],
 			activeMembersIDs: []group.MemberIndex{1, 2, 3, 4, 5},
 			expectedResult:   true,
 		},
 		"message from another valid but non-operating member": {
-			senderID:         group.MemberIndex(2),
+			senderIndex:      group.MemberIndex(2),
 			senderPublicKey:  operatorsPublicKeys[1],
 			activeMembersIDs: []group.MemberIndex{1, 3, 4, 5}, // 2 is inactive
 			expectedResult:   false,
 		},
 		"message from self": {
-			senderID:         group.MemberIndex(1),
+			senderIndex:      group.MemberIndex(1),
 			senderPublicKey:  operatorsPublicKeys[0],
 			activeMembersIDs: []group.MemberIndex{1, 2, 3, 4, 5},
 			expectedResult:   false,
 		},
 		"message from another invalid member": {
-			senderID:         group.MemberIndex(2),
+			senderIndex:      group.MemberIndex(2),
 			senderPublicKey:  operatorsPublicKeys[3],
 			activeMembersIDs: []group.MemberIndex{1, 2, 3, 4, 5},
 			expectedResult:   false,
@@ -84,12 +84,18 @@ func TestShouldAcceptMessage(t *testing.T) {
 
 			member := newMember(
 				&testutils.MockLogger{},
+				big.NewInt(200),
 				group.MemberIndex(1),
 				groupSize,
 				groupSize-honestThreshold,
 				membershipValdator,
 				"1",
-				&keygen.LocalPreParams{},
+				func() (*PreParams, error) {
+					return &PreParams{
+						data: &keygen.LocalPreParams{},
+					}, nil
+				},
+				1,
 			)
 
 			filter := member.inactiveMemberFilter()
@@ -98,7 +104,7 @@ func TestShouldAcceptMessage(t *testing.T) {
 			}
 			filter.FlushInactiveMembers()
 
-			result := member.shouldAcceptMessage(test.senderID, test.senderPublicKey)
+			result := member.shouldAcceptMessage(test.senderIndex, test.senderPublicKey)
 
 			testutils.AssertBoolsEqual(
 				t,
@@ -110,89 +116,30 @@ func TestShouldAcceptMessage(t *testing.T) {
 	}
 }
 
-func TestGenerateTssPartiesIDs(t *testing.T) {
-	thisMemberID := group.MemberIndex(2)
-	groupMembersIDs := []group.MemberIndex{
-		group.MemberIndex(1),
-		group.MemberIndex(2),
-		group.MemberIndex(3),
-		group.MemberIndex(4),
-		group.MemberIndex(5),
-	}
+func TestIdentityConverter_MemberIndexToTssPartyID(t *testing.T) {
+	converter := &identityConverter{seed: big.NewInt(300)}
+	memberIndex := group.MemberIndex(2)
 
-	thisTssPartyID, groupTssPartiesIDs := generateTssPartiesIDs(
-		thisMemberID,
-		groupMembersIDs,
-	)
-
-	// Just check that the `thisTssPartyID` points to `thisMemberID`. Extensive
-	// check will be done in the loop below.
-	testutils.AssertBytesEqual(
-		t,
-		thisTssPartyID.Key,
-		big.NewInt(int64(thisMemberID)).Bytes(),
-	)
-
-	testutils.AssertIntsEqual(
-		t,
-		"length of resulting group TSS parties IDs",
-		len(groupMembersIDs),
-		len(groupTssPartiesIDs),
-	)
-
-	for i, tssPartyID := range groupTssPartiesIDs {
-		testutils.AssertStringsEqual(
-			t,
-			fmt.Sprintf("ID of the TSS party ID [%v]", i),
-			tssPartyID.Id,
-			strconv.Itoa(int(groupMembersIDs[i])),
-		)
-
-		testutils.AssertBytesEqual(
-			t,
-			tssPartyID.Key,
-			big.NewInt(int64(groupMembersIDs[i])).Bytes(),
-		)
-
-		testutils.AssertStringsEqual(
-			t,
-			fmt.Sprintf("moniker of the TSS party ID [%v]", i),
-			tssPartyID.Moniker,
-			fmt.Sprintf("member-%v", groupMembersIDs[i]),
-		)
-
-		testutils.AssertIntsEqual(
-			t,
-			fmt.Sprintf("index of the TSS party ID [%v]", i),
-			-1,
-			tssPartyID.Index,
-		)
-	}
-}
-
-func TestNewTssPartyIDFromMemberID(t *testing.T) {
-	memberID := group.MemberIndex(2)
-
-	tssPartyID := newTssPartyIDFromMemberID(memberID)
+	tssPartyID := converter.MemberIndexToTssPartyID(memberIndex)
 
 	testutils.AssertStringsEqual(
 		t,
 		"ID of the TSS party ID",
 		tssPartyID.Id,
-		strconv.Itoa(int(memberID)),
+		"302",
 	)
 
 	testutils.AssertBytesEqual(
 		t,
 		tssPartyID.Key,
-		big.NewInt(int64(memberID)).Bytes(),
+		big.NewInt(302).Bytes(),
 	)
 
 	testutils.AssertStringsEqual(
 		t,
 		"moniker of the TSS party ID",
 		tssPartyID.Moniker,
-		fmt.Sprintf("member-%v", memberID),
+		fmt.Sprintf("member-%v", memberIndex),
 	)
 
 	testutils.AssertIntsEqual(
@@ -203,72 +150,36 @@ func TestNewTssPartyIDFromMemberID(t *testing.T) {
 	)
 }
 
-func TestMemberIDToTssPartyIDKey(t *testing.T) {
-	memberID := group.MemberIndex(2)
+func TestIdentityConverter_MemberIndexToTssPartyIDKey(t *testing.T) {
+	converter := &identityConverter{seed: big.NewInt(300)}
+	memberIndex := group.MemberIndex(2)
 
-	key := memberIDToTssPartyIDKey(memberID)
+	key := converter.MemberIndexToTssPartyIDKey(memberIndex)
 
 	testutils.AssertBigIntsEqual(
 		t,
 		"key of the TSS party ID",
-		big.NewInt(int64(memberID)),
+		big.NewInt(302),
 		key,
 	)
 }
 
-func TestTssPartyIDToMemberID(t *testing.T) {
-	partyID := tss.NewPartyID("2", "member-2", big.NewInt(2))
+func TestIdentityConverter_TssPartyIDToMemberIndex(t *testing.T) {
+	converter := &identityConverter{seed: big.NewInt(300)}
+	partyID := tss.NewPartyID("302", "member-2", big.NewInt(302))
 
-	memberID := tssPartyIDToMemberID(partyID)
+	memberIndex := converter.TssPartyIDToMemberIndex(partyID)
 
-	testutils.AssertIntsEqual(t, "member ID", 2, int(memberID))
+	testutils.AssertIntsEqual(t, "member ID", 2, int(memberIndex))
 }
 
-func TestResolveSortedTssPartyID(t *testing.T) {
-	groupTssPartiesIDs := []*tss.PartyID{
-		tss.NewPartyID("1", "member-1", big.NewInt(1)),
-		tss.NewPartyID("2", "member-2", big.NewInt(2)),
-		tss.NewPartyID("3", "member-3", big.NewInt(3)),
-		tss.NewPartyID("4", "member-4", big.NewInt(4)),
-		tss.NewPartyID("5", "member-5", big.NewInt(5)),
-	}
+func TestIdentityConverter_TssPartyIDToMemberIndex_Corrupted(t *testing.T) {
+	converter := &identityConverter{seed: big.NewInt(303)}
+	partyID := tss.NewPartyID("302", "member-2", big.NewInt(302))
 
-	tssParameters := tss.NewParameters(
-		tss.EC(),
-		tss.NewPeerContext(tss.SortPartyIDs(groupTssPartiesIDs)),
-		groupTssPartiesIDs[0],
-		len(groupTssPartiesIDs),
-		2,
-	)
+	// seed > member ID; it should never happen, so the party ID is considered
+	// corrupted and MemberIndex(0) is returned.
+	memberIndex := converter.TssPartyIDToMemberIndex(partyID)
 
-	memberID := group.MemberIndex(2)
-
-	tssPartyID := resolveSortedTssPartyID(tssParameters, memberID)
-
-	testutils.AssertStringsEqual(
-		t,
-		"ID of the TSS party ID",
-		tssPartyID.Id,
-		strconv.Itoa(int(memberID)),
-	)
-
-	testutils.AssertBytesEqual(
-		t,
-		tssPartyID.Key,
-		big.NewInt(int64(memberID)).Bytes(),
-	)
-
-	testutils.AssertStringsEqual(
-		t,
-		"moniker of the TSS party ID",
-		tssPartyID.Moniker,
-		fmt.Sprintf("member-%v", memberID),
-	)
-
-	testutils.AssertIntsEqual(
-		t,
-		"index of the TSS party ID",
-		int(memberID-1),
-		tssPartyID.Index,
-	)
+	testutils.AssertIntsEqual(t, "member ID", 0, int(memberIndex))
 }

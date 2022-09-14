@@ -23,6 +23,7 @@ import (
 // Definitions of contract names.
 const (
 	WalletRegistryContractName = "WalletRegistry"
+	BridgeContractName         = "Bridge"
 )
 
 // TbtcChain represents a TBTC-specific chain handle.
@@ -115,6 +116,20 @@ func (tc *TbtcChain) GetConfig() *tbtc.ChainConfig {
 		HonestThreshold:            honestThreshold,
 		ResultPublicationBlockStep: uint64(resultPublicationBlockStep),
 	}
+}
+
+// Staking returns address of the TokenStaking contract the WalletRegistry is
+// connected to.
+func (tc *TbtcChain) Staking() (chain.Address, error) {
+	stakingContractAddress, err := tc.walletRegistry.Staking()
+	if err != nil {
+		return "", fmt.Errorf(
+			"failed to get the token staking address: [%w]",
+			err,
+		)
+	}
+
+	return chain.Address(stakingContractAddress.String()), nil
 }
 
 // IsRecognized checks whether the given operator is recognized by the TbtcChain
@@ -353,6 +368,14 @@ func (tc *TbtcChain) CalculateDKGResultHash(
 	return dkg.ResultHashFromBytes(hash)
 }
 
+// TODO: This is a temporary function that should be removed once the client
+//       is integrated with real on-chain contracts.
+func (tc *TbtcChain) OnSignatureRequested(
+	handler func(event *tbtc.SignatureRequestedEvent),
+) subscription.EventSubscription {
+	return tc.mockWalletRegistry.OnSignatureRequested(handler)
+}
+
 // TODO: Temporary mock that simulates the behavior of the WalletRegistry
 //	     contract. Should be removed eventually.
 type mockWalletRegistry struct {
@@ -364,9 +387,9 @@ type mockWalletRegistry struct {
 	currentDkgMutex      sync.RWMutex
 	currentDkgStartBlock *big.Int
 
-	activeGroupMutex         sync.RWMutex
-	activeGroup              []byte
-	activeGroupOperableBlock *big.Int
+	activeWalletMutex         sync.RWMutex
+	activeWallet              []byte
+	activeWalletOperableBlock *big.Int
 }
 
 func newMockWalletRegistry(blockCounter chain.BlockCounter) *mockWalletRegistry {
@@ -448,8 +471,8 @@ func (mwr *mockWalletRegistry) SubmitDKGResult(
 	mwr.currentDkgMutex.Lock()
 	defer mwr.currentDkgMutex.Unlock()
 
-	mwr.activeGroupMutex.Lock()
-	defer mwr.activeGroupMutex.Unlock()
+	mwr.activeWalletMutex.Lock()
+	defer mwr.activeWalletMutex.Unlock()
 
 	// Abort if there is no DKG in progress. This check is needed to handle a
 	// situation in which two operators of the same client attempt to submit
@@ -482,12 +505,61 @@ func (mwr *mockWalletRegistry) SubmitDKGResult(
 		}(handler)
 	}
 
-	mwr.activeGroup = groupPublicKeyBytes
-	mwr.activeGroupOperableBlock = new(big.Int).Add(
+	mwr.activeWallet = groupPublicKeyBytes
+	mwr.activeWalletOperableBlock = new(big.Int).Add(
 		mwr.currentDkgStartBlock,
-		big.NewInt(150),
+		// We add an arbitrary value that must cover the protocol duration
+		// and some additional time for all clients to submit the DKG
+		// result to their own internal mocked chain. This value is bigger than
+		// the value used in beacon as the tECDSA DKG takes more blocks.
+		big.NewInt(200),
 	)
 	mwr.currentDkgStartBlock = nil
 
 	return nil
+}
+
+func (mwr *mockWalletRegistry) OnSignatureRequested(
+	handler func(event *tbtc.SignatureRequestedEvent),
+) subscription.EventSubscription {
+	ctx, cancelCtx := context.WithCancel(context.Background())
+	blocksChan := mwr.blockCounter.WatchBlocks(ctx)
+
+	go func() {
+		for {
+			select {
+			case block := <-blocksChan:
+				// Generate an event every 100 block.
+				if block%100 == 0 {
+					mwr.activeWalletMutex.RLock()
+
+					if len(mwr.activeWallet) > 0 {
+						// If the active wallet is ready to receive the request.
+						if big.NewInt(int64(block)).Cmp(
+							mwr.activeWalletOperableBlock,
+						) >= 0 {
+							blockBytes := make([]byte, 8)
+							binary.BigEndian.PutUint64(blockBytes, block)
+							blockHashBytes := crypto.Keccak256(blockBytes)
+							blockHash := new(big.Int).SetBytes(blockHashBytes)
+
+							go handler(&tbtc.SignatureRequestedEvent{
+								WalletPublicKey: mwr.activeWallet,
+								Message:         blockHash,
+								BlockNumber:     block,
+							})
+						}
+					}
+
+					mwr.activeWalletMutex.RUnlock()
+				}
+			case <-ctx.Done():
+				return
+			}
+		}
+	}()
+
+	return subscription.NewEventSubscription(func() {
+		cancelCtx()
+	})
 }

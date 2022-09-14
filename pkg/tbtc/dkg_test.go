@@ -7,6 +7,8 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/keep-network/keep-core/pkg/chain/local_v1"
+
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/internal/tecdsatest"
 	"github.com/keep-network/keep-core/pkg/protocol/group"
@@ -34,8 +36,6 @@ func TestDkgRetryLoop(t *testing.T) {
 		"address-8",
 	}
 
-	const dkgExecutionLength = 300
-
 	testData, err := tecdsatest.LoadPrivateKeyShareTestFixtures(1)
 	if err != nil {
 		t.Fatalf("failed to load test data: [%v]", err)
@@ -60,10 +60,10 @@ func TestDkgRetryLoop(t *testing.T) {
 				return context.WithCancel(context.Background())
 			},
 			dkgAttemptFn: func(attempt *dkgAttemptParams) (*dkg.Result, uint64, error) {
-				return testResult, attempt.startBlock + dkgExecutionLength, nil
+				return testResult, attempt.startBlock + dkg.ProtocolBlocks(), nil
 			},
 			expectedErr:               nil,
-			expectedExecutionEndBlock: 500,
+			expectedExecutionEndBlock: 325, // 200 + 125
 			expectedResult:            testResult,
 			expectedLastAttempt: &dkgAttemptParams{
 				index:           1,
@@ -89,16 +89,16 @@ func TestDkgRetryLoop(t *testing.T) {
 					}
 				}
 
-				return testResult, attempt.startBlock + dkgExecutionLength, nil
+				return testResult, attempt.startBlock + dkg.ProtocolBlocks(), nil
 			},
 			expectedErr:               nil,
-			expectedExecutionEndBlock: 574,
+			expectedExecutionEndBlock: 585, // 460 + 125
 			expectedResult:            testResult,
 			// Members 4 and 6 should be excluded in the last attempt as
 			// they were inactive.
 			expectedLastAttempt: &dkgAttemptParams{
 				index:           3,
-				startBlock:      274,
+				startBlock:      460, // 200 + 125 + 5 + 125 + 5
 				excludedMembers: []group.MemberIndex{4, 6},
 			},
 		},
@@ -116,17 +116,17 @@ func TestDkgRetryLoop(t *testing.T) {
 					}
 				}
 
-				return testResult, attempt.startBlock + dkgExecutionLength, nil
+				return testResult, attempt.startBlock + dkg.ProtocolBlocks(), nil
 			},
 			expectedErr:               nil,
-			expectedExecutionEndBlock: 537,
+			expectedExecutionEndBlock: 455, // 330 + 125
 			expectedResult:            testResult,
 			// Member 3 was inactive but excluding their operator drops the
 			// group size below the quorum. We fall back to the random algorithm
 			// that excludes member 4 for the given seed.
 			expectedLastAttempt: &dkgAttemptParams{
 				index:           2,
-				startBlock:      237,
+				startBlock:      330, // 200 + 125 + 5
 				excludedMembers: []group.MemberIndex{4},
 			},
 		},
@@ -140,10 +140,10 @@ func TestDkgRetryLoop(t *testing.T) {
 					return nil, 0, fmt.Errorf("invalid data")
 				}
 
-				return testResult, attempt.startBlock + dkgExecutionLength, nil
+				return testResult, attempt.startBlock + dkg.ProtocolBlocks(), nil
 			},
 			expectedErr:               nil,
-			expectedExecutionEndBlock: 574,
+			expectedExecutionEndBlock: 585, // 460 + 125
 			expectedResult:            testResult,
 			// Since the error is not related with inactive members, we
 			// use the random algorithm from the very beginning. It
@@ -151,7 +151,7 @@ func TestDkgRetryLoop(t *testing.T) {
 			// seed.
 			expectedLastAttempt: &dkgAttemptParams{
 				index:           3,
-				startBlock:      274,
+				startBlock:      460, // 200 + 125 + 5 + 125 + 5
 				excludedMembers: []group.MemberIndex{2, 5},
 			},
 		},
@@ -171,10 +171,10 @@ func TestDkgRetryLoop(t *testing.T) {
 					}
 				}
 
-				return testResult, attempt.startBlock + dkgExecutionLength, nil
+				return testResult, attempt.startBlock + dkg.ProtocolBlocks(), nil
 			},
 			expectedErr:               nil,
-			expectedExecutionEndBlock: 574,
+			expectedExecutionEndBlock: 585, // 460 + 125
 			expectedResult:            testResult,
 			// The random algorithm was used first so subsequent errors related
 			// to inactive members are not taken into account. The random
@@ -182,7 +182,7 @@ func TestDkgRetryLoop(t *testing.T) {
 			// seed.
 			expectedLastAttempt: &dkgAttemptParams{
 				index:           3,
-				startBlock:      274,
+				startBlock:      460, // 200 + 125 + 5 + 125 + 5
 				excludedMembers: []group.MemberIndex{2, 5},
 			},
 		},
@@ -202,17 +202,17 @@ func TestDkgRetryLoop(t *testing.T) {
 					}
 				}
 
-				return testResult, attempt.startBlock + dkgExecutionLength, nil
+				return testResult, attempt.startBlock + dkg.ProtocolBlocks(), nil
 			},
 			expectedErr:               nil,
-			expectedExecutionEndBlock: 685,
+			expectedExecutionEndBlock: 975, // 850 + 125
 			expectedResult:            testResult,
 			// 5 attempts failed due to different single members who were inactive.
 			// The 6th attempt should be made using the random retry that
 			// returns member 9 for the given seed.
 			expectedLastAttempt: &dkgAttemptParams{
 				index:           6,
-				startBlock:      385,
+				startBlock:      850, // 200 + 5 * (125 + 5)
 				excludedMembers: []group.MemberIndex{9},
 			},
 		},
@@ -232,10 +232,10 @@ func TestDkgRetryLoop(t *testing.T) {
 					return nil, 0, fmt.Errorf("invalid data")
 				}
 
-				return testResult, attempt.startBlock + dkgExecutionLength, nil
+				return testResult, attempt.startBlock + dkg.ProtocolBlocks(), nil
 			},
 			expectedErr:               nil,
-			expectedExecutionEndBlock: 574,
+			expectedExecutionEndBlock: 585, // 460 + 125
 			expectedResult:            testResult,
 			// First attempt fail due to member 2 who is inactive but the second
 			// attempt fail due to another error so the random algorithm
@@ -243,7 +243,7 @@ func TestDkgRetryLoop(t *testing.T) {
 			// (same operator) for the given seed.
 			expectedLastAttempt: &dkgAttemptParams{
 				index:           3,
-				startBlock:      274,
+				startBlock:      460, // 200 + 125 + 5 + 125 + 5
 				excludedMembers: []group.MemberIndex{2, 5},
 			},
 		},
@@ -257,22 +257,22 @@ func TestDkgRetryLoop(t *testing.T) {
 					return nil, 0, fmt.Errorf("invalid data")
 				}
 
-				return testResult, attempt.startBlock + dkgExecutionLength, nil
+				return testResult, attempt.startBlock + dkg.ProtocolBlocks(), nil
 			},
 			expectedErr:               nil,
-			expectedExecutionEndBlock: 1150,
+			expectedExecutionEndBlock: 2370, // 2245 + 125
 			expectedResult:            testResult,
 			// Random algorithm is used from the very beginning. We also
 			// observe a delay blocks bump on the 10th attempt which is
 			// 100 blocks instead of 5. That said, the start block for the 16th
 			// attempt can be calculated as follows:
-			// 200 + 37 + 37 + 37 + 37 + 37 + 37 + 37 + 37 + 132 + 37 + 37 + 37 + 37 + 37 + 37
-			// where all 37 denotes a duration of a normal attempt (32 blocks
-			// plus 5 delay blocks) and 132 is the duration of the 10th attempt
-			// (32 + 100 bumped delay blocks).
+			// 200 + 130 + 130 + 130 + 130 + 130 + 130 + 130 + 130 + 225 + 130 + 130 + 130 + 130 + 130 + 130
+			// where all 130 denotes a duration of a normal attempt (125 blocks
+			// plus 5 delay blocks) and 225 is the duration of the 10th attempt
+			// (125 + 100 bumped delay blocks).
 			expectedLastAttempt: &dkgAttemptParams{
 				index:           16,
-				startBlock:      850,
+				startBlock:      2245,
 				excludedMembers: []group.MemberIndex{7, 9},
 			},
 		},
@@ -286,10 +286,10 @@ func TestDkgRetryLoop(t *testing.T) {
 					return nil, 0, fmt.Errorf("invalid data")
 				}
 
-				return testResult, attempt.startBlock + dkgExecutionLength, nil
+				return testResult, attempt.startBlock + dkg.ProtocolBlocks(), nil
 			},
 			expectedErr:               nil,
-			expectedExecutionEndBlock: 722,
+			expectedExecutionEndBlock: 1105, // 850 + 125 + 5 + 125
 			expectedResult:            testResult,
 			// Member 6 is the executing one. First 5 attempts fail and are
 			// retried using the random algorithm. The 6th attempt does not
@@ -297,7 +297,7 @@ func TestDkgRetryLoop(t *testing.T) {
 			// member 6 skips attempt 6 and succeeds on attempt 7.
 			expectedLastAttempt: &dkgAttemptParams{
 				index:           7,
-				startBlock:      422,
+				startBlock:      980, // 200 + 6 * (125 + 5)
 				excludedMembers: []group.MemberIndex{7},
 			},
 		},
@@ -390,10 +390,137 @@ func TestDkgRetryLoop(t *testing.T) {
 	}
 }
 
+func TestDecideSigningGroupMemberFate(t *testing.T) {
+	chainConfig := &ChainConfig{
+		GroupSize:       10,
+		GroupQuorum:     8,
+		HonestThreshold: 6,
+	}
+
+	blockCounter, err := local_v1.BlockCounter()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	testData, err := tecdsatest.LoadPrivateKeyShareTestFixtures(1)
+	if err != nil {
+		t.Fatalf("failed to load test data: [%v]", err)
+	}
+
+	memberIndex := group.MemberIndex(1)
+	publicationStartBlock := uint64(0)
+
+	result := &dkg.Result{
+		Group: group.NewGroup(
+			chainConfig.GroupSize-chainConfig.HonestThreshold,
+			chainConfig.GroupSize,
+		),
+		PrivateKeyShare: tecdsa.NewPrivateKeyShare(testData[0]),
+	}
+
+	resultGroupPublicKeyBytes, err := result.GroupPublicKeyBytes()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var tests = map[string]struct {
+		resultSubmittedEvent           *DKGResultSubmittedEvent
+		expectedOperatingMemberIndexes []group.MemberIndex
+		expectedError                  error
+	}{
+		"member supports the published result": {
+			resultSubmittedEvent: &DKGResultSubmittedEvent{
+				MemberIndex:         2,
+				GroupPublicKeyBytes: resultGroupPublicKeyBytes,
+				Misbehaved:          []byte{7, 10},
+				BlockNumber:         publicationStartBlock + 5,
+			},
+			// should return operating members according to the published result
+			expectedOperatingMemberIndexes: []group.MemberIndex{1, 2, 3, 4, 5, 6, 8, 9},
+		},
+		"member supports different public key": {
+			resultSubmittedEvent: &DKGResultSubmittedEvent{
+				MemberIndex:         2,
+				GroupPublicKeyBytes: []byte{0x00, 0x01}, // different result
+				Misbehaved:          []byte{7, 10},
+				BlockNumber:         publicationStartBlock + 5,
+			},
+			expectedError: fmt.Errorf(
+				"[member:%v] could not stay in the group because the "+
+					"member does not support the same group public key",
+				memberIndex,
+			),
+		},
+		"member considered as misbehaved": {
+			resultSubmittedEvent: &DKGResultSubmittedEvent{
+				MemberIndex:         2,
+				GroupPublicKeyBytes: resultGroupPublicKeyBytes,
+				Misbehaved:          []byte{memberIndex}, // member considered as misbehaved
+				BlockNumber:         publicationStartBlock + 5,
+			},
+			expectedError: fmt.Errorf(
+				"[member:%v] could not stay in the group because the "+
+					"member is considered as misbehaving",
+				memberIndex,
+			),
+		},
+		"publication timeout exceeded": {
+			resultSubmittedEvent: nil, // the result is not published at all
+			expectedError:        fmt.Errorf("ECDSA DKG result publication timed out"),
+		},
+	}
+
+	for testName, test := range tests {
+		t.Run(testName, func(t *testing.T) {
+			dkgResultChannel := make(chan *DKGResultSubmittedEvent, 1)
+
+			if test.resultSubmittedEvent != nil {
+				dkgResultChannel <- test.resultSubmittedEvent
+			}
+
+			operatingMemberIndexes, err := decideSigningGroupMemberFate(
+				memberIndex,
+				dkgResultChannel,
+				publicationStartBlock,
+				result,
+				chainConfig,
+				blockCounter,
+			)
+
+			if !reflect.DeepEqual(
+				test.expectedOperatingMemberIndexes,
+				operatingMemberIndexes,
+			) {
+				t.Errorf(
+					"unexpected operating member indexes\n"+
+						"expected: [%v]\n"+
+						"actual:   [%v]",
+					test.expectedOperatingMemberIndexes,
+					operatingMemberIndexes,
+				)
+			}
+
+			if !reflect.DeepEqual(
+				test.expectedError,
+				err,
+			) {
+				t.Errorf(
+					"unexpected error\n"+
+						"expected: [%v]\n"+
+						"actual:   [%v]",
+					test.expectedError,
+					err,
+				)
+			}
+		})
+	}
+}
+
 func TestFinalSigningGroup(t *testing.T) {
 	chainConfig := &ChainConfig{
 		GroupSize:       5,
-		HonestThreshold: 3,
+		GroupQuorum:     3,
+		HonestThreshold: 2,
 	}
 
 	selectedOperators := []chain.Address{

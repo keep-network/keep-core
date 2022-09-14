@@ -2,6 +2,7 @@ package dkg
 
 import (
 	"fmt"
+	"math/big"
 	"time"
 
 	"github.com/ipfs/go-log"
@@ -15,8 +16,9 @@ import (
 
 // Executor represents an ECDSA distributed key generation process executor.
 type Executor struct {
-	logger           log.StandardLogger
-	tssPreParamsPool *tssPreParamsPool
+	logger                   log.StandardLogger
+	tssPreParamsPool         *tssPreParamsPool
+	keyGenerationConcurrency int
 }
 
 // NewExecutor creates a new Executor instance.
@@ -27,7 +29,12 @@ func NewExecutor(
 	preParamsGenerationTimeout time.Duration,
 	preParamsGenerationDelay time.Duration,
 	preParamsGenerationConcurrency int,
+	keyGenerationConcurrency int,
 ) *Executor {
+	logger.Infof(
+		"ECDSA key generation concurrency level is [%d]",
+		keyGenerationConcurrency,
+	)
 	return &Executor{
 		logger: logger,
 		tssPreParamsPool: newTssPreParamsPool(
@@ -38,6 +45,7 @@ func NewExecutor(
 			preParamsGenerationDelay,
 			preParamsGenerationConcurrency,
 		),
+		keyGenerationConcurrency: keyGenerationConcurrency,
 	}
 }
 
@@ -50,6 +58,7 @@ func NewExecutor(
 // group by passing a non-empty excludedMembers slice holding the members that
 // should be excluded.
 func (e *Executor) Execute(
+	seed *big.Int,
 	sessionID string,
 	startBlockNumber uint64,
 	memberIndex group.MemberIndex,
@@ -64,19 +73,16 @@ func (e *Executor) Execute(
 
 	registerUnmarshallers(channel)
 
-	preParams, err := e.tssPreParamsPool.GetNow()
-	if err != nil {
-		return nil, 0, fmt.Errorf("failed fetching pre-params: [%v]", err)
-	}
-
 	member := newMember(
 		e.logger,
+		seed,
 		memberIndex,
 		groupSize,
 		dishonestThreshold,
 		membershipValidator,
 		sessionID,
-		preParams.data,
+		e.tssPreParamsPool.GetNow,
+		e.keyGenerationConcurrency,
 	)
 
 	// Mark excluded members as disqualified in order to not exchange messages
@@ -105,6 +111,10 @@ func (e *Executor) Execute(
 	}
 
 	return finalizationState.result(), endBlockNumber, nil
+}
+
+func (e *Executor) PreParamsPool() *tssPreParamsPool {
+	return e.tssPreParamsPool
 }
 
 // SignedResult represents information pertaining to the process of signing

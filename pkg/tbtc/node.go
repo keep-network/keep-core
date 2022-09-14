@@ -1,29 +1,23 @@
 package tbtc
 
 import (
-	"bytes"
 	"context"
-	"crypto/sha256"
-	"encoding/binary"
-	"errors"
+	"crypto/ecdsa"
+	"encoding/hex"
 	"fmt"
+	"golang.org/x/exp/slices"
 	"math/big"
-	"sort"
 	"time"
-
-	"github.com/keep-network/keep-core/pkg/chain"
-	"github.com/keep-network/keep-core/pkg/tecdsa/retry"
 
 	"github.com/keep-network/keep-common/pkg/persistence"
 	"github.com/keep-network/keep-core/pkg/generator"
-	"github.com/keep-network/keep-core/pkg/internal/testutils"
 	"github.com/keep-network/keep-core/pkg/net"
 	"github.com/keep-network/keep-core/pkg/protocol/group"
 	"github.com/keep-network/keep-core/pkg/tecdsa/dkg"
+	"github.com/keep-network/keep-core/pkg/tecdsa/signing"
 )
 
 // TODO: Unit tests for `node.go`.
-// TODO: Extract the DKG-specific code into a separate file `pkg/tbtc/dkg.go`
 
 // node represents the current state of an ECDSA node.
 type node struct {
@@ -50,6 +44,7 @@ func newNode(
 		config.PreParamsGenerationTimeout,
 		config.PreParamsGenerationDelay,
 		config.PreParamsGenerationConcurrency,
+		config.KeyGenerationConcurrency,
 	)
 
 	latch := generator.NewProtocolLatch()
@@ -135,7 +130,7 @@ func (n *node) joinDKGIfEligible(seed *big.Int, startBlockNumber uint64) {
 		}
 
 		membershipValidator := group.NewMembershipValidator(
-			&testutils.MockLogger{},
+			logger,
 			selectedSigningGroupOperators,
 			signing,
 		)
@@ -173,12 +168,12 @@ func (n *node) joinDKGIfEligible(seed *big.Int, startBlockNumber uint64) {
 				)
 
 				// TODO: For this client iteration, the retry loop is started
-				//       with a 2h timeout. Once the WalletRegistry is
+				//       with a 168h timeout. Once the WalletRegistry is
 				//       integrated, the stop signal should be generated
 				//       by observing the DKG result submission or timeout.
 				loopCtx, cancelLoopCtx := context.WithTimeout(
 					context.Background(),
-					2*time.Hour,
+					7*24*time.Hour,
 				)
 				defer cancelLoopCtx()
 
@@ -202,6 +197,7 @@ func (n *node) joinDKGIfEligible(seed *big.Int, startBlockNumber uint64) {
 						)
 
 						result, executionEndBlock, err := n.dkgExecutor.Execute(
+							seed,
 							sessionID,
 							attempt.startBlock,
 							memberIndex,
@@ -276,11 +272,13 @@ func (n *node) joinDKGIfEligible(seed *big.Int, startBlockNumber uint64) {
 						err,
 					)
 
-					if operatingMemberIndexes, err = n.decideSigningGroupMemberFate(
+					if operatingMemberIndexes, err = decideSigningGroupMemberFate(
 						memberIndex,
 						dkgResultChannel,
 						publicationStartBlock,
 						result,
+						chainConfig,
+						blockCounter,
 					); err != nil {
 						logger.Errorf(
 							"[member:%v] failed to handle DKG result "+
@@ -352,561 +350,167 @@ func (n *node) joinDKGIfEligible(seed *big.Int, startBlockNumber uint64) {
 	}
 }
 
-// decideSigningGroupMemberFate decides what the member will do in case it
-// failed to publish its DKG result. Member can stay in the group if it supports
-// the same group public key as the one registered on-chain and the member is
-// not considered as misbehaving by the group.
-func (n *node) decideSigningGroupMemberFate(
-	memberIndex group.MemberIndex,
-	dkgResultChannel chan *DKGResultSubmittedEvent,
-	publicationStartBlock uint64,
-	result *dkg.Result,
-) ([]group.MemberIndex, error) {
-	dkgResultEvent, err := n.waitForDkgResultEvent(
-		dkgResultChannel,
-		publicationStartBlock,
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	groupPublicKeyBytes, err := result.GroupPublicKeyBytes()
-	if err != nil {
-		return nil, err
-	}
-
-	// If member doesn't support the same group public key, it could not stay
-	// in the group.
-	if !bytes.Equal(groupPublicKeyBytes, dkgResultEvent.GroupPublicKeyBytes) {
-		return nil, fmt.Errorf(
-			"[member:%v] could not stay in the group because "+
-				"the member do not support the same group public key",
-			memberIndex,
-		)
-	}
-
-	misbehavedSet := make(map[group.MemberIndex]struct{})
-	for _, misbehavedID := range dkgResultEvent.Misbehaved {
-		misbehavedSet[misbehavedID] = struct{}{}
-	}
-
-	// If member is considered as misbehaved, it could not stay in the group.
-	if _, isMisbehaved := misbehavedSet[memberIndex]; isMisbehaved {
-		return nil, fmt.Errorf(
-			"[member:%v] could not stay in the group because "+
-				"the member is considered as misbehaving",
-			memberIndex,
-		)
-	}
-
-	// Construct a new view of the operating members according to the accepted
-	// DKG result.
-	operatingMemberIndexes := make([]group.MemberIndex, 0)
-	for _, memberID := range result.Group.MemberIDs() {
-		if _, isMisbehaved := misbehavedSet[memberID]; !isMisbehaved {
-			operatingMemberIndexes = append(operatingMemberIndexes, memberID)
-		}
-	}
-
-	return operatingMemberIndexes, nil
-}
-
-// waitForDkgResultEvent waits for the DKG result submission event. It times out
-// and returns error if the DKG result event is not emitted on time.
-func (n *node) waitForDkgResultEvent(
-	dkgResultChannel chan *DKGResultSubmittedEvent,
-	publicationStartBlock uint64,
-) (*DKGResultSubmittedEvent, error) {
-	config := n.chain.GetConfig()
-
-	timeoutBlock := publicationStartBlock + dkg.PrePublicationBlocks() +
-		(uint64(config.GroupSize) * config.ResultPublicationBlockStep)
-
-	blockCounter, err := n.chain.BlockCounter()
-	if err != nil {
-		return nil, err
-	}
-
-	timeoutBlockChannel, err := blockCounter.BlockHeightWaiter(timeoutBlock)
-	if err != nil {
-		return nil, err
-	}
-
-	select {
-	case dkgResultEvent := <-dkgResultChannel:
-		return dkgResultEvent, nil
-	case <-timeoutBlockChannel:
-		return nil, fmt.Errorf("ECDSA DKG result publication timed out")
-	}
-}
-
-// finalSigningGroup takes three parameters:
-//   - selectedOperators: Contains addresses of all selected operators. Slice
-//     length equals to the groupSize. Each element with index N corresponds
-//     to the group member with ID N+1.
-//   - operatingMembersIndexes: Contains group members indexes that were neither
-//     disqualified nor marked as inactive. Slice length is lesser than or equal
-//     to the groupSize.
-//   - chainConfig: The tBTC chain's configuration
+// joinSigningIfEligible takes a message and undergoes the process of tECDSA
+// signing if this node's operator proves to control some signers of the
+// requested wallet. This is an interactive process, and joinSigningIfEligible
+// can block for an extended period of time while it completes the operation.
 //
-// Using those parameters, this function transforms the selectedOperators
-// slice into another slice that contains addresses of all operators
-// that were neither disqualified nor marked as inactive. This way, the
-// resulting slice has only addresses of properly operating operators
-// who form the resulting group.
-//
-// Apart from that, this function returns a map that holds the final signing
-// group members indexes that should be used by particular members who behaved
-// correctly during the DKG protocol execution. The key of this map is the
-// member index used during DKG protocol and the value is the new member
-// index that should be used in the context of the final signing group.
-//
-// Example:
-// selectedOperators: [0xAA, 0xBB, 0xCC, 0xDD, 0xEE]
-// operatingMembersIndexes: [5, 1, 3]
-// finalOperators: [0xAA, 0xCC, 0xEE]
-// finalMembersIndexes: [1:1, 3:2, 5:3]
-func finalSigningGroup(
-	selectedOperators []chain.Address,
-	operatingMembersIndexes []group.MemberIndex,
-	chainConfig *ChainConfig,
-) (
-	[]chain.Address,
-	map[group.MemberIndex]group.MemberIndex,
-	error,
+// TODO: Ultimately, one client will handle multiple signature requests for
+//       multiple wallets. Because of that, logging within that function
+//       must use the context of the given signature request.
+func (n *node) joinSigningIfEligible(
+	message *big.Int,
+	walletPublicKey *ecdsa.PublicKey,
+	startBlockNumber uint64,
 ) {
-	// TODO: Use `GroupQuorum` parameter instead of `HonestThreshold`
-	if len(selectedOperators) != chainConfig.GroupSize ||
-		len(operatingMembersIndexes) < chainConfig.HonestThreshold {
-		return nil, nil, fmt.Errorf("invalid input parameters")
-	}
-
-	sort.Slice(operatingMembersIndexes, func(i, j int) bool {
-		return operatingMembersIndexes[i] < operatingMembersIndexes[j]
-	})
-
-	finalOperators := make(
-		[]chain.Address,
-		len(operatingMembersIndexes),
-	)
-	finalMembersIndexes := make(
-		map[group.MemberIndex]group.MemberIndex,
-		len(operatingMembersIndexes),
-	)
-
-	for i, operatingMemberID := range operatingMembersIndexes {
-		finalOperators[i] = selectedOperators[operatingMemberID-1]
-		finalMembersIndexes[operatingMemberID] = group.MemberIndex(i + 1)
-	}
-
-	return finalOperators, finalMembersIndexes, nil
-}
-
-// dkgResultSigner is responsible for signing the DKG result and verification of
-// signatures generated by other group members.
-type dkgResultSigner struct {
-	chain Chain
-}
-
-func newDkgResultSigner(chain Chain) *dkgResultSigner {
-	return &dkgResultSigner{
-		chain: chain,
-	}
-}
-
-// SignResult signs the provided DKG result. It returns the information
-// pertaining to the signing process: public key, signature, result hash.
-// TODO: Add unit tests.
-func (drs *dkgResultSigner) SignResult(result *dkg.Result) (*dkg.SignedResult, error) {
-	resultHash, err := drs.chain.CalculateDKGResultHash(result)
-	if err != nil {
-		return nil, fmt.Errorf(
-			"dkg result hash calculation failed [%w]",
-			err,
-		)
-	}
-
-	signing := drs.chain.Signing()
-
-	signature, err := signing.Sign(resultHash[:])
-	if err != nil {
-		return nil, fmt.Errorf(
-			"dkg result hash signing failed [%w]",
-			err,
-		)
-	}
-
-	return &dkg.SignedResult{
-		PublicKey:  signing.PublicKey(),
-		Signature:  signature,
-		ResultHash: resultHash,
-	}, nil
-}
-
-// VerifySignature verifies if the signature was generated from the provided
-// DKG result has using the provided public key.
-// TODO: Add unit tests.
-func (drs *dkgResultSigner) VerifySignature(signedResult *dkg.SignedResult) (bool, error) {
-	return drs.chain.Signing().VerifyWithPublicKey(
-		signedResult.ResultHash[:],
-		signedResult.Signature,
-		signedResult.PublicKey,
-	)
-}
-
-// dkgResultSubmitter is responsible for submitting the DKG result to the chain.
-type dkgResultSubmitter struct {
-	chain Chain
-}
-
-func newDkgResultSubmitter(chain Chain) *dkgResultSubmitter {
-	return &dkgResultSubmitter{
-		chain: chain,
-	}
-}
-
-// SubmitResult submits the DKG result along with submitting signatures to the
-// chain. In the process, it checks if the number of signatures is above
-// the required threshold, whether the result was already submitted and waits
-// until the member is eligible for DKG result submission.
-// TODO: Add unit tests.
-func (drs *dkgResultSubmitter) SubmitResult(
-	memberIndex group.MemberIndex,
-	result *dkg.Result,
-	signatures map[group.MemberIndex][]byte,
-	startBlockNumber uint64,
-) error {
-	config := drs.chain.GetConfig()
-
-	// TODO: Compare signatures count to the GroupQuorum parameter
-	if len(signatures) < config.HonestThreshold {
-		return fmt.Errorf(
-			"could not submit result with [%v] signatures for signature "+
-				"honest threshold [%v]",
-			len(signatures),
-			config.HonestThreshold,
-		)
-	}
-
-	resultSubmittedChan := make(chan uint64)
-
-	subscription := drs.chain.OnDKGResultSubmitted(
-		func(event *DKGResultSubmittedEvent) {
-			resultSubmittedChan <- event.BlockNumber
-		},
-	)
-	defer subscription.Unsubscribe()
-
-	dkgState, err := drs.chain.GetDKGState()
-	if err != nil {
-		return fmt.Errorf("could not check DKG state: [%w]", err)
-	}
-
-	if dkgState != AwaitingResult {
-		// Someone who was ahead of us in the queue submitted the result. Giving up.
-		logger.Infof(
-			"[member:%v] DKG is no longer awaiting the result; "+
-				"aborting DKG result submission",
-			memberIndex,
-		)
-		return nil
-	}
-
-	// Wait until the current member is eligible to submit the result.
-	submitterEligibleChan, err := drs.setupEligibilityQueue(
-		startBlockNumber,
-		memberIndex,
-	)
-	if err != nil {
-		return fmt.Errorf("cannot set up eligibility queue: [%w]", err)
-	}
-
-	for {
-		select {
-		case blockNumber := <-submitterEligibleChan:
-			// Member becomes eligible to submit the result. Result submission
-			// would trigger the sender side of the result submission event
-			// listener but also cause the receiver side (this select)
-			// termination that will result with a dangling goroutine blocked
-			// forever on the `onSubmittedResultChan` channel. This would
-			// cause a resource leak. In order to avoid that, we should
-			// unsubscribe from the result submission event listener before
-			// submitting the result.
-			subscription.Unsubscribe()
-
-			publicKeyBytes, err := result.GroupPublicKeyBytes()
-			if err != nil {
-				return fmt.Errorf("cannot get public key bytes [%w]", err)
-			}
-
-			logger.Infof(
-				"[member:%v] submitting DKG result with public key [0x%x] and "+
-					"[%v] supporting member signatures at block [%v]",
-				memberIndex,
-				publicKeyBytes,
-				len(signatures),
-				blockNumber,
-			)
-
-			return drs.chain.SubmitDKGResult(
-				memberIndex,
-				result,
-				signatures,
-			)
-		case blockNumber := <-resultSubmittedChan:
-			logger.Infof(
-				"[member:%v] leaving; DKG result submitted by other member "+
-					"at block [%v]",
-				memberIndex,
-				blockNumber,
-			)
-			// A result has been submitted by other member. Leave without
-			// publishing the result.
-			return nil
-		}
-	}
-}
-
-// setupEligibilityQueue waits until the current member is eligible to
-// submit a result to the blockchain. First member is eligible to submit straight
-// away, each following member is eligible after pre-defined block step.
-//
-// TODO: Revisit the setupEligibilityQueue function. The RFC mentions we should
-//	     start submitting from a random member, not the first one.
-func (drs *dkgResultSubmitter) setupEligibilityQueue(
-	startBlockNumber uint64,
-	memberIndex group.MemberIndex,
-) (<-chan uint64, error) {
-	blockWaitTime := (uint64(memberIndex) - 1) *
-		drs.chain.GetConfig().ResultPublicationBlockStep
-
-	eligibleBlockHeight := startBlockNumber + blockWaitTime
-
 	logger.Infof(
-		"[member:%v] waiting for block [%v] to submit",
-		memberIndex,
-		eligibleBlockHeight,
+		"checking eligibility for signature of message [%v]",
+		message,
 	)
 
-	blockCounter, err := drs.chain.BlockCounter()
-	if err != nil {
-		return nil, fmt.Errorf("could not get block counter [%w]", err)
-	}
+	if signers := n.walletRegistry.getSigners(
+		walletPublicKey,
+	); len(signers) > 0 {
+		logger.Infof(
+			"joining signature of message [%v] controlling [%v] signers",
+			message,
+			len(signers),
+		)
 
-	waiter, err := blockCounter.BlockHeightWaiter(eligibleBlockHeight)
-	if err != nil {
-		return nil, fmt.Errorf("block height waiter failure [%w]", err)
-	}
+		// All signers belong to one wallet. Take that wallet from the
+		// first signer.
+		wallet := signers[0].wallet
+		// Actual wallet signing group size may be different from the
+		// `GroupSize` parameter of the chain config.
+		signingGroupSize := len(wallet.signingGroupOperators)
+		// The dishonest threshold for the wallet signing group must be
+		// also calculated using the actual wallet signing group size.
+		signingGroupDishonestThreshold := signingGroupSize -
+			n.chain.GetConfig().HonestThreshold
 
-	return waiter, err
-}
+		walletPublicKeyBytes, err := marshalPublicKey(walletPublicKey)
+		if err != nil {
+			logger.Errorf("cannot marshal wallet public key: [%v]", err)
+			return
+		}
 
-// dkgRetryLoop is a struct that encapsulates the DKG retry logic.
-type dkgRetryLoop struct {
-	memberIndex          group.MemberIndex
-	selectedOperators    chain.Addresses
-	inactiveOperatorsSet map[chain.Address]bool
+		channelName := fmt.Sprintf(
+			"%s-%s",
+			ProtocolName,
+			hex.EncodeToString(walletPublicKeyBytes),
+		)
 
-	chainConfig *ChainConfig
+		broadcastChannel, err := n.netProvider.BroadcastChannelFor(channelName)
+		if err != nil {
+			logger.Errorf("failed to get broadcast channel: [%v]", err)
+			return
+		}
 
-	attemptCounter    uint
-	attemptStartBlock uint64
+		membershipValidator := group.NewMembershipValidator(
+			logger,
+			wallet.signingGroupOperators,
+			n.chain.Signing(),
+		)
 
-	randomRetryCounter uint
-	randomRetrySeed    int64
-
-	delayBlocks              uint64
-	delayBlocksBumpFrequency uint
-	delayBlocksBumpFactor    uint64
-}
-
-func newDkgRetryLoop(
-	seed *big.Int,
-	initialStartBlock uint64,
-	memberIndex group.MemberIndex,
-	selectedOperators chain.Addresses,
-	chainConfig *ChainConfig,
-) *dkgRetryLoop {
-	// Pre-compute the 8-byte seed that may be needed for the random
-	// retry algorithm. Since the original DKG seed passed as parameter
-	// can have a variable length, it is safer to take the first 8 bytes
-	// of sha256(seed) as the randomRetrySeed.
-	seedSha256 := sha256.Sum256(seed.Bytes())
-	randomRetrySeed := int64(binary.BigEndian.Uint64(seedSha256[:8]))
-
-	return &dkgRetryLoop{
-		memberIndex:              memberIndex,
-		selectedOperators:        selectedOperators,
-		inactiveOperatorsSet:     make(map[chain.Address]bool),
-		chainConfig:              chainConfig,
-		attemptCounter:           0,
-		attemptStartBlock:        initialStartBlock,
-		randomRetryCounter:       0,
-		randomRetrySeed:          randomRetrySeed,
-		delayBlocks:              5,
-		delayBlocksBumpFrequency: 100,
-		delayBlocksBumpFactor:    20,
-	}
-}
-
-// dkgAttemptParams represents parameters of a DKG attempt.
-type dkgAttemptParams struct {
-	index           uint
-	startBlock      uint64
-	excludedMembers []group.MemberIndex
-}
-
-// dkgAttemptFn represents a function performing a DKG attempt.
-type dkgAttemptFn func(*dkgAttemptParams) (*dkg.Result, uint64, error)
-
-// start begins the DKG retry loop using the given DKG attempt function.
-// The retry loop terminates when the DKG result is produced or the ctx
-// parameter is done, whatever comes first.
-func (drl *dkgRetryLoop) start(
-	ctx context.Context,
-	dkgAttemptFn dkgAttemptFn,
-) (*dkg.Result, uint64, error) {
-	// All selected operators should be qualified for the first attempt.
-	qualifiedOperatorsSet := drl.selectedOperators.Set()
-
-	for {
-		drl.attemptCounter++
-
-		// Check the loop stop signal.
-		if ctx.Err() != nil {
-			return nil, 0, fmt.Errorf(
-				"dkg retry loop received stop signal on attempt [%v]",
-				drl.attemptCounter,
+		err = broadcastChannel.SetFilter(membershipValidator.IsInGroup)
+		if err != nil {
+			logger.Errorf(
+				"could not set filter for channel [%v]: [%v]",
+				broadcastChannel.Name(),
+				err,
 			)
 		}
 
-		// In order to start attempts >1 in the right place, we need to
-		// determine how many blocks were taken by previous attempts. We assume
-		// the worst case that each attempt failed at the end of the DKG
-		// protocol.
-		//
-		// That said, we need to increment the previous attempt start
-		// block by the number of blocks equal to the protocol duration and
-		// by some additional delay blocks. We need a small fixed delay in
-		// order to mitigate all corner cases where the actual attempt duration
-		// was slightly longer than the expected duration determined by the
-		// dkg.ProtocolBlocks function.
-		//
-		// For example, the attempt may fail at
-		// the end of the protocol but the error is returned after some time
-		// and more blocks than expected are mined in the meantime.
-		// Additionally, we want to strongly extend the delay period
-		// periodically in order to give some additional time for nodes to
-		// recover and re-fill their internal TSS pre-parameters pools.
-		if drl.attemptCounter > 1 {
-			delayBlocks := drl.delayBlocks
-			if drl.attemptCounter%drl.delayBlocksBumpFrequency == 0 {
-				delayBlocks *= drl.delayBlocksBumpFactor
-			}
-
-			drl.attemptStartBlock = drl.attemptStartBlock +
-				dkg.ProtocolBlocks() +
-				delayBlocks
+		blockCounter, err := n.chain.BlockCounter()
+		if err != nil {
+			logger.Errorf("failed to get block counter: [%v]", err)
+			return
 		}
 
-		// Exclude all members controlled by the operators that were not
-		// qualified for the current attempt.
-		excludedMembers := make([]group.MemberIndex, 0)
-		attemptSkipped := false
-		for i, operator := range drl.selectedOperators {
-			if !qualifiedOperatorsSet[operator] {
-				memberIndex := group.MemberIndex(i + 1)
-				excludedMembers = append(excludedMembers, memberIndex)
+		for _, currentSigner := range signers {
+			go func(signer *signer) {
+				n.protocolLatch.Lock()
+				defer n.protocolLatch.Unlock()
 
-				// If the given member was not qualified for the given attempt,
-				// mark this attempt as skipped in order to skip the execution
-				// and set up the next attempt properly.
-				if memberIndex == drl.memberIndex {
-					attemptSkipped = true
-					break
-				}
-			}
-		}
-
-		var result *dkg.Result
-		var executionEndBlock uint64
-		var attemptErr error
-
-		if !attemptSkipped {
-			result, executionEndBlock, attemptErr = dkgAttemptFn(&dkgAttemptParams{
-				index:           drl.attemptCounter,
-				startBlock:      drl.attemptStartBlock,
-				excludedMembers: excludedMembers,
-			})
-			if attemptErr != nil {
-				var imErr *dkg.InactiveMembersError
-				if errors.As(attemptErr, &imErr) {
-					for _, memberIndex := range imErr.InactiveMembersIndexes {
-						operator := drl.selectedOperators[memberIndex-1]
-						drl.inactiveOperatorsSet[operator] = true
-					}
-				}
-			}
-		}
-
-		if attemptSkipped || attemptErr != nil {
-			var err error
-			qualifiedOperatorsSet, err = drl.qualifiedOperatorsSet()
-			if err != nil {
-				return nil, 0, fmt.Errorf(
-					"cannot get qualified operators for attempt [%v]: [%w]",
-					drl.attemptCounter+1,
-					err,
+				// TODO: Add retries support and update the following parameters
+				//       on every attempt.
+				attemptIndex := 1
+				// TODO: Temporarily use the first 51 members for signing.
+				excludedMembers := make(
+					[]group.MemberIndex,
+					signingGroupDishonestThreshold,
 				)
-			}
+				for i := range excludedMembers {
+					excludedMembers[i] = group.MemberIndex(
+						n.chain.GetConfig().HonestThreshold + i + 1,
+					)
+				}
 
-			continue
+				if slices.Contains(excludedMembers, signer.signingGroupMemberIndex) {
+					logger.Infof(
+						"[member:%v] excluded from signing attempt "+
+							"[%v] of message [%v]; aborting",
+						signer.signingGroupMemberIndex,
+						attemptIndex,
+						message,
+					)
+					return
+				}
+
+				logger.Infof(
+					"[member:%v] starting signing attempt [%v] of "+
+						"message [%v] with [%v] group members (excluded: [%v])",
+					signer.signingGroupMemberIndex,
+					attemptIndex,
+					message,
+					signingGroupSize-len(excludedMembers),
+					excludedMembers,
+				)
+
+				sessionID := fmt.Sprintf(
+					"%v-%v",
+					message.Text(16),
+					attemptIndex,
+				)
+
+				result, err := signing.Execute(
+					logger,
+					message,
+					sessionID,
+					startBlockNumber,
+					signer.signingGroupMemberIndex,
+					signer.privateKeyShare,
+					signingGroupSize,
+					signingGroupDishonestThreshold,
+					excludedMembers,
+					blockCounter,
+					broadcastChannel,
+					membershipValidator,
+				)
+				if err != nil {
+					logger.Errorf(
+						"[member:%v] signing of message [%v] "+
+							"failed: [%v]",
+						signer.signingGroupMemberIndex,
+						message,
+						err,
+					)
+					return
+				}
+
+				logger.Infof(
+					"[member:%v] generated signature [%v] "+
+						"for message [%v]",
+					signer.signingGroupMemberIndex,
+					result.Signature,
+					message,
+				)
+			}(currentSigner)
 		}
-
-		return result, executionEndBlock, nil
-	}
-}
-
-// qualifiedOperatorsSet returns a set of operators qualified to participate
-// in the given DKG attempt.
-func (drl *dkgRetryLoop) qualifiedOperatorsSet() (map[chain.Address]bool, error) {
-	// If this is one of the first attempts and random retries were not started
-	// yet, check if there are known inactive operators. If the group quorum
-	// can be maintained, just exclude the members controlled by the inactive
-	// operators from the qualified set.
-	if drl.attemptCounter <= 5 &&
-		drl.randomRetryCounter == 0 &&
-		len(drl.inactiveOperatorsSet) > 0 {
-		qualifiedOperators := make(chain.Addresses, 0)
-		for _, operator := range drl.selectedOperators {
-			if !drl.inactiveOperatorsSet[operator] {
-				qualifiedOperators = append(qualifiedOperators, operator)
-			}
-		}
-
-		// If this attempt pushes us below the group quorum we are falling
-		// back to the random retry algorithm that excludes specific members
-		// from the original group selection result returned by the sortition
-		// pool.
-		if len(qualifiedOperators) >= drl.chainConfig.GroupQuorum {
-			return qualifiedOperators.Set(), nil
-		}
-	}
-
-	// In any other case, try to make a random retry.
-	qualifiedOperators, err := retry.EvaluateRetryParticipantsForKeyGeneration(
-		drl.selectedOperators,
-		drl.randomRetrySeed,
-		drl.randomRetryCounter,
-		uint(drl.chainConfig.GroupQuorum),
-	)
-	if err != nil {
-		return nil, fmt.Errorf(
-			"random operator selection failed: [%w]",
-			err,
+	} else {
+		logger.Infof(
+			"not eligible for signature of message [%v]",
+			message,
 		)
 	}
-
-	drl.randomRetryCounter++
-	return chain.Addresses(qualifiedOperators).Set(), nil
 }

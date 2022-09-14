@@ -3,6 +3,8 @@ package registry
 import (
 	"fmt"
 
+	"google.golang.org/protobuf/proto"
+
 	"github.com/keep-network/keep-core/pkg/beacon/dkg"
 	"github.com/keep-network/keep-core/pkg/beacon/registry/gen/pb"
 )
@@ -14,16 +16,16 @@ func (m *Membership) Marshal() ([]byte, error) {
 		return nil, err
 	}
 
-	return (&pb.Membership{
+	return proto.Marshal(&pb.Membership{
 		Signer:  signer,
 		Channel: m.ChannelName,
-	}).Marshal()
+	})
 }
 
 // Unmarshal converts a byte array produced by Marshal to Membership.
 func (m *Membership) Unmarshal(bytes []byte) error {
 	pbMembership := pb.Membership{}
-	if err := pbMembership.Unmarshal(bytes); err != nil {
+	if err := proto.Unmarshal(bytes, &pbMembership); err != nil {
 		return err
 	}
 

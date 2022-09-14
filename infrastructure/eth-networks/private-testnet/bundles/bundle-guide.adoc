@@ -5,6 +5,14 @@
 :source-highlighter: rouge
 :icons: font
 
+ifdef::env-github[]
+:tip-caption: :bulb:
+:note-caption: :information_source:
+:important-caption: :heavy_exclamation_mark:
+:caution-caption: :fire:
+:warning-caption: :warning:
+endif::[]
+
 = Keep Network Private Testnet Bundle
 
 Use this bundle to setup Keep Network node running on Keep Network Private Testnet.
@@ -60,6 +68,13 @@ submitted from the Staking Provider Account, please refer to
 link:https://docs.keep.network/registration.html#register-operator[Register Operator]
 documentation.
 
+TIP: When starting the client, remember about running the `keep-client start` 
+command with the `--goerli` flag.
+
+IMPORTANT: The Operator Account has to be funded with Goerli ETH (GöETH) so the
+client can submit transactions to the Ethereum chain. This bundle doesn't fund
+the account, please do it on your own.
+
 == Configuration
 
 For details on the Keep Client Node configuration visit
@@ -72,10 +87,12 @@ link:https://docs.keep.network/run-keep-node.html#testnet[Testnet documentation]
 
 === Validate
 
-To validate the running client check the metrics for the number of connected peers.
+To validate the running client check the metrics for the number of connected peers
+(`connected_peers_count`).
+
 The client should connect to the bootstrap nodes (at least 2) and other nodes that
 are working in the network. There should be at least 10 connections.
 
 ```
-curl localhost:8081/metrics
+curl localhost:9601/metrics
 ```

@@ -6,10 +6,11 @@ import (
 	"strings"
 
 	commonEthereum "github.com/keep-network/keep-common/pkg/chain/ethereum"
+	"github.com/keep-network/keep-core/build"
 	chainEthereum "github.com/keep-network/keep-core/pkg/chain/ethereum"
 )
 
-func nodeHeader(addrStrings []string, port int, ethereumConfig commonEthereum.Config) {
+func nodeHeader(addrStrings []string, operator string, port int, ethereumConfig commonEthereum.Config) {
 	header := ` 
 
 ▓▓▌ ▓▓ ▐▓▓ ▓▓▓▓▓▓▓▓▓▓▌▐▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓ ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓ ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▄
@@ -45,6 +46,10 @@ Trust math, not hardware.
 		dashes,
 		buildLine(maxLineLength, prefix, suffix, "Keep Client Node"),
 		buildLine(maxLineLength, prefix, suffix, ""),
+		buildVersion(maxLineLength, prefix, suffix),
+		buildLine(maxLineLength, prefix, suffix, ""),
+		buildLine(maxLineLength, prefix, suffix, fmt.Sprintf("Operator: %s", operator)),
+		buildLine(maxLineLength, prefix, suffix, ""),
 		buildLine(maxLineLength, prefix, suffix, fmt.Sprintf("Port: %d", port)),
 		buildMultiLine(maxLineLength, prefix, suffix, "IPs : ", addrStrings),
 		buildLine(maxLineLength, prefix, suffix, ""),
@@ -76,6 +81,14 @@ func buildMultiLine(lineLength int, prefix, suffix, startPrefix string, lines []
 	}
 
 	return combinedLines
+}
+
+func buildVersion(lineLength int, prefix, suffix string) string {
+	return buildLine(
+		lineLength,
+		prefix,
+		suffix,
+		fmt.Sprintf("Version: %s (%s)", build.Version, build.Revision))
 }
 
 func buildContractAddresses(lineLength int, prefix, suffix string, ethereumConfig commonEthereum.Config) string {

@@ -187,8 +187,8 @@ func initNetworkFlags(cmd *cobra.Command, cfg *config.Config) {
 // Initialize flags for Storage configuration.
 func initStorageFlags(cmd *cobra.Command, cfg *config.Config) {
 	cmd.Flags().StringVar(
-		&cfg.Storage.DataDir,
-		"storage.dataDir",
+		&cfg.Storage.Dir,
+		"storage.dir",
 		"",
 		"Location to store the Keep client key shares and other sensitive data.",
 	)
@@ -199,7 +199,7 @@ func initMetricsFlags(cmd *cobra.Command, cfg *config.Config) {
 	cmd.Flags().IntVar(
 		&cfg.Metrics.Port,
 		"metrics.port",
-		8080,
+		9601,
 		"Metrics HTTP server listening port.",
 	)
 
@@ -223,7 +223,7 @@ func initDiagnosticsFlags(cmd *cobra.Command, cfg *config.Config) {
 	cmd.Flags().IntVar(
 		&cfg.Diagnostics.Port,
 		"diagnostics.port",
-		8081,
+		9701,
 		"Diagnostics HTTP server listening port.",
 	)
 }
@@ -256,6 +256,13 @@ func initTbtcFlags(cmd *cobra.Command, cfg *config.Config) {
 		tbtc.DefaultPreParamsGenerationConcurrency,
 		"tECDSA pre-parameters generation concurrency.",
 	)
+
+	cmd.Flags().IntVar(
+		&cfg.Tbtc.KeyGenerationConcurrency,
+		"tbtc.keyGenerationConcurrency",
+		tbtc.DefaultKeyGenerationConcurrency,
+		"tECDSA key generation concurrency.",
+	)
 }
 
 // Initialize flags for Developer configuration.
@@ -271,6 +278,7 @@ func initDeveloperFlags(command *cobra.Command) {
 		)
 	}
 
+	initContractAddressFlag(chainEthereum.BridgeContractName)
 	initContractAddressFlag(chainEthereum.RandomBeaconContractName)
 	initContractAddressFlag(chainEthereum.TokenStakingContractName)
 	initContractAddressFlag(chainEthereum.WalletRegistryContractName)

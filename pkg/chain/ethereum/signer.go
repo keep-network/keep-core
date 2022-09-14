@@ -2,8 +2,10 @@ package ethereum
 
 import (
 	"fmt"
+
 	"github.com/ethereum/go-ethereum/accounts/keystore"
 	"github.com/ethereum/go-ethereum/common"
+
 	"github.com/keep-network/keep-common/pkg/chain/ethereum/ethutil"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/operator"
@@ -18,6 +20,11 @@ func newSigner(chainKey *keystore.Key) *signer {
 	return &signer{
 		ethutil.NewSigner(chainKey.PrivateKey),
 	}
+}
+
+// Address returns operator's address.
+func (s *signer) Address() chain.Address {
+	return s.PublicKeyBytesToAddress(s.PublicKey())
 }
 
 func (s *signer) PublicKeyToAddress(

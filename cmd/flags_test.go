@@ -6,6 +6,7 @@ import (
 	"math/big"
 	"os"
 	"reflect"
+	"runtime"
 	"strings"
 	"testing"
 	"time"
@@ -18,6 +19,7 @@ import (
 	chainEthereum "github.com/keep-network/keep-core/pkg/chain/ethereum"
 	ethereumBeacon "github.com/keep-network/keep-core/pkg/chain/ethereum/beacon/gen"
 	ethereumEcdsa "github.com/keep-network/keep-core/pkg/chain/ethereum/ecdsa/gen"
+	ethereumTbtc "github.com/keep-network/keep-core/pkg/chain/ethereum/tbtc/gen"
 	ethereumThreshold "github.com/keep-network/keep-core/pkg/chain/ethereum/threshold/gen"
 )
 
@@ -111,9 +113,9 @@ var cmdFlagsTests = map[string]struct {
 		expectedValueFromFlag: 486,
 		defaultValue:          0,
 	},
-	"storage.dataDir": {
-		readValueFunc: func(c *config.Config) interface{} { return c.Storage.DataDir },
-		flagName:      "--storage.dataDir",
+	"storage.dir": {
+		readValueFunc: func(c *config.Config) interface{} { return c.Storage.Dir },
+		flagName:      "--storage.dir",
 		flagValue:     "./flagged/location/dude",
 		defaultValue:  "",
 	},
@@ -122,7 +124,7 @@ var cmdFlagsTests = map[string]struct {
 		flagName:              "--metrics.port",
 		flagValue:             "9870",
 		expectedValueFromFlag: 9870,
-		defaultValue:          8080,
+		defaultValue:          9601,
 	},
 	"metrics.networkMetricsTick": {
 		readValueFunc:         func(c *config.Config) interface{} { return c.Metrics.NetworkMetricsTick },
@@ -143,7 +145,7 @@ var cmdFlagsTests = map[string]struct {
 		flagName:              "--diagnostics.port",
 		flagValue:             "6089",
 		expectedValueFromFlag: 6089,
-		defaultValue:          8081,
+		defaultValue:          9701,
 	},
 	"tbtc.preParamsPoolSize": {
 		readValueFunc:         func(c *config.Config) interface{} { return c.Tbtc.PreParamsPoolSize },
@@ -173,6 +175,13 @@ var cmdFlagsTests = map[string]struct {
 		expectedValueFromFlag: 2,
 		defaultValue:          1,
 	},
+	"tbtc.keyGenConcurrency": {
+		readValueFunc:         func(c *config.Config) interface{} { return c.Tbtc.KeyGenerationConcurrency },
+		flagName:              "--tbtc.keyGenerationConcurrency",
+		flagValue:             "101",
+		expectedValueFromFlag: 101,
+		defaultValue:          runtime.GOMAXPROCS(0),
+	},
 	"developer.randomBeaconAddress": {
 		readValueFunc: func(c *config.Config) interface{} {
 			address, _ := c.Ethereum.ContractAddress(chainEthereum.RandomBeaconContractName)
@@ -192,6 +201,16 @@ var cmdFlagsTests = map[string]struct {
 		flagValue:             "0xb76707515c3f908411b5211863a7581589a1e31f",
 		expectedValueFromFlag: "0xB76707515C3f908411B5211863A7581589a1E31F",
 		defaultValue:          ethereumEcdsa.WalletRegistryAddress,
+	},
+	"developer.bridgeAddress": {
+		readValueFunc: func(c *config.Config) interface{} {
+			address, _ := c.Ethereum.ContractAddress(chainEthereum.BridgeContractName)
+			return address.String()
+		},
+		flagName:              "--developer.bridgeAddress",
+		flagValue:             "0xd21DE06574811450E722a33D8093558E8c04eacc",
+		expectedValueFromFlag: "0xd21DE06574811450E722a33D8093558E8c04eacc",
+		defaultValue:          ethereumTbtc.BridgeAddress,
 	},
 	"developer.tokenStakingAddress": {
 		readValueFunc: func(c *config.Config) interface{} {
@@ -239,7 +258,7 @@ func TestFlags_ReadConfigFromFlagsWithDefaults(t *testing.T) {
 	args := []string{
 		cmdFlagsTests["ethereum.url"].flagName, cmdFlagsTests["ethereum.url"].flagValue,
 		cmdFlagsTests["ethereum.keyFile"].flagName, cmdFlagsTests["ethereum.keyFile"].flagValue,
-		cmdFlagsTests["storage.dataDir"].flagName, cmdFlagsTests["storage.dataDir"].flagValue,
+		cmdFlagsTests["storage.dir"].flagName, cmdFlagsTests["storage.dir"].flagValue,
 	}
 	testCommand.SetArgs(args)
 
@@ -297,14 +316,14 @@ func TestFlags_Mixed(t *testing.T) {
 			readValueFunc: func(c *config.Config) interface{} { return c.Metrics.Port },
 			expectedValue: 3097,
 		},
-		"storage.dataDir": {
-			readValueFunc: func(c *config.Config) interface{} { return c.Storage.DataDir },
+		"storage.dir": {
+			readValueFunc: func(c *config.Config) interface{} { return c.Storage.Dir },
 			expectedValue: "/my/secure/location",
 		},
 		// Properties not provided in the config file nor set with flags. Use defaults.
 		"diagnostics.port": {
 			readValueFunc: func(c *config.Config) interface{} { return c.Diagnostics.Port },
-			expectedValue: 8081,
+			expectedValue: 9701,
 		},
 	}
 

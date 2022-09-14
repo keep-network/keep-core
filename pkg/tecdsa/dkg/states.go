@@ -3,6 +3,7 @@ package dkg
 import (
 	"bytes"
 	"context"
+	"fmt"
 
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/net"
@@ -21,13 +22,13 @@ const (
 	tssRoundOneStateActiveBlocks = 5
 
 	tssRoundTwoStateDelayBlocks  = 1
-	tssRoundTwoStateActiveBlocks = 10
+	tssRoundTwoStateActiveBlocks = 100
 
 	tssRoundThreeStateDelayBlocks  = 1
 	tssRoundThreeStateActiveBlocks = 5
 
 	finalizationStateDelayBlocks  = 1
-	finalizationStateActiveBlocks = 2
+	finalizationStateActiveBlocks = 5
 
 	resultSigningStateDelayBlocks  = 1
 	resultSigningStateActiveBlocks = 5
@@ -131,7 +132,7 @@ func (skgs *symmetricKeyGenerationState) ActiveBlocks() uint64 {
 }
 
 func (skgs *symmetricKeyGenerationState) Initiate(ctx context.Context) error {
-	skgs.member.MarkInactiveMembers(skgs.previousPhaseMessages)
+	skgs.member.markInactiveMembers(skgs.previousPhaseMessages)
 
 	if len(skgs.member.group.InactiveMemberIDs()) > 0 {
 		return newInactiveMembersError(skgs.member.group.InactiveMemberIDs())
@@ -145,9 +146,17 @@ func (skgs *symmetricKeyGenerationState) Receive(msg net.Message) error {
 }
 
 func (skgs *symmetricKeyGenerationState) Next() (state.State, error) {
+	member, err := skgs.member.initializeTssRoundOne()
+	if err != nil {
+		return nil, fmt.Errorf(
+			"cannot initialize TSS round one member: [%w]",
+			err,
+		)
+	}
+
 	return &tssRoundOneState{
 		channel:     skgs.channel,
-		member:      skgs.member.initializeTssRoundOne(),
+		member:      member,
 		outcomeChan: make(chan error),
 	}, nil
 }
@@ -233,7 +242,7 @@ func (tros *tssRoundOneState) MemberIndex() group.MemberIndex {
 	return tros.member.id
 }
 
-// tssRoundOneState is the state during which members broadcast TSS
+// tssRoundTwoState is the state during which members broadcast TSS
 // shares and de-commitments.
 // `tssRoundTwoMessage`s are valid in this state.
 type tssRoundTwoState struct {
@@ -256,7 +265,7 @@ func (trts *tssRoundTwoState) ActiveBlocks() uint64 {
 }
 
 func (trts *tssRoundTwoState) Initiate(ctx context.Context) error {
-	trts.member.MarkInactiveMembers(trts.previousPhaseMessages)
+	trts.member.markInactiveMembers(trts.previousPhaseMessages)
 
 	if len(trts.member.group.InactiveMemberIDs()) > 0 {
 		return newInactiveMembersError(trts.member.group.InactiveMemberIDs())
@@ -318,7 +327,7 @@ func (trts *tssRoundTwoState) MemberIndex() group.MemberIndex {
 	return trts.member.id
 }
 
-// tssRoundOneState is the state during which members broadcast the TSS Paillier
+// tssRoundThreeState is the state during which members broadcast the TSS Paillier
 // proof.
 // `tssRoundThreeMessage`s are valid in this state.
 type tssRoundThreeState struct {
@@ -341,7 +350,7 @@ func (trts *tssRoundThreeState) ActiveBlocks() uint64 {
 }
 
 func (trts *tssRoundThreeState) Initiate(ctx context.Context) error {
-	trts.member.MarkInactiveMembers(trts.previousPhaseMessages)
+	trts.member.markInactiveMembers(trts.previousPhaseMessages)
 
 	if len(trts.member.group.InactiveMemberIDs()) > 0 {
 		return newInactiveMembersError(trts.member.group.InactiveMemberIDs())
@@ -425,7 +434,7 @@ func (fs *finalizationState) ActiveBlocks() uint64 {
 }
 
 func (fs *finalizationState) Initiate(ctx context.Context) error {
-	fs.member.MarkInactiveMembers(fs.previousPhaseMessages)
+	fs.member.markInactiveMembers(fs.previousPhaseMessages)
 
 	if len(fs.member.group.InactiveMemberIDs()) > 0 {
 		return newInactiveMembersError(fs.member.group.InactiveMemberIDs())
@@ -591,15 +600,10 @@ func (svs *signaturesVerificationState) ActiveBlocks() uint64 {
 }
 
 func (svs *signaturesVerificationState) Initiate(ctx context.Context) error {
-	signatures, err := svs.member.verifyDKGResultSignatures(
+	svs.validSignatures = svs.member.verifyDKGResultSignatures(
 		svs.signatureMessages,
 		svs.resultSigner,
 	)
-	if err != nil {
-		return err
-	}
-
-	svs.validSignatures = signatures
 	return nil
 }
 

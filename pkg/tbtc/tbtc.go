@@ -3,10 +3,12 @@ package tbtc
 import (
 	"context"
 	"fmt"
+	"runtime"
 	"time"
 
 	"github.com/ipfs/go-log"
 	"github.com/keep-network/keep-common/pkg/persistence"
+	"github.com/keep-network/keep-core/pkg/diagnostics"
 	"github.com/keep-network/keep-core/pkg/generator"
 	"github.com/keep-network/keep-core/pkg/net"
 	"github.com/keep-network/keep-core/pkg/sortition"
@@ -26,6 +28,8 @@ const (
 	DefaultPreParamsGenerationConcurrency = 1
 )
 
+var DefaultKeyGenerationConcurrency = runtime.GOMAXPROCS(0)
+
 // Config carries the config for tBTC protocol.
 type Config struct {
 	// The size of the pre-parameters pool for tECDSA.
@@ -36,6 +40,8 @@ type Config struct {
 	PreParamsGenerationDelay time.Duration
 	// Concurrency level for pre-parameters generation for tECDSA.
 	PreParamsGenerationConcurrency int
+	// Concurrency level for key-generation for tECDSA.
+	KeyGenerationConcurrency int
 }
 
 // Initialize kicks off the TBTC by initializing internal state, ensuring
@@ -48,9 +54,17 @@ func Initialize(
 	persistence persistence.Handle,
 	scheduler *generator.Scheduler,
 	config Config,
+	registry *diagnostics.Registry,
 ) error {
 	node := newNode(chain, netProvider, persistence, scheduler, config)
 	deduplicator := newDeduplicator()
+
+	assembleTbtcDiagnostics := func() map[string]interface{} {
+		return map[string]interface{}{
+			"preParamsPoolSize": node.dkgExecutor.PreParamsPool().CurrentSize(),
+		}
+	}
+	registry.RegisterApplicationSource("tbtc", assembleTbtcDiagnostics)
 
 	err := sortition.MonitorPool(ctx, logger, chain, sortition.DefaultStatusCheckTick)
 	if err != nil {
@@ -82,6 +96,28 @@ func Initialize(
 
 			node.joinDKGIfEligible(
 				event.Seed,
+				event.BlockNumber,
+			)
+		}()
+	})
+
+	// TODO: This is a temporary signing loop trigger that should be removed
+	//       once the client is integrated with real on-chain contracts.
+	_ = chain.OnSignatureRequested(func(event *SignatureRequestedEvent) {
+		go func() {
+			// There is no need to deduplicate. Test loop events are unique.
+
+			logger.Infof(
+				"signature of message [%v] requested from "+
+					"wallet [0x%x] at block [%v]",
+				event.Message,
+				event.WalletPublicKey,
+				event.BlockNumber,
+			)
+
+			node.joinSigningIfEligible(
+				event.Message,
+				unmarshalPublicKey(event.WalletPublicKey),
 				event.BlockNumber,
 			)
 		}()

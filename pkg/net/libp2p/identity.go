@@ -2,6 +2,9 @@ package libp2p
 
 import (
 	"fmt"
+
+	"google.golang.org/protobuf/proto"
+
 	"github.com/keep-network/keep-core/pkg/operator"
 
 	"github.com/keep-network/keep-core/pkg/net/gen/pb"
@@ -79,7 +82,7 @@ func (i *identity) Marshal() ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	return (&pb.Identity{PubKey: pubKeyBytes}).Marshal()
+	return proto.Marshal(&pb.Identity{PubKey: pubKeyBytes})
 }
 
 func (i *identity) Unmarshal(bytes []byte) error {
@@ -89,7 +92,7 @@ func (i *identity) Unmarshal(bytes []byte) error {
 		pbIdentity pb.Identity
 	)
 
-	if err = pbIdentity.Unmarshal(bytes); err != nil {
+	if err = proto.Unmarshal(bytes, &pbIdentity); err != nil {
 		return fmt.Errorf("unmarshalling failed: [%v]", err)
 	}
 	i.pubKey, err = libp2pcrypto.UnmarshalPublicKey(pbIdentity.PubKey)

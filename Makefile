@@ -76,16 +76,29 @@ else
 	$(foreach module,$(modules),$(call get_npm_package,$(module),$(environment)))
 endif
 
-generate:
+proto_files := $(shell find ./pkg -name '*.proto')
+proto_targets := $(proto_files:.proto=.pb.go)
+
+gen_proto: ${proto_targets}
+
+%.pb.go: %.proto go.mod go.sum
+	protoc --go_out=. --go_opt=paths=source_relative $*.proto
+
+generate: gen_proto
 	$(info Running Go code generator)
 	go generate ./...
 
+version = $(shell git describe --tags --match "v[0-9]*" HEAD)
+revision = $(shell git rev-parse --short HEAD)
+
+go_build_cmd = go build -ldflags "-X github.com/keep-network/keep-core/build.Version=$(version) -X github.com/keep-network/keep-core/build.Revision=$(revision)" -a -o $(1) .
+
 build:
 	$(info Building Go code)
-	go build -o keep-client -a . 
+	$(call go_build_cmd,keep-client)
 
 cmd-help: build
 	@echo '$$ keep-client start --help' > docs/resources/client-start-help
 	./keep-client start --help >> docs/resources/client-start-help
 
-.PHONY: all development goerli download_artifacts generate build cmd-help
+.PHONY: all development goerli download_artifacts generate gen_proto build cmd-help
