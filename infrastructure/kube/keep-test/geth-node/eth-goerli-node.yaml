@@ -44,7 +44,7 @@ spec:
     spec:
       containers:
         - name: geth-goerli
-          image: ethereum/client-go:v1.10.20
+          image: ethereum/client-go:v1.10.24
           ports:
             - containerPort: 8545
             - containerPort: 8546
