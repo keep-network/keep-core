@@ -145,7 +145,7 @@ type enoughPreParamsPoolSizePolicy struct {
 }
 
 func (epppsp *enoughPreParamsPoolSizePolicy) ShouldJoin() bool {
-	actualPoolSize := epppsp.node.dkgExecutor.PreParamsPool().CurrentSize()
+	actualPoolSize := epppsp.node.dkgExecutor.PreParamsCount()
 	targetPoolSize := epppsp.config.PreParamsPoolSize
 	return actualPoolSize >= targetPoolSize
 }
