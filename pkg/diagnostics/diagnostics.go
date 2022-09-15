@@ -13,6 +13,12 @@ import (
 
 var logger = log.Logger("keep-diagnostics")
 
+// All available protocols https://github.com/multiformats/multiaddr#protocols
+// Eligible protocols are used to fetch the address to call the /diagnostics
+// endpoint
+var eligibleIP4 = "ip4"
+var eligibleDNS4 = "dns4"
+
 // Config stores diagnostics-related configuration.
 type Config struct {
 	Port int
@@ -46,17 +52,19 @@ func RegisterConnectedPeersSource(
 		peersList := make([]map[string]interface{}, len(connectedPeers))
 		for i := 0; i < len(connectedPeers); i++ {
 			peer := connectedPeers[i]
-			peerAddrInfo := connectedPeersAddrInfo[i].Addrs
+			peersAddrInfo := connectedPeersAddrInfo[i].Addrs
 
-			var peerIP string
-			for _, peerAddr := range peerAddrInfo {
-				// Peer contains public and localhost ip4 addresses. We need to fetch a
+			var peerAddr string
+			for _, peerAddrInfo := range peersAddrInfo {
+				// Peer may contain public and local addresses. We need to fetch a
 				// public address only. Range of local addresses starting from 127.* are
 				// skipped.
-				if strings.Contains(peerAddr.String(), "ip4") && !strings.Contains(peerAddr.String(), "ip4/127.") {
-					// address is formatted as follows /ip4/<ip_address>/tcp/<port>
-					// IP address has 1 index
-					peerIP = strings.Split(strings.Trim(strings.TrimSpace(peerAddr.String()), "/"), "/")[1]
+				if strings.Contains(peerAddrInfo.String(), eligibleDNS4) ||
+					(strings.Contains(peerAddrInfo.String(), eligibleIP4) &&
+						!strings.Contains(peerAddrInfo.String(), "/127.")) {
+					// address is formatted as follows /<protocol_code>/<ip_address>/<connection_protocol>/<port>
+					// Address is  the 1st index
+					peerAddr = strings.Split(strings.Trim(peerAddrInfo.String(), "/"), "/")[1]
 				}
 			}
 
@@ -77,7 +85,7 @@ func RegisterConnectedPeersSource(
 			peersList[i] = map[string]interface{}{
 				"network_id":    peer,
 				"chain_address": peerChainAddress.String(),
-				"ip":            peerIP,
+				"address":       peerAddr,
 			}
 		}
 
