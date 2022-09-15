@@ -26,12 +26,12 @@ type preParamsStorage struct {
 	// of the storage are thread-safe.
 	mutex sync.Mutex
 
-	persistence persistence.Handle
+	persistence persistence.BasicHandle
 	logger      log.StandardLogger
 }
 
 func newPreParamsStorage(
-	persistence persistence.Handle,
+	persistence persistence.BasicHandle,
 	logger log.StandardLogger,
 ) preParamsStorage {
 	return preParamsStorage{

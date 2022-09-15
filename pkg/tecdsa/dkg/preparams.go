@@ -38,7 +38,7 @@ type tssPreParamsPool struct {
 func newTssPreParamsPool(
 	logger log.StandardLogger,
 	scheduler *generator.Scheduler,
-	persistence persistence.Handle,
+	persistence persistence.BasicHandle,
 	poolSize int,
 	generationTimeout time.Duration,
 	generationDelay time.Duration,

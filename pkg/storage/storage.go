@@ -71,24 +71,24 @@ func Initialize(config Config, encryptionPassword string) (Storage, error) {
 
 // InitializeKeyStorePersistence initializes a disk persistence under keystore parent.
 func (s *Storage) InitializeKeyStorePersistence(dir string) (
-	persistence.Handle,
+	persistence.ProtectedHandle,
 	error,
 ) {
-	return s.initializePersistence(s.keystoreDir, dir)
+	return s.initializeKeyStorePersistence(s.keystoreDir, dir)
 }
 
 // InitializeWorkPersistence initializes a disk persistence under work parent.
 func (s *Storage) InitializeWorkPersistence(dir string) (
-	persistence.Handle,
+	persistence.BasicHandle,
 	error,
 ) {
-	return s.initializePersistence(s.workDir, dir)
+	return s.initializeWorkPersistence(s.workDir, dir)
 }
 
-// initializePersistence creates a persistent directory under a parent directory.
+// initializeKeyStorePersistence creates a persistent directory under a parent directory.
 // It returns an error is the parent directory doesn't exist.
-func (s *Storage) initializePersistence(parentDir string, dir string) (
-	persistence.Handle,
+func (s *Storage) initializeKeyStorePersistence(parentDir string, dir string) (
+	persistence.ProtectedHandle,
 	error,
 ) {
 	if err := persistence.EnsureDirectoryExists(parentDir, dir); err != nil {
@@ -102,12 +102,40 @@ func (s *Storage) initializePersistence(parentDir string, dir string) (
 
 	path := path.Join(parentDir, dir)
 
-	diskHandle, err := persistence.NewDiskHandle(path)
+	diskHandle, err := persistence.NewProtectedDiskHandle(path)
 	if err != nil {
 		return nil, fmt.Errorf("cannot create [%s] disk handle: [%w]", path, err)
 	}
 
-	return persistence.NewEncryptedPersistence(
+	return persistence.NewEncryptedProtectedPersistence(
+		diskHandle,
+		s.encryptionPassword,
+	), nil
+}
+
+// initializeWorkPersistence creates a persistent directory under a parent directory.
+// It returns an error is the parent directory doesn't exist.
+func (s *Storage) initializeWorkPersistence(parentDir string, dir string) (
+	persistence.BasicHandle,
+	error,
+) {
+	if err := persistence.EnsureDirectoryExists(parentDir, dir); err != nil {
+		return nil, fmt.Errorf(
+			"cannot create storage directory [%s] in [%s]: [%w]",
+			dir,
+			parentDir,
+			err,
+		)
+	}
+
+	path := path.Join(parentDir, dir)
+
+	diskHandle, err := persistence.NewBasicDiskHandle(path)
+	if err != nil {
+		return nil, fmt.Errorf("cannot create [%s] disk handle: [%w]", path, err)
+	}
+
+	return persistence.NewEncryptedBasicPersistence(
 		diskHandle,
 		s.encryptionPassword,
 	), nil

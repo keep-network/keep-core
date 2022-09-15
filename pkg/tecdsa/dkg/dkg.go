@@ -25,7 +25,7 @@ type Executor struct {
 func NewExecutor(
 	logger log.StandardLogger,
 	scheduler *generator.Scheduler,
-	persistence persistence.Handle,
+	persistence persistence.BasicHandle,
 	preParamsPoolSize int,
 	preParamsGenerationTimeout time.Duration,
 	preParamsGenerationDelay time.Duration,

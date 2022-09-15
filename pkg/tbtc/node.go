@@ -32,8 +32,8 @@ type node struct {
 func newNode(
 	chain Chain,
 	netProvider net.Provider,
-	keyStorePersistance persistence.Handle,
-	workPersistence persistence.Handle,
+	keyStorePersistance persistence.ProtectedHandle,
+	workPersistence persistence.BasicHandle,
 	scheduler *generator.Scheduler,
 	config Config,
 ) *node {
