@@ -343,7 +343,7 @@ func (tc *TbtcChain) SubmitDKGResult(
 
 // TODO: Implement a real GetDKGState function.
 func (tc *TbtcChain) GetDKGState() (tbtc.DKGState, error) {
-	return tbtc.AwaitingResult, nil
+	return tc.mockWalletRegistry.GetDKGState()
 }
 
 // CalculateDKGResultHash calculates Keccak-256 hash of the DKG result. Operation
@@ -529,8 +529,8 @@ func (mwr *mockWalletRegistry) OnSignatureRequested(
 		for {
 			select {
 			case block := <-blocksChan:
-				// Generate an event every 100 block.
-				if block%100 == 0 {
+				// Generate an event every 200 block.
+				if block%200 == 0 {
 					mwr.activeWalletMutex.RLock()
 
 					if len(mwr.activeWallet) > 0 {
@@ -562,4 +562,15 @@ func (mwr *mockWalletRegistry) OnSignatureRequested(
 	return subscription.NewEventSubscription(func() {
 		cancelCtx()
 	})
+}
+
+func (mwr *mockWalletRegistry) GetDKGState() (tbtc.DKGState, error) {
+	mwr.currentDkgMutex.RLock()
+	defer mwr.currentDkgMutex.RUnlock()
+
+	if mwr.currentDkgStartBlock != nil {
+		return tbtc.AwaitingResult, nil
+	}
+
+	return tbtc.Idle, nil
 }

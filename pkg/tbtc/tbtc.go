@@ -110,7 +110,7 @@ func Initialize(
 			logger.Infof(
 				"signature of message [%v] requested from "+
 					"wallet [0x%x] at block [%v]",
-				event.Message,
+				event.Message.Text(16),
 				event.WalletPublicKey,
 				event.BlockNumber,
 			)
