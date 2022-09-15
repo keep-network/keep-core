@@ -288,7 +288,7 @@ func TestValidate_PeerRecognized_CacheEmptied(t *testing.T) {
 	}
 }
 
-func TestValidate_PeerIsBootstrapNode(t *testing.T) {
+func TestValidate_PeerIsAllowlistedNode(t *testing.T) {
 	_, peerOperatorPublicKey, err := operator.GenerateKeyPair(
 		local_v1.DefaultCurve,
 	)
@@ -296,15 +296,13 @@ func TestValidate_PeerIsBootstrapNode(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	// Mark the peer as a bootstrap node, so that it validated despite not
+	// Mark the peer as an allowlisted node, so that it validated despite not
 	// being recognized by any application
-	bootstrapPeersKeys := map[string]bool{
-		peerOperatorPublicKey.String(): true,
-	}
+	allowList := NewAllowList([]*operator.PublicKey{peerOperatorPublicKey})
 
 	policy := &anyApplicationPolicy{
 		applications:        []Application{newMockApplication()},
-		bootstrapPeersKeys:  bootstrapPeersKeys,
+		allowList:           allowList,
 		positiveResultCache: cache.NewTimeCache(cachingPeriod),
 		negativeResultCache: cache.NewTimeCache(cachingPeriod),
 	}

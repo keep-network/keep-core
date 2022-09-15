@@ -82,7 +82,7 @@ func start(cmd *cobra.Command) error {
 
 	firewall := firewall.AnyApplicationPolicy(
 		[]firewall.Application{beaconChain, tbtcChain},
-		bootstrapPeersPublicKeys,
+		firewall.NewAllowList(bootstrapPeersPublicKeys),
 	)
 
 	netProvider, err := libp2p.Connect(

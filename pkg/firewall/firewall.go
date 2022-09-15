@@ -26,6 +26,28 @@ func (nf *noFirewall) Validate(remotePeerPublicKey *operator.PublicKey) error {
 	return nil
 }
 
+// AllowList represents a list of operator public keys that are not checked
+// against the firewall rules and are always valid peers.
+type AllowList struct {
+	allowedPublicKeys map[string]bool
+}
+
+// NewAllowList creates a new firewall's allowlist based on the given public
+// key list.
+func NewAllowList(operatorPublicKeys []*operator.PublicKey) *AllowList {
+	allowedPublicKeys := make(map[string]bool, len(operatorPublicKeys))
+
+	for _, operatorPublicKey := range operatorPublicKeys {
+		allowedPublicKeys[operatorPublicKey.String()] = true
+	}
+
+	return &AllowList{allowedPublicKeys}
+}
+
+func (al *AllowList) Contains(operatorPublicKey *operator.PublicKey) bool {
+	return al.allowedPublicKeys[operatorPublicKey.String()]
+}
+
 const (
 	// PositiveIsRecognizedCachePeriod is the time period the cache maintains
 	// the positive result of the last `IsRecognized` checks.
@@ -44,16 +66,11 @@ var errNotRecognized = fmt.Errorf(
 
 func AnyApplicationPolicy(
 	applications []Application,
-	bootstrapPeersPublicKeys []*operator.PublicKey,
+	allowList *AllowList,
 ) net.Firewall {
-	bootstrapPeersKeys := make(map[string]bool, len(bootstrapPeersPublicKeys))
-	for _, key := range bootstrapPeersPublicKeys {
-		bootstrapPeersKeys[key.String()] = true
-	}
-
 	return &anyApplicationPolicy{
 		applications:        applications,
-		bootstrapPeersKeys:  bootstrapPeersKeys,
+		allowList:           allowList,
 		positiveResultCache: cache.NewTimeCache(PositiveIsRecognizedCachePeriod),
 		negativeResultCache: cache.NewTimeCache(NegativeIsRecognizedCachePeriod),
 	}
@@ -61,24 +78,22 @@ func AnyApplicationPolicy(
 
 type anyApplicationPolicy struct {
 	applications        []Application
-	bootstrapPeersKeys  map[string]bool
+	allowList           *AllowList
 	positiveResultCache *cache.TimeCache
 	negativeResultCache *cache.TimeCache
 }
 
 // Validate checks whether the given operator meets the conditions to join
-// the network. The operator can join the network if it is a bootstrap node
-// or it is a non-bootstrap node, but it is recognized as eligible by any of
+// the network. The operator can join the network if it is an allowlisted node
+// or it is a non-allowlisted node, but it is recognized as eligible by any of
 // the applications. Nil is returned on a successful validation, error otherwise.
-// Due to performance reasons the results of validations for non-bootstrap nodes
-//  are stored in a cache for a certain amount of time.
+// Due to performance reasons the results of validations for non-allowlisted
+// nodes are stored in a cache for a certain amount of time.
 func (aap *anyApplicationPolicy) Validate(
 	remotePeerPublicKey *operator.PublicKey,
 ) error {
-	remotePeerPublicKeyHex := remotePeerPublicKey.String()
-
-	// If the peer is a bootstrap peer, consider it validated.
-	if aap.bootstrapPeersKeys[remotePeerPublicKeyHex] {
+	// If the peer is on the allowlist, consider it validated.
+	if aap.allowList.Contains(remotePeerPublicKey) {
 		return nil
 	}
 
@@ -92,6 +107,8 @@ func (aap *anyApplicationPolicy) Validate(
 	// have to ask the chain about the current status.
 	aap.positiveResultCache.Sweep()
 	aap.negativeResultCache.Sweep()
+
+	remotePeerPublicKeyHex := remotePeerPublicKey.String()
 
 	if aap.positiveResultCache.Has(remotePeerPublicKeyHex) {
 		return nil
