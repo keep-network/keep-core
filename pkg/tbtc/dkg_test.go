@@ -260,19 +260,15 @@ func TestDkgRetryLoop(t *testing.T) {
 				return testResult, attempt.startBlock + dkg.ProtocolBlocks(), nil
 			},
 			expectedErr:               nil,
-			expectedExecutionEndBlock: 2370, // 2245 + 125
+			expectedExecutionEndBlock: 2275, // 2150 + 125
 			expectedResult:            testResult,
-			// Random algorithm is used from the very beginning. We also
-			// observe a delay blocks bump on the 10th attempt which is
-			// 100 blocks instead of 5. That said, the start block for the 16th
-			// attempt can be calculated as follows:
-			// 200 + 130 + 130 + 130 + 130 + 130 + 130 + 130 + 130 + 225 + 130 + 130 + 130 + 130 + 130 + 130
-			// where all 130 denotes a duration of a normal attempt (125 blocks
-			// plus 5 delay blocks) and 225 is the duration of the 10th attempt
-			// (125 + 100 bumped delay blocks).
+			// Random algorithm is used from the very beginning. The start block
+			// for the 16th attempt can be calculated as follows: 200 + 15 * 130
+			// where 130 denotes a duration of an attempt (125 blocks plus 5
+			// delay blocks).
 			expectedLastAttempt: &dkgAttemptParams{
 				number:                 16,
-				startBlock:             2245,
+				startBlock:             2150,
 				excludedMembersIndexes: []group.MemberIndex{7, 9},
 			},
 		},
@@ -328,11 +324,6 @@ func TestDkgRetryLoop(t *testing.T) {
 				selectedOperators,
 				chainConfig,
 			)
-
-			// Given the small group size, we never reach the original
-			// bump frequency which is 100. Here we make it smaller in order
-			// to test its behavior.
-			retryLoop.delayBlocksBumpFrequency = 10
 
 			ctx, cancelCtx := test.ctxFn()
 			defer cancelCtx()

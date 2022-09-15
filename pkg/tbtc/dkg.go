@@ -35,9 +35,7 @@ type dkgRetryLoop struct {
 	randomRetryCounter uint
 	randomRetrySeed    int64
 
-	delayBlocks              uint64
-	delayBlocksBumpFrequency uint
-	delayBlocksBumpFactor    uint64
+	delayBlocks uint64
 }
 
 func newDkgRetryLoop(
@@ -55,17 +53,15 @@ func newDkgRetryLoop(
 	randomRetrySeed := int64(binary.BigEndian.Uint64(seedSha256[:8]))
 
 	return &dkgRetryLoop{
-		memberIndex:              memberIndex,
-		selectedOperators:        selectedOperators,
-		inactiveOperatorsSet:     make(map[chain.Address]bool),
-		chainConfig:              chainConfig,
-		attemptCounter:           0,
-		attemptStartBlock:        initialStartBlock,
-		randomRetryCounter:       0,
-		randomRetrySeed:          randomRetrySeed,
-		delayBlocks:              5,
-		delayBlocksBumpFrequency: 100,
-		delayBlocksBumpFactor:    20,
+		memberIndex:          memberIndex,
+		selectedOperators:    selectedOperators,
+		inactiveOperatorsSet: make(map[chain.Address]bool),
+		chainConfig:          chainConfig,
+		attemptCounter:       0,
+		attemptStartBlock:    initialStartBlock,
+		randomRetryCounter:   0,
+		randomRetrySeed:      randomRetrySeed,
+		delayBlocks:          5,
 	}
 }
 
@@ -115,18 +111,10 @@ func (drl *dkgRetryLoop) start(
 		// For example, the attempt may fail at
 		// the end of the protocol but the error is returned after some time
 		// and more blocks than expected are mined in the meantime.
-		// Additionally, we want to strongly extend the delay period
-		// periodically in order to give some additional time for nodes to
-		// recover and re-fill their internal TSS pre-parameters pools.
 		if drl.attemptCounter > 1 {
-			delayBlocks := drl.delayBlocks
-			if drl.attemptCounter%drl.delayBlocksBumpFrequency == 0 {
-				delayBlocks *= drl.delayBlocksBumpFactor
-			}
-
 			drl.attemptStartBlock = drl.attemptStartBlock +
 				dkg.ProtocolBlocks() +
-				delayBlocks
+				drl.delayBlocks
 		}
 
 		// Exclude all members controlled by the operators that were not
