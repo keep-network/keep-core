@@ -11,7 +11,6 @@ replace github.com/bnb-chain/tss-lib => github.com/keep-network/tss-lib v1.3.3-0
 // See https://github.com/protocolbuffers/protobuf-go/commit/fb0abd915897428ccfdd6b03b48ad8219751ee54
 replace google.golang.org/protobuf/dev => google.golang.org/protobuf v1.28.2-0.20220831092852-f930b1dc76e8
 
-
 require (
 	github.com/bnb-chain/tss-lib v1.3.4-0.20220817120442-2f5f2e4fb79e
 	github.com/btcsuite/btcd v0.22.1
@@ -23,6 +22,7 @@ require (
 	github.com/ipfs/go-datastore v0.5.1
 	github.com/ipfs/go-ipfs-config v0.16.0
 	github.com/ipfs/go-log v1.0.5
+	github.com/ipfs/go-log/v2 v2.5.1
 	github.com/jbenet/goprocess v0.1.4
 	github.com/keep-network/keep-common v1.7.1-0.20220909095219-0c806cf341a6
 	github.com/libp2p/go-addr-util v0.2.0
@@ -35,6 +35,7 @@ require (
 	github.com/spf13/cobra v1.5.0
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.12.0
+	go.uber.org/zap v1.21.0
 	golang.org/x/crypto v0.0.0-20220525230936-793ad666bf5e
 	golang.org/x/exp v0.0.0-20220426173459-3bcf042a4bf5
 	google.golang.org/protobuf v1.28.1
@@ -85,7 +86,6 @@ require (
 	github.com/ipfs/go-ipld-format v0.3.0 // indirect
 	github.com/ipfs/go-ipld-legacy v0.1.0 // indirect
 	github.com/ipfs/go-ipns v0.1.2 // indirect
-	github.com/ipfs/go-log/v2 v2.5.1 // indirect
 	github.com/ipfs/go-merkledag v0.6.0 // indirect
 	github.com/ipfs/go-metrics-interface v0.0.1 // indirect
 	github.com/ipfs/go-verifcid v0.0.1 // indirect
@@ -170,7 +170,6 @@ require (
 	go.opencensus.io v0.23.0 // indirect
 	go.uber.org/atomic v1.9.0 // indirect
 	go.uber.org/multierr v1.8.0 // indirect
-	go.uber.org/zap v1.21.0 // indirect
 	golang.org/x/mod v0.6.0-dev.0.20220419223038-86c51ed26bb4 // indirect
 	golang.org/x/net v0.0.0-20220520000938-2e3eb7b945c2 // indirect
 	golang.org/x/sync v0.0.0-20220601150217-0de741cfad7f // indirect
