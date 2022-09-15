@@ -68,7 +68,16 @@ func Initialize(
 		},
 	)
 
-	err := sortition.MonitorPool(ctx, logger, chain, sortition.DefaultStatusCheckTick)
+	err := sortition.MonitorPool(
+		ctx,
+		logger,
+		chain,
+		sortition.DefaultStatusCheckTick,
+		&enoughPreParamsPoolSizePolicy{
+			node:   node,
+			config: config,
+		},
+	)
 	if err != nil {
 		return fmt.Errorf(
 			"could not set up sortition pool monitoring: [%v]",
@@ -126,4 +135,17 @@ func Initialize(
 	})
 
 	return nil
+}
+
+// enoughPreParamsPoolSizePolicy is a policy that enforces the sufficient size
+// of the DKG pre-parameters pool before joining the sortition pool.
+type enoughPreParamsPoolSizePolicy struct {
+	node   *node
+	config Config
+}
+
+func (epppsp *enoughPreParamsPoolSizePolicy) ShouldJoin() bool {
+	actualPoolSize := epppsp.node.dkgExecutor.PreParamsCount()
+	targetPoolSize := epppsp.config.PreParamsPoolSize
+	return actualPoolSize >= targetPoolSize
 }

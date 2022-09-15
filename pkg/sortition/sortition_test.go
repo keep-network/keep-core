@@ -40,7 +40,13 @@ func TestMonitorPool_NotRegisteredOperator(t *testing.T) {
 
 	localChain := local.Connect(testOperatorAddress)
 
-	err := MonitorPool(ctx, &testutils.MockLogger{}, localChain, statusCheckTick)
+	err := MonitorPool(
+		ctx,
+		&testutils.MockLogger{},
+		localChain,
+		statusCheckTick,
+		UnconditionalJoinPolicy,
+	)
 	testutils.AssertErrorsSame(t, errOperatorUnknown, err)
 }
 
@@ -51,7 +57,13 @@ func TestMonitorPool_NoStake(t *testing.T) {
 	localChain := local.Connect(testOperatorAddress)
 	localChain.RegisterOperator(testStakingProviderAddress, testOperatorAddress)
 
-	err := MonitorPool(ctx, &testutils.MockLogger{}, localChain, statusCheckTick)
+	err := MonitorPool(
+		ctx,
+		&testutils.MockLogger{},
+		localChain,
+		statusCheckTick,
+		UnconditionalJoinPolicy,
+	)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -74,7 +86,13 @@ func TestMonitor_JoinPool(t *testing.T) {
 	localChain.RegisterOperator(testStakingProviderAddress, testOperatorAddress)
 	localChain.SetEligibleStake(testStakingProviderAddress, big.NewInt(100))
 
-	err := MonitorPool(ctx, &testutils.MockLogger{}, localChain, statusCheckTick)
+	err := MonitorPool(
+		ctx,
+		&testutils.MockLogger{},
+		localChain,
+		statusCheckTick,
+		UnconditionalJoinPolicy,
+	)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -89,6 +107,35 @@ func TestMonitor_JoinPool(t *testing.T) {
 	}
 }
 
+func TestMonitor_JoinPool_PolicyNotSatisfied(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	localChain := local.Connect(testOperatorAddress)
+	localChain.RegisterOperator(testStakingProviderAddress, testOperatorAddress)
+	localChain.SetEligibleStake(testStakingProviderAddress, big.NewInt(100))
+
+	err := MonitorPool(
+		ctx,
+		&testutils.MockLogger{},
+		localChain,
+		statusCheckTick,
+		&neverJoinPolicy{},
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	isOperatorInPool, err := localChain.IsOperatorInPool()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if isOperatorInPool {
+		t.Fatal("expected the operator to not join the pool")
+	}
+}
+
 func TestMonitor_UpdatePool(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -100,7 +147,13 @@ func TestMonitor_UpdatePool(t *testing.T) {
 
 	localChain.SetEligibleStake(testStakingProviderAddress, big.NewInt(101))
 
-	err := MonitorPool(ctx, &testutils.MockLogger{}, localChain, statusCheckTick)
+	err := MonitorPool(
+		ctx,
+		&testutils.MockLogger{},
+		localChain,
+		statusCheckTick,
+		UnconditionalJoinPolicy,
+	)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -121,7 +174,13 @@ func TestMonitor_JoinPool_WithDelay(t *testing.T) {
 	localChain := local.Connect(testOperatorAddress)
 	localChain.RegisterOperator(testStakingProviderAddress, testOperatorAddress)
 
-	err := MonitorPool(ctx, &testutils.MockLogger{}, localChain, statusCheckTick)
+	err := MonitorPool(
+		ctx,
+		&testutils.MockLogger{},
+		localChain,
+		statusCheckTick,
+		UnconditionalJoinPolicy,
+	)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -157,7 +216,13 @@ func TestMonitor_UpdatePool_WithDelay(t *testing.T) {
 	localChain.SetEligibleStake(testStakingProviderAddress, big.NewInt(100))
 	localChain.JoinSortitionPool()
 
-	err := MonitorPool(ctx, &testutils.MockLogger{}, localChain, statusCheckTick)
+	err := MonitorPool(
+		ctx,
+		&testutils.MockLogger{},
+		localChain,
+		statusCheckTick,
+		UnconditionalJoinPolicy,
+	)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -197,7 +262,13 @@ func TestMonitor_CannotRestoreRewardsEligibility_TimeNotPassed(t *testing.T) {
 	localChain.SetRewardIneligibility(big.NewInt(1))
 	localChain.SetCurrentTimestamp(big.NewInt(0))
 
-	err := MonitorPool(ctx, &testutils.MockLogger{}, localChain, statusCheckTick)
+	err := MonitorPool(
+		ctx,
+		&testutils.MockLogger{},
+		localChain,
+		statusCheckTick,
+		UnconditionalJoinPolicy,
+	)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -225,7 +296,8 @@ func TestMonitor_CanRestoreRewardsEligibility(t *testing.T) {
 	localChain.SetRewardIneligibility(big.NewInt(1))
 	localChain.SetCurrentTimestamp(big.NewInt(2))
 
-	err := MonitorPool(ctx, &testutils.MockLogger{}, localChain, statusCheckTick)
+	err := MonitorPool(
+		ctx, &testutils.MockLogger{}, localChain, statusCheckTick, UnconditionalJoinPolicy)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -253,7 +325,13 @@ func TestMonitor_CanRestoreRewardsEligibility_WithDelay(t *testing.T) {
 	localChain.SetRewardIneligibility(big.NewInt(1))
 	localChain.SetCurrentTimestamp(big.NewInt(0))
 
-	err := MonitorPool(ctx, &testutils.MockLogger{}, localChain, statusCheckTick)
+	err := MonitorPool(
+		ctx,
+		&testutils.MockLogger{},
+		localChain,
+		statusCheckTick,
+		UnconditionalJoinPolicy,
+	)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -270,4 +348,10 @@ func TestMonitor_CanRestoreRewardsEligibility_WithDelay(t *testing.T) {
 	if !isEligibleForRewards {
 		t.Fatal("expected the operator to be restored for rewards")
 	}
+}
+
+type neverJoinPolicy struct{}
+
+func (njp *neverJoinPolicy) ShouldJoin() bool {
+	return false
 }

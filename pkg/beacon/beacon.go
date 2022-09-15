@@ -44,7 +44,13 @@ func Initialize(
 		scheduler,
 	)
 
-	err := sortition.MonitorPool(ctx, logger, beaconChain, sortition.DefaultStatusCheckTick)
+	err := sortition.MonitorPool(
+		ctx,
+		logger,
+		beaconChain,
+		sortition.DefaultStatusCheckTick,
+		sortition.UnconditionalJoinPolicy,
+	)
 	if err != nil {
 		return fmt.Errorf("could not set up sortition pool monitoring: [%v]", err)
 	}
