@@ -161,6 +161,12 @@ jobs:
             REVISION=${{ env.revision }}
           push: false
 
+      - name: Archive Client Binaries
+        uses: actions/upload-artifact@v3
+        with:
+          name: binaries
+          path: tmp/bin/
+
       - name: Publish Client Binaries
         # if: github.event_name == 'workflow_dispatch'
         # TODO: Implement
