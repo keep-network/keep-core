@@ -6,6 +6,7 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/keep-network/keep-core/build"
 	"github.com/keep-network/keep-core/config"
 	"github.com/keep-network/keep-core/pkg/beacon"
 	"github.com/keep-network/keep-core/pkg/chain"
@@ -127,6 +128,11 @@ func start(cmd *cobra.Command) error {
 		return fmt.Errorf("error initializing beacon: [%v]", err)
 	}
 
+	initializeMetrics(ctx, clientConfig, netProvider, blockCounter)
+	registry := initializeDiagnostics(clientConfig)
+	registry.RegisterConnectedPeersSource(netProvider, signing)
+	registry.RegisterClientInfoSource(netProvider, signing, build.Version, build.Revision)
+
 	err = tbtc.Initialize(
 		ctx,
 		tbtcChain,
@@ -135,13 +141,11 @@ func start(cmd *cobra.Command) error {
 		tbtcDataPersistence,
 		scheduler,
 		clientConfig.Tbtc,
+		registry,
 	)
 	if err != nil {
 		return fmt.Errorf("error initializing TBTC: [%v]", err)
 	}
-
-	initializeMetrics(ctx, clientConfig, netProvider, blockCounter)
-	initializeDiagnostics(ctx, clientConfig, netProvider, signing)
 
 	select {
 	case <-ctx.Done():
@@ -196,17 +200,14 @@ func initializeMetrics(
 }
 
 func initializeDiagnostics(
-	ctx context.Context,
 	config *config.Config,
-	netProvider net.Provider,
-	signing chain.Signing,
-) {
+) *diagnostics.Registry {
 	registry, isConfigured := diagnostics.Initialize(
 		config.Diagnostics.Port,
 	)
 	if !isConfigured {
 		logger.Infof("diagnostics are not configured")
-		return
+		return nil
 	}
 
 	logger.Infof(
@@ -214,6 +215,5 @@ func initializeDiagnostics(
 		config.Diagnostics.Port,
 	)
 
-	diagnostics.RegisterConnectedPeersSource(registry, netProvider, signing)
-	diagnostics.RegisterClientInfoSource(registry, netProvider, signing)
+	return registry
 }

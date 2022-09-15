@@ -16,10 +16,10 @@ const (
 	ephemeralKeyPairStateActiveBlocks = 5
 
 	tssRoundOneStateDelayBlocks  = 1
-	tssRoundOneStateActiveBlocks = 5
+	tssRoundOneStateActiveBlocks = 11
 
 	tssRoundTwoStateDelayBlocks  = 1
-	tssRoundTwoStateActiveBlocks = 5
+	tssRoundTwoStateActiveBlocks = 6
 
 	tssRoundThreeStateDelayBlocks  = 1
 	tssRoundThreeStateActiveBlocks = 5
@@ -933,7 +933,7 @@ func (trns *tssRoundNineState) MemberIndex() group.MemberIndex {
 // finalizationState is the last state of the signing protocol - in this state,
 // signing is completed. No messages are valid in this state.
 //
-// State prepares a result to that is returned to the caller.
+// State prepares a result that is returned to the caller.
 type finalizationState struct {
 	channel net.BroadcastChannel
 	member  *finalizingMember

@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/ipfs/go-log"
+	"github.com/ipfs/go-log/v2"
 )
 
 // ErrEmptyPool is returned by GetNow when the pool is empty.

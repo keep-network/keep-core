@@ -1,14 +1,16 @@
 package dkg
 
 import (
-	"github.com/keep-network/keep-core/pkg/tecdsa"
-	"github.com/keep-network/keep-core/pkg/tecdsa/common"
+	"fmt"
+	"math/big"
 
 	"github.com/bnb-chain/tss-lib/ecdsa/keygen"
 	"github.com/bnb-chain/tss-lib/tss"
-	"github.com/ipfs/go-log"
+	"github.com/ipfs/go-log/v2"
 	"github.com/keep-network/keep-core/pkg/crypto/ephemeral"
 	"github.com/keep-network/keep-core/pkg/protocol/group"
+	"github.com/keep-network/keep-core/pkg/tecdsa"
+	"github.com/keep-network/keep-core/pkg/tecdsa/common"
 )
 
 // Member represents a DKG protocol member.
@@ -24,21 +26,24 @@ type member struct {
 	membershipValidator *group.MembershipValidator
 	// Identifier of the particular DKG session this member is part of.
 	sessionID string
-	// TSS pre-parameters.
-	tssPreParams *keygen.LocalPreParams
+	// TSS pre-parameters getter.
+	preParamsFn func() (*PreParams, error)
 	// Concurrency level of TSS key-generation protocol.
 	keyGenerationConcurrency int
+	// Instance of the member identity converter.
+	identityConverter *identityConverter
 }
 
 // newMember creates a new member in an initial state
 func newMember(
 	logger log.StandardLogger,
+	seed *big.Int,
 	memberID group.MemberIndex,
 	groupSize,
 	dishonestThreshold int,
 	membershipValidator *group.MembershipValidator,
 	sessionID string,
-	tssPreParams *keygen.LocalPreParams,
+	preParamsFn func() (*PreParams, error),
 	keyGenerationConcurrency int,
 ) *member {
 	return &member{
@@ -47,8 +52,9 @@ func newMember(
 		group:                    group.NewGroup(dishonestThreshold, groupSize),
 		membershipValidator:      membershipValidator,
 		sessionID:                sessionID,
-		tssPreParams:             tssPreParams,
+		preParamsFn:              preParamsFn,
 		keyGenerationConcurrency: keyGenerationConcurrency,
+		identityConverter:        &identityConverter{seed: seed},
 	}
 }
 
@@ -129,13 +135,17 @@ func (skgm *symmetricKeyGeneratingMember) markInactiveMembers(
 }
 
 // initializeTssRoundOne returns a member to perform next protocol operations.
-func (skgm *symmetricKeyGeneratingMember) initializeTssRoundOne() *tssRoundOneMember {
+func (skgm *symmetricKeyGeneratingMember) initializeTssRoundOne() (
+	*tssRoundOneMember,
+	error,
+) {
 	// Set up the local TSS party using only operating members. This effectively
 	// removes all excluded members who were marked as disqualified at the
 	// beginning of the protocol.
 	tssPartyID, groupTssPartiesIDs := common.GenerateTssPartiesIDs(
 		skgm.id,
 		skgm.group.OperatingMemberIDs(),
+		skgm.identityConverter,
 	)
 
 	tssParameters := tss.NewParameters(
@@ -150,11 +160,16 @@ func (skgm *symmetricKeyGeneratingMember) initializeTssRoundOne() *tssRoundOneMe
 	tssOutgoingMessagesChan := make(chan tss.Message, len(groupTssPartiesIDs))
 	tssResultChan := make(chan keygen.LocalPartySaveData, 1)
 
+	preParams, err := skgm.preParamsFn()
+	if err != nil {
+		return nil, fmt.Errorf("failed fetching pre-params: [%w]", err)
+	}
+
 	tssParty := keygen.NewLocalParty(
 		tssParameters,
 		tssOutgoingMessagesChan,
 		tssResultChan,
-		*skgm.tssPreParams,
+		*preParams.data,
 	)
 
 	return &tssRoundOneMember{
@@ -163,7 +178,7 @@ func (skgm *symmetricKeyGeneratingMember) initializeTssRoundOne() *tssRoundOneMe
 		tssParameters:                tssParameters,
 		tssOutgoingMessagesChan:      tssOutgoingMessagesChan,
 		tssResultChan:                tssResultChan,
-	}
+	}, nil
 }
 
 // tssRoundOneMember represents one member in a distributed key generating
@@ -332,4 +347,40 @@ func (sm *signingMember) initializeSubmittingMember() *submittingMember {
 // the result.
 type submittingMember struct {
 	*signingMember
+}
+
+// identityConverter implements the common.IdentityConverter for tECDSA DKG.
+// It maps every member index to a party ID by adding a constant seed value.
+type identityConverter struct {
+	seed *big.Int
+}
+
+func (ic *identityConverter) MemberIndexToTssPartyID(
+	memberIndex group.MemberIndex,
+) *tss.PartyID {
+	partyIDKey := ic.MemberIndexToTssPartyIDKey(memberIndex)
+
+	return tss.NewPartyID(
+		partyIDKey.Text(10),
+		fmt.Sprintf("member-%v", memberIndex),
+		partyIDKey,
+	)
+}
+
+func (ic *identityConverter) MemberIndexToTssPartyIDKey(
+	memberIndex group.MemberIndex,
+) *big.Int {
+	return new(big.Int).Add(ic.seed, big.NewInt(int64(memberIndex)))
+}
+
+func (ic *identityConverter) TssPartyIDToMemberIndex(
+	partyID *tss.PartyID,
+) group.MemberIndex {
+	if ic.seed.Cmp(partyID.KeyInt()) > 0 { // is seed > party ID?
+		return group.MemberIndex(0)
+	}
+
+	return group.MemberIndex(
+		new(big.Int).Sub(partyID.KeyInt(), ic.seed).Int64(),
+	)
 }

@@ -65,7 +65,7 @@ func (trom *tssRoundOneMessage) Marshal() ([]byte, error) {
 	})
 }
 
-// Unmarshal converts a byte array produced by Marshal to an tssRoundOneMessage.
+// Unmarshal converts a byte array produced by Marshal to a tssRoundOneMessage.
 func (trom *tssRoundOneMessage) Unmarshal(bytes []byte) error {
 	pbMsg := pb.TSSRoundOneMessage{}
 	if err := proto.Unmarshal(bytes, &pbMsg); err != nil {
@@ -108,7 +108,7 @@ func (trtm *tssRoundTwoMessage) Marshal() ([]byte, error) {
 	})
 }
 
-// Unmarshal converts a byte array produced by Marshal to an tssRoundTwoMessage.
+// Unmarshal converts a byte array produced by Marshal to a tssRoundTwoMessage.
 func (trtm *tssRoundTwoMessage) Unmarshal(bytes []byte) error {
 	pbMsg := pb.TSSRoundTwoMessage{}
 	if err := proto.Unmarshal(bytes, &pbMsg); err != nil {
@@ -139,13 +139,13 @@ func (trtm *tssRoundTwoMessage) Unmarshal(bytes []byte) error {
 // network communication.
 func (trtm *tssRoundThreeMessage) Marshal() ([]byte, error) {
 	return proto.Marshal(&pb.TSSRoundThreeMessage{
-		SenderID:  uint32(trtm.senderID),
-		Payload:   trtm.payload,
-		SessionID: trtm.sessionID,
+		SenderID:         uint32(trtm.senderID),
+		BroadcastPayload: trtm.broadcastPayload,
+		SessionID:        trtm.sessionID,
 	})
 }
 
-// Unmarshal converts a byte array produced by Marshal to an tssRoundThreeMessage.
+// Unmarshal converts a byte array produced by Marshal to a tssRoundThreeMessage.
 func (trtm *tssRoundThreeMessage) Unmarshal(bytes []byte) error {
 	pbMsg := pb.TSSRoundThreeMessage{}
 	if err := proto.Unmarshal(bytes, &pbMsg); err != nil {
@@ -157,7 +157,7 @@ func (trtm *tssRoundThreeMessage) Unmarshal(bytes []byte) error {
 	}
 
 	trtm.senderID = group.MemberIndex(pbMsg.SenderID)
-	trtm.payload = pbMsg.Payload
+	trtm.broadcastPayload = pbMsg.BroadcastPayload
 	trtm.sessionID = pbMsg.SessionID
 
 	return nil
@@ -167,13 +167,13 @@ func (trtm *tssRoundThreeMessage) Unmarshal(bytes []byte) error {
 // network communication.
 func (trfm *tssRoundFourMessage) Marshal() ([]byte, error) {
 	return proto.Marshal(&pb.TSSRoundFourMessage{
-		SenderID:  uint32(trfm.senderID),
-		Payload:   trfm.payload,
-		SessionID: trfm.sessionID,
+		SenderID:         uint32(trfm.senderID),
+		BroadcastPayload: trfm.broadcastPayload,
+		SessionID:        trfm.sessionID,
 	})
 }
 
-// Unmarshal converts a byte array produced by Marshal to an tssRoundFourMessage.
+// Unmarshal converts a byte array produced by Marshal to a tssRoundFourMessage.
 func (trfm *tssRoundFourMessage) Unmarshal(bytes []byte) error {
 	pbMsg := pb.TSSRoundFourMessage{}
 	if err := proto.Unmarshal(bytes, &pbMsg); err != nil {
@@ -185,7 +185,7 @@ func (trfm *tssRoundFourMessage) Unmarshal(bytes []byte) error {
 	}
 
 	trfm.senderID = group.MemberIndex(pbMsg.SenderID)
-	trfm.payload = pbMsg.Payload
+	trfm.broadcastPayload = pbMsg.BroadcastPayload
 	trfm.sessionID = pbMsg.SessionID
 
 	return nil
@@ -195,13 +195,13 @@ func (trfm *tssRoundFourMessage) Unmarshal(bytes []byte) error {
 // network communication.
 func (trfm *tssRoundFiveMessage) Marshal() ([]byte, error) {
 	return proto.Marshal(&pb.TSSRoundFiveMessage{
-		SenderID:  uint32(trfm.senderID),
-		Payload:   trfm.payload,
-		SessionID: trfm.sessionID,
+		SenderID:         uint32(trfm.senderID),
+		BroadcastPayload: trfm.broadcastPayload,
+		SessionID:        trfm.sessionID,
 	})
 }
 
-// Unmarshal converts a byte array produced by Marshal to an tssRoundFiveMessage.
+// Unmarshal converts a byte array produced by Marshal to a tssRoundFiveMessage.
 func (trfm *tssRoundFiveMessage) Unmarshal(bytes []byte) error {
 	pbMsg := pb.TSSRoundFiveMessage{}
 	if err := proto.Unmarshal(bytes, &pbMsg); err != nil {
@@ -213,7 +213,7 @@ func (trfm *tssRoundFiveMessage) Unmarshal(bytes []byte) error {
 	}
 
 	trfm.senderID = group.MemberIndex(pbMsg.SenderID)
-	trfm.payload = pbMsg.Payload
+	trfm.broadcastPayload = pbMsg.BroadcastPayload
 	trfm.sessionID = pbMsg.SessionID
 
 	return nil
@@ -223,13 +223,13 @@ func (trfm *tssRoundFiveMessage) Unmarshal(bytes []byte) error {
 // network communication.
 func (trsm *tssRoundSixMessage) Marshal() ([]byte, error) {
 	return proto.Marshal(&pb.TSSRoundSixMessage{
-		SenderID:  uint32(trsm.senderID),
-		Payload:   trsm.payload,
-		SessionID: trsm.sessionID,
+		SenderID:         uint32(trsm.senderID),
+		BroadcastPayload: trsm.broadcastPayload,
+		SessionID:        trsm.sessionID,
 	})
 }
 
-// Unmarshal converts a byte array produced by Marshal to an tssRoundSixMessage.
+// Unmarshal converts a byte array produced by Marshal to a tssRoundSixMessage.
 func (trsm *tssRoundSixMessage) Unmarshal(bytes []byte) error {
 	pbMsg := pb.TSSRoundSixMessage{}
 	if err := proto.Unmarshal(bytes, &pbMsg); err != nil {
@@ -241,7 +241,7 @@ func (trsm *tssRoundSixMessage) Unmarshal(bytes []byte) error {
 	}
 
 	trsm.senderID = group.MemberIndex(pbMsg.SenderID)
-	trsm.payload = pbMsg.Payload
+	trsm.broadcastPayload = pbMsg.BroadcastPayload
 	trsm.sessionID = pbMsg.SessionID
 
 	return nil
@@ -251,13 +251,13 @@ func (trsm *tssRoundSixMessage) Unmarshal(bytes []byte) error {
 // network communication.
 func (trsm *tssRoundSevenMessage) Marshal() ([]byte, error) {
 	return proto.Marshal(&pb.TSSRoundSevenMessage{
-		SenderID:  uint32(trsm.senderID),
-		Payload:   trsm.payload,
-		SessionID: trsm.sessionID,
+		SenderID:         uint32(trsm.senderID),
+		BroadcastPayload: trsm.broadcastPayload,
+		SessionID:        trsm.sessionID,
 	})
 }
 
-// Unmarshal converts a byte array produced by Marshal to an tssRoundSevenMessage.
+// Unmarshal converts a byte array produced by Marshal to a tssRoundSevenMessage.
 func (trsm *tssRoundSevenMessage) Unmarshal(bytes []byte) error {
 	pbMsg := pb.TSSRoundSevenMessage{}
 	if err := proto.Unmarshal(bytes, &pbMsg); err != nil {
@@ -269,7 +269,7 @@ func (trsm *tssRoundSevenMessage) Unmarshal(bytes []byte) error {
 	}
 
 	trsm.senderID = group.MemberIndex(pbMsg.SenderID)
-	trsm.payload = pbMsg.Payload
+	trsm.broadcastPayload = pbMsg.BroadcastPayload
 	trsm.sessionID = pbMsg.SessionID
 
 	return nil
@@ -279,13 +279,13 @@ func (trsm *tssRoundSevenMessage) Unmarshal(bytes []byte) error {
 // network communication.
 func (trem *tssRoundEightMessage) Marshal() ([]byte, error) {
 	return proto.Marshal(&pb.TSSRoundEightMessage{
-		SenderID:  uint32(trem.senderID),
-		Payload:   trem.payload,
-		SessionID: trem.sessionID,
+		SenderID:         uint32(trem.senderID),
+		BroadcastPayload: trem.broadcastPayload,
+		SessionID:        trem.sessionID,
 	})
 }
 
-// Unmarshal converts a byte array produced by Marshal to an tssRoundEightMessage.
+// Unmarshal converts a byte array produced by Marshal to a tssRoundEightMessage.
 func (trem *tssRoundEightMessage) Unmarshal(bytes []byte) error {
 	pbMsg := pb.TSSRoundEightMessage{}
 	if err := proto.Unmarshal(bytes, &pbMsg); err != nil {
@@ -297,7 +297,7 @@ func (trem *tssRoundEightMessage) Unmarshal(bytes []byte) error {
 	}
 
 	trem.senderID = group.MemberIndex(pbMsg.SenderID)
-	trem.payload = pbMsg.Payload
+	trem.broadcastPayload = pbMsg.BroadcastPayload
 	trem.sessionID = pbMsg.SessionID
 
 	return nil
@@ -307,13 +307,13 @@ func (trem *tssRoundEightMessage) Unmarshal(bytes []byte) error {
 // network communication.
 func (trnm *tssRoundNineMessage) Marshal() ([]byte, error) {
 	return proto.Marshal(&pb.TSSRoundNineMessage{
-		SenderID:  uint32(trnm.senderID),
-		Payload:   trnm.payload,
-		SessionID: trnm.sessionID,
+		SenderID:         uint32(trnm.senderID),
+		BroadcastPayload: trnm.broadcastPayload,
+		SessionID:        trnm.sessionID,
 	})
 }
 
-// Unmarshal converts a byte array produced by Marshal to an tssRoundNineMessage.
+// Unmarshal converts a byte array produced by Marshal to a tssRoundNineMessage.
 func (trnm *tssRoundNineMessage) Unmarshal(bytes []byte) error {
 	pbMsg := pb.TSSRoundNineMessage{}
 	if err := proto.Unmarshal(bytes, &pbMsg); err != nil {
@@ -325,7 +325,7 @@ func (trnm *tssRoundNineMessage) Unmarshal(bytes []byte) error {
 	}
 
 	trnm.senderID = group.MemberIndex(pbMsg.SenderID)
-	trnm.payload = pbMsg.Payload
+	trnm.broadcastPayload = pbMsg.BroadcastPayload
 	trnm.sessionID = pbMsg.SessionID
 
 	return nil

@@ -1,15 +1,18 @@
 package signing
 
 import (
+	"fmt"
+	"math/big"
+
 	tsslibcommon "github.com/bnb-chain/tss-lib/common"
 	"github.com/bnb-chain/tss-lib/ecdsa/signing"
 	"github.com/bnb-chain/tss-lib/tss"
-	"github.com/ipfs/go-log"
+	"github.com/ipfs/go-log/v2"
 	"github.com/keep-network/keep-core/pkg/crypto/ephemeral"
 	"github.com/keep-network/keep-core/pkg/protocol/group"
 	"github.com/keep-network/keep-core/pkg/tecdsa"
 	"github.com/keep-network/keep-core/pkg/tecdsa/common"
-	"math/big"
+	"golang.org/x/exp/slices"
 )
 
 // Member represents a signing protocol member.
@@ -29,6 +32,8 @@ type member struct {
 	message *big.Int
 	// tECDSA private key share of the member.
 	privateKeyShare *tecdsa.PrivateKeyShare
+	// Instance of the member identity converter.
+	identityConverter *identityConverter
 }
 
 // newMember creates a new member in an initial state
@@ -50,6 +55,7 @@ func newMember(
 		sessionID:           sessionID,
 		message:             message,
 		privateKeyShare:     privateKeyShare,
+		identityConverter:   &identityConverter{keys: privateKeyShare.Data().Ks},
 	}
 }
 
@@ -137,6 +143,7 @@ func (skgm *symmetricKeyGeneratingMember) initializeTssRoundOne() *tssRoundOneMe
 	tssPartyID, groupTssPartiesIDs := common.GenerateTssPartiesIDs(
 		skgm.id,
 		skgm.group.OperatingMemberIDs(),
+		skgm.identityConverter,
 	)
 
 	tssParameters := tss.NewParameters(
@@ -192,7 +199,7 @@ type tssRoundTwoMember struct {
 }
 
 // markInactiveMembers takes all messages from the previous signing protocol
-// execution phase and marks all member who did not send a message as inactive.
+// execution phase and marks all members who did not send a message as inactive.
 func (trtm *tssRoundTwoMember) markInactiveMembers(
 	tssRoundOneMessages []*tssRoundOneMessage,
 ) {
@@ -218,7 +225,7 @@ type tssRoundThreeMember struct {
 }
 
 // markInactiveMembers takes all messages from the previous signing protocol
-// execution phase and marks all member who did not send a message as inactive.
+// execution phase and marks all members who did not send a message as inactive.
 func (trtm *tssRoundThreeMember) markInactiveMembers(
 	tssRoundTwoMessages []*tssRoundTwoMessage,
 ) {
@@ -244,7 +251,7 @@ type tssRoundFourMember struct {
 }
 
 // markInactiveMembers takes all messages from the previous signing protocol
-// execution phase and marks all member who did not send a message as inactive.
+// execution phase and marks all members who did not send a message as inactive.
 func (trtm *tssRoundFourMember) markInactiveMembers(
 	tssRoundThreeMessages []*tssRoundThreeMessage,
 ) {
@@ -270,7 +277,7 @@ type tssRoundFiveMember struct {
 }
 
 // markInactiveMembers takes all messages from the previous signing protocol
-// execution phase and marks all member who did not send a message as inactive.
+// execution phase and marks all members who did not send a message as inactive.
 func (trfm *tssRoundFiveMember) markInactiveMembers(
 	tssRoundFourMessages []*tssRoundFourMessage,
 ) {
@@ -296,7 +303,7 @@ type tssRoundSixMember struct {
 }
 
 // markInactiveMembers takes all messages from the previous signing protocol
-// execution phase and marks all member who did not send a message as inactive.
+// execution phase and marks all members who did not send a message as inactive.
 func (trsm *tssRoundSixMember) markInactiveMembers(
 	tssRoundFiveMessages []*tssRoundFiveMessage,
 ) {
@@ -322,7 +329,7 @@ type tssRoundSevenMember struct {
 }
 
 // markInactiveMembers takes all messages from the previous signing protocol
-// execution phase and marks all member who did not send a message as inactive.
+// execution phase and marks all members who did not send a message as inactive.
 func (trsm *tssRoundSevenMember) markInactiveMembers(
 	tssRoundSixMessages []*tssRoundSixMessage,
 ) {
@@ -348,7 +355,7 @@ type tssRoundEightMember struct {
 }
 
 // markInactiveMembers takes all messages from the previous signing protocol
-// execution phase and marks all member who did not send a message as inactive.
+// execution phase and marks all members who did not send a message as inactive.
 func (trem *tssRoundEightMember) markInactiveMembers(
 	tssRoundSevenMessages []*tssRoundSevenMessage,
 ) {
@@ -374,7 +381,7 @@ type tssRoundNineMember struct {
 }
 
 // markInactiveMembers takes all messages from the previous signing protocol
-// execution phase and marks all member who did not send a message as inactive.
+// execution phase and marks all members who did not send a message as inactive.
 func (trnm *tssRoundNineMember) markInactiveMembers(
 	tssRoundEightMessages []*tssRoundEightMessage,
 ) {
@@ -404,7 +411,7 @@ type finalizingMember struct {
 }
 
 // markInactiveMembers takes all messages from the previous signing protocol
-// execution phase and marks all member who did not send a message as inactive.
+// execution phase and marks all members who did not send a message as inactive.
 func (fm *finalizingMember) markInactiveMembers(
 	tssRoundNineMessages []*tssRoundNineMessage,
 ) {
@@ -416,7 +423,42 @@ func (fm *finalizingMember) markInactiveMembers(
 	filter.FlushInactiveMembers()
 }
 
-// Result is successful computation of the tECDSA signature.
+// Result is a successful computation of the tECDSA signature.
 func (fm *finalizingMember) Result() *Result {
 	return &Result{Signature: tecdsa.NewSignature(fm.tssResult)}
+}
+
+// identityConverter implements the common.IdentityConverter for tECDSA signing.
+// It does the conversion using the predefined keys list obtained from Ks
+// party ID array available in TSS key share.
+type identityConverter struct {
+	keys []*big.Int
+}
+
+func (ic *identityConverter) MemberIndexToTssPartyID(
+	memberIndex group.MemberIndex,
+) *tss.PartyID {
+	partyIDKey := ic.MemberIndexToTssPartyIDKey(memberIndex)
+
+	return tss.NewPartyID(
+		partyIDKey.Text(10),
+		fmt.Sprintf("member-%v", memberIndex),
+		partyIDKey,
+	)
+}
+
+func (ic *identityConverter) MemberIndexToTssPartyIDKey(
+	memberIndex group.MemberIndex,
+) *big.Int {
+	return ic.keys[memberIndex-1]
+}
+
+func (ic *identityConverter) TssPartyIDToMemberIndex(
+	partyID *tss.PartyID,
+) group.MemberIndex {
+	index := slices.IndexFunc(ic.keys, func(key *big.Int) bool {
+		return key.Cmp(partyID.KeyInt()) == 0
+	})
+
+	return group.MemberIndex(index + 1)
 }

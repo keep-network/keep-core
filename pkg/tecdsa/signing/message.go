@@ -46,7 +46,7 @@ func (trom *tssRoundOneMessage) SenderID() group.MemberIndex {
 	return trom.senderID
 }
 
-// Type returns a string describing an tssRoundOneMessage type for
+// Type returns a string describing a tssRoundOneMessage type for
 // marshaling purposes.
 func (trom *tssRoundOneMessage) Type() string {
 	return messageTypePrefix + "tss_round_one_message"
@@ -57,8 +57,8 @@ func (trom *tssRoundOneMessage) Type() string {
 type tssRoundTwoMessage struct {
 	senderID group.MemberIndex
 
-	peersPayload     map[group.MemberIndex][]byte
-	sessionID        string
+	peersPayload map[group.MemberIndex][]byte
+	sessionID    string
 }
 
 // SenderID returns protocol-level identifier of the message sender.
@@ -66,7 +66,7 @@ func (trtm *tssRoundTwoMessage) SenderID() group.MemberIndex {
 	return trtm.senderID
 }
 
-// Type returns a string describing an tssRoundTwoMessage type for
+// Type returns a string describing a tssRoundTwoMessage type for
 // marshaling purposes.
 func (trtm *tssRoundTwoMessage) Type() string {
 	return messageTypePrefix + "tss_round_two_message"
@@ -77,8 +77,8 @@ func (trtm *tssRoundTwoMessage) Type() string {
 type tssRoundThreeMessage struct {
 	senderID group.MemberIndex
 
-	payload   []byte
-	sessionID string
+	broadcastPayload []byte
+	sessionID        string
 }
 
 // SenderID returns protocol-level identifier of the message sender.
@@ -86,7 +86,7 @@ func (trtm *tssRoundThreeMessage) SenderID() group.MemberIndex {
 	return trtm.senderID
 }
 
-// Type returns a string describing an tssRoundThreeMessage type for
+// Type returns a string describing a tssRoundThreeMessage type for
 // marshaling purposes.
 func (trtm *tssRoundThreeMessage) Type() string {
 	return messageTypePrefix + "tss_round_three_message"
@@ -97,8 +97,8 @@ func (trtm *tssRoundThreeMessage) Type() string {
 type tssRoundFourMessage struct {
 	senderID group.MemberIndex
 
-	payload   []byte
-	sessionID string
+	broadcastPayload []byte
+	sessionID        string
 }
 
 // SenderID returns protocol-level identifier of the message sender.
@@ -106,7 +106,7 @@ func (trfm *tssRoundFourMessage) SenderID() group.MemberIndex {
 	return trfm.senderID
 }
 
-// Type returns a string describing an tssRoundFourMessage type for
+// Type returns a string describing a tssRoundFourMessage type for
 // marshaling purposes.
 func (trfm *tssRoundFourMessage) Type() string {
 	return messageTypePrefix + "tss_round_four_message"
@@ -117,8 +117,8 @@ func (trfm *tssRoundFourMessage) Type() string {
 type tssRoundFiveMessage struct {
 	senderID group.MemberIndex
 
-	payload   []byte
-	sessionID string
+	broadcastPayload []byte
+	sessionID        string
 }
 
 // SenderID returns protocol-level identifier of the message sender.
@@ -126,7 +126,7 @@ func (trfm *tssRoundFiveMessage) SenderID() group.MemberIndex {
 	return trfm.senderID
 }
 
-// Type returns a string describing an tssRoundFiveMessage type for
+// Type returns a string describing a tssRoundFiveMessage type for
 // marshaling purposes.
 func (trfm *tssRoundFiveMessage) Type() string {
 	return messageTypePrefix + "tss_round_five_message"
@@ -137,8 +137,8 @@ func (trfm *tssRoundFiveMessage) Type() string {
 type tssRoundSixMessage struct {
 	senderID group.MemberIndex
 
-	payload   []byte
-	sessionID string
+	broadcastPayload []byte
+	sessionID        string
 }
 
 // SenderID returns protocol-level identifier of the message sender.
@@ -146,7 +146,7 @@ func (trsm *tssRoundSixMessage) SenderID() group.MemberIndex {
 	return trsm.senderID
 }
 
-// Type returns a string describing an tssRoundSixMessage type for
+// Type returns a string describing a tssRoundSixMessage type for
 // marshaling purposes.
 func (trfm *tssRoundSixMessage) Type() string {
 	return messageTypePrefix + "tss_round_six_message"
@@ -157,8 +157,8 @@ func (trfm *tssRoundSixMessage) Type() string {
 type tssRoundSevenMessage struct {
 	senderID group.MemberIndex
 
-	payload   []byte
-	sessionID string
+	broadcastPayload []byte
+	sessionID        string
 }
 
 // SenderID returns protocol-level identifier of the message sender.
@@ -166,7 +166,7 @@ func (trsm *tssRoundSevenMessage) SenderID() group.MemberIndex {
 	return trsm.senderID
 }
 
-// Type returns a string describing an tssRoundSevenMessage type for
+// Type returns a string describing a tssRoundSevenMessage type for
 // marshaling purposes.
 func (trfm *tssRoundSevenMessage) Type() string {
 	return messageTypePrefix + "tss_round_seven_message"
@@ -177,8 +177,8 @@ func (trfm *tssRoundSevenMessage) Type() string {
 type tssRoundEightMessage struct {
 	senderID group.MemberIndex
 
-	payload   []byte
-	sessionID string
+	broadcastPayload []byte
+	sessionID        string
 }
 
 // SenderID returns protocol-level identifier of the message sender.
@@ -186,7 +186,7 @@ func (trem *tssRoundEightMessage) SenderID() group.MemberIndex {
 	return trem.senderID
 }
 
-// Type returns a string describing an tssRoundEightMessage type for
+// Type returns a string describing a tssRoundEightMessage type for
 // marshaling purposes.
 func (trem *tssRoundEightMessage) Type() string {
 	return messageTypePrefix + "tss_round_eight_message"
@@ -197,8 +197,8 @@ func (trem *tssRoundEightMessage) Type() string {
 type tssRoundNineMessage struct {
 	senderID group.MemberIndex
 
-	payload   []byte
-	sessionID string
+	broadcastPayload []byte
+	sessionID        string
 }
 
 // SenderID returns protocol-level identifier of the message sender.
@@ -206,7 +206,7 @@ func (trnm *tssRoundNineMessage) SenderID() group.MemberIndex {
 	return trnm.senderID
 }
 
-// Type returns a string describing an tssRoundNineMessage type for
+// Type returns a string describing a tssRoundNineMessage type for
 // marshaling purposes.
 func (trnm *tssRoundNineMessage) Type() string {
 	return messageTypePrefix + "tss_round_nine_message"

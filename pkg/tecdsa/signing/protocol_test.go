@@ -763,7 +763,7 @@ func TestTssRoundThree(t *testing.T) {
 
 		assertOutgoingMessageBroadcastPayload(
 			t,
-			message.payload,
+			message.broadcastPayload,
 			memberID,
 		)
 	}
@@ -1043,7 +1043,7 @@ func TestTssRoundFour(t *testing.T) {
 
 		assertOutgoingMessageBroadcastPayload(
 			t,
-			message.payload,
+			message.broadcastPayload,
 			memberID,
 		)
 	}
@@ -1069,7 +1069,7 @@ func TestTssRoundFour_IncomingMessageCorrupted_WrongPayload(t *testing.T) {
 		for _, message := range messages {
 			if message.senderID != member.id {
 				// Corrupt the message's payload.
-				message.payload = corruptedPayload
+				message.broadcastPayload = corruptedPayload
 				receivedMessages = append(receivedMessages, message)
 			}
 		}
@@ -1232,7 +1232,7 @@ func TestTssRoundFive(t *testing.T) {
 
 		assertOutgoingMessageBroadcastPayload(
 			t,
-			message.payload,
+			message.broadcastPayload,
 			memberID,
 		)
 	}
@@ -1258,7 +1258,7 @@ func TestTssRoundFive_IncomingMessageCorrupted_WrongPayload(t *testing.T) {
 		for _, message := range messages {
 			if message.senderID != member.id {
 				// Corrupt the message's payload.
-				message.payload = corruptedPayload
+				message.broadcastPayload = corruptedPayload
 				receivedMessages = append(receivedMessages, message)
 			}
 		}
@@ -1421,7 +1421,7 @@ func TestTssRoundSix(t *testing.T) {
 
 		assertOutgoingMessageBroadcastPayload(
 			t,
-			message.payload,
+			message.broadcastPayload,
 			memberID,
 		)
 	}
@@ -1447,7 +1447,7 @@ func TestTssRoundSix_IncomingMessageCorrupted_WrongPayload(t *testing.T) {
 		for _, message := range messages {
 			if message.senderID != member.id {
 				// Corrupt the message's payload.
-				message.payload = corruptedPayload
+				message.broadcastPayload = corruptedPayload
 				receivedMessages = append(receivedMessages, message)
 			}
 		}
@@ -1610,7 +1610,7 @@ func TestTssRoundSeven(t *testing.T) {
 
 		assertOutgoingMessageBroadcastPayload(
 			t,
-			message.payload,
+			message.broadcastPayload,
 			memberID,
 		)
 	}
@@ -1636,7 +1636,7 @@ func TestTssRoundSeven_IncomingMessageCorrupted_WrongPayload(t *testing.T) {
 		for _, message := range messages {
 			if message.senderID != member.id {
 				// Corrupt the message's payload.
-				message.payload = corruptedPayload
+				message.broadcastPayload = corruptedPayload
 				receivedMessages = append(receivedMessages, message)
 			}
 		}
@@ -1799,7 +1799,7 @@ func TestTssRoundEight(t *testing.T) {
 
 		assertOutgoingMessageBroadcastPayload(
 			t,
-			message.payload,
+			message.broadcastPayload,
 			memberID,
 		)
 	}
@@ -1825,7 +1825,7 @@ func TestTssRoundEight_IncomingMessageCorrupted_WrongPayload(t *testing.T) {
 		for _, message := range messages {
 			if message.senderID != member.id {
 				// Corrupt the message's payload.
-				message.payload = corruptedPayload
+				message.broadcastPayload = corruptedPayload
 				receivedMessages = append(receivedMessages, message)
 			}
 		}
@@ -1988,7 +1988,7 @@ func TestTssRoundNine(t *testing.T) {
 
 		assertOutgoingMessageBroadcastPayload(
 			t,
-			message.payload,
+			message.broadcastPayload,
 			memberID,
 		)
 	}
@@ -2014,7 +2014,7 @@ func TestTssRoundNine_IncomingMessageCorrupted_WrongPayload(t *testing.T) {
 		for _, message := range messages {
 			if message.senderID != member.id {
 				// Corrupt the message's payload.
-				message.payload = corruptedPayload
+				message.broadcastPayload = corruptedPayload
 				receivedMessages = append(receivedMessages, message)
 			}
 		}
@@ -2232,7 +2232,7 @@ func TestTssFinalize_IncomingMessageCorrupted_WrongPayload(t *testing.T) {
 		for _, message := range messages {
 			if message.senderID != member.id {
 				// Corrupt the message's payload.
-				message.payload = corruptedPayload
+				message.broadcastPayload = corruptedPayload
 				receivedMessages = append(receivedMessages, message)
 			}
 		}
@@ -2430,12 +2430,13 @@ func initializeEphemeralKeyPairGeneratingMembersGroup(
 
 		members = append(members, &ephemeralKeyPairGeneratingMember{
 			member: &member{
-				logger:          &testutils.MockLogger{},
-				id:              id,
-				group:           signingGroup,
-				sessionID:       sessionID,
-				message:         big.NewInt(100),
-				privateKeyShare: tecdsa.NewPrivateKeyShare(testData[i-1]),
+				logger:            &testutils.MockLogger{},
+				id:                id,
+				group:             signingGroup,
+				sessionID:         sessionID,
+				message:           big.NewInt(100),
+				privateKeyShare:   tecdsa.NewPrivateKeyShare(testData[i-1]),
+				identityConverter: &identityConverter{keys: testData[i-1].Ks},
 			},
 			ephemeralKeyPairs: make(map[group.MemberIndex]*ephemeral.KeyPair),
 		})

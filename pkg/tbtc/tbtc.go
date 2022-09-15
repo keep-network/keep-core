@@ -9,6 +9,7 @@ import (
 	"github.com/ipfs/go-log"
 
 	"github.com/keep-network/keep-common/pkg/persistence"
+	"github.com/keep-network/keep-core/pkg/diagnostics"
 	"github.com/keep-network/keep-core/pkg/generator"
 	"github.com/keep-network/keep-core/pkg/net"
 	"github.com/keep-network/keep-core/pkg/sortition"
@@ -55,11 +56,30 @@ func Initialize(
 	workPersistence persistence.Handle,
 	scheduler *generator.Scheduler,
 	config Config,
+	registry *diagnostics.Registry,
 ) error {
 	node := newNode(chain, netProvider, keyStorePersistence, workPersistence, scheduler, config)
 	deduplicator := newDeduplicator()
 
-	err := sortition.MonitorPool(ctx, logger, chain, sortition.DefaultStatusCheckTick)
+	registry.RegisterApplicationSource(
+		"tbtc",
+		func() map[string]interface{} {
+			return map[string]interface{}{
+				"preParamsPoolSize": node.dkgExecutor.PreParamsCount(),
+			}
+		},
+	)
+
+	err := sortition.MonitorPool(
+		ctx,
+		logger,
+		chain,
+		sortition.DefaultStatusCheckTick,
+		&enoughPreParamsPoolSizePolicy{
+			node:   node,
+			config: config,
+		},
+	)
 	if err != nil {
 		return fmt.Errorf(
 			"could not set up sortition pool monitoring: [%v]",
@@ -103,7 +123,7 @@ func Initialize(
 			logger.Infof(
 				"signature of message [%v] requested from "+
 					"wallet [0x%x] at block [%v]",
-				event.Message,
+				event.Message.Text(16),
 				event.WalletPublicKey,
 				event.BlockNumber,
 			)
@@ -117,4 +137,17 @@ func Initialize(
 	})
 
 	return nil
+}
+
+// enoughPreParamsPoolSizePolicy is a policy that enforces the sufficient size
+// of the DKG pre-parameters pool before joining the sortition pool.
+type enoughPreParamsPoolSizePolicy struct {
+	node   *node
+	config Config
+}
+
+func (epppsp *enoughPreParamsPoolSizePolicy) ShouldJoin() bool {
+	actualPoolSize := epppsp.node.dkgExecutor.PreParamsCount()
+	targetPoolSize := epppsp.config.PreParamsPoolSize
+	return actualPoolSize >= targetPoolSize
 }

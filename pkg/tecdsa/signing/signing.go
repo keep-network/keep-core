@@ -2,13 +2,14 @@ package signing
 
 import (
 	"fmt"
-	"github.com/ipfs/go-log"
+	"math/big"
+
+	"github.com/ipfs/go-log/v2"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/net"
 	"github.com/keep-network/keep-core/pkg/protocol/group"
 	"github.com/keep-network/keep-core/pkg/protocol/state"
 	"github.com/keep-network/keep-core/pkg/tecdsa"
-	"math/big"
 )
 
 // Execute runs the tECDSA signing protocol, given a message to sign,
@@ -28,7 +29,7 @@ func Execute(
 	privateKeyShare *tecdsa.PrivateKeyShare,
 	groupSize int,
 	dishonestThreshold int,
-	excludedMembers []group.MemberIndex,
+	excludedMembersIndexes []group.MemberIndex,
 	blockCounter chain.BlockCounter,
 	channel net.BroadcastChannel,
 	membershipValidator *group.MembershipValidator,
@@ -50,9 +51,9 @@ func Execute(
 
 	// Mark excluded members as disqualified in order to not exchange messages
 	// with them.
-	for _, excludedMember := range excludedMembers {
-		if excludedMember != member.id {
-			member.group.MarkMemberAsDisqualified(excludedMember)
+	for _, excludedMemberIndex := range excludedMembersIndexes {
+		if excludedMemberIndex != member.id {
+			member.group.MarkMemberAsDisqualified(excludedMemberIndex)
 		}
 	}
 

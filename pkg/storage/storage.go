@@ -18,12 +18,12 @@ const (
 	// The key store persistent storage directory is a place where the sensitive
 	// data are stored. The greatest care should be taken to backup the directory
 	// and never loose any data stored there.
-	// Loosing data stored in this directory is a serious threat to the Keep Network
-	// security.
+	// Losing data stored in this directory is a serious protocol violation.
 	keyStoreDirName = "keystore"
 	// The work persistent storage directory keeps data that should persist
-	// the client restart. Loosing data stored in this directory will not
-	// harm the operator nor the network.
+	// the client restart. Losing data stored in this directory may
+	// lead to losing rewards as a result of inactivity but is not
+	// a protocol violation.
 	workDirName = "work"
 )
 

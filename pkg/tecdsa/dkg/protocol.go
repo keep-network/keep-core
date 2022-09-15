@@ -106,7 +106,7 @@ func (skgm *symmetricKeyGeneratingMember) isValidEphemeralPublicKeyMessage(
 		}
 
 		if _, ok := message.ephemeralPublicKeys[memberID]; !ok {
-			skgm.logger.Warningf(
+			skgm.logger.Warnf(
 				"[member:%v] ephemeral public key message from member [%v] "+
 					"does not contain public key for member [%v]",
 				skgm.id,
@@ -145,9 +145,9 @@ func (trom *tssRoundOneMember) tssRoundOne(
 		}
 
 		return &tssRoundOneMessage{
-			senderID:  trom.id,
-			payload:   tssMessageBytes,
-			sessionID: trom.sessionID,
+			senderID:         trom.id,
+			broadcastPayload: tssMessageBytes,
+			sessionID:        trom.sessionID,
 		}, nil
 	case <-ctx.Done():
 		return nil, fmt.Errorf(
@@ -169,8 +169,12 @@ func (trtm *tssRoundTwoMember) tssRoundTwo(
 		senderID := tssRoundOneMessage.SenderID()
 
 		_, tssErr := trtm.tssParty.UpdateFromBytes(
-			tssRoundOneMessage.payload,
-			common.ResolveSortedTssPartyID(trtm.tssParameters, senderID),
+			tssRoundOneMessage.broadcastPayload,
+			common.ResolveSortedTssPartyID(
+				trtm.tssParameters,
+				senderID,
+				trtm.identityConverter,
+			),
 			true,
 		)
 		if tssErr != nil {
@@ -207,6 +211,7 @@ outgoingMessagesLoop:
 	broadcastPayload, peersPayload, err := common.AggregateTssMessages(
 		tssMessages,
 		trtm.symmetricKeys,
+		trtm.identityConverter,
 	)
 	if err != nil {
 		return nil, fmt.Errorf(
@@ -240,7 +245,11 @@ func (trtm *tssRoundThreeMember) tssRoundThree(
 	// to round three.
 	for _, tssRoundTwoMessage := range deduplicateBySender(tssRoundTwoMessages) {
 		senderID := tssRoundTwoMessage.SenderID()
-		senderTssPartyID := common.ResolveSortedTssPartyID(trtm.tssParameters, senderID)
+		senderTssPartyID := common.ResolveSortedTssPartyID(
+			trtm.tssParameters,
+			senderID,
+			trtm.identityConverter,
+		)
 
 		// Update the local TSS party using the broadcast part of the message
 		// produced in round two.
@@ -315,9 +324,9 @@ func (trtm *tssRoundThreeMember) tssRoundThree(
 		}
 
 		return &tssRoundThreeMessage{
-			senderID:  trtm.id,
-			payload:   tssMessageBytes,
-			sessionID: trtm.sessionID,
+			senderID:         trtm.id,
+			broadcastPayload: tssMessageBytes,
+			sessionID:        trtm.sessionID,
 		}, nil
 	case <-ctx.Done():
 		return nil, fmt.Errorf(
@@ -337,8 +346,12 @@ func (fm *finalizingMember) tssFinalize(
 		senderID := tssRoundThreeMessage.SenderID()
 
 		_, tssErr := fm.tssParty.UpdateFromBytes(
-			tssRoundThreeMessage.payload,
-			common.ResolveSortedTssPartyID(fm.tssParameters, senderID),
+			tssRoundThreeMessage.broadcastPayload,
+			common.ResolveSortedTssPartyID(
+				fm.tssParameters,
+				senderID,
+				fm.identityConverter,
+			),
 			true,
 		)
 		if tssErr != nil {
