@@ -2,13 +2,14 @@ package signing
 
 import (
 	"fmt"
-	"github.com/ipfs/go-log"
+	"math/big"
+
+	"github.com/ipfs/go-log/v2"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/net"
 	"github.com/keep-network/keep-core/pkg/protocol/group"
 	"github.com/keep-network/keep-core/pkg/protocol/state"
 	"github.com/keep-network/keep-core/pkg/tecdsa"
-	"math/big"
 )
 
 // Execute runs the tECDSA signing protocol, given a message to sign,

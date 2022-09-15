@@ -106,7 +106,7 @@ func (skgm *symmetricKeyGeneratingMember) isValidEphemeralPublicKeyMessage(
 		}
 
 		if _, ok := message.ephemeralPublicKeys[memberID]; !ok {
-			skgm.logger.Warningf(
+			skgm.logger.Warnf(
 				"[member:%v] ephemeral public key message from member [%v] "+
 					"does not contain public key for member [%v]",
 				skgm.id,
