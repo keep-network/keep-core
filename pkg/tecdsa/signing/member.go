@@ -199,7 +199,7 @@ type tssRoundTwoMember struct {
 }
 
 // markInactiveMembers takes all messages from the previous signing protocol
-// execution phase and marks all member who did not send a message as inactive.
+// execution phase and marks all members who did not send a message as inactive.
 func (trtm *tssRoundTwoMember) markInactiveMembers(
 	tssRoundOneMessages []*tssRoundOneMessage,
 ) {
@@ -225,7 +225,7 @@ type tssRoundThreeMember struct {
 }
 
 // markInactiveMembers takes all messages from the previous signing protocol
-// execution phase and marks all member who did not send a message as inactive.
+// execution phase and marks all members who did not send a message as inactive.
 func (trtm *tssRoundThreeMember) markInactiveMembers(
 	tssRoundTwoMessages []*tssRoundTwoMessage,
 ) {
@@ -251,7 +251,7 @@ type tssRoundFourMember struct {
 }
 
 // markInactiveMembers takes all messages from the previous signing protocol
-// execution phase and marks all member who did not send a message as inactive.
+// execution phase and marks all members who did not send a message as inactive.
 func (trtm *tssRoundFourMember) markInactiveMembers(
 	tssRoundThreeMessages []*tssRoundThreeMessage,
 ) {
@@ -277,7 +277,7 @@ type tssRoundFiveMember struct {
 }
 
 // markInactiveMembers takes all messages from the previous signing protocol
-// execution phase and marks all member who did not send a message as inactive.
+// execution phase and marks all members who did not send a message as inactive.
 func (trfm *tssRoundFiveMember) markInactiveMembers(
 	tssRoundFourMessages []*tssRoundFourMessage,
 ) {
@@ -303,7 +303,7 @@ type tssRoundSixMember struct {
 }
 
 // markInactiveMembers takes all messages from the previous signing protocol
-// execution phase and marks all member who did not send a message as inactive.
+// execution phase and marks all members who did not send a message as inactive.
 func (trsm *tssRoundSixMember) markInactiveMembers(
 	tssRoundFiveMessages []*tssRoundFiveMessage,
 ) {
@@ -329,7 +329,7 @@ type tssRoundSevenMember struct {
 }
 
 // markInactiveMembers takes all messages from the previous signing protocol
-// execution phase and marks all member who did not send a message as inactive.
+// execution phase and marks all members who did not send a message as inactive.
 func (trsm *tssRoundSevenMember) markInactiveMembers(
 	tssRoundSixMessages []*tssRoundSixMessage,
 ) {
@@ -355,7 +355,7 @@ type tssRoundEightMember struct {
 }
 
 // markInactiveMembers takes all messages from the previous signing protocol
-// execution phase and marks all member who did not send a message as inactive.
+// execution phase and marks all members who did not send a message as inactive.
 func (trem *tssRoundEightMember) markInactiveMembers(
 	tssRoundSevenMessages []*tssRoundSevenMessage,
 ) {
@@ -381,7 +381,7 @@ type tssRoundNineMember struct {
 }
 
 // markInactiveMembers takes all messages from the previous signing protocol
-// execution phase and marks all member who did not send a message as inactive.
+// execution phase and marks all members who did not send a message as inactive.
 func (trnm *tssRoundNineMember) markInactiveMembers(
 	tssRoundEightMessages []*tssRoundEightMessage,
 ) {
@@ -411,7 +411,7 @@ type finalizingMember struct {
 }
 
 // markInactiveMembers takes all messages from the previous signing protocol
-// execution phase and marks all member who did not send a message as inactive.
+// execution phase and marks all members who did not send a message as inactive.
 func (fm *finalizingMember) markInactiveMembers(
 	tssRoundNineMessages []*tssRoundNineMessage,
 ) {
@@ -423,7 +423,7 @@ func (fm *finalizingMember) markInactiveMembers(
 	filter.FlushInactiveMembers()
 }
 
-// Result is successful computation of the tECDSA signature.
+// Result is a successful computation of the tECDSA signature.
 func (fm *finalizingMember) Result() *Result {
 	return &Result{Signature: tecdsa.NewSignature(fm.tssResult)}
 }

@@ -36,8 +36,8 @@ func (epkm *ephemeralPublicKeyMessage) Type() string {
 type tssRoundOneMessage struct {
 	senderID group.MemberIndex
 
-	payload   []byte
-	sessionID string
+	broadcastPayload []byte
+	sessionID        string
 }
 
 // SenderID returns protocol-level identifier of the message sender.
@@ -77,8 +77,8 @@ func (trtm *tssRoundTwoMessage) Type() string {
 type tssRoundThreeMessage struct {
 	senderID group.MemberIndex
 
-	payload   []byte
-	sessionID string
+	broadcastPayload []byte
+	sessionID        string
 }
 
 // SenderID returns protocol-level identifier of the message sender.

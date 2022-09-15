@@ -145,9 +145,9 @@ func (trom *tssRoundOneMember) tssRoundOne(
 		}
 
 		return &tssRoundOneMessage{
-			senderID:  trom.id,
-			payload:   tssMessageBytes,
-			sessionID: trom.sessionID,
+			senderID:         trom.id,
+			broadcastPayload: tssMessageBytes,
+			sessionID:        trom.sessionID,
 		}, nil
 	case <-ctx.Done():
 		return nil, fmt.Errorf(
@@ -169,7 +169,7 @@ func (trtm *tssRoundTwoMember) tssRoundTwo(
 		senderID := tssRoundOneMessage.SenderID()
 
 		_, tssErr := trtm.tssParty.UpdateFromBytes(
-			tssRoundOneMessage.payload,
+			tssRoundOneMessage.broadcastPayload,
 			common.ResolveSortedTssPartyID(
 				trtm.tssParameters,
 				senderID,
@@ -324,9 +324,9 @@ func (trtm *tssRoundThreeMember) tssRoundThree(
 		}
 
 		return &tssRoundThreeMessage{
-			senderID:  trtm.id,
-			payload:   tssMessageBytes,
-			sessionID: trtm.sessionID,
+			senderID:         trtm.id,
+			broadcastPayload: tssMessageBytes,
+			sessionID:        trtm.sessionID,
 		}, nil
 	case <-ctx.Done():
 		return nil, fmt.Errorf(
@@ -346,7 +346,7 @@ func (fm *finalizingMember) tssFinalize(
 		senderID := tssRoundThreeMessage.SenderID()
 
 		_, tssErr := fm.tssParty.UpdateFromBytes(
-			tssRoundThreeMessage.payload,
+			tssRoundThreeMessage.broadcastPayload,
 			common.ResolveSortedTssPartyID(
 				fm.tssParameters,
 				senderID,
