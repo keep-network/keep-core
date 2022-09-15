@@ -48,6 +48,9 @@ func (al *AllowList) Contains(operatorPublicKey *operator.PublicKey) bool {
 	return al.allowedPublicKeys[operatorPublicKey.String()]
 }
 
+// EmptyAllowList represents an empty firewall allowlist.
+var EmptyAllowList = NewAllowList([]*operator.PublicKey{})
+
 const (
 	// PositiveIsRecognizedCachePeriod is the time period the cache maintains
 	// the positive result of the last `IsRecognized` checks.
