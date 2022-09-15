@@ -504,8 +504,8 @@ func (n *node) joinSigningIfEligible(
 				)
 				if err != nil {
 					logger.Errorf(
-						"[member:%v] signing of message [%v] "+
-							"failed: [%v]",
+						"[member:%v] all retries for the signing of " +
+							"message [%v] failed; giving up: [%v]",
 						signer.signingGroupMemberIndex,
 						message.Text(16),
 						err,
