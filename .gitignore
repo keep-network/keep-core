@@ -1,6 +1,3 @@
-# Hidden files
-.*
-
 # MacOS
 *.DS_Store
 
@@ -18,7 +15,7 @@
 # Infrastructure
 /infrastructure/gcp/service-accounts*
 
-# keys
+# Keys
 keystore/
 keep_accounts
 
