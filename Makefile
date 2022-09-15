@@ -88,18 +88,23 @@ generate: gen_proto
 	$(info Running Go code generator)
 	go generate ./...
 
+# Default parameters for client building. They can be overriten when calling the
+# make command.
 version = $(shell git describe --tags --match "v[0-9]*" HEAD)
 revision = $(shell git rev-parse --short HEAD)
+output_dir = bin
+app_name = keep-client
 
-go_build_cmd = go build -ldflags "-X github.com/keep-network/keep-core/build.Version=$(version) -X github.com/keep-network/keep-core/build.Revision=$(revision)" -a -o $(1) .
-go_build_platform_cmd = GOOS=$(1) GOARCH=$(2) $(call go_build_cmd,bin/keep-client-$(1)-$(2)-$(version))
+go_build_cmd = go build -ldflags "-X github.com/keep-network/keep-core/build.Version=$(version) -X github.com/keep-network/keep-core/build.Revision=$(revision)" -o $(output_dir)/$(1) -a .
+go_build_platform_cmd = GOOS=$(1) GOARCH=$(2) $(call go_build_cmd,$(app_name)-$(1)-$(2)-$(version))
 
 build:
 	$(info Building Go code)
-	$(call go_build_cmd,keep-client)
+	$(call go_build_cmd,$(app_name))
 
 # TODO: Test and add more platforms.
-build-all:
+build-multi:
+	$(info Building client binaries for multiple platforms)
 	$(call go_build_platform_cmd,linux,386)
 	$(call go_build_platform_cmd,linux,amd64)
 	$(call go_build_platform_cmd,darwin,amd64)

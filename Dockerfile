@@ -110,7 +110,7 @@ ARG APP_NAME=keep-client
 ARG VERSION
 ARG REVISION
 
-RUN make build-all version=$VERSION revision=$REVISION output_dir=$APP_DIR/bin app_name=$APP_NAME
+RUN make build-multi version=$VERSION revision=$REVISION output_dir=$APP_DIR/bin app_name=$APP_NAME
 
 FROM scratch as output-bins
 
