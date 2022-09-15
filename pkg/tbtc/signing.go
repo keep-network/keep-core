@@ -26,9 +26,6 @@ type signingRetryLoop struct {
 	attemptStartBlock uint64
 	attemptSeed       int64
 
-	randomRetryCounter uint
-	randomRetrySeed    int64
-
 	delayBlocks uint64
 }
 
@@ -39,16 +36,12 @@ func newSigningRetryLoop(
 	signingGroupOperators chain.Addresses,
 	chainConfig *ChainConfig,
 ) *signingRetryLoop {
-	// Pre-compute the 8-byte seed that is needed for the random
-	// retry algorithm. Since the original message passed as parameter
-	// can have a variable length, it is safer to take the first 8 bytes
-	// of sha256(seed) as the randomRetrySeed.
+	// Compute the 8-byte seed needed for the random retry algorithm. We take
+	// the first 8 bytes of the hash of the signed message. This allows us to
+	// not care in this piece of the code about the length of the message and
+	// how this message is proposed.
 	messageSha256 := sha256.Sum256(message.Bytes())
-	randomRetrySeed := int64(binary.BigEndian.Uint64(messageSha256[:8]))
-	// Also, take the next 8 bytes for the attemptSeed that is sometimes
-	// used to trim the qualified members list to the minimum size equal
-	// to the honest threshold.
-	attemptSeed := int64(binary.BigEndian.Uint64(messageSha256[8:16]))
+	attemptSeed := int64(binary.BigEndian.Uint64(messageSha256[:8]))
 
 	return &signingRetryLoop{
 		signingGroupMemberIndex: signingGroupMemberIndex,
@@ -57,8 +50,6 @@ func newSigningRetryLoop(
 		attemptCounter:          0,
 		attemptStartBlock:       initialStartBlock,
 		attemptSeed:             attemptSeed,
-		randomRetryCounter:      0,
-		randomRetrySeed:         randomRetrySeed,
 		delayBlocks:             5,
 	}
 }
@@ -208,8 +199,8 @@ func (srl *signingRetryLoop) qualifiedOperatorsSet() (
 ) {
 	qualifiedOperators, err := retry.EvaluateRetryParticipantsForSigning(
 		srl.signingGroupOperators,
-		srl.randomRetrySeed,
-		srl.randomRetryCounter,
+		srl.attemptSeed,
+		srl.attemptCounter,
 		uint(srl.chainConfig.HonestThreshold),
 	)
 	if err != nil {
@@ -219,6 +210,5 @@ func (srl *signingRetryLoop) qualifiedOperatorsSet() (
 		)
 	}
 
-	srl.randomRetryCounter++
 	return chain.Addresses(qualifiedOperators).Set(), nil
 }

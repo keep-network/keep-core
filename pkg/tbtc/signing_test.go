@@ -86,11 +86,11 @@ func TestSigningRetryLoop(t *testing.T) {
 			// excludes 3 members (6 is the honest threshold) from the second
 			// attempt: 1, 2 and 5. The additional exclusion round that trims
 			// the included members list to the honest threshold size adds
-			// member 7 to the final excluded members list.
+			// member 9 to the final excluded members list.
 			expectedLastAttempt: &signingAttemptParams{
 				index:           2,
 				startBlock:      278, // 200 + 1 * (73 + 5)
-				excludedMembers: []group.MemberIndex{1, 2, 5, 7},
+				excludedMembers: []group.MemberIndex{1, 2, 5, 9},
 			},
 		},
 		"executing member excluded": {
@@ -114,7 +114,7 @@ func TestSigningRetryLoop(t *testing.T) {
 			expectedLastAttempt: &signingAttemptParams{
 				index:           7,
 				startBlock:      668, // 200 + 6 * (73 + 5)
-				excludedMembers: []group.MemberIndex{1, 4, 6, 9},
+				excludedMembers: []group.MemberIndex{1, 5, 6, 9},
 			},
 		},
 		"loop context done": {
