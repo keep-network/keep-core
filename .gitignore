@@ -59,3 +59,4 @@ pkg/chain/*/*/gen/_address
 
 # Temporary directory
 tmp/
+diagnostics/
