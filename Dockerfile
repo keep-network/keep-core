@@ -63,14 +63,14 @@ RUN make get_artifacts environment=$ENVIRONMENT
 COPY ./config $APP_DIR/config
 RUN make generate environment=$ENVIRONMENT
 
+COPY ./ $APP_DIR/
+
 #
 # Build Docker Image
 #
 FROM build-sources AS build-docker
 
 WORKDIR $APP_DIR
-
-COPY ./ $APP_DIR/
 
 # Client Versioning.
 ARG VERSION
@@ -100,8 +100,6 @@ CMD []
 # Build Binaries
 #
 FROM build-sources AS build-bins
-
-COPY ./ $APP_DIR/
 
 WORKDIR $APP_DIR
 
