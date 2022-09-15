@@ -123,10 +123,8 @@ func start(cmd *cobra.Command) error {
 
 	scheduler := generator.StartScheduler()
 
-	// TODO: Replace with a `isBootstrapNode` config flag.
-	// Monitor sortition pool only if the node is a non-bootstrap node, i.e.
-	// it has peers that it should connect to.
-	monitorPool := len(clientConfig.LibP2P.Peers) > 0
+	// Monitor sortition pool only if the node is a non-bootstrap node.
+	monitorPool := !clientConfig.LibP2P.Bootstrap
 
 	err = beacon.Initialize(
 		ctx,

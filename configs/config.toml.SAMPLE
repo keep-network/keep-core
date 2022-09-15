@@ -47,6 +47,7 @@ KeyFile = "/Users/someuser/ethereum/data/keystore/UTC--2018-03-11T01-37-33.20276
 # BalanceAlertThreshold = "0.5 ether" # 0.5 ether (default value)
 
 [network]
+Bootstrap = false
 Peers = [
 	"/ip4/127.0.0.1/tcp/3919/ipfs/16Uiu2HAmFRJtCWfdXhZEZHWb4tUpH1QMMgzH1oiamCfUuK6NgqWX",
 ]

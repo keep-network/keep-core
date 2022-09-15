@@ -71,6 +71,7 @@ const MaximumDisseminationTime = 90
 
 // Config defines the configuration for the libp2p network provider.
 type Config struct {
+	Bootstrap          bool
 	Peers              []string
 	Port               int
 	AnnouncedAddresses []string
