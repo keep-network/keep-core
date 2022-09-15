@@ -3,6 +3,7 @@ package dkg
 import (
 	"bytes"
 	"context"
+	"fmt"
 
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/net"
@@ -145,9 +146,17 @@ func (skgs *symmetricKeyGenerationState) Receive(msg net.Message) error {
 }
 
 func (skgs *symmetricKeyGenerationState) Next() (state.State, error) {
+	member, err := skgs.member.initializeTssRoundOne()
+	if err != nil {
+		return nil, fmt.Errorf(
+			"cannot initialize TSS round one member: [%w]",
+			err,
+		)
+	}
+
 	return &tssRoundOneState{
 		channel:     skgs.channel,
-		member:      skgs.member.initializeTssRoundOne(),
+		member:      member,
 		outcomeChan: make(chan error),
 	}, nil
 }

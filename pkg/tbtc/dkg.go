@@ -7,12 +7,14 @@ import (
 	"encoding/binary"
 	"errors"
 	"fmt"
+	"math/big"
+	"sort"
+
+	"github.com/ipfs/go-log/v2"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/protocol/group"
 	"github.com/keep-network/keep-core/pkg/tecdsa/dkg"
 	"github.com/keep-network/keep-core/pkg/tecdsa/retry"
-	"math/big"
-	"sort"
 )
 
 // dkgRetryLoop is a struct that encapsulates the DKG retry logic.
@@ -26,6 +28,10 @@ type dkgRetryLoop struct {
 	attemptCounter    uint
 	attemptStartBlock uint64
 
+	// We use a separate counter for the random retry algorithm because we
+	// try to exclude inactive members in the first attempts and then switch
+	// to the random retry mechanism. In result, an attempt is not always
+	// the same as one run of the random retry algorithm.
 	randomRetryCounter uint
 	randomRetrySeed    int64
 
@@ -41,10 +47,10 @@ func newDkgRetryLoop(
 	selectedOperators chain.Addresses,
 	chainConfig *ChainConfig,
 ) *dkgRetryLoop {
-	// Pre-compute the 8-byte seed that may be needed for the random
-	// retry algorithm. Since the original DKG seed passed as parameter
-	// can have a variable length, it is safer to take the first 8 bytes
-	// of sha256(seed) as the randomRetrySeed.
+	// Compute the 8-byte seed needed for the random retry algorithm. We take
+	// the first 8 bytes of the hash of the DKG seed. This allows us to not
+	// care in this piece of the code about the length of the seed and how this
+	// seed is proposed.
 	seedSha256 := sha256.Sum256(seed.Bytes())
 	randomRetrySeed := int64(binary.BigEndian.Uint64(seedSha256[:8]))
 
@@ -65,9 +71,9 @@ func newDkgRetryLoop(
 
 // dkgAttemptParams represents parameters of a DKG attempt.
 type dkgAttemptParams struct {
-	index           uint
-	startBlock      uint64
-	excludedMembers []group.MemberIndex
+	number                 uint
+	startBlock             uint64
+	excludedMembersIndexes []group.MemberIndex
 }
 
 // dkgAttemptFn represents a function performing a DKG attempt.
@@ -125,12 +131,15 @@ func (drl *dkgRetryLoop) start(
 
 		// Exclude all members controlled by the operators that were not
 		// qualified for the current attempt.
-		excludedMembers := make([]group.MemberIndex, 0)
+		excludedMembersIndexes := make([]group.MemberIndex, 0)
 		attemptSkipped := false
 		for i, operator := range drl.selectedOperators {
 			if !qualifiedOperatorsSet[operator] {
 				memberIndex := group.MemberIndex(i + 1)
-				excludedMembers = append(excludedMembers, memberIndex)
+				excludedMembersIndexes = append(
+					excludedMembersIndexes,
+					memberIndex,
+				)
 
 				// If the given member was not qualified for the given attempt,
 				// mark this attempt as skipped in order to skip the execution
@@ -148,9 +157,9 @@ func (drl *dkgRetryLoop) start(
 
 		if !attemptSkipped {
 			result, executionEndBlock, attemptErr = dkgAttemptFn(&dkgAttemptParams{
-				index:           drl.attemptCounter,
-				startBlock:      drl.attemptStartBlock,
-				excludedMembers: excludedMembers,
+				number:                 drl.attemptCounter,
+				startBlock:             drl.attemptStartBlock,
+				excludedMembersIndexes: excludedMembersIndexes,
 			})
 			if attemptErr != nil {
 				var imErr *dkg.InactiveMembersError
@@ -427,12 +436,17 @@ func (drs *dkgResultSigner) VerifySignature(signedResult *dkg.SignedResult) (boo
 
 // dkgResultSubmitter is responsible for submitting the DKG result to the chain.
 type dkgResultSubmitter struct {
-	chain Chain
+	dkgLogger log.StandardLogger
+	chain     Chain
 }
 
-func newDkgResultSubmitter(chain Chain) *dkgResultSubmitter {
+func newDkgResultSubmitter(
+	dkgLogger log.StandardLogger,
+	chain Chain,
+) *dkgResultSubmitter {
 	return &dkgResultSubmitter{
-		chain: chain,
+		dkgLogger: dkgLogger,
+		chain:     chain,
 	}
 }
 
@@ -474,7 +488,7 @@ func (drs *dkgResultSubmitter) SubmitResult(
 
 	if dkgState != AwaitingResult {
 		// Someone who was ahead of us in the queue submitted the result. Giving up.
-		logger.Infof(
+		drs.dkgLogger.Infof(
 			"[member:%v] DKG is no longer awaiting the result; "+
 				"aborting DKG result submission",
 			memberIndex,
@@ -509,7 +523,7 @@ func (drs *dkgResultSubmitter) SubmitResult(
 				return fmt.Errorf("cannot get public key bytes [%w]", err)
 			}
 
-			logger.Infof(
+			drs.dkgLogger.Infof(
 				"[member:%v] submitting DKG result with public key [0x%x] and "+
 					"[%v] supporting member signatures at block [%v]",
 				memberIndex,
@@ -524,7 +538,7 @@ func (drs *dkgResultSubmitter) SubmitResult(
 				signatures,
 			)
 		case blockNumber := <-resultSubmittedChan:
-			logger.Infof(
+			drs.dkgLogger.Infof(
 				"[member:%v] leaving; DKG result submitted by other member "+
 					"at block [%v]",
 				memberIndex,
@@ -552,7 +566,7 @@ func (drs *dkgResultSubmitter) setupEligibilityQueue(
 
 	eligibleBlockHeight := startBlockNumber + blockWaitTime
 
-	logger.Infof(
+	drs.dkgLogger.Infof(
 		"[member:%v] waiting for block [%v] to submit",
 		memberIndex,
 		eligibleBlockHeight,

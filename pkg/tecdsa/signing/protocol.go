@@ -105,7 +105,7 @@ func (skgm *symmetricKeyGeneratingMember) isValidEphemeralPublicKeyMessage(
 		}
 
 		if _, ok := message.ephemeralPublicKeys[memberID]; !ok {
-			skgm.logger.Warningf(
+			skgm.logger.Warnf(
 				"[member:%v] ephemeral public key message from member [%v] "+
 					"does not contain public key for member [%v]",
 				skgm.id,
@@ -374,9 +374,9 @@ func (trtm *tssRoundThreeMember) tssRoundThree(
 		}
 
 		return &tssRoundThreeMessage{
-			senderID:  trtm.id,
-			payload:   tssMessageBytes,
-			sessionID: trtm.sessionID,
+			senderID:         trtm.id,
+			broadcastPayload: tssMessageBytes,
+			sessionID:        trtm.sessionID,
 		}, nil
 	case <-ctx.Done():
 		return nil, fmt.Errorf(
@@ -397,7 +397,7 @@ func (trfm *tssRoundFourMember) tssRoundFour(
 		senderID := tssRoundThreeMessage.SenderID()
 
 		_, tssErr := trfm.tssParty.UpdateFromBytes(
-			tssRoundThreeMessage.payload,
+			tssRoundThreeMessage.broadcastPayload,
 			common.ResolveSortedTssPartyID(
 				trfm.tssParameters,
 				senderID,
@@ -427,9 +427,9 @@ func (trfm *tssRoundFourMember) tssRoundFour(
 		}
 
 		return &tssRoundFourMessage{
-			senderID:  trfm.id,
-			payload:   tssMessageBytes,
-			sessionID: trfm.sessionID,
+			senderID:         trfm.id,
+			broadcastPayload: tssMessageBytes,
+			sessionID:        trfm.sessionID,
 		}, nil
 	case <-ctx.Done():
 		return nil, fmt.Errorf(
@@ -450,7 +450,7 @@ func (trfm *tssRoundFiveMember) tssRoundFive(
 		senderID := tssRoundFourMessage.SenderID()
 
 		_, tssErr := trfm.tssParty.UpdateFromBytes(
-			tssRoundFourMessage.payload,
+			tssRoundFourMessage.broadcastPayload,
 			common.ResolveSortedTssPartyID(
 				trfm.tssParameters,
 				senderID,
@@ -480,9 +480,9 @@ func (trfm *tssRoundFiveMember) tssRoundFive(
 		}
 
 		return &tssRoundFiveMessage{
-			senderID:  trfm.id,
-			payload:   tssMessageBytes,
-			sessionID: trfm.sessionID,
+			senderID:         trfm.id,
+			broadcastPayload: tssMessageBytes,
+			sessionID:        trfm.sessionID,
 		}, nil
 	case <-ctx.Done():
 		return nil, fmt.Errorf(
@@ -503,7 +503,7 @@ func (trsm *tssRoundSixMember) tssRoundSix(
 		senderID := tssRoundFiveMessage.SenderID()
 
 		_, tssErr := trsm.tssParty.UpdateFromBytes(
-			tssRoundFiveMessage.payload,
+			tssRoundFiveMessage.broadcastPayload,
 			common.ResolveSortedTssPartyID(
 				trsm.tssParameters,
 				senderID,
@@ -533,9 +533,9 @@ func (trsm *tssRoundSixMember) tssRoundSix(
 		}
 
 		return &tssRoundSixMessage{
-			senderID:  trsm.id,
-			payload:   tssMessageBytes,
-			sessionID: trsm.sessionID,
+			senderID:         trsm.id,
+			broadcastPayload: tssMessageBytes,
+			sessionID:        trsm.sessionID,
 		}, nil
 	case <-ctx.Done():
 		return nil, fmt.Errorf(
@@ -550,13 +550,13 @@ func (trsm *tssRoundSevenMember) tssRoundSeven(
 	ctx context.Context,
 	tssRoundSixMessages []*tssRoundSixMessage,
 ) (*tssRoundSevenMessage, error) {
-	// Use messages from round five to update the local party and advance
+	// Use messages from round six to update the local party and advance
 	// to round seven.
 	for _, tssRoundSixMessage := range deduplicateBySender(tssRoundSixMessages) {
 		senderID := tssRoundSixMessage.SenderID()
 
 		_, tssErr := trsm.tssParty.UpdateFromBytes(
-			tssRoundSixMessage.payload,
+			tssRoundSixMessage.broadcastPayload,
 			common.ResolveSortedTssPartyID(
 				trsm.tssParameters,
 				senderID,
@@ -586,9 +586,9 @@ func (trsm *tssRoundSevenMember) tssRoundSeven(
 		}
 
 		return &tssRoundSevenMessage{
-			senderID:  trsm.id,
-			payload:   tssMessageBytes,
-			sessionID: trsm.sessionID,
+			senderID:         trsm.id,
+			broadcastPayload: tssMessageBytes,
+			sessionID:        trsm.sessionID,
 		}, nil
 	case <-ctx.Done():
 		return nil, fmt.Errorf(
@@ -603,13 +603,13 @@ func (trem *tssRoundEightMember) tssRoundEight(
 	ctx context.Context,
 	tssRoundSevenMessages []*tssRoundSevenMessage,
 ) (*tssRoundEightMessage, error) {
-	// Use messages from round five to update the local party and advance
+	// Use messages from round seven to update the local party and advance
 	// to round eight.
 	for _, tssRoundSevenMessage := range deduplicateBySender(tssRoundSevenMessages) {
 		senderID := tssRoundSevenMessage.SenderID()
 
 		_, tssErr := trem.tssParty.UpdateFromBytes(
-			tssRoundSevenMessage.payload,
+			tssRoundSevenMessage.broadcastPayload,
 			common.ResolveSortedTssPartyID(
 				trem.tssParameters,
 				senderID,
@@ -639,9 +639,9 @@ func (trem *tssRoundEightMember) tssRoundEight(
 		}
 
 		return &tssRoundEightMessage{
-			senderID:  trem.id,
-			payload:   tssMessageBytes,
-			sessionID: trem.sessionID,
+			senderID:         trem.id,
+			broadcastPayload: tssMessageBytes,
+			sessionID:        trem.sessionID,
 		}, nil
 	case <-ctx.Done():
 		return nil, fmt.Errorf(
@@ -656,13 +656,13 @@ func (trnm *tssRoundNineMember) tssRoundNine(
 	ctx context.Context,
 	tssRoundEightMessages []*tssRoundEightMessage,
 ) (*tssRoundNineMessage, error) {
-	// Use messages from round five to update the local party and advance
+	// Use messages from round eight to update the local party and advance
 	// to round nine.
 	for _, tssRoundEightMessage := range deduplicateBySender(tssRoundEightMessages) {
 		senderID := tssRoundEightMessage.SenderID()
 
 		_, tssErr := trnm.tssParty.UpdateFromBytes(
-			tssRoundEightMessage.payload,
+			tssRoundEightMessage.broadcastPayload,
 			common.ResolveSortedTssPartyID(
 				trnm.tssParameters,
 				senderID,
@@ -692,9 +692,9 @@ func (trnm *tssRoundNineMember) tssRoundNine(
 		}
 
 		return &tssRoundNineMessage{
-			senderID:  trnm.id,
-			payload:   tssMessageBytes,
-			sessionID: trnm.sessionID,
+			senderID:         trnm.id,
+			broadcastPayload: tssMessageBytes,
+			sessionID:        trnm.sessionID,
 		}, nil
 	case <-ctx.Done():
 		return nil, fmt.Errorf(
@@ -714,7 +714,7 @@ func (fm *finalizingMember) tssFinalize(
 		senderID := tssRoundNineMessage.SenderID()
 
 		_, tssErr := fm.tssParty.UpdateFromBytes(
-			tssRoundNineMessage.payload,
+			tssRoundNineMessage.broadcastPayload,
 			common.ResolveSortedTssPartyID(
 				fm.tssParameters,
 				senderID,

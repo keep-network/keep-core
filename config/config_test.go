@@ -122,8 +122,8 @@ func TestReadConfigFromFile(t *testing.T) {
 			readValueFunc: func(c *Config) interface{} { return c.LibP2P.DisseminationTime },
 			expectedValue: 76,
 		},
-		"Storage.DataDir": {
-			readValueFunc: func(c *Config) interface{} { return c.Storage.DataDir },
+		"Storage.Dir": {
+			readValueFunc: func(c *Config) interface{} { return c.Storage.Dir },
 			expectedValue: "/my/secure/location",
 		},
 		"Metrics.Port": {

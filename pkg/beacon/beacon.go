@@ -51,6 +51,7 @@ func Initialize(
 			logger,
 			beaconChain,
 			sortition.DefaultStatusCheckTick,
+			sortition.UnconditionalJoinPolicy,
 		)
 		if err != nil {
 			return fmt.Errorf(
