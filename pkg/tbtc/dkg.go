@@ -26,6 +26,10 @@ type dkgRetryLoop struct {
 	attemptCounter    uint
 	attemptStartBlock uint64
 
+	// We use a separate counter for the random retry algorithm because we
+	// try to exclude inactive members in the first attempts and then switch
+	// to the random retry mechanism. In result, an attempt is not always
+	// the same as one run of the random retry algorithm.
 	randomRetryCounter uint
 	randomRetrySeed    int64
 
