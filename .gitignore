@@ -28,6 +28,9 @@ __pycache__
 /configs/
 !/configs/config.toml.SAMPLE
 
+# Application Working Directory
+.keep/
+
 # Private testnet artifacts
 *-keep-client-deployment-bundle.tar.gz
 
