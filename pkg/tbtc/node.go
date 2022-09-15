@@ -184,17 +184,17 @@ func (n *node) joinDKGIfEligible(seed *big.Int, startBlockNumber uint64) {
 								"for block [%v] with [%v] group members "+
 								"(excluded: [%v])",
 							memberIndex,
-							attempt.index,
+							attempt.number,
 							attempt.startBlock,
-							chainConfig.GroupSize-len(attempt.excludedMembers),
-							attempt.excludedMembers,
+							chainConfig.GroupSize-len(attempt.excludedMembersIndexes),
+							attempt.excludedMembersIndexes,
 						)
 
 						// sessionID must be different for each attempt.
 						sessionID := fmt.Sprintf(
 							"%v-%v",
 							seed.Text(16),
-							attempt.index,
+							attempt.number,
 						)
 
 						result, executionEndBlock, err := n.dkgExecutor.Execute(
@@ -204,7 +204,7 @@ func (n *node) joinDKGIfEligible(seed *big.Int, startBlockNumber uint64) {
 							memberIndex,
 							chainConfig.GroupSize,
 							chainConfig.DishonestThreshold(),
-							attempt.excludedMembers,
+							attempt.excludedMembersIndexes,
 							blockCounter,
 							broadcastChannel,
 							membershipValidator,
@@ -214,7 +214,7 @@ func (n *node) joinDKGIfEligible(seed *big.Int, startBlockNumber uint64) {
 								"[member:%v] dkg attempt [%v] "+
 									"failed: [%v]",
 								memberIndex,
-								attempt.index,
+								attempt.number,
 								err,
 							)
 
@@ -459,17 +459,17 @@ func (n *node) joinSigningIfEligible(
 								"block [%v] with [%v] group "+
 								"members (excluded: [%v])",
 							signer.signingGroupMemberIndex,
-							attempt.index,
+							attempt.number,
 							message.Text(16),
 							attempt.startBlock,
-							signingGroupSize-len(attempt.excludedMembers),
-							attempt.excludedMembers,
+							signingGroupSize-len(attempt.excludedMembersIndexes),
+							attempt.excludedMembersIndexes,
 						)
 
 						sessionID := fmt.Sprintf(
 							"%v-%v",
 							message.Text(16),
-							attempt.index,
+							attempt.number,
 						)
 
 						result, err := signing.Execute(
@@ -481,7 +481,7 @@ func (n *node) joinSigningIfEligible(
 							signer.privateKeyShare,
 							signingGroupSize,
 							signingGroupDishonestThreshold,
-							attempt.excludedMembers,
+							attempt.excludedMembersIndexes,
 							blockCounter,
 							broadcastChannel,
 							membershipValidator,
@@ -491,7 +491,7 @@ func (n *node) joinSigningIfEligible(
 								"[member:%v] signing attempt [%v] "+
 									"of message [%v] failed: [%v]",
 								signer.signingGroupMemberIndex,
-								attempt.index,
+								attempt.number,
 								message.Text(16),
 								err,
 							)

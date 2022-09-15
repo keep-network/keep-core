@@ -65,9 +65,9 @@ func newDkgRetryLoop(
 
 // dkgAttemptParams represents parameters of a DKG attempt.
 type dkgAttemptParams struct {
-	index           uint
-	startBlock      uint64
-	excludedMembers []group.MemberIndex
+	number                 uint
+	startBlock             uint64
+	excludedMembersIndexes []group.MemberIndex
 }
 
 // dkgAttemptFn represents a function performing a DKG attempt.
@@ -125,12 +125,15 @@ func (drl *dkgRetryLoop) start(
 
 		// Exclude all members controlled by the operators that were not
 		// qualified for the current attempt.
-		excludedMembers := make([]group.MemberIndex, 0)
+		excludedMembersIndexes := make([]group.MemberIndex, 0)
 		attemptSkipped := false
 		for i, operator := range drl.selectedOperators {
 			if !qualifiedOperatorsSet[operator] {
 				memberIndex := group.MemberIndex(i + 1)
-				excludedMembers = append(excludedMembers, memberIndex)
+				excludedMembersIndexes = append(
+					excludedMembersIndexes,
+					memberIndex,
+				)
 
 				// If the given member was not qualified for the given attempt,
 				// mark this attempt as skipped in order to skip the execution
@@ -148,9 +151,9 @@ func (drl *dkgRetryLoop) start(
 
 		if !attemptSkipped {
 			result, executionEndBlock, attemptErr = dkgAttemptFn(&dkgAttemptParams{
-				index:           drl.attemptCounter,
-				startBlock:      drl.attemptStartBlock,
-				excludedMembers: excludedMembers,
+				number:                 drl.attemptCounter,
+				startBlock:             drl.attemptStartBlock,
+				excludedMembersIndexes: excludedMembersIndexes,
 			})
 			if attemptErr != nil {
 				var imErr *dkg.InactiveMembersError

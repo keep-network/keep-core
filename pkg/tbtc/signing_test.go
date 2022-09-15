@@ -61,9 +61,9 @@ func TestSigningRetryLoop(t *testing.T) {
 			// excludes 4 members (6 is the honest threshold) from the first
 			// attempt: 3, 7, 8 and 10.
 			expectedLastAttempt: &signingAttemptParams{
-				index:           1,
-				startBlock:      200,
-				excludedMembers: []group.MemberIndex{3, 7, 8, 10},
+				number:                 1,
+				startBlock:             200,
+				excludedMembersIndexes: []group.MemberIndex{3, 7, 8, 10},
 			},
 		},
 		"error on initial attempt": {
@@ -72,7 +72,7 @@ func TestSigningRetryLoop(t *testing.T) {
 				return context.WithCancel(context.Background())
 			},
 			signingAttemptFn: func(attempt *signingAttemptParams) (*signing.Result, error) {
-				if attempt.index <= 1 {
+				if attempt.number <= 1 {
 					return nil, fmt.Errorf("invalid data")
 				}
 
@@ -87,9 +87,9 @@ func TestSigningRetryLoop(t *testing.T) {
 			// the included members list to the honest threshold size adds
 			// member 9 to the final excluded members list.
 			expectedLastAttempt: &signingAttemptParams{
-				index:           2,
-				startBlock:      278, // 200 + 1 * (73 + 5)
-				excludedMembers: []group.MemberIndex{1, 2, 5, 9},
+				number:                 2,
+				startBlock:             278, // 200 + 1 * (73 + 5)
+				excludedMembersIndexes: []group.MemberIndex{1, 2, 5, 9},
 			},
 		},
 		"executing member excluded": {
@@ -98,7 +98,7 @@ func TestSigningRetryLoop(t *testing.T) {
 				return context.WithCancel(context.Background())
 			},
 			signingAttemptFn: func(attempt *signingAttemptParams) (*signing.Result, error) {
-				if attempt.index <= 5 {
+				if attempt.number <= 5 {
 					return nil, fmt.Errorf("invalid data")
 				}
 
@@ -111,9 +111,9 @@ func TestSigningRetryLoop(t *testing.T) {
 			// return an error but member 2 is excluded for this attempt so,
 			// member 2 skips attempt 6 and ends on attempt 7.
 			expectedLastAttempt: &signingAttemptParams{
-				index:           7,
-				startBlock:      668, // 200 + 6 * (73 + 5)
-				excludedMembers: []group.MemberIndex{1, 5, 6, 9},
+				number:                 7,
+				startBlock:             668, // 200 + 6 * (73 + 5)
+				excludedMembersIndexes: []group.MemberIndex{1, 5, 6, 9},
 			},
 		},
 		"loop context done": {
