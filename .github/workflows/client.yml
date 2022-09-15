@@ -82,7 +82,7 @@ jobs:
       - name: Build Docker Build Image
         uses: docker/build-push-action@v2
         with:
-          target: gobuild
+          target: build-docker
           tags: go-build-env
           build-args: |
             VERSION=${{ env.version }}
@@ -102,6 +102,7 @@ jobs:
         if: github.event_name != 'workflow_dispatch'
         uses: docker/build-push-action@v2
         with:
+          target: runtime-docker
           labels: |
             version=${{ env.version }}
             revision=${{ env.revision }}
@@ -121,6 +122,7 @@ jobs:
         env:
           IMAGE_NAME: "keep-client"
         with:
+          target: runtime-docker
           # GCR image should be named according to following convention:
           # HOSTNAME/PROJECT-ID/IMAGE:TAG
           # We don't use TAG yet, will be added at later stages of work on RFC-18.
