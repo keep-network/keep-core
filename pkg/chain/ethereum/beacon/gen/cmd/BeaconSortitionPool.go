@@ -15,7 +15,7 @@ import (
 
 	chainutil "github.com/keep-network/keep-common/pkg/chain/ethereum/ethutil"
 	"github.com/keep-network/keep-common/pkg/cmd"
-	"github.com/keep-network/keep-core/config"
+	"github.com/keep-network/keep-common/pkg/utils/decode"
 	"github.com/keep-network/keep-core/pkg/chain/ethereum/beacon/gen/contract"
 
 	"github.com/spf13/cobra"
@@ -52,6 +52,7 @@ func init() {
 	BeaconSortitionPoolCommand.AddCommand(
 		bspCanRestoreRewardEligibilityCommand(),
 		bspGetAvailableRewardsCommand(),
+		bspGetIDOperatorCommand(),
 		bspGetOperatorIDCommand(),
 		bspGetPoolWeightCommand(),
 		bspIneligibleEarnedRewardsCommand(),
@@ -78,7 +79,7 @@ func init() {
 		bspWithdrawRewardsCommand(),
 	)
 
-	Command.AddCommand(BeaconSortitionPoolCommand)
+	ModuleCommand.AddCommand(BeaconSortitionPoolCommand)
 }
 
 /// ------------------- Const methods -------------------
@@ -103,6 +104,7 @@ func bspCanRestoreRewardEligibility(c *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
+
 	arg_operator, err := chainutil.AddressFromHex(args[0])
 	if err != nil {
 		return fmt.Errorf(
@@ -145,6 +147,7 @@ func bspGetAvailableRewards(c *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
+
 	arg_operator, err := chainutil.AddressFromHex(args[0])
 	if err != nil {
 		return fmt.Errorf(
@@ -155,6 +158,49 @@ func bspGetAvailableRewards(c *cobra.Command, args []string) error {
 
 	result, err := contract.GetAvailableRewardsAtBlock(
 		arg_operator,
+		cmd.BlockFlagValue.Int,
+	)
+
+	if err != nil {
+		return err
+	}
+
+	cmd.PrintOutput(result)
+
+	return nil
+}
+
+func bspGetIDOperatorCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "get-i-d-operator [arg_id]",
+		Short:                 "Calls the view method getIDOperator on the BeaconSortitionPool contract.",
+		Args:                  cmd.ArgCountChecker(1),
+		RunE:                  bspGetIDOperator,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	cmd.InitConstFlags(c)
+
+	return c
+}
+
+func bspGetIDOperator(c *cobra.Command, args []string) error {
+	contract, err := initializeBeaconSortitionPool(c)
+	if err != nil {
+		return err
+	}
+
+	arg_id, err := decode.ParseUint[uint32](args[0], 32)
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter arg_id, a uint32, from passed value %v",
+			args[0],
+		)
+	}
+
+	result, err := contract.GetIDOperatorAtBlock(
+		arg_id,
 		cmd.BlockFlagValue.Int,
 	)
 
@@ -187,6 +233,7 @@ func bspGetOperatorID(c *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
+
 	arg_operator, err := chainutil.AddressFromHex(args[0])
 	if err != nil {
 		return fmt.Errorf(
@@ -229,6 +276,7 @@ func bspGetPoolWeight(c *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
+
 	arg_operator, err := chainutil.AddressFromHex(args[0])
 	if err != nil {
 		return fmt.Errorf(
@@ -305,6 +353,7 @@ func bspIsEligibleForRewards(c *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
+
 	arg_operator, err := chainutil.AddressFromHex(args[0])
 	if err != nil {
 		return fmt.Errorf(
@@ -381,6 +430,7 @@ func bspIsOperatorInPool(c *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
+
 	arg_operator, err := chainutil.AddressFromHex(args[0])
 	if err != nil {
 		return fmt.Errorf(
@@ -423,6 +473,7 @@ func bspIsOperatorRegistered(c *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
+
 	arg_operator, err := chainutil.AddressFromHex(args[0])
 	if err != nil {
 		return fmt.Errorf(
@@ -465,6 +516,7 @@ func bspIsOperatorUpToDate(c *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
+
 	arg_operator, err := chainutil.AddressFromHex(args[0])
 	if err != nil {
 		return fmt.Errorf(
@@ -472,7 +524,6 @@ func bspIsOperatorUpToDate(c *cobra.Command, args []string) error {
 			args[0],
 		)
 	}
-
 	arg_authorizedStake, err := hexutil.DecodeBig(args[1])
 	if err != nil {
 		return fmt.Errorf(
@@ -652,6 +703,7 @@ func bspRewardsEligibilityRestorableAt(c *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
+
 	arg_operator, err := chainutil.AddressFromHex(args[0])
 	if err != nil {
 		return fmt.Errorf(
@@ -739,7 +791,6 @@ func bspInsertOperator(c *cobra.Command, args []string) error {
 			args[0],
 		)
 	}
-
 	arg_authorizedStake, err := hexutil.DecodeBig(args[1])
 	if err != nil {
 		return fmt.Errorf(
@@ -858,7 +909,6 @@ func bspReceiveApproval(c *cobra.Command, args []string) error {
 			args[0],
 		)
 	}
-
 	arg_amount, err := hexutil.DecodeBig(args[1])
 	if err != nil {
 		return fmt.Errorf(
@@ -866,7 +916,6 @@ func bspReceiveApproval(c *cobra.Command, args []string) error {
 			args[1],
 		)
 	}
-
 	arg_token, err := chainutil.AddressFromHex(args[2])
 	if err != nil {
 		return fmt.Errorf(
@@ -874,7 +923,6 @@ func bspReceiveApproval(c *cobra.Command, args []string) error {
 			args[2],
 		)
 	}
-
 	arg3, err := hexutil.Decode(args[3])
 	if err != nil {
 		return fmt.Errorf(
@@ -1166,7 +1214,6 @@ func bspUpdateOperatorStatus(c *cobra.Command, args []string) error {
 			args[0],
 		)
 	}
-
 	arg_authorizedStake, err := hexutil.DecodeBig(args[1])
 	if err != nil {
 		return fmt.Errorf(
@@ -1296,7 +1343,6 @@ func bspWithdrawRewards(c *cobra.Command, args []string) error {
 			args[0],
 		)
 	}
-
 	arg_beneficiary, err := chainutil.AddressFromHex(args[1])
 	if err != nil {
 		return fmt.Errorf(
@@ -1341,10 +1387,7 @@ func bspWithdrawRewards(c *cobra.Command, args []string) error {
 /// ------------------- Initialization -------------------
 
 func initializeBeaconSortitionPool(c *cobra.Command) (*contract.BeaconSortitionPool, error) {
-	cfg, err := config.ReadEthereumConfig(c.Flags())
-	if err != nil {
-		return nil, fmt.Errorf("error reading config from file: [%v]", err)
-	}
+	cfg := *ModuleCommand.GetConfig()
 
 	client, err := ethclient.Dial(cfg.URL)
 	if err != nil {

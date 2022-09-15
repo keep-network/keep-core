@@ -4,22 +4,25 @@ import (
 	"fmt"
 	"math/big"
 
+	"google.golang.org/protobuf/proto"
+
 	"github.com/keep-network/keep-core/pkg/chain"
 
 	bn256 "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
+
 	"github.com/keep-network/keep-core/pkg/beacon/registry/gen/pb"
 	"github.com/keep-network/keep-core/pkg/protocol/group"
 )
 
 // Marshal converts ThresholdSigner to byte array.
 func (ts *ThresholdSigner) Marshal() ([]byte, error) {
-	return (&pb.ThresholdSigner{
+	return proto.Marshal(&pb.ThresholdSigner{
 		MemberIndex:          uint32(ts.memberIndex),
 		GroupPublicKey:       ts.groupPublicKey.Marshal(),
 		GroupPrivateKeyShare: ts.groupPrivateKeyShare.String(),
 		GroupPublicKeyShares: marshalGroupPublicKeyShares(ts.groupPublicKeyShares),
 		GroupOperators:       marshalGroupOperators(ts.groupOperators),
-	}).Marshal()
+	})
 }
 
 func marshalGroupPublicKeyShares(
@@ -47,7 +50,7 @@ func marshalGroupOperators(groupOperators []chain.Address) []string {
 // Unmarshal converts a byte array back to ThresholdSigner.
 func (ts *ThresholdSigner) Unmarshal(bytes []byte) error {
 	pbThresholdSigner := pb.ThresholdSigner{}
-	if err := pbThresholdSigner.Unmarshal(bytes); err != nil {
+	if err := proto.Unmarshal(bytes, &pbThresholdSigner); err != nil {
 		return err
 	}
 
@@ -60,7 +63,7 @@ func (ts *ThresholdSigner) Unmarshal(bytes []byte) error {
 	privateKeyShare := new(big.Int)
 	privateKeyShare, ok := privateKeyShare.SetString(pbThresholdSigner.GroupPrivateKeyShare, 10)
 	if !ok {
-		return fmt.Errorf("Error occured while converting a private key share to string")
+		return fmt.Errorf("error occurred while converting a private key share to string")
 	}
 
 	groupPublicKeyShares, err := unmarshalGroupPublicKeyShares(

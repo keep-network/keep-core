@@ -3,6 +3,8 @@ package entry
 import (
 	"fmt"
 
+	"google.golang.org/protobuf/proto"
+
 	"github.com/keep-network/keep-core/pkg/beacon/entry/gen/pb"
 	"github.com/keep-network/keep-core/pkg/protocol/group"
 )
@@ -32,14 +34,14 @@ func (ssm *SignatureShareMessage) Marshal() ([]byte, error) {
 		Share:    ssm.shareBytes,
 	}
 
-	return pbSignatureShare.Marshal()
+	return proto.Marshal(&pbSignatureShare)
 }
 
 // Unmarshal converts a byte array produced by Marshal to a
 // SignatureShareMessage.
 func (ssm *SignatureShareMessage) Unmarshal(bytes []byte) error {
 	pbSignatureShare := pb.SignatureShare{}
-	err := pbSignatureShare.Unmarshal(bytes)
+	err := proto.Unmarshal(bytes, &pbSignatureShare)
 	if err != nil {
 		return err
 	}

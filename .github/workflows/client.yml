@@ -2,7 +2,7 @@ name: Go
 
 on:
   schedule:
-    - cron: '0 0 * * *'
+    - cron: "0 0 * * *"
   push:
     branches:
       - main
@@ -17,16 +17,16 @@ on:
   workflow_dispatch:
     inputs:
       environment:
-        description: 'Environment for workflow execution'
+        description: "Environment for workflow execution"
         required: false
-        default: 'dev'
+        default: "dev"
       upstream_builds:
-        description: 'Upstream builds'
+        description: "Upstream builds"
         required: false
       upstream_ref:
-        description: 'Git reference to checkout (e.g. branch name)'
+        description: "Git reference to checkout (e.g. branch name)"
         required: false
-        default: 'main'
+        default: "main"
 
 jobs:
   client-detect-changes:
@@ -53,6 +53,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+        with:
+          # Fetch the whole history for the `git describe` command to work.
+          fetch-depth: 0
+
+      - name: Resolve versions
+        run: |
+          echo "version=$(git describe --tags --match "v[0-9]*" HEAD)" >> $GITHUB_ENV
+          echo "revision=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
 
       - name: Load environment variables
         uses: keep-network/ci/actions/load-env-variables@v2
@@ -77,8 +85,8 @@ jobs:
           target: gobuild
           tags: go-build-env
           build-args: |
-            REVISION=${{ github.sha }}
-          # VERSION= ? TODO: Configure version, sample: 1.7.6
+            VERSION=${{ env.version }}
+            REVISION=${{ env.revision }}
           load: true # load image to local registry to use it in next steps
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,dest=/tmp/.buildx-cache-new
@@ -93,10 +101,10 @@ jobs:
       - name: Build Docker Runtime Image
         if: github.event_name != 'workflow_dispatch'
         uses: docker/build-push-action@v2
-        env:
-          IMAGE_NAME: 'keep-client'
         with:
-          labels: revision=${{ github.sha }}
+          labels: |
+            version=${{ env.version }}
+            revision=${{ env.revision }}
           push: false
 
       - name: Login to Google Container Registry
@@ -111,15 +119,19 @@ jobs:
         if: github.event_name == 'workflow_dispatch'
         uses: docker/build-push-action@v2
         env:
-          IMAGE_NAME: 'keep-client'
+          IMAGE_NAME: "keep-client"
         with:
           # GCR image should be named according to following convention:
           # HOSTNAME/PROJECT-ID/IMAGE:TAG
           # We don't use TAG yet, will be added at later stages of work on RFC-18.
           tags: ${{ env.GCR_REGISTRY_URL }}/${{ env.GOOGLE_PROJECT_ID }}/${{ env.IMAGE_NAME }}
-          labels: revision=${{ github.sha }}
+          labels: |
+            version=${{ env.version }}
+            revision=${{ env.revision }}
           build-args: |
             ENVIRONMENT=${{ github.event.inputs.environment }}
+            VERSION=${{ env.version }}
+            REVISION=${{ env.revision }}
           push: true
 
       - name: Notify CI about completion of the workflow
@@ -194,4 +206,8 @@ jobs:
         with:
           go-version-file: "go.mod"
       - name: gofmt
-        run: gofmt -d -e .
+        run: |
+          if [ $(gofmt -l . | wc -l) -gt 0 ]; then
+            gofmt -d -e .
+            exit 1
+          fi

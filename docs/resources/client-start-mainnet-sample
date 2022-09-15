@@ -1,0 +1,7 @@
+export KEEP_ETHEREUM_PASSWORD="<Ethereum Key File Password>"
+
+keep-client \
+    start \
+    --ethereum.url "<Ethereum API WS URL>" \
+    --ethereum.keyFile "<Operator Key File Path>" \
+    --storage.dir "<Storage Data Directory>"

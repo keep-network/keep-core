@@ -14,6 +14,25 @@ const (
 
 var errOperatorUnknown = fmt.Errorf("operator not registered for the staking provider, check Threshold dashboard")
 
+// JoinPolicy determines how the client is supposed to join to the sortition
+// pool. The policy can encapsulate special conditions that the client want
+// to fulfill before joining the sortition pool.
+type JoinPolicy interface {
+	// ShouldJoin indicates whether the joining condition is fulfilled and
+	// the client should join the pool.
+	ShouldJoin() bool
+}
+
+// UnconditionalJoinPolicy is a policy that doesn't enforce any conditions
+// for joining the sortition pool.
+var UnconditionalJoinPolicy = &unconditionalJoinPolicy{}
+
+type unconditionalJoinPolicy struct{}
+
+func (ujp *unconditionalJoinPolicy) ShouldJoin() bool {
+	return true
+}
+
 // MonitorPool periodically checks the status of the operator in the sortition
 // pool. If the operator is supposed to be in the sortition pool but is not
 // there yet, the function attempts to add the operator to the pool. If the
@@ -24,6 +43,7 @@ func MonitorPool(
 	logger log.StandardLogger,
 	chain Chain,
 	tick time.Duration,
+	policy JoinPolicy,
 ) error {
 	_, isRegistered, err := chain.OperatorToStakingProvider()
 	if err != nil {
@@ -34,7 +54,7 @@ func MonitorPool(
 		return errOperatorUnknown
 	}
 
-	err = checkOperatorStatus(logger, chain)
+	err = checkOperatorStatus(logger, chain, policy)
 	if err != nil {
 		logger.Errorf("could not check operator sortition pool status: [%v]", err)
 	}
@@ -48,7 +68,7 @@ func MonitorPool(
 				ticker.Stop()
 				return
 			case <-ticker.C:
-				err = checkOperatorStatus(logger, chain)
+				err = checkOperatorStatus(logger, chain, policy)
 				if err != nil {
 					logger.Errorf("could not check operator sortition pool status: [%v]", err)
 					continue
@@ -60,7 +80,11 @@ func MonitorPool(
 	return nil
 }
 
-func checkOperatorStatus(logger log.StandardLogger, chain Chain) error {
+func checkOperatorStatus(
+	logger log.StandardLogger,
+	chain Chain,
+	policy JoinPolicy,
+) error {
 	logger.Info("checking sortition pool operator status")
 
 	isOperatorInPool, err := chain.IsOperatorInPool()
@@ -111,10 +135,14 @@ func checkOperatorStatus(logger log.StandardLogger, chain Chain) error {
 			logger.Errorf("could not update the sortition pool: [%v]", err)
 		}
 	} else {
-		logger.Info("joining the sortition pool")
-		err := chain.JoinSortitionPool()
-		if err != nil {
-			logger.Errorf("could not join the sortition pool: [%v]", err)
+		if policy.ShouldJoin() {
+			logger.Info("joining the sortition pool")
+			err := chain.JoinSortitionPool()
+			if err != nil {
+				logger.Errorf("could not join the sortition pool: [%v]", err)
+			}
+		} else {
+			logger.Info("holding off with joining the sortition pool due to joining policy")
 		}
 	}
 

@@ -2,9 +2,10 @@ package dkg
 
 import (
 	"fmt"
+	"math/big"
 	"time"
 
-	"github.com/ipfs/go-log"
+	"github.com/ipfs/go-log/v2"
 
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/generator"
@@ -15,8 +16,8 @@ import (
 
 // Executor represents an ECDSA distributed key generation process executor.
 type Executor struct {
-	logger           log.StandardLogger
-	tssPreParamsPool *tssPreParamsPool
+	tssPreParamsPool         *tssPreParamsPool
+	keyGenerationConcurrency int
 }
 
 // NewExecutor creates a new Executor instance.
@@ -27,9 +28,13 @@ func NewExecutor(
 	preParamsGenerationTimeout time.Duration,
 	preParamsGenerationDelay time.Duration,
 	preParamsGenerationConcurrency int,
+	keyGenerationConcurrency int,
 ) *Executor {
+	logger.Infof(
+		"ECDSA key generation concurrency level is [%d]",
+		keyGenerationConcurrency,
+	)
 	return &Executor{
-		logger: logger,
 		tssPreParamsPool: newTssPreParamsPool(
 			logger,
 			scheduler,
@@ -38,6 +43,7 @@ func NewExecutor(
 			preParamsGenerationDelay,
 			preParamsGenerationConcurrency,
 		),
+		keyGenerationConcurrency: keyGenerationConcurrency,
 	}
 }
 
@@ -50,40 +56,39 @@ func NewExecutor(
 // group by passing a non-empty excludedMembers slice holding the members that
 // should be excluded.
 func (e *Executor) Execute(
+	logger log.StandardLogger,
+	seed *big.Int,
 	sessionID string,
 	startBlockNumber uint64,
 	memberIndex group.MemberIndex,
 	groupSize int,
 	dishonestThreshold int,
-	excludedMembers []group.MemberIndex,
+	excludedMembersIndexes []group.MemberIndex,
 	blockCounter chain.BlockCounter,
 	channel net.BroadcastChannel,
 	membershipValidator *group.MembershipValidator,
 ) (*Result, uint64, error) {
-	e.logger.Debugf("[member:%v] initializing member", memberIndex)
+	logger.Debugf("[member:%v] initializing member", memberIndex)
 
 	registerUnmarshallers(channel)
 
-	preParams, err := e.tssPreParamsPool.GetNow()
-	if err != nil {
-		return nil, 0, fmt.Errorf("failed fetching pre-params: [%v]", err)
-	}
-
 	member := newMember(
-		e.logger,
+		logger,
+		seed,
 		memberIndex,
 		groupSize,
 		dishonestThreshold,
 		membershipValidator,
 		sessionID,
-		preParams.data,
+		e.tssPreParamsPool.GetNow,
+		e.keyGenerationConcurrency,
 	)
 
 	// Mark excluded members as disqualified in order to not exchange messages
 	// with them and have them recorded as misbehaving in the final result.
-	for _, excludedMember := range excludedMembers {
-		if excludedMember != member.id {
-			member.group.MarkMemberAsDisqualified(excludedMember)
+	for _, excludedMemberIndex := range excludedMembersIndexes {
+		if excludedMemberIndex != member.id {
+			member.group.MarkMemberAsDisqualified(excludedMemberIndex)
 		}
 	}
 
@@ -92,7 +97,7 @@ func (e *Executor) Execute(
 		member:  member.initializeEphemeralKeysGeneration(),
 	}
 
-	stateMachine := state.NewMachine(e.logger, channel, blockCounter, initialState)
+	stateMachine := state.NewMachine(logger, channel, blockCounter, initialState)
 
 	lastState, endBlockNumber, err := stateMachine.Execute(startBlockNumber)
 	if err != nil {
@@ -105,6 +110,11 @@ func (e *Executor) Execute(
 	}
 
 	return finalizationState.result(), endBlockNumber, nil
+}
+
+// PreParamsCount returns the current count of the DKG pre-parameters.
+func (e *Executor) PreParamsCount() int {
+	return e.tssPreParamsPool.CurrentSize()
 }
 
 // SignedResult represents information pertaining to the process of signing

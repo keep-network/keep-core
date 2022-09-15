@@ -17,6 +17,14 @@ import (
 	"github.com/keep-network/keep-core/pkg/tbtc"
 )
 
+func initGlobalFlags(
+	cmd *cobra.Command,
+	configFilePath *string,
+) {
+	initGlobalConfigFlags(cmd, configFilePath)
+	initGlobalEthereumFlags(cmd)
+}
+
 func initFlags(
 	cmd *cobra.Command,
 	configFilePath *string,
@@ -25,10 +33,7 @@ func initFlags(
 ) {
 	for _, category := range categories {
 		switch category {
-		case config.General:
-			initConfigFlags(cmd, configFilePath)
 		case config.Ethereum:
-			initEthereumNetworkFlags(cmd)
 			initEthereumFlags(cmd, cfg)
 		case config.Network:
 			initNetworkFlags(cmd, cfg)
@@ -51,7 +56,7 @@ func initFlags(
 }
 
 // Initialize flag for configuration file path.
-func initConfigFlags(cmd *cobra.Command, configFilePath *string) {
+func initGlobalConfigFlags(cmd *cobra.Command, configFilePath *string) {
 	cmd.PersistentFlags().StringVarP(
 		configFilePath,
 		"config",
@@ -65,22 +70,22 @@ func initConfigFlags(cmd *cobra.Command, configFilePath *string) {
 // to run a client for a specific Ethereum network, e.g. add `--goerli` to the client
 // start command to run the client against Görli Ethereum network. Only one flag
 // from this set is allowed.
-func initEthereumNetworkFlags(cmd *cobra.Command) {
+func initGlobalEthereumFlags(cmd *cobra.Command) {
 	// TODO: Consider removing `--mainnet` flag. For now it's here to reduce a confusion
 	// when developing and testing the client.
-	cmd.Flags().Bool(
+	cmd.PersistentFlags().Bool(
 		commonEthereum.Mainnet.String(),
 		false,
 		"Mainnet network",
 	)
 
-	cmd.Flags().Bool(
+	cmd.PersistentFlags().Bool(
 		commonEthereum.Goerli.String(),
 		false,
 		"Görli network",
 	)
 
-	cmd.Flags().Bool(
+	cmd.PersistentFlags().Bool(
 		commonEthereum.Developer.String(),
 		false,
 		"Developer network",
@@ -182,8 +187,8 @@ func initNetworkFlags(cmd *cobra.Command, cfg *config.Config) {
 // Initialize flags for Storage configuration.
 func initStorageFlags(cmd *cobra.Command, cfg *config.Config) {
 	cmd.Flags().StringVar(
-		&cfg.Storage.DataDir,
-		"storage.dataDir",
+		&cfg.Storage.Dir,
+		"storage.dir",
 		"",
 		"Location to store the Keep client key shares and other sensitive data.",
 	)
@@ -194,7 +199,7 @@ func initMetricsFlags(cmd *cobra.Command, cfg *config.Config) {
 	cmd.Flags().IntVar(
 		&cfg.Metrics.Port,
 		"metrics.port",
-		8080,
+		9601,
 		"Metrics HTTP server listening port.",
 	)
 
@@ -218,7 +223,7 @@ func initDiagnosticsFlags(cmd *cobra.Command, cfg *config.Config) {
 	cmd.Flags().IntVar(
 		&cfg.Diagnostics.Port,
 		"diagnostics.port",
-		8081,
+		9701,
 		"Diagnostics HTTP server listening port.",
 	)
 }
@@ -251,6 +256,13 @@ func initTbtcFlags(cmd *cobra.Command, cfg *config.Config) {
 		tbtc.DefaultPreParamsGenerationConcurrency,
 		"tECDSA pre-parameters generation concurrency.",
 	)
+
+	cmd.Flags().IntVar(
+		&cfg.Tbtc.KeyGenerationConcurrency,
+		"tbtc.keyGenerationConcurrency",
+		tbtc.DefaultKeyGenerationConcurrency,
+		"tECDSA key generation concurrency.",
+	)
 }
 
 // Initialize flags for Developer configuration.
@@ -266,6 +278,7 @@ func initDeveloperFlags(command *cobra.Command) {
 		)
 	}
 
+	initContractAddressFlag(chainEthereum.BridgeContractName)
 	initContractAddressFlag(chainEthereum.RandomBeaconContractName)
 	initContractAddressFlag(chainEthereum.TokenStakingContractName)
 	initContractAddressFlag(chainEthereum.WalletRegistryContractName)

@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-option go_package = "pb";
+option go_package = "./pb";
 package dkg;
 
 message EphemeralPublicKeyMessage {
@@ -11,7 +11,7 @@ message EphemeralPublicKeyMessage {
 
 message TSSRoundOneMessage {
     uint32 senderID = 1;
-    bytes payload = 2;
+    bytes broadcastPayload = 2;
     string sessionID = 3;
 }
 
@@ -24,7 +24,7 @@ message TSSRoundTwoMessage {
 
 message TSSRoundThreeMessage {
     uint32 senderID = 1;
-    bytes payload = 2;
+    bytes broadcastPayload = 2;
     string sessionID = 3;
 }
 

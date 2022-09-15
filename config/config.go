@@ -14,10 +14,10 @@ import (
 	"golang.org/x/crypto/ssh/terminal"
 
 	commonEthereum "github.com/keep-network/keep-common/pkg/chain/ethereum"
-	"github.com/keep-network/keep-core/pkg/beacon/registry"
 	"github.com/keep-network/keep-core/pkg/diagnostics"
 	"github.com/keep-network/keep-core/pkg/metrics"
 	"github.com/keep-network/keep-core/pkg/net/libp2p"
+	"github.com/keep-network/keep-core/pkg/storage"
 	"github.com/keep-network/keep-core/pkg/tbtc"
 )
 
@@ -37,7 +37,7 @@ const (
 type Config struct {
 	Ethereum    commonEthereum.Config
 	LibP2P      libp2p.Config `mapstructure:"network"`
-	Storage     registry.Config
+	Storage     storage.Config
 	Metrics     metrics.Config
 	Diagnostics diagnostics.Config
 	Tbtc        tbtc.Config
@@ -177,42 +177,15 @@ func validateConfig(config *Config, categories ...Category) error {
 				))
 			}
 		case Storage:
-			if config.Storage.DataDir == "" {
+			if config.Storage.Dir == "" {
 				result = multierror.Append(result, fmt.Errorf(
-					"missing value for storage.dataDir; see storage section in configuration",
+					"missing value for storage.dir; see storage section in configuration",
 				))
 			}
 		}
 	}
 
 	return result.ErrorOrNil()
-}
-
-// ReadEthereumConfig reads in the configuration from a file specified by `--config`
-// flag and other flags provided in the `flagSet` and returns its contained Ethereum
-// config, or an error if something fails.
-//
-// This is the same as invoking ReadConfig and reading the Ethereum property
-// from the returned config, but is available for external functions that expect
-// to interact solely with Ethereum and are therefore independent of the rest of
-// the config structure.
-func ReadEthereumConfig(flagSet *pflag.FlagSet) (commonEthereum.Config, error) {
-	config := Config{}
-
-	configPath, err := flagSet.GetString("config")
-	if err != nil {
-		return commonEthereum.Config{},
-			fmt.Errorf(
-				"failed to read config file path from command flag: %w",
-				err,
-			)
-	}
-
-	if err := config.ReadConfig(configPath, flagSet, Ethereum); err != nil {
-		return commonEthereum.Config{}, err
-	}
-
-	return config.Ethereum, nil
 }
 
 // readConfigFile uses viper to read configuration from a config file. The config file

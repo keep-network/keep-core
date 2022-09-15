@@ -5,6 +5,8 @@ import (
 	"math/big"
 
 	"github.com/bnb-chain/tss-lib/ecdsa/keygen"
+	"google.golang.org/protobuf/proto"
+
 	"github.com/keep-network/keep-core/pkg/crypto/ephemeral"
 	"github.com/keep-network/keep-core/pkg/protocol/group"
 	"github.com/keep-network/keep-core/pkg/tecdsa/dkg/gen/pb"
@@ -18,18 +20,18 @@ func (epkm *ephemeralPublicKeyMessage) Marshal() ([]byte, error) {
 		return nil, err
 	}
 
-	return (&pb.EphemeralPublicKeyMessage{
+	return proto.Marshal(&pb.EphemeralPublicKeyMessage{
 		SenderID:            uint32(epkm.senderID),
 		EphemeralPublicKeys: ephemeralPublicKeys,
 		SessionID:           epkm.sessionID,
-	}).Marshal()
+	})
 }
 
 // Unmarshal converts a byte array produced by Marshal to
 // an ephemeralPublicKeyMessage
 func (epkm *ephemeralPublicKeyMessage) Unmarshal(bytes []byte) error {
 	pbMsg := pb.EphemeralPublicKeyMessage{}
-	if err := pbMsg.Unmarshal(bytes); err != nil {
+	if err := proto.Unmarshal(bytes, &pbMsg); err != nil {
 		return err
 	}
 
@@ -52,17 +54,17 @@ func (epkm *ephemeralPublicKeyMessage) Unmarshal(bytes []byte) error {
 // Marshal converts this tssRoundOneMessage to a byte array suitable for
 // network communication.
 func (trom *tssRoundOneMessage) Marshal() ([]byte, error) {
-	return (&pb.TSSRoundOneMessage{
-		SenderID:  uint32(trom.senderID),
-		Payload:   trom.payload,
-		SessionID: trom.sessionID,
-	}).Marshal()
+	return proto.Marshal(&pb.TSSRoundOneMessage{
+		SenderID:         uint32(trom.senderID),
+		BroadcastPayload: trom.broadcastPayload,
+		SessionID:        trom.sessionID,
+	})
 }
 
 // Unmarshal converts a byte array produced by Marshal to an tssRoundOneMessage.
 func (trom *tssRoundOneMessage) Unmarshal(bytes []byte) error {
 	pbMsg := pb.TSSRoundOneMessage{}
-	if err := pbMsg.Unmarshal(bytes); err != nil {
+	if err := proto.Unmarshal(bytes, &pbMsg); err != nil {
 		return err
 	}
 
@@ -71,7 +73,7 @@ func (trom *tssRoundOneMessage) Unmarshal(bytes []byte) error {
 	}
 
 	trom.senderID = group.MemberIndex(pbMsg.SenderID)
-	trom.payload = pbMsg.Payload
+	trom.broadcastPayload = pbMsg.BroadcastPayload
 	trom.sessionID = pbMsg.SessionID
 
 	return nil
@@ -85,18 +87,18 @@ func (trtm *tssRoundTwoMessage) Marshal() ([]byte, error) {
 		peersPayload[uint32(receiverID)] = payload
 	}
 
-	return (&pb.TSSRoundTwoMessage{
+	return proto.Marshal(&pb.TSSRoundTwoMessage{
 		SenderID:         uint32(trtm.senderID),
 		BroadcastPayload: trtm.broadcastPayload,
 		PeersPayload:     peersPayload,
 		SessionID:        trtm.sessionID,
-	}).Marshal()
+	})
 }
 
 // Unmarshal converts a byte array produced by Marshal to an tssRoundTwoMessage.
 func (trtm *tssRoundTwoMessage) Unmarshal(bytes []byte) error {
 	pbMsg := pb.TSSRoundTwoMessage{}
-	if err := pbMsg.Unmarshal(bytes); err != nil {
+	if err := proto.Unmarshal(bytes, &pbMsg); err != nil {
 		return err
 	}
 
@@ -124,17 +126,17 @@ func (trtm *tssRoundTwoMessage) Unmarshal(bytes []byte) error {
 // Marshal converts this tssRoundThreeMessage to a byte array suitable for
 // network communication.
 func (trtm *tssRoundThreeMessage) Marshal() ([]byte, error) {
-	return (&pb.TSSRoundThreeMessage{
-		SenderID:  uint32(trtm.senderID),
-		Payload:   trtm.payload,
-		SessionID: trtm.sessionID,
-	}).Marshal()
+	return proto.Marshal(&pb.TSSRoundThreeMessage{
+		SenderID:         uint32(trtm.senderID),
+		BroadcastPayload: trtm.broadcastPayload,
+		SessionID:        trtm.sessionID,
+	})
 }
 
 // Unmarshal converts a byte array produced by Marshal to an tssRoundThreeMessage.
 func (trtm *tssRoundThreeMessage) Unmarshal(bytes []byte) error {
 	pbMsg := pb.TSSRoundThreeMessage{}
-	if err := pbMsg.Unmarshal(bytes); err != nil {
+	if err := proto.Unmarshal(bytes, &pbMsg); err != nil {
 		return err
 	}
 
@@ -143,7 +145,7 @@ func (trtm *tssRoundThreeMessage) Unmarshal(bytes []byte) error {
 	}
 
 	trtm.senderID = group.MemberIndex(pbMsg.SenderID)
-	trtm.payload = pbMsg.Payload
+	trtm.broadcastPayload = pbMsg.BroadcastPayload
 	trtm.sessionID = pbMsg.SessionID
 
 	return nil
@@ -196,20 +198,20 @@ func unmarshalPublicKeyMap(
 // Marshal converts this resultSignatureMessage to a byte array suitable
 // for network communication.
 func (rsm *resultSignatureMessage) Marshal() ([]byte, error) {
-	return (&pb.ResultSignatureMessage{
+	return proto.Marshal(&pb.ResultSignatureMessage{
 		SenderID:   uint32(rsm.senderID),
 		ResultHash: rsm.resultHash[:],
 		Signature:  rsm.signature,
 		PublicKey:  rsm.publicKey,
 		SessionID:  rsm.sessionID,
-	}).Marshal()
+	})
 }
 
 // Unmarshal converts a byte array produced by Marshal to a
 // resultSignatureMessage.
 func (rsm *resultSignatureMessage) Unmarshal(bytes []byte) error {
 	pbMsg := pb.ResultSignatureMessage{}
-	if err := pbMsg.Unmarshal(bytes); err != nil {
+	if err := proto.Unmarshal(bytes, &pbMsg); err != nil {
 		return err
 	}
 
@@ -243,15 +245,15 @@ func (pp *PreParams) Marshal() ([]byte, error) {
 		Q:      pp.data.Q.Bytes(),
 	}
 
-	return (&pb.PreParams{
+	return proto.Marshal(&pb.PreParams{
 		Data: localPreParams,
-	}).Marshal()
+	})
 }
 
 // Unmarshal converts a byte array back to the PreParams.
 func (pp *PreParams) Unmarshal(bytes []byte) error {
 	pbPreParams := pb.PreParams{}
-	if err := pbPreParams.Unmarshal(bytes); err != nil {
+	if err := proto.Unmarshal(bytes, &pbPreParams); err != nil {
 		return fmt.Errorf("failed to unmarshal pre params: [%v]", err)
 	}
 

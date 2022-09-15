@@ -12,6 +12,7 @@ import (
 
 	ethereumBeacon "github.com/keep-network/keep-core/pkg/chain/ethereum/beacon/gen"
 	ethereumEcdsa "github.com/keep-network/keep-core/pkg/chain/ethereum/ecdsa/gen"
+	ethereumTbtc "github.com/keep-network/keep-core/pkg/chain/ethereum/tbtc/gen"
 	ethereumThreshold "github.com/keep-network/keep-core/pkg/chain/ethereum/threshold/gen"
 )
 
@@ -38,6 +39,7 @@ func initializeContractAddressesAliases() {
 	aliasEthereumContract(chainEthereum.RandomBeaconContractName)
 	aliasEthereumContract(chainEthereum.TokenStakingContractName)
 	aliasEthereumContract(chainEthereum.WalletRegistryContractName)
+	aliasEthereumContract(chainEthereum.BridgeContractName)
 }
 
 // resolveContractsAddresses verifies if contracts addresses are configured, if not
@@ -65,6 +67,10 @@ func (c *Config) resolveContractsAddresses() {
 	resolveContractAddress(
 		chainEthereum.WalletRegistryContractName,
 		ethereumEcdsa.WalletRegistryAddress,
+	)
+	resolveContractAddress(
+		chainEthereum.BridgeContractName,
+		ethereumTbtc.BridgeAddress,
 	)
 	resolveContractAddress(
 		chainEthereum.TokenStakingContractName,

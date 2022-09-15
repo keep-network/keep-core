@@ -32,3 +32,8 @@ func (pks *PrivateKeyShare) PublicKey() *ecdsa.PublicKey {
 		Y:     pks.data.ECDSAPub.Y(),
 	}
 }
+
+// Data returns the internal data of the private key share.
+func (pks *PrivateKeyShare) Data() keygen.LocalPartySaveData {
+	return pks.data
+}
