@@ -112,8 +112,9 @@ func (e *Executor) Execute(
 	return finalizationState.result(), endBlockNumber, nil
 }
 
-func (e *Executor) PreParamsPool() *tssPreParamsPool {
-	return e.tssPreParamsPool
+// PreParamsCount returns the current count of the DKG pre-parameters.
+func (e *Executor) PreParamsCount() int {
+	return e.tssPreParamsPool.CurrentSize()
 }
 
 // SignedResult represents information pertaining to the process of signing

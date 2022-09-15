@@ -59,12 +59,14 @@ func Initialize(
 	node := newNode(chain, netProvider, persistence, scheduler, config)
 	deduplicator := newDeduplicator()
 
-	assembleTbtcDiagnostics := func() map[string]interface{} {
-		return map[string]interface{}{
-			"preParamsPoolSize": node.dkgExecutor.PreParamsPool().CurrentSize(),
-		}
-	}
-	registry.RegisterApplicationSource("tbtc", assembleTbtcDiagnostics)
+	registry.RegisterApplicationSource(
+		"tbtc",
+		func() map[string]interface{} {
+			return map[string]interface{}{
+				"preParamsPoolSize": node.dkgExecutor.PreParamsCount(),
+			}
+		},
+	)
 
 	err := sortition.MonitorPool(ctx, logger, chain, sortition.DefaultStatusCheckTick)
 	if err != nil {
