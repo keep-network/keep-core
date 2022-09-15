@@ -112,9 +112,9 @@ library EcdsaInactivity {
             claim.signingMembersIndices,
             groupMembers.length
         );
-
+       
         bytes32 signedMessageHash = keccak256(
-            abi.encodePacked(
+            abi.encode(
                 nonce,
                 walletPubKey,
                 claim.inactiveMembersIndices,

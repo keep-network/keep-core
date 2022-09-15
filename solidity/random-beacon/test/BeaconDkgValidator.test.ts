@@ -691,10 +691,10 @@ describe("BeaconDkgValidator", () => {
 
     context("when signatures contain wrong result hash", () => {
       const signWithWrongResultHash = async (signingOperators: Operator[]) => {
-        const wrongResultHash = ethers.utils.solidityKeccak256(
+        const wrongResultHash = ethers.utils.keccak256(ethers.utils.defaultAbiCoder.encode(
           ["bytes", "uint8[]", "uint256"],
           [groupPublicKey, noMisbehaved, dkgStartBlock + 12345]
-        )
+        ))
         const signatures = []
         for (let i = 0; i < signingOperators.length; i++) {
           const { signer: ethersSigner } = signingOperators[i]

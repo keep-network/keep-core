@@ -106,7 +106,7 @@ library BeaconInactivity {
         // them in future in case some other application has a group with the
         // same ID and subset of members.
         bytes32 signedMessageHash = keccak256(
-            abi.encodePacked(nonce, groupPubKey, claim.inactiveMembersIndices)
+            abi.encode(nonce, groupPubKey, claim.inactiveMembersIndices)
         ).toEthSignedMessageHash();
 
         address[] memory groupMembersAddresses = sortitionPool.getIDOperators(

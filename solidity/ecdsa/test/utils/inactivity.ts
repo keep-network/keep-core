@@ -14,10 +14,10 @@ export async function signOperatorInactivityClaim(
   signatures: string
   signingMembersIndices: number[]
 }> {
-  const messageHash = ethers.utils.solidityKeccak256(
+  const messageHash = ethers.utils.keccak256(ethers.utils.defaultAbiCoder.encode(
     ["uint256", "bytes", "uint8[]", "bool"],
     [nonce, groupPubKey, inactiveMembersIndices, failedHeartbeat]
-  )
+  ))
 
   const signingMembersIndices: number[] = []
   const signatures: string[] = []

@@ -215,7 +215,7 @@ contract BeaconDkgValidator {
         returns (bool)
     {
         bytes32 hash = keccak256(
-            abi.encodePacked(
+            abi.encode(
                 result.groupPubKey,
                 result.misbehavedMembersIndices,
                 startBlock

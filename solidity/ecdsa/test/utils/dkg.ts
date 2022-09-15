@@ -196,10 +196,10 @@ export async function signDkgResult(
   signingMembersIndices: number[]
   signaturesBytes: string
 }> {
-  const resultHash = ethers.utils.solidityKeccak256(
+  const resultHash = ethers.utils.keccak256(ethers.utils.defaultAbiCoder.encode(
     ["bytes", "uint8[]", "uint256"],
     [groupPublicKey, misbehavedMembersIndices, startBlock]
-  )
+  ))
 
   const members: number[] = []
   const signingMembersIndices: number[] = []
