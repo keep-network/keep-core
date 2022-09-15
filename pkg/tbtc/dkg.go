@@ -41,10 +41,10 @@ func newDkgRetryLoop(
 	selectedOperators chain.Addresses,
 	chainConfig *ChainConfig,
 ) *dkgRetryLoop {
-	// Pre-compute the 8-byte seed that may be needed for the random
-	// retry algorithm. Since the original DKG seed passed as parameter
-	// can have a variable length, it is safer to take the first 8 bytes
-	// of sha256(seed) as the randomRetrySeed.
+	// Compute the 8-byte seed needed for the random retry algorithm. We take
+	// the first 8 bytes of the hash of the DKG seed. This allows us to not
+	// care in this piece of the code about the length of the seed and how this
+	// seed is proposed.
 	seedSha256 := sha256.Sum256(seed.Bytes())
 	randomRetrySeed := int64(binary.BigEndian.Uint64(seedSha256[:8]))
 
