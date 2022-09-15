@@ -1,4 +1,4 @@
-FROM golang:1.18.3-alpine3.16 AS gobuild
+FROM golang:1.18.3-alpine3.16 AS build-sources
 
 ENV GOPATH=/go \
 	GOBIN=/go/bin \
@@ -63,24 +63,57 @@ RUN make get_artifacts environment=$ENVIRONMENT
 COPY ./config $APP_DIR/config
 RUN make generate environment=$ENVIRONMENT
 
+#
+# Build Docker Image
+#
+FROM build-sources AS build-docker
+
+WORKDIR $APP_DIR
+
 COPY ./ $APP_DIR/
 
 # Client Versioning.
 ARG VERSION
 ARG REVISION
 
-RUN GOOS=linux make build version=$VERSION revision=$REVISION && \
-	mv $APP_NAME $BIN_PATH
+RUN GOOS=linux make build \
+	version=$VERSION \
+	revision=$REVISION \
+	output_dir=$APP_DIR \
+	app_name=$APP_NAME
 
-FROM alpine:3.16
+FROM alpine:3.16 as runtime-docker
 
 ENV APP_NAME=keep-client \
+	APP_DIR=/go/src/github.com/keep-network/keep-core \
 	BIN_PATH=/usr/local/bin
 
-COPY --from=gobuild $BIN_PATH/$APP_NAME $BIN_PATH
+COPY --from=build-docker $APP_DIR/$APP_NAME $BIN_PATH
 
 # ENTRYPOINT cant handle ENV variables.
 ENTRYPOINT ["keep-client"]
 
 # docker caches more when using CMD [] resulting in a faster build.
 CMD []
+
+#
+# Build Binaries
+#
+FROM build-sources AS build-bins
+
+COPY ./ $APP_DIR/
+
+WORKDIR $APP_DIR
+
+ARG APP_NAME=keep-client
+# Client Versioning.
+ARG VERSION
+ARG REVISION
+
+RUN make build-all version=$VERSION revision=$REVISION output_dir=$APP_DIR/bin app_name=$APP_NAME
+
+FROM scratch as output-bins
+
+ENV APP_DIR=/go/src/github.com/keep-network/keep-core
+
+COPY --from=build-bins $APP_DIR/bin .
