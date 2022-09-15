@@ -8,6 +8,7 @@ import (
 
 	"github.com/ipfs/go-log"
 	"github.com/keep-network/keep-common/pkg/persistence"
+	"github.com/keep-network/keep-core/pkg/diagnostics"
 	"github.com/keep-network/keep-core/pkg/generator"
 	"github.com/keep-network/keep-core/pkg/net"
 	"github.com/keep-network/keep-core/pkg/sortition"
@@ -53,9 +54,17 @@ func Initialize(
 	persistence persistence.Handle,
 	scheduler *generator.Scheduler,
 	config Config,
+	registry *diagnostics.Registry,
 ) error {
 	node := newNode(chain, netProvider, persistence, scheduler, config)
 	deduplicator := newDeduplicator()
+
+	assembleTbtcDiagnostics := func() map[string]interface{} {
+		return map[string]interface{}{
+			"preParamsPoolSize": node.dkgExecutor.PreParamsPool().CurrentSize(),
+		}
+	}
+	registry.RegisterApplicationSource("tbtc", assembleTbtcDiagnostics)
 
 	err := sortition.MonitorPool(ctx, logger, chain, sortition.DefaultStatusCheckTick)
 	if err != nil {

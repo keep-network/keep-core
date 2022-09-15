@@ -1814,13 +1814,19 @@ func initializeEphemeralKeyPairGeneratingMembersGroup(
 	for i := 1; i <= groupSize; i++ {
 		id := group.MemberIndex(i)
 
+		preParamsFn := func() (*PreParams, error) {
+			return &PreParams{
+				data: tssPreParams[id],
+			}, nil
+		}
+
 		members = append(members, &ephemeralKeyPairGeneratingMember{
 			member: &member{
 				logger:                   &testutils.MockLogger{},
 				id:                       id,
 				group:                    dkgGroup,
 				sessionID:                sessionID,
-				tssPreParams:             tssPreParams[id],
+				preParamsFn:              preParamsFn,
 				keyGenerationConcurrency: 10,
 				identityConverter:        &identityConverter{seed: big.NewInt(200)},
 			},
@@ -1909,9 +1915,17 @@ func initializeTssRoundOneMembersGroup(
 			)
 		}
 
+		tssRoundOneMember, err := member.initializeTssRoundOne()
+		if err != nil {
+			return nil, fmt.Errorf(
+				"cannot initialize TSS round one member: [%v]",
+				err,
+			)
+		}
+
 		tssRoundOneMembers = append(
 			tssRoundOneMembers,
-			member.initializeTssRoundOne(),
+			tssRoundOneMember,
 		)
 	}
 

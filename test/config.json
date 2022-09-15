@@ -22,7 +22,7 @@
         "DisseminationTime": 76
     },
     "Storage": {
-        "DataDir": "/my/secure/location"
+        "Dir": "/my/secure/location"
     },
     "Metrics": {
         "Port": 3498,

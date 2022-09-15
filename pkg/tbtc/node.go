@@ -5,9 +5,10 @@ import (
 	"crypto/ecdsa"
 	"encoding/hex"
 	"fmt"
-	"go.uber.org/zap"
 	"math/big"
 	"time"
+
+	"go.uber.org/zap"
 
 	"github.com/keep-network/keep-common/pkg/persistence"
 	"github.com/keep-network/keep-core/pkg/generator"
@@ -177,7 +178,7 @@ func (n *node) joinDKGIfEligible(seed *big.Int, startBlockNumber uint64) {
 					loopCtx,
 					func(attempt *dkgAttemptParams) (*dkg.Result, uint64, error) {
 						dkgAttemptLogger := dkgLogger.With(
-							zap.Uint("attempt", attempt.index),
+							zap.Uint("attempt", attempt.number),
 							zap.Uint64("attemptStartBlock", attempt.startBlock),
 						)
 
@@ -185,15 +186,15 @@ func (n *node) joinDKGIfEligible(seed *big.Int, startBlockNumber uint64) {
 							"[member:%v] scheduled dkg attempt "+
 								"with [%v] group members (excluded: [%v])",
 							memberIndex,
-							chainConfig.GroupSize-len(attempt.excludedMembers),
-							attempt.excludedMembers,
+							chainConfig.GroupSize-len(attempt.excludedMembersIndexes),
+							attempt.excludedMembersIndexes,
 						)
 
 						// sessionID must be different for each attempt.
 						sessionID := fmt.Sprintf(
 							"%v-%v",
 							seed.Text(16),
-							attempt.index,
+							attempt.number,
 						)
 
 						result, executionEndBlock, err := n.dkgExecutor.Execute(
@@ -204,7 +205,7 @@ func (n *node) joinDKGIfEligible(seed *big.Int, startBlockNumber uint64) {
 							memberIndex,
 							chainConfig.GroupSize,
 							chainConfig.DishonestThreshold(),
-							attempt.excludedMembers,
+							attempt.excludedMembersIndexes,
 							blockCounter,
 							broadcastChannel,
 							membershipValidator,
@@ -456,7 +457,7 @@ func (n *node) joinSigningIfEligible(
 					loopCtx,
 					func(attempt *signingAttemptParams) (*signing.Result, error) {
 						signingAttemptLogger := signingLogger.With(
-							zap.Uint("attempt", attempt.index),
+							zap.Uint("attempt", attempt.number),
 							zap.Uint64("attemptStartBlock", attempt.startBlock),
 						)
 
@@ -464,14 +465,14 @@ func (n *node) joinSigningIfEligible(
 							"[member:%v] scheduled signing attempt "+
 								"with [%v] group members (excluded: [%v])",
 							signer.signingGroupMemberIndex,
-							signingGroupSize-len(attempt.excludedMembers),
-							attempt.excludedMembers,
+							signingGroupSize-len(attempt.excludedMembersIndexes),
+							attempt.excludedMembersIndexes,
 						)
 
 						sessionID := fmt.Sprintf(
 							"%v-%v",
 							message.Text(16),
-							attempt.index,
+							attempt.number,
 						)
 
 						result, err := signing.Execute(
@@ -483,7 +484,7 @@ func (n *node) joinSigningIfEligible(
 							signer.privateKeyShare,
 							signingGroupSize,
 							signingGroupDishonestThreshold,
-							attempt.excludedMembers,
+							attempt.excludedMembersIndexes,
 							blockCounter,
 							broadcastChannel,
 							membershipValidator,
@@ -503,7 +504,8 @@ func (n *node) joinSigningIfEligible(
 				)
 				if err != nil {
 					signingLogger.Errorf(
-						"[member:%v] signing failed: [%v]",
+						"[member:%v] all retries for the signing failed; "+
+							"giving up: [%v]",
 						signer.signingGroupMemberIndex,
 						err,
 					)

@@ -26,9 +26,6 @@ type signingRetryLoop struct {
 	attemptStartBlock uint64
 	attemptSeed       int64
 
-	randomRetryCounter uint
-	randomRetrySeed    int64
-
 	delayBlocks uint64
 }
 
@@ -39,16 +36,12 @@ func newSigningRetryLoop(
 	signingGroupOperators chain.Addresses,
 	chainConfig *ChainConfig,
 ) *signingRetryLoop {
-	// Pre-compute the 8-byte seed that is needed for the random
-	// retry algorithm. Since the original message passed as parameter
-	// can have a variable length, it is safer to take the first 8 bytes
-	// of sha256(seed) as the randomRetrySeed.
+	// Compute the 8-byte seed needed for the random retry algorithm. We take
+	// the first 8 bytes of the hash of the signed message. This allows us to
+	// not care in this piece of the code about the length of the message and
+	// how this message is proposed.
 	messageSha256 := sha256.Sum256(message.Bytes())
-	randomRetrySeed := int64(binary.BigEndian.Uint64(messageSha256[:8]))
-	// Also, take the next 8 bytes for the attemptSeed that is sometimes
-	// used to trim the qualified members list to the minimum size equal
-	// to the honest threshold.
-	attemptSeed := int64(binary.BigEndian.Uint64(messageSha256[8:16]))
+	attemptSeed := int64(binary.BigEndian.Uint64(messageSha256[:8]))
 
 	return &signingRetryLoop{
 		signingGroupMemberIndex: signingGroupMemberIndex,
@@ -57,17 +50,15 @@ func newSigningRetryLoop(
 		attemptCounter:          0,
 		attemptStartBlock:       initialStartBlock,
 		attemptSeed:             attemptSeed,
-		randomRetryCounter:      0,
-		randomRetrySeed:         randomRetrySeed,
 		delayBlocks:             5,
 	}
 }
 
 // signingAttemptParams represents parameters of a signing attempt.
 type signingAttemptParams struct {
-	index           uint
-	startBlock      uint64
-	excludedMembers []group.MemberIndex
+	number                 uint
+	startBlock             uint64
+	excludedMembersIndexes []group.MemberIndex
 }
 
 // signingAttemptFn represents a function performing a signing attempt.
@@ -124,50 +115,56 @@ func (srl *signingRetryLoop) start(
 
 		// Exclude all members controlled by the operators that were not
 		// qualified for the current attempt.
-		includedMembers := make([]group.MemberIndex, 0)
-		excludedMembers := make([]group.MemberIndex, 0)
+		includedMembersIndexes := make([]group.MemberIndex, 0)
+		excludedMembersIndexes := make([]group.MemberIndex, 0)
 		for i, operator := range srl.signingGroupOperators {
 			memberIndex := group.MemberIndex(i + 1)
 
-			if !qualifiedOperatorsSet[operator] {
-				excludedMembers = append(excludedMembers, memberIndex)
+			if qualifiedOperatorsSet[operator] {
+				includedMembersIndexes = append(
+					includedMembersIndexes,
+					memberIndex,
+				)
 			} else {
-				includedMembers = append(includedMembers, memberIndex)
+				excludedMembersIndexes = append(
+					excludedMembersIndexes,
+					memberIndex,
+				)
 			}
 		}
 
 		// Make sure we always use just the smallest required count of
 		// signing members for performance reasons
-		if len(includedMembers) > srl.chainConfig.HonestThreshold {
+		if len(includedMembersIndexes) > srl.chainConfig.HonestThreshold {
 			// #nosec G404 (insecure random number source (rand))
 			// Shuffling does not require secure randomness.
 			rng := rand.New(rand.NewSource(
 				srl.attemptSeed + int64(srl.attemptCounter),
 			))
 			// Sort in ascending order just in case.
-			sort.Slice(includedMembers, func(i, j int) bool {
-				return includedMembers[i] < includedMembers[j]
+			sort.Slice(includedMembersIndexes, func(i, j int) bool {
+				return includedMembersIndexes[i] < includedMembersIndexes[j]
 			})
 			// Shuffle the included members slice to randomize the
 			// selection of additionally excluded members.
-			rng.Shuffle(len(includedMembers), func(i, j int) {
-				includedMembers[i], includedMembers[j] =
-					includedMembers[j], includedMembers[i]
+			rng.Shuffle(len(includedMembersIndexes), func(i, j int) {
+				includedMembersIndexes[i], includedMembersIndexes[j] =
+					includedMembersIndexes[j], includedMembersIndexes[i]
 			})
 			// Get the surplus of included members and add them to
 			// the excluded members list.
-			excludedMembers = append(
-				excludedMembers,
-				includedMembers[srl.chainConfig.HonestThreshold:]...,
+			excludedMembersIndexes = append(
+				excludedMembersIndexes,
+				includedMembersIndexes[srl.chainConfig.HonestThreshold:]...,
 			)
 			// Sort the resulting excluded members list in ascending order.
-			sort.Slice(excludedMembers, func(i, j int) bool {
-				return excludedMembers[i] < excludedMembers[j]
+			sort.Slice(excludedMembersIndexes, func(i, j int) bool {
+				return excludedMembersIndexes[i] < excludedMembersIndexes[j]
 			})
 		}
 
 		attemptSkipped := slices.Contains(
-			excludedMembers,
+			excludedMembersIndexes,
 			srl.signingGroupMemberIndex,
 		)
 
@@ -176,9 +173,9 @@ func (srl *signingRetryLoop) start(
 
 		if !attemptSkipped {
 			result, attemptErr = signingAttemptFn(&signingAttemptParams{
-				index:           srl.attemptCounter,
-				startBlock:      srl.attemptStartBlock,
-				excludedMembers: excludedMembers,
+				number:                 srl.attemptCounter,
+				startBlock:             srl.attemptStartBlock,
+				excludedMembersIndexes: excludedMembersIndexes,
 			})
 		}
 
@@ -208,8 +205,8 @@ func (srl *signingRetryLoop) qualifiedOperatorsSet() (
 ) {
 	qualifiedOperators, err := retry.EvaluateRetryParticipantsForSigning(
 		srl.signingGroupOperators,
-		srl.randomRetrySeed,
-		srl.randomRetryCounter,
+		srl.attemptSeed,
+		srl.attemptCounter,
 		uint(srl.chainConfig.HonestThreshold),
 	)
 	if err != nil {
@@ -219,6 +216,5 @@ func (srl *signingRetryLoop) qualifiedOperatorsSet() (
 		)
 	}
 
-	srl.randomRetryCounter++
 	return chain.Addresses(qualifiedOperators).Set(), nil
 }
