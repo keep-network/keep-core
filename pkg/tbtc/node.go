@@ -113,9 +113,9 @@ func (n *node) joinDKGIfEligible(seed *big.Int, startBlockNumber uint64) {
 	if membersCount := len(indexes); membersCount > 0 {
 		if preParamsCount := n.dkgExecutor.PreParamsCount(); membersCount > preParamsCount {
 			dkgLogger.Infof(
-				"cannot join DKG as pre-parameters pool is too small; "+
-					"[%v] pre-parameters is required but only [%v] is "+
-					"available",
+				"cannot join DKG as pre-parameters pool size is "+
+					"too small; [%v] pre-parameters are required but "+
+					"only [%v] available",
 				membersCount,
 				preParamsCount,
 			)
