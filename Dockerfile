@@ -11,7 +11,7 @@ ENV GOPATH=/go \
 RUN apk add --update --no-cache \
 	g++ \
 	linux-headers \
-	protobuf \
+	protobuf-dev \
 	git \
 	make \
 	nodejs \
