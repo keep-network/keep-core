@@ -136,6 +136,24 @@ jobs:
             REVISION=${{ env.revision }}
           push: true
 
+      - name: Build Client Binaries
+        uses: docker/build-push-action@v3
+        with:
+          target: output-bins
+          outputs: type=local,dest=./tmp/bin/
+          build-args: |
+            ENVIRONMENT=${{ github.event.inputs.environment }}
+            APP_NAME=keep-client-${{ github.event.inputs.environment }}
+            VERSION=${{ env.version }}
+            REVISION=${{ env.revision }}
+          push: false
+
+      - name: Publish Client Binaries
+        # if: github.event_name == 'workflow_dispatch'
+        # TODO: Implement
+        run: |
+          ls -l ./tmp/bin/
+
       - name: Notify CI about completion of the workflow
         if: github.event_name == 'workflow_dispatch'
         uses: keep-network/ci/actions/notify-workflow-completed@v2
@@ -158,24 +176,6 @@ jobs:
         run: |
           rm -rf /tmp/.buildx-cache
           mv /tmp/.buildx-cache-new /tmp/.buildx-cache
-
-  # This is a job that tests if the client binary can be build for multiple platforms.
-  # TODO: Integrate into the publication process and publish the binaries.
-  client-binaries-build:
-    needs: [client-detect-changes, client-build-test-publish]
-    if: |
-      github.event_name != 'pull_request'
-        || needs.client-detect-changes.outputs.path-filter == 'true'
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-go@v3
-        with:
-          go-version-file: "go.mod"
-      - name: Generate Code
-        run: make get_artifacts generate
-      - name: Build Binaries
-        run: make build-all
 
   client-scan:
     needs: client-detect-changes
