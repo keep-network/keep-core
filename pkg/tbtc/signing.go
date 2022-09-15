@@ -106,7 +106,7 @@ func (srl *signingRetryLoop) start(
 		//
 		// For example, the attempt may fail at the end of the protocol but the
 		// error is returned after some time and more blocks than expected are
-		//mined in the meantime.
+		// mined in the meantime.
 		if srl.attemptCounter > 1 {
 			srl.attemptStartBlock = srl.attemptStartBlock +
 				signing.ProtocolBlocks() +
