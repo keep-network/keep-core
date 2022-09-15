@@ -15,7 +15,6 @@ import (
 func TestSigningRetryLoop(t *testing.T) {
 	chainConfig := &ChainConfig{
 		GroupSize:       10,
-		GroupQuorum:     8,
 		HonestThreshold: 6,
 	}
 
