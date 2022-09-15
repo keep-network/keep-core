@@ -4,4 +4,4 @@ keep-client \
     start \
     --ethereum.url "<Ethereum API WS URL>" \
     --ethereum.keyFile "<Operator Key File Path>" \
-    --storage.dataDir "<Storage Data Directory>"
+    --storage.dir "<Storage Data Directory>"

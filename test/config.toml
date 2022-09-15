@@ -20,7 +20,7 @@ AnnouncedAddresses = ["/dns4/example.com/tcp/3919", "/ip4/80.70.60.50/tcp/3919"]
 DisseminationTime = 76
 
 [storage]
-DataDir = "/my/secure/location"
+Dir = "/my/secure/location"
 
 [metrics]
 Port = 3498

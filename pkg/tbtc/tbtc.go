@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/ipfs/go-log"
-	commonDiagnostics "github.com/keep-network/keep-common/pkg/diagnostics"
 	"github.com/keep-network/keep-common/pkg/persistence"
 	"github.com/keep-network/keep-core/pkg/diagnostics"
 	"github.com/keep-network/keep-core/pkg/generator"
@@ -55,17 +54,19 @@ func Initialize(
 	persistence persistence.Handle,
 	scheduler *generator.Scheduler,
 	config Config,
-	registry *commonDiagnostics.Registry,
+	registry *diagnostics.Registry,
 ) error {
 	node := newNode(chain, netProvider, persistence, scheduler, config)
 	deduplicator := newDeduplicator()
 
-	assembleTbtcDiagnostics := func() map[string]interface{} {
-		return map[string]interface{}{
-			"preParamsPoolSize": node.dkgExecutor.PreParamsPool().CurrentSize(),
-		}
-	}
-	diagnostics.RegisterApplicationSource(registry, "tbtc", assembleTbtcDiagnostics)
+	registry.RegisterApplicationSource(
+		"tbtc",
+		func() map[string]interface{} {
+			return map[string]interface{}{
+				"preParamsPoolSize": node.dkgExecutor.PreParamsCount(),
+			}
+		},
+	)
 
 	err := sortition.MonitorPool(
 		ctx,
@@ -120,7 +121,7 @@ func Initialize(
 			logger.Infof(
 				"signature of message [%v] requested from "+
 					"wallet [0x%x] at block [%v]",
-				event.Message,
+				event.Message.Text(16),
 				event.WalletPublicKey,
 				event.BlockNumber,
 			)
