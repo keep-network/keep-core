@@ -152,14 +152,3 @@ if ! [ -x "$(command -v protoc-gen-go)" ]; then
 fi
 
 echo "Protobuf has been installed successfully!"
-
-echo "Installing Truffle..."
-
-npm install -g truffle@5.0.30
-
-if ! [ -x "$(command -v truffle)" ]; then
-  echo "Truffle installation failed"
-  exit 1
-fi
-
-echo "Truffle has been installed successfully!"

@@ -64,7 +64,7 @@ func (e *Executor) Execute(
 	memberIndex group.MemberIndex,
 	groupSize int,
 	dishonestThreshold int,
-	excludedMembers []group.MemberIndex,
+	excludedMembersIndexes []group.MemberIndex,
 	blockCounter chain.BlockCounter,
 	channel net.BroadcastChannel,
 	membershipValidator *group.MembershipValidator,
@@ -72,11 +72,6 @@ func (e *Executor) Execute(
 	e.logger.Debugf("[member:%v] initializing member", memberIndex)
 
 	registerUnmarshallers(channel)
-
-	preParams, err := e.tssPreParamsPool.GetNow()
-	if err != nil {
-		return nil, 0, fmt.Errorf("failed fetching pre-params: [%w]", err)
-	}
 
 	member := newMember(
 		e.logger,
@@ -86,15 +81,15 @@ func (e *Executor) Execute(
 		dishonestThreshold,
 		membershipValidator,
 		sessionID,
-		preParams.data,
+		e.tssPreParamsPool.GetNow,
 		e.keyGenerationConcurrency,
 	)
 
 	// Mark excluded members as disqualified in order to not exchange messages
 	// with them and have them recorded as misbehaving in the final result.
-	for _, excludedMember := range excludedMembers {
-		if excludedMember != member.id {
-			member.group.MarkMemberAsDisqualified(excludedMember)
+	for _, excludedMemberIndex := range excludedMembersIndexes {
+		if excludedMemberIndex != member.id {
+			member.group.MarkMemberAsDisqualified(excludedMemberIndex)
 		}
 	}
 

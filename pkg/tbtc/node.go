@@ -5,7 +5,6 @@ import (
 	"crypto/ecdsa"
 	"encoding/hex"
 	"fmt"
-	"golang.org/x/exp/slices"
 	"math/big"
 	"time"
 
@@ -193,19 +192,21 @@ func (n *node) joinDKGIfEligible(seed *big.Int, startBlockNumber uint64) {
 					loopCtx,
 					func(attempt *dkgAttemptParams) (*dkg.Result, uint64, error) {
 						logger.Infof(
-							"[member:%v] starting dkg attempt [%v] "+
-								"with [%v] group members (excluded: [%v])",
+							"[member:%v] scheduled dkg attempt [%v] "+
+								"for block [%v] with [%v] group members "+
+								"(excluded: [%v])",
 							memberIndex,
-							attempt.index,
-							chainConfig.GroupSize-len(attempt.excludedMembers),
-							attempt.excludedMembers,
+							attempt.number,
+							attempt.startBlock,
+							chainConfig.GroupSize-len(attempt.excludedMembersIndexes),
+							attempt.excludedMembersIndexes,
 						)
 
 						// sessionID must be different for each attempt.
 						sessionID := fmt.Sprintf(
 							"%v-%v",
 							seed.Text(16),
-							attempt.index,
+							attempt.number,
 						)
 
 						result, executionEndBlock, err := n.dkgExecutor.Execute(
@@ -215,7 +216,7 @@ func (n *node) joinDKGIfEligible(seed *big.Int, startBlockNumber uint64) {
 							memberIndex,
 							chainConfig.GroupSize,
 							chainConfig.DishonestThreshold(),
-							attempt.excludedMembers,
+							attempt.excludedMembersIndexes,
 							blockCounter,
 							broadcastChannel,
 							membershipValidator,
@@ -225,7 +226,7 @@ func (n *node) joinDKGIfEligible(seed *big.Int, startBlockNumber uint64) {
 								"[member:%v] dkg attempt [%v] "+
 									"failed: [%v]",
 								memberIndex,
-								attempt.index,
+								attempt.number,
 								err,
 							)
 
@@ -377,7 +378,7 @@ func (n *node) joinSigningIfEligible(
 ) {
 	logger.Infof(
 		"checking eligibility for signature of message [%v]",
-		message,
+		message.Text(16),
 	)
 
 	if signers := n.walletRegistry.getSigners(
@@ -385,7 +386,7 @@ func (n *node) joinSigningIfEligible(
 	); len(signers) > 0 {
 		logger.Infof(
 			"joining signature of message [%v] controlling [%v] signers",
-			message,
+			message.Text(16),
 			len(signers),
 		)
 
@@ -444,67 +445,81 @@ func (n *node) joinSigningIfEligible(
 				n.protocolLatch.Lock()
 				defer n.protocolLatch.Unlock()
 
-				// TODO: Add retries support and update the following parameters
-				//       on every attempt.
-				attemptIndex := 1
-				// TODO: Temporarily use the first 51 members for signing.
-				excludedMembers := make(
-					[]group.MemberIndex,
-					signingGroupDishonestThreshold,
-				)
-				for i := range excludedMembers {
-					excludedMembers[i] = group.MemberIndex(
-						n.chain.GetConfig().HonestThreshold + i + 1,
-					)
-				}
-
-				if slices.Contains(excludedMembers, signer.signingGroupMemberIndex) {
-					logger.Infof(
-						"[member:%v] excluded from signing attempt "+
-							"[%v] of message [%v]; aborting",
-						signer.signingGroupMemberIndex,
-						attemptIndex,
-						message,
-					)
-					return
-				}
-
-				logger.Infof(
-					"[member:%v] starting signing attempt [%v] of "+
-						"message [%v] with [%v] group members (excluded: [%v])",
-					signer.signingGroupMemberIndex,
-					attemptIndex,
+				retryLoop := newSigningRetryLoop(
 					message,
-					signingGroupSize-len(excludedMembers),
-					excludedMembers,
-				)
-
-				sessionID := fmt.Sprintf(
-					"%v-%v",
-					message.Text(16),
-					attemptIndex,
-				)
-
-				result, err := signing.Execute(
-					logger,
-					message,
-					sessionID,
 					startBlockNumber,
 					signer.signingGroupMemberIndex,
-					signer.privateKeyShare,
-					signingGroupSize,
-					signingGroupDishonestThreshold,
-					excludedMembers,
-					blockCounter,
-					broadcastChannel,
-					membershipValidator,
+					wallet.signingGroupOperators,
+					n.chain.GetConfig(),
+				)
+
+				// TODO: For this client iteration, the signing loop is started
+				//       with a 24h timeout. Another cancel signal should
+				//       be used in the final implementation.
+				loopCtx, cancelLoopCtx := context.WithTimeout(
+					context.Background(),
+					24*time.Hour,
+				)
+				defer cancelLoopCtx()
+
+				result, err := retryLoop.start(
+					loopCtx,
+					func(attempt *signingAttemptParams) (*signing.Result, error) {
+						logger.Infof(
+							"[member:%v] scheduled signing "+
+								"attempt [%v] of message [%v] for "+
+								"block [%v] with [%v] group "+
+								"members (excluded: [%v])",
+							signer.signingGroupMemberIndex,
+							attempt.number,
+							message.Text(16),
+							attempt.startBlock,
+							signingGroupSize-len(attempt.excludedMembersIndexes),
+							attempt.excludedMembersIndexes,
+						)
+
+						sessionID := fmt.Sprintf(
+							"%v-%v",
+							message.Text(16),
+							attempt.number,
+						)
+
+						result, err := signing.Execute(
+							logger,
+							message,
+							sessionID,
+							attempt.startBlock,
+							signer.signingGroupMemberIndex,
+							signer.privateKeyShare,
+							signingGroupSize,
+							signingGroupDishonestThreshold,
+							attempt.excludedMembersIndexes,
+							blockCounter,
+							broadcastChannel,
+							membershipValidator,
+						)
+						if err != nil {
+							logger.Errorf(
+								"[member:%v] signing attempt [%v] "+
+									"of message [%v] failed: [%v]",
+								signer.signingGroupMemberIndex,
+								attempt.number,
+								message.Text(16),
+								err,
+							)
+
+							return nil, err
+						}
+
+						return result, nil
+					},
 				)
 				if err != nil {
 					logger.Errorf(
-						"[member:%v] signing of message [%v] "+
-							"failed: [%v]",
+						"[member:%v] all retries for the signing of "+
+							"message [%v] failed; giving up: [%v]",
 						signer.signingGroupMemberIndex,
-						message,
+						message.Text(16),
 						err,
 					)
 					return
@@ -515,14 +530,14 @@ func (n *node) joinSigningIfEligible(
 						"for message [%v]",
 					signer.signingGroupMemberIndex,
 					result.Signature,
-					message,
+					message.Text(16),
 				)
 			}(currentSigner)
 		}
 	} else {
 		logger.Infof(
 			"not eligible for signature of message [%v]",
-			message,
+			message.Text(16),
 		)
 	}
 }

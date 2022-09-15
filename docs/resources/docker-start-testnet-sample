@@ -21,4 +21,4 @@ docker run --detach \
     --goerli \
     --ethereum.url $ETHEREUM_WS_URL \
     --ethereum.keyFile /mnt/keep/config/$OPERATOR_KEY_FILE_NAME \
-    --storage.dataDir /mnt/keep/storage
+    --storage.dir /mnt/keep/storage
