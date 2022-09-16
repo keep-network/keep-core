@@ -11,7 +11,7 @@ LOG_WARNING_END='\n\e\033[0m'    # new line + reset
 SOURCE_PROJECT_ID=keep-test-f3e0
 DESTINATION_BUCKET_NAME="diagnostics_test"
 PROJECT_NAME="keep-test"
-PEERS_LOCATION="diagnostics/peers.json"
+PEERS_LOCATION="diagnostics"
 
 help() {
   echo -e "\nUsage: $0" \
@@ -56,6 +56,6 @@ printf "${LOG_START}Setting cloud context to the ${PROJECT_NAME}...${LOG_END}"
 gcloud config set project $SOURCE_PROJECT_ID
 
 printf "${LOG_START}Uploading peers info to a ${DESTINATION_BUCKET_NAME} bucket...${LOG_END}"
-gcloud storage cp ${PEERS_LOCATION} gs://$DESTINATION_BUCKET_NAME/
+gcloud storage cp "${PEERS_LOCATION}/peers_*.json" gs://$DESTINATION_BUCKET_NAME/
 
 printf "${DONE_START}Upload completed!${DONE_END}"

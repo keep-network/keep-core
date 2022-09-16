@@ -7,7 +7,7 @@ DONE_START='\n\e[1;32m'          # new line + bold + green
 DONE_END='\n\n\e[0m'             # new line + reset
 
 IP_ADDRESS_DEFAULT="127.0.0.1" # bootstrap node
-PORT_DEFAULT="8081" # bootstrap port
+PORT_DEFAULT="9701" # bootstrap port
 PEER_PORTS_DEFAULT=("9701") # a range of ports can be provided
 ENDPOINT="diagnostics" # diagnostics api endpoint
 DIAGNOSTICS_DIR="diagnostics" # tmp dir for saving peers info
@@ -83,6 +83,7 @@ peersJsonArray=$(jq -s <<< "${peers[@]}")
 peersJson=$(jq --null-input -r --argjson peersJsonArray "${peersJsonArray}" '{peers: $peersJsonArray}')
 
 printf "${LOG_START}Saving diagnostics to a file...${LOG_END}"
-echo $peersJson > ${DIAGNOSTICS_DIR}/peers.json
+timestamp=$(date +%s) # unix timestamp, seconds since Jan 01 1970
+echo $peersJson > "${DIAGNOSTICS_DIR}/peers_$timestamp.json"
 
 printf "${DONE_START}Bootstrap diagnostics completed!${DONE_END}"
