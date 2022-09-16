@@ -3,6 +3,7 @@ package ethereum
 import (
 	"context"
 	"encoding/binary"
+	"encoding/hex"
 	"fmt"
 	"math/big"
 	"math/rand"
@@ -118,6 +119,20 @@ func (bc *BeaconChain) GetConfig() *beaconchain.Config {
 		ResultPublicationBlockStep: uint64(resultPublicationBlockStep),
 		RelayEntryTimeout:          uint64(relayEntryTimeout),
 	}
+}
+
+// Staking returns address of the TokenStaking contract the RandomBeacon is
+// connected to.
+func (bc *BeaconChain) Staking() (chain.Address, error) {
+	stakingContractAddress, err := bc.randomBeacon.Staking()
+	if err != nil {
+		return "", fmt.Errorf(
+			"failed to get the token staking address: [%w]",
+			err,
+		)
+	}
+
+	return chain.Address(stakingContractAddress.String()), nil
 }
 
 // OperatorToStakingProvider returns the staking provider address for the
@@ -257,7 +272,7 @@ func (bc *BeaconChain) OnGroupRegistered(
 
 // TODO: Implement a real IsGroupRegistered function.
 func (bc *BeaconChain) IsGroupRegistered(groupPublicKey []byte) (bool, error) {
-	return false, nil
+	return bc.mockRandomBeacon.IsGroupRegistered(groupPublicKey)
 }
 
 // TODO: Implement a real IsStaleGroup function.
@@ -421,6 +436,9 @@ type mockRandomBeacon struct {
 	activeGroup              []byte
 	activeGroupOperableBlock *big.Int
 
+	groupsMutex sync.RWMutex
+	groups      map[string]bool
+
 	currentRequestMutex         sync.RWMutex
 	currentRequestStartBlock    *big.Int
 	currentRequestPreviousEntry []byte
@@ -434,6 +452,7 @@ func newMockRandomBeacon(blockCounter chain.BlockCounter) *mockRandomBeacon {
 	return &mockRandomBeacon{
 		blockCounter:                 blockCounter,
 		dkgResultSubmissionHandlers:  make(map[int]func(submission *event.DKGResultSubmission)),
+		groups:                       make(map[string]bool),
 		relayEntrySubmissionHandlers: make(map[int]func(submission *event.RelayEntrySubmitted)),
 	}
 }
@@ -510,6 +529,9 @@ func (mrb *mockRandomBeacon) SubmitDKGResult(
 	mrb.activeGroupMutex.Lock()
 	defer mrb.activeGroupMutex.Unlock()
 
+	mrb.groupsMutex.Lock()
+	defer mrb.groupsMutex.Unlock()
+
 	// Abort if there is no DKG in progress. This check is needed to handle a
 	// situation in which two operators of the same client attempt to submit
 	// the DKG result.
@@ -539,6 +561,7 @@ func (mrb *mockRandomBeacon) SubmitDKGResult(
 		big.NewInt(150),
 	)
 	mrb.currentDkgStartBlock = nil
+	mrb.groups[hex.EncodeToString(dkgResult.GroupPublicKey)] = true
 
 	return nil
 }
@@ -683,4 +706,11 @@ func (mrb *mockRandomBeacon) CurrentRequestGroupPublicKey() ([]byte, error) {
 	defer mrb.currentRequestMutex.RUnlock()
 
 	return mrb.currentRequestGroup, nil
+}
+
+func (mrb *mockRandomBeacon) IsGroupRegistered(groupPublicKey []byte) (bool, error) {
+	mrb.groupsMutex.RLock()
+	defer mrb.groupsMutex.RUnlock()
+
+	return mrb.groups[hex.EncodeToString(groupPublicKey)], nil
 }

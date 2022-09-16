@@ -6,17 +6,18 @@ import (
 	"math/big"
 	"sync"
 
-	"github.com/keep-network/keep-core/pkg/chain"
-	"github.com/keep-network/keep-core/pkg/operator"
+	"github.com/hashicorp/go-multierror"
 
 	"github.com/ethereum/go-ethereum/accounts/keystore"
 	"github.com/ethereum/go-ethereum/ethclient"
-
 	"github.com/ipfs/go-log"
+
 	"github.com/keep-network/keep-common/pkg/chain/ethereum"
 	"github.com/keep-network/keep-common/pkg/chain/ethereum/ethutil"
 	"github.com/keep-network/keep-common/pkg/rate"
+	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/chain/ethereum/threshold/gen/contract"
+	"github.com/keep-network/keep-core/pkg/operator"
 )
 
 // Definitions of contract names.
@@ -108,12 +109,63 @@ func Connect(
 		)
 	}
 
+	if err := validateContractsAddresses(config, beaconChain, tbtcChain); err != nil {
+		return nil, nil, nil, nil, nil, fmt.Errorf(
+			"contracts addresses validation failed: [%w]", err,
+		)
+	}
+
 	return beaconChain,
 		tbtcChain,
 		baseChain.blockCounter,
 		baseChain.Signing(),
 		operatorPrivateKey,
 		nil
+}
+
+func validateContractsAddresses(
+	config ethereum.Config,
+	beaconChain *BeaconChain,
+	tbtcChain *TbtcChain,
+) error {
+	baseStakingAddress, err := config.ContractAddress(TokenStakingContractName)
+	if err != nil {
+		return fmt.Errorf(
+			"failed to get %s address from config: [%w]",
+			TokenStakingContractName,
+			err,
+		)
+	}
+
+	beaconStakingAddress, err := beaconChain.Staking()
+	if err != nil {
+		return fmt.Errorf("failed to get staking address for beacon: [%w]", err)
+	}
+
+	tbtcStakingAddress, err := tbtcChain.Staking()
+	if err != nil {
+		return fmt.Errorf("failed to get staking address for tbtc: [%w]", err)
+	}
+
+	var result *multierror.Error
+
+	if beaconStakingAddress.String() != baseStakingAddress.String() {
+		result = multierror.Append(result, fmt.Errorf(
+			"staking address for beacon [%s] doesn't match the base token staking address: [%s]",
+			beaconStakingAddress,
+			baseStakingAddress,
+		))
+	}
+
+	if tbtcStakingAddress.String() != baseStakingAddress.String() {
+		result = multierror.Append(result, fmt.Errorf(
+			"staking address for tbtc [%s] doesn't match the base token staking address: [%s]",
+			tbtcStakingAddress,
+			baseStakingAddress,
+		))
+	}
+
+	return result.ErrorOrNil()
 }
 
 // newChain construct a new instance of the Ethereum chain handle.
@@ -127,6 +179,18 @@ func newBaseChain(
 		return nil, fmt.Errorf(
 			"failed to resolve Ethereum chain id: [%v]",
 			err,
+		)
+	}
+
+	if config.Network != ethereum.Developer &&
+		big.NewInt(config.Network.ChainID()).Cmp(chainID) != 0 {
+		return nil, fmt.Errorf(
+			"chain id returned from ethereum api [%s] "+
+				"doesn't match the expected chain id [%d] for [%s] network; "+
+				"please verify the configured ethereum.url",
+			chainID.String(),
+			config.Network.ChainID(),
+			config.Network,
 		)
 	}
 

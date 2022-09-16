@@ -10,6 +10,7 @@ import (
 	bn256 "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
 	"github.com/gogo/protobuf/proto"
 	fuzz "github.com/google/gofuzz"
+
 	"github.com/keep-network/keep-core/pkg/crypto/ephemeral"
 )
 
@@ -20,6 +21,8 @@ import (
 //
 // This is a utility meant to facilitate tests that verify round-trip marshaling
 // of objects with custom protobuf marshaling.
+// TODO: proto.Marshaler is deprecated. Use "google.golang.org/protobuf/proto".Message instead.
+// TODO: proto.Unmarshaler is deprecated. Use "google.golang.org/protobuf/proto".Message instead.
 func RoundTrip(
 	marshaler proto.Marshaler,
 	unmarshaler proto.Unmarshaler,
@@ -38,6 +41,7 @@ func RoundTrip(
 }
 
 // FuzzUnmarshaler tests given unmarshaler with random bytes.
+// TODO: proto.Unmarshaler is deprecated. Use "google.golang.org/protobuf/proto".Message instead.
 func FuzzUnmarshaler(unmarshaler proto.Unmarshaler) {
 	for i := 0; i < 100; i++ {
 		var messageBytes []byte

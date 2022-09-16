@@ -11,11 +11,13 @@ import (
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
+	"golang.org/x/exp/slices"
+
 	"github.com/keep-network/keep-core/pkg/chain/ethereum"
 	ethereumBeacon "github.com/keep-network/keep-core/pkg/chain/ethereum/beacon/gen"
 	ethereumEcdsa "github.com/keep-network/keep-core/pkg/chain/ethereum/ecdsa/gen"
+	ethereumTbtc "github.com/keep-network/keep-core/pkg/chain/ethereum/tbtc/gen"
 	ethereumThreshold "github.com/keep-network/keep-core/pkg/chain/ethereum/threshold/gen"
-	"golang.org/x/exp/slices"
 )
 
 func TestReadConfigFromFile(t *testing.T) {
@@ -67,6 +69,7 @@ func TestReadConfigFromFile(t *testing.T) {
 				"randombeacon":   "0xcf64c2a367341170cb4e09cf8c0ed137d8473ceb",
 				"walletregistry": "0x143ba24e66fce8bca22f7d739f9a932c519b1c76",
 				"tokenstaking":   "0xa363a197f1bbb8877f50350234e3f15fb4175457",
+				"bridge":         "0x138D2a0c87BA9f6BE1DCc13D6224A6aCE9B6b6F0",
 			},
 		},
 		"Developer - RandomBeacon": {
@@ -90,6 +93,13 @@ func TestReadConfigFromFile(t *testing.T) {
 			},
 			expectedValue: "0xa363a197F1BbB8877F50350234e3f15fB4175457",
 		},
+		"Ethereum.Developer - Bridge": {
+			readValueFunc: func(c *Config) interface{} {
+				address, _ := c.Ethereum.ContractAddress(ethereum.BridgeContractName)
+				return address.String()
+			},
+			expectedValue: "0x138D2a0c87BA9f6BE1DCc13D6224A6aCE9B6b6F0",
+		},
 		"Network.Port": {
 			readValueFunc: func(c *Config) interface{} { return c.LibP2P.Port },
 			expectedValue: 27001,
@@ -112,8 +122,8 @@ func TestReadConfigFromFile(t *testing.T) {
 			readValueFunc: func(c *Config) interface{} { return c.LibP2P.DisseminationTime },
 			expectedValue: 76,
 		},
-		"Storage.DataDir": {
-			readValueFunc: func(c *Config) interface{} { return c.Storage.DataDir },
+		"Storage.Dir": {
+			readValueFunc: func(c *Config) interface{} { return c.Storage.Dir },
 			expectedValue: "/my/secure/location",
 		},
 		"Metrics.Port": {
@@ -237,6 +247,7 @@ func TestReadConfig_ReadContracts(t *testing.T) {
 	ethereumBeacon.RandomBeaconAddress = "0xd1640b381327c2d5425d6d3d605539a3db72f857"
 	ethereumEcdsa.WalletRegistryAddress = "0xdb3dd6d4f43d39c996d0afeb6fbabc284f9ffb1a"
 	ethereumThreshold.TokenStakingAddress = "0xaa7b41039ea8f9ec2d89bbe96e19f97b6c267a27"
+	ethereumTbtc.BridgeAddress = "0x9490165195503fcf6a0fd20ac113223fefb66ed5"
 
 	var configReadTests = map[string]struct {
 		configFilePath string
@@ -244,24 +255,28 @@ func TestReadConfig_ReadContracts(t *testing.T) {
 		expectedRandomBeaconAddress   string
 		expectedWalletRegistryAddress string
 		expectedTokenStakingAddress   string
+		expectedBridgeAddress         string
 	}{
 		"no developer contracts addresses configured": {
 			configFilePath:                "../test/config_no_contracts.toml",
 			expectedRandomBeaconAddress:   "0xd1640b381327c2d5425d6d3d605539a3db72f857",
 			expectedWalletRegistryAddress: "0xdb3dd6d4f43d39c996d0afeb6fbabc284f9ffb1a",
 			expectedTokenStakingAddress:   "0xaa7b41039ea8f9ec2d89bbe96e19f97b6c267a27",
+			expectedBridgeAddress:         "0x9490165195503fcf6a0fd20ac113223fefb66ed5",
 		},
 		"developer contracts addresses configured": {
 			configFilePath:                "../test/config.toml",
 			expectedRandomBeaconAddress:   "0xcf64c2a367341170cb4e09cf8c0ed137d8473ceb",
 			expectedWalletRegistryAddress: "0x143ba24e66fce8bca22f7d739f9a932c519b1c76",
 			expectedTokenStakingAddress:   "0xa363a197f1bbb8877f50350234e3f15fb4175457",
+			expectedBridgeAddress:         "0x138D2a0c87BA9f6BE1DCc13D6224A6aCE9B6b6F0",
 		},
 		"mxied contracts addresses configured": {
 			configFilePath:                "../test/config_mixed_contracts.toml",
 			expectedRandomBeaconAddress:   "0xd1640b381327c2d5425d6d3d605539a3db72f857",
 			expectedWalletRegistryAddress: "0x143ba24e66fce8bca22f7d739f9a932c519b1c76",
 			expectedTokenStakingAddress:   "0xaa7b41039ea8f9ec2d89bbe96e19f97b6c267a27",
+			expectedBridgeAddress:         "0x9490165195503fcf6a0fd20ac113223fefb66ed5",
 		},
 	}
 
@@ -294,6 +309,7 @@ func TestReadConfig_ReadContracts(t *testing.T) {
 			validate(ethereum.RandomBeaconContractName, test.expectedRandomBeaconAddress)
 			validate(ethereum.WalletRegistryContractName, test.expectedWalletRegistryAddress)
 			validate(ethereum.TokenStakingContractName, test.expectedTokenStakingAddress)
+			validate(ethereum.BridgeContractName, test.expectedBridgeAddress)
 		})
 	}
 }

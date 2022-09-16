@@ -6,8 +6,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	commonDiagnostics "github.com/keep-network/keep-common/pkg/diagnostics"
-	"github.com/keep-network/keep-common/pkg/persistence"
+	"github.com/keep-network/keep-core/build"
 	"github.com/keep-network/keep-core/config"
 	"github.com/keep-network/keep-core/pkg/beacon"
 	"github.com/keep-network/keep-core/pkg/chain"
@@ -19,6 +18,7 @@ import (
 	"github.com/keep-network/keep-core/pkg/net"
 	"github.com/keep-network/keep-core/pkg/net/libp2p"
 	"github.com/keep-network/keep-core/pkg/net/retransmission"
+	"github.com/keep-network/keep-core/pkg/storage"
 	"github.com/keep-network/keep-core/pkg/tbtc"
 )
 
@@ -58,7 +58,6 @@ Environment variables:
 // start starts a node
 func start(cmd *cobra.Command) error {
 	ctx := context.Background()
-	rootCmd := cmd.Root()
 
 	logger.Infof(
 		"Starting the client against [%s] ethereum network...",
@@ -88,18 +87,27 @@ func start(cmd *cobra.Command) error {
 
 	nodeHeader(
 		netProvider.ConnectionManager().AddrStrings(),
+		beaconChain.Signing().Address().String(),
 		clientConfig.LibP2P.Port,
 		clientConfig.Ethereum,
 	)
 
-	beaconPersistence, err := initializePersistence(clientConfig, "beacon")
+	storage, err := storage.Initialize(
+		clientConfig.Storage,
+		clientConfig.Ethereum.KeyFilePassword,
+	)
 	if err != nil {
-		return fmt.Errorf("cannot initialize beacon persistence: [%w]", err)
+		return fmt.Errorf("cannot initialize storage: [%w]", err)
 	}
 
-	tbtcPersistence, err := initializePersistence(clientConfig, "tbtc")
+	beaconKeyStorePersistence, err := storage.InitializeKeyStorePersistence("beacon")
 	if err != nil {
-		return fmt.Errorf("cannot initialize tbtc persistence: [%w]", err)
+		return fmt.Errorf("cannot initialize beacon keystore persistence: [%w]", err)
+	}
+
+	tbtcKeyStorePersistence, err := storage.InitializeKeyStorePersistence("tbtc")
+	if err != nil {
+		return fmt.Errorf("cannot initialize tbtc keystore persistence: [%w]", err)
 	}
 
 	scheduler := generator.StartScheduler()
@@ -108,7 +116,7 @@ func start(cmd *cobra.Command) error {
 		ctx,
 		beaconChain,
 		netProvider,
-		beaconPersistence,
+		beaconKeyStorePersistence,
 		scheduler,
 	)
 	if err != nil {
@@ -117,14 +125,14 @@ func start(cmd *cobra.Command) error {
 
 	initializeMetrics(ctx, clientConfig, netProvider, blockCounter)
 	registry := initializeDiagnostics(clientConfig)
-	diagnostics.RegisterConnectedPeersSource(registry, netProvider, signing)
-	diagnostics.RegisterClientInfoSource(registry, netProvider, signing, rootCmd.Version)
+	registry.RegisterConnectedPeersSource(netProvider, signing)
+	registry.RegisterClientInfoSource(netProvider, signing, build.Version, build.Revision)
 
 	err = tbtc.Initialize(
 		ctx,
 		tbtcChain,
 		netProvider,
-		tbtcPersistence,
+		tbtcKeyStorePersistence,
 		scheduler,
 		clientConfig.Tbtc,
 		registry,
@@ -141,40 +149,6 @@ func start(cmd *cobra.Command) error {
 
 		return fmt.Errorf("uh-oh, we went boom boom for no reason")
 	}
-}
-
-func initializePersistence(clientConfig *config.Config, application string) (
-	persistence.Handle,
-	error,
-) {
-	err := persistence.EnsureDirectoryExists(
-		clientConfig.Storage.DataDir,
-		application,
-	)
-	if err != nil {
-		return nil, fmt.Errorf(
-			"cannot create storage directory for "+
-				"application [%v]: [%w]",
-			application,
-			err,
-		)
-	}
-
-	path := fmt.Sprintf("%s/%s", clientConfig.Storage.DataDir, application)
-
-	diskHandle, err := persistence.NewDiskHandle(path)
-	if err != nil {
-		return nil, fmt.Errorf(
-			"cannot create [%v] disk handle: [%w]",
-			application,
-			err,
-		)
-	}
-
-	return persistence.NewEncryptedPersistence(
-		diskHandle,
-		clientConfig.Ethereum.Account.KeyFilePassword,
-	), nil
 }
 
 func initializeMetrics(
@@ -221,7 +195,7 @@ func initializeMetrics(
 
 func initializeDiagnostics(
 	config *config.Config,
-) *commonDiagnostics.Registry {
+) *diagnostics.Registry {
 	registry, isConfigured := diagnostics.Initialize(
 		config.Diagnostics.Port,
 	)

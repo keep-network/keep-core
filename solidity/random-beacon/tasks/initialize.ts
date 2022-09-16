@@ -126,5 +126,5 @@ task(
   .addParam("provider", "Staking Provider", undefined, types.string)
   .addParam("operator", "Staking Operator", undefined, types.string)
   .setAction(async (args, hre) => {
-    await register(hre, "RandomBeacon", args.provider, args.owner)
+    await register(hre, "RandomBeacon", args.provider, args.operator)
   })
