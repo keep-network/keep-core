@@ -4,8 +4,10 @@
 package local
 
 import (
-	"github.com/keep-network/keep-core/pkg/operator"
 	"sync"
+
+	"github.com/keep-network/keep-core/pkg/operator"
+	"github.com/libp2p/go-libp2p-core/peer"
 
 	"github.com/ipfs/go-log"
 	"github.com/keep-network/keep-core/pkg/net"
@@ -87,7 +89,8 @@ func (lp *localProvider) ConnectionManager() net.ConnectionManager {
 type localConnectionManager struct {
 	mutex sync.Mutex
 
-	peers map[string]*operator.PublicKey
+	peers         map[string]*operator.PublicKey
+	peersAddrInfo map[string]peer.AddrInfo
 }
 
 func (lcm *localConnectionManager) ConnectedPeers() []string {
@@ -98,6 +101,16 @@ func (lcm *localConnectionManager) ConnectedPeers() []string {
 		connectedPeers = append(connectedPeers, peer)
 	}
 	return connectedPeers
+}
+
+func (lcm *localConnectionManager) ConnectedPeersAddrInfo() []peer.AddrInfo {
+	lcm.mutex.Lock()
+	defer lcm.mutex.Unlock()
+	var peersAddrInfo []peer.AddrInfo
+	for _, peer := range lcm.peersAddrInfo {
+		peersAddrInfo = append(peersAddrInfo, peer)
+	}
+	return peersAddrInfo
 }
 
 func (lcm *localConnectionManager) GetPeerPublicKey(
