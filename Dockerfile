@@ -112,4 +112,4 @@ FROM scratch as output-bins
 
 ENV APP_DIR=/go/src/github.com/keep-network/keep-core
 
-COPY --from=build-bins $APP_DIR/bin .
+COPY --from=build-bins $APP_DIR/out/bin .

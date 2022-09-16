@@ -15,7 +15,7 @@ REVISION_DEFAULT=$(git rev-parse --short HEAD)
 read -p "Revision [$REVISION_DEFAULT]: " REVISION
 REVISION=${REVISION:-$REVISION_DEFAULT}
 
-BIN_OUTPUT_DIR=${ROOT_DIR}/bin/
+BIN_OUTPUT_DIR=${ROOT_DIR}/out/bin/
 
 docker buildx build \
     --platform linux/amd64 \
