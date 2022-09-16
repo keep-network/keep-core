@@ -11,7 +11,6 @@ replace github.com/bnb-chain/tss-lib => github.com/keep-network/tss-lib v1.3.3-0
 // See https://github.com/protocolbuffers/protobuf-go/commit/fb0abd915897428ccfdd6b03b48ad8219751ee54
 replace google.golang.org/protobuf/dev => google.golang.org/protobuf v1.28.2-0.20220831092852-f930b1dc76e8
 
-
 require (
 	github.com/bnb-chain/tss-lib v1.3.4-0.20220817120442-2f5f2e4fb79e
 	github.com/btcsuite/btcd v0.22.1
@@ -24,7 +23,7 @@ require (
 	github.com/ipfs/go-ipfs-config v0.16.0
 	github.com/ipfs/go-log v1.0.5
 	github.com/jbenet/goprocess v0.1.4
-	github.com/keep-network/keep-common v1.7.1-0.20220909095219-0c806cf341a6
+	github.com/keep-network/keep-common v1.7.1-0.20220916085024-7a8696e19eaf
 	github.com/libp2p/go-addr-util v0.2.0
 	github.com/libp2p/go-libp2p v0.20.1
 	github.com/libp2p/go-libp2p-core v0.16.1

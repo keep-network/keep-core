@@ -6,6 +6,7 @@ import (
 
 	"github.com/bnb-chain/tss-lib/ecdsa/keygen"
 	"google.golang.org/protobuf/proto"
+	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/keep-network/keep-core/pkg/crypto/ephemeral"
 	"github.com/keep-network/keep-core/pkg/protocol/group"
@@ -246,7 +247,8 @@ func (pp *PreParams) Marshal() ([]byte, error) {
 	}
 
 	return proto.Marshal(&pb.PreParams{
-		Data: localPreParams,
+		Data:              localPreParams,
+		CreationTimestamp: timestamppb.New(pp.creationTimestamp),
 	})
 }
 
@@ -266,6 +268,7 @@ func (pp *PreParams) Unmarshal(bytes []byte) error {
 		P:       new(big.Int).SetBytes(pbPreParams.Data.GetP()),
 		Q:       new(big.Int).SetBytes(pbPreParams.Data.GetQ()),
 	}
+	pp.creationTimestamp = pbPreParams.CreationTimestamp.AsTime()
 
 	return nil
 }

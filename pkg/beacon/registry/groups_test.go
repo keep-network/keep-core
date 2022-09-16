@@ -3,15 +3,17 @@ package registry
 import (
 	"bytes"
 	"encoding/hex"
-	"github.com/keep-network/keep-core/pkg/internal/testutils"
 	"math/big"
 	"reflect"
 	"testing"
+
+	"github.com/keep-network/keep-core/pkg/internal/testutils"
 
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/chain/local_v1"
 
 	bn256 "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
+
 	"github.com/keep-network/keep-common/pkg/persistence"
 	"github.com/keep-network/keep-core/pkg/beacon/dkg"
 	"github.com/keep-network/keep-core/pkg/beacon/event"

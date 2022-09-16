@@ -16,10 +16,10 @@ type storage interface {
 }
 
 type persistentStorage struct {
-	handle persistence.Handle
+	handle persistence.ProtectedHandle
 }
 
-func newStorage(persistence persistence.Handle) storage {
+func newStorage(persistence persistence.ProtectedHandle) storage {
 	return &persistentStorage{
 		handle: persistence,
 	}

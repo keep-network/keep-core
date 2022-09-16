@@ -31,7 +31,7 @@ func Initialize(
 	ctx context.Context,
 	beaconChain beaconchain.Interface,
 	netProvider net.Provider,
-	persistence persistence.Handle,
+	persistence persistence.ProtectedHandle,
 	scheduler *generator.Scheduler,
 ) error {
 	groupRegistry := registry.NewGroupRegistry(logger, beaconChain, persistence)
