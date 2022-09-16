@@ -52,9 +52,8 @@ COPY ./pkg/tecdsa/dkg/gen $APP_DIR/pkg/tecdsa/dkg/gen
 COPY ./pkg/tecdsa/signing/gen $APP_DIR/pkg/tecdsa/signing/gen
 COPY ./pkg/tecdsa/gen $APP_DIR/pkg/tecdsa/gen
 
-# If ENVIRONMENT is not set it will download NPM packages versions
-# published and tagged as `development`.
-ARG ENVIRONMENT=development
+# Environment is to download published and tagged NPM packages versions.
+ARG ENVIRONMENT
 
 COPY ./Makefile $APP_DIR/Makefile
 RUN make get_artifacts environment=$ENVIRONMENT

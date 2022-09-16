@@ -136,20 +136,7 @@ jobs:
             REVISION=${{ env.revision }}
           push: true
 
-      - name: Build Client Binaries - Dry Run - Goerli
-        if: github.event_name != 'workflow_dispatch'
-        uses: docker/build-push-action@v3
-        with:
-          target: output-bins
-          outputs: type=local,dest=./tmp/bin/
-          build-args: |
-            ENVIRONMENT=goerli
-            VERSION=${{ env.version }}
-            REVISION=${{ env.revision }}
-          push: false
-
       - name: Build Client Binaries
-        if: github.event_name == 'workflow_dispatch'
         uses: docker/build-push-action@v3
         with:
           target: output-bins

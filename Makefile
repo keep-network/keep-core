@@ -1,6 +1,8 @@
 # environment is used as a tag of the npm packages for contracts artifacts. If
 # not overwritten it defaults to `development`.
-environment = development
+ifndef environment
+override environment = development
+endif
 
 # Build with contract packages published to the NPM registry and tagged `development`.
 development:
@@ -90,8 +92,12 @@ generate: gen_proto
 
 # Default parameters for client building. They can be overriten when calling the
 # make command.
-version = $(shell git describe --tags --match "v[0-9]*" HEAD)
-revision = $(shell git rev-parse --short HEAD)
+ifndef version
+override version = $(shell git describe --tags --match "v[0-9]*" HEAD)
+endif
+ifndef revision
+override revision = $(shell git rev-parse --short HEAD)
+endif
 output_dir = bin
 app_name = keep-client
 
