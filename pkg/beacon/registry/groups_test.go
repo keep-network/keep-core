@@ -271,10 +271,6 @@ func (phm *persistenceHandleMock) Archive(directory string) error {
 	return nil
 }
 
-func (phm *persistenceHandleMock) Delete(directory string, name string) error {
-	panic("not implemented")
-}
-
 type testDataDescriptor struct {
 	name      string
 	directory string
