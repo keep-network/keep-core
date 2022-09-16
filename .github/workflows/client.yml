@@ -140,7 +140,7 @@ jobs:
         uses: docker/build-push-action@v3
         with:
           target: output-bins
-          outputs: type=local,dest=./tmp/bin/
+          outputs: type=local,dest=./out/bin/
           build-args: |
             ENVIRONMENT=${{ github.event.inputs.environment }}
             VERSION=${{ env.version }}
@@ -151,13 +151,14 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: binaries
-          path: tmp/bin/
+          path: |
+            out/bin/*.[tar.gz|md5|sha256]
 
       - name: Publish Client Binaries
         # if: github.event_name == 'workflow_dispatch'
         # TODO: Implement
         run: |
-          ls -l ./tmp/bin/
+          ls -l ./out/bin/
 
       - name: Notify CI about completion of the workflow
         if: github.event_name == 'workflow_dispatch'
