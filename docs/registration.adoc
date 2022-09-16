@@ -127,4 +127,4 @@ page for the recent Mainnet addresses of the contracts.
 // TODO: Add section with the Keep Network contracts addresses to the Threshold Network docs.
 
 
-NOTE: icon:flask[] For Testnet contracts please visit the xref:./run-keep-node.adoc#testnet-contracts[link].
+NOTE: icon:flask[] For Testnet contracts please visit the xref:./deployments.adoc#goerli-contracts[link].
