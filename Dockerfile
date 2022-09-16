@@ -11,7 +11,7 @@ ENV GOPATH=/go \
 RUN apk add --update --no-cache \
 	g++ \
 	linux-headers \
-	protobuf \
+	protobuf-dev \
 	git \
 	make \
 	nodejs \
@@ -34,7 +34,7 @@ COPY go.mod go.sum $APP_DIR/
 RUN go mod download
 
 # Install code generators.
-RUN cd /go/pkg/mod/google.golang.org/protobuf@v1.28.1/cmd/protoc-gen-go/ && go install .
+RUN go install google.golang.org/protobuf/cmd/protoc-gen-go@v1.28.1
 
 # Copy source code for generation.
 COPY ./pkg/beacon/dkg/result/gen $APP_DIR/pkg/beacon/dkg/result/gen

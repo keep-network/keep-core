@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/ipfs/go-log"
+
 	"github.com/keep-network/keep-common/pkg/persistence"
 	"github.com/keep-network/keep-core/pkg/diagnostics"
 	"github.com/keep-network/keep-core/pkg/generator"
@@ -51,12 +52,13 @@ func Initialize(
 	ctx context.Context,
 	chain Chain,
 	netProvider net.Provider,
-	persistence persistence.Handle,
+	keyStorePersistence persistence.ProtectedHandle,
+	workPersistence persistence.BasicHandle,
 	scheduler *generator.Scheduler,
 	config Config,
 	registry *diagnostics.Registry,
 ) error {
-	node := newNode(chain, netProvider, persistence, scheduler, config)
+	node := newNode(chain, netProvider, keyStorePersistence, workPersistence, scheduler, config)
 	deduplicator := newDeduplicator()
 
 	registry.RegisterApplicationSource(

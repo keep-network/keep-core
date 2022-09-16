@@ -32,15 +32,17 @@ type node struct {
 func newNode(
 	chain Chain,
 	netProvider net.Provider,
-	persistence persistence.Handle,
+	keyStorePersistance persistence.ProtectedHandle,
+	workPersistence persistence.BasicHandle,
 	scheduler *generator.Scheduler,
 	config Config,
 ) *node {
-	walletRegistry := newWalletRegistry(persistence)
+	walletRegistry := newWalletRegistry(keyStorePersistance)
 
 	dkgExecutor := dkg.NewExecutor(
 		logger,
 		scheduler,
+		workPersistence,
 		config.PreParamsPoolSize,
 		config.PreParamsGenerationTimeout,
 		config.PreParamsGenerationDelay,

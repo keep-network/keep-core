@@ -7,6 +7,7 @@ import (
 
 	"github.com/ipfs/go-log/v2"
 
+	"github.com/keep-network/keep-common/pkg/persistence"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/generator"
 	"github.com/keep-network/keep-core/pkg/net"
@@ -24,6 +25,7 @@ type Executor struct {
 func NewExecutor(
 	logger log.StandardLogger,
 	scheduler *generator.Scheduler,
+	persistence persistence.BasicHandle,
 	preParamsPoolSize int,
 	preParamsGenerationTimeout time.Duration,
 	preParamsGenerationDelay time.Duration,
@@ -38,6 +40,7 @@ func NewExecutor(
 		tssPreParamsPool: newTssPreParamsPool(
 			logger,
 			scheduler,
+			persistence,
 			preParamsPoolSize,
 			preParamsGenerationTimeout,
 			preParamsGenerationDelay,

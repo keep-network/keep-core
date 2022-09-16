@@ -5,8 +5,9 @@ import (
 	"crypto/elliptic"
 	"encoding/hex"
 	"fmt"
-	"github.com/keep-network/keep-common/pkg/persistence"
 	"sync"
+
+	"github.com/keep-network/keep-common/pkg/persistence"
 )
 
 // walletRegistry is the component that holds the data of the wallets managed
@@ -27,7 +28,7 @@ type walletRegistry struct {
 }
 
 // newWalletRegistry creates a new instance of the walletRegistry.
-func newWalletRegistry(persistence persistence.Handle) *walletRegistry {
+func newWalletRegistry(persistence persistence.ProtectedHandle) *walletRegistry {
 	walletStorage := newWalletStorage(persistence)
 
 	// Pre-populate the wallet cache using the wallet storage.
@@ -86,11 +87,11 @@ func (wr *walletRegistry) getSigners(
 // used directly only by the walletRegistry.
 type walletStorage struct {
 	// persistence is the handle to the underlying persistence layer.
-	persistence persistence.Handle
+	persistence persistence.ProtectedHandle
 }
 
 // newWalletStorage creates a new instance of the walletStorage.
-func newWalletStorage(persistence persistence.Handle) *walletStorage {
+func newWalletStorage(persistence persistence.ProtectedHandle) *walletStorage {
 	return &walletStorage{persistence}
 }
 

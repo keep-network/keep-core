@@ -3,6 +3,8 @@ syntax = "proto3";
 option go_package = "./pb";
 package dkg;
 
+import "google/protobuf/timestamp.proto";
+
 message PreParams {
   message LocalPreParams {
     bytes nTilde = 2;
@@ -15,5 +17,5 @@ message PreParams {
   }
 
   LocalPreParams data = 1;
+  google.protobuf.Timestamp creationTimestamp = 2;
 }
-
