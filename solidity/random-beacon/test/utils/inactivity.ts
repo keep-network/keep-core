@@ -2,6 +2,9 @@ import { ethers } from "hardhat"
 
 import type { Operator } from "./operators"
 
+// default Hardhat's networks blockchain, see https://hardhat.org/config/
+const hardhatNetworkId = 31337
+
 // eslint-disable-next-line import/prefer-default-export
 export async function signOperatorInactivityClaim(
   signers: Operator[],
@@ -13,10 +16,12 @@ export async function signOperatorInactivityClaim(
   signatures: string
   signingMembersIndices: number[]
 }> {
-  const messageHash = ethers.utils.keccak256(ethers.utils.defaultAbiCoder.encode(
-    ["uint256", "bytes", "uint8[]"],
-    [nonce, groupPubKey, inactiveMembersIndices]
-  ))
+  const messageHash = ethers.utils.keccak256(
+    ethers.utils.defaultAbiCoder.encode(
+      ["uint256", "uint256", "bytes", "uint8[]"],
+      [hardhatNetworkId, nonce, groupPubKey, inactiveMembersIndices]
+    )
+  )
 
   const signingMembersIndices: number[] = []
   const signatures: string[] = []

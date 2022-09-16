@@ -5,7 +5,12 @@ import { expect } from "chai"
 
 import { constants, walletRegistryFixture } from "./fixtures"
 import { selectGroup, hashUint32Array } from "./utils/groups"
-import { signDkgResult, noMisbehaved, hashDKGMembers } from "./utils/dkg"
+import {
+  signDkgResult,
+  noMisbehaved,
+  hashDKGMembers,
+  hardhatNetworkId,
+} from "./utils/dkg"
 import ecdsaData from "./data/ecdsa"
 
 import type { IWalletOwner } from "../typechain/IWalletOwner"
@@ -695,10 +700,17 @@ describe("EcdsaDkgValidator", () => {
 
     context("when signatures contain wrong result hash", () => {
       const signWithWrongResultHash = async (signingOperators: Operator[]) => {
-        const wrongResultHash = ethers.utils.keccak256(ethers.utils.defaultAbiCoder.encode(
-          ["bytes", "uint8[]", "uint256"],
-          [groupPublicKey, noMisbehaved, dkgStartBlock + 12345]
-        ))
+        const wrongResultHash = ethers.utils.keccak256(
+          ethers.utils.defaultAbiCoder.encode(
+            ["uint256", "bytes", "uint8[]", "uint256"],
+            [
+              hardhatNetworkId,
+              groupPublicKey,
+              noMisbehaved,
+              dkgStartBlock + 12345,
+            ]
+          )
+        )
         const signatures = []
         for (let i = 0; i < signingOperators.length; i++) {
           const { signer: ethersSigner } = signingOperators[i]

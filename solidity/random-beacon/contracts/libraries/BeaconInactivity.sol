@@ -31,12 +31,12 @@ library BeaconInactivity {
         uint256[] inactiveMembersIndices;
         // Concatenation of signatures from members supporting the claim.
         // The message to be signed by each member is keccak256 hash of the
-        // concatenation of inactivity claim nonce for the given group, group
-        // public key, and inactive members indices. The calculated hash should
-        // be prefixed with `\x19Ethereum signed message:\n` before signing, so
-        // the message to sign is:
+        // concatenation of the chain ID, inactivity claim nonce for the given
+        // group, group public key, and inactive members indices. The calculated
+        // hash should be prefixed with `\x19Ethereum signed message:\n` before
+        // signing, so the message to sign is:
         // `\x19Ethereum signed message:\n${keccak256(
-        //    nonce | groupPubKey | inactiveMembersIndices
+        //    chainID | nonce | groupPubKey | inactiveMembersIndices
         // )}`
         bytes signatures;
         // Indices of members corresponding to each signature. Indices must be
@@ -106,7 +106,12 @@ library BeaconInactivity {
         // them in future in case some other application has a group with the
         // same ID and subset of members.
         bytes32 signedMessageHash = keccak256(
-            abi.encode(nonce, groupPubKey, claim.inactiveMembersIndices)
+            abi.encode(
+                block.chainid,
+                nonce,
+                groupPubKey,
+                claim.inactiveMembersIndices
+            )
         ).toEthSignedMessageHash();
 
         address[] memory groupMembersAddresses = sortitionPool.getIDOperators(

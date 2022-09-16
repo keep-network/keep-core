@@ -16,6 +16,9 @@ import type {
 
 const { provider } = waffle
 
+// default Hardhat's networks blockchain, see https://hardhat.org/config/
+export const hardhatNetworkId = 31337
+
 export const noMisbehaved: number[] = []
 
 export async function genesis(
@@ -219,10 +222,12 @@ export async function signDkgResult(
   signingMembersIndices: number[]
   signaturesBytes: string
 }> {
-  const resultHash = ethers.utils.keccak256(ethers.utils.defaultAbiCoder.encode(
-    ["bytes", "uint8[]", "uint256"],
-    [groupPublicKey, misbehavedMembersIndices, startBlock]
-  ))
+  const resultHash = ethers.utils.keccak256(
+    ethers.utils.defaultAbiCoder.encode(
+      ["uint256", "bytes", "uint8[]", "uint256"],
+      [hardhatNetworkId, groupPublicKey, misbehavedMembersIndices, startBlock]
+    )
+  )
 
   const members: number[] = []
   const signingMembersIndices: number[] = []

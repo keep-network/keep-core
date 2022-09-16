@@ -39,13 +39,13 @@ library EcdsaInactivity {
         bool heartbeatFailed;
         // Concatenation of signatures from members supporting the claim.
         // The message to be signed by each member is keccak256 hash of the
-        // concatenation of inactivity claim nonce for the given wallet, wallet
-        // public key, inactive members indices, and boolean flag indicating
-        // if this is a wallet-wide heartbeat failure. The calculated hash should
-        // be prefixed with `\x19Ethereum signed message:\n` before signing, so
-        // the message to sign is:
+        // concatenation of the chain ID, inactivity claim nonce for the given
+        // wallet, wallet public key, inactive members indices, and boolean flag
+        // indicating if this is a wallet-wide heartbeat failure. The calculated
+        // hash should be prefixed with `\x19Ethereum signed message:\n` before
+        // signing, so the message to sign is:
         // `\x19Ethereum signed message:\n${keccak256(
-        //    nonce | walletPubKey | inactiveMembersIndices | heartbeatFailed
+        //    chainID | nonce | walletPubKey | inactiveMembersIndices | heartbeatFailed
         // )}`
         bytes signatures;
         // Indices of members corresponding to each signature. Indices must be
@@ -112,9 +112,10 @@ library EcdsaInactivity {
             claim.signingMembersIndices,
             groupMembers.length
         );
-       
+
         bytes32 signedMessageHash = keccak256(
             abi.encode(
+                block.chainid,
                 nonce,
                 walletPubKey,
                 claim.inactiveMembersIndices,

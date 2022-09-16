@@ -220,6 +220,7 @@ contract EcdsaDkgValidator {
     ) public view returns (bool) {
         bytes32 hash = keccak256(
             abi.encode(
+                block.chainid,
                 result.groupPubKey,
                 result.misbehavedMembersIndices,
                 startBlock
