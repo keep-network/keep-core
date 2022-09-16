@@ -22,7 +22,6 @@ docker buildx build \
     --output type=local,dest=${BIN_OUTPUT_DIR} \
     --target=output-bins \
     --build-arg ENVIRONMENT=${ENVIRONMENT} \
-    --build-arg APP_NAME=${APP_NAME} \
     --build-arg VERSION=${VERSION} \
     --build-arg REVISION=${REVISION} \
     .

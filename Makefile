@@ -98,25 +98,54 @@ endif
 ifndef revision
 override revision = $(shell git rev-parse --short HEAD)
 endif
-output_dir = bin
-app_name = keep-client
 
-go_build_cmd = go build -ldflags "-X github.com/keep-network/keep-core/build.Version=$(version) -X github.com/keep-network/keep-core/build.Revision=$(revision)" -o $(output_dir)/$(1) -a .
-go_build_platform_cmd = GOOS=$(1) GOARCH=$(2) $(call go_build_cmd,$(app_name)-$(1)-$(2)-$(version))
+app_name := keep-client
+
+define go_build_cmd
+	$(eval out_dir := $(1))
+	$(eval file_name := $(2))
+	$(eval os := $(3))
+	$(eval arch := $(4))
+
+	GOOS=$(os) GOARCH=$(arch) go build \
+		-ldflags "-X github.com/keep-network/keep-core/build.Version=$(version) -X github.com/keep-network/keep-core/build.Revision=$(revision)" \
+		-o $(out_dir)/$(file_name) \
+		-a \
+		.
+endef
+
+define go_build_platform_cmd
+	$(eval os := $(firstword $(subst /, ,$(1))))
+	$(eval arch := $(lastword $(subst /, ,$(1))))
+	$(eval file_name := $(app_name)-$(environment)-$(os)-$(arch)-$(version))
+
+	$(call go_build_cmd,out/bin,$(file_name),$(os),$(arch))
+endef
 
 build:
 	$(info Building Go code)
-	$(call go_build_cmd,$(app_name))
+	$(call go_build_cmd,.,$(app_name))
 
-# TODO: Test and add more platforms.
-build-multi:
+platforms := linux/386 \
+	linux/amd64 \
+	darwin/amd64
+
+build_multi:
 	$(info Building client binaries for multiple platforms)
-	$(call go_build_platform_cmd,linux,386)
-	$(call go_build_platform_cmd,linux,amd64)
-	$(call go_build_platform_cmd,darwin,amd64)
+	$(foreach platform,$(platforms),$(call go_build_platform_cmd,$(platform)))
+
+out/bin/%.tar.gz:
+	cd $(@D) && tar -czvf $*.tar.gz $*
+	cd $(@D) && md5sum $*.tar.gz > $*.md5
+	cd $(@D) && sha256sum $*.tar.gz > $*.sha256
+
+binaries := $(addprefix out/bin/, $(addsuffix -$(version), $(addprefix $(app_name)-$(environment)-, $(subst /,-,$(platforms)))))
+build_packages = $(addsuffix .tar.gz,$(binaries))
+
+release: build_multi $(build_packages)
 
 cmd-help: build
-	@echo '$$ keep-client start --help' > docs/resources/client-start-help
-	./keep-client start --help >> docs/resources/client-start-help
+	@echo '$$ $(app_name) start --help' > docs/resources/client-start-help
+	./$(app_name) start --help >> docs/resources/client-start-help
 
-.PHONY: all development goerli download_artifacts generate gen_proto build cmd-help
+.PHONY: all development goerli download_artifacts generate gen_proto build cmd-help release build_multi

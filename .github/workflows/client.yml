@@ -143,7 +143,6 @@ jobs:
           outputs: type=local,dest=./tmp/bin/
           build-args: |
             ENVIRONMENT=${{ github.event.inputs.environment }}
-            APP_NAME=keep-client-${{ github.event.inputs.environment }}
             VERSION=${{ env.version }}
             REVISION=${{ env.revision }}
           push: false

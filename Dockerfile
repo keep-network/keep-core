@@ -77,9 +77,7 @@ ARG REVISION
 
 RUN GOOS=linux make build \
 	version=$VERSION \
-	revision=$REVISION \
-	output_dir=$APP_DIR \
-	app_name=$APP_NAME
+	revision=$REVISION
 
 FROM alpine:3.16 as runtime-docker
 
@@ -102,12 +100,13 @@ FROM build-sources AS build-bins
 
 WORKDIR $APP_DIR
 
-ARG APP_NAME=keep-client
 # Client Versioning.
 ARG VERSION
 ARG REVISION
 
-RUN make build-multi version=$VERSION revision=$REVISION output_dir=$APP_DIR/bin app_name=$APP_NAME
+RUN make release \
+	version=$VERSION \
+	revision=$REVISION
 
 FROM scratch as output-bins
 
