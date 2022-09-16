@@ -1,12 +1,12 @@
 package dkg
 
 import (
+	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
 	"sort"
 	"sync"
 
-	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ipfs/go-log/v2"
 
 	"github.com/keep-network/keep-common/pkg/persistence"
@@ -49,6 +49,7 @@ func (p *preParamsStorage) Save(pp *PreParams) (*PersistedPreParams, error) {
 	if err != nil {
 		return nil, fmt.Errorf("marshalling of the preparams failed: [%v]", err)
 	}
+	ppHash := sha256.Sum256(ppBytes)
 
 	fileName := fmt.Sprintf(
 		"pp_%d_%s",
@@ -57,7 +58,7 @@ func (p *preParamsStorage) Save(pp *PreParams) (*PersistedPreParams, error) {
 		pp.creationTimestamp.UnixMilli(),
 		// Add part of the hash for an ultra unlikely scenario that two saves
 		// happen in the exactly the same millisecond.
-		hex.EncodeToString(crypto.Keccak256(ppBytes))[:7],
+		hex.EncodeToString(ppHash[:7]),
 	)
 
 	if err := p.persistence.Save(
