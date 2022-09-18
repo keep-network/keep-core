@@ -1,6 +1,9 @@
 #!/bin/bash
 set -eou pipefail
 
+# This script should be run after scripts/diagnostics.sh which creates a single
+# file with peers data.
+
 LOG_START='\n\e[1;36m'           # new line + bold + color
 LOG_END='\n\e[0m'                # new line + reset color
 DONE_START='\n\e[1;32m'          # new line + bold + green
@@ -8,16 +11,16 @@ DONE_END='\n\n\e[0m'             # new line + reset
 LOG_WARNING_START='\n\e\033[33m' # new line + bold + warning color
 LOG_WARNING_END='\n\e\033[0m'    # new line + reset
 
-SOURCE_PROJECT_ID=keep-test-f3e0
-DESTINATION_BUCKET_NAME="diagnostics_test"
-PROJECT_NAME="keep-test"
-PEERS_LOCATION="diagnostics"
+BUCKET_NAME_DEFAULT="diagnostics_test"
+PEERS_DIR_PATH="diagnostics"
 
 help() {
   echo -e "\nUsage: $0" \
-    "--key-file-path <GCP-key-file-path>"
-  echo -e "\n\nCommand line arguments:\n"
-  echo -e "\t--key-file: GCP key file path\n"
+    "--oauth2-token-path <GCP-oauth2-token-path>" \
+    "--bucket-name <GCP-bucket-name>"
+  echo -e "\nCommand line arguments:\n"
+  echo -e "\t--oauth2-token: GCP oauth2 token path"
+  echo -e "\t--bucket-name: GCP destination bucket name\n"
   exit 1 # Exit script after printing help
 }
 
@@ -25,7 +28,8 @@ help() {
 for arg in "$@"; do
   shift
   case "$arg" in
-  "--key-file") set -- "$@" "-k" ;;
+  "--oauth2-token") set -- "$@" "-k" ;;
+  "--bucket-name") set -- "$@" "-b" ;;
   "--help") set -- "$@" "-h" ;;
   *) set -- "$@" "$arg" ;;
   esac
@@ -33,29 +37,30 @@ done
 
 # Parse short options
 OPTIND=1
-while getopts "k:h" opt; do
+while getopts "k:b:h" opt; do
   case "$opt" in
-  k) key_file_path="$OPTARG" ;;
+  k) oauth2_token_path="$OPTARG" ;;
+  b) bucket_name="$OPTARG" ;;
   h) help ;;
   ?) help ;; # Print help in case parameter is non-existent
   esac
 done
 shift $(expr $OPTIND - 1) # remove options from positional parameters
 
-KEY_FILE_PATH=${key_file_path:-""}
+OAUTH2_TOKEN_PATH=${oauth2_token_path:-""}
+BUCKET_NAME=${bucket_name:-${BUCKET_NAME_DEFAULT}}
 
-if [ "$KEY_FILE_PATH" == "" ]; then
-  printf "${LOG_WARNING_START}Key file must be provided.${LOG_WARNING_END}"
+if [ "$OAUTH2_TOKEN_PATH" == "" ]; then
+  printf "${LOG_WARNING_START}OAuth2 token must be provided.${LOG_WARNING_END}"
+  exit 1
 fi
 
-# Run script
-printf "${LOG_START}Authenticating with gcloud...${LOG_END}"
-gcloud auth activate-service-account --key-file $key_file_path
+# Read the file name to be uploaded to GCP bucket
+file_name=`find ${PEERS_DIR_PATH} -type f -exec basename {} \;`
 
-printf "${LOG_START}Setting cloud context to the ${PROJECT_NAME}...${LOG_END}"
-gcloud config set project $SOURCE_PROJECT_ID
-
-printf "${LOG_START}Uploading peers info to a ${DESTINATION_BUCKET_NAME} bucket...${LOG_END}"
-gcloud storage cp "${PEERS_LOCATION}/peers_*.json" gs://$DESTINATION_BUCKET_NAME/
+curl -X POST --data-binary @${PEERS_DIR_PATH}"/"${file_name} \
+     -H "Authorization: Bearer `cat ${OAUTH2_TOKEN_PATH}`" \
+     -H "Content-Type: application/json" \
+    "https://storage.googleapis.com/upload/storage/v1/b/${BUCKET_NAME}/o?name=${file_name}"
 
 printf "${DONE_START}Upload completed!${DONE_END}"
