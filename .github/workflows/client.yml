@@ -152,7 +152,9 @@ jobs:
         with:
           name: binaries
           path: |
-            out/bin/*.[tar.gz|md5|sha256]
+            out/bin/*.tar.gz
+            out/bin/*.md5
+            out/bin/*.sha256
 
       - name: Publish Client Binaries
         # if: github.event_name == 'workflow_dispatch'
