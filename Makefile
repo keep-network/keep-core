@@ -126,8 +126,7 @@ build:
 	$(info Building Go code)
 	$(call go_build_cmd,.,$(app_name))
 
-platforms := linux/386 \
-	linux/amd64 \
+platforms := linux/amd64 \
 	darwin/amd64
 
 build_multi:
