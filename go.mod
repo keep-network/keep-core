@@ -16,7 +16,6 @@ require (
 	github.com/btcsuite/btcd v0.22.1
 	github.com/btcsuite/btcd/btcec/v2 v2.2.0
 	github.com/ethereum/go-ethereum v1.10.19
-	github.com/gogo/protobuf v1.3.2
 	github.com/google/gofuzz v1.1.1-0.20200604201612-c04b05f3adfa
 	github.com/hashicorp/go-multierror v1.1.1
 	github.com/ipfs/go-datastore v0.5.1
@@ -63,6 +62,7 @@ require (
 	github.com/go-stack/stack v1.8.0 // indirect
 	github.com/go-task/slim-sprig v0.0.0-20210107165309-348f09dbbbc0 // indirect
 	github.com/godbus/dbus/v5 v5.0.4 // indirect
+	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/google/gopacket v1.1.19 // indirect
 	github.com/google/uuid v1.3.0 // indirect
