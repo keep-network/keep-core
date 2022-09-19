@@ -157,10 +157,16 @@ jobs:
             out/bin/*.sha256
 
       - name: Publish Client Binaries
+        # TODO: Enable `if` filter once tested
         # if: github.event_name == 'workflow_dispatch'
-        # TODO: Implement
-        run: |
-          ls -l ./out/bin/
+        uses: thesis/gcp-storage-bucket-action@v3.1.0
+        with:
+          service-key: ${{ secrets.KEEP_TEST_CLIENT_BINARIES_UPLOADER_SERVICE_KEY_JSON_BASE64 }}
+          # TODO: Change to keep-prd-210b once mainnet setup is done and we are sure we want to publish mainnet builds automatically.
+          project: keep-test-f3e0
+          bucket-name: keep-test-client-binaries
+          bucket-path: ${{ github.event.inputs.environment }}/${{ env.version }}
+          build-folder: out/bin
 
       - name: Notify CI about completion of the workflow
         if: github.event_name == 'workflow_dispatch'
