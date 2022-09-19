@@ -117,7 +117,7 @@ endef
 define go_build_platform_cmd
 	$(eval os := $(firstword $(subst /, ,$(1))))
 	$(eval arch := $(lastword $(subst /, ,$(1))))
-	$(eval file_name := $(app_name)-$(environment)-$(os)-$(arch)-$(version))
+	$(eval file_name := $(app_name)-$(environment)-$(version)-$(os)-$(arch))
 
 	$(call go_build_cmd,out/bin,$(file_name),$(os),$(arch))
 endef
@@ -138,7 +138,7 @@ out/bin/%.tar.gz:
 	cd $(@D) && md5sum $*.tar.gz > $*.md5
 	cd $(@D) && sha256sum $*.tar.gz > $*.sha256
 
-binaries := $(addprefix out/bin/, $(addsuffix -$(version), $(addprefix $(app_name)-$(environment)-, $(subst /,-,$(platforms)))))
+binaries := $(addprefix out/bin/$(app_name)-$(environment)-$(version)-, $(subst /,-,$(platforms)))
 build_packages = $(addsuffix .tar.gz,$(binaries))
 
 release: build_multi $(build_packages)
