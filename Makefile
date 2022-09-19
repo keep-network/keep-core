@@ -21,7 +21,7 @@ goerli:
 local:
 	make all environment=local
 
-all: get_artifacts generate build cmd-help
+all: get_artifacts generate build cmd-help release
 
 modules := beacon \
 	ecdsa \
