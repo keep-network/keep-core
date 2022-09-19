@@ -100,11 +100,14 @@ FROM build-sources AS build-bins
 
 WORKDIR $APP_DIR
 
+ARG ENVIRONMENT
+
 # Client Versioning.
 ARG VERSION
 ARG REVISION
 
 RUN make release \
+	environment=$ENVIRONMENT \
 	version=$VERSION \
 	revision=$REVISION
 
