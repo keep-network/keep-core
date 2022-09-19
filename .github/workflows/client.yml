@@ -28,6 +28,8 @@ on:
         required: false
         default: "main"
 
+# TODO: Implement automatic releases creation on tags push with https://github.com/softprops/action-gh-release
+
 jobs:
   client-detect-changes:
     runs-on: ubuntu-latest
