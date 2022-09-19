@@ -163,8 +163,7 @@ jobs:
             out/bin/*.sha256
 
       - name: Publish Client Binaries
-        # TODO: Enable `if` filter once tested
-        # if: github.event_name == 'workflow_dispatch'
+        if: github.event_name == 'workflow_dispatch'
         uses: thesis/gcp-storage-bucket-action@v3.1.0
         with:
           service-key: ${{ secrets.KEEP_TEST_CLIENT_BINARIES_UPLOADER_SERVICE_KEY_JSON_BASE64 }}
