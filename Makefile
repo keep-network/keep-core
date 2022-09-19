@@ -134,7 +134,7 @@ build_multi:
 	$(foreach platform,$(platforms),$(call go_build_platform_cmd,$(platform)))
 
 out/bin/%.tar.gz:
-	cd $(@D) && tar -czvf $*.tar.gz $* && rm $*
+	cd $(@D) && cp $* keep-client && tar -czvf $*.tar.gz keep-client && rm $* keep-client
 	cd $(@D) && md5sum $*.tar.gz > $*.md5
 	cd $(@D) && sha256sum $*.tar.gz > $*.sha256
 
