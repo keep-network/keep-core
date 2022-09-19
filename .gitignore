@@ -60,5 +60,5 @@ pkg/chain/*/*/gen/_address
 # Temporary directory
 tmp/
 
-# Go Binaries
-bin/
+# Output directory
+out/
