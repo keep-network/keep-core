@@ -139,6 +139,8 @@ func (n *node) joinDKGIfEligible(seed *big.Int, startBlockNumber uint64) {
 			return
 		}
 
+		dkg.RegisterUnmarshallers(broadcastChannel)
+
 		membershipValidator := group.NewMembershipValidator(
 			dkgLogger,
 			selectedSigningGroupOperators,
@@ -439,6 +441,8 @@ func (n *node) joinSigningIfEligible(
 			signingLogger.Errorf("failed to get broadcast channel: [%v]", err)
 			return
 		}
+
+		signing.RegisterUnmarshallers(broadcastChannel)
 
 		membershipValidator := group.NewMembershipValidator(
 			signingLogger,
