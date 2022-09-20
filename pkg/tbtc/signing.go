@@ -180,10 +180,7 @@ func (srl *signingRetryLoop) start(
 
 		// Check the loop stop signal.
 		if ctx.Err() != nil {
-			return nil, fmt.Errorf(
-				"signing retry loop received stop signal on attempt [%v]",
-				srl.attemptCounter,
-			)
+			return nil, nil
 		}
 
 		var result *signing.Result

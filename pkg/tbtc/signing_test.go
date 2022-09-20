@@ -128,7 +128,7 @@ func TestSigningRetryLoop(t *testing.T) {
 			signingAttemptFn: func(attempt *signingAttemptParams) (*signing.Result, error) {
 				return nil, fmt.Errorf("invalid data")
 			},
-			expectedErr:         fmt.Errorf("signing retry loop received stop signal on attempt [1]"),
+			expectedErr:         nil,
 			expectedResult:      nil,
 			expectedLastAttempt: nil,
 		},

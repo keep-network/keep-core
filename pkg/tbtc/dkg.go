@@ -150,10 +150,7 @@ func (drl *dkgRetryLoop) start(
 
 		// Check the loop stop signal.
 		if ctx.Err() != nil {
-			return nil, 0, fmt.Errorf(
-				"dkg retry loop received stop signal on attempt [%v]",
-				drl.attemptCounter,
-			)
+			return nil, 0, nil
 		}
 
 		var result *dkg.Result

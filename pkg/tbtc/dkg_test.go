@@ -308,7 +308,7 @@ func TestDkgRetryLoop(t *testing.T) {
 			dkgAttemptFn: func(attempt *dkgAttemptParams) (*dkg.Result, uint64, error) {
 				return nil, 0, fmt.Errorf("invalid data")
 			},
-			expectedErr:               fmt.Errorf("dkg retry loop received stop signal on attempt [1]"),
+			expectedErr:               nil,
 			expectedResult:            nil,
 			expectedExecutionEndBlock: 0,
 			expectedLastAttempt:       nil,
