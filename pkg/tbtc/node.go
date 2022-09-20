@@ -189,6 +189,7 @@ func (n *node) joinDKGIfEligible(seed *big.Int, startBlockNumber uint64) {
 
 				result, executionEndBlock, err := retryLoop.start(
 					loopCtx,
+					n.waitForBlockHeight,
 					func(attempt *dkgAttemptParams) (*dkg.Result, uint64, error) {
 						dkgAttemptLogger := dkgLogger.With(
 							zap.Uint("attempt", attempt.number),
@@ -369,8 +370,9 @@ func (n *node) joinDKGIfEligible(seed *big.Int, startBlockNumber uint64) {
 // can block for an extended period of time while it completes the operation.
 //
 // TODO: Ultimately, one client will handle multiple signature requests for
-//       multiple wallets. Because of that, logging within that function
-//       must use the context of the given signature request.
+//
+//	multiple wallets. Because of that, logging within that function
+//	must use the context of the given signature request.
 func (n *node) joinSigningIfEligible(
 	message *big.Int,
 	walletPublicKey *ecdsa.PublicKey,
@@ -468,6 +470,7 @@ func (n *node) joinSigningIfEligible(
 
 				result, err := retryLoop.start(
 					loopCtx,
+					n.waitForBlockHeight,
 					func(attempt *signingAttemptParams) (*signing.Result, error) {
 						signingAttemptLogger := signingLogger.With(
 							zap.Uint("attempt", attempt.number),
@@ -535,4 +538,24 @@ func (n *node) joinSigningIfEligible(
 	} else {
 		signingLogger.Info("not eligible for signing")
 	}
+}
+
+// TODO: this should become a part of BlockHeightWaiter interface.
+func (n *node) waitForBlockHeight(ctx context.Context, blockHeight uint64) error {
+	blockCounter, err := n.chain.BlockCounter()
+	if err != nil {
+		return err
+	}
+
+	wait, err := blockCounter.BlockHeightWaiter(blockHeight)
+	if err != nil {
+		return err
+	}
+
+	select {
+	case <-wait:
+	case <-ctx.Done():
+	}
+
+	return nil
 }

@@ -3,13 +3,14 @@ package tbtc
 import (
 	"context"
 	"fmt"
+	"math/big"
+	"reflect"
+	"testing"
+
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/protocol/group"
 	"github.com/keep-network/keep-core/pkg/tecdsa"
 	"github.com/keep-network/keep-core/pkg/tecdsa/signing"
-	"math/big"
-	"reflect"
-	"testing"
 )
 
 func TestSigningRetryLoop(t *testing.T) {
@@ -146,10 +147,15 @@ func TestSigningRetryLoop(t *testing.T) {
 			ctx, cancelCtx := test.ctxFn()
 			defer cancelCtx()
 
+			var lastAttemptStartBlock uint64
 			var lastAttempt *signingAttemptParams
 
 			result, err := retryLoop.start(
 				ctx,
+				func(ctx context.Context, attemptStartBlock uint64) error {
+					lastAttemptStartBlock = attemptStartBlock
+					return nil
+				},
 				func(params *signingAttemptParams) (*signing.Result, error) {
 					lastAttempt = params
 					return test.signingAttemptFn(params)
@@ -174,6 +180,17 @@ func TestSigningRetryLoop(t *testing.T) {
 					test.expectedResult,
 					result,
 				)
+			}
+
+			if test.expectedLastAttempt != nil {
+				if test.expectedLastAttempt.startBlock != lastAttemptStartBlock {
+					t.Errorf("unexpected last attempt start block\n"+
+						"expected: [%+v]\n"+
+						"actual:   [%+v]",
+						test.expectedLastAttempt.startBlock,
+						lastAttemptStartBlock,
+					)
+				}
 			}
 
 			if !reflect.DeepEqual(test.expectedLastAttempt, lastAttempt) {

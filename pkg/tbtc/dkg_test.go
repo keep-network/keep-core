@@ -328,10 +328,15 @@ func TestDkgRetryLoop(t *testing.T) {
 			ctx, cancelCtx := test.ctxFn()
 			defer cancelCtx()
 
+			var lastAttemptStartBlock uint64
 			var lastAttempt *dkgAttemptParams
 
 			result, executionEndBlock, err := retryLoop.start(
 				ctx,
+				func(ctx context.Context, attemptStartBlock uint64) error {
+					lastAttemptStartBlock = attemptStartBlock
+					return nil
+				},
 				func(params *dkgAttemptParams) (*dkg.Result, uint64, error) {
 					lastAttempt = params
 					return test.dkgAttemptFn(params)
@@ -366,6 +371,17 @@ func TestDkgRetryLoop(t *testing.T) {
 					test.expectedResult,
 					result,
 				)
+			}
+
+			if test.expectedLastAttempt != nil {
+				if test.expectedLastAttempt.startBlock != lastAttemptStartBlock {
+					t.Errorf("unexpected last attempt start block\n"+
+						"expected: [%+v]\n"+
+						"actual:   [%+v]",
+						test.expectedLastAttempt.startBlock,
+						lastAttemptStartBlock,
+					)
+				}
 			}
 
 			if !reflect.DeepEqual(test.expectedLastAttempt, lastAttempt) {
