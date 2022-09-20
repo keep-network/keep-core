@@ -10,6 +10,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
+
 	"github.com/keep-network/keep-common/pkg/chain/ethereum"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/chain/ethereum/ecdsa/gen/contract"
@@ -42,7 +43,14 @@ func newTbtcChain(
 	config ethereum.Config,
 	baseChain *baseChain,
 ) (*TbtcChain, error) {
-	walletRegistryAddress, err := config.ContractAddress(WalletRegistryContractName)
+	// FIXME: Use `WalletRegistryContractName` instead of `RandomBeaconContractName`.
+	// DKG for the WalletRegistry depends on the RandomBeacon group creation.
+	// Currently the client doesn't publish a generated group to the chain
+	// as it works against a mocked chain implementation. Without a Beacon group
+	// published to the chain, the WalletRegistry's DKG cannot start. As a workaround
+	// for the first stage of the Chaosnet we use the RandomBeacon's address,
+	// as the client only wants to get to the sortition pool to select a group.
+	walletRegistryAddress, err := config.ContractAddress(RandomBeaconContractName)
 	if err != nil {
 		return nil, fmt.Errorf(
 			"failed to resolve %s contract address: [%v]",
