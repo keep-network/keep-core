@@ -219,6 +219,18 @@ func (p *preParamsStorage) ReadAll() ([]*PersistedPreParams, error) {
 				)
 				continue
 			}
+			// Validate recovered PreParams with the same function that is used
+			// in tss-lib and causes panic if the PreParams fail the validation.
+			// Ref: https://github.com/bnb-chain/tss-lib/blob/cbfa6cf63f18f471429eaab0a5f51cf72b7e9df8/ecdsa/keygen/local_party.go#L71-L73
+			if !persistedPreParams.Data.data.ValidateWithProof() {
+				p.logger.Errorf(
+					"PreParams recovered from file [%s] in directory [%s] failed validation",
+					descriptor.Name(),
+					descriptor.Directory(),
+				)
+				continue
+			}
+
 			persistedPreParams.ID = descriptor.Name()
 
 			allPreParams = append(allPreParams, persistedPreParams)
