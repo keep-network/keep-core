@@ -65,14 +65,10 @@ func (r *Registry) RegisterConnectedPeersSource(
 
 			var peerAddr string
 			for _, peerAddrInfo := range peersAddrInfo {
-				// Peer may contain public and local addresses. We need to fetch a
-				// public address only. Range of local addresses starting from 127.* are
-				// skipped.
 				if strings.Contains(peerAddrInfo.String(), eligibleDNS4) ||
-					(strings.Contains(peerAddrInfo.String(), eligibleIP4) &&
-						!strings.Contains(peerAddrInfo.String(), "/127.")) {
+					(strings.Contains(peerAddrInfo.String(), eligibleIP4)) {
 					// address is formatted as follows /<protocol_code>/<ip_address>/<connection_protocol>/<port>
-					// Address is  the 1st index
+					// Address is the 1st index
 					peerAddr = strings.Split(strings.Trim(peerAddrInfo.String(), "/"), "/")[1]
 				}
 			}
