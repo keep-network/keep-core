@@ -184,7 +184,7 @@ jobs:
           environment: ${{ github.event.inputs.environment }}
           upstream_builds: ${{ github.event.inputs.upstream_builds }}
           upstream_ref: ${{ github.event.inputs.upstream_ref }}
-          version: ${{ github.sha }} # TODO: replace with version once versioning ready
+          version: ${{ env.version }}
 
       - # Temp fix - move cache instead of copying (added below step and
         # modified value of `cache-to`).
