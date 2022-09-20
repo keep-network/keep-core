@@ -45,6 +45,12 @@ func (sp *StopPill) Unmarshal(bytes []byte) error {
 	return nil
 }
 
+func registerStopPillUnmarshaller(channel net.BroadcastChannel) {
+	channel.SetUnmarshaler(func() net.TaggedUnmarshaler {
+		return &StopPill{}
+	})
+}
+
 func sendStopPill(
 	ctx context.Context,
 	broadcastChannel net.BroadcastChannel,

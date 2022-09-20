@@ -140,6 +140,7 @@ func (n *node) joinDKGIfEligible(seed *big.Int, startBlockNumber uint64) {
 		}
 
 		dkg.RegisterUnmarshallers(broadcastChannel)
+		registerStopPillUnmarshaller(broadcastChannel)
 
 		membershipValidator := group.NewMembershipValidator(
 			dkgLogger,
@@ -443,6 +444,7 @@ func (n *node) joinSigningIfEligible(
 		}
 
 		signing.RegisterUnmarshallers(broadcastChannel)
+		registerStopPillUnmarshaller(broadcastChannel)
 
 		membershipValidator := group.NewMembershipValidator(
 			signingLogger,
