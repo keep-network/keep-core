@@ -171,7 +171,7 @@ func (srl *signingRetryLoop) start(
 		err := waitWithSigningAttemptFn(ctx, srl.attemptStartBlock)
 		if err != nil {
 			return nil, fmt.Errorf(
-				"failed waiting on block [%v] for attempt [%v]: [%v]",
+				"failed waiting for block [%v] for attempt [%v]: [%v]",
 				srl.attemptStartBlock,
 				srl.attemptCounter+1,
 				err,

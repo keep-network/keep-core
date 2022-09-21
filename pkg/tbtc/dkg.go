@@ -141,7 +141,7 @@ func (drl *dkgRetryLoop) start(
 		err := waitWithDkgAttemptFn(ctx, drl.attemptStartBlock)
 		if err != nil {
 			return nil, 0, fmt.Errorf(
-				"failed waiting on block [%v] for attempt [%v]: [%v]",
+				"failed waiting for block [%v] for attempt [%v]: [%v]",
 				drl.attemptStartBlock,
 				drl.attemptCounter+1,
 				err,
