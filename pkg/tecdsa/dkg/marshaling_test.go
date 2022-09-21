@@ -286,9 +286,6 @@ func TestPreParamsMarshalling(t *testing.T) {
 	}
 
 	localPreParams := testData[0].LocalPreParams
-	// we do not serialize PaillierSK for PreParams because it is empty
-	// for LocalPreParams not used yet in DKG
-	localPreParams.PaillierSK = nil
 
 	preParams := newPreParams(&localPreParams)
 
@@ -298,10 +295,15 @@ func TestPreParamsMarshalling(t *testing.T) {
 		t.Fatal(err)
 	}
 	if !reflect.DeepEqual(preParams, unmarshaled) {
-		t.Fatalf(
+		t.Errorf(
 			"unexpected content of unmarshaled pre-params\nexpected: %+v\nactual:   %+v\n",
 			preParams,
 			unmarshaled,
 		)
+	}
+
+	// Check if PreParams Data pass the tss-lib validation.
+	if !unmarshaled.data.ValidateWithProof() {
+		t.Errorf("unmarshaled pre params data are invalid")
 	}
 }

@@ -6,7 +6,18 @@ package dkg;
 import "google/protobuf/timestamp.proto";
 
 message PreParams {
+  message PublicKey {
+    bytes n = 1;
+  }
+
+  message PrivateKey {
+    PublicKey publicKey = 1;
+    bytes lambdaN = 2;
+    bytes phiN = 3;
+  }
+  
   message LocalPreParams {
+    PrivateKey paillierSK = 1;
     bytes nTilde = 2;
     bytes h1i = 3;
     bytes h2i = 4;
