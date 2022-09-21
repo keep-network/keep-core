@@ -65,16 +65,16 @@ type signingAttemptParams struct {
 // signingAttemptFn represents a function performing a signing attempt.
 type signingAttemptFn func(*signingAttemptParams) (*signing.Result, error)
 
-// waitForSigningAttemptFn represents a function blocking the attempt execution
+// waitWithSigningAttemptFn represents a function blocking the attempt execution
 // until the given block height.
-type waitForSigningAttemptFn func(context.Context, uint64) error
+type waitWithSigningAttemptFn func(context.Context, uint64) error
 
 // start begins the signing retry loop using the given signing attempt function.
 // The retry loop terminates when the signing result is produced or the ctx
 // parameter is done, whatever comes first.
 func (srl *signingRetryLoop) start(
 	ctx context.Context,
-	waitForSigningAttemptFn waitForSigningAttemptFn,
+	waitWithSigningAttemptFn waitWithSigningAttemptFn,
 	signingAttemptFn signingAttemptFn,
 ) (*signing.Result, error) {
 	// We want to take the random subset right away for the first attempt.
@@ -168,7 +168,7 @@ func (srl *signingRetryLoop) start(
 
 		// Wait for the right moment to execute the signingAttemptFn, as
 		// calculated in srl.attemptStartBlock.
-		err := waitForSigningAttemptFn(ctx, srl.attemptStartBlock)
+		err := waitWithSigningAttemptFn(ctx, srl.attemptStartBlock)
 		if err != nil {
 			return nil, fmt.Errorf(
 				"failed waiting on block [%v] for attempt [%v]: [%v]",

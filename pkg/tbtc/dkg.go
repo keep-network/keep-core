@@ -75,16 +75,16 @@ type dkgAttemptParams struct {
 // dkgAttemptFn represents a function performing a DKG attempt.
 type dkgAttemptFn func(*dkgAttemptParams) (*dkg.Result, uint64, error)
 
-// waitForAttemptFn represents a function blocking the attempt execution until
-// the given block height.
-type waitForDkgAttemptFn func(context.Context, uint64) error
+// waitWithDkgAttemptFn represents a function blocking the attempt execution
+// until the given block height.
+type waitWithDkgAttemptFn func(context.Context, uint64) error
 
 // start begins the DKG retry loop using the given DKG attempt function.
 // The retry loop terminates when the DKG result is produced or the ctx
 // parameter is done, whatever comes first.
 func (drl *dkgRetryLoop) start(
 	ctx context.Context,
-	waitForDkgAttemptFn waitForDkgAttemptFn,
+	waitWithDkgAttemptFn waitWithDkgAttemptFn,
 	dkgAttemptFn dkgAttemptFn,
 ) (*dkg.Result, uint64, error) {
 	// All selected operators should be qualified for the first attempt.
@@ -138,7 +138,7 @@ func (drl *dkgRetryLoop) start(
 
 		// Wait for the right moment to execute the attemptFn, as calculated
 		// in drl.attemptStartBlock.
-		err := waitForDkgAttemptFn(ctx, drl.attemptStartBlock)
+		err := waitWithDkgAttemptFn(ctx, drl.attemptStartBlock)
 		if err != nil {
 			return nil, 0, fmt.Errorf(
 				"failed waiting on block [%v] for attempt [%v]: [%v]",
