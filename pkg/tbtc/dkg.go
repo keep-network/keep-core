@@ -143,7 +143,7 @@ func (drl *dkgRetryLoop) start(
 			return nil, 0, fmt.Errorf(
 				"failed waiting for block [%v] for attempt [%v]: [%v]",
 				drl.attemptStartBlock,
-				drl.attemptCounter+1,
+				drl.attemptCounter,
 				err,
 			)
 		}

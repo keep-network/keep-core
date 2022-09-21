@@ -173,7 +173,7 @@ func (srl *signingRetryLoop) start(
 			return nil, fmt.Errorf(
 				"failed waiting for block [%v] for attempt [%v]: [%v]",
 				srl.attemptStartBlock,
-				srl.attemptCounter+1,
+				srl.attemptCounter,
 				err,
 			)
 		}
