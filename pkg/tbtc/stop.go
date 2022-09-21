@@ -55,9 +55,9 @@ func sendStopPill(
 	ctx context.Context,
 	broadcastChannel net.BroadcastChannel,
 	attemptNumber uint,
-) {
+) error {
 	stopPill := &StopPill{uint64(attemptNumber)}
-	broadcastChannel.Send(ctx, stopPill)
+	return broadcastChannel.Send(ctx, stopPill)
 }
 
 func cancelContextOnStopSignal(

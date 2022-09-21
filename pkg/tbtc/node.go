@@ -239,7 +239,14 @@ func (n *node) joinDKGIfEligible(seed *big.Int, startBlockNumber uint64) {
 							return nil, 0, err
 						}
 
-						sendStopPill(loopCtx, broadcastChannel, attempt.number)
+						if err := sendStopPill(loopCtx, broadcastChannel, attempt.number); err != nil {
+							dkgLogger.Errorf(
+								"[member:%v] could not send the stop pill: [%v]",
+								memberIndex,
+								err,
+							)
+						}
+
 						return result, executionEndBlock, nil
 					},
 				)
@@ -539,7 +546,14 @@ func (n *node) joinSigningIfEligible(
 							return nil, err
 						}
 
-						sendStopPill(loopCtx, broadcastChannel, attempt.number)
+						if err := sendStopPill(loopCtx, broadcastChannel, attempt.number); err != nil {
+							signingLogger.Errorf(
+								"[member:%v] could not send the stop pill: [%v]",
+								signer.signingGroupMemberIndex,
+								err,
+							)
+						}
+
 						return result, nil
 					},
 				)
