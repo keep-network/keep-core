@@ -257,7 +257,7 @@ func (n *node) joinDKGIfEligible(seed *big.Int, startBlockNumber uint64) {
 				// the result has been produced but the current member did not
 				// participate in the work so they do not know the result.
 				if result == nil {
-					dkgLogger.Info(
+					dkgLogger.Infof(
 						"[member:%v] dkg retry loop received stop signal",
 						memberIndex,
 					)
@@ -558,7 +558,7 @@ func (n *node) joinSigningIfEligible(
 				// the result has been produced but the current member did not
 				// participate in the work so they do not know the result.
 				if result == nil {
-					signingLogger.Info(
+					signingLogger.Infof(
 						"[member:%v] signing retry loop received stop signal",
 						signer.signingGroupMemberIndex,
 					)
