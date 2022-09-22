@@ -66,7 +66,7 @@ func Initialize(
 		metricsRegistry.ObserveApplicationSource(
 			"tbtc",
 			map[string]metrics.Source{
-				"pre_params_in_pool": func() float64 {
+				"pre_params_count": func() float64 {
 					return float64(node.dkgExecutor.PreParamsCount())
 				},
 			},
