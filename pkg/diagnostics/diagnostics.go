@@ -61,9 +61,9 @@ func (r *Registry) RegisterConnectedPeersSource(
 		for peer, multiaddrs := range connectedPeersAddrInfo {
 			var addresses []string
 			var peerAddr string
-			// Multiaddr is formatted as follows /<protocol_code>/<address>/<connection_protocol>/<port>
-			// Address is the 1st index
 			for _, address := range multiaddrs {
+				// Multiaddr is formatted as follows /<protocol_code>/<address>/<connection_protocol>/<port>
+				// Address is the 1st index
 				peerAddr = strings.Split(strings.Trim(address, "/"), "/")[1]
 				addresses = append(addresses, peerAddr)
 			}
