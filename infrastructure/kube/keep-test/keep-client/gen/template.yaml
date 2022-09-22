@@ -16,6 +16,14 @@ network: goerli
 #@ def account():
 #@   return "account-" + str(client.id)
 #@ end
+
+#@ def announcedAddresses():
+#@   result = "/dns4/" + name() + ".default.svc.cluster.local/tcp/3919"
+#@   if client.publicAnnouncedAddress:
+#@     result += ",/dns4/" + client.publicAnnouncedAddress + "/tcp/3919"
+#@   end
+#@   return result
+#@ end
 ---
 apiVersion: apps/v1
 kind: StatefulSet
@@ -90,7 +98,7 @@ spec:
             - "--network.port"
             - "3919"
             - "--network.announcedAddresses"
-            -  #@ "/dns4/" + name() + ".default.svc.cluster.local/tcp/3919"
+            -  #@ announcedAddresses()
             #@ if client.networkPeers:
             - "--network.peers"
             -  #@ client.networkPeers
@@ -163,4 +171,5 @@ spec:
       targetPort: 9701
       name: diagnostics
   selector: #@ labels()
+  loadBalancerIP: #@ client.staticIP
 #@ end

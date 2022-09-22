@@ -86,7 +86,7 @@ spec:
         - --network.port
         - "3919"
         - --network.announcedAddresses
-        - /dns4/keep-client-0.default.svc.cluster.local/tcp/3919
+        - /dns4/keep-client-0.default.svc.cluster.local/tcp/3919,/dns4/bootstrap-0.test.keep.network/tcp/3919
         - --metrics.port
         - "9601"
         - --diagnostics.port
@@ -200,6 +200,7 @@ spec:
     type: client
     id: "0"
     network: goerli
+  loadBalancerIP: 104.154.61.116
 ---
 apiVersion: apps/v1
 kind: StatefulSet
@@ -288,7 +289,7 @@ spec:
         - --network.port
         - "3919"
         - --network.announcedAddresses
-        - /dns4/keep-client-1.default.svc.cluster.local/tcp/3919
+        - /dns4/keep-client-1.default.svc.cluster.local/tcp/3919,/dns4/bootstrap-1.test.keep.network/tcp/3919
         - --network.peers
         - /dns4/keep-client-0.default.svc.cluster.local/tcp/3919/ipfs/16Uiu2HAmCcfVpHwfBKNFbQuhvGuFXHVLQ65gB4sJm7HyrcZuLttH
         - --metrics.port
@@ -404,6 +405,7 @@ spec:
     type: client
     id: "1"
     network: goerli
+  loadBalancerIP: 35.223.100.87
 ---
 apiVersion: apps/v1
 kind: StatefulSet
@@ -608,6 +610,7 @@ spec:
     type: client
     id: "2"
     network: goerli
+  loadBalancerIP: null
 ---
 apiVersion: apps/v1
 kind: StatefulSet
@@ -812,6 +815,7 @@ spec:
     type: client
     id: "3"
     network: goerli
+  loadBalancerIP: null
 ---
 apiVersion: apps/v1
 kind: StatefulSet
@@ -1016,3 +1020,4 @@ spec:
     type: client
     id: "4"
     network: goerli
+  loadBalancerIP: null

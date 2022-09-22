@@ -2,8 +2,12 @@
 ---
 clients:
   - id: 0
+    publicAnnouncedAddress: "bootstrap-0.test.keep.network"
+    staticIP: "104.154.61.116"
   - id: 1
     networkPeers: /dns4/keep-client-0.default.svc.cluster.local/tcp/3919/ipfs/16Uiu2HAmCcfVpHwfBKNFbQuhvGuFXHVLQ65gB4sJm7HyrcZuLttH
+    publicAnnouncedAddress: "bootstrap-1.test.keep.network"
+    staticIP: "35.223.100.87"
   - id: 2
     networkPeers: /dns4/keep-client-1.default.svc.cluster.local/tcp/3919/ipfs/16Uiu2HAm3eJtyFKAttzJ85NLMromHuRg4yyum3CREMf6CHBBV6KY
   - id: 3
