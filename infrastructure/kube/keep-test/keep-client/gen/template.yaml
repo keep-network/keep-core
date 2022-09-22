@@ -63,9 +63,12 @@ spec:
           image: "gcr.io/keep-test-f3e0/keep-client:latest"
           imagePullPolicy: Always
           ports:
-            - containerPort: 3919
-            - containerPort: 9601
-            - containerPort: 9701
+            - name: network
+              containerPort: 3919
+            - name: metrics
+              containerPort: 9601
+            - name: diagnostics
+              containerPort: 9701
           env:
             - name: KEEP_ETHEREUM_PASSWORD
               valueFrom:
@@ -161,15 +164,15 @@ metadata:
 spec:
   type: LoadBalancer
   ports:
-    - port: 3919
-      targetPort: 3919
-      name: network
-    - port: 9601
-      targetPort: 9601
-      name: metrics
-    - port: 9701
-      targetPort: 9701
-      name: diagnostics
+    - name: network
+      port: 3919
+      targetPort: network
+    - name: metrics
+      port: 9601
+      targetPort: metrics
+    - name: diagnostics
+      port: 9701
+      targetPort: diagnostics
   selector: #@ labels()
   loadBalancerIP: #@ client.staticIP
 #@ end
