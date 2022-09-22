@@ -21,7 +21,7 @@ func TestGetNow(t *testing.T) {
 	defer scheduler.stop()
 
 	for {
-		if pool.CurrentSize() == 5 {
+		if pool.ParametersCount() == 5 {
 			break
 		}
 		// Yield the processor so that the generation goroutines could do their
@@ -70,11 +70,11 @@ func TestStop(t *testing.T) {
 	// give some time for the generation process to stop and capture the number
 	// of parameters generated
 	time.Sleep(10 * time.Millisecond)
-	size := pool.CurrentSize()
+	size := pool.ParametersCount()
 
 	// wait some time and make sure no new parameters are generated
 	time.Sleep(20 * time.Millisecond)
-	if size != pool.CurrentSize() {
+	if size != pool.ParametersCount() {
 		t.Errorf("expected no new parameters to be generated")
 	}
 }
@@ -95,7 +95,7 @@ func TestStopNoNils(t *testing.T) {
 	// give some time for the generation process to stop
 	time.Sleep(10 * time.Millisecond)
 
-	if pool.CurrentSize() != 0 {
+	if pool.ParametersCount() != 0 {
 		t.Errorf("expected no parameters to be generated")
 	}
 }
@@ -111,7 +111,7 @@ func TestPersist(t *testing.T) {
 	// give some time for the generation process to stop
 	time.Sleep(10 * time.Millisecond)
 
-	if pool.CurrentSize() != persistence.parameterCount() {
+	if pool.ParametersCount() != persistence.parameterCount() {
 		t.Errorf("not all parameters have been persisted")
 	}
 }

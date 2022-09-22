@@ -66,7 +66,7 @@ func Initialize(
 		metricsRegistry.ObserveApplicationSource(
 			"tbtc",
 			map[string]metrics.Source{
-				"pre_params_pool_size": func() float64 {
+				"pre_params_in_pool": func() float64 {
 					return float64(node.dkgExecutor.PreParamsCount())
 				},
 			},
@@ -78,7 +78,7 @@ func Initialize(
 		logger,
 		chain,
 		sortition.DefaultStatusCheckTick,
-		&enoughPreParamsPoolSizePolicy{
+		&enoughPreParamsInPoolPolicy{
 			node:   node,
 			config: config,
 		},
@@ -142,15 +142,15 @@ func Initialize(
 	return nil
 }
 
-// enoughPreParamsPoolSizePolicy is a policy that enforces the sufficient size
+// enoughPreParamsInPoolPolicy is a policy that enforces the sufficient size
 // of the DKG pre-parameters pool before joining the sortition pool.
-type enoughPreParamsPoolSizePolicy struct {
+type enoughPreParamsInPoolPolicy struct {
 	node   *node
 	config Config
 }
 
-func (epppsp *enoughPreParamsPoolSizePolicy) ShouldJoin() bool {
-	actualPoolSize := epppsp.node.dkgExecutor.PreParamsCount()
-	targetPoolSize := epppsp.config.PreParamsPoolSize
-	return actualPoolSize >= targetPoolSize
+func (eppip *enoughPreParamsInPoolPolicy) ShouldJoin() bool {
+	paramsInPool := eppip.node.dkgExecutor.PreParamsCount()
+	poolSize := eppip.config.PreParamsPoolSize
+	return paramsInPool >= poolSize
 }
