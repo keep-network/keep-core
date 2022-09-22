@@ -54,3 +54,6 @@ yarn-error.log
 
 # Temporary directory
 tmp/
+
+# Output directory
+out/

@@ -73,8 +73,6 @@ func (e *Executor) Execute(
 ) (*Result, uint64, error) {
 	logger.Debugf("[member:%v] initializing member", memberIndex)
 
-	registerUnmarshallers(channel)
-
 	member := newMember(
 		logger,
 		seed,
@@ -117,7 +115,7 @@ func (e *Executor) Execute(
 
 // PreParamsCount returns the current count of the DKG pre-parameters.
 func (e *Executor) PreParamsCount() int {
-	return e.tssPreParamsPool.CurrentSize()
+	return e.tssPreParamsPool.ParametersCount()
 }
 
 // SignedResult represents information pertaining to the process of signing
@@ -198,10 +196,10 @@ func Publish(
 	return nil
 }
 
-// registerUnmarshallers initializes the given broadcast channel to be able to
+// RegisterUnmarshallers initializes the given broadcast channel to be able to
 // perform DKG protocol interactions by registering all the required protocol
 // message unmarshallers.
-func registerUnmarshallers(channel net.BroadcastChannel) {
+func RegisterUnmarshallers(channel net.BroadcastChannel) {
 	channel.SetUnmarshaler(func() net.TaggedUnmarshaler {
 		return &ephemeralPublicKeyMessage{}
 	})

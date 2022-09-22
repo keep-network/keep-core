@@ -2,9 +2,10 @@
 .*
 
 # Top-level directories unrelated to the build.
-docs/
+docs*/
 infrastructure/
 scripts/
+tmp/
 
 # Top-level files unrealted to the build.
 CODEOWNERS
@@ -19,9 +20,16 @@ Dockerfile
 solidity-v1/
 solidity/
 
+# Token Stakedrop stuff.
+token-stakedrop/
+
+# Token Tracker stuff.
+token-tracker/
+
 # Go stuff.
 **/gen/_contracts
-**/gen/*/**/*.go
+**/gen/**/*.go
+!**/gen/gen.go
 !**/gen/cmd/cmd.go
 
 # Legacy V1 contracts bindings.

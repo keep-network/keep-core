@@ -3,9 +3,8 @@ package net
 import (
 	"context"
 
+	"github.com/keep-network/keep-core/pkg/internal/pb"
 	"github.com/keep-network/keep-core/pkg/operator"
-
-	"github.com/gogo/protobuf/proto"
 )
 
 // TransportIdentifier represents a protocol-level identifier. It is an opaque
@@ -30,8 +29,7 @@ type Message interface {
 // TaggedMarshaler is an interface that includes the proto.Marshaler interface,
 // but also provides a string type for the marshalable object.
 type TaggedMarshaler interface {
-	// TODO: proto.Marshaler is deprecated. Use "google.golang.org/protobuf/proto".Message instead.
-	proto.Marshaler
+	pb.Marshaler
 	Type() string
 }
 
@@ -84,8 +82,7 @@ type ConnectionManager interface {
 // Type() method is expected to be invokable on a just-initialized instance of
 // the unmarshaler (i.e., before unmarshaling is completed).
 type TaggedUnmarshaler interface {
-	// TODO: proto.Unmarshaler is deprecated. Use "google.golang.org/protobuf/proto".Message instead.
-	proto.Unmarshaler
+	pb.Unmarshaler
 	Type() string
 }
 

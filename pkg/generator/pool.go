@@ -47,11 +47,11 @@ func NewParameterPool[T any](
 	logger log.StandardLogger,
 	scheduler *Scheduler,
 	persistence Persistence[T],
-	targetSize int,
+	poolSize int,
 	generateFn func(context.Context) *T,
 	generateDelay time.Duration,
 ) *ParameterPool[T] {
-	pool := make(chan *Persisted[T], targetSize)
+	pool := make(chan *Persisted[T], poolSize)
 
 	all, err := persistence.ReadAll()
 	if err != nil {
@@ -62,9 +62,9 @@ func NewParameterPool[T any](
 
 	for i, parameter := range all {
 		// Load to the pool only the number of the parameters read from the persistence
-		// that can fit within the pool's target size, to avoid locking on writing to the
+		// that can fit within the pool's size, to avoid locking on writing to the
 		// channel.
-		if i >= targetSize {
+		if i >= poolSize {
 			break
 		}
 
@@ -130,8 +130,7 @@ func (pp *ParameterPool[T]) GetNow() (*T, error) {
 	}
 }
 
-// CurrentSize returns the current size of the pool - the number of available
-// parameters.
-func (pp *ParameterPool[T]) CurrentSize() int {
+// ParametersCount returns the number of parameters in the pool.
+func (pp *ParameterPool[T]) ParametersCount() int {
 	return len(pp.pool)
 }

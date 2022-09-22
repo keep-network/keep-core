@@ -42,6 +42,8 @@ const fixture = async () => {
     constants.poolWeightDivisor
   )) as SortitionPool
 
+  await sortitionPool.deactivateChaosnet()
+
   const DKGValidator = await ethers.getContractFactory("BeaconDkgValidator")
   const dkgValidator = (await DKGValidator.deploy(
     sortitionPool.address
