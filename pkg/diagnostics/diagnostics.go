@@ -55,22 +55,17 @@ func (r *Registry) RegisterConnectedPeersSource(
 ) {
 	r.Registry.RegisterSource("connected_peers", func() string {
 		connectionManager := netProvider.ConnectionManager()
-		connectedPeers := connectionManager.ConnectedPeers()
 		connectedPeersAddrInfo := connectionManager.ConnectedPeersAddrInfo()
 
-		peersList := make([]map[string]interface{}, len(connectedPeers))
-		for i := 0; i < len(connectedPeers); i++ {
-			peer := connectedPeers[i]
-			peersAddrInfo := connectedPeersAddrInfo[i].Addrs
-
+		var peersList []map[string]interface{}
+		for peer, multiaddrs := range connectedPeersAddrInfo {
+			var addresses []string
 			var peerAddr string
-			for _, peerAddrInfo := range peersAddrInfo {
-				if strings.Contains(peerAddrInfo.String(), eligibleDNS4) ||
-					(strings.Contains(peerAddrInfo.String(), eligibleIP4)) {
-					// address is formatted as follows /<protocol_code>/<ip_address>/<connection_protocol>/<port>
-					// Address is the 1st index
-					peerAddr = strings.Split(strings.Trim(peerAddrInfo.String(), "/"), "/")[1]
-				}
+			// Multiaddr is formatted as follows /<protocol_code>/<address>/<connection_protocol>/<port>
+			// Address is the 1st index
+			for _, address := range multiaddrs {
+				peerAddr = strings.Split(strings.Trim(address, "/"), "/")[1]
+				addresses = append(addresses, peerAddr)
 			}
 
 			peerPublicKey, err := connectionManager.GetPeerPublicKey(peer)
@@ -87,11 +82,12 @@ func (r *Registry) RegisterConnectedPeersSource(
 				continue
 			}
 
-			peersList[i] = map[string]interface{}{
+			peerInfo := map[string]interface{}{
 				"network_id":    peer,
 				"chain_address": peerChainAddress.String(),
-				"address":       peerAddr,
+				"addresses":     addresses,
 			}
+			peersList = append(peersList, peerInfo)
 		}
 
 		bytes, err := json.Marshal(peersList)
