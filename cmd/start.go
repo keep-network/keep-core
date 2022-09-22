@@ -177,7 +177,7 @@ func initializeMetrics(
 	blockCounter chain.BlockCounter,
 ) (*metrics.Registry, bool) {
 	registry, isConfigured := metrics.Initialize(
-		config.Metrics.Port,
+		ctx, config.Metrics.Port,
 	)
 	if !isConfigured {
 		logger.Infof("metrics are not configured")
@@ -190,20 +190,17 @@ func initializeMetrics(
 	)
 
 	registry.ObserveConnectedPeersCount(
-		ctx,
 		netProvider,
 		config.Metrics.NetworkMetricsTick,
 	)
 
 	registry.ObserveConnectedBootstrapCount(
-		ctx,
 		netProvider,
 		config.LibP2P.Peers,
 		config.Metrics.NetworkMetricsTick,
 	)
 
 	registry.ObserveEthConnectivity(
-		ctx,
 		blockCounter,
 		config.Metrics.EthereumMetricsTick,
 	)

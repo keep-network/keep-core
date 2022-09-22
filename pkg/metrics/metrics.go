@@ -32,17 +32,20 @@ type Config struct {
 // for registering client-custom metrics.
 type Registry struct {
 	*metrics.Registry
+
+	ctx context.Context
 }
 
 // Initialize set up the metrics registry and enables metrics server.
 func Initialize(
+	ctx context.Context,
 	port int,
 ) (*Registry, bool) {
 	if port == 0 {
 		return nil, false
 	}
 
-	registry := &Registry{metrics.NewRegistry()}
+	registry := &Registry{metrics.NewRegistry(), ctx}
 
 	registry.EnableServer(port)
 
@@ -52,7 +55,6 @@ func Initialize(
 // ObserveConnectedPeersCount triggers an observation process of the
 // connected_peers_count metric.
 func (r *Registry) ObserveConnectedPeersCount(
-	ctx context.Context,
 	netProvider net.Provider,
 	tick time.Duration,
 ) {
@@ -62,7 +64,6 @@ func (r *Registry) ObserveConnectedPeersCount(
 	}
 
 	r.observe(
-		ctx,
 		"connected_peers_count",
 		input,
 		validateTick(tick, DefaultNetworkMetricsTick),
@@ -72,7 +73,6 @@ func (r *Registry) ObserveConnectedPeersCount(
 // ObserveConnectedBootstrapCount triggers an observation process of the
 // connected_bootstrap_count metric.
 func (r *Registry) ObserveConnectedBootstrapCount(
-	ctx context.Context,
 	netProvider net.Provider,
 	bootstraps []string,
 	tick time.Duration,
@@ -90,7 +90,6 @@ func (r *Registry) ObserveConnectedBootstrapCount(
 	}
 
 	r.observe(
-		ctx,
 		"connected_bootstrap_count",
 		input,
 		validateTick(tick, DefaultNetworkMetricsTick),
@@ -100,7 +99,6 @@ func (r *Registry) ObserveConnectedBootstrapCount(
 // ObserveEthConnectivity triggers an observation process of the
 // eth_connectivity metric.
 func (r *Registry) ObserveEthConnectivity(
-	ctx context.Context,
 	blockCounter chain.BlockCounter,
 	tick time.Duration,
 ) {
@@ -115,7 +113,6 @@ func (r *Registry) ObserveEthConnectivity(
 	}
 
 	r.observe(
-		ctx,
 		"eth_connectivity",
 		input,
 		validateTick(tick, DefaultEthereumMetricsTick),
@@ -123,7 +120,6 @@ func (r *Registry) ObserveEthConnectivity(
 }
 
 func (r *Registry) observe(
-	ctx context.Context,
 	name string,
 	input metrics.ObserverInput,
 	tick time.Duration,
@@ -134,7 +130,7 @@ func (r *Registry) observe(
 		return
 	}
 
-	observer.Observe(ctx, tick)
+	observer.Observe(r.ctx, tick)
 
 	logger.Infof("observing %s with [%s] tick", name, tick)
 }
