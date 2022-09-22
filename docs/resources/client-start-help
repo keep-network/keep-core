@@ -25,7 +25,8 @@ Flags:
       --tbtc.preParamsGenerationTimeout duration   tECDSA pre-parameters generation timeout. (default 2m0s)
       --tbtc.preParamsGenerationDelay duration     tECDSA pre-parameters generation delay. (default 10s)
       --tbtc.preParamsGenerationConcurrency int    tECDSA pre-parameters generation concurrency. (default 1)
-      --tbtc.keyGenerationConcurrency int          tECDSA key generation concurrency. (default number of cores)
+      --tbtc.keyGenerationConcurrency int          tECDSA key generation concurrency. (default 10)
+      --developer.bridgeAddress string             Address of the Bridge smart contract
       --developer.randomBeaconAddress string       Address of the RandomBeacon smart contract
       --developer.tokenStakingAddress string       Address of the TokenStaking smart contract
       --developer.walletRegistryAddress string     Address of the WalletRegistry smart contract
