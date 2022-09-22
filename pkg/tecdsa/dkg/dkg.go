@@ -115,7 +115,7 @@ func (e *Executor) Execute(
 
 // PreParamsCount returns the current count of the DKG pre-parameters.
 func (e *Executor) PreParamsCount() int {
-	return e.tssPreParamsPool.CurrentSize()
+	return e.tssPreParamsPool.ParametersCount()
 }
 
 // SignedResult represents information pertaining to the process of signing
