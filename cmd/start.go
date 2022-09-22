@@ -128,15 +128,15 @@ func start(cmd *cobra.Command) error {
 		return fmt.Errorf("error initializing beacon: [%v]", err)
 	}
 
-	initializeMetrics(
+	metricsRegistry := initializeMetrics(
 		ctx,
 		clientConfig,
 		netProvider,
 		blockCounter,
 	)
 
-	diagnosticsRegistry, diagnosticsConfigured := initializeDiagnostics(clientConfig)
-	if diagnosticsConfigured {
+	diagnosticsRegistry := initializeDiagnostics(clientConfig)
+	if diagnosticsRegistry != nil {
 		diagnosticsRegistry.RegisterConnectedPeersSource(netProvider, signing)
 		diagnosticsRegistry.RegisterClientInfoSource(
 			netProvider,
@@ -154,7 +154,7 @@ func start(cmd *cobra.Command) error {
 		tbtcDataPersistence,
 		scheduler,
 		clientConfig.Tbtc,
-		diagnosticsRegistry,
+		metricsRegistry,
 	)
 	if err != nil {
 		return fmt.Errorf("error initializing TBTC: [%v]", err)
@@ -175,13 +175,13 @@ func initializeMetrics(
 	config *config.Config,
 	netProvider net.Provider,
 	blockCounter chain.BlockCounter,
-) (*metrics.Registry, bool) {
+) *metrics.Registry {
 	registry, isConfigured := metrics.Initialize(
 		ctx, config.Metrics.Port,
 	)
 	if !isConfigured {
 		logger.Infof("metrics are not configured")
-		return nil, false
+		return nil
 	}
 
 	logger.Infof(
@@ -205,18 +205,18 @@ func initializeMetrics(
 		config.Metrics.EthereumMetricsTick,
 	)
 
-	return registry, true
+	return registry
 }
 
 func initializeDiagnostics(
 	config *config.Config,
-) (*diagnostics.Registry, bool) {
+) *diagnostics.Registry {
 	registry, isConfigured := diagnostics.Initialize(
 		config.Diagnostics.Port,
 	)
 	if !isConfigured {
 		logger.Infof("diagnostics are not configured")
-		return nil, false
+		return nil
 	}
 
 	logger.Infof(
@@ -224,5 +224,5 @@ func initializeDiagnostics(
 		config.Diagnostics.Port,
 	)
 
-	return registry, true
+	return registry
 }

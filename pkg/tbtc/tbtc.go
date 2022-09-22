@@ -9,8 +9,8 @@ import (
 	"github.com/ipfs/go-log"
 
 	"github.com/keep-network/keep-common/pkg/persistence"
-	"github.com/keep-network/keep-core/pkg/diagnostics"
 	"github.com/keep-network/keep-core/pkg/generator"
+	"github.com/keep-network/keep-core/pkg/metrics"
 	"github.com/keep-network/keep-core/pkg/net"
 	"github.com/keep-network/keep-core/pkg/sortition"
 )
@@ -56,19 +56,22 @@ func Initialize(
 	workPersistence persistence.BasicHandle,
 	scheduler *generator.Scheduler,
 	config Config,
-	registry *diagnostics.Registry,
+	metricsRegistry *metrics.Registry,
 ) error {
 	node := newNode(chain, netProvider, keyStorePersistence, workPersistence, scheduler, config)
 	deduplicator := newDeduplicator()
 
-	registry.RegisterApplicationSource(
-		"tbtc",
-		func() map[string]interface{} {
-			return map[string]interface{}{
-				"preParamsPoolSize": node.dkgExecutor.PreParamsCount(),
-			}
-		},
-	)
+	if metricsRegistry != nil {
+		// only if metrics are configured
+		metricsRegistry.ObserveApplicationSource(
+			"tbtc",
+			map[string]metrics.Source{
+				"pre_params_pool_size": func() float64 {
+					return float64(node.dkgExecutor.PreParamsCount())
+				},
+			},
+		)
+	}
 
 	err := sortition.MonitorPool(
 		ctx,

@@ -2,6 +2,7 @@ package metrics
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/ipfs/go-log"
@@ -12,6 +13,8 @@ import (
 
 var logger = log.Logger("keep-metrics")
 
+type Source func() float64
+
 const (
 	// DefaultNetworkMetricsTick is the default duration of the
 	// observation tick for network metrics.
@@ -19,6 +22,9 @@ const (
 	// DefaultEthereumMetricsTick is the default duration of the
 	// observation tick for Ethereum metrics.
 	DefaultEthereumMetricsTick = 10 * time.Minute
+	// The duration of the observation tick for all application-specific
+	// metrics.
+	ApplicationMetricsTick = 1 * time.Minute
 )
 
 // Config stores meta-info about metrics.
@@ -119,12 +125,27 @@ func (r *Registry) ObserveEthConnectivity(
 	)
 }
 
+// ObserveEthConnectivity triggers an observation process of application-specific
+// metrics.
+func (r *Registry) ObserveApplicationSource(
+	application string,
+	inputs map[string]Source,
+) {
+	for k, v := range inputs {
+		r.observe(
+			fmt.Sprintf("%s_%s", application, k),
+			v,
+			ApplicationMetricsTick,
+		)
+	}
+}
+
 func (r *Registry) observe(
 	name string,
-	input metrics.ObserverInput,
+	input Source,
 	tick time.Duration,
 ) {
-	observer, err := r.NewGaugeObserver(name, input)
+	observer, err := r.NewGaugeObserver(name, metrics.ObserverInput(input))
 	if err != nil {
 		logger.Warnf("could not create gauge observer [%v]", name)
 		return
