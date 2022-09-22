@@ -28,15 +28,21 @@ type Config struct {
 	EthereumMetricsTick time.Duration
 }
 
+// Registry wraps keep-common metrics registry and exposes additional functions
+// for registering client-custom metrics.
+type Registry struct {
+	*metrics.Registry
+}
+
 // Initialize set up the metrics registry and enables metrics server.
 func Initialize(
 	port int,
-) (*metrics.Registry, bool) {
+) (*Registry, bool) {
 	if port == 0 {
 		return nil, false
 	}
 
-	registry := metrics.NewRegistry()
+	registry := &Registry{metrics.NewRegistry()}
 
 	registry.EnableServer(port)
 
@@ -45,9 +51,8 @@ func Initialize(
 
 // ObserveConnectedPeersCount triggers an observation process of the
 // connected_peers_count metric.
-func ObserveConnectedPeersCount(
+func (r *Registry) ObserveConnectedPeersCount(
 	ctx context.Context,
-	registry *metrics.Registry,
 	netProvider net.Provider,
 	tick time.Duration,
 ) {
@@ -56,20 +61,18 @@ func ObserveConnectedPeersCount(
 		return float64(len(connectedPeers))
 	}
 
-	observe(
+	r.observe(
 		ctx,
 		"connected_peers_count",
 		input,
-		registry,
 		validateTick(tick, DefaultNetworkMetricsTick),
 	)
 }
 
 // ObserveConnectedBootstrapCount triggers an observation process of the
 // connected_bootstrap_count metric.
-func ObserveConnectedBootstrapCount(
+func (r *Registry) ObserveConnectedBootstrapCount(
 	ctx context.Context,
-	registry *metrics.Registry,
 	netProvider net.Provider,
 	bootstraps []string,
 	tick time.Duration,
@@ -86,20 +89,18 @@ func ObserveConnectedBootstrapCount(
 		return float64(currentCount)
 	}
 
-	observe(
+	r.observe(
 		ctx,
 		"connected_bootstrap_count",
 		input,
-		registry,
 		validateTick(tick, DefaultNetworkMetricsTick),
 	)
 }
 
 // ObserveEthConnectivity triggers an observation process of the
 // eth_connectivity metric.
-func ObserveEthConnectivity(
+func (r *Registry) ObserveEthConnectivity(
 	ctx context.Context,
-	registry *metrics.Registry,
 	blockCounter chain.BlockCounter,
 	tick time.Duration,
 ) {
@@ -113,25 +114,23 @@ func ObserveEthConnectivity(
 		return 1
 	}
 
-	observe(
+	r.observe(
 		ctx,
 		"eth_connectivity",
 		input,
-		registry,
 		validateTick(tick, DefaultEthereumMetricsTick),
 	)
 }
 
-func observe(
+func (r *Registry) observe(
 	ctx context.Context,
 	name string,
 	input metrics.ObserverInput,
-	registry *metrics.Registry,
 	tick time.Duration,
 ) {
-	observer, err := registry.NewGaugeObserver(name, input)
+	observer, err := r.NewGaugeObserver(name, input)
 	if err != nil {
-		logger.Warningf("could not create gauge observer [%v]", name)
+		logger.Warnf("could not create gauge observer [%v]", name)
 		return
 	}
 

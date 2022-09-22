@@ -128,10 +128,23 @@ func start(cmd *cobra.Command) error {
 		return fmt.Errorf("error initializing beacon: [%v]", err)
 	}
 
-	initializeMetrics(ctx, clientConfig, netProvider, blockCounter)
-	registry := initializeDiagnostics(clientConfig)
-	registry.RegisterConnectedPeersSource(netProvider, signing)
-	registry.RegisterClientInfoSource(netProvider, signing, build.Version, build.Revision)
+	initializeMetrics(
+		ctx,
+		clientConfig,
+		netProvider,
+		blockCounter,
+	)
+
+	diagnosticsRegistry, diagnosticsConfigured := initializeDiagnostics(clientConfig)
+	if diagnosticsConfigured {
+		diagnosticsRegistry.RegisterConnectedPeersSource(netProvider, signing)
+		diagnosticsRegistry.RegisterClientInfoSource(
+			netProvider,
+			signing,
+			build.Version,
+			build.Revision,
+		)
+	}
 
 	err = tbtc.Initialize(
 		ctx,
@@ -141,7 +154,7 @@ func start(cmd *cobra.Command) error {
 		tbtcDataPersistence,
 		scheduler,
 		clientConfig.Tbtc,
-		registry,
+		diagnosticsRegistry,
 	)
 	if err != nil {
 		return fmt.Errorf("error initializing TBTC: [%v]", err)
@@ -162,13 +175,13 @@ func initializeMetrics(
 	config *config.Config,
 	netProvider net.Provider,
 	blockCounter chain.BlockCounter,
-) {
+) (*metrics.Registry, bool) {
 	registry, isConfigured := metrics.Initialize(
 		config.Metrics.Port,
 	)
 	if !isConfigured {
 		logger.Infof("metrics are not configured")
-		return
+		return nil, false
 	}
 
 	logger.Infof(
@@ -176,38 +189,37 @@ func initializeMetrics(
 		config.Metrics.Port,
 	)
 
-	metrics.ObserveConnectedPeersCount(
+	registry.ObserveConnectedPeersCount(
 		ctx,
-		registry,
 		netProvider,
 		config.Metrics.NetworkMetricsTick,
 	)
 
-	metrics.ObserveConnectedBootstrapCount(
+	registry.ObserveConnectedBootstrapCount(
 		ctx,
-		registry,
 		netProvider,
 		config.LibP2P.Peers,
 		config.Metrics.NetworkMetricsTick,
 	)
 
-	metrics.ObserveEthConnectivity(
+	registry.ObserveEthConnectivity(
 		ctx,
-		registry,
 		blockCounter,
 		config.Metrics.EthereumMetricsTick,
 	)
+
+	return registry, true
 }
 
 func initializeDiagnostics(
 	config *config.Config,
-) *diagnostics.Registry {
+) (*diagnostics.Registry, bool) {
 	registry, isConfigured := diagnostics.Initialize(
 		config.Diagnostics.Port,
 	)
 	if !isConfigured {
 		logger.Infof("diagnostics are not configured")
-		return nil
+		return nil, false
 	}
 
 	logger.Infof(
@@ -215,5 +227,5 @@ func initializeDiagnostics(
 		config.Diagnostics.Port,
 	)
 
-	return registry
+	return registry, true
 }
