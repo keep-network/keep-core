@@ -6,42 +6,46 @@ metadata:
   namespace: monitoring
   labels:
     app: prometheus
+    type: monitoring
 spec:
   replicas: 1
   selector:
     matchLabels:
       app: prometheus
+      type: monitoring
   template:
     metadata:
       labels:
         app: prometheus
+        type: monitoring
     spec:
-      securityContext:
-        fsGroup: 65534
-        runAsGroup: 0
-        runAsNonRoot: false
-        runAsUser: 0
       containers:
         - name: prometheus
           image: prom/prometheus:v2.37.0
           args:
-            - "--config.file=/etc/prometheus/prometheus.yml"
-            - "--storage.tsdb.path=/prometheus/"
+            - --config.file=/etc/prometheus/prometheus.yml
+            - --storage.tsdb.path=/prometheus/
           ports:
             - name: prometheus
               containerPort: 9090
           resources:
             limits:
-              memory: "1Gi"
               cpu: "1"
+              memory: 1Gi
             requests:
+              cpu: 500m
               memory: 500M
-              cpu: "500m"
           volumeMounts:
             - name: prometheus-config-volume
               mountPath: /etc/prometheus/
             - name: prometheus-storage-volume
               mountPath: /prometheus/
+      dnsPolicy: ClusterFirst
+      securityContext:
+        fsGroup: 65534
+        runAsGroup: 0
+        runAsNonRoot: false
+        runAsUser: 0
       volumes:
         - name: prometheus-config-volume
           configMap:

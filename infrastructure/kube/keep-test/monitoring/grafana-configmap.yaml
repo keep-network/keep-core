@@ -46,45 +46,49 @@ data:
         "list": [
           {
             "builtIn": 1,
-            "datasource": "-- Grafana --",
+            "datasource": {
+              "type": "datasource",
+              "uid": "grafana"
+            },
             "enable": true,
             "hide": true,
             "iconColor": "rgba(0, 211, 255, 1)",
             "name": "Annotations & Alerts",
+            "target": {
+              "limit": 100,
+              "matchAny": false,
+              "tags": [],
+              "type": "dashboard"
+            },
             "type": "dashboard"
           }
         ]
       },
       "editable": false,
-      "gnetId": null,
+      "fiscalYearStartMonth": 0,
       "graphTooltip": 0,
       "id": 1,
-      "iteration": 1592220277626,
       "links": [],
+      "liveNow": false,
       "panels": [
         {
-          "datasource": "prometheus",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "P1809F7CD0C75ACF3"
+          },
           "fieldConfig": {
             "defaults": {
-              "custom": {},
               "mappings": [
                 {
-                  "from": "",
-                  "id": 0,
-                  "operator": "",
-                  "text": "Down",
-                  "to": "",
-                  "type": 1,
-                  "value": "0"
-                },
-                {
-                  "from": "",
-                  "id": 1,
-                  "operator": "",
-                  "text": "Up",
-                  "to": "",
-                  "type": 1,
-                  "value": "1"
+                  "options": {
+                    "0": {
+                      "text": "Down"
+                    },
+                    "1": {
+                      "text": "Up"
+                    }
+                  },
+                  "type": "value"
                 }
               ],
               "thresholds": {
@@ -125,46 +129,44 @@ data:
               ],
               "fields": "",
               "values": false
-            }
+            },
+            "textMode": "auto"
           },
-          "pluginVersion": "7.0.3",
+          "pluginVersion": "9.1.2",
           "targets": [
             {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "P1809F7CD0C75ACF3"
+              },
               "expr": "up{instance=~\"$client\",type=\"client\"}",
               "interval": "",
               "legendFormat": "",
               "refId": "A"
             }
           ],
-          "timeFrom": null,
-          "timeShift": null,
           "title": "Client health",
           "transformations": [],
           "type": "stat"
         },
         {
-          "datasource": "prometheus",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "P1809F7CD0C75ACF3"
+          },
           "fieldConfig": {
             "defaults": {
-              "custom": {},
               "mappings": [
                 {
-                  "from": "",
-                  "id": 0,
-                  "operator": "",
-                  "text": "Down",
-                  "to": "",
-                  "type": 1,
-                  "value": "0"
-                },
-                {
-                  "from": "",
-                  "id": 1,
-                  "operator": "",
-                  "text": "Up",
-                  "to": "",
-                  "type": 1,
-                  "value": "1"
+                  "options": {
+                    "0": {
+                      "text": "Down"
+                    },
+                    "1": {
+                      "text": "Up"
+                    }
+                  },
+                  "type": "value"
                 }
               ],
               "thresholds": {
@@ -205,19 +207,22 @@ data:
               ],
               "fields": "",
               "values": false
-            }
+            },
+            "textMode": "auto"
           },
-          "pluginVersion": "7.0.3",
+          "pluginVersion": "9.1.2",
           "targets": [
             {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "P1809F7CD0C75ACF3"
+              },
               "expr": "eth_connectivity{instance=~\"$client\",type=\"client\"}",
               "interval": "",
               "legendFormat": "",
               "refId": "A"
             }
           ],
-          "timeFrom": null,
-          "timeShift": null,
           "title": "Ethereum node connectivity",
           "transformations": [],
           "type": "stat"
@@ -227,10 +232,13 @@ data:
           "bars": false,
           "dashLength": 10,
           "dashes": false,
-          "datasource": "prometheus",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "P1809F7CD0C75ACF3"
+          },
           "fieldConfig": {
             "defaults": {
-              "custom": {}
+              "links": []
             },
             "overrides": []
           },
@@ -257,9 +265,10 @@ data:
           "linewidth": 2,
           "nullPointMode": "null",
           "options": {
-            "dataLinks": []
+            "alertThreshold": true
           },
           "percentage": false,
+          "pluginVersion": "9.1.2",
           "pointradius": 2,
           "points": false,
           "renderer": "flot",
@@ -269,6 +278,10 @@ data:
           "steppedLine": false,
           "targets": [
             {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "P1809F7CD0C75ACF3"
+              },
               "expr": "connected_peers_count{instance=~\"$client\",type=\"client\"}",
               "interval": "",
               "legendFormat": "",
@@ -276,9 +289,7 @@ data:
             }
           ],
           "thresholds": [],
-          "timeFrom": null,
           "timeRegions": [],
-          "timeShift": null,
           "title": "Connected peers count ",
           "tooltip": {
             "shared": true,
@@ -288,9 +299,7 @@ data:
           "transformations": [],
           "type": "graph",
           "xaxis": {
-            "buckets": null,
             "mode": "time",
-            "name": null,
             "show": true,
             "values": []
           },
@@ -300,22 +309,17 @@ data:
               "format": "none",
               "label": "",
               "logBase": 1,
-              "max": null,
               "min": "0",
               "show": true
             },
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             }
           ],
           "yaxis": {
-            "align": false,
-            "alignLevel": null
+            "align": false
           }
         },
         {
@@ -323,10 +327,13 @@ data:
           "bars": false,
           "dashLength": 10,
           "dashes": false,
-          "datasource": "prometheus",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "P1809F7CD0C75ACF3"
+          },
           "fieldConfig": {
             "defaults": {
-              "custom": {}
+              "links": []
             },
             "overrides": []
           },
@@ -353,9 +360,10 @@ data:
           "linewidth": 1,
           "nullPointMode": "null",
           "options": {
-            "dataLinks": []
+            "alertThreshold": true
           },
           "percentage": false,
+          "pluginVersion": "9.1.2",
           "pointradius": 2,
           "points": false,
           "renderer": "flot",
@@ -365,6 +373,10 @@ data:
           "steppedLine": false,
           "targets": [
             {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "P1809F7CD0C75ACF3"
+              },
               "expr": "connected_bootstrap_count{instance=~\"$client\",type=\"client\"}",
               "interval": "",
               "legendFormat": "",
@@ -372,9 +384,7 @@ data:
             }
           ],
           "thresholds": [],
-          "timeFrom": null,
           "timeRegions": [],
-          "timeShift": null,
           "title": "Connected bootstrap count ",
           "tooltip": {
             "shared": true,
@@ -384,9 +394,7 @@ data:
           "transformations": [],
           "type": "graph",
           "xaxis": {
-            "buckets": null,
             "mode": "time",
-            "name": null,
             "show": true,
             "values": []
           },
@@ -396,57 +404,51 @@ data:
               "format": "none",
               "label": "",
               "logBase": 1,
-              "max": null,
               "min": "0",
               "show": true
             },
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             }
           ],
           "yaxis": {
-            "align": false,
-            "alignLevel": null
+            "align": false
           }
         }
       ],
       "refresh": "5s",
-      "schemaVersion": 25,
+      "schemaVersion": 37,
       "style": "dark",
       "tags": [],
       "templating": {
         "list": [
           {
-            "allValue": null,
             "current": {
-              "selected": true,
-              "text": "keep-client-0.default.svc.cluster.local:9601",
-              "value": "keep-client-0.default.svc.cluster.local:9601",
-              "text": "keep-client-1.default.svc.cluster.local:9601",
-              "value": "keep-client-1.default.svc.cluster.local:9601",
-              "text": "bst-a01.test.keep.boar.network:9601:9601",
-              "value": "bst-a01.test.keep.boar.network:9601:9601"
+              "selected": false,
+              "text": "10.102.1.19:3919",
+              "value": "10.102.1.19:3919"
             },
-            "datasource": "prometheus",
+            "datasource": {
+              "type": "prometheus",
+              "uid": "P1809F7CD0C75ACF3"
+            },
             "definition": "label_values({type=\"client\"}, instance)",
             "hide": 0,
             "includeAll": false,
-            "label": null,
             "multi": false,
             "name": "client",
             "options": [],
-            "query": "label_values({type=\"client\"}, instance)",
+            "query": {
+              "query": "label_values({type=\"client\"}, instance)",
+              "refId": "prometheus-client-Variable-Query"
+            },
             "refresh": 1,
             "regex": "",
             "skipUrlSync": false,
             "sort": 1,
             "tagValuesQuery": "",
-            "tags": [],
             "tagsQuery": "",
             "type": "query",
             "useTags": false
@@ -473,5 +475,6 @@ data:
       "timezone": "utc",
       "title": "clients-dashboard",
       "uid": "q3ZeGbmGk",
-      "version": 29
+      "version": 2,
+      "weekStart": ""
     }
