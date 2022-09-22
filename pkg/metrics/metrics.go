@@ -125,8 +125,8 @@ func (r *Registry) ObserveEthConnectivity(
 	)
 }
 
-// ObserveEthConnectivity triggers an observation process of application-specific
-// metrics.
+// ObserveApplicationSource triggers an observation process of
+// application-specific metrics.
 func (r *Registry) ObserveApplicationSource(
 	application string,
 	inputs map[string]Source,
