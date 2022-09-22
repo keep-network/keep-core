@@ -19,6 +19,11 @@ data:
           severity: slack
         annotations:
           summary: High Memory Usage
+  external-clients-targets.yml: |-
+    - targets:
+      - bst-a01.test.keep.boar.network:9601
+      - keep-validator-0.eks-ap-northeast-2-secure.staging.staked.cloud:9601
+      - bootstrap-alpha.test.threshold.p2p.org:9601
   prometheus.yml: |-
     global:
       scrape_interval: 5s
@@ -33,6 +38,34 @@ data:
           - "alertmanager.monitoring.svc:9093"
 
     scrape_configs:
+    - job_name: external-clients
+      metrics_path: /metrics
+      scheme: http
+      file_sd_configs:
+        - files:
+            - 'external-clients-targets.yml'
+    - job_name: internal-clients
+      honor_timestamps: true
+      metrics_path: /metrics
+      scheme: http
+      follow_redirects: true
+      enable_http2: true
+      kubernetes_sd_configs:
+      - role: service
+        follow_redirects: true
+        enable_http2: true
+        namespaces:
+          names:
+          - default
+        selectors:
+        - role: service
+          label: "app=keep"
+      relabel_configs:
+      - source_labels: [__meta_kubernetes_service_port_name]
+        separator: ;
+        regex: metrics
+        replacement: $1
+        action: keep
     - job_name: node-exporter
       honor_timestamps: true
       scrape_interval: 5s
@@ -41,14 +74,14 @@ data:
       scheme: http
       follow_redirects: true
       enable_http2: true
-        relabel_configs:
-        - source_labels: [__meta_kubernetes_endpoints_name]
+      relabel_configs:
+      - source_labels: [__meta_kubernetes_endpoints_name]
         separator: ;
         regex: node-exporter
         replacement: $1
-          action: keep
-        kubernetes_sd_configs:
-        - role: endpoints
+        action: keep
+      kubernetes_sd_configs:
+      - role: endpoints
         kubeconfig_file: ""
         follow_redirects: true
         enable_http2: true
@@ -57,19 +90,19 @@ data:
       scrape_interval: 5s
       scrape_timeout: 5s
       metrics_path: /metrics
-        scheme: https
+      scheme: https
       authorization:
         type: Bearer
         credentials_file: /var/run/secrets/kubernetes.io/serviceaccount/token
-        tls_config:
-          ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+      tls_config:
+        ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
         insecure_skip_verify: false
       follow_redirects: true
       enable_http2: true
-        relabel_configs:
-        - source_labels: [__meta_kubernetes_namespace, __meta_kubernetes_service_name, __meta_kubernetes_endpoint_port_name]
+      relabel_configs:
+      - source_labels: [__meta_kubernetes_namespace, __meta_kubernetes_service_name, __meta_kubernetes_endpoint_port_name]
         separator: ;
-          regex: default;kubernetes;https
+        regex: default;kubernetes;https
         replacement: $1
         action: keep
       kubernetes_sd_configs:
@@ -82,32 +115,32 @@ data:
       scrape_interval: 5s
       scrape_timeout: 5s
       metrics_path: /metrics
-        scheme: https
+      scheme: https
       authorization:
         type: Bearer
         credentials_file: /var/run/secrets/kubernetes.io/serviceaccount/token
-        tls_config:
-          ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+      tls_config:
+        ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
         insecure_skip_verify: false
       follow_redirects: true
       enable_http2: true
-        relabel_configs:
+      relabel_configs:
       - separator: ;
-          regex: __meta_kubernetes_node_label_(.+)
+        regex: __meta_kubernetes_node_label_(.+)
         replacement: $1
         action: labelmap
       - separator: ;
         regex: (.*)
         target_label: __address__
-          replacement: kubernetes.default.svc:443
+        replacement: kubernetes.default.svc:443
         action: replace
-        - source_labels: [__meta_kubernetes_node_name]
+      - source_labels: [__meta_kubernetes_node_name]
         separator: ;
-          regex: (.+)
-          target_label: __metrics_path__
-          replacement: /api/v1/nodes/${1}/proxy/metrics     
+        regex: (.+)
+        target_label: __metrics_path__
+        replacement: /api/v1/nodes/${1}/proxy/metrics
         action: replace
-        kubernetes_sd_configs:
+      kubernetes_sd_configs:
       - role: node
         kubeconfig_file: ""
         follow_redirects: true
@@ -120,32 +153,32 @@ data:
       scheme: http
       follow_redirects: true
       enable_http2: true
-        relabel_configs:
-        - source_labels: [__meta_kubernetes_pod_label_app]
+      relabel_configs:
+      - source_labels: [__meta_kubernetes_pod_label_app]
         separator: ;
-          regex: (geth|keep|grafana|prometheus)
+        regex: (geth|keep|grafana|prometheus)
         replacement: $1
-          action: keep
-        - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_path]
+        action: keep
+      - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_path]
         separator: ;
         regex: (.+)
-          target_label: __metrics_path__
+        target_label: __metrics_path__
         replacement: $1
         action: replace
       - separator: ;
-          regex: __meta_kubernetes_pod_label_(.+)
+        regex: __meta_kubernetes_pod_label_(.+)
         replacement: $1
         action: labelmap
-        - source_labels: [__meta_kubernetes_namespace]
+      - source_labels: [__meta_kubernetes_namespace]
         separator: ;
         regex: (.*)
-          target_label: kubernetes_namespace
+        target_label: kubernetes_namespace
         replacement: $1
         action: replace
-        - source_labels: [__meta_kubernetes_pod_name]
+      - source_labels: [__meta_kubernetes_pod_name]
         separator: ;
         regex: (.*)
-          target_label: kubernetes_pod_name
+        target_label: kubernetes_pod_name
         replacement: $1
         action: replace
       - source_labels: [__meta_kubernetes_pod_name]
@@ -154,8 +187,8 @@ data:
         target_label: kubernetes_pod_name_monitoring
         replacement: ${1}.default.svc.cluster.local:9601
         action: replace
-        kubernetes_sd_configs:
-        - role: pod
+      kubernetes_sd_configs:
+      - role: pod
         kubeconfig_file: ""
         follow_redirects: true
         enable_http2: true
@@ -167,36 +200,36 @@ data:
       scheme: http
       follow_redirects: true
       enable_http2: true
-        relabel_configs:
-        - source_labels: [__meta_kubernetes_pod_label_app]
+      relabel_configs:
+      - source_labels: [__meta_kubernetes_pod_label_app]
         separator: ;
-          regex: grafana.*
+        regex: grafana.*
         replacement: $1
-          action: keep
-        - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_path]
+        action: keep
+      - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_path]
         separator: ;
         regex: (.+)
-          target_label: __metrics_path__
+        target_label: __metrics_path__
         replacement: $1
         action: replace
       - separator: ;
-          regex: __meta_kubernetes_pod_label_(.+)
+        regex: __meta_kubernetes_pod_label_(.+)
         replacement: $1
         action: labelmap
-        - source_labels: [__meta_kubernetes_namespace]
+      - source_labels: [__meta_kubernetes_namespace]
         separator: ;
         regex: (.*)
-          target_label: kubernetes_namespace
+        target_label: kubernetes_namespace
         replacement: $1
         action: replace
-        - source_labels: [__meta_kubernetes_pod_name]
+      - source_labels: [__meta_kubernetes_pod_name]
         separator: ;
         regex: (.*)
-          target_label: kubernetes_pod_name
+        target_label: kubernetes_pod_name
         replacement: $1
         action: replace
-        kubernetes_sd_configs:
-        - role: pod
+      kubernetes_sd_configs:
+      - role: pod
         kubeconfig_file: ""
         follow_redirects: true
         enable_http2: true
@@ -208,32 +241,32 @@ data:
       scheme: http
       follow_redirects: true
       enable_http2: true
-        relabel_configs:
-        - source_labels: [__meta_kubernetes_pod_label_app]
+      relabel_configs:
+      - source_labels: [__meta_kubernetes_pod_label_app]
         separator: ;
-          regex: prometheus.*
+        regex: prometheus.*
         replacement: $1
-          action: keep
-        - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_path]
+        action: keep
+      - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_path]
         separator: ;
         regex: (.+)
-          target_label: __metrics_path__
+        target_label: __metrics_path__
         replacement: $1
         action: replace
       - separator: ;
-          regex: __meta_kubernetes_pod_label_(.+)
+        regex: __meta_kubernetes_pod_label_(.+)
         replacement: $1
         action: labelmap
-        - source_labels: [__meta_kubernetes_namespace]
+      - source_labels: [__meta_kubernetes_namespace]
         separator: ;
         regex: (.*)
-          target_label: kubernetes_namespace
+        target_label: kubernetes_namespace
         replacement: $1
         action: replace
-        - source_labels: [__meta_kubernetes_pod_name]
+      - source_labels: [__meta_kubernetes_pod_name]
         separator: ;
         regex: (.*)
-          target_label: kubernetes_pod_name
+        target_label: kubernetes_pod_name
         replacement: $1
         action: replace
       kubernetes_sd_configs:
@@ -249,7 +282,7 @@ data:
       scheme: http
       follow_redirects: true
       enable_http2: true
-        static_configs:
+      static_configs:
       - targets:
         - kube-state-metrics.kube-system.svc.cluster.local:8080
     - job_name: kubernetes-cadvisor
@@ -257,32 +290,32 @@ data:
       scrape_interval: 5s
       scrape_timeout: 5s
       metrics_path: /metrics
-        scheme: https
+      scheme: https
       authorization:
         type: Bearer
         credentials_file: /var/run/secrets/kubernetes.io/serviceaccount/token
-        tls_config:
-          ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+      tls_config:
+        ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
         insecure_skip_verify: false
       follow_redirects: true
       enable_http2: true
-        relabel_configs:
+      relabel_configs:
       - separator: ;
-          regex: __meta_kubernetes_node_label_(.+)
+        regex: __meta_kubernetes_node_label_(.+)
         replacement: $1
         action: labelmap
       - separator: ;
         regex: (.*)
         target_label: __address__
-          replacement: kubernetes.default.svc:443
+        replacement: kubernetes.default.svc:443
         action: replace
-        - source_labels: [__meta_kubernetes_node_name]
+      - source_labels: [__meta_kubernetes_node_name]
         separator: ;
-          regex: (.+)
-          target_label: __metrics_path__
-          replacement: /api/v1/nodes/${1}/proxy/metrics/cadvisor
+        regex: (.+)
+        target_label: __metrics_path__
+        replacement: /api/v1/nodes/${1}/proxy/metrics/cadvisor
         action: replace
-        kubernetes_sd_configs:
+      kubernetes_sd_configs:
       - role: node
         kubeconfig_file: ""
         follow_redirects: true
@@ -295,44 +328,44 @@ data:
       scheme: http
       follow_redirects: true
       enable_http2: true
-        relabel_configs:
-        - source_labels: [__meta_kubernetes_service_annotation_prometheus_io_scrape]
+      relabel_configs:
+      - source_labels: [__meta_kubernetes_service_annotation_prometheus_io_scrape]
         separator: ;
         regex: "true"
         replacement: $1
-          action: keep
-        - source_labels: [__meta_kubernetes_service_annotation_prometheus_io_scheme]
+        action: keep
+      - source_labels: [__meta_kubernetes_service_annotation_prometheus_io_scheme]
         separator: ;
         regex: (https?)
-          target_label: __scheme__
+        target_label: __scheme__
         replacement: $1
         action: replace
-        - source_labels: [__meta_kubernetes_service_annotation_prometheus_io_path]
+      - source_labels: [__meta_kubernetes_service_annotation_prometheus_io_path]
         separator: ;
         regex: (.+)
-          target_label: __metrics_path__
+        target_label: __metrics_path__
         replacement: $1
         action: replace
-        - source_labels: [__address__, __meta_kubernetes_service_annotation_prometheus_io_port]
+      - source_labels: [__address__, __meta_kubernetes_service_annotation_prometheus_io_port]
         separator: ;
-          regex: ([^:]+)(?::\d+)?;(\d+)
+        regex: ([^:]+)(?::\d+)?;(\d+)
         target_label: __address__
-          replacement: $1:$2
+        replacement: $1:$2
         action: replace
       - separator: ;
-          regex: __meta_kubernetes_service_label_(.+)
+        regex: __meta_kubernetes_service_label_(.+)
         replacement: $1
         action: labelmap
-        - source_labels: [__meta_kubernetes_namespace]
+      - source_labels: [__meta_kubernetes_namespace]
         separator: ;
         regex: (.*)
-          target_label: kubernetes_namespace
+        target_label: kubernetes_namespace
         replacement: $1
         action: replace
-        - source_labels: [__meta_kubernetes_service_name]
+      - source_labels: [__meta_kubernetes_service_name]
         separator: ;
         regex: (.*)
-          target_label: kubernetes_name
+        target_label: kubernetes_name
         replacement: $1
         action: replace
       kubernetes_sd_configs:
