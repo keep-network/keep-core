@@ -80,7 +80,7 @@ export async function randomBeaconDeployment(): Promise<DeployedContracts> {
   const staking: TokenStaking =
     await helpers.contracts.getContract<TokenStaking>("TokenStaking")
 
-  const { deployer } = await helpers.signers.getNamedSigners()
+  const { deployer, chaosnetOwner } = await helpers.signers.getNamedSigners()
 
   const sortitionPool: SortitionPool = await helpers.contracts.getContract(
     "BeaconSortitionPool"
@@ -102,6 +102,8 @@ export async function randomBeaconDeployment(): Promise<DeployedContracts> {
 
   await updateTokenStakingParams(t, staking, deployer)
   await setFixtureParameters(randomBeacon)
+
+  await sortitionPool.connect(chaosnetOwner).deactivateChaosnet()
 
   const contracts: DeployedContracts = {
     sortitionPool,
