@@ -88,9 +88,9 @@ type anyApplicationPolicy struct {
 
 // Validate checks whether the given operator meets the conditions to join
 // the network. The operator can join the network if it is an allowlisted node
-// or it is a non-allowlisted node, but it is recognized as eligible by any of
+// or it is a non-allowlisted node but it is recognized as eligible by any of
 // the applications. Nil is returned on a successful validation, error otherwise.
-// Due to performance reasons the results of validations for non-allowlisted
+// Due to performance reasons, the results of validations for non-allowlisted
 // nodes are stored in a cache for a certain amount of time.
 func (aap *anyApplicationPolicy) Validate(
 	remotePeerPublicKey *operator.PublicKey,
