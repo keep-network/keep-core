@@ -252,12 +252,12 @@ func (c *channel) processPubsubMessage(pubsubMessage *pubsub.Message) error {
 		return err
 	}
 
-	return c.processContainerMessage(pubsubMessage.GetFrom(), messageProto)
+	return c.processContainerMessage(pubsubMessage.GetFrom(), &messageProto)
 }
 
 func (c *channel) processContainerMessage(
 	proposedSender peer.ID,
-	message pb.BroadcastNetworkMessage,
+	message *pb.BroadcastNetworkMessage,
 ) error {
 	// The protocol type is on the envelope; let's pull that type
 	// from our map of unmarshallers.

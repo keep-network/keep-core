@@ -260,19 +260,15 @@ func TestDkgRetryLoop(t *testing.T) {
 				return testResult, attempt.startBlock + dkg.ProtocolBlocks(), nil
 			},
 			expectedErr:               nil,
-			expectedExecutionEndBlock: 2370, // 2245 + 125
+			expectedExecutionEndBlock: 2275, // 2150 + 125
 			expectedResult:            testResult,
-			// Random algorithm is used from the very beginning. We also
-			// observe a delay blocks bump on the 10th attempt which is
-			// 100 blocks instead of 5. That said, the start block for the 16th
-			// attempt can be calculated as follows:
-			// 200 + 130 + 130 + 130 + 130 + 130 + 130 + 130 + 130 + 225 + 130 + 130 + 130 + 130 + 130 + 130
-			// where all 130 denotes a duration of a normal attempt (125 blocks
-			// plus 5 delay blocks) and 225 is the duration of the 10th attempt
-			// (125 + 100 bumped delay blocks).
+			// Random algorithm is used from the very beginning. The start block
+			// for the 16th attempt can be calculated as follows: 200 + 15 * 130
+			// where 130 denotes a duration of an attempt (125 blocks plus 5
+			// delay blocks).
 			expectedLastAttempt: &dkgAttemptParams{
 				number:                 16,
-				startBlock:             2245,
+				startBlock:             2150,
 				excludedMembersIndexes: []group.MemberIndex{7, 9},
 			},
 		},
@@ -312,7 +308,7 @@ func TestDkgRetryLoop(t *testing.T) {
 			dkgAttemptFn: func(attempt *dkgAttemptParams) (*dkg.Result, uint64, error) {
 				return nil, 0, fmt.Errorf("invalid data")
 			},
-			expectedErr:               fmt.Errorf("dkg retry loop received stop signal on attempt [1]"),
+			expectedErr:               nil,
 			expectedResult:            nil,
 			expectedExecutionEndBlock: 0,
 			expectedLastAttempt:       nil,
@@ -329,18 +325,18 @@ func TestDkgRetryLoop(t *testing.T) {
 				chainConfig,
 			)
 
-			// Given the small group size, we never reach the original
-			// bump frequency which is 100. Here we make it smaller in order
-			// to test its behavior.
-			retryLoop.delayBlocksBumpFrequency = 10
-
 			ctx, cancelCtx := test.ctxFn()
 			defer cancelCtx()
 
+			var lastAttemptStartBlock uint64
 			var lastAttempt *dkgAttemptParams
 
 			result, executionEndBlock, err := retryLoop.start(
 				ctx,
+				func(ctx context.Context, attemptStartBlock uint64) error {
+					lastAttemptStartBlock = attemptStartBlock
+					return nil
+				},
 				func(params *dkgAttemptParams) (*dkg.Result, uint64, error) {
 					lastAttempt = params
 					return test.dkgAttemptFn(params)
@@ -375,6 +371,17 @@ func TestDkgRetryLoop(t *testing.T) {
 					test.expectedResult,
 					result,
 				)
+			}
+
+			if test.expectedLastAttempt != nil {
+				if test.expectedLastAttempt.startBlock != lastAttemptStartBlock {
+					t.Errorf("unexpected last attempt start block\n"+
+						"expected: [%+v]\n"+
+						"actual:   [%+v]",
+						test.expectedLastAttempt.startBlock,
+						lastAttemptStartBlock,
+					)
+				}
 			}
 
 			if !reflect.DeepEqual(test.expectedLastAttempt, lastAttempt) {

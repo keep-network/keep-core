@@ -702,11 +702,11 @@ contract WalletRegistry is
     ///         list corresponds to the expected set of members determined
     ///         by the sortition pool.
     /// @dev The message to be signed by each member is keccak256 hash of the
-    ///      calculated group public key, misbehaved members indices and DKG
-    ///      start block. The calculated hash should be prefixed with prefixed with
+    ///      chain ID, calculated group public key, misbehaved members indices
+    ///      and DKG start block. The calculated hash should be prefixed with
     ///      `\x19Ethereum signed message:\n` before signing, so the message to
     ///      sign is:
-    ///      `\x19Ethereum signed message:\n${keccak256(groupPubKey,misbehavedIndices,startBlock)}`
+    ///      `\x19Ethereum signed message:\n${keccak256(chainID,groupPubKey,misbehavedIndices,startBlock)}`
     /// @param dkgResult DKG result.
     function submitDkgResult(DKG.Result calldata dkgResult) external {
         wallets.validatePublicKey(dkgResult.groupPubKey);

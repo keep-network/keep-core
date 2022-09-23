@@ -5,14 +5,15 @@ import (
 	"crypto/sha256"
 	"encoding/binary"
 	"fmt"
+	"math/big"
+	"math/rand"
+	"sort"
+
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/protocol/group"
 	"github.com/keep-network/keep-core/pkg/tecdsa/retry"
 	"github.com/keep-network/keep-core/pkg/tecdsa/signing"
 	"golang.org/x/exp/slices"
-	"math/big"
-	"math/rand"
-	"sort"
 )
 
 // signingRetryLoop is a struct that encapsulates the signing retry logic.
@@ -64,11 +65,16 @@ type signingAttemptParams struct {
 // signingAttemptFn represents a function performing a signing attempt.
 type signingAttemptFn func(*signingAttemptParams) (*signing.Result, error)
 
+// waitWithSigningAttemptFn represents a function blocking the attempt execution
+// until the given block height.
+type waitWithSigningAttemptFn func(context.Context, uint64) error
+
 // start begins the signing retry loop using the given signing attempt function.
 // The retry loop terminates when the signing result is produced or the ctx
 // parameter is done, whatever comes first.
 func (srl *signingRetryLoop) start(
 	ctx context.Context,
+	waitWithSigningAttemptFn waitWithSigningAttemptFn,
 	signingAttemptFn signingAttemptFn,
 ) (*signing.Result, error) {
 	// We want to take the random subset right away for the first attempt.
@@ -84,14 +90,6 @@ func (srl *signingRetryLoop) start(
 	for {
 		srl.attemptCounter++
 
-		// Check the loop stop signal.
-		if ctx.Err() != nil {
-			return nil, fmt.Errorf(
-				"signing retry loop received stop signal on attempt [%v]",
-				srl.attemptCounter,
-			)
-		}
-
 		// In order to start attempts >1 in the right place, we need to
 		// determine how many blocks were taken by previous attempts. We assume
 		// the worst case that each attempt failed at the end of the signing
@@ -106,7 +104,7 @@ func (srl *signingRetryLoop) start(
 		//
 		// For example, the attempt may fail at the end of the protocol but the
 		// error is returned after some time and more blocks than expected are
-		//mined in the meantime.
+		// mined in the meantime.
 		if srl.attemptCounter > 1 {
 			srl.attemptStartBlock = srl.attemptStartBlock +
 				signing.ProtocolBlocks() +
@@ -167,6 +165,23 @@ func (srl *signingRetryLoop) start(
 			excludedMembersIndexes,
 			srl.signingGroupMemberIndex,
 		)
+
+		// Wait for the right moment to execute the signingAttemptFn, as
+		// calculated in srl.attemptStartBlock.
+		err := waitWithSigningAttemptFn(ctx, srl.attemptStartBlock)
+		if err != nil {
+			return nil, fmt.Errorf(
+				"failed waiting for block [%v] for attempt [%v]: [%v]",
+				srl.attemptStartBlock,
+				srl.attemptCounter,
+				err,
+			)
+		}
+
+		// Check the loop stop signal.
+		if ctx.Err() != nil {
+			return nil, nil
+		}
 
 		var result *signing.Result
 		var attemptErr error

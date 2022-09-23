@@ -7,6 +7,7 @@ import (
 
 	"github.com/ipfs/go-log/v2"
 
+	"github.com/keep-network/keep-common/pkg/persistence"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/generator"
 	"github.com/keep-network/keep-core/pkg/net"
@@ -24,6 +25,7 @@ type Executor struct {
 func NewExecutor(
 	logger log.StandardLogger,
 	scheduler *generator.Scheduler,
+	persistence persistence.BasicHandle,
 	preParamsPoolSize int,
 	preParamsGenerationTimeout time.Duration,
 	preParamsGenerationDelay time.Duration,
@@ -38,6 +40,7 @@ func NewExecutor(
 		tssPreParamsPool: newTssPreParamsPool(
 			logger,
 			scheduler,
+			persistence,
 			preParamsPoolSize,
 			preParamsGenerationTimeout,
 			preParamsGenerationDelay,
@@ -69,8 +72,6 @@ func (e *Executor) Execute(
 	membershipValidator *group.MembershipValidator,
 ) (*Result, uint64, error) {
 	logger.Debugf("[member:%v] initializing member", memberIndex)
-
-	registerUnmarshallers(channel)
 
 	member := newMember(
 		logger,
@@ -114,7 +115,7 @@ func (e *Executor) Execute(
 
 // PreParamsCount returns the current count of the DKG pre-parameters.
 func (e *Executor) PreParamsCount() int {
-	return e.tssPreParamsPool.CurrentSize()
+	return e.tssPreParamsPool.ParametersCount()
 }
 
 // SignedResult represents information pertaining to the process of signing
@@ -195,10 +196,10 @@ func Publish(
 	return nil
 }
 
-// registerUnmarshallers initializes the given broadcast channel to be able to
+// RegisterUnmarshallers initializes the given broadcast channel to be able to
 // perform DKG protocol interactions by registering all the required protocol
 // message unmarshallers.
-func registerUnmarshallers(channel net.BroadcastChannel) {
+func RegisterUnmarshallers(channel net.BroadcastChannel) {
 	channel.SetUnmarshaler(func() net.TaggedUnmarshaler {
 		return &ephemeralPublicKeyMessage{}
 	})

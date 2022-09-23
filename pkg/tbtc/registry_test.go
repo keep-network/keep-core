@@ -1,10 +1,11 @@
 package tbtc
 
 import (
-	"github.com/keep-network/keep-common/pkg/persistence"
-	"github.com/keep-network/keep-core/pkg/internal/testutils"
 	"reflect"
 	"testing"
+
+	"github.com/keep-network/keep-common/pkg/persistence"
+	"github.com/keep-network/keep-core/pkg/internal/testutils"
 )
 
 func TestWalletRegistry_RegisterSigner(t *testing.T) {

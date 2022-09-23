@@ -120,6 +120,11 @@ const config: HardhatUserConfig = {
       goerli: 0,
       // mainnet: ""
     },
+    chaosnetOwner: {
+      default: 3,
+      goerli: 0,
+      // mainnet: ""
+    },
   },
   external: {
     contracts:

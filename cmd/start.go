@@ -121,6 +121,11 @@ func start(cmd *cobra.Command) error {
 		return fmt.Errorf("cannot initialize tbtc keystore persistence: [%w]", err)
 	}
 
+	tbtcDataPersistence, err := storage.InitializeWorkPersistence("tbtc")
+	if err != nil {
+		return fmt.Errorf("cannot initialize tbtc data persistence: [%w]", err)
+	}
+
 	scheduler := generator.StartScheduler()
 
 	// Monitor sortition pool only if the node is a non-bootstrap node.
@@ -138,19 +143,33 @@ func start(cmd *cobra.Command) error {
 		return fmt.Errorf("error initializing beacon: [%v]", err)
 	}
 
-	initializeMetrics(ctx, clientConfig, netProvider, blockCounter)
-	registry := initializeDiagnostics(clientConfig)
-	registry.RegisterConnectedPeersSource(netProvider, signing)
-	registry.RegisterClientInfoSource(netProvider, signing, build.Version, build.Revision)
+	metricsRegistry := initializeMetrics(
+		ctx,
+		clientConfig,
+		netProvider,
+		blockCounter,
+	)
+
+	diagnosticsRegistry := initializeDiagnostics(clientConfig)
+	if diagnosticsRegistry != nil {
+		diagnosticsRegistry.RegisterConnectedPeersSource(netProvider, signing)
+		diagnosticsRegistry.RegisterClientInfoSource(
+			netProvider,
+			signing,
+			build.Version,
+			build.Revision,
+		)
+	}
 
 	err = tbtc.Initialize(
 		ctx,
 		tbtcChain,
 		netProvider,
 		tbtcKeyStorePersistence,
+		tbtcDataPersistence,
 		scheduler,
 		clientConfig.Tbtc,
-		registry,
+		metricsRegistry,
 		monitorPool,
 	)
 	if err != nil {
@@ -172,13 +191,13 @@ func initializeMetrics(
 	config *config.Config,
 	netProvider net.Provider,
 	blockCounter chain.BlockCounter,
-) {
+) *metrics.Registry {
 	registry, isConfigured := metrics.Initialize(
-		config.Metrics.Port,
+		ctx, config.Metrics.Port,
 	)
 	if !isConfigured {
 		logger.Infof("metrics are not configured")
-		return
+		return nil
 	}
 
 	logger.Infof(
@@ -186,27 +205,23 @@ func initializeMetrics(
 		config.Metrics.Port,
 	)
 
-	metrics.ObserveConnectedPeersCount(
-		ctx,
-		registry,
+	registry.ObserveConnectedPeersCount(
 		netProvider,
 		config.Metrics.NetworkMetricsTick,
 	)
 
-	metrics.ObserveConnectedBootstrapCount(
-		ctx,
-		registry,
+	registry.ObserveConnectedBootstrapCount(
 		netProvider,
 		config.LibP2P.Peers,
 		config.Metrics.NetworkMetricsTick,
 	)
 
-	metrics.ObserveEthConnectivity(
-		ctx,
-		registry,
+	registry.ObserveEthConnectivity(
 		blockCounter,
 		config.Metrics.EthereumMetricsTick,
 	)
+
+	return registry
 }
 
 func initializeDiagnostics(

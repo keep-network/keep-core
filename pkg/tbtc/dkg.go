@@ -35,9 +35,7 @@ type dkgRetryLoop struct {
 	randomRetryCounter uint
 	randomRetrySeed    int64
 
-	delayBlocks              uint64
-	delayBlocksBumpFrequency uint
-	delayBlocksBumpFactor    uint64
+	delayBlocks uint64
 }
 
 func newDkgRetryLoop(
@@ -55,17 +53,15 @@ func newDkgRetryLoop(
 	randomRetrySeed := int64(binary.BigEndian.Uint64(seedSha256[:8]))
 
 	return &dkgRetryLoop{
-		memberIndex:              memberIndex,
-		selectedOperators:        selectedOperators,
-		inactiveOperatorsSet:     make(map[chain.Address]bool),
-		chainConfig:              chainConfig,
-		attemptCounter:           0,
-		attemptStartBlock:        initialStartBlock,
-		randomRetryCounter:       0,
-		randomRetrySeed:          randomRetrySeed,
-		delayBlocks:              5,
-		delayBlocksBumpFrequency: 100,
-		delayBlocksBumpFactor:    20,
+		memberIndex:          memberIndex,
+		selectedOperators:    selectedOperators,
+		inactiveOperatorsSet: make(map[chain.Address]bool),
+		chainConfig:          chainConfig,
+		attemptCounter:       0,
+		attemptStartBlock:    initialStartBlock,
+		randomRetryCounter:   0,
+		randomRetrySeed:      randomRetrySeed,
+		delayBlocks:          5,
 	}
 }
 
@@ -79,11 +75,16 @@ type dkgAttemptParams struct {
 // dkgAttemptFn represents a function performing a DKG attempt.
 type dkgAttemptFn func(*dkgAttemptParams) (*dkg.Result, uint64, error)
 
+// waitWithDkgAttemptFn represents a function blocking the attempt execution
+// until the given block height.
+type waitWithDkgAttemptFn func(context.Context, uint64) error
+
 // start begins the DKG retry loop using the given DKG attempt function.
 // The retry loop terminates when the DKG result is produced or the ctx
 // parameter is done, whatever comes first.
 func (drl *dkgRetryLoop) start(
 	ctx context.Context,
+	waitWithDkgAttemptFn waitWithDkgAttemptFn,
 	dkgAttemptFn dkgAttemptFn,
 ) (*dkg.Result, uint64, error) {
 	// All selected operators should be qualified for the first attempt.
@@ -91,14 +92,6 @@ func (drl *dkgRetryLoop) start(
 
 	for {
 		drl.attemptCounter++
-
-		// Check the loop stop signal.
-		if ctx.Err() != nil {
-			return nil, 0, fmt.Errorf(
-				"dkg retry loop received stop signal on attempt [%v]",
-				drl.attemptCounter,
-			)
-		}
 
 		// In order to start attempts >1 in the right place, we need to
 		// determine how many blocks were taken by previous attempts. We assume
@@ -115,18 +108,10 @@ func (drl *dkgRetryLoop) start(
 		// For example, the attempt may fail at
 		// the end of the protocol but the error is returned after some time
 		// and more blocks than expected are mined in the meantime.
-		// Additionally, we want to strongly extend the delay period
-		// periodically in order to give some additional time for nodes to
-		// recover and re-fill their internal TSS pre-parameters pools.
 		if drl.attemptCounter > 1 {
-			delayBlocks := drl.delayBlocks
-			if drl.attemptCounter%drl.delayBlocksBumpFrequency == 0 {
-				delayBlocks *= drl.delayBlocksBumpFactor
-			}
-
 			drl.attemptStartBlock = drl.attemptStartBlock +
 				dkg.ProtocolBlocks() +
-				delayBlocks
+				drl.delayBlocks
 		}
 
 		// Exclude all members controlled by the operators that were not
@@ -149,6 +134,23 @@ func (drl *dkgRetryLoop) start(
 					break
 				}
 			}
+		}
+
+		// Wait for the right moment to execute the attemptFn, as calculated
+		// in drl.attemptStartBlock.
+		err := waitWithDkgAttemptFn(ctx, drl.attemptStartBlock)
+		if err != nil {
+			return nil, 0, fmt.Errorf(
+				"failed waiting for block [%v] for attempt [%v]: [%v]",
+				drl.attemptStartBlock,
+				drl.attemptCounter,
+				err,
+			)
+		}
+
+		// Check the loop stop signal.
+		if ctx.Err() != nil {
+			return nil, 0, nil
 		}
 
 		var result *dkg.Result
@@ -556,7 +558,7 @@ func (drs *dkgResultSubmitter) SubmitResult(
 // away, each following member is eligible after pre-defined block step.
 //
 // TODO: Revisit the setupEligibilityQueue function. The RFC mentions we should
-//	     start submitting from a random member, not the first one.
+// start submitting from a random member, not the first one.
 func (drs *dkgResultSubmitter) setupEligibilityQueue(
 	startBlockNumber uint64,
 	memberIndex group.MemberIndex,

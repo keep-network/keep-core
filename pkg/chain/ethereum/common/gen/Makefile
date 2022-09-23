@@ -1,5 +1,5 @@
 ifndef environment
-	$(error environment not defined)
+override environment = development
 endif
 
 root_dir := $(realpath ../../../../..)
