@@ -14,25 +14,6 @@ const (
 
 var errOperatorUnknown = fmt.Errorf("operator not registered for the staking provider, check Threshold dashboard")
 
-// JoinPolicy determines how the client is supposed to join to the sortition
-// pool. The policy can encapsulate special conditions that the client want
-// to fulfill before joining the sortition pool.
-type JoinPolicy interface {
-	// ShouldJoin indicates whether the joining condition is fulfilled and
-	// the client should join the pool.
-	ShouldJoin() bool
-}
-
-// UnconditionalJoinPolicy is a policy that doesn't enforce any conditions
-// for joining the sortition pool.
-var UnconditionalJoinPolicy = &unconditionalJoinPolicy{}
-
-type unconditionalJoinPolicy struct{}
-
-func (ujp *unconditionalJoinPolicy) ShouldJoin() bool {
-	return true
-}
-
 // MonitorPool periodically checks the status of the operator in the sortition
 // pool. If the operator is supposed to be in the sortition pool but is not
 // there yet, the function attempts to add the operator to the pool. If the
