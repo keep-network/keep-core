@@ -132,8 +132,13 @@ const config: HardhatUserConfig = {
       goerli: 0,
       // mainnet: ""
     },
-    esdm: {
+    chaosnetOwner: {
       default: 3,
+      goerli: 0,
+      // mainnet: ""
+    },
+    esdm: {
+      default: 4,
       goerli: 0,
       // mainnet: ""
     },

@@ -5,11 +5,11 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   const { getNamedAccounts, deployments, helpers } = hre
   const { deployer } = await getNamedAccounts()
 
-  const SortitionPool = await deployments.get("EcdsaSortitionPool")
+  const EcdsaSortitionPool = await deployments.get("EcdsaSortitionPool")
 
   const EcdsaDkgValidator = await deployments.deploy("EcdsaDkgValidator", {
     from: deployer,
-    args: [SortitionPool.address],
+    args: [EcdsaSortitionPool.address],
     log: true,
     waitConfirmations: 1,
   })

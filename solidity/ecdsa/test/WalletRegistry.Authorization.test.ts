@@ -73,6 +73,9 @@ describe("WalletRegistry - Authorization", () => {
     thirdParty = await ethers.getSigner(accounts[6])
     ;({ deployer, governance } = await helpers.signers.getNamedSigners())
 
+    const { chaosnetOwner } = await helpers.signers.getNamedSigners()
+    await sortitionPool.connect(chaosnetOwner).deactivateChaosnet()
+
     walletOwner = await initializeWalletOwner(
       walletRegistryGovernance,
       governance

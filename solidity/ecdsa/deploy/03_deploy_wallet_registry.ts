@@ -5,7 +5,7 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   const { getNamedAccounts, deployments, ethers, helpers } = hre
   const { deployer } = await getNamedAccounts()
 
-  const SortitionPool = await deployments.get("EcdsaSortitionPool")
+  const EcdsaSortitionPool = await deployments.get("EcdsaSortitionPool")
   const TokenStaking = await deployments.get("TokenStaking")
   const ReimbursementPool = await deployments.get("ReimbursementPool")
   const RandomBeacon = await deployments.get("RandomBeacon")
@@ -36,7 +36,7 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
         },
       },
       proxyOpts: {
-        constructorArgs: [SortitionPool.address, TokenStaking.address],
+        constructorArgs: [EcdsaSortitionPool.address, TokenStaking.address],
         unsafeAllow: ["external-library-linking"],
         kind: "transparent",
       },
