@@ -33,6 +33,7 @@ func Initialize(
 	netProvider net.Provider,
 	persistence persistence.ProtectedHandle,
 	scheduler *generator.Scheduler,
+	monitorPool bool,
 ) error {
 	groupRegistry := registry.NewGroupRegistry(logger, beaconChain, persistence)
 	groupRegistry.LoadExistingGroups()
@@ -44,15 +45,20 @@ func Initialize(
 		scheduler,
 	)
 
-	err := sortition.MonitorPool(
-		ctx,
-		logger,
-		beaconChain,
-		sortition.DefaultStatusCheckTick,
-		sortition.UnconditionalJoinPolicy,
-	)
-	if err != nil {
-		return fmt.Errorf("could not set up sortition pool monitoring: [%v]", err)
+	if monitorPool {
+		err := sortition.MonitorPool(
+			ctx,
+			logger,
+			beaconChain,
+			sortition.DefaultStatusCheckTick,
+			sortition.UnconditionalJoinPolicy,
+		)
+		if err != nil {
+			return fmt.Errorf(
+				"could not set up sortition pool monitoring: [%v]",
+				err,
+			)
+		}
 	}
 
 	eventDeduplicator := event.NewDeduplicator(beaconChain)

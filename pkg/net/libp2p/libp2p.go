@@ -71,6 +71,7 @@ const MaximumDisseminationTime = 90
 
 // Config defines the configuration for the libp2p network provider.
 type Config struct {
+	Bootstrap          bool
 	Peers              []string
 	Port               int
 	AnnouncedAddresses []string
@@ -522,4 +523,45 @@ func multiaddressWithIdentity(
 	peerID peer.ID,
 ) string {
 	return fmt.Sprintf("%s/ipfs/%s", multiaddress.String(), peerID.String())
+}
+
+// ExtractPeersPublicKeys returns a list of operator public keys based on the
+// provided list of peer addresses. Peer addresses must be in the format:
+// <endpoint>/ipfs/<cid>
+func ExtractPeersPublicKeys(peerAddresses []string) ([]*operator.PublicKey, error) {
+	peerInfos, err := extractMultiAddrFromPeers(peerAddresses)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"failed to extract multiaddress from peer addresses: [%v]",
+			err,
+		)
+	}
+
+	peersPublicKeys := make([]*operator.PublicKey, 0, len(peerInfos))
+
+	for _, peerInfo := range peerInfos {
+		peerNetworkPublicKey, err := peerInfo.ID.ExtractPublicKey()
+		if err != nil {
+			return nil, fmt.Errorf(
+				"failed to extract network public key for peer [%s]: [%v]",
+				peerInfo.ID.Pretty(),
+				err,
+			)
+		}
+
+		peerOperatorPublicKey, err := networkPublicKeyToOperatorPublicKey(
+			peerNetworkPublicKey,
+		)
+		if err != nil {
+			return nil, fmt.Errorf(
+				"failed to convert to operator public key for peer [%s]: [%v]",
+				peerInfo.ID.Pretty(),
+				err,
+			)
+		}
+
+		peersPublicKeys = append(peersPublicKeys, peerOperatorPublicKey)
+	}
+
+	return peersPublicKeys, nil
 }

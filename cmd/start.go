@@ -70,8 +70,19 @@ func start(cmd *cobra.Command) error {
 		return fmt.Errorf("error connecting to Ethereum node: [%v]", err)
 	}
 
+	bootstrapPeersPublicKeys, err := libp2p.ExtractPeersPublicKeys(
+		clientConfig.LibP2P.Peers,
+	)
+	if err != nil {
+		return fmt.Errorf(
+			"error extracting bootstrap peers public keys: [%v]",
+			err,
+		)
+	}
+
 	firewall := firewall.AnyApplicationPolicy(
 		[]firewall.Application{beaconChain, tbtcChain},
+		firewall.NewAllowList(bootstrapPeersPublicKeys),
 	)
 
 	netProvider, err := libp2p.Connect(
@@ -117,12 +128,16 @@ func start(cmd *cobra.Command) error {
 
 	scheduler := generator.StartScheduler()
 
+	// Monitor sortition pool only if the node is a non-bootstrap node.
+	monitorPool := !clientConfig.LibP2P.Bootstrap
+
 	err = beacon.Initialize(
 		ctx,
 		beaconChain,
 		netProvider,
 		beaconKeyStorePersistence,
 		scheduler,
+		monitorPool,
 	)
 	if err != nil {
 		return fmt.Errorf("error initializing beacon: [%v]", err)
@@ -155,6 +170,7 @@ func start(cmd *cobra.Command) error {
 		scheduler,
 		clientConfig.Tbtc,
 		metricsRegistry,
+		monitorPool,
 	)
 	if err != nil {
 		return fmt.Errorf("error initializing TBTC: [%v]", err)

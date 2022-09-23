@@ -154,6 +154,13 @@ func initEthereumFlags(cmd *cobra.Command, cfg *config.Config) {
 
 // Initialize flags for Network configuration.
 func initNetworkFlags(cmd *cobra.Command, cfg *config.Config) {
+	cmd.Flags().BoolVar(
+		&cfg.LibP2P.Bootstrap,
+		"network.bootstrap",
+		false,
+		"Run the client in bootstrap mode.",
+	)
+
 	cmd.Flags().StringSliceVar(
 		&cfg.LibP2P.Peers,
 		"network.peers",

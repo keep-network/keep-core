@@ -79,6 +79,13 @@ var cmdFlagsTests = map[string]struct {
 		expectedValueFromFlag: big.NewInt(1250000000000000000),
 		defaultValue:          big.NewInt(500000000000000000),
 	},
+	"network.bootstrap": {
+		readValueFunc:         func(c *config.Config) interface{} { return c.LibP2P.Bootstrap },
+		flagName:              "--network.bootstrap",
+		flagValue:             "true",
+		expectedValueFromFlag: true,
+		defaultValue:          false,
+	},
 	"network.port": {
 		readValueFunc:         func(c *config.Config) interface{} { return c.LibP2P.Port },
 		flagName:              "--network.port",
