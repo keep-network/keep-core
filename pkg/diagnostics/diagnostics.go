@@ -2,7 +2,6 @@ package diagnostics
 
 import (
 	"encoding/json"
-	"strings"
 
 	"github.com/keep-network/keep-core/pkg/chain"
 
@@ -12,12 +11,6 @@ import (
 )
 
 var logger = log.Logger("keep-diagnostics")
-
-// All available protocols https://github.com/multiformats/multiaddr#protocols
-// Eligible protocols are used to fetch the address to call the /diagnostics
-// endpoint
-var eligibleIP4 = "ip4"
-var eligibleDNS4 = "dns4"
 
 // Config stores diagnostics-related configuration.
 type Config struct {
@@ -59,15 +52,6 @@ func (r *Registry) RegisterConnectedPeersSource(
 
 		var peersList []map[string]interface{}
 		for peer, multiaddrs := range connectedPeersAddrInfo {
-			var addresses []string
-			var peerAddr string
-			for _, address := range multiaddrs {
-				// Multiaddr is formatted as follows /<protocol_code>/<address>/<connection_protocol>/<port>
-				// Address is the 1st index
-				peerAddr = strings.Split(strings.Trim(address, "/"), "/")[1]
-				addresses = append(addresses, peerAddr)
-			}
-
 			peerPublicKey, err := connectionManager.GetPeerPublicKey(peer)
 			if err != nil {
 				logger.Error("error on getting peer public key: [%v]", err)
@@ -85,7 +69,7 @@ func (r *Registry) RegisterConnectedPeersSource(
 			peerInfo := map[string]interface{}{
 				"network_id":    peer,
 				"chain_address": peerChainAddress.String(),
-				"addresses":     addresses,
+				"multiaddrs":     multiaddrs,
 			}
 			peersList = append(peersList, peerInfo)
 		}
