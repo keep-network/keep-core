@@ -89,7 +89,10 @@ export const walletRegistryFixture = deployments.createFixture(
       walletRegistry
     )
 
-    const { deployer, governance } = await helpers.signers.getNamedSigners()
+    const { deployer, governance, chaosnetOwner } =
+      await helpers.signers.getNamedSigners()
+
+    await sortitionPool.connect(chaosnetOwner).deactivateChaosnet()
 
     const [thirdParty] = await helpers.signers.getUnnamedSigners()
 
