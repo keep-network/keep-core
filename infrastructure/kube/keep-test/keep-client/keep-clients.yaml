@@ -50,9 +50,12 @@ spec:
         image: gcr.io/keep-test-f3e0/keep-client:latest
         imagePullPolicy: Always
         ports:
-        - containerPort: 3919
-        - containerPort: 9601
-        - containerPort: 9701
+        - name: network
+          containerPort: 3919
+        - name: metrics
+          containerPort: 9601
+        - name: diagnostics
+          containerPort: 9701
         env:
         - name: KEEP_ETHEREUM_PASSWORD
           valueFrom:
@@ -86,7 +89,7 @@ spec:
         - --network.port
         - "3919"
         - --network.announcedAddresses
-        - /dns4/keep-client-0.default.svc.cluster.local/tcp/3919
+        - /dns4/keep-client-0.default.svc.cluster.local/tcp/3919,/dns4/bootstrap-0.test.keep.network/tcp/3919
         - --metrics.port
         - "9601"
         - --diagnostics.port
@@ -186,20 +189,21 @@ metadata:
 spec:
   type: LoadBalancer
   ports:
-  - port: 3919
-    targetPort: 3919
-    name: network
-  - port: 9601
-    targetPort: 9601
-    name: metrics
-  - port: 9701
-    targetPort: 9701
-    name: diagnostics
+  - name: network
+    port: 3919
+    targetPort: network
+  - name: metrics
+    port: 9601
+    targetPort: metrics
+  - name: diagnostics
+    port: 9701
+    targetPort: diagnostics
   selector:
     app: keep
     type: client
     id: "0"
     network: goerli
+  loadBalancerIP: 104.154.61.116
 ---
 apiVersion: apps/v1
 kind: StatefulSet
@@ -252,9 +256,12 @@ spec:
         image: gcr.io/keep-test-f3e0/keep-client:latest
         imagePullPolicy: Always
         ports:
-        - containerPort: 3919
-        - containerPort: 9601
-        - containerPort: 9701
+        - name: network
+          containerPort: 3919
+        - name: metrics
+          containerPort: 9601
+        - name: diagnostics
+          containerPort: 9701
         env:
         - name: KEEP_ETHEREUM_PASSWORD
           valueFrom:
@@ -288,7 +295,7 @@ spec:
         - --network.port
         - "3919"
         - --network.announcedAddresses
-        - /dns4/keep-client-1.default.svc.cluster.local/tcp/3919
+        - /dns4/keep-client-1.default.svc.cluster.local/tcp/3919,/dns4/bootstrap-1.test.keep.network/tcp/3919
         - --network.peers
         - /dns4/keep-client-0.default.svc.cluster.local/tcp/3919/ipfs/16Uiu2HAmCcfVpHwfBKNFbQuhvGuFXHVLQ65gB4sJm7HyrcZuLttH
         - --metrics.port
@@ -390,20 +397,21 @@ metadata:
 spec:
   type: LoadBalancer
   ports:
-  - port: 3919
-    targetPort: 3919
-    name: network
-  - port: 9601
-    targetPort: 9601
-    name: metrics
-  - port: 9701
-    targetPort: 9701
-    name: diagnostics
+  - name: network
+    port: 3919
+    targetPort: network
+  - name: metrics
+    port: 9601
+    targetPort: metrics
+  - name: diagnostics
+    port: 9701
+    targetPort: diagnostics
   selector:
     app: keep
     type: client
     id: "1"
     network: goerli
+  loadBalancerIP: 35.223.100.87
 ---
 apiVersion: apps/v1
 kind: StatefulSet
@@ -456,9 +464,12 @@ spec:
         image: gcr.io/keep-test-f3e0/keep-client:latest
         imagePullPolicy: Always
         ports:
-        - containerPort: 3919
-        - containerPort: 9601
-        - containerPort: 9701
+        - name: network
+          containerPort: 3919
+        - name: metrics
+          containerPort: 9601
+        - name: diagnostics
+          containerPort: 9701
         env:
         - name: KEEP_ETHEREUM_PASSWORD
           valueFrom:
@@ -594,20 +605,21 @@ metadata:
 spec:
   type: LoadBalancer
   ports:
-  - port: 3919
-    targetPort: 3919
-    name: network
-  - port: 9601
-    targetPort: 9601
-    name: metrics
-  - port: 9701
-    targetPort: 9701
-    name: diagnostics
+  - name: network
+    port: 3919
+    targetPort: network
+  - name: metrics
+    port: 9601
+    targetPort: metrics
+  - name: diagnostics
+    port: 9701
+    targetPort: diagnostics
   selector:
     app: keep
     type: client
     id: "2"
     network: goerli
+  loadBalancerIP: null
 ---
 apiVersion: apps/v1
 kind: StatefulSet
@@ -660,9 +672,12 @@ spec:
         image: gcr.io/keep-test-f3e0/keep-client:latest
         imagePullPolicy: Always
         ports:
-        - containerPort: 3919
-        - containerPort: 9601
-        - containerPort: 9701
+        - name: network
+          containerPort: 3919
+        - name: metrics
+          containerPort: 9601
+        - name: diagnostics
+          containerPort: 9701
         env:
         - name: KEEP_ETHEREUM_PASSWORD
           valueFrom:
@@ -798,20 +813,21 @@ metadata:
 spec:
   type: LoadBalancer
   ports:
-  - port: 3919
-    targetPort: 3919
-    name: network
-  - port: 9601
-    targetPort: 9601
-    name: metrics
-  - port: 9701
-    targetPort: 9701
-    name: diagnostics
+  - name: network
+    port: 3919
+    targetPort: network
+  - name: metrics
+    port: 9601
+    targetPort: metrics
+  - name: diagnostics
+    port: 9701
+    targetPort: diagnostics
   selector:
     app: keep
     type: client
     id: "3"
     network: goerli
+  loadBalancerIP: null
 ---
 apiVersion: apps/v1
 kind: StatefulSet
@@ -864,9 +880,12 @@ spec:
         image: gcr.io/keep-test-f3e0/keep-client:latest
         imagePullPolicy: Always
         ports:
-        - containerPort: 3919
-        - containerPort: 9601
-        - containerPort: 9701
+        - name: network
+          containerPort: 3919
+        - name: metrics
+          containerPort: 9601
+        - name: diagnostics
+          containerPort: 9701
         env:
         - name: KEEP_ETHEREUM_PASSWORD
           valueFrom:
@@ -1002,17 +1021,18 @@ metadata:
 spec:
   type: LoadBalancer
   ports:
-  - port: 3919
-    targetPort: 3919
-    name: network
-  - port: 9601
-    targetPort: 9601
-    name: metrics
-  - port: 9701
-    targetPort: 9701
-    name: diagnostics
+  - name: network
+    port: 3919
+    targetPort: network
+  - name: metrics
+    port: 9601
+    targetPort: metrics
+  - name: diagnostics
+    port: 9701
+    targetPort: diagnostics
   selector:
     app: keep
     type: client
     id: "4"
     network: goerli
+  loadBalancerIP: null
