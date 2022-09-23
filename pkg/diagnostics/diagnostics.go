@@ -69,7 +69,7 @@ func (r *Registry) RegisterConnectedPeersSource(
 			peerInfo := map[string]interface{}{
 				"network_id":    peer,
 				"chain_address": peerChainAddress.String(),
-				"multiaddrs":     multiaddrs,
+				"multiaddrs":    multiaddrs,
 			}
 			peersList = append(peersList, peerInfo)
 		}
