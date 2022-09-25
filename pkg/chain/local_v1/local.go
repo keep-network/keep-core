@@ -131,7 +131,7 @@ func (c *localChain) OnRelayEntryRequested(
 	})
 }
 
-func (c *localChain) SelectGroup(seed *big.Int) ([]chain.Address, error) {
+func (c *localChain) SelectGroup(seed *big.Int) (chain.Addresses, error) {
 	panic("not implemented")
 }
 
