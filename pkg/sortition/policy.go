@@ -2,8 +2,8 @@ package sortition
 
 import "github.com/ipfs/go-log"
 
-// JoinPolicy determines how the client is supposed to join to the sortition
-// pool. The policy can encapsulate special conditions that the client want
+// JoinPolicy determines how the client is supposed to join the sortition
+// pool. The policy can encapsulate special conditions that the client wants
 // to fulfill before joining the sortition pool.
 type JoinPolicy interface {
 	// ShouldJoin indicates whether the joining condition is fulfilled and
