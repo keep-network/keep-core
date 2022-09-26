@@ -12,6 +12,7 @@ Flags:
       --ethereum.requestPerSecondLimit int         Request per second limit for all types of Ethereum client requests. (default 150)
       --ethereum.concurrencyLimit int              The maximum number of concurrent requests which can be executed against Ethereum client. (default 30)
       --ethereum.balanceAlertThreshold wei         The minimum balance of operator account below which client starts reporting errors in logs. (default 500000000 gwei)
+      --network.bootstrap                          Run the client in bootstrap mode.
       --network.peers strings                      Addresses of the network bootstrap nodes.
   -p, --network.port int                           Keep client listening port. (default 3919)
       --network.announcedAddresses strings         Overwrites the default Keep client address announced in the network. Should be used for NAT or when more advanced firewall rules are applied.
@@ -25,7 +26,7 @@ Flags:
       --tbtc.preParamsGenerationTimeout duration   tECDSA pre-parameters generation timeout. (default 2m0s)
       --tbtc.preParamsGenerationDelay duration     tECDSA pre-parameters generation delay. (default 10s)
       --tbtc.preParamsGenerationConcurrency int    tECDSA pre-parameters generation concurrency. (default 1)
-      --tbtc.keyGenerationConcurrency int          tECDSA key generation concurrency. (default number of cores)
+      --tbtc.keyGenerationConcurrency int          tECDSA key generation concurrency. (default 16)
       --developer.bridgeAddress string             Address of the Bridge smart contract
       --developer.randomBeaconAddress string       Address of the RandomBeacon smart contract
       --developer.tokenStakingAddress string       Address of the TokenStaking smart contract

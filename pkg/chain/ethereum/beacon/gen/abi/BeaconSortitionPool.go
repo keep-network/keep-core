@@ -30,7 +30,7 @@ var (
 
 // BeaconSortitionPoolMetaData contains all meta data concerning the BeaconSortitionPool contract.
 var BeaconSortitionPoolMetaData = &bind.MetaData{
-	ABI: "[{\"inputs\":[{\"internalType\":\"contractIERC20WithPermit\",\"name\":\"_rewardToken\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"_poolWeightDivisor\",\"type\":\"uint256\"}],\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint32[]\",\"name\":\"ids\",\"type\":\"uint32[]\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"until\",\"type\":\"uint256\"}],\"name\":\"IneligibleForRewards\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"previousOwner\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"OwnershipTransferred\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"operator\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"uint32\",\"name\":\"id\",\"type\":\"uint32\"}],\"name\":\"RewardEligibilityRestored\",\"type\":\"event\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"operator\",\"type\":\"address\"}],\"name\":\"canRestoreRewardEligibility\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"operator\",\"type\":\"address\"}],\"name\":\"getAvailableRewards\",\"outputs\":[{\"internalType\":\"uint96\",\"name\":\"\",\"type\":\"uint96\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint32\",\"name\":\"id\",\"type\":\"uint32\"}],\"name\":\"getIDOperator\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint32[]\",\"name\":\"ids\",\"type\":\"uint32[]\"}],\"name\":\"getIDOperators\",\"outputs\":[{\"internalType\":\"address[]\",\"name\":\"\",\"type\":\"address[]\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"operator\",\"type\":\"address\"}],\"name\":\"getOperatorID\",\"outputs\":[{\"internalType\":\"uint32\",\"name\":\"\",\"type\":\"uint32\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"operator\",\"type\":\"address\"}],\"name\":\"getPoolWeight\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"ineligibleEarnedRewards\",\"outputs\":[{\"internalType\":\"uint96\",\"name\":\"\",\"type\":\"uint96\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"operator\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"authorizedStake\",\"type\":\"uint256\"}],\"name\":\"insertOperator\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"operator\",\"type\":\"address\"}],\"name\":\"isEligibleForRewards\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"isLocked\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"operator\",\"type\":\"address\"}],\"name\":\"isOperatorInPool\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"operator\",\"type\":\"address\"}],\"name\":\"isOperatorRegistered\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"operator\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"authorizedStake\",\"type\":\"uint256\"}],\"name\":\"isOperatorUpToDate\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"lock\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"operatorsInPool\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"owner\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"poolWeightDivisor\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"sender\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"},{\"internalType\":\"address\",\"name\":\"token\",\"type\":\"address\"},{\"internalType\":\"bytes\",\"name\":\"\",\"type\":\"bytes\"}],\"name\":\"receiveApproval\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"renounceOwnership\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"operator\",\"type\":\"address\"}],\"name\":\"restoreRewardEligibility\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"rewardToken\",\"outputs\":[{\"internalType\":\"contractIERC20WithPermit\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"operator\",\"type\":\"address\"}],\"name\":\"rewardsEligibilityRestorableAt\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"groupSize\",\"type\":\"uint256\"},{\"internalType\":\"bytes32\",\"name\":\"seed\",\"type\":\"bytes32\"}],\"name\":\"selectGroup\",\"outputs\":[{\"internalType\":\"uint32[]\",\"name\":\"\",\"type\":\"uint32[]\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint32[]\",\"name\":\"operators\",\"type\":\"uint32[]\"},{\"internalType\":\"uint256\",\"name\":\"until\",\"type\":\"uint256\"}],\"name\":\"setRewardIneligibility\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"totalWeight\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"transferOwnership\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"unlock\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"operator\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"authorizedStake\",\"type\":\"uint256\"}],\"name\":\"updateOperatorStatus\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"recipient\",\"type\":\"address\"}],\"name\":\"withdrawIneligible\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"operator\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"beneficiary\",\"type\":\"address\"}],\"name\":\"withdrawRewards\",\"outputs\":[{\"internalType\":\"uint96\",\"name\":\"\",\"type\":\"uint96\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]",
+	ABI: "[{\"inputs\":[{\"internalType\":\"contractIERC20WithPermit\",\"name\":\"_rewardToken\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"_poolWeightDivisor\",\"type\":\"uint256\"}],\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"address[]\",\"name\":\"operators\",\"type\":\"address[]\"}],\"name\":\"BetaOperatorsAdded\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[],\"name\":\"ChaosnetDeactivated\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"address\",\"name\":\"oldChaosnetOwner\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"newChaosnetOwner\",\"type\":\"address\"}],\"name\":\"ChaosnetOwnerRoleTransferred\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint32[]\",\"name\":\"ids\",\"type\":\"uint32[]\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"until\",\"type\":\"uint256\"}],\"name\":\"IneligibleForRewards\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"previousOwner\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"OwnershipTransferred\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"operator\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"uint32\",\"name\":\"id\",\"type\":\"uint32\"}],\"name\":\"RewardEligibilityRestored\",\"type\":\"event\"},{\"inputs\":[{\"internalType\":\"address[]\",\"name\":\"operators\",\"type\":\"address[]\"}],\"name\":\"addBetaOperators\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"operator\",\"type\":\"address\"}],\"name\":\"canRestoreRewardEligibility\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"chaosnetOwner\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"deactivateChaosnet\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"operator\",\"type\":\"address\"}],\"name\":\"getAvailableRewards\",\"outputs\":[{\"internalType\":\"uint96\",\"name\":\"\",\"type\":\"uint96\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint32\",\"name\":\"id\",\"type\":\"uint32\"}],\"name\":\"getIDOperator\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint32[]\",\"name\":\"ids\",\"type\":\"uint32[]\"}],\"name\":\"getIDOperators\",\"outputs\":[{\"internalType\":\"address[]\",\"name\":\"\",\"type\":\"address[]\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"operator\",\"type\":\"address\"}],\"name\":\"getOperatorID\",\"outputs\":[{\"internalType\":\"uint32\",\"name\":\"\",\"type\":\"uint32\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"operator\",\"type\":\"address\"}],\"name\":\"getPoolWeight\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"ineligibleEarnedRewards\",\"outputs\":[{\"internalType\":\"uint96\",\"name\":\"\",\"type\":\"uint96\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"operator\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"authorizedStake\",\"type\":\"uint256\"}],\"name\":\"insertOperator\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"name\":\"isBetaOperator\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"isChaosnetActive\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"operator\",\"type\":\"address\"}],\"name\":\"isEligibleForRewards\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"isLocked\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"operator\",\"type\":\"address\"}],\"name\":\"isOperatorInPool\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"operator\",\"type\":\"address\"}],\"name\":\"isOperatorRegistered\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"operator\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"authorizedStake\",\"type\":\"uint256\"}],\"name\":\"isOperatorUpToDate\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"lock\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"operatorsInPool\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"owner\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"poolWeightDivisor\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"sender\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"},{\"internalType\":\"address\",\"name\":\"token\",\"type\":\"address\"},{\"internalType\":\"bytes\",\"name\":\"\",\"type\":\"bytes\"}],\"name\":\"receiveApproval\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"renounceOwnership\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"operator\",\"type\":\"address\"}],\"name\":\"restoreRewardEligibility\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"rewardToken\",\"outputs\":[{\"internalType\":\"contractIERC20WithPermit\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"operator\",\"type\":\"address\"}],\"name\":\"rewardsEligibilityRestorableAt\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"groupSize\",\"type\":\"uint256\"},{\"internalType\":\"bytes32\",\"name\":\"seed\",\"type\":\"bytes32\"}],\"name\":\"selectGroup\",\"outputs\":[{\"internalType\":\"uint32[]\",\"name\":\"\",\"type\":\"uint32[]\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint32[]\",\"name\":\"operators\",\"type\":\"uint32[]\"},{\"internalType\":\"uint256\",\"name\":\"until\",\"type\":\"uint256\"}],\"name\":\"setRewardIneligibility\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"totalWeight\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"newChaosnetOwner\",\"type\":\"address\"}],\"name\":\"transferChaosnetOwnerRole\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"transferOwnership\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"unlock\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"operator\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"authorizedStake\",\"type\":\"uint256\"}],\"name\":\"updateOperatorStatus\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"recipient\",\"type\":\"address\"}],\"name\":\"withdrawIneligible\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"operator\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"beneficiary\",\"type\":\"address\"}],\"name\":\"withdrawRewards\",\"outputs\":[{\"internalType\":\"uint96\",\"name\":\"\",\"type\":\"uint96\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]",
 }
 
 // BeaconSortitionPoolABI is the input ABI used to generate the binding from.
@@ -208,6 +208,37 @@ func (_BeaconSortitionPool *BeaconSortitionPoolSession) CanRestoreRewardEligibil
 // Solidity: function canRestoreRewardEligibility(address operator) view returns(bool)
 func (_BeaconSortitionPool *BeaconSortitionPoolCallerSession) CanRestoreRewardEligibility(operator common.Address) (bool, error) {
 	return _BeaconSortitionPool.Contract.CanRestoreRewardEligibility(&_BeaconSortitionPool.CallOpts, operator)
+}
+
+// ChaosnetOwner is a free data retrieval call binding the contract method 0x7c2cf6cd.
+//
+// Solidity: function chaosnetOwner() view returns(address)
+func (_BeaconSortitionPool *BeaconSortitionPoolCaller) ChaosnetOwner(opts *bind.CallOpts) (common.Address, error) {
+	var out []interface{}
+	err := _BeaconSortitionPool.contract.Call(opts, &out, "chaosnetOwner")
+
+	if err != nil {
+		return *new(common.Address), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(common.Address)).(*common.Address)
+
+	return out0, err
+
+}
+
+// ChaosnetOwner is a free data retrieval call binding the contract method 0x7c2cf6cd.
+//
+// Solidity: function chaosnetOwner() view returns(address)
+func (_BeaconSortitionPool *BeaconSortitionPoolSession) ChaosnetOwner() (common.Address, error) {
+	return _BeaconSortitionPool.Contract.ChaosnetOwner(&_BeaconSortitionPool.CallOpts)
+}
+
+// ChaosnetOwner is a free data retrieval call binding the contract method 0x7c2cf6cd.
+//
+// Solidity: function chaosnetOwner() view returns(address)
+func (_BeaconSortitionPool *BeaconSortitionPoolCallerSession) ChaosnetOwner() (common.Address, error) {
+	return _BeaconSortitionPool.Contract.ChaosnetOwner(&_BeaconSortitionPool.CallOpts)
 }
 
 // GetAvailableRewards is a free data retrieval call binding the contract method 0x873e31fa.
@@ -394,6 +425,68 @@ func (_BeaconSortitionPool *BeaconSortitionPoolSession) IneligibleEarnedRewards(
 // Solidity: function ineligibleEarnedRewards() view returns(uint96)
 func (_BeaconSortitionPool *BeaconSortitionPoolCallerSession) IneligibleEarnedRewards() (*big.Int, error) {
 	return _BeaconSortitionPool.Contract.IneligibleEarnedRewards(&_BeaconSortitionPool.CallOpts)
+}
+
+// IsBetaOperator is a free data retrieval call binding the contract method 0x398ece9c.
+//
+// Solidity: function isBetaOperator(address ) view returns(bool)
+func (_BeaconSortitionPool *BeaconSortitionPoolCaller) IsBetaOperator(opts *bind.CallOpts, arg0 common.Address) (bool, error) {
+	var out []interface{}
+	err := _BeaconSortitionPool.contract.Call(opts, &out, "isBetaOperator", arg0)
+
+	if err != nil {
+		return *new(bool), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(bool)).(*bool)
+
+	return out0, err
+
+}
+
+// IsBetaOperator is a free data retrieval call binding the contract method 0x398ece9c.
+//
+// Solidity: function isBetaOperator(address ) view returns(bool)
+func (_BeaconSortitionPool *BeaconSortitionPoolSession) IsBetaOperator(arg0 common.Address) (bool, error) {
+	return _BeaconSortitionPool.Contract.IsBetaOperator(&_BeaconSortitionPool.CallOpts, arg0)
+}
+
+// IsBetaOperator is a free data retrieval call binding the contract method 0x398ece9c.
+//
+// Solidity: function isBetaOperator(address ) view returns(bool)
+func (_BeaconSortitionPool *BeaconSortitionPoolCallerSession) IsBetaOperator(arg0 common.Address) (bool, error) {
+	return _BeaconSortitionPool.Contract.IsBetaOperator(&_BeaconSortitionPool.CallOpts, arg0)
+}
+
+// IsChaosnetActive is a free data retrieval call binding the contract method 0xb0f3828e.
+//
+// Solidity: function isChaosnetActive() view returns(bool)
+func (_BeaconSortitionPool *BeaconSortitionPoolCaller) IsChaosnetActive(opts *bind.CallOpts) (bool, error) {
+	var out []interface{}
+	err := _BeaconSortitionPool.contract.Call(opts, &out, "isChaosnetActive")
+
+	if err != nil {
+		return *new(bool), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(bool)).(*bool)
+
+	return out0, err
+
+}
+
+// IsChaosnetActive is a free data retrieval call binding the contract method 0xb0f3828e.
+//
+// Solidity: function isChaosnetActive() view returns(bool)
+func (_BeaconSortitionPool *BeaconSortitionPoolSession) IsChaosnetActive() (bool, error) {
+	return _BeaconSortitionPool.Contract.IsChaosnetActive(&_BeaconSortitionPool.CallOpts)
+}
+
+// IsChaosnetActive is a free data retrieval call binding the contract method 0xb0f3828e.
+//
+// Solidity: function isChaosnetActive() view returns(bool)
+func (_BeaconSortitionPool *BeaconSortitionPoolCallerSession) IsChaosnetActive() (bool, error) {
+	return _BeaconSortitionPool.Contract.IsChaosnetActive(&_BeaconSortitionPool.CallOpts)
 }
 
 // IsEligibleForRewards is a free data retrieval call binding the contract method 0x660186e6.
@@ -768,6 +861,48 @@ func (_BeaconSortitionPool *BeaconSortitionPoolCallerSession) TotalWeight() (*bi
 	return _BeaconSortitionPool.Contract.TotalWeight(&_BeaconSortitionPool.CallOpts)
 }
 
+// AddBetaOperators is a paid mutator transaction binding the contract method 0x3e723fc9.
+//
+// Solidity: function addBetaOperators(address[] operators) returns()
+func (_BeaconSortitionPool *BeaconSortitionPoolTransactor) AddBetaOperators(opts *bind.TransactOpts, operators []common.Address) (*types.Transaction, error) {
+	return _BeaconSortitionPool.contract.Transact(opts, "addBetaOperators", operators)
+}
+
+// AddBetaOperators is a paid mutator transaction binding the contract method 0x3e723fc9.
+//
+// Solidity: function addBetaOperators(address[] operators) returns()
+func (_BeaconSortitionPool *BeaconSortitionPoolSession) AddBetaOperators(operators []common.Address) (*types.Transaction, error) {
+	return _BeaconSortitionPool.Contract.AddBetaOperators(&_BeaconSortitionPool.TransactOpts, operators)
+}
+
+// AddBetaOperators is a paid mutator transaction binding the contract method 0x3e723fc9.
+//
+// Solidity: function addBetaOperators(address[] operators) returns()
+func (_BeaconSortitionPool *BeaconSortitionPoolTransactorSession) AddBetaOperators(operators []common.Address) (*types.Transaction, error) {
+	return _BeaconSortitionPool.Contract.AddBetaOperators(&_BeaconSortitionPool.TransactOpts, operators)
+}
+
+// DeactivateChaosnet is a paid mutator transaction binding the contract method 0xf23baf4a.
+//
+// Solidity: function deactivateChaosnet() returns()
+func (_BeaconSortitionPool *BeaconSortitionPoolTransactor) DeactivateChaosnet(opts *bind.TransactOpts) (*types.Transaction, error) {
+	return _BeaconSortitionPool.contract.Transact(opts, "deactivateChaosnet")
+}
+
+// DeactivateChaosnet is a paid mutator transaction binding the contract method 0xf23baf4a.
+//
+// Solidity: function deactivateChaosnet() returns()
+func (_BeaconSortitionPool *BeaconSortitionPoolSession) DeactivateChaosnet() (*types.Transaction, error) {
+	return _BeaconSortitionPool.Contract.DeactivateChaosnet(&_BeaconSortitionPool.TransactOpts)
+}
+
+// DeactivateChaosnet is a paid mutator transaction binding the contract method 0xf23baf4a.
+//
+// Solidity: function deactivateChaosnet() returns()
+func (_BeaconSortitionPool *BeaconSortitionPoolTransactorSession) DeactivateChaosnet() (*types.Transaction, error) {
+	return _BeaconSortitionPool.Contract.DeactivateChaosnet(&_BeaconSortitionPool.TransactOpts)
+}
+
 // InsertOperator is a paid mutator transaction binding the contract method 0x241a4188.
 //
 // Solidity: function insertOperator(address operator, uint256 authorizedStake) returns()
@@ -894,6 +1029,27 @@ func (_BeaconSortitionPool *BeaconSortitionPoolTransactorSession) SetRewardIneli
 	return _BeaconSortitionPool.Contract.SetRewardIneligibility(&_BeaconSortitionPool.TransactOpts, operators, until)
 }
 
+// TransferChaosnetOwnerRole is a paid mutator transaction binding the contract method 0xc545b3a9.
+//
+// Solidity: function transferChaosnetOwnerRole(address newChaosnetOwner) returns()
+func (_BeaconSortitionPool *BeaconSortitionPoolTransactor) TransferChaosnetOwnerRole(opts *bind.TransactOpts, newChaosnetOwner common.Address) (*types.Transaction, error) {
+	return _BeaconSortitionPool.contract.Transact(opts, "transferChaosnetOwnerRole", newChaosnetOwner)
+}
+
+// TransferChaosnetOwnerRole is a paid mutator transaction binding the contract method 0xc545b3a9.
+//
+// Solidity: function transferChaosnetOwnerRole(address newChaosnetOwner) returns()
+func (_BeaconSortitionPool *BeaconSortitionPoolSession) TransferChaosnetOwnerRole(newChaosnetOwner common.Address) (*types.Transaction, error) {
+	return _BeaconSortitionPool.Contract.TransferChaosnetOwnerRole(&_BeaconSortitionPool.TransactOpts, newChaosnetOwner)
+}
+
+// TransferChaosnetOwnerRole is a paid mutator transaction binding the contract method 0xc545b3a9.
+//
+// Solidity: function transferChaosnetOwnerRole(address newChaosnetOwner) returns()
+func (_BeaconSortitionPool *BeaconSortitionPoolTransactorSession) TransferChaosnetOwnerRole(newChaosnetOwner common.Address) (*types.Transaction, error) {
+	return _BeaconSortitionPool.Contract.TransferChaosnetOwnerRole(&_BeaconSortitionPool.TransactOpts, newChaosnetOwner)
+}
+
 // TransferOwnership is a paid mutator transaction binding the contract method 0xf2fde38b.
 //
 // Solidity: function transferOwnership(address newOwner) returns()
@@ -997,6 +1153,408 @@ func (_BeaconSortitionPool *BeaconSortitionPoolSession) WithdrawRewards(operator
 // Solidity: function withdrawRewards(address operator, address beneficiary) returns(uint96)
 func (_BeaconSortitionPool *BeaconSortitionPoolTransactorSession) WithdrawRewards(operator common.Address, beneficiary common.Address) (*types.Transaction, error) {
 	return _BeaconSortitionPool.Contract.WithdrawRewards(&_BeaconSortitionPool.TransactOpts, operator, beneficiary)
+}
+
+// BeaconSortitionPoolBetaOperatorsAddedIterator is returned from FilterBetaOperatorsAdded and is used to iterate over the raw logs and unpacked data for BetaOperatorsAdded events raised by the BeaconSortitionPool contract.
+type BeaconSortitionPoolBetaOperatorsAddedIterator struct {
+	Event *BeaconSortitionPoolBetaOperatorsAdded // Event containing the contract specifics and raw log
+
+	contract *bind.BoundContract // Generic contract to use for unpacking event data
+	event    string              // Event name to use for unpacking event data
+
+	logs chan types.Log        // Log channel receiving the found contract events
+	sub  ethereum.Subscription // Subscription for errors, completion and termination
+	done bool                  // Whether the subscription completed delivering logs
+	fail error                 // Occurred error to stop iteration
+}
+
+// Next advances the iterator to the subsequent event, returning whether there
+// are any more events found. In case of a retrieval or parsing error, false is
+// returned and Error() can be queried for the exact failure.
+func (it *BeaconSortitionPoolBetaOperatorsAddedIterator) Next() bool {
+	// If the iterator failed, stop iterating
+	if it.fail != nil {
+		return false
+	}
+	// If the iterator completed, deliver directly whatever's available
+	if it.done {
+		select {
+		case log := <-it.logs:
+			it.Event = new(BeaconSortitionPoolBetaOperatorsAdded)
+			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+				it.fail = err
+				return false
+			}
+			it.Event.Raw = log
+			return true
+
+		default:
+			return false
+		}
+	}
+	// Iterator still in progress, wait for either a data or an error event
+	select {
+	case log := <-it.logs:
+		it.Event = new(BeaconSortitionPoolBetaOperatorsAdded)
+		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+			it.fail = err
+			return false
+		}
+		it.Event.Raw = log
+		return true
+
+	case err := <-it.sub.Err():
+		it.done = true
+		it.fail = err
+		return it.Next()
+	}
+}
+
+// Error returns any retrieval or parsing error occurred during filtering.
+func (it *BeaconSortitionPoolBetaOperatorsAddedIterator) Error() error {
+	return it.fail
+}
+
+// Close terminates the iteration process, releasing any pending underlying
+// resources.
+func (it *BeaconSortitionPoolBetaOperatorsAddedIterator) Close() error {
+	it.sub.Unsubscribe()
+	return nil
+}
+
+// BeaconSortitionPoolBetaOperatorsAdded represents a BetaOperatorsAdded event raised by the BeaconSortitionPool contract.
+type BeaconSortitionPoolBetaOperatorsAdded struct {
+	Operators []common.Address
+	Raw       types.Log // Blockchain specific contextual infos
+}
+
+// FilterBetaOperatorsAdded is a free log retrieval operation binding the contract event 0x79b60dc9f29a0514f5ce9bf1e89b7add7a22440cde3b203c03a842e3b534071b.
+//
+// Solidity: event BetaOperatorsAdded(address[] operators)
+func (_BeaconSortitionPool *BeaconSortitionPoolFilterer) FilterBetaOperatorsAdded(opts *bind.FilterOpts) (*BeaconSortitionPoolBetaOperatorsAddedIterator, error) {
+
+	logs, sub, err := _BeaconSortitionPool.contract.FilterLogs(opts, "BetaOperatorsAdded")
+	if err != nil {
+		return nil, err
+	}
+	return &BeaconSortitionPoolBetaOperatorsAddedIterator{contract: _BeaconSortitionPool.contract, event: "BetaOperatorsAdded", logs: logs, sub: sub}, nil
+}
+
+// WatchBetaOperatorsAdded is a free log subscription operation binding the contract event 0x79b60dc9f29a0514f5ce9bf1e89b7add7a22440cde3b203c03a842e3b534071b.
+//
+// Solidity: event BetaOperatorsAdded(address[] operators)
+func (_BeaconSortitionPool *BeaconSortitionPoolFilterer) WatchBetaOperatorsAdded(opts *bind.WatchOpts, sink chan<- *BeaconSortitionPoolBetaOperatorsAdded) (event.Subscription, error) {
+
+	logs, sub, err := _BeaconSortitionPool.contract.WatchLogs(opts, "BetaOperatorsAdded")
+	if err != nil {
+		return nil, err
+	}
+	return event.NewSubscription(func(quit <-chan struct{}) error {
+		defer sub.Unsubscribe()
+		for {
+			select {
+			case log := <-logs:
+				// New log arrived, parse the event and forward to the user
+				event := new(BeaconSortitionPoolBetaOperatorsAdded)
+				if err := _BeaconSortitionPool.contract.UnpackLog(event, "BetaOperatorsAdded", log); err != nil {
+					return err
+				}
+				event.Raw = log
+
+				select {
+				case sink <- event:
+				case err := <-sub.Err():
+					return err
+				case <-quit:
+					return nil
+				}
+			case err := <-sub.Err():
+				return err
+			case <-quit:
+				return nil
+			}
+		}
+	}), nil
+}
+
+// ParseBetaOperatorsAdded is a log parse operation binding the contract event 0x79b60dc9f29a0514f5ce9bf1e89b7add7a22440cde3b203c03a842e3b534071b.
+//
+// Solidity: event BetaOperatorsAdded(address[] operators)
+func (_BeaconSortitionPool *BeaconSortitionPoolFilterer) ParseBetaOperatorsAdded(log types.Log) (*BeaconSortitionPoolBetaOperatorsAdded, error) {
+	event := new(BeaconSortitionPoolBetaOperatorsAdded)
+	if err := _BeaconSortitionPool.contract.UnpackLog(event, "BetaOperatorsAdded", log); err != nil {
+		return nil, err
+	}
+	event.Raw = log
+	return event, nil
+}
+
+// BeaconSortitionPoolChaosnetDeactivatedIterator is returned from FilterChaosnetDeactivated and is used to iterate over the raw logs and unpacked data for ChaosnetDeactivated events raised by the BeaconSortitionPool contract.
+type BeaconSortitionPoolChaosnetDeactivatedIterator struct {
+	Event *BeaconSortitionPoolChaosnetDeactivated // Event containing the contract specifics and raw log
+
+	contract *bind.BoundContract // Generic contract to use for unpacking event data
+	event    string              // Event name to use for unpacking event data
+
+	logs chan types.Log        // Log channel receiving the found contract events
+	sub  ethereum.Subscription // Subscription for errors, completion and termination
+	done bool                  // Whether the subscription completed delivering logs
+	fail error                 // Occurred error to stop iteration
+}
+
+// Next advances the iterator to the subsequent event, returning whether there
+// are any more events found. In case of a retrieval or parsing error, false is
+// returned and Error() can be queried for the exact failure.
+func (it *BeaconSortitionPoolChaosnetDeactivatedIterator) Next() bool {
+	// If the iterator failed, stop iterating
+	if it.fail != nil {
+		return false
+	}
+	// If the iterator completed, deliver directly whatever's available
+	if it.done {
+		select {
+		case log := <-it.logs:
+			it.Event = new(BeaconSortitionPoolChaosnetDeactivated)
+			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+				it.fail = err
+				return false
+			}
+			it.Event.Raw = log
+			return true
+
+		default:
+			return false
+		}
+	}
+	// Iterator still in progress, wait for either a data or an error event
+	select {
+	case log := <-it.logs:
+		it.Event = new(BeaconSortitionPoolChaosnetDeactivated)
+		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+			it.fail = err
+			return false
+		}
+		it.Event.Raw = log
+		return true
+
+	case err := <-it.sub.Err():
+		it.done = true
+		it.fail = err
+		return it.Next()
+	}
+}
+
+// Error returns any retrieval or parsing error occurred during filtering.
+func (it *BeaconSortitionPoolChaosnetDeactivatedIterator) Error() error {
+	return it.fail
+}
+
+// Close terminates the iteration process, releasing any pending underlying
+// resources.
+func (it *BeaconSortitionPoolChaosnetDeactivatedIterator) Close() error {
+	it.sub.Unsubscribe()
+	return nil
+}
+
+// BeaconSortitionPoolChaosnetDeactivated represents a ChaosnetDeactivated event raised by the BeaconSortitionPool contract.
+type BeaconSortitionPoolChaosnetDeactivated struct {
+	Raw types.Log // Blockchain specific contextual infos
+}
+
+// FilterChaosnetDeactivated is a free log retrieval operation binding the contract event 0xbea11dc6cfde2788be7e8a6ceef5c8d181bb1c628ba6d71675fca0e754367c74.
+//
+// Solidity: event ChaosnetDeactivated()
+func (_BeaconSortitionPool *BeaconSortitionPoolFilterer) FilterChaosnetDeactivated(opts *bind.FilterOpts) (*BeaconSortitionPoolChaosnetDeactivatedIterator, error) {
+
+	logs, sub, err := _BeaconSortitionPool.contract.FilterLogs(opts, "ChaosnetDeactivated")
+	if err != nil {
+		return nil, err
+	}
+	return &BeaconSortitionPoolChaosnetDeactivatedIterator{contract: _BeaconSortitionPool.contract, event: "ChaosnetDeactivated", logs: logs, sub: sub}, nil
+}
+
+// WatchChaosnetDeactivated is a free log subscription operation binding the contract event 0xbea11dc6cfde2788be7e8a6ceef5c8d181bb1c628ba6d71675fca0e754367c74.
+//
+// Solidity: event ChaosnetDeactivated()
+func (_BeaconSortitionPool *BeaconSortitionPoolFilterer) WatchChaosnetDeactivated(opts *bind.WatchOpts, sink chan<- *BeaconSortitionPoolChaosnetDeactivated) (event.Subscription, error) {
+
+	logs, sub, err := _BeaconSortitionPool.contract.WatchLogs(opts, "ChaosnetDeactivated")
+	if err != nil {
+		return nil, err
+	}
+	return event.NewSubscription(func(quit <-chan struct{}) error {
+		defer sub.Unsubscribe()
+		for {
+			select {
+			case log := <-logs:
+				// New log arrived, parse the event and forward to the user
+				event := new(BeaconSortitionPoolChaosnetDeactivated)
+				if err := _BeaconSortitionPool.contract.UnpackLog(event, "ChaosnetDeactivated", log); err != nil {
+					return err
+				}
+				event.Raw = log
+
+				select {
+				case sink <- event:
+				case err := <-sub.Err():
+					return err
+				case <-quit:
+					return nil
+				}
+			case err := <-sub.Err():
+				return err
+			case <-quit:
+				return nil
+			}
+		}
+	}), nil
+}
+
+// ParseChaosnetDeactivated is a log parse operation binding the contract event 0xbea11dc6cfde2788be7e8a6ceef5c8d181bb1c628ba6d71675fca0e754367c74.
+//
+// Solidity: event ChaosnetDeactivated()
+func (_BeaconSortitionPool *BeaconSortitionPoolFilterer) ParseChaosnetDeactivated(log types.Log) (*BeaconSortitionPoolChaosnetDeactivated, error) {
+	event := new(BeaconSortitionPoolChaosnetDeactivated)
+	if err := _BeaconSortitionPool.contract.UnpackLog(event, "ChaosnetDeactivated", log); err != nil {
+		return nil, err
+	}
+	event.Raw = log
+	return event, nil
+}
+
+// BeaconSortitionPoolChaosnetOwnerRoleTransferredIterator is returned from FilterChaosnetOwnerRoleTransferred and is used to iterate over the raw logs and unpacked data for ChaosnetOwnerRoleTransferred events raised by the BeaconSortitionPool contract.
+type BeaconSortitionPoolChaosnetOwnerRoleTransferredIterator struct {
+	Event *BeaconSortitionPoolChaosnetOwnerRoleTransferred // Event containing the contract specifics and raw log
+
+	contract *bind.BoundContract // Generic contract to use for unpacking event data
+	event    string              // Event name to use for unpacking event data
+
+	logs chan types.Log        // Log channel receiving the found contract events
+	sub  ethereum.Subscription // Subscription for errors, completion and termination
+	done bool                  // Whether the subscription completed delivering logs
+	fail error                 // Occurred error to stop iteration
+}
+
+// Next advances the iterator to the subsequent event, returning whether there
+// are any more events found. In case of a retrieval or parsing error, false is
+// returned and Error() can be queried for the exact failure.
+func (it *BeaconSortitionPoolChaosnetOwnerRoleTransferredIterator) Next() bool {
+	// If the iterator failed, stop iterating
+	if it.fail != nil {
+		return false
+	}
+	// If the iterator completed, deliver directly whatever's available
+	if it.done {
+		select {
+		case log := <-it.logs:
+			it.Event = new(BeaconSortitionPoolChaosnetOwnerRoleTransferred)
+			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+				it.fail = err
+				return false
+			}
+			it.Event.Raw = log
+			return true
+
+		default:
+			return false
+		}
+	}
+	// Iterator still in progress, wait for either a data or an error event
+	select {
+	case log := <-it.logs:
+		it.Event = new(BeaconSortitionPoolChaosnetOwnerRoleTransferred)
+		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+			it.fail = err
+			return false
+		}
+		it.Event.Raw = log
+		return true
+
+	case err := <-it.sub.Err():
+		it.done = true
+		it.fail = err
+		return it.Next()
+	}
+}
+
+// Error returns any retrieval or parsing error occurred during filtering.
+func (it *BeaconSortitionPoolChaosnetOwnerRoleTransferredIterator) Error() error {
+	return it.fail
+}
+
+// Close terminates the iteration process, releasing any pending underlying
+// resources.
+func (it *BeaconSortitionPoolChaosnetOwnerRoleTransferredIterator) Close() error {
+	it.sub.Unsubscribe()
+	return nil
+}
+
+// BeaconSortitionPoolChaosnetOwnerRoleTransferred represents a ChaosnetOwnerRoleTransferred event raised by the BeaconSortitionPool contract.
+type BeaconSortitionPoolChaosnetOwnerRoleTransferred struct {
+	OldChaosnetOwner common.Address
+	NewChaosnetOwner common.Address
+	Raw              types.Log // Blockchain specific contextual infos
+}
+
+// FilterChaosnetOwnerRoleTransferred is a free log retrieval operation binding the contract event 0xf7d2871c195d5dcbeca7c9bfb4f7ae4149d0915a5d3d03c8c2286c9a24e932be.
+//
+// Solidity: event ChaosnetOwnerRoleTransferred(address oldChaosnetOwner, address newChaosnetOwner)
+func (_BeaconSortitionPool *BeaconSortitionPoolFilterer) FilterChaosnetOwnerRoleTransferred(opts *bind.FilterOpts) (*BeaconSortitionPoolChaosnetOwnerRoleTransferredIterator, error) {
+
+	logs, sub, err := _BeaconSortitionPool.contract.FilterLogs(opts, "ChaosnetOwnerRoleTransferred")
+	if err != nil {
+		return nil, err
+	}
+	return &BeaconSortitionPoolChaosnetOwnerRoleTransferredIterator{contract: _BeaconSortitionPool.contract, event: "ChaosnetOwnerRoleTransferred", logs: logs, sub: sub}, nil
+}
+
+// WatchChaosnetOwnerRoleTransferred is a free log subscription operation binding the contract event 0xf7d2871c195d5dcbeca7c9bfb4f7ae4149d0915a5d3d03c8c2286c9a24e932be.
+//
+// Solidity: event ChaosnetOwnerRoleTransferred(address oldChaosnetOwner, address newChaosnetOwner)
+func (_BeaconSortitionPool *BeaconSortitionPoolFilterer) WatchChaosnetOwnerRoleTransferred(opts *bind.WatchOpts, sink chan<- *BeaconSortitionPoolChaosnetOwnerRoleTransferred) (event.Subscription, error) {
+
+	logs, sub, err := _BeaconSortitionPool.contract.WatchLogs(opts, "ChaosnetOwnerRoleTransferred")
+	if err != nil {
+		return nil, err
+	}
+	return event.NewSubscription(func(quit <-chan struct{}) error {
+		defer sub.Unsubscribe()
+		for {
+			select {
+			case log := <-logs:
+				// New log arrived, parse the event and forward to the user
+				event := new(BeaconSortitionPoolChaosnetOwnerRoleTransferred)
+				if err := _BeaconSortitionPool.contract.UnpackLog(event, "ChaosnetOwnerRoleTransferred", log); err != nil {
+					return err
+				}
+				event.Raw = log
+
+				select {
+				case sink <- event:
+				case err := <-sub.Err():
+					return err
+				case <-quit:
+					return nil
+				}
+			case err := <-sub.Err():
+				return err
+			case <-quit:
+				return nil
+			}
+		}
+	}), nil
+}
+
+// ParseChaosnetOwnerRoleTransferred is a log parse operation binding the contract event 0xf7d2871c195d5dcbeca7c9bfb4f7ae4149d0915a5d3d03c8c2286c9a24e932be.
+//
+// Solidity: event ChaosnetOwnerRoleTransferred(address oldChaosnetOwner, address newChaosnetOwner)
+func (_BeaconSortitionPool *BeaconSortitionPoolFilterer) ParseChaosnetOwnerRoleTransferred(log types.Log) (*BeaconSortitionPoolChaosnetOwnerRoleTransferred, error) {
+	event := new(BeaconSortitionPoolChaosnetOwnerRoleTransferred)
+	if err := _BeaconSortitionPool.contract.UnpackLog(event, "ChaosnetOwnerRoleTransferred", log); err != nil {
+		return nil, err
+	}
+	event.Raw = log
+	return event, nil
 }
 
 // BeaconSortitionPoolIneligibleForRewardsIterator is returned from FilterIneligibleForRewards and is used to iterate over the raw logs and unpacked data for IneligibleForRewards events raised by the BeaconSortitionPool contract.

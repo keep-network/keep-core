@@ -105,6 +105,268 @@ func NewEcdsaSortitionPool(
 // ----- Non-const Methods ------
 
 // Transaction submission.
+func (esp *EcdsaSortitionPool) AddBetaOperators(
+	arg_operators []common.Address,
+
+	transactionOptions ...chainutil.TransactionOptions,
+) (*types.Transaction, error) {
+	espLogger.Debug(
+		"submitting transaction addBetaOperators",
+		" params: ",
+		fmt.Sprint(
+			arg_operators,
+		),
+	)
+
+	esp.transactionMutex.Lock()
+	defer esp.transactionMutex.Unlock()
+
+	// create a copy
+	transactorOptions := new(bind.TransactOpts)
+	*transactorOptions = *esp.transactorOptions
+
+	if len(transactionOptions) > 1 {
+		return nil, fmt.Errorf(
+			"could not process multiple transaction options sets",
+		)
+	} else if len(transactionOptions) > 0 {
+		transactionOptions[0].Apply(transactorOptions)
+	}
+
+	nonce, err := esp.nonceManager.CurrentNonce()
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve account nonce: %v", err)
+	}
+
+	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
+
+	transaction, err := esp.contract.AddBetaOperators(
+		transactorOptions,
+		arg_operators,
+	)
+	if err != nil {
+		return transaction, esp.errorResolver.ResolveError(
+			err,
+			esp.transactorOptions.From,
+			nil,
+			"addBetaOperators",
+			arg_operators,
+		)
+	}
+
+	espLogger.Infof(
+		"submitted transaction addBetaOperators with id: [%s] and nonce [%v]",
+		transaction.Hash(),
+		transaction.Nonce(),
+	)
+
+	go esp.miningWaiter.ForceMining(
+		transaction,
+		transactorOptions,
+		func(newTransactorOptions *bind.TransactOpts) (*types.Transaction, error) {
+			// If original transactor options has a non-zero gas limit, that
+			// means the client code set it on their own. In that case, we
+			// should rewrite the gas limit from the original transaction
+			// for each resubmission. If the gas limit is not set by the client
+			// code, let the the submitter re-estimate the gas limit on each
+			// resubmission.
+			if transactorOptions.GasLimit != 0 {
+				newTransactorOptions.GasLimit = transactorOptions.GasLimit
+			}
+
+			transaction, err := esp.contract.AddBetaOperators(
+				newTransactorOptions,
+				arg_operators,
+			)
+			if err != nil {
+				return nil, esp.errorResolver.ResolveError(
+					err,
+					esp.transactorOptions.From,
+					nil,
+					"addBetaOperators",
+					arg_operators,
+				)
+			}
+
+			espLogger.Infof(
+				"submitted transaction addBetaOperators with id: [%s] and nonce [%v]",
+				transaction.Hash(),
+				transaction.Nonce(),
+			)
+
+			return transaction, nil
+		},
+	)
+
+	esp.nonceManager.IncrementNonce()
+
+	return transaction, err
+}
+
+// Non-mutating call, not a transaction submission.
+func (esp *EcdsaSortitionPool) CallAddBetaOperators(
+	arg_operators []common.Address,
+	blockNumber *big.Int,
+) error {
+	var result interface{} = nil
+
+	err := chainutil.CallAtBlock(
+		esp.transactorOptions.From,
+		blockNumber, nil,
+		esp.contractABI,
+		esp.caller,
+		esp.errorResolver,
+		esp.contractAddress,
+		"addBetaOperators",
+		&result,
+		arg_operators,
+	)
+
+	return err
+}
+
+func (esp *EcdsaSortitionPool) AddBetaOperatorsGasEstimate(
+	arg_operators []common.Address,
+) (uint64, error) {
+	var result uint64
+
+	result, err := chainutil.EstimateGas(
+		esp.callerOptions.From,
+		esp.contractAddress,
+		"addBetaOperators",
+		esp.contractABI,
+		esp.transactor,
+		arg_operators,
+	)
+
+	return result, err
+}
+
+// Transaction submission.
+func (esp *EcdsaSortitionPool) DeactivateChaosnet(
+
+	transactionOptions ...chainutil.TransactionOptions,
+) (*types.Transaction, error) {
+	espLogger.Debug(
+		"submitting transaction deactivateChaosnet",
+	)
+
+	esp.transactionMutex.Lock()
+	defer esp.transactionMutex.Unlock()
+
+	// create a copy
+	transactorOptions := new(bind.TransactOpts)
+	*transactorOptions = *esp.transactorOptions
+
+	if len(transactionOptions) > 1 {
+		return nil, fmt.Errorf(
+			"could not process multiple transaction options sets",
+		)
+	} else if len(transactionOptions) > 0 {
+		transactionOptions[0].Apply(transactorOptions)
+	}
+
+	nonce, err := esp.nonceManager.CurrentNonce()
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve account nonce: %v", err)
+	}
+
+	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
+
+	transaction, err := esp.contract.DeactivateChaosnet(
+		transactorOptions,
+	)
+	if err != nil {
+		return transaction, esp.errorResolver.ResolveError(
+			err,
+			esp.transactorOptions.From,
+			nil,
+			"deactivateChaosnet",
+		)
+	}
+
+	espLogger.Infof(
+		"submitted transaction deactivateChaosnet with id: [%s] and nonce [%v]",
+		transaction.Hash(),
+		transaction.Nonce(),
+	)
+
+	go esp.miningWaiter.ForceMining(
+		transaction,
+		transactorOptions,
+		func(newTransactorOptions *bind.TransactOpts) (*types.Transaction, error) {
+			// If original transactor options has a non-zero gas limit, that
+			// means the client code set it on their own. In that case, we
+			// should rewrite the gas limit from the original transaction
+			// for each resubmission. If the gas limit is not set by the client
+			// code, let the the submitter re-estimate the gas limit on each
+			// resubmission.
+			if transactorOptions.GasLimit != 0 {
+				newTransactorOptions.GasLimit = transactorOptions.GasLimit
+			}
+
+			transaction, err := esp.contract.DeactivateChaosnet(
+				newTransactorOptions,
+			)
+			if err != nil {
+				return nil, esp.errorResolver.ResolveError(
+					err,
+					esp.transactorOptions.From,
+					nil,
+					"deactivateChaosnet",
+				)
+			}
+
+			espLogger.Infof(
+				"submitted transaction deactivateChaosnet with id: [%s] and nonce [%v]",
+				transaction.Hash(),
+				transaction.Nonce(),
+			)
+
+			return transaction, nil
+		},
+	)
+
+	esp.nonceManager.IncrementNonce()
+
+	return transaction, err
+}
+
+// Non-mutating call, not a transaction submission.
+func (esp *EcdsaSortitionPool) CallDeactivateChaosnet(
+	blockNumber *big.Int,
+) error {
+	var result interface{} = nil
+
+	err := chainutil.CallAtBlock(
+		esp.transactorOptions.From,
+		blockNumber, nil,
+		esp.contractABI,
+		esp.caller,
+		esp.errorResolver,
+		esp.contractAddress,
+		"deactivateChaosnet",
+		&result,
+	)
+
+	return err
+}
+
+func (esp *EcdsaSortitionPool) DeactivateChaosnetGasEstimate() (uint64, error) {
+	var result uint64
+
+	result, err := chainutil.EstimateGas(
+		esp.callerOptions.From,
+		esp.contractAddress,
+		"deactivateChaosnet",
+		esp.contractABI,
+		esp.transactor,
+	)
+
+	return result, err
+}
+
+// Transaction submission.
 func (esp *EcdsaSortitionPool) InsertOperator(
 	arg_operator common.Address,
 	arg_authorizedStake *big.Int,
@@ -955,6 +1217,144 @@ func (esp *EcdsaSortitionPool) SetRewardIneligibilityGasEstimate(
 }
 
 // Transaction submission.
+func (esp *EcdsaSortitionPool) TransferChaosnetOwnerRole(
+	arg_newChaosnetOwner common.Address,
+
+	transactionOptions ...chainutil.TransactionOptions,
+) (*types.Transaction, error) {
+	espLogger.Debug(
+		"submitting transaction transferChaosnetOwnerRole",
+		" params: ",
+		fmt.Sprint(
+			arg_newChaosnetOwner,
+		),
+	)
+
+	esp.transactionMutex.Lock()
+	defer esp.transactionMutex.Unlock()
+
+	// create a copy
+	transactorOptions := new(bind.TransactOpts)
+	*transactorOptions = *esp.transactorOptions
+
+	if len(transactionOptions) > 1 {
+		return nil, fmt.Errorf(
+			"could not process multiple transaction options sets",
+		)
+	} else if len(transactionOptions) > 0 {
+		transactionOptions[0].Apply(transactorOptions)
+	}
+
+	nonce, err := esp.nonceManager.CurrentNonce()
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve account nonce: %v", err)
+	}
+
+	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
+
+	transaction, err := esp.contract.TransferChaosnetOwnerRole(
+		transactorOptions,
+		arg_newChaosnetOwner,
+	)
+	if err != nil {
+		return transaction, esp.errorResolver.ResolveError(
+			err,
+			esp.transactorOptions.From,
+			nil,
+			"transferChaosnetOwnerRole",
+			arg_newChaosnetOwner,
+		)
+	}
+
+	espLogger.Infof(
+		"submitted transaction transferChaosnetOwnerRole with id: [%s] and nonce [%v]",
+		transaction.Hash(),
+		transaction.Nonce(),
+	)
+
+	go esp.miningWaiter.ForceMining(
+		transaction,
+		transactorOptions,
+		func(newTransactorOptions *bind.TransactOpts) (*types.Transaction, error) {
+			// If original transactor options has a non-zero gas limit, that
+			// means the client code set it on their own. In that case, we
+			// should rewrite the gas limit from the original transaction
+			// for each resubmission. If the gas limit is not set by the client
+			// code, let the the submitter re-estimate the gas limit on each
+			// resubmission.
+			if transactorOptions.GasLimit != 0 {
+				newTransactorOptions.GasLimit = transactorOptions.GasLimit
+			}
+
+			transaction, err := esp.contract.TransferChaosnetOwnerRole(
+				newTransactorOptions,
+				arg_newChaosnetOwner,
+			)
+			if err != nil {
+				return nil, esp.errorResolver.ResolveError(
+					err,
+					esp.transactorOptions.From,
+					nil,
+					"transferChaosnetOwnerRole",
+					arg_newChaosnetOwner,
+				)
+			}
+
+			espLogger.Infof(
+				"submitted transaction transferChaosnetOwnerRole with id: [%s] and nonce [%v]",
+				transaction.Hash(),
+				transaction.Nonce(),
+			)
+
+			return transaction, nil
+		},
+	)
+
+	esp.nonceManager.IncrementNonce()
+
+	return transaction, err
+}
+
+// Non-mutating call, not a transaction submission.
+func (esp *EcdsaSortitionPool) CallTransferChaosnetOwnerRole(
+	arg_newChaosnetOwner common.Address,
+	blockNumber *big.Int,
+) error {
+	var result interface{} = nil
+
+	err := chainutil.CallAtBlock(
+		esp.transactorOptions.From,
+		blockNumber, nil,
+		esp.contractABI,
+		esp.caller,
+		esp.errorResolver,
+		esp.contractAddress,
+		"transferChaosnetOwnerRole",
+		&result,
+		arg_newChaosnetOwner,
+	)
+
+	return err
+}
+
+func (esp *EcdsaSortitionPool) TransferChaosnetOwnerRoleGasEstimate(
+	arg_newChaosnetOwner common.Address,
+) (uint64, error) {
+	var result uint64
+
+	result, err := chainutil.EstimateGas(
+		esp.callerOptions.From,
+		esp.contractAddress,
+		"transferChaosnetOwnerRole",
+		esp.contractABI,
+		esp.transactor,
+		arg_newChaosnetOwner,
+	)
+
+	return result, err
+}
+
+// Transaction submission.
 func (esp *EcdsaSortitionPool) TransferOwnership(
 	arg_newOwner common.Address,
 
@@ -1695,6 +2095,43 @@ func (esp *EcdsaSortitionPool) CanRestoreRewardEligibilityAtBlock(
 	return result, err
 }
 
+func (esp *EcdsaSortitionPool) ChaosnetOwner() (common.Address, error) {
+	result, err := esp.contract.ChaosnetOwner(
+		esp.callerOptions,
+	)
+
+	if err != nil {
+		return result, esp.errorResolver.ResolveError(
+			err,
+			esp.callerOptions.From,
+			nil,
+			"chaosnetOwner",
+		)
+	}
+
+	return result, err
+}
+
+func (esp *EcdsaSortitionPool) ChaosnetOwnerAtBlock(
+	blockNumber *big.Int,
+) (common.Address, error) {
+	var result common.Address
+
+	err := chainutil.CallAtBlock(
+		esp.callerOptions.From,
+		blockNumber,
+		nil,
+		esp.contractABI,
+		esp.caller,
+		esp.errorResolver,
+		esp.contractAddress,
+		"chaosnetOwner",
+		&result,
+	)
+
+	return result, err
+}
+
 func (esp *EcdsaSortitionPool) GetAvailableRewards(
 	arg_operator common.Address,
 ) (*big.Int, error) {
@@ -1941,6 +2378,86 @@ func (esp *EcdsaSortitionPool) IneligibleEarnedRewardsAtBlock(
 		esp.errorResolver,
 		esp.contractAddress,
 		"ineligibleEarnedRewards",
+		&result,
+	)
+
+	return result, err
+}
+
+func (esp *EcdsaSortitionPool) IsBetaOperator(
+	arg0 common.Address,
+) (bool, error) {
+	result, err := esp.contract.IsBetaOperator(
+		esp.callerOptions,
+		arg0,
+	)
+
+	if err != nil {
+		return result, esp.errorResolver.ResolveError(
+			err,
+			esp.callerOptions.From,
+			nil,
+			"isBetaOperator",
+			arg0,
+		)
+	}
+
+	return result, err
+}
+
+func (esp *EcdsaSortitionPool) IsBetaOperatorAtBlock(
+	arg0 common.Address,
+	blockNumber *big.Int,
+) (bool, error) {
+	var result bool
+
+	err := chainutil.CallAtBlock(
+		esp.callerOptions.From,
+		blockNumber,
+		nil,
+		esp.contractABI,
+		esp.caller,
+		esp.errorResolver,
+		esp.contractAddress,
+		"isBetaOperator",
+		&result,
+		arg0,
+	)
+
+	return result, err
+}
+
+func (esp *EcdsaSortitionPool) IsChaosnetActive() (bool, error) {
+	result, err := esp.contract.IsChaosnetActive(
+		esp.callerOptions,
+	)
+
+	if err != nil {
+		return result, esp.errorResolver.ResolveError(
+			err,
+			esp.callerOptions.From,
+			nil,
+			"isChaosnetActive",
+		)
+	}
+
+	return result, err
+}
+
+func (esp *EcdsaSortitionPool) IsChaosnetActiveAtBlock(
+	blockNumber *big.Int,
+) (bool, error) {
+	var result bool
+
+	err := chainutil.CallAtBlock(
+		esp.callerOptions.From,
+		blockNumber,
+		nil,
+		esp.contractABI,
+		esp.caller,
+		esp.errorResolver,
+		esp.contractAddress,
+		"isChaosnetActive",
 		&result,
 	)
 
@@ -2438,6 +2955,543 @@ func (esp *EcdsaSortitionPool) TotalWeightAtBlock(
 }
 
 // ------ Events -------
+
+func (esp *EcdsaSortitionPool) BetaOperatorsAddedEvent(
+	opts *ethereum.SubscribeOpts,
+) *EspBetaOperatorsAddedSubscription {
+	if opts == nil {
+		opts = new(ethereum.SubscribeOpts)
+	}
+	if opts.Tick == 0 {
+		opts.Tick = chainutil.DefaultSubscribeOptsTick
+	}
+	if opts.PastBlocks == 0 {
+		opts.PastBlocks = chainutil.DefaultSubscribeOptsPastBlocks
+	}
+
+	return &EspBetaOperatorsAddedSubscription{
+		esp,
+		opts,
+	}
+}
+
+type EspBetaOperatorsAddedSubscription struct {
+	contract *EcdsaSortitionPool
+	opts     *ethereum.SubscribeOpts
+}
+
+type ecdsaSortitionPoolBetaOperatorsAddedFunc func(
+	Operators []common.Address,
+	blockNumber uint64,
+)
+
+func (boas *EspBetaOperatorsAddedSubscription) OnEvent(
+	handler ecdsaSortitionPoolBetaOperatorsAddedFunc,
+) subscription.EventSubscription {
+	eventChan := make(chan *abi.EcdsaSortitionPoolBetaOperatorsAdded)
+	ctx, cancelCtx := context.WithCancel(context.Background())
+
+	go func() {
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case event := <-eventChan:
+				handler(
+					event.Operators,
+					event.Raw.BlockNumber,
+				)
+			}
+		}
+	}()
+
+	sub := boas.Pipe(eventChan)
+	return subscription.NewEventSubscription(func() {
+		sub.Unsubscribe()
+		cancelCtx()
+	})
+}
+
+func (boas *EspBetaOperatorsAddedSubscription) Pipe(
+	sink chan *abi.EcdsaSortitionPoolBetaOperatorsAdded,
+) subscription.EventSubscription {
+	ctx, cancelCtx := context.WithCancel(context.Background())
+	go func() {
+		ticker := time.NewTicker(boas.opts.Tick)
+		defer ticker.Stop()
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-ticker.C:
+				lastBlock, err := boas.contract.blockCounter.CurrentBlock()
+				if err != nil {
+					espLogger.Errorf(
+						"subscription failed to pull events: [%v]",
+						err,
+					)
+				}
+				fromBlock := lastBlock - boas.opts.PastBlocks
+
+				espLogger.Infof(
+					"subscription monitoring fetching past BetaOperatorsAdded events "+
+						"starting from block [%v]",
+					fromBlock,
+				)
+				events, err := boas.contract.PastBetaOperatorsAddedEvents(
+					fromBlock,
+					nil,
+				)
+				if err != nil {
+					espLogger.Errorf(
+						"subscription failed to pull events: [%v]",
+						err,
+					)
+					continue
+				}
+				espLogger.Infof(
+					"subscription monitoring fetched [%v] past BetaOperatorsAdded events",
+					len(events),
+				)
+
+				for _, event := range events {
+					sink <- event
+				}
+			}
+		}
+	}()
+
+	sub := boas.contract.watchBetaOperatorsAdded(
+		sink,
+	)
+
+	return subscription.NewEventSubscription(func() {
+		sub.Unsubscribe()
+		cancelCtx()
+	})
+}
+
+func (esp *EcdsaSortitionPool) watchBetaOperatorsAdded(
+	sink chan *abi.EcdsaSortitionPoolBetaOperatorsAdded,
+) event.Subscription {
+	subscribeFn := func(ctx context.Context) (event.Subscription, error) {
+		return esp.contract.WatchBetaOperatorsAdded(
+			&bind.WatchOpts{Context: ctx},
+			sink,
+		)
+	}
+
+	thresholdViolatedFn := func(elapsed time.Duration) {
+		espLogger.Errorf(
+			"subscription to event BetaOperatorsAdded had to be "+
+				"retried [%s] since the last attempt; please inspect "+
+				"host chain connectivity",
+			elapsed,
+		)
+	}
+
+	subscriptionFailedFn := func(err error) {
+		espLogger.Errorf(
+			"subscription to event BetaOperatorsAdded failed "+
+				"with error: [%v]; resubscription attempt will be "+
+				"performed",
+			err,
+		)
+	}
+
+	return chainutil.WithResubscription(
+		chainutil.SubscriptionBackoffMax,
+		subscribeFn,
+		chainutil.SubscriptionAlertThreshold,
+		thresholdViolatedFn,
+		subscriptionFailedFn,
+	)
+}
+
+func (esp *EcdsaSortitionPool) PastBetaOperatorsAddedEvents(
+	startBlock uint64,
+	endBlock *uint64,
+) ([]*abi.EcdsaSortitionPoolBetaOperatorsAdded, error) {
+	iterator, err := esp.contract.FilterBetaOperatorsAdded(
+		&bind.FilterOpts{
+			Start: startBlock,
+			End:   endBlock,
+		},
+	)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"error retrieving past BetaOperatorsAdded events: [%v]",
+			err,
+		)
+	}
+
+	events := make([]*abi.EcdsaSortitionPoolBetaOperatorsAdded, 0)
+
+	for iterator.Next() {
+		event := iterator.Event
+		events = append(events, event)
+	}
+
+	return events, nil
+}
+
+func (esp *EcdsaSortitionPool) ChaosnetDeactivatedEvent(
+	opts *ethereum.SubscribeOpts,
+) *EspChaosnetDeactivatedSubscription {
+	if opts == nil {
+		opts = new(ethereum.SubscribeOpts)
+	}
+	if opts.Tick == 0 {
+		opts.Tick = chainutil.DefaultSubscribeOptsTick
+	}
+	if opts.PastBlocks == 0 {
+		opts.PastBlocks = chainutil.DefaultSubscribeOptsPastBlocks
+	}
+
+	return &EspChaosnetDeactivatedSubscription{
+		esp,
+		opts,
+	}
+}
+
+type EspChaosnetDeactivatedSubscription struct {
+	contract *EcdsaSortitionPool
+	opts     *ethereum.SubscribeOpts
+}
+
+type ecdsaSortitionPoolChaosnetDeactivatedFunc func(
+	blockNumber uint64,
+)
+
+func (cds *EspChaosnetDeactivatedSubscription) OnEvent(
+	handler ecdsaSortitionPoolChaosnetDeactivatedFunc,
+) subscription.EventSubscription {
+	eventChan := make(chan *abi.EcdsaSortitionPoolChaosnetDeactivated)
+	ctx, cancelCtx := context.WithCancel(context.Background())
+
+	go func() {
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case event := <-eventChan:
+				handler(
+					event.Raw.BlockNumber,
+				)
+			}
+		}
+	}()
+
+	sub := cds.Pipe(eventChan)
+	return subscription.NewEventSubscription(func() {
+		sub.Unsubscribe()
+		cancelCtx()
+	})
+}
+
+func (cds *EspChaosnetDeactivatedSubscription) Pipe(
+	sink chan *abi.EcdsaSortitionPoolChaosnetDeactivated,
+) subscription.EventSubscription {
+	ctx, cancelCtx := context.WithCancel(context.Background())
+	go func() {
+		ticker := time.NewTicker(cds.opts.Tick)
+		defer ticker.Stop()
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-ticker.C:
+				lastBlock, err := cds.contract.blockCounter.CurrentBlock()
+				if err != nil {
+					espLogger.Errorf(
+						"subscription failed to pull events: [%v]",
+						err,
+					)
+				}
+				fromBlock := lastBlock - cds.opts.PastBlocks
+
+				espLogger.Infof(
+					"subscription monitoring fetching past ChaosnetDeactivated events "+
+						"starting from block [%v]",
+					fromBlock,
+				)
+				events, err := cds.contract.PastChaosnetDeactivatedEvents(
+					fromBlock,
+					nil,
+				)
+				if err != nil {
+					espLogger.Errorf(
+						"subscription failed to pull events: [%v]",
+						err,
+					)
+					continue
+				}
+				espLogger.Infof(
+					"subscription monitoring fetched [%v] past ChaosnetDeactivated events",
+					len(events),
+				)
+
+				for _, event := range events {
+					sink <- event
+				}
+			}
+		}
+	}()
+
+	sub := cds.contract.watchChaosnetDeactivated(
+		sink,
+	)
+
+	return subscription.NewEventSubscription(func() {
+		sub.Unsubscribe()
+		cancelCtx()
+	})
+}
+
+func (esp *EcdsaSortitionPool) watchChaosnetDeactivated(
+	sink chan *abi.EcdsaSortitionPoolChaosnetDeactivated,
+) event.Subscription {
+	subscribeFn := func(ctx context.Context) (event.Subscription, error) {
+		return esp.contract.WatchChaosnetDeactivated(
+			&bind.WatchOpts{Context: ctx},
+			sink,
+		)
+	}
+
+	thresholdViolatedFn := func(elapsed time.Duration) {
+		espLogger.Errorf(
+			"subscription to event ChaosnetDeactivated had to be "+
+				"retried [%s] since the last attempt; please inspect "+
+				"host chain connectivity",
+			elapsed,
+		)
+	}
+
+	subscriptionFailedFn := func(err error) {
+		espLogger.Errorf(
+			"subscription to event ChaosnetDeactivated failed "+
+				"with error: [%v]; resubscription attempt will be "+
+				"performed",
+			err,
+		)
+	}
+
+	return chainutil.WithResubscription(
+		chainutil.SubscriptionBackoffMax,
+		subscribeFn,
+		chainutil.SubscriptionAlertThreshold,
+		thresholdViolatedFn,
+		subscriptionFailedFn,
+	)
+}
+
+func (esp *EcdsaSortitionPool) PastChaosnetDeactivatedEvents(
+	startBlock uint64,
+	endBlock *uint64,
+) ([]*abi.EcdsaSortitionPoolChaosnetDeactivated, error) {
+	iterator, err := esp.contract.FilterChaosnetDeactivated(
+		&bind.FilterOpts{
+			Start: startBlock,
+			End:   endBlock,
+		},
+	)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"error retrieving past ChaosnetDeactivated events: [%v]",
+			err,
+		)
+	}
+
+	events := make([]*abi.EcdsaSortitionPoolChaosnetDeactivated, 0)
+
+	for iterator.Next() {
+		event := iterator.Event
+		events = append(events, event)
+	}
+
+	return events, nil
+}
+
+func (esp *EcdsaSortitionPool) ChaosnetOwnerRoleTransferredEvent(
+	opts *ethereum.SubscribeOpts,
+) *EspChaosnetOwnerRoleTransferredSubscription {
+	if opts == nil {
+		opts = new(ethereum.SubscribeOpts)
+	}
+	if opts.Tick == 0 {
+		opts.Tick = chainutil.DefaultSubscribeOptsTick
+	}
+	if opts.PastBlocks == 0 {
+		opts.PastBlocks = chainutil.DefaultSubscribeOptsPastBlocks
+	}
+
+	return &EspChaosnetOwnerRoleTransferredSubscription{
+		esp,
+		opts,
+	}
+}
+
+type EspChaosnetOwnerRoleTransferredSubscription struct {
+	contract *EcdsaSortitionPool
+	opts     *ethereum.SubscribeOpts
+}
+
+type ecdsaSortitionPoolChaosnetOwnerRoleTransferredFunc func(
+	OldChaosnetOwner common.Address,
+	NewChaosnetOwner common.Address,
+	blockNumber uint64,
+)
+
+func (corts *EspChaosnetOwnerRoleTransferredSubscription) OnEvent(
+	handler ecdsaSortitionPoolChaosnetOwnerRoleTransferredFunc,
+) subscription.EventSubscription {
+	eventChan := make(chan *abi.EcdsaSortitionPoolChaosnetOwnerRoleTransferred)
+	ctx, cancelCtx := context.WithCancel(context.Background())
+
+	go func() {
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case event := <-eventChan:
+				handler(
+					event.OldChaosnetOwner,
+					event.NewChaosnetOwner,
+					event.Raw.BlockNumber,
+				)
+			}
+		}
+	}()
+
+	sub := corts.Pipe(eventChan)
+	return subscription.NewEventSubscription(func() {
+		sub.Unsubscribe()
+		cancelCtx()
+	})
+}
+
+func (corts *EspChaosnetOwnerRoleTransferredSubscription) Pipe(
+	sink chan *abi.EcdsaSortitionPoolChaosnetOwnerRoleTransferred,
+) subscription.EventSubscription {
+	ctx, cancelCtx := context.WithCancel(context.Background())
+	go func() {
+		ticker := time.NewTicker(corts.opts.Tick)
+		defer ticker.Stop()
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-ticker.C:
+				lastBlock, err := corts.contract.blockCounter.CurrentBlock()
+				if err != nil {
+					espLogger.Errorf(
+						"subscription failed to pull events: [%v]",
+						err,
+					)
+				}
+				fromBlock := lastBlock - corts.opts.PastBlocks
+
+				espLogger.Infof(
+					"subscription monitoring fetching past ChaosnetOwnerRoleTransferred events "+
+						"starting from block [%v]",
+					fromBlock,
+				)
+				events, err := corts.contract.PastChaosnetOwnerRoleTransferredEvents(
+					fromBlock,
+					nil,
+				)
+				if err != nil {
+					espLogger.Errorf(
+						"subscription failed to pull events: [%v]",
+						err,
+					)
+					continue
+				}
+				espLogger.Infof(
+					"subscription monitoring fetched [%v] past ChaosnetOwnerRoleTransferred events",
+					len(events),
+				)
+
+				for _, event := range events {
+					sink <- event
+				}
+			}
+		}
+	}()
+
+	sub := corts.contract.watchChaosnetOwnerRoleTransferred(
+		sink,
+	)
+
+	return subscription.NewEventSubscription(func() {
+		sub.Unsubscribe()
+		cancelCtx()
+	})
+}
+
+func (esp *EcdsaSortitionPool) watchChaosnetOwnerRoleTransferred(
+	sink chan *abi.EcdsaSortitionPoolChaosnetOwnerRoleTransferred,
+) event.Subscription {
+	subscribeFn := func(ctx context.Context) (event.Subscription, error) {
+		return esp.contract.WatchChaosnetOwnerRoleTransferred(
+			&bind.WatchOpts{Context: ctx},
+			sink,
+		)
+	}
+
+	thresholdViolatedFn := func(elapsed time.Duration) {
+		espLogger.Errorf(
+			"subscription to event ChaosnetOwnerRoleTransferred had to be "+
+				"retried [%s] since the last attempt; please inspect "+
+				"host chain connectivity",
+			elapsed,
+		)
+	}
+
+	subscriptionFailedFn := func(err error) {
+		espLogger.Errorf(
+			"subscription to event ChaosnetOwnerRoleTransferred failed "+
+				"with error: [%v]; resubscription attempt will be "+
+				"performed",
+			err,
+		)
+	}
+
+	return chainutil.WithResubscription(
+		chainutil.SubscriptionBackoffMax,
+		subscribeFn,
+		chainutil.SubscriptionAlertThreshold,
+		thresholdViolatedFn,
+		subscriptionFailedFn,
+	)
+}
+
+func (esp *EcdsaSortitionPool) PastChaosnetOwnerRoleTransferredEvents(
+	startBlock uint64,
+	endBlock *uint64,
+) ([]*abi.EcdsaSortitionPoolChaosnetOwnerRoleTransferred, error) {
+	iterator, err := esp.contract.FilterChaosnetOwnerRoleTransferred(
+		&bind.FilterOpts{
+			Start: startBlock,
+			End:   endBlock,
+		},
+	)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"error retrieving past ChaosnetOwnerRoleTransferred events: [%v]",
+			err,
+		)
+	}
+
+	events := make([]*abi.EcdsaSortitionPoolChaosnetOwnerRoleTransferred, 0)
+
+	for iterator.Next() {
+		event := iterator.Event
+		events = append(events, event)
+	}
+
+	return events, nil
+}
 
 func (esp *EcdsaSortitionPool) IneligibleForRewardsEvent(
 	opts *ethereum.SubscribeOpts,
