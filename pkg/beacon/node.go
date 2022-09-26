@@ -75,6 +75,8 @@ func (n *node) JoinDKGIfEligible(
 		return
 	}
 
+	logger.Infof("selected group members = %s", selectedOperators)
+
 	if len(selectedOperators) > n.beaconChain.GetConfig().GroupSize {
 		logger.Errorf(
 			"group size larger than supported: [%v]",
