@@ -80,6 +80,8 @@ func (n *node) joinDKGIfEligible(seed *big.Int, startBlockNumber uint64) {
 		return
 	}
 
+	logger.Infof("selected group members = %s", selectedSigningGroupOperators)
+
 	chainConfig := n.chain.GetConfig()
 
 	if len(selectedSigningGroupOperators) > chainConfig.GroupSize {
