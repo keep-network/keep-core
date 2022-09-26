@@ -89,7 +89,7 @@ spec:
         - --network.port
         - "3919"
         - --network.announcedAddresses
-        - /dns4/keep-client-0.default.svc.cluster.local/tcp/3919,/dns4/bootstrap-0.test.keep.network/tcp/3919
+        - /dns4/bootstrap-0.test.keep.network/tcp/3919
         - --metrics.port
         - "9601"
         - --diagnostics.port
@@ -295,7 +295,7 @@ spec:
         - --network.port
         - "3919"
         - --network.announcedAddresses
-        - /dns4/keep-client-1.default.svc.cluster.local/tcp/3919,/dns4/bootstrap-1.test.keep.network/tcp/3919
+        - /dns4/bootstrap-1.test.keep.network/tcp/3919
         - --network.peers
         - /dns4/keep-client-0.default.svc.cluster.local/tcp/3919/ipfs/16Uiu2HAmCcfVpHwfBKNFbQuhvGuFXHVLQ65gB4sJm7HyrcZuLttH
         - --metrics.port
@@ -502,8 +502,6 @@ spec:
         - /mnt/keep-client/data
         - --network.port
         - "3919"
-        - --network.announcedAddresses
-        - /dns4/keep-client-2.default.svc.cluster.local/tcp/3919
         - --network.peers
         - /dns4/keep-client-1.default.svc.cluster.local/tcp/3919/ipfs/16Uiu2HAm3eJtyFKAttzJ85NLMromHuRg4yyum3CREMf6CHBBV6KY
         - --metrics.port
@@ -710,8 +708,6 @@ spec:
         - /mnt/keep-client/data
         - --network.port
         - "3919"
-        - --network.announcedAddresses
-        - /dns4/keep-client-3.default.svc.cluster.local/tcp/3919
         - --network.peers
         - /dns4/keep-client-2.default.svc.cluster.local/tcp/3919/ipfs/16Uiu2HAmNNuCp45z5bgB8KiTHv1vHTNAVbBgxxtTFGAndageo9Dp
         - --metrics.port
@@ -918,8 +914,6 @@ spec:
         - /mnt/keep-client/data
         - --network.port
         - "3919"
-        - --network.announcedAddresses
-        - /dns4/keep-client-4.default.svc.cluster.local/tcp/3919
         - --network.peers
         - /dns4/keep-client-3.default.svc.cluster.local/tcp/3919/ipfs/16Uiu2HAm8KJX32kr3eYUhDuzwTucSfAfspnjnXNf9veVhB12t6Vf
         - --metrics.port
