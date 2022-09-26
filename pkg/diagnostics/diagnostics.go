@@ -48,11 +48,10 @@ func (r *Registry) RegisterConnectedPeersSource(
 ) {
 	r.Registry.RegisterSource("connected_peers", func() string {
 		connectionManager := netProvider.ConnectionManager()
-		connectedPeers := connectionManager.ConnectedPeers()
+		connectedPeersAddrInfo := connectionManager.ConnectedPeersAddrInfo()
 
-		peersList := make([]map[string]interface{}, len(connectedPeers))
-		for i := 0; i < len(connectedPeers); i++ {
-			peer := connectedPeers[i]
+		var peersList []map[string]interface{}
+		for peer, multiaddrs := range connectedPeersAddrInfo {
 			peerPublicKey, err := connectionManager.GetPeerPublicKey(peer)
 			if err != nil {
 				logger.Error("error on getting peer public key: [%v]", err)
@@ -67,10 +66,12 @@ func (r *Registry) RegisterConnectedPeersSource(
 				continue
 			}
 
-			peersList[i] = map[string]interface{}{
+			peerInfo := map[string]interface{}{
 				"network_id":    peer,
 				"chain_address": peerChainAddress.String(),
+				"multiaddrs":    multiaddrs,
 			}
+			peersList = append(peersList, peerInfo)
 		}
 
 		bytes, err := json.Marshal(peersList)
