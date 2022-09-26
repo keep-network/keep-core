@@ -1,17 +1,13 @@
-package metrics
+package clientinfo
 
 import (
-	"context"
 	"fmt"
 	"time"
 
-	"github.com/ipfs/go-log"
-	"github.com/keep-network/keep-common/pkg/metrics"
+	"github.com/keep-network/keep-common/pkg/clientinfo"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/net"
 )
-
-var logger = log.Logger("keep-metrics")
 
 type Source func() float64
 
@@ -26,37 +22,6 @@ const (
 	// metrics.
 	ApplicationMetricsTick = 1 * time.Minute
 )
-
-// Config stores meta-info about metrics.
-type Config struct {
-	Port                int
-	NetworkMetricsTick  time.Duration
-	EthereumMetricsTick time.Duration
-}
-
-// Registry wraps keep-common metrics registry and exposes additional functions
-// for registering client-custom metrics.
-type Registry struct {
-	*metrics.Registry
-
-	ctx context.Context
-}
-
-// Initialize set up the metrics registry and enables metrics server.
-func Initialize(
-	ctx context.Context,
-	port int,
-) (*Registry, bool) {
-	if port == 0 {
-		return nil, false
-	}
-
-	registry := &Registry{metrics.NewRegistry(), ctx}
-
-	registry.EnableServer(port)
-
-	return registry, true
-}
 
 // ObserveConnectedPeersCount triggers an observation process of the
 // connected_peers_count metric.
@@ -145,7 +110,7 @@ func (r *Registry) observe(
 	input Source,
 	tick time.Duration,
 ) {
-	observer, err := r.NewGaugeObserver(name, metrics.ObserverInput(input))
+	observer, err := r.NewMetricGaugeObserver(name, clientinfo.ObserverInput(input))
 	if err != nil {
 		logger.Warnf("could not create gauge observer [%v]", name)
 		return

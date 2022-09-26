@@ -22,13 +22,10 @@ DisseminationTime = 76
 [storage]
 Dir = "/my/secure/location"
 
-[metrics]
+[clientinfo]
 Port = 3498
 NetworkMetricsTick = "43s"
 EthereumMetricsTick = "1m27s"
-
-[diagnostics]
-Port = 9723
 
 [developer]
 RandomBeaconAddress = "0xcf64c2a367341170cb4e09cf8c0ed137d8473ceb"
