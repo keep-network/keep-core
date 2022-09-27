@@ -110,7 +110,7 @@ func (r *Registry) observe(
 	input Source,
 	tick time.Duration,
 ) {
-	observer, err := r.NewMetricGaugeObserver(name, clientinfo.ObserverInput(input))
+	observer, err := r.NewMetricGaugeObserver(name, clientinfo.MetricObserverInput(input))
 	if err != nil {
 		logger.Warnf("could not create gauge observer [%v]", name)
 		return
