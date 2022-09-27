@@ -52,10 +52,8 @@ spec:
         ports:
         - name: network
           containerPort: 3919
-        - name: metrics
+        - name: client-info
           containerPort: 9601
-        - name: diagnostics
-          containerPort: 9701
         env:
         - name: KEEP_ETHEREUM_PASSWORD
           valueFrom:
@@ -90,10 +88,8 @@ spec:
         - "3919"
         - --network.announcedAddresses
         - /dns4/keep-client-0.default.svc.cluster.local/tcp/3919,/dns4/bootstrap-0.test.keep.network/tcp/3919
-        - --metrics.port
+        - --clientInfo.port
         - "9601"
-        - --diagnostics.port
-        - "9701"
       initContainers:
       - name: initcontainer-beacon
         image: gcr.io/keep-test-f3e0/keep-random-beacon-hardhat:latest
@@ -192,12 +188,9 @@ spec:
   - name: network
     port: 3919
     targetPort: network
-  - name: metrics
+  - name: client-info
     port: 9601
-    targetPort: metrics
-  - name: diagnostics
-    port: 9701
-    targetPort: diagnostics
+    targetPort: client-info
   selector:
     app: keep
     type: client
@@ -258,10 +251,8 @@ spec:
         ports:
         - name: network
           containerPort: 3919
-        - name: metrics
+        - name: client-info
           containerPort: 9601
-        - name: diagnostics
-          containerPort: 9701
         env:
         - name: KEEP_ETHEREUM_PASSWORD
           valueFrom:
@@ -298,10 +289,8 @@ spec:
         - /dns4/keep-client-1.default.svc.cluster.local/tcp/3919,/dns4/bootstrap-1.test.keep.network/tcp/3919
         - --network.peers
         - /dns4/keep-client-0.default.svc.cluster.local/tcp/3919/ipfs/16Uiu2HAmCcfVpHwfBKNFbQuhvGuFXHVLQ65gB4sJm7HyrcZuLttH
-        - --metrics.port
+        - --clientInfo.port
         - "9601"
-        - --diagnostics.port
-        - "9701"
       initContainers:
       - name: initcontainer-beacon
         image: gcr.io/keep-test-f3e0/keep-random-beacon-hardhat:latest
@@ -400,12 +389,9 @@ spec:
   - name: network
     port: 3919
     targetPort: network
-  - name: metrics
+  - name: client-info
     port: 9601
-    targetPort: metrics
-  - name: diagnostics
-    port: 9701
-    targetPort: diagnostics
+    targetPort: client-info
   selector:
     app: keep
     type: client
@@ -466,10 +452,8 @@ spec:
         ports:
         - name: network
           containerPort: 3919
-        - name: metrics
+        - name: client-info
           containerPort: 9601
-        - name: diagnostics
-          containerPort: 9701
         env:
         - name: KEEP_ETHEREUM_PASSWORD
           valueFrom:
@@ -506,10 +490,8 @@ spec:
         - /dns4/keep-client-2.default.svc.cluster.local/tcp/3919
         - --network.peers
         - /dns4/keep-client-1.default.svc.cluster.local/tcp/3919/ipfs/16Uiu2HAm3eJtyFKAttzJ85NLMromHuRg4yyum3CREMf6CHBBV6KY
-        - --metrics.port
+        - --clientInfo.port
         - "9601"
-        - --diagnostics.port
-        - "9701"
       initContainers:
       - name: initcontainer-beacon
         image: gcr.io/keep-test-f3e0/keep-random-beacon-hardhat:latest
@@ -608,12 +590,9 @@ spec:
   - name: network
     port: 3919
     targetPort: network
-  - name: metrics
+  - name: client-info
     port: 9601
-    targetPort: metrics
-  - name: diagnostics
-    port: 9701
-    targetPort: diagnostics
+    targetPort: client-info
   selector:
     app: keep
     type: client
@@ -674,10 +653,8 @@ spec:
         ports:
         - name: network
           containerPort: 3919
-        - name: metrics
+        - name: client-info
           containerPort: 9601
-        - name: diagnostics
-          containerPort: 9701
         env:
         - name: KEEP_ETHEREUM_PASSWORD
           valueFrom:
@@ -714,10 +691,8 @@ spec:
         - /dns4/keep-client-3.default.svc.cluster.local/tcp/3919
         - --network.peers
         - /dns4/keep-client-2.default.svc.cluster.local/tcp/3919/ipfs/16Uiu2HAmNNuCp45z5bgB8KiTHv1vHTNAVbBgxxtTFGAndageo9Dp
-        - --metrics.port
+        - --clientInfo.port
         - "9601"
-        - --diagnostics.port
-        - "9701"
       initContainers:
       - name: initcontainer-beacon
         image: gcr.io/keep-test-f3e0/keep-random-beacon-hardhat:latest
@@ -816,12 +791,9 @@ spec:
   - name: network
     port: 3919
     targetPort: network
-  - name: metrics
+  - name: client-info
     port: 9601
-    targetPort: metrics
-  - name: diagnostics
-    port: 9701
-    targetPort: diagnostics
+    targetPort: client-info
   selector:
     app: keep
     type: client
@@ -882,10 +854,8 @@ spec:
         ports:
         - name: network
           containerPort: 3919
-        - name: metrics
+        - name: client-info
           containerPort: 9601
-        - name: diagnostics
-          containerPort: 9701
         env:
         - name: KEEP_ETHEREUM_PASSWORD
           valueFrom:
@@ -922,10 +892,8 @@ spec:
         - /dns4/keep-client-4.default.svc.cluster.local/tcp/3919
         - --network.peers
         - /dns4/keep-client-3.default.svc.cluster.local/tcp/3919/ipfs/16Uiu2HAm8KJX32kr3eYUhDuzwTucSfAfspnjnXNf9veVhB12t6Vf
-        - --metrics.port
+        - --clientInfo.port
         - "9601"
-        - --diagnostics.port
-        - "9701"
       initContainers:
       - name: initcontainer-beacon
         image: gcr.io/keep-test-f3e0/keep-random-beacon-hardhat:latest
@@ -1024,12 +992,9 @@ spec:
   - name: network
     port: 3919
     targetPort: network
-  - name: metrics
+  - name: client-info
     port: 9601
-    targetPort: metrics
-  - name: diagnostics
-    port: 9701
-    targetPort: diagnostics
+    targetPort: client-info
   selector:
     app: keep
     type: client
