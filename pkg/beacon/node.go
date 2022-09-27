@@ -6,6 +6,7 @@ import (
 	"math/big"
 
 	bn256 "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
+
 	"github.com/keep-network/keep-core/pkg/altbn128"
 	beaconchain "github.com/keep-network/keep-core/pkg/beacon/chain"
 	"github.com/keep-network/keep-core/pkg/beacon/dkg"
@@ -75,7 +76,11 @@ func (n *node) JoinDKGIfEligible(
 		return
 	}
 
-	logger.Infof("selected group members = %s", selectedOperators)
+	logger.Infof(
+		"selected group members for DKG with seed [0x%x] = %s",
+		dkgSeed,
+		selectedOperators,
+	)
 
 	if len(selectedOperators) > n.beaconChain.GetConfig().GroupSize {
 		logger.Errorf(
