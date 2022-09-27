@@ -126,21 +126,17 @@ func TestReadConfigFromFile(t *testing.T) {
 			readValueFunc: func(c *Config) interface{} { return c.Storage.Dir },
 			expectedValue: "/my/secure/location",
 		},
-		"Metrics.Port": {
-			readValueFunc: func(c *Config) interface{} { return c.Metrics.Port },
+		"ClientInfo.Port": {
+			readValueFunc: func(c *Config) interface{} { return c.ClientInfo.Port },
 			expectedValue: 3498,
 		},
-		"Metrics.NetworkMetricsTick": {
-			readValueFunc: func(c *Config) interface{} { return c.Metrics.NetworkMetricsTick },
+		"ClientInfo.NetworkMetricsTick": {
+			readValueFunc: func(c *Config) interface{} { return c.ClientInfo.NetworkMetricsTick },
 			expectedValue: 43 * time.Second,
 		},
-		"Metrics.EthereumMetricsTick": {
-			readValueFunc: func(c *Config) interface{} { return c.Metrics.EthereumMetricsTick },
+		"ClientInfo.EthereumMetricsTick": {
+			readValueFunc: func(c *Config) interface{} { return c.ClientInfo.EthereumMetricsTick },
 			expectedValue: 87 * time.Second,
-		},
-		"Diagnostics.Port": {
-			readValueFunc: func(c *Config) interface{} { return c.Diagnostics.Port },
-			expectedValue: 9723,
 		},
 	}
 

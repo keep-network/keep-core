@@ -57,10 +57,8 @@ spec:
           ports:
             - name: network
               containerPort: 3919
-            - name: metrics
+            - name: client-info
               containerPort: 9601
-            - name: diagnostics
-              containerPort: 9701
           env:
             - name: KEEP_ETHEREUM_PASSWORD
               valueFrom:
@@ -100,10 +98,8 @@ spec:
             - "--network.peers"
             -  #@ client.networkPeers
             #@ end
-            - "--metrics.port"
+            - "--clientInfo.port"
             - "9601"
-            - "--diagnostics.port"
-            - "9701"
       initContainers:
         #@ for/end initcontainer in data.values.initContainers:
         - name: #@ initcontainer.name
@@ -161,12 +157,9 @@ spec:
     - name: network
       port: 3919
       targetPort: network
-    - name: metrics
+    - name: client-info
       port: 9601
-      targetPort: metrics
-    - name: diagnostics
-      port: 9701
-      targetPort: diagnostics
+      targetPort: client-info
   selector: #@ labels()
   loadBalancerIP: #@ client.staticIP
 #@ end
