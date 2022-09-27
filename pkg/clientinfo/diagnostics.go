@@ -8,6 +8,30 @@ import (
 	"github.com/keep-network/keep-core/pkg/net"
 )
 
+// Diagnostics describes data structure returned by the diagnostics endpoint.
+type Diagnostics struct {
+	ClientInfo     Client `json:"client_info"`
+	ConnectedPeers []Peer `json:"connected_peers"`
+}
+
+// Client describes data structure of client information.
+type Client struct {
+	ChainAddress string `json:"chain_address"`
+	NetworkID    string `json:"network_id"`
+	Version      string `json:"version"`
+	Revision     string `json:"revision"`
+}
+
+// Peer describes data structure of peer information.
+type Peer struct {
+	ChainAddress          string   `json:"chain_address"`
+	NetworkID             string   `json:"network_id"`
+	NetworkMultiAddresses []string `json:"multiaddrs"`
+}
+
+// ApplicationInfo describes data structure of application information.
+type ApplicationInfo map[string]interface{}
+
 // RegisterConnectedPeersSource registers the diagnostics source providing
 // information about connected peers.
 func (r *Registry) RegisterConnectedPeersSource(
@@ -18,9 +42,9 @@ func (r *Registry) RegisterConnectedPeersSource(
 		connectionManager := netProvider.ConnectionManager()
 		connectedPeersAddrInfo := connectionManager.ConnectedPeersAddrInfo()
 
-		var peersList []map[string]interface{}
-		for peer, multiaddrs := range connectedPeersAddrInfo {
-			peerPublicKey, err := connectionManager.GetPeerPublicKey(peer)
+		var peersList []Peer
+		for peerNetworkID, multiaddrs := range connectedPeersAddrInfo {
+			peerPublicKey, err := connectionManager.GetPeerPublicKey(peerNetworkID)
 			if err != nil {
 				logger.Error("error on getting peer public key: [%v]", err)
 				continue
@@ -34,12 +58,11 @@ func (r *Registry) RegisterConnectedPeersSource(
 				continue
 			}
 
-			peerInfo := map[string]interface{}{
-				"network_id":    peer,
-				"chain_address": peerChainAddress.String(),
-				"multiaddrs":    multiaddrs,
-			}
-			peersList = append(peersList, peerInfo)
+			peersList = append(peersList, Peer{
+				NetworkID:             peerNetworkID,
+				ChainAddress:          peerChainAddress.String(),
+				NetworkMultiAddresses: multiaddrs,
+			})
 		}
 
 		bytes, err := json.Marshal(peersList)
@@ -78,11 +101,11 @@ func (r *Registry) RegisterClientInfoSource(
 			return ""
 		}
 
-		clientInfo := map[string]interface{}{
-			"network_id":    clientID,
-			"chain_address": clientChainAddress.String(),
-			"version":       clientVersion,
-			"revision":      clientRevision,
+		clientInfo := Client{
+			NetworkID:    clientID,
+			ChainAddress: clientChainAddress.String(),
+			Version:      clientVersion,
+			Revision:     clientRevision,
 		}
 
 		bytes, err := json.Marshal(clientInfo)
@@ -99,7 +122,7 @@ func (r *Registry) RegisterClientInfoSource(
 // information about the application.
 func (r *Registry) RegisterApplicationSource(
 	application string,
-	fetchApplicationDiagnostics func() map[string]interface{},
+	fetchApplicationDiagnostics func() ApplicationInfo,
 ) {
 	r.Registry.RegisterDiagnosticSource(application, func() string {
 		bytes, err := json.Marshal(fetchApplicationDiagnostics())
