@@ -117,12 +117,15 @@ func (r *Registry) ObserveApplicationSource(
 
 // RegisterMetricClientInfo registers static client information labels for metrics.
 func (r *Registry) RegisterMetricClientInfo(version string) {
-	r.NewMetricInfo(
+	_, err := r.NewMetricInfo(
 		ClientInfoMetricName,
 		[]commonClientInfo.Label{
 			commonClientInfo.NewLabel("version", version),
 		},
 	)
+	if err != nil {
+		logger.Warnf("could not register metric client info: [%v]", err)
+	}
 }
 
 func (r *Registry) observe(
