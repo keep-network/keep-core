@@ -204,6 +204,8 @@ func initializeClientInfo(
 		config.ClientInfo.EthereumMetricsTick,
 	)
 
+	registry.RegisterMetricClientInfo(build.Version)
+
 	registry.RegisterConnectedPeersSource(netProvider, signing)
 	registry.RegisterClientInfoSource(
 		netProvider,

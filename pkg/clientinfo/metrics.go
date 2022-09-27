@@ -7,6 +7,8 @@ import (
 	"github.com/keep-network/keep-common/pkg/clientinfo"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/net"
+
+	commonClientInfo "github.com/keep-network/keep-common/pkg/clientinfo"
 )
 
 type Source func() float64
@@ -16,6 +18,7 @@ const (
 	ConnectedPeersCountMetricName     = "connected_peers_count"
 	ConnectedBootstrapCountMetricName = "connected_bootstrap_count"
 	EthConnectivityMetricName         = "eth_connectivity"
+	ClientInfoMetricName              = "client_info"
 )
 
 const (
@@ -110,6 +113,16 @@ func (r *Registry) ObserveApplicationSource(
 			ApplicationMetricsTick,
 		)
 	}
+}
+
+// RegisterMetricClientInfo registers static client information labels for metrics.
+func (r *Registry) RegisterMetricClientInfo(version string) {
+	r.NewMetricInfo(
+		ClientInfoMetricName,
+		[]commonClientInfo.Label{
+			commonClientInfo.NewLabel("version", version),
+		},
+	)
 }
 
 func (r *Registry) observe(
