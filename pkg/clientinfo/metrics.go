@@ -7,9 +7,19 @@ import (
 	"github.com/keep-network/keep-common/pkg/clientinfo"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/net"
+
+	commonClientInfo "github.com/keep-network/keep-common/pkg/clientinfo"
 )
 
 type Source func() float64
+
+// Names under which metrics are exposed.
+const (
+	ConnectedPeersCountMetricName     = "connected_peers_count"
+	ConnectedBootstrapCountMetricName = "connected_bootstrap_count"
+	EthConnectivityMetricName         = "eth_connectivity"
+	ClientInfoMetricName              = "client_info"
+)
 
 const (
 	// DefaultNetworkMetricsTick is the default duration of the
@@ -35,7 +45,7 @@ func (r *Registry) ObserveConnectedPeersCount(
 	}
 
 	r.observe(
-		"connected_peers_count",
+		ConnectedPeersCountMetricName,
 		input,
 		validateTick(tick, DefaultNetworkMetricsTick),
 	)
@@ -61,7 +71,7 @@ func (r *Registry) ObserveConnectedBootstrapCount(
 	}
 
 	r.observe(
-		"connected_bootstrap_count",
+		ConnectedBootstrapCountMetricName,
 		input,
 		validateTick(tick, DefaultNetworkMetricsTick),
 	)
@@ -84,7 +94,7 @@ func (r *Registry) ObserveEthConnectivity(
 	}
 
 	r.observe(
-		"eth_connectivity",
+		EthConnectivityMetricName,
 		input,
 		validateTick(tick, DefaultEthereumMetricsTick),
 	)
@@ -102,6 +112,19 @@ func (r *Registry) ObserveApplicationSource(
 			v,
 			ApplicationMetricsTick,
 		)
+	}
+}
+
+// RegisterMetricClientInfo registers static client information labels for metrics.
+func (r *Registry) RegisterMetricClientInfo(version string) {
+	_, err := r.NewMetricInfo(
+		ClientInfoMetricName,
+		[]commonClientInfo.Label{
+			commonClientInfo.NewLabel("version", version),
+		},
+	)
+	if err != nil {
+		logger.Warnf("could not register metric client info: [%v]", err)
 	}
 }
 
