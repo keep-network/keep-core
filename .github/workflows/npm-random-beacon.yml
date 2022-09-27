@@ -7,6 +7,7 @@ on:
     paths:
       - "solidity/random-beacon/contracts/**"
       - "solidity/random-beacon/deploy/**"
+      - "solidity/random-beacon/tasks/**"
       - "solidity/random-beacon/hardhat.config.ts"
       - "solidity/random-beacon/package.json"
       - "solidity/random-beacon/yarn.lock"

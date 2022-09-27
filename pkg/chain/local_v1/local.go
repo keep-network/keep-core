@@ -427,6 +427,14 @@ func (c *localChain) RestoreRewardEligibility() error {
 	panic("unsupported")
 }
 
+func (c *localChain) IsChaosnetActive() (bool, error) {
+	panic("unsupported")
+}
+
+func (c *localChain) IsBetaOperator() (bool, error) {
+	panic("unsupported")
+}
+
 func generateHandlerID() int {
 	// #nosec G404 (insecure random number source (rand))
 	// Local chain implementation doesn't require secure randomness.

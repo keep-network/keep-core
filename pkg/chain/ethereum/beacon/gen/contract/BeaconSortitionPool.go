@@ -105,6 +105,268 @@ func NewBeaconSortitionPool(
 // ----- Non-const Methods ------
 
 // Transaction submission.
+func (bsp *BeaconSortitionPool) AddBetaOperators(
+	arg_operators []common.Address,
+
+	transactionOptions ...chainutil.TransactionOptions,
+) (*types.Transaction, error) {
+	bspLogger.Debug(
+		"submitting transaction addBetaOperators",
+		" params: ",
+		fmt.Sprint(
+			arg_operators,
+		),
+	)
+
+	bsp.transactionMutex.Lock()
+	defer bsp.transactionMutex.Unlock()
+
+	// create a copy
+	transactorOptions := new(bind.TransactOpts)
+	*transactorOptions = *bsp.transactorOptions
+
+	if len(transactionOptions) > 1 {
+		return nil, fmt.Errorf(
+			"could not process multiple transaction options sets",
+		)
+	} else if len(transactionOptions) > 0 {
+		transactionOptions[0].Apply(transactorOptions)
+	}
+
+	nonce, err := bsp.nonceManager.CurrentNonce()
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve account nonce: %v", err)
+	}
+
+	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
+
+	transaction, err := bsp.contract.AddBetaOperators(
+		transactorOptions,
+		arg_operators,
+	)
+	if err != nil {
+		return transaction, bsp.errorResolver.ResolveError(
+			err,
+			bsp.transactorOptions.From,
+			nil,
+			"addBetaOperators",
+			arg_operators,
+		)
+	}
+
+	bspLogger.Infof(
+		"submitted transaction addBetaOperators with id: [%s] and nonce [%v]",
+		transaction.Hash(),
+		transaction.Nonce(),
+	)
+
+	go bsp.miningWaiter.ForceMining(
+		transaction,
+		transactorOptions,
+		func(newTransactorOptions *bind.TransactOpts) (*types.Transaction, error) {
+			// If original transactor options has a non-zero gas limit, that
+			// means the client code set it on their own. In that case, we
+			// should rewrite the gas limit from the original transaction
+			// for each resubmission. If the gas limit is not set by the client
+			// code, let the the submitter re-estimate the gas limit on each
+			// resubmission.
+			if transactorOptions.GasLimit != 0 {
+				newTransactorOptions.GasLimit = transactorOptions.GasLimit
+			}
+
+			transaction, err := bsp.contract.AddBetaOperators(
+				newTransactorOptions,
+				arg_operators,
+			)
+			if err != nil {
+				return nil, bsp.errorResolver.ResolveError(
+					err,
+					bsp.transactorOptions.From,
+					nil,
+					"addBetaOperators",
+					arg_operators,
+				)
+			}
+
+			bspLogger.Infof(
+				"submitted transaction addBetaOperators with id: [%s] and nonce [%v]",
+				transaction.Hash(),
+				transaction.Nonce(),
+			)
+
+			return transaction, nil
+		},
+	)
+
+	bsp.nonceManager.IncrementNonce()
+
+	return transaction, err
+}
+
+// Non-mutating call, not a transaction submission.
+func (bsp *BeaconSortitionPool) CallAddBetaOperators(
+	arg_operators []common.Address,
+	blockNumber *big.Int,
+) error {
+	var result interface{} = nil
+
+	err := chainutil.CallAtBlock(
+		bsp.transactorOptions.From,
+		blockNumber, nil,
+		bsp.contractABI,
+		bsp.caller,
+		bsp.errorResolver,
+		bsp.contractAddress,
+		"addBetaOperators",
+		&result,
+		arg_operators,
+	)
+
+	return err
+}
+
+func (bsp *BeaconSortitionPool) AddBetaOperatorsGasEstimate(
+	arg_operators []common.Address,
+) (uint64, error) {
+	var result uint64
+
+	result, err := chainutil.EstimateGas(
+		bsp.callerOptions.From,
+		bsp.contractAddress,
+		"addBetaOperators",
+		bsp.contractABI,
+		bsp.transactor,
+		arg_operators,
+	)
+
+	return result, err
+}
+
+// Transaction submission.
+func (bsp *BeaconSortitionPool) DeactivateChaosnet(
+
+	transactionOptions ...chainutil.TransactionOptions,
+) (*types.Transaction, error) {
+	bspLogger.Debug(
+		"submitting transaction deactivateChaosnet",
+	)
+
+	bsp.transactionMutex.Lock()
+	defer bsp.transactionMutex.Unlock()
+
+	// create a copy
+	transactorOptions := new(bind.TransactOpts)
+	*transactorOptions = *bsp.transactorOptions
+
+	if len(transactionOptions) > 1 {
+		return nil, fmt.Errorf(
+			"could not process multiple transaction options sets",
+		)
+	} else if len(transactionOptions) > 0 {
+		transactionOptions[0].Apply(transactorOptions)
+	}
+
+	nonce, err := bsp.nonceManager.CurrentNonce()
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve account nonce: %v", err)
+	}
+
+	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
+
+	transaction, err := bsp.contract.DeactivateChaosnet(
+		transactorOptions,
+	)
+	if err != nil {
+		return transaction, bsp.errorResolver.ResolveError(
+			err,
+			bsp.transactorOptions.From,
+			nil,
+			"deactivateChaosnet",
+		)
+	}
+
+	bspLogger.Infof(
+		"submitted transaction deactivateChaosnet with id: [%s] and nonce [%v]",
+		transaction.Hash(),
+		transaction.Nonce(),
+	)
+
+	go bsp.miningWaiter.ForceMining(
+		transaction,
+		transactorOptions,
+		func(newTransactorOptions *bind.TransactOpts) (*types.Transaction, error) {
+			// If original transactor options has a non-zero gas limit, that
+			// means the client code set it on their own. In that case, we
+			// should rewrite the gas limit from the original transaction
+			// for each resubmission. If the gas limit is not set by the client
+			// code, let the the submitter re-estimate the gas limit on each
+			// resubmission.
+			if transactorOptions.GasLimit != 0 {
+				newTransactorOptions.GasLimit = transactorOptions.GasLimit
+			}
+
+			transaction, err := bsp.contract.DeactivateChaosnet(
+				newTransactorOptions,
+			)
+			if err != nil {
+				return nil, bsp.errorResolver.ResolveError(
+					err,
+					bsp.transactorOptions.From,
+					nil,
+					"deactivateChaosnet",
+				)
+			}
+
+			bspLogger.Infof(
+				"submitted transaction deactivateChaosnet with id: [%s] and nonce [%v]",
+				transaction.Hash(),
+				transaction.Nonce(),
+			)
+
+			return transaction, nil
+		},
+	)
+
+	bsp.nonceManager.IncrementNonce()
+
+	return transaction, err
+}
+
+// Non-mutating call, not a transaction submission.
+func (bsp *BeaconSortitionPool) CallDeactivateChaosnet(
+	blockNumber *big.Int,
+) error {
+	var result interface{} = nil
+
+	err := chainutil.CallAtBlock(
+		bsp.transactorOptions.From,
+		blockNumber, nil,
+		bsp.contractABI,
+		bsp.caller,
+		bsp.errorResolver,
+		bsp.contractAddress,
+		"deactivateChaosnet",
+		&result,
+	)
+
+	return err
+}
+
+func (bsp *BeaconSortitionPool) DeactivateChaosnetGasEstimate() (uint64, error) {
+	var result uint64
+
+	result, err := chainutil.EstimateGas(
+		bsp.callerOptions.From,
+		bsp.contractAddress,
+		"deactivateChaosnet",
+		bsp.contractABI,
+		bsp.transactor,
+	)
+
+	return result, err
+}
+
+// Transaction submission.
 func (bsp *BeaconSortitionPool) InsertOperator(
 	arg_operator common.Address,
 	arg_authorizedStake *big.Int,
@@ -955,6 +1217,144 @@ func (bsp *BeaconSortitionPool) SetRewardIneligibilityGasEstimate(
 }
 
 // Transaction submission.
+func (bsp *BeaconSortitionPool) TransferChaosnetOwnerRole(
+	arg_newChaosnetOwner common.Address,
+
+	transactionOptions ...chainutil.TransactionOptions,
+) (*types.Transaction, error) {
+	bspLogger.Debug(
+		"submitting transaction transferChaosnetOwnerRole",
+		" params: ",
+		fmt.Sprint(
+			arg_newChaosnetOwner,
+		),
+	)
+
+	bsp.transactionMutex.Lock()
+	defer bsp.transactionMutex.Unlock()
+
+	// create a copy
+	transactorOptions := new(bind.TransactOpts)
+	*transactorOptions = *bsp.transactorOptions
+
+	if len(transactionOptions) > 1 {
+		return nil, fmt.Errorf(
+			"could not process multiple transaction options sets",
+		)
+	} else if len(transactionOptions) > 0 {
+		transactionOptions[0].Apply(transactorOptions)
+	}
+
+	nonce, err := bsp.nonceManager.CurrentNonce()
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve account nonce: %v", err)
+	}
+
+	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
+
+	transaction, err := bsp.contract.TransferChaosnetOwnerRole(
+		transactorOptions,
+		arg_newChaosnetOwner,
+	)
+	if err != nil {
+		return transaction, bsp.errorResolver.ResolveError(
+			err,
+			bsp.transactorOptions.From,
+			nil,
+			"transferChaosnetOwnerRole",
+			arg_newChaosnetOwner,
+		)
+	}
+
+	bspLogger.Infof(
+		"submitted transaction transferChaosnetOwnerRole with id: [%s] and nonce [%v]",
+		transaction.Hash(),
+		transaction.Nonce(),
+	)
+
+	go bsp.miningWaiter.ForceMining(
+		transaction,
+		transactorOptions,
+		func(newTransactorOptions *bind.TransactOpts) (*types.Transaction, error) {
+			// If original transactor options has a non-zero gas limit, that
+			// means the client code set it on their own. In that case, we
+			// should rewrite the gas limit from the original transaction
+			// for each resubmission. If the gas limit is not set by the client
+			// code, let the the submitter re-estimate the gas limit on each
+			// resubmission.
+			if transactorOptions.GasLimit != 0 {
+				newTransactorOptions.GasLimit = transactorOptions.GasLimit
+			}
+
+			transaction, err := bsp.contract.TransferChaosnetOwnerRole(
+				newTransactorOptions,
+				arg_newChaosnetOwner,
+			)
+			if err != nil {
+				return nil, bsp.errorResolver.ResolveError(
+					err,
+					bsp.transactorOptions.From,
+					nil,
+					"transferChaosnetOwnerRole",
+					arg_newChaosnetOwner,
+				)
+			}
+
+			bspLogger.Infof(
+				"submitted transaction transferChaosnetOwnerRole with id: [%s] and nonce [%v]",
+				transaction.Hash(),
+				transaction.Nonce(),
+			)
+
+			return transaction, nil
+		},
+	)
+
+	bsp.nonceManager.IncrementNonce()
+
+	return transaction, err
+}
+
+// Non-mutating call, not a transaction submission.
+func (bsp *BeaconSortitionPool) CallTransferChaosnetOwnerRole(
+	arg_newChaosnetOwner common.Address,
+	blockNumber *big.Int,
+) error {
+	var result interface{} = nil
+
+	err := chainutil.CallAtBlock(
+		bsp.transactorOptions.From,
+		blockNumber, nil,
+		bsp.contractABI,
+		bsp.caller,
+		bsp.errorResolver,
+		bsp.contractAddress,
+		"transferChaosnetOwnerRole",
+		&result,
+		arg_newChaosnetOwner,
+	)
+
+	return err
+}
+
+func (bsp *BeaconSortitionPool) TransferChaosnetOwnerRoleGasEstimate(
+	arg_newChaosnetOwner common.Address,
+) (uint64, error) {
+	var result uint64
+
+	result, err := chainutil.EstimateGas(
+		bsp.callerOptions.From,
+		bsp.contractAddress,
+		"transferChaosnetOwnerRole",
+		bsp.contractABI,
+		bsp.transactor,
+		arg_newChaosnetOwner,
+	)
+
+	return result, err
+}
+
+// Transaction submission.
 func (bsp *BeaconSortitionPool) TransferOwnership(
 	arg_newOwner common.Address,
 
@@ -1695,6 +2095,43 @@ func (bsp *BeaconSortitionPool) CanRestoreRewardEligibilityAtBlock(
 	return result, err
 }
 
+func (bsp *BeaconSortitionPool) ChaosnetOwner() (common.Address, error) {
+	result, err := bsp.contract.ChaosnetOwner(
+		bsp.callerOptions,
+	)
+
+	if err != nil {
+		return result, bsp.errorResolver.ResolveError(
+			err,
+			bsp.callerOptions.From,
+			nil,
+			"chaosnetOwner",
+		)
+	}
+
+	return result, err
+}
+
+func (bsp *BeaconSortitionPool) ChaosnetOwnerAtBlock(
+	blockNumber *big.Int,
+) (common.Address, error) {
+	var result common.Address
+
+	err := chainutil.CallAtBlock(
+		bsp.callerOptions.From,
+		blockNumber,
+		nil,
+		bsp.contractABI,
+		bsp.caller,
+		bsp.errorResolver,
+		bsp.contractAddress,
+		"chaosnetOwner",
+		&result,
+	)
+
+	return result, err
+}
+
 func (bsp *BeaconSortitionPool) GetAvailableRewards(
 	arg_operator common.Address,
 ) (*big.Int, error) {
@@ -1941,6 +2378,86 @@ func (bsp *BeaconSortitionPool) IneligibleEarnedRewardsAtBlock(
 		bsp.errorResolver,
 		bsp.contractAddress,
 		"ineligibleEarnedRewards",
+		&result,
+	)
+
+	return result, err
+}
+
+func (bsp *BeaconSortitionPool) IsBetaOperator(
+	arg0 common.Address,
+) (bool, error) {
+	result, err := bsp.contract.IsBetaOperator(
+		bsp.callerOptions,
+		arg0,
+	)
+
+	if err != nil {
+		return result, bsp.errorResolver.ResolveError(
+			err,
+			bsp.callerOptions.From,
+			nil,
+			"isBetaOperator",
+			arg0,
+		)
+	}
+
+	return result, err
+}
+
+func (bsp *BeaconSortitionPool) IsBetaOperatorAtBlock(
+	arg0 common.Address,
+	blockNumber *big.Int,
+) (bool, error) {
+	var result bool
+
+	err := chainutil.CallAtBlock(
+		bsp.callerOptions.From,
+		blockNumber,
+		nil,
+		bsp.contractABI,
+		bsp.caller,
+		bsp.errorResolver,
+		bsp.contractAddress,
+		"isBetaOperator",
+		&result,
+		arg0,
+	)
+
+	return result, err
+}
+
+func (bsp *BeaconSortitionPool) IsChaosnetActive() (bool, error) {
+	result, err := bsp.contract.IsChaosnetActive(
+		bsp.callerOptions,
+	)
+
+	if err != nil {
+		return result, bsp.errorResolver.ResolveError(
+			err,
+			bsp.callerOptions.From,
+			nil,
+			"isChaosnetActive",
+		)
+	}
+
+	return result, err
+}
+
+func (bsp *BeaconSortitionPool) IsChaosnetActiveAtBlock(
+	blockNumber *big.Int,
+) (bool, error) {
+	var result bool
+
+	err := chainutil.CallAtBlock(
+		bsp.callerOptions.From,
+		blockNumber,
+		nil,
+		bsp.contractABI,
+		bsp.caller,
+		bsp.errorResolver,
+		bsp.contractAddress,
+		"isChaosnetActive",
 		&result,
 	)
 
@@ -2438,6 +2955,543 @@ func (bsp *BeaconSortitionPool) TotalWeightAtBlock(
 }
 
 // ------ Events -------
+
+func (bsp *BeaconSortitionPool) BetaOperatorsAddedEvent(
+	opts *ethereum.SubscribeOpts,
+) *BspBetaOperatorsAddedSubscription {
+	if opts == nil {
+		opts = new(ethereum.SubscribeOpts)
+	}
+	if opts.Tick == 0 {
+		opts.Tick = chainutil.DefaultSubscribeOptsTick
+	}
+	if opts.PastBlocks == 0 {
+		opts.PastBlocks = chainutil.DefaultSubscribeOptsPastBlocks
+	}
+
+	return &BspBetaOperatorsAddedSubscription{
+		bsp,
+		opts,
+	}
+}
+
+type BspBetaOperatorsAddedSubscription struct {
+	contract *BeaconSortitionPool
+	opts     *ethereum.SubscribeOpts
+}
+
+type beaconSortitionPoolBetaOperatorsAddedFunc func(
+	Operators []common.Address,
+	blockNumber uint64,
+)
+
+func (boas *BspBetaOperatorsAddedSubscription) OnEvent(
+	handler beaconSortitionPoolBetaOperatorsAddedFunc,
+) subscription.EventSubscription {
+	eventChan := make(chan *abi.BeaconSortitionPoolBetaOperatorsAdded)
+	ctx, cancelCtx := context.WithCancel(context.Background())
+
+	go func() {
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case event := <-eventChan:
+				handler(
+					event.Operators,
+					event.Raw.BlockNumber,
+				)
+			}
+		}
+	}()
+
+	sub := boas.Pipe(eventChan)
+	return subscription.NewEventSubscription(func() {
+		sub.Unsubscribe()
+		cancelCtx()
+	})
+}
+
+func (boas *BspBetaOperatorsAddedSubscription) Pipe(
+	sink chan *abi.BeaconSortitionPoolBetaOperatorsAdded,
+) subscription.EventSubscription {
+	ctx, cancelCtx := context.WithCancel(context.Background())
+	go func() {
+		ticker := time.NewTicker(boas.opts.Tick)
+		defer ticker.Stop()
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-ticker.C:
+				lastBlock, err := boas.contract.blockCounter.CurrentBlock()
+				if err != nil {
+					bspLogger.Errorf(
+						"subscription failed to pull events: [%v]",
+						err,
+					)
+				}
+				fromBlock := lastBlock - boas.opts.PastBlocks
+
+				bspLogger.Infof(
+					"subscription monitoring fetching past BetaOperatorsAdded events "+
+						"starting from block [%v]",
+					fromBlock,
+				)
+				events, err := boas.contract.PastBetaOperatorsAddedEvents(
+					fromBlock,
+					nil,
+				)
+				if err != nil {
+					bspLogger.Errorf(
+						"subscription failed to pull events: [%v]",
+						err,
+					)
+					continue
+				}
+				bspLogger.Infof(
+					"subscription monitoring fetched [%v] past BetaOperatorsAdded events",
+					len(events),
+				)
+
+				for _, event := range events {
+					sink <- event
+				}
+			}
+		}
+	}()
+
+	sub := boas.contract.watchBetaOperatorsAdded(
+		sink,
+	)
+
+	return subscription.NewEventSubscription(func() {
+		sub.Unsubscribe()
+		cancelCtx()
+	})
+}
+
+func (bsp *BeaconSortitionPool) watchBetaOperatorsAdded(
+	sink chan *abi.BeaconSortitionPoolBetaOperatorsAdded,
+) event.Subscription {
+	subscribeFn := func(ctx context.Context) (event.Subscription, error) {
+		return bsp.contract.WatchBetaOperatorsAdded(
+			&bind.WatchOpts{Context: ctx},
+			sink,
+		)
+	}
+
+	thresholdViolatedFn := func(elapsed time.Duration) {
+		bspLogger.Errorf(
+			"subscription to event BetaOperatorsAdded had to be "+
+				"retried [%s] since the last attempt; please inspect "+
+				"host chain connectivity",
+			elapsed,
+		)
+	}
+
+	subscriptionFailedFn := func(err error) {
+		bspLogger.Errorf(
+			"subscription to event BetaOperatorsAdded failed "+
+				"with error: [%v]; resubscription attempt will be "+
+				"performed",
+			err,
+		)
+	}
+
+	return chainutil.WithResubscription(
+		chainutil.SubscriptionBackoffMax,
+		subscribeFn,
+		chainutil.SubscriptionAlertThreshold,
+		thresholdViolatedFn,
+		subscriptionFailedFn,
+	)
+}
+
+func (bsp *BeaconSortitionPool) PastBetaOperatorsAddedEvents(
+	startBlock uint64,
+	endBlock *uint64,
+) ([]*abi.BeaconSortitionPoolBetaOperatorsAdded, error) {
+	iterator, err := bsp.contract.FilterBetaOperatorsAdded(
+		&bind.FilterOpts{
+			Start: startBlock,
+			End:   endBlock,
+		},
+	)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"error retrieving past BetaOperatorsAdded events: [%v]",
+			err,
+		)
+	}
+
+	events := make([]*abi.BeaconSortitionPoolBetaOperatorsAdded, 0)
+
+	for iterator.Next() {
+		event := iterator.Event
+		events = append(events, event)
+	}
+
+	return events, nil
+}
+
+func (bsp *BeaconSortitionPool) ChaosnetDeactivatedEvent(
+	opts *ethereum.SubscribeOpts,
+) *BspChaosnetDeactivatedSubscription {
+	if opts == nil {
+		opts = new(ethereum.SubscribeOpts)
+	}
+	if opts.Tick == 0 {
+		opts.Tick = chainutil.DefaultSubscribeOptsTick
+	}
+	if opts.PastBlocks == 0 {
+		opts.PastBlocks = chainutil.DefaultSubscribeOptsPastBlocks
+	}
+
+	return &BspChaosnetDeactivatedSubscription{
+		bsp,
+		opts,
+	}
+}
+
+type BspChaosnetDeactivatedSubscription struct {
+	contract *BeaconSortitionPool
+	opts     *ethereum.SubscribeOpts
+}
+
+type beaconSortitionPoolChaosnetDeactivatedFunc func(
+	blockNumber uint64,
+)
+
+func (cds *BspChaosnetDeactivatedSubscription) OnEvent(
+	handler beaconSortitionPoolChaosnetDeactivatedFunc,
+) subscription.EventSubscription {
+	eventChan := make(chan *abi.BeaconSortitionPoolChaosnetDeactivated)
+	ctx, cancelCtx := context.WithCancel(context.Background())
+
+	go func() {
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case event := <-eventChan:
+				handler(
+					event.Raw.BlockNumber,
+				)
+			}
+		}
+	}()
+
+	sub := cds.Pipe(eventChan)
+	return subscription.NewEventSubscription(func() {
+		sub.Unsubscribe()
+		cancelCtx()
+	})
+}
+
+func (cds *BspChaosnetDeactivatedSubscription) Pipe(
+	sink chan *abi.BeaconSortitionPoolChaosnetDeactivated,
+) subscription.EventSubscription {
+	ctx, cancelCtx := context.WithCancel(context.Background())
+	go func() {
+		ticker := time.NewTicker(cds.opts.Tick)
+		defer ticker.Stop()
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-ticker.C:
+				lastBlock, err := cds.contract.blockCounter.CurrentBlock()
+				if err != nil {
+					bspLogger.Errorf(
+						"subscription failed to pull events: [%v]",
+						err,
+					)
+				}
+				fromBlock := lastBlock - cds.opts.PastBlocks
+
+				bspLogger.Infof(
+					"subscription monitoring fetching past ChaosnetDeactivated events "+
+						"starting from block [%v]",
+					fromBlock,
+				)
+				events, err := cds.contract.PastChaosnetDeactivatedEvents(
+					fromBlock,
+					nil,
+				)
+				if err != nil {
+					bspLogger.Errorf(
+						"subscription failed to pull events: [%v]",
+						err,
+					)
+					continue
+				}
+				bspLogger.Infof(
+					"subscription monitoring fetched [%v] past ChaosnetDeactivated events",
+					len(events),
+				)
+
+				for _, event := range events {
+					sink <- event
+				}
+			}
+		}
+	}()
+
+	sub := cds.contract.watchChaosnetDeactivated(
+		sink,
+	)
+
+	return subscription.NewEventSubscription(func() {
+		sub.Unsubscribe()
+		cancelCtx()
+	})
+}
+
+func (bsp *BeaconSortitionPool) watchChaosnetDeactivated(
+	sink chan *abi.BeaconSortitionPoolChaosnetDeactivated,
+) event.Subscription {
+	subscribeFn := func(ctx context.Context) (event.Subscription, error) {
+		return bsp.contract.WatchChaosnetDeactivated(
+			&bind.WatchOpts{Context: ctx},
+			sink,
+		)
+	}
+
+	thresholdViolatedFn := func(elapsed time.Duration) {
+		bspLogger.Errorf(
+			"subscription to event ChaosnetDeactivated had to be "+
+				"retried [%s] since the last attempt; please inspect "+
+				"host chain connectivity",
+			elapsed,
+		)
+	}
+
+	subscriptionFailedFn := func(err error) {
+		bspLogger.Errorf(
+			"subscription to event ChaosnetDeactivated failed "+
+				"with error: [%v]; resubscription attempt will be "+
+				"performed",
+			err,
+		)
+	}
+
+	return chainutil.WithResubscription(
+		chainutil.SubscriptionBackoffMax,
+		subscribeFn,
+		chainutil.SubscriptionAlertThreshold,
+		thresholdViolatedFn,
+		subscriptionFailedFn,
+	)
+}
+
+func (bsp *BeaconSortitionPool) PastChaosnetDeactivatedEvents(
+	startBlock uint64,
+	endBlock *uint64,
+) ([]*abi.BeaconSortitionPoolChaosnetDeactivated, error) {
+	iterator, err := bsp.contract.FilterChaosnetDeactivated(
+		&bind.FilterOpts{
+			Start: startBlock,
+			End:   endBlock,
+		},
+	)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"error retrieving past ChaosnetDeactivated events: [%v]",
+			err,
+		)
+	}
+
+	events := make([]*abi.BeaconSortitionPoolChaosnetDeactivated, 0)
+
+	for iterator.Next() {
+		event := iterator.Event
+		events = append(events, event)
+	}
+
+	return events, nil
+}
+
+func (bsp *BeaconSortitionPool) ChaosnetOwnerRoleTransferredEvent(
+	opts *ethereum.SubscribeOpts,
+) *BspChaosnetOwnerRoleTransferredSubscription {
+	if opts == nil {
+		opts = new(ethereum.SubscribeOpts)
+	}
+	if opts.Tick == 0 {
+		opts.Tick = chainutil.DefaultSubscribeOptsTick
+	}
+	if opts.PastBlocks == 0 {
+		opts.PastBlocks = chainutil.DefaultSubscribeOptsPastBlocks
+	}
+
+	return &BspChaosnetOwnerRoleTransferredSubscription{
+		bsp,
+		opts,
+	}
+}
+
+type BspChaosnetOwnerRoleTransferredSubscription struct {
+	contract *BeaconSortitionPool
+	opts     *ethereum.SubscribeOpts
+}
+
+type beaconSortitionPoolChaosnetOwnerRoleTransferredFunc func(
+	OldChaosnetOwner common.Address,
+	NewChaosnetOwner common.Address,
+	blockNumber uint64,
+)
+
+func (corts *BspChaosnetOwnerRoleTransferredSubscription) OnEvent(
+	handler beaconSortitionPoolChaosnetOwnerRoleTransferredFunc,
+) subscription.EventSubscription {
+	eventChan := make(chan *abi.BeaconSortitionPoolChaosnetOwnerRoleTransferred)
+	ctx, cancelCtx := context.WithCancel(context.Background())
+
+	go func() {
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case event := <-eventChan:
+				handler(
+					event.OldChaosnetOwner,
+					event.NewChaosnetOwner,
+					event.Raw.BlockNumber,
+				)
+			}
+		}
+	}()
+
+	sub := corts.Pipe(eventChan)
+	return subscription.NewEventSubscription(func() {
+		sub.Unsubscribe()
+		cancelCtx()
+	})
+}
+
+func (corts *BspChaosnetOwnerRoleTransferredSubscription) Pipe(
+	sink chan *abi.BeaconSortitionPoolChaosnetOwnerRoleTransferred,
+) subscription.EventSubscription {
+	ctx, cancelCtx := context.WithCancel(context.Background())
+	go func() {
+		ticker := time.NewTicker(corts.opts.Tick)
+		defer ticker.Stop()
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-ticker.C:
+				lastBlock, err := corts.contract.blockCounter.CurrentBlock()
+				if err != nil {
+					bspLogger.Errorf(
+						"subscription failed to pull events: [%v]",
+						err,
+					)
+				}
+				fromBlock := lastBlock - corts.opts.PastBlocks
+
+				bspLogger.Infof(
+					"subscription monitoring fetching past ChaosnetOwnerRoleTransferred events "+
+						"starting from block [%v]",
+					fromBlock,
+				)
+				events, err := corts.contract.PastChaosnetOwnerRoleTransferredEvents(
+					fromBlock,
+					nil,
+				)
+				if err != nil {
+					bspLogger.Errorf(
+						"subscription failed to pull events: [%v]",
+						err,
+					)
+					continue
+				}
+				bspLogger.Infof(
+					"subscription monitoring fetched [%v] past ChaosnetOwnerRoleTransferred events",
+					len(events),
+				)
+
+				for _, event := range events {
+					sink <- event
+				}
+			}
+		}
+	}()
+
+	sub := corts.contract.watchChaosnetOwnerRoleTransferred(
+		sink,
+	)
+
+	return subscription.NewEventSubscription(func() {
+		sub.Unsubscribe()
+		cancelCtx()
+	})
+}
+
+func (bsp *BeaconSortitionPool) watchChaosnetOwnerRoleTransferred(
+	sink chan *abi.BeaconSortitionPoolChaosnetOwnerRoleTransferred,
+) event.Subscription {
+	subscribeFn := func(ctx context.Context) (event.Subscription, error) {
+		return bsp.contract.WatchChaosnetOwnerRoleTransferred(
+			&bind.WatchOpts{Context: ctx},
+			sink,
+		)
+	}
+
+	thresholdViolatedFn := func(elapsed time.Duration) {
+		bspLogger.Errorf(
+			"subscription to event ChaosnetOwnerRoleTransferred had to be "+
+				"retried [%s] since the last attempt; please inspect "+
+				"host chain connectivity",
+			elapsed,
+		)
+	}
+
+	subscriptionFailedFn := func(err error) {
+		bspLogger.Errorf(
+			"subscription to event ChaosnetOwnerRoleTransferred failed "+
+				"with error: [%v]; resubscription attempt will be "+
+				"performed",
+			err,
+		)
+	}
+
+	return chainutil.WithResubscription(
+		chainutil.SubscriptionBackoffMax,
+		subscribeFn,
+		chainutil.SubscriptionAlertThreshold,
+		thresholdViolatedFn,
+		subscriptionFailedFn,
+	)
+}
+
+func (bsp *BeaconSortitionPool) PastChaosnetOwnerRoleTransferredEvents(
+	startBlock uint64,
+	endBlock *uint64,
+) ([]*abi.BeaconSortitionPoolChaosnetOwnerRoleTransferred, error) {
+	iterator, err := bsp.contract.FilterChaosnetOwnerRoleTransferred(
+		&bind.FilterOpts{
+			Start: startBlock,
+			End:   endBlock,
+		},
+	)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"error retrieving past ChaosnetOwnerRoleTransferred events: [%v]",
+			err,
+		)
+	}
+
+	events := make([]*abi.BeaconSortitionPoolChaosnetOwnerRoleTransferred, 0)
+
+	for iterator.Next() {
+		event := iterator.Event
+		events = append(events, event)
+	}
+
+	return events, nil
+}
 
 func (bsp *BeaconSortitionPool) IneligibleForRewardsEvent(
 	opts *ethereum.SubscribeOpts,

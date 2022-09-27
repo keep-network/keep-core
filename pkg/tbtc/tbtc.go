@@ -80,10 +80,13 @@ func Initialize(
 			logger,
 			chain,
 			sortition.DefaultStatusCheckTick,
-			&enoughPreParamsInPoolPolicy{
-				node:   node,
-				config: config,
-			},
+			sortition.NewConjunctionPolicy(
+				sortition.NewBetaOperatorPolicy(chain, logger),
+				&enoughPreParamsInPoolPolicy{
+					node:   node,
+					config: config,
+				},
+			),
 		)
 		if err != nil {
 			return fmt.Errorf(
