@@ -183,17 +183,11 @@ IMPORTANT: Please update your firewall rules if necessary.
 |TCP
 |3919
 
-|<<metrics,Metrics>>
-|metrics.port
+|<<clientInfo,Client Info>>
+|clientInfo.port
 |Egress
 |TCP
 |9601
-
-|<<diagnostics,Diagnostics>>
-|diagnostics.port
-|Egress
-|TCP
-|9701
 
 |===
 
@@ -312,8 +306,16 @@ TIP: If you want to share your LibP2P address with others you can get it from th
 startup log.  When sharing remember to substitute the `/ipv4/` address with the public facing IP of your client if you're running on a private machine, or replace the entire
 `/ipv4/` segment with a DNS entry if you're using a hostname.
 
+[#clientInfo]
+== Client Info
+
+The client exposes metrics and diagnostics on a configurable port (default: `9601`)
+under `/metrics` and `/diagnostics` resources.
+
+The data can be consumed by Prometheus to monitor the state of a node.
+
 [#metrics]
-== Metrics
+=== Metrics
 
 The client exposes the following metrics:
 
@@ -341,7 +343,7 @@ eth_connectivity 1 1623235129789
 ```
 
 [#diagnostics]
-== Diagnostics
+=== Diagnostics
 
 The client exposes the following diagnostics:
 
@@ -353,7 +355,7 @@ the port at which diagnostics endpoint is exposed.
 
 Example diagnostics endpoint call result:
 ```
-$ curl localhost:9701/diagnostics
+$ curl localhost:9601/diagnostics
 {
   "client_info" { 
    "ethereum_address":"0xDcd4199e22d09248cA2583cBDD2759b2acD22381",
