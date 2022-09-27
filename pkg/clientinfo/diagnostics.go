@@ -38,7 +38,7 @@ func (r *Registry) RegisterConnectedPeersSource(
 	netProvider net.Provider,
 	signing chain.Signing,
 ) {
-	r.Registry.RegisterDiagnosticSource("connected_peers", func() string {
+	r.RegisterDiagnosticSource("connected_peers", func() string {
 		connectionManager := netProvider.ConnectionManager()
 		connectedPeersAddrInfo := connectionManager.ConnectedPeersAddrInfo()
 
@@ -83,7 +83,7 @@ func (r *Registry) RegisterClientInfoSource(
 	clientVersion string,
 	clientRevision string,
 ) {
-	r.Registry.RegisterDiagnosticSource("client_info", func() string {
+	r.RegisterDiagnosticSource("client_info", func() string {
 		connectionManager := netProvider.ConnectionManager()
 
 		clientID := netProvider.ID().String()
@@ -124,7 +124,7 @@ func (r *Registry) RegisterApplicationSource(
 	application string,
 	fetchApplicationDiagnostics func() ApplicationInfo,
 ) {
-	r.Registry.RegisterDiagnosticSource(application, func() string {
+	r.RegisterDiagnosticSource(application, func() string {
 		bytes, err := json.Marshal(fetchApplicationDiagnostics())
 		if err != nil {
 			logger.Error("error on serializing peers list to JSON: [%v]", err)
