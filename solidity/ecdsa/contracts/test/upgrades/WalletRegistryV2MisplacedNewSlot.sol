@@ -15,7 +15,7 @@
 //
 //                           Trust math, not hardware.
 
-pragma solidity ^0.8.9;
+pragma solidity 0.8.17;
 
 import "../../api/IWalletRegistry.sol";
 import "../../api/IWalletOwner.sol";
