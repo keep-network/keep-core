@@ -40,6 +40,26 @@ spec:
               mountPath: /etc/prometheus/
             - name: prometheus-storage-volume
               mountPath: /prometheus/
+            - name: prometheus-sd-volume
+              mountPath: /etc/prometheus/sd/
+        - name: keep-sd
+          image: keepnetwork/keep-prometheus-sd
+          args:
+            - --output.file=/etc/prometheus/sd/keep-sd.json
+            - --source.address=bootstrap-0.test.keep.network:9601
+            - --source.address=bootstrap-1.test.keep.network:9601
+            - --refresh.interval=5m
+            - --log.json
+          resources:
+            limits:
+              cpu: "1"
+              memory: 1Gi
+            requests:
+              cpu: 500m
+              memory: 500M
+          volumeMounts:
+            - name: prometheus-sd-volume
+              mountPath: /etc/prometheus/sd/
       dnsPolicy: ClusterFirst
       securityContext:
         fsGroup: 65534
@@ -54,3 +74,5 @@ spec:
         - name: prometheus-storage-volume
           persistentVolumeClaim:
             claimName: prometheus-pvc
+        - name: prometheus-sd-volume
+          emptyDir: {}
