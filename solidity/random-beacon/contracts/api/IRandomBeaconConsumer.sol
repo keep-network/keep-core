@@ -12,7 +12,7 @@
 //
 //                           Trust math, not hardware.
 
-pragma solidity ^0.8.9;
+pragma solidity 0.8.17;
 
 interface IRandomBeaconConsumer {
     /// @notice Receives relay entry produced by Keep Random Beacon. This function

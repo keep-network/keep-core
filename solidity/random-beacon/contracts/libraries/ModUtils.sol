@@ -12,7 +12,7 @@
 //
 //
 
-pragma solidity ^0.8.9;
+pragma solidity 0.8.17;
 
 library ModUtils {
     /// @dev Wraps the modular exponent pre-compile introduced in Byzantium.
