@@ -69,6 +69,8 @@ Port = 3920
 [storage]
 Dir = "/my/secure/location"
 
+# ClientInfo exposes metrics and diagnostics modules.
+# 
 # Metrics collects and exposes information useful for external monitoring tools usually
 # operating on time series data.
 # All values exposed by metrics module are quantifiable or countable.
@@ -77,16 +79,14 @@ Dir = "/my/secure/location"
 # - connected peers count
 # - connected bootstraps count
 # - eth client connectivity status
-[metrics]
-Port = 8080
-# NetworkMetricsTick = 60
-# EthereumMetricsTick = 600
-
+# 
 # Diagnostics module exposes the following information:
 # - list of connected peers along with their network id and ethereum operator address
 # - information about the client's network id and ethereum operator address
-[diagnostics]
-Port = 8081
+[clientInfo]
+Port = 9601
+# NetworkMetricsTick = 60
+# EthereumMetricsTick = 600
 
 # Uncomment to overwrite default values for TBTC config.
 #
