@@ -50,6 +50,7 @@ spec:
             - --source.address=bootstrap-1.test.keep.network:9601
             - --refresh.interval=5m
             - --log.json
+            - --scan.allowPrivateAddresses
           resources:
             limits:
               cpu: "1"
