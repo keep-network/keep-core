@@ -84,7 +84,10 @@ func (sm *SymmetricKeyGeneratingMember) GenerateSymmetricKeys(
 		err := sm.evidenceLog.PutEphemeralMessage(ephemeralPubKeyMessage)
 		if err != nil {
 			sm.logger.Errorf(
-				"could not put ephemeral key message to the evidence log: [%v]",
+				"[member:%v] could not put ephemeral key message " +
+					"from member [%v] to the evidence log: [%v]",
+				sm.ID,
+				otherMember,
 				err,
 			)
 		}
@@ -200,7 +203,11 @@ func (cm *CommittingMember) CalculateMembersSharesAndCommitments() (
 		// yield an error.
 		symmetricKey, hasKey := cm.symmetricKeys[receiverID]
 		if !hasKey {
-			cm.logger.Warningf("no symmetric key for receiver: [%v]", receiverID)
+			cm.logger.Warningf(
+				"[member:%v] no symmetric key for receiver: [%v]",
+				cm.ID,
+				receiverID,
+			)
 			continue
 		}
 
@@ -319,7 +326,10 @@ func (cvm *CommitmentsVerifyingMember) VerifyReceivedSharesAndCommitmentsMessage
 		err := cvm.evidenceLog.PutPeerSharesMessage(sharesMessage)
 		if err != nil {
 			cvm.logger.Errorf(
-				"could not put peer shares message to the evidence log: [%v]",
+				"[member:%v] could not put peer shares message " +
+					"from member [%v] to the evidence log: [%v]",
+				cvm.ID,
+				sharesMessage.senderID,
 				err,
 			)
 		}
@@ -421,7 +431,9 @@ func (cvm *CommitmentsVerifyingMember) VerifyReceivedSharesAndCommitmentsMessage
 			}
 		}
 		if !sharesMessageFound {
-			cvm.logger.Warningf("cannot find shares message from member: [%v]",
+			cvm.logger.Warningf(
+				"[member:%v] cannot find shares message from member: [%v]",
+				cvm.ID,
 				commitmentsMessage.senderID,
 			)
 		}
@@ -774,7 +786,7 @@ func findPublicKey(
 	ephemeralPublicKeyMessage := evidenceLog.ephemeralPublicKeyMessage(senderID)
 	if ephemeralPublicKeyMessage == nil {
 		logger.Warningf(
-			"no ephemeral public key message for sender %v",
+			"no ephemeral public key message for sender [%v]",
 			senderID,
 		)
 		return nil
@@ -783,7 +795,7 @@ func findPublicKey(
 	senderPublicKey, ok := ephemeralPublicKeyMessage.ephemeralPublicKeys[receiverID]
 	if !ok {
 		logger.Warningf(
-			"no ephemeral public key generated for receiver %v",
+			"no ephemeral public key generated for receiver [%v]",
 			receiverID,
 		)
 		return nil
