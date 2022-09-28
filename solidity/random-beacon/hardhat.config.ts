@@ -125,7 +125,6 @@ const config: HardhatUserConfig = {
       mainnet: 0, // "0x123694886DBf5Ac94DDA07135349534536D14cAf"
     },
     governance: {
-      // TODO: Rename to thresholdCouncil
       default: 2,
       goerli: 0,
       mainnet: "0x9f6e831c8f8939dc0c830c6e492e7cef4f9c2f5f", // Threshold Council
