@@ -2,6 +2,7 @@ package entry
 
 import (
 	"context"
+	"encoding/hex"
 	"fmt"
 	"github.com/keep-network/keep-core/pkg/beacon/event"
 
@@ -66,7 +67,9 @@ func SignAndSubmit(
 
 	selfShare := signer.CalculateSignatureShare(previousEntry)
 
-	go broadcastShare(ctx, logger, signer.MemberID(), selfShare, channel)
+	sessionID := hex.EncodeToString(previousEntryBytes)
+
+	go broadcastShare(ctx, logger, signer.MemberID(), selfShare, channel, sessionID)
 
 	receiveChannel := make(chan net.Message, 64)
 	channel.Recv(ctx, func(netMessage net.Message) {
@@ -85,7 +88,9 @@ func SignAndSubmit(
 		select {
 		case netMessage := <-receiveChannel:
 			message, ok := netMessage.Payload().(*SignatureShareMessage)
-			if !ok || signer.MemberID() == message.SenderID() {
+			if !ok ||
+				signer.MemberID() == message.SenderID() ||
+				message.sessionID != sessionID {
 				continue
 			}
 
@@ -161,10 +166,12 @@ func broadcastShare(
 	memberID group.MemberIndex,
 	share *bn256.G1,
 	channel net.BroadcastChannel,
+	sessionID string,
 ) {
 	message := &SignatureShareMessage{
 		memberID,
 		share.Marshal(),
+		sessionID,
 	}
 
 	if err := channel.Send(ctx, message); err != nil {
