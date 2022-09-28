@@ -7,7 +7,7 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   const { execute } = deployments
   const { to1e18 } = helpers.number
 
-  const POOL_WEIGHT_DIVISOR = to1e18(1) // TODO: Update value
+  const POOL_WEIGHT_DIVISOR = to1e18(1)
 
   const T = await deployments.get("T")
 
@@ -21,7 +21,7 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
 
   await execute(
     "BeaconSortitionPool",
-    { from: deployer },
+    { from: deployer, log: true, waitConfirmations: 1 },
     "transferChaosnetOwnerRole",
     chaosnetOwner
   )
