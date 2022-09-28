@@ -34,6 +34,7 @@
     "prepublishOnly": "hardhat prepare-artifacts --network $npm_config_network"
   },
   "devDependencies": {
+    "@keep-network/hardhat-helpers": "^0.6.0-pre.15",
     "@defi-wonderland/smock": "^2.0.7",
     "@keep-network/hardhat-local-networks-config": "^0.1.0-pre.4",
     "@nomiclabs/hardhat-ethers": "^2.0.6",
@@ -68,9 +69,8 @@
     "typescript": "^4.5.4"
   },
   "dependencies": {
-    "@keep-network/hardhat-helpers": "^0.6.0-pre.15",
     "@keep-network/random-beacon": "development",
-    "@keep-network/sortition-pools": "^2.0.0-pre.15",
+    "@keep-network/sortition-pools": "^2.0.0-pre.16",
     "@openzeppelin/contracts": "^4.6.0",
     "@openzeppelin/contracts-upgradeable": "^4.6.0",
     "@threshold-network/solidity-contracts": "development"

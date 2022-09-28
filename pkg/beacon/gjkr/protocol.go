@@ -3,18 +3,19 @@
 //
 // See http://docs.keep.network/random-beacon/dkg.html
 //
-//     [GJKR 99]: Gennaro R., Jarecki S., Krawczyk H., Rabin T. (1999) Secure
-//         Distributed Key Generation for Discrete-Log Based Cryptosystems. In:
-//         Stern J. (eds) Advances in Cryptology — EUROCRYPT ’99. EUROCRYPT 1999.
-//         Lecture Notes in Computer Science, vol 1592. Springer, Berlin, Heidelberg
-//         http://groups.csail.mit.edu/cis/pubs/stasio/vss.ps.gz
+//	[GJKR 99]: Gennaro R., Jarecki S., Krawczyk H., Rabin T. (1999) Secure
+//	    Distributed Key Generation for Discrete-Log Based Cryptosystems. In:
+//	    Stern J. (eds) Advances in Cryptology — EUROCRYPT ’99. EUROCRYPT 1999.
+//	    Lecture Notes in Computer Science, vol 1592. Springer, Berlin, Heidelberg
+//	    http://groups.csail.mit.edu/cis/pubs/stasio/vss.ps.gz
 package gjkr
 
 import (
 	crand "crypto/rand"
 	"fmt"
-	"github.com/ipfs/go-log/v2"
 	"math/big"
+
+	"github.com/ipfs/go-log/v2"
 
 	bn256 "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
 	"github.com/keep-network/keep-core/pkg/crypto/ephemeral"
@@ -67,7 +68,9 @@ func (em *EphemeralKeyPairGeneratingMember) GenerateEphemeralKeyPair() (
 func (sm *SymmetricKeyGeneratingMember) GenerateSymmetricKeys(
 	ephemeralPubKeyMessages []*EphemeralPublicKeyMessage,
 ) error {
-	for _, ephemeralPubKeyMessage := range ephemeralPubKeyMessages {
+	for _, ephemeralPubKeyMessage := range deduplicateBySender(
+		ephemeralPubKeyMessages,
+	) {
 		otherMember := ephemeralPubKeyMessage.senderID
 
 		if !sm.isValidEphemeralPublicKeyMessage(ephemeralPubKeyMessage) {
@@ -84,7 +87,10 @@ func (sm *SymmetricKeyGeneratingMember) GenerateSymmetricKeys(
 		err := sm.evidenceLog.PutEphemeralMessage(ephemeralPubKeyMessage)
 		if err != nil {
 			sm.logger.Errorf(
-				"could not put ephemeral key message to the evidence log: [%v]",
+				"[member:%v] could not put ephemeral key message "+
+					"from member [%v] to the evidence log: [%v]",
+				sm.ID,
+				otherMember,
 				err,
 			)
 		}
@@ -200,7 +206,11 @@ func (cm *CommittingMember) CalculateMembersSharesAndCommitments() (
 		// yield an error.
 		symmetricKey, hasKey := cm.symmetricKeys[receiverID]
 		if !hasKey {
-			cm.logger.Warnf("no symmetric key for receiver: [%v]", receiverID)
+			cm.logger.Warnf(
+				"[member:%v] no symmetric key for receiver: [%v]",
+				cm.ID,
+				receiverID,
+			)
 			continue
 		}
 
@@ -315,18 +325,23 @@ func (cvm *CommitmentsVerifyingMember) VerifyReceivedSharesAndCommitmentsMessage
 	sharesMessages []*PeerSharesMessage,
 	commitmentsMessages []*MemberCommitmentsMessage,
 ) (*SecretSharesAccusationsMessage, error) {
-	for _, sharesMessage := range sharesMessages {
+	deduplicatedSharesMessages := deduplicateBySender(sharesMessages)
+
+	for _, sharesMessage := range deduplicatedSharesMessages {
 		err := cvm.evidenceLog.PutPeerSharesMessage(sharesMessage)
 		if err != nil {
 			cvm.logger.Errorf(
-				"could not put peer shares message to the evidence log: [%v]",
+				"[member:%v] could not put peer shares message "+
+					"from member [%v] to the evidence log: [%v]",
+				cvm.ID,
+				sharesMessage.senderID,
 				err,
 			)
 		}
 	}
 
 	accusedMembersKeys := make(map[group.MemberIndex]*ephemeral.PrivateKey)
-	for _, commitmentsMessage := range commitmentsMessages {
+	for _, commitmentsMessage := range deduplicateBySender(commitmentsMessages) {
 		if !cvm.isValidMemberCommitmentsMessage(commitmentsMessage) {
 			cvm.logger.Warnf(
 				"[member:%v] member [%v] disqualified because of "+
@@ -343,7 +358,7 @@ func (cvm *CommitmentsVerifyingMember) VerifyReceivedSharesAndCommitmentsMessage
 
 		// Find share message sent by the same member who sent commitment message
 		sharesMessageFound := false
-		for _, sharesMessage := range sharesMessages {
+		for _, sharesMessage := range deduplicatedSharesMessages {
 			if sharesMessage.senderID == commitmentsMessage.senderID {
 				sharesMessageFound = true
 
@@ -421,7 +436,9 @@ func (cvm *CommitmentsVerifyingMember) VerifyReceivedSharesAndCommitmentsMessage
 			}
 		}
 		if !sharesMessageFound {
-			cvm.logger.Warnf("cannot find shares message from member: [%v]",
+			cvm.logger.Warnf(
+				"[member:%v] cannot find shares message from member: [%v]",
+				cvm.ID,
 				commitmentsMessage.senderID,
 			)
 		}
@@ -543,13 +560,13 @@ func (cm *CommittingMember) areSharesValidAgainstCommitments(
 // should never happen.
 //
 // Accuser is disqualified if:
-// - accused the current member
-// - the revealed private key does not match the public key previously broadcast
-//   by the accuser
-// - accused inactive or already disqualified member and as a result, we do not
-//   have enough information to resolve that accusation
-// - shares of the accused member are valid against commitments
-// - accused member ID does not exist
+//   - accused the current member
+//   - the revealed private key does not match the public key previously broadcast
+//     by the accuser
+//   - accused inactive or already disqualified member and as a result, we do not
+//     have enough information to resolve that accusation
+//   - shares of the accused member are valid against commitments
+//   - accused member ID does not exist
 //
 // Accused member is disqualified if:
 // - shares of the accused member can not be decrypted
@@ -559,7 +576,7 @@ func (cm *CommittingMember) areSharesValidAgainstCommitments(
 func (sjm *SharesJustifyingMember) ResolveSecretSharesAccusationsMessages(
 	messages []*SecretSharesAccusationsMessage,
 ) error {
-	for _, message := range messages {
+	for _, message := range deduplicateBySender(messages) {
 		accuserID := message.senderID
 		for accusedID, revealedAccuserPrivateKey := range message.accusedMembersKeys {
 			isAccusedIDValid := accusedID > 0 && int(accusedID) <= sjm.group.GroupSize()
@@ -758,14 +775,14 @@ func (sjm *SharesJustifyingMember) discardReceivedShares(
 // present in that message.
 //
 // There are two assumptions made here:
-// 1. If the given sender did not deliver ephemeral public key message in phase
-//    1, it should be marked as inactive, hence, this function should never be
-//    called for that sender ID,
-// 2. If the given sender delivered ephemeral public key message in phase 1
-//    but that message did not contain a public key for all group members
-//    including the one passed as receiver to this function, sender should be
-//    disqualified in phase 2, and this function should never be called for that
-//    sender ID.
+//  1. If the given sender did not deliver ephemeral public key message in phase
+//     1, it should be marked as inactive, hence, this function should never be
+//     called for that sender ID,
+//  2. If the given sender delivered ephemeral public key message in phase 1
+//     but that message did not contain a public key for all group members
+//     including the one passed as receiver to this function, sender should be
+//     disqualified in phase 2, and this function should never be called for that
+//     sender ID.
 func findPublicKey(
 	logger log.StandardLogger,
 	evidenceLog evidenceLog,
@@ -774,7 +791,7 @@ func findPublicKey(
 	ephemeralPublicKeyMessage := evidenceLog.ephemeralPublicKeyMessage(senderID)
 	if ephemeralPublicKeyMessage == nil {
 		logger.Warnf(
-			"no ephemeral public key message for sender %v",
+			"no ephemeral public key message for sender [%v]",
 			senderID,
 		)
 		return nil
@@ -783,7 +800,7 @@ func findPublicKey(
 	senderPublicKey, ok := ephemeralPublicKeyMessage.ephemeralPublicKeys[receiverID]
 	if !ok {
 		logger.Warnf(
-			"no ephemeral public key generated for receiver %v",
+			"no ephemeral public key generated for receiver [%v]",
 			receiverID,
 		)
 		return nil
@@ -848,7 +865,7 @@ func (sm *SharingMember) VerifyPublicKeySharePoints(
 	accusedMembersKeys := make(map[group.MemberIndex]*ephemeral.PrivateKey)
 	// `product = Π (A_j[k] ^ (i^k)) mod p` for k in [0..T],
 	// where: j is sender's ID, i is current member ID, T is dishonest threshold.
-	for _, message := range messages {
+	for _, message := range deduplicateBySender(messages) {
 		if !sm.isValidMemberPublicKeySharePointsMessage(message) {
 			sm.logger.Warnf(
 				"[member:%v] member [%v] disqualified because of "+
@@ -981,15 +998,15 @@ func (sm *SharingMember) publicKeyShare(
 // should never happen.
 //
 // Accuser is disqualified if:
-// - accused the current member
-// - the revealed private key does not match the public key previously broadcast
-//   by the accuser
-// - accused inactive or already disqualified member and as a result, we do not
-//   have enough information to resolve that accusation
-// - shares of the accused member are valid against public key share points
-// - shares of the accused member can not be decrypted and the accuser didn't
-//   complain about this fact in phase 4 (protocol violation)
-// - accused member ID does not exist
+//   - accused the current member
+//   - the revealed private key does not match the public key previously broadcast
+//     by the accuser
+//   - accused inactive or already disqualified member and as a result, we do not
+//     have enough information to resolve that accusation
+//   - shares of the accused member are valid against public key share points
+//   - shares of the accused member can not be decrypted and the accuser didn't
+//     complain about this fact in phase 4 (protocol violation)
+//   - accused member ID does not exist
 //
 // Accused member is disqualified if:
 // - shares of the accused member can not be decrypted
@@ -999,7 +1016,7 @@ func (sm *SharingMember) publicKeyShare(
 func (pjm *PointsJustifyingMember) ResolvePublicKeySharePointsAccusationsMessages(
 	messages []*PointsAccusationsMessage,
 ) error {
-	for _, message := range messages {
+	for _, message := range deduplicateBySender(messages) {
 		accuserID := message.senderID
 		for accusedID, revealedAccuserPrivateKey := range message.accusedMembersKeys {
 			isAccusedIDValid := accusedID > 0 && int(accusedID) <= pjm.group.GroupSize()
@@ -1248,7 +1265,7 @@ func (rm *RevealingMember) membersForReconstruction() []group.MemberIndex {
 func (rm *ReconstructingMember) ReconstructMisbehavedIndividualKeys(
 	messages []*MisbehavedEphemeralKeysMessage,
 ) error {
-	for _, message := range messages {
+	for _, message := range deduplicateBySender(messages) {
 		// Validate received message. If message is invalid, sender should
 		// be considered as misbehaving and marked as disqualified.
 		if !rm.isValidMisbehavedEphemeralKeysMessage(message) {
@@ -1684,13 +1701,13 @@ func pow(id group.MemberIndex, y int) *big.Int {
 //
 // This function combines individual public keys of all Qualified Members who were
 // approved for Phase 6. Three categories of individual public keys are considered:
-// 1. Current member's individual public key.
-// 2. Peer members' individual public keys - for members who passed a public key
-//    share points validation in Phase 8 and accusations resolution in Phase 9 and
-//    are still active group members.
-// 3. Misbehaved members' individual public keys - for QUAL members who were
-//    marked as disqualified or inactive and theirs individual private and
-//    public keys were reconstructed in Phase 11.
+//  1. Current member's individual public key.
+//  2. Peer members' individual public keys - for members who passed a public key
+//     share points validation in Phase 8 and accusations resolution in Phase 9 and
+//     are still active group members.
+//  3. Misbehaved members' individual public keys - for QUAL members who were
+//     marked as disqualified or inactive and theirs individual private and
+//     public keys were reconstructed in Phase 11.
 //
 // See Phase 12 of the protocol specification.
 func (cm *CombiningMember) CombineGroupPublicKey() {
@@ -1768,4 +1785,23 @@ func (cm *CombiningMember) ComputeGroupPublicKeyShares() {
 
 		cm.groupPublicKeySharesChannel <- groupPublicKeyShares
 	}()
+}
+
+// deduplicateBySender removes duplicated items for the given sender.
+// It always takes the first item that occurs for the given sender
+// and ignores the subsequent ones.
+func deduplicateBySender[T interface{ SenderID() group.MemberIndex }](
+	list []T,
+) []T {
+	senders := make(map[group.MemberIndex]bool)
+	result := make([]T, 0)
+
+	for _, item := range list {
+		if _, exists := senders[item.SenderID()]; !exists {
+			senders[item.SenderID()] = true
+			result = append(result, item)
+		}
+	}
+
+	return result
 }

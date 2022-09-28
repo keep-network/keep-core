@@ -6,4 +6,5 @@ package entry;
 message SignatureShare {
     uint32 senderID = 1;
     bytes share = 2;
+    string sessionID = 3;
 }
