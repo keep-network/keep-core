@@ -705,6 +705,14 @@
     "@openzeppelin/contracts" "^4.3.2"
     "@thesis/solidity-contracts" "github:thesis/solidity-contracts#4985bcf"
 
+"@keep-network/sortition-pools@^2.0.0-pre.16":
+  version "2.0.0-pre.16"
+  resolved "https://registry.yarnpkg.com/@keep-network/sortition-pools/-/sortition-pools-2.0.0-pre.16.tgz#2df738cc06e4062212605d12740127eaa71c2346"
+  integrity sha512-tEd21AbtZj4gqm46n0l8ujA7p7C7RtdN5DhSw0FWI9FYKg1iL4IoQw8Fe7wsqzMnLf61zQfNeQ7w78jPaqoowA==
+  dependencies:
+    "@openzeppelin/contracts" "^4.3.2"
+    "@thesis/solidity-contracts" "github:thesis/solidity-contracts#4985bcf"
+
 "@metamask/eth-sig-util@^4.0.0":
   version "4.0.1"
   resolved "https://registry.yarnpkg.com/@metamask/eth-sig-util/-/eth-sig-util-4.0.1.tgz#3ad61f6ea9ad73ba5b19db780d40d9aae5157088"
