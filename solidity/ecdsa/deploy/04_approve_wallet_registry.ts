@@ -20,3 +20,7 @@ export default func
 
 func.tags = ["WalletRegistryApprove"]
 func.dependencies = ["TokenStaking", "WalletRegistry"]
+
+// Skip for mainnet.
+func.skip = async (hre: HardhatRuntimeEnvironment): Promise<boolean> =>
+  hre.network.name === "mainnet"
