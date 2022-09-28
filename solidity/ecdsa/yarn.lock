@@ -1128,9 +1128,9 @@
     "@thesis/solidity-contracts" "github:thesis/solidity-contracts#4985bcf"
 
 "@threshold-network/solidity-contracts@development":
-  version "1.2.0-dev.17"
-  resolved "https://registry.yarnpkg.com/@threshold-network/solidity-contracts/-/solidity-contracts-1.2.0-dev.17.tgz#c12157f199bb1ef95ca3748654286abb08ed8f7b"
-  integrity sha512-YJE4fgwjBha+61iVo4TiUN/F5eND835U8rWxHy1uBU4e/CZGG99Vv1n33NMDvTNHw6pi2HKLKYqWSyc01/5/PA==
+  version "1.2.0-dev.24"
+  resolved "https://registry.yarnpkg.com/@threshold-network/solidity-contracts/-/solidity-contracts-1.2.0-dev.24.tgz#a6ec0d22bebd0829a70663bc72a6a49713b6fec8"
+  integrity sha512-lNNrsTDhOyqZNNfJ/1lffcCTRoV5CepTvHQWlsIQS5ku/QYFU8MldfRxITNbJSkySYdBA9VGSyiGYM3zSyJAOg==
   dependencies:
     "@keep-network/keep-core" ">1.8.1-dev <1.8.1-goerli"
     "@openzeppelin/contracts" "~4.5.0"
@@ -1281,9 +1281,9 @@
     form-data "^3.0.0"
 
 "@types/node@*":
-  version "18.7.21"
-  resolved "https://registry.yarnpkg.com/@types/node/-/node-18.7.21.tgz#63ee6688070e456325b6748dc492a7b948593871"
-  integrity sha512-rLFzK5bhM0YPyCoTC8bolBjMk7bwnZ8qeZUBslBfjZQou2ssJdWslx9CZ8DGM+Dx7QXQiiTVZ/6QO6kwtHkZCA==
+  version "18.7.23"
+  resolved "https://registry.yarnpkg.com/@types/node/-/node-18.7.23.tgz#75c580983846181ebe5f4abc40fe9dfb2d65665f"
+  integrity sha512-DWNcCHolDq0ZKGizjx2DZjR/PqsYwAcYUJmfMWqtVU2MBMG5Mo+xFZrhGId5r/O5HOuMPyQEcM6KUBp5lBZZBg==
 
 "@types/node@^10.0.3", "@types/node@^10.12.18", "@types/node@^10.3.2":
   version "10.17.60"
