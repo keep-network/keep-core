@@ -102,46 +102,6 @@ func start(cmd *cobra.Command) error {
 		clientConfig.Ethereum,
 	)
 
-	storage, err := storage.Initialize(
-		clientConfig.Storage,
-		clientConfig.Ethereum.KeyFilePassword,
-	)
-	if err != nil {
-		return fmt.Errorf("cannot initialize storage: [%w]", err)
-	}
-
-	beaconKeyStorePersistence, err := storage.InitializeKeyStorePersistence("beacon")
-	if err != nil {
-		return fmt.Errorf("cannot initialize beacon keystore persistence: [%w]", err)
-	}
-
-	tbtcKeyStorePersistence, err := storage.InitializeKeyStorePersistence("tbtc")
-	if err != nil {
-		return fmt.Errorf("cannot initialize tbtc keystore persistence: [%w]", err)
-	}
-
-	tbtcDataPersistence, err := storage.InitializeWorkPersistence("tbtc")
-	if err != nil {
-		return fmt.Errorf("cannot initialize tbtc data persistence: [%w]", err)
-	}
-
-	scheduler := generator.StartScheduler()
-
-	// Monitor sortition pool only if the node is a non-bootstrap node.
-	monitorPool := !clientConfig.LibP2P.Bootstrap
-
-	err = beacon.Initialize(
-		ctx,
-		beaconChain,
-		netProvider,
-		beaconKeyStorePersistence,
-		scheduler,
-		monitorPool,
-	)
-	if err != nil {
-		return fmt.Errorf("error initializing beacon: [%v]", err)
-	}
-
 	clientInfoRegistry := initializeClientInfo(
 		ctx,
 		clientConfig,
@@ -150,19 +110,72 @@ func start(cmd *cobra.Command) error {
 		blockCounter,
 	)
 
-	err = tbtc.Initialize(
-		ctx,
-		tbtcChain,
-		netProvider,
-		tbtcKeyStorePersistence,
-		tbtcDataPersistence,
-		scheduler,
-		clientConfig.Tbtc,
-		clientInfoRegistry,
-		monitorPool,
-	)
-	if err != nil {
-		return fmt.Errorf("error initializing TBTC: [%v]", err)
+	// Initialize beacon and tbtc only for non-bootstrap nodes.
+	// Skip initialization for bootstrap nodes as they are only used for network
+	// discovery.
+	if !clientConfig.LibP2P.Bootstrap {
+		storage, err := storage.Initialize(
+			clientConfig.Storage,
+			clientConfig.Ethereum.KeyFilePassword,
+		)
+		if err != nil {
+			return fmt.Errorf("cannot initialize storage: [%w]", err)
+		}
+
+		beaconKeyStorePersistence, err := storage.InitializeKeyStorePersistence(
+			"beacon",
+		)
+		if err != nil {
+			return fmt.Errorf(
+				"cannot initialize beacon keystore persistence: [%w]",
+				err,
+			)
+		}
+
+		tbtcKeyStorePersistence, err := storage.InitializeKeyStorePersistence(
+			"tbtc",
+		)
+		if err != nil {
+			return fmt.Errorf(
+				"cannot initialize tbtc keystore persistence: [%w]",
+				err,
+			)
+		}
+
+		tbtcDataPersistence, err := storage.InitializeWorkPersistence("tbtc")
+		if err != nil {
+			return fmt.Errorf(
+				"cannot initialize tbtc data persistence: [%w]",
+				err,
+			)
+		}
+
+		scheduler := generator.StartScheduler()
+
+		err = beacon.Initialize(
+			ctx,
+			beaconChain,
+			netProvider,
+			beaconKeyStorePersistence,
+			scheduler,
+		)
+		if err != nil {
+			return fmt.Errorf("error initializing beacon: [%v]", err)
+		}
+
+		err = tbtc.Initialize(
+			ctx,
+			tbtcChain,
+			netProvider,
+			tbtcKeyStorePersistence,
+			tbtcDataPersistence,
+			scheduler,
+			clientConfig.Tbtc,
+			clientInfoRegistry,
+		)
+		if err != nil {
+			return fmt.Errorf("error initializing TBTC: [%v]", err)
+		}
 	}
 
 	select {

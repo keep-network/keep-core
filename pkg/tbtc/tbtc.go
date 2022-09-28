@@ -57,7 +57,6 @@ func Initialize(
 	scheduler *generator.Scheduler,
 	config Config,
 	clientInfo *clientinfo.Registry,
-	monitorPool bool,
 ) error {
 	node := newNode(chain, netProvider, keyStorePersistence, workPersistence, scheduler, config)
 	deduplicator := newDeduplicator()
@@ -74,26 +73,24 @@ func Initialize(
 		)
 	}
 
-	if monitorPool {
-		err := sortition.MonitorPool(
-			ctx,
-			logger,
-			chain,
-			sortition.DefaultStatusCheckTick,
-			sortition.NewConjunctionPolicy(
-				sortition.NewBetaOperatorPolicy(chain, logger),
-				&enoughPreParamsInPoolPolicy{
-					node:   node,
-					config: config,
-				},
-			),
+	err := sortition.MonitorPool(
+		ctx,
+		logger,
+		chain,
+		sortition.DefaultStatusCheckTick,
+		sortition.NewConjunctionPolicy(
+			sortition.NewBetaOperatorPolicy(chain, logger),
+			&enoughPreParamsInPoolPolicy{
+				node:   node,
+				config: config,
+			},
+		),
+	)
+	if err != nil {
+		return fmt.Errorf(
+			"could not set up sortition pool monitoring: [%v]",
+			err,
 		)
-		if err != nil {
-			return fmt.Errorf(
-				"could not set up sortition pool monitoring: [%v]",
-				err,
-			)
-		}
 	}
 
 	_ = chain.OnDKGStarted(func(event *DKGStartedEvent) {
