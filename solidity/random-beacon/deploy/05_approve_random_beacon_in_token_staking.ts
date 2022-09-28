@@ -22,3 +22,7 @@ export default func
 
 func.tags = ["RandomBeaconApprove"]
 func.dependencies = ["TokenStaking", "RandomBeacon"]
+
+// Skip for mainnet.
+func.skip = async (hre: HardhatRuntimeEnvironment): Promise<boolean> =>
+  hre.network.name === "mainnet"
