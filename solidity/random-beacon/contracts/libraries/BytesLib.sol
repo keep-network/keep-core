@@ -12,7 +12,7 @@
 //
 //
 
-pragma solidity ^0.8.9;
+pragma solidity 0.8.17;
 
 /*
 Version pulled from keep-core v1:

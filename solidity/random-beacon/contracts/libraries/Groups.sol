@@ -12,7 +12,7 @@
 //
 //
 
-pragma solidity ^0.8.9;
+pragma solidity 0.8.17;
 
 /// @notice This library is used as a registry of created groups.
 /// @dev This library should be used along with DKG library that ensures linear

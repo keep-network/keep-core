@@ -12,7 +12,7 @@
 //
 //                           Trust math, not hardware.
 
-pragma solidity ^0.8.9;
+pragma solidity 0.8.17;
 
 import "./api/IRandomBeacon.sol";
 import "./libraries/Groups.sol";
