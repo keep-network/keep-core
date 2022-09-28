@@ -1,7 +1,7 @@
 package gjkr
 
 import (
-	"github.com/ipfs/go-log"
+	"github.com/ipfs/go-log/v2"
 	"math/big"
 
 	bn256 "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"

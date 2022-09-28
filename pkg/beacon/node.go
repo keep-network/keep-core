@@ -122,7 +122,7 @@ func (n *node) JoinDKGIfEligible(
 		}
 
 		membershipValidator := group.NewMembershipValidator(
-			logger,
+			dkgLogger,
 			selectedOperators,
 			signing,
 		)
@@ -146,7 +146,7 @@ func (n *node) JoinDKGIfEligible(
 				defer n.protocolLatch.Unlock()
 
 				signer, err := dkg.ExecuteDKG(
-					logger,
+					dkgLogger,
 					dkgSeed,
 					memberIndex,
 					dkgStartBlockNumber,
