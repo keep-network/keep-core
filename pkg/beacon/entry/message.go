@@ -9,14 +9,16 @@ import (
 type SignatureShareMessage struct {
 	senderID   group.MemberIndex
 	shareBytes []byte
+	sessionID  string
 }
 
 // NewSignatureShareMessage creates new SignatureShareMessage.
 func NewSignatureShareMessage(
 	senderID group.MemberIndex,
 	shareBytes []byte,
+	sessionID string,
 ) *SignatureShareMessage {
-	return &SignatureShareMessage{senderID, shareBytes}
+	return &SignatureShareMessage{senderID, shareBytes, sessionID}
 }
 
 // SenderID returns protocol-level identifier of the message sender.
