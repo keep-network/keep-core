@@ -6,7 +6,7 @@ import (
 	"github.com/keep-network/keep-core/pkg/beacon/event"
 
 	bn256 "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
-	"github.com/ipfs/go-log"
+	"github.com/ipfs/go-log/v2"
 	beaconchain "github.com/keep-network/keep-core/pkg/beacon/chain"
 	"github.com/keep-network/keep-core/pkg/beacon/dkg"
 	"github.com/keep-network/keep-core/pkg/bls"
@@ -95,7 +95,7 @@ func SignAndSubmit(
 				previousEntry,
 			)
 			if err != nil {
-				logger.Warningf(
+				logger.Warnf(
 					"[member:%v] rejecting signature share from "+
 						"member [%v]: [%v]",
 					signer.MemberID(),

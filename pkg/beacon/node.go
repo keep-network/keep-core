@@ -322,6 +322,11 @@ func (n *node) GenerateRelayEntry(
 	groupPublicKey []byte,
 	startBlockHeight uint64,
 ) {
+	relayLogger := logger.With(
+		zap.String("groupPublicKey", hex.EncodeToString(groupPublicKey)),
+		zap.String("previousEntry", hex.EncodeToString(previousEntry)),
+	)
+
 	memberships := n.groupRegistry.GetGroup(groupPublicKey)
 
 	if len(memberships) < 1 {
@@ -330,7 +335,7 @@ func (n *node) GenerateRelayEntry(
 
 	channel, err := n.netProvider.BroadcastChannelFor(memberships[0].ChannelName)
 	if err != nil {
-		logger.Errorf("could not create broadcast channel: [%v]", err)
+		relayLogger.Errorf("could not create broadcast channel: [%v]", err)
 		return
 	}
 
@@ -344,14 +349,14 @@ func (n *node) GenerateRelayEntry(
 		GroupOperators()
 
 	membershipValidator := group.NewMembershipValidator(
-		logger,
+		relayLogger,
 		groupMembers,
 		n.beaconChain.Signing(),
 	)
 
 	err = channel.SetFilter(membershipValidator.IsInGroup)
 	if err != nil {
-		logger.Errorf(
+		relayLogger.Errorf(
 			"could not set filter for channel [%v]: [%v]",
 			channel.Name(),
 			err,
@@ -360,7 +365,7 @@ func (n *node) GenerateRelayEntry(
 
 	blockCounter, err := n.beaconChain.BlockCounter()
 	if err != nil {
-		logger.Errorf("failed to get block counter: [%v]", err)
+		relayLogger.Errorf("failed to get block counter: [%v]", err)
 		return
 	}
 
@@ -372,7 +377,7 @@ func (n *node) GenerateRelayEntry(
 			defer n.protocolLatch.Unlock()
 
 			err = entry.SignAndSubmit(
-				logger,
+				relayLogger,
 				blockCounter,
 				channel,
 				n.beaconChain,
@@ -382,7 +387,7 @@ func (n *node) GenerateRelayEntry(
 				startBlockHeight,
 			)
 			if err != nil {
-				logger.Errorf(
+				relayLogger.Errorf(
 					"error creating threshold signature: [%v]",
 					err,
 				)
