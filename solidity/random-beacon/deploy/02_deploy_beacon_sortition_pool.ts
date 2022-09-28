@@ -21,7 +21,7 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
 
   await execute(
     "BeaconSortitionPool",
-    { from: deployer },
+    { from: deployer, log: true, waitConfirmations: 1 },
     "transferChaosnetOwnerRole",
     chaosnetOwner
   )
