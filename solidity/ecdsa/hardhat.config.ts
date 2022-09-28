@@ -111,6 +111,14 @@ const config: HardhatUserConfig = {
         : undefined,
       tags: ["etherscan", "tenderly"],
     },
+    mainnet: {
+      url: process.env.CHAIN_API_URL || "",
+      chainId: 1,
+      accounts: process.env.CONTRACT_OWNER_ACCOUNT_PRIVATE_KEY
+        ? [process.env.CONTRACT_OWNER_ACCOUNT_PRIVATE_KEY]
+        : undefined,
+      tags: ["etherscan", "tenderly"],
+    },
   },
   // // Define local networks configuration file path to load networks from the file.
   // localNetworksConfig: "./.hardhat/networks.ts",
@@ -125,22 +133,23 @@ const config: HardhatUserConfig = {
     deployer: {
       default: 1, // take the second account
       goerli: 0,
-      // mainnet: ""
+      mainnet: 0, // "0x123694886DBf5Ac94DDA07135349534536D14cAf"
     },
     governance: {
+      // TODO: Rename to thresholdCouncil
       default: 2,
       goerli: 0,
-      // mainnet: ""
+      mainnet: "0x9f6e831c8f8939dc0c830c6e492e7cef4f9c2f5f", // Threshold Council
     },
     chaosnetOwner: {
       default: 3,
       goerli: 0,
-      // mainnet: ""
+      mainnet: "0x9f6e831c8f8939dc0c830c6e492e7cef4f9c2f5f", // Threshold Council
     },
     esdm: {
       default: 4,
       goerli: 0,
-      // mainnet: ""
+      mainnet: "0x9f6e831c8f8939dc0c830c6e492e7cef4f9c2f5f", // Threshold Council
     },
   },
   external: {
@@ -174,7 +183,7 @@ const config: HardhatUserConfig = {
         "node_modules/@threshold-network/solidity-contracts/artifacts",
         "node_modules/@keep-network/random-beacon/artifacts",
       ],
-      // mainnet: ["./external/mainnet"],
+      mainnet: ["./external/mainnet"],
     },
   },
   dependencyCompiler:
