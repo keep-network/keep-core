@@ -86,7 +86,7 @@ func (sm *SymmetricKeyGeneratingMember) GenerateSymmetricKeys(
 		err := sm.evidenceLog.PutEphemeralMessage(ephemeralPubKeyMessage)
 		if err != nil {
 			sm.logger.Errorf(
-				"[member:%v] could not put ephemeral key message " +
+				"[member:%v] could not put ephemeral key message "+
 					"from member [%v] to the evidence log: [%v]",
 				sm.ID,
 				otherMember,
@@ -330,7 +330,7 @@ func (cvm *CommitmentsVerifyingMember) VerifyReceivedSharesAndCommitmentsMessage
 		err := cvm.evidenceLog.PutPeerSharesMessage(sharesMessage)
 		if err != nil {
 			cvm.logger.Errorf(
-				"[member:%v] could not put peer shares message " +
+				"[member:%v] could not put peer shares message "+
 					"from member [%v] to the evidence log: [%v]",
 				cvm.ID,
 				sharesMessage.senderID,
