@@ -22,7 +22,7 @@
 // - submission eligibility delay was replaced with a submission timeout,
 // - seed timeout notification requires seedTimeout period to pass.
 
-pragma solidity ^0.8.9;
+pragma solidity 0.8.17;
 
 import "@openzeppelin/contracts-upgradeable/utils/cryptography/ECDSAUpgradeable.sol";
 import "@keep-network/sortition-pools/contracts/SortitionPool.sol";

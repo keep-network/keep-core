@@ -70,7 +70,7 @@
   "dependencies": {
     "@keep-network/hardhat-helpers": "^0.6.0-pre.15",
     "@keep-network/random-beacon": "development",
-    "@keep-network/sortition-pools": "^2.0.0-pre.15",
+    "@keep-network/sortition-pools": "^2.0.0-pre.16",
     "@openzeppelin/contracts": "^4.6.0",
     "@openzeppelin/contracts-upgradeable": "^4.6.0",
     "@threshold-network/solidity-contracts": "development"

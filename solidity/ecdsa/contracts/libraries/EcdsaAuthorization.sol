@@ -12,7 +12,7 @@
 //
 //
 
-pragma solidity ^0.8.9;
+pragma solidity 0.8.17;
 
 import "@keep-network/sortition-pools/contracts/SortitionPool.sol";
 import "@threshold-network/solidity-contracts/contracts/staking/IStaking.sol";
