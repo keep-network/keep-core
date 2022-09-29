@@ -398,7 +398,6 @@ func newDkgResultSigner(chain Chain) *dkgResultSigner {
 
 // SignResult signs the provided DKG result. It returns the information
 // pertaining to the signing process: public key, signature, result hash.
-// TODO: Add unit tests.
 func (drs *dkgResultSigner) SignResult(result *dkg.Result) (*dkg.SignedResult, error) {
 	resultHash, err := drs.chain.CalculateDKGResultHash(result)
 	if err != nil {
@@ -427,7 +426,6 @@ func (drs *dkgResultSigner) SignResult(result *dkg.Result) (*dkg.SignedResult, e
 
 // VerifySignature verifies if the signature was generated from the provided
 // DKG result has using the provided public key.
-// TODO: Add unit tests.
 func (drs *dkgResultSigner) VerifySignature(signedResult *dkg.SignedResult) (bool, error) {
 	return drs.chain.Signing().VerifyWithPublicKey(
 		signedResult.ResultHash[:],
@@ -456,7 +454,6 @@ func newDkgResultSubmitter(
 // chain. In the process, it checks if the number of signatures is above
 // the required threshold, whether the result was already submitted and waits
 // until the member is eligible for DKG result submission.
-// TODO: Add unit tests.
 func (drs *dkgResultSubmitter) SubmitResult(
 	memberIndex group.MemberIndex,
 	result *dkg.Result,

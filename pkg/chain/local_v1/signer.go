@@ -14,7 +14,7 @@ type signer struct {
 	*commonlocal.Signer
 }
 
-func newSigner(operatorPrivateKey *operator.PrivateKey) *signer {
+func NewSigner(operatorPrivateKey *operator.PrivateKey) *signer {
 	chainPrivateKey, _, err := operatorPrivateKeyToChainKeyPair(operatorPrivateKey)
 	if err != nil {
 		panic(err)
