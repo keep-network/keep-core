@@ -1,6 +1,6 @@
 {
   "name": "@keep-network/random-beacon",
-  "version": "2.0.0-dev",
+  "version": "2.0.0",
   "description": "Keep Random Beacon",
   "files": [
     "artifacts/",
@@ -34,10 +34,10 @@
   },
   "dependencies": {
     "@keep-network/hardhat-helpers": "^0.6.0-pre.15",
-    "@keep-network/sortition-pools": "^2.0.0-pre.16",
+    "@keep-network/sortition-pools": "2.0.0",
     "@openzeppelin/contracts": "^4.6.0",
     "@thesis/solidity-contracts": "github:thesis/solidity-contracts#4985bcf",
-    "@threshold-network/solidity-contracts": "development"
+    "@threshold-network/solidity-contracts": "1.2.1"
   },
   "devDependencies": {
     "@defi-wonderland/smock": "^2.0.7",
