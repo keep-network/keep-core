@@ -62,7 +62,7 @@ func (n *node) JoinDKGIfEligible(
 	dkgStartBlockNumber uint64,
 ) {
 	dkgLogger := logger.With(
-		zap.String("seed", dkgSeed.Text(16)),
+		zap.String("seed", fmt.Sprintf("0x%x", dkgSeed)),
 	)
 
 	dkgLogger.Info("checking eligibility for DKG")
@@ -168,7 +168,7 @@ func (n *node) JoinDKGIfEligible(
 				err = n.groupRegistry.RegisterGroup(signer, groupPublicKey)
 				if err != nil {
 					dkgLogger.Errorf(
-						"[member:%v] failed to register a group [%v]: [%v]",
+						"[member:%v] failed to register a group [0x%v]: [%v]",
 						signer.MemberID(),
 						groupPublicKey,
 						err,
@@ -177,7 +177,7 @@ func (n *node) JoinDKGIfEligible(
 				}
 
 				dkgLogger.Infof(
-					"[member:%v] group [%v] registered successfully",
+					"[member:%v] group [0x%v] registered successfully",
 					signer.MemberID(),
 					groupPublicKey,
 				)
@@ -323,8 +323,8 @@ func (n *node) GenerateRelayEntry(
 	startBlockHeight uint64,
 ) {
 	relayLogger := logger.With(
-		zap.String("groupPublicKey", hex.EncodeToString(groupPublicKey)),
-		zap.String("previousEntry", hex.EncodeToString(previousEntry)),
+		zap.String("groupPublicKey", fmt.Sprintf("0x%x", groupPublicKey)),
+		zap.String("previousEntry", fmt.Sprintf("0x%x", previousEntry)),
 	)
 
 	memberships := n.groupRegistry.GetGroup(groupPublicKey)
