@@ -5,6 +5,7 @@ package cmd
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"sync"
 
@@ -14,6 +15,8 @@ import (
 
 	chainutil "github.com/keep-network/keep-common/pkg/chain/ethereum/ethutil"
 	"github.com/keep-network/keep-common/pkg/cmd"
+	"github.com/keep-network/keep-common/pkg/utils/decode"
+	"github.com/keep-network/keep-core/pkg/chain/ethereum/ecdsa/gen/abi"
 	"github.com/keep-network/keep-core/pkg/chain/ethereum/ecdsa/gen/contract"
 
 	"github.com/spf13/cobra"
@@ -53,11 +56,11 @@ func init() {
 		wrDkgParametersCommand(),
 		wrEligibleStakeCommand(),
 		wrGasParametersCommand(),
-		wrGetDkgDataCommand(),
 		wrGetWalletCreationStateCommand(),
 		wrGovernanceCommand(),
 		wrHasDkgTimedOutCommand(),
 		wrHasSeedTimedOutCommand(),
+		wrIsDkgResultValidCommand(),
 		wrIsOperatorInPoolCommand(),
 		wrIsOperatorUpToDateCommand(),
 		wrMinimumAuthorizationCommand(),
@@ -74,19 +77,27 @@ func init() {
 		wrStakingProviderToOperatorCommand(),
 		wrWalletOwnerCommand(),
 		wrApproveAuthorizationDecreaseCommand(),
+		wrApproveDkgResultCommand(),
+		wrAuthorizationDecreaseRequestedCommand(),
+		wrAuthorizationIncreasedCommand(),
 		wrBeaconCallbackCommand(),
+		wrChallengeDkgResultCommand(),
 		wrInitializeCommand(),
+		wrInvoluntaryAuthorizationDecreaseCommand(),
 		wrJoinSortitionPoolCommand(),
 		wrNotifyDkgTimeoutCommand(),
 		wrNotifySeedTimeoutCommand(),
 		wrRegisterOperatorCommand(),
 		wrRequestNewWalletCommand(),
+		wrSubmitDkgResultCommand(),
 		wrTransferGovernanceCommand(),
+		wrUpdateAuthorizationParametersCommand(),
 		wrUpdateDkgParametersCommand(),
 		wrUpdateGasParametersCommand(),
 		wrUpdateOperatorStatusCommand(),
 		wrUpdateReimbursementPoolCommand(),
 		wrUpdateRewardParametersCommand(),
+		wrUpdateSlashingParametersCommand(),
 		wrUpdateWalletOwnerCommand(),
 		wrUpgradeRandomBeaconCommand(),
 		wrWithdrawIneligibleRewardsCommand(),
@@ -152,6 +163,7 @@ func wrAvailableRewards(c *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
+
 	arg_stakingProvider, err := chainutil.AddressFromHex(args[0])
 	if err != nil {
 		return fmt.Errorf(
@@ -228,6 +240,7 @@ func wrEligibleStake(c *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
+
 	arg_stakingProvider, err := chainutil.AddressFromHex(args[0])
 	if err != nil {
 		return fmt.Errorf(
@@ -272,40 +285,6 @@ func wrGasParameters(c *cobra.Command, args []string) error {
 	}
 
 	result, err := contract.GasParametersAtBlock(
-		cmd.BlockFlagValue.Int,
-	)
-
-	if err != nil {
-		return err
-	}
-
-	cmd.PrintOutput(result)
-
-	return nil
-}
-
-func wrGetDkgDataCommand() *cobra.Command {
-	c := &cobra.Command{
-		Use:                   "get-dkg-data",
-		Short:                 "Calls the view method getDkgData on the WalletRegistry contract.",
-		Args:                  cmd.ArgCountChecker(0),
-		RunE:                  wrGetDkgData,
-		SilenceUsage:          true,
-		DisableFlagsInUseLine: true,
-	}
-
-	cmd.InitConstFlags(c)
-
-	return c
-}
-
-func wrGetDkgData(c *cobra.Command, args []string) error {
-	contract, err := initializeWalletRegistry(c)
-	if err != nil {
-		return err
-	}
-
-	result, err := contract.GetDkgDataAtBlock(
 		cmd.BlockFlagValue.Int,
 	)
 
@@ -454,6 +433,46 @@ func wrHasSeedTimedOut(c *cobra.Command, args []string) error {
 	return nil
 }
 
+func wrIsDkgResultValidCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "is-dkg-result-valid [arg_result_json]",
+		Short:                 "Calls the view method isDkgResultValid on the WalletRegistry contract.",
+		Args:                  cmd.ArgCountChecker(1),
+		RunE:                  wrIsDkgResultValid,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	cmd.InitConstFlags(c)
+
+	return c
+}
+
+func wrIsDkgResultValid(c *cobra.Command, args []string) error {
+	contract, err := initializeWalletRegistry(c)
+	if err != nil {
+		return err
+	}
+
+	arg_result_json := abi.EcdsaDkgResult{}
+	if err := json.Unmarshal([]byte(args[0]), &arg_result_json); err != nil {
+		return fmt.Errorf("failed to unmarshal arg_result_json to abi.EcdsaDkgResult: %w", err)
+	}
+
+	result, err := contract.IsDkgResultValidAtBlock(
+		arg_result_json,
+		cmd.BlockFlagValue.Int,
+	)
+
+	if err != nil {
+		return err
+	}
+
+	cmd.PrintOutput(result)
+
+	return nil
+}
+
 func wrIsOperatorInPoolCommand() *cobra.Command {
 	c := &cobra.Command{
 		Use:                   "is-operator-in-pool [arg_operator]",
@@ -474,6 +493,7 @@ func wrIsOperatorInPool(c *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
+
 	arg_operator, err := chainutil.AddressFromHex(args[0])
 	if err != nil {
 		return fmt.Errorf(
@@ -516,6 +536,7 @@ func wrIsOperatorUpToDate(c *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
+
 	arg_operator, err := chainutil.AddressFromHex(args[0])
 	if err != nil {
 		return fmt.Errorf(
@@ -592,6 +613,7 @@ func wrOperatorToStakingProvider(c *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
+
 	arg_operator, err := chainutil.AddressFromHex(args[0])
 	if err != nil {
 		return fmt.Errorf(
@@ -634,6 +656,7 @@ func wrPendingAuthorizationDecrease(c *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
+
 	arg_stakingProvider, err := chainutil.AddressFromHex(args[0])
 	if err != nil {
 		return fmt.Errorf(
@@ -744,6 +767,7 @@ func wrRemainingAuthorizationDecreaseDelay(c *cobra.Command, args []string) erro
 	if err != nil {
 		return err
 	}
+
 	arg_stakingProvider, err := chainutil.AddressFromHex(args[0])
 	if err != nil {
 		return fmt.Errorf(
@@ -956,6 +980,7 @@ func wrStakingProviderToOperator(c *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
+
 	arg_stakingProvider, err := chainutil.AddressFromHex(args[0])
 	if err != nil {
 		return fmt.Errorf(
@@ -1074,6 +1099,219 @@ func wrApproveAuthorizationDecrease(c *cobra.Command, args []string) error {
 	return nil
 }
 
+func wrApproveDkgResultCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "approve-dkg-result [arg_dkgResult_json]",
+		Short:                 "Calls the nonpayable method approveDkgResult on the WalletRegistry contract.",
+		Args:                  cmd.ArgCountChecker(1),
+		RunE:                  wrApproveDkgResult,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	c.PreRunE = cmd.NonConstArgsChecker
+	cmd.InitNonConstFlags(c)
+
+	return c
+}
+
+func wrApproveDkgResult(c *cobra.Command, args []string) error {
+	contract, err := initializeWalletRegistry(c)
+	if err != nil {
+		return err
+	}
+
+	arg_dkgResult_json := abi.EcdsaDkgResult{}
+	if err := json.Unmarshal([]byte(args[0]), &arg_dkgResult_json); err != nil {
+		return fmt.Errorf("failed to unmarshal arg_dkgResult_json to abi.EcdsaDkgResult: %w", err)
+	}
+
+	var (
+		transaction *types.Transaction
+	)
+
+	if shouldSubmit, _ := c.Flags().GetBool(cmd.SubmitFlag); shouldSubmit {
+		// Do a regular submission. Take payable into account.
+		transaction, err = contract.ApproveDkgResult(
+			arg_dkgResult_json,
+		)
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput(transaction.Hash())
+	} else {
+		// Do a call.
+		err = contract.CallApproveDkgResult(
+			arg_dkgResult_json,
+			cmd.BlockFlagValue.Int,
+		)
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput("success")
+	}
+
+	return nil
+}
+
+func wrAuthorizationDecreaseRequestedCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "authorization-decrease-requested [arg_stakingProvider] [arg_fromAmount] [arg_toAmount]",
+		Short:                 "Calls the nonpayable method authorizationDecreaseRequested on the WalletRegistry contract.",
+		Args:                  cmd.ArgCountChecker(3),
+		RunE:                  wrAuthorizationDecreaseRequested,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	c.PreRunE = cmd.NonConstArgsChecker
+	cmd.InitNonConstFlags(c)
+
+	return c
+}
+
+func wrAuthorizationDecreaseRequested(c *cobra.Command, args []string) error {
+	contract, err := initializeWalletRegistry(c)
+	if err != nil {
+		return err
+	}
+
+	arg_stakingProvider, err := chainutil.AddressFromHex(args[0])
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter arg_stakingProvider, a address, from passed value %v",
+			args[0],
+		)
+	}
+	arg_fromAmount, err := hexutil.DecodeBig(args[1])
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter arg_fromAmount, a uint96, from passed value %v",
+			args[1],
+		)
+	}
+	arg_toAmount, err := hexutil.DecodeBig(args[2])
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter arg_toAmount, a uint96, from passed value %v",
+			args[2],
+		)
+	}
+
+	var (
+		transaction *types.Transaction
+	)
+
+	if shouldSubmit, _ := c.Flags().GetBool(cmd.SubmitFlag); shouldSubmit {
+		// Do a regular submission. Take payable into account.
+		transaction, err = contract.AuthorizationDecreaseRequested(
+			arg_stakingProvider,
+			arg_fromAmount,
+			arg_toAmount,
+		)
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput(transaction.Hash())
+	} else {
+		// Do a call.
+		err = contract.CallAuthorizationDecreaseRequested(
+			arg_stakingProvider,
+			arg_fromAmount,
+			arg_toAmount,
+			cmd.BlockFlagValue.Int,
+		)
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput("success")
+	}
+
+	return nil
+}
+
+func wrAuthorizationIncreasedCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "authorization-increased [arg_stakingProvider] [arg_fromAmount] [arg_toAmount]",
+		Short:                 "Calls the nonpayable method authorizationIncreased on the WalletRegistry contract.",
+		Args:                  cmd.ArgCountChecker(3),
+		RunE:                  wrAuthorizationIncreased,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	c.PreRunE = cmd.NonConstArgsChecker
+	cmd.InitNonConstFlags(c)
+
+	return c
+}
+
+func wrAuthorizationIncreased(c *cobra.Command, args []string) error {
+	contract, err := initializeWalletRegistry(c)
+	if err != nil {
+		return err
+	}
+
+	arg_stakingProvider, err := chainutil.AddressFromHex(args[0])
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter arg_stakingProvider, a address, from passed value %v",
+			args[0],
+		)
+	}
+	arg_fromAmount, err := hexutil.DecodeBig(args[1])
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter arg_fromAmount, a uint96, from passed value %v",
+			args[1],
+		)
+	}
+	arg_toAmount, err := hexutil.DecodeBig(args[2])
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter arg_toAmount, a uint96, from passed value %v",
+			args[2],
+		)
+	}
+
+	var (
+		transaction *types.Transaction
+	)
+
+	if shouldSubmit, _ := c.Flags().GetBool(cmd.SubmitFlag); shouldSubmit {
+		// Do a regular submission. Take payable into account.
+		transaction, err = contract.AuthorizationIncreased(
+			arg_stakingProvider,
+			arg_fromAmount,
+			arg_toAmount,
+		)
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput(transaction.Hash())
+	} else {
+		// Do a call.
+		err = contract.CallAuthorizationIncreased(
+			arg_stakingProvider,
+			arg_fromAmount,
+			arg_toAmount,
+			cmd.BlockFlagValue.Int,
+		)
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput("success")
+	}
+
+	return nil
+}
+
 func wrBeaconCallbackCommand() *cobra.Command {
 	c := &cobra.Command{
 		Use:                   "beacon-callback [arg_relayEntry] [arg1]",
@@ -1103,7 +1341,6 @@ func wrBeaconCallback(c *cobra.Command, args []string) error {
 			args[0],
 		)
 	}
-
 	arg1, err := hexutil.DecodeBig(args[1])
 	if err != nil {
 		return fmt.Errorf(
@@ -1132,6 +1369,63 @@ func wrBeaconCallback(c *cobra.Command, args []string) error {
 		err = contract.CallBeaconCallback(
 			arg_relayEntry,
 			arg1,
+			cmd.BlockFlagValue.Int,
+		)
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput("success")
+	}
+
+	return nil
+}
+
+func wrChallengeDkgResultCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "challenge-dkg-result [arg_dkgResult_json]",
+		Short:                 "Calls the nonpayable method challengeDkgResult on the WalletRegistry contract.",
+		Args:                  cmd.ArgCountChecker(1),
+		RunE:                  wrChallengeDkgResult,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	c.PreRunE = cmd.NonConstArgsChecker
+	cmd.InitNonConstFlags(c)
+
+	return c
+}
+
+func wrChallengeDkgResult(c *cobra.Command, args []string) error {
+	contract, err := initializeWalletRegistry(c)
+	if err != nil {
+		return err
+	}
+
+	arg_dkgResult_json := abi.EcdsaDkgResult{}
+	if err := json.Unmarshal([]byte(args[0]), &arg_dkgResult_json); err != nil {
+		return fmt.Errorf("failed to unmarshal arg_dkgResult_json to abi.EcdsaDkgResult: %w", err)
+	}
+
+	var (
+		transaction *types.Transaction
+	)
+
+	if shouldSubmit, _ := c.Flags().GetBool(cmd.SubmitFlag); shouldSubmit {
+		// Do a regular submission. Take payable into account.
+		transaction, err = contract.ChallengeDkgResult(
+			arg_dkgResult_json,
+		)
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput(transaction.Hash())
+	} else {
+		// Do a call.
+		err = contract.CallChallengeDkgResult(
+			arg_dkgResult_json,
 			cmd.BlockFlagValue.Int,
 		)
 		if err != nil {
@@ -1173,7 +1467,6 @@ func wrInitialize(c *cobra.Command, args []string) error {
 			args[0],
 		)
 	}
-
 	arg__randomBeacon, err := chainutil.AddressFromHex(args[1])
 	if err != nil {
 		return fmt.Errorf(
@@ -1181,7 +1474,6 @@ func wrInitialize(c *cobra.Command, args []string) error {
 			args[1],
 		)
 	}
-
 	arg__reimbursementPool, err := chainutil.AddressFromHex(args[2])
 	if err != nil {
 		return fmt.Errorf(
@@ -1212,6 +1504,84 @@ func wrInitialize(c *cobra.Command, args []string) error {
 			arg__ecdsaDkgValidator,
 			arg__randomBeacon,
 			arg__reimbursementPool,
+			cmd.BlockFlagValue.Int,
+		)
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput("success")
+	}
+
+	return nil
+}
+
+func wrInvoluntaryAuthorizationDecreaseCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "involuntary-authorization-decrease [arg_stakingProvider] [arg_fromAmount] [arg_toAmount]",
+		Short:                 "Calls the nonpayable method involuntaryAuthorizationDecrease on the WalletRegistry contract.",
+		Args:                  cmd.ArgCountChecker(3),
+		RunE:                  wrInvoluntaryAuthorizationDecrease,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	c.PreRunE = cmd.NonConstArgsChecker
+	cmd.InitNonConstFlags(c)
+
+	return c
+}
+
+func wrInvoluntaryAuthorizationDecrease(c *cobra.Command, args []string) error {
+	contract, err := initializeWalletRegistry(c)
+	if err != nil {
+		return err
+	}
+
+	arg_stakingProvider, err := chainutil.AddressFromHex(args[0])
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter arg_stakingProvider, a address, from passed value %v",
+			args[0],
+		)
+	}
+	arg_fromAmount, err := hexutil.DecodeBig(args[1])
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter arg_fromAmount, a uint96, from passed value %v",
+			args[1],
+		)
+	}
+	arg_toAmount, err := hexutil.DecodeBig(args[2])
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter arg_toAmount, a uint96, from passed value %v",
+			args[2],
+		)
+	}
+
+	var (
+		transaction *types.Transaction
+	)
+
+	if shouldSubmit, _ := c.Flags().GetBool(cmd.SubmitFlag); shouldSubmit {
+		// Do a regular submission. Take payable into account.
+		transaction, err = contract.InvoluntaryAuthorizationDecrease(
+			arg_stakingProvider,
+			arg_fromAmount,
+			arg_toAmount,
+		)
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput(transaction.Hash())
+	} else {
+		// Do a call.
+		err = contract.CallInvoluntaryAuthorizationDecrease(
+			arg_stakingProvider,
+			arg_fromAmount,
+			arg_toAmount,
 			cmd.BlockFlagValue.Int,
 		)
 		if err != nil {
@@ -1480,6 +1850,63 @@ func wrRequestNewWallet(c *cobra.Command, args []string) error {
 	return nil
 }
 
+func wrSubmitDkgResultCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "submit-dkg-result [arg_dkgResult_json]",
+		Short:                 "Calls the nonpayable method submitDkgResult on the WalletRegistry contract.",
+		Args:                  cmd.ArgCountChecker(1),
+		RunE:                  wrSubmitDkgResult,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	c.PreRunE = cmd.NonConstArgsChecker
+	cmd.InitNonConstFlags(c)
+
+	return c
+}
+
+func wrSubmitDkgResult(c *cobra.Command, args []string) error {
+	contract, err := initializeWalletRegistry(c)
+	if err != nil {
+		return err
+	}
+
+	arg_dkgResult_json := abi.EcdsaDkgResult{}
+	if err := json.Unmarshal([]byte(args[0]), &arg_dkgResult_json); err != nil {
+		return fmt.Errorf("failed to unmarshal arg_dkgResult_json to abi.EcdsaDkgResult: %w", err)
+	}
+
+	var (
+		transaction *types.Transaction
+	)
+
+	if shouldSubmit, _ := c.Flags().GetBool(cmd.SubmitFlag); shouldSubmit {
+		// Do a regular submission. Take payable into account.
+		transaction, err = contract.SubmitDkgResult(
+			arg_dkgResult_json,
+		)
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput(transaction.Hash())
+	} else {
+		// Do a call.
+		err = contract.CallSubmitDkgResult(
+			arg_dkgResult_json,
+			cmd.BlockFlagValue.Int,
+		)
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput("success")
+	}
+
+	return nil
+}
+
 func wrTransferGovernanceCommand() *cobra.Command {
 	c := &cobra.Command{
 		Use:                   "transfer-governance [arg_newGovernance]",
@@ -1540,6 +1967,84 @@ func wrTransferGovernance(c *cobra.Command, args []string) error {
 	return nil
 }
 
+func wrUpdateAuthorizationParametersCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "update-authorization-parameters [arg__minimumAuthorization] [arg__authorizationDecreaseDelay] [arg__authorizationDecreaseChangePeriod]",
+		Short:                 "Calls the nonpayable method updateAuthorizationParameters on the WalletRegistry contract.",
+		Args:                  cmd.ArgCountChecker(3),
+		RunE:                  wrUpdateAuthorizationParameters,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	c.PreRunE = cmd.NonConstArgsChecker
+	cmd.InitNonConstFlags(c)
+
+	return c
+}
+
+func wrUpdateAuthorizationParameters(c *cobra.Command, args []string) error {
+	contract, err := initializeWalletRegistry(c)
+	if err != nil {
+		return err
+	}
+
+	arg__minimumAuthorization, err := hexutil.DecodeBig(args[0])
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter arg__minimumAuthorization, a uint96, from passed value %v",
+			args[0],
+		)
+	}
+	arg__authorizationDecreaseDelay, err := decode.ParseUint[uint64](args[1], 64)
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter arg__authorizationDecreaseDelay, a uint64, from passed value %v",
+			args[1],
+		)
+	}
+	arg__authorizationDecreaseChangePeriod, err := decode.ParseUint[uint64](args[2], 64)
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter arg__authorizationDecreaseChangePeriod, a uint64, from passed value %v",
+			args[2],
+		)
+	}
+
+	var (
+		transaction *types.Transaction
+	)
+
+	if shouldSubmit, _ := c.Flags().GetBool(cmd.SubmitFlag); shouldSubmit {
+		// Do a regular submission. Take payable into account.
+		transaction, err = contract.UpdateAuthorizationParameters(
+			arg__minimumAuthorization,
+			arg__authorizationDecreaseDelay,
+			arg__authorizationDecreaseChangePeriod,
+		)
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput(transaction.Hash())
+	} else {
+		// Do a call.
+		err = contract.CallUpdateAuthorizationParameters(
+			arg__minimumAuthorization,
+			arg__authorizationDecreaseDelay,
+			arg__authorizationDecreaseChangePeriod,
+			cmd.BlockFlagValue.Int,
+		)
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput("success")
+	}
+
+	return nil
+}
+
 func wrUpdateDkgParametersCommand() *cobra.Command {
 	c := &cobra.Command{
 		Use:                   "update-dkg-parameters [arg__seedTimeout] [arg__resultChallengePeriodLength] [arg__resultChallengeExtraGas] [arg__resultSubmissionTimeout] [arg__submitterPrecedencePeriodLength]",
@@ -1569,7 +2074,6 @@ func wrUpdateDkgParameters(c *cobra.Command, args []string) error {
 			args[0],
 		)
 	}
-
 	arg__resultChallengePeriodLength, err := hexutil.DecodeBig(args[1])
 	if err != nil {
 		return fmt.Errorf(
@@ -1577,7 +2081,6 @@ func wrUpdateDkgParameters(c *cobra.Command, args []string) error {
 			args[1],
 		)
 	}
-
 	arg__resultChallengeExtraGas, err := hexutil.DecodeBig(args[2])
 	if err != nil {
 		return fmt.Errorf(
@@ -1585,7 +2088,6 @@ func wrUpdateDkgParameters(c *cobra.Command, args []string) error {
 			args[2],
 		)
 	}
-
 	arg__resultSubmissionTimeout, err := hexutil.DecodeBig(args[3])
 	if err != nil {
 		return fmt.Errorf(
@@ -1593,7 +2095,6 @@ func wrUpdateDkgParameters(c *cobra.Command, args []string) error {
 			args[3],
 		)
 	}
-
 	arg__submitterPrecedencePeriodLength, err := hexutil.DecodeBig(args[4])
 	if err != nil {
 		return fmt.Errorf(
@@ -1669,7 +2170,6 @@ func wrUpdateGasParameters(c *cobra.Command, args []string) error {
 			args[0],
 		)
 	}
-
 	arg_dkgResultApprovalGasOffset, err := hexutil.DecodeBig(args[1])
 	if err != nil {
 		return fmt.Errorf(
@@ -1677,7 +2177,6 @@ func wrUpdateGasParameters(c *cobra.Command, args []string) error {
 			args[1],
 		)
 	}
-
 	arg_notifyOperatorInactivityGasOffset, err := hexutil.DecodeBig(args[2])
 	if err != nil {
 		return fmt.Errorf(
@@ -1685,7 +2184,6 @@ func wrUpdateGasParameters(c *cobra.Command, args []string) error {
 			args[2],
 		)
 	}
-
 	arg_notifySeedTimeoutGasOffset, err := hexutil.DecodeBig(args[3])
 	if err != nil {
 		return fmt.Errorf(
@@ -1693,7 +2191,6 @@ func wrUpdateGasParameters(c *cobra.Command, args []string) error {
 			args[3],
 		)
 	}
-
 	arg_notifyDkgTimeoutNegativeGasOffset, err := hexutil.DecodeBig(args[4])
 	if err != nil {
 		return fmt.Errorf(
@@ -1889,7 +2386,6 @@ func wrUpdateRewardParameters(c *cobra.Command, args []string) error {
 			args[0],
 		)
 	}
-
 	arg_sortitionPoolRewardsBanDuration, err := hexutil.DecodeBig(args[1])
 	if err != nil {
 		return fmt.Errorf(
@@ -1918,6 +2414,66 @@ func wrUpdateRewardParameters(c *cobra.Command, args []string) error {
 		err = contract.CallUpdateRewardParameters(
 			arg_maliciousDkgResultNotificationRewardMultiplier,
 			arg_sortitionPoolRewardsBanDuration,
+			cmd.BlockFlagValue.Int,
+		)
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput("success")
+	}
+
+	return nil
+}
+
+func wrUpdateSlashingParametersCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "update-slashing-parameters [arg_maliciousDkgResultSlashingAmount]",
+		Short:                 "Calls the nonpayable method updateSlashingParameters on the WalletRegistry contract.",
+		Args:                  cmd.ArgCountChecker(1),
+		RunE:                  wrUpdateSlashingParameters,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	c.PreRunE = cmd.NonConstArgsChecker
+	cmd.InitNonConstFlags(c)
+
+	return c
+}
+
+func wrUpdateSlashingParameters(c *cobra.Command, args []string) error {
+	contract, err := initializeWalletRegistry(c)
+	if err != nil {
+		return err
+	}
+
+	arg_maliciousDkgResultSlashingAmount, err := hexutil.DecodeBig(args[0])
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter arg_maliciousDkgResultSlashingAmount, a uint96, from passed value %v",
+			args[0],
+		)
+	}
+
+	var (
+		transaction *types.Transaction
+	)
+
+	if shouldSubmit, _ := c.Flags().GetBool(cmd.SubmitFlag); shouldSubmit {
+		// Do a regular submission. Take payable into account.
+		transaction, err = contract.UpdateSlashingParameters(
+			arg_maliciousDkgResultSlashingAmount,
+		)
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput(transaction.Hash())
+	} else {
+		// Do a call.
+		err = contract.CallUpdateSlashingParameters(
+			arg_maliciousDkgResultSlashingAmount,
 			cmd.BlockFlagValue.Int,
 		)
 		if err != nil {

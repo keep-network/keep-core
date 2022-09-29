@@ -9,13 +9,13 @@ import (
 	"testing"
 	"time"
 
-	protoio "github.com/gogo/protobuf/io"
+	libp2pcrypto "github.com/libp2p/go-libp2p-core/crypto"
+	peer "github.com/libp2p/go-libp2p-core/peer"
+
 	keepNet "github.com/keep-network/keep-core/pkg/net"
 	"github.com/keep-network/keep-core/pkg/net/gen/pb"
 	"github.com/keep-network/keep-core/pkg/net/security/handshake"
 	"github.com/keep-network/keep-core/pkg/operator"
-	libp2pcrypto "github.com/libp2p/go-libp2p-core/crypto"
-	peer "github.com/libp2p/go-libp2p-core/peer"
 )
 
 func TestPinnedAndMessageKeyMismatch(t *testing.T) {
@@ -51,6 +51,8 @@ func TestPinnedAndMessageKeyMismatch(t *testing.T) {
 			remotePeerPublicKey: responderStaticKey.GetPublic(),
 		}
 
+		ac.initializePipe()
+
 		maliciousInitiatorHijacksHonestRun(t, ac)
 		return
 	}(initiatorConn, initiator.peerID, initiator.networkPrivateKey, responder.peerID, responder.networkPrivateKey)
@@ -72,9 +74,6 @@ func TestPinnedAndMessageKeyMismatch(t *testing.T) {
 // peer-pinning should ensure that a malicious peer can't hijack a connection
 // after the first act and sign subsequent messages.
 func maliciousInitiatorHijacksHonestRun(t *testing.T, ac *authenticatedConnection) {
-	initiatorConnectionReader := protoio.NewDelimitedReader(ac.Conn, maxFrameSize)
-	initiatorConnectionWriter := protoio.NewDelimitedWriter(ac.Conn)
-
 	initiatorAct1, err := handshake.InitiateHandshake(protocolKeep)
 	if err != nil {
 		t.Fatal(err)
@@ -85,13 +84,13 @@ func maliciousInitiatorHijacksHonestRun(t *testing.T, ac *authenticatedConnectio
 		t.Fatal(err)
 	}
 
-	if err := ac.initiatorSendAct1(act1WireMessage, initiatorConnectionWriter); err != nil {
+	if err := ac.initiatorSendAct1(act1WireMessage); err != nil {
 		t.Fatal(err)
 	}
 
 	initiatorAct2 := initiatorAct1.Next()
 
-	act2Message, err := ac.initiatorReceiveAct2(initiatorConnectionReader)
+	act2Message, err := ac.initiatorReceiveAct2()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -118,7 +117,7 @@ func maliciousInitiatorHijacksHonestRun(t *testing.T, ac *authenticatedConnectio
 		Signature: signedAct3Message,
 	}
 
-	if err := initiatorConnectionWriter.WriteMsg(act3Envelope); err != nil {
+	if err := ac.pipe.send(act3Envelope); err != nil {
 		t.Fatal(err)
 	}
 }

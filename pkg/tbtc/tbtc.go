@@ -7,7 +7,9 @@ import (
 	"time"
 
 	"github.com/ipfs/go-log"
+
 	"github.com/keep-network/keep-common/pkg/persistence"
+	"github.com/keep-network/keep-core/pkg/clientinfo"
 	"github.com/keep-network/keep-core/pkg/generator"
 	"github.com/keep-network/keep-core/pkg/net"
 	"github.com/keep-network/keep-core/pkg/sortition"
@@ -50,14 +52,40 @@ func Initialize(
 	ctx context.Context,
 	chain Chain,
 	netProvider net.Provider,
-	persistence persistence.Handle,
+	keyStorePersistence persistence.ProtectedHandle,
+	workPersistence persistence.BasicHandle,
 	scheduler *generator.Scheduler,
 	config Config,
+	clientInfo *clientinfo.Registry,
 ) error {
-	node := newNode(chain, netProvider, persistence, scheduler, config)
+	node := newNode(chain, netProvider, keyStorePersistence, workPersistence, scheduler, config)
 	deduplicator := newDeduplicator()
 
-	err := sortition.MonitorPool(ctx, logger, chain, sortition.DefaultStatusCheckTick)
+	if clientInfo != nil {
+		// only if client info endpoint is configured
+		clientInfo.ObserveApplicationSource(
+			"tbtc",
+			map[string]clientinfo.Source{
+				"pre_params_count": func() float64 {
+					return float64(node.dkgExecutor.PreParamsCount())
+				},
+			},
+		)
+	}
+
+	err := sortition.MonitorPool(
+		ctx,
+		logger,
+		chain,
+		sortition.DefaultStatusCheckTick,
+		sortition.NewConjunctionPolicy(
+			sortition.NewBetaOperatorPolicy(chain, logger),
+			&enoughPreParamsInPoolPolicy{
+				node:   node,
+				config: config,
+			},
+		),
+	)
 	if err != nil {
 		return fmt.Errorf(
 			"could not set up sortition pool monitoring: [%v]",
@@ -101,7 +129,7 @@ func Initialize(
 			logger.Infof(
 				"signature of message [%v] requested from "+
 					"wallet [0x%x] at block [%v]",
-				event.Message,
+				event.Message.Text(16),
 				event.WalletPublicKey,
 				event.BlockNumber,
 			)
@@ -115,4 +143,17 @@ func Initialize(
 	})
 
 	return nil
+}
+
+// enoughPreParamsInPoolPolicy is a policy that enforces the sufficient size
+// of the DKG pre-parameters pool before joining the sortition pool.
+type enoughPreParamsInPoolPolicy struct {
+	node   *node
+	config Config
+}
+
+func (eppip *enoughPreParamsInPoolPolicy) ShouldJoin() bool {
+	paramsInPool := eppip.node.dkgExecutor.PreParamsCount()
+	poolSize := eppip.config.PreParamsPoolSize
+	return paramsInPool >= poolSize
 }

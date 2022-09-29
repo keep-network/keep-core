@@ -9,11 +9,6 @@ import (
 	"encoding/hex"
 )
 
-// Config stores meta-info about keeping data on disk
-type Config struct {
-	DataDir string
-}
-
 type storage interface {
 	save(membership *Membership) error
 	readAll() (<-chan *Membership, <-chan error)
@@ -21,10 +16,10 @@ type storage interface {
 }
 
 type persistentStorage struct {
-	handle persistence.Handle
+	handle persistence.ProtectedHandle
 }
 
-func newStorage(persistence persistence.Handle) storage {
+func newStorage(persistence persistence.ProtectedHandle) storage {
 	return &persistentStorage{
 		handle: persistence,
 	}

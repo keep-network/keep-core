@@ -1,15 +1,18 @@
 package signing
 
 import (
+	"fmt"
+	"math/big"
+
 	tsslibcommon "github.com/bnb-chain/tss-lib/common"
 	"github.com/bnb-chain/tss-lib/ecdsa/signing"
 	"github.com/bnb-chain/tss-lib/tss"
-	"github.com/ipfs/go-log"
+	"github.com/ipfs/go-log/v2"
 	"github.com/keep-network/keep-core/pkg/crypto/ephemeral"
 	"github.com/keep-network/keep-core/pkg/protocol/group"
 	"github.com/keep-network/keep-core/pkg/tecdsa"
 	"github.com/keep-network/keep-core/pkg/tecdsa/common"
-	"math/big"
+	"golang.org/x/exp/slices"
 )
 
 // Member represents a signing protocol member.
@@ -29,6 +32,8 @@ type member struct {
 	message *big.Int
 	// tECDSA private key share of the member.
 	privateKeyShare *tecdsa.PrivateKeyShare
+	// Instance of the member identity converter.
+	identityConverter *identityConverter
 }
 
 // newMember creates a new member in an initial state
@@ -50,6 +55,7 @@ func newMember(
 		sessionID:           sessionID,
 		message:             message,
 		privateKeyShare:     privateKeyShare,
+		identityConverter:   &identityConverter{keys: privateKeyShare.Data().Ks},
 	}
 }
 
@@ -116,9 +122,9 @@ type symmetricKeyGeneratingMember struct {
 	symmetricKeys map[group.MemberIndex]ephemeral.SymmetricKey
 }
 
-// MarkInactiveMembers takes all messages from the previous signing protocol
+// markInactiveMembers takes all messages from the previous signing protocol
 // execution phase and marks all member who did not send a message as IA.
-func (skgm *symmetricKeyGeneratingMember) MarkInactiveMembers(
+func (skgm *symmetricKeyGeneratingMember) markInactiveMembers(
 	ephemeralPubKeyMessages []*ephemeralPublicKeyMessage,
 ) {
 	filter := skgm.inactiveMemberFilter()
@@ -137,6 +143,7 @@ func (skgm *symmetricKeyGeneratingMember) initializeTssRoundOne() *tssRoundOneMe
 	tssPartyID, groupTssPartiesIDs := common.GenerateTssPartiesIDs(
 		skgm.id,
 		skgm.group.OperatingMemberIDs(),
+		skgm.identityConverter,
 	)
 
 	tssParameters := tss.NewParameters(
@@ -191,9 +198,9 @@ type tssRoundTwoMember struct {
 	*tssRoundOneMember
 }
 
-// MarkInactiveMembers takes all messages from the previous signing protocol
-// execution phase and marks all member who did not send a message as inactive.
-func (trtm *tssRoundTwoMember) MarkInactiveMembers(
+// markInactiveMembers takes all messages from the previous signing protocol
+// execution phase and marks all members who did not send a message as inactive.
+func (trtm *tssRoundTwoMember) markInactiveMembers(
 	tssRoundOneMessages []*tssRoundOneMessage,
 ) {
 	filter := trtm.inactiveMemberFilter()
@@ -202,4 +209,256 @@ func (trtm *tssRoundTwoMember) MarkInactiveMembers(
 	}
 
 	filter.FlushInactiveMembers()
+}
+
+// initializeTssRoundThree returns a member to perform next protocol operations.
+func (trtm *tssRoundTwoMember) initializeTssRoundThree() *tssRoundThreeMember {
+	return &tssRoundThreeMember{
+		tssRoundTwoMember: trtm,
+	}
+}
+
+// tssRoundThreeMember represents one member in a signing group performing the
+// third round of the TSS keygen.
+type tssRoundThreeMember struct {
+	*tssRoundTwoMember
+}
+
+// markInactiveMembers takes all messages from the previous signing protocol
+// execution phase and marks all members who did not send a message as inactive.
+func (trtm *tssRoundThreeMember) markInactiveMembers(
+	tssRoundTwoMessages []*tssRoundTwoMessage,
+) {
+	filter := trtm.inactiveMemberFilter()
+	for _, message := range tssRoundTwoMessages {
+		filter.MarkMemberAsActive(message.senderID)
+	}
+
+	filter.FlushInactiveMembers()
+}
+
+// initializeTssRoundFour returns a member to perform next protocol operations.
+func (trtm *tssRoundThreeMember) initializeTssRoundFour() *tssRoundFourMember {
+	return &tssRoundFourMember{
+		tssRoundThreeMember: trtm,
+	}
+}
+
+// tssRoundFourMember represents one member in a signing group performing the
+// fourth round of the TSS keygen.
+type tssRoundFourMember struct {
+	*tssRoundThreeMember
+}
+
+// markInactiveMembers takes all messages from the previous signing protocol
+// execution phase and marks all members who did not send a message as inactive.
+func (trtm *tssRoundFourMember) markInactiveMembers(
+	tssRoundThreeMessages []*tssRoundThreeMessage,
+) {
+	filter := trtm.inactiveMemberFilter()
+	for _, message := range tssRoundThreeMessages {
+		filter.MarkMemberAsActive(message.senderID)
+	}
+
+	filter.FlushInactiveMembers()
+}
+
+// initializeTssRoundFive returns a member to perform next protocol operations.
+func (trfm *tssRoundFourMember) initializeTssRoundFive() *tssRoundFiveMember {
+	return &tssRoundFiveMember{
+		tssRoundFourMember: trfm,
+	}
+}
+
+// tssRoundFiveMember represents one member in a signing group performing the
+// fifth round of the TSS keygen.
+type tssRoundFiveMember struct {
+	*tssRoundFourMember
+}
+
+// markInactiveMembers takes all messages from the previous signing protocol
+// execution phase and marks all members who did not send a message as inactive.
+func (trfm *tssRoundFiveMember) markInactiveMembers(
+	tssRoundFourMessages []*tssRoundFourMessage,
+) {
+	filter := trfm.inactiveMemberFilter()
+	for _, message := range tssRoundFourMessages {
+		filter.MarkMemberAsActive(message.senderID)
+	}
+
+	filter.FlushInactiveMembers()
+}
+
+// initializeTssRoundSix returns a member to perform next protocol operations.
+func (trfm *tssRoundFiveMember) initializeTssRoundSix() *tssRoundSixMember {
+	return &tssRoundSixMember{
+		tssRoundFiveMember: trfm,
+	}
+}
+
+// tssRoundSixMember represents one member in a signing group performing the
+// sixth round of the TSS keygen.
+type tssRoundSixMember struct {
+	*tssRoundFiveMember
+}
+
+// markInactiveMembers takes all messages from the previous signing protocol
+// execution phase and marks all members who did not send a message as inactive.
+func (trsm *tssRoundSixMember) markInactiveMembers(
+	tssRoundFiveMessages []*tssRoundFiveMessage,
+) {
+	filter := trsm.inactiveMemberFilter()
+	for _, message := range tssRoundFiveMessages {
+		filter.MarkMemberAsActive(message.senderID)
+	}
+
+	filter.FlushInactiveMembers()
+}
+
+// initializeTssRoundSeven returns a member to perform next protocol operations.
+func (trsm *tssRoundSixMember) initializeTssRoundSeven() *tssRoundSevenMember {
+	return &tssRoundSevenMember{
+		tssRoundSixMember: trsm,
+	}
+}
+
+// tssRoundSevenMember represents one member in a signing group performing the
+// seventh round of the TSS keygen.
+type tssRoundSevenMember struct {
+	*tssRoundSixMember
+}
+
+// markInactiveMembers takes all messages from the previous signing protocol
+// execution phase and marks all members who did not send a message as inactive.
+func (trsm *tssRoundSevenMember) markInactiveMembers(
+	tssRoundSixMessages []*tssRoundSixMessage,
+) {
+	filter := trsm.inactiveMemberFilter()
+	for _, message := range tssRoundSixMessages {
+		filter.MarkMemberAsActive(message.senderID)
+	}
+
+	filter.FlushInactiveMembers()
+}
+
+// initializeTssRoundEight returns a member to perform next protocol operations.
+func (trsm *tssRoundSevenMember) initializeTssRoundEight() *tssRoundEightMember {
+	return &tssRoundEightMember{
+		tssRoundSevenMember: trsm,
+	}
+}
+
+// tssRoundEightMember represents one member in a signing group performing the
+// eighth round of the TSS keygen.
+type tssRoundEightMember struct {
+	*tssRoundSevenMember
+}
+
+// markInactiveMembers takes all messages from the previous signing protocol
+// execution phase and marks all members who did not send a message as inactive.
+func (trem *tssRoundEightMember) markInactiveMembers(
+	tssRoundSevenMessages []*tssRoundSevenMessage,
+) {
+	filter := trem.inactiveMemberFilter()
+	for _, message := range tssRoundSevenMessages {
+		filter.MarkMemberAsActive(message.senderID)
+	}
+
+	filter.FlushInactiveMembers()
+}
+
+// initializeTssRoundNine returns a member to perform next protocol operations.
+func (trem *tssRoundEightMember) initializeTssRoundNine() *tssRoundNineMember {
+	return &tssRoundNineMember{
+		tssRoundEightMember: trem,
+	}
+}
+
+// tssRoundNineMember represents one member in a signing group performing the
+// ninth round of the TSS keygen.
+type tssRoundNineMember struct {
+	*tssRoundEightMember
+}
+
+// markInactiveMembers takes all messages from the previous signing protocol
+// execution phase and marks all members who did not send a message as inactive.
+func (trnm *tssRoundNineMember) markInactiveMembers(
+	tssRoundEightMessages []*tssRoundEightMessage,
+) {
+	filter := trnm.inactiveMemberFilter()
+	for _, message := range tssRoundEightMessages {
+		filter.MarkMemberAsActive(message.senderID)
+	}
+
+	filter.FlushInactiveMembers()
+}
+
+// initializeFinalization returns a member to perform next protocol operations.
+func (trnm *tssRoundNineMember) initializeFinalization() *finalizingMember {
+	return &finalizingMember{
+		tssRoundNineMember: trnm,
+	}
+}
+
+// finalizingMember represents one member of the given group, after it
+// completed the signing process.
+//
+// Prepares a result in the last phase of the protocol.
+type finalizingMember struct {
+	*tssRoundNineMember
+
+	tssResult *tsslibcommon.SignatureData
+}
+
+// markInactiveMembers takes all messages from the previous signing protocol
+// execution phase and marks all members who did not send a message as inactive.
+func (fm *finalizingMember) markInactiveMembers(
+	tssRoundNineMessages []*tssRoundNineMessage,
+) {
+	filter := fm.inactiveMemberFilter()
+	for _, message := range tssRoundNineMessages {
+		filter.MarkMemberAsActive(message.senderID)
+	}
+
+	filter.FlushInactiveMembers()
+}
+
+// Result is a successful computation of the tECDSA signature.
+func (fm *finalizingMember) Result() *Result {
+	return &Result{Signature: tecdsa.NewSignature(fm.tssResult)}
+}
+
+// identityConverter implements the common.IdentityConverter for tECDSA signing.
+// It does the conversion using the predefined keys list obtained from Ks
+// party ID array available in TSS key share.
+type identityConverter struct {
+	keys []*big.Int
+}
+
+func (ic *identityConverter) MemberIndexToTssPartyID(
+	memberIndex group.MemberIndex,
+) *tss.PartyID {
+	partyIDKey := ic.MemberIndexToTssPartyIDKey(memberIndex)
+
+	return tss.NewPartyID(
+		partyIDKey.Text(10),
+		fmt.Sprintf("member-%v", memberIndex),
+		partyIDKey,
+	)
+}
+
+func (ic *identityConverter) MemberIndexToTssPartyIDKey(
+	memberIndex group.MemberIndex,
+) *big.Int {
+	return ic.keys[memberIndex-1]
+}
+
+func (ic *identityConverter) TssPartyIDToMemberIndex(
+	partyID *tss.PartyID,
+) group.MemberIndex {
+	index := slices.IndexFunc(ic.keys, func(key *big.Int) bool {
+		return key.Cmp(partyID.KeyInt()) == 0
+	})
+
+	return group.MemberIndex(index + 1)
 }

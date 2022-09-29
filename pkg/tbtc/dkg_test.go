@@ -67,9 +67,9 @@ func TestDkgRetryLoop(t *testing.T) {
 			expectedExecutionEndBlock: 325, // 200 + 125
 			expectedResult:            testResult,
 			expectedLastAttempt: &dkgAttemptParams{
-				index:           1,
-				startBlock:      200,
-				excludedMembers: []group.MemberIndex{},
+				number:                 1,
+				startBlock:             200,
+				excludedMembersIndexes: []group.MemberIndex{},
 			},
 		},
 		"IA error on initial attempts and quorum is maintained": {
@@ -78,13 +78,13 @@ func TestDkgRetryLoop(t *testing.T) {
 				return context.WithCancel(context.Background())
 			},
 			dkgAttemptFn: func(attempt *dkgAttemptParams) (*dkg.Result, uint64, error) {
-				if attempt.index == 1 {
+				if attempt.number == 1 {
 					return nil, 0, &dkg.InactiveMembersError{
 						InactiveMembersIndexes: []group.MemberIndex{4},
 					}
 				}
 
-				if attempt.index == 2 {
+				if attempt.number == 2 {
 					return nil, 0, &dkg.InactiveMembersError{
 						InactiveMembersIndexes: []group.MemberIndex{6},
 					}
@@ -98,9 +98,9 @@ func TestDkgRetryLoop(t *testing.T) {
 			// Members 4 and 6 should be excluded in the last attempt as
 			// they were inactive.
 			expectedLastAttempt: &dkgAttemptParams{
-				index:           3,
-				startBlock:      460, // 200 + 125 + 5 + 125 + 5
-				excludedMembers: []group.MemberIndex{4, 6},
+				number:                 3,
+				startBlock:             460, // 200 + 125 + 5 + 125 + 5
+				excludedMembersIndexes: []group.MemberIndex{4, 6},
 			},
 		},
 		"IA error on initial attempts and quorum is not maintained": {
@@ -111,7 +111,7 @@ func TestDkgRetryLoop(t *testing.T) {
 			dkgAttemptFn: func(attempt *dkgAttemptParams) (*dkg.Result, uint64, error) {
 				// Member 3 is controlled by an operator that controls 3 members
 				// in total. Excluding that operator will break the group quorum.
-				if attempt.index == 1 {
+				if attempt.number == 1 {
 					return nil, 0, &dkg.InactiveMembersError{
 						InactiveMembersIndexes: []group.MemberIndex{3},
 					}
@@ -126,9 +126,9 @@ func TestDkgRetryLoop(t *testing.T) {
 			// group size below the quorum. We fall back to the random algorithm
 			// that excludes member 4 for the given seed.
 			expectedLastAttempt: &dkgAttemptParams{
-				index:           2,
-				startBlock:      330, // 200 + 125 + 5
-				excludedMembers: []group.MemberIndex{4},
+				number:                 2,
+				startBlock:             330, // 200 + 125 + 5
+				excludedMembersIndexes: []group.MemberIndex{4},
 			},
 		},
 		"other error on initial attempts": {
@@ -137,7 +137,7 @@ func TestDkgRetryLoop(t *testing.T) {
 				return context.WithCancel(context.Background())
 			},
 			dkgAttemptFn: func(attempt *dkgAttemptParams) (*dkg.Result, uint64, error) {
-				if attempt.index == 1 || attempt.index == 2 {
+				if attempt.number == 1 || attempt.number == 2 {
 					return nil, 0, fmt.Errorf("invalid data")
 				}
 
@@ -151,9 +151,9 @@ func TestDkgRetryLoop(t *testing.T) {
 			// excludes members 2 and 5 (same operator) for the given
 			// seed.
 			expectedLastAttempt: &dkgAttemptParams{
-				index:           3,
-				startBlock:      460, // 200 + 125 + 5 + 125 + 5
-				excludedMembers: []group.MemberIndex{2, 5},
+				number:                 3,
+				startBlock:             460, // 200 + 125 + 5 + 125 + 5
+				excludedMembersIndexes: []group.MemberIndex{2, 5},
 			},
 		},
 		"other error then IA error on initial attempts": {
@@ -162,11 +162,11 @@ func TestDkgRetryLoop(t *testing.T) {
 				return context.WithCancel(context.Background())
 			},
 			dkgAttemptFn: func(attempt *dkgAttemptParams) (*dkg.Result, uint64, error) {
-				if attempt.index == 1 {
+				if attempt.number == 1 {
 					return nil, 0, fmt.Errorf("invalid data")
 				}
 
-				if attempt.index == 2 {
+				if attempt.number == 2 {
 					return nil, 0, &dkg.InactiveMembersError{
 						InactiveMembersIndexes: []group.MemberIndex{3},
 					}
@@ -182,9 +182,9 @@ func TestDkgRetryLoop(t *testing.T) {
 			// algorithm excludes members 2 and 5 (same operator) for the given
 			// seed.
 			expectedLastAttempt: &dkgAttemptParams{
-				index:           3,
-				startBlock:      460, // 200 + 125 + 5 + 125 + 5
-				excludedMembers: []group.MemberIndex{2, 5},
+				number:                 3,
+				startBlock:             460, // 200 + 125 + 5 + 125 + 5
+				excludedMembersIndexes: []group.MemberIndex{2, 5},
 			},
 		},
 		"IA error on initial and later attempts": {
@@ -195,10 +195,10 @@ func TestDkgRetryLoop(t *testing.T) {
 			dkgAttemptFn: func(attempt *dkgAttemptParams) (*dkg.Result, uint64, error) {
 				inactiveQueue := []group.MemberIndex{1, 4, 6, 7, 9}
 
-				if attempt.index <= 5 {
+				if attempt.number <= 5 {
 					return nil, 0, &dkg.InactiveMembersError{
 						InactiveMembersIndexes: []group.MemberIndex{
-							inactiveQueue[attempt.index-1],
+							inactiveQueue[attempt.number-1],
 						},
 					}
 				}
@@ -212,9 +212,9 @@ func TestDkgRetryLoop(t *testing.T) {
 			// The 6th attempt should be made using the random retry that
 			// returns member 9 for the given seed.
 			expectedLastAttempt: &dkgAttemptParams{
-				index:           6,
-				startBlock:      850, // 200 + 5 * (125 + 5)
-				excludedMembers: []group.MemberIndex{9},
+				number:                 6,
+				startBlock:             850, // 200 + 5 * (125 + 5)
+				excludedMembersIndexes: []group.MemberIndex{9},
 			},
 		},
 		"IA error then other error on initial attempts": {
@@ -223,13 +223,13 @@ func TestDkgRetryLoop(t *testing.T) {
 				return context.WithCancel(context.Background())
 			},
 			dkgAttemptFn: func(attempt *dkgAttemptParams) (*dkg.Result, uint64, error) {
-				if attempt.index == 1 {
+				if attempt.number == 1 {
 					return nil, 0, &dkg.InactiveMembersError{
 						InactiveMembersIndexes: []group.MemberIndex{2},
 					}
 				}
 
-				if attempt.index == 2 {
+				if attempt.number == 2 {
 					return nil, 0, fmt.Errorf("invalid data")
 				}
 
@@ -243,9 +243,9 @@ func TestDkgRetryLoop(t *testing.T) {
 			// should be used eventually and return members 2 and 5
 			// (same operator) for the given seed.
 			expectedLastAttempt: &dkgAttemptParams{
-				index:           3,
-				startBlock:      460, // 200 + 125 + 5 + 125 + 5
-				excludedMembers: []group.MemberIndex{2, 5},
+				number:                 3,
+				startBlock:             460, // 200 + 125 + 5 + 125 + 5
+				excludedMembersIndexes: []group.MemberIndex{2, 5},
 			},
 		},
 		"other error on initial and later attempts": {
@@ -254,27 +254,23 @@ func TestDkgRetryLoop(t *testing.T) {
 				return context.WithCancel(context.Background())
 			},
 			dkgAttemptFn: func(attempt *dkgAttemptParams) (*dkg.Result, uint64, error) {
-				if attempt.index <= 15 {
+				if attempt.number <= 15 {
 					return nil, 0, fmt.Errorf("invalid data")
 				}
 
 				return testResult, attempt.startBlock + dkg.ProtocolBlocks(), nil
 			},
 			expectedErr:               nil,
-			expectedExecutionEndBlock: 2370, // 2245 + 125
+			expectedExecutionEndBlock: 2275, // 2150 + 125
 			expectedResult:            testResult,
-			// Random algorithm is used from the very beginning. We also
-			// observe a delay blocks bump on the 10th attempt which is
-			// 100 blocks instead of 5. That said, the start block for the 16th
-			// attempt can be calculated as follows:
-			// 200 + 130 + 130 + 130 + 130 + 130 + 130 + 130 + 130 + 225 + 130 + 130 + 130 + 130 + 130 + 130
-			// where all 130 denotes a duration of a normal attempt (125 blocks
-			// plus 5 delay blocks) and 225 is the duration of the 10th attempt
-			// (125 + 100 bumped delay blocks).
+			// Random algorithm is used from the very beginning. The start block
+			// for the 16th attempt can be calculated as follows: 200 + 15 * 130
+			// where 130 denotes a duration of an attempt (125 blocks plus 5
+			// delay blocks).
 			expectedLastAttempt: &dkgAttemptParams{
-				index:           16,
-				startBlock:      2245,
-				excludedMembers: []group.MemberIndex{7, 9},
+				number:                 16,
+				startBlock:             2150,
+				excludedMembersIndexes: []group.MemberIndex{7, 9},
 			},
 		},
 		"executing member excluded": {
@@ -283,7 +279,7 @@ func TestDkgRetryLoop(t *testing.T) {
 				return context.WithCancel(context.Background())
 			},
 			dkgAttemptFn: func(attempt *dkgAttemptParams) (*dkg.Result, uint64, error) {
-				if attempt.index <= 5 {
+				if attempt.number <= 5 {
 					return nil, 0, fmt.Errorf("invalid data")
 				}
 
@@ -297,9 +293,9 @@ func TestDkgRetryLoop(t *testing.T) {
 			// return an error but member 6 is excluded for this attempt so,
 			// member 6 skips attempt 6 and succeeds on attempt 7.
 			expectedLastAttempt: &dkgAttemptParams{
-				index:           7,
-				startBlock:      980, // 200 + 6 * (125 + 5)
-				excludedMembers: []group.MemberIndex{7},
+				number:                 7,
+				startBlock:             980, // 200 + 6 * (125 + 5)
+				excludedMembersIndexes: []group.MemberIndex{7},
 			},
 		},
 		"loop context done": {
@@ -313,7 +309,7 @@ func TestDkgRetryLoop(t *testing.T) {
 			dkgAttemptFn: func(attempt *dkgAttemptParams) (*dkg.Result, uint64, error) {
 				return nil, 0, fmt.Errorf("invalid data")
 			},
-			expectedErr:               fmt.Errorf("dkg retry loop received stop signal on attempt [1]"),
+			expectedErr:               nil,
 			expectedResult:            nil,
 			expectedExecutionEndBlock: 0,
 			expectedLastAttempt:       nil,
@@ -330,18 +326,18 @@ func TestDkgRetryLoop(t *testing.T) {
 				chainConfig,
 			)
 
-			// Given the small group size, we never reach the original
-			// bump frequency which is 100. Here we make it smaller in order
-			// to test its behavior.
-			retryLoop.delayBlocksBumpFrequency = 10
-
 			ctx, cancelCtx := test.ctxFn()
 			defer cancelCtx()
 
+			var lastAttemptStartBlock uint64
 			var lastAttempt *dkgAttemptParams
 
 			result, executionEndBlock, err := retryLoop.start(
 				ctx,
+				func(ctx context.Context, attemptStartBlock uint64) error {
+					lastAttemptStartBlock = attemptStartBlock
+					return nil
+				},
 				func(params *dkgAttemptParams) (*dkg.Result, uint64, error) {
 					lastAttempt = params
 					return test.dkgAttemptFn(params)
@@ -376,6 +372,17 @@ func TestDkgRetryLoop(t *testing.T) {
 					test.expectedResult,
 					result,
 				)
+			}
+
+			if test.expectedLastAttempt != nil {
+				if test.expectedLastAttempt.startBlock != lastAttemptStartBlock {
+					t.Errorf("unexpected last attempt start block\n"+
+						"expected: [%+v]\n"+
+						"actual:   [%+v]",
+						test.expectedLastAttempt.startBlock,
+						lastAttemptStartBlock,
+					)
+				}
 			}
 
 			if !reflect.DeepEqual(test.expectedLastAttempt, lastAttempt) {

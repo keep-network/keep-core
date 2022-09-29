@@ -31,7 +31,7 @@ func Initialize(
 	ctx context.Context,
 	beaconChain beaconchain.Interface,
 	netProvider net.Provider,
-	persistence persistence.Handle,
+	persistence persistence.ProtectedHandle,
 	scheduler *generator.Scheduler,
 ) error {
 	groupRegistry := registry.NewGroupRegistry(logger, beaconChain, persistence)
@@ -44,9 +44,18 @@ func Initialize(
 		scheduler,
 	)
 
-	err := sortition.MonitorPool(ctx, logger, beaconChain, sortition.DefaultStatusCheckTick)
+	err := sortition.MonitorPool(
+		ctx,
+		logger,
+		beaconChain,
+		sortition.DefaultStatusCheckTick,
+		sortition.NewBetaOperatorPolicy(beaconChain, logger),
+	)
 	if err != nil {
-		return fmt.Errorf("could not set up sortition pool monitoring: [%v]", err)
+		return fmt.Errorf(
+			"could not set up sortition pool monitoring: [%v]",
+			err,
+		)
 	}
 
 	eventDeduplicator := event.NewDeduplicator(beaconChain)

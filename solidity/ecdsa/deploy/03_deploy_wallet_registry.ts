@@ -4,8 +4,13 @@ import type { DeployFunction } from "hardhat-deploy/types"
 const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   const { getNamedAccounts, deployments, ethers, helpers } = hre
   const { deployer } = await getNamedAccounts()
+  const { to1e18 } = helpers.number
 
-  const SortitionPool = await deployments.get("EcdsaSortitionPool")
+  const minimumAuthorization = to1e18(40_000) // 40k T
+  const authorizationDecreaseDelay = 1_209_600 // 1 209 600 seconds = 14 days
+  const authorizationDecreaseChangePeriod = 1_209_600 // 1 209 600 seconds = 14 days
+
+  const EcdsaSortitionPool = await deployments.get("EcdsaSortitionPool")
   const TokenStaking = await deployments.get("TokenStaking")
   const ReimbursementPool = await deployments.get("ReimbursementPool")
   const RandomBeacon = await deployments.get("RandomBeacon")
@@ -36,11 +41,20 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
         },
       },
       proxyOpts: {
-        constructorArgs: [SortitionPool.address, TokenStaking.address],
+        constructorArgs: [EcdsaSortitionPool.address, TokenStaking.address],
         unsafeAllow: ["external-library-linking"],
         kind: "transparent",
       },
     }
+  )
+
+  await deployments.execute(
+    "WalletRegistry",
+    { from: deployer, log: true, waitConfirmations: 1 },
+    "updateAuthorizationParameters",
+    minimumAuthorization,
+    authorizationDecreaseDelay,
+    authorizationDecreaseChangePeriod
   )
 
   await helpers.ownable.transferOwnership(

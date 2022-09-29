@@ -3,10 +3,11 @@ import type { DeployFunction } from "hardhat-deploy/types"
 
 const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   const { getNamedAccounts, deployments, helpers } = hre
-  const { deployer } = await getNamedAccounts()
+  const { deployer, chaosnetOwner } = await getNamedAccounts()
+  const { execute } = deployments
   const { to1e18 } = helpers.number
 
-  const POOL_WEIGHT_DIVISOR = to1e18(1) // TODO: Update value
+  const POOL_WEIGHT_DIVISOR = to1e18(1)
 
   const T = await deployments.get("T")
 
@@ -17,6 +18,13 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
     log: true,
     waitConfirmations: 1,
   })
+
+  await execute(
+    "BeaconSortitionPool",
+    { from: deployer, log: true, waitConfirmations: 1 },
+    "transferChaosnetOwnerRole",
+    chaosnetOwner
+  )
 
   if (hre.network.tags.etherscan) {
     await helpers.etherscan.verify(BeaconSortitionPool)

@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	fuzz "github.com/google/gofuzz"
+
 	"github.com/keep-network/keep-core/pkg/crypto/ephemeral"
 	"github.com/keep-network/keep-core/pkg/internal/pbutils"
 	"github.com/keep-network/keep-core/pkg/internal/tecdsatest"
@@ -75,9 +76,9 @@ func TestFuzzEphemeralPublicKeyMessage_Unmarshaler(t *testing.T) {
 
 func TestTssRoundOneMessage_MarshalingRoundtrip(t *testing.T) {
 	msg := &tssRoundOneMessage{
-		senderID:  group.MemberIndex(50),
-		payload:   []byte{1, 2, 3, 4, 5},
-		sessionID: "session-1",
+		senderID:         group.MemberIndex(50),
+		broadcastPayload: []byte{1, 2, 3, 4, 5},
+		sessionID:        "session-1",
 	}
 	unmarshaled := &tssRoundOneMessage{}
 
@@ -108,9 +109,9 @@ func TestFuzzTssRoundOneMessage_MarshalingRoundtrip(t *testing.T) {
 		f.Fuzz(&sessionID)
 
 		message := &tssRoundOneMessage{
-			senderID:  senderID,
-			payload:   payload,
-			sessionID: sessionID,
+			senderID:         senderID,
+			broadcastPayload: payload,
+			sessionID:        sessionID,
 		}
 
 		_ = pbutils.RoundTrip(message, &tssRoundOneMessage{})
@@ -178,9 +179,9 @@ func TestFuzzTssRoundTwoMessage_Unmarshaler(t *testing.T) {
 
 func TestTssRoundThreeMessage_MarshalingRoundtrip(t *testing.T) {
 	msg := &tssRoundThreeMessage{
-		senderID:  group.MemberIndex(50),
-		payload:   []byte{1, 2, 3, 4, 5},
-		sessionID: "session-1",
+		senderID:         group.MemberIndex(50),
+		broadcastPayload: []byte{1, 2, 3, 4, 5},
+		sessionID:        "session-1",
 	}
 	unmarshaled := &tssRoundThreeMessage{}
 
@@ -211,9 +212,9 @@ func TestFuzzTssRoundThreeMessage_MarshalingRoundtrip(t *testing.T) {
 		f.Fuzz(&sessionID)
 
 		message := &tssRoundThreeMessage{
-			senderID:  senderID,
-			payload:   payload,
-			sessionID: sessionID,
+			senderID:         senderID,
+			broadcastPayload: payload,
+			sessionID:        sessionID,
 		}
 
 		_ = pbutils.RoundTrip(message, &tssRoundThreeMessage{})
@@ -285,11 +286,8 @@ func TestPreParamsMarshalling(t *testing.T) {
 	}
 
 	localPreParams := testData[0].LocalPreParams
-	// we do not serialize PaillierSK for PreParams because it is empty
-	// for LocalPreParams not used yet in DKG
-	localPreParams.PaillierSK = nil
 
-	preParams := NewPreParams(&localPreParams)
+	preParams := newPreParams(&localPreParams)
 
 	unmarshaled := &PreParams{}
 
@@ -297,6 +295,15 @@ func TestPreParamsMarshalling(t *testing.T) {
 		t.Fatal(err)
 	}
 	if !reflect.DeepEqual(preParams, unmarshaled) {
-		t.Fatal("unexpected content of unmarshaled pre-params")
+		t.Errorf(
+			"unexpected content of unmarshaled pre-params\nexpected: %+v\nactual:   %+v\n",
+			preParams,
+			unmarshaled,
+		)
+	}
+
+	// Check if PreParams Data pass the tss-lib validation.
+	if !unmarshaled.data.ValidateWithProof() {
+		t.Errorf("unmarshaled pre params data are invalid")
 	}
 }

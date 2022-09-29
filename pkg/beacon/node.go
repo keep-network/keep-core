@@ -6,16 +6,17 @@ import (
 	"math/big"
 
 	bn256 "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
+	"go.uber.org/zap"
+
 	"github.com/keep-network/keep-core/pkg/altbn128"
 	beaconchain "github.com/keep-network/keep-core/pkg/beacon/chain"
 	"github.com/keep-network/keep-core/pkg/beacon/dkg"
 	"github.com/keep-network/keep-core/pkg/beacon/entry"
 	"github.com/keep-network/keep-core/pkg/beacon/event"
-	"github.com/keep-network/keep-core/pkg/generator"
-	"github.com/keep-network/keep-core/pkg/protocol/group"
-
 	"github.com/keep-network/keep-core/pkg/beacon/registry"
+	"github.com/keep-network/keep-core/pkg/generator"
 	"github.com/keep-network/keep-core/pkg/net"
+	"github.com/keep-network/keep-core/pkg/protocol/group"
 )
 
 // node represents the current state of a beacon node.
@@ -60,23 +61,22 @@ func (n *node) JoinDKGIfEligible(
 	dkgSeed *big.Int,
 	dkgStartBlockNumber uint64,
 ) {
-	logger.Infof(
-		"checking eligibility for DKG with seed [0x%x]",
-		dkgSeed,
+	dkgLogger := logger.With(
+		zap.String("seed", dkgSeed.Text(16)),
 	)
+
+	dkgLogger.Info("checking eligibility for DKG")
 
 	selectedOperators, err := n.beaconChain.SelectGroup(dkgSeed)
 	if err != nil {
-		logger.Errorf(
-			"failed to select group with seed [0x%x]: [%v]",
-			dkgSeed,
-			err,
-		)
+		dkgLogger.Errorf("failed to select group: [%v]", err)
 		return
 	}
 
+	dkgLogger.Infof("selected group members for DKG = %s", selectedOperators)
+
 	if len(selectedOperators) > n.beaconChain.GetConfig().GroupSize {
-		logger.Errorf(
+		dkgLogger.Errorf(
 			"group size larger than supported: [%v]",
 			len(selectedOperators),
 		)
@@ -87,13 +87,13 @@ func (n *node) JoinDKGIfEligible(
 
 	_, operatorPublicKey, err := n.beaconChain.OperatorKeyPair()
 	if err != nil {
-		logger.Errorf("failed to get operator public key: [%v]", err)
+		dkgLogger.Errorf("failed to get operator public key: [%v]", err)
 		return
 	}
 
 	operatorAddress, err := signing.PublicKeyToAddress(operatorPublicKey)
 	if err != nil {
-		logger.Errorf("failed to get operator address: [%v]", err)
+		dkgLogger.Errorf("failed to get operator address: [%v]", err)
 		return
 	}
 
@@ -110,27 +110,26 @@ func (n *node) JoinDKGIfEligible(
 	channelName := fmt.Sprintf("%s-%s", ProtocolName, dkgSeed.Text(16))
 
 	if len(indexes) > 0 {
-		logger.Infof(
-			"joining DKG with seed [0x%x] and controlling [%v] group members",
-			dkgSeed,
+		dkgLogger.Infof(
+			"joining DKG and controlling [%v] group members",
 			len(indexes),
 		)
 
 		broadcastChannel, err := n.netProvider.BroadcastChannelFor(channelName)
 		if err != nil {
-			logger.Errorf("failed to get broadcast channel: [%v]", err)
+			dkgLogger.Errorf("failed to get broadcast channel: [%v]", err)
 			return
 		}
 
 		membershipValidator := group.NewMembershipValidator(
-			logger,
+			dkgLogger,
 			selectedOperators,
 			signing,
 		)
 
 		err = broadcastChannel.SetFilter(membershipValidator.IsInGroup)
 		if err != nil {
-			logger.Errorf(
+			dkgLogger.Errorf(
 				"could not set filter for channel [%v]: [%v]",
 				broadcastChannel.Name(),
 				err,
@@ -147,7 +146,7 @@ func (n *node) JoinDKGIfEligible(
 				defer n.protocolLatch.Unlock()
 
 				signer, err := dkg.ExecuteDKG(
-					logger,
+					dkgLogger,
 					dkgSeed,
 					memberIndex,
 					dkgStartBlockNumber,
@@ -157,7 +156,7 @@ func (n *node) JoinDKGIfEligible(
 					selectedOperators,
 				)
 				if err != nil {
-					logger.Errorf("failed to execute dkg: [%v]", err)
+					dkgLogger.Errorf("failed to execute dkg: [%v]", err)
 					return
 				}
 
@@ -168,7 +167,7 @@ func (n *node) JoinDKGIfEligible(
 				// TODO: Consider snapshotting the key material just in case.
 				err = n.groupRegistry.RegisterGroup(signer, groupPublicKey)
 				if err != nil {
-					logger.Errorf(
+					dkgLogger.Errorf(
 						"[member:%v] failed to register a group [%v]: [%v]",
 						signer.MemberID(),
 						groupPublicKey,
@@ -177,7 +176,7 @@ func (n *node) JoinDKGIfEligible(
 					return
 				}
 
-				logger.Infof(
+				dkgLogger.Infof(
 					"[member:%v] group [%v] registered successfully",
 					signer.MemberID(),
 					groupPublicKey,
@@ -185,7 +184,7 @@ func (n *node) JoinDKGIfEligible(
 			}()
 		}
 	} else {
-		logger.Infof("not eligible for DKG with seed [0x%x]", dkgSeed)
+		dkgLogger.Infof("not eligible for DKG")
 	}
 
 	return
@@ -323,6 +322,11 @@ func (n *node) GenerateRelayEntry(
 	groupPublicKey []byte,
 	startBlockHeight uint64,
 ) {
+	relayLogger := logger.With(
+		zap.String("groupPublicKey", hex.EncodeToString(groupPublicKey)),
+		zap.String("previousEntry", hex.EncodeToString(previousEntry)),
+	)
+
 	memberships := n.groupRegistry.GetGroup(groupPublicKey)
 
 	if len(memberships) < 1 {
@@ -331,7 +335,7 @@ func (n *node) GenerateRelayEntry(
 
 	channel, err := n.netProvider.BroadcastChannelFor(memberships[0].ChannelName)
 	if err != nil {
-		logger.Errorf("could not create broadcast channel: [%v]", err)
+		relayLogger.Errorf("could not create broadcast channel: [%v]", err)
 		return
 	}
 
@@ -345,14 +349,14 @@ func (n *node) GenerateRelayEntry(
 		GroupOperators()
 
 	membershipValidator := group.NewMembershipValidator(
-		logger,
+		relayLogger,
 		groupMembers,
 		n.beaconChain.Signing(),
 	)
 
 	err = channel.SetFilter(membershipValidator.IsInGroup)
 	if err != nil {
-		logger.Errorf(
+		relayLogger.Errorf(
 			"could not set filter for channel [%v]: [%v]",
 			channel.Name(),
 			err,
@@ -361,7 +365,7 @@ func (n *node) GenerateRelayEntry(
 
 	blockCounter, err := n.beaconChain.BlockCounter()
 	if err != nil {
-		logger.Errorf("failed to get block counter: [%v]", err)
+		relayLogger.Errorf("failed to get block counter: [%v]", err)
 		return
 	}
 
@@ -373,7 +377,7 @@ func (n *node) GenerateRelayEntry(
 			defer n.protocolLatch.Unlock()
 
 			err = entry.SignAndSubmit(
-				logger,
+				relayLogger,
 				blockCounter,
 				channel,
 				n.beaconChain,
@@ -383,7 +387,7 @@ func (n *node) GenerateRelayEntry(
 				startBlockHeight,
 			)
 			if err != nil {
-				logger.Errorf(
+				relayLogger.Errorf(
 					"error creating threshold signature: [%v]",
 					err,
 				)

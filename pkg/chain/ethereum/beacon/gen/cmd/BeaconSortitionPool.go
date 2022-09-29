@@ -15,6 +15,7 @@ import (
 
 	chainutil "github.com/keep-network/keep-common/pkg/chain/ethereum/ethutil"
 	"github.com/keep-network/keep-common/pkg/cmd"
+	"github.com/keep-network/keep-common/pkg/utils/decode"
 	"github.com/keep-network/keep-core/pkg/chain/ethereum/beacon/gen/contract"
 
 	"github.com/spf13/cobra"
@@ -50,10 +51,14 @@ func init() {
 
 	BeaconSortitionPoolCommand.AddCommand(
 		bspCanRestoreRewardEligibilityCommand(),
+		bspChaosnetOwnerCommand(),
 		bspGetAvailableRewardsCommand(),
+		bspGetIDOperatorCommand(),
 		bspGetOperatorIDCommand(),
 		bspGetPoolWeightCommand(),
 		bspIneligibleEarnedRewardsCommand(),
+		bspIsBetaOperatorCommand(),
+		bspIsChaosnetActiveCommand(),
 		bspIsEligibleForRewardsCommand(),
 		bspIsLockedCommand(),
 		bspIsOperatorInPoolCommand(),
@@ -65,11 +70,13 @@ func init() {
 		bspRewardTokenCommand(),
 		bspRewardsEligibilityRestorableAtCommand(),
 		bspTotalWeightCommand(),
+		bspDeactivateChaosnetCommand(),
 		bspInsertOperatorCommand(),
 		bspLockCommand(),
 		bspReceiveApprovalCommand(),
 		bspRenounceOwnershipCommand(),
 		bspRestoreRewardEligibilityCommand(),
+		bspTransferChaosnetOwnerRoleCommand(),
 		bspTransferOwnershipCommand(),
 		bspUnlockCommand(),
 		bspUpdateOperatorStatusCommand(),
@@ -102,6 +109,7 @@ func bspCanRestoreRewardEligibility(c *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
+
 	arg_operator, err := chainutil.AddressFromHex(args[0])
 	if err != nil {
 		return fmt.Errorf(
@@ -112,6 +120,40 @@ func bspCanRestoreRewardEligibility(c *cobra.Command, args []string) error {
 
 	result, err := contract.CanRestoreRewardEligibilityAtBlock(
 		arg_operator,
+		cmd.BlockFlagValue.Int,
+	)
+
+	if err != nil {
+		return err
+	}
+
+	cmd.PrintOutput(result)
+
+	return nil
+}
+
+func bspChaosnetOwnerCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "chaosnet-owner",
+		Short:                 "Calls the view method chaosnetOwner on the BeaconSortitionPool contract.",
+		Args:                  cmd.ArgCountChecker(0),
+		RunE:                  bspChaosnetOwner,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	cmd.InitConstFlags(c)
+
+	return c
+}
+
+func bspChaosnetOwner(c *cobra.Command, args []string) error {
+	contract, err := initializeBeaconSortitionPool(c)
+	if err != nil {
+		return err
+	}
+
+	result, err := contract.ChaosnetOwnerAtBlock(
 		cmd.BlockFlagValue.Int,
 	)
 
@@ -144,6 +186,7 @@ func bspGetAvailableRewards(c *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
+
 	arg_operator, err := chainutil.AddressFromHex(args[0])
 	if err != nil {
 		return fmt.Errorf(
@@ -154,6 +197,49 @@ func bspGetAvailableRewards(c *cobra.Command, args []string) error {
 
 	result, err := contract.GetAvailableRewardsAtBlock(
 		arg_operator,
+		cmd.BlockFlagValue.Int,
+	)
+
+	if err != nil {
+		return err
+	}
+
+	cmd.PrintOutput(result)
+
+	return nil
+}
+
+func bspGetIDOperatorCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "get-i-d-operator [arg_id]",
+		Short:                 "Calls the view method getIDOperator on the BeaconSortitionPool contract.",
+		Args:                  cmd.ArgCountChecker(1),
+		RunE:                  bspGetIDOperator,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	cmd.InitConstFlags(c)
+
+	return c
+}
+
+func bspGetIDOperator(c *cobra.Command, args []string) error {
+	contract, err := initializeBeaconSortitionPool(c)
+	if err != nil {
+		return err
+	}
+
+	arg_id, err := decode.ParseUint[uint32](args[0], 32)
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter arg_id, a uint32, from passed value %v",
+			args[0],
+		)
+	}
+
+	result, err := contract.GetIDOperatorAtBlock(
+		arg_id,
 		cmd.BlockFlagValue.Int,
 	)
 
@@ -186,6 +272,7 @@ func bspGetOperatorID(c *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
+
 	arg_operator, err := chainutil.AddressFromHex(args[0])
 	if err != nil {
 		return fmt.Errorf(
@@ -228,6 +315,7 @@ func bspGetPoolWeight(c *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
+
 	arg_operator, err := chainutil.AddressFromHex(args[0])
 	if err != nil {
 		return fmt.Errorf(
@@ -284,6 +372,83 @@ func bspIneligibleEarnedRewards(c *cobra.Command, args []string) error {
 	return nil
 }
 
+func bspIsBetaOperatorCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "is-beta-operator [arg0]",
+		Short:                 "Calls the view method isBetaOperator on the BeaconSortitionPool contract.",
+		Args:                  cmd.ArgCountChecker(1),
+		RunE:                  bspIsBetaOperator,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	cmd.InitConstFlags(c)
+
+	return c
+}
+
+func bspIsBetaOperator(c *cobra.Command, args []string) error {
+	contract, err := initializeBeaconSortitionPool(c)
+	if err != nil {
+		return err
+	}
+
+	arg0, err := chainutil.AddressFromHex(args[0])
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter arg0, a address, from passed value %v",
+			args[0],
+		)
+	}
+
+	result, err := contract.IsBetaOperatorAtBlock(
+		arg0,
+		cmd.BlockFlagValue.Int,
+	)
+
+	if err != nil {
+		return err
+	}
+
+	cmd.PrintOutput(result)
+
+	return nil
+}
+
+func bspIsChaosnetActiveCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "is-chaosnet-active",
+		Short:                 "Calls the view method isChaosnetActive on the BeaconSortitionPool contract.",
+		Args:                  cmd.ArgCountChecker(0),
+		RunE:                  bspIsChaosnetActive,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	cmd.InitConstFlags(c)
+
+	return c
+}
+
+func bspIsChaosnetActive(c *cobra.Command, args []string) error {
+	contract, err := initializeBeaconSortitionPool(c)
+	if err != nil {
+		return err
+	}
+
+	result, err := contract.IsChaosnetActiveAtBlock(
+		cmd.BlockFlagValue.Int,
+	)
+
+	if err != nil {
+		return err
+	}
+
+	cmd.PrintOutput(result)
+
+	return nil
+}
+
 func bspIsEligibleForRewardsCommand() *cobra.Command {
 	c := &cobra.Command{
 		Use:                   "is-eligible-for-rewards [arg_operator]",
@@ -304,6 +469,7 @@ func bspIsEligibleForRewards(c *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
+
 	arg_operator, err := chainutil.AddressFromHex(args[0])
 	if err != nil {
 		return fmt.Errorf(
@@ -380,6 +546,7 @@ func bspIsOperatorInPool(c *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
+
 	arg_operator, err := chainutil.AddressFromHex(args[0])
 	if err != nil {
 		return fmt.Errorf(
@@ -422,6 +589,7 @@ func bspIsOperatorRegistered(c *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
+
 	arg_operator, err := chainutil.AddressFromHex(args[0])
 	if err != nil {
 		return fmt.Errorf(
@@ -464,6 +632,7 @@ func bspIsOperatorUpToDate(c *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
+
 	arg_operator, err := chainutil.AddressFromHex(args[0])
 	if err != nil {
 		return fmt.Errorf(
@@ -471,7 +640,6 @@ func bspIsOperatorUpToDate(c *cobra.Command, args []string) error {
 			args[0],
 		)
 	}
-
 	arg_authorizedStake, err := hexutil.DecodeBig(args[1])
 	if err != nil {
 		return fmt.Errorf(
@@ -651,6 +819,7 @@ func bspRewardsEligibilityRestorableAt(c *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
+
 	arg_operator, err := chainutil.AddressFromHex(args[0])
 	if err != nil {
 		return fmt.Errorf(
@@ -709,6 +878,55 @@ func bspTotalWeight(c *cobra.Command, args []string) error {
 
 /// ------------------- Non-const methods -------------------
 
+func bspDeactivateChaosnetCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "deactivate-chaosnet",
+		Short:                 "Calls the nonpayable method deactivateChaosnet on the BeaconSortitionPool contract.",
+		Args:                  cmd.ArgCountChecker(0),
+		RunE:                  bspDeactivateChaosnet,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	c.PreRunE = cmd.NonConstArgsChecker
+	cmd.InitNonConstFlags(c)
+
+	return c
+}
+
+func bspDeactivateChaosnet(c *cobra.Command, args []string) error {
+	contract, err := initializeBeaconSortitionPool(c)
+	if err != nil {
+		return err
+	}
+
+	var (
+		transaction *types.Transaction
+	)
+
+	if shouldSubmit, _ := c.Flags().GetBool(cmd.SubmitFlag); shouldSubmit {
+		// Do a regular submission. Take payable into account.
+		transaction, err = contract.DeactivateChaosnet()
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput(transaction.Hash())
+	} else {
+		// Do a call.
+		err = contract.CallDeactivateChaosnet(
+			cmd.BlockFlagValue.Int,
+		)
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput("success")
+	}
+
+	return nil
+}
+
 func bspInsertOperatorCommand() *cobra.Command {
 	c := &cobra.Command{
 		Use:                   "insert-operator [arg_operator] [arg_authorizedStake]",
@@ -738,7 +956,6 @@ func bspInsertOperator(c *cobra.Command, args []string) error {
 			args[0],
 		)
 	}
-
 	arg_authorizedStake, err := hexutil.DecodeBig(args[1])
 	if err != nil {
 		return fmt.Errorf(
@@ -857,7 +1074,6 @@ func bspReceiveApproval(c *cobra.Command, args []string) error {
 			args[0],
 		)
 	}
-
 	arg_amount, err := hexutil.DecodeBig(args[1])
 	if err != nil {
 		return fmt.Errorf(
@@ -865,7 +1081,6 @@ func bspReceiveApproval(c *cobra.Command, args []string) error {
 			args[1],
 		)
 	}
-
 	arg_token, err := chainutil.AddressFromHex(args[2])
 	if err != nil {
 		return fmt.Errorf(
@@ -873,7 +1088,6 @@ func bspReceiveApproval(c *cobra.Command, args []string) error {
 			args[2],
 		)
 	}
-
 	arg3, err := hexutil.Decode(args[3])
 	if err != nil {
 		return fmt.Errorf(
@@ -1027,6 +1241,66 @@ func bspRestoreRewardEligibility(c *cobra.Command, args []string) error {
 	return nil
 }
 
+func bspTransferChaosnetOwnerRoleCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "transfer-chaosnet-owner-role [arg_newChaosnetOwner]",
+		Short:                 "Calls the nonpayable method transferChaosnetOwnerRole on the BeaconSortitionPool contract.",
+		Args:                  cmd.ArgCountChecker(1),
+		RunE:                  bspTransferChaosnetOwnerRole,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	c.PreRunE = cmd.NonConstArgsChecker
+	cmd.InitNonConstFlags(c)
+
+	return c
+}
+
+func bspTransferChaosnetOwnerRole(c *cobra.Command, args []string) error {
+	contract, err := initializeBeaconSortitionPool(c)
+	if err != nil {
+		return err
+	}
+
+	arg_newChaosnetOwner, err := chainutil.AddressFromHex(args[0])
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter arg_newChaosnetOwner, a address, from passed value %v",
+			args[0],
+		)
+	}
+
+	var (
+		transaction *types.Transaction
+	)
+
+	if shouldSubmit, _ := c.Flags().GetBool(cmd.SubmitFlag); shouldSubmit {
+		// Do a regular submission. Take payable into account.
+		transaction, err = contract.TransferChaosnetOwnerRole(
+			arg_newChaosnetOwner,
+		)
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput(transaction.Hash())
+	} else {
+		// Do a call.
+		err = contract.CallTransferChaosnetOwnerRole(
+			arg_newChaosnetOwner,
+			cmd.BlockFlagValue.Int,
+		)
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput("success")
+	}
+
+	return nil
+}
+
 func bspTransferOwnershipCommand() *cobra.Command {
 	c := &cobra.Command{
 		Use:                   "transfer-ownership [arg_newOwner]",
@@ -1165,7 +1439,6 @@ func bspUpdateOperatorStatus(c *cobra.Command, args []string) error {
 			args[0],
 		)
 	}
-
 	arg_authorizedStake, err := hexutil.DecodeBig(args[1])
 	if err != nil {
 		return fmt.Errorf(
@@ -1295,7 +1568,6 @@ func bspWithdrawRewards(c *cobra.Command, args []string) error {
 			args[0],
 		)
 	}
-
 	arg_beneficiary, err := chainutil.AddressFromHex(args[1])
 	if err != nil {
 		return fmt.Errorf(

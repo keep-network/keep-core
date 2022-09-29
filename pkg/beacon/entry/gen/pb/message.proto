@@ -1,9 +1,10 @@
 syntax = "proto3";
 
-option go_package = "pb";
+option go_package = "./pb";
 package entry;
 
 message SignatureShare {
     uint32 senderID = 1;
     bytes share = 2;
+    string sessionID = 3;
 }

@@ -2,13 +2,14 @@ package signing
 
 import (
 	"fmt"
-	"github.com/ipfs/go-log"
+	"math/big"
+
+	"github.com/ipfs/go-log/v2"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/net"
 	"github.com/keep-network/keep-core/pkg/protocol/group"
 	"github.com/keep-network/keep-core/pkg/protocol/state"
 	"github.com/keep-network/keep-core/pkg/tecdsa"
-	"math/big"
 )
 
 // Execute runs the tECDSA signing protocol, given a message to sign,
@@ -28,14 +29,12 @@ func Execute(
 	privateKeyShare *tecdsa.PrivateKeyShare,
 	groupSize int,
 	dishonestThreshold int,
-	excludedMembers []group.MemberIndex,
+	excludedMembersIndexes []group.MemberIndex,
 	blockCounter chain.BlockCounter,
 	channel net.BroadcastChannel,
 	membershipValidator *group.MembershipValidator,
 ) (*Result, error) {
 	logger.Debugf("[member:%v] initializing member", memberIndex)
-
-	registerUnmarshallers(channel)
 
 	member := newMember(
 		logger,
@@ -50,9 +49,9 @@ func Execute(
 
 	// Mark excluded members as disqualified in order to not exchange messages
 	// with them.
-	for _, excludedMember := range excludedMembers {
-		if excludedMember != member.id {
-			member.group.MarkMemberAsDisqualified(excludedMember)
+	for _, excludedMemberIndex := range excludedMembersIndexes {
+		if excludedMemberIndex != member.id {
+			member.group.MarkMemberAsDisqualified(excludedMemberIndex)
 		}
 	}
 
@@ -68,28 +67,46 @@ func Execute(
 		return nil, err
 	}
 
-	_, ok := lastState.(*tssRoundTwoState)
+	finalizationState, ok := lastState.(*finalizationState)
 	if !ok {
 		return nil, fmt.Errorf("execution ended on state: %T", lastState)
 	}
 
-	// TODO: Temporary result. Eventually, take the result from the
-	//       finalization state.
-	return &Result{
-		R:          new(big.Int).Add(message, big.NewInt(1)),
-		S:          new(big.Int).Add(message, big.NewInt(2)),
-		RecoveryID: 1,
-	}, nil
+	return finalizationState.result(), nil
 }
 
-// registerUnmarshallers initializes the given broadcast channel to be able to
+// RegisterUnmarshallers initializes the given broadcast channel to be able to
 // perform signing protocol interactions by registering all the required
 // protocol message unmarshallers.
-func registerUnmarshallers(channel net.BroadcastChannel) {
+func RegisterUnmarshallers(channel net.BroadcastChannel) {
 	channel.SetUnmarshaler(func() net.TaggedUnmarshaler {
 		return &ephemeralPublicKeyMessage{}
 	})
 	channel.SetUnmarshaler(func() net.TaggedUnmarshaler {
 		return &tssRoundOneMessage{}
+	})
+	channel.SetUnmarshaler(func() net.TaggedUnmarshaler {
+		return &tssRoundTwoMessage{}
+	})
+	channel.SetUnmarshaler(func() net.TaggedUnmarshaler {
+		return &tssRoundThreeMessage{}
+	})
+	channel.SetUnmarshaler(func() net.TaggedUnmarshaler {
+		return &tssRoundFourMessage{}
+	})
+	channel.SetUnmarshaler(func() net.TaggedUnmarshaler {
+		return &tssRoundFiveMessage{}
+	})
+	channel.SetUnmarshaler(func() net.TaggedUnmarshaler {
+		return &tssRoundSixMessage{}
+	})
+	channel.SetUnmarshaler(func() net.TaggedUnmarshaler {
+		return &tssRoundSevenMessage{}
+	})
+	channel.SetUnmarshaler(func() net.TaggedUnmarshaler {
+		return &tssRoundEightMessage{}
+	})
+	channel.SetUnmarshaler(func() net.TaggedUnmarshaler {
+		return &tssRoundNineMessage{}
 	})
 }

@@ -3,6 +3,8 @@ package entry
 import (
 	"fmt"
 
+	"google.golang.org/protobuf/proto"
+
 	"github.com/keep-network/keep-core/pkg/beacon/entry/gen/pb"
 	"github.com/keep-network/keep-core/pkg/protocol/group"
 )
@@ -28,18 +30,19 @@ func (*SignatureShareMessage) Type() string {
 // network communication.
 func (ssm *SignatureShareMessage) Marshal() ([]byte, error) {
 	pbSignatureShare := pb.SignatureShare{
-		SenderID: uint32(ssm.senderID),
-		Share:    ssm.shareBytes,
+		SenderID:  uint32(ssm.senderID),
+		Share:     ssm.shareBytes,
+		SessionID: ssm.sessionID,
 	}
 
-	return pbSignatureShare.Marshal()
+	return proto.Marshal(&pbSignatureShare)
 }
 
 // Unmarshal converts a byte array produced by Marshal to a
 // SignatureShareMessage.
 func (ssm *SignatureShareMessage) Unmarshal(bytes []byte) error {
 	pbSignatureShare := pb.SignatureShare{}
-	err := pbSignatureShare.Unmarshal(bytes)
+	err := proto.Unmarshal(bytes, &pbSignatureShare)
 	if err != nil {
 		return err
 	}
@@ -49,6 +52,7 @@ func (ssm *SignatureShareMessage) Unmarshal(bytes []byte) error {
 	}
 	ssm.senderID = group.MemberIndex(pbSignatureShare.SenderID)
 	ssm.shareBytes = pbSignatureShare.Share
+	ssm.sessionID = pbSignatureShare.SessionID
 
 	return nil
 }

@@ -20,9 +20,8 @@ const (
 //
 //	https://github.com/bnb-chain/tss-lib/blob/v1.3.3/ecdsa/keygen/test_utils.go#L36
 //
-// Test data JSON files copied from:
-//
-//	https://github.com/bnb-chain/tss-lib/tree/v1.3.3/test/_ecdsa_fixtures
+// Test data JSON files were generated using the tECDSA DKG protocol from
+// the `pkg/tecdsa/dkg` package and represent a signing group 3-of-5.
 func LoadPrivateKeyShareTestFixtures(count int) (
 	[]keygen.LocalPartySaveData,
 	error,

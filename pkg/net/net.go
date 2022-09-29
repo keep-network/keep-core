@@ -2,9 +2,9 @@ package net
 
 import (
 	"context"
-	"github.com/keep-network/keep-core/pkg/operator"
 
-	"github.com/gogo/protobuf/proto"
+	"github.com/keep-network/keep-core/pkg/internal/pb"
+	"github.com/keep-network/keep-core/pkg/operator"
 )
 
 // TransportIdentifier represents a protocol-level identifier. It is an opaque
@@ -29,7 +29,7 @@ type Message interface {
 // TaggedMarshaler is an interface that includes the proto.Marshaler interface,
 // but also provides a string type for the marshalable object.
 type TaggedMarshaler interface {
-	proto.Marshaler
+	pb.Marshaler
 	Type() string
 }
 
@@ -67,6 +67,7 @@ type Provider interface {
 // from any given connected peer.
 type ConnectionManager interface {
 	ConnectedPeers() []string
+	ConnectedPeersAddrInfo() map[string][]string
 	GetPeerPublicKey(connectedPeer string) (*operator.PublicKey, error)
 	DisconnectPeer(connectedPeer string)
 
@@ -81,7 +82,7 @@ type ConnectionManager interface {
 // Type() method is expected to be invokable on a just-initialized instance of
 // the unmarshaler (i.e., before unmarshaling is completed).
 type TaggedUnmarshaler interface {
-	proto.Unmarshaler
+	pb.Unmarshaler
 	Type() string
 }
 

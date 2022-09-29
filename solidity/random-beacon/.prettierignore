@@ -2,6 +2,7 @@ artifacts/
 build/
 cache/
 deployments/
+external/
 hardhat-dependency-compiler/
 typechain/
 export.json

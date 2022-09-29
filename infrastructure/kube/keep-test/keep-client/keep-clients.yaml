@@ -50,9 +50,10 @@ spec:
         image: gcr.io/keep-test-f3e0/keep-client:latest
         imagePullPolicy: Always
         ports:
-        - containerPort: 3919
-        - containerPort: 9601
-        - containerPort: 9701
+        - name: network
+          containerPort: 3919
+        - name: client-info
+          containerPort: 9601
         env:
         - name: KEEP_ETHEREUM_PASSWORD
           valueFrom:
@@ -81,16 +82,14 @@ spec:
         - $(ETH_WS_URL)
         - --ethereum.keyFile
         - /mnt/keep-client/keyfile/account-0-keyfile
-        - --storage.dataDir
+        - --storage.dir
         - /mnt/keep-client/data
         - --network.port
         - "3919"
         - --network.announcedAddresses
-        - /dns4/keep-client-0.default.svc.cluster.local/tcp/3919
-        - --metrics.port
+        - /dns4/bootstrap-0.test.keep.network/tcp/3919
+        - --clientInfo.port
         - "9601"
-        - --diagnostics.port
-        - "9701"
       initContainers:
       - name: initcontainer-beacon
         image: gcr.io/keep-test-f3e0/keep-random-beacon-hardhat:latest
@@ -186,20 +185,18 @@ metadata:
 spec:
   type: LoadBalancer
   ports:
-  - port: 3919
-    targetPort: 3919
-    name: network
-  - port: 9601
-    targetPort: 9601
-    name: metrics
-  - port: 9701
-    targetPort: 9701
-    name: diagnostics
+  - name: network
+    port: 3919
+    targetPort: network
+  - name: client-info
+    port: 9601
+    targetPort: client-info
   selector:
     app: keep
     type: client
     id: "0"
     network: goerli
+  loadBalancerIP: 104.154.61.116
 ---
 apiVersion: apps/v1
 kind: StatefulSet
@@ -252,9 +249,10 @@ spec:
         image: gcr.io/keep-test-f3e0/keep-client:latest
         imagePullPolicy: Always
         ports:
-        - containerPort: 3919
-        - containerPort: 9601
-        - containerPort: 9701
+        - name: network
+          containerPort: 3919
+        - name: client-info
+          containerPort: 9601
         env:
         - name: KEEP_ETHEREUM_PASSWORD
           valueFrom:
@@ -283,18 +281,14 @@ spec:
         - $(ETH_WS_URL)
         - --ethereum.keyFile
         - /mnt/keep-client/keyfile/account-1-keyfile
-        - --storage.dataDir
+        - --storage.dir
         - /mnt/keep-client/data
         - --network.port
         - "3919"
         - --network.announcedAddresses
-        - /dns4/keep-client-1.default.svc.cluster.local/tcp/3919
-        - --network.peers
-        - /dns4/keep-client-0.default.svc.cluster.local/tcp/3919/ipfs/16Uiu2HAmCcfVpHwfBKNFbQuhvGuFXHVLQ65gB4sJm7HyrcZuLttH
-        - --metrics.port
+        - /dns4/bootstrap-1.test.keep.network/tcp/3919
+        - --clientInfo.port
         - "9601"
-        - --diagnostics.port
-        - "9701"
       initContainers:
       - name: initcontainer-beacon
         image: gcr.io/keep-test-f3e0/keep-random-beacon-hardhat:latest
@@ -390,20 +384,18 @@ metadata:
 spec:
   type: LoadBalancer
   ports:
-  - port: 3919
-    targetPort: 3919
-    name: network
-  - port: 9601
-    targetPort: 9601
-    name: metrics
-  - port: 9701
-    targetPort: 9701
-    name: diagnostics
+  - name: network
+    port: 3919
+    targetPort: network
+  - name: client-info
+    port: 9601
+    targetPort: client-info
   selector:
     app: keep
     type: client
     id: "1"
     network: goerli
+  loadBalancerIP: 35.223.100.87
 ---
 apiVersion: apps/v1
 kind: StatefulSet
@@ -456,9 +448,10 @@ spec:
         image: gcr.io/keep-test-f3e0/keep-client:latest
         imagePullPolicy: Always
         ports:
-        - containerPort: 3919
-        - containerPort: 9601
-        - containerPort: 9701
+        - name: network
+          containerPort: 3919
+        - name: client-info
+          containerPort: 9601
         env:
         - name: KEEP_ETHEREUM_PASSWORD
           valueFrom:
@@ -487,18 +480,12 @@ spec:
         - $(ETH_WS_URL)
         - --ethereum.keyFile
         - /mnt/keep-client/keyfile/account-2-keyfile
-        - --storage.dataDir
+        - --storage.dir
         - /mnt/keep-client/data
         - --network.port
         - "3919"
-        - --network.announcedAddresses
-        - /dns4/keep-client-2.default.svc.cluster.local/tcp/3919
-        - --network.peers
-        - /dns4/keep-client-1.default.svc.cluster.local/tcp/3919/ipfs/16Uiu2HAm3eJtyFKAttzJ85NLMromHuRg4yyum3CREMf6CHBBV6KY
-        - --metrics.port
+        - --clientInfo.port
         - "9601"
-        - --diagnostics.port
-        - "9701"
       initContainers:
       - name: initcontainer-beacon
         image: gcr.io/keep-test-f3e0/keep-random-beacon-hardhat:latest
@@ -594,20 +581,18 @@ metadata:
 spec:
   type: LoadBalancer
   ports:
-  - port: 3919
-    targetPort: 3919
-    name: network
-  - port: 9601
-    targetPort: 9601
-    name: metrics
-  - port: 9701
-    targetPort: 9701
-    name: diagnostics
+  - name: network
+    port: 3919
+    targetPort: network
+  - name: client-info
+    port: 9601
+    targetPort: client-info
   selector:
     app: keep
     type: client
     id: "2"
     network: goerli
+  loadBalancerIP: null
 ---
 apiVersion: apps/v1
 kind: StatefulSet
@@ -660,9 +645,10 @@ spec:
         image: gcr.io/keep-test-f3e0/keep-client:latest
         imagePullPolicy: Always
         ports:
-        - containerPort: 3919
-        - containerPort: 9601
-        - containerPort: 9701
+        - name: network
+          containerPort: 3919
+        - name: client-info
+          containerPort: 9601
         env:
         - name: KEEP_ETHEREUM_PASSWORD
           valueFrom:
@@ -691,18 +677,12 @@ spec:
         - $(ETH_WS_URL)
         - --ethereum.keyFile
         - /mnt/keep-client/keyfile/account-3-keyfile
-        - --storage.dataDir
+        - --storage.dir
         - /mnt/keep-client/data
         - --network.port
         - "3919"
-        - --network.announcedAddresses
-        - /dns4/keep-client-3.default.svc.cluster.local/tcp/3919
-        - --network.peers
-        - /dns4/keep-client-2.default.svc.cluster.local/tcp/3919/ipfs/16Uiu2HAmNNuCp45z5bgB8KiTHv1vHTNAVbBgxxtTFGAndageo9Dp
-        - --metrics.port
+        - --clientInfo.port
         - "9601"
-        - --diagnostics.port
-        - "9701"
       initContainers:
       - name: initcontainer-beacon
         image: gcr.io/keep-test-f3e0/keep-random-beacon-hardhat:latest
@@ -798,20 +778,18 @@ metadata:
 spec:
   type: LoadBalancer
   ports:
-  - port: 3919
-    targetPort: 3919
-    name: network
-  - port: 9601
-    targetPort: 9601
-    name: metrics
-  - port: 9701
-    targetPort: 9701
-    name: diagnostics
+  - name: network
+    port: 3919
+    targetPort: network
+  - name: client-info
+    port: 9601
+    targetPort: client-info
   selector:
     app: keep
     type: client
     id: "3"
     network: goerli
+  loadBalancerIP: null
 ---
 apiVersion: apps/v1
 kind: StatefulSet
@@ -864,9 +842,10 @@ spec:
         image: gcr.io/keep-test-f3e0/keep-client:latest
         imagePullPolicy: Always
         ports:
-        - containerPort: 3919
-        - containerPort: 9601
-        - containerPort: 9701
+        - name: network
+          containerPort: 3919
+        - name: client-info
+          containerPort: 9601
         env:
         - name: KEEP_ETHEREUM_PASSWORD
           valueFrom:
@@ -895,18 +874,12 @@ spec:
         - $(ETH_WS_URL)
         - --ethereum.keyFile
         - /mnt/keep-client/keyfile/account-4-keyfile
-        - --storage.dataDir
+        - --storage.dir
         - /mnt/keep-client/data
         - --network.port
         - "3919"
-        - --network.announcedAddresses
-        - /dns4/keep-client-4.default.svc.cluster.local/tcp/3919
-        - --network.peers
-        - /dns4/keep-client-3.default.svc.cluster.local/tcp/3919/ipfs/16Uiu2HAm8KJX32kr3eYUhDuzwTucSfAfspnjnXNf9veVhB12t6Vf
-        - --metrics.port
+        - --clientInfo.port
         - "9601"
-        - --diagnostics.port
-        - "9701"
       initContainers:
       - name: initcontainer-beacon
         image: gcr.io/keep-test-f3e0/keep-random-beacon-hardhat:latest
@@ -1002,20 +975,18 @@ metadata:
 spec:
   type: LoadBalancer
   ports:
-  - port: 3919
-    targetPort: 3919
-    name: network
-  - port: 9601
-    targetPort: 9601
-    name: metrics
-  - port: 9701
-    targetPort: 9701
-    name: diagnostics
+  - name: network
+    port: 3919
+    targetPort: network
+  - name: client-info
+    port: 9601
+    targetPort: client-info
   selector:
     app: keep
     type: client
     id: "4"
     network: goerli
+  loadBalancerIP: null
 ---
 apiVersion: apps/v1
 kind: StatefulSet
@@ -1068,9 +1039,10 @@ spec:
         image: gcr.io/keep-test-f3e0/keep-client:latest
         imagePullPolicy: Always
         ports:
-        - containerPort: 3919
-        - containerPort: 9601
-        - containerPort: 9701
+        - name: network
+          containerPort: 3919
+        - name: client-info
+          containerPort: 9601
         env:
         - name: KEEP_ETHEREUM_PASSWORD
           valueFrom:
@@ -1099,18 +1071,12 @@ spec:
         - $(ETH_WS_URL)
         - --ethereum.keyFile
         - /mnt/keep-client/keyfile/account-5-keyfile
-        - --storage.dataDir
+        - --storage.dir
         - /mnt/keep-client/data
         - --network.port
         - "3919"
-        - --network.announcedAddresses
-        - /dns4/keep-client-5.default.svc.cluster.local/tcp/3919
-        - --network.peers
-        - /dns4/keep-client-4.default.svc.cluster.local/tcp/3919/ipfs/16Uiu2HAkxRTeySEWZfW9C83GPFpQUXvrygmZryCN6DL4piZrbAv4
-        - --metrics.port
+        - --clientInfo.port
         - "9601"
-        - --diagnostics.port
-        - "9701"
       initContainers:
       - name: initcontainer-beacon
         image: gcr.io/keep-test-f3e0/keep-random-beacon-hardhat:latest
@@ -1206,20 +1172,18 @@ metadata:
 spec:
   type: LoadBalancer
   ports:
-  - port: 3919
-    targetPort: 3919
-    name: network
-  - port: 9601
-    targetPort: 9601
-    name: metrics
-  - port: 9701
-    targetPort: 9701
-    name: diagnostics
+  - name: network
+    port: 3919
+    targetPort: network
+  - name: client-info
+    port: 9601
+    targetPort: client-info
   selector:
     app: keep
     type: client
     id: "5"
     network: goerli
+  loadBalancerIP: null
 ---
 apiVersion: apps/v1
 kind: StatefulSet
@@ -1272,9 +1236,10 @@ spec:
         image: gcr.io/keep-test-f3e0/keep-client:latest
         imagePullPolicy: Always
         ports:
-        - containerPort: 3919
-        - containerPort: 9601
-        - containerPort: 9701
+        - name: network
+          containerPort: 3919
+        - name: client-info
+          containerPort: 9601
         env:
         - name: KEEP_ETHEREUM_PASSWORD
           valueFrom:
@@ -1303,18 +1268,12 @@ spec:
         - $(ETH_WS_URL)
         - --ethereum.keyFile
         - /mnt/keep-client/keyfile/account-6-keyfile
-        - --storage.dataDir
+        - --storage.dir
         - /mnt/keep-client/data
         - --network.port
         - "3919"
-        - --network.announcedAddresses
-        - /dns4/keep-client-6.default.svc.cluster.local/tcp/3919
-        - --network.peers
-        - /dns4/keep-client-5.default.svc.cluster.local/tcp/3919/ipfs/16Uiu2HAm7Vq3Xf8xnSQDyj2j3AAEDjJk9Hp1RemTXNKmQwHm8cFt
-        - --metrics.port
+        - --clientInfo.port
         - "9601"
-        - --diagnostics.port
-        - "9701"
       initContainers:
       - name: initcontainer-beacon
         image: gcr.io/keep-test-f3e0/keep-random-beacon-hardhat:latest
@@ -1410,20 +1369,18 @@ metadata:
 spec:
   type: LoadBalancer
   ports:
-  - port: 3919
-    targetPort: 3919
-    name: network
-  - port: 9601
-    targetPort: 9601
-    name: metrics
-  - port: 9701
-    targetPort: 9701
-    name: diagnostics
+  - name: network
+    port: 3919
+    targetPort: network
+  - name: client-info
+    port: 9601
+    targetPort: client-info
   selector:
     app: keep
     type: client
     id: "6"
     network: goerli
+  loadBalancerIP: null
 ---
 apiVersion: apps/v1
 kind: StatefulSet
@@ -1476,9 +1433,10 @@ spec:
         image: gcr.io/keep-test-f3e0/keep-client:latest
         imagePullPolicy: Always
         ports:
-        - containerPort: 3919
-        - containerPort: 9601
-        - containerPort: 9701
+        - name: network
+          containerPort: 3919
+        - name: client-info
+          containerPort: 9601
         env:
         - name: KEEP_ETHEREUM_PASSWORD
           valueFrom:
@@ -1507,18 +1465,12 @@ spec:
         - $(ETH_WS_URL)
         - --ethereum.keyFile
         - /mnt/keep-client/keyfile/account-7-keyfile
-        - --storage.dataDir
+        - --storage.dir
         - /mnt/keep-client/data
         - --network.port
         - "3919"
-        - --network.announcedAddresses
-        - /dns4/keep-client-7.default.svc.cluster.local/tcp/3919
-        - --network.peers
-        - /dns4/keep-client-6.default.svc.cluster.local/tcp/3919/ipfs/16Uiu2HAmNT1E8Hepthx6sgoHXb7WDpCk9ecPTN7J1FvaD76SvvPG
-        - --metrics.port
+        - --clientInfo.port
         - "9601"
-        - --diagnostics.port
-        - "9701"
       initContainers:
       - name: initcontainer-beacon
         image: gcr.io/keep-test-f3e0/keep-random-beacon-hardhat:latest
@@ -1614,20 +1566,18 @@ metadata:
 spec:
   type: LoadBalancer
   ports:
-  - port: 3919
-    targetPort: 3919
-    name: network
-  - port: 9601
-    targetPort: 9601
-    name: metrics
-  - port: 9701
-    targetPort: 9701
-    name: diagnostics
+  - name: network
+    port: 3919
+    targetPort: network
+  - name: client-info
+    port: 9601
+    targetPort: client-info
   selector:
     app: keep
     type: client
     id: "7"
     network: goerli
+  loadBalancerIP: null
 ---
 apiVersion: apps/v1
 kind: StatefulSet
@@ -1680,9 +1630,10 @@ spec:
         image: gcr.io/keep-test-f3e0/keep-client:latest
         imagePullPolicy: Always
         ports:
-        - containerPort: 3919
-        - containerPort: 9601
-        - containerPort: 9701
+        - name: network
+          containerPort: 3919
+        - name: client-info
+          containerPort: 9601
         env:
         - name: KEEP_ETHEREUM_PASSWORD
           valueFrom:
@@ -1711,18 +1662,12 @@ spec:
         - $(ETH_WS_URL)
         - --ethereum.keyFile
         - /mnt/keep-client/keyfile/account-8-keyfile
-        - --storage.dataDir
+        - --storage.dir
         - /mnt/keep-client/data
         - --network.port
         - "3919"
-        - --network.announcedAddresses
-        - /dns4/keep-client-8.default.svc.cluster.local/tcp/3919
-        - --network.peers
-        - /dns4/keep-client-7.default.svc.cluster.local/tcp/3919/ipfs/16Uiu2HAmNnbEQy4wi9KNoyoGh3nZy5urkbf5oUKrw69XmVrKeowd
-        - --metrics.port
+        - --clientInfo.port
         - "9601"
-        - --diagnostics.port
-        - "9701"
       initContainers:
       - name: initcontainer-beacon
         image: gcr.io/keep-test-f3e0/keep-random-beacon-hardhat:latest
@@ -1818,20 +1763,18 @@ metadata:
 spec:
   type: LoadBalancer
   ports:
-  - port: 3919
-    targetPort: 3919
-    name: network
-  - port: 9601
-    targetPort: 9601
-    name: metrics
-  - port: 9701
-    targetPort: 9701
-    name: diagnostics
+  - name: network
+    port: 3919
+    targetPort: network
+  - name: client-info
+    port: 9601
+    targetPort: client-info
   selector:
     app: keep
     type: client
     id: "8"
     network: goerli
+  loadBalancerIP: null
 ---
 apiVersion: apps/v1
 kind: StatefulSet
@@ -1884,9 +1827,10 @@ spec:
         image: gcr.io/keep-test-f3e0/keep-client:latest
         imagePullPolicy: Always
         ports:
-        - containerPort: 3919
-        - containerPort: 9601
-        - containerPort: 9701
+        - name: network
+          containerPort: 3919
+        - name: client-info
+          containerPort: 9601
         env:
         - name: KEEP_ETHEREUM_PASSWORD
           valueFrom:
@@ -1915,18 +1859,12 @@ spec:
         - $(ETH_WS_URL)
         - --ethereum.keyFile
         - /mnt/keep-client/keyfile/account-9-keyfile
-        - --storage.dataDir
+        - --storage.dir
         - /mnt/keep-client/data
         - --network.port
         - "3919"
-        - --network.announcedAddresses
-        - /dns4/keep-client-9.default.svc.cluster.local/tcp/3919
-        - --network.peers
-        - /dns4/keep-client-8.default.svc.cluster.local/tcp/3919/ipfs/16Uiu2HAmCJ9iupUiWed9NmpsPG7W2EiccEceuDrKZuQe7mkyAQxv
-        - --metrics.port
+        - --clientInfo.port
         - "9601"
-        - --diagnostics.port
-        - "9701"
       initContainers:
       - name: initcontainer-beacon
         image: gcr.io/keep-test-f3e0/keep-random-beacon-hardhat:latest
@@ -2022,17 +1960,15 @@ metadata:
 spec:
   type: LoadBalancer
   ports:
-  - port: 3919
-    targetPort: 3919
-    name: network
-  - port: 9601
-    targetPort: 9601
-    name: metrics
-  - port: 9701
-    targetPort: 9701
-    name: diagnostics
+  - name: network
+    port: 3919
+    targetPort: network
+  - name: client-info
+    port: 9601
+    targetPort: client-info
   selector:
     app: keep
     type: client
     id: "9"
     network: goerli
+  loadBalancerIP: null

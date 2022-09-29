@@ -1,16 +1,25 @@
-package metrics
+package clientinfo
 
 import (
-	"context"
+	"fmt"
 	"time"
 
-	"github.com/ipfs/go-log"
-	"github.com/keep-network/keep-common/pkg/metrics"
+	"github.com/keep-network/keep-common/pkg/clientinfo"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/net"
+
+	commonClientInfo "github.com/keep-network/keep-common/pkg/clientinfo"
 )
 
-var logger = log.Logger("keep-metrics")
+type Source func() float64
+
+// Names under which metrics are exposed.
+const (
+	ConnectedPeersCountMetricName     = "connected_peers_count"
+	ConnectedBootstrapCountMetricName = "connected_bootstrap_count"
+	EthConnectivityMetricName         = "eth_connectivity"
+	ClientInfoMetricName              = "client_info"
+)
 
 const (
 	// DefaultNetworkMetricsTick is the default duration of the
@@ -19,35 +28,14 @@ const (
 	// DefaultEthereumMetricsTick is the default duration of the
 	// observation tick for Ethereum metrics.
 	DefaultEthereumMetricsTick = 10 * time.Minute
+	// The duration of the observation tick for all application-specific
+	// metrics.
+	ApplicationMetricsTick = 1 * time.Minute
 )
-
-// Config stores meta-info about metrics.
-type Config struct {
-	Port                int
-	NetworkMetricsTick  time.Duration
-	EthereumMetricsTick time.Duration
-}
-
-// Initialize set up the metrics registry and enables metrics server.
-func Initialize(
-	port int,
-) (*metrics.Registry, bool) {
-	if port == 0 {
-		return nil, false
-	}
-
-	registry := metrics.NewRegistry()
-
-	registry.EnableServer(port)
-
-	return registry, true
-}
 
 // ObserveConnectedPeersCount triggers an observation process of the
 // connected_peers_count metric.
-func ObserveConnectedPeersCount(
-	ctx context.Context,
-	registry *metrics.Registry,
+func (r *Registry) ObserveConnectedPeersCount(
 	netProvider net.Provider,
 	tick time.Duration,
 ) {
@@ -56,20 +44,16 @@ func ObserveConnectedPeersCount(
 		return float64(len(connectedPeers))
 	}
 
-	observe(
-		ctx,
-		"connected_peers_count",
+	r.observe(
+		ConnectedPeersCountMetricName,
 		input,
-		registry,
 		validateTick(tick, DefaultNetworkMetricsTick),
 	)
 }
 
 // ObserveConnectedBootstrapCount triggers an observation process of the
 // connected_bootstrap_count metric.
-func ObserveConnectedBootstrapCount(
-	ctx context.Context,
-	registry *metrics.Registry,
+func (r *Registry) ObserveConnectedBootstrapCount(
 	netProvider net.Provider,
 	bootstraps []string,
 	tick time.Duration,
@@ -86,20 +70,16 @@ func ObserveConnectedBootstrapCount(
 		return float64(currentCount)
 	}
 
-	observe(
-		ctx,
-		"connected_bootstrap_count",
+	r.observe(
+		ConnectedBootstrapCountMetricName,
 		input,
-		registry,
 		validateTick(tick, DefaultNetworkMetricsTick),
 	)
 }
 
 // ObserveEthConnectivity triggers an observation process of the
 // eth_connectivity metric.
-func ObserveEthConnectivity(
-	ctx context.Context,
-	registry *metrics.Registry,
+func (r *Registry) ObserveEthConnectivity(
 	blockCounter chain.BlockCounter,
 	tick time.Duration,
 ) {
@@ -113,29 +93,53 @@ func ObserveEthConnectivity(
 		return 1
 	}
 
-	observe(
-		ctx,
-		"eth_connectivity",
+	r.observe(
+		EthConnectivityMetricName,
 		input,
-		registry,
 		validateTick(tick, DefaultEthereumMetricsTick),
 	)
 }
 
-func observe(
-	ctx context.Context,
+// ObserveApplicationSource triggers an observation process of
+// application-specific metrics.
+func (r *Registry) ObserveApplicationSource(
+	application string,
+	inputs map[string]Source,
+) {
+	for k, v := range inputs {
+		r.observe(
+			fmt.Sprintf("%s_%s", application, k),
+			v,
+			ApplicationMetricsTick,
+		)
+	}
+}
+
+// RegisterMetricClientInfo registers static client information labels for metrics.
+func (r *Registry) RegisterMetricClientInfo(version string) {
+	_, err := r.NewMetricInfo(
+		ClientInfoMetricName,
+		[]commonClientInfo.Label{
+			commonClientInfo.NewLabel("version", version),
+		},
+	)
+	if err != nil {
+		logger.Warnf("could not register metric client info: [%v]", err)
+	}
+}
+
+func (r *Registry) observe(
 	name string,
-	input metrics.ObserverInput,
-	registry *metrics.Registry,
+	input Source,
 	tick time.Duration,
 ) {
-	observer, err := registry.NewGaugeObserver(name, input)
+	observer, err := r.NewMetricGaugeObserver(name, clientinfo.MetricObserverInput(input))
 	if err != nil {
-		logger.Warningf("could not create gauge observer [%v]", name)
+		logger.Warnf("could not create gauge observer [%v]", name)
 		return
 	}
 
-	observer.Observe(ctx, tick)
+	observer.Observe(r.ctx, tick)
 
 	logger.Infof("observing %s with [%s] tick", name, tick)
 }

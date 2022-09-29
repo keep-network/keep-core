@@ -1,34 +1,22 @@
-node_modules/
-artifacts/
-build/
-vendor/
-_local/
-*.swp
-*.swo
+# MacOS
 *.DS_Store
-,*
-*.out
-*.abi
-*.account
 
 # Executables
-debug
-debug.test
-keep-core
-main
-main.test
+/keep-client
 
 # IDEs
 .vscode/
 .idea/
 
-# Infrastructure
-.terraform
-infrastructure/gcp/service-accounts*
-.secrets*
+# Vim
+*.swp
+*.swo
 
-# keys
-keystore
+# Infrastructure
+/infrastructure/gcp/service-accounts*
+
+# Keys
+keystore/
 keep_accounts
 
 # Python and IPython
@@ -37,25 +25,35 @@ __pycache__
 *.pyc
 
 # Configuration files
-configs
-!configs/config.toml.SAMPLE
+/configs/
+!/configs/config.toml.SAMPLE
+
+# Application Working Directory
+.keep/
 
 # Private testnet artifacts
 *-keep-client-deployment-bundle.tar.gz
-keep-client-snapshot.tar
+
+# Node
+node_modules/
 
 # Yarn
 yarn-error.log
 
-# Hardhat
-cache/
-export.json
-
-# TypeScript
-typechain/
+# Solidity
+/solidity*/**/artifacts/
+/solidity*/**/build/
+/solidity*/**/cache/
+/solidity*/**/typechain/
+/solidity*/**/export.json
 
 # Go bindings generator
-pkg/chain/*/*/gen/_address
+/pkg/chain/**/gen/_address/
+/pkg/chain/**/gen/_contracts/
+/pkg/chain/**/gen/abi/*.abi
 
 # Temporary directory
 tmp/
+
+# Output directory
+out/

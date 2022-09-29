@@ -2,7 +2,7 @@ import type { HardhatRuntimeEnvironment } from "hardhat/types"
 import type { DeployFunction } from "hardhat-deploy/types"
 
 const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
-  const { getNamedAccounts, deployments } = hre
+  const { getNamedAccounts, deployments, helpers } = hre
   const { deployer } = await getNamedAccounts()
 
   const WalletRegistry = await deployments.get("WalletRegistry")
@@ -18,6 +18,10 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
       waitConfirmations: 1,
     }
   )
+
+  if (hre.network.tags.etherscan) {
+    await helpers.etherscan.verify(WalletRegistryGovernance)
+  }
 
   if (hre.network.tags.tenderly) {
     await hre.tenderly.verify({

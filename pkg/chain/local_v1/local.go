@@ -131,7 +131,7 @@ func (c *localChain) OnRelayEntryRequested(
 	})
 }
 
-func (c *localChain) SelectGroup(seed *big.Int) ([]chain.Address, error) {
+func (c *localChain) SelectGroup(seed *big.Int) (chain.Addresses, error) {
 	panic("not implemented")
 }
 
@@ -424,6 +424,14 @@ func (c *localChain) CanRestoreRewardEligibility() (bool, error) {
 }
 
 func (c *localChain) RestoreRewardEligibility() error {
+	panic("unsupported")
+}
+
+func (c *localChain) IsChaosnetActive() (bool, error) {
+	panic("unsupported")
+}
+
+func (c *localChain) IsBetaOperator() (bool, error) {
 	panic("unsupported")
 }
 

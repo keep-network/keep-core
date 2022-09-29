@@ -3,14 +3,15 @@ import type { DeployFunction } from "hardhat-deploy/types"
 
 const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   const { getNamedAccounts, deployments, helpers } = hre
-  const { deployer } = await getNamedAccounts()
+  const { deployer, chaosnetOwner } = await getNamedAccounts()
+  const { execute } = deployments
   const { to1e18 } = helpers.number
 
-  const POOL_WEIGHT_DIVISOR = to1e18(1) // TODO: Update value
+  const POOL_WEIGHT_DIVISOR = to1e18(1)
 
   const T = await deployments.get("T")
 
-  const SortitionPool = await deployments.deploy("EcdsaSortitionPool", {
+  const EcdsaSortitionPool = await deployments.deploy("EcdsaSortitionPool", {
     contract: "SortitionPool",
     from: deployer,
     args: [T.address, POOL_WEIGHT_DIVISOR],
@@ -18,14 +19,21 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
     waitConfirmations: 1,
   })
 
+  await execute(
+    "EcdsaSortitionPool",
+    { from: deployer, log: true, waitConfirmations: 1 },
+    "transferChaosnetOwnerRole",
+    chaosnetOwner
+  )
+
   if (hre.network.tags.etherscan) {
-    await helpers.etherscan.verify(SortitionPool)
+    await helpers.etherscan.verify(EcdsaSortitionPool)
   }
 
   if (hre.network.tags.tenderly) {
     await hre.tenderly.verify({
       name: "EcdsaSortitionPool",
-      address: SortitionPool.address,
+      address: EcdsaSortitionPool.address,
     })
   }
 }

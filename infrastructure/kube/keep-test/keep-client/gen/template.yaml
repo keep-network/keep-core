@@ -55,9 +55,10 @@ spec:
           image: "gcr.io/keep-test-f3e0/keep-client:latest"
           imagePullPolicy: Always
           ports:
-            - containerPort: 3919
-            - containerPort: 9601
-            - containerPort: 9701
+            - name: network
+              containerPort: 3919
+            - name: client-info
+              containerPort: 9601
           env:
             - name: KEEP_ETHEREUM_PASSWORD
               valueFrom:
@@ -85,20 +86,20 @@ spec:
             - $(ETH_WS_URL)
             - "--ethereum.keyFile"
             -  #@ "/mnt/keep-client/keyfile/" + account() + "-keyfile"
-            - "--storage.dataDir"
+            - "--storage.dir"
             - "/mnt/keep-client/data"
             - "--network.port"
             - "3919"
+            #@ if client.publicAnnouncedAddress:
             - "--network.announcedAddresses"
-            -  #@ "/dns4/" + name() + ".default.svc.cluster.local/tcp/3919"
+            -  #@ "/dns4/" + client.publicAnnouncedAddress + "/tcp/3919"
+            #@ end
             #@ if client.networkPeers:
             - "--network.peers"
             -  #@ client.networkPeers
             #@ end
-            - "--metrics.port"
+            - "--clientInfo.port"
             - "9601"
-            - "--diagnostics.port"
-            - "9701"
       initContainers:
         #@ for/end initcontainer in data.values.initContainers:
         - name: #@ initcontainer.name
@@ -153,14 +154,12 @@ metadata:
 spec:
   type: LoadBalancer
   ports:
-    - port: 3919
-      targetPort: 3919
-      name: network
-    - port: 9601
-      targetPort: 9601
-      name: metrics
-    - port: 9701
-      targetPort: 9701
-      name: diagnostics
+    - name: network
+      port: 3919
+      targetPort: network
+    - name: client-info
+      port: 9601
+      targetPort: client-info
   selector: #@ labels()
+  loadBalancerIP: #@ client.staticIP
 #@ end

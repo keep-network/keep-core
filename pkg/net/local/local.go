@@ -4,8 +4,9 @@
 package local
 
 import (
-	"github.com/keep-network/keep-core/pkg/operator"
 	"sync"
+
+	"github.com/keep-network/keep-core/pkg/operator"
 
 	"github.com/ipfs/go-log"
 	"github.com/keep-network/keep-core/pkg/net"
@@ -98,6 +99,17 @@ func (lcm *localConnectionManager) ConnectedPeers() []string {
 		connectedPeers = append(connectedPeers, peer)
 	}
 	return connectedPeers
+}
+
+func (lcm *localConnectionManager) ConnectedPeersAddrInfo() map[string][]string {
+	lcm.mutex.Lock()
+	defer lcm.mutex.Unlock()
+	var peersAddrInfo map[string][]string
+	addresses := []string{"/ip4/localhost/"}
+	for peer := range lcm.peers {
+		peersAddrInfo[peer] = addresses
+	}
+	return peersAddrInfo
 }
 
 func (lcm *localConnectionManager) GetPeerPublicKey(

@@ -1,6 +1,8 @@
 # environment is used as a tag of the npm packages for contracts artifacts. If
 # not overwritten it defaults to `development`.
-environment = development
+ifndef environment
+override environment = development
+endif
 
 # Build with contract packages published to the NPM registry and tagged `development`.
 development:
@@ -19,7 +21,7 @@ goerli:
 local:
 	make all environment=local
 
-all: get_artifacts generate build cmd-help
+all: get_artifacts generate build cmd-help release
 
 modules := beacon \
 	ecdsa \
@@ -76,21 +78,73 @@ else
 	$(foreach module,$(modules),$(call get_npm_package,$(module),$(environment)))
 endif
 
-generate:
+proto_files := $(shell find ./pkg -name '*.proto')
+proto_targets := $(proto_files:.proto=.pb.go)
+
+gen_proto: ${proto_targets}
+
+%.pb.go: %.proto go.mod go.sum
+	protoc --go_out=. --go_opt=paths=source_relative $*.proto
+
+generate: gen_proto
 	$(info Running Go code generator)
 	go generate ./...
 
-version = $(shell git describe --tags --match "v[0-9]*" HEAD)
-revision = $(shell git rev-parse --short HEAD)
+# Default parameters for client building. They can be overriten when calling the
+# make command.
+ifndef version
+override version = $(shell git describe --tags --match "v[0-9]*" HEAD)
+endif
+ifndef revision
+override revision = $(shell git rev-parse --short HEAD)
+endif
 
-go_build_cmd = go build -ldflags "-X main.version=$(version) -X main.revision=$(revision)" -a -o $(1) .
+app_name := keep-client
+
+define go_build_cmd
+	$(eval out_dir := $(1))
+	$(eval file_name := $(2))
+	$(eval os := $(3))
+	$(eval arch := $(4))
+
+	GOOS=$(os) GOARCH=$(arch) go build \
+		-ldflags "-X github.com/keep-network/keep-core/build.Version=$(version) -X github.com/keep-network/keep-core/build.Revision=$(revision)" \
+		-o $(out_dir)/$(file_name) \
+		-a \
+		.
+endef
+
+define go_build_platform_cmd
+	$(eval os := $(firstword $(subst /, ,$(1))))
+	$(eval arch := $(lastword $(subst /, ,$(1))))
+	$(eval file_name := $(app_name)-$(environment)-$(version)-$(os)-$(arch))
+
+	$(call go_build_cmd,out/bin,$(file_name),$(os),$(arch))
+endef
 
 build:
 	$(info Building Go code)
-	$(call go_build_cmd,keep-client)
+	$(call go_build_cmd,.,$(app_name))
+
+platforms := linux/amd64 \
+	darwin/amd64
+
+build_multi:
+	$(info Building client binaries for multiple platforms)
+	$(foreach platform,$(platforms),$(call go_build_platform_cmd,$(platform)))
+
+out/bin/%.tar.gz:
+	cd $(@D) && cp $* keep-client && tar -czvf $*.tar.gz keep-client && rm $* keep-client
+	cd $(@D) && md5sum $*.tar.gz > $*.md5
+	cd $(@D) && sha256sum $*.tar.gz > $*.sha256
+
+binaries := $(addprefix out/bin/$(app_name)-$(environment)-$(version)-, $(subst /,-,$(platforms)))
+build_packages = $(addsuffix .tar.gz,$(binaries))
+
+release: build_multi $(build_packages)
 
 cmd-help: build
-	@echo '$$ keep-client start --help' > docs/resources/client-start-help
-	./keep-client start --help >> docs/resources/client-start-help
+	@echo '$$ $(app_name) start --help' > docs/resources/client-start-help
+	./$(app_name) start --help >> docs/resources/client-start-help
 
-.PHONY: all development goerli download_artifacts generate build cmd-help
+.PHONY: all development goerli download_artifacts generate gen_proto build cmd-help release build_multi

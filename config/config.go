@@ -14,10 +14,9 @@ import (
 	"golang.org/x/crypto/ssh/terminal"
 
 	commonEthereum "github.com/keep-network/keep-common/pkg/chain/ethereum"
-	"github.com/keep-network/keep-core/pkg/beacon/registry"
-	"github.com/keep-network/keep-core/pkg/diagnostics"
-	"github.com/keep-network/keep-core/pkg/metrics"
+	"github.com/keep-network/keep-core/pkg/clientinfo"
 	"github.com/keep-network/keep-core/pkg/net/libp2p"
+	"github.com/keep-network/keep-core/pkg/storage"
 	"github.com/keep-network/keep-core/pkg/tbtc"
 )
 
@@ -35,12 +34,11 @@ const (
 
 // Config is the top level config structure.
 type Config struct {
-	Ethereum    commonEthereum.Config
-	LibP2P      libp2p.Config `mapstructure:"network"`
-	Storage     registry.Config
-	Metrics     metrics.Config
-	Diagnostics diagnostics.Config
-	Tbtc        tbtc.Config
+	Ethereum   commonEthereum.Config
+	LibP2P     libp2p.Config `mapstructure:"network"`
+	Storage    storage.Config
+	ClientInfo clientinfo.Config
+	Tbtc       tbtc.Config
 }
 
 // Bind the flags to the viper configuration. Viper reads configuration from
@@ -177,9 +175,9 @@ func validateConfig(config *Config, categories ...Category) error {
 				))
 			}
 		case Storage:
-			if config.Storage.DataDir == "" {
+			if config.Storage.Dir == "" {
 				result = multierror.Append(result, fmt.Errorf(
-					"missing value for storage.dataDir; see storage section in configuration",
+					"missing value for storage.dir; see storage section in configuration",
 				))
 			}
 		}
