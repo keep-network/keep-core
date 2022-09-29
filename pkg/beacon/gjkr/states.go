@@ -93,7 +93,7 @@ func (ekpgs *ephemeralKeyPairGenerationState) Receive(msg net.Message) error {
 		if ekpgs.member.shouldAcceptMessage(
 			phaseMessage.SenderID(),
 			msg.SenderPublicKey(),
-		) {
+		) && ekpgs.member.sessionID == phaseMessage.sessionID {
 			ekpgs.phaseMessages = append(ekpgs.phaseMessages, phaseMessage)
 		}
 	}
@@ -198,7 +198,7 @@ func (cs *commitmentState) Receive(msg net.Message) error {
 		if cs.member.shouldAcceptMessage(
 			phaseMessage.SenderID(),
 			msg.SenderPublicKey(),
-		) {
+		) && cs.member.sessionID == phaseMessage.sessionID {
 			cs.phaseSharesMessages = append(cs.phaseSharesMessages, phaseMessage)
 		}
 
@@ -206,7 +206,7 @@ func (cs *commitmentState) Receive(msg net.Message) error {
 		if cs.member.shouldAcceptMessage(
 			phaseMessage.SenderID(),
 			msg.SenderPublicKey(),
-		) {
+		) && cs.member.sessionID == phaseMessage.sessionID {
 			cs.phaseCommitmentsMessages = append(
 				cs.phaseCommitmentsMessages,
 				phaseMessage,
@@ -280,7 +280,7 @@ func (cvs *commitmentsVerificationState) Receive(msg net.Message) error {
 		if cvs.member.shouldAcceptMessage(
 			phaseMessage.SenderID(),
 			msg.SenderPublicKey(),
-		) {
+		) && cvs.member.sessionID == phaseMessage.sessionID {
 			cvs.phaseAccusationsMessages = append(
 				cvs.phaseAccusationsMessages,
 				phaseMessage,
@@ -425,7 +425,7 @@ func (pss *pointsShareState) Receive(msg net.Message) error {
 		if pss.member.shouldAcceptMessage(
 			phaseMessage.SenderID(),
 			msg.SenderPublicKey(),
-		) {
+		) && pss.member.sessionID == phaseMessage.sessionID {
 			pss.phaseMessages = append(pss.phaseMessages, phaseMessage)
 		}
 	}
@@ -490,7 +490,7 @@ func (pvs *pointsValidationState) Receive(msg net.Message) error {
 		if pvs.member.shouldAcceptMessage(
 			phaseMessage.SenderID(),
 			msg.SenderPublicKey(),
-		) {
+		) && pvs.member.sessionID == phaseMessage.sessionID {
 			pvs.phaseMessages = append(pvs.phaseMessages, phaseMessage)
 		}
 	}
@@ -598,7 +598,7 @@ func (rs *keyRevealState) Receive(msg net.Message) error {
 		if rs.member.shouldAcceptMessage(
 			phaseMessage.SenderID(),
 			msg.SenderPublicKey(),
-		) {
+		) && rs.member.sessionID == phaseMessage.sessionID {
 			rs.phaseMessages = append(rs.phaseMessages, phaseMessage)
 		}
 	}

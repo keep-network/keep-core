@@ -19,6 +19,8 @@ type DKGResultHashSignatureMessage struct {
 	// Public key of the sender. It will be used to verify the signature by
 	// the receiver.
 	publicKey []byte
+	// Identifier of the particular DKG session this message is part of.
+	sessionID string
 }
 
 // SenderID returns protocol-level identifier of the message sender.

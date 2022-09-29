@@ -378,6 +378,7 @@ func TestShouldAcceptMessage(t *testing.T) {
 				group.MemberIndex(1),
 				dkgGroup,
 				membershipValdator,
+				"session-1",
 			)
 
 			for _, inactiveMemberID := range test.inactiveMembersIDs {
@@ -446,6 +447,7 @@ func initializeSigningMembers(groupSize int) (
 			memberIndex,
 			dkgGroup,
 			membershipValidator,
+			"session-1",
 		)
 	}
 

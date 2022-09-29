@@ -361,7 +361,7 @@ func TestResolvePublicKeySharePointsAccusationsMessages(t *testing.T) {
 			shares := make(map[group.MemberIndex]*peerShares)
 			shares[test.accuserID] = &peerShares{encryptedShareS, encryptedShareT}
 			justifyingMember.evidenceLog.PutPeerSharesMessage(
-				&PeerSharesMessage{test.accusedID, shares},
+				&PeerSharesMessage{test.accusedID, shares, "session-1"},
 			)
 
 			if test.modifyEvidenceLog != nil {

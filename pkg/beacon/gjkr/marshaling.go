@@ -37,6 +37,7 @@ func (epkm *EphemeralPublicKeyMessage) Marshal() ([]byte, error) {
 	return proto.Marshal(&pb.EphemeralPublicKey{
 		SenderID:            uint32(epkm.senderID),
 		EphemeralPublicKeys: ephemeralPublicKeys,
+		SessionID:           epkm.sessionID,
 	})
 }
 
@@ -59,6 +60,7 @@ func (epkm *EphemeralPublicKeyMessage) Unmarshal(bytes []byte) error {
 	}
 
 	epkm.ephemeralPublicKeys = ephemeralPublicKeys
+	epkm.sessionID = pbMsg.SessionID
 
 	return nil
 }
@@ -80,6 +82,7 @@ func (mcm *MemberCommitmentsMessage) Marshal() ([]byte, error) {
 	return proto.Marshal(&pb.MemberCommitments{
 		SenderID:    uint32(mcm.senderID),
 		Commitments: commitmentBytes,
+		SessionID:   mcm.sessionID,
 	})
 }
 
@@ -109,6 +112,7 @@ func (mcm *MemberCommitmentsMessage) Unmarshal(bytes []byte) error {
 		commitments = append(commitments, commitment)
 	}
 	mcm.commitments = commitments
+	mcm.sessionID = pbMsg.SessionID
 
 	return nil
 }
@@ -135,8 +139,9 @@ func (psm *PeerSharesMessage) Marshal() ([]byte, error) {
 	}
 
 	return proto.Marshal(&pb.PeerShares{
-		SenderID: uint32(psm.senderID),
-		Shares:   pbShares,
+		SenderID:  uint32(psm.senderID),
+		Shares:    pbShares,
+		SessionID: psm.sessionID,
 	})
 }
 
@@ -169,6 +174,7 @@ func (psm *PeerSharesMessage) Unmarshal(bytes []byte) error {
 	}
 
 	psm.shares = shares
+	psm.sessionID = pbMsg.SessionID
 
 	return nil
 }
@@ -190,6 +196,7 @@ func (ssam *SecretSharesAccusationsMessage) Marshal() ([]byte, error) {
 	return proto.Marshal(&pb.SecretSharesAccusations{
 		SenderID:           uint32(ssam.senderID),
 		AccusedMembersKeys: accusedMembersKeys,
+		SessionID:          ssam.sessionID,
 	})
 }
 
@@ -212,6 +219,7 @@ func (ssam *SecretSharesAccusationsMessage) Unmarshal(bytes []byte) error {
 	}
 
 	ssam.accusedMembersKeys = accusedMembersKeys
+	ssam.sessionID = pbMsg.SessionID
 
 	return nil
 }
@@ -237,6 +245,7 @@ func (mpspm *MemberPublicKeySharePointsMessage) Marshal() ([]byte, error) {
 	return proto.Marshal(&pb.MemberPublicKeySharePoints{
 		SenderID:             uint32(mpspm.senderID),
 		PublicKeySharePoints: keySharePoints,
+		SessionID:            mpspm.sessionID,
 	})
 }
 
@@ -266,6 +275,7 @@ func (mpspm *MemberPublicKeySharePointsMessage) Unmarshal(bytes []byte) error {
 		keySharePoints = append(keySharePoints, keySharePoint)
 	}
 	mpspm.publicKeySharePoints = keySharePoints
+	mpspm.sessionID = pbMsg.SessionID
 
 	return nil
 }
@@ -287,6 +297,7 @@ func (pam *PointsAccusationsMessage) Marshal() ([]byte, error) {
 	return proto.Marshal(&pb.PointsAccusations{
 		SenderID:           uint32(pam.senderID),
 		AccusedMembersKeys: accusedMembersKeys,
+		SessionID:          pam.sessionID,
 	})
 }
 
@@ -309,6 +320,7 @@ func (pam *PointsAccusationsMessage) Unmarshal(bytes []byte) error {
 	}
 
 	pam.accusedMembersKeys = accusedMembersKeys
+	pam.sessionID = pbMsg.SessionID
 
 	return nil
 }
@@ -330,6 +342,7 @@ func (mekm *MisbehavedEphemeralKeysMessage) Marshal() ([]byte, error) {
 	return proto.Marshal(&pb.MisbehavedEphemeralKeys{
 		SenderID:    uint32(mekm.senderID),
 		PrivateKeys: privateKeys,
+		SessionID:   mekm.sessionID,
 	})
 }
 
@@ -352,6 +365,7 @@ func (mekm *MisbehavedEphemeralKeysMessage) Unmarshal(bytes []byte) error {
 	}
 
 	mekm.privateKeys = privateKeys
+	mekm.sessionID = pbMsg.SessionID
 
 	return nil
 }

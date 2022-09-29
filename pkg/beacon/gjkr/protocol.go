@@ -55,6 +55,7 @@ func (em *EphemeralKeyPairGeneratingMember) GenerateEphemeralKeyPair() (
 	return &EphemeralPublicKeyMessage{
 		senderID:            em.ID,
 		ephemeralPublicKeys: ephemeralKeys,
+		sessionID:           em.sessionID,
 	}, nil
 }
 
@@ -187,7 +188,7 @@ func (cm *CommittingMember) CalculateMembersSharesAndCommitments() (
 
 	// Calculate shares for other group members by evaluating polynomials
 	// defined by coefficients `a_i` and `b_i`
-	var sharesMessage = newPeerSharesMessage(cm.ID)
+	var sharesMessage = newPeerSharesMessage(cm.ID, cm.sessionID)
 	for _, receiverID := range cm.group.MemberIDs() {
 		// s_j = f_(j) mod q
 		memberShareS := cm.evaluateMemberShare(receiverID, coefficientsA)
@@ -236,6 +237,7 @@ func (cm *CommittingMember) CalculateMembersSharesAndCommitments() (
 	commitmentsMessage := &MemberCommitmentsMessage{
 		senderID:    cm.ID,
 		commitments: commitments,
+		sessionID:   cm.sessionID,
 	}
 
 	return sharesMessage, commitmentsMessage, nil
@@ -447,6 +449,7 @@ func (cvm *CommitmentsVerifyingMember) VerifyReceivedSharesAndCommitmentsMessage
 	return &SecretSharesAccusationsMessage{
 		senderID:           cvm.ID,
 		accusedMembersKeys: accusedMembersKeys,
+		sessionID:          cvm.sessionID,
 	}, nil
 }
 
@@ -850,6 +853,7 @@ func (sm *SharingMember) CalculatePublicKeySharePoints() *MemberPublicKeySharePo
 	return &MemberPublicKeySharePointsMessage{
 		senderID:             sm.ID,
 		publicKeySharePoints: sm.publicKeySharePoints,
+		sessionID:            sm.sessionID,
 	}
 }
 
@@ -898,6 +902,7 @@ func (sm *SharingMember) VerifyPublicKeySharePoints(
 	return &PointsAccusationsMessage{
 		senderID:           sm.ID,
 		accusedMembersKeys: accusedMembersKeys,
+		sessionID:          sm.sessionID,
 	}, nil
 }
 
@@ -1210,6 +1215,7 @@ func (rm *RevealingMember) RevealMisbehavedMembersKeys() (
 	return &MisbehavedEphemeralKeysMessage{
 		senderID:    rm.ID,
 		privateKeys: privateKeys,
+		sessionID:   rm.sessionID,
 	}, nil
 }
 

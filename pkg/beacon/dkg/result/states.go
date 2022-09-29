@@ -88,7 +88,8 @@ func (rss *resultSigningState) Receive(msg net.Message) error {
 		if rss.member.shouldAcceptMessage(
 			signedMessage.SenderID(),
 			msg.SenderPublicKey(),
-		) && isValidKeyUsed(signedMessage) {
+		) && isValidKeyUsed(signedMessage) &&
+			rss.member.sessionID == signedMessage.sessionID {
 			rss.signatureMessages = append(rss.signatureMessages, signedMessage)
 		}
 	}
