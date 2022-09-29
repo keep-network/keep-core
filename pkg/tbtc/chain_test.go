@@ -92,7 +92,15 @@ func (lc *localChain) RestoreRewardEligibility() error {
 	panic("unsupported")
 }
 
-func (lc *localChain) SelectGroup(seed *big.Int) ([]chain.Address, error) {
+func (lc *localChain) IsChaosnetActive() (bool, error) {
+	panic("unsupported")
+}
+
+func (lc *localChain) IsBetaOperator() (bool, error) {
+	panic("unsupported")
+}
+
+func (lc *localChain) SelectGroup(seed *big.Int) (chain.Addresses, error) {
 	panic("not implemented")
 }
 

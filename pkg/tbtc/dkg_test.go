@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/keep-network/keep-core/pkg/chain/local_v1"
+	"github.com/keep-network/keep-core/pkg/internal/testutils"
 
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/internal/tecdsatest"
@@ -703,7 +704,6 @@ func TestSignResult_ErrorDuringDkgResultHashCalculation(t *testing.T) {
 	}
 }
 
-
 func TestVerifySignature_VerificationSuccessful(t *testing.T) {
 	chain := Connect(5, 4, 3)
 	dkgResultSigner := newDkgResultSigner(chain)
@@ -817,10 +817,9 @@ func TestVerifySignature_VerificationError(t *testing.T) {
 	}
 }
 
-
 func TestSubmitResult_MemberSubmitsResult(t *testing.T) {
 	chain := Connect(5, 4, 3)
-	dkgResultSubmitter := newDkgResultSubmitter(chain)
+	dkgResultSubmitter := newDkgResultSubmitter(&testutils.MockLogger{}, chain)
 
 	testData, err := tecdsatest.LoadPrivateKeyShareTestFixtures(1)
 	if err != nil {
@@ -865,7 +864,7 @@ func TestSubmitResult_MemberSubmitsResult(t *testing.T) {
 
 func TestSubmitResult_MemberDoesNotSubmitsResult(t *testing.T) {
 	chain := Connect(5, 4, 3)
-	dkgResultSubmitter := newDkgResultSubmitter(chain)
+	dkgResultSubmitter := newDkgResultSubmitter(&testutils.MockLogger{}, chain)
 
 	testData, err := tecdsatest.LoadPrivateKeyShareTestFixtures(1)
 	if err != nil {
@@ -939,7 +938,7 @@ func TestSubmitResult_MemberDoesNotSubmitsResult(t *testing.T) {
 
 func TestSubmitResult_TooFewSignatures(t *testing.T) {
 	chain := Connect(5, 4, 3)
-	dkgResultSubmitter := newDkgResultSubmitter(chain)
+	dkgResultSubmitter := newDkgResultSubmitter(&testutils.MockLogger{}, chain)
 
 	testData, err := tecdsatest.LoadPrivateKeyShareTestFixtures(1)
 	if err != nil {
