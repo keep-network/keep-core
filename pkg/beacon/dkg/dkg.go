@@ -38,14 +38,17 @@ func ExecuteDKG(
 	gjkr.RegisterUnmarshallers(channel)
 	dkgResult.RegisterUnmarshallers(channel)
 
+	sessionID := seed.Text(16)
+
 	gjkrResult, gjkrEndBlockHeight, err := gjkr.Execute(
 		logger,
+		seed,
+		sessionID,
 		memberIndex,
 		beaconConfig.GroupSize,
 		blockCounter,
 		channel,
 		beaconConfig.DishonestThreshold(),
-		seed,
 		membershipValidator,
 		startBlockHeight,
 	)
@@ -71,6 +74,7 @@ func ExecuteDKG(
 
 	err = dkgResult.Publish(
 		logger,
+		sessionID,
 		memberIndex,
 		gjkrResult.Group,
 		membershipValidator,

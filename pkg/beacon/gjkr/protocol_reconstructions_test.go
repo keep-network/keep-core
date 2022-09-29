@@ -42,6 +42,7 @@ func TestRevealMisbehavedMembersKeys(t *testing.T) {
 	expectedResult := &MisbehavedEphemeralKeysMessage{
 		senderID:    firstMember.ID,
 		privateKeys: expectedDisqualifiedKeys,
+		sessionID:   "session-1",
 	}
 
 	result, err := firstMember.RevealMisbehavedMembersKeys()
@@ -187,7 +188,7 @@ func generateDisqualifiedMemberShares(
 	for _, disqualifiedMember := range disqualifiedMembers {
 		disqualifiedMemberShares[disqualifiedMember.ID] = make(map[group.MemberIndex]*big.Int)
 		// Simulate message broadcasted by disqualified member in Phase 3.
-		peerSharesMessage := newPeerSharesMessage(disqualifiedMember.ID)
+		peerSharesMessage := newPeerSharesMessage(disqualifiedMember.ID, "session-1")
 		commitments := make([]*bn256.G1, 0)
 
 		for i, otherMember := range otherMembers {
@@ -368,7 +369,7 @@ func TestReconstructMisbehavedIndividualKeys(t *testing.T) {
 
 	for _, disqualifiedMember := range disqualifiedMembers {
 		// Simulate message broadcasted by disqualified member in Phase 3.
-		peerSharesMessage := newPeerSharesMessage(disqualifiedMember.ID)
+		peerSharesMessage := newPeerSharesMessage(disqualifiedMember.ID, "session-1")
 		commitments := make([]*bn256.G1, 0)
 
 		for i, otherMember := range otherMembers {

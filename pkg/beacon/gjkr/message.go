@@ -26,6 +26,7 @@ type EphemeralPublicKeyMessage struct {
 	senderID group.MemberIndex // i
 
 	ephemeralPublicKeys map[group.MemberIndex]*ephemeral.PublicKey // j -> Y_ij
+	sessionID           string
 }
 
 // MemberCommitmentsMessage is a message payload that carries the sender's
@@ -37,6 +38,7 @@ type MemberCommitmentsMessage struct {
 	senderID group.MemberIndex
 
 	commitments []*bn256.G1 // slice of C_ik
+	sessionID   string
 }
 
 // PeerSharesMessage is a message payload that carries shares `s_ij` and `t_ij`
@@ -46,7 +48,8 @@ type MemberCommitmentsMessage struct {
 type PeerSharesMessage struct {
 	senderID group.MemberIndex // i
 
-	shares map[group.MemberIndex]*peerShares // j -> (s_ij, t_ij)
+	shares    map[group.MemberIndex]*peerShares // j -> (s_ij, t_ij)
+	sessionID string
 }
 
 type peerShares struct {
@@ -64,6 +67,7 @@ type SecretSharesAccusationsMessage struct {
 	senderID group.MemberIndex
 
 	accusedMembersKeys map[group.MemberIndex]*ephemeral.PrivateKey
+	sessionID          string
 }
 
 // MemberPublicKeySharePointsMessage is a message payload that carries the
@@ -74,6 +78,7 @@ type MemberPublicKeySharePointsMessage struct {
 	senderID group.MemberIndex
 
 	publicKeySharePoints []*bn256.G2 // A_ik = g^{a_ik} mod p
+	sessionID            string
 }
 
 // PointsAccusationsMessage is a message payload that carries all of the sender's
@@ -86,6 +91,7 @@ type PointsAccusationsMessage struct {
 	senderID group.MemberIndex
 
 	accusedMembersKeys map[group.MemberIndex]*ephemeral.PrivateKey
+	sessionID          string
 }
 
 // MisbehavedEphemeralKeysMessage is a message payload that carries sender's
@@ -96,6 +102,7 @@ type MisbehavedEphemeralKeysMessage struct {
 	senderID group.MemberIndex
 
 	privateKeys map[group.MemberIndex]*ephemeral.PrivateKey
+	sessionID   string
 }
 
 // SenderID returns protocol-level identifier of the message sender.
@@ -133,10 +140,14 @@ func (mekm *MisbehavedEphemeralKeysMessage) SenderID() group.MemberIndex {
 	return mekm.senderID
 }
 
-func newPeerSharesMessage(senderID group.MemberIndex) *PeerSharesMessage {
+func newPeerSharesMessage(
+	senderID group.MemberIndex,
+	sessionID string,
+) *PeerSharesMessage {
 	return &PeerSharesMessage{
-		senderID: senderID,
-		shares:   make(map[group.MemberIndex]*peerShares),
+		senderID:  senderID,
+		shares:    make(map[group.MemberIndex]*peerShares),
+		sessionID: sessionID,
 	}
 }
 

@@ -29,6 +29,9 @@ type memberCore struct {
 
 	// Cryptographic protocol parameters, the same for all members in the group.
 	protocolParameters *protocolParameters
+
+	// Identifier of the particular DKG session this member is part of.
+	sessionID string
 }
 
 // LocalMember represents one member in a threshold group, prior to the
@@ -235,6 +238,7 @@ func NewMember(
 	dishonestThreshold int,
 	membershipValidator *group.MembershipValidator,
 	seed *big.Int,
+	sessionID string,
 ) (*LocalMember, error) {
 	return &LocalMember{
 		memberCore: &memberCore{
@@ -244,6 +248,7 @@ func NewMember(
 			membershipValidator,
 			newDkgEvidenceLog(),
 			newProtocolParameters(seed),
+			sessionID,
 		},
 	}, nil
 }
