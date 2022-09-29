@@ -4,11 +4,6 @@ import type { DeployFunction, DeployOptions } from "hardhat-deploy/types"
 const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   const { getNamedAccounts, deployments, helpers } = hre
   const { deployer } = await getNamedAccounts()
-  const { to1e18 } = helpers.number
-
-  const minimumAuthorization = to1e18(40_000) // 40k T
-  const authorizationDecreaseDelay = 1_209_600 // 1 209 600 seconds = 14 days
-  const authorizationDecreaseChangePeriod = 1_209_600 // 1 209 600 seconds = 14 days
 
   const T = await deployments.get("T")
   const TokenStaking = await deployments.get("TokenStaking")
@@ -56,15 +51,6 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
     },
     ...deployOptions,
   })
-
-  await deployments.execute(
-    "RandomBeacon",
-    { from: deployer, log: true, waitConfirmations: 1 },
-    "updateAuthorizationParameters",
-    minimumAuthorization,
-    authorizationDecreaseDelay,
-    authorizationDecreaseChangePeriod
-  )
 
   await helpers.ownable.transferOwnership(
     "BeaconSortitionPool",
