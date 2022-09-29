@@ -96,9 +96,13 @@ CMD []
 #
 # Build Binaries
 #
-FROM build-sources AS build-bins
+FROM golang:1.18.3-bullseye AS build-bins
+
+ENV APP_DIR=/go/src/github.com/keep-network/keep-core
 
 WORKDIR $APP_DIR
+
+COPY --from=build-sources $APP_DIR $APP_DIR
 
 ARG ENVIRONMENT
 
