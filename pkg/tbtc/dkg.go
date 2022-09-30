@@ -462,12 +462,11 @@ func (drs *dkgResultSubmitter) SubmitResult(
 ) error {
 	config := drs.chain.GetConfig()
 
-	if len(signatures) < config.HonestThreshold {
+	if len(signatures) < config.GroupQuorum {
 		return fmt.Errorf(
-			"could not submit result with [%v] signatures for signature "+
-				"honest threshold [%v]",
+			"could not submit result with [%v] signatures for group quorum [%v]",
 			len(signatures),
-			config.HonestThreshold,
+			config.GroupQuorum,
 		)
 	}
 
