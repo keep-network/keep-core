@@ -920,9 +920,9 @@ func bDefeatFraudChallengeWithHeartbeat(c *cobra.Command, args []string) error {
 
 func bInitializeCommand() *cobra.Command {
 	c := &cobra.Command{
-		Use:                   "initialize [arg__bank] [arg__relay] [arg__treasury] [arg__ecdsaWalletRegistry] [arg__reimbursementPool] [arg__txProofDifficultyFactor]",
+		Use:                   "initialize [arg__bank] [arg__relay] [arg__treasury] [arg__ecdsaWalletRegistry] [arg__txProofDifficultyFactor]",
 		Short:                 "Calls the nonpayable method initialize on the Bridge contract.",
-		Args:                  cmd.ArgCountChecker(6),
+		Args:                  cmd.ArgCountChecker(5),
 		RunE:                  bInitialize,
 		SilenceUsage:          true,
 		DisableFlagsInUseLine: true,
@@ -968,18 +968,11 @@ func bInitialize(c *cobra.Command, args []string) error {
 			args[3],
 		)
 	}
-	arg__reimbursementPool, err := chainutil.AddressFromHex(args[4])
-	if err != nil {
-		return fmt.Errorf(
-			"couldn't parse parameter arg__reimbursementPool, a address, from passed value %v",
-			args[4],
-		)
-	}
-	arg__txProofDifficultyFactor, err := hexutil.DecodeBig(args[5])
+	arg__txProofDifficultyFactor, err := hexutil.DecodeBig(args[4])
 	if err != nil {
 		return fmt.Errorf(
 			"couldn't parse parameter arg__txProofDifficultyFactor, a uint96, from passed value %v",
-			args[5],
+			args[4],
 		)
 	}
 
@@ -994,7 +987,6 @@ func bInitialize(c *cobra.Command, args []string) error {
 			arg__relay,
 			arg__treasury,
 			arg__ecdsaWalletRegistry,
-			arg__reimbursementPool,
 			arg__txProofDifficultyFactor,
 		)
 		if err != nil {
@@ -1009,7 +1001,6 @@ func bInitialize(c *cobra.Command, args []string) error {
 			arg__relay,
 			arg__treasury,
 			arg__ecdsaWalletRegistry,
-			arg__reimbursementPool,
 			arg__txProofDifficultyFactor,
 			cmd.BlockFlagValue.Int,
 		)
@@ -1649,9 +1640,9 @@ func bTransferGovernance(c *cobra.Command, args []string) error {
 
 func bUpdateDepositParametersCommand() *cobra.Command {
 	c := &cobra.Command{
-		Use:                   "update-deposit-parameters [arg_depositDustThreshold] [arg_depositTreasuryFeeDivisor] [arg_depositTxMaxFee] [arg_depositRevealAheadPeriod]",
+		Use:                   "update-deposit-parameters [arg_depositDustThreshold] [arg_depositTreasuryFeeDivisor] [arg_depositTxMaxFee]",
 		Short:                 "Calls the nonpayable method updateDepositParameters on the Bridge contract.",
-		Args:                  cmd.ArgCountChecker(4),
+		Args:                  cmd.ArgCountChecker(3),
 		RunE:                  bUpdateDepositParameters,
 		SilenceUsage:          true,
 		DisableFlagsInUseLine: true,
@@ -1690,13 +1681,6 @@ func bUpdateDepositParameters(c *cobra.Command, args []string) error {
 			args[2],
 		)
 	}
-	arg_depositRevealAheadPeriod, err := decode.ParseUint[uint32](args[3], 32)
-	if err != nil {
-		return fmt.Errorf(
-			"couldn't parse parameter arg_depositRevealAheadPeriod, a uint32, from passed value %v",
-			args[3],
-		)
-	}
 
 	var (
 		transaction *types.Transaction
@@ -1708,7 +1692,6 @@ func bUpdateDepositParameters(c *cobra.Command, args []string) error {
 			arg_depositDustThreshold,
 			arg_depositTreasuryFeeDivisor,
 			arg_depositTxMaxFee,
-			arg_depositRevealAheadPeriod,
 		)
 		if err != nil {
 			return err
@@ -1721,7 +1704,6 @@ func bUpdateDepositParameters(c *cobra.Command, args []string) error {
 			arg_depositDustThreshold,
 			arg_depositTreasuryFeeDivisor,
 			arg_depositTxMaxFee,
-			arg_depositRevealAheadPeriod,
 			cmd.BlockFlagValue.Int,
 		)
 		if err != nil {
@@ -1823,9 +1805,9 @@ func bUpdateFraudParameters(c *cobra.Command, args []string) error {
 
 func bUpdateMovingFundsParametersCommand() *cobra.Command {
 	c := &cobra.Command{
-		Use:                   "update-moving-funds-parameters [arg_movingFundsTxMaxTotalFee] [arg_movingFundsDustThreshold] [arg_movingFundsTimeoutResetDelay] [arg_movingFundsTimeout] [arg_movingFundsTimeoutSlashingAmount] [arg_movingFundsTimeoutNotifierRewardMultiplier] [arg_movingFundsCommitmentGasOffset] [arg_movedFundsSweepTxMaxTotalFee] [arg_movedFundsSweepTimeout] [arg_movedFundsSweepTimeoutSlashingAmount] [arg_movedFundsSweepTimeoutNotifierRewardMultiplier]",
+		Use:                   "update-moving-funds-parameters [arg_movingFundsTxMaxTotalFee] [arg_movingFundsDustThreshold] [arg_movingFundsTimeoutResetDelay] [arg_movingFundsTimeout] [arg_movingFundsTimeoutSlashingAmount] [arg_movingFundsTimeoutNotifierRewardMultiplier] [arg_movedFundsSweepTxMaxTotalFee] [arg_movedFundsSweepTimeout] [arg_movedFundsSweepTimeoutSlashingAmount] [arg_movedFundsSweepTimeoutNotifierRewardMultiplier]",
 		Short:                 "Calls the nonpayable method updateMovingFundsParameters on the Bridge contract.",
-		Args:                  cmd.ArgCountChecker(11),
+		Args:                  cmd.ArgCountChecker(10),
 		RunE:                  bUpdateMovingFundsParameters,
 		SilenceUsage:          true,
 		DisableFlagsInUseLine: true,
@@ -1885,39 +1867,32 @@ func bUpdateMovingFundsParameters(c *cobra.Command, args []string) error {
 			args[5],
 		)
 	}
-	arg_movingFundsCommitmentGasOffset, err := decode.ParseUint[uint16](args[6], 16)
-	if err != nil {
-		return fmt.Errorf(
-			"couldn't parse parameter arg_movingFundsCommitmentGasOffset, a uint16, from passed value %v",
-			args[6],
-		)
-	}
-	arg_movedFundsSweepTxMaxTotalFee, err := decode.ParseUint[uint64](args[7], 64)
+	arg_movedFundsSweepTxMaxTotalFee, err := decode.ParseUint[uint64](args[6], 64)
 	if err != nil {
 		return fmt.Errorf(
 			"couldn't parse parameter arg_movedFundsSweepTxMaxTotalFee, a uint64, from passed value %v",
-			args[7],
+			args[6],
 		)
 	}
-	arg_movedFundsSweepTimeout, err := decode.ParseUint[uint32](args[8], 32)
+	arg_movedFundsSweepTimeout, err := decode.ParseUint[uint32](args[7], 32)
 	if err != nil {
 		return fmt.Errorf(
 			"couldn't parse parameter arg_movedFundsSweepTimeout, a uint32, from passed value %v",
-			args[8],
+			args[7],
 		)
 	}
-	arg_movedFundsSweepTimeoutSlashingAmount, err := hexutil.DecodeBig(args[9])
+	arg_movedFundsSweepTimeoutSlashingAmount, err := hexutil.DecodeBig(args[8])
 	if err != nil {
 		return fmt.Errorf(
 			"couldn't parse parameter arg_movedFundsSweepTimeoutSlashingAmount, a uint96, from passed value %v",
-			args[9],
+			args[8],
 		)
 	}
-	arg_movedFundsSweepTimeoutNotifierRewardMultiplier, err := decode.ParseUint[uint32](args[10], 32)
+	arg_movedFundsSweepTimeoutNotifierRewardMultiplier, err := decode.ParseUint[uint32](args[9], 32)
 	if err != nil {
 		return fmt.Errorf(
 			"couldn't parse parameter arg_movedFundsSweepTimeoutNotifierRewardMultiplier, a uint32, from passed value %v",
-			args[10],
+			args[9],
 		)
 	}
 
@@ -1934,7 +1909,6 @@ func bUpdateMovingFundsParameters(c *cobra.Command, args []string) error {
 			arg_movingFundsTimeout,
 			arg_movingFundsTimeoutSlashingAmount,
 			arg_movingFundsTimeoutNotifierRewardMultiplier,
-			arg_movingFundsCommitmentGasOffset,
 			arg_movedFundsSweepTxMaxTotalFee,
 			arg_movedFundsSweepTimeout,
 			arg_movedFundsSweepTimeoutSlashingAmount,
@@ -1954,7 +1928,6 @@ func bUpdateMovingFundsParameters(c *cobra.Command, args []string) error {
 			arg_movingFundsTimeout,
 			arg_movingFundsTimeoutSlashingAmount,
 			arg_movingFundsTimeoutNotifierRewardMultiplier,
-			arg_movingFundsCommitmentGasOffset,
 			arg_movedFundsSweepTxMaxTotalFee,
 			arg_movedFundsSweepTimeout,
 			arg_movedFundsSweepTimeoutSlashingAmount,

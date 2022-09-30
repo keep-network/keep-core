@@ -732,7 +732,6 @@ func (b *Bridge) Initialize(
 	arg__relay common.Address,
 	arg__treasury common.Address,
 	arg__ecdsaWalletRegistry common.Address,
-	arg__reimbursementPool common.Address,
 	arg__txProofDifficultyFactor *big.Int,
 
 	transactionOptions ...chainutil.TransactionOptions,
@@ -745,7 +744,6 @@ func (b *Bridge) Initialize(
 			arg__relay,
 			arg__treasury,
 			arg__ecdsaWalletRegistry,
-			arg__reimbursementPool,
 			arg__txProofDifficultyFactor,
 		),
 	)
@@ -778,7 +776,6 @@ func (b *Bridge) Initialize(
 		arg__relay,
 		arg__treasury,
 		arg__ecdsaWalletRegistry,
-		arg__reimbursementPool,
 		arg__txProofDifficultyFactor,
 	)
 	if err != nil {
@@ -791,7 +788,6 @@ func (b *Bridge) Initialize(
 			arg__relay,
 			arg__treasury,
 			arg__ecdsaWalletRegistry,
-			arg__reimbursementPool,
 			arg__txProofDifficultyFactor,
 		)
 	}
@@ -822,7 +818,6 @@ func (b *Bridge) Initialize(
 				arg__relay,
 				arg__treasury,
 				arg__ecdsaWalletRegistry,
-				arg__reimbursementPool,
 				arg__txProofDifficultyFactor,
 			)
 			if err != nil {
@@ -835,7 +830,6 @@ func (b *Bridge) Initialize(
 					arg__relay,
 					arg__treasury,
 					arg__ecdsaWalletRegistry,
-					arg__reimbursementPool,
 					arg__txProofDifficultyFactor,
 				)
 			}
@@ -861,7 +855,6 @@ func (b *Bridge) CallInitialize(
 	arg__relay common.Address,
 	arg__treasury common.Address,
 	arg__ecdsaWalletRegistry common.Address,
-	arg__reimbursementPool common.Address,
 	arg__txProofDifficultyFactor *big.Int,
 	blockNumber *big.Int,
 ) error {
@@ -880,7 +873,6 @@ func (b *Bridge) CallInitialize(
 		arg__relay,
 		arg__treasury,
 		arg__ecdsaWalletRegistry,
-		arg__reimbursementPool,
 		arg__txProofDifficultyFactor,
 	)
 
@@ -892,7 +884,6 @@ func (b *Bridge) InitializeGasEstimate(
 	arg__relay common.Address,
 	arg__treasury common.Address,
 	arg__ecdsaWalletRegistry common.Address,
-	arg__reimbursementPool common.Address,
 	arg__txProofDifficultyFactor *big.Int,
 ) (uint64, error) {
 	var result uint64
@@ -907,7 +898,6 @@ func (b *Bridge) InitializeGasEstimate(
 		arg__relay,
 		arg__treasury,
 		arg__ecdsaWalletRegistry,
-		arg__reimbursementPool,
 		arg__txProofDifficultyFactor,
 	)
 
@@ -4157,7 +4147,6 @@ func (b *Bridge) UpdateDepositParameters(
 	arg_depositDustThreshold uint64,
 	arg_depositTreasuryFeeDivisor uint64,
 	arg_depositTxMaxFee uint64,
-	arg_depositRevealAheadPeriod uint32,
 
 	transactionOptions ...chainutil.TransactionOptions,
 ) (*types.Transaction, error) {
@@ -4168,7 +4157,6 @@ func (b *Bridge) UpdateDepositParameters(
 			arg_depositDustThreshold,
 			arg_depositTreasuryFeeDivisor,
 			arg_depositTxMaxFee,
-			arg_depositRevealAheadPeriod,
 		),
 	)
 
@@ -4199,7 +4187,6 @@ func (b *Bridge) UpdateDepositParameters(
 		arg_depositDustThreshold,
 		arg_depositTreasuryFeeDivisor,
 		arg_depositTxMaxFee,
-		arg_depositRevealAheadPeriod,
 	)
 	if err != nil {
 		return transaction, b.errorResolver.ResolveError(
@@ -4210,7 +4197,6 @@ func (b *Bridge) UpdateDepositParameters(
 			arg_depositDustThreshold,
 			arg_depositTreasuryFeeDivisor,
 			arg_depositTxMaxFee,
-			arg_depositRevealAheadPeriod,
 		)
 	}
 
@@ -4239,7 +4225,6 @@ func (b *Bridge) UpdateDepositParameters(
 				arg_depositDustThreshold,
 				arg_depositTreasuryFeeDivisor,
 				arg_depositTxMaxFee,
-				arg_depositRevealAheadPeriod,
 			)
 			if err != nil {
 				return nil, b.errorResolver.ResolveError(
@@ -4250,7 +4235,6 @@ func (b *Bridge) UpdateDepositParameters(
 					arg_depositDustThreshold,
 					arg_depositTreasuryFeeDivisor,
 					arg_depositTxMaxFee,
-					arg_depositRevealAheadPeriod,
 				)
 			}
 
@@ -4274,7 +4258,6 @@ func (b *Bridge) CallUpdateDepositParameters(
 	arg_depositDustThreshold uint64,
 	arg_depositTreasuryFeeDivisor uint64,
 	arg_depositTxMaxFee uint64,
-	arg_depositRevealAheadPeriod uint32,
 	blockNumber *big.Int,
 ) error {
 	var result interface{} = nil
@@ -4291,7 +4274,6 @@ func (b *Bridge) CallUpdateDepositParameters(
 		arg_depositDustThreshold,
 		arg_depositTreasuryFeeDivisor,
 		arg_depositTxMaxFee,
-		arg_depositRevealAheadPeriod,
 	)
 
 	return err
@@ -4301,7 +4283,6 @@ func (b *Bridge) UpdateDepositParametersGasEstimate(
 	arg_depositDustThreshold uint64,
 	arg_depositTreasuryFeeDivisor uint64,
 	arg_depositTxMaxFee uint64,
-	arg_depositRevealAheadPeriod uint32,
 ) (uint64, error) {
 	var result uint64
 
@@ -4314,7 +4295,6 @@ func (b *Bridge) UpdateDepositParametersGasEstimate(
 		arg_depositDustThreshold,
 		arg_depositTreasuryFeeDivisor,
 		arg_depositTxMaxFee,
-		arg_depositRevealAheadPeriod,
 	)
 
 	return result, err
@@ -4496,7 +4476,6 @@ func (b *Bridge) UpdateMovingFundsParameters(
 	arg_movingFundsTimeout uint32,
 	arg_movingFundsTimeoutSlashingAmount *big.Int,
 	arg_movingFundsTimeoutNotifierRewardMultiplier uint32,
-	arg_movingFundsCommitmentGasOffset uint16,
 	arg_movedFundsSweepTxMaxTotalFee uint64,
 	arg_movedFundsSweepTimeout uint32,
 	arg_movedFundsSweepTimeoutSlashingAmount *big.Int,
@@ -4514,7 +4493,6 @@ func (b *Bridge) UpdateMovingFundsParameters(
 			arg_movingFundsTimeout,
 			arg_movingFundsTimeoutSlashingAmount,
 			arg_movingFundsTimeoutNotifierRewardMultiplier,
-			arg_movingFundsCommitmentGasOffset,
 			arg_movedFundsSweepTxMaxTotalFee,
 			arg_movedFundsSweepTimeout,
 			arg_movedFundsSweepTimeoutSlashingAmount,
@@ -4552,7 +4530,6 @@ func (b *Bridge) UpdateMovingFundsParameters(
 		arg_movingFundsTimeout,
 		arg_movingFundsTimeoutSlashingAmount,
 		arg_movingFundsTimeoutNotifierRewardMultiplier,
-		arg_movingFundsCommitmentGasOffset,
 		arg_movedFundsSweepTxMaxTotalFee,
 		arg_movedFundsSweepTimeout,
 		arg_movedFundsSweepTimeoutSlashingAmount,
@@ -4570,7 +4547,6 @@ func (b *Bridge) UpdateMovingFundsParameters(
 			arg_movingFundsTimeout,
 			arg_movingFundsTimeoutSlashingAmount,
 			arg_movingFundsTimeoutNotifierRewardMultiplier,
-			arg_movingFundsCommitmentGasOffset,
 			arg_movedFundsSweepTxMaxTotalFee,
 			arg_movedFundsSweepTimeout,
 			arg_movedFundsSweepTimeoutSlashingAmount,
@@ -4606,7 +4582,6 @@ func (b *Bridge) UpdateMovingFundsParameters(
 				arg_movingFundsTimeout,
 				arg_movingFundsTimeoutSlashingAmount,
 				arg_movingFundsTimeoutNotifierRewardMultiplier,
-				arg_movingFundsCommitmentGasOffset,
 				arg_movedFundsSweepTxMaxTotalFee,
 				arg_movedFundsSweepTimeout,
 				arg_movedFundsSweepTimeoutSlashingAmount,
@@ -4624,7 +4599,6 @@ func (b *Bridge) UpdateMovingFundsParameters(
 					arg_movingFundsTimeout,
 					arg_movingFundsTimeoutSlashingAmount,
 					arg_movingFundsTimeoutNotifierRewardMultiplier,
-					arg_movingFundsCommitmentGasOffset,
 					arg_movedFundsSweepTxMaxTotalFee,
 					arg_movedFundsSweepTimeout,
 					arg_movedFundsSweepTimeoutSlashingAmount,
@@ -4655,7 +4629,6 @@ func (b *Bridge) CallUpdateMovingFundsParameters(
 	arg_movingFundsTimeout uint32,
 	arg_movingFundsTimeoutSlashingAmount *big.Int,
 	arg_movingFundsTimeoutNotifierRewardMultiplier uint32,
-	arg_movingFundsCommitmentGasOffset uint16,
 	arg_movedFundsSweepTxMaxTotalFee uint64,
 	arg_movedFundsSweepTimeout uint32,
 	arg_movedFundsSweepTimeoutSlashingAmount *big.Int,
@@ -4679,7 +4652,6 @@ func (b *Bridge) CallUpdateMovingFundsParameters(
 		arg_movingFundsTimeout,
 		arg_movingFundsTimeoutSlashingAmount,
 		arg_movingFundsTimeoutNotifierRewardMultiplier,
-		arg_movingFundsCommitmentGasOffset,
 		arg_movedFundsSweepTxMaxTotalFee,
 		arg_movedFundsSweepTimeout,
 		arg_movedFundsSweepTimeoutSlashingAmount,
@@ -4696,7 +4668,6 @@ func (b *Bridge) UpdateMovingFundsParametersGasEstimate(
 	arg_movingFundsTimeout uint32,
 	arg_movingFundsTimeoutSlashingAmount *big.Int,
 	arg_movingFundsTimeoutNotifierRewardMultiplier uint32,
-	arg_movingFundsCommitmentGasOffset uint16,
 	arg_movedFundsSweepTxMaxTotalFee uint64,
 	arg_movedFundsSweepTimeout uint32,
 	arg_movedFundsSweepTimeoutSlashingAmount *big.Int,
@@ -4716,7 +4687,6 @@ func (b *Bridge) UpdateMovingFundsParametersGasEstimate(
 		arg_movingFundsTimeout,
 		arg_movingFundsTimeoutSlashingAmount,
 		arg_movingFundsTimeoutNotifierRewardMultiplier,
-		arg_movingFundsCommitmentGasOffset,
 		arg_movedFundsSweepTxMaxTotalFee,
 		arg_movedFundsSweepTimeout,
 		arg_movedFundsSweepTimeoutSlashingAmount,
@@ -5165,7 +5135,6 @@ type contractReferences struct {
 	Bank                common.Address
 	Relay               common.Address
 	EcdsaWalletRegistry common.Address
-	ReimbursementPool   common.Address
 }
 
 func (b *Bridge) ContractReferences() (contractReferences, error) {
@@ -5209,7 +5178,6 @@ type depositParameters struct {
 	DepositDustThreshold      uint64
 	DepositTreasuryFeeDivisor uint64
 	DepositTxMaxFee           uint64
-	DepositRevealAheadPeriod  uint32
 }
 
 func (b *Bridge) DepositParameters() (depositParameters, error) {
@@ -5546,7 +5514,6 @@ type movingFundsParameters struct {
 	MovingFundsTimeout                             uint32
 	MovingFundsTimeoutSlashingAmount               *big.Int
 	MovingFundsTimeoutNotifierRewardMultiplier     uint32
-	MovingFundsCommitmentGasOffset                 uint16
 	MovedFundsSweepTxMaxTotalFee                   uint64
 	MovedFundsSweepTimeout                         uint32
 	MovedFundsSweepTimeoutSlashingAmount           *big.Int
@@ -5960,7 +5927,6 @@ type bridgeDepositParametersUpdatedFunc func(
 	DepositDustThreshold uint64,
 	DepositTreasuryFeeDivisor uint64,
 	DepositTxMaxFee uint64,
-	DepositRevealAheadPeriod uint32,
 	blockNumber uint64,
 )
 
@@ -5980,7 +5946,6 @@ func (dpus *BDepositParametersUpdatedSubscription) OnEvent(
 					event.DepositDustThreshold,
 					event.DepositTreasuryFeeDivisor,
 					event.DepositTxMaxFee,
-					event.DepositRevealAheadPeriod,
 					event.Raw.BlockNumber,
 				)
 			}
@@ -8615,7 +8580,6 @@ type bridgeMovingFundsParametersUpdatedFunc func(
 	MovingFundsTimeout uint32,
 	MovingFundsTimeoutSlashingAmount *big.Int,
 	MovingFundsTimeoutNotifierRewardMultiplier uint32,
-	MovingFundsCommitmentGasOffset uint16,
 	MovedFundsSweepTxMaxTotalFee uint64,
 	MovedFundsSweepTimeout uint32,
 	MovedFundsSweepTimeoutSlashingAmount *big.Int,
@@ -8642,7 +8606,6 @@ func (mfpus *BMovingFundsParametersUpdatedSubscription) OnEvent(
 					event.MovingFundsTimeout,
 					event.MovingFundsTimeoutSlashingAmount,
 					event.MovingFundsTimeoutNotifierRewardMultiplier,
-					event.MovingFundsCommitmentGasOffset,
 					event.MovedFundsSweepTxMaxTotalFee,
 					event.MovedFundsSweepTimeout,
 					event.MovedFundsSweepTimeoutSlashingAmount,

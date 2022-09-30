@@ -56,6 +56,7 @@ func init() {
 		wrDkgParametersCommand(),
 		wrEligibleStakeCommand(),
 		wrGasParametersCommand(),
+		wrGetDkgDataCommand(),
 		wrGetWalletCreationStateCommand(),
 		wrGovernanceCommand(),
 		wrHasDkgTimedOutCommand(),
@@ -285,6 +286,40 @@ func wrGasParameters(c *cobra.Command, args []string) error {
 	}
 
 	result, err := contract.GasParametersAtBlock(
+		cmd.BlockFlagValue.Int,
+	)
+
+	if err != nil {
+		return err
+	}
+
+	cmd.PrintOutput(result)
+
+	return nil
+}
+
+func wrGetDkgDataCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "get-dkg-data",
+		Short:                 "Calls the view method getDkgData on the WalletRegistry contract.",
+		Args:                  cmd.ArgCountChecker(0),
+		RunE:                  wrGetDkgData,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	cmd.InitConstFlags(c)
+
+	return c
+}
+
+func wrGetDkgData(c *cobra.Command, args []string) error {
+	contract, err := initializeWalletRegistry(c)
+	if err != nil {
+		return err
+	}
+
+	result, err := contract.GetDkgDataAtBlock(
 		cmd.BlockFlagValue.Int,
 	)
 
