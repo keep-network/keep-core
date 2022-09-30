@@ -21,7 +21,7 @@ Flags:
       --clientInfo.port int                        Client Info HTTP server listening port. (default 9601)
       --clientInfo.networkMetricsTick duration     Client Info network metrics check tick in seconds. (default 1m0s)
       --clientInfo.ethereumMetricsTick duration    Client info Ethereum metrics check tick in seconds. (default 10m0s)
-      --tbtc.preParamsPoolSize int                 tECDSA pre-parameters pool size. (default 3000)
+      --tbtc.preParamsPoolSize int                 tECDSA pre-parameters pool size. (default 1000)
       --tbtc.preParamsGenerationTimeout duration   tECDSA pre-parameters generation timeout. (default 2m0s)
       --tbtc.preParamsGenerationDelay duration     tECDSA pre-parameters generation delay. (default 10s)
       --tbtc.preParamsGenerationConcurrency int    tECDSA pre-parameters generation concurrency. (default 1)
