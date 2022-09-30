@@ -835,6 +835,7 @@ func TestSubmitResult_MemberSubmitsResult(t *testing.T) {
 		1: []byte("signature 1"),
 		2: []byte("signature 2"),
 		3: []byte("signature 3"),
+		4: []byte("signature 4"),
 	}
 	startBlock := uint64(3)
 
@@ -878,6 +879,7 @@ func TestSubmitResult_MemberDoesNotSubmitsResult(t *testing.T) {
 		1: []byte("signature 1"),
 		2: []byte("signature 2"),
 		3: []byte("signature 3"),
+		4: []byte("signature 4"),
 	}
 	startBlock := uint64(2)
 
@@ -953,6 +955,7 @@ func TestSubmitResult_TooFewSignatures(t *testing.T) {
 	signatures := map[group.MemberIndex][]byte{
 		1: []byte("signature 1"),
 		2: []byte("signature 2"),
+		3: []byte("signature 3"),
 	}
 	startBlock := uint64(3)
 
@@ -964,8 +967,7 @@ func TestSubmitResult_TooFewSignatures(t *testing.T) {
 	)
 
 	expectedError := fmt.Errorf(
-		"could not submit result with [2] signatures for signature honest " +
-			"threshold [3]",
+		"could not submit result with [3] signatures for group quorum [4]",
 	)
 	if !reflect.DeepEqual(expectedError, err) {
 		t.Errorf(
