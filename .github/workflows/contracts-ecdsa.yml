@@ -226,7 +226,7 @@ jobs:
       # test environment it should be used temporarily only.
       - name: Use Sortition Pool forked contracts
         run: |
-          yarn upgrade github:keep-network/sortition-pools#test-fork
+          yarn upgrade @keep-network/sortition-pools@github:keep-network/sortition-pools#test-fork
 
       - name: Configure tenderly
         env:
