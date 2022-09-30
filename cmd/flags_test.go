@@ -152,7 +152,7 @@ var cmdFlagsTests = map[string]struct {
 		flagName:              "--tbtc.preParamsPoolSize",
 		flagValue:             "75",
 		expectedValueFromFlag: 75,
-		defaultValue:          3000,
+		defaultValue:          1000,
 	},
 	"tbtc.preParamsGenerationTimeout": {
 		readValueFunc:         func(c *config.Config) interface{} { return c.Tbtc.PreParamsGenerationTimeout },

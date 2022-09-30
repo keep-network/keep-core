@@ -23,7 +23,7 @@ var logger = log.Logger("keep-tbtc")
 const ProtocolName = "tbtc"
 
 const (
-	DefaultPreParamsPoolSize              = 3000
+	DefaultPreParamsPoolSize              = 1000
 	DefaultPreParamsGenerationTimeout     = 2 * time.Minute
 	DefaultPreParamsGenerationDelay       = 10 * time.Second
 	DefaultPreParamsGenerationConcurrency = 1
