@@ -23,6 +23,13 @@ var logger = log.Logger("keep-beacon")
 // ProtocolName denotes the name of the protocol defined by this package.
 const ProtocolName = "beacon"
 
+// Config carries the config for beacon protocol.
+type Config struct {
+	// Flag indicating that the sortition pool update should be attempted
+	// regardless of the sortition pool state.
+	SortitionPoolForceUpdate bool
+}
+
 // Initialize kicks off the random beacon by initializing internal state,
 // ensuring preconditions like staking are met, and then kicking off the
 // internal random beacon implementation. Returns an error if this failed,
@@ -33,6 +40,7 @@ func Initialize(
 	netProvider net.Provider,
 	persistence persistence.ProtectedHandle,
 	scheduler *generator.Scheduler,
+	config Config,
 ) error {
 	groupRegistry := registry.NewGroupRegistry(logger, beaconChain, persistence)
 	groupRegistry.LoadExistingGroups()
@@ -50,6 +58,7 @@ func Initialize(
 		beaconChain,
 		sortition.DefaultStatusCheckTick,
 		sortition.NewBetaOperatorPolicy(beaconChain, logger),
+		config.SortitionPoolForceUpdate,
 	)
 	if err != nil {
 		return fmt.Errorf(

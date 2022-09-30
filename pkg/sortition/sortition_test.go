@@ -46,6 +46,7 @@ func TestMonitorPool_NotRegisteredOperator(t *testing.T) {
 		localChain,
 		statusCheckTick,
 		UnconditionalJoinPolicy,
+		false,
 	)
 	testutils.AssertErrorsSame(t, errOperatorUnknown, err)
 }
@@ -63,6 +64,7 @@ func TestMonitorPool_NoStake(t *testing.T) {
 		localChain,
 		statusCheckTick,
 		UnconditionalJoinPolicy,
+		false,
 	)
 	if err != nil {
 		t.Fatal(err)
@@ -92,6 +94,7 @@ func TestMonitor_JoinPool(t *testing.T) {
 		localChain,
 		statusCheckTick,
 		UnconditionalJoinPolicy,
+		false,
 	)
 	if err != nil {
 		t.Fatal(err)
@@ -121,6 +124,7 @@ func TestMonitor_JoinPool_PolicyNotSatisfied(t *testing.T) {
 		localChain,
 		statusCheckTick,
 		&neverJoinPolicy{},
+		false,
 	)
 	if err != nil {
 		t.Fatal(err)
@@ -153,6 +157,7 @@ func TestMonitor_UpdatePool(t *testing.T) {
 		localChain,
 		statusCheckTick,
 		UnconditionalJoinPolicy,
+		false,
 	)
 	if err != nil {
 		t.Fatal(err)
@@ -180,6 +185,7 @@ func TestMonitor_JoinPool_WithDelay(t *testing.T) {
 		localChain,
 		statusCheckTick,
 		UnconditionalJoinPolicy,
+		false,
 	)
 	if err != nil {
 		t.Fatal(err)
@@ -222,6 +228,7 @@ func TestMonitor_UpdatePool_WithDelay(t *testing.T) {
 		localChain,
 		statusCheckTick,
 		UnconditionalJoinPolicy,
+		false,
 	)
 	if err != nil {
 		t.Fatal(err)
@@ -268,6 +275,7 @@ func TestMonitor_CannotRestoreRewardsEligibility_TimeNotPassed(t *testing.T) {
 		localChain,
 		statusCheckTick,
 		UnconditionalJoinPolicy,
+		false,
 	)
 	if err != nil {
 		t.Fatal(err)
@@ -297,7 +305,13 @@ func TestMonitor_CanRestoreRewardsEligibility(t *testing.T) {
 	localChain.SetCurrentTimestamp(big.NewInt(2))
 
 	err := MonitorPool(
-		ctx, &testutils.MockLogger{}, localChain, statusCheckTick, UnconditionalJoinPolicy)
+		ctx,
+		&testutils.MockLogger{},
+		localChain,
+		statusCheckTick,
+		UnconditionalJoinPolicy,
+		false,
+	)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -331,6 +345,7 @@ func TestMonitor_CanRestoreRewardsEligibility_WithDelay(t *testing.T) {
 		localChain,
 		statusCheckTick,
 		UnconditionalJoinPolicy,
+		false,
 	)
 	if err != nil {
 		t.Fatal(err)

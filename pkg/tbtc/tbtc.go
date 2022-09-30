@@ -43,6 +43,9 @@ type Config struct {
 	PreParamsGenerationConcurrency int
 	// Concurrency level for key-generation for tECDSA.
 	KeyGenerationConcurrency int
+	// Flag indicating that the sortition pool update should be attempted
+	// regardless of the sortition pool state.
+	SortitionPoolForceUpdate bool
 }
 
 // Initialize kicks off the TBTC by initializing internal state, ensuring
@@ -85,6 +88,7 @@ func Initialize(
 				config: config,
 			},
 		),
+		config.SortitionPoolForceUpdate,
 	)
 	if err != nil {
 		return fmt.Errorf(

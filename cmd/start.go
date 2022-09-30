@@ -3,6 +3,7 @@ package cmd
 import (
 	"context"
 	"fmt"
+	commonEthereum "github.com/keep-network/keep-common/pkg/chain/ethereum"
 
 	"github.com/spf13/cobra"
 
@@ -152,12 +153,18 @@ func start(cmd *cobra.Command) error {
 
 		scheduler := generator.StartScheduler()
 
+		sortitionPoolForceUpdate := clientConfig.Ethereum.Network !=
+			commonEthereum.Mainnet
+
 		err = beacon.Initialize(
 			ctx,
 			beaconChain,
 			netProvider,
 			beaconKeyStorePersistence,
 			scheduler,
+			beacon.Config{
+				SortitionPoolForceUpdate: sortitionPoolForceUpdate,
+			},
 		)
 		if err != nil {
 			return fmt.Errorf("error initializing beacon: [%v]", err)
@@ -170,7 +177,14 @@ func start(cmd *cobra.Command) error {
 			tbtcKeyStorePersistence,
 			tbtcDataPersistence,
 			scheduler,
-			clientConfig.Tbtc,
+			tbtc.Config{
+				PreParamsPoolSize:              clientConfig.Tbtc.PreParamsPoolSize,
+				PreParamsGenerationTimeout:     clientConfig.Tbtc.PreParamsGenerationTimeout,
+				PreParamsGenerationDelay:       clientConfig.Tbtc.PreParamsGenerationDelay,
+				PreParamsGenerationConcurrency: clientConfig.Tbtc.PreParamsGenerationConcurrency,
+				KeyGenerationConcurrency:       clientConfig.Tbtc.KeyGenerationConcurrency,
+				SortitionPoolForceUpdate:       sortitionPoolForceUpdate,
+			},
 			clientInfoRegistry,
 		)
 		if err != nil {

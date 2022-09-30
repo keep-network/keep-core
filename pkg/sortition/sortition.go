@@ -25,6 +25,7 @@ func MonitorPool(
 	chain Chain,
 	tick time.Duration,
 	policy JoinPolicy,
+	forceUpdate bool,
 ) error {
 	_, isRegistered, err := chain.OperatorToStakingProvider()
 	if err != nil {
@@ -35,7 +36,7 @@ func MonitorPool(
 		return errOperatorUnknown
 	}
 
-	err = checkOperatorStatus(logger, chain, policy)
+	err = checkOperatorStatus(logger, chain, policy, forceUpdate)
 	if err != nil {
 		logger.Errorf("could not check operator sortition pool status: [%v]", err)
 	}
@@ -49,7 +50,7 @@ func MonitorPool(
 				ticker.Stop()
 				return
 			case <-ticker.C:
-				err = checkOperatorStatus(logger, chain, policy)
+				err = checkOperatorStatus(logger, chain, policy, forceUpdate)
 				if err != nil {
 					logger.Errorf("could not check operator sortition pool status: [%v]", err)
 					continue
@@ -65,6 +66,7 @@ func checkOperatorStatus(
 	logger log.StandardLogger,
 	chain Chain,
 	policy JoinPolicy,
+	forceUpdate bool,
 ) error {
 	logger.Info("checking sortition pool operator status")
 
@@ -104,7 +106,7 @@ func checkOperatorStatus(
 		return err
 	}
 
-	if isLocked {
+	if isLocked && !forceUpdate {
 		logger.Info("sortition pool state is locked, waiting with the update")
 		return nil
 	}
