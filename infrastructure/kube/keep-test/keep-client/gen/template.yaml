@@ -54,6 +54,10 @@ spec:
         - name: keep-client
           image: "gcr.io/keep-test-f3e0/keep-client:latest"
           imagePullPolicy: Always
+          resources:
+            requests:
+              cpu: 1500m
+              memory: 512M
           ports:
             - name: network
               containerPort: 3919
@@ -100,6 +104,8 @@ spec:
             #@ end
             - "--clientInfo.port"
             - "9601"
+            - "--tbtc.keyGenerationConcurrency"
+            - "2"
       initContainers:
         #@ for/end initcontainer in data.values.initContainers:
         - name: #@ initcontainer.name
