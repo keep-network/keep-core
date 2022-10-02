@@ -12,10 +12,9 @@ development:
 goerli:
 	make all environment=goerli
 
-# TODO: Mainnet packages have not been published yet.
 # Build with contract packages published to the NPM registry and tagged `mainnet`.
-# mainnet:
-# 	make all environment=mainnet
+mainnet:
+	make all environment=mainnet
 
 # Build with contract packages deployed locally.
 local:
