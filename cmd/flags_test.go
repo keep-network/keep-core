@@ -19,7 +19,6 @@ import (
 	chainEthereum "github.com/keep-network/keep-core/pkg/chain/ethereum"
 	ethereumBeacon "github.com/keep-network/keep-core/pkg/chain/ethereum/beacon/gen"
 	ethereumEcdsa "github.com/keep-network/keep-core/pkg/chain/ethereum/ecdsa/gen"
-	ethereumTbtc "github.com/keep-network/keep-core/pkg/chain/ethereum/tbtc/gen"
 	ethereumThreshold "github.com/keep-network/keep-core/pkg/chain/ethereum/threshold/gen"
 )
 
@@ -210,7 +209,9 @@ var cmdFlagsTests = map[string]struct {
 		flagName:              "--developer.bridgeAddress",
 		flagValue:             "0xd21DE06574811450E722a33D8093558E8c04eacc",
 		expectedValueFromFlag: "0xd21DE06574811450E722a33D8093558E8c04eacc",
-		defaultValue:          ethereumTbtc.BridgeAddress,
+		// FIXME: Commented out temporarily for mainnet build.
+		// defaultValue: ethereumTbtc.BridgeAddress,
+		defaultValue: "0x0000000000000000000000000000000000000000",
 	},
 	"developer.tokenStakingAddress": {
 		readValueFunc: func(c *config.Config) interface{} {
