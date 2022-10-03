@@ -137,7 +137,11 @@ func checkRewardsEligibility(logger log.StandardLogger, chain Chain) error {
 	}
 
 	if isEligibleForRewards {
-		logger.Info("operator is eligible for rewards")
+		// TODO: Uncomment once the rewards get allocated via the sortition pool.
+		// We do not want to confuse the operators not meeting the requirements
+		// for the interim rewards allocations with false-positive messages
+		// from logs.
+		// logger.Info("operator is eligible for rewards")
 	} else {
 		logger.Info("operator is marked as ineligible for rewards")
 
