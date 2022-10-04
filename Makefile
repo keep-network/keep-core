@@ -12,10 +12,9 @@ development:
 goerli:
 	make all environment=goerli
 
-# TODO: Mainnet packages have not been published yet.
 # Build with contract packages published to the NPM registry and tagged `mainnet`.
-# mainnet:
-# 	make all environment=mainnet
+mainnet:
+	make all environment=mainnet
 
 # Build with contract packages deployed locally.
 local:
@@ -23,10 +22,11 @@ local:
 
 all: get_artifacts generate build cmd-help release
 
+# FIXME: tbtc module was removed as it's not used in the client. Add it back
+# while implementing tbtc integration.
 modules := beacon \
 	ecdsa \
-	threshold \
-	tbtc
+	threshold
 
 # Required by get_npm_package function.
 npm_beacon_package := @keep-network/random-beacon

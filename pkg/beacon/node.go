@@ -69,7 +69,13 @@ func (n *node) JoinDKGIfEligible(
 
 	selectedOperators, err := n.beaconChain.SelectGroup(dkgSeed)
 	if err != nil {
-		dkgLogger.Errorf("failed to select group: [%v]", err)
+		// TODO: We should consider switching this log to Errorf when the
+		// Chaosnet 0 phase is completed and results are submitted to the chain.
+		// To let the operators join the pool, the dev team will keep unlocking
+		// it via DKG timeout from time to time. During the period pool is
+		// unlocked, selecting the group will not work.
+		//dkgLogger.Errorf("failed to select group: [%v]", err)
+		dkgLogger.Warnf("selecting group not possible: [%v]", err)
 		return
 	}
 

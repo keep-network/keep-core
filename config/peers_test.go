@@ -15,8 +15,12 @@ func TestResolvePeers(t *testing.T) {
 		expectedPeers []string
 		expectedError error
 	}{
-		// TODO: Add mainnet support
-		// "mainnet network": {},
+		"mainnet network": {
+			network: commonEthereum.Mainnet,
+			expectedPeers: []string{
+				"/dns4/bst-a01.tbtc.boar.network/tcp/5001/ipfs/16Uiu2HAmAmCrLuUmnBgpavU8y8JBUN6jWAQ93JwydZy3ABRyY6wU",
+				"/dns4/bst-b01.tbtc.boar.network/tcp/5001/ipfs/16Uiu2HAm4w5HdJQxBnadGRepaiGfWVvtMzhdAGZVcrf9i71mv69V",
+			}},
 		"goerli network": {
 			network: commonEthereum.Goerli,
 			expectedPeers: []string{
