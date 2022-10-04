@@ -476,7 +476,21 @@ func (p *provider) bootstrap(
 		return err
 	}
 
-	bootstrapConfig := bootstrapConfigWithPeers(peerInfos)
+	ownID := p.identity.id
+	filteredPeerInfos := make([]peer.AddrInfo, 0)
+
+	for _, peerInfo := range peerInfos {
+		if peerInfo.ID == ownID {
+			logger.Infof(
+				"Found own address [%v] on bootstrap peer list. Ignoring it.",
+				peerInfo.ID,
+			)
+		} else {
+			filteredPeerInfos = append(filteredPeerInfos, peerInfo)
+		}
+	}
+
+	bootstrapConfig := bootstrapConfigWithPeers(filteredPeerInfos)
 
 	// TODO: use the io.Closer to shutdown the bootstrapper when we build out
 	// a shutdown process.
