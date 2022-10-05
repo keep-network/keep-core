@@ -28,6 +28,11 @@ message TSSRoundThreeMessage {
     string sessionID = 3;
 }
 
+message TSSFinalizationMessage {
+    uint32 senderID = 1;
+    string sessionID = 2;
+}
+
 message ResultSignatureMessage {
     uint32 senderID = 1;
     bytes resultHash = 2;

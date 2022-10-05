@@ -153,6 +153,33 @@ func (trtm *tssRoundThreeMessage) Unmarshal(bytes []byte) error {
 	return nil
 }
 
+// Marshal converts this tssFinalizationMessage to a byte array suitable for
+// network communication.
+func (tfm *tssFinalizationMessage) Marshal() ([]byte, error) {
+	return proto.Marshal(&pb.TSSFinalizationMessage{
+		SenderID:  uint32(tfm.senderID),
+		SessionID: tfm.sessionID,
+	})
+}
+
+// Unmarshal converts a byte array produced by Marshal to an
+// tssFinalizationMessage.
+func (tfm *tssFinalizationMessage) Unmarshal(bytes []byte) error {
+	pbMsg := pb.TSSFinalizationMessage{}
+	if err := proto.Unmarshal(bytes, &pbMsg); err != nil {
+		return err
+	}
+
+	if err := validateMemberIndex(pbMsg.SenderID); err != nil {
+		return err
+	}
+
+	tfm.senderID = group.MemberIndex(pbMsg.SenderID)
+	tfm.sessionID = pbMsg.SessionID
+
+	return nil
+}
+
 func validateMemberIndex(protoIndex uint32) error {
 	// Protobuf does not have uint8 type, so we are using uint32. When
 	// unmarshalling message, we need to make sure we do not overflow.

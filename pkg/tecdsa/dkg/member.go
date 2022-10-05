@@ -251,10 +251,9 @@ func (trtm *tssRoundThreeMember) initializeFinalization() *finalizingMember {
 	}
 }
 
-// finalizingMember represents one member of the given group, after it
-// completed the distributed key generation process.
-//
-// Prepares a result to publish in the last phase of the protocol.
+// finalizingMember represents one member of the given group performing the
+// finalization of the TSS process and preparing the distributed key generation
+// result.
 type finalizingMember struct {
 	*tssRoundThreeMember
 
@@ -274,13 +273,38 @@ func (fm *finalizingMember) markInactiveMembers(
 	filter.FlushInactiveMembers()
 }
 
-// Result can be either the successful computation of the distributed key
-// generation process or a notification of failure.
+// Result is the successful computation of the distributed key generation process.
 func (fm *finalizingMember) Result() *Result {
 	return &Result{
 		Group:           fm.group,
 		PrivateKeyShare: tecdsa.NewPrivateKeyShare(fm.tssResult),
 	}
+}
+
+// initializeConfirmation returns a member to perform next protocol operations.
+func (fm *finalizingMember) initializeConfirmation() *confirmingMember {
+	return &confirmingMember{
+		finalizingMember: fm,
+	}
+}
+
+// confirmingMember represents one member of the given group confirming a
+// successful course of the distributed key generation process.
+type confirmingMember struct {
+	*finalizingMember
+}
+
+// markInactiveMembers takes all messages from the previous DKG protocol
+// execution phase and marks all member who did not send a message as IA.
+func (cm *confirmingMember) markInactiveMembers(
+	tssFinalizationMessages []*tssFinalizationMessage,
+) {
+	filter := cm.inactiveMemberFilter()
+	for _, message := range tssFinalizationMessages {
+		filter.MarkMemberAsActive(message.senderID)
+	}
+
+	filter.FlushInactiveMembers()
 }
 
 // signingMember represents a group member sharing their preferred DKG result hash

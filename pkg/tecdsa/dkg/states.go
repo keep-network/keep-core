@@ -412,10 +412,9 @@ func (trts *tssRoundThreeState) MemberIndex() group.MemberIndex {
 	return trts.member.id
 }
 
-// finalizationState is the last state of the DKG protocol - in this state,
-// distributed key generation is completed. No messages are valid in this state.
-//
-// State prepares a result to that is returned to the caller.
+// finalizationState is the state during which members finalize the TSS process
+// and prepare the distributed key generation result.
+// `tssFinalizationMessage`s are valid in this state.
 type finalizationState struct {
 	channel net.BroadcastChannel
 	member  *finalizingMember
@@ -423,6 +422,8 @@ type finalizationState struct {
 	outcomeChan chan error
 
 	previousPhaseMessages []*tssRoundThreeMessage
+
+	phaseMessages []*tssFinalizationMessage
 }
 
 func (fs *finalizationState) DelayBlocks() uint64 {
@@ -447,8 +448,13 @@ func (fs *finalizationState) Initiate(ctx context.Context) error {
 	// In order to make that working, Initiate must trigger the computations
 	// in a separate goroutine and return before the end of the state.
 	go func() {
-		err := fs.member.tssFinalize(ctx, fs.previousPhaseMessages)
+		message, err := fs.member.tssFinalize(ctx, fs.previousPhaseMessages)
 		if err != nil {
+			fs.outcomeChan <- err
+			return
+		}
+
+		if err := fs.channel.Send(ctx, message); err != nil {
 			fs.outcomeChan <- err
 			return
 		}
@@ -460,6 +466,16 @@ func (fs *finalizationState) Initiate(ctx context.Context) error {
 }
 
 func (fs *finalizationState) Receive(msg net.Message) error {
+	switch phaseMessage := msg.Payload().(type) {
+	case *tssFinalizationMessage:
+		if fs.member.shouldAcceptMessage(
+			phaseMessage.SenderID(),
+			msg.SenderPublicKey(),
+		) && fs.member.sessionID == phaseMessage.sessionID {
+			fs.phaseMessages = append(fs.phaseMessages, phaseMessage)
+		}
+	}
+
 	return nil
 }
 
@@ -469,15 +485,58 @@ func (fs *finalizationState) Next() (state.State, error) {
 		return nil, err
 	}
 
-	return nil, nil
+	return &confirmationState{
+		channel:               fs.channel,
+		member:                fs.member.initializeConfirmation(),
+		previousPhaseMessages: fs.phaseMessages,
+	}, nil
 }
 
 func (fs *finalizationState) MemberIndex() group.MemberIndex {
 	return fs.member.id
 }
 
-func (fs *finalizationState) result() *Result {
-	return fs.member.Result()
+// confirmationState is the state during which members confirm a successful
+// course of the distributed key generation process.
+type confirmationState struct {
+	channel net.BroadcastChannel
+	member  *confirmingMember
+
+	previousPhaseMessages []*tssFinalizationMessage
+}
+
+func (cs *confirmationState) DelayBlocks() uint64 {
+	return silentStateDelayBlocks
+}
+
+func (cs *confirmationState) ActiveBlocks() uint64 {
+	return silentStateActiveBlocks
+}
+
+func (cs *confirmationState) Initiate(ctx context.Context) error {
+	cs.member.markInactiveMembers(cs.previousPhaseMessages)
+
+	if len(cs.member.group.InactiveMemberIDs()) > 0 {
+		return newInactiveMembersError(cs.member.group.InactiveMemberIDs())
+	}
+
+	return nil
+}
+
+func (cs *confirmationState) Receive(msg net.Message) error {
+	return nil
+}
+
+func (cs *confirmationState) Next() (state.State, error) {
+	return nil, nil
+}
+
+func (cs *confirmationState) MemberIndex() group.MemberIndex {
+	return cs.member.id
+}
+
+func (cs *confirmationState) result() *Result {
+	return cs.member.Result()
 }
 
 // resultSigningState is the state during which group members sign their
