@@ -82,10 +82,10 @@ Currently they are:
 @keep-network/keep-ecdsa@1.9.0-goerli.0
 @keep-network/tbtc@1.1.2-goerli.0
 @keep-network/coverage-pools@1.1.0-goerli.0
-@threshold-network/solidity-contracts@1.2.0-goerli.1
-@keep-network/random-beacon@2.0.0-goerli.9
-@keep-network/ecdsa@2.0.0-goerli.5
-@keep-network/tbtc-v2@0.1.1-goerli.3
+@threshold-network/solidity-contracts@1.3.0-goerli.0
+@keep-network/random-beacon@2.1.0-goerli.1
+@keep-network/ecdsa@2.1.0-goerli.1
+@keep-network/tbtc-v2@0.1.1-goerli.6
 ```
 
 [#goerli-contracts]
@@ -97,37 +97,37 @@ Currently they are:
 |Address
 
 |Vending Machine (NU<>T)
-|link:https://goerli.etherscan.io/address/0x54Ce8dB3B05783C01Cc24471e9B0692ac971131b#code[0x54Ce8dB3B05783C01Cc24471e9B0692ac971131b]
+|link:https://goerli.etherscan.io/address/0x8D4Ccc04D17d055b88fbaB8634C7F0611d8Aa946#code[0x8D4Ccc04D17d055b88fbaB8634C7F0611d8Aa946]
 
 |Vending Machine (KEEP<>T)
-|link:https://goerli.etherscan.io/address/0x6Fa363E7864E922D6B2b0a5941DB4b51FfcEdA42#code[0x6Fa363E7864E922D6B2b0a5941DB4b51FfcEdA42]
+|link:https://goerli.etherscan.io/address/0x8d1EDfee0510537E1081a28Fa4A94769Cfa3969a#code[0x8d1EDfee0510537E1081a28Fa4A94769Cfa3969a]
 
 |T token
-|link:https://goerli.etherscan.io/address/0x04821baABb8564305042CAe6b58b47Bd0370ce57#code[0x04821baABb8564305042CAe6b58b47Bd0370ce57]
+|link:https://goerli.etherscan.io/address/0x3f16380656cAE45D3f80D8833682d2b606eD094A#code[0x3f16380656cAE45D3f80D8833682d2b606eD094A]
 
 |NU token
-|link:https://goerli.etherscan.io/address/0x6D1fd71e1752c61D45206E244B76fCF157dfA635#code[0x6D1fd71e1752c61D45206E244B76fCF157dfA635]
+|link:https://goerli.etherscan.io/address/0x26bDc8Cb2D4F55Af3B43568069b65B435bCdc32c#code[0x26bDc8Cb2D4F55Af3B43568069b65B435bCdc32c]
 
 |KEEP token
 |link:https://goerli.etherscan.io/address/0x22647FfAe391540d584599818CA22fdF18890753#code[0x22647FfAe391540d584599818CA22fdF18890753]
 
 |NU Staking Escrow (stub)
-|link:https://goerli.etherscan.io/address/0x5C23eDa6306d433C0b87Cc248194D70563257132#code[0x5C23eDa6306d433C0b87Cc248194D70563257132]
+|link:https://goerli.etherscan.io/address/0xd696d5a9b083959587F30e487038529a876b08C2#code[0xd696d5a9b083959587F30e487038529a876b08C2]
 
 |Keep Stake
-|link:https://goerli.etherscan.io/address/0x349e80083C8911244E53e99793c5E648098A1f66#code[0x349e80083C8911244E53e99793c5E648098A1f66]
+|link:https://goerli.etherscan.io/address/0xC76796B031232976cb17521342B0d12283588E6F#code[0xC76796B031232976cb17521342B0d12283588E6F]
 
 |Token Staking
-|link:https://goerli.etherscan.io/address/0x69f962a0fbA5635e84eC94131f9072108E2E4F24#code[0x69f962a0fbA5635e84eC94131f9072108E2E4F24]
+|link:https://goerli.etherscan.io/address/0x1da5d88C26EA4f87b5e09C3452eE2384Ee20DC75#code[0x1da5d88C26EA4f87b5e09C3452eE2384Ee20DC75]
 
 |RandomBeacon
-|link:https://goerli.etherscan.io/address/0x2bA82903B635a96154A515488d2952E86D6adc3A#code[0x2bA82903B635a96154A515488d2952E86D6adc3A]
+|link:https://goerli.etherscan.io/address/0xaFfCD4734eEa140Ba5666Bf60541CCAFfa74F4be#code[0xaFfCD4734eEa140Ba5666Bf60541CCAFfa74F4be]
 
 |WalletRegistry
-|link:https://goerli.etherscan.io/address/0x2363cc10b7680000C02E4a7067A68d1788ffc86F#writeProxyContract[0x2363cc10b7680000C02E4a7067A68d1788ffc86F]
+|link:https://goerli.etherscan.io/address/0x82BE0F8C8d43fAC584B03f4b782370E202A34527#writeProxyContract[0x82BE0F8C8d43fAC584B03f4b782370E202A34527]
 
 |Bridge
-|link:https://goerli.etherscan.io/address/0x9eEBaFC9281c8B434Bd74547DC0c561fD3982BB7#code[0x9eEBaFC9281c8B434Bd74547DC0c561fD3982BB7]
+|link:https://goerli.etherscan.io/address/0x52E861c35240d722e9EF7B605dC72C71ff8fc185#code[0x52E861c35240d722e9EF7B605dC72C71ff8fc185]
 
 |===
 
