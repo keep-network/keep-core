@@ -479,13 +479,10 @@ func (p *provider) bootstrap(
 	ownID := p.identity.id
 	filteredPeerInfos := make([]peer.AddrInfo, 0)
 
+	// If the client's own address is mistakenly added to the list of bootstrap
+	// peers, filter it out. This will prevent self-dialing.
 	for _, peerInfo := range peerInfos {
-		if peerInfo.ID == ownID {
-			logger.Infof(
-				"Found own address [%v] on bootstrap peer list. Ignoring it.",
-				peerInfo.ID,
-			)
-		} else {
+		if peerInfo.ID != ownID {
 			filteredPeerInfos = append(filteredPeerInfos, peerInfo)
 		}
 	}
