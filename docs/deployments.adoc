@@ -27,7 +27,7 @@ Currently they are:
 @keep-network/tbtc-v2: TBD
 ```
 
-=== Contracts addresses:
+=== Contracts addresses
 
 [%header,cols="1m,1m"]
 |===
@@ -89,7 +89,7 @@ Currently they are:
 ```
 
 [#goerli-contracts]
-=== Contracts addresses:
+=== Contracts addresses
 
 [%header,cols="1m,1m"]
 |===
@@ -151,7 +151,7 @@ They are:
 @keep-network/tbtc-v2@0.1.1-ropsten.7
 ```
 
-=== Contracts addresses:
+=== Contracts addresses
 
 [%header,cols="1m,1m"]
 |===
