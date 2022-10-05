@@ -22,8 +22,8 @@ Currently they are:
 @keep-network/tbtc@1.1.0
 @keep-network/coverage-pools@1.0.0
 @threshold-network/solidity-contracts@1.1.0
-@keep-network/random-beacon: TBD
-@keep-network/ecdsa: TBD
+@keep-network/random-beacon@2.0.0
+@keep-network/ecdsa@2.0.0
 @keep-network/tbtc-v2: TBD
 ```
 
@@ -53,16 +53,16 @@ Currently they are:
 |link:https://etherscan.io/address/0xbbD3C0C794F40c4f993B03F65343aCC6fcfCb2e2#writeProxyContract[0xbbD3C0C794F40c4f993B03F65343aCC6fcfCb2e2]
 
 |Keep Stake
-|TBD
+|link:https://goerli.etherscan.io/address/0x10DE37cF84202A20cae61069C617B3Aa874aF8b4#code[0x10DE37cF84202A20cae61069C617B3Aa874aF8b4]
 
 |Token Staking 
 |link:https://etherscan.io/address/0x01b67b1194c75264d06f808a921228a95c765dd7#writeProxyContract[0x01b67b1194c75264d06f808a921228a95c765dd7]
 
 |RandomBeacon
-|TBD
+|link:https://etherscan.io/address/0x5499f54b4A1CB4816eefCf78962040461be3D80b[0x5499f54b4A1CB4816eefCf78962040461be3D80b]
 
 |WalletRegistry
-|TBD
+|link:https://etherscan.io/address/0xfbae130e06bbc8ca198861beecae6e2b830398fb[0xfbae130e06bbc8ca198861beecae6e2b830398fb]
 
 |Bridge
 |TBD
