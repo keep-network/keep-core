@@ -11,6 +11,13 @@ const endTimeDate = new Date(endTime * 1000).toISOString().slice(0, 10)
 const distribution_path = "distributions/" + endTimeDate
 
 async function main() {
+  try {
+    fs.mkdirSync(distribution_path)
+  } catch (err) {
+    console.error(err)
+    return
+  }
+
   const ongoingRewards = await stakingRewards.getOngoingMekleInput(
     graphqlApi,
     startTime,
@@ -23,27 +30,27 @@ async function main() {
   )
   const merkleDist = stakingRewards.genMerkleDist(merkleInput)
 
-  fs.mkdir(distribution_path, (err) => {
-    if (err) {
-      return console.error(err)
-    }
-  })
-  fs.writeFileSync(
-    distribution_path + "/MerkleInputOngoingRewards.json",
-    JSON.stringify(ongoingRewards, null, 4)
-  )
-  fs.writeFileSync(
-    distribution_path + "/MerkleInputBonusRewards.json",
-    JSON.stringify(bonusRewards, null, 4)
-  )
-  fs.writeFileSync(
-    distribution_path + "/MerkleInputTotalRewards.json",
-    JSON.stringify(merkleInput, null, 4)
-  )
-  fs.writeFileSync(
-    distribution_path + "/MerkleDist.json",
-    JSON.stringify(merkleDist, null, 4)
-  )
+  try{
+    fs.writeFileSync(
+      distribution_path + "/MerkleInputOngoingRewards.json",
+      JSON.stringify(ongoingRewards, null, 4)
+    )
+    fs.writeFileSync(
+      distribution_path + "/MerkleInputBonusRewards.json",
+      JSON.stringify(bonusRewards, null, 4)
+    )
+    fs.writeFileSync(
+      distribution_path + "/MerkleInputTotalRewards.json",
+      JSON.stringify(merkleInput, null, 4)
+    )
+    fs.writeFileSync(
+      distribution_path + "/MerkleDist.json",
+      JSON.stringify(merkleDist, null, 4)
+    )
+  } catch (err) {
+    console.error(err)
+    return
+  }
 
   console.log("Total amount of rewards: ", merkleDist.totalAmount)
 }
