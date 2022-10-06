@@ -92,6 +92,25 @@ func (trtm *tssRoundThreeMessage) Type() string {
 	return messageTypePrefix + "tss_round_three_message"
 }
 
+// tssFinalizationMessage is a message payload that carries the sender's TSS
+// finalization confirmation.
+type tssFinalizationMessage struct {
+	senderID group.MemberIndex
+
+	sessionID string
+}
+
+// SenderID returns protocol-level identifier of the message sender.
+func (tfm *tssFinalizationMessage) SenderID() group.MemberIndex {
+	return tfm.senderID
+}
+
+// Type returns a string describing an tssFinalizationMessage type for
+// marshaling purposes.
+func (tfm *tssFinalizationMessage) Type() string {
+	return messageTypePrefix + "tss_finalization_message"
+}
+
 // resultSignatureMessage is a message payload that carries a hash of
 // the DKG result and a signature over this hash for a DKG result.
 //

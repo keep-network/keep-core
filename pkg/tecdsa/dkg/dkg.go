@@ -105,12 +105,12 @@ func (e *Executor) Execute(
 		return nil, 0, err
 	}
 
-	finalizationState, ok := lastState.(*finalizationState)
+	confirmationState, ok := lastState.(*confirmationState)
 	if !ok {
 		return nil, 0, fmt.Errorf("execution ended on state: %T", lastState)
 	}
 
-	return finalizationState.result(), endBlockNumber, nil
+	return confirmationState.result(), endBlockNumber, nil
 }
 
 // PreParamsCount returns the current count of the DKG pre-parameters.
@@ -211,6 +211,9 @@ func RegisterUnmarshallers(channel net.BroadcastChannel) {
 	})
 	channel.SetUnmarshaler(func() net.TaggedUnmarshaler {
 		return &tssRoundThreeMessage{}
+	})
+	channel.SetUnmarshaler(func() net.TaggedUnmarshaler {
+		return &tssFinalizationMessage{}
 	})
 	channel.SetUnmarshaler(func() net.TaggedUnmarshaler {
 		return &resultSignatureMessage{}

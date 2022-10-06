@@ -225,6 +225,50 @@ func TestFuzzTssRoundThreeMessage_Unmarshaler(t *testing.T) {
 	pbutils.FuzzUnmarshaler(&tssRoundThreeMessage{})
 }
 
+func TestTssFinalizationMessage_MarshalingRoundtrip(t *testing.T) {
+	msg := &tssFinalizationMessage{
+		senderID:  group.MemberIndex(50),
+		sessionID: "session-1",
+	}
+	unmarshaled := &tssFinalizationMessage{}
+
+	err := pbutils.RoundTrip(msg, unmarshaled)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if !reflect.DeepEqual(msg, unmarshaled) {
+		t.Fatalf("unexpected content of unmarshaled message")
+	}
+}
+
+func TestFuzzTssFinalizationMessage_MarshalingRoundtrip(t *testing.T) {
+	for i := 0; i < 10; i++ {
+		var (
+			senderID  group.MemberIndex
+			sessionID string
+		)
+
+		f := fuzz.New().NilChance(0.1).
+			NumElements(0, 512).
+			Funcs(pbutils.FuzzFuncs()...)
+
+		f.Fuzz(&senderID)
+		f.Fuzz(&sessionID)
+
+		message := &tssFinalizationMessage{
+			senderID:  senderID,
+			sessionID: sessionID,
+		}
+
+		_ = pbutils.RoundTrip(message, &tssFinalizationMessage{})
+	}
+}
+
+func TestFuzzTssFinalizationMessage_Unmarshaler(t *testing.T) {
+	pbutils.FuzzUnmarshaler(&tssFinalizationMessage{})
+}
+
 func TestResultSignatureMessage_MarshalingRoundtrip(t *testing.T) {
 	msg := &resultSignatureMessage{
 		senderID:   123,
