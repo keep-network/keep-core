@@ -213,6 +213,9 @@ func RegisterUnmarshallers(channel net.BroadcastChannel) {
 		return &tssRoundThreeMessage{}
 	})
 	channel.SetUnmarshaler(func() net.TaggedUnmarshaler {
+		return &tssFinalizationMessage{}
+	})
+	channel.SetUnmarshaler(func() net.TaggedUnmarshaler {
 		return &resultSignatureMessage{}
 	})
 }
