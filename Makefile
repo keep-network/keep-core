@@ -20,7 +20,7 @@ mainnet:
 local:
 	make all environment=local
 
-all: get_artifacts generate build cmd-help release
+all: get_artifacts generate build release cmd-help
 
 # FIXME: tbtc module was removed as it's not used in the client. Add it back
 # while implementing tbtc integration.
