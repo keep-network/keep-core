@@ -476,7 +476,18 @@ func (p *provider) bootstrap(
 		return err
 	}
 
-	bootstrapConfig := bootstrapConfigWithPeers(peerInfos)
+	ownID := p.identity.id
+	filteredPeerInfos := make([]peer.AddrInfo, 0)
+
+	// If the client's own address is on the list of bootstrap peers, filter it
+	// out to prevent self-dialing.
+	for _, peerInfo := range peerInfos {
+		if peerInfo.ID != ownID {
+			filteredPeerInfos = append(filteredPeerInfos, peerInfo)
+		}
+	}
+
+	bootstrapConfig := bootstrapConfigWithPeers(filteredPeerInfos)
 
 	// TODO: use the io.Closer to shutdown the bootstrapper when we build out
 	// a shutdown process.
