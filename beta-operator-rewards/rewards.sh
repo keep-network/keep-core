@@ -69,42 +69,40 @@ if [ "$REWARDS_START_DATE" == "" ]; then
   exit 1
 fi
 
+# TODO: convert to Y-m-d 23:59:59
 rewardsStartDate=$(date -j -f "%Y-%m-%d" ${REWARDS_START_DATE} "+%s")
 rewardsEndDate=$(date -j -f "%Y-%m-%d" ${REWARDS_END_DATE} "+%s")
 
 printf "${LOG_START}Installing yarn dependencies...${LOG_END}"
 yarn install
 
-# latestTags=$(git tag --sort=version:refname --list 'v[0-9]*') # sorted oldest -> latest
-latestTags=$(git tag --sort=-version:refname --list 'v[0-9]*') # sorted latest -> oldest
-# latestTags=$(git tag --sort=version:refname --list 'v[0-9]*.*-m[0-9]*') # sorted oldest -> latest
+# latestTags=$(git tag --sort=-version:refname --list 'v[0-9]*.*-m[0-9]*') # TODO: REPLACE, this is correct regex to match latest versions
+allTags=($(git tag --sort=-version:refname --list 'v[0-9]*')) # sorted latest -> oldest # TODO: For testing
+latestTags=allTags[@]:0:1                                     # pick 2 latest tags
+
 tagsInRewardInterval=()
-for tag in $latestTags; do
-  timestamp=$(git show -s --format=%ct $tag^{commit})
-  # Getting the client tags that were released 7 days prior to the rewards interval
-  # start time and 7 days prior to the interval end. If a new client is released
-  # ex. 3 days before the end of the interval and a peer didn't upgrade the client
-  # it is not taken into account for the current rewards interval. It will be
-  # measured only in the next reward interval. In short, the rewards interval is
-  # offset by 7 days.
-  rewardsStartOffset=$(($rewardsStartDate - ${CLIENT_UPGRADE_DELAY_ACCEPTANCE}))
-  rewardsEndOffset=$(($rewardsEndDate - ${CLIENT_UPGRADE_DELAY_ACCEPTANCE}))
-  if [ "$rewardsStartOffset" -lt "$timestamp" ] && [ "$timestamp" -le "$rewardsEndOffset" ]; then
-    tagTimestamp="${tag}_$(git show -s --format=%ct $tag^{commit})"
-    tagsInRewardInterval+=($tagTimestamp)
-  elif [ "$timestamp" -le "$rewardsStartOffset" ]; then
-    # current tag (in case no new tags in a given rewards interval)
-    # or one before the latest to check what version was before the newest tag
-    tagTimestamp="${tag}_$(git show -s --format=%ct $tag^{commit})"
-    tagsInRewardInterval+=($tagTimestamp)
-    break
-  fi
-done
+
+latestTimestamp=$(git show -s --format=%ct ${allTags[0]}^{commit})
+if [ $latestTimestamp -gt $rewardsStartDate ] && [ $latestTimestamp -lt $rewardsEndDate ]; then
+  tagOneBeforeLatestTimestamp="${allTags[0]}_$(git show -s --format=%ct ${allTags[1]}^{commit})"
+  tagLatestTimestamp="${allTags[1]}_$latestTimestamp"
+  tagsInRewardInterval+=($tagOneBeforeLatestTimestamp)
+  tagsInRewardInterval+=($tagLatestTimestamp)
+elif [ $latestTimestamp -gt $rewardsEndDate ]; then
+  # The latest tag was created after the given rewards interval. We do not process
+  # such tags and we take the one before latest
+  tagLatestTimestamp="${allTags[1]}_$latestTimestamp"
+  tagsInRewardInterval+=($tagLatestTimestamp)
+else
+  # Latest tag was created before the start rewards interval and continue being
+  # the latest tag. (no new releases)
+  tagLatestTimestamp="${allTags[0]}_$latestTimestamp"
+  tagsInRewardInterval+=($tagLatestTimestamp)
+fi
 
 # Converting array to string so we can pass to the rewards-requirements.ts
-printf -v tags '|%s' "${tagsInRewardInterval[@]}"
-
-echo $tags
+printf -v tags '%s|' "${tagsInRewardInterval[@]}"
+tagsTrimmed="${tags%?}" # remove "|" at the end
 
 # Run script
 printf "${LOG_START}Fetching peers data...${LOG_END}"
@@ -115,7 +113,7 @@ yarn rewards-requirements \
   --start $rewardsStartDate \
   --end $rewardsEndDate \
   --interval 5 \
-  --versions $tags \
+  --versions $tagsTrimmed \
   --output ${OUTPUT_JSON_FILE}
 
 # TODO: do we want to upload the output file to a GCP bucket?

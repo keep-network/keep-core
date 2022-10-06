@@ -38,10 +38,11 @@ export async function calculateRewardsFactors() {
   const queryStep = 600; // 10min in sec
   const prometheus_job = options.job;
   const prometheusAPI = options.api;
-  const clientVersions = options.versions;
+  const clientVersions = options.versions.split("|"); // sorted from latest to oldest
   const startRewardsTimestamp = parseInt(options.start);
   const endRewardsTimestamp = parseInt(options.end);
   const scrapeInterval = parseInt(options.interval);
+  const allowedUpgradeDelay = 1209600; // 2 weeks in sec. TODO: add as an option.param
   const rewardsInterval = endRewardsTimestamp - startRewardsTimestamp;
   const requiredUptime = 96; // percent
   const preParamsAvgInterval = "24h"; // hours
@@ -55,9 +56,11 @@ export async function calculateRewardsFactors() {
     preParams: "preParams",
   };
   const upTimeRewardsCoefficient = "upTimeRewardsCoefficient";
-  const prometheusAPIQuery = `${prometheusAPI}/query`
+  const prometheusAPIQuery = `${prometheusAPI}/query`;
   const peersDataFile = options.output;
   const defaultProvider = "goerli";
+  const clientVersionIndex = 0;
+  const clientTimestampIndex = 1;
 
   // Query for bootstrap data that has peer instances
   const queryBootstrapData = `${prometheusAPI}/query_range`;
@@ -141,8 +144,10 @@ export async function calculateRewardsFactors() {
       query: `sum_over_time(up{instance='${peer.metric.instance}', job='${prometheus_job}'}
               [${uptimeSearchRange}s] offset ${offset}s) * ${scrapeInterval} / ${uptimeSearchRange}`,
     };
-
-    const resultUptime = await queryPrometheus(prometheusAPIQuery, paramsUptime);
+    const resultUptime = await queryPrometheus(
+      prometheusAPIQuery,
+      paramsUptime
+    );
     const resultUptimePercent = resultUptime.data.result[0].value[1] * 100;
     const upFactor = resultUptimePercent < requiredUptime ? 0 : 1;
     peerData.set(factors.upTime, upFactor);
@@ -162,7 +167,6 @@ export async function calculateRewardsFactors() {
       query: `avg_over_time(tbtc_pre_params_count{instance='${peer.metric.instance}', job='${prometheus_job}'}
               [${preParamsAvgInterval}] offset ${offset}s)[${rewardsInterval}s:${preParamsResolution}]`,
     };
-
     const resultPreParams = await queryPrometheus(
       prometheusAPIQuery,
       paramsPreParams
@@ -182,11 +186,58 @@ export async function calculateRewardsFactors() {
 
     /// Version requirement (One-week delay in updates to the most recent version)
 
-    // TODO: implement
-    // - parse clientVersions by "|" and extract the tag timestamp by "_"
-    // - start checking the version req from the latest to newest from the parsed
-    //   timestamps above and add 7 days (delay) to each timestamp
-    // - check against Prometheus. If they match.. good, if not.. no rewards
+    // Check a peer's version at the end of the rewards interval
+    const buildVersionParams = {
+      query: `client_info{instance='${peer.metric.instance}', job='${prometheus_job}'} @ ${endRewardsTimestamp}`,
+    };
+    const resultBuildVersion = await queryPrometheus(
+      prometheusAPIQuery,
+      buildVersionParams
+    );
+
+    if (resultBuildVersion.data !== undefined && resultBuildVersion.data.result.length > 0) {
+      const peerVersion =
+        resultBuildVersion.data.result[0].metric.version.split("-")[0];
+      const latestClientVersionInfo = clientVersions[0].split("_");
+      if (clientVersions.length > 1) {
+        const oneBeforeLatestClientVersionInfo = clientVersions[0].split("_");
+        if (
+          latestClientVersionInfo[clientTimestampIndex] <
+          endRewardsTimestamp - allowedUpgradeDelay
+        ) {
+          // Latest version was released prior to a delay threshold.
+          // Peer's version must be the latest client's version.
+          if (peerVersion === latestClientVersionInfo[clientVersionIndex]) {
+            peerData.set(factors.version, 1);
+          } else {
+            peerData.set(factors.version, 0);
+          }
+        } else {
+          // Latest version was released in the allowed delay window.
+          // Peer's version should match the latest or one before the latest client's
+          // version.
+          if (
+            peerVersion === latestClientVersionInfo[clientVersionIndex] ||
+            peerVersion === oneBeforeLatestClientVersionInfo[clientVersionIndex]
+          ) {
+            peerData.set(factors.version, 1);
+          } else {
+            peerData.set(factors.version, 0);
+          }
+        }
+      } else {
+        // Latest release was done prior to the start interval
+        // Peer's version must be the latest
+        if (peerVersion === latestClientVersionInfo[clientVersionIndex]) {
+          peerData.set(factors.version, 1);
+        } else {
+          peerData.set(factors.version, 0);
+        }
+      }
+    } else {
+      // A peer doesn't metric any build versions
+      peerData.set(factors.version, 0);
+    }
 
     peersData.set(peer.metric.instance, peerData);
     console.log("peersDataFactors", peersData);
