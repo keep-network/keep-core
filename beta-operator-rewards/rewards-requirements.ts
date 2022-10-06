@@ -23,7 +23,7 @@ export async function calculateRewardsFactors() {
       "-e, --end <timestamp>",
       "ending time for rewards calculation"
     )
-    .requiredOption("-i, --interval <timestamp>", "scrape interval") // IMPORTANT, it has to be the same as in prometheous config
+    .requiredOption("-i, --interval <timestamp>", "scrape interval") // IMPORTANT! Must match Prometheus config
     .requiredOption("-a, --api <prometheus api>", "prometheus API")
     .requiredOption("-j, --job <prometheus job>", "prometheus job")
     .requiredOption(
@@ -36,32 +36,33 @@ export async function calculateRewardsFactors() {
   const options = program.opts();
 
   const queryStep = 600; // 10min in sec
-  const prometheous_job = options.job;
+  const prometheus_job = options.job;
   const prometheusAPI = options.api;
+  const clientVersions = options.versions;
   const startRewardsTimestamp = parseInt(options.start);
   const endRewardsTimestamp = parseInt(options.end);
   const scrapeInterval = parseInt(options.interval);
-  const clientVersions = options.versions;
   const rewardsInterval = endRewardsTimestamp - startRewardsTimestamp;
   const requiredUptime = 96; // percent
-  const preParamsAvgInterval = 24; // hours
-  const preParamsResolution = 24; // hours
+  const preParamsAvgInterval = "24h"; // hours
+  const preParamsResolution = "24h"; // hours
   const minPreParams = 500; // min requirement for pre params daily avg
   const factors = {
     isBeaconAuthorized: "isBeaconAuthorized",
     isTbtcAuthorized: "isTbtcAuthorized",
     upTime: "upTime",
-    version: "verion",
+    version: "version",
     preParams: "preParams",
   };
   const upTimeRewardsCoefficient = "upTimeRewardsCoefficient";
+  const prometheusAPIQuery = `${prometheusAPI}/query`
   const peersDataFile = options.output;
   const defaultProvider = "goerli";
 
   // Query for bootstrap data that has peer instances
   const queryBootstrapData = `${prometheusAPI}/query_range`;
   const paramsBootstrapData = {
-    query: `up{job='${prometheous_job}'}`,
+    query: `up{job='${prometheus_job}'}`,
     start: startRewardsTimestamp,
     end: endRewardsTimestamp,
     step: queryStep,
@@ -88,6 +89,7 @@ export async function calculateRewardsFactors() {
   );
 
   if (Date.now() / 1000 < endRewardsTimestamp) {
+    console.log("End time interval must be in the past");
     return "End time interval must be in the past";
   }
 
@@ -128,7 +130,6 @@ export async function calculateRewardsFactors() {
     // evaluating uptime from this point.
     const firstRegisteredUptime = peer.values[0][0];
     const uptimeSearchRange = endRewardsTimestamp - firstRegisteredUptime;
-    const queryUptime = `${prometheusAPI}/query`;
     // Offset is set in case the end time interval is not aligned with execution
     // of this script. It "goes" back in time relevant to the current time.
     const offset = Math.floor(Date.now() / 1000) - endRewardsTimestamp;
@@ -137,10 +138,11 @@ export async function calculateRewardsFactors() {
     // hence we need to multiply the result by the scrape interval
     // (set in the config file) and divide by the uptime search range.
     const paramsUptime = {
-      query: `sum_over_time(up{instance='${peer.metric.instance}', job='${prometheous_job}'}[${uptimeSearchRange}s] offset ${offset}s) * ${scrapeInterval} / ${uptimeSearchRange}`,
+      query: `sum_over_time(up{instance='${peer.metric.instance}', job='${prometheus_job}'}
+              [${uptimeSearchRange}s] offset ${offset}s) * ${scrapeInterval} / ${uptimeSearchRange}`,
     };
 
-    const resultUptime = await queryPrometheus(queryUptime, paramsUptime);
+    const resultUptime = await queryPrometheus(prometheusAPIQuery, paramsUptime);
     const resultUptimePercent = resultUptime.data.result[0].value[1] * 100;
     const upFactor = resultUptimePercent < requiredUptime ? 0 : 1;
     peerData.set(factors.upTime, upFactor);
@@ -155,14 +157,14 @@ export async function calculateRewardsFactors() {
 
     /// Pre-param requirement
 
-    const queryPreParams = `${prometheusAPI}/query`;
     // <func>(<metric>{<labels>}[<local_range>] offset <time>)[<global_range>:<resolution>]
     const paramsPreParams = {
-      query: `avg_over_time(tbtc_pre_params_count{instance='${peer.metric.instance}', job='${prometheous_job}'}[${preParamsAvgInterval}h] offset ${offset}s)[${rewardsInterval}s:${preParamsResolution}h]`,
+      query: `avg_over_time(tbtc_pre_params_count{instance='${peer.metric.instance}', job='${prometheus_job}'}
+              [${preParamsAvgInterval}] offset ${offset}s)[${rewardsInterval}s:${preParamsResolution}]`,
     };
 
     const resultPreParams = await queryPrometheus(
-      queryPreParams,
+      prometheusAPIQuery,
       paramsPreParams
     );
     peerData.set(factors.preParams, 1);
@@ -203,7 +205,7 @@ export async function calculateRewardsFactors() {
 }
 
 async function convertToJSON(map: Map<string, Map<string, any>>) {
-  var json: { [k: string]: any } = {};
+  let json: { [k: string]: any } = {};
   map.forEach((value: Map<string, any>, key: string) => {
     const result = Object.fromEntries(value);
     json[key] = result;

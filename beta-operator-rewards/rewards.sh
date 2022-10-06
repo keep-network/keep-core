@@ -16,13 +16,13 @@ CLIENT_UPGRADE_DELAY_ACCEPTANCE=604800 # 7days in sec
 help() {
   echo -e "\nUsage: $0" \
     "--prometheus-api <prometheus-api-address>" \
-    "--prometheous-job <prometheous-job>" \
+    "--prometheus-job <prometheus-job>" \
     "--rewards-start-date <rewards-start-date Y-m-d>" \
     "--rewards-end-date <rewards-end-date Y-m-d>" \
     "--bucket-name <GCP-bucket-name>"
   echo -e "\nCommand line arguments:\n"
   echo -e "\t--prometheus-api: Prometheus API"
-  echo -e "\t--prometheous-job: Prometheous service discovery job name"
+  echo -e "\t--prometheus-job: Prometheus service discovery job name"
   echo -e "\t--rewards-start-date: Rewards start date Y-m-d"
   echo -e "\t--rewards-end-date: Rewards end date Y-m-d"
   echo -e "\t--bucket-name: GCP destination bucket name where peer data are stored\n"
@@ -34,7 +34,7 @@ for arg in "$@"; do
   shift
   case "$arg" in
   "--prometheus-api") set -- "$@" "-i" ;;
-  "--prometheous-job") set -- "$@" "-p" ;;
+  "--prometheus-job") set -- "$@" "-p" ;;
   "--rewards-start-date") set -- "$@" "-k" ;;
   "--rewards-end-date") set -- "$@" "-e" ;;
   "--bucket-name") set -- "$@" "-b" ;;
