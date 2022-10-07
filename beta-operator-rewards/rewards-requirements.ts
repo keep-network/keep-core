@@ -47,7 +47,7 @@ export async function calculateRewardsFactors() {
 
   // Parse the program options
   const options = program.opts();
-  const prometheus_job = options.job;
+  const prometheusJob = options.job;
   const prometheusAPI = options.api;
   const clientVersions = options.versions.split("|"); // sorted from latest to oldest
   const startRewardsTimestamp = parseInt(options.start);
@@ -71,7 +71,7 @@ export async function calculateRewardsFactors() {
 
   // Query for bootstrap data that has peer instances
   const paramsBootstrapData = {
-    query: `up{job='${prometheus_job}'}`,
+    query: `up{job='${prometheusJob}'}`,
     start: startRewardsTimestamp,
     end: endRewardsTimestamp,
     step: QUERY_STEP,
@@ -147,7 +147,7 @@ export async function calculateRewardsFactors() {
     // hence we need to multiply the result by the scrape interval
     // (set in the config file) and divide by the uptime search range.
     const paramsUptime = {
-      query: `sum_over_time(up{instance='${peer.metric.instance}', job='${prometheus_job}'}
+      query: `sum_over_time(up{instance='${peer.metric.instance}', job='${prometheusJob}'}
               [${uptimeSearchRange}s] offset ${offset}s) * ${scrapeInterval} / ${uptimeSearchRange}`,
     };
     const resultUptime = await queryPrometheus(
@@ -170,7 +170,7 @@ export async function calculateRewardsFactors() {
 
     // <func>(<metric>{<labels>}[<local_range>] offset <time>)[<global_range>:<resolution>]
     const paramsPreParams = {
-      query: `avg_over_time(tbtc_pre_params_count{instance='${peer.metric.instance}', job='${prometheus_job}'}
+      query: `avg_over_time(tbtc_pre_params_count{instance='${peer.metric.instance}', job='${prometheusJob}'}
               [${PRE_PARAMS_AVG_INTERVAL}] offset ${offset}s)[${rewardsInterval}s:${PRE_PARAMS_RESOLUTION}]`,
     };
     const resultPreParams = await queryPrometheus(
@@ -194,7 +194,7 @@ export async function calculateRewardsFactors() {
 
     // Check a peer's version at the end of the rewards interval
     const buildVersionParams = {
-      query: `client_info{instance='${peer.metric.instance}', job='${prometheus_job}'} @ ${endRewardsTimestamp}`,
+      query: `client_info{instance='${peer.metric.instance}', job='${prometheusJob}'} @ ${endRewardsTimestamp}`,
     };
     const resultBuildVersion = await queryPrometheus(
       prometheusAPIQuery,
