@@ -12,7 +12,7 @@ import (
 	"github.com/keep-network/keep-common/pkg/rate"
 	"github.com/keep-network/keep-core/config"
 	chainEthereum "github.com/keep-network/keep-core/pkg/chain/ethereum"
-	"github.com/keep-network/keep-core/pkg/metrics"
+	"github.com/keep-network/keep-core/pkg/clientinfo"
 	"github.com/keep-network/keep-core/pkg/net/libp2p"
 	"github.com/keep-network/keep-core/pkg/tbtc"
 )
@@ -39,10 +39,8 @@ func initFlags(
 			initNetworkFlags(cmd, cfg)
 		case config.Storage:
 			initStorageFlags(cmd, cfg)
-		case config.Metrics:
-			initMetricsFlags(cmd, cfg)
-		case config.Diagnostics:
-			initDiagnosticsFlags(cmd, cfg)
+		case config.ClientInfo:
+			initClientInfoFlags(cmd, cfg)
 		case config.Tbtc:
 			initTbtcFlags(cmd, cfg)
 		case config.Developer:
@@ -154,6 +152,13 @@ func initEthereumFlags(cmd *cobra.Command, cfg *config.Config) {
 
 // Initialize flags for Network configuration.
 func initNetworkFlags(cmd *cobra.Command, cfg *config.Config) {
+	cmd.Flags().BoolVar(
+		&cfg.LibP2P.Bootstrap,
+		"network.bootstrap",
+		false,
+		"Run the client in bootstrap mode.",
+	)
+
 	cmd.Flags().StringSliceVar(
 		&cfg.LibP2P.Peers,
 		"network.peers",
@@ -194,37 +199,27 @@ func initStorageFlags(cmd *cobra.Command, cfg *config.Config) {
 	)
 }
 
-// Initialize flags for Metrics configuration.
-func initMetricsFlags(cmd *cobra.Command, cfg *config.Config) {
+// Initialize flags for ClientInfo configuration.
+func initClientInfoFlags(cmd *cobra.Command, cfg *config.Config) {
 	cmd.Flags().IntVar(
-		&cfg.Metrics.Port,
-		"metrics.port",
+		&cfg.ClientInfo.Port,
+		"clientInfo.port",
 		9601,
-		"Metrics HTTP server listening port.",
+		"Client Info HTTP server listening port.",
 	)
 
 	cmd.Flags().DurationVar(
-		&cfg.Metrics.NetworkMetricsTick,
-		"metrics.networkMetricsTick",
-		metrics.DefaultNetworkMetricsTick,
-		"Network metrics check tick in seconds.",
+		&cfg.ClientInfo.NetworkMetricsTick,
+		"clientInfo.networkMetricsTick",
+		clientinfo.DefaultNetworkMetricsTick,
+		"Client Info network metrics check tick in seconds.",
 	)
 
 	cmd.Flags().DurationVar(
-		&cfg.Metrics.EthereumMetricsTick,
-		"metrics.ethereumMetricsTick",
-		metrics.DefaultEthereumMetricsTick,
-		"Ethereum metrics check tick in seconds.",
-	)
-}
-
-// Initialize flags for Diagnostics configuration.
-func initDiagnosticsFlags(cmd *cobra.Command, cfg *config.Config) {
-	cmd.Flags().IntVar(
-		&cfg.Diagnostics.Port,
-		"diagnostics.port",
-		9701,
-		"Diagnostics HTTP server listening port.",
+		&cfg.ClientInfo.EthereumMetricsTick,
+		"clientInfo.ethereumMetricsTick",
+		clientinfo.DefaultEthereumMetricsTick,
+		"Client info Ethereum metrics check tick in seconds.",
 	)
 }
 

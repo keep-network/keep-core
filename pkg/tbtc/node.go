@@ -69,16 +69,24 @@ func newNode(
 // completes the on-chain operation.
 func (n *node) joinDKGIfEligible(seed *big.Int, startBlockNumber uint64) {
 	dkgLogger := logger.With(
-		zap.String("seed", seed.Text(16)),
+		zap.String("seed", fmt.Sprintf("0x%x", seed)),
 	)
 
 	dkgLogger.Info("checking eligibility for DKG")
 
 	selectedSigningGroupOperators, err := n.chain.SelectGroup(seed)
 	if err != nil {
-		dkgLogger.Errorf("failed to select group: [%v]", err)
+		// TODO: We should consider switching this log to Errorf when the
+		// Chaosnet 0 phase is completed and results are submitted to the chain.
+		// To let the operators join the pool, the dev team will keep unlocking
+		// it via DKG timeout from time to time. During the period pool is
+		// unlocked, selecting the group will not work.
+		//dkgLogger.Errorf("failed to select group: [%v]", err)
+		dkgLogger.Warnf("selecting group not possible: [%v]", err)
 		return
 	}
+
+	dkgLogger.Infof("selected group members for DKG = %s", selectedSigningGroupOperators)
 
 	chainConfig := n.chain.GetConfig()
 
@@ -404,7 +412,7 @@ func (n *node) joinSigningIfEligible(
 	startBlockNumber uint64,
 ) {
 	signingLogger := logger.With(
-		zap.String("message", message.Text(16)),
+		zap.String("message", fmt.Sprintf("0x%x", message)),
 	)
 
 	walletPublicKeyBytes, err := marshalPublicKey(walletPublicKey)
@@ -414,7 +422,7 @@ func (n *node) joinSigningIfEligible(
 	}
 
 	signingLogger = signingLogger.With(
-		zap.String("wallet", hex.EncodeToString(walletPublicKeyBytes)),
+		zap.String("wallet", fmt.Sprintf("0x%x", walletPublicKeyBytes)),
 	)
 
 	signingLogger.Info("checking eligibility for signing")

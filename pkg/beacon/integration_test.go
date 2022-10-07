@@ -4,6 +4,7 @@ package beacon_test
 
 import (
 	"crypto/rand"
+	"encoding/hex"
 	"fmt"
 	"math/big"
 	"testing"
@@ -226,6 +227,8 @@ func TestSigningWithInvalidSignatureShare(t *testing.T) {
 	t.Parallel()
 
 	interceptor := func(msg net.TaggedMarshaler) net.TaggedMarshaler {
+		sessionID := hex.EncodeToString(previousEntry())
+
 		signatureShareMessage, ok := msg.(*entry.SignatureShareMessage)
 
 		// Member 1 sends shares which could not be unmarshalled as a G1 point.
@@ -233,6 +236,7 @@ func TestSigningWithInvalidSignatureShare(t *testing.T) {
 			return entry.NewSignatureShareMessage(
 				signatureShareMessage.SenderID(),
 				[]byte{0, 1},
+				sessionID,
 			)
 		}
 
@@ -247,6 +251,7 @@ func TestSigningWithInvalidSignatureShare(t *testing.T) {
 			return entry.NewSignatureShareMessage(
 				signatureShareMessage.SenderID(),
 				randomG1.Marshal(),
+				sessionID,
 			)
 		}
 

@@ -19,7 +19,6 @@ import (
 	chainEthereum "github.com/keep-network/keep-core/pkg/chain/ethereum"
 	ethereumBeacon "github.com/keep-network/keep-core/pkg/chain/ethereum/beacon/gen"
 	ethereumEcdsa "github.com/keep-network/keep-core/pkg/chain/ethereum/ecdsa/gen"
-	ethereumTbtc "github.com/keep-network/keep-core/pkg/chain/ethereum/tbtc/gen"
 	ethereumThreshold "github.com/keep-network/keep-core/pkg/chain/ethereum/threshold/gen"
 )
 
@@ -79,6 +78,13 @@ var cmdFlagsTests = map[string]struct {
 		expectedValueFromFlag: big.NewInt(1250000000000000000),
 		defaultValue:          big.NewInt(500000000000000000),
 	},
+	"network.bootstrap": {
+		readValueFunc:         func(c *config.Config) interface{} { return c.LibP2P.Bootstrap },
+		flagName:              "--network.bootstrap",
+		flagValue:             "true",
+		expectedValueFromFlag: true,
+		defaultValue:          false,
+	},
 	"network.port": {
 		readValueFunc:         func(c *config.Config) interface{} { return c.LibP2P.Port },
 		flagName:              "--network.port",
@@ -119,40 +125,33 @@ var cmdFlagsTests = map[string]struct {
 		flagValue:     "./flagged/location/dude",
 		defaultValue:  "",
 	},
-	"metrics.port": {
-		readValueFunc:         func(c *config.Config) interface{} { return c.Metrics.Port },
-		flagName:              "--metrics.port",
+	"clientInfo.port": {
+		readValueFunc:         func(c *config.Config) interface{} { return c.ClientInfo.Port },
+		flagName:              "--clientInfo.port",
 		flagValue:             "9870",
 		expectedValueFromFlag: 9870,
 		defaultValue:          9601,
 	},
-	"metrics.networkMetricsTick": {
-		readValueFunc:         func(c *config.Config) interface{} { return c.Metrics.NetworkMetricsTick },
-		flagName:              "--metrics.networkMetricsTick",
+	"clientInfo.networkMetricsTick": {
+		readValueFunc:         func(c *config.Config) interface{} { return c.ClientInfo.NetworkMetricsTick },
+		flagName:              "--clientInfo.networkMetricsTick",
 		flagValue:             "3m9s",
 		expectedValueFromFlag: 189 * time.Second,
 		defaultValue:          1 * time.Minute,
 	},
-	"metrics.ethereumMetricsTick": {
-		readValueFunc:         func(c *config.Config) interface{} { return c.Metrics.EthereumMetricsTick },
-		flagName:              "--metrics.ethereumMetricsTick",
+	"clientInfo.ethereumMetricsTick": {
+		readValueFunc:         func(c *config.Config) interface{} { return c.ClientInfo.EthereumMetricsTick },
+		flagName:              "--clientInfo.ethereumMetricsTick",
 		flagValue:             "1m16s",
 		expectedValueFromFlag: 76 * time.Second,
 		defaultValue:          10 * time.Minute,
-	},
-	"diagnostics.port": {
-		readValueFunc:         func(c *config.Config) interface{} { return c.Diagnostics.Port },
-		flagName:              "--diagnostics.port",
-		flagValue:             "6089",
-		expectedValueFromFlag: 6089,
-		defaultValue:          9701,
 	},
 	"tbtc.preParamsPoolSize": {
 		readValueFunc:         func(c *config.Config) interface{} { return c.Tbtc.PreParamsPoolSize },
 		flagName:              "--tbtc.preParamsPoolSize",
 		flagValue:             "75",
 		expectedValueFromFlag: 75,
-		defaultValue:          3000,
+		defaultValue:          1000,
 	},
 	"tbtc.preParamsGenerationTimeout": {
 		readValueFunc:         func(c *config.Config) interface{} { return c.Tbtc.PreParamsGenerationTimeout },
@@ -210,7 +209,9 @@ var cmdFlagsTests = map[string]struct {
 		flagName:              "--developer.bridgeAddress",
 		flagValue:             "0xd21DE06574811450E722a33D8093558E8c04eacc",
 		expectedValueFromFlag: "0xd21DE06574811450E722a33D8093558E8c04eacc",
-		defaultValue:          ethereumTbtc.BridgeAddress,
+		// FIXME: Commented out temporarily for mainnet build.
+		// defaultValue: ethereumTbtc.BridgeAddress,
+		defaultValue: "0x0000000000000000000000000000000000000000",
 	},
 	"developer.tokenStakingAddress": {
 		readValueFunc: func(c *config.Config) interface{} {
@@ -312,18 +313,13 @@ func TestFlags_Mixed(t *testing.T) {
 			expectedValue: 7469,
 		},
 		// Properties defined in the config file, not set with flags.
-		"metrics.port": {
-			readValueFunc: func(c *config.Config) interface{} { return c.Metrics.Port },
+		"clientInfo.port": {
+			readValueFunc: func(c *config.Config) interface{} { return c.ClientInfo.Port },
 			expectedValue: 3097,
 		},
 		"storage.dir": {
 			readValueFunc: func(c *config.Config) interface{} { return c.Storage.Dir },
 			expectedValue: "/my/secure/location",
-		},
-		// Properties not provided in the config file nor set with flags. Use defaults.
-		"diagnostics.port": {
-			readValueFunc: func(c *config.Config) interface{} { return c.Diagnostics.Port },
-			expectedValue: 9701,
 		},
 	}
 

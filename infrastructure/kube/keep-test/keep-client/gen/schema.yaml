@@ -4,6 +4,10 @@ clients:
   - id: 0
     #@schema/nullable
     networkPeers: ""
+    #@schema/nullable
+    publicAnnouncedAddress: ""
+    #@schema/nullable
+    staticIP: ""
     stakeAmount: 800_000
 initContainers:
   - name: ""

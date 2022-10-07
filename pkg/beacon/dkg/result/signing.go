@@ -2,7 +2,7 @@ package result
 
 import (
 	"fmt"
-	"github.com/ipfs/go-log"
+	"github.com/ipfs/go-log/v2"
 
 	"github.com/keep-network/keep-core/pkg/chain"
 
@@ -28,6 +28,9 @@ type SigningMember struct {
 	preferredDKGResultHash beaconchain.DKGResultHash
 	// Signature over preferredDKGResultHash calculated by the member.
 	selfDKGResultSignature []byte
+
+	// Identifier of the particular DKG session this member is part of.
+	sessionID string
 }
 
 // NewSigningMember creates a member to execute signing DKG result hash.
@@ -36,12 +39,14 @@ func NewSigningMember(
 	memberIndex group.MemberIndex,
 	dkgGroup *group.Group,
 	membershipValidator *group.MembershipValidator,
+	sessionID string,
 ) *SigningMember {
 	return &SigningMember{
 		logger:              logger,
 		index:               memberIndex,
 		group:               dkgGroup,
 		membershipValidator: membershipValidator,
+		sessionID:           sessionID,
 	}
 }
 
@@ -77,6 +82,7 @@ func (sm *SigningMember) SignDKGResult(
 		resultHash:  resultHash,
 		signature:   signature,
 		publicKey:   signing.PublicKey(),
+		sessionID:   sm.sessionID,
 	}, nil
 }
 

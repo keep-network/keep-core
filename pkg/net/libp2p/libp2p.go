@@ -71,6 +71,7 @@ const MaximumDisseminationTime = 90
 
 // Config defines the configuration for the libp2p network provider.
 type Config struct {
+	Bootstrap          bool
 	Peers              []string
 	Port               int
 	AnnouncedAddresses []string
@@ -154,6 +155,20 @@ func (cm *connectionManager) ConnectedPeers() []string {
 		peers = append(peers, connectedPeer.String())
 	}
 	return peers
+}
+
+func (cm *connectionManager) ConnectedPeersAddrInfo() map[string][]string {
+	// map[peerID][]peerAddresses
+	peersAddrInfo := make(map[string][]string)
+	for _, connectedPeer := range cm.Network().Peers() {
+		addrPeerInfo := cm.Peerstore().PeerInfo(connectedPeer)
+		var addresses []string
+		for _, addr := range addrPeerInfo.Addrs {
+			addresses = append(addresses, addr.String())
+		}
+		peersAddrInfo[addrPeerInfo.ID.String()] = addresses
+	}
+	return peersAddrInfo
 }
 
 func (cm *connectionManager) GetPeerPublicKey(connectedPeer string) (*operator.PublicKey, error) {
@@ -461,7 +476,18 @@ func (p *provider) bootstrap(
 		return err
 	}
 
-	bootstrapConfig := bootstrapConfigWithPeers(peerInfos)
+	ownID := p.identity.id
+	filteredPeerInfos := make([]peer.AddrInfo, 0)
+
+	// If the client's own address is on the list of bootstrap peers, filter it
+	// out to prevent self-dialing.
+	for _, peerInfo := range peerInfos {
+		if peerInfo.ID != ownID {
+			filteredPeerInfos = append(filteredPeerInfos, peerInfo)
+		}
+	}
+
+	bootstrapConfig := bootstrapConfigWithPeers(filteredPeerInfos)
 
 	// TODO: use the io.Closer to shutdown the bootstrapper when we build out
 	// a shutdown process.
@@ -522,4 +548,45 @@ func multiaddressWithIdentity(
 	peerID peer.ID,
 ) string {
 	return fmt.Sprintf("%s/ipfs/%s", multiaddress.String(), peerID.String())
+}
+
+// ExtractPeersPublicKeys returns a list of operator public keys based on the
+// provided list of peer addresses. Peer addresses must be in the format:
+// <endpoint>/ipfs/<cid>
+func ExtractPeersPublicKeys(peerAddresses []string) ([]*operator.PublicKey, error) {
+	peerInfos, err := extractMultiAddrFromPeers(peerAddresses)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"failed to extract multiaddress from peer addresses: [%v]",
+			err,
+		)
+	}
+
+	peersPublicKeys := make([]*operator.PublicKey, 0, len(peerInfos))
+
+	for _, peerInfo := range peerInfos {
+		peerNetworkPublicKey, err := peerInfo.ID.ExtractPublicKey()
+		if err != nil {
+			return nil, fmt.Errorf(
+				"failed to extract network public key for peer [%s]: [%v]",
+				peerInfo.ID.Pretty(),
+				err,
+			)
+		}
+
+		peerOperatorPublicKey, err := networkPublicKeyToOperatorPublicKey(
+			peerNetworkPublicKey,
+		)
+		if err != nil {
+			return nil, fmt.Errorf(
+				"failed to convert to operator public key for peer [%s]: [%v]",
+				peerInfo.ID.Pretty(),
+				err,
+			)
+		}
+
+		peersPublicKeys = append(peersPublicKeys, peerOperatorPublicKey)
+	}
+
+	return peersPublicKeys, nil
 }

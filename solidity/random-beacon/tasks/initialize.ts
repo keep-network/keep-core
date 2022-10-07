@@ -6,6 +6,7 @@ import {
   stake,
   authorize,
   register,
+  addBetaOperator,
 } from "./utils"
 
 // Main task executing all child tasks.
@@ -19,10 +20,12 @@ export const TASK_STAKE = "stake"
 // Name prefix that should be used in tasks implementation for specific application.
 export const TASK_AUTHORIZE = "authorize"
 export const TASK_REGISTER = "register"
+export const TASK_ADD_BETA_OPERATOR = "add_beta_operator"
 // Subtask for the Random Beacon application.
 const TASK_INITIALIZE_BEACON = `${TASK_INITIALIZE}:beacon`
 const TASK_AUTHORIZE_BEACON = `${TASK_AUTHORIZE}:beacon`
 const TASK_REGISTER_BEACON = `${TASK_REGISTER}:beacon`
+const TASK_ADD_BETA_OPERATOR_BEACON = `${TASK_ADD_BETA_OPERATOR}:beacon`
 
 task(
   TASK_INITIALIZE,
@@ -45,6 +48,8 @@ task(
     await hre.run(TASK_INITIALIZE_STAKING, args)
     // Initialize Beacon
     await hre.run(TASK_INITIALIZE_BEACON, args)
+    // Set the operator as a beta operator
+    await hre.run(TASK_ADD_BETA_OPERATOR_BEACON, args)
   })
 
 task(TASK_INITIALIZE_STAKING, "Initializes staking for a service provider")
@@ -124,7 +129,16 @@ task(
   "Registers an operator for a staking provider in Beacon"
 )
   .addParam("provider", "Staking Provider", undefined, types.string)
-  .addParam("operator", "Staking Operator", undefined, types.string)
+  .addParam("operator", "Operator Address", undefined, types.string)
   .setAction(async (args, hre) => {
     await register(hre, "RandomBeacon", args.provider, args.operator)
+  })
+
+task(
+  TASK_ADD_BETA_OPERATOR_BEACON,
+  "Adds an operator to the set of beta operators in Beacon"
+)
+  .addParam("operator", "Operator Address", undefined, types.string)
+  .setAction(async (args, hre) => {
+    await addBetaOperator(hre, "BeaconSortitionPool", args.operator)
   })

@@ -49,10 +49,13 @@ func Initialize(
 		logger,
 		beaconChain,
 		sortition.DefaultStatusCheckTick,
-		sortition.UnconditionalJoinPolicy,
+		sortition.NewBetaOperatorPolicy(beaconChain, logger),
 	)
 	if err != nil {
-		return fmt.Errorf("could not set up sortition pool monitoring: [%v]", err)
+		return fmt.Errorf(
+			"could not set up sortition pool monitoring: [%v]",
+			err,
+		)
 	}
 
 	eventDeduplicator := event.NewDeduplicator(beaconChain)

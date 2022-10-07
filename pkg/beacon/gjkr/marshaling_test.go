@@ -31,6 +31,7 @@ func TestEphemeralPublicKeyMessageRoundtrip(t *testing.T) {
 	msg := &EphemeralPublicKeyMessage{
 		senderID:            group.MemberIndex(38),
 		ephemeralPublicKeys: publicKeys,
+		sessionID:           "session-1",
 	}
 	unmarshaled := &EphemeralPublicKeyMessage{}
 
@@ -49,6 +50,7 @@ func TestFuzzEphemeralPublicKeyMessageRoundtrip(t *testing.T) {
 		var (
 			senderID            group.MemberIndex
 			ephemeralPublicKeys map[group.MemberIndex]*ephemeral.PublicKey
+			sessionID           string
 		)
 
 		f := fuzz.New().NilChance(0.1).
@@ -57,10 +59,12 @@ func TestFuzzEphemeralPublicKeyMessageRoundtrip(t *testing.T) {
 
 		f.Fuzz(&senderID)
 		f.Fuzz(&ephemeralPublicKeys)
+		f.Fuzz(&sessionID)
 
 		message := &EphemeralPublicKeyMessage{
 			senderID:            senderID,
 			ephemeralPublicKeys: ephemeralPublicKeys,
+			sessionID:           sessionID,
 		}
 
 		_ = pbutils.RoundTrip(message, &EphemeralPublicKeyMessage{})
@@ -79,6 +83,7 @@ func TestMemberCommitmentsMessageRoundtrip(t *testing.T) {
 			new(bn256.G1).ScalarBaseMult(big.NewInt(1385)),
 			new(bn256.G1).ScalarBaseMult(big.NewInt(1569)),
 		},
+		sessionID: "session-1",
 	}
 	unmarshaled := &MemberCommitmentsMessage{}
 
@@ -97,6 +102,7 @@ func TestFuzzMemberCommitmentsMessageRoundtrip(t *testing.T) {
 		var (
 			senderID    group.MemberIndex
 			commitments []*bn256.G1
+			sessionID   string
 		)
 
 		f := fuzz.New().NilChance(0.1).
@@ -105,10 +111,12 @@ func TestFuzzMemberCommitmentsMessageRoundtrip(t *testing.T) {
 
 		f.Fuzz(&senderID)
 		f.Fuzz(&commitments)
+		f.Fuzz(&sessionID)
 
 		message := &MemberCommitmentsMessage{
 			senderID:    senderID,
 			commitments: commitments,
+			sessionID:   sessionID,
 		}
 
 		_ = pbutils.RoundTrip(message, &MemberCommitmentsMessage{})
@@ -131,8 +139,9 @@ func TestPeerSharesMessageRoundtrip(t *testing.T) {
 	}
 
 	msg := &PeerSharesMessage{
-		senderID: group.MemberIndex(97),
-		shares:   shares,
+		senderID:  group.MemberIndex(97),
+		shares:    shares,
+		sessionID: "session-1",
 	}
 
 	unmarshaled := &PeerSharesMessage{}
@@ -150,8 +159,9 @@ func TestPeerSharesMessageRoundtrip(t *testing.T) {
 func TestFuzzPeerSharesMessageRoundtrip(t *testing.T) {
 	for i := 0; i < 10; i++ {
 		var (
-			senderID group.MemberIndex
-			shares   map[group.MemberIndex]*peerShares
+			senderID  group.MemberIndex
+			shares    map[group.MemberIndex]*peerShares
+			sessionID string
 		)
 
 		fuzzPeerShares := func(shares *peerShares, c fuzz.Continue) {
@@ -173,10 +183,12 @@ func TestFuzzPeerSharesMessageRoundtrip(t *testing.T) {
 
 		f.Fuzz(&senderID)
 		f.Fuzz(&shares)
+		f.Fuzz(&sessionID)
 
 		message := &PeerSharesMessage{
-			senderID: senderID,
-			shares:   shares,
+			senderID:  senderID,
+			shares:    shares,
+			sessionID: sessionID,
 		}
 
 		_ = pbutils.RoundTrip(message, &PeerSharesMessage{})
@@ -204,6 +216,7 @@ func TestSecretSharesAccusationsMessageRoundtrip(t *testing.T) {
 			group.MemberIndex(12): keyPair1.PrivateKey,
 			group.MemberIndex(92): keyPair2.PrivateKey,
 		},
+		sessionID: "session-1",
 	}
 	unmarshaled := &SecretSharesAccusationsMessage{}
 
@@ -222,6 +235,7 @@ func TestFuzzSecretSharesAccusationsMessageRoundtrip(t *testing.T) {
 		var (
 			senderID           group.MemberIndex
 			accusedMembersKeys map[group.MemberIndex]*ephemeral.PrivateKey
+			sessionID          string
 		)
 
 		f := fuzz.New().NilChance(0.1).
@@ -230,10 +244,12 @@ func TestFuzzSecretSharesAccusationsMessageRoundtrip(t *testing.T) {
 
 		f.Fuzz(&senderID)
 		f.Fuzz(&accusedMembersKeys)
+		f.Fuzz(&sessionID)
 
 		message := &SecretSharesAccusationsMessage{
 			senderID:           senderID,
 			accusedMembersKeys: accusedMembersKeys,
+			sessionID:          sessionID,
 		}
 
 		_ = pbutils.RoundTrip(message, &SecretSharesAccusationsMessage{})
@@ -253,6 +269,7 @@ func TestMemberPublicKeySharePointsMessageRoundtrip(t *testing.T) {
 			new(bn256.G2).ScalarBaseMult(big.NewInt(18828)),
 			new(bn256.G2).ScalarBaseMult(big.NewInt(88711)),
 		},
+		sessionID: "session-1",
 	}
 	unmarshaled := &MemberPublicKeySharePointsMessage{}
 
@@ -271,6 +288,7 @@ func TestFuzzMemberPublicKeySharePointsMessageRoundtrip(t *testing.T) {
 		var (
 			senderID             group.MemberIndex
 			publicKeySharePoints []*bn256.G2
+			sessionID            string
 		)
 
 		f := fuzz.New().NilChance(0.1).
@@ -279,10 +297,12 @@ func TestFuzzMemberPublicKeySharePointsMessageRoundtrip(t *testing.T) {
 
 		f.Fuzz(&senderID)
 		f.Fuzz(&publicKeySharePoints)
+		f.Fuzz(&sessionID)
 
 		message := &MemberPublicKeySharePointsMessage{
 			senderID:             senderID,
 			publicKeySharePoints: publicKeySharePoints,
+			sessionID:            sessionID,
 		}
 
 		_ = pbutils.RoundTrip(message, &MemberPublicKeySharePointsMessage{})
@@ -310,6 +330,7 @@ func TestPointsAccusationsMessageRoundtrip(t *testing.T) {
 			group.MemberIndex(41): keyPair1.PrivateKey,
 			group.MemberIndex(11): keyPair2.PrivateKey,
 		},
+		sessionID: "session-1",
 	}
 	unmarshaled := &PointsAccusationsMessage{}
 
@@ -328,6 +349,7 @@ func TestFuzzPointsAccusationsMessageRoundtrip(t *testing.T) {
 		var (
 			senderID           group.MemberIndex
 			accusedMembersKeys map[group.MemberIndex]*ephemeral.PrivateKey
+			sessionID          string
 		)
 
 		f := fuzz.New().NilChance(0.1).
@@ -336,10 +358,12 @@ func TestFuzzPointsAccusationsMessageRoundtrip(t *testing.T) {
 
 		f.Fuzz(&senderID)
 		f.Fuzz(&accusedMembersKeys)
+		f.Fuzz(&sessionID)
 
 		message := &PointsAccusationsMessage{
 			senderID:           senderID,
 			accusedMembersKeys: accusedMembersKeys,
+			sessionID:          sessionID,
 		}
 
 		_ = pbutils.RoundTrip(message, &PointsAccusationsMessage{})
@@ -367,6 +391,7 @@ func TestMisbehavedEphemeralKeysMessageRoundtrip(t *testing.T) {
 			group.MemberIndex(181): keyPair1.PrivateKey,
 			group.MemberIndex(88):  keyPair2.PrivateKey,
 		},
+		sessionID: "session-1",
 	}
 	unmarshaled := &MisbehavedEphemeralKeysMessage{}
 
@@ -385,6 +410,7 @@ func TestFuzzMisbehavedEphemeralKeysMessageRoundtrip(t *testing.T) {
 		var (
 			senderID    group.MemberIndex
 			privateKeys map[group.MemberIndex]*ephemeral.PrivateKey
+			sessionID   string
 		)
 
 		f := fuzz.New().NilChance(0.1).
@@ -393,10 +419,12 @@ func TestFuzzMisbehavedEphemeralKeysMessageRoundtrip(t *testing.T) {
 
 		f.Fuzz(&senderID)
 		f.Fuzz(&privateKeys)
+		f.Fuzz(&sessionID)
 
 		message := &MisbehavedEphemeralKeysMessage{
 			senderID:    senderID,
 			privateKeys: privateKeys,
+			sessionID:   sessionID,
 		}
 
 		_ = pbutils.RoundTrip(message, &MisbehavedEphemeralKeysMessage{})

@@ -7,5 +7,8 @@ export.json
 
 # Contract artifacts
 artifacts/
-deployments/
+deployments/*
 !deployments/mainnet
+
+# OpenZeppelin
+.openzeppelin/unknown-*.json

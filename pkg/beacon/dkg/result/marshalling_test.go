@@ -17,6 +17,7 @@ func TestDKGResultHashSignatureMessageRoundtrip(t *testing.T) {
 		resultHash:  [32]byte{30},
 		signature:   []byte("signature"),
 		publicKey:   []byte("pubkey"),
+		sessionID:   "session-1",
 	}
 
 	unmarshaled := &DKGResultHashSignatureMessage{}
@@ -37,6 +38,7 @@ func TestFuzzDKGResultHashSignatureMessageRoundtrip(t *testing.T) {
 			resultHash  chain.DKGResultHash
 			signature   []byte
 			publicKey   []byte
+			sessionID   string
 		)
 
 		f := fuzz.New().NilChance(0.1).NumElements(0, 512)
@@ -45,12 +47,14 @@ func TestFuzzDKGResultHashSignatureMessageRoundtrip(t *testing.T) {
 		f.Fuzz(&resultHash)
 		f.Fuzz(&signature)
 		f.Fuzz(&publicKey)
+		f.Fuzz(&sessionID)
 
 		message := &DKGResultHashSignatureMessage{
 			senderIndex: senderIndex,
 			resultHash:  resultHash,
 			signature:   signature,
 			publicKey:   publicKey,
+			sessionID:   sessionID,
 		}
 
 		_ = pbutils.RoundTrip(message, &DKGResultHashSignatureMessage{})

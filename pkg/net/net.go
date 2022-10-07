@@ -67,6 +67,7 @@ type Provider interface {
 // from any given connected peer.
 type ConnectionManager interface {
 	ConnectedPeers() []string
+	ConnectedPeersAddrInfo() map[string][]string
 	GetPeerPublicKey(connectedPeer string) (*operator.PublicKey, error)
 	DisconnectPeer(connectedPeer string)
 

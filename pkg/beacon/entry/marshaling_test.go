@@ -11,7 +11,7 @@ import (
 )
 
 func TestSignatureShareMessageRoundTrip(t *testing.T) {
-	msg := &SignatureShareMessage{123, make([]byte, 0)}
+	msg := &SignatureShareMessage{123, make([]byte, 0), "session-1"}
 	unmarshaled := &SignatureShareMessage{}
 
 	err := pbutils.RoundTrip(msg, unmarshaled)
@@ -35,16 +35,19 @@ func TestFuzzSignatureShareMessageRoundtrip(t *testing.T) {
 		var (
 			senderID   group.MemberIndex
 			shareBytes []byte
+			sessionID  string
 		)
 
 		f := fuzz.New().NilChance(0.1).NumElements(0, 512)
 
 		f.Fuzz(&senderID)
 		f.Fuzz(&shareBytes)
+		f.Fuzz(&sessionID)
 
 		message := &SignatureShareMessage{
 			senderID:   senderID,
 			shareBytes: shareBytes,
+			sessionID:  sessionID,
 		}
 
 		_ = pbutils.RoundTrip(message, &SignatureShareMessage{})

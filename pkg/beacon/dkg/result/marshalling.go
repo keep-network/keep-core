@@ -36,6 +36,7 @@ func (d *DKGResultHashSignatureMessage) Marshal() ([]byte, error) {
 		ResultHash:  d.resultHash[:],
 		Signature:   d.signature,
 		PublicKey:   d.publicKey,
+		SessionID:   d.sessionID,
 	})
 }
 
@@ -60,6 +61,7 @@ func (d *DKGResultHashSignatureMessage) Unmarshal(bytes []byte) error {
 
 	d.signature = pbMsg.Signature
 	d.publicKey = pbMsg.PublicKey
+	d.sessionID = pbMsg.SessionID
 
 	return nil
 }

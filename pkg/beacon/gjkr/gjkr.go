@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"math/big"
 
-	"github.com/ipfs/go-log"
+	"github.com/ipfs/go-log/v2"
 
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/net"
@@ -55,12 +55,13 @@ func RegisterUnmarshallers(channel net.BroadcastChannel) {
 // error.
 func Execute(
 	logger log.StandardLogger,
+	seed *big.Int,
+	sessionID string,
 	memberIndex group.MemberIndex,
 	groupSize int,
 	blockCounter chain.BlockCounter,
 	channel net.BroadcastChannel,
 	dishonestThreshold int,
-	seed *big.Int,
 	membershipValidator *group.MembershipValidator,
 	startBlockHeight uint64,
 ) (*Result, uint64, error) {
@@ -73,6 +74,7 @@ func Execute(
 		dishonestThreshold,
 		membershipValidator,
 		seed,
+		sessionID,
 	)
 	if err != nil {
 		return nil, 0, fmt.Errorf("cannot create a new member: [%v]", err)

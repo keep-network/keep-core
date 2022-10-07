@@ -3,11 +3,10 @@ package dkg
 import (
 	"context"
 	"fmt"
-	"github.com/keep-network/keep-core/pkg/tecdsa/common"
-
 	"github.com/bnb-chain/tss-lib/tss"
 	"github.com/keep-network/keep-core/pkg/crypto/ephemeral"
 	"github.com/keep-network/keep-core/pkg/protocol/group"
+	"github.com/keep-network/keep-core/pkg/tecdsa/common"
 )
 
 // generateEphemeralKeyPair takes the group member list and generates an
@@ -339,7 +338,7 @@ func (trtm *tssRoundThreeMember) tssRoundThree(
 func (fm *finalizingMember) tssFinalize(
 	ctx context.Context,
 	tssRoundThreeMessages []*tssRoundThreeMessage,
-) error {
+) (*tssFinalizationMessage, error) {
 	// Use messages from round three to update the local party and get the
 	// result.
 	for _, tssRoundThreeMessage := range deduplicateBySender(tssRoundThreeMessages) {
@@ -355,7 +354,7 @@ func (fm *finalizingMember) tssFinalize(
 			true,
 		)
 		if tssErr != nil {
-			return fmt.Errorf(
+			return nil, fmt.Errorf(
 				"cannot update using TSS round three message "+
 					"from member [%v]: [%v]",
 				senderID,
@@ -367,9 +366,13 @@ func (fm *finalizingMember) tssFinalize(
 	select {
 	case tssResult := <-fm.tssResultChan:
 		fm.tssResult = tssResult
-		return nil
+
+		return &tssFinalizationMessage{
+			senderID:  fm.id,
+			sessionID: fm.sessionID,
+		}, nil
 	case <-ctx.Done():
-		return fmt.Errorf(
+		return nil, fmt.Errorf(
 			"TSS result was not generated on time",
 		)
 	}

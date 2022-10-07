@@ -1,44 +1,36 @@
-package diagnostics
+package clientinfo
 
 import (
 	"encoding/json"
 
 	"github.com/keep-network/keep-core/pkg/chain"
 
-	"github.com/ipfs/go-log"
-	"github.com/keep-network/keep-common/pkg/diagnostics"
 	"github.com/keep-network/keep-core/pkg/net"
 )
 
-var logger = log.Logger("keep-diagnostics")
-
-// Config stores diagnostics-related configuration.
-type Config struct {
-	Port int
+// Diagnostics describes data structure returned by the diagnostics endpoint.
+type Diagnostics struct {
+	ClientInfo     Client `json:"client_info"`
+	ConnectedPeers []Peer `json:"connected_peers"`
 }
 
-// Registry wraps keep-common registry for internal use of exposed keep-common
-// registry methods.
-type Registry struct {
-	Registry *diagnostics.Registry
+// Client describes data structure of client information.
+type Client struct {
+	ChainAddress string `json:"chain_address"`
+	NetworkID    string `json:"network_id"`
+	Version      string `json:"version"`
+	Revision     string `json:"revision"`
 }
 
-// Initialize sets up the diagnostics registry and enables diagnostics server.
-func Initialize(port int) (*Registry, bool) {
-	if port == 0 {
-		return nil, false
-	}
-
-	registry := diagnostics.NewRegistry()
-
-	registry.EnableServer(port)
-
-	newRegistry := &Registry{
-		Registry: registry,
-	}
-
-	return newRegistry, true
+// Peer describes data structure of peer information.
+type Peer struct {
+	ChainAddress          string   `json:"chain_address"`
+	NetworkID             string   `json:"network_id"`
+	NetworkMultiAddresses []string `json:"multiaddrs"`
 }
+
+// ApplicationInfo describes data structure of application information.
+type ApplicationInfo map[string]interface{}
 
 // RegisterConnectedPeersSource registers the diagnostics source providing
 // information about connected peers.
@@ -46,14 +38,13 @@ func (r *Registry) RegisterConnectedPeersSource(
 	netProvider net.Provider,
 	signing chain.Signing,
 ) {
-	r.Registry.RegisterSource("connected_peers", func() string {
+	r.RegisterDiagnosticSource("connected_peers", func() string {
 		connectionManager := netProvider.ConnectionManager()
-		connectedPeers := connectionManager.ConnectedPeers()
+		connectedPeersAddrInfo := connectionManager.ConnectedPeersAddrInfo()
 
-		peersList := make([]map[string]interface{}, len(connectedPeers))
-		for i := 0; i < len(connectedPeers); i++ {
-			peer := connectedPeers[i]
-			peerPublicKey, err := connectionManager.GetPeerPublicKey(peer)
+		var peersList []Peer
+		for peerNetworkID, multiaddrs := range connectedPeersAddrInfo {
+			peerPublicKey, err := connectionManager.GetPeerPublicKey(peerNetworkID)
 			if err != nil {
 				logger.Error("error on getting peer public key: [%v]", err)
 				continue
@@ -67,10 +58,11 @@ func (r *Registry) RegisterConnectedPeersSource(
 				continue
 			}
 
-			peersList[i] = map[string]interface{}{
-				"network_id":    peer,
-				"chain_address": peerChainAddress.String(),
-			}
+			peersList = append(peersList, Peer{
+				NetworkID:             peerNetworkID,
+				ChainAddress:          peerChainAddress.String(),
+				NetworkMultiAddresses: multiaddrs,
+			})
 		}
 
 		bytes, err := json.Marshal(peersList)
@@ -91,7 +83,7 @@ func (r *Registry) RegisterClientInfoSource(
 	clientVersion string,
 	clientRevision string,
 ) {
-	r.Registry.RegisterSource("client_info", func() string {
+	r.RegisterDiagnosticSource("client_info", func() string {
 		connectionManager := netProvider.ConnectionManager()
 
 		clientID := netProvider.ID().String()
@@ -109,11 +101,11 @@ func (r *Registry) RegisterClientInfoSource(
 			return ""
 		}
 
-		clientInfo := map[string]interface{}{
-			"network_id":    clientID,
-			"chain_address": clientChainAddress.String(),
-			"version":       clientVersion,
-			"revision":      clientRevision,
+		clientInfo := Client{
+			NetworkID:    clientID,
+			ChainAddress: clientChainAddress.String(),
+			Version:      clientVersion,
+			Revision:     clientRevision,
 		}
 
 		bytes, err := json.Marshal(clientInfo)
@@ -128,8 +120,11 @@ func (r *Registry) RegisterClientInfoSource(
 
 // RegisterApplicationSource registers the diagnostics source providing
 // information about the application.
-func (r *Registry) RegisterApplicationSource(application string, fetchApplicationDiagnostics func() map[string]interface{}) {
-	r.Registry.RegisterSource(application, func() string {
+func (r *Registry) RegisterApplicationSource(
+	application string,
+	fetchApplicationDiagnostics func() ApplicationInfo,
+) {
+	r.RegisterDiagnosticSource(application, func() string {
 		bytes, err := json.Marshal(fetchApplicationDiagnostics())
 		if err != nil {
 			logger.Error("error on serializing peers list to JSON: [%v]", err)

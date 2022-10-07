@@ -13,9 +13,10 @@ import (
 
 const cachingPeriod = time.Second
 
-func TestValidate_OperatorNotRecognized_NoApplications(t *testing.T) {
+func TestValidate_PeerNotRecognized_NoApplications(t *testing.T) {
 	policy := &anyApplicationPolicy{
 		applications:        []Application{},
+		allowList:           EmptyAllowList,
 		positiveResultCache: cache.NewTimeCache(cachingPeriod),
 		negativeResultCache: cache.NewTimeCache(cachingPeriod),
 	}
@@ -31,7 +32,7 @@ func TestValidate_OperatorNotRecognized_NoApplications(t *testing.T) {
 	testutils.AssertErrorsSame(t, errNotRecognized, err)
 }
 
-func TestValidate_OperatorNotRecognized_MultipleApplications(t *testing.T) {
+func TestValidate_PeerNotRecognized_MultipleApplications(t *testing.T) {
 	_, peerOperatorPublicKey, err := operator.GenerateKeyPair(
 		local_v1.DefaultCurve,
 	)
@@ -43,6 +44,7 @@ func TestValidate_OperatorNotRecognized_MultipleApplications(t *testing.T) {
 		applications: []Application{
 			newMockApplication(),
 			newMockApplication()},
+		allowList:           EmptyAllowList,
 		positiveResultCache: cache.NewTimeCache(cachingPeriod),
 		negativeResultCache: cache.NewTimeCache(cachingPeriod),
 	}
@@ -51,7 +53,7 @@ func TestValidate_OperatorNotRecognized_MultipleApplications(t *testing.T) {
 	testutils.AssertErrorsSame(t, errNotRecognized, err)
 }
 
-func TestValidate_OperatorRecognized_FirstApplicationRecognizes(t *testing.T) {
+func TestValidate_PeerRecognized_FirstApplicationRecognizes(t *testing.T) {
 	_, peerOperatorPublicKey, err := operator.GenerateKeyPair(
 		local_v1.DefaultCurve,
 	)
@@ -69,6 +71,7 @@ func TestValidate_OperatorRecognized_FirstApplicationRecognizes(t *testing.T) {
 		applications: []Application{
 			application,
 			newMockApplication()},
+		allowList:           EmptyAllowList,
 		positiveResultCache: cache.NewTimeCache(cachingPeriod),
 		negativeResultCache: cache.NewTimeCache(cachingPeriod),
 	}
@@ -79,7 +82,7 @@ func TestValidate_OperatorRecognized_FirstApplicationRecognizes(t *testing.T) {
 	}
 }
 
-func TestValidate_OperatorRecognized_SecondApplicationRecognizes(t *testing.T) {
+func TestValidate_PeerRecognized_SecondApplicationRecognizes(t *testing.T) {
 	_, peerOperatorPublicKey, err := operator.GenerateKeyPair(
 		local_v1.DefaultCurve,
 	)
@@ -97,6 +100,7 @@ func TestValidate_OperatorRecognized_SecondApplicationRecognizes(t *testing.T) {
 		applications: []Application{
 			newMockApplication(),
 			application},
+		allowList:           EmptyAllowList,
 		positiveResultCache: cache.NewTimeCache(cachingPeriod),
 		negativeResultCache: cache.NewTimeCache(cachingPeriod),
 	}
@@ -107,7 +111,7 @@ func TestValidate_OperatorRecognized_SecondApplicationRecognizes(t *testing.T) {
 	}
 }
 
-func TestValidate_OperatorNotRecognized_FirstApplicationReturnedError(t *testing.T) {
+func TestValidate_PeerNotRecognized_FirstApplicationReturnedError(t *testing.T) {
 	_, peerOperatorPublicKey, err := operator.GenerateKeyPair(
 		local_v1.DefaultCurve,
 	)
@@ -135,6 +139,7 @@ func TestValidate_OperatorNotRecognized_FirstApplicationReturnedError(t *testing
 		applications: []Application{
 			application1,
 			application2},
+		allowList:           EmptyAllowList,
 		positiveResultCache: cache.NewTimeCache(cachingPeriod),
 		negativeResultCache: cache.NewTimeCache(cachingPeriod),
 	}
@@ -143,7 +148,7 @@ func TestValidate_OperatorNotRecognized_FirstApplicationReturnedError(t *testing
 	testutils.AssertAnyErrorInChainMatchesTarget(t, applicationError, err)
 }
 
-func TestValidate_OperatorRecognized_Cached(t *testing.T) {
+func TestValidate_PeerRecognized_Cached(t *testing.T) {
 	_, peerOperatorPublicKey, err := operator.GenerateKeyPair(
 		local_v1.DefaultCurve,
 	)
@@ -159,6 +164,7 @@ func TestValidate_OperatorRecognized_Cached(t *testing.T) {
 
 	policy := &anyApplicationPolicy{
 		applications:        []Application{application},
+		allowList:           EmptyAllowList,
 		positiveResultCache: cache.NewTimeCache(cachingPeriod),
 		negativeResultCache: cache.NewTimeCache(cachingPeriod),
 	}
@@ -181,7 +187,7 @@ func TestValidate_OperatorRecognized_Cached(t *testing.T) {
 	}
 }
 
-func TestValidate_OperatorNotRecognized_CacheEmptied(t *testing.T) {
+func TestValidate_PeerNotRecognized_CacheEmptied(t *testing.T) {
 	_, peerOperatorPublicKey, err := operator.GenerateKeyPair(
 		local_v1.DefaultCurve,
 	)
@@ -197,6 +203,7 @@ func TestValidate_OperatorNotRecognized_CacheEmptied(t *testing.T) {
 
 	policy := &anyApplicationPolicy{
 		applications:        []Application{application},
+		allowList:           EmptyAllowList,
 		positiveResultCache: cache.NewTimeCache(cachingPeriod),
 		negativeResultCache: cache.NewTimeCache(cachingPeriod),
 	}
@@ -220,7 +227,7 @@ func TestValidate_OperatorNotRecognized_CacheEmptied(t *testing.T) {
 	testutils.AssertErrorsSame(t, errNotRecognized, err)
 }
 
-func TestValidate_OperatorNotRecognized_Cached(t *testing.T) {
+func TestValidate_PeerNotRecognized_Cached(t *testing.T) {
 	_, peerOperatorPublicKey, err := operator.GenerateKeyPair(
 		local_v1.DefaultCurve,
 	)
@@ -229,13 +236,9 @@ func TestValidate_OperatorNotRecognized_Cached(t *testing.T) {
 	}
 
 	application := newMockApplication()
-	application.setIsRecognized(peerOperatorPublicKey, result{
-		isRecognized: false,
-		err:          nil,
-	})
-
 	policy := &anyApplicationPolicy{
 		applications:        []Application{application},
+		allowList:           EmptyAllowList,
 		positiveResultCache: cache.NewTimeCache(cachingPeriod),
 		negativeResultCache: cache.NewTimeCache(cachingPeriod),
 	}
@@ -254,7 +257,7 @@ func TestValidate_OperatorNotRecognized_Cached(t *testing.T) {
 	testutils.AssertErrorsSame(t, errNotRecognized, err)
 }
 
-func TestValidate_OperatorRecognized_CacheEmptied(t *testing.T) {
+func TestValidate_PeerRecognized_CacheEmptied(t *testing.T) {
 	_, peerOperatorPublicKey, err := operator.GenerateKeyPair(
 		local_v1.DefaultCurve,
 	)
@@ -270,6 +273,7 @@ func TestValidate_OperatorRecognized_CacheEmptied(t *testing.T) {
 
 	policy := &anyApplicationPolicy{
 		applications:        []Application{application},
+		allowList:           EmptyAllowList,
 		positiveResultCache: cache.NewTimeCache(cachingPeriod),
 		negativeResultCache: cache.NewTimeCache(cachingPeriod),
 	}
@@ -286,6 +290,31 @@ func TestValidate_OperatorRecognized_CacheEmptied(t *testing.T) {
 	})
 
 	time.Sleep(cachingPeriod)
+
+	err = policy.Validate(peerOperatorPublicKey)
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestValidate_PeerIsAllowlistedNode(t *testing.T) {
+	_, peerOperatorPublicKey, err := operator.GenerateKeyPair(
+		local_v1.DefaultCurve,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Mark the peer as an allowlisted node, so that it validated despite not
+	// being recognized by any application
+	allowList := NewAllowList([]*operator.PublicKey{peerOperatorPublicKey})
+
+	policy := &anyApplicationPolicy{
+		applications:        []Application{newMockApplication()},
+		allowList:           allowList,
+		positiveResultCache: cache.NewTimeCache(cachingPeriod),
+		negativeResultCache: cache.NewTimeCache(cachingPeriod),
+	}
 
 	err = policy.Validate(peerOperatorPublicKey)
 	if err != nil {
@@ -310,12 +339,15 @@ type mockApplication struct {
 
 func (ma *mockApplication) setIsRecognized(
 	operatorPublicKey *operator.PublicKey,
-	result result) {
+	result result,
+) {
 	ma.results[operatorPublicKey] = result
 }
 
 func (ma *mockApplication) IsRecognized(operatorPublicKey *operator.PublicKey) (
-	bool, error) {
+	bool,
+	error,
+) {
 	result := ma.results[operatorPublicKey]
 	return result.isRecognized, result.err
 }

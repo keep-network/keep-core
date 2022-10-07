@@ -30,7 +30,7 @@ func TestSigner_PublicKeyToAddress(t *testing.T) {
 	}
 
 	// The operator private key is not relevant in this scenario.
-	signer := newSigner(&operator.PrivateKey{
+	signer := NewSigner(&operator.PrivateKey{
 		PublicKey: *operatorPublicKey,
 	})
 

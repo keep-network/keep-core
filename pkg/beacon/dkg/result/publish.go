@@ -2,7 +2,7 @@ package result
 
 import (
 	"fmt"
-	"github.com/ipfs/go-log"
+	"github.com/ipfs/go-log/v2"
 
 	beaconchain "github.com/keep-network/keep-core/pkg/beacon/chain"
 	"github.com/keep-network/keep-core/pkg/beacon/gjkr"
@@ -29,6 +29,7 @@ func RegisterUnmarshallers(channel net.BroadcastChannel) {
 // along with everyone's votes.
 func Publish(
 	logger log.StandardLogger,
+	sessionID string,
 	memberIndex group.MemberIndex,
 	dkgGroup *group.Group,
 	membershipValidator *group.MembershipValidator,
@@ -42,7 +43,7 @@ func Publish(
 		channel:                 channel,
 		beaconChain:             beaconChain,
 		blockCounter:            blockCounter,
-		member:                  NewSigningMember(logger, memberIndex, dkgGroup, membershipValidator),
+		member:                  NewSigningMember(logger, memberIndex, dkgGroup, membershipValidator, sessionID),
 		result:                  convertGjkrResult(result),
 		signatureMessages:       make([]*DKGResultHashSignatureMessage, 0),
 		signingStartBlockHeight: startBlockHeight,

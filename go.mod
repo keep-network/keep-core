@@ -2,17 +2,12 @@ module github.com/keep-network/keep-core
 
 go 1.18
 
-// Temporary replacement until the fix to tss-lib is merged.
-// This fix allows groups of 100 to be generated on dev machines.
-// https://github.com/bnb-chain/tss-lib/pull/203
-replace github.com/bnb-chain/tss-lib => github.com/keep-network/tss-lib v1.3.3-0.20220826121242-73ee9558285f
-
 // Temporary replacement until v1.28.2 is released containing `protodelim` package.
 // See https://github.com/protocolbuffers/protobuf-go/commit/fb0abd915897428ccfdd6b03b48ad8219751ee54
 replace google.golang.org/protobuf/dev => google.golang.org/protobuf v1.28.2-0.20220831092852-f930b1dc76e8
 
 require (
-	github.com/bnb-chain/tss-lib v1.3.4-0.20220817120442-2f5f2e4fb79e
+	github.com/bnb-chain/tss-lib v1.3.5
 	github.com/btcsuite/btcd v0.22.1
 	github.com/btcsuite/btcd/btcec/v2 v2.2.0
 	github.com/ethereum/go-ethereum v1.10.19
@@ -23,7 +18,7 @@ require (
 	github.com/ipfs/go-log v1.0.5
 	github.com/ipfs/go-log/v2 v2.5.1
 	github.com/jbenet/goprocess v0.1.4
-	github.com/keep-network/keep-common v1.7.1-0.20220916085024-7a8696e19eaf
+	github.com/keep-network/keep-common v1.7.1-0.20220927141039-5689702dc79f
 	github.com/libp2p/go-addr-util v0.2.0
 	github.com/libp2p/go-libp2p v0.20.1
 	github.com/libp2p/go-libp2p-core v0.16.1
@@ -47,6 +42,7 @@ require (
 	github.com/benbjohnson/clock v1.3.0 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/btcsuite/btcd/chaincfg/chainhash v1.0.1 // indirect
+	github.com/btcsuite/btcutil v1.0.3-0.20201208143702-a53e38424cce // indirect
 	github.com/cespare/xxhash/v2 v2.1.2 // indirect
 	github.com/cheekybits/genny v1.0.0 // indirect
 	github.com/containerd/cgroups v0.0.0-20201119153540-4cbc285b3327 // indirect

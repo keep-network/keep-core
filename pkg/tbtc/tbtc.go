@@ -9,8 +9,8 @@ import (
 	"github.com/ipfs/go-log"
 
 	"github.com/keep-network/keep-common/pkg/persistence"
+	"github.com/keep-network/keep-core/pkg/clientinfo"
 	"github.com/keep-network/keep-core/pkg/generator"
-	"github.com/keep-network/keep-core/pkg/metrics"
 	"github.com/keep-network/keep-core/pkg/net"
 	"github.com/keep-network/keep-core/pkg/sortition"
 )
@@ -23,7 +23,7 @@ var logger = log.Logger("keep-tbtc")
 const ProtocolName = "tbtc"
 
 const (
-	DefaultPreParamsPoolSize              = 3000
+	DefaultPreParamsPoolSize              = 1000
 	DefaultPreParamsGenerationTimeout     = 2 * time.Minute
 	DefaultPreParamsGenerationDelay       = 10 * time.Second
 	DefaultPreParamsGenerationConcurrency = 1
@@ -56,16 +56,16 @@ func Initialize(
 	workPersistence persistence.BasicHandle,
 	scheduler *generator.Scheduler,
 	config Config,
-	metricsRegistry *metrics.Registry,
+	clientInfo *clientinfo.Registry,
 ) error {
 	node := newNode(chain, netProvider, keyStorePersistence, workPersistence, scheduler, config)
 	deduplicator := newDeduplicator()
 
-	if metricsRegistry != nil {
-		// only if metrics are configured
-		metricsRegistry.ObserveApplicationSource(
+	if clientInfo != nil {
+		// only if client info endpoint is configured
+		clientInfo.ObserveApplicationSource(
 			"tbtc",
-			map[string]metrics.Source{
+			map[string]clientinfo.Source{
 				"pre_params_count": func() float64 {
 					return float64(node.dkgExecutor.PreParamsCount())
 				},
@@ -78,10 +78,13 @@ func Initialize(
 		logger,
 		chain,
 		sortition.DefaultStatusCheckTick,
-		&enoughPreParamsInPoolPolicy{
-			node:   node,
-			config: config,
-		},
+		sortition.NewConjunctionPolicy(
+			sortition.NewBetaOperatorPolicy(chain, logger),
+			&enoughPreParamsInPoolPolicy{
+				node:   node,
+				config: config,
+			},
+		),
 	)
 	if err != nil {
 		return fmt.Errorf(

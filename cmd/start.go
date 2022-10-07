@@ -11,10 +11,9 @@ import (
 	"github.com/keep-network/keep-core/pkg/beacon"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/chain/ethereum"
-	"github.com/keep-network/keep-core/pkg/diagnostics"
+	"github.com/keep-network/keep-core/pkg/clientinfo"
 	"github.com/keep-network/keep-core/pkg/firewall"
 	"github.com/keep-network/keep-core/pkg/generator"
-	"github.com/keep-network/keep-core/pkg/metrics"
 	"github.com/keep-network/keep-core/pkg/net"
 	"github.com/keep-network/keep-core/pkg/net/libp2p"
 	"github.com/keep-network/keep-core/pkg/net/retransmission"
@@ -70,8 +69,19 @@ func start(cmd *cobra.Command) error {
 		return fmt.Errorf("error connecting to Ethereum node: [%v]", err)
 	}
 
+	bootstrapPeersPublicKeys, err := libp2p.ExtractPeersPublicKeys(
+		clientConfig.LibP2P.Peers,
+	)
+	if err != nil {
+		return fmt.Errorf(
+			"error extracting bootstrap peers public keys: [%v]",
+			err,
+		)
+	}
+
 	firewall := firewall.AnyApplicationPolicy(
 		[]firewall.Application{beaconChain, tbtcChain},
+		firewall.NewAllowList(bootstrapPeersPublicKeys),
 	)
 
 	netProvider, err := libp2p.Connect(
@@ -92,72 +102,80 @@ func start(cmd *cobra.Command) error {
 		clientConfig.Ethereum,
 	)
 
-	storage, err := storage.Initialize(
-		clientConfig.Storage,
-		clientConfig.Ethereum.KeyFilePassword,
-	)
-	if err != nil {
-		return fmt.Errorf("cannot initialize storage: [%w]", err)
-	}
-
-	beaconKeyStorePersistence, err := storage.InitializeKeyStorePersistence("beacon")
-	if err != nil {
-		return fmt.Errorf("cannot initialize beacon keystore persistence: [%w]", err)
-	}
-
-	tbtcKeyStorePersistence, err := storage.InitializeKeyStorePersistence("tbtc")
-	if err != nil {
-		return fmt.Errorf("cannot initialize tbtc keystore persistence: [%w]", err)
-	}
-
-	tbtcDataPersistence, err := storage.InitializeWorkPersistence("tbtc")
-	if err != nil {
-		return fmt.Errorf("cannot initialize tbtc data persistence: [%w]", err)
-	}
-
-	scheduler := generator.StartScheduler()
-
-	err = beacon.Initialize(
-		ctx,
-		beaconChain,
-		netProvider,
-		beaconKeyStorePersistence,
-		scheduler,
-	)
-	if err != nil {
-		return fmt.Errorf("error initializing beacon: [%v]", err)
-	}
-
-	metricsRegistry := initializeMetrics(
+	clientInfoRegistry := initializeClientInfo(
 		ctx,
 		clientConfig,
 		netProvider,
+		signing,
 		blockCounter,
 	)
 
-	diagnosticsRegistry := initializeDiagnostics(clientConfig)
-	if diagnosticsRegistry != nil {
-		diagnosticsRegistry.RegisterConnectedPeersSource(netProvider, signing)
-		diagnosticsRegistry.RegisterClientInfoSource(
-			netProvider,
-			signing,
-			build.Version,
-			build.Revision,
+	// Initialize beacon and tbtc only for non-bootstrap nodes.
+	// Skip initialization for bootstrap nodes as they are only used for network
+	// discovery.
+	if !clientConfig.LibP2P.Bootstrap {
+		storage, err := storage.Initialize(
+			clientConfig.Storage,
+			clientConfig.Ethereum.KeyFilePassword,
 		)
-	}
+		if err != nil {
+			return fmt.Errorf("cannot initialize storage: [%w]", err)
+		}
 
-	err = tbtc.Initialize(
-		ctx,
-		tbtcChain,
-		netProvider,
-		tbtcKeyStorePersistence,
-		tbtcDataPersistence,
-		scheduler,
-		clientConfig.Tbtc,
-		metricsRegistry,
-	)
-	if err != nil {
-		return fmt.Errorf("error initializing TBTC: [%v]", err)
+		beaconKeyStorePersistence, err := storage.InitializeKeyStorePersistence(
+			"beacon",
+		)
+		if err != nil {
+			return fmt.Errorf(
+				"cannot initialize beacon keystore persistence: [%w]",
+				err,
+			)
+		}
+
+		tbtcKeyStorePersistence, err := storage.InitializeKeyStorePersistence(
+			"tbtc",
+		)
+		if err != nil {
+			return fmt.Errorf(
+				"cannot initialize tbtc keystore persistence: [%w]",
+				err,
+			)
+		}
+
+		tbtcDataPersistence, err := storage.InitializeWorkPersistence("tbtc")
+		if err != nil {
+			return fmt.Errorf(
+				"cannot initialize tbtc data persistence: [%w]",
+				err,
+			)
+		}
+
+		scheduler := generator.StartScheduler()
+
+		err = beacon.Initialize(
+			ctx,
+			beaconChain,
+			netProvider,
+			beaconKeyStorePersistence,
+			scheduler,
+		)
+		if err != nil {
+			return fmt.Errorf("error initializing beacon: [%v]", err)
+		}
+
+		err = tbtc.Initialize(
+			ctx,
+			tbtcChain,
+			netProvider,
+			tbtcKeyStorePersistence,
+			tbtcDataPersistence,
+			scheduler,
+			clientConfig.Tbtc,
+			clientInfoRegistry,
+		)
+		if err != nil {
+			return fmt.Errorf("error initializing TBTC: [%v]", err)
+		}
 	}
 
 	select {
@@ -170,58 +188,48 @@ func start(cmd *cobra.Command) error {
 	}
 }
 
-func initializeMetrics(
+func initializeClientInfo(
 	ctx context.Context,
 	config *config.Config,
 	netProvider net.Provider,
+	signing chain.Signing,
 	blockCounter chain.BlockCounter,
-) *metrics.Registry {
-	registry, isConfigured := metrics.Initialize(
-		ctx, config.Metrics.Port,
-	)
+) *clientinfo.Registry {
+	registry, isConfigured := clientinfo.Initialize(ctx, config.ClientInfo.Port)
 	if !isConfigured {
-		logger.Infof("metrics are not configured")
+		logger.Infof("client info endpoint not configured")
 		return nil
 	}
 
-	logger.Infof(
-		"enabled metrics on port [%v]",
-		config.Metrics.Port,
-	)
-
 	registry.ObserveConnectedPeersCount(
 		netProvider,
-		config.Metrics.NetworkMetricsTick,
+		config.ClientInfo.NetworkMetricsTick,
 	)
 
 	registry.ObserveConnectedBootstrapCount(
 		netProvider,
 		config.LibP2P.Peers,
-		config.Metrics.NetworkMetricsTick,
+		config.ClientInfo.NetworkMetricsTick,
 	)
 
 	registry.ObserveEthConnectivity(
 		blockCounter,
-		config.Metrics.EthereumMetricsTick,
+		config.ClientInfo.EthereumMetricsTick,
 	)
 
-	return registry
-}
+	registry.RegisterMetricClientInfo(build.Version)
 
-func initializeDiagnostics(
-	config *config.Config,
-) *diagnostics.Registry {
-	registry, isConfigured := diagnostics.Initialize(
-		config.Diagnostics.Port,
+	registry.RegisterConnectedPeersSource(netProvider, signing)
+	registry.RegisterClientInfoSource(
+		netProvider,
+		signing,
+		build.Version,
+		build.Revision,
 	)
-	if !isConfigured {
-		logger.Infof("diagnostics are not configured")
-		return nil
-	}
 
 	logger.Infof(
-		"enabled diagnostics on port [%v]",
-		config.Diagnostics.Port,
+		"enabled client info endpoint on port [%v]",
+		config.ClientInfo.Port,
 	)
 
 	return registry

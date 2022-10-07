@@ -1,19 +1,25 @@
-package metrics
+package clientinfo
 
 import (
-	"context"
 	"fmt"
 	"time"
 
-	"github.com/ipfs/go-log"
-	"github.com/keep-network/keep-common/pkg/metrics"
+	"github.com/keep-network/keep-common/pkg/clientinfo"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/net"
+
+	commonClientInfo "github.com/keep-network/keep-common/pkg/clientinfo"
 )
 
-var logger = log.Logger("keep-metrics")
-
 type Source func() float64
+
+// Names under which metrics are exposed.
+const (
+	ConnectedPeersCountMetricName     = "connected_peers_count"
+	ConnectedBootstrapCountMetricName = "connected_bootstrap_count"
+	EthConnectivityMetricName         = "eth_connectivity"
+	ClientInfoMetricName              = "client_info"
+)
 
 const (
 	// DefaultNetworkMetricsTick is the default duration of the
@@ -27,37 +33,6 @@ const (
 	ApplicationMetricsTick = 1 * time.Minute
 )
 
-// Config stores meta-info about metrics.
-type Config struct {
-	Port                int
-	NetworkMetricsTick  time.Duration
-	EthereumMetricsTick time.Duration
-}
-
-// Registry wraps keep-common metrics registry and exposes additional functions
-// for registering client-custom metrics.
-type Registry struct {
-	*metrics.Registry
-
-	ctx context.Context
-}
-
-// Initialize set up the metrics registry and enables metrics server.
-func Initialize(
-	ctx context.Context,
-	port int,
-) (*Registry, bool) {
-	if port == 0 {
-		return nil, false
-	}
-
-	registry := &Registry{metrics.NewRegistry(), ctx}
-
-	registry.EnableServer(port)
-
-	return registry, true
-}
-
 // ObserveConnectedPeersCount triggers an observation process of the
 // connected_peers_count metric.
 func (r *Registry) ObserveConnectedPeersCount(
@@ -70,7 +45,7 @@ func (r *Registry) ObserveConnectedPeersCount(
 	}
 
 	r.observe(
-		"connected_peers_count",
+		ConnectedPeersCountMetricName,
 		input,
 		validateTick(tick, DefaultNetworkMetricsTick),
 	)
@@ -96,7 +71,7 @@ func (r *Registry) ObserveConnectedBootstrapCount(
 	}
 
 	r.observe(
-		"connected_bootstrap_count",
+		ConnectedBootstrapCountMetricName,
 		input,
 		validateTick(tick, DefaultNetworkMetricsTick),
 	)
@@ -119,7 +94,7 @@ func (r *Registry) ObserveEthConnectivity(
 	}
 
 	r.observe(
-		"eth_connectivity",
+		EthConnectivityMetricName,
 		input,
 		validateTick(tick, DefaultEthereumMetricsTick),
 	)
@@ -140,12 +115,25 @@ func (r *Registry) ObserveApplicationSource(
 	}
 }
 
+// RegisterMetricClientInfo registers static client information labels for metrics.
+func (r *Registry) RegisterMetricClientInfo(version string) {
+	_, err := r.NewMetricInfo(
+		ClientInfoMetricName,
+		[]commonClientInfo.Label{
+			commonClientInfo.NewLabel("version", version),
+		},
+	)
+	if err != nil {
+		logger.Warnf("could not register metric client info: [%v]", err)
+	}
+}
+
 func (r *Registry) observe(
 	name string,
 	input Source,
 	tick time.Duration,
 ) {
-	observer, err := r.NewGaugeObserver(name, metrics.ObserverInput(input))
+	observer, err := r.NewMetricGaugeObserver(name, clientinfo.MetricObserverInput(input))
 	if err != nil {
 		logger.Warnf("could not create gauge observer [%v]", name)
 		return

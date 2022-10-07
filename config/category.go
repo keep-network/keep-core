@@ -7,8 +7,7 @@ const (
 	Ethereum
 	Network
 	Storage
-	Metrics
-	Diagnostics
+	ClientInfo
 	Tbtc
 	Developer
 )
@@ -18,8 +17,7 @@ var AllCategories = []Category{
 	Ethereum,
 	Network,
 	Storage,
-	Metrics,
-	Diagnostics,
+	ClientInfo,
 	Tbtc,
 	Developer,
 }

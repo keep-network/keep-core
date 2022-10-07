@@ -6,7 +6,7 @@ import (
 	"math/big"
 	"sort"
 
-	"github.com/ipfs/go-log"
+	"github.com/ipfs/go-log/v2"
 
 	beaconchain "github.com/keep-network/keep-core/pkg/beacon/chain"
 	dkgResult "github.com/keep-network/keep-core/pkg/beacon/dkg/result"
@@ -38,14 +38,17 @@ func ExecuteDKG(
 	gjkr.RegisterUnmarshallers(channel)
 	dkgResult.RegisterUnmarshallers(channel)
 
+	sessionID := seed.Text(16)
+
 	gjkrResult, gjkrEndBlockHeight, err := gjkr.Execute(
 		logger,
+		seed,
+		sessionID,
 		memberIndex,
 		beaconConfig.GroupSize,
 		blockCounter,
 		channel,
 		beaconConfig.DishonestThreshold(),
-		seed,
 		membershipValidator,
 		startBlockHeight,
 	)
@@ -71,6 +74,7 @@ func ExecuteDKG(
 
 	err = dkgResult.Publish(
 		logger,
+		sessionID,
 		memberIndex,
 		gjkrResult.Group,
 		membershipValidator,
@@ -87,7 +91,7 @@ func ExecuteDKG(
 		// chain for the result published by any other group member and based
 		// on that, we decide whether we should stay in the final group
 		// or drop our membership.
-		logger.Warningf(
+		logger.Warnf(
 			"[member:%v] DKG result publication process failed [%v]",
 			memberIndex,
 			err,

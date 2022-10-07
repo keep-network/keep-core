@@ -12,16 +12,16 @@ Flags:
       --ethereum.requestPerSecondLimit int         Request per second limit for all types of Ethereum client requests. (default 150)
       --ethereum.concurrencyLimit int              The maximum number of concurrent requests which can be executed against Ethereum client. (default 30)
       --ethereum.balanceAlertThreshold wei         The minimum balance of operator account below which client starts reporting errors in logs. (default 500000000 gwei)
+      --network.bootstrap                          Run the client in bootstrap mode.
       --network.peers strings                      Addresses of the network bootstrap nodes.
   -p, --network.port int                           Keep client listening port. (default 3919)
       --network.announcedAddresses strings         Overwrites the default Keep client address announced in the network. Should be used for NAT or when more advanced firewall rules are applied.
       --network.disseminationTime int              Specifies courtesy message dissemination time in seconds for topics the node is not subscribed to. Should be used only on selected bootstrap nodes. (0 = none)
       --storage.dir string                         Location to store the Keep client key shares and other sensitive data.
-      --metrics.port int                           Metrics HTTP server listening port. (default 9601)
-      --metrics.networkMetricsTick duration        Network metrics check tick in seconds. (default 1m0s)
-      --metrics.ethereumMetricsTick duration       Ethereum metrics check tick in seconds. (default 10m0s)
-      --diagnostics.port int                       Diagnostics HTTP server listening port. (default 9701)
-      --tbtc.preParamsPoolSize int                 tECDSA pre-parameters pool size. (default 3000)
+      --clientInfo.port int                        Client Info HTTP server listening port. (default 9601)
+      --clientInfo.networkMetricsTick duration     Client Info network metrics check tick in seconds. (default 1m0s)
+      --clientInfo.ethereumMetricsTick duration    Client info Ethereum metrics check tick in seconds. (default 10m0s)
+      --tbtc.preParamsPoolSize int                 tECDSA pre-parameters pool size. (default 1000)
       --tbtc.preParamsGenerationTimeout duration   tECDSA pre-parameters generation timeout. (default 2m0s)
       --tbtc.preParamsGenerationDelay duration     tECDSA pre-parameters generation delay. (default 10s)
       --tbtc.preParamsGenerationConcurrency int    tECDSA pre-parameters generation concurrency. (default 1)
