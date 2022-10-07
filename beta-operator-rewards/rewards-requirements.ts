@@ -33,15 +33,18 @@ export async function calculateRewardsFactors() {
     .requiredOption("-o, --output <file>", "output JSON file")
     .parse(process.argv);
 
+  // Parse the program options
   const options = program.opts();
-
-  const queryStep = 600; // 10min in sec
   const prometheus_job = options.job;
   const prometheusAPI = options.api;
   const clientVersions = options.versions.split("|"); // sorted from latest to oldest
   const startRewardsTimestamp = parseInt(options.start);
   const endRewardsTimestamp = parseInt(options.end);
   const scrapeInterval = parseInt(options.interval);
+  const peersDataFile = options.output;
+  // End program option parsing
+
+  const queryStep = 600; // 10min in sec
   const allowedUpgradeDelay = 1209600; // 2 weeks in sec. TODO: add as an option.param
   const rewardsInterval = endRewardsTimestamp - startRewardsTimestamp;
   const requiredUptime = 96; // percent
@@ -57,7 +60,6 @@ export async function calculateRewardsFactors() {
   };
   const upTimeRewardsCoefficient = "upTimeRewardsCoefficient";
   const prometheusAPIQuery = `${prometheusAPI}/query`;
-  const peersDataFile = options.output;
   const defaultProvider = "goerli";
   const clientVersionIndex = 0;
   const clientTimestampIndex = 1;
