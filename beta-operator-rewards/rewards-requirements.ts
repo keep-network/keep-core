@@ -16,12 +16,17 @@ import {
   CLIENT_TIMESTAMP_INDEX,
   CLIENT_VERSION_INDEX,
   DEFAULT_PROVIDER,
+  IS_BEACON_AUTHORIZED_FACTOR,
+  IS_TBTC_AUTHORIZED_FACTOR,
   MIN_PRE_PARAMS,
   PRE_PARAMS_AVG_INTERVAL,
+  PRE_PARAMS_FACTOR,
   PRE_PARAMS_RESOLUTION,
   QUERY_STEP,
   REQUIRED_UPTIME,
   UPTIME_REWARDS_COEFFICIENT,
+  UP_TIME_FACTOR,
+  VERSION_FACTOR,
 } from "./rewards-constants"
 
 export async function calculateRewardsFactors() {
@@ -57,14 +62,6 @@ export async function calculateRewardsFactors() {
   // End program option parsing
 
   const rewardsInterval = endRewardsTimestamp - startRewardsTimestamp;
-
-  const factors = {
-    isBeaconAuthorized: "isBeaconAuthorized",
-    isTbtcAuthorized: "isTbtcAuthorized",
-    upTime: "upTime",
-    version: "version",
-    preParams: "preParams",
-  };
 
   const prometheusAPIQuery = `${prometheusAPI}/query`;
   const queryBootstrapData = `${prometheusAPI}/query_range`;
@@ -115,9 +112,9 @@ export async function calculateRewardsFactors() {
       stakingProviderAddressForBeacon
     );
     if (eligibleStakeForBeacon.isZero()) {
-      peerData.set(factors.isBeaconAuthorized, 0);
+      peerData.set(IS_BEACON_AUTHORIZED_FACTOR, 0);
     } else {
-      peerData.set(factors.isBeaconAuthorized, 1);
+      peerData.set(IS_BEACON_AUTHORIZED_FACTOR, 1);
     }
 
     /// tBTC application authorized requirement
@@ -128,9 +125,9 @@ export async function calculateRewardsFactors() {
       stakingProviderAddressForTbtc
     );
     if (eligibleStakeForTbtc.isZero()) {
-      peerData.set(factors.isTbtcAuthorized, 0);
+      peerData.set(IS_TBTC_AUTHORIZED_FACTOR, 0);
     } else {
-      peerData.set(factors.isTbtcAuthorized, 1);
+      peerData.set(IS_TBTC_AUTHORIZED_FACTOR, 1);
     }
 
     /// Up time requirement
@@ -156,7 +153,7 @@ export async function calculateRewardsFactors() {
     );
     const resultUptimePercent = resultUptime.data.result[0].value[1] * 100;
     const upFactor = resultUptimePercent < REQUIRED_UPTIME ? 0 : 1;
-    peerData.set(factors.upTime, upFactor);
+    peerData.set(UP_TIME_FACTOR, upFactor);
     const upFactorCoefficient = upFactor
       ? uptimeSearchRange / rewardsInterval
       : 0;
@@ -177,15 +174,15 @@ export async function calculateRewardsFactors() {
       prometheusAPIQuery,
       paramsPreParams
     );
-    peerData.set(factors.preParams, 1);
+    peerData.set(PRE_PARAMS_FACTOR, 1);
     if (resultPreParams.data.result.length == 0) {
-      peerData.set(factors.preParams, 0);
+      peerData.set(PRE_PARAMS_FACTOR, 0);
     } else {
       resultPreParams.data.result[0].values.forEach(function (
         peerPreParams: any
       ) {
         if (Number(peerPreParams[1]) < MIN_PRE_PARAMS) {
-          peerData.set(factors.preParams, 0);
+          peerData.set(PRE_PARAMS_FACTOR, 0);
         }
       });
     }
@@ -214,9 +211,9 @@ export async function calculateRewardsFactors() {
           // Latest version was released prior to a delay threshold.
           // Peer's version must be the latest client's version.
           if (peerVersion === latestClientVersionInfo[CLIENT_VERSION_INDEX]) {
-            peerData.set(factors.version, 1);
+            peerData.set(VERSION_FACTOR, 1);
           } else {
-            peerData.set(factors.version, 0);
+            peerData.set(VERSION_FACTOR, 0);
           }
         } else {
           // Latest version was released in the allowed delay window.
@@ -226,23 +223,23 @@ export async function calculateRewardsFactors() {
             peerVersion === latestClientVersionInfo[CLIENT_VERSION_INDEX] ||
             peerVersion === oneBeforeLatestClientVersionInfo[CLIENT_VERSION_INDEX]
           ) {
-            peerData.set(factors.version, 1);
+            peerData.set(VERSION_FACTOR, 1);
           } else {
-            peerData.set(factors.version, 0);
+            peerData.set(VERSION_FACTOR, 0);
           }
         }
       } else {
         // Latest release was done prior to the start interval
         // Peer's version must be the latest
         if (peerVersion === latestClientVersionInfo[CLIENT_VERSION_INDEX]) {
-          peerData.set(factors.version, 1);
+          peerData.set(VERSION_FACTOR, 1);
         } else {
-          peerData.set(factors.version, 0);
+          peerData.set(VERSION_FACTOR, 0);
         }
       }
     } else {
       // A peer doesn't metric any build versions
-      peerData.set(factors.version, 0);
+      peerData.set(VERSION_FACTOR, 0);
     }
 
     peersData.set(peer.metric.instance, peerData);
