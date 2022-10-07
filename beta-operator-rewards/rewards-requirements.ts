@@ -11,6 +11,18 @@ import {
   address as WalletRegistryAddress,
 } from "@keep-network/ecdsa/artifacts/WalletRegistry.json";
 import axios from "axios";
+import {
+  allowedUpgradeDelay,
+  clientTimestampIndex,
+  clientVersionIndex,
+  defaultProvider,
+  minPreParams,
+  preParamsAvgInterval,
+  preParamsResolution,
+  queryStep,
+  requiredUptime,
+  upTimeRewardsCoefficient,
+} from "./rewards-constants"
 
 export async function calculateRewardsFactors() {
   program
@@ -44,13 +56,8 @@ export async function calculateRewardsFactors() {
   const peersDataFile = options.output;
   // End program option parsing
 
-  const queryStep = 600; // 10min in sec
-  const allowedUpgradeDelay = 1209600; // 2 weeks in sec. TODO: add as an option.param
   const rewardsInterval = endRewardsTimestamp - startRewardsTimestamp;
-  const requiredUptime = 96; // percent
-  const preParamsAvgInterval = "24h"; // hours
-  const preParamsResolution = "24h"; // hours
-  const minPreParams = 500; // min requirement for pre params daily avg
+
   const factors = {
     isBeaconAuthorized: "isBeaconAuthorized",
     isTbtcAuthorized: "isTbtcAuthorized",
@@ -58,14 +65,11 @@ export async function calculateRewardsFactors() {
     version: "version",
     preParams: "preParams",
   };
-  const upTimeRewardsCoefficient = "upTimeRewardsCoefficient";
+
   const prometheusAPIQuery = `${prometheusAPI}/query`;
-  const defaultProvider = "goerli";
-  const clientVersionIndex = 0;
-  const clientTimestampIndex = 1;
+  const queryBootstrapData = `${prometheusAPI}/query_range`;
 
   // Query for bootstrap data that has peer instances
-  const queryBootstrapData = `${prometheusAPI}/query_range`;
   const paramsBootstrapData = {
     query: `up{job='${prometheus_job}'}`,
     start: startRewardsTimestamp,
