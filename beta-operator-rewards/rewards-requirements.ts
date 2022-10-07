@@ -12,16 +12,16 @@ import {
 } from "@keep-network/ecdsa/artifacts/WalletRegistry.json";
 import axios from "axios";
 import {
-  allowedUpgradeDelay,
-  clientTimestampIndex,
-  clientVersionIndex,
-  defaultProvider,
-  minPreParams,
-  preParamsAvgInterval,
-  preParamsResolution,
-  queryStep,
-  requiredUptime,
-  upTimeRewardsCoefficient,
+  ALLOWED_UPGRADE_DELAY,
+  CLIENT_TIMESTAMP_INDEX,
+  CLIENT_VERSION_INDEX,
+  DEFAULT_PROVIDER,
+  MIN_PRE_PARAMS,
+  PRE_PARAMS_AVG_INTERVAL,
+  PRE_PARAMS_RESOLUTION,
+  QUERY_STEP,
+  REQUIRED_UPTIME,
+  UPTIME_REWARDS_COEFFICIENT,
 } from "./rewards-constants"
 
 export async function calculateRewardsFactors() {
@@ -74,7 +74,7 @@ export async function calculateRewardsFactors() {
     query: `up{job='${prometheus_job}'}`,
     start: startRewardsTimestamp,
     end: endRewardsTimestamp,
-    step: queryStep,
+    step: QUERY_STEP,
   };
 
   const bootstrapData = await queryPrometheus(
@@ -84,7 +84,7 @@ export async function calculateRewardsFactors() {
 
   let peersData = new Map<string, Map<string, number>>(); // peer address -> {component name: factor}
 
-  const provider = ethers.getDefaultProvider(defaultProvider);
+  const provider = ethers.getDefaultProvider(DEFAULT_PROVIDER);
   const randomBeacon = new Contract(
     RandomBeaconAddress,
     JSON.stringify(RandomBeaconABI),
@@ -155,7 +155,7 @@ export async function calculateRewardsFactors() {
       paramsUptime
     );
     const resultUptimePercent = resultUptime.data.result[0].value[1] * 100;
-    const upFactor = resultUptimePercent < requiredUptime ? 0 : 1;
+    const upFactor = resultUptimePercent < REQUIRED_UPTIME ? 0 : 1;
     peerData.set(factors.upTime, upFactor);
     const upFactorCoefficient = upFactor
       ? uptimeSearchRange / rewardsInterval
@@ -164,14 +164,14 @@ export async function calculateRewardsFactors() {
     // that peer joins the network later relative to the rewards interval start.
     // Ex. if a peer joins mid month and all other factors are satisfied, then
     // the rewards are devided by half.
-    peerData.set(upTimeRewardsCoefficient, upFactorCoefficient);
+    peerData.set(UPTIME_REWARDS_COEFFICIENT, upFactorCoefficient);
 
     /// Pre-param requirement
 
     // <func>(<metric>{<labels>}[<local_range>] offset <time>)[<global_range>:<resolution>]
     const paramsPreParams = {
       query: `avg_over_time(tbtc_pre_params_count{instance='${peer.metric.instance}', job='${prometheus_job}'}
-              [${preParamsAvgInterval}] offset ${offset}s)[${rewardsInterval}s:${preParamsResolution}]`,
+              [${PRE_PARAMS_AVG_INTERVAL}] offset ${offset}s)[${rewardsInterval}s:${PRE_PARAMS_RESOLUTION}]`,
     };
     const resultPreParams = await queryPrometheus(
       prometheusAPIQuery,
@@ -184,7 +184,7 @@ export async function calculateRewardsFactors() {
       resultPreParams.data.result[0].values.forEach(function (
         peerPreParams: any
       ) {
-        if (Number(peerPreParams[1]) < minPreParams) {
+        if (Number(peerPreParams[1]) < MIN_PRE_PARAMS) {
           peerData.set(factors.preParams, 0);
         }
       });
@@ -208,12 +208,12 @@ export async function calculateRewardsFactors() {
       if (clientVersions.length > 1) {
         const oneBeforeLatestClientVersionInfo = clientVersions[0].split("_");
         if (
-          latestClientVersionInfo[clientTimestampIndex] <
-          endRewardsTimestamp - allowedUpgradeDelay
+          latestClientVersionInfo[CLIENT_TIMESTAMP_INDEX] <
+          endRewardsTimestamp - ALLOWED_UPGRADE_DELAY
         ) {
           // Latest version was released prior to a delay threshold.
           // Peer's version must be the latest client's version.
-          if (peerVersion === latestClientVersionInfo[clientVersionIndex]) {
+          if (peerVersion === latestClientVersionInfo[CLIENT_VERSION_INDEX]) {
             peerData.set(factors.version, 1);
           } else {
             peerData.set(factors.version, 0);
@@ -223,8 +223,8 @@ export async function calculateRewardsFactors() {
           // Peer's version should match the latest or one before the latest client's
           // version.
           if (
-            peerVersion === latestClientVersionInfo[clientVersionIndex] ||
-            peerVersion === oneBeforeLatestClientVersionInfo[clientVersionIndex]
+            peerVersion === latestClientVersionInfo[CLIENT_VERSION_INDEX] ||
+            peerVersion === oneBeforeLatestClientVersionInfo[CLIENT_VERSION_INDEX]
           ) {
             peerData.set(factors.version, 1);
           } else {
@@ -234,7 +234,7 @@ export async function calculateRewardsFactors() {
       } else {
         // Latest release was done prior to the start interval
         // Peer's version must be the latest
-        if (peerVersion === latestClientVersionInfo[clientVersionIndex]) {
+        if (peerVersion === latestClientVersionInfo[CLIENT_VERSION_INDEX]) {
           peerData.set(factors.version, 1);
         } else {
           peerData.set(factors.version, 0);
@@ -254,7 +254,7 @@ export async function calculateRewardsFactors() {
   // for a given peer:
   // - check if all the requirements were satisfied (factors.* == 1)
   // - if all the reqs ^ are satisfied calculate the rewards:
-  // -- peerRewards = (peer's authorized stake / total authorized stake) * rewardsForAGivenMonth * upTimeRewardsCoefficient
+  // -- peerRewards = (peer's authorized stake / total authorized stake) * rewardsForAGivenMonth * UPTIME_REWARDS_COEFFICIENT
 
   const jsonObject = await convertToJSON(peersData);
   // Save to file
