@@ -15,7 +15,7 @@ spec:
         fsGroup: 472
       containers:
         - name: grafana
-          image: grafana/grafana:9.1.2
+          image: grafana/grafana:9.1.7
           ports:
             - name: grafana
               containerPort: 3000
@@ -31,9 +31,9 @@ spec:
               mountPath: /var/lib/grafana
             - name: grafana-dashboards-files
               mountPath: /var/lib/grafana/dashboards
-            - name: grafana-datasources
+            - name: grafana-config-datasources
               mountPath: /etc/grafana/provisioning/datasources
-            - name: grafana-dashboards
+            - name: grafana-config-dashboards
               mountPath: /etc/grafana/provisioning/dashboards
       volumes:
         - name: grafana-storage
@@ -41,19 +41,16 @@ spec:
             claimName: grafana-pvc
         - name: grafana-dashboards-files
           configMap:
-            name: grafana-config
+            name: grafana-dashboards
             defaultMode: 420
-            items:
-              - key: keep-network-nodes-dashboard.json
-                path: keep-network-nodes-dashboard.json
-        - name: grafana-datasources
+        - name: grafana-config-datasources
           configMap:
             name: grafana-config
             defaultMode: 420
             items:
               - key: datasources.yaml
                 path: datasources.yaml
-        - name: grafana-dashboards
+        - name: grafana-config-dashboards
           configMap:
             name: grafana-config
             defaultMode: 420

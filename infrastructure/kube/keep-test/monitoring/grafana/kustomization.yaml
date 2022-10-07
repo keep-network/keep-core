@@ -14,7 +14,11 @@ configMapGenerator:
     files:
       - config/dashboards.yaml
       - config/datasources.yaml
-      - config/keep-network-nodes-dashboard.json
+  - name: grafana-dashboards
+    files:
+      - dashboards/keep-network-nodes-dashboard.json
+      - dashboards/kubernetes-deployments.json
+      - dashboards/prometheus.json
 
 generatorOptions:
   disableNameSuffixHash: true
