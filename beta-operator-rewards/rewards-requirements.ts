@@ -61,6 +61,11 @@ export async function calculateRewardsFactors() {
   const peersDataFile = options.output;
   // End program option parsing
 
+  if (Date.now() / 1000 < endRewardsTimestamp) {
+    console.log("End time interval must be in the past");
+    return "End time interval must be in the past";
+  }
+
   const rewardsInterval = endRewardsTimestamp - startRewardsTimestamp;
 
   const prometheusAPIQuery = `${prometheusAPI}/query`;
@@ -93,11 +98,6 @@ export async function calculateRewardsFactors() {
     JSON.stringify(WalletRegistryABI),
     provider
   );
-
-  if (Date.now() / 1000 < endRewardsTimestamp) {
-    console.log("End time interval must be in the past");
-    return "End time interval must be in the past";
-  }
 
   for (let i = 0; i < (await bootstrapData.data.result.length); i++) {
     const peer = bootstrapData.data.result[i];
