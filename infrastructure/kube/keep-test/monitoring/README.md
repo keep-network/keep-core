@@ -134,3 +134,29 @@ Notice the **url** key in the ConfigMap file that refers to prometheus FQDN that
 Service should be available under
 
 http://grafana.monitoring.svc.cluster.local:3000/
+
+
+## Kubernetes
+
+### Kustomization
+
+Kubernetes resources configuration uses [Kustomization](https://kubernetes.io/docs/tasks/manage-kubernetes-objects/kustomization/).
+
+#### Grafana
+
+Configuration is stored in [./grafana/kustomization.yaml](kustomization.yaml) file.
+
+To preview generated config run `kubectl kustomize grafana/`
+
+To apply the configuration run `kubectl apply -k grafana/`
+
+#### Prometheus
+
+Configuration is stored in [./prometheus/kustomization.yaml](kustomization.yaml) file.
+
+To preview generated config run `kubectl kustomize prometheus/`
+
+To apply the configuration run `kubectl apply -k prometheus/`
+
+
+`kubectl diff -k prometheus/`

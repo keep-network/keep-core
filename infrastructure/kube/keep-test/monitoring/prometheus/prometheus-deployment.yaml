@@ -3,10 +3,6 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: prometheus
-  namespace: monitoring
-  labels:
-    app: prometheus
-    type: monitoring
 spec:
   replicas: 1
   selector:
@@ -14,17 +10,13 @@ spec:
       app: prometheus
       type: monitoring
   template:
-    metadata:
-      labels:
-        app: prometheus
-        type: monitoring
     spec:
       containers:
         - name: prometheus
           image: prom/prometheus:v2.37.0
           args:
-            - --config.file=/etc/prometheus/prometheus.yml
-            - --storage.tsdb.path=/prometheus/
+            - --config.file=/etc/prometheus/config.yaml
+            - --storage.tsdb.path=/etc/prometheus/data
             - --storage.tsdb.retention.time=1y
           ports:
             - name: prometheus
@@ -40,7 +32,7 @@ spec:
             - name: prometheus-config-volume
               mountPath: /etc/prometheus/
             - name: prometheus-storage-volume
-              mountPath: /prometheus/
+              mountPath: /etc/prometheus/data/
             - name: prometheus-sd-volume
               mountPath: /etc/prometheus/sd/
         - name: keep-sd
@@ -72,7 +64,7 @@ spec:
         - name: prometheus-config-volume
           configMap:
             defaultMode: 420
-            name: prometheus
+            name: prometheus-config
         - name: prometheus-storage-volume
           persistentVolumeClaim:
             claimName: prometheus-pvc

@@ -3,21 +3,16 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: grafana
-  namespace: monitoring
 spec:
   replicas: 1
   selector:
     matchLabels:
       app: grafana
   template:
-    metadata:
-      name: grafana
-      labels:
-        app: grafana
     spec:
       securityContext:
-          runAsUser: 472
-          fsGroup: 472
+        runAsUser: 472
+        fsGroup: 472
       containers:
         - name: grafana
           image: grafana/grafana:9.1.2
@@ -46,21 +41,21 @@ spec:
             claimName: grafana-pvc
         - name: grafana-dashboards-files
           configMap:
-            name: grafana
+            name: grafana-config
             defaultMode: 420
             items:
-              - key: clients-dashboard.json
-                path: clients-dashboard.json
+              - key: keep-network-nodes-dashboard.json
+                path: keep-network-nodes-dashboard.json
         - name: grafana-datasources
           configMap:
-            name: grafana
+            name: grafana-config
             defaultMode: 420
             items:
               - key: datasources.yaml
                 path: datasources.yaml
         - name: grafana-dashboards
           configMap:
-            name: grafana
+            name: grafana-config
             defaultMode: 420
             items:
               - key: dashboards.yaml

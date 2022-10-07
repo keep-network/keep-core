@@ -1,0 +1,22 @@
+resources:
+  - grafana-deployment.yaml
+  - grafana-pvc.yaml
+  - grafana-service.yaml
+
+namespace: monitoring
+
+commonLabels:
+  app: grafana
+  type: monitoring
+
+configMapGenerator:
+  - name: grafana-config
+    files:
+      - config/dashboards.yaml
+      - config/datasources.yaml
+      - config/keep-network-nodes-dashboard.json
+
+generatorOptions:
+  disableNameSuffixHash: true
+  annotations:
+    note: generated
