@@ -29,6 +29,14 @@ TIP: To easily switch between namespaces use
 link:https://github.com/ahmetb/kubectx[`kubens` command]:
 `kubens monitoring`.
 
+## Storage Class
+
+To define a Storage Class used by the Persistent Volume Claims execute:
+
+```bash
+kubectl apply -f storage-class.yaml
+```
+
 [#prometheus]
 ## Prometheus
 
