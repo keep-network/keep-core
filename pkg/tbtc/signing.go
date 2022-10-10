@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/binary"
+	"errors"
 	"fmt"
 	"math/big"
 	"math/rand"
@@ -20,12 +21,20 @@ import (
 type signingRetryLoop struct {
 	signingGroupMemberIndex group.MemberIndex
 	signingGroupOperators   chain.Addresses
+	inactiveOperatorsSet    map[chain.Address]bool
 
 	chainConfig *ChainConfig
 
+	seed int64
+
 	attemptCounter    uint
 	attemptStartBlock uint64
-	attemptSeed       int64
+
+	// We use a separate counter for the random retry algorithm because we
+	// try to exclude inactive members in the first attempts and then switch
+	// to the random retry mechanism. In result, an attempt is not always
+	// the same as one run of the random retry algorithm.
+	randomRetryCounter uint
 
 	delayBlocks uint64
 }
@@ -37,20 +46,22 @@ func newSigningRetryLoop(
 	signingGroupOperators chain.Addresses,
 	chainConfig *ChainConfig,
 ) *signingRetryLoop {
-	// Compute the 8-byte seed needed for the random retry algorithm. We take
+	// Compute the 8-byte seed needed for the random actions. We take
 	// the first 8 bytes of the hash of the signed message. This allows us to
 	// not care in this piece of the code about the length of the message and
 	// how this message is proposed.
 	messageSha256 := sha256.Sum256(message.Bytes())
-	attemptSeed := int64(binary.BigEndian.Uint64(messageSha256[:8]))
+	seed := int64(binary.BigEndian.Uint64(messageSha256[:8]))
 
 	return &signingRetryLoop{
 		signingGroupMemberIndex: signingGroupMemberIndex,
 		signingGroupOperators:   signingGroupOperators,
+		inactiveOperatorsSet:    make(map[chain.Address]bool),
 		chainConfig:             chainConfig,
 		attemptCounter:          0,
 		attemptStartBlock:       initialStartBlock,
-		attemptSeed:             attemptSeed,
+		seed:                    seed,
+		randomRetryCounter:      0,
 		delayBlocks:             5,
 	}
 }
@@ -77,15 +88,8 @@ func (srl *signingRetryLoop) start(
 	waitWithSigningAttemptFn waitWithSigningAttemptFn,
 	signingAttemptFn signingAttemptFn,
 ) (*signing.Result, error) {
-	// We want to take the random subset right away for the first attempt.
-	qualifiedOperatorsSet, err := srl.qualifiedOperatorsSet()
-	if err != nil {
-		return nil, fmt.Errorf(
-			"cannot get qualified operators for attempt [%v]: [%w]",
-			srl.attemptCounter+1,
-			err,
-		)
-	}
+	// All signing group operators should be qualified for the first attempt.
+	qualifiedOperatorsSet := srl.signingGroupOperators.Set()
 
 	for {
 		srl.attemptCounter++
@@ -137,7 +141,7 @@ func (srl *signingRetryLoop) start(
 			// #nosec G404 (insecure random number source (rand))
 			// Shuffling does not require secure randomness.
 			rng := rand.New(rand.NewSource(
-				srl.attemptSeed + int64(srl.attemptCounter),
+				srl.seed + int64(srl.attemptCounter),
 			))
 			// Sort in ascending order just in case.
 			sort.Slice(includedMembersIndexes, func(i, j int) bool {
@@ -192,6 +196,15 @@ func (srl *signingRetryLoop) start(
 				startBlock:             srl.attemptStartBlock,
 				excludedMembersIndexes: excludedMembersIndexes,
 			})
+			if attemptErr != nil {
+				var imErr *signing.InactiveMembersError
+				if errors.As(attemptErr, &imErr) {
+					for _, memberIndex := range imErr.InactiveMembersIndexes {
+						operator := srl.signingGroupOperators[memberIndex-1]
+						srl.inactiveOperatorsSet[operator] = true
+					}
+				}
+			}
 		}
 
 		if attemptSkipped || attemptErr != nil {
@@ -218,10 +231,33 @@ func (srl *signingRetryLoop) qualifiedOperatorsSet() (
 	map[chain.Address]bool,
 	error,
 ) {
+	// If this is one of the first attempts and random retries were not started
+	// yet, check if there are known inactive operators. If the honest threshold
+	// can be maintained, just exclude the members controlled by the inactive
+	// operators from the qualified set.
+	if srl.attemptCounter <= 5 &&
+		srl.randomRetryCounter == 0 &&
+		len(srl.inactiveOperatorsSet) > 0 {
+		qualifiedOperators := make(chain.Addresses, 0)
+		for _, operator := range srl.signingGroupOperators {
+			if !srl.inactiveOperatorsSet[operator] {
+				qualifiedOperators = append(qualifiedOperators, operator)
+			}
+		}
+
+		// If this attempt pushes us below the honest threshold we are falling
+		// back to the random retry algorithm that excludes specific members
+		// from the original signing group.
+		if len(qualifiedOperators) >= srl.chainConfig.HonestThreshold {
+			return qualifiedOperators.Set(), nil
+		}
+	}
+
+	// In any other case, try to make a random retry.
 	qualifiedOperators, err := retry.EvaluateRetryParticipantsForSigning(
 		srl.signingGroupOperators,
-		srl.attemptSeed,
-		srl.attemptCounter,
+		srl.seed,
+		srl.randomRetryCounter,
 		uint(srl.chainConfig.HonestThreshold),
 	)
 	if err != nil {
@@ -231,5 +267,6 @@ func (srl *signingRetryLoop) qualifiedOperatorsSet() (
 		)
 	}
 
+	srl.randomRetryCounter++
 	return chain.Addresses(qualifiedOperators).Set(), nil
 }
