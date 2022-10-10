@@ -1,0 +1,240 @@
+:icons: font
+
+ifdef::env-github[]
+:tip-caption: :bulb:
+:note-caption: :information_source:
+:important-caption: :heavy_exclamation_mark:
+:caution-caption: :fire:
+:warning-caption: :warning:
+endif::[]
+
+# Monitoring
+
+The monitoring stack has the following components:
+
+1. <<prometheus>>
+2. <<grafana>>
+
+## Namespace
+
+Kubernetes monitoring resources are configured in `monitoring` namespace.
+
+To create the namespace execute:
+
+```bash
+kubectl create namespace monitoring
+```
+
+TIP: To easily switch between namespaces use 
+link:https://github.com/ahmetb/kubectx[`kubens` command]:
+`kubens monitoring`.
+
+[#prometheus]
+## Prometheus
+
+Prometheus is used to collect metrics from the endpoints.
+
+### Cluster Role
+
+To let the Prometheus monitor Kubernetes cluster resources a Cluster Role has to
+be created:
+
+```bash
+kubectl create -f prometheus-cluster-role.yaml
+```
+
+NOTE: This step is necessary only if the Prometheus instance should scrape the
+endpoints discovered in the Kubernetes cluster. It may not be necessary for 
+the production, where Keep Network Nodes will be discovered with
+<<keep-discovered-nodes,Keep Nodes Service Discovery>> tool.
+
+TIP: In case of permissions issues please refer to the <<cluster-role-binding>>
+section.
+
+[#cluster-role-binding]
+#### Cluster Role Binding
+
+Additional Cluster Role Binding may be required for your user to create
+a Cluster Role. It can be done by the Owner in the GCP IAM or by executing a
+command:
+
+```bash
+ACCOUNT=$(gcloud info --format='value(config.account)')
+kubectl create clusterrolebinding owner-cluster-admin-binding \
+    --clusterrole cluster-admin \
+    --user $ACCOUNT
+```
+
+### Config Map
+
+Prometheus configuration files are held in a Config Map that is generated with <<kustomization>> tool.
+The files included in the Config Map are:
+
+- link:prometheus/config/config.yaml[`config.yaml`] is a link:https://prometheus.io/docs/prometheus/latest/configuration/configuration/[Prometheus configuration file],
+- link:prometheus/config/external-clients-targets.yaml[`external-clients-targets.yaml`]
+is a list of endpoints to monitor (see: <<keep-external-nodes>> section),
+- `rules.yaml` is a link:https://prometheus.io/docs/prometheus/latest/configuration/recording_rules/#configuring-rules[Prometheus rules configuration] file.
+
+By externalizing Prometheus configuration to a Config Map, there is no need to build Prometheus image whenever it needs configuration amendments. Updating the Config Map
+and restarting the Prometheus pod is enough to reconfigure Prometheus.
+
+NOTE: To apply the configuration to the cluster please see <<kustomization-prometheus>>
+section.
+
+### Persistent Volume Claim
+
+Prometheus stores data in a Persistent Volume Claim configured in a
+link:prometheus/prometheus-pvc.yaml[prometheus-pvc.yaml] file.
+
+NOTE: To apply the configuration to the cluster please see <<kustomization-prometheus>>
+section.
+
+### Deployment
+
+Prometheus instance is configured as a Deployment in a 
+link:prometheus/prometheus-deployment.yaml[prometheus-deployment.yaml] file.
+
+The configuration uses Config Map resources and Persistent Volume claim described
+in the previous sections.
+
+NOTE: To apply the configuration to the cluster please see <<kustomization-prometheus>>
+section.
+
+### Service
+
+Prometheus is exposed as a Service configured in
+link:prometheus/prometheus-service.yaml[prometheus-service.yaml] file.
+
+NOTE: To apply the configuration to the cluster please see <<kustomization-prometheus>>
+section.
+
+The service will be available under http://prometheus.monitoring.svc.cluster.local.
+
+The FQDN was resolved automatically from the service configuration by `kube-dns`:
+
+```yaml
+metadata:
+  name: prometheus
+  namespace: monitoring
+...
+spec:
+  ports:
+    - port: 8080
+```
+
+NOTE: To access the cluster you may need a VPN connection to the `keep-test` network.
+
+### Keep Nodes Discovery
+
+There are three scrape jobs configured for Prometheus:
+
+[#keep-discovered-nodes]
+#### keep-discovered-nodes
+
+The nodes to monitor are discovered with
+link:https://github.com/keep-network/prometheus-sd[Prometheus Custom Service Discovery].
+
+[#keep-external-nodes]
+#### keep-external-nodes
+
+The nodes to monitor are configured in a fixed: `external-clients-targets.yaml`.
+
+#### keep-internal-nodes
+
+The nodes to monitor are resolved from Kubernetes' services labeled `app=keep`.
+
+[#grafana]
+## Grafana
+
+### Config Map
+
+
+Grafana configuration files are held in Config Maps that are generated with <<kustomization>> tool.
+
+NOTE: To apply the configuration to the cluster please see <<kustomization-grafana>>
+section.
+
+#### Config
+
+The files included in the `grafana-config` Config Map are:
+
+- link:grafana/datasources.yaml[`datasources.yaml`] defines a reference to the
+Prometheus instance,
+
+- link:grafana/dashboards.yaml[`dashboards.yaml`] defines path to Grafana
+Dashboards configuration.
+
+#### Dashboards
+
+The files included in the `grafana-dashboards` Config Map are Grafana
+link:grafana/dashboards[`dashboards`] for data presentation.
+
+### Persistent Volume Claim
+
+Grafana stores data in a Persistent Volume Claim configured in a
+link:grafana/grafana-pvc.yaml[grafana-pvc.yaml] file.
+
+NOTE: To apply the configuration to the cluster please see <<kustomization-grafana>>
+section.
+
+#### Deployment
+
+Grafana instance is configured as a Deployment in a 
+link:grafana/grafana-deployment.yaml[grafana-deployment.yaml] file.
+
+The configuration uses Config Map resources and Persistent Volume claim described
+in the previous sections.
+
+NOTE: To apply the configuration to the cluster please see <<kustomization-grafana>>
+section.
+
+### Service
+
+Grafana is exposed as a Service configured in
+link:grafana/grafana-service.yaml[grafana-service.yaml] file.
+
+NOTE: To apply the configuration to the cluster please see <<kustomization-grafana>>
+section.
+
+The service will be available under http://grafana.monitoring.svc.cluster.local:3000/.
+
+## Kubernetes
+
+[#kustomization]
+### Kustomization
+
+Kubernetes resources configuration uses link:https://kubernetes.io/docs/tasks/manage-kubernetes-objects/kustomization[Kustomization] to set common fields and
+generate Config Maps.
+
+[#kustomization-prometheus]
+#### Prometheus
+
+Configuration is stored in link:./prometheus/kustomization.yaml[prometheus/kustomization.yaml]
+file.
+
+To preview generated config run: `kubectl kustomize prometheus/`
+
+To see a configuration diff run: `kubectl diff -k prometheus/`
+
+To apply the configuration run: `kubectl apply -k prometheus/`
+
+[#kustomization-grafana]
+#### Grafana
+
+Configuration is stored in link:./grafana/kustomization.yaml[grafana/kustomization.yaml] file.
+
+To preview generated config run `kubectl kustomize grafana/`
+
+To see a configuration diff run: `kubectl diff -k grafana/`
+
+To apply the configuration run `kubectl apply -k grafana/`
+
+## Resources
+
+This configuration was inspired by this link:https://devopscube.com/setup-prometheus-monitoring-on-kubernetes/[tutorial].
+
+// TODO:
+// - [ ] Configure TLS and expose Grafana publicly: https://kubernetes.io/docs/concepts/services-networking/connect-applications-service/#securing-the-service
+// - [ ] Revisit kubernetes scrape configuration in Prometheus' `config.yaml` - 
+// remove not needed entries
+// - [ ] Add Grafana dashboard for Kubernetes resources monitoring
