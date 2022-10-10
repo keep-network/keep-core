@@ -78,7 +78,7 @@ scrape_configs:
         selectors:
           - role: service
             label: app=keep
-  - job_name: node-exporter
+  - job_name: grafana
     honor_timestamps: true
     scrape_interval: 5s
     scrape_timeout: 5s
@@ -87,13 +87,76 @@ scrape_configs:
     follow_redirects: true
     enable_http2: true
     relabel_configs:
-      - source_labels: [__meta_kubernetes_endpoints_name]
+      - source_labels: [__meta_kubernetes_pod_label_app]
         separator: ;
-        regex: node-exporter
+        regex: grafana.*
         replacement: $1
         action: keep
+      - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_path]
+        separator: ;
+        regex: (.+)
+        target_label: __metrics_path__
+        replacement: $1
+        action: replace
+      - separator: ;
+        regex: __meta_kubernetes_pod_label_(.+)
+        replacement: $1
+        action: labelmap
+      - source_labels: [__meta_kubernetes_namespace]
+        separator: ;
+        regex: (.*)
+        target_label: kubernetes_namespace
+        replacement: $1
+        action: replace
+      - source_labels: [__meta_kubernetes_pod_name]
+        separator: ;
+        regex: (.*)
+        target_label: kubernetes_pod_name
+        replacement: $1
+        action: replace
     kubernetes_sd_configs:
-      - role: endpoints
+      - role: pod
+        kubeconfig_file: ""
+        follow_redirects: true
+        enable_http2: true
+  - job_name: prometheus
+    honor_timestamps: true
+    scrape_interval: 5s
+    scrape_timeout: 5s
+    metrics_path: /metrics
+    scheme: http
+    follow_redirects: true
+    enable_http2: true
+    relabel_configs:
+      - source_labels: [__meta_kubernetes_pod_label_app]
+        separator: ;
+        regex: prometheus.*
+        replacement: $1
+        action: keep
+      - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_path]
+        separator: ;
+        regex: (.+)
+        target_label: __metrics_path__
+        replacement: $1
+        action: replace
+      - separator: ;
+        regex: __meta_kubernetes_pod_label_(.+)
+        replacement: $1
+        action: labelmap
+      - source_labels: [__meta_kubernetes_namespace]
+        separator: ;
+        regex: (.*)
+        target_label: kubernetes_namespace
+        replacement: $1
+        action: replace
+      - source_labels: [__meta_kubernetes_pod_name]
+        separator: ;
+        regex: (.*)
+        target_label: kubernetes_pod_name
+        replacement: $1
+        action: replace
+    kubernetes_sd_configs:
+      - role: pod
         kubeconfig_file: ""
         follow_redirects: true
         enable_http2: true
@@ -120,6 +183,25 @@ scrape_configs:
           ]
         separator: ;
         regex: default;kubernetes;https
+        replacement: $1
+        action: keep
+    kubernetes_sd_configs:
+      - role: endpoints
+        kubeconfig_file: ""
+        follow_redirects: true
+        enable_http2: true
+  - job_name: node-exporter
+    honor_timestamps: true
+    scrape_interval: 5s
+    scrape_timeout: 5s
+    metrics_path: /metrics
+    scheme: http
+    follow_redirects: true
+    enable_http2: true
+    relabel_configs:
+      - source_labels: [__meta_kubernetes_endpoints_name]
+        separator: ;
+        regex: node-exporter
         replacement: $1
         action: keep
     kubernetes_sd_configs:
@@ -203,88 +285,6 @@ scrape_configs:
         regex: (.*)
         target_label: kubernetes_pod_name_monitoring
         replacement: ${1}.default.svc.cluster.local:9601
-        action: replace
-    kubernetes_sd_configs:
-      - role: pod
-        kubeconfig_file: ""
-        follow_redirects: true
-        enable_http2: true
-  - job_name: grafana
-    honor_timestamps: true
-    scrape_interval: 5s
-    scrape_timeout: 5s
-    metrics_path: /metrics
-    scheme: http
-    follow_redirects: true
-    enable_http2: true
-    relabel_configs:
-      - source_labels: [__meta_kubernetes_pod_label_app]
-        separator: ;
-        regex: grafana.*
-        replacement: $1
-        action: keep
-      - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_path]
-        separator: ;
-        regex: (.+)
-        target_label: __metrics_path__
-        replacement: $1
-        action: replace
-      - separator: ;
-        regex: __meta_kubernetes_pod_label_(.+)
-        replacement: $1
-        action: labelmap
-      - source_labels: [__meta_kubernetes_namespace]
-        separator: ;
-        regex: (.*)
-        target_label: kubernetes_namespace
-        replacement: $1
-        action: replace
-      - source_labels: [__meta_kubernetes_pod_name]
-        separator: ;
-        regex: (.*)
-        target_label: kubernetes_pod_name
-        replacement: $1
-        action: replace
-    kubernetes_sd_configs:
-      - role: pod
-        kubeconfig_file: ""
-        follow_redirects: true
-        enable_http2: true
-  - job_name: prometheus
-    honor_timestamps: true
-    scrape_interval: 5s
-    scrape_timeout: 5s
-    metrics_path: /metrics
-    scheme: http
-    follow_redirects: true
-    enable_http2: true
-    relabel_configs:
-      - source_labels: [__meta_kubernetes_pod_label_app]
-        separator: ;
-        regex: prometheus.*
-        replacement: $1
-        action: keep
-      - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_path]
-        separator: ;
-        regex: (.+)
-        target_label: __metrics_path__
-        replacement: $1
-        action: replace
-      - separator: ;
-        regex: __meta_kubernetes_pod_label_(.+)
-        replacement: $1
-        action: labelmap
-      - source_labels: [__meta_kubernetes_namespace]
-        separator: ;
-        regex: (.*)
-        target_label: kubernetes_namespace
-        replacement: $1
-        action: replace
-      - source_labels: [__meta_kubernetes_pod_name]
-        separator: ;
-        regex: (.*)
-        target_label: kubernetes_pod_name
-        replacement: $1
         action: replace
     kubernetes_sd_configs:
       - role: pod
