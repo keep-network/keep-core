@@ -1,0 +1,10 @@
+apiVersion: 1
+providers:
+  - name: dashboards-provider
+    type: file
+    disableDeletion: true
+    editable: false
+    updateIntervalSeconds: 10
+    allowUiUpdates: false
+    options:
+      path: "/var/lib/grafana/dashboards"
