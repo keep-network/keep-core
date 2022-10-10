@@ -1,3 +1,5 @@
+# TODO: Revisit this file while working on exposing data publicly and setting up TLS.
+# TODO: Describe in the README.adoc
 ---
 ## Nginx Ingress
 ## Follow https://devopscube.com/setup-ingress-kubernetes-nginx-controller/
