@@ -275,10 +275,10 @@ Google Cloud Documentation:
 
 - link:https://cloud.google.com/kubernetes-engine/docs/concepts/ingress[GKE Ingress for HTTP(S) Load Balancing]
 - link:https://cloud.google.com/dns/docs/set-up-dns-records-domain-name[Set up DNS records for a domain name with Cloud DNS]
-
+- link:https://cloud.google.com/kubernetes-engine/docs/how-to/managed-certs#gcloud[Using Google-managed SSL certificates]
 
 // TODO:
-// - [ ] Configure TLS and expose Grafana publicly: https://kubernetes.io/docs/concepts/services-networking/connect-applications-service/#securing-the-service
+// - [ ] Expose Grafana publicly (https://grafana.com/docs/grafana/latest/dashboards/dashboard-public/)
 // - [ ] Revisit kubernetes scrape configuration in Prometheus' `config.yaml` - 
 // remove not needed entries
 // - [ ] Add Grafana dashboard for Kubernetes resources monitoring
