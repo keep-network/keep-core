@@ -1,28 +1,18 @@
-# TODO: Revisit this file while working on exposing data publicly and setting up TLS.
-# TODO: Describe in the README.adoc
----
-## Nginx Ingress
-## Follow https://devopscube.com/setup-ingress-kubernetes-nginx-controller/
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: monitoring
   namespace: monitoring
   annotations:
-    kubernetes.io/ingress.class: nginx
+    kubernetes.io/ingress.class: "gce"
+    # The static IP has to be created with the following command:
+    # `gcloud compute addresses create keep-test-monitoring-ingress --global`
+    kubernetes.io/ingress.global-static-ip-name: "keep-test-monitoring-ingress"
 spec:
   rules:
-    - host: monitoring.test.keep.network
-      http:
+    - http:
         paths:
-          - path: /prom
-            pathType: Prefix
-            backend:
-              service:
-                name: prometheus
-                port:
-                  number: 9090
-          - path: /grafana
+          - path: "/grafana"
             pathType: Prefix
             backend:
               service:

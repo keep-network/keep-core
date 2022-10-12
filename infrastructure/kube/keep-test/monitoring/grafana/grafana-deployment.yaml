@@ -16,6 +16,13 @@ spec:
       containers:
         - name: grafana
           image: grafana/grafana:9.1.7
+          env:
+            - name: GF_SERVER_DOMAIN
+              value: monitoring.test.keep.network
+            - name: GF_SERVER_ROOT_URL
+              value: "%(protocol)s://%(domain)s:%(http_port)s/grafana/"
+            - name: GF_SERVER_SERVE_FROM_SUB_PATH
+              value: "true"
           ports:
             - name: grafana
               containerPort: 3000
