@@ -17,7 +17,6 @@ configMapGenerator:
   - name: grafana-dashboards
     files:
       - dashboards/keep-network-nodes-dashboard.json
-      - dashboards/kubernetes-deployments.json
       - dashboards/prometheus.json
 
 generatorOptions:
