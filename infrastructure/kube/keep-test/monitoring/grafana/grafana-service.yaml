@@ -4,9 +4,6 @@ kind: Service
 metadata:
   name: grafana
   namespace: monitoring
-  annotations:
-      prometheus.io/scrape: 'true'
-      prometheus.io/port: '3000'
 spec:
   selector:
     app: grafana
