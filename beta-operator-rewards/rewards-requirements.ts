@@ -111,11 +111,11 @@ export async function calculateRewardsFactors() {
     const eligibleStakeForBeacon = await walletRegistry.eligibleStake(
       stakingProviderAddressForBeacon
     );
-    if (eligibleStakeForBeacon.isZero()) {
-      peerData.set(IS_BEACON_AUTHORIZED_FACTOR, 0);
-    } else {
-      peerData.set(IS_BEACON_AUTHORIZED_FACTOR, 1);
-    }
+    setFactor(
+      peerData,
+      IS_BEACON_AUTHORIZED_FACTOR,
+      !eligibleStakeForBeacon.isZero()
+    )
 
     /// tBTC application authorized requirement
 
@@ -124,11 +124,11 @@ export async function calculateRewardsFactors() {
     const eligibleStakeForTbtc = await walletRegistry.eligibleStake(
       stakingProviderAddressForTbtc
     );
-    if (eligibleStakeForTbtc.isZero()) {
-      peerData.set(IS_TBTC_AUTHORIZED_FACTOR, 0);
-    } else {
-      peerData.set(IS_TBTC_AUTHORIZED_FACTOR, 1);
-    }
+    setFactor(
+      peerData,
+      IS_TBTC_AUTHORIZED_FACTOR,
+      !eligibleStakeForBeacon.isZero()
+    )
 
     /// Up time requirement
 
@@ -152,8 +152,9 @@ export async function calculateRewardsFactors() {
       paramsUptime
     );
     const resultUptimePercent = resultUptime.data.result[0].value[1] * 100;
-    const upFactor = resultUptimePercent < REQUIRED_UPTIME ? 0 : 1;
-    peerData.set(UP_TIME_FACTOR, upFactor);
+    const upFactor = resultUptimePercent >= REQUIRED_UPTIME ? 1 : 0
+    peerData.set(UP_TIME_FACTOR, upFactor)
+
     const upFactorCoefficient = upFactor
       ? uptimeSearchRange / rewardsInterval
       : 0;
@@ -210,32 +211,30 @@ export async function calculateRewardsFactors() {
         ) {
           // Latest version was released prior to a delay threshold.
           // Peer's version must be the latest client's version.
-          if (peerVersion === latestClientVersionInfo[CLIENT_VERSION_INDEX]) {
-            peerData.set(VERSION_FACTOR, 1);
-          } else {
-            peerData.set(VERSION_FACTOR, 0);
-          }
+          setFactor(
+            peerData,
+            VERSION_FACTOR,
+            peerVersion === latestClientVersionInfo[CLIENT_VERSION_INDEX],
+          )
         } else {
           // Latest version was released in the allowed delay window.
           // Peer's version should match the latest or one before the latest client's
           // version.
-          if (
+          setFactor(
+            peerData,
+            VERSION_FACTOR,
             peerVersion === latestClientVersionInfo[CLIENT_VERSION_INDEX] ||
-            peerVersion === oneBeforeLatestClientVersionInfo[CLIENT_VERSION_INDEX]
-          ) {
-            peerData.set(VERSION_FACTOR, 1);
-          } else {
-            peerData.set(VERSION_FACTOR, 0);
-          }
+            peerVersion === oneBeforeLatestClientVersionInfo[CLIENT_VERSION_INDEX],
+          )
         }
       } else {
         // Latest release was done prior to the start interval
         // Peer's version must be the latest
-        if (peerVersion === latestClientVersionInfo[CLIENT_VERSION_INDEX]) {
-          peerData.set(VERSION_FACTOR, 1);
-        } else {
-          peerData.set(VERSION_FACTOR, 0);
-        }
+        setFactor(
+          peerData,
+          VERSION_FACTOR,
+          peerVersion === latestClientVersionInfo[CLIENT_VERSION_INDEX],
+        )
       }
     } else {
       // A peer doesn't metric any build versions
@@ -243,7 +242,7 @@ export async function calculateRewardsFactors() {
     }
 
     peersData.set(peer.metric.instance, peerData);
-    console.log("peersDataFactors", peersData);
+    console.log(peerData)
   }
 
   // TODO: calculate rewards for a given address
@@ -256,6 +255,13 @@ export async function calculateRewardsFactors() {
   const jsonObject = await convertToJSON(peersData);
   // Save to file
   fs.writeFileSync(peersDataFile, JSON.stringify(jsonObject, null, 2));
+}
+
+function setFactor(peerData: Map<string, any>, factor: string, condition: boolean): void {
+  peerData.set(
+    factor,
+    condition ? 1 : 0,
+  )
 }
 
 async function convertToJSON(map: Map<string, Map<string, any>>) {
