@@ -74,7 +74,6 @@ spec:
           volumeMounts:
             - name: prometheus-sd-volume
               mountPath: /etc/prometheus/sd/
-      dnsPolicy: ClusterFirst
       securityContext:
         fsGroup: 65534
         runAsGroup: 0
