@@ -23,6 +23,8 @@ spec:
               value: "%(protocol)s://%(domain)s:%(http_port)s/grafana/"
             - name: GF_SERVER_SERVE_FROM_SUB_PATH
               value: "true"
+            - name: GF_FEATURE_TOGGLES_PUBLICDASHBOARDS
+              value: "true"
           ports:
             - name: grafana
               containerPort: 3000
@@ -60,6 +62,9 @@ spec:
               mountPath: /etc/grafana/provisioning/datasources
             - name: grafana-config-dashboards
               mountPath: /etc/grafana/provisioning/dashboards
+            - name: grafana-grafana-ini
+              mountPath: /etc/grafana/grafana.ini
+              subPath: grafana.ini
       volumes:
         - name: grafana-storage
           persistentVolumeClaim:
@@ -82,3 +87,10 @@ spec:
             items:
               - key: dashboards.yaml
                 path: dashboards.yaml
+        - name: grafana-grafana-ini
+          configMap:
+            name: grafana-config
+            defaultMode: 0644
+            items:
+              - key: grafana.ini
+                path: grafana.ini

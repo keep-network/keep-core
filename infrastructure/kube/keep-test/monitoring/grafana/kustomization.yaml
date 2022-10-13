@@ -12,6 +12,7 @@ commonLabels:
 configMapGenerator:
   - name: grafana-config
     files:
+      - config/grafana.ini
       - config/dashboards.yaml
       - config/datasources.yaml
   - name: grafana-dashboards
