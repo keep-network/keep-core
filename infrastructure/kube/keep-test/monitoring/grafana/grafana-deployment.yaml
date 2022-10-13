@@ -54,24 +54,31 @@ spec:
               memory: 500M
               cpu: "500m"
           volumeMounts:
-            - name: grafana-storage
-              mountPath: /var/lib/grafana
-            - name: grafana-dashboards-files
-              mountPath: /var/lib/grafana/dashboards
+            - name: grafana-grafana-ini
+              mountPath: /etc/grafana/grafana.ini
+              subPath: grafana.ini
             - name: grafana-config-datasources
               mountPath: /etc/grafana/provisioning/datasources
             - name: grafana-config-dashboards
               mountPath: /etc/grafana/provisioning/dashboards
-            - name: grafana-grafana-ini
-              mountPath: /etc/grafana/grafana.ini
-              subPath: grafana.ini
+
+            - name: grafana-storage
+              mountPath: /var/lib/grafana
+            - name: grafana-dashboards-infrastructure
+              mountPath: /var/lib/grafana/dashboards/infrastructure
+            - name: grafana-dashboards-keep
+              mountPath: /var/lib/grafana/dashboards/keep
       volumes:
         - name: grafana-storage
           persistentVolumeClaim:
             claimName: grafana-pvc
-        - name: grafana-dashboards-files
+        - name: grafana-dashboards-keep
           configMap:
-            name: grafana-dashboards
+            name: grafana-dashboards-keep
+            defaultMode: 420
+        - name: grafana-dashboards-infrastructure
+          configMap:
+            name: grafana-dashboards-infrastructure
             defaultMode: 420
         - name: grafana-config-datasources
           configMap:

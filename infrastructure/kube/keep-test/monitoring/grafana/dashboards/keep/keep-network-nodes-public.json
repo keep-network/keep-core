@@ -25,14 +25,13 @@
     "editable": true,
     "fiscalYearStartMonth": 0,
     "graphTooltip": 0,
-    "id": 2,
     "links": [],
     "liveNow": false,
     "panels": [
         {
             "datasource": {
                 "type": "prometheus",
-                "uid": "P1809F7CD0C75ACF3"
+                "uid": "P09205B1DD12FB1C6"
             },
             "fieldConfig": {
                 "defaults": {
@@ -83,18 +82,15 @@
                 },
                 "textMode": "auto"
             },
-            "pluginVersion": "9.1.2",
+            "pluginVersion": "9.1.8",
             "targets": [
                 {
                     "datasource": {
                         "type": "prometheus",
-                        "uid": "P1809F7CD0C75ACF3"
+                        "uid": "P09205B1DD12FB1C6"
                     },
                     "editorMode": "builder",
-                    "exemplar": false,
-                    "expr": "sum by(job) (sum by(chain_address) (up{job=\"$keepNodesGroup\"}))",
-                    "format": "time_series",
-                    "instant": false,
+                    "expr": "sum by(job) (sum by(chain_address) (up{job=\"keep-discovered-nodes\"}))",
                     "legendFormat": "__auto",
                     "range": true,
                     "refId": "A"
@@ -106,7 +102,7 @@
         {
             "datasource": {
                 "type": "prometheus",
-                "uid": "P1809F7CD0C75ACF3"
+                "uid": "P09205B1DD12FB1C6"
             },
             "fieldConfig": {
                 "defaults": {
@@ -196,11 +192,11 @@
                 {
                     "datasource": {
                         "type": "prometheus",
-                        "uid": "P1809F7CD0C75ACF3"
+                        "uid": "P09205B1DD12FB1C6"
                     },
                     "editorMode": "builder",
                     "exemplar": false,
-                    "expr": "min by(chain_address) (connected_bootstrap_count{job=\"$keepNodesGroup\"})",
+                    "expr": "min by(chain_address) (connected_bootstrap_count{job=\"keep-discovered-nodes\"})",
                     "format": "time_series",
                     "hide": false,
                     "instant": false,
@@ -216,7 +212,7 @@
         {
             "datasource": {
                 "type": "prometheus",
-                "uid": "P1809F7CD0C75ACF3"
+                "uid": "P09205B1DD12FB1C6"
             },
             "fieldConfig": {
                 "defaults": {
@@ -310,11 +306,11 @@
                 {
                     "datasource": {
                         "type": "prometheus",
-                        "uid": "P1809F7CD0C75ACF3"
+                        "uid": "P09205B1DD12FB1C6"
                     },
                     "editorMode": "builder",
                     "exemplar": false,
-                    "expr": "min by(chain_address) (tbtc_pre_params_count{job=\"$keepNodesGroup\"})",
+                    "expr": "min by(chain_address) (tbtc_pre_params_count{job=\"keep-discovered-nodes\"})",
                     "format": "time_series",
                     "hide": false,
                     "instant": false,
@@ -330,7 +326,7 @@
         {
             "datasource": {
                 "type": "prometheus",
-                "uid": "P1809F7CD0C75ACF3"
+                "uid": "P09205B1DD12FB1C6"
             },
             "fieldConfig": {
                 "defaults": {
@@ -419,10 +415,10 @@
                 {
                     "datasource": {
                         "type": "prometheus",
-                        "uid": "P1809F7CD0C75ACF3"
+                        "uid": "P09205B1DD12FB1C6"
                     },
                     "editorMode": "builder",
-                    "expr": "min by(chain_address) (connected_peers_count{job=\"$keepNodesGroup\"})",
+                    "expr": "min by(chain_address) (connected_peers_count{job=\"keep-discovered-nodes\"})",
                     "hide": false,
                     "interval": "",
                     "legendFormat": "{{chain_address}}",
@@ -436,7 +432,7 @@
         {
             "datasource": {
                 "type": "prometheus",
-                "uid": "P1809F7CD0C75ACF3"
+                "uid": "P09205B1DD12FB1C6"
             },
             "description": "",
             "fieldConfig": {
@@ -490,16 +486,16 @@
                     }
                 ]
             },
-            "pluginVersion": "9.1.2",
+            "pluginVersion": "9.1.8",
             "targets": [
                 {
                     "datasource": {
                         "type": "prometheus",
-                        "uid": "P1809F7CD0C75ACF3"
+                        "uid": "P09205B1DD12FB1C6"
                     },
                     "editorMode": "builder",
                     "exemplar": false,
-                    "expr": "up{job=\"$keepNodesGroup\"}",
+                    "expr": "up{job=\"keep-discovered-nodes\"}",
                     "format": "table",
                     "hide": false,
                     "instant": true,
@@ -511,11 +507,11 @@
                 {
                     "datasource": {
                         "type": "prometheus",
-                        "uid": "P1809F7CD0C75ACF3"
+                        "uid": "P09205B1DD12FB1C6"
                     },
                     "editorMode": "builder",
                     "exemplar": false,
-                    "expr": "client_info{job=\"$keepNodesGroup\"}",
+                    "expr": "client_info{job=\"keep-discovered-nodes\"}",
                     "format": "table",
                     "hide": false,
                     "instant": true,
@@ -595,7 +591,7 @@
         {
             "datasource": {
                 "type": "prometheus",
-                "uid": "P1809F7CD0C75ACF3"
+                "uid": "P09205B1DD12FB1C6"
             },
             "fieldConfig": {
                 "defaults": {
@@ -647,10 +643,10 @@
                 {
                     "datasource": {
                         "type": "prometheus",
-                        "uid": "P1809F7CD0C75ACF3"
+                        "uid": "P09205B1DD12FB1C6"
                     },
                     "editorMode": "builder",
-                    "expr": "min by(chain_address) (up{job=\"$keepNodesGroup\"})",
+                    "expr": "min by(chain_address) (up{job=\"keep-discovered-nodes\"})",
                     "interval": "",
                     "legendFormat": "{{chain_address}}",
                     "range": true,
@@ -663,7 +659,7 @@
         {
             "datasource": {
                 "type": "prometheus",
-                "uid": "P1809F7CD0C75ACF3"
+                "uid": "P09205B1DD12FB1C6"
             },
             "description": "A number of running instances for each operator address.",
             "fieldConfig": {
@@ -725,10 +721,10 @@
                 {
                     "datasource": {
                         "type": "prometheus",
-                        "uid": "P1809F7CD0C75ACF3"
+                        "uid": "P09205B1DD12FB1C6"
                     },
                     "editorMode": "builder",
-                    "expr": "count by(chain_address) (up{job=\"$keepNodesGroup\"})",
+                    "expr": "count by(chain_address) (up{job=\"keep-discovered-nodes\"})",
                     "legendFormat": "__auto",
                     "range": true,
                     "refId": "A"
@@ -743,39 +739,11 @@
     "style": "dark",
     "tags": [
         "tbtc",
-        "keep"
+        "keep",
+        "public"
     ],
     "templating": {
-        "list": [
-            {
-                "current": {
-                    "selected": true,
-                    "text": "keep-discovered-nodes",
-                    "value": "keep-discovered-nodes"
-                },
-                "datasource": {
-                    "type": "prometheus",
-                    "uid": "P1809F7CD0C75ACF3"
-                },
-                "definition": "label_values(job)",
-                "description": "",
-                "hide": 0,
-                "includeAll": false,
-                "label": "Keep Network Nodes Group",
-                "multi": false,
-                "name": "keepNodesGroup",
-                "options": [],
-                "query": {
-                    "query": "label_values(job)",
-                    "refId": "StandardVariableQuery"
-                },
-                "refresh": 1,
-                "regex": "^keep-.*",
-                "skipUrlSync": false,
-                "sort": 0,
-                "type": "query"
-            }
-        ]
+        "list": []
     },
     "time": {
         "from": "now-7d",
@@ -796,8 +764,8 @@
         ]
     },
     "timezone": "",
-    "title": "Keep Network Nodes",
-    "uid": "tMgEvbnVk",
-    "version": 49,
+    "title": "Keep Network Nodes Public",
+    "uid": "hhDyYDI4z",
+    "version": 11,
     "weekStart": ""
 }
