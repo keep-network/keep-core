@@ -1,9 +1,18 @@
 apiVersion: 1
 datasources:
-  - name: prometheus
+  - name: Trickster
     type: prometheus
     access: proxy
     editable: true
     orgId: 1
-    url: http://prometheus.monitoring.svc.cluster.local:9090
+    url: http://trickster:8480
+    version: 1
+    isDefault: true
+
+  - name: Prometheus
+    type: prometheus
+    access: proxy
+    editable: true
+    orgId: 1
+    url: http://prometheus:9090
     version: 1
