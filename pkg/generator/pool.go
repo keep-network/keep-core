@@ -74,30 +74,32 @@ func NewParameterPool[T any](
 	logger.Infof("loaded [%d] parameters from persistence", len(pool))
 
 	scheduler.compute(func(ctx context.Context) {
-		start := time.Now()
+		if len(pool) < poolSize {
+			start := time.Now()
 
-		generated := generateFn(ctx)
+			generated := generateFn(ctx)
 
-		// The generateFn returns nil when the context is done. We should not
-		// add nil element to the pool.
-		if generated == nil {
-			return
-		}
+			// The generateFn returns nil when the context is done. We should not
+			// add nil element to the pool.
+			if generated == nil {
+				return
+			}
 
-		persisted, err := persistence.Save(generated)
-		if err != nil {
-			logger.Errorf(
-				"failed to persist generated parameter: [%w]",
-				err,
+			persisted, err := persistence.Save(generated)
+			if err != nil {
+				logger.Errorf(
+					"failed to persist generated parameter: [%w]",
+					err,
+				)
+			}
+			pool <- persisted
+
+			logger.Infof(
+				"generated new parameters, took: [%s] current pool size: [%d]",
+				time.Since(start),
+				len(pool),
 			)
 		}
-		pool <- persisted
-
-		logger.Infof(
-			"generated new parameters, took: [%s] current pool size: [%d]",
-			time.Since(start),
-			len(pool),
-		)
 
 		// Wait some time after delivering the result regardless if the delivery
 		// took some time or not. We want to ensure all other processes of the
