@@ -11,6 +11,11 @@ spec:
       type: monitoring
   template:
     spec:
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        runAsNonRoot: true
       containers:
         - name: trickster
           image: trickstercache/trickster:2
@@ -34,6 +39,8 @@ spec:
               valueFrom:
                 fieldRef:
                   fieldPath: metadata.namespace
+          securityContext:
+            readOnlyRootFilesystem: true
       volumes:
         - name: trickster-config
           configMap:

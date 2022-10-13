@@ -11,8 +11,10 @@ spec:
   template:
     spec:
       securityContext:
-        runAsUser: 472
-        fsGroup: 472
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        runAsNonRoot: true
       containers:
         - name: grafana
           image: grafana/grafana:9.1.8
@@ -61,13 +63,14 @@ spec:
               mountPath: /etc/grafana/provisioning/datasources
             - name: grafana-config-dashboards
               mountPath: /etc/grafana/provisioning/dashboards
-
             - name: grafana-storage
               mountPath: /var/lib/grafana
             - name: grafana-dashboards-infrastructure
               mountPath: /var/lib/grafana/dashboards/infrastructure
             - name: grafana-dashboards-keep
               mountPath: /var/lib/grafana/dashboards/keep
+          securityContext:
+            readOnlyRootFilesystem: true
       volumes:
         - name: grafana-storage
           persistentVolumeClaim:
@@ -75,29 +78,24 @@ spec:
         - name: grafana-dashboards-keep
           configMap:
             name: grafana-dashboards-keep
-            defaultMode: 0644
         - name: grafana-dashboards-infrastructure
           configMap:
             name: grafana-dashboards-infrastructure
-            defaultMode: 0644
         - name: grafana-config-datasources
           configMap:
             name: grafana-config
-            defaultMode: 0644
             items:
               - key: datasources.yaml
                 path: datasources.yaml
         - name: grafana-config-dashboards
           configMap:
             name: grafana-config
-            defaultMode: 0644
             items:
               - key: dashboards.yaml
                 path: dashboards.yaml
         - name: grafana-grafana-ini
           configMap:
             name: grafana-config
-            defaultMode: 0644
             items:
               - key: grafana.ini
                 path: grafana.ini

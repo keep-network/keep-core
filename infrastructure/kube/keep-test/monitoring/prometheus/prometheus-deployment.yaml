@@ -11,6 +11,11 @@ spec:
       type: monitoring
   template:
     spec:
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        runAsNonRoot: true
       containers:
         - name: prometheus
           image: prom/prometheus:v2.39.1
@@ -55,6 +60,8 @@ spec:
               mountPath: /etc/prometheus/data/
             - name: prometheus-sd-volume
               mountPath: /etc/prometheus/sd/
+          securityContext:
+            readOnlyRootFilesystem: true
         - name: keep-sd
           image: keepnetwork/keep-prometheus-sd
           args:
@@ -74,15 +81,11 @@ spec:
           volumeMounts:
             - name: prometheus-sd-volume
               mountPath: /etc/prometheus/sd/
-      securityContext:
-        fsGroup: 65534
-        runAsGroup: 0
-        runAsNonRoot: false
-        runAsUser: 0
+          securityContext:
+            readOnlyRootFilesystem: true
       volumes:
         - name: prometheus-config-volume
           configMap:
-            defaultMode: 0644
             name: prometheus-config
         - name: prometheus-storage-volume
           persistentVolumeClaim:
