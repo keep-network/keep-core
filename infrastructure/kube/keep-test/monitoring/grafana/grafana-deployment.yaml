@@ -48,11 +48,11 @@ spec:
             timeoutSeconds: 1
           resources:
             limits:
-              memory: "1Gi"
-              cpu: "1000m"
+              cpu: 1000m
+              memory: 1Gi
             requests:
-              memory: 500M
-              cpu: "500m"
+              cpu: 250m
+              memory: 512Mi
           volumeMounts:
             - name: grafana-grafana-ini
               mountPath: /etc/grafana/grafana.ini
