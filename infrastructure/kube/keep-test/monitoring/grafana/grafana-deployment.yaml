@@ -75,22 +75,22 @@ spec:
         - name: grafana-dashboards-keep
           configMap:
             name: grafana-dashboards-keep
-            defaultMode: 420
+            defaultMode: 0644
         - name: grafana-dashboards-infrastructure
           configMap:
             name: grafana-dashboards-infrastructure
-            defaultMode: 420
+            defaultMode: 0644
         - name: grafana-config-datasources
           configMap:
             name: grafana-config
-            defaultMode: 420
+            defaultMode: 0644
             items:
               - key: datasources.yaml
                 path: datasources.yaml
         - name: grafana-config-dashboards
           configMap:
             name: grafana-config
-            defaultMode: 420
+            defaultMode: 0644
             items:
               - key: dashboards.yaml
                 path: dashboards.yaml
