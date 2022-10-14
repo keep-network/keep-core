@@ -483,11 +483,14 @@ func (n *node) joinSigningIfEligible(
 				defer n.protocolLatch.Unlock()
 
 				retryLoop := newSigningRetryLoop(
+					signingLogger,
 					message,
 					startBlockNumber,
 					signer.signingGroupMemberIndex,
 					wallet.signingGroupOperators,
 					n.chain.GetConfig(),
+					broadcastChannel,
+					membershipValidator,
 				)
 
 				// TODO: For this client iteration, the signing loop is started

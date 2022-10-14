@@ -5,17 +5,18 @@ import (
 	"crypto/sha256"
 	"encoding/binary"
 	"fmt"
-	"math/big"
-	"math/rand"
-	"sort"
-
+	"github.com/ipfs/go-log/v2"
 	"github.com/keep-network/keep-core/pkg/chain"
+	"github.com/keep-network/keep-core/pkg/net"
 	"github.com/keep-network/keep-core/pkg/protocol/group"
 	"github.com/keep-network/keep-core/pkg/tbtc/gen/pb"
 	"github.com/keep-network/keep-core/pkg/tecdsa/retry"
 	"github.com/keep-network/keep-core/pkg/tecdsa/signing"
-	"google.golang.org/protobuf/proto"
 	"golang.org/x/exp/slices"
+	"google.golang.org/protobuf/proto"
+	"math/big"
+	"math/rand"
+	"sort"
 )
 
 // signingAnnouncementMessage represents a message that is used to announce
@@ -61,24 +62,37 @@ func (sam *signingAnnouncementMessage) Type() string {
 
 // signingRetryLoop is a struct that encapsulates the signing retry logic.
 type signingRetryLoop struct {
+	logger log.StandardLogger
+
+	message *big.Int
+
 	signingGroupMemberIndex group.MemberIndex
 	signingGroupOperators   chain.Addresses
 
 	chainConfig *ChainConfig
 
-	attemptCounter    uint
-	attemptStartBlock uint64
-	attemptSeed       int64
+	announcementDelayBlocks  uint64
+	announcementActiveBlocks uint64
 
-	delayBlocks uint64
+	attemptCounter     uint
+	attemptStartBlock  uint64
+	attemptSeed        int64
+	attemptDelayBlocks uint64
+
+	broadcastChannel net.BroadcastChannel
+
+	membershipValidator *group.MembershipValidator
 }
 
 func newSigningRetryLoop(
+	logger log.StandardLogger,
 	message *big.Int,
 	initialStartBlock uint64,
 	signingGroupMemberIndex group.MemberIndex,
 	signingGroupOperators chain.Addresses,
 	chainConfig *ChainConfig,
+	broadcastChannel net.BroadcastChannel,
+	membershipValidator *group.MembershipValidator,
 ) *signingRetryLoop {
 	// Compute the 8-byte seed needed for the random retry algorithm. We take
 	// the first 8 bytes of the hash of the signed message. This allows us to
@@ -87,14 +101,24 @@ func newSigningRetryLoop(
 	messageSha256 := sha256.Sum256(message.Bytes())
 	attemptSeed := int64(binary.BigEndian.Uint64(messageSha256[:8]))
 
+	broadcastChannel.SetUnmarshaler(func() net.TaggedUnmarshaler {
+		return &signingAnnouncementMessage{}
+	})
+
 	return &signingRetryLoop{
-		signingGroupMemberIndex: signingGroupMemberIndex,
-		signingGroupOperators:   signingGroupOperators,
-		chainConfig:             chainConfig,
-		attemptCounter:          0,
-		attemptStartBlock:       initialStartBlock,
-		attemptSeed:             attemptSeed,
-		delayBlocks:             5,
+		logger:                   logger,
+		message:                  message,
+		signingGroupMemberIndex:  signingGroupMemberIndex,
+		signingGroupOperators:    signingGroupOperators,
+		chainConfig:              chainConfig,
+		announcementDelayBlocks:  1,
+		announcementActiveBlocks: 5,
+		attemptCounter:           0,
+		attemptStartBlock:        initialStartBlock,
+		attemptSeed:              attemptSeed,
+		attemptDelayBlocks:       5,
+		broadcastChannel:         broadcastChannel,
+		membershipValidator:      membershipValidator,
 	}
 }
 
@@ -108,28 +132,18 @@ type signingAttemptParams struct {
 // signingAttemptFn represents a function performing a signing attempt.
 type signingAttemptFn func(*signingAttemptParams) (*signing.Result, error)
 
-// waitWithSigningAttemptFn represents a function blocking the attempt execution
-// until the given block height.
-type waitWithSigningAttemptFn func(context.Context, uint64) error
+// waitForBlockFn represents a function blocking the execution until the given
+// block height.
+type waitForBlockFn func(context.Context, uint64) error
 
 // start begins the signing retry loop using the given signing attempt function.
 // The retry loop terminates when the signing result is produced or the ctx
 // parameter is done, whatever comes first.
 func (srl *signingRetryLoop) start(
 	ctx context.Context,
-	waitWithSigningAttemptFn waitWithSigningAttemptFn,
+	waitForBlockFn waitForBlockFn,
 	signingAttemptFn signingAttemptFn,
 ) (*signing.Result, error) {
-	// We want to take the random subset right away for the first attempt.
-	qualifiedOperatorsSet, err := srl.qualifiedOperatorsSet()
-	if err != nil {
-		return nil, fmt.Errorf(
-			"cannot get qualified operators for attempt [%v]: [%w]",
-			srl.attemptCounter+1,
-			err,
-		)
-	}
-
 	for {
 		srl.attemptCounter++
 
@@ -150,72 +164,19 @@ func (srl *signingRetryLoop) start(
 		// mined in the meantime.
 		if srl.attemptCounter > 1 {
 			srl.attemptStartBlock = srl.attemptStartBlock +
+				srl.announcementDelayBlocks +
+				srl.announcementActiveBlocks +
 				signing.ProtocolBlocks() +
-				srl.delayBlocks
+				srl.attemptDelayBlocks
 		}
 
-		// Exclude all members controlled by the operators that were not
-		// qualified for the current attempt.
-		includedMembersIndexes := make([]group.MemberIndex, 0)
-		excludedMembersIndexes := make([]group.MemberIndex, 0)
-		for i, operator := range srl.signingGroupOperators {
-			memberIndex := group.MemberIndex(i + 1)
-
-			if qualifiedOperatorsSet[operator] {
-				includedMembersIndexes = append(
-					includedMembersIndexes,
-					memberIndex,
-				)
-			} else {
-				excludedMembersIndexes = append(
-					excludedMembersIndexes,
-					memberIndex,
-				)
-			}
-		}
-
-		// Make sure we always use just the smallest required count of
-		// signing members for performance reasons
-		if len(includedMembersIndexes) > srl.chainConfig.HonestThreshold {
-			// #nosec G404 (insecure random number source (rand))
-			// Shuffling does not require secure randomness.
-			rng := rand.New(rand.NewSource(
-				srl.attemptSeed + int64(srl.attemptCounter),
-			))
-			// Sort in ascending order just in case.
-			sort.Slice(includedMembersIndexes, func(i, j int) bool {
-				return includedMembersIndexes[i] < includedMembersIndexes[j]
-			})
-			// Shuffle the included members slice to randomize the
-			// selection of additionally excluded members.
-			rng.Shuffle(len(includedMembersIndexes), func(i, j int) {
-				includedMembersIndexes[i], includedMembersIndexes[j] =
-					includedMembersIndexes[j], includedMembersIndexes[i]
-			})
-			// Get the surplus of included members and add them to
-			// the excluded members list.
-			excludedMembersIndexes = append(
-				excludedMembersIndexes,
-				includedMembersIndexes[srl.chainConfig.HonestThreshold:]...,
-			)
-			// Sort the resulting excluded members list in ascending order.
-			sort.Slice(excludedMembersIndexes, func(i, j int) bool {
-				return excludedMembersIndexes[i] < excludedMembersIndexes[j]
-			})
-		}
-
-		attemptSkipped := slices.Contains(
-			excludedMembersIndexes,
-			srl.signingGroupMemberIndex,
-		)
-
-		// Wait for the right moment to execute the signingAttemptFn, as
-		// calculated in srl.attemptStartBlock.
-		err := waitWithSigningAttemptFn(ctx, srl.attemptStartBlock)
+		announcementStartBlock := srl.attemptStartBlock + srl.announcementDelayBlocks
+		err := waitForBlockFn(ctx, announcementStartBlock)
 		if err != nil {
 			return nil, fmt.Errorf(
-				"failed waiting for block [%v] for attempt [%v]: [%v]",
-				srl.attemptStartBlock,
+				"failed waiting for announcement start block [%v] "+
+					"for attempt [%v]: [%v]",
+				announcementStartBlock,
 				srl.attemptCounter,
 				err,
 			)
@@ -226,28 +187,86 @@ func (srl *signingRetryLoop) start(
 			return nil, nil
 		}
 
+		// Set up the announcement phase stop signal.
+		announceCtx, cancelAnnounceCtx := context.WithCancel(ctx)
+		announcementEndBlock := announcementStartBlock + srl.announcementActiveBlocks
+		go func() {
+			defer cancelAnnounceCtx()
+
+			if err := waitForBlockFn(ctx, announcementEndBlock); err != nil {
+				srl.logger.Errorf(
+					"[member:%v] failed waiting for announcement end "+
+						"block [%v] for attempt [%v]: [%v]",
+					srl.signingGroupMemberIndex,
+					announcementEndBlock,
+					srl.attemptCounter,
+					err,
+				)
+			}
+		}()
+
+		srl.logger.Infof(
+			"[member:%v] starting announcement phase for attempt [%v]",
+			srl.signingGroupMemberIndex,
+			srl.attemptCounter,
+		)
+
+		announcements, err := srl.announceAttempt(announceCtx)
+		if err != nil {
+			srl.logger.Warnf(
+				"[member:%v] announcement for attempt [%v] "+
+					"failed: [%v]; starting next attempt",
+				srl.signingGroupMemberIndex,
+				srl.attemptCounter,
+				err,
+			)
+			continue
+		}
+
+		srl.logger.Infof(
+			"[member:%v] completed announcement phase for attempt [%v] "+
+				"and [%v] other members announced readiness",
+			srl.signingGroupMemberIndex,
+			srl.attemptCounter,
+			len(announcements),
+		)
+
+		qualifiedOperatorsSet, err := srl.qualifiedOperatorsSet(announcements)
+		if err != nil {
+			return nil, fmt.Errorf(
+				"cannot get qualified operators for attempt [%v]: [%w]",
+				srl.attemptCounter,
+				err,
+			)
+		}
+
+		// Exclude all members controlled by the operators that were not
+		// qualified for the current attempt.
+		excludedMembersIndexes := srl.excludedMembersIndexes(qualifiedOperatorsSet)
+
+		attemptSkipped := slices.Contains(
+			excludedMembersIndexes,
+			srl.signingGroupMemberIndex,
+		)
+
 		var result *signing.Result
 		var attemptErr error
 
 		if !attemptSkipped {
 			result, attemptErr = signingAttemptFn(&signingAttemptParams{
 				number:                 srl.attemptCounter,
-				startBlock:             srl.attemptStartBlock,
+				startBlock:             announcementEndBlock,
 				excludedMembersIndexes: excludedMembersIndexes,
 			})
+		} else {
+			srl.logger.Infof(
+				"[member:%v] attempt [%v] skipped",
+				srl.signingGroupMemberIndex,
+				srl.attemptCounter,
+			)
 		}
 
 		if attemptSkipped || attemptErr != nil {
-			var err error
-			qualifiedOperatorsSet, err = srl.qualifiedOperatorsSet()
-			if err != nil {
-				return nil, fmt.Errorf(
-					"cannot get qualified operators for attempt [%v]: [%w]",
-					srl.attemptCounter+1,
-					err,
-				)
-			}
-
 			continue
 		}
 
@@ -256,15 +275,33 @@ func (srl *signingRetryLoop) start(
 }
 
 // qualifiedOperatorsSet returns a set of operators qualified to participate
-// in the given signing attempt.
-func (srl *signingRetryLoop) qualifiedOperatorsSet() (
-	map[chain.Address]bool,
-	error,
-) {
+// in the given signing attempt. The set of qualified operators is taken
+// from the set of active operators who announced readiness through
+// their controlled signing group members.
+func (srl *signingRetryLoop) qualifiedOperatorsSet(
+	announcements map[group.MemberIndex]bool,
+) (map[chain.Address]bool, error) {
+	// The retry algorithm expects that we count retries from 0. Since
+	// the first invocation of the algorithm will be for `attemptCounter == 1`
+	// we need to subtract one while determining the number of the given retry.
+	retryCount := srl.attemptCounter - 1
+
+	var announcedSigningGroupOperators []chain.Address
+	for i, operator := range srl.signingGroupOperators {
+		memberIndex := group.MemberIndex(i + 1)
+
+		if announcements[memberIndex] {
+			announcedSigningGroupOperators = append(
+				announcedSigningGroupOperators,
+				operator,
+			)
+		}
+	}
+
 	qualifiedOperators, err := retry.EvaluateRetryParticipantsForSigning(
-		srl.signingGroupOperators,
+		announcedSigningGroupOperators,
 		srl.attemptSeed,
-		srl.attemptCounter,
+		retryCount,
 		uint(srl.chainConfig.HonestThreshold),
 	)
 	if err != nil {
@@ -275,4 +312,132 @@ func (srl *signingRetryLoop) qualifiedOperatorsSet() (
 	}
 
 	return chain.Addresses(qualifiedOperators).Set(), nil
+}
+
+// excludedMembersIndexes returns a list of excluded members' indexes for
+// the given qualified operators set.
+func (srl *signingRetryLoop) excludedMembersIndexes(
+	qualifiedOperatorsSet map[chain.Address]bool,
+) []group.MemberIndex {
+	includedMembersIndexes := make([]group.MemberIndex, 0)
+	excludedMembersIndexes := make([]group.MemberIndex, 0)
+	for i, operator := range srl.signingGroupOperators {
+		memberIndex := group.MemberIndex(i + 1)
+
+		if qualifiedOperatorsSet[operator] {
+			includedMembersIndexes = append(
+				includedMembersIndexes,
+				memberIndex,
+			)
+		} else {
+			excludedMembersIndexes = append(
+				excludedMembersIndexes,
+				memberIndex,
+			)
+		}
+	}
+
+	// Make sure we always use just the smallest required count of
+	// signing members for performance reasons
+	if len(includedMembersIndexes) > srl.chainConfig.HonestThreshold {
+		// #nosec G404 (insecure random number source (rand))
+		// Shuffling does not require secure randomness.
+		rng := rand.New(rand.NewSource(
+			srl.attemptSeed + int64(srl.attemptCounter),
+		))
+		// Sort in ascending order just in case.
+		sort.Slice(includedMembersIndexes, func(i, j int) bool {
+			return includedMembersIndexes[i] < includedMembersIndexes[j]
+		})
+		// Shuffle the included members slice to randomize the
+		// selection of additionally excluded members.
+		rng.Shuffle(len(includedMembersIndexes), func(i, j int) {
+			includedMembersIndexes[i], includedMembersIndexes[j] =
+				includedMembersIndexes[j], includedMembersIndexes[i]
+		})
+		// Get the surplus of included members and add them to
+		// the excluded members list.
+		excludedMembersIndexes = append(
+			excludedMembersIndexes,
+			includedMembersIndexes[srl.chainConfig.HonestThreshold:]...,
+		)
+		// Sort the resulting excluded members list in ascending order.
+		sort.Slice(excludedMembersIndexes, func(i, j int) bool {
+			return excludedMembersIndexes[i] < excludedMembersIndexes[j]
+		})
+	}
+
+	return excludedMembersIndexes
+}
+
+// announceAttempt broadcasts the member's readiness announcement for the
+// given signing attempt and listens for announcements from other signing
+// group members. This function keeps working until the ctx parameter is done
+// and returns successfully only if the total number of ready members
+// (including the announcing member) is equal to or grater than the honest
+// threshold parameter.
+func (srl *signingRetryLoop) announceAttempt(ctx context.Context) (
+	map[group.MemberIndex]bool,
+	error,
+) {
+	err := srl.broadcastChannel.Send(ctx, &signingAnnouncementMessage{
+		senderID:      srl.signingGroupMemberIndex,
+		message:       srl.message,
+		attemptNumber: uint64(srl.attemptCounter),
+	})
+	if err != nil {
+		return nil, fmt.Errorf("cannot send announcement message: [%w]", err)
+	}
+
+	messagesChan := make(chan net.Message, len(srl.signingGroupOperators))
+	srl.broadcastChannel.Recv(ctx, func(message net.Message) {
+		messagesChan <- message
+	})
+
+	announcements := make(map[group.MemberIndex]bool)
+
+loop:
+	for {
+		select {
+		case netMessage := <-messagesChan:
+			announcement, ok := netMessage.Payload().(*signingAnnouncementMessage)
+			if !ok {
+				continue
+			}
+
+			if announcement.senderID == srl.signingGroupMemberIndex {
+				continue
+			}
+
+			if !srl.membershipValidator.IsValidMembership(
+				announcement.senderID,
+				netMessage.SenderPublicKey(),
+			) {
+				continue
+			}
+
+			if announcement.message.Cmp(srl.message) != 0 {
+				continue
+			}
+
+			if announcement.attemptNumber != uint64(srl.attemptCounter) {
+				continue
+			}
+
+			announcements[announcement.senderID] = true
+		case <-ctx.Done():
+			break loop
+		}
+	}
+
+	// The total number of operating members for the given attempt is the count
+	// of the received announcements plus the member itself.
+	operatingMembers := len(announcements) + 1
+	if operatingMembers < srl.chainConfig.HonestThreshold {
+		return nil, fmt.Errorf(
+			"operating members count is lesser than the honest threshold",
+		)
+	}
+
+	return announcements, nil
 }
