@@ -15,6 +15,7 @@ This is a Hardhat project:
 - `scripts`: Hardhat scripts:
   - `gen_merkle_dist.js`: generate new Merkle distribution
   - `verify_proof.js`: verify Merkle proof
+  - `stake_history.js`: fetch the information of a particular staker, including staking history.
   - `claim_example.js`: example about how to claim tokens using the contract
 
 ## Examples
@@ -47,6 +48,7 @@ npx hardhat test
 ```
 
 ## Deploy
+
 To deploy to the Ropsten test network you will need a `.env` that looks similar to:
 
 ```
@@ -56,6 +58,7 @@ MAINNET_ETHERSCAN_KEY="M5xxxxxxxxxxxxxxxxxxxxxxxxxxxxxSMV"
 ```
 
 You can then run
+
 ```bash
 npx hardhat --network ropsten deploy
 ```
@@ -63,7 +66,9 @@ npx hardhat --network ropsten deploy
 The contract will be deployed and the source code will be verified on etherscan.
 
 ## Test Deployment
+
 In order to run a test deployment:
+
 ```bash
 npx hardhat --network mainnet_test deploy
 ```
