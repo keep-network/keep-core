@@ -1,8 +1,0 @@
-syntax = "proto3";
-
-option go_package = "./pb";
-package tbtc;
-
-message StopPill {
-    uint64 attemptNumber = 1;
-}

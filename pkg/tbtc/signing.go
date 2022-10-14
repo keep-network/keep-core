@@ -11,10 +11,53 @@ import (
 
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/protocol/group"
+	"github.com/keep-network/keep-core/pkg/tbtc/gen/pb"
 	"github.com/keep-network/keep-core/pkg/tecdsa/retry"
 	"github.com/keep-network/keep-core/pkg/tecdsa/signing"
+	"google.golang.org/protobuf/proto"
 	"golang.org/x/exp/slices"
 )
+
+// signingAnnouncementMessage represents a message that is used to announce
+// member's participation in the given signing attempt for the given message.
+type signingAnnouncementMessage struct {
+	senderID      group.MemberIndex
+	message       *big.Int
+	attemptNumber uint64
+}
+
+func (sam *signingAnnouncementMessage) Marshal() ([]byte, error) {
+	return proto.Marshal(&pb.SigningAnnouncementMessage{
+		SenderID:      uint32(sam.senderID),
+		Message:       sam.message.Bytes(),
+		AttemptNumber: sam.attemptNumber,
+	})
+}
+
+func (sam *signingAnnouncementMessage) Unmarshal(bytes []byte) error {
+	pbMessage := pb.SigningAnnouncementMessage{}
+	if err := proto.Unmarshal(bytes, &pbMessage); err != nil {
+		return fmt.Errorf(
+			"failed to unmarshal SigningAnnouncementMessage: [%v]",
+			err,
+		)
+	}
+
+	if senderID := pbMessage.SenderID; senderID > group.MaxMemberIndex {
+		return fmt.Errorf("invalid member index value: [%v]", senderID)
+	} else {
+		sam.senderID = group.MemberIndex(senderID)
+	}
+
+	sam.message = new(big.Int).SetBytes(pbMessage.Message)
+	sam.attemptNumber = pbMessage.AttemptNumber
+
+	return nil
+}
+
+func (sam *signingAnnouncementMessage) Type() string {
+	return "tbtc/signing_announcement_message"
+}
 
 // signingRetryLoop is a struct that encapsulates the signing retry logic.
 type signingRetryLoop struct {
