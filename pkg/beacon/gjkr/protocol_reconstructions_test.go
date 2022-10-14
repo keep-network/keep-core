@@ -97,9 +97,8 @@ func TestRevealMisbehavedMembersShares(t *testing.T) {
 			break
 		}
 	}
-	if _, ok := expectedDisqualifiedShares[clearedMember.ID][invalidRevealingMember.ID]; ok {
-		delete(expectedDisqualifiedShares[clearedMember.ID], invalidRevealingMember.ID)
-	}
+	
+	delete(expectedDisqualifiedShares[clearedMember.ID], invalidRevealingMember.ID)
 
 	// Fill `expectedMembersForReconstruction` slice stored in `member1` state
 	// with disqualified members ids. Without this, `member1` will not be able
