@@ -215,7 +215,7 @@ func (mgri *mockGroupRegistrationInterface) IsGroupRegistered(
 func (mgri *mockGroupRegistrationInterface) IsStaleGroup(groupPublicKey []byte) (bool, error) {
 	mgri.groupsCheckedIfStale[groupKeyToString(groupPublicKey)] = true
 	for _, groupToRemove := range mgri.groupsToRemove {
-		if bytes.Compare(groupToRemove, groupPublicKey) == 0 {
+		if bytes.Equal(groupToRemove, groupPublicKey) {
 			return true, nil
 		}
 	}

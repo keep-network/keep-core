@@ -227,7 +227,7 @@ func (c *localChain) IsStaleGroup(groupPublicKey []byte) (bool, error) {
 	}
 
 	for _, group := range c.groups {
-		if bytes.Compare(group.groupPublicKey, groupPublicKey) == 0 {
+		if bytes.Equal(group.groupPublicKey, groupPublicKey) {
 			return group.registrationBlockHeight+groupActiveTime+relayRequestTimeout < currentBlock, nil
 		}
 	}
@@ -237,7 +237,7 @@ func (c *localChain) IsStaleGroup(groupPublicKey []byte) (bool, error) {
 
 func (c *localChain) IsGroupRegistered(groupPublicKey []byte) (bool, error) {
 	for _, group := range c.groups {
-		if bytes.Compare(group.groupPublicKey, groupPublicKey) == 0 {
+		if bytes.Equal(group.groupPublicKey, groupPublicKey) {
 			return true, nil
 		}
 	}
