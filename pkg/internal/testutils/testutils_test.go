@@ -15,8 +15,8 @@ func TestAssertBytesEqual(t *testing.T) {
 		expectedError error
 	}{
 		"same bytes": {
-			expectedBytes: make([]byte, 5, 5),
-			actualBytes:   make([]byte, 5, 5),
+			expectedBytes: make([]byte, 5),
+			actualBytes:   make([]byte, 5),
 			expectedError: nil,
 		},
 		"empty bytes": {
@@ -45,8 +45,8 @@ func TestAssertBytesEqual(t *testing.T) {
 			),
 		},
 		"same but longer bytes": {
-			expectedBytes: make([]byte, 3, 3),
-			actualBytes:   make([]byte, 6, 6),
+			expectedBytes: make([]byte, 3),
+			actualBytes:   make([]byte, 6),
 			expectedError: fmt.Errorf(
 				"%s\nexpected: [%s]\nactual:   [%s]",
 				"Byte slices differ in 3 places",
@@ -55,8 +55,8 @@ func TestAssertBytesEqual(t *testing.T) {
 			),
 		},
 		"same but shorter bytes": {
-			expectedBytes: make([]byte, 6, 6),
-			actualBytes:   make([]byte, 3, 3),
+			expectedBytes: make([]byte, 6),
+			actualBytes:   make([]byte, 3),
 			expectedError: fmt.Errorf(
 				"%s\nexpected: [%s]\nactual:   [%s]",
 				"Byte slices differ in 3 places",
