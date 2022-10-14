@@ -28,10 +28,9 @@ func getBroadcastChannel(
 		broadcastChannels = make(map[string][]*localChannel)
 	}
 
-	localChannels, exists := broadcastChannels[name]
+	_, exists := broadcastChannels[name]
 	if !exists {
-		localChannels = make([]*localChannel, 0)
-		broadcastChannels[name] = localChannels
+		broadcastChannels[name] = make([]*localChannel, 0)
 	}
 
 	identifier := randomLocalIdentifier()

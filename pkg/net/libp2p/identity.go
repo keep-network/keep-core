@@ -5,8 +5,6 @@ import (
 
 	"google.golang.org/protobuf/proto"
 
-	"github.com/keep-network/keep-core/pkg/operator"
-
 	"github.com/keep-network/keep-core/pkg/net/gen/pb"
 
 	libp2pcrypto "github.com/libp2p/go-libp2p-core/crypto"
@@ -26,28 +24,6 @@ type identity struct {
 }
 
 type networkIdentity peer.ID
-
-func generateIdentity() (*identity, error) {
-	operatorPrivateKey, _, err := operator.GenerateKeyPair(DefaultCurve)
-	if err != nil {
-		return nil, fmt.Errorf(
-			"cannot generate operator key pair: [%v]",
-			err,
-		)
-	}
-
-	networkPrivateKey, _, err := operatorPrivateKeyToNetworkKeyPair(
-		operatorPrivateKey,
-	)
-	if err != nil {
-		return nil, fmt.Errorf(
-			"cannot convert operator private key to network key pair: [%v]",
-			err,
-		)
-	}
-
-	return createIdentity(networkPrivateKey)
-}
 
 func createIdentity(privateKey libp2pcrypto.PrivKey) (*identity, error) {
 	peerID, err := peer.IDFromPublicKey(privateKey.GetPublic())

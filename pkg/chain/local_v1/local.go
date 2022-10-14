@@ -20,7 +20,6 @@ import (
 var logger = log.Logger("keep-chainlocal")
 
 var seedGroupPublicKey = []byte("seed to group public key")
-var seedRelayEntry = big.NewInt(123456789)
 var groupActiveTime = uint64(10)
 var relayRequestTimeout = uint64(8)
 
