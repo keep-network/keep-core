@@ -192,8 +192,6 @@ func (n *node) JoinDKGIfEligible(
 	} else {
 		dkgLogger.Infof("not eligible for DKG")
 	}
-
-	return
 }
 
 // ForwardSignatureShares enables the ability to forward signature shares
