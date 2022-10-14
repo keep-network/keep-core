@@ -22,11 +22,21 @@ spec:
             - name: GF_SERVER_DOMAIN
               value: monitoring.test.keep.network
             - name: GF_SERVER_ROOT_URL
-              value: "%(protocol)s://%(domain)s:%(http_port)s/grafana/"
+              value: "%(protocol)s://%(domain)s:80/grafana/"
             - name: GF_SERVER_SERVE_FROM_SUB_PATH
               value: "true"
             - name: GF_FEATURE_TOGGLES_PUBLICDASHBOARDS
               value: "true"
+            - name: GF_AUTH_GOOGLE_CLIENT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: grafana-auth-google
+                  key: client_id
+            - name: GF_AUTH_GOOGLE_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: grafana-auth-google
+                  key: client_secret
           ports:
             - name: grafana
               containerPort: 3000
