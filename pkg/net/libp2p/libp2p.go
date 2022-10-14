@@ -129,7 +129,7 @@ func (p *provider) BroadcastChannelForwarderFor(name string) {
 	timeout := time.Duration(p.disseminationTime) * time.Second
 
 	if err := p.broadcastChannelManager.newForwarder(name, timeout); err != nil {
-		logger.Warningf(
+		logger.Warnf(
 			"could not create message forwarder for channel [%v]: [%v]",
 			name,
 			err,
@@ -454,7 +454,7 @@ func parseMultiaddresses(addresses []string) []ma.Multiaddr {
 	for _, address := range addresses {
 		multiaddress, err := ma.NewMultiaddr(address)
 		if err != nil {
-			logger.Warningf(
+			logger.Warnf(
 				"could not parse address string [%v]: [%v]",
 				address,
 				err,

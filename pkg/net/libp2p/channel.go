@@ -227,7 +227,7 @@ func (c *channel) subscriptionWorker(ctx context.Context) {
 			select {
 			case c.incomingMessageQueue <- message:
 			default:
-				logger.Warningf("message workers are too slow; dropping message")
+				logger.Warnf("message workers are too slow; dropping message")
 			}
 		}
 	}
@@ -336,7 +336,7 @@ func (c *channel) deliver(message net.Message) {
 		select {
 		case handler.channel <- message:
 		default:
-			logger.Warningf("message handler is too slow; dropping message")
+			logger.Warnf("message handler is too slow; dropping message")
 		}
 	}
 }
@@ -363,7 +363,7 @@ func createTopicValidator(filter net.BroadcastChannelFilter) pubsub.Validator {
 	return func(_ context.Context, _ peer.ID, message *pubsub.Message) bool {
 		authorPublicKey, err := extractPublicKey(message.GetFrom())
 		if err != nil {
-			logger.Warningf(
+			logger.Warnf(
 				"could not retrieve message author public key: [%v]",
 				err,
 			)
