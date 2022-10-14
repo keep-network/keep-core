@@ -74,8 +74,8 @@ func NewParameterPool[T any](
 	logger.Infof("loaded [%d] parameters from persistence", len(pool))
 
 	scheduler.compute(func(ctx context.Context) {
-		// Only generate new parameters if the pool is not full. Otherwise
-		// go to sleep.
+		// Only generate a new parameter if the target number of parameters has
+		// not been reached yet. Otherwise do nothing.
 		if len(pool) < poolSize {
 			start := time.Now()
 
@@ -107,7 +107,8 @@ func NewParameterPool[T any](
 		// took some time or not. We want to ensure all other processes of the
 		// client receive access to CPU.
 		// Additionally, make sure the generation delay is at least 1 second,
-		// so that this function is not executed too often.
+		// so that this function is not executed too often when the parameter
+		// target has been reached.
 		if generateDelay < 1*time.Second {
 			generateDelay = 1 * time.Second
 		}
