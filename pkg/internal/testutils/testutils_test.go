@@ -29,7 +29,7 @@ func TestAssertBytesEqual(t *testing.T) {
 			actualBytes:   byteArray[0:5],
 			expectedError: fmt.Errorf(
 				"%s\nexpected: [%s]\nactual:   [%s]",
-				"Byte slices differ in 5 places",
+				"byte slices differ in 5 places",
 				"[]",
 				"[0 1 2 3 4]",
 			),
@@ -39,7 +39,7 @@ func TestAssertBytesEqual(t *testing.T) {
 			actualBytes:   make([]byte, 0),
 			expectedError: fmt.Errorf(
 				"%s\nexpected: [%s]\nactual:   [%s]",
-				"Byte slices differ in 5 places",
+				"byte slices differ in 5 places",
 				"[0 1 2 3 4]",
 				"[]",
 			),
@@ -49,7 +49,7 @@ func TestAssertBytesEqual(t *testing.T) {
 			actualBytes:   make([]byte, 6),
 			expectedError: fmt.Errorf(
 				"%s\nexpected: [%s]\nactual:   [%s]",
-				"Byte slices differ in 3 places",
+				"byte slices differ in 3 places",
 				"[0 0 0]",
 				"[0 0 0 0 0 0]",
 			),
@@ -59,7 +59,7 @@ func TestAssertBytesEqual(t *testing.T) {
 			actualBytes:   make([]byte, 3),
 			expectedError: fmt.Errorf(
 				"%s\nexpected: [%s]\nactual:   [%s]",
-				"Byte slices differ in 3 places",
+				"byte slices differ in 3 places",
 				"[0 0 0 0 0 0]",
 				"[0 0 0]",
 			),
@@ -69,7 +69,7 @@ func TestAssertBytesEqual(t *testing.T) {
 			actualBytes:   byteArray[5:10],
 			expectedError: fmt.Errorf(
 				"%s\nexpected: [%s]\nactual:   [%s]",
-				"Byte slices differ in 5 places",
+				"byte slices differ in 5 places",
 				"[0 1 2 3 4]",
 				"[5 6 7 8 9]",
 			),
@@ -79,7 +79,7 @@ func TestAssertBytesEqual(t *testing.T) {
 			actualBytes:   byteArray[5:8],
 			expectedError: fmt.Errorf(
 				"%s\nexpected: [%s]\nactual:   [%s]",
-				"Byte slices differ in 5 places",
+				"byte slices differ in 5 places",
 				"[0 1 2 3 4]",
 				"[5 6 7]",
 			),
@@ -89,7 +89,7 @@ func TestAssertBytesEqual(t *testing.T) {
 			actualBytes:   byteArray[5:10],
 			expectedError: fmt.Errorf(
 				"%s\nexpected: [%s]\nactual:   [%s]",
-				"Byte slices differ in 5 places",
+				"byte slices differ in 5 places",
 				"[0 1 2]",
 				"[5 6 7 8 9]",
 			),

@@ -33,7 +33,7 @@ func (m *Membership) Unmarshal(bytes []byte) error {
 
 	err := signer.Unmarshal(pbMembership.Signer)
 	if err != nil {
-		return fmt.Errorf("Unexpected error occured [%v]", err)
+		return fmt.Errorf("unexpected error occured [%v]", err)
 	}
 
 	m.Signer = signer

@@ -17,7 +17,7 @@ const maxMemberIndex = 255
 
 func validateMemberIndex(protoIndex uint32) error {
 	if protoIndex > maxMemberIndex {
-		return fmt.Errorf("Invalid member index value: [%v]", protoIndex)
+		return fmt.Errorf("invalid member index value: [%v]", protoIndex)
 	}
 	return nil
 }
