@@ -104,7 +104,7 @@ func (lcm *localConnectionManager) ConnectedPeers() []string {
 func (lcm *localConnectionManager) ConnectedPeersAddrInfo() map[string][]string {
 	lcm.mutex.Lock()
 	defer lcm.mutex.Unlock()
-	var peersAddrInfo map[string][]string
+	peersAddrInfo := make(map[string][]string)
 	addresses := []string{"/ip4/localhost/"}
 	for peer := range lcm.peers {
 		peersAddrInfo[peer] = addresses
