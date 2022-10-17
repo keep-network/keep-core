@@ -178,14 +178,8 @@ func start(cmd *cobra.Command) error {
 		}
 	}
 
-	select {
-	case <-ctx.Done():
-		if err != nil {
-			return err
-		}
-
-		return fmt.Errorf("uh-oh, we went boom boom for no reason")
-	}
+	<-ctx.Done()
+	return fmt.Errorf("shutting down the node because its context has ended")
 }
 
 func initializeClientInfo(
