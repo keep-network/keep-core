@@ -37,6 +37,16 @@ spec:
                 secretKeyRef:
                   name: grafana-auth-google
                   key: client_secret
+            - name: GF_AUTH_GITHUB_CLIENT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: grafana-auth-github
+                  key: client_id
+            - name: GF_AUTH_GITHUB_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: grafana-auth-github
+                  key: client_secret
           ports:
             - name: grafana
               containerPort: 3000
