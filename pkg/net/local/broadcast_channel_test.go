@@ -2,12 +2,13 @@ package local
 
 import (
 	"context"
-	"github.com/keep-network/keep-core/pkg/operator"
 	"reflect"
 	"sort"
 	"sync"
 	"testing"
 	"time"
+
+	"github.com/keep-network/keep-core/pkg/operator"
 
 	"github.com/keep-network/keep-core/pkg/internal/testutils"
 	"github.com/keep-network/keep-core/pkg/net"
@@ -218,7 +219,7 @@ loop:
 				msg.Payload(),
 			)
 		}
-		if "local" != msg.Type() {
+		if mockNetMessageType != msg.Type() {
 			t.Errorf(
 				"invalid type\nexpected: [%+v]\nactual:   [%+v]\n",
 				"local",
@@ -251,10 +252,12 @@ func initTestChannel(channelName string) (*operator.PublicKey, net.BroadcastChan
 	return operatorPublicKey, localChannel, nil
 }
 
+const mockNetMessageType = "mock_message"
+
 type mockNetMessage struct{}
 
 func (mm *mockNetMessage) Type() string {
-	return "mock_message"
+	return mockNetMessageType
 }
 
 func (mm *mockNetMessage) Marshal() ([]byte, error) {
