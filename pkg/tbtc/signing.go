@@ -60,6 +60,21 @@ func (sam *signingAnnouncementMessage) Type() string {
 	return "tbtc/signing_announcement_message"
 }
 
+// signingAnnouncer represents a component responsible for exchanging readiness
+// announcements for the given signing attempt of the given message.
+type signingAnnouncer interface {
+	// announce sends the member's readiness announcement for the given signing
+	// attempt of the given message and listens for announcements from other
+	// signing group members. It returns a map containing the received
+	// announcements with member indexes as keys.
+	announce(
+		ctx context.Context,
+		signingGroupMemberIndex group.MemberIndex,
+		message *big.Int,
+		attemptNumber uint64,
+	) (map[group.MemberIndex]bool, error)
+}
+
 // signingRetryLoop is a struct that encapsulates the signing retry logic.
 type signingRetryLoop struct {
 	logger log.StandardLogger
@@ -71,6 +86,7 @@ type signingRetryLoop struct {
 
 	chainConfig *ChainConfig
 
+	announcer                signingAnnouncer
 	announcementDelayBlocks  uint64
 	announcementActiveBlocks uint64
 
@@ -78,10 +94,6 @@ type signingRetryLoop struct {
 	attemptStartBlock  uint64
 	attemptSeed        int64
 	attemptDelayBlocks uint64
-
-	broadcastChannel net.BroadcastChannel
-
-	membershipValidator *group.MembershipValidator
 }
 
 func newSigningRetryLoop(
@@ -91,8 +103,7 @@ func newSigningRetryLoop(
 	signingGroupMemberIndex group.MemberIndex,
 	signingGroupOperators chain.Addresses,
 	chainConfig *ChainConfig,
-	broadcastChannel net.BroadcastChannel,
-	membershipValidator *group.MembershipValidator,
+	announcer signingAnnouncer,
 ) *signingRetryLoop {
 	// Compute the 8-byte seed needed for the random retry algorithm. We take
 	// the first 8 bytes of the hash of the signed message. This allows us to
@@ -101,24 +112,19 @@ func newSigningRetryLoop(
 	messageSha256 := sha256.Sum256(message.Bytes())
 	attemptSeed := int64(binary.BigEndian.Uint64(messageSha256[:8]))
 
-	broadcastChannel.SetUnmarshaler(func() net.TaggedUnmarshaler {
-		return &signingAnnouncementMessage{}
-	})
-
 	return &signingRetryLoop{
 		logger:                   logger,
 		message:                  message,
 		signingGroupMemberIndex:  signingGroupMemberIndex,
 		signingGroupOperators:    signingGroupOperators,
 		chainConfig:              chainConfig,
+		announcer:                announcer,
 		announcementDelayBlocks:  1,
 		announcementActiveBlocks: 5,
 		attemptCounter:           0,
 		attemptStartBlock:        initialStartBlock,
 		attemptSeed:              attemptSeed,
 		attemptDelayBlocks:       5,
-		broadcastChannel:         broadcastChannel,
-		membershipValidator:      membershipValidator,
 	}
 }
 
@@ -211,7 +217,12 @@ func (srl *signingRetryLoop) start(
 			srl.attemptCounter,
 		)
 
-		announcements, err := srl.announceAttempt(announceCtx)
+		announcements, err := srl.announcer.announce(
+			announceCtx,
+			srl.signingGroupMemberIndex,
+			srl.message,
+			uint64(srl.attemptCounter),
+		)
 		if err != nil {
 			srl.logger.Warnf(
 				"[member:%v] announcement for attempt [%v] "+
@@ -370,27 +381,58 @@ func (srl *signingRetryLoop) excludedMembersIndexes(
 	return excludedMembersIndexes
 }
 
-// announceAttempt broadcasts the member's readiness announcement for the
-// given signing attempt and listens for announcements from other signing
-// group members. This function keeps working until the ctx parameter is done
+// broadcastSigningAnnouncer is an implementation of the signingAnnouncer that
+// performs the readiness announcement over the provided broadcast channel.
+type broadcastSigningAnnouncer struct {
+	chainConfig         *ChainConfig
+	broadcastChannel    net.BroadcastChannel
+	membershipValidator *group.MembershipValidator
+}
+
+// newBroadcastSigningAnnouncer creates a new instance of the
+// broadcastSigningAnnouncer.
+func newBroadcastSigningAnnouncer(
+	chainConfig *ChainConfig,
+	broadcastChannel net.BroadcastChannel,
+	membershipValidator *group.MembershipValidator,
+) *broadcastSigningAnnouncer {
+	broadcastChannel.SetUnmarshaler(func() net.TaggedUnmarshaler {
+		return &signingAnnouncementMessage{}
+	})
+
+	return &broadcastSigningAnnouncer{
+		chainConfig:         chainConfig,
+		broadcastChannel:    broadcastChannel,
+		membershipValidator: membershipValidator,
+	}
+}
+
+// announce broadcasts the member's readiness announcement for the given
+// signing attempt and listens for announcements from other signing group
+// members. This function keeps working until the ctx parameter is done
 // and returns successfully only if the total number of ready members
 // (including the announcing member) is equal to or grater than the honest
 // threshold parameter.
-func (srl *signingRetryLoop) announceAttempt(ctx context.Context) (
+func (bsa *broadcastSigningAnnouncer) announce(
+	ctx context.Context,
+	signingGroupMemberIndex group.MemberIndex,
+	message *big.Int,
+	attemptNumber uint64,
+) (
 	map[group.MemberIndex]bool,
 	error,
 ) {
-	err := srl.broadcastChannel.Send(ctx, &signingAnnouncementMessage{
-		senderID:      srl.signingGroupMemberIndex,
-		message:       srl.message,
-		attemptNumber: uint64(srl.attemptCounter),
+	err := bsa.broadcastChannel.Send(ctx, &signingAnnouncementMessage{
+		senderID:      signingGroupMemberIndex,
+		message:       message,
+		attemptNumber: attemptNumber,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("cannot send announcement message: [%w]", err)
 	}
 
-	messagesChan := make(chan net.Message, len(srl.signingGroupOperators))
-	srl.broadcastChannel.Recv(ctx, func(message net.Message) {
+	messagesChan := make(chan net.Message, bsa.chainConfig.GroupSize)
+	bsa.broadcastChannel.Recv(ctx, func(message net.Message) {
 		messagesChan <- message
 	})
 
@@ -405,22 +447,22 @@ loop:
 				continue
 			}
 
-			if announcement.senderID == srl.signingGroupMemberIndex {
+			if announcement.senderID == signingGroupMemberIndex {
 				continue
 			}
 
-			if !srl.membershipValidator.IsValidMembership(
+			if !bsa.membershipValidator.IsValidMembership(
 				announcement.senderID,
 				netMessage.SenderPublicKey(),
 			) {
 				continue
 			}
 
-			if announcement.message.Cmp(srl.message) != 0 {
+			if announcement.message.Cmp(message) != 0 {
 				continue
 			}
 
-			if announcement.attemptNumber != uint64(srl.attemptCounter) {
+			if announcement.attemptNumber != attemptNumber {
 				continue
 			}
 
@@ -433,7 +475,7 @@ loop:
 	// The total number of operating members for the given attempt is the count
 	// of the received announcements plus the member itself.
 	operatingMembers := len(announcements) + 1
-	if operatingMembers < srl.chainConfig.HonestThreshold {
+	if operatingMembers < bsa.chainConfig.HonestThreshold {
 		return nil, fmt.Errorf(
 			"operating members count is lesser than the honest threshold",
 		)
