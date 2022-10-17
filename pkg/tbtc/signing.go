@@ -65,14 +65,15 @@ func (sam *signingAnnouncementMessage) Type() string {
 type signingAnnouncer interface {
 	// announce sends the member's readiness announcement for the given signing
 	// attempt of the given message and listens for announcements from other
-	// signing group members. It returns a map containing the received
-	// announcements with member indexes as keys.
+	// signing group members. It returns a list of unique members indexes that
+	// are ready for the given attempt, including the executing member's index.
+	// The list is sorted in ascending order.
 	announce(
 		ctx context.Context,
 		signingGroupMemberIndex group.MemberIndex,
 		message *big.Int,
 		attemptNumber uint64,
-	) (map[group.MemberIndex]bool, error)
+	) ([]group.MemberIndex, error)
 }
 
 // signingRetryLoop is a struct that encapsulates the signing retry logic.
@@ -217,7 +218,7 @@ func (srl *signingRetryLoop) start(
 			srl.attemptCounter,
 		)
 
-		announcements, err := srl.announcer.announce(
+		readyMembersIndexes, err := srl.announcer.announce(
 			announceCtx,
 			srl.signingGroupMemberIndex,
 			srl.message,
@@ -236,13 +237,13 @@ func (srl *signingRetryLoop) start(
 
 		srl.logger.Infof(
 			"[member:%v] completed announcement phase for attempt [%v] "+
-				"and [%v] other members announced readiness",
+				"and [%v] members are ready to sign",
 			srl.signingGroupMemberIndex,
 			srl.attemptCounter,
-			len(announcements),
+			len(readyMembersIndexes),
 		)
 
-		qualifiedOperatorsSet, err := srl.qualifiedOperatorsSet(announcements)
+		qualifiedOperatorsSet, err := srl.qualifiedOperatorsSet(readyMembersIndexes)
 		if err != nil {
 			return nil, fmt.Errorf(
 				"cannot get qualified operators for attempt [%v]: [%w]",
@@ -253,7 +254,10 @@ func (srl *signingRetryLoop) start(
 
 		// Exclude all members controlled by the operators that were not
 		// qualified for the current attempt.
-		excludedMembersIndexes := srl.excludedMembersIndexes(qualifiedOperatorsSet)
+		excludedMembersIndexes := srl.excludedMembersIndexes(
+			qualifiedOperatorsSet,
+			readyMembersIndexes,
+		)
 
 		attemptSkipped := slices.Contains(
 			excludedMembersIndexes,
@@ -290,27 +294,23 @@ func (srl *signingRetryLoop) start(
 // from the set of active operators who announced readiness through
 // their controlled signing group members.
 func (srl *signingRetryLoop) qualifiedOperatorsSet(
-	announcements map[group.MemberIndex]bool,
+	readyMembersIndexes []group.MemberIndex,
 ) (map[chain.Address]bool, error) {
 	// The retry algorithm expects that we count retries from 0. Since
 	// the first invocation of the algorithm will be for `attemptCounter == 1`
 	// we need to subtract one while determining the number of the given retry.
 	retryCount := srl.attemptCounter - 1
 
-	var announcedSigningGroupOperators []chain.Address
-	for i, operator := range srl.signingGroupOperators {
-		memberIndex := group.MemberIndex(i + 1)
-
-		if announcements[memberIndex] {
-			announcedSigningGroupOperators = append(
-				announcedSigningGroupOperators,
-				operator,
-			)
-		}
+	var readySigningGroupOperators []chain.Address
+	for _, memberIndex := range readyMembersIndexes {
+		readySigningGroupOperators = append(
+			readySigningGroupOperators,
+			srl.signingGroupOperators[memberIndex-1],
+		)
 	}
 
 	qualifiedOperators, err := retry.EvaluateRetryParticipantsForSigning(
-		announcedSigningGroupOperators,
+		readySigningGroupOperators,
 		srl.attemptSeed,
 		retryCount,
 		uint(srl.chainConfig.HonestThreshold),
@@ -329,13 +329,15 @@ func (srl *signingRetryLoop) qualifiedOperatorsSet(
 // the given qualified operators set.
 func (srl *signingRetryLoop) excludedMembersIndexes(
 	qualifiedOperatorsSet map[chain.Address]bool,
+	readyMembersIndexes []group.MemberIndex,
 ) []group.MemberIndex {
 	includedMembersIndexes := make([]group.MemberIndex, 0)
 	excludedMembersIndexes := make([]group.MemberIndex, 0)
 	for i, operator := range srl.signingGroupOperators {
 		memberIndex := group.MemberIndex(i + 1)
 
-		if qualifiedOperatorsSet[operator] {
+		if qualifiedOperatorsSet[operator] &&
+			slices.Contains(readyMembersIndexes, memberIndex) {
 			includedMembersIndexes = append(
 				includedMembersIndexes,
 				memberIndex,
@@ -407,19 +409,19 @@ func newBroadcastSigningAnnouncer(
 	}
 }
 
-// announce broadcasts the member's readiness announcement for the given
-// signing attempt and listens for announcements from other signing group
-// members. This function keeps working until the ctx parameter is done
-// and returns successfully only if the total number of ready members
-// (including the announcing member) is equal to or grater than the honest
-// threshold parameter.
+// announce is an implementation of the signingAnnouncer.announce method.
+//
+// This implementation fulfills the method specification and additionally:
+// - blocks until the ctx passed as argument is done
+// - returns an error if the total number of ready members is lesser than the
+//   honest threshold parameter
 func (bsa *broadcastSigningAnnouncer) announce(
 	ctx context.Context,
 	signingGroupMemberIndex group.MemberIndex,
 	message *big.Int,
 	attemptNumber uint64,
 ) (
-	map[group.MemberIndex]bool,
+	[]group.MemberIndex,
 	error,
 ) {
 	err := bsa.broadcastChannel.Send(ctx, &signingAnnouncementMessage{
@@ -436,7 +438,9 @@ func (bsa *broadcastSigningAnnouncer) announce(
 		messagesChan <- message
 	})
 
-	announcements := make(map[group.MemberIndex]bool)
+	readyMembersIndexesSet := make(map[group.MemberIndex]bool)
+	// Mark itself as ready.
+	readyMembersIndexesSet[signingGroupMemberIndex] = true
 
 loop:
 	for {
@@ -466,20 +470,26 @@ loop:
 				continue
 			}
 
-			announcements[announcement.senderID] = true
+			readyMembersIndexesSet[announcement.senderID] = true
 		case <-ctx.Done():
 			break loop
 		}
 	}
 
-	// The total number of operating members for the given attempt is the count
-	// of the received announcements plus the member itself.
-	operatingMembers := len(announcements) + 1
-	if operatingMembers < bsa.chainConfig.HonestThreshold {
+	if len(readyMembersIndexesSet) < bsa.chainConfig.HonestThreshold {
 		return nil, fmt.Errorf(
-			"operating members count is lesser than the honest threshold",
+			"ready members count is lesser than the honest threshold",
 		)
 	}
 
-	return announcements, nil
+	var readyMembersIndexes []group.MemberIndex
+	for memberIndex := range readyMembersIndexesSet {
+		readyMembersIndexes = append(readyMembersIndexes, memberIndex)
+	}
+
+	sort.Slice(readyMembersIndexes, func(i, j int) bool {
+		return readyMembersIndexes[i] < readyMembersIndexes[j]
+	})
+
+	return readyMembersIndexes, nil
 }
