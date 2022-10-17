@@ -218,7 +218,7 @@ loop:
 				msg.Payload(),
 			)
 		}
-		if "local" != msg.Type() {
+		if msg.Type() != "local" {
 			t.Errorf(
 				"invalid type\nexpected: [%+v]\nactual:   [%+v]\n",
 				"local",
