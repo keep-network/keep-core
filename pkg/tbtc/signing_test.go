@@ -3,6 +3,8 @@ package tbtc
 import (
 	"context"
 	"fmt"
+	fuzz "github.com/google/gofuzz"
+	"github.com/keep-network/keep-core/pkg/internal/pbutils"
 	"github.com/keep-network/keep-core/pkg/internal/testutils"
 	"math/big"
 	"reflect"
@@ -13,6 +15,54 @@ import (
 	"github.com/keep-network/keep-core/pkg/tecdsa"
 	"github.com/keep-network/keep-core/pkg/tecdsa/signing"
 )
+
+func TestSigningAnnouncementMessage_MarshalingRoundtrip(t *testing.T) {
+	msg := &signingAnnouncementMessage{
+		senderID:      group.MemberIndex(38),
+		message:       big.NewInt(100),
+		attemptNumber: 3,
+	}
+	unmarshaled := &signingAnnouncementMessage{}
+
+	err := pbutils.RoundTrip(msg, unmarshaled)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if !reflect.DeepEqual(msg, unmarshaled) {
+		t.Fatalf("unexpected content of unmarshaled message")
+	}
+}
+
+func TestFuzzSigningAnnouncementMessage_MarshalingRoundtrip(t *testing.T) {
+	for i := 0; i < 10; i++ {
+		var (
+			senderID      group.MemberIndex
+			message       *big.Int
+			attemptNumber uint64
+		)
+
+		f := fuzz.New().NilChance(0.1).
+			NumElements(0, 512).
+			Funcs(pbutils.FuzzFuncs()...)
+
+		f.Fuzz(&senderID)
+		f.Fuzz(&message)
+		f.Fuzz(&attemptNumber)
+
+		msg := &signingAnnouncementMessage{
+			senderID:      senderID,
+			message:       message,
+			attemptNumber: attemptNumber,
+		}
+
+		_ = pbutils.RoundTrip(msg, &signingAnnouncementMessage{})
+	}
+}
+
+func TestFuzzSigningAnnouncementMessage_Unmarshaler(t *testing.T) {
+	pbutils.FuzzUnmarshaler(&signingAnnouncementMessage{})
+}
 
 func TestSigningRetryLoop(t *testing.T) {
 	chainConfig := &ChainConfig{
