@@ -26,9 +26,7 @@ type Machine struct {
 	initialState State // first state from which execution starts
 }
 
-// NewMachine returns a new protocol state machine. It requires a broadcast
-// channel and an initialization function for the channel to be able to
-// perform interactions between protocol parties.
+// NewMachine returns a new protocol state machine.
 func NewMachine(
 	logger log.StandardLogger,
 	channel net.BroadcastChannel,
@@ -150,10 +148,11 @@ func stateTransition(
 		lastStateEndBlockHeight,
 	)
 
-	// We delay the initialization of the new state by one block to give all
-	// other coopearating state machines a chance to enter the new state.
-	// This is needed when, for example, during the initialization some
-	// state-specific messages are sent.
+	// We delay the initialization of the new state by `initiateDelay` of blocks
+	// to give all other participants a chance to enter the new state. This is
+	// needed when state accepts only messages specific to that state.
+	// In that case, if the message is sent too early, it is lost given that the
+	// receiveBuffer has the retransmissions filtered out.
 	initiateDelay := lastStateEndBlockHeight + currentState.DelayBlocks()
 	err := blockCounter.WaitForBlockHeight(initiateDelay)
 	if err != nil {
