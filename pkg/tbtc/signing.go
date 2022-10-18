@@ -243,21 +243,16 @@ func (srl *signingRetryLoop) start(
 			len(readyMembersIndexes),
 		)
 
-		qualifiedOperatorsSet, err := srl.qualifiedOperatorsSet(readyMembersIndexes)
+		excludedMembersIndexes, err := srl.performMembersSelection(
+			readyMembersIndexes,
+		)
 		if err != nil {
 			return nil, fmt.Errorf(
-				"cannot get qualified operators for attempt [%v]: [%w]",
+				"cannot select members for attempt [%v]: [%w]",
 				srl.attemptCounter,
 				err,
 			)
 		}
-
-		// Exclude all members controlled by the operators that were not
-		// qualified for the current attempt.
-		excludedMembersIndexes := srl.excludedMembersIndexes(
-			qualifiedOperatorsSet,
-			readyMembersIndexes,
-		)
 
 		attemptSkipped := slices.Contains(
 			excludedMembersIndexes,
@@ -287,6 +282,44 @@ func (srl *signingRetryLoop) start(
 
 		return result, nil
 	}
+}
+
+// performMembersSelection runs the member selection process whose result
+// is a list of members' indexes that should be excluded by the client
+// for the given signing attempt.
+//
+// The member selection process is done based on the list of ready members
+// provided as the readyMembersIndexes argument. This list is used twice:
+//
+// First, the algorithm determining the qualified operators set uses the
+// ready members list to build an input consisting of only active operators.
+// This way we guarantee that the qualified operators set contains only
+// ready and active operators that will actually take part in the signing
+// attempt.
+//
+// Second, the ready members list is used to determine a list of excluded
+// members. The excluded members list is built using the qualified operators
+// set. The algorithm that determines the qualified operators set does not
+// care about an exact mapping between operators and controlled members but
+// relies on the members count solely. That means the information about
+// readiness of specific members controlled by the given operators is not
+// included in the resulting qualified operators set. In order to properly
+// decide about inclusion or exclusion of specific members of a given
+// qualified operator, we must take the ready members list into account.
+func (srl *signingRetryLoop) performMembersSelection(
+	readyMembersIndexes []group.MemberIndex,
+) ([]group.MemberIndex, error) {
+	qualifiedOperatorsSet, err := srl.qualifiedOperatorsSet(readyMembersIndexes)
+	if err != nil {
+		return nil, fmt.Errorf("cannot get qualified operators: [%w]", err)
+	}
+
+	// Exclude all members controlled by the operators that were not
+	// qualified for the current attempt.
+	return srl.excludedMembersIndexes(
+		qualifiedOperatorsSet,
+		readyMembersIndexes,
+	), nil
 }
 
 // qualifiedOperatorsSet returns a set of operators qualified to participate
