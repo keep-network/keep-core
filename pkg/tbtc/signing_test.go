@@ -376,46 +376,35 @@ func TestSigningRetryLoop(t *testing.T) {
 			}
 
 			if test.expectedLastAttempt != nil {
-				expectedOutgoingAnnouncementsCount :=
-					int(test.expectedLastAttempt.number)
-				actualOutgoingAnnouncementsCount :=
-					len(announcer.outgoingAnnouncements)
-				if expectedOutgoingAnnouncementsCount !=
-					actualOutgoingAnnouncementsCount {
-					t.Errorf(
-						"unexpected outgoing announcements count\n"+
-							"expected: [%+v]\n"+
-							"actual:   [%+v]",
-						expectedOutgoingAnnouncementsCount,
-						actualOutgoingAnnouncementsCount,
-					)
-				}
+				testutils.AssertIntsEqual(
+					t,
+					"outgoing announcements count",
+					int(test.expectedLastAttempt.number),
+					len(announcer.outgoingAnnouncements),
+				)
 
 				for attemptNumber, outgoingAnnouncement := range announcer.outgoingAnnouncements {
-					if test.signingGroupMemberIndex !=
-						outgoingAnnouncement.signingGroupMemberIndex {
-						t.Errorf(
-							"unexpected outgoing announcement's member "+
-								"index for attempt [%v]\n"+
-								"expected: [%+v]\n"+
-								"actual:   [%+v]",
+					testutils.AssertIntsEqual(
+						t,
+						fmt.Sprintf(
+							"outgoing announcement's member index "+
+								"for attempt [%v]",
 							attemptNumber,
-							test.signingGroupMemberIndex,
-							outgoingAnnouncement.signingGroupMemberIndex,
-						)
-					}
+						),
+						int(test.signingGroupMemberIndex),
+						int(outgoingAnnouncement.signingGroupMemberIndex),
+					)
 
-					if message.Cmp(outgoingAnnouncement.message) != 0 {
-						t.Errorf(
-							"unexpected outgoing announcement's message "+
-								"for attempt [%v]\n"+
-								"expected: [%+v]\n"+
-								"actual:   [%+v]",
+					testutils.AssertBigIntsEqual(
+						t,
+						fmt.Sprintf(
+							"outgoing announcement's message "+
+								"for attempt [%v]",
 							attemptNumber,
-							message,
-							outgoingAnnouncement.message,
-						)
-					}
+						),
+						message,
+						outgoingAnnouncement.message,
+					)
 				}
 			}
 		})
@@ -468,13 +457,11 @@ func TestBroadcastSigningAnnouncer(t *testing.T) {
 	var tests = map[string]struct {
 		message                    *big.Int
 		broadcastingMembersIndexes []group.MemberIndex
-		expectedErrors             map[group.MemberIndex]error
 		expectedResults            map[group.MemberIndex][]group.MemberIndex
 	}{
 		"all members broadcasted announcements": {
 			message:                    big.NewInt(100),
 			broadcastingMembersIndexes: []group.MemberIndex{1, 2, 3, 4, 5},
-			expectedErrors:             make(map[group.MemberIndex]error),
 			expectedResults: map[group.MemberIndex][]group.MemberIndex{
 				1: {1, 2, 3, 4, 5},
 				2: {1, 2, 3, 4, 5},
@@ -486,7 +473,6 @@ func TestBroadcastSigningAnnouncer(t *testing.T) {
 		"part of members broadcasted announcements": {
 			message:                    big.NewInt(200),
 			broadcastingMembersIndexes: []group.MemberIndex{1, 3, 5},
-			expectedErrors:             make(map[group.MemberIndex]error),
 			expectedResults: map[group.MemberIndex][]group.MemberIndex{
 				1: {1, 3, 5},
 				3: {1, 3, 5},
@@ -567,15 +553,12 @@ func TestBroadcastSigningAnnouncer(t *testing.T) {
 				errors[e.memberIndex] = e.err
 			}
 
-			if !reflect.DeepEqual(test.expectedErrors, errors) {
-				t.Errorf(
-					"unexpected errors\n"+
-						"expected: [%v]\n"+
-						"actual:   [%v]",
-					test.expectedErrors,
-					errors,
-				)
-			}
+			testutils.AssertIntsEqual(
+				t,
+				"errors count",
+				0,
+				len(errors),
+			)
 
 			if !reflect.DeepEqual(test.expectedResults, results) {
 				t.Errorf(
