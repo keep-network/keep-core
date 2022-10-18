@@ -568,11 +568,15 @@ func TestBroadcastSigningAnnouncer(t *testing.T) {
 }
 
 type mockSigningAnnouncer struct {
+	// outgoingAnnouncements holds all announcements that are supposed to
+	// be sent by the announcer.
 	outgoingAnnouncements map[uint64]struct {
 		signingGroupMemberIndex group.MemberIndex
 		message                 *big.Int
 	}
 
+	// incomingAnnouncementsFn returns all announcements that are supposed to
+	// be received by the announcer for the given attempt.
 	incomingAnnouncementsFn func(
 		attemptNumber uint64,
 	) ([]group.MemberIndex, error)
