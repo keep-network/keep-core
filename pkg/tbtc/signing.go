@@ -418,7 +418,7 @@ func newBroadcastSigningAnnouncer(
 func (bsa *broadcastSigningAnnouncer) announce(
 	ctx context.Context,
 	signingGroupMemberIndex group.MemberIndex,
-	message *big.Int,
+	messageToSign *big.Int,
 	attemptNumber uint64,
 ) (
 	[]group.MemberIndex,
@@ -431,7 +431,7 @@ func (bsa *broadcastSigningAnnouncer) announce(
 
 	err := bsa.broadcastChannel.Send(ctx, &signingAnnouncementMessage{
 		senderID:      signingGroupMemberIndex,
-		message:       message,
+		message:       messageToSign,
 		attemptNumber: attemptNumber,
 	})
 	if err != nil {
@@ -462,7 +462,7 @@ loop:
 				continue
 			}
 
-			if announcement.message.Cmp(message) != 0 {
+			if announcement.message.Cmp(messageToSign) != 0 {
 				continue
 			}
 
