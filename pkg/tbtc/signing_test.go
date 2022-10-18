@@ -4,11 +4,16 @@ import (
 	"context"
 	"fmt"
 	fuzz "github.com/google/gofuzz"
+	"github.com/keep-network/keep-core/pkg/chain/local_v1"
 	"github.com/keep-network/keep-core/pkg/internal/pbutils"
 	"github.com/keep-network/keep-core/pkg/internal/testutils"
+	"github.com/keep-network/keep-core/pkg/net/local"
+	"github.com/keep-network/keep-core/pkg/operator"
 	"math/big"
 	"reflect"
+	"sync"
 	"testing"
+	"time"
 
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/protocol/group"
@@ -380,6 +385,184 @@ func TestSigningRetryLoop(t *testing.T) {
 						)
 					}
 				}
+			}
+		})
+	}
+}
+
+func TestBroadcastSigningAnnouncer(t *testing.T) {
+	chainConfig := &ChainConfig{
+		GroupSize:       5,
+		HonestThreshold: 3,
+	}
+
+	operatorPrivateKey, operatorPublicKey, err := operator.GenerateKeyPair(
+		local_v1.DefaultCurve,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	localChain := local_v1.ConnectWithKey(
+		chainConfig.GroupSize,
+		chainConfig.HonestThreshold,
+		operatorPrivateKey,
+	)
+
+	operatorAddress, err := localChain.Signing().PublicKeyToAddress(
+		operatorPublicKey,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var signingGroupOperators []chain.Address
+	for i := 0; i < chainConfig.GroupSize; i++ {
+		signingGroupOperators = append(signingGroupOperators, operatorAddress)
+	}
+
+	localProvider := local.ConnectWithKey(operatorPublicKey)
+
+	type memberResult struct {
+		memberIndex group.MemberIndex
+		readyMembersIndexes []group.MemberIndex
+	}
+
+	type memberError struct {
+		memberIndex group.MemberIndex
+		err error
+	}
+
+	var tests = map[string]struct {
+		message                    *big.Int
+		broadcastingMembersIndexes []group.MemberIndex
+		expectedErrors             map[group.MemberIndex]error
+		expectedResults            map[group.MemberIndex][]group.MemberIndex
+	}{
+		"all members broadcasted announcements": {
+			message: big.NewInt(100),
+			broadcastingMembersIndexes: []group.MemberIndex{1, 2, 3, 4, 5},
+			expectedErrors: make(map[group.MemberIndex]error),
+			expectedResults: map[group.MemberIndex][]group.MemberIndex{
+				1: {1, 2, 3, 4, 5},
+				2: {1, 2, 3, 4, 5},
+				3: {1, 2, 3, 4, 5},
+				4: {1, 2, 3, 4, 5},
+				5: {1, 2, 3, 4, 5},
+			},
+		},
+		"honest majority of members broadcasted announcements": {
+			message: big.NewInt(200),
+			broadcastingMembersIndexes: []group.MemberIndex{1, 3, 5},
+			expectedErrors: make(map[group.MemberIndex]error),
+			expectedResults: map[group.MemberIndex][]group.MemberIndex{
+				1: {1, 3, 5},
+				3: {1, 3, 5},
+				5: {1, 3, 5},
+			},
+		},
+		"minority of members broadcasted announcements": {
+			message: big.NewInt(300),
+			broadcastingMembersIndexes: []group.MemberIndex{1, 3},
+			expectedErrors: map[group.MemberIndex]error{
+				1: fmt.Errorf("ready members count is lesser than the honest threshold"),
+				3: fmt.Errorf("ready members count is lesser than the honest threshold"),
+			},
+			expectedResults: make(map[group.MemberIndex][]group.MemberIndex),
+		},
+	}
+
+	for testName, test := range tests {
+		t.Run(testName, func(t *testing.T) {
+			broadcastChannel, err := localProvider.BroadcastChannelFor(
+				test.message.Text(16),
+			)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			membershipValidator := group.NewMembershipValidator(
+				&testutils.MockLogger{},
+				signingGroupOperators,
+				localChain.Signing(),
+			)
+
+			announcer := newBroadcastSigningAnnouncer(
+				chainConfig,
+				broadcastChannel,
+				membershipValidator,
+			)
+
+			resultsChan := make(
+				chan *memberResult,
+				len(test.broadcastingMembersIndexes),
+			)
+			errorsChan := make(
+				chan *memberError,
+				len(test.broadcastingMembersIndexes),
+			)
+
+			wg := sync.WaitGroup{}
+			wg.Add(len(test.broadcastingMembersIndexes))
+
+			for _, broadcastingMemberIndex :=
+				range test.broadcastingMembersIndexes {
+				go func(memberIndex group.MemberIndex) {
+					defer wg.Done()
+
+					ctx, cancelCtx := context.WithTimeout(
+						context.Background(),
+						100 * time.Millisecond,
+					)
+					defer cancelCtx()
+
+					readyMembersIndexes, err := announcer.announce(
+						ctx,
+						memberIndex,
+						test.message,
+						1,
+					)
+					if err != nil {
+						errorsChan <- &memberError{memberIndex, err}
+						return
+					}
+
+					resultsChan <- &memberResult{memberIndex, readyMembersIndexes}
+				}(broadcastingMemberIndex)
+			}
+
+			wg.Wait()
+
+			close(resultsChan)
+			results := make(map[group.MemberIndex][]group.MemberIndex)
+			for r := range resultsChan {
+				results[r.memberIndex] = r.readyMembersIndexes
+			}
+
+			close(errorsChan)
+			errors := make(map[group.MemberIndex]error)
+			for e := range errorsChan {
+				errors[e.memberIndex] = e.err
+			}
+
+			if !reflect.DeepEqual(test.expectedErrors, errors) {
+				t.Errorf(
+					"unexpected errors\n" +
+						"expected: [%v]\n" +
+						"actual:   [%v]",
+					test.expectedErrors,
+					errors,
+				)
+			}
+
+			if !reflect.DeepEqual(test.expectedResults, results) {
+				t.Errorf(
+					"unexpected results\n" +
+						"expected: [%v]\n" +
+						"actual:   [%v]",
+					test.expectedResults,
+					results,
+				)
 			}
 		})
 	}

@@ -424,6 +424,11 @@ func (bsa *broadcastSigningAnnouncer) announce(
 	[]group.MemberIndex,
 	error,
 ) {
+	messagesChan := make(chan net.Message, bsa.chainConfig.GroupSize)
+	bsa.broadcastChannel.Recv(ctx, func(message net.Message) {
+		messagesChan <- message
+	})
+
 	err := bsa.broadcastChannel.Send(ctx, &signingAnnouncementMessage{
 		senderID:      signingGroupMemberIndex,
 		message:       message,
@@ -432,11 +437,6 @@ func (bsa *broadcastSigningAnnouncer) announce(
 	if err != nil {
 		return nil, fmt.Errorf("cannot send announcement message: [%w]", err)
 	}
-
-	messagesChan := make(chan net.Message, bsa.chainConfig.GroupSize)
-	bsa.broadcastChannel.Recv(ctx, func(message net.Message) {
-		messagesChan <- message
-	})
 
 	readyMembersIndexesSet := make(map[group.MemberIndex]bool)
 	// Mark itself as ready.
