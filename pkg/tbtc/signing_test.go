@@ -116,7 +116,7 @@ func TestSigningRetryLoop(t *testing.T) {
 		"success on initial attempt": {
 			signingGroupMemberIndex: 1,
 			ctxFn: func() (context.Context, context.CancelFunc) {
-				return context.WithCancel(context.Background())
+				return context.WithTimeout(context.Background(), 10*time.Second)
 			},
 			incomingAnnouncementsFn: func(
 				attemptNumber uint64,
@@ -137,15 +137,15 @@ func TestSigningRetryLoop(t *testing.T) {
 				excludedMembersIndexes: []group.MemberIndex{3, 7, 8, 10},
 			},
 		},
-		"success on initial attempt with missing announcements": {
+		"success on initial attempt with missing announcements and honest majority": {
 			signingGroupMemberIndex: 1,
 			ctxFn: func() (context.Context, context.CancelFunc) {
-				return context.WithCancel(context.Background())
+				return context.WithTimeout(context.Background(), 10*time.Second)
 			},
 			incomingAnnouncementsFn: func(
 				attemptNumber uint64,
 			) ([]group.MemberIndex, error) {
-				// Only the following members announced their readiness.
+				// Honest majority of members announced their readiness.
 				return []group.MemberIndex{1, 2, 3, 6, 7, 9}, nil
 			},
 			signingAttemptFn: func(attempt *signingAttemptParams) (*signing.Result, error) {
@@ -162,10 +162,42 @@ func TestSigningRetryLoop(t *testing.T) {
 				excludedMembersIndexes: []group.MemberIndex{4, 5, 8, 10},
 			},
 		},
+		"missing announcements without honest majority on initial attempt": {
+			signingGroupMemberIndex: 3,
+			ctxFn: func() (context.Context, context.CancelFunc) {
+				return context.WithTimeout(context.Background(), 10*time.Second)
+			},
+			incomingAnnouncementsFn: func(
+				attemptNumber uint64,
+			) ([]group.MemberIndex, error) {
+				if attemptNumber <= 1 {
+					// Minority of members announced their readiness.
+					return []group.MemberIndex{1, 2, 3, 6, 7}, nil
+				}
+
+				return signingGroupMembersIndexes, nil
+			},
+			signingAttemptFn: func(attempt *signingAttemptParams) (*signing.Result, error) {
+				return testResult, nil
+			},
+			expectedErr:    nil,
+			expectedResult: testResult,
+			// Member 3 is the executing one. The first attempt's announcement
+			// fails and the signing random retry algorithm invoked with the
+			// test seed excludes 3 members (6 is the honest threshold) from the
+			// second attempt: 1, 2 and 5. The additional exclusion round that
+			// trims the included members list to the honest threshold size
+			// adds member 9 to the final excluded members list.
+			expectedLastAttempt: &signingAttemptParams{
+				number:                 2,
+				startBlock:             290, // 206 + 1 * (6 + 73 + 5)
+				excludedMembersIndexes: []group.MemberIndex{1, 2, 5, 9},
+			},
+		},
 		"announcement error on initial attempt": {
 			signingGroupMemberIndex: 4,
 			ctxFn: func() (context.Context, context.CancelFunc) {
-				return context.WithCancel(context.Background())
+				return context.WithTimeout(context.Background(), 10*time.Second)
 			},
 			incomingAnnouncementsFn: func(
 				attemptNumber uint64,
@@ -196,7 +228,7 @@ func TestSigningRetryLoop(t *testing.T) {
 		"signing error on initial attempt": {
 			signingGroupMemberIndex: 4,
 			ctxFn: func() (context.Context, context.CancelFunc) {
-				return context.WithCancel(context.Background())
+				return context.WithTimeout(context.Background(), 10*time.Second)
 			},
 			incomingAnnouncementsFn: func(
 				attemptNumber uint64,
@@ -227,7 +259,7 @@ func TestSigningRetryLoop(t *testing.T) {
 		"executing member excluded": {
 			signingGroupMemberIndex: 2,
 			ctxFn: func() (context.Context, context.CancelFunc) {
-				return context.WithCancel(context.Background())
+				return context.WithTimeout(context.Background(), 10*time.Second)
 			},
 			incomingAnnouncementsFn: func(
 				attemptNumber uint64,
@@ -451,7 +483,7 @@ func TestBroadcastSigningAnnouncer(t *testing.T) {
 				5: {1, 2, 3, 4, 5},
 			},
 		},
-		"honest majority of members broadcasted announcements": {
+		"part of members broadcasted announcements": {
 			message:                    big.NewInt(200),
 			broadcastingMembersIndexes: []group.MemberIndex{1, 3, 5},
 			expectedErrors:             make(map[group.MemberIndex]error),
@@ -460,15 +492,6 @@ func TestBroadcastSigningAnnouncer(t *testing.T) {
 				3: {1, 3, 5},
 				5: {1, 3, 5},
 			},
-		},
-		"minority of members broadcasted announcements": {
-			message:                    big.NewInt(300),
-			broadcastingMembersIndexes: []group.MemberIndex{1, 3},
-			expectedErrors: map[group.MemberIndex]error{
-				1: fmt.Errorf("ready members count is lesser than the honest threshold"),
-				3: fmt.Errorf("ready members count is lesser than the honest threshold"),
-			},
-			expectedResults: make(map[group.MemberIndex][]group.MemberIndex),
 		},
 	}
 

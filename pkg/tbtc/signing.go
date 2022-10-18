@@ -189,11 +189,6 @@ func (srl *signingRetryLoop) start(
 			)
 		}
 
-		// Check the loop stop signal.
-		if ctx.Err() != nil {
-			return nil, nil
-		}
-
 		// Set up the announcement phase stop signal.
 		announceCtx, cancelAnnounceCtx := context.WithCancel(ctx)
 		announcementEndBlock := announcementStartBlock + srl.announcementActiveBlocks
@@ -235,13 +230,30 @@ func (srl *signingRetryLoop) start(
 			continue
 		}
 
-		srl.logger.Infof(
-			"[member:%v] completed announcement phase for attempt [%v] "+
-				"and [%v] members are ready to sign",
-			srl.signingGroupMemberIndex,
-			srl.attemptCounter,
-			len(readyMembersIndexes),
-		)
+		// Check the loop stop signal.
+		if ctx.Err() != nil {
+			return nil, nil
+		}
+
+		if len(readyMembersIndexes) >= srl.chainConfig.HonestThreshold {
+			srl.logger.Infof(
+				"[member:%v] completed announcement phase for attempt [%v] "+
+					"with honest majority of [%v] members ready to sign",
+				srl.signingGroupMemberIndex,
+				srl.attemptCounter,
+				len(readyMembersIndexes),
+			)
+		} else {
+			srl.logger.Warnf(
+				"[member:%v] completed announcement phase for attempt [%v] "+
+					"with minority of [%v] members ready to sign; "+
+					"starting next attempt",
+				srl.signingGroupMemberIndex,
+				srl.attemptCounter,
+				len(readyMembersIndexes),
+			)
+			continue
+		}
 
 		excludedMembersIndexes, err := srl.performMembersSelection(
 			readyMembersIndexes,
@@ -446,8 +458,6 @@ func newBroadcastSigningAnnouncer(
 //
 // This implementation fulfills the method specification and additionally:
 // - blocks until the ctx passed as argument is done
-// - returns an error if the total number of ready members is lesser than the
-//   honest threshold parameter
 func (bsa *broadcastSigningAnnouncer) announce(
 	ctx context.Context,
 	signingGroupMemberIndex group.MemberIndex,
@@ -509,13 +519,7 @@ loop:
 		}
 	}
 
-	if len(readyMembersIndexesSet) < bsa.chainConfig.HonestThreshold {
-		return nil, fmt.Errorf(
-			"ready members count is lesser than the honest threshold",
-		)
-	}
-
-	var readyMembersIndexes []group.MemberIndex
+	readyMembersIndexes := make([]group.MemberIndex, 0)
 	for memberIndex := range readyMembersIndexesSet {
 		readyMembersIndexes = append(readyMembersIndexes, memberIndex)
 	}
