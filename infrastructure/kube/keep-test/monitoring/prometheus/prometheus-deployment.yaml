@@ -11,9 +11,14 @@ spec:
       type: monitoring
   template:
     spec:
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        runAsNonRoot: true
       containers:
         - name: prometheus
-          image: prom/prometheus:v2.37.0
+          image: prom/prometheus:v2.39.1
           args:
             - --config.file=/etc/prometheus/config.yaml
             - --storage.tsdb.path=/etc/prometheus/data
@@ -21,13 +26,33 @@ spec:
           ports:
             - name: prometheus
               containerPort: 9090
+          readinessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: "/-/ready"
+              port: 9090
+              scheme: HTTP
+            initialDelaySeconds: 10
+            periodSeconds: 30
+            successThreshold: 1
+            timeoutSeconds: 2
+          livenessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: "/-/healthy"
+              port: prometheus
+              scheme: HTTP
+            initialDelaySeconds: 10
+            periodSeconds: 30
+            successThreshold: 1
+            timeoutSeconds: 2
           resources:
             limits:
-              cpu: "1"
+              cpu: 1000m
               memory: 1Gi
             requests:
               cpu: 500m
-              memory: 500M
+              memory: 512Mi
           volumeMounts:
             - name: prometheus-config-volume
               mountPath: /etc/prometheus/
@@ -35,6 +60,8 @@ spec:
               mountPath: /etc/prometheus/data/
             - name: prometheus-sd-volume
               mountPath: /etc/prometheus/sd/
+          securityContext:
+            readOnlyRootFilesystem: true
         - name: keep-sd
           image: keepnetwork/keep-prometheus-sd
           args:
@@ -46,24 +73,19 @@ spec:
             - --scan.allowPrivateAddresses
           resources:
             limits:
-              cpu: "1"
+              cpu: 1000m
               memory: 1Gi
             requests:
-              cpu: 500m
-              memory: 500M
+              cpu: 250m
+              memory: 256Mi
           volumeMounts:
             - name: prometheus-sd-volume
               mountPath: /etc/prometheus/sd/
-      dnsPolicy: ClusterFirst
-      securityContext:
-        fsGroup: 65534
-        runAsGroup: 0
-        runAsNonRoot: false
-        runAsUser: 0
+          securityContext:
+            readOnlyRootFilesystem: true
       volumes:
         - name: prometheus-config-volume
           configMap:
-            defaultMode: 420
             name: prometheus-config
         - name: prometheus-storage-volume
           persistentVolumeClaim:

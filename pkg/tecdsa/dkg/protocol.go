@@ -421,7 +421,7 @@ func (sm *signingMember) verifyDKGResultSignatures(
 		// preferred DKG result hash.
 		if message.resultHash != sm.preferredDKGResultHash {
 			sm.logger.Infof(
-				"[member: %v] signature from sender [%d] supports "+
+				"[member:%v] signature from sender [%d] supports "+
 					"result different than preferred",
 				sm.memberIndex,
 				message.senderID,
@@ -439,7 +439,7 @@ func (sm *signingMember) verifyDKGResultSignatures(
 		)
 		if err != nil {
 			sm.logger.Infof(
-				"[member: %v] verification of signature "+
+				"[member:%v] verification of signature "+
 					"from sender [%d] failed: [%v]",
 				sm.memberIndex,
 				message.senderID,
@@ -449,7 +449,7 @@ func (sm *signingMember) verifyDKGResultSignatures(
 		}
 		if !isValid {
 			sm.logger.Infof(
-				"[member: %v] sender [%d] provided invalid signature",
+				"[member:%v] sender [%d] provided invalid signature",
 				sm.memberIndex,
 				message.senderID,
 			)

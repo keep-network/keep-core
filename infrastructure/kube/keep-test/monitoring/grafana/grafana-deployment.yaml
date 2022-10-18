@@ -11,49 +11,111 @@ spec:
   template:
     spec:
       securityContext:
-        runAsUser: 472
-        fsGroup: 472
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        runAsNonRoot: true
       containers:
         - name: grafana
-          image: grafana/grafana:9.1.7
+          image: grafana/grafana:9.1.8
+          env:
+            - name: GF_SERVER_DOMAIN
+              value: monitoring.test.keep.network
+            - name: GF_SERVER_ROOT_URL
+              value: "%(protocol)s://%(domain)s:80/grafana/"
+            - name: GF_SERVER_SERVE_FROM_SUB_PATH
+              value: "true"
+            - name: GF_FEATURE_TOGGLES_PUBLICDASHBOARDS
+              value: "true"
+            - name: GF_AUTH_GOOGLE_CLIENT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: grafana-auth-google
+                  key: client_id
+            - name: GF_AUTH_GOOGLE_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: grafana-auth-google
+                  key: client_secret
+            - name: GF_AUTH_GITHUB_CLIENT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: grafana-auth-github
+                  key: client_id
+            - name: GF_AUTH_GITHUB_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: grafana-auth-github
+                  key: client_secret
           ports:
             - name: grafana
               containerPort: 3000
+          readinessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: /api/health
+              port: 3000
+              scheme: HTTP
+            initialDelaySeconds: 10
+            periodSeconds: 30
+            successThreshold: 1
+            timeoutSeconds: 2
+          livenessProbe:
+            failureThreshold: 3
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            successThreshold: 1
+            tcpSocket:
+              port: 3000
+            timeoutSeconds: 1
           resources:
             limits:
-              memory: "1Gi"
-              cpu: "1000m"
+              cpu: 1000m
+              memory: 1Gi
             requests:
-              memory: 500M
-              cpu: "500m"
+              cpu: 250m
+              memory: 512Mi
           volumeMounts:
-            - name: grafana-storage
-              mountPath: /var/lib/grafana
-            - name: grafana-dashboards-files
-              mountPath: /var/lib/grafana/dashboards
+            - name: grafana-grafana-ini
+              mountPath: /etc/grafana/grafana.ini
+              subPath: grafana.ini
             - name: grafana-config-datasources
               mountPath: /etc/grafana/provisioning/datasources
             - name: grafana-config-dashboards
               mountPath: /etc/grafana/provisioning/dashboards
+            - name: grafana-storage
+              mountPath: /var/lib/grafana
+            - name: grafana-dashboards-infrastructure
+              mountPath: /var/lib/grafana/dashboards/infrastructure
+            - name: grafana-dashboards-keep
+              mountPath: /var/lib/grafana/dashboards/keep
+          securityContext:
+            readOnlyRootFilesystem: true
       volumes:
         - name: grafana-storage
           persistentVolumeClaim:
             claimName: grafana-pvc
-        - name: grafana-dashboards-files
+        - name: grafana-dashboards-keep
           configMap:
-            name: grafana-dashboards
-            defaultMode: 420
+            name: grafana-dashboards-keep
+        - name: grafana-dashboards-infrastructure
+          configMap:
+            name: grafana-dashboards-infrastructure
         - name: grafana-config-datasources
           configMap:
             name: grafana-config
-            defaultMode: 420
             items:
               - key: datasources.yaml
                 path: datasources.yaml
         - name: grafana-config-dashboards
           configMap:
             name: grafana-config
-            defaultMode: 420
             items:
               - key: dashboards.yaml
                 path: dashboards.yaml
+        - name: grafana-grafana-ini
+          configMap:
+            name: grafana-config
+            items:
+              - key: grafana.ini
+                path: grafana.ini

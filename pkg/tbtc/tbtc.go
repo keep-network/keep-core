@@ -127,9 +127,9 @@ func Initialize(
 			// There is no need to deduplicate. Test loop events are unique.
 
 			logger.Infof(
-				"signature of message [%v] requested from "+
+				"signature of message [0x%x] requested from "+
 					"wallet [0x%x] at block [%v]",
-				event.Message.Text(16),
+				event.Message,
 				event.WalletPublicKey,
 				event.BlockNumber,
 			)
