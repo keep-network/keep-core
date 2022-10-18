@@ -424,13 +424,13 @@ func TestBroadcastSigningAnnouncer(t *testing.T) {
 	localProvider := local.ConnectWithKey(operatorPublicKey)
 
 	type memberResult struct {
-		memberIndex group.MemberIndex
+		memberIndex         group.MemberIndex
 		readyMembersIndexes []group.MemberIndex
 	}
 
 	type memberError struct {
 		memberIndex group.MemberIndex
-		err error
+		err         error
 	}
 
 	var tests = map[string]struct {
@@ -440,9 +440,9 @@ func TestBroadcastSigningAnnouncer(t *testing.T) {
 		expectedResults            map[group.MemberIndex][]group.MemberIndex
 	}{
 		"all members broadcasted announcements": {
-			message: big.NewInt(100),
+			message:                    big.NewInt(100),
 			broadcastingMembersIndexes: []group.MemberIndex{1, 2, 3, 4, 5},
-			expectedErrors: make(map[group.MemberIndex]error),
+			expectedErrors:             make(map[group.MemberIndex]error),
 			expectedResults: map[group.MemberIndex][]group.MemberIndex{
 				1: {1, 2, 3, 4, 5},
 				2: {1, 2, 3, 4, 5},
@@ -452,9 +452,9 @@ func TestBroadcastSigningAnnouncer(t *testing.T) {
 			},
 		},
 		"honest majority of members broadcasted announcements": {
-			message: big.NewInt(200),
+			message:                    big.NewInt(200),
 			broadcastingMembersIndexes: []group.MemberIndex{1, 3, 5},
-			expectedErrors: make(map[group.MemberIndex]error),
+			expectedErrors:             make(map[group.MemberIndex]error),
 			expectedResults: map[group.MemberIndex][]group.MemberIndex{
 				1: {1, 3, 5},
 				3: {1, 3, 5},
@@ -462,7 +462,7 @@ func TestBroadcastSigningAnnouncer(t *testing.T) {
 			},
 		},
 		"minority of members broadcasted announcements": {
-			message: big.NewInt(300),
+			message:                    big.NewInt(300),
 			broadcastingMembersIndexes: []group.MemberIndex{1, 3},
 			expectedErrors: map[group.MemberIndex]error{
 				1: fmt.Errorf("ready members count is lesser than the honest threshold"),
@@ -505,14 +505,13 @@ func TestBroadcastSigningAnnouncer(t *testing.T) {
 			wg := sync.WaitGroup{}
 			wg.Add(len(test.broadcastingMembersIndexes))
 
-			for _, broadcastingMemberIndex :=
-				range test.broadcastingMembersIndexes {
+			for _, broadcastingMemberIndex := range test.broadcastingMembersIndexes {
 				go func(memberIndex group.MemberIndex) {
 					defer wg.Done()
 
 					ctx, cancelCtx := context.WithTimeout(
 						context.Background(),
-						100 * time.Millisecond,
+						100*time.Millisecond,
 					)
 					defer cancelCtx()
 
@@ -547,8 +546,8 @@ func TestBroadcastSigningAnnouncer(t *testing.T) {
 
 			if !reflect.DeepEqual(test.expectedErrors, errors) {
 				t.Errorf(
-					"unexpected errors\n" +
-						"expected: [%v]\n" +
+					"unexpected errors\n"+
+						"expected: [%v]\n"+
 						"actual:   [%v]",
 					test.expectedErrors,
 					errors,
@@ -557,8 +556,8 @@ func TestBroadcastSigningAnnouncer(t *testing.T) {
 
 			if !reflect.DeepEqual(test.expectedResults, results) {
 				t.Errorf(
-					"unexpected results\n" +
-						"expected: [%v]\n" +
+					"unexpected results\n"+
+						"expected: [%v]\n"+
 						"actual:   [%v]",
 					test.expectedResults,
 					results,
