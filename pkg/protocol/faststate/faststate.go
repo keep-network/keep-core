@@ -110,17 +110,12 @@ func (bs *BaseState) receive(msg net.Message) {
 	defer bs.messagesMutex.Unlock()
 
 	messageType := msg.Type()
-	received, ok := bs.messages[messageType]
-
-	if ok {
-		bs.messages[messageType] = append(received, msg)
-	} else {
-		bs.messages[messageType] = []net.Message{msg}
-	}
+	bs.messages[messageType] = append(bs.messages[messageType], msg)
 }
 
 // GetAllReceivedMessages returns all messages of the given Type() received
-// so far.
+// so far. If no messages of the given Type() were received, nil slice is
+// returned.
 func (bs *BaseState) GetAllReceivedMessages(messageType string) []net.Message {
 	bs.messagesMutex.RLock()
 	defer bs.messagesMutex.RUnlock()
