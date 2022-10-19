@@ -12,9 +12,12 @@ import (
 // For the entire time of state transition (delay + initiate), messages
 // are not handled. We use a buffer to unblock producers and let
 // them perform optional filtering/validation during that time.
-// The size of that buffer should be equal to the biggest possible
-// message count which can be delivered by the broadcast channel
-// in the same moment.
+// The size of that buffer should not be lower than the number of messages
+// which can be delivered by the broadcast channel during the time the state
+// is blocked on initiation.
+// This version of the state machine requires a strict synchronization between
+// participants, so this number is also the maximum number of messages that
+// could be delivered in a single state.
 const receiveBuffer = 128
 
 // Machine is a state machine that executes states implementing the State
@@ -26,9 +29,7 @@ type Machine struct {
 	initialState State // first state from which execution starts
 }
 
-// NewMachine returns a new protocol state machine. It requires a broadcast
-// channel and an initialization function for the channel to be able to
-// perform interactions between protocol parties.
+// NewMachine returns a new protocol state machine.
 func NewMachine(
 	logger log.StandardLogger,
 	channel net.BroadcastChannel,
@@ -130,8 +131,6 @@ func (m *Machine) Execute(startBlockHeight uint64) (State, uint64, error) {
 				cancelCtx()
 				return nil, 0, err
 			}
-
-			continue
 		}
 	}
 }
@@ -150,10 +149,11 @@ func stateTransition(
 		lastStateEndBlockHeight,
 	)
 
-	// We delay the initialization of the new state by one block to give all
-	// other coopearating state machines a chance to enter the new state.
-	// This is needed when, for example, during the initialization some
-	// state-specific messages are sent.
+	// We delay the initialization of the new state by `initiateDelay` of blocks
+	// to give all other participants a chance to enter the new state. This is
+	// needed when state accepts only messages specific to that state.
+	// In that case, if the message is sent too early, it is lost given that the
+	// receiveBuffer has the retransmissions filtered out.
 	initiateDelay := lastStateEndBlockHeight + currentState.DelayBlocks()
 	err := blockCounter.WaitForBlockHeight(initiateDelay)
 	if err != nil {

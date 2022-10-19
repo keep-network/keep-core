@@ -3,9 +3,10 @@ package local
 import (
 	"context"
 	"fmt"
-	"github.com/keep-network/keep-core/pkg/operator"
 	"sync"
 	"sync/atomic"
+
+	"github.com/keep-network/keep-core/pkg/operator"
 
 	"github.com/keep-network/keep-core/pkg/net"
 	"github.com/keep-network/keep-core/pkg/net/internal"
@@ -61,7 +62,7 @@ func (lc *localChannel) Send(ctx context.Context, message net.TaggedMarshaler) e
 	netMessage := internal.BasicMessage(
 		lc.identifier,
 		unmarshaled,
-		"local",
+		message.Type(),
 		operatorPublicKeyBytes,
 		lc.nextSeqno(),
 	)

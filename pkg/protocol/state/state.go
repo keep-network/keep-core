@@ -1,6 +1,10 @@
 // Package state contains a generic state machine implementation that is
 // meant to be used with interactive protocols which require a synchronization
-// mechanism between protocol members.
+// mechanism between protocol members. The synchronization is based on
+// a fixed number of active and delay blocks. Even if the given participant
+// received all the necessary information to continue the protocol, the state
+// machine waits with proceeding to the next step for the fixed duration of
+// blocks.
 package state
 
 import (
