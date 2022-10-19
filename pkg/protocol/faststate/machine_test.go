@@ -12,7 +12,7 @@ import (
 
 	"github.com/keep-network/keep-core/pkg/internal/testutils"
 	"github.com/keep-network/keep-core/pkg/net"
-	netLocal "github.com/keep-network/keep-core/pkg/net/local"
+	netlocal "github.com/keep-network/keep-core/pkg/net/local"
 	"github.com/keep-network/keep-core/pkg/protocol/group"
 )
 
@@ -23,7 +23,7 @@ const (
 )
 
 func TestExecute(t *testing.T) {
-	provider := netLocal.Connect()
+	provider := netlocal.Connect()
 	channel, err := provider.BroadcastChannelFor("test")
 	if err != nil {
 		t.Fatal(err)
