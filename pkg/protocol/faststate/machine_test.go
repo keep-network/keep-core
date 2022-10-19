@@ -36,8 +36,8 @@ func TestExecute(t *testing.T) {
 		return &round3Message{}
 	})
 
-	ctx, cancelFn := context.WithCancel(context.Background())
-	defer cancelFn()
+	ctx, cancelCtx := context.WithCancel(context.Background())
+	defer cancelCtx()
 
 	var logger = &testutils.MockLogger{}
 
