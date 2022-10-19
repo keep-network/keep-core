@@ -26,8 +26,8 @@ spec:
               containerPort: 8481
           readinessProbe:
             httpGet:
-              path: "/trickster/ping"
-              port: trickster
+              path: "/trickster/health/default"
+              port: metrics
               scheme: HTTP
             initialDelaySeconds: 10
             periodSeconds: 30
