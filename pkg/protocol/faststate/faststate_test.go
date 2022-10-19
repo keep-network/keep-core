@@ -7,7 +7,7 @@ import (
 	"github.com/keep-network/keep-core/pkg/net"
 )
 
-func TestBaseStateReceive(t *testing.T) {
+func TestBaseStateReceiveToHistory(t *testing.T) {
 	const type1 = "faststate/test_type1"
 	const type2 = "faststate/test_type2"
 
@@ -22,10 +22,10 @@ func TestBaseStateReceive(t *testing.T) {
 		t.Fatalf("expected no messages of the second type yet")
 	}
 
-	state.receive(&mockMessage{_type: type1, payload: "a"})
-	state.receive(&mockMessage{_type: type1, payload: "b"})
-	state.receive(&mockMessage{_type: type2, payload: "a"})
-	state.receive(&mockMessage{_type: type1, payload: "c"})
+	state.ReceiveToHistory(&mockMessage{_type: type1, payload: "a"})
+	state.ReceiveToHistory(&mockMessage{_type: type1, payload: "b"})
+	state.ReceiveToHistory(&mockMessage{_type: type2, payload: "a"})
+	state.ReceiveToHistory(&mockMessage{_type: type1, payload: "c"})
 
 	messages = state.GetAllReceivedMessages(type1)
 	testutils.AssertIntsEqual(

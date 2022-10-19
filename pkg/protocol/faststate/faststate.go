@@ -104,8 +104,14 @@ func NewBaseState() *BaseState {
 	}
 }
 
-// receive stores the received message by its Type()
-func (bs *BaseState) receive(msg net.Message) {
+// ReceiveToHistory stores the received message by its Type() in the internal
+// history of received messages.
+//
+// This function is NOT performing any validation of the received net.Message,
+// especially if the public key matches member index or if the given operator is
+// allowed to publish messages in the broadcast channel. This function should
+// be wrapped with a set of validations.
+func (bs *BaseState) ReceiveToHistory(msg net.Message) {
 	bs.messagesMutex.Lock()
 	defer bs.messagesMutex.Unlock()
 

@@ -120,7 +120,7 @@ func (ts *testState1) Initiate(ctx context.Context) error {
 	return nil
 }
 func (ts *testState1) Receive(msg net.Message) error {
-	ts.receive(msg)
+	ts.ReceiveToHistory(msg)
 	return nil
 }
 func (ts *testState1) Next() (State, error) {
@@ -146,7 +146,7 @@ func (ts *testState2) Initiate(ctx context.Context) error {
 	return nil
 }
 func (ts *testState2) Receive(msg net.Message) error {
-	ts.receive(msg)
+	ts.ReceiveToHistory(msg)
 	return nil
 }
 func (ts *testState2) Next() (State, error) {
@@ -174,7 +174,7 @@ func (ts *testState3) Initiate(ctx context.Context) error {
 	return nil
 }
 func (ts *testState3) Receive(msg net.Message) error {
-	ts.receive(msg)
+	ts.ReceiveToHistory(msg)
 	return nil
 }
 func (ts *testState3) Next() (State, error) {
