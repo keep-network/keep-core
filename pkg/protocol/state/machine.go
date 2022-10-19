@@ -131,8 +131,6 @@ func (m *Machine) Execute(startBlockHeight uint64) (State, uint64, error) {
 				cancelCtx()
 				return nil, 0, err
 			}
-
-			continue
 		}
 	}
 }

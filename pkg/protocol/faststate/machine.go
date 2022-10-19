@@ -117,8 +117,6 @@ func (m *Machine) Execute() (State, error) {
 			if err != nil {
 				return nil, err
 			}
-
-			continue
 		}
 	}
 }
