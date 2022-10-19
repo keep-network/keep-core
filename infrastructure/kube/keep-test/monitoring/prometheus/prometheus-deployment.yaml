@@ -27,24 +27,18 @@ spec:
             - name: prometheus
               containerPort: 9090
           readinessProbe:
-            failureThreshold: 3
             httpGet:
               path: "/-/ready"
               port: 9090
-              scheme: HTTP
             initialDelaySeconds: 10
             periodSeconds: 30
-            successThreshold: 1
             timeoutSeconds: 2
           livenessProbe:
-            failureThreshold: 3
             httpGet:
               path: "/-/healthy"
               port: prometheus
-              scheme: HTTP
             initialDelaySeconds: 10
             periodSeconds: 30
-            successThreshold: 1
             timeoutSeconds: 2
           resources:
             limits:

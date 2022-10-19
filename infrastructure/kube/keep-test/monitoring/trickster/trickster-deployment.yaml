@@ -28,18 +28,10 @@ spec:
             httpGet:
               path: "/trickster/health/default"
               port: metrics
-              scheme: HTTP
-            initialDelaySeconds: 10
-            periodSeconds: 30
-            timeoutSeconds: 2
           livenessProbe:
             httpGet:
               path: "/trickster/ping"
               port: trickster
-              scheme: HTTP
-            initialDelaySeconds: 10
-            periodSeconds: 30
-            timeoutSeconds: 2
           resources:
             limits:
               cpu: 1000m
