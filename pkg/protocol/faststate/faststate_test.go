@@ -11,7 +11,7 @@ func TestBaseStateReceiveToHistory(t *testing.T) {
 	const type1 = "faststate/test_type1"
 	const type2 = "faststate/test_type2"
 
-	state := NewBaseState()
+	state := NewBaseAsyncState()
 
 	messages := state.GetAllReceivedMessages(type1)
 	if len(messages) != 0 {

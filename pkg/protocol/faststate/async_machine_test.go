@@ -42,19 +42,19 @@ func TestExecute(t *testing.T) {
 	var logger = &testutils.MockLogger{}
 
 	initialState1 := &testState1{
-		BaseState:   NewBaseState(),
-		memberIndex: group.MemberIndex(1),
-		channel:     channel,
+		BaseAsyncState: NewBaseAsyncState(),
+		memberIndex:    group.MemberIndex(1),
+		channel:        channel,
 	}
 	initialState2 := &testState1{
-		BaseState:   NewBaseState(),
-		memberIndex: group.MemberIndex(2),
-		channel:     channel,
+		BaseAsyncState: NewBaseAsyncState(),
+		memberIndex:    group.MemberIndex(2),
+		channel:        channel,
 	}
 	initialState3 := &testState1{
-		BaseState:   NewBaseState(),
-		memberIndex: group.MemberIndex(3),
-		channel:     channel,
+		BaseAsyncState: NewBaseAsyncState(),
+		memberIndex:    group.MemberIndex(3),
+		channel:        channel,
 	}
 
 	var wg sync.WaitGroup
@@ -101,7 +101,7 @@ func TestExecute(t *testing.T) {
 // it is not receiving or sending any messages.
 //
 type testState1 struct {
-	*BaseState
+	*BaseAsyncState
 
 	memberIndex group.MemberIndex
 	channel     net.BroadcastChannel
@@ -123,7 +123,7 @@ func (ts *testState1) Receive(msg net.Message) error {
 	ts.ReceiveToHistory(msg)
 	return nil
 }
-func (ts *testState1) Next() (State, error) {
+func (ts *testState1) Next() (AsyncState, error) {
 	ts.addToTestLog("1-done")
 	return &testState2{testState1: ts}, nil
 }
@@ -149,7 +149,7 @@ func (ts *testState2) Receive(msg net.Message) error {
 	ts.ReceiveToHistory(msg)
 	return nil
 }
-func (ts *testState2) Next() (State, error) {
+func (ts *testState2) Next() (AsyncState, error) {
 	ts.addToTestLog("2-done")
 	return &testState3{testState2: ts}, nil
 }
@@ -177,7 +177,7 @@ func (ts *testState3) Receive(msg net.Message) error {
 	ts.ReceiveToHistory(msg)
 	return nil
 }
-func (ts *testState3) Next() (State, error) {
+func (ts *testState3) Next() (AsyncState, error) {
 	ts.addToTestLog("3-done")
 	return nil, nil
 }

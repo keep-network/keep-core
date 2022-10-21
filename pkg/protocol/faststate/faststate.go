@@ -62,8 +62,8 @@ import (
 	"github.com/keep-network/keep-core/pkg/protocol/group"
 )
 
-// State is and interface that should be implemented by protocol states.
-type State interface {
+// AsyncState is and interface that should be implemented by protocol states.
+type AsyncState interface {
 
 	// CanTransition indicates if the state has all the information needed and
 	// is ready to advance to the next one.
@@ -83,23 +83,23 @@ type State interface {
 
 	// Next performs a state transition to the next state of the protocol.
 	// If the current state is the last one, nextState returns `nil`.
-	Next() (State, error)
+	Next() (AsyncState, error)
 
 	// MemberIndex returns the index of member associated with the current state.
 	MemberIndex() group.MemberIndex
 }
 
-// BaseState allows to store all received messages even if they are not
+// BaseAsyncState allows to store all received messages even if they are not
 // used for the currently executed state. This is important to allow the state
 // machine to eventually synchronize with other participants if the current
 // state machine is late compared to the rest of the group.
-type BaseState struct {
+type BaseAsyncState struct {
 	messages      map[string][]net.Message
 	messagesMutex sync.RWMutex
 }
 
-func NewBaseState() *BaseState {
-	return &BaseState{
+func NewBaseAsyncState() *BaseAsyncState {
+	return &BaseAsyncState{
 		messages: make(map[string][]net.Message),
 	}
 }
@@ -111,20 +111,20 @@ func NewBaseState() *BaseState {
 // especially if the public key matches member index or if the given operator is
 // allowed to publish messages in the broadcast channel. This function should
 // be wrapped with a set of validations.
-func (bs *BaseState) ReceiveToHistory(msg net.Message) {
-	bs.messagesMutex.Lock()
-	defer bs.messagesMutex.Unlock()
+func (bas *BaseAsyncState) ReceiveToHistory(msg net.Message) {
+	bas.messagesMutex.Lock()
+	defer bas.messagesMutex.Unlock()
 
 	messageType := msg.Type()
-	bs.messages[messageType] = append(bs.messages[messageType], msg)
+	bas.messages[messageType] = append(bas.messages[messageType], msg)
 }
 
 // GetAllReceivedMessages returns all messages of the given Type() received
 // so far. If no messages of the given Type() were received, nil slice is
 // returned.
-func (bs *BaseState) GetAllReceivedMessages(messageType string) []net.Message {
-	bs.messagesMutex.RLock()
-	defer bs.messagesMutex.RUnlock()
+func (bas *BaseAsyncState) GetAllReceivedMessages(messageType string) []net.Message {
+	bas.messagesMutex.RLock()
+	defer bas.messagesMutex.RUnlock()
 
-	return bs.messages[messageType]
+	return bas.messages[messageType]
 }

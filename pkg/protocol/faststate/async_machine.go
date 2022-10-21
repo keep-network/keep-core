@@ -31,7 +31,7 @@ type AsyncMachine struct {
 	logger       log.StandardLogger
 	ctx          context.Context
 	channel      net.BroadcastChannel
-	initialState State // first state from which execution starts
+	initialState AsyncState // first state from which execution starts
 }
 
 // NewAsyncMachine returns a new protocol state machine.
@@ -46,7 +46,7 @@ func NewAsyncMachine(
 	logger log.StandardLogger,
 	ctx context.Context,
 	channel net.BroadcastChannel,
-	initialState State,
+	initialState AsyncState,
 ) *AsyncMachine {
 	return &AsyncMachine{
 		logger:       logger,
@@ -58,7 +58,7 @@ func NewAsyncMachine(
 
 // Execute state machine starting with initial state up to finalization. It
 // requires the broadcast channel to be pre-initialized.
-func (am *AsyncMachine) Execute() (State, error) {
+func (am *AsyncMachine) Execute() (AsyncState, error) {
 	recvChan := make(chan net.Message, receiveBuffer)
 	handler := func(msg net.Message) {
 		recvChan <- msg
@@ -124,7 +124,7 @@ func (am *AsyncMachine) Execute() (State, error) {
 func stateTransition(
 	ctx context.Context,
 	logger log.StandardLogger,
-	currentState State,
+	currentState AsyncState,
 ) (<-chan interface{}, error) {
 	logger.Infof(
 		"[member:%v,state:%T] transitioning to a new state",
