@@ -11,6 +11,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/spf13/cobra"
 	"golang.org/x/exp/slices"
 
@@ -184,44 +185,44 @@ var cmdFlagsTests = map[string]struct {
 	"developer.randomBeaconAddress": {
 		readValueFunc: func(c *config.Config) interface{} {
 			address, _ := c.Ethereum.ContractAddress(chainEthereum.RandomBeaconContractName)
-			return address.String()
+			return address
 		},
 		flagName:              "--developer.randomBeaconAddress",
 		flagValue:             "0x3b292d36468bc7fd481987818ef2e4d28202a0ed",
-		expectedValueFromFlag: "0x3B292D36468bC7fd481987818ef2E4d28202A0eD",
-		defaultValue:          ethereumBeacon.RandomBeaconAddress,
+		expectedValueFromFlag: common.HexToAddress("0x3B292D36468bC7fd481987818ef2E4d28202A0eD"),
+		defaultValue:          common.HexToAddress(ethereumBeacon.RandomBeaconAddress),
 	},
 	"developer.walletRegistryAddress": {
 		readValueFunc: func(c *config.Config) interface{} {
 			address, _ := c.Ethereum.ContractAddress(chainEthereum.WalletRegistryContractName)
-			return address.String()
+			return address
 		},
 		flagName:              "--developer.walletRegistryAddress",
 		flagValue:             "0xb76707515c3f908411b5211863a7581589a1e31f",
-		expectedValueFromFlag: "0xB76707515C3f908411B5211863A7581589a1E31F",
-		defaultValue:          ethereumEcdsa.WalletRegistryAddress,
+		expectedValueFromFlag: common.HexToAddress("0xB76707515C3f908411B5211863A7581589a1E31F"),
+		defaultValue:          common.HexToAddress(ethereumEcdsa.WalletRegistryAddress),
 	},
 	"developer.bridgeAddress": {
 		readValueFunc: func(c *config.Config) interface{} {
 			address, _ := c.Ethereum.ContractAddress(chainEthereum.BridgeContractName)
-			return address.String()
+			return address
 		},
 		flagName:              "--developer.bridgeAddress",
 		flagValue:             "0xd21DE06574811450E722a33D8093558E8c04eacc",
-		expectedValueFromFlag: "0xd21DE06574811450E722a33D8093558E8c04eacc",
+		expectedValueFromFlag: common.HexToAddress("0xd21DE06574811450E722a33D8093558E8c04eacc"),
 		// FIXME: Commented out temporarily for mainnet build.
-		// defaultValue: ethereumTbtc.BridgeAddress,
-		defaultValue: "0x0000000000000000000000000000000000000000",
+		// defaultValue: common.HexToAddress(ethereumTbtc.BridgeAddress),
+		defaultValue: common.HexToAddress("0x0000000000000000000000000000000000000000"),
 	},
 	"developer.tokenStakingAddress": {
 		readValueFunc: func(c *config.Config) interface{} {
 			address, _ := c.Ethereum.ContractAddress(chainEthereum.TokenStakingContractName)
-			return address.String()
+			return address
 		},
 		flagName:              "--developer.tokenStakingAddress",
 		flagValue:             "0x861b021462e7864a7413edf0113030b892978617",
-		expectedValueFromFlag: "0x861b021462e7864a7413edF0113030B892978617",
-		defaultValue:          ethereumThreshold.TokenStakingAddress,
+		expectedValueFromFlag: common.HexToAddress("0x861b021462e7864a7413edF0113030B892978617"),
+		defaultValue:          common.HexToAddress(ethereumThreshold.TokenStakingAddress),
 	},
 }
 
