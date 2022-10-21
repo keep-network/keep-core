@@ -61,15 +61,15 @@ func TestExecute(t *testing.T) {
 	wg.Add(3)
 
 	go func() {
-		NewMachine(logger, ctx, channel, initialState1).Execute()
+		NewAsyncMachine(logger, ctx, channel, initialState1).Execute()
 		wg.Done()
 	}()
 	go func() {
-		NewMachine(logger, ctx, channel, initialState2).Execute()
+		NewAsyncMachine(logger, ctx, channel, initialState2).Execute()
 		wg.Done()
 	}()
 	go func() {
-		NewMachine(logger, ctx, channel, initialState3).Execute()
+		NewAsyncMachine(logger, ctx, channel, initialState3).Execute()
 		wg.Done()
 	}()
 

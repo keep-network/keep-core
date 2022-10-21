@@ -25,16 +25,16 @@ const receiveBuffer = 512
 // is checked.
 const transitionCheckInterval = 100 * time.Millisecond
 
-// Machine is a state machine that executes states implementing the State
+// AsyncMachine is a state machine that executes states implementing the State
 // interface.
-type Machine struct {
+type AsyncMachine struct {
 	logger       log.StandardLogger
 	ctx          context.Context
 	channel      net.BroadcastChannel
 	initialState State // first state from which execution starts
 }
 
-// NewMachine returns a new protocol state machine.
+// NewAsyncMachine returns a new protocol state machine.
 // The context passed to `faststate.NewSyncMachine` must be active as long as the
 // result is not published to the chain or until a fixed time for the protocol
 // execution has not passed.
@@ -42,13 +42,13 @@ type Machine struct {
 // The context is used for the retransmission of messages and all protocol
 // participants must have a chance to receive messages from other participants.
 // See `faststate` package documentation for more information.
-func NewMachine(
+func NewAsyncMachine(
 	logger log.StandardLogger,
 	ctx context.Context,
 	channel net.BroadcastChannel,
 	initialState State,
-) *Machine {
-	return &Machine{
+) *AsyncMachine {
+	return &AsyncMachine{
 		logger:       logger,
 		ctx:          ctx,
 		channel:      channel,
@@ -58,18 +58,18 @@ func NewMachine(
 
 // Execute state machine starting with initial state up to finalization. It
 // requires the broadcast channel to be pre-initialized.
-func (m *Machine) Execute() (State, error) {
+func (am *AsyncMachine) Execute() (State, error) {
 	recvChan := make(chan net.Message, receiveBuffer)
 	handler := func(msg net.Message) {
 		recvChan <- msg
 	}
-	m.channel.Recv(m.ctx, handler)
+	am.channel.Recv(am.ctx, handler)
 
-	currentState := m.initialState
+	currentState := am.initialState
 
 	onStateDone, err := stateTransition(
-		m.ctx,
-		m.logger,
+		am.ctx,
+		am.logger,
 		currentState,
 	)
 	if err != nil {
@@ -81,7 +81,7 @@ func (m *Machine) Execute() (State, error) {
 		case msg := <-recvChan:
 			err := currentState.Receive(msg)
 			if err != nil {
-				m.logger.Errorf(
+				am.logger.Errorf(
 					"[member:%v,state:%T] failed to receive a message: [%v]",
 					currentState.MemberIndex(),
 					currentState,
@@ -100,7 +100,7 @@ func (m *Machine) Execute() (State, error) {
 			}
 
 			if nextState == nil {
-				m.logger.Infof(
+				am.logger.Infof(
 					"[member:%v,state:%T] reached final state",
 					currentState.MemberIndex(),
 					currentState,
@@ -110,8 +110,8 @@ func (m *Machine) Execute() (State, error) {
 
 			currentState = nextState
 			onStateDone, err = stateTransition(
-				m.ctx,
-				m.logger,
+				am.ctx,
+				am.logger,
 				currentState,
 			)
 			if err != nil {
