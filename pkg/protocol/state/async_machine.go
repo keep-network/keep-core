@@ -1,4 +1,4 @@
-package faststate
+package state
 
 import (
 	"context"
@@ -19,7 +19,7 @@ import (
 // between participants, so this number is also the maximum number of messages
 // that could be delivered when the current machine is blocked on initiation
 // and the rest of participants advance with work.
-const receiveBuffer = 512
+const asyncReceiveBuffer = 512
 
 // The time interval with which the CanTransition of the State condition
 // is checked.
@@ -59,7 +59,7 @@ func NewAsyncMachine(
 // Execute state machine starting with initial state up to finalization. It
 // requires the broadcast channel to be pre-initialized.
 func (am *AsyncMachine) Execute() (AsyncState, error) {
-	recvChan := make(chan net.Message, receiveBuffer)
+	recvChan := make(chan net.Message, asyncReceiveBuffer)
 	handler := func(msg net.Message) {
 		recvChan <- msg
 	}
@@ -67,7 +67,7 @@ func (am *AsyncMachine) Execute() (AsyncState, error) {
 
 	currentState := am.initialState
 
-	onStateDone, err := stateTransition(
+	onStateDone, err := asyncStateTransition(
 		am.ctx,
 		am.logger,
 		currentState,
@@ -109,7 +109,7 @@ func (am *AsyncMachine) Execute() (AsyncState, error) {
 			}
 
 			currentState = nextState
-			onStateDone, err = stateTransition(
+			onStateDone, err = asyncStateTransition(
 				am.ctx,
 				am.logger,
 				currentState,
@@ -121,7 +121,7 @@ func (am *AsyncMachine) Execute() (AsyncState, error) {
 	}
 }
 
-func stateTransition(
+func asyncStateTransition(
 	ctx context.Context,
 	logger log.StandardLogger,
 	currentState AsyncState,

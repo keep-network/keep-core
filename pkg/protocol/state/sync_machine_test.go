@@ -18,7 +18,7 @@ import (
 var testLog map[uint64][]string
 var blockCounter chain.BlockCounter
 
-func TestExecute(t *testing.T) {
+func TestSyncExecute(t *testing.T) {
 	testLog = make(map[uint64][]string)
 
 	localChain := local_v1.Connect(10, 5)
@@ -50,7 +50,7 @@ func TestExecute(t *testing.T) {
 		return &TestMessage{}
 	})
 
-	initialState := testState1{
+	initialState := testSyncState1{
 		memberIndex: group.MemberIndex(1),
 		channel:     channel,
 	}
@@ -62,7 +62,7 @@ func TestExecute(t *testing.T) {
 		t.Errorf("unexpected error [%v]", err)
 	}
 
-	if _, ok := finalState.(*testState5); !ok {
+	if _, ok := finalState.(*testSyncState5); !ok {
 		t.Errorf("state is not final [%v]", finalState)
 	}
 
@@ -71,21 +71,21 @@ func TestExecute(t *testing.T) {
 	}
 
 	expectedTestLog := map[uint64][]string{
-		1: []string{
-			"1-state.testState1-initiate",
-			"1-state.testState1-receive-message_1",
+		1: {
+			"1-state.testSyncState1-initiate",
+			"1-state.testSyncState1-receive-message_1",
 		},
-		3: []string{"1-state.testState2-initiate"},
-		4: []string{"1-state.testState2-receive-message_2"},
-		6: []string{
-			"1-state.testState3-initiate",
-			"1-state.testState4-initiate",
+		3: {"1-state.testSyncState2-initiate"},
+		4: {"1-state.testSyncState2-receive-message_2"},
+		6: {
+			"1-state.testSyncState3-initiate",
+			"1-state.testSyncState4-initiate",
 		},
-		7: []string{
-			"1-state.testState4-receive-message_3",
+		7: {
+			"1-state.testSyncState4-receive-message_3",
 		},
-		8: []string{
-			"1-state.testState5-initiate",
+		8: {
+			"1-state.testSyncState5-initiate",
 		},
 	}
 
@@ -107,109 +107,109 @@ func addToTestLog(testState SyncState, functionName string) {
 	)
 }
 
-type testState1 struct {
+type testSyncState1 struct {
 	memberIndex group.MemberIndex
 	channel     net.BroadcastChannel
 }
 
-func (ts testState1) DelayBlocks() uint64  { return 0 }
-func (ts testState1) ActiveBlocks() uint64 { return 2 }
-func (ts testState1) Initiate(ctx context.Context) error {
-	addToTestLog(ts, "initiate")
+func (tss testSyncState1) DelayBlocks() uint64  { return 0 }
+func (tss testSyncState1) ActiveBlocks() uint64 { return 2 }
+func (tss testSyncState1) Initiate(ctx context.Context) error {
+	addToTestLog(tss, "initiate")
 	return nil
 }
-func (ts testState1) Receive(msg net.Message) error {
+func (ts testSyncState1) Receive(msg net.Message) error {
 	addToTestLog(
 		ts,
 		fmt.Sprintf("receive-%v", msg.Payload().(*TestMessage).content),
 	)
 	return nil
 }
-func (ts testState1) Next() (SyncState, error)       { return &testState2{ts}, nil }
-func (ts testState1) MemberIndex() group.MemberIndex { return ts.memberIndex }
+func (tss testSyncState1) Next() (SyncState, error)       { return &testSyncState2{tss}, nil }
+func (tss testSyncState1) MemberIndex() group.MemberIndex { return tss.memberIndex }
 
-type testState2 struct {
-	testState1
+type testSyncState2 struct {
+	testSyncState1
 }
 
-func (ts testState2) DelayBlocks() uint64  { return 0 }
-func (ts testState2) ActiveBlocks() uint64 { return 2 }
-func (ts testState2) Initiate(ctx context.Context) error {
-	addToTestLog(ts, "initiate")
+func (tss testSyncState2) DelayBlocks() uint64  { return 0 }
+func (tss testSyncState2) ActiveBlocks() uint64 { return 2 }
+func (tss testSyncState2) Initiate(ctx context.Context) error {
+	addToTestLog(tss, "initiate")
 	return nil
 }
-func (ts testState2) Receive(msg net.Message) error {
+func (ts testSyncState2) Receive(msg net.Message) error {
 	addToTestLog(
 		ts,
 		fmt.Sprintf("receive-%v", msg.Payload().(*TestMessage).content),
 	)
 	return nil
 }
-func (ts testState2) Next() (SyncState, error)       { return &testState3{ts}, nil }
-func (ts testState2) MemberIndex() group.MemberIndex { return ts.memberIndex }
+func (tss testSyncState2) Next() (SyncState, error)       { return &testSyncState3{tss}, nil }
+func (tss testSyncState2) MemberIndex() group.MemberIndex { return tss.memberIndex }
 
-type testState3 struct {
-	testState2
+type testSyncState3 struct {
+	testSyncState2
 }
 
-func (ts testState3) DelayBlocks() uint64  { return 1 }
-func (ts testState3) ActiveBlocks() uint64 { return 0 }
+func (tss testSyncState3) DelayBlocks() uint64  { return 1 }
+func (tss testSyncState3) ActiveBlocks() uint64 { return 0 }
 
-func (ts testState3) Initiate(ctx context.Context) error {
-	addToTestLog(ts, "initiate")
+func (tss testSyncState3) Initiate(ctx context.Context) error {
+	addToTestLog(tss, "initiate")
 	return nil
 }
 
-func (ts testState3) Receive(msg net.Message) error {
+func (tss testSyncState3) Receive(msg net.Message) error {
+	addToTestLog(
+		tss,
+		fmt.Sprintf("receive-%v", msg.Payload().(*TestMessage).content),
+	)
+	return nil
+}
+
+func (tss testSyncState3) Next() (SyncState, error)       { return &testSyncState4{tss}, nil }
+func (tss testSyncState3) MemberIndex() group.MemberIndex { return tss.memberIndex }
+
+type testSyncState4 struct {
+	testSyncState3
+}
+
+func (ts testSyncState4) DelayBlocks() uint64  { return 0 }
+func (ts testSyncState4) ActiveBlocks() uint64 { return 2 }
+func (ts testSyncState4) Initiate(ctx context.Context) error {
+	addToTestLog(ts, "initiate")
+	return nil
+}
+func (ts testSyncState4) Receive(msg net.Message) error {
 	addToTestLog(
 		ts,
 		fmt.Sprintf("receive-%v", msg.Payload().(*TestMessage).content),
 	)
 	return nil
 }
+func (tss testSyncState4) Next() (SyncState, error)       { return &testSyncState5{tss}, nil }
+func (tss testSyncState4) MemberIndex() group.MemberIndex { return tss.memberIndex }
 
-func (ts testState3) Next() (SyncState, error)       { return &testState4{ts}, nil }
-func (ts testState3) MemberIndex() group.MemberIndex { return ts.memberIndex }
-
-type testState4 struct {
-	testState3
+type testSyncState5 struct {
+	testSyncState4
 }
 
-func (ts testState4) DelayBlocks() uint64  { return 0 }
-func (ts testState4) ActiveBlocks() uint64 { return 2 }
-func (ts testState4) Initiate(ctx context.Context) error {
-	addToTestLog(ts, "initiate")
+func (sts testSyncState5) DelayBlocks() uint64  { return 0 }
+func (tss testSyncState5) ActiveBlocks() uint64 { return 0 }
+func (tss testSyncState5) Initiate(ctx context.Context) error {
+	addToTestLog(tss, "initiate")
 	return nil
 }
-func (ts testState4) Receive(msg net.Message) error {
+func (tss testSyncState5) Receive(msg net.Message) error {
 	addToTestLog(
-		ts,
+		tss,
 		fmt.Sprintf("receive-%v", msg.Payload().(*TestMessage).content),
 	)
 	return nil
 }
-func (ts testState4) Next() (SyncState, error)       { return &testState5{ts}, nil }
-func (ts testState4) MemberIndex() group.MemberIndex { return ts.memberIndex }
-
-type testState5 struct {
-	testState4
-}
-
-func (ts testState5) DelayBlocks() uint64  { return 0 }
-func (ts testState5) ActiveBlocks() uint64 { return 0 }
-func (ts testState5) Initiate(ctx context.Context) error {
-	addToTestLog(ts, "initiate")
-	return nil
-}
-func (ts testState5) Receive(msg net.Message) error {
-	addToTestLog(
-		ts,
-		fmt.Sprintf("receive-%v", msg.Payload().(*TestMessage).content),
-	)
-	return nil
-}
-func (ts testState5) Next() (SyncState, error)       { return nil, nil }
-func (ts testState5) MemberIndex() group.MemberIndex { return ts.memberIndex }
+func (tss testSyncState5) Next() (SyncState, error)       { return nil, nil }
+func (tss testSyncState5) MemberIndex() group.MemberIndex { return tss.memberIndex }
 
 type TestMessage struct {
 	content string

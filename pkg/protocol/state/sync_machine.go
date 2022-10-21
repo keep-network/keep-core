@@ -18,7 +18,7 @@ import (
 // This version of the state machine requires a strict synchronization between
 // participants, so this number is also the maximum number of messages that
 // could be delivered in a single state.
-const receiveBuffer = 128
+const syncReceiveBuffer = 128
 
 // SyncMachine is a state machine that executes states implementing the State
 // interface.
@@ -47,7 +47,7 @@ func NewSyncMachine(
 // Execute state machine starting with initial state up to finalization. It
 // requires the broadcast channel to be pre-initialized.
 func (sm *SyncMachine) Execute(startBlockHeight uint64) (SyncState, uint64, error) {
-	recvChan := make(chan net.Message, receiveBuffer)
+	recvChan := make(chan net.Message, syncReceiveBuffer)
 	handler := func(msg net.Message) {
 		recvChan <- msg
 	}
@@ -153,7 +153,7 @@ func stateTransition(
 	// to give all other participants a chance to enter the new state. This is
 	// needed when state accepts only messages specific to that state.
 	// In that case, if the message is sent too early, it is lost given that the
-	// receiveBuffer has the retransmissions filtered out.
+	// syncReceiveBuffer has the retransmissions filtered out.
 	initiateDelay := lastStateEndBlockHeight + currentState.DelayBlocks()
 	err := blockCounter.WaitForBlockHeight(initiateDelay)
 	if err != nil {
