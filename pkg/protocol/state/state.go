@@ -14,8 +14,8 @@ import (
 	"github.com/keep-network/keep-core/pkg/protocol/group"
 )
 
-// State is and interface that should be implemented by protocol states.
-type State interface {
+// SyncState is and interface that should be implemented by protocol states.
+type SyncState interface {
 	// DelayBlocks returns the number of blocks for which the current state
 	// initialization is delayed. We delay the initialization to give all other
 	// cooperating state machines (e.g. those running on other clients)
@@ -46,7 +46,7 @@ type State interface {
 
 	// Next performs a state transition to the next state of the protocol.
 	// If the current state is the last one, nextState returns `nil`.
-	Next() (State, error)
+	Next() (SyncState, error)
 
 	// MemberIndex returns the index of member associated with the current state.
 	MemberIndex() group.MemberIndex

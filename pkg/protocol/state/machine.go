@@ -26,7 +26,7 @@ type Machine struct {
 	logger       log.StandardLogger
 	channel      net.BroadcastChannel
 	blockCounter chain.BlockCounter
-	initialState State // first state from which execution starts
+	initialState SyncState // first state from which execution starts
 }
 
 // NewMachine returns a new protocol state machine.
@@ -34,7 +34,7 @@ func NewMachine(
 	logger log.StandardLogger,
 	channel net.BroadcastChannel,
 	blockCounter chain.BlockCounter,
-	initialState State,
+	initialState SyncState,
 ) *Machine {
 	return &Machine{
 		logger:       logger,
@@ -46,7 +46,7 @@ func NewMachine(
 
 // Execute state machine starting with initial state up to finalization. It
 // requires the broadcast channel to be pre-initialized.
-func (m *Machine) Execute(startBlockHeight uint64) (State, uint64, error) {
+func (m *Machine) Execute(startBlockHeight uint64) (SyncState, uint64, error) {
 	recvChan := make(chan net.Message, receiveBuffer)
 	handler := func(msg net.Message) {
 		recvChan <- msg
@@ -138,7 +138,7 @@ func (m *Machine) Execute(startBlockHeight uint64) (State, uint64, error) {
 func stateTransition(
 	ctx context.Context,
 	logger log.StandardLogger,
-	currentState State,
+	currentState SyncState,
 	lastStateEndBlockHeight uint64,
 	blockCounter chain.BlockCounter,
 ) (<-chan uint64, error) {

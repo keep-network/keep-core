@@ -3,10 +3,11 @@ package state
 import (
 	"context"
 	"fmt"
-	"github.com/keep-network/keep-core/pkg/chain/local_v1"
-	"github.com/keep-network/keep-core/pkg/internal/testutils"
 	"reflect"
 	"testing"
+
+	"github.com/keep-network/keep-core/pkg/chain/local_v1"
+	"github.com/keep-network/keep-core/pkg/internal/testutils"
 
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/net"
@@ -93,7 +94,7 @@ func TestExecute(t *testing.T) {
 	}
 }
 
-func addToTestLog(testState State, functionName string) {
+func addToTestLog(testState SyncState, functionName string) {
 	currentBlock, _ := blockCounter.CurrentBlock()
 	testLog[currentBlock] = append(
 		testLog[currentBlock],
@@ -124,7 +125,7 @@ func (ts testState1) Receive(msg net.Message) error {
 	)
 	return nil
 }
-func (ts testState1) Next() (State, error)           { return &testState2{ts}, nil }
+func (ts testState1) Next() (SyncState, error)       { return &testState2{ts}, nil }
 func (ts testState1) MemberIndex() group.MemberIndex { return ts.memberIndex }
 
 type testState2 struct {
@@ -144,7 +145,7 @@ func (ts testState2) Receive(msg net.Message) error {
 	)
 	return nil
 }
-func (ts testState2) Next() (State, error)           { return &testState3{ts}, nil }
+func (ts testState2) Next() (SyncState, error)       { return &testState3{ts}, nil }
 func (ts testState2) MemberIndex() group.MemberIndex { return ts.memberIndex }
 
 type testState3 struct {
@@ -167,7 +168,7 @@ func (ts testState3) Receive(msg net.Message) error {
 	return nil
 }
 
-func (ts testState3) Next() (State, error)           { return &testState4{ts}, nil }
+func (ts testState3) Next() (SyncState, error)       { return &testState4{ts}, nil }
 func (ts testState3) MemberIndex() group.MemberIndex { return ts.memberIndex }
 
 type testState4 struct {
@@ -187,7 +188,7 @@ func (ts testState4) Receive(msg net.Message) error {
 	)
 	return nil
 }
-func (ts testState4) Next() (State, error)           { return &testState5{ts}, nil }
+func (ts testState4) Next() (SyncState, error)       { return &testState5{ts}, nil }
 func (ts testState4) MemberIndex() group.MemberIndex { return ts.memberIndex }
 
 type testState5 struct {
@@ -207,7 +208,7 @@ func (ts testState5) Receive(msg net.Message) error {
 	)
 	return nil
 }
-func (ts testState5) Next() (State, error)           { return nil, nil }
+func (ts testState5) Next() (SyncState, error)       { return nil, nil }
 func (ts testState5) MemberIndex() group.MemberIndex { return ts.memberIndex }
 
 type TestMessage struct {
