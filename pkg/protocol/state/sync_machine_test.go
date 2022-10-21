@@ -55,7 +55,7 @@ func TestExecute(t *testing.T) {
 		channel:     channel,
 	}
 
-	stateMachine := NewMachine(&testutils.MockLogger{}, channel, blockCounter, initialState)
+	stateMachine := NewSyncMachine(&testutils.MockLogger{}, channel, blockCounter, initialState)
 
 	finalState, endBlockHeight, err := stateMachine.Execute(1)
 	if err != nil {

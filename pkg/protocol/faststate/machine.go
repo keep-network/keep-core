@@ -35,7 +35,7 @@ type Machine struct {
 }
 
 // NewMachine returns a new protocol state machine.
-// The context passed to `faststate.NewMachine` must be active as long as the
+// The context passed to `faststate.NewSyncMachine` must be active as long as the
 // result is not published to the chain or until a fixed time for the protocol
 // execution has not passed.
 //

@@ -10,7 +10,7 @@
 //
 // Requirement 1: Context lifetime and retransmissions
 //
-// The context passed to `faststate.NewMachine` must be active as long as the
+// The context passed to `faststate.NewSyncMachine` must be active as long as the
 // result is not published to the chain or until a fixed time for the protocol
 // execution has not passed.
 //
