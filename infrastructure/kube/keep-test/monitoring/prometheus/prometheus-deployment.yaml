@@ -23,19 +23,20 @@ spec:
             - --config.file=/etc/prometheus/config.yaml
             - --storage.tsdb.path=/etc/prometheus/data
             - --storage.tsdb.retention.time=1y
+            - --web.external-url=/prometheus/
           ports:
             - name: prometheus
               containerPort: 9090
           readinessProbe:
             httpGet:
-              path: "/-/ready"
-              port: 9090
+              path: "/prometheus/-/ready"
+              port: prometheus
             initialDelaySeconds: 10
             periodSeconds: 30
             timeoutSeconds: 2
           livenessProbe:
             httpGet:
-              path: "/-/healthy"
+              path: "/prometheus/-/healthy"
               port: prometheus
             initialDelaySeconds: 10
             periodSeconds: 30

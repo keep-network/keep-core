@@ -5,7 +5,7 @@ datasources:
     access: proxy
     editable: true
     orgId: 1
-    url: http://trickster:8480
+    url: http://trickster:8480/prometheus
     version: 1
     isDefault: true
 
@@ -14,5 +14,5 @@ datasources:
     access: proxy
     editable: true
     orgId: 1
-    url: http://prometheus:9090
+    url: http://prometheus:9090/prometheus
     version: 1
