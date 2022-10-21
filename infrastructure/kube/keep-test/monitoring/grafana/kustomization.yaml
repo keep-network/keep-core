@@ -12,13 +12,16 @@ commonLabels:
 configMapGenerator:
   - name: grafana-config
     files:
+      - config/grafana.ini
       - config/dashboards.yaml
       - config/datasources.yaml
-  - name: grafana-dashboards
+  - name: grafana-dashboards-keep
     files:
-      - dashboards/keep-network-nodes-dashboard.json
-      - dashboards/kubernetes-deployments.json
-      - dashboards/prometheus.json
+      - dashboards/keep/keep-network-nodes-public.json
+      - dashboards/keep/keep-network-nodes.json
+  - name: grafana-dashboards-infrastructure
+    files:
+      - dashboards/infrastructure/kubernetes-deployments.json
 
 generatorOptions:
   disableNameSuffixHash: true

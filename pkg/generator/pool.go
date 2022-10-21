@@ -91,7 +91,17 @@ func NewParameterPool[T any](
 				err,
 			)
 		}
-		pool <- persisted
+
+		select {
+		case pool <- persisted:
+		case <-ctx.Done():
+			// Do not wait on writing to the full channel if the context for
+			// the generateFn was cancelled. This way we can avoid multiple
+			// generator goroutines hanging on writing to the channel in case
+			// the generator was stopped and resumed multiple times and the
+			// pool was full for all that time.
+			return
+		}
 
 		logger.Infof(
 			"generated new parameters, took: [%s] current pool size: [%d]",

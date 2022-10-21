@@ -156,7 +156,6 @@ The nodes to monitor are resolved from Kubernetes' services labeled `app=keep`.
 
 ### Config Map
 
-
 Grafana configuration files are held in Config Maps that are generated with <<kustomization>> tool.
 
 NOTE: To apply the configuration to the cluster please see <<kustomization-grafana>>
@@ -237,12 +236,47 @@ To see a configuration diff run: `kubectl diff -k grafana/`
 
 To apply the configuration run `kubectl apply -k grafana/`
 
+## Ingress
+
+Ingress is used to expose the services to the internet. As an Ingress controller
+we use Google Kubernetes Engine (GKE) built-in and managed Ingress controller 
+called link:https://cloud.google.com/kubernetes-engine/docs/concepts/ingress[GKE Ingress].
+
+Following resources are exposed publicly:
+
+https://monitoring.test.keep.network/grafana
+
+### Configuration
+
+To configure the Ingress following steps have to be executed:
+
+1. Create Static IP for the Monitoring Ingress:
++
+```bash
+gcloud compute addresses create keep-test-monitoring-ingress --global
+```
+
+2. Create a Cloud DNS entry to point to the IP created in the previous step (`gcloud compute addresses list`).
+Follow the
+link:https://cloud.google.com/dns/docs/set-up-dns-records-domain-name#create_a_record_to_point_the_domain_to_an_external_ip_address[Google Cloud documentation].
+
+3. Deploy the Ingress configuration:
++
+```bash
+kubectl apply -f monitoring-ingress.yaml
+```
+
 ## Resources
 
 This configuration was inspired by this link:https://devopscube.com/setup-prometheus-monitoring-on-kubernetes/[tutorial].
 
+Google Cloud Documentation:
+
+- link:https://cloud.google.com/kubernetes-engine/docs/concepts/ingress[GKE Ingress for HTTP(S) Load Balancing]
+- link:https://cloud.google.com/dns/docs/set-up-dns-records-domain-name[Set up DNS records for a domain name with Cloud DNS]
+- link:https://cloud.google.com/kubernetes-engine/docs/how-to/managed-certs#gcloud[Using Google-managed SSL certificates]
+
 // TODO:
-// - [ ] Configure TLS and expose Grafana publicly: https://kubernetes.io/docs/concepts/services-networking/connect-applications-service/#securing-the-service
 // - [ ] Revisit kubernetes scrape configuration in Prometheus' `config.yaml` - 
 // remove not needed entries
 // - [ ] Add Grafana dashboard for Kubernetes resources monitoring
