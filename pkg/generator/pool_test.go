@@ -70,13 +70,51 @@ func TestStop(t *testing.T) {
 	// give some time for the generation process to stop and capture the number
 	// of parameters generated
 	time.Sleep(10 * time.Millisecond)
-	size := pool.ParametersCount()
+	parametersCount := pool.ParametersCount()
 
 	// wait some time and make sure no new parameters are generated
 	time.Sleep(20 * time.Millisecond)
-	if size != pool.ParametersCount() {
+	if parametersCount != pool.ParametersCount() {
 		t.Errorf("expected no new parameters to be generated")
 	}
+}
+
+// TestStopBlocked ensures the pool honors the stop signal send to the scheduler
+// and it does not keep generating parameters even if at the time of receiving
+// the stop signal, the pool was blocked on its capacity.
+func TestStopBlocked(t *testing.T) {
+	// the pool has a capacity of only one parameter
+	const poolSize = 1
+	pool, scheduler, _ := newTestPool(poolSize)
+
+	// give some time to generate the parameter and stop
+	time.Sleep(25 * time.Millisecond)
+	scheduler.stop()
+
+	// give some time for the generation process to stop and capture the number
+	// of parameters generated
+	time.Sleep(10 * time.Millisecond)
+	parametersCount := pool.ParametersCount()
+	testutils.AssertIntsEqual(
+		t,
+		"number of parameters in the pool",
+		poolSize,
+		parametersCount,
+	)
+
+	// take one parameter from the pool
+	pool.GetNow()
+
+	// no new parameters should be generated, the process is stopped
+	// even if the new parameter was generated, it should not be added to
+	// the pool
+	parametersCount = pool.ParametersCount()
+	testutils.AssertIntsEqual(
+		t,
+		"number of parameters in the pool",
+		0,
+		parametersCount,
+	)
 }
 
 // TestStopNoNils ensures no nil result is added to the pool when the context
@@ -111,8 +149,23 @@ func TestPersist(t *testing.T) {
 	// give some time for the generation process to stop
 	time.Sleep(10 * time.Millisecond)
 
-	if pool.ParametersCount() != persistence.parameterCount() {
-		t.Errorf("not all parameters have been persisted")
+	// There are only two possible valid states:
+	// 1. All parameters that have been generated are persisted and available
+	//    in the pool. It happens when the context was stopped at the time of
+	//    generating the next parameter.
+	// 2. There is one more parameter persisted than available in the pool.
+	//    It happens when the context was stopped during persisting the
+	//    generated parameter.
+	//
+	// Both states are valid. We are fine if the generated parameter is
+	// persisted and not added to the pool but it would not be correct to add
+	// a parameter to the pool before first persisting it given how GetNow() is
+	// constructed: get from the pool, then delete from persistence, and return.
+	poolParametersCount := pool.ParametersCount()
+	persistenceParametersCount := persistence.parameterCount()
+	if poolParametersCount != persistenceParametersCount &&
+		poolParametersCount+1 != persistenceParametersCount {
+		t.Errorf("too few parameters have been persisted")
 	}
 }
 
