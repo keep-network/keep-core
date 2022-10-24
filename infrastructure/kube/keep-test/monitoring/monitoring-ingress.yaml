@@ -10,6 +10,11 @@ metadata:
     kubernetes.io/ingress.global-static-ip-name: "keep-test-monitoring-ingress"
     networking.gke.io/managed-certificates: monitoring-cert
 spec:
+  defaultBackend:
+    service:
+      name: grafana
+      port:
+        number: 3000
   rules:
     - http:
         paths:
