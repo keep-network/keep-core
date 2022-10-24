@@ -9,24 +9,38 @@ import (
 	"github.com/keep-network/keep-core/pkg/net"
 )
 
-// For the entire time of initiating the state transition, messages
-// are not handled. We use a buffer to unblock producers and let
-// them perform optional filtering/validation during that time.
-// The size of that buffer should not be lower than the number of messages
-// which can be delivered by the broadcast channel during the time the state
-// is blocked on initiation.
-// This version of the state machine does not require a strict synchronization
-// between participants, so this number is also the maximum number of messages
-// that could be delivered when the current machine is blocked on initiation
-// and the rest of participants advance with work.
+// For the entire time of initiating the state transition, messages are not
+// handled. We use a buffer to unblock producers and let them perform optional
+// filtering/validation during that time. The size of that buffer should not be
+// lower than the number of messages which can be delivered by the broadcast
+// channel during the time the state is blocked on initiation.
+// The async version of the state machine does not require a strict
+// synchronization between participants, so this number is also the maximum
+// number of messages that could be delivered when the current machine is
+// blocked on initiation and the rest of participants advance with work.
 const asyncReceiveBuffer = 512
 
-// The time interval with which the CanTransition of the State condition
+// The time interval with which the CanTransition of the AsyncState condition
 // is checked.
 const transitionCheckInterval = 100 * time.Millisecond
 
-// AsyncMachine is a state machine that executes states implementing the State
-// interface.
+// AsyncMachine is a state machine that executes states implementing the
+// AsyncState interface.
+//
+// AsyncMachine execution state is based on an signal from each participant that
+// they are ready to proceed to the next step when, for example, they received
+// all the necessary information from all the other participants.
+//
+// AsyncMachine is meant to be used with interactive protocols when participants
+// are expected to synchronize based on the messages being sent and some
+// participants may be slower than others. Each protocol participant, to finish
+// the execution, must wait for the slowest participant. This approach is
+// the most optimal when the protocol may finish successfully only if all
+// members expected to participate in the execution are actively participating.
+//
+// This approach allows for faster execution of protocols but has
+// strict requirements regarding the implementation of states. Please see
+// AsyncState documentation for more information.
 type AsyncMachine struct {
 	logger       log.StandardLogger
 	ctx          context.Context
@@ -34,14 +48,14 @@ type AsyncMachine struct {
 	initialState AsyncState // first state from which execution starts
 }
 
-// NewAsyncMachine returns a new protocol state machine.
+// NewAsyncMachine returns a new protocol asynchronous state machine
+//
 // The context passed to `faststate.NewSyncMachine` must be active as long as the
 // result is not published to the chain or until a fixed time for the protocol
 // execution has not passed.
 //
 // The context is used for the retransmission of messages and all protocol
 // participants must have a chance to receive messages from other participants.
-// See `faststate` package documentation for more information.
 func NewAsyncMachine(
 	logger log.StandardLogger,
 	ctx context.Context,

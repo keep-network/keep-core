@@ -20,8 +20,16 @@ import (
 // could be delivered in a single state.
 const syncReceiveBuffer = 128
 
-// SyncMachine is a state machine that executes states implementing the State
-// interface.
+// SyncMachine is a state machine that executes states implementing the
+// SyncState interface.
+//
+// SyncMachine is meant to be used with interactive protocols when participants
+// are expected to synchronize based on the number of blocks being mined at the
+// time the protocol is executing. Even if the given participant received all
+// the necessary information to continue the protocol, the state machine waits
+// with proceeding to the next step for the fixed duration of blocks. This
+// approach is the most optimal when the protocol may finish successfully even
+// if some members expected to participate in the execution are inactive.
 type SyncMachine struct {
 	logger       log.StandardLogger
 	channel      net.BroadcastChannel

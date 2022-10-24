@@ -1,10 +1,20 @@
-// Package state contains a generic state machine implementation that is
-// meant to be used with interactive protocols which require a synchronization
-// mechanism between protocol members. The synchronization is based on
-// a fixed number of active and delay blocks. Even if the given participant
+// Package state contains generic state machine implementations.
+//
+// state.SyncMachine is meant to be used with interactive protocols when
+// participants are expected to synchronize based on the number of blocks being
+// mined at the time the protocol is executing. Even if the given participant
 // received all the necessary information to continue the protocol, the state
 // machine waits with proceeding to the next step for the fixed duration of
-// blocks.
+// blocks. This approach is the most optimal when the protocol may finish
+// successfully even if some members expected to participate in the execution
+// are inactive.
+//
+// state.AsyncMachine is meant to be used with interactive protocols when
+// participants are expected to synchronize based on the messages being sent and
+// some participants may be slower than others. Each protocol participant, to
+// finish the execution, must wait for the slowest participant. This approach is
+// the most optimal when the protocol may finish successfully only if all
+// members expected to participate in the execution are actively participating.
 package state
 
 import (
@@ -15,7 +25,22 @@ import (
 	"github.com/keep-network/keep-core/pkg/protocol/group"
 )
 
-// SyncState is and interface that should be implemented by protocol states.
+// SilentStateDelayBlocks is a delay in blocks for a SyncState that do not
+// exchange any network messages as a part of its execution.
+//
+// There is no delay before such state enters initialization.
+const SilentStateDelayBlocks = 0
+
+// SilentStateActiveBlocks is a number of blocks for which a SyncState that do
+// not exchange any network messages as a part of its execution should be
+// active.
+//
+// Such state is active only for a time needed to perform required computations
+// and not any longer.
+const SilentStateActiveBlocks = 0
+
+// SyncState is and interface that should be implemented by protocol states
+// of sync.Machine.
 type SyncState interface {
 	// DelayBlocks returns the number of blocks for which the current state
 	// initialization is delayed. We delay the initialization to give all other
@@ -53,34 +78,20 @@ type SyncState interface {
 	MemberIndex() group.MemberIndex
 }
 
-// SilentStateDelayBlocks is a delay in blocks for a state that do not
-// exchange any network messages as a part of its execution.
+// AsyncState is and interface that should be implemented by protocol states of
+// async.Machine.
 //
-// There is no delay before such state enters initialization.
-const SilentStateDelayBlocks = 0
-
-// SilentStateActiveBlocks is a number of blocks for which a state that do not
-// exchange any network messages as a part of its execution should be active.
-//
-// Such state is active only for a time needed to perform required computations
-// and not any longer.
-const SilentStateActiveBlocks = 0
-
-// AsyncState is and interface that should be implemented by protocol states.
-//
-// Package faststate contains a generic state machine implementation that is
-// meant to be used with interactive protocols which do not require a strict
-// synchronization mechanism between protocol members. The synchronization is
-// based on an signal from each participant that they are ready to proceed to
-// the next step when, for example, they received all the necessary information
-// from all the other participants.
+// The synchronization of the execution is based on an signal from each
+// participant that they are ready to proceed to the next step when, for
+// example, they received all the necessary information from all the other
+// participants.
 //
 // This approach allows for faster execution of protocols but has strict
 // requirements regarding the implementation of states.
 //
 // Requirement 1: Context lifetime and retransmissions
 //
-// The context passed to `faststate.NewSyncMachine` must be active as long as the
+// The context passed to `state.AsyncMachine` must be active as long as the
 // result is not published to the chain or until a fixed time for the protocol
 // execution has not passed.
 //
@@ -120,7 +131,7 @@ const SilentStateActiveBlocks = 0
 // of the group is. If the current member is at the first state of the
 // execution, and all other members advanced to further states, the current
 // member should accept and store messages from further states "for the future"
-// instead of rejecting them. This can be achieved using `faststate.BaseState`
+// instead of rejecting them. This can be achieved using `BaseAsyncState`
 // structure.
 type AsyncState interface {
 
