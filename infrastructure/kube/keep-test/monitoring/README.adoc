@@ -1,4 +1,5 @@
 :icons: font
+:toc: left
 
 ifdef::env-github[]
 :tip-caption: :bulb:
