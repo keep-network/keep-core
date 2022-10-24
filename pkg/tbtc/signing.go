@@ -19,6 +19,10 @@ import (
 	"sort"
 )
 
+// signingAttemptMaxBlockDuration determines the maximum block duration of a
+// single signing attempt.
+const signingAttemptMaxBlockDuration = 100
+
 // signingAnnouncementMessage represents a message that is used to announce
 // member's participation in the given signing attempt for the given message.
 type signingAnnouncementMessage struct {
@@ -173,7 +177,7 @@ func (srl *signingRetryLoop) start(
 			srl.attemptStartBlock = srl.attemptStartBlock +
 				srl.announcementDelayBlocks +
 				srl.announcementActiveBlocks +
-				signing.ProtocolBlocks() +
+				signingAttemptMaxBlockDuration +
 				srl.attemptDelayBlocks
 		}
 

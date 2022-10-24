@@ -1,14 +1,14 @@
 package signing
 
 import (
+	"context"
 	"fmt"
+	"github.com/keep-network/keep-core/pkg/protocol/faststate"
 	"math/big"
 
 	"github.com/ipfs/go-log/v2"
-	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/net"
 	"github.com/keep-network/keep-core/pkg/protocol/group"
-	"github.com/keep-network/keep-core/pkg/protocol/state"
 	"github.com/keep-network/keep-core/pkg/tecdsa"
 )
 
@@ -21,16 +21,15 @@ import (
 // group by passing a non-empty excludedMembers slice holding the members that
 // should be excluded.
 func Execute(
+	ctx context.Context,
 	logger log.StandardLogger,
 	message *big.Int,
 	sessionID string,
-	startBlockNumber uint64,
 	memberIndex group.MemberIndex,
 	privateKeyShare *tecdsa.PrivateKeyShare,
 	groupSize int,
 	dishonestThreshold int,
 	excludedMembersIndexes []group.MemberIndex,
-	blockCounter chain.BlockCounter,
 	channel net.BroadcastChannel,
 	membershipValidator *group.MembershipValidator,
 ) (*Result, error) {
@@ -56,13 +55,15 @@ func Execute(
 	}
 
 	initialState := &ephemeralKeyPairGenerationState{
-		channel: channel,
-		member:  member.initializeEphemeralKeysGeneration(),
+		BaseState:      faststate.NewBaseState(),
+		action:         &stateAction{},
+		channel:        channel,
+		member:         member.initializeEphemeralKeysGeneration(),
 	}
 
-	stateMachine := state.NewMachine(logger, channel, blockCounter, initialState)
+	stateMachine := faststate.NewMachine(logger, ctx, channel, initialState)
 
-	lastState, _, err := stateMachine.Execute(startBlockNumber)
+	lastState, err := stateMachine.Execute()
 	if err != nil {
 		return nil, err
 	}

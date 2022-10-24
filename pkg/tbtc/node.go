@@ -471,12 +471,6 @@ func (n *node) joinSigningIfEligible(
 			)
 		}
 
-		blockCounter, err := n.chain.BlockCounter()
-		if err != nil {
-			signingLogger.Errorf("failed to get block counter: [%v]", err)
-			return
-		}
-
 		for _, currentSigner := range signers {
 			go func(signer *signer) {
 				n.protocolLatch.Lock()
@@ -525,6 +519,27 @@ func (n *node) joinSigningIfEligible(
 							attempt.excludedMembersIndexes,
 						)
 
+						// Set up the attempt timeout signal.
+						attemptCtx, cancelAttemptCtx := context.WithCancel(
+							loopCtx,
+						)
+						go func() {
+							defer cancelAttemptCtx()
+
+							err := n.waitForBlockHeight(
+								loopCtx,
+								attempt.startBlock + signingAttemptMaxBlockDuration,
+							)
+							if err != nil {
+								signingAttemptLogger.Warnf(
+									"[member:%v] failed waiting for " +
+										"attempt stop signal: [%v]",
+									signer.signingGroupMemberIndex,
+									err,
+								)
+							}
+						}()
+
 						sessionID := fmt.Sprintf(
 							"%v-%v",
 							message.Text(16),
@@ -532,16 +547,15 @@ func (n *node) joinSigningIfEligible(
 						)
 
 						result, err := signing.Execute(
+							attemptCtx,
 							signingAttemptLogger,
 							message,
 							sessionID,
-							attempt.startBlock,
 							signer.signingGroupMemberIndex,
 							signer.privateKeyShare,
 							signingGroupSize,
 							signingGroupDishonestThreshold,
 							attempt.excludedMembersIndexes,
-							blockCounter,
 							broadcastChannel,
 							membershipValidator,
 						)
