@@ -29,3 +29,10 @@ type Chain interface {
 	// returns an error.
 	GetBlockHeader(blockNumber uint) (*BlockHeader, error)
 }
+
+// Temporary solution to be able to connect to Bitcoin chain
+type Config struct {
+	URL      string
+	Username string
+	Password string
+}
