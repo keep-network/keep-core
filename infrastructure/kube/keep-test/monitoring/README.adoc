@@ -11,6 +11,8 @@ endif::[]
 
 # Monitoring
 
+## Components
+
 The monitoring stack has the following components:
 
 1. <<prometheus>>
