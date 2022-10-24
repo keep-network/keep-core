@@ -42,4 +42,5 @@ metadata:
   namespace: monitoring
 spec:
   domains:
+    - monitoring.test.threshold.network
     - monitoring.test.keep.network
