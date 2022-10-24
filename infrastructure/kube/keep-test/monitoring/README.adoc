@@ -13,7 +13,8 @@ endif::[]
 The monitoring stack has the following components:
 
 1. <<prometheus>>
-2. <<grafana>>
+2. <<trickster>>
+3. <<grafana>>
 
 ## Namespace
 
@@ -132,6 +133,13 @@ spec:
 
 NOTE: To access the cluster you may need a VPN connection to the `keep-test` network.
 
+### Health Check
+
+To verify health of the service open the following website:
+http://prometheus.monitoring.svc.cluster.local:9090/prometheus/-/healthy
+
+Read more about health checks in the link:https://prometheus.io/docs/prometheus/latest/management_api/[Prometheus documentation].
+
 ### Keep Nodes Discovery
 
 There are three scrape jobs configured for Prometheus:
@@ -150,6 +158,56 @@ The nodes to monitor are configured in a fixed: `external-clients-targets.yaml`.
 #### keep-internal-nodes
 
 The nodes to monitor are resolved from Kubernetes' services labeled `app=keep`.
+
+[#trickster]
+## Trickster
+
+link:https://github.com/trickstercache/trickster[Trickster] is used as a caching-proxy between Grafana and Prometheus.
+
+Queries to metrics should be made to the Trickster instance instead of the Prometheus. Trickster will obtain data from Prometheus and cache the results for future usage.
+
+### Config Map
+
+Trickster configuration file is held in a Config Map that is generated with <<kustomization>> tool.
+The files included in the Config Map are:
+
+- link:trickster/config/trickster.yaml[`trickster.yaml`] is a configuration file, based on the link:https://github.com/trickstercache/trickster/blob/main/examples/conf/example.full.yaml[example],
+
+NOTE: To apply the configuration to the cluster please see <<kustomization-trickster>>
+section.
+
+### Deployment
+
+Trickster instance is configured as a Deployment in a 
+link:trickster/trickster-deployment.yaml[trickster-deployment.yaml] file.
+
+The configuration uses Config Map resources described
+in the previous sections.
+
+NOTE: To apply the configuration to the cluster please see <<kustomization-trickster>>
+section.
+
+### Service
+
+Trickster is exposed as a Service configured in
+link:trickster/trickster-service.yaml[trickster-service.yaml] file.
+
+NOTE: To apply the configuration to the cluster please see <<kustomization-trickster>>
+section.
+
+The service will be available under http://trickster.monitoring.svc.cluster.local.
+
+NOTE: To access the cluster you may need a VPN connection to the `keep-test` network.
+
+### Health Check
+
+To verify health of the service open the following website:
+http://trickster.monitoring.svc.cluster.local:8480/trickster/ping
+
+To verify Trickster's connection with Prometheus open the following website:
+http://trickster.monitoring.svc.cluster.local:8481/trickster/health
+
+Read more about health checks in the link:https://github.com/trickstercache/trickster/blob/main/docs/health.md[Trickster documentation].
 
 [#grafana]
 ## Grafana
@@ -205,6 +263,19 @@ section.
 
 The service will be available under http://grafana.monitoring.svc.cluster.local:3000/.
 
+[#grafana-google]
+### Google OAuth2
+
+Grafana is integrated with Google OAuth2 authentication.
+
+You can login to the Grafana with a Google account under any of the following domains:
+
+- `threshold.network`,
+- `keep.network`,
+- `thesis.co`.
+
+Read more about configuration in the link:https://grafana.com/docs/grafana/latest/setup-grafana/configure-security/configure-authentication/google/[Grafana documentation].
+
 ## Kubernetes
 
 [#kustomization]
@@ -225,6 +296,18 @@ To see a configuration diff run: `kubectl diff -k prometheus/`
 
 To apply the configuration run: `kubectl apply -k prometheus/`
 
+[#kustomization-trickster]
+#### Trickster
+
+Configuration is stored in link:./trickster/kustomization.yaml[trickster/kustomization.yaml]
+file.
+
+To preview generated config run: `kubectl kustomize trickster/`
+
+To see a configuration diff run: `kubectl diff -k trickster/`
+
+To apply the configuration run: `kubectl apply -k trickster/`
+
 [#kustomization-grafana]
 #### Grafana
 
@@ -244,7 +327,9 @@ called link:https://cloud.google.com/kubernetes-engine/docs/concepts/ingress[GKE
 
 Following resources are exposed publicly:
 
-https://monitoring.test.keep.network/grafana
+https://monitoring.test.threshold.network/grafana
+
+https://monitoring.test.threshold.network/prometheus (via Trickster)
 
 ### Configuration
 
@@ -265,6 +350,18 @@ link:https://cloud.google.com/dns/docs/set-up-dns-records-domain-name#create_a_r
 ```bash
 kubectl apply -f monitoring-ingress.yaml
 ```
+
+## Public Dashboard
+
+By default Grafana requires login to view the dashboards. We enabled this possibility
+for Google accounts in selected domains (see: <<grafana-google>> section).
+To share the monitoring dashboard broadly we configured a
+link:https://grafana.com/docs/grafana/latest/dashboards/dashboard-public/[Public Dashboard].
+
+The dashboard is exposed publicly with an additional Google Cloud Load Balancer
+and a redirection under:
+
+https://public.monitoring.test.threshold.network
 
 ## Resources
 
