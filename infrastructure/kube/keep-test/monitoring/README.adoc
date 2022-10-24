@@ -16,6 +16,23 @@ The monitoring stack has the following components:
 2. <<trickster>>
 3. <<grafana>>
 
+[ditaa]
+----
+     +--------+    +--------+    +--------+    +--------+       
+     |  Node  |    |  Node  |    |  Node  |    |  Node  |       
+     +--------+    +--------+    +--------+    +--------+       
+          ^            ^              ^             ^           
+          |            |              |             |           
+       +---------------------------------------------           
+       |                                                        
+       |                                                        
++--------------+        +--------------+        +--------------+
+|              |        |              |        |              |
+|  Prometheus  |<-------|  Trickster   |<-------|   Grafana    |
+|              |        |              |        |              |
++--------------+        +--------------+        +--------------+
+----
+
 ## Namespace
 
 Kubernetes monitoring resources are configured in `monitoring` namespace.
