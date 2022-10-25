@@ -384,26 +384,23 @@ async function authorizationForRewardsInterval(
   events.sort((a, b) => a.blockNumber - b.blockNumber);
 
   let tmpBlock = startRewardsBlock; // prev tmp block
-  let event;
   for (let i = 0; i < events.length; i++) {
-    event = events[i];
-    const coefficientStr = (
-      ((event.blockNumber - tmpBlock) / deltaRewardsBlock) *
-      PRECISION
-    ).toString();
-    const coefficient = parseInt(coefficientStr);
+    const event = events[i];
+    const coefficient = Math.floor(
+      ((event.blockNumber - tmpBlock) / deltaRewardsBlock) * PRECISION
+    );
     authorization = authorization.add(event.args.fromAmount.mul(coefficient));
     tmpBlock = event.blockNumber;
   }
   authorization = authorization.div(PRECISION);
 
   // calculating authorization for the last sub-interval
-  const coefficientStr = (
-    ((endRewardsBlock - tmpBlock) / deltaRewardsBlock) *
-    PRECISION
-  ).toString();
-  const coefficient = parseInt(coefficientStr);
-  authorization = authorization.add(event.args.toAmount.mul(coefficient));
+  const coefficient = Math.floor(
+    ((endRewardsBlock - tmpBlock) / deltaRewardsBlock) * PRECISION
+  );
+  authorization = authorization.add(
+    events[events.length - 1].args.toAmount.mul(coefficient)
+  );
 
   return authorization.div(PRECISION);
 }
