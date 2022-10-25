@@ -528,11 +528,11 @@ func (n *node) joinSigningIfEligible(
 
 							err := n.waitForBlockHeight(
 								loopCtx,
-								attempt.startBlock + signingAttemptMaxBlockDuration,
+								attempt.startBlock+signingAttemptMaxBlockDuration,
 							)
 							if err != nil {
 								signingAttemptLogger.Warnf(
-									"[member:%v] failed waiting for " +
+									"[member:%v] failed waiting for "+
 										"attempt stop signal: [%v]",
 									signer.signingGroupMemberIndex,
 									err,

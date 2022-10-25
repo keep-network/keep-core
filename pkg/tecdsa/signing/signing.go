@@ -55,10 +55,10 @@ func Execute(
 	}
 
 	initialState := &ephemeralKeyPairGenerationState{
-		BaseState:      faststate.NewBaseState(),
-		action:         &stateAction{},
-		channel:        channel,
-		member:         member.initializeEphemeralKeysGeneration(),
+		BaseState: faststate.NewBaseState(),
+		action:    &stateAction{},
+		channel:   channel,
+		member:    member.initializeEphemeralKeysGeneration(),
 	}
 
 	stateMachine := faststate.NewMachine(logger, ctx, channel, initialState)
