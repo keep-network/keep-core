@@ -29,7 +29,7 @@ func TestStateAction(t *testing.T) {
 
 	funcOneCtx, funcOneCancelCtx := context.WithTimeout(
 		context.Background(),
-		1 * time.Second,
+		1*time.Second,
 	)
 	funcOne := func() error {
 		defer funcOneCancelCtx()
@@ -62,7 +62,7 @@ func TestStateAction(t *testing.T) {
 
 	funcTwoCtx, funcTwoCancelCtx := context.WithTimeout(
 		context.Background(),
-		1 * time.Second,
+		1*time.Second,
 	)
 	funcTwo := func() error {
 		defer funcTwoCancelCtx()
@@ -99,7 +99,7 @@ func TestStateAction(t *testing.T) {
 	funcThreeErr := fmt.Errorf("func three error")
 	funcThreeCtx, funcThreeCancelCtx := context.WithTimeout(
 		context.Background(),
-		1 * time.Second,
+		1*time.Second,
 	)
 	funcThree := func() error {
 		defer funcThreeCancelCtx()
@@ -151,11 +151,11 @@ func TestReceivedMessages(t *testing.T) {
 	state.ReceiveToHistory(newMockNetMessage(message7))
 
 	expectedType1Messages := []*ephemeralPublicKeyMessage{message1, message4, message5}
-	actualType1Messages :=  receivedMessages[*ephemeralPublicKeyMessage](state)
+	actualType1Messages := receivedMessages[*ephemeralPublicKeyMessage](state)
 	if !reflect.DeepEqual(expectedType1Messages, actualType1Messages) {
 		t.Errorf(
-			"unexpected messages\n" +
-				"expected: [%v]\n" +
+			"unexpected messages\n"+
+				"expected: [%v]\n"+
 				"actual:   [%v]",
 			expectedType1Messages,
 			actualType1Messages,
@@ -163,11 +163,11 @@ func TestReceivedMessages(t *testing.T) {
 	}
 
 	expectedType2Messages := []*tssRoundOneMessage{message2, message3}
-	actualType2Messages :=  receivedMessages[*tssRoundOneMessage](state)
+	actualType2Messages := receivedMessages[*tssRoundOneMessage](state)
 	if !reflect.DeepEqual(expectedType2Messages, actualType2Messages) {
 		t.Errorf(
-			"unexpected messages\n" +
-				"expected: [%v]\n" +
+			"unexpected messages\n"+
+				"expected: [%v]\n"+
 				"actual:   [%v]",
 			expectedType2Messages,
 			actualType2Messages,
@@ -175,11 +175,11 @@ func TestReceivedMessages(t *testing.T) {
 	}
 
 	expectedType3Messages := make([]*tssRoundTwoMessage, 0)
-	actualType3Messages :=  receivedMessages[*tssRoundTwoMessage](state)
+	actualType3Messages := receivedMessages[*tssRoundTwoMessage](state)
 	if !reflect.DeepEqual(expectedType3Messages, actualType3Messages) {
 		t.Errorf(
-			"unexpected messages\n" +
-				"expected: [%v]\n" +
+			"unexpected messages\n"+
+				"expected: [%v]\n"+
 				"actual:   [%v]",
 			expectedType3Messages,
 			actualType3Messages,
