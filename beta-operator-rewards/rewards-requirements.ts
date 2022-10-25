@@ -138,7 +138,7 @@ export async function calculateRewardsFactors() {
     startRewardsBlock,
     endRewardsBlock
   );
-  const intevalAuthorizationIncreasedEvents = await filterEventsByApplications(
+  const intevalAuthorizationIncreasedEvents = filterEventsByApplications(
     allIntevalAuthorizationIncreasedEvents
   );
 
@@ -149,7 +149,7 @@ export async function calculateRewardsFactors() {
       startRewardsBlock,
       endRewardsBlock
     );
-  const intervalAuthorizationDecreasedEvents = await filterEventsByApplications(
+  const intervalAuthorizationDecreasedEvents = filterEventsByApplications(
     allIntervalAuthorizationDecreasedEvents
   );
 
@@ -162,7 +162,7 @@ export async function calculateRewardsFactors() {
       endRewardsBlock,
       currentBlockNumber
     );
-  const postIntervalIncreasedEvents = await filterEventsByApplications(
+  const postIntervalIncreasedEvents = filterEventsByApplications(
     allPostIntervalAuthorizationIncreasedEvents
   );
 
@@ -175,7 +175,7 @@ export async function calculateRewardsFactors() {
       endRewardsBlock,
       currentBlockNumber
     );
-  const postIntervalDecreasedEvents = await filterEventsByApplications(
+  const postIntervalDecreasedEvents = filterEventsByApplications(
     allPostIntervalAuthorizationDecreasedEvents
   );
 
@@ -209,7 +209,7 @@ export async function calculateRewardsFactors() {
     }
 
     // Events that were emitted between the [start:end] rewards dates.
-    const intervalEvents = await filterEventsByStakingProvider(
+    const intervalEvents = filterEventsByStakingProvider(
       intevalAuthorizationIncreasedEvents.concat(
         intervalAuthorizationDecreasedEvents
       ),
@@ -313,14 +313,14 @@ async function getAuthorization(
     return obj.args.application == application.address;
   });
 
-  return await authorizationForRewardsInterval(
+  return authorizationForRewardsInterval(
     applicationEvents,
     startRewardsBlock,
     endRewardsBlock
   );
 }
 
-async function filterEventsByApplications(events: any[]) {
+function filterEventsByApplications(events: any[]) {
   const filteredEvents = new Array();
   for (let j = 0; j < events.length; j++) {
     const event = events[j];
@@ -335,7 +335,7 @@ async function filterEventsByApplications(events: any[]) {
   return filteredEvents;
 }
 
-async function filterEventsByStakingProvider(
+function filterEventsByStakingProvider(
   events: any[],
   stakingProvider: string
 ) {
@@ -369,7 +369,7 @@ async function filterEventsByStakingProvider(
 //  Sep 18 - 30 constant 100k (last sub-interval)
 // authorization = (3-0)/30*100 + (8-3)/30*110 + (14-8)/30*135
 //               + (18-14)/30*120 + (30-18)/30*100
-async function authorizationForRewardsInterval(
+function authorizationForRewardsInterval(
   events: any[],
   startRewardsBlock: number,
   endRewardsBlock: number
