@@ -395,13 +395,7 @@ async function authorizationPostRewardsInterval(
   });
 
   // Sort events in ascending order
-  randomBeaconEvents.sort(function (a, b) {
-    return a.blockNumber < b.blockNumber
-      ? -1
-      : a.blockNumber == b.blockNumber
-      ? 0
-      : 1;
-  });
+  randomBeaconEvents.sort((a, b) => a.blockNumber - b.blockNumber);
 
   if (events.length > 0 && events[0].blockNumber < currentBlockNumber) {
     // There are events present after the rewards interval and before the
