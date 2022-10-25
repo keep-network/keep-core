@@ -1,0 +1,15 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: trickster
+spec:
+  selector:
+    app: trickster
+  ports:
+    - name: trickster
+      port: 8480
+      targetPort: trickster
+    - name: metrics
+      port: 8481
+      targetPort: metrics
