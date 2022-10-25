@@ -208,13 +208,11 @@ export async function calculateRewardsFactors() {
       continue;
     }
 
-    // Events that were emitted between the [start:end] rewards dates.
-    const intervalEvents = filterEventsByStakingProvider(
-      intevalAuthorizationIncreasedEvents.concat(
-        intervalAuthorizationDecreasedEvents
-      ),
-      stakingProvider
-    );
+    // Events that were emitted between the [start:end] rewards dates for a given
+    // stakingProvider.
+    const intervalEvents = intevalAuthorizationIncreasedEvents
+      .concat(intervalAuthorizationDecreasedEvents)
+      .filter((event) => event.args.stakingProvider === stakingProvider);
 
     /// Random Beacon application authorization requirement
     let beaconAuthorization = await getAuthorization(
@@ -296,9 +294,8 @@ async function getAuthorization(
     // Events that were emitted between the [end:firstEventDate|currentDate] dates.
     // This is used to fetch the authorization that was allocated during the rewards
     // interval.
-    const postIntervalEvents = await filterEventsByStakingProvider(
-      postEvents,
-      stakingProvider
+    const postIntervalEvents = postEvents.filter(
+      (event) => event.args.stakingProvider === stakingProvider
     );
 
     return await authorizationPostRewardsInterval(
@@ -321,33 +318,12 @@ async function getAuthorization(
 }
 
 function filterEventsByApplications(events: any[]) {
-  const filteredEvents = new Array();
-  for (let j = 0; j < events.length; j++) {
-    const event = events[j];
-    if (
-      event.args.application == RandomBeaconAddress ||
-      event.args.application == WalletRegistryAddress
-    ) {
-      filteredEvents.push(event);
-    }
-  }
-
-  return filteredEvents;
-}
-
-function filterEventsByStakingProvider(
-  events: any[],
-  stakingProvider: string
-) {
-  const filteredEvents = new Array();
-  for (let j = 0; j < events.length; j++) {
-    const event = events[j];
-    if (event.args.stakingProvider == stakingProvider) {
-      filteredEvents.push(event);
-    }
-  }
-
-  return filteredEvents;
+  return events.filter((event) => {
+    return (
+      event.args.application === RandomBeaconAddress ||
+      event.args.application === WalletRegistryAddress
+    );
+  });
 }
 
 // Calculates the weighted authorization for rewards interval based on events.
