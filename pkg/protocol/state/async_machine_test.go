@@ -96,6 +96,34 @@ func TestAsyncExecute(t *testing.T) {
 	)
 }
 
+func TestAsyncExecute_ContextCancelled(t *testing.T) {
+	provider := netlocal.Connect()
+	channel, err := provider.BroadcastChannelFor("test")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	ctx, cancelCtx := context.WithCancel(context.Background())
+	defer cancelCtx()
+
+	var logger = &testutils.MockLogger{}
+
+	initialState := &testAsyncState1{
+		BaseAsyncState: NewBaseAsyncState(),
+		memberIndex:    group.MemberIndex(1),
+		channel:        channel,
+	}
+
+	go func() {
+		time.Sleep(1 * time.Second)
+		cancelCtx()
+	}()
+
+	_, err = NewAsyncMachine(logger, ctx, channel, initialState).Execute()
+
+	testutils.AssertErrorsSame(t, context.Canceled, err)
+}
+
 //
 // testAsyncState1 can transition to the next state immediately;
 // it is not receiving or sending any messages.

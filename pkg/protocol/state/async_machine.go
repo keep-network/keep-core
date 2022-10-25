@@ -131,6 +131,8 @@ func (am *AsyncMachine) Execute() (AsyncState, error) {
 			if err != nil {
 				return nil, err
 			}
+		case <-am.ctx.Done():
+			return nil, am.ctx.Err()
 		}
 	}
 }
