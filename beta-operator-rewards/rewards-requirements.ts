@@ -381,13 +381,7 @@ async function authorizationForRewardsInterval(
   let authorization = BigNumber.from("0");
   const deltaRewardsBlock = endRewardsBlock - startRewardsBlock;
   // ascending order
-  events.sort(function (a, b) {
-    return a.blockNumber < b.blockNumber
-      ? -1
-      : a.blockNumber == b.blockNumber
-      ? 0
-      : 1;
-  });
+  events.sort((a, b) => a.blockNumber - b.blockNumber);
 
   let tmpBlock = startRewardsBlock; // prev tmp block
   let event;
