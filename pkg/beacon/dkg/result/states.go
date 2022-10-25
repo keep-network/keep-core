@@ -12,7 +12,7 @@ import (
 )
 
 // represents a given state in the state machine for signing dkg results
-type signingState = state.State
+type signingState = state.SyncState
 
 const resultSigningStateDelayBlocks = 1
 const resultSigningStateActiveBlocks = 5
@@ -97,7 +97,7 @@ func (rss *resultSigningState) Receive(msg net.Message) error {
 	return nil
 }
 
-func (rss *resultSigningState) Next() (state.State, error) {
+func (rss *resultSigningState) Next() (state.SyncState, error) {
 	// set up the verification state, phase 13 part 2
 	return &signaturesVerificationState{
 		channel:           rss.channel,
@@ -163,7 +163,7 @@ func (svs *signaturesVerificationState) Receive(msg net.Message) error {
 	return nil
 }
 
-func (svs *signaturesVerificationState) Next() (state.State, error) {
+func (svs *signaturesVerificationState) Next() (state.SyncState, error) {
 	return &resultSubmissionState{
 		channel:      svs.channel,
 		beaconChain:  svs.beaconChain,
@@ -225,7 +225,7 @@ func (rss *resultSubmissionState) Receive(msg net.Message) error {
 	return nil
 }
 
-func (rss *resultSubmissionState) Next() (state.State, error) {
+func (rss *resultSubmissionState) Next() (state.SyncState, error) {
 	// returning nil represents this is the final state
 	return nil, nil
 }

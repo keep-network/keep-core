@@ -20,9 +20,9 @@ spec:
           image: grafana/grafana:9.1.8
           env:
             - name: GF_SERVER_DOMAIN
-              value: monitoring.test.keep.network
+              value: monitoring.threshold.network
             - name: GF_SERVER_ROOT_URL
-              value: "%(protocol)s://%(domain)s:80/grafana/"
+              value: "https://%(domain)s/grafana/"
             - name: GF_SERVER_SERVE_FROM_SUB_PATH
               value: "true"
             - name: GF_FEATURE_TOGGLES_PUBLICDASHBOARDS
@@ -36,16 +36,6 @@ spec:
               valueFrom:
                 secretKeyRef:
                   name: grafana-auth-google
-                  key: client_secret
-            - name: GF_AUTH_GITHUB_CLIENT_ID
-              valueFrom:
-                secretKeyRef:
-                  name: grafana-auth-github
-                  key: client_id
-            - name: GF_AUTH_GITHUB_CLIENT_SECRET
-              valueFrom:
-                secretKeyRef:
-                  name: grafana-auth-github
                   key: client_secret
           ports:
             - name: grafana
@@ -78,8 +68,6 @@ spec:
               mountPath: /etc/grafana/provisioning/dashboards
             - name: grafana-storage
               mountPath: /var/lib/grafana
-            - name: grafana-dashboards-infrastructure
-              mountPath: /var/lib/grafana/dashboards/infrastructure
             - name: grafana-dashboards-keep
               mountPath: /var/lib/grafana/dashboards/keep
           securityContext:
@@ -91,9 +79,6 @@ spec:
         - name: grafana-dashboards-keep
           configMap:
             name: grafana-dashboards-keep
-        - name: grafana-dashboards-infrastructure
-          configMap:
-            name: grafana-dashboards-infrastructure
         - name: grafana-config-datasources
           configMap:
             name: grafana-config

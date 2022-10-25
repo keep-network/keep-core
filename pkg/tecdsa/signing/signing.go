@@ -3,8 +3,9 @@ package signing
 import (
 	"context"
 	"fmt"
-	"github.com/keep-network/keep-core/pkg/protocol/faststate"
 	"math/big"
+
+	"github.com/keep-network/keep-core/pkg/protocol/state"
 
 	"github.com/ipfs/go-log/v2"
 	"github.com/keep-network/keep-core/pkg/net"
@@ -55,13 +56,13 @@ func Execute(
 	}
 
 	initialState := &ephemeralKeyPairGenerationState{
-		BaseState: faststate.NewBaseState(),
-		action:    &stateAction{},
-		channel:   channel,
-		member:    member.initializeEphemeralKeysGeneration(),
+		BaseAsyncState: state.NewBaseAsyncState(),
+		action:         &stateAction{},
+		channel:        channel,
+		member:         member.initializeEphemeralKeysGeneration(),
 	}
 
-	stateMachine := faststate.NewMachine(logger, ctx, channel, initialState)
+	stateMachine := state.NewAsyncMachine(logger, ctx, channel, initialState)
 
 	lastState, err := stateMachine.Execute()
 	if err != nil {

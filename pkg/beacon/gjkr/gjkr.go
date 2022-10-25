@@ -85,7 +85,7 @@ func Execute(
 		member:  member.InitializeEphemeralKeysGeneration(),
 	}
 
-	stateMachine := state.NewMachine(logger, channel, blockCounter, initialState)
+	stateMachine := state.NewSyncMachine(logger, channel, blockCounter, initialState)
 
 	lastState, endBlockHeight, err := stateMachine.Execute(startBlockHeight)
 	if err != nil {

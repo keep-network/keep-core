@@ -3,8 +3,8 @@ package signing
 import (
 	"context"
 	"github.com/keep-network/keep-core/pkg/net"
-	"github.com/keep-network/keep-core/pkg/protocol/faststate"
 	"github.com/keep-network/keep-core/pkg/protocol/group"
+	"github.com/keep-network/keep-core/pkg/protocol/state"
 	"sync"
 )
 
@@ -12,7 +12,7 @@ import (
 // public ephemeral keys generated for other members of the group.
 // `ephemeralPublicKeyMessage`s are valid in this state.
 type ephemeralKeyPairGenerationState struct {
-	*faststate.BaseState
+	*state.BaseAsyncState
 
 	action *stateAction
 
@@ -59,16 +59,16 @@ func (ekpgs *ephemeralKeyPairGenerationState) CanTransition() bool {
 	return ekpgs.action.isDone() && messagingDone
 }
 
-func (ekpgs *ephemeralKeyPairGenerationState) Next() (faststate.State, error) {
+func (ekpgs *ephemeralKeyPairGenerationState) Next() (state.AsyncState, error) {
 	if err := ekpgs.action.error(); err != nil {
 		return nil, err
 	}
 
 	return &symmetricKeyGenerationState{
-		BaseState: ekpgs.BaseState,
-		action:    &stateAction{},
-		channel:   ekpgs.channel,
-		member:    ekpgs.member.initializeSymmetricKeyGeneration(),
+		BaseAsyncState: ekpgs.BaseAsyncState,
+		action:         &stateAction{},
+		channel:        ekpgs.channel,
+		member:         ekpgs.member.initializeSymmetricKeyGeneration(),
 	}, nil
 }
 
@@ -80,7 +80,7 @@ func (ekpgs *ephemeralKeyPairGenerationState) MemberIndex() group.MemberIndex {
 // symmetric keys from the previously exchanged ephemeral public keys.
 // No messages are valid in this state.
 type symmetricKeyGenerationState struct {
-	*faststate.BaseState
+	*state.BaseAsyncState
 
 	action *stateAction
 
@@ -106,16 +106,16 @@ func (skgs *symmetricKeyGenerationState) CanTransition() bool {
 	return skgs.action.isDone()
 }
 
-func (skgs *symmetricKeyGenerationState) Next() (faststate.State, error) {
+func (skgs *symmetricKeyGenerationState) Next() (state.AsyncState, error) {
 	if err := skgs.action.error(); err != nil {
 		return nil, err
 	}
 
 	return &tssRoundOneState{
-		BaseState: skgs.BaseState,
-		action:    &stateAction{},
-		channel:   skgs.channel,
-		member:    skgs.member.initializeTssRoundOne(),
+		BaseAsyncState: skgs.BaseAsyncState,
+		action:         &stateAction{},
+		channel:        skgs.channel,
+		member:         skgs.member.initializeTssRoundOne(),
 	}, nil
 }
 
@@ -127,7 +127,7 @@ func (skgs *symmetricKeyGenerationState) MemberIndex() group.MemberIndex {
 // round one messages.
 // `tssRoundOneMessage`s are valid in this state.
 type tssRoundOneState struct {
-	*faststate.BaseState
+	*state.BaseAsyncState
 
 	action *stateAction
 
@@ -172,16 +172,16 @@ func (tros *tssRoundOneState) CanTransition() bool {
 	return tros.action.isDone() && messagingDone
 }
 
-func (tros *tssRoundOneState) Next() (faststate.State, error) {
+func (tros *tssRoundOneState) Next() (state.AsyncState, error) {
 	if err := tros.action.error(); err != nil {
 		return nil, err
 	}
 
 	return &tssRoundTwoState{
-		BaseState: tros.BaseState,
-		action:    &stateAction{},
-		channel:   tros.channel,
-		member:    tros.member.initializeTssRoundTwo(),
+		BaseAsyncState: tros.BaseAsyncState,
+		action:         &stateAction{},
+		channel:        tros.channel,
+		member:         tros.member.initializeTssRoundTwo(),
 	}, nil
 }
 
@@ -193,7 +193,7 @@ func (tros *tssRoundOneState) MemberIndex() group.MemberIndex {
 // round two messages.
 // `tssRoundTwoMessage`s are valid in this state.
 type tssRoundTwoState struct {
-	*faststate.BaseState
+	*state.BaseAsyncState
 
 	action *stateAction
 
@@ -241,16 +241,16 @@ func (trts *tssRoundTwoState) CanTransition() bool {
 	return trts.action.isDone() && messagingDone
 }
 
-func (trts *tssRoundTwoState) Next() (faststate.State, error) {
+func (trts *tssRoundTwoState) Next() (state.AsyncState, error) {
 	if err := trts.action.error(); err != nil {
 		return nil, err
 	}
 
 	return &tssRoundThreeState{
-		BaseState: trts.BaseState,
-		action:    &stateAction{},
-		channel:   trts.channel,
-		member:    trts.member.initializeTssRoundThree(),
+		BaseAsyncState: trts.BaseAsyncState,
+		action:         &stateAction{},
+		channel:        trts.channel,
+		member:         trts.member.initializeTssRoundThree(),
 	}, nil
 }
 
@@ -262,7 +262,7 @@ func (trts *tssRoundTwoState) MemberIndex() group.MemberIndex {
 // round three messages.
 // `tssRoundThreeMessage`s are valid in this state.
 type tssRoundThreeState struct {
-	*faststate.BaseState
+	*state.BaseAsyncState
 
 	action *stateAction
 
@@ -310,16 +310,16 @@ func (trts *tssRoundThreeState) CanTransition() bool {
 	return trts.action.isDone() && messagingDone
 }
 
-func (trts *tssRoundThreeState) Next() (faststate.State, error) {
+func (trts *tssRoundThreeState) Next() (state.AsyncState, error) {
 	if err := trts.action.error(); err != nil {
 		return nil, err
 	}
 
 	return &tssRoundFourState{
-		BaseState: trts.BaseState,
-		action:    &stateAction{},
-		channel:   trts.channel,
-		member:    trts.member.initializeTssRoundFour(),
+		BaseAsyncState: trts.BaseAsyncState,
+		action:         &stateAction{},
+		channel:        trts.channel,
+		member:         trts.member.initializeTssRoundFour(),
 	}, nil
 }
 
@@ -331,7 +331,7 @@ func (trts *tssRoundThreeState) MemberIndex() group.MemberIndex {
 // round four messages.
 // `tssRoundFourMessage`s are valid in this state.
 type tssRoundFourState struct {
-	*faststate.BaseState
+	*state.BaseAsyncState
 
 	action *stateAction
 
@@ -379,16 +379,16 @@ func (trfs *tssRoundFourState) CanTransition() bool {
 	return trfs.action.isDone() && messagingDone
 }
 
-func (trfs *tssRoundFourState) Next() (faststate.State, error) {
+func (trfs *tssRoundFourState) Next() (state.AsyncState, error) {
 	if err := trfs.action.error(); err != nil {
 		return nil, err
 	}
 
 	return &tssRoundFiveState{
-		BaseState: trfs.BaseState,
-		action:    &stateAction{},
-		channel:   trfs.channel,
-		member:    trfs.member.initializeTssRoundFive(),
+		BaseAsyncState: trfs.BaseAsyncState,
+		action:         &stateAction{},
+		channel:        trfs.channel,
+		member:         trfs.member.initializeTssRoundFive(),
 	}, nil
 }
 
@@ -400,7 +400,7 @@ func (trfs *tssRoundFourState) MemberIndex() group.MemberIndex {
 // round five messages.
 // `tssRoundFiveMessage`s are valid in this state.
 type tssRoundFiveState struct {
-	*faststate.BaseState
+	*state.BaseAsyncState
 
 	action *stateAction
 
@@ -448,16 +448,16 @@ func (trfs *tssRoundFiveState) CanTransition() bool {
 	return trfs.action.isDone() && messagingDone
 }
 
-func (trfs *tssRoundFiveState) Next() (faststate.State, error) {
+func (trfs *tssRoundFiveState) Next() (state.AsyncState, error) {
 	if err := trfs.action.error(); err != nil {
 		return nil, err
 	}
 
 	return &tssRoundSixState{
-		BaseState: trfs.BaseState,
-		action:    &stateAction{},
-		channel:   trfs.channel,
-		member:    trfs.member.initializeTssRoundSix(),
+		BaseAsyncState: trfs.BaseAsyncState,
+		action:         &stateAction{},
+		channel:        trfs.channel,
+		member:         trfs.member.initializeTssRoundSix(),
 	}, nil
 }
 
@@ -469,7 +469,7 @@ func (trfs *tssRoundFiveState) MemberIndex() group.MemberIndex {
 // round six messages.
 // `tssRoundSixMessage`s are valid in this state.
 type tssRoundSixState struct {
-	*faststate.BaseState
+	*state.BaseAsyncState
 
 	action *stateAction
 
@@ -517,16 +517,16 @@ func (trss *tssRoundSixState) CanTransition() bool {
 	return trss.action.isDone() && messagingDone
 }
 
-func (trss *tssRoundSixState) Next() (faststate.State, error) {
+func (trss *tssRoundSixState) Next() (state.AsyncState, error) {
 	if err := trss.action.error(); err != nil {
 		return nil, err
 	}
 
 	return &tssRoundSevenState{
-		BaseState: trss.BaseState,
-		action:    &stateAction{},
-		channel:   trss.channel,
-		member:    trss.member.initializeTssRoundSeven(),
+		BaseAsyncState: trss.BaseAsyncState,
+		action:         &stateAction{},
+		channel:        trss.channel,
+		member:         trss.member.initializeTssRoundSeven(),
 	}, nil
 }
 
@@ -538,7 +538,7 @@ func (trss *tssRoundSixState) MemberIndex() group.MemberIndex {
 // round seven messages.
 // `tssRoundSevenMessage`s are valid in this state.
 type tssRoundSevenState struct {
-	*faststate.BaseState
+	*state.BaseAsyncState
 
 	action *stateAction
 
@@ -586,16 +586,16 @@ func (trss *tssRoundSevenState) CanTransition() bool {
 	return trss.action.isDone() && messagingDone
 }
 
-func (trss *tssRoundSevenState) Next() (faststate.State, error) {
+func (trss *tssRoundSevenState) Next() (state.AsyncState, error) {
 	if err := trss.action.error(); err != nil {
 		return nil, err
 	}
 
 	return &tssRoundEightState{
-		BaseState: trss.BaseState,
-		action:    &stateAction{},
-		channel:   trss.channel,
-		member:    trss.member.initializeTssRoundEight(),
+		BaseAsyncState: trss.BaseAsyncState,
+		action:         &stateAction{},
+		channel:        trss.channel,
+		member:         trss.member.initializeTssRoundEight(),
 	}, nil
 }
 
@@ -607,7 +607,7 @@ func (trss *tssRoundSevenState) MemberIndex() group.MemberIndex {
 // round eight messages.
 // `tssRoundEightMessage`s are valid in this state.
 type tssRoundEightState struct {
-	*faststate.BaseState
+	*state.BaseAsyncState
 
 	action *stateAction
 
@@ -655,16 +655,16 @@ func (tres *tssRoundEightState) CanTransition() bool {
 	return tres.action.isDone() && messagingDone
 }
 
-func (tres *tssRoundEightState) Next() (faststate.State, error) {
+func (tres *tssRoundEightState) Next() (state.AsyncState, error) {
 	if err := tres.action.error(); err != nil {
 		return nil, err
 	}
 
 	return &tssRoundNineState{
-		BaseState: tres.BaseState,
-		action:    &stateAction{},
-		channel:   tres.channel,
-		member:    tres.member.initializeTssRoundNine(),
+		BaseAsyncState: tres.BaseAsyncState,
+		action:         &stateAction{},
+		channel:        tres.channel,
+		member:         tres.member.initializeTssRoundNine(),
 	}, nil
 }
 
@@ -676,7 +676,7 @@ func (tres *tssRoundEightState) MemberIndex() group.MemberIndex {
 // round nine messages.
 // `tssRoundNineMessage`s are valid in this state.
 type tssRoundNineState struct {
-	*faststate.BaseState
+	*state.BaseAsyncState
 
 	action *stateAction
 
@@ -724,16 +724,16 @@ func (trns *tssRoundNineState) CanTransition() bool {
 	return trns.action.isDone() && messagingDone
 }
 
-func (trns *tssRoundNineState) Next() (faststate.State, error) {
+func (trns *tssRoundNineState) Next() (state.AsyncState, error) {
 	if err := trns.action.error(); err != nil {
 		return nil, err
 	}
 
 	return &finalizationState{
-		BaseState: trns.BaseState,
-		action:    &stateAction{},
-		channel:   trns.channel,
-		member:    trns.member.initializeFinalization(),
+		BaseAsyncState: trns.BaseAsyncState,
+		action:         &stateAction{},
+		channel:        trns.channel,
+		member:         trns.member.initializeFinalization(),
 	}, nil
 }
 
@@ -746,7 +746,7 @@ func (trns *tssRoundNineState) MemberIndex() group.MemberIndex {
 //
 // State prepares a result that is returned to the caller.
 type finalizationState struct {
-	*faststate.BaseState
+	*state.BaseAsyncState
 
 	action *stateAction
 
@@ -778,7 +778,7 @@ func (fs *finalizationState) CanTransition() bool {
 	return fs.action.isDone()
 }
 
-func (fs *finalizationState) Next() (faststate.State, error) {
+func (fs *finalizationState) Next() (state.AsyncState, error) {
 	if err := fs.action.error(); err != nil {
 		return nil, err
 	}

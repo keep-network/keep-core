@@ -101,7 +101,7 @@ func (ekpgs *ephemeralKeyPairGenerationState) Receive(msg net.Message) error {
 	return nil
 }
 
-func (ekpgs *ephemeralKeyPairGenerationState) Next() (state.State, error) {
+func (ekpgs *ephemeralKeyPairGenerationState) Next() (state.SyncState, error) {
 	return &symmetricKeyGenerationState{
 		channel:               ekpgs.channel,
 		member:                ekpgs.member.initializeSymmetricKeyGeneration(),
@@ -145,7 +145,7 @@ func (skgs *symmetricKeyGenerationState) Receive(msg net.Message) error {
 	return nil
 }
 
-func (skgs *symmetricKeyGenerationState) Next() (state.State, error) {
+func (skgs *symmetricKeyGenerationState) Next() (state.SyncState, error) {
 	member, err := skgs.member.initializeTssRoundOne()
 	if err != nil {
 		return nil, fmt.Errorf(
@@ -224,7 +224,7 @@ func (tros *tssRoundOneState) Receive(msg net.Message) error {
 	return nil
 }
 
-func (tros *tssRoundOneState) Next() (state.State, error) {
+func (tros *tssRoundOneState) Next() (state.SyncState, error) {
 	err := <-tros.outcomeChan
 	if err != nil {
 		return nil, err
@@ -309,7 +309,7 @@ func (trts *tssRoundTwoState) Receive(msg net.Message) error {
 	return nil
 }
 
-func (trts *tssRoundTwoState) Next() (state.State, error) {
+func (trts *tssRoundTwoState) Next() (state.SyncState, error) {
 	err := <-trts.outcomeChan
 	if err != nil {
 		return nil, err
@@ -394,7 +394,7 @@ func (trts *tssRoundThreeState) Receive(msg net.Message) error {
 	return nil
 }
 
-func (trts *tssRoundThreeState) Next() (state.State, error) {
+func (trts *tssRoundThreeState) Next() (state.SyncState, error) {
 	err := <-trts.outcomeChan
 	if err != nil {
 		return nil, err
@@ -479,7 +479,7 @@ func (fs *finalizationState) Receive(msg net.Message) error {
 	return nil
 }
 
-func (fs *finalizationState) Next() (state.State, error) {
+func (fs *finalizationState) Next() (state.SyncState, error) {
 	err := <-fs.outcomeChan
 	if err != nil {
 		return nil, err
@@ -527,7 +527,7 @@ func (cs *confirmationState) Receive(msg net.Message) error {
 	return nil
 }
 
-func (cs *confirmationState) Next() (state.State, error) {
+func (cs *confirmationState) Next() (state.SyncState, error) {
 	return nil, nil
 }
 
@@ -611,7 +611,7 @@ func (rss *resultSigningState) Receive(msg net.Message) error {
 	return nil
 }
 
-func (rss *resultSigningState) Next() (state.State, error) {
+func (rss *resultSigningState) Next() (state.SyncState, error) {
 	return &signaturesVerificationState{
 		channel:           rss.channel,
 		resultSigner:      rss.resultSigner,
@@ -670,7 +670,7 @@ func (svs *signaturesVerificationState) Receive(msg net.Message) error {
 	return nil
 }
 
-func (svs *signaturesVerificationState) Next() (state.State, error) {
+func (svs *signaturesVerificationState) Next() (state.SyncState, error) {
 	return &resultSubmissionState{
 		channel:         svs.channel,
 		resultSubmitter: svs.resultSubmitter,
@@ -724,7 +724,7 @@ func (rss *resultSubmissionState) Receive(msg net.Message) error {
 	return nil
 }
 
-func (rss *resultSubmissionState) Next() (state.State, error) {
+func (rss *resultSubmissionState) Next() (state.SyncState, error) {
 	// returning nil represents this is the final state
 	return nil, nil
 }

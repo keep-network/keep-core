@@ -18,25 +18,33 @@ import (
 // This version of the state machine requires a strict synchronization between
 // participants, so this number is also the maximum number of messages that
 // could be delivered in a single state.
-const receiveBuffer = 128
+const syncReceiveBuffer = 128
 
-// Machine is a state machine that executes states implementing the State
-// interface.
-type Machine struct {
+// SyncMachine is a state machine that executes states implementing the
+// SyncState interface.
+//
+// SyncMachine is meant to be used with interactive protocols when participants
+// are expected to synchronize based on the number of blocks being mined at the
+// time the protocol is executing. Even if the given participant received all
+// the necessary information to continue the protocol, the state machine waits
+// with proceeding to the next step for the fixed duration of blocks. This
+// approach is the most optimal when the protocol may finish successfully even
+// if some members expected to participate in the execution are inactive.
+type SyncMachine struct {
 	logger       log.StandardLogger
 	channel      net.BroadcastChannel
 	blockCounter chain.BlockCounter
-	initialState State // first state from which execution starts
+	initialState SyncState // first state from which execution starts
 }
 
-// NewMachine returns a new protocol state machine.
-func NewMachine(
+// NewSyncMachine returns a new protocol state machine.
+func NewSyncMachine(
 	logger log.StandardLogger,
 	channel net.BroadcastChannel,
 	blockCounter chain.BlockCounter,
-	initialState State,
-) *Machine {
-	return &Machine{
+	initialState SyncState,
+) *SyncMachine {
+	return &SyncMachine{
 		logger:       logger,
 		channel:      channel,
 		blockCounter: blockCounter,
@@ -46,22 +54,22 @@ func NewMachine(
 
 // Execute state machine starting with initial state up to finalization. It
 // requires the broadcast channel to be pre-initialized.
-func (m *Machine) Execute(startBlockHeight uint64) (State, uint64, error) {
-	recvChan := make(chan net.Message, receiveBuffer)
+func (sm *SyncMachine) Execute(startBlockHeight uint64) (SyncState, uint64, error) {
+	recvChan := make(chan net.Message, syncReceiveBuffer)
 	handler := func(msg net.Message) {
 		recvChan <- msg
 	}
 
-	currentState := m.initialState
+	currentState := sm.initialState
 	ctx, cancelCtx := context.WithCancel(context.Background())
-	m.channel.Recv(ctx, handler)
+	sm.channel.Recv(ctx, handler)
 
-	m.logger.Infof(
+	sm.logger.Infof(
 		"[member:%v] waiting for block [%v] to start execution",
 		currentState.MemberIndex(),
 		startBlockHeight,
 	)
-	err := m.blockCounter.WaitForBlockHeight(startBlockHeight)
+	err := sm.blockCounter.WaitForBlockHeight(startBlockHeight)
 	if err != nil {
 		cancelCtx()
 		return nil, 0, fmt.Errorf("failed to wait for the execution start block")
@@ -71,10 +79,10 @@ func (m *Machine) Execute(startBlockHeight uint64) (State, uint64, error) {
 
 	blockWaiter, err := stateTransition(
 		ctx,
-		m.logger,
+		sm.logger,
 		currentState,
 		lastStateEndBlockHeight,
-		m.blockCounter,
+		sm.blockCounter,
 	)
 	if err != nil {
 		cancelCtx()
@@ -86,7 +94,7 @@ func (m *Machine) Execute(startBlockHeight uint64) (State, uint64, error) {
 		case msg := <-recvChan:
 			err := currentState.Receive(msg)
 			if err != nil {
-				m.logger.Errorf(
+				sm.logger.Errorf(
 					"[member:%v,state:%T] failed to receive a message: [%v]",
 					currentState.MemberIndex(),
 					currentState,
@@ -107,7 +115,7 @@ func (m *Machine) Execute(startBlockHeight uint64) (State, uint64, error) {
 			}
 
 			if nextState == nil {
-				m.logger.Infof(
+				sm.logger.Infof(
 					"[member:%v,state:%T] reached final state at block: [%v]",
 					currentState.MemberIndex(),
 					currentState,
@@ -118,14 +126,14 @@ func (m *Machine) Execute(startBlockHeight uint64) (State, uint64, error) {
 
 			currentState = nextState
 			ctx, cancelCtx = context.WithCancel(context.Background())
-			m.channel.Recv(ctx, handler)
+			sm.channel.Recv(ctx, handler)
 
 			blockWaiter, err = stateTransition(
 				ctx,
-				m.logger,
+				sm.logger,
 				currentState,
 				lastStateEndBlockHeight,
-				m.blockCounter,
+				sm.blockCounter,
 			)
 			if err != nil {
 				cancelCtx()
@@ -138,7 +146,7 @@ func (m *Machine) Execute(startBlockHeight uint64) (State, uint64, error) {
 func stateTransition(
 	ctx context.Context,
 	logger log.StandardLogger,
-	currentState State,
+	currentState SyncState,
 	lastStateEndBlockHeight uint64,
 	blockCounter chain.BlockCounter,
 ) (<-chan uint64, error) {
@@ -153,7 +161,7 @@ func stateTransition(
 	// to give all other participants a chance to enter the new state. This is
 	// needed when state accepts only messages specific to that state.
 	// In that case, if the message is sent too early, it is lost given that the
-	// receiveBuffer has the retransmissions filtered out.
+	// syncReceiveBuffer has the retransmissions filtered out.
 	initiateDelay := lastStateEndBlockHeight + currentState.DelayBlocks()
 	err := blockCounter.WaitForBlockHeight(initiateDelay)
 	if err != nil {

@@ -6,7 +6,6 @@ metadata:
 spec:
   selector:
     app: trickster
-  type: NodePort
   ports:
     - name: trickster
       port: 8480
