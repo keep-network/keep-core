@@ -560,7 +560,7 @@ func (n *node) joinSigningIfEligible(
 							membershipValidator,
 						)
 						if err != nil {
-							signingAttemptLogger.Errorf(
+							signingAttemptLogger.Warnf(
 								"[member:%v] signing attempt failed: [%v]",
 								signer.signingGroupMemberIndex,
 								err,
@@ -569,13 +569,22 @@ func (n *node) joinSigningIfEligible(
 							return nil, err
 						}
 
-						if err := sendStopPill(loopCtx, broadcastChannel, attempt.number); err != nil {
-							signingLogger.Errorf(
-								"[member:%v] could not send the stop pill: [%v]",
-								signer.signingGroupMemberIndex,
-								err,
-							)
-						}
+						// Schedule the stop pill to be sent a fixed amount of
+						// time after the result is returned. Do not do it
+						// immediately as other members can be very close
+						// to produce the result as well. This mechanism should
+						// be more sophisticated but since it is temporary, we
+						// can live with it for now.
+						go func() {
+							time.Sleep(1 * time.Minute)
+							if err := sendStopPill(loopCtx, broadcastChannel, attempt.number); err != nil {
+								signingLogger.Errorf(
+									"[member:%v] could not send the stop pill: [%v]",
+									signer.signingGroupMemberIndex,
+									err,
+								)
+							}
+						}()
 
 						return result, nil
 					},
