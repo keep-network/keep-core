@@ -24,6 +24,14 @@ spec:
               containerPort: 8480
             - name: metrics
               containerPort: 8481
+          readinessProbe:
+            httpGet:
+              path: "/trickster/health/default"
+              port: metrics
+          livenessProbe:
+            httpGet:
+              path: "/trickster/ping"
+              port: trickster
           resources:
             limits:
               cpu: 1000m

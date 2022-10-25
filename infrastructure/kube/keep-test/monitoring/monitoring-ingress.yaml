@@ -10,6 +10,11 @@ metadata:
     kubernetes.io/ingress.global-static-ip-name: "keep-test-monitoring-ingress"
     networking.gke.io/managed-certificates: monitoring-cert
 spec:
+  defaultBackend:
+    service:
+      name: grafana
+      port:
+        number: 3000
   rules:
     - http:
         paths:
@@ -20,6 +25,20 @@ spec:
                 name: grafana
                 port:
                   number: 3000
+          - path: "/prometheus"
+            pathType: Prefix
+            backend:
+              service:
+                name: trickster
+                port:
+                  number: 8480
+          - path: "/trickster"
+            pathType: Prefix
+            backend:
+              service:
+                name: trickster
+                port:
+                  number: 8480
 ---
 apiVersion: networking.gke.io/v1
 kind: ManagedCertificate
@@ -28,4 +47,5 @@ metadata:
   namespace: monitoring
 spec:
   domains:
+    - monitoring.test.threshold.network
     - monitoring.test.keep.network

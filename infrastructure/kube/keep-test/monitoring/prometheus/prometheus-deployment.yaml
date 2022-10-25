@@ -5,6 +5,8 @@ metadata:
   name: prometheus
 spec:
   replicas: 1
+  strategy:
+    type: Recreate
   selector:
     matchLabels:
       app: prometheus
@@ -23,28 +25,23 @@ spec:
             - --config.file=/etc/prometheus/config.yaml
             - --storage.tsdb.path=/etc/prometheus/data
             - --storage.tsdb.retention.time=1y
+            - --web.external-url=/prometheus/
           ports:
             - name: prometheus
               containerPort: 9090
           readinessProbe:
-            failureThreshold: 3
             httpGet:
-              path: "/-/ready"
-              port: 9090
-              scheme: HTTP
+              path: "/prometheus/-/ready"
+              port: prometheus
             initialDelaySeconds: 10
             periodSeconds: 30
-            successThreshold: 1
             timeoutSeconds: 2
           livenessProbe:
-            failureThreshold: 3
             httpGet:
-              path: "/-/healthy"
+              path: "/prometheus/-/healthy"
               port: prometheus
-              scheme: HTTP
             initialDelaySeconds: 10
             periodSeconds: 30
-            successThreshold: 1
             timeoutSeconds: 2
           resources:
             limits:
