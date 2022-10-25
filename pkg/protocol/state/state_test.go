@@ -1,4 +1,4 @@
-package faststate
+package state
 
 import (
 	"testing"
@@ -7,11 +7,11 @@ import (
 	"github.com/keep-network/keep-core/pkg/net"
 )
 
-func TestBaseStateReceiveToHistory(t *testing.T) {
+func TestBaseAsyncStateReceiveToHistory(t *testing.T) {
 	const type1 = "faststate/test_type1"
 	const type2 = "faststate/test_type2"
 
-	state := NewBaseState()
+	state := NewBaseAsyncState()
 
 	messages := state.GetAllReceivedMessages(type1)
 	if len(messages) != 0 {

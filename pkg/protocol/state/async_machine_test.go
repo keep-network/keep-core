@@ -1,4 +1,4 @@
-package faststate
+package state
 
 import (
 	"context"
@@ -22,7 +22,7 @@ const (
 	round3MessageType = "test/round_3_message"
 )
 
-func TestExecute(t *testing.T) {
+func TestAsyncExecute(t *testing.T) {
 	provider := netlocal.Connect()
 	channel, err := provider.BroadcastChannelFor("test")
 	if err != nil {
@@ -41,35 +41,35 @@ func TestExecute(t *testing.T) {
 
 	var logger = &testutils.MockLogger{}
 
-	initialState1 := &testState1{
-		BaseState:   NewBaseState(),
-		memberIndex: group.MemberIndex(1),
-		channel:     channel,
+	initialState1 := &testAsyncState1{
+		BaseAsyncState: NewBaseAsyncState(),
+		memberIndex:    group.MemberIndex(1),
+		channel:        channel,
 	}
-	initialState2 := &testState1{
-		BaseState:   NewBaseState(),
-		memberIndex: group.MemberIndex(2),
-		channel:     channel,
+	initialState2 := &testAsyncState1{
+		BaseAsyncState: NewBaseAsyncState(),
+		memberIndex:    group.MemberIndex(2),
+		channel:        channel,
 	}
-	initialState3 := &testState1{
-		BaseState:   NewBaseState(),
-		memberIndex: group.MemberIndex(3),
-		channel:     channel,
+	initialState3 := &testAsyncState1{
+		BaseAsyncState: NewBaseAsyncState(),
+		memberIndex:    group.MemberIndex(3),
+		channel:        channel,
 	}
 
 	var wg sync.WaitGroup
 	wg.Add(3)
 
 	go func() {
-		NewMachine(logger, ctx, channel, initialState1).Execute()
+		NewAsyncMachine(logger, ctx, channel, initialState1).Execute()
 		wg.Done()
 	}()
 	go func() {
-		NewMachine(logger, ctx, channel, initialState2).Execute()
+		NewAsyncMachine(logger, ctx, channel, initialState2).Execute()
 		wg.Done()
 	}()
 	go func() {
-		NewMachine(logger, ctx, channel, initialState3).Execute()
+		NewAsyncMachine(logger, ctx, channel, initialState3).Execute()
 		wg.Done()
 	}()
 
@@ -97,94 +97,94 @@ func TestExecute(t *testing.T) {
 }
 
 //
-// testState1 can transition to the next state immediately;
+// testAsyncState1 can transition to the next state immediately;
 // it is not receiving or sending any messages.
 //
-type testState1 struct {
-	*BaseState
+type testAsyncState1 struct {
+	*BaseAsyncState
 
 	memberIndex group.MemberIndex
 	channel     net.BroadcastChannel
 	testLog     []string
 }
 
-func (ts *testState1) addToTestLog(log string) {
-	ts.testLog = append(ts.testLog, log)
+func (tas *testAsyncState1) addToTestLog(log string) {
+	tas.testLog = append(tas.testLog, log)
 }
 
-func (ts *testState1) CanTransition() bool {
+func (tas *testAsyncState1) CanTransition() bool {
 	return true
 }
-func (ts *testState1) Initiate(ctx context.Context) error {
-	ts.addToTestLog("1-initiate")
+func (tas *testAsyncState1) Initiate(ctx context.Context) error {
+	tas.addToTestLog("1-initiate")
 	return nil
 }
-func (ts *testState1) Receive(msg net.Message) error {
-	ts.ReceiveToHistory(msg)
+func (tas *testAsyncState1) Receive(msg net.Message) error {
+	tas.ReceiveToHistory(msg)
 	return nil
 }
-func (ts *testState1) Next() (State, error) {
-	ts.addToTestLog("1-done")
-	return &testState2{testState1: ts}, nil
+func (tas *testAsyncState1) Next() (AsyncState, error) {
+	tas.addToTestLog("1-done")
+	return &testAsyncState2{testAsyncState1: tas}, nil
 }
-func (ts *testState1) MemberIndex() group.MemberIndex { return ts.memberIndex }
+func (tas *testAsyncState1) MemberIndex() group.MemberIndex { return tas.memberIndex }
 
 //
-// testState2 waits for `partyCount` messages to be received;
+// testAsyncState2 waits for `partyCount` messages to be received;
 // it is sending one message immediately upon the initiation.
 //
-type testState2 struct {
-	*testState1
+type testAsyncState2 struct {
+	*testAsyncState1
 }
 
-func (ts *testState2) CanTransition() bool {
-	return len(ts.GetAllReceivedMessages(round2MessageType)) == partyCount
+func (tas *testAsyncState2) CanTransition() bool {
+	return len(tas.GetAllReceivedMessages(round2MessageType)) == partyCount
 }
-func (ts *testState2) Initiate(ctx context.Context) error {
-	ts.addToTestLog("2-initiate")
-	ts.channel.Send(ctx, newRound2Message(strconv.Itoa(int(ts.memberIndex))))
+func (tas *testAsyncState2) Initiate(ctx context.Context) error {
+	tas.addToTestLog("2-initiate")
+	tas.channel.Send(ctx, newRound2Message(strconv.Itoa(int(tas.memberIndex))))
 	return nil
 }
-func (ts *testState2) Receive(msg net.Message) error {
-	ts.ReceiveToHistory(msg)
+func (tas *testAsyncState2) Receive(msg net.Message) error {
+	tas.ReceiveToHistory(msg)
 	return nil
 }
-func (ts *testState2) Next() (State, error) {
-	ts.addToTestLog("2-done")
-	return &testState3{testState2: ts}, nil
+func (tas *testAsyncState2) Next() (AsyncState, error) {
+	tas.addToTestLog("2-done")
+	return &testAsyncState3{testAsyncState2: tas}, nil
 }
-func (ts *testState2) MemberIndex() group.MemberIndex { return ts.memberIndex }
+func (tas *testAsyncState2) MemberIndex() group.MemberIndex { return tas.memberIndex }
 
 //
-// testState3 waits for `partyCount` messages to be received.
+// testAsyncState3 waits for `partyCount` messages to be received.
 // It is sending one message after some random delay upon the initiation.
 //
-type testState3 struct {
-	*testState2
+type testAsyncState3 struct {
+	*testAsyncState2
 }
 
-func (ts *testState3) CanTransition() bool {
-	return len(ts.GetAllReceivedMessages(round3MessageType)) == partyCount
+func (tas *testAsyncState3) CanTransition() bool {
+	return len(tas.GetAllReceivedMessages(round3MessageType)) == partyCount
 }
-func (ts *testState3) Initiate(ctx context.Context) error {
-	ts.addToTestLog("3-initiate")
+func (tas *testAsyncState3) Initiate(ctx context.Context) error {
+	tas.addToTestLog("3-initiate")
 	rand.Seed(time.Now().UnixNano())
 	time.Sleep(time.Duration(rand.Intn(1000)) * time.Millisecond)
-	ts.channel.Send(ctx, newRound3Message(strconv.Itoa(int(ts.memberIndex))))
+	tas.channel.Send(ctx, newRound3Message(strconv.Itoa(int(tas.memberIndex))))
 	return nil
 }
-func (ts *testState3) Receive(msg net.Message) error {
-	ts.ReceiveToHistory(msg)
+func (tas *testAsyncState3) Receive(msg net.Message) error {
+	tas.ReceiveToHistory(msg)
 	return nil
 }
-func (ts *testState3) Next() (State, error) {
-	ts.addToTestLog("3-done")
+func (tas *testAsyncState3) Next() (AsyncState, error) {
+	tas.addToTestLog("3-done")
 	return nil, nil
 }
-func (ts *testState3) MemberIndex() group.MemberIndex { return ts.memberIndex }
+func (tas *testAsyncState3) MemberIndex() group.MemberIndex { return tas.memberIndex }
 
 //
-// testState2 message
+// testAsyncState2 message
 //
 type round2Message struct {
 	Type_   string `json:"type"`
@@ -208,7 +208,7 @@ func newRound2Message(payload string) *round2Message {
 }
 
 //
-// testState3 message
+// testAsyncState3 message
 //
 type round3Message struct {
 	Type_   string `json:"type"`

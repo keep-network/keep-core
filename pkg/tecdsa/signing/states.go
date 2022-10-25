@@ -117,7 +117,7 @@ func (ekpgs *ephemeralKeyPairGenerationState) Receive(msg net.Message) error {
 	return nil
 }
 
-func (ekpgs *ephemeralKeyPairGenerationState) Next() (state.State, error) {
+func (ekpgs *ephemeralKeyPairGenerationState) Next() (state.SyncState, error) {
 	return &symmetricKeyGenerationState{
 		channel:               ekpgs.channel,
 		member:                ekpgs.member.initializeSymmetricKeyGeneration(),
@@ -161,7 +161,7 @@ func (skgs *symmetricKeyGenerationState) Receive(net.Message) error {
 	return nil
 }
 
-func (skgs *symmetricKeyGenerationState) Next() (state.State, error) {
+func (skgs *symmetricKeyGenerationState) Next() (state.SyncState, error) {
 	return &tssRoundOneState{
 		channel:     skgs.channel,
 		member:      skgs.member.initializeTssRoundOne(),
@@ -232,7 +232,7 @@ func (tros *tssRoundOneState) Receive(msg net.Message) error {
 	return nil
 }
 
-func (tros *tssRoundOneState) Next() (state.State, error) {
+func (tros *tssRoundOneState) Next() (state.SyncState, error) {
 	err := <-tros.outcomeChan
 	if err != nil {
 		return nil, err
@@ -317,7 +317,7 @@ func (trts *tssRoundTwoState) Receive(msg net.Message) error {
 	return nil
 }
 
-func (trts *tssRoundTwoState) Next() (state.State, error) {
+func (trts *tssRoundTwoState) Next() (state.SyncState, error) {
 	err := <-trts.outcomeChan
 	if err != nil {
 		return nil, err
@@ -402,7 +402,7 @@ func (trts *tssRoundThreeState) Receive(msg net.Message) error {
 	return nil
 }
 
-func (trts *tssRoundThreeState) Next() (state.State, error) {
+func (trts *tssRoundThreeState) Next() (state.SyncState, error) {
 	err := <-trts.outcomeChan
 	if err != nil {
 		return nil, err
@@ -487,7 +487,7 @@ func (trfs *tssRoundFourState) Receive(msg net.Message) error {
 	return nil
 }
 
-func (trfs *tssRoundFourState) Next() (state.State, error) {
+func (trfs *tssRoundFourState) Next() (state.SyncState, error) {
 	err := <-trfs.outcomeChan
 	if err != nil {
 		return nil, err
@@ -572,7 +572,7 @@ func (trfs *tssRoundFiveState) Receive(msg net.Message) error {
 	return nil
 }
 
-func (trfs *tssRoundFiveState) Next() (state.State, error) {
+func (trfs *tssRoundFiveState) Next() (state.SyncState, error) {
 	err := <-trfs.outcomeChan
 	if err != nil {
 		return nil, err
@@ -657,7 +657,7 @@ func (trss *tssRoundSixState) Receive(msg net.Message) error {
 	return nil
 }
 
-func (trss *tssRoundSixState) Next() (state.State, error) {
+func (trss *tssRoundSixState) Next() (state.SyncState, error) {
 	err := <-trss.outcomeChan
 	if err != nil {
 		return nil, err
@@ -742,7 +742,7 @@ func (trss *tssRoundSevenState) Receive(msg net.Message) error {
 	return nil
 }
 
-func (trss *tssRoundSevenState) Next() (state.State, error) {
+func (trss *tssRoundSevenState) Next() (state.SyncState, error) {
 	err := <-trss.outcomeChan
 	if err != nil {
 		return nil, err
@@ -827,7 +827,7 @@ func (tres *tssRoundEightState) Receive(msg net.Message) error {
 	return nil
 }
 
-func (tres *tssRoundEightState) Next() (state.State, error) {
+func (tres *tssRoundEightState) Next() (state.SyncState, error) {
 	err := <-tres.outcomeChan
 	if err != nil {
 		return nil, err
@@ -912,7 +912,7 @@ func (trns *tssRoundNineState) Receive(msg net.Message) error {
 	return nil
 }
 
-func (trns *tssRoundNineState) Next() (state.State, error) {
+func (trns *tssRoundNineState) Next() (state.SyncState, error) {
 	err := <-trns.outcomeChan
 	if err != nil {
 		return nil, err
@@ -981,7 +981,7 @@ func (fs *finalizationState) Receive(net.Message) error {
 	return nil
 }
 
-func (fs *finalizationState) Next() (state.State, error) {
+func (fs *finalizationState) Next() (state.SyncState, error) {
 	err := <-fs.outcomeChan
 	if err != nil {
 		return nil, err

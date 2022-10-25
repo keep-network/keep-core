@@ -2,6 +2,7 @@ package result
 
 import (
 	"fmt"
+
 	"github.com/ipfs/go-log/v2"
 
 	beaconchain "github.com/keep-network/keep-core/pkg/beacon/chain"
@@ -49,7 +50,7 @@ func Publish(
 		signingStartBlockHeight: startBlockHeight,
 	}
 
-	stateMachine := state.NewMachine(logger, channel, blockCounter, initialState)
+	stateMachine := state.NewSyncMachine(logger, channel, blockCounter, initialState)
 
 	lastState, _, err := stateMachine.Execute(startBlockHeight)
 	if err != nil {
