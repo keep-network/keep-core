@@ -7,8 +7,6 @@ import (
 	"github.com/keep-network/keep-common/pkg/clientinfo"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/net"
-
-	commonClientInfo "github.com/keep-network/keep-common/pkg/clientinfo"
 )
 
 type Source func() float64
@@ -119,8 +117,8 @@ func (r *Registry) ObserveApplicationSource(
 func (r *Registry) RegisterMetricClientInfo(version string) {
 	_, err := r.NewMetricInfo(
 		ClientInfoMetricName,
-		[]commonClientInfo.Label{
-			commonClientInfo.NewLabel("version", version),
+		[]clientinfo.Label{
+			clientinfo.NewLabel("version", version),
 		},
 	)
 	if err != nil {

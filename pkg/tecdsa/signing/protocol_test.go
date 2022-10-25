@@ -75,7 +75,7 @@ func TestGenerateEphemeralKeyPair(t *testing.T) {
 		// Assert key pairs are non-nil.
 		for otherMemberID, keyPair := range member.ephemeralKeyPairs {
 			if keyPair == nil {
-				t.Errorf(
+				t.Fatalf(
 					"[member:%v] key pair not set for member [%v]",
 					member.id,
 					otherMemberID,
@@ -2166,7 +2166,7 @@ func TestTssFinalize(t *testing.T) {
 		signature := member.Result().Signature
 
 		if signature == nil {
-			t.Errorf(
+			t.Fatalf(
 				"member [%v] has not produced a signature",
 				member.id,
 			)

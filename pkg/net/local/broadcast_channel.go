@@ -89,7 +89,7 @@ func (lc *localChannel) deliver(message net.Message) {
 		select {
 		case handler.channel <- message:
 		default:
-			logger.Warningf("handler too slow, dropping message")
+			logger.Warnf("handler too slow, dropping message")
 		}
 	}
 }

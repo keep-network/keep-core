@@ -25,6 +25,7 @@ func TestIsExecuting(t *testing.T) {
 
 	latch.Lock()
 	latch.Lock()
+	//lint:ignore SA2001 empty critical section for test purposes
 	latch.Unlock()
 
 	if !latch.IsExecuting() {

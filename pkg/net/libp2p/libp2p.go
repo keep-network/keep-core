@@ -16,6 +16,7 @@ import (
 
 	dstore "github.com/ipfs/go-datastore"
 	dssync "github.com/ipfs/go-datastore/sync"
+	//lint:ignore SA1019 package deprecated, but we rely on its interface
 	addrutil "github.com/libp2p/go-addr-util"
 	"github.com/libp2p/go-libp2p"
 	"github.com/libp2p/go-libp2p-core/host"
@@ -129,7 +130,7 @@ func (p *provider) BroadcastChannelForwarderFor(name string) {
 	timeout := time.Duration(p.disseminationTime) * time.Second
 
 	if err := p.broadcastChannelManager.newForwarder(name, timeout); err != nil {
-		logger.Warningf(
+		logger.Warnf(
 			"could not create message forwarder for channel [%v]: [%v]",
 			name,
 			err,
@@ -454,7 +455,7 @@ func parseMultiaddresses(addresses []string) []ma.Multiaddr {
 	for _, address := range addresses {
 		multiaddress, err := ma.NewMultiaddr(address)
 		if err != nil {
-			logger.Warningf(
+			logger.Warnf(
 				"could not parse address string [%v]: [%v]",
 				address,
 				err,

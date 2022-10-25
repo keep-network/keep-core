@@ -11,7 +11,7 @@ import (
 	"github.com/mitchellh/mapstructure"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
-	"golang.org/x/crypto/ssh/terminal"
+	"golang.org/x/term"
 
 	commonEthereum "github.com/keep-network/keep-common/pkg/chain/ethereum"
 	"github.com/keep-network/keep-core/pkg/clientinfo"
@@ -228,7 +228,7 @@ func unmarshalConfig(config *Config) error {
 // capturing the password.
 func readPassword(prompt string) (string, error) {
 	fmt.Print(prompt)
-	bytePassword, err := terminal.ReadPassword(int(syscall.Stdin))
+	bytePassword, err := term.ReadPassword(int(syscall.Stdin))
 	fmt.Print("\n")
 	if err != nil {
 		return "", fmt.Errorf("unable to read password, error [%s]", err)

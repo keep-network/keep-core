@@ -20,7 +20,6 @@ import (
 var logger = log.Logger("keep-chainlocal")
 
 var seedGroupPublicKey = []byte("seed to group public key")
-var seedRelayEntry = big.NewInt(123456789)
 var groupActiveTime = uint64(10)
 var relayRequestTimeout = uint64(8)
 
@@ -228,7 +227,7 @@ func (c *localChain) IsStaleGroup(groupPublicKey []byte) (bool, error) {
 	}
 
 	for _, group := range c.groups {
-		if bytes.Compare(group.groupPublicKey, groupPublicKey) == 0 {
+		if bytes.Equal(group.groupPublicKey, groupPublicKey) {
 			return group.registrationBlockHeight+groupActiveTime+relayRequestTimeout < currentBlock, nil
 		}
 	}
@@ -238,7 +237,7 @@ func (c *localChain) IsStaleGroup(groupPublicKey []byte) (bool, error) {
 
 func (c *localChain) IsGroupRegistered(groupPublicKey []byte) (bool, error) {
 	for _, group := range c.groups {
-		if bytes.Compare(group.groupPublicKey, groupPublicKey) == 0 {
+		if bytes.Equal(group.groupPublicKey, groupPublicKey) {
 			return true, nil
 		}
 	}

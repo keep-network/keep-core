@@ -83,7 +83,7 @@ func Initialize(
 					}
 
 					if !shouldProcess {
-						logger.Warningf(
+						logger.Warnf(
 							"relay entry requested event with previous "+
 								"entry [0x%x] and starting block [%v] has been "+
 								"already processed",
@@ -133,7 +133,7 @@ func Initialize(
 			if ok := eventDeduplicator.NotifyDKGStarted(
 				event.Seed,
 			); !ok {
-				logger.Warningf(
+				logger.Warnf(
 					"DKG started event with seed [0x%x] and "+
 						"starting block [%v] has been already processed",
 					event.Seed,
@@ -203,7 +203,7 @@ func confirmCurrentRelayRequest(
 				return
 			}
 
-			logger.Warningf(
+			logger.Warnf(
 				"could not check current request start block: [%v]; "+
 					"will retry after [%v]",
 				err,
@@ -231,7 +231,7 @@ func confirmCurrentRelayRequest(
 			// fast before this node receives an event and is able to confirm a
 			// request ID.
 			if currentRequestStartBlock == 0 {
-				logger.Warningf(
+				logger.Warnf(
 					"there is no entry in progress; "+
 						"current request start block is 0 "+
 						"giving up after [%v] retries",

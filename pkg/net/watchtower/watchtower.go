@@ -51,7 +51,7 @@ func NewGuard(
 
 func (g *Guard) currentlyChecking(peer string) bool {
 	g.peerCrossListLock.Lock()
-	checking, _ := g.peerCrossList[peer]
+	checking := g.peerCrossList[peer]
 	g.peerCrossListLock.Unlock()
 	return checking
 }

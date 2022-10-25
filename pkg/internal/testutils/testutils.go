@@ -106,7 +106,7 @@ func testBytesEqual(expectedBytes []byte, actualBytes []byte) error {
 
 	if diffCount != 0 {
 		return fmt.Errorf(
-			"Byte slices differ in %v places\nexpected: [%v]\nactual:   [%v]",
+			"byte slices differ in %v places\nexpected: [%v]\nactual:   [%v]",
 			diffCount,
 			expectedBytes,
 			actualBytes,

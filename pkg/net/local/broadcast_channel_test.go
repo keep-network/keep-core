@@ -219,7 +219,7 @@ loop:
 				msg.Payload(),
 			)
 		}
-		if mockNetMessageType != msg.Type() {
+		if msg.Type() != mockNetMessageType {
 			t.Errorf(
 				"invalid type\nexpected: [%+v]\nactual:   [%+v]\n",
 				"local",

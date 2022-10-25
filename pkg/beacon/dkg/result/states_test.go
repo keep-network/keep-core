@@ -27,6 +27,9 @@ func TestAcceptValidSignatureHashMessage(t *testing.T) {
 		dkgResult,
 		beaconChain2,
 	)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	state := &resultSigningState{
 		member:            member,
@@ -69,6 +72,9 @@ func TestDoNotAcceptMessageWithSwappedKey(t *testing.T) {
 		dkgResult,
 		beaconChain2,
 	)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	state := &resultSigningState{
 		member:            member,

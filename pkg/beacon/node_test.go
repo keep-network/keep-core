@@ -8,7 +8,6 @@ import (
 	"github.com/keep-network/keep-core/pkg/chain/local_v1"
 )
 
-var address = "0x65ea55c1f10491038425725dc00dffeab2a1e28a"
 var relayEntryTimeout = uint64(15)
 
 func TestMonitorRelayEntryOnChain_EntrySubmitted(t *testing.T) {

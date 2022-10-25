@@ -192,8 +192,6 @@ func (n *node) JoinDKGIfEligible(
 	} else {
 		dkgLogger.Infof("not eligible for DKG")
 	}
-
-	return
 }
 
 // ForwardSignatureShares enables the ability to forward signature shares
@@ -202,7 +200,7 @@ func (n *node) JoinDKGIfEligible(
 func (n *node) ForwardSignatureShares(groupPublicKeyBytes []byte) {
 	name, err := channelNameForPublicKeyBytes(groupPublicKeyBytes)
 	if err != nil {
-		logger.Warningf("could not forward signature shares: [%v]", err)
+		logger.Warnf("could not forward signature shares: [%v]", err)
 		return
 	}
 
@@ -297,7 +295,7 @@ func (n *node) MonitorRelayEntry(
 		case blockNumber := <-timeoutWaiterChannel:
 			subscription.Unsubscribe()
 			close(onEntrySubmittedChannel)
-			logger.Warningf(
+			logger.Warnf(
 				"relay entry was not submitted on time, reporting timeout at block [%v]",
 				blockNumber,
 			)
