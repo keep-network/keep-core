@@ -1,31 +1,36 @@
 #!/bin/bash
 set -eou pipefail
 
-LOG_START='\n\e[1;36m'  # new line + bold + color
-LOG_END='\n\e[0m'       # new line + reset color
-DONE_START='\n\e[1;32m' # new line + bold + green
-DONE_END='\n\n\e[0m'    # new line + reset
+LOG_START='\n\e[1;36m'           # new line + bold + color
+LOG_END='\n\e[0m'                # new line + reset color
+DONE_START='\n\e[1;32m'          # new line + bold + green
+DONE_END='\n\n\e[0m'             # new line + reset
+LOG_WARNING_START='\n\e\033[33m' # new line + bold + warning color
+LOG_WARNING_END='\n\e\033[0m'    # new line + reset
 
-PROMETHEUS_API_DEFAULT="http://prometheus.monitoring.svc.cluster.local:9090/api/v1"
-PROMETHEOUS_JOB_DEFAULT="keep-discovered-nodes"
-REWARDS_END_DATE_DEFAULT=$(date +"%Y-%m-%d")
+PROMETHEUS_API_DEFAULT="https://monitoring.test.threshold.network/prometheus/api/v1"
+PROMETHEUS_JOB_DEFAULT="keep-discovered-nodes"
+PROMETHEUS_SCRAPE_INTERVAL_DEFAULT=60 # in sec
 OUTPUT_JSON_FILE="peersData.json"
-BUCKET_NAME_DEFAULT="diagnostics_test"
-CLIENT_UPGRADE_DELAY_ACCEPTANCE=604800 # 7days in sec
+ETHERSCAN_API="https://api-goerli.etherscan.io" # TODO: change to mainnet https://api.etherscan.io/
 
 help() {
   echo -e "\nUsage: $0" \
-    "--prometheus-api <prometheus-api-address>" \
-    "--prometheus-job <prometheus-job>" \
     "--rewards-start-date <rewards-start-date Y-m-d>" \
     "--rewards-end-date <rewards-end-date Y-m-d>" \
-    "--bucket-name <GCP-bucket-name>"
-  echo -e "\nCommand line arguments:\n"
-  echo -e "\t--prometheus-api: Prometheus API"
-  echo -e "\t--prometheus-job: Prometheus service discovery job name"
-  echo -e "\t--rewards-start-date: Rewards start date Y-m-d"
-  echo -e "\t--rewards-end-date: Rewards end date Y-m-d"
-  echo -e "\t--bucket-name: GCP destination bucket name where peer data are stored\n"
+    "--etherscan-token <etherscan-token>" \
+    "--prometheus-api <prometheus-api-address>" \
+    "--prometheus-job <prometheus-job-name>" \
+    "--prometheus-scrape-interval <prometheus-scrape-interval-in-sec>"
+  echo -e "\nRequired command line arguments:\n"
+  echo -e "\t--rewards-start-date: Rewards interval start date formatted as Y-m-d"
+  echo -e "\t--rewards-end-date: Rewards interval end date formatted as Y-m-d"
+  echo -e "\t--etherscan-token: Etherscan API key token"
+  echo -e "\nOptional command line arguments:\n"
+  echo -e "\t--prometheus-api: Prometheus API. Default: ${PROMETHEUS_API_DEFAULT}"
+  echo -e "\t--prometheus-job: Prometheus service discovery job name. Default: ${PROMETHEUS_JOB_DEFAULT}"
+  echo -e "\t--prometheus-interval: Prometheus scrape interval. Default: ${PROMETHEUS_SCRAPE_INTERVAL_DEFAULT} sec."
+  echo -e ""
   exit 1 # Exit script after printing help
 }
 
@@ -33,11 +38,12 @@ help() {
 for arg in "$@"; do
   shift
   case "$arg" in
-  "--prometheus-api") set -- "$@" "-i" ;;
-  "--prometheus-job") set -- "$@" "-p" ;;
   "--rewards-start-date") set -- "$@" "-k" ;;
   "--rewards-end-date") set -- "$@" "-e" ;;
-  "--bucket-name") set -- "$@" "-b" ;;
+  "--etherscan-token") set -- "$@" "-t" ;;
+  "--prometheus-api") set -- "$@" "-a" ;;
+  "--prometheus-job") set -- "$@" "-p" ;;
+  "--prometheus-interval") set -- "$@" "-i" ;;
   "--help") set -- "$@" "-h" ;;
   *) set -- "$@" "$arg" ;;
   esac
@@ -45,33 +51,61 @@ done
 
 # Parse short options
 OPTIND=1
-while getopts "a:d:p:k:e:b:h" opt; do
+while getopts "k:e:t:a:p:i:h" opt; do
   case "$opt" in
-  a) prometheus_api="$OPTARG" ;;
-  p) prometheous_job="$OPTARG" ;;
   k) rewards_start_date="$OPTARG" ;;
   e) rewards_end_date="$OPTARG" ;;
-  b) bucket_name="$OPTARG" ;;
+  t) etherscan_token="$OPTARG" ;;
+  a) prometheus_api="$OPTARG" ;;
+  p) prometheus_job="$OPTARG" ;;
+  i) prometheus_scrape_interval="$OPTARG" ;;
   h) help ;;
   ?) help ;; # Print help in case parameter is non-existent
   esac
 done
 shift $(expr $OPTIND - 1) # remove options from positional parameters
 
+ETHERSCAN_TOKEN=${etherscan_token:-""}
 REWARDS_START_DATE=${rewards_start_date:-""}
-REWARDS_END_DATE=${rewards_end_date:-${REWARDS_END_DATE_DEFAULT}}
+REWARDS_END_DATE=${rewards_end_date:-""}
 PROMETHEUS_API=${prometheus_api:-${PROMETHEUS_API_DEFAULT}}
-PROMETHEOUS_JOB=${prometheous_job:-${PROMETHEOUS_JOB_DEFAULT}}
-BUCKET_NAME=${bucket_name:-${BUCKET_NAME_DEFAULT}}
+PROMETHEUS_JOB=${prometheus_job:-${PROMETHEUS_JOB_DEFAULT}}
+PROMETHEUS_SCRAPE_INTERVAL=${prometheus_scrape_interval:-${PROMETHEUS_SCRAPE_INTERVAL_DEFAULT}}
 
 if [ "$REWARDS_START_DATE" == "" ]; then
   printf "${LOG_WARNING_START}Rewards start date must be provided.${LOG_WARNING_END}"
-  exit 1
+  help
 fi
 
-# TODO: convert to Y-m-d 23:59:59
-rewardsStartDate=$(date -j -f "%Y-%m-%d" ${REWARDS_START_DATE} "+%s")
-rewardsEndDate=$(date -j -f "%Y-%m-%d" ${REWARDS_END_DATE} "+%s")
+if [ "$REWARDS_END_DATE" == "" ]; then
+  printf "${LOG_WARNING_START}Rewards end date must be provided.${LOG_WARNING_END}"
+  help
+fi
+
+if [ "$ETHERSCAN_TOKEN" == "" ]; then
+  printf "${LOG_WARNING_START}Etherscan API key token must be provided.${LOG_WARNING_END}"
+  help
+fi
+
+rewardsStartDate=$(TZ=UTC date -j -f "%Y-%m-%d %H:%M:%S" "${REWARDS_START_DATE} 00:00:00" "+%s")
+rewardsEndDate=$(TZ=UTC date -j -f "%Y-%m-%d %H:%M:%S" "${REWARDS_END_DATE} 23:59:59" "+%s")
+
+startBlockApiCall="${ETHERSCAN_API}/api?\
+module=block&\
+action=getblocknobytime&\
+timestamp=$rewardsStartDate&\
+closest=after&\
+apikey=${ETHERSCAN_TOKEN}"
+
+endBlockApiCall="${ETHERSCAN_API}/api?\
+module=block&\
+action=getblocknobytime&\
+timestamp=$rewardsEndDate&\
+closest=after&\
+apikey=${ETHERSCAN_TOKEN}"
+
+startRewardsBlock=$(curl -s $startBlockApiCall | jq '.result|tonumber')
+endRewardsBlock=$(curl -s $endBlockApiCall | jq '.result|tonumber')
 
 printf "${LOG_START}Installing yarn dependencies...${LOG_END}"
 yarn install
@@ -107,15 +141,15 @@ tagsTrimmed="${tags%?}" # remove "|" at the end
 # Run script
 printf "${LOG_START}Fetching peers data...${LOG_END}"
 
-yarn rewards-requirements \
+ETHERSCAN_TOKEN=${ETHERSCAN_TOKEN} yarn rewards-requirements \
   --api ${PROMETHEUS_API} \
-  --job ${PROMETHEOUS_JOB} \
-  --start $rewardsStartDate \
-  --end $rewardsEndDate \
-  --interval 5 \
+  --job ${PROMETHEUS_JOB} \
+  --start-timestamp $rewardsStartDate \
+  --end-timestamp $rewardsEndDate \
+  --start-block $startRewardsBlock \
+  --end-block $endRewardsBlock \
+  --interval ${PROMETHEUS_SCRAPE_INTERVAL} \
   --versions $tagsTrimmed \
   --output ${OUTPUT_JSON_FILE}
-
-# TODO: do we want to upload the output file to a GCP bucket?
 
 printf "${DONE_START}Complete!${DONE_END}"
