@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"github.com/keep-network/keep-core/pkg/internal/testutils"
 	"github.com/keep-network/keep-core/pkg/net"
-	"github.com/keep-network/keep-core/pkg/protocol/faststate"
+	"github.com/keep-network/keep-core/pkg/protocol/state"
 	"reflect"
 	"testing"
 	"time"
@@ -132,7 +132,7 @@ func TestStateAction(t *testing.T) {
 }
 
 func TestReceivedMessages(t *testing.T) {
-	state := faststate.NewBaseState()
+	state := state.NewBaseAsyncState()
 
 	message1 := &ephemeralPublicKeyMessage{senderID: 1}
 	message2 := &tssRoundOneMessage{senderID: 1}
