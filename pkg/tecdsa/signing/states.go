@@ -2,126 +2,74 @@ package signing
 
 import (
 	"context"
+	"sync"
 
 	"github.com/keep-network/keep-core/pkg/net"
 	"github.com/keep-network/keep-core/pkg/protocol/group"
 	"github.com/keep-network/keep-core/pkg/protocol/state"
 )
 
-const (
-	silentStateDelayBlocks  = 0
-	silentStateActiveBlocks = 0
-
-	ephemeralKeyPairStateDelayBlocks  = 1
-	ephemeralKeyPairStateActiveBlocks = 5
-
-	tssRoundOneStateDelayBlocks  = 1
-	tssRoundOneStateActiveBlocks = 11
-
-	tssRoundTwoStateDelayBlocks  = 1
-	tssRoundTwoStateActiveBlocks = 6
-
-	tssRoundThreeStateDelayBlocks  = 1
-	tssRoundThreeStateActiveBlocks = 5
-
-	tssRoundFourStateDelayBlocks  = 1
-	tssRoundFourStateActiveBlocks = 5
-
-	tssRoundFiveStateDelayBlocks  = 1
-	tssRoundFiveStateActiveBlocks = 5
-
-	tssRoundSixStateDelayBlocks  = 1
-	tssRoundSixStateActiveBlocks = 5
-
-	tssRoundSevenStateDelayBlocks  = 1
-	tssRoundSevenStateActiveBlocks = 5
-
-	tssRoundEightStateDelayBlocks  = 1
-	tssRoundEightStateActiveBlocks = 5
-
-	tssRoundNineStateDelayBlocks  = 1
-	tssRoundNineStateActiveBlocks = 5
-
-	finalizationStateDelayBlocks  = 1
-	finalizationStateActiveBlocks = 5
-)
-
-// ProtocolBlocks returns the total number of blocks it takes to execute
-// all the required work defined by the signing protocol.
-func ProtocolBlocks() uint64 {
-	return ephemeralKeyPairStateDelayBlocks +
-		ephemeralKeyPairStateActiveBlocks +
-		tssRoundOneStateDelayBlocks +
-		tssRoundOneStateActiveBlocks +
-		tssRoundTwoStateDelayBlocks +
-		tssRoundTwoStateActiveBlocks +
-		tssRoundThreeStateDelayBlocks +
-		tssRoundThreeStateActiveBlocks +
-		tssRoundFourStateDelayBlocks +
-		tssRoundFourStateActiveBlocks +
-		tssRoundFiveStateDelayBlocks +
-		tssRoundFiveStateActiveBlocks +
-		tssRoundSixStateDelayBlocks +
-		tssRoundSixStateActiveBlocks +
-		tssRoundSevenStateDelayBlocks +
-		tssRoundSevenStateActiveBlocks +
-		tssRoundEightStateDelayBlocks +
-		tssRoundEightStateActiveBlocks +
-		tssRoundNineStateDelayBlocks +
-		tssRoundNineStateActiveBlocks +
-		finalizationStateDelayBlocks +
-		finalizationStateActiveBlocks
-}
-
 // ephemeralKeyPairGenerationState is the state during which members broadcast
 // public ephemeral keys generated for other members of the group.
 // `ephemeralPublicKeyMessage`s are valid in this state.
 type ephemeralKeyPairGenerationState struct {
+	*state.BaseAsyncState
+
+	action *stateAction
+
 	channel net.BroadcastChannel
 	member  *ephemeralKeyPairGeneratingMember
-
-	phaseMessages []*ephemeralPublicKeyMessage
-}
-
-func (ekpgs *ephemeralKeyPairGenerationState) DelayBlocks() uint64 {
-	return ephemeralKeyPairStateDelayBlocks
-}
-
-func (ekpgs *ephemeralKeyPairGenerationState) ActiveBlocks() uint64 {
-	return ephemeralKeyPairStateActiveBlocks
 }
 
 func (ekpgs *ephemeralKeyPairGenerationState) Initiate(ctx context.Context) error {
-	message, err := ekpgs.member.generateEphemeralKeyPair()
-	if err != nil {
-		return err
-	}
+	ekpgs.action.run(func() error {
+		message, err := ekpgs.member.generateEphemeralKeyPair()
+		if err != nil {
+			return err
+		}
 
-	if err := ekpgs.channel.Send(ctx, message); err != nil {
-		return err
-	}
+		if err := ekpgs.channel.Send(ctx, message); err != nil {
+			return err
+		}
+
+		return nil
+	})
+
 	return nil
 }
 
-func (ekpgs *ephemeralKeyPairGenerationState) Receive(msg net.Message) error {
-	switch phaseMessage := msg.Payload().(type) {
-	case *ephemeralPublicKeyMessage:
+func (ekpgs *ephemeralKeyPairGenerationState) Receive(
+	netMessage net.Message,
+) error {
+	if protocolMessage, ok := netMessage.Payload().(message); ok {
 		if ekpgs.member.shouldAcceptMessage(
-			phaseMessage.SenderID(),
-			msg.SenderPublicKey(),
-		) && ekpgs.member.sessionID == phaseMessage.sessionID {
-			ekpgs.phaseMessages = append(ekpgs.phaseMessages, phaseMessage)
+			protocolMessage.SenderID(),
+			netMessage.SenderPublicKey(),
+		) && ekpgs.member.sessionID == protocolMessage.SessionID() {
+			ekpgs.ReceiveToHistory(netMessage)
 		}
 	}
 
 	return nil
 }
 
-func (ekpgs *ephemeralKeyPairGenerationState) Next() (state.SyncState, error) {
+func (ekpgs *ephemeralKeyPairGenerationState) CanTransition() bool {
+	messagingDone := len(receivedMessages[*ephemeralPublicKeyMessage](ekpgs)) ==
+		len(ekpgs.member.group.OperatingMemberIDs())-1
+
+	return ekpgs.action.isDone() && messagingDone
+}
+
+func (ekpgs *ephemeralKeyPairGenerationState) Next() (state.AsyncState, error) {
+	if err := ekpgs.action.error(); err != nil {
+		return nil, err
+	}
+
 	return &symmetricKeyGenerationState{
-		channel:               ekpgs.channel,
-		member:                ekpgs.member.initializeSymmetricKeyGeneration(),
-		previousPhaseMessages: ekpgs.phaseMessages,
+		BaseAsyncState: ekpgs.BaseAsyncState,
+		action:         &stateAction{},
+		channel:        ekpgs.channel,
+		member:         ekpgs.member.initializeSymmetricKeyGeneration(),
 	}, nil
 }
 
@@ -133,39 +81,42 @@ func (ekpgs *ephemeralKeyPairGenerationState) MemberIndex() group.MemberIndex {
 // symmetric keys from the previously exchanged ephemeral public keys.
 // No messages are valid in this state.
 type symmetricKeyGenerationState struct {
+	*state.BaseAsyncState
+
+	action *stateAction
+
 	channel net.BroadcastChannel
 	member  *symmetricKeyGeneratingMember
-
-	previousPhaseMessages []*ephemeralPublicKeyMessage
-}
-
-func (skgs *symmetricKeyGenerationState) DelayBlocks() uint64 {
-	return silentStateDelayBlocks
-}
-
-func (skgs *symmetricKeyGenerationState) ActiveBlocks() uint64 {
-	return silentStateActiveBlocks
 }
 
 func (skgs *symmetricKeyGenerationState) Initiate(ctx context.Context) error {
-	skgs.member.markInactiveMembers(skgs.previousPhaseMessages)
+	skgs.action.run(func() error {
+		return skgs.member.generateSymmetricKeys(
+			receivedMessages[*ephemeralPublicKeyMessage](skgs),
+		)
+	})
 
-	if len(skgs.member.group.InactiveMemberIDs()) > 0 {
-		return newInactiveMembersError(skgs.member.group.InactiveMemberIDs())
-	}
-
-	return skgs.member.generateSymmetricKeys(skgs.previousPhaseMessages)
+	return nil
 }
 
 func (skgs *symmetricKeyGenerationState) Receive(net.Message) error {
 	return nil
 }
 
-func (skgs *symmetricKeyGenerationState) Next() (state.SyncState, error) {
+func (skgs *symmetricKeyGenerationState) CanTransition() bool {
+	return skgs.action.isDone()
+}
+
+func (skgs *symmetricKeyGenerationState) Next() (state.AsyncState, error) {
+	if err := skgs.action.error(); err != nil {
+		return nil, err
+	}
+
 	return &tssRoundOneState{
-		channel:     skgs.channel,
-		member:      skgs.member.initializeTssRoundOne(),
-		outcomeChan: make(chan error),
+		BaseAsyncState: skgs.BaseAsyncState,
+		action:         &stateAction{},
+		channel:        skgs.channel,
+		member:         skgs.member.initializeTssRoundOne(),
 	}, nil
 }
 
@@ -177,72 +128,61 @@ func (skgs *symmetricKeyGenerationState) MemberIndex() group.MemberIndex {
 // round one messages.
 // `tssRoundOneMessage`s are valid in this state.
 type tssRoundOneState struct {
+	*state.BaseAsyncState
+
+	action *stateAction
+
 	channel net.BroadcastChannel
 	member  *tssRoundOneMember
-
-	outcomeChan chan error
-
-	phaseMessages []*tssRoundOneMessage
-}
-
-func (tros *tssRoundOneState) DelayBlocks() uint64 {
-	return tssRoundOneStateDelayBlocks
-}
-
-func (tros *tssRoundOneState) ActiveBlocks() uint64 {
-	return tssRoundOneStateActiveBlocks
 }
 
 func (tros *tssRoundOneState) Initiate(ctx context.Context) error {
-	// TSS computations can be time-consuming and can exceed the current
-	// state's time window. The ctx parameter is scoped to the lifetime of
-	// the current state so, it can be used as a timeout signal. However,
-	// that ctx is cancelled upon state's end only after Initiate returns.
-	// In order to make that working, Initiate must trigger the computations
-	// in a separate goroutine and return before the end of the state.
-	go func() {
+	tros.action.run(func() error {
 		message, err := tros.member.tssRoundOne(ctx)
 		if err != nil {
-			tros.outcomeChan <- err
-			return
+			return err
 		}
 
 		if err := tros.channel.Send(ctx, message); err != nil {
-			tros.outcomeChan <- err
-			return
+			return err
 		}
 
-		close(tros.outcomeChan)
-	}()
+		return nil
+	})
 
 	return nil
 }
 
-func (tros *tssRoundOneState) Receive(msg net.Message) error {
-	switch phaseMessage := msg.Payload().(type) {
-	case *tssRoundOneMessage:
+func (tros *tssRoundOneState) Receive(netMessage net.Message) error {
+	if protocolMessage, ok := netMessage.Payload().(message); ok {
 		if tros.member.shouldAcceptMessage(
-			phaseMessage.SenderID(),
-			msg.SenderPublicKey(),
-		) && tros.member.sessionID == phaseMessage.sessionID {
-			tros.phaseMessages = append(tros.phaseMessages, phaseMessage)
+			protocolMessage.SenderID(),
+			netMessage.SenderPublicKey(),
+		) && tros.member.sessionID == protocolMessage.SessionID() {
+			tros.ReceiveToHistory(netMessage)
 		}
 	}
 
 	return nil
 }
 
-func (tros *tssRoundOneState) Next() (state.SyncState, error) {
-	err := <-tros.outcomeChan
-	if err != nil {
+func (tros *tssRoundOneState) CanTransition() bool {
+	messagingDone := len(receivedMessages[*tssRoundOneMessage](tros)) ==
+		len(tros.member.group.OperatingMemberIDs())-1
+
+	return tros.action.isDone() && messagingDone
+}
+
+func (tros *tssRoundOneState) Next() (state.AsyncState, error) {
+	if err := tros.action.error(); err != nil {
 		return nil, err
 	}
 
 	return &tssRoundTwoState{
-		channel:               tros.channel,
-		member:                tros.member.initializeTssRoundTwo(),
-		outcomeChan:           make(chan error),
-		previousPhaseMessages: tros.phaseMessages,
+		BaseAsyncState: tros.BaseAsyncState,
+		action:         &stateAction{},
+		channel:        tros.channel,
+		member:         tros.member.initializeTssRoundTwo(),
 	}, nil
 }
 
@@ -254,80 +194,64 @@ func (tros *tssRoundOneState) MemberIndex() group.MemberIndex {
 // round two messages.
 // `tssRoundTwoMessage`s are valid in this state.
 type tssRoundTwoState struct {
+	*state.BaseAsyncState
+
+	action *stateAction
+
 	channel net.BroadcastChannel
 	member  *tssRoundTwoMember
-
-	outcomeChan chan error
-
-	previousPhaseMessages []*tssRoundOneMessage
-
-	phaseMessages []*tssRoundTwoMessage
-}
-
-func (trts *tssRoundTwoState) DelayBlocks() uint64 {
-	return tssRoundTwoStateDelayBlocks
-}
-
-func (trts *tssRoundTwoState) ActiveBlocks() uint64 {
-	return tssRoundTwoStateActiveBlocks
 }
 
 func (trts *tssRoundTwoState) Initiate(ctx context.Context) error {
-	trts.member.markInactiveMembers(trts.previousPhaseMessages)
-
-	if len(trts.member.group.InactiveMemberIDs()) > 0 {
-		return newInactiveMembersError(trts.member.group.InactiveMemberIDs())
-	}
-
-	// TSS computations can be time-consuming and can exceed the current
-	// state's time window. The ctx parameter is scoped to the lifetime of
-	// the current state so, it can be used as a timeout signal. However,
-	// that ctx is cancelled upon state's end only after Initiate returns.
-	// In order to make that working, Initiate must trigger the computations
-	// in a separate goroutine and return before the end of the state.
-	go func() {
-		message, err := trts.member.tssRoundTwo(ctx, trts.previousPhaseMessages)
+	trts.action.run(func() error {
+		message, err := trts.member.tssRoundTwo(
+			ctx,
+			receivedMessages[*tssRoundOneMessage](trts),
+		)
 		if err != nil {
-			trts.outcomeChan <- err
-			return
+			return err
 		}
 
 		if err := trts.channel.Send(ctx, message); err != nil {
-			trts.outcomeChan <- err
-			return
+			return err
 		}
 
-		close(trts.outcomeChan)
-	}()
+		return nil
+	})
 
 	return nil
 }
 
-func (trts *tssRoundTwoState) Receive(msg net.Message) error {
-	switch phaseMessage := msg.Payload().(type) {
-	case *tssRoundTwoMessage:
+func (trts *tssRoundTwoState) Receive(netMessage net.Message) error {
+	if protocolMessage, ok := netMessage.Payload().(message); ok {
 		if trts.member.shouldAcceptMessage(
-			phaseMessage.SenderID(),
-			msg.SenderPublicKey(),
-		) && trts.member.sessionID == phaseMessage.sessionID {
-			trts.phaseMessages = append(trts.phaseMessages, phaseMessage)
+			protocolMessage.SenderID(),
+			netMessage.SenderPublicKey(),
+		) && trts.member.sessionID == protocolMessage.SessionID() {
+			trts.ReceiveToHistory(netMessage)
 		}
 	}
 
 	return nil
 }
 
-func (trts *tssRoundTwoState) Next() (state.SyncState, error) {
-	err := <-trts.outcomeChan
-	if err != nil {
+func (trts *tssRoundTwoState) CanTransition() bool {
+	messagingDone := len(receivedMessages[*tssRoundTwoMessage](trts)) ==
+		len(trts.member.group.OperatingMemberIDs())-1
+
+	return trts.action.isDone() && messagingDone
+}
+
+func (trts *tssRoundTwoState) Next() (state.AsyncState, error) {
+	if err := trts.action.error(); err != nil {
 		return nil, err
 	}
 
 	return &tssRoundThreeState{
-		channel:               trts.channel,
-		member:                trts.member.initializeTssRoundThree(),
-		outcomeChan:           make(chan error),
-		previousPhaseMessages: trts.phaseMessages,
+		BaseAsyncState: trts.BaseAsyncState,
+		action:         &stateAction{},
+		channel:        trts.channel,
+		member:         trts.member.initializeTssRoundThree(),
 	}, nil
 }
 
@@ -339,80 +263,64 @@ func (trts *tssRoundTwoState) MemberIndex() group.MemberIndex {
 // round three messages.
 // `tssRoundThreeMessage`s are valid in this state.
 type tssRoundThreeState struct {
+	*state.BaseAsyncState
+
+	action *stateAction
+
 	channel net.BroadcastChannel
 	member  *tssRoundThreeMember
-
-	outcomeChan chan error
-
-	previousPhaseMessages []*tssRoundTwoMessage
-
-	phaseMessages []*tssRoundThreeMessage
-}
-
-func (trts *tssRoundThreeState) DelayBlocks() uint64 {
-	return tssRoundThreeStateDelayBlocks
-}
-
-func (trts *tssRoundThreeState) ActiveBlocks() uint64 {
-	return tssRoundThreeStateActiveBlocks
 }
 
 func (trts *tssRoundThreeState) Initiate(ctx context.Context) error {
-	trts.member.markInactiveMembers(trts.previousPhaseMessages)
-
-	if len(trts.member.group.InactiveMemberIDs()) > 0 {
-		return newInactiveMembersError(trts.member.group.InactiveMemberIDs())
-	}
-
-	// TSS computations can be time-consuming and can exceed the current
-	// state's time window. The ctx parameter is scoped to the lifetime of
-	// the current state so, it can be used as a timeout signal. However,
-	// that ctx is cancelled upon state's end only after Initiate returns.
-	// In order to make that working, Initiate must trigger the computations
-	// in a separate goroutine and return before the end of the state.
-	go func() {
-		message, err := trts.member.tssRoundThree(ctx, trts.previousPhaseMessages)
+	trts.action.run(func() error {
+		message, err := trts.member.tssRoundThree(
+			ctx,
+			receivedMessages[*tssRoundTwoMessage](trts),
+		)
 		if err != nil {
-			trts.outcomeChan <- err
-			return
+			return err
 		}
 
 		if err := trts.channel.Send(ctx, message); err != nil {
-			trts.outcomeChan <- err
-			return
+			return err
 		}
 
-		close(trts.outcomeChan)
-	}()
+		return nil
+	})
 
 	return nil
 }
 
-func (trts *tssRoundThreeState) Receive(msg net.Message) error {
-	switch phaseMessage := msg.Payload().(type) {
-	case *tssRoundThreeMessage:
+func (trts *tssRoundThreeState) Receive(netMessage net.Message) error {
+	if protocolMessage, ok := netMessage.Payload().(message); ok {
 		if trts.member.shouldAcceptMessage(
-			phaseMessage.SenderID(),
-			msg.SenderPublicKey(),
-		) && trts.member.sessionID == phaseMessage.sessionID {
-			trts.phaseMessages = append(trts.phaseMessages, phaseMessage)
+			protocolMessage.SenderID(),
+			netMessage.SenderPublicKey(),
+		) && trts.member.sessionID == protocolMessage.SessionID() {
+			trts.ReceiveToHistory(netMessage)
 		}
 	}
 
 	return nil
 }
 
-func (trts *tssRoundThreeState) Next() (state.SyncState, error) {
-	err := <-trts.outcomeChan
-	if err != nil {
+func (trts *tssRoundThreeState) CanTransition() bool {
+	messagingDone := len(receivedMessages[*tssRoundThreeMessage](trts)) ==
+		len(trts.member.group.OperatingMemberIDs())-1
+
+	return trts.action.isDone() && messagingDone
+}
+
+func (trts *tssRoundThreeState) Next() (state.AsyncState, error) {
+	if err := trts.action.error(); err != nil {
 		return nil, err
 	}
 
 	return &tssRoundFourState{
-		channel:               trts.channel,
-		member:                trts.member.initializeTssRoundFour(),
-		outcomeChan:           make(chan error),
-		previousPhaseMessages: trts.phaseMessages,
+		BaseAsyncState: trts.BaseAsyncState,
+		action:         &stateAction{},
+		channel:        trts.channel,
+		member:         trts.member.initializeTssRoundFour(),
 	}, nil
 }
 
@@ -424,80 +332,64 @@ func (trts *tssRoundThreeState) MemberIndex() group.MemberIndex {
 // round four messages.
 // `tssRoundFourMessage`s are valid in this state.
 type tssRoundFourState struct {
+	*state.BaseAsyncState
+
+	action *stateAction
+
 	channel net.BroadcastChannel
 	member  *tssRoundFourMember
-
-	outcomeChan chan error
-
-	previousPhaseMessages []*tssRoundThreeMessage
-
-	phaseMessages []*tssRoundFourMessage
-}
-
-func (trfs *tssRoundFourState) DelayBlocks() uint64 {
-	return tssRoundFourStateDelayBlocks
-}
-
-func (trfs *tssRoundFourState) ActiveBlocks() uint64 {
-	return tssRoundFourStateActiveBlocks
 }
 
 func (trfs *tssRoundFourState) Initiate(ctx context.Context) error {
-	trfs.member.markInactiveMembers(trfs.previousPhaseMessages)
-
-	if len(trfs.member.group.InactiveMemberIDs()) > 0 {
-		return newInactiveMembersError(trfs.member.group.InactiveMemberIDs())
-	}
-
-	// TSS computations can be time-consuming and can exceed the current
-	// state's time window. The ctx parameter is scoped to the lifetime of
-	// the current state so, it can be used as a timeout signal. However,
-	// that ctx is cancelled upon state's end only after Initiate returns.
-	// In order to make that working, Initiate must trigger the computations
-	// in a separate goroutine and return before the end of the state.
-	go func() {
-		message, err := trfs.member.tssRoundFour(ctx, trfs.previousPhaseMessages)
+	trfs.action.run(func() error {
+		message, err := trfs.member.tssRoundFour(
+			ctx,
+			receivedMessages[*tssRoundThreeMessage](trfs),
+		)
 		if err != nil {
-			trfs.outcomeChan <- err
-			return
+			return err
 		}
 
 		if err := trfs.channel.Send(ctx, message); err != nil {
-			trfs.outcomeChan <- err
-			return
+			return err
 		}
 
-		close(trfs.outcomeChan)
-	}()
+		return nil
+	})
 
 	return nil
 }
 
-func (trfs *tssRoundFourState) Receive(msg net.Message) error {
-	switch phaseMessage := msg.Payload().(type) {
-	case *tssRoundFourMessage:
+func (trfs *tssRoundFourState) Receive(netMessage net.Message) error {
+	if protocolMessage, ok := netMessage.Payload().(message); ok {
 		if trfs.member.shouldAcceptMessage(
-			phaseMessage.SenderID(),
-			msg.SenderPublicKey(),
-		) && trfs.member.sessionID == phaseMessage.sessionID {
-			trfs.phaseMessages = append(trfs.phaseMessages, phaseMessage)
+			protocolMessage.SenderID(),
+			netMessage.SenderPublicKey(),
+		) && trfs.member.sessionID == protocolMessage.SessionID() {
+			trfs.ReceiveToHistory(netMessage)
 		}
 	}
 
 	return nil
 }
 
-func (trfs *tssRoundFourState) Next() (state.SyncState, error) {
-	err := <-trfs.outcomeChan
-	if err != nil {
+func (trfs *tssRoundFourState) CanTransition() bool {
+	messagingDone := len(receivedMessages[*tssRoundFourMessage](trfs)) ==
+		len(trfs.member.group.OperatingMemberIDs())-1
+
+	return trfs.action.isDone() && messagingDone
+}
+
+func (trfs *tssRoundFourState) Next() (state.AsyncState, error) {
+	if err := trfs.action.error(); err != nil {
 		return nil, err
 	}
 
 	return &tssRoundFiveState{
-		channel:               trfs.channel,
-		member:                trfs.member.initializeTssRoundFive(),
-		outcomeChan:           make(chan error),
-		previousPhaseMessages: trfs.phaseMessages,
+		BaseAsyncState: trfs.BaseAsyncState,
+		action:         &stateAction{},
+		channel:        trfs.channel,
+		member:         trfs.member.initializeTssRoundFive(),
 	}, nil
 }
 
@@ -509,80 +401,64 @@ func (trfs *tssRoundFourState) MemberIndex() group.MemberIndex {
 // round five messages.
 // `tssRoundFiveMessage`s are valid in this state.
 type tssRoundFiveState struct {
+	*state.BaseAsyncState
+
+	action *stateAction
+
 	channel net.BroadcastChannel
 	member  *tssRoundFiveMember
-
-	outcomeChan chan error
-
-	previousPhaseMessages []*tssRoundFourMessage
-
-	phaseMessages []*tssRoundFiveMessage
-}
-
-func (trfs *tssRoundFiveState) DelayBlocks() uint64 {
-	return tssRoundFiveStateDelayBlocks
-}
-
-func (trfs *tssRoundFiveState) ActiveBlocks() uint64 {
-	return tssRoundFiveStateActiveBlocks
 }
 
 func (trfs *tssRoundFiveState) Initiate(ctx context.Context) error {
-	trfs.member.markInactiveMembers(trfs.previousPhaseMessages)
-
-	if len(trfs.member.group.InactiveMemberIDs()) > 0 {
-		return newInactiveMembersError(trfs.member.group.InactiveMemberIDs())
-	}
-
-	// TSS computations can be time-consuming and can exceed the current
-	// state's time window. The ctx parameter is scoped to the lifetime of
-	// the current state so, it can be used as a timeout signal. However,
-	// that ctx is cancelled upon state's end only after Initiate returns.
-	// In order to make that working, Initiate must trigger the computations
-	// in a separate goroutine and return before the end of the state.
-	go func() {
-		message, err := trfs.member.tssRoundFive(ctx, trfs.previousPhaseMessages)
+	trfs.action.run(func() error {
+		message, err := trfs.member.tssRoundFive(
+			ctx,
+			receivedMessages[*tssRoundFourMessage](trfs),
+		)
 		if err != nil {
-			trfs.outcomeChan <- err
-			return
+			return err
 		}
 
 		if err := trfs.channel.Send(ctx, message); err != nil {
-			trfs.outcomeChan <- err
-			return
+			return err
 		}
 
-		close(trfs.outcomeChan)
-	}()
+		return nil
+	})
 
 	return nil
 }
 
-func (trfs *tssRoundFiveState) Receive(msg net.Message) error {
-	switch phaseMessage := msg.Payload().(type) {
-	case *tssRoundFiveMessage:
+func (trfs *tssRoundFiveState) Receive(netMessage net.Message) error {
+	if protocolMessage, ok := netMessage.Payload().(message); ok {
 		if trfs.member.shouldAcceptMessage(
-			phaseMessage.SenderID(),
-			msg.SenderPublicKey(),
-		) && trfs.member.sessionID == phaseMessage.sessionID {
-			trfs.phaseMessages = append(trfs.phaseMessages, phaseMessage)
+			protocolMessage.SenderID(),
+			netMessage.SenderPublicKey(),
+		) && trfs.member.sessionID == protocolMessage.SessionID() {
+			trfs.ReceiveToHistory(netMessage)
 		}
 	}
 
 	return nil
 }
 
-func (trfs *tssRoundFiveState) Next() (state.SyncState, error) {
-	err := <-trfs.outcomeChan
-	if err != nil {
+func (trfs *tssRoundFiveState) CanTransition() bool {
+	messagingDone := len(receivedMessages[*tssRoundFiveMessage](trfs)) ==
+		len(trfs.member.group.OperatingMemberIDs())-1
+
+	return trfs.action.isDone() && messagingDone
+}
+
+func (trfs *tssRoundFiveState) Next() (state.AsyncState, error) {
+	if err := trfs.action.error(); err != nil {
 		return nil, err
 	}
 
 	return &tssRoundSixState{
-		channel:               trfs.channel,
-		member:                trfs.member.initializeTssRoundSix(),
-		outcomeChan:           make(chan error),
-		previousPhaseMessages: trfs.phaseMessages,
+		BaseAsyncState: trfs.BaseAsyncState,
+		action:         &stateAction{},
+		channel:        trfs.channel,
+		member:         trfs.member.initializeTssRoundSix(),
 	}, nil
 }
 
@@ -594,80 +470,64 @@ func (trfs *tssRoundFiveState) MemberIndex() group.MemberIndex {
 // round six messages.
 // `tssRoundSixMessage`s are valid in this state.
 type tssRoundSixState struct {
+	*state.BaseAsyncState
+
+	action *stateAction
+
 	channel net.BroadcastChannel
 	member  *tssRoundSixMember
-
-	outcomeChan chan error
-
-	previousPhaseMessages []*tssRoundFiveMessage
-
-	phaseMessages []*tssRoundSixMessage
-}
-
-func (trss *tssRoundSixState) DelayBlocks() uint64 {
-	return tssRoundSixStateDelayBlocks
-}
-
-func (trss *tssRoundSixState) ActiveBlocks() uint64 {
-	return tssRoundSixStateActiveBlocks
 }
 
 func (trss *tssRoundSixState) Initiate(ctx context.Context) error {
-	trss.member.markInactiveMembers(trss.previousPhaseMessages)
-
-	if len(trss.member.group.InactiveMemberIDs()) > 0 {
-		return newInactiveMembersError(trss.member.group.InactiveMemberIDs())
-	}
-
-	// TSS computations can be time-consuming and can exceed the current
-	// state's time window. The ctx parameter is scoped to the lifetime of
-	// the current state so, it can be used as a timeout signal. However,
-	// that ctx is cancelled upon state's end only after Initiate returns.
-	// In order to make that working, Initiate must trigger the computations
-	// in a separate goroutine and return before the end of the state.
-	go func() {
-		message, err := trss.member.tssRoundSix(ctx, trss.previousPhaseMessages)
+	trss.action.run(func() error {
+		message, err := trss.member.tssRoundSix(
+			ctx,
+			receivedMessages[*tssRoundFiveMessage](trss),
+		)
 		if err != nil {
-			trss.outcomeChan <- err
-			return
+			return err
 		}
 
 		if err := trss.channel.Send(ctx, message); err != nil {
-			trss.outcomeChan <- err
-			return
+			return err
 		}
 
-		close(trss.outcomeChan)
-	}()
+		return nil
+	})
 
 	return nil
 }
 
-func (trss *tssRoundSixState) Receive(msg net.Message) error {
-	switch phaseMessage := msg.Payload().(type) {
-	case *tssRoundSixMessage:
+func (trss *tssRoundSixState) Receive(netMessage net.Message) error {
+	if protocolMessage, ok := netMessage.Payload().(message); ok {
 		if trss.member.shouldAcceptMessage(
-			phaseMessage.SenderID(),
-			msg.SenderPublicKey(),
-		) && trss.member.sessionID == phaseMessage.sessionID {
-			trss.phaseMessages = append(trss.phaseMessages, phaseMessage)
+			protocolMessage.SenderID(),
+			netMessage.SenderPublicKey(),
+		) && trss.member.sessionID == protocolMessage.SessionID() {
+			trss.ReceiveToHistory(netMessage)
 		}
 	}
 
 	return nil
 }
 
-func (trss *tssRoundSixState) Next() (state.SyncState, error) {
-	err := <-trss.outcomeChan
-	if err != nil {
+func (trss *tssRoundSixState) CanTransition() bool {
+	messagingDone := len(receivedMessages[*tssRoundSixMessage](trss)) ==
+		len(trss.member.group.OperatingMemberIDs())-1
+
+	return trss.action.isDone() && messagingDone
+}
+
+func (trss *tssRoundSixState) Next() (state.AsyncState, error) {
+	if err := trss.action.error(); err != nil {
 		return nil, err
 	}
 
 	return &tssRoundSevenState{
-		channel:               trss.channel,
-		member:                trss.member.initializeTssRoundSeven(),
-		outcomeChan:           make(chan error),
-		previousPhaseMessages: trss.phaseMessages,
+		BaseAsyncState: trss.BaseAsyncState,
+		action:         &stateAction{},
+		channel:        trss.channel,
+		member:         trss.member.initializeTssRoundSeven(),
 	}, nil
 }
 
@@ -679,80 +539,64 @@ func (trss *tssRoundSixState) MemberIndex() group.MemberIndex {
 // round seven messages.
 // `tssRoundSevenMessage`s are valid in this state.
 type tssRoundSevenState struct {
+	*state.BaseAsyncState
+
+	action *stateAction
+
 	channel net.BroadcastChannel
 	member  *tssRoundSevenMember
-
-	outcomeChan chan error
-
-	previousPhaseMessages []*tssRoundSixMessage
-
-	phaseMessages []*tssRoundSevenMessage
-}
-
-func (trss *tssRoundSevenState) DelayBlocks() uint64 {
-	return tssRoundSevenStateDelayBlocks
-}
-
-func (trss *tssRoundSevenState) ActiveBlocks() uint64 {
-	return tssRoundSevenStateActiveBlocks
 }
 
 func (trss *tssRoundSevenState) Initiate(ctx context.Context) error {
-	trss.member.markInactiveMembers(trss.previousPhaseMessages)
-
-	if len(trss.member.group.InactiveMemberIDs()) > 0 {
-		return newInactiveMembersError(trss.member.group.InactiveMemberIDs())
-	}
-
-	// TSS computations can be time-consuming and can exceed the current
-	// state's time window. The ctx parameter is scoped to the lifetime of
-	// the current state so, it can be used as a timeout signal. However,
-	// that ctx is cancelled upon state's end only after Initiate returns.
-	// In order to make that working, Initiate must trigger the computations
-	// in a separate goroutine and return before the end of the state.
-	go func() {
-		message, err := trss.member.tssRoundSeven(ctx, trss.previousPhaseMessages)
+	trss.action.run(func() error {
+		message, err := trss.member.tssRoundSeven(
+			ctx,
+			receivedMessages[*tssRoundSixMessage](trss),
+		)
 		if err != nil {
-			trss.outcomeChan <- err
-			return
+			return err
 		}
 
 		if err := trss.channel.Send(ctx, message); err != nil {
-			trss.outcomeChan <- err
-			return
+			return err
 		}
 
-		close(trss.outcomeChan)
-	}()
+		return nil
+	})
 
 	return nil
 }
 
-func (trss *tssRoundSevenState) Receive(msg net.Message) error {
-	switch phaseMessage := msg.Payload().(type) {
-	case *tssRoundSevenMessage:
+func (trss *tssRoundSevenState) Receive(netMessage net.Message) error {
+	if protocolMessage, ok := netMessage.Payload().(message); ok {
 		if trss.member.shouldAcceptMessage(
-			phaseMessage.SenderID(),
-			msg.SenderPublicKey(),
-		) && trss.member.sessionID == phaseMessage.sessionID {
-			trss.phaseMessages = append(trss.phaseMessages, phaseMessage)
+			protocolMessage.SenderID(),
+			netMessage.SenderPublicKey(),
+		) && trss.member.sessionID == protocolMessage.SessionID() {
+			trss.ReceiveToHistory(netMessage)
 		}
 	}
 
 	return nil
 }
 
-func (trss *tssRoundSevenState) Next() (state.SyncState, error) {
-	err := <-trss.outcomeChan
-	if err != nil {
+func (trss *tssRoundSevenState) CanTransition() bool {
+	messagingDone := len(receivedMessages[*tssRoundSevenMessage](trss)) ==
+		len(trss.member.group.OperatingMemberIDs())-1
+
+	return trss.action.isDone() && messagingDone
+}
+
+func (trss *tssRoundSevenState) Next() (state.AsyncState, error) {
+	if err := trss.action.error(); err != nil {
 		return nil, err
 	}
 
 	return &tssRoundEightState{
-		channel:               trss.channel,
-		member:                trss.member.initializeTssRoundEight(),
-		outcomeChan:           make(chan error),
-		previousPhaseMessages: trss.phaseMessages,
+		BaseAsyncState: trss.BaseAsyncState,
+		action:         &stateAction{},
+		channel:        trss.channel,
+		member:         trss.member.initializeTssRoundEight(),
 	}, nil
 }
 
@@ -764,80 +608,64 @@ func (trss *tssRoundSevenState) MemberIndex() group.MemberIndex {
 // round eight messages.
 // `tssRoundEightMessage`s are valid in this state.
 type tssRoundEightState struct {
+	*state.BaseAsyncState
+
+	action *stateAction
+
 	channel net.BroadcastChannel
 	member  *tssRoundEightMember
-
-	outcomeChan chan error
-
-	previousPhaseMessages []*tssRoundSevenMessage
-
-	phaseMessages []*tssRoundEightMessage
-}
-
-func (tres *tssRoundEightState) DelayBlocks() uint64 {
-	return tssRoundEightStateDelayBlocks
-}
-
-func (tres *tssRoundEightState) ActiveBlocks() uint64 {
-	return tssRoundEightStateActiveBlocks
 }
 
 func (tres *tssRoundEightState) Initiate(ctx context.Context) error {
-	tres.member.markInactiveMembers(tres.previousPhaseMessages)
-
-	if len(tres.member.group.InactiveMemberIDs()) > 0 {
-		return newInactiveMembersError(tres.member.group.InactiveMemberIDs())
-	}
-
-	// TSS computations can be time-consuming and can exceed the current
-	// state's time window. The ctx parameter is scoped to the lifetime of
-	// the current state so, it can be used as a timeout signal. However,
-	// that ctx is cancelled upon state's end only after Initiate returns.
-	// In order to make that working, Initiate must trigger the computations
-	// in a separate goroutine and return before the end of the state.
-	go func() {
-		message, err := tres.member.tssRoundEight(ctx, tres.previousPhaseMessages)
+	tres.action.run(func() error {
+		message, err := tres.member.tssRoundEight(
+			ctx,
+			receivedMessages[*tssRoundSevenMessage](tres),
+		)
 		if err != nil {
-			tres.outcomeChan <- err
-			return
+			return err
 		}
 
 		if err := tres.channel.Send(ctx, message); err != nil {
-			tres.outcomeChan <- err
-			return
+			return err
 		}
 
-		close(tres.outcomeChan)
-	}()
+		return nil
+	})
 
 	return nil
 }
 
-func (tres *tssRoundEightState) Receive(msg net.Message) error {
-	switch phaseMessage := msg.Payload().(type) {
-	case *tssRoundEightMessage:
+func (tres *tssRoundEightState) Receive(netMessage net.Message) error {
+	if protocolMessage, ok := netMessage.Payload().(message); ok {
 		if tres.member.shouldAcceptMessage(
-			phaseMessage.SenderID(),
-			msg.SenderPublicKey(),
-		) && tres.member.sessionID == phaseMessage.sessionID {
-			tres.phaseMessages = append(tres.phaseMessages, phaseMessage)
+			protocolMessage.SenderID(),
+			netMessage.SenderPublicKey(),
+		) && tres.member.sessionID == protocolMessage.SessionID() {
+			tres.ReceiveToHistory(netMessage)
 		}
 	}
 
 	return nil
 }
 
-func (tres *tssRoundEightState) Next() (state.SyncState, error) {
-	err := <-tres.outcomeChan
-	if err != nil {
+func (tres *tssRoundEightState) CanTransition() bool {
+	messagingDone := len(receivedMessages[*tssRoundEightMessage](tres)) ==
+		len(tres.member.group.OperatingMemberIDs())-1
+
+	return tres.action.isDone() && messagingDone
+}
+
+func (tres *tssRoundEightState) Next() (state.AsyncState, error) {
+	if err := tres.action.error(); err != nil {
 		return nil, err
 	}
 
 	return &tssRoundNineState{
-		channel:               tres.channel,
-		member:                tres.member.initializeTssRoundNine(),
-		outcomeChan:           make(chan error),
-		previousPhaseMessages: tres.phaseMessages,
+		BaseAsyncState: tres.BaseAsyncState,
+		action:         &stateAction{},
+		channel:        tres.channel,
+		member:         tres.member.initializeTssRoundNine(),
 	}, nil
 }
 
@@ -849,80 +677,64 @@ func (tres *tssRoundEightState) MemberIndex() group.MemberIndex {
 // round nine messages.
 // `tssRoundNineMessage`s are valid in this state.
 type tssRoundNineState struct {
+	*state.BaseAsyncState
+
+	action *stateAction
+
 	channel net.BroadcastChannel
 	member  *tssRoundNineMember
-
-	outcomeChan chan error
-
-	previousPhaseMessages []*tssRoundEightMessage
-
-	phaseMessages []*tssRoundNineMessage
-}
-
-func (trns *tssRoundNineState) DelayBlocks() uint64 {
-	return tssRoundNineStateDelayBlocks
-}
-
-func (trns *tssRoundNineState) ActiveBlocks() uint64 {
-	return tssRoundNineStateActiveBlocks
 }
 
 func (trns *tssRoundNineState) Initiate(ctx context.Context) error {
-	trns.member.markInactiveMembers(trns.previousPhaseMessages)
-
-	if len(trns.member.group.InactiveMemberIDs()) > 0 {
-		return newInactiveMembersError(trns.member.group.InactiveMemberIDs())
-	}
-
-	// TSS computations can be time-consuming and can exceed the current
-	// state's time window. The ctx parameter is scoped to the lifetime of
-	// the current state so, it can be used as a timeout signal. However,
-	// that ctx is cancelled upon state's end only after Initiate returns.
-	// In order to make that working, Initiate must trigger the computations
-	// in a separate goroutine and return before the end of the state.
-	go func() {
-		message, err := trns.member.tssRoundNine(ctx, trns.previousPhaseMessages)
+	trns.action.run(func() error {
+		message, err := trns.member.tssRoundNine(
+			ctx,
+			receivedMessages[*tssRoundEightMessage](trns),
+		)
 		if err != nil {
-			trns.outcomeChan <- err
-			return
+			return err
 		}
 
 		if err := trns.channel.Send(ctx, message); err != nil {
-			trns.outcomeChan <- err
-			return
+			return err
 		}
 
-		close(trns.outcomeChan)
-	}()
+		return nil
+	})
 
 	return nil
 }
 
-func (trns *tssRoundNineState) Receive(msg net.Message) error {
-	switch phaseMessage := msg.Payload().(type) {
-	case *tssRoundNineMessage:
+func (trns *tssRoundNineState) Receive(netMessage net.Message) error {
+	if protocolMessage, ok := netMessage.Payload().(message); ok {
 		if trns.member.shouldAcceptMessage(
-			phaseMessage.SenderID(),
-			msg.SenderPublicKey(),
-		) && trns.member.sessionID == phaseMessage.sessionID {
-			trns.phaseMessages = append(trns.phaseMessages, phaseMessage)
+			protocolMessage.SenderID(),
+			netMessage.SenderPublicKey(),
+		) && trns.member.sessionID == protocolMessage.SessionID() {
+			trns.ReceiveToHistory(netMessage)
 		}
 	}
 
 	return nil
 }
 
-func (trns *tssRoundNineState) Next() (state.SyncState, error) {
-	err := <-trns.outcomeChan
-	if err != nil {
+func (trns *tssRoundNineState) CanTransition() bool {
+	messagingDone := len(receivedMessages[*tssRoundNineMessage](trns)) ==
+		len(trns.member.group.OperatingMemberIDs())-1
+
+	return trns.action.isDone() && messagingDone
+}
+
+func (trns *tssRoundNineState) Next() (state.AsyncState, error) {
+	if err := trns.action.error(); err != nil {
 		return nil, err
 	}
 
 	return &finalizationState{
-		channel:               trns.channel,
-		member:                trns.member.initializeFinalization(),
-		outcomeChan:           make(chan error),
-		previousPhaseMessages: trns.phaseMessages,
+		BaseAsyncState: trns.BaseAsyncState,
+		action:         &stateAction{},
+		channel:        trns.channel,
+		member:         trns.member.initializeFinalization(),
 	}, nil
 }
 
@@ -935,44 +747,26 @@ func (trns *tssRoundNineState) MemberIndex() group.MemberIndex {
 //
 // State prepares a result that is returned to the caller.
 type finalizationState struct {
+	*state.BaseAsyncState
+
+	action *stateAction
+
 	channel net.BroadcastChannel
 	member  *finalizingMember
-
-	outcomeChan chan error
-
-	previousPhaseMessages []*tssRoundNineMessage
-}
-
-func (fs *finalizationState) DelayBlocks() uint64 {
-	return finalizationStateDelayBlocks
-}
-
-func (fs *finalizationState) ActiveBlocks() uint64 {
-	return finalizationStateActiveBlocks
 }
 
 func (fs *finalizationState) Initiate(ctx context.Context) error {
-	fs.member.markInactiveMembers(fs.previousPhaseMessages)
-
-	if len(fs.member.group.InactiveMemberIDs()) > 0 {
-		return newInactiveMembersError(fs.member.group.InactiveMemberIDs())
-	}
-
-	// TSS computations can be time-consuming and can exceed the current
-	// state's time window. The ctx parameter is scoped to the lifetime of
-	// the current state so, it can be used as a timeout signal. However,
-	// that ctx is cancelled upon state's end only after Initiate returns.
-	// In order to make that working, Initiate must trigger the computations
-	// in a separate goroutine and return before the end of the state.
-	go func() {
-		err := fs.member.tssFinalize(ctx, fs.previousPhaseMessages)
+	fs.action.run(func() error {
+		err := fs.member.tssFinalize(
+			ctx,
+			receivedMessages[*tssRoundNineMessage](fs),
+		)
 		if err != nil {
-			fs.outcomeChan <- err
-			return
+			return err
 		}
 
-		close(fs.outcomeChan)
-	}()
+		return nil
+	})
 
 	return nil
 }
@@ -981,9 +775,12 @@ func (fs *finalizationState) Receive(net.Message) error {
 	return nil
 }
 
-func (fs *finalizationState) Next() (state.SyncState, error) {
-	err := <-fs.outcomeChan
-	if err != nil {
+func (fs *finalizationState) CanTransition() bool {
+	return fs.action.isDone()
+}
+
+func (fs *finalizationState) Next() (state.AsyncState, error) {
+	if err := fs.action.error(); err != nil {
 		return nil, err
 	}
 
@@ -996,4 +793,100 @@ func (fs *finalizationState) MemberIndex() group.MemberIndex {
 
 func (fs *finalizationState) result() *Result {
 	return fs.member.Result()
+}
+
+// stateAction represents an asynchronous action performed in the given
+// protocol state.
+type stateAction struct {
+	mutex   sync.RWMutex
+	running bool
+	done    bool
+	err     error
+}
+
+// run triggers the action goroutine. Can be called only once. Successive
+// calls do nothing.
+func (sa *stateAction) run(actionFn func() error) {
+	sa.mutex.Lock()
+	defer sa.mutex.Unlock()
+
+	if sa.running || sa.done {
+		return
+	}
+
+	sa.running = true
+
+	go func() {
+		err := actionFn()
+
+		sa.mutex.Lock()
+
+		sa.running = false
+		sa.done = true
+		sa.err = err
+
+		sa.mutex.Unlock()
+	}()
+}
+
+// isDone returns whether the state's action is done.
+func (sa *stateAction) isDone() bool {
+	sa.mutex.RLock()
+	defer sa.mutex.RUnlock()
+	return sa.done
+}
+
+// error returns the state's action error if any. Calling this function makes
+// sense only when the action is done, i.e. the isDone function returns true.
+// After this function returns a non-nil error, successive calls return the
+// same error.
+func (sa *stateAction) error() error {
+	sa.mutex.RLock()
+	defer sa.mutex.RUnlock()
+	return sa.err
+}
+
+// messageReceiverState is a type constraint that refers to a state which is
+// supposed to receive network messages.
+type messageReceiverState interface {
+	GetAllReceivedMessages(messageType string) []net.Message
+}
+
+// receivedMessages returns all messages of type T that have been received
+// and validated so far. Returned messages are deduplicated so there is a
+// guarantee that only one message of the given type is returned for the
+// given sender.
+func receivedMessages[T message, S messageReceiverState](state S) []T {
+	var template T
+
+	payloads := make([]T, 0)
+	for _, msg := range state.GetAllReceivedMessages(template.Type()) {
+		payload, ok := msg.Payload().(T)
+		if !ok {
+			continue
+		}
+
+		payloads = append(payloads, payload)
+	}
+
+	return deduplicateBySender(payloads)
+}
+
+// deduplicateBySender removes duplicated items for the given sender.
+// It always takes the first item that occurs for the given sender
+// and ignores the subsequent ones.
+func deduplicateBySender[T interface{ SenderID() group.MemberIndex }](
+	list []T,
+) []T {
+	senders := make(map[group.MemberIndex]bool)
+	result := make([]T, 0)
+
+	for _, item := range list {
+		if _, exists := senders[item.SenderID()]; !exists {
+			senders[item.SenderID()] = true
+			result = append(result, item)
+		}
+	}
+
+	return result
 }

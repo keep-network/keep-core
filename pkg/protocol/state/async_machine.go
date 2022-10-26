@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/ipfs/go-log"
+	"github.com/ipfs/go-log/v2"
 	"github.com/keep-network/keep-core/pkg/net"
 )
 
@@ -131,6 +131,8 @@ func (am *AsyncMachine) Execute() (AsyncState, error) {
 			if err != nil {
 				return nil, err
 			}
+		case <-am.ctx.Done():
+			return nil, am.ctx.Err()
 		}
 	}
 }

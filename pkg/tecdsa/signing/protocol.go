@@ -52,7 +52,7 @@ func (ekpgm *ephemeralKeyPairGeneratingMember) generateEphemeralKeyPair() (
 func (skgm *symmetricKeyGeneratingMember) generateSymmetricKeys(
 	ephemeralPubKeyMessages []*ephemeralPublicKeyMessage,
 ) error {
-	for _, ephemeralPubKeyMessage := range deduplicateBySender(ephemeralPubKeyMessages) {
+	for _, ephemeralPubKeyMessage := range ephemeralPubKeyMessages {
 		otherMember := ephemeralPubKeyMessage.senderID
 
 		if !skgm.isValidEphemeralPublicKeyMessage(ephemeralPubKeyMessage) {
@@ -185,7 +185,7 @@ func (trtm *tssRoundTwoMember) tssRoundTwo(
 ) (*tssRoundTwoMessage, error) {
 	// Use messages from round one to update the local party and advance
 	// to round two.
-	for _, tssRoundOneMessage := range deduplicateBySender(tssRoundOneMessages) {
+	for _, tssRoundOneMessage := range tssRoundOneMessages {
 		senderID := tssRoundOneMessage.SenderID()
 		senderTssPartyID := common.ResolveSortedTssPartyID(
 			trtm.tssParameters,
@@ -309,7 +309,7 @@ func (trtm *tssRoundThreeMember) tssRoundThree(
 ) (*tssRoundThreeMessage, error) {
 	// Use messages from round two to update the local party and advance
 	// to round three.
-	for _, tssRoundTwoMessage := range deduplicateBySender(tssRoundTwoMessages) {
+	for _, tssRoundTwoMessage := range tssRoundTwoMessages {
 		senderID := tssRoundTwoMessage.SenderID()
 		senderTssPartyID := common.ResolveSortedTssPartyID(
 			trtm.tssParameters,
@@ -393,7 +393,7 @@ func (trfm *tssRoundFourMember) tssRoundFour(
 ) (*tssRoundFourMessage, error) {
 	// Use messages from round three to update the local party and advance
 	// to round four.
-	for _, tssRoundThreeMessage := range deduplicateBySender(tssRoundThreeMessages) {
+	for _, tssRoundThreeMessage := range tssRoundThreeMessages {
 		senderID := tssRoundThreeMessage.SenderID()
 
 		_, tssErr := trfm.tssParty.UpdateFromBytes(
@@ -446,7 +446,7 @@ func (trfm *tssRoundFiveMember) tssRoundFive(
 ) (*tssRoundFiveMessage, error) {
 	// Use messages from round four to update the local party and advance
 	// to round five.
-	for _, tssRoundFourMessage := range deduplicateBySender(tssRoundFourMessages) {
+	for _, tssRoundFourMessage := range tssRoundFourMessages {
 		senderID := tssRoundFourMessage.SenderID()
 
 		_, tssErr := trfm.tssParty.UpdateFromBytes(
@@ -499,7 +499,7 @@ func (trsm *tssRoundSixMember) tssRoundSix(
 ) (*tssRoundSixMessage, error) {
 	// Use messages from round five to update the local party and advance
 	// to round six.
-	for _, tssRoundFiveMessage := range deduplicateBySender(tssRoundFiveMessages) {
+	for _, tssRoundFiveMessage := range tssRoundFiveMessages {
 		senderID := tssRoundFiveMessage.SenderID()
 
 		_, tssErr := trsm.tssParty.UpdateFromBytes(
@@ -552,7 +552,7 @@ func (trsm *tssRoundSevenMember) tssRoundSeven(
 ) (*tssRoundSevenMessage, error) {
 	// Use messages from round six to update the local party and advance
 	// to round seven.
-	for _, tssRoundSixMessage := range deduplicateBySender(tssRoundSixMessages) {
+	for _, tssRoundSixMessage := range tssRoundSixMessages {
 		senderID := tssRoundSixMessage.SenderID()
 
 		_, tssErr := trsm.tssParty.UpdateFromBytes(
@@ -605,7 +605,7 @@ func (trem *tssRoundEightMember) tssRoundEight(
 ) (*tssRoundEightMessage, error) {
 	// Use messages from round seven to update the local party and advance
 	// to round eight.
-	for _, tssRoundSevenMessage := range deduplicateBySender(tssRoundSevenMessages) {
+	for _, tssRoundSevenMessage := range tssRoundSevenMessages {
 		senderID := tssRoundSevenMessage.SenderID()
 
 		_, tssErr := trem.tssParty.UpdateFromBytes(
@@ -658,7 +658,7 @@ func (trnm *tssRoundNineMember) tssRoundNine(
 ) (*tssRoundNineMessage, error) {
 	// Use messages from round eight to update the local party and advance
 	// to round nine.
-	for _, tssRoundEightMessage := range deduplicateBySender(tssRoundEightMessages) {
+	for _, tssRoundEightMessage := range tssRoundEightMessages {
 		senderID := tssRoundEightMessage.SenderID()
 
 		_, tssErr := trnm.tssParty.UpdateFromBytes(
@@ -710,7 +710,7 @@ func (fm *finalizingMember) tssFinalize(
 ) error {
 	// Use messages from round nine to update the local party and get the
 	// result.
-	for _, tssRoundNineMessage := range deduplicateBySender(tssRoundNineMessages) {
+	for _, tssRoundNineMessage := range tssRoundNineMessages {
 		senderID := tssRoundNineMessage.SenderID()
 
 		_, tssErr := fm.tssParty.UpdateFromBytes(
@@ -741,23 +741,4 @@ func (fm *finalizingMember) tssFinalize(
 			"TSS result was not generated on time",
 		)
 	}
-}
-
-// deduplicateBySender removes duplicated items for the given sender.
-// It always takes the first item that occurs for the given sender
-// and ignores the subsequent ones.
-func deduplicateBySender[T interface{ SenderID() group.MemberIndex }](
-	list []T,
-) []T {
-	senders := make(map[group.MemberIndex]bool)
-	result := make([]T, 0)
-
-	for _, item := range list {
-		if _, exists := senders[item.SenderID()]; !exists {
-			senders[item.SenderID()] = true
-			result = append(result, item)
-		}
-	}
-
-	return result
 }

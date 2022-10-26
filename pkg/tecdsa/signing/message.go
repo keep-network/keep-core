@@ -7,6 +7,16 @@ import (
 
 const messageTypePrefix = "tecdsa_signing/"
 
+// message holds common traits of all signing protocol messages.
+type message interface {
+	// SenderID returns protocol-level identifier of the message sender.
+	SenderID() group.MemberIndex
+	// SessionID returns the session identifier of the message.
+	SessionID() string
+	// Type returns the exact type of the message.
+	Type() string
+}
+
 // ephemeralPublicKeyMessage is a message payload that carries the sender's
 // ephemeral public keys generated for all other group members.
 //
@@ -23,6 +33,11 @@ type ephemeralPublicKeyMessage struct {
 // SenderID returns protocol-level identifier of the message sender.
 func (epkm *ephemeralPublicKeyMessage) SenderID() group.MemberIndex {
 	return epkm.senderID
+}
+
+// SessionID returns the session identifier of the message.
+func (epkm *ephemeralPublicKeyMessage) SessionID() string {
+	return epkm.sessionID
 }
 
 // Type returns a string describing an ephemeralPublicKeyMessage type for
@@ -46,6 +61,11 @@ func (trom *tssRoundOneMessage) SenderID() group.MemberIndex {
 	return trom.senderID
 }
 
+// SessionID returns the session identifier of the message.
+func (trom *tssRoundOneMessage) SessionID() string {
+	return trom.sessionID
+}
+
 // Type returns a string describing a tssRoundOneMessage type for
 // marshaling purposes.
 func (trom *tssRoundOneMessage) Type() string {
@@ -64,6 +84,11 @@ type tssRoundTwoMessage struct {
 // SenderID returns protocol-level identifier of the message sender.
 func (trtm *tssRoundTwoMessage) SenderID() group.MemberIndex {
 	return trtm.senderID
+}
+
+// SessionID returns the session identifier of the message.
+func (trtm *tssRoundTwoMessage) SessionID() string {
+	return trtm.sessionID
 }
 
 // Type returns a string describing a tssRoundTwoMessage type for
@@ -86,6 +111,11 @@ func (trtm *tssRoundThreeMessage) SenderID() group.MemberIndex {
 	return trtm.senderID
 }
 
+// SessionID returns the session identifier of the message.
+func (trtm *tssRoundThreeMessage) SessionID() string {
+	return trtm.sessionID
+}
+
 // Type returns a string describing a tssRoundThreeMessage type for
 // marshaling purposes.
 func (trtm *tssRoundThreeMessage) Type() string {
@@ -104,6 +134,11 @@ type tssRoundFourMessage struct {
 // SenderID returns protocol-level identifier of the message sender.
 func (trfm *tssRoundFourMessage) SenderID() group.MemberIndex {
 	return trfm.senderID
+}
+
+// SessionID returns the session identifier of the message.
+func (trfm *tssRoundFourMessage) SessionID() string {
+	return trfm.sessionID
 }
 
 // Type returns a string describing a tssRoundFourMessage type for
@@ -126,6 +161,11 @@ func (trfm *tssRoundFiveMessage) SenderID() group.MemberIndex {
 	return trfm.senderID
 }
 
+// SessionID returns the session identifier of the message.
+func (trfm *tssRoundFiveMessage) SessionID() string {
+	return trfm.sessionID
+}
+
 // Type returns a string describing a tssRoundFiveMessage type for
 // marshaling purposes.
 func (trfm *tssRoundFiveMessage) Type() string {
@@ -144,6 +184,11 @@ type tssRoundSixMessage struct {
 // SenderID returns protocol-level identifier of the message sender.
 func (trsm *tssRoundSixMessage) SenderID() group.MemberIndex {
 	return trsm.senderID
+}
+
+// SessionID returns the session identifier of the message.
+func (trsm *tssRoundSixMessage) SessionID() string {
+	return trsm.sessionID
 }
 
 // Type returns a string describing a tssRoundSixMessage type for
@@ -166,6 +211,11 @@ func (trsm *tssRoundSevenMessage) SenderID() group.MemberIndex {
 	return trsm.senderID
 }
 
+// SessionID returns the session identifier of the message.
+func (trfm *tssRoundSevenMessage) SessionID() string {
+	return trfm.sessionID
+}
+
 // Type returns a string describing a tssRoundSevenMessage type for
 // marshaling purposes.
 func (trfm *tssRoundSevenMessage) Type() string {
@@ -186,6 +236,11 @@ func (trem *tssRoundEightMessage) SenderID() group.MemberIndex {
 	return trem.senderID
 }
 
+// SessionID returns the session identifier of the message.
+func (trem *tssRoundEightMessage) SessionID() string {
+	return trem.sessionID
+}
+
 // Type returns a string describing a tssRoundEightMessage type for
 // marshaling purposes.
 func (trem *tssRoundEightMessage) Type() string {
@@ -204,6 +259,11 @@ type tssRoundNineMessage struct {
 // SenderID returns protocol-level identifier of the message sender.
 func (trnm *tssRoundNineMessage) SenderID() group.MemberIndex {
 	return trnm.senderID
+}
+
+// SessionID returns the session identifier of the message.
+func (trnm *tssRoundNineMessage) SessionID() string {
+	return trnm.sessionID
 }
 
 // Type returns a string describing a tssRoundNineMessage type for

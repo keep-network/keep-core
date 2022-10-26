@@ -471,12 +471,6 @@ func (n *node) joinSigningIfEligible(
 			)
 		}
 
-		blockCounter, err := n.chain.BlockCounter()
-		if err != nil {
-			signingLogger.Errorf("failed to get block counter: [%v]", err)
-			return
-		}
-
 		for _, currentSigner := range signers {
 			go func(signer *signer) {
 				n.protocolLatch.Lock()
@@ -525,6 +519,27 @@ func (n *node) joinSigningIfEligible(
 							attempt.excludedMembersIndexes,
 						)
 
+						// Set up the attempt timeout signal.
+						attemptCtx, cancelAttemptCtx := context.WithCancel(
+							loopCtx,
+						)
+						go func() {
+							defer cancelAttemptCtx()
+
+							err := n.waitForBlockHeight(
+								loopCtx,
+								attempt.startBlock+signingAttemptMaxBlockDuration,
+							)
+							if err != nil {
+								signingAttemptLogger.Warnf(
+									"[member:%v] failed waiting for "+
+										"attempt stop signal: [%v]",
+									signer.signingGroupMemberIndex,
+									err,
+								)
+							}
+						}()
+
 						sessionID := fmt.Sprintf(
 							"%v-%v",
 							message.Text(16),
@@ -532,21 +547,20 @@ func (n *node) joinSigningIfEligible(
 						)
 
 						result, err := signing.Execute(
+							attemptCtx,
 							signingAttemptLogger,
 							message,
 							sessionID,
-							attempt.startBlock,
 							signer.signingGroupMemberIndex,
 							signer.privateKeyShare,
 							signingGroupSize,
 							signingGroupDishonestThreshold,
 							attempt.excludedMembersIndexes,
-							blockCounter,
 							broadcastChannel,
 							membershipValidator,
 						)
 						if err != nil {
-							signingAttemptLogger.Errorf(
+							signingAttemptLogger.Warnf(
 								"[member:%v] signing attempt failed: [%v]",
 								signer.signingGroupMemberIndex,
 								err,
@@ -555,13 +569,22 @@ func (n *node) joinSigningIfEligible(
 							return nil, err
 						}
 
-						if err := sendStopPill(loopCtx, broadcastChannel, attempt.number); err != nil {
-							signingLogger.Errorf(
-								"[member:%v] could not send the stop pill: [%v]",
-								signer.signingGroupMemberIndex,
-								err,
-							)
-						}
+						// Schedule the stop pill to be sent a fixed amount of
+						// time after the result is returned. Do not do it
+						// immediately as other members can be very close
+						// to produce the result as well. This mechanism should
+						// be more sophisticated but since it is temporary, we
+						// can live with it for now.
+						go func() {
+							time.Sleep(1 * time.Minute)
+							if err := sendStopPill(loopCtx, broadcastChannel, attempt.number); err != nil {
+								signingLogger.Errorf(
+									"[member:%v] could not send the stop pill: [%v]",
+									signer.signingGroupMemberIndex,
+									err,
+								)
+							}
+						}()
 
 						return result, nil
 					},
