@@ -396,21 +396,8 @@ include::../config/_peers/goerli[]
 [#testnet-contracts,Testnet Contracts]
 === Contracts
 
-[%header,cols="1m,1m"]
-|===
-|Contract
-|Address
-
-|TokenStaking
-|link:https://goerli.etherscan.io/address/0x69f962a0fbA5635e84eC94131f9072108E2E4F24#code[0x69f962a0fbA5635e84eC94131f9072108E2E4F24]
-
-|RandomBeacon
-|link:https://goerli.etherscan.io/address/0x2bA82903B635a96154A515488d2952E86D6adc3A#code[0x2bA82903B635a96154A515488d2952E86D6adc3A]
-
-|WalletRegistry
-|link:https://goerli.etherscan.io/address/0x2363cc10b7680000C02E4a7067A68d1788ffc86F#writeProxyContract[0x2363cc10b7680000C02E4a7067A68d1788ffc86F]
-
-|===
+To get adresses of contracts on Testnet please see the
+link:https://docs.threshold.network/extras/contract-addresses/goerli-testnet#tbtc-application-contracts[link].
 
 === Installation
 
