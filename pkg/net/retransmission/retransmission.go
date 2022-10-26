@@ -19,11 +19,6 @@ import (
 // of the Context calling the provided retransmit function. The retransmit
 // function has to guarantee that every call from this function sends a message
 // with the same sequence number.
-//
-// The provided context is used to identify the retransmission routine of
-// the given message. If there is a need to use a single context to send
-// multiple messages, it is recommended to use a separate child context
-// for each message. Otherwise, only the last message will be retransmitted.
 func ScheduleRetransmissions(
 	ctx context.Context,
 	logger log.StandardLogger,
