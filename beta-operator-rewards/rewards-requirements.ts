@@ -32,7 +32,7 @@ import {
   QUERY_STEP,
   REQUIRED_UPTIME,
   UPTIME_REWARDS_COEFFICIENT,
-  UP_TIME,
+  UP_TIME_PERCENT,
   VERSION_FACTOR,
   PRECISION,
   UPTIME_QUERY_RESOLUTION,
@@ -46,49 +46,48 @@ const provider = new ethers.providers.EtherscanProvider(
   process.env.ETHERSCAN_TOKEN
 );
 
-export async function calculateRewardsFactors() {
-  program
-    .version("0.0.1")
-    .requiredOption(
-      "-s, --start-timestamp <timestamp>",
-      "starting time for rewards calculation"
-    )
-    .requiredOption(
-      "-e, --end-timestamp <timestamp>",
-      "ending time for rewards calculation"
-    )
-    .requiredOption(
-      "-b, --start-block <timestamp>",
-      "start block for rewards calculation"
-    )
-    .requiredOption(
-      "-z, --end-block <timestamp>",
-      "end block for rewards calculation"
-    )
-    .requiredOption("-i, --interval <timestamp>", "scrape interval") // IMPORTANT! Must match Prometheus config
-    .requiredOption("-a, --api <prometheus api>", "prometheus API")
-    .requiredOption("-j, --job <prometheus job>", "prometheus job")
-    .requiredOption(
-      "-v, --versions <client version(s) in a rewards interval>",
-      "client version(s) in a rewards interval"
-    )
-    .requiredOption("-o, --output <file>", "output JSON file")
-    .parse(process.argv);
+program
+  .version("0.0.1")
+  .requiredOption(
+    "-s, --start-timestamp <timestamp>",
+    "starting time for rewards calculation"
+  )
+  .requiredOption(
+    "-e, --end-timestamp <timestamp>",
+    "ending time for rewards calculation"
+  )
+  .requiredOption(
+    "-b, --start-block <timestamp>",
+    "start block for rewards calculation"
+  )
+  .requiredOption(
+    "-z, --end-block <timestamp>",
+    "end block for rewards calculation"
+  )
+  .requiredOption("-i, --interval <timestamp>", "scrape interval") // IMPORTANT! Must match Prometheus config
+  .requiredOption("-a, --api <prometheus api>", "prometheus API")
+  .requiredOption("-j, --job <prometheus job>", "prometheus job")
+  .requiredOption(
+    "-v, --versions <client version(s) in a rewards interval>",
+    "client version(s) in a rewards interval"
+  )
+  .requiredOption("-o, --output <file>", "output JSON file")
+  .parse(process.argv);
 
-  // Parse the program options
-  const options = program.opts();
-  const prometheusJob = options.job;
-  const prometheusAPI = options.api;
-  const clientVersions = options.versions.split("|"); // sorted from latest to oldest
-  const startRewardsTimestamp = parseInt(options.startTimestamp);
-  const endRewardsTimestamp = parseInt(options.endTimestamp);
-  const startRewardsBlock = parseInt(options.startBlock);
-  const endRewardsBlock = parseInt(options.endBlock);
-  const scrapeInterval = parseInt(options.interval);
-  const peersDataFile = options.output;
-  const rewardsIntervalBlocksDelta = endRewardsBlock - startRewardsBlock;
-  // End program option parsing
+// Parse the program options
+const options = program.opts();
+const prometheusJob = options.job;
+const prometheusAPI = options.api;
+const clientVersions = options.versions.split("|"); // sorted from latest to oldest
+const startRewardsTimestamp = parseInt(options.startTimestamp);
+const endRewardsTimestamp = parseInt(options.endTimestamp);
+const startRewardsBlock = parseInt(options.startBlock);
+const endRewardsBlock = parseInt(options.endBlock);
+const scrapeInterval = parseInt(options.interval); // TODO: might not be needed.
+const peersDataFile = options.output;
+// End program option parsing
 
+export async function runRewardsRequirements() {
   if (Date.now() / 1000 < endRewardsTimestamp) {
     console.log("End time interval must be in the past");
     return "End time interval must be in the past";
@@ -97,12 +96,11 @@ export async function calculateRewardsFactors() {
   const currentBlockNumber = await provider.getBlockNumber();
   const rewardsInterval = endRewardsTimestamp - startRewardsTimestamp;
 
-  const prometheusAPIQuery = `${prometheusAPI}/query`;
   const queryBootstrapData = `${prometheusAPI}/query_range`;
 
-  // Query for bootstrap data that has peer instances
+  // Query for bootstrap data that has peer instances grouped by operators
   const paramsBootstrapData = {
-    query: `up{job='${prometheusJob}'}`,
+    query: `sum by(chain_address)({job='${prometheusJob}'})`,
     start: startRewardsTimestamp,
     end: endRewardsTimestamp,
     step: QUERY_STEP,
@@ -111,19 +109,6 @@ export async function calculateRewardsFactors() {
   const bootstrapData = (
     await queryPrometheus(queryBootstrapData, paramsBootstrapData)
   ).data.result;
-
-  let bootstrapDataByOperator = new Map<string, Array<any>>();
-  for (let i = 0; i < bootstrapData.length; i++) {
-    const peer = bootstrapData[i];
-    let peerInstances = bootstrapDataByOperator.get(peer.metric.chain_address);
-    if (peerInstances !== undefined) {
-      peerInstances.push(peer);
-    } else {
-      const peerInstances = new Array();
-      peerInstances.push(peer);
-      bootstrapDataByOperator.set(peer.metric.chain_address, peerInstances);
-    }
-  }
 
   let peersData = new Array();
   let weightedAuthorizations = new Array();
@@ -193,8 +178,8 @@ export async function calculateRewardsFactors() {
     allPostIntervalAuthorizationDecreasedEvents
   );
 
-  // TODO: Probably don't need 'instance' here. Try to optimize "bootstrapDataByOperator" query
-  for (const [operatorAddress, instance] of bootstrapDataByOperator) {
+  for (let i = 0; i < bootstrapData.length; i++) {
+    const operatorAddress = bootstrapData[i].metric.chain_address;
     let authorizations = new Map<string, BigNumber>(); // application: value
     let requirements = new Map<string, boolean>(); // factor: true | false
     let instancesData = new Array();
@@ -260,48 +245,21 @@ export async function calculateRewardsFactors() {
     requirements.set(IS_TBTC_AUTHORIZED_FACTOR, !tbtcAuthorization.isZero());
 
     /// Up time requirement
+    let { uptimeCoefficient, isUptimeSatisfied } = await checkUptime(
+      operatorAddress,
+      instancesData,
+      rewardsInterval
+    );
+    // BigNumbers cannot operate on floats. Coefficient needs to be multiplied by 100
+    uptimeCoefficient = Math.floor(uptimeCoefficient * HUNDRED);
 
-    // Go back in time relevant to the current date to get data for the exact
-    // rewards interval dates.
-    const offset = Math.floor(Date.now() / 1000) - endRewardsTimestamp;
-    const paramsOperatorUptime = {
-      query: `up{chain_address="${operatorAddress}", job="${prometheusJob}"}[${rewardsInterval}s:${UPTIME_QUERY_RESOLUTION}s] offset ${offset}s`,
-    };
+    requirements.set(IS_UP_TIME_SATISFIED, isUptimeSatisfied);
 
-    const instancesByOperator = (
-      await queryPrometheus(prometheusAPIQuery, paramsOperatorUptime)
-    ).data.result;
+    /// Pre-params requiremnt
+    // TODO: implement
 
-    // First registered 'up' metric in a given timeframe <start:end> for a given
-    // operator. Start evaluating uptime from this point.
-    const firstRegisteredUptime = instancesByOperator[0].values[0][0];
-    const uptimeSearchRange = endRewardsTimestamp - firstRegisteredUptime;
-
-    const paramsSumUpTime = {
-      query: `sum_over_time(up{chain_address="${operatorAddress}", job="${prometheusJob}"}[${uptimeSearchRange}s:${UPTIME_QUERY_RESOLUTION}s] offset ${offset}s) * ${UPTIME_QUERY_RESOLUTION} / ${uptimeSearchRange}`,
-    };
-
-    const instancesWithUpTime = (
-      await queryPrometheus(prometheusAPIQuery, paramsSumUpTime)
-    ).data.result;
-
-    let sumUpTime = 0;
-    for (let i = 0; i < instancesWithUpTime.length; i++) {
-      let instanceData = new Map<string, number | string>(); // param name: value
-      const upTime = instancesWithUpTime[i].value[1];
-      instanceData.set(UP_TIME, instancesWithUpTime[i].value[1]);
-      instanceData.set(INSTANCE, instancesWithUpTime[i].metric.instance);
-
-      instancesData.push(Object.fromEntries(instanceData));
-      sumUpTime += upTime;
-    }
-
-    const isUpTimeSatisfied = sumUpTime * HUNDRED >= REQUIRED_UPTIME;
-    requirements.set(IS_UP_TIME_SATISFIED, isUpTimeSatisfied);
-
-    const upTimeCoefficient = isUpTimeSatisfied
-      ? Math.floor((uptimeSearchRange / rewardsInterval) * HUNDRED)
-      : 0;
+    /// Version requiremnt
+    // TODO: implement
 
     // Assemble
     //   "instances":[
@@ -325,23 +283,29 @@ export async function calculateRewardsFactors() {
       requirements: Object.fromEntries(requirements),
     };
 
-    // TODO: assemble this only when all the requirements are satisfied
-    const beacon = BigNumber.from(authorizations.get(BEACON_AUTHORIZATION));
-    const tbct = BigNumber.from(authorizations.get(TBTC_AUTHORIZATION));
-    let minApplicationAuthorization = beacon;
-    if (beacon.gt(tbct)) {
-      minApplicationAuthorization = tbct;
+    // TODO: Add pre-params and version reqs
+    if (
+      requirements.get(IS_BEACON_AUTHORIZED_FACTOR) &&
+      requirements.get(IS_TBTC_AUTHORIZED_FACTOR) &&
+      requirements.get(IS_UP_TIME_SATISFIED)
+    ) {
+      const beacon = BigNumber.from(authorizations.get(BEACON_AUTHORIZATION));
+      const tbct = BigNumber.from(authorizations.get(TBTC_AUTHORIZATION));
+      let minApplicationAuthorization = beacon;
+      if (beacon.gt(tbct)) {
+        minApplicationAuthorization = tbct;
+      }
+      weightedAuthorization[stakingProvider] = {
+        // beaneficiary: <address> TODO: implement
+        weightedAuthorization: minApplicationAuthorization
+          .mul(uptimeCoefficient)
+          .div(HUNDRED)
+          .toString(),
+      };
+      weightedAuthorizations.push(weightedAuthorization);
     }
-    weightedAuthorization[stakingProvider] = {
-      // beaneficiary: <address> TODO: implement
-      weightedAuthorization: minApplicationAuthorization
-        .mul(upTimeCoefficient)
-        .div(HUNDRED)
-        .toString(),
-    };
 
     peersData.push(peerData);
-    weightedAuthorizations.push(weightedAuthorization);
   }
 
   console.log("peersData: ", JSON.stringify(peersData, null, 2));
@@ -349,12 +313,60 @@ export async function calculateRewardsFactors() {
     "weightedAuthorizations: ",
     JSON.stringify(weightedAuthorizations, null, 2)
   );
+}
 
-  // TODO: Save to file
-  // - all requirements
-  // - weighted authorization for NU team
-  // const jsonObject = await convertToJSON(peersData);
-  // fs.writeFileSync(peersDataFile, JSON.stringify(jsonObject, null, 2));
+// Peer uptime requirement. The total uptime for all the instances for a given
+// operator has to be greater than 96% to receive the rewards.
+async function checkUptime(
+  operatorAddress: string,
+  instancesData: any[],
+  rewardsInterval: number
+) {
+  const prometheusAPIQuery = `${prometheusAPI}/query`;
+  // Go back in time relevant to the current date to get data for the exact
+  // rewards interval dates.
+  const offset = Math.floor(Date.now() / 1000) - endRewardsTimestamp;
+  const paramsOperatorUptime = {
+    query: `up{chain_address="${operatorAddress}", job="${prometheusJob}"}
+            [${rewardsInterval}s:${UPTIME_QUERY_RESOLUTION}s] offset ${offset}s`,
+  };
+
+  const instancesByOperator = (
+    await queryPrometheus(prometheusAPIQuery, paramsOperatorUptime)
+  ).data.result;
+
+  // First registered 'up' metric in a given interval <start:end> for a given
+  // operator. Start evaluating uptime from this point.
+  const firstRegisteredUptime = instancesByOperator[0].values[0][0];
+  const uptimeSearchRange = endRewardsTimestamp - firstRegisteredUptime;
+
+  const paramsSumUptimes = {
+    query: `sum_over_time(up{chain_address="${operatorAddress}", job="${prometheusJob}"}
+            [${uptimeSearchRange}s:${UPTIME_QUERY_RESOLUTION}s] offset ${offset}s) 
+            * ${UPTIME_QUERY_RESOLUTION} / ${uptimeSearchRange}`,
+  };
+
+  const instancesWithUptime = (
+    await queryPrometheus(prometheusAPIQuery, paramsSumUptimes)
+  ).data.result;
+
+  let sumUptime = 0;
+  for (let i = 0; i < instancesWithUptime.length; i++) {
+    let instanceData = new Map<string, number | string>(); // param name: value
+    const uptime = instancesWithUptime[i].value[1] * HUNDRED;
+    instanceData.set(UP_TIME_PERCENT, instancesWithUptime[i].value[1]);
+    instanceData.set(INSTANCE, instancesWithUptime[i].metric.instance);
+
+    instancesData.push(Object.fromEntries(instanceData));
+    sumUptime += uptime;
+  }
+
+  const isUptimeSatisfied = sumUptime >= REQUIRED_UPTIME;
+
+  const uptimeCoefficient = isUptimeSatisfied
+    ? uptimeSearchRange / rewardsInterval
+    : 0;
+  return { uptimeCoefficient, isUptimeSatisfied };
 }
 
 async function getAuthorization(
@@ -514,4 +526,4 @@ async function queryPrometheus(url: string, params: any): Promise<any> {
   }
 }
 
-calculateRewardsFactors();
+runRewardsRequirements();
