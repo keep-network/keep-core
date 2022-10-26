@@ -3,6 +3,7 @@ package state
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"math/rand"
 	"strconv"
 	"strings"
@@ -22,6 +23,8 @@ const (
 	round3MessageType = "test/round_3_message"
 )
 
+// TestAsyncExecute is a happy path test ensuring all steps are executed
+// and that the order of transitions is maintained.
 func TestAsyncExecute(t *testing.T) {
 	provider := netlocal.Connect()
 	channel, err := provider.BroadcastChannelFor("test")
@@ -96,6 +99,8 @@ func TestAsyncExecute(t *testing.T) {
 	)
 }
 
+// TestAsyncExecute_ContextCancelled ensures the state machine stops the
+// execution when the context got cancelled.
 func TestAsyncExecute_ContextCancelled(t *testing.T) {
 	provider := netlocal.Connect()
 	channel, err := provider.BroadcastChannelFor("test")
@@ -123,6 +128,124 @@ func TestAsyncExecute_ContextCancelled(t *testing.T) {
 
 	testutils.AssertErrorsSame(t, context.Canceled, err)
 }
+
+// TestAsyncExecute_FailingStateInitiate ensures the state machine fails the
+// execution when initiation of a state returned an error.
+func TestAsyncExecute_FailingStateInitiate(t *testing.T) {
+	provider := netlocal.Connect()
+	channel, err := provider.BroadcastChannelFor("test")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	ctx, cancelCtx := context.WithCancel(context.Background())
+	defer cancelCtx()
+
+	var logger = &testutils.MockLogger{}
+
+	initialState := &failingState{}
+
+	_, err = NewAsyncMachine(logger, ctx, channel, initialState).Execute()
+
+	expectedError := "failed to initiate new state [they drew first blood, not me]"
+	testutils.AssertStringsEqual(t, "error returned", expectedError, err.Error())
+}
+
+// TestAsyncExecute_InitiateBeforeTransitioning ensures CanTransition is not
+// called before Initiate finished.
+func TestAsyncExecute_InitiateBeforeTransitioning(t *testing.T) {
+	provider := netlocal.Connect()
+	channel, err := provider.BroadcastChannelFor("test")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	ctx, cancelCtx := context.WithCancel(context.Background())
+	defer cancelCtx()
+
+	var logger = &testutils.MockLogger{}
+
+	initialState := &simpleLoggingState{}
+
+	_, err = NewAsyncMachine(logger, ctx, channel, initialState).Execute()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	expectedExecutionLog := "initiate can-transition next"
+	testutils.AssertStringsEqual(
+		t,
+		"execution log",
+		expectedExecutionLog,
+		strings.Join(initialState.testLog, " "),
+	)
+}
+
+//
+// State used for TestAsyncExecute_InitiateBeforeTransitioning
+//
+
+// simpleLoggingState is logging calls to Initiate, CanTransition, and Next.
+// This allows testing if functions are called in a proper order.
+type simpleLoggingState struct {
+	testLog []string
+}
+
+func (sls *simpleLoggingState) addToTestLog(log string) {
+	sls.testLog = append(sls.testLog, log)
+}
+
+func (sls *simpleLoggingState) CanTransition() bool {
+	sls.addToTestLog("can-transition")
+	return true
+}
+func (sls *simpleLoggingState) Initiate(ctx context.Context) error {
+	// hold on for the time needed to execute at least few checks
+	time.Sleep(transitionCheckInterval * 3)
+	sls.addToTestLog("initiate")
+	return nil
+}
+func (sls *simpleLoggingState) Receive(msg net.Message) error {
+	panic("should not be called")
+}
+func (sls *simpleLoggingState) Next() (AsyncState, error) {
+	sls.addToTestLog("next")
+	return nil, nil
+}
+func (sls *simpleLoggingState) MemberIndex() group.MemberIndex {
+	return group.MemberIndex(1)
+}
+
+//
+// State used for TestAsyncExecute_FailingState
+//
+
+//
+// failingState fails the execution on Initiate after doing some computations
+//
+type failingState struct {
+}
+
+func (fs *failingState) CanTransition() bool {
+	panic("should not be called")
+}
+func (fs *failingState) Initiate(ctx context.Context) error {
+	time.Sleep(50 * time.Millisecond) // just some random delay
+	return fmt.Errorf("they drew first blood, not me")
+}
+func (fs *failingState) Receive(msg net.Message) error {
+	panic("should not be called")
+}
+func (fs *failingState) Next() (AsyncState, error) {
+	panic("should not be called")
+}
+func (tas *failingState) MemberIndex() group.MemberIndex {
+	return group.MemberIndex(1)
+}
+
+//
+// States used for TestAsyncExecute and TestAsyncExecute_ContextCancelled
+//
 
 //
 // testAsyncState1 can transition to the next state immediately;
