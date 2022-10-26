@@ -32,9 +32,13 @@ import {
   QUERY_STEP,
   REQUIRED_UPTIME,
   UPTIME_REWARDS_COEFFICIENT,
-  UP_TIME_FACTOR,
+  UP_TIME,
   VERSION_FACTOR,
   PRECISION,
+  UPTIME_QUERY_RESOLUTION,
+  INSTANCE,
+  IS_UP_TIME_SATISFIED,
+  HUNDRED,
 } from "./rewards-constants";
 
 const provider = new ethers.providers.EtherscanProvider(
@@ -98,21 +102,31 @@ export async function calculateRewardsFactors() {
 
   // Query for bootstrap data that has peer instances
   const paramsBootstrapData = {
-    query: `sum by(chain_address)({job='${prometheusJob}'})`,
+    query: `up{job='${prometheusJob}'}`,
     start: startRewardsTimestamp,
     end: endRewardsTimestamp,
     step: QUERY_STEP,
   };
 
-  const bootstrapDataByOperator = (
+  const bootstrapData = (
     await queryPrometheus(queryBootstrapData, paramsBootstrapData)
   ).data.result;
 
-  // TODO: filter by 1 address and fetch authorizations by 1 address
-  // you have multiple addresses because of the instances
-  // console.log("bootstrapData", bootstrapData)
+  let bootstrapDataByOperator = new Map<string, Array<any>>();
+  for (let i = 0; i < bootstrapData.length; i++) {
+    const peer = bootstrapData[i];
+    let peerInstances = bootstrapDataByOperator.get(peer.metric.chain_address);
+    if (peerInstances !== undefined) {
+      peerInstances.push(peer);
+    } else {
+      const peerInstances = new Array();
+      peerInstances.push(peer);
+      bootstrapDataByOperator.set(peer.metric.chain_address, peerInstances);
+    }
+  }
 
   let peersData = new Array();
+  let weightedAuthorizations = new Array();
 
   const randomBeacon = new Contract(
     RandomBeaconAddress,
@@ -179,23 +193,25 @@ export async function calculateRewardsFactors() {
     allPostIntervalAuthorizationDecreasedEvents
   );
 
-  for (let i = 0; i < bootstrapDataByOperator.length; i++) {
-    const peer = bootstrapDataByOperator[i];
+  // TODO: Probably don't need 'instance' here. Try to optimize "bootstrapDataByOperator" query
+  for (const [operatorAddress, instance] of bootstrapDataByOperator) {
     let authorizations = new Map<string, BigNumber>(); // application: value
     let requirements = new Map<string, boolean>(); // factor: true | false
+    let instancesData = new Array();
     let peerData: any = {};
+    let weightedAuthorization: any = {};
 
     // Staking provider should be the same for Beacon and TBTC apps
     const stakingProvider = await randomBeacon.operatorToStakingProvider(
-      peer.metric.chain_address
+      operatorAddress
     );
     const stakingProviderAddressForTbtc =
-      await walletRegistry.operatorToStakingProvider(peer.metric.chain_address);
+      await walletRegistry.operatorToStakingProvider(operatorAddress);
 
     if (stakingProvider !== stakingProviderAddressForTbtc) {
       console.log(
         `Staking providers for Beacon ${stakingProvider} and TBTC ${stakingProviderAddressForTbtc} must match. ` +
-          `No Rewards were calculated for operator ${peer.metric.chain_address}`
+          `No Rewards were calculated for operator ${operatorAddress}`
       );
       continue;
     }
@@ -203,7 +219,7 @@ export async function calculateRewardsFactors() {
     if (stakingProvider === ethers.constants.AddressZero) {
       console.log(
         `Staking provider cannot be zero address. ` +
-          `No Rewards were calculated for operator ${peer.metric.chain_address}`
+          `No Rewards were calculated for operator ${operatorAddress}`
       );
       continue;
     }
@@ -243,13 +259,50 @@ export async function calculateRewardsFactors() {
     authorizations.set(TBTC_AUTHORIZATION, tbtcAuthorization.toString());
     requirements.set(IS_TBTC_AUTHORIZED_FACTOR, !tbtcAuthorization.isZero());
 
-    /// Start assembling peer data and weighted authorizations
-    peerData[stakingProvider] = {
-      applications: Object.fromEntries(authorizations),
-      requirements: Object.fromEntries(requirements),
+    /// Up time requirement
+
+    // Go back in time relevant to the current date to get data for the exact
+    // rewards interval dates.
+    const offset = Math.floor(Date.now() / 1000) - endRewardsTimestamp;
+    const paramsOperatorUptime = {
+      query: `up{chain_address="${operatorAddress}", job="${prometheusJob}"}[${rewardsInterval}s:${UPTIME_QUERY_RESOLUTION}s] offset ${offset}s`,
     };
 
-    // TODO: iterate over instances for a given operator address
+    const instancesByOperator = (
+      await queryPrometheus(prometheusAPIQuery, paramsOperatorUptime)
+    ).data.result;
+
+    // First registered 'up' metric in a given timeframe <start:end> for a given
+    // operator. Start evaluating uptime from this point.
+    const firstRegisteredUptime = instancesByOperator[0].values[0][0];
+    const uptimeSearchRange = endRewardsTimestamp - firstRegisteredUptime;
+
+    const paramsSumUpTime = {
+      query: `sum_over_time(up{chain_address="${operatorAddress}", job="${prometheusJob}"}[${uptimeSearchRange}s:${UPTIME_QUERY_RESOLUTION}s] offset ${offset}s) * ${UPTIME_QUERY_RESOLUTION} / ${uptimeSearchRange}`,
+    };
+
+    const instancesWithUpTime = (
+      await queryPrometheus(prometheusAPIQuery, paramsSumUpTime)
+    ).data.result;
+
+    let sumUpTime = 0;
+    for (let i = 0; i < instancesWithUpTime.length; i++) {
+      let instanceData = new Map<string, number | string>(); // param name: value
+      const upTime = instancesWithUpTime[i].value[1];
+      instanceData.set(UP_TIME, instancesWithUpTime[i].value[1]);
+      instanceData.set(INSTANCE, instancesWithUpTime[i].metric.instance);
+
+      instancesData.push(Object.fromEntries(instanceData));
+      sumUpTime += upTime;
+    }
+
+    const isUpTimeSatisfied = sumUpTime * HUNDRED >= REQUIRED_UPTIME;
+    requirements.set(IS_UP_TIME_SATISFIED, isUpTimeSatisfied);
+
+    const upTimeCoefficient = isUpTimeSatisfied
+      ? Math.floor((uptimeSearchRange / rewardsInterval) * HUNDRED)
+      : 0;
+
     // Assemble
     //   "instances":[
     //     {
@@ -261,16 +314,41 @@ export async function calculateRewardsFactors() {
     //    (...)
     //    ],
 
+    // console.log("authorizations", authorizations);
+    // console.log("instancesData", instancesData);
+    // console.log("requirements", requirements);
+
+    /// Start assembling peer data and weighted authorizations
+    peerData[stakingProvider] = {
+      applications: Object.fromEntries(authorizations),
+      instances: instancesData,
+      requirements: Object.fromEntries(requirements),
+    };
+
+    // TODO: assemble this only when all the requirements are satisfied
+    const beacon = BigNumber.from(authorizations.get(BEACON_AUTHORIZATION));
+    const tbct = BigNumber.from(authorizations.get(TBTC_AUTHORIZATION));
+    let minApplicationAuthorization = beacon;
+    if (beacon.gt(tbct)) {
+      minApplicationAuthorization = tbct;
+    }
+    weightedAuthorization[stakingProvider] = {
+      // beaneficiary: <address> TODO: implement
+      weightedAuthorization: minApplicationAuthorization
+        .mul(upTimeCoefficient)
+        .div(HUNDRED)
+        .toString(),
+    };
+
     peersData.push(peerData);
+    weightedAuthorizations.push(weightedAuthorization);
   }
 
   console.log("peersData: ", JSON.stringify(peersData, null, 2));
-
-  // TODO: calculate weighted authorization for a given staking provider
-  // <staking provider address>: {
-  //   beneficiary: <address>,
-  //   weightedAuthorization: <amount> // uptimeCoeficient * min(beaconAuthorization, tbtcAuthorization)
-  // }
+  console.log(
+    "weightedAuthorizations: ",
+    JSON.stringify(weightedAuthorizations, null, 2)
+  );
 
   // TODO: Save to file
   // - all requirements
