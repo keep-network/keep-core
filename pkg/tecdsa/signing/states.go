@@ -2,10 +2,11 @@ package signing
 
 import (
 	"context"
+	"sync"
+
 	"github.com/keep-network/keep-core/pkg/net"
 	"github.com/keep-network/keep-core/pkg/protocol/group"
 	"github.com/keep-network/keep-core/pkg/protocol/state"
-	"sync"
 )
 
 // ephemeralKeyPairGenerationState is the state during which members broadcast
@@ -27,7 +28,7 @@ func (ekpgs *ephemeralKeyPairGenerationState) Initiate(ctx context.Context) erro
 			return err
 		}
 
-		if err := sendMessage(ctx, ekpgs.channel, message); err != nil {
+		if err := ekpgs.channel.Send(ctx, message); err != nil {
 			return err
 		}
 
@@ -142,7 +143,7 @@ func (tros *tssRoundOneState) Initiate(ctx context.Context) error {
 			return err
 		}
 
-		if err := sendMessage(ctx, tros.channel, message); err != nil {
+		if err := tros.channel.Send(ctx, message); err != nil {
 			return err
 		}
 
@@ -211,7 +212,7 @@ func (trts *tssRoundTwoState) Initiate(ctx context.Context) error {
 			return err
 		}
 
-		if err := sendMessage(ctx, trts.channel, message); err != nil {
+		if err := trts.channel.Send(ctx, message); err != nil {
 			return err
 		}
 
@@ -280,7 +281,7 @@ func (trts *tssRoundThreeState) Initiate(ctx context.Context) error {
 			return err
 		}
 
-		if err := sendMessage(ctx, trts.channel, message); err != nil {
+		if err := trts.channel.Send(ctx, message); err != nil {
 			return err
 		}
 
@@ -349,7 +350,7 @@ func (trfs *tssRoundFourState) Initiate(ctx context.Context) error {
 			return err
 		}
 
-		if err := sendMessage(ctx, trfs.channel, message); err != nil {
+		if err := trfs.channel.Send(ctx, message); err != nil {
 			return err
 		}
 
@@ -418,7 +419,7 @@ func (trfs *tssRoundFiveState) Initiate(ctx context.Context) error {
 			return err
 		}
 
-		if err := sendMessage(ctx, trfs.channel, message); err != nil {
+		if err := trfs.channel.Send(ctx, message); err != nil {
 			return err
 		}
 
@@ -487,7 +488,7 @@ func (trss *tssRoundSixState) Initiate(ctx context.Context) error {
 			return err
 		}
 
-		if err := sendMessage(ctx, trss.channel, message); err != nil {
+		if err := trss.channel.Send(ctx, message); err != nil {
 			return err
 		}
 
@@ -556,7 +557,7 @@ func (trss *tssRoundSevenState) Initiate(ctx context.Context) error {
 			return err
 		}
 
-		if err := sendMessage(ctx, trss.channel, message); err != nil {
+		if err := trss.channel.Send(ctx, message); err != nil {
 			return err
 		}
 
@@ -625,7 +626,7 @@ func (tres *tssRoundEightState) Initiate(ctx context.Context) error {
 			return err
 		}
 
-		if err := sendMessage(ctx, tres.channel, message); err != nil {
+		if err := tres.channel.Send(ctx, message); err != nil {
 			return err
 		}
 
@@ -694,7 +695,7 @@ func (trns *tssRoundNineState) Initiate(ctx context.Context) error {
 			return err
 		}
 
-		if err := sendMessage(ctx, trns.channel, message); err != nil {
+		if err := trns.channel.Send(ctx, message); err != nil {
 			return err
 		}
 
@@ -843,22 +844,6 @@ func (sa *stateAction) error() error {
 	sa.mutex.RLock()
 	defer sa.mutex.RUnlock()
 	return sa.err
-}
-
-// sendMessage sends the state's message using the provided broadcast channel.
-func sendMessage(
-	ctx context.Context,
-	channel net.BroadcastChannel,
-	message net.TaggedMarshaler,
-) error {
-	// The channel.Send function sets up retransmissions and expects a
-	// unique context to properly differentiate the sending routine among
-	// others. The context received as argument of the Initiate function
-	// cannot be used directly because it is global for the entire
-	// state machine. Because of that, channel.Send must be called with
-	// a child context.
-	sendCtx := context.WithValue(ctx, "message", message.Type())
-	return channel.Send(sendCtx, message)
 }
 
 // messageReceiverState is a type constraint that refers to a state which is

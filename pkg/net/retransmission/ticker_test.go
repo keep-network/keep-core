@@ -25,6 +25,30 @@ func TestOnTick(t *testing.T) {
 	}
 }
 
+func TestOnTickSameContext(t *testing.T) {
+	ticks := make(chan uint64)
+	ticker := NewTicker(ticks)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	tickCount1 := 0
+	tickCount2 := 0
+	ticker.onTick(ctx, func() { tickCount1++ })
+	ticker.onTick(ctx, func() { tickCount2++ })
+
+	ticks <- 1
+	ticks <- 2
+	time.Sleep(10 * time.Millisecond)
+
+	if tickCount1 != 2 {
+		t.Errorf("expected [2] executions of handler, had [%v]", tickCount1)
+	}
+	if tickCount2 != 2 {
+		t.Errorf("expected [2] executions of handler, had [%v]", tickCount2)
+	}
+}
+
 func TestOnTickTimeTicker(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 105*time.Millisecond)
 	defer cancel()
@@ -69,6 +93,31 @@ func TestUnregisterHandler(t *testing.T) {
 	}
 	if tickCount2 != 3 {
 		t.Errorf("expected [3] executions of the second handler, had [%v]", tickCount2)
+	}
+}
+
+func TestUnregisterHandlerSameContext(t *testing.T) {
+	ticks := make(chan uint64)
+	ticker := NewTicker(ticks)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 50*time.Millisecond)
+	defer cancel()
+
+	tickCount1 := 0
+	ticker.onTick(ctx, func() { tickCount1++ })
+
+	tickCount2 := 0
+	ticker.onTick(ctx, func() { tickCount2++ })
+
+	ticks <- 1
+	ticks <- 2
+	<-ctx.Done()
+
+	if tickCount1 != 2 {
+		t.Errorf("expected [2] executions of the first handler, had [%v]", tickCount1)
+	}
+	if tickCount2 != 2 {
+		t.Errorf("expected [2] executions of the second handler, had [%v]", tickCount2)
 	}
 }
 
