@@ -467,12 +467,19 @@ exports.getOngoingMekleInput = async function (
 }
 
 /**
- * Generate the bonus rewards earned by stakes between June 1st and July 15th
- * and return it in Merkle distribution input format
- * @param {string}  gqlURL          Subgraph GraphQL API URL
- * @return {BigNumber}              The amount of generated rewards
+ * Return the bonus-elegible stakes, including beneficiary and staked amount.
+ * Only stakes that meet with the following requirements are elegible for bonus
+ * reward:
+ * 1. Start staking before Jun 1st 2022 00:00:00 GMT
+ * 2. Not to unstake any amount of T before Jul 15th 2022 00:00:00 GMT
+ * 3. Have an PRE node deployed and confirmed in Threshold Network
+ * @param {string} gqlURL     Subgraph GraphQL API URL
+ * @returns {Promise}         Promise of an object
+ *          {Object[]}        bonusStakes - The bonus-elegible stakes
+ *          {string}          bonusStakes[].beneficiary - Beneficiary address
+ *          {string}          bonusStakes[].amount - Bonus reward amount
  */
-exports.getBonusMerkleInput = async function (gqlUrl) {
+exports.getBonusStakes = async function (gqlUrl) {
   const startTimestamp = 1654041600 // Jun 1st 2022 00:00:00 GMT
   const endTimestamp = 1657843200 // Jul 15th 2022 00:00:00 GMT
   const gqlClient = createClient({ url: gqlUrl })
@@ -513,7 +520,7 @@ exports.getBonusMerkleInput = async function (gqlUrl) {
     })
   })
 
-  const rewards = {}
+  const bonusStakes = {}
 
   // Filter the stakes that are not elegible for bonus
   Object.keys(stakeList).map((stakingProvider) => {
@@ -544,18 +551,15 @@ exports.getBonusMerkleInput = async function (gqlUrl) {
       )
       const beneficiary = stakeDatasItem.beneficiary
 
-      // Calculate the earning of this stake r = 0.03 * initial_amount
-      const reward = epochStakes[0].amount.times(0.03)
-
       const stProvCheckSum = ethers.utils.getAddress(stakingProvider)
-      rewards[stProvCheckSum] = {
+      bonusStakes[stProvCheckSum] = {
         beneficiary: ethers.utils.getAddress(beneficiary),
-        amount: reward.toFixed(0),
+        amount: epochStakes[0].amount.toFixed(0),
       }
     }
   })
 
-  return rewards
+  return bonusStakes
 }
 
 /**
@@ -692,9 +696,7 @@ exports.getStakingHistory = async function (gqlUrl, stakingProvider) {
         histElem.event = epochAmount > amount ? "topped-up" : "unstaked"
       }
       histElem.staked = (epochAmount / 10 ** 18).toFixed()
-      histElem.timestamp = new Date(
-        epoch.epoch.timestamp * 1000
-      ).toISOString()
+      histElem.timestamp = new Date(epoch.epoch.timestamp * 1000).toISOString()
       stakeData.stakingHistory.push(histElem)
       amount = epochAmount
     }
