@@ -96,6 +96,10 @@ type BroadcastChannel interface {
 	// Send function publishes a message m to the channel. Message m needs to
 	// conform to the marshalling interface. Message will be periodically
 	// retransmitted by the channel for the lifetime of the provided context.
+	// The provided context is used to identify the retransmission routine of
+	// the given message. If there is a need to use a single context to send
+	// multiple messages, it is recommended to use a separate child context
+	// for each message. Otherwise, only the last message will be retransmitted.
 	Send(ctx context.Context, m TaggedMarshaler) error
 	// Recv installs a message handler that will receive messages from the
 	// channel for the entire lifetime of the provided context.
