@@ -97,7 +97,11 @@ func (am *AsyncMachine) Execute() (AsyncState, error) {
 
 		case err := <-onStateDone:
 			if err != nil {
-				return nil, fmt.Errorf("failed to initiate new state [%w]", err)
+				return nil, fmt.Errorf(
+					"failed to initiate state [%T]: [%w]",
+					currentState,
+					err,
+				)
 			}
 
 			nextState, err := currentState.Next()

@@ -147,7 +147,7 @@ func TestAsyncExecute_FailingStateInitiate(t *testing.T) {
 
 	_, err = NewAsyncMachine(logger, ctx, channel, initialState).Execute()
 
-	expectedError := "failed to initiate new state [they drew first blood, not me]"
+	expectedError := "failed to initiate state [*state.failingState]: [they drew first blood, not me]"
 	testutils.AssertStringsEqual(t, "error returned", expectedError, err.Error())
 }
 
