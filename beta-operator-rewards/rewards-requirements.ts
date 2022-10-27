@@ -22,18 +22,17 @@ import {
   CLIENT_VERSION_INDEX,
   DEFAULT_NETWORK,
   BEACON_AUTHORIZATION,
-  IS_BEACON_AUTHORIZED_FACTOR,
+  IS_BEACON_AUTHORIZED,
   TBTC_AUTHORIZATION,
-  IS_TBTC_AUTHORIZED_FACTOR,
-  MIN_PRE_PARAMS,
-  PRE_PARAMS_AVG_INTERVAL,
-  PRE_PARAMS_FACTOR,
-  PRE_PARAMS_RESOLUTION,
+  IS_TBTC_AUTHORIZED,
+  REQUIRED_MIN_PRE_PARAMS,
+  PRE_PARAMS,
+  IS_PRE_PARAMS_SATISFIED,
   QUERY_STEP,
-  REQUIRED_UPTIME,
+  REQUIRED_UPTIME_PERCENT,
   UPTIME_REWARDS_COEFFICIENT,
   UP_TIME_PERCENT,
-  VERSION_FACTOR,
+  VERSION,
   PRECISION,
   UPTIME_QUERY_RESOLUTION,
   INSTANCE,
@@ -85,7 +84,11 @@ const startRewardsBlock = parseInt(options.startBlock);
 const endRewardsBlock = parseInt(options.endBlock);
 const scrapeInterval = parseInt(options.interval); // TODO: might not be needed.
 const peersDataFile = options.output;
-// End program option parsing
+
+const prometheusAPIQuery = `${prometheusAPI}/query`;
+// Go back in time relevant to the current date to get data for the exact
+// rewards interval dates.
+const offset = Math.floor(Date.now() / 1000) - endRewardsTimestamp;
 
 export async function runRewardsRequirements() {
   if (Date.now() / 1000 < endRewardsTimestamp) {
@@ -182,7 +185,7 @@ export async function runRewardsRequirements() {
     const operatorAddress = bootstrapData[i].metric.chain_address;
     let authorizations = new Map<string, BigNumber>(); // application: value
     let requirements = new Map<string, boolean>(); // factor: true | false
-    let instancesData = new Array();
+    let instancesData = new Map<string, Map<string, string | number>>();
     let peerData: any = {};
     let weightedAuthorization: any = {};
 
@@ -209,6 +212,13 @@ export async function runRewardsRequirements() {
       continue;
     }
 
+    // Populate instances for a given operator.
+    await instancesForOperator(
+      operatorAddress,
+      rewardsInterval,
+      instancesData
+    );
+
     // Events that were emitted between the [start:end] rewards dates for a given
     // stakingProvider.
     const intervalEvents = intevalAuthorizationIncreasedEvents
@@ -226,10 +236,7 @@ export async function runRewardsRequirements() {
     );
 
     authorizations.set(BEACON_AUTHORIZATION, beaconAuthorization.toString());
-    requirements.set(
-      IS_BEACON_AUTHORIZED_FACTOR,
-      !beaconAuthorization.isZero()
-    );
+    requirements.set(IS_BEACON_AUTHORIZED, !beaconAuthorization.isZero());
 
     /// tBTC application authorized requirement
     const tbtcAuthorization = await getAuthorization(
@@ -242,35 +249,29 @@ export async function runRewardsRequirements() {
     );
 
     authorizations.set(TBTC_AUTHORIZATION, tbtcAuthorization.toString());
-    requirements.set(IS_TBTC_AUTHORIZED_FACTOR, !tbtcAuthorization.isZero());
+    requirements.set(IS_TBTC_AUTHORIZED, !tbtcAuthorization.isZero());
 
-    /// Up time requirement
+    /// Uptime requirement
     let { uptimeCoefficient, isUptimeSatisfied } = await checkUptime(
       operatorAddress,
-      instancesData,
-      rewardsInterval
+      rewardsInterval,
+      instancesData
     );
     // BigNumbers cannot operate on floats. Coefficient needs to be multiplied by 100
     uptimeCoefficient = Math.floor(uptimeCoefficient * HUNDRED);
-
     requirements.set(IS_UP_TIME_SATISFIED, isUptimeSatisfied);
 
     /// Pre-params requiremnt
-    // TODO: implement
+    const isPrePramsSatisfied = await checkPreParams(
+      operatorAddress,
+      rewardsInterval,
+      instancesData
+    );
 
-    /// Version requiremnt
-    // TODO: implement
+    requirements.set(IS_PRE_PARAMS_SATISFIED, isPrePramsSatisfied);
 
-    // Assemble
-    //   "instances":[
-    //     {
-    //        "uptimePercent":4.251766217084136,
-    //        "preParams":132,
-    //        "version":"2.0.0-1m",
-    //        "ip":"10.102.0.30:9701"
-    //     },
-    //    (...)
-    //    ],
+    /// Version requirement
+    // TODO: implement
 
     // console.log("authorizations", authorizations);
     // console.log("instancesData", instancesData);
@@ -279,15 +280,16 @@ export async function runRewardsRequirements() {
     /// Start assembling peer data and weighted authorizations
     peerData[stakingProvider] = {
       applications: Object.fromEntries(authorizations),
-      instances: instancesData,
+      instances: convertToObject(instancesData),
       requirements: Object.fromEntries(requirements),
     };
 
-    // TODO: Add pre-params and version reqs
+    // TODO: Add version reqs
     if (
-      requirements.get(IS_BEACON_AUTHORIZED_FACTOR) &&
-      requirements.get(IS_TBTC_AUTHORIZED_FACTOR) &&
-      requirements.get(IS_UP_TIME_SATISFIED)
+      requirements.get(IS_BEACON_AUTHORIZED) &&
+      requirements.get(IS_TBTC_AUTHORIZED) &&
+      requirements.get(IS_UP_TIME_SATISFIED) &&
+      requirements.get(IS_PRE_PARAMS_SATISFIED)
     ) {
       const beacon = BigNumber.from(authorizations.get(BEACON_AUTHORIZATION));
       const tbct = BigNumber.from(authorizations.get(TBTC_AUTHORIZATION));
@@ -315,29 +317,82 @@ export async function runRewardsRequirements() {
   );
 }
 
+async function instancesForOperator(
+  operatorAddress: any,
+  rewardsInterval: number,
+  instancesData: Map<string, Map<string, string | number>>
+) {
+  // Resolution is defaulted to Prometheus settings.
+  const instancesDataByOperatorParams = {
+    query: `present_over_time(up{chain_address="${operatorAddress}", job="${prometheusJob}"}
+                [${rewardsInterval}s] offset ${offset}s)`,
+  };
+  const instancesDataByOperator = (
+    await queryPrometheus(prometheusAPIQuery, instancesDataByOperatorParams)
+  ).data.result;
+
+  instancesDataByOperator.forEach(
+    (element: { metric: { instance: string } }) => {
+      const instanceData = new Map<string, string | number>();
+      instancesData.set(element.metric.instance, instanceData);
+    }
+  );
+}
+
+async function checkPreParams(
+  operatorAddress: string,
+  rewardsInterval: number,
+  dataInstances: Map<string, Map<string, string | number>>
+) {
+  // Avg of pre-params across all the instances for a given operator in the rewards
+  // interval dates. Resolution is defaulted to Prometheus settings.
+  const paramsPreParams = {
+    query: `avg_over_time(tbtc_pre_params_count{chain_address="${operatorAddress}", job="${prometheusJob}"}
+              [${rewardsInterval}s] offset ${offset}s)`,
+  };
+
+  const preParamsAvgByInstance = (
+    await queryPrometheus(prometheusAPIQuery, paramsPreParams)
+  ).data.result;
+
+  let sumPreParams = 0;
+  for (let i = 0; i < preParamsAvgByInstance.length; i++) {
+    const instance = preParamsAvgByInstance[i];
+    const preParams = parseInt(instance.value[1]); // [timestamp, value]
+    const dataInstance = dataInstances.get(instance.metric.instance);
+    if (dataInstance !== undefined) {
+      dataInstance.set(PRE_PARAMS, preParams);
+    } else {
+      // Should not happen
+      console.error("Instance must be present for a given rewards interval.");
+    }
+
+    sumPreParams += preParams;
+  }
+
+  const preParamsAvg = sumPreParams / preParamsAvgByInstance.length;
+  return preParamsAvg >= REQUIRED_MIN_PRE_PARAMS;
+}
+
 // Peer uptime requirement. The total uptime for all the instances for a given
 // operator has to be greater than 96% to receive the rewards.
 async function checkUptime(
   operatorAddress: string,
-  instancesData: any[],
-  rewardsInterval: number
+  rewardsInterval: number,
+  instancesData: Map<string, Map<string, string | number>>
 ) {
-  const prometheusAPIQuery = `${prometheusAPI}/query`;
-  // Go back in time relevant to the current date to get data for the exact
-  // rewards interval dates.
-  const offset = Math.floor(Date.now() / 1000) - endRewardsTimestamp;
   const paramsOperatorUptime = {
     query: `up{chain_address="${operatorAddress}", job="${prometheusJob}"}
             [${rewardsInterval}s:${UPTIME_QUERY_RESOLUTION}s] offset ${offset}s`,
   };
 
-  const instancesByOperator = (
+  const instances = (
     await queryPrometheus(prometheusAPIQuery, paramsOperatorUptime)
   ).data.result;
 
   // First registered 'up' metric in a given interval <start:end> for a given
   // operator. Start evaluating uptime from this point.
-  const firstRegisteredUptime = instancesByOperator.reduce(
+  const firstRegisteredUptime = instances.reduce(
     (currentMin: number, instance: any) =>
       Math.min(instance.values[0][0], currentMin),
     Number.MAX_VALUE
@@ -351,22 +406,26 @@ async function checkUptime(
             * ${UPTIME_QUERY_RESOLUTION} / ${uptimeSearchRange}`,
   };
 
-  const instancesWithUptime = (
+  const uptimesByInstance = (
     await queryPrometheus(prometheusAPIQuery, paramsSumUptimes)
   ).data.result;
 
   let sumUptime = 0;
-  for (let i = 0; i < instancesWithUptime.length; i++) {
-    let instanceData = new Map<string, number | string>(); // param name: value
-    const uptime = instancesWithUptime[i].value[1] * HUNDRED;
-    instanceData.set(UP_TIME_PERCENT, instancesWithUptime[i].value[1]);
-    instanceData.set(INSTANCE, instancesWithUptime[i].metric.instance);
+  for (let i = 0; i < uptimesByInstance.length; i++) {
+    const instance = uptimesByInstance[i];
+    const uptime = instance.value[1] * HUNDRED;
+    const dataInstance = instancesData.get(instance.metric.instance);
+    if (dataInstance !== undefined) {
+      dataInstance.set(UP_TIME_PERCENT, uptime);
+    } else {
+      // Should not happen
+      console.error("Instance must be present for a given rewards interval.");
+    }
 
-    instancesData.push(Object.fromEntries(instanceData));
     sumUptime += uptime;
   }
 
-  const isUptimeSatisfied = sumUptime >= REQUIRED_UPTIME;
+  const isUptimeSatisfied = sumUptime >= REQUIRED_UPTIME_PERCENT;
 
   const uptimeCoefficient = isUptimeSatisfied
     ? uptimeSearchRange / rewardsInterval
@@ -505,14 +564,14 @@ async function authorizationPostRewardsInterval(
   return await application.eligibleStake(stakingProvider);
 }
 
-async function convertToJSON(map: Map<string, Map<string, any>>) {
-  let json: { [k: string]: any } = {};
+function convertToObject(map: Map<string, Map<string, any>>) {
+  let obj: { [k: string]: any } = {};
   map.forEach((value: Map<string, any>, key: string) => {
     const result = Object.fromEntries(value);
-    json[key] = result;
+    obj[key] = result;
   });
 
-  return json;
+  return obj;
 }
 
 async function queryPrometheus(url: string, params: any): Promise<any> {
