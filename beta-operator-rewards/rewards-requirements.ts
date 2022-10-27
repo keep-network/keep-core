@@ -337,7 +337,12 @@ async function checkUptime(
 
   // First registered 'up' metric in a given interval <start:end> for a given
   // operator. Start evaluating uptime from this point.
-  const firstRegisteredUptime = instancesByOperator[0].values[0][0];
+  const firstRegisteredUptime = instancesByOperator.reduce(
+    (currentMin: number, instance: any) =>
+      Math.min(instance.values[0][0], currentMin),
+    Number.MAX_VALUE
+  );
+
   const uptimeSearchRange = endRewardsTimestamp - firstRegisteredUptime;
 
   const paramsSumUptimes = {
