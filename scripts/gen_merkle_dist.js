@@ -1,8 +1,9 @@
 // Script that generates a new Merkle Distribution and outputs the data to JSON files
 
 const fs = require("fs")
-const subgraph = require("../src/stakingrewards/subgraph.js")
-const rewards = require("../src/stakingrewards/rewards.js")
+const Subgraph = require("../src/stakingrewards/subgraph.js")
+const Rewards = require("../src/stakingrewards/rewards.js")
+const MerkleDist = require("../src/stakingrewards/merkle_dist.js")
 
 const graphqlApi =
   "https://api.studio.thegraph.com/query/24143/main-threshold-subgraph/0.0.7"
@@ -21,19 +22,19 @@ async function main() {
     return
   }
 
-  const ongoingStakes = await subgraph.getOngoingStakes(
+  const ongoingStakes = await Subgraph.getOngoingStakes(
     graphqlApi,
     startTime,
     endTime
   )
-  const ongoingRewards = await rewards.calculateOngoingRewards(ongoingStakes, ongoingWeight)
-  const bonusStakes = await subgraph.getBonusStakes(graphqlApi)
-  const bonusRewards = rewards.calculateBonusRewards(bonusStakes, bonusWeight)
-  const merkleInput = stakingRewards.combineMerkleInputs(
+  const ongoingRewards = await Rewards.calculateOngoingRewards(ongoingStakes, ongoingWeight)
+  const bonusStakes = await Subgraph.getBonusStakes(graphqlApi)
+  const bonusRewards = Rewards.calculateBonusRewards(bonusStakes, bonusWeight)
+  const merkleInput = MerkleDist.combineMerkleInputs(
     ongoingRewards,
     bonusRewards
   )
-  const merkleDist = stakingRewards.genMerkleDist(merkleInput)
+  const merkleDist = MerkleDist.genMerkleDist(merkleInput)
 
   try{
     fs.writeFileSync(
