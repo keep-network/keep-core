@@ -19,12 +19,12 @@ type Hash [HashByteLength]byte
 // to 2*HashByteLength.
 func NewHashFromString(hash string, byteOrder ByteOrder) (Hash, error) {
 	if len(hash) != 2*HashByteLength {
-		return [HashByteLength]byte{}, fmt.Errorf("wrong hash string size")
+		return Hash{}, fmt.Errorf("wrong hash string size")
 	}
 
 	hashBytes, err := hex.DecodeString(hash)
 	if err != nil {
-		return [HashByteLength]byte{}, fmt.Errorf(
+		return Hash{}, fmt.Errorf(
 			"cannot decode hash string: [%w]",
 			err,
 		)
@@ -40,7 +40,7 @@ func NewHashFromString(hash string, byteOrder ByteOrder) (Hash, error) {
 // to HashByteLength.
 func NewHash(hash []byte, byteOrder ByteOrder) (Hash, error) {
 	if len(hash) != HashByteLength {
-		return [HashByteLength]byte{}, fmt.Errorf("wrong hash size")
+		return Hash{}, fmt.Errorf("wrong hash size")
 	}
 
 	var result Hash

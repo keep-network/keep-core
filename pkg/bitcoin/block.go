@@ -41,5 +41,5 @@ func (bh *BlockHeader) Hash() Hash {
 	//       1. Call bh.Serialize() to get the serialized block hash.
 	//       2. Compute the double SHA-256 over the serialized  block hash.
 	//       3. Construct the Hash instance appropriately.
-	return [HashByteLength]byte{}
+	return Hash{}
 }

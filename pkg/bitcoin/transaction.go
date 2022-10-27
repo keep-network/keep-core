@@ -44,7 +44,7 @@ func (t *Transaction) Hash() Hash {
 	//       1. Call t.Serialize() to get the serialized transaction.
 	//       2. Compute the double SHA-256 over the serialized transaction.
 	//       3. Construct the Hash instance appropriately.
-	return [HashByteLength]byte{}
+	return Hash{}
 }
 
 // TransactionOutpoint represents a Bitcoin transaction outpoint.
