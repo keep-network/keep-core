@@ -7,7 +7,6 @@ const BigNumber = require("bignumber.js")
 
 // The Graph limits GraphQL queries to 1000 results max
 const RESULTS_PER_QUERY = 1000
-const SECONDS_IN_YEAR = 31536000
 
 async function getEpochById(gqlClient, epochId) {
   let epoch
@@ -345,14 +344,19 @@ exports.genMerkleDist = function (merkleInput) {
 }
 
 /**
- * Generate the ongoing rewards earned by stakes since a specific date and
- * return it in Merkle distribution input format
+ * Return the ongoing-rewards-elegible stakes, including beneficiary and epoch
+ * stakes between two dates. Stakes earn rewards during the period in which:
+ * 1. Have any amount of T token staked
+ * 2. Have an PRE node deployed and confirmed in Threshold Network
  * @param {string}  gqlURL          Subgraph GraphQL API URL
  * @param {Number} startTimestamp   Start date UNIX timestamp
- * @param {Number}  endTimestamp    End date UNIX timestamp
- * @return {Object}                 The ongoing rewards of each stake
+ * @param {Number} endTimestamp     End date UNIX timestamp
+ * @returns {Promise}               Promise of an object
+ *          {Object[]}              ongStakes - The ongoing-elegible stakes
+ *          {string}                ongStakes[].beneficiary - Beneficiary addr
+ *          {Object[]}              ongStakes[].epochStakes - Epoch stakes
  */
-exports.getOngoingMekleInput = async function (
+exports.getOngoingStakes = async function (
   gqlUrl,
   startTimestamp,
   endTimestamp
@@ -408,62 +412,60 @@ exports.getOngoingMekleInput = async function (
     })
   })
 
-  // Calculate the reward of each stake
-  // Rewards formula: r = (s_1 * y_t) * t / 365; where y_t is 0.15
-  const rewards = {}
-  Object.keys(stakeList).map((stakingProvider) => {
-    let reward = BigNumber(0)
+  const ongoingStakes = {}
 
-    const stake = stakeList[stakingProvider]
+  // Calculate the actual epoch stake duration: the seconds in which the stake
+  // actually meets with operator confirmed ongoing reward requirement
+  Object.keys(stakeList).map((stakingProvider) => {
+    let epochStakes = stakeList[stakingProvider]
 
     // Check if operator is confirmed and when
     const opConf = opsConfirmed.find((op) => op.id === stakingProvider)
     const opConfTimestamp = opConf ? opConf.confirmedTimestamp : undefined
     if (opConfTimestamp) {
-      reward = stake.reduce((total, epochStake) => {
-        let epochReward = BigNumber(0)
-        const stakeAmount = BigNumber(epochStake.amount)
+      // Discard the stake epochs in which operator was not confirmed yet and
+      // reduce the duration of those epochs in which operator was confirmed
+      const epochStakesClean = epochStakes.map((epochStake) => {
         const epochTimestamp = parseInt(epochStake.epochTimestamp)
         let epochDuration = epochStake.epochDuration
           ? parseInt(epochStake.epochDuration)
           : currentTime - epochStake.epochTimestamp
 
         if (
-          // If the operator was confirmed in the middle of this epoch...
+          // If the operator was confirmed in the middle of this epoch the,
+          // the duration is shorter
           opConfTimestamp > epochTimestamp &&
           opConfTimestamp <= epochTimestamp + epochDuration
         ) {
           epochDuration = epochTimestamp + epochDuration - opConfTimestamp
         } else if (opConfTimestamp >= epochTimestamp + epochDuration) {
-          // No rewards if the operator was not yet confirmed
+          // No duration if the operator was not yet confirmed
           epochDuration = 0
         }
 
-        epochReward = stakeAmount
-          .times(15)
-          .times(epochDuration)
-          .div(SECONDS_IN_YEAR * 100)
+        return {
+          epochId: epochStake.epochId,
+          amount: epochStake.amount,
+          epochDuration: epochDuration,
+        }
+      })
 
-        return total.plus(epochReward)
-      }, BigNumber(0))
-    }
-
-    if (!reward.isZero()) {
-      // Find the beneficiary of this reward
       const stakeDatasItem = stakeDatas.find(
-        (stake) => stake.id === stakingProvider
+        (stakeData) => stakeData.id === stakingProvider
       )
-      const beneficiary = stakeDatasItem.beneficiary
+
+      const benefCheckSum = ethers.utils.getAddress(stakeDatasItem.beneficiary)
 
       const stProvCheckSum = ethers.utils.getAddress(stakingProvider)
-      rewards[stProvCheckSum] = {
-        beneficiary: ethers.utils.getAddress(beneficiary),
-        amount: reward.toFixed(0),
+
+      ongoingStakes[stProvCheckSum] = {
+        beneficiary: benefCheckSum,
+        epochStakes: epochStakesClean,
       }
     }
   })
 
-  return rewards
+  return ongoingStakes
 }
 
 /**
