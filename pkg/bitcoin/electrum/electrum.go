@@ -21,7 +21,7 @@ func (c *Client) GetTransactionConfirmations(
 }
 
 func (c *Client) BroadcastTransaction(
-	transactionHash bitcoin.Hash,
+	transaction *bitcoin.Transaction,
 ) error {
 	// TODO: Implementation.
 	panic("not implemented")

@@ -18,7 +18,7 @@ type Chain interface {
 	// done, this function returns an error. This function does not give any
 	// guarantees regarding transaction mining. The transaction may be mined or
 	// rejected eventually.
-	BroadcastTransaction(transactionHash Hash) error
+	BroadcastTransaction(transaction *Transaction) error
 
 	// GetCurrentBlockNumber gets the number of the current block. If the
 	// current block was not determined, this function returns an error.
