@@ -4,11 +4,11 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/keep-network/keep-core/pkg/maintainer"
+	"github.com/keep-network/keep-core/pkg/maintainer/config"
 	"github.com/spf13/cobra"
 )
 
-var maintainerConfig = &maintainer.Config{}
+var maintainerConfig = &config.Config{}
 
 // RelayCommand contains the definition of the relay command-line subcommand.
 var RelayCommand = &cobra.Command{
