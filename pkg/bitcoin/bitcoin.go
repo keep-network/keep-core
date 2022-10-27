@@ -21,14 +21,14 @@ const (
 	// InternalByteOrder represents the internal byte order used by the Bitcoin
 	// protocol. This is the primary byte order that is suitable for the
 	// use cases related with the protocol logic and cryptography. Byte arrays
-	// using this byte order should be converted to numbers using according to
+	// using this byte order should be converted to numbers according to
 	// the little-endian sequence.
 	InternalByteOrder = iota
 
 	// ReversedByteOrder represents the "human" byte order. This is the
 	// byte order that is typically used by the third party services like
 	// block explorers or Bitcoin chain clients. Byte arrays using this byte
-	// order should be converted to numbers using  according to the big-endian
+	// order should be converted to numbers according to the big-endian
 	// sequence.
 	ReversedByteOrder
 )
