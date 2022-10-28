@@ -33,7 +33,7 @@ const (
 	// use cases related with the protocol logic and cryptography. Byte arrays
 	// using this byte order should be converted to numbers according to
 	// the little-endian sequence.
-	InternalByteOrder = iota
+	InternalByteOrder ByteOrder = iota
 
 	// ReversedByteOrder represents the "human" byte order. This is the
 	// byte order that is typically used by the third party services like
