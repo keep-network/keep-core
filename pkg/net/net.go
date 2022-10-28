@@ -2,6 +2,7 @@ package net
 
 import (
 	"context"
+
 	"github.com/keep-network/keep-core/pkg/internal/pb"
 	"github.com/keep-network/keep-core/pkg/operator"
 )
@@ -12,9 +13,6 @@ type TransportIdentifier interface {
 	String() string
 }
 
-// MessageType is an alias representing the network message type.
-type MessageType = string
-
 // Message represents a message exchanged within the network layer. It carries
 // a sender id for the transport layer and, if available, for the protocol
 // layer. It also carries an unmarshaled payload.
@@ -24,63 +22,8 @@ type Message interface {
 
 	Payload() interface{}
 
-	Type() MessageType
+	Type() string
 	Seqno() uint64
-}
-
-// TypedPayload is a constraint type representing an abstract network payload
-// that describes its own type. Despite the Message interface extends TypedPayload,
-// there is no guarantee that Message.Payload() does the same. The TypedPayload
-// should be used in the context of Message.Payload() only in cases where the
-// underlying Message.Payload() type actually implements TypedPayload.
-type TypedPayload interface {
-	Type() MessageType
-}
-
-// TypedPayloads is a collection of items conforming the TypedPayload constraint.
-type TypedPayloads[T TypedPayload] []T
-
-// TypedMessagesSupplier is an abstract supplier of Messages whose MessageType
-// returned by Message.Type() matches the concrete type behind the TypedPayload
-// constraint.
-type TypedMessagesSupplier[T TypedPayload] func(MessageType) []Message
-
-// Payloads uses the TypedMessagesSupplier to extract TypedPayloads that
-// represent a concrete type conforming the TypedPayload constraint.
-func (tms TypedMessagesSupplier[T]) Payloads() TypedPayloads[T] {
-	var template T
-
-	payloads := make([]T, 0)
-	for _, message := range tms(template.Type()) {
-		payload, ok := message.Payload().(T)
-		if !ok {
-			continue
-		}
-
-		payloads = append(payloads, payload)
-	}
-
-	return payloads
-}
-
-// Deduplicate returns a deduplicated copy of tp. The deduplication logic
-// determines duplicates using the provided keyFn that is used to produce
-// a key for the given payload. Payloads using the same key are considered
-// equal. Only the first payload with the given key is put to the resulting
-// slice.
-func (tp TypedPayloads[T]) Deduplicate(keyFn func(T) string) TypedPayloads[T] {
-	keys := make(map[string]bool)
-	result := make([]T, 0)
-
-	for _, payload := range tp {
-		key := keyFn(payload)
-		if _, exists := keys[key]; !exists {
-			keys[key] = true
-			result = append(result, payload)
-		}
-	}
-
-	return result
 }
 
 // TaggedMarshaler is an interface that includes the proto.Marshaler interface,

@@ -2,7 +2,6 @@ package signing
 
 import (
 	"context"
-	"strconv"
 
 	"github.com/keep-network/keep-core/pkg/net"
 	"github.com/keep-network/keep-core/pkg/protocol/group"
@@ -663,17 +662,47 @@ func (fs *finalizationState) result() *Result {
 	return fs.member.Result()
 }
 
+// messageReceiverState is a type constraint that refers to a state which is
+// supposed to receive network messages.
+type messageReceiverState interface {
+	GetAllReceivedMessages(messageType string) []net.Message
+}
+
 // receivedMessages returns all messages of type T that have been received
 // and validated so far. Returned messages are deduplicated so there is a
 // guarantee that only one message of the given type is returned for the
 // given sender.
-func receivedMessages[
-	T message,
-	S interface{ GetAllReceivedMessages(string) []net.Message },
-](state S) []T {
-	return net.TypedMessagesSupplier[T](state.GetAllReceivedMessages).
-		Payloads().
-		Deduplicate(func(message T) string {
-			return strconv.Itoa(int(message.SenderID()))
-		})
+func receivedMessages[T message, S messageReceiverState](state S) []T {
+	var template T
+
+	payloads := make([]T, 0)
+	for _, msg := range state.GetAllReceivedMessages(template.Type()) {
+		payload, ok := msg.Payload().(T)
+		if !ok {
+			continue
+		}
+
+		payloads = append(payloads, payload)
+	}
+
+	return deduplicateBySender(payloads)
+}
+
+// deduplicateBySender removes duplicated items for the given sender.
+// It always takes the first item that occurs for the given sender
+// and ignores the subsequent ones.
+func deduplicateBySender[T interface{ SenderID() group.MemberIndex }](
+	list []T,
+) []T {
+	senders := make(map[group.MemberIndex]bool)
+	result := make([]T, 0)
+
+	for _, item := range list {
+		if _, exists := senders[item.SenderID()]; !exists {
+			senders[item.SenderID()] = true
+			result = append(result, item)
+		}
+	}
+
+	return result
 }
