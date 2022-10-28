@@ -2,10 +2,10 @@ package signing
 
 import (
 	"context"
-
 	"github.com/keep-network/keep-core/pkg/net"
 	"github.com/keep-network/keep-core/pkg/protocol/group"
 	"github.com/keep-network/keep-core/pkg/protocol/state"
+	"strconv"
 )
 
 // ephemeralKeyPairGenerationState is the state during which members broadcast
@@ -46,7 +46,7 @@ func (ekpgs *ephemeralKeyPairGenerationState) Receive(netMessage net.Message) er
 }
 
 func (ekpgs *ephemeralKeyPairGenerationState) CanTransition() bool {
-	messagingDone := len(receivedMessages[*ephemeralPublicKeyMessage](ekpgs)) ==
+	messagingDone := len(receivedMessages[*ephemeralPublicKeyMessage](ekpgs.BaseAsyncState)) ==
 		len(ekpgs.member.group.OperatingMemberIDs())-1
 
 	return messagingDone
@@ -76,7 +76,7 @@ type symmetricKeyGenerationState struct {
 
 func (skgs *symmetricKeyGenerationState) Initiate(ctx context.Context) error {
 	return skgs.member.generateSymmetricKeys(
-		receivedMessages[*ephemeralPublicKeyMessage](skgs),
+		receivedMessages[*ephemeralPublicKeyMessage](skgs.BaseAsyncState),
 	)
 }
 
@@ -137,7 +137,7 @@ func (tros *tssRoundOneState) Receive(netMessage net.Message) error {
 }
 
 func (tros *tssRoundOneState) CanTransition() bool {
-	messagingDone := len(receivedMessages[*tssRoundOneMessage](tros)) ==
+	messagingDone := len(receivedMessages[*tssRoundOneMessage](tros.BaseAsyncState)) ==
 		len(tros.member.group.OperatingMemberIDs())-1
 
 	return messagingDone
@@ -168,7 +168,7 @@ type tssRoundTwoState struct {
 func (trts *tssRoundTwoState) Initiate(ctx context.Context) error {
 	message, err := trts.member.tssRoundTwo(
 		ctx,
-		receivedMessages[*tssRoundOneMessage](trts),
+		receivedMessages[*tssRoundOneMessage](trts.BaseAsyncState),
 	)
 	if err != nil {
 		return err
@@ -195,7 +195,7 @@ func (trts *tssRoundTwoState) Receive(netMessage net.Message) error {
 }
 
 func (trts *tssRoundTwoState) CanTransition() bool {
-	messagingDone := len(receivedMessages[*tssRoundTwoMessage](trts)) ==
+	messagingDone := len(receivedMessages[*tssRoundTwoMessage](trts.BaseAsyncState)) ==
 		len(trts.member.group.OperatingMemberIDs())-1
 
 	return messagingDone
@@ -226,7 +226,7 @@ type tssRoundThreeState struct {
 func (trts *tssRoundThreeState) Initiate(ctx context.Context) error {
 	message, err := trts.member.tssRoundThree(
 		ctx,
-		receivedMessages[*tssRoundTwoMessage](trts),
+		receivedMessages[*tssRoundTwoMessage](trts.BaseAsyncState),
 	)
 	if err != nil {
 		return err
@@ -253,7 +253,7 @@ func (trts *tssRoundThreeState) Receive(netMessage net.Message) error {
 }
 
 func (trts *tssRoundThreeState) CanTransition() bool {
-	messagingDone := len(receivedMessages[*tssRoundThreeMessage](trts)) ==
+	messagingDone := len(receivedMessages[*tssRoundThreeMessage](trts.BaseAsyncState)) ==
 		len(trts.member.group.OperatingMemberIDs())-1
 
 	return messagingDone
@@ -284,7 +284,7 @@ type tssRoundFourState struct {
 func (trfs *tssRoundFourState) Initiate(ctx context.Context) error {
 	message, err := trfs.member.tssRoundFour(
 		ctx,
-		receivedMessages[*tssRoundThreeMessage](trfs),
+		receivedMessages[*tssRoundThreeMessage](trfs.BaseAsyncState),
 	)
 	if err != nil {
 		return err
@@ -311,7 +311,7 @@ func (trfs *tssRoundFourState) Receive(netMessage net.Message) error {
 }
 
 func (trfs *tssRoundFourState) CanTransition() bool {
-	messagingDone := len(receivedMessages[*tssRoundFourMessage](trfs)) ==
+	messagingDone := len(receivedMessages[*tssRoundFourMessage](trfs.BaseAsyncState)) ==
 		len(trfs.member.group.OperatingMemberIDs())-1
 
 	return messagingDone
@@ -342,7 +342,7 @@ type tssRoundFiveState struct {
 func (trfs *tssRoundFiveState) Initiate(ctx context.Context) error {
 	message, err := trfs.member.tssRoundFive(
 		ctx,
-		receivedMessages[*tssRoundFourMessage](trfs),
+		receivedMessages[*tssRoundFourMessage](trfs.BaseAsyncState),
 	)
 	if err != nil {
 		return err
@@ -369,7 +369,7 @@ func (trfs *tssRoundFiveState) Receive(netMessage net.Message) error {
 }
 
 func (trfs *tssRoundFiveState) CanTransition() bool {
-	messagingDone := len(receivedMessages[*tssRoundFiveMessage](trfs)) ==
+	messagingDone := len(receivedMessages[*tssRoundFiveMessage](trfs.BaseAsyncState)) ==
 		len(trfs.member.group.OperatingMemberIDs())-1
 
 	return messagingDone
@@ -400,7 +400,7 @@ type tssRoundSixState struct {
 func (trss *tssRoundSixState) Initiate(ctx context.Context) error {
 	message, err := trss.member.tssRoundSix(
 		ctx,
-		receivedMessages[*tssRoundFiveMessage](trss),
+		receivedMessages[*tssRoundFiveMessage](trss.BaseAsyncState),
 	)
 	if err != nil {
 		return err
@@ -427,7 +427,7 @@ func (trss *tssRoundSixState) Receive(netMessage net.Message) error {
 }
 
 func (trss *tssRoundSixState) CanTransition() bool {
-	messagingDone := len(receivedMessages[*tssRoundSixMessage](trss)) ==
+	messagingDone := len(receivedMessages[*tssRoundSixMessage](trss.BaseAsyncState)) ==
 		len(trss.member.group.OperatingMemberIDs())-1
 
 	return messagingDone
@@ -458,7 +458,7 @@ type tssRoundSevenState struct {
 func (trss *tssRoundSevenState) Initiate(ctx context.Context) error {
 	message, err := trss.member.tssRoundSeven(
 		ctx,
-		receivedMessages[*tssRoundSixMessage](trss),
+		receivedMessages[*tssRoundSixMessage](trss.BaseAsyncState),
 	)
 	if err != nil {
 		return err
@@ -485,7 +485,7 @@ func (trss *tssRoundSevenState) Receive(netMessage net.Message) error {
 }
 
 func (trss *tssRoundSevenState) CanTransition() bool {
-	messagingDone := len(receivedMessages[*tssRoundSevenMessage](trss)) ==
+	messagingDone := len(receivedMessages[*tssRoundSevenMessage](trss.BaseAsyncState)) ==
 		len(trss.member.group.OperatingMemberIDs())-1
 
 	return messagingDone
@@ -516,7 +516,7 @@ type tssRoundEightState struct {
 func (tres *tssRoundEightState) Initiate(ctx context.Context) error {
 	message, err := tres.member.tssRoundEight(
 		ctx,
-		receivedMessages[*tssRoundSevenMessage](tres),
+		receivedMessages[*tssRoundSevenMessage](tres.BaseAsyncState),
 	)
 	if err != nil {
 		return err
@@ -543,7 +543,7 @@ func (tres *tssRoundEightState) Receive(netMessage net.Message) error {
 }
 
 func (tres *tssRoundEightState) CanTransition() bool {
-	messagingDone := len(receivedMessages[*tssRoundEightMessage](tres)) ==
+	messagingDone := len(receivedMessages[*tssRoundEightMessage](tres.BaseAsyncState)) ==
 		len(tres.member.group.OperatingMemberIDs())-1
 
 	return messagingDone
@@ -574,7 +574,7 @@ type tssRoundNineState struct {
 func (trns *tssRoundNineState) Initiate(ctx context.Context) error {
 	message, err := trns.member.tssRoundNine(
 		ctx,
-		receivedMessages[*tssRoundEightMessage](trns),
+		receivedMessages[*tssRoundEightMessage](trns.BaseAsyncState),
 	)
 	if err != nil {
 		return err
@@ -601,7 +601,7 @@ func (trns *tssRoundNineState) Receive(netMessage net.Message) error {
 }
 
 func (trns *tssRoundNineState) CanTransition() bool {
-	messagingDone := len(receivedMessages[*tssRoundNineMessage](trns)) ==
+	messagingDone := len(receivedMessages[*tssRoundNineMessage](trns.BaseAsyncState)) ==
 		len(trns.member.group.OperatingMemberIDs())-1
 
 	return messagingDone
@@ -633,7 +633,7 @@ type finalizationState struct {
 func (fs *finalizationState) Initiate(ctx context.Context) error {
 	err := fs.member.tssFinalize(
 		ctx,
-		receivedMessages[*tssRoundNineMessage](fs),
+		receivedMessages[*tssRoundNineMessage](fs.BaseAsyncState),
 	)
 	if err != nil {
 		return err
@@ -662,47 +662,19 @@ func (fs *finalizationState) result() *Result {
 	return fs.member.Result()
 }
 
-// messageReceiverState is a type constraint that refers to a state which is
-// supposed to receive network messages.
-type messageReceiverState interface {
-	GetAllReceivedMessages(messageType string) []net.Message
-}
-
 // receivedMessages returns all messages of type T that have been received
 // and validated so far. Returned messages are deduplicated so there is a
 // guarantee that only one message of the given type is returned for the
 // given sender.
-func receivedMessages[T message, S messageReceiverState](state S) []T {
-	var template T
+func receivedMessages[T message](base *state.BaseAsyncState) []T {
+	var messageTemplate T
 
-	payloads := make([]T, 0)
-	for _, msg := range state.GetAllReceivedMessages(template.Type()) {
-		payload, ok := msg.Payload().(T)
-		if !ok {
-			continue
-		}
+	payloads := state.ExtractMessagesPayloads[T](base, messageTemplate.Type())
 
-		payloads = append(payloads, payload)
-	}
-
-	return deduplicateBySender(payloads)
-}
-
-// deduplicateBySender removes duplicated items for the given sender.
-// It always takes the first item that occurs for the given sender
-// and ignores the subsequent ones.
-func deduplicateBySender[T interface{ SenderID() group.MemberIndex }](
-	list []T,
-) []T {
-	senders := make(map[group.MemberIndex]bool)
-	result := make([]T, 0)
-
-	for _, item := range list {
-		if _, exists := senders[item.SenderID()]; !exists {
-			senders[item.SenderID()] = true
-			result = append(result, item)
-		}
-	}
-
-	return result
+	return state.DeduplicateMessagesPayloads(
+		payloads,
+		func(message T) string {
+			return strconv.Itoa(int(message.SenderID()))
+		},
+	)
 }
