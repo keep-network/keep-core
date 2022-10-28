@@ -25,6 +25,8 @@ var RelayCommand = &cobra.Command{
 
 const relayDescription = `The relay command starts relay maintainer`
 
+// relay sets up the connection to the Bitcoin chain and the relay chain and
+// launches the process of maintaining the relay.
 func relay(cmd *cobra.Command, args []string) error {
 	ctx := context.Background()
 

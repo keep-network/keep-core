@@ -18,6 +18,7 @@ type Config struct {
 	Ethereum ethereum.Config
 }
 
+// ReadConfig reads in the configuration file at `configFilePath`.
 func (c *Config) ReadConfig(configFilePath string) error {
 	// Read configuration from a file if the config file path is set.
 	if configFilePath != "" {
