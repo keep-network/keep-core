@@ -2,18 +2,20 @@ package maintainer
 
 import (
 	"github.com/keep-network/keep-core/pkg/bitcoin"
-	"github.com/keep-network/keep-core/pkg/tbtc"
-
 )
 
-func NewRelay(btcChain bitcoin.Chain, tbtcChain tbtc.Chain) *Relay {
+type RelayChain interface {
+	Retarget(headers []bitcoin.BlockHeader) error
+}
+
+func NewRelay(btcChain bitcoin.Chain, relayChain RelayChain) *Relay {
 	return &Relay{
-		btcChain:  btcChain,
-		tbtcChain: tbtcChain,
+		btcChain:   btcChain,
+		relayChain: relayChain,
 	}
 }
 
 type Relay struct {
-	btcChain  bitcoin.Chain
-	tbtcChain tbtc.Chain
+	btcChain   bitcoin.Chain
+	relayChain RelayChain
 }

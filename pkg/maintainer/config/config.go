@@ -3,10 +3,10 @@ package config
 import (
 	"fmt"
 
-	"github.com/spf13/viper"
-	"github.com/mitchellh/mapstructure"
 	"github.com/keep-network/keep-common/pkg/chain/ethereum"
 	"github.com/keep-network/keep-core/pkg/bitcoin"
+	"github.com/mitchellh/mapstructure"
+	"github.com/spf13/viper"
 )
 
 // TODO: Should each maintainer have its own config or should there be a single
@@ -37,7 +37,6 @@ func (c *Config) ReadConfig(configFilePath string) error {
 
 	return nil
 }
-
 
 // unmarshalConfig unmarshals config with viper from config file and command-line
 // flags into a struct.
