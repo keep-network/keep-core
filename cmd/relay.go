@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/keep-network/keep-core/pkg/maintainer"
 	"github.com/keep-network/keep-core/pkg/maintainer/config"
 	"github.com/spf13/cobra"
 )
@@ -25,7 +26,7 @@ var RelayCommand = &cobra.Command{
 
 const relayDescription = `The relay command starts relay maintainer`
 
-// relay sets up the connection to the Bitcoin chain and the relay chain and
+// relay sets up the connections to the Bitcoin chain and the relay chain and
 // launches the process of maintaining the relay.
 func relay(cmd *cobra.Command, args []string) error {
 	ctx := context.Background()
@@ -36,7 +37,7 @@ func relay(cmd *cobra.Command, args []string) error {
 	// 	return fmt.Errorf("could not connect BTC chain: [%v]", err)
 	// }
 
-	// maintainer.NewRelay(btcChain, nil)
+	maintainer.NewRelay(ctx, nil, nil)
 
 	// 	TODO: add metrics
 	logger.Info("relay started")
