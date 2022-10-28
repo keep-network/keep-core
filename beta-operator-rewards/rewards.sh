@@ -110,28 +110,32 @@ endRewardsBlock=$(curl -s $endBlockApiCall | jq '.result|tonumber')
 printf "${LOG_START}Installing yarn dependencies...${LOG_END}"
 yarn install
 
-# latestTags=$(git tag --sort=-version:refname --list 'v[0-9]*.*-m[0-9]*') # TODO: REPLACE, this is correct regex to match latest versions
+# allTags=($(git tag --sort=-version:refname --list 'v[0-9]*.*-m[0-9]*')) # TODO: REPLACE, this is correct regex to match latest versions
 allTags=($(git tag --sort=-version:refname --list 'v[0-9]*')) # sorted latest -> oldest # TODO: For testing
-latestTags=allTags[@]:0:1                                     # pick 2 latest tags
+latestTag=${allTags[0]}
+latestTimestamp=$(git show -s --format=%ct ${latestTag}^{commit})
+latestTagTimestamp="${latestTag}_$latestTimestamp"
 
 tagsInRewardInterval=()
 
-latestTimestamp=$(git show -s --format=%ct ${allTags[0]}^{commit})
-if [ $latestTimestamp -gt $rewardsStartDate ] && [ $latestTimestamp -lt $rewardsEndDate ]; then
-  tagOneBeforeLatestTimestamp="${allTags[0]}_$(git show -s --format=%ct ${allTags[1]}^{commit})"
-  tagLatestTimestamp="${allTags[1]}_$latestTimestamp"
-  tagsInRewardInterval+=($tagOneBeforeLatestTimestamp)
-  tagsInRewardInterval+=($tagLatestTimestamp)
-elif [ $latestTimestamp -gt $rewardsEndDate ]; then
-  # The latest tag was created after the given rewards interval. We do not process
-  # such tags and we take the one before latest
-  tagLatestTimestamp="${allTags[1]}_$latestTimestamp"
-  tagsInRewardInterval+=($tagLatestTimestamp)
-else
-  # Latest tag was created before the start rewards interval and continue being
-  # the latest tag. (no new releases)
-  tagLatestTimestamp="${allTags[0]}_$latestTimestamp"
-  tagsInRewardInterval+=($tagLatestTimestamp)
+if [ ${#allTags[@]} -gt 1 ]; then
+  secondToLatestTag=${allTags[1]}
+  secondToLatestTagTimestamp="${secondToLatestTag}_$(git show -s --format=%ct ${secondToLatestTag}^{commit})"
+  if [ $latestTimestamp -gt $rewardsStartDate ] && [ $latestTimestamp -lt $rewardsEndDate ]; then
+    # The latest tag was created within the rewards interval dates.
+    tagsInRewardInterval+=($latestTagTimestamp)
+    tagsInRewardInterval+=($secondToLatestTagTimestamp)
+  elif [ $latestTimestamp -gt $rewardsEndDate ]; then
+    # The latest tag was created after the given rewards interval. Take a
+    # second to latest tag.
+    tagsInRewardInterval+=($secondToLatestTagTimestamp)
+  fi
+fi
+
+if [ ${#tagsInRewardInterval[@]} -eq 0 ]; then
+  # There is only one tag or the latest tag was created before the start rewards
+  # interval and it is continue being the latest tag. (No new releases)
+  tagsInRewardInterval+=($latestTagTimestamp)
 fi
 
 # Converting array to string so we can pass to the rewards-requirements.ts
@@ -149,7 +153,7 @@ ETHERSCAN_TOKEN=${ETHERSCAN_TOKEN} yarn rewards-requirements \
   --start-block $startRewardsBlock \
   --end-block $endRewardsBlock \
   --interval ${PROMETHEUS_SCRAPE_INTERVAL} \
-  --versions $tagsTrimmed \
+  --releases $tagsTrimmed \
   --output ${OUTPUT_JSON_FILE}
 
 printf "${DONE_START}Complete!${DONE_END}"

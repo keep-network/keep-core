@@ -67,8 +67,8 @@ program
   .requiredOption("-a, --api <prometheus api>", "prometheus API")
   .requiredOption("-j, --job <prometheus job>", "prometheus job")
   .requiredOption(
-    "-v, --versions <client version(s) in a rewards interval>",
-    "client version(s) in a rewards interval"
+    "-r, --releases <client releases in a rewards interval>",
+    "client releases in a rewards interval"
   )
   .requiredOption("-o, --output <file>", "output JSON file")
   .parse(process.argv);
@@ -77,7 +77,7 @@ program
 const options = program.opts();
 const prometheusJob = options.job;
 const prometheusAPI = options.api;
-const clientVersions = options.versions.split("|"); // sorted from latest to oldest
+const clientReleases = options.releases.split("|"); // sorted from latest to oldest
 const startRewardsTimestamp = parseInt(options.startTimestamp);
 const endRewardsTimestamp = parseInt(options.endTimestamp);
 const startRewardsBlock = parseInt(options.startBlock);
@@ -99,9 +99,8 @@ export async function runRewardsRequirements() {
   const currentBlockNumber = await provider.getBlockNumber();
   const rewardsInterval = endRewardsTimestamp - startRewardsTimestamp;
 
-  const queryBootstrapData = `${prometheusAPI}/query_range`;
-
   // Query for bootstrap data that has peer instances grouped by operators
+  const queryBootstrapData = `${prometheusAPI}/query_range`;
   const paramsBootstrapData = {
     query: `sum by(chain_address)({job='${prometheusJob}'})`,
     start: startRewardsTimestamp,
@@ -134,7 +133,7 @@ export async function runRewardsRequirements() {
     provider
   );
 
-  console.log("Fetching AuthorizationIncreased events in rewards interval..");
+  console.log("Fetching AuthorizationIncreased events in rewards interval...");
   const allIntevalAuthorizationIncreasedEvents = await tokenStaking.queryFilter(
     "AuthorizationIncreased",
     startRewardsBlock,
@@ -144,7 +143,7 @@ export async function runRewardsRequirements() {
     allIntevalAuthorizationIncreasedEvents
   );
 
-  console.log("Fetching AuthorizationDecreased events in rewards interval..");
+  console.log("Fetching AuthorizationDecreased events in rewards interval...");
   const allIntervalAuthorizationDecreasedEvents =
     await tokenStaking.queryFilter(
       "AuthorizationDecreaseApproved",
@@ -156,7 +155,7 @@ export async function runRewardsRequirements() {
   );
 
   console.log(
-    "Fetching AuthorizationIncreased events after rewards interval.."
+    "Fetching AuthorizationIncreased events after rewards interval..."
   );
   const allPostIntervalAuthorizationIncreasedEvents =
     await tokenStaking.queryFilter(
@@ -169,7 +168,7 @@ export async function runRewardsRequirements() {
   );
 
   console.log(
-    "Fetching AuthorizationDecreased events after rewards interval.."
+    "Fetching AuthorizationDecreased events after rewards interval..."
   );
   const allPostIntervalAuthorizationDecreasedEvents =
     await tokenStaking.queryFilter(
@@ -213,11 +212,7 @@ export async function runRewardsRequirements() {
     }
 
     // Populate instances for a given operator.
-    await instancesForOperator(
-      operatorAddress,
-      rewardsInterval,
-      instancesData
-    );
+    await instancesForOperator(operatorAddress, rewardsInterval, instancesData);
 
     // Events that were emitted between the [start:end] rewards dates for a given
     // stakingProvider.
@@ -252,9 +247,19 @@ export async function runRewardsRequirements() {
     requirements.set(IS_TBTC_AUTHORIZED, !tbtcAuthorization.isZero());
 
     /// Uptime requirement
+    const paramsOperatorUptime = {
+      query: `up{chain_address="${operatorAddress}", job="${prometheusJob}"}
+              [${rewardsInterval}s:${UPTIME_QUERY_RESOLUTION}s] offset ${offset}s`,
+    };
+
+    const instances = (
+      await queryPrometheus(prometheusAPIQuery, paramsOperatorUptime)
+    ).data.result;
+
     let { uptimeCoefficient, isUptimeSatisfied } = await checkUptime(
       operatorAddress,
       rewardsInterval,
+      instances,
       instancesData
     );
     // BigNumbers cannot operate on floats. Coefficient needs to be multiplied by 100
@@ -271,7 +276,37 @@ export async function runRewardsRequirements() {
     requirements.set(IS_PRE_PARAMS_SATISFIED, isPrePramsSatisfied);
 
     /// Version requirement
+    // Find a peer's latest registered timestamp
+    const latestRegisteredBuildVersion = instances.reduce(
+      (currentMax: number, instance: any) =>
+        Math.max(instance.values[instance.values.length - 1][0], currentMax),
+      Number.MIN_VALUE
+    );
+
+    const buildVersionParams = {
+      query: `client_info{chain_address="${operatorAddress}", job="${prometheusJob}"} @${latestRegisteredBuildVersion}`,
+    };
+    const queryBuildVersionResult = (
+      await queryPrometheus(prometheusAPIQuery, buildVersionParams)
+    ).data.result;
+
+    let buildVersion = "";
+    if (queryBuildVersionResult[0] !== undefined) {
+      buildVersion = queryBuildVersionResult[0].metric.version;
+    } else {
+      console.log(
+        `Cannot establish client's build version ` +
+          `No Rewards were calculated for operator ${operatorAddress}`
+      );
+      continue;
+    }
+
     // TODO: implement
+    if (clientReleases.length > 1) {
+      // two allowed
+    } else {
+      // one is allowed
+    }
 
     // console.log("authorizations", authorizations);
     // console.log("instancesData", instancesData);
@@ -297,6 +332,8 @@ export async function runRewardsRequirements() {
       if (beacon.gt(tbct)) {
         minApplicationAuthorization = tbct;
       }
+      // TODO: - adjust by APR 15%, ie *1.25%
+      //       - make APR an input var
       weightedAuthorization[stakingProvider] = {
         // beaneficiary: <address> TODO: implement
         weightedAuthorization: minApplicationAuthorization
@@ -379,17 +416,9 @@ async function checkPreParams(
 async function checkUptime(
   operatorAddress: string,
   rewardsInterval: number,
+  instances: any,
   instancesData: Map<string, Map<string, string | number>>
 ) {
-  const paramsOperatorUptime = {
-    query: `up{chain_address="${operatorAddress}", job="${prometheusJob}"}
-            [${rewardsInterval}s:${UPTIME_QUERY_RESOLUTION}s] offset ${offset}s`,
-  };
-
-  const instances = (
-    await queryPrometheus(prometheusAPIQuery, paramsOperatorUptime)
-  ).data.result;
-
   // First registered 'up' metric in a given interval <start:end> for a given
   // operator. Start evaluating uptime from this point.
   const firstRegisteredUptime = instances.reduce(
