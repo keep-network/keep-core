@@ -137,6 +137,8 @@ type AsyncState interface {
 
 	// CanTransition indicates if the state has all the information needed and
 	// is ready to advance to the next one.
+	// It is guaranteed that CanTransition() is not called for the current state
+	// until Initiate() completes the work.
 	CanTransition() bool
 
 	// Initiate performs all the required calculations and sends out all the
