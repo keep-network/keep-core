@@ -200,3 +200,45 @@ func (bas *BaseAsyncState) GetAllReceivedMessages(messageType string) []net.Mess
 
 	return bas.messages[messageType]
 }
+
+// ExtractMessagesPayloads gets all messages of type messageType from the
+// state's history, extracts their payloads and tries to cast them to type T.
+// If the payload cannot be cast to T, it is ignored. It is the caller's
+// responsibility to ensure that the type T actually corresponds to the
+// type of payloads extracted from messages of type messageType.
+func ExtractMessagesPayloads[T any](
+	state *BaseAsyncState,
+	messageType string,
+) []T {
+	payloads := make([]T, 0)
+	for _, msg := range state.GetAllReceivedMessages(messageType) {
+		payload, ok := msg.Payload().(T)
+		if !ok {
+			continue
+		}
+
+		payloads = append(payloads, payload)
+	}
+
+	return payloads
+}
+
+// DeduplicateMessagesPayloads returns a deduplicated copy of payloads.
+// The deduplication logic determines duplicates using the provided keyFn that
+// is used to produce a key for the given payload. Payloads using the same key
+// are considered equal. Only the first payload with the given key is put to
+// the resulting slice.
+func DeduplicateMessagesPayloads[T any](payloads []T, keyFn func(T) string) []T {
+	keys := make(map[string]bool)
+	result := make([]T, 0)
+
+	for _, payload := range payloads {
+		key := keyFn(payload)
+		if _, exists := keys[key]; !exists {
+			keys[key] = true
+			result = append(result, payload)
+		}
+	}
+
+	return result
+}
