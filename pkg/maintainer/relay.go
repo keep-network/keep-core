@@ -8,7 +8,7 @@ import (
 	"github.com/keep-network/keep-core/pkg/bitcoin"
 )
 
-var logger = log.Logger("maintainer-relay")
+var logger = log.Logger("keep-maintainer-relay")
 
 // RelayChain is an interface that provides the ability to communicate with the
 // relay on-chain contract.
@@ -42,10 +42,10 @@ type Relay struct {
 
 // startRelayControlLoop launches the loop responsible for controlling the relay.
 func (r *Relay) startRelayControlLoop(ctx context.Context) {
-	logger.Infof("starting headers relay")
+	logger.Info("starting headers relay")
 
 	defer func() {
-		logger.Infof("stopping headers relay")
+		logger.Info("stopping headers relay")
 	}()
 
 	for {
@@ -53,8 +53,8 @@ func (r *Relay) startRelayControlLoop(ctx context.Context) {
 		case <-ctx.Done():
 			return
 		default:
-			// TODO: implement
-			logger.Infof("relay is working")
+			// TODO: Implement header relay loop. For now just print a message.
+			logger.Info("relay is working")
 		}
 
 		time.Sleep(1 * time.Second)

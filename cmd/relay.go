@@ -31,15 +31,22 @@ const relayDescription = `The relay command starts relay maintainer`
 func relay(cmd *cobra.Command, args []string) error {
 	ctx := context.Background()
 
-	// TODO: uncomment when the electrum implementation is ready
+	// TODO: Add connection to the Bitcoin chain:
 	// btcChain, err := bitcoin.Connect(ctx, &maintainerConfig.Bitcoin)
 	// if err != nil {
 	// 	return fmt.Errorf("could not connect BTC chain: [%v]", err)
 	// }
 
+	// TODO: Add connection to the relay chain:
+	// relayChain, err := connectRelayChain(config)
+	// if err != nil {
+	// 	return fmt.Errorf("could not connect host chain: [%v]", err)
+	// }
+
 	maintainer.NewRelay(ctx, nil, nil)
 
-	// 	TODO: add metrics
+	// TODO: Consider adding metrics.
+
 	logger.Info("relay started")
 
 	<-ctx.Done()
