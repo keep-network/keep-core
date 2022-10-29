@@ -109,7 +109,7 @@ export async function runRewardsRequirements() {
     await queryPrometheus(queryBootstrapData, paramsBootstrapData)
   ).data.result;
 
-  let peersData = new Array();
+  let operatorsData = new Array();
   let rewardsData = new Array();
 
   const randomBeacon = new Contract(
@@ -182,7 +182,7 @@ export async function runRewardsRequirements() {
     let authorizations = new Map<string, BigNumber>(); // application: value
     let requirements = new Map<string, boolean>(); // factor: true | false
     let instancesData = new Map<string, Map<string, string | number>>();
-    let peerData: any = {};
+    let operatorData: any = {};
     let rewardData: any = {};
 
     // Staking provider should be the same for Beacon and TBTC apps
@@ -327,7 +327,7 @@ export async function runRewardsRequirements() {
     }
 
     /// Start assembling peer data and weighted authorizations
-    peerData[stakingProvider] = {
+    operatorData[stakingProvider] = {
       applications: Object.fromEntries(authorizations),
       instances: convertToObject(instancesData),
       requirements: Object.fromEntries(requirements),
@@ -361,10 +361,10 @@ export async function runRewardsRequirements() {
       rewardsData.push(rewardData);
     }
 
-    peersData.push(peerData);
+    operatorsData.push(operatorData);
   }
 
-  console.log("peersData: ", JSON.stringify(peersData, null, 2));
+  console.log("operatorsData: ", JSON.stringify(operatorsData, null, 2));
   console.log(
     "rewardsData: ",
     JSON.stringify(rewardsData, null, 2)
