@@ -92,7 +92,7 @@ export async function runRewardsRequirements() {
     return "End time interval must be in the past";
   }
 
-  const monthlyRate = APR / 12 * HUNDRED // monthly periodic rate ARP / 12 month
+  const monthlyRate = (APR / 12) * HUNDRED; // monthly periodic rate ARP / 12 month
   const currentBlockNumber = await provider.getBlockNumber();
   const rewardsInterval = endRewardsTimestamp - startRewardsTimestamp;
 
@@ -199,6 +199,7 @@ export async function runRewardsRequirements() {
       );
       continue;
     }
+    const { beneficiary } = await tokenStaking.rolesOf(stakingProvider);
 
     if (stakingProvider === ethers.constants.AddressZero) {
       console.log(
@@ -345,10 +346,9 @@ export async function runRewardsRequirements() {
       if (beacon.gt(tbct)) {
         minApplicationAuthorization = tbct;
       }
-      // TODO: - adjust by APR 15%, ie *1.25%
-      //       - make APR an input var
+
       weightedAuthorization[stakingProvider] = {
-        // beaneficiary: <address> TODO: implement
+        beneficiary: beneficiary,
         // amount = APR/12 * clientUptimeCoefficient * min(beaconWeightedAuthorization, tbtcWeightedAuthorization)
         amount: minApplicationAuthorization
           .mul(uptimeCoefficient)
