@@ -16,4 +16,4 @@ export const PRECISION = 1000;
 export const QUERY_RESOLUTION = 120 // 2min sampling time for the metrics
 export const HUNDRED = 100
 export const IS_VERSION_SATISFIED = "isVersionSatisfied"
-
+export const APR = 15 // percent
