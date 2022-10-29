@@ -7,8 +7,9 @@
     "beta-operator-rewards"
   ],
   "scripts": {
-    "rewards-requirements": "ts-node rewards-requirements.ts"
+    "rewards": "ts-node rewards.ts"
   },
+  "license": "MIT",
   "dependencies": {
     "@keep-network/tbtc-v2": "0.1.1-goerli.6",
     "axios": "^0.27.2",

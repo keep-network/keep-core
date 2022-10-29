@@ -10,7 +10,7 @@ LOG_WARNING_END='\n\e\033[0m'    # new line + reset
 
 PROMETHEUS_API_DEFAULT="https://monitoring.test.threshold.network/prometheus/api/v1"
 PROMETHEUS_JOB_DEFAULT="keep-discovered-nodes"
-OUTPUT_JSON_FILE="peersData.json"
+REWARDS_JSON_DEFAULT="./rewards.json"
 ETHERSCAN_API="https://api-goerli.etherscan.io" # TODO: change to mainnet https://api.etherscan.io/
 
 help() {
@@ -20,6 +20,7 @@ help() {
     "--etherscan-token <etherscan-token>" \
     "--prometheus-api <prometheus-api-address>" \
     "--prometheus-job <prometheus-job-name>" \
+    "--rewards-json <rewards-json-output-path>"
   echo -e "\nRequired command line arguments:\n"
   echo -e "\t--rewards-start-date: Rewards interval start date formatted as Y-m-d"
   echo -e "\t--rewards-end-date: Rewards interval end date formatted as Y-m-d"
@@ -27,6 +28,7 @@ help() {
   echo -e "\nOptional command line arguments:\n"
   echo -e "\t--prometheus-api: Prometheus API. Default: ${PROMETHEUS_API_DEFAULT}"
   echo -e "\t--prometheus-job: Prometheus service discovery job name. Default: ${PROMETHEUS_JOB_DEFAULT}"
+  echo -e "\t--rewards-json: Rewards JSON output path. Default: ${REWARDS_JSON_DEFAULT}"
   echo -e ""
   exit 1 # Exit script after printing help
 }
@@ -40,6 +42,7 @@ for arg in "$@"; do
   "--etherscan-token") set -- "$@" "-t" ;;
   "--prometheus-api") set -- "$@" "-a" ;;
   "--prometheus-job") set -- "$@" "-p" ;;
+  "--rewards-json") set -- "$@" "-o" ;;
   "--help") set -- "$@" "-h" ;;
   *) set -- "$@" "$arg" ;;
   esac
@@ -47,13 +50,14 @@ done
 
 # Parse short options
 OPTIND=1
-while getopts "k:e:t:a:p:i:h" opt; do
+while getopts "k:e:t:a:p:o:h" opt; do
   case "$opt" in
   k) rewards_start_date="$OPTARG" ;;
   e) rewards_end_date="$OPTARG" ;;
   t) etherscan_token="$OPTARG" ;;
   a) prometheus_api="$OPTARG" ;;
   p) prometheus_job="$OPTARG" ;;
+  o) rewards_json="$OPTARG" ;;
   h) help ;;
   ?) help ;; # Print help in case parameter is non-existent
   esac
@@ -65,6 +69,7 @@ REWARDS_START_DATE=${rewards_start_date:-""}
 REWARDS_END_DATE=${rewards_end_date:-""}
 PROMETHEUS_API=${prometheus_api:-${PROMETHEUS_API_DEFAULT}}
 PROMETHEUS_JOB=${prometheus_job:-${PROMETHEUS_JOB_DEFAULT}}
+REWARDS_JSON=${rewards_json:-${REWARDS_JSON_DEFAULT}}
 
 if [ "$REWARDS_START_DATE" == "" ]; then
   printf "${LOG_WARNING_START}Rewards start date must be provided.${LOG_WARNING_END}"
@@ -104,6 +109,7 @@ endRewardsBlock=$(curl -s $endBlockApiCall | jq '.result|tonumber')
 printf "${LOG_START}Installing yarn dependencies...${LOG_END}"
 yarn install
 
+printf "${LOG_START}Retrieving client release tags...${LOG_END}"
 allTags=($(git tag --sort=-version:refname --list 'v[0-9]*.*-m[0-9]*'))
 latestTag=${allTags[0]}
 latestTimestamp=$(git show -s --format=%ct ${latestTag}^{commit})
@@ -138,7 +144,7 @@ tagsTrimmed="${tags%?}" # remove "|" at the end
 # Run script
 printf "${LOG_START}Fetching peers data...${LOG_END}"
 
-ETHERSCAN_TOKEN=${ETHERSCAN_TOKEN} yarn rewards-requirements \
+ETHERSCAN_TOKEN=${ETHERSCAN_TOKEN} yarn rewards \
   --api ${PROMETHEUS_API} \
   --job ${PROMETHEUS_JOB} \
   --start-timestamp $rewardsStartDate \
@@ -146,6 +152,6 @@ ETHERSCAN_TOKEN=${ETHERSCAN_TOKEN} yarn rewards-requirements \
   --start-block $startRewardsBlock \
   --end-block $endRewardsBlock \
   --releases $tagsTrimmed \
-  --output ${OUTPUT_JSON_FILE}
+  --output ${REWARDS_JSON}
 
 printf "${DONE_START}Complete!${DONE_END}"
