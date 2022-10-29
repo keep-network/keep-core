@@ -1,21 +1,19 @@
 export const ALLOWED_UPGRADE_DELAY = 1209600; // 2 weeks in sec. TODO: add as an option.param
-export const CLIENT_TIMESTAMP_INDEX = 1;
-export const CLIENT_VERSION_INDEX = 0;
 export const DEFAULT_NETWORK = "goerli";
 export const REQUIRED_MIN_PRE_PARAMS = 500; // min requirement for pre params daily avg
 export const QUERY_STEP = 600; // 10min in sec
 export const REQUIRED_UPTIME_PERCENT = 96; // percent
-export const UPTIME_REWARDS_COEFFICIENT = "uptimeRewardsCoefficient";
 export const IS_BEACON_AUTHORIZED = "isBeaconAuthorized";
 export const BEACON_AUTHORIZATION = "beaconAuthorization";
 export const IS_TBTC_AUTHORIZED = "isTbtcAuthorized";
 export const TBTC_AUTHORIZATION = "tbtcAuthorization";
 export const UP_TIME_PERCENT = "upTimePercent";
 export const IS_UP_TIME_SATISFIED = "isUptimeSatisfied";
-export const INSTANCE = "instance";
 export const VERSION = "version";
-export const PRE_PARAMS = "preParams";
+export const AVG_PRE_PARAMS = "avgPreParams";
 export const IS_PRE_PARAMS_SATISFIED = "isPreParamsSatisfied";
 export const PRECISION = 1000;
-export const UPTIME_QUERY_RESOLUTION = 120 // 2min is a sampling time for the uptime metric
+export const QUERY_RESOLUTION = 120 // 2min sampling time for the metrics
 export const HUNDRED = 100
+export const IS_VERSION_SATISFIED = "isVersionSatisfied"
+

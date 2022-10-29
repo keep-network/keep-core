@@ -17,26 +17,23 @@ import {
 } from "@threshold-network/solidity-contracts/artifacts/TokenStaking.json";
 import axios from "axios";
 import {
-  ALLOWED_UPGRADE_DELAY,
-  CLIENT_TIMESTAMP_INDEX,
-  CLIENT_VERSION_INDEX,
   DEFAULT_NETWORK,
   BEACON_AUTHORIZATION,
-  IS_BEACON_AUTHORIZED,
   TBTC_AUTHORIZATION,
-  IS_TBTC_AUTHORIZED,
-  REQUIRED_MIN_PRE_PARAMS,
-  PRE_PARAMS,
-  IS_PRE_PARAMS_SATISFIED,
-  QUERY_STEP,
-  REQUIRED_UPTIME_PERCENT,
-  UPTIME_REWARDS_COEFFICIENT,
   UP_TIME_PERCENT,
+  AVG_PRE_PARAMS,
   VERSION,
-  PRECISION,
-  UPTIME_QUERY_RESOLUTION,
-  INSTANCE,
+  IS_BEACON_AUTHORIZED,
+  IS_TBTC_AUTHORIZED,
   IS_UP_TIME_SATISFIED,
+  IS_PRE_PARAMS_SATISFIED,
+  IS_VERSION_SATISFIED,
+  REQUIRED_UPTIME_PERCENT,
+  REQUIRED_MIN_PRE_PARAMS,
+  ALLOWED_UPGRADE_DELAY,
+  PRECISION,
+  QUERY_STEP,
+  QUERY_RESOLUTION,
   HUNDRED,
 } from "./rewards-constants";
 
@@ -247,19 +244,9 @@ export async function runRewardsRequirements() {
     requirements.set(IS_TBTC_AUTHORIZED, !tbtcAuthorization.isZero());
 
     /// Uptime requirement
-    const paramsOperatorUptime = {
-      query: `up{chain_address="${operatorAddress}", job="${prometheusJob}"}
-              [${rewardsInterval}s:${UPTIME_QUERY_RESOLUTION}s] offset ${offset}s`,
-    };
-
-    const instances = (
-      await queryPrometheus(prometheusAPIQuery, paramsOperatorUptime)
-    ).data.result;
-
     let { uptimeCoefficient, isUptimeSatisfied } = await checkUptime(
       operatorAddress,
       rewardsInterval,
-      instances,
       instancesData
     );
     // BigNumbers cannot operate on floats. Coefficient needs to be multiplied by 100
@@ -276,41 +263,67 @@ export async function runRewardsRequirements() {
     requirements.set(IS_PRE_PARAMS_SATISFIED, isPrePramsSatisfied);
 
     /// Version requirement
-    // Find a peer's latest registered timestamp
-    const latestRegisteredBuildVersion = instances.reduce(
-      (currentMax: number, instance: any) =>
-        Math.max(instance.values[instance.values.length - 1][0], currentMax),
-      Number.MIN_VALUE
-    );
+    let {
+      instanceWithLatestBuildVersion,
+      latestRegisteredBuildVersionTimestmap,
+    } = await checkVersion(operatorAddress, rewardsInterval, instancesData);
 
-    const buildVersionParams = {
-      query: `client_info{chain_address="${operatorAddress}", job="${prometheusJob}"} @${latestRegisteredBuildVersion}`,
-    };
-    const queryBuildVersionResult = (
-      await queryPrometheus(prometheusAPIQuery, buildVersionParams)
-    ).data.result;
-
-    let buildVersion = "";
-    if (queryBuildVersionResult[0] !== undefined) {
-      buildVersion = queryBuildVersionResult[0].metric.version;
-    } else {
+    if (instanceWithLatestBuildVersion === undefined) {
       console.log(
-        `Cannot establish client's build version ` +
-          `No Rewards were calculated for operator ${operatorAddress}`
+        `Cannot determine a client version. No Rewards were calculated for operator ${operatorAddress}`
       );
       continue;
     }
 
-    // TODO: implement
-    if (clientReleases.length > 1) {
-      // two allowed
-    } else {
-      // one is allowed
-    }
+    // This is an example to illustrate a client's build version requirement.
+    // A client must be either on the second to latest version or latest.
+    //                       v1 or v2                v2
+    //           |-------------------------------\|-------|
+    // Timeline -|-------------*------------------*-------|->
+    //         Sep1            v2             v2+delay   Sep30
+    // Where:
+    // v2 was released Sep10
+    // delay = 14days
+    // v2 + delay = Sep10 + 14days = Sep24
+    // Between Sep1 - Sep24 a client is allowed to run v1 or v2
+    // Between Sep24 - Sep30 a client is allowed to run only v2
 
-    // console.log("authorizations", authorizations);
-    // console.log("instancesData", instancesData);
-    // console.log("requirements", requirements);
+    const buildVersion = instanceWithLatestBuildVersion.metric.version;
+    const latestClientRelease = clientReleases[0].split("_");
+    const latestClientTag = latestClientRelease[0];
+    const latestClientReleaseTimestamp = latestClientRelease[1];
+    if (clientReleases.length > 1) {
+      // A client is allowed to be on either of the two latest releases.
+      const secondToLatestClientRelease = clientReleases[1].split("_");
+      const secondToLatestClientTag = secondToLatestClientRelease[0];
+
+      let allowedDelayEndTimestamp =
+        latestClientReleaseTimestamp + ALLOWED_UPGRADE_DELAY;
+      if (allowedDelayEndTimestamp > endRewardsTimestamp) {
+        allowedDelayEndTimestamp = endRewardsTimestamp;
+      }
+
+      if (latestRegisteredBuildVersionTimestmap <= allowedDelayEndTimestamp) {
+        // A client's version can be on either 2 latest versions
+        requirements.set(
+          IS_VERSION_SATISFIED,
+          buildVersion.includes(latestClientTag) ||
+            buildVersion.includes(secondToLatestClientTag)
+        );
+      } else {
+        // The allowed delay for an upgrade is over. A client should be on the
+        // latest build version.
+        requirements.set(
+          IS_VERSION_SATISFIED,
+          buildVersion.includes(latestClientTag)
+        );
+      }
+    } else {
+      requirements.set(
+        IS_VERSION_SATISFIED,
+        buildVersion.includes(latestClientTag)
+      );
+    }
 
     /// Start assembling peer data and weighted authorizations
     peerData[stakingProvider] = {
@@ -319,12 +332,12 @@ export async function runRewardsRequirements() {
       requirements: Object.fromEntries(requirements),
     };
 
-    // TODO: Add version reqs
     if (
       requirements.get(IS_BEACON_AUTHORIZED) &&
       requirements.get(IS_TBTC_AUTHORIZED) &&
       requirements.get(IS_UP_TIME_SATISFIED) &&
-      requirements.get(IS_PRE_PARAMS_SATISFIED)
+      requirements.get(IS_PRE_PARAMS_SATISFIED) &&
+      requirements.get(IS_VERSION_SATISFIED)
     ) {
       const beacon = BigNumber.from(authorizations.get(BEACON_AUTHORIZATION));
       const tbct = BigNumber.from(authorizations.get(TBTC_AUTHORIZATION));
@@ -352,114 +365,6 @@ export async function runRewardsRequirements() {
     "weightedAuthorizations: ",
     JSON.stringify(weightedAuthorizations, null, 2)
   );
-}
-
-async function instancesForOperator(
-  operatorAddress: any,
-  rewardsInterval: number,
-  instancesData: Map<string, Map<string, string | number>>
-) {
-  // Resolution is defaulted to Prometheus settings.
-  const instancesDataByOperatorParams = {
-    query: `present_over_time(up{chain_address="${operatorAddress}", job="${prometheusJob}"}
-                [${rewardsInterval}s] offset ${offset}s)`,
-  };
-  const instancesDataByOperator = (
-    await queryPrometheus(prometheusAPIQuery, instancesDataByOperatorParams)
-  ).data.result;
-
-  instancesDataByOperator.forEach(
-    (element: { metric: { instance: string } }) => {
-      const instanceData = new Map<string, string | number>();
-      instancesData.set(element.metric.instance, instanceData);
-    }
-  );
-}
-
-async function checkPreParams(
-  operatorAddress: string,
-  rewardsInterval: number,
-  dataInstances: Map<string, Map<string, string | number>>
-) {
-  // Avg of pre-params across all the instances for a given operator in the rewards
-  // interval dates. Resolution is defaulted to Prometheus settings.
-  const paramsPreParams = {
-    query: `avg_over_time(tbtc_pre_params_count{chain_address="${operatorAddress}", job="${prometheusJob}"}
-              [${rewardsInterval}s] offset ${offset}s)`,
-  };
-
-  const preParamsAvgByInstance = (
-    await queryPrometheus(prometheusAPIQuery, paramsPreParams)
-  ).data.result;
-
-  let sumPreParams = 0;
-  for (let i = 0; i < preParamsAvgByInstance.length; i++) {
-    const instance = preParamsAvgByInstance[i];
-    const preParams = parseInt(instance.value[1]); // [timestamp, value]
-    const dataInstance = dataInstances.get(instance.metric.instance);
-    if (dataInstance !== undefined) {
-      dataInstance.set(PRE_PARAMS, preParams);
-    } else {
-      // Should not happen
-      console.error("Instance must be present for a given rewards interval.");
-    }
-
-    sumPreParams += preParams;
-  }
-
-  const preParamsAvg = sumPreParams / preParamsAvgByInstance.length;
-  return preParamsAvg >= REQUIRED_MIN_PRE_PARAMS;
-}
-
-// Peer uptime requirement. The total uptime for all the instances for a given
-// operator has to be greater than 96% to receive the rewards.
-async function checkUptime(
-  operatorAddress: string,
-  rewardsInterval: number,
-  instances: any,
-  instancesData: Map<string, Map<string, string | number>>
-) {
-  // First registered 'up' metric in a given interval <start:end> for a given
-  // operator. Start evaluating uptime from this point.
-  const firstRegisteredUptime = instances.reduce(
-    (currentMin: number, instance: any) =>
-      Math.min(instance.values[0][0], currentMin),
-    Number.MAX_VALUE
-  );
-
-  const uptimeSearchRange = endRewardsTimestamp - firstRegisteredUptime;
-
-  const paramsSumUptimes = {
-    query: `sum_over_time(up{chain_address="${operatorAddress}", job="${prometheusJob}"}
-            [${uptimeSearchRange}s:${UPTIME_QUERY_RESOLUTION}s] offset ${offset}s) 
-            * ${UPTIME_QUERY_RESOLUTION} / ${uptimeSearchRange}`,
-  };
-
-  const uptimesByInstance = (
-    await queryPrometheus(prometheusAPIQuery, paramsSumUptimes)
-  ).data.result;
-
-  let sumUptime = 0;
-  for (let i = 0; i < uptimesByInstance.length; i++) {
-    const instance = uptimesByInstance[i];
-    const uptime = instance.value[1] * HUNDRED;
-    const dataInstance = instancesData.get(instance.metric.instance);
-    if (dataInstance !== undefined) {
-      dataInstance.set(UP_TIME_PERCENT, uptime);
-    } else {
-      // Should not happen
-      console.error("Instance must be present for a given rewards interval.");
-    }
-
-    sumUptime += uptime;
-  }
-
-  const isUptimeSatisfied = sumUptime >= REQUIRED_UPTIME_PERCENT;
-
-  const uptimeCoefficient = isUptimeSatisfied
-    ? uptimeSearchRange / rewardsInterval
-    : 0;
-  return { uptimeCoefficient, isUptimeSatisfied };
 }
 
 async function getAuthorization(
@@ -591,6 +496,164 @@ async function authorizationPostRewardsInterval(
   // Current authorization is the same as the authorization at the end of the
   // rewards interval.
   return await application.eligibleStake(stakingProvider);
+}
+
+async function instancesForOperator(
+  operatorAddress: any,
+  rewardsInterval: number,
+  instancesData: Map<string, Map<string, string | number>>
+) {
+  // Resolution is defaulted to Prometheus settings.
+  const instancesDataByOperatorParams = {
+    query: `present_over_time(up{chain_address="${operatorAddress}", job="${prometheusJob}"}
+                [${rewardsInterval}s] offset ${offset}s)`,
+  };
+  const instancesDataByOperator = (
+    await queryPrometheus(prometheusAPIQuery, instancesDataByOperatorParams)
+  ).data.result;
+
+  instancesDataByOperator.forEach(
+    (element: { metric: { instance: string } }) => {
+      const instanceData = new Map<string, string | number>();
+      instancesData.set(element.metric.instance, instanceData);
+    }
+  );
+}
+
+// Peer uptime requirement. The total uptime for all the instances for a given
+// operator has to be greater than 96% to receive the rewards.
+async function checkUptime(
+  operatorAddress: string,
+  rewardsInterval: number,
+  instancesData: Map<string, Map<string, string | number>>
+) {
+  const paramsOperatorUptime = {
+    query: `up{chain_address="${operatorAddress}", job="${prometheusJob}"}
+            [${rewardsInterval}s:${QUERY_RESOLUTION}s] offset ${offset}s`,
+  };
+
+  const instances = (
+    await queryPrometheus(prometheusAPIQuery, paramsOperatorUptime)
+  ).data.result;
+
+  // First registered 'up' metric in a given interval <start:end> for a given
+  // operator. Start evaluating uptime from this point.
+  const firstRegisteredUptime = instances.reduce(
+    (currentMin: number, instance: any) =>
+      Math.min(instance.values[0][0], currentMin),
+    Number.MAX_VALUE
+  );
+
+  const uptimeSearchRange = endRewardsTimestamp - firstRegisteredUptime;
+
+  const paramsSumUptimes = {
+    query: `sum_over_time(up{chain_address="${operatorAddress}", job="${prometheusJob}"}
+            [${uptimeSearchRange}s:${QUERY_RESOLUTION}s] offset ${offset}s) 
+            * ${QUERY_RESOLUTION} / ${uptimeSearchRange}`,
+  };
+
+  const uptimesByInstance = (
+    await queryPrometheus(prometheusAPIQuery, paramsSumUptimes)
+  ).data.result;
+
+  let sumUptime = 0;
+  for (let i = 0; i < uptimesByInstance.length; i++) {
+    const instance = uptimesByInstance[i];
+    const uptime = instance.value[1] * HUNDRED;
+    const dataInstance = instancesData.get(instance.metric.instance);
+    if (dataInstance !== undefined) {
+      dataInstance.set(UP_TIME_PERCENT, uptime);
+    } else {
+      // Should not happen
+      console.error("Instance must be present for a given rewards interval.");
+    }
+
+    sumUptime += uptime;
+  }
+
+  const isUptimeSatisfied = sumUptime >= REQUIRED_UPTIME_PERCENT;
+
+  const uptimeCoefficient = isUptimeSatisfied
+    ? uptimeSearchRange / rewardsInterval
+    : 0;
+  return { uptimeCoefficient, isUptimeSatisfied };
+}
+
+async function checkPreParams(
+  operatorAddress: string,
+  rewardsInterval: number,
+  dataInstances: Map<string, Map<string, string | number>>
+) {
+  // Avg of pre-params across all the instances for a given operator in the rewards
+  // interval dates. Resolution is defaulted to Prometheus settings.
+  const paramsPreParams = {
+    query: `avg_over_time(tbtc_pre_params_count{chain_address="${operatorAddress}", job="${prometheusJob}"}
+              [${rewardsInterval}s:${QUERY_RESOLUTION}s] offset ${offset}s)`,
+  };
+
+  const preParamsAvgByInstance = (
+    await queryPrometheus(prometheusAPIQuery, paramsPreParams)
+  ).data.result;
+
+  let sumPreParams = 0;
+  for (let i = 0; i < preParamsAvgByInstance.length; i++) {
+    const instance = preParamsAvgByInstance[i];
+    const preParams = parseInt(instance.value[1]); // [timestamp, value]
+    const dataInstance = dataInstances.get(instance.metric.instance);
+    if (dataInstance !== undefined) {
+      dataInstance.set(AVG_PRE_PARAMS, preParams);
+    } else {
+      // Should not happen
+      console.error("Instance must be present for a given rewards interval.");
+    }
+
+    sumPreParams += preParams;
+  }
+
+  const preParamsAvg = sumPreParams / preParamsAvgByInstance.length;
+  return preParamsAvg >= REQUIRED_MIN_PRE_PARAMS;
+}
+
+async function checkVersion(
+  operatorAddress: string,
+  rewardsInterval: number,
+  instancesData: Map<string, Map<string, string | number>>
+) {
+  const buildVersionInstancesParams = {
+    query: `client_info{chain_address="${operatorAddress}", job="${prometheusJob}"}[${rewardsInterval}s:${QUERY_RESOLUTION}s] offset ${offset}s`,
+  };
+  // Get build versions of instances in rewards interval
+  const queryBuildVersionInstances = (
+    await queryPrometheus(prometheusAPIQuery, buildVersionInstancesParams)
+  ).data.result;
+
+  let instanceWithLatestBuildVersion;
+  let latestRegisteredBuildVersionTimestmap = 0; // min number
+
+  // Determine client's build version for it all it's instances
+  for (let i = 0; i < queryBuildVersionInstances.length; i++) {
+    const instance = queryBuildVersionInstances[i];
+    // Find latest registered timestamp in a given instance
+    if (
+      instance.values[instance.values.length - 1][0] >
+      latestRegisteredBuildVersionTimestmap
+    ) {
+      latestRegisteredBuildVersionTimestmap =
+        instance.values[instance.values.length - 1][0];
+      instanceWithLatestBuildVersion = instance;
+    }
+    const dataInstance = instancesData.get(instance.metric.instance);
+    if (dataInstance !== undefined) {
+      dataInstance.set(VERSION, instance.metric.version);
+    } else {
+      // Should not happen
+      console.error("Instance must be present for a given rewards interval.");
+    }
+  }
+  return {
+    instanceWithLatestBuildVersion,
+    latestRegisteredBuildVersionTimestmap,
+  };
 }
 
 function convertToObject(map: Map<string, Map<string, any>>) {

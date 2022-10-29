@@ -110,8 +110,7 @@ endRewardsBlock=$(curl -s $endBlockApiCall | jq '.result|tonumber')
 printf "${LOG_START}Installing yarn dependencies...${LOG_END}"
 yarn install
 
-# allTags=($(git tag --sort=-version:refname --list 'v[0-9]*.*-m[0-9]*')) # TODO: REPLACE, this is correct regex to match latest versions
-allTags=($(git tag --sort=-version:refname --list 'v[0-9]*')) # sorted latest -> oldest # TODO: For testing
+allTags=($(git tag --sort=-version:refname --list 'v[0-9]*.*-m[0-9]*'))
 latestTag=${allTags[0]}
 latestTimestamp=$(git show -s --format=%ct ${latestTag}^{commit})
 latestTagTimestamp="${latestTag}_$latestTimestamp"
