@@ -35,6 +35,7 @@ import {
   QUERY_STEP,
   QUERY_RESOLUTION,
   HUNDRED,
+  APR,
 } from "./rewards-constants";
 
 const provider = new ethers.providers.EtherscanProvider(
@@ -60,7 +61,6 @@ program
     "-z, --end-block <timestamp>",
     "end block for rewards calculation"
   )
-  .requiredOption("-i, --interval <timestamp>", "scrape interval") // IMPORTANT! Must match Prometheus config
   .requiredOption("-a, --api <prometheus api>", "prometheus API")
   .requiredOption("-j, --job <prometheus job>", "prometheus job")
   .requiredOption(
@@ -79,7 +79,6 @@ const startRewardsTimestamp = parseInt(options.startTimestamp);
 const endRewardsTimestamp = parseInt(options.endTimestamp);
 const startRewardsBlock = parseInt(options.startBlock);
 const endRewardsBlock = parseInt(options.endBlock);
-const scrapeInterval = parseInt(options.interval); // TODO: might not be needed.
 const peersDataFile = options.output;
 
 const prometheusAPIQuery = `${prometheusAPI}/query`;
@@ -93,6 +92,7 @@ export async function runRewardsRequirements() {
     return "End time interval must be in the past";
   }
 
+  const monthlyRate = APR / 12 * HUNDRED // monthly periodic rate ARP / 12 month
   const currentBlockNumber = await provider.getBlockNumber();
   const rewardsInterval = endRewardsTimestamp - startRewardsTimestamp;
 
@@ -349,9 +349,13 @@ export async function runRewardsRequirements() {
       //       - make APR an input var
       weightedAuthorization[stakingProvider] = {
         // beaneficiary: <address> TODO: implement
-        weightedAuthorization: minApplicationAuthorization
+        // amount = APR/12 * clientUptimeCoefficient * min(beaconWeightedAuthorization, tbtcWeightedAuthorization)
+        amount: minApplicationAuthorization
           .mul(uptimeCoefficient)
-          .div(HUNDRED)
+          .mul(monthlyRate)
+          .div(HUNDRED) // coefficient was multiplied by 100 earlier
+          .div(HUNDRED) // APR monthly rate was multiplied by 100 earlier
+          .div(HUNDRED) // APR monthly rate is in %
           .toString(),
       };
       weightedAuthorizations.push(weightedAuthorization);

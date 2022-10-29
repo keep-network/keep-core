@@ -10,7 +10,6 @@ LOG_WARNING_END='\n\e\033[0m'    # new line + reset
 
 PROMETHEUS_API_DEFAULT="https://monitoring.test.threshold.network/prometheus/api/v1"
 PROMETHEUS_JOB_DEFAULT="keep-discovered-nodes"
-PROMETHEUS_SCRAPE_INTERVAL_DEFAULT=60 # in sec
 OUTPUT_JSON_FILE="peersData.json"
 ETHERSCAN_API="https://api-goerli.etherscan.io" # TODO: change to mainnet https://api.etherscan.io/
 
@@ -21,7 +20,6 @@ help() {
     "--etherscan-token <etherscan-token>" \
     "--prometheus-api <prometheus-api-address>" \
     "--prometheus-job <prometheus-job-name>" \
-    "--prometheus-scrape-interval <prometheus-scrape-interval-in-sec>"
   echo -e "\nRequired command line arguments:\n"
   echo -e "\t--rewards-start-date: Rewards interval start date formatted as Y-m-d"
   echo -e "\t--rewards-end-date: Rewards interval end date formatted as Y-m-d"
@@ -29,7 +27,6 @@ help() {
   echo -e "\nOptional command line arguments:\n"
   echo -e "\t--prometheus-api: Prometheus API. Default: ${PROMETHEUS_API_DEFAULT}"
   echo -e "\t--prometheus-job: Prometheus service discovery job name. Default: ${PROMETHEUS_JOB_DEFAULT}"
-  echo -e "\t--prometheus-interval: Prometheus scrape interval. Default: ${PROMETHEUS_SCRAPE_INTERVAL_DEFAULT} sec."
   echo -e ""
   exit 1 # Exit script after printing help
 }
@@ -43,7 +40,6 @@ for arg in "$@"; do
   "--etherscan-token") set -- "$@" "-t" ;;
   "--prometheus-api") set -- "$@" "-a" ;;
   "--prometheus-job") set -- "$@" "-p" ;;
-  "--prometheus-interval") set -- "$@" "-i" ;;
   "--help") set -- "$@" "-h" ;;
   *) set -- "$@" "$arg" ;;
   esac
@@ -58,7 +54,6 @@ while getopts "k:e:t:a:p:i:h" opt; do
   t) etherscan_token="$OPTARG" ;;
   a) prometheus_api="$OPTARG" ;;
   p) prometheus_job="$OPTARG" ;;
-  i) prometheus_scrape_interval="$OPTARG" ;;
   h) help ;;
   ?) help ;; # Print help in case parameter is non-existent
   esac
@@ -70,7 +65,6 @@ REWARDS_START_DATE=${rewards_start_date:-""}
 REWARDS_END_DATE=${rewards_end_date:-""}
 PROMETHEUS_API=${prometheus_api:-${PROMETHEUS_API_DEFAULT}}
 PROMETHEUS_JOB=${prometheus_job:-${PROMETHEUS_JOB_DEFAULT}}
-PROMETHEUS_SCRAPE_INTERVAL=${prometheus_scrape_interval:-${PROMETHEUS_SCRAPE_INTERVAL_DEFAULT}}
 
 if [ "$REWARDS_START_DATE" == "" ]; then
   printf "${LOG_WARNING_START}Rewards start date must be provided.${LOG_WARNING_END}"
@@ -151,7 +145,6 @@ ETHERSCAN_TOKEN=${ETHERSCAN_TOKEN} yarn rewards-requirements \
   --end-timestamp $rewardsEndDate \
   --start-block $startRewardsBlock \
   --end-block $endRewardsBlock \
-  --interval ${PROMETHEUS_SCRAPE_INTERVAL} \
   --releases $tagsTrimmed \
   --output ${OUTPUT_JSON_FILE}
 
