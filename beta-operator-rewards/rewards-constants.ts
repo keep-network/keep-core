@@ -1,5 +1,4 @@
 export const ALLOWED_UPGRADE_DELAY = 1209600; // 2 weeks in sec. TODO: add as an option.param
-export const DEFAULT_NETWORK = "goerli";
 export const REQUIRED_MIN_PRE_PARAMS = 500; // min requirement for pre params daily avg
 export const QUERY_STEP = 600; // 10min in sec
 export const REQUIRED_UPTIME_PERCENT = 96; // percent

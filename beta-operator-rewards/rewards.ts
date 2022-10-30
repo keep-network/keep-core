@@ -17,7 +17,6 @@ import {
 } from "@threshold-network/solidity-contracts/artifacts/TokenStaking.json";
 import axios from "axios";
 import {
-  DEFAULT_NETWORK,
   BEACON_AUTHORIZATION,
   TBTC_AUTHORIZATION,
   UP_TIME_PERCENT,
@@ -37,11 +36,6 @@ import {
   HUNDRED,
   APR,
 } from "./rewards-constants";
-
-const provider = new ethers.providers.EtherscanProvider(
-  DEFAULT_NETWORK,
-  process.env.ETHERSCAN_TOKEN
-);
 
 program
   .version("0.0.1")
@@ -67,6 +61,7 @@ program
     "-r, --releases <client releases in a rewards interval>",
     "client releases in a rewards interval"
   )
+  .requiredOption("-n, --network <name>", "network name")
   .requiredOption("-o, --output <file>", "output JSON file")
   .parse(process.argv);
 
@@ -80,6 +75,7 @@ const endRewardsTimestamp = parseInt(options.endTimestamp);
 const startRewardsBlock = parseInt(options.startBlock);
 const endRewardsBlock = parseInt(options.endBlock);
 const rewardsDataOutput = options.output;
+const network = options.network;
 
 const prometheusAPIQuery = `${prometheusAPI}/query`;
 // Go back in time relevant to the current date to get data for the exact
@@ -91,6 +87,11 @@ export async function runRewardsRequirements() {
     console.log("End time interval must be in the past");
     return "End time interval must be in the past";
   }
+
+  const provider = new ethers.providers.EtherscanProvider(
+    network,
+    process.env.ETHERSCAN_TOKEN
+  );
 
   const monthlyRate = (APR / 12) * HUNDRED; // monthly periodic rate ARP / 12 month
   const currentBlockNumber = await provider.getBlockNumber();
@@ -225,7 +226,8 @@ export async function runRewardsRequirements() {
       postIntervalIncreasedEvents.concat(postIntervalDecreasedEvents),
       stakingProvider,
       startRewardsBlock,
-      endRewardsBlock
+      endRewardsBlock,
+      currentBlockNumber
     );
 
     authorizations.set(BEACON_AUTHORIZATION, beaconAuthorization.toString());
@@ -238,7 +240,8 @@ export async function runRewardsRequirements() {
       postIntervalIncreasedEvents.concat(postIntervalDecreasedEvents),
       stakingProvider,
       startRewardsBlock,
-      endRewardsBlock
+      endRewardsBlock,
+      currentBlockNumber
     );
 
     authorizations.set(TBTC_AUTHORIZATION, tbtcAuthorization.toString());
@@ -365,14 +368,8 @@ export async function runRewardsRequirements() {
   }
 
   console.log("operatorsData: ", JSON.stringify(operatorsData, null, 2));
-  console.log(
-    "rewardsData: ",
-    JSON.stringify(rewardsData, null, 2)
-  );
-  fs.writeFileSync(
-    rewardsDataOutput,
-    JSON.stringify(rewardsData, null, 2)
-  )
+  console.log("rewardsData: ", JSON.stringify(rewardsData, null, 2));
+  fs.writeFileSync(rewardsDataOutput, JSON.stringify(rewardsData, null, 2));
 }
 
 async function getAuthorization(
@@ -381,7 +378,8 @@ async function getAuthorization(
   postEvents: any[],
   stakingProvider: string,
   startRewardsBlock: number,
-  endRewardsBlock: number
+  endRewardsBlock: number,
+  currentBlockNumber: number
 ) {
   // When there were no events during the rewards interval, then we fetch the
   // authorization after the interval which was the same as for the actual
@@ -397,7 +395,8 @@ async function getAuthorization(
     return await authorizationPostRewardsInterval(
       postIntervalEvents,
       application,
-      stakingProvider
+      stakingProvider,
+      currentBlockNumber
     );
   }
 
@@ -483,9 +482,9 @@ function authorizationForRewardsInterval(
 async function authorizationPostRewardsInterval(
   events: any[],
   application: Contract,
-  stakingProvider: string
+  stakingProvider: string,
+  currentBlockNumber: number
 ) {
-  const currentBlockNumber = await provider.getBlockNumber();
   const randomBeaconEvents = events.filter((obj) => {
     return obj.application == RandomBeaconABI;
   });
