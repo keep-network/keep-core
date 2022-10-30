@@ -82,7 +82,7 @@ const prometheusAPIQuery = `${prometheusAPI}/query`;
 // rewards interval dates.
 const offset = Math.floor(Date.now() / 1000) - endRewardsTimestamp;
 
-export async function runRewardsRequirements() {
+export async function calculateRewards() {
   if (Date.now() / 1000 < endRewardsTimestamp) {
     console.log("End time interval must be in the past");
     return "End time interval must be in the past";
@@ -110,8 +110,8 @@ export async function runRewardsRequirements() {
     await queryPrometheus(queryBootstrapData, paramsBootstrapData)
   ).data.result;
 
-  let operatorsData = new Array();
-  let rewardsData = new Array();
+  const operatorsData = new Array();
+  const rewardsData = new Array();
 
   const randomBeacon = new Contract(
     RandomBeaconAddress,
@@ -210,9 +210,6 @@ export async function runRewardsRequirements() {
       continue;
     }
 
-    // Populate instances for a given operator.
-    await instancesForOperator(operatorAddress, rewardsInterval, instancesData);
-
     // Events that were emitted between the [start:end] rewards dates for a given
     // stakingProvider.
     const intervalEvents = intevalAuthorizationIncreasedEvents
@@ -229,7 +226,6 @@ export async function runRewardsRequirements() {
       endRewardsBlock,
       currentBlockNumber
     );
-
     authorizations.set(BEACON_AUTHORIZATION, beaconAuthorization.toString());
     requirements.set(IS_BEACON_AUTHORIZED, !beaconAuthorization.isZero());
 
@@ -246,6 +242,11 @@ export async function runRewardsRequirements() {
 
     authorizations.set(TBTC_AUTHORIZATION, tbtcAuthorization.toString());
     requirements.set(IS_TBTC_AUTHORIZED, !tbtcAuthorization.isZero());
+
+    /// Off-chain client reqs
+
+    // Populate instances for a given operator.
+    await instancesForOperator(operatorAddress, rewardsInterval, instancesData);
 
     /// Uptime requirement
     let { uptimeCoefficient, isUptimeSatisfied } = await checkUptime(
@@ -689,4 +690,4 @@ async function queryPrometheus(url: string, params: any): Promise<any> {
   }
 }
 
-runRewardsRequirements();
+calculateRewards();
