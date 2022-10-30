@@ -132,50 +132,35 @@ export async function calculateRewards() {
   );
 
   console.log("Fetching AuthorizationIncreased events in rewards interval...");
-  const allIntevalAuthorizationIncreasedEvents = await tokenStaking.queryFilter(
+  const intervalAuthorizationIncreasedEvents = await tokenStaking.queryFilter(
     "AuthorizationIncreased",
     startRewardsBlock,
     endRewardsBlock
   );
-  const intevalAuthorizationIncreasedEvents = filterEventsByApplications(
-    allIntevalAuthorizationIncreasedEvents
-  );
 
   console.log("Fetching AuthorizationDecreased events in rewards interval...");
-  const allIntervalAuthorizationDecreasedEvents =
-    await tokenStaking.queryFilter(
-      "AuthorizationDecreaseApproved",
-      startRewardsBlock,
-      endRewardsBlock
-    );
-  const intervalAuthorizationDecreasedEvents = filterEventsByApplications(
-    allIntervalAuthorizationDecreasedEvents
+  const intervalAuthorizationDecreasedEvents = await tokenStaking.queryFilter(
+    "AuthorizationDecreaseApproved",
+    startRewardsBlock,
+    endRewardsBlock
   );
 
   console.log(
     "Fetching AuthorizationIncreased events after rewards interval..."
   );
-  const allPostIntervalAuthorizationIncreasedEvents =
-    await tokenStaking.queryFilter(
-      "AuthorizationIncreased",
-      endRewardsBlock,
-      currentBlockNumber
-    );
-  const postIntervalIncreasedEvents = filterEventsByApplications(
-    allPostIntervalAuthorizationIncreasedEvents
+  const postIntervalAuthorizationIncreasedEvents = await tokenStaking.queryFilter(
+    "AuthorizationIncreased",
+    endRewardsBlock,
+    currentBlockNumber
   );
 
   console.log(
     "Fetching AuthorizationDecreased events after rewards interval..."
   );
-  const allPostIntervalAuthorizationDecreasedEvents =
-    await tokenStaking.queryFilter(
-      "AuthorizationDecreaseApproved",
-      endRewardsBlock,
-      currentBlockNumber
-    );
-  const postIntervalDecreasedEvents = filterEventsByApplications(
-    allPostIntervalAuthorizationDecreasedEvents
+  const postIntervalAuthorizationDecreasedEvents = await tokenStaking.queryFilter(
+    "AuthorizationDecreaseApproved",
+    endRewardsBlock,
+    currentBlockNumber
   );
 
   for (let i = 0; i < bootstrapData.length; i++) {
@@ -212,15 +197,45 @@ export async function calculateRewards() {
 
     // Events that were emitted between the [start:end] rewards dates for a given
     // stakingProvider.
-    const intervalEvents = intevalAuthorizationIncreasedEvents
-      .concat(intervalAuthorizationDecreasedEvents)
-      .filter((event) => event.args.stakingProvider === stakingProvider);
+    let intervalEvents = intervalAuthorizationIncreasedEvents.concat(
+      intervalAuthorizationDecreasedEvents
+    );
+    if (intervalEvents.length > 0) {
+      intervalEvents = intervalEvents.filter(
+        (event) => event.args!.stakingProvider === stakingProvider
+      );
+    }
+
+    // Events that were emitted between the [end:now] dates for a given
+    // stakingProvider.
+    let postIntervalEvents = postIntervalAuthorizationIncreasedEvents.concat(
+      postIntervalAuthorizationDecreasedEvents
+    );
+    if (postIntervalEvents.length > 0) {
+      postIntervalEvents = postIntervalEvents.filter(
+        (event) => event.args!.stakingProvider === stakingProvider
+      );
+    }
 
     /// Random Beacon application authorization requirement
-    let beaconAuthorization = await getAuthorization(
+    let beaconIntervalEvents = new Array();
+    if (intervalEvents.length > 0) {
+      beaconIntervalEvents = intervalEvents.filter(
+        (obj) => obj.args!.application == randomBeacon.address
+      );
+    }
+
+    let beaconPostIntervalEvents = new Array();
+    if (postIntervalEvents.length > 0) {
+      beaconPostIntervalEvents = postIntervalEvents.filter(
+        (obj) => obj.args!.application == randomBeacon.address
+      );
+    }
+
+    const beaconAuthorization = await getAuthorization(
       randomBeacon,
-      intervalEvents,
-      postIntervalIncreasedEvents.concat(postIntervalDecreasedEvents),
+      beaconIntervalEvents,
+      beaconPostIntervalEvents,
       stakingProvider,
       startRewardsBlock,
       endRewardsBlock,
@@ -230,10 +245,24 @@ export async function calculateRewards() {
     requirements.set(IS_BEACON_AUTHORIZED, !beaconAuthorization.isZero());
 
     /// tBTC application authorized requirement
+    let tbtcIntervalEvents = new Array();
+    if (intervalEvents.length > 0) {
+      tbtcIntervalEvents = intervalEvents.filter(
+        (obj) => obj.args!.application == walletRegistry.address
+      );
+    }
+
+    let tbtcPostIntervalEvents = new Array();
+    if (postIntervalEvents.length > 0) {
+      tbtcPostIntervalEvents = postIntervalEvents.filter(
+        (obj) => obj.args!.application == walletRegistry.address
+      );
+    }
+
     const tbtcAuthorization = await getAuthorization(
       walletRegistry,
-      intervalEvents,
-      postIntervalIncreasedEvents.concat(postIntervalDecreasedEvents),
+      tbtcIntervalEvents,
+      tbtcPostIntervalEvents,
       stakingProvider,
       startRewardsBlock,
       endRewardsBlock,
@@ -376,50 +405,29 @@ export async function calculateRewards() {
 async function getAuthorization(
   application: Contract,
   intervalEvents: any[],
-  postEvents: any[],
+  postIntervalEvents: any[],
   stakingProvider: string,
   startRewardsBlock: number,
   endRewardsBlock: number,
   currentBlockNumber: number
 ) {
-  // When there were no events during the rewards interval, then we fetch the
-  // authorization after the interval which was the same as for the actual
-  // rewards interval.
-  if (intervalEvents.length == 0) {
-    // Events that were emitted between the [end:firstEventDate|currentDate] dates.
-    // This is used to fetch the authorization that was allocated during the rewards
-    // interval.
-    const postIntervalEvents = postEvents.filter(
-      (event) => event.args.stakingProvider === stakingProvider
-    );
-
-    return await authorizationPostRewardsInterval(
-      postIntervalEvents,
-      application,
-      stakingProvider,
-      currentBlockNumber
+  if (intervalEvents.length > 0) {
+    return authorizationForRewardsInterval(
+      intervalEvents,
+      startRewardsBlock,
+      endRewardsBlock
     );
   }
 
-  // There is at least one event emitted during the rewards interval
-  const applicationEvents = intervalEvents.filter((obj) => {
-    return obj.args.application == application.address;
-  });
-
-  return authorizationForRewardsInterval(
-    applicationEvents,
-    startRewardsBlock,
-    endRewardsBlock
+  // Events that were emitted between the [end:firstEventDate|currentDate] dates.
+  // This is used to fetch the authorization that was set during the rewards
+  // interval.
+  return await authorizationPostRewardsInterval(
+    postIntervalEvents,
+    application,
+    stakingProvider,
+    currentBlockNumber
   );
-}
-
-function filterEventsByApplications(events: any[]) {
-  return events.filter((event) => {
-    return (
-      event.args.application === RandomBeaconAddress ||
-      event.args.application === WalletRegistryAddress
-    );
-  });
 }
 
 // Calculates the weighted authorization for rewards interval based on events.
@@ -442,22 +450,18 @@ function filterEventsByApplications(events: any[]) {
 // authorization = (3-0)/30*100 + (8-3)/30*110 + (14-8)/30*135
 //               + (18-14)/30*120 + (30-18)/30*100
 function authorizationForRewardsInterval(
-  events: any[],
+  intervalEvents: any[],
   startRewardsBlock: number,
   endRewardsBlock: number
 ) {
-  if (events.length == 0) {
-    return BigNumber.from("0");
-  }
-
   let authorization = BigNumber.from("0");
   const deltaRewardsBlock = endRewardsBlock - startRewardsBlock;
   // ascending order
-  events.sort((a, b) => a.blockNumber - b.blockNumber);
+  intervalEvents.sort((a, b) => a.blockNumber - b.blockNumber);
 
   let tmpBlock = startRewardsBlock; // prev tmp block
-  for (let i = 0; i < events.length; i++) {
-    const event = events[i];
+  for (let i = 0; i < intervalEvents.length; i++) {
+    const event = intervalEvents[i];
     const coefficient = Math.floor(
       ((event.blockNumber - tmpBlock) / deltaRewardsBlock) * PRECISION
     );
@@ -471,7 +475,7 @@ function authorizationForRewardsInterval(
     ((endRewardsBlock - tmpBlock) / deltaRewardsBlock) * PRECISION
   );
   authorization = authorization.add(
-    events[events.length - 1].args.toAmount.mul(coefficient)
+    intervalEvents[intervalEvents.length - 1].args.toAmount.mul(coefficient)
   );
 
   return authorization.div(PRECISION);
@@ -481,22 +485,22 @@ function authorizationForRewardsInterval(
 // interval. If no events were emitted, then get the authorization from the current
 // block.
 async function authorizationPostRewardsInterval(
-  events: any[],
+  postIntervalEvents: any[],
   application: Contract,
   stakingProvider: string,
   currentBlockNumber: number
 ) {
-  const randomBeaconEvents = events.filter((obj) => {
-    return obj.application == RandomBeaconABI;
-  });
-
   // Sort events in ascending order
-  randomBeaconEvents.sort((a, b) => a.blockNumber - b.blockNumber);
+  postIntervalEvents.sort((a, b) => a.blockNumber - b.blockNumber);
 
-  if (events.length > 0 && events[0].blockNumber < currentBlockNumber) {
-    // There are events present after the rewards interval and before the
-    // current block.
-    return events[0].args.fromAmount;
+  if (
+    postIntervalEvents.length > 0 &&
+    postIntervalEvents[0].blockNumber < currentBlockNumber
+  ) {
+    // There are events (increase or decrease) present after the rewards interval
+    // and before the current block. Take the "fromAmount", because it was the
+    // same as for the rewards interval dates.
+    return postIntervalEvents[0].args.fromAmount;
   }
 
   // There were no authorization events after the rewards interval and before
