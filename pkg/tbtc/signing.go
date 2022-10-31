@@ -94,10 +94,6 @@ type signingAttemptParams struct {
 // signingAttemptFn represents a function performing a signing attempt.
 type signingAttemptFn func(*signingAttemptParams) (*signing.Result, error)
 
-// waitForBlockFn represents a function blocking the execution until the given
-// block height.
-type waitForBlockFn func(context.Context, uint64) error
-
 // start begins the signing retry loop using the given signing attempt function.
 // The retry loop terminates when the signing result is produced or the ctx
 // parameter is done, whatever comes first.
@@ -119,7 +115,7 @@ func (srl *signingRetryLoop) start(
 		// by some additional delay blocks. We need a small fixed delay in
 		// order to mitigate all corner cases where the actual attempt duration
 		// was slightly longer than the expected duration determined by the
-		// signing.ProtocolBlocks function.
+		// signingAttemptMaxBlockDuration constant.
 		//
 		// For example, the attempt may fail at the end of the protocol but the
 		// error is returned after some time and more blocks than expected are
