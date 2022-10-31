@@ -8,6 +8,8 @@ import (
 	"math/big"
 	"time"
 
+	"github.com/keep-network/keep-core/pkg/protocol/announcer"
+
 	"go.uber.org/zap"
 
 	"github.com/keep-network/keep-common/pkg/persistence"
@@ -476,8 +478,9 @@ func (n *node) joinSigningIfEligible(
 				n.protocolLatch.Lock()
 				defer n.protocolLatch.Unlock()
 
-				announcer := newBroadcastSigningAnnouncer(
-					n.chain.GetConfig(),
+				announcer := announcer.New(
+					fmt.Sprintf("%v-%v", ProtocolName, "signing"),
+					n.chain.GetConfig().GroupSize,
 					broadcastChannel,
 					membershipValidator,
 				)
