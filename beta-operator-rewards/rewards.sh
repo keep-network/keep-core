@@ -13,6 +13,7 @@ PROMETHEUS_JOB_DEFAULT="keep-discovered-nodes"
 REWARDS_JSON_DEFAULT="./rewards.json"
 ETHERSCAN_API_DEFAULT="https://api.etherscan.io"
 NETWORK_DEFAULT="mainnet"
+KEEP_CORE_REPO="https://github.com/keep-network/keep-core"
 
 help() {
   echo -e "\nUsage: $0" \
@@ -121,37 +122,42 @@ printf "${LOG_START}Installing yarn dependencies...${LOG_END}"
 yarn install
 
 printf "${LOG_START}Retrieving client release tags...${LOG_END}"
-# allTags=($(git tag --sort=-version:refname --list 'v[0-9]*.*-m[0-9]*'))
-# latestTag=${allTags[0]}
-# latestTimestamp=$(git show -s --format=%ct ${latestTag}^{commit})
-# latestTagTimestamp="${latestTag}_$latestTimestamp"
+merkleDistributionRepo=$(git remote get-url origin)
+git remote set-url origin ${KEEP_CORE_REPO}
+git fetch --all --tags --prune
+allTags=($(git tag --sort=-version:refname --list 'v[0-9]*.*-m[0-9]*'))
+latestTag=${allTags[0]}
+latestTimestamp=$(git show -s --format=%ct ${latestTag}^{commit})
+latestTagTimestamp="${latestTag}_$latestTimestamp"
 
-# tagsInRewardInterval=()
+tagsInRewardInterval=()
 
-# if [ ${#allTags[@]} -gt 1 ]; then
-#   secondToLatestTag=${allTags[1]}
-#   secondToLatestTagTimestamp="${secondToLatestTag}_$(git show -s --format=%ct ${secondToLatestTag}^{commit})"
-#   if [ $latestTimestamp -gt $rewardsStartDate ] && [ $latestTimestamp -lt $rewardsEndDate ]; then
-#     # The latest tag was created within the rewards interval dates.
-#     tagsInRewardInterval+=($latestTagTimestamp)
-#     tagsInRewardInterval+=($secondToLatestTagTimestamp)
-#   elif [ $latestTimestamp -gt $rewardsEndDate ]; then
-#     # The latest tag was created after the given rewards interval. Take a
-#     # second to latest tag.
-#     tagsInRewardInterval+=($secondToLatestTagTimestamp)
-#   fi
-# fi
+if [ ${#allTags[@]} -gt 1 ]; then
+  secondToLatestTag=${allTags[1]}
+  secondToLatestTagTimestamp="${secondToLatestTag}_$(git show -s --format=%ct ${secondToLatestTag}^{commit})"
+  if [ $latestTimestamp -gt $rewardsStartDate ] && [ $latestTimestamp -lt $rewardsEndDate ]; then
+    # The latest tag was created within the rewards interval dates.
+    tagsInRewardInterval+=($latestTagTimestamp)
+    tagsInRewardInterval+=($secondToLatestTagTimestamp)
+  elif [ $latestTimestamp -gt $rewardsEndDate ]; then
+    # The latest tag was created after the given rewards interval. Take a
+    # second to latest tag.
+    tagsInRewardInterval+=($secondToLatestTagTimestamp)
+  fi
+fi
 
-# if [ ${#tagsInRewardInterval[@]} -eq 0 ]; then
-#   # There is only one tag or the latest tag was created before the start rewards
-#   # interval and it is continue being the latest tag. (No new releases)
-#   tagsInRewardInterval+=($latestTagTimestamp)
-# fi
+if [ ${#tagsInRewardInterval[@]} -eq 0 ]; then
+  # There is only one tag or the latest tag was created before the start rewards
+  # interval and it is continue being the latest tag. (No new releases)
+  tagsInRewardInterval+=($latestTagTimestamp)
+fi
 
-# # Converting array to string so we can pass to the rewards-requirements.ts
-# printf -v tags '%s|' "${tagsInRewardInterval[@]}"
-# tagsTrimmed="${tags%?}" # remove "|" at the end
-tagsTrimmed="v2.0.0-m1_1664807554"
+# Converting array to string so we can pass to the rewards-requirements.ts
+printf -v tags '%s|' "${tagsInRewardInterval[@]}"
+tagsTrimmed="${tags%?}" # remove "|" at the end
+
+# Setting remote back to merkle distribution repo
+git remote set-url origin $merkleDistributionRepo
 
 # Run script
 printf "${LOG_START}Fetching peers data...${LOG_END}"
