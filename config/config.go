@@ -14,7 +14,9 @@ import (
 	"golang.org/x/term"
 
 	commonEthereum "github.com/keep-network/keep-common/pkg/chain/ethereum"
+	"github.com/keep-network/keep-core/pkg/bitcoin"
 	"github.com/keep-network/keep-core/pkg/clientinfo"
+	"github.com/keep-network/keep-core/pkg/maintainer"
 	"github.com/keep-network/keep-core/pkg/net/libp2p"
 	"github.com/keep-network/keep-core/pkg/storage"
 	"github.com/keep-network/keep-core/pkg/tbtc"
@@ -35,10 +37,12 @@ const (
 // Config is the top level config structure.
 type Config struct {
 	Ethereum   commonEthereum.Config
+	Bitcoin    bitcoin.Config
 	LibP2P     libp2p.Config `mapstructure:"network"`
 	Storage    storage.Config
 	ClientInfo clientinfo.Config
 	Tbtc       tbtc.Config
+	Maintainer maintainer.Config
 }
 
 // Bind the flags to the viper configuration. Viper reads configuration from
@@ -166,6 +170,24 @@ func validateConfig(config *Config, categories ...Category) error {
 			if config.Ethereum.Account.KeyFile == "" {
 				result = multierror.Append(result, fmt.Errorf(
 					"missing value for ethereum.keyFile; see ethereum section in configuration",
+				))
+			}
+		case Bitcoin:
+			if config.Bitcoin.URL == "" {
+				result = multierror.Append(result, fmt.Errorf(
+					"missing value for bitcoin.url; see bitcoin section in configuration",
+				))
+			}
+
+			if config.Bitcoin.Username == "" {
+				result = multierror.Append(result, fmt.Errorf(
+					"missing value for bitcoin.username; see bitcoin section in configuration",
+				))
+			}
+
+			if config.Bitcoin.Password == "" {
+				result = multierror.Append(result, fmt.Errorf(
+					"missing value for bitcoin.password; see bitcoin section in configuration",
 				))
 			}
 		case Network:

@@ -35,7 +35,7 @@ func init() {
 		StartCommand,
 		PingCommand,
 		EthereumCommand,
-		RelayCommand,
+		MaintainerCommand,
 	)
 }
 

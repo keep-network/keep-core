@@ -35,6 +35,8 @@ func initFlags(
 		switch category {
 		case config.Ethereum:
 			initEthereumFlags(cmd, cfg)
+		case config.Bitcoin:
+			initBitcoinFlags(cmd, cfg)
 		case config.Network:
 			initNetworkFlags(cmd, cfg)
 		case config.Storage:
@@ -45,6 +47,8 @@ func initFlags(
 			initTbtcFlags(cmd, cfg)
 		case config.Developer:
 			initDeveloperFlags(cmd)
+		case config.Maintainer:
+			initMaintainerFlags(cmd)
 		}
 	}
 
@@ -147,6 +151,30 @@ func initEthereumFlags(cmd *cobra.Command, cfg *config.Config) {
 		"ethereum.balanceAlertThreshold",
 		*commonEthereum.WrapWei(big.NewInt(500000000000000000)), // 0.5 ether
 		"The minimum balance of operator account below which client starts reporting errors in logs.",
+	)
+}
+
+// Initialize flags for Bitcoin configuration.
+func initBitcoinFlags(cmd *cobra.Command, cfg *config.Config) {
+	cmd.Flags().StringVar(
+		&cfg.Bitcoin.URL,
+		"bitcoin.url",
+		"",
+		"rpc connection URL for Bitcoin client.",
+	)
+
+	cmd.Flags().StringVar(
+		&cfg.Bitcoin.Username,
+		"bitcoin.username",
+		"",
+		"rpc connection username for Bitcoin client.",
+	)
+
+	cmd.Flags().StringVar(
+		&cfg.Bitcoin.Password,
+		"bitcoin.password",
+		"",
+		"rpc connection password for Bitcoin client.",
 	)
 }
 
@@ -277,4 +305,13 @@ func initDeveloperFlags(command *cobra.Command) {
 	initContractAddressFlag(chainEthereum.RandomBeaconContractName)
 	initContractAddressFlag(chainEthereum.TokenStakingContractName)
 	initContractAddressFlag(chainEthereum.WalletRegistryContractName)
+}
+
+// Initialize flags for Maintainer configuration.
+func initMaintainerFlags(command *cobra.Command) {
+	command.PersistentFlags().Bool(
+		"relay",
+		false,
+		"start relay",
+	)
 }

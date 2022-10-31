@@ -2,6 +2,7 @@ package maintainer
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/ipfs/go-log"
@@ -18,7 +19,31 @@ type RelayChain interface {
 	Retarget(headers []bitcoin.BlockHeader) error
 }
 
-func NewRelay(
+// launchRelay sets up the connections to the Bitcoin chain and the relay chain
+// and launches the process of maintaining the relay.
+func LaunchRelay(ctx context.Context) error {
+	// TODO: Add connection to the Bitcoin chain:
+	// btcChain, err := bitcoin.Connect(ctx, &maintainerConfig.Bitcoin)
+	// if err != nil {
+	// 	return fmt.Errorf("could not connect BTC chain: [%v]", err)
+	// }
+
+	// TODO: Add connection to the relay chain:
+	// relayChain, err := connectRelayChain(config)
+	// if err != nil {
+	// 	return fmt.Errorf("could not connect relay chain: [%v]", err)
+	// }
+
+	newRelay(ctx, nil, nil)
+
+	// TODO: Consider adding metrics.
+	logger.Info("relay started")
+
+	<-ctx.Done()
+	return fmt.Errorf("unexpected context cancellation")
+}
+
+func newRelay(
 	ctx context.Context,
 	btcChain bitcoin.Chain,
 	relayChain RelayChain,

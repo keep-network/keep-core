@@ -1,5 +1,12 @@
 package bitcoin
 
+// Temporary solution to be able to connect to Bitcoin chain
+type Config struct {
+	URL      string
+	Username string
+	Password string
+}
+
 // Chain defines an interface meant to be used for interaction with the
 // Bitcoin chain.
 type Chain interface {
@@ -28,11 +35,4 @@ type Chain interface {
 	// block with the given number was not found on the chain, this function
 	// returns an error.
 	GetBlockHeader(blockNumber uint) (*BlockHeader, error)
-}
-
-// Temporary solution to be able to connect to Bitcoin chain
-type Config struct {
-	URL      string
-	Username string
-	Password string
 }
