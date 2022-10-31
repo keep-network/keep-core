@@ -57,6 +57,7 @@ program
   )
   .requiredOption("-a, --api <prometheus api>", "prometheus API")
   .requiredOption("-j, --job <prometheus job>", "prometheus job")
+  .requiredOption("-s, --october17 <october 17 block>", "october 17 block")
   .requiredOption(
     "-r, --releases <client releases in a rewards interval>",
     "client releases in a rewards interval"
@@ -74,6 +75,7 @@ const startRewardsTimestamp = parseInt(options.startTimestamp);
 const endRewardsTimestamp = parseInt(options.endTimestamp);
 const startRewardsBlock = parseInt(options.startBlock);
 const endRewardsBlock = parseInt(options.endBlock);
+const october17Block = parseInt(options.october17);
 const rewardsDataOutput = options.output;
 const network = options.network;
 
@@ -239,6 +241,7 @@ export async function calculateRewards() {
       stakingProvider,
       startRewardsBlock,
       endRewardsBlock,
+      october17Block,
       currentBlockNumber
     );
     authorizations.set(BEACON_AUTHORIZATION, beaconAuthorization.toString());
@@ -266,6 +269,7 @@ export async function calculateRewards() {
       stakingProvider,
       startRewardsBlock,
       endRewardsBlock,
+      october17Block,
       currentBlockNumber
     );
 
@@ -409,13 +413,15 @@ async function getAuthorization(
   stakingProvider: string,
   startRewardsBlock: number,
   endRewardsBlock: number,
+  october17Block: number,
   currentBlockNumber: number
 ) {
   if (intervalEvents.length > 0) {
     return authorizationForRewardsInterval(
       intervalEvents,
       startRewardsBlock,
-      endRewardsBlock
+      endRewardsBlock,
+      october17Block
     );
   }
 
@@ -447,12 +453,27 @@ async function getAuthorization(
 //  Sep 8 - 14 from 135k to 120k
 //  Sep 14 - 18 from 120k to 100k
 //  Sep 18 - 30 constant 100k (last sub-interval)
-// authorization = (3-0)/30*100 + (8-3)/30*110 + (14-8)/30*135
-//               + (18-14)/30*120 + (30-18)/30*100
+// Weighted authorization = (3-0)/30*100 + (8-3)/30*110 + (14-8)/30*135
+//                        + (18-14)/30*120 + (30-18)/30*100
+// October 2022 is a special month for rewards calculation.  If a node was set
+// after Oct 1 but prior to Oct 17, then we calculate the rewards for the entire
+// month.
+// See https://blog.threshold.network/tbtc-v2-hits-its-first-launch-milestone/
+// E.g. 1
+// First and only event was on Oct 10. The authorization is calculated for the
+// entire month.
+// E.g. 2
+// First increase event was on Oct 10 from 0 to 100k
+// Second increase was on Oct 15 from 100k to 150k
+// Authorization of 100k is interpolated for the dates between Oct 1 - Oct 10
+// Authorization for Oct 1 - Oct 15 is now 100k; coefficient 15/30
+// Authorization between Oct 15 - Oct 30 is 150k; coefficent 15/30
+// Weighted authorization: 15/30 * 100k + 15/30 * 150k
 function authorizationForRewardsInterval(
   intervalEvents: any[],
   startRewardsBlock: number,
-  endRewardsBlock: number
+  endRewardsBlock: number,
+  october17Block: number,
 ) {
   let authorization = BigNumber.from("0");
   const deltaRewardsBlock = endRewardsBlock - startRewardsBlock;
@@ -460,13 +481,20 @@ function authorizationForRewardsInterval(
   intervalEvents.sort((a, b) => a.blockNumber - b.blockNumber);
 
   let tmpBlock = startRewardsBlock; // prev tmp block
-  for (let i = 0; i < intervalEvents.length; i++) {
-    const event = intervalEvents[i];
+  let firstEventBlock = intervalEvents[0].blockNumber
+  
+  let index = 0
+  if (firstEventBlock < october17Block) {
+    index = 1
+  }
+
+  for (let i = index; i < intervalEvents.length; i++) {
+    const eventBlock = intervalEvents[i].blockNumber
     const coefficient = Math.floor(
-      ((event.blockNumber - tmpBlock) / deltaRewardsBlock) * PRECISION
+      ((eventBlock - tmpBlock) / deltaRewardsBlock) * PRECISION
     );
-    authorization = authorization.add(event.args.fromAmount.mul(coefficient));
-    tmpBlock = event.blockNumber;
+    authorization = authorization.add(intervalEvents[i].args.fromAmount.mul(coefficient));
+    tmpBlock = eventBlock;
   }
   authorization = authorization.div(PRECISION);
 

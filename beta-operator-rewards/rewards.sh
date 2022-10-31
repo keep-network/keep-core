@@ -13,6 +13,8 @@ PROMETHEUS_JOB_DEFAULT="keep-discovered-nodes"
 REWARDS_JSON_DEFAULT="./rewards.json"
 ETHERSCAN_API_DEFAULT="https://api.etherscan.io"
 NETWORK_DEFAULT="mainnet"
+# Special case when calculating rewards
+OCTOBER_17="2022-10-17"
 
 help() {
   echo -e "\nUsage: $0" \
@@ -99,6 +101,7 @@ fi
 
 rewardsStartDate=$(TZ=UTC date -j -f "%Y-%m-%d %H:%M:%S" "${REWARDS_START_DATE} 00:00:00" "+%s")
 rewardsEndDate=$(TZ=UTC date -j -f "%Y-%m-%d %H:%M:%S" "${REWARDS_END_DATE} 23:59:59" "+%s")
+october17=$(TZ=UTC date -j -f "%Y-%m-%d %H:%M:%S" "${OCTOBER_17} 23:59:59" "+%s")
 
 startBlockApiCall="${ETHERSCAN_API}/api?\
 module=block&\
@@ -114,8 +117,16 @@ timestamp=$rewardsEndDate&\
 closest=after&\
 apikey=${ETHERSCAN_TOKEN}"
 
+october17ApiCall="${ETHERSCAN_API}/api?\
+module=block&\
+action=getblocknobytime&\
+timestamp=$october17&\
+closest=after&\
+apikey=${ETHERSCAN_TOKEN}"
+
 startRewardsBlock=$(curl -s $startBlockApiCall | jq '.result|tonumber')
 endRewardsBlock=$(curl -s $endBlockApiCall | jq '.result|tonumber')
+october17Block=$(curl -s $october17ApiCall | jq '.result|tonumber')
 
 printf "${LOG_START}Installing yarn dependencies...${LOG_END}"
 yarn install
@@ -162,6 +173,7 @@ ETHERSCAN_TOKEN=${ETHERSCAN_TOKEN} yarn rewards \
   --end-timestamp $rewardsEndDate \
   --start-block $startRewardsBlock \
   --end-block $endRewardsBlock \
+  --october17 $october17Block \
   --releases $tagsTrimmed \
   --network ${NETWORK} \
   --output ${REWARDS_JSON}
