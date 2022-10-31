@@ -2,7 +2,7 @@
   "name": "stakingrewards",
   "version": "1.0.0",
   "description": "Staking rewards calculation in Threshold Network",
-  "main": "stakingrewards.js",
+  "main": "subgraph.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },

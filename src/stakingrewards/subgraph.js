@@ -1,13 +1,10 @@
 require("isomorphic-unfetch")
 const { createClient, gql } = require("@urql/core")
 const { ethers } = require("ethers")
-const { MerkleTree } = require("merkletreejs")
-const keccak256 = require("keccak256")
 const BigNumber = require("bignumber.js")
 
 // The Graph limits GraphQL queries to 1000 results max
 const RESULTS_PER_QUERY = 1000
-const SECONDS_IN_YEAR = 31536000
 
 async function getEpochById(gqlClient, epochId) {
   let epoch
@@ -257,102 +254,19 @@ async function getStakeDatasInfo(gqlClient) {
 }
 
 /**
- * Combine two Merkle distribution inputs, adding the amounts and taking the
- * beneficiary of the second input
- * @param {Object} baseMerkleInput  Merkle input used as base
- * @param {Object} addedMerkleInput Merkle input to be added
- * @return {Object}                 Combination of two Merkle inputs
- */
-exports.combineMerkleInputs = function (baseMerkleInput, addedMerkleInput) {
-  const combined = JSON.parse(JSON.stringify(baseMerkleInput))
-  Object.keys(addedMerkleInput).map((stakingProvider) => {
-    const combinedClaim = combined[stakingProvider]
-    const addedClaim = addedMerkleInput[stakingProvider]
-    if (combinedClaim) {
-      combinedClaim.beneficiary = addedClaim.beneficiary
-      combinedClaim.amount = BigNumber(combinedClaim.amount)
-        .plus(BigNumber(addedClaim.amount))
-        .toFixed()
-    } else {
-      combined[stakingProvider] = {
-        beneficiary: addedClaim.beneficiary,
-        amount: addedClaim.amount,
-      }
-    }
-  })
-  return combined
-}
-
-/**
- * Generate a Merkle distribution from Merkle distribution input
- * @param {Object} merkleInput      Merkle input generated from rewards
- * @return {Object}                 Merkle distribution
- */
-exports.genMerkleDist = function (merkleInput) {
-  const stakingProviders = Object.keys(merkleInput)
-  const data = Object.values(merkleInput)
-
-  const elements = stakingProviders.map(
-    (stakingProvider, i) =>
-      stakingProvider +
-      data[i].beneficiary.substr(2) +
-      BigNumber(data[i].amount).toString(16).padStart(64, "0")
-  )
-
-  const tree = new MerkleTree(elements, keccak256, {
-    hashLeaves: true,
-    sort: true,
-  })
-
-  const root = tree.getHexRoot()
-  const leaves = tree.getHexLeaves()
-  const proofs = leaves.map(tree.getHexProof, tree)
-
-  const totalAmount = data
-    .map((claim) => BigNumber(claim.amount))
-    .reduce((a, b) => a.plus(b))
-    .toFixed()
-
-  const claims = Object.entries(merkleInput).map(([stakingProvider, data]) => {
-    const leaf = MerkleTree.bufferToHex(
-      keccak256(
-        stakingProvider +
-          data.beneficiary.substr(2) +
-          BigNumber(data.amount).toString(16).padStart(64, "0")
-      )
-    )
-    return {
-      stakingProvider: stakingProvider,
-      beneficiary: data.beneficiary,
-      amount: data.amount,
-      proof: proofs[leaves.indexOf(leaf)],
-    }
-  })
-
-  const dist = {
-    totalAmount: totalAmount,
-    merkleRoot: root,
-    claims: claims.reduce(
-      (a, { stakingProvider, beneficiary, amount, proof }) => {
-        a[stakingProvider] = { beneficiary, amount, proof }
-        return a
-      },
-      {}
-    ),
-  }
-
-  return dist
-}
-
-/**
- * Generate the ongoing rewards earned by stakes since a specific date and
- * return it in Merkle distribution input format
+ * Return the ongoing-rewards-elegible stakes, including beneficiary and epoch
+ * stakes between two dates. Stakes earn rewards during the period in which:
+ * 1. Have any amount of T token staked
+ * 2. Have an PRE node deployed and confirmed in Threshold Network
  * @param {string}  gqlURL          Subgraph GraphQL API URL
  * @param {Number} startTimestamp   Start date UNIX timestamp
- * @param {Number}  endTimestamp    End date UNIX timestamp
- * @return {Object}                 The ongoing rewards of each stake
+ * @param {Number} endTimestamp     End date UNIX timestamp
+ * @returns {Promise}               Promise of an object
+ *          {Object[]}              ongStakes - The ongoing-elegible stakes
+ *          {string}                ongStakes[].beneficiary - Beneficiary addr
+ *          {Object[]}              ongStakes[].epochStakes - Epoch stakes
  */
-exports.getOngoingMekleInput = async function (
+exports.getOngoingStakes = async function (
   gqlUrl,
   startTimestamp,
   endTimestamp
@@ -408,71 +322,76 @@ exports.getOngoingMekleInput = async function (
     })
   })
 
-  // Calculate the reward of each stake
-  // Rewards formula: r = (s_1 * y_t) * t / 365; where y_t is 0.15
-  const rewards = {}
-  Object.keys(stakeList).map((stakingProvider) => {
-    let reward = BigNumber(0)
+  const ongoingStakes = {}
 
-    const stake = stakeList[stakingProvider]
+  // Calculate the actual epoch stake duration: the seconds in which the stake
+  // actually meets with operator confirmed ongoing reward requirement
+  Object.keys(stakeList).map((stakingProvider) => {
+    let epochStakes = stakeList[stakingProvider]
 
     // Check if operator is confirmed and when
     const opConf = opsConfirmed.find((op) => op.id === stakingProvider)
     const opConfTimestamp = opConf ? opConf.confirmedTimestamp : undefined
     if (opConfTimestamp) {
-      reward = stake.reduce((total, epochStake) => {
-        let epochReward = BigNumber(0)
-        const stakeAmount = BigNumber(epochStake.amount)
+      // Discard the stake epochs in which operator was not confirmed yet and
+      // reduce the duration of those epochs in which operator was confirmed
+      const epochStakesClean = epochStakes.map((epochStake) => {
         const epochTimestamp = parseInt(epochStake.epochTimestamp)
         let epochDuration = epochStake.epochDuration
           ? parseInt(epochStake.epochDuration)
           : currentTime - epochStake.epochTimestamp
 
         if (
-          // If the operator was confirmed in the middle of this epoch...
+          // If the operator was confirmed in the middle of this epoch the,
+          // the duration is shorter
           opConfTimestamp > epochTimestamp &&
           opConfTimestamp <= epochTimestamp + epochDuration
         ) {
           epochDuration = epochTimestamp + epochDuration - opConfTimestamp
         } else if (opConfTimestamp >= epochTimestamp + epochDuration) {
-          // No rewards if the operator was not yet confirmed
+          // No duration if the operator was not yet confirmed
           epochDuration = 0
         }
 
-        epochReward = stakeAmount
-          .times(15)
-          .times(epochDuration)
-          .div(SECONDS_IN_YEAR * 100)
+        return {
+          epochId: epochStake.epochId,
+          amount: epochStake.amount,
+          epochDuration: epochDuration,
+        }
+      })
 
-        return total.plus(epochReward)
-      }, BigNumber(0))
-    }
-
-    if (!reward.isZero()) {
-      // Find the beneficiary of this reward
       const stakeDatasItem = stakeDatas.find(
-        (stake) => stake.id === stakingProvider
+        (stakeData) => stakeData.id === stakingProvider
       )
-      const beneficiary = stakeDatasItem.beneficiary
+
+      const benefCheckSum = ethers.utils.getAddress(stakeDatasItem.beneficiary)
 
       const stProvCheckSum = ethers.utils.getAddress(stakingProvider)
-      rewards[stProvCheckSum] = {
-        beneficiary: ethers.utils.getAddress(beneficiary),
-        amount: reward.toFixed(0),
+
+      ongoingStakes[stProvCheckSum] = {
+        beneficiary: benefCheckSum,
+        epochStakes: epochStakesClean,
       }
     }
   })
 
-  return rewards
+  return ongoingStakes
 }
 
 /**
- * Generate the bonus rewards earned by stakes between June 1st and July 15th
- * and return it in Merkle distribution input format
- * @param {string}  gqlURL          Subgraph GraphQL API URL
- * @return {BigNumber}              The amount of generated rewards
+ * Return the bonus-elegible stakes, including beneficiary and staked amount.
+ * Only stakes that meet with the following requirements are elegible for bonus
+ * reward:
+ * 1. Start staking before Jun 1st 2022 00:00:00 GMT
+ * 2. Not to unstake any amount of T before Jul 15th 2022 00:00:00 GMT
+ * 3. Have an PRE node deployed and confirmed in Threshold Network
+ * @param {string} gqlURL     Subgraph GraphQL API URL
+ * @returns {Promise}         Promise of an object
+ *          {Object[]}        bonusStakes - The bonus-elegible stakes
+ *          {string}          bonusStakes[].beneficiary - Beneficiary address
+ *          {string}          bonusStakes[].amount - Bonus reward amount
  */
-exports.getBonusMerkleInput = async function (gqlUrl) {
+exports.getBonusStakes = async function (gqlUrl) {
   const startTimestamp = 1654041600 // Jun 1st 2022 00:00:00 GMT
   const endTimestamp = 1657843200 // Jul 15th 2022 00:00:00 GMT
   const gqlClient = createClient({ url: gqlUrl })
@@ -513,7 +432,7 @@ exports.getBonusMerkleInput = async function (gqlUrl) {
     })
   })
 
-  const rewards = {}
+  const bonusStakes = {}
 
   // Filter the stakes that are not elegible for bonus
   Object.keys(stakeList).map((stakingProvider) => {
@@ -544,18 +463,15 @@ exports.getBonusMerkleInput = async function (gqlUrl) {
       )
       const beneficiary = stakeDatasItem.beneficiary
 
-      // Calculate the earning of this stake r = 0.03 * initial_amount
-      const reward = epochStakes[0].amount.times(0.03)
-
       const stProvCheckSum = ethers.utils.getAddress(stakingProvider)
-      rewards[stProvCheckSum] = {
+      bonusStakes[stProvCheckSum] = {
         beneficiary: ethers.utils.getAddress(beneficiary),
-        amount: reward.toFixed(0),
+        amount: epochStakes[0].amount.toFixed(0),
       }
     }
   })
 
-  return rewards
+  return bonusStakes
 }
 
 /**
@@ -692,9 +608,7 @@ exports.getStakingHistory = async function (gqlUrl, stakingProvider) {
         histElem.event = epochAmount > amount ? "topped-up" : "unstaked"
       }
       histElem.staked = (epochAmount / 10 ** 18).toFixed()
-      histElem.timestamp = new Date(
-        epoch.epoch.timestamp * 1000
-      ).toISOString()
+      histElem.timestamp = new Date(epoch.epoch.timestamp * 1000).toISOString()
       stakeData.stakingHistory.push(histElem)
       amount = epochAmount
     }

@@ -1,12 +1,16 @@
 // Script that generates a new Merkle Distribution and outputs the data to JSON files
 
 const fs = require("fs")
-const stakingRewards = require("../src/stakingrewards/stakingrewards.js")
+const Subgraph = require("../src/stakingrewards/subgraph.js")
+const Rewards = require("../src/stakingrewards/rewards.js")
+const MerkleDist = require("../src/stakingrewards/merkle_dist.js")
 
 const graphqlApi =
   "https://api.studio.thegraph.com/query/24143/main-threshold-subgraph/0.0.7"
-const startTime = 1654041600  // Jun 1st 2022 00:00:00 GMT
-const endTime = 1664496000    // Sep 30th 2022 00:00:00 GMT
+const bonusWeight = 1.0 // Stakes receive the full bonus
+const ongoingWeight = 1.0 // Stakes receive the full ongoing rewards
+const startTime = 1654041600 // Jun 1st 2022 00:00:00 GMT
+const endTime = 1664496000 // Sep 30th 2022 00:00:00 GMT
 const endTimeDate = new Date(endTime * 1000).toISOString().slice(0, 10)
 const distribution_path = "distributions/" + endTimeDate
 
@@ -18,17 +22,19 @@ async function main() {
     return
   }
 
-  const ongoingRewards = await stakingRewards.getOngoingMekleInput(
+  const ongoingStakes = await Subgraph.getOngoingStakes(
     graphqlApi,
     startTime,
     endTime
   )
-  const bonusRewards = await stakingRewards.getBonusMerkleInput(graphqlApi)
-  const merkleInput = stakingRewards.combineMerkleInputs(
+  const ongoingRewards = await Rewards.calculateOngoingRewards(ongoingStakes, ongoingWeight)
+  const bonusStakes = await Subgraph.getBonusStakes(graphqlApi)
+  const bonusRewards = Rewards.calculateBonusRewards(bonusStakes, bonusWeight)
+  const merkleInput = MerkleDist.combineMerkleInputs(
     ongoingRewards,
     bonusRewards
   )
-  const merkleDist = stakingRewards.genMerkleDist(merkleInput)
+  const merkleDist = MerkleDist.genMerkleDist(merkleInput)
 
   try{
     fs.writeFileSync(
