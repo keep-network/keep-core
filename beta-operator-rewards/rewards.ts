@@ -411,10 +411,7 @@ async function getAuthorization(
   endRewardsBlock: number,
   currentBlockNumber: number
 ) {
-  console.log("application.address:", application.address)
-  console.log("application.address:", application.address)
   if (intervalEvents.length > 0) {
-    console.log("inside of rewards interval....")
     return authorizationForRewardsInterval(
       intervalEvents,
       startRewardsBlock,
@@ -463,38 +460,24 @@ function authorizationForRewardsInterval(
   intervalEvents.sort((a, b) => a.blockNumber - b.blockNumber);
 
   let tmpBlock = startRewardsBlock; // prev tmp block
-  console.log("startRewardsBlock", startRewardsBlock)
-  console.log("endRewardsBlock", endRewardsBlock)
-  console.log("deltaRewardsBlock", deltaRewardsBlock)
-  console.log("tmpBlock start", tmpBlock)
-  console.log("intervalEvents: ", intervalEvents)
   for (let i = 0; i < intervalEvents.length; i++) {
     const event = intervalEvents[i];
     const coefficient = Math.floor(
       ((event.blockNumber - tmpBlock) / deltaRewardsBlock) * PRECISION
       );
-      console.log("coefficient1: ", coefficient)
-      console.log("event.args.fromAmount: ", (event.args.fromAmount).toString())
       
       authorization = authorization.add(event.args.fromAmount.mul(coefficient));
-      console.log("partial authorization: ", authorization.toString())
       tmpBlock = event.blockNumber;
   }
-  console.log("tmpBlock end", tmpBlock)
   authorization = authorization.div(PRECISION);
 
   // calculating authorization for the last sub-interval
   const coefficient = Math.floor(
     ((endRewardsBlock - tmpBlock) / deltaRewardsBlock) * PRECISION
   );
-  console.log("coefficient2: ", coefficient)
-  console.log("authorization before: ", authorization.toString())
-  console.log("intervalEvents[intervalEvents.length - 1].args.toAmount: ", (intervalEvents[intervalEvents.length - 1].args.toAmount).toString())
   authorization = authorization.add(
     intervalEvents[intervalEvents.length - 1].args.toAmount.mul(coefficient)
   );
-
-  console.log("authorization.div(PRECISION): ", (authorization.div(PRECISION)).toString())
 
   return authorization.div(PRECISION);
 }
@@ -508,11 +491,9 @@ async function authorizationPostRewardsInterval(
   stakingProvider: string,
   currentBlockNumber: number
 ) {
-  console.log("inside of post rewards interval....")
   // Sort events in ascending order
   postIntervalEvents.sort((a, b) => a.blockNumber - b.blockNumber);
   
-  console.log("postIntervalEvents", postIntervalEvents)
   if (
     postIntervalEvents.length > 0 &&
     postIntervalEvents[0].blockNumber < currentBlockNumber
@@ -520,7 +501,6 @@ async function authorizationPostRewardsInterval(
     // There are events (increase or decrease) present after the rewards interval
     // and before the current block. Take the "fromAmount", because it was the
     // same as for the rewards interval dates.
-    console.log("postIntervalEvents[0].args.fromAmount", postIntervalEvents[0].args.fromAmount)
     return postIntervalEvents[0].args.fromAmount;
   }
 
@@ -529,7 +509,6 @@ async function authorizationPostRewardsInterval(
   // Current authorization is the same as the authorization at the end of the
   // rewards interval.
   const authorization = await application.eligibleStake(stakingProvider)
-  console.log("authorization", authorization)
   return authorization;
 }
 
