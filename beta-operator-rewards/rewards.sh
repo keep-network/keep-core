@@ -8,11 +8,11 @@ DONE_END='\n\n\e[0m'             # new line + reset
 LOG_WARNING_START='\n\e\033[33m' # new line + bold + warning color
 LOG_WARNING_END='\n\e\033[0m'    # new line + reset
 
-PROMETHEUS_API_DEFAULT="https://monitoring.test.threshold.network/prometheus/api/v1"
+PROMETHEUS_API_DEFAULT="https://monitoring.threshold.network/prometheus/api/v1"
 PROMETHEUS_JOB_DEFAULT="keep-discovered-nodes"
 REWARDS_JSON_DEFAULT="./rewards.json"
-ETHERSCAN_API_DEFAULT="https://api-goerli.etherscan.io"
-NETWORK_DEFAULT="goerli"
+ETHERSCAN_API_DEFAULT="https://api.etherscan.io"
+NETWORK_DEFAULT="mainnet"
 
 help() {
   echo -e "\nUsage: $0" \
