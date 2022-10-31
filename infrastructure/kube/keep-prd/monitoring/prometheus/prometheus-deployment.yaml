@@ -66,6 +66,7 @@ spec:
             - --source.address=bst-a01.tbtc.boar.network:9601
             - --source.address=bst-b01.tbtc.boar.network:9601
             - --refresh.interval=5m
+            - --scan.timeout=3s
             - --log.json
           resources:
             limits:
