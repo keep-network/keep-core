@@ -44,8 +44,8 @@ type dkgRetryLoop struct {
 	announcementDelayBlocks  uint64
 	announcementActiveBlocks uint64
 
-	attemptCounter     uint
-	attemptStartBlock  uint64
+	attemptCounter    uint
+	attemptStartBlock uint64
 	// attemptSeed is a 8-byte seed obtained from the original seed.
 	// Used for the random operator selection. It never changes.
 	attemptSeed        int64
