@@ -5,78 +5,29 @@ import (
 	"crypto/sha256"
 	"encoding/binary"
 	"fmt"
-	"github.com/ipfs/go-log/v2"
-	"github.com/keep-network/keep-core/pkg/chain"
-	"github.com/keep-network/keep-core/pkg/net"
-	"github.com/keep-network/keep-core/pkg/protocol/group"
-	"github.com/keep-network/keep-core/pkg/tbtc/gen/pb"
-	"github.com/keep-network/keep-core/pkg/tecdsa/retry"
-	"github.com/keep-network/keep-core/pkg/tecdsa/signing"
-	"golang.org/x/exp/slices"
-	"google.golang.org/protobuf/proto"
 	"math/big"
 	"math/rand"
 	"sort"
+
+	"github.com/ipfs/go-log/v2"
+	"github.com/keep-network/keep-core/pkg/chain"
+	"github.com/keep-network/keep-core/pkg/protocol/group"
+	"github.com/keep-network/keep-core/pkg/tecdsa/retry"
+	"github.com/keep-network/keep-core/pkg/tecdsa/signing"
+	"golang.org/x/exp/slices"
 )
 
 // signingAttemptMaxBlockDuration determines the maximum block duration of a
 // single signing attempt.
 const signingAttemptMaxBlockDuration = 100
 
-// signingAnnouncementMessage represents a message that is used to announce
-// member's participation in the given signing attempt for the given message.
-type signingAnnouncementMessage struct {
-	senderID      group.MemberIndex
-	message       *big.Int
-	attemptNumber uint64
-}
-
-func (sam *signingAnnouncementMessage) Marshal() ([]byte, error) {
-	return proto.Marshal(&pb.SigningAnnouncementMessage{
-		SenderID:      uint32(sam.senderID),
-		Message:       sam.message.Bytes(),
-		AttemptNumber: sam.attemptNumber,
-	})
-}
-
-func (sam *signingAnnouncementMessage) Unmarshal(bytes []byte) error {
-	pbMessage := pb.SigningAnnouncementMessage{}
-	if err := proto.Unmarshal(bytes, &pbMessage); err != nil {
-		return fmt.Errorf(
-			"failed to unmarshal SigningAnnouncementMessage: [%v]",
-			err,
-		)
-	}
-
-	if senderID := pbMessage.SenderID; senderID > group.MaxMemberIndex {
-		return fmt.Errorf("invalid member index value: [%v]", senderID)
-	} else {
-		sam.senderID = group.MemberIndex(senderID)
-	}
-
-	sam.message = new(big.Int).SetBytes(pbMessage.Message)
-	sam.attemptNumber = pbMessage.AttemptNumber
-
-	return nil
-}
-
-func (sam *signingAnnouncementMessage) Type() string {
-	return "tbtc/signing_announcement_message"
-}
-
 // signingAnnouncer represents a component responsible for exchanging readiness
 // announcements for the given signing attempt of the given message.
 type signingAnnouncer interface {
-	// announce sends the member's readiness announcement for the given signing
-	// attempt of the given message and listens for announcements from other
-	// signing group members. It returns a list of unique members indexes that
-	// are ready for the given attempt, including the executing member's index.
-	// The list is sorted in ascending order.
-	announce(
+	Announce(
 		ctx context.Context,
-		signingGroupMemberIndex group.MemberIndex,
-		message *big.Int,
-		attemptNumber uint64,
+		memberIndex group.MemberIndex,
+		sessionID string,
 	) ([]group.MemberIndex, error)
 }
 
@@ -143,10 +94,6 @@ type signingAttemptParams struct {
 // signingAttemptFn represents a function performing a signing attempt.
 type signingAttemptFn func(*signingAttemptParams) (*signing.Result, error)
 
-// waitForBlockFn represents a function blocking the execution until the given
-// block height.
-type waitForBlockFn func(context.Context, uint64) error
-
 // start begins the signing retry loop using the given signing attempt function.
 // The retry loop terminates when the signing result is produced or the ctx
 // parameter is done, whatever comes first.
@@ -168,7 +115,7 @@ func (srl *signingRetryLoop) start(
 		// by some additional delay blocks. We need a small fixed delay in
 		// order to mitigate all corner cases where the actual attempt duration
 		// was slightly longer than the expected duration determined by the
-		// signing.ProtocolBlocks function.
+		// signingAttemptMaxBlockDuration constant.
 		//
 		// For example, the attempt may fail at the end of the protocol but the
 		// error is returned after some time and more blocks than expected are
@@ -217,11 +164,10 @@ func (srl *signingRetryLoop) start(
 			srl.attemptCounter,
 		)
 
-		readyMembersIndexes, err := srl.announcer.announce(
+		readyMembersIndexes, err := srl.announcer.Announce(
 			announceCtx,
 			srl.signingGroupMemberIndex,
-			srl.message,
-			uint64(srl.attemptCounter),
+			fmt.Sprintf("%v-%v", srl.message, srl.attemptCounter),
 		)
 		if err != nil {
 			srl.logger.Warnf(
@@ -430,107 +376,4 @@ func (srl *signingRetryLoop) excludedMembersIndexes(
 	}
 
 	return excludedMembersIndexes
-}
-
-// broadcastSigningAnnouncer is an implementation of the signingAnnouncer that
-// performs the readiness announcement over the provided broadcast channel.
-type broadcastSigningAnnouncer struct {
-	chainConfig         *ChainConfig
-	broadcastChannel    net.BroadcastChannel
-	membershipValidator *group.MembershipValidator
-}
-
-// newBroadcastSigningAnnouncer creates a new instance of the
-// broadcastSigningAnnouncer.
-func newBroadcastSigningAnnouncer(
-	chainConfig *ChainConfig,
-	broadcastChannel net.BroadcastChannel,
-	membershipValidator *group.MembershipValidator,
-) *broadcastSigningAnnouncer {
-	broadcastChannel.SetUnmarshaler(func() net.TaggedUnmarshaler {
-		return &signingAnnouncementMessage{}
-	})
-
-	return &broadcastSigningAnnouncer{
-		chainConfig:         chainConfig,
-		broadcastChannel:    broadcastChannel,
-		membershipValidator: membershipValidator,
-	}
-}
-
-// announce is an implementation of the signingAnnouncer.announce method.
-//
-// This implementation fulfills the method specification and additionally:
-// - blocks until the ctx passed as argument is done
-func (bsa *broadcastSigningAnnouncer) announce(
-	ctx context.Context,
-	signingGroupMemberIndex group.MemberIndex,
-	messageToSign *big.Int,
-	attemptNumber uint64,
-) (
-	[]group.MemberIndex,
-	error,
-) {
-	messagesChan := make(chan net.Message, bsa.chainConfig.GroupSize)
-	bsa.broadcastChannel.Recv(ctx, func(message net.Message) {
-		messagesChan <- message
-	})
-
-	err := bsa.broadcastChannel.Send(ctx, &signingAnnouncementMessage{
-		senderID:      signingGroupMemberIndex,
-		message:       messageToSign,
-		attemptNumber: attemptNumber,
-	})
-	if err != nil {
-		return nil, fmt.Errorf("cannot send announcement message: [%w]", err)
-	}
-
-	readyMembersIndexesSet := make(map[group.MemberIndex]bool)
-	// Mark itself as ready.
-	readyMembersIndexesSet[signingGroupMemberIndex] = true
-
-loop:
-	for {
-		select {
-		case netMessage := <-messagesChan:
-			announcement, ok := netMessage.Payload().(*signingAnnouncementMessage)
-			if !ok {
-				continue
-			}
-
-			if announcement.senderID == signingGroupMemberIndex {
-				continue
-			}
-
-			if !bsa.membershipValidator.IsValidMembership(
-				announcement.senderID,
-				netMessage.SenderPublicKey(),
-			) {
-				continue
-			}
-
-			if announcement.message.Cmp(messageToSign) != 0 {
-				continue
-			}
-
-			if announcement.attemptNumber != attemptNumber {
-				continue
-			}
-
-			readyMembersIndexesSet[announcement.senderID] = true
-		case <-ctx.Done():
-			break loop
-		}
-	}
-
-	readyMembersIndexes := make([]group.MemberIndex, 0)
-	for memberIndex := range readyMembersIndexesSet {
-		readyMembersIndexes = append(readyMembersIndexes, memberIndex)
-	}
-
-	sort.Slice(readyMembersIndexes, func(i, j int) bool {
-		return readyMembersIndexes[i] < readyMembersIndexes[j]
-	})
-
-	return readyMembersIndexes, nil
 }

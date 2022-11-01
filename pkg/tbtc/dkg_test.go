@@ -6,6 +6,7 @@ import (
 	"math/big"
 	"reflect"
 	"testing"
+	"time"
 
 	"github.com/keep-network/keep-core/pkg/chain/local_v1"
 	"github.com/keep-network/keep-core/pkg/internal/testutils"
@@ -19,6 +20,8 @@ import (
 )
 
 func TestDkgRetryLoop(t *testing.T) {
+	seed := big.NewInt(100)
+
 	chainConfig := &ChainConfig{
 		GroupSize:       10,
 		GroupQuorum:     8,
@@ -38,6 +41,14 @@ func TestDkgRetryLoop(t *testing.T) {
 		"address-8",
 	}
 
+	membersIndexes := make([]group.MemberIndex, 0)
+	for i := range selectedOperators {
+		membersIndexes = append(
+			membersIndexes,
+			group.MemberIndex(i+1),
+		)
+	}
+
 	testData, err := tecdsatest.LoadPrivateKeyShareTestFixtures(1)
 	if err != nil {
 		t.Fatalf("failed to load test data: [%v]", err)
@@ -50,6 +61,7 @@ func TestDkgRetryLoop(t *testing.T) {
 	var tests = map[string]struct {
 		memberIndex               group.MemberIndex
 		ctxFn                     func() (context.Context, context.CancelFunc)
+		incomingAnnouncementsFn   func(sessionID string) ([]group.MemberIndex, error)
 		dkgAttemptFn              dkgAttemptFn
 		expectedErr               error
 		expectedExecutionEndBlock uint64
@@ -59,244 +71,153 @@ func TestDkgRetryLoop(t *testing.T) {
 		"success on initial attempt": {
 			memberIndex: 1,
 			ctxFn: func() (context.Context, context.CancelFunc) {
-				return context.WithCancel(context.Background())
+				return context.WithTimeout(context.Background(), 10*time.Second)
+			},
+			incomingAnnouncementsFn: func(sessionID string) ([]group.MemberIndex, error) {
+				return membersIndexes, nil
 			},
 			dkgAttemptFn: func(attempt *dkgAttemptParams) (*dkg.Result, uint64, error) {
 				return testResult, attempt.startBlock + dkg.ProtocolBlocks(), nil
 			},
 			expectedErr:               nil,
-			expectedExecutionEndBlock: 325, // 200 + 125
+			expectedExecutionEndBlock: 331, // 206 + 125
 			expectedResult:            testResult,
 			expectedLastAttempt: &dkgAttemptParams{
 				number:                 1,
-				startBlock:             200,
+				startBlock:             206,
 				excludedMembersIndexes: []group.MemberIndex{},
 			},
 		},
-		"IA error on initial attempts and quorum is maintained": {
+		"success on initial attempt with missing announcements and quorum": {
 			memberIndex: 1,
 			ctxFn: func() (context.Context, context.CancelFunc) {
-				return context.WithCancel(context.Background())
+				return context.WithTimeout(context.Background(), 10*time.Second)
+			},
+			incomingAnnouncementsFn: func(sessionID string) ([]group.MemberIndex, error) {
+				// Quorum of members announced their readiness.
+				return []group.MemberIndex{1, 2, 3, 4, 5, 6, 7, 8}, nil
 			},
 			dkgAttemptFn: func(attempt *dkgAttemptParams) (*dkg.Result, uint64, error) {
-				if attempt.number == 1 {
-					return nil, 0, &dkg.InactiveMembersError{
-						InactiveMembersIndexes: []group.MemberIndex{4},
-					}
-				}
-
-				if attempt.number == 2 {
-					return nil, 0, &dkg.InactiveMembersError{
-						InactiveMembersIndexes: []group.MemberIndex{6},
-					}
-				}
-
 				return testResult, attempt.startBlock + dkg.ProtocolBlocks(), nil
 			},
 			expectedErr:               nil,
-			expectedExecutionEndBlock: 585, // 460 + 125
+			expectedExecutionEndBlock: 331, // 206 + 125
 			expectedResult:            testResult,
-			// Members 4 and 6 should be excluded in the last attempt as
-			// they were inactive.
+			// As only 8 members (group quorum) announced their readiness,
+			// we don't have any other option than select them for the attempt.
+			// Not ready members are excluded.
 			expectedLastAttempt: &dkgAttemptParams{
-				number:                 3,
-				startBlock:             460, // 200 + 125 + 5 + 125 + 5
-				excludedMembersIndexes: []group.MemberIndex{4, 6},
+				number:                 1,
+				startBlock:             206,
+				excludedMembersIndexes: []group.MemberIndex{9, 10},
 			},
 		},
-		"IA error on initial attempts and quorum is not maintained": {
+		"missing announcements without quorum on initial attempt": {
 			memberIndex: 1,
 			ctxFn: func() (context.Context, context.CancelFunc) {
-				return context.WithCancel(context.Background())
+				return context.WithTimeout(context.Background(), 10*time.Second)
 			},
-			dkgAttemptFn: func(attempt *dkgAttemptParams) (*dkg.Result, uint64, error) {
-				// Member 3 is controlled by an operator that controls 3 members
-				// in total. Excluding that operator will break the group quorum.
-				if attempt.number == 1 {
-					return nil, 0, &dkg.InactiveMembersError{
-						InactiveMembersIndexes: []group.MemberIndex{3},
-					}
+			incomingAnnouncementsFn: func(sessionID string) ([]group.MemberIndex, error) {
+				if sessionID == fmt.Sprintf("%v-%v", seed, 1) {
+					// Non-quorum of members announced their readiness.
+					return []group.MemberIndex{1, 2, 3, 4, 5, 6, 7}, nil
 				}
 
+				return membersIndexes, nil
+			},
+			dkgAttemptFn: func(attempt *dkgAttemptParams) (*dkg.Result, uint64, error) {
 				return testResult, attempt.startBlock + dkg.ProtocolBlocks(), nil
 			},
 			expectedErr:               nil,
-			expectedExecutionEndBlock: 455, // 330 + 125
+			expectedExecutionEndBlock: 467, // 342 + 125
 			expectedResult:            testResult,
-			// Member 3 was inactive but excluding their operator drops the
-			// group size below the quorum. We fall back to the random algorithm
-			// that excludes member 4 for the given seed.
+			// First attempt fails because the group quorum did not announce
+			// readiness.
 			expectedLastAttempt: &dkgAttemptParams{
 				number:                 2,
-				startBlock:             330, // 200 + 125 + 5
-				excludedMembersIndexes: []group.MemberIndex{4},
-			},
-		},
-		"other error on initial attempts": {
-			memberIndex: 1,
-			ctxFn: func() (context.Context, context.CancelFunc) {
-				return context.WithCancel(context.Background())
-			},
-			dkgAttemptFn: func(attempt *dkgAttemptParams) (*dkg.Result, uint64, error) {
-				if attempt.number == 1 || attempt.number == 2 {
-					return nil, 0, fmt.Errorf("invalid data")
-				}
-
-				return testResult, attempt.startBlock + dkg.ProtocolBlocks(), nil
-			},
-			expectedErr:               nil,
-			expectedExecutionEndBlock: 585, // 460 + 125
-			expectedResult:            testResult,
-			// Since the error is not related with inactive members, we
-			// use the random algorithm from the very beginning. It
-			// excludes members 2 and 5 (same operator) for the given
-			// seed.
-			expectedLastAttempt: &dkgAttemptParams{
-				number:                 3,
-				startBlock:             460, // 200 + 125 + 5 + 125 + 5
+				startBlock:             342, // 206 + 1 * (6 + 125 + 5)
 				excludedMembersIndexes: []group.MemberIndex{2, 5},
 			},
 		},
-		"other error then IA error on initial attempts": {
+		"announcement error on initial attempt": {
 			memberIndex: 1,
 			ctxFn: func() (context.Context, context.CancelFunc) {
-				return context.WithCancel(context.Background())
+				return context.WithTimeout(context.Background(), 10*time.Second)
+			},
+			incomingAnnouncementsFn: func(sessionID string) ([]group.MemberIndex, error) {
+				if sessionID == fmt.Sprintf("%v-%v", seed, 1) {
+					return nil, fmt.Errorf("unexpected error")
+				}
+
+				return membersIndexes, nil
+			},
+			dkgAttemptFn: func(attempt *dkgAttemptParams) (*dkg.Result, uint64, error) {
+				return testResult, attempt.startBlock + dkg.ProtocolBlocks(), nil
+			},
+			expectedErr:               nil,
+			expectedExecutionEndBlock: 467, // 342 + 125
+			expectedResult:            testResult,
+			// First attempt fails due to the announcer error.
+			expectedLastAttempt: &dkgAttemptParams{
+				number:                 2,
+				startBlock:             342, // 206 + 1 * (6 + 125 + 5)
+				excludedMembersIndexes: []group.MemberIndex{2, 5},
+			},
+		},
+		"DKG error on initial attempt": {
+			memberIndex: 1,
+			ctxFn: func() (context.Context, context.CancelFunc) {
+				return context.WithTimeout(context.Background(), 10*time.Second)
+			},
+			incomingAnnouncementsFn: func(sessionID string) ([]group.MemberIndex, error) {
+				return membersIndexes, nil
 			},
 			dkgAttemptFn: func(attempt *dkgAttemptParams) (*dkg.Result, uint64, error) {
 				if attempt.number == 1 {
 					return nil, 0, fmt.Errorf("invalid data")
 				}
 
-				if attempt.number == 2 {
-					return nil, 0, &dkg.InactiveMembersError{
-						InactiveMembersIndexes: []group.MemberIndex{3},
-					}
-				}
-
 				return testResult, attempt.startBlock + dkg.ProtocolBlocks(), nil
 			},
 			expectedErr:               nil,
-			expectedExecutionEndBlock: 585, // 460 + 125
+			expectedExecutionEndBlock: 467, // 342 + 125
 			expectedResult:            testResult,
-			// The random algorithm was used first so subsequent errors related
-			// to inactive members are not taken into account. The random
-			// algorithm excludes members 2 and 5 (same operator) for the given
-			// seed.
+			// The DKG error occurs on attempt 1. For attempt 2, all members are
+			// ready, and we use the random algorithm to exclude some members.
+			// The algorithm excludes members 2 and 5 (same operator) for the
+			// given seed.
 			expectedLastAttempt: &dkgAttemptParams{
-				number:                 3,
-				startBlock:             460, // 200 + 125 + 5 + 125 + 5
+				number:                 2,
+				startBlock:             342, // 206 + 1 * (6 + 125 + 5)
 				excludedMembersIndexes: []group.MemberIndex{2, 5},
-			},
-		},
-		"IA error on initial and later attempts": {
-			memberIndex: 2,
-			ctxFn: func() (context.Context, context.CancelFunc) {
-				return context.WithCancel(context.Background())
-			},
-			dkgAttemptFn: func(attempt *dkgAttemptParams) (*dkg.Result, uint64, error) {
-				inactiveQueue := []group.MemberIndex{1, 4, 6, 7, 9}
-
-				if attempt.number <= 5 {
-					return nil, 0, &dkg.InactiveMembersError{
-						InactiveMembersIndexes: []group.MemberIndex{
-							inactiveQueue[attempt.number-1],
-						},
-					}
-				}
-
-				return testResult, attempt.startBlock + dkg.ProtocolBlocks(), nil
-			},
-			expectedErr:               nil,
-			expectedExecutionEndBlock: 975, // 850 + 125
-			expectedResult:            testResult,
-			// 5 attempts failed due to different single members who were inactive.
-			// The 6th attempt should be made using the random retry that
-			// returns member 9 for the given seed.
-			expectedLastAttempt: &dkgAttemptParams{
-				number:                 6,
-				startBlock:             850, // 200 + 5 * (125 + 5)
-				excludedMembersIndexes: []group.MemberIndex{9},
-			},
-		},
-		"IA error then other error on initial attempts": {
-			memberIndex: 1,
-			ctxFn: func() (context.Context, context.CancelFunc) {
-				return context.WithCancel(context.Background())
-			},
-			dkgAttemptFn: func(attempt *dkgAttemptParams) (*dkg.Result, uint64, error) {
-				if attempt.number == 1 {
-					return nil, 0, &dkg.InactiveMembersError{
-						InactiveMembersIndexes: []group.MemberIndex{2},
-					}
-				}
-
-				if attempt.number == 2 {
-					return nil, 0, fmt.Errorf("invalid data")
-				}
-
-				return testResult, attempt.startBlock + dkg.ProtocolBlocks(), nil
-			},
-			expectedErr:               nil,
-			expectedExecutionEndBlock: 585, // 460 + 125
-			expectedResult:            testResult,
-			// First attempt fail due to member 2 who is inactive but the second
-			// attempt fail due to another error so the random algorithm
-			// should be used eventually and return members 2 and 5
-			// (same operator) for the given seed.
-			expectedLastAttempt: &dkgAttemptParams{
-				number:                 3,
-				startBlock:             460, // 200 + 125 + 5 + 125 + 5
-				excludedMembersIndexes: []group.MemberIndex{2, 5},
-			},
-		},
-		"other error on initial and later attempts": {
-			memberIndex: 1,
-			ctxFn: func() (context.Context, context.CancelFunc) {
-				return context.WithCancel(context.Background())
-			},
-			dkgAttemptFn: func(attempt *dkgAttemptParams) (*dkg.Result, uint64, error) {
-				if attempt.number <= 15 {
-					return nil, 0, fmt.Errorf("invalid data")
-				}
-
-				return testResult, attempt.startBlock + dkg.ProtocolBlocks(), nil
-			},
-			expectedErr:               nil,
-			expectedExecutionEndBlock: 2275, // 2150 + 125
-			expectedResult:            testResult,
-			// Random algorithm is used from the very beginning. The start block
-			// for the 16th attempt can be calculated as follows: 200 + 15 * 130
-			// where 130 denotes a duration of an attempt (125 blocks plus 5
-			// delay blocks).
-			expectedLastAttempt: &dkgAttemptParams{
-				number:                 16,
-				startBlock:             2150,
-				excludedMembersIndexes: []group.MemberIndex{7, 9},
 			},
 		},
 		"executing member excluded": {
-			memberIndex: 6,
+			memberIndex: 5,
 			ctxFn: func() (context.Context, context.CancelFunc) {
-				return context.WithCancel(context.Background())
+				return context.WithTimeout(context.Background(), 10*time.Second)
+			},
+			incomingAnnouncementsFn: func(sessionID string) ([]group.MemberIndex, error) {
+				return membersIndexes, nil
 			},
 			dkgAttemptFn: func(attempt *dkgAttemptParams) (*dkg.Result, uint64, error) {
-				if attempt.number <= 5 {
+				if attempt.number <= 2 {
 					return nil, 0, fmt.Errorf("invalid data")
 				}
 
 				return testResult, attempt.startBlock + dkg.ProtocolBlocks(), nil
 			},
 			expectedErr:               nil,
-			expectedExecutionEndBlock: 1105, // 850 + 125 + 5 + 125
+			expectedExecutionEndBlock: 603, // 478 + 125
 			expectedResult:            testResult,
-			// Member 6 is the executing one. First 5 attempts fail and are
-			// retried using the random algorithm. The 6th attempt does not
-			// return an error but member 6 is excluded for this attempt so,
-			// member 6 skips attempt 6 and succeeds on attempt 7.
+			// Member 5 is the executing one. First attempt fails and is
+			// retried using the random algorithm. The 2nd attempt does not
+			// return an error but member 5 is excluded for this attempt so,
+			// member 5 skips attempt 2 and succeeds on attempt 3.
 			expectedLastAttempt: &dkgAttemptParams{
-				number:                 7,
-				startBlock:             980, // 200 + 6 * (125 + 5)
-				excludedMembersIndexes: []group.MemberIndex{7},
+				number:                 3,
+				startBlock:             478, // 206 + 2 * (6 + 125 + 5)
+				excludedMembersIndexes: []group.MemberIndex{9},
 			},
 		},
 		"loop context done": {
@@ -306,6 +227,9 @@ func TestDkgRetryLoop(t *testing.T) {
 				// Cancel the context deliberately.
 				cancelCtx()
 				return ctx, cancelCtx
+			},
+			incomingAnnouncementsFn: func(sessionID string) ([]group.MemberIndex, error) {
+				return membersIndexes, nil
 			},
 			dkgAttemptFn: func(attempt *dkgAttemptParams) (*dkg.Result, uint64, error) {
 				return nil, 0, fmt.Errorf("invalid data")
@@ -319,24 +243,29 @@ func TestDkgRetryLoop(t *testing.T) {
 
 	for testName, test := range tests {
 		t.Run(testName, func(t *testing.T) {
+			announcer := &mockDkgAnnouncer{
+				outgoingAnnouncements:   make(map[string]group.MemberIndex),
+				incomingAnnouncementsFn: test.incomingAnnouncementsFn,
+			}
+
 			retryLoop := newDkgRetryLoop(
-				big.NewInt(100),
+				&testutils.MockLogger{},
+				seed,
 				200,
 				test.memberIndex,
 				selectedOperators,
 				chainConfig,
+				announcer,
 			)
 
 			ctx, cancelCtx := test.ctxFn()
 			defer cancelCtx()
 
-			var lastAttemptStartBlock uint64
 			var lastAttempt *dkgAttemptParams
 
 			result, executionEndBlock, err := retryLoop.start(
 				ctx,
 				func(ctx context.Context, attemptStartBlock uint64) error {
-					lastAttemptStartBlock = attemptStartBlock
 					return nil
 				},
 				func(params *dkgAttemptParams) (*dkg.Result, uint64, error) {
@@ -375,17 +304,6 @@ func TestDkgRetryLoop(t *testing.T) {
 				)
 			}
 
-			if test.expectedLastAttempt != nil {
-				if test.expectedLastAttempt.startBlock != lastAttemptStartBlock {
-					t.Errorf("unexpected last attempt start block\n"+
-						"expected: [%+v]\n"+
-						"actual:   [%+v]",
-						test.expectedLastAttempt.startBlock,
-						lastAttemptStartBlock,
-					)
-				}
-			}
-
 			if !reflect.DeepEqual(test.expectedLastAttempt, lastAttempt) {
 				t.Errorf(
 					"unexpected last attempt\n"+
@@ -394,6 +312,28 @@ func TestDkgRetryLoop(t *testing.T) {
 					test.expectedLastAttempt,
 					lastAttempt,
 				)
+			}
+
+			if test.expectedLastAttempt != nil {
+				testutils.AssertIntsEqual(
+					t,
+					"outgoing announcements count",
+					int(test.expectedLastAttempt.number),
+					len(announcer.outgoingAnnouncements),
+				)
+
+				for sessionID, memberIndex := range announcer.outgoingAnnouncements {
+					testutils.AssertIntsEqual(
+						t,
+						fmt.Sprintf(
+							"outgoing announcement's member index "+
+								"for session [%v]",
+							sessionID,
+						),
+						int(test.memberIndex),
+						int(memberIndex),
+					)
+				}
 			}
 		})
 	}
@@ -978,4 +918,26 @@ func TestSubmitResult_TooFewSignatures(t *testing.T) {
 			err,
 		)
 	}
+}
+
+type mockDkgAnnouncer struct {
+	// outgoingAnnouncements holds all announcements that are sent by the
+	// announcer.
+	outgoingAnnouncements map[string]group.MemberIndex
+
+	// incomingAnnouncementsFn returns all announcements that are received
+	// by the announcer for the given attempt.
+	incomingAnnouncementsFn func(
+		sessionID string,
+	) ([]group.MemberIndex, error)
+}
+
+func (mda *mockDkgAnnouncer) Announce(
+	ctx context.Context,
+	memberIndex group.MemberIndex,
+	sessionID string,
+) ([]group.MemberIndex, error) {
+	mda.outgoingAnnouncements[sessionID] = memberIndex
+
+	return mda.incomingAnnouncementsFn(sessionID)
 }

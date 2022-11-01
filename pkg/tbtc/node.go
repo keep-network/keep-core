@@ -8,6 +8,8 @@ import (
 	"math/big"
 	"time"
 
+	"github.com/keep-network/keep-core/pkg/protocol/announcer"
+
 	"go.uber.org/zap"
 
 	"github.com/keep-network/keep-common/pkg/persistence"
@@ -180,12 +182,21 @@ func (n *node) joinDKGIfEligible(seed *big.Int, startBlockNumber uint64) {
 				n.protocolLatch.Lock()
 				defer n.protocolLatch.Unlock()
 
+				announcer := announcer.New(
+					fmt.Sprintf("%v-%v", ProtocolName, "dkg"),
+					n.chain.GetConfig().GroupSize,
+					broadcastChannel,
+					membershipValidator,
+				)
+
 				retryLoop := newDkgRetryLoop(
+					dkgLogger,
 					seed,
 					startBlockNumber,
 					memberIndex,
 					selectedSigningGroupOperators,
 					chainConfig,
+					announcer,
 				)
 
 				// TODO: For this client iteration, the retry loop is started
@@ -476,8 +487,9 @@ func (n *node) joinSigningIfEligible(
 				n.protocolLatch.Lock()
 				defer n.protocolLatch.Unlock()
 
-				announcer := newBroadcastSigningAnnouncer(
-					n.chain.GetConfig(),
+				announcer := announcer.New(
+					fmt.Sprintf("%v-%v", ProtocolName, "signing"),
+					n.chain.GetConfig().GroupSize,
 					broadcastChannel,
 					membershipValidator,
 				)
@@ -622,6 +634,10 @@ func (n *node) joinSigningIfEligible(
 		signingLogger.Info("not eligible for signing")
 	}
 }
+
+// waitForBlockFn represents a function blocking the execution until the given
+// block height.
+type waitForBlockFn func(context.Context, uint64) error
 
 // TODO: this should become a part of BlockHeightWaiter interface.
 func (n *node) waitForBlockHeight(ctx context.Context, blockHeight uint64) error {
