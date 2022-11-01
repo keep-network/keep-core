@@ -291,7 +291,7 @@ export async function calculateRewards() {
     uptimeCoefficient = Math.floor(uptimeCoefficient * HUNDRED);
     requirements.set(IS_UP_TIME_SATISFIED, isUptimeSatisfied);
 
-    /// Pre-params requiremnt
+    /// Pre-params requirement
     const isPrePramsSatisfied = await checkPreParams(
       operatorAddress,
       rewardsInterval,
@@ -509,7 +509,7 @@ function authorizationForRewardsInterval(
   return authorization.div(PRECISION);
 }
 
-// Get the authorization from the first event that occured after the rewards
+// Get the authorization from the first event that occurred after the rewards
 // interval. If no events were emitted, then get the authorization from the current
 // block.
 async function authorizationPostRewardsInterval(
