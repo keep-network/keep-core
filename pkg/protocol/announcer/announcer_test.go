@@ -2,12 +2,6 @@ package announcer
 
 import (
 	"context"
-	"math/big"
-	"reflect"
-	"sync"
-	"testing"
-	"time"
-
 	fuzz "github.com/google/gofuzz"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/chain/local_v1"
@@ -16,6 +10,10 @@ import (
 	"github.com/keep-network/keep-core/pkg/net/local"
 	"github.com/keep-network/keep-core/pkg/operator"
 	"github.com/keep-network/keep-core/pkg/protocol/group"
+	"math/big"
+	"reflect"
+	"sync"
+	"testing"
 )
 
 func TestAnnouncementMessage_MarshalingRoundtrip(t *testing.T) {
@@ -175,7 +173,7 @@ func TestAnnouncer(t *testing.T) {
 
 					ctx, cancelCtx := context.WithTimeout(
 						context.Background(),
-						100*time.Millisecond,
+						3*local.RetransmissionTick,
 					)
 					defer cancelCtx()
 
