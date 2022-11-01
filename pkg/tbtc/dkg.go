@@ -17,6 +17,10 @@ import (
 	"github.com/keep-network/keep-core/pkg/tecdsa/retry"
 )
 
+// dkgAttemptMaxBlockDuration determines the maximum block duration of a
+// single DKG attempt.
+const dkgAttemptMaxBlockDuration = 150
+
 // dkgAnnouncer represents a component responsible for exchanging readiness
 // announcements for the given DKG attempt for the given seed.
 type dkgAnnouncer interface {
@@ -92,7 +96,7 @@ type dkgAttemptParams struct {
 }
 
 // dkgAttemptFn represents a function performing a DKG attempt.
-type dkgAttemptFn func(*dkgAttemptParams) (*dkg.Result, uint64, error)
+type dkgAttemptFn func(*dkgAttemptParams) (*dkg.Result, error)
 
 // start begins the DKG retry loop using the given DKG attempt function.
 // The retry loop terminates when the DKG result is produced or the ctx
@@ -101,7 +105,7 @@ func (drl *dkgRetryLoop) start(
 	ctx context.Context,
 	waitForBlockFn waitForBlockFn,
 	dkgAttemptFn dkgAttemptFn,
-) (*dkg.Result, uint64, error) {
+) (*dkg.Result, error) {
 	for {
 		drl.attemptCounter++
 
@@ -131,7 +135,7 @@ func (drl *dkgRetryLoop) start(
 		announcementStartBlock := drl.attemptStartBlock + drl.announcementDelayBlocks
 		err := waitForBlockFn(ctx, announcementStartBlock)
 		if err != nil {
-			return nil, 0, fmt.Errorf(
+			return nil, fmt.Errorf(
 				"failed waiting for announcement start block [%v] "+
 					"for attempt [%v]: [%v]",
 				announcementStartBlock,
@@ -182,7 +186,7 @@ func (drl *dkgRetryLoop) start(
 
 		// Check the loop stop signal.
 		if ctx.Err() != nil {
-			return nil, 0, nil
+			return nil, nil
 		}
 
 		if len(readyMembersIndexes) >= drl.chainConfig.GroupQuorum {
@@ -209,7 +213,7 @@ func (drl *dkgRetryLoop) start(
 			readyMembersIndexes,
 		)
 		if err != nil {
-			return nil, 0, fmt.Errorf(
+			return nil, fmt.Errorf(
 				"cannot select members for attempt [%v]: [%w]",
 				drl.attemptCounter,
 				err,
@@ -222,11 +226,10 @@ func (drl *dkgRetryLoop) start(
 		)
 
 		var result *dkg.Result
-		var executionEndBlock uint64
 		var attemptErr error
 
 		if !attemptSkipped {
-			result, executionEndBlock, attemptErr = dkgAttemptFn(&dkgAttemptParams{
+			result, attemptErr = dkgAttemptFn(&dkgAttemptParams{
 				number:                 drl.attemptCounter,
 				startBlock:             announcementEndBlock,
 				excludedMembersIndexes: excludedMembersIndexes,
@@ -243,7 +246,7 @@ func (drl *dkgRetryLoop) start(
 			continue
 		}
 
-		return result, executionEndBlock, nil
+		return result, nil
 	}
 }
 

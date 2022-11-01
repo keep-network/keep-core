@@ -1,6 +1,7 @@
 package dkg
 
 import (
+	"context"
 	"fmt"
 	"math/big"
 	"time"
@@ -59,18 +60,17 @@ func NewExecutor(
 // group by passing a non-empty excludedMembers slice holding the members that
 // should be excluded.
 func (e *Executor) Execute(
+	ctx context.Context,
 	logger log.StandardLogger,
 	seed *big.Int,
 	sessionID string,
-	startBlockNumber uint64,
 	memberIndex group.MemberIndex,
 	groupSize int,
 	dishonestThreshold int,
 	excludedMembersIndexes []group.MemberIndex,
-	blockCounter chain.BlockCounter,
 	channel net.BroadcastChannel,
 	membershipValidator *group.MembershipValidator,
-) (*Result, uint64, error) {
+) (*Result, error) {
 	logger.Debugf("[member:%v] initializing member", memberIndex)
 
 	member := newMember(
@@ -98,19 +98,19 @@ func (e *Executor) Execute(
 		member:  member.initializeEphemeralKeysGeneration(),
 	}
 
-	stateMachine := state.NewSyncMachine(logger, channel, blockCounter, initialState)
+	stateMachine := state.NewAsyncMachine(logger, ctx, channel, initialState)
 
-	lastState, endBlockNumber, err := stateMachine.Execute(startBlockNumber)
+	lastState, err := stateMachine.Execute()
 	if err != nil {
-		return nil, 0, err
+		return nil, err
 	}
 
 	confirmationState, ok := lastState.(*confirmationState)
 	if !ok {
-		return nil, 0, fmt.Errorf("execution ended on state: %T", lastState)
+		return nil, fmt.Errorf("execution ended on state: %T", lastState)
 	}
 
-	return confirmationState.result(), endBlockNumber, nil
+	return confirmationState.result(), nil
 }
 
 // PreParamsCount returns the current count of the DKG pre-parameters.

@@ -209,12 +209,17 @@ func (n *node) joinDKGIfEligible(seed *big.Int, startBlockNumber uint64) {
 					7*24*time.Hour,
 				)
 				defer cancelLoopCtx()
-				cancelDkgContextOnStopSignal(loopCtx, cancelLoopCtx, broadcastChannel, seed.Text(16))
+				cancelDkgContextOnStopSignal(
+					loopCtx,
+					cancelLoopCtx,
+					broadcastChannel,
+					seed.Text(16),
+				)
 
-				result, executionEndBlock, err := retryLoop.start(
+				result, err := retryLoop.start(
 					loopCtx,
 					n.waitForBlockHeight,
-					func(attempt *dkgAttemptParams) (*dkg.Result, uint64, error) {
+					func(attempt *dkgAttemptParams) (*dkg.Result, error) {
 						dkgAttemptLogger := dkgLogger.With(
 							zap.Uint("attempt", attempt.number),
 							zap.Uint64("attemptStartBlock", attempt.startBlock),
@@ -228,6 +233,27 @@ func (n *node) joinDKGIfEligible(seed *big.Int, startBlockNumber uint64) {
 							attempt.excludedMembersIndexes,
 						)
 
+						// Set up the attempt timeout signal.
+						attemptCtx, cancelAttemptCtx := context.WithCancel(
+							loopCtx,
+						)
+						go func() {
+							defer cancelAttemptCtx()
+
+							err := n.waitForBlockHeight(
+								loopCtx,
+								attempt.startBlock+dkgAttemptMaxBlockDuration,
+							)
+							if err != nil {
+								dkgAttemptLogger.Warnf(
+									"[member:%v] failed waiting for "+
+										"attempt stop signal: [%v]",
+									memberIndex,
+									err,
+								)
+							}
+						}()
+
 						// sessionID must be different for each attempt.
 						sessionID := fmt.Sprintf(
 							"%v-%v",
@@ -235,16 +261,15 @@ func (n *node) joinDKGIfEligible(seed *big.Int, startBlockNumber uint64) {
 							attempt.number,
 						)
 
-						result, executionEndBlock, err := n.dkgExecutor.Execute(
+						result, err := n.dkgExecutor.Execute(
+							attemptCtx,
 							dkgAttemptLogger,
 							seed,
 							sessionID,
-							attempt.startBlock,
 							memberIndex,
 							chainConfig.GroupSize,
 							chainConfig.DishonestThreshold(),
 							attempt.excludedMembersIndexes,
-							blockCounter,
 							broadcastChannel,
 							membershipValidator,
 						)
@@ -255,18 +280,32 @@ func (n *node) joinDKGIfEligible(seed *big.Int, startBlockNumber uint64) {
 								err,
 							)
 
-							return nil, 0, err
+							return nil, err
 						}
 
-						if err := sendDkgStopPill(loopCtx, broadcastChannel, seed.Text(16), attempt.number); err != nil {
-							dkgLogger.Errorf(
-								"[member:%v] could not send the stop pill: [%v]",
-								memberIndex,
-								err,
-							)
-						}
+						// Schedule the stop pill to be sent a fixed amount of
+						// time after the result is returned. Do not do it
+						// immediately as other members can be very close
+						// to produce the result as well. This mechanism should
+						// be more sophisticated but since it is temporary, we
+						// can live with it for now.
+						go func() {
+							time.Sleep(1 * time.Minute)
+							if err := sendDkgStopPill(
+								loopCtx,
+								broadcastChannel,
+								seed.Text(16),
+								attempt.number,
+							); err != nil {
+								dkgLogger.Errorf(
+									"[member:%v] could not send the stop pill: [%v]",
+									memberIndex,
+									err,
+								)
+							}
+						}()
 
-						return result, executionEndBlock, nil
+						return result, nil
 					},
 				)
 				if err != nil {
@@ -293,7 +332,7 @@ func (n *node) joinDKGIfEligible(seed *big.Int, startBlockNumber uint64) {
 				// TODO: Snapshot the key material before doing on-chain result
 				//       submission.
 
-				publicationStartBlock := executionEndBlock
+				publicationStartBlock := uint64(0) // TODO: Remove.
 				operatingMemberIndexes := result.Group.OperatingMemberIDs()
 				dkgResultChannel := make(chan *DKGResultSubmittedEvent)
 
@@ -512,7 +551,12 @@ func (n *node) joinSigningIfEligible(
 					24*time.Hour,
 				)
 				defer cancelLoopCtx()
-				cancelSigningContextOnStopSignal(loopCtx, cancelLoopCtx, broadcastChannel, message.Text(16))
+				cancelSigningContextOnStopSignal(
+					loopCtx,
+					cancelLoopCtx,
+					broadcastChannel,
+					message.Text(16),
+				)
 
 				result, err := retryLoop.start(
 					loopCtx,
@@ -589,7 +633,12 @@ func (n *node) joinSigningIfEligible(
 						// can live with it for now.
 						go func() {
 							time.Sleep(1 * time.Minute)
-							if err := sendSigningStopPill(loopCtx, broadcastChannel, message.Text(16), attempt.number); err != nil {
+							if err := sendSigningStopPill(
+								loopCtx,
+								broadcastChannel,
+								message.Text(16),
+								attempt.number,
+							); err != nil {
 								signingLogger.Errorf(
 									"[member:%v] could not send the stop pill: [%v]",
 									signer.signingGroupMemberIndex,
