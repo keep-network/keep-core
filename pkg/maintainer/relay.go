@@ -19,8 +19,8 @@ type RelayChain interface {
 	Retarget(headers []bitcoin.BlockHeader) error
 }
 
-// launchRelay sets up the connections to the Bitcoin chain and the relay chain
-// and launches the process of maintaining the relay.
+// LaunchRelay sets up the connections to the Bitcoin and relay chains and
+// launches the process of maintaining the relay.
 func LaunchRelay(ctx context.Context) error {
 	// TODO: Add connection to the Bitcoin chain:
 	// btcChain, err := bitcoin.Connect(ctx, &maintainerConfig.Bitcoin)

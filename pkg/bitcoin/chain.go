@@ -1,6 +1,6 @@
 package bitcoin
 
-// Temporary solution to be able to connect to Bitcoin chain
+// Config contains the config data needed to connect to the Bitcoin chain.
 type Config struct {
 	URL      string
 	Username string
