@@ -8,7 +8,17 @@
 package bitcoin
 
 // CompactSizeUint is a documentation type that is supposed to capture the
-// details of the Bitcoin's CompactSize Unsigned Integer as described in:
+// details of the Bitcoin's CompactSize Unsigned Integer. It represents a
+// number value encoded to bytes according to the following rules:
+//
+//                     Value               | Bytes |                  Format
+// ---------------------------------------------------------------------------------------
+// >= 0 && <= 252                          |   1   | uint8
+// >= 253 && <= 0xffff                     |   3   | 0xfd followed by the number as uint16
+// >= 0x10000 && <= 0xffffffff             |   5   | 0xfe followed by the number as uint32
+// >= 0x100000000 && <= 0xffffffffffffffff |   9   | 0xff followed by the number as uint64
+//
+// For reference, see:
 // https://developer.bitcoin.org/reference/transactions.html#compactsize-unsigned-integers
 type CompactSizeUint uint64
 
@@ -23,12 +33,13 @@ const (
 	// use cases related with the protocol logic and cryptography. Byte arrays
 	// using this byte order should be converted to numbers according to
 	// the little-endian sequence.
-	InternalByteOrder = iota
+	InternalByteOrder ByteOrder = iota
 
 	// ReversedByteOrder represents the "human" byte order. This is the
 	// byte order that is typically used by the third party services like
 	// block explorers or Bitcoin chain clients. Byte arrays using this byte
 	// order should be converted to numbers according to the big-endian
-	// sequence.
+	// sequence. This type is also known as the `RPC Byte Order` in the
+	// Bitcoin specification.
 	ReversedByteOrder
 )

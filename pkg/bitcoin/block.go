@@ -14,12 +14,13 @@ type BlockHeader struct {
 	// MerkleRootHash is a hash derived from the hashes of all transactions
 	// included in this block.
 	MerkleRootHash Hash
-	// Time is a Unix epoch time when the block was created.
+	// Time is a Unix epoch time when the miner started hashing the header.
 	Time uint32
 	// Bits determines the target threshold this block's header hash must be
 	// less than or equal to.
 	Bits uint32
-	// Nonce is the nonce used to generate the block.
+	// Nonce is an arbitrary number miners change to modify the header hash
+	// in order to produce a hash less than or equal to the target threshold.
 	Nonce uint32
 }
 
