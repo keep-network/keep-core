@@ -31,6 +31,8 @@ type dkgAnnouncer interface {
 type dkgRetryLoop struct {
 	logger log.StandardLogger
 
+	// seed is the original seed for DKG.
+	// Used for the announcement. It never changes.
 	seed *big.Int
 
 	memberIndex       group.MemberIndex
@@ -44,6 +46,8 @@ type dkgRetryLoop struct {
 
 	attemptCounter     uint
 	attemptStartBlock  uint64
+	// attemptSeed is a 8-byte seed obtained from the original seed.
+	// Used for the random operator selection. It never changes.
 	attemptSeed        int64
 	attemptDelayBlocks uint64
 }
