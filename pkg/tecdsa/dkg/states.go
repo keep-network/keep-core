@@ -6,24 +6,10 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/net"
 	"github.com/keep-network/keep-core/pkg/protocol/group"
 	"github.com/keep-network/keep-core/pkg/protocol/state"
 )
-
-const (
-	resultSigningStateDelayBlocks  = 1
-	resultSigningStateActiveBlocks = 5
-)
-
-// PrePublicationBlocks returns the total number of blocks it takes to execute
-// all the required work to get ready for the result publication or to decide
-// to skip the publication because there are not enough supporters of
-// the given result.
-func PrePublicationBlocks() uint64 {
-	return resultSigningStateDelayBlocks + resultSigningStateActiveBlocks
-}
 
 // ephemeralKeyPairGenerationState is the state during which members broadcast
 // public ephemeral keys generated for other members of the group.
@@ -356,26 +342,15 @@ func (fs *finalizationState) result() *Result {
 // preferred DKG result (by hashing their DKG result, and then signing the
 // result), and share this over the broadcast channel.
 type resultSigningState struct {
+	*state.BaseAsyncState
+
 	channel         net.BroadcastChannel
 	resultSigner    ResultSigner
 	resultSubmitter ResultSubmitter
-	blockCounter    chain.BlockCounter
 
 	member *signingMember
 
 	result *Result
-
-	signatureMessages []*resultSignatureMessage
-
-	signingStartBlockHeight uint64
-}
-
-func (rss *resultSigningState) DelayBlocks() uint64 {
-	return resultSigningStateDelayBlocks
-}
-
-func (rss *resultSigningState) ActiveBlocks() uint64 {
-	return resultSigningStateActiveBlocks
 }
 
 func (rss *resultSigningState) Initiate(ctx context.Context) error {
@@ -383,13 +358,15 @@ func (rss *resultSigningState) Initiate(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
+
 	if err := rss.channel.Send(ctx, message); err != nil {
 		return err
 	}
+
 	return nil
 }
 
-func (rss *resultSigningState) Receive(msg net.Message) error {
+func (rss *resultSigningState) Receive(netMessage net.Message) error {
 	// The network layer determines the message sender's public key based on
 	// the network client's pinned identity. The sender can not use any other
 	// public key than the one it is identified with in the network.
@@ -405,38 +382,49 @@ func (rss *resultSigningState) Receive(msg net.Message) error {
 	// produce a signature over the DKG result hash. If the keys don't match,
 	// it means that an incorrect key was used to sign DKG result hash and
 	// the message should be rejected.
-	isValidKeyUsed := func(phaseMessage *resultSignatureMessage) bool {
-		return bytes.Equal(phaseMessage.publicKey, msg.SenderPublicKey())
+	isValidKeyUsed := func(signatureMessage *resultSignatureMessage) bool {
+		return bytes.Equal(signatureMessage.publicKey, netMessage.SenderPublicKey())
 	}
 
-	switch signedMessage := msg.Payload().(type) {
-	case *resultSignatureMessage:
+	// As there is only one message type exchanged during result publication,
+	// we can simplify the code and cast directly to the concrete type
+	// `*resultSignatureMessage` instead of casting to the generic `message`.
+	if signatureMessage, ok := netMessage.Payload().(*resultSignatureMessage); ok {
 		if rss.member.shouldAcceptMessage(
-			signedMessage.SenderID(),
-			msg.SenderPublicKey(),
+			signatureMessage.SenderID(),
+			netMessage.SenderPublicKey(),
 		) && isValidKeyUsed(
-			signedMessage,
-		) && rss.member.sessionID == signedMessage.sessionID {
-			rss.signatureMessages = append(rss.signatureMessages, signedMessage)
+			signatureMessage,
+		) && rss.member.sessionID == signatureMessage.sessionID {
+			rss.ReceiveToHistory(netMessage)
 		}
 	}
 
 	return nil
 }
 
-func (rss *resultSigningState) Next() (state.SyncState, error) {
+func (rss *resultSigningState) CanTransition() bool {
+	// Although there is no hard requirement to expect signature messages
+	// from all participants, it makes sense to do so because this is an
+	// additional participant availability check that allows to maximize
+	// the final count of active participants. Moreover, this check does not
+	// bound the signing state to a fixed duration and one can move to the
+	// next state as soon as possible.
+	messagingDone := len(receivedMessages[*resultSignatureMessage](rss.BaseAsyncState)) ==
+		len(rss.member.group.OperatingMemberIDs())-1
+
+	return messagingDone
+}
+
+func (rss *resultSigningState) Next() (state.AsyncState, error) {
 	return &signaturesVerificationState{
-		channel:           rss.channel,
-		resultSigner:      rss.resultSigner,
-		resultSubmitter:   rss.resultSubmitter,
-		blockCounter:      rss.blockCounter,
-		member:            rss.member,
-		result:            rss.result,
-		signatureMessages: rss.signatureMessages,
-		validSignatures:   make(map[group.MemberIndex][]byte),
-		verificationStartBlockHeight: rss.signingStartBlockHeight +
-			rss.DelayBlocks() +
-			rss.ActiveBlocks(),
+		BaseAsyncState:  rss.BaseAsyncState,
+		channel:         rss.channel,
+		resultSigner:    rss.resultSigner,
+		resultSubmitter: rss.resultSubmitter,
+		member:          rss.member,
+		result:          rss.result,
+		validSignatures: make(map[group.MemberIndex][]byte),
 	}, nil
 }
 
@@ -448,32 +436,22 @@ func (rss *resultSigningState) MemberIndex() group.MemberIndex {
 // all validSignatures that valid submitters sent over the broadcast channel in
 // the previous state. Valid validSignatures are added to the state.
 type signaturesVerificationState struct {
+	*state.BaseAsyncState
+
 	channel         net.BroadcastChannel
 	resultSigner    ResultSigner
 	resultSubmitter ResultSubmitter
-	blockCounter    chain.BlockCounter
 
 	member *signingMember
 
 	result *Result
 
-	signatureMessages []*resultSignatureMessage
-	validSignatures   map[group.MemberIndex][]byte
-
-	verificationStartBlockHeight uint64
-}
-
-func (svs *signaturesVerificationState) DelayBlocks() uint64 {
-	return state.SilentStateDelayBlocks
-}
-
-func (svs *signaturesVerificationState) ActiveBlocks() uint64 {
-	return state.SilentStateActiveBlocks
+	validSignatures map[group.MemberIndex][]byte
 }
 
 func (svs *signaturesVerificationState) Initiate(ctx context.Context) error {
 	svs.validSignatures = svs.member.verifyDKGResultSignatures(
-		svs.signatureMessages,
+		receivedMessages[*resultSignatureMessage](svs.BaseAsyncState),
 		svs.resultSigner,
 	)
 	return nil
@@ -483,17 +461,18 @@ func (svs *signaturesVerificationState) Receive(msg net.Message) error {
 	return nil
 }
 
-func (svs *signaturesVerificationState) Next() (state.SyncState, error) {
+func (svs *signaturesVerificationState) CanTransition() bool {
+	return true
+}
+
+func (svs *signaturesVerificationState) Next() (state.AsyncState, error) {
 	return &resultSubmissionState{
+		BaseAsyncState:  svs.BaseAsyncState,
 		channel:         svs.channel,
 		resultSubmitter: svs.resultSubmitter,
-		blockCounter:    svs.blockCounter,
 		member:          svs.member.initializeSubmittingMember(),
 		result:          svs.result,
 		signatures:      svs.validSignatures,
-		submissionStartBlockHeight: svs.verificationStartBlockHeight +
-			svs.DelayBlocks() +
-			svs.ActiveBlocks(),
 	}, nil
 }
 
@@ -504,31 +483,22 @@ func (svs *signaturesVerificationState) MemberIndex() group.MemberIndex {
 // resultSubmissionState is the state during which group members submit the dkg
 // result to the chain. This state concludes the DKG protocol.
 type resultSubmissionState struct {
+	*state.BaseAsyncState
+
 	channel         net.BroadcastChannel
 	resultSubmitter ResultSubmitter
-	blockCounter    chain.BlockCounter
 
 	member *submittingMember
 
 	result     *Result
 	signatures map[group.MemberIndex][]byte
-
-	submissionStartBlockHeight uint64
-}
-
-func (rss *resultSubmissionState) DelayBlocks() uint64 {
-	return state.SilentStateDelayBlocks
-}
-
-func (rss *resultSubmissionState) ActiveBlocks() uint64 {
-	return state.SilentStateActiveBlocks
 }
 
 func (rss *resultSubmissionState) Initiate(ctx context.Context) error {
 	return rss.member.submitDKGResult(
+		ctx,
 		rss.result,
 		rss.signatures,
-		rss.submissionStartBlockHeight,
 		rss.resultSubmitter,
 	)
 }
@@ -537,7 +507,11 @@ func (rss *resultSubmissionState) Receive(msg net.Message) error {
 	return nil
 }
 
-func (rss *resultSubmissionState) Next() (state.SyncState, error) {
+func (rss *resultSubmissionState) CanTransition() bool {
+	return true
+}
+
+func (rss *resultSubmissionState) Next() (state.AsyncState, error) {
 	// returning nil represents this is the final state
 	return nil, nil
 }

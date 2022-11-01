@@ -167,12 +167,6 @@ func (n *node) joinDKGIfEligible(seed *big.Int, startBlockNumber uint64) {
 			)
 		}
 
-		blockCounter, err := n.chain.BlockCounter()
-		if err != nil {
-			dkgLogger.Errorf("failed to get block counter: [%v]", err)
-			return
-		}
-
 		for _, index := range indexes {
 			// Capture the member index for the goroutine. The group member
 			// index should be in range [1, groupSize] so we need to add 1.
@@ -332,7 +326,6 @@ func (n *node) joinDKGIfEligible(seed *big.Int, startBlockNumber uint64) {
 				// TODO: Snapshot the key material before doing on-chain result
 				//       submission.
 
-				publicationStartBlock := uint64(0) // TODO: Remove.
 				operatingMemberIndexes := result.Group.OperatingMemberIDs()
 				dkgResultChannel := make(chan *DKGResultSubmittedEvent)
 
@@ -343,12 +336,22 @@ func (n *node) joinDKGIfEligible(seed *big.Int, startBlockNumber uint64) {
 				)
 				defer dkgResultSubscription.Unsubscribe()
 
+				// Set up the publication stop signal that should allow to
+				// perform all the result-signing-related actions and
+				// handle the worst case when the result is submitted by the
+				// last group member.
+				publicationCtx, cancelPublicationCtx := context.WithTimeout(
+					context.Background(),
+					dkgResultSigningDuration+
+						(time.Duration(chainConfig.GroupSize)*dkgResultSubmissionDelayStep),
+				)
+				defer cancelPublicationCtx()
+
 				err = dkg.Publish(
+					publicationCtx,
 					dkgLogger,
 					seed.Text(16),
-					publicationStartBlock,
 					memberIndex,
-					blockCounter,
 					broadcastChannel,
 					membershipValidator,
 					newDkgResultSigner(n.chain),
@@ -370,12 +373,10 @@ func (n *node) joinDKGIfEligible(seed *big.Int, startBlockNumber uint64) {
 					)
 
 					if operatingMemberIndexes, err = decideSigningGroupMemberFate(
+						publicationCtx,
 						memberIndex,
 						dkgResultChannel,
-						publicationStartBlock,
 						result,
-						chainConfig,
-						blockCounter,
 					); err != nil {
 						dkgLogger.Errorf(
 							"[member:%v] failed to handle DKG result "+

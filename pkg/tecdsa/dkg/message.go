@@ -164,6 +164,11 @@ func (rsm *resultSignatureMessage) SenderID() group.MemberIndex {
 	return rsm.senderID
 }
 
+// SessionID returns the session identifier of the message.
+func (rsm *resultSignatureMessage) SessionID() string {
+	return rsm.sessionID
+}
+
 // Type returns a string describing an resultSignatureMessage type for
 // marshaling purposes.
 func (rsm *resultSignatureMessage) Type() string {

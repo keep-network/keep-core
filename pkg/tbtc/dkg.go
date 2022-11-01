@@ -9,6 +9,7 @@ import (
 	"golang.org/x/exp/slices"
 	"math/big"
 	"sort"
+	"time"
 
 	"github.com/ipfs/go-log/v2"
 	"github.com/keep-network/keep-core/pkg/chain"
@@ -17,9 +18,22 @@ import (
 	"github.com/keep-network/keep-core/pkg/tecdsa/retry"
 )
 
-// dkgAttemptMaxBlockDuration determines the maximum block duration of a
-// single DKG attempt.
-const dkgAttemptMaxBlockDuration = 150
+// TODO: Revisit those constants, especially dkgResultSubmissionDelayStep
+// which should be bigger once the contract integration is ready.
+const (
+	// dkgAttemptMaxBlockDuration determines the maximum block duration of a
+	// single DKG attempt.
+	dkgAttemptMaxBlockDuration = 150
+	// dkgResultSigningDuration determines the approximate duration it
+	// takes to execute all the required work related to DKG result signing
+	// and verification.
+	dkgResultSigningDuration = 5 * time.Minute
+	// dkgResultSubmissionDelayStep determines the delay step that is used to
+	// calculate the submission delay time that should be respected by the
+	// given member to avoid all members submitting the same DKG result at the
+	// same time.
+	dkgResultSubmissionDelayStep = 10 * time.Second
+)
 
 // dkgAnnouncer represents a component responsible for exchanging readiness
 // announcements for the given DKG attempt for the given seed.
@@ -128,7 +142,7 @@ func (drl *dkgRetryLoop) start(
 			drl.attemptStartBlock = drl.attemptStartBlock +
 				drl.announcementDelayBlocks +
 				drl.announcementActiveBlocks +
-				dkg.ProtocolBlocks() +
+				dkgAttemptMaxBlockDuration +
 				drl.attemptDelayBlocks
 		}
 
@@ -345,85 +359,54 @@ func (drl *dkgRetryLoop) qualifiedOperatorsSet(
 // the same group public key as the one registered on-chain and the member is
 // not considered as misbehaving by the group.
 func decideSigningGroupMemberFate(
+	ctx context.Context,
 	memberIndex group.MemberIndex,
 	dkgResultChannel chan *DKGResultSubmittedEvent,
-	publicationStartBlock uint64,
 	result *dkg.Result,
-	chainConfig *ChainConfig,
-	blockCounter chain.BlockCounter,
 ) ([]group.MemberIndex, error) {
-	dkgResultEvent, err := waitForDkgResultEvent(
-		dkgResultChannel,
-		publicationStartBlock,
-		chainConfig,
-		blockCounter,
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	groupPublicKeyBytes, err := result.GroupPublicKeyBytes()
-	if err != nil {
-		return nil, err
-	}
-
-	// If member doesn't support the same group public key, it could not stay
-	// in the group.
-	if !bytes.Equal(groupPublicKeyBytes, dkgResultEvent.GroupPublicKeyBytes) {
-		return nil, fmt.Errorf(
-			"[member:%v] could not stay in the group because "+
-				"the member does not support the same group public key",
-			memberIndex,
-		)
-	}
-
-	misbehavedSet := make(map[group.MemberIndex]struct{})
-	for _, misbehavedID := range dkgResultEvent.Misbehaved {
-		misbehavedSet[misbehavedID] = struct{}{}
-	}
-
-	// If member is considered as misbehaved, it could not stay in the group.
-	if _, isMisbehaved := misbehavedSet[memberIndex]; isMisbehaved {
-		return nil, fmt.Errorf(
-			"[member:%v] could not stay in the group because "+
-				"the member is considered as misbehaving",
-			memberIndex,
-		)
-	}
-
-	// Construct a new view of the operating members according to the accepted
-	// DKG result.
-	operatingMemberIndexes := make([]group.MemberIndex, 0)
-	for _, memberID := range result.Group.MemberIDs() {
-		if _, isMisbehaved := misbehavedSet[memberID]; !isMisbehaved {
-			operatingMemberIndexes = append(operatingMemberIndexes, memberID)
-		}
-	}
-
-	return operatingMemberIndexes, nil
-}
-
-// waitForDkgResultEvent waits for the DKG result submission event. It times out
-// and returns error if the DKG result event is not emitted on time.
-func waitForDkgResultEvent(
-	dkgResultChannel chan *DKGResultSubmittedEvent,
-	publicationStartBlock uint64,
-	chainConfig *ChainConfig,
-	blockCounter chain.BlockCounter,
-) (*DKGResultSubmittedEvent, error) {
-	timeoutBlock := publicationStartBlock + dkg.PrePublicationBlocks() +
-		(uint64(chainConfig.GroupSize) * chainConfig.ResultPublicationBlockStep)
-
-	timeoutBlockChannel, err := blockCounter.BlockHeightWaiter(timeoutBlock)
-	if err != nil {
-		return nil, err
-	}
-
 	select {
 	case dkgResultEvent := <-dkgResultChannel:
-		return dkgResultEvent, nil
-	case <-timeoutBlockChannel:
-		return nil, fmt.Errorf("ECDSA DKG result publication timed out")
+		groupPublicKeyBytes, err := result.GroupPublicKeyBytes()
+		if err != nil {
+			return nil, err
+		}
+
+		// If member doesn't support the same group public key, it could not stay
+		// in the group.
+		if !bytes.Equal(groupPublicKeyBytes, dkgResultEvent.GroupPublicKeyBytes) {
+			return nil, fmt.Errorf(
+				"[member:%v] could not stay in the group because "+
+					"the member does not support the same group public key",
+				memberIndex,
+			)
+		}
+
+		misbehavedSet := make(map[group.MemberIndex]struct{})
+		for _, misbehavedID := range dkgResultEvent.Misbehaved {
+			misbehavedSet[misbehavedID] = struct{}{}
+		}
+
+		// If member is considered as misbehaved, it could not stay in the group.
+		if _, isMisbehaved := misbehavedSet[memberIndex]; isMisbehaved {
+			return nil, fmt.Errorf(
+				"[member:%v] could not stay in the group because "+
+					"the member is considered as misbehaving",
+				memberIndex,
+			)
+		}
+
+		// Construct a new view of the operating members according to the accepted
+		// DKG result.
+		operatingMemberIndexes := make([]group.MemberIndex, 0)
+		for _, memberID := range result.Group.MemberIDs() {
+			if _, isMisbehaved := misbehavedSet[memberID]; !isMisbehaved {
+				operatingMemberIndexes = append(operatingMemberIndexes, memberID)
+			}
+		}
+
+		return operatingMemberIndexes, nil
+	case <-ctx.Done():
+		return nil, fmt.Errorf("result publication timed out")
 	}
 }
 
@@ -559,10 +542,10 @@ func newDkgResultSubmitter(
 // the required threshold, whether the result was already submitted and waits
 // until the member is eligible for DKG result submission.
 func (drs *dkgResultSubmitter) SubmitResult(
+	ctx context.Context,
 	memberIndex group.MemberIndex,
 	result *dkg.Result,
 	signatures map[group.MemberIndex][]byte,
-	startBlockNumber uint64,
 ) error {
 	config := drs.chain.GetConfig()
 
@@ -598,18 +581,20 @@ func (drs *dkgResultSubmitter) SubmitResult(
 		return nil
 	}
 
-	// Wait until the current member is eligible to submit the result.
-	submitterEligibleChan, err := drs.setupEligibilityQueue(
-		startBlockNumber,
+	submissionDelay := time.Duration(memberIndex-1) * dkgResultSubmissionDelayStep
+
+	drs.dkgLogger.Infof(
+		"[member:%v] waiting [%v] to submit",
 		memberIndex,
+		submissionDelay,
 	)
-	if err != nil {
-		return fmt.Errorf("cannot set up eligibility queue: [%w]", err)
-	}
+
+	submissionTimer := time.NewTimer(submissionDelay)
+	defer submissionTimer.Stop()
 
 	for {
 		select {
-		case blockNumber := <-submitterEligibleChan:
+		case <-submissionTimer.C:
 			// Member becomes eligible to submit the result. Result submission
 			// would trigger the sender side of the result submission event
 			// listener but also cause the receiver side (this select)
@@ -627,11 +612,10 @@ func (drs *dkgResultSubmitter) SubmitResult(
 
 			drs.dkgLogger.Infof(
 				"[member:%v] submitting DKG result with public key [0x%x] and "+
-					"[%v] supporting member signatures at block [%v]",
+					"[%v] supporting member signatures",
 				memberIndex,
 				publicKeyBytes,
 				len(signatures),
-				blockNumber,
 			)
 
 			return drs.chain.SubmitDKGResult(
@@ -649,40 +633,8 @@ func (drs *dkgResultSubmitter) SubmitResult(
 			// A result has been submitted by other member. Leave without
 			// publishing the result.
 			return nil
+		case <-ctx.Done():
+			return fmt.Errorf("result publication timed out")
 		}
 	}
-}
-
-// setupEligibilityQueue waits until the current member is eligible to
-// submit a result to the blockchain. First member is eligible to submit straight
-// away, each following member is eligible after pre-defined block step.
-//
-// TODO: Revisit the setupEligibilityQueue function. The RFC mentions we should
-// start submitting from a random member, not the first one.
-func (drs *dkgResultSubmitter) setupEligibilityQueue(
-	startBlockNumber uint64,
-	memberIndex group.MemberIndex,
-) (<-chan uint64, error) {
-	blockWaitTime := (uint64(memberIndex) - 1) *
-		drs.chain.GetConfig().ResultPublicationBlockStep
-
-	eligibleBlockHeight := startBlockNumber + blockWaitTime
-
-	drs.dkgLogger.Infof(
-		"[member:%v] waiting for block [%v] to submit",
-		memberIndex,
-		eligibleBlockHeight,
-	)
-
-	blockCounter, err := drs.chain.BlockCounter()
-	if err != nil {
-		return nil, fmt.Errorf("could not get block counter [%w]", err)
-	}
-
-	waiter, err := blockCounter.BlockHeightWaiter(eligibleBlockHeight)
-	if err != nil {
-		return nil, fmt.Errorf("block height waiter failure [%w]", err)
-	}
-
-	return waiter, err
 }

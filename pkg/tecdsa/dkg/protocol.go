@@ -468,16 +468,16 @@ func (sm *signingMember) verifyDKGResultSignatures(
 // submitDKGResult submits the DKG result along with the supporting signatures
 // to the provided result submitter.
 func (sm *submittingMember) submitDKGResult(
+	ctx context.Context,
 	result *Result,
 	signatures map[group.MemberIndex][]byte,
-	startBlockNumber uint64,
 	resultSubmitter ResultSubmitter,
 ) error {
 	if err := resultSubmitter.SubmitResult(
+		ctx,
 		sm.memberIndex,
 		result,
 		signatures,
-		startBlockNumber,
 	); err != nil {
 		return fmt.Errorf("failed to submit DKG result [%v]", err)
 	}
