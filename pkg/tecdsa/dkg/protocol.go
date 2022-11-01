@@ -52,7 +52,7 @@ func (ekpgm *ephemeralKeyPairGeneratingMember) generateEphemeralKeyPair() (
 func (skgm *symmetricKeyGeneratingMember) generateSymmetricKeys(
 	ephemeralPubKeyMessages []*ephemeralPublicKeyMessage,
 ) error {
-	for _, ephemeralPubKeyMessage := range deduplicateBySender(ephemeralPubKeyMessages) {
+	for _, ephemeralPubKeyMessage := range ephemeralPubKeyMessages {
 		otherMember := ephemeralPubKeyMessage.senderID
 
 		if !skgm.isValidEphemeralPublicKeyMessage(ephemeralPubKeyMessage) {
@@ -164,7 +164,7 @@ func (trtm *tssRoundTwoMember) tssRoundTwo(
 ) (*tssRoundTwoMessage, error) {
 	// Use messages from round one to update the local party and advance
 	// to round two.
-	for _, tssRoundOneMessage := range deduplicateBySender(tssRoundOneMessages) {
+	for _, tssRoundOneMessage := range tssRoundOneMessages {
 		senderID := tssRoundOneMessage.SenderID()
 
 		_, tssErr := trtm.tssParty.UpdateFromBytes(
@@ -242,7 +242,7 @@ func (trtm *tssRoundThreeMember) tssRoundThree(
 ) (*tssRoundThreeMessage, error) {
 	// Use messages from round two to update the local party and advance
 	// to round three.
-	for _, tssRoundTwoMessage := range deduplicateBySender(tssRoundTwoMessages) {
+	for _, tssRoundTwoMessage := range tssRoundTwoMessages {
 		senderID := tssRoundTwoMessage.SenderID()
 		senderTssPartyID := common.ResolveSortedTssPartyID(
 			trtm.tssParameters,
@@ -341,7 +341,7 @@ func (fm *finalizingMember) tssFinalize(
 ) (*tssFinalizationMessage, error) {
 	// Use messages from round three to update the local party and get the
 	// result.
-	for _, tssRoundThreeMessage := range deduplicateBySender(tssRoundThreeMessages) {
+	for _, tssRoundThreeMessage := range tssRoundThreeMessages {
 		senderID := tssRoundThreeMessage.SenderID()
 
 		_, tssErr := fm.tssParty.UpdateFromBytes(
@@ -416,7 +416,7 @@ func (sm *signingMember) verifyDKGResultSignatures(
 ) map[group.MemberIndex][]byte {
 	receivedValidResultSignatures := make(map[group.MemberIndex][]byte)
 
-	for _, message := range deduplicateBySender(messages) {
+	for _, message := range messages {
 		// Sender's preferred DKG result hash doesn't match current member's
 		// preferred DKG result hash.
 		if message.resultHash != sm.preferredDKGResultHash {
@@ -483,23 +483,4 @@ func (sm *submittingMember) submitDKGResult(
 	}
 
 	return nil
-}
-
-// deduplicateBySender removes duplicated items for the given sender.
-// It always takes the first item that occurs for the given sender
-// and ignores the subsequent ones.
-func deduplicateBySender[T interface{ SenderID() group.MemberIndex }](
-	list []T,
-) []T {
-	senders := make(map[group.MemberIndex]bool)
-	result := make([]T, 0)
-
-	for _, item := range list {
-		if _, exists := senders[item.SenderID()]; !exists {
-			senders[item.SenderID()] = true
-			result = append(result, item)
-		}
-	}
-
-	return result
 }

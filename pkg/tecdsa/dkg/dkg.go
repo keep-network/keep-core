@@ -105,12 +105,12 @@ func (e *Executor) Execute(
 		return nil, err
 	}
 
-	confirmationState, ok := lastState.(*confirmationState)
+	finalizationState, ok := lastState.(*finalizationState)
 	if !ok {
 		return nil, fmt.Errorf("execution ended on state: %T", lastState)
 	}
 
-	return confirmationState.result(), nil
+	return finalizationState.result(), nil
 }
 
 // PreParamsCount returns the current count of the DKG pre-parameters.
