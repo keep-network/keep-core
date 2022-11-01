@@ -2006,11 +2006,3 @@ func (mrs *mockResultSubmitter) SubmitResult(
 		"could not find submitting outcome for the result",
 	)
 }
-
-type mockSenderItem struct {
-	senderID group.MemberIndex
-}
-
-func (msi *mockSenderItem) SenderID() group.MemberIndex {
-	return msi.senderID
-}
