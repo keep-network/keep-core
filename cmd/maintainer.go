@@ -46,11 +46,7 @@ func init() {
 func launchMaintainers(cmd *cobra.Command, args []string) error {
 	ctx := context.Background()
 
-	launchRelay, err := cmd.Flags().GetBool("relay")
-	if err != nil {
-		return fmt.Errorf("failed to check relay flag: [%w]", err)
-	}
-
+	launchRelay := clientConfig.Maintainer.Relay
 	if launchRelay {
 		go maintainer.LaunchRelay(ctx)
 	}

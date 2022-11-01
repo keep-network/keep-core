@@ -5,6 +5,13 @@
 # KeyFile is expected to be overwritten by a flag.
 KeyFile = "/tmp/UTC--2018-03-11T01-37-33.202765887Z--c2a56884538778bacd91aa5bf343bf882c5fb18b"
 
+[bitcoin]
+# URL is expected to be overwritten by a flag.
+URL = "another.url.to.bitcoin"
+# Username is expected to be provided as a flag.
+# Password is expected to be read from the file, not passed as a flag.
+Password = "pass"
+
 [network]
 # Port is expected to be overwritten by a flag.
 Port = 27001

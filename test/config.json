@@ -9,6 +9,11 @@
         "MaxGasFeeCap": "148 Gwei",
         "BalanceAlertThreshold": "2.3 ether"
     },
+    "Bitcoin": {
+        "URL": "url.to.bitcoin:18332",
+        "Username": "user",
+        "Password": "pass"
+    },
     "Network": {
         "Port": 27001,
         "Peers": [
@@ -28,6 +33,9 @@
         "Port": 3498,
         "NetworkMetricsTick": "43s",
         "EthereumMetricsTick": "1m27s"
+    },
+    "Maintainer": {
+        "Relay": true
     },
     "Developer": {
         "RandomBeaconAddress": "0xcf64c2a367341170cb4e09cf8c0ed137d8473ceb",

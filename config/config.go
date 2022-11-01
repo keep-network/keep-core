@@ -41,8 +41,8 @@ type Config struct {
 	LibP2P     libp2p.Config `mapstructure:"network"`
 	Storage    storage.Config
 	ClientInfo clientinfo.Config
-	Tbtc       tbtc.Config
 	Maintainer maintainer.Config
+	Tbtc       tbtc.Config
 }
 
 // Bind the flags to the viper configuration. Viper reads configuration from

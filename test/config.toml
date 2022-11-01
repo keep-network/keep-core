@@ -10,6 +10,11 @@ ConcurrencyLimit = 56
 MaxGasFeeCap = "148 Gwei"
 BalanceAlertThreshold = "2.3 ether"
 
+[bitcoin]
+URL = "url.to.bitcoin:18332"
+Username = "user"
+Password = "pass"
+
 [network]
 Port = 27001
 Peers = [
@@ -26,6 +31,9 @@ Dir = "/my/secure/location"
 Port = 3498
 NetworkMetricsTick = "43s"
 EthereumMetricsTick = "1m27s"
+
+[maintainer]
+Relay = true
 
 [developer]
 RandomBeaconAddress = "0xcf64c2a367341170cb4e09cf8c0ed137d8473ceb"

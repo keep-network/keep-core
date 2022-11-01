@@ -79,6 +79,27 @@ var cmdFlagsTests = map[string]struct {
 		expectedValueFromFlag: big.NewInt(1250000000000000000),
 		defaultValue:          big.NewInt(500000000000000000),
 	},
+	"bitcoin.url": {
+		readValueFunc:         func(c *config.Config) interface{} { return c.Bitcoin.URL },
+		flagName:              "--bitcoin.url",
+		flagValue:             "url.to.bitcoin:18332",
+		expectedValueFromFlag: "url.to.bitcoin:18332",
+		defaultValue:          "",
+	},
+	"bitcoin.username": {
+		readValueFunc:         func(c *config.Config) interface{} { return c.Bitcoin.Username },
+		flagName:              "--bitcoin.username",
+		flagValue:             "user",
+		expectedValueFromFlag: "user",
+		defaultValue:          "",
+	},
+	"bitcoin.password": {
+		readValueFunc:         func(c *config.Config) interface{} { return c.Bitcoin.Password },
+		flagName:              "--bitcoin.password",
+		flagValue:             "pass",
+		expectedValueFromFlag: "pass",
+		defaultValue:          "",
+	},
 	"network.bootstrap": {
 		readValueFunc:         func(c *config.Config) interface{} { return c.LibP2P.Bootstrap },
 		flagName:              "--network.bootstrap",
@@ -182,6 +203,13 @@ var cmdFlagsTests = map[string]struct {
 		expectedValueFromFlag: 101,
 		defaultValue:          runtime.GOMAXPROCS(0),
 	},
+	"maintainer.relay": {
+		readValueFunc:         func(c *config.Config) interface{} { return c.Maintainer.Relay },
+		flagName:              "--relay",
+		flagValue:             "", // don't provide any value
+		expectedValueFromFlag: true,
+		defaultValue:          false,
+	},
 	"developer.randomBeaconAddress": {
 		readValueFunc: func(c *config.Config) interface{} {
 			address, _ := c.Ethereum.ContractAddress(chainEthereum.RandomBeaconContractName)
@@ -260,6 +288,9 @@ func TestFlags_ReadConfigFromFlagsWithDefaults(t *testing.T) {
 	args := []string{
 		cmdFlagsTests["ethereum.url"].flagName, cmdFlagsTests["ethereum.url"].flagValue,
 		cmdFlagsTests["ethereum.keyFile"].flagName, cmdFlagsTests["ethereum.keyFile"].flagValue,
+		cmdFlagsTests["bitcoin.url"].flagName, cmdFlagsTests["bitcoin.url"].flagValue,
+		cmdFlagsTests["bitcoin.username"].flagName, cmdFlagsTests["bitcoin.username"].flagValue,
+		cmdFlagsTests["bitcoin.password"].flagName, cmdFlagsTests["bitcoin.password"].flagValue,
 		cmdFlagsTests["storage.dir"].flagName, cmdFlagsTests["storage.dir"].flagValue,
 	}
 	testCommand.SetArgs(args)
@@ -289,7 +320,10 @@ func TestFlags_Mixed(t *testing.T) {
 		"--config", "../test/config_flags.toml",
 		"--ethereum.url", "https://api.url.com/123eth",
 		"--ethereum.keyFile", "./keyfile-path/from/flag",
+		"--bitcoin.url", "url.to.bitcoin",
+		"--bitcoin.username", "user",
 		"--network.port", "7469",
+		"--relay",
 	}
 	testCommand.SetArgs(args)
 
@@ -309,6 +343,21 @@ func TestFlags_Mixed(t *testing.T) {
 			readValueFunc: func(c *config.Config) interface{} { return c.Ethereum.Account.KeyFile },
 			expectedValue: "./keyfile-path/from/flag",
 		},
+		// Properties provided in the config file and overwritten by the flags.
+		"bitcoin.url": {
+			readValueFunc: func(c *config.Config) interface{} { return c.Bitcoin.URL },
+			expectedValue: "url.to.bitcoin",
+		},
+		// Properties not defined in the config file, but set with flags.
+		"bitcoin.username": {
+			readValueFunc: func(c *config.Config) interface{} { return c.Bitcoin.Username },
+			expectedValue: "user",
+		},
+		// Properties defined in the config file, not set with flags.
+		"bitcoin.password": {
+			readValueFunc: func(c *config.Config) interface{} { return c.Bitcoin.Password },
+			expectedValue: "pass",
+		},
 		"network.port": {
 			readValueFunc: func(c *config.Config) interface{} { return c.LibP2P.Port },
 			expectedValue: 7469,
@@ -321,6 +370,11 @@ func TestFlags_Mixed(t *testing.T) {
 		"storage.dir": {
 			readValueFunc: func(c *config.Config) interface{} { return c.Storage.Dir },
 			expectedValue: "/my/secure/location",
+		},
+		// Properties not defined in the config file, but set with flags.
+		"maintainer.relay": {
+			readValueFunc: func(c *config.Config) interface{} { return c.Maintainer.Relay },
+			expectedValue: true,
 		},
 	}
 

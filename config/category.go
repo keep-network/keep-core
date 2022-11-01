@@ -10,16 +10,30 @@ const (
 	Storage
 	ClientInfo
 	Tbtc
-	Developer
 	Maintainer
+	Developer
 )
 
-var AllCategories = []Category{
+// StartCmdCategories are categories needed for the start command.
+var StartCmdCategories = []Category{
 	General,
 	Ethereum,
 	Network,
 	Storage,
 	ClientInfo,
 	Tbtc,
+	Developer,
+}
+
+// AllCategories are all available categories.
+var AllCategories = []Category{
+	General,
+	Ethereum,
+	Bitcoin,
+	Network,
+	Storage,
+	ClientInfo,
+	Tbtc,
+	Maintainer,
 	Developer,
 }

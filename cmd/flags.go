@@ -45,10 +45,10 @@ func initFlags(
 			initClientInfoFlags(cmd, cfg)
 		case config.Tbtc:
 			initTbtcFlags(cmd, cfg)
+		case config.Maintainer:
+			initMaintainerFlags(cmd, cfg)
 		case config.Developer:
 			initDeveloperFlags(cmd)
-		case config.Maintainer:
-			initMaintainerFlags(cmd)
 		}
 	}
 
@@ -160,21 +160,21 @@ func initBitcoinFlags(cmd *cobra.Command, cfg *config.Config) {
 		&cfg.Bitcoin.URL,
 		"bitcoin.url",
 		"",
-		"rpc connection URL for Bitcoin client.",
+		"URL for Bitcoin client connection.",
 	)
 
 	cmd.Flags().StringVar(
 		&cfg.Bitcoin.Username,
 		"bitcoin.username",
 		"",
-		"rpc connection username for Bitcoin client.",
+		"Username for Bitcoin client connection.",
 	)
 
 	cmd.Flags().StringVar(
 		&cfg.Bitcoin.Password,
 		"bitcoin.password",
 		"",
-		"rpc connection password for Bitcoin client.",
+		"Password for Bitcoin client connection.",
 	)
 }
 
@@ -288,6 +288,16 @@ func initTbtcFlags(cmd *cobra.Command, cfg *config.Config) {
 	)
 }
 
+// Initialize flags for Maintainer configuration.
+func initMaintainerFlags(command *cobra.Command, cfg *config.Config) {
+	command.Flags().BoolVar(
+		&cfg.Maintainer.Relay,
+		"relay",
+		false,
+		"start relay",
+	)
+}
+
 // Initialize flags for Developer configuration.
 func initDeveloperFlags(command *cobra.Command) {
 	initContractAddressFlag := func(contractName string) {
@@ -305,13 +315,4 @@ func initDeveloperFlags(command *cobra.Command) {
 	initContractAddressFlag(chainEthereum.RandomBeaconContractName)
 	initContractAddressFlag(chainEthereum.TokenStakingContractName)
 	initContractAddressFlag(chainEthereum.WalletRegistryContractName)
-}
-
-// Initialize flags for Maintainer configuration.
-func initMaintainerFlags(command *cobra.Command) {
-	command.PersistentFlags().Bool(
-		"relay",
-		false,
-		"start relay",
-	)
 }
