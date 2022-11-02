@@ -403,7 +403,7 @@ export async function calculateRewards() {
 
   console.log("operatorsData: ", JSON.stringify(operatorsData, null, 2));
   console.log("rewardsData: ", JSON.stringify(rewardsData, null, 4));
-  fs.writeFileSync(rewardsDataOutput, JSON.stringify(rewardsData, null, 2));
+  fs.writeFileSync(rewardsDataOutput, JSON.stringify(rewardsData, null, 4));
 }
 
 async function getAuthorization(
