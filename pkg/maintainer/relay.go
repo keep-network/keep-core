@@ -11,14 +11,6 @@ import (
 
 var logger = log.Logger("keep-maintainer-relay")
 
-// RelayChain is an interface that provides the ability to communicate with the
-// relay on-chain contract.
-type RelayChain interface {
-	// Retarget adds a new epoch to the relay by providing a proof
-	// of the difficulty before and after the retarget.
-	Retarget(headers []bitcoin.BlockHeader) error
-}
-
 // LaunchRelay sets up the connections to the Bitcoin and relay chains and
 // launches the process of maintaining the relay.
 func LaunchRelay(ctx context.Context) error {
