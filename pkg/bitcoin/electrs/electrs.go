@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/ipfs/go-log"
+
 	"github.com/keep-network/keep-core/pkg/bitcoin"
 )
 
@@ -59,8 +60,28 @@ func Connect(config Config) (bitcoin.Chain, error) {
 func (c *Connection) GetTransaction(
 	transactionHash bitcoin.Hash,
 ) (*bitcoin.Transaction, error) {
-	// TODO: Implementation.
-	panic("not implemented")
+	txID := transactionHash.String(bitcoin.ReversedByteOrder)
+
+	responseBody, err := c.httpGet(fmt.Sprintf("tx/%s", txID))
+	if err != nil {
+		return nil, fmt.Errorf(
+			"failed to get the transaction [%s]: [%w]",
+			txID,
+			err,
+		)
+	}
+
+	tx, err := decodeJSON[transaction](responseBody)
+	if err != nil {
+		return nil, fmt.Errorf("failed to decode response: [%w]", err)
+	}
+
+	result, err := tx.convert()
+	if err != nil {
+		return nil, fmt.Errorf("failed to convert transaction: %w", err)
+	}
+
+	return &result, nil
 }
 
 func (c *Connection) GetTransactionConfirmations(
