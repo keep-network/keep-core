@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/ipfs/go-log"
 	"github.com/keep-network/keep-core/pkg/bitcoin"
 )
 
@@ -16,6 +17,8 @@ const (
 	// DefaultRetryTimeout is a default timeout used for retries.
 	DefaultRetryTimeout = 60 * time.Second
 )
+
+var logger = log.Logger("keep-electrs")
 
 // Config holds configurable properties.
 type Config struct {
