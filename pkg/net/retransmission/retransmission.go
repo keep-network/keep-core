@@ -14,21 +14,25 @@ import (
 	"github.com/keep-network/keep-core/pkg/net"
 )
 
-// ScheduleRetransmissions takes the provided message and retransmits it
-// for every new tick received from the provided Ticker for the entire lifetime
-// of the Context calling the provided retransmit function. The retransmit
-// function has to guarantee that every call from this function sends a message
-// with the same sequence number.
+// RetransmitFn represents a retransmission routine.
+type RetransmitFn func() error
+
+// ScheduleRetransmissions uses the given Strategy to decide whether to call
+// the provided RetransmitFn for every new tick received from the provided
+// Ticker for the entire lifetime of the Context. The RetransmitFn function has
+// to guarantee that every call from this function sends a message with the
+// same sequence number.
 func ScheduleRetransmissions(
 	ctx context.Context,
 	logger log.StandardLogger,
 	ticker *Ticker,
-	retransmit func() error,
+	retransmit RetransmitFn,
+	strategy Strategy,
 ) {
 	go func() {
 		ticker.onTick(ctx, func() {
 			go func() {
-				if err := retransmit(); err != nil {
+				if err := strategy.Tick(retransmit); err != nil {
 					logger.Errorf("could not retransmit message: [%v]", err)
 				}
 			}()
