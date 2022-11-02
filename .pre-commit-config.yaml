@@ -1,10 +1,11 @@
 repos:
  - repo: https://github.com/keep-network/pre-commit-golang.git
-   rev: 4cc73f21101f9da1208719b02bbbe0a4c491497e
+   rev: 979f199 # update after merging https://github.com/keep-network/pre-commit-golang/pull/5 
    hooks:
     - id: go-imports
     - id: go-vet
     - id: go-fmt
+    - id: staticcheck
  - repo: https://github.com/keep-network/pre-commit-hooks.git
    rev: 63e729f
    hooks:
