@@ -113,7 +113,7 @@ export async function calculateRewards() {
   ).data.result;
 
   const operatorsData = new Array();
-  const rewardsData = new Array();
+  const rewardsData: any = {};
 
   const randomBeacon = new Contract(
     RandomBeaconAddress,
@@ -150,20 +150,22 @@ export async function calculateRewards() {
   console.log(
     "Fetching AuthorizationIncreased events after rewards interval..."
   );
-  const postIntervalAuthorizationIncreasedEvents = await tokenStaking.queryFilter(
-    "AuthorizationIncreased",
-    endRewardsBlock,
-    currentBlockNumber
-  );
+  const postIntervalAuthorizationIncreasedEvents =
+    await tokenStaking.queryFilter(
+      "AuthorizationIncreased",
+      endRewardsBlock,
+      currentBlockNumber
+    );
 
   console.log(
     "Fetching AuthorizationDecreased events after rewards interval..."
   );
-  const postIntervalAuthorizationDecreasedEvents = await tokenStaking.queryFilter(
-    "AuthorizationDecreaseApproved",
-    endRewardsBlock,
-    currentBlockNumber
-  );
+  const postIntervalAuthorizationDecreasedEvents =
+    await tokenStaking.queryFilter(
+      "AuthorizationDecreaseApproved",
+      endRewardsBlock,
+      currentBlockNumber
+    );
 
   for (let i = 0; i < bootstrapData.length; i++) {
     const operatorAddress = bootstrapData[i].metric.chain_address;
@@ -171,7 +173,6 @@ export async function calculateRewards() {
     let requirements = new Map<string, boolean>(); // factor: true | false
     let instancesData = new Map<string, Map<string, string | number>>();
     let operatorData: any = {};
-    let rewardData: any = {};
 
     // Staking provider should be the same for Beacon and TBTC apps
     const stakingProvider = await randomBeacon.operatorToStakingProvider(
@@ -384,7 +385,7 @@ export async function calculateRewards() {
         minApplicationAuthorization = tbct;
       }
 
-      rewardData[stakingProvider] = {
+      rewardsData[stakingProvider] = {
         beneficiary: beneficiary,
         // amount = APR/12 * clientUptimeCoefficient * min(beaconWeightedAuthorization, tbtcWeightedAuthorization)
         amount: minApplicationAuthorization
@@ -395,14 +396,13 @@ export async function calculateRewards() {
           .div(HUNDRED) // APR monthly rate is in %
           .toString(),
       };
-      rewardsData.push(rewardData);
     }
 
     operatorsData.push(operatorData);
   }
 
   console.log("operatorsData: ", JSON.stringify(operatorsData, null, 2));
-  console.log("rewardsData: ", JSON.stringify(rewardsData, null, 2));
+  console.log("rewardsData: ", JSON.stringify(rewardsData, null, 4));
   fs.writeFileSync(rewardsDataOutput, JSON.stringify(rewardsData, null, 2));
 }
 
@@ -473,7 +473,7 @@ function authorizationForRewardsInterval(
   intervalEvents: any[],
   startRewardsBlock: number,
   endRewardsBlock: number,
-  october17Block: number,
+  october17Block: number
 ) {
   let authorization = BigNumber.from("0");
   const deltaRewardsBlock = endRewardsBlock - startRewardsBlock;
@@ -481,19 +481,21 @@ function authorizationForRewardsInterval(
   intervalEvents.sort((a, b) => a.blockNumber - b.blockNumber);
 
   let tmpBlock = startRewardsBlock; // prev tmp block
-  let firstEventBlock = intervalEvents[0].blockNumber
-  
-  let index = 0
+  let firstEventBlock = intervalEvents[0].blockNumber;
+
+  let index = 0;
   if (firstEventBlock < october17Block) {
-    index = 1
+    index = 1;
   }
 
   for (let i = index; i < intervalEvents.length; i++) {
-    const eventBlock = intervalEvents[i].blockNumber
+    const eventBlock = intervalEvents[i].blockNumber;
     const coefficient = Math.floor(
       ((eventBlock - tmpBlock) / deltaRewardsBlock) * PRECISION
     );
-    authorization = authorization.add(intervalEvents[i].args.fromAmount.mul(coefficient));
+    authorization = authorization.add(
+      intervalEvents[i].args.fromAmount.mul(coefficient)
+    );
     tmpBlock = eventBlock;
   }
   authorization = authorization.div(PRECISION);
@@ -520,7 +522,7 @@ async function authorizationPostRewardsInterval(
 ) {
   // Sort events in ascending order
   postIntervalEvents.sort((a, b) => a.blockNumber - b.blockNumber);
-  
+
   if (
     postIntervalEvents.length > 0 &&
     postIntervalEvents[0].blockNumber < currentBlockNumber
@@ -535,7 +537,7 @@ async function authorizationPostRewardsInterval(
   // the current block.
   // Current authorization is the same as the authorization at the end of the
   // rewards interval.
-  const authorization = await application.eligibleStake(stakingProvider)
+  const authorization = await application.eligibleStake(stakingProvider);
   return authorization;
 }
 
