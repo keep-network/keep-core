@@ -1,0 +1,27 @@
+{
+  "name": "beta-operator-rewards",
+  "description": "Beta operators rewards calculation",
+  "version": "1.0.0",
+  "keywords": [
+    "threshold-network",
+    "beta-operator-rewards"
+  ],
+  "scripts": {
+    "rewards": "ts-node rewards.ts"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "@threshold-network/solidity-contracts": "1.2.1",
+    "@keep-network/random-beacon": "2.0.0",
+    "@keep-network/ecdsa": "2.0.0"
+  },
+  "devDependencies": {
+    "axios": "^0.27.2",
+    "ethers": "^5.7.1",
+    "@types/node": "^18.7.23",
+    "commander": "^9.4.0",
+    "ts-node": "^10.9.1",
+    "tslib": "^2.4.0",
+    "typescript": "^4.8.4"
+  }
+}
