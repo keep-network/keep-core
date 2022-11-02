@@ -3,17 +3,12 @@ package tbtc
 import (
 	"context"
 	"fmt"
-	fuzz "github.com/google/gofuzz"
-	"github.com/keep-network/keep-core/pkg/chain/local_v1"
-	"github.com/keep-network/keep-core/pkg/internal/pbutils"
-	"github.com/keep-network/keep-core/pkg/internal/testutils"
-	"github.com/keep-network/keep-core/pkg/net/local"
-	"github.com/keep-network/keep-core/pkg/operator"
 	"math/big"
 	"reflect"
-	"sync"
 	"testing"
 	"time"
+
+	"github.com/keep-network/keep-core/pkg/internal/testutils"
 
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/protocol/group"
@@ -21,55 +16,9 @@ import (
 	"github.com/keep-network/keep-core/pkg/tecdsa/signing"
 )
 
-func TestSigningAnnouncementMessage_MarshalingRoundtrip(t *testing.T) {
-	msg := &signingAnnouncementMessage{
-		senderID:      group.MemberIndex(38),
-		message:       big.NewInt(100),
-		attemptNumber: 3,
-	}
-	unmarshaled := &signingAnnouncementMessage{}
-
-	err := pbutils.RoundTrip(msg, unmarshaled)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	if !reflect.DeepEqual(msg, unmarshaled) {
-		t.Fatalf("unexpected content of unmarshaled message")
-	}
-}
-
-func TestFuzzSigningAnnouncementMessage_MarshalingRoundtrip(t *testing.T) {
-	for i := 0; i < 10; i++ {
-		var (
-			senderID      group.MemberIndex
-			message       *big.Int
-			attemptNumber uint64
-		)
-
-		f := fuzz.New().NilChance(0.1).
-			NumElements(0, 512).
-			Funcs(pbutils.FuzzFuncs()...)
-
-		f.Fuzz(&senderID)
-		f.Fuzz(&message)
-		f.Fuzz(&attemptNumber)
-
-		msg := &signingAnnouncementMessage{
-			senderID:      senderID,
-			message:       message,
-			attemptNumber: attemptNumber,
-		}
-
-		_ = pbutils.RoundTrip(msg, &signingAnnouncementMessage{})
-	}
-}
-
-func TestFuzzSigningAnnouncementMessage_Unmarshaler(t *testing.T) {
-	pbutils.FuzzUnmarshaler(&signingAnnouncementMessage{})
-}
-
 func TestSigningRetryLoop(t *testing.T) {
+	message := big.NewInt(100)
+
 	chainConfig := &ChainConfig{
 		GroupSize:       10,
 		HonestThreshold: 6,
@@ -107,7 +56,7 @@ func TestSigningRetryLoop(t *testing.T) {
 	var tests = map[string]struct {
 		signingGroupMemberIndex group.MemberIndex
 		ctxFn                   func() (context.Context, context.CancelFunc)
-		incomingAnnouncementsFn func(attemptNumber uint64) ([]group.MemberIndex, error)
+		incomingAnnouncementsFn func(sessionID string) ([]group.MemberIndex, error)
 		signingAttemptFn        signingAttemptFn
 		expectedErr             error
 		expectedResult          *signing.Result
@@ -119,7 +68,7 @@ func TestSigningRetryLoop(t *testing.T) {
 				return context.WithTimeout(context.Background(), 10*time.Second)
 			},
 			incomingAnnouncementsFn: func(
-				attemptNumber uint64,
+				sessionID string,
 			) ([]group.MemberIndex, error) {
 				return signingGroupMembersIndexes, nil
 			},
@@ -143,7 +92,7 @@ func TestSigningRetryLoop(t *testing.T) {
 				return context.WithTimeout(context.Background(), 10*time.Second)
 			},
 			incomingAnnouncementsFn: func(
-				attemptNumber uint64,
+				sessionID string,
 			) ([]group.MemberIndex, error) {
 				// Honest majority of members announced their readiness.
 				return []group.MemberIndex{1, 2, 3, 6, 7, 9}, nil
@@ -168,9 +117,9 @@ func TestSigningRetryLoop(t *testing.T) {
 				return context.WithTimeout(context.Background(), 10*time.Second)
 			},
 			incomingAnnouncementsFn: func(
-				attemptNumber uint64,
+				sessionID string,
 			) ([]group.MemberIndex, error) {
-				if attemptNumber <= 1 {
+				if sessionID == fmt.Sprintf("%v-%v", message, 1) {
 					// Minority of members announced their readiness.
 					return []group.MemberIndex{1, 2, 3, 6, 7}, nil
 				}
@@ -200,9 +149,9 @@ func TestSigningRetryLoop(t *testing.T) {
 				return context.WithTimeout(context.Background(), 10*time.Second)
 			},
 			incomingAnnouncementsFn: func(
-				attemptNumber uint64,
+				sessionID string,
 			) ([]group.MemberIndex, error) {
-				if attemptNumber <= 1 {
+				if sessionID == fmt.Sprintf("%v-%v", message, 1) {
 					return nil, fmt.Errorf("unexpected error")
 				}
 
@@ -231,7 +180,7 @@ func TestSigningRetryLoop(t *testing.T) {
 				return context.WithTimeout(context.Background(), 10*time.Second)
 			},
 			incomingAnnouncementsFn: func(
-				attemptNumber uint64,
+				sessionID string,
 			) ([]group.MemberIndex, error) {
 				return signingGroupMembersIndexes, nil
 			},
@@ -262,7 +211,7 @@ func TestSigningRetryLoop(t *testing.T) {
 				return context.WithTimeout(context.Background(), 10*time.Second)
 			},
 			incomingAnnouncementsFn: func(
-				attemptNumber uint64,
+				sessionID string,
 			) ([]group.MemberIndex, error) {
 				return signingGroupMembersIndexes, nil
 			},
@@ -294,7 +243,7 @@ func TestSigningRetryLoop(t *testing.T) {
 				return ctx, cancelCtx
 			},
 			incomingAnnouncementsFn: func(
-				attemptNumber uint64,
+				sessionID string,
 			) ([]group.MemberIndex, error) {
 				return signingGroupMembersIndexes, nil
 			},
@@ -310,14 +259,9 @@ func TestSigningRetryLoop(t *testing.T) {
 	for testName, test := range tests {
 		t.Run(testName, func(t *testing.T) {
 			announcer := &mockSigningAnnouncer{
-				outgoingAnnouncements: make(map[uint64]struct {
-					signingGroupMemberIndex group.MemberIndex
-					message                 *big.Int
-				}),
+				outgoingAnnouncements:   make(map[string]group.MemberIndex),
 				incomingAnnouncementsFn: test.incomingAnnouncementsFn,
 			}
-
-			message := big.NewInt(100)
 
 			retryLoop := newSigningRetryLoop(
 				&testutils.MockLogger{},
@@ -383,191 +327,18 @@ func TestSigningRetryLoop(t *testing.T) {
 					len(announcer.outgoingAnnouncements),
 				)
 
-				for attemptNumber, outgoingAnnouncement := range announcer.outgoingAnnouncements {
+				for sessionID, memberIndex := range announcer.outgoingAnnouncements {
 					testutils.AssertIntsEqual(
 						t,
 						fmt.Sprintf(
 							"outgoing announcement's member index "+
-								"for attempt [%v]",
-							attemptNumber,
+								"for session [%v]",
+							sessionID,
 						),
 						int(test.signingGroupMemberIndex),
-						int(outgoingAnnouncement.signingGroupMemberIndex),
-					)
-
-					testutils.AssertBigIntsEqual(
-						t,
-						fmt.Sprintf(
-							"outgoing announcement's message "+
-								"for attempt [%v]",
-							attemptNumber,
-						),
-						message,
-						outgoingAnnouncement.message,
+						int(memberIndex),
 					)
 				}
-			}
-		})
-	}
-}
-
-func TestBroadcastSigningAnnouncer(t *testing.T) {
-	chainConfig := &ChainConfig{
-		GroupSize:       5,
-		HonestThreshold: 3,
-	}
-
-	operatorPrivateKey, operatorPublicKey, err := operator.GenerateKeyPair(
-		local_v1.DefaultCurve,
-	)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	localChain := local_v1.ConnectWithKey(
-		chainConfig.GroupSize,
-		chainConfig.HonestThreshold,
-		operatorPrivateKey,
-	)
-
-	operatorAddress, err := localChain.Signing().PublicKeyToAddress(
-		operatorPublicKey,
-	)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	var signingGroupOperators []chain.Address
-	for i := 0; i < chainConfig.GroupSize; i++ {
-		signingGroupOperators = append(signingGroupOperators, operatorAddress)
-	}
-
-	localProvider := local.ConnectWithKey(operatorPublicKey)
-
-	type memberResult struct {
-		memberIndex         group.MemberIndex
-		readyMembersIndexes []group.MemberIndex
-	}
-
-	type memberError struct {
-		memberIndex group.MemberIndex
-		err         error
-	}
-
-	var tests = map[string]struct {
-		message                    *big.Int
-		broadcastingMembersIndexes []group.MemberIndex
-		expectedResults            map[group.MemberIndex][]group.MemberIndex
-	}{
-		"all members broadcasted announcements": {
-			message:                    big.NewInt(100),
-			broadcastingMembersIndexes: []group.MemberIndex{1, 2, 3, 4, 5},
-			expectedResults: map[group.MemberIndex][]group.MemberIndex{
-				1: {1, 2, 3, 4, 5},
-				2: {1, 2, 3, 4, 5},
-				3: {1, 2, 3, 4, 5},
-				4: {1, 2, 3, 4, 5},
-				5: {1, 2, 3, 4, 5},
-			},
-		},
-		"part of members broadcasted announcements": {
-			message:                    big.NewInt(200),
-			broadcastingMembersIndexes: []group.MemberIndex{1, 3, 5},
-			expectedResults: map[group.MemberIndex][]group.MemberIndex{
-				1: {1, 3, 5},
-				3: {1, 3, 5},
-				5: {1, 3, 5},
-			},
-		},
-	}
-
-	for testName, test := range tests {
-		t.Run(testName, func(t *testing.T) {
-			broadcastChannel, err := localProvider.BroadcastChannelFor(
-				test.message.Text(16),
-			)
-			if err != nil {
-				t.Fatal(err)
-			}
-
-			membershipValidator := group.NewMembershipValidator(
-				&testutils.MockLogger{},
-				signingGroupOperators,
-				localChain.Signing(),
-			)
-
-			announcer := newBroadcastSigningAnnouncer(
-				chainConfig,
-				broadcastChannel,
-				membershipValidator,
-			)
-
-			resultsChan := make(
-				chan *memberResult,
-				len(test.broadcastingMembersIndexes),
-			)
-			errorsChan := make(
-				chan *memberError,
-				len(test.broadcastingMembersIndexes),
-			)
-
-			wg := sync.WaitGroup{}
-			wg.Add(len(test.broadcastingMembersIndexes))
-
-			for _, broadcastingMemberIndex := range test.broadcastingMembersIndexes {
-				go func(memberIndex group.MemberIndex) {
-					defer wg.Done()
-
-					ctx, cancelCtx := context.WithTimeout(
-						context.Background(),
-						100*time.Millisecond,
-					)
-					defer cancelCtx()
-
-					readyMembersIndexes, err := announcer.announce(
-						ctx,
-						memberIndex,
-						test.message,
-						1,
-					)
-					if err != nil {
-						errorsChan <- &memberError{memberIndex, err}
-						return
-					}
-
-					resultsChan <- &memberResult{memberIndex, readyMembersIndexes}
-				}(broadcastingMemberIndex)
-			}
-
-			wg.Wait()
-
-			close(resultsChan)
-			results := make(map[group.MemberIndex][]group.MemberIndex)
-			for r := range resultsChan {
-				results[r.memberIndex] = r.readyMembersIndexes
-			}
-
-			close(errorsChan)
-			errors := make(map[group.MemberIndex]error)
-			for e := range errorsChan {
-				errors[e.memberIndex] = e.err
-			}
-
-			testutils.AssertIntsEqual(
-				t,
-				"errors count",
-				0,
-				len(errors),
-			)
-
-			if !reflect.DeepEqual(test.expectedResults, results) {
-				t.Errorf(
-					"unexpected results\n"+
-						"expected: [%v]\n"+
-						"actual:   [%v]",
-					test.expectedResults,
-					results,
-				)
 			}
 		})
 	}
@@ -576,28 +347,21 @@ func TestBroadcastSigningAnnouncer(t *testing.T) {
 type mockSigningAnnouncer struct {
 	// outgoingAnnouncements holds all announcements that are sent by the
 	// announcer.
-	outgoingAnnouncements map[uint64]struct {
-		signingGroupMemberIndex group.MemberIndex
-		message                 *big.Int
-	}
+	outgoingAnnouncements map[string]group.MemberIndex
 
 	// incomingAnnouncementsFn returns all announcements that are received
 	// by the announcer for the given attempt.
 	incomingAnnouncementsFn func(
-		attemptNumber uint64,
+		sessionID string,
 	) ([]group.MemberIndex, error)
 }
 
-func (msa *mockSigningAnnouncer) announce(
+func (msa *mockSigningAnnouncer) Announce(
 	ctx context.Context,
-	signingGroupMemberIndex group.MemberIndex,
-	message *big.Int,
-	attemptNumber uint64,
+	memberIndex group.MemberIndex,
+	sessionID string,
 ) ([]group.MemberIndex, error) {
-	msa.outgoingAnnouncements[attemptNumber] = struct {
-		signingGroupMemberIndex group.MemberIndex
-		message                 *big.Int
-	}{signingGroupMemberIndex, message}
+	msa.outgoingAnnouncements[sessionID] = memberIndex
 
-	return msa.incomingAnnouncementsFn(attemptNumber)
+	return msa.incomingAnnouncementsFn(sessionID)
 }

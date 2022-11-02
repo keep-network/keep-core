@@ -57,7 +57,6 @@ func Execute(
 
 	initialState := &ephemeralKeyPairGenerationState{
 		BaseAsyncState: state.NewBaseAsyncState(),
-		action:         &stateAction{},
 		channel:        channel,
 		member:         member.initializeEphemeralKeysGeneration(),
 	}

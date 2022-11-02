@@ -66,6 +66,7 @@ spec:
             - --source.address=bootstrap-0.test.keep.network:9601
             - --source.address=bootstrap-1.test.keep.network:9601
             - --refresh.interval=5m
+            - --scan.timeout=3s
             - --log.json
             - --scan.allowPrivateAddresses
           resources:

@@ -10,6 +10,10 @@ import (
 	"github.com/keep-network/keep-core/pkg/net/retransmission"
 )
 
+// RetransmissionTick determines the frequency of the retransmissions done
+// by the local broadcast channel implementation.
+const RetransmissionTick = 50 * time.Millisecond
+
 var broadcastChannelsMutex sync.Mutex
 var broadcastChannels map[string][]*localChannel
 
@@ -43,7 +47,7 @@ func getBroadcastChannel(
 		unmarshalersMutex:    sync.Mutex{},
 		unmarshalersByType:   make(map[string]func() net.TaggedUnmarshaler, 0),
 		retransmissionTicker: retransmission.NewTimeTicker(
-			context.Background(), 50*time.Millisecond,
+			context.Background(), RetransmissionTick,
 		),
 	}
 	broadcastChannels[name] = append(broadcastChannels[name], channel)
