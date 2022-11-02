@@ -1,4 +1,4 @@
-package electrum
+package electrs
 
 import (
 	"github.com/keep-network/keep-core/pkg/bitcoin"
