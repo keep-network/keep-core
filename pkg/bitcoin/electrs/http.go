@@ -49,13 +49,9 @@ func (c *Connection) httpRequest(
 		}
 
 		if resp.StatusCode != 200 {
-			responseBody, err := io.ReadAll(resp.Body)
-			if err != nil {
-				logger.Warnf(
-					"failed to read the response: [%v]",
-					err,
-				)
-			}
+			responseBody, _ := io.ReadAll(resp.Body)
+			// Ignore error from body reading as returning the response body
+			// is just a nice-to-have.
 
 			return fmt.Errorf(
 				"response status is not 200 - status: [%s], payload: [%s]",
