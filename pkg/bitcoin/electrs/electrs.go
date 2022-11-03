@@ -129,11 +129,25 @@ func (c *Connection) GetTransactionConfirmations(
 	return confirmations, nil
 }
 
+// BroadcastTransaction broadcasts the given transaction over the
+// network of the Bitcoin chain nodes. If the broadcast action could not be
+// done, this function returns an error. This function does not give any
+// guarantees regarding transaction mining. The transaction may be mined or
+// rejected eventually.
 func (c *Connection) BroadcastTransaction(
 	transaction *bitcoin.Transaction,
 ) error {
-	// TODO: Implementation.
-	panic("not implemented")
+	transactionRaw := transaction.Serialize()
+	logger.Debugf("broadcasting transaction: [%s]", transactionRaw)
+
+	response, err := c.httpPost("tx", transactionRaw)
+	if err != nil {
+		return fmt.Errorf("failed to post the transaction: [%w]", err)
+	}
+
+	logger.Debugf("transaction broadcast successful: [%s]", response)
+
+	return nil
 }
 
 // GetCurrentBlockNumber gets the number of the current block. If the
