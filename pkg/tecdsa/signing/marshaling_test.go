@@ -1,12 +1,13 @@
 package signing
 
 import (
+	"reflect"
+	"testing"
+
 	fuzz "github.com/google/gofuzz"
 	"github.com/keep-network/keep-core/pkg/crypto/ephemeral"
 	"github.com/keep-network/keep-core/pkg/internal/pbutils"
 	"github.com/keep-network/keep-core/pkg/protocol/group"
-	"reflect"
-	"testing"
 )
 
 func TestEphemeralPublicKeyMessage_MarshalingRoundtrip(t *testing.T) {
@@ -71,71 +72,89 @@ func TestFuzzEphemeralPublicKeyMessage_Unmarshaler(t *testing.T) {
 	pbutils.FuzzUnmarshaler(&ephemeralPublicKeyMessage{})
 }
 
-func TestTssRoundOneMessage_MarshalingRoundtrip(t *testing.T) {
-	msg := &tssRoundOneMessage{
-		senderID:         group.MemberIndex(50),
-		broadcastPayload: []byte{1, 2, 3, 4, 5},
-		peersPayload: map[group.MemberIndex][]byte{
-			1: {6, 7, 8, 9, 10},
-			2: {11, 12, 13, 14, 15},
-		},
+func TestTssRoundOneCompositeMessage_MarshalingRoundtrip(t *testing.T) {
+	msg := &tssRoundOneCompositeMessage{
+		senderID:  group.MemberIndex(50),
 		sessionID: "session-1",
-	}
-	unmarshaled := &tssRoundOneMessage{}
-
-	err := pbutils.RoundTrip(msg, unmarshaled)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	if !reflect.DeepEqual(msg, unmarshaled) {
-		t.Fatalf("unexpected content of unmarshaled message")
-	}
-}
-
-func TestFuzzTssRoundOneMessage_MarshalingRoundtrip(t *testing.T) {
-	for i := 0; i < 10; i++ {
-		var (
-			senderID         group.MemberIndex
-			broadcastPayload []byte
-			peersPayload     map[group.MemberIndex][]byte
-			sessionID        string
-		)
-
-		f := fuzz.New().NilChance(0.1).
-			NumElements(0, 512).
-			Funcs(pbutils.FuzzFuncs()...)
-
-		f.Fuzz(&senderID)
-		f.Fuzz(&broadcastPayload)
-		f.Fuzz(&peersPayload)
-		f.Fuzz(&sessionID)
-
-		message := &tssRoundOneMessage{
-			senderID:         senderID,
-			broadcastPayload: broadcastPayload,
-			peersPayload:     peersPayload,
-			sessionID:        sessionID,
-		}
-
-		_ = pbutils.RoundTrip(message, &tssRoundOneMessage{})
-	}
-}
-
-func TestFuzzTssRoundOneMessage_Unmarshaler(t *testing.T) {
-	pbutils.FuzzUnmarshaler(&tssRoundOneMessage{})
-}
-
-func TestTssRoundTwoMessage_MarshalingRoundtrip(t *testing.T) {
-	msg := &tssRoundTwoMessage{
-		senderID: group.MemberIndex(50),
-		peersPayload: map[group.MemberIndex][]byte{
-			1: {6, 7, 8, 9, 10},
-			2: {11, 12, 13, 14, 15},
+		tssRoundOneMessages: map[string]*tssRoundOneMessage{
+			"one": &tssRoundOneMessage{
+				broadcastPayload: []byte{1, 2, 3, 4, 5},
+				peersPayload: map[group.MemberIndex][]byte{
+					1: {6, 7, 8, 9, 10},
+					2: {11, 12, 13, 14, 15},
+				},
+			},
+			"two": &tssRoundOneMessage{
+				broadcastPayload: []byte{6, 7, 8, 9},
+				peersPayload: map[group.MemberIndex][]byte{
+					1: {16, 17, 18, 19, 20},
+					2: {21, 22, 23, 24, 25},
+				},
+			},
 		},
+	}
+	unmarshaled := &tssRoundOneCompositeMessage{}
+
+	err := pbutils.RoundTrip(msg, unmarshaled)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if !reflect.DeepEqual(msg, unmarshaled) {
+		t.Fatalf("unexpected content of unmarshaled message")
+	}
+}
+
+func TestFuzzTssRoundOneCompositeMessage_MarshalingRoundtrip(t *testing.T) {
+	for i := 0; i < 10; i++ {
+		var (
+			senderID            group.MemberIndex
+			sessionID           string
+			tssRoundOneMessages map[string]*tssRoundOneMessage
+		)
+
+		f := fuzz.New().NilChance(0.1).
+			NumElements(0, 512).
+			Funcs(pbutils.FuzzFuncs()...)
+
+		f.Fuzz(&senderID)
+		f.Fuzz(&sessionID)
+		f.Fuzz(&tssRoundOneMessages)
+
+		message := &tssRoundOneCompositeMessage{
+			senderID:            senderID,
+			sessionID:           sessionID,
+			tssRoundOneMessages: tssRoundOneMessages,
+		}
+
+		_ = pbutils.RoundTrip(message, &tssRoundOneCompositeMessage{})
+	}
+}
+
+func TestFuzzTssRoundOneCompositeMessage_Unmarshaler(t *testing.T) {
+	pbutils.FuzzUnmarshaler(&tssRoundOneCompositeMessage{})
+}
+
+func TestTssRoundTwoCompositeMessage_MarshalingRoundtrip(t *testing.T) {
+	msg := &tssRoundTwoCompositeMessage{
+		senderID:  group.MemberIndex(50),
 		sessionID: "session-1",
+		tssRoundTwoMessages: map[string]*tssRoundTwoMessage{
+			"one": &tssRoundTwoMessage{
+				peersPayload: map[group.MemberIndex][]byte{
+					1: {6, 7, 8, 9, 10},
+					2: {11, 12, 13, 14, 15},
+				},
+			},
+			"two": &tssRoundTwoMessage{
+				peersPayload: map[group.MemberIndex][]byte{
+					1: {16, 17, 18, 19, 20},
+					2: {21, 22, 23, 24, 25},
+				},
+			},
+		},
 	}
-	unmarshaled := &tssRoundTwoMessage{}
+	unmarshaled := &tssRoundTwoCompositeMessage{}
 
 	err := pbutils.RoundTrip(msg, unmarshaled)
 	if err != nil {
@@ -147,12 +166,12 @@ func TestTssRoundTwoMessage_MarshalingRoundtrip(t *testing.T) {
 	}
 }
 
-func TestFuzzTssRoundTwoMessage_MarshalingRoundtrip(t *testing.T) {
+func TestFuzzTssRoundTwoCompositeMessage_MarshalingRoundtrip(t *testing.T) {
 	for i := 0; i < 10; i++ {
 		var (
-			senderID     group.MemberIndex
-			peersPayload map[group.MemberIndex][]byte
-			sessionID    string
+			senderID            group.MemberIndex
+			sessionID           string
+			tssRoundTwoMessages map[string]*tssRoundTwoMessage
 		)
 
 		f := fuzz.New().NilChance(0.1).
@@ -160,30 +179,37 @@ func TestFuzzTssRoundTwoMessage_MarshalingRoundtrip(t *testing.T) {
 			Funcs(pbutils.FuzzFuncs()...)
 
 		f.Fuzz(&senderID)
-		f.Fuzz(&peersPayload)
 		f.Fuzz(&sessionID)
+		f.Fuzz(&tssRoundTwoMessages)
 
-		message := &tssRoundTwoMessage{
-			senderID:     senderID,
-			peersPayload: peersPayload,
-			sessionID:    sessionID,
+		message := &tssRoundTwoCompositeMessage{
+			senderID:            senderID,
+			sessionID:           sessionID,
+			tssRoundTwoMessages: tssRoundTwoMessages,
 		}
 
-		_ = pbutils.RoundTrip(message, &tssRoundTwoMessage{})
+		_ = pbutils.RoundTrip(message, &tssRoundTwoCompositeMessage{})
 	}
 }
 
-func TestFuzzTssRoundTwoMessage_Unmarshaler(t *testing.T) {
-	pbutils.FuzzUnmarshaler(&tssRoundTwoMessage{})
+func TestFuzzTssRoundTwoCompositeMessage_Unmarshaler(t *testing.T) {
+	pbutils.FuzzUnmarshaler(&tssRoundTwoCompositeMessage{})
 }
 
-func TestTssRoundThreeMessage_MarshalingRoundtrip(t *testing.T) {
-	msg := &tssRoundThreeMessage{
-		senderID:         group.MemberIndex(50),
-		broadcastPayload: []byte{1, 2, 3, 4, 5},
-		sessionID:        "session-1",
+func TestTssRoundThreeCompositeMessage_MarshalingRoundtrip(t *testing.T) {
+	msg := &tssRoundThreeCompositeMessage{
+		senderID:  group.MemberIndex(50),
+		sessionID: "session-1",
+		tssRoundThreeMessages: map[string]*tssRoundThreeMessage{
+			"one": &tssRoundThreeMessage{
+				broadcastPayload: []byte{1, 2, 3, 4, 5},
+			},
+			"two": &tssRoundThreeMessage{
+				broadcastPayload: []byte{6, 7, 8, 9, 10},
+			},
+		},
 	}
-	unmarshaled := &tssRoundThreeMessage{}
+	unmarshaled := &tssRoundThreeCompositeMessage{}
 
 	err := pbutils.RoundTrip(msg, unmarshaled)
 	if err != nil {
@@ -195,12 +221,12 @@ func TestTssRoundThreeMessage_MarshalingRoundtrip(t *testing.T) {
 	}
 }
 
-func TestFuzzTssRoundThreeMessage_MarshalingRoundtrip(t *testing.T) {
+func TestFuzzTssRoundThreeCompositeMessage_MarshalingRoundtrip(t *testing.T) {
 	for i := 0; i < 10; i++ {
 		var (
-			senderID  group.MemberIndex
-			payload   []byte
-			sessionID string
+			senderID              group.MemberIndex
+			sessionID             string
+			tssRoundThreeMessages map[string]*tssRoundThreeMessage
 		)
 
 		f := fuzz.New().NilChance(0.1).
@@ -208,30 +234,37 @@ func TestFuzzTssRoundThreeMessage_MarshalingRoundtrip(t *testing.T) {
 			Funcs(pbutils.FuzzFuncs()...)
 
 		f.Fuzz(&senderID)
-		f.Fuzz(&payload)
 		f.Fuzz(&sessionID)
+		f.Fuzz(&tssRoundThreeMessages)
 
-		message := &tssRoundThreeMessage{
-			senderID:         senderID,
-			broadcastPayload: payload,
-			sessionID:        sessionID,
+		message := &tssRoundThreeCompositeMessage{
+			senderID:              senderID,
+			sessionID:             sessionID,
+			tssRoundThreeMessages: tssRoundThreeMessages,
 		}
 
-		_ = pbutils.RoundTrip(message, &tssRoundThreeMessage{})
+		_ = pbutils.RoundTrip(message, &tssRoundThreeCompositeMessage{})
 	}
 }
 
-func TestFuzzTssRoundThreeMessage_Unmarshaler(t *testing.T) {
-	pbutils.FuzzUnmarshaler(&tssRoundThreeMessage{})
+func TestFuzzTssRoundThreeCompositeMessage_Unmarshaler(t *testing.T) {
+	pbutils.FuzzUnmarshaler(&tssRoundThreeCompositeMessage{})
 }
 
-func TestTssRoundFourMessage_MarshalingRoundtrip(t *testing.T) {
-	msg := &tssRoundFourMessage{
-		senderID:         group.MemberIndex(50),
-		broadcastPayload: []byte{1, 2, 3, 4, 5},
-		sessionID:        "session-1",
+func TestTssRoundFourCompositeMessage_MarshalingRoundtrip(t *testing.T) {
+	msg := &tssRoundFourCompositeMessage{
+		senderID:  group.MemberIndex(50),
+		sessionID: "session-1",
+		tssRoundFourMessages: map[string]*tssRoundFourMessage{
+			"one": &tssRoundFourMessage{
+				broadcastPayload: []byte{1, 2, 3, 4, 5},
+			},
+			"two": &tssRoundFourMessage{
+				broadcastPayload: []byte{6, 7, 8, 9, 10},
+			},
+		},
 	}
-	unmarshaled := &tssRoundFourMessage{}
+	unmarshaled := &tssRoundFourCompositeMessage{}
 
 	err := pbutils.RoundTrip(msg, unmarshaled)
 	if err != nil {
@@ -243,12 +276,12 @@ func TestTssRoundFourMessage_MarshalingRoundtrip(t *testing.T) {
 	}
 }
 
-func TestFuzzTssRoundFourMessage_MarshalingRoundtrip(t *testing.T) {
+func TestFuzzTssRoundFourCompositeMessage_MarshalingRoundtrip(t *testing.T) {
 	for i := 0; i < 10; i++ {
 		var (
-			senderID  group.MemberIndex
-			payload   []byte
-			sessionID string
+			senderID             group.MemberIndex
+			sessionID            string
+			tssRoundFourMessages map[string]*tssRoundFourMessage
 		)
 
 		f := fuzz.New().NilChance(0.1).
@@ -256,30 +289,37 @@ func TestFuzzTssRoundFourMessage_MarshalingRoundtrip(t *testing.T) {
 			Funcs(pbutils.FuzzFuncs()...)
 
 		f.Fuzz(&senderID)
-		f.Fuzz(&payload)
 		f.Fuzz(&sessionID)
+		f.Fuzz(&tssRoundFourMessages)
 
-		message := &tssRoundFourMessage{
-			senderID:         senderID,
-			broadcastPayload: payload,
-			sessionID:        sessionID,
+		message := &tssRoundFourCompositeMessage{
+			senderID:             senderID,
+			sessionID:            sessionID,
+			tssRoundFourMessages: tssRoundFourMessages,
 		}
 
-		_ = pbutils.RoundTrip(message, &tssRoundFourMessage{})
+		_ = pbutils.RoundTrip(message, &tssRoundFourCompositeMessage{})
 	}
 }
 
-func TestFuzzTssRoundFourMessage_Unmarshaler(t *testing.T) {
-	pbutils.FuzzUnmarshaler(&tssRoundFourMessage{})
+func TestFuzzTssRoundFourCompositeMessage_Unmarshaler(t *testing.T) {
+	pbutils.FuzzUnmarshaler(&tssRoundFourCompositeMessage{})
 }
 
-func TestTssRoundFiveMessage_MarshalingRoundtrip(t *testing.T) {
-	msg := &tssRoundFiveMessage{
-		senderID:         group.MemberIndex(50),
-		broadcastPayload: []byte{1, 2, 3, 4, 5},
-		sessionID:        "session-1",
+func TestTssRoundFiveCompositeMessage_MarshalingRoundtrip(t *testing.T) {
+	msg := &tssRoundFiveCompositeMessage{
+		senderID:  group.MemberIndex(50),
+		sessionID: "session-1",
+		tssRoundFiveMessages: map[string]*tssRoundFiveMessage{
+			"one": &tssRoundFiveMessage{
+				broadcastPayload: []byte{1, 2, 3, 4, 5},
+			},
+			"two": &tssRoundFiveMessage{
+				broadcastPayload: []byte{6, 7, 8, 9, 10},
+			},
+		},
 	}
-	unmarshaled := &tssRoundFiveMessage{}
+	unmarshaled := &tssRoundFiveCompositeMessage{}
 
 	err := pbutils.RoundTrip(msg, unmarshaled)
 	if err != nil {
@@ -291,12 +331,12 @@ func TestTssRoundFiveMessage_MarshalingRoundtrip(t *testing.T) {
 	}
 }
 
-func TestFuzzTssRoundFiveMessage_MarshalingRoundtrip(t *testing.T) {
+func TestFuzzTssRoundFiveCompositeMessage_MarshalingRoundtrip(t *testing.T) {
 	for i := 0; i < 10; i++ {
 		var (
-			senderID  group.MemberIndex
-			payload   []byte
-			sessionID string
+			senderID             group.MemberIndex
+			sessionID            string
+			tssRoundFiveMessages map[string]*tssRoundFiveMessage
 		)
 
 		f := fuzz.New().NilChance(0.1).
@@ -304,30 +344,37 @@ func TestFuzzTssRoundFiveMessage_MarshalingRoundtrip(t *testing.T) {
 			Funcs(pbutils.FuzzFuncs()...)
 
 		f.Fuzz(&senderID)
-		f.Fuzz(&payload)
 		f.Fuzz(&sessionID)
+		f.Fuzz(&tssRoundFiveMessages)
 
-		message := &tssRoundFiveMessage{
-			senderID:         senderID,
-			broadcastPayload: payload,
-			sessionID:        sessionID,
+		message := &tssRoundFiveCompositeMessage{
+			senderID:             senderID,
+			sessionID:            sessionID,
+			tssRoundFiveMessages: tssRoundFiveMessages,
 		}
 
-		_ = pbutils.RoundTrip(message, &tssRoundFiveMessage{})
+		_ = pbutils.RoundTrip(message, &tssRoundFiveCompositeMessage{})
 	}
 }
 
-func TestFuzzTssRoundFiveMessage_Unmarshaler(t *testing.T) {
-	pbutils.FuzzUnmarshaler(&tssRoundFiveMessage{})
+func TestFuzzTssRoundFiveCompositeMessage_Unmarshaler(t *testing.T) {
+	pbutils.FuzzUnmarshaler(&tssRoundFiveCompositeMessage{})
 }
 
-func TestTssRoundSixMessage_MarshalingRoundtrip(t *testing.T) {
-	msg := &tssRoundSixMessage{
-		senderID:         group.MemberIndex(50),
-		broadcastPayload: []byte{1, 2, 3, 4, 5},
-		sessionID:        "session-1",
+func TestTssRoundSixCompositeMessage_MarshalingRoundtrip(t *testing.T) {
+	msg := &tssRoundSixCompositeMessage{
+		senderID:  group.MemberIndex(50),
+		sessionID: "session-1",
+		tssRoundSixMessages: map[string]*tssRoundSixMessage{
+			"one": &tssRoundSixMessage{
+				broadcastPayload: []byte{1, 2, 3, 4, 5},
+			},
+			"two": &tssRoundSixMessage{
+				broadcastPayload: []byte{6, 7, 8, 9, 10},
+			},
+		},
 	}
-	unmarshaled := &tssRoundSixMessage{}
+	unmarshaled := &tssRoundSixCompositeMessage{}
 
 	err := pbutils.RoundTrip(msg, unmarshaled)
 	if err != nil {
@@ -339,12 +386,12 @@ func TestTssRoundSixMessage_MarshalingRoundtrip(t *testing.T) {
 	}
 }
 
-func TestFuzzTssRoundSixMessage_MarshalingRoundtrip(t *testing.T) {
+func TestFuzzTssRoundSixCompositeMessage_MarshalingRoundtrip(t *testing.T) {
 	for i := 0; i < 10; i++ {
 		var (
-			senderID  group.MemberIndex
-			payload   []byte
-			sessionID string
+			senderID            group.MemberIndex
+			sessionID           string
+			tssRoundSixMessages map[string]*tssRoundSixMessage
 		)
 
 		f := fuzz.New().NilChance(0.1).
@@ -352,30 +399,37 @@ func TestFuzzTssRoundSixMessage_MarshalingRoundtrip(t *testing.T) {
 			Funcs(pbutils.FuzzFuncs()...)
 
 		f.Fuzz(&senderID)
-		f.Fuzz(&payload)
 		f.Fuzz(&sessionID)
+		f.Fuzz(&tssRoundSixMessages)
 
-		message := &tssRoundSixMessage{
-			senderID:         senderID,
-			broadcastPayload: payload,
-			sessionID:        sessionID,
+		message := &tssRoundSixCompositeMessage{
+			senderID:            senderID,
+			sessionID:           sessionID,
+			tssRoundSixMessages: tssRoundSixMessages,
 		}
 
-		_ = pbutils.RoundTrip(message, &tssRoundSixMessage{})
+		_ = pbutils.RoundTrip(message, &tssRoundSixCompositeMessage{})
 	}
 }
 
-func TestFuzzTssRoundSixMessage_Unmarshaler(t *testing.T) {
-	pbutils.FuzzUnmarshaler(&tssRoundSixMessage{})
+func TestFuzzTssRoundSixCompositeMessage_Unmarshaler(t *testing.T) {
+	pbutils.FuzzUnmarshaler(&tssRoundSixCompositeMessage{})
 }
 
-func TestTssRoundSevenMessage_MarshalingRoundtrip(t *testing.T) {
-	msg := &tssRoundSevenMessage{
-		senderID:         group.MemberIndex(50),
-		broadcastPayload: []byte{1, 2, 3, 4, 5},
-		sessionID:        "session-1",
+func TestTssRoundSevenCompositeMessage_MarshalingRoundtrip(t *testing.T) {
+	msg := &tssRoundSevenCompositeMessage{
+		senderID:  group.MemberIndex(50),
+		sessionID: "session-1",
+		tssRoundSevenMessages: map[string]*tssRoundSevenMessage{
+			"one": &tssRoundSevenMessage{
+				broadcastPayload: []byte{1, 2, 3, 4, 5},
+			},
+			"two": &tssRoundSevenMessage{
+				broadcastPayload: []byte{6, 7, 8, 9, 10},
+			},
+		},
 	}
-	unmarshaled := &tssRoundSevenMessage{}
+	unmarshaled := &tssRoundSevenCompositeMessage{}
 
 	err := pbutils.RoundTrip(msg, unmarshaled)
 	if err != nil {
@@ -387,12 +441,12 @@ func TestTssRoundSevenMessage_MarshalingRoundtrip(t *testing.T) {
 	}
 }
 
-func TestFuzzTssRoundSevenMessage_MarshalingRoundtrip(t *testing.T) {
+func TestFuzzTssRoundSevenCompositeMessage_MarshalingRoundtrip(t *testing.T) {
 	for i := 0; i < 10; i++ {
 		var (
-			senderID  group.MemberIndex
-			payload   []byte
-			sessionID string
+			senderID              group.MemberIndex
+			sessionID             string
+			tssRoundSevenMessages map[string]*tssRoundSevenMessage
 		)
 
 		f := fuzz.New().NilChance(0.1).
@@ -400,30 +454,36 @@ func TestFuzzTssRoundSevenMessage_MarshalingRoundtrip(t *testing.T) {
 			Funcs(pbutils.FuzzFuncs()...)
 
 		f.Fuzz(&senderID)
-		f.Fuzz(&payload)
 		f.Fuzz(&sessionID)
+		f.Fuzz(&tssRoundSevenMessages)
 
-		message := &tssRoundSevenMessage{
-			senderID:         senderID,
-			broadcastPayload: payload,
-			sessionID:        sessionID,
+		message := &tssRoundSevenCompositeMessage{
+			senderID:  senderID,
+			sessionID: sessionID,
 		}
 
-		_ = pbutils.RoundTrip(message, &tssRoundSevenMessage{})
+		_ = pbutils.RoundTrip(message, &tssRoundSevenCompositeMessage{})
 	}
 }
 
-func TestFuzzTssRoundSevenMessage_Unmarshaler(t *testing.T) {
-	pbutils.FuzzUnmarshaler(&tssRoundSevenMessage{})
+func TestFuzzTssRoundSevenCompositeMessage_Unmarshaler(t *testing.T) {
+	pbutils.FuzzUnmarshaler(&tssRoundSevenCompositeMessage{})
 }
 
-func TestTssRoundEightMessage_MarshalingRoundtrip(t *testing.T) {
-	msg := &tssRoundEightMessage{
-		senderID:         group.MemberIndex(50),
-		broadcastPayload: []byte{1, 2, 3, 4, 5},
-		sessionID:        "session-1",
+func TestTssRoundEightCompositeMessage_MarshalingRoundtrip(t *testing.T) {
+	msg := &tssRoundEightCompositeMessage{
+		senderID:  group.MemberIndex(50),
+		sessionID: "session-1",
+		tssRoundEightMessages: map[string]*tssRoundEightMessage{
+			"one": &tssRoundEightMessage{
+				broadcastPayload: []byte{1, 2, 3, 4, 5},
+			},
+			"two": &tssRoundEightMessage{
+				broadcastPayload: []byte{6, 7, 8, 9, 10},
+			},
+		},
 	}
-	unmarshaled := &tssRoundEightMessage{}
+	unmarshaled := &tssRoundEightCompositeMessage{}
 
 	err := pbutils.RoundTrip(msg, unmarshaled)
 	if err != nil {
@@ -435,12 +495,12 @@ func TestTssRoundEightMessage_MarshalingRoundtrip(t *testing.T) {
 	}
 }
 
-func TestFuzzTssRoundEightMessage_MarshalingRoundtrip(t *testing.T) {
+func TestFuzzTssRoundEightCompositeMessage_MarshalingRoundtrip(t *testing.T) {
 	for i := 0; i < 10; i++ {
 		var (
-			senderID  group.MemberIndex
-			payload   []byte
-			sessionID string
+			senderID              group.MemberIndex
+			sessionID             string
+			tssRoundEightMessages map[string]*tssRoundEightMessage
 		)
 
 		f := fuzz.New().NilChance(0.1).
@@ -448,30 +508,37 @@ func TestFuzzTssRoundEightMessage_MarshalingRoundtrip(t *testing.T) {
 			Funcs(pbutils.FuzzFuncs()...)
 
 		f.Fuzz(&senderID)
-		f.Fuzz(&payload)
 		f.Fuzz(&sessionID)
+		f.Fuzz(&tssRoundEightMessages)
 
-		message := &tssRoundEightMessage{
-			senderID:         senderID,
-			broadcastPayload: payload,
-			sessionID:        sessionID,
+		message := &tssRoundEightCompositeMessage{
+			senderID:              senderID,
+			sessionID:             sessionID,
+			tssRoundEightMessages: tssRoundEightMessages,
 		}
 
-		_ = pbutils.RoundTrip(message, &tssRoundEightMessage{})
+		_ = pbutils.RoundTrip(message, &tssRoundEightCompositeMessage{})
 	}
 }
 
-func TestFuzzTssRoundEightMessage_Unmarshaler(t *testing.T) {
-	pbutils.FuzzUnmarshaler(&tssRoundEightMessage{})
+func TestFuzzTssRoundEightCompositeMessage_Unmarshaler(t *testing.T) {
+	pbutils.FuzzUnmarshaler(&tssRoundEightCompositeMessage{})
 }
 
-func TestTssRoundNineMessage_MarshalingRoundtrip(t *testing.T) {
-	msg := &tssRoundNineMessage{
-		senderID:         group.MemberIndex(50),
-		broadcastPayload: []byte{1, 2, 3, 4, 5},
-		sessionID:        "session-1",
+func TestTssRoundNineCompositeMessage_MarshalingRoundtrip(t *testing.T) {
+	msg := &tssRoundNineCompositeMessage{
+		senderID:  group.MemberIndex(50),
+		sessionID: "session-1",
+		tssRoundNineMessages: map[string]*tssRoundNineMessage{
+			"one": &tssRoundNineMessage{
+				broadcastPayload: []byte{1, 2, 3, 4, 5},
+			},
+			"two": &tssRoundNineMessage{
+				broadcastPayload: []byte{6, 7, 8, 9, 10},
+			},
+		},
 	}
-	unmarshaled := &tssRoundNineMessage{}
+	unmarshaled := &tssRoundNineCompositeMessage{}
 
 	err := pbutils.RoundTrip(msg, unmarshaled)
 	if err != nil {
@@ -483,12 +550,12 @@ func TestTssRoundNineMessage_MarshalingRoundtrip(t *testing.T) {
 	}
 }
 
-func TestFuzzTssRoundNineMessage_MarshalingRoundtrip(t *testing.T) {
+func TestFuzzTssRoundNineCompositeMessage_MarshalingRoundtrip(t *testing.T) {
 	for i := 0; i < 10; i++ {
 		var (
-			senderID  group.MemberIndex
-			payload   []byte
-			sessionID string
+			senderID             group.MemberIndex
+			sessionID            string
+			tssRoundNineMessages map[string]*tssRoundNineMessage
 		)
 
 		f := fuzz.New().NilChance(0.1).
@@ -496,19 +563,19 @@ func TestFuzzTssRoundNineMessage_MarshalingRoundtrip(t *testing.T) {
 			Funcs(pbutils.FuzzFuncs()...)
 
 		f.Fuzz(&senderID)
-		f.Fuzz(&payload)
 		f.Fuzz(&sessionID)
+		f.Fuzz(&tssRoundNineMessages)
 
-		message := &tssRoundNineMessage{
-			senderID:         senderID,
-			broadcastPayload: payload,
-			sessionID:        sessionID,
+		message := &tssRoundNineCompositeMessage{
+			senderID:             senderID,
+			sessionID:            sessionID,
+			tssRoundNineMessages: tssRoundNineMessages,
 		}
 
-		_ = pbutils.RoundTrip(message, &tssRoundNineMessage{})
+		_ = pbutils.RoundTrip(message, &tssRoundNineCompositeMessage{})
 	}
 }
 
-func TestFuzzTssRoundNineMessage_Unmarshaler(t *testing.T) {
-	pbutils.FuzzUnmarshaler(&tssRoundNineMessage{})
+func TestFuzzTssRoundNineCompositeMessage_Unmarshaler(t *testing.T) {
+	pbutils.FuzzUnmarshaler(&tssRoundNineCompositeMessage{})
 }
