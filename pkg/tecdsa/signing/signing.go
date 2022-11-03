@@ -84,30 +84,30 @@ func RegisterUnmarshallers(channel net.BroadcastChannel) {
 		return &ephemeralPublicKeyMessage{}
 	})
 	channel.SetUnmarshaler(func() net.TaggedUnmarshaler {
-		return &tssRoundOneMessage{}
+		return &tssRoundOneCompositeMessage{}
 	})
 	channel.SetUnmarshaler(func() net.TaggedUnmarshaler {
-		return &tssRoundTwoMessage{}
+		return &tssRoundTwoCompositeMessage{}
 	})
 	channel.SetUnmarshaler(func() net.TaggedUnmarshaler {
-		return &tssRoundThreeMessage{}
+		return &tssRoundThreeCompositeMessage{}
 	})
 	channel.SetUnmarshaler(func() net.TaggedUnmarshaler {
-		return &tssRoundFourMessage{}
+		return &tssRoundFourCompositeMessage{}
 	})
 	channel.SetUnmarshaler(func() net.TaggedUnmarshaler {
-		return &tssRoundFiveMessage{}
+		return &tssRoundFiveCompositeMessage{}
 	})
 	channel.SetUnmarshaler(func() net.TaggedUnmarshaler {
-		return &tssRoundSixMessage{}
+		return &tssRoundSixCompositeMessage{}
 	})
 	channel.SetUnmarshaler(func() net.TaggedUnmarshaler {
-		return &tssRoundSevenMessage{}
+		return &tssRoundSevenCompositeMessage{}
 	})
 	channel.SetUnmarshaler(func() net.TaggedUnmarshaler {
-		return &tssRoundEightMessage{}
+		return &tssRoundEightCompositeMessage{}
 	})
 	channel.SetUnmarshaler(func() net.TaggedUnmarshaler {
-		return &tssRoundNineMessage{}
+		return &tssRoundNineCompositeMessage{}
 	})
 }
