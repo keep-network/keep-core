@@ -587,7 +587,7 @@ async function checkUptime(
     Number.MAX_VALUE
   );
 
-  const uptimeSearchRange = endRewardsTimestamp - firstRegisteredUptime;
+  let uptimeSearchRange = endRewardsTimestamp - firstRegisteredUptime;
 
   const paramsSumUptimes = {
     query: `sum_over_time(up{chain_address="${operatorAddress}", job="${prometheusJob}"}
@@ -615,6 +615,12 @@ async function checkUptime(
   }
 
   const isUptimeSatisfied = sumUptime >= REQUIRED_UPTIME_PERCENT;
+  // October is a special month for rewards calculation. If a node was set before
+  // October 17th, then it is eligible for the entire month of rewards. Uptime of
+  // a running node still need to meet the uptime requirement after it was set.
+  if (startRewardsBlock < october17Block) {
+    uptimeSearchRange = rewardsInterval;
+  }
 
   const uptimeCoefficient = isUptimeSatisfied
     ? uptimeSearchRange / rewardsInterval
