@@ -2,7 +2,6 @@ package maintainer
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"github.com/ipfs/go-log"
@@ -10,30 +9,6 @@ import (
 )
 
 var logger = log.Logger("keep-maintainer-relay")
-
-// LaunchRelay sets up the connections to the Bitcoin and relay chains and
-// launches the process of maintaining the relay.
-func LaunchRelay(ctx context.Context) error {
-	// TODO: Add connection to the Bitcoin chain:
-	// btcChain, err := bitcoin.Connect(ctx, &maintainerConfig.Bitcoin)
-	// if err != nil {
-	// 	return fmt.Errorf("could not connect BTC chain: [%v]", err)
-	// }
-
-	// TODO: Add connection to the relay chain:
-	// relayChain, err := connectRelayChain(config)
-	// if err != nil {
-	// 	return fmt.Errorf("could not connect relay chain: [%v]", err)
-	// }
-
-	newRelay(ctx, nil, nil)
-
-	// TODO: Consider adding metrics.
-	logger.Info("relay started")
-
-	<-ctx.Done()
-	return fmt.Errorf("unexpected context cancellation")
-}
 
 func newRelay(
 	ctx context.Context,
@@ -45,7 +20,7 @@ func newRelay(
 		relayChain: relayChain,
 	}
 
-	go relay.startRelayControlLoop(ctx)
+	go relay.startControlLoop(ctx)
 
 	return relay
 }
@@ -57,8 +32,8 @@ type Relay struct {
 	relayChain RelayChain
 }
 
-// startRelayControlLoop launches the loop responsible for controlling the relay.
-func (r *Relay) startRelayControlLoop(ctx context.Context) {
+// startControlLoop launches the loop responsible for controlling the relay.
+func (r *Relay) startControlLoop(ctx context.Context) {
 	logger.Info("starting headers relay")
 
 	defer func() {

@@ -26,7 +26,7 @@ var MaintainerCommand = &cobra.Command{
 			logger.Fatalf("error reading config: %v", err)
 		}
 	},
-	RunE: launchMaintainers,
+	RunE: maintainers,
 }
 
 func init() {
@@ -40,21 +40,15 @@ func init() {
 	)
 }
 
-// launchMaintainers launches maintainer tasks specified by flags passed to
-// the maintainer command. If there were no tasks specified, all the maintainer
-// tasks are launched.
-func launchMaintainers(cmd *cobra.Command, args []string) error {
+// maintainers initializes maintainer tasks specified by flags passed to the
+// maintainer command.
+func maintainers(cmd *cobra.Command, args []string) error {
 	ctx := context.Background()
 
-	launchRelay := clientConfig.Maintainer.Relay
-	if launchRelay {
-		go maintainer.LaunchRelay(ctx)
+	err := maintainer.Initialize(clientConfig.Maintainer, ctx)
+	if err != nil {
+		return fmt.Errorf("failed to initialize maintainers [%v]", err)
 	}
-
-	// TODO: Launch other maintainer tasks if necessary, e.g. spv. If no task
-	//       has been specified - launch all the maintainer tasks.
-	// TODO: Cancel all launched tasks if one of the tasks is unable to be
-	//       launched, e.g. due to configuration errors.
 
 	<-ctx.Done()
 	return fmt.Errorf("unexpected context cancellation")
