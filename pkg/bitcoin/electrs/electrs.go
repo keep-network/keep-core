@@ -152,9 +152,39 @@ func (c *Connection) GetCurrentBlockNumber() (uint, error) {
 	return uint(result), nil
 }
 
+// GetBlockHeader gets the block header for the given block number. If the
+// block with the given number was not found on the chain, this function
+// returns an error.
 func (c *Connection) GetBlockHeader(
 	blockNumber uint,
 ) (*bitcoin.BlockHeader, error) {
-	// TODO: Implementation.
-	panic("not implemented")
+	blockHash, err := c.httpGet(fmt.Sprintf("block-height/%d", blockNumber))
+	if err != nil {
+		return nil, fmt.Errorf(
+			"failed to get hash of block at height [%d]: [%w]",
+			blockNumber,
+			err,
+		)
+	}
+
+	blockHeaderJSON, err := c.httpGet(fmt.Sprintf("block/%s", blockHash))
+	if err != nil {
+		return nil, fmt.Errorf(
+			"failed to get header of block [%s]: [%w]",
+			blockHash,
+			err,
+		)
+	}
+
+	blockHeader, err := decodeJSON[blockHeader](blockHeaderJSON)
+	if err != nil {
+		return nil, fmt.Errorf("failed to decode block header response: [%w]", err)
+	}
+
+	result, err := blockHeader.convert()
+	if err != nil {
+		return nil, fmt.Errorf("failed to convert block header: %w", err)
+	}
+
+	return &result, nil
 }
