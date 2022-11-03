@@ -51,3 +51,18 @@ exports.calculateOngoingRewards = function (stakes, weight) {
   })
   return ongoingRewards
 }
+
+/**
+ * Calculate the tBTCv2 weighted rewards earned by each stake
+ * @param {Object} stakes     Stakes with staked T amount
+ * @param {Number} weight     The weight of this type of reward
+ * @return {Object}           The stakes including reward amount
+ */
+exports.calculateTbtcv2Rewards = function (stakes, weight) {
+  Object.keys(stakes).map((stakingProvider) => {
+    const amount = BigNumber(stakes[stakingProvider].amount)
+    const weightedReward = amount.times(weight)
+    stakes[stakingProvider].amount = weightedReward.toFixed(0)
+  })
+  return stakes
+}

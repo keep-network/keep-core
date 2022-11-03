@@ -401,8 +401,8 @@ export async function calculateRewards() {
     operatorsData.push(operatorData);
   }
 
-  console.log("operatorsData: ", JSON.stringify(operatorsData, null, 2));
-  console.log("rewardsData: ", JSON.stringify(rewardsData, null, 4));
+  // console.log("operatorsData: ", JSON.stringify(operatorsData, null, 2));
+  // console.log("rewardsData: ", JSON.stringify(rewardsData, null, 4));
   fs.writeFileSync(rewardsDataOutput, JSON.stringify(rewardsData, null, 4));
 }
 
