@@ -25,15 +25,13 @@ async function main() {
   let bonusRewards = {}
   let ongoingRewards = {}
   let tbtcv2Rewards = {}
-  const startDate = new Date(startTime * 1000).toISOString().slice(0, 10)
   const endDate = new Date(endTime * 1000).toISOString().slice(0, 10)
   const distPath = `distributions/${endDate}`
   const lastDistPath = `distributions/${lastDistribution}`
   const tbtcv2Script =
   `./rewards.sh ` +
-  `--rewards-start-date ${startDate} ` +
-  `--rewards-end-date ${endDate} ` +
-  `--rewards-json ./rewards.json ` +
+  `--rewards-start-date ${startTime} ` +
+  `--rewards-end-date ${endTime} ` +
   `--etherscan-token ${process.env.ETHERSCAN_TOKEN}`
 
   try {
