@@ -45,10 +45,19 @@ func init() {
 func maintainers(cmd *cobra.Command, args []string) error {
 	ctx := context.Background()
 
-	err := maintainer.Initialize(clientConfig.Maintainer, ctx)
-	if err != nil {
-		return fmt.Errorf("failed to initialize maintainers [%v]", err)
-	}
+	// TODO: Add connection to the Electrum chain:
+	// btcChain, err := electrum.Connect(ctx, &clientConfig.Electrum)
+	// if err != nil {
+	// 	return fmt.Errorf("could not connect to Electrum chain: [%v]", err)
+	// }
+
+	// TODO: Add connection to the Tbtc chain:
+	// tbtcChain, err := newTbtcChain(config)
+	// if err != nil {
+	// 	return fmt.Errorf("could not connect to Tbtc chain: [%v]", err)
+	// }
+
+	maintainer.Initialize(ctx, clientConfig.Maintainer, nil, nil)
 
 	<-ctx.Done()
 	return fmt.Errorf("unexpected context cancellation")
