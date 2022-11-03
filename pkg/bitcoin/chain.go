@@ -1,12 +1,5 @@
 package bitcoin
 
-// Config contains the config data needed to connect to the Bitcoin chain.
-type Config struct {
-	URL      string
-	Username string
-	Password string
-}
-
 // Chain defines an interface meant to be used for interaction with the
 // Bitcoin chain.
 type Chain interface {

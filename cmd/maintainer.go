@@ -20,7 +20,7 @@ var MaintainerCommand = &cobra.Command{
 			configFilePath,
 			cmd.Flags(),
 			config.Ethereum,
-			config.Bitcoin,
+			config.Electrum,
 			config.Maintainer,
 		); err != nil {
 			logger.Fatalf("error reading config: %v", err)
@@ -35,7 +35,7 @@ func init() {
 		&configFilePath,
 		clientConfig,
 		config.Ethereum,
-		config.Bitcoin,
+		config.Electrum,
 		config.Maintainer,
 	)
 }

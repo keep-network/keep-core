@@ -35,8 +35,8 @@ func initFlags(
 		switch category {
 		case config.Ethereum:
 			initEthereumFlags(cmd, cfg)
-		case config.Bitcoin:
-			initBitcoinFlags(cmd, cfg)
+		case config.Electrum:
+			initElectrumFlags(cmd, cfg)
 		case config.Network:
 			initNetworkFlags(cmd, cfg)
 		case config.Storage:
@@ -154,27 +154,27 @@ func initEthereumFlags(cmd *cobra.Command, cfg *config.Config) {
 	)
 }
 
-// Initialize flags for Bitcoin configuration.
-func initBitcoinFlags(cmd *cobra.Command, cfg *config.Config) {
+// Initialize flags for Electrum configuration.
+func initElectrumFlags(cmd *cobra.Command, cfg *config.Config) {
 	cmd.Flags().StringVar(
-		&cfg.Bitcoin.URL,
-		"bitcoin.url",
+		&cfg.Electrum.URL,
+		"electrum.url",
 		"",
-		"URL for Bitcoin client connection.",
+		"URL for Electrum client connection.",
 	)
 
 	cmd.Flags().StringVar(
-		&cfg.Bitcoin.Username,
-		"bitcoin.username",
+		&cfg.Electrum.Username,
+		"electrum.username",
 		"",
-		"Username for Bitcoin client connection.",
+		"Username for Electrum client connection.",
 	)
 
 	cmd.Flags().StringVar(
-		&cfg.Bitcoin.Password,
-		"bitcoin.password",
+		&cfg.Electrum.Password,
+		"electrum.password",
 		"",
-		"Password for Bitcoin client connection.",
+		"Password for Electrum client connection.",
 	)
 }
 

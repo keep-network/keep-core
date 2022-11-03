@@ -4,6 +4,13 @@ import (
 	"github.com/keep-network/keep-core/pkg/bitcoin"
 )
 
+// Config contains the config data needed to connect to the Electrum chain.
+type Config struct {
+	URL      string
+	Username string
+	Password string
+}
+
 type Client struct{}
 
 func (c *Client) GetTransaction(

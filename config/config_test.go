@@ -100,16 +100,16 @@ func TestReadConfigFromFile(t *testing.T) {
 			},
 			expectedValue: "0x138D2a0c87BA9f6BE1DCc13D6224A6aCE9B6b6F0",
 		},
-		"Bitcoin.URL": {
-			readValueFunc: func(c *Config) interface{} { return c.Bitcoin.URL },
-			expectedValue: "url.to.bitcoin:18332",
+		"Electrum.URL": {
+			readValueFunc: func(c *Config) interface{} { return c.Electrum.URL },
+			expectedValue: "url.to.electrum:18332",
 		},
-		"Bitcoin.Username": {
-			readValueFunc: func(c *Config) interface{} { return c.Bitcoin.Username },
+		"Electrum.Username": {
+			readValueFunc: func(c *Config) interface{} { return c.Electrum.Username },
 			expectedValue: "user",
 		},
-		"Bitcoin.Password": {
-			readValueFunc: func(c *Config) interface{} { return c.Bitcoin.Password },
+		"Electrum.Password": {
+			readValueFunc: func(c *Config) interface{} { return c.Electrum.Password },
 			expectedValue: "pass",
 		},
 		"Network.Port": {

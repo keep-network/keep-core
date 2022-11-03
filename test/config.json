@@ -9,8 +9,8 @@
         "MaxGasFeeCap": "148 Gwei",
         "BalanceAlertThreshold": "2.3 ether"
     },
-    "Bitcoin": {
-        "URL": "url.to.bitcoin:18332",
+    "Electrum": {
+        "URL": "url.to.electrum:18332",
         "Username": "user",
         "Password": "pass"
     },
