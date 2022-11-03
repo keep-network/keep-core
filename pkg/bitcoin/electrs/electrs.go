@@ -88,11 +88,45 @@ func (c *Connection) GetTransaction(
 	return &result, nil
 }
 
+// GetTransactionConfirmations gets the number of confirmations for the
+// transaction with the given transaction hash. If the transaction with the
+// given hash was not found on the chain, this function returns an error.
 func (c *Connection) GetTransactionConfirmations(
 	transactionHash bitcoin.Hash,
 ) (uint, error) {
-	// TODO: Implementation.
-	panic("not implemented")
+	txID := transactionHash.String(bitcoin.ReversedByteOrder)
+
+	transactionJSON, err := c.httpGet(fmt.Sprintf("tx/%s", txID))
+	if err != nil {
+		return 0, fmt.Errorf(
+			"failed to get the transaction [%s]: [%w]",
+			txID,
+			err,
+		)
+	}
+
+	tx, err := decodeJSON[transaction](transactionJSON)
+	if err != nil {
+		return 0, fmt.Errorf("failed to decode response: [%w]", err)
+	}
+
+	if !tx.Status.Confirmed {
+		return 0, nil
+	}
+
+	txBlockHeight := tx.Status.BlockHeight
+
+	currentBlockHeight, err := c.GetCurrentBlockNumber()
+	if err != nil {
+		return 0, fmt.Errorf("failed to get current block height: [%w]", err)
+	}
+
+	confirmations := uint(1)
+
+	if currentBlockHeight > txBlockHeight {
+		confirmations += currentBlockHeight - txBlockHeight
+	}
+	return confirmations, nil
 }
 
 func (c *Connection) BroadcastTransaction(

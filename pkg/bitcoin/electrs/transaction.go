@@ -12,6 +12,7 @@ type transaction struct {
 	Locktime uint32 `json:"locktime"`
 	Vin      []vin  `json:"vin"`
 	Vout     []vout `json:"vout"`
+	Status   status `json:"status"`
 }
 
 type vin struct {
@@ -24,6 +25,11 @@ type vin struct {
 type vout struct {
 	Value        int64  `json:"value"`
 	ScriptPubkey string `json:"scriptpubkey"`
+}
+
+type status struct {
+	Confirmed   bool `json:"confirmed"`
+	BlockHeight uint `json:"block_height"`
 }
 
 func (t *transaction) convert() (bitcoin.Transaction, error) {
