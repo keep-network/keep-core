@@ -10,14 +10,22 @@ import (
 
 var logger = log.Logger("keep-maintainer-relay")
 
+// RelayChain is an interface that provides the ability to communicate with the
+// relay on-chain contract.
+type RelayChain interface {
+	// Retarget adds a new epoch to the relay by providing a proof
+	// of the difficulty before and after the retarget.
+	Retarget(headers []bitcoin.BlockHeader) error
+}
+
 func newRelay(
 	ctx context.Context,
 	btcChain bitcoin.Chain,
-	relayChain RelayChain,
+	chain RelayChain,
 ) *Relay {
 	relay := &Relay{
-		btcChain:   btcChain,
-		relayChain: relayChain,
+		btcChain: btcChain,
+		chain:    chain,
 	}
 
 	go relay.startControlLoop(ctx)
@@ -28,8 +36,8 @@ func newRelay(
 // Relay is the part of maintainer responsible for maintaining the state of
 // the relay on-chain contract.
 type Relay struct {
-	btcChain   bitcoin.Chain
-	relayChain RelayChain
+	btcChain bitcoin.Chain
+	chain    RelayChain
 }
 
 // startControlLoop launches the loop responsible for controlling the relay.
