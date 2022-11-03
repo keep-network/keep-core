@@ -15,12 +15,12 @@ ETHERSCAN_API_DEFAULT="https://api.etherscan.io"
 NETWORK_DEFAULT="mainnet"
 KEEP_CORE_REPO="https://github.com/keep-network/keep-core"
 # Special case when calculating rewards
-OCTOBER_17="2022-10-17"
+OCTOBER_17="1665964800"
 
 help() {
   echo -e "\nUsage: $0" \
-    "--rewards-start-date <rewards-start-date Y-m-d>" \
-    "--rewards-end-date <rewards-end-date Y-m-d>" \
+    "--rewards-start-date <rewards-start-date timestamp>" \
+    "--rewards-end-date <rewards-end-date timestamp>" \
     "--etherscan-token <etherscan-token>" \
     "--prometheus-api <prometheus-api-address>" \
     "--prometheus-job <prometheus-job-name>" \
@@ -28,8 +28,8 @@ help() {
     "--network <network-name>" \
     "--rewards-json <rewards-json-output-path>"
   echo -e "\nRequired command line arguments:\n"
-  echo -e "\t--rewards-start-date: Rewards interval start date formatted as Y-m-d"
-  echo -e "\t--rewards-end-date: Rewards interval end date formatted as Y-m-d"
+  echo -e "\t--rewards-start-date: Rewards interval start date formatted as UNIX timestamp"
+  echo -e "\t--rewards-end-date: Rewards interval end date formatted as UNIX timestamp"
   echo -e "\t--etherscan-token: Etherscan API key token"
   echo -e "\nOptional command line arguments:\n"
   echo -e "\t--prometheus-api: Prometheus API. Default: ${PROMETHEUS_API_DEFAULT}"
@@ -100,28 +100,29 @@ if [ "$ETHERSCAN_TOKEN" == "" ]; then
   help
 fi
 
-rewardsStartDate=$(TZ=UTC date -j -f "%Y-%m-%d %H:%M:%S" "${REWARDS_START_DATE} 00:00:00" "+%s")
-rewardsEndDate=$(TZ=UTC date -j -f "%Y-%m-%d %H:%M:%S" "${REWARDS_END_DATE} 23:59:59" "+%s")
-october17=$(TZ=UTC date -j -f "%Y-%m-%d %H:%M:%S" "${OCTOBER_17} 23:59:59" "+%s")
+# TBTCv2 rewards must be calculated since Oct 1st 2022
+if [ "$REWARDS_START_DATE" -lt "1664582400" ]; then
+  REWARDS_START_DATE=1664582400
+fi
 
 startBlockApiCall="${ETHERSCAN_API}/api?\
 module=block&\
 action=getblocknobytime&\
-timestamp=$rewardsStartDate&\
+timestamp=$REWARDS_START_DATE&\
 closest=after&\
 apikey=${ETHERSCAN_TOKEN}"
 
 endBlockApiCall="${ETHERSCAN_API}/api?\
 module=block&\
 action=getblocknobytime&\
-timestamp=$rewardsEndDate&\
+timestamp=$REWARDS_END_DATE&\
 closest=after&\
 apikey=${ETHERSCAN_TOKEN}"
 
 october17ApiCall="${ETHERSCAN_API}/api?\
 module=block&\
 action=getblocknobytime&\
-timestamp=$october17&\
+timestamp=$OCTOBER_17&\
 closest=after&\
 apikey=${ETHERSCAN_TOKEN}"
 
@@ -146,11 +147,11 @@ tagsInRewardInterval=()
 if [ ${#allTags[@]} -gt 1 ]; then
   secondToLatestTag=${allTags[1]}
   secondToLatestTagTimestamp="${secondToLatestTag}_$(git show -s --format=%ct ${secondToLatestTag}^{commit})"
-  if [ $latestTimestamp -gt $rewardsStartDate ] && [ $latestTimestamp -lt $rewardsEndDate ]; then
+  if [ $latestTimestamp -gt $REWARDS_START_DATE ] && [ $latestTimestamp -lt $REWARDS_END_DATE ]; then
     # The latest tag was created within the rewards interval dates.
     tagsInRewardInterval+=($latestTagTimestamp)
     tagsInRewardInterval+=($secondToLatestTagTimestamp)
-  elif [ $latestTimestamp -gt $rewardsEndDate ]; then
+  elif [ $latestTimestamp -gt $REWARDS_END_DATE ]; then
     # The latest tag was created after the given rewards interval. Take a
     # second to latest tag.
     tagsInRewardInterval+=($secondToLatestTagTimestamp)
@@ -176,8 +177,8 @@ printf "${LOG_START}Fetching peers data...${LOG_END}"
 ETHERSCAN_TOKEN=${ETHERSCAN_TOKEN} yarn rewards \
   --api ${PROMETHEUS_API} \
   --job ${PROMETHEUS_JOB} \
-  --start-timestamp $rewardsStartDate \
-  --end-timestamp $rewardsEndDate \
+  --start-timestamp $REWARDS_START_DATE \
+  --end-timestamp $REWARDS_END_DATE \
   --start-block $startRewardsBlock \
   --end-block $endRewardsBlock \
   --october17 $october17Block \
