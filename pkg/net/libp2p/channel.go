@@ -88,7 +88,11 @@ func (c *channel) Name() string {
 	return c.name
 }
 
-func (c *channel) Send(ctx context.Context, message net.TaggedMarshaler) error {
+func (c *channel) Send(
+	ctx context.Context,
+	message net.TaggedMarshaler,
+	strategy ...net.RetransmissionStrategy,
+) error {
 	messageProto, err := c.messageProto(message)
 	if err != nil {
 		return err
@@ -100,7 +104,21 @@ func (c *channel) Send(ctx context.Context, message net.TaggedMarshaler) error {
 		return c.publish(messageProto)
 	}
 
-	retransmission.ScheduleRetransmissions(ctx, logger, c.retransmissionTicker, doSend)
+	var selectedStrategy net.RetransmissionStrategy
+	switch len(strategy) {
+	case 1:
+		selectedStrategy = strategy[0]
+	default:
+		selectedStrategy = net.StandardRetransmissionStrategy
+	}
+
+	retransmission.ScheduleRetransmissions(
+		ctx,
+		logger,
+		c.retransmissionTicker,
+		doSend,
+		retransmission.WithStrategy(selectedStrategy),
+	)
 
 	return doSend()
 }
