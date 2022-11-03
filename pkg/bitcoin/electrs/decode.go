@@ -3,13 +3,12 @@ package electrs
 import (
 	"encoding/json"
 	"fmt"
-	"io"
 )
 
-func decodeJSON[K any](r io.ReadCloser) (K, error) {
+func decodeJSON[K any](input []byte) (K, error) {
 	var result K
 
-	if err := json.NewDecoder(r).Decode(&result); err != nil {
+	if err := json.Unmarshal(input, &result); err != nil {
 		return result, fmt.Errorf("failed to decode: [%w]", err)
 	}
 

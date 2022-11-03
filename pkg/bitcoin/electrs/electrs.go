@@ -65,7 +65,7 @@ func (c *Connection) GetTransaction(
 ) (*bitcoin.Transaction, error) {
 	txID := transactionHash.String(bitcoin.ReversedByteOrder)
 
-	responseBody, err := c.httpGet(fmt.Sprintf("tx/%s", txID))
+	transactionJSON, err := c.httpGet(fmt.Sprintf("tx/%s", txID))
 	if err != nil {
 		return nil, fmt.Errorf(
 			"failed to get the transaction [%s]: [%w]",
@@ -74,7 +74,7 @@ func (c *Connection) GetTransaction(
 		)
 	}
 
-	tx, err := decodeJSON[transaction](responseBody)
+	tx, err := decodeJSON[transaction](transactionJSON)
 	if err != nil {
 		return nil, fmt.Errorf("failed to decode response: [%w]", err)
 	}

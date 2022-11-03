@@ -10,7 +10,7 @@ import (
 	"github.com/keep-network/keep-common/pkg/wrappers"
 )
 
-func (c *Connection) httpGet(resource string) (io.ReadCloser, error) {
+func (c *Connection) httpGet(resource string) ([]byte, error) {
 	return c.httpRequest(
 		func() (*http.Response, error) {
 			return c.client.Get(
@@ -20,7 +20,7 @@ func (c *Connection) httpGet(resource string) (io.ReadCloser, error) {
 	)
 }
 
-func (c *Connection) httpPost(resource string, requestBody []byte) (io.ReadCloser, error) {
+func (c *Connection) httpPost(resource string, requestBody []byte) ([]byte, error) {
 	return c.httpRequest(
 		func() (*http.Response, error) {
 			return c.client.Post(
@@ -34,7 +34,7 @@ func (c *Connection) httpPost(resource string, requestBody []byte) (io.ReadClose
 
 func (c *Connection) httpRequest(
 	request func() (*http.Response, error),
-) (io.ReadCloser, error) {
+) ([]byte, error) {
 	var responseReader io.ReadCloser
 
 	err := wrappers.DoWithDefaultRetry(c.retryTimeout, func(ctx context.Context) error {
@@ -68,6 +68,14 @@ func (c *Connection) httpRequest(
 
 		return nil
 	})
+	if err != nil {
+		return []byte{}, fmt.Errorf("request failed: [%w]", err)
+	}
 
-	return responseReader, err
+	responseBody, err := io.ReadAll(responseReader)
+	if err != nil {
+		return []byte{}, fmt.Errorf("failed to read response body: [%w]", err)
+	}
+
+	return responseBody, nil
 }
