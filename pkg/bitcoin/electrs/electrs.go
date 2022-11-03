@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 
@@ -101,9 +102,20 @@ func (c *Connection) BroadcastTransaction(
 	panic("not implemented")
 }
 
+// GetCurrentBlockNumber gets the number of the current block. If the
+// current block was not determined, this function returns an error.
 func (c *Connection) GetCurrentBlockNumber() (uint, error) {
-	// TODO: Implementation.
-	panic("not implemented")
+	blockHeight, err := c.httpGet("blocks/tip/height")
+	if err != nil {
+		return 0, fmt.Errorf("failed to get the blocks tip height: [%w]", err)
+	}
+
+	result, err := strconv.ParseUint(string(blockHeight), 10, 32)
+	if err != nil {
+		return 0, fmt.Errorf("failed to parse block height [%s]: [%w]", blockHeight, err)
+	}
+
+	return uint(result), nil
 }
 
 func (c *Connection) GetBlockHeader(
