@@ -27,9 +27,14 @@ func (ekpgs *ephemeralKeyPairGenerationState) Initiate(ctx context.Context) erro
 		return err
 	}
 
-	if err := ekpgs.channel.Send(ctx, message); err != nil {
+	if err := ekpgs.channel.Send(
+		ctx,
+		message,
+		net.BackoffRetransmissionStrategy,
+	); err != nil {
 		return err
 	}
+
 	return nil
 }
 
@@ -125,7 +130,11 @@ func (tros *tssRoundOneState) Initiate(ctx context.Context) error {
 		return err
 	}
 
-	if err := tros.channel.Send(ctx, message); err != nil {
+	if err := tros.channel.Send(
+		ctx,
+		message,
+		net.BackoffRetransmissionStrategy,
+	); err != nil {
 		return err
 	}
 
@@ -183,7 +192,11 @@ func (trts *tssRoundTwoState) Initiate(ctx context.Context) error {
 		return err
 	}
 
-	if err := trts.channel.Send(ctx, message); err != nil {
+	if err := trts.channel.Send(
+		ctx,
+		message,
+		net.BackoffRetransmissionStrategy,
+	); err != nil {
 		return err
 	}
 
@@ -241,7 +254,11 @@ func (trts *tssRoundThreeState) Initiate(ctx context.Context) error {
 		return err
 	}
 
-	if err := trts.channel.Send(ctx, message); err != nil {
+	if err := trts.channel.Send(
+		ctx,
+		message,
+		net.BackoffRetransmissionStrategy,
+	); err != nil {
 		return err
 	}
 
@@ -299,7 +316,11 @@ func (fs *finalizationState) Initiate(ctx context.Context) error {
 		return err
 	}
 
-	if err := fs.channel.Send(ctx, message); err != nil {
+	if err := fs.channel.Send(
+		ctx,
+		message,
+		net.BackoffRetransmissionStrategy,
+	); err != nil {
 		return err
 	}
 
