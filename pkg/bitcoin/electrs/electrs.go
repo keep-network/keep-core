@@ -57,6 +57,9 @@ func Connect(config Config) (bitcoin.Chain, error) {
 	}, nil
 }
 
+// GetTransaction gets the transaction with the given transaction hash.
+// If the transaction with the given hash was not found on the chain,
+// this function returns an error.
 func (c *Connection) GetTransaction(
 	transactionHash bitcoin.Hash,
 ) (*bitcoin.Transaction, error) {
