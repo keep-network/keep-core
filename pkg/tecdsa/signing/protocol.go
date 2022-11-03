@@ -3,6 +3,7 @@ package signing
 import (
 	"context"
 	"fmt"
+
 	"github.com/bnb-chain/tss-lib/tss"
 	"github.com/keep-network/keep-core/pkg/crypto/ephemeral"
 	"github.com/keep-network/keep-core/pkg/protocol/group"
@@ -121,10 +122,39 @@ func (skgm *symmetricKeyGeneratingMember) isValidEphemeralPublicKeyMessage(
 
 // tssRoundOne starts the TSS process by executing its first round. The
 // outcome of that round is a message containing TSS round one components.
+// This function performs the first round of TSS for all messages being signed,
+// sequentially.
 func (trom *tssRoundOneMember) tssRoundOne(
 	ctx context.Context,
+) (*tssRoundOneCompositeMessage, error) {
+	// All TSS round one messages grouped by the data being signed
+	tssRoundOneMessages := make(map[string]*tssRoundOneMessage)
+
+	for messageToSign, tssState := range trom.tssStates {
+		tssMessage, err := trom.tssRoundOneInternal(ctx, tssState)
+		if err != nil {
+			return nil, err
+		}
+
+		tssRoundOneMessages[messageToSign] = tssMessage
+	}
+
+	return &tssRoundOneCompositeMessage{
+		senderID:            trom.id,
+		sessionID:           trom.sessionID,
+		tssRoundOneMessages: tssRoundOneMessages,
+	}, nil
+}
+
+// tssRoundOneInternal starts the TSS process by executing its first round. The
+// outcome of that round is a message containing TSS round one components.
+// This function is called in a context of a single message being signed for
+// the given TSS state.
+func (trom *tssRoundOneMember) tssRoundOneInternal(
+	ctx context.Context,
+	tssState *tssState,
 ) (*tssRoundOneMessage, error) {
-	if err := trom.tssParty.Start(); err != nil {
+	if err := tssState.tssParty.Start(); err != nil {
 		return nil, fmt.Errorf(
 			"failed to start TSS round one: [%v]",
 			err,
@@ -137,7 +167,7 @@ func (trom *tssRoundOneMember) tssRoundOne(
 outgoingMessagesLoop:
 	for {
 		select {
-		case tssMessage := <-trom.tssOutgoingMessagesChan:
+		case tssMessage := <-tssState.tssOutgoingMessagesChan:
 			tssMessages = append(tssMessages, tssMessage)
 
 			if len(tssMessages) == len(trom.group.OperatingMemberIDs()) {
@@ -170,32 +200,82 @@ outgoingMessagesLoop:
 	}
 
 	return &tssRoundOneMessage{
-		senderID:         trom.id,
 		broadcastPayload: broadcastPayload,
 		peersPayload:     peersPayload,
-		sessionID:        trom.sessionID,
 	}, nil
 }
 
 // tssRoundTwo performs the second round of the TSS process. The outcome of
 // that round is a message containing TSS round two components.
+// This function performs the second round of TSS for all messages being signed,
+// sequentially.
 func (trtm *tssRoundTwoMember) tssRoundTwo(
 	ctx context.Context,
-	tssRoundOneMessages []*tssRoundOneMessage,
+	tssRoundOneCompositeMessages []*tssRoundOneCompositeMessage,
+) (*tssRoundTwoCompositeMessage, error) {
+	tssRoundTwoMessages := make(map[string]*tssRoundTwoMessage)
+
+	// For every message being signed...
+	for messageToSign, tssState := range trtm.tssStates {
+
+		// First, flatten the composite TSS messages. We go through all composite
+		// TSS messages, find the ones for the given message being signed and
+		// group them in a map, keyed by the sender member index.
+		tssRoundOneMessages := make(map[group.MemberIndex]*tssRoundOneMessage)
+
+		for _, tssRoundOneCompositeMessage := range tssRoundOneCompositeMessages {
+			message, ok := tssRoundOneCompositeMessage.tssRoundOneMessages[messageToSign]
+			if !ok {
+				return nil, fmt.Errorf(
+					"missing tss round one message from member [%v] to sign message [%v]",
+					tssRoundOneCompositeMessage.senderID,
+					messageToSign,
+				)
+			}
+
+			tssRoundOneMessages[tssRoundOneCompositeMessage.senderID] = message
+		}
+
+		tssRoundTwoMessage, err := trtm.tssRoundTwoInternal(
+			ctx,
+			tssState,
+			tssRoundOneMessages,
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		tssRoundTwoMessages[messageToSign] = tssRoundTwoMessage
+	}
+
+	return &tssRoundTwoCompositeMessage{
+		senderID:            trtm.id,
+		sessionID:           trtm.sessionID,
+		tssRoundTwoMessages: tssRoundTwoMessages,
+	}, nil
+}
+
+// tssRoundTwoInternal performs the second round of the TSS process. The outcome
+// of that round is a message containing TSS round two components.
+// This function is called in a context of a single message being signed for
+// the given TSS state.
+func (trtm *tssRoundTwoMember) tssRoundTwoInternal(
+	ctx context.Context,
+	tssState *tssState,
+	tssRoundOneMessages map[group.MemberIndex]*tssRoundOneMessage,
 ) (*tssRoundTwoMessage, error) {
 	// Use messages from round one to update the local party and advance
 	// to round two.
-	for _, tssRoundOneMessage := range tssRoundOneMessages {
-		senderID := tssRoundOneMessage.SenderID()
+	for senderID, tssRoundOneMessage := range tssRoundOneMessages {
 		senderTssPartyID := common.ResolveSortedTssPartyID(
-			trtm.tssParameters,
+			tssState.tssParameters,
 			senderID,
 			trtm.identityConverter,
 		)
 
 		// Update the local TSS party using the broadcast part of the message
 		// produced in round one.
-		_, tssErr := trtm.tssParty.UpdateFromBytes(
+		_, tssErr := tssState.tssParty.UpdateFromBytes(
 			tssRoundOneMessage.broadcastPayload,
 			senderTssPartyID,
 			true,
@@ -239,7 +319,7 @@ func (trtm *tssRoundTwoMember) tssRoundTwo(
 		}
 		// Update the local TSS party using the P2P part of the message
 		// produced in round one.
-		_, tssErr = trtm.tssParty.UpdateFromBytes(
+		_, tssErr = tssState.tssParty.UpdateFromBytes(
 			peerPayload,
 			senderTssPartyID,
 			false,
@@ -260,7 +340,7 @@ func (trtm *tssRoundTwoMember) tssRoundTwo(
 outgoingMessagesLoop:
 	for {
 		select {
-		case tssMessage := <-trtm.tssOutgoingMessagesChan:
+		case tssMessage := <-tssState.tssOutgoingMessagesChan:
 			tssMessages = append(tssMessages, tssMessage)
 
 			if len(tssMessages) == len(trtm.group.OperatingMemberIDs())-1 {
@@ -295,24 +375,74 @@ outgoingMessagesLoop:
 	}
 
 	return &tssRoundTwoMessage{
-		senderID:     trtm.id,
 		peersPayload: peersPayload,
-		sessionID:    trtm.sessionID,
 	}, nil
 }
 
 // tssRoundThree performs the third round of the TSS process. The outcome of
 // that round is a message containing TSS round three components.
+// This function performs the third round of TSS for all messages being signed,
+// sequentially.
 func (trtm *tssRoundThreeMember) tssRoundThree(
 	ctx context.Context,
-	tssRoundTwoMessages []*tssRoundTwoMessage,
+	tssRoundTwoCompositeMessages []*tssRoundTwoCompositeMessage,
+) (*tssRoundThreeCompositeMessage, error) {
+	tssRoundThreeMessages := make(map[string]*tssRoundThreeMessage)
+
+	// For every message being signed...
+	for messageToSign, tssState := range trtm.tssStates {
+
+		// First, flatten the composite TSS messages. We go through all composite
+		// TSS messages, find the ones for the given message being signed and
+		// group them in a map, keyed by the sender member index.
+		tssRoundTwoMessages := make(map[group.MemberIndex]*tssRoundTwoMessage)
+
+		for _, tssRoundTwoCompositeMessage := range tssRoundTwoCompositeMessages {
+			message, ok := tssRoundTwoCompositeMessage.tssRoundTwoMessages[messageToSign]
+			if !ok {
+				return nil, fmt.Errorf(
+					"missing tss round two message from member [%v] to sign message [%v]",
+					tssRoundTwoCompositeMessage.senderID,
+					messageToSign,
+				)
+			}
+
+			tssRoundTwoMessages[tssRoundTwoCompositeMessage.senderID] = message
+		}
+
+		tssRoundThreeMessage, err := trtm.tssRoundThreeInternal(
+			ctx,
+			tssState,
+			tssRoundTwoMessages,
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		tssRoundThreeMessages[messageToSign] = tssRoundThreeMessage
+	}
+
+	return &tssRoundThreeCompositeMessage{
+		senderID:              trtm.id,
+		sessionID:             trtm.sessionID,
+		tssRoundThreeMessages: tssRoundThreeMessages,
+	}, nil
+}
+
+// tssRoundThreeInternal performs the third round of the TSS process. The outcome
+// of that round is a message containing TSS round three components.
+// This function is called in a context of a single message being signed for
+// the given TSS state.
+func (trtm *tssRoundThreeMember) tssRoundThreeInternal(
+	ctx context.Context,
+	tssState *tssState,
+	tssRoundTwoMessages map[group.MemberIndex]*tssRoundTwoMessage,
 ) (*tssRoundThreeMessage, error) {
 	// Use messages from round two to update the local party and advance
 	// to round three.
-	for _, tssRoundTwoMessage := range tssRoundTwoMessages {
-		senderID := tssRoundTwoMessage.SenderID()
+	for senderID, tssRoundTwoMessage := range tssRoundTwoMessages {
 		senderTssPartyID := common.ResolveSortedTssPartyID(
-			trtm.tssParameters,
+			tssState.tssParameters,
 			senderID,
 			trtm.identityConverter,
 		)
@@ -347,7 +477,7 @@ func (trtm *tssRoundThreeMember) tssRoundThree(
 		}
 		// Update the local TSS party using the P2P part of the message
 		// produced in round two.
-		_, tssErr := trtm.tssParty.UpdateFromBytes(
+		_, tssErr := tssState.tssParty.UpdateFromBytes(
 			peerPayload,
 			senderTssPartyID,
 			false,
@@ -364,7 +494,7 @@ func (trtm *tssRoundThreeMember) tssRoundThree(
 
 	// We expect exactly one TSS message to be produced in this phase.
 	select {
-	case tssMessage := <-trtm.tssOutgoingMessagesChan:
+	case tssMessage := <-tssState.tssOutgoingMessagesChan:
 		tssMessageBytes, _, err := tssMessage.WireBytes()
 		if err != nil {
 			return nil, fmt.Errorf(
@@ -373,11 +503,7 @@ func (trtm *tssRoundThreeMember) tssRoundThree(
 			)
 		}
 
-		return &tssRoundThreeMessage{
-			senderID:         trtm.id,
-			broadcastPayload: tssMessageBytes,
-			sessionID:        trtm.sessionID,
-		}, nil
+		return &tssRoundThreeMessage{broadcastPayload: tssMessageBytes}, nil
 	case <-ctx.Done():
 		return nil, fmt.Errorf(
 			"TSS round three outgoing message was not generated on time",
@@ -387,19 +513,70 @@ func (trtm *tssRoundThreeMember) tssRoundThree(
 
 // tssRoundFour performs the fourth round of the TSS process. The outcome of
 // that round is a message containing TSS round four components.
+// This function performs the fourth round of TSS for all messages being signed,
+// sequentially.
 func (trfm *tssRoundFourMember) tssRoundFour(
 	ctx context.Context,
-	tssRoundThreeMessages []*tssRoundThreeMessage,
+	tssRoundThreeCompositeMessages []*tssRoundThreeCompositeMessage,
+) (*tssRoundFourCompositeMessage, error) {
+	tssRoundFourMessages := make(map[string]*tssRoundFourMessage)
+
+	// For every message being signed...
+	for messageToSign, tssState := range trfm.tssStates {
+
+		// First, flatten the composite TSS messages. We go through all composite
+		// TSS messages, find the ones for the given message being signed and
+		// group them in a map, keyed by the sender member index.
+		tssRoundThreeMessages := make(map[group.MemberIndex]*tssRoundThreeMessage)
+
+		for _, tssRoundThreeCompositeMessage := range tssRoundThreeCompositeMessages {
+			message, ok := tssRoundThreeCompositeMessage.tssRoundThreeMessages[messageToSign]
+			if !ok {
+				return nil, fmt.Errorf(
+					"missing tss round three message from member [%v] to sign message [%v]",
+					tssRoundThreeCompositeMessage.senderID,
+					messageToSign,
+				)
+			}
+
+			tssRoundThreeMessages[tssRoundThreeCompositeMessage.senderID] = message
+		}
+
+		tssRoundFourMessage, err := trfm.tssRoundFourInternal(
+			ctx,
+			tssState,
+			tssRoundThreeMessages,
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		tssRoundFourMessages[messageToSign] = tssRoundFourMessage
+	}
+
+	return &tssRoundFourCompositeMessage{
+		senderID:             trfm.id,
+		sessionID:            trfm.sessionID,
+		tssRoundFourMessages: tssRoundFourMessages,
+	}, nil
+}
+
+// tssRoundFourInternal performs the fourth round of the TSS process. The outcome
+// of that round is a message containing TSS round four components.
+// This function is called in a context of a single message being signed for
+// the given TSS state.
+func (trfm *tssRoundFourMember) tssRoundFourInternal(
+	ctx context.Context,
+	tssState *tssState,
+	tssRoundThreeMessages map[group.MemberIndex]*tssRoundThreeMessage,
 ) (*tssRoundFourMessage, error) {
 	// Use messages from round three to update the local party and advance
 	// to round four.
-	for _, tssRoundThreeMessage := range tssRoundThreeMessages {
-		senderID := tssRoundThreeMessage.SenderID()
-
-		_, tssErr := trfm.tssParty.UpdateFromBytes(
+	for senderID, tssRoundThreeMessage := range tssRoundThreeMessages {
+		_, tssErr := tssState.tssParty.UpdateFromBytes(
 			tssRoundThreeMessage.broadcastPayload,
 			common.ResolveSortedTssPartyID(
-				trfm.tssParameters,
+				tssState.tssParameters,
 				senderID,
 				trfm.identityConverter,
 			),
@@ -417,7 +594,7 @@ func (trfm *tssRoundFourMember) tssRoundFour(
 
 	// We expect exactly one TSS message to be produced in this phase.
 	select {
-	case tssMessage := <-trfm.tssOutgoingMessagesChan:
+	case tssMessage := <-tssState.tssOutgoingMessagesChan:
 		tssMessageBytes, _, err := tssMessage.WireBytes()
 		if err != nil {
 			return nil, fmt.Errorf(
@@ -427,9 +604,7 @@ func (trfm *tssRoundFourMember) tssRoundFour(
 		}
 
 		return &tssRoundFourMessage{
-			senderID:         trfm.id,
 			broadcastPayload: tssMessageBytes,
-			sessionID:        trfm.sessionID,
 		}, nil
 	case <-ctx.Done():
 		return nil, fmt.Errorf(
@@ -440,19 +615,71 @@ func (trfm *tssRoundFourMember) tssRoundFour(
 
 // tssRoundFive performs the fifth round of the TSS process. The outcome of
 // that round is a message containing TSS round five components.
+// This function performs the fifth round of TSS for all messages being signed,
+// sequentially.
 func (trfm *tssRoundFiveMember) tssRoundFive(
 	ctx context.Context,
-	tssRoundFourMessages []*tssRoundFourMessage,
+	tssRoundFourCompositeMessages []*tssRoundFourCompositeMessage,
+) (*tssRoundFiveCompositeMessage, error) {
+	tssRoundFiveMessages := make(map[string]*tssRoundFiveMessage)
+
+	// For every message being signed...
+	for messageToSign, tssState := range trfm.tssStates {
+
+		// First, flatten the composite TSS messages. We go through all composite
+		// TSS messages, find the ones for the given message being signed and
+		// group them in a map, keyed by the sender member index.
+		tssRoundFourMessages := make(map[group.MemberIndex]*tssRoundFourMessage)
+
+		for _, tssRoundFourCompositeMessage := range tssRoundFourCompositeMessages {
+			message, ok := tssRoundFourCompositeMessage.tssRoundFourMessages[messageToSign]
+			if !ok {
+				return nil, fmt.Errorf(
+					"missing tss round four message from member [%v] to sign message [%v]",
+					tssRoundFourCompositeMessage.senderID,
+					messageToSign,
+				)
+			}
+
+			tssRoundFourMessages[tssRoundFourCompositeMessage.senderID] = message
+		}
+
+		tssRoundFiveMessage, err := trfm.tssRoundFiveInternal(
+			ctx,
+			tssState,
+			tssRoundFourMessages,
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		tssRoundFiveMessages[messageToSign] = tssRoundFiveMessage
+	}
+
+	return &tssRoundFiveCompositeMessage{
+		senderID:             trfm.id,
+		sessionID:            trfm.sessionID,
+		tssRoundFiveMessages: tssRoundFiveMessages,
+	}, nil
+}
+
+// tssRoundFive performs the fifth round of the TSS process. The outcome of
+// that round is a message containing TSS round five components.
+// This function is called in a context of a single message being signed for
+// the given TSS state.
+func (trfm *tssRoundFiveMember) tssRoundFiveInternal(
+	ctx context.Context,
+	tssState *tssState,
+	tssRoundFourMessages map[group.MemberIndex]*tssRoundFourMessage,
 ) (*tssRoundFiveMessage, error) {
 	// Use messages from round four to update the local party and advance
 	// to round five.
-	for _, tssRoundFourMessage := range tssRoundFourMessages {
-		senderID := tssRoundFourMessage.SenderID()
+	for senderID, tssRoundFourMessage := range tssRoundFourMessages {
 
-		_, tssErr := trfm.tssParty.UpdateFromBytes(
+		_, tssErr := tssState.tssParty.UpdateFromBytes(
 			tssRoundFourMessage.broadcastPayload,
 			common.ResolveSortedTssPartyID(
-				trfm.tssParameters,
+				tssState.tssParameters,
 				senderID,
 				trfm.identityConverter,
 			),
@@ -470,7 +697,7 @@ func (trfm *tssRoundFiveMember) tssRoundFive(
 
 	// We expect exactly one TSS message to be produced in this phase.
 	select {
-	case tssMessage := <-trfm.tssOutgoingMessagesChan:
+	case tssMessage := <-tssState.tssOutgoingMessagesChan:
 		tssMessageBytes, _, err := tssMessage.WireBytes()
 		if err != nil {
 			return nil, fmt.Errorf(
@@ -480,9 +707,7 @@ func (trfm *tssRoundFiveMember) tssRoundFive(
 		}
 
 		return &tssRoundFiveMessage{
-			senderID:         trfm.id,
 			broadcastPayload: tssMessageBytes,
-			sessionID:        trfm.sessionID,
 		}, nil
 	case <-ctx.Done():
 		return nil, fmt.Errorf(
@@ -493,19 +718,70 @@ func (trfm *tssRoundFiveMember) tssRoundFive(
 
 // tssRoundSix performs the sixth round of the TSS process. The outcome of
 // that round is a message containing TSS round six components.
+// This function performs the first round of TSS for all messages being signed,
+// sequentially.
 func (trsm *tssRoundSixMember) tssRoundSix(
 	ctx context.Context,
-	tssRoundFiveMessages []*tssRoundFiveMessage,
+	tssRoundFiveCompositeMessages []*tssRoundFiveCompositeMessage,
+) (*tssRoundSixCompositeMessage, error) {
+	tssRoundSixMessages := make(map[string]*tssRoundSixMessage)
+
+	// For every message being signed...
+	for messageToSign, tssState := range trsm.tssStates {
+
+		// First, flatten the composite TSS messages. We go through all composite
+		// TSS messages, find the ones for the given message being signed and
+		// group them in a map, keyed by the sender member index.
+		tssRoundFiveMessages := make(map[group.MemberIndex]*tssRoundFiveMessage)
+
+		for _, tssRoundFiveCompositeMessage := range tssRoundFiveCompositeMessages {
+			message, ok := tssRoundFiveCompositeMessage.tssRoundFiveMessages[messageToSign]
+			if !ok {
+				return nil, fmt.Errorf(
+					"missing tss round five message from member [%v] to sign message [%v]",
+					tssRoundFiveCompositeMessage.senderID,
+					messageToSign,
+				)
+			}
+
+			tssRoundFiveMessages[tssRoundFiveCompositeMessage.senderID] = message
+		}
+
+		tssRoundSixMessage, err := trsm.tssRoundSixInternal(
+			ctx,
+			tssState,
+			tssRoundFiveMessages,
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		tssRoundSixMessages[messageToSign] = tssRoundSixMessage
+	}
+
+	return &tssRoundSixCompositeMessage{
+		senderID:            trsm.id,
+		sessionID:           trsm.sessionID,
+		tssRoundSixMessages: tssRoundSixMessages,
+	}, nil
+}
+
+// tssRoundSixInternal performs the sixth round of the TSS process. The outcome
+// of that round is a message containing TSS round six components.
+// This function is called in a context of a single message being signed for
+// the given TSS state.
+func (trsm *tssRoundSixMember) tssRoundSixInternal(
+	ctx context.Context,
+	tssState *tssState,
+	tssRoundFiveMessages map[group.MemberIndex]*tssRoundFiveMessage,
 ) (*tssRoundSixMessage, error) {
 	// Use messages from round five to update the local party and advance
 	// to round six.
-	for _, tssRoundFiveMessage := range tssRoundFiveMessages {
-		senderID := tssRoundFiveMessage.SenderID()
-
-		_, tssErr := trsm.tssParty.UpdateFromBytes(
+	for senderID, tssRoundFiveMessage := range tssRoundFiveMessages {
+		_, tssErr := tssState.tssParty.UpdateFromBytes(
 			tssRoundFiveMessage.broadcastPayload,
 			common.ResolveSortedTssPartyID(
-				trsm.tssParameters,
+				tssState.tssParameters,
 				senderID,
 				trsm.identityConverter,
 			),
@@ -523,7 +799,7 @@ func (trsm *tssRoundSixMember) tssRoundSix(
 
 	// We expect exactly one TSS message to be produced in this phase.
 	select {
-	case tssMessage := <-trsm.tssOutgoingMessagesChan:
+	case tssMessage := <-tssState.tssOutgoingMessagesChan:
 		tssMessageBytes, _, err := tssMessage.WireBytes()
 		if err != nil {
 			return nil, fmt.Errorf(
@@ -533,9 +809,7 @@ func (trsm *tssRoundSixMember) tssRoundSix(
 		}
 
 		return &tssRoundSixMessage{
-			senderID:         trsm.id,
 			broadcastPayload: tssMessageBytes,
-			sessionID:        trsm.sessionID,
 		}, nil
 	case <-ctx.Done():
 		return nil, fmt.Errorf(
@@ -546,19 +820,70 @@ func (trsm *tssRoundSixMember) tssRoundSix(
 
 // tssRoundSeven performs the seventh round of the TSS process. The outcome of
 // that round is a message containing TSS round seven components.
+// This function performs the seventh round of TSS for all messages being signed,
+// sequentially.
 func (trsm *tssRoundSevenMember) tssRoundSeven(
 	ctx context.Context,
-	tssRoundSixMessages []*tssRoundSixMessage,
+	tssRoundSixCompositeMessages []*tssRoundSixCompositeMessage,
+) (*tssRoundSevenCompositeMessage, error) {
+	tssRoundSevenMessages := make(map[string]*tssRoundSevenMessage)
+
+	// For every message being signed...
+	for messageToSign, tssState := range trsm.tssStates {
+
+		// First, flatten the composite TSS messages. We go through all composite
+		// TSS messages, find the ones for the given message being signed and
+		// group them in a map, keyed by the sender member index.
+		tssRoundSixMessages := make(map[group.MemberIndex]*tssRoundSixMessage)
+
+		for _, tssRoundSixCompositeMessage := range tssRoundSixCompositeMessages {
+			message, ok := tssRoundSixCompositeMessage.tssRoundSixMessages[messageToSign]
+			if !ok {
+				return nil, fmt.Errorf(
+					"missing tss round six message from member [%v] to sign message [%v]",
+					tssRoundSixCompositeMessage.senderID,
+					messageToSign,
+				)
+			}
+
+			tssRoundSixMessages[tssRoundSixCompositeMessage.senderID] = message
+		}
+
+		tssRoundSevenMessage, err := trsm.tssRoundSevenInternal(
+			ctx,
+			tssState,
+			tssRoundSixMessages,
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		tssRoundSevenMessages[messageToSign] = tssRoundSevenMessage
+	}
+
+	return &tssRoundSevenCompositeMessage{
+		senderID:              trsm.id,
+		sessionID:             trsm.sessionID,
+		tssRoundSevenMessages: tssRoundSevenMessages,
+	}, nil
+}
+
+// tssRoundSeven performs the seventh round of the TSS process. The outcome of
+// that round is a message containing TSS round seven components.
+// This function is called in a context of a single message being signed for
+// the given TSS state.
+func (trsm *tssRoundSevenMember) tssRoundSevenInternal(
+	ctx context.Context,
+	tssState *tssState,
+	tssRoundSixMessages map[group.MemberIndex]*tssRoundSixMessage,
 ) (*tssRoundSevenMessage, error) {
 	// Use messages from round six to update the local party and advance
 	// to round seven.
-	for _, tssRoundSixMessage := range tssRoundSixMessages {
-		senderID := tssRoundSixMessage.SenderID()
-
-		_, tssErr := trsm.tssParty.UpdateFromBytes(
+	for senderID, tssRoundSixMessage := range tssRoundSixMessages {
+		_, tssErr := tssState.tssParty.UpdateFromBytes(
 			tssRoundSixMessage.broadcastPayload,
 			common.ResolveSortedTssPartyID(
-				trsm.tssParameters,
+				tssState.tssParameters,
 				senderID,
 				trsm.identityConverter,
 			),
@@ -576,7 +901,7 @@ func (trsm *tssRoundSevenMember) tssRoundSeven(
 
 	// We expect exactly one TSS message to be produced in this phase.
 	select {
-	case tssMessage := <-trsm.tssOutgoingMessagesChan:
+	case tssMessage := <-tssState.tssOutgoingMessagesChan:
 		tssMessageBytes, _, err := tssMessage.WireBytes()
 		if err != nil {
 			return nil, fmt.Errorf(
@@ -586,9 +911,7 @@ func (trsm *tssRoundSevenMember) tssRoundSeven(
 		}
 
 		return &tssRoundSevenMessage{
-			senderID:         trsm.id,
 			broadcastPayload: tssMessageBytes,
-			sessionID:        trsm.sessionID,
 		}, nil
 	case <-ctx.Done():
 		return nil, fmt.Errorf(
@@ -599,19 +922,70 @@ func (trsm *tssRoundSevenMember) tssRoundSeven(
 
 // tssRoundEight performs the eighth round of the TSS process. The outcome of
 // that round is a message containing TSS round eight components.
+// This function performs the eighth round of TSS for all messages being signed,
+// sequentially.
 func (trem *tssRoundEightMember) tssRoundEight(
 	ctx context.Context,
-	tssRoundSevenMessages []*tssRoundSevenMessage,
+	tssRoundSevenCompositeMessages []*tssRoundSevenCompositeMessage,
+) (*tssRoundEightCompositeMessage, error) {
+	tssRoundEightMessages := make(map[string]*tssRoundEightMessage)
+
+	// For every message being signed...
+	for messageToSign, tssState := range trem.tssStates {
+
+		// First, flatten the composite TSS messages. We go through all composite
+		// TSS messages, find the ones for the given message being signed and
+		// group them in a map, keyed by the sender member index.
+		tssRoundSevenMessages := make(map[group.MemberIndex]*tssRoundSevenMessage)
+
+		for _, tssRoundSevenCompositeMessage := range tssRoundSevenCompositeMessages {
+			message, ok := tssRoundSevenCompositeMessage.tssRoundSevenMessages[messageToSign]
+			if !ok {
+				return nil, fmt.Errorf(
+					"missing tss round seven message from member [%v] to sign message [%v]",
+					tssRoundSevenCompositeMessage.senderID,
+					messageToSign,
+				)
+			}
+
+			tssRoundSevenMessages[tssRoundSevenCompositeMessage.senderID] = message
+		}
+
+		tssRoundEightMessage, err := trem.tssRoundEightInternal(
+			ctx,
+			tssState,
+			tssRoundSevenMessages,
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		tssRoundEightMessages[messageToSign] = tssRoundEightMessage
+	}
+
+	return &tssRoundEightCompositeMessage{
+		senderID:              trem.id,
+		sessionID:             trem.sessionID,
+		tssRoundEightMessages: tssRoundEightMessages,
+	}, nil
+}
+
+// tssRoundEightInternal performs the eighth round of the TSS process. The outcome
+// of that round is a message containing TSS round eight components.
+// This function is called in a context of a single message being signed for
+// the given TSS state.
+func (trem *tssRoundEightMember) tssRoundEightInternal(
+	ctx context.Context,
+	tssState *tssState,
+	tssRoundSevenMessages map[group.MemberIndex]*tssRoundSevenMessage,
 ) (*tssRoundEightMessage, error) {
 	// Use messages from round seven to update the local party and advance
 	// to round eight.
-	for _, tssRoundSevenMessage := range tssRoundSevenMessages {
-		senderID := tssRoundSevenMessage.SenderID()
-
-		_, tssErr := trem.tssParty.UpdateFromBytes(
+	for senderID, tssRoundSevenMessage := range tssRoundSevenMessages {
+		_, tssErr := tssState.tssParty.UpdateFromBytes(
 			tssRoundSevenMessage.broadcastPayload,
 			common.ResolveSortedTssPartyID(
-				trem.tssParameters,
+				tssState.tssParameters,
 				senderID,
 				trem.identityConverter,
 			),
@@ -629,7 +1003,7 @@ func (trem *tssRoundEightMember) tssRoundEight(
 
 	// We expect exactly one TSS message to be produced in this phase.
 	select {
-	case tssMessage := <-trem.tssOutgoingMessagesChan:
+	case tssMessage := <-tssState.tssOutgoingMessagesChan:
 		tssMessageBytes, _, err := tssMessage.WireBytes()
 		if err != nil {
 			return nil, fmt.Errorf(
@@ -639,9 +1013,7 @@ func (trem *tssRoundEightMember) tssRoundEight(
 		}
 
 		return &tssRoundEightMessage{
-			senderID:         trem.id,
 			broadcastPayload: tssMessageBytes,
-			sessionID:        trem.sessionID,
 		}, nil
 	case <-ctx.Done():
 		return nil, fmt.Errorf(
@@ -652,19 +1024,70 @@ func (trem *tssRoundEightMember) tssRoundEight(
 
 // tssRoundNine performs the ninth round of the TSS process. The outcome of
 // that round is a message containing TSS round nine components.
+// This function performs the ninth round of TSS for all messages being signed,
+// sequentially.
 func (trnm *tssRoundNineMember) tssRoundNine(
 	ctx context.Context,
-	tssRoundEightMessages []*tssRoundEightMessage,
+	tssRoundEightCompositeMessages []*tssRoundEightCompositeMessage,
+) (*tssRoundNineCompositeMessage, error) {
+	tssRoundNineMessages := make(map[string]*tssRoundNineMessage)
+
+	// For every message being signed...
+	for messageToSign, tssState := range trnm.tssStates {
+
+		// First, flatten the composite TSS messages. We go through all composite
+		// TSS messages, find the ones for the given message being signed and
+		// group them in a map, keyed by the sender member index.
+		tssRoundEightMessages := make(map[group.MemberIndex]*tssRoundEightMessage)
+
+		for _, tssRoundEightCompositeMessage := range tssRoundEightCompositeMessages {
+			message, ok := tssRoundEightCompositeMessage.tssRoundEightMessages[messageToSign]
+			if !ok {
+				return nil, fmt.Errorf(
+					"missing tss round eight message from member [%v] to sign message [%v]",
+					tssRoundEightCompositeMessage.senderID,
+					messageToSign,
+				)
+			}
+
+			tssRoundEightMessages[tssRoundEightCompositeMessage.senderID] = message
+		}
+
+		tssRoundNineMessage, err := trnm.tssRoundNineInternal(
+			ctx,
+			tssState,
+			tssRoundEightMessages,
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		tssRoundNineMessages[messageToSign] = tssRoundNineMessage
+	}
+
+	return &tssRoundNineCompositeMessage{
+		senderID:             trnm.id,
+		sessionID:            trnm.sessionID,
+		tssRoundNineMessages: tssRoundNineMessages,
+	}, nil
+}
+
+// tssRoundNineInternal performs the ninth round of the TSS process. The outcome
+// of that round is a message containing TSS round nine components.
+// This function is called in a context of a single message being signed for
+// the given TSS state.
+func (trnm *tssRoundNineMember) tssRoundNineInternal(
+	ctx context.Context,
+	tssState *tssState,
+	tssRoundEightMessages map[group.MemberIndex]*tssRoundEightMessage,
 ) (*tssRoundNineMessage, error) {
 	// Use messages from round eight to update the local party and advance
 	// to round nine.
-	for _, tssRoundEightMessage := range tssRoundEightMessages {
-		senderID := tssRoundEightMessage.SenderID()
-
-		_, tssErr := trnm.tssParty.UpdateFromBytes(
+	for senderID, tssRoundEightMessage := range tssRoundEightMessages {
+		_, tssErr := tssState.tssParty.UpdateFromBytes(
 			tssRoundEightMessage.broadcastPayload,
 			common.ResolveSortedTssPartyID(
-				trnm.tssParameters,
+				tssState.tssParameters,
 				senderID,
 				trnm.identityConverter,
 			),
@@ -682,7 +1105,7 @@ func (trnm *tssRoundNineMember) tssRoundNine(
 
 	// We expect exactly one TSS message to be produced in this phase.
 	select {
-	case tssMessage := <-trnm.tssOutgoingMessagesChan:
+	case tssMessage := <-tssState.tssOutgoingMessagesChan:
 		tssMessageBytes, _, err := tssMessage.WireBytes()
 		if err != nil {
 			return nil, fmt.Errorf(
@@ -692,9 +1115,7 @@ func (trnm *tssRoundNineMember) tssRoundNine(
 		}
 
 		return &tssRoundNineMessage{
-			senderID:         trnm.id,
 			broadcastPayload: tssMessageBytes,
-			sessionID:        trnm.sessionID,
 		}, nil
 	case <-ctx.Done():
 		return nil, fmt.Errorf(
@@ -704,19 +1125,61 @@ func (trnm *tssRoundNineMember) tssRoundNine(
 }
 
 // tssFinalize finalizes the TSS process by producing a result.
+// This function finalizes TSS process for all messages being signed,
+// sequentially.
 func (fm *finalizingMember) tssFinalize(
 	ctx context.Context,
-	tssRoundNineMessages []*tssRoundNineMessage,
+	tssRoundNineCompositeMessages []*tssRoundNineCompositeMessage,
+) error {
+	// For every message being signed...
+	for messageToSign, tssState := range fm.tssStates {
+
+		// First, flatten the composite TSS messages. We go through all composite
+		// TSS messages, find the ones for the given message being signed and
+		// group them in a map, keyed by the sender member index.
+		tssRoundNineMessages := make(map[group.MemberIndex]*tssRoundNineMessage)
+
+		for _, tssRoundNineCompositeMessage := range tssRoundNineCompositeMessages {
+			message, ok := tssRoundNineCompositeMessage.tssRoundNineMessages[messageToSign]
+			if !ok {
+				return fmt.Errorf(
+					"missing tss round nine message from member [%v] to sign message [%v]",
+					tssRoundNineCompositeMessage.senderID,
+					messageToSign,
+				)
+			}
+
+			tssRoundNineMessages[tssRoundNineCompositeMessage.senderID] = message
+		}
+
+		err := fm.tssFinalizeInternal(
+			ctx,
+			tssState,
+			tssRoundNineMessages,
+		)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+// tssFinalize finalizes the TSS process by producing a result.
+// This function is called in a context of a single message being signed for
+// the given TSS state.
+func (fm *finalizingMember) tssFinalizeInternal(
+	ctx context.Context,
+	tssState *tssState,
+	tssRoundNineMessages map[group.MemberIndex]*tssRoundNineMessage,
 ) error {
 	// Use messages from round nine to update the local party and get the
 	// result.
-	for _, tssRoundNineMessage := range tssRoundNineMessages {
-		senderID := tssRoundNineMessage.SenderID()
-
-		_, tssErr := fm.tssParty.UpdateFromBytes(
+	for senderID, tssRoundNineMessage := range tssRoundNineMessages {
+		_, tssErr := tssState.tssParty.UpdateFromBytes(
 			tssRoundNineMessage.broadcastPayload,
 			common.ResolveSortedTssPartyID(
-				fm.tssParameters,
+				tssState.tssParameters,
 				senderID,
 				fm.identityConverter,
 			),
@@ -733,7 +1196,7 @@ func (fm *finalizingMember) tssFinalize(
 	}
 
 	select {
-	case tssResult := <-fm.tssResultChan:
+	case tssResult := <-tssState.tssResultChan:
 		fm.tssResult = &tssResult
 		return nil
 	case <-ctx.Done():

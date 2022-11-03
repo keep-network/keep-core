@@ -28,8 +28,8 @@ type member struct {
 	membershipValidator *group.MembershipValidator
 	// Identifier of the particular signing session this member is part of.
 	sessionID string
-	// Message that is the subject of the signing process.
-	message *big.Int
+	// Messages that are the subject of the signing process.
+	messages []*big.Int
 	// tECDSA private key share of the member.
 	privateKeyShare *tecdsa.PrivateKeyShare
 	// Instance of the member identity converter.
@@ -44,7 +44,7 @@ func newMember(
 	dishonestThreshold int,
 	membershipValidator *group.MembershipValidator,
 	sessionID string,
-	message *big.Int,
+	messages []*big.Int,
 	privateKeyShare *tecdsa.PrivateKeyShare,
 ) *member {
 	return &member{
@@ -53,7 +53,7 @@ func newMember(
 		group:               group.NewGroup(dishonestThreshold, groupSize),
 		membershipValidator: membershipValidator,
 		sessionID:           sessionID,
-		message:             message,
+		messages:            messages,
 		privateKeyShare:     privateKeyShare,
 		identityConverter:   &identityConverter{keys: privateKeyShare.Data().Ks},
 	}
@@ -124,41 +124,58 @@ type symmetricKeyGeneratingMember struct {
 
 // initializeTssRoundOne returns a member to perform next protocol operations.
 func (skgm *symmetricKeyGeneratingMember) initializeTssRoundOne() *tssRoundOneMember {
-	// Set up the local TSS party using only operating members. This effectively
-	// removes all excluded members who were marked as disqualified at the
-	// beginning of the protocol.
-	tssPartyID, groupTssPartiesIDs := common.GenerateTssPartiesIDs(
-		skgm.id,
-		skgm.group.OperatingMemberIDs(),
-		skgm.identityConverter,
-	)
+	tssStates := make(map[string]*tssState)
 
-	tssParameters := tss.NewParameters(
-		tecdsa.Curve,
-		tss.NewPeerContext(tss.SortPartyIDs(groupTssPartiesIDs)),
-		tssPartyID,
-		len(groupTssPartiesIDs),
-		skgm.group.HonestThreshold()-1,
-	)
+	// Setup a separate TSS party instance for each message being signed.
+	for _, message := range skgm.messages {
+		// Set up the local TSS party using only operating members. This effectively
+		// removes all excluded members who were marked as disqualified at the
+		// beginning of the protocol.
+		tssPartyID, groupTssPartiesIDs := common.GenerateTssPartiesIDs(
+			skgm.id,
+			skgm.group.OperatingMemberIDs(),
+			skgm.identityConverter,
+		)
 
-	tssOutgoingMessagesChan := make(chan tss.Message, len(groupTssPartiesIDs))
-	tssResultChan := make(chan tsslibcommon.SignatureData, 1)
+		tssParameters := tss.NewParameters(
+			tecdsa.Curve,
+			tss.NewPeerContext(tss.SortPartyIDs(groupTssPartiesIDs)),
+			tssPartyID,
+			len(groupTssPartiesIDs),
+			skgm.group.HonestThreshold()-1,
+		)
 
-	tssParty := signing.NewLocalParty(
-		skgm.message,
-		tssParameters,
-		skgm.privateKeyShare.Data(),
-		tssOutgoingMessagesChan,
-		tssResultChan,
-	)
+		tssOutgoingMessagesChan := make(chan tss.Message, len(groupTssPartiesIDs))
+		tssResultChan := make(chan tsslibcommon.SignatureData, 1)
+
+		tssParty := signing.NewLocalParty(
+			message,
+			tssParameters,
+			skgm.privateKeyShare.Data(),
+			tssOutgoingMessagesChan,
+			tssResultChan,
+		)
+
+		tssStates[message.Text(16)] = &tssState{
+			tssParty:                tssParty,
+			tssParameters:           tssParameters,
+			tssOutgoingMessagesChan: tssOutgoingMessagesChan,
+			tssResultChan:           tssResultChan,
+		}
+	}
 
 	return &tssRoundOneMember{
 		symmetricKeyGeneratingMember: skgm,
-		tssParty:                     tssParty,
-		tssParameters:                tssParameters,
-		tssOutgoingMessagesChan:      tssOutgoingMessagesChan,
-		tssResultChan:                tssResultChan,
+		tssStates:                    tssStates,
 	}
+}
+
+// tssState aggregates TSS protocol state for the given message being signed.
+type tssState struct {
+	tssParty                tss.Party
+	tssParameters           *tss.Parameters
+	tssOutgoingMessagesChan <-chan tss.Message
+	tssResultChan           <-chan tsslibcommon.SignatureData
 }
 
 // tssRoundOneMember represents one member in a signing group performing the
@@ -166,10 +183,9 @@ func (skgm *symmetricKeyGeneratingMember) initializeTssRoundOne() *tssRoundOneMe
 type tssRoundOneMember struct {
 	*symmetricKeyGeneratingMember
 
-	tssParty                tss.Party
-	tssParameters           *tss.Parameters
-	tssOutgoingMessagesChan <-chan tss.Message
-	tssResultChan           <-chan tsslibcommon.SignatureData
+	// Separate TSS state for each message being signed. Key is the hex string
+	// of the message being signed.
+	tssStates map[string]*tssState
 }
 
 // initializeTssRoundTwo returns a member to perform next protocol operations.
