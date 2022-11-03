@@ -9,57 +9,93 @@ message EphemeralPublicKeyMessage {
     string sessionID = 3;
 }
 
-message TSSRoundOneMessage {
+message TSSRoundOneCompositeMessage {
+    message TSSRoundOneMessage {
+        bytes broadcastPayload = 1;
+        map<uint32, bytes> peersPayload = 2;
+    }
+
     uint32 senderID = 1;
-    bytes broadcastPayload = 2;
-    map<uint32, bytes> peersPayload = 3;
-    string sessionID = 4;
+    string sessionID = 2;
+    map<string, TSSRoundOneMessage> tssRoundOneMessages = 3;
 }
 
-message TSSRoundTwoMessage {
+message TSSRoundTwoCompositeMessage {
+    message TSSRoundTwoMessage {
+        map<uint32, bytes> peersPayload = 1;
+    }
+
     uint32 senderID = 1;
-    map<uint32, bytes> peersPayload = 2;
-    string sessionID = 3;
+    string sessionID = 2;
+    map<string, TSSRoundTwoMessage> tssRoundTwoMessages = 3;
 }
 
-message TSSRoundThreeMessage {
+message TSSRoundThreeCompositeMessage {
+    message TSSRoundThreeMessage {
+        bytes broadcastPayload = 1;
+    }
+
     uint32 senderID = 1;
-    bytes broadcastPayload = 2;
-    string sessionID = 3;
+    string sessionID = 2;
+    map<string, TSSRoundThreeMessage> tssRoundThreeMessages = 3;
 }
 
-message TSSRoundFourMessage {
+message TSSRoundFourCompositeMessage {
+    message TSSRoundFourMessage {
+        bytes broadcastPayload = 1;
+    }
+
     uint32 senderID = 1;
-    bytes broadcastPayload = 2;
-    string sessionID = 3;
+    string sessionID = 2;
+    map<string, TSSRoundFourMessage> tssRoundFourMessages = 3;
 }
 
-message TSSRoundFiveMessage {
+message TSSRoundFiveCompositeMessage {
+    message TSSRoundFiveMessage {
+        bytes broadcastPayload = 1;
+    }
+
     uint32 senderID = 1;
-    bytes broadcastPayload = 2;
-    string sessionID = 3;
+    string sessionID = 2;
+    map<string, TSSRoundFiveMessage> tssRoundFiveMessages = 3;
 }
 
-message TSSRoundSixMessage {
+message TSSRoundSixCompositeMessage {
+    message TSSRoundSixMessage {
+        bytes broadcastPayload = 1;
+    }
+
     uint32 senderID = 1;
-    bytes broadcastPayload = 2;
-    string sessionID = 3;
+    string sessionID = 2;
+    map<string, TSSRoundSixMessage> tssRoundSixMessages = 3;
 }
 
-message TSSRoundSevenMessage {
+message TSSRoundSevenCompositeMessage {
+    message TSSRoundSevenMessage {
+        bytes broadcastPayload = 1;
+    }
+
     uint32 senderID = 1;
-    bytes broadcastPayload = 2;
-    string sessionID = 3;
+    string sessionID = 2;
+    map<string, TSSRoundSevenMessage> tssRoundSevenMessages = 3;
 }
 
-message TSSRoundEightMessage {
+message TSSRoundEightCompositeMessage {
+    message TSSRoundEightMessage {
+        bytes broadcastPayload = 1;
+    }
+
     uint32 senderID = 1;
-    bytes broadcastPayload = 2;
-    string sessionID = 3;
+    string sessionID = 2;
+    map<string, TSSRoundEightMessage> tssRoundEightMessages = 3;
 }
 
-message TSSRoundNineMessage {
+message TSSRoundNineCompositeMessage {
+    message TSSRoundNineMessage {
+       bytes broadcastPayload = 1;
+    }
+
     uint32 senderID = 1;
-    bytes broadcastPayload = 2;
-    string sessionID = 3;
+    string sessionID = 2;
+    map<string, TSSRoundNineMessage> tssRoundNineMessages = 3;
 }

@@ -46,228 +46,282 @@ func (epkm *ephemeralPublicKeyMessage) Type() string {
 	return messageTypePrefix + "ephemeral_public_key_message"
 }
 
+// tssRoundOneCompositeMessage is a composite of tssRoundOneMessages keyed by
+// the message being signed.
+type tssRoundOneCompositeMessage struct {
+	senderID  group.MemberIndex
+	sessionID string
+
+	tssRoundOneMessages map[string]*tssRoundOneMessage
+}
+
 // tssRoundOneMessage is a message payload that carries the sender's
 // TSS round one components.
 type tssRoundOneMessage struct {
-	senderID group.MemberIndex
-
 	broadcastPayload []byte
 	peersPayload     map[group.MemberIndex][]byte
-	sessionID        string
 }
 
 // SenderID returns protocol-level identifier of the message sender.
-func (trom *tssRoundOneMessage) SenderID() group.MemberIndex {
-	return trom.senderID
+func (trocm *tssRoundOneCompositeMessage) SenderID() group.MemberIndex {
+	return trocm.senderID
 }
 
 // SessionID returns the session identifier of the message.
-func (trom *tssRoundOneMessage) SessionID() string {
-	return trom.sessionID
+func (trocm *tssRoundOneCompositeMessage) SessionID() string {
+	return trocm.sessionID
 }
 
-// Type returns a string describing a tssRoundOneMessage type for
+// Type returns a string describing a tssRoundOneCompositeMessage type for
 // marshaling purposes.
-func (trom *tssRoundOneMessage) Type() string {
-	return messageTypePrefix + "tss_round_one_message"
+func (trocm *tssRoundOneCompositeMessage) Type() string {
+	return messageTypePrefix + "tss_round_one_composite_message"
+}
+
+// tssRoundTwoCompositeMessage is a composite of tssRoundTwoMessages keyed by the
+// message being signed.
+type tssRoundTwoCompositeMessage struct {
+	senderID  group.MemberIndex
+	sessionID string
+
+	tssRoundTwoMessages map[string]*tssRoundTwoMessage
 }
 
 // tssRoundTwoMessage is a message payload that carries the sender's
 // TSS round two components.
 type tssRoundTwoMessage struct {
-	senderID group.MemberIndex
-
 	peersPayload map[group.MemberIndex][]byte
-	sessionID    string
 }
 
 // SenderID returns protocol-level identifier of the message sender.
-func (trtm *tssRoundTwoMessage) SenderID() group.MemberIndex {
-	return trtm.senderID
+func (trtcm *tssRoundTwoCompositeMessage) SenderID() group.MemberIndex {
+	return trtcm.senderID
 }
 
 // SessionID returns the session identifier of the message.
-func (trtm *tssRoundTwoMessage) SessionID() string {
-	return trtm.sessionID
+func (trtcm *tssRoundTwoCompositeMessage) SessionID() string {
+	return trtcm.sessionID
 }
 
-// Type returns a string describing a tssRoundTwoMessage type for
+// Type returns a string describing a tssRoundTwoCompositeMessage type for
 // marshaling purposes.
-func (trtm *tssRoundTwoMessage) Type() string {
-	return messageTypePrefix + "tss_round_two_message"
+func (trtcm *tssRoundTwoCompositeMessage) Type() string {
+	return messageTypePrefix + "tss_round_two_composite_message"
+}
+
+// tssRoundThreeCompositeMessage is a composite of tssRoundThreeMessages keyed
+// by the message being signed.
+type tssRoundThreeCompositeMessage struct {
+	senderID  group.MemberIndex
+	sessionID string
+
+	tssRoundThreeMessages map[string]*tssRoundThreeMessage
 }
 
 // tssRoundThreeMessage is a message payload that carries the sender's
 // TSS round three components.
 type tssRoundThreeMessage struct {
-	senderID group.MemberIndex
-
 	broadcastPayload []byte
-	sessionID        string
 }
 
 // SenderID returns protocol-level identifier of the message sender.
-func (trtm *tssRoundThreeMessage) SenderID() group.MemberIndex {
-	return trtm.senderID
+func (trtcm *tssRoundThreeCompositeMessage) SenderID() group.MemberIndex {
+	return trtcm.senderID
 }
 
 // SessionID returns the session identifier of the message.
-func (trtm *tssRoundThreeMessage) SessionID() string {
-	return trtm.sessionID
+func (trtcm *tssRoundThreeCompositeMessage) SessionID() string {
+	return trtcm.sessionID
 }
 
-// Type returns a string describing a tssRoundThreeMessage type for
+// Type returns a string describing a tssRoundThreeCompositeMessage type for
 // marshaling purposes.
-func (trtm *tssRoundThreeMessage) Type() string {
-	return messageTypePrefix + "tss_round_three_message"
+func (trtcm *tssRoundThreeCompositeMessage) Type() string {
+	return messageTypePrefix + "tss_round_three_composite_message"
+}
+
+// tssRoundFourCompositeMessage is a composite of tssRoundFourMessages keyed by
+// the message being signed.
+type tssRoundFourCompositeMessage struct {
+	senderID  group.MemberIndex
+	sessionID string
+
+	tssRoundFourMessages map[string]*tssRoundFourMessage
 }
 
 // tssRoundFourMessage is a message payload that carries the sender's
 // TSS round four components.
 type tssRoundFourMessage struct {
-	senderID group.MemberIndex
-
 	broadcastPayload []byte
-	sessionID        string
 }
 
 // SenderID returns protocol-level identifier of the message sender.
-func (trfm *tssRoundFourMessage) SenderID() group.MemberIndex {
-	return trfm.senderID
+func (trfcm *tssRoundFourCompositeMessage) SenderID() group.MemberIndex {
+	return trfcm.senderID
 }
 
 // SessionID returns the session identifier of the message.
-func (trfm *tssRoundFourMessage) SessionID() string {
-	return trfm.sessionID
+func (trfcm *tssRoundFourCompositeMessage) SessionID() string {
+	return trfcm.sessionID
 }
 
-// Type returns a string describing a tssRoundFourMessage type for
+// Type returns a string describing a tssRoundFourCompositeMessage type for
 // marshaling purposes.
-func (trfm *tssRoundFourMessage) Type() string {
-	return messageTypePrefix + "tss_round_four_message"
+func (trfcm *tssRoundFourCompositeMessage) Type() string {
+	return messageTypePrefix + "tss_round_four_composite_message"
+}
+
+// tssRoundFiveCompositeMessage is a composite of tssRoundFiveMessage keyed by
+// the message being signed.
+type tssRoundFiveCompositeMessage struct {
+	senderID  group.MemberIndex
+	sessionID string
+
+	tssRoundFiveMessages map[string]*tssRoundFiveMessage
 }
 
 // tssRoundFiveMessage is a message payload that carries the sender's
 // TSS round five components.
 type tssRoundFiveMessage struct {
-	senderID group.MemberIndex
-
 	broadcastPayload []byte
-	sessionID        string
 }
 
 // SenderID returns protocol-level identifier of the message sender.
-func (trfm *tssRoundFiveMessage) SenderID() group.MemberIndex {
-	return trfm.senderID
+func (trfcm *tssRoundFiveCompositeMessage) SenderID() group.MemberIndex {
+	return trfcm.senderID
 }
 
 // SessionID returns the session identifier of the message.
-func (trfm *tssRoundFiveMessage) SessionID() string {
-	return trfm.sessionID
+func (trfcm *tssRoundFiveCompositeMessage) SessionID() string {
+	return trfcm.sessionID
 }
 
-// Type returns a string describing a tssRoundFiveMessage type for
+// Type returns a string describing a tssRoundFiveCompositeMessage type for
 // marshaling purposes.
-func (trfm *tssRoundFiveMessage) Type() string {
-	return messageTypePrefix + "tss_round_five_message"
+func (trfcm *tssRoundFiveCompositeMessage) Type() string {
+	return messageTypePrefix + "tss_round_five_composite_message"
+}
+
+// tssRoundSixCompositeMessage is a composite of tssRoundSixMessage keyed by
+// the message being signed.
+type tssRoundSixCompositeMessage struct {
+	senderID  group.MemberIndex
+	sessionID string
+
+	tssRoundSixMessages map[string]*tssRoundSixMessage
 }
 
 // tssRoundSixMessage is a message payload that carries the sender's
 // TSS round six components.
 type tssRoundSixMessage struct {
-	senderID group.MemberIndex
-
 	broadcastPayload []byte
-	sessionID        string
 }
 
 // SenderID returns protocol-level identifier of the message sender.
-func (trsm *tssRoundSixMessage) SenderID() group.MemberIndex {
-	return trsm.senderID
+func (trscm *tssRoundSixCompositeMessage) SenderID() group.MemberIndex {
+	return trscm.senderID
 }
 
 // SessionID returns the session identifier of the message.
-func (trsm *tssRoundSixMessage) SessionID() string {
-	return trsm.sessionID
+func (trscm *tssRoundSixCompositeMessage) SessionID() string {
+	return trscm.sessionID
 }
 
-// Type returns a string describing a tssRoundSixMessage type for
+// Type returns a string describing a tssRoundSixCompositeMessage type for
 // marshaling purposes.
-func (trfm *tssRoundSixMessage) Type() string {
-	return messageTypePrefix + "tss_round_six_message"
+func (trscm *tssRoundSixCompositeMessage) Type() string {
+	return messageTypePrefix + "tss_round_six_composite_message"
+}
+
+// tssRoundSevenCompositeMessage is a composite of tssRoundSevenMessages keyed
+// by the message being signed.
+type tssRoundSevenCompositeMessage struct {
+	senderID  group.MemberIndex
+	sessionID string
+
+	tssRoundSevenMessages map[string]*tssRoundSevenMessage
 }
 
 // tssRoundSevenMessage is a message payload that carries the sender's
 // TSS round seven components.
 type tssRoundSevenMessage struct {
-	senderID group.MemberIndex
-
 	broadcastPayload []byte
-	sessionID        string
 }
 
 // SenderID returns protocol-level identifier of the message sender.
-func (trsm *tssRoundSevenMessage) SenderID() group.MemberIndex {
-	return trsm.senderID
+func (trscm *tssRoundSevenCompositeMessage) SenderID() group.MemberIndex {
+	return trscm.senderID
 }
 
 // SessionID returns the session identifier of the message.
-func (trfm *tssRoundSevenMessage) SessionID() string {
-	return trfm.sessionID
+func (trscm *tssRoundSevenCompositeMessage) SessionID() string {
+	return trscm.sessionID
 }
 
-// Type returns a string describing a tssRoundSevenMessage type for
+// Type returns a string describing a tssRoundSevenCompositeMessage type for
 // marshaling purposes.
-func (trfm *tssRoundSevenMessage) Type() string {
-	return messageTypePrefix + "tss_round_seven_message"
+func (trscm *tssRoundSevenCompositeMessage) Type() string {
+	return messageTypePrefix + "tss_round_seven_composite_message"
+}
+
+// tssRoundEightCompositeMessage is a composite of tssRoundEightMessages keyed
+// by the message being signed.
+type tssRoundEightCompositeMessage struct {
+	senderID  group.MemberIndex
+	sessionID string
+
+	tssRoundEightMessages map[string]*tssRoundEightMessage
 }
 
 // tssRoundEightMessage is a message payload that carries the sender's
 // TSS round eight components.
 type tssRoundEightMessage struct {
-	senderID group.MemberIndex
-
 	broadcastPayload []byte
-	sessionID        string
 }
 
 // SenderID returns protocol-level identifier of the message sender.
-func (trem *tssRoundEightMessage) SenderID() group.MemberIndex {
-	return trem.senderID
+func (trecm *tssRoundEightCompositeMessage) SenderID() group.MemberIndex {
+	return trecm.senderID
 }
 
 // SessionID returns the session identifier of the message.
-func (trem *tssRoundEightMessage) SessionID() string {
-	return trem.sessionID
+func (trecm *tssRoundEightCompositeMessage) SessionID() string {
+	return trecm.sessionID
 }
 
-// Type returns a string describing a tssRoundEightMessage type for
+// Type returns a string describing a tssRoundEightCompositeMessage type for
 // marshaling purposes.
-func (trem *tssRoundEightMessage) Type() string {
-	return messageTypePrefix + "tss_round_eight_message"
+func (trecm *tssRoundEightCompositeMessage) Type() string {
+	return messageTypePrefix + "tss_round_eight_composite_message"
+}
+
+// tssRoundNineCompositeMessage is a composite of tssRoundNineMessage keyed by
+// the message being signed.
+type tssRoundNineCompositeMessage struct {
+	senderID  group.MemberIndex
+	sessionID string
+
+	tssRoundNineMessages map[string]*tssRoundNineMessage
 }
 
 // tssRoundNineMessage is a message payload that carries the sender's
 // TSS round nine components.
 type tssRoundNineMessage struct {
-	senderID group.MemberIndex
-
 	broadcastPayload []byte
-	sessionID        string
 }
 
 // SenderID returns protocol-level identifier of the message sender.
-func (trnm *tssRoundNineMessage) SenderID() group.MemberIndex {
-	return trnm.senderID
+func (trncm *tssRoundNineCompositeMessage) SenderID() group.MemberIndex {
+	return trncm.senderID
 }
 
 // SessionID returns the session identifier of the message.
-func (trnm *tssRoundNineMessage) SessionID() string {
-	return trnm.sessionID
+func (trncm *tssRoundNineCompositeMessage) SessionID() string {
+	return trncm.sessionID
 }
 
-// Type returns a string describing a tssRoundNineMessage type for
+// Type returns a string describing a tssRoundNineCompositeMessage type for
 // marshaling purposes.
-func (trnm *tssRoundNineMessage) Type() string {
-	return messageTypePrefix + "tss_round_nine_message"
+func (trncm *tssRoundNineCompositeMessage) Type() string {
+	return messageTypePrefix + "tss_round_nine_composite_message"
 }
