@@ -15,12 +15,12 @@ ETHERSCAN_API_DEFAULT="https://api.etherscan.io"
 NETWORK_DEFAULT="mainnet"
 KEEP_CORE_REPO="https://github.com/keep-network/keep-core"
 # Special case when calculating rewards
-OCTOBER_17="2022-10-17"
+OCTOBER_17="1665964800"
 
 help() {
   echo -e "\nUsage: $0" \
-    "--rewards-start-date <rewards-start-date Y-m-d>" \
-    "--rewards-end-date <rewards-end-date Y-m-d>" \
+    "--rewards-start-date <rewards-start-date timestamp>" \
+    "--rewards-end-date <rewards-end-date timestamp>" \
     "--etherscan-token <etherscan-token>" \
     "--prometheus-api <prometheus-api-address>" \
     "--prometheus-job <prometheus-job-name>" \
@@ -28,8 +28,8 @@ help() {
     "--network <network-name>" \
     "--rewards-json <rewards-json-output-path>"
   echo -e "\nRequired command line arguments:\n"
-  echo -e "\t--rewards-start-date: Rewards interval start date formatted as Y-m-d"
-  echo -e "\t--rewards-end-date: Rewards interval end date formatted as Y-m-d"
+  echo -e "\t--rewards-start-date: Rewards interval start date formatted as UNIX timestamp"
+  echo -e "\t--rewards-end-date: Rewards interval end date formatted as UNIX timestamp"
   echo -e "\t--etherscan-token: Etherscan API key token"
   echo -e "\nOptional command line arguments:\n"
   echo -e "\t--prometheus-api: Prometheus API. Default: ${PROMETHEUS_API_DEFAULT}"
@@ -105,8 +105,6 @@ if [ "$REWARDS_START_DATE" -lt "1664582400" ]; then
   REWARDS_START_DATE=1664582400
 fi
 
-october17=$(TZ=UTC date -j -f "%Y-%m-%d %H:%M:%S" "${OCTOBER_17} 23:59:59" "+%s")
-
 startBlockApiCall="${ETHERSCAN_API}/api?\
 module=block&\
 action=getblocknobytime&\
@@ -124,7 +122,7 @@ apikey=${ETHERSCAN_TOKEN}"
 october17ApiCall="${ETHERSCAN_API}/api?\
 module=block&\
 action=getblocknobytime&\
-timestamp=$october17&\
+timestamp=$OCTOBER_17&\
 closest=after&\
 apikey=${ETHERSCAN_TOKEN}"
 
