@@ -1,6 +1,7 @@
 package electrs
 
 // https://blockstream.info/testnet/api/tx/c580e0e352570d90e303d912a506055ceeb0ee06f97dce6988c69941374f5479
+const TxID = "c580e0e352570d90e303d912a506055ceeb0ee06f97dce6988c69941374f5479"
 const Tx = `
 {
     "txid": "c580e0e352570d90e303d912a506055ceeb0ee06f97dce6988c69941374f5479",
@@ -56,6 +57,8 @@ const Tx = `
 `
 
 // https://blockstream.info/testnet/api/block/000000000000002af10911b8db32ed34dc6ea6515f84af5f7b82973c9a839e6d
+const BlockHeight = uint(2135502)
+const BlockHash = "000000000000002af10911b8db32ed34dc6ea6515f84af5f7b82973c9a839e6d"
 const Block = `
 {
     "id": "000000000000002af10911b8db32ed34dc6ea6515f84af5f7b82973c9a839e6d",
