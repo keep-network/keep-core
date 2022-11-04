@@ -17,6 +17,21 @@ import (
 	"github.com/keep-network/keep-core/pkg/internal/testutils"
 )
 
+// TODO: Add tests for errors
+
+var transactionHash bitcoin.Hash
+
+func init() {
+	var err error
+	transactionHash, err = bitcoin.NewHashFromString(
+		testData.TxID,
+		bitcoin.ReversedByteOrder,
+	)
+	if err != nil {
+		panic(err)
+	}
+}
+
 func TestConnect(t *testing.T) {
 	testData := map[string]struct {
 		config        Config
@@ -116,24 +131,19 @@ func TestConnect(t *testing.T) {
 }
 
 func TestGetTransaction(t *testing.T) {
-	transactionHashString := "c580e0e352570d90e303d912a506055ceeb0ee06f97dce6988c69941374f5479"
-	transactionHash, err := bitcoin.NewHashFromString(
-		transactionHashString,
-		bitcoin.ReversedByteOrder,
-	)
-	if err != nil {
-		t.Fatal(err)
-	}
-
 	httpClientMock := newHTTPClientMock()
 	httpClientMock.mockGet(
-		fmt.Sprintf("%s/tx/%s", testAPIURL, transactionHash.String(bitcoin.ReversedByteOrder)),
+		fmt.Sprintf("%s/tx/%s", testAPIURL, testData.TxID),
 		200,
 		testData.Tx,
 	)
 
 	electrs := newMockedConnection(httpClientMock)
 
+	testGetTransaction(t, electrs)
+}
+
+func testGetTransaction(t *testing.T, electrs bitcoin.Chain) {
 	expectedResult := bitcoinTestTx(t)
 
 	result, err := electrs.GetTransaction(transactionHash)
@@ -144,24 +154,16 @@ func TestGetTransaction(t *testing.T) {
 	if diff := deep.Equal(result, expectedResult); diff != nil {
 		t.Errorf("compare failed: %v", diff)
 	}
+
 }
 
 func TestGetTransactionConfirmations(t *testing.T) {
 	currentBlock := 2403554
 	expectedResult := uint(268506)
 
-	transactionHashString := "c580e0e352570d90e303d912a506055ceeb0ee06f97dce6988c69941374f5479"
-	transactionHash, err := bitcoin.NewHashFromString(
-		transactionHashString,
-		bitcoin.ReversedByteOrder,
-	)
-	if err != nil {
-		t.Fatal(err)
-	}
-
 	httpClientMock := newHTTPClientMock()
 	httpClientMock.mockGet(
-		fmt.Sprintf("%s/tx/%s", testAPIURL, transactionHash.String(bitcoin.ReversedByteOrder)),
+		fmt.Sprintf("%s/tx/%s", testAPIURL, testData.TxID),
 		200,
 		testData.Tx,
 	)
@@ -173,17 +175,36 @@ func TestGetTransactionConfirmations(t *testing.T) {
 
 	electrs := newMockedConnection(httpClientMock)
 
+	testGetTransactionConfirmations(t, electrs, expectedResult, true)
+}
+
+func testGetTransactionConfirmations(
+	t *testing.T,
+	electrs bitcoin.Chain,
+	expectedResult uint,
+	exactMatch bool,
+) {
 	result, err := electrs.GetTransactionConfirmations(transactionHash)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	if result != expectedResult {
-		t.Errorf(
-			"invalid result\nexpected: %v\nactual:   %v",
-			expectedResult,
-			result,
-		)
+	if exactMatch {
+		if result != expectedResult {
+			t.Errorf(
+				"invalid result (exact match)\nexpected: %v\nactual:   %v",
+				expectedResult,
+				result,
+			)
+		}
+	} else {
+		if result < expectedResult {
+			t.Errorf(
+				"invalid result (greater or equal match)\nexpected: %v\nactual:   %v",
+				expectedResult,
+				result,
+			)
+		}
 	}
 }
 
@@ -206,7 +227,7 @@ func TestBroadcastTransaction(t *testing.T) {
 }
 
 func TestGetLatestBlockHeight(t *testing.T) {
-	expectedResult := uint(189645)
+	expectedResult := uint(2404094)
 
 	mockClient := newHTTPClientMock()
 	mockClient.mockGet(
@@ -217,37 +238,62 @@ func TestGetLatestBlockHeight(t *testing.T) {
 
 	electrs := newMockedConnection(mockClient)
 
+	testGetLatestBlockHeight(t, electrs, expectedResult, true)
+}
+
+func testGetLatestBlockHeight(
+	t *testing.T,
+	electrs bitcoin.Chain,
+	expectedResult uint,
+	exactMatch bool,
+) {
 	result, err := electrs.GetLatestBlockHeight()
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	if result != expectedResult {
-		t.Errorf(
-			"invalid result\nexpected: %v\nactual:   %v",
-			expectedResult,
-			result,
-		)
+	if exactMatch {
+		if result != expectedResult {
+			t.Errorf(
+				"invalid result (exact match)\nexpected: %v\nactual:   %v",
+				expectedResult,
+				result,
+			)
+		}
+	} else {
+		if result < expectedResult {
+			t.Errorf(
+				"invalid result (greater or equal match)\nexpected: %v\nactual:   %v",
+				expectedResult,
+				result,
+			)
+		}
 	}
 }
 
 func TestGetBlockHeader(t *testing.T) {
-	blockHeight := uint(2135502)
-	blockHash := "000000000000002af10911b8db32ed34dc6ea6515f84af5f7b82973c9a839e6d"
-
 	mockClient := newHTTPClientMock()
 	mockClient.mockGet(
-		fmt.Sprintf("%s/block-height/%d", testAPIURL, blockHeight),
+		fmt.Sprintf("%s/block-height/%d", testAPIURL, testData.BlockHeight),
 		200,
-		blockHash,
+		testData.BlockHash,
 	)
 	mockClient.mockGet(
-		fmt.Sprintf("%s/block/%s", testAPIURL, blockHash),
+		fmt.Sprintf("%s/block/%s", testAPIURL, testData.BlockHash),
 		200,
 		testData.Block,
 	)
 
 	electrs := newMockedConnection(mockClient)
+
+	testGetBlockHeader(t, electrs)
+}
+
+func testGetBlockHeader(
+	t *testing.T,
+	electrs bitcoin.Chain,
+) {
+	blockHeight := testData.BlockHeight
 
 	previousBlockHeaderHash, err := bitcoin.NewHashFromString(
 		"000000000066450030efdf72f233ed2495547a32295deea1e2f3a16b1e50a3a5",
