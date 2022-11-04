@@ -116,7 +116,7 @@ func (c *Connection) GetTransactionConfirmations(
 
 	txBlockHeight := tx.Status.BlockHeight
 
-	latestBlockHeight, err := c.GetLatestBlockNumber()
+	latestBlockHeight, err := c.GetLatestBlockHeight()
 	if err != nil {
 		return 0, fmt.Errorf("failed to get current block height: [%w]", err)
 	}
@@ -150,9 +150,9 @@ func (c *Connection) BroadcastTransaction(
 	return nil
 }
 
-// GetLatestBlockNumber gets the height of the latest block (tip). If the
+// GetLatestBlockHeight gets the height of the latest block (tip). If the
 // latest block was not determined, this function returns an error.
-func (c *Connection) GetLatestBlockNumber() (uint, error) {
+func (c *Connection) GetLatestBlockHeight() (uint, error) {
 	blockHeight, err := c.httpGet("blocks/tip/height")
 	if err != nil {
 		return 0, fmt.Errorf("failed to get the blocks tip height: [%w]", err)
@@ -166,17 +166,17 @@ func (c *Connection) GetLatestBlockNumber() (uint, error) {
 	return uint(result), nil
 }
 
-// GetBlockHeader gets the block header for the given block number. If the
-// block with the given number was not found on the chain, this function
+// GetBlockHeader gets the block header for the given block height. If the
+// block with the given height was not found on the chain, this function
 // returns an error.
 func (c *Connection) GetBlockHeader(
-	blockNumber uint,
+	blockHeight uint,
 ) (*bitcoin.BlockHeader, error) {
-	blockHash, err := c.httpGet(fmt.Sprintf("block-height/%d", blockNumber))
+	blockHash, err := c.httpGet(fmt.Sprintf("block-height/%d", blockHeight))
 	if err != nil {
 		return nil, fmt.Errorf(
 			"failed to get hash of block at height [%d]: [%w]",
-			blockNumber,
+			blockHeight,
 			err,
 		)
 	}
