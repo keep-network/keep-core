@@ -116,15 +116,15 @@ func (c *Connection) GetTransactionConfirmations(
 
 	txBlockHeight := tx.Status.BlockHeight
 
-	currentBlockHeight, err := c.GetCurrentBlockNumber()
+	latestBlockHeight, err := c.GetLatestBlockNumber()
 	if err != nil {
 		return 0, fmt.Errorf("failed to get current block height: [%w]", err)
 	}
 
 	confirmations := uint(1)
 
-	if currentBlockHeight > txBlockHeight {
-		confirmations += currentBlockHeight - txBlockHeight
+	if latestBlockHeight > txBlockHeight {
+		confirmations += latestBlockHeight - txBlockHeight
 	}
 	return confirmations, nil
 }
@@ -150,9 +150,9 @@ func (c *Connection) BroadcastTransaction(
 	return nil
 }
 
-// GetCurrentBlockNumber gets the number of the current block. If the
-// current block was not determined, this function returns an error.
-func (c *Connection) GetCurrentBlockNumber() (uint, error) {
+// GetLatestBlockNumber gets the height of the latest block (tip). If the
+// latest block was not determined, this function returns an error.
+func (c *Connection) GetLatestBlockNumber() (uint, error) {
 	blockHeight, err := c.httpGet("blocks/tip/height")
 	if err != nil {
 		return 0, fmt.Errorf("failed to get the blocks tip height: [%w]", err)
