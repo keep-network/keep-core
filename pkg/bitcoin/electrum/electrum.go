@@ -27,7 +27,7 @@ func (c *Client) BroadcastTransaction(
 	panic("not implemented")
 }
 
-func (c *Client) GetCurrentBlockNumber() (uint, error) {
+func (c *Client) GetLatestBlockNumber() (uint, error) {
 	// TODO: Implementation.
 	panic("not implemented")
 }

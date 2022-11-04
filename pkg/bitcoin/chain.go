@@ -20,9 +20,9 @@ type Chain interface {
 	// rejected eventually.
 	BroadcastTransaction(transaction *Transaction) error
 
-	// GetCurrentBlockNumber gets the number of the current block. If the
-	// current block was not determined, this function returns an error.
-	GetCurrentBlockNumber() (uint, error)
+	// GetLatestBlockNumber gets the height of the latest block (tip). If the
+	// latest block was not determined, this function returns an error.
+	GetLatestBlockNumber() (uint, error)
 
 	// GetBlockHeader gets the block header for the given block number. If the
 	// block with the given number was not found on the chain, this function
