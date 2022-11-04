@@ -5,7 +5,7 @@ type Category int
 const (
 	General Category = iota
 	Ethereum
-	Electrum
+	Electrs
 	Network
 	Storage
 	ClientInfo
@@ -29,7 +29,7 @@ var StartCmdCategories = []Category{
 var AllCategories = []Category{
 	General,
 	Ethereum,
-	Electrum,
+	Electrs,
 	Network,
 	Storage,
 	ClientInfo,

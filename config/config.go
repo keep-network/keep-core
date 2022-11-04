@@ -14,7 +14,7 @@ import (
 	"golang.org/x/term"
 
 	commonEthereum "github.com/keep-network/keep-common/pkg/chain/ethereum"
-	"github.com/keep-network/keep-core/pkg/bitcoin/electrum"
+	"github.com/keep-network/keep-core/pkg/bitcoin/electrs"
 	"github.com/keep-network/keep-core/pkg/clientinfo"
 	"github.com/keep-network/keep-core/pkg/maintainer"
 	"github.com/keep-network/keep-core/pkg/net/libp2p"
@@ -37,7 +37,7 @@ const (
 // Config is the top level config structure.
 type Config struct {
 	Ethereum   commonEthereum.Config
-	Electrum   electrum.Config
+	Electrs    electrs.Config
 	LibP2P     libp2p.Config `mapstructure:"network"`
 	Storage    storage.Config
 	ClientInfo clientinfo.Config
@@ -172,22 +172,10 @@ func validateConfig(config *Config, categories ...Category) error {
 					"missing value for ethereum.keyFile; see ethereum section in configuration",
 				))
 			}
-		case Electrum:
-			if config.Electrum.URL == "" {
+		case Electrs:
+			if config.Electrs.URL == "" {
 				result = multierror.Append(result, fmt.Errorf(
-					"missing value for electrum.url; see electrum section in configuration",
-				))
-			}
-
-			if config.Electrum.Username == "" {
-				result = multierror.Append(result, fmt.Errorf(
-					"missing value for electrum.username; see electrum section in configuration",
-				))
-			}
-
-			if config.Electrum.Password == "" {
-				result = multierror.Append(result, fmt.Errorf(
-					"missing value for electrum.password; see electrum section in configuration",
+					"missing value for electrs.url; see electrs section in configuration",
 				))
 			}
 		case Network:

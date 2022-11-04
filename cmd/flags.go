@@ -11,6 +11,7 @@ import (
 	"github.com/keep-network/keep-common/pkg/cmd/flag"
 	"github.com/keep-network/keep-common/pkg/rate"
 	"github.com/keep-network/keep-core/config"
+	"github.com/keep-network/keep-core/pkg/bitcoin/electrs"
 	chainEthereum "github.com/keep-network/keep-core/pkg/chain/ethereum"
 	"github.com/keep-network/keep-core/pkg/clientinfo"
 	"github.com/keep-network/keep-core/pkg/net/libp2p"
@@ -35,8 +36,8 @@ func initFlags(
 		switch category {
 		case config.Ethereum:
 			initEthereumFlags(cmd, cfg)
-		case config.Electrum:
-			initElectrumFlags(cmd, cfg)
+		case config.Electrs:
+			initElectrsFlags(cmd, cfg)
 		case config.Network:
 			initNetworkFlags(cmd, cfg)
 		case config.Storage:
@@ -154,27 +155,27 @@ func initEthereumFlags(cmd *cobra.Command, cfg *config.Config) {
 	)
 }
 
-// Initialize flags for Electrum configuration.
-func initElectrumFlags(cmd *cobra.Command, cfg *config.Config) {
+// Initialize flags for Electrs configuration.
+func initElectrsFlags(cmd *cobra.Command, cfg *config.Config) {
 	cmd.Flags().StringVar(
-		&cfg.Electrum.URL,
-		"electrum.url",
+		&cfg.Electrs.URL,
+		"electrs.url",
 		"",
-		"URL for Electrum client connection.",
+		"URL for Electrs client connection.",
 	)
 
-	cmd.Flags().StringVar(
-		&cfg.Electrum.Username,
-		"electrum.username",
-		"",
-		"Username for Electrum client connection.",
+	cmd.Flags().DurationVar(
+		&cfg.Electrs.RequestTimeout,
+		"electrs.requestTimeout",
+		electrs.DefaultRequestTimeout,
+		"Timeout for Electrs client HTTP requests.",
 	)
 
-	cmd.Flags().StringVar(
-		&cfg.Electrum.Password,
-		"electrum.password",
-		"",
-		"Password for Electrum client connection.",
+	cmd.Flags().DurationVar(
+		&cfg.Electrs.RetryTimeout,
+		"electrs.retryTimeout",
+		electrs.DefaultRetryTimeout,
+		"Timeout for Electrs client retries.",
 	)
 }
 

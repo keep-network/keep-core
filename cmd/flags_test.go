@@ -79,26 +79,26 @@ var cmdFlagsTests = map[string]struct {
 		expectedValueFromFlag: big.NewInt(1250000000000000000),
 		defaultValue:          big.NewInt(500000000000000000),
 	},
-	"electrum.url": {
-		readValueFunc:         func(c *config.Config) interface{} { return c.Electrum.URL },
-		flagName:              "--electrum.url",
-		flagValue:             "url.to.electrum:18332",
-		expectedValueFromFlag: "url.to.electrum:18332",
+	"electrs.url": {
+		readValueFunc:         func(c *config.Config) interface{} { return c.Electrs.URL },
+		flagName:              "--electrs.url",
+		flagValue:             "url.to.electrs:18332",
+		expectedValueFromFlag: "url.to.electrs:18332",
 		defaultValue:          "",
 	},
-	"electrum.username": {
-		readValueFunc:         func(c *config.Config) interface{} { return c.Electrum.Username },
-		flagName:              "--electrum.username",
-		flagValue:             "user",
-		expectedValueFromFlag: "user",
-		defaultValue:          "",
+	"electrs.requestTimeout": {
+		readValueFunc:         func(c *config.Config) interface{} { return c.Electrs.RequestTimeout },
+		flagName:              "--electrs.requestTimeout",
+		flagValue:             "500ms",
+		expectedValueFromFlag: 500 * time.Millisecond,
+		defaultValue:          5 * time.Second,
 	},
-	"electrum.password": {
-		readValueFunc:         func(c *config.Config) interface{} { return c.Electrum.Password },
-		flagName:              "--electrum.password",
-		flagValue:             "pass",
-		expectedValueFromFlag: "pass",
-		defaultValue:          "",
+	"electrs.retryTimeout": {
+		readValueFunc:         func(c *config.Config) interface{} { return c.Electrs.RetryTimeout },
+		flagName:              "--electrs.retryTimeout",
+		flagValue:             "10s",
+		expectedValueFromFlag: 10 * time.Second,
+		defaultValue:          60 * time.Second,
 	},
 	"network.bootstrap": {
 		readValueFunc:         func(c *config.Config) interface{} { return c.LibP2P.Bootstrap },
@@ -288,9 +288,7 @@ func TestFlags_ReadConfigFromFlagsWithDefaults(t *testing.T) {
 	args := []string{
 		cmdFlagsTests["ethereum.url"].flagName, cmdFlagsTests["ethereum.url"].flagValue,
 		cmdFlagsTests["ethereum.keyFile"].flagName, cmdFlagsTests["ethereum.keyFile"].flagValue,
-		cmdFlagsTests["electrum.url"].flagName, cmdFlagsTests["electrum.url"].flagValue,
-		cmdFlagsTests["electrum.username"].flagName, cmdFlagsTests["electrum.username"].flagValue,
-		cmdFlagsTests["electrum.password"].flagName, cmdFlagsTests["electrum.password"].flagValue,
+		cmdFlagsTests["electrs.url"].flagName, cmdFlagsTests["electrs.url"].flagValue,
 		cmdFlagsTests["storage.dir"].flagName, cmdFlagsTests["storage.dir"].flagValue,
 	}
 	testCommand.SetArgs(args)
@@ -320,8 +318,8 @@ func TestFlags_Mixed(t *testing.T) {
 		"--config", "../test/config_flags.toml",
 		"--ethereum.url", "https://api.url.com/123eth",
 		"--ethereum.keyFile", "./keyfile-path/from/flag",
-		"--electrum.url", "url.to.electrum:18332",
-		"--electrum.username", "user",
+		"--electrs.url", "url.to.electrs:18332",
+		"--electrs.requestTimeout", "500ms",
 		"--network.port", "7469",
 		"--relay",
 	}
@@ -344,19 +342,19 @@ func TestFlags_Mixed(t *testing.T) {
 			expectedValue: "./keyfile-path/from/flag",
 		},
 		// Properties provided in the config file and overwritten by the flags.
-		"electrum.url": {
-			readValueFunc: func(c *config.Config) interface{} { return c.Electrum.URL },
-			expectedValue: "url.to.electrum:18332",
+		"electrs.url": {
+			readValueFunc: func(c *config.Config) interface{} { return c.Electrs.URL },
+			expectedValue: "url.to.electrs:18332",
 		},
 		// Properties not defined in the config file, but set with flags.
-		"electrum.username": {
-			readValueFunc: func(c *config.Config) interface{} { return c.Electrum.Username },
-			expectedValue: "user",
+		"electrs.requestTimeout": {
+			readValueFunc: func(c *config.Config) interface{} { return c.Electrs.RequestTimeout },
+			expectedValue: 500 * time.Millisecond,
 		},
 		// Properties defined in the config file, not set with flags.
-		"electrum.password": {
-			readValueFunc: func(c *config.Config) interface{} { return c.Electrum.Password },
-			expectedValue: "pass",
+		"electrs.retryTimeout": {
+			readValueFunc: func(c *config.Config) interface{} { return c.Electrs.RetryTimeout },
+			expectedValue: 10 * time.Second,
 		},
 		"network.port": {
 			readValueFunc: func(c *config.Config) interface{} { return c.LibP2P.Port },

@@ -5,12 +5,12 @@
 # KeyFile is expected to be overwritten by a flag.
 KeyFile = "/tmp/UTC--2018-03-11T01-37-33.202765887Z--c2a56884538778bacd91aa5bf343bf882c5fb18b"
 
-[electrum]
+[electrs]
 # URL is expected to be overwritten by a flag.
-URL = "another.url.to.electrum:18332"
-# Username is expected to be provided as a flag.
-# Password is expected to be read from the file, not passed as a flag.
-Password = "pass"
+URL = "another.url.to.electrs:18332"
+# RequestTimeout is expected to be provided as a flag.
+# RetryTimeout is expected to be read from the file, not passed as a flag.
+RetryTimeout = "10s"
 
 [network]
 # Port is expected to be overwritten by a flag.
