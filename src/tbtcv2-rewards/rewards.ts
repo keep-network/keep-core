@@ -57,8 +57,14 @@ program
   )
   .requiredOption("-a, --api <prometheus api>", "prometheus API")
   .requiredOption("-j, --job <prometheus job>", "prometheus job")
-  .requiredOption("-s, --october17-block <october 17 block>", "october 17 block")
-  .requiredOption("-t, --october17-timestamp <october 17 timestamp>", "october 17 timestamp")
+  .requiredOption(
+    "-s, --october17-block <october 17 block>",
+    "october 17 block"
+  )
+  .requiredOption(
+    "-t, --october17-timestamp <october 17 timestamp>",
+    "october 17 timestamp"
+  )
   .requiredOption(
     "-r, --releases <client releases in a rewards interval>",
     "client releases in a rewards interval"
@@ -290,8 +296,9 @@ export async function calculateRewards() {
       rewardsInterval,
       instancesData
     );
-    // BigNumbers cannot operate on floats. Coefficient needs to be multiplied by 100
-    uptimeCoefficient = Math.floor(uptimeCoefficient * HUNDRED);
+    // BigNumbers cannot operate on floats. Coefficient needs to be multiplied 
+    // by PRECISION
+    uptimeCoefficient = Math.floor(uptimeCoefficient * PRECISION);
     requirements.set(IS_UP_TIME_SATISFIED, isUptimeSatisfied);
 
     /// Pre-params requirement
@@ -393,7 +400,7 @@ export async function calculateRewards() {
         amount: minApplicationAuthorization
           .mul(uptimeCoefficient)
           .mul(monthlyRate)
-          .div(HUNDRED) // coefficient was multiplied by 100 earlier
+          .div(PRECISION) // coefficient was multiplied by PRECISION earlier
           .div(HUNDRED) // APR monthly rate was multiplied by 100 earlier
           .div(HUNDRED) // APR monthly rate is in %
           .toString(),
