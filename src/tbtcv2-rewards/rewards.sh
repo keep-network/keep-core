@@ -14,8 +14,8 @@ REWARDS_JSON_DEFAULT="./rewards.json"
 ETHERSCAN_API_DEFAULT="https://api.etherscan.io"
 NETWORK_DEFAULT="mainnet"
 KEEP_CORE_REPO="https://github.com/keep-network/keep-core"
-# Special case when calculating rewards
-OCTOBER_17="1665964800"
+# Special October case when calculating rewards
+OCTOBER_17="1666051200" # Oct 18 00:00:00 GMT
 
 help() {
   echo -e "\nUsage: $0" \
@@ -181,7 +181,8 @@ ETHERSCAN_TOKEN=${ETHERSCAN_TOKEN} yarn rewards \
   --end-timestamp $REWARDS_END_DATE \
   --start-block $startRewardsBlock \
   --end-block $endRewardsBlock \
-  --october17 $october17Block \
+  --october17-block $october17Block \
+  --october17-timestamp $OCTOBER_17 \
   --releases $tagsTrimmed \
   --network ${NETWORK} \
   --output ${REWARDS_JSON}
