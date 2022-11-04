@@ -27,13 +27,13 @@ func (c *Client) BroadcastTransaction(
 	panic("not implemented")
 }
 
-func (c *Client) GetLatestBlockNumber() (uint, error) {
+func (c *Client) GetLatestBlockHeight() (uint, error) {
 	// TODO: Implementation.
 	panic("not implemented")
 }
 
 func (c *Client) GetBlockHeader(
-	blockNumber uint,
+	blockHeight uint,
 ) (*bitcoin.BlockHeader, error) {
 	// TODO: Implementation.
 	panic("not implemented")
