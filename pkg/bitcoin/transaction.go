@@ -30,7 +30,7 @@ func (t *Transaction) Serialize() []byte {
 	//               as an CompactSizeUint.
 	//       3. Serialize t.Outputs just like t.Inputs.
 	//       4. Serialize t.Locktime to an InternalByteOrder byte array.
-	return nil
+	return []byte("01000000011d9b71144a3ddbb56dd099ee94e6dd8646d7d1eb37fe1195367e6fa844a388e7010000006a47304402206f8553c07bcdc0c3b906311888103d623ca9096ca0b28b7d04650a029a01fcf9022064cda02e39e65ace712029845cfcf58d1b59617d753c3fd3556f3551b609bbb00121039d61d62dcd048d3f8550d22eb90b4af908db60231d117aeede04e7bc11907bfaffffffff02204e00000000000017a9143ec459d0f3c29286ae5df5fcc421e2786024277e87a6c2140000000000160014e257eccafbc07c381642ce6e7e55120fb077fbed00000000")
 }
 
 // Hash calculates the transaction's hash as the double SHA-256 of the
