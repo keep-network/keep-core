@@ -57,7 +57,8 @@ program
   )
   .requiredOption("-a, --api <prometheus api>", "prometheus API")
   .requiredOption("-j, --job <prometheus job>", "prometheus job")
-  .requiredOption("-s, --october17 <october 17 block>", "october 17 block")
+  .requiredOption("-s, --october17-block <october 17 block>", "october 17 block")
+  .requiredOption("-t, --october17-timestamp <october 17 timestamp>", "october 17 timestamp")
   .requiredOption(
     "-r, --releases <client releases in a rewards interval>",
     "client releases in a rewards interval"
@@ -75,7 +76,8 @@ const startRewardsTimestamp = parseInt(options.startTimestamp);
 const endRewardsTimestamp = parseInt(options.endTimestamp);
 const startRewardsBlock = parseInt(options.startBlock);
 const endRewardsBlock = parseInt(options.endBlock);
-const october17Block = parseInt(options.october17);
+const october17Block = parseInt(options.october17Block);
+const october17Timestamp = parseInt(options.october17Timestamp);
 const rewardsDataOutput = options.output;
 const network = options.network;
 
@@ -401,7 +403,7 @@ export async function calculateRewards() {
     operatorsData.push(operatorData);
   }
 
-  // console.log("operatorsData: ", JSON.stringify(operatorsData, null, 2));
+  // console.log("operatorsData: ", JSON.stringify(operatorsData, null, 4));
   // console.log("rewardsData: ", JSON.stringify(rewardsData, null, 4));
   fs.writeFileSync(rewardsDataOutput, JSON.stringify(rewardsData, null, 4));
 }
@@ -498,7 +500,6 @@ function authorizationForRewardsInterval(
     );
     tmpBlock = eventBlock;
   }
-  authorization = authorization.div(PRECISION);
 
   // calculating authorization for the last sub-interval
   const coefficient = Math.floor(
@@ -618,7 +619,7 @@ async function checkUptime(
   // October is a special month for rewards calculation. If a node was set before
   // October 17th, then it is eligible for the entire month of rewards. Uptime of
   // a running node still need to meet the uptime requirement after it was set.
-  if (startRewardsBlock < october17Block) {
+  if (firstRegisteredUptime < october17Timestamp) {
     uptimeSearchRange = rewardsInterval;
   }
 
