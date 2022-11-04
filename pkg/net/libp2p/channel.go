@@ -91,7 +91,7 @@ func (c *channel) Name() string {
 func (c *channel) Send(
 	ctx context.Context,
 	message net.TaggedMarshaler,
-	strategy ...net.RetransmissionStrategy,
+	retransmissionStrategy ...net.RetransmissionStrategy,
 ) error {
 	messageProto, err := c.messageProto(message)
 	if err != nil {
@@ -104,12 +104,12 @@ func (c *channel) Send(
 		return c.publish(messageProto)
 	}
 
-	var selectedStrategy net.RetransmissionStrategy
-	switch len(strategy) {
+	var strategy net.RetransmissionStrategy
+	switch len(retransmissionStrategy) {
 	case 1:
-		selectedStrategy = strategy[0]
+		strategy = retransmissionStrategy[0]
 	default:
-		selectedStrategy = net.StandardRetransmissionStrategy
+		strategy = net.StandardRetransmissionStrategy
 	}
 
 	retransmission.ScheduleRetransmissions(
@@ -117,7 +117,7 @@ func (c *channel) Send(
 		logger,
 		c.retransmissionTicker,
 		doSend,
-		retransmission.WithStrategy(selectedStrategy),
+		retransmission.WithStrategy(strategy),
 	)
 
 	return doSend()

@@ -43,7 +43,7 @@ func (lc *localChannel) Name() string {
 func (lc *localChannel) Send(
 	ctx context.Context,
 	message net.TaggedMarshaler,
-	strategy ...net.RetransmissionStrategy,
+	retransmissionStrategy ...net.RetransmissionStrategy,
 ) error {
 	bytes, err := message.Marshal()
 	if err != nil {
@@ -71,12 +71,12 @@ func (lc *localChannel) Send(
 		lc.nextSeqno(),
 	)
 
-	var selectedStrategy net.RetransmissionStrategy
-	switch len(strategy) {
+	var strategy net.RetransmissionStrategy
+	switch len(retransmissionStrategy) {
 	case 1:
-		selectedStrategy = strategy[0]
+		strategy = retransmissionStrategy[0]
 	default:
-		selectedStrategy = net.StandardRetransmissionStrategy
+		strategy = net.StandardRetransmissionStrategy
 	}
 
 	retransmission.ScheduleRetransmissions(
@@ -86,7 +86,7 @@ func (lc *localChannel) Send(
 		func() error {
 			return broadcastMessage(lc.name, netMessage)
 		},
-		retransmission.WithStrategy(selectedStrategy),
+		retransmission.WithStrategy(strategy),
 	)
 
 	return broadcastMessage(lc.name, netMessage)
