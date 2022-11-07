@@ -1,25 +1,45 @@
 package tbtc
 
 import (
+	"bytes"
 	"context"
 	"crypto/sha256"
 	"encoding/binary"
+	"encoding/hex"
 	"fmt"
-	"math/big"
-	"math/rand"
-	"sort"
-
 	"github.com/ipfs/go-log/v2"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/protocol/group"
 	"github.com/keep-network/keep-core/pkg/tecdsa/retry"
 	"github.com/keep-network/keep-core/pkg/tecdsa/signing"
 	"golang.org/x/exp/slices"
+	"math/big"
+	"math/rand"
+	"sort"
 )
 
 // signingAttemptMaxBlockDuration determines the maximum block duration of a
 // single signing attempt.
 const signingAttemptMaxBlockDuration = 100
+
+// signingRequestID represents the identifier of a signing protocol instance.
+type signingRequestID [32]byte
+
+// newSigningRequestID creates a new signing request ID based on the provided
+// messages being subject of the given request.
+func newSigningRequestID(messages []*big.Int) signingRequestID {
+	var buffer bytes.Buffer
+
+	for _, message := range messages {
+		buffer.Write(message.Bytes())
+	}
+
+	return sha256.Sum256(buffer.Bytes())
+}
+
+func (sri signingRequestID) String() string {
+	return hex.EncodeToString(sri[:])
+}
 
 // signingAnnouncer represents a component responsible for exchanging readiness
 // announcements for the given signing attempt of the given message.
@@ -35,7 +55,7 @@ type signingAnnouncer interface {
 type signingRetryLoop struct {
 	logger log.StandardLogger
 
-	message *big.Int
+	requestID signingRequestID
 
 	signingGroupMemberIndex group.MemberIndex
 	signingGroupOperators   chain.Addresses
@@ -54,23 +74,21 @@ type signingRetryLoop struct {
 
 func newSigningRetryLoop(
 	logger log.StandardLogger,
-	message *big.Int,
+	requestID signingRequestID,
 	initialStartBlock uint64,
 	signingGroupMemberIndex group.MemberIndex,
 	signingGroupOperators chain.Addresses,
 	chainConfig *ChainConfig,
 	announcer signingAnnouncer,
 ) *signingRetryLoop {
-	// Compute the 8-byte seed needed for the random retry algorithm. We take
-	// the first 8 bytes of the hash of the signed message. This allows us to
-	// not care in this piece of the code about the length of the message and
-	// how this message is proposed.
-	messageSha256 := sha256.Sum256(message.Bytes())
-	attemptSeed := int64(binary.BigEndian.Uint64(messageSha256[:8]))
+	// Get the 8-byte seed needed for the random retry algorithm. We take the
+	// first 8 bytes of signing request ID. This allows us to not care in this
+	// piece of the code about the length of the ID and how this ID is proposed.
+	attemptSeed := int64(binary.BigEndian.Uint64(requestID[:8]))
 
 	return &signingRetryLoop{
 		logger:                   logger,
-		message:                  message,
+		requestID:                requestID,
 		signingGroupMemberIndex:  signingGroupMemberIndex,
 		signingGroupOperators:    signingGroupOperators,
 		chainConfig:              chainConfig,
@@ -167,7 +185,7 @@ func (srl *signingRetryLoop) start(
 		readyMembersIndexes, err := srl.announcer.Announce(
 			announceCtx,
 			srl.signingGroupMemberIndex,
-			fmt.Sprintf("%v-%v", srl.message, srl.attemptCounter),
+			fmt.Sprintf("%s-%v", srl.requestID, srl.attemptCounter),
 		)
 		if err != nil {
 			srl.logger.Warnf(

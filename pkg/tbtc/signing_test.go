@@ -16,8 +16,25 @@ import (
 	"github.com/keep-network/keep-core/pkg/tecdsa/signing"
 )
 
+func TestSigningRequestID(t *testing.T) {
+	message1 := new(big.Int).SetBytes([]byte{0x03, 0x09, 0xAA, 0xFF, 0x45})
+	message2 := new(big.Int).SetBytes([]byte{0x02, 0x08, 0xBB, 0xEE, 0x46})
+	message3 := new(big.Int).SetBytes([]byte{0x01, 0x07, 0xCC, 0xDD, 0x47})
+
+	requestID := newSigningRequestID([]*big.Int{message1, message2, message3})
+
+	expectedRequestID := "e4e52e3d8044b72236e52b5c4e40dcf62afb46f7de48bc0d7630cac62ccda7a5"
+
+	testutils.AssertStringsEqual(
+		t,
+		"request ID",
+		expectedRequestID,
+		requestID.String(),
+	)
+}
+
 func TestSigningRetryLoop(t *testing.T) {
-	message := big.NewInt(100)
+	requestID := newSigningRequestID([]*big.Int{big.NewInt(100)})
 
 	chainConfig := &ChainConfig{
 		GroupSize:       10,
@@ -119,7 +136,7 @@ func TestSigningRetryLoop(t *testing.T) {
 			incomingAnnouncementsFn: func(
 				sessionID string,
 			) ([]group.MemberIndex, error) {
-				if sessionID == fmt.Sprintf("%v-%v", message, 1) {
+				if sessionID == fmt.Sprintf("%s-%v", requestID, 1) {
 					// Minority of members announced their readiness.
 					return []group.MemberIndex{1, 2, 3, 6, 7}, nil
 				}
@@ -151,7 +168,7 @@ func TestSigningRetryLoop(t *testing.T) {
 			incomingAnnouncementsFn: func(
 				sessionID string,
 			) ([]group.MemberIndex, error) {
-				if sessionID == fmt.Sprintf("%v-%v", message, 1) {
+				if sessionID == fmt.Sprintf("%s-%v", requestID, 1) {
 					return nil, fmt.Errorf("unexpected error")
 				}
 
@@ -265,7 +282,7 @@ func TestSigningRetryLoop(t *testing.T) {
 
 			retryLoop := newSigningRetryLoop(
 				&testutils.MockLogger{},
-				message,
+				requestID,
 				200,
 				test.signingGroupMemberIndex,
 				signingGroupOperators,

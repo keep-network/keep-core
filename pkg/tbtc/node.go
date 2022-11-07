@@ -413,12 +413,15 @@ func (n *node) joinDKGIfEligible(seed *big.Int, startBlockNumber uint64) {
 // requested wallet. This is an interactive process, and joinSigningIfEligible
 // can block for an extended period of time while it completes the operation.
 func (n *node) joinSigningIfEligible(
-	message *big.Int,
+	messages []*big.Int,
 	walletPublicKey *ecdsa.PublicKey,
 	startBlockNumber uint64,
 ) {
+	requestID := newSigningRequestID(messages)
+
 	signingLogger := logger.With(
-		zap.String("message", fmt.Sprintf("0x%x", message)),
+		zap.String("requestID", fmt.Sprintf("0x%s", requestID)),
+		zap.Uint64("requestStartBlock", startBlockNumber),
 	)
 
 	walletPublicKeyBytes, err := marshalPublicKey(walletPublicKey)
@@ -496,7 +499,7 @@ func (n *node) joinSigningIfEligible(
 
 				retryLoop := newSigningRetryLoop(
 					signingLogger,
-					message,
+					requestID,
 					startBlockNumber,
 					signer.signingGroupMemberIndex,
 					wallet.signingGroupOperators,
@@ -512,7 +515,12 @@ func (n *node) joinSigningIfEligible(
 					24*time.Hour,
 				)
 				defer cancelLoopCtx()
-				cancelSigningContextOnStopSignal(loopCtx, cancelLoopCtx, broadcastChannel, message.Text(16))
+				cancelSigningContextOnStopSignal(
+					loopCtx,
+					cancelLoopCtx,
+					broadcastChannel,
+					requestID.String(),
+				)
 
 				result, err := retryLoop.start(
 					loopCtx,
@@ -553,15 +561,15 @@ func (n *node) joinSigningIfEligible(
 						}()
 
 						sessionID := fmt.Sprintf(
-							"%v-%v",
-							message.Text(16),
+							"%s-%v",
+							requestID,
 							attempt.number,
 						)
 
 						result, err := signing.Execute(
 							attemptCtx,
 							signingAttemptLogger,
-							message,
+							messages,
 							sessionID,
 							signer.signingGroupMemberIndex,
 							signer.privateKeyShare,
@@ -589,7 +597,12 @@ func (n *node) joinSigningIfEligible(
 						// can live with it for now.
 						go func() {
 							time.Sleep(1 * time.Minute)
-							if err := sendSigningStopPill(loopCtx, broadcastChannel, message.Text(16), attempt.number); err != nil {
+							if err := sendSigningStopPill(
+								loopCtx,
+								broadcastChannel,
+								requestID.String(),
+								attempt.number,
+							); err != nil {
 								signingLogger.Errorf(
 									"[member:%v] could not send the stop pill: [%v]",
 									signer.signingGroupMemberIndex,

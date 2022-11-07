@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"runtime"
+	"strings"
 	"time"
 
 	"github.com/ipfs/go-log"
@@ -125,17 +126,21 @@ func Initialize(
 	_ = chain.OnSignatureRequested(func(event *SignatureRequestedEvent) {
 		go func() {
 			// There is no need to deduplicate. Test loop events are unique.
+			messages := make([]string, len(event.Messages))
+			for i, message := range event.Messages {
+				messages[i] = fmt.Sprintf("0x%s", message.Text(16))
+			}
 
 			logger.Infof(
-				"signature of message [0x%x] requested from "+
+				"signature of messages [%s] requested from "+
 					"wallet [0x%x] at block [%v]",
-				event.Message,
+				strings.Join(messages, ", "),
 				event.WalletPublicKey,
 				event.BlockNumber,
 			)
 
 			node.joinSigningIfEligible(
-				event.Message,
+				event.Messages,
 				unmarshalPublicKey(event.WalletPublicKey),
 				event.BlockNumber,
 			)

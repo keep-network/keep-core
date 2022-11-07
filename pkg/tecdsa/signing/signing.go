@@ -13,7 +13,7 @@ import (
 	"github.com/keep-network/keep-core/pkg/tecdsa"
 )
 
-// Execute runs the tECDSA signing protocol, given a message to sign,
+// Execute runs the tECDSA signing protocol, given messages to sign,
 // broadcast channel to mediate with, a block counter used for time tracking,
 // a member index to use in the group, private key share, dishonest threshold,
 // and block height when signing protocol should start.
@@ -24,7 +24,7 @@ import (
 func Execute(
 	ctx context.Context,
 	logger log.StandardLogger,
-	message *big.Int,
+	messages []*big.Int,
 	sessionID string,
 	memberIndex group.MemberIndex,
 	privateKeyShare *tecdsa.PrivateKeyShare,
@@ -43,7 +43,7 @@ func Execute(
 		dishonestThreshold,
 		membershipValidator,
 		sessionID,
-		message,
+		messages,
 		privateKeyShare,
 	)
 

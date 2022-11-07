@@ -563,9 +563,17 @@ func (mwr *mockWalletRegistry) OnSignatureRequested(
 							blockHashBytes := crypto.Keccak256(blockBytes)
 							blockHash := new(big.Int).SetBytes(blockHashBytes)
 
+							messages := make([]*big.Int, 10)
+							for i := range messages {
+								messages[i] = new(big.Int).Add(
+									blockHash,
+									big.NewInt(int64(i)),
+								)
+							}
+
 							go handler(&tbtc.SignatureRequestedEvent{
 								WalletPublicKey: mwr.activeWallet,
-								Message:         blockHash,
+								Messages:        messages,
 								BlockNumber:     block,
 							})
 						}
