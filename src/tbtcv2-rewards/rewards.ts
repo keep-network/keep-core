@@ -71,6 +71,7 @@ program
   )
   .requiredOption("-n, --network <name>", "network name")
   .requiredOption("-o, --output <file>", "output JSON file")
+  .requiredOption("-d, --output-details-path <path>", "output JSON details path")
   .parse(process.argv);
 
 // Parse the program options
@@ -85,6 +86,7 @@ const endRewardsBlock = parseInt(options.endBlock);
 const october17Block = parseInt(options.october17Block);
 const october17Timestamp = parseInt(options.october17Timestamp);
 const rewardsDataOutput = options.output;
+const rewardsDetailsPath = options.outputDetailsPath;
 const network = options.network;
 
 const prometheusAPIQuery = `${prometheusAPI}/query`;
@@ -413,6 +415,8 @@ export async function calculateRewards() {
   // console.log("operatorsData: ", JSON.stringify(operatorsData, null, 4));
   // console.log("rewardsData: ", JSON.stringify(rewardsData, null, 4));
   fs.writeFileSync(rewardsDataOutput, JSON.stringify(rewardsData, null, 4));
+  const detailsFileName = `${startRewardsTimestamp}-${endRewardsTimestamp}` 
+  fs.writeFileSync(rewardsDetailsPath+"/"+detailsFileName+".json", JSON.stringify(operatorsData, null, 4));
 }
 
 async function getAuthorization(
