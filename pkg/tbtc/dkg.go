@@ -24,10 +24,6 @@ const (
 	// dkgAttemptMaxBlockDuration determines the maximum block duration of a
 	// single DKG attempt.
 	dkgAttemptMaxBlockDuration = 150
-	// dkgResultSigningDuration determines the approximate duration it
-	// takes to execute all the required work related to DKG result signing
-	// and verification.
-	dkgResultSigningDuration = 5 * time.Minute
 	// dkgResultSubmissionDelayStep determines the delay step that is used to
 	// calculate the submission delay time that should be respected by the
 	// given member to avoid all members submitting the same DKG result at the

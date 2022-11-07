@@ -340,12 +340,16 @@ func (n *node) joinDKGIfEligible(seed *big.Int, startBlockNumber uint64) {
 				// perform all the result-signing-related actions and
 				// handle the worst case when the result is submitted by the
 				// last group member.
+				publicationTimeout := time.Duration(chainConfig.GroupSize) *
+					dkgResultSubmissionDelayStep
 				publicationCtx, cancelPublicationCtx := context.WithTimeout(
 					context.Background(),
-					dkgResultSigningDuration+
-						(time.Duration(chainConfig.GroupSize)*dkgResultSubmissionDelayStep),
+					publicationTimeout,
 				)
-				defer cancelPublicationCtx()
+				go func() {
+					defer cancelPublicationCtx()
+					time.Sleep(publicationTimeout)
+				}()
 
 				err = dkg.Publish(
 					publicationCtx,
