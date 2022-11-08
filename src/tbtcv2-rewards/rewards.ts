@@ -31,7 +31,7 @@ import {
   REQUIRED_MIN_PRE_PARAMS,
   ALLOWED_UPGRADE_DELAY,
   PRECISION,
-  QUERY_STEP,
+  OPERATORS_SEARCH_QUERY_STEP,
   QUERY_RESOLUTION,
   HUNDRED,
   APR,
@@ -115,7 +115,7 @@ export async function calculateRewards() {
     query: `sum by(chain_address)({job='${prometheusJob}'})`,
     start: startRewardsTimestamp,
     end: endRewardsTimestamp,
-    step: QUERY_STEP,
+    step: OPERATORS_SEARCH_QUERY_STEP,
   };
 
   const bootstrapData = (
