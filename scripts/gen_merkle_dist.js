@@ -1,4 +1,5 @@
 // Script that generates a new Merkle Distribution and outputs the data to JSON files
+// Use: node scripts/gen_merkle_dist.js
 
 const fs = require("fs")
 const shell = require("shelljs")
@@ -7,6 +8,7 @@ const Subgraph = require("../src/stakingrewards/subgraph.js")
 const Rewards = require("../src/stakingrewards/rewards.js")
 const MerkleDist = require("../src/stakingrewards/merkle_dist.js")
 
+// The following parameters must be modified for each distribution
 const bonusWeight = 0.0
 const ongoingWeight = 0.875
 const tbtcv2Weight = 0.125
