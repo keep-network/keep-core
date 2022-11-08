@@ -69,7 +69,10 @@ program
   )
   .requiredOption("-n, --network <name>", "network name")
   .requiredOption("-o, --output <file>", "output JSON file")
-  .requiredOption("-d, --output-details-path <path>", "output JSON details path")
+  .requiredOption(
+    "-d, --output-details-path <path>",
+    "output JSON details path"
+  )
   .requiredOption("-q, --required-pre-params <number>", "required pre params")
   .requiredOption("-m, --required-uptime <percent>", "required uptime")
   .parse(process.argv);
@@ -300,7 +303,7 @@ export async function calculateRewards() {
       rewardsInterval,
       instancesData
     );
-    // BigNumbers cannot operate on floats. Coefficient needs to be multiplied 
+    // BigNumbers cannot operate on floats. Coefficient needs to be multiplied
     // by PRECISION
     uptimeCoefficient = Math.floor(uptimeCoefficient * PRECISION);
     requirements.set(IS_UP_TIME_SATISFIED, isUptimeSatisfied);
@@ -417,8 +420,11 @@ export async function calculateRewards() {
   // console.log("operatorsData: ", JSON.stringify(operatorsData, null, 4));
   // console.log("rewardsData: ", JSON.stringify(rewardsData, null, 4));
   fs.writeFileSync(rewardsDataOutput, JSON.stringify(rewardsData, null, 4));
-  const detailsFileName = `${startRewardsTimestamp}-${endRewardsTimestamp}` 
-  fs.writeFileSync(rewardsDetailsPath+"/"+detailsFileName+".json", JSON.stringify(operatorsData, null, 4));
+  const detailsFileName = `${startRewardsTimestamp}-${endRewardsTimestamp}`;
+  fs.writeFileSync(
+    rewardsDetailsPath + "/" + detailsFileName + ".json",
+    JSON.stringify(operatorsData, null, 4)
+  );
 }
 
 async function getAuthorization(
