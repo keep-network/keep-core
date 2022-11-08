@@ -16,6 +16,9 @@ NETWORK_DEFAULT="mainnet"
 KEEP_CORE_REPO="https://github.com/keep-network/keep-core"
 # Special October case when calculating rewards
 OCTOBER_17="1666051200" # Oct 18 00:00:00 GMT
+REWARDS_DETAILS_PATH_DEFAULT="./rewards-details"
+REQUIRED_PRE_PARAMS_DEFAULT=500
+REQUIRED_UPTIME_DEFAULT=96 # percent
 
 help() {
   echo -e "\nUsage: $0" \
@@ -26,7 +29,10 @@ help() {
     "--prometheus-job <prometheus-job-name>" \
     "--etherscan-api <etherscan-api-url>" \
     "--network <network-name>" \
-    "--rewards-json <rewards-json-output-path>"
+    "--rewards-json <rewards-json-output-path>" \
+    "--rewards-details-path <rewards-details-path" \
+    "--required-pre-params <required-pre-params>" \
+    "--required-uptime <required-uptime>"
   echo -e "\nRequired command line arguments:\n"
   echo -e "\t--rewards-start-date: Rewards interval start date formatted as UNIX timestamp"
   echo -e "\t--rewards-end-date: Rewards interval end date formatted as UNIX timestamp"
@@ -37,6 +43,9 @@ help() {
   echo -e "\t--etherscan-api: Etherscan API url. Default: ${ETHERSCAN_API_DEFAULT}"
   echo -e "\t--network: Network name. Default: ${NETWORK_DEFAULT}"
   echo -e "\t--rewards-json: Rewards JSON output path. Default: ${REWARDS_JSON_DEFAULT}"
+  echo -e "\t--rewards-details-path: Rewards details path. Default: ${REWARDS_DETAILS_PATH_DEFAULT}"
+  echo -e "\t--required-pre-params: Required pre-params. Default: ${REQUIRED_PRE_PARAMS_DEFAULT}"
+  echo -e "\t--required-uptime: Required client uptime. Default: ${REQUIRED_UPTIME_DEFAULT}"
   echo -e ""
   exit 1 # Exit script after printing help
 }
@@ -53,6 +62,9 @@ for arg in "$@"; do
   "--prometheus-job") set -- "$@" "-p" ;;
   "--network") set -- "$@" "-n" ;;
   "--rewards-json") set -- "$@" "-o" ;;
+  "--rewards-details-path") set -- "$@" "-d" ;;
+  "--required-pre-params") set -- "$@" "-s" ;;
+  "--required-uptime") set -- "$@" "-m" ;;
   "--help") set -- "$@" "-h" ;;
   *) set -- "$@" "$arg" ;;
   esac
@@ -60,7 +72,7 @@ done
 
 # Parse short options
 OPTIND=1
-while getopts "k:e:t:r:a:p:n:o:h" opt; do
+while getopts "k:e:t:r:a:p:n:o:d:s:m:h" opt; do
   case "$opt" in
   k) rewards_start_date="$OPTARG" ;;
   e) rewards_end_date="$OPTARG" ;;
@@ -70,6 +82,9 @@ while getopts "k:e:t:r:a:p:n:o:h" opt; do
   p) prometheus_job="$OPTARG" ;;
   n) network="$OPTARG" ;;
   o) rewards_json="$OPTARG" ;;
+  d) rewards_details_path="$OPTARG" ;;
+  s) required_pre_params="$OPTARG" ;;
+  m) required_uptime="$OPTARG" ;;
   h) help ;;
   ?) help ;; # Print help in case parameter is non-existent
   esac
@@ -84,6 +99,9 @@ PROMETHEUS_JOB=${prometheus_job:-${PROMETHEUS_JOB_DEFAULT}}
 REWARDS_JSON=${rewards_json:-${REWARDS_JSON_DEFAULT}}
 ETHERSCAN_API=${etherscan_api:-${ETHERSCAN_API_DEFAULT}}
 NETWORK=${network:-${NETWORK_DEFAULT}}
+REWARDS_DETAILS_PATH=${rewards_details_path:-${REWARDS_DETAILS_PATH_DEFAULT}}
+REQUIRED_PRE_PARAMS=${required_pre_params:-${REQUIRED_PRE_PARAMS_DEFAULT}}
+REQUIRED_UPTIME=${required_uptime:-${REQUIRED_UPTIME_DEFAULT}}
 
 if [ "$REWARDS_START_DATE" == "" ]; then
   printf "${LOG_WARNING_START}Rewards start date must be provided.${LOG_WARNING_END}"
@@ -185,6 +203,9 @@ ETHERSCAN_TOKEN=${ETHERSCAN_TOKEN} yarn rewards \
   --october17-timestamp $OCTOBER_17 \
   --releases $tagsTrimmed \
   --network ${NETWORK} \
-  --output ${REWARDS_JSON}
+  --output ${REWARDS_JSON} \
+  --output-details-path ${REWARDS_DETAILS_PATH} \
+  --required-pre-params ${REQUIRED_PRE_PARAMS} \
+  --required-uptime ${REQUIRED_UPTIME}
 
 printf "${DONE_START}Complete!${DONE_END}"

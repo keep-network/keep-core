@@ -27,11 +27,9 @@ import {
   IS_UP_TIME_SATISFIED,
   IS_PRE_PARAMS_SATISFIED,
   IS_VERSION_SATISFIED,
-  REQUIRED_UPTIME_PERCENT,
-  REQUIRED_MIN_PRE_PARAMS,
   ALLOWED_UPGRADE_DELAY,
   PRECISION,
-  QUERY_STEP,
+  OPERATORS_SEARCH_QUERY_STEP,
   QUERY_RESOLUTION,
   HUNDRED,
   APR,
@@ -58,7 +56,7 @@ program
   .requiredOption("-a, --api <prometheus api>", "prometheus API")
   .requiredOption("-j, --job <prometheus job>", "prometheus job")
   .requiredOption(
-    "-s, --october17-block <october 17 block>",
+    "-c, --october17-block <october 17 block>",
     "october 17 block"
   )
   .requiredOption(
@@ -71,6 +69,12 @@ program
   )
   .requiredOption("-n, --network <name>", "network name")
   .requiredOption("-o, --output <file>", "output JSON file")
+  .requiredOption(
+    "-d, --output-details-path <path>",
+    "output JSON details path"
+  )
+  .requiredOption("-q, --required-pre-params <number>", "required pre params")
+  .requiredOption("-m, --required-uptime <percent>", "required uptime")
   .parse(process.argv);
 
 // Parse the program options
@@ -85,7 +89,10 @@ const endRewardsBlock = parseInt(options.endBlock);
 const october17Block = parseInt(options.october17Block);
 const october17Timestamp = parseInt(options.october17Timestamp);
 const rewardsDataOutput = options.output;
+const rewardsDetailsPath = options.outputDetailsPath;
 const network = options.network;
+const requiredPreParams = options.requiredPreParams;
+const requiredUptime = options.requiredUptime; // percent
 
 const prometheusAPIQuery = `${prometheusAPI}/query`;
 // Go back in time relevant to the current date to get data for the exact
@@ -113,7 +120,7 @@ export async function calculateRewards() {
     query: `sum by(chain_address)({job='${prometheusJob}'})`,
     start: startRewardsTimestamp,
     end: endRewardsTimestamp,
-    step: QUERY_STEP,
+    step: OPERATORS_SEARCH_QUERY_STEP,
   };
 
   const bootstrapData = (
@@ -296,7 +303,7 @@ export async function calculateRewards() {
       rewardsInterval,
       instancesData
     );
-    // BigNumbers cannot operate on floats. Coefficient needs to be multiplied 
+    // BigNumbers cannot operate on floats. Coefficient needs to be multiplied
     // by PRECISION
     uptimeCoefficient = Math.floor(uptimeCoefficient * PRECISION);
     requirements.set(IS_UP_TIME_SATISFIED, isUptimeSatisfied);
@@ -413,6 +420,11 @@ export async function calculateRewards() {
   // console.log("operatorsData: ", JSON.stringify(operatorsData, null, 4));
   // console.log("rewardsData: ", JSON.stringify(rewardsData, null, 4));
   fs.writeFileSync(rewardsDataOutput, JSON.stringify(rewardsData, null, 4));
+  const detailsFileName = `${startRewardsTimestamp}-${endRewardsTimestamp}`;
+  fs.writeFileSync(
+    rewardsDetailsPath + "/" + detailsFileName + ".json",
+    JSON.stringify(operatorsData, null, 4)
+  );
 }
 
 async function getAuthorization(
@@ -622,7 +634,7 @@ async function checkUptime(
     sumUptime += uptime;
   }
 
-  const isUptimeSatisfied = sumUptime >= REQUIRED_UPTIME_PERCENT;
+  const isUptimeSatisfied = sumUptime >= requiredUptime;
   // October is a special month for rewards calculation. If a node was set before
   // October 17th, then it is eligible for the entire month of rewards. Uptime of
   // a running node still need to meet the uptime requirement after it was set.
@@ -668,7 +680,7 @@ async function checkPreParams(
   }
 
   const preParamsAvg = sumPreParams / preParamsAvgByInstance.length;
-  return preParamsAvg >= REQUIRED_MIN_PRE_PARAMS;
+  return preParamsAvg >= requiredPreParams;
 }
 
 async function checkVersion(
