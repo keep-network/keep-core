@@ -45,7 +45,21 @@ func (ekpgs *ephemeralKeyPairGenerationState) Receive(netMessage net.Message) er
 			netMessage.SenderPublicKey(),
 		) && ekpgs.member.sessionID == protocolMessage.SessionID() {
 			ekpgs.ReceiveToHistory(netMessage)
+		} else {
+			ekpgs.member.logger.Warnf(
+				"[member:%v,state:*dkg.ephemeralKeyPairGenerationState] Receive() validation failed on shouldAcceptMessage or session ID comparison; sender ID: [%v]; sender pubkey: [%v], current session ID: [%v], session ID from message: [%v]",
+				ekpgs.member.id,
+				protocolMessage.SenderID(),
+				netMessage.SenderPublicKey(),
+				ekpgs.member.sessionID,
+				protocolMessage.SessionID(),
+			)
 		}
+	} else {
+		ekpgs.member.logger.Warnf(
+			"[member:%v,state:*dkg.ephemeralKeyPairGenerationState] could not cast the net message! message is: [%v]",
+			netMessage,
+		)
 	}
 
 	return nil
@@ -155,6 +169,11 @@ func (tros *tssRoundOneState) Receive(netMessage net.Message) error {
 }
 
 func (tros *tssRoundOneState) CanTransition() bool {
+	tros.member.logger.Infof(
+		"[member:%v,state:*dkg.tssRoundOneState] CanTransition() has [%v] messages received",
+		tros.member.id,
+		len(receivedMessages[*tssRoundOneMessage](tros.BaseAsyncState)),
+	)
 	messagingDone := len(receivedMessages[*tssRoundOneMessage](tros.BaseAsyncState)) ==
 		len(tros.member.group.OperatingMemberIDs())-1
 
@@ -217,6 +236,11 @@ func (trts *tssRoundTwoState) Receive(netMessage net.Message) error {
 }
 
 func (trts *tssRoundTwoState) CanTransition() bool {
+	trts.member.logger.Infof(
+		"[member:%v,state:*dkg.tssRoundTwoState] CanTransition() has [%v] messages received",
+		trts.member.id,
+		len(receivedMessages[*tssRoundTwoMessage](trts.BaseAsyncState)),
+	)
 	messagingDone := len(receivedMessages[*tssRoundTwoMessage](trts.BaseAsyncState)) ==
 		len(trts.member.group.OperatingMemberIDs())-1
 
@@ -279,6 +303,11 @@ func (trts *tssRoundThreeState) Receive(netMessage net.Message) error {
 }
 
 func (trts *tssRoundThreeState) CanTransition() bool {
+	trts.member.logger.Infof(
+		"[member:%v,state:*dkg.tssRoundThreeState] CanTransition() has [%v] messages received",
+		trts.member.id,
+		len(receivedMessages[*tssRoundThreeMessage](trts.BaseAsyncState)),
+	)
 	messagingDone := len(receivedMessages[*tssRoundThreeMessage](trts.BaseAsyncState)) ==
 		len(trts.member.group.OperatingMemberIDs())-1
 
@@ -341,6 +370,11 @@ func (fs *finalizationState) Receive(netMessage net.Message) error {
 }
 
 func (fs *finalizationState) CanTransition() bool {
+	fs.member.logger.Infof(
+		"[member:%v,state:*dkg.tssRoundFourState] CanTransition() has [%v] messages received",
+		fs.member.id,
+		len(receivedMessages[*tssFinalizationMessage](fs.BaseAsyncState)),
+	)
 	messagingDone := len(receivedMessages[*tssFinalizationMessage](fs.BaseAsyncState)) ==
 		len(fs.member.group.OperatingMemberIDs())-1
 
@@ -425,6 +459,11 @@ func (rss *resultSigningState) Receive(netMessage net.Message) error {
 }
 
 func (rss *resultSigningState) CanTransition() bool {
+	rss.member.logger.Infof(
+		"[member:%v, resultSigningState] CanTransition() has [%v] messages received",
+		rss.member.memberIndex,
+		len(receivedMessages[*resultSignatureMessage](rss.BaseAsyncState)),
+	)
 	// Although there is no hard requirement to expect signature messages
 	// from all participants, it makes sense to do so because this is an
 	// additional participant availability check that allows to maximize
