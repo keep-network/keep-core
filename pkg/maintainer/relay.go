@@ -112,16 +112,17 @@ func (r *Relay) startControlLoop(ctx context.Context) {
 	}
 }
 
-// submitHeaders submits block headers for retargets.
+// submitHeaders submits block headers to the relay chain.
 func (r *Relay) submitHeaders(ctx context.Context) error {
 	if err := r.verifySubmissionEligibility(); err != nil {
 		return fmt.Errorf(
-			"relay maintainer not eligible to submit retargets [%v]",
+			"cannot submit block headers to the relay chain [%v]",
 			err,
 		)
 	}
 
 	for {
+		// The height of the Bitcoin blockchain.
 		currentBlockNumber, err := r.btcChain.GetCurrentBlockNumber()
 		if err != nil {
 			return fmt.Errorf(
@@ -130,6 +131,7 @@ func (r *Relay) submitHeaders(ctx context.Context) error {
 			)
 		}
 
+		// The current epoch proven in the relay chain.
 		currentEpoch, err := r.chain.CurrentEpoch()
 		if err != nil {
 			return fmt.Errorf(
@@ -138,6 +140,7 @@ func (r *Relay) submitHeaders(ctx context.Context) error {
 			)
 		}
 
+		// The number of blocks required for each side of a retarget proof.
 		proofLength, err := r.chain.ProofLength()
 		if err != nil {
 			return fmt.Errorf(
@@ -146,14 +149,32 @@ func (r *Relay) submitHeaders(ctx context.Context) error {
 			)
 		}
 
-		nextEpoch := currentEpoch + 1
-		nextEpochHeight := nextEpoch * bitcoinEpochLength
+		// The new epoch to be proven in the relay chain.
+		newEpoch := currentEpoch + 1
 
-		firstBlockHeaderHeight := uint(nextEpochHeight - proofLength)
-		lastBlockHeaderHeight := uint(nextEpochHeight + proofLength - 1)
+		// Height of the first block of the new epoch.
+		newEpochHeight := newEpoch * bitcoinEpochLength
 
-		retargetSleepTime := hardRetargetSleepTime
+		// The range of block headers to be pull from the Bitcoin chain should
+		// start `proofLength` blocks before the first block of the new epoch
+		// and end `proofLength`-1 after it.
+		// For example, if the new epoch begins at block 522144 and `proofLength`
+		// is 3, then the range should be [522141, 522146]:
+		// 522141 <- old difficulty target
+		// 522142 <- old difficulty target
+		// 522143 <- old difficulty target
+		// << difficulty retarget >>
+		// 522144 <- new difficulty target (first block of the new epoch)
+		// 522145 <- new difficulty target
+		// 522146 <- new difficulty target
+		firstBlockHeaderHeight := uint(newEpochHeight - proofLength)
+		lastBlockHeaderHeight := uint(newEpochHeight + proofLength - 1)
 
+		var retargetSleepTime time.Duration
+
+		// The required range of block headers can be pulled from the Bitcoin
+		// blockchain only if the blockchain height is equal or greater the end
+		// of the range.
 		if currentBlockNumber >= lastBlockHeaderHeight {
 			headers, err := r.getBlockHeaders(
 				firstBlockHeaderHeight,
@@ -161,20 +182,34 @@ func (r *Relay) submitHeaders(ctx context.Context) error {
 			)
 			if err != nil {
 				return fmt.Errorf(
-					"failed to get block headers for retarget [%v]",
+					"failed to get block headers from Bitcoin chain [%v]",
 					err,
 				)
 			}
 
 			if err := r.chain.Retarget(headers); err != nil {
 				return fmt.Errorf(
-					"failed to submit block headers [%v] for a retarget [%v]",
-					headers,
+					"failed to submit block headers from range [%v, %v] to "+
+						"the relay chain [%v]",
+					firstBlockHeaderHeight,
+					lastBlockHeaderHeight,
 					err,
 				)
 			}
 
 			retargetSleepTime = softRetargetSleepTime
+
+			logger.Infof(
+				"Successfully submitted block headers [%v:%v] to the relay "+
+					"chain. The current proven epoch is %v.",
+				firstBlockHeaderHeight,
+				lastBlockHeaderHeight,
+				newEpoch,
+			)
+		} else {
+			retargetSleepTime = hardRetargetSleepTime
+
+			logger.Infof("The relay is up-to-date with the Bitcoin blockchain")
 		}
 
 		time.Sleep(retargetSleepTime)
@@ -182,7 +217,7 @@ func (r *Relay) submitHeaders(ctx context.Context) error {
 }
 
 // verifySubmissionEligibility verifies whether a relay maintainer is eligible
-// to submit block headers for retargets.
+// to submit block headers to the relay chain.
 func (r *Relay) verifySubmissionEligibility() error {
 	isReady, err := r.chain.Ready()
 	if err != nil {
@@ -200,7 +235,7 @@ func (r *Relay) verifySubmissionEligibility() error {
 	if err != nil {
 		return fmt.Errorf(
 			"cannot check whether authorization is required to submit "+
-				"retargets [%v]",
+				"block headers [%v]",
 			err,
 		)
 	}
@@ -215,14 +250,14 @@ func (r *Relay) verifySubmissionEligibility() error {
 	if err != nil {
 		return fmt.Errorf(
 			"cannot check whether relay maintainer is authorized to "+
-				"submit retargets [%v]",
+				"submit block headers [%v]",
 			err,
 		)
 	}
 
 	if !isAuthorized {
 		return fmt.Errorf(
-			"relay maintainer is not authorized to submit retargets",
+			"relay maintainer has not been authorized to submit block headers",
 		)
 	}
 
