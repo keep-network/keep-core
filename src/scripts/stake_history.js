@@ -1,7 +1,7 @@
 // Script that retrieves the information of a particular staker, including the staking history
 // Use: node scripts/stake_history.js <staking provider address>
 
-const Subgraph = require("../src/stakingrewards/subgraph.js")
+const Subgraph = require("../pre-rewards/subgraph.js")
 
 const graphqlApi =
   "https://api.studio.thegraph.com/query/24143/main-threshold-subgraph/0.0.7"

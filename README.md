@@ -1,33 +1,20 @@
-# T Merkle Distributor
+# Threshold Network rewards Merkle distribution
 
-Solidity contract for Threshold rewards' distribution.
+Solidity contract and scripts for Threshold Network rewards' distribution.
 
-In Cumulative Merkle Drop contract each new token distribution replaces previous one and should
-contain cumulative balances of all the participants. Cumulative claimed amount is used as
+In Cumulative Merkle Drop contract, each new token distribution replaces previous one and should
+contain the cumulative balances of all the participants. Cumulative claimed amount is used as
 invalidation for every participant.
 
 ## Structure
 
-This is a Hardhat project:
-
 - `contracts`: Source code for contract
-- `test`: Contract tests
-- `scripts`: Hardhat scripts:
-  - `gen_merkle_dist.js`: generate new Merkle distribution
-  - `verify_proof.js`: verify Merkle proof
+- `test`: Hardhat contract tests.
+- `src/scripts`:
+  - `gen_rewards_dist.js`: generate new Merkle distribution for the Threshold Network rewards earned
+    in a specific period.
+  - `verify_proof.js`: verify Merkle proof of a distribution.
   - `stake_history.js`: fetch the information of a particular staker, including staking history.
-  - `claim_example.js`: example about how to claim tokens using the contract
-
-## Examples
-
-- `example_stake_list_<n>.json`: List of stakes and its data. This JSON is the input of
-  `gen_merkle_dist.js`, which will return the Merkle Distribution for provided stakes.
-- `example_dist_generated_<n>.json`: All the data of the generated Merkle distribution. Includes the
-  total amount of tokens to be claimed by stakers, the Merkle root, and the info of each stake. It's
-  the output of `gen_merkle_dist.js`.
-- `example_proof_generated_<n>.json`: This is an example of the data that will be provided to each
-  staker. Includes the Merkle root, the amount of tokens to be claimed and the Merkle proof. It's the
-  output of `gen_merkle_dist.js`.
 
 ## Installation
 
@@ -35,13 +22,37 @@ This is a Hardhat project:
 npm install
 ```
 
-## Run scripts
+In order to run the scripts, it's needed to have a `.env` file that includes:
 
-```bash
-npx hardhat run scripts/<script.js>
+```
+ETHERSCAN_TOKEN=<your Etherscan API token>
 ```
 
-## Run tests
+## Run scripts
+
+> **NOTE:** Scripts must be run from the repo root, and not from the folder that contains them.
+
+### gen_rewards_dist script
+
+This script calculates the Threshold Network rewards earned during a specific period, adds them to
+the previous distributions, and generates a new distribution that contains the cumulative rewards.
+
+Note that some parameters (rewards weights, start time, end time, last distribution path...) must be
+changed in the script before running it.
+
+```bash
+node src/scripts/gen_rewards_dist.js
+```
+
+### stake_history script
+
+This script fetch the information of a particular staker, including staking history.
+
+```bash
+node src/scripts/stake_history <0x-prefixed staking provider address>
+```
+
+## Run Hardhat tests
 
 ```bash
 npx hardhat test

@@ -1,12 +1,13 @@
-// Script that generates a new Merkle Distribution and outputs the data to JSON files
+// Script that generates a new Merkle Distribution for rewards and outputs the
+// data to JSON files
 // Use: node scripts/gen_merkle_dist.js
 
 const fs = require("fs")
 const shell = require("shelljs")
 const dotenv = require("dotenv").config()
-const Subgraph = require("../src/stakingrewards/subgraph.js")
-const Rewards = require("../src/stakingrewards/rewards.js")
-const MerkleDist = require("../src/stakingrewards/merkle_dist.js")
+const Subgraph = require("../pre-rewards/subgraph.js")
+const Rewards = require("../pre-rewards/rewards.js")
+const MerkleDist = require("../merkle_dist/merkle_dist.js")
 
 // The following parameters must be modified for each distribution
 const bonusWeight = 0.0
