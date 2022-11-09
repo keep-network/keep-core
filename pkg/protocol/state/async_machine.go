@@ -7,6 +7,7 @@ import (
 
 	"github.com/ipfs/go-log/v2"
 	"github.com/keep-network/keep-core/pkg/net"
+	"github.com/keep-network/keep-core/pkg/protocol/group"
 )
 
 // asyncReceiveBuffer is a buffer for messages received from the broadcast
@@ -65,6 +66,16 @@ func NewAsyncMachine(
 	}
 }
 
+// message holds common traits of all signing protocol messages.
+type message interface {
+	// SenderID returns protocol-level identifier of the message sender.
+	SenderID() group.MemberIndex
+	// SessionID returns the session identifier of the message.
+	SessionID() string
+	// Type returns the exact type of the message.
+	Type() string
+}
+
 // Execute state machine starting with initial state up to finalization. It
 // requires the broadcast channel to be pre-initialized.
 func (am *AsyncMachine) Execute() (AsyncState, error) {
@@ -85,6 +96,23 @@ func (am *AsyncMachine) Execute() (AsyncState, error) {
 	for {
 		select {
 		case msg := <-recvChan:
+			if protocolMessage, ok := msg.Payload().(message); ok {
+				am.logger.Infof(
+					"[member:%v,state:%T] is receiving a message of type [%v] from member with index [%v]",
+					currentState.MemberIndex(),
+					currentState,
+					protocolMessage.Type(),
+					protocolMessage.SenderID(),
+				)
+			} else {
+				am.logger.Infof(
+					"[member:%v,state:%T] is receiving a message of type [%v] which IS NOT A PROTOCOL MESSAGE",
+					currentState.MemberIndex(),
+					currentState,
+					msg.Type(),
+				)
+			}
+
 			err := currentState.Receive(msg)
 			if err != nil {
 				am.logger.Errorf(

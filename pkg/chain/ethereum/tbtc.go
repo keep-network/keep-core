@@ -432,8 +432,9 @@ func (mwr *mockWalletRegistry) OnDKGStarted(
 				// Generate an event every 500th block starting from block 250.
 				// The shift is done in order to avoid overlapping with beacon
 				// DKG test loop.
-				shift := uint64(250)
-				if block >= shift && (block-shift)%500 == 0 {
+				//shift := uint64(250)
+				//if block >= shift && (block-shift)%500 == 0 {
+				if block%200 == 0 {
 					// The seed is keccak256(block).
 					blockBytes := make([]byte, 8)
 					binary.BigEndian.PutUint64(blockBytes, block)
@@ -540,45 +541,47 @@ func (mwr *mockWalletRegistry) SubmitDKGResult(
 func (mwr *mockWalletRegistry) OnSignatureRequested(
 	handler func(event *tbtc.SignatureRequestedEvent),
 ) subscription.EventSubscription {
-	ctx, cancelCtx := context.WithCancel(context.Background())
-	blocksChan := mwr.blockCounter.WatchBlocks(ctx)
+	//ctx, cancelCtx := context.WithCancel(context.Background())
+	//blocksChan := mwr.blockCounter.WatchBlocks(ctx)
 
-	go func() {
-		for {
-			select {
-			case block := <-blocksChan:
-				// Generate an event every 200 block.
-				if block%200 == 0 {
-					mwr.activeWalletMutex.RLock()
+	/*
+		go func() {
+			for {
+				select {
+				case block := <-blocksChan:
+					// Generate an event every 200 block.
+					if block%200 == 0 {
+						mwr.activeWalletMutex.RLock()
 
-					if len(mwr.activeWallet) > 0 {
-						// If the active wallet is ready to receive the request.
-						if big.NewInt(int64(block)).Cmp(
-							mwr.activeWalletOperableBlock,
-						) >= 0 {
-							blockBytes := make([]byte, 8)
-							binary.BigEndian.PutUint64(blockBytes, block)
-							blockHashBytes := crypto.Keccak256(blockBytes)
-							blockHash := new(big.Int).SetBytes(blockHashBytes)
+						if len(mwr.activeWallet) > 0 {
+							// If the active wallet is ready to receive the request.
+							if big.NewInt(int64(block)).Cmp(
+								mwr.activeWalletOperableBlock,
+							) >= 0 {
+								blockBytes := make([]byte, 8)
+								binary.BigEndian.PutUint64(blockBytes, block)
+								blockHashBytes := crypto.Keccak256(blockBytes)
+								blockHash := new(big.Int).SetBytes(blockHashBytes)
 
-							go handler(&tbtc.SignatureRequestedEvent{
-								WalletPublicKey: mwr.activeWallet,
-								Message:         blockHash,
-								BlockNumber:     block,
-							})
+								go handler(&tbtc.SignatureRequestedEvent{
+									WalletPublicKey: mwr.activeWallet,
+									Message:         blockHash,
+									BlockNumber:     block,
+								})
+							}
 						}
-					}
 
-					mwr.activeWalletMutex.RUnlock()
+						mwr.activeWalletMutex.RUnlock()
+					}
+				case <-ctx.Done():
+					return
 				}
-			case <-ctx.Done():
-				return
 			}
-		}
-	}()
+		}()
+	*/
 
 	return subscription.NewEventSubscription(func() {
-		cancelCtx()
+		//cancelCtx()
 	})
 }
 
