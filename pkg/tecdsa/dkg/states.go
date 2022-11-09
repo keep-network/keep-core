@@ -86,7 +86,16 @@ func (skgs *symmetricKeyGenerationState) Initiate(ctx context.Context) error {
 	)
 }
 
-func (skgs *symmetricKeyGenerationState) Receive(msg net.Message) error {
+func (skgs *symmetricKeyGenerationState) Receive(netMessage net.Message) error {
+	if protocolMessage, ok := netMessage.Payload().(message); ok {
+		if skgs.member.shouldAcceptMessage(
+			protocolMessage.SenderID(),
+			netMessage.SenderPublicKey(),
+		) && skgs.member.sessionID == protocolMessage.SessionID() {
+			skgs.ReceiveToHistory(netMessage)
+		}
+	}
+
 	return nil
 }
 
