@@ -59,7 +59,7 @@ func (c *channel) Name() string {
 func (c *channel) Send(
 	ctx context.Context,
 	m net.TaggedMarshaler,
-	strategy ...net.RetransmissionStrategy,
+	retransmissionStrategy ...net.RetransmissionStrategy,
 ) error {
 	altered := c.rules(m)
 	if altered == nil {

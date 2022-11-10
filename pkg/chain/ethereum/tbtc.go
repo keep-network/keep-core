@@ -116,13 +116,11 @@ func (tc *TbtcChain) GetConfig() *tbtc.ChainConfig {
 	groupSize := 100
 	groupQuorum := 90
 	honestThreshold := 51
-	resultPublicationBlockStep := 1
 
 	return &tbtc.ChainConfig{
-		GroupSize:                  groupSize,
-		GroupQuorum:                groupQuorum,
-		HonestThreshold:            honestThreshold,
-		ResultPublicationBlockStep: uint64(resultPublicationBlockStep),
+		GroupSize:       groupSize,
+		GroupQuorum:     groupQuorum,
+		HonestThreshold: honestThreshold,
 	}
 }
 
