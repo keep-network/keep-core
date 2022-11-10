@@ -18,7 +18,7 @@ function verifyProof(wallet, beneficiary, amount, proof, root) {
 }
 
 function main() {
-  let proof = true
+  let proofVerification = true
 
   const json = JSON.parse(fs.readFileSync(PROOF_PATH, { encoding: "utf8" }))
   if (typeof json !== "object") throw new Error("Invalid JSON")
@@ -38,11 +38,11 @@ function main() {
     )
 
     if (!proofResult) {
-      proof = false
+      proofVerification = false
     }
   })
 
-  console.log("Proof result: ", proof)
+  console.log("Proof result: ", proofVerification)
 }
 
 main()
