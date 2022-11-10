@@ -567,13 +567,17 @@ exports.getStakingHistory = async function (gqlUrl, stakingProvider) {
     .then((result) => {
       if (result.error) console.error(result.error)
       const data = result.data.simplePREApplication
-      stakeData.operator.operator = data.operator
-      stakeData.operator.bondedDate = new Date(
-        data.bondedTimestamp * 1000
-      ).toISOString()
-      stakeData.operator.confirmedDate = new Date(
-        data.confirmedTimestamp * 1000
-      ).toISOString()
+      if (!data) {
+        stakeData.operator = null
+      } else {
+        stakeData.operator.operator = data.operator
+        stakeData.operator.bondedDate = new Date(
+          data.bondedTimestamp * 1000
+        ).toISOString()
+        stakeData.operator.confirmedDate = new Date(
+          data.confirmedTimestamp * 1000
+        ).toISOString()
+      }
     })
 
   do {
