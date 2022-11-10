@@ -346,6 +346,11 @@ func (n *node) joinDKGIfEligible(seed *big.Int, startBlockNumber uint64) {
 					context.Background(),
 					publicationTimeout,
 				)
+				// TODO: Call cancelPublicationCtx() when the result is
+				//       available and published and remove this goroutine.
+				//       This goroutine is duplicating context.WithTimeout work
+				//       right now but is here to emphasize the need of manual
+				//       context cancellation.
 				go func() {
 					defer cancelPublicationCtx()
 					time.Sleep(publicationTimeout)
