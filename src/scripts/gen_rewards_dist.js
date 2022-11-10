@@ -2,9 +2,9 @@
 // data to JSON files
 // Use: node scripts/gen_merkle_dist.js
 
+require("dotenv").config()
 const fs = require("fs")
 const shell = require("shelljs")
-const dotenv = require("dotenv").config()
 const Subgraph = require("../pre-rewards/subgraph.js")
 const Rewards = require("../pre-rewards/rewards.js")
 const MerkleDist = require("../merkle_dist/merkle_dist.js")
@@ -32,10 +32,10 @@ async function main() {
   const distPath = `distributions/${endDate}`
   const lastDistPath = `distributions/${lastDistribution}`
   const tbtcv2Script =
-  `./rewards.sh ` +
-  `--rewards-start-date ${startTime} ` +
-  `--rewards-end-date ${endTime} ` +
-  `--etherscan-token ${process.env.ETHERSCAN_TOKEN}`
+    "./rewards.sh " +
+    `--rewards-start-date ${startTime} ` +
+    `--rewards-end-date ${endTime} ` +
+    `--etherscan-token ${process.env.ETHERSCAN_TOKEN}`
 
   try {
     fs.mkdirSync(distPath)
@@ -76,24 +76,39 @@ async function main() {
   }
 
   try {
-    bonusRewards = JSON.parse(fs.readFileSync(`${lastDistPath}/MerkleInputBonusRewards.json`))
-    bonusRewards = MerkleDist.combineMerkleInputs(bonusRewards, earnedBonusRewards)
+    bonusRewards = JSON.parse(
+      fs.readFileSync(`${lastDistPath}/MerkleInputBonusRewards.json`)
+    )
+    bonusRewards = MerkleDist.combineMerkleInputs(
+      bonusRewards,
+      earnedBonusRewards
+    )
     fs.writeFileSync(
       distPath + "/MerkleInputBonusRewards.json",
       JSON.stringify(bonusRewards, null, 4)
     )
-    ongoingRewards = JSON.parse(fs.readFileSync(`${lastDistPath}/MerkleInputOngoingRewards.json`))
-    ongoingRewards = MerkleDist.combineMerkleInputs(ongoingRewards, earnedOngoingRewards)
+    ongoingRewards = JSON.parse(
+      fs.readFileSync(`${lastDistPath}/MerkleInputOngoingRewards.json`)
+    )
+    ongoingRewards = MerkleDist.combineMerkleInputs(
+      ongoingRewards,
+      earnedOngoingRewards
+    )
     fs.writeFileSync(
       distPath + "/MerkleInputOngoingRewards.json",
       JSON.stringify(ongoingRewards, null, 4)
     )
-    if(fs.existsSync(`${lastDistPath}/MerkleInputTbtcv2Rewards.json`)) {
-      tbtcv2Rewards = JSON.parse(fs.readFileSync(`${lastDistPath}/MerkleInputTbtcv2Rewards.json`))
+    if (fs.existsSync(`${lastDistPath}/MerkleInputTbtcv2Rewards.json`)) {
+      tbtcv2Rewards = JSON.parse(
+        fs.readFileSync(`${lastDistPath}/MerkleInputTbtcv2Rewards.json`)
+      )
     } else {
       tbtcv2Rewards = {}
     }
-    tbtcv2Rewards = MerkleDist.combineMerkleInputs(tbtcv2Rewards, earnedTbtcv2Rewards)
+    tbtcv2Rewards = MerkleDist.combineMerkleInputs(
+      tbtcv2Rewards,
+      earnedTbtcv2Rewards
+    )
     fs.writeFileSync(
       distPath + "/MerkleInputTbtcv2Rewards.json",
       JSON.stringify(earnedTbtcv2Rewards, null, 4)

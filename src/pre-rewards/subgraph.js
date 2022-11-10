@@ -598,7 +598,7 @@ exports.getStakingHistory = async function (gqlUrl, stakingProvider) {
     return parseInt(epochA.epoch.id) - parseInt(epochB.epoch.id)
   })
 
-  epochStakes.forEach((epoch, index) => {
+  epochStakes.forEach((epoch) => {
     const epochAmount = parseInt(epoch.amount)
     if (epochAmount !== amount) {
       const histElem = { epoch: epoch.epoch.id }

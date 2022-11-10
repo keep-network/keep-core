@@ -1,21 +1,21 @@
-import { BigNumber } from "@ethersproject/bignumber";
-import { Contract } from "ethers";
-import { program } from "commander";
-import * as fs from "fs";
-import { ethers } from "ethers";
+import { BigNumber } from "@ethersproject/bignumber"
+import { Contract } from "ethers"
+import { program } from "commander"
+import * as fs from "fs"
+import { ethers } from "ethers"
 import {
   abi as RandomBeaconABI,
   address as RandomBeaconAddress,
-} from "@keep-network/random-beacon/artifacts/RandomBeacon.json";
+} from "@keep-network/random-beacon/artifacts/RandomBeacon.json"
 import {
   abi as WalletRegistryABI,
   address as WalletRegistryAddress,
-} from "@keep-network/ecdsa/artifacts/WalletRegistry.json";
+} from "@keep-network/ecdsa/artifacts/WalletRegistry.json"
 import {
   abi as TokenStakingABI,
   address as TokenStakingAddress,
-} from "@threshold-network/solidity-contracts/artifacts/TokenStaking.json";
-import axios from "axios";
+} from "@threshold-network/solidity-contracts/artifacts/TokenStaking.json"
+import axios from "axios"
 import {
   BEACON_AUTHORIZATION,
   TBTC_AUTHORIZATION,
@@ -33,7 +33,7 @@ import {
   QUERY_RESOLUTION,
   HUNDRED,
   APR,
-} from "./rewards-constants";
+} from "./rewards-constants"
 
 program
   .version("0.0.1")
@@ -75,179 +75,179 @@ program
   )
   .requiredOption("-q, --required-pre-params <number>", "required pre params")
   .requiredOption("-m, --required-uptime <percent>", "required uptime")
-  .parse(process.argv);
+  .parse(process.argv)
 
 // Parse the program options
-const options = program.opts();
-const prometheusJob = options.job;
-const prometheusAPI = options.api;
-const clientReleases = options.releases.split("|"); // sorted from latest to oldest
-const startRewardsTimestamp = parseInt(options.startTimestamp);
-const endRewardsTimestamp = parseInt(options.endTimestamp);
-const startRewardsBlock = parseInt(options.startBlock);
-const endRewardsBlock = parseInt(options.endBlock);
-const october17Block = parseInt(options.october17Block);
-const october17Timestamp = parseInt(options.october17Timestamp);
-const rewardsDataOutput = options.output;
-const rewardsDetailsPath = options.outputDetailsPath;
-const network = options.network;
-const requiredPreParams = options.requiredPreParams;
-const requiredUptime = options.requiredUptime; // percent
+const options = program.opts()
+const prometheusJob = options.job
+const prometheusAPI = options.api
+const clientReleases = options.releases.split("|") // sorted from latest to oldest
+const startRewardsTimestamp = parseInt(options.startTimestamp)
+const endRewardsTimestamp = parseInt(options.endTimestamp)
+const startRewardsBlock = parseInt(options.startBlock)
+const endRewardsBlock = parseInt(options.endBlock)
+const october17Block = parseInt(options.october17Block)
+const october17Timestamp = parseInt(options.october17Timestamp)
+const rewardsDataOutput = options.output
+const rewardsDetailsPath = options.outputDetailsPath
+const network = options.network
+const requiredPreParams = options.requiredPreParams
+const requiredUptime = options.requiredUptime // percent
 
-const prometheusAPIQuery = `${prometheusAPI}/query`;
+const prometheusAPIQuery = `${prometheusAPI}/query`
 // Go back in time relevant to the current date to get data for the exact
 // rewards interval dates.
-const offset = Math.floor(Date.now() / 1000) - endRewardsTimestamp;
+const offset = Math.floor(Date.now() / 1000) - endRewardsTimestamp
 
 export async function calculateRewards() {
   if (Date.now() / 1000 < endRewardsTimestamp) {
-    console.log("End time interval must be in the past");
-    return "End time interval must be in the past";
+    console.log("End time interval must be in the past")
+    return "End time interval must be in the past"
   }
 
   const provider = new ethers.providers.EtherscanProvider(
     network,
     process.env.ETHERSCAN_TOKEN
-  );
+  )
 
-  const monthlyRate = (APR / 12) * HUNDRED; // monthly periodic rate ARP / 12 month
-  const currentBlockNumber = await provider.getBlockNumber();
-  const rewardsInterval = endRewardsTimestamp - startRewardsTimestamp;
+  const monthlyRate = (APR / 12) * HUNDRED // monthly periodic rate ARP / 12 month
+  const currentBlockNumber = await provider.getBlockNumber()
+  const rewardsInterval = endRewardsTimestamp - startRewardsTimestamp
 
   // Query for bootstrap data that has peer instances grouped by operators
-  const queryBootstrapData = `${prometheusAPI}/query_range`;
+  const queryBootstrapData = `${prometheusAPI}/query_range`
   const paramsBootstrapData = {
     query: `sum by(chain_address)({job='${prometheusJob}'})`,
     start: startRewardsTimestamp,
     end: endRewardsTimestamp,
     step: OPERATORS_SEARCH_QUERY_STEP,
-  };
+  }
 
   const bootstrapData = (
     await queryPrometheus(queryBootstrapData, paramsBootstrapData)
-  ).data.result;
+  ).data.result
 
-  const operatorsData = new Array();
-  const rewardsData: any = {};
+  const operatorsData = new Array()
+  const rewardsData: any = {}
 
   const randomBeacon = new Contract(
     RandomBeaconAddress,
     JSON.stringify(RandomBeaconABI),
     provider
-  );
+  )
 
   const tokenStaking = new Contract(
     TokenStakingAddress,
     JSON.stringify(TokenStakingABI),
     provider
-  );
+  )
 
   const walletRegistry = new Contract(
     WalletRegistryAddress,
     JSON.stringify(WalletRegistryABI),
     provider
-  );
+  )
 
-  console.log("Fetching AuthorizationIncreased events in rewards interval...");
+  console.log("Fetching AuthorizationIncreased events in rewards interval...")
   const intervalAuthorizationIncreasedEvents = await tokenStaking.queryFilter(
     "AuthorizationIncreased",
     startRewardsBlock,
     endRewardsBlock
-  );
+  )
 
-  console.log("Fetching AuthorizationDecreased events in rewards interval...");
+  console.log("Fetching AuthorizationDecreased events in rewards interval...")
   const intervalAuthorizationDecreasedEvents = await tokenStaking.queryFilter(
     "AuthorizationDecreaseApproved",
     startRewardsBlock,
     endRewardsBlock
-  );
+  )
 
   console.log(
     "Fetching AuthorizationIncreased events after rewards interval..."
-  );
+  )
   const postIntervalAuthorizationIncreasedEvents =
     await tokenStaking.queryFilter(
       "AuthorizationIncreased",
       endRewardsBlock,
       currentBlockNumber
-    );
+    )
 
   console.log(
     "Fetching AuthorizationDecreased events after rewards interval..."
-  );
+  )
   const postIntervalAuthorizationDecreasedEvents =
     await tokenStaking.queryFilter(
       "AuthorizationDecreaseApproved",
       endRewardsBlock,
       currentBlockNumber
-    );
+    )
 
   for (let i = 0; i < bootstrapData.length; i++) {
-    const operatorAddress = bootstrapData[i].metric.chain_address;
-    let authorizations = new Map<string, BigNumber>(); // application: value
-    let requirements = new Map<string, boolean>(); // factor: true | false
-    let instancesData = new Map<string, Map<string, string | number>>();
-    let operatorData: any = {};
+    const operatorAddress = bootstrapData[i].metric.chain_address
+    let authorizations = new Map<string, BigNumber>() // application: value
+    let requirements = new Map<string, boolean>() // factor: true | false
+    let instancesData = new Map<string, Map<string, string | number>>()
+    let operatorData: any = {}
 
     // Staking provider should be the same for Beacon and TBTC apps
     const stakingProvider = await randomBeacon.operatorToStakingProvider(
       operatorAddress
-    );
+    )
     const stakingProviderAddressForTbtc =
-      await walletRegistry.operatorToStakingProvider(operatorAddress);
+      await walletRegistry.operatorToStakingProvider(operatorAddress)
 
     if (stakingProvider !== stakingProviderAddressForTbtc) {
       console.log(
         `Staking providers for Beacon ${stakingProvider} and TBTC ${stakingProviderAddressForTbtc} must match. ` +
           `No Rewards were calculated for operator ${operatorAddress}`
-      );
-      continue;
+      )
+      continue
     }
-    const { beneficiary } = await tokenStaking.rolesOf(stakingProvider);
+    const { beneficiary } = await tokenStaking.rolesOf(stakingProvider)
 
     if (stakingProvider === ethers.constants.AddressZero) {
       console.log(
-        `Staking provider cannot be zero address. ` +
+        "Staking provider cannot be zero address. " +
           `No Rewards were calculated for operator ${operatorAddress}`
-      );
-      continue;
+      )
+      continue
     }
 
     // Events that were emitted between the [start:end] rewards dates for a given
     // stakingProvider.
     let intervalEvents = intervalAuthorizationIncreasedEvents.concat(
       intervalAuthorizationDecreasedEvents
-    );
+    )
     if (intervalEvents.length > 0) {
       intervalEvents = intervalEvents.filter(
         (event) => event.args!.stakingProvider === stakingProvider
-      );
+      )
     }
 
     // Events that were emitted between the [end:now] dates for a given
     // stakingProvider.
     let postIntervalEvents = postIntervalAuthorizationIncreasedEvents.concat(
       postIntervalAuthorizationDecreasedEvents
-    );
+    )
     if (postIntervalEvents.length > 0) {
       postIntervalEvents = postIntervalEvents.filter(
         (event) => event.args!.stakingProvider === stakingProvider
-      );
+      )
     }
 
     /// Random Beacon application authorization requirement
-    let beaconIntervalEvents = new Array();
+    let beaconIntervalEvents = new Array()
     if (intervalEvents.length > 0) {
       beaconIntervalEvents = intervalEvents.filter(
         (obj) => obj.args!.application == randomBeacon.address
-      );
+      )
     }
 
-    let beaconPostIntervalEvents = new Array();
+    let beaconPostIntervalEvents = new Array()
     if (postIntervalEvents.length > 0) {
       beaconPostIntervalEvents = postIntervalEvents.filter(
         (obj) => obj.args!.application == randomBeacon.address
-      );
+      )
     }
 
     const beaconAuthorization = await getAuthorization(
@@ -259,23 +259,23 @@ export async function calculateRewards() {
       endRewardsBlock,
       october17Block,
       currentBlockNumber
-    );
-    authorizations.set(BEACON_AUTHORIZATION, beaconAuthorization.toString());
-    requirements.set(IS_BEACON_AUTHORIZED, !beaconAuthorization.isZero());
+    )
+    authorizations.set(BEACON_AUTHORIZATION, beaconAuthorization.toString())
+    requirements.set(IS_BEACON_AUTHORIZED, !beaconAuthorization.isZero())
 
     /// tBTC application authorized requirement
-    let tbtcIntervalEvents = new Array();
+    let tbtcIntervalEvents = new Array()
     if (intervalEvents.length > 0) {
       tbtcIntervalEvents = intervalEvents.filter(
         (obj) => obj.args!.application == walletRegistry.address
-      );
+      )
     }
 
-    let tbtcPostIntervalEvents = new Array();
+    let tbtcPostIntervalEvents = new Array()
     if (postIntervalEvents.length > 0) {
       tbtcPostIntervalEvents = postIntervalEvents.filter(
         (obj) => obj.args!.application == walletRegistry.address
-      );
+      )
     }
 
     const tbtcAuthorization = await getAuthorization(
@@ -287,47 +287,47 @@ export async function calculateRewards() {
       endRewardsBlock,
       october17Block,
       currentBlockNumber
-    );
+    )
 
-    authorizations.set(TBTC_AUTHORIZATION, tbtcAuthorization.toString());
-    requirements.set(IS_TBTC_AUTHORIZED, !tbtcAuthorization.isZero());
+    authorizations.set(TBTC_AUTHORIZATION, tbtcAuthorization.toString())
+    requirements.set(IS_TBTC_AUTHORIZED, !tbtcAuthorization.isZero())
 
     /// Off-chain client reqs
 
     // Populate instances for a given operator.
-    await instancesForOperator(operatorAddress, rewardsInterval, instancesData);
+    await instancesForOperator(operatorAddress, rewardsInterval, instancesData)
 
     /// Uptime requirement
     let { uptimeCoefficient, isUptimeSatisfied } = await checkUptime(
       operatorAddress,
       rewardsInterval,
       instancesData
-    );
+    )
     // BigNumbers cannot operate on floats. Coefficient needs to be multiplied
     // by PRECISION
-    uptimeCoefficient = Math.floor(uptimeCoefficient * PRECISION);
-    requirements.set(IS_UP_TIME_SATISFIED, isUptimeSatisfied);
+    uptimeCoefficient = Math.floor(uptimeCoefficient * PRECISION)
+    requirements.set(IS_UP_TIME_SATISFIED, isUptimeSatisfied)
 
     /// Pre-params requirement
     const isPrePramsSatisfied = await checkPreParams(
       operatorAddress,
       rewardsInterval,
       instancesData
-    );
+    )
 
-    requirements.set(IS_PRE_PARAMS_SATISFIED, isPrePramsSatisfied);
+    requirements.set(IS_PRE_PARAMS_SATISFIED, isPrePramsSatisfied)
 
     /// Version requirement
     let {
       instanceWithLatestBuildVersion,
       latestRegisteredBuildVersionTimestmap,
-    } = await checkVersion(operatorAddress, rewardsInterval, instancesData);
+    } = await checkVersion(operatorAddress, rewardsInterval, instancesData)
 
     if (instanceWithLatestBuildVersion === undefined) {
       console.log(
         `Cannot determine a client version. No Rewards were calculated for operator ${operatorAddress}`
-      );
-      continue;
+      )
+      continue
     }
 
     // This is an example to illustrate a client's build version requirement.
@@ -343,19 +343,19 @@ export async function calculateRewards() {
     // Between Sep1 - Sep24 a client is allowed to run v1 or v2
     // Between Sep24 - Sep30 a client is allowed to run only v2
 
-    const buildVersion = instanceWithLatestBuildVersion.metric.version;
-    const latestClientRelease = clientReleases[0].split("_");
-    const latestClientTag = latestClientRelease[0];
-    const latestClientReleaseTimestamp = latestClientRelease[1];
+    const buildVersion = instanceWithLatestBuildVersion.metric.version
+    const latestClientRelease = clientReleases[0].split("_")
+    const latestClientTag = latestClientRelease[0]
+    const latestClientReleaseTimestamp = latestClientRelease[1]
     if (clientReleases.length > 1) {
       // A client is allowed to be on either of the two latest releases.
-      const secondToLatestClientRelease = clientReleases[1].split("_");
-      const secondToLatestClientTag = secondToLatestClientRelease[0];
+      const secondToLatestClientRelease = clientReleases[1].split("_")
+      const secondToLatestClientTag = secondToLatestClientRelease[0]
 
       let allowedDelayEndTimestamp =
-        latestClientReleaseTimestamp + ALLOWED_UPGRADE_DELAY;
+        latestClientReleaseTimestamp + ALLOWED_UPGRADE_DELAY
       if (allowedDelayEndTimestamp > endRewardsTimestamp) {
-        allowedDelayEndTimestamp = endRewardsTimestamp;
+        allowedDelayEndTimestamp = endRewardsTimestamp
       }
 
       if (latestRegisteredBuildVersionTimestmap <= allowedDelayEndTimestamp) {
@@ -364,20 +364,20 @@ export async function calculateRewards() {
           IS_VERSION_SATISFIED,
           buildVersion.includes(latestClientTag) ||
             buildVersion.includes(secondToLatestClientTag)
-        );
+        )
       } else {
         // The allowed delay for an upgrade is over. A client should be on the
         // latest build version.
         requirements.set(
           IS_VERSION_SATISFIED,
           buildVersion.includes(latestClientTag)
-        );
+        )
       }
     } else {
       requirements.set(
         IS_VERSION_SATISFIED,
         buildVersion.includes(latestClientTag)
-      );
+      )
     }
 
     /// Start assembling peer data and weighted authorizations
@@ -385,7 +385,7 @@ export async function calculateRewards() {
       applications: Object.fromEntries(authorizations),
       instances: convertToObject(instancesData),
       requirements: Object.fromEntries(requirements),
-    };
+    }
 
     if (
       requirements.get(IS_BEACON_AUTHORIZED) &&
@@ -394,11 +394,11 @@ export async function calculateRewards() {
       requirements.get(IS_PRE_PARAMS_SATISFIED) &&
       requirements.get(IS_VERSION_SATISFIED)
     ) {
-      const beacon = BigNumber.from(authorizations.get(BEACON_AUTHORIZATION));
-      const tbct = BigNumber.from(authorizations.get(TBTC_AUTHORIZATION));
-      let minApplicationAuthorization = beacon;
+      const beacon = BigNumber.from(authorizations.get(BEACON_AUTHORIZATION))
+      const tbct = BigNumber.from(authorizations.get(TBTC_AUTHORIZATION))
+      let minApplicationAuthorization = beacon
       if (beacon.gt(tbct)) {
-        minApplicationAuthorization = tbct;
+        minApplicationAuthorization = tbct
       }
 
       rewardsData[stakingProvider] = {
@@ -411,20 +411,20 @@ export async function calculateRewards() {
           .div(HUNDRED) // APR monthly rate was multiplied by 100 earlier
           .div(HUNDRED) // APR monthly rate is in %
           .toString(),
-      };
+      }
     }
 
-    operatorsData.push(operatorData);
+    operatorsData.push(operatorData)
   }
 
   // console.log("operatorsData: ", JSON.stringify(operatorsData, null, 4));
   // console.log("rewardsData: ", JSON.stringify(rewardsData, null, 4));
-  fs.writeFileSync(rewardsDataOutput, JSON.stringify(rewardsData, null, 4));
-  const detailsFileName = `${startRewardsTimestamp}-${endRewardsTimestamp}`;
+  fs.writeFileSync(rewardsDataOutput, JSON.stringify(rewardsData, null, 4))
+  const detailsFileName = `${startRewardsTimestamp}-${endRewardsTimestamp}`
   fs.writeFileSync(
     rewardsDetailsPath + "/" + detailsFileName + ".json",
     JSON.stringify(operatorsData, null, 4)
-  );
+  )
 }
 
 async function getAuthorization(
@@ -443,7 +443,7 @@ async function getAuthorization(
       startRewardsBlock,
       endRewardsBlock,
       october17Block
-    );
+    )
   }
 
   // Events that were emitted between the [end:firstEventDate|currentDate] dates.
@@ -454,7 +454,7 @@ async function getAuthorization(
     application,
     stakingProvider,
     currentBlockNumber
-  );
+  )
 }
 
 // Calculates the weighted authorization for rewards interval based on events.
@@ -496,39 +496,39 @@ function authorizationForRewardsInterval(
   endRewardsBlock: number,
   october17Block: number
 ) {
-  let authorization = BigNumber.from("0");
-  const deltaRewardsBlock = endRewardsBlock - startRewardsBlock;
+  let authorization = BigNumber.from("0")
+  const deltaRewardsBlock = endRewardsBlock - startRewardsBlock
   // ascending order
-  intervalEvents.sort((a, b) => a.blockNumber - b.blockNumber);
+  intervalEvents.sort((a, b) => a.blockNumber - b.blockNumber)
 
-  let tmpBlock = startRewardsBlock; // prev tmp block
-  let firstEventBlock = intervalEvents[0].blockNumber;
+  let tmpBlock = startRewardsBlock // prev tmp block
+  let firstEventBlock = intervalEvents[0].blockNumber
 
-  let index = 0;
+  let index = 0
   if (firstEventBlock < october17Block) {
-    index = 1;
+    index = 1
   }
 
   for (let i = index; i < intervalEvents.length; i++) {
-    const eventBlock = intervalEvents[i].blockNumber;
+    const eventBlock = intervalEvents[i].blockNumber
     const coefficient = Math.floor(
       ((eventBlock - tmpBlock) / deltaRewardsBlock) * PRECISION
-    );
+    )
     authorization = authorization.add(
       intervalEvents[i].args.fromAmount.mul(coefficient)
-    );
-    tmpBlock = eventBlock;
+    )
+    tmpBlock = eventBlock
   }
 
   // calculating authorization for the last sub-interval
   const coefficient = Math.floor(
     ((endRewardsBlock - tmpBlock) / deltaRewardsBlock) * PRECISION
-  );
+  )
   authorization = authorization.add(
     intervalEvents[intervalEvents.length - 1].args.toAmount.mul(coefficient)
-  );
+  )
 
-  return authorization.div(PRECISION);
+  return authorization.div(PRECISION)
 }
 
 // Get the authorization from the first event that occurred after the rewards
@@ -541,7 +541,7 @@ async function authorizationPostRewardsInterval(
   currentBlockNumber: number
 ) {
   // Sort events in ascending order
-  postIntervalEvents.sort((a, b) => a.blockNumber - b.blockNumber);
+  postIntervalEvents.sort((a, b) => a.blockNumber - b.blockNumber)
 
   if (
     postIntervalEvents.length > 0 &&
@@ -550,15 +550,15 @@ async function authorizationPostRewardsInterval(
     // There are events (increase or decrease) present after the rewards interval
     // and before the current block. Take the "fromAmount", because it was the
     // same as for the rewards interval dates.
-    return postIntervalEvents[0].args.fromAmount;
+    return postIntervalEvents[0].args.fromAmount
   }
 
   // There were no authorization events after the rewards interval and before
   // the current block.
   // Current authorization is the same as the authorization at the end of the
   // rewards interval.
-  const authorization = await application.eligibleStake(stakingProvider);
-  return authorization;
+  const authorization = await application.eligibleStake(stakingProvider)
+  return authorization
 }
 
 async function instancesForOperator(
@@ -570,17 +570,17 @@ async function instancesForOperator(
   const instancesDataByOperatorParams = {
     query: `present_over_time(up{chain_address="${operatorAddress}", job="${prometheusJob}"}
                 [${rewardsInterval}s] offset ${offset}s)`,
-  };
+  }
   const instancesDataByOperator = (
     await queryPrometheus(prometheusAPIQuery, instancesDataByOperatorParams)
-  ).data.result;
+  ).data.result
 
   instancesDataByOperator.forEach(
     (element: { metric: { instance: string } }) => {
-      const instanceData = new Map<string, string | number>();
-      instancesData.set(element.metric.instance, instanceData);
+      const instanceData = new Map<string, string | number>()
+      instancesData.set(element.metric.instance, instanceData)
     }
-  );
+  )
 }
 
 // Peer uptime requirement. The total uptime for all the instances for a given
@@ -593,11 +593,11 @@ async function checkUptime(
   const paramsOperatorUptime = {
     query: `up{chain_address="${operatorAddress}", job="${prometheusJob}"}
             [${rewardsInterval}s:${QUERY_RESOLUTION}s] offset ${offset}s`,
-  };
+  }
 
   const instances = (
     await queryPrometheus(prometheusAPIQuery, paramsOperatorUptime)
-  ).data.result;
+  ).data.result
 
   // First registered 'up' metric in a given interval <start:end> for a given
   // operator. Start evaluating uptime from this point.
@@ -605,47 +605,47 @@ async function checkUptime(
     (currentMin: number, instance: any) =>
       Math.min(instance.values[0][0], currentMin),
     Number.MAX_VALUE
-  );
+  )
 
-  let uptimeSearchRange = endRewardsTimestamp - firstRegisteredUptime;
+  let uptimeSearchRange = endRewardsTimestamp - firstRegisteredUptime
 
   const paramsSumUptimes = {
     query: `sum_over_time(up{chain_address="${operatorAddress}", job="${prometheusJob}"}
             [${uptimeSearchRange}s:${QUERY_RESOLUTION}s] offset ${offset}s) 
             * ${QUERY_RESOLUTION} / ${uptimeSearchRange}`,
-  };
+  }
 
   const uptimesByInstance = (
     await queryPrometheus(prometheusAPIQuery, paramsSumUptimes)
-  ).data.result;
+  ).data.result
 
-  let sumUptime = 0;
+  let sumUptime = 0
   for (let i = 0; i < uptimesByInstance.length; i++) {
-    const instance = uptimesByInstance[i];
-    const uptime = instance.value[1] * HUNDRED;
-    const dataInstance = instancesData.get(instance.metric.instance);
+    const instance = uptimesByInstance[i]
+    const uptime = instance.value[1] * HUNDRED
+    const dataInstance = instancesData.get(instance.metric.instance)
     if (dataInstance !== undefined) {
-      dataInstance.set(UP_TIME_PERCENT, uptime);
+      dataInstance.set(UP_TIME_PERCENT, uptime)
     } else {
       // Should not happen
-      console.error("Instance must be present for a given rewards interval.");
+      console.error("Instance must be present for a given rewards interval.")
     }
 
-    sumUptime += uptime;
+    sumUptime += uptime
   }
 
-  const isUptimeSatisfied = sumUptime >= requiredUptime;
+  const isUptimeSatisfied = sumUptime >= requiredUptime
   // October is a special month for rewards calculation. If a node was set before
   // October 17th, then it is eligible for the entire month of rewards. Uptime of
   // a running node still need to meet the uptime requirement after it was set.
   if (firstRegisteredUptime < october17Timestamp) {
-    uptimeSearchRange = rewardsInterval;
+    uptimeSearchRange = rewardsInterval
   }
 
   const uptimeCoefficient = isUptimeSatisfied
     ? uptimeSearchRange / rewardsInterval
-    : 0;
-  return { uptimeCoefficient, isUptimeSatisfied };
+    : 0
+  return { uptimeCoefficient, isUptimeSatisfied }
 }
 
 async function checkPreParams(
@@ -658,29 +658,29 @@ async function checkPreParams(
   const paramsPreParams = {
     query: `avg_over_time(tbtc_pre_params_count{chain_address="${operatorAddress}", job="${prometheusJob}"}
               [${rewardsInterval}s:${QUERY_RESOLUTION}s] offset ${offset}s)`,
-  };
+  }
 
   const preParamsAvgByInstance = (
     await queryPrometheus(prometheusAPIQuery, paramsPreParams)
-  ).data.result;
+  ).data.result
 
-  let sumPreParams = 0;
+  let sumPreParams = 0
   for (let i = 0; i < preParamsAvgByInstance.length; i++) {
-    const instance = preParamsAvgByInstance[i];
-    const preParams = parseInt(instance.value[1]); // [timestamp, value]
-    const dataInstance = dataInstances.get(instance.metric.instance);
+    const instance = preParamsAvgByInstance[i]
+    const preParams = parseInt(instance.value[1]) // [timestamp, value]
+    const dataInstance = dataInstances.get(instance.metric.instance)
     if (dataInstance !== undefined) {
-      dataInstance.set(AVG_PRE_PARAMS, preParams);
+      dataInstance.set(AVG_PRE_PARAMS, preParams)
     } else {
       // Should not happen
-      console.error("Instance must be present for a given rewards interval.");
+      console.error("Instance must be present for a given rewards interval.")
     }
 
-    sumPreParams += preParams;
+    sumPreParams += preParams
   }
 
-  const preParamsAvg = sumPreParams / preParamsAvgByInstance.length;
-  return preParamsAvg >= requiredPreParams;
+  const preParamsAvg = sumPreParams / preParamsAvgByInstance.length
+  return preParamsAvg >= requiredPreParams
 }
 
 async function checkVersion(
@@ -690,65 +690,65 @@ async function checkVersion(
 ) {
   const buildVersionInstancesParams = {
     query: `client_info{chain_address="${operatorAddress}", job="${prometheusJob}"}[${rewardsInterval}s:${QUERY_RESOLUTION}s] offset ${offset}s`,
-  };
+  }
   // Get build versions of instances in rewards interval
   const queryBuildVersionInstances = (
     await queryPrometheus(prometheusAPIQuery, buildVersionInstancesParams)
-  ).data.result;
+  ).data.result
 
-  let instanceWithLatestBuildVersion;
-  let latestRegisteredBuildVersionTimestmap = 0; // min number
+  let instanceWithLatestBuildVersion
+  let latestRegisteredBuildVersionTimestmap = 0 // min number
 
   // Determine client's build version for it all it's instances
   for (let i = 0; i < queryBuildVersionInstances.length; i++) {
-    const instance = queryBuildVersionInstances[i];
+    const instance = queryBuildVersionInstances[i]
     // Find latest registered timestamp in a given instance
     if (
       instance.values[instance.values.length - 1][0] >
       latestRegisteredBuildVersionTimestmap
     ) {
       latestRegisteredBuildVersionTimestmap =
-        instance.values[instance.values.length - 1][0];
-      instanceWithLatestBuildVersion = instance;
+        instance.values[instance.values.length - 1][0]
+      instanceWithLatestBuildVersion = instance
     }
-    const dataInstance = instancesData.get(instance.metric.instance);
+    const dataInstance = instancesData.get(instance.metric.instance)
     if (dataInstance !== undefined) {
-      dataInstance.set(VERSION, instance.metric.version);
+      dataInstance.set(VERSION, instance.metric.version)
     } else {
       // Should not happen
-      console.error("Instance must be present for a given rewards interval.");
+      console.error("Instance must be present for a given rewards interval.")
     }
   }
   return {
     instanceWithLatestBuildVersion,
     latestRegisteredBuildVersionTimestmap,
-  };
+  }
 }
 
 function convertToObject(map: Map<string, Map<string, any>>) {
-  let obj: { [k: string]: any } = {};
+  let obj: { [k: string]: any } = {}
   map.forEach((value: Map<string, any>, key: string) => {
-    const result = Object.fromEntries(value);
-    obj[key] = result;
-  });
+    const result = Object.fromEntries(value)
+    obj[key] = result
+  })
 
-  return obj;
+  return obj
 }
 
 async function queryPrometheus(url: string, params: any): Promise<any> {
   try {
-    const { data } = await axios.get(url, { params: params });
+    const { data } = await axios.get(url, { params: params })
 
-    return data;
+    return data
   } catch (error) {
     if (axios.isAxiosError(error)) {
-      console.log("error message: ", error.message);
-      return error.message;
+      console.log("error message: ", error.message)
+      return error.message
     } else {
-      console.log("unexpected error: ", error);
-      return "An unexpected error occurred";
+      console.log("unexpected error: ", error)
+      return "An unexpected error occurred"
     }
   }
 }
 
-calculateRewards();
+calculateRewards()
