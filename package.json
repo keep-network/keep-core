@@ -4,7 +4,13 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "prepare": "husky install"
+  },
+  "lint-staged": {
+    "src/**/*.{js,jsx,ts,tsx}": [
+      "eslint --cache --fix --cache-location ./node_modules/.cache/eslint/.eslintcache",
+      "prettier --write --ignore-unknown"
+    ]
   },
   "keywords": [],
   "author": "",
@@ -14,19 +20,27 @@
     "@nomiclabs/hardhat-etherscan": "^3.1.0",
     "@nomiclabs/hardhat-waffle": "^2.0.3",
     "@openzeppelin/test-helpers": "^0.5.15",
+    "@typescript-eslint/eslint-plugin": "^5.42.1",
+    "@typescript-eslint/parser": "^5.42.1",
     "chai": "^4.3.6",
     "dotenv": "^16.0.0",
+    "eslint": "^8.27.0",
+    "eslint-config-prettier": "^8.5.0",
     "ethereum-waffle": "^3.4.0",
     "ethers": "^5.6.9",
     "fast-check": "^2.23.2",
+    "graphql": "^16.5.0",
     "hardhat": "^2.9.9",
     "hardhat-deploy": "^0.11.1",
     "hardhat-deploy-ethers": "^0.3.0-beta.13",
     "hardhat-gas-reporter": "^1.0.8",
-    "keccak256": "^1.0.6",
-    "merkletreejs": "^0.2.32",
+    "husky": "^8.0.2",
     "isomorphic-unfetch": "^3.1.0",
-    "graphql": "^16.5.0"
+    "keccak256": "^1.0.6",
+    "lint-staged": "^13.0.3",
+    "merkletreejs": "^0.2.32",
+    "prettier": "2.7.1",
+    "typescript": "^4.8.4"
   },
   "dependencies": {
     "@thesis/solidity-contracts": "github:thesis/solidity-contracts#4985bcf",
