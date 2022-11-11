@@ -134,11 +134,20 @@ func Initialize(
 				event.BlockNumber,
 			)
 
-			node.joinSigningIfEligible(
-				event.Message,
+			controller, err := node.createSigningGroupController(
 				unmarshalPublicKey(event.WalletPublicKey),
+			)
+			if err != nil {
+				// TODO: Handle error.
+			}
+
+			_, err = controller.sign(
+				event.Message,
 				event.BlockNumber,
 			)
+			if err != nil {
+				// TODO: Handle error.
+			}
 		}()
 	})
 

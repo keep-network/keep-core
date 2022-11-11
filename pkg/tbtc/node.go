@@ -5,6 +5,7 @@ import (
 	"crypto/ecdsa"
 	"encoding/hex"
 	"fmt"
+	"github.com/keep-network/keep-core/pkg/tecdsa"
 	"math/big"
 	"time"
 
@@ -457,241 +458,280 @@ func (n *node) joinDKGIfEligible(seed *big.Int, startBlockNumber uint64) {
 	}
 }
 
-// joinSigningIfEligible takes a message and undergoes the process of tECDSA
-// signing if this node's operator proves to control some signers of the
-// requested wallet. This is an interactive process, and joinSigningIfEligible
-// can block for an extended period of time while it completes the operation.
-func (n *node) joinSigningIfEligible(
-	message *big.Int,
+// TODO: Documentation.
+func (n *node) createSigningGroupController(
 	walletPublicKey *ecdsa.PublicKey,
-	startBlockNumber uint64,
-) {
-	signingLogger := logger.With(
-		zap.String("message", fmt.Sprintf("0x%x", message)),
-	)
-
+) (*signingGroupController, error) {
 	walletPublicKeyBytes, err := marshalPublicKey(walletPublicKey)
 	if err != nil {
-		signingLogger.Errorf("cannot marshal wallet public key: [%v]", err)
-		return
+		return nil, fmt.Errorf("cannot marshal wallet public key: [%v]", err)
 	}
 
-	signingLogger = signingLogger.With(
+	controllerLogger := logger.With(
 		zap.String("wallet", fmt.Sprintf("0x%x", walletPublicKeyBytes)),
 	)
 
-	signingLogger.Info("checking eligibility for signing")
-
-	if signers := n.walletRegistry.getSigners(
-		walletPublicKey,
-	); len(signers) > 0 {
-		signingLogger.Infof(
-			"joining signing; controlling [%v] signers",
-			len(signers),
+	signers := n.walletRegistry.getSigners(walletPublicKey)
+	if len(signers) == 0 {
+		return nil, fmt.Errorf(
+			"node does not control signers of wallet with public key [0x%x]",
+			walletPublicKeyBytes,
 		)
+	}
 
-		// All signers belong to one wallet. Take that wallet from the
-		// first signer.
-		wallet := signers[0].wallet
-		// Actual wallet signing group size may be different from the
-		// `GroupSize` parameter of the chain config.
-		signingGroupSize := len(wallet.signingGroupOperators)
-		// The dishonest threshold for the wallet signing group must be
-		// also calculated using the actual wallet signing group size.
-		signingGroupDishonestThreshold := signingGroupSize -
-			n.chain.GetConfig().HonestThreshold
+	// All signers belong to one wallet. Take that wallet from the
+	// first signer.
+	wallet := signers[0].wallet
 
-		channelName := fmt.Sprintf(
-			"%s-%s",
-			ProtocolName,
-			hex.EncodeToString(walletPublicKeyBytes),
+	channelName := fmt.Sprintf(
+		"%s-%s",
+		ProtocolName,
+		hex.EncodeToString(walletPublicKeyBytes),
+	)
+
+	broadcastChannel, err := n.netProvider.BroadcastChannelFor(channelName)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get broadcast channel: [%v]", err)
+	}
+
+	signing.RegisterUnmarshallers(broadcastChannel)
+	registerStopPillUnmarshaller(broadcastChannel)
+
+	membershipValidator := group.NewMembershipValidator(
+		controllerLogger,
+		wallet.signingGroupOperators,
+		n.chain.Signing(),
+	)
+
+	err = broadcastChannel.SetFilter(membershipValidator.IsInGroup)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"could not set filter for channel [%v]: [%v]",
+			broadcastChannel.Name(),
+			err,
 		)
+	}
 
-		broadcastChannel, err := n.netProvider.BroadcastChannelFor(channelName)
-		if err != nil {
-			signingLogger.Errorf("failed to get broadcast channel: [%v]", err)
-			return
-		}
+	controllerLogger.Infof(
+		"signing group created; controlling [%v] signers",
+		len(signers),
+	)
 
-		signing.RegisterUnmarshallers(broadcastChannel)
-		registerStopPillUnmarshaller(broadcastChannel)
+	return &signingGroupController{
+		signers:             signers,
+		broadcastChannel:    broadcastChannel,
+		membershipValidator: membershipValidator,
+		chainConfig:         n.chain.GetConfig(),
+		waitForBlockFn:      n.waitForBlockHeight,
+	}, nil
+}
 
-		membershipValidator := group.NewMembershipValidator(
-			signingLogger,
-			wallet.signingGroupOperators,
-			n.chain.Signing(),
-		)
+// TODO: Documentation.
+type signingGroupController struct {
+	signers             []*signer
+	broadcastChannel    net.BroadcastChannel
+	membershipValidator *group.MembershipValidator
+	chainConfig         *ChainConfig
+	waitForBlockFn      waitForBlockFn
+}
 
-		err = broadcastChannel.SetFilter(membershipValidator.IsInGroup)
-		if err != nil {
-			signingLogger.Errorf(
-				"could not set filter for channel [%v]: [%v]",
-				broadcastChannel.Name(),
-				err,
+// TODO: Documentation.
+func (sgc *signingGroupController) signBatch(
+	messages []*big.Int,
+	startBlockNumber uint64,
+) ([]*tecdsa.Signature, error) {
+	// TODO: Implementation.
+	return nil, nil
+}
+
+// TODO: Documentation.
+func (sgc *signingGroupController) sign(
+	message *big.Int,
+	startBlockNumber uint64,
+) (*tecdsa.Signature, error) {
+	// All signers belong to one wallet. Take that wallet from the
+	// first signer.
+	wallet := sgc.signers[0].wallet
+	// Actual wallet signing group size may be different from the
+	// `GroupSize` parameter of the chain config.
+	signingGroupSize := len(wallet.signingGroupOperators)
+	// The dishonest threshold for the wallet signing group must be
+	// also calculated using the actual wallet signing group size.
+	signingGroupDishonestThreshold := signingGroupSize -
+		sgc.chainConfig.HonestThreshold
+
+	walletPublicKeyBytes, err := marshalPublicKey(wallet.publicKey)
+	if err != nil {
+		return nil, fmt.Errorf("cannot marshal wallet public key: [%v]", err)
+	}
+
+	signingLogger := logger.With(
+		zap.String("wallet", fmt.Sprintf("0x%x", walletPublicKeyBytes)),
+		zap.String("message", fmt.Sprintf("0x%x", message)),
+	)
+
+	for _, currentSigner := range sgc.signers {
+		go func(signer *signer) {
+			// TODO: Solve the problem with the protocol latch.
+			// n.protocolLatch.Lock()
+			// defer n.protocolLatch.Unlock()
+
+			announcer := announcer.New(
+				fmt.Sprintf("%v-%v", ProtocolName, "signing"),
+				sgc.chainConfig.GroupSize,
+				sgc.broadcastChannel,
+				sgc.membershipValidator,
 			)
-		}
 
-		for _, currentSigner := range signers {
-			go func(signer *signer) {
-				n.protocolLatch.Lock()
-				defer n.protocolLatch.Unlock()
+			retryLoop := newSigningRetryLoop(
+				signingLogger,
+				message,
+				startBlockNumber,
+				signer.signingGroupMemberIndex,
+				wallet.signingGroupOperators,
+				sgc.chainConfig,
+				announcer,
+			)
 
-				announcer := announcer.New(
-					fmt.Sprintf("%v-%v", ProtocolName, "signing"),
-					n.chain.GetConfig().GroupSize,
-					broadcastChannel,
-					membershipValidator,
-				)
+			// TODO: For this client iteration, the signing loop is started
+			//       with a 24h timeout and a stop pill sent by any group
+			//       member.
+			loopCtx, cancelLoopCtx := context.WithTimeout(
+				context.Background(),
+				24*time.Hour,
+			)
+			defer cancelLoopCtx()
+			cancelSigningContextOnStopSignal(
+				loopCtx,
+				cancelLoopCtx,
+				sgc.broadcastChannel,
+				message.Text(16),
+			)
 
-				retryLoop := newSigningRetryLoop(
-					signingLogger,
-					message,
-					startBlockNumber,
-					signer.signingGroupMemberIndex,
-					wallet.signingGroupOperators,
-					n.chain.GetConfig(),
-					announcer,
-				)
+			result, err := retryLoop.start(
+				loopCtx,
+				sgc.waitForBlockFn,
+				func(attempt *signingAttemptParams) (*signing.Result, error) {
+					signingAttemptLogger := signingLogger.With(
+						zap.Uint("attempt", attempt.number),
+						zap.Uint64("attemptStartBlock", attempt.startBlock),
+					)
 
-				// TODO: For this client iteration, the signing loop is started
-				//       with a 24h timeout and a stop pill sent by any group
-				//       member.
-				loopCtx, cancelLoopCtx := context.WithTimeout(
-					context.Background(),
-					24*time.Hour,
-				)
-				defer cancelLoopCtx()
-				cancelSigningContextOnStopSignal(
-					loopCtx,
-					cancelLoopCtx,
-					broadcastChannel,
-					message.Text(16),
-				)
+					signingAttemptLogger.Infof(
+						"[member:%v] scheduled signing attempt "+
+							"with [%v] group members (excluded: [%v])",
+						signer.signingGroupMemberIndex,
+						signingGroupSize-len(attempt.excludedMembersIndexes),
+						attempt.excludedMembersIndexes,
+					)
 
-				result, err := retryLoop.start(
-					loopCtx,
-					n.waitForBlockHeight,
-					func(attempt *signingAttemptParams) (*signing.Result, error) {
-						signingAttemptLogger := signingLogger.With(
-							zap.Uint("attempt", attempt.number),
-							zap.Uint64("attemptStartBlock", attempt.startBlock),
-						)
+					// Set up the attempt timeout signal.
+					attemptCtx, cancelAttemptCtx := context.WithCancel(
+						loopCtx,
+					)
+					go func() {
+						defer cancelAttemptCtx()
 
-						signingAttemptLogger.Infof(
-							"[member:%v] scheduled signing attempt "+
-								"with [%v] group members (excluded: [%v])",
-							signer.signingGroupMemberIndex,
-							signingGroupSize-len(attempt.excludedMembersIndexes),
-							attempt.excludedMembersIndexes,
-						)
-
-						// Set up the attempt timeout signal.
-						attemptCtx, cancelAttemptCtx := context.WithCancel(
+						err := sgc.waitForBlockFn(
 							loopCtx,
-						)
-						go func() {
-							defer cancelAttemptCtx()
-
-							err := n.waitForBlockHeight(
-								loopCtx,
-								attempt.startBlock+signingAttemptMaxBlockDuration,
-							)
-							if err != nil {
-								signingAttemptLogger.Warnf(
-									"[member:%v] failed waiting for "+
-										"attempt stop signal: [%v]",
-									signer.signingGroupMemberIndex,
-									err,
-								)
-							}
-						}()
-
-						sessionID := fmt.Sprintf(
-							"%v-%v",
-							message.Text(16),
-							attempt.number,
-						)
-
-						result, err := signing.Execute(
-							attemptCtx,
-							signingAttemptLogger,
-							message,
-							sessionID,
-							signer.signingGroupMemberIndex,
-							signer.privateKeyShare,
-							signingGroupSize,
-							signingGroupDishonestThreshold,
-							attempt.excludedMembersIndexes,
-							broadcastChannel,
-							membershipValidator,
+							attempt.startBlock+signingAttemptMaxBlockDuration,
 						)
 						if err != nil {
 							signingAttemptLogger.Warnf(
-								"[member:%v] signing attempt failed: [%v]",
+								"[member:%v] failed waiting for "+
+									"attempt stop signal: [%v]",
 								signer.signingGroupMemberIndex,
 								err,
 							)
-
-							return nil, err
 						}
+					}()
 
-						// Schedule the stop pill to be sent a fixed amount of
-						// time after the result is returned. Do not do it
-						// immediately as other members can be very close
-						// to produce the result as well. This mechanism should
-						// be more sophisticated but since it is temporary, we
-						// can live with it for now.
-						go func() {
-							time.Sleep(1 * time.Minute)
-							if err := sendSigningStopPill(
-								loopCtx,
-								broadcastChannel,
-								message.Text(16),
-								attempt.number,
-							); err != nil {
-								signingLogger.Errorf(
-									"[member:%v] could not send the stop pill: [%v]",
-									signer.signingGroupMemberIndex,
-									err,
-								)
-							}
-						}()
-
-						return result, nil
-					},
-				)
-				if err != nil {
-					signingLogger.Errorf(
-						"[member:%v] all retries for the signing failed; "+
-							"giving up: [%v]",
-						signer.signingGroupMemberIndex,
-						err,
+					sessionID := fmt.Sprintf(
+						"%v-%v",
+						message.Text(16),
+						attempt.number,
 					)
-					return
-				}
-				// TODO: This condition should go away once we integrate
-				// WalletRegistry contract. In this scenario, member received
-				// a StopPill from some other group member and it means that
-				// the result has been produced but the current member did not
-				// participate in the work so they do not know the result.
-				if result == nil {
-					signingLogger.Infof(
-						"[member:%v] signing retry loop received stop signal",
-						signer.signingGroupMemberIndex,
-					)
-					return
-				}
 
-				signingLogger.Infof(
-					"[member:%v] generated signature [%v]",
+					result, err := signing.Execute(
+						attemptCtx,
+						signingAttemptLogger,
+						message,
+						sessionID,
+						signer.signingGroupMemberIndex,
+						signer.privateKeyShare,
+						signingGroupSize,
+						signingGroupDishonestThreshold,
+						attempt.excludedMembersIndexes,
+						sgc.broadcastChannel,
+						sgc.membershipValidator,
+					)
+					if err != nil {
+						signingAttemptLogger.Warnf(
+							"[member:%v] signing attempt failed: [%v]",
+							signer.signingGroupMemberIndex,
+							err,
+						)
+
+						return nil, err
+					}
+
+					// Schedule the stop pill to be sent a fixed amount of
+					// time after the result is returned. Do not do it
+					// immediately as other members can be very close
+					// to produce the result as well. This mechanism should
+					// be more sophisticated but since it is temporary, we
+					// can live with it for now.
+					go func() {
+						time.Sleep(1 * time.Minute)
+						if err := sendSigningStopPill(
+							loopCtx,
+							sgc.broadcastChannel,
+							message.Text(16),
+							attempt.number,
+						); err != nil {
+							signingLogger.Errorf(
+								"[member:%v] could not send the stop pill: [%v]",
+								signer.signingGroupMemberIndex,
+								err,
+							)
+						}
+					}()
+
+					return result, nil
+				},
+			)
+			if err != nil {
+				signingLogger.Errorf(
+					"[member:%v] all retries for the signing failed; "+
+						"giving up: [%v]",
 					signer.signingGroupMemberIndex,
-					result.Signature,
+					err,
 				)
-			}(currentSigner)
-		}
-	} else {
-		signingLogger.Info("not eligible for signing")
+				return
+			}
+			// TODO: This condition should go away once we integrate
+			// WalletRegistry contract. In this scenario, member received
+			// a StopPill from some other group member and it means that
+			// the result has been produced but the current member did not
+			// participate in the work so they do not know the result.
+			if result == nil {
+				signingLogger.Infof(
+					"[member:%v] signing retry loop received stop signal",
+					signer.signingGroupMemberIndex,
+				)
+				return
+			}
+
+			signingLogger.Infof(
+				"[member:%v] generated signature [%v]",
+				signer.signingGroupMemberIndex,
+				result.Signature,
+			)
+		}(currentSigner)
 	}
+
+	// TODO: Return the result
+	return nil, nil
 }
 
 // waitForBlockFn represents a function blocking the execution until the given
