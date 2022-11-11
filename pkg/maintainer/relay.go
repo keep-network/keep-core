@@ -173,8 +173,8 @@ func (r *Relay) submitHeaders(ctx context.Context) error {
 		var retargetSleepTime time.Duration
 
 		// The required range of block headers can be pulled from the Bitcoin
-		// blockchain only if the blockchain height is equal or greater the end
-		// of the range.
+		// blockchain only if the blockchain height is equal to or greater than
+		// the end of the range.
 		if currentBlockNumber >= lastBlockHeaderHeight {
 			headers, err := r.getBlockHeaders(
 				firstBlockHeaderHeight,
@@ -212,7 +212,11 @@ func (r *Relay) submitHeaders(ctx context.Context) error {
 			logger.Infof("The relay is up-to-date with the Bitcoin blockchain")
 		}
 
-		time.Sleep(retargetSleepTime)
+		select {
+		case <-time.After(retargetSleepTime):
+		case <-ctx.Done():
+			return ctx.Err()
+		}
 	}
 }
 
