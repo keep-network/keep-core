@@ -12,7 +12,7 @@ import {
 
 import type { IWalletOwner } from "../typechain/IWalletOwner"
 import type { FakeContract } from "@defi-wonderland/smock"
-import type { ContractTransaction, Signer } from "ethers"
+import type { ContractTransaction } from "ethers"
 import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
 import type {
   WalletRegistry,
