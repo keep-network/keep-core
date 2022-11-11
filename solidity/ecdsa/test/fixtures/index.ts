@@ -17,6 +17,7 @@ import type {
   TokenStaking,
   T,
   IRandomBeacon,
+  RandomBeaconChaosnet,
 } from "../../typechain"
 import type { FakeContract } from "@defi-wonderland/smock"
 
@@ -58,6 +59,7 @@ export const walletRegistryFixture = deployments.createFixture(
     reimbursementPool: ReimbursementPool
     staking: TokenStaking
     randomBeacon: FakeContract<IRandomBeacon>
+    randomBeaconChaosnet: RandomBeaconChaosnet
     walletOwner: FakeContract<IWalletOwner>
     deployer: SignerWithAddress
     governance: SignerWithAddress
@@ -88,6 +90,9 @@ export const walletRegistryFixture = deployments.createFixture(
     const randomBeacon: FakeContract<IRandomBeacon> = await fakeRandomBeacon(
       walletRegistry
     )
+
+    const randomBeaconChaosnet: RandomBeaconChaosnet =
+      await helpers.contracts.getContract("RandomBeaconChaosnet")
 
     const { deployer, governance, chaosnetOwner } =
       await helpers.signers.getNamedSigners()
@@ -126,6 +131,7 @@ export const walletRegistryFixture = deployments.createFixture(
       sortitionPool,
       reimbursementPool,
       randomBeacon,
+      randomBeaconChaosnet,
       walletOwner,
       deployer,
       governance,
