@@ -20,15 +20,15 @@ exports.calculateBonusRewards = function (stakes, weight) {
 }
 
 /**
- * Calculate the ongoing rewards earned by each stake
+ * Calculate the PRE rewards earned by each stake
  * reward = (s_1 * y_t) * t / 365;
  * where y_t (target APY) is 0.15 and s_1 is the T amount staked
  * @param {Object} stakes     Stakes with staked T amount
  * @param {Number} weight     The weight of this type of reward
  * @return {Object}           The stakes including reward amount
  */
-exports.calculateOngoingRewards = function (stakes, weight) {
-  const ongoingRewards = {}
+exports.calculatePreRewards = function (stakes, weight) {
+  const preRewards = {}
   Object.keys(stakes).map((stakingProvider) => {
     const epochStakes = stakes[stakingProvider].epochStakes
     const reward = epochStakes.reduce((total, epochStake) => {
@@ -43,13 +43,13 @@ exports.calculateOngoingRewards = function (stakes, weight) {
 
     if (!reward.isZero()) {
       const weightedReward = reward.times(weight)
-      ongoingRewards[stakingProvider] = {
+      preRewards[stakingProvider] = {
         beneficiary: stakes[stakingProvider].beneficiary,
-        amount: weightedReward.toFixed(0)
+        amount: weightedReward.toFixed(0),
       }
     }
   })
-  return ongoingRewards
+  return preRewards
 }
 
 /**

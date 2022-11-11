@@ -11,7 +11,7 @@ const MerkleDist = require("../merkle_dist/merkle_dist.js")
 
 // The following parameters must be modified for each distribution
 const bonusWeight = 0.0
-const ongoingWeight = 0.875
+const preWeight = 0.875
 const tbtcv2Weight = 0.125
 const startTime = 1664496000 // Sep 30th 2022 00:00:00 GMT
 const endTime = 1667260800 // Nov 1st 2022 00:00:00 GMT
@@ -23,10 +23,10 @@ const graphqlApi =
 
 async function main() {
   let earnedBonusRewards = {}
-  let earnedOngoingRewards = {}
+  let earnedPreRewards = {}
   let earnedTbtcv2Rewards = {}
   let bonusRewards = {}
-  let ongoingRewards = {}
+  let preRewards = {}
   let tbtcv2Rewards = {}
   const endDate = new Date(endTime * 1000).toISOString().slice(0, 10)
   const distPath = `distributions/${endDate}`
@@ -50,17 +50,14 @@ async function main() {
     earnedBonusRewards = Rewards.calculateBonusRewards(bonusStakes, bonusWeight)
   }
 
-  if (ongoingWeight > 0) {
-    console.log("Calculating ongoing rewards...")
-    const ongoingStakes = await Subgraph.getOngoingStakes(
+  if (preWeight > 0) {
+    console.log("Calculating PRE rewards...")
+    const preStakes = await Subgraph.getPreStakes(
       graphqlApi,
       startTime,
       endTime
     )
-    earnedOngoingRewards = await Rewards.calculateOngoingRewards(
-      ongoingStakes,
-      ongoingWeight
-    )
+    earnedPreRewards = await Rewards.calculatePreRewards(preStakes, preWeight)
   }
 
   if (tbtcv2Weight > 0) {
@@ -87,16 +84,16 @@ async function main() {
       distPath + "/MerkleInputBonusRewards.json",
       JSON.stringify(bonusRewards, null, 4)
     )
-    ongoingRewards = JSON.parse(
+    // TODO: change MerkleInputOngoingRewards.json to MerkleInputPreRewards.json
+    // for December distribution (the distribution that is going to be released
+    // on 2023/01/01)
+    preRewards = JSON.parse(
       fs.readFileSync(`${lastDistPath}/MerkleInputOngoingRewards.json`)
     )
-    ongoingRewards = MerkleDist.combineMerkleInputs(
-      ongoingRewards,
-      earnedOngoingRewards
-    )
+    preRewards = MerkleDist.combineMerkleInputs(preRewards, earnedPreRewards)
     fs.writeFileSync(
-      distPath + "/MerkleInputOngoingRewards.json",
-      JSON.stringify(ongoingRewards, null, 4)
+      distPath + "/MerkleInputPreRewards.json",
+      JSON.stringify(preRewards, null, 4)
     )
     if (fs.existsSync(`${lastDistPath}/MerkleInputTbtcv2Rewards.json`)) {
       tbtcv2Rewards = JSON.parse(
@@ -118,7 +115,7 @@ async function main() {
     return
   }
 
-  let merkleInput = MerkleDist.combineMerkleInputs(bonusRewards, ongoingRewards)
+  let merkleInput = MerkleDist.combineMerkleInputs(bonusRewards, preRewards)
   merkleInput = MerkleDist.combineMerkleInputs(merkleInput, tbtcv2Rewards)
 
   const merkleDist = MerkleDist.genMerkleDist(merkleInput)

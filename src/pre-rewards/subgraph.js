@@ -254,7 +254,7 @@ async function getStakeDatasInfo(gqlClient) {
 }
 
 /**
- * Return the ongoing-rewards-elegible stakes, including beneficiary and epoch
+ * Return the PRE-rewards-elegible stakes, including beneficiary and epoch
  * stakes between two dates. Stakes earn rewards during the period in which:
  * 1. Have any amount of T token staked
  * 2. Have an PRE node deployed and confirmed in Threshold Network
@@ -262,15 +262,11 @@ async function getStakeDatasInfo(gqlClient) {
  * @param {Number} startTimestamp   Start date UNIX timestamp
  * @param {Number} endTimestamp     End date UNIX timestamp
  * @returns {Promise}               Promise of an object
- *          {Object[]}              ongStakes - The ongoing-elegible stakes
- *          {string}                ongStakes[].beneficiary - Beneficiary addr
- *          {Object[]}              ongStakes[].epochStakes - Epoch stakes
+ *          {Object[]}              preStakes - The PRE-elegible stakes
+ *          {string}                preStakes[].beneficiary - Beneficiary addr
+ *          {Object[]}              preStakes[].epochStakes - Epoch stakes
  */
-exports.getOngoingStakes = async function (
-  gqlUrl,
-  startTimestamp,
-  endTimestamp
-) {
+exports.getPreStakes = async function (gqlUrl, startTimestamp, endTimestamp) {
   const currentTime = parseInt(Date.now() / 1000)
   const gqlClient = createClient({ url: gqlUrl })
 
@@ -322,10 +318,10 @@ exports.getOngoingStakes = async function (
     })
   })
 
-  const ongoingStakes = {}
+  const preStakes = {}
 
   // Calculate the actual epoch stake duration: the seconds in which the stake
-  // actually meets with operator confirmed ongoing reward requirement
+  // actually meets with operator confirmed PRE reward requirement
   Object.keys(stakeList).map((stakingProvider) => {
     let epochStakes = stakeList[stakingProvider]
 
@@ -368,14 +364,14 @@ exports.getOngoingStakes = async function (
 
       const stProvCheckSum = ethers.utils.getAddress(stakingProvider)
 
-      ongoingStakes[stProvCheckSum] = {
+      preStakes[stProvCheckSum] = {
         beneficiary: benefCheckSum,
         epochStakes: epochStakesClean,
       }
     }
   })
 
-  return ongoingStakes
+  return preStakes
 }
 
 /**
