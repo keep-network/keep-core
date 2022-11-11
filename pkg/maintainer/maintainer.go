@@ -13,7 +13,7 @@ func Initialize(
 	chain RelayChain,
 ) {
 	if config.Relay {
-		go newRelay(ctx, btcChain, chain)
+		initializeRelay(ctx, btcChain, chain)
 	}
 
 	// TODO: Check if launching multiple maintainers is really beneficial.
