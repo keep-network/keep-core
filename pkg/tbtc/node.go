@@ -562,6 +562,7 @@ func (sgc *signingGroupController) signBatch(
 
 // TODO: Documentation.
 func (sgc *signingGroupController) sign(
+	ctx context.Context,
 	message *big.Int,
 	startBlockNumber uint64,
 ) (*tecdsa.Signature, error) {
@@ -586,6 +587,13 @@ func (sgc *signingGroupController) sign(
 		zap.String("message", fmt.Sprintf("0x%x", message)),
 	)
 
+	type signerOutcome struct {
+		signature *tecdsa.Signature
+		err       error
+	}
+
+	signerOutcomesChan := make(chan *signerOutcome, len(sgc.signers))
+
 	for _, currentSigner := range sgc.signers {
 		go func(signer *signer) {
 			sgc.onSignerStartFn()
@@ -608,7 +616,8 @@ func (sgc *signingGroupController) sign(
 				announcer,
 			)
 
-			loopCtx, cancelLoopCtx := context.WithCancel(context.Background())
+			// Set up the loop timeout signal.
+			loopCtx, cancelLoopCtx := context.WithCancel(ctx)
 			go func() {
 				defer cancelLoopCtx()
 
@@ -736,6 +745,12 @@ func (sgc *signingGroupController) sign(
 					signer.signingGroupMemberIndex,
 					err,
 				)
+
+				signerOutcomesChan <- &signerOutcome{
+					signature: nil,
+					err:       err,
+				}
+
 				return
 			}
 			// TODO: This condition should go away once we integrate
@@ -748,6 +763,12 @@ func (sgc *signingGroupController) sign(
 					"[member:%v] signing retry loop received stop signal",
 					signer.signingGroupMemberIndex,
 				)
+
+				signerOutcomesChan <- &signerOutcome{
+					signature: nil,
+					err:       nil,
+				}
+				
 				return
 			}
 
@@ -756,11 +777,47 @@ func (sgc *signingGroupController) sign(
 				signer.signingGroupMemberIndex,
 				result.Signature,
 			)
+
+			signerOutcomesChan <- &signerOutcome{
+				signature: result.Signature,
+				err:       nil,
+			}
 		}(currentSigner)
 	}
 
-	// TODO: Return the result
-	return nil, nil
+	signerOutcomes := make([]*signerOutcome, 0)
+
+outcomesLoop:
+	for {
+		select {
+		case outcome := <-signerOutcomesChan:
+			signerOutcomes = append(signerOutcomes, outcome)
+
+			if len(signerOutcomes) == len(sgc.signers) {
+				break outcomesLoop
+			}
+		case <-ctx.Done():
+			return nil, ctx.Err()
+		}
+	}
+
+	var signature *tecdsa.Signature
+
+	for _, outcome := range signerOutcomes {
+		if outcome.err != nil {
+			return nil, fmt.Errorf("failed signers")
+		}
+
+		if signature == nil {
+			signature = outcome.signature
+		}
+
+		if signature.String() != outcome.signature.String() {
+			return nil, fmt.Errorf("signers came with different signatures")
+		}
+	}
+
+	return signature, nil
 }
 
 // waitForBlockFn represents a function blocking the execution until the given
