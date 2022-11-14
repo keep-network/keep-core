@@ -45,6 +45,7 @@
   "dependencies": {
     "@thesis/solidity-contracts": "github:thesis/solidity-contracts#4985bcf",
     "@urql/core": "^2.6.0",
+    "axios": "^1.1.3",
     "bignumber.js": "^9.0.2",
     "ganache-cli": "^6.12.2",
     "isomorphic-unfetch": "^3.1.0",

@@ -1,6 +1,6 @@
 // Script that generates a new Merkle Distribution for rewards and outputs the
 // data to JSON files
-// Use: node scripts/gen_merkle_dist.js
+// Use: node src/scripts/gen_merkle_dist.js
 
 require("dotenv").config()
 const fs = require("fs")
