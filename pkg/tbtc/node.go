@@ -518,13 +518,14 @@ func (n *node) createSigningGroupController(
 	)
 
 	return &signingGroupController{
-		signers:             signers,
-		broadcastChannel:    broadcastChannel,
-		membershipValidator: membershipValidator,
-		chainConfig:         n.chain.GetConfig(),
-		waitForBlockFn:      n.waitForBlockHeight,
-		onSignerStartFn:     n.protocolLatch.Lock,
-		onSignerEndFn:       n.protocolLatch.Unlock,
+		signers:              signers,
+		broadcastChannel:     broadcastChannel,
+		membershipValidator:  membershipValidator,
+		chainConfig:          n.chain.GetConfig(),
+		waitForBlockFn:       n.waitForBlockHeight,
+		onSignerStartFn:      n.protocolLatch.Lock,
+		onSignerEndFn:        n.protocolLatch.Unlock,
+		signingAttemptsLimit: 5,
 	}, nil
 }
 
@@ -534,14 +535,20 @@ type signingGroupController struct {
 	broadcastChannel    net.BroadcastChannel
 	membershipValidator *group.MembershipValidator
 	chainConfig         *ChainConfig
-	waitForBlockFn      waitForBlockFn
 
+	// waitForBlockFn is a function used to wait for the given block.
+	waitForBlockFn waitForBlockFn
 	// onSignerStartFn is a callback function invoked when a single signer
 	// starts the execution of the signing protocol.
 	onSignerStartFn func()
 	// onSignerEndFn is a callback function invoked when a single signer
 	// end the execution of the signing protocol, regardless of the outcome.
 	onSignerEndFn func()
+
+	// signingAttemptsLimit determines the maximum attempts count that will
+	// be made by a single signer for the given message. Once the attempts
+	// limit is hit the signer gives up.
+	signingAttemptsLimit uint
 }
 
 // TODO: Documentation.
@@ -601,14 +608,28 @@ func (sgc *signingGroupController) sign(
 				announcer,
 			)
 
-			// TODO: For this client iteration, the signing loop is started
-			//       with a 24h timeout and a stop pill sent by any group
-			//       member.
-			loopCtx, cancelLoopCtx := context.WithTimeout(
-				context.Background(),
-				24*time.Hour,
-			)
-			defer cancelLoopCtx()
+			loopCtx, cancelLoopCtx := context.WithCancel(context.Background())
+			go func() {
+				defer cancelLoopCtx()
+
+				loopMaximumBlocks := uint64(
+					sgc.signingAttemptsLimit * signingAttemptMaximumBlocks(),
+				)
+
+				err := sgc.waitForBlockFn(
+					loopCtx,
+					startBlockNumber+loopMaximumBlocks,
+				)
+				if err != nil {
+					signingLogger.Warnf(
+						"[member:%v] failed waiting for "+
+							"loop stop signal: [%v]",
+						signer.signingGroupMemberIndex,
+						err,
+					)
+				}
+			}()
+
 			cancelSigningContextOnStopSignal(
 				loopCtx,
 				cancelLoopCtx,
@@ -642,7 +663,7 @@ func (sgc *signingGroupController) sign(
 
 						err := sgc.waitForBlockFn(
 							loopCtx,
-							attempt.startBlock+signingAttemptMaxBlockDuration,
+							attempt.startBlock+signingAttemptMaximumProtocolBlocks,
 						)
 						if err != nil {
 							signingAttemptLogger.Warnf(

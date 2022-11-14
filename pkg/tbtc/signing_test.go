@@ -139,7 +139,7 @@ func TestSigningRetryLoop(t *testing.T) {
 			// adds member 9 to the final excluded members list.
 			expectedLastAttempt: &signingAttemptParams{
 				number:                 2,
-				startBlock:             317, // 206 + 1 * (6 + 100 + 5)
+				startBlock:             237, // 206 + 1 * (6 + 20 + 5)
 				excludedMembersIndexes: []group.MemberIndex{1, 2, 5, 9},
 			},
 		},
@@ -170,7 +170,7 @@ func TestSigningRetryLoop(t *testing.T) {
 			// member 9 to the final excluded members list.
 			expectedLastAttempt: &signingAttemptParams{
 				number:                 2,
-				startBlock:             317, // 206 + 1 * (6 + 100 + 5)
+				startBlock:             237, // 206 + 1 * (6 + 20 + 5)
 				excludedMembersIndexes: []group.MemberIndex{1, 2, 5, 9},
 			},
 		},
@@ -201,7 +201,7 @@ func TestSigningRetryLoop(t *testing.T) {
 			// member 9 to the final excluded members list.
 			expectedLastAttempt: &signingAttemptParams{
 				number:                 2,
-				startBlock:             317, // 206 + 1 * (6 + 100 + 5)
+				startBlock:             237, // 206 + 1 * (6 + 20 + 5)
 				excludedMembersIndexes: []group.MemberIndex{1, 2, 5, 9},
 			},
 		},
@@ -230,7 +230,7 @@ func TestSigningRetryLoop(t *testing.T) {
 			// member 2 skips attempt 6 and ends on attempt 7.
 			expectedLastAttempt: &signingAttemptParams{
 				number:                 7,
-				startBlock:             872, // 206 + 6 * (6 + 100 + 5)
+				startBlock:             392, // 206 + 6 * (6 + 20 + 5)
 				excludedMembersIndexes: []group.MemberIndex{1, 5, 6, 9},
 			},
 		},

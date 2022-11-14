@@ -17,9 +17,31 @@ import (
 	"golang.org/x/exp/slices"
 )
 
-// signingAttemptMaxBlockDuration determines the maximum block duration of a
-// single signing attempt.
-const signingAttemptMaxBlockDuration = 100
+const (
+	// signingAttemptAnnouncementDelayBlocks determines the duration of the
+	// announcement phase delay that is preserved before starting the
+	// announcement phase.
+	signingAttemptAnnouncementDelayBlocks = 1
+	// signingAttemptAnnouncementActiveBlocks determines the duration of the
+	// announcement phase that is performed at the beginning of each signing
+	// attempt.
+	signingAttemptAnnouncementActiveBlocks = 5
+	// signingAttemptProtocolBlocks determines the maximum block duration of the
+	// actual protocol computations.
+	signingAttemptMaximumProtocolBlocks = 20
+	// signingAttemptCoolDownBlocks determines the duration of the cool down
+	// period that is preserved between subsequent signing attempts.
+	signingAttemptCoolDownBlocks = 5
+)
+
+// signingAttemptMaximumBlocks returns the maximum block duration of a single
+// signing attempt.
+func signingAttemptMaximumBlocks() uint {
+	return signingAttemptAnnouncementDelayBlocks +
+		signingAttemptAnnouncementActiveBlocks +
+		signingAttemptMaximumProtocolBlocks +
+		signingAttemptCoolDownBlocks
+}
 
 // signingAnnouncer represents a component responsible for exchanging readiness
 // announcements for the given signing attempt of the given message.
@@ -42,14 +64,11 @@ type signingRetryLoop struct {
 
 	chainConfig *ChainConfig
 
-	announcer                signingAnnouncer
-	announcementDelayBlocks  uint64
-	announcementActiveBlocks uint64
+	announcer signingAnnouncer
 
-	attemptCounter     uint
-	attemptStartBlock  uint64
-	attemptSeed        int64
-	attemptDelayBlocks uint64
+	attemptCounter    uint
+	attemptStartBlock uint64
+	attemptSeed       int64
 }
 
 func newSigningRetryLoop(
@@ -69,18 +88,15 @@ func newSigningRetryLoop(
 	attemptSeed := int64(binary.BigEndian.Uint64(messageSha256[:8]))
 
 	return &signingRetryLoop{
-		logger:                   logger,
-		message:                  message,
-		signingGroupMemberIndex:  signingGroupMemberIndex,
-		signingGroupOperators:    signingGroupOperators,
-		chainConfig:              chainConfig,
-		announcer:                announcer,
-		announcementDelayBlocks:  1,
-		announcementActiveBlocks: 5,
-		attemptCounter:           0,
-		attemptStartBlock:        initialStartBlock,
-		attemptSeed:              attemptSeed,
-		attemptDelayBlocks:       5,
+		logger:                  logger,
+		message:                 message,
+		signingGroupMemberIndex: signingGroupMemberIndex,
+		signingGroupOperators:   signingGroupOperators,
+		chainConfig:             chainConfig,
+		announcer:               announcer,
+		attemptCounter:          0,
+		attemptStartBlock:       initialStartBlock,
+		attemptSeed:             attemptSeed,
 	}
 }
 
@@ -112,23 +128,20 @@ func (srl *signingRetryLoop) start(
 		//
 		// That said, we need to increment the previous attempt start
 		// block by the number of blocks equal to the protocol duration and
-		// by some additional delay blocks. We need a small fixed delay in
+		// by some additional delay blocks. We need a small cool down in
 		// order to mitigate all corner cases where the actual attempt duration
 		// was slightly longer than the expected duration determined by the
-		// signingAttemptMaxBlockDuration constant.
+		// signingAttemptMaximumProtocolBlocks constant.
 		//
 		// For example, the attempt may fail at the end of the protocol but the
 		// error is returned after some time and more blocks than expected are
 		// mined in the meantime.
 		if srl.attemptCounter > 1 {
 			srl.attemptStartBlock = srl.attemptStartBlock +
-				srl.announcementDelayBlocks +
-				srl.announcementActiveBlocks +
-				signingAttemptMaxBlockDuration +
-				srl.attemptDelayBlocks
+				uint64(signingAttemptMaximumBlocks())
 		}
 
-		announcementStartBlock := srl.attemptStartBlock + srl.announcementDelayBlocks
+		announcementStartBlock := srl.attemptStartBlock + signingAttemptAnnouncementDelayBlocks
 		err := waitForBlockFn(ctx, announcementStartBlock)
 		if err != nil {
 			return nil, fmt.Errorf(
@@ -142,7 +155,7 @@ func (srl *signingRetryLoop) start(
 
 		// Set up the announcement phase stop signal.
 		announceCtx, cancelAnnounceCtx := context.WithCancel(ctx)
-		announcementEndBlock := announcementStartBlock + srl.announcementActiveBlocks
+		announcementEndBlock := announcementStartBlock + signingAttemptAnnouncementActiveBlocks
 		go func() {
 			defer cancelAnnounceCtx()
 
