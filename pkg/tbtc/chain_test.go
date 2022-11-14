@@ -5,6 +5,7 @@ import (
 	"math/big"
 	"sync"
 
+	"github.com/keep-network/keep-core/pkg/bitcoin"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/chain/local_v1"
 	"github.com/keep-network/keep-core/pkg/operator"
@@ -194,6 +195,42 @@ func (lc *localChain) CalculateDKGResultHash(
 func (lc *localChain) OnSignatureRequested(
 	handler func(event *SignatureRequestedEvent),
 ) subscription.EventSubscription {
+	panic("unsupported")
+}
+
+// Ready checks whether the relay is active (i.e. genesis has been
+// performed).
+func (lc *localChain) Ready() (bool, error) {
+	panic("unsupported")
+}
+
+// AuthorizationRequired checks whether the relay requires the address
+// submitting a retarget to be authorised in advance by governance.
+func (lc *localChain) AuthorizationRequired() (bool, error) {
+	panic("unsupported")
+}
+
+// IsAuthorized checks whether the given address has been authorised to
+// submit a retarget by governance.
+func (lc *localChain) IsAuthorized(address chain.Address) (bool, error) {
+	panic("unsupported")
+}
+
+// Retarget adds a new epoch to the relay by providing a proof
+// of the difficulty before and after the retarget.
+func (lc *localChain) Retarget(headers []*bitcoin.BlockHeader) error {
+	panic("unsupported")
+}
+
+// CurrentEpoch returns the number of the latest epoch whose difficulty is
+// proven to the relay.
+func (lc *localChain) CurrentEpoch() (uint64, error) {
+	panic("unsupported")
+}
+
+// ProofLength returns the number of blocks required for each side of a
+// retarget proof.
+func (lc *localChain) ProofLength() (uint64, error) {
 	panic("unsupported")
 }
 

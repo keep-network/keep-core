@@ -214,6 +214,18 @@ var cmdFlagsTests = map[string]struct {
 		// defaultValue: common.HexToAddress(ethereumTbtc.BridgeAddress),
 		defaultValue: common.HexToAddress("0x0000000000000000000000000000000000000000"),
 	},
+	"developer.lightRelayAddress": {
+		readValueFunc: func(c *config.Config) interface{} {
+			address, _ := c.Ethereum.ContractAddress(chainEthereum.LightRelayContractName)
+			return address
+		},
+		flagName:              "--developer.lightRelayAddress",
+		flagValue:             "0x68e20afD773fDF1231B5cbFeA7040e73e79cAc36",
+		expectedValueFromFlag: common.HexToAddress("0x68e20afD773fDF1231B5cbFeA7040e73e79cAc36"),
+		// FIXME: Commented out temporarily for mainnet build.
+		// defaultValue: common.HexToAddress(ethereumTbtc.LightRelayAddress),
+		defaultValue: common.HexToAddress("0x0000000000000000000000000000000000000000"),
+	},
 	"developer.tokenStakingAddress": {
 		readValueFunc: func(c *config.Config) interface{} {
 			address, _ := c.Ethereum.ContractAddress(chainEthereum.TokenStakingContractName)
