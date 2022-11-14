@@ -523,6 +523,8 @@ func (n *node) createSigningGroupController(
 		membershipValidator: membershipValidator,
 		chainConfig:         n.chain.GetConfig(),
 		waitForBlockFn:      n.waitForBlockHeight,
+		onSignerStartFn:     n.protocolLatch.Lock,
+		onSignerEndFn:       n.protocolLatch.Unlock,
 	}, nil
 }
 
@@ -533,6 +535,13 @@ type signingGroupController struct {
 	membershipValidator *group.MembershipValidator
 	chainConfig         *ChainConfig
 	waitForBlockFn      waitForBlockFn
+
+	// onSignerStartFn is a callback function invoked when a single signer
+	// starts the execution of the signing protocol.
+	onSignerStartFn func()
+	// onSignerEndFn is a callback function invoked when a single signer
+	// end the execution of the signing protocol, regardless of the outcome.
+	onSignerEndFn func()
 }
 
 // TODO: Documentation.
@@ -572,9 +581,8 @@ func (sgc *signingGroupController) sign(
 
 	for _, currentSigner := range sgc.signers {
 		go func(signer *signer) {
-			// TODO: Solve the problem with the protocol latch.
-			// n.protocolLatch.Lock()
-			// defer n.protocolLatch.Unlock()
+			sgc.onSignerStartFn()
+			defer sgc.onSignerEndFn()
 
 			announcer := announcer.New(
 				fmt.Sprintf("%v-%v", ProtocolName, "signing"),
