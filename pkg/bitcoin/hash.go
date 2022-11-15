@@ -61,8 +61,14 @@ func NewHash(hash []byte, byteOrder ByteOrder) (Hash, error) {
 }
 
 // String returns the unprefixed hexadecimal string representation of the Hash
+// in the InternalByteOrder.
+func (h Hash) String() string {
+	return h.Hex(InternalByteOrder)
+}
+
+// Hex returns the unprefixed hexadecimal string representation of the Hash
 // in the given ByteOrder.
-func (h Hash) String(byteOrder ByteOrder) string {
+func (h Hash) Hex(byteOrder ByteOrder) string {
 	switch byteOrder {
 	case InternalByteOrder:
 		return hex.EncodeToString(h[:])
