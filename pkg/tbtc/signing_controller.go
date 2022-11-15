@@ -9,7 +9,9 @@ import (
 	"github.com/keep-network/keep-core/pkg/tecdsa"
 	"github.com/keep-network/keep-core/pkg/tecdsa/signing"
 	"go.uber.org/zap"
+	"golang.org/x/exp/slices"
 	"math/big"
+	"reflect"
 )
 
 // TODO: Documentation.
@@ -179,7 +181,11 @@ func (sgc *signingGroupController) sign(
 					signer.signingGroupMemberIndex,
 					err,
 				)
-				signerOutcomesChan <- &signerOutcome{err: err}
+				signerOutcomesChan <- &signerOutcome{
+					signature: nil,
+					endBlock:  0,
+					err:       err,
+				}
 				return
 			}
 
@@ -197,48 +203,37 @@ func (sgc *signingGroupController) sign(
 		}(currentSigner)
 	}
 
-	// TODO: Try to simplify the following code.
-
 	signerOutcomes := make([]*signerOutcome, 0)
 
-outcomesLoop:
 	for {
 		select {
 		case outcome := <-signerOutcomesChan:
 			signerOutcomes = append(signerOutcomes, outcome)
 
 			if len(signerOutcomes) == len(sgc.signers) {
-				break outcomesLoop
+				outcomes := slices.CompactFunc(
+					signerOutcomes,
+					func(o1, o2 *signerOutcome) bool {
+						return o1.signature.Equals(o2.signature) &&
+							o1.endBlock == o2.endBlock &&
+							reflect.DeepEqual(o1.err, o2.err)
+					},
+				)
+
+				if len(outcomes) != 1 {
+					return nil, 0, fmt.Errorf("signers came to different outcomes")
+				}
+
+				commonOutcome := outcomes[0]
+
+				if err := commonOutcome.err; err != nil {
+					return nil, 0, fmt.Errorf("signers failed: [%v]", err)
+				}
+
+				return commonOutcome.signature, commonOutcome.endBlock, nil
 			}
 		case <-ctx.Done():
 			return nil, 0, ctx.Err()
 		}
 	}
-
-	var signature *tecdsa.Signature
-	var endBlock uint64
-
-	for _, outcome := range signerOutcomes {
-		if outcome.err != nil {
-			return nil, 0, fmt.Errorf("failed signers")
-		}
-
-		if signature == nil {
-			signature = outcome.signature
-		}
-
-		if endBlock == 0 {
-			endBlock = outcome.endBlock
-		}
-
-		if signature.String() != outcome.signature.String() {
-			return nil, 0, fmt.Errorf("signers came with different signatures")
-		}
-
-		if endBlock != outcome.endBlock {
-			return nil, 0, fmt.Errorf("signers came with different end blocks")
-		}
-	}
-
-	return signature, endBlock, nil
 }

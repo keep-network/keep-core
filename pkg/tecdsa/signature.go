@@ -44,3 +44,36 @@ func (s *Signature) String() string {
 		s.RecoveryID,
 	)
 }
+
+// Equals determines the equality of two signatures.
+func (s *Signature) Equals(other *Signature) bool {
+	if s == nil || other == nil {
+		return s == other
+	}
+
+	if s.R == nil || other.R == nil {
+		if s.R != other.R {
+			return false
+		}
+	} else {
+		if s.R.Cmp(other.R) != 0 {
+			return false
+		}
+	}
+
+	if s.S == nil || other.S == nil {
+		if s.S != other.S {
+			return false
+		}
+	} else {
+		if s.S.Cmp(other.S) != 0 {
+			return false
+		}
+	}
+
+	if s.RecoveryID != other.RecoveryID {
+		return false
+	}
+
+	return true
+}

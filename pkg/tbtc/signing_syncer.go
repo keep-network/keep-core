@@ -222,7 +222,7 @@ func (ss *signingSyncer) isValidSyncMessage(
 	}
 
 	if signature != nil {
-		if syncMessage.signature.String() != signature.String() {
+		if !syncMessage.signature.Equals(signature) {
 			return false
 		}
 	}
