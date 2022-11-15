@@ -1,38 +1,147 @@
 package electrum
 
 import (
+	"context"
+	"crypto/tls"
+	"fmt"
+	"strings"
+	"time"
+
+	"github.com/checksum0/go-electrum/electrum"
+	"github.com/ipfs/go-log"
+	"golang.org/x/exp/slices"
+
+	"github.com/keep-network/keep-common/pkg/wrappers"
 	"github.com/keep-network/keep-core/pkg/bitcoin"
 )
 
-type Client struct{}
+var (
+	supportedProtocolVersions = []string{"1.4"}
+	logger                    = log.Logger("keep-electrum")
+)
 
-func (c *Client) GetTransaction(
+// Connection is a handle for interactions with Electrum server.
+type Connection struct {
+	ctx                 context.Context
+	client              *electrum.Client
+	requestRetryTimeout time.Duration
+}
+
+// Connect initializes handle with provided Config.
+func Connect(ctx context.Context, config Config) (bitcoin.Chain, error) {
+	if config.KeepAliveInterval == 0 {
+		config.KeepAliveInterval = DefaultKeepAliveInterval
+	}
+	if config.RequestRetryTimeout == 0 {
+		config.RequestRetryTimeout = DefaultRequestRetryTimeout
+	}
+
+	var client *electrum.Client
+	var err error
+	switch config.Protocol {
+	case TCP:
+		client, err = electrum.NewClientTCP(ctx, config.URL)
+	case SSL:
+		// TODO: Implement certificate verification to be able to disable the `InsecureSkipVerify: true` workaround.
+		tlsConfig := &tls.Config{InsecureSkipVerify: true}
+		client, err = electrum.NewClientSSL(ctx, config.URL, tlsConfig)
+	default:
+		return nil, fmt.Errorf("unsupported protocol: [%s]", config.Protocol)
+	}
+	if err != nil {
+		return nil, fmt.Errorf("failed to initialize electrum client: [%w]", err)
+	}
+
+	// Get the server's details.
+	err = wrappers.DoWithDefaultRetry(
+		config.RequestRetryTimeout,
+		func(ctx context.Context,
+		) error {
+			serverVersion, protocolVersion, err := client.ServerVersion(ctx)
+			if err != nil {
+				return fmt.Errorf("ServerVersion failed: [%w]", err)
+			}
+			logger.Infof(
+				"connected to electrum server [version: [%s], protocol: [%s]]",
+				serverVersion,
+				protocolVersion,
+			)
+
+			// Log a warning if connected to a server running an unsupported protocol version.
+			if !slices.Contains(supportedProtocolVersions, protocolVersion) {
+				logger.Warnf(
+					"electrum server [%s] runs an unsupported protocol version: [%s]; expected one of: [%s]",
+					config.URL,
+					protocolVersion,
+					strings.Join(supportedProtocolVersions, ","),
+				)
+			}
+
+			return nil
+		})
+	if err != nil {
+		return nil, fmt.Errorf("failed to get server version: [%w]", err)
+	}
+
+	// Keep the connection alive and check the connection health.
+	go func() {
+		ticker := time.NewTicker(config.KeepAliveInterval)
+
+		for {
+			select {
+			case <-ticker.C:
+				err := wrappers.DoWithDefaultRetry(config.RequestRetryTimeout, client.Ping)
+				if err != nil {
+					logger.Errorf(
+						"failed to ping the electrum server; "+
+							"please verify health of the electrum server: [%v]",
+						err,
+					)
+				}
+			case <-ctx.Done():
+				ticker.Stop()
+				client.Shutdown()
+				return
+			}
+		}
+	}()
+
+	// TODO: Add reconnects on lost connection.
+
+	return &Connection{
+		ctx:                 ctx,
+		client:              client,
+		requestRetryTimeout: config.RequestRetryTimeout,
+	}, nil
+}
+
+func (c *Connection) GetTransaction(
 	transactionHash bitcoin.Hash,
 ) (*bitcoin.Transaction, error) {
 	// TODO: Implementation.
 	panic("not implemented")
 }
 
-func (c *Client) GetTransactionConfirmations(
+func (c *Connection) GetTransactionConfirmations(
 	transactionHash bitcoin.Hash,
 ) (uint, error) {
 	// TODO: Implementation.
 	panic("not implemented")
 }
 
-func (c *Client) BroadcastTransaction(
+func (c *Connection) BroadcastTransaction(
 	transaction *bitcoin.Transaction,
 ) error {
 	// TODO: Implementation.
 	panic("not implemented")
 }
 
-func (c *Client) GetLatestBlockHeight() (uint, error) {
+func (c *Connection) GetLatestBlockHeight() (uint, error) {
 	// TODO: Implementation.
 	panic("not implemented")
 }
 
-func (c *Client) GetBlockHeader(
+func (c *Connection) GetBlockHeader(
 	blockHeight uint,
 ) (*bitcoin.BlockHeader, error) {
 	// TODO: Implementation.
