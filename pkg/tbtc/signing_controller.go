@@ -10,7 +10,6 @@ import (
 	"github.com/keep-network/keep-core/pkg/tecdsa/signing"
 	"go.uber.org/zap"
 	"math/big"
-	"time"
 )
 
 // TODO: Documentation.
@@ -111,17 +110,15 @@ func (sgc *signingGroupController) sign(
 			// Set up the loop timeout signal.
 			loopTimeoutBlock := startBlockNumber +
 				uint64(sgc.signingAttemptsLimit*signingAttemptMaximumBlocks())
-			loopCtx, cancelLoopCtx := withCancelOnBlock(
+			// Do not cancel the loopCtx upon function exit and continue
+			// to broadcast sync messages until the attempt timeout. This way
+			// we maximize the chance that other members, especially the
+			// ones not participating in the successful signature get synced
+			// as well.
+			loopCtx, _ := withCancelOnBlock(
 				ctx,
 				loopTimeoutBlock,
 				sgc.waitForBlockFn,
-			)
-
-			cancelSigningContextOnStopSignal(
-				loopCtx,
-				cancelLoopCtx,
-				sgc.broadcastChannel,
-				message.Text(16),
 			)
 
 			result, endBlock, err := retryLoop.start(
@@ -172,28 +169,6 @@ func (sgc *signingGroupController) sign(
 						return nil, 0, err
 					}
 
-					// Schedule the stop pill to be sent a fixed amount of
-					// time after the result is returned. Do not do it
-					// immediately as other members can be very close
-					// to produce the result as well. This mechanism should
-					// be more sophisticated but since it is temporary, we
-					// can live with it for now.
-					go func() {
-						time.Sleep(1 * time.Minute)
-						if err := sendSigningStopPill(
-							loopCtx,
-							sgc.broadcastChannel,
-							message.Text(16),
-							attempt.number,
-						); err != nil {
-							signingLogger.Errorf(
-								"[member:%v] could not send the stop pill: [%v]",
-								signer.signingGroupMemberIndex,
-								err,
-							)
-						}
-					}()
-
 					return result, 0, nil
 				},
 			)
@@ -204,24 +179,7 @@ func (sgc *signingGroupController) sign(
 					signer.signingGroupMemberIndex,
 					err,
 				)
-
 				signerOutcomesChan <- &signerOutcome{err: err}
-
-				return
-			}
-			// TODO: This condition should go away once we integrate
-			// WalletRegistry contract. In this scenario, member received
-			// a StopPill from some other group member and it means that
-			// the result has been produced but the current member did not
-			// participate in the work so they do not know the result.
-			if result == nil {
-				signingLogger.Infof(
-					"[member:%v] signing retry loop received stop signal",
-					signer.signingGroupMemberIndex,
-				)
-
-				signerOutcomesChan <- &signerOutcome{}
-
 				return
 			}
 
