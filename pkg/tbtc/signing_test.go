@@ -72,8 +72,10 @@ func TestSigningRetryLoop(t *testing.T) {
 			) ([]group.MemberIndex, error) {
 				return signingGroupMembersIndexes, nil
 			},
-			signingAttemptFn: func(attempt *signingAttemptParams) (*signing.Result, error) {
-				return testResult, nil
+			signingAttemptFn: func(
+				attempt *signingAttemptParams,
+			) (*signing.Result, uint64, error) {
+				return testResult, 0, nil
 			},
 			expectedErr:    nil,
 			expectedResult: testResult,
@@ -97,8 +99,10 @@ func TestSigningRetryLoop(t *testing.T) {
 				// Honest majority of members announced their readiness.
 				return []group.MemberIndex{1, 2, 3, 6, 7, 9}, nil
 			},
-			signingAttemptFn: func(attempt *signingAttemptParams) (*signing.Result, error) {
-				return testResult, nil
+			signingAttemptFn: func(
+				attempt *signingAttemptParams,
+			) (*signing.Result, uint64, error) {
+				return testResult, 0, nil
 			},
 			expectedErr:    nil,
 			expectedResult: testResult,
@@ -126,8 +130,10 @@ func TestSigningRetryLoop(t *testing.T) {
 
 				return signingGroupMembersIndexes, nil
 			},
-			signingAttemptFn: func(attempt *signingAttemptParams) (*signing.Result, error) {
-				return testResult, nil
+			signingAttemptFn: func(
+				attempt *signingAttemptParams,
+			) (*signing.Result, uint64, error) {
+				return testResult, 0, nil
 			},
 			expectedErr:    nil,
 			expectedResult: testResult,
@@ -157,8 +163,10 @@ func TestSigningRetryLoop(t *testing.T) {
 
 				return signingGroupMembersIndexes, nil
 			},
-			signingAttemptFn: func(attempt *signingAttemptParams) (*signing.Result, error) {
-				return testResult, nil
+			signingAttemptFn: func(
+				attempt *signingAttemptParams,
+			) (*signing.Result, uint64, error) {
+				return testResult, 0, nil
 			},
 			expectedErr:    nil,
 			expectedResult: testResult,
@@ -184,12 +192,14 @@ func TestSigningRetryLoop(t *testing.T) {
 			) ([]group.MemberIndex, error) {
 				return signingGroupMembersIndexes, nil
 			},
-			signingAttemptFn: func(attempt *signingAttemptParams) (*signing.Result, error) {
+			signingAttemptFn: func(
+				attempt *signingAttemptParams,
+			) (*signing.Result, uint64, error) {
 				if attempt.number <= 1 {
-					return nil, fmt.Errorf("invalid data")
+					return nil, 0, fmt.Errorf("invalid data")
 				}
 
-				return testResult, nil
+				return testResult, 0, nil
 			},
 			expectedErr:    nil,
 			expectedResult: testResult,
@@ -215,12 +225,14 @@ func TestSigningRetryLoop(t *testing.T) {
 			) ([]group.MemberIndex, error) {
 				return signingGroupMembersIndexes, nil
 			},
-			signingAttemptFn: func(attempt *signingAttemptParams) (*signing.Result, error) {
+			signingAttemptFn: func(
+				attempt *signingAttemptParams,
+			) (*signing.Result, uint64, error) {
 				if attempt.number <= 5 {
-					return nil, fmt.Errorf("invalid data")
+					return nil, 0, fmt.Errorf("invalid data")
 				}
 
-				return testResult, nil
+				return testResult, 0, nil
 			},
 			expectedErr:    nil,
 			expectedResult: testResult,
@@ -247,8 +259,10 @@ func TestSigningRetryLoop(t *testing.T) {
 			) ([]group.MemberIndex, error) {
 				return signingGroupMembersIndexes, nil
 			},
-			signingAttemptFn: func(attempt *signingAttemptParams) (*signing.Result, error) {
-				return nil, fmt.Errorf("invalid data")
+			signingAttemptFn: func(
+				attempt *signingAttemptParams,
+			) (*signing.Result, uint64, error) {
+				return nil, 0, fmt.Errorf("invalid data")
 			},
 			expectedErr:         nil,
 			expectedResult:      nil,
@@ -271,6 +285,7 @@ func TestSigningRetryLoop(t *testing.T) {
 				signingGroupOperators,
 				chainConfig,
 				announcer,
+				nil, // TODO: Implement.
 			)
 
 			ctx, cancelCtx := test.ctxFn()
@@ -278,12 +293,12 @@ func TestSigningRetryLoop(t *testing.T) {
 
 			var lastAttempt *signingAttemptParams
 
-			result, err := retryLoop.start(
+			result, _, err := retryLoop.start(
 				ctx,
 				func(context.Context, uint64) error {
 					return nil
 				},
-				func(params *signingAttemptParams) (*signing.Result, error) {
+				func(params *signingAttemptParams) (*signing.Result, uint64, error) {
 					lastAttempt = params
 					return test.signingAttemptFn(params)
 				},

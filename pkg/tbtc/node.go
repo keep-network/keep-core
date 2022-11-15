@@ -565,7 +565,7 @@ func (sgc *signingGroupController) sign(
 	ctx context.Context,
 	message *big.Int,
 	startBlockNumber uint64,
-) (*tecdsa.Signature, error) {
+) (*tecdsa.Signature, uint64, error) {
 	// All signers belong to one wallet. Take that wallet from the
 	// first signer.
 	wallet := sgc.signers[0].wallet
@@ -579,7 +579,7 @@ func (sgc *signingGroupController) sign(
 
 	walletPublicKeyBytes, err := marshalPublicKey(wallet.publicKey)
 	if err != nil {
-		return nil, fmt.Errorf("cannot marshal wallet public key: [%v]", err)
+		return nil, 0, fmt.Errorf("cannot marshal wallet public key: [%v]", err)
 	}
 
 	signingLogger := logger.With(
@@ -589,6 +589,7 @@ func (sgc *signingGroupController) sign(
 
 	type signerOutcome struct {
 		signature *tecdsa.Signature
+		endBlock  uint64
 		err       error
 	}
 
@@ -606,6 +607,12 @@ func (sgc *signingGroupController) sign(
 				sgc.membershipValidator,
 			)
 
+			syncer := newSigningSyncer(
+				sgc.chainConfig.GroupSize,
+				sgc.broadcastChannel,
+				sgc.membershipValidator,
+			)
+
 			retryLoop := newSigningRetryLoop(
 				signingLogger,
 				message,
@@ -614,30 +621,17 @@ func (sgc *signingGroupController) sign(
 				wallet.signingGroupOperators,
 				sgc.chainConfig,
 				announcer,
+				syncer,
 			)
 
 			// Set up the loop timeout signal.
-			loopCtx, cancelLoopCtx := context.WithCancel(ctx)
-			go func() {
-				defer cancelLoopCtx()
-
-				loopMaximumBlocks := uint64(
-					sgc.signingAttemptsLimit * signingAttemptMaximumBlocks(),
-				)
-
-				err := sgc.waitForBlockFn(
-					loopCtx,
-					startBlockNumber+loopMaximumBlocks,
-				)
-				if err != nil {
-					signingLogger.Warnf(
-						"[member:%v] failed waiting for "+
-							"loop stop signal: [%v]",
-						signer.signingGroupMemberIndex,
-						err,
-					)
-				}
-			}()
+			loopTimeoutBlock := startBlockNumber +
+				uint64(sgc.signingAttemptsLimit*signingAttemptMaximumBlocks())
+			loopCtx, cancelLoopCtx := withCancelOnBlock(
+				ctx,
+				loopTimeoutBlock,
+				sgc.waitForBlockFn,
+			)
 
 			cancelSigningContextOnStopSignal(
 				loopCtx,
@@ -646,17 +640,18 @@ func (sgc *signingGroupController) sign(
 				message.Text(16),
 			)
 
-			result, err := retryLoop.start(
+			result, endBlock, err := retryLoop.start(
 				loopCtx,
 				sgc.waitForBlockFn,
-				func(attempt *signingAttemptParams) (*signing.Result, error) {
+				func(attempt *signingAttemptParams) (*signing.Result, uint64, error) {
 					signingAttemptLogger := signingLogger.With(
 						zap.Uint("attempt", attempt.number),
 						zap.Uint64("attemptStartBlock", attempt.startBlock),
+						zap.Uint64("attemptTimeoutBlock", attempt.timeoutBlock),
 					)
 
 					signingAttemptLogger.Infof(
-						"[member:%v] scheduled signing attempt "+
+						"[member:%v] starting signing protocol "+
 							"with [%v] group members (excluded: [%v])",
 						signer.signingGroupMemberIndex,
 						signingGroupSize-len(attempt.excludedMembersIndexes),
@@ -664,25 +659,11 @@ func (sgc *signingGroupController) sign(
 					)
 
 					// Set up the attempt timeout signal.
-					attemptCtx, cancelAttemptCtx := context.WithCancel(
+					attemptCtx, _ := withCancelOnBlock(
 						loopCtx,
+						attempt.timeoutBlock,
+						sgc.waitForBlockFn,
 					)
-					go func() {
-						defer cancelAttemptCtx()
-
-						err := sgc.waitForBlockFn(
-							loopCtx,
-							attempt.startBlock+signingAttemptMaximumProtocolBlocks,
-						)
-						if err != nil {
-							signingAttemptLogger.Warnf(
-								"[member:%v] failed waiting for "+
-									"attempt stop signal: [%v]",
-								signer.signingGroupMemberIndex,
-								err,
-							)
-						}
-					}()
 
 					sessionID := fmt.Sprintf(
 						"%v-%v",
@@ -704,13 +685,7 @@ func (sgc *signingGroupController) sign(
 						sgc.membershipValidator,
 					)
 					if err != nil {
-						signingAttemptLogger.Warnf(
-							"[member:%v] signing attempt failed: [%v]",
-							signer.signingGroupMemberIndex,
-							err,
-						)
-
-						return nil, err
+						return nil, 0, err
 					}
 
 					// Schedule the stop pill to be sent a fixed amount of
@@ -735,7 +710,7 @@ func (sgc *signingGroupController) sign(
 						}
 					}()
 
-					return result, nil
+					return result, 0, nil
 				},
 			)
 			if err != nil {
@@ -746,10 +721,7 @@ func (sgc *signingGroupController) sign(
 					err,
 				)
 
-				signerOutcomesChan <- &signerOutcome{
-					signature: nil,
-					err:       err,
-				}
+				signerOutcomesChan <- &signerOutcome{err: err}
 
 				return
 			}
@@ -764,11 +736,8 @@ func (sgc *signingGroupController) sign(
 					signer.signingGroupMemberIndex,
 				)
 
-				signerOutcomesChan <- &signerOutcome{
-					signature: nil,
-					err:       nil,
-				}
-				
+				signerOutcomesChan <- &signerOutcome{}
+
 				return
 			}
 
@@ -780,6 +749,7 @@ func (sgc *signingGroupController) sign(
 
 			signerOutcomesChan <- &signerOutcome{
 				signature: result.Signature,
+				endBlock:  endBlock,
 				err:       nil,
 			}
 		}(currentSigner)
@@ -797,27 +767,36 @@ outcomesLoop:
 				break outcomesLoop
 			}
 		case <-ctx.Done():
-			return nil, ctx.Err()
+			return nil, 0, ctx.Err()
 		}
 	}
 
 	var signature *tecdsa.Signature
+	var endBlock uint64
 
 	for _, outcome := range signerOutcomes {
 		if outcome.err != nil {
-			return nil, fmt.Errorf("failed signers")
+			return nil, 0, fmt.Errorf("failed signers")
 		}
 
 		if signature == nil {
 			signature = outcome.signature
 		}
 
+		if endBlock == 0 {
+			endBlock = outcome.endBlock
+		}
+
 		if signature.String() != outcome.signature.String() {
-			return nil, fmt.Errorf("signers came with different signatures")
+			return nil, 0, fmt.Errorf("signers came with different signatures")
+		}
+
+		if endBlock != outcome.endBlock {
+			return nil, 0, fmt.Errorf("signers came with different end blocks")
 		}
 	}
 
-	return signature, nil
+	return signature, endBlock, nil
 }
 
 // waitForBlockFn represents a function blocking the execution until the given
@@ -842,4 +821,30 @@ func (n *node) waitForBlockHeight(ctx context.Context, blockHeight uint64) error
 	}
 
 	return nil
+}
+
+// withCancelOnBlock returns a copy of the given ctx that is automatically
+// cancelled on the given block or when the parent ctx is done. Note that the
+// context can be cancelled earlier if the waitForBlockFn returns an error.
+func withCancelOnBlock(
+	ctx context.Context,
+	block uint64,
+	waitForBlockFn waitForBlockFn,
+) (context.Context, context.CancelFunc) {
+	blockCtx, cancelBlockCtx := context.WithCancel(ctx)
+
+	go func() {
+		defer cancelBlockCtx()
+
+		err := waitForBlockFn(ctx, block)
+		if err != nil {
+			logger.Warnf(
+				"failed to wait for block [%v]; "+
+					"context cancelled earlier than expected",
+				err,
+			)
+		}
+	}()
+
+	return blockCtx, cancelBlockCtx
 }

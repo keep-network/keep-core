@@ -4,6 +4,7 @@ import (
 	"crypto/ecdsa"
 	"crypto/elliptic"
 	"fmt"
+	"math/big"
 
 	"google.golang.org/protobuf/proto"
 
@@ -83,6 +84,52 @@ func (s *signer) Unmarshal(bytes []byte) error {
 	return nil
 }
 
+// Marshal converts the signingSyncMessage to a byte array.
+func (ssm *signingSyncMessage) Marshal() ([]byte, error) {
+	signatureBytes, err := ssm.signature.Marshal()
+	if err != nil {
+		return nil, err
+	}
+
+	return proto.Marshal(&pb.SigningSyncMessage{
+		SenderID:      uint32(ssm.senderID),
+		Message:       ssm.message.Text(16),
+		AttemptNumber: uint64(ssm.attemptNumber),
+		Signature:     signatureBytes,
+		EndBlock:      ssm.endBlock,
+	})
+}
+
+// Unmarshal converts a byte array back to the signingSyncMessage.
+func (ssm *signingSyncMessage) Unmarshal(bytes []byte) error {
+	pbMsg := pb.SigningSyncMessage{}
+	if err := proto.Unmarshal(bytes, &pbMsg); err != nil {
+		return fmt.Errorf("failed to unmarshal SigningSyncMessage: [%v]", err)
+	}
+
+	if err := validateMemberIndex(pbMsg.SenderID); err != nil {
+		return err
+	}
+
+	message, ok := new(big.Int).SetString(pbMsg.Message, 16)
+	if !ok {
+		return fmt.Errorf("cannot unmarshal message")
+	}
+
+	signature := &tecdsa.Signature{}
+	if err := signature.Unmarshal(pbMsg.Signature); err != nil {
+		return fmt.Errorf("cannot unmarshal signature: [%v]", err)
+	}
+
+	ssm.senderID = group.MemberIndex(pbMsg.SenderID)
+	ssm.message = message
+	ssm.attemptNumber = uint(pbMsg.AttemptNumber)
+	ssm.signature = signature
+	ssm.endBlock = pbMsg.EndBlock
+
+	return nil
+}
+
 // marshalPublicKey converts an ECDSA public key to a byte
 // array (uncompressed).
 func marshalPublicKey(publicKey *ecdsa.PublicKey) ([]byte, error) {
@@ -110,4 +157,13 @@ func unmarshalPublicKey(bytes []byte) *ecdsa.PublicKey {
 		X:     x,
 		Y:     y,
 	}
+}
+
+func validateMemberIndex(protoIndex uint32) error {
+	// Protobuf does not have uint8 type, so we are using uint32. When
+	// unmarshalling message, we need to make sure we do not overflow.
+	if protoIndex > group.MaxMemberIndex {
+		return fmt.Errorf("invalid member index value: [%v]", protoIndex)
+	}
+	return nil
 }

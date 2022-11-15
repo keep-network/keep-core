@@ -168,3 +168,13 @@ func (pks *PrivateKeyShare) Unmarshal(bytes []byte) error {
 
 	return nil
 }
+
+func (s *Signature) Marshal() ([]byte, error) {
+	// TODO: Implementation.
+	panic("implement")
+}
+
+func (s *Signature) Unmarshal(bytes []byte) error {
+	// TODO: Implementation.
+	panic("implement")
+}

@@ -69,6 +69,8 @@ type signingRetryLoop struct {
 	attemptCounter    uint
 	attemptStartBlock uint64
 	attemptSeed       int64
+
+	syncer *signingSyncer
 }
 
 func newSigningRetryLoop(
@@ -79,6 +81,7 @@ func newSigningRetryLoop(
 	signingGroupOperators chain.Addresses,
 	chainConfig *ChainConfig,
 	announcer signingAnnouncer,
+	syncer *signingSyncer,
 ) *signingRetryLoop {
 	// Compute the 8-byte seed needed for the random retry algorithm. We take
 	// the first 8 bytes of the hash of the signed message. This allows us to
@@ -97,6 +100,7 @@ func newSigningRetryLoop(
 		attemptCounter:          0,
 		attemptStartBlock:       initialStartBlock,
 		attemptSeed:             attemptSeed,
+		syncer:                  syncer,
 	}
 }
 
@@ -104,11 +108,12 @@ func newSigningRetryLoop(
 type signingAttemptParams struct {
 	number                 uint
 	startBlock             uint64
+	timeoutBlock           uint64
 	excludedMembersIndexes []group.MemberIndex
 }
 
 // signingAttemptFn represents a function performing a signing attempt.
-type signingAttemptFn func(*signingAttemptParams) (*signing.Result, error)
+type signingAttemptFn func(*signingAttemptParams) (*signing.Result, uint64, error)
 
 // start begins the signing retry loop using the given signing attempt function.
 // The retry loop terminates when the signing result is produced or the ctx
@@ -117,7 +122,7 @@ func (srl *signingRetryLoop) start(
 	ctx context.Context,
 	waitForBlockFn waitForBlockFn,
 	signingAttemptFn signingAttemptFn,
-) (*signing.Result, error) {
+) (*signing.Result, uint64, error) {
 	for {
 		srl.attemptCounter++
 
@@ -141,10 +146,16 @@ func (srl *signingRetryLoop) start(
 				uint64(signingAttemptMaximumBlocks())
 		}
 
+		srl.logger.Infof(
+			"[member:%v] waiting for attempt [%v] start signal",
+			srl.signingGroupMemberIndex,
+			srl.attemptCounter,
+		)
+
 		announcementStartBlock := srl.attemptStartBlock + signingAttemptAnnouncementDelayBlocks
 		err := waitForBlockFn(ctx, announcementStartBlock)
 		if err != nil {
-			return nil, fmt.Errorf(
+			return nil, 0, fmt.Errorf(
 				"failed waiting for announcement start block [%v] "+
 					"for attempt [%v]: [%v]",
 				announcementStartBlock,
@@ -154,22 +165,8 @@ func (srl *signingRetryLoop) start(
 		}
 
 		// Set up the announcement phase stop signal.
-		announceCtx, cancelAnnounceCtx := context.WithCancel(ctx)
 		announcementEndBlock := announcementStartBlock + signingAttemptAnnouncementActiveBlocks
-		go func() {
-			defer cancelAnnounceCtx()
-
-			if err := waitForBlockFn(ctx, announcementEndBlock); err != nil {
-				srl.logger.Errorf(
-					"[member:%v] failed waiting for announcement end "+
-						"block [%v] for attempt [%v]: [%v]",
-					srl.signingGroupMemberIndex,
-					announcementEndBlock,
-					srl.attemptCounter,
-					err,
-				)
-			}
-		}()
+		announceCtx, _ := withCancelOnBlock(ctx, announcementEndBlock, waitForBlockFn)
 
 		srl.logger.Infof(
 			"[member:%v] starting announcement phase for attempt [%v]",
@@ -195,7 +192,7 @@ func (srl *signingRetryLoop) start(
 
 		// Check the loop stop signal.
 		if ctx.Err() != nil {
-			return nil, nil
+			return nil, 0, nil
 		}
 
 		if len(readyMembersIndexes) >= srl.chainConfig.HonestThreshold {
@@ -222,11 +219,19 @@ func (srl *signingRetryLoop) start(
 			readyMembersIndexes,
 		)
 		if err != nil {
-			return nil, fmt.Errorf(
+			return nil, 0, fmt.Errorf(
 				"cannot select members for attempt [%v]: [%w]",
 				srl.attemptCounter,
 				err,
 			)
+		}
+
+		includedMembersIndexes := make([]group.MemberIndex, 0)
+		for i := range srl.signingGroupOperators {
+			memberIndex := group.MemberIndex(i + 1)
+			if !slices.Contains(excludedMembersIndexes, memberIndex) {
+				includedMembersIndexes = append(includedMembersIndexes, memberIndex)
+			}
 		}
 
 		attemptSkipped := slices.Contains(
@@ -234,28 +239,88 @@ func (srl *signingRetryLoop) start(
 			srl.signingGroupMemberIndex,
 		)
 
-		var result *signing.Result
-		var attemptErr error
+		timeoutBlock := announcementEndBlock + signingAttemptMaximumProtocolBlocks
+
+		syncTimeoutCtx, _ := withCancelOnBlock(ctx, timeoutBlock, waitForBlockFn)
 
 		if !attemptSkipped {
-			result, attemptErr = signingAttemptFn(&signingAttemptParams{
-				number:                 srl.attemptCounter,
-				startBlock:             announcementEndBlock,
-				excludedMembersIndexes: excludedMembersIndexes,
-			})
-		} else {
 			srl.logger.Infof(
-				"[member:%v] attempt [%v] skipped",
+				"[member:%v] eligible for attempt [%v]",
 				srl.signingGroupMemberIndex,
 				srl.attemptCounter,
 			)
-		}
 
-		if attemptSkipped || attemptErr != nil {
-			continue
-		}
+			result, endBlock, err := signingAttemptFn(&signingAttemptParams{
+				number:                 srl.attemptCounter,
+				startBlock:             announcementEndBlock,
+				timeoutBlock:           timeoutBlock,
+				excludedMembersIndexes: excludedMembersIndexes,
+			})
+			if err != nil {
+				srl.logger.Warnf(
+					"[member:%v] failed attempt [%v]: [%v]; "+
+						"starting next attempt",
+					srl.signingGroupMemberIndex,
+					srl.attemptCounter,
+					err,
+				)
+				continue
+			}
 
-		return result, nil
+			srl.logger.Infof(
+				"[member:%v] syncing result for attempt [%v]",
+				srl.signingGroupMemberIndex,
+				srl.attemptCounter,
+			)
+
+			latestEndBlock, err := srl.syncer.syncAttemptParticipant(
+				syncTimeoutCtx,
+				srl.signingGroupMemberIndex,
+				srl.message,
+				srl.attemptCounter,
+				includedMembersIndexes,
+				result,
+				endBlock,
+			)
+			if err != nil {
+				srl.logger.Warnf(
+					"[member:%v] cannot sync result for "+
+						"attempt [%v]: [%v]; starting next attempt",
+					srl.signingGroupMemberIndex,
+					srl.attemptCounter,
+					err,
+				)
+				continue
+			}
+
+			return result, latestEndBlock, nil
+		} else {
+			srl.logger.Infof(
+				"[member:%v] not eligible for attempt [%v]; "+
+					"trying to sync result as observer",
+				srl.signingGroupMemberIndex,
+				srl.attemptCounter,
+			)
+
+			result, latestEndBlock, err := srl.syncer.syncAttemptObserver(
+				syncTimeoutCtx,
+				srl.message,
+				srl.attemptCounter,
+				includedMembersIndexes,
+			)
+			if err != nil {
+				srl.logger.Warnf(
+					"[member:%v] cannot sync result for "+
+						"attempt [%v]: [%v]; starting next attempt",
+					srl.signingGroupMemberIndex,
+					srl.attemptCounter,
+					err,
+				)
+				continue
+			}
+
+			return result, latestEndBlock, nil
+		}
 	}
 }
 

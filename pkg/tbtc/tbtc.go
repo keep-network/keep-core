@@ -141,7 +141,7 @@ func Initialize(
 				// TODO: Handle error.
 			}
 
-			_, err = controller.sign(
+			_, _, err = controller.sign(
 				context.TODO(),
 				event.Message,
 				event.BlockNumber,
