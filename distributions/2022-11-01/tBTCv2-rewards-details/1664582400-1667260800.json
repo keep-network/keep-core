@@ -645,12 +645,12 @@
             },
             "instances": {
                 "34.107.103.188:9601": {
-                    "upTimePercent": 32.48742483264627,
+                    "upTimePercent": 32.49120683786544,
                     "avgPreParams": 1000,
                     "version": "v2.0.0-m1"
                 },
                 "34.140.78.107:9601": {
-                    "upTimePercent": 66.94905638969782,
+                    "upTimePercent": 66.94527438447865,
                     "avgPreParams": 1000,
                     "version": "v2.0.0-m1"
                 }

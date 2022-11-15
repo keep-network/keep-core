@@ -30,15 +30,18 @@ async function main() {
   let tbtcv2Rewards = {}
   const endDate = new Date(endTime * 1000).toISOString().slice(0, 10)
   const distPath = `distributions/${endDate}`
+  const tbtcv2RewardsDetailsPath = `${distPath}/tBTCv2-rewards-details/`
   const lastDistPath = `distributions/${lastDistribution}`
   const tbtcv2Script =
     "./rewards.sh " +
     `--rewards-start-date ${startTime} ` +
     `--rewards-end-date ${endTime} ` +
-    `--etherscan-token ${process.env.ETHERSCAN_TOKEN}`
+    `--etherscan-token ${process.env.ETHERSCAN_TOKEN} ` +
+    `--rewards-details-path ../../${tbtcv2RewardsDetailsPath}`
 
   try {
     fs.mkdirSync(distPath)
+    fs.mkdirSync(tbtcv2RewardsDetailsPath)
   } catch (err) {
     console.error(err)
     return

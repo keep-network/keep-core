@@ -417,8 +417,6 @@ export async function calculateRewards() {
     operatorsData.push(operatorData)
   }
 
-  // console.log("operatorsData: ", JSON.stringify(operatorsData, null, 4));
-  // console.log("rewardsData: ", JSON.stringify(rewardsData, null, 4));
   fs.writeFileSync(rewardsDataOutput, JSON.stringify(rewardsData, null, 4))
   const detailsFileName = `${startRewardsTimestamp}-${endRewardsTimestamp}`
   fs.writeFileSync(
@@ -611,7 +609,7 @@ async function checkUptime(
 
   const paramsSumUptimes = {
     query: `sum_over_time(up{chain_address="${operatorAddress}", job="${prometheusJob}"}
-            [${uptimeSearchRange}s:${QUERY_RESOLUTION}s] offset ${offset}s) 
+            [${uptimeSearchRange}s:${QUERY_RESOLUTION}s] offset ${offset}s)
             * ${QUERY_RESOLUTION} / ${uptimeSearchRange}`,
   }
 
