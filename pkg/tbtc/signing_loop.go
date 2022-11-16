@@ -115,6 +115,19 @@ type signingAttemptParams struct {
 // signingAttemptFn represents a function performing a signing attempt.
 type signingAttemptFn func(*signingAttemptParams) (*signing.Result, uint64, error)
 
+// signingRetryLoopResult represents the result of the signing retry loop.
+type signingRetryLoopResult struct {
+	// result if the outcome of the signing process.
+	result *signing.Result
+	// latestEndBlock is the block at which the slowest signer of the successful
+	// signing attempt completed signature computation. This block is also
+	// the common end block accepted by all other members of the signing group.
+	latestEndBlock uint64
+	// attemptTimeoutBlock is the block at which the successful attempt times
+	// out.
+	attemptTimeoutBlock uint64
+}
+
 // start begins the signing retry loop using the given signing attempt function.
 // The retry loop terminates when the signing result is produced or the ctx
 // parameter is done, whatever comes first.
@@ -122,7 +135,7 @@ func (srl *signingRetryLoop) start(
 	ctx context.Context,
 	waitForBlockFn waitForBlockFn,
 	signingAttemptFn signingAttemptFn,
-) (*signing.Result, uint64, error) {
+) (*signingRetryLoopResult, error) {
 	for {
 		srl.attemptCounter++
 
@@ -155,7 +168,7 @@ func (srl *signingRetryLoop) start(
 		announcementStartBlock := srl.attemptStartBlock + signingAttemptAnnouncementDelayBlocks
 		err := waitForBlockFn(ctx, announcementStartBlock)
 		if err != nil {
-			return nil, 0, fmt.Errorf(
+			return nil, fmt.Errorf(
 				"failed waiting for announcement start block [%v] "+
 					"for attempt [%v]: [%v]",
 				announcementStartBlock,
@@ -192,7 +205,7 @@ func (srl *signingRetryLoop) start(
 
 		// Check the loop stop signal.
 		if ctx.Err() != nil {
-			return nil, 0, nil
+			return nil, ctx.Err()
 		}
 
 		if len(readyMembersIndexes) >= srl.chainConfig.HonestThreshold {
@@ -219,7 +232,7 @@ func (srl *signingRetryLoop) start(
 			readyMembersIndexes,
 		)
 		if err != nil {
-			return nil, 0, fmt.Errorf(
+			return nil, fmt.Errorf(
 				"cannot select members for attempt [%v]: [%w]",
 				srl.attemptCounter,
 				err,
@@ -293,7 +306,11 @@ func (srl *signingRetryLoop) start(
 				continue
 			}
 
-			return result, latestEndBlock, nil
+			return &signingRetryLoopResult{
+				result:              result,
+				latestEndBlock:      latestEndBlock,
+				attemptTimeoutBlock: timeoutBlock,
+			}, nil
 		} else {
 			srl.logger.Infof(
 				"[member:%v] not eligible for attempt [%v]; "+
@@ -319,7 +336,11 @@ func (srl *signingRetryLoop) start(
 				continue
 			}
 
-			return result, latestEndBlock, nil
+			return &signingRetryLoopResult{
+				result:              result,
+				latestEndBlock:      latestEndBlock,
+				attemptTimeoutBlock: timeoutBlock,
+			}, nil
 		}
 	}
 }

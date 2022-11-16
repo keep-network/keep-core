@@ -114,18 +114,13 @@ func (sgc *signingGroupController) sign(
 			// Set up the loop timeout signal.
 			loopTimeoutBlock := startBlockNumber +
 				uint64(sgc.signingAttemptsLimit*signingAttemptMaximumBlocks())
-			// Do not cancel the loopCtx upon function exit and continue
-			// to broadcast sync messages until the attempt timeout. This way
-			// we maximize the chance that other members, especially the
-			// ones not participating in the successful signature get synced
-			// as well.
-			loopCtx, _ := withCancelOnBlock(
+			loopCtx, cancelLoopCtx := withCancelOnBlock(
 				ctx,
 				loopTimeoutBlock,
 				sgc.waitForBlockFn,
 			)
 
-			result, endBlock, err := retryLoop.start(
+			loopResult, err := retryLoop.start(
 				loopCtx,
 				sgc.waitForBlockFn,
 				func(attempt *signingAttemptParams) (*signing.Result, uint64, error) {
@@ -182,30 +177,58 @@ func (sgc *signingGroupController) sign(
 				},
 			)
 			if err != nil {
+				// Signer failed so there is no point to hold the loopCtx.
+				// Cancel it regardless of their timeout.
+				cancelLoopCtx()
+
 				signingLogger.Errorf(
 					"[member:%v] all retries for the signing failed; "+
 						"giving up: [%v]",
 					signer.signingGroupMemberIndex,
 					err,
 				)
+
 				signerOutcomesChan <- &signerOutcome{
 					signature: nil,
 					endBlock:  0,
 					err:       err,
 				}
+
 				return
 			}
+
+			// Do not cancel the loopCtx upon function exit immediately and
+			// continue to broadcast sync messages until the successful attempt
+			// timeout. This way we maximize the chance that other members,
+			// especially the ones not participating in the successful signature
+			// attempt get synced as well.
+			go func() {
+				defer cancelLoopCtx()
+
+				err := sgc.waitForBlockFn(
+					loopCtx,
+					loopResult.attemptTimeoutBlock,
+				)
+				if err != nil {
+					signingLogger.Warnf(
+						"[member:%v] failed waiting for signing "+
+							"loop stop signal: [%v]",
+						signer.signingGroupMemberIndex,
+						err,
+					)
+				}
+			}()
 
 			signingLogger.Infof(
 				"[member:%v] generated signature [%v] at block [%v]",
 				signer.signingGroupMemberIndex,
-				result.Signature,
-				endBlock,
+				loopResult.result.Signature,
+				loopResult.latestEndBlock,
 			)
 
 			signerOutcomesChan <- &signerOutcome{
-				signature: result.Signature,
-				endBlock:  endBlock,
+				signature: loopResult.result.Signature,
+				endBlock:  loopResult.latestEndBlock,
 				err:       nil,
 			}
 		}(currentSigner)
