@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"runtime"
+	"strings"
 	"time"
 
 	"github.com/ipfs/go-log"
@@ -125,11 +126,18 @@ func Initialize(
 	_ = chain.OnSignatureRequested(func(event *SignatureRequestedEvent) {
 		go func() {
 			// There is no need to deduplicate. Test loop events are unique.
+			messagesDigests := make([]string, len(event.Messages))
+			for i, message := range event.Messages {
+				messagesDigests[i] = fmt.Sprintf(
+					"0x%x...",
+					message.Bytes()[:8],
+				)
+			}
 
 			logger.Infof(
-				"signature of message [0x%x] requested from "+
+				"signature of messages [%s] requested from "+
 					"wallet [0x%x] at block [%v]",
-				event.Message,
+				strings.Join(messagesDigests, ", "),
 				event.WalletPublicKey,
 				event.BlockNumber,
 			)
@@ -138,17 +146,28 @@ func Initialize(
 				unmarshalPublicKey(event.WalletPublicKey),
 			)
 			if err != nil {
-				// TODO: Handle error.
+				logger.Errorf("cannot get signing group controller: [%v]", err)
+				return
 			}
 
-			_, _, err = controller.sign(
+			signatures, err := controller.signBatch(
 				context.TODO(),
-				event.Message,
+				event.Messages,
 				event.BlockNumber,
 			)
 			if err != nil {
-				// TODO: Handle error.
+				logger.Errorf("cannot sign batch: [%v]", err)
+				return
 			}
+
+			logger.Infof(
+				"generated [%v] sigantures for messages [%s] as "+
+					"requested from wallet [0x%x] at block [%v]",
+				len(signatures),
+				strings.Join(messagesDigests, ", "),
+				event.WalletPublicKey,
+				event.BlockNumber,
+			)
 		}()
 	})
 

@@ -12,6 +12,13 @@ import (
 	"golang.org/x/exp/slices"
 	"math/big"
 	"reflect"
+	"strings"
+)
+
+const (
+	// signingBatchInterludeBlocks determines the block duration of the
+	// interlude preserved between subsequent signings in a signing batch.
+	signingBatchInterludeBlocks = 2
 )
 
 // TODO: Documentation.
@@ -40,22 +47,68 @@ type signingGroupController struct {
 
 // TODO: Documentation.
 func (sgc *signingGroupController) signBatch(
+	ctx context.Context,
 	messages []*big.Int,
-	startBlockNumber uint64,
+	startBlock uint64,
 ) ([]*tecdsa.Signature, error) {
-	// TODO: Implementation.
-	return nil, nil
+	wallet := sgc.wallet()
+
+	walletPublicKeyBytes, err := marshalPublicKey(wallet.publicKey)
+	if err != nil {
+		return nil, fmt.Errorf("cannot marshal wallet public key: [%v]", err)
+	}
+
+	messagesDigests := make([]string, len(messages))
+	for i, message := range messages {
+		messagesDigests[i] = fmt.Sprintf("0x%x...", message.Bytes()[:8])
+	}
+
+	signingBatchLogger := logger.With(
+		zap.String("wallet", fmt.Sprintf("0x%x", walletPublicKeyBytes)),
+		zap.String("messages", strings.Join(messagesDigests, ", ")),
+	)
+
+	signingStartBlock := startBlock // start block for the first signing
+	signatures := make([]*tecdsa.Signature, len(messages))
+	endBlocks := make([]uint64, len(messages))
+
+	for i, message := range messages {
+		signingBatchMessageLogger := signingBatchLogger.With(
+			zap.String("message", fmt.Sprintf("0x%x", message)),
+			zap.String("index", fmt.Sprintf("%v/%v", i+1, len(messages))),
+		)
+
+		signingBatchMessageLogger.Infof("generating signature for message")
+
+		if i > 0 {
+			signingStartBlock = endBlocks[i-1] + signingBatchInterludeBlocks
+		}
+
+		signature, endBlock, err := sgc.sign(ctx, message, signingStartBlock)
+		if err != nil {
+			return nil, err
+		}
+
+		signingBatchMessageLogger.Infof(
+			"generated signature [%v] for message at block [%v]",
+			signature,
+			endBlock,
+		)
+
+		signatures[i] = signature
+		endBlocks[i] = endBlock
+	}
+
+	return signatures, nil
 }
 
 // TODO: Documentation.
 func (sgc *signingGroupController) sign(
 	ctx context.Context,
 	message *big.Int,
-	startBlockNumber uint64,
+	startBlock uint64,
 ) (*tecdsa.Signature, uint64, error) {
-	// All signers belong to one wallet. Take that wallet from the
-	// first signer.
-	wallet := sgc.signers[0].wallet
+	wallet := sgc.wallet()
 	// Actual wallet signing group size may be different from the
 	// `GroupSize` parameter of the chain config.
 	signingGroupSize := len(wallet.signingGroupOperators)
@@ -69,9 +122,14 @@ func (sgc *signingGroupController) sign(
 		return nil, 0, fmt.Errorf("cannot marshal wallet public key: [%v]", err)
 	}
 
+	loopTimeoutBlock := startBlock +
+		uint64(sgc.signingAttemptsLimit*signingAttemptMaximumBlocks())
+
 	signingLogger := logger.With(
 		zap.String("wallet", fmt.Sprintf("0x%x", walletPublicKeyBytes)),
 		zap.String("message", fmt.Sprintf("0x%x", message)),
+		zap.Uint64("signingStartBlock", startBlock),
+		zap.Uint64("signingTimeoutBlock", loopTimeoutBlock),
 	)
 
 	type signerOutcome struct {
@@ -103,7 +161,7 @@ func (sgc *signingGroupController) sign(
 			retryLoop := newSigningRetryLoop(
 				signingLogger,
 				message,
-				startBlockNumber,
+				startBlock,
 				signer.signingGroupMemberIndex,
 				wallet.signingGroupOperators,
 				sgc.chainConfig,
@@ -112,8 +170,6 @@ func (sgc *signingGroupController) sign(
 			)
 
 			// Set up the loop timeout signal.
-			loopTimeoutBlock := startBlockNumber +
-				uint64(sgc.signingAttemptsLimit*signingAttemptMaximumBlocks())
 			loopCtx, cancelLoopCtx := withCancelOnBlock(
 				ctx,
 				loopTimeoutBlock,
@@ -125,7 +181,7 @@ func (sgc *signingGroupController) sign(
 				sgc.waitForBlockFn,
 				func(attempt *signingAttemptParams) (*signing.Result, uint64, error) {
 					signingAttemptLogger := signingLogger.With(
-						zap.Uint("attempt", attempt.number),
+						zap.Uint("attemptNumber", attempt.number),
 						zap.Uint64("attemptStartBlock", attempt.startBlock),
 						zap.Uint64("attemptTimeoutBlock", attempt.timeoutBlock),
 					)
@@ -267,4 +323,10 @@ func (sgc *signingGroupController) sign(
 			return nil, 0, ctx.Err()
 		}
 	}
+}
+
+func (sgc *signingGroupController) wallet() wallet {
+	// All signers belong to one wallet. Take that wallet from the
+	// first signer.
+	return sgc.signers[0].wallet
 }
