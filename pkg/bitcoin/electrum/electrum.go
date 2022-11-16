@@ -141,9 +141,32 @@ func (c *Connection) GetLatestBlockHeight() (uint, error) {
 	panic("not implemented")
 }
 
+// GetBlockHeader gets the block header for the given block height. If the
+// block with the given height was not found on the chain, this function
+// returns an error.
 func (c *Connection) GetBlockHeader(
 	blockHeight uint,
 ) (*bitcoin.BlockHeader, error) {
-	// TODO: Implementation.
-	panic("not implemented")
+	var getBlockHeaderResult *electrum.GetBlockHeaderResult
+	err := wrappers.DoWithDefaultRetry(c.requestRetryTimeout, func(ctx context.Context) error {
+		result, err := c.client.GetBlockHeader(c.ctx, uint32(blockHeight), 0)
+		if err != nil {
+			return fmt.Errorf(
+				"GetBlockHeader failed: [%w]",
+				err,
+			)
+		}
+		getBlockHeaderResult = result
+		return nil
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to get block header: [%w]", err)
+	}
+
+	blockHeader, err := convertBlockHeader(getBlockHeaderResult)
+	if err != nil {
+		return nil, fmt.Errorf("failed to convert block header: %w", err)
+	}
+
+	return blockHeader, nil
 }
