@@ -128,9 +128,11 @@ func Initialize(
 			// There is no need to deduplicate. Test loop events are unique.
 			messagesDigests := make([]string, len(event.Messages))
 			for i, message := range event.Messages {
+				bytes := message.Bytes()
 				messagesDigests[i] = fmt.Sprintf(
-					"0x%x...",
-					message.Bytes()[:8],
+					"0x%x...%x",
+					bytes[:2],
+					bytes[len(bytes)-2:],
 				)
 			}
 

@@ -66,7 +66,8 @@ func (sgc *signingGroupController) signBatch(
 
 	messagesDigests := make([]string, len(messages))
 	for i, message := range messages {
-		messagesDigests[i] = fmt.Sprintf("0x%x...", message.Bytes()[:8])
+		bytes := message.Bytes()
+		messagesDigests[i] = fmt.Sprintf("0x%x...%x", bytes[:2], bytes[len(bytes)-2:])
 	}
 
 	signingBatchLogger := logger.With(
