@@ -77,7 +77,7 @@ func (ss *signingSyncer) syncAttemptParticipant(
 		attemptNumber: attemptNumber,
 		signature:     result.Signature,
 		endBlock:      endBlock,
-	})
+	}, net.BackoffRetransmissionStrategy)
 	if err != nil {
 		return 0, fmt.Errorf("cannot send sync message: [%v]", err)
 	}
