@@ -169,12 +169,25 @@ func (pks *PrivateKeyShare) Unmarshal(bytes []byte) error {
 	return nil
 }
 
+// Marshal converts the Signature to a byte array.
 func (s *Signature) Marshal() ([]byte, error) {
-	// TODO: Implementation.
-	panic("implement")
+	return proto.Marshal(&pb.Signature{
+		R:          s.R.Bytes(),
+		S:          s.S.Bytes(),
+		RecoveryID: int32(s.RecoveryID),
+	})
 }
 
+// Unmarshal converts a byte array back to the Signature.
 func (s *Signature) Unmarshal(bytes []byte) error {
-	// TODO: Implementation.
-	panic("implement")
+	pbMsg := pb.Signature{}
+	if err := proto.Unmarshal(bytes, &pbMsg); err != nil {
+		return fmt.Errorf("failed to unmarshal Signature: [%v]", err)
+	}
+
+	s.R = new(big.Int).SetBytes(pbMsg.R)
+	s.S = new(big.Int).SetBytes(pbMsg.S)
+	s.RecoveryID = int(pbMsg.RecoveryID)
+
+	return nil
 }
