@@ -136,9 +136,30 @@ func (c *Connection) BroadcastTransaction(
 	panic("not implemented")
 }
 
+// GetLatestBlockHeight gets the height of the latest block (tip). If the
+// latest block was not determined, this function returns an error.
 func (c *Connection) GetLatestBlockHeight() (uint, error) {
-	// TODO: Implementation.
-	panic("not implemented")
+	var tip *electrum.SubscribeHeadersResult
+	err := wrappers.DoWithDefaultRetry(c.requestRetryTimeout, func(ctx context.Context) error {
+		headersChan, err := c.client.SubscribeHeaders(c.ctx)
+		if err != nil {
+			return fmt.Errorf("failed to get the blocks tip height: [%w]", err)
+		}
+
+		tip = <-headersChan
+		return nil
+	})
+	if err != nil {
+		return 0, fmt.Errorf("failed to subscribe for headers: [%w]", err)
+	}
+
+	blockHeight := tip.Height
+
+	if blockHeight > 0 {
+		return uint(blockHeight), nil
+	}
+
+	return 0, nil
 }
 
 // GetBlockHeader gets the block header for the given block height. If the
