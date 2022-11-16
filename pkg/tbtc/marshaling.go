@@ -93,7 +93,7 @@ func (ssm *signingSyncMessage) Marshal() ([]byte, error) {
 
 	return proto.Marshal(&pb.SigningSyncMessage{
 		SenderID:      uint32(ssm.senderID),
-		Message:       ssm.message.Text(16),
+		Message:       ssm.message.Bytes(),
 		AttemptNumber: uint64(ssm.attemptNumber),
 		Signature:     signatureBytes,
 		EndBlock:      ssm.endBlock,
@@ -111,18 +111,13 @@ func (ssm *signingSyncMessage) Unmarshal(bytes []byte) error {
 		return err
 	}
 
-	message, ok := new(big.Int).SetString(pbMsg.Message, 16)
-	if !ok {
-		return fmt.Errorf("cannot unmarshal message")
-	}
-
 	signature := &tecdsa.Signature{}
 	if err := signature.Unmarshal(pbMsg.Signature); err != nil {
 		return fmt.Errorf("cannot unmarshal signature: [%v]", err)
 	}
 
 	ssm.senderID = group.MemberIndex(pbMsg.SenderID)
-	ssm.message = message
+	ssm.message = new(big.Int).SetBytes(pbMsg.Message)
 	ssm.attemptNumber = uint(pbMsg.AttemptNumber)
 	ssm.signature = signature
 	ssm.endBlock = pbMsg.EndBlock

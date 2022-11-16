@@ -11,7 +11,7 @@ message StopPill {
 
 message SigningSyncMessage {
     uint32 senderID = 1;
-    string message = 2;
+    bytes message = 2;
     uint64 attemptNumber = 3;
     bytes signature = 4;
     uint64 endBlock = 5;
