@@ -9,6 +9,7 @@ import (
 
 	"github.com/checksum0/go-electrum/electrum"
 	"github.com/ipfs/go-log"
+	"go.uber.org/zap"
 	"golang.org/x/exp/slices"
 
 	"github.com/keep-network/keep-common/pkg/wrappers"
@@ -129,11 +130,38 @@ func (c *Connection) GetTransactionConfirmations(
 	panic("not implemented")
 }
 
+// BroadcastTransaction broadcasts the given transaction over the
+// network of the Bitcoin chain nodes. If the broadcast action could not be
+// done, this function returns an error. This function does not give any
+// guarantees regarding transaction mining. The transaction may be mined or
+// rejected eventually.
 func (c *Connection) BroadcastTransaction(
 	transaction *bitcoin.Transaction,
 ) error {
-	// TODO: Implementation.
-	panic("not implemented")
+	rawTx := transaction.Serialize()
+
+	rawTxLogger := logger.With(
+		zap.String("rawTx", hex.EncodeToString(rawTx)),
+	)
+	rawTxLogger.Debugf("broadcasting transaction")
+
+	var response string
+	err := wrappers.DoWithDefaultRetry(c.requestRetryTimeout, func(ctx context.Context) error {
+		var err error
+		response, err = c.client.BroadcastTransaction(c.ctx, string(rawTx))
+		if err != nil {
+			return fmt.Errorf("BroadcastTransaction failed: [%w]", err)
+		}
+
+		rawTxLogger.Infof("transaction broadcast successful: [%s]", response)
+
+		return nil
+	})
+	if err != nil {
+		return fmt.Errorf("failed to broadcast the transaction: [%w]", err)
+	}
+
+	return nil
 }
 
 // GetLatestBlockHeight gets the height of the latest block (tip). If the
