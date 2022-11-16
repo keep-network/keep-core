@@ -21,7 +21,8 @@ const (
 	signingBatchInterludeBlocks = 2
 )
 
-// TODO: Documentation.
+// signingGroupController is a component responsible for executing signing
+// related to a specific wallet whose part is controlled by this node.
 type signingGroupController struct {
 	signers             []*signer
 	broadcastChannel    net.BroadcastChannel
@@ -45,7 +46,12 @@ type signingGroupController struct {
 	signingAttemptsLimit uint
 }
 
-// TODO: Documentation.
+// signBatch performs the signing process for each message from the given
+// messages batch, one after another. If at least one message cannot be signed,
+// this function returns an error. If all messages were signed successfully,
+// a slice of signatures is returned. Order of the returned signatures matches
+// the order of the messages in the batch, i.e. the first signature corresponds
+// to the first message, and so on.
 func (sgc *signingGroupController) signBatch(
 	ctx context.Context,
 	messages []*big.Int,
@@ -102,7 +108,12 @@ func (sgc *signingGroupController) signBatch(
 	return signatures, nil
 }
 
-// TODO: Documentation.
+// sign performs the signing process for the given message. The process is
+// triggered according to the given start block. If the message cannot be signed
+// within a limited time window, an error is returned. If the message was
+// signed successfully, this function returns the signature along with the
+// block at which the signature was calculated. This end block is common for
+// all wallet signers so can be used as a synchronization point.
 func (sgc *signingGroupController) sign(
 	ctx context.Context,
 	message *big.Int,
