@@ -16,12 +16,10 @@ func Initialize(
 		go newRelay(ctx, btcChain, chain)
 	}
 
-	// TODO: Check if launching multiple maintainers is really beneficial.
-	//       Panic on one maintainer goroutine will crush the whole program.
-	//       Also, if we misconfigure one maintainer and it cannot launch,
-	//       should we cancel all the maintainers that already launched properly?
-
-	// TODO: If we decide to enable launching multiple maintainers with one
-	//       command, allow them to be launch all together with
-	//       `./keep-client maintainer` command (without providing any flag).
+	// TODO: Allow for launching multiple maintainers here. Every flag
+	//       indicating a maintainer task should launch a separate maintainer.
+	//       If there are no flags specified, all the maintainers should be launch.
+	//       Notice that panic on one maintainer goroutine will crush the whole
+	//       program. Consider cancelling all maintainers if one maintainer
+	//       cannot ba launched due to a configuration error.
 }
