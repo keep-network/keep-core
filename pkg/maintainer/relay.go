@@ -42,10 +42,10 @@ type Relay struct {
 
 // startControlLoop launches the loop responsible for controlling the relay.
 func (r *Relay) startControlLoop(ctx context.Context) {
-	logger.Info("starting headers relay")
+	logger.Info("starting Bitcoin difficulty maintainer")
 
 	defer func() {
-		logger.Info("stopping headers relay")
+		logger.Info("stopping Bitcoin difficulty maintainer")
 	}()
 
 	for {

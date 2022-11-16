@@ -13,8 +13,8 @@ import (
 // subcommand.
 var MaintainerCommand = &cobra.Command{
 	Use:   "maintainer",
-	Short: `Starts keep maintainers`,
-	Long:  `The maintainer command starts keep maintainers`,
+	Short: `Starts tBTC maintainers`,
+	Long:  `The maintainer command starts tBTC maintainers`,
 	PreRun: func(cmd *cobra.Command, args []string) {
 		if err := clientConfig.ReadConfig(
 			configFilePath,
