@@ -116,11 +116,38 @@ func Connect(ctx context.Context, config Config) (bitcoin.Chain, error) {
 	}, nil
 }
 
+// GetTransaction gets the transaction with the given transaction hash.
+// If the transaction with the given hash was not found on the chain,
+// this function returns an error.
 func (c *Connection) GetTransaction(
 	transactionHash bitcoin.Hash,
 ) (*bitcoin.Transaction, error) {
-	// TODO: Implementation.
-	panic("not implemented")
+	txID := transactionHash.Hex(bitcoin.ReversedByteOrder)
+
+	var rawTransaction string
+	err := wrappers.DoWithDefaultRetry(c.requestRetryTimeout, func(ctx context.Context) error {
+		// We cannot use `GetTransaction` to get the the transaction details
+		// as Esplora/Electrs doesn't support verbose transactions.
+		// See: https://github.com/Blockstream/electrs/pull/36
+		rawTx, err := c.client.GetRawTransaction(c.ctx, txID)
+		if err != nil {
+			return fmt.Errorf("GetRawTransaction failed: [%w]", err)
+		}
+
+		rawTransaction = rawTx
+
+		return nil
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to get raw transaction [%s]: [%w]", txID, err)
+	}
+
+	result, err := convertRawTransaction(rawTransaction)
+	if err != nil {
+		return nil, fmt.Errorf("failed to convert transaction: [%w]", err)
+	}
+
+	return result, nil
 }
 
 func (c *Connection) GetTransactionConfirmations(
