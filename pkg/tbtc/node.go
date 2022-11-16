@@ -517,11 +517,20 @@ func (n *node) createSigningGroupController(
 		len(signers),
 	)
 
+	blockCounter, err := n.chain.BlockCounter()
+	if err != nil {
+		return nil, fmt.Errorf(
+			"could not get block counter: [%v]",
+			err,
+		)
+	}
+
 	return &signingGroupController{
 		signers:              signers,
 		broadcastChannel:     broadcastChannel,
 		membershipValidator:  membershipValidator,
 		chainConfig:          n.chain.GetConfig(),
+		currentBlockFn:       blockCounter.CurrentBlock,
 		waitForBlockFn:       n.waitForBlockHeight,
 		onSignerStartFn:      n.protocolLatch.Lock,
 		onSignerEndFn:        n.protocolLatch.Unlock,

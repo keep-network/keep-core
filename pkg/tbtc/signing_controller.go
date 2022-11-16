@@ -21,6 +21,8 @@ type signingGroupController struct {
 	membershipValidator *group.MembershipValidator
 	chainConfig         *ChainConfig
 
+	// currentBlockFn is a function used to get the current block.
+	currentBlockFn func() (uint64, error)
 	// waitForBlockFn is a function used to wait for the given block.
 	waitForBlockFn waitForBlockFn
 	// onSignerStartFn is a callback function invoked when a single signer
@@ -171,7 +173,12 @@ func (sgc *signingGroupController) sign(
 						return nil, 0, err
 					}
 
-					return result, 0, nil
+					endBlock, err := sgc.currentBlockFn()
+					if err != nil {
+						return nil, 0, err
+					}
+
+					return result, endBlock, nil
 				},
 			)
 			if err != nil {
@@ -190,9 +197,10 @@ func (sgc *signingGroupController) sign(
 			}
 
 			signingLogger.Infof(
-				"[member:%v] generated signature [%v]",
+				"[member:%v] generated signature [%v] at block [%v]",
 				signer.signingGroupMemberIndex,
 				result.Signature,
+				endBlock,
 			)
 
 			signerOutcomesChan <- &signerOutcome{
