@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"math/big"
+	"sync"
 	"time"
 
 	"github.com/keep-network/keep-core/pkg/protocol/announcer"
@@ -27,8 +28,13 @@ type node struct {
 	chain          Chain
 	netProvider    net.Provider
 	walletRegistry *walletRegistry
-	dkgExecutor    *dkg.Executor
 	protocolLatch  *generator.ProtocolLatch
+
+	// TODO: Introduce tbtc.dkgExecutor similarly to the tbtc.signingExecutor.
+	dkgExecutor *dkg.Executor
+
+	signingExecutorsMutex sync.Mutex
+	signingExecutors      map[string]*signingExecutor
 }
 
 func newNode(
@@ -56,11 +62,12 @@ func newNode(
 	scheduler.RegisterProtocol(latch)
 
 	return &node{
-		chain:          chain,
-		netProvider:    netProvider,
-		walletRegistry: walletRegistry,
-		dkgExecutor:    dkgExecutor,
-		protocolLatch:  latch,
+		chain:            chain,
+		netProvider:      netProvider,
+		walletRegistry:   walletRegistry,
+		protocolLatch:    latch,
+		dkgExecutor:      dkgExecutor,
+		signingExecutors: make(map[string]*signingExecutor),
 	}
 }
 
@@ -457,17 +464,26 @@ func (n *node) joinDKGIfEligible(seed *big.Int, startBlockNumber uint64) {
 	}
 }
 
-// createSigningGroupController creates a controller that allows managing the
-// group of signers controlled by this node that are part of the given wallet.
-func (n *node) createSigningGroupController(
+// getSigningExecutor gets the signing executor responsible for executing
+// signing related to a specific wallet whose part is controlled by this node.
+func (n *node) getSigningExecutor(
 	walletPublicKey *ecdsa.PublicKey,
-) (*signingGroupController, error) {
+) (*signingExecutor, error) {
+	n.signingExecutorsMutex.Lock()
+	defer n.signingExecutorsMutex.Unlock()
+
 	walletPublicKeyBytes, err := marshalPublicKey(walletPublicKey)
 	if err != nil {
 		return nil, fmt.Errorf("cannot marshal wallet public key: [%v]", err)
 	}
 
-	controllerLogger := logger.With(
+	executorKey := hex.EncodeToString(walletPublicKeyBytes)
+
+	if executor, exists := n.signingExecutors[executorKey]; exists {
+		return executor, nil
+	}
+
+	executorLogger := logger.With(
 		zap.String("wallet", fmt.Sprintf("0x%x", walletPublicKeyBytes)),
 	)
 
@@ -495,10 +511,9 @@ func (n *node) createSigningGroupController(
 	}
 
 	signing.RegisterUnmarshallers(broadcastChannel)
-	registerStopPillUnmarshaller(broadcastChannel)
 
 	membershipValidator := group.NewMembershipValidator(
-		controllerLogger,
+		executorLogger,
 		wallet.signingGroupOperators,
 		n.chain.Signing(),
 	)
@@ -512,8 +527,8 @@ func (n *node) createSigningGroupController(
 		)
 	}
 
-	controllerLogger.Infof(
-		"signing group created; controlling [%v] signers",
+	executorLogger.Infof(
+		"signing executor created; controlling [%v] signers",
 		len(signers),
 	)
 
@@ -525,7 +540,7 @@ func (n *node) createSigningGroupController(
 		)
 	}
 
-	return &signingGroupController{
+	executor := &signingExecutor{
 		signers:              signers,
 		broadcastChannel:     broadcastChannel,
 		membershipValidator:  membershipValidator,
@@ -535,7 +550,11 @@ func (n *node) createSigningGroupController(
 		onSignerStartFn:      n.protocolLatch.Lock,
 		onSignerEndFn:        n.protocolLatch.Unlock,
 		signingAttemptsLimit: 5,
-	}, nil
+	}
+
+	n.signingExecutors[executorKey] = executor
+
+	return executor, nil
 }
 
 // waitForBlockFn represents a function blocking the execution until the given

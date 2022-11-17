@@ -144,15 +144,15 @@ func Initialize(
 				event.BlockNumber,
 			)
 
-			controller, err := node.createSigningGroupController(
+			executor, err := node.getSigningExecutor(
 				unmarshalPublicKey(event.WalletPublicKey),
 			)
 			if err != nil {
-				logger.Errorf("cannot get signing group controller: [%v]", err)
+				logger.Errorf("cannot get signing executor: [%v]", err)
 				return
 			}
 
-			signatures, err := controller.signBatch(
+			signatures, err := executor.signBatch(
 				context.TODO(),
 				event.Messages,
 				event.BlockNumber,

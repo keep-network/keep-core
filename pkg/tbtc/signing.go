@@ -21,9 +21,11 @@ const (
 	signingBatchInterludeBlocks = 2
 )
 
-// signingGroupController is a component responsible for executing signing
-// related to a specific wallet whose part is controlled by this node.
-type signingGroupController struct {
+// signingExecutor is a component responsible for executing signing related to
+// a specific wallet whose part is controlled by this node.
+//
+// TODO: Add busy check.
+type signingExecutor struct {
 	signers             []*signer
 	broadcastChannel    net.BroadcastChannel
 	membershipValidator *group.MembershipValidator
@@ -52,12 +54,12 @@ type signingGroupController struct {
 // a slice of signatures is returned. Order of the returned signatures matches
 // the order of the messages in the batch, i.e. the first signature corresponds
 // to the first message, and so on.
-func (sgc *signingGroupController) signBatch(
+func (se *signingExecutor) signBatch(
 	ctx context.Context,
 	messages []*big.Int,
 	startBlock uint64,
 ) ([]*tecdsa.Signature, error) {
-	wallet := sgc.wallet()
+	wallet := se.wallet()
 
 	walletPublicKeyBytes, err := marshalPublicKey(wallet.publicKey)
 	if err != nil {
@@ -91,7 +93,7 @@ func (sgc *signingGroupController) signBatch(
 			signingStartBlock = endBlocks[i-1] + signingBatchInterludeBlocks
 		}
 
-		signature, endBlock, err := sgc.sign(ctx, message, signingStartBlock)
+		signature, endBlock, err := se.sign(ctx, message, signingStartBlock)
 		if err != nil {
 			return nil, err
 		}
@@ -115,19 +117,19 @@ func (sgc *signingGroupController) signBatch(
 // signed successfully, this function returns the signature along with the
 // block at which the signature was calculated. This end block is common for
 // all wallet signers so can be used as a synchronization point.
-func (sgc *signingGroupController) sign(
+func (se *signingExecutor) sign(
 	ctx context.Context,
 	message *big.Int,
 	startBlock uint64,
 ) (*tecdsa.Signature, uint64, error) {
-	wallet := sgc.wallet()
+	wallet := se.wallet()
 	// Actual wallet signing group size may be different from the
 	// `GroupSize` parameter of the chain config.
 	signingGroupSize := len(wallet.signingGroupOperators)
 	// The dishonest threshold for the wallet signing group must be
 	// also calculated using the actual wallet signing group size.
 	signingGroupDishonestThreshold := signingGroupSize -
-		sgc.chainConfig.HonestThreshold
+		se.chainConfig.HonestThreshold
 
 	walletPublicKeyBytes, err := marshalPublicKey(wallet.publicKey)
 	if err != nil {
@@ -135,7 +137,7 @@ func (sgc *signingGroupController) sign(
 	}
 
 	loopTimeoutBlock := startBlock +
-		uint64(sgc.signingAttemptsLimit*signingAttemptMaximumBlocks())
+		uint64(se.signingAttemptsLimit*signingAttemptMaximumBlocks())
 
 	signingLogger := logger.With(
 		zap.String("wallet", fmt.Sprintf("0x%x", walletPublicKeyBytes)),
@@ -150,24 +152,24 @@ func (sgc *signingGroupController) sign(
 		err       error
 	}
 
-	signerOutcomesChan := make(chan *signerOutcome, len(sgc.signers))
+	signerOutcomesChan := make(chan *signerOutcome, len(se.signers))
 
-	for _, currentSigner := range sgc.signers {
+	for _, currentSigner := range se.signers {
 		go func(signer *signer) {
-			sgc.onSignerStartFn()
-			defer sgc.onSignerEndFn()
+			se.onSignerStartFn()
+			defer se.onSignerEndFn()
 
 			announcer := announcer.New(
 				fmt.Sprintf("%v-%v", ProtocolName, "signing"),
-				sgc.chainConfig.GroupSize,
-				sgc.broadcastChannel,
-				sgc.membershipValidator,
+				se.chainConfig.GroupSize,
+				se.broadcastChannel,
+				se.membershipValidator,
 			)
 
 			syncer := newSigningSyncer(
-				sgc.chainConfig.GroupSize,
-				sgc.broadcastChannel,
-				sgc.membershipValidator,
+				se.chainConfig.GroupSize,
+				se.broadcastChannel,
+				se.membershipValidator,
 			)
 
 			retryLoop := newSigningRetryLoop(
@@ -176,7 +178,7 @@ func (sgc *signingGroupController) sign(
 				startBlock,
 				signer.signingGroupMemberIndex,
 				wallet.signingGroupOperators,
-				sgc.chainConfig,
+				se.chainConfig,
 				announcer,
 				syncer,
 			)
@@ -185,12 +187,12 @@ func (sgc *signingGroupController) sign(
 			loopCtx, cancelLoopCtx := withCancelOnBlock(
 				ctx,
 				loopTimeoutBlock,
-				sgc.waitForBlockFn,
+				se.waitForBlockFn,
 			)
 
 			loopResult, err := retryLoop.start(
 				loopCtx,
-				sgc.waitForBlockFn,
+				se.waitForBlockFn,
 				func(attempt *signingAttemptParams) (*signing.Result, uint64, error) {
 					signingAttemptLogger := signingLogger.With(
 						zap.Uint("attemptNumber", attempt.number),
@@ -210,7 +212,7 @@ func (sgc *signingGroupController) sign(
 					attemptCtx, _ := withCancelOnBlock(
 						loopCtx,
 						attempt.timeoutBlock,
-						sgc.waitForBlockFn,
+						se.waitForBlockFn,
 					)
 
 					sessionID := fmt.Sprintf(
@@ -229,14 +231,14 @@ func (sgc *signingGroupController) sign(
 						signingGroupSize,
 						signingGroupDishonestThreshold,
 						attempt.excludedMembersIndexes,
-						sgc.broadcastChannel,
-						sgc.membershipValidator,
+						se.broadcastChannel,
+						se.membershipValidator,
 					)
 					if err != nil {
 						return nil, 0, err
 					}
 
-					endBlock, err := sgc.currentBlockFn()
+					endBlock, err := se.currentBlockFn()
 					if err != nil {
 						return nil, 0, err
 					}
@@ -273,7 +275,7 @@ func (sgc *signingGroupController) sign(
 			go func() {
 				defer cancelLoopCtx()
 
-				err := sgc.waitForBlockFn(
+				err := se.waitForBlockFn(
 					loopCtx,
 					loopResult.attemptTimeoutBlock,
 				)
@@ -309,7 +311,7 @@ func (sgc *signingGroupController) sign(
 		case outcome := <-signerOutcomesChan:
 			signerOutcomes = append(signerOutcomes, outcome)
 
-			if len(signerOutcomes) == len(sgc.signers) {
+			if len(signerOutcomes) == len(se.signers) {
 				outcomes := slices.CompactFunc(
 					signerOutcomes,
 					func(o1, o2 *signerOutcome) bool {
@@ -337,8 +339,8 @@ func (sgc *signingGroupController) sign(
 	}
 }
 
-func (sgc *signingGroupController) wallet() wallet {
+func (se *signingExecutor) wallet() wallet {
 	// All signers belong to one wallet. Take that wallet from the
 	// first signer.
-	return sgc.signers[0].wallet
+	return se.signers[0].wallet
 }
