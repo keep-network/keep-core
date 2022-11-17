@@ -144,7 +144,11 @@ func (c *Connection) GetTransaction(
 		return nil
 	})
 	if err != nil {
-		return nil, fmt.Errorf("failed to get raw transaction [%s]: [%w]", txID, err)
+		return nil, fmt.Errorf(
+			"failed to get raw transaction with ID [%s]: [%w]",
+			txID,
+			err,
+		)
 	}
 
 	result, err := convertRawTransaction(rawTransaction)
@@ -183,7 +187,12 @@ func (c *Connection) GetTransactionConfirmations(
 		return nil
 	})
 	if err != nil {
-		return 0, fmt.Errorf("failed to get raw transaction [%s]: [%w]", txID, err)
+		return 0,
+			fmt.Errorf(
+				"failed to get raw transaction with ID [%s]: [%w]",
+				txID,
+				err,
+			)
 	}
 
 	tx, err := decodeTransaction(rawTransaction)
@@ -231,7 +240,7 @@ txOutLoop:
 		})
 		if err != nil {
 			// Don't return an error, but continue to the next TxOut entry.
-			txLogger.Errorf("failed to get history for script hash [%s]: [%w]", err)
+			txLogger.Errorf("failed to get history for script hash: [%v]", err)
 			continue txOutLoop
 		}
 
