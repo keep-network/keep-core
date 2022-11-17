@@ -10,9 +10,9 @@ import (
 	"math/big"
 )
 
-// signingSyncMessage is a message used to synchronize members of a signing
-// group upon successful signature calculation.
-type signingSyncMessage struct {
+// signingDoneMessage is a message used to signal a successful signature
+// calculation across all signing group members.
+type signingDoneMessage struct {
 	senderID      group.MemberIndex
 	message       *big.Int
 	attemptNumber uint
@@ -20,44 +20,46 @@ type signingSyncMessage struct {
 	endBlock      uint64
 }
 
-func (ssm *signingSyncMessage) Type() string {
-	return "tbtc/signing_sync_message"
+func (sdm *signingDoneMessage) Type() string {
+	return "tbtc/signing_done_message"
 }
 
-// signingSyncer is a component that is responsible for synchronization of
-// the signing result across all signing group members.
-type signingSyncer struct {
+// signingDoneCheck is a component that is responsible for signaling a
+// successful signature calculation across all signing group members.
+type signingDoneCheck struct {
 	groupSize           int
 	broadcastChannel    net.BroadcastChannel
 	membershipValidator *group.MembershipValidator
 }
 
-// newSigningSyncer creates a new instance of the signingSyncer.
-func newSigningSyncer(
+func newSigningDoneCheck(
 	groupSize int,
 	broadcastChannel net.BroadcastChannel,
 	membershipValidator *group.MembershipValidator,
-) *signingSyncer {
+) *signingDoneCheck {
 	broadcastChannel.SetUnmarshaler(func() net.TaggedUnmarshaler {
-		return &signingSyncMessage{}
+		return &signingDoneMessage{}
 	})
 
-	return &signingSyncer{
+	return &signingDoneCheck{
 		groupSize:           groupSize,
 		broadcastChannel:    broadcastChannel,
 		membershipValidator: membershipValidator,
 	}
 }
 
-// syncAttemptParticipant runs the attempt participant sync routine. This
-// function broadcasts the signing result along with information necessary to
-// attribute the result to the given signing attempt and listens for similar
-// messages from other members participating in the given attempt. This function
-// blocks until it receives all the required sync messages from other members
-// or until the passed context is done. In the first case, it returns the
-// block at which the slowest signer completed the signature computation process.
-// Otherwise, it returns an error.
-func (ss *signingSyncer) syncAttemptParticipant(
+// exchange runs the signing done check exchanging routine. This function:
+// - broadcasts the signing done check along with information necessary to
+//   attribute the result to the given signing attempt.
+// - listens for incoming signing done checks from other members participating
+//   in the given signing attempt, matching the broadcasted done check.
+// This function blocks until it receives all the required done checks from
+// other members or until the passed context is done. In the first case, it
+// returns the block at which the slowest signer completed the signature
+// computation process. However, even after the function return, the done check
+// is retransmitted for the lifetime of the passed context. If the expected
+// done checks are not received on time, the function returns an error.
+func (sdc *signingDoneCheck) exchange(
 	ctx context.Context,
 	memberIndex group.MemberIndex,
 	message *big.Int,
@@ -72,14 +74,14 @@ func (ss *signingSyncer) syncAttemptParticipant(
 	receiveCtx, cancelReceiveCtx := context.WithCancel(ctx)
 	defer cancelReceiveCtx()
 
-	messagesChan := make(chan net.Message, ss.groupSize)
-	ss.broadcastChannel.Recv(receiveCtx, func(message net.Message) {
+	messagesChan := make(chan net.Message, sdc.groupSize)
+	sdc.broadcastChannel.Recv(receiveCtx, func(message net.Message) {
 		messagesChan <- message
 	})
 
 	// Use the original context for the send routine as we want to keep
 	// retransmissions on until the context is alive.
-	err := ss.broadcastChannel.Send(ctx, &signingSyncMessage{
+	err := sdc.broadcastChannel.Send(ctx, &signingDoneMessage{
 		senderID:      memberIndex,
 		message:       message,
 		attemptNumber: attemptNumber,
@@ -87,7 +89,7 @@ func (ss *signingSyncer) syncAttemptParticipant(
 		endBlock:      endBlock,
 	}, net.BackoffRetransmissionStrategy)
 	if err != nil {
-		return 0, fmt.Errorf("cannot send sync message: [%v]", err)
+		return 0, fmt.Errorf("cannot send signing done message: [%v]", err)
 	}
 
 	awaitingSenders := make(map[group.MemberIndex]bool)
@@ -104,13 +106,13 @@ func (ss *signingSyncer) syncAttemptParticipant(
 	for {
 		select {
 		case netMessage := <-messagesChan:
-			syncMessage, ok := netMessage.Payload().(*signingSyncMessage)
+			doneMessage, ok := netMessage.Payload().(*signingDoneMessage)
 			if !ok {
 				continue
 			}
 
-			if !ss.isValidSyncMessage(
-				syncMessage,
+			if !sdc.isValidDoneMessage(
+				doneMessage,
 				awaitingSenders,
 				netMessage.SenderPublicKey(),
 				message,
@@ -120,30 +122,30 @@ func (ss *signingSyncer) syncAttemptParticipant(
 				continue
 			}
 
-			if syncMessage.endBlock > latestEndBlock {
-				latestEndBlock = syncMessage.endBlock
+			if doneMessage.endBlock > latestEndBlock {
+				latestEndBlock = doneMessage.endBlock
 			}
 
-			delete(awaitingSenders, syncMessage.senderID)
+			delete(awaitingSenders, doneMessage.senderID)
 
 			if len(awaitingSenders) == 0 {
 				return latestEndBlock, nil
 			}
 		case <-ctx.Done():
-			return 0, fmt.Errorf("cannot receive sync messages on time")
+			return 0, fmt.Errorf("cannot receive signing done messages on time")
 		}
 	}
 }
 
-// syncAttemptObserver runs the attempt observer sync routine. This function
-// is kind of a "passive" version of the syncAttemptParticipant function.
-// It only listens for signing sync messages from members participating in the
-// given signing attempt. This function blocks until it receives all the
-// required sync messages from signing members or until the passed context is
-// done. In the first case, it returns the signature computed by the signing
-// members and the block at which the slowest signer completed the signature
-// computation process. Otherwise, it returns an error.
-func (ss *signingSyncer) syncAttemptObserver(
+// listen runs the signing done check listening routine. This function listens
+// for incoming signing done checks from members participating in the given
+// signing attempt. This function blocks until it receives all the required
+// done checks from members or until the passed context is done. In the first
+// case, it returns the signature computed by the signing members and the block
+// at which the slowest signer completed the signature computation process.
+// If the expected done checks are not received on time, the function returns
+// an error.
+func (sdc *signingDoneCheck) listen(
 	ctx context.Context,
 	message *big.Int,
 	attemptNumber uint,
@@ -155,8 +157,8 @@ func (ss *signingSyncer) syncAttemptObserver(
 	receiveCtx, cancelReceiveCtx := context.WithCancel(ctx)
 	defer cancelReceiveCtx()
 
-	messagesChan := make(chan net.Message, ss.groupSize)
-	ss.broadcastChannel.Recv(receiveCtx, func(message net.Message) {
+	messagesChan := make(chan net.Message, sdc.groupSize)
+	sdc.broadcastChannel.Recv(receiveCtx, func(message net.Message) {
 		messagesChan <- message
 	})
 
@@ -171,13 +173,13 @@ func (ss *signingSyncer) syncAttemptObserver(
 	for {
 		select {
 		case netMessage := <-messagesChan:
-			syncMessage, ok := netMessage.Payload().(*signingSyncMessage)
+			doneMessage, ok := netMessage.Payload().(*signingDoneMessage)
 			if !ok {
 				continue
 			}
 
-			if !ss.isValidSyncMessage(
-				syncMessage,
+			if !sdc.isValidDoneMessage(
+				doneMessage,
 				awaitingSenders,
 				netMessage.SenderPublicKey(),
 				message,
@@ -187,56 +189,56 @@ func (ss *signingSyncer) syncAttemptObserver(
 				continue
 			}
 
-			if syncMessage.endBlock > latestEndBlock {
-				latestEndBlock = syncMessage.endBlock
+			if doneMessage.endBlock > latestEndBlock {
+				latestEndBlock = doneMessage.endBlock
 			}
 
 			if signature == nil {
-				signature = syncMessage.signature
+				signature = doneMessage.signature
 			}
 
-			delete(awaitingSenders, syncMessage.senderID)
+			delete(awaitingSenders, doneMessage.senderID)
 
 			if len(awaitingSenders) == 0 {
 				return &signing.Result{Signature: signature}, latestEndBlock, nil
 			}
 		case <-ctx.Done():
-			return nil, 0, fmt.Errorf("cannot receive sync messages on time")
+			return nil, 0, fmt.Errorf("cannot receive signing done messages on time")
 		}
 	}
 }
 
-// isValidSyncMessage validates the given signingSyncMessage in the context
+// isValidDoneMessage validates the given signingDoneMessage in the context
 // of the given signing attempt.
-func (ss *signingSyncer) isValidSyncMessage(
-	syncMessage *signingSyncMessage,
+func (sdc *signingDoneCheck) isValidDoneMessage(
+	doneMessage *signingDoneMessage,
 	awaitingSenders map[group.MemberIndex]bool,
 	senderPublicKey []byte,
 	message *big.Int,
 	attemptNumber uint,
 	signature *tecdsa.Signature,
 ) bool {
-	if !awaitingSenders[syncMessage.senderID] {
+	if !awaitingSenders[doneMessage.senderID] {
 		return false
 	}
 
-	if !ss.membershipValidator.IsValidMembership(
-		syncMessage.senderID,
+	if !sdc.membershipValidator.IsValidMembership(
+		doneMessage.senderID,
 		senderPublicKey,
 	) {
 		return false
 	}
 
-	if syncMessage.message.Cmp(message) != 0 {
+	if doneMessage.message.Cmp(message) != 0 {
 		return false
 	}
 
-	if syncMessage.attemptNumber != attemptNumber {
+	if doneMessage.attemptNumber != attemptNumber {
 		return false
 	}
 
 	if signature != nil {
-		if !syncMessage.signature.Equals(signature) {
+		if !doneMessage.signature.Equals(signature) {
 			return false
 		}
 	}

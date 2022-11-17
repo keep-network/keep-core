@@ -84,27 +84,27 @@ func (s *signer) Unmarshal(bytes []byte) error {
 	return nil
 }
 
-// Marshal converts the signingSyncMessage to a byte array.
-func (ssm *signingSyncMessage) Marshal() ([]byte, error) {
-	signatureBytes, err := ssm.signature.Marshal()
+// Marshal converts the signingDoneMessage to a byte array.
+func (sdm *signingDoneMessage) Marshal() ([]byte, error) {
+	signatureBytes, err := sdm.signature.Marshal()
 	if err != nil {
 		return nil, err
 	}
 
-	return proto.Marshal(&pb.SigningSyncMessage{
-		SenderID:      uint32(ssm.senderID),
-		Message:       ssm.message.Bytes(),
-		AttemptNumber: uint64(ssm.attemptNumber),
+	return proto.Marshal(&pb.SigningDoneMessage{
+		SenderID:      uint32(sdm.senderID),
+		Message:       sdm.message.Bytes(),
+		AttemptNumber: uint64(sdm.attemptNumber),
 		Signature:     signatureBytes,
-		EndBlock:      ssm.endBlock,
+		EndBlock:      sdm.endBlock,
 	})
 }
 
-// Unmarshal converts a byte array back to the signingSyncMessage.
-func (ssm *signingSyncMessage) Unmarshal(bytes []byte) error {
-	pbMsg := pb.SigningSyncMessage{}
+// Unmarshal converts a byte array back to the signingDoneMessage.
+func (sdm *signingDoneMessage) Unmarshal(bytes []byte) error {
+	pbMsg := pb.SigningDoneMessage{}
 	if err := proto.Unmarshal(bytes, &pbMsg); err != nil {
-		return fmt.Errorf("failed to unmarshal SigningSyncMessage: [%v]", err)
+		return fmt.Errorf("failed to unmarshal SigningDoneMessage: [%v]", err)
 	}
 
 	if err := validateMemberIndex(pbMsg.SenderID); err != nil {
@@ -116,11 +116,11 @@ func (ssm *signingSyncMessage) Unmarshal(bytes []byte) error {
 		return fmt.Errorf("cannot unmarshal signature: [%v]", err)
 	}
 
-	ssm.senderID = group.MemberIndex(pbMsg.SenderID)
-	ssm.message = new(big.Int).SetBytes(pbMsg.Message)
-	ssm.attemptNumber = uint(pbMsg.AttemptNumber)
-	ssm.signature = signature
-	ssm.endBlock = pbMsg.EndBlock
+	sdm.senderID = group.MemberIndex(pbMsg.SenderID)
+	sdm.message = new(big.Int).SetBytes(pbMsg.Message)
+	sdm.attemptNumber = uint(pbMsg.AttemptNumber)
+	sdm.signature = signature
+	sdm.endBlock = pbMsg.EndBlock
 
 	return nil
 }

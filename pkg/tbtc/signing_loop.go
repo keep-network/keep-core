@@ -70,7 +70,7 @@ type signingRetryLoop struct {
 	attemptStartBlock uint64
 	attemptSeed       int64
 
-	syncer *signingSyncer
+	doneCheck *signingDoneCheck
 }
 
 func newSigningRetryLoop(
@@ -81,7 +81,7 @@ func newSigningRetryLoop(
 	signingGroupOperators chain.Addresses,
 	chainConfig *ChainConfig,
 	announcer signingAnnouncer,
-	syncer *signingSyncer,
+	doneCheck *signingDoneCheck,
 ) *signingRetryLoop {
 	// Compute the 8-byte seed needed for the random retry algorithm. We take
 	// the first 8 bytes of the hash of the signed message. This allows us to
@@ -100,7 +100,7 @@ func newSigningRetryLoop(
 		attemptCounter:          0,
 		attemptStartBlock:       initialStartBlock,
 		attemptSeed:             attemptSeed,
-		syncer:                  syncer,
+		doneCheck:               doneCheck,
 	}
 }
 
@@ -254,7 +254,7 @@ func (srl *signingRetryLoop) start(
 
 		timeoutBlock := announcementEndBlock + signingAttemptMaximumProtocolBlocks
 
-		syncTimeoutCtx, _ := withCancelOnBlock(ctx, timeoutBlock, waitForBlockFn)
+		doneCheckTimeoutCtx, _ := withCancelOnBlock(ctx, timeoutBlock, waitForBlockFn)
 
 		if !attemptSkipped {
 			srl.logger.Infof(
@@ -281,13 +281,13 @@ func (srl *signingRetryLoop) start(
 			}
 
 			srl.logger.Infof(
-				"[member:%v] syncing result for attempt [%v]",
+				"[member:%v] exchanging signing done checks for attempt [%v]",
 				srl.signingGroupMemberIndex,
 				srl.attemptCounter,
 			)
 
-			latestEndBlock, err := srl.syncer.syncAttemptParticipant(
-				syncTimeoutCtx,
+			latestEndBlock, err := srl.doneCheck.exchange(
+				doneCheckTimeoutCtx,
 				srl.signingGroupMemberIndex,
 				srl.message,
 				srl.attemptCounter,
@@ -297,8 +297,8 @@ func (srl *signingRetryLoop) start(
 			)
 			if err != nil {
 				srl.logger.Warnf(
-					"[member:%v] cannot sync result for "+
-						"attempt [%v]: [%v]; starting next attempt",
+					"[member:%v] cannot exchange signing done checks "+
+						"for attempt [%v]: [%v]; starting next attempt",
 					srl.signingGroupMemberIndex,
 					srl.attemptCounter,
 					err,
@@ -314,21 +314,21 @@ func (srl *signingRetryLoop) start(
 		} else {
 			srl.logger.Infof(
 				"[member:%v] not eligible for attempt [%v]; "+
-					"trying to sync result as observer",
+					"listening for signing done checks",
 				srl.signingGroupMemberIndex,
 				srl.attemptCounter,
 			)
 
-			result, latestEndBlock, err := srl.syncer.syncAttemptObserver(
-				syncTimeoutCtx,
+			result, latestEndBlock, err := srl.doneCheck.listen(
+				doneCheckTimeoutCtx,
 				srl.message,
 				srl.attemptCounter,
 				includedMembersIndexes,
 			)
 			if err != nil {
 				srl.logger.Warnf(
-					"[member:%v] cannot sync result for "+
-						"attempt [%v]: [%v]; starting next attempt",
+					"[member:%v] cannot listen for signing done "+
+						"checks for attempt [%v]: [%v]; starting next attempt",
 					srl.signingGroupMemberIndex,
 					srl.attemptCounter,
 					err,

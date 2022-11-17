@@ -193,7 +193,7 @@ func (se *signingExecutor) sign(
 				se.membershipValidator,
 			)
 
-			syncer := newSigningSyncer(
+			doneCheck := newSigningDoneCheck(
 				se.chainConfig.GroupSize,
 				se.broadcastChannel,
 				se.membershipValidator,
@@ -207,7 +207,7 @@ func (se *signingExecutor) sign(
 				wallet.signingGroupOperators,
 				se.chainConfig,
 				announcer,
-				syncer,
+				doneCheck,
 			)
 
 			// Set up the loop timeout signal.
@@ -295,10 +295,10 @@ func (se *signingExecutor) sign(
 			}
 
 			// Do not cancel the loopCtx upon function exit immediately and
-			// continue to broadcast sync messages until the successful attempt
-			// timeout. This way we maximize the chance that other members,
-			// especially the ones not participating in the successful signature
-			// attempt get synced as well.
+			// continue to broadcast signing done checks until the successful
+			// attempt timeout. This way we maximize the chance that other
+			// members, especially the ones not participating in the successful
+			// signature attempt, receive the done checks as well.
 			go func() {
 				defer cancelLoopCtx()
 

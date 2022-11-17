@@ -9,7 +9,7 @@ message StopPill {
     string messageToSign = 3;
 }
 
-message SigningSyncMessage {
+message SigningDoneMessage {
     uint32 senderID = 1;
     bytes message = 2;
     uint64 attemptNumber = 3;

@@ -83,7 +83,7 @@ func (x *StopPill) GetMessageToSign() string {
 	return ""
 }
 
-type SigningSyncMessage struct {
+type SigningDoneMessage struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
@@ -95,8 +95,8 @@ type SigningSyncMessage struct {
 	EndBlock      uint64 `protobuf:"varint,5,opt,name=endBlock,proto3" json:"endBlock,omitempty"`
 }
 
-func (x *SigningSyncMessage) Reset() {
-	*x = SigningSyncMessage{}
+func (x *SigningDoneMessage) Reset() {
+	*x = SigningDoneMessage{}
 	if protoimpl.UnsafeEnabled {
 		mi := &file_pkg_tbtc_gen_pb_message_proto_msgTypes[1]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -104,13 +104,13 @@ func (x *SigningSyncMessage) Reset() {
 	}
 }
 
-func (x *SigningSyncMessage) String() string {
+func (x *SigningDoneMessage) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*SigningSyncMessage) ProtoMessage() {}
+func (*SigningDoneMessage) ProtoMessage() {}
 
-func (x *SigningSyncMessage) ProtoReflect() protoreflect.Message {
+func (x *SigningDoneMessage) ProtoReflect() protoreflect.Message {
 	mi := &file_pkg_tbtc_gen_pb_message_proto_msgTypes[1]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -122,40 +122,40 @@ func (x *SigningSyncMessage) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use SigningSyncMessage.ProtoReflect.Descriptor instead.
-func (*SigningSyncMessage) Descriptor() ([]byte, []int) {
+// Deprecated: Use SigningDoneMessage.ProtoReflect.Descriptor instead.
+func (*SigningDoneMessage) Descriptor() ([]byte, []int) {
 	return file_pkg_tbtc_gen_pb_message_proto_rawDescGZIP(), []int{1}
 }
 
-func (x *SigningSyncMessage) GetSenderID() uint32 {
+func (x *SigningDoneMessage) GetSenderID() uint32 {
 	if x != nil {
 		return x.SenderID
 	}
 	return 0
 }
 
-func (x *SigningSyncMessage) GetMessage() []byte {
+func (x *SigningDoneMessage) GetMessage() []byte {
 	if x != nil {
 		return x.Message
 	}
 	return nil
 }
 
-func (x *SigningSyncMessage) GetAttemptNumber() uint64 {
+func (x *SigningDoneMessage) GetAttemptNumber() uint64 {
 	if x != nil {
 		return x.AttemptNumber
 	}
 	return 0
 }
 
-func (x *SigningSyncMessage) GetSignature() []byte {
+func (x *SigningDoneMessage) GetSignature() []byte {
 	if x != nil {
 		return x.Signature
 	}
 	return nil
 }
 
-func (x *SigningSyncMessage) GetEndBlock() uint64 {
+func (x *SigningDoneMessage) GetEndBlock() uint64 {
 	if x != nil {
 		return x.EndBlock
 	}
@@ -175,7 +175,7 @@ var file_pkg_tbtc_gen_pb_message_proto_rawDesc = []byte{
 	0x64, 0x12, 0x24, 0x0a, 0x0d, 0x6d, 0x65, 0x73, 0x73, 0x61, 0x67, 0x65, 0x54, 0x6f, 0x53, 0x69,
 	0x67, 0x6e, 0x18, 0x03, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0d, 0x6d, 0x65, 0x73, 0x73, 0x61, 0x67,
 	0x65, 0x54, 0x6f, 0x53, 0x69, 0x67, 0x6e, 0x22, 0xaa, 0x01, 0x0a, 0x12, 0x53, 0x69, 0x67, 0x6e,
-	0x69, 0x6e, 0x67, 0x53, 0x79, 0x6e, 0x63, 0x4d, 0x65, 0x73, 0x73, 0x61, 0x67, 0x65, 0x12, 0x1a,
+	0x69, 0x6e, 0x67, 0x44, 0x6f, 0x6e, 0x65, 0x4d, 0x65, 0x73, 0x73, 0x61, 0x67, 0x65, 0x12, 0x1a,
 	0x0a, 0x08, 0x73, 0x65, 0x6e, 0x64, 0x65, 0x72, 0x49, 0x44, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0d,
 	0x52, 0x08, 0x73, 0x65, 0x6e, 0x64, 0x65, 0x72, 0x49, 0x44, 0x12, 0x18, 0x0a, 0x07, 0x6d, 0x65,
 	0x73, 0x73, 0x61, 0x67, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0c, 0x52, 0x07, 0x6d, 0x65, 0x73,
@@ -204,7 +204,7 @@ func file_pkg_tbtc_gen_pb_message_proto_rawDescGZIP() []byte {
 var file_pkg_tbtc_gen_pb_message_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
 var file_pkg_tbtc_gen_pb_message_proto_goTypes = []interface{}{
 	(*StopPill)(nil),           // 0: tbtc.StopPill
-	(*SigningSyncMessage)(nil), // 1: tbtc.SigningSyncMessage
+	(*SigningDoneMessage)(nil), // 1: tbtc.SigningDoneMessage
 }
 var file_pkg_tbtc_gen_pb_message_proto_depIdxs = []int32{
 	0, // [0:0] is the sub-list for method output_type
@@ -233,7 +233,7 @@ func file_pkg_tbtc_gen_pb_message_proto_init() {
 			}
 		}
 		file_pkg_tbtc_gen_pb_message_proto_msgTypes[1].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*SigningSyncMessage); i {
+			switch v := v.(*SigningDoneMessage); i {
 			case 0:
 				return &v.state
 			case 1:
