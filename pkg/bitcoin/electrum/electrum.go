@@ -45,13 +45,15 @@ func Connect(ctx context.Context, config Config) (bitcoin.Chain, error) {
 	var err error
 	switch config.Protocol {
 	case TCP:
+		// TODO: Add retry to connection establishment.
 		client, err = electrum.NewClientTCP(ctx, config.URL)
 	case SSL:
 		// TODO: Implement certificate verification to be able to disable the `InsecureSkipVerify: true` workaround.
 		tlsConfig := &tls.Config{InsecureSkipVerify: true}
+		// TODO: Add retry to connection establishment.
 		client, err = electrum.NewClientSSL(ctx, config.URL, tlsConfig)
 	default:
-		return nil, fmt.Errorf("unsupported protocol: [%s]", config.Protocol)
+		err = fmt.Errorf("unsupported protocol: [%s]", config.Protocol)
 	}
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize electrum client: [%w]", err)
@@ -60,8 +62,7 @@ func Connect(ctx context.Context, config Config) (bitcoin.Chain, error) {
 	// Get the server's details.
 	err = wrappers.DoWithDefaultRetry(
 		config.RequestRetryTimeout,
-		func(ctx context.Context,
-		) error {
+		func(ctx context.Context) error {
 			serverVersion, protocolVersion, err := client.ServerVersion(ctx)
 			if err != nil {
 				return fmt.Errorf("ServerVersion failed: [%w]", err)
