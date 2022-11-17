@@ -26,7 +26,7 @@ var TbtcMaintainerCommand = &cobra.Command{
 			logger.Fatalf("error reading config: %v", err)
 		}
 	},
-	RunE: maintainers,
+	RunE: TbtcMaintainer,
 }
 
 func init() {
@@ -40,9 +40,9 @@ func init() {
 	)
 }
 
-// maintainers initializes maintainer tasks specified by flags passed to the
+// TbtcMaintainer initializes maintainer tasks specified by flags passed to the
 // maintainer command.
-func maintainers(cmd *cobra.Command, args []string) error {
+func TbtcMaintainer(cmd *cobra.Command, args []string) error {
 	ctx := context.Background()
 
 	// TODO: Add connection to the Electrs chain:
