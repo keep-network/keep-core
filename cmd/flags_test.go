@@ -203,9 +203,9 @@ var cmdFlagsTests = map[string]struct {
 		expectedValueFromFlag: 101,
 		defaultValue:          runtime.GOMAXPROCS(0),
 	},
-	"maintainer.relay": {
-		readValueFunc:         func(c *config.Config) interface{} { return c.Maintainer.Relay },
-		flagName:              "--relay",
+	"maintainer.bitcoinDifficulty": {
+		readValueFunc:         func(c *config.Config) interface{} { return c.Maintainer.BitcoinDifficulty },
+		flagName:              "--bitcoinDifficulty",
 		flagValue:             "", // don't provide any value
 		expectedValueFromFlag: true,
 		defaultValue:          false,
@@ -321,7 +321,7 @@ func TestFlags_Mixed(t *testing.T) {
 		"--electrs.url", "url.to.electrs:18332",
 		"--electrs.requestTimeout", "500ms",
 		"--network.port", "7469",
-		"--relay",
+		"--bitcoinDifficulty",
 	}
 	testCommand.SetArgs(args)
 
@@ -370,8 +370,8 @@ func TestFlags_Mixed(t *testing.T) {
 			expectedValue: "/my/secure/location",
 		},
 		// Properties not defined in the config file, but set with flags.
-		"maintainer.relay": {
-			readValueFunc: func(c *config.Config) interface{} { return c.Maintainer.Relay },
+		"maintainer.bitcoinDifficulty": {
+			readValueFunc: func(c *config.Config) interface{} { return c.Maintainer.BitcoinDifficulty },
 			expectedValue: true,
 		},
 	}

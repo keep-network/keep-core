@@ -292,10 +292,10 @@ func initTbtcFlags(cmd *cobra.Command, cfg *config.Config) {
 // Initialize flags for Maintainer configuration.
 func initMaintainerFlags(command *cobra.Command, cfg *config.Config) {
 	command.Flags().BoolVar(
-		&cfg.Maintainer.Relay,
-		"relay",
+		&cfg.Maintainer.BitcoinDifficulty,
+		"bitcoinDifficulty",
 		false,
-		"start relay",
+		"start Bitcoin difficulty maintainer",
 	)
 }
 

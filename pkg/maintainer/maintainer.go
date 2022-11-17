@@ -10,10 +10,10 @@ func Initialize(
 	ctx context.Context,
 	config Config,
 	btcChain bitcoin.Chain,
-	chain RelayChain,
+	chain BitcoinDifficultyChain,
 ) {
-	if config.Relay {
-		go newRelay(ctx, btcChain, chain)
+	if config.BitcoinDifficulty {
+		go newBitcoinDifficultyMaintainer(ctx, btcChain, chain)
 	}
 
 	// TODO: Allow for launching multiple maintainers here. Every flag
