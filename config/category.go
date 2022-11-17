@@ -10,7 +10,7 @@ const (
 	Storage
 	ClientInfo
 	Tbtc
-	Maintainer
+	TbtcMaintainer
 	Developer
 )
 
@@ -34,6 +34,6 @@ var AllCategories = []Category{
 	Storage,
 	ClientInfo,
 	Tbtc,
-	Maintainer,
+	TbtcMaintainer,
 	Developer,
 }

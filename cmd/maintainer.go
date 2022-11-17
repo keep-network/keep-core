@@ -9,9 +9,9 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// MaintainerCommand contains the definition of the maintainer command-line
-// subcommand.
-var MaintainerCommand = &cobra.Command{
+// TbtcMaintainerCommand contains the definition of the tBTC maintainer
+// command-line subcommand.
+var TbtcMaintainerCommand = &cobra.Command{
 	Use:   "maintainer",
 	Short: `Starts tBTC maintainers`,
 	Long:  `The maintainer command starts tBTC maintainers`,
@@ -21,7 +21,7 @@ var MaintainerCommand = &cobra.Command{
 			cmd.Flags(),
 			config.Ethereum,
 			config.Electrs,
-			config.Maintainer,
+			config.TbtcMaintainer,
 		); err != nil {
 			logger.Fatalf("error reading config: %v", err)
 		}
@@ -31,12 +31,12 @@ var MaintainerCommand = &cobra.Command{
 
 func init() {
 	initFlags(
-		MaintainerCommand,
+		TbtcMaintainerCommand,
 		&configFilePath,
 		clientConfig,
 		config.Ethereum,
 		config.Electrs,
-		config.Maintainer,
+		config.TbtcMaintainer,
 	)
 }
 

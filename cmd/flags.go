@@ -46,7 +46,7 @@ func initFlags(
 			initClientInfoFlags(cmd, cfg)
 		case config.Tbtc:
 			initTbtcFlags(cmd, cfg)
-		case config.Maintainer:
+		case config.TbtcMaintainer:
 			initMaintainerFlags(cmd, cfg)
 		case config.Developer:
 			initDeveloperFlags(cmd)
