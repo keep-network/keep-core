@@ -6,6 +6,7 @@ package electrum
 import (
 	"context"
 	"encoding/hex"
+	"fmt"
 	"math"
 	"testing"
 	"time"
@@ -16,7 +17,6 @@ import (
 	"github.com/keep-network/keep-core/pkg/bitcoin"
 )
 
-// TODO: Add negative tests
 // TODO: Include integration test in the CI.
 // To run the tests execute `go test -v -tags=integration ./...`
 
@@ -80,6 +80,48 @@ func TestGetTransaction_Integration(t *testing.T) {
 	}
 }
 
+func TestGetTransaction_Negative_Integration(t *testing.T) {
+	invalidTxID, err := bitcoin.NewHashFromString(
+		"ecc246ac58e682c8edccabb6476bb5482df541847b774085cdb8bfc53165cd34",
+		bitcoin.ReversedByteOrder,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	replaceErrorMsgForTests := []string{"electrumx ssl", "fulcrum ssl"}
+
+	for testName, config := range configs {
+		t.Run(testName, func(t *testing.T) {
+			electrs := newTestConnection(t, config)
+
+			expectedErrorMsg := fmt.Sprintf(
+				"failed to get raw transaction with ID [%s]: [retry timeout [1s] exceeded; most recent error: [GetRawTransaction failed: [missing transaction]]]",
+				invalidTxID.Hex(bitcoin.ReversedByteOrder),
+			)
+
+			// As a workaround for the problem described in https://github.com/checksum0/go-electrum/issues/5
+			// we use an alternative expected error message for servers
+			// that are not correctly supported by the electrum client.
+			if slices.Contains(replaceErrorMsgForTests, testName) {
+				expectedErrorMsg = fmt.Sprintf(
+					"failed to get raw transaction with ID [%s]: [retry timeout [1s] exceeded; most recent error: [GetRawTransaction failed: [Unmarshal received message failed: json: cannot unmarshal object into Go struct field response.error of type string]]]",
+					invalidTxID.Hex(bitcoin.ReversedByteOrder),
+				)
+			}
+
+			_, err := electrs.GetTransaction(invalidTxID)
+			if err.Error() != expectedErrorMsg {
+				t.Errorf(
+					"invalid error\nexpected: %v\nactual:   %v",
+					expectedErrorMsg,
+					err,
+				)
+			}
+		})
+	}
+}
+
 func TestGetTransactionConfirmations_Integration(t *testing.T) {
 	expectedResult := uint(271247)
 
@@ -97,6 +139,48 @@ func TestGetTransactionConfirmations_Integration(t *testing.T) {
 					"invalid result (greater or equal match)\nexpected: %v\nactual:   %v",
 					expectedResult,
 					result,
+				)
+			}
+		})
+	}
+}
+
+func TestGetTransactionConfirmations_Negative_Integration(t *testing.T) {
+	invalidTxID, err := bitcoin.NewHashFromString(
+		"ecc246ac58e682c8edccabb6476bb5482df541847b774085cdb8bfc53165cd34",
+		bitcoin.ReversedByteOrder,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	replaceErrorMsgForTests := []string{"electrumx ssl", "fulcrum ssl"}
+
+	for testName, config := range configs {
+		t.Run(testName, func(t *testing.T) {
+			electrs := newTestConnection(t, config)
+
+			expectedErrorMsg := fmt.Sprintf(
+				"failed to get raw transaction with ID [%s]: [retry timeout [1s] exceeded; most recent error: [GetRawTransaction failed: [missing transaction]]]",
+				invalidTxID.Hex(bitcoin.ReversedByteOrder),
+			)
+
+			// As a workaround for the problem described in https://github.com/checksum0/go-electrum/issues/5
+			// we use an alternative expected error message for servers
+			// that are not correctly supported by the electrum client.
+			if slices.Contains(replaceErrorMsgForTests, testName) {
+				expectedErrorMsg = fmt.Sprintf(
+					"failed to get raw transaction with ID [%s]: [retry timeout [1s] exceeded; most recent error: [GetRawTransaction failed: [Unmarshal received message failed: json: cannot unmarshal object into Go struct field response.error of type string]]]",
+					invalidTxID.Hex(bitcoin.ReversedByteOrder),
+				)
+			}
+
+			_, err := electrs.GetTransactionConfirmations(invalidTxID)
+			if err.Error() != expectedErrorMsg {
+				t.Errorf(
+					"invalid error\nexpected: %v\nactual:   %v",
+					expectedErrorMsg,
+					err,
 				)
 			}
 		})
