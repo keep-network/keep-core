@@ -545,10 +545,9 @@ func (n *node) getSigningExecutor(
 		broadcastChannel,
 		membershipValidator,
 		n.chain.GetConfig(),
+		n.protocolLatch,
 		blockCounter.CurrentBlock,
 		n.waitForBlockHeight,
-		n.protocolLatch.Lock,
-		n.protocolLatch.Unlock,
 		5,
 	)
 

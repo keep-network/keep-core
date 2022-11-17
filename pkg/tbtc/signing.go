@@ -3,6 +3,7 @@ package tbtc
 import (
 	"context"
 	"fmt"
+	"github.com/keep-network/keep-core/pkg/generator"
 	"github.com/keep-network/keep-core/pkg/net"
 	"github.com/keep-network/keep-core/pkg/protocol/announcer"
 	"github.com/keep-network/keep-core/pkg/protocol/group"
@@ -33,17 +34,12 @@ type signingExecutor struct {
 	broadcastChannel    net.BroadcastChannel
 	membershipValidator *group.MembershipValidator
 	chainConfig         *ChainConfig
+	protocolLatch       *generator.ProtocolLatch
 
 	// currentBlockFn is a function used to get the current block.
 	currentBlockFn func() (uint64, error)
 	// waitForBlockFn is a function used to wait for the given block.
 	waitForBlockFn waitForBlockFn
-	// onSignerStartFn is a callback function invoked when a single signer
-	// starts the execution of the signing protocol.
-	onSignerStartFn func()
-	// onSignerEndFn is a callback function invoked when a single signer
-	// end the execution of the signing protocol, regardless of the outcome.
-	onSignerEndFn func()
 
 	// signingAttemptsLimit determines the maximum attempts count that will
 	// be made by a single signer for the given message. Once the attempts
@@ -56,10 +52,9 @@ func newSigningExecutor(
 	broadcastChannel net.BroadcastChannel,
 	membershipValidator *group.MembershipValidator,
 	chainConfig *ChainConfig,
+	protocolLatch *generator.ProtocolLatch,
 	currentBlockFn func() (uint64, error),
 	waitForBlockFn waitForBlockFn,
-	onSignerStartFn func(),
-	onSignerEndFn func(),
 	signingAttemptsLimit uint,
 ) *signingExecutor {
 	return &signingExecutor{
@@ -68,10 +63,9 @@ func newSigningExecutor(
 		broadcastChannel:     broadcastChannel,
 		membershipValidator:  membershipValidator,
 		chainConfig:          chainConfig,
+		protocolLatch:        protocolLatch,
 		currentBlockFn:       currentBlockFn,
 		waitForBlockFn:       waitForBlockFn,
-		onSignerStartFn:      onSignerStartFn,
-		onSignerEndFn:        onSignerEndFn,
 		signingAttemptsLimit: signingAttemptsLimit,
 	}
 }
@@ -189,8 +183,8 @@ func (se *signingExecutor) sign(
 
 	for _, currentSigner := range se.signers {
 		go func(signer *signer) {
-			se.onSignerStartFn()
-			defer se.onSignerEndFn()
+			se.protocolLatch.Lock()
+			defer se.protocolLatch.Unlock()
 
 			announcer := announcer.New(
 				fmt.Sprintf("%v-%v", ProtocolName, "signing"),
