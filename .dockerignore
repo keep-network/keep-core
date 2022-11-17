@@ -35,3 +35,7 @@ token-tracker/
 # Legacy V1 contracts bindings.
 # We won't generate new bindings in the docker build process, but use the existing ones.
 !pkg/chain/gen
+
+pkg/chain/ethereum/threshold/gen/_address/TokenStaking
+pkg/chain/ethereum/beacon/gen/_address/RandomBeacon
+pkg/chain/ethereum/ecdsa/gen/_address/WalletRegistry
