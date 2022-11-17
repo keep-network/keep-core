@@ -10,6 +10,7 @@ import (
 	"github.com/keep-network/keep-core/pkg/tecdsa/signing"
 	"go.uber.org/zap"
 	"golang.org/x/exp/slices"
+	"golang.org/x/sync/semaphore"
 	"math/big"
 	"reflect"
 	"strings"
@@ -26,6 +27,8 @@ const (
 //
 // TODO: Add busy check.
 type signingExecutor struct {
+	lock *semaphore.Weighted
+
 	signers             []*signer
 	broadcastChannel    net.BroadcastChannel
 	membershipValidator *group.MembershipValidator
@@ -46,6 +49,31 @@ type signingExecutor struct {
 	// be made by a single signer for the given message. Once the attempts
 	// limit is hit the signer gives up.
 	signingAttemptsLimit uint
+}
+
+func newSigningExecutor(
+	signers []*signer,
+	broadcastChannel net.BroadcastChannel,
+	membershipValidator *group.MembershipValidator,
+	chainConfig *ChainConfig,
+	currentBlockFn func() (uint64, error),
+	waitForBlockFn waitForBlockFn,
+	onSignerStartFn func(),
+	onSignerEndFn func(),
+	signingAttemptsLimit uint,
+) *signingExecutor {
+	return &signingExecutor{
+		lock:                 semaphore.NewWeighted(1),
+		signers:              signers,
+		broadcastChannel:     broadcastChannel,
+		membershipValidator:  membershipValidator,
+		chainConfig:          chainConfig,
+		currentBlockFn:       currentBlockFn,
+		waitForBlockFn:       waitForBlockFn,
+		onSignerStartFn:      onSignerStartFn,
+		onSignerEndFn:        onSignerEndFn,
+		signingAttemptsLimit: signingAttemptsLimit,
+	}
 }
 
 // signBatch performs the signing process for each message from the given
@@ -122,6 +150,11 @@ func (se *signingExecutor) sign(
 	message *big.Int,
 	startBlock uint64,
 ) (*tecdsa.Signature, uint64, error) {
+	if lockAcquired := se.lock.TryAcquire(1); !lockAcquired {
+		return nil, 0, fmt.Errorf("signing executor is busy")
+	}
+	defer se.lock.Release(1)
+
 	wallet := se.wallet()
 	// Actual wallet signing group size may be different from the
 	// `GroupSize` parameter of the chain config.

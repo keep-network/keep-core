@@ -540,17 +540,17 @@ func (n *node) getSigningExecutor(
 		)
 	}
 
-	executor := &signingExecutor{
-		signers:              signers,
-		broadcastChannel:     broadcastChannel,
-		membershipValidator:  membershipValidator,
-		chainConfig:          n.chain.GetConfig(),
-		currentBlockFn:       blockCounter.CurrentBlock,
-		waitForBlockFn:       n.waitForBlockHeight,
-		onSignerStartFn:      n.protocolLatch.Lock,
-		onSignerEndFn:        n.protocolLatch.Unlock,
-		signingAttemptsLimit: 5,
-	}
+	executor := newSigningExecutor(
+		signers,
+		broadcastChannel,
+		membershipValidator,
+		n.chain.GetConfig(),
+		blockCounter.CurrentBlock,
+		n.waitForBlockHeight,
+		n.protocolLatch.Lock,
+		n.protocolLatch.Unlock,
+		5,
+	)
 
 	n.signingExecutors[executorKey] = executor
 
