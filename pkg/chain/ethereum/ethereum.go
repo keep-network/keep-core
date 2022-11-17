@@ -123,36 +123,6 @@ func Connect(
 		nil
 }
 
-// Connect creates TBTC Ethereum chain handles.
-func ConnectTbtc(
-	ctx context.Context,
-	config ethereum.Config,
-) (
-	*TbtcChain,
-	error,
-) {
-	client, err := ethclient.Dial(config.URL)
-	if err != nil {
-		return nil, fmt.Errorf(
-			"error Connecting to Ethereum Server: %s [%v]",
-			config.URL,
-			err,
-		)
-	}
-
-	baseChain, err := newBaseChain(ctx, config, client)
-	if err != nil {
-		return nil, fmt.Errorf("could not create base chain handle: [%v]", err)
-	}
-
-	tbtcChain, err := newTbtcChain(config, baseChain)
-	if err != nil {
-		return nil, fmt.Errorf("could not create TBTC chain handle: [%v]", err)
-	}
-
-	return tbtcChain, nil
-}
-
 func validateContractsAddresses(
 	config ethereum.Config,
 	beaconChain *BeaconChain,
