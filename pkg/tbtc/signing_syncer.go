@@ -66,11 +66,19 @@ func (ss *signingSyncer) syncAttemptParticipant(
 	result *signing.Result,
 	endBlock uint64,
 ) (uint64, error) {
+	// Use a separate context for the message receiver as the receiver must
+	// be closed upon function return. Leaving a dangling receiver without
+	// the message processing loop will cause warnings on the channel level.
+	receiveCtx, cancelReceiveCtx := context.WithCancel(ctx)
+	defer cancelReceiveCtx()
+
 	messagesChan := make(chan net.Message, ss.groupSize)
-	ss.broadcastChannel.Recv(ctx, func(message net.Message) {
+	ss.broadcastChannel.Recv(receiveCtx, func(message net.Message) {
 		messagesChan <- message
 	})
 
+	// Use the original context for the send routine as we want to keep
+	// retransmissions on until the context is alive.
 	err := ss.broadcastChannel.Send(ctx, &signingSyncMessage{
 		senderID:      memberIndex,
 		message:       message,
@@ -141,8 +149,14 @@ func (ss *signingSyncer) syncAttemptObserver(
 	attemptNumber uint,
 	attemptMembersIndexes []group.MemberIndex,
 ) (*signing.Result, uint64, error) {
+	// Use a separate context for the message receiver as the receiver must
+	// be closed upon function return. Leaving a dangling receiver without
+	// the message processing loop will cause warnings on the channel level.
+	receiveCtx, cancelReceiveCtx := context.WithCancel(ctx)
+	defer cancelReceiveCtx()
+
 	messagesChan := make(chan net.Message, ss.groupSize)
-	ss.broadcastChannel.Recv(ctx, func(message net.Message) {
+	ss.broadcastChannel.Recv(receiveCtx, func(message net.Message) {
 		messagesChan <- message
 	})
 
