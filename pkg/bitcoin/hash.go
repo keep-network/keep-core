@@ -3,6 +3,8 @@ package bitcoin
 import (
 	"encoding/hex"
 	"fmt"
+
+	"github.com/keep-network/keep-core/pkg/internal/byteutils"
 )
 
 // HashByteLength is the byte length of the Hash type.
@@ -49,10 +51,8 @@ func NewHash(hash []byte, byteOrder ByteOrder) (Hash, error) {
 	case InternalByteOrder:
 		copy(result[:], hash[:])
 	case ReversedByteOrder:
-		for i := 0; i < HashByteLength/2; i++ {
-			hash[i], hash[HashByteLength-1-i] = hash[HashByteLength-1-i], hash[i]
-		}
-		copy(result[:], hash[:])
+		reversed := byteutils.Reverse(hash)
+		copy(result[:], reversed)
 	default:
 		panic("unknown byte order")
 	}
