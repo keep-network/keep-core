@@ -2,6 +2,7 @@ package tecdsa
 
 import (
 	"crypto/elliptic"
+	"math/big"
 	"reflect"
 	"testing"
 
@@ -50,4 +51,21 @@ func TestPrivateKeyShareMarshalling_NonTECDSAKey(t *testing.T) {
 	_, err = privateKeyShare.Marshal()
 
 	testutils.AssertErrorsSame(t, ErrIncompatiblePublicKey, err)
+}
+
+func TestSignatureMarshalling(t *testing.T) {
+	signature := &Signature{
+		R:          big.NewInt(100),
+		S:          big.NewInt(200),
+		RecoveryID: 2,
+	}
+
+	unmarshaled := &Signature{}
+
+	if err := pbutils.RoundTrip(signature, unmarshaled); err != nil {
+		t.Fatal(err)
+	}
+	if !reflect.DeepEqual(signature, unmarshaled) {
+		t.Fatal("unexpected content of unmarshaled signature")
+	}
 }
