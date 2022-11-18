@@ -21,7 +21,7 @@ var TbtcMaintainerCommand = &cobra.Command{
 			cmd.Flags(),
 			config.Ethereum,
 			config.BitcoinElectrum,
-			config.TbtcMaintainer,
+			config.Tbtc,
 		); err != nil {
 			logger.Fatalf("error reading config: %v", err)
 		}
@@ -36,7 +36,7 @@ func init() {
 		clientConfig,
 		config.Ethereum,
 		config.BitcoinElectrum,
-		config.TbtcMaintainer,
+		config.Tbtc,
 	)
 }
 
@@ -57,7 +57,7 @@ func TbtcMaintainer(cmd *cobra.Command, args []string) error {
 	// 	return fmt.Errorf("could not connect to Tbtc chain: [%v]", err)
 	// }
 
-	maintainer.Initialize(ctx, clientConfig.Maintainer, nil, nil)
+	maintainer.Initialize(ctx, clientConfig.Tbtc.Maintainer, nil, nil)
 
 	<-ctx.Done()
 	return fmt.Errorf("unexpected context cancellation")

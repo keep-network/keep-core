@@ -16,7 +16,6 @@ import (
 	commonEthereum "github.com/keep-network/keep-common/pkg/chain/ethereum"
 	"github.com/keep-network/keep-core/pkg/clientinfo"
 	"github.com/keep-network/keep-core/pkg/config"
-	"github.com/keep-network/keep-core/pkg/maintainer"
 	"github.com/keep-network/keep-core/pkg/net/libp2p"
 	"github.com/keep-network/keep-core/pkg/storage"
 	"github.com/keep-network/keep-core/pkg/tbtc"
@@ -41,7 +40,6 @@ type Config struct {
 	LibP2P     libp2p.Config `mapstructure:"network"`
 	Storage    storage.Config
 	ClientInfo clientinfo.Config
-	Maintainer maintainer.Config
 	Tbtc       tbtc.Config
 }
 

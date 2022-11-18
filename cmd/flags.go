@@ -45,8 +45,6 @@ func initFlags(
 			initClientInfoFlags(cmd, cfg)
 		case config.Tbtc:
 			initTbtcFlags(cmd, cfg)
-		case config.TbtcMaintainer:
-			initMaintainerFlags(cmd, cfg)
 		case config.Developer:
 			initDeveloperFlags(cmd)
 		}
@@ -273,12 +271,9 @@ func initTbtcFlags(cmd *cobra.Command, cfg *config.Config) {
 		tbtc.DefaultKeyGenerationConcurrency,
 		"tECDSA key generation concurrency.",
 	)
-}
 
-// Initialize flags for Maintainer configuration.
-func initMaintainerFlags(command *cobra.Command, cfg *config.Config) {
-	command.Flags().BoolVar(
-		&cfg.Maintainer.BitcoinDifficulty,
+	cmd.Flags().BoolVar(
+		&cfg.Tbtc.Maintainer.BitcoinDifficulty,
 		"bitcoinDifficulty",
 		false,
 		"start Bitcoin difficulty maintainer",

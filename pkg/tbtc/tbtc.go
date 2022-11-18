@@ -11,6 +11,7 @@ import (
 	"github.com/keep-network/keep-common/pkg/persistence"
 	"github.com/keep-network/keep-core/pkg/clientinfo"
 	"github.com/keep-network/keep-core/pkg/generator"
+	"github.com/keep-network/keep-core/pkg/maintainer"
 	"github.com/keep-network/keep-core/pkg/net"
 	"github.com/keep-network/keep-core/pkg/sortition"
 )
@@ -43,6 +44,9 @@ type Config struct {
 	PreParamsGenerationConcurrency int
 	// Concurrency level for key-generation for tECDSA.
 	KeyGenerationConcurrency int
+
+	// Maintainer defines the configuration for the tBTC maintainer.
+	Maintainer maintainer.Config
 }
 
 // Initialize kicks off the TBTC by initializing internal state, ensuring

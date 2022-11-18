@@ -30,7 +30,7 @@ Port = 3498
 NetworkMetricsTick = "43s"
 EthereumMetricsTick = "1m27s"
 
-[maintainer]
+[tbtc.maintainer]
 BitcoinDifficulty = true
 
 [developer]
