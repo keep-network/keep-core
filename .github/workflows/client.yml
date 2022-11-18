@@ -124,7 +124,8 @@ jobs:
         if: github.event_name == 'workflow_dispatch'
         uses: docker/build-push-action@v3
         env:
-          IMAGE_NAME: "keep-client"
+        # DO NOT MERGE TO MAIN
+          IMAGE_NAME: "keep-client-wip"
         with:
           target: runtime-docker
           tags: |
@@ -173,19 +174,19 @@ jobs:
           bucket-name: keep-test-client-binaries
           bucket-path: ${{ github.event.inputs.environment }}/${{ env.version }}
           build-folder: out/bin
-
-      - name: Notify CI about completion of the workflow
-        if: github.event_name == 'workflow_dispatch'
-        uses: keep-network/ci/actions/notify-workflow-completed@v2
-        env:
-          GITHUB_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
-        with:
-          module: "github.com/keep-network/keep-core/client"
-          url: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
-          environment: ${{ github.event.inputs.environment }}
-          upstream_builds: ${{ github.event.inputs.upstream_builds }}
-          upstream_ref: ${{ github.event.inputs.upstream_ref }}
-          version: ${{ env.version }}
+      # DO NOT MERGE TO MAIN
+      # - name: Notify CI about completion of the workflow
+      #   if: github.event_name == 'workflow_dispatch'
+      #   uses: keep-network/ci/actions/notify-workflow-completed@v2
+      #   env:
+      #     GITHUB_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
+      #   with:
+      #     module: "github.com/keep-network/keep-core/client"
+      #     url: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
+      #     environment: ${{ github.event.inputs.environment }}
+      #     upstream_builds: ${{ github.event.inputs.upstream_builds }}
+      #     upstream_ref: ${{ github.event.inputs.upstream_ref }}
+      #     version: ${{ env.version }}
 
       - # Temp fix - move cache instead of copying (added below step and
         # modified value of `cache-to`).
