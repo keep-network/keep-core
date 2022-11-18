@@ -53,6 +53,27 @@ type signingAnnouncer interface {
 	) ([]group.MemberIndex, error)
 }
 
+// signingDoneCheckStrategy is a strategy that determines the way of signaling
+// a successful signature calculation across all signing group members.
+type signingDoneCheckStrategy interface {
+	exchange(
+		ctx context.Context,
+		memberIndex group.MemberIndex,
+		message *big.Int,
+		attemptNumber uint,
+		attemptMembersIndexes []group.MemberIndex,
+		result *signing.Result,
+		endBlock uint64,
+	) (uint64, error)
+
+	listen(
+		ctx context.Context,
+		message *big.Int,
+		attemptNumber uint,
+		attemptMembersIndexes []group.MemberIndex,
+	) (*signing.Result, uint64, error)
+}
+
 // signingRetryLoop is a struct that encapsulates the signing retry logic.
 type signingRetryLoop struct {
 	logger log.StandardLogger
@@ -70,7 +91,7 @@ type signingRetryLoop struct {
 	attemptStartBlock uint64
 	attemptSeed       int64
 
-	doneCheck *signingDoneCheck
+	doneCheck signingDoneCheckStrategy
 }
 
 func newSigningRetryLoop(
@@ -81,7 +102,7 @@ func newSigningRetryLoop(
 	signingGroupOperators chain.Addresses,
 	chainConfig *ChainConfig,
 	announcer signingAnnouncer,
-	doneCheck *signingDoneCheck,
+	doneCheck signingDoneCheckStrategy,
 ) *signingRetryLoop {
 	// Compute the 8-byte seed needed for the random retry algorithm. We take
 	// the first 8 bytes of the hash of the signed message. This allows us to
