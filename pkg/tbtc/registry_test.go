@@ -224,6 +224,10 @@ func (mph *mockPersistenceHandle) Archive(directory string) error {
 	panic("not implemented")
 }
 
+func (mph *mockPersistenceHandle) Delete(directory string, name string) error {
+	panic("not implemented")
+}
+
 type mockDescriptor struct {
 	name      string
 	directory string
