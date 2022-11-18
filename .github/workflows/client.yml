@@ -92,6 +92,7 @@ jobs:
           load: true # load image to local registry to use it in next steps
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,dest=/tmp/.buildx-cache-new
+          context: .
 
       - name: Run Go tests
         run: |
@@ -109,6 +110,7 @@ jobs:
             version=${{ env.version }}
             revision=${{ env.revision }}
           push: false
+          context: .
 
       - name: Login to Google Container Registry
         if: github.event_name == 'workflow_dispatch'
@@ -138,6 +140,7 @@ jobs:
             VERSION=${{ env.version }}
             REVISION=${{ env.revision }}
           push: true
+          context: .
 
       - name: Build Client Binaries
         uses: docker/build-push-action@v3
@@ -149,6 +152,7 @@ jobs:
             VERSION=${{ env.version }}
             REVISION=${{ env.revision }}
           push: false
+          context: .
 
       - name: Archive Client Binaries
         uses: actions/upload-artifact@v3
