@@ -82,7 +82,7 @@ jobs:
             ${{ runner.os }}-buildx-
 
       - name: Build Docker Build Image
-        uses: docker/build-push-action@v2
+        uses: docker/build-push-action@v3
         with:
           target: build-docker
           tags: go-build-env
@@ -102,7 +102,7 @@ jobs:
 
       - name: Build Docker Runtime Image
         if: github.event_name != 'workflow_dispatch'
-        uses: docker/build-push-action@v2
+        uses: docker/build-push-action@v3
         with:
           target: runtime-docker
           labels: |
@@ -120,7 +120,7 @@ jobs:
 
       - name: Build and publish Docker Runtime Image
         if: github.event_name == 'workflow_dispatch'
-        uses: docker/build-push-action@v2
+        uses: docker/build-push-action@v3
         env:
           IMAGE_NAME: "keep-client"
         with:
