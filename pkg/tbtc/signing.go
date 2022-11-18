@@ -25,8 +25,6 @@ const (
 
 // signingExecutor is a component responsible for executing signing related to
 // a specific wallet whose part is controlled by this node.
-//
-// TODO: Add busy check.
 type signingExecutor struct {
 	lock *semaphore.Weighted
 
