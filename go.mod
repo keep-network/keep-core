@@ -2,14 +2,18 @@ module github.com/keep-network/keep-core
 
 go 1.18
 
-// Temporary replacement until v1.28.2 is released containing `protodelim` package.
-// See https://github.com/protocolbuffers/protobuf-go/commit/fb0abd915897428ccfdd6b03b48ad8219751ee54
-replace google.golang.org/protobuf/dev => google.golang.org/protobuf v1.28.2-0.20220831092852-f930b1dc76e8
+replace (
+	github.com/checksum0/go-electrum => github.com/keep-network/go-electrum v0.0.0-20220912200153-b862ac442cf9
+	// Temporary replacement until v1.28.2 is released containing `protodelim` package.
+	// See https://github.com/protocolbuffers/protobuf-go/commit/fb0abd915897428ccfdd6b03b48ad8219751ee54
+	google.golang.org/protobuf/dev => google.golang.org/protobuf v1.28.2-0.20220831092852-f930b1dc76e8
+)
 
 require (
 	github.com/bnb-chain/tss-lib v1.3.5
 	github.com/btcsuite/btcd v0.22.1
 	github.com/btcsuite/btcd/btcec/v2 v2.2.0
+	github.com/checksum0/go-electrum v0.0.0-20220912200153-b862ac442cf9
 	github.com/ethereum/go-ethereum v1.10.19
 	github.com/google/gofuzz v1.1.1-0.20200604201612-c04b05f3adfa
 	github.com/hashicorp/go-multierror v1.1.1
