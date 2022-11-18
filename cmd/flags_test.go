@@ -79,26 +79,12 @@ var cmdFlagsTests = map[string]struct {
 		expectedValueFromFlag: big.NewInt(1250000000000000000),
 		defaultValue:          big.NewInt(500000000000000000),
 	},
-	"electrs.url": {
-		readValueFunc:         func(c *config.Config) interface{} { return c.Electrs.URL },
-		flagName:              "--electrs.url",
-		flagValue:             "url.to.electrs:18332",
-		expectedValueFromFlag: "url.to.electrs:18332",
+	"bitcoin.electrum.url": {
+		readValueFunc:         func(c *config.Config) interface{} { return c.Bitcoin.Electrum.URL },
+		flagName:              "--bitcoin.electrum.url",
+		flagValue:             "url.to.electrum:18332",
+		expectedValueFromFlag: "url.to.electrum:18332",
 		defaultValue:          "",
-	},
-	"electrs.requestTimeout": {
-		readValueFunc:         func(c *config.Config) interface{} { return c.Electrs.RequestTimeout },
-		flagName:              "--electrs.requestTimeout",
-		flagValue:             "500ms",
-		expectedValueFromFlag: 500 * time.Millisecond,
-		defaultValue:          5 * time.Second,
-	},
-	"electrs.retryTimeout": {
-		readValueFunc:         func(c *config.Config) interface{} { return c.Electrs.RetryTimeout },
-		flagName:              "--electrs.retryTimeout",
-		flagValue:             "10s",
-		expectedValueFromFlag: 10 * time.Second,
-		defaultValue:          60 * time.Second,
 	},
 	"network.bootstrap": {
 		readValueFunc:         func(c *config.Config) interface{} { return c.LibP2P.Bootstrap },
@@ -288,7 +274,7 @@ func TestFlags_ReadConfigFromFlagsWithDefaults(t *testing.T) {
 	args := []string{
 		cmdFlagsTests["ethereum.url"].flagName, cmdFlagsTests["ethereum.url"].flagValue,
 		cmdFlagsTests["ethereum.keyFile"].flagName, cmdFlagsTests["ethereum.keyFile"].flagValue,
-		cmdFlagsTests["electrs.url"].flagName, cmdFlagsTests["electrs.url"].flagValue,
+		cmdFlagsTests["bitcoin.electrum.url"].flagName, cmdFlagsTests["bitcoin.electrum.url"].flagValue,
 		cmdFlagsTests["storage.dir"].flagName, cmdFlagsTests["storage.dir"].flagValue,
 	}
 	testCommand.SetArgs(args)
@@ -318,8 +304,7 @@ func TestFlags_Mixed(t *testing.T) {
 		"--config", "../test/config_flags.toml",
 		"--ethereum.url", "https://api.url.com/123eth",
 		"--ethereum.keyFile", "./keyfile-path/from/flag",
-		"--electrs.url", "url.to.electrs:18332",
-		"--electrs.requestTimeout", "500ms",
+		"--bitcoin.electrum.url", "url.to.electrum:18332",
 		"--network.port", "7469",
 		"--bitcoinDifficulty",
 	}
@@ -342,19 +327,9 @@ func TestFlags_Mixed(t *testing.T) {
 			expectedValue: "./keyfile-path/from/flag",
 		},
 		// Properties provided in the config file and overwritten by the flags.
-		"electrs.url": {
-			readValueFunc: func(c *config.Config) interface{} { return c.Electrs.URL },
-			expectedValue: "url.to.electrs:18332",
-		},
-		// Properties not defined in the config file, but set with flags.
-		"electrs.requestTimeout": {
-			readValueFunc: func(c *config.Config) interface{} { return c.Electrs.RequestTimeout },
-			expectedValue: 500 * time.Millisecond,
-		},
-		// Properties defined in the config file, not set with flags.
-		"electrs.retryTimeout": {
-			readValueFunc: func(c *config.Config) interface{} { return c.Electrs.RetryTimeout },
-			expectedValue: 10 * time.Second,
+		"bitcoin.electrum.url": {
+			readValueFunc: func(c *config.Config) interface{} { return c.Bitcoin.Electrum.URL },
+			expectedValue: "url.to.electrum:18332",
 		},
 		"network.port": {
 			readValueFunc: func(c *config.Config) interface{} { return c.LibP2P.Port },

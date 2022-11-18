@@ -100,17 +100,9 @@ func TestReadConfigFromFile(t *testing.T) {
 			},
 			expectedValue: "0x138D2a0c87BA9f6BE1DCc13D6224A6aCE9B6b6F0",
 		},
-		"Electrs.URL": {
-			readValueFunc: func(c *Config) interface{} { return c.Electrs.URL },
-			expectedValue: "url.to.electrs:18332",
-		},
-		"Electrs.RequestTimeout": {
-			readValueFunc: func(c *Config) interface{} { return c.Electrs.RequestTimeout },
-			expectedValue: 500 * time.Millisecond,
-		},
-		"Electrs.RetryTimeout": {
-			readValueFunc: func(c *Config) interface{} { return c.Electrs.RetryTimeout },
-			expectedValue: 10 * time.Second,
+		"Bitcoin.Electrum.URL": {
+			readValueFunc: func(c *Config) interface{} { return c.Bitcoin.Electrum.URL },
+			expectedValue: "url.to.electrum:18332",
 		},
 		"Network.Port": {
 			readValueFunc: func(c *Config) interface{} { return c.LibP2P.Port },

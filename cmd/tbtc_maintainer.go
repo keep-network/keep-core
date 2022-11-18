@@ -20,7 +20,7 @@ var TbtcMaintainerCommand = &cobra.Command{
 			configFilePath,
 			cmd.Flags(),
 			config.Ethereum,
-			config.Electrs,
+			config.BitcoinElectrum,
 			config.TbtcMaintainer,
 		); err != nil {
 			logger.Fatalf("error reading config: %v", err)
@@ -35,7 +35,7 @@ func init() {
 		&configFilePath,
 		clientConfig,
 		config.Ethereum,
-		config.Electrs,
+		config.BitcoinElectrum,
 		config.TbtcMaintainer,
 	)
 }
@@ -45,10 +45,10 @@ func init() {
 func TbtcMaintainer(cmd *cobra.Command, args []string) error {
 	ctx := context.Background()
 
-	// TODO: Add connection to the Electrs chain:
-	// btcChain, err := electrs.Connect(ctx, &clientConfig.Electrs)
+	// TODO: Add connection to the Bitcoin electrum chain:
+	// btcChain, err := electrum.Connect(ctx, &clientConfig.Electrum)
 	// if err != nil {
-	// 	return fmt.Errorf("could not connect to Electrs chain: [%v]", err)
+	// 	return fmt.Errorf("could not connect to Electrum chain: [%v]", err)
 	// }
 
 	// TODO: Add connection to the Tbtc chain:

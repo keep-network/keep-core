@@ -10,10 +10,8 @@ ConcurrencyLimit = 56
 MaxGasFeeCap = "148 Gwei"
 BalanceAlertThreshold = "2.3 ether"
 
-[Electrs]
-URL = "url.to.electrs:18332"
-RequestTimeout = "500ms"
-RetryTimeout = "10s"
+[bitcoin.electrum]
+URL = "url.to.electrum:18332"
 
 [network]
 Port = 27001
