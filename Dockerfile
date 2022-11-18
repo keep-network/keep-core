@@ -81,7 +81,6 @@ ARG REVISION
 RUN GOOS=linux make build \
 	version=$VERSION \
 	revision=$REVISION
-RUN cat pkg/chain/ethereum/threshold/gen/_address/TokenStaking
 
 FROM alpine:3.16 as runtime-docker
 
@@ -90,7 +89,6 @@ ENV APP_NAME=keep-client \
 	BIN_PATH=/usr/local/bin
 
 COPY --from=build-docker $APP_DIR/$APP_NAME $BIN_PATH
-RUN cat pkg/chain/ethereum/threshold/gen/_address/TokenStaking
 
 # ENTRYPOINT cant handle ENV variables.
 ENTRYPOINT ["keep-client"]
@@ -108,7 +106,6 @@ ENV APP_DIR=/go/src/github.com/keep-network/keep-core
 WORKDIR $APP_DIR
 
 COPY --from=build-sources $APP_DIR $APP_DIR
-RUN cat pkg/chain/ethereum/threshold/gen/_address/TokenStaking
 
 ARG ENVIRONMENT
 
