@@ -34,7 +34,9 @@ type node struct {
 	dkgExecutor *dkg.Executor
 
 	signingExecutorsMutex sync.Mutex
-	signingExecutors      map[string]*signingExecutor
+	// signingExecutors is the cache holding signing executors for specific wallets.
+	// The cache key is the uncompressed public key (with 04 prefix) of the wallet.
+	signingExecutors map[string]*signingExecutor
 }
 
 func newNode(
