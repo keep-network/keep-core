@@ -17,7 +17,7 @@ replace (
 
 require (
 	github.com/bnb-chain/tss-lib v1.3.5
-	github.com/btcsuite/btcd v0.22.3
+	github.com/btcsuite/btcd v0.23.1
 	github.com/btcsuite/btcd/btcec/v2 v2.2.0
 	github.com/btcsuite/btcd/v2 v2.0.0-00010101000000-000000000000
 	github.com/checksum0/go-electrum v0.0.0-20220912200153-b862ac442cf9
