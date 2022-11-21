@@ -11,9 +11,9 @@ import (
 	"github.com/keep-network/keep-common/pkg/persistence"
 	"github.com/keep-network/keep-core/pkg/clientinfo"
 	"github.com/keep-network/keep-core/pkg/generator"
-	"github.com/keep-network/keep-core/pkg/maintainer"
 	"github.com/keep-network/keep-core/pkg/net"
 	"github.com/keep-network/keep-core/pkg/sortition"
+	"github.com/keep-network/keep-core/pkg/tbtc/maintainer"
 )
 
 // TODO: Unit tests for `tbtc.go`.

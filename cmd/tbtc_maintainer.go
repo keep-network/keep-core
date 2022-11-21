@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/keep-network/keep-core/config"
-	"github.com/keep-network/keep-core/pkg/maintainer"
+	"github.com/keep-network/keep-core/pkg/tbtc/maintainer"
 	"github.com/spf13/cobra"
 )
 
