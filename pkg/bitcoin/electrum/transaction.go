@@ -5,7 +5,7 @@ import (
 	"encoding/hex"
 	"fmt"
 
-	"github.com/btcsuite/btcd/wire"
+	"github.com/btcsuite/btcd/v2/wire"
 
 	"github.com/keep-network/keep-core/pkg/bitcoin"
 )
