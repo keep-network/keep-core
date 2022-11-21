@@ -597,7 +597,7 @@ func withCancelOnBlock(
 
 		err := waitForBlockFn(ctx, block)
 		if err != nil {
-			logger.Warnf(
+			logger.Errorf(
 				"failed to wait for block [%v]; "+
 					"context cancelled earlier than expected",
 				err,
