@@ -4,7 +4,6 @@ package pbutils
 
 import (
 	"crypto/ecdsa"
-	"github.com/keep-network/keep-core/pkg/tecdsa"
 	"math/big"
 
 	"github.com/btcsuite/btcd/btcec"
@@ -59,7 +58,6 @@ func FuzzFuncs() []interface{} {
 		fuzzEphemeralPrivateKey(),
 		fuzzG1(),
 		fuzzG2(),
-		fuzzTecdsaSignature(),
 	}
 }
 
@@ -123,21 +121,5 @@ func fuzzG2() func(*bn256.G2, fuzz.Continue) {
 		}
 
 		g2.ScalarBaseMult(&k)
-	}
-}
-
-func fuzzTecdsaSignature() func(*tecdsa.Signature, fuzz.Continue) {
-	return func(signature *tecdsa.Signature, c fuzz.Continue) {
-		var r big.Int
-		var s big.Int
-		var recoveryID int
-
-		c.Fuzz(&r)
-		c.Fuzz(&s)
-		c.Fuzz(&recoveryID)
-
-		signature.S = &s
-		signature.R = &r
-		signature.RecoveryID = recoveryID
 	}
 }
