@@ -56,14 +56,21 @@ func TestSigningExecutor_Sign_Busy(t *testing.T) {
 	message := big.NewInt(100)
 	startBlock := uint64(0)
 
+	errChan := make(chan error, 1)
 	go func() {
-		_, _, _ = executor.sign(ctx, message, startBlock)
+		_, _, err := executor.sign(ctx, message, startBlock)
+		errChan <- err
 	}()
 
 	time.Sleep(100 * time.Millisecond)
 
 	_, _, err := executor.sign(ctx, message, startBlock)
 	testutils.AssertErrorsSame(t, errSigningExecutorBusy, err)
+
+	err = <-errChan
+	if err != nil {
+		t.Errorf("unexpected error: [%v]", err)
+	}
 }
 
 func TestSigningExecutor_SignBatch(t *testing.T) {
@@ -73,9 +80,9 @@ func TestSigningExecutor_SignBatch(t *testing.T) {
 	defer cancelCtx()
 
 	messages := []*big.Int{
-		big.NewInt(100),
-		big.NewInt(200),
-		big.NewInt(300),
+		big.NewInt(1000),
+		big.NewInt(2000),
+		big.NewInt(3000),
 	}
 	startBlock := uint64(0)
 
