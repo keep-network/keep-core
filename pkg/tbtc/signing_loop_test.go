@@ -690,6 +690,7 @@ func (msdc *mockSigningDoneCheck) exchange(
 	memberIndex group.MemberIndex,
 	message *big.Int,
 	attemptNumber uint64,
+	attemptTimeoutBlock uint64,
 	attemptMembersIndexes []group.MemberIndex,
 	result *signing.Result,
 	endBlock uint64,
@@ -709,6 +710,7 @@ func (msdc *mockSigningDoneCheck) listen(
 	ctx context.Context,
 	message *big.Int,
 	attemptNumber uint64,
+	attemptTimeoutBlock uint64,
 	attemptMembersIndexes []group.MemberIndex,
 ) (*signing.Result, uint64, error) {
 	return msdc.listenDoneChecksOutcomeFn(attemptNumber)

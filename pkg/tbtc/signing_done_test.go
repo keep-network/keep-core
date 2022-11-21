@@ -37,6 +37,7 @@ func TestSigningDoneCheck(t *testing.T) {
 
 	message := big.NewInt(100)
 	attemptNumber := uint64(2)
+	attemptTimeoutBlock := uint64(1000)
 	attemptMemberIndexes := memberIndexes[:chainConfig.HonestThreshold]
 	result := &signing.Result{
 		Signature: &tecdsa.Signature{
@@ -67,6 +68,7 @@ func TestSigningDoneCheck(t *testing.T) {
 					memberIndex,
 					message,
 					attemptNumber,
+					attemptTimeoutBlock,
 					attemptMemberIndexes,
 					result,
 					500+uint64(memberIndex),
@@ -82,6 +84,7 @@ func TestSigningDoneCheck(t *testing.T) {
 					ctx,
 					message,
 					attemptNumber,
+					attemptTimeoutBlock,
 					attemptMemberIndexes,
 				)
 				outcomesChan <- &outcome{

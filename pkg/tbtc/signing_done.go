@@ -66,6 +66,7 @@ func (sdc *signingDoneCheck) exchange(
 	memberIndex group.MemberIndex,
 	message *big.Int,
 	attemptNumber uint64,
+	attemptTimeoutBlock uint64,
 	attemptMembersIndexes []group.MemberIndex,
 	result *signing.Result,
 	endBlock uint64,
@@ -119,6 +120,7 @@ func (sdc *signingDoneCheck) exchange(
 				netMessage.SenderPublicKey(),
 				message,
 				attemptNumber,
+				attemptTimeoutBlock,
 				result.Signature,
 			) {
 				continue
@@ -152,6 +154,7 @@ func (sdc *signingDoneCheck) listen(
 	ctx context.Context,
 	message *big.Int,
 	attemptNumber uint64,
+	attemptTimeoutBlock uint64,
 	attemptMembersIndexes []group.MemberIndex,
 ) (*signing.Result, uint64, error) {
 	// Use a separate context for the message receiver as the receiver must
@@ -187,6 +190,7 @@ func (sdc *signingDoneCheck) listen(
 				netMessage.SenderPublicKey(),
 				message,
 				attemptNumber,
+				attemptTimeoutBlock,
 				signature,
 			) {
 				continue
@@ -219,6 +223,7 @@ func (sdc *signingDoneCheck) isValidDoneMessage(
 	senderPublicKey []byte,
 	message *big.Int,
 	attemptNumber uint64,
+	attemptTimeoutBlock uint64,
 	signature *tecdsa.Signature,
 ) bool {
 	if !awaitingSenders[doneMessage.senderID] {
@@ -237,6 +242,10 @@ func (sdc *signingDoneCheck) isValidDoneMessage(
 	}
 
 	if doneMessage.attemptNumber != attemptNumber {
+		return false
+	}
+
+	if doneMessage.endBlock > attemptTimeoutBlock {
 		return false
 	}
 
