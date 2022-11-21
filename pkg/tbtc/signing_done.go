@@ -59,6 +59,8 @@ func newSigningDoneCheck(
 // computation process. However, even after the function return, the done check
 // is retransmitted for the lifetime of the passed context. If the expected
 // done checks are not received on time, the function returns an error.
+// This function is meant to be used by members participating in the given
+// signing attempt.
 func (sdc *signingDoneCheck) exchange(
 	ctx context.Context,
 	memberIndex group.MemberIndex,
@@ -144,7 +146,8 @@ func (sdc *signingDoneCheck) exchange(
 // case, it returns the signature computed by the signing members and the block
 // at which the slowest signer completed the signature computation process.
 // If the expected done checks are not received on time, the function returns
-// an error.
+// an error. This function is meant to be used by members not participating in
+// the given signing attempt.
 func (sdc *signingDoneCheck) listen(
 	ctx context.Context,
 	message *big.Int,
