@@ -23,9 +23,9 @@ const (
 	signingBatchInterludeBlocks = 2
 )
 
-// signingExecutorBusyErr is an error returned when the signing executor
+// errSigningExecutorBusy is an error returned when the signing executor
 // cannot execute the requested signature due to an ongoing signing.
-var signingExecutorBusyErr = fmt.Errorf("signing executor is busy")
+var errSigningExecutorBusy = fmt.Errorf("signing executor is busy")
 
 // signingExecutor is a component responsible for executing signing related to
 // a specific wallet whose part is controlled by this node.
@@ -159,7 +159,7 @@ func (se *signingExecutor) sign(
 	startBlock uint64,
 ) (*tecdsa.Signature, uint64, error) {
 	if lockAcquired := se.lock.TryAcquire(1); !lockAcquired {
-		return nil, 0, signingExecutorBusyErr
+		return nil, 0, errSigningExecutorBusy
 	}
 	defer se.lock.Release(1)
 

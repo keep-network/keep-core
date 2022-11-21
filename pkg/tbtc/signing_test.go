@@ -63,7 +63,7 @@ func TestSigningExecutor_Sign_Busy(t *testing.T) {
 	time.Sleep(100 * time.Millisecond)
 
 	_, _, err := executor.sign(ctx, message, startBlock)
-	testutils.AssertErrorsSame(t, signingExecutorBusyErr, err)
+	testutils.AssertErrorsSame(t, errSigningExecutorBusy, err)
 }
 
 func TestSigningExecutor_SignBatch(t *testing.T) {

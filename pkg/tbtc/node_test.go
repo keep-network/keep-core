@@ -180,7 +180,7 @@ func createMockKeyStorePersistence(
 			// real world.
 			descriptor := &mockDescriptor{
 				name:      fmt.Sprintf("membership_%v", i+1),
-				directory: fmt.Sprintf("%s", key[2:]), // trim the 04 prefix
+				directory: key[2:], // trim the 04 prefix
 				content:   signerBytes,
 			}
 
