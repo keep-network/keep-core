@@ -2,6 +2,7 @@ package tecdsa
 
 import (
 	"fmt"
+	"math"
 	"math/big"
 
 	"github.com/bnb-chain/tss-lib/crypto"
@@ -185,9 +186,13 @@ func (s *Signature) Unmarshal(bytes []byte) error {
 		return fmt.Errorf("failed to unmarshal Signature: [%v]", err)
 	}
 
+	if id := pbMsg.RecoveryID; id > math.MaxInt8 || id < math.MinInt8 {
+		return fmt.Errorf("invalid recovery ID value: [%v]", id)
+	}
+
 	s.R = new(big.Int).SetBytes(pbMsg.R)
 	s.S = new(big.Int).SetBytes(pbMsg.S)
-	s.RecoveryID = int(pbMsg.RecoveryID)
+	s.RecoveryID = int8(pbMsg.RecoveryID)
 
 	return nil
 }

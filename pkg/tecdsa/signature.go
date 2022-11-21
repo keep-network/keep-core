@@ -15,7 +15,7 @@ import (
 type Signature struct {
 	R          *big.Int
 	S          *big.Int
-	RecoveryID int
+	RecoveryID int8
 }
 
 // NewSignature constructs a new instance of the tECDSA signature based on
@@ -30,7 +30,7 @@ func NewSignature(data *common.SignatureData) *Signature {
 	return &Signature{
 		R:          new(big.Int).SetBytes(data.GetR()),
 		S:          new(big.Int).SetBytes(data.GetS()),
-		RecoveryID: recoveryInt,
+		RecoveryID: int8(recoveryInt),
 	}
 }
 
