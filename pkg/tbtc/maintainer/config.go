@@ -2,8 +2,9 @@ package maintainer
 
 // Config contains maintainer configuration.
 type Config struct {
-	// Relay indicates whether maintainer should start the header relay.
-	Relay bool
+	// BitcoinDifficulty indicates whether the Bitcoin difficulty maintainer
+	// should be started.
+	BitcoinDifficulty bool
 
 	// TODO: Add options for other maintainer tasks, e.g. spv
 }

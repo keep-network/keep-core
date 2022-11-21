@@ -11,7 +11,6 @@ import (
 	"github.com/keep-network/keep-common/pkg/cmd/flag"
 	"github.com/keep-network/keep-common/pkg/rate"
 	"github.com/keep-network/keep-core/config"
-	"github.com/keep-network/keep-core/pkg/bitcoin/electrs"
 	chainEthereum "github.com/keep-network/keep-core/pkg/chain/ethereum"
 	"github.com/keep-network/keep-core/pkg/clientinfo"
 	"github.com/keep-network/keep-core/pkg/net/libp2p"
@@ -36,8 +35,8 @@ func initFlags(
 		switch category {
 		case config.Ethereum:
 			initEthereumFlags(cmd, cfg)
-		case config.Electrs:
-			initElectrsFlags(cmd, cfg)
+		case config.BitcoinElectrum:
+			initBitcoinElectrumFlags(cmd, cfg)
 		case config.Network:
 			initNetworkFlags(cmd, cfg)
 		case config.Storage:
@@ -46,8 +45,6 @@ func initFlags(
 			initClientInfoFlags(cmd, cfg)
 		case config.Tbtc:
 			initTbtcFlags(cmd, cfg)
-		case config.Maintainer:
-			initMaintainerFlags(cmd, cfg)
 		case config.Developer:
 			initDeveloperFlags(cmd)
 		}
@@ -155,28 +152,15 @@ func initEthereumFlags(cmd *cobra.Command, cfg *config.Config) {
 	)
 }
 
-// Initialize flags for Electrs configuration.
-func initElectrsFlags(cmd *cobra.Command, cfg *config.Config) {
+// Initialize flags for Bitcoin electrum configuration.
+func initBitcoinElectrumFlags(cmd *cobra.Command, cfg *config.Config) {
 	cmd.Flags().StringVar(
-		&cfg.Electrs.URL,
-		"electrs.url",
+		&cfg.Bitcoin.Electrum.URL,
+		"bitcoin.electrum.url",
 		"",
-		"URL for Electrs client connection.",
+		"URL for Bitcoin electrum client connection.",
 	)
-
-	cmd.Flags().DurationVar(
-		&cfg.Electrs.RequestTimeout,
-		"electrs.requestTimeout",
-		electrs.DefaultRequestTimeout,
-		"Timeout for Electrs client HTTP requests.",
-	)
-
-	cmd.Flags().DurationVar(
-		&cfg.Electrs.RetryTimeout,
-		"electrs.retryTimeout",
-		electrs.DefaultRetryTimeout,
-		"Timeout for Electrs client retries.",
-	)
+	// TODO: Initialize other config options from `electrum.Config`
 }
 
 // Initialize flags for Network configuration.
@@ -287,15 +271,12 @@ func initTbtcFlags(cmd *cobra.Command, cfg *config.Config) {
 		tbtc.DefaultKeyGenerationConcurrency,
 		"tECDSA key generation concurrency.",
 	)
-}
 
-// Initialize flags for Maintainer configuration.
-func initMaintainerFlags(command *cobra.Command, cfg *config.Config) {
-	command.Flags().BoolVar(
-		&cfg.Maintainer.Relay,
-		"relay",
+	cmd.Flags().BoolVar(
+		&cfg.Tbtc.Maintainer.BitcoinDifficulty,
+		"bitcoinDifficulty",
 		false,
-		"start relay",
+		"start Bitcoin difficulty maintainer",
 	)
 }
 

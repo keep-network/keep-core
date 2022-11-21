@@ -5,12 +5,11 @@ type Category int
 const (
 	General Category = iota
 	Ethereum
-	Electrs
+	BitcoinElectrum
 	Network
 	Storage
 	ClientInfo
 	Tbtc
-	Maintainer
 	Developer
 )
 
@@ -29,11 +28,10 @@ var StartCmdCategories = []Category{
 var AllCategories = []Category{
 	General,
 	Ethereum,
-	Electrs,
+	BitcoinElectrum,
 	Network,
 	Storage,
 	ClientInfo,
 	Tbtc,
-	Maintainer,
 	Developer,
 }

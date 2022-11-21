@@ -10,10 +10,8 @@ ConcurrencyLimit = 56
 MaxGasFeeCap = "148 Gwei"
 BalanceAlertThreshold = "2.3 ether"
 
-[Electrs]
-URL = "url.to.electrs:18332"
-RequestTimeout = "500ms"
-RetryTimeout = "10s"
+[bitcoin.electrum]
+URL = "url.to.electrum:18332"
 
 [network]
 Port = 27001
@@ -32,8 +30,8 @@ Port = 3498
 NetworkMetricsTick = "43s"
 EthereumMetricsTick = "1m27s"
 
-[maintainer]
-Relay = true
+[tbtc.maintainer]
+BitcoinDifficulty = true
 
 [developer]
 RandomBeaconAddress = "0xcf64c2a367341170cb4e09cf8c0ed137d8473ceb"
