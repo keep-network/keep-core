@@ -23,6 +23,10 @@ const (
 	signingBatchInterludeBlocks = 2
 )
 
+// signingExecutorBusyErr is an error returned when the signing executor
+// cannot execute the requested signature due to an ongoing signing.
+var signingExecutorBusyErr = fmt.Errorf("signing executor is busy")
+
 // signingExecutor is a component responsible for executing signing related to
 // a specific wallet whose part is controlled by this node.
 type signingExecutor struct {
@@ -89,7 +93,19 @@ func (se *signingExecutor) signBatch(
 	messagesDigests := make([]string, len(messages))
 	for i, message := range messages {
 		bytes := message.Bytes()
-		messagesDigests[i] = fmt.Sprintf("0x%x...%x", bytes[:2], bytes[len(bytes)-2:])
+
+		var messageDigest string
+		if len(bytes) > 8 {
+			messageDigest = fmt.Sprintf(
+				"0x%x...%x",
+				bytes[:2],
+				bytes[len(bytes)-2:],
+			)
+		} else {
+			messageDigest = fmt.Sprintf("0x%x", bytes)
+		}
+
+		messagesDigests[i] = messageDigest
 	}
 
 	signingBatchLogger := logger.With(
@@ -143,7 +159,7 @@ func (se *signingExecutor) sign(
 	startBlock uint64,
 ) (*tecdsa.Signature, uint64, error) {
 	if lockAcquired := se.lock.TryAcquire(1); !lockAcquired {
-		return nil, 0, fmt.Errorf("signing executor is busy")
+		return nil, 0, signingExecutorBusyErr
 	}
 	defer se.lock.Release(1)
 
