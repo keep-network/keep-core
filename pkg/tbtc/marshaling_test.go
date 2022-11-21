@@ -72,7 +72,7 @@ func TestFuzzSigningDoneMessage_MarshalingRoundtrip(t *testing.T) {
 		var (
 			senderID      group.MemberIndex
 			message       big.Int
-			attemptNumber uint
+			attemptNumber uint64
 			signature     tecdsa.Signature
 			endBlock      uint64
 		)

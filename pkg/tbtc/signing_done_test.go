@@ -36,7 +36,7 @@ func TestSigningDoneCheck(t *testing.T) {
 	defer cancelCtx()
 
 	message := big.NewInt(100)
-	attemptNumber := uint(2)
+	attemptNumber := uint64(2)
 	attemptMemberIndexes := memberIndexes[:chainConfig.HonestThreshold]
 	result := &signing.Result{
 		Signature: &tecdsa.Signature{

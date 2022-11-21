@@ -94,7 +94,7 @@ func (sdm *signingDoneMessage) Marshal() ([]byte, error) {
 	return proto.Marshal(&pb.SigningDoneMessage{
 		SenderID:      uint32(sdm.senderID),
 		Message:       sdm.message.Bytes(),
-		AttemptNumber: uint64(sdm.attemptNumber),
+		AttemptNumber: sdm.attemptNumber,
 		Signature:     signatureBytes,
 		EndBlock:      sdm.endBlock,
 	})
@@ -118,7 +118,7 @@ func (sdm *signingDoneMessage) Unmarshal(bytes []byte) error {
 
 	sdm.senderID = group.MemberIndex(pbMsg.SenderID)
 	sdm.message = new(big.Int).SetBytes(pbMsg.Message)
-	sdm.attemptNumber = uint(pbMsg.AttemptNumber)
+	sdm.attemptNumber = pbMsg.AttemptNumber
 	sdm.signature = signature
 	sdm.endBlock = pbMsg.EndBlock
 

@@ -60,7 +60,7 @@ type signingDoneCheckStrategy interface {
 		ctx context.Context,
 		memberIndex group.MemberIndex,
 		message *big.Int,
-		attemptNumber uint,
+		attemptNumber uint64,
 		attemptMembersIndexes []group.MemberIndex,
 		result *signing.Result,
 		endBlock uint64,
@@ -69,7 +69,7 @@ type signingDoneCheckStrategy interface {
 	listen(
 		ctx context.Context,
 		message *big.Int,
-		attemptNumber uint,
+		attemptNumber uint64,
 		attemptMembersIndexes []group.MemberIndex,
 	) (*signing.Result, uint64, error)
 }
@@ -311,7 +311,7 @@ func (srl *signingRetryLoop) start(
 				doneCheckTimeoutCtx,
 				srl.signingGroupMemberIndex,
 				srl.message,
-				srl.attemptCounter,
+				uint64(srl.attemptCounter),
 				includedMembersIndexes,
 				result,
 				endBlock,
@@ -343,7 +343,7 @@ func (srl *signingRetryLoop) start(
 			result, latestEndBlock, err := srl.doneCheck.listen(
 				doneCheckTimeoutCtx,
 				srl.message,
-				srl.attemptCounter,
+				uint64(srl.attemptCounter),
 				includedMembersIndexes,
 			)
 			if err != nil {

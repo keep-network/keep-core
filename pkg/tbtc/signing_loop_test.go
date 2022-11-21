@@ -58,8 +58,8 @@ func TestSigningRetryLoop(t *testing.T) {
 		ctxFn                       func() (context.Context, context.CancelFunc)
 		incomingAnnouncementsFn     func(sessionID string) ([]group.MemberIndex, error)
 		signingAttemptFn            signingAttemptFn
-		exchangeDoneChecksOutcomeFn func(attemptNumber uint, endBlock uint64) (uint64, error)
-		listenDoneChecksOutcomeFn   func(attemptNumber uint) (*signing.Result, uint64, error)
+		exchangeDoneChecksOutcomeFn func(attemptNumber uint64, endBlock uint64) (uint64, error)
+		listenDoneChecksOutcomeFn   func(attemptNumber uint64) (*signing.Result, uint64, error)
 		expectedOutgoingDoneChecks  []*signingDoneMessage
 		expectedErr                 error
 		expectedResult              *signingRetryLoopResult
@@ -82,7 +82,7 @@ func TestSigningRetryLoop(t *testing.T) {
 				return testResult, 215, nil // an arbitrary end block
 			},
 			exchangeDoneChecksOutcomeFn: func(
-				attemptNumber uint,
+				attemptNumber uint64,
 				endBlock uint64,
 			) (uint64, error) {
 				// Simulate that the done check phase determines the same
@@ -132,7 +132,7 @@ func TestSigningRetryLoop(t *testing.T) {
 				return testResult, 215, nil // an arbitrary end block
 			},
 			exchangeDoneChecksOutcomeFn: func(
-				attemptNumber uint,
+				attemptNumber uint64,
 				endBlock uint64,
 			) (uint64, error) {
 				// Simulate that the done check phase determines the same
@@ -186,7 +186,7 @@ func TestSigningRetryLoop(t *testing.T) {
 				return testResult, 247, nil // an arbitrary end block
 			},
 			exchangeDoneChecksOutcomeFn: func(
-				attemptNumber uint,
+				attemptNumber uint64,
 				endBlock uint64,
 			) (uint64, error) {
 				// Simulate that the done check phase determines the same
@@ -242,7 +242,7 @@ func TestSigningRetryLoop(t *testing.T) {
 				return testResult, 247, nil // an arbitrary end block
 			},
 			exchangeDoneChecksOutcomeFn: func(
-				attemptNumber uint,
+				attemptNumber uint64,
 				endBlock uint64,
 			) (uint64, error) {
 				// Simulate that the done check phase determines the same
@@ -298,7 +298,7 @@ func TestSigningRetryLoop(t *testing.T) {
 				return testResult, 247, nil // an arbitrary end block
 			},
 			exchangeDoneChecksOutcomeFn: func(
-				attemptNumber uint,
+				attemptNumber uint64,
 				endBlock uint64,
 			) (uint64, error) {
 				// Simulate that the done check phase determines the same
@@ -350,7 +350,7 @@ func TestSigningRetryLoop(t *testing.T) {
 				return nil, 0, fmt.Errorf("invalid data")
 			},
 			listenDoneChecksOutcomeFn: func(
-				attemptNumber uint,
+				attemptNumber uint64,
 			) (*signing.Result, uint64, error) {
 				// Simulate the result and the end block have been determined
 				// by listening for signing done checks.
@@ -404,7 +404,7 @@ func TestSigningRetryLoop(t *testing.T) {
 				panic("undefined behavior")
 			},
 			exchangeDoneChecksOutcomeFn: func(
-				attemptNumber uint,
+				attemptNumber uint64,
 				endBlock uint64,
 			) (uint64, error) {
 				// Fail the done check for the first attempt.
@@ -472,7 +472,7 @@ func TestSigningRetryLoop(t *testing.T) {
 				panic("undefined behavior")
 			},
 			listenDoneChecksOutcomeFn: func(
-				attemptNumber uint,
+				attemptNumber uint64,
 			) (*signing.Result, uint64, error) {
 				// Fail the done check for the first attempt.
 				if attemptNumber == 1 {
@@ -482,7 +482,7 @@ func TestSigningRetryLoop(t *testing.T) {
 				panic("undefined behavior")
 			},
 			exchangeDoneChecksOutcomeFn: func(
-				attemptNumber uint,
+				attemptNumber uint64,
 				endBlock uint64,
 			) (uint64, error) {
 				// Simulate that the done check phase determines the same
@@ -676,12 +676,12 @@ type mockSigningDoneCheck struct {
 	outgoingDoneChecks []*signingDoneMessage
 
 	exchangeDoneChecksOutcomeFn func(
-		attemptNumber uint,
+		attemptNumber uint64,
 		endBlock uint64,
 	) (uint64, error)
 
 	listenDoneChecksOutcomeFn func(
-		attemptNumber uint,
+		attemptNumber uint64,
 	) (*signing.Result, uint64, error)
 }
 
@@ -689,7 +689,7 @@ func (msdc *mockSigningDoneCheck) exchange(
 	ctx context.Context,
 	memberIndex group.MemberIndex,
 	message *big.Int,
-	attemptNumber uint,
+	attemptNumber uint64,
 	attemptMembersIndexes []group.MemberIndex,
 	result *signing.Result,
 	endBlock uint64,
@@ -708,7 +708,7 @@ func (msdc *mockSigningDoneCheck) exchange(
 func (msdc *mockSigningDoneCheck) listen(
 	ctx context.Context,
 	message *big.Int,
-	attemptNumber uint,
+	attemptNumber uint64,
 	attemptMembersIndexes []group.MemberIndex,
 ) (*signing.Result, uint64, error) {
 	return msdc.listenDoneChecksOutcomeFn(attemptNumber)

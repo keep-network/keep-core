@@ -15,7 +15,7 @@ import (
 type signingDoneMessage struct {
 	senderID      group.MemberIndex
 	message       *big.Int
-	attemptNumber uint
+	attemptNumber uint64
 	signature     *tecdsa.Signature
 	endBlock      uint64
 }
@@ -63,7 +63,7 @@ func (sdc *signingDoneCheck) exchange(
 	ctx context.Context,
 	memberIndex group.MemberIndex,
 	message *big.Int,
-	attemptNumber uint,
+	attemptNumber uint64,
 	attemptMembersIndexes []group.MemberIndex,
 	result *signing.Result,
 	endBlock uint64,
@@ -148,7 +148,7 @@ func (sdc *signingDoneCheck) exchange(
 func (sdc *signingDoneCheck) listen(
 	ctx context.Context,
 	message *big.Int,
-	attemptNumber uint,
+	attemptNumber uint64,
 	attemptMembersIndexes []group.MemberIndex,
 ) (*signing.Result, uint64, error) {
 	// Use a separate context for the message receiver as the receiver must
@@ -215,7 +215,7 @@ func (sdc *signingDoneCheck) isValidDoneMessage(
 	awaitingSenders map[group.MemberIndex]bool,
 	senderPublicKey []byte,
 	message *big.Int,
-	attemptNumber uint,
+	attemptNumber uint64,
 	signature *tecdsa.Signature,
 ) bool {
 	if !awaitingSenders[doneMessage.senderID] {
