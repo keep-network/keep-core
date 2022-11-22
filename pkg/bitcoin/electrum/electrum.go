@@ -49,6 +49,7 @@ func Connect(ctx context.Context, config Config) (bitcoin.Chain, error) {
 		client, err = electrum.NewClientTCP(ctx, config.URL)
 	case SSL:
 		// TODO: Implement certificate verification to be able to disable the `InsecureSkipVerify: true` workaround.
+		// #nosec G402 (TLS InsecureSkipVerify set true)
 		tlsConfig := &tls.Config{InsecureSkipVerify: true}
 		// TODO: Add retry to connection establishment.
 		client, err = electrum.NewClientSSL(ctx, config.URL, tlsConfig)
