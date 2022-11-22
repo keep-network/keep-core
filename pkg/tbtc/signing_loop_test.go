@@ -102,7 +102,7 @@ func TestSigningRetryLoop(t *testing.T) {
 			expectedResult: &signingRetryLoopResult{
 				result:              testResult,
 				latestEndBlock:      215, // the end block resolved by the done check phase
-				attemptTimeoutBlock: 226, // start block of the first attempt + 20
+				attemptTimeoutBlock: 236, // start block of the first attempt + 30
 			},
 			// The signing random retry algorithm invoked with the test seed
 			// excludes 4 members (6 is the honest threshold) from the first
@@ -110,7 +110,7 @@ func TestSigningRetryLoop(t *testing.T) {
 			expectedLastExecutedAttempt: &signingAttemptParams{
 				number:                 1,
 				startBlock:             206,
-				timeoutBlock:           226, // start block of the first attempt + 20
+				timeoutBlock:           236, // start block of the first attempt + 30
 				excludedMembersIndexes: []group.MemberIndex{3, 7, 8, 10},
 			},
 			outgoingAnnouncementsCount: 1,
@@ -152,7 +152,7 @@ func TestSigningRetryLoop(t *testing.T) {
 			expectedResult: &signingRetryLoopResult{
 				result:              testResult,
 				latestEndBlock:      215, // the end block resolved by the done check phase
-				attemptTimeoutBlock: 226, // start block of the first attempt + 20
+				attemptTimeoutBlock: 236, // start block of the first attempt + 30
 			},
 			// As only 6 members (honest threshold) announced their readiness,
 			// we don't have any other option than select them for the attempt.
@@ -160,7 +160,7 @@ func TestSigningRetryLoop(t *testing.T) {
 			expectedLastExecutedAttempt: &signingAttemptParams{
 				number:                 1,
 				startBlock:             206,
-				timeoutBlock:           226, // start block of the first attempt + 20
+				timeoutBlock:           236, // start block of the first attempt + 30
 				excludedMembersIndexes: []group.MemberIndex{4, 5, 8, 10},
 			},
 			outgoingAnnouncementsCount: 1,
@@ -183,7 +183,7 @@ func TestSigningRetryLoop(t *testing.T) {
 			signingAttemptFn: func(
 				attempt *signingAttemptParams,
 			) (*signing.Result, uint64, error) {
-				return testResult, 247, nil // an arbitrary end block
+				return testResult, 260, nil // an arbitrary end block
 			},
 			exchangeDoneChecksOutcomeFn: func(
 				attemptNumber uint64,
@@ -199,14 +199,14 @@ func TestSigningRetryLoop(t *testing.T) {
 					message:       message,
 					attemptNumber: 2,
 					signature:     testResult.Signature,
-					endBlock:      247,
+					endBlock:      260,
 				},
 			},
 			expectedErr: nil,
 			expectedResult: &signingRetryLoopResult{
 				result:              testResult,
-				latestEndBlock:      247, // the end block resolved by the done check phase
-				attemptTimeoutBlock: 257, // start block of the second attempt + 20
+				latestEndBlock:      260, // the end block resolved by the done check phase
+				attemptTimeoutBlock: 277, // start block of the second attempt + 30
 			},
 			// Member 3 is the executing one. The first attempt's announcement
 			// fails and the signing random retry algorithm invoked with the
@@ -216,8 +216,8 @@ func TestSigningRetryLoop(t *testing.T) {
 			// adds member 9 to the final excluded members list.
 			expectedLastExecutedAttempt: &signingAttemptParams{
 				number:                 2,
-				startBlock:             237, // 206 + 1 * (6 + 20 + 5)
-				timeoutBlock:           257, // start block of the second attempt + 20
+				startBlock:             247, // 206 + 1 * (6 + 30 + 5)
+				timeoutBlock:           277, // start block of the second attempt + 30
 				excludedMembersIndexes: []group.MemberIndex{1, 2, 5, 9},
 			},
 			outgoingAnnouncementsCount: 2,
@@ -239,7 +239,7 @@ func TestSigningRetryLoop(t *testing.T) {
 			signingAttemptFn: func(
 				attempt *signingAttemptParams,
 			) (*signing.Result, uint64, error) {
-				return testResult, 247, nil // an arbitrary end block
+				return testResult, 260, nil // an arbitrary end block
 			},
 			exchangeDoneChecksOutcomeFn: func(
 				attemptNumber uint64,
@@ -255,14 +255,14 @@ func TestSigningRetryLoop(t *testing.T) {
 					message:       message,
 					attemptNumber: 2,
 					signature:     testResult.Signature,
-					endBlock:      247,
+					endBlock:      260,
 				},
 			},
 			expectedErr: nil,
 			expectedResult: &signingRetryLoopResult{
 				result:              testResult,
-				latestEndBlock:      247, // the end block resolved by the done check phase
-				attemptTimeoutBlock: 257, // start block of the second attempt + 20
+				latestEndBlock:      260, // the end block resolved by the done check phase
+				attemptTimeoutBlock: 277, // start block of the second attempt + 30
 			},
 			// Member 4 is the executing one. The first attempt fails and
 			// the signing random retry algorithm invoked with the test seed
@@ -272,8 +272,8 @@ func TestSigningRetryLoop(t *testing.T) {
 			// member 9 to the final excluded members list.
 			expectedLastExecutedAttempt: &signingAttemptParams{
 				number:                 2,
-				startBlock:             237, // 206 + 1 * (6 + 20 + 5)
-				timeoutBlock:           257, // start block of the second attempt + 20
+				startBlock:             247, // 206 + 1 * (6 + 30 + 5)
+				timeoutBlock:           277, // start block of the second attempt + 30
 				excludedMembersIndexes: []group.MemberIndex{1, 2, 5, 9},
 			},
 			outgoingAnnouncementsCount: 2,
@@ -295,7 +295,7 @@ func TestSigningRetryLoop(t *testing.T) {
 					return nil, 0, fmt.Errorf("invalid data")
 				}
 
-				return testResult, 247, nil // an arbitrary end block
+				return testResult, 260, nil // an arbitrary end block
 			},
 			exchangeDoneChecksOutcomeFn: func(
 				attemptNumber uint64,
@@ -311,14 +311,14 @@ func TestSigningRetryLoop(t *testing.T) {
 					message:       message,
 					attemptNumber: 2,
 					signature:     testResult.Signature,
-					endBlock:      247,
+					endBlock:      260,
 				},
 			},
 			expectedErr: nil,
 			expectedResult: &signingRetryLoopResult{
 				result:              testResult,
-				latestEndBlock:      247, // the end block resolved by the done check phase
-				attemptTimeoutBlock: 257, // start block of the second attempt + 20
+				latestEndBlock:      260, // the end block resolved by the done check phase
+				attemptTimeoutBlock: 277, // start block of the second attempt + 30
 			},
 			// Member 4 is the executing one. The first attempt fails and
 			// the signing random retry algorithm invoked with the test seed
@@ -328,8 +328,8 @@ func TestSigningRetryLoop(t *testing.T) {
 			// member 9 to the final excluded members list.
 			expectedLastExecutedAttempt: &signingAttemptParams{
 				number:                 2,
-				startBlock:             237, // 206 + 1 * (6 + 20 + 5)
-				timeoutBlock:           257, // start block of the second attempt + 20
+				startBlock:             247, // 206 + 1 * (6 + 30 + 5)
+				timeoutBlock:           277, // start block of the second attempt + 30
 				excludedMembersIndexes: []group.MemberIndex{1, 2, 5, 9},
 			},
 			outgoingAnnouncementsCount: 2,
@@ -355,7 +355,7 @@ func TestSigningRetryLoop(t *testing.T) {
 				// Simulate the result and the end block have been determined
 				// by listening for signing done checks.
 				if attemptNumber == 2 {
-					return testResult, 247, nil
+					return testResult, 260, nil
 				}
 
 				panic("undefined behavior")
@@ -364,8 +364,8 @@ func TestSigningRetryLoop(t *testing.T) {
 			expectedErr:                nil,
 			expectedResult: &signingRetryLoopResult{
 				result:              testResult,
-				latestEndBlock:      247, // the end block resolved by the done check phase
-				attemptTimeoutBlock: 257, // start block of the second attempt + 20
+				latestEndBlock:      260, // the end block resolved by the done check phase
+				attemptTimeoutBlock: 277, // start block of the second attempt + 30
 			},
 			// Member 2 is the executing one. The first attempt fails
 			// and is the last attempt executed by this member because member
@@ -373,7 +373,7 @@ func TestSigningRetryLoop(t *testing.T) {
 			expectedLastExecutedAttempt: &signingAttemptParams{
 				number:                 1,
 				startBlock:             206,
-				timeoutBlock:           226, // start block of the first attempt + 20
+				timeoutBlock:           236, // start block of the first attempt + 30
 				excludedMembersIndexes: []group.MemberIndex{3, 7, 8, 10},
 			},
 			// The second announcement is done at the beginning of the
@@ -398,7 +398,7 @@ func TestSigningRetryLoop(t *testing.T) {
 				}
 
 				if attempt.number == 2 {
-					return testResult, 247, nil // an arbitrary end block
+					return testResult, 260, nil // an arbitrary end block
 				}
 
 				panic("undefined behavior")
@@ -429,14 +429,14 @@ func TestSigningRetryLoop(t *testing.T) {
 					message:       message,
 					attemptNumber: 2,
 					signature:     testResult.Signature,
-					endBlock:      247,
+					endBlock:      260,
 				},
 			},
 			expectedErr: nil,
 			expectedResult: &signingRetryLoopResult{
 				result:              testResult,
-				latestEndBlock:      247, // the end block resolved by the done check phase
-				attemptTimeoutBlock: 257, // start block of the second attempt + 20
+				latestEndBlock:      260, // the end block resolved by the done check phase
+				attemptTimeoutBlock: 277, // start block of the second attempt + 30
 			},
 			// Member 4 is the executing one. The first attempt done check
 			// exchange fails and the signing random retry algorithm invoked
@@ -446,8 +446,8 @@ func TestSigningRetryLoop(t *testing.T) {
 			// threshold size adds member 9 to the final excluded members list.
 			expectedLastExecutedAttempt: &signingAttemptParams{
 				number:                 2,
-				startBlock:             237, // 206 + 1 * (6 + 20 + 5)
-				timeoutBlock:           257, // start block of the second attempt + 20
+				startBlock:             247, // 206 + 1 * (6 + 30 + 5)
+				timeoutBlock:           277, // start block of the second attempt + 30
 				excludedMembersIndexes: []group.MemberIndex{1, 2, 5, 9},
 			},
 			outgoingAnnouncementsCount: 2,
@@ -466,7 +466,7 @@ func TestSigningRetryLoop(t *testing.T) {
 				attempt *signingAttemptParams,
 			) (*signing.Result, uint64, error) {
 				if attempt.number == 2 {
-					return testResult, 247, nil // an arbitrary end block
+					return testResult, 260, nil // an arbitrary end block
 				}
 
 				panic("undefined behavior")
@@ -476,7 +476,7 @@ func TestSigningRetryLoop(t *testing.T) {
 			) (*signing.Result, uint64, error) {
 				// Fail the done check for the first attempt.
 				if attemptNumber == 1 {
-					return nil, 247, fmt.Errorf("network error")
+					return nil, 260, fmt.Errorf("network error")
 				}
 
 				panic("undefined behavior")
@@ -495,14 +495,14 @@ func TestSigningRetryLoop(t *testing.T) {
 					message:       message,
 					attemptNumber: 2,
 					signature:     testResult.Signature,
-					endBlock:      247,
+					endBlock:      260,
 				},
 			},
 			expectedErr: nil,
 			expectedResult: &signingRetryLoopResult{
 				result:              testResult,
-				latestEndBlock:      247, // the end block resolved by the done check phase
-				attemptTimeoutBlock: 257, // start block of the second attempt + 20
+				latestEndBlock:      260, // the end block resolved by the done check phase
+				attemptTimeoutBlock: 277, // start block of the second attempt + 30
 			},
 			// Member 8 is the executing one and is excluded from the first attempt.
 			// The first attempt done check listen fails and the signing random
@@ -513,8 +513,8 @@ func TestSigningRetryLoop(t *testing.T) {
 			//member 9 to the final excluded members list.
 			expectedLastExecutedAttempt: &signingAttemptParams{
 				number:                 2,
-				startBlock:             237, // 206 + 1 * (6 + 20 + 5)
-				timeoutBlock:           257, // start block of the second attempt + 20
+				startBlock:             247, // 206 + 1 * (6 + 30 + 5)
+				timeoutBlock:           277, // start block of the second attempt + 30
 				excludedMembersIndexes: []group.MemberIndex{1, 2, 5, 9},
 			},
 			outgoingAnnouncementsCount: 2,
