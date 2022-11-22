@@ -179,5 +179,9 @@ func setupSigningExecutor(t *testing.T) *signingExecutor {
 		t.Fatal(err)
 	}
 
+	// Test block counter is much quicker than the real world one.
+	// Set more attempts to give more time for computations.
+	executor.signingAttemptsLimit *= 3
+
 	return executor
 }
