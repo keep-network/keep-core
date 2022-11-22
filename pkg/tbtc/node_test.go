@@ -138,10 +138,18 @@ func createMockSigner(t *testing.T) *signer {
 
 	privateKeyShare := tecdsa.NewPrivateKeyShare(testData[0])
 
+	signingGroupOperators := []chain.Address{
+		"address-1",
+		"address-2",
+		"address-3",
+		"address-3",
+		"address-5",
+	}
+
 	return &signer{
 		wallet: wallet{
 			publicKey:             privateKeyShare.PublicKey(),
-			signingGroupOperators: []chain.Address{},
+			signingGroupOperators: signingGroupOperators,
 		},
 		signingGroupMemberIndex: group.MemberIndex(1),
 		privateKeyShare:         privateKeyShare,
