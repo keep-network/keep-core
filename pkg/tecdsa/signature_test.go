@@ -61,6 +61,19 @@ func TestSignatureEquals(t *testing.T) {
 			},
 			expectedResult: true,
 		},
+		"both signatures' R are nil but recovery IDs are different": {
+			signature1: &Signature{
+				R:          nil,
+				S:          big.NewInt(200),
+				RecoveryID: 2,
+			},
+			signature2: &Signature{
+				R:          nil,
+				S:          big.NewInt(200),
+				RecoveryID: 3,
+			},
+			expectedResult: false,
+		},
 		"first signature's R is nil": {
 			signature1: &Signature{
 				R:          nil,
@@ -112,6 +125,19 @@ func TestSignatureEquals(t *testing.T) {
 				RecoveryID: 2,
 			},
 			expectedResult: true,
+		},
+		"both signatures' S are nil but recovery IDs are different": {
+			signature1: &Signature{
+				R:          big.NewInt(100),
+				S:          nil,
+				RecoveryID: 2,
+			},
+			signature2: &Signature{
+				R:          big.NewInt(100),
+				S:          nil,
+				RecoveryID: 3,
+			},
+			expectedResult: false,
 		},
 		"first signature's S is nil": {
 			signature1: &Signature{
