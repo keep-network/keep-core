@@ -19,9 +19,7 @@ var TbtcMaintainerCommand = &cobra.Command{
 		if err := clientConfig.ReadConfig(
 			configFilePath,
 			cmd.Flags(),
-			config.Ethereum,
-			config.BitcoinElectrum,
-			config.Tbtc,
+			config.TbtcMaintainerCategories...,
 		); err != nil {
 			logger.Fatalf("error reading config: %v", err)
 		}
@@ -34,9 +32,7 @@ func init() {
 		TbtcMaintainerCommand,
 		&configFilePath,
 		clientConfig,
-		config.Ethereum,
-		config.BitcoinElectrum,
-		config.Tbtc,
+		config.TbtcMaintainerCategories...,
 	)
 }
 

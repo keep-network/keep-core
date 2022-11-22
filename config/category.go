@@ -24,6 +24,13 @@ var StartCmdCategories = []Category{
 	Developer,
 }
 
+// TbtcMaintainerCategories are categories needed for the tBTC maintainer command.
+var TbtcMaintainerCategories = []Category{
+	Ethereum,
+	BitcoinElectrum,
+	Tbtc,
+}
+
 // AllCategories are all available categories.
 var AllCategories = []Category{
 	General,
