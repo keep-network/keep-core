@@ -10,14 +10,6 @@ import (
 
 var logger = log.Logger("keep-maintainer-bitcoin-difficulty")
 
-// BitcoinDifficultyChain is an interface that provides the ability to
-// communicate with the Bitcoin difficulty on-chain contract.
-type BitcoinDifficultyChain interface {
-	// Retarget adds a new epoch to the Bitcoin difficulty relay by providing
-	// a proof of the difficulty before and after the retarget.
-	Retarget(headers []bitcoin.BlockHeader) error
-}
-
 func newBitcoinDifficultyMaintainer(
 	ctx context.Context,
 	btcChain bitcoin.Chain,
