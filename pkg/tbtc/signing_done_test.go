@@ -106,7 +106,7 @@ func TestSigningDoneCheck(t *testing.T) {
 	for outcome := range outcomesChan {
 		if !result.Signature.Equals(outcome.signature) {
 			t.Errorf(
-				"unexpected signature in for member [%v]\n"+
+				"unexpected signature for member [%v]\n"+
 					"expected: [%v]\n"+
 					"actual:   [%v]",
 				outcome.memberIndex,
