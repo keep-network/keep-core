@@ -163,7 +163,7 @@ func Initialize(
 			}
 
 			logger.Infof(
-				"generated [%v] sigantures for messages [%s] as "+
+				"generated [%v] signatures for messages [%s] as "+
 					"requested from wallet [0x%x] at block [%v]",
 				len(signatures),
 				strings.Join(messagesDigests, ", "),
