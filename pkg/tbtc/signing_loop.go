@@ -193,13 +193,15 @@ func (srl *signingRetryLoop) start(
 		announcementStartBlock := srl.attemptStartBlock + signingAttemptAnnouncementDelayBlocks
 		err := waitForBlockFn(ctx, announcementStartBlock)
 		if err != nil {
-			return nil, fmt.Errorf(
-				"failed waiting for announcement start block [%v] "+
-					"for attempt [%v]: [%v]",
+			srl.logger.Errorf(
+				"[member:%v] failed waiting for announcement start "+
+					"block [%v] for attempt [%v]: [%v]; starting next attempt",
+				srl.signingGroupMemberIndex,
 				announcementStartBlock,
 				srl.attemptCounter,
 				err,
 			)
+			continue
 		}
 
 		// Set up the announcement phase stop signal.
