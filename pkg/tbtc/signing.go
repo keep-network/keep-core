@@ -175,13 +175,6 @@ func (se *signingExecutor) sign(
 	defer se.lock.Release(1)
 
 	wallet := se.wallet()
-	// Actual wallet signing group size may be different from the
-	// `GroupSize` parameter of the chain config.
-	signingGroupSize := len(wallet.signingGroupOperators)
-	// The dishonest threshold for the wallet signing group must be
-	// also calculated using the actual wallet signing group size.
-	signingGroupDishonestThreshold := signingGroupSize -
-		se.chainConfig.HonestThreshold
 
 	walletPublicKeyBytes, err := marshalPublicKey(wallet.publicKey)
 	if err != nil {
@@ -259,7 +252,7 @@ func (se *signingExecutor) sign(
 						"[member:%v] starting signing protocol "+
 							"with [%v] group members (excluded: [%v])",
 						signer.signingGroupMemberIndex,
-						signingGroupSize-len(attempt.excludedMembersIndexes),
+						wallet.groupSize()-len(attempt.excludedMembersIndexes),
 						attempt.excludedMembersIndexes,
 					)
 
@@ -283,8 +276,10 @@ func (se *signingExecutor) sign(
 						sessionID,
 						signer.signingGroupMemberIndex,
 						signer.privateKeyShare,
-						signingGroupSize,
-						signingGroupDishonestThreshold,
+						wallet.groupSize(),
+						wallet.groupDishonestThreshold(
+							se.chainConfig.HonestThreshold,
+						),
 						attempt.excludedMembersIndexes,
 						se.broadcastChannel,
 						se.membershipValidator,
