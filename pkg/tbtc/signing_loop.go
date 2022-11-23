@@ -281,6 +281,9 @@ func (srl *signingRetryLoop) start(
 
 		timeoutBlock := announcementEndBlock + signingAttemptMaximumProtocolBlocks
 
+		// doneCheckTimeoutCtx is active until the timeout even if the protocol
+		// completed successfully earlier. This is needed to ensure all protocol
+		// participants have a chance to receive signingDoneMessage.
 		doneCheckTimeoutCtx, _ := withCancelOnBlock(ctx, timeoutBlock, waitForBlockFn)
 
 		if !attemptSkipped {
