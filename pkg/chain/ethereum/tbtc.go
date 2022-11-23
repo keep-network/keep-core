@@ -12,10 +12,8 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 
 	"github.com/keep-network/keep-common/pkg/chain/ethereum"
-	"github.com/keep-network/keep-core/pkg/bitcoin"
 	"github.com/keep-network/keep-core/pkg/chain"
 	ecdsaContract "github.com/keep-network/keep-core/pkg/chain/ethereum/ecdsa/gen/contract"
-	tbtcContract "github.com/keep-network/keep-core/pkg/chain/ethereum/tbtc/gen/contract"
 	"github.com/keep-network/keep-core/pkg/operator"
 	"github.com/keep-network/keep-core/pkg/protocol/group"
 	"github.com/keep-network/keep-core/pkg/subscription"
@@ -27,7 +25,6 @@ import (
 const (
 	WalletRegistryContractName = "WalletRegistry"
 	BridgeContractName         = "Bridge"
-	LightRelayContractName     = "LightRelay"
 )
 
 // TbtcChain represents a TBTC-specific chain handle.
@@ -38,8 +35,6 @@ type TbtcChain struct {
 
 	mockWalletRegistry *mockWalletRegistry
 	sortitionPool      *ecdsaContract.EcdsaSortitionPool
-
-	lightRelay *tbtcContract.LightRelay
 }
 
 // NewTbtcChain construct a new instance of the TBTC-specific Ethereum
@@ -108,38 +103,11 @@ func newTbtcChain(
 		)
 	}
 
-	lightRelayAddress, err := config.ContractAddress(LightRelayContractName)
-	if err != nil {
-		return nil, fmt.Errorf(
-			"failed to attach to LightRelay contract: [%v]",
-			err,
-		)
-	}
-
-	lightRelay, err :=
-		tbtcContract.NewLightRelay(
-			lightRelayAddress,
-			baseChain.chainID,
-			baseChain.key,
-			baseChain.client,
-			baseChain.nonceManager,
-			baseChain.miningWaiter,
-			baseChain.blockCounter,
-			baseChain.transactionMutex,
-		)
-	if err != nil {
-		return nil, fmt.Errorf(
-			"failed to attach to EcdsaSortitionPool contract: [%v]",
-			err,
-		)
-	}
-
 	return &TbtcChain{
 		baseChain:          baseChain,
 		walletRegistry:     walletRegistry,
 		mockWalletRegistry: newMockWalletRegistry(baseChain.blockCounter),
 		sortitionPool:      sortitionPool,
-		lightRelay:         lightRelay,
 	}, nil
 }
 
@@ -423,47 +391,6 @@ func (tc *TbtcChain) OnSignatureRequested(
 	handler func(event *tbtc.SignatureRequestedEvent),
 ) subscription.EventSubscription {
 	return tc.mockWalletRegistry.OnSignatureRequested(handler)
-}
-
-// Ready checks whether the relay is active (i.e. genesis has been performed).
-func (tc *TbtcChain) Ready() (bool, error) {
-	return tc.lightRelay.Ready()
-}
-
-// AuthorizationRequired checks whether the relay requires the address
-// submitting a retarget to be authorised in advance by governance.
-func (tc *TbtcChain) AuthorizationRequired() (bool, error) {
-	return tc.lightRelay.AuthorizationRequired()
-}
-
-// IsAuthorized checks whether the given address has been authorised to submit
-// a retarget by governance.
-func (tc *TbtcChain) IsAuthorized(address chain.Address) (bool, error) {
-	return tc.lightRelay.IsAuthorized(common.HexToAddress(address.String()))
-}
-
-// Retarget adds a new epoch to the relay by providing a proof of the difficulty
-// before and after the retarget.
-func (tc *TbtcChain) Retarget(headers []*bitcoin.BlockHeader) error {
-	var serializedHeaders []byte
-	for _, header := range headers {
-		serializedHeader := header.Serialize()
-		serializedHeaders = append(serializedHeaders, serializedHeader[:]...)
-	}
-	_, err := tc.lightRelay.Retarget(serializedHeaders)
-	return err
-}
-
-// CurrentEpoch returns the number of the latest epoch whose difficulty is
-// proven to the relay.
-func (tc *TbtcChain) CurrentEpoch() (uint64, error) {
-	return tc.lightRelay.CurrentEpoch()
-}
-
-// ProofLength returns the number of blocks required for each side of a retarget
-// proof.
-func (tc *TbtcChain) ProofLength() (uint64, error) {
-	return tc.lightRelay.ProofLength()
 }
 
 // TODO: Temporary mock that simulates the behavior of the WalletRegistry
