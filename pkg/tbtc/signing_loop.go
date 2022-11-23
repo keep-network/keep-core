@@ -153,7 +153,9 @@ type signingRetryLoopResult struct {
 
 // start begins the signing retry loop using the given signing attempt function.
 // The retry loop terminates when the signing result is produced or the ctx
-// parameter is done, whatever comes first.
+// parameter is done, whatever comes first. The signing result is produced
+// only if all signers who participated in signing confirmed they are done
+// by sending a valid `signingDoneMessage` during the signing done check phase.
 func (srl *signingRetryLoop) start(
 	ctx context.Context,
 	waitForBlockFn waitForBlockFn,

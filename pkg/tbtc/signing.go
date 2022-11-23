@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 	"math/big"
-	"reflect"
 	"strings"
+	"sync"
 
 	"github.com/keep-network/keep-core/pkg/generator"
 	"github.com/keep-network/keep-core/pkg/net"
@@ -14,7 +14,6 @@ import (
 	"github.com/keep-network/keep-core/pkg/tecdsa"
 	"github.com/keep-network/keep-core/pkg/tecdsa/signing"
 	"go.uber.org/zap"
-	"golang.org/x/exp/slices"
 	"golang.org/x/sync/semaphore"
 )
 
@@ -199,18 +198,21 @@ func (se *signingExecutor) sign(
 		zap.Uint64("signingTimeoutBlock", loopTimeoutBlock),
 	)
 
-	type signerOutcome struct {
+	type signingOutcome struct {
 		signature *tecdsa.Signature
 		endBlock  uint64
-		err       error
 	}
 
-	signerOutcomesChan := make(chan *signerOutcome, len(se.signers))
+	wg := sync.WaitGroup{}
+	wg.Add(len(se.signers))
+	signingOutcomeChan := make(chan *signingOutcome, len(se.signers))
 
 	for _, currentSigner := range se.signers {
 		go func(signer *signer) {
 			se.protocolLatch.Lock()
 			defer se.protocolLatch.Unlock()
+
+			defer wg.Done()
 
 			announcer := announcer.New(
 				fmt.Sprintf("%v-%v", ProtocolName, "signing"),
@@ -311,12 +313,6 @@ func (se *signingExecutor) sign(
 					err,
 				)
 
-				signerOutcomesChan <- &signerOutcome{
-					signature: nil,
-					endBlock:  0,
-					err:       err,
-				}
-
 				return
 			}
 
@@ -349,46 +345,28 @@ func (se *signingExecutor) sign(
 				loopResult.latestEndBlock,
 			)
 
-			signerOutcomesChan <- &signerOutcome{
+			signingOutcomeChan <- &signingOutcome{
 				signature: loopResult.result.Signature,
 				endBlock:  loopResult.latestEndBlock,
-				err:       nil,
 			}
 		}(currentSigner)
 	}
 
-	signerOutcomes := make([]*signerOutcome, 0)
+	// Wait until all controlled signers complete their signing routines,
+	// regardless of their result.
+	wg.Wait()
 
-	for {
-		select {
-		case outcome := <-signerOutcomesChan:
-			signerOutcomes = append(signerOutcomes, outcome)
-
-			if len(signerOutcomes) == len(se.signers) {
-				outcomes := slices.CompactFunc(
-					signerOutcomes,
-					func(o1, o2 *signerOutcome) bool {
-						return o1.signature.Equals(o2.signature) &&
-							o1.endBlock == o2.endBlock &&
-							reflect.DeepEqual(o1.err, o2.err)
-					},
-				)
-
-				if len(outcomes) != 1 {
-					return nil, 0, fmt.Errorf("signers came to different outcomes")
-				}
-
-				commonOutcome := outcomes[0]
-
-				if err := commonOutcome.err; err != nil {
-					return nil, 0, fmt.Errorf("signers failed: [%v]", err)
-				}
-
-				return commonOutcome.signature, commonOutcome.endBlock, nil
-			}
-		case <-ctx.Done():
-			return nil, 0, ctx.Err()
-		}
+	// Take the first outcome from the channel as the outcome of all members.
+	// This assumption is totally valid because the signing loop produces a
+	// result only if all signers who participated in signing confirmed they
+	// are done by sending a valid `signingDoneMessage` during the signing done
+	// check phase. If the result was not inserted to the channel by any
+	// signer, that means all signers failed and have not produced a signature.
+	select {
+	case outcome := <-signingOutcomeChan:
+		return outcome.signature, outcome.endBlock, nil
+	default:
+		return nil, 0, fmt.Errorf("all signers failed")
 	}
 }
 
