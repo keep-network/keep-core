@@ -13,7 +13,6 @@ import (
 	"github.com/keep-network/keep-core/pkg/protocol/group"
 	"github.com/keep-network/keep-core/pkg/tecdsa"
 	"reflect"
-	"strings"
 	"testing"
 )
 
@@ -59,9 +58,12 @@ func TestNode_GetSigningExecutor(t *testing.T) {
 		len(node.signingExecutors),
 	)
 
-	executor, err := node.getSigningExecutor(walletPublicKey)
+	executor, ok, err := node.getSigningExecutor(walletPublicKey)
 	if err != nil {
 		t.Fatal(err)
+	}
+	if !ok {
+		t.Fatal("node is supposed to control wallet signers")
 	}
 
 	testutils.AssertIntsEqual(
@@ -94,9 +96,12 @@ func TestNode_GetSigningExecutor(t *testing.T) {
 		executor.broadcastChannel.Name(),
 	)
 
-	_, err = node.getSigningExecutor(walletPublicKey)
+	_, ok, err = node.getSigningExecutor(walletPublicKey)
 	if err != nil {
 		t.Fatal(err)
+	}
+	if !ok {
+		t.Fatal("node is supposed to control wallet signers")
 	}
 
 	// The executor was already created in the previous call so cached instance
@@ -118,12 +123,12 @@ func TestNode_GetSigningExecutor(t *testing.T) {
 		Y:     y,
 	}
 
-	_, err = node.getSigningExecutor(nonControlledWalletPublicKey)
-	if !strings.Contains(
-		err.Error(),
-		"node does not control signers of wallet with public key",
-	) {
-		t.Errorf("unexpected error")
+	_, ok, err = node.getSigningExecutor(nonControlledWalletPublicKey)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if ok {
+		t.Fatal("node is not supposed to control wallet signers")
 	}
 }
 

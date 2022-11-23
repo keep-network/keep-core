@@ -174,9 +174,12 @@ func setupSigningExecutor(t *testing.T) *signingExecutor {
 		Config{},
 	)
 
-	executor, err := node.getSigningExecutor(signers[0].wallet.publicKey)
+	executor, ok, err := node.getSigningExecutor(signers[0].wallet.publicKey)
 	if err != nil {
 		t.Fatal(err)
+	}
+	if !ok {
+		t.Fatal("node is supposed to control wallet signers")
 	}
 
 	// Test block counter is much quicker than the real world one.

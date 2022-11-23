@@ -144,11 +144,19 @@ func Initialize(
 				event.BlockNumber,
 			)
 
-			executor, err := node.getSigningExecutor(
+			executor, ok, err := node.getSigningExecutor(
 				unmarshalPublicKey(event.WalletPublicKey),
 			)
 			if err != nil {
 				logger.Errorf("cannot get signing executor: [%v]", err)
+				return
+			}
+			if !ok {
+				logger.Infof(
+					"node does not control signers of wallet "+
+						"with public key [0x%x]",
+					event.WalletPublicKey,
+				)
 				return
 			}
 

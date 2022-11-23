@@ -468,21 +468,23 @@ func (n *node) joinDKGIfEligible(seed *big.Int, startBlockNumber uint64) {
 
 // getSigningExecutor gets the signing executor responsible for executing
 // signing related to a specific wallet whose part is controlled by this node.
+// The second boolean return value indicates whether the node controls at least
+// one signer for the given wallet.
 func (n *node) getSigningExecutor(
 	walletPublicKey *ecdsa.PublicKey,
-) (*signingExecutor, error) {
+) (*signingExecutor, bool, error) {
 	n.signingExecutorsMutex.Lock()
 	defer n.signingExecutorsMutex.Unlock()
 
 	walletPublicKeyBytes, err := marshalPublicKey(walletPublicKey)
 	if err != nil {
-		return nil, fmt.Errorf("cannot marshal wallet public key: [%v]", err)
+		return nil, false, fmt.Errorf("cannot marshal wallet public key: [%v]", err)
 	}
 
 	executorKey := hex.EncodeToString(walletPublicKeyBytes)
 
 	if executor, exists := n.signingExecutors[executorKey]; exists {
-		return executor, nil
+		return executor, true, nil
 	}
 
 	executorLogger := logger.With(
@@ -491,10 +493,9 @@ func (n *node) getSigningExecutor(
 
 	signers := n.walletRegistry.getSigners(walletPublicKey)
 	if len(signers) == 0 {
-		return nil, fmt.Errorf(
-			"node does not control signers of wallet with public key [0x%x]",
-			walletPublicKeyBytes,
-		)
+		// This is not an error because the node simply does not control
+		// the given wallet.
+		return nil, false, nil
 	}
 
 	// All signers belong to one wallet. Take that wallet from the
@@ -509,7 +510,7 @@ func (n *node) getSigningExecutor(
 
 	broadcastChannel, err := n.netProvider.BroadcastChannelFor(channelName)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get broadcast channel: [%v]", err)
+		return nil, false, fmt.Errorf("failed to get broadcast channel: [%v]", err)
 	}
 
 	signing.RegisterUnmarshallers(broadcastChannel)
@@ -522,7 +523,7 @@ func (n *node) getSigningExecutor(
 
 	err = broadcastChannel.SetFilter(membershipValidator.IsInGroup)
 	if err != nil {
-		return nil, fmt.Errorf(
+		return nil, false, fmt.Errorf(
 			"could not set filter for channel [%v]: [%v]",
 			broadcastChannel.Name(),
 			err,
@@ -536,7 +537,7 @@ func (n *node) getSigningExecutor(
 
 	blockCounter, err := n.chain.BlockCounter()
 	if err != nil {
-		return nil, fmt.Errorf(
+		return nil, false, fmt.Errorf(
 			"could not get block counter: [%v]",
 			err,
 		)
@@ -555,7 +556,7 @@ func (n *node) getSigningExecutor(
 
 	n.signingExecutors[executorKey] = executor
 
-	return executor, nil
+	return executor, true, nil
 }
 
 // waitForBlockFn represents a function blocking the execution until the given
