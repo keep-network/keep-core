@@ -21,6 +21,24 @@ import (
 	"github.com/keep-network/keep-core/pkg/tecdsa/signing"
 )
 
+const (
+	// signingAttemptsLimit determines the maximum number of signing attempts
+	// that can be performed for the given message being subject of signing.
+	//
+	// The value of `5` should be enough to produce the signature even with
+	// `2` malicious members in a signing group of `100` members. To produce
+	// the signature, `51` members must be selected out of the honest `98`.
+	// The probability of successful signing in that case is:
+	// `P = (98 choose 51) / (100 choose 51) = ~0.24` which means we need
+	// `5` attempts on the worst case.
+	//
+	// A greater limit does not necessarily make sense. Presence of more than
+	// `2` malicious members in the signing group has a very small probability.
+	// Moreover, the signature must be produced in the reasonable time.
+	// That being said, the value `5` seems to be reasonable trade-off.
+	signingAttemptsLimit = 5
+)
+
 // TODO: Unit tests for `node.go`.
 
 // node represents the current state of an ECDSA node.
@@ -551,7 +569,7 @@ func (n *node) getSigningExecutor(
 		n.protocolLatch,
 		blockCounter.CurrentBlock,
 		n.waitForBlockHeight,
-		5,
+		signingAttemptsLimit,
 	)
 
 	n.signingExecutors[executorKey] = executor
