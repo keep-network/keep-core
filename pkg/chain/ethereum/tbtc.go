@@ -13,7 +13,7 @@ import (
 
 	"github.com/keep-network/keep-common/pkg/chain/ethereum"
 	"github.com/keep-network/keep-core/pkg/chain"
-	ecdsaContract "github.com/keep-network/keep-core/pkg/chain/ethereum/ecdsa/gen/contract"
+	"github.com/keep-network/keep-core/pkg/chain/ethereum/ecdsa/gen/contract"
 	"github.com/keep-network/keep-core/pkg/operator"
 	"github.com/keep-network/keep-core/pkg/protocol/group"
 	"github.com/keep-network/keep-core/pkg/subscription"
@@ -31,10 +31,10 @@ const (
 type TbtcChain struct {
 	*baseChain
 
-	walletRegistry *ecdsaContract.WalletRegistry
+	walletRegistry *contract.WalletRegistry
 
 	mockWalletRegistry *mockWalletRegistry
-	sortitionPool      *ecdsaContract.EcdsaSortitionPool
+	sortitionPool      *contract.EcdsaSortitionPool
 }
 
 // NewTbtcChain construct a new instance of the TBTC-specific Ethereum
@@ -60,7 +60,7 @@ func newTbtcChain(
 	}
 
 	walletRegistry, err :=
-		ecdsaContract.NewWalletRegistry(
+		contract.NewWalletRegistry(
 			walletRegistryAddress,
 			baseChain.chainID,
 			baseChain.key,
@@ -86,7 +86,7 @@ func newTbtcChain(
 	}
 
 	sortitionPool, err :=
-		ecdsaContract.NewEcdsaSortitionPool(
+		contract.NewEcdsaSortitionPool(
 			sortitionPoolAddress,
 			baseChain.chainID,
 			baseChain.key,
