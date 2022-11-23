@@ -231,7 +231,18 @@ func (se *signingExecutor) sign(
 				doneCheck,
 			)
 
-			// Set up the loop timeout signal.
+			// Set up the loop timeout signal. This context is associated with
+			// all attempts and gets canceled in three situations:
+			// - one of the attempts failed with an error,
+			// - we gave up after executing multiple attempts,
+			// - one of the attempts succeeded.
+			// In the last case, the context is not canceled immediately but,
+			// we wait until the timeout for the successful attempt is done.
+			// This lets the inner context to retransmit the signing done
+			// messages for a longer period of time than just for the actual
+			// execution time from the perspective of the current member.
+			// This is important to ensure everyone has a chance to receive
+			// the signing done message broadcasted by the current member.
 			loopCtx, cancelLoopCtx := withCancelOnBlock(
 				ctx,
 				loopTimeoutBlock,
@@ -311,7 +322,8 @@ func (se *signingExecutor) sign(
 				return
 			}
 
-			// Do not cancel the loopCtx upon function exit immediately and
+			// Just as mentioned in the comment above the definition of loopCtx,
+			// do not cancel the loopCtx upon function exit immediately and
 			// continue to broadcast signing done checks until the successful
 			// attempt timeout. This way we maximize the chance that other
 			// members, especially the ones not participating in the successful
