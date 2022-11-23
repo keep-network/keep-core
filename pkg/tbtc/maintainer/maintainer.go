@@ -12,7 +12,7 @@ func Initialize(
 	btcChain bitcoin.Chain,
 	chain BitcoinDifficultyChain,
 ) {
-	// If non of the maintainers was specified in the config (i.e. no option was
+	// If none of the maintainers was specified in the config (i.e. no option was
 	// provided to the `maintainer` command), all maintainers should be launched.
 	launchAll := !config.BitcoinDifficulty
 
