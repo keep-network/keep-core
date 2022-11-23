@@ -3,6 +3,10 @@ package tbtc
 import (
 	"context"
 	"fmt"
+	"math/big"
+	"reflect"
+	"strings"
+
 	"github.com/keep-network/keep-core/pkg/generator"
 	"github.com/keep-network/keep-core/pkg/net"
 	"github.com/keep-network/keep-core/pkg/protocol/announcer"
@@ -12,14 +16,22 @@ import (
 	"go.uber.org/zap"
 	"golang.org/x/exp/slices"
 	"golang.org/x/sync/semaphore"
-	"math/big"
-	"reflect"
-	"strings"
 )
 
 const (
 	// signingBatchInterludeBlocks determines the block duration of the
 	// interlude preserved between subsequent signings in a signing batch.
+	// If the signing of the previous message completed at block X, the signing
+	// of the next message starts at `X + signingBatchInterludeBlocks`.
+	// This is the additional time signers have to realize that the signing is
+	// done by receiving the signingDoneMessage. Note that the end block of the
+	// previous signing used to establish the start block of the next signing
+	// comes from signingDoneMessage received and there is no guarantee all
+	// signing group members received signingDoneMessage before the highest
+	// endBlock is reached on the chain. The interlude is an additional time for
+	// the broadcast channel to spread information about signing successfully
+	// completed by the slowest signing group member (the one who sends the
+	// signingDoneMessage as the last one).
 	signingBatchInterludeBlocks = 2
 )
 
