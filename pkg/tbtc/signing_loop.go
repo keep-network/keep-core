@@ -140,7 +140,7 @@ type signingAttemptFn func(*signingAttemptParams) (*signing.Result, uint64, erro
 
 // signingRetryLoopResult represents the result of the signing retry loop.
 type signingRetryLoopResult struct {
-	// result if the outcome of the signing process.
+	// result is the outcome of the signing process.
 	result *signing.Result
 	// latestEndBlock is the block at which the slowest signer of the successful
 	// signing attempt completed signature computation. This block is also
