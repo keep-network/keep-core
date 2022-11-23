@@ -16,12 +16,15 @@ const (
 	LightRelayContractName = "LightRelay"
 )
 
+// BitcoinDifficultyChain represents a Bitcoin difficulty-specific chain handle.
 type BitcoinDifficultyChain struct {
 	*baseChain
 
 	lightRelay *contract.LightRelay
 }
 
+// NewBitcoinDifficultyChain construct a new instance of the Bitcoin difficulty
+// - specific Ethereum chain handle.
 func NewBitcoinDifficultyChain(
 	config ethereum.Config,
 	baseChain *baseChain,
