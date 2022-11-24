@@ -268,6 +268,13 @@ func (se *signingExecutor) sign(
 					)
 
 					// Set up the attempt timeout signal.
+					// This context is associated with the current attempt and
+					// gets canceled when the timeout for the current attempt is
+					// hit. The context is not canceled earlier, even if the
+					// execution succeeded. This is needed to ensure all
+					// protocol participants, even the slowest one, have
+					// a chance to receive all messages sent by this member
+					// and complete the protocol.
 					attemptCtx, _ := withCancelOnBlock(
 						loopCtx,
 						attempt.timeoutBlock,
