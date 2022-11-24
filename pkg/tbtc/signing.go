@@ -105,6 +105,11 @@ func (se *signingExecutor) signBatch(
 	for i, message := range messages {
 		bytes := message.Bytes()
 
+		// Real-world messages are usually 32-byte however, test ones can be
+		// much shorter. The distinction of displaying whole messages up
+		// to 8 bytes is arbitrary though can be justified as digesting shorter
+		// values is rather an overkill. Having full messages while inspecting
+		// test logs may help while debugging.
 		var messageDigest string
 		if len(bytes) > 8 {
 			messageDigest = fmt.Sprintf(
