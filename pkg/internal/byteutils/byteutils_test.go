@@ -89,7 +89,18 @@ func TestReverse(t *testing.T) {
 
 	for testName, test := range tests {
 		t.Run(testName, func(t *testing.T) {
+			expectedSource := make([]byte, len(test.value))
+			copy(expectedSource, test.value)
+
 			actualResult := Reverse(test.value)
+
+			if !bytes.Equal(expectedSource, test.value) {
+				t.Errorf(
+					"source array was modified\nexpected: [%+v]\nactual:   [%+v]",
+					expectedSource,
+					test.value,
+				)
+			}
 
 			if !bytes.Equal(test.expectedResult, actualResult) {
 				t.Errorf(
