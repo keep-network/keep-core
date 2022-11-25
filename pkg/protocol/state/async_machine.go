@@ -68,11 +68,14 @@ func NewAsyncMachine(
 // Execute state machine starting with initial state up to finalization. It
 // requires the broadcast channel to be pre-initialized.
 func (am *AsyncMachine) Execute() (AsyncState, error) {
+	recvCtx, cancelRecvCtx := context.WithCancel(am.ctx)
+	defer cancelRecvCtx()
+
 	recvChan := make(chan net.Message, asyncReceiveBuffer)
 	handler := func(msg net.Message) {
 		recvChan <- msg
 	}
-	am.channel.Recv(am.ctx, handler)
+	am.channel.Recv(recvCtx, handler)
 
 	currentState := am.initialState
 
