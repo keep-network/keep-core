@@ -23,7 +23,7 @@ func (n Protocol) String() string {
 	return []string{"unknown", "tcp", "ssl"}[n]
 }
 
-// ParseProtocol parses string
+// ParseProtocol parses string.
 func ParseProtocol(str string) (Protocol, bool) {
 	c, ok := protocolMap[strings.ToLower(str)]
 	return c, ok
