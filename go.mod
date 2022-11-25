@@ -22,6 +22,7 @@ require (
 	github.com/btcsuite/btcd/v2 v2.0.0-00010101000000-000000000000
 	github.com/checksum0/go-electrum v0.0.0-20220912200153-b862ac442cf9
 	github.com/ethereum/go-ethereum v1.10.19
+	github.com/go-test/deep v1.0.8
 	github.com/google/gofuzz v1.1.1-0.20200604201612-c04b05f3adfa
 	github.com/hashicorp/go-multierror v1.1.1
 	github.com/ipfs/go-datastore v0.5.1
