@@ -13,20 +13,18 @@ import (
 // command-line subcommand.
 var TbtcMaintainerCommand = &cobra.Command{
 	Use:   "maintainer",
-	Short: `Starts tBTC maintainers`,
-	Long:  `The maintainer command starts tBTC maintainers`,
+	Short: `(experimental) Starts tBTC maintainers`,
+	Long:  `(experimental) The maintainer command starts tBTC maintainers`,
 	PreRun: func(cmd *cobra.Command, args []string) {
 		if err := clientConfig.ReadConfig(
 			configFilePath,
 			cmd.Flags(),
-			config.Ethereum,
-			config.BitcoinElectrum,
-			config.Tbtc,
+			config.TbtcMaintainerCategories...,
 		); err != nil {
 			logger.Fatalf("error reading config: %v", err)
 		}
 	},
-	RunE: TbtcMaintainer,
+	RunE: tbtcMaintainer,
 }
 
 func init() {
@@ -34,15 +32,13 @@ func init() {
 		TbtcMaintainerCommand,
 		&configFilePath,
 		clientConfig,
-		config.Ethereum,
-		config.BitcoinElectrum,
-		config.Tbtc,
+		config.TbtcMaintainerCategories...,
 	)
 }
 
-// TbtcMaintainer initializes maintainer tasks specified by flags passed to the
+// tbtcMaintainer initializes maintainer tasks specified by flags passed to the
 // maintainer command.
-func TbtcMaintainer(cmd *cobra.Command, args []string) error {
+func tbtcMaintainer(cmd *cobra.Command, args []string) error {
 	ctx := context.Background()
 
 	// TODO: Add connection to the Bitcoin electrum chain:
