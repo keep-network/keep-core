@@ -1,59 +1,74 @@
 package maintainer
 
 import (
+	"fmt"
 	"reflect"
 	"testing"
 
 	"github.com/keep-network/keep-core/pkg/bitcoin"
 )
 
-func TestGetBlockHeaders(t *testing.T) {
-	btcChain := bitcoin.ConnectLocal()
-
-	blockHeaders := map[uint]*bitcoin.BlockHeader{
-		700000: {
-			Version:                 0,
-			PreviousBlockHeaderHash: bitcoin.Hash{},
-			MerkleRootHash:          bitcoin.Hash{},
-			Time:                    11111,
-			Bits:                    2222,
-			Nonce:                   3333,
+func TestVerifySubmissionEligibility(t *testing.T) {
+	tests := map[string]struct {
+		ready                 bool
+		authorizationRequired bool
+		operatorAuthorized    bool
+		expectedErr           error
+	}{
+		"chain not ready": {
+			ready:                 false,
+			authorizationRequired: false,
+			operatorAuthorized:    false,
+			expectedErr:           fmt.Errorf("relay genesis has not been performed"),
 		},
-		700001: {
-			Version:                 0,
-			PreviousBlockHeaderHash: bitcoin.Hash{},
-			MerkleRootHash:          bitcoin.Hash{},
-			Time:                    222,
-			Bits:                    333,
-			Nonce:                   444,
+		"authorization not required": {
+			ready:                 true,
+			authorizationRequired: false,
+			operatorAuthorized:    false,
+			expectedErr:           nil,
 		},
-		700002: {
-			Version:                 0,
-			PreviousBlockHeaderHash: bitcoin.Hash{},
-			MerkleRootHash:          bitcoin.Hash{},
-			Time:                    555,
-			Bits:                    555,
-			Nonce:                   666,
+		"operator not authorized": {
+			ready:                 true,
+			authorizationRequired: true,
+			operatorAuthorized:    false,
+			expectedErr: fmt.Errorf(
+				"relay maintainer has not been authorized to submit block headers",
+			),
+		},
+		"operator authorized": {
+			ready:                 true,
+			authorizationRequired: true,
+			operatorAuthorized:    true,
+			expectedErr:           nil,
 		},
 	}
-	btcChain.SetBlockHeaders(blockHeaders)
 
-	bitcoinDifficultyMaintainer := &BitcoinDifficultyMaintainer{
-		btcChain: btcChain,
-		chain:    nil,
-	}
+	for testName, test := range tests {
+		t.Run(testName, func(t *testing.T) {
+			localChain := ConnectLocal()
+			operatorAddress := localChain.Signing().Address()
 
-	headers, err := bitcoinDifficultyMaintainer.getBlockHeaders(700000, 700002)
-	if err != nil {
-		t.Fatal(err)
-	}
+			localChain.SetReady(test.ready)
+			localChain.SetAuthorizationRequired(test.authorizationRequired)
+			localChain.SetAuthorizedOperator(
+				operatorAddress,
+				test.operatorAuthorized,
+			)
 
-	expectedHeaders := []*bitcoin.BlockHeader{
-		blockHeaders[700000], blockHeaders[700001], blockHeaders[700002],
-	}
+			bitcoinDifficultyMaintainer := &BitcoinDifficultyMaintainer{
+				btcChain: nil,
+				chain:    localChain,
+			}
 
-	if !reflect.DeepEqual(expectedHeaders, headers) {
-		t.Errorf("\nexpected: %v\nactual:   %v", expectedHeaders, headers)
+			err := bitcoinDifficultyMaintainer.verifySubmissionEligibility()
+			if !reflect.DeepEqual(test.expectedErr, err) {
+				t.Errorf(
+					"unexpected error\nexpected: %v\nactual:   %v\n",
+					test.expectedErr,
+					err,
+				)
+			}
+		})
 	}
 }
 
@@ -114,7 +129,7 @@ func TestProveSingleEpoch(t *testing.T) {
 	}
 	btcChain.SetBlockHeaders(blockHeaders)
 
-	chain := &localBitcoinDifficultyChain{}
+	chain := ConnectLocal()
 
 	chain.SetCurrentEpoch(299)
 	chain.SetProofLength(3)
@@ -159,5 +174,55 @@ func TestProveSingleEpoch(t *testing.T) {
 			expectedNewDifficulty,
 			eventsNewDifficulty,
 		)
+	}
+}
+
+func TestGetBlockHeaders(t *testing.T) {
+	btcChain := bitcoin.ConnectLocal()
+
+	blockHeaders := map[uint]*bitcoin.BlockHeader{
+		700000: {
+			Version:                 0,
+			PreviousBlockHeaderHash: bitcoin.Hash{},
+			MerkleRootHash:          bitcoin.Hash{},
+			Time:                    11111,
+			Bits:                    2222,
+			Nonce:                   3333,
+		},
+		700001: {
+			Version:                 0,
+			PreviousBlockHeaderHash: bitcoin.Hash{},
+			MerkleRootHash:          bitcoin.Hash{},
+			Time:                    222,
+			Bits:                    333,
+			Nonce:                   444,
+		},
+		700002: {
+			Version:                 0,
+			PreviousBlockHeaderHash: bitcoin.Hash{},
+			MerkleRootHash:          bitcoin.Hash{},
+			Time:                    555,
+			Bits:                    555,
+			Nonce:                   666,
+		},
+	}
+	btcChain.SetBlockHeaders(blockHeaders)
+
+	bitcoinDifficultyMaintainer := &BitcoinDifficultyMaintainer{
+		btcChain: btcChain,
+		chain:    nil,
+	}
+
+	headers, err := bitcoinDifficultyMaintainer.getBlockHeaders(700000, 700002)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	expectedHeaders := []*bitcoin.BlockHeader{
+		blockHeaders[700000], blockHeaders[700001], blockHeaders[700002],
+	}
+
+	if !reflect.DeepEqual(expectedHeaders, headers) {
+		t.Errorf("\nexpected: %v\nactual:   %v", expectedHeaders, headers)
 	}
 }
