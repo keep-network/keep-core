@@ -250,7 +250,7 @@ func (r *BitcoinDifficultyMaintainer) getBlockHeaders(
 		header, err := r.btcChain.GetBlockHeader(height)
 		if err != nil {
 			return []*bitcoin.BlockHeader{}, fmt.Errorf(
-				"failed to get block header at height [%v]: [%v]",
+				"failed to get block header at height %v: [%v]",
 				height,
 				err,
 			)
