@@ -1,6 +1,7 @@
 package bitcoin
 
 import (
+	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
 )
@@ -58,6 +59,12 @@ func NewHash(hash []byte, byteOrder ByteOrder) (Hash, error) {
 	}
 
 	return result, nil
+}
+
+// ComputeHash computes the Hash for the provided data.
+func ComputeHash(data []byte) Hash {
+	first := sha256.Sum256(data)
+	return sha256.Sum256(first[:])
 }
 
 // String returns the unprefixed hexadecimal string representation of the Hash
