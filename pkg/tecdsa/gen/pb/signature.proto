@@ -1,0 +1,10 @@
+syntax = "proto3";
+
+option go_package = "./pb";
+package tecdsa;
+
+message Signature {
+  bytes r = 1;
+  bytes s = 2;
+  int32 recoveryID = 3;
+}

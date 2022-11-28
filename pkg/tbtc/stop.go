@@ -70,19 +70,6 @@ func sendDkgStopPill(
 	return broadcastChannel.Send(ctx, stopPill)
 }
 
-func sendSigningStopPill(
-	ctx context.Context,
-	broadcastChannel net.BroadcastChannel,
-	messageToSign string,
-	attemptNumber uint,
-) error {
-	stopPill := &StopPill{
-		attemptNumber: uint64(attemptNumber),
-		messageToSign: messageToSign,
-	}
-	return broadcastChannel.Send(ctx, stopPill)
-}
-
 func cancelDkgContextOnStopSignal(
 	ctx context.Context,
 	cancelFn func(),
@@ -93,22 +80,6 @@ func cancelDkgContextOnStopSignal(
 		switch stopPill := msg.Payload().(type) {
 		case *StopPill:
 			if stopPill.dkgSeed == dkgSeed {
-				cancelFn()
-			}
-		}
-	})
-}
-
-func cancelSigningContextOnStopSignal(
-	ctx context.Context,
-	cancelFn func(),
-	broadcastChannel net.BroadcastChannel,
-	messageToSign string,
-) {
-	broadcastChannel.Recv(ctx, func(msg net.Message) {
-		switch stopPill := msg.Payload().(type) {
-		case *StopPill:
-			if stopPill.messageToSign == messageToSign {
 				cancelFn()
 			}
 		}
