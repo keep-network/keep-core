@@ -33,7 +33,18 @@ func (lc *LocalChain) BroadcastTransaction(transaction *Transaction) error {
 // GetCurrentBlockNumber gets the number of the current block. If the
 // current block was not determined, this function returns an error.
 func (lc *LocalChain) GetCurrentBlockNumber() (uint, error) {
-	panic("unsupported")
+	blockchainTip := uint(0)
+	for blockHeaderHeight := range lc.blockHeaders {
+		if blockHeaderHeight > blockchainTip {
+			blockchainTip = blockHeaderHeight
+		}
+	}
+
+	if blockchainTip == 0 {
+		return 0, fmt.Errorf("could not get current block block number")
+	}
+
+	return blockchainTip, nil
 }
 
 // GetBlockHeader gets the block header for the given block number. If the
