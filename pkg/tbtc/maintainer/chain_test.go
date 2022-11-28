@@ -63,6 +63,8 @@ func (lbdc *localBitcoinDifficultyChain) Retarget(
 	}
 	lbdc.retargetEvents = append(lbdc.retargetEvents, retargetEvent)
 
+	lbdc.currentEpoch++
+
 	return nil
 }
 

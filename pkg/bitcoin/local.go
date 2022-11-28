@@ -41,7 +41,7 @@ func (lc *LocalChain) GetCurrentBlockNumber() (uint, error) {
 	}
 
 	if blockchainTip == 0 {
-		return 0, fmt.Errorf("could not get current block block number")
+		return 0, fmt.Errorf("blockchain does not contain any blocks")
 	}
 
 	return blockchainTip, nil
@@ -54,7 +54,7 @@ func (lc *LocalChain) GetBlockHeader(blockNumber uint) (*BlockHeader, error) {
 	blockHeader, found := lc.blockHeaders[blockNumber]
 	if !found {
 		return nil, fmt.Errorf(
-			"could not find block header at height %v",
+			"block header at height %v does not exist",
 			blockNumber,
 		)
 	}

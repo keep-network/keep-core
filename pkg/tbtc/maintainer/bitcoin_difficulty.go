@@ -10,14 +10,14 @@ import (
 )
 
 const (
-	// Back-off time which should be applied when the bitcoin difficulty
-	// maintainer is restarted. It helps to avoid being flooded with error logs
-	// in case of a permanent error  in the relay.
-	restartBackoffTime = 10 * time.Second
+	// Default value for back-off time which should be applied when the bitcoin
+	// difficulty maintainer is restarted. It helps to avoid being flooded with
+	// error logs in case of a permanent error  in the relay.
+	defaultRestartBackoffTime = 10 * time.Second
 
-	// Backoff time which should be applied after each attempt to prove a single
-	// Bitcoin epoch.
-	epochProvenBackOffTime = 60 * time.Second
+	// Default value for backoff time which should be applied after each attempt
+	// to prove a single Bitcoin epoch.
+	defaultEpochProvenBackOffTime = 60 * time.Second
 
 	// The number of blocks in a Bitcoin epoch.
 	bitcoinEpochLength = 2016
@@ -29,10 +29,14 @@ func initializeBitcoinDifficultyMaintainer(
 	ctx context.Context,
 	btcChain bitcoin.Chain,
 	chain BitcoinDifficultyChain,
+	epochProvenBackOffTime time.Duration,
+	restartBackOffTime time.Duration,
 ) {
 	bitcoinDifficultyMaintainer := &BitcoinDifficultyMaintainer{
-		btcChain: btcChain,
-		chain:    chain,
+		btcChain:               btcChain,
+		chain:                  chain,
+		epochProvenBackOffTime: epochProvenBackOffTime,
+		restartBackOffTime:     restartBackOffTime,
 	}
 
 	go bitcoinDifficultyMaintainer.startControlLoop(ctx)
@@ -43,11 +47,14 @@ func initializeBitcoinDifficultyMaintainer(
 type BitcoinDifficultyMaintainer struct {
 	btcChain bitcoin.Chain
 	chain    BitcoinDifficultyChain
+
+	epochProvenBackOffTime time.Duration
+	restartBackOffTime     time.Duration
 }
 
 // startControlLoop starts the loop responsible for controlling the Bitcoin
 // difficulty maintainer.
-func (r *BitcoinDifficultyMaintainer) startControlLoop(ctx context.Context) {
+func (bdm *BitcoinDifficultyMaintainer) startControlLoop(ctx context.Context) {
 	logger.Info("starting Bitcoin difficulty maintainer")
 
 	defer func() {
@@ -59,7 +66,7 @@ func (r *BitcoinDifficultyMaintainer) startControlLoop(ctx context.Context) {
 		case <-ctx.Done():
 			return
 		default:
-			err := r.proveEpochs(ctx)
+			err := bdm.proveEpochs(ctx)
 			if err != nil {
 				logger.Errorf(
 					"restarting relay maintainer due to error while proving "+
@@ -68,14 +75,13 @@ func (r *BitcoinDifficultyMaintainer) startControlLoop(ctx context.Context) {
 				)
 			}
 		}
-
-		time.Sleep(restartBackoffTime)
+		time.Sleep(bdm.restartBackOffTime)
 	}
 }
 
 // proveEpochs proves Bitcoin blockchain epochs in the relay chain.
-func (r *BitcoinDifficultyMaintainer) proveEpochs(ctx context.Context) error {
-	if err := r.verifySubmissionEligibility(); err != nil {
+func (bdm *BitcoinDifficultyMaintainer) proveEpochs(ctx context.Context) error {
+	if err := bdm.verifySubmissionEligibility(); err != nil {
 		return fmt.Errorf(
 			"cannot proceed with proving Bitcoin blockchain epochs in the "+
 				"relay chain [%v]",
@@ -84,7 +90,7 @@ func (r *BitcoinDifficultyMaintainer) proveEpochs(ctx context.Context) error {
 	}
 
 	for {
-		if err := r.proveSingleEpoch(); err != nil {
+		if err := bdm.proveSingleEpoch(); err != nil {
 			return fmt.Errorf(
 				"cannot prove Bitcoin blockchain epoch to the relay chain [%v]",
 				err,
@@ -92,7 +98,7 @@ func (r *BitcoinDifficultyMaintainer) proveEpochs(ctx context.Context) error {
 		}
 
 		select {
-		case <-time.After(epochProvenBackOffTime):
+		case <-time.After(bdm.epochProvenBackOffTime):
 		case <-ctx.Done():
 			return ctx.Err()
 		}
@@ -101,8 +107,8 @@ func (r *BitcoinDifficultyMaintainer) proveEpochs(ctx context.Context) error {
 
 // verifySubmissionEligibility verifies whether a relay maintainer is eligible
 // to submit block headers to the relay chain.
-func (r *BitcoinDifficultyMaintainer) verifySubmissionEligibility() error {
-	isReady, err := r.chain.Ready()
+func (bdm *BitcoinDifficultyMaintainer) verifySubmissionEligibility() error {
+	isReady, err := bdm.chain.Ready()
 	if err != nil {
 		return fmt.Errorf(
 			"cannot check whether relay genesis has been performed [%v]",
@@ -114,7 +120,7 @@ func (r *BitcoinDifficultyMaintainer) verifySubmissionEligibility() error {
 		return fmt.Errorf("relay genesis has not been performed")
 	}
 
-	isAuthorizationRequired, err := r.chain.IsAuthorizationRequired()
+	isAuthorizationRequired, err := bdm.chain.IsAuthorizationRequired()
 	if err != nil {
 		return fmt.Errorf(
 			"cannot check whether authorization is required to submit "+
@@ -127,9 +133,9 @@ func (r *BitcoinDifficultyMaintainer) verifySubmissionEligibility() error {
 		return nil
 	}
 
-	maintainerAddress := r.chain.Signing().Address()
+	maintainerAddress := bdm.chain.Signing().Address()
 
-	isAuthorized, err := r.chain.IsAuthorized(maintainerAddress)
+	isAuthorized, err := bdm.chain.IsAuthorized(maintainerAddress)
 	if err != nil {
 		return fmt.Errorf(
 			"cannot check whether relay maintainer is authorized to "+
@@ -149,9 +155,9 @@ func (r *BitcoinDifficultyMaintainer) verifySubmissionEligibility() error {
 
 // proveSingleEpoch proves a single Bitcoin blockchain epoch in the relay chain
 // if there is a Bitcoin blockchain epoch to be proven.
-func (r *BitcoinDifficultyMaintainer) proveSingleEpoch() error {
+func (bdm *BitcoinDifficultyMaintainer) proveSingleEpoch() error {
 	// The height of the Bitcoin blockchain.
-	currentBlockNumber, err := r.btcChain.GetCurrentBlockNumber()
+	currentBlockNumber, err := bdm.btcChain.GetCurrentBlockNumber()
 	if err != nil {
 		return fmt.Errorf(
 			"failed to get current block number [%v]",
@@ -160,7 +166,7 @@ func (r *BitcoinDifficultyMaintainer) proveSingleEpoch() error {
 	}
 
 	// The current epoch proven in the relay chain.
-	currentEpoch, err := r.chain.CurrentEpoch()
+	currentEpoch, err := bdm.chain.CurrentEpoch()
 	if err != nil {
 		return fmt.Errorf(
 			"failed to get current epoch [%v]",
@@ -169,7 +175,7 @@ func (r *BitcoinDifficultyMaintainer) proveSingleEpoch() error {
 	}
 
 	// The number of blocks required for each side of a retarget proof.
-	proofLength, err := r.chain.ProofLength()
+	proofLength, err := bdm.chain.ProofLength()
 	if err != nil {
 		return fmt.Errorf(
 			"failed to get proof length [%v]",
@@ -202,7 +208,7 @@ func (r *BitcoinDifficultyMaintainer) proveSingleEpoch() error {
 	// blockchain only if the blockchain height is equal to or greater than
 	// the end of the range.
 	if currentBlockNumber >= lastBlockHeaderHeight {
-		headers, err := r.getBlockHeaders(
+		headers, err := bdm.getBlockHeaders(
 			firstBlockHeaderHeight,
 			lastBlockHeaderHeight,
 		)
@@ -213,7 +219,7 @@ func (r *BitcoinDifficultyMaintainer) proveSingleEpoch() error {
 			)
 		}
 
-		if err := r.chain.Retarget(headers); err != nil {
+		if err := bdm.chain.Retarget(headers); err != nil {
 			return fmt.Errorf(
 				"failed to submit block headers from range [%v, %v] to "+
 					"the relay chain [%v]",
@@ -238,7 +244,7 @@ func (r *BitcoinDifficultyMaintainer) proveSingleEpoch() error {
 }
 
 // getBlockHeaders returns block headers from the given range.
-func (r *BitcoinDifficultyMaintainer) getBlockHeaders(
+func (bdm *BitcoinDifficultyMaintainer) getBlockHeaders(
 	firstHeaderHeight,
 	lastHeaderHeight uint,
 ) (
@@ -247,7 +253,7 @@ func (r *BitcoinDifficultyMaintainer) getBlockHeaders(
 	var headers []*bitcoin.BlockHeader
 
 	for height := firstHeaderHeight; height <= lastHeaderHeight; height++ {
-		header, err := r.btcChain.GetBlockHeader(height)
+		header, err := bdm.btcChain.GetBlockHeader(height)
 		if err != nil {
 			return []*bitcoin.BlockHeader{}, fmt.Errorf(
 				"failed to get block header at height %v: [%v]",
