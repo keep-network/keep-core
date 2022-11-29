@@ -100,6 +100,10 @@ func TestReadConfigFromFile(t *testing.T) {
 			},
 			expectedValue: "0x138D2a0c87BA9f6BE1DCc13D6224A6aCE9B6b6F0",
 		},
+		"Bitcoin.Electrum.URL": {
+			readValueFunc: func(c *Config) interface{} { return c.Bitcoin.Electrum.URL },
+			expectedValue: "url.to.electrum:18332",
+		},
 		"Network.Port": {
 			readValueFunc: func(c *Config) interface{} { return c.LibP2P.Port },
 			expectedValue: 27001,
@@ -137,6 +141,10 @@ func TestReadConfigFromFile(t *testing.T) {
 		"ClientInfo.EthereumMetricsTick": {
 			readValueFunc: func(c *Config) interface{} { return c.ClientInfo.EthereumMetricsTick },
 			expectedValue: 87 * time.Second,
+		},
+		"Tbtc.Maintainer.BitcoinDifficulty": {
+			readValueFunc: func(c *Config) interface{} { return c.Tbtc.Maintainer.BitcoinDifficulty },
+			expectedValue: true,
 		},
 	}
 
