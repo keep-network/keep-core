@@ -1,13 +1,5 @@
 package bitcoin
 
-const (
-	// TransactionVersion is the current latest supported transaction version.
-	TransactionVersion = 1
-	// MaxTransactionInputSequence is the maximum sequence number the sequence
-	// field of a transaction input can be.
-	MaxTransactionInputSequence uint32 = 0xffffffff
-)
-
 // Transaction represents a Bitcoin transaction. For reference, see:
 // https://developer.bitcoin.org/reference/transactions.html#raw-transaction-format
 type Transaction struct {
@@ -21,36 +13,6 @@ type Transaction struct {
 	// block number, interpreted according to the locktime parsing rules:
 	// https://developer.bitcoin.org/devguide/transactions.html#locktime-and-sequence-number
 	Locktime uint32
-}
-
-// NewTransaction constructs an empty Transaction instance.
-func NewTransaction() *Transaction {
-	return &Transaction{
-		Version:  TransactionVersion,
-		Inputs:   make([]*TransactionInput, 0),
-		Outputs:  make([]*TransactionOutput, 0),
-		Locktime: 0,
-	}
-}
-
-// AddInput adds a new unsigned TransactionInput pointing to the provided
-// TransactionOutpoint.
-func (t *Transaction) AddInput(outpoint *TransactionOutpoint) {
-	t.Inputs = append(t.Inputs, &TransactionInput{
-		Outpoint:        outpoint,
-		SignatureScript: nil,
-		Witness:         nil,
-		Sequence:        MaxTransactionInputSequence,
-	})
-}
-
-// AddOutput adds a new TransactionOutput of the given value and locked
-// using the provided publicKeyScript.
-func (t *Transaction) AddOutput(publicKeyScript []byte, value int64) {
-	t.Outputs = append(t.Outputs, &TransactionOutput{
-		Value:           value,
-		PublicKeyScript: publicKeyScript,
-	})
 }
 
 // Serialize serializes the transaction to a byte array using the traditional

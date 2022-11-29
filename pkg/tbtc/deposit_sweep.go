@@ -10,21 +10,23 @@ func assembleDepositSweepTransaction(
 	walletMainUtxo *bitcoin.UnspentTransactionOutput,
 	deposits []*deposit,
 	fee int64,
-) (*bitcoin.Transaction, error) {
+) (*bitcoin.TransactionBuilder, error) {
 	if len(deposits) < 1 {
 		return nil, fmt.Errorf("at least one deposit is required")
 	}
 
-	transaction := bitcoin.NewTransaction()
+	builder := bitcoin.NewTransactionBuilder()
 	totalInputsValue := int64(0)
 
 	if walletMainUtxo != nil {
-		transaction.AddInput(walletMainUtxo.Outpoint)
+		// TODO: Set proper scriptCode and witness.
+		builder.AddInput(walletMainUtxo, nil, false)
 		totalInputsValue += walletMainUtxo.Value
 	}
 
 	for _, deposit := range deposits {
-		transaction.AddInput(deposit.utxo.Outpoint)
+		// TODO: Set proper scriptCode and witness.
+		builder.AddInput(deposit.utxo, nil, false)
 		totalInputsValue += deposit.utxo.Value
 	}
 
@@ -36,7 +38,10 @@ func assembleDepositSweepTransaction(
 
 	outputValue := totalInputsValue - fee
 
-	transaction.AddOutput(outputScript, outputValue)
+	builder.AddOutput(&bitcoin.TransactionOutput{
+		Value:           outputValue,
+		PublicKeyScript: outputScript,
+	})
 
-	return transaction, nil
+	return builder, nil
 }
