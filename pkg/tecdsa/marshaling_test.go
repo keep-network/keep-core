@@ -2,6 +2,8 @@ package tecdsa
 
 import (
 	"crypto/elliptic"
+	fuzz "github.com/google/gofuzz"
+	"math/big"
 	"reflect"
 	"testing"
 
@@ -50,4 +52,51 @@ func TestPrivateKeyShareMarshalling_NonTECDSAKey(t *testing.T) {
 	_, err = privateKeyShare.Marshal()
 
 	testutils.AssertErrorsSame(t, ErrIncompatiblePublicKey, err)
+}
+
+func TestSignature_MarshalingRoundtrip(t *testing.T) {
+	signature := &Signature{
+		R:          big.NewInt(100),
+		S:          big.NewInt(200),
+		RecoveryID: 2,
+	}
+
+	unmarshaled := &Signature{}
+
+	if err := pbutils.RoundTrip(signature, unmarshaled); err != nil {
+		t.Fatal(err)
+	}
+	if !reflect.DeepEqual(signature, unmarshaled) {
+		t.Fatal("unexpected content of unmarshaled signature")
+	}
+}
+
+func TestFuzzSignature_MarshalingRoundtrip(t *testing.T) {
+	for i := 0; i < 10; i++ {
+		var (
+			r          big.Int
+			s          big.Int
+			recoveryID int8
+		)
+
+		f := fuzz.New().NilChance(0.1).
+			NumElements(0, 512).
+			Funcs(pbutils.FuzzFuncs()...)
+
+		f.Fuzz(&r)
+		f.Fuzz(&s)
+		f.Fuzz(&recoveryID)
+
+		signature := &Signature{
+			R:          &r,
+			S:          &s,
+			RecoveryID: recoveryID,
+		}
+
+		_ = pbutils.RoundTrip(signature, &Signature{})
+	}
+}
+
+func TestFuzzSignature_Unmarshaler(t *testing.T) {
+	pbutils.FuzzUnmarshaler(&Signature{})
 }

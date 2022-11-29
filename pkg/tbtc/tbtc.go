@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"runtime"
+	"strings"
 	"time"
 
 	"github.com/ipfs/go-log"
@@ -13,6 +14,7 @@ import (
 	"github.com/keep-network/keep-core/pkg/generator"
 	"github.com/keep-network/keep-core/pkg/net"
 	"github.com/keep-network/keep-core/pkg/sortition"
+	"github.com/keep-network/keep-core/pkg/tbtc/maintainer"
 )
 
 // TODO: Unit tests for `tbtc.go`.
@@ -43,6 +45,9 @@ type Config struct {
 	PreParamsGenerationConcurrency int
 	// Concurrency level for key-generation for tECDSA.
 	KeyGenerationConcurrency int
+
+	// Maintainer defines the configuration for the tBTC maintainer.
+	Maintainer maintainer.Config
 }
 
 // Initialize kicks off the TBTC by initializing internal state, ensuring
@@ -125,18 +130,56 @@ func Initialize(
 	_ = chain.OnSignatureRequested(func(event *SignatureRequestedEvent) {
 		go func() {
 			// There is no need to deduplicate. Test loop events are unique.
+			messagesDigests := make([]string, len(event.Messages))
+			for i, message := range event.Messages {
+				bytes := message.Bytes()
+				messagesDigests[i] = fmt.Sprintf(
+					"0x%x...%x",
+					bytes[:2],
+					bytes[len(bytes)-2:],
+				)
+			}
 
 			logger.Infof(
-				"signature of message [0x%x] requested from "+
+				"signature of messages [%s] requested from "+
 					"wallet [0x%x] at block [%v]",
-				event.Message,
+				strings.Join(messagesDigests, ", "),
 				event.WalletPublicKey,
 				event.BlockNumber,
 			)
 
-			node.joinSigningIfEligible(
-				event.Message,
+			executor, ok, err := node.getSigningExecutor(
 				unmarshalPublicKey(event.WalletPublicKey),
+			)
+			if err != nil {
+				logger.Errorf("cannot get signing executor: [%v]", err)
+				return
+			}
+			if !ok {
+				logger.Infof(
+					"node does not control signers of wallet "+
+						"with public key [0x%x]",
+					event.WalletPublicKey,
+				)
+				return
+			}
+
+			signatures, err := executor.signBatch(
+				context.TODO(),
+				event.Messages,
+				event.BlockNumber,
+			)
+			if err != nil {
+				logger.Errorf("cannot sign batch: [%v]", err)
+				return
+			}
+
+			logger.Infof(
+				"generated [%v] signatures for messages [%s] as "+
+					"requested from wallet [0x%x] at block [%v]",
+				len(signatures),
+				strings.Join(messagesDigests, ", "),
+				event.WalletPublicKey,
 				event.BlockNumber,
 			)
 		}()

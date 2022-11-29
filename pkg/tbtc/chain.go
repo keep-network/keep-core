@@ -105,7 +105,7 @@ type BridgeChain interface {
 //       is integrated with real on-chain contracts.
 type SignatureRequestedEvent struct {
 	WalletPublicKey []byte
-	Message         *big.Int
+	Messages        []*big.Int
 	BlockNumber     uint64
 }
 

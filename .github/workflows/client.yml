@@ -82,7 +82,7 @@ jobs:
             ${{ runner.os }}-buildx-
 
       - name: Build Docker Build Image
-        uses: docker/build-push-action@v2
+        uses: docker/build-push-action@v3
         with:
           target: build-docker
           tags: go-build-env
@@ -92,6 +92,7 @@ jobs:
           load: true # load image to local registry to use it in next steps
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,dest=/tmp/.buildx-cache-new
+          context: .
 
       - name: Run Go tests
         run: |
@@ -102,13 +103,14 @@ jobs:
 
       - name: Build Docker Runtime Image
         if: github.event_name != 'workflow_dispatch'
-        uses: docker/build-push-action@v2
+        uses: docker/build-push-action@v3
         with:
           target: runtime-docker
           labels: |
             version=${{ env.version }}
             revision=${{ env.revision }}
           push: false
+          context: .
 
       - name: Login to Google Container Registry
         if: github.event_name == 'workflow_dispatch'
@@ -120,7 +122,7 @@ jobs:
 
       - name: Build and publish Docker Runtime Image
         if: github.event_name == 'workflow_dispatch'
-        uses: docker/build-push-action@v2
+        uses: docker/build-push-action@v3
         env:
           IMAGE_NAME: "keep-client"
         with:
@@ -138,6 +140,7 @@ jobs:
             VERSION=${{ env.version }}
             REVISION=${{ env.revision }}
           push: true
+          context: .
 
       - name: Build Client Binaries
         uses: docker/build-push-action@v3
@@ -149,6 +152,7 @@ jobs:
             VERSION=${{ env.version }}
             REVISION=${{ env.revision }}
           push: false
+          context: .
 
       - name: Archive Client Binaries
         uses: actions/upload-artifact@v3
