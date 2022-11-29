@@ -104,16 +104,17 @@ type TransactionInput struct {
 	Outpoint *TransactionOutpoint
 	// SignatureScript is a script-language script that satisfies the conditions
 	// placed in the outpoint's public key script (see TransactionOutput.PublicKeyScript).
-	// This slice must start with the byte-length of the script encoded as a
-	// CompactSizeUint. This field is not set (nil or empty) for SegWit
-	// transaction inputs. That means it is mutually exclusive with the below
-	// Witness field.
+	// This slice MUST NOT start with the byte-length of the script encoded as
+	// a CompactSizeUint as this is done during transaction serialization.
+	// This field is not set (nil or empty) for SegWit transaction inputs.
+	// That means it is mutually exclusive with the below Witness field.
 	SignatureScript []byte
 	// Witness holds the witness data for the given input. It should be interpreted
-	// as a stack with one or many elements. Each element of the stack should
-	// start with the byte-length of the script encoded as a CompactSizeUint.
-	// This field is not set (nil or empty) for non-SegWit transaction inputs.
-	// That means it is mutually exclusive with the above SignatureScript field.
+	// as a stack with one or many elements. Individual elements MUST NOT start
+	// with the byte-length of the script encoded as a CompactSizeUint as this
+	// is done during transaction serialization. This field is not set
+	// (nil or empty) for non-SegWit transaction inputs. That means it is
+	// mutually exclusive with the above SignatureScript field.
 	Witness [][]byte
 	// Sequence is the sequence number for this input. Default value
 	// is 0xffffffff. For reference, see:
@@ -127,8 +128,8 @@ type TransactionOutput struct {
 	// Value denotes the number of satoshis to spend. Zero is a valid value.
 	Value int64
 	// PublicKeyScript defines the conditions that must be satisfied to spend
-	// this output. This slice must start with the byte-length of the script
-	// encoded as CompactSizeUint
+	// this output. This slice MUST NOT start with the byte-length of the script
+	// encoded as CompactSizeUint as this is done during transaction serialization.
 	PublicKeyScript []byte
 }
 
