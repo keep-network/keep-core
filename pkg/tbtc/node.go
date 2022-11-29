@@ -205,7 +205,6 @@ func (n *node) joinDKGIfEligible(seed *big.Int, startBlockNumber uint64) {
 
 				announcer := announcer.New(
 					fmt.Sprintf("%v-%v", ProtocolName, "dkg"),
-					n.chain.GetConfig().GroupSize,
 					broadcastChannel,
 					membershipValidator,
 				)

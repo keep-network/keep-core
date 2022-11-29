@@ -2,6 +2,11 @@ package announcer
 
 import (
 	"context"
+	"math/big"
+	"reflect"
+	"sync"
+	"testing"
+
 	fuzz "github.com/google/gofuzz"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/chain/local_v1"
@@ -10,10 +15,6 @@ import (
 	"github.com/keep-network/keep-core/pkg/net/local"
 	"github.com/keep-network/keep-core/pkg/operator"
 	"github.com/keep-network/keep-core/pkg/protocol/group"
-	"math/big"
-	"reflect"
-	"sync"
-	"testing"
 )
 
 func TestAnnouncementMessage_MarshalingRoundtrip(t *testing.T) {
@@ -150,7 +151,6 @@ func TestAnnouncer(t *testing.T) {
 
 			announcer := New(
 				protocolID,
-				groupSize,
 				broadcastChannel,
 				membershipValidator,
 			)

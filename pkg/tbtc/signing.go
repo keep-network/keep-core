@@ -214,7 +214,6 @@ func (se *signingExecutor) sign(
 
 			announcer := announcer.New(
 				fmt.Sprintf("%v-%v", ProtocolName, "signing"),
-				se.chainConfig.GroupSize,
 				se.broadcastChannel,
 				se.membershipValidator,
 			)
