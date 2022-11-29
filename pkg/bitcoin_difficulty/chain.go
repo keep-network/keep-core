@@ -8,10 +8,10 @@ import (
 // Chain defines the interface that pertains specifically to the process of
 // updating Bitcoin difficulty.
 type Chain interface {
-	// Ready checks whether the relay is active (i.e. genesis has been
-	// performed). Note that at least one retarget needs to be provided after
-	// genesis, before previous epoch difficulty value is initialized and
-	// it can be used.
+	// Ready checks whether the relay is active (i.e. genesis has been performed).
+	// Note that if the relay is used by querying the current and previous epoch
+	// difficulty, at least one retarget needs to be provided after genesis;
+	// otherwise the prevEpochDifficulty will be uninitialised and zero.
 	Ready() (bool, error)
 
 	// AuthorizationRequired checks whether the relay requires the address

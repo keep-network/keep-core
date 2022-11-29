@@ -61,8 +61,9 @@ func NewBitcoinDifficultyChain(
 }
 
 // Ready checks whether the relay is active (i.e. genesis has been performed).
-// Note that at least one retarget needs to be provided after genesis, before
-// previous epoch difficulty value is initialized and it can be used.
+// Note that if the relay is used by querying the current and previous epoch
+// difficulty, at least one retarget needs to be provided after genesis;
+// otherwise the prevEpochDifficulty will be uninitialised and zero.
 func (bdc *BitcoinDifficultyChain) Ready() (bool, error) {
 	return bdc.lightRelay.Ready()
 }
