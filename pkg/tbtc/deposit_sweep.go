@@ -7,22 +7,25 @@ import (
 
 func assembleDepositSweepTransaction(
 	wallet wallet,
-	utxos []*bitcoin.UnspentTransactionOutput,
+	walletMainUtxo *bitcoin.UnspentTransactionOutput,
+	deposits []*deposit,
 	fee int64,
 ) (*bitcoin.Transaction, error) {
-	if len(utxos) < 1 {
+	if len(deposits) < 1 {
 		return nil, fmt.Errorf("at least one deposit is required")
 	}
-
-	// TODO: Handle the wallet's main UTXO.
 
 	transaction := bitcoin.NewTransaction()
 	totalInputsValue := int64(0)
 
-	for _, utxo := range utxos {
-		transaction.AddInput(utxo.Outpoint)
+	if walletMainUtxo != nil {
+		transaction.AddInput(walletMainUtxo.Outpoint)
+		totalInputsValue += walletMainUtxo.Value
+	}
 
-		// TODO: Add deposit's value to the totalInputsValue.
+	for _, deposit := range deposits {
+		transaction.AddInput(deposit.utxo.Outpoint)
+		totalInputsValue += deposit.utxo.Value
 	}
 
 	walletPublicKeyHash := bitcoin.PublicKeyHash(wallet.publicKey)
