@@ -25,14 +25,14 @@ type localBitcoinDifficultyChain struct {
 	retargetEvents []*RetargetEvent
 }
 
-// Ready checks whether the relay is active (i.e. genesis has been
-// performed).
+// Ready checks whether the Bitcoin difficulty chain is active (i.e. genesis has
+// been performed).
 func (lbdc *localBitcoinDifficultyChain) Ready() (bool, error) {
 	return lbdc.ready, nil
 }
 
-// IsAuthorizationRequired checks whether the relay requires the address
-// submitting a retarget to be authorised in advance by governance.
+// IsAuthorizationRequired checks whether the Bitcoin difficulty chain requires
+// the address submitting a retarget to be authorised in advance by governance.
 func (lbdc *localBitcoinDifficultyChain) IsAuthorizationRequired() (bool, error) {
 	return lbdc.authorizationRequired, nil
 }
@@ -50,7 +50,7 @@ func (lbdc *localBitcoinDifficultyChain) Signing() chain.Signing {
 	return local_v1.NewSigner(lbdc.operatorPrivateKey)
 }
 
-// Retarget adds a new epoch to the Bitcoin difficulty relay by providing
+// Retarget adds a new epoch to the Bitcoin difficulty chain by providing
 // a proof of the difficulty before and after the retarget.
 func (lbdc *localBitcoinDifficultyChain) Retarget(
 	headers []*bitcoin.BlockHeader,
@@ -69,9 +69,10 @@ func (lbdc *localBitcoinDifficultyChain) Retarget(
 }
 
 // CurrentEpoch returns the number of the latest epoch whose difficulty is
-// proven to the relay. If the genesis epoch's number is set correctly, and
-// retargets along the way have been legitimate, the current epoch equals
-// the height of the block starting the most recent epoch, divided by 2016.
+// proven in the Bitcoin difficulty chain. If the genesis epoch's number is
+// set correctly, and retargets along the way have been legitimate, the current
+// epoch equals the height of the block starting the most recent epoch, divided
+// by 2016.
 func (lbdc *localBitcoinDifficultyChain) CurrentEpoch() (uint64, error) {
 	return lbdc.currentEpoch, nil
 }
@@ -118,6 +119,8 @@ func (lbdc *localBitcoinDifficultyChain) RetargetEvents() []*RetargetEvent {
 	return lbdc.retargetEvents
 }
 
+// ConnectLocal connects to the local Bitcoin difficulty chain and returns
+// a chain handle.
 func ConnectLocal() *localBitcoinDifficultyChain {
 	operatorPrivateKey, _, err := operator.GenerateKeyPair(local_v1.DefaultCurve)
 	if err != nil {

@@ -15,33 +15,37 @@ func TestVerifySubmissionEligibility(t *testing.T) {
 		ready                 bool
 		authorizationRequired bool
 		operatorAuthorized    bool
-		expectedErr           error
+		expectedError         error
 	}{
 		"chain not ready": {
 			ready:                 false,
 			authorizationRequired: false,
 			operatorAuthorized:    false,
-			expectedErr:           fmt.Errorf("relay genesis has not been performed"),
+			expectedError: fmt.Errorf(
+				"genesis has not been performed in the Bitcoin difficulty " +
+					"chain",
+			),
 		},
 		"authorization not required": {
 			ready:                 true,
 			authorizationRequired: false,
 			operatorAuthorized:    false,
-			expectedErr:           nil,
+			expectedError:         nil,
 		},
 		"operator not authorized": {
 			ready:                 true,
 			authorizationRequired: true,
 			operatorAuthorized:    false,
-			expectedErr: fmt.Errorf(
-				"relay maintainer has not been authorized to submit block headers",
+			expectedError: fmt.Errorf(
+				"Bitcoin difficulty maintainer has not been authorized to " +
+					"submit block headers",
 			),
 		},
 		"operator authorized": {
 			ready:                 true,
 			authorizationRequired: true,
 			operatorAuthorized:    true,
-			expectedErr:           nil,
+			expectedError:         nil,
 		},
 	}
 
@@ -65,10 +69,10 @@ func TestVerifySubmissionEligibility(t *testing.T) {
 			}
 
 			err := bitcoinDifficultyMaintainer.verifySubmissionEligibility()
-			if !reflect.DeepEqual(test.expectedErr, err) {
+			if !reflect.DeepEqual(test.expectedError, err) {
 				t.Errorf(
 					"unexpected error\nexpected: %v\nactual:   %v\n",
-					test.expectedErr,
+					test.expectedError,
 					err,
 				)
 			}
@@ -76,7 +80,7 @@ func TestVerifySubmissionEligibility(t *testing.T) {
 	}
 }
 
-func TestProveSingleEpoch(t *testing.T) {
+func TestProveNextEpoch(t *testing.T) {
 	btcChain := bitcoin.ConnectLocal()
 
 	// Set three block headers on each side of the retarget. The old epoch
@@ -133,25 +137,25 @@ func TestProveSingleEpoch(t *testing.T) {
 	}
 	btcChain.SetBlockHeaders(blockHeaders)
 
-	chain := ConnectLocal()
+	localChain := ConnectLocal()
 
-	chain.SetCurrentEpoch(299)
-	chain.SetProofLength(3)
+	localChain.SetCurrentEpoch(299)
+	localChain.SetProofLength(3)
 
 	bitcoinDifficultyMaintainer := &BitcoinDifficultyMaintainer{
 		btcChain:               btcChain,
-		chain:                  chain,
+		chain:                  localChain,
 		epochProvenBackOffTime: defaultEpochProvenBackOffTime,
 		restartBackOffTime:     defaultRestartBackoffTime,
 	}
 
-	err := bitcoinDifficultyMaintainer.proveSingleEpoch()
+	err := bitcoinDifficultyMaintainer.proveNextEpoch()
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	expectedNumberOfRetargetEvents := 1
-	retargetEvents := chain.RetargetEvents()
+	retargetEvents := localChain.RetargetEvents()
 	if len(retargetEvents) != expectedNumberOfRetargetEvents {
 		t.Fatalf(
 			"unexpected number of retarget events\nexpected: %v\nactual:   %v\n",
@@ -191,25 +195,25 @@ func TestGetBlockHeaders(t *testing.T) {
 			Version:                 0,
 			PreviousBlockHeaderHash: bitcoin.Hash{},
 			MerkleRootHash:          bitcoin.Hash{},
-			Time:                    11111,
-			Bits:                    2222,
-			Nonce:                   3333,
+			Time:                    1000000,
+			Bits:                    1111111,
+			Nonce:                   30,
 		},
 		700001: {
 			Version:                 0,
 			PreviousBlockHeaderHash: bitcoin.Hash{},
 			MerkleRootHash:          bitcoin.Hash{},
-			Time:                    222,
-			Bits:                    333,
-			Nonce:                   444,
+			Time:                    1000100,
+			Bits:                    1111111,
+			Nonce:                   40,
 		},
 		700002: {
 			Version:                 0,
 			PreviousBlockHeaderHash: bitcoin.Hash{},
 			MerkleRootHash:          bitcoin.Hash{},
-			Time:                    555,
-			Bits:                    555,
-			Nonce:                   666,
+			Time:                    1000200,
+			Bits:                    2222222,
+			Nonce:                   50,
 		},
 	}
 	btcChain.SetBlockHeaders(blockHeaders)
@@ -240,22 +244,21 @@ func TestProveEpochs_ErrorVerifyingSubmissionEligibility(t *testing.T) {
 	defer cancelCtx()
 
 	// Do not authorize the maintainer to trigger an error.
-	chain := ConnectLocal()
-	chain.SetReady(true)
-	chain.SetAuthorizationRequired(true)
+	localChain := ConnectLocal()
+	localChain.SetReady(true)
+	localChain.SetAuthorizationRequired(true)
 
 	bitcoinDifficultyMaintainer := &BitcoinDifficultyMaintainer{
 		btcChain:               nil,
-		chain:                  chain,
+		chain:                  localChain,
 		epochProvenBackOffTime: defaultEpochProvenBackOffTime,
 		restartBackOffTime:     defaultRestartBackoffTime,
 	}
 
 	err := bitcoinDifficultyMaintainer.proveEpochs(ctx)
 	expectedError := fmt.Errorf(
-		"cannot proceed with proving Bitcoin blockchain epochs in the relay " +
-			"chain [relay maintainer has not been authorized to submit block " +
-			"headers]",
+		"cannot proceed with proving Bitcoin blockchain epochs [Bitcoin " +
+			"difficulty maintainer has not been authorized to submit block headers]",
 	)
 	if !reflect.DeepEqual(expectedError, err) {
 		t.Errorf(
@@ -292,8 +295,8 @@ func TestProveEpochs_ErrorProvingSingleEpoch(t *testing.T) {
 
 	err := bitcoinDifficultyMaintainer.proveEpochs(ctx)
 	expectedError := fmt.Errorf(
-		"cannot prove Bitcoin blockchain epoch to the relay chain [failed to " +
-			"get current block number [blockchain does not contain any blocks]]",
+		"cannot prove Bitcoin blockchain epoch [failed to get current block " +
+			"number [blockchain does not contain any blocks]]",
 	)
 	if !reflect.DeepEqual(expectedError, err) {
 		t.Errorf(
@@ -406,7 +409,7 @@ func TestBitcoinDifficultyMaintainer_Integration(t *testing.T) {
 
 	//************ Prove epoch for the first time ************
 	// Set headers in the Bitcoin chain. The headers will be used to prove
-	// epochs 300 and 301 in this and subsequent test.
+	// epochs 300 and 301 in this and subsequent tests.
 	blockHeaders := map[uint]*bitcoin.BlockHeader{
 		604799: { // Last block of the epoch 299
 			Version:                 0,
@@ -429,7 +432,7 @@ func TestBitcoinDifficultyMaintainer_Integration(t *testing.T) {
 			PreviousBlockHeaderHash: bitcoin.Hash{},
 			MerkleRootHash:          bitcoin.Hash{},
 			Time:                    1000400,
-			Bits:                    3333333,
+			Bits:                    2222222,
 			Nonce:                   50,
 		},
 		606816: { // First block of the epoch 301
@@ -437,7 +440,7 @@ func TestBitcoinDifficultyMaintainer_Integration(t *testing.T) {
 			PreviousBlockHeaderHash: bitcoin.Hash{},
 			MerkleRootHash:          bitcoin.Hash{},
 			Time:                    1000500,
-			Bits:                    4444444,
+			Bits:                    3333333,
 			Nonce:                   60,
 		},
 		608831: { // Last block of the epoch 301
@@ -445,7 +448,7 @@ func TestBitcoinDifficultyMaintainer_Integration(t *testing.T) {
 			PreviousBlockHeaderHash: bitcoin.Hash{},
 			MerkleRootHash:          bitcoin.Hash{},
 			Time:                    1000600,
-			Bits:                    5555555,
+			Bits:                    3333333,
 			Nonce:                   70,
 		},
 		608832: { // First block of the epoch 302
@@ -453,7 +456,7 @@ func TestBitcoinDifficultyMaintainer_Integration(t *testing.T) {
 			PreviousBlockHeaderHash: bitcoin.Hash{},
 			MerkleRootHash:          bitcoin.Hash{},
 			Time:                    1000700,
-			Bits:                    6666666,
+			Bits:                    4444444,
 			Nonce:                   80,
 		},
 	}
