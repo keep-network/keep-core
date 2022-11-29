@@ -4,6 +4,7 @@ import (
 	"crypto/ecdsa"
 	"crypto/elliptic"
 	"fmt"
+	"math/big"
 
 	"google.golang.org/protobuf/proto"
 
@@ -83,6 +84,47 @@ func (s *signer) Unmarshal(bytes []byte) error {
 	return nil
 }
 
+// Marshal converts the signingDoneMessage to a byte array.
+func (sdm *signingDoneMessage) Marshal() ([]byte, error) {
+	signatureBytes, err := sdm.signature.Marshal()
+	if err != nil {
+		return nil, err
+	}
+
+	return proto.Marshal(&pb.SigningDoneMessage{
+		SenderID:      uint32(sdm.senderID),
+		Message:       sdm.message.Bytes(),
+		AttemptNumber: sdm.attemptNumber,
+		Signature:     signatureBytes,
+		EndBlock:      sdm.endBlock,
+	})
+}
+
+// Unmarshal converts a byte array back to the signingDoneMessage.
+func (sdm *signingDoneMessage) Unmarshal(bytes []byte) error {
+	pbMsg := pb.SigningDoneMessage{}
+	if err := proto.Unmarshal(bytes, &pbMsg); err != nil {
+		return fmt.Errorf("failed to unmarshal SigningDoneMessage: [%v]", err)
+	}
+
+	if err := validateMemberIndex(pbMsg.SenderID); err != nil {
+		return err
+	}
+
+	signature := &tecdsa.Signature{}
+	if err := signature.Unmarshal(pbMsg.Signature); err != nil {
+		return fmt.Errorf("cannot unmarshal signature: [%v]", err)
+	}
+
+	sdm.senderID = group.MemberIndex(pbMsg.SenderID)
+	sdm.message = new(big.Int).SetBytes(pbMsg.Message)
+	sdm.attemptNumber = pbMsg.AttemptNumber
+	sdm.signature = signature
+	sdm.endBlock = pbMsg.EndBlock
+
+	return nil
+}
+
 // marshalPublicKey converts an ECDSA public key to a byte
 // array (uncompressed).
 func marshalPublicKey(publicKey *ecdsa.PublicKey) ([]byte, error) {
@@ -110,4 +152,13 @@ func unmarshalPublicKey(bytes []byte) *ecdsa.PublicKey {
 		X:     x,
 		Y:     y,
 	}
+}
+
+func validateMemberIndex(protoIndex uint32) error {
+	// Protobuf does not have uint8 type, so we are using uint32. When
+	// unmarshalling message, we need to make sure we do not overflow.
+	if protoIndex > group.MaxMemberIndex {
+		return fmt.Errorf("invalid member index value: [%v]", protoIndex)
+	}
+	return nil
 }

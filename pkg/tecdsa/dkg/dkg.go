@@ -1,6 +1,7 @@
 package dkg
 
 import (
+	"context"
 	"fmt"
 	"math/big"
 	"time"
@@ -8,7 +9,6 @@ import (
 	"github.com/ipfs/go-log/v2"
 
 	"github.com/keep-network/keep-common/pkg/persistence"
-	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/generator"
 	"github.com/keep-network/keep-core/pkg/net"
 	"github.com/keep-network/keep-core/pkg/protocol/group"
@@ -59,18 +59,17 @@ func NewExecutor(
 // group by passing a non-empty excludedMembers slice holding the members that
 // should be excluded.
 func (e *Executor) Execute(
+	ctx context.Context,
 	logger log.StandardLogger,
 	seed *big.Int,
 	sessionID string,
-	startBlockNumber uint64,
 	memberIndex group.MemberIndex,
 	groupSize int,
 	dishonestThreshold int,
 	excludedMembersIndexes []group.MemberIndex,
-	blockCounter chain.BlockCounter,
 	channel net.BroadcastChannel,
 	membershipValidator *group.MembershipValidator,
-) (*Result, uint64, error) {
+) (*Result, error) {
 	logger.Debugf("[member:%v] initializing member", memberIndex)
 
 	member := newMember(
@@ -94,23 +93,24 @@ func (e *Executor) Execute(
 	}
 
 	initialState := &ephemeralKeyPairGenerationState{
-		channel: channel,
-		member:  member.initializeEphemeralKeysGeneration(),
+		BaseAsyncState: state.NewBaseAsyncState(),
+		channel:        channel,
+		member:         member.initializeEphemeralKeysGeneration(),
 	}
 
-	stateMachine := state.NewSyncMachine(logger, channel, blockCounter, initialState)
+	stateMachine := state.NewAsyncMachine(logger, ctx, channel, initialState)
 
-	lastState, endBlockNumber, err := stateMachine.Execute(startBlockNumber)
+	lastState, err := stateMachine.Execute()
 	if err != nil {
-		return nil, 0, err
+		return nil, err
 	}
 
-	confirmationState, ok := lastState.(*confirmationState)
+	finalizationState, ok := lastState.(*finalizationState)
 	if !ok {
-		return nil, 0, fmt.Errorf("execution ended on state: %T", lastState)
+		return nil, fmt.Errorf("execution ended on state: %T", lastState)
 	}
 
-	return confirmationState.result(), endBlockNumber, nil
+	return finalizationState.result(), nil
 }
 
 // PreParamsCount returns the current count of the DKG pre-parameters.
@@ -143,21 +143,20 @@ type ResultSigner interface {
 type ResultSubmitter interface {
 	// SubmitResult submits the DKG result along with the supporting signatures.
 	SubmitResult(
+		ctx context.Context,
 		memberIndex group.MemberIndex,
 		result *Result,
 		signatures map[group.MemberIndex][]byte,
-		startBlockNumber uint64,
 	) error
 }
 
 // Publish signs the DKG result for the given group member, collects signatures
 // from other members and verifies them, and submits the DKG result.
 func Publish(
+	ctx context.Context,
 	logger log.StandardLogger,
 	sessionID string,
-	publicationStartBlock uint64,
 	memberIndex group.MemberIndex,
-	blockCounter chain.BlockCounter,
 	channel net.BroadcastChannel,
 	membershipValidator *group.MembershipValidator,
 	resultSigner ResultSigner,
@@ -165,10 +164,10 @@ func Publish(
 	result *Result,
 ) error {
 	initialState := &resultSigningState{
+		BaseAsyncState:  state.NewBaseAsyncState(),
 		channel:         channel,
 		resultSigner:    resultSigner,
 		resultSubmitter: resultSubmitter,
-		blockCounter:    blockCounter,
 		member: newSigningMember(
 			logger,
 			memberIndex,
@@ -176,14 +175,12 @@ func Publish(
 			membershipValidator,
 			sessionID,
 		),
-		result:                  result,
-		signatureMessages:       make([]*resultSignatureMessage, 0),
-		signingStartBlockHeight: publicationStartBlock,
+		result: result,
 	}
 
-	stateMachine := state.NewSyncMachine(logger, channel, blockCounter, initialState)
+	stateMachine := state.NewAsyncMachine(logger, ctx, channel, initialState)
 
-	lastState, _, err := stateMachine.Execute(publicationStartBlock)
+	lastState, err := stateMachine.Execute()
 	if err != nil {
 		return err
 	}

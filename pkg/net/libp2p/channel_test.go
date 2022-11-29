@@ -3,12 +3,13 @@ package libp2p
 import (
 	"context"
 	"encoding/hex"
-	"github.com/keep-network/keep-core/pkg/operator"
 	"reflect"
 	"sort"
 	"sync"
 	"testing"
 	"time"
+
+	"github.com/keep-network/keep-core/pkg/operator"
 
 	"github.com/keep-network/keep-core/pkg/net"
 	peer "github.com/libp2p/go-libp2p-core/peer"
@@ -146,6 +147,35 @@ func TestUnregisterWhenHandling(t *testing.T) {
 
 	if receivedCount != stopAt {
 		t.Fatalf("unexpected number of received messages: [%v]", receivedCount)
+	}
+}
+
+func TestUnregisterWhenHandlingBlocked(t *testing.T) {
+	channel := &channel{}
+	receiver := make(chan interface{})
+
+	ctx, cancel := context.WithCancel(context.Background())
+
+	receivedCount := 0
+
+	channel.Recv(ctx, func(msg net.Message) {
+		receivedCount++
+		receiver <- msg // there is no receiver, this call will block
+	})
+
+	// send a message and give some time for the handler message piping goroutine
+	channel.deliver(&mockNetMessage{})
+	time.Sleep(100 * time.Millisecond)
+
+	// cancel the context and give some time for the handler lifecycle goroutine
+	cancel()
+	time.Sleep(100 * time.Millisecond)
+
+	if receivedCount != 1 {
+		t.Fatalf("expected just one Recv call")
+	}
+	if len(channel.messageHandlers) != 0 {
+		t.Fatalf("expected the handler to be unregistered")
 	}
 }
 

@@ -8,7 +8,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/keep-network/keep-core/pkg/chain/local_v1"
 	"github.com/keep-network/keep-core/pkg/internal/testutils"
 
 	"github.com/keep-network/keep-core/pkg/chain"
@@ -59,14 +58,13 @@ func TestDkgRetryLoop(t *testing.T) {
 	}
 
 	var tests = map[string]struct {
-		memberIndex               group.MemberIndex
-		ctxFn                     func() (context.Context, context.CancelFunc)
-		incomingAnnouncementsFn   func(sessionID string) ([]group.MemberIndex, error)
-		dkgAttemptFn              dkgAttemptFn
-		expectedErr               error
-		expectedExecutionEndBlock uint64
-		expectedResult            *dkg.Result
-		expectedLastAttempt       *dkgAttemptParams
+		memberIndex             group.MemberIndex
+		ctxFn                   func() (context.Context, context.CancelFunc)
+		incomingAnnouncementsFn func(sessionID string) ([]group.MemberIndex, error)
+		dkgAttemptFn            dkgAttemptFn
+		expectedErr             error
+		expectedResult          *dkg.Result
+		expectedLastAttempt     *dkgAttemptParams
 	}{
 		"success on initial attempt": {
 			memberIndex: 1,
@@ -76,12 +74,11 @@ func TestDkgRetryLoop(t *testing.T) {
 			incomingAnnouncementsFn: func(sessionID string) ([]group.MemberIndex, error) {
 				return membersIndexes, nil
 			},
-			dkgAttemptFn: func(attempt *dkgAttemptParams) (*dkg.Result, uint64, error) {
-				return testResult, attempt.startBlock + dkg.ProtocolBlocks(), nil
+			dkgAttemptFn: func(attempt *dkgAttemptParams) (*dkg.Result, error) {
+				return testResult, nil
 			},
-			expectedErr:               nil,
-			expectedExecutionEndBlock: 331, // 206 + 125
-			expectedResult:            testResult,
+			expectedErr:    nil,
+			expectedResult: testResult,
 			expectedLastAttempt: &dkgAttemptParams{
 				number:                 1,
 				startBlock:             206,
@@ -97,12 +94,11 @@ func TestDkgRetryLoop(t *testing.T) {
 				// Quorum of members announced their readiness.
 				return []group.MemberIndex{1, 2, 3, 4, 5, 6, 7, 8}, nil
 			},
-			dkgAttemptFn: func(attempt *dkgAttemptParams) (*dkg.Result, uint64, error) {
-				return testResult, attempt.startBlock + dkg.ProtocolBlocks(), nil
+			dkgAttemptFn: func(attempt *dkgAttemptParams) (*dkg.Result, error) {
+				return testResult, nil
 			},
-			expectedErr:               nil,
-			expectedExecutionEndBlock: 331, // 206 + 125
-			expectedResult:            testResult,
+			expectedErr:    nil,
+			expectedResult: testResult,
 			// As only 8 members (group quorum) announced their readiness,
 			// we don't have any other option than select them for the attempt.
 			// Not ready members are excluded.
@@ -125,17 +121,16 @@ func TestDkgRetryLoop(t *testing.T) {
 
 				return membersIndexes, nil
 			},
-			dkgAttemptFn: func(attempt *dkgAttemptParams) (*dkg.Result, uint64, error) {
-				return testResult, attempt.startBlock + dkg.ProtocolBlocks(), nil
+			dkgAttemptFn: func(attempt *dkgAttemptParams) (*dkg.Result, error) {
+				return testResult, nil
 			},
-			expectedErr:               nil,
-			expectedExecutionEndBlock: 467, // 342 + 125
-			expectedResult:            testResult,
+			expectedErr:    nil,
+			expectedResult: testResult,
 			// First attempt fails because the group quorum did not announce
 			// readiness.
 			expectedLastAttempt: &dkgAttemptParams{
 				number:                 2,
-				startBlock:             342, // 206 + 1 * (6 + 125 + 5)
+				startBlock:             367, // 206 + 1 * (6 + 150 + 5)
 				excludedMembersIndexes: []group.MemberIndex{2, 5},
 			},
 		},
@@ -151,16 +146,15 @@ func TestDkgRetryLoop(t *testing.T) {
 
 				return membersIndexes, nil
 			},
-			dkgAttemptFn: func(attempt *dkgAttemptParams) (*dkg.Result, uint64, error) {
-				return testResult, attempt.startBlock + dkg.ProtocolBlocks(), nil
+			dkgAttemptFn: func(attempt *dkgAttemptParams) (*dkg.Result, error) {
+				return testResult, nil
 			},
-			expectedErr:               nil,
-			expectedExecutionEndBlock: 467, // 342 + 125
-			expectedResult:            testResult,
+			expectedErr:    nil,
+			expectedResult: testResult,
 			// First attempt fails due to the announcer error.
 			expectedLastAttempt: &dkgAttemptParams{
 				number:                 2,
-				startBlock:             342, // 206 + 1 * (6 + 125 + 5)
+				startBlock:             367, // 206 + 1 * (6 + 150 + 5)
 				excludedMembersIndexes: []group.MemberIndex{2, 5},
 			},
 		},
@@ -172,23 +166,22 @@ func TestDkgRetryLoop(t *testing.T) {
 			incomingAnnouncementsFn: func(sessionID string) ([]group.MemberIndex, error) {
 				return membersIndexes, nil
 			},
-			dkgAttemptFn: func(attempt *dkgAttemptParams) (*dkg.Result, uint64, error) {
+			dkgAttemptFn: func(attempt *dkgAttemptParams) (*dkg.Result, error) {
 				if attempt.number == 1 {
-					return nil, 0, fmt.Errorf("invalid data")
+					return nil, fmt.Errorf("invalid data")
 				}
 
-				return testResult, attempt.startBlock + dkg.ProtocolBlocks(), nil
+				return testResult, nil
 			},
-			expectedErr:               nil,
-			expectedExecutionEndBlock: 467, // 342 + 125
-			expectedResult:            testResult,
+			expectedErr:    nil,
+			expectedResult: testResult,
 			// The DKG error occurs on attempt 1. For attempt 2, all members are
 			// ready, and we use the random algorithm to exclude some members.
 			// The algorithm excludes members 2 and 5 (same operator) for the
 			// given seed.
 			expectedLastAttempt: &dkgAttemptParams{
 				number:                 2,
-				startBlock:             342, // 206 + 1 * (6 + 125 + 5)
+				startBlock:             367, // 206 + 1 * (6 + 150 + 5)
 				excludedMembersIndexes: []group.MemberIndex{2, 5},
 			},
 		},
@@ -200,23 +193,22 @@ func TestDkgRetryLoop(t *testing.T) {
 			incomingAnnouncementsFn: func(sessionID string) ([]group.MemberIndex, error) {
 				return membersIndexes, nil
 			},
-			dkgAttemptFn: func(attempt *dkgAttemptParams) (*dkg.Result, uint64, error) {
+			dkgAttemptFn: func(attempt *dkgAttemptParams) (*dkg.Result, error) {
 				if attempt.number <= 2 {
-					return nil, 0, fmt.Errorf("invalid data")
+					return nil, fmt.Errorf("invalid data")
 				}
 
-				return testResult, attempt.startBlock + dkg.ProtocolBlocks(), nil
+				return testResult, nil
 			},
-			expectedErr:               nil,
-			expectedExecutionEndBlock: 603, // 478 + 125
-			expectedResult:            testResult,
+			expectedErr:    nil,
+			expectedResult: testResult,
 			// Member 5 is the executing one. First attempt fails and is
 			// retried using the random algorithm. The 2nd attempt does not
 			// return an error but member 5 is excluded for this attempt so,
 			// member 5 skips attempt 2 and succeeds on attempt 3.
 			expectedLastAttempt: &dkgAttemptParams{
 				number:                 3,
-				startBlock:             478, // 206 + 2 * (6 + 125 + 5)
+				startBlock:             528, // 206 + 2 * (6 + 150 + 5)
 				excludedMembersIndexes: []group.MemberIndex{9},
 			},
 		},
@@ -231,13 +223,12 @@ func TestDkgRetryLoop(t *testing.T) {
 			incomingAnnouncementsFn: func(sessionID string) ([]group.MemberIndex, error) {
 				return membersIndexes, nil
 			},
-			dkgAttemptFn: func(attempt *dkgAttemptParams) (*dkg.Result, uint64, error) {
-				return nil, 0, fmt.Errorf("invalid data")
+			dkgAttemptFn: func(attempt *dkgAttemptParams) (*dkg.Result, error) {
+				return nil, fmt.Errorf("invalid data")
 			},
-			expectedErr:               nil,
-			expectedResult:            nil,
-			expectedExecutionEndBlock: 0,
-			expectedLastAttempt:       nil,
+			expectedErr:         nil,
+			expectedResult:      nil,
+			expectedLastAttempt: nil,
 		},
 	}
 
@@ -263,12 +254,12 @@ func TestDkgRetryLoop(t *testing.T) {
 
 			var lastAttempt *dkgAttemptParams
 
-			result, executionEndBlock, err := retryLoop.start(
+			result, err := retryLoop.start(
 				ctx,
 				func(ctx context.Context, attemptStartBlock uint64) error {
 					return nil
 				},
-				func(params *dkgAttemptParams) (*dkg.Result, uint64, error) {
+				func(params *dkgAttemptParams) (*dkg.Result, error) {
 					lastAttempt = params
 					return test.dkgAttemptFn(params)
 				},
@@ -281,16 +272,6 @@ func TestDkgRetryLoop(t *testing.T) {
 						"actual:   [%+v]",
 					test.expectedErr,
 					err,
-				)
-			}
-
-			if test.expectedExecutionEndBlock != executionEndBlock {
-				t.Errorf(
-					"unexpected execution end block\n"+
-						"expected: [%+v]\n"+
-						"actual:   [%+v]",
-					test.expectedExecutionEndBlock,
-					executionEndBlock,
 				)
 			}
 
@@ -346,18 +327,12 @@ func TestDecideSigningGroupMemberFate(t *testing.T) {
 		HonestThreshold: 6,
 	}
 
-	blockCounter, err := local_v1.BlockCounter()
-	if err != nil {
-		t.Fatal(err)
-	}
-
 	testData, err := tecdsatest.LoadPrivateKeyShareTestFixtures(1)
 	if err != nil {
 		t.Fatalf("failed to load test data: [%v]", err)
 	}
 
 	memberIndex := group.MemberIndex(1)
-	publicationStartBlock := uint64(0)
 
 	result := &dkg.Result{
 		Group: group.NewGroup(
@@ -373,26 +348,33 @@ func TestDecideSigningGroupMemberFate(t *testing.T) {
 	}
 
 	var tests = map[string]struct {
+		ctxFn                          func() (context.Context, context.CancelFunc)
 		resultSubmittedEvent           *DKGResultSubmittedEvent
 		expectedOperatingMemberIndexes []group.MemberIndex
 		expectedError                  error
 	}{
 		"member supports the published result": {
+			ctxFn: func() (context.Context, context.CancelFunc) {
+				return context.WithCancel(context.Background())
+			},
 			resultSubmittedEvent: &DKGResultSubmittedEvent{
 				MemberIndex:         2,
 				GroupPublicKeyBytes: resultGroupPublicKeyBytes,
 				Misbehaved:          []byte{7, 10},
-				BlockNumber:         publicationStartBlock + 5,
+				BlockNumber:         5,
 			},
 			// should return operating members according to the published result
 			expectedOperatingMemberIndexes: []group.MemberIndex{1, 2, 3, 4, 5, 6, 8, 9},
 		},
 		"member supports different public key": {
+			ctxFn: func() (context.Context, context.CancelFunc) {
+				return context.WithCancel(context.Background())
+			},
 			resultSubmittedEvent: &DKGResultSubmittedEvent{
 				MemberIndex:         2,
 				GroupPublicKeyBytes: []byte{0x00, 0x01}, // different result
 				Misbehaved:          []byte{7, 10},
-				BlockNumber:         publicationStartBlock + 5,
+				BlockNumber:         5,
 			},
 			expectedError: fmt.Errorf(
 				"[member:%v] could not stay in the group because the "+
@@ -401,11 +383,14 @@ func TestDecideSigningGroupMemberFate(t *testing.T) {
 			),
 		},
 		"member considered as misbehaved": {
+			ctxFn: func() (context.Context, context.CancelFunc) {
+				return context.WithCancel(context.Background())
+			},
 			resultSubmittedEvent: &DKGResultSubmittedEvent{
 				MemberIndex:         2,
 				GroupPublicKeyBytes: resultGroupPublicKeyBytes,
 				Misbehaved:          []byte{memberIndex}, // member considered as misbehaved
-				BlockNumber:         publicationStartBlock + 5,
+				BlockNumber:         5,
 			},
 			expectedError: fmt.Errorf(
 				"[member:%v] could not stay in the group because the "+
@@ -414,8 +399,14 @@ func TestDecideSigningGroupMemberFate(t *testing.T) {
 			),
 		},
 		"publication timeout exceeded": {
+			ctxFn: func() (context.Context, context.CancelFunc) {
+				ctx, cancelCtx := context.WithCancel(context.Background())
+				// Cancel the context deliberately.
+				cancelCtx()
+				return ctx, cancelCtx
+			},
 			resultSubmittedEvent: nil, // the result is not published at all
-			expectedError:        fmt.Errorf("ECDSA DKG result publication timed out"),
+			expectedError:        fmt.Errorf("result publication timed out"),
 		},
 	}
 
@@ -427,13 +418,14 @@ func TestDecideSigningGroupMemberFate(t *testing.T) {
 				dkgResultChannel <- test.resultSubmittedEvent
 			}
 
+			ctx, cancelCtx := test.ctxFn()
+			defer cancelCtx()
+
 			operatingMemberIndexes, err := decideSigningGroupMemberFate(
+				ctx,
 				memberIndex,
 				dkgResultChannel,
-				publicationStartBlock,
 				result,
-				chainConfig,
-				blockCounter,
 			)
 
 			if !reflect.DeepEqual(
@@ -777,13 +769,15 @@ func TestSubmitResult_MemberSubmitsResult(t *testing.T) {
 		3: []byte("signature 3"),
 		4: []byte("signature 4"),
 	}
-	startBlock := uint64(3)
+
+	ctx, cancelCtx := context.WithCancel(context.Background())
+	defer cancelCtx()
 
 	err = dkgResultSubmitter.SubmitResult(
+		ctx,
 		memberIndex,
 		result,
 		signatures,
-		startBlock,
 	)
 	if err != nil {
 		t.Fatal(err)
@@ -821,7 +815,9 @@ func TestSubmitResult_MemberDoesNotSubmitsResult(t *testing.T) {
 		3: []byte("signature 3"),
 		4: []byte("signature 4"),
 	}
-	startBlock := uint64(2)
+
+	ctx, cancelCtx := context.WithCancel(context.Background())
+	defer cancelCtx()
 
 	secondMemberSubmissionChannel := make(chan error)
 
@@ -829,22 +825,27 @@ func TestSubmitResult_MemberDoesNotSubmitsResult(t *testing.T) {
 	go func() {
 		secondMemberIndex := group.MemberIndex(2)
 		secondMemberErr := dkgResultSubmitter.SubmitResult(
+			ctx,
 			secondMemberIndex,
 			result,
 			signatures,
-			startBlock,
 		)
 		secondMemberSubmissionChannel <- secondMemberErr
 	}()
+
+	// This sleep is needed to give enough time for the second member to
+	// register their result submission event handler and act properly on
+	// the result submitted by the first member.
+	time.Sleep(1 * time.Second)
 
 	// While the second member is waiting for submission eligibility, submit the
 	// result with the first member.
 	firstMemberIndex := group.MemberIndex(1)
 	firstMemberErr := dkgResultSubmitter.SubmitResult(
+		ctx,
 		firstMemberIndex,
 		result,
 		signatures,
-		startBlock,
 	)
 	if firstMemberErr != nil {
 		t.Fatal(firstMemberErr)
@@ -897,13 +898,15 @@ func TestSubmitResult_TooFewSignatures(t *testing.T) {
 		2: []byte("signature 2"),
 		3: []byte("signature 3"),
 	}
-	startBlock := uint64(3)
+
+	ctx, cancelCtx := context.WithCancel(context.Background())
+	defer cancelCtx()
 
 	err = dkgResultSubmitter.SubmitResult(
+		ctx,
 		memberIndex,
 		result,
 		signatures,
-		startBlock,
 	)
 
 	expectedError := fmt.Errorf(
