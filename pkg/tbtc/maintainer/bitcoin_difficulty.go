@@ -62,20 +62,20 @@ func (bdm *BitcoinDifficultyMaintainer) startControlLoop(ctx context.Context) {
 	}()
 
 	for {
+		err := bdm.proveEpochs(ctx)
+		if err != nil {
+			logger.Errorf(
+				"restarting relay maintainer due to error while proving "+
+					"Bitcoin blockchain epochs [%v]",
+				err,
+			)
+		}
+
 		select {
+		case <-time.After(bdm.restartBackOffTime):
 		case <-ctx.Done():
 			return
-		default:
-			err := bdm.proveEpochs(ctx)
-			if err != nil {
-				logger.Errorf(
-					"restarting relay maintainer due to error while proving "+
-						"Bitcoin blockchain epochs [%v]",
-					err,
-				)
-			}
 		}
-		time.Sleep(bdm.restartBackOffTime)
 	}
 }
 
