@@ -132,7 +132,7 @@ func (c *channel) Send(
 // could explore using a channel. We would avoid unnecessary hop and the
 // broadcast channel could be dropping messages if the receiving channel is full.
 //
-//https://github.com/keep-network/keep-core/issues/3420
+// See https://github.com/keep-network/keep-core/issues/3420
 func (c *channel) Recv(ctx context.Context, handler func(m net.Message)) {
 	messageHandler := &messageHandler{
 		ctx:     ctx,
@@ -177,6 +177,11 @@ func (c *channel) Recv(ctx context.Context, handler func(m net.Message)) {
 					continue
 				}
 
+				// TODO: If this function blocks forever, this entire goroutine
+				// will be blocked forever. We should consider using a channel
+				// instead of a callback receiver.
+				//
+				// See https://github.com/keep-network/keep-core/issues/3420
 				handleWithRetransmissions(msg)
 			}
 		}
