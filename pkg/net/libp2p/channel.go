@@ -123,6 +123,16 @@ func (c *channel) Send(
 	return doSend()
 }
 
+// TODO: The broadcast channel Recv function expects the message handler as
+// a callback. However, in possibly all cases all the handler is doing is
+// writing to a buffered channel. The broadcast channel has no idea what is
+// happening with the receiver. If it takes too long to receive a message, the
+// receiver's handler goroutine piping messages from `messageHandler.channel`
+// to `handleWithRetransmissions` gets blocked. Instead of using a callback, we
+// could explore using a channel. We would avoid unnecessary hop and the
+// broadcast channel could be dropping messages if the receiving channel is full.
+//
+//https://github.com/keep-network/keep-core/issues/3420
 func (c *channel) Recv(ctx context.Context, handler func(m net.Message)) {
 	messageHandler := &messageHandler{
 		ctx:     ctx,
@@ -135,12 +145,22 @@ func (c *channel) Recv(ctx context.Context, handler func(m net.Message)) {
 
 	handleWithRetransmissions := retransmission.WithRetransmissionSupport(handler)
 
+	// A separate goroutine controls the lifecycle of the handler. The message
+	// handler is removed from the channel if the context is done. This logic is
+	// placed in a separate goroutine because the call to
+	// `handleWithRetransmission` is blocking and we do not want to wait with
+	// removing the handler if that call blocks for a longer period of time,
+	// for example, when the underlying buffered channel is full.
+	go func() {
+		<-ctx.Done()
+		logger.Debug("context is done; removing message handler")
+		c.removeHandler(messageHandler)
+	}()
+
 	go func() {
 		for {
 			select {
 			case <-ctx.Done():
-				logger.Debug("context is done; removing message handler")
-				c.removeHandler(messageHandler)
 				return
 
 			case msg := <-messageHandler.channel:
