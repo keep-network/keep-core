@@ -14,6 +14,14 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
+// announceReceiveBuffer is a buffer for messages received from the broadcast
+// channel needed when the announcer's consumer is temporarily too slow to
+// handle them. Keep in mind that although we expect only 51 announce messages,
+// it may happen that the announcer receives retransmissions of messages from
+// the previous signing protocol and before they are filtered out as not
+// interesting for the announcer, they are buffered in the channel.
+const announceReceiveBuffer = 512
+
 // announcementMessage represents a message that is used to announce
 // member's participation in the given session of the protocol.
 type announcementMessage struct {
@@ -100,7 +108,8 @@ func (a *Announcer) Announce(
 	[]group.MemberIndex,
 	error,
 ) {
-	messagesChan := make(chan net.Message, a.groupSize)
+	messagesChan := make(chan net.Message, announceReceiveBuffer)
+
 	a.broadcastChannel.Recv(ctx, func(message net.Message) {
 		messagesChan <- message
 	})
