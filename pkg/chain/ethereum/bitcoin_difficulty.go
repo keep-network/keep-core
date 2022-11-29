@@ -61,6 +61,8 @@ func NewBitcoinDifficultyChain(
 }
 
 // Ready checks whether the relay is active (i.e. genesis has been performed).
+// Note that at least one retarget needs to be provided after genesis, before
+// previous epoch difficulty value is initialized and it can be used.
 func (bdc *BitcoinDifficultyChain) Ready() (bool, error) {
 	return bdc.lightRelay.Ready()
 }
@@ -71,8 +73,8 @@ func (bdc *BitcoinDifficultyChain) AuthorizationRequired() (bool, error) {
 	return bdc.lightRelay.AuthorizationRequired()
 }
 
-// IsAuthorized checks whether the given address has been authorised to submit
-// a retarget by governance.
+// IsAuthorized checks whether the given address has been authorised by
+// governance to submit a retarget.
 func (bdc *BitcoinDifficultyChain) IsAuthorized(address chain.Address) (bool, error) {
 	return bdc.lightRelay.IsAuthorized(common.HexToAddress(address.String()))
 }

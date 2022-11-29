@@ -9,15 +9,17 @@ import (
 // updating Bitcoin difficulty.
 type Chain interface {
 	// Ready checks whether the relay is active (i.e. genesis has been
-	// performed).
+	// performed). Note that at least one retarget needs to be provided after
+	// genesis, before previous epoch difficulty value is initialized and
+	// it can be used.
 	Ready() (bool, error)
 
 	// AuthorizationRequired checks whether the relay requires the address
 	// submitting a retarget to be authorised in advance by governance.
 	AuthorizationRequired() (bool, error)
 
-	// IsAuthorized checks whether the given address has been authorised to
-	// submit a retarget by governance.
+	// IsAuthorized checks whether the given address has been authorised by
+	// governance to submit a retarget.
 	IsAuthorized(address chain.Address) (bool, error)
 
 	// Retarget adds a new epoch to the relay by providing a proof
