@@ -23,7 +23,7 @@ import (
 	"github.com/keep-network/keep-core/pkg/tecdsa/dkg"
 )
 
-// Definitions of contract names.
+// Definitions of contract names
 const (
 	WalletRegistryContractName = "WalletRegistry"
 	BridgeContractName         = "Bridge"
