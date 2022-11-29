@@ -1,4 +1,4 @@
-package bitcoin_difficulty
+package btcdiff
 
 import (
 	"github.com/keep-network/keep-core/pkg/bitcoin"
