@@ -50,7 +50,7 @@ func NewBitcoinDifficultyChain(
 		)
 	if err != nil {
 		return nil, fmt.Errorf(
-			"failed to attach to EcdsaSortitionPool contract: [%v]",
+			"failed to attach to LightRelay contract: [%v]",
 			err,
 		)
 	}
