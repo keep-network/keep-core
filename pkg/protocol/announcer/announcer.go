@@ -67,19 +67,16 @@ func (am *announcementMessage) Type() string {
 // readiness announcement over the provided broadcast channel.
 type Announcer struct {
 	protocolID          string
-	groupSize           int
 	broadcastChannel    net.BroadcastChannel
 	membershipValidator *group.MembershipValidator
 }
 
 // New creates a new instance of the Announcer. It expects a unique protocol
-// identifier, the size of the group performing the protocol, a broadcast
-// channel configured to mediate between group members, and a membership
-// validator configured to validate the group membership of announcements
-// senders.
+// identifier, a broadcast channel configured to mediate between group members,
+// and a membership validator configured to validate the group membership of
+// announcements senders.
 func New(
 	protocolID string,
-	groupSize int,
 	broadcastChannel net.BroadcastChannel,
 	membershipValidator *group.MembershipValidator,
 ) *Announcer {
@@ -89,7 +86,6 @@ func New(
 
 	return &Announcer{
 		protocolID:          protocolID,
-		groupSize:           groupSize,
 		broadcastChannel:    broadcastChannel,
 		membershipValidator: membershipValidator,
 	}
