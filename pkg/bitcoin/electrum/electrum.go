@@ -29,6 +29,7 @@ var (
 type Connection struct {
 	ctx                 context.Context
 	client              *electrum.Client
+	clientMutex         *sync.RWMutex
 	requestRetryTimeout time.Duration //TODO: REMOVE
 	config              Config
 }
@@ -412,9 +413,16 @@ func requestWithRetry[K interface{}](
 	err := wrappers.DoWithDefaultRetry(
 		c.requestRetryTimeout,
 		func(ctx context.Context) error {
+			if err := c.reconnectIfShutdown(); err != nil {
+				return err
+			}
+
 			requestCtx, requestCancel := context.WithTimeout(ctx, c.config.RequestTimeout)
 			defer requestCancel()
+
+			c.clientMutex.RLock()
 			r, err := requestFn(requestCtx, c.client)
+			c.clientMutex.RUnlock()
 
 			if err != nil {
 				return fmt.Errorf("request failed: [%w]", err)
@@ -425,4 +433,21 @@ func requestWithRetry[K interface{}](
 		})
 
 	return result, err
+}
+
+func (c *Connection) reconnectIfShutdown() error {
+	c.clientMutex.Lock()
+	defer c.clientMutex.Unlock()
+
+	isClientShutdown := c.client.IsShutdown()
+	if isClientShutdown {
+		logger.Warn("connection to electrum server is down; reconnecting...")
+		err := c.electrumConnect()
+		if err != nil {
+			return fmt.Errorf("failed to reconnect to electrum server: [%w]", err)
+		}
+		logger.Info("reconnected to electrum server")
+	}
+
+	return nil
 }
