@@ -36,6 +36,22 @@ type Connection struct {
 
 // Connect initializes handle with provided Config.
 func Connect(parentCtx context.Context, config Config) (bitcoin.Chain, error) {
+	if config.ConnectTimeout == 0 {
+		config.ConnectTimeout = DefaultConnectTimeout
+	}
+	if config.ConnectRetryTimeout == 0 {
+		config.ConnectRetryTimeout = DefaultConnectRetryTimeout
+	}
+	if config.RequestTimeout == 0 {
+		config.RequestTimeout = DefaultRequestTimeout
+	}
+	if config.RequestRetryTimeout == 0 {
+		config.RequestRetryTimeout = DefaultRequestRetryTimeout
+	}
+	if config.KeepAliveInterval == 0 {
+		config.KeepAliveInterval = DefaultKeepAliveInterval
+	}
+
 	c := &Connection{
 		ctx:                 parentCtx,
 		requestRetryTimeout: config.RequestRetryTimeout,
