@@ -369,6 +369,9 @@ func (c *Connection) keepAlive() {
 						"please verify health of the electrum server: [%v]",
 					err,
 				)
+			} else {
+				// Adjust ticker starting at the time of the latest successful ping.
+				ticker = time.NewTicker(c.config.KeepAliveInterval)
 			}
 		case <-c.ctx.Done():
 			ticker.Stop()
