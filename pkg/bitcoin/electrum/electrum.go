@@ -320,17 +320,27 @@ func (c *Connection) electrumConnect() error {
 	var err error
 	switch c.config.Protocol {
 	case TCP:
-		// TODO: Add retry to connection establishment.
-		client, err = electrum.NewClientTCP(c.ctx, c.config.URL)
+		logger.Debug("establishing TCP connection to electrum server...")
+		client, err = connectWithRetry(
+			c,
+			func(ctx context.Context) (*electrum.Client, error) {
+				return electrum.NewClientTCP(ctx, c.config.URL)
+			},
+		)
 	case SSL:
 		// TODO: Implement certificate verification to be able to disable the `InsecureSkipVerify: true` workaround.
 		// #nosec G402 (TLS InsecureSkipVerify set true)
 		tlsConfig := &tls.Config{InsecureSkipVerify: true}
-		// TODO: Add retry to connection establishment.
-		client, err = electrum.NewClientSSL(c.ctx, c.config.URL, tlsConfig)
+
+		logger.Debug("establishing SSL connection to electrum server...")
+		client, err = connectWithRetry(
+			c,
+			func(ctx context.Context) (*electrum.Client, error) {
+				return electrum.NewClientSSL(ctx, c.config.URL, tlsConfig)
+			},
+		)
 	default:
 		err = fmt.Errorf("unsupported protocol: [%s]", c.config.Protocol)
-
 	}
 
 	if err == nil {
@@ -365,6 +375,32 @@ func (c *Connection) keepAlive() {
 			return
 		}
 	}
+}
+
+func connectWithRetry(
+	c *Connection,
+	newClientFn func(ctx context.Context) (*electrum.Client, error),
+) (*electrum.Client, error) {
+	var result *electrum.Client
+	err := wrappers.DoWithDefaultRetry(
+		c.config.ConnectRetryTimeout,
+		func(ctx context.Context) error {
+			connectCtx, connectCancel := context.WithTimeout(
+				c.ctx,
+				c.config.ConnectTimeout,
+			)
+			defer connectCancel()
+
+			client, err := newClientFn(connectCtx)
+			if err == nil {
+				result = client
+			}
+
+			return err
+		},
+	)
+
+	return result, err
 }
 
 func requestWithRetry[K interface{}](
