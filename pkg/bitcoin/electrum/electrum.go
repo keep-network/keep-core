@@ -27,11 +27,10 @@ var (
 
 // Connection is a handle for interactions with Electrum server.
 type Connection struct {
-	ctx                 context.Context
-	client              *electrum.Client
-	clientMutex         *sync.RWMutex
-	requestRetryTimeout time.Duration //TODO: REMOVE
-	config              Config
+	ctx         context.Context
+	client      *electrum.Client
+	clientMutex *sync.RWMutex
+	config      Config
 }
 
 // Connect initializes handle with provided Config.
@@ -53,10 +52,9 @@ func Connect(parentCtx context.Context, config Config) (bitcoin.Chain, error) {
 	}
 
 	c := &Connection{
-		ctx:                 parentCtx,
-		requestRetryTimeout: config.RequestRetryTimeout,
-		config:              config,
-		clientMutex:         &sync.RWMutex{},
+		ctx:         parentCtx,
+		config:      config,
+		clientMutex: &sync.RWMutex{},
 	}
 
 	if err := c.electrumConnect(); err != nil {
@@ -430,7 +428,7 @@ func requestWithRetry[K interface{}](
 	var result K
 
 	err := wrappers.DoWithDefaultRetry(
-		c.requestRetryTimeout,
+		c.config.RequestRetryTimeout,
 		func(ctx context.Context) error {
 			if err := c.reconnectIfShutdown(); err != nil {
 				return err
