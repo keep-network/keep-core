@@ -34,30 +34,15 @@ type Connection struct {
 }
 
 // Connect initializes handle with provided Config.
-func Connect(ctx context.Context, config Config) (bitcoin.Chain, error) {
-	if config.KeepAliveInterval == 0 {
-		config.KeepAliveInterval = DefaultKeepAliveInterval
-	}
-	if config.RequestRetryTimeout == 0 {
-		config.RequestRetryTimeout = DefaultRequestRetryTimeout
+func Connect(parentCtx context.Context, config Config) (bitcoin.Chain, error) {
+	c := &Connection{
+		ctx:                 parentCtx,
+		requestRetryTimeout: config.RequestRetryTimeout,
+		config:              config,
+		clientMutex:         &sync.RWMutex{},
 	}
 
-	var client *electrum.Client
-	var err error
-	switch config.Protocol {
-	case TCP:
-		// TODO: Add retry to connection establishment.
-		client, err = electrum.NewClientTCP(ctx, config.URL)
-	case SSL:
-		// TODO: Implement certificate verification to be able to disable the `InsecureSkipVerify: true` workaround.
-		// #nosec G402 (TLS InsecureSkipVerify set true)
-		tlsConfig := &tls.Config{InsecureSkipVerify: true}
-		// TODO: Add retry to connection establishment.
-		client, err = electrum.NewClientSSL(ctx, config.URL, tlsConfig)
-	default:
-		err = fmt.Errorf("unsupported protocol: [%s]", config.Protocol)
-	}
-	if err != nil {
+	if err := c.electrumConnect(); err != nil {
 		return nil, fmt.Errorf("failed to initialize electrum client: [%w]", err)
 	}
 
@@ -101,12 +86,7 @@ func Connect(ctx context.Context, config Config) (bitcoin.Chain, error) {
 
 	// TODO: Add reconnects on lost connection.
 
-	return &Connection{
-		ctx:                 ctx,
-		client:              client,
-		requestRetryTimeout: config.RequestRetryTimeout,
-		config:              config,
-	}, nil
+	return c, nil
 }
 
 // GetTransaction gets the transaction with the given transaction hash.
@@ -333,6 +313,31 @@ func (c *Connection) GetBlockHeader(
 	}
 
 	return blockHeader, nil
+}
+
+func (c *Connection) electrumConnect() error {
+	var client *electrum.Client
+	var err error
+	switch c.config.Protocol {
+	case TCP:
+		// TODO: Add retry to connection establishment.
+		client, err = electrum.NewClientTCP(c.ctx, c.config.URL)
+	case SSL:
+		// TODO: Implement certificate verification to be able to disable the `InsecureSkipVerify: true` workaround.
+		// #nosec G402 (TLS InsecureSkipVerify set true)
+		tlsConfig := &tls.Config{InsecureSkipVerify: true}
+		// TODO: Add retry to connection establishment.
+		client, err = electrum.NewClientSSL(c.ctx, c.config.URL, tlsConfig)
+	default:
+		err = fmt.Errorf("unsupported protocol: [%s]", c.config.Protocol)
+
+	}
+
+	if err == nil {
+		c.client = client
+	}
+
+	return err
 }
 
 func (c *Connection) keepAlive() {
