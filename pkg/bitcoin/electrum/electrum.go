@@ -62,33 +62,38 @@ func Connect(ctx context.Context, config Config) (bitcoin.Chain, error) {
 	}
 
 	// Get the server's details.
-	err = wrappers.DoWithDefaultRetry(
-		config.RequestRetryTimeout,
-		func(ctx context.Context) error {
+	type Server struct {
+		version  string
+		protocol string
+	}
+	server, err := requestWithRetry(
+		c,
+		func(ctx context.Context, client *electrum.Client) (*Server, error) {
 			serverVersion, protocolVersion, err := client.ServerVersion(ctx)
 			if err != nil {
-				return fmt.Errorf("ServerVersion failed: [%w]", err)
+				return nil, err
 			}
-			logger.Infof(
-				"connected to electrum server [version: [%s], protocol: [%s]]",
-				serverVersion,
-				protocolVersion,
-			)
-
-			// Log a warning if connected to a server running an unsupported protocol version.
-			if !slices.Contains(supportedProtocolVersions, protocolVersion) {
-				logger.Warnf(
-					"electrum server [%s] runs an unsupported protocol version: [%s]; expected one of: [%s]",
-					config.URL,
-					protocolVersion,
-					strings.Join(supportedProtocolVersions, ","),
-				)
-			}
-
-			return nil
-		})
+			return &Server{serverVersion, protocolVersion}, nil
+		},
+	)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get server version: [%w]", err)
+	}
+
+	logger.Infof(
+		"connected to electrum server [version: [%s], protocol: [%s]]",
+		server.version,
+		server.protocol,
+	)
+
+	// Log a warning if connected to a server running an unsupported protocol version.
+	if !slices.Contains(supportedProtocolVersions, server.protocol) {
+		logger.Warnf(
+			"electrum server [%s] runs an unsupported protocol version: [%s]; expected one of: [%s]",
+			config.URL,
+			server.protocol,
+			strings.Join(supportedProtocolVersions, ","),
+		)
 	}
 
 	// Keep the connection alive and check the connection health.
@@ -112,20 +117,14 @@ func (c *Connection) GetTransaction(
 ) (*bitcoin.Transaction, error) {
 	txID := transactionHash.Hex(bitcoin.ReversedByteOrder)
 
-	var rawTransaction string
-	err := wrappers.DoWithDefaultRetry(c.requestRetryTimeout, func(ctx context.Context) error {
-		// We cannot use `GetTransaction` to get the the transaction details
-		// as Esplora/Electrs doesn't support verbose transactions.
-		// See: https://github.com/Blockstream/electrs/pull/36
-		rawTx, err := c.client.GetRawTransaction(c.ctx, txID)
-		if err != nil {
-			return fmt.Errorf("GetRawTransaction failed: [%w]", err)
-		}
-
-		rawTransaction = rawTx
-
-		return nil
-	})
+	rawTransaction, err := requestWithRetry(
+		c,
+		func(ctx context.Context, client *electrum.Client) (string, error) {
+			// We cannot use `GetTransaction` to get the the transaction details
+			// as Esplora/Electrs doesn't support verbose transactions.
+			// See: https://github.com/Blockstream/electrs/pull/36
+			return client.GetRawTransaction(ctx, txID)
+		})
 	if err != nil {
 		return nil, fmt.Errorf(
 			"failed to get raw transaction with ID [%s]: [%w]",
@@ -154,21 +153,14 @@ func (c *Connection) GetTransactionConfirmations(
 		zap.String("txID", txID),
 	)
 
-	var rawTransaction string
-	err := wrappers.DoWithDefaultRetry(c.requestRetryTimeout, func(ctx context.Context) error {
-		// We cannot use `GetTransaction` to get the the transaction details
-		// as Esplora/Electrs doesn't support verbose transactions.
-		// See: https://github.com/Blockstream/electrs/pull/36
-		rawTx, err := c.client.GetRawTransaction(c.ctx, txID)
-		if err != nil {
-			return fmt.Errorf(
-				"GetRawTransaction failed: [%w]",
-				err,
-			)
-		}
-		rawTransaction = rawTx
-		return nil
-	})
+	rawTransaction, err := requestWithRetry(
+		c,
+		func(ctx context.Context, client *electrum.Client) (string, error) {
+			// We cannot use `GetTransaction` to get the the transaction details
+			// as Esplora/Electrs doesn't support verbose transactions.
+			// See: https://github.com/Blockstream/electrs/pull/36
+			return client.GetRawTransaction(ctx, txID)
+		})
 	if err != nil {
 		return 0,
 			fmt.Errorf(
@@ -210,17 +202,14 @@ txOutLoop:
 		reversedScriptHash := byteutils.Reverse(scriptHash[:])
 		reversedScriptHashString := hex.EncodeToString(reversedScriptHash)
 
-		var scriptHashHistory []*electrum.GetMempoolResult
-		err := wrappers.DoWithDefaultRetry(c.requestRetryTimeout, func(ctx context.Context) error {
-			history, err := c.client.GetHistory(c.ctx, reversedScriptHashString)
-			if err != nil {
-				return fmt.Errorf("GetHistory failed: [%w]", err)
-			}
-
-			scriptHashHistory = history
-
-			return nil
-		})
+		scriptHashHistory, err := requestWithRetry(
+			c,
+			func(
+				ctx context.Context,
+				client *electrum.Client,
+			) ([]*electrum.GetMempoolResult, error) {
+				return client.GetHistory(ctx, reversedScriptHashString)
+			})
 		if err != nil {
 			// Don't return an error, but continue to the next TxOut entry.
 			txLogger.Errorf("failed to get history for script hash: [%v]", err)
@@ -280,20 +269,17 @@ func (c *Connection) BroadcastTransaction(
 	rawTxLogger.Debugf("broadcasting transaction")
 
 	var response string
-	err := wrappers.DoWithDefaultRetry(c.requestRetryTimeout, func(ctx context.Context) error {
-		var err error
-		response, err = c.client.BroadcastTransaction(c.ctx, string(rawTx))
-		if err != nil {
-			return fmt.Errorf("BroadcastTransaction failed: [%w]", err)
-		}
 
-		rawTxLogger.Infof("transaction broadcast successful: [%s]", response)
-
-		return nil
-	})
+	response, err := requestWithRetry(
+		c,
+		func(ctx context.Context, client *electrum.Client) (string, error) {
+			return client.BroadcastTransaction(ctx, string(rawTx))
+		})
 	if err != nil {
 		return fmt.Errorf("failed to broadcast the transaction: [%w]", err)
 	}
+
+	rawTxLogger.Infof("transaction broadcast successful: [%s]", response)
 
 	return nil
 }
@@ -301,21 +287,19 @@ func (c *Connection) BroadcastTransaction(
 // GetLatestBlockHeight gets the height of the latest block (tip). If the
 // latest block was not determined, this function returns an error.
 func (c *Connection) GetLatestBlockHeight() (uint, error) {
-	var tip *electrum.SubscribeHeadersResult
-	err := wrappers.DoWithDefaultRetry(c.requestRetryTimeout, func(ctx context.Context) error {
-		headersChan, err := c.client.SubscribeHeaders(c.ctx)
-		if err != nil {
-			return fmt.Errorf("failed to get the blocks tip height: [%w]", err)
-		}
-
-		tip = <-headersChan
-		return nil
-	})
+	blockHeight, err := requestWithRetry(
+		c,
+		func(ctx context.Context, client *electrum.Client) (int32, error) {
+			headersChan, err := client.SubscribeHeaders(ctx)
+			if err != nil {
+				return 0, fmt.Errorf("failed to get the blocks tip height: [%w]", err)
+			}
+			tip := <-headersChan
+			return tip.Height, nil
+		})
 	if err != nil {
 		return 0, fmt.Errorf("failed to subscribe for headers: [%w]", err)
 	}
-
-	blockHeight := tip.Height
 
 	if blockHeight > 0 {
 		return uint(blockHeight), nil
@@ -330,18 +314,15 @@ func (c *Connection) GetLatestBlockHeight() (uint, error) {
 func (c *Connection) GetBlockHeader(
 	blockHeight uint,
 ) (*bitcoin.BlockHeader, error) {
-	var getBlockHeaderResult *electrum.GetBlockHeaderResult
-	err := wrappers.DoWithDefaultRetry(c.requestRetryTimeout, func(ctx context.Context) error {
-		result, err := c.client.GetBlockHeader(c.ctx, uint32(blockHeight), 0)
-		if err != nil {
-			return fmt.Errorf(
-				"GetBlockHeader failed: [%w]",
-				err,
-			)
-		}
-		getBlockHeaderResult = result
-		return nil
-	})
+	getBlockHeaderResult, err := requestWithRetry(
+		c,
+		func(
+			ctx context.Context,
+			client *electrum.Client,
+		) (*electrum.GetBlockHeaderResult, error) {
+			return client.GetBlockHeader(ctx, uint32(blockHeight), 0)
+		},
+	)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get block header: [%w]", err)
 	}
@@ -360,7 +341,12 @@ func (c *Connection) keepAlive() {
 	for {
 		select {
 		case <-ticker.C:
-			err := wrappers.DoWithDefaultRetry(c.config.RequestRetryTimeout, c.client.Ping)
+			_, err := requestWithRetry(
+				c,
+				func(ctx context.Context, client *electrum.Client) (interface{}, error) {
+					return nil, client.Ping(ctx)
+				},
+			)
 			if err != nil {
 				logger.Errorf(
 					"failed to ping the electrum server; "+
@@ -374,4 +360,28 @@ func (c *Connection) keepAlive() {
 			return
 		}
 	}
+}
+
+func requestWithRetry[K interface{}](
+	c *Connection,
+	requestFn func(ctx context.Context, client *electrum.Client) (K, error),
+) (K, error) {
+	var result K
+
+	err := wrappers.DoWithDefaultRetry(
+		c.requestRetryTimeout,
+		func(ctx context.Context) error {
+			requestCtx, requestCancel := context.WithTimeout(ctx, c.config.RequestTimeout)
+			defer requestCancel()
+			r, err := requestFn(requestCtx, c.client)
+
+			if err != nil {
+				return fmt.Errorf("request failed: [%w]", err)
+			}
+
+			result = r
+			return nil
+		})
+
+	return result, err
 }
