@@ -1,7 +1,9 @@
 package bitcoin
 
 import (
+	"crypto/ecdsa"
 	"fmt"
+	"github.com/btcsuite/btcd/btcec"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/btcsuite/btcd/txscript"
 	"github.com/btcsuite/btcd/wire"
@@ -66,7 +68,14 @@ func (tb *TransactionBuilder) AddPublicKeyHashInput(
 		witness:    txscript.IsWitnessProgram(utxoScript),
 	}
 
-	tb.addInput(utxo, sigHashArgs)
+	hash := chainhash.Hash(utxo.Outpoint.TransactionHash)
+	outpoint := wire.NewOutPoint(&hash, utxo.Outpoint.OutputIndex)
+
+	// Deliberately set both `signatureScript` and `witness` arguments to nil
+	// because at this point, the input does not contain any signature data.
+	tb.transaction.AddTxIn(wire.NewTxIn(outpoint, nil, nil))
+
+	tb.sigHashArgs = append(tb.sigHashArgs, sigHashArgs)
 
 	return nil
 }
@@ -105,7 +114,22 @@ func (tb *TransactionBuilder) AddScriptHashInput(
 		witness:    txscript.IsWitnessProgram(utxoScript),
 	}
 
-	tb.addInput(utxo, sigHashArgs)
+	hash := chainhash.Hash(utxo.Outpoint.TransactionHash)
+	outpoint := wire.NewOutPoint(&hash, utxo.Outpoint.OutputIndex)
+
+	// Signature data required to unlock a P2SH/P2WSH UTXO needs the plain-text
+	// redeem script to be placed as the last item of the `witness` field for
+	// P2WSH or the `signatureScript` field for P2SH. Here we prepare to fulfill
+	// that requirement by putting the redeem script to the correct field and
+	// let the AddSignatures method prepend it with the actual signature
+	// and public key.
+	if sigHashArgs.witness {
+		tb.transaction.AddTxIn(wire.NewTxIn(outpoint, nil, [][]byte{redeemScript}))
+	} else {
+		tb.transaction.AddTxIn(wire.NewTxIn(outpoint, redeemScript, nil))
+	}
+
+	tb.sigHashArgs = append(tb.sigHashArgs, sigHashArgs)
 
 	return nil
 }
@@ -126,21 +150,6 @@ func (tb *TransactionBuilder) getScript(
 	}
 
 	return transaction.Outputs[utxo.Outpoint.OutputIndex].PublicKeyScript, nil
-}
-
-// addInput adds the given input along with their sighash arguments.
-func (tb *TransactionBuilder) addInput(
-	utxo *UnspentTransactionOutput,
-	sigHashArgs *inputSigHashArgs,
-) {
-	hash := chainhash.Hash(utxo.Outpoint.TransactionHash)
-	outpoint := wire.NewOutPoint(&hash, utxo.Outpoint.OutputIndex)
-
-	// Deliberately set both `signatureScript` and `witness` arguments to nil
-	// because at this point, the input does not contain any signature data.
-	tb.transaction.AddTxIn(wire.NewTxIn(outpoint, nil, nil))
-
-	tb.sigHashArgs = append(tb.sigHashArgs, sigHashArgs)
 }
 
 // AddOutput adds a new transaction's output.
@@ -197,12 +206,115 @@ func (tb *TransactionBuilder) SigHashes() ([]*big.Int, error) {
 	return sigHashes, nil
 }
 
+// AddSignatures adds signature data for transaction inputs and returns a
+// signed Transaction instance. The signatures slice should have the same
+// length as the transaction's input vector. The signature with given index
+// should correspond to the input with the same index. Each signature
+// should also contain a public key that can be used for verification, i.e.
+// this should be the public key that corresponds to the private key used
+// to produce the given signature.
+func (tb *TransactionBuilder) AddSignatures(
+	signatures []*struct {
+		R, S      *big.Int
+		publicKey *ecdsa.PublicKey
+	},
+) (*Transaction, error) {
+	if len(signatures) != len(tb.transaction.TxIn) {
+		return nil, fmt.Errorf("wrong signatures count")
+	}
+
+	for i, input := range tb.transaction.TxIn {
+		signature := signatures[i]
+
+		signatureBytes := append(
+			(&btcec.Signature{R: signature.R, S: signature.S}).Serialize(),
+			byte(txscript.SigHashAll),
+		)
+		publicKeyBytes := (*btcec.PublicKey)(
+			signature.publicKey,
+		).SerializeCompressed()
+
+		sigHashArgs := tb.sigHashArgs[i]
+
+		if sigHashArgs.witness {
+			witness := wire.TxWitness{
+				signatureBytes,
+				publicKeyBytes,
+			}
+
+			// If the Witness field was pre-filled with data, put them at
+			// the end of the final witness field. This is the case for
+			// P2WSH inputs.
+			if len(input.Witness) == 1 {
+				witness = append(witness, input.Witness[0])
+			}
+
+			input.Witness = witness
+		} else {
+			builder := txscript.NewScriptBuilder().
+				AddData(signatureBytes).
+				AddData(publicKeyBytes)
+
+			// If the SignatureScript field was pre-filled with data, put them
+			// at the end of the final SignatureScript field. This is the case
+			// for P2SH inputs.
+			if len(input.SignatureScript) > 0 {
+				builder.AddData(input.SignatureScript)
+			}
+
+			script, err := builder.Script()
+			if err != nil {
+				return nil, fmt.Errorf(
+					"cannot build signature script for input [%v]: [%v]",
+					i,
+					err,
+				)
+			}
+
+			input.SignatureScript = script
+		}
+	}
+
+	return tb.stateToTransaction(), nil
+}
+
+// stateToTransaction converts the internal state of the builder into a Transaction.
+func (tb *TransactionBuilder) stateToTransaction() *Transaction {
+	inputs := make([]*TransactionInput, len(tb.transaction.TxIn))
+	for i, input := range tb.transaction.TxIn {
+		inputs[i] = &TransactionInput{
+			Outpoint: &TransactionOutpoint{
+				TransactionHash: Hash(input.PreviousOutPoint.Hash),
+				OutputIndex:     input.PreviousOutPoint.Index,
+			},
+			SignatureScript: input.SignatureScript,
+			Witness:         input.Witness,
+			Sequence:        input.Sequence,
+		}
+	}
+
+	outputs := make([]*TransactionOutput, len(tb.transaction.TxOut))
+	for i, output := range tb.transaction.TxOut {
+		outputs[i] = &TransactionOutput{
+			Value:           output.Value,
+			PublicKeyScript: output.PkScript,
+		}
+	}
+
+	return &Transaction{
+		Version:  tb.transaction.Version,
+		Inputs:   inputs,
+		Outputs:  outputs,
+		Locktime: tb.transaction.LockTime,
+	}
+}
+
 // TotalInputsValue returns the total value of transaction inputs.
 func (tb *TransactionBuilder) TotalInputsValue() int64 {
 	totalInputsValue := int64(0)
 
-	for _, args := range tb.sigHashArgs {
-		totalInputsValue += args.value
+	for _, sigHashArgs := range tb.sigHashArgs {
+		totalInputsValue += sigHashArgs.value
 	}
 
 	return totalInputsValue
