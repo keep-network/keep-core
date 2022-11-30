@@ -29,7 +29,8 @@ var (
 type Connection struct {
 	ctx                 context.Context
 	client              *electrum.Client
-	requestRetryTimeout time.Duration
+	requestRetryTimeout time.Duration //TODO: REMOVE
+	config              Config
 }
 
 // Connect initializes handle with provided Config.
@@ -91,27 +92,7 @@ func Connect(ctx context.Context, config Config) (bitcoin.Chain, error) {
 	}
 
 	// Keep the connection alive and check the connection health.
-	go func() {
-		ticker := time.NewTicker(config.KeepAliveInterval)
-
-		for {
-			select {
-			case <-ticker.C:
-				err := wrappers.DoWithDefaultRetry(config.RequestRetryTimeout, client.Ping)
-				if err != nil {
-					logger.Errorf(
-						"failed to ping the electrum server; "+
-							"please verify health of the electrum server: [%v]",
-						err,
-					)
-				}
-			case <-ctx.Done():
-				ticker.Stop()
-				client.Shutdown()
-				return
-			}
-		}
-	}()
+	go c.keepAlive()
 
 	// TODO: Add reconnects on lost connection.
 
@@ -119,6 +100,7 @@ func Connect(ctx context.Context, config Config) (bitcoin.Chain, error) {
 		ctx:                 ctx,
 		client:              client,
 		requestRetryTimeout: config.RequestRetryTimeout,
+		config:              config,
 	}, nil
 }
 
@@ -370,4 +352,26 @@ func (c *Connection) GetBlockHeader(
 	}
 
 	return blockHeader, nil
+}
+
+func (c *Connection) keepAlive() {
+	ticker := time.NewTicker(c.config.KeepAliveInterval)
+
+	for {
+		select {
+		case <-ticker.C:
+			err := wrappers.DoWithDefaultRetry(c.config.RequestRetryTimeout, c.client.Ping)
+			if err != nil {
+				logger.Errorf(
+					"failed to ping the electrum server; "+
+						"please verify health of the electrum server: [%v]",
+					err,
+				)
+			}
+		case <-c.ctx.Done():
+			ticker.Stop()
+			c.client.Shutdown()
+			return
+		}
+	}
 }
