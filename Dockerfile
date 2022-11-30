@@ -53,6 +53,9 @@ COPY ./pkg/tecdsa/signing/gen $APP_DIR/pkg/tecdsa/signing/gen
 COPY ./pkg/tecdsa/gen $APP_DIR/pkg/tecdsa/gen
 COPY ./pkg/protocol/announcer/gen $APP_DIR/pkg/protocol/announcer/gen
 
+RUN echo "LS 1"
+RUN ls /go/src/github.com/keep-network/keep-core/pkg/chain/ethereum/tbtc/gen/contract
+
 # Environment is to download published and tagged NPM packages versions.
 ARG ENVIRONMENT
 
@@ -63,7 +66,13 @@ RUN make get_artifacts environment=$ENVIRONMENT
 COPY ./config $APP_DIR/config
 RUN make generate environment=$ENVIRONMENT
 
+RUN echo "LS 2"
+RUN ls /go/src/github.com/keep-network/keep-core/pkg/chain/ethereum/tbtc/gen/contract
+
 COPY ./ $APP_DIR/
+
+RUN echo "LS 3"
+RUN ls /go/src/github.com/keep-network/keep-core/pkg/chain/ethereum/tbtc/gen/contract
 
 #
 # Build Docker Image
@@ -86,6 +95,9 @@ ENV APP_NAME=keep-client \
 	APP_DIR=/go/src/github.com/keep-network/keep-core \
 	BIN_PATH=/usr/local/bin
 
+RUN echo "LS 4"
+RUN ls /go/src/github.com/keep-network/keep-core/pkg/chain/ethereum/tbtc/gen/contract
+
 COPY --from=build-docker $APP_DIR/$APP_NAME $BIN_PATH
 
 # ENTRYPOINT cant handle ENV variables.
@@ -103,6 +115,9 @@ ENV APP_DIR=/go/src/github.com/keep-network/keep-core
 
 WORKDIR $APP_DIR
 
+RUN echo "LS 5"
+RUN ls /go/src/github.com/keep-network/keep-core/pkg/chain/ethereum/tbtc/gen/contract
+
 COPY --from=build-sources $APP_DIR $APP_DIR
 
 ARG ENVIRONMENT
@@ -110,6 +125,9 @@ ARG ENVIRONMENT
 # Client Versioning.
 ARG VERSION
 ARG REVISION
+
+RUN echo "LS 6"
+RUN ls /go/src/github.com/keep-network/keep-core/pkg/chain/ethereum/tbtc/gen/contract
 
 RUN make release \
 	environment=$ENVIRONMENT \
