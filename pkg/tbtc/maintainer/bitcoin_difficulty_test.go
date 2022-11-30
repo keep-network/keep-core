@@ -37,7 +37,7 @@ func TestVerifySubmissionEligibility(t *testing.T) {
 			authorizationRequired: true,
 			operatorAuthorized:    false,
 			expectedError: fmt.Errorf(
-				"Bitcoin difficulty maintainer has not been authorized to " +
+				"bitcoin difficulty maintainer has not been authorized to " +
 					"submit block headers",
 			),
 		},
@@ -257,7 +257,7 @@ func TestProveEpochs_ErrorVerifyingSubmissionEligibility(t *testing.T) {
 
 	err := bitcoinDifficultyMaintainer.proveEpochs(ctx)
 	expectedError := fmt.Errorf(
-		"cannot proceed with proving Bitcoin blockchain epochs [Bitcoin " +
+		"cannot proceed with proving Bitcoin blockchain epochs [bitcoin " +
 			"difficulty maintainer has not been authorized to submit block headers]",
 	)
 	if !reflect.DeepEqual(expectedError, err) {

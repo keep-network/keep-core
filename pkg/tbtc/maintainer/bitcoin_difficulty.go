@@ -145,7 +145,7 @@ func (bdm *BitcoinDifficultyMaintainer) verifySubmissionEligibility() error {
 
 	if !isAuthorized {
 		return fmt.Errorf(
-			"Bitcoin difficulty maintainer has not been authorized to submit " +
+			"bitcoin difficulty maintainer has not been authorized to submit " +
 				"block headers",
 		)
 	}
