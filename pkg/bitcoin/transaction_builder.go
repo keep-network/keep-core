@@ -14,46 +14,124 @@ import (
 // produce a full-fledged signed transaction that can be spread across
 // the Bitcoin network.
 type TransactionBuilder struct {
+	chain       Chain
 	transaction *wire.MsgTx
 	sigHashArgs []*inputSigHashArgs
 }
 
 // NewTransactionBuilder constructs a new TransactionBuilder instance.
-func NewTransactionBuilder() *TransactionBuilder {
+func NewTransactionBuilder(chain Chain) *TransactionBuilder {
 	transaction := wire.NewMsgTx(wire.TxVersion)
 	transaction.LockTime = 0
 
 	return &TransactionBuilder{
+		chain:       chain,
 		transaction: transaction,
 		sigHashArgs: make([]*inputSigHashArgs, 0),
 	}
 }
 
-// AddInput adds a new unsigned transaction's input based on the provided UTXO
-// and stores some additional data required to construct a proper input's
-// signature hash needed to produce a signature unlocking that UTXO.
-//
-// The scriptCode parameter represents the script that is actually executed
-// while unlocking the given UTXO. The scriptCode depends on the script type
-// that was used to lock the given UTXO. Specifically:
-// - If the UTXO was locked with a P2PKH/P2WPKH script, the scriptCode is
-//   equivalent to the original non-SegWit PublicKeyScript format of the P2PKH
-//   output, i.e. `<0x76a914> <20-byte PKH> <0x88ac>`. This applies to P2WPKH
-//   outputs as well, even though they use SegWit PublicKeyScript format, i.e.
-//   `<0x0014> <20-byte PKH>`. This is because the P2WPKH SegWit PublicKeyScript
-//   format is actually translated to the P2PKH non-SegWit PublicKeyScript
-//   format. However, this function accepts both PublicKeyScript formats and do
-//   necessary translations underneath.
-// - If the UTXO was locked with a P2SH/P2WSH script, the scriptCode is
-//   equivalent to the plain-text redeem script whose hash is included
-//   in the PublicKeyScript format.
-//
-// The witness parameter tells whether the added input points to a SegWit
-// output or not.
-func (tb *TransactionBuilder) AddInput(
+// AddPublicKeyHashInput adds an unsigned input pointing to a UTXO locked
+// using a P2PKH or P2WPKH script.
+func (tb *TransactionBuilder) AddPublicKeyHashInput(
 	utxo *UnspentTransactionOutput,
-	scriptCode []byte,
-	witness bool,
+) error {
+	utxoScript, err := tb.getScript(utxo)
+	if err != nil {
+		return fmt.Errorf(
+			"cannot get locking script for UTXO pointed "+
+				"by the input: [%v]",
+			err,
+		)
+	}
+
+	class := txscript.GetScriptClass(utxoScript)
+	isPublicKeyHashScript := class == txscript.PubKeyHashTy ||
+		class == txscript.WitnessV0PubKeyHashTy
+	if !isPublicKeyHashScript {
+		return fmt.Errorf(
+			"UTXO pointed by the input is not P2PKH/P2WPKH",
+		)
+	}
+
+	// The UTXO was locked using a P2PKH/P2WPKH script so, the scriptCode
+	// required to build the sighash is equivalent to that script. Worth
+	// noting that the P2WPKH script is actually converted to the P2PKH script
+	// when used as a scriptCode, according to BIP-0143. For reference see,
+	// https://github.com/bitcoin/bips/blob/master/bip-0143.mediawiki#specification.
+	// That conversion is handled within the `txscript.CalcWitnessSigHash` call.
+	sigHashArgs := &inputSigHashArgs{
+		value:      utxo.Value,
+		scriptCode: utxoScript,
+		witness:    txscript.IsWitnessProgram(utxoScript),
+	}
+
+	tb.addInput(utxo, sigHashArgs)
+
+	return nil
+}
+
+// AddScriptHashInput adds an unsigned input pointing to a UTXO locked
+// using a P2SH or P2WSH script. This function also requires the plain-text
+// redeemScript whose hash was used to build the P2SH/P2WSH locking script.
+func (tb *TransactionBuilder) AddScriptHashInput(
+	utxo *UnspentTransactionOutput,
+	redeemScript Script,
+) error {
+	utxoScript, err := tb.getScript(utxo)
+	if err != nil {
+		return fmt.Errorf(
+			"cannot get locking script for UTXO pointed "+
+				"by the input: [%v]",
+			err,
+		)
+	}
+
+	class := txscript.GetScriptClass(utxoScript)
+	isPublicKeyHashScript := class == txscript.ScriptHashTy ||
+		class == txscript.WitnessV0ScriptHashTy
+	if !isPublicKeyHashScript {
+		return fmt.Errorf(
+			"UTXO pointed by the input is not P2SH/P2WSH",
+		)
+	}
+
+	// The UTXO was locked using a P2SH/P2WSH script so, the scriptCode required
+	// to build the sighash is equivalent to the plain-text redeem script whose
+	// hash is included in the P2SH/P2WSH script.
+	sigHashArgs := &inputSigHashArgs{
+		value:      utxo.Value,
+		scriptCode: redeemScript,
+		witness:    txscript.IsWitnessProgram(utxoScript),
+	}
+
+	tb.addInput(utxo, sigHashArgs)
+
+	return nil
+}
+
+// getScript gets the locking script (PublicKeyScript) for the given unspent
+// transaction output.
+func (tb *TransactionBuilder) getScript(
+	utxo *UnspentTransactionOutput,
+) (Script, error) {
+	hash := utxo.Outpoint.TransactionHash
+	transaction, err := tb.chain.GetTransaction(hash)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"cannot get transaction with hash [%s]: [%v]",
+			hash.String(InternalByteOrder),
+			err,
+		)
+	}
+
+	return transaction.Outputs[utxo.Outpoint.OutputIndex].PublicKeyScript, nil
+}
+
+// addInput adds the given input along with their sighash arguments.
+func (tb *TransactionBuilder) addInput(
+	utxo *UnspentTransactionOutput,
+	sigHashArgs *inputSigHashArgs,
 ) {
 	hash := chainhash.Hash(utxo.Outpoint.TransactionHash)
 	outpoint := wire.NewOutPoint(&hash, utxo.Outpoint.OutputIndex)
@@ -62,11 +140,7 @@ func (tb *TransactionBuilder) AddInput(
 	// because at this point, the input does not contain any signature data.
 	tb.transaction.AddTxIn(wire.NewTxIn(outpoint, nil, nil))
 
-	tb.sigHashArgs = append(tb.sigHashArgs, &inputSigHashArgs{
-		value:      utxo.Value,
-		scriptCode: scriptCode,
-		witness:    witness,
-	})
+	tb.sigHashArgs = append(tb.sigHashArgs, sigHashArgs)
 }
 
 // AddOutput adds a new transaction's output.
@@ -123,10 +197,27 @@ func (tb *TransactionBuilder) SigHashes() ([]*big.Int, error) {
 	return sigHashes, nil
 }
 
+// TotalInputsValue returns the total value of transaction inputs.
+func (tb *TransactionBuilder) TotalInputsValue() int64 {
+	totalInputsValue := int64(0)
+
+	for _, args := range tb.sigHashArgs {
+		totalInputsValue += args.value
+	}
+
+	return totalInputsValue
+}
+
 // inputSigHashArgs is a helper structure holding some arguments required to
 // compute a sighash for the given input.
 type inputSigHashArgs struct {
-	value      int64
+	// value denotes the satoshi value of the UTXO pointed by the given input.
+	value int64
+	// scriptCode is a component of the input's sighash and is the script that
+	// is actually executed while unlocking the given UTXO. The scriptCode
+	// depends on the script type that was used to lock the given UTXO.
 	scriptCode []byte
-	witness    bool
+	// witness denotes whether the given input point's to a UTXO locked using
+	// a witness script.
+	witness bool
 }
