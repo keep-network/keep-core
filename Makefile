@@ -26,7 +26,8 @@ all: get_artifacts generate build release cmd-help
 # while implementing tbtc integration.
 modules := beacon \
 	ecdsa \
-	threshold
+	threshold \
+	tbtc
 
 # Required by get_npm_package function.
 npm_beacon_package := @keep-network/random-beacon
