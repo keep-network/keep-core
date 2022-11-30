@@ -3,13 +3,21 @@ package electrum
 import "time"
 
 const (
+	// DefaultConnectTimeout is a default timeout used for a single attempt of
+	// Electrum connection establishment.
+	DefaultConnectTimeout = 10 * time.Second
+	// DefaultConnectRetryTimeout is a default timeout used for Electrum
+	// connection establishment retries.
+	DefaultConnectRetryTimeout = 60 * time.Second
+	// DefaultRequestTimeout is a default timeout used for a single attempt of
+	// Electrum protocol request.
+	DefaultRequestTimeout = 30 * time.Second
+	// DefaultRequestRetryTimeout is a default timeout used for Electrum protocol
+	// request retries.
+	DefaultRequestRetryTimeout = 120 * time.Second
 	// DefaultKeepAliveInterval is a default interval used for Electrum server
 	// connection keep alive requests.
 	DefaultKeepAliveInterval = 5 * time.Minute
-
-	// DefaultRequestRetryTimeout is a default timeout used for Electrum request
-	// retries.
-	DefaultRequestRetryTimeout = 60 * time.Second
 )
 
 // Config holds configurable properties.
@@ -18,10 +26,16 @@ type Config struct {
 	URL string
 	// Electrum server protocol connection (`TCP` or `SSL`).
 	Protocol Protocol
+	// Timeout for a single attempt of Electrum connection establishment.
+	ConnectTimeout time.Duration
+	// Timeout for Electrum connection establishment retries.
+	ConnectRetryTimeout time.Duration
+	// Timeout for a single attempt of Electrum protocol request.
+	RequestTimeout time.Duration
+	// Timeout for Electrum protocol request retries.
+	RequestRetryTimeout time.Duration
 	// Interval for connection keep alive requests.
 	// An Electrum server may disconnect clients that have not sent any requests
 	// for roughly 10 minutes.
 	KeepAliveInterval time.Duration
-	// Timeout for Electrum requests retries.
-	RequestRetryTimeout time.Duration
 }
