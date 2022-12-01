@@ -28,7 +28,7 @@ var (
 
 // Connection is a handle for interactions with Electrum server.
 type Connection struct {
-	ctx         context.Context
+	parentCtx   context.Context
 	client      *electrum.Client
 	clientMutex *sync.RWMutex
 	config      Config
@@ -53,7 +53,7 @@ func Connect(parentCtx context.Context, config Config) (bitcoin.Chain, error) {
 	}
 
 	c := &Connection{
-		ctx:         parentCtx,
+		parentCtx:   parentCtx,
 		config:      config,
 		clientMutex: &sync.RWMutex{},
 	}
@@ -396,7 +396,7 @@ func (c *Connection) keepAlive() {
 				// Adjust ticker starting at the time of the latest successful ping.
 				ticker = time.NewTicker(c.config.KeepAliveInterval)
 			}
-		case <-c.ctx.Done():
+		case <-c.parentCtx.Done():
 			ticker.Stop()
 			c.client.Shutdown()
 			return
