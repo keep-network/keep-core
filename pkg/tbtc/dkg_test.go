@@ -6,8 +6,149 @@ import (
 	"testing"
 
 	"github.com/keep-network/keep-core/pkg/chain"
+	"github.com/keep-network/keep-core/pkg/internal/tecdsatest"
+	"github.com/keep-network/keep-core/pkg/internal/testutils"
 	"github.com/keep-network/keep-core/pkg/protocol/group"
+	"github.com/keep-network/keep-core/pkg/tecdsa"
+	"github.com/keep-network/keep-core/pkg/tecdsa/dkg"
 )
+
+func TestRegisterSigner(t *testing.T) {
+	testData, err := tecdsatest.LoadPrivateKeyShareTestFixtures(1)
+	if err != nil {
+		t.Fatalf("failed to load test data: [%v]", err)
+	}
+
+	const (
+		groupSize          = 5
+		groupQuorum        = 3
+		honestThreshold    = 2
+		dishonestThreshold = 3
+	)
+
+	localChain := Connect(groupSize, groupQuorum, honestThreshold)
+
+	selectedOperators := []chain.Address{
+		"0xAA",
+		"0xBB",
+		"0xCC",
+		"0xDD",
+		"0xEE",
+	}
+
+	persistenceHandle := &mockPersistenceHandle{}
+	walletRegistry := newWalletRegistry(persistenceHandle)
+
+	dkgExecutor := &dkgExecutor{
+		// setting only the fields really needed for this test
+		chain:          localChain,
+		walletRegistry: walletRegistry,
+	}
+
+	var tests = map[string]struct {
+		memberIndex           group.MemberIndex
+		disqualifiedMemberIDs []group.MemberIndex
+		inactiveMemberIDs     []group.MemberIndex
+
+		expectedError                      error
+		expectedFinalSigningGroupIndex     group.MemberIndex
+		expectedFinalSigningGroupOperators []chain.Address
+	}{
+		"all members participating": {
+			memberIndex:                        1,
+			disqualifiedMemberIDs:              nil,
+			inactiveMemberIDs:                  nil,
+			expectedFinalSigningGroupIndex:     1,
+			expectedFinalSigningGroupOperators: selectedOperators,
+		},
+		"some member inactive": {
+			memberIndex:                        3,
+			disqualifiedMemberIDs:              nil,
+			inactiveMemberIDs:                  []group.MemberIndex{2, 5},
+			expectedFinalSigningGroupIndex:     2,
+			expectedFinalSigningGroupOperators: []chain.Address{"0xAA", "0xCC", "0xDD"},
+		},
+		"some members disqualified": {
+			memberIndex:                        1,
+			disqualifiedMemberIDs:              []group.MemberIndex{2, 5},
+			inactiveMemberIDs:                  nil,
+			expectedError:                      nil,
+			expectedFinalSigningGroupIndex:     1,
+			expectedFinalSigningGroupOperators: []chain.Address{"0xAA", "0xCC", "0xDD"},
+		},
+		"the current member inactive": {
+			memberIndex:           2,
+			disqualifiedMemberIDs: nil,
+			inactiveMemberIDs:     []group.MemberIndex{2, 5},
+			expectedError:         fmt.Errorf("failed to resolve final signing group member index"),
+		},
+		"the current member disqualified": {
+			memberIndex:           5,
+			disqualifiedMemberIDs: []group.MemberIndex{2, 5},
+			inactiveMemberIDs:     nil,
+			expectedError:         fmt.Errorf("failed to resolve final signing group member index"),
+		},
+	}
+
+	for testName, test := range tests {
+		t.Run(testName, func(t *testing.T) {
+			group := group.NewGroup(dishonestThreshold, groupSize)
+			for _, disqualifiedMember := range test.disqualifiedMemberIDs {
+				group.MarkMemberAsDisqualified(disqualifiedMember)
+			}
+			for _, inactiveMember := range test.inactiveMemberIDs {
+				group.MarkMemberAsInactive(inactiveMember)
+			}
+
+			result := &dkg.Result{
+				Group:           group,
+				PrivateKeyShare: tecdsa.NewPrivateKeyShare(testData[0]),
+			}
+
+			signer, err := dkgExecutor.registerSigner(result, test.memberIndex, selectedOperators)
+
+			if !reflect.DeepEqual(test.expectedError, err) {
+				t.Errorf(
+					"unexpected error\n"+
+						"expected: %v\n"+
+						"actual:   %v\n",
+					test.expectedError,
+					err,
+				)
+			}
+
+			if test.expectedError != nil {
+				if signer != nil {
+					t.Errorf("expected nil signer")
+				}
+
+				// do not check the rest of assertions, the signer should be nil
+				return
+			}
+
+			testutils.AssertIntsEqual(
+				t,
+				"final signing group index",
+				int(test.expectedFinalSigningGroupIndex),
+				int(signer.signingGroupMemberIndex),
+			)
+
+			if !reflect.DeepEqual(
+				test.expectedFinalSigningGroupOperators,
+				signer.wallet.signingGroupOperators,
+			) {
+				t.Errorf(
+					"unexpected final signing group operators\n"+
+						"expected: %v\n"+
+						"actual:   %v\n",
+					test.expectedFinalSigningGroupOperators,
+					signer.wallet.signingGroupOperators,
+				)
+
+			}
+		})
+	}
+}
 
 func TestFinalSigningGroup(t *testing.T) {
 	chainConfig := &ChainConfig{

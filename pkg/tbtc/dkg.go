@@ -390,88 +390,27 @@ func (de *dkgExecutor) generateSigningGroup(
 				return
 			}
 
-			// Final signing group may differ from the original DKG
-			// group outputted by the sortition protocol. One need to
-			// determine the final signing group based on the selected
-			// group members who behaved correctly during DKG protocol.
-			operatingMemberIndexes := result.Group.OperatingMemberIDs()
-			finalSigningGroupOperators, finalSigningGroupMembersIndexes, err :=
-				finalSigningGroup(
-					selectedSigningGroupOperators,
-					operatingMemberIndexes,
-					chainConfig,
-				)
-			if err != nil {
-				dkgLogger.Errorf(
-					"[member:%v] failed to resolve final signing group members",
-					memberIndex,
-				)
-				return
-			}
-
-			// Just like the final and original group may differ, the
-			// member index used during the DKG protocol may differ
-			// from the final signing group member index as well.
-			// We need to remap it.
-			finalSigningGroupMemberIndex, ok :=
-				finalSigningGroupMembersIndexes[memberIndex]
-			if !ok {
-				dkgLogger.Errorf(
-					"[member:%v] failed to resolve final signing "+
-						"group member index",
-					memberIndex,
-				)
-				return
-			}
-
-			signer := newSigner(
-				result.PrivateKeyShare.PublicKey(),
-				finalSigningGroupOperators,
-				finalSigningGroupMemberIndex,
-				result.PrivateKeyShare,
+			signer, err := de.registerSigner(
+				result,
+				memberIndex,
+				selectedSigningGroupOperators,
 			)
-
-			err = de.walletRegistry.registerSigner(signer)
 			if err != nil {
 				dkgLogger.Errorf(
-					"failed to register %s: [%v]",
-					signer,
+					"[member:%v] failed to register signing group member: [%v]",
+					memberIndex,
 					err,
 				)
-				return
 			}
 
 			dkgLogger.Infof("registered %s", signer)
 
-			// Set up the publication stop signal that should allow to
-			// perform all the result-signing-related actions and
-			// handle the worst case when the result is submitted by the
-			// last group member.
-			publicationTimeout := time.Duration(chainConfig.GroupSize) *
-				dkgResultSubmissionDelayStep
-			publicationCtx, cancelPublicationCtx := context.WithTimeout(
-				context.Background(),
-				publicationTimeout,
-			)
-			// TODO: Call cancelPublicationCtx() when the result is
-			//       available and published and remove this goroutine.
-			//       This goroutine is duplicating context.WithTimeout work
-			//       right now but is here to emphasize the need of manual
-			//       context cancellation.
-			go func() {
-				defer cancelPublicationCtx()
-				time.Sleep(publicationTimeout)
-			}()
-
-			err = dkg.Publish(
-				publicationCtx,
+			err = de.submitDkgResult(
 				dkgLogger,
-				seed.Text(16),
+				seed,
 				memberIndex,
 				broadcastChannel,
 				membershipValidator,
-				newDkgResultSigner(de.chain),
-				newDkgResultSubmitter(dkgLogger, de.chain),
 				result,
 			)
 			if err != nil {
@@ -483,6 +422,105 @@ func (de *dkgExecutor) generateSigningGroup(
 			}
 		}()
 	}
+}
+
+// registerSigner determines the final signing group shape and persists the
+// generated signer with a unique key share. Note that the final group members
+// may differ from the ones returned by the sortition pool if there was any
+// misbehavior or inactivities during the key generation.
+func (de *dkgExecutor) registerSigner(
+	result *dkg.Result,
+	memberIndex group.MemberIndex,
+	selectedSigningGroupOperators chain.Addresses,
+) (*signer, error) {
+	chainConfig := de.chain.GetConfig()
+	// Final signing group may differ from the original DKG
+	// group outputted by the sortition protocol. One need to
+	// determine the final signing group based on the selected
+	// group members who behaved correctly during DKG protocol.
+	operatingMemberIndexes := result.Group.OperatingMemberIDs()
+	finalSigningGroupOperators, finalSigningGroupMembersIndexes, err :=
+		finalSigningGroup(
+			selectedSigningGroupOperators,
+			operatingMemberIndexes,
+			chainConfig,
+		)
+	if err != nil {
+		return nil, fmt.Errorf("failed to resolve final signing group members")
+	}
+
+	// Just like the final and original group may differ, the
+	// member index used during the DKG protocol may differ
+	// from the final signing group member index as well.
+	// We need to remap it.
+	finalSigningGroupMemberIndex, ok :=
+		finalSigningGroupMembersIndexes[memberIndex]
+	if !ok {
+		return nil, fmt.Errorf("failed to resolve final signing " +
+			"group member index",
+		)
+	}
+
+	signer := newSigner(
+		result.PrivateKeyShare.PublicKey(),
+		finalSigningGroupOperators,
+		finalSigningGroupMemberIndex,
+		result.PrivateKeyShare,
+	)
+
+	err = de.walletRegistry.registerSigner(signer)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"failed to register %s: [%v]",
+			signer,
+			err,
+		)
+	}
+
+	return signer, nil
+}
+
+// submitDkgResult submits the DKG result to the chain.
+func (de *dkgExecutor) submitDkgResult(
+	dkgLogger log.StandardLogger,
+	seed *big.Int,
+	memberIndex group.MemberIndex,
+	broadcastChannel net.BroadcastChannel,
+	membershipValidator *group.MembershipValidator,
+	result *dkg.Result,
+) error {
+	// Set up the publication stop signal that should allow to
+	// perform all the result-signing-related actions and
+	// handle the worst case when the result is submitted by the
+	// last group member.
+	chainConfig := de.chain.GetConfig()
+	publicationTimeout := time.Duration(chainConfig.GroupSize) *
+		dkgResultSubmissionDelayStep
+	publicationCtx, cancelPublicationCtx := context.WithTimeout(
+		context.Background(),
+		publicationTimeout,
+	)
+	// TODO: Call cancelPublicationCtx() when the result is
+	//       available and published and remove this goroutine.
+	//       This goroutine is duplicating context.WithTimeout work
+	//       right now but is here to emphasize the need of manual
+	//       context cancellation.
+	go func() {
+		defer cancelPublicationCtx()
+		time.Sleep(publicationTimeout)
+	}()
+
+	return dkg.Publish(
+		publicationCtx,
+		dkgLogger,
+		seed.Text(16),
+		memberIndex,
+		broadcastChannel,
+		membershipValidator,
+		newDkgResultSigner(de.chain),
+		newDkgResultSubmitter(dkgLogger, de.chain),
+		result,
+	)
 }
 
 // finalSigningGroup takes three parameters:
