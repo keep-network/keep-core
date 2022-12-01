@@ -60,6 +60,7 @@ func newDkgExecutor(
 	config Config,
 	workPersistence persistence.BasicHandle,
 	scheduler *generator.Scheduler,
+	waitForBlockFn waitForBlockFn,
 ) *dkgExecutor {
 	tecdsaExecutor := dkg.NewExecutor(
 		logger,
@@ -78,6 +79,7 @@ func newDkgExecutor(
 		walletRegistry: walletRegistry,
 		protocolLatch:  protocolLatch,
 		tecdsaExecutor: tecdsaExecutor,
+		waitForBlockFn: waitForBlockFn,
 	}
 }
 

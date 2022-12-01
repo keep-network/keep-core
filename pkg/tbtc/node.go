@@ -65,7 +65,17 @@ func newNode(
 	latch := generator.NewProtocolLatch()
 	scheduler.RegisterProtocol(latch)
 
-	dkgExecutor := newDkgExecutor(
+	node := &node{
+		chain:            chain,
+		netProvider:      netProvider,
+		walletRegistry:   walletRegistry,
+		protocolLatch:    latch,
+		signingExecutors: make(map[string]*signingExecutor),
+	}
+
+	// TODO: This chicken and egg problem should be solved when
+	// waitForBlockHeight becomes a part of BlockHeightWaiter interface.
+	node.dkgExecutor = newDkgExecutor(
 		chain,
 		netProvider,
 		walletRegistry,
@@ -73,16 +83,10 @@ func newNode(
 		config,
 		workPersistence,
 		scheduler,
+		node.waitForBlockHeight,
 	)
 
-	return &node{
-		chain:            chain,
-		netProvider:      netProvider,
-		walletRegistry:   walletRegistry,
-		protocolLatch:    latch,
-		dkgExecutor:      dkgExecutor,
-		signingExecutors: make(map[string]*signingExecutor),
-	}
+	return node
 }
 
 // joinDKGIfEligible takes a seed value and undergoes the process of the
