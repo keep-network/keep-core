@@ -413,7 +413,7 @@ func connectWithRetry(
 		c.config.ConnectRetryTimeout,
 		func(ctx context.Context) error {
 			connectCtx, connectCancel := context.WithTimeout(
-				c.ctx,
+				ctx,
 				c.config.ConnectTimeout,
 			)
 			defer connectCancel()
