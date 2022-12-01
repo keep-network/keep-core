@@ -36,15 +36,6 @@ func TestRegisterSigner(t *testing.T) {
 		"0xEE",
 	}
 
-	persistenceHandle := &mockPersistenceHandle{}
-	walletRegistry := newWalletRegistry(persistenceHandle)
-
-	dkgExecutor := &dkgExecutor{
-		// setting only the fields really needed for this test
-		chain:          localChain,
-		walletRegistry: walletRegistry,
-	}
-
 	var tests = map[string]struct {
 		memberIndex           group.MemberIndex
 		disqualifiedMemberIDs []group.MemberIndex
@@ -92,6 +83,15 @@ func TestRegisterSigner(t *testing.T) {
 
 	for testName, test := range tests {
 		t.Run(testName, func(t *testing.T) {
+			persistenceHandle := &mockPersistenceHandle{}
+			walletRegistry := newWalletRegistry(persistenceHandle)
+
+			dkgExecutor := &dkgExecutor{
+				// setting only the fields really needed for this test
+				chain:          localChain,
+				walletRegistry: walletRegistry,
+			}
+
 			group := group.NewGroup(dishonestThreshold, groupSize)
 			for _, disqualifiedMember := range test.disqualifiedMemberIDs {
 				group.MarkMemberAsDisqualified(disqualifiedMember)
@@ -144,8 +144,18 @@ func TestRegisterSigner(t *testing.T) {
 					test.expectedFinalSigningGroupOperators,
 					signer.wallet.signingGroupOperators,
 				)
-
 			}
+
+			registeredSigners := walletRegistry.getSigners(
+				result.PrivateKeyShare.PublicKey(),
+			)
+
+			testutils.AssertIntsEqual(
+				t,
+				"number of signers registered",
+				1,
+				len(registeredSigners),
+			)
 		})
 	}
 }
