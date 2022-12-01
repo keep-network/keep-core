@@ -6,13 +6,19 @@ import (
 	"crypto/sha256"
 	"encoding/binary"
 	"fmt"
-	"golang.org/x/exp/slices"
 	"math/big"
 	"sort"
 	"time"
 
+	"go.uber.org/zap"
+	"golang.org/x/exp/slices"
+
 	"github.com/ipfs/go-log/v2"
+	"github.com/keep-network/keep-common/pkg/persistence"
 	"github.com/keep-network/keep-core/pkg/chain"
+	"github.com/keep-network/keep-core/pkg/generator"
+	"github.com/keep-network/keep-core/pkg/net"
+	"github.com/keep-network/keep-core/pkg/protocol/announcer"
 	"github.com/keep-network/keep-core/pkg/protocol/group"
 	"github.com/keep-network/keep-core/pkg/tecdsa/dkg"
 	"github.com/keep-network/keep-core/pkg/tecdsa/retry"
@@ -30,6 +36,493 @@ const (
 	// same time.
 	dkgResultSubmissionDelayStep = 10 * time.Second
 )
+
+// dkgExecutor is a component responsible for the full execution of ECDSA
+// Distributed Key Generation: determining members selected to the signing
+// group, executing off-chain protocol, and publishing the result to the chain.
+type dkgExecutor struct {
+	chain          Chain
+	netProvider    net.Provider
+	walletRegistry *walletRegistry
+	protocolLatch  *generator.ProtocolLatch
+
+	// waitForBlockFn is a function used to wait for the given block.
+	waitForBlockFn waitForBlockFn
+
+	tecdsaExecutor *dkg.Executor
+}
+
+// newDkgExecutor creates a new instance of dkgExecutor struct. There should
+// be only one instance of dkgExecutor.
+func newDkgExecutor(
+	chain Chain,
+	netProvider net.Provider,
+	walletRegistry *walletRegistry,
+	protocolLatch *generator.ProtocolLatch,
+	config Config,
+	workPersistence persistence.BasicHandle,
+	scheduler *generator.Scheduler,
+) *dkgExecutor {
+	tecdsaExecutor := dkg.NewExecutor(
+		logger,
+		scheduler,
+		workPersistence,
+		config.PreParamsPoolSize,
+		config.PreParamsGenerationTimeout,
+		config.PreParamsGenerationDelay,
+		config.PreParamsGenerationConcurrency,
+		config.KeyGenerationConcurrency,
+	)
+
+	return &dkgExecutor{
+		chain:          chain,
+		netProvider:    netProvider,
+		walletRegistry: walletRegistry,
+		protocolLatch:  protocolLatch,
+		tecdsaExecutor: tecdsaExecutor,
+	}
+}
+
+// preParamsCount returns the current count of the ECDSA DKG pre-parameters.
+func (de *dkgExecutor) preParamsCount() int {
+	return de.tecdsaExecutor.PreParamsCount()
+}
+
+// executeDkgIfEligible is the main function of dkgExecutor. It performs the
+// full execution of ECDSA Distributed Key Generation: determining members
+// selected to the signing group, executing off-chain protocol, and publishing
+// the result to the chain.
+func (de *dkgExecutor) executeDkgIfEligible(
+	seed *big.Int,
+	startBlockNumber uint64,
+) {
+	dkgLogger := logger.With(
+		zap.String("seed", fmt.Sprintf("0x%x", seed)),
+	)
+
+	dkgLogger.Info("checking eligibility for DKG")
+	memberIndexes, selectedSigningGroupOperators, err := de.checkEligibility(dkgLogger, seed)
+	if err != nil {
+		dkgLogger.Errorf("could not check eligibility for DKG: [%v]", err)
+		return
+	}
+
+	if membersCount := len(memberIndexes); membersCount > 0 {
+		if preParamsCount := de.tecdsaExecutor.PreParamsCount(); membersCount > preParamsCount {
+			dkgLogger.Infof(
+				"cannot join DKG as pre-parameters pool size is "+
+					"too small; [%v] pre-parameters are required but "+
+					"only [%v] available",
+				membersCount,
+				preParamsCount,
+			)
+			return
+		}
+
+		dkgLogger.Infof(
+			"joining DKG and controlling [%v] group members",
+			membersCount,
+		)
+
+		de.generateSigningGroup(
+			dkgLogger,
+			seed,
+			memberIndexes,
+			selectedSigningGroupOperators,
+			startBlockNumber,
+		)
+	} else {
+		dkgLogger.Infof("not eligible for DKG")
+	}
+}
+
+// checkEligibility performs on-chain group selection and returns two pieces
+// of information:
+// - Indexes of members selected to the signing group and controlled by this
+//   operator. The indexes are in range [1, `groupSize`]. The slice is nil if
+//   none of the selected signing group members is controlled by this operator.
+// - Addresses of all signing group members. There are always `groupSize`
+//   elements in this slice.
+func (de *dkgExecutor) checkEligibility(
+	dkgLogger log.StandardLogger,
+	seed *big.Int,
+) ([]uint8, chain.Addresses, error) {
+	selectedSigningGroupOperators, err := de.chain.SelectGroup(seed)
+	if err != nil {
+		return nil, nil, fmt.Errorf("selecting group not possible: [%v]", err)
+	}
+
+	dkgLogger.Infof("selected group members for DKG = %s", selectedSigningGroupOperators)
+
+	if len(selectedSigningGroupOperators) > de.chain.GetConfig().GroupSize {
+		return nil, nil, fmt.Errorf(
+			"group size larger than supported: [%v]",
+			len(selectedSigningGroupOperators),
+		)
+	}
+
+	_, operatorPublicKey, err := de.chain.OperatorKeyPair()
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to get operator public key: [%v]", err)
+	}
+
+	operatorAddress, err := de.chain.Signing().PublicKeyToAddress(operatorPublicKey)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to get operator address: [%v]", err)
+	}
+
+	indexes := make([]uint8, 0)
+	for index, operator := range selectedSigningGroupOperators {
+		// See if we are amongst those chosen
+		if operator == operatorAddress {
+			// The group member index should be in range [1, groupSize] so we
+			// need to add 1.
+			indexes = append(indexes, uint8(index)+1)
+		}
+	}
+
+	return indexes, selectedSigningGroupOperators, nil
+}
+
+// setupBroadcastChannel creates and initializes broadcast channel for the
+// current DKG execution. It is a temporary channel named after the seed and
+// the protocol name.
+func (de *dkgExecutor) setupBroadcastChannel(
+	seed *big.Int,
+	membershipValidator *group.MembershipValidator,
+) (net.BroadcastChannel, error) {
+	// Create temporary broadcast channel name for DKG using the
+	// group selection seed with the protocol name as prefix.
+	channelName := fmt.Sprintf("%s-%s", ProtocolName, seed.Text(16))
+
+	broadcastChannel, err := de.netProvider.BroadcastChannelFor(channelName)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get broadcast channel: [%v]", err)
+	}
+
+	dkg.RegisterUnmarshallers(broadcastChannel)
+	registerStopPillUnmarshaller(broadcastChannel)
+
+	err = broadcastChannel.SetFilter(membershipValidator.IsInGroup)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"could not set filter for channel [%v]: [%v]",
+			broadcastChannel.Name(),
+			err,
+		)
+	}
+
+	return broadcastChannel, nil
+}
+
+// generateSigningGroup executes off-chain protocol for each member controlled
+// by the current operator and upon successful execution of the protocol
+// publishes the result to the chain.
+func (de *dkgExecutor) generateSigningGroup(
+	dkgLogger *zap.SugaredLogger,
+	seed *big.Int,
+	memberIndexes []uint8,
+	selectedSigningGroupOperators chain.Addresses,
+	startBlockNumber uint64,
+) {
+	membershipValidator := group.NewMembershipValidator(
+		dkgLogger,
+		selectedSigningGroupOperators,
+		de.chain.Signing(),
+	)
+
+	broadcastChannel, err := de.setupBroadcastChannel(seed, membershipValidator)
+	if err != nil {
+		dkgLogger.Errorf("could not set up a broadcast channel: [%v]", err)
+		return
+	}
+
+	chainConfig := de.chain.GetConfig()
+
+	for _, index := range memberIndexes {
+		// Capture the member index for the goroutine.
+		memberIndex := index
+
+		go func() {
+			de.protocolLatch.Lock()
+			defer de.protocolLatch.Unlock()
+
+			announcer := announcer.New(
+				fmt.Sprintf("%v-%v", ProtocolName, "dkg"),
+				broadcastChannel,
+				membershipValidator,
+			)
+
+			retryLoop := newDkgRetryLoop(
+				dkgLogger,
+				seed,
+				startBlockNumber,
+				memberIndex,
+				selectedSigningGroupOperators,
+				chainConfig,
+				announcer,
+			)
+
+			// TODO: For this client iteration, the retry loop is started
+			//       with a 168h timeout and a stop pill sent by any group
+			//       member. Once the WalletRegistry is integrated, the stop
+			//       signal should be generated by observing the DKG result
+			//       submission or timeout.
+			loopCtx, cancelLoopCtx := context.WithTimeout(
+				context.Background(),
+				7*24*time.Hour,
+			)
+			defer cancelLoopCtx()
+			cancelDkgContextOnStopSignal(
+				loopCtx,
+				cancelLoopCtx,
+				broadcastChannel,
+				seed.Text(16),
+			)
+
+			result, err := retryLoop.start(
+				loopCtx,
+				de.waitForBlockFn,
+				func(attempt *dkgAttemptParams) (*dkg.Result, error) {
+					dkgAttemptLogger := dkgLogger.With(
+						zap.Uint("attempt", attempt.number),
+						zap.Uint64("attemptStartBlock", attempt.startBlock),
+					)
+
+					dkgAttemptLogger.Infof(
+						"[member:%v] scheduled dkg attempt "+
+							"with [%v] group members (excluded: [%v])",
+						memberIndex,
+						chainConfig.GroupSize-len(attempt.excludedMembersIndexes),
+						attempt.excludedMembersIndexes,
+					)
+
+					// Set up the attempt timeout signal.
+					attemptCtx, cancelAttemptCtx := context.WithCancel(
+						loopCtx,
+					)
+					go func() {
+						defer cancelAttemptCtx()
+
+						err := de.waitForBlockFn(
+							loopCtx,
+							attempt.startBlock+dkgAttemptMaxBlockDuration,
+						)
+						if err != nil {
+							dkgAttemptLogger.Warnf(
+								"[member:%v] failed waiting for "+
+									"attempt stop signal: [%v]",
+								memberIndex,
+								err,
+							)
+						}
+					}()
+
+					// sessionID must be different for each attempt.
+					sessionID := fmt.Sprintf(
+						"%v-%v",
+						seed.Text(16),
+						attempt.number,
+					)
+
+					result, err := de.tecdsaExecutor.Execute(
+						attemptCtx,
+						dkgAttemptLogger,
+						seed,
+						sessionID,
+						memberIndex,
+						chainConfig.GroupSize,
+						chainConfig.DishonestThreshold(),
+						attempt.excludedMembersIndexes,
+						broadcastChannel,
+						membershipValidator,
+					)
+					if err != nil {
+						dkgAttemptLogger.Errorf(
+							"[member:%v] dkg attempt failed: [%v]",
+							memberIndex,
+							err,
+						)
+
+						return nil, err
+					}
+
+					// Schedule the stop pill to be sent a fixed amount of
+					// time after the result is returned. Do not do it
+					// immediately as other members can be very close
+					// to produce the result as well. This mechanism should
+					// be more sophisticated but since it is temporary, we
+					// can live with it for now.
+					go func() {
+						time.Sleep(1 * time.Minute)
+						if err := sendDkgStopPill(
+							loopCtx,
+							broadcastChannel,
+							seed.Text(16),
+							attempt.number,
+						); err != nil {
+							dkgLogger.Errorf(
+								"[member:%v] could not send the stop pill: [%v]",
+								memberIndex,
+								err,
+							)
+						}
+					}()
+
+					return result, nil
+				},
+			)
+			if err != nil {
+				dkgLogger.Errorf(
+					"[member:%v] failed to execute dkg: [%v]",
+					memberIndex,
+					err,
+				)
+				return
+			}
+			// TODO: This condition should go away once we integrate
+			// WalletRegistry contract. In this scenario, member received
+			// a StopPill from some other group member and it means that
+			// the result has been produced but the current member did not
+			// participate in the work so they do not know the result.
+			if result == nil {
+				dkgLogger.Infof(
+					"[member:%v] dkg retry loop received stop signal",
+					memberIndex,
+				)
+				return
+			}
+
+			// TODO: Snapshot the key material before doing on-chain result
+			//       submission.
+
+			operatingMemberIndexes := result.Group.OperatingMemberIDs()
+			dkgResultChannel := make(chan *DKGResultSubmittedEvent)
+
+			dkgResultSubscription := de.chain.OnDKGResultSubmitted(
+				func(event *DKGResultSubmittedEvent) {
+					dkgResultChannel <- event
+				},
+			)
+			defer dkgResultSubscription.Unsubscribe()
+
+			// Set up the publication stop signal that should allow to
+			// perform all the result-signing-related actions and
+			// handle the worst case when the result is submitted by the
+			// last group member.
+			publicationTimeout := time.Duration(chainConfig.GroupSize) *
+				dkgResultSubmissionDelayStep
+			publicationCtx, cancelPublicationCtx := context.WithTimeout(
+				context.Background(),
+				publicationTimeout,
+			)
+			// TODO: Call cancelPublicationCtx() when the result is
+			//       available and published and remove this goroutine.
+			//       This goroutine is duplicating context.WithTimeout work
+			//       right now but is here to emphasize the need of manual
+			//       context cancellation.
+			go func() {
+				defer cancelPublicationCtx()
+				time.Sleep(publicationTimeout)
+			}()
+
+			err = dkg.Publish(
+				publicationCtx,
+				dkgLogger,
+				seed.Text(16),
+				memberIndex,
+				broadcastChannel,
+				membershipValidator,
+				newDkgResultSigner(de.chain),
+				newDkgResultSubmitter(dkgLogger, de.chain),
+				result,
+			)
+			if err != nil {
+				// Result publication failed. It means that either the result
+				// this member proposed is not supported by the majority of
+				// group members or that the chain interaction failed.
+				// In either case, we observe the chain for the result
+				// published by any other group member and based on that,
+				// we decide whether we should stay in the final group or
+				// drop our membership.
+				dkgLogger.Warnf(
+					"[member:%v] DKG result publication process failed [%v]",
+					memberIndex,
+					err,
+				)
+
+				if operatingMemberIndexes, err = decideSigningGroupMemberFate(
+					publicationCtx,
+					memberIndex,
+					dkgResultChannel,
+					result,
+				); err != nil {
+					dkgLogger.Errorf(
+						"[member:%v] failed to handle DKG result "+
+							"publishing failure: [%v]",
+						memberIndex,
+						err,
+					)
+					return
+				}
+			}
+
+			// Final signing group may differ from the original DKG
+			// group outputted by the sortition protocol. One need to
+			// determine the final signing group based on the selected
+			// group members who behaved correctly during DKG protocol.
+			finalSigningGroupOperators, finalSigningGroupMembersIndexes, err :=
+				finalSigningGroup(
+					selectedSigningGroupOperators,
+					operatingMemberIndexes,
+					chainConfig,
+				)
+			if err != nil {
+				dkgLogger.Errorf(
+					"[member:%v] failed to resolve final signing "+
+						"group: [%v]",
+					memberIndex,
+					err,
+				)
+				return
+			}
+
+			// Just like the final and original group may differ, the
+			// member index used during the DKG protocol may differ
+			// from the final signing group member index as well.
+			// We need to remap it.
+			finalSigningGroupMemberIndex, ok :=
+				finalSigningGroupMembersIndexes[memberIndex]
+			if !ok {
+				dkgLogger.Errorf(
+					"[member:%v] failed to resolve final signing "+
+						"group member index",
+					memberIndex,
+				)
+				return
+			}
+
+			signer := newSigner(
+				result.PrivateKeyShare.PublicKey(),
+				finalSigningGroupOperators,
+				finalSigningGroupMemberIndex,
+				result.PrivateKeyShare,
+			)
+
+			err = de.walletRegistry.registerSigner(signer)
+			if err != nil {
+				dkgLogger.Errorf(
+					"failed to register %s: [%v]",
+					signer,
+					err,
+				)
+				return
+			}
+
+			dkgLogger.Infof("registered %s", signer)
+		}()
+	}
+}
 
 // dkgAnnouncer represents a component responsible for exchanging readiness
 // announcements for the given DKG attempt for the given seed.
