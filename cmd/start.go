@@ -27,7 +27,7 @@ var StartCommand = &cobra.Command{
 	Short: "Starts the Keep Client",
 	Long:  "Starts the Keep Client in the foreground",
 	PreRun: func(cmd *cobra.Command, args []string) {
-		if err := clientConfig.ReadConfig(configFilePath, cmd.Flags(), config.AllCategories...); err != nil {
+		if err := clientConfig.ReadConfig(configFilePath, cmd.Flags(), config.StartCmdCategories...); err != nil {
 			logger.Fatalf("error reading config: %v", err)
 		}
 	},
@@ -39,7 +39,7 @@ var StartCommand = &cobra.Command{
 }
 
 func init() {
-	initFlags(StartCommand, &configFilePath, clientConfig, config.AllCategories...)
+	initFlags(StartCommand, &configFilePath, clientConfig, config.StartCmdCategories...)
 
 	StartCommand.SetUsageTemplate(
 		fmt.Sprintf(`%s

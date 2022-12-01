@@ -2,378 +2,394 @@ package tbtc
 
 import (
 	"context"
-	"crypto/sha256"
-	"encoding/binary"
 	"fmt"
 	"math/big"
-	"math/rand"
-	"sort"
+	"strings"
+	"sync"
 
-	"github.com/ipfs/go-log/v2"
-	"github.com/keep-network/keep-core/pkg/chain"
+	"github.com/keep-network/keep-core/pkg/generator"
+	"github.com/keep-network/keep-core/pkg/net"
+	"github.com/keep-network/keep-core/pkg/protocol/announcer"
 	"github.com/keep-network/keep-core/pkg/protocol/group"
-	"github.com/keep-network/keep-core/pkg/tecdsa/retry"
+	"github.com/keep-network/keep-core/pkg/tecdsa"
 	"github.com/keep-network/keep-core/pkg/tecdsa/signing"
-	"golang.org/x/exp/slices"
+	"go.uber.org/zap"
+	"golang.org/x/sync/semaphore"
 )
 
-// signingAttemptMaxBlockDuration determines the maximum block duration of a
-// single signing attempt.
-const signingAttemptMaxBlockDuration = 100
+const (
+	// signingBatchInterludeBlocks determines the block duration of the
+	// interlude preserved between subsequent signings in a signing batch.
+	// If the signing of the previous message completed at block X, the signing
+	// of the next message starts at `X + signingBatchInterludeBlocks`.
+	// This is the additional time signers have to realize that the signing is
+	// done by receiving the signingDoneMessage. Note that the end block of the
+	// previous signing used to establish the start block of the next signing
+	// comes from signingDoneMessage received and there is no guarantee all
+	// signing group members received signingDoneMessage before the highest
+	// endBlock is reached on the chain. The interlude is an additional time for
+	// the broadcast channel to spread information about signing successfully
+	// completed by the slowest signing group member (the one who sends the
+	// signingDoneMessage as the last one).
+	signingBatchInterludeBlocks = 2
+)
 
-// signingAnnouncer represents a component responsible for exchanging readiness
-// announcements for the given signing attempt of the given message.
-type signingAnnouncer interface {
-	Announce(
-		ctx context.Context,
-		memberIndex group.MemberIndex,
-		sessionID string,
-	) ([]group.MemberIndex, error)
+// errSigningExecutorBusy is an error returned when the signing executor
+// cannot execute the requested signature due to an ongoing signing.
+var errSigningExecutorBusy = fmt.Errorf("signing executor is busy")
+
+// signingExecutor is a component responsible for executing signing related to
+// a specific wallet whose part is controlled by this node.
+type signingExecutor struct {
+	lock *semaphore.Weighted
+
+	signers             []*signer
+	broadcastChannel    net.BroadcastChannel
+	membershipValidator *group.MembershipValidator
+	chainConfig         *ChainConfig
+	protocolLatch       *generator.ProtocolLatch
+
+	// currentBlockFn is a function used to get the current block.
+	currentBlockFn func() (uint64, error)
+	// waitForBlockFn is a function used to wait for the given block.
+	waitForBlockFn waitForBlockFn
+
+	// signingAttemptsLimit determines the maximum attempts count that will
+	// be made by a single signer for the given message. Once the attempts
+	// limit is hit the signer gives up.
+	signingAttemptsLimit uint
 }
 
-// signingRetryLoop is a struct that encapsulates the signing retry logic.
-type signingRetryLoop struct {
-	logger log.StandardLogger
-
-	message *big.Int
-
-	signingGroupMemberIndex group.MemberIndex
-	signingGroupOperators   chain.Addresses
-
-	chainConfig *ChainConfig
-
-	announcer                signingAnnouncer
-	announcementDelayBlocks  uint64
-	announcementActiveBlocks uint64
-
-	attemptCounter     uint
-	attemptStartBlock  uint64
-	attemptSeed        int64
-	attemptDelayBlocks uint64
-}
-
-func newSigningRetryLoop(
-	logger log.StandardLogger,
-	message *big.Int,
-	initialStartBlock uint64,
-	signingGroupMemberIndex group.MemberIndex,
-	signingGroupOperators chain.Addresses,
+func newSigningExecutor(
+	signers []*signer,
+	broadcastChannel net.BroadcastChannel,
+	membershipValidator *group.MembershipValidator,
 	chainConfig *ChainConfig,
-	announcer signingAnnouncer,
-) *signingRetryLoop {
-	// Compute the 8-byte seed needed for the random retry algorithm. We take
-	// the first 8 bytes of the hash of the signed message. This allows us to
-	// not care in this piece of the code about the length of the message and
-	// how this message is proposed.
-	messageSha256 := sha256.Sum256(message.Bytes())
-	attemptSeed := int64(binary.BigEndian.Uint64(messageSha256[:8]))
-
-	return &signingRetryLoop{
-		logger:                   logger,
-		message:                  message,
-		signingGroupMemberIndex:  signingGroupMemberIndex,
-		signingGroupOperators:    signingGroupOperators,
-		chainConfig:              chainConfig,
-		announcer:                announcer,
-		announcementDelayBlocks:  1,
-		announcementActiveBlocks: 5,
-		attemptCounter:           0,
-		attemptStartBlock:        initialStartBlock,
-		attemptSeed:              attemptSeed,
-		attemptDelayBlocks:       5,
+	protocolLatch *generator.ProtocolLatch,
+	currentBlockFn func() (uint64, error),
+	waitForBlockFn waitForBlockFn,
+	signingAttemptsLimit uint,
+) *signingExecutor {
+	return &signingExecutor{
+		lock:                 semaphore.NewWeighted(1),
+		signers:              signers,
+		broadcastChannel:     broadcastChannel,
+		membershipValidator:  membershipValidator,
+		chainConfig:          chainConfig,
+		protocolLatch:        protocolLatch,
+		currentBlockFn:       currentBlockFn,
+		waitForBlockFn:       waitForBlockFn,
+		signingAttemptsLimit: signingAttemptsLimit,
 	}
 }
 
-// signingAttemptParams represents parameters of a signing attempt.
-type signingAttemptParams struct {
-	number                 uint
-	startBlock             uint64
-	excludedMembersIndexes []group.MemberIndex
+// signBatch performs the signing process for each message from the given
+// messages batch, one after another. If at least one message cannot be signed,
+// this function returns an error. If all messages were signed successfully,
+// a slice of signatures is returned. Order of the returned signatures matches
+// the order of the messages in the batch, i.e. the first signature corresponds
+// to the first message, and so on.
+func (se *signingExecutor) signBatch(
+	ctx context.Context,
+	messages []*big.Int,
+	startBlock uint64,
+) ([]*tecdsa.Signature, error) {
+	wallet := se.wallet()
+
+	walletPublicKeyBytes, err := marshalPublicKey(wallet.publicKey)
+	if err != nil {
+		return nil, fmt.Errorf("cannot marshal wallet public key: [%v]", err)
+	}
+
+	messagesDigests := make([]string, len(messages))
+	for i, message := range messages {
+		bytes := message.Bytes()
+
+		// Real-world messages are usually 32-byte however, test ones can be
+		// much shorter. The distinction of displaying whole messages up
+		// to 8 bytes is arbitrary though can be justified as digesting shorter
+		// values is rather an overkill. Having full messages while inspecting
+		// test logs may help while debugging.
+		var messageDigest string
+		if len(bytes) > 8 {
+			messageDigest = fmt.Sprintf(
+				"0x%x...%x",
+				bytes[:2],
+				bytes[len(bytes)-2:],
+			)
+		} else {
+			messageDigest = fmt.Sprintf("0x%x", bytes)
+		}
+
+		messagesDigests[i] = messageDigest
+	}
+
+	signingBatchLogger := logger.With(
+		zap.String("wallet", fmt.Sprintf("0x%x", walletPublicKeyBytes)),
+		zap.String("messages", strings.Join(messagesDigests, ", ")),
+	)
+
+	signingStartBlock := startBlock // start block for the first signing
+	signatures := make([]*tecdsa.Signature, len(messages))
+	endBlocks := make([]uint64, len(messages))
+
+	for i, message := range messages {
+		signingBatchMessageLogger := signingBatchLogger.With(
+			zap.String("message", fmt.Sprintf("0x%x", message)),
+			zap.String("index", fmt.Sprintf("%v/%v", i+1, len(messages))),
+		)
+
+		signingBatchMessageLogger.Infof("generating signature for message")
+
+		if i > 0 {
+			signingStartBlock = endBlocks[i-1] + signingBatchInterludeBlocks
+		}
+
+		signature, endBlock, err := se.sign(ctx, message, signingStartBlock)
+		if err != nil {
+			return nil, err
+		}
+
+		signingBatchMessageLogger.Infof(
+			"generated signature [%v] for message at block [%v]",
+			signature,
+			endBlock,
+		)
+
+		signatures[i] = signature
+		endBlocks[i] = endBlock
+	}
+
+	return signatures, nil
 }
 
-// signingAttemptFn represents a function performing a signing attempt.
-type signingAttemptFn func(*signingAttemptParams) (*signing.Result, error)
-
-// start begins the signing retry loop using the given signing attempt function.
-// The retry loop terminates when the signing result is produced or the ctx
-// parameter is done, whatever comes first.
-func (srl *signingRetryLoop) start(
+// sign performs the signing process for the given message. The process is
+// triggered according to the given start block. If the message cannot be signed
+// within a limited time window, an error is returned. If the message was
+// signed successfully, this function returns the signature along with the
+// block at which the signature was calculated. This end block is common for
+// all wallet signers so can be used as a synchronization point.
+func (se *signingExecutor) sign(
 	ctx context.Context,
-	waitForBlockFn waitForBlockFn,
-	signingAttemptFn signingAttemptFn,
-) (*signing.Result, error) {
-	for {
-		srl.attemptCounter++
+	message *big.Int,
+	startBlock uint64,
+) (*tecdsa.Signature, uint64, error) {
+	if lockAcquired := se.lock.TryAcquire(1); !lockAcquired {
+		return nil, 0, errSigningExecutorBusy
+	}
+	defer se.lock.Release(1)
 
-		// In order to start attempts >1 in the right place, we need to
-		// determine how many blocks were taken by previous attempts. We assume
-		// the worst case that each attempt failed at the end of the signing
-		// protocol.
-		//
-		// That said, we need to increment the previous attempt start
-		// block by the number of blocks equal to the protocol duration and
-		// by some additional delay blocks. We need a small fixed delay in
-		// order to mitigate all corner cases where the actual attempt duration
-		// was slightly longer than the expected duration determined by the
-		// signingAttemptMaxBlockDuration constant.
-		//
-		// For example, the attempt may fail at the end of the protocol but the
-		// error is returned after some time and more blocks than expected are
-		// mined in the meantime.
-		if srl.attemptCounter > 1 {
-			srl.attemptStartBlock = srl.attemptStartBlock +
-				srl.announcementDelayBlocks +
-				srl.announcementActiveBlocks +
-				signingAttemptMaxBlockDuration +
-				srl.attemptDelayBlocks
-		}
+	wallet := se.wallet()
 
-		announcementStartBlock := srl.attemptStartBlock + srl.announcementDelayBlocks
-		err := waitForBlockFn(ctx, announcementStartBlock)
-		if err != nil {
-			return nil, fmt.Errorf(
-				"failed waiting for announcement start block [%v] "+
-					"for attempt [%v]: [%v]",
-				announcementStartBlock,
-				srl.attemptCounter,
-				err,
+	walletPublicKeyBytes, err := marshalPublicKey(wallet.publicKey)
+	if err != nil {
+		return nil, 0, fmt.Errorf("cannot marshal wallet public key: [%v]", err)
+	}
+
+	loopTimeoutBlock := startBlock +
+		uint64(se.signingAttemptsLimit*signingAttemptMaximumBlocks())
+
+	signingLogger := logger.With(
+		zap.String("wallet", fmt.Sprintf("0x%x", walletPublicKeyBytes)),
+		zap.String("message", fmt.Sprintf("0x%x", message)),
+		zap.Uint64("signingStartBlock", startBlock),
+		zap.Uint64("signingTimeoutBlock", loopTimeoutBlock),
+	)
+
+	type signingOutcome struct {
+		signature *tecdsa.Signature
+		endBlock  uint64
+	}
+
+	wg := sync.WaitGroup{}
+	wg.Add(len(se.signers))
+	signingOutcomeChan := make(chan *signingOutcome, len(se.signers))
+
+	for _, currentSigner := range se.signers {
+		go func(signer *signer) {
+			se.protocolLatch.Lock()
+			defer se.protocolLatch.Unlock()
+
+			defer wg.Done()
+
+			announcer := announcer.New(
+				fmt.Sprintf("%v-%v", ProtocolName, "signing"),
+				se.broadcastChannel,
+				se.membershipValidator,
 			)
-		}
 
-		// Set up the announcement phase stop signal.
-		announceCtx, cancelAnnounceCtx := context.WithCancel(ctx)
-		announcementEndBlock := announcementStartBlock + srl.announcementActiveBlocks
-		go func() {
-			defer cancelAnnounceCtx()
+			doneCheck := newSigningDoneCheck(
+				se.chainConfig.GroupSize,
+				se.broadcastChannel,
+				se.membershipValidator,
+			)
 
-			if err := waitForBlockFn(ctx, announcementEndBlock); err != nil {
-				srl.logger.Errorf(
-					"[member:%v] failed waiting for announcement end "+
-						"block [%v] for attempt [%v]: [%v]",
-					srl.signingGroupMemberIndex,
-					announcementEndBlock,
-					srl.attemptCounter,
+			retryLoop := newSigningRetryLoop(
+				signingLogger,
+				message,
+				startBlock,
+				signer.signingGroupMemberIndex,
+				wallet.signingGroupOperators,
+				se.chainConfig,
+				announcer,
+				doneCheck,
+			)
+
+			// Set up the loop timeout signal. This context is associated with
+			// all attempts and gets canceled in three situations:
+			// - one of the attempts failed with an error,
+			// - we gave up after executing multiple attempts,
+			// - one of the attempts succeeded.
+			// In the last case, the context is not canceled immediately but,
+			// we wait until the timeout for the successful attempt is done.
+			// This lets the inner context to retransmit the signing done
+			// messages for a longer period of time than just for the actual
+			// execution time from the perspective of the current member.
+			// This is important to ensure everyone has a chance to receive
+			// the signing done message broadcasted by the current member.
+			loopCtx, cancelLoopCtx := withCancelOnBlock(
+				ctx,
+				loopTimeoutBlock,
+				se.waitForBlockFn,
+			)
+
+			loopResult, err := retryLoop.start(
+				loopCtx,
+				se.waitForBlockFn,
+				func(attempt *signingAttemptParams) (*signing.Result, uint64, error) {
+					signingAttemptLogger := signingLogger.With(
+						zap.Uint("attemptNumber", attempt.number),
+						zap.Uint64("attemptStartBlock", attempt.startBlock),
+						zap.Uint64("attemptTimeoutBlock", attempt.timeoutBlock),
+					)
+
+					signingAttemptLogger.Infof(
+						"[member:%v] starting signing protocol "+
+							"with [%v] group members (excluded: [%v])",
+						signer.signingGroupMemberIndex,
+						wallet.groupSize()-len(attempt.excludedMembersIndexes),
+						attempt.excludedMembersIndexes,
+					)
+
+					// Set up the attempt timeout signal.
+					// This context is associated with the current attempt and
+					// gets canceled when the timeout for the current attempt is
+					// hit. The context is not canceled earlier, even if the
+					// execution succeeded. This is needed to ensure all
+					// protocol participants, even the slowest one, have
+					// a chance to receive all messages sent by this member
+					// and complete the protocol.
+					attemptCtx, _ := withCancelOnBlock(
+						loopCtx,
+						attempt.timeoutBlock,
+						se.waitForBlockFn,
+					)
+
+					sessionID := fmt.Sprintf(
+						"%v-%v",
+						message.Text(16),
+						attempt.number,
+					)
+
+					result, err := signing.Execute(
+						attemptCtx,
+						signingAttemptLogger,
+						message,
+						sessionID,
+						signer.signingGroupMemberIndex,
+						signer.privateKeyShare,
+						wallet.groupSize(),
+						wallet.groupDishonestThreshold(
+							se.chainConfig.HonestThreshold,
+						),
+						attempt.excludedMembersIndexes,
+						se.broadcastChannel,
+						se.membershipValidator,
+					)
+					if err != nil {
+						return nil, 0, err
+					}
+
+					endBlock, err := se.currentBlockFn()
+					if err != nil {
+						return nil, 0, err
+					}
+
+					return result, endBlock, nil
+				},
+			)
+			if err != nil {
+				// Signer failed so there is no point to hold the loopCtx.
+				// Cancel it regardless of their timeout.
+				cancelLoopCtx()
+
+				signingLogger.Errorf(
+					"[member:%v] all retries for the signing failed; "+
+						"giving up: [%v]",
+					signer.signingGroupMemberIndex,
 					err,
 				)
+
+				return
 			}
-		}()
 
-		srl.logger.Infof(
-			"[member:%v] starting announcement phase for attempt [%v]",
-			srl.signingGroupMemberIndex,
-			srl.attemptCounter,
-		)
+			// Just as mentioned in the comment above the definition of loopCtx,
+			// do not cancel the loopCtx upon function exit immediately and
+			// continue to broadcast signing done checks until the successful
+			// attempt timeout. This way we maximize the chance that other
+			// members, especially the ones not participating in the successful
+			// signature attempt, receive the done checks as well.
+			go func() {
+				defer cancelLoopCtx()
 
-		readyMembersIndexes, err := srl.announcer.Announce(
-			announceCtx,
-			srl.signingGroupMemberIndex,
-			fmt.Sprintf("%v-%v", srl.message, srl.attemptCounter),
-		)
-		if err != nil {
-			srl.logger.Warnf(
-				"[member:%v] announcement for attempt [%v] "+
-					"failed: [%v]; starting next attempt",
-				srl.signingGroupMemberIndex,
-				srl.attemptCounter,
-				err,
+				err := se.waitForBlockFn(
+					loopCtx,
+					loopResult.attemptTimeoutBlock,
+				)
+				if err != nil {
+					signingLogger.Warnf(
+						"[member:%v] failed waiting for signing "+
+							"loop stop signal: [%v]",
+						signer.signingGroupMemberIndex,
+						err,
+					)
+				}
+			}()
+
+			signingLogger.Infof(
+				"[member:%v] generated signature [%v] at block [%v]",
+				signer.signingGroupMemberIndex,
+				loopResult.result.Signature,
+				loopResult.latestEndBlock,
 			)
-			continue
-		}
 
-		// Check the loop stop signal.
-		if ctx.Err() != nil {
-			return nil, nil
-		}
+			signingOutcomeChan <- &signingOutcome{
+				signature: loopResult.result.Signature,
+				endBlock:  loopResult.latestEndBlock,
+			}
+		}(currentSigner)
+	}
 
-		if len(readyMembersIndexes) >= srl.chainConfig.HonestThreshold {
-			srl.logger.Infof(
-				"[member:%v] completed announcement phase for attempt [%v] "+
-					"with honest majority of [%v] members ready to sign",
-				srl.signingGroupMemberIndex,
-				srl.attemptCounter,
-				len(readyMembersIndexes),
-			)
-		} else {
-			srl.logger.Warnf(
-				"[member:%v] completed announcement phase for attempt [%v] "+
-					"with minority of [%v] members ready to sign; "+
-					"starting next attempt",
-				srl.signingGroupMemberIndex,
-				srl.attemptCounter,
-				len(readyMembersIndexes),
-			)
-			continue
-		}
+	// Wait until all controlled signers complete their signing routines,
+	// regardless of their result.
+	wg.Wait()
 
-		excludedMembersIndexes, err := srl.performMembersSelection(
-			readyMembersIndexes,
-		)
-		if err != nil {
-			return nil, fmt.Errorf(
-				"cannot select members for attempt [%v]: [%w]",
-				srl.attemptCounter,
-				err,
-			)
-		}
-
-		attemptSkipped := slices.Contains(
-			excludedMembersIndexes,
-			srl.signingGroupMemberIndex,
-		)
-
-		var result *signing.Result
-		var attemptErr error
-
-		if !attemptSkipped {
-			result, attemptErr = signingAttemptFn(&signingAttemptParams{
-				number:                 srl.attemptCounter,
-				startBlock:             announcementEndBlock,
-				excludedMembersIndexes: excludedMembersIndexes,
-			})
-		} else {
-			srl.logger.Infof(
-				"[member:%v] attempt [%v] skipped",
-				srl.signingGroupMemberIndex,
-				srl.attemptCounter,
-			)
-		}
-
-		if attemptSkipped || attemptErr != nil {
-			continue
-		}
-
-		return result, nil
+	// Take the first outcome from the channel as the outcome of all members.
+	// This assumption is totally valid because the signing loop produces a
+	// result only if all signers who participated in signing confirmed they
+	// are done by sending a valid `signingDoneMessage` during the signing done
+	// check phase. If the result was not inserted to the channel by any
+	// signer, that means all signers failed and have not produced a signature.
+	select {
+	case outcome := <-signingOutcomeChan:
+		return outcome.signature, outcome.endBlock, nil
+	default:
+		return nil, 0, fmt.Errorf("all signers failed")
 	}
 }
 
-// performMembersSelection runs the member selection process whose result
-// is a list of members' indexes that should be excluded by the client
-// for the given signing attempt.
-//
-// The member selection process is done based on the list of ready members
-// provided as the readyMembersIndexes argument. This list is used twice:
-//
-// First, the algorithm determining the qualified operators set uses the
-// ready members list to build an input consisting of only active operators.
-// This way we guarantee that the qualified operators set contains only
-// ready and active operators that will actually take part in the signing
-// attempt.
-//
-// Second, the ready members list is used to determine a list of excluded
-// members. The excluded members list is built using the qualified operators
-// set. The algorithm that determines the qualified operators set does not
-// care about an exact mapping between operators and controlled members but
-// relies on the members count solely. That means the information about
-// readiness of specific members controlled by the given operators is not
-// included in the resulting qualified operators set. In order to properly
-// decide about inclusion or exclusion of specific members of a given
-// qualified operator, we must take the ready members list into account.
-func (srl *signingRetryLoop) performMembersSelection(
-	readyMembersIndexes []group.MemberIndex,
-) ([]group.MemberIndex, error) {
-	qualifiedOperatorsSet, err := srl.qualifiedOperatorsSet(readyMembersIndexes)
-	if err != nil {
-		return nil, fmt.Errorf("cannot get qualified operators: [%w]", err)
-	}
-
-	// Exclude all members controlled by the operators that were not
-	// qualified for the current attempt.
-	return srl.excludedMembersIndexes(
-		qualifiedOperatorsSet,
-		readyMembersIndexes,
-	), nil
-}
-
-// qualifiedOperatorsSet returns a set of operators qualified to participate
-// in the given signing attempt. The set of qualified operators is taken
-// from the set of active operators who announced readiness through
-// their controlled signing group members.
-func (srl *signingRetryLoop) qualifiedOperatorsSet(
-	readyMembersIndexes []group.MemberIndex,
-) (map[chain.Address]bool, error) {
-	// The retry algorithm expects that we count retries from 0. Since
-	// the first invocation of the algorithm will be for `attemptCounter == 1`
-	// we need to subtract one while determining the number of the given retry.
-	retryCount := srl.attemptCounter - 1
-
-	var readySigningGroupOperators []chain.Address
-	for _, memberIndex := range readyMembersIndexes {
-		readySigningGroupOperators = append(
-			readySigningGroupOperators,
-			srl.signingGroupOperators[memberIndex-1],
-		)
-	}
-
-	qualifiedOperators, err := retry.EvaluateRetryParticipantsForSigning(
-		readySigningGroupOperators,
-		srl.attemptSeed,
-		retryCount,
-		uint(srl.chainConfig.HonestThreshold),
-	)
-	if err != nil {
-		return nil, fmt.Errorf(
-			"random operator selection failed: [%w]",
-			err,
-		)
-	}
-
-	return chain.Addresses(qualifiedOperators).Set(), nil
-}
-
-// excludedMembersIndexes returns a list of excluded members' indexes for
-// the given qualified operators set.
-func (srl *signingRetryLoop) excludedMembersIndexes(
-	qualifiedOperatorsSet map[chain.Address]bool,
-	readyMembersIndexes []group.MemberIndex,
-) []group.MemberIndex {
-	includedMembersIndexes := make([]group.MemberIndex, 0)
-	excludedMembersIndexes := make([]group.MemberIndex, 0)
-	for i, operator := range srl.signingGroupOperators {
-		memberIndex := group.MemberIndex(i + 1)
-
-		if qualifiedOperatorsSet[operator] &&
-			slices.Contains(readyMembersIndexes, memberIndex) {
-			includedMembersIndexes = append(
-				includedMembersIndexes,
-				memberIndex,
-			)
-		} else {
-			excludedMembersIndexes = append(
-				excludedMembersIndexes,
-				memberIndex,
-			)
-		}
-	}
-
-	// Make sure we always use just the smallest required count of
-	// signing members for performance reasons
-	if len(includedMembersIndexes) > srl.chainConfig.HonestThreshold {
-		// #nosec G404 (insecure random number source (rand))
-		// Shuffling does not require secure randomness.
-		rng := rand.New(rand.NewSource(
-			srl.attemptSeed + int64(srl.attemptCounter),
-		))
-		// Sort in ascending order just in case.
-		sort.Slice(includedMembersIndexes, func(i, j int) bool {
-			return includedMembersIndexes[i] < includedMembersIndexes[j]
-		})
-		// Shuffle the included members slice to randomize the
-		// selection of additionally excluded members.
-		rng.Shuffle(len(includedMembersIndexes), func(i, j int) {
-			includedMembersIndexes[i], includedMembersIndexes[j] =
-				includedMembersIndexes[j], includedMembersIndexes[i]
-		})
-		// Get the surplus of included members and add them to
-		// the excluded members list.
-		excludedMembersIndexes = append(
-			excludedMembersIndexes,
-			includedMembersIndexes[srl.chainConfig.HonestThreshold:]...,
-		)
-		// Sort the resulting excluded members list in ascending order.
-		sort.Slice(excludedMembersIndexes, func(i, j int) bool {
-			return excludedMembersIndexes[i] < excludedMembersIndexes[j]
-		})
-	}
-
-	return excludedMembersIndexes
+func (se *signingExecutor) wallet() wallet {
+	// All signers belong to one wallet. Take that wallet from the
+	// first signer.
+	return se.signers[0].wallet
 }
