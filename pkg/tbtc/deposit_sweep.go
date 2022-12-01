@@ -1,6 +1,7 @@
 package tbtc
 
 import (
+	"crypto/ecdsa"
 	"fmt"
 	"github.com/keep-network/keep-core/pkg/bitcoin"
 )
@@ -11,7 +12,7 @@ import (
 // instance ready to be spread across the Bitcoin network.
 func assembleDepositSweepTransaction(
 	bitcoinChain bitcoin.Chain,
-	wallet wallet,
+	walletPublicKey *ecdsa.PublicKey,
 	walletMainUtxo *bitcoin.UnspentTransactionOutput,
 	deposits []*deposit,
 	fee int64,
@@ -52,7 +53,7 @@ func assembleDepositSweepTransaction(
 		}
 	}
 
-	walletPublicKeyHash := bitcoin.PublicKeyHash(wallet.publicKey)
+	walletPublicKeyHash := bitcoin.PublicKeyHash(walletPublicKey)
 	outputScript, err := bitcoin.PayToWitnessPublicKeyHash(walletPublicKeyHash)
 	if err != nil {
 		return nil, fmt.Errorf("cannot compute output script: [%v]", err)

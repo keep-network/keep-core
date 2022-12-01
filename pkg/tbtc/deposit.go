@@ -39,11 +39,11 @@ type deposit struct {
 func (d *deposit) script() ([]byte, error) {
 	script := fmt.Sprintf(
 		depositScriptFormat,
-		d.depositor,
-		d.blindingFactor,
-		d.walletPublicKeyHash,
-		d.refundPublicKeyHash,
-		d.refundLocktime,
+		hex.EncodeToString(d.depositor[:]),
+		hex.EncodeToString(d.blindingFactor[:]),
+		hex.EncodeToString(d.walletPublicKeyHash[:]),
+		hex.EncodeToString(d.refundPublicKeyHash[:]),
+		hex.EncodeToString(d.refundLocktime[:]),
 	)
 
 	return hex.DecodeString(script)
