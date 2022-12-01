@@ -14,3 +14,4 @@ export const QUERY_RESOLUTION = 60 // 1min sampling time for the metrics
 export const HUNDRED = 100
 export const IS_VERSION_SATISFIED = "isVersionSatisfied"
 export const APR = 15 // percent
+export const SECONDS_IN_YEAR = 31536000
