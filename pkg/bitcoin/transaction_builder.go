@@ -17,18 +17,15 @@ import (
 // the Bitcoin network.
 type TransactionBuilder struct {
 	chain       Chain
-	transaction *wire.MsgTx
+	internal    *internalTransaction
 	sigHashArgs []*inputSigHashArgs
 }
 
 // NewTransactionBuilder constructs a new TransactionBuilder instance.
 func NewTransactionBuilder(chain Chain) *TransactionBuilder {
-	transaction := wire.NewMsgTx(wire.TxVersion)
-	transaction.LockTime = 0
-
 	return &TransactionBuilder{
 		chain:       chain,
-		transaction: transaction,
+		internal:    newInternalTransaction(),
 		sigHashArgs: make([]*inputSigHashArgs, 0),
 	}
 }
@@ -73,7 +70,7 @@ func (tb *TransactionBuilder) AddPublicKeyHashInput(
 
 	// Deliberately set both `signatureScript` and `witness` arguments to nil
 	// because at this point, the input does not contain any signature data.
-	tb.transaction.AddTxIn(wire.NewTxIn(outpoint, nil, nil))
+	tb.internal.AddTxIn(wire.NewTxIn(outpoint, nil, nil))
 
 	tb.sigHashArgs = append(tb.sigHashArgs, sigHashArgs)
 
@@ -124,9 +121,9 @@ func (tb *TransactionBuilder) AddScriptHashInput(
 	// let the AddSignatures method prepend it with the actual signature
 	// and public key.
 	if sigHashArgs.witness {
-		tb.transaction.AddTxIn(wire.NewTxIn(outpoint, nil, [][]byte{redeemScript}))
+		tb.internal.AddTxIn(wire.NewTxIn(outpoint, nil, [][]byte{redeemScript}))
 	} else {
-		tb.transaction.AddTxIn(wire.NewTxIn(outpoint, redeemScript, nil))
+		tb.internal.AddTxIn(wire.NewTxIn(outpoint, redeemScript, nil))
 	}
 
 	tb.sigHashArgs = append(tb.sigHashArgs, sigHashArgs)
@@ -154,7 +151,7 @@ func (tb *TransactionBuilder) getScript(
 
 // AddOutput adds a new transaction's output.
 func (tb *TransactionBuilder) AddOutput(output *TransactionOutput) {
-	tb.transaction.AddTxOut(wire.NewTxOut(output.Value, output.PublicKeyScript))
+	tb.internal.AddTxOut(wire.NewTxOut(output.Value, output.PublicKeyScript))
 }
 
 // SigHashes computes the signature hashes for all transaction inputs. Elements
@@ -162,13 +159,13 @@ func (tb *TransactionBuilder) AddOutput(output *TransactionOutput) {
 // they correspond to. That is, an element at the given index matches the input
 // with the same index.
 func (tb *TransactionBuilder) SigHashes() ([]*big.Int, error) {
-	sigHashes := make([]*big.Int, len(tb.transaction.TxIn))
+	sigHashes := make([]*big.Int, len(tb.internal.TxIn))
 
 	// Calculation of sighashes for witness inputs can be faster as common
 	// sighash fragments can be pre-computed upfront and reused.
-	witnessSigHashFragments := txscript.NewTxSigHashes(tb.transaction)
+	witnessSigHashFragments := txscript.NewTxSigHashes(tb.internal.MsgTx)
 
-	for i := range tb.transaction.TxIn {
+	for i := range tb.internal.TxIn {
 		sigHashArgs := tb.sigHashArgs[i]
 
 		var sigHashBytes []byte
@@ -179,7 +176,7 @@ func (tb *TransactionBuilder) SigHashes() ([]*big.Int, error) {
 				sigHashArgs.scriptCode,
 				witnessSigHashFragments,
 				txscript.SigHashAll,
-				tb.transaction,
+				tb.internal.MsgTx,
 				i,
 				sigHashArgs.value,
 			)
@@ -187,7 +184,7 @@ func (tb *TransactionBuilder) SigHashes() ([]*big.Int, error) {
 			sigHashBytes, err = txscript.CalcSignatureHash(
 				sigHashArgs.scriptCode,
 				txscript.SigHashAll,
-				tb.transaction,
+				tb.internal.MsgTx,
 				i,
 			)
 		}
@@ -206,6 +203,12 @@ func (tb *TransactionBuilder) SigHashes() ([]*big.Int, error) {
 	return sigHashes, nil
 }
 
+// SignatureContainer is a helper type holding signature data.
+type SignatureContainer struct {
+	R, S      *big.Int
+	PublicKey *ecdsa.PublicKey
+}
+
 // AddSignatures adds signature data for transaction inputs and returns a
 // signed Transaction instance. The signatures slice should have the same
 // length as the transaction's input vector. The signature with given index
@@ -214,16 +217,13 @@ func (tb *TransactionBuilder) SigHashes() ([]*big.Int, error) {
 // this should be the public key that corresponds to the private key used
 // to produce the given signature.
 func (tb *TransactionBuilder) AddSignatures(
-	signatures []*struct {
-		R, S      *big.Int
-		publicKey *ecdsa.PublicKey
-	},
+	signatures []*SignatureContainer,
 ) (*Transaction, error) {
-	if len(signatures) != len(tb.transaction.TxIn) {
+	if len(signatures) != len(tb.internal.TxIn) {
 		return nil, fmt.Errorf("wrong signatures count")
 	}
 
-	for i, input := range tb.transaction.TxIn {
+	for i, input := range tb.internal.TxIn {
 		signature := signatures[i]
 
 		signatureBytes := append(
@@ -231,7 +231,7 @@ func (tb *TransactionBuilder) AddSignatures(
 			byte(txscript.SigHashAll),
 		)
 		publicKeyBytes := (*btcec.PublicKey)(
-			signature.publicKey,
+			signature.PublicKey,
 		).SerializeCompressed()
 
 		sigHashArgs := tb.sigHashArgs[i]
@@ -275,38 +275,7 @@ func (tb *TransactionBuilder) AddSignatures(
 		}
 	}
 
-	return tb.stateToTransaction(), nil
-}
-
-// stateToTransaction converts the internal state of the builder into a Transaction.
-func (tb *TransactionBuilder) stateToTransaction() *Transaction {
-	inputs := make([]*TransactionInput, len(tb.transaction.TxIn))
-	for i, input := range tb.transaction.TxIn {
-		inputs[i] = &TransactionInput{
-			Outpoint: &TransactionOutpoint{
-				TransactionHash: Hash(input.PreviousOutPoint.Hash),
-				OutputIndex:     input.PreviousOutPoint.Index,
-			},
-			SignatureScript: input.SignatureScript,
-			Witness:         input.Witness,
-			Sequence:        input.Sequence,
-		}
-	}
-
-	outputs := make([]*TransactionOutput, len(tb.transaction.TxOut))
-	for i, output := range tb.transaction.TxOut {
-		outputs[i] = &TransactionOutput{
-			Value:           output.Value,
-			PublicKeyScript: output.PkScript,
-		}
-	}
-
-	return &Transaction{
-		Version:  tb.transaction.Version,
-		Inputs:   inputs,
-		Outputs:  outputs,
-		Locktime: tb.transaction.LockTime,
-	}
+	return tb.internal.toTransaction(), nil
 }
 
 // TotalInputsValue returns the total value of transaction inputs.
@@ -332,4 +301,74 @@ type inputSigHashArgs struct {
 	// witness denotes whether the given input point's to a UTXO locked using
 	// a witness script.
 	witness bool
+}
+
+// internalTransaction is an internal utility representation of the Transaction
+// that expose a lot of tools helpful during transaction manipulation.
+type internalTransaction struct {
+	*wire.MsgTx
+}
+
+func newInternalTransaction() *internalTransaction {
+	msgTx := wire.NewMsgTx(wire.TxVersion)
+	msgTx.LockTime = 0
+
+	return &internalTransaction{msgTx}
+}
+
+func (it *internalTransaction) fromTransaction(transaction *Transaction) {
+	it.Version = transaction.Version
+
+	it.TxIn = make([]*wire.TxIn, len(transaction.Inputs))
+	for i, input := range transaction.Inputs {
+		it.TxIn[i] = &wire.TxIn{
+			PreviousOutPoint: wire.OutPoint{
+				Hash:  chainhash.Hash(input.Outpoint.TransactionHash),
+				Index: input.Outpoint.OutputIndex,
+			},
+			SignatureScript: input.SignatureScript,
+			Witness:         input.Witness,
+			Sequence:        input.Sequence,
+		}
+	}
+
+	it.TxOut = make([]*wire.TxOut, len(transaction.Outputs))
+	for i, output := range transaction.Outputs {
+		it.TxOut[i] = &wire.TxOut{
+			Value:    output.Value,
+			PkScript: output.PublicKeyScript,
+		}
+	}
+
+	it.LockTime = transaction.Locktime
+}
+
+func (it *internalTransaction) toTransaction() *Transaction {
+	inputs := make([]*TransactionInput, len(it.TxIn))
+	for i, input := range it.TxIn {
+		inputs[i] = &TransactionInput{
+			Outpoint: &TransactionOutpoint{
+				TransactionHash: Hash(input.PreviousOutPoint.Hash),
+				OutputIndex:     input.PreviousOutPoint.Index,
+			},
+			SignatureScript: input.SignatureScript,
+			Witness:         input.Witness,
+			Sequence:        input.Sequence,
+		}
+	}
+
+	outputs := make([]*TransactionOutput, len(it.TxOut))
+	for i, output := range it.TxOut {
+		outputs[i] = &TransactionOutput{
+			Value:           output.Value,
+			PublicKeyScript: output.PkScript,
+		}
+	}
+
+	return &Transaction{
+		Version:  it.Version,
+		Inputs:   inputs,
+		Outputs:  outputs,
+		Locktime: it.LockTime,
+	}
 }
