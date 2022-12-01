@@ -1,7 +1,6 @@
 package tbtc
 
 import (
-	"bytes"
 	"context"
 	"fmt"
 	"math/big"
@@ -393,84 +392,11 @@ func (de *dkgExecutor) generateSigningGroup(
 				return
 			}
 
-			// TODO: Snapshot the key material before doing on-chain result
-			//       submission.
-
-			operatingMemberIndexes := result.Group.OperatingMemberIDs()
-			dkgResultChannel := make(chan *DKGResultSubmittedEvent)
-
-			dkgResultSubscription := de.chain.OnDKGResultSubmitted(
-				func(event *DKGResultSubmittedEvent) {
-					dkgResultChannel <- event
-				},
-			)
-			defer dkgResultSubscription.Unsubscribe()
-
-			// Set up the publication stop signal that should allow to
-			// perform all the result-signing-related actions and
-			// handle the worst case when the result is submitted by the
-			// last group member.
-			publicationTimeout := time.Duration(chainConfig.GroupSize) *
-				dkgResultSubmissionDelayStep
-			publicationCtx, cancelPublicationCtx := context.WithTimeout(
-				context.Background(),
-				publicationTimeout,
-			)
-			// TODO: Call cancelPublicationCtx() when the result is
-			//       available and published and remove this goroutine.
-			//       This goroutine is duplicating context.WithTimeout work
-			//       right now but is here to emphasize the need of manual
-			//       context cancellation.
-			go func() {
-				defer cancelPublicationCtx()
-				time.Sleep(publicationTimeout)
-			}()
-
-			err = dkg.Publish(
-				publicationCtx,
-				dkgLogger,
-				seed.Text(16),
-				memberIndex,
-				broadcastChannel,
-				membershipValidator,
-				newDkgResultSigner(de.chain),
-				newDkgResultSubmitter(dkgLogger, de.chain),
-				result,
-			)
-			if err != nil {
-				// Result publication failed. It means that either the result
-				// this member proposed is not supported by the majority of
-				// group members or that the chain interaction failed.
-				// In either case, we observe the chain for the result
-				// published by any other group member and based on that,
-				// we decide whether we should stay in the final group or
-				// drop our membership.
-				dkgLogger.Warnf(
-					"[member:%v] DKG result publication process failed [%v]",
-					memberIndex,
-					err,
-				)
-
-				if operatingMemberIndexes, err = decideSigningGroupMemberFate(
-					publicationCtx,
-					memberIndex,
-					dkgResultChannel,
-					result,
-				); err != nil {
-					dkgLogger.Errorf(
-						"[member:%v] failed to handle DKG result "+
-							"publishing failure: [%v]",
-						memberIndex,
-						err,
-					)
-					return
-				}
-			}
-
 			// Final signing group may differ from the original DKG
 			// group outputted by the sortition protocol. One need to
 			// determine the final signing group based on the selected
 			// group members who behaved correctly during DKG protocol.
+			operatingMemberIndexes := result.Group.OperatingMemberIDs()
 			finalSigningGroupOperators, finalSigningGroupMembersIndexes, err :=
 				finalSigningGroup(
 					selectedSigningGroupOperators,
@@ -479,10 +405,8 @@ func (de *dkgExecutor) generateSigningGroup(
 				)
 			if err != nil {
 				dkgLogger.Errorf(
-					"[member:%v] failed to resolve final signing "+
-						"group: [%v]",
+					"[member:%v] failed to resolve final signing group members",
 					memberIndex,
-					err,
 				)
 				return
 			}
@@ -520,6 +444,45 @@ func (de *dkgExecutor) generateSigningGroup(
 			}
 
 			dkgLogger.Infof("registered %s", signer)
+
+			// Set up the publication stop signal that should allow to
+			// perform all the result-signing-related actions and
+			// handle the worst case when the result is submitted by the
+			// last group member.
+			publicationTimeout := time.Duration(chainConfig.GroupSize) *
+				dkgResultSubmissionDelayStep
+			publicationCtx, cancelPublicationCtx := context.WithTimeout(
+				context.Background(),
+				publicationTimeout,
+			)
+			// TODO: Call cancelPublicationCtx() when the result is
+			//       available and published and remove this goroutine.
+			//       This goroutine is duplicating context.WithTimeout work
+			//       right now but is here to emphasize the need of manual
+			//       context cancellation.
+			go func() {
+				defer cancelPublicationCtx()
+				time.Sleep(publicationTimeout)
+			}()
+
+			err = dkg.Publish(
+				publicationCtx,
+				dkgLogger,
+				seed.Text(16),
+				memberIndex,
+				broadcastChannel,
+				membershipValidator,
+				newDkgResultSigner(de.chain),
+				newDkgResultSubmitter(dkgLogger, de.chain),
+				result,
+			)
+			if err != nil {
+				dkgLogger.Errorf(
+					"[member:%v] DKG result publication process failed [%v]",
+					memberIndex,
+					err,
+				)
+			}
 		}()
 	}
 }
@@ -612,62 +575,6 @@ func (drl *dkgRetryLoop) qualifiedOperatorsSet(
 	}
 
 	return chain.Addresses(qualifiedOperators).Set(), nil
-}
-
-// decideSigningGroupMemberFate decides what the member will do in case it
-// failed to publish its DKG result. Member can stay in the group if it supports
-// the same group public key as the one registered on-chain and the member is
-// not considered as misbehaving by the group.
-func decideSigningGroupMemberFate(
-	ctx context.Context,
-	memberIndex group.MemberIndex,
-	dkgResultChannel chan *DKGResultSubmittedEvent,
-	result *dkg.Result,
-) ([]group.MemberIndex, error) {
-	select {
-	case dkgResultEvent := <-dkgResultChannel:
-		groupPublicKeyBytes, err := result.GroupPublicKeyBytes()
-		if err != nil {
-			return nil, err
-		}
-
-		// If member doesn't support the same group public key, it could not stay
-		// in the group.
-		if !bytes.Equal(groupPublicKeyBytes, dkgResultEvent.GroupPublicKeyBytes) {
-			return nil, fmt.Errorf(
-				"[member:%v] could not stay in the group because "+
-					"the member does not support the same group public key",
-				memberIndex,
-			)
-		}
-
-		misbehavedSet := make(map[group.MemberIndex]struct{})
-		for _, misbehavedID := range dkgResultEvent.Misbehaved {
-			misbehavedSet[misbehavedID] = struct{}{}
-		}
-
-		// If member is considered as misbehaved, it could not stay in the group.
-		if _, isMisbehaved := misbehavedSet[memberIndex]; isMisbehaved {
-			return nil, fmt.Errorf(
-				"[member:%v] could not stay in the group because "+
-					"the member is considered as misbehaving",
-				memberIndex,
-			)
-		}
-
-		// Construct a new view of the operating members according to the accepted
-		// DKG result.
-		operatingMemberIndexes := make([]group.MemberIndex, 0)
-		for _, memberID := range result.Group.MemberIDs() {
-			if _, isMisbehaved := misbehavedSet[memberID]; !isMisbehaved {
-				operatingMemberIndexes = append(operatingMemberIndexes, memberID)
-			}
-		}
-
-		return operatingMemberIndexes, nil
-	case <-ctx.Done():
-		return nil, fmt.Errorf("result publication timed out")
-	}
 }
 
 // finalSigningGroup takes three parameters:
