@@ -317,3 +317,25 @@ func TestDkgRetryLoop(t *testing.T) {
 		})
 	}
 }
+
+type mockDkgAnnouncer struct {
+	// outgoingAnnouncements holds all announcements that are sent by the
+	// announcer.
+	outgoingAnnouncements map[string]group.MemberIndex
+
+	// incomingAnnouncementsFn returns all announcements that are received
+	// by the announcer for the given attempt.
+	incomingAnnouncementsFn func(
+		sessionID string,
+	) ([]group.MemberIndex, error)
+}
+
+func (mda *mockDkgAnnouncer) Announce(
+	ctx context.Context,
+	memberIndex group.MemberIndex,
+	sessionID string,
+) ([]group.MemberIndex, error) {
+	mda.outgoingAnnouncements[sessionID] = memberIndex
+
+	return mda.incomingAnnouncementsFn(sessionID)
+}
