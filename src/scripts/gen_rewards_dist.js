@@ -111,7 +111,7 @@ async function main() {
     )
     fs.writeFileSync(
       distPath + "/MerkleInputTbtcv2Rewards.json",
-      JSON.stringify(earnedTbtcv2Rewards, null, 4)
+      JSON.stringify(tbtcv2Rewards, null, 4)
     )
   } catch (err) {
     console.error(err)
