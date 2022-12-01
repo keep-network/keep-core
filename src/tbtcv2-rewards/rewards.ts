@@ -33,6 +33,7 @@ import {
   QUERY_RESOLUTION,
   HUNDRED,
   APR,
+  SECONDS_IN_YEAR,
 } from "./rewards-constants"
 
 program
@@ -110,9 +111,10 @@ export async function calculateRewards() {
     process.env.ETHERSCAN_TOKEN
   )
 
-  const monthlyRate = (APR / 12) * HUNDRED // monthly periodic rate ARP / 12 month
-  const currentBlockNumber = await provider.getBlockNumber()
   const rewardsInterval = endRewardsTimestamp - startRewardsTimestamp
+  // periodic rate rounded and adjusted because BigNumber can't operate on floating numbers.
+  const periodicRate = Math.round(APR * (rewardsInterval / SECONDS_IN_YEAR) * PRECISION)
+  const currentBlockNumber = await provider.getBlockNumber()
 
   // Query for bootstrap data that has peer instances grouped by operators
   const queryBootstrapData = `${prometheusAPI}/query_range`
@@ -403,13 +405,13 @@ export async function calculateRewards() {
 
       rewardsData[stakingProvider] = {
         beneficiary: beneficiary,
-        // amount = APR/12 * clientUptimeCoefficient * min(beaconWeightedAuthorization, tbtcWeightedAuthorization)
+        // amount = min(beaconWeightedAuthorization, tbtcWeightedAuthorization) * clientUptimeCoefficient * periodicRate
         amount: minApplicationAuthorization
           .mul(uptimeCoefficient)
-          .mul(monthlyRate)
+          .mul(periodicRate)
           .div(PRECISION) // coefficient was multiplied by PRECISION earlier
-          .div(HUNDRED) // APR monthly rate was multiplied by 100 earlier
-          .div(HUNDRED) // APR monthly rate is in %
+          .div(PRECISION) // APR was multiplied by PRECISION earlier
+          .div(HUNDRED) // APR is in %
           .toString(),
       }
     }
