@@ -1,0 +1,244 @@
+package tbtc
+
+import (
+	"context"
+	"crypto/sha256"
+	"encoding/binary"
+	"fmt"
+	"math/big"
+
+	"github.com/ipfs/go-log/v2"
+	"github.com/keep-network/keep-core/pkg/chain"
+	"github.com/keep-network/keep-core/pkg/protocol/group"
+	"github.com/keep-network/keep-core/pkg/tecdsa/dkg"
+	"golang.org/x/exp/slices"
+)
+
+// dkgAnnouncer represents a component responsible for exchanging readiness
+// announcements for the given DKG attempt for the given seed.
+type dkgAnnouncer interface {
+	Announce(
+		ctx context.Context,
+		memberIndex group.MemberIndex,
+		sessionID string,
+	) ([]group.MemberIndex, error)
+}
+
+// dkgRetryLoop is a struct that encapsulates the DKG retry logic.
+type dkgRetryLoop struct {
+	logger log.StandardLogger
+
+	// seed is the original seed for DKG.
+	// Used for the announcement. It never changes.
+	seed *big.Int
+
+	memberIndex       group.MemberIndex
+	selectedOperators chain.Addresses
+
+	chainConfig *ChainConfig
+
+	announcer                dkgAnnouncer
+	announcementDelayBlocks  uint64
+	announcementActiveBlocks uint64
+
+	attemptCounter    uint
+	attemptStartBlock uint64
+	// attemptSeed is a 8-byte seed obtained from the original seed.
+	// Used for the random operator selection. It never changes.
+	attemptSeed        int64
+	attemptDelayBlocks uint64
+}
+
+func newDkgRetryLoop(
+	logger log.StandardLogger,
+	seed *big.Int,
+	initialStartBlock uint64,
+	memberIndex group.MemberIndex,
+	selectedOperators chain.Addresses,
+	chainConfig *ChainConfig,
+	announcer dkgAnnouncer,
+) *dkgRetryLoop {
+	// Compute the 8-byte seed needed for the random retry algorithm. We take
+	// the first 8 bytes of the hash of the DKG seed. This allows us to not
+	// care in this piece of the code about the length of the seed and how this
+	// seed is proposed.
+	seedSha256 := sha256.Sum256(seed.Bytes())
+	attemptSeed := int64(binary.BigEndian.Uint64(seedSha256[:8]))
+
+	return &dkgRetryLoop{
+		logger:                   logger,
+		seed:                     seed,
+		memberIndex:              memberIndex,
+		selectedOperators:        selectedOperators,
+		chainConfig:              chainConfig,
+		announcer:                announcer,
+		announcementDelayBlocks:  1,
+		announcementActiveBlocks: 5,
+		attemptCounter:           0,
+		attemptStartBlock:        initialStartBlock,
+		attemptSeed:              attemptSeed,
+		attemptDelayBlocks:       5,
+	}
+}
+
+// dkgAttemptParams represents parameters of a DKG attempt.
+type dkgAttemptParams struct {
+	number                 uint
+	startBlock             uint64
+	excludedMembersIndexes []group.MemberIndex
+}
+
+// dkgAttemptFn represents a function performing a DKG attempt.
+type dkgAttemptFn func(*dkgAttemptParams) (*dkg.Result, error)
+
+// start begins the DKG retry loop using the given DKG attempt function.
+// The retry loop terminates when the DKG result is produced or the ctx
+// parameter is done, whatever comes first.
+func (drl *dkgRetryLoop) start(
+	ctx context.Context,
+	waitForBlockFn waitForBlockFn,
+	dkgAttemptFn dkgAttemptFn,
+) (*dkg.Result, error) {
+	for {
+		drl.attemptCounter++
+
+		// In order to start attempts >1 in the right place, we need to
+		// determine how many blocks were taken by previous attempts. We assume
+		// the worst case that each attempt failed at the end of the DKG
+		// protocol.
+		//
+		// That said, we need to increment the previous attempt start
+		// block by the number of blocks equal to the protocol duration and
+		// by some additional delay blocks. We need a small fixed delay in
+		// order to mitigate all corner cases where the actual attempt duration
+		// was slightly longer than the expected duration determined by the
+		// dkg.ProtocolBlocks function.
+		//
+		// For example, the attempt may fail at the end of the protocol but the
+		// error is returned after some time and more blocks than expected are
+		// mined in the meantime.
+		if drl.attemptCounter > 1 {
+			drl.attemptStartBlock = drl.attemptStartBlock +
+				drl.announcementDelayBlocks +
+				drl.announcementActiveBlocks +
+				dkgAttemptMaxBlockDuration +
+				drl.attemptDelayBlocks
+		}
+
+		announcementStartBlock := drl.attemptStartBlock + drl.announcementDelayBlocks
+		err := waitForBlockFn(ctx, announcementStartBlock)
+		if err != nil {
+			return nil, fmt.Errorf(
+				"failed waiting for announcement start block [%v] "+
+					"for attempt [%v]: [%v]",
+				announcementStartBlock,
+				drl.attemptCounter,
+				err,
+			)
+		}
+
+		// Set up the announcement phase stop signal.
+		announceCtx, cancelAnnounceCtx := context.WithCancel(ctx)
+		announcementEndBlock := announcementStartBlock + drl.announcementActiveBlocks
+		go func() {
+			defer cancelAnnounceCtx()
+
+			if err := waitForBlockFn(ctx, announcementEndBlock); err != nil {
+				drl.logger.Errorf(
+					"[member:%v] failed waiting for announcement end "+
+						"block [%v] for attempt [%v]: [%v]",
+					drl.memberIndex,
+					announcementEndBlock,
+					drl.attemptCounter,
+					err,
+				)
+			}
+		}()
+
+		drl.logger.Infof(
+			"[member:%v] starting announcement phase for attempt [%v]",
+			drl.memberIndex,
+			drl.attemptCounter,
+		)
+
+		readyMembersIndexes, err := drl.announcer.Announce(
+			announceCtx,
+			drl.memberIndex,
+			fmt.Sprintf("%v-%v", drl.seed, drl.attemptCounter),
+		)
+		if err != nil {
+			drl.logger.Warnf(
+				"[member:%v] announcement for attempt [%v] "+
+					"failed: [%v]; starting next attempt",
+				drl.memberIndex,
+				drl.attemptCounter,
+				err,
+			)
+			continue
+		}
+
+		// Check the loop stop signal.
+		if ctx.Err() != nil {
+			return nil, nil
+		}
+
+		if len(readyMembersIndexes) >= drl.chainConfig.GroupQuorum {
+			drl.logger.Infof(
+				"[member:%v] completed announcement phase for attempt [%v] "+
+					"with quorum of [%v] members ready to perform DKG",
+				drl.memberIndex,
+				drl.attemptCounter,
+				len(readyMembersIndexes),
+			)
+		} else {
+			drl.logger.Warnf(
+				"[member:%v] completed announcement phase for attempt [%v] "+
+					"with non-quorum of [%v] members ready to perform DKG; "+
+					"starting next attempt",
+				drl.memberIndex,
+				drl.attemptCounter,
+				len(readyMembersIndexes),
+			)
+			continue
+		}
+
+		excludedMembersIndexes, err := drl.performMembersSelection(
+			readyMembersIndexes,
+		)
+		if err != nil {
+			return nil, fmt.Errorf(
+				"cannot select members for attempt [%v]: [%w]",
+				drl.attemptCounter,
+				err,
+			)
+		}
+
+		attemptSkipped := slices.Contains(
+			excludedMembersIndexes,
+			drl.memberIndex,
+		)
+
+		var result *dkg.Result
+		var attemptErr error
+
+		if !attemptSkipped {
+			result, attemptErr = dkgAttemptFn(&dkgAttemptParams{
+				number:                 drl.attemptCounter,
+				startBlock:             announcementEndBlock,
+				excludedMembersIndexes: excludedMembersIndexes,
+			})
+		} else {
+			drl.logger.Infof(
+				"[member:%v] attempt [%v] skipped",
+				drl.memberIndex,
+				drl.attemptCounter,
+			)
+		}
+
+		if attemptSkipped || attemptErr != nil {
+			continue
+		}
+
+		return result, nil
+	}
+}
