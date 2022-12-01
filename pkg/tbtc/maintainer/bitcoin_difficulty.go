@@ -119,7 +119,7 @@ func (bdm *BitcoinDifficultyMaintainer) verifySubmissionEligibility() error {
 		)
 	}
 
-	isAuthorizationRequired, err := bdm.chain.IsAuthorizationRequired()
+	authorizationRequired, err := bdm.chain.AuthorizationRequired()
 	if err != nil {
 		return fmt.Errorf(
 			"cannot check whether authorization is required to submit "+
@@ -128,7 +128,7 @@ func (bdm *BitcoinDifficultyMaintainer) verifySubmissionEligibility() error {
 		)
 	}
 
-	if !isAuthorizationRequired {
+	if !authorizationRequired {
 		return nil
 	}
 

@@ -25,20 +25,19 @@ type localBitcoinDifficultyChain struct {
 	retargetEvents []*RetargetEvent
 }
 
-// Ready checks whether the Bitcoin difficulty chain is active (i.e. genesis has
-// been performed).
+// Ready checks whether the relay is active (i.e. genesis has been performed).
 func (lbdc *localBitcoinDifficultyChain) Ready() (bool, error) {
 	return lbdc.ready, nil
 }
 
-// IsAuthorizationRequired checks whether the Bitcoin difficulty chain requires
-// the address submitting a retarget to be authorised in advance by governance.
-func (lbdc *localBitcoinDifficultyChain) IsAuthorizationRequired() (bool, error) {
+// AuthorizationRequired checks whether the relay requires the address
+// submitting a retarget to be authorised in advance by governance.
+func (lbdc *localBitcoinDifficultyChain) AuthorizationRequired() (bool, error) {
 	return lbdc.authorizationRequired, nil
 }
 
-// IsAuthorized checks whether the given address has been authorised to
-// submit a retarget by governance.
+// IsAuthorized checks whether the given address has been authorised by
+// governance to submit a retarget.
 func (lbdc *localBitcoinDifficultyChain) IsAuthorized(
 	address chain.Address,
 ) (bool, error) {
@@ -50,8 +49,8 @@ func (lbdc *localBitcoinDifficultyChain) Signing() chain.Signing {
 	return local_v1.NewSigner(lbdc.operatorPrivateKey)
 }
 
-// Retarget adds a new epoch to the Bitcoin difficulty chain by providing
-// a proof of the difficulty before and after the retarget.
+// Retarget adds a new epoch to the relay by providing a proof
+// of the difficulty before and after the retarget.
 func (lbdc *localBitcoinDifficultyChain) Retarget(
 	headers []*bitcoin.BlockHeader,
 ) error {
@@ -69,22 +68,18 @@ func (lbdc *localBitcoinDifficultyChain) Retarget(
 }
 
 // CurrentEpoch returns the number of the latest epoch whose difficulty is
-// proven in the Bitcoin difficulty chain. If the genesis epoch's number is
-// set correctly, and retargets along the way have been legitimate, the current
-// epoch equals the height of the block starting the most recent epoch, divided
-// by 2016.
+// proven to the relay.
 func (lbdc *localBitcoinDifficultyChain) CurrentEpoch() (uint64, error) {
 	return lbdc.currentEpoch, nil
 }
 
 // ProofLength returns the number of blocks required for each side of a
-// retarget proof: a retarget must provide `proofLength` blocks before
-// the retarget and `proofLength` blocks after it.
+// retarget proof.
 func (lbdc *localBitcoinDifficultyChain) ProofLength() (uint64, error) {
 	return lbdc.proofLength, nil
 }
 
-// SetAuthorizedOperator sets chain's status as either ready or not.
+// SetReady sets chain's status as either ready or not.
 func (lbdc *localBitcoinDifficultyChain) SetReady(ready bool) {
 	lbdc.ready = ready
 }
@@ -109,7 +104,7 @@ func (lbdc *localBitcoinDifficultyChain) SetCurrentEpoch(currentEpoch uint64) {
 	lbdc.currentEpoch = currentEpoch
 }
 
-// SetCurrentEpoch sets the proof length needed for a retarget.
+// SetProofLength sets the proof length needed for a retarget.
 func (lbdc *localBitcoinDifficultyChain) SetProofLength(proofLength uint64) {
 	lbdc.proofLength = proofLength
 }
