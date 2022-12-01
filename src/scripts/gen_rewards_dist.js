@@ -11,11 +11,11 @@ const MerkleDist = require("../merkle_dist/merkle_dist.js")
 
 // The following parameters must be modified for each distribution
 const bonusWeight = 0.0
-const preWeight = 0.875
-const tbtcv2Weight = 0.125
-const startTime = 1664496000 // Sep 30th 2022 00:00:00 GMT
-const endTime = 1667260800 // Nov 1st 2022 00:00:00 GMT
-const lastDistribution = "2022-09-30"
+const preWeight = 0.75
+const tbtcv2Weight = 0.25
+const startTime = 1667260800 // Nov 1st 2022 00:00:00 GMT
+const endTime = 1669852800 // Dec 1st 2022 00:00:00 GMT
+const lastDistribution = "2022-11-01"
 
 const tbtcv2ScriptPath = "src/tbtcv2-rewards/"
 const graphqlApi =
