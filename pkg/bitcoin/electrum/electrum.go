@@ -62,39 +62,8 @@ func Connect(parentCtx context.Context, config Config) (bitcoin.Chain, error) {
 		return nil, fmt.Errorf("failed to initialize electrum client: [%w]", err)
 	}
 
-	// Get the server's details.
-	type Server struct {
-		version  string
-		protocol string
-	}
-	server, err := requestWithRetry(
-		c,
-		func(ctx context.Context, client *electrum.Client) (*Server, error) {
-			serverVersion, protocolVersion, err := client.ServerVersion(ctx)
-			if err != nil {
-				return nil, err
-			}
-			return &Server{serverVersion, protocolVersion}, nil
-		},
-	)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get server version: [%w]", err)
-	}
-
-	logger.Infof(
-		"connected to electrum server [version: [%s], protocol: [%s]]",
-		server.version,
-		server.protocol,
-	)
-
-	// Log a warning if connected to a server running an unsupported protocol version.
-	if !slices.Contains(supportedProtocolVersions, server.protocol) {
-		logger.Warnf(
-			"electrum server [%s] runs an unsupported protocol version: [%s]; expected one of: [%s]",
-			config.URL,
-			server.protocol,
-			strings.Join(supportedProtocolVersions, ","),
-		)
+	if err := c.verifyServer(); err != nil {
+		return nil, fmt.Errorf("failed to verify electrum server: [%w]", err)
 	}
 
 	// Keep the connection alive and check the connection health.
@@ -364,6 +333,45 @@ func (c *Connection) electrumConnect() error {
 	}
 
 	return err
+}
+
+func (c *Connection) verifyServer() error {
+	type Server struct {
+		version  string
+		protocol string
+	}
+
+	server, err := requestWithRetry(
+		c,
+		func(ctx context.Context, client *electrum.Client) (*Server, error) {
+			serverVersion, protocolVersion, err := client.ServerVersion(ctx)
+			if err != nil {
+				return nil, err
+			}
+			return &Server{serverVersion, protocolVersion}, nil
+		},
+	)
+	if err != nil {
+		return fmt.Errorf("failed to get server version: [%w]", err)
+	}
+
+	logger.Infof(
+		"connected to electrum server [version: [%s], protocol: [%s]]",
+		server.version,
+		server.protocol,
+	)
+
+	// Log a warning if connected to a server running an unsupported protocol version.
+	if !slices.Contains(supportedProtocolVersions, server.protocol) {
+		logger.Warnf(
+			"electrum server [%s] runs an unsupported protocol version: [%s]; expected one of: [%s]",
+			c.config.URL,
+			server.protocol,
+			strings.Join(supportedProtocolVersions, ","),
+		)
+	}
+
+	return nil
 }
 
 func (c *Connection) keepAlive() {
