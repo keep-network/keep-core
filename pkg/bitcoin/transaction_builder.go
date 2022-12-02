@@ -14,11 +14,12 @@ import (
 // transaction creation process. It assembles an unsigned transaction,
 // prepares it for signing, and applies the given signatures in order to
 // produce a full-fledged signed transaction that can be spread across
-// the Bitcoin network.
+// the Bitcoin network. The builder IS NOT SAFE for concurrent use.
 type TransactionBuilder struct {
 	chain       Chain
 	internal    *internalTransaction
 	sigHashArgs []*inputSigHashArgs
+	sigHashes   []*big.Int
 }
 
 // NewTransactionBuilder constructs a new TransactionBuilder instance.
@@ -154,11 +155,12 @@ func (tb *TransactionBuilder) AddOutput(output *TransactionOutput) {
 	tb.internal.AddTxOut(wire.NewTxOut(output.Value, output.PublicKeyScript))
 }
 
-// SigHashes computes the signature hashes for all transaction inputs. Elements
-// of the returned slice are ordered in the same way as the transaction inputs
-// they correspond to. That is, an element at the given index matches the input
-// with the same index.
-func (tb *TransactionBuilder) SigHashes() ([]*big.Int, error) {
+// ComputeSignatureHashes computes the signature hashes for all transaction
+// inputs and stores them into the builder's state. Elements of the returned
+// slice are ordered in the same way as the transaction inputs they correspond
+// to. That is, an element at the given index matches the input with the same
+// index.
+func (tb *TransactionBuilder) ComputeSignatureHashes() ([]*big.Int, error) {
 	sigHashes := make([]*big.Int, len(tb.internal.TxIn))
 
 	// Calculation of sighashes for witness inputs can be faster as common
@@ -200,6 +202,8 @@ func (tb *TransactionBuilder) SigHashes() ([]*big.Int, error) {
 		sigHashes[i] = new(big.Int).SetBytes(sigHashBytes)
 	}
 
+	tb.sigHashes = sigHashes
+
 	return sigHashes, nil
 }
 
@@ -215,16 +219,31 @@ type SignatureContainer struct {
 // should correspond to the input with the same index. Each signature
 // should also contain a public key that can be used for verification, i.e.
 // this should be the public key that corresponds to the private key used
-// to produce the given signature.
+// to produce the given signature. Each signature is verified and an error
+// is produced if any signature is not valid for their input.
 func (tb *TransactionBuilder) AddSignatures(
 	signatures []*SignatureContainer,
 ) (*Transaction, error) {
+	if len(tb.sigHashes) == 0 {
+		return nil, fmt.Errorf("signature hashes must be computed first")
+	}
+
 	if len(signatures) != len(tb.internal.TxIn) {
 		return nil, fmt.Errorf("wrong signatures count")
 	}
 
 	for i, input := range tb.internal.TxIn {
 		signature := signatures[i]
+
+		// Make a sanity check to avoid producing crap transactions.
+		if !ecdsa.Verify(
+			signature.PublicKey,
+			tb.sigHashes[i].Bytes(),
+			signature.R,
+			signature.S,
+		) {
+			return nil, fmt.Errorf("invalid signature for input [%v]", i)
+		}
 
 		signatureBytes := append(
 			(&btcec.Signature{R: signature.R, S: signature.S}).Serialize(),

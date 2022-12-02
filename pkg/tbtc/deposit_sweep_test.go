@@ -53,7 +53,7 @@ func TestAssembleDepositSweepTransaction(t *testing.T) {
 				t.Fatal(err)
 			}
 
-			sigHashes, err := builder.SigHashes()
+			sigHashes, err := builder.ComputeSignatureHashes()
 			if err != nil {
 				t.Fatal(err)
 			}
