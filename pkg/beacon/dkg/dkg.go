@@ -62,7 +62,7 @@ func ExecuteDKG(
 
 	startPublicationBlockHeight := gjkrEndBlockHeight
 
-	operatingMemberIDs := gjkrResult.Group.OperatingMemberIDs()
+	operatingMemberIndexes := gjkrResult.Group.OperatingMemberIndexes()
 
 	dkgResultChannel := make(chan *event.DKGResultSubmission)
 	dkgResultSubscription := beaconChain.OnDKGResultSubmitted(
@@ -97,7 +97,7 @@ func ExecuteDKG(
 			err,
 		)
 
-		if operatingMemberIDs, err = decideMemberFate(
+		if operatingMemberIndexes, err = decideMemberFate(
 			memberIndex,
 			gjkrResult,
 			dkgResultChannel,
@@ -111,7 +111,7 @@ func ExecuteDKG(
 
 	groupOperators, err := resolveGroupOperators(
 		selectedOperators,
-		operatingMemberIDs,
+		operatingMemberIndexes,
 		beaconConfig,
 	)
 	if err != nil {
@@ -180,14 +180,14 @@ func decideMemberFate(
 
 	// Construct a new view of the operating members according to the accepted
 	// DKG result.
-	operatingMemberIDs := make([]group.MemberIndex, 0)
-	for _, memberID := range gjkrResult.Group.MemberIDs() {
+	operatingMemberIndexes := make([]group.MemberIndex, 0)
+	for _, memberID := range gjkrResult.Group.MemberIndexes() {
 		if _, isMisbehaved := misbehavedSet[memberID]; !isMisbehaved {
-			operatingMemberIDs = append(operatingMemberIDs, memberID)
+			operatingMemberIndexes = append(operatingMemberIndexes, memberID)
 		}
 	}
 
-	return operatingMemberIDs, nil
+	return operatingMemberIndexes, nil
 }
 
 func waitForDkgResultEvent(

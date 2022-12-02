@@ -438,7 +438,7 @@ func (de *dkgExecutor) registerSigner(
 	// group outputted by the sortition protocol. One need to
 	// determine the final signing group based on the selected
 	// group members who behaved correctly during DKG protocol.
-	operatingMemberIndexes := result.Group.OperatingMemberIDs()
+	operatingMemberIndexes := result.Group.OperatingMemberIndexes()
 	finalSigningGroupOperators, finalSigningGroupMembersIndexes, err :=
 		finalSigningGroup(
 			selectedSigningGroupOperators,

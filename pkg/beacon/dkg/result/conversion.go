@@ -1,8 +1,9 @@
 package result
 
 import (
-	beaconchain "github.com/keep-network/keep-core/pkg/beacon/chain"
 	"sort"
+
+	beaconchain "github.com/keep-network/keep-core/pkg/beacon/chain"
 
 	"github.com/keep-network/keep-core/pkg/beacon/gjkr"
 	"github.com/keep-network/keep-core/pkg/protocol/group"
@@ -55,8 +56,8 @@ func convertGjkrResult(gjkrResult *gjkr.Result) *beaconchain.DKGResult {
 	return &beaconchain.DKGResult{
 		GroupPublicKey: groupPublicKey,
 		Misbehaved: convertToMisbehaved(
-			gjkrResult.Group.InactiveMemberIDs(),
-			gjkrResult.Group.DisqualifiedMemberIDs(),
+			gjkrResult.Group.InactiveMemberIndexes(),
+			gjkrResult.Group.DisqualifiedMemberIndexes(),
 		),
 	}
 }
