@@ -2,6 +2,7 @@ package ethereum
 
 import (
 	"context"
+	"crypto/ecdsa"
 	"encoding/binary"
 	"fmt"
 	"math/big"
@@ -14,6 +15,7 @@ import (
 	"github.com/keep-network/keep-common/pkg/chain/ethereum"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/chain/ethereum/ecdsa/gen/contract"
+	"github.com/keep-network/keep-core/pkg/internal/byteutils"
 	"github.com/keep-network/keep-core/pkg/operator"
 	"github.com/keep-network/keep-core/pkg/protocol/group"
 	"github.com/keep-network/keep-core/pkg/subscription"
@@ -358,6 +360,57 @@ func (tc *TbtcChain) SubmitDKGResult(
 	)
 }
 
+// convertSignaturesToChainFormat converts signatures map to two slices. First
+// slice contains indices of members from the map, second slice is a slice of
+// concatenated signatures. Signatures and member indices are returned in the
+// matching order. It requires each signature to be exactly 65-byte long.
+func convertSignaturesToChainFormat(
+	signatures map[group.MemberIndex][]byte,
+) ([]*big.Int, []byte, error) {
+	signatureSize := 65
+
+	var membersIndices []*big.Int
+	var signaturesSlice []byte
+
+	for memberIndex, signature := range signatures {
+		if len(signatures[memberIndex]) != signatureSize {
+			return nil, nil, fmt.Errorf(
+				"invalid signature size for member [%v] got [%d] bytes but [%d] bytes required",
+				memberIndex,
+				len(signatures[memberIndex]),
+				signatureSize,
+			)
+		}
+		membersIndices = append(membersIndices, big.NewInt(int64(memberIndex)))
+		signaturesSlice = append(signaturesSlice, signature...)
+	}
+
+	return membersIndices, signaturesSlice, nil
+}
+
+// convertPubKeyToChainFormat takes X and Y coordinates of a signer's public key
+// and concatenates it to a 64-byte long array. If any of coordinates is shorter
+// than 32-byte it is preceded with zeros.
+func convertPubKeyToChainFormat(publicKey *ecdsa.PublicKey) ([64]byte, error) {
+	var serialized [64]byte
+
+	x, err := byteutils.LeftPadTo32Bytes(publicKey.X.Bytes())
+	if err != nil {
+		return serialized, err
+	}
+
+	y, err := byteutils.LeftPadTo32Bytes(publicKey.Y.Bytes())
+	if err != nil {
+		return serialized, err
+	}
+
+	serializedBytes := append(x, y...)
+
+	copy(serialized[:], serializedBytes)
+
+	return serialized, nil
+}
+
 // TODO: Implement a real GetDKGState function.
 func (tc *TbtcChain) GetDKGState() (tbtc.DKGState, error) {
 	return tc.mockWalletRegistry.GetDKGState()
@@ -391,34 +444,6 @@ func (tc *TbtcChain) OnSignatureRequested(
 	handler func(event *tbtc.SignatureRequestedEvent),
 ) subscription.EventSubscription {
 	return tc.mockWalletRegistry.OnSignatureRequested(handler)
-}
-
-// convertSignaturesToChainFormat converts signatures map to two slices. First
-// slice contains indices of members from the map, second slice is a slice of
-// concatenated signatures. Signatures and member indices are returned in the
-// matching order. It requires each signature to be exactly 65-byte long.
-func convertSignaturesToChainFormat(
-	signatures map[group.MemberIndex][]byte,
-) ([]*big.Int, []byte, error) {
-	signatureSize := 65
-
-	var membersIndices []*big.Int
-	var signaturesSlice []byte
-
-	for memberIndex, signature := range signatures {
-		if len(signatures[memberIndex]) != signatureSize {
-			return nil, nil, fmt.Errorf(
-				"invalid signature size for member [%v] got [%d] bytes but [%d] bytes required",
-				memberIndex,
-				len(signatures[memberIndex]),
-				signatureSize,
-			)
-		}
-		membersIndices = append(membersIndices, big.NewInt(int64(memberIndex)))
-		signaturesSlice = append(signaturesSlice, signature...)
-	}
-
-	return membersIndices, signaturesSlice, nil
 }
 
 // TODO: Temporary mock that simulates the behavior of the WalletRegistry
