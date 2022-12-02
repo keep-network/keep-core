@@ -57,7 +57,7 @@ func TestConvertSignaturesToChainFormat(t *testing.T) {
 
 			if !reflect.DeepEqual(err, test.expectedError) {
 				t.Errorf(
-					"unexpected error\nexpected: %v\nactual:   %v\n",
+					"unexpected error\nexpected: [%v]\nactual:   [%v]\n",
 					test.expectedError,
 					err,
 				)
@@ -136,4 +136,41 @@ func TestConvertPubKeyToChainFormat(t *testing.T) {
 		expectedResult[:],
 		actualResult[:],
 	)
+}
+
+func TestValidateMemberIndex(t *testing.T) {
+	one := big.NewInt(1)
+	maxMemberIndex := big.NewInt(255)
+
+	var tests = map[string]struct {
+		chainMemberIndex *big.Int
+		expectedError    error
+	}{
+		"less than max member index": {
+			chainMemberIndex: new(big.Int).Sub(maxMemberIndex, one),
+			expectedError:    nil,
+		},
+		"max member index": {
+			chainMemberIndex: maxMemberIndex,
+			expectedError:    nil,
+		},
+		"greater than max member index": {
+			chainMemberIndex: new(big.Int).Add(maxMemberIndex, one),
+			expectedError:    fmt.Errorf("invalid member index value: [256]"),
+		},
+	}
+
+	for testName, test := range tests {
+		t.Run(testName, func(t *testing.T) {
+			err := validateMemberIndex(test.chainMemberIndex)
+
+			if !reflect.DeepEqual(err, test.expectedError) {
+				t.Errorf(
+					"unexpected error\nexpected: [%v]\nactual:   [%v]\n",
+					test.expectedError,
+					err,
+				)
+			}
+		})
+	}
 }

@@ -6,7 +6,6 @@ import (
 	"encoding/binary"
 	"fmt"
 	"math/big"
-	"math/rand"
 	"sync"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -14,6 +13,7 @@ import (
 
 	"github.com/keep-network/keep-common/pkg/chain/ethereum"
 	"github.com/keep-network/keep-core/pkg/chain"
+	"github.com/keep-network/keep-core/pkg/chain/ethereum/ecdsa/gen/abi"
 	"github.com/keep-network/keep-core/pkg/chain/ethereum/ecdsa/gen/contract"
 	"github.com/keep-network/keep-core/pkg/internal/byteutils"
 	"github.com/keep-network/keep-core/pkg/operator"
@@ -328,7 +328,6 @@ func (tc *TbtcChain) SelectGroup(seed *big.Int) (chain.Addresses, error) {
 	return result, nil
 }
 
-// TODO: Implement a real OnDKGStarted function.
 func (tc *TbtcChain) OnDKGStarted(
 	handler func(event *tbtc.DKGStartedEvent),
 ) subscription.EventSubscription {
@@ -345,14 +344,41 @@ func (tc *TbtcChain) OnDKGStarted(
 	return tc.walletRegistry.DkgStartedEvent(nil, nil).OnEvent(onEvent)
 }
 
-// TODO: Implement a real OnDKGResultSubmitted event subscription. The current
-// implementation just pipes the DKG submission event generated within
-// SubmitDKGResult to the handlers registered in the
-// dkgResultSubmissionHandlers map.
 func (tc *TbtcChain) OnDKGResultSubmitted(
 	handler func(event *tbtc.DKGResultSubmittedEvent),
 ) subscription.EventSubscription {
-	return tc.mockWalletRegistry.OnDKGResultSubmitted(handler)
+	onEvent := func(
+		resultHash [32]byte,
+		seed *big.Int,
+		result abi.EcdsaDkgResult,
+		blockNumber uint64,
+	) {
+		if err := validateMemberIndex(result.SubmitterMemberIndex); err != nil {
+			logger.Errorf(
+				"unexpected submitter member index in DKGResultSubmitted event: [%v]",
+				err,
+			)
+			return
+		}
+
+		handler(&tbtc.DKGResultSubmittedEvent{
+			MemberIndex:         uint32(result.SubmitterMemberIndex.Uint64()),
+			GroupPublicKeyBytes: result.GroupPubKey,
+			Misbehaved:          result.MisbehavedMembersIndices,
+			BlockNumber:         blockNumber,
+		})
+	}
+
+	return tc.walletRegistry.DkgResultSubmittedEvent(nil, nil, nil).OnEvent(onEvent)
+}
+
+func validateMemberIndex(chainMemberIndex *big.Int) error {
+	maxMemberIndex := big.NewInt(group.MaxMemberIndex)
+	if chainMemberIndex.Cmp(maxMemberIndex) > 0 {
+		return fmt.Errorf("invalid member index value: [%v]", chainMemberIndex)
+	}
+
+	return nil
 }
 
 // TODO: Implement a real SubmitDKGResult action. The current implementation
@@ -480,26 +506,6 @@ func newMockWalletRegistry(blockCounter chain.BlockCounter) *mockWalletRegistry 
 			map[int]func(submission *tbtc.DKGResultSubmittedEvent),
 		),
 	}
-}
-
-func (mwr *mockWalletRegistry) OnDKGResultSubmitted(
-	handler func(event *tbtc.DKGResultSubmittedEvent),
-) subscription.EventSubscription {
-	mwr.dkgResultSubmissionHandlersMutex.Lock()
-	defer mwr.dkgResultSubmissionHandlersMutex.Unlock()
-
-	// #nosec G404 (insecure random number source (rand))
-	// Temporary test implementation doesn't require secure randomness.
-	handlerID := rand.Int()
-
-	mwr.dkgResultSubmissionHandlers[handlerID] = handler
-
-	return subscription.NewEventSubscription(func() {
-		mwr.dkgResultSubmissionHandlersMutex.Lock()
-		defer mwr.dkgResultSubmissionHandlersMutex.Unlock()
-
-		delete(mwr.dkgResultSubmissionHandlers, handlerID)
-	})
 }
 
 func (mwr *mockWalletRegistry) SubmitDKGResult(
