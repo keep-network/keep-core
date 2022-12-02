@@ -17,6 +17,7 @@ import (
 
 	commonEthereum "github.com/keep-network/keep-common/pkg/chain/ethereum"
 	"github.com/keep-network/keep-core/config"
+	"github.com/keep-network/keep-core/pkg/bitcoin/electrum"
 	chainEthereum "github.com/keep-network/keep-core/pkg/chain/ethereum"
 	ethereumBeacon "github.com/keep-network/keep-core/pkg/chain/ethereum/beacon/gen"
 	ethereumEcdsa "github.com/keep-network/keep-core/pkg/chain/ethereum/ecdsa/gen"
@@ -85,6 +86,48 @@ var cmdFlagsTests = map[string]struct {
 		flagValue:             "url.to.electrum:18332",
 		expectedValueFromFlag: "url.to.electrum:18332",
 		defaultValue:          "",
+	},
+	"bitcoin.electrum.protocol": {
+		readValueFunc:         func(c *config.Config) interface{} { return c.Bitcoin.Electrum.Protocol },
+		flagName:              "--bitcoin.electrum.protocol",
+		flagValue:             "ssl",
+		expectedValueFromFlag: electrum.SSL,
+		defaultValue:          electrum.TCP,
+	},
+	"bitcoin.electrum.connectTimeout": {
+		readValueFunc:         func(c *config.Config) interface{} { return c.Bitcoin.Electrum.ConnectTimeout },
+		flagName:              "--bitcoin.electrum.connectTimeout",
+		flagValue:             "5m45s",
+		expectedValueFromFlag: 345 * time.Second,
+		defaultValue:          10 * time.Second,
+	},
+	"bitcoin.electrum.connectRetryTimeout": {
+		readValueFunc:         func(c *config.Config) interface{} { return c.Bitcoin.Electrum.ConnectRetryTimeout },
+		flagName:              "--bitcoin.electrum.connectRetryTimeout",
+		flagValue:             "124s",
+		expectedValueFromFlag: 124 * time.Second,
+		defaultValue:          60 * time.Second,
+	},
+	"bitcoin.electrum.requestTimeout": {
+		readValueFunc:         func(c *config.Config) interface{} { return c.Bitcoin.Electrum.RequestTimeout },
+		flagName:              "--bitcoin.electrum.requestTimeout",
+		flagValue:             "43s",
+		expectedValueFromFlag: 43 * time.Second,
+		defaultValue:          30 * time.Second,
+	},
+	"bitcoin.electrum.requestRetryTimeout": {
+		readValueFunc:         func(c *config.Config) interface{} { return c.Bitcoin.Electrum.RequestRetryTimeout },
+		flagName:              "--bitcoin.electrum.requestRetryTimeout",
+		flagValue:             "10m",
+		expectedValueFromFlag: 600 * time.Second,
+		defaultValue:          120 * time.Second,
+	},
+	"bitcoin.electrum.keepAliveInterval": {
+		readValueFunc:         func(c *config.Config) interface{} { return c.Bitcoin.Electrum.KeepAliveInterval },
+		flagName:              "--bitcoin.electrum.keepAliveInterval",
+		flagValue:             "11m",
+		expectedValueFromFlag: 660 * time.Second,
+		defaultValue:          300 * time.Second,
 	},
 	"network.bootstrap": {
 		readValueFunc:         func(c *config.Config) interface{} { return c.LibP2P.Bootstrap },
