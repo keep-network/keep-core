@@ -12,6 +12,12 @@ BalanceAlertThreshold = "2.3 ether"
 
 [bitcoin.electrum]
 URL = "url.to.electrum:18332"
+Protocol = "ssl"
+ConnectTimeout = "54s"
+ConnectRetryTimeout = "3m12s"
+RequestTimeout = "1m34s"
+RequestRetryTimeout = "5m"
+KeepAliveInterval = "12m"
 
 [network]
 Port = 27001
