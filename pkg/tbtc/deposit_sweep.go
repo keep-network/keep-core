@@ -7,9 +7,17 @@ import (
 )
 
 // assembleDepositSweepTransaction constructs an unsigned deposit sweep Bitcoin
-// transaction. The resulting bitcoin.TransactionBuilder instance holds all
-// the data necessary to sign the transaction and obtain a bitcoin.Transaction
-// instance ready to be spread across the Bitcoin network.
+// transaction.
+//
+// Regarding input arguments, the walletPublicKey parameter is optional and
+// can be set as nil if the wallet does not have a main UTXO at the moment.
+// The deposits slice must contain at least one element. The fee argument
+// is not validated anyway so must be chosen with respect to the system
+// limitations.
+//
+// The resulting bitcoin.TransactionBuilder instance holds all the data
+// necessary to sign the transaction and obtain a bitcoin.Transaction instance
+// ready to be spread across the Bitcoin network.
 func assembleDepositSweepTransaction(
 	bitcoinChain bitcoin.Chain,
 	walletPublicKey *ecdsa.PublicKey,
