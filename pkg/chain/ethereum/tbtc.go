@@ -447,9 +447,31 @@ func convertPubKeyToChainFormat(publicKey *ecdsa.PublicKey) ([64]byte, error) {
 	return serialized, nil
 }
 
-// TODO: Implement a real GetDKGState function.
 func (tc *TbtcChain) GetDKGState() (tbtc.DKGState, error) {
-	return tc.mockWalletRegistry.GetDKGState()
+	walletCreationState, err := tc.walletRegistry.GetWalletCreationState()
+	if err != nil {
+		return 0, err
+	}
+
+	var state tbtc.DKGState
+
+	switch walletCreationState {
+	case 0:
+		state = tbtc.Idle
+	case 1:
+		state = tbtc.AwaitingSeed
+	case 2:
+		state = tbtc.AwaitingResult
+	case 3:
+		state = tbtc.Challenge
+	default:
+		err = fmt.Errorf(
+			"unexpected wallet creation state: [%v]",
+			walletCreationState,
+		)
+	}
+
+	return state, err
 }
 
 // CalculateDKGResultHash calculates Keccak-256 hash of the DKG result. Operation
@@ -618,15 +640,4 @@ func (mwr *mockWalletRegistry) OnSignatureRequested(
 	return subscription.NewEventSubscription(func() {
 		cancelCtx()
 	})
-}
-
-func (mwr *mockWalletRegistry) GetDKGState() (tbtc.DKGState, error) {
-	mwr.currentDkgMutex.RLock()
-	defer mwr.currentDkgMutex.RUnlock()
-
-	if mwr.currentDkgStartBlock != nil {
-		return tbtc.AwaitingResult, nil
-	}
-
-	return tbtc.Idle, nil
 }
