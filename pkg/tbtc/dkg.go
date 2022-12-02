@@ -98,7 +98,10 @@ func (de *dkgExecutor) executeDkgIfEligible(
 	)
 
 	dkgLogger.Info("checking eligibility for DKG")
-	memberIndexes, selectedSigningGroupOperators, err := de.checkEligibility(dkgLogger, seed)
+	memberIndexes, _, selectedSigningGroupOperators, err := de.checkEligibility(
+		dkgLogger,
+		seed,
+	)
 	if err != nil {
 		dkgLogger.Errorf("could not check eligibility for DKG: [%v]", err)
 		return
@@ -133,43 +136,45 @@ func (de *dkgExecutor) executeDkgIfEligible(
 	}
 }
 
-// checkEligibility performs on-chain group selection and returns two pieces
+// checkEligibility performs on-chain group selection and returns three pieces
 // of information:
 // - Indexes of members selected to the signing group and controlled by this
 //   operator. The indexes are in range [1, `groupSize`]. The slice is nil if
 //   none of the selected signing group members is controlled by this operator.
+// - Sortition Pool identifiers of all signing group members. There are always
+//   `groupSize` elements in this slice.
 // - Addresses of all signing group members. There are always `groupSize`
 //   elements in this slice.
 func (de *dkgExecutor) checkEligibility(
 	dkgLogger log.StandardLogger,
 	seed *big.Int,
-) ([]uint8, chain.Addresses, error) {
-	selectedSigningGroupOperators, err := de.chain.SelectGroup(seed)
+) ([]uint8, chain.OperatorIDs, chain.Addresses, error) {
+	selectedOperatorIDs, selectedOperatorAddresses, err := de.chain.SelectGroup()
 	if err != nil {
-		return nil, nil, fmt.Errorf("selecting group not possible: [%v]", err)
+		return nil, nil, nil, fmt.Errorf("selecting group not possible: [%v]", err)
 	}
 
-	dkgLogger.Infof("selected group members for DKG = %s", selectedSigningGroupOperators)
+	dkgLogger.Infof("selected group members for DKG = %s", selectedOperatorAddresses)
 
-	if len(selectedSigningGroupOperators) > de.chain.GetConfig().GroupSize {
-		return nil, nil, fmt.Errorf(
+	if len(selectedOperatorAddresses) > de.chain.GetConfig().GroupSize {
+		return nil, nil, nil, fmt.Errorf(
 			"group size larger than supported: [%v]",
-			len(selectedSigningGroupOperators),
+			len(selectedOperatorAddresses),
 		)
 	}
 
 	_, operatorPublicKey, err := de.chain.OperatorKeyPair()
 	if err != nil {
-		return nil, nil, fmt.Errorf("failed to get operator public key: [%v]", err)
+		return nil, nil, nil, fmt.Errorf("failed to get operator public key: [%v]", err)
 	}
 
 	operatorAddress, err := de.chain.Signing().PublicKeyToAddress(operatorPublicKey)
 	if err != nil {
-		return nil, nil, fmt.Errorf("failed to get operator address: [%v]", err)
+		return nil, nil, nil, fmt.Errorf("failed to get operator address: [%v]", err)
 	}
 
 	indexes := make([]uint8, 0)
-	for index, operator := range selectedSigningGroupOperators {
+	for index, operator := range selectedOperatorAddresses {
 		// See if we are amongst those chosen
 		if operator == operatorAddress {
 			// The group member index should be in range [1, groupSize] so we
@@ -178,7 +183,7 @@ func (de *dkgExecutor) checkEligibility(
 		}
 	}
 
-	return indexes, selectedSigningGroupOperators, nil
+	return indexes, selectedOperatorIDs, selectedOperatorAddresses, nil
 }
 
 // setupBroadcastChannel creates and initializes broadcast channel for the

@@ -100,7 +100,7 @@ func (lc *localChain) IsBetaOperator() (bool, error) {
 	panic("unsupported")
 }
 
-func (lc *localChain) SelectGroup(seed *big.Int) (chain.Addresses, error) {
+func (lc *localChain) SelectGroup() (chain.OperatorIDs, chain.Addresses, error) {
 	panic("not implemented")
 }
 
