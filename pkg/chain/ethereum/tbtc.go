@@ -1,12 +1,9 @@
 package ethereum
 
 import (
-	"context"
 	"crypto/ecdsa"
-	"encoding/binary"
 	"fmt"
 	"math/big"
-	"sync"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
@@ -23,6 +20,8 @@ import (
 	"github.com/keep-network/keep-core/pkg/tecdsa/dkg"
 )
 
+// TODO: implement DKG result challenge functions
+
 // Definitions of contract names.
 const (
 	WalletRegistryContractName = "WalletRegistry"
@@ -34,9 +33,7 @@ type TbtcChain struct {
 	*baseChain
 
 	walletRegistry *contract.WalletRegistry
-
-	mockWalletRegistry *mockWalletRegistry
-	sortitionPool      *contract.EcdsaSortitionPool
+	sortitionPool  *contract.EcdsaSortitionPool
 }
 
 // NewTbtcChain construct a new instance of the TBTC-specific Ethereum
@@ -106,10 +103,9 @@ func newTbtcChain(
 	}
 
 	return &TbtcChain{
-		baseChain:          baseChain,
-		walletRegistry:     walletRegistry,
-		mockWalletRegistry: newMockWalletRegistry(baseChain.blockCounter),
-		sortitionPool:      sortitionPool,
+		baseChain:      baseChain,
+		walletRegistry: walletRegistry,
+		sortitionPool:  sortitionPool,
 	}, nil
 }
 
@@ -378,19 +374,38 @@ func validateMemberIndex(chainMemberIndex *big.Int) error {
 	return nil
 }
 
-// TODO: Implement a real SubmitDKGResult action. The current implementation
-// just creates and pipes the DKG submission event to the handlers
-// registered in the dkgResultSubmissionHandlers map.
 func (tc *TbtcChain) SubmitDKGResult(
 	memberIndex group.MemberIndex,
 	result *dkg.Result,
 	signatures map[group.MemberIndex][]byte,
 ) error {
-	return tc.mockWalletRegistry.SubmitDKGResult(
-		memberIndex,
-		result,
+	serializedKey, err := convertPubKeyToChainFormat(
+		result.PrivateKeyShare.PublicKey(),
+	)
+	if err != nil {
+		return fmt.Errorf("could not serialize the public key: [%v]", err)
+	}
+
+	signingMemberIndices, signatureBytes, err := convertSignaturesToChainFormat(
 		signatures,
 	)
+	if err != nil {
+		return fmt.Errorf("could not convert signatures to chain format: [%v]", err)
+	}
+
+	_, err = tc.walletRegistry.SubmitDkgResult(abi.EcdsaDkgResult{
+		SubmitterMemberIndex:     big.NewInt(int64(memberIndex)),
+		GroupPubKey:              serializedKey[:],
+		MisbehavedMembersIndices: result.MisbehavedMembersIndexes(),
+		Signatures:               signatureBytes,
+		SigningMembersIndices:    signingMemberIndices,
+		/*
+			Members                  []uint32
+			MembersHash              [32]byte
+		*/
+	})
+
+	return err
 }
 
 // convertSignaturesToChainFormat converts signatures map to two slices. First
@@ -493,148 +508,9 @@ func (tc *TbtcChain) CalculateDKGResultHash(
 	return dkg.ResultHashFromBytes(hash)
 }
 
-// TODO: This is a temporary function that should be removed once the client
-// is integrated with real on-chain contracts.
+// TODO: Replace it with heartbeat mechanism
 func (tc *TbtcChain) OnSignatureRequested(
 	handler func(event *tbtc.SignatureRequestedEvent),
 ) subscription.EventSubscription {
-	return tc.mockWalletRegistry.OnSignatureRequested(handler)
-}
-
-// TODO: Temporary mock that simulates the behavior of the WalletRegistry
-//
-//	contract. Should be removed eventually.
-type mockWalletRegistry struct {
-	blockCounter chain.BlockCounter
-
-	dkgResultSubmissionHandlersMutex sync.Mutex
-	dkgResultSubmissionHandlers      map[int]func(submission *tbtc.DKGResultSubmittedEvent)
-
-	currentDkgMutex      sync.RWMutex
-	currentDkgStartBlock *big.Int
-
-	activeWalletMutex         sync.RWMutex
-	activeWallet              []byte
-	activeWalletOperableBlock *big.Int
-}
-
-func newMockWalletRegistry(blockCounter chain.BlockCounter) *mockWalletRegistry {
-	return &mockWalletRegistry{
-		blockCounter: blockCounter,
-		dkgResultSubmissionHandlers: make(
-			map[int]func(submission *tbtc.DKGResultSubmittedEvent),
-		),
-	}
-}
-
-func (mwr *mockWalletRegistry) SubmitDKGResult(
-	memberIndex group.MemberIndex,
-	result *dkg.Result,
-	signatures map[group.MemberIndex][]byte,
-) error {
-	mwr.dkgResultSubmissionHandlersMutex.Lock()
-	defer mwr.dkgResultSubmissionHandlersMutex.Unlock()
-
-	mwr.currentDkgMutex.Lock()
-	defer mwr.currentDkgMutex.Unlock()
-
-	mwr.activeWalletMutex.Lock()
-	defer mwr.activeWalletMutex.Unlock()
-
-	// Abort if there is no DKG in progress. This check is needed to handle a
-	// situation in which two operators of the same client attempt to submit
-	// the DKG result.
-	if mwr.currentDkgStartBlock == nil {
-		return nil
-	}
-
-	blockNumber, err := mwr.blockCounter.CurrentBlock()
-	if err != nil {
-		return fmt.Errorf("failed to get the current block")
-	}
-
-	groupPublicKeyBytes, err := result.GroupPublicKeyBytes()
-	if err != nil {
-		return fmt.Errorf(
-			"failed to extract group public key bytes from the result [%v]",
-			err,
-		)
-	}
-
-	for _, handler := range mwr.dkgResultSubmissionHandlers {
-		go func(handler func(*tbtc.DKGResultSubmittedEvent)) {
-			handler(&tbtc.DKGResultSubmittedEvent{
-				MemberIndex:         uint32(memberIndex),
-				GroupPublicKeyBytes: groupPublicKeyBytes,
-				Misbehaved:          result.MisbehavedMembersIndexes(),
-				BlockNumber:         blockNumber,
-			})
-		}(handler)
-	}
-
-	mwr.activeWallet = groupPublicKeyBytes
-	mwr.activeWalletOperableBlock = new(big.Int).Add(
-		mwr.currentDkgStartBlock,
-		// We add an arbitrary value that must cover the protocol duration
-		// and some additional time for all clients to submit the DKG
-		// result to their own internal mocked chain. This value is bigger than
-		// the value used in beacon as the tECDSA DKG takes more blocks.
-		big.NewInt(200),
-	)
-	mwr.currentDkgStartBlock = nil
-
-	return nil
-}
-
-func (mwr *mockWalletRegistry) OnSignatureRequested(
-	handler func(event *tbtc.SignatureRequestedEvent),
-) subscription.EventSubscription {
-	ctx, cancelCtx := context.WithCancel(context.Background())
-	blocksChan := mwr.blockCounter.WatchBlocks(ctx)
-
-	go func() {
-		for {
-			select {
-			case block := <-blocksChan:
-				// Generate an event every 500 block.
-				if block%500 == 0 {
-					mwr.activeWalletMutex.RLock()
-
-					if len(mwr.activeWallet) > 0 {
-						// If the active wallet is ready to receive the request.
-						if big.NewInt(int64(block)).Cmp(
-							mwr.activeWalletOperableBlock,
-						) >= 0 {
-							blockBytes := make([]byte, 8)
-							binary.BigEndian.PutUint64(blockBytes, block)
-							blockHashBytes := crypto.Keccak256(blockBytes)
-							blockHash := new(big.Int).SetBytes(blockHashBytes)
-
-							messages := make([]*big.Int, 10)
-							for i := range messages {
-								messages[i] = new(big.Int).Add(
-									blockHash,
-									big.NewInt(int64(i)),
-								)
-							}
-
-							go handler(&tbtc.SignatureRequestedEvent{
-								WalletPublicKey: mwr.activeWallet,
-								Messages:        messages,
-								BlockNumber:     block,
-							})
-						}
-					}
-
-					mwr.activeWalletMutex.RUnlock()
-				}
-			case <-ctx.Done():
-				return
-			}
-		}
-	}()
-
-	return subscription.NewEventSubscription(func() {
-		cancelCtx()
-	})
+	return subscription.NewEventSubscription(func() {})
 }
