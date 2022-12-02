@@ -332,7 +332,17 @@ func (tc *TbtcChain) SelectGroup(seed *big.Int) (chain.Addresses, error) {
 func (tc *TbtcChain) OnDKGStarted(
 	handler func(event *tbtc.DKGStartedEvent),
 ) subscription.EventSubscription {
-	return tc.mockWalletRegistry.OnDKGStarted(handler)
+	onEvent := func(
+		seed *big.Int,
+		blockNumber uint64,
+	) {
+		handler(&tbtc.DKGStartedEvent{
+			Seed:        seed,
+			BlockNumber: blockNumber,
+		})
+	}
+
+	return tc.walletRegistry.DkgStartedEvent(nil, nil).OnEvent(onEvent)
 }
 
 // TODO: Implement a real OnDKGResultSubmitted event subscription. The current
@@ -470,45 +480,6 @@ func newMockWalletRegistry(blockCounter chain.BlockCounter) *mockWalletRegistry 
 			map[int]func(submission *tbtc.DKGResultSubmittedEvent),
 		),
 	}
-}
-
-func (mwr *mockWalletRegistry) OnDKGStarted(
-	handler func(event *tbtc.DKGStartedEvent),
-) subscription.EventSubscription {
-	ctx, cancelCtx := context.WithCancel(context.Background())
-	blocksChan := mwr.blockCounter.WatchBlocks(ctx)
-
-	go func() {
-		for {
-			select {
-			case block := <-blocksChan:
-				// Generate an event every 1000th block starting from block 250.
-				// The shift is done in order to avoid overlapping with beacon
-				// DKG test loop.
-				shift := uint64(250)
-				if block >= shift && (block-shift)%1000 == 0 {
-					// The seed is keccak256(block).
-					blockBytes := make([]byte, 8)
-					binary.BigEndian.PutUint64(blockBytes, block)
-					seedBytes := crypto.Keccak256(blockBytes)
-					seed := new(big.Int).SetBytes(seedBytes)
-
-					mwr.currentDkgStartBlock = big.NewInt(int64(block))
-
-					go handler(&tbtc.DKGStartedEvent{
-						Seed:        seed,
-						BlockNumber: block,
-					})
-				}
-			case <-ctx.Done():
-				return
-			}
-		}
-	}()
-
-	return subscription.NewEventSubscription(func() {
-		cancelCtx()
-	})
 }
 
 func (mwr *mockWalletRegistry) OnDKGResultSubmitted(
