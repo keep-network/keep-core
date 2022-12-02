@@ -393,6 +393,34 @@ func (tc *TbtcChain) OnSignatureRequested(
 	return tc.mockWalletRegistry.OnSignatureRequested(handler)
 }
 
+// convertSignaturesToChainFormat converts signatures map to two slices. First
+// slice contains indices of members from the map, second slice is a slice of
+// concatenated signatures. Signatures and member indices are returned in the
+// matching order. It requires each signature to be exactly 65-byte long.
+func convertSignaturesToChainFormat(
+	signatures map[group.MemberIndex][]byte,
+) ([]*big.Int, []byte, error) {
+	signatureSize := 65
+
+	var membersIndices []*big.Int
+	var signaturesSlice []byte
+
+	for memberIndex, signature := range signatures {
+		if len(signatures[memberIndex]) != signatureSize {
+			return nil, nil, fmt.Errorf(
+				"invalid signature size for member [%v] got [%d] bytes but [%d] bytes required",
+				memberIndex,
+				len(signatures[memberIndex]),
+				signatureSize,
+			)
+		}
+		membersIndices = append(membersIndices, big.NewInt(int64(memberIndex)))
+		signaturesSlice = append(signaturesSlice, signature...)
+	}
+
+	return membersIndices, signaturesSlice, nil
+}
+
 // TODO: Temporary mock that simulates the behavior of the WalletRegistry
 //
 //	contract. Should be removed eventually.
