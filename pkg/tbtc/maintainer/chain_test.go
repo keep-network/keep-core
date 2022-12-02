@@ -36,7 +36,7 @@ func (lbdc *localBitcoinDifficultyChain) AuthorizationRequired() (bool, error) {
 	return lbdc.authorizationRequired, nil
 }
 
-// IsAuthorized checks whether the given address has been authorised by
+// IsAuthorized checks whether the given address has been authorized by
 // governance to submit a retarget.
 func (lbdc *localBitcoinDifficultyChain) IsAuthorized(
 	address chain.Address,
