@@ -12,6 +12,7 @@ type RetargetEvent struct {
 	oldDifficulty, newDifficulty uint32
 }
 
+// localBitcoinChain represents a local Bitcoin difficulty chain.
 type localBitcoinDifficultyChain struct {
 	operatorPrivateKey *operator.PrivateKey
 
@@ -114,9 +115,9 @@ func (lbdc *localBitcoinDifficultyChain) RetargetEvents() []*RetargetEvent {
 	return lbdc.retargetEvents
 }
 
-// ConnectLocal connects to the local Bitcoin difficulty chain and returns
-// a chain handle.
-func ConnectLocal() *localBitcoinDifficultyChain {
+// connectLocalBitcoinDifficultyChain connects to the local Bitcoin difficulty
+// chain and returns a chain handle.
+func connectLocalBitcoinDifficultyChain() *localBitcoinDifficultyChain {
 	operatorPrivateKey, _, err := operator.GenerateKeyPair(local_v1.DefaultCurve)
 	if err != nil {
 		panic(err)

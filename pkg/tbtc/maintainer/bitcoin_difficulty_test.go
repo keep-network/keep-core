@@ -51,19 +51,19 @@ func TestVerifySubmissionEligibility(t *testing.T) {
 
 	for testName, test := range tests {
 		t.Run(testName, func(t *testing.T) {
-			localChain := ConnectLocal()
-			operatorAddress := localChain.Signing().Address()
+			difficultyChain := connectLocalBitcoinDifficultyChain()
+			operatorAddress := difficultyChain.Signing().Address()
 
-			localChain.SetReady(test.ready)
-			localChain.SetAuthorizationRequired(test.authorizationRequired)
-			localChain.SetAuthorizedOperator(
+			difficultyChain.SetReady(test.ready)
+			difficultyChain.SetAuthorizationRequired(test.authorizationRequired)
+			difficultyChain.SetAuthorizedOperator(
 				operatorAddress,
 				test.operatorAuthorized,
 			)
 
 			bitcoinDifficultyMaintainer := &BitcoinDifficultyMaintainer{
 				btcChain:               nil,
-				chain:                  localChain,
+				chain:                  difficultyChain,
 				epochProvenBackOffTime: defaultEpochProvenBackOffTime,
 				restartBackOffTime:     defaultRestartBackoffTime,
 			}
@@ -81,7 +81,7 @@ func TestVerifySubmissionEligibility(t *testing.T) {
 }
 
 func TestProveNextEpoch(t *testing.T) {
-	btcChain := bitcoin.ConnectLocal()
+	btcChain := connectLocalBitcoinChain()
 
 	// Set three block headers on each side of the retarget. The old epoch
 	// number is 299, the new epoch number is 300.
@@ -137,14 +137,14 @@ func TestProveNextEpoch(t *testing.T) {
 	}
 	btcChain.SetBlockHeaders(blockHeaders)
 
-	localChain := ConnectLocal()
+	difficultyChain := connectLocalBitcoinDifficultyChain()
 
-	localChain.SetCurrentEpoch(299)
-	localChain.SetProofLength(3)
+	difficultyChain.SetCurrentEpoch(299)
+	difficultyChain.SetProofLength(3)
 
 	bitcoinDifficultyMaintainer := &BitcoinDifficultyMaintainer{
 		btcChain:               btcChain,
-		chain:                  localChain,
+		chain:                  difficultyChain,
 		epochProvenBackOffTime: defaultEpochProvenBackOffTime,
 		restartBackOffTime:     defaultRestartBackoffTime,
 	}
@@ -155,7 +155,7 @@ func TestProveNextEpoch(t *testing.T) {
 	}
 
 	expectedNumberOfRetargetEvents := 1
-	retargetEvents := localChain.RetargetEvents()
+	retargetEvents := difficultyChain.RetargetEvents()
 	if len(retargetEvents) != expectedNumberOfRetargetEvents {
 		t.Fatalf(
 			"unexpected number of retarget events\nexpected: %v\nactual:   %v\n",
@@ -188,7 +188,7 @@ func TestProveNextEpoch(t *testing.T) {
 }
 
 func TestGetBlockHeaders(t *testing.T) {
-	btcChain := bitcoin.ConnectLocal()
+	btcChain := connectLocalBitcoinChain()
 
 	blockHeaders := map[uint]*bitcoin.BlockHeader{
 		700000: {
@@ -244,13 +244,13 @@ func TestProveEpochs_ErrorVerifyingSubmissionEligibility(t *testing.T) {
 	defer cancelCtx()
 
 	// Do not authorize the maintainer to trigger an error.
-	localChain := ConnectLocal()
-	localChain.SetReady(true)
-	localChain.SetAuthorizationRequired(true)
+	difficultyChain := connectLocalBitcoinDifficultyChain()
+	difficultyChain.SetReady(true)
+	difficultyChain.SetAuthorizationRequired(true)
 
 	bitcoinDifficultyMaintainer := &BitcoinDifficultyMaintainer{
 		btcChain:               nil,
-		chain:                  localChain,
+		chain:                  difficultyChain,
 		epochProvenBackOffTime: defaultEpochProvenBackOffTime,
 		restartBackOffTime:     defaultRestartBackoffTime,
 	}
@@ -273,22 +273,22 @@ func TestProveEpochs_ErrorProvingSingleEpoch(t *testing.T) {
 	ctx, cancelCtx := context.WithCancel(context.Background())
 	defer cancelCtx()
 
-	localChain := ConnectLocal()
-	maintainerAddress := localChain.Signing().Address()
+	difficultyChain := connectLocalBitcoinDifficultyChain()
+	maintainerAddress := difficultyChain.Signing().Address()
 
-	localChain.SetReady(true)
-	localChain.SetAuthorizationRequired(true)
-	localChain.SetAuthorizedOperator(
+	difficultyChain.SetReady(true)
+	difficultyChain.SetAuthorizationRequired(true)
+	difficultyChain.SetAuthorizedOperator(
 		maintainerAddress,
 		true,
 	)
 
 	// Do not set block headers in the Bitcoin chain to trigger an error.
-	btcChain := bitcoin.ConnectLocal()
+	btcChain := connectLocalBitcoinChain()
 
 	bitcoinDifficultyMaintainer := &BitcoinDifficultyMaintainer{
 		btcChain:               btcChain,
-		chain:                  localChain,
+		chain:                  difficultyChain,
 		epochProvenBackOffTime: defaultEpochProvenBackOffTime,
 		restartBackOffTime:     defaultRestartBackoffTime,
 	}
@@ -311,19 +311,19 @@ func TestProveEpochs_Successful(t *testing.T) {
 	ctx, cancelCtx := context.WithCancel(context.Background())
 	defer cancelCtx()
 
-	localChain := ConnectLocal()
-	maintainerAddress := localChain.Signing().Address()
+	difficultyChain := connectLocalBitcoinDifficultyChain()
+	maintainerAddress := difficultyChain.Signing().Address()
 
-	localChain.SetReady(true)
-	localChain.SetAuthorizationRequired(true)
-	localChain.SetAuthorizedOperator(
+	difficultyChain.SetReady(true)
+	difficultyChain.SetAuthorizationRequired(true)
+	difficultyChain.SetAuthorizedOperator(
 		maintainerAddress,
 		true,
 	)
-	localChain.SetProofLength(1)
-	localChain.SetCurrentEpoch(299)
+	difficultyChain.SetProofLength(1)
+	difficultyChain.SetCurrentEpoch(299)
 
-	btcChain := bitcoin.ConnectLocal()
+	btcChain := connectLocalBitcoinChain()
 
 	// Set one block header on each side of the retarget. The old epoch number
 	// is 299, the new epoch number is 300.
@@ -349,7 +349,7 @@ func TestProveEpochs_Successful(t *testing.T) {
 
 	bitcoinDifficultyMaintainer := &BitcoinDifficultyMaintainer{
 		btcChain:               btcChain,
-		chain:                  localChain,
+		chain:                  difficultyChain,
 		epochProvenBackOffTime: 2 * time.Second,
 		restartBackOffTime:     2 * time.Second,
 	}
@@ -376,19 +376,19 @@ func TestBitcoinDifficultyMaintainer_Integration(t *testing.T) {
 	ctx, cancelCtx := context.WithCancel(context.Background())
 	defer cancelCtx()
 
-	localChain := ConnectLocal()
-	maintainerAddress := localChain.Signing().Address()
+	difficultyChain := connectLocalBitcoinDifficultyChain()
+	maintainerAddress := difficultyChain.Signing().Address()
 
-	localChain.SetReady(true)
-	localChain.SetAuthorizationRequired(true)
-	localChain.SetAuthorizedOperator(
+	difficultyChain.SetReady(true)
+	difficultyChain.SetAuthorizationRequired(true)
+	difficultyChain.SetAuthorizedOperator(
 		maintainerAddress,
 		true,
 	)
-	localChain.SetProofLength(1)
-	localChain.SetCurrentEpoch(299)
+	difficultyChain.SetProofLength(1)
+	difficultyChain.SetCurrentEpoch(299)
 
-	btcChain := bitcoin.ConnectLocal()
+	btcChain := connectLocalBitcoinChain()
 
 	epochProvenBackOffTime := 500 * time.Millisecond
 	restartBackOffTime := 1 * time.Second
@@ -396,7 +396,7 @@ func TestBitcoinDifficultyMaintainer_Integration(t *testing.T) {
 	initializeBitcoinDifficultyMaintainer(
 		ctx,
 		btcChain,
-		localChain,
+		difficultyChain,
 		epochProvenBackOffTime,
 		restartBackOffTime,
 	)
@@ -468,7 +468,7 @@ func TestBitcoinDifficultyMaintainer_Integration(t *testing.T) {
 
 	// Make sure the first new epoch has been proven.
 	expectedNumberOfRetargetEvents := 1
-	retargetEvents := localChain.RetargetEvents()
+	retargetEvents := difficultyChain.RetargetEvents()
 	if len(retargetEvents) != expectedNumberOfRetargetEvents {
 		t.Fatalf(
 			"unexpected number of retarget events\nexpected: %v\nactual:   %v\n",
@@ -506,7 +506,7 @@ func TestBitcoinDifficultyMaintainer_Integration(t *testing.T) {
 
 	// Make sure the second new epoch has been proven.
 	expectedNumberOfRetargetEvents = 2
-	retargetEvents = localChain.RetargetEvents()
+	retargetEvents = difficultyChain.RetargetEvents()
 	if len(retargetEvents) != expectedNumberOfRetargetEvents {
 		t.Fatalf(
 			"unexpected number of retarget events\nexpected: %v\nactual:   %v\n",
@@ -548,7 +548,7 @@ func TestBitcoinDifficultyMaintainer_Integration(t *testing.T) {
 	// Make sure the Bitcoin difficulty maintainer has stopped and the number
 	// of proven epochs has not changed.
 	expectedNumberOfRetargetEvents = 2
-	retargetEvents = localChain.RetargetEvents()
+	retargetEvents = difficultyChain.RetargetEvents()
 	if len(retargetEvents) != expectedNumberOfRetargetEvents {
 		t.Fatalf(
 			"unexpected number of retarget events\nexpected: %v\nactual:   %v\n",
