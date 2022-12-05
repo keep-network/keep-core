@@ -410,6 +410,7 @@ func connectWithRetry(
 ) (*electrum.Client, error) {
 	var result *electrum.Client
 	err := wrappers.DoWithDefaultRetry(
+		c.parentCtx,
 		c.config.ConnectRetryTimeout,
 		func(ctx context.Context) error {
 			connectCtx, connectCancel := context.WithTimeout(
@@ -437,6 +438,7 @@ func requestWithRetry[K interface{}](
 	var result K
 
 	err := wrappers.DoWithDefaultRetry(
+		c.parentCtx,
 		c.config.RequestRetryTimeout,
 		func(ctx context.Context) error {
 			if err := c.reconnectIfShutdown(); err != nil {

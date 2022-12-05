@@ -3,16 +3,15 @@ module github.com/keep-network/keep-core
 go 1.18
 
 replace (
-	github.com/checksum0/go-electrum => github.com/keep-network/go-electrum v0.0.0-20220912200153-b862ac442cf9
-	// Temporary replacement until v1.28.2 is released containing `protodelim` package.
-	// See https://github.com/protocolbuffers/protobuf-go/commit/fb0abd915897428ccfdd6b03b48ad8219751ee54
-	google.golang.org/protobuf/dev => google.golang.org/protobuf v1.28.2-0.20220831092852-f930b1dc76e8
-
 	// btcd in version v.0.23 extracted `btcd/btcec` to a separate package `btcd/btcec/v2`.
 	// Some of the dependencies still require the old version, which we workaround
 	// here:
 	github.com/btcsuite/btcd => github.com/btcsuite/btcd v0.22.3
 	github.com/btcsuite/btcd/v2 => github.com/btcsuite/btcd v0.23.4
+	github.com/checksum0/go-electrum => github.com/keep-network/go-electrum v0.0.0-20220912200153-b862ac442cf9
+	// Temporary replacement until v1.28.2 is released containing `protodelim` package.
+	// See https://github.com/protocolbuffers/protobuf-go/commit/fb0abd915897428ccfdd6b03b48ad8219751ee54
+	google.golang.org/protobuf/dev => google.golang.org/protobuf v1.28.2-0.20220831092852-f930b1dc76e8
 )
 
 require (
@@ -30,7 +29,7 @@ require (
 	github.com/ipfs/go-log v1.0.5
 	github.com/ipfs/go-log/v2 v2.5.1
 	github.com/jbenet/goprocess v0.1.4
-	github.com/keep-network/keep-common v1.7.1-0.20220927141039-5689702dc79f
+	github.com/keep-network/keep-common v1.7.1-0.20221202150054-6bb1ab62d428
 	github.com/libp2p/go-addr-util v0.2.0
 	github.com/libp2p/go-libp2p v0.20.1
 	github.com/libp2p/go-libp2p-core v0.16.1
