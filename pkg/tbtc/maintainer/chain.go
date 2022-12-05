@@ -29,8 +29,10 @@ type BitcoinDifficultyChain interface {
 	// of the difficulty before and after the retarget.
 	Retarget(headers []*bitcoin.BlockHeader) error
 
-	// CurrentEpoch returns the number of the latest epoch whose difficulty is
-	// proven to the relay.
+	// CurrentEpoch returns the number of the latest difficulty epoch which is
+	// proven to the relay. If the genesis epoch's number is set correctly, and
+	// retargets along the way have been legitimate, this equals the height of
+	// the block starting the most recent epoch, divided by 2016.
 	CurrentEpoch() (uint64, error)
 
 	// ProofLength returns the number of blocks required for each side of a

@@ -68,8 +68,10 @@ func (lbdc *localBitcoinDifficultyChain) Retarget(
 	return nil
 }
 
-// CurrentEpoch returns the number of the latest epoch whose difficulty is
-// proven to the relay.
+// CurrentEpoch returns the number of the latest difficulty epoch which is
+// proven to the relay. If the genesis epoch's number is set correctly, and
+// retargets along the way have been legitimate, this equals the height of
+// the block starting the most recent epoch, divided by 2016.
 func (lbdc *localBitcoinDifficultyChain) CurrentEpoch() (uint64, error) {
 	return lbdc.currentEpoch, nil
 }
