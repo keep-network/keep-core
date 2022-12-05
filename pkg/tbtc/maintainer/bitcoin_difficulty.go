@@ -184,7 +184,7 @@ func (bdm *BitcoinDifficultyMaintainer) proveNextEpoch() error {
 	}
 
 	// The new epoch to be proven in the Bitcoin difficulty chain.
-	newEpoch := currentEpoch + 1
+	newEpoch := uint(currentEpoch) + 1
 
 	// Height of the first block of the new epoch.
 	newEpochHeight := newEpoch * bitcoinDifficultyEpochLength
@@ -201,8 +201,8 @@ func (bdm *BitcoinDifficultyMaintainer) proveNextEpoch() error {
 	// 522144 <- new difficulty target (first block of the new epoch)
 	// 522145 <- new difficulty target
 	// 522146 <- new difficulty target
-	firstBlockHeaderHeight := uint(newEpochHeight - proofLength)
-	lastBlockHeaderHeight := uint(newEpochHeight + proofLength - 1)
+	firstBlockHeaderHeight := newEpochHeight - uint(proofLength)
+	lastBlockHeaderHeight := newEpochHeight + uint(proofLength) - 1
 
 	// The required range of block headers can be pulled from the Bitcoin
 	// blockchain only if the blockchain height is equal to or greater than
@@ -221,7 +221,7 @@ func (bdm *BitcoinDifficultyMaintainer) proveNextEpoch() error {
 
 		if err := bdm.chain.Retarget(headers); err != nil {
 			return fmt.Errorf(
-				"failed to submit block headers from range [%v, %v] to "+
+				"failed to submit block headers from range [%d:%d] to "+
 					"the Bitcoin difficulty chain [%v]",
 				firstBlockHeaderHeight,
 				lastBlockHeaderHeight,
@@ -230,16 +230,23 @@ func (bdm *BitcoinDifficultyMaintainer) proveNextEpoch() error {
 		}
 
 		logger.Infof(
-			"Successfully submitted block headers [%v:%v] to the Bitcoin "+
-				"difficulty chain. The current proven epoch is %v.",
+			"Successfully submitted block headers [%d:%d] for epoch %d to "+
+				"the Bitcoin difficulty chain",
 			firstBlockHeaderHeight,
 			lastBlockHeaderHeight,
 			newEpoch,
 		)
+	} else if currentBlockNumber >= newEpochHeight {
+		logger.Infof(
+			"The Bitcoin difficulty chain has to be synced with the "+
+				"Bitcoin blockchain; waiting for [%d] new blocks to "+
+				"be mined to form a headers chain for retarget",
+			lastBlockHeaderHeight-currentBlockNumber,
+		)
 	} else {
 		logger.Infof(
-			"The Bitcoin difficulty chain is up-to-date with the " +
-				"Bitcoin blockchain",
+			"The Bitcoin difficulty chain is up-to-date with the Bitcoin " +
+				"blockchain",
 		)
 	}
 
@@ -259,7 +266,7 @@ func (bdm *BitcoinDifficultyMaintainer) getBlockHeaders(
 		header, err := bdm.btcChain.GetBlockHeader(height)
 		if err != nil {
 			return []*bitcoin.BlockHeader{}, fmt.Errorf(
-				"failed to get block header at height %v: [%v]",
+				"failed to get block header at height %d: [%v]",
 				height,
 				err,
 			)
