@@ -189,9 +189,9 @@ func (bdm *BitcoinDifficultyMaintainer) proveNextEpoch() error {
 	// Height of the first block of the new epoch.
 	newEpochHeight := newEpoch * bitcoinDifficultyEpochLength
 
-	// The range of block headers to be pull from the Bitcoin chain should
-	// start `proofLength` blocks before the first block of the new epoch
-	// and end `proofLength`-1 after it.
+	// The range of block headers to be pulled from the Bitcoin chain should
+	// start `proofLength` blocks before the first block of the new difficulty
+	// epoch and end `proofLength`-1 after it.
 	// For example, if the new epoch begins at block 522144 and `proofLength`
 	// is 3, then the range should be [522141, 522146]:
 	// 522141 <- old difficulty target
