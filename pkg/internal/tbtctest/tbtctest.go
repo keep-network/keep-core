@@ -1,10 +1,25 @@
 // Package tbtctest contains scenarios meant to be used for Bitcoin-related
 // tests in the pkg/tbtc package. Here are the details of specific scenarios:
 //
-// - deposit_sweep_scenario_1.json: Bitcoin deposit sweep transaction in which
+// - deposit_sweep_scenario_0.json: Bitcoin deposit sweep transaction in which
 //   three inputs (a P2WPKH main UTXO, a P2SH deposit, and a P2WSH deposit)
 //   were swept into a P2WPKH main UTXO. For reference see:
 //   https://live.blockcypher.com/btc-testnet/tx/435d4aff6d4bc34134877bd3213c17970142fdd04d4113d534120033b9eecb2e
+//
+// - deposit_sweep_scenario_1.json: Bitcoin deposit sweep transaction in which
+//   two inputs (a P2SH deposit, and a P2WSH deposit) were swept into a P2WPKH
+//   main UTXO. For reference see:
+//   https://live.blockcypher.com/btc-testnet/tx/f8eaf242a55ea15e602f9f990e33f67f99dfbe25d1802bbde63cc1caabf99668
+//
+// - deposit_sweep_scenario_2.json: Bitcoin deposit sweep transaction in which
+//   one input (a P2SH deposit) was swept into a P2WPKH main UTXO.
+//   For reference see:
+//   https://live.blockcypher.com/btc-testnet/tx/f5b9ad4e8cd5317925319ebc64dc923092bef3b56429c6b1bc2261bbdc73f351
+//
+// - deposit_sweep_scenario_3.json: Bitcoin deposit sweep transaction in which
+//   one input (a P2WSH deposit) was swept into a P2WPKH main UTXO.
+//   For reference see:
+//   https://live.blockcypher.com/btc-testnet/tx/9efc9d555233e12e06378a35a7b988d54f7043b5c3156adc79c7af0a0fd6f1a0
 package tbtctest
 
 import (
