@@ -20,8 +20,8 @@ const (
 	// to prove a single Bitcoin epoch.
 	defaultEpochProvenBackOffTime = 60 * time.Second
 
-	// The number of blocks in a Bitcoin epoch.
-	bitcoinEpochLength = 2016
+	// The number of blocks in a Bitcoin difficulty epoch.
+	bitcoinDifficultyEpochLength = 2016
 )
 
 var logger = log.Logger("keep-maintainer-bitcoin-difficulty")
@@ -187,7 +187,7 @@ func (bdm *BitcoinDifficultyMaintainer) proveNextEpoch() error {
 	newEpoch := currentEpoch + 1
 
 	// Height of the first block of the new epoch.
-	newEpochHeight := newEpoch * bitcoinEpochLength
+	newEpochHeight := newEpoch * bitcoinDifficultyEpochLength
 
 	// The range of block headers to be pull from the Bitcoin chain should
 	// start `proofLength` blocks before the first block of the new epoch
