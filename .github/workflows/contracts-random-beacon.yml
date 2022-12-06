@@ -8,6 +8,7 @@ on:
       - main
     paths:
       - "solidity/random-beacon/**"
+      - ".github/workflows/contracts-random-beacon.yml"
   pull_request:
   # We intend to use `workflow dispatch` in two different situations/paths:
   # 1. If a workflow will be manually dispatched from branch named
@@ -52,6 +53,7 @@ jobs:
           filters: |
             path-filter:
               - './solidity/random-beacon/**'
+              - './.github/workflows/contracts-random-beacon.yml'
 
   contracts-lint:
     needs: contracts-detect-changes
