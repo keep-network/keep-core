@@ -1,14 +1,17 @@
 package bitcoin
 
 import (
+	"crypto/ecdsa"
+	"crypto/elliptic"
 	"encoding/hex"
+	"github.com/btcsuite/btcd/btcec"
 	"github.com/keep-network/keep-core/pkg/internal/testutils"
 	"reflect"
 	"testing"
 )
 
 func TestTransaction_SerializeRoundtrip(t *testing.T) {
-	transaction := testTransaction(t)
+	transaction := transactionFixture(t)
 
 	witnessBytes := transaction.Serialize(Witness)
 
@@ -69,7 +72,7 @@ func TestTransaction_SerializeRoundtrip(t *testing.T) {
 }
 
 func TestTransaction_Hash(t *testing.T) {
-	hash := testTransaction(t).Hash()
+	hash := transactionFixture(t).Hash()
 
 	expectedHash := "435d4aff6d4bc34134877bd3213c17970142fdd04d4113d534120033b9eecb2e"
 
@@ -82,7 +85,7 @@ func TestTransaction_Hash(t *testing.T) {
 }
 
 func TestTransaction_WitnessHash(t *testing.T) {
-	hash := testTransaction(t).WitnessHash()
+	hash := transactionFixture(t).WitnessHash()
 
 	expectedHash := "6131ce6056c8c76eb92f17c64516cf71143bb289b55f9ab0cacb5b1c8f2bd94a"
 
@@ -94,9 +97,9 @@ func TestTransaction_WitnessHash(t *testing.T) {
 	)
 }
 
-// testTransaction returns a test transaction which is a real testnet transaction:
+// transactionFixture returns a real testnet transaction:
 // https://live.blockcypher.com/btc-testnet/tx/435d4aff6d4bc34134877bd3213c17970142fdd04d4113d534120033b9eecb2e
-func testTransaction(t *testing.T) *Transaction {
+func transactionFixture(t *testing.T) *Transaction {
 	tx := new(Transaction)
 
 	tx.Version = 1
@@ -124,7 +127,7 @@ func testTransaction(t *testing.T) *Transaction {
 					"da4cc29dcf8581d9",
 			),
 		},
-		Sequence: 4294967295,
+		Sequence: 0xffffffff,
 	})
 	tx.Inputs = append(tx.Inputs, &TransactionInput{
 		Outpoint: &TransactionOutpoint{
@@ -146,7 +149,7 @@ func testTransaction(t *testing.T) *Transaction {
 				"afbc07c381642ce6e7e55120fb077fbed8804e0250162b175ac68",
 		),
 		Witness:  [][]byte{},
-		Sequence: 4294967295,
+		Sequence: 0xffffffff,
 	})
 	tx.Inputs = append(tx.Inputs, &TransactionInput{
 		Outpoint: &TransactionOutpoint{
@@ -178,7 +181,7 @@ func testTransaction(t *testing.T) *Transaction {
 					"fbed8804e0250162b175ac68",
 			),
 		},
-		Sequence: 4294967295,
+		Sequence: 0xffffffff,
 	})
 
 	tx.Outputs = append(tx.Outputs, &TransactionOutput{
@@ -194,6 +197,15 @@ func testTransaction(t *testing.T) *Transaction {
 	return tx
 }
 
+func transactionFrom(t *testing.T, hex string) *Transaction {
+	tx := new(Transaction)
+	err := tx.Deserialize(hexToSlice(t, hex))
+	if err != nil {
+		t.Fatalf("error while converting [%v]: [%v]", hex, err)
+	}
+	return tx
+}
+
 func hexToSlice(t *testing.T, hexString string) []byte {
 	bytes, err := hex.DecodeString(hexString)
 	if err != nil {
@@ -202,10 +214,19 @@ func hexToSlice(t *testing.T, hexString string) []byte {
 	return bytes
 }
 
-func hexToHash(t *testing.T, hexString string) Hash {
-	hash, err := NewHashFromString(hexString, ReversedByteOrder)
+func hexToHash(t *testing.T, hex string) Hash {
+	hash, err := NewHashFromString(hex, ReversedByteOrder)
 	if err != nil {
-		t.Fatalf("error while converting [%v]: [%v]", hexString, err)
+		t.Fatalf("error while converting [%v]: [%v]", hex, err)
 	}
 	return hash
+}
+
+func hexToPublicKet(t *testing.T, hex string) *ecdsa.PublicKey {
+	x, y := elliptic.Unmarshal(btcec.S256(), hexToSlice(t, hex))
+	return &ecdsa.PublicKey{
+		Curve: btcec.S256(),
+		X:     x,
+		Y:     y,
+	}
 }
