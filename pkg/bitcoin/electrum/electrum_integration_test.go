@@ -21,7 +21,7 @@ import (
 // To run the tests execute `go test -v -tags=integration ./...`
 
 const TxID = "c580e0e352570d90e303d912a506055ceeb0ee06f97dce6988c69941374f5479"
-const timeout = 1 * time.Second
+const timeout = 2 * time.Second
 
 var transactionHash bitcoin.Hash
 
@@ -97,7 +97,7 @@ func TestGetTransaction_Negative_Integration(t *testing.T) {
 			electrs := newTestConnection(t, config)
 
 			expectedErrorMsg := fmt.Sprintf(
-				"failed to get raw transaction with ID [%s]: [retry timeout [%s] exceeded; most recent error: [GetRawTransaction failed: [missing transaction]]]",
+				"failed to get raw transaction with ID [%s]: [retry timeout [%s] exceeded; most recent error: [request failed: [missing transaction]]]",
 				invalidTxID.Hex(bitcoin.ReversedByteOrder),
 				timeout,
 			)
@@ -107,7 +107,7 @@ func TestGetTransaction_Negative_Integration(t *testing.T) {
 			// that are not correctly supported by the electrum client.
 			if slices.Contains(replaceErrorMsgForTests, testName) {
 				expectedErrorMsg = fmt.Sprintf(
-					"failed to get raw transaction with ID [%s]: [retry timeout [%s] exceeded; most recent error: [GetRawTransaction failed: [Unmarshal received message failed: json: cannot unmarshal object into Go struct field response.error of type string]]]",
+					"failed to get raw transaction with ID [%s]: [retry timeout [%s] exceeded; most recent error: [request failed: [Unmarshal received message failed: json: cannot unmarshal object into Go struct field response.error of type string]]]",
 					invalidTxID.Hex(bitcoin.ReversedByteOrder),
 					timeout,
 				)
@@ -164,7 +164,7 @@ func TestGetTransactionConfirmations_Negative_Integration(t *testing.T) {
 			electrs := newTestConnection(t, config)
 
 			expectedErrorMsg := fmt.Sprintf(
-				"failed to get raw transaction with ID [%s]: [retry timeout [%s] exceeded; most recent error: [GetRawTransaction failed: [missing transaction]]]",
+				"failed to get raw transaction with ID [%s]: [retry timeout [%s] exceeded; most recent error: [request failed: [missing transaction]]]",
 				invalidTxID.Hex(bitcoin.ReversedByteOrder),
 				timeout,
 			)
@@ -174,13 +174,13 @@ func TestGetTransactionConfirmations_Negative_Integration(t *testing.T) {
 			// that are not correctly supported by the electrum client.
 			if slices.Contains(replaceErrorMsgForTests, testName) {
 				expectedErrorMsg = fmt.Sprintf(
-					"failed to get raw transaction with ID [%s]: [retry timeout [%s] exceeded; most recent error: [GetRawTransaction failed: [Unmarshal received message failed: json: cannot unmarshal object into Go struct field response.error of type string]]]",
+					"failed to get raw transaction with ID [%s]: [retry timeout [%s] exceeded; most recent error: [request failed: [Unmarshal received message failed: json: cannot unmarshal object into Go struct field response.error of type string]]]",
 					invalidTxID.Hex(bitcoin.ReversedByteOrder),
 					timeout,
 				)
 			}
 
-			_, err := electrs.GetTransactionConfirmations(invalidTxID)
+			_, err := electrum.GetTransactionConfirmations(invalidTxID)
 			if err.Error() != expectedErrorMsg {
 				t.Errorf(
 					"invalid error\nexpected: %v\nactual:   %v",
@@ -245,9 +245,9 @@ func TestGetBlockHeader_Integration(t *testing.T) {
 
 	for testName, config := range configs {
 		t.Run(testName, func(t *testing.T) {
-			electrs := newTestConnection(t, config)
+			electrum := newTestConnection(t, config)
 
-			result, err := electrs.GetBlockHeader(blockHeight)
+			result, err := electrum.GetBlockHeader(blockHeight)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -266,10 +266,10 @@ func TestGetBlockHeader_Negative_Integration(t *testing.T) {
 
 	for testName, config := range configs {
 		t.Run(testName, func(t *testing.T) {
-			electrs := newTestConnection(t, config)
+			electrum := newTestConnection(t, config)
 
 			expectedErrorMsg := fmt.Sprintf(
-				"failed to get block header: [retry timeout [%s] exceeded; most recent error: [GetBlockHeader failed: [missing header]]]",
+				"failed to get block header: [retry timeout [%s] exceeded; most recent error: [request failed: [missing header]]]",
 				timeout,
 			)
 
@@ -278,12 +278,12 @@ func TestGetBlockHeader_Negative_Integration(t *testing.T) {
 			// that are not correctly supported by the electrum client.
 			if slices.Contains(replaceErrorMsgForTests, testName) {
 				expectedErrorMsg = fmt.Sprintf(
-					"failed to get block header: [retry timeout [%s] exceeded; most recent error: [GetBlockHeader failed: [Unmarshal received message failed: json: cannot unmarshal object into Go struct field response.error of type string]]]",
+					"failed to get block header: [retry timeout [%s] exceeded; most recent error: [request failed: [Unmarshal received message failed: json: cannot unmarshal object into Go struct field response.error of type string]]]",
 					timeout,
 				)
 			}
 
-			_, err := electrs.GetBlockHeader(blockHeight)
+			_, err := electrum.GetBlockHeader(blockHeight)
 			if err.Error() != expectedErrorMsg {
 				t.Errorf(
 					"invalid error\nexpected: %v\nactual:   %v",
@@ -296,12 +296,12 @@ func TestGetBlockHeader_Negative_Integration(t *testing.T) {
 }
 
 func newTestConnection(t *testing.T, config Config) bitcoin.Chain {
-	electrs, err := Connect(context.Background(), config)
+	electrum, err := Connect(context.Background(), config)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	return electrs
+	return electrum
 }
 
 func bitcoinTestTx(t *testing.T) *bitcoin.Transaction {
