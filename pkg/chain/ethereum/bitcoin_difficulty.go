@@ -92,8 +92,10 @@ func (bdc *BitcoinDifficultyChain) Retarget(headers []*bitcoin.BlockHeader) erro
 	return err
 }
 
-// CurrentEpoch returns the number of the latest epoch whose difficulty is
-// proven to the relay.
+// CurrentEpoch returns the number of the latest difficulty epoch which is
+// proven to the relay. If the genesis epoch's number is set correctly, and
+// retargets along the way have been legitimate, this equals the height of
+// the block starting the most recent epoch, divided by 2016.
 func (bdc *BitcoinDifficultyChain) CurrentEpoch() (uint64, error) {
 	return bdc.lightRelay.CurrentEpoch()
 }
