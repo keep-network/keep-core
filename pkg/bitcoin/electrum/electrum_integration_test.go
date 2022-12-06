@@ -67,9 +67,9 @@ func TestGetTransaction_Integration(t *testing.T) {
 
 	for testName, config := range configs {
 		t.Run(testName, func(t *testing.T) {
-			electrs := newTestConnection(t, config)
+			electrum := newTestConnection(t, config)
 
-			result, err := electrs.GetTransaction(transactionHash)
+			result, err := electrum.GetTransaction(transactionHash)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -94,7 +94,7 @@ func TestGetTransaction_Negative_Integration(t *testing.T) {
 
 	for testName, config := range configs {
 		t.Run(testName, func(t *testing.T) {
-			electrs := newTestConnection(t, config)
+			electrum := newTestConnection(t, config)
 
 			expectedErrorMsg := fmt.Sprintf(
 				"failed to get raw transaction with ID [%s]: [retry timeout [%s] exceeded; most recent error: [request failed: [missing transaction]]]",
@@ -113,7 +113,7 @@ func TestGetTransaction_Negative_Integration(t *testing.T) {
 				)
 			}
 
-			_, err := electrs.GetTransaction(invalidTxID)
+			_, err := electrum.GetTransaction(invalidTxID)
 			if err.Error() != expectedErrorMsg {
 				t.Errorf(
 					"invalid error\nexpected: %v\nactual:   %v",
@@ -130,9 +130,9 @@ func TestGetTransactionConfirmations_Integration(t *testing.T) {
 
 	for testName, config := range configs {
 		t.Run(testName, func(t *testing.T) {
-			electrs := newTestConnection(t, config)
+			electrum := newTestConnection(t, config)
 
-			result, err := electrs.GetTransactionConfirmations(transactionHash)
+			result, err := electrum.GetTransactionConfirmations(transactionHash)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -161,7 +161,7 @@ func TestGetTransactionConfirmations_Negative_Integration(t *testing.T) {
 
 	for testName, config := range configs {
 		t.Run(testName, func(t *testing.T) {
-			electrs := newTestConnection(t, config)
+			electrum := newTestConnection(t, config)
 
 			expectedErrorMsg := fmt.Sprintf(
 				"failed to get raw transaction with ID [%s]: [retry timeout [%s] exceeded; most recent error: [request failed: [missing transaction]]]",
@@ -197,9 +197,9 @@ func TestGetLatestBlockHeight_Integration(t *testing.T) {
 
 	for testName, config := range configs {
 		t.Run(testName, func(t *testing.T) {
-			electrs := newTestConnection(t, config)
+			electrum := newTestConnection(t, config)
 
-			result, err := electrs.GetLatestBlockHeight()
+			result, err := electrum.GetLatestBlockHeight()
 			if err != nil {
 				t.Fatal(err)
 			}
