@@ -51,6 +51,9 @@ func TestPayToWitnessPublicKeyHash(t *testing.T) {
 	copy(publicKeyHash[:], publicKeyHashBytes)
 
 	result, err := PayToWitnessPublicKeyHash(publicKeyHash)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	expectedResult, err := hex.DecodeString(
 		"00148db50eb52063ea9d98b3eac91489a90f738986f6",
@@ -75,6 +78,9 @@ func TestPayToPublicKeyHash(t *testing.T) {
 	copy(publicKeyHash[:], publicKeyHashBytes)
 
 	result, err := PayToPublicKeyHash(publicKeyHash)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	expectedResult, err := hex.DecodeString(
 		"76a9148db50eb52063ea9d98b3eac91489a90f738986f688ac",
@@ -145,6 +151,9 @@ func TestPayToWitnessScriptHash(t *testing.T) {
 	copy(scriptHash[:], scriptHashBytes)
 
 	result, err := PayToWitnessScriptHash(scriptHash)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	expectedResult, err := hex.DecodeString(
 		"002086a303cdd2e2eab1d1679f1a813835dc5a1b65321077cdccaf08f98cbf04ca96",
@@ -169,6 +178,9 @@ func TestPayToScriptHash(t *testing.T) {
 	copy(scriptHash[:], scriptHashBytes)
 
 	result, err := PayToScriptHash(scriptHash)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	expectedResult, err := hex.DecodeString(
 		"a9143ec459d0f3c29286ae5df5fcc421e2786024277e87",
