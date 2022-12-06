@@ -3,6 +3,7 @@ package bitcoin
 import (
 	"crypto/ecdsa"
 	"crypto/elliptic"
+	"crypto/sha256"
 	"github.com/btcsuite/btcd/txscript"
 	"github.com/btcsuite/btcutil"
 )
@@ -50,9 +51,9 @@ func PayToPublicKeyHash(publicKeyHash [20]byte) ([]byte, error) {
 type Script []byte
 
 // WitnessScriptHash constructs the 32-byte witness script hash by applying
-// SHA-256 twice on the provided Script.
+// single SHA-256 on the provided Script.
 func WitnessScriptHash(script Script) [32]byte {
-	return ComputeHash(script)
+	return sha256.Sum256(script)
 }
 
 // ScriptHash constructs the 20-byte script hash by applying SHA-256 then
