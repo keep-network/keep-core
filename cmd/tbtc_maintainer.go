@@ -43,7 +43,6 @@ func init() {
 func tbtcMaintainer(cmd *cobra.Command, args []string) error {
 	ctx := context.Background()
 
-	// TODO: Add connection to the Bitcoin electrum chain:
 	bitcoinChain, err := electrum.Connect(ctx, clientConfig.Bitcoin.Electrum)
 	if err != nil {
 		return fmt.Errorf("could not connect to Electrum chain: [%v]", err)
