@@ -115,26 +115,24 @@ func TestGetTransaction_Negative_Integration(t *testing.T) {
 }
 
 func TestGetTransactionConfirmations_Integration(t *testing.T) {
-	expectedResult := uint(271247)
-
 	for testName, config := range configs {
 		t.Run(testName, func(t *testing.T) {
 			electrum := newTestConnection(t, config)
 
 			for txName, tx := range testData.Transactions {
 				t.Run(txName, func(t *testing.T) {
+					latestBlockHeight, err := electrum.GetLatestBlockHeight()
+					if err != nil {
+						t.Fatalf("failed to get the latest block height: %s", err)
+					}
+					expectedConfirmations := latestBlockHeight - tx.BlockHeight
+
 					result, err := electrum.GetTransactionConfirmations(tx.TxHash)
 					if err != nil {
 						t.Fatal(err)
 					}
 
-					if result < expectedResult {
-						t.Errorf(
-							"invalid result (greater or equal match)\nexpected: %v\nactual:   %v",
-							expectedResult,
-							result,
-						)
-					}
+					assertConfirmationsCloseTo(t, expectedConfirmations, result)
 				})
 			}
 		})
