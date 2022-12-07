@@ -3,12 +3,31 @@ package tbtc
 import (
 	"context"
 	"fmt"
+	"math/big"
+	"sync"
+	"time"
+
 	"github.com/keep-network/keep-core/pkg/net"
 	"github.com/keep-network/keep-core/pkg/protocol/group"
 	"github.com/keep-network/keep-core/pkg/tecdsa"
 	"github.com/keep-network/keep-core/pkg/tecdsa/signing"
-	"math/big"
 )
+
+// signingDoneReceiveBuffer is a buffer for messages received from the broadcast
+// channel needed when the signing done's consumer is temporarily too slow to
+// handle them. Keep in mind that although we expect only 51 done messages,
+// it may happen that the check receives retransmissions of messages from
+// the signing protocol and before they are filtered out as not interesting for
+// the done check, they are buffered in the channel.
+const signingDoneReceiveBuffer = 512
+
+// signingDoneCheckInterval determines a frequency of checking if all conditions
+// to consider the signing as done are met, in waitUntilAllDone.
+const signingDoneCheckInterval = 100 * time.Millisecond
+
+// errWaitDoneTimedOut is returned by waitUntilAllDone if it did not receive
+// valid done checks from all members on time.
+var errWaitDoneTimedOut = fmt.Errorf("cannot receive signing done messages on time")
 
 // signingDoneMessage is a message used to signal a successful signature
 // calculation across all signing group members.
@@ -30,6 +49,12 @@ type signingDoneCheck struct {
 	groupSize           int
 	broadcastChannel    net.BroadcastChannel
 	membershipValidator *group.MembershipValidator
+
+	receiveCtx           context.Context
+	cancelReceiveCtx     context.CancelFunc
+	expectedSignersCount int
+	doneSigners          map[group.MemberIndex]*signingDoneMessage
+	doneSignersMutex     sync.Mutex
 }
 
 func newSigningDoneCheck(
@@ -48,169 +73,130 @@ func newSigningDoneCheck(
 	}
 }
 
-// exchange runs the signing done check exchanging routine. This function:
-// - broadcasts the signing done check along with information necessary to
-//   attribute the result to the given signing attempt.
-// - listens for incoming signing done checks from other members participating
-//   in the given signing attempt, matching the broadcasted done check.
-// This function blocks until it receives all the required done checks from
-// other members or until the passed context is done. In the first case, it
-// returns the block at which the slowest signer completed the signature
-// computation process. However, even after the function return, the done check
-// is retransmitted for the lifetime of the passed context. If the expected
-// done checks are not received on time, the function returns an error.
-// This function is meant to be used by members participating in the given
-// signing attempt.
-func (sdc *signingDoneCheck) exchange(
-	ctx context.Context,
-	memberIndex group.MemberIndex,
-	message *big.Int,
-	attemptNumber uint64,
-	attemptTimeoutBlock uint64,
-	attemptMembersIndexes []group.MemberIndex,
-	result *signing.Result,
-	endBlock uint64,
-) (uint64, error) {
-	// Use a separate context for the message receiver as the receiver must
-	// be closed upon function return. Leaving a dangling receiver without
-	// the message processing loop will cause warnings on the channel level.
-	receiveCtx, cancelReceiveCtx := context.WithCancel(ctx)
-	defer cancelReceiveCtx()
-
-	messagesChan := make(chan net.Message, sdc.groupSize)
-	sdc.broadcastChannel.Recv(receiveCtx, func(message net.Message) {
-		messagesChan <- message
-	})
-
-	// Use the original context for the send routine as we want to keep
-	// retransmissions on until the context is alive.
-	err := sdc.broadcastChannel.Send(ctx, &signingDoneMessage{
-		senderID:      memberIndex,
-		message:       message,
-		attemptNumber: attemptNumber,
-		signature:     result.Signature,
-		endBlock:      endBlock,
-	}, net.BackoffRetransmissionStrategy)
-	if err != nil {
-		return 0, fmt.Errorf("cannot send signing done message: [%v]", err)
-	}
-
-	awaitingSenders := make(map[group.MemberIndex]bool)
-	for _, attemptMemberIndex := range attemptMembersIndexes {
-		if memberIndex == attemptMemberIndex {
-			continue
-		}
-
-		awaitingSenders[attemptMemberIndex] = true
-	}
-
-	latestEndBlock := endBlock
-
-	for {
-		select {
-		case netMessage := <-messagesChan:
-			doneMessage, ok := netMessage.Payload().(*signingDoneMessage)
-			if !ok {
-				continue
-			}
-
-			if !sdc.isValidDoneMessage(
-				doneMessage,
-				awaitingSenders,
-				netMessage.SenderPublicKey(),
-				message,
-				attemptNumber,
-				attemptTimeoutBlock,
-				result.Signature,
-			) {
-				continue
-			}
-
-			if doneMessage.endBlock > latestEndBlock {
-				latestEndBlock = doneMessage.endBlock
-			}
-
-			delete(awaitingSenders, doneMessage.senderID)
-
-			if len(awaitingSenders) == 0 {
-				return latestEndBlock, nil
-			}
-		case <-ctx.Done():
-			return 0, fmt.Errorf("cannot receive signing done messages on time")
-		}
-	}
-}
-
 // listen runs the signing done check listening routine. This function listens
 // for incoming signing done checks from members participating in the given
-// signing attempt. This function blocks until it receives all the required
-// done checks from members or until the passed context is done. In the first
-// case, it returns the signature computed by the signing members and the block
-// at which the slowest signer completed the signature computation process.
-// If the expected done checks are not received on time, the function returns
-// an error. This function is meant to be used by members not participating in
-// the given signing attempt.
+// signing attempt. Messages are filtered out based on the attempt number. Only
+// one message for the given attempt can be sent by the given signing group
+// member. This function should be called before the signing attempt starts to
+// ensure signing done messages are getting received as early as possible. This
+// is especially important when the current member is the slowest one with
+// executing the signing.
 func (sdc *signingDoneCheck) listen(
 	ctx context.Context,
 	message *big.Int,
 	attemptNumber uint64,
 	attemptTimeoutBlock uint64,
 	attemptMembersIndexes []group.MemberIndex,
-) (*signing.Result, uint64, error) {
-	// Use a separate context for the message receiver as the receiver must
-	// be closed upon function return. Leaving a dangling receiver without
-	// the message processing loop will cause warnings on the channel level.
-	receiveCtx, cancelReceiveCtx := context.WithCancel(ctx)
-	defer cancelReceiveCtx()
+) {
+	// Use a separate context for the message receiver as the receiver and the
+	// consuming goroutine are closed when the `waitUntilAllDone` completes its
+	// work. Leaving a dangling receiver without the message processing loop
+	// causes warnings on the channel level.
+	sdc.receiveCtx, sdc.cancelReceiveCtx = context.WithCancel(ctx)
 
-	messagesChan := make(chan net.Message, sdc.groupSize)
-	sdc.broadcastChannel.Recv(receiveCtx, func(message net.Message) {
+	messagesChan := make(chan net.Message, signingDoneReceiveBuffer)
+	sdc.broadcastChannel.Recv(sdc.receiveCtx, func(message net.Message) {
 		messagesChan <- message
 	})
 
-	awaitingSenders := make(map[group.MemberIndex]bool)
-	for _, attemptMemberIndex := range attemptMembersIndexes {
-		awaitingSenders[attemptMemberIndex] = true
-	}
+	sdc.expectedSignersCount = len(attemptMembersIndexes)
+	sdc.doneSigners = make(map[group.MemberIndex]*signingDoneMessage)
 
-	var signature *tecdsa.Signature
-	latestEndBlock := uint64(0)
+	go func() {
+		for {
+			select {
+			case netMessage := <-messagesChan:
+				doneMessage, ok := netMessage.Payload().(*signingDoneMessage)
+				if !ok {
+					continue
+				}
+
+				if !sdc.isValidDoneMessage(
+					doneMessage,
+					netMessage.SenderPublicKey(),
+					message,
+					attemptNumber,
+					attemptTimeoutBlock,
+				) {
+					continue
+				}
+
+				sdc.doneSignersMutex.Lock()
+				sdc.doneSigners[doneMessage.senderID] = doneMessage
+				sdc.doneSignersMutex.Unlock()
+
+			case <-sdc.receiveCtx.Done():
+				return
+			}
+		}
+	}()
+}
+
+// signalDone broadcasts the signing done check along with information necessary
+// to attribute the result to the given signing attempt.
+func (sdc *signingDoneCheck) signalDone(
+	ctx context.Context,
+	memberIndex group.MemberIndex,
+	message *big.Int,
+	attemptNumber uint64,
+	result *signing.Result,
+	endBlock uint64,
+) error {
+	return sdc.broadcastChannel.Send(ctx, &signingDoneMessage{
+		senderID:      memberIndex,
+		message:       message,
+		attemptNumber: attemptNumber,
+		signature:     result.Signature,
+		endBlock:      endBlock,
+	}, net.BackoffRetransmissionStrategy)
+}
+
+// waitUntilAllDone blocks until it receives all the required done checks from
+// members or until the passed context is done. In the first case, it returns
+// the signature computed by the signing members and the block at which the
+// slowest signer completed the signature computation process. If the expected
+// done checks are not received on time, the function returns an error. If at
+// least one signature is different from others, the function returns an error.
+func (sdc *signingDoneCheck) waitUntilAllDone(ctx context.Context) (
+	*signing.Result,
+	uint64,
+	error,
+) {
+	defer sdc.cancelReceiveCtx()
+
+	ticker := time.NewTicker(signingDoneCheckInterval)
+	defer ticker.Stop()
 
 	for {
 		select {
-		case netMessage := <-messagesChan:
-			doneMessage, ok := netMessage.Payload().(*signingDoneMessage)
-			if !ok {
-				continue
-			}
+		case <-ctx.Done():
+			return nil, 0, errWaitDoneTimedOut
 
-			if !sdc.isValidDoneMessage(
-				doneMessage,
-				awaitingSenders,
-				netMessage.SenderPublicKey(),
-				message,
-				attemptNumber,
-				attemptTimeoutBlock,
-				signature,
-			) {
-				continue
-			}
+		case <-ticker.C:
+			if sdc.expectedSignersCount == len(sdc.doneSigners) {
+				var signature *tecdsa.Signature
+				var latestEndBlock uint64
 
-			if doneMessage.endBlock > latestEndBlock {
-				latestEndBlock = doneMessage.endBlock
-			}
+				for _, doneMessage := range sdc.doneSigners {
+					if signature == nil {
+						signature = doneMessage.signature
+					} else {
+						if !signature.Equals(doneMessage.signature) {
+							return nil, 0, fmt.Errorf(
+								"not matching signatures detected: [%v] and [%v]",
+								signature,
+								doneMessage.signature,
+							)
+						}
+					}
 
-			if signature == nil {
-				signature = doneMessage.signature
-			}
+					if doneMessage.endBlock > latestEndBlock {
+						latestEndBlock = doneMessage.endBlock
+					}
+				}
 
-			delete(awaitingSenders, doneMessage.senderID)
-
-			if len(awaitingSenders) == 0 {
 				return &signing.Result{Signature: signature}, latestEndBlock, nil
 			}
-		case <-ctx.Done():
-			return nil, 0, fmt.Errorf("cannot receive signing done messages on time")
 		}
 	}
 }
@@ -219,14 +205,14 @@ func (sdc *signingDoneCheck) listen(
 // of the given signing attempt.
 func (sdc *signingDoneCheck) isValidDoneMessage(
 	doneMessage *signingDoneMessage,
-	awaitingSenders map[group.MemberIndex]bool,
 	senderPublicKey []byte,
 	message *big.Int,
 	attemptNumber uint64,
 	attemptTimeoutBlock uint64,
-	signature *tecdsa.Signature,
 ) bool {
-	if !awaitingSenders[doneMessage.senderID] {
+	_, signerDone := sdc.doneSigners[doneMessage.senderID]
+	if signerDone {
+		// only one done message allowed
 		return false
 	}
 
@@ -249,10 +235,8 @@ func (sdc *signingDoneCheck) isValidDoneMessage(
 		return false
 	}
 
-	if signature != nil {
-		if !doneMessage.signature.Equals(signature) {
-			return false
-		}
+	if doneMessage.signature == nil {
+		return false
 	}
 
 	return true
