@@ -3,6 +3,7 @@ package signing
 import (
 	"context"
 	"fmt"
+
 	"github.com/bnb-chain/tss-lib/tss"
 	"github.com/keep-network/keep-core/pkg/crypto/ephemeral"
 	"github.com/keep-network/keep-core/pkg/protocol/group"
@@ -19,7 +20,7 @@ func (ekpgm *ephemeralKeyPairGeneratingMember) generateEphemeralKeyPair() (
 	ephemeralKeys := make(map[group.MemberIndex]*ephemeral.PublicKey)
 
 	// Calculate ephemeral key pair for every other group member
-	for _, member := range ekpgm.group.MemberIDs() {
+	for _, member := range ekpgm.group.MemberIndexes() {
 		if member == ekpgm.id {
 			// don’t actually generate a key with ourselves
 			continue
@@ -98,7 +99,7 @@ func (skgm *symmetricKeyGeneratingMember) generateSymmetricKeys(
 func (skgm *symmetricKeyGeneratingMember) isValidEphemeralPublicKeyMessage(
 	message *ephemeralPublicKeyMessage,
 ) bool {
-	for _, memberID := range skgm.group.MemberIDs() {
+	for _, memberID := range skgm.group.MemberIndexes() {
 		if memberID == message.senderID {
 			// Message contains ephemeral public keys only for other group members
 			continue
@@ -140,7 +141,7 @@ outgoingMessagesLoop:
 		case tssMessage := <-trom.tssOutgoingMessagesChan:
 			tssMessages = append(tssMessages, tssMessage)
 
-			if len(tssMessages) == len(trom.group.OperatingMemberIDs()) {
+			if len(tssMessages) == len(trom.group.OperatingMemberIndexes()) {
 				break outgoingMessagesLoop
 			}
 		case <-ctx.Done():
@@ -164,7 +165,7 @@ outgoingMessagesLoop:
 	}
 
 	ok := len(broadcastPayload) > 0 &&
-		len(peersPayload) == len(trom.group.OperatingMemberIDs())-1
+		len(peersPayload) == len(trom.group.OperatingMemberIndexes())-1
 	if !ok {
 		return nil, fmt.Errorf("cannot produce a proper TSS round one message")
 	}
@@ -263,7 +264,7 @@ outgoingMessagesLoop:
 		case tssMessage := <-trtm.tssOutgoingMessagesChan:
 			tssMessages = append(tssMessages, tssMessage)
 
-			if len(tssMessages) == len(trtm.group.OperatingMemberIDs())-1 {
+			if len(tssMessages) == len(trtm.group.OperatingMemberIndexes())-1 {
 				break outgoingMessagesLoop
 			}
 		case <-ctx.Done():
@@ -289,7 +290,7 @@ outgoingMessagesLoop:
 	// Unlike the previous phase (TSS round 1), we don't expect a broadcast
 	// payload here.
 	ok := len(broadcastPayload) == 0 &&
-		len(peersPayload) == len(trtm.group.OperatingMemberIDs())-1
+		len(peersPayload) == len(trtm.group.OperatingMemberIndexes())-1
 	if !ok {
 		return nil, fmt.Errorf("cannot produce a proper TSS round two message")
 	}

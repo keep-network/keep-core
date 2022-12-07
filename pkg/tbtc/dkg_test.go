@@ -37,9 +37,9 @@ func TestRegisterSigner(t *testing.T) {
 	}
 
 	var tests = map[string]struct {
-		memberIndex           group.MemberIndex
-		disqualifiedMemberIDs []group.MemberIndex
-		inactiveMemberIDs     []group.MemberIndex
+		memberIndex               group.MemberIndex
+		disqualifiedMemberIndexes []group.MemberIndex
+		inactiveMemberIndexes     []group.MemberIndex
 
 		expectedError                      error
 		expectedFinalSigningGroupIndex     group.MemberIndex
@@ -47,37 +47,37 @@ func TestRegisterSigner(t *testing.T) {
 	}{
 		"all members participating": {
 			memberIndex:                        1,
-			disqualifiedMemberIDs:              nil,
-			inactiveMemberIDs:                  nil,
+			disqualifiedMemberIndexes:          nil,
+			inactiveMemberIndexes:              nil,
 			expectedFinalSigningGroupIndex:     1,
 			expectedFinalSigningGroupOperators: selectedOperators,
 		},
 		"some member inactive": {
 			memberIndex:                        3,
-			disqualifiedMemberIDs:              nil,
-			inactiveMemberIDs:                  []group.MemberIndex{2, 5},
+			disqualifiedMemberIndexes:          nil,
+			inactiveMemberIndexes:              []group.MemberIndex{2, 5},
 			expectedFinalSigningGroupIndex:     2,
 			expectedFinalSigningGroupOperators: []chain.Address{"0xAA", "0xCC", "0xDD"},
 		},
 		"some members disqualified": {
 			memberIndex:                        1,
-			disqualifiedMemberIDs:              []group.MemberIndex{2, 5},
-			inactiveMemberIDs:                  nil,
+			disqualifiedMemberIndexes:          []group.MemberIndex{2, 5},
+			inactiveMemberIndexes:              nil,
 			expectedError:                      nil,
 			expectedFinalSigningGroupIndex:     1,
 			expectedFinalSigningGroupOperators: []chain.Address{"0xAA", "0xCC", "0xDD"},
 		},
 		"the current member inactive": {
-			memberIndex:           2,
-			disqualifiedMemberIDs: nil,
-			inactiveMemberIDs:     []group.MemberIndex{2, 5},
-			expectedError:         fmt.Errorf("failed to resolve final signing group member index"),
+			memberIndex:               2,
+			disqualifiedMemberIndexes: nil,
+			inactiveMemberIndexes:     []group.MemberIndex{2, 5},
+			expectedError:             fmt.Errorf("failed to resolve final signing group member index"),
 		},
 		"the current member disqualified": {
-			memberIndex:           5,
-			disqualifiedMemberIDs: []group.MemberIndex{2, 5},
-			inactiveMemberIDs:     nil,
-			expectedError:         fmt.Errorf("failed to resolve final signing group member index"),
+			memberIndex:               5,
+			disqualifiedMemberIndexes: []group.MemberIndex{2, 5},
+			inactiveMemberIndexes:     nil,
+			expectedError:             fmt.Errorf("failed to resolve final signing group member index"),
 		},
 	}
 
@@ -93,10 +93,10 @@ func TestRegisterSigner(t *testing.T) {
 			}
 
 			group := group.NewGroup(dishonestThreshold, groupSize)
-			for _, disqualifiedMember := range test.disqualifiedMemberIDs {
+			for _, disqualifiedMember := range test.disqualifiedMemberIndexes {
 				group.MarkMemberAsDisqualified(disqualifiedMember)
 			}
-			for _, inactiveMember := range test.inactiveMemberIDs {
+			for _, inactiveMember := range test.inactiveMemberIndexes {
 				group.MarkMemberAsInactive(inactiveMember)
 			}
 

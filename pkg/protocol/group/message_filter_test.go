@@ -9,27 +9,27 @@ import (
 
 func TestFilterInactiveMembers(t *testing.T) {
 	var tests = map[string]struct {
-		selfMemberID             MemberIndex
+		selfMemberIndex          MemberIndex
 		groupMembers             []MemberIndex
-		messageSenderIDs         []MemberIndex
+		messageSenderIndexes     []MemberIndex
 		expectedOperatingMembers []MemberIndex
 	}{
 		"all other members active": {
-			selfMemberID:             4,
+			selfMemberIndex:          4,
 			groupMembers:             []MemberIndex{3, 2, 4, 5, 1, 9},
-			messageSenderIDs:         []MemberIndex{3, 2, 5, 9, 1},
+			messageSenderIndexes:     []MemberIndex{3, 2, 5, 9, 1},
 			expectedOperatingMembers: []MemberIndex{3, 2, 4, 5, 1, 9},
 		},
 		"all other members inactive": {
-			selfMemberID:             9,
+			selfMemberIndex:          9,
 			groupMembers:             []MemberIndex{9, 1, 2, 3},
-			messageSenderIDs:         []MemberIndex{},
+			messageSenderIndexes:     []MemberIndex{},
 			expectedOperatingMembers: []MemberIndex{9},
 		},
 		"some members inactive": {
-			selfMemberID:             3,
+			selfMemberIndex:          3,
 			groupMembers:             []MemberIndex{3, 4, 5, 1, 2, 8},
-			messageSenderIDs:         []MemberIndex{1, 4, 2},
+			messageSenderIndexes:     []MemberIndex{1, 4, 2},
 			expectedOperatingMembers: []MemberIndex{3, 4, 1, 2},
 		},
 	}
@@ -37,23 +37,23 @@ func TestFilterInactiveMembers(t *testing.T) {
 	for testName, test := range tests {
 		t.Run(testName, func(t *testing.T) {
 			group := &Group{
-				memberIDs: test.groupMembers,
+				memberIndexes: test.groupMembers,
 			}
 
 			filter := &InactiveMemberFilter{
 				logger:             &testutils.MockLogger{},
-				selfMemberID:       test.selfMemberID,
+				selfMemberID:       test.selfMemberIndex,
 				group:              group,
 				phaseActiveMembers: make([]MemberIndex, 0),
 			}
 
-			for _, member := range test.messageSenderIDs {
+			for _, member := range test.messageSenderIndexes {
 				filter.MarkMemberAsActive(member)
 			}
 
 			filter.FlushInactiveMembers()
 
-			actual := filter.group.OperatingMemberIDs()
+			actual := filter.group.OperatingMemberIndexes()
 			expected := test.expectedOperatingMembers
 
 			if !reflect.DeepEqual(actual, expected) {
