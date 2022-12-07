@@ -62,17 +62,20 @@ func (drs *dkgResultSigner) VerifySignature(signedResult *dkg.SignedResult) (boo
 
 // dkgResultSubmitter is responsible for submitting the DKG result to the chain.
 type dkgResultSubmitter struct {
-	dkgLogger log.StandardLogger
-	chain     Chain
+	dkgLogger            log.StandardLogger
+	chain                Chain
+	groupSelectionResult *GroupSelectionResult
 }
 
 func newDkgResultSubmitter(
 	dkgLogger log.StandardLogger,
 	chain Chain,
+	groupSelectionResult *GroupSelectionResult,
 ) *dkgResultSubmitter {
 	return &dkgResultSubmitter{
-		dkgLogger: dkgLogger,
-		chain:     chain,
+		dkgLogger:            dkgLogger,
+		chain:                chain,
+		groupSelectionResult: groupSelectionResult,
 	}
 }
 
@@ -161,6 +164,7 @@ func (drs *dkgResultSubmitter) SubmitResult(
 				memberIndex,
 				result,
 				signatures,
+				drs.groupSelectionResult,
 			)
 		case blockNumber := <-resultSubmittedChan:
 			drs.dkgLogger.Infof(

@@ -100,7 +100,7 @@ func (lc *localChain) IsBetaOperator() (bool, error) {
 	panic("unsupported")
 }
 
-func (lc *localChain) SelectGroup() (chain.OperatorIDs, chain.Addresses, error) {
+func (lc *localChain) SelectGroup() (*GroupSelectionResult, error) {
 	panic("not implemented")
 }
 
@@ -133,8 +133,9 @@ func (lc *localChain) OnDKGResultSubmitted(
 // over result hash from group participants supporting the result.
 func (lc *localChain) SubmitDKGResult(
 	memberIndex group.MemberIndex,
-	result *dkg.Result,
+	dkgResult *dkg.Result,
 	signatures map[group.MemberIndex][]byte,
+	groupSelectionResult *GroupSelectionResult,
 ) error {
 	lc.dkgResultSubmissionHandlersMutex.Lock()
 	defer lc.dkgResultSubmissionHandlersMutex.Unlock()
@@ -147,7 +148,7 @@ func (lc *localChain) SubmitDKGResult(
 		return fmt.Errorf("failed to get the current block")
 	}
 
-	groupPublicKeyBytes, err := result.GroupPublicKeyBytes()
+	groupPublicKeyBytes, err := dkgResult.GroupPublicKeyBytes()
 	if err != nil {
 		return fmt.Errorf(
 			"failed to extract group public key bytes from the result [%v]",
@@ -159,7 +160,7 @@ func (lc *localChain) SubmitDKGResult(
 		handler(&DKGResultSubmittedEvent{
 			MemberIndex:         uint32(memberIndex),
 			GroupPublicKeyBytes: groupPublicKeyBytes,
-			Misbehaved:          result.MisbehavedMembersIndexes(),
+			Misbehaved:          dkgResult.MisbehavedMembersIndexes(),
 			BlockNumber:         blockNumber,
 		})
 	}

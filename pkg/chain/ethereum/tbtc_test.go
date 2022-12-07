@@ -3,7 +3,9 @@ package ethereum
 import (
 	"bytes"
 	"crypto/ecdsa"
+	"encoding/hex"
 	"fmt"
+	"github.com/keep-network/keep-core/pkg/chain"
 	"math/big"
 	"reflect"
 	"testing"
@@ -12,6 +14,26 @@ import (
 	"github.com/keep-network/keep-core/pkg/internal/testutils"
 	"github.com/keep-network/keep-core/pkg/protocol/group"
 )
+
+func TestComputeOperatorsIDsHash(t *testing.T) {
+	operatorIDs := []chain.OperatorID{
+		5, 1, 55, 45435534, 33, 345, 23, 235, 3333, 2,
+	}
+
+	hash, err := computeOperatorsIDsHash(operatorIDs)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	expectedHash := "8cd41effd4ee91b56d6b2f836efdcac11ab1ef2ae228e348814d0e6c2966d01e"
+
+	testutils.AssertStringsEqual(
+		t,
+		"hash",
+		expectedHash,
+		hex.EncodeToString(hash[:]),
+	)
+}
 
 func TestConvertSignaturesToChainFormat(t *testing.T) {
 	signatureSize := 65

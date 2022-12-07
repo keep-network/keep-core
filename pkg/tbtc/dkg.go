@@ -98,9 +98,8 @@ func (de *dkgExecutor) executeDkgIfEligible(
 	)
 
 	dkgLogger.Info("checking eligibility for DKG")
-	memberIndexes, _, selectedSigningGroupOperators, err := de.checkEligibility(
+	memberIndexes, groupSelectionResult, err := de.checkEligibility(
 		dkgLogger,
-		seed,
 	)
 	if err != nil {
 		dkgLogger.Errorf("could not check eligibility for DKG: [%v]", err)
@@ -128,7 +127,7 @@ func (de *dkgExecutor) executeDkgIfEligible(
 			dkgLogger,
 			seed,
 			memberIndexes,
-			selectedSigningGroupOperators,
+			groupSelectionResult,
 			startBlockNumber,
 		)
 	} else {
@@ -136,45 +135,46 @@ func (de *dkgExecutor) executeDkgIfEligible(
 	}
 }
 
-// checkEligibility performs on-chain group selection and returns three pieces
+// checkEligibility performs on-chain group selection and returns two pieces
 // of information:
 // - Indexes of members selected to the signing group and controlled by this
 //   operator. The indexes are in range [1, `groupSize`]. The slice is nil if
 //   none of the selected signing group members is controlled by this operator.
-// - Sortition Pool identifiers of all signing group members. There are always
-//   `groupSize` elements in this slice.
-// - Addresses of all signing group members. There are always `groupSize`
-//   elements in this slice.
+// - Group selection result holding chain.OperatorID and chain.Address for
+//   operators selected to the signing group. There are always `groupSize`
+//   selected operators.
 func (de *dkgExecutor) checkEligibility(
 	dkgLogger log.StandardLogger,
-	seed *big.Int,
-) ([]uint8, chain.OperatorIDs, chain.Addresses, error) {
-	selectedOperatorIDs, selectedOperatorAddresses, err := de.chain.SelectGroup()
+) ([]uint8, *GroupSelectionResult, error) {
+	groupSelectionResult, err := de.chain.SelectGroup()
 	if err != nil {
-		return nil, nil, nil, fmt.Errorf("selecting group not possible: [%v]", err)
+		return nil, nil, fmt.Errorf("selecting group not possible: [%v]", err)
 	}
 
-	dkgLogger.Infof("selected group members for DKG = %s", selectedOperatorAddresses)
+	dkgLogger.Infof(
+		"selected group members for DKG = %s",
+		groupSelectionResult.OperatorsAddresses,
+	)
 
-	if len(selectedOperatorAddresses) > de.chain.GetConfig().GroupSize {
-		return nil, nil, nil, fmt.Errorf(
+	if len(groupSelectionResult.OperatorsAddresses) > de.chain.GetConfig().GroupSize {
+		return nil, nil, fmt.Errorf(
 			"group size larger than supported: [%v]",
-			len(selectedOperatorAddresses),
+			len(groupSelectionResult.OperatorsAddresses),
 		)
 	}
 
 	_, operatorPublicKey, err := de.chain.OperatorKeyPair()
 	if err != nil {
-		return nil, nil, nil, fmt.Errorf("failed to get operator public key: [%v]", err)
+		return nil, nil, fmt.Errorf("failed to get operator public key: [%v]", err)
 	}
 
 	operatorAddress, err := de.chain.Signing().PublicKeyToAddress(operatorPublicKey)
 	if err != nil {
-		return nil, nil, nil, fmt.Errorf("failed to get operator address: [%v]", err)
+		return nil, nil, fmt.Errorf("failed to get operator address: [%v]", err)
 	}
 
 	indexes := make([]uint8, 0)
-	for index, operator := range selectedOperatorAddresses {
+	for index, operator := range groupSelectionResult.OperatorsAddresses {
 		// See if we are amongst those chosen
 		if operator == operatorAddress {
 			// The group member index should be in range [1, groupSize] so we
@@ -183,7 +183,7 @@ func (de *dkgExecutor) checkEligibility(
 		}
 	}
 
-	return indexes, selectedOperatorIDs, selectedOperatorAddresses, nil
+	return indexes, groupSelectionResult, nil
 }
 
 // setupBroadcastChannel creates and initializes broadcast channel for the
@@ -224,12 +224,12 @@ func (de *dkgExecutor) generateSigningGroup(
 	dkgLogger *zap.SugaredLogger,
 	seed *big.Int,
 	memberIndexes []uint8,
-	selectedSigningGroupOperators chain.Addresses,
+	groupSelectionResult *GroupSelectionResult,
 	startBlockNumber uint64,
 ) {
 	membershipValidator := group.NewMembershipValidator(
 		dkgLogger,
-		selectedSigningGroupOperators,
+		groupSelectionResult.OperatorsAddresses,
 		de.chain.Signing(),
 	)
 
@@ -260,7 +260,7 @@ func (de *dkgExecutor) generateSigningGroup(
 				seed,
 				startBlockNumber,
 				memberIndex,
-				selectedSigningGroupOperators,
+				groupSelectionResult.OperatorsAddresses,
 				chainConfig,
 				announcer,
 			)
@@ -398,7 +398,7 @@ func (de *dkgExecutor) generateSigningGroup(
 			signer, err := de.registerSigner(
 				result,
 				memberIndex,
-				selectedSigningGroupOperators,
+				groupSelectionResult.OperatorsAddresses,
 			)
 			if err != nil {
 				dkgLogger.Errorf(
@@ -417,6 +417,7 @@ func (de *dkgExecutor) generateSigningGroup(
 				broadcastChannel,
 				membershipValidator,
 				result,
+				groupSelectionResult,
 			)
 			if err != nil {
 				dkgLogger.Errorf(
@@ -492,7 +493,8 @@ func (de *dkgExecutor) submitDkgResult(
 	memberIndex group.MemberIndex,
 	broadcastChannel net.BroadcastChannel,
 	membershipValidator *group.MembershipValidator,
-	result *dkg.Result,
+	dkgResult *dkg.Result,
+	groupSelectionResult *GroupSelectionResult,
 ) error {
 	// Set up the publication stop signal that should allow to
 	// perform all the result-signing-related actions and
@@ -523,8 +525,8 @@ func (de *dkgExecutor) submitDkgResult(
 		broadcastChannel,
 		membershipValidator,
 		newDkgResultSigner(de.chain),
-		newDkgResultSubmitter(dkgLogger, de.chain),
-		result,
+		newDkgResultSubmitter(dkgLogger, de.chain, groupSelectionResult),
+		dkgResult,
 	)
 }
 

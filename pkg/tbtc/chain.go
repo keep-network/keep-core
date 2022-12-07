@@ -26,7 +26,16 @@ type GroupSelectionChain interface {
 	// SelectGroup returns the group members selected for the current group
 	// selection. The function returns an error if the chain's state does not
 	// allow for group selection at the moment.
-	SelectGroup() (chain.OperatorIDs, chain.Addresses, error)
+	SelectGroup() (*GroupSelectionResult, error)
+}
+
+// GroupSelectionResult represents a group selection result, i.e. operators
+// selected to perform the DKG protocol. The result consists of two slices
+// of equal length holding the chain.OperatorID and chain.Address for each
+// selected operator.
+type GroupSelectionResult struct {
+	OperatorsIDs       chain.OperatorIDs
+	OperatorsAddresses chain.Addresses
 }
 
 // DistributedKeyGenerationChain defines the subset of the TBTC chain
@@ -49,8 +58,9 @@ type DistributedKeyGenerationChain interface {
 	// over result hash from group participants supporting the result.
 	SubmitDKGResult(
 		memberIndex group.MemberIndex,
-		result *dkg.Result,
+		dkgResult *dkg.Result,
 		signatures map[group.MemberIndex][]byte,
+		groupSelectionResult *GroupSelectionResult,
 	) error
 
 	// GetDKGState returns the current state of the DKG procedure.

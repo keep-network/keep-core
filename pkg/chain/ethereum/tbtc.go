@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"math/big"
 
+	gethabi "github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 
@@ -294,10 +295,10 @@ func (tc *TbtcChain) IsBetaOperator() (bool, error) {
 // SelectGroup returns the group members selected for the current group
 // selection. The function returns an error if the chain's state does not allow
 // for group selection at the moment.
-func (tc *TbtcChain) SelectGroup() (chain.OperatorIDs, chain.Addresses, error) {
+func (tc *TbtcChain) SelectGroup() (*tbtc.GroupSelectionResult, error) {
 	operatorsIDs, err := tc.walletRegistry.SelectGroup()
 	if err != nil {
-		return nil, nil, fmt.Errorf(
+		return nil, fmt.Errorf(
 			"cannot select group in the sortition pool: [%v]",
 			err,
 		)
@@ -305,7 +306,7 @@ func (tc *TbtcChain) SelectGroup() (chain.OperatorIDs, chain.Addresses, error) {
 
 	operatorsAddresses, err := tc.sortitionPool.GetIDOperators(operatorsIDs)
 	if err != nil {
-		return nil, nil, fmt.Errorf(
+		return nil, fmt.Errorf(
 			"cannot convert operators' IDs to addresses: [%v]",
 			err,
 		)
@@ -318,7 +319,10 @@ func (tc *TbtcChain) SelectGroup() (chain.OperatorIDs, chain.Addresses, error) {
 		addresses[i] = chain.Address(operatorsAddresses[i].String())
 	}
 
-	return ids, addresses, nil
+	return &tbtc.GroupSelectionResult{
+		OperatorsIDs:       ids,
+		OperatorsAddresses: addresses,
+	}, nil
 }
 
 func (tc *TbtcChain) OnDKGStarted(
@@ -376,11 +380,12 @@ func validateMemberIndex(chainMemberIndex *big.Int) error {
 
 func (tc *TbtcChain) SubmitDKGResult(
 	memberIndex group.MemberIndex,
-	result *dkg.Result,
+	dkgResult *dkg.Result,
 	signatures map[group.MemberIndex][]byte,
+	groupSelectionResult *tbtc.GroupSelectionResult,
 ) error {
 	serializedKey, err := convertPubKeyToChainFormat(
-		result.PrivateKeyShare.PublicKey(),
+		dkgResult.PrivateKeyShare.PublicKey(),
 	)
 	if err != nil {
 		return fmt.Errorf("could not serialize the public key: [%v]", err)
@@ -393,19 +398,44 @@ func (tc *TbtcChain) SubmitDKGResult(
 		return fmt.Errorf("could not convert signatures to chain format: [%v]", err)
 	}
 
+	operatingMembersIndexes := dkgResult.Group.OperatingMemberIndexes()
+	operatingOperatorsIDs := make([]chain.OperatorID, len(operatingMembersIndexes))
+	for i, operatingMemberID := range operatingMembersIndexes {
+		operatingOperatorsIDs[i] = groupSelectionResult.OperatorsIDs[operatingMemberID-1]
+	}
+
+	membersHash, err := computeOperatorsIDsHash(operatingOperatorsIDs)
+	if err != nil {
+		return fmt.Errorf("could not compute members hash: [%v]", err)
+	}
+
 	_, err = tc.walletRegistry.SubmitDkgResult(abi.EcdsaDkgResult{
 		SubmitterMemberIndex:     big.NewInt(int64(memberIndex)),
 		GroupPubKey:              serializedKey[:],
-		MisbehavedMembersIndices: result.MisbehavedMembersIndexes(),
+		MisbehavedMembersIndices: dkgResult.MisbehavedMembersIndexes(),
 		Signatures:               signatureBytes,
 		SigningMembersIndices:    signingMemberIndices,
-		/*
-			Members                  []uint32
-			MembersHash              [32]byte
-		*/
+		Members:                  groupSelectionResult.OperatorsIDs,
+		MembersHash:              membersHash,
 	})
 
 	return err
+}
+
+// computeOperatorsIDsHash computes the keccak256 hash for the given list
+// of operators IDs.
+func computeOperatorsIDsHash(operatorsIDs chain.OperatorIDs) ([32]byte, error) {
+	uint32SliceType, err := gethabi.NewType("uint32[]", "uint32[]", nil)
+	if err != nil {
+		return [32]byte{}, err
+	}
+
+	bytes, err := gethabi.Arguments{{Type: uint32SliceType}}.Pack(operatorsIDs)
+	if err != nil {
+		return [32]byte{}, err
+	}
+
+	return crypto.Keccak256Hash(bytes), nil
 }
 
 // convertSignaturesToChainFormat converts signatures map to two slices. First
