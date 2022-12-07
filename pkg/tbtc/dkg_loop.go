@@ -11,6 +11,7 @@ import (
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/protocol/group"
 	"github.com/keep-network/keep-core/pkg/tecdsa/dkg"
+	"github.com/keep-network/keep-core/pkg/tecdsa/retry"
 	"golang.org/x/exp/slices"
 )
 
@@ -241,4 +242,94 @@ func (drl *dkgRetryLoop) start(
 
 		return result, nil
 	}
+}
+
+// performMembersSelection runs the member selection process whose result
+// is a list of members' indexes that should be excluded by the client
+// for the given DKG attempt.
+//
+// The member selection process is done based on the list of ready members
+// provided as the readyMembersIndexes argument. This list is used twice:
+//
+// First, the algorithm determining the qualified operators set uses the
+// ready members list to build an input consisting of only active operators.
+// This way we guarantee that the qualified operators set contains only
+// ready and active operators that will actually take part in the DKG
+// attempt.
+//
+// Second, the ready members list is used to determine a list of excluded
+// members. The excluded members list is built using the qualified operators
+// set. The algorithm that determines the qualified operators set does not
+// care about an exact mapping between operators and controlled members but
+// relies on the members count solely. That means the information about
+// readiness of specific members controlled by the given operators is not
+// included in the resulting qualified operators set. In order to properly
+// decide about inclusion or exclusion of specific members of a given
+// qualified operator, we must take the ready members list into account.
+func (drl *dkgRetryLoop) performMembersSelection(
+	readyMembersIndexes []group.MemberIndex,
+) ([]group.MemberIndex, error) {
+	qualifiedOperatorsSet, err := drl.qualifiedOperatorsSet(readyMembersIndexes)
+	if err != nil {
+		return nil, fmt.Errorf("cannot get qualified operators: [%w]", err)
+	}
+
+	excludedMembersIndexes := make([]group.MemberIndex, 0)
+	for i, operator := range drl.selectedOperators {
+		memberIndex := group.MemberIndex(i + 1)
+
+		included := qualifiedOperatorsSet[operator] &&
+			slices.Contains(readyMembersIndexes, memberIndex)
+
+		if !included {
+			excludedMembersIndexes = append(
+				excludedMembersIndexes,
+				memberIndex,
+			)
+		}
+	}
+
+	return excludedMembersIndexes, nil
+}
+
+// qualifiedOperatorsSet returns a set of operators qualified to participate
+// in the given DKG attempt. The set of qualified operators is taken from the
+// set of active operators who announced readiness through their controlled DKG
+// group members.
+func (drl *dkgRetryLoop) qualifiedOperatorsSet(
+	readyMembersIndexes []group.MemberIndex,
+) (map[chain.Address]bool, error) {
+	var readyOperators chain.Addresses
+	for _, memberIndex := range readyMembersIndexes {
+		readyOperators = append(
+			readyOperators,
+			drl.selectedOperators[memberIndex-1],
+		)
+	}
+
+	// For the first attempt, just return the operators who announced readiness.
+	// Otherwise, randomly exclude operators from the ready operators set.
+	if drl.attemptCounter == 1 {
+		return readyOperators.Set(), nil
+	}
+
+	// The retry algorithm expects that we count retries from 0. Since
+	// the first invocation of the algorithm will be for `attemptCounter == 1`
+	// we need to subtract one while determining the number of the given retry.
+	retryCount := drl.attemptCounter - 1
+
+	qualifiedOperators, err := retry.EvaluateRetryParticipantsForKeyGeneration(
+		readyOperators,
+		drl.attemptSeed,
+		retryCount,
+		uint(drl.chainConfig.GroupQuorum),
+	)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"random operator selection failed: [%w]",
+			err,
+		)
+	}
+
+	return chain.Addresses(qualifiedOperators).Set(), nil
 }

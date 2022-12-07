@@ -1,7 +1,6 @@
 package tbtc
 
 import (
-	"bytes"
 	"context"
 	"fmt"
 	"math/big"
@@ -9,7 +8,6 @@ import (
 	"time"
 
 	"go.uber.org/zap"
-	"golang.org/x/exp/slices"
 
 	"github.com/ipfs/go-log/v2"
 	"github.com/keep-network/keep-common/pkg/persistence"
@@ -19,7 +17,6 @@ import (
 	"github.com/keep-network/keep-core/pkg/protocol/announcer"
 	"github.com/keep-network/keep-core/pkg/protocol/group"
 	"github.com/keep-network/keep-core/pkg/tecdsa/dkg"
-	"github.com/keep-network/keep-core/pkg/tecdsa/retry"
 )
 
 // TODO: Revisit those constants, especially dkgResultSubmissionDelayStep
@@ -393,281 +390,137 @@ func (de *dkgExecutor) generateSigningGroup(
 				return
 			}
 
-			// TODO: Snapshot the key material before doing on-chain result
-			//       submission.
-
-			operatingMemberIndexes := result.Group.OperatingMemberIDs()
-			dkgResultChannel := make(chan *DKGResultSubmittedEvent)
-
-			dkgResultSubscription := de.chain.OnDKGResultSubmitted(
-				func(event *DKGResultSubmittedEvent) {
-					dkgResultChannel <- event
-				},
+			signer, err := de.registerSigner(
+				result,
+				memberIndex,
+				selectedSigningGroupOperators,
 			)
-			defer dkgResultSubscription.Unsubscribe()
+			if err != nil {
+				dkgLogger.Errorf(
+					"[member:%v] failed to register signing group member: [%v]",
+					memberIndex,
+					err,
+				)
+			}
 
-			// Set up the publication stop signal that should allow to
-			// perform all the result-signing-related actions and
-			// handle the worst case when the result is submitted by the
-			// last group member.
-			publicationTimeout := time.Duration(chainConfig.GroupSize) *
-				dkgResultSubmissionDelayStep
-			publicationCtx, cancelPublicationCtx := context.WithTimeout(
-				context.Background(),
-				publicationTimeout,
-			)
-			// TODO: Call cancelPublicationCtx() when the result is
-			//       available and published and remove this goroutine.
-			//       This goroutine is duplicating context.WithTimeout work
-			//       right now but is here to emphasize the need of manual
-			//       context cancellation.
-			go func() {
-				defer cancelPublicationCtx()
-				time.Sleep(publicationTimeout)
-			}()
+			dkgLogger.Infof("registered %s", signer)
 
-			err = dkg.Publish(
-				publicationCtx,
+			err = de.submitDkgResult(
 				dkgLogger,
-				seed.Text(16),
+				seed,
 				memberIndex,
 				broadcastChannel,
 				membershipValidator,
-				newDkgResultSigner(de.chain),
-				newDkgResultSubmitter(dkgLogger, de.chain),
 				result,
 			)
 			if err != nil {
-				// Result publication failed. It means that either the result
-				// this member proposed is not supported by the majority of
-				// group members or that the chain interaction failed.
-				// In either case, we observe the chain for the result
-				// published by any other group member and based on that,
-				// we decide whether we should stay in the final group or
-				// drop our membership.
-				dkgLogger.Warnf(
+				dkgLogger.Errorf(
 					"[member:%v] DKG result publication process failed [%v]",
 					memberIndex,
 					err,
 				)
-
-				if operatingMemberIndexes, err = decideSigningGroupMemberFate(
-					publicationCtx,
-					memberIndex,
-					dkgResultChannel,
-					result,
-				); err != nil {
-					dkgLogger.Errorf(
-						"[member:%v] failed to handle DKG result "+
-							"publishing failure: [%v]",
-						memberIndex,
-						err,
-					)
-					return
-				}
 			}
-
-			// Final signing group may differ from the original DKG
-			// group outputted by the sortition protocol. One need to
-			// determine the final signing group based on the selected
-			// group members who behaved correctly during DKG protocol.
-			finalSigningGroupOperators, finalSigningGroupMembersIndexes, err :=
-				finalSigningGroup(
-					selectedSigningGroupOperators,
-					operatingMemberIndexes,
-					chainConfig,
-				)
-			if err != nil {
-				dkgLogger.Errorf(
-					"[member:%v] failed to resolve final signing "+
-						"group: [%v]",
-					memberIndex,
-					err,
-				)
-				return
-			}
-
-			// Just like the final and original group may differ, the
-			// member index used during the DKG protocol may differ
-			// from the final signing group member index as well.
-			// We need to remap it.
-			finalSigningGroupMemberIndex, ok :=
-				finalSigningGroupMembersIndexes[memberIndex]
-			if !ok {
-				dkgLogger.Errorf(
-					"[member:%v] failed to resolve final signing "+
-						"group member index",
-					memberIndex,
-				)
-				return
-			}
-
-			signer := newSigner(
-				result.PrivateKeyShare.PublicKey(),
-				finalSigningGroupOperators,
-				finalSigningGroupMemberIndex,
-				result.PrivateKeyShare,
-			)
-
-			err = de.walletRegistry.registerSigner(signer)
-			if err != nil {
-				dkgLogger.Errorf(
-					"failed to register %s: [%v]",
-					signer,
-					err,
-				)
-				return
-			}
-
-			dkgLogger.Infof("registered %s", signer)
 		}()
 	}
 }
 
-// performMembersSelection runs the member selection process whose result
-// is a list of members' indexes that should be excluded by the client
-// for the given DKG attempt.
-//
-// The member selection process is done based on the list of ready members
-// provided as the readyMembersIndexes argument. This list is used twice:
-//
-// First, the algorithm determining the qualified operators set uses the
-// ready members list to build an input consisting of only active operators.
-// This way we guarantee that the qualified operators set contains only
-// ready and active operators that will actually take part in the DKG
-// attempt.
-//
-// Second, the ready members list is used to determine a list of excluded
-// members. The excluded members list is built using the qualified operators
-// set. The algorithm that determines the qualified operators set does not
-// care about an exact mapping between operators and controlled members but
-// relies on the members count solely. That means the information about
-// readiness of specific members controlled by the given operators is not
-// included in the resulting qualified operators set. In order to properly
-// decide about inclusion or exclusion of specific members of a given
-// qualified operator, we must take the ready members list into account.
-func (drl *dkgRetryLoop) performMembersSelection(
-	readyMembersIndexes []group.MemberIndex,
-) ([]group.MemberIndex, error) {
-	qualifiedOperatorsSet, err := drl.qualifiedOperatorsSet(readyMembersIndexes)
+// registerSigner determines the final signing group shape and persists the
+// generated signer with a unique key share. Note that the final group members
+// may differ from the ones returned by the sortition pool if there was any
+// misbehavior or inactivities during the key generation.
+func (de *dkgExecutor) registerSigner(
+	result *dkg.Result,
+	memberIndex group.MemberIndex,
+	selectedSigningGroupOperators chain.Addresses,
+) (*signer, error) {
+	chainConfig := de.chain.GetConfig()
+	// Final signing group may differ from the original DKG
+	// group outputted by the sortition protocol. One need to
+	// determine the final signing group based on the selected
+	// group members who behaved correctly during DKG protocol.
+	operatingMemberIndexes := result.Group.OperatingMemberIDs()
+	finalSigningGroupOperators, finalSigningGroupMembersIndexes, err :=
+		finalSigningGroup(
+			selectedSigningGroupOperators,
+			operatingMemberIndexes,
+			chainConfig,
+		)
 	if err != nil {
-		return nil, fmt.Errorf("cannot get qualified operators: [%w]", err)
+		return nil, fmt.Errorf("failed to resolve final signing group members")
 	}
 
-	excludedMembersIndexes := make([]group.MemberIndex, 0)
-	for i, operator := range drl.selectedOperators {
-		memberIndex := group.MemberIndex(i + 1)
-
-		included := qualifiedOperatorsSet[operator] &&
-			slices.Contains(readyMembersIndexes, memberIndex)
-
-		if !included {
-			excludedMembersIndexes = append(
-				excludedMembersIndexes,
-				memberIndex,
-			)
-		}
-	}
-
-	return excludedMembersIndexes, nil
-}
-
-// qualifiedOperatorsSet returns a set of operators qualified to participate
-// in the given DKG attempt. The set of qualified operators is taken from the
-// set of active operators who announced readiness through their controlled DKG
-// group members.
-func (drl *dkgRetryLoop) qualifiedOperatorsSet(
-	readyMembersIndexes []group.MemberIndex,
-) (map[chain.Address]bool, error) {
-	var readyOperators chain.Addresses
-	for _, memberIndex := range readyMembersIndexes {
-		readyOperators = append(
-			readyOperators,
-			drl.selectedOperators[memberIndex-1],
+	// Just like the final and original group may differ, the
+	// member index used during the DKG protocol may differ
+	// from the final signing group member index as well.
+	// We need to remap it.
+	finalSigningGroupMemberIndex, ok :=
+		finalSigningGroupMembersIndexes[memberIndex]
+	if !ok {
+		return nil, fmt.Errorf("failed to resolve final signing " +
+			"group member index",
 		)
 	}
 
-	// For the first attempt, just return the operators who announced readiness.
-	// Otherwise, randomly exclude operators from the ready operators set.
-	if drl.attemptCounter == 1 {
-		return readyOperators.Set(), nil
-	}
-
-	// The retry algorithm expects that we count retries from 0. Since
-	// the first invocation of the algorithm will be for `attemptCounter == 1`
-	// we need to subtract one while determining the number of the given retry.
-	retryCount := drl.attemptCounter - 1
-
-	qualifiedOperators, err := retry.EvaluateRetryParticipantsForKeyGeneration(
-		readyOperators,
-		drl.attemptSeed,
-		retryCount,
-		uint(drl.chainConfig.GroupQuorum),
+	signer := newSigner(
+		result.PrivateKeyShare.PublicKey(),
+		finalSigningGroupOperators,
+		finalSigningGroupMemberIndex,
+		result.PrivateKeyShare,
 	)
+
+	err = de.walletRegistry.registerSigner(signer)
 	if err != nil {
 		return nil, fmt.Errorf(
-			"random operator selection failed: [%w]",
+			"failed to register %s: [%v]",
+			signer,
 			err,
 		)
 	}
 
-	return chain.Addresses(qualifiedOperators).Set(), nil
+	return signer, nil
 }
 
-// decideSigningGroupMemberFate decides what the member will do in case it
-// failed to publish its DKG result. Member can stay in the group if it supports
-// the same group public key as the one registered on-chain and the member is
-// not considered as misbehaving by the group.
-func decideSigningGroupMemberFate(
-	ctx context.Context,
+// submitDkgResult submits the DKG result to the chain.
+func (de *dkgExecutor) submitDkgResult(
+	dkgLogger log.StandardLogger,
+	seed *big.Int,
 	memberIndex group.MemberIndex,
-	dkgResultChannel chan *DKGResultSubmittedEvent,
+	broadcastChannel net.BroadcastChannel,
+	membershipValidator *group.MembershipValidator,
 	result *dkg.Result,
-) ([]group.MemberIndex, error) {
-	select {
-	case dkgResultEvent := <-dkgResultChannel:
-		groupPublicKeyBytes, err := result.GroupPublicKeyBytes()
-		if err != nil {
-			return nil, err
-		}
+) error {
+	// Set up the publication stop signal that should allow to
+	// perform all the result-signing-related actions and
+	// handle the worst case when the result is submitted by the
+	// last group member.
+	chainConfig := de.chain.GetConfig()
+	publicationTimeout := time.Duration(chainConfig.GroupSize) *
+		dkgResultSubmissionDelayStep
+	publicationCtx, cancelPublicationCtx := context.WithTimeout(
+		context.Background(),
+		publicationTimeout,
+	)
+	// TODO: Call cancelPublicationCtx() when the result is
+	//       available and published and remove this goroutine.
+	//       This goroutine is duplicating context.WithTimeout work
+	//       right now but is here to emphasize the need of manual
+	//       context cancellation.
+	go func() {
+		defer cancelPublicationCtx()
+		time.Sleep(publicationTimeout)
+	}()
 
-		// If member doesn't support the same group public key, it could not stay
-		// in the group.
-		if !bytes.Equal(groupPublicKeyBytes, dkgResultEvent.GroupPublicKeyBytes) {
-			return nil, fmt.Errorf(
-				"[member:%v] could not stay in the group because "+
-					"the member does not support the same group public key",
-				memberIndex,
-			)
-		}
-
-		misbehavedSet := make(map[group.MemberIndex]struct{})
-		for _, misbehavedID := range dkgResultEvent.Misbehaved {
-			misbehavedSet[misbehavedID] = struct{}{}
-		}
-
-		// If member is considered as misbehaved, it could not stay in the group.
-		if _, isMisbehaved := misbehavedSet[memberIndex]; isMisbehaved {
-			return nil, fmt.Errorf(
-				"[member:%v] could not stay in the group because "+
-					"the member is considered as misbehaving",
-				memberIndex,
-			)
-		}
-
-		// Construct a new view of the operating members according to the accepted
-		// DKG result.
-		operatingMemberIndexes := make([]group.MemberIndex, 0)
-		for _, memberID := range result.Group.MemberIDs() {
-			if _, isMisbehaved := misbehavedSet[memberID]; !isMisbehaved {
-				operatingMemberIndexes = append(operatingMemberIndexes, memberID)
-			}
-		}
-
-		return operatingMemberIndexes, nil
-	case <-ctx.Done():
-		return nil, fmt.Errorf("result publication timed out")
-	}
+	return dkg.Publish(
+		publicationCtx,
+		dkgLogger,
+		seed.Text(16),
+		memberIndex,
+		broadcastChannel,
+		membershipValidator,
+		newDkgResultSigner(de.chain),
+		newDkgResultSubmitter(dkgLogger, de.chain),
+		result,
+	)
 }
 
 // finalSigningGroup takes three parameters:

@@ -1,151 +1,161 @@
 package tbtc
 
 import (
-	"context"
 	"fmt"
 	"reflect"
 	"testing"
 
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/internal/tecdsatest"
+	"github.com/keep-network/keep-core/pkg/internal/testutils"
 	"github.com/keep-network/keep-core/pkg/protocol/group"
 	"github.com/keep-network/keep-core/pkg/tecdsa"
 	"github.com/keep-network/keep-core/pkg/tecdsa/dkg"
 )
 
-func TestDecideSigningGroupMemberFate(t *testing.T) {
-	chainConfig := &ChainConfig{
-		GroupSize:       10,
-		GroupQuorum:     8,
-		HonestThreshold: 6,
-	}
-
+func TestRegisterSigner(t *testing.T) {
 	testData, err := tecdsatest.LoadPrivateKeyShareTestFixtures(1)
 	if err != nil {
 		t.Fatalf("failed to load test data: [%v]", err)
 	}
 
-	memberIndex := group.MemberIndex(1)
+	const (
+		groupSize          = 5
+		groupQuorum        = 3
+		honestThreshold    = 2
+		dishonestThreshold = 3
+	)
 
-	result := &dkg.Result{
-		Group: group.NewGroup(
-			chainConfig.GroupSize-chainConfig.HonestThreshold,
-			chainConfig.GroupSize,
-		),
-		PrivateKeyShare: tecdsa.NewPrivateKeyShare(testData[0]),
-	}
+	localChain := Connect(groupSize, groupQuorum, honestThreshold)
 
-	resultGroupPublicKeyBytes, err := result.GroupPublicKeyBytes()
-	if err != nil {
-		t.Fatal(err)
+	selectedOperators := []chain.Address{
+		"0xAA",
+		"0xBB",
+		"0xCC",
+		"0xDD",
+		"0xEE",
 	}
 
 	var tests = map[string]struct {
-		ctxFn                          func() (context.Context, context.CancelFunc)
-		resultSubmittedEvent           *DKGResultSubmittedEvent
-		expectedOperatingMemberIndexes []group.MemberIndex
-		expectedError                  error
+		memberIndex           group.MemberIndex
+		disqualifiedMemberIDs []group.MemberIndex
+		inactiveMemberIDs     []group.MemberIndex
+
+		expectedError                      error
+		expectedFinalSigningGroupIndex     group.MemberIndex
+		expectedFinalSigningGroupOperators []chain.Address
 	}{
-		"member supports the published result": {
-			ctxFn: func() (context.Context, context.CancelFunc) {
-				return context.WithCancel(context.Background())
-			},
-			resultSubmittedEvent: &DKGResultSubmittedEvent{
-				MemberIndex:         2,
-				GroupPublicKeyBytes: resultGroupPublicKeyBytes,
-				Misbehaved:          []byte{7, 10},
-				BlockNumber:         5,
-			},
-			// should return operating members according to the published result
-			expectedOperatingMemberIndexes: []group.MemberIndex{1, 2, 3, 4, 5, 6, 8, 9},
+		"all members participating": {
+			memberIndex:                        1,
+			disqualifiedMemberIDs:              nil,
+			inactiveMemberIDs:                  nil,
+			expectedFinalSigningGroupIndex:     1,
+			expectedFinalSigningGroupOperators: selectedOperators,
 		},
-		"member supports different public key": {
-			ctxFn: func() (context.Context, context.CancelFunc) {
-				return context.WithCancel(context.Background())
-			},
-			resultSubmittedEvent: &DKGResultSubmittedEvent{
-				MemberIndex:         2,
-				GroupPublicKeyBytes: []byte{0x00, 0x01}, // different result
-				Misbehaved:          []byte{7, 10},
-				BlockNumber:         5,
-			},
-			expectedError: fmt.Errorf(
-				"[member:%v] could not stay in the group because the "+
-					"member does not support the same group public key",
-				memberIndex,
-			),
+		"some member inactive": {
+			memberIndex:                        3,
+			disqualifiedMemberIDs:              nil,
+			inactiveMemberIDs:                  []group.MemberIndex{2, 5},
+			expectedFinalSigningGroupIndex:     2,
+			expectedFinalSigningGroupOperators: []chain.Address{"0xAA", "0xCC", "0xDD"},
 		},
-		"member considered as misbehaved": {
-			ctxFn: func() (context.Context, context.CancelFunc) {
-				return context.WithCancel(context.Background())
-			},
-			resultSubmittedEvent: &DKGResultSubmittedEvent{
-				MemberIndex:         2,
-				GroupPublicKeyBytes: resultGroupPublicKeyBytes,
-				Misbehaved:          []byte{memberIndex}, // member considered as misbehaved
-				BlockNumber:         5,
-			},
-			expectedError: fmt.Errorf(
-				"[member:%v] could not stay in the group because the "+
-					"member is considered as misbehaving",
-				memberIndex,
-			),
+		"some members disqualified": {
+			memberIndex:                        1,
+			disqualifiedMemberIDs:              []group.MemberIndex{2, 5},
+			inactiveMemberIDs:                  nil,
+			expectedError:                      nil,
+			expectedFinalSigningGroupIndex:     1,
+			expectedFinalSigningGroupOperators: []chain.Address{"0xAA", "0xCC", "0xDD"},
 		},
-		"publication timeout exceeded": {
-			ctxFn: func() (context.Context, context.CancelFunc) {
-				ctx, cancelCtx := context.WithCancel(context.Background())
-				// Cancel the context deliberately.
-				cancelCtx()
-				return ctx, cancelCtx
-			},
-			resultSubmittedEvent: nil, // the result is not published at all
-			expectedError:        fmt.Errorf("result publication timed out"),
+		"the current member inactive": {
+			memberIndex:           2,
+			disqualifiedMemberIDs: nil,
+			inactiveMemberIDs:     []group.MemberIndex{2, 5},
+			expectedError:         fmt.Errorf("failed to resolve final signing group member index"),
+		},
+		"the current member disqualified": {
+			memberIndex:           5,
+			disqualifiedMemberIDs: []group.MemberIndex{2, 5},
+			inactiveMemberIDs:     nil,
+			expectedError:         fmt.Errorf("failed to resolve final signing group member index"),
 		},
 	}
 
 	for testName, test := range tests {
 		t.Run(testName, func(t *testing.T) {
-			dkgResultChannel := make(chan *DKGResultSubmittedEvent, 1)
+			persistenceHandle := &mockPersistenceHandle{}
+			walletRegistry := newWalletRegistry(persistenceHandle)
 
-			if test.resultSubmittedEvent != nil {
-				dkgResultChannel <- test.resultSubmittedEvent
+			dkgExecutor := &dkgExecutor{
+				// setting only the fields really needed for this test
+				chain:          localChain,
+				walletRegistry: walletRegistry,
 			}
 
-			ctx, cancelCtx := test.ctxFn()
-			defer cancelCtx()
-
-			operatingMemberIndexes, err := decideSigningGroupMemberFate(
-				ctx,
-				memberIndex,
-				dkgResultChannel,
-				result,
-			)
-
-			if !reflect.DeepEqual(
-				test.expectedOperatingMemberIndexes,
-				operatingMemberIndexes,
-			) {
-				t.Errorf(
-					"unexpected operating member indexes\n"+
-						"expected: [%v]\n"+
-						"actual:   [%v]",
-					test.expectedOperatingMemberIndexes,
-					operatingMemberIndexes,
-				)
+			group := group.NewGroup(dishonestThreshold, groupSize)
+			for _, disqualifiedMember := range test.disqualifiedMemberIDs {
+				group.MarkMemberAsDisqualified(disqualifiedMember)
+			}
+			for _, inactiveMember := range test.inactiveMemberIDs {
+				group.MarkMemberAsInactive(inactiveMember)
 			}
 
-			if !reflect.DeepEqual(
-				test.expectedError,
-				err,
-			) {
+			result := &dkg.Result{
+				Group:           group,
+				PrivateKeyShare: tecdsa.NewPrivateKeyShare(testData[0]),
+			}
+
+			signer, err := dkgExecutor.registerSigner(result, test.memberIndex, selectedOperators)
+
+			if !reflect.DeepEqual(test.expectedError, err) {
 				t.Errorf(
 					"unexpected error\n"+
-						"expected: [%v]\n"+
-						"actual:   [%v]",
+						"expected: %v\n"+
+						"actual:   %v\n",
 					test.expectedError,
 					err,
 				)
 			}
+
+			if test.expectedError != nil {
+				if signer != nil {
+					t.Errorf("expected nil signer")
+				}
+
+				// do not check the rest of assertions, the signer should be nil
+				return
+			}
+
+			testutils.AssertIntsEqual(
+				t,
+				"final signing group index",
+				int(test.expectedFinalSigningGroupIndex),
+				int(signer.signingGroupMemberIndex),
+			)
+
+			if !reflect.DeepEqual(
+				test.expectedFinalSigningGroupOperators,
+				signer.wallet.signingGroupOperators,
+			) {
+				t.Errorf(
+					"unexpected final signing group operators\n"+
+						"expected: %v\n"+
+						"actual:   %v\n",
+					test.expectedFinalSigningGroupOperators,
+					signer.wallet.signingGroupOperators,
+				)
+			}
+
+			registeredSigners := walletRegistry.getSigners(
+				result.PrivateKeyShare.PublicKey(),
+			)
+
+			testutils.AssertIntsEqual(
+				t,
+				"number of signers registered",
+				1,
+				len(registeredSigners),
+			)
 		})
 	}
 }
