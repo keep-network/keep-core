@@ -5,7 +5,6 @@ package electrum
 
 import (
 	"context"
-	"encoding/hex"
 	"fmt"
 	"math"
 	"testing"
@@ -15,15 +14,14 @@ import (
 	"golang.org/x/exp/slices"
 
 	"github.com/keep-network/keep-core/pkg/bitcoin"
+
+	testData "github.com/keep-network/keep-core/internal/testdata/bitcoin"
 )
 
 // TODO: Include integration test in the CI.
 // To run the tests execute `go test -v -tags=integration ./...`
 
-const TxID = "c580e0e352570d90e303d912a506055ceeb0ee06f97dce6988c69941374f5479"
 const timeout = 2 * time.Second
-
-var transactionHash bitcoin.Hash
 
 // Servers details were taken from a public Electrum servers list published
 // at https://1209k.com/bitcoin-eye/ele.php?chain=tbtc.
@@ -51,31 +49,22 @@ var configs = map[string]Config{
 	// TODO: Add Keep's electrum server
 }
 
-func init() {
-	var err error
-	transactionHash, err = bitcoin.NewHashFromString(
-		TxID,
-		bitcoin.ReversedByteOrder,
-	)
-	if err != nil {
-		panic(err)
-	}
-}
-
 func TestGetTransaction_Integration(t *testing.T) {
-	expectedResult := bitcoinTestTx(t)
-
 	for testName, config := range configs {
+		electrum := newTestConnection(t, config)
+
 		t.Run(testName, func(t *testing.T) {
-			electrum := newTestConnection(t, config)
+			for txName, tx := range testData.Transactions {
+				t.Run(txName, func(t *testing.T) {
+					result, err := electrum.GetTransaction(tx.TxHash)
+					if err != nil {
+						t.Fatal(err)
+					}
 
-			result, err := electrum.GetTransaction(transactionHash)
-			if err != nil {
-				t.Fatal(err)
-			}
-
-			if diff := deep.Equal(result, expectedResult); diff != nil {
-				t.Errorf("compare failed: %v", diff)
+					if diff := deep.Equal(result, &tx.BitcoinTx); diff != nil {
+						t.Errorf("compare failed: %v", diff)
+					}
+				})
 			}
 		})
 	}
@@ -132,17 +121,21 @@ func TestGetTransactionConfirmations_Integration(t *testing.T) {
 		t.Run(testName, func(t *testing.T) {
 			electrum := newTestConnection(t, config)
 
-			result, err := electrum.GetTransactionConfirmations(transactionHash)
-			if err != nil {
-				t.Fatal(err)
-			}
+			for txName, tx := range testData.Transactions {
+				t.Run(txName, func(t *testing.T) {
+					result, err := electrum.GetTransactionConfirmations(tx.TxHash)
+					if err != nil {
+						t.Fatal(err)
+					}
 
-			if result < expectedResult {
-				t.Errorf(
-					"invalid result (greater or equal match)\nexpected: %v\nactual:   %v",
-					expectedResult,
-					result,
-				)
+					if result < expectedResult {
+						t.Errorf(
+							"invalid result (greater or equal match)\nexpected: %v\nactual:   %v",
+							expectedResult,
+							result,
+						)
+					}
+				})
 			}
 		})
 	}
@@ -302,53 +295,4 @@ func newTestConnection(t *testing.T, config Config) bitcoin.Chain {
 	}
 
 	return electrum
-}
-
-func bitcoinTestTx(t *testing.T) *bitcoin.Transaction {
-	prevTxHash, err := bitcoin.NewHashFromString(
-		"e788a344a86f7e369511fe37ebd1d74686dde694ee99d06db5db3d4a14719b1d",
-		bitcoin.ReversedByteOrder,
-	)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	txInScript, err := hex.DecodeString("47304402206f8553c07bcdc0c3b906311888103d623ca9096ca0b28b7d04650a029a01fcf9022064cda02e39e65ace712029845cfcf58d1b59617d753c3fd3556f3551b609bbb00121039d61d62dcd048d3f8550d22eb90b4af908db60231d117aeede04e7bc11907bfa")
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	txOutScript0, err := hex.DecodeString("a9143ec459d0f3c29286ae5df5fcc421e2786024277e87")
-	if err != nil {
-		t.Fatal(err)
-	}
-	txOutScript1, err := hex.DecodeString("0014e257eccafbc07c381642ce6e7e55120fb077fbed")
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	return &bitcoin.Transaction{
-		Version: 1,
-		Inputs: []*bitcoin.TransactionInput{
-			{
-				Outpoint: &bitcoin.TransactionOutpoint{
-					TransactionHash: prevTxHash,
-					OutputIndex:     1,
-				},
-				SignatureScript: txInScript,
-				Sequence:        4294967295,
-			},
-		},
-		Outputs: []*bitcoin.TransactionOutput{
-			{
-				PublicKeyScript: txOutScript0,
-				Value:           20000,
-			},
-			{
-				PublicKeyScript: txOutScript1,
-				Value:           1360550,
-			},
-		},
-		Locktime: 0,
-	}
 }
