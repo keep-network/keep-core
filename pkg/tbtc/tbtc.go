@@ -125,9 +125,7 @@ func Initialize(
 		}()
 	})
 
-	// TODO: This is a temporary signing loop trigger that should be removed
-	//       once the client is integrated with real on-chain contracts.
-	_ = chain.OnSignatureRequested(func(event *SignatureRequestedEvent) {
+	_ = chain.OnHeartbeatRequested(func(event *HeartbeatRequestedEvent) {
 		go func() {
 			// There is no need to deduplicate. Test loop events are unique.
 			messagesDigests := make([]string, len(event.Messages))
@@ -141,7 +139,7 @@ func Initialize(
 			}
 
 			logger.Infof(
-				"signature of messages [%s] requested from "+
+				"heartbeat [%s] requested from "+
 					"wallet [0x%x] at block [%v]",
 				strings.Join(messagesDigests, ", "),
 				event.WalletPublicKey,
@@ -175,7 +173,7 @@ func Initialize(
 			}
 
 			logger.Infof(
-				"generated [%v] signatures for messages [%s] as "+
+				"generated [%v] signatures for heartbeat [%s] as "+
 					"requested from wallet [0x%x] at block [%v]",
 				len(signatures),
 				strings.Join(messagesDigests, ", "),

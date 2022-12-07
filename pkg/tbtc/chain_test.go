@@ -192,8 +192,8 @@ func (lc *localChain) CalculateDKGResultHash(
 	return dkgResultHash, nil
 }
 
-func (lc *localChain) OnSignatureRequested(
-	handler func(event *SignatureRequestedEvent),
+func (lc *localChain) OnHeartbeatRequested(
+	handler func(event *HeartbeatRequestedEvent),
 ) subscription.EventSubscription {
 	panic("unsupported")
 }

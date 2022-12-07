@@ -92,27 +92,15 @@ type DKGResultSubmittedEvent struct {
 // BridgeChain defines the subset of the TBTC chain interface that pertains
 // specifically to the tBTC Bridge operations.
 type BridgeChain interface {
-	// OnSignatureRequested registers a callback that is invoked when an
-	// on-chain notification of the Bridge signature request is seen.
-	//
-	// TODO: This is a temporary function that should be removed once the client
-	//       is integrated with real on-chain contracts. This is because the
-	//       Bridge contract will not request wallets' signatures in such an
-	//       explicit way. It will emit some domain-specific events and specific
-	//       wallets will respond in an appropriate way, often by building and
-	//       signing BTC transactions. However, for this iteration, we want to
-	//       have a test signing loop so we are simulating that signatures are
-	//       requested by the Bridge explicitly.
-	OnSignatureRequested(
-		func(event *SignatureRequestedEvent),
+	// OnHeartbeatRequested registers a callback that is invoked when an
+	// on-chain notification of the Bridge heartbeat request is seen.
+	OnHeartbeatRequested(
+		func(event *HeartbeatRequestedEvent),
 	) subscription.EventSubscription
 }
 
-// SignatureRequestedEvent represents a Bridge signature request event.
-//
-// TODO: This is a temporary structure that should be removed once the client
-//       is integrated with real on-chain contracts.
-type SignatureRequestedEvent struct {
+// HeartbeatRequestedEvent represents a Bridge heartbeat request event.
+type HeartbeatRequestedEvent struct {
 	WalletPublicKey []byte
 	Messages        []*big.Int
 	BlockNumber     uint64

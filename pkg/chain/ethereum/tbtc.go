@@ -1,7 +1,10 @@
 package ethereum
 
 import (
+	"context"
 	"crypto/ecdsa"
+	"crypto/sha256"
+	"encoding/binary"
 	"fmt"
 	"math/big"
 
@@ -12,7 +15,8 @@ import (
 	"github.com/keep-network/keep-common/pkg/chain/ethereum"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/chain/ethereum/ecdsa/gen/abi"
-	"github.com/keep-network/keep-core/pkg/chain/ethereum/ecdsa/gen/contract"
+	ecdsacontract "github.com/keep-network/keep-core/pkg/chain/ethereum/ecdsa/gen/contract"
+	tbtccontract "github.com/keep-network/keep-core/pkg/chain/ethereum/tbtc/gen/contract"
 	"github.com/keep-network/keep-core/pkg/internal/byteutils"
 	"github.com/keep-network/keep-core/pkg/operator"
 	"github.com/keep-network/keep-core/pkg/protocol/group"
@@ -25,6 +29,8 @@ import (
 
 // Definitions of contract names.
 const (
+	// Deprecated: The wallet registry address is taken from the Bridge.
+	// TODO: Remove that field from the config template.
 	WalletRegistryContractName = "WalletRegistry"
 	BridgeContractName         = "Bridge"
 )
@@ -33,8 +39,9 @@ const (
 type TbtcChain struct {
 	*baseChain
 
-	walletRegistry *contract.WalletRegistry
-	sortitionPool  *contract.EcdsaSortitionPool
+	bridge         *tbtccontract.Bridge
+	walletRegistry *ecdsacontract.WalletRegistry
+	sortitionPool  *ecdsacontract.EcdsaSortitionPool
 }
 
 // NewTbtcChain construct a new instance of the TBTC-specific Ethereum
@@ -43,24 +50,45 @@ func newTbtcChain(
 	config ethereum.Config,
 	baseChain *baseChain,
 ) (*TbtcChain, error) {
-	// FIXME: Use `WalletRegistryContractName` instead of `RandomBeaconContractName`.
-	// DKG for the WalletRegistry depends on the RandomBeacon group creation.
-	// Currently the client doesn't publish a generated group to the chain
-	// as it works against a mocked chain implementation. Without a Beacon group
-	// published to the chain, the WalletRegistry's DKG cannot start. As a workaround
-	// for the first stage of the Chaosnet we use the RandomBeacon's address,
-	// as the client only wants to get to the sortition pool to select a group.
-	walletRegistryAddress, err := config.ContractAddress(RandomBeaconContractName)
+	bridgeAddress, err := config.ContractAddress(BridgeContractName)
 	if err != nil {
 		return nil, fmt.Errorf(
 			"failed to resolve %s contract address: [%v]",
-			WalletRegistryContractName,
+			BridgeContractName,
 			err,
 		)
 	}
 
+	bridge, err :=
+		tbtccontract.NewBridge(
+			bridgeAddress,
+			baseChain.chainID,
+			baseChain.key,
+			baseChain.client,
+			baseChain.nonceManager,
+			baseChain.miningWaiter,
+			baseChain.blockCounter,
+			baseChain.transactionMutex,
+		)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"failed to attach to Bridge contract: [%v]",
+			err,
+		)
+	}
+
+	references, err := bridge.ContractReferences()
+	if err != nil {
+		return nil, fmt.Errorf(
+			"failed to get contract references from Bridge: [%v]",
+			err,
+		)
+	}
+
+	walletRegistryAddress := references.EcdsaWalletRegistry
+
 	walletRegistry, err :=
-		contract.NewWalletRegistry(
+		ecdsacontract.NewWalletRegistry(
 			walletRegistryAddress,
 			baseChain.chainID,
 			baseChain.key,
@@ -86,7 +114,7 @@ func newTbtcChain(
 	}
 
 	sortitionPool, err :=
-		contract.NewEcdsaSortitionPool(
+		ecdsacontract.NewEcdsaSortitionPool(
 			sortitionPoolAddress,
 			baseChain.chainID,
 			baseChain.key,
@@ -538,9 +566,107 @@ func (tc *TbtcChain) CalculateDKGResultHash(
 	return dkg.ResultHashFromBytes(hash)
 }
 
-// TODO: Replace it with heartbeat mechanism
-func (tc *TbtcChain) OnSignatureRequested(
-	handler func(event *tbtc.SignatureRequestedEvent),
+// OnHeartbeatRequested runs a heartbeat loop that produces a heartbeat
+// request every ~8 hours. A single heartbeat request consists of 5 messages
+// that must be signed sequentially.
+func (tc *TbtcChain) OnHeartbeatRequested(
+	handler func(event *tbtc.HeartbeatRequestedEvent),
 ) subscription.EventSubscription {
-	return subscription.NewEventSubscription(func() {})
+	ctx, cancelCtx := context.WithCancel(context.Background())
+	blocksChan := tc.blockCounter.WatchBlocks(ctx)
+
+	go func() {
+		for {
+			select {
+			case block := <-blocksChan:
+				// Generate a heartbeat every 2400 block, i.e. ~8 hours.
+				if block%2400 == 0 {
+					walletPublicKey, ok, err := tc.activeWalletPublicKey()
+					if err != nil {
+						logger.Errorf(
+							"cannot get active wallet for heartbeat request: [%v]",
+							err,
+						)
+						continue
+					}
+
+					if !ok {
+						logger.Infof("there is no active wallet for heartbeat at the moment")
+						continue
+					}
+
+					if len(walletPublicKey) > 0 {
+						prefixBytes := make([]byte, 8)
+						binary.BigEndian.PutUint64(
+							prefixBytes,
+							0xffffffffffffffff,
+						)
+
+						messages := make([]*big.Int, 5)
+						for i := range messages {
+							suffixBytes := make([]byte, 8)
+							binary.BigEndian.PutUint64(
+								suffixBytes,
+								block+uint64(i),
+							)
+
+							preimage := append(prefixBytes, suffixBytes...)
+							preimageSha256 := sha256.Sum256(preimage)
+							message := sha256.Sum256(preimageSha256[:])
+
+							messages[i] = new(big.Int).SetBytes(message[:])
+						}
+
+						go handler(&tbtc.HeartbeatRequestedEvent{
+							WalletPublicKey: walletPublicKey,
+							Messages:        messages,
+							BlockNumber:     block,
+						})
+					}
+				}
+			case <-ctx.Done():
+				return
+			}
+		}
+	}()
+
+	return subscription.NewEventSubscription(func() {
+		cancelCtx()
+	})
+}
+
+func (tc *TbtcChain) activeWalletPublicKey() ([]byte, bool, error) {
+	walletPublicKeyHash, err := tc.bridge.ActiveWalletPubKeyHash()
+	if err != nil {
+		return nil, false, fmt.Errorf(
+			"cannot get active wallet public key hash: [%v]",
+			err,
+		)
+	}
+
+	if walletPublicKeyHash == [20]byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0} {
+		return nil, false, nil
+	}
+
+	bridgeWalletData, err := tc.bridge.Wallets(walletPublicKeyHash)
+	if err != nil {
+		return nil, false, fmt.Errorf(
+			"cannot get active wallet data from Bridge: [%v]",
+			err,
+		)
+	}
+
+	registryWalletData, err := tc.walletRegistry.GetWallet(bridgeWalletData.EcdsaWalletID)
+	if err != nil {
+		return nil, false, fmt.Errorf(
+			"cannot get active wallet data from WalletRegistry: [%v]",
+			err,
+		)
+	}
+
+	publicKeyBytes := []byte{0x04} // pre-fill with uncompressed ECDSA public key prefix
+	publicKeyBytes = append(publicKeyBytes, registryWalletData.PublicKeyX[:]...)
+	publicKeyBytes = append(publicKeyBytes, registryWalletData.PublicKeyY[:]...)
+
+	return publicKeyBytes, true, nil
 }
