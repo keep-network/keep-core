@@ -26,10 +26,10 @@ contract RandomBeaconChaosnet is IRandomBeacon, Ownable {
     using Callback for Callback.Data;
 
     /// @notice Arbitrary relay entry - Euler's number
-    uint256 public entry = 271828182845904523536028747135266249;
+    uint256 public constant entry = 271828182845904523536028747135266249;
 
     /// @notice Relay entry callback gas limit.
-    uint256 public _callbackGasLimit = 64_000;
+    uint256 public constant _callbackGasLimit = 64_000;
 
     /// @notice Authorized addresses that can request a relay entry.
     mapping(address => bool) public authorizedRequesters;
