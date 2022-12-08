@@ -17,7 +17,8 @@ import (
 
 func TestSignResult_SigningSuccessful(t *testing.T) {
 	chain := Connect(5, 4, 3)
-	dkgResultSigner := newDkgResultSigner(chain)
+	dkgStartBlock := uint64(2000)
+	dkgResultSigner := newDkgResultSigner(chain, dkgStartBlock)
 
 	testData, err := tecdsatest.LoadPrivateKeyShareTestFixtures(1)
 	if err != nil {
@@ -82,7 +83,8 @@ func TestSignResult_SigningSuccessful(t *testing.T) {
 
 func TestSignResult_ErrorDuringDkgResultHashCalculation(t *testing.T) {
 	chain := Connect(5, 4, 3)
-	dkgResultSigner := newDkgResultSigner(chain)
+	dkgStartBlock := uint64(2000)
+	dkgResultSigner := newDkgResultSigner(chain, dkgStartBlock)
 
 	// Use nil as the DKG result to cause hash calculation error
 	_, err := dkgResultSigner.SignResult(nil)
@@ -102,7 +104,8 @@ func TestSignResult_ErrorDuringDkgResultHashCalculation(t *testing.T) {
 
 func TestVerifySignature_VerificationSuccessful(t *testing.T) {
 	chain := Connect(5, 4, 3)
-	dkgResultSigner := newDkgResultSigner(chain)
+	dkgStartBlock := uint64(2000)
+	dkgResultSigner := newDkgResultSigner(chain, dkgStartBlock)
 
 	testData, err := tecdsatest.LoadPrivateKeyShareTestFixtures(1)
 	if err != nil {
@@ -133,7 +136,8 @@ func TestVerifySignature_VerificationSuccessful(t *testing.T) {
 
 func TestVerifySignature_VerificationFailure(t *testing.T) {
 	chain := Connect(5, 4, 3)
-	dkgResultSigner := newDkgResultSigner(chain)
+	dkgStartBlock := uint64(2000)
+	dkgResultSigner := newDkgResultSigner(chain, dkgStartBlock)
 
 	testData, err := tecdsatest.LoadPrivateKeyShareTestFixtures(1)
 	if err != nil {
@@ -177,7 +181,8 @@ func TestVerifySignature_VerificationFailure(t *testing.T) {
 
 func TestVerifySignature_VerificationError(t *testing.T) {
 	chain := Connect(5, 4, 3)
-	dkgResultSigner := newDkgResultSigner(chain)
+	dkgStartBlock := uint64(2000)
+	dkgResultSigner := newDkgResultSigner(chain, dkgStartBlock)
 
 	testData, err := tecdsatest.LoadPrivateKeyShareTestFixtures(1)
 	if err != nil {

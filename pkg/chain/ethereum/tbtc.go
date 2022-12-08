@@ -6,15 +6,14 @@ import (
 	"crypto/sha256"
 	"encoding/binary"
 	"fmt"
-	"math/big"
-
-	gethabi "github.com/ethereum/go-ethereum/accounts/abi"
+	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
+	"math/big"
 
 	"github.com/keep-network/keep-common/pkg/chain/ethereum"
 	"github.com/keep-network/keep-core/pkg/chain"
-	"github.com/keep-network/keep-core/pkg/chain/ethereum/ecdsa/gen/abi"
+	ecdsaabi "github.com/keep-network/keep-core/pkg/chain/ethereum/ecdsa/gen/abi"
 	ecdsacontract "github.com/keep-network/keep-core/pkg/chain/ethereum/ecdsa/gen/contract"
 	tbtccontract "github.com/keep-network/keep-core/pkg/chain/ethereum/tbtc/gen/contract"
 	"github.com/keep-network/keep-core/pkg/internal/byteutils"
@@ -375,7 +374,7 @@ func (tc *TbtcChain) OnDKGResultSubmitted(
 	onEvent := func(
 		resultHash [32]byte,
 		seed *big.Int,
-		result abi.EcdsaDkgResult,
+		result ecdsaabi.EcdsaDkgResult,
 		blockNumber uint64,
 	) {
 		if err := validateMemberIndex(result.SubmitterMemberIndex); err != nil {
@@ -437,7 +436,7 @@ func (tc *TbtcChain) SubmitDKGResult(
 		return fmt.Errorf("could not compute members hash: [%v]", err)
 	}
 
-	_, err = tc.walletRegistry.SubmitDkgResult(abi.EcdsaDkgResult{
+	_, err = tc.walletRegistry.SubmitDkgResult(ecdsaabi.EcdsaDkgResult{
 		SubmitterMemberIndex:     big.NewInt(int64(memberIndex)),
 		GroupPubKey:              serializedKey[:],
 		MisbehavedMembersIndices: dkgResult.MisbehavedMembersIndexes(),
@@ -453,12 +452,12 @@ func (tc *TbtcChain) SubmitDKGResult(
 // computeOperatorsIDsHash computes the keccak256 hash for the given list
 // of operators IDs.
 func computeOperatorsIDsHash(operatorsIDs chain.OperatorIDs) ([32]byte, error) {
-	uint32SliceType, err := gethabi.NewType("uint32[]", "uint32[]", nil)
+	uint32SliceType, err := abi.NewType("uint32[]", "uint32[]", nil)
 	if err != nil {
 		return [32]byte{}, err
 	}
 
-	bytes, err := gethabi.Arguments{{Type: uint32SliceType}}.Pack(operatorsIDs)
+	bytes, err := abi.Arguments{{Type: uint32SliceType}}.Pack(operatorsIDs)
 	if err != nil {
 		return [32]byte{}, err
 	}
@@ -551,19 +550,66 @@ func (tc *TbtcChain) GetDKGState() (tbtc.DKGState, error) {
 // hash over it. This corresponds to the DKG result hash calculation on-chain.
 // Hashes calculated off-chain and on-chain must always match.
 func (tc *TbtcChain) CalculateDKGResultHash(
+	startBlock uint64,
 	result *dkg.Result,
 ) (dkg.ResultHash, error) {
-	groupPublicKeyBytes, err := result.GroupPublicKeyBytes()
+	groupPublicKey, err := result.GroupPublicKeyBytes()
 	if err != nil {
 		return dkg.ResultHash{}, err
 	}
 
-	// Encode DKG result to the format matched with Solidity keccak256(abi.encodePacked(...))
-	// TODO: Adjust the message structure to the format needed by the wallet
-	//       registry contract:
-	//       \x19Ethereum signed message:\n${keccak256(groupPubKey,misbehavedIndices,startBlock)}
-	hash := crypto.Keccak256(groupPublicKeyBytes, result.MisbehavedMembersIndexes())
-	return dkg.ResultHashFromBytes(hash)
+	return computeDkgResultHash(
+		tc.chainID,
+		groupPublicKey,
+		result.MisbehavedMembersIndexes(),
+		big.NewInt(int64(startBlock)),
+	)
+}
+
+// computeDkgResultHash computes the keccak256 hash for the given DKG result
+// parameters.
+func computeDkgResultHash(
+	chainID *big.Int,
+	groupPublicKey []byte,
+	misbehavedMembersIndexes []group.MemberIndex,
+	startBlock *big.Int,
+) (dkg.ResultHash, error) {
+	uint256Type, err := abi.NewType("uint256", "uint256", nil)
+	if err != nil {
+		return dkg.ResultHash{}, err
+	}
+	bytesType, err := abi.NewType("bytes", "bytes", nil)
+	if err != nil {
+		return dkg.ResultHash{}, err
+	}
+	uint8SliceType, err := abi.NewType("uint8[]", "uint8[]", nil)
+	if err != nil {
+		return dkg.ResultHash{}, err
+	}
+
+	bytes, err := abi.Arguments{
+		{Type: uint256Type},
+		{Type: bytesType},
+		{Type: uint8SliceType},
+		{Type: uint256Type},
+	}.Pack(
+		chainID,
+		groupPublicKey,
+		misbehavedMembersIndexes,
+		startBlock,
+	)
+	if err != nil {
+		return [32]byte{}, err
+	}
+
+	bytesHash := crypto.Keccak256(bytes)
+
+	prefixedBytesHash := append(
+		[]byte(fmt.Sprintf("\x19Ethereum Signed Message:\n%v", len(bytesHash))),
+		bytesHash...,
+	)
+
+	return dkg.ResultHash(crypto.Keccak256Hash(prefixedBytesHash)), nil
 }
 
 // OnHeartbeatRequested runs a heartbeat loop that produces a heartbeat

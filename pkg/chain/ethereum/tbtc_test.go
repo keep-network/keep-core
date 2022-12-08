@@ -196,3 +196,38 @@ func TestValidateMemberIndex(t *testing.T) {
 		})
 	}
 }
+
+func TestComputeDkgResultHash(t *testing.T) {
+	chainID := big.NewInt(1)
+
+	groupPublicKey, err := hex.DecodeString(
+		"04989d253b17a6a0f41838b84ff0d20e8898f9d7b1a98f2564da4cc29dcf8581d9" +
+			"d218b65e7d91c752f7b22eaceb771a9af3a6f3d3f010a5d471a1aeef7d7713af",
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	misbehavedMembersIndexes := []group.MemberIndex{2, 55}
+
+	startBlock := big.NewInt(2000)
+
+	hash, err := computeDkgResultHash(
+		chainID,
+		groupPublicKey,
+		misbehavedMembersIndexes,
+		startBlock,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	expectedHash := "ff0bcba04ba8f389a063c6405d8fd3e383eb0d2649f41d3e0a937c550149131a"
+
+	testutils.AssertStringsEqual(
+		t,
+		"hash",
+		expectedHash,
+		hex.EncodeToString(hash[:]),
+	)
+}

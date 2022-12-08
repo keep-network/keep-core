@@ -91,7 +91,7 @@ func (de *dkgExecutor) preParamsCount() int {
 // the result to the chain.
 func (de *dkgExecutor) executeDkgIfEligible(
 	seed *big.Int,
-	startBlockNumber uint64,
+	startBlock uint64,
 ) {
 	dkgLogger := logger.With(
 		zap.String("seed", fmt.Sprintf("0x%x", seed)),
@@ -128,7 +128,7 @@ func (de *dkgExecutor) executeDkgIfEligible(
 			seed,
 			memberIndexes,
 			groupSelectionResult,
-			startBlockNumber,
+			startBlock,
 		)
 	} else {
 		dkgLogger.Infof("not eligible for DKG")
@@ -225,7 +225,7 @@ func (de *dkgExecutor) generateSigningGroup(
 	seed *big.Int,
 	memberIndexes []uint8,
 	groupSelectionResult *GroupSelectionResult,
-	startBlockNumber uint64,
+	startBlock uint64,
 ) {
 	membershipValidator := group.NewMembershipValidator(
 		dkgLogger,
@@ -258,7 +258,7 @@ func (de *dkgExecutor) generateSigningGroup(
 			retryLoop := newDkgRetryLoop(
 				dkgLogger,
 				seed,
-				startBlockNumber,
+				startBlock,
 				memberIndex,
 				groupSelectionResult.OperatorsAddresses,
 				chainConfig,
@@ -418,6 +418,7 @@ func (de *dkgExecutor) generateSigningGroup(
 				membershipValidator,
 				result,
 				groupSelectionResult,
+				startBlock,
 			)
 			if err != nil {
 				dkgLogger.Errorf(
@@ -495,6 +496,7 @@ func (de *dkgExecutor) submitDkgResult(
 	membershipValidator *group.MembershipValidator,
 	dkgResult *dkg.Result,
 	groupSelectionResult *GroupSelectionResult,
+	startBlock uint64,
 ) error {
 	// Set up the publication stop signal that should allow to
 	// perform all the result-signing-related actions and
@@ -524,7 +526,7 @@ func (de *dkgExecutor) submitDkgResult(
 		memberIndex,
 		broadcastChannel,
 		membershipValidator,
-		newDkgResultSigner(de.chain),
+		newDkgResultSigner(de.chain, startBlock),
 		newDkgResultSubmitter(dkgLogger, de.chain, groupSelectionResult),
 		dkgResult,
 	)

@@ -68,7 +68,10 @@ type DistributedKeyGenerationChain interface {
 
 	// CalculateDKGResultHash calculates 256-bit hash of DKG result in standard
 	// specific for the chain. Operation is performed off-chain.
-	CalculateDKGResultHash(result *dkg.Result) (dkg.ResultHash, error)
+	CalculateDKGResultHash(
+		startBlock uint64,
+		result *dkg.Result,
+	) (dkg.ResultHash, error)
 }
 
 // DKGStartedEvent represents a DKG start event.

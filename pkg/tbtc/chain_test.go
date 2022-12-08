@@ -179,6 +179,7 @@ func (lc *localChain) GetDKGState() (DKGState, error) {
 // CalculateDKGResultHash calculates 256-bit hash of DKG result using SHA3-256
 // hashing algorithm.
 func (lc *localChain) CalculateDKGResultHash(
+	startBlock uint64,
 	result *dkg.Result,
 ) (dkg.ResultHash, error) {
 	if result == nil {
