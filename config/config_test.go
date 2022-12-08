@@ -142,8 +142,8 @@ func TestReadConfigFromFile(t *testing.T) {
 			readValueFunc: func(c *Config) interface{} { return c.ClientInfo.EthereumMetricsTick },
 			expectedValue: 87 * time.Second,
 		},
-		"Tbtc.Maintainer.BitcoinDifficulty": {
-			readValueFunc: func(c *Config) interface{} { return c.Tbtc.Maintainer.BitcoinDifficulty },
+		"Maintainer.BitcoinDifficulty": {
+			readValueFunc: func(c *Config) interface{} { return c.Maintainer.BitcoinDifficulty },
 			expectedValue: true,
 		},
 	}

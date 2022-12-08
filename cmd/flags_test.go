@@ -189,8 +189,8 @@ var cmdFlagsTests = map[string]struct {
 		expectedValueFromFlag: 101,
 		defaultValue:          runtime.GOMAXPROCS(0),
 	},
-	"tbtc.maintainer.bitcoinDifficulty": {
-		readValueFunc:         func(c *config.Config) interface{} { return c.Tbtc.Maintainer.BitcoinDifficulty },
+	"maintainer.bitcoinDifficulty": {
+		readValueFunc:         func(c *config.Config) interface{} { return c.Maintainer.BitcoinDifficulty },
 		flagName:              "--bitcoinDifficulty",
 		flagValue:             "", // don't provide any value
 		expectedValueFromFlag: true,
@@ -345,8 +345,8 @@ func TestFlags_Mixed(t *testing.T) {
 			expectedValue: "/my/secure/location",
 		},
 		// Properties not defined in the config file, but set with flags.
-		"tbtc.maintainer.bitcoinDifficulty": {
-			readValueFunc: func(c *config.Config) interface{} { return c.Tbtc.Maintainer.BitcoinDifficulty },
+		"maintainer.bitcoinDifficulty": {
+			readValueFunc: func(c *config.Config) interface{} { return c.Maintainer.BitcoinDifficulty },
 			expectedValue: true,
 		},
 	}

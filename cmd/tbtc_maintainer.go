@@ -5,40 +5,40 @@ import (
 	"fmt"
 
 	"github.com/keep-network/keep-core/config"
-	"github.com/keep-network/keep-core/pkg/tbtc/maintainer"
+	"github.com/keep-network/keep-core/pkg/maintainer"
 	"github.com/spf13/cobra"
 )
 
-// TbtcMaintainerCommand contains the definition of the tBTC maintainer
-// command-line subcommand.
-var TbtcMaintainerCommand = &cobra.Command{
+// MaintainerCommand contains the definition of the maintainer command-line
+// subcommand.
+var MaintainerCommand = &cobra.Command{
 	Use:   "maintainer",
-	Short: `(experimental) Starts tBTC maintainers`,
-	Long:  `(experimental) The maintainer command starts tBTC maintainers`,
+	Short: `(experimental) Starts maintainers`,
+	Long:  `(experimental) The maintainer command starts maintainers`,
 	PreRun: func(cmd *cobra.Command, args []string) {
 		if err := clientConfig.ReadConfig(
 			configFilePath,
 			cmd.Flags(),
-			config.TbtcMaintainerCategories...,
+			config.MaintainerCategories...,
 		); err != nil {
 			logger.Fatalf("error reading config: %v", err)
 		}
 	},
-	RunE: tbtcMaintainer,
+	RunE: maintainers,
 }
 
 func init() {
 	initFlags(
-		TbtcMaintainerCommand,
+		MaintainerCommand,
 		&configFilePath,
 		clientConfig,
-		config.TbtcMaintainerCategories...,
+		config.MaintainerCategories...,
 	)
 }
 
-// tbtcMaintainer initializes maintainer tasks specified by flags passed to the
+// maintainers initializes maintainer tasks specified by flags passed to the
 // maintainer command.
-func tbtcMaintainer(cmd *cobra.Command, args []string) error {
+func maintainers(cmd *cobra.Command, args []string) error {
 	ctx := context.Background()
 
 	// TODO: Add connection to the Bitcoin electrum chain:
@@ -53,7 +53,7 @@ func tbtcMaintainer(cmd *cobra.Command, args []string) error {
 	// 	return fmt.Errorf("could not connect to Tbtc chain: [%v]", err)
 	// }
 
-	maintainer.Initialize(ctx, clientConfig.Tbtc.Maintainer, nil, nil)
+	maintainer.Initialize(ctx, clientConfig.Maintainer, nil, nil)
 
 	<-ctx.Done()
 	return fmt.Errorf("unexpected context cancellation")
