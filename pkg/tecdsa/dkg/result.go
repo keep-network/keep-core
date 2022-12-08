@@ -42,10 +42,10 @@ func (r *Result) GroupPublicKeyBytes() ([]byte, error) {
 func (r *Result) MisbehavedMembersIndexes() []group.MemberIndex {
 	// Merge inactive and disqualified member indexes into 'misbehaved' set.
 	misbehaving := make(map[group.MemberIndex]bool)
-	for _, inactiveMemberIndex := range r.Group.InactiveMemberIDs() {
+	for _, inactiveMemberIndex := range r.Group.InactiveMemberIndexes() {
 		misbehaving[inactiveMemberIndex] = true
 	}
-	for _, disqualifiedMemberIndex := range r.Group.DisqualifiedMemberIDs() {
+	for _, disqualifiedMemberIndex := range r.Group.DisqualifiedMemberIndexes() {
 		misbehaving[disqualifiedMemberIndex] = true
 	}
 
