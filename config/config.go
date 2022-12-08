@@ -14,6 +14,7 @@ import (
 	"golang.org/x/term"
 
 	commonEthereum "github.com/keep-network/keep-common/pkg/chain/ethereum"
+	"github.com/keep-network/keep-core/pkg/bitcoin/electrum"
 	"github.com/keep-network/keep-core/pkg/clientinfo"
 	"github.com/keep-network/keep-core/pkg/net/libp2p"
 	"github.com/keep-network/keep-core/pkg/storage"
@@ -35,6 +36,7 @@ const (
 // Config is the top level config structure.
 type Config struct {
 	Ethereum   commonEthereum.Config
+	Bitcoin    electrum.BitcoinConfig
 	LibP2P     libp2p.Config `mapstructure:"network"`
 	Storage    storage.Config
 	ClientInfo clientinfo.Config
@@ -166,6 +168,12 @@ func validateConfig(config *Config, categories ...Category) error {
 			if config.Ethereum.Account.KeyFile == "" {
 				result = multierror.Append(result, fmt.Errorf(
 					"missing value for ethereum.keyFile; see ethereum section in configuration",
+				))
+			}
+		case BitcoinElectrum:
+			if config.Bitcoin.Electrum.URL == "" {
+				result = multierror.Append(result, fmt.Errorf(
+					"missing value for bitcoin.electrum.url; see bitcoin electrum section in configuration",
 				))
 			}
 		case Network:

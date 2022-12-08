@@ -15,7 +15,7 @@ import (
 type Signature struct {
 	R          *big.Int
 	S          *big.Int
-	RecoveryID int
+	RecoveryID int8
 }
 
 // NewSignature constructs a new instance of the tECDSA signature based on
@@ -30,7 +30,7 @@ func NewSignature(data *common.SignatureData) *Signature {
 	return &Signature{
 		R:          new(big.Int).SetBytes(data.GetR()),
 		S:          new(big.Int).SetBytes(data.GetS()),
-		RecoveryID: recoveryInt,
+		RecoveryID: int8(recoveryInt),
 	}
 }
 
@@ -43,4 +43,37 @@ func (s *Signature) String() string {
 		s.S,
 		s.RecoveryID,
 	)
+}
+
+// Equals determines the equality of two signatures.
+func (s *Signature) Equals(other *Signature) bool {
+	if s == nil || other == nil {
+		return s == other
+	}
+
+	if s.R == nil || other.R == nil {
+		if s.R != other.R {
+			return false
+		}
+	} else {
+		if s.R.Cmp(other.R) != 0 {
+			return false
+		}
+	}
+
+	if s.S == nil || other.S == nil {
+		if s.S != other.S {
+			return false
+		}
+	} else {
+		if s.S.Cmp(other.S) != 0 {
+			return false
+		}
+	}
+
+	if s.RecoveryID != other.RecoveryID {
+		return false
+	}
+
+	return true
 }

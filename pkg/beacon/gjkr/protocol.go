@@ -34,7 +34,7 @@ func (em *EphemeralKeyPairGeneratingMember) GenerateEphemeralKeyPair() (
 	ephemeralKeys := make(map[group.MemberIndex]*ephemeral.PublicKey)
 
 	// Calculate ephemeral key pair for every other group member
-	for _, member := range em.group.MemberIDs() {
+	for _, member := range em.group.MemberIndexes() {
 		if member == em.ID {
 			// don’t actually generate a key with ourselves
 			continue
@@ -131,7 +131,7 @@ func (sm *SymmetricKeyGeneratingMember) GenerateSymmetricKeys(
 func (sm *SymmetricKeyGeneratingMember) isValidEphemeralPublicKeyMessage(
 	message *EphemeralPublicKeyMessage,
 ) bool {
-	for _, memberID := range sm.group.MemberIDs() {
+	for _, memberID := range sm.group.MemberIndexes() {
 		if memberID == message.senderID {
 			// Message contains ephemeral public keys only for other group members
 			continue
@@ -189,7 +189,7 @@ func (cm *CommittingMember) CalculateMembersSharesAndCommitments() (
 	// Calculate shares for other group members by evaluating polynomials
 	// defined by coefficients `a_i` and `b_i`
 	var sharesMessage = newPeerSharesMessage(cm.ID, cm.sessionID)
-	for _, receiverID := range cm.group.MemberIDs() {
+	for _, receiverID := range cm.group.MemberIndexes() {
 		// s_j = f_(j) mod q
 		memberShareS := cm.evaluateMemberShare(receiverID, coefficientsA)
 		// t_j = g_(j) mod q
@@ -483,7 +483,7 @@ func (cvm *CommitmentsVerifyingMember) isValidMemberCommitmentsMessage(
 func (cvm *CommitmentsVerifyingMember) isValidPeerSharesMessage(
 	message *PeerSharesMessage,
 ) bool {
-	for _, memberID := range cvm.group.OperatingMemberIDs() {
+	for _, memberID := range cvm.group.OperatingMemberIndexes() {
 		if memberID == message.senderID {
 			// Message contains shares only for other group members.
 			continue
@@ -1241,7 +1241,7 @@ func (rm *RevealingMember) membersForReconstruction() []group.MemberIndex {
 
 	// From disqualified members list filter those
 	// whose shares need to be reconstructed.
-	for _, disqualifiedMemberID := range rm.group.DisqualifiedMemberIDs() {
+	for _, disqualifiedMemberID := range rm.group.DisqualifiedMemberIndexes() {
 		if needsReconstruction(disqualifiedMemberID) {
 			members = append(members, disqualifiedMemberID)
 		}
@@ -1249,7 +1249,7 @@ func (rm *RevealingMember) membersForReconstruction() []group.MemberIndex {
 
 	// From inactive members list filter those
 	// whose shares need to be reconstructed.
-	for _, inactiveMemberID := range rm.group.InactiveMemberIDs() {
+	for _, inactiveMemberID := range rm.group.InactiveMemberIndexes() {
 		if needsReconstruction(inactiveMemberID) {
 			members = append(members, inactiveMemberID)
 		}
@@ -1747,7 +1747,7 @@ func (cm *CombiningMember) ComputeGroupPublicKeyShares() {
 		groupPublicKeyShares := make(map[group.MemberIndex]*bn256.G2)
 
 		// Calculate group public key shares for all other operating members.
-		for _, operatingMemberID := range cm.group.OperatingMemberIDs() {
+		for _, operatingMemberID := range cm.group.OperatingMemberIndexes() {
 			if operatingMemberID == cm.ID {
 				continue
 			}

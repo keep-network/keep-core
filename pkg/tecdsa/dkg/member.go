@@ -90,7 +90,7 @@ func (m *member) initializeEphemeralKeysGeneration() *ephemeralKeyPairGenerating
 
 // ephemeralKeyPairGeneratingMember represents one member in a distributed key
 // generating group performing ephemeral key pair generation. It has a full list
-// of `memberIDs` that belong to its threshold group.
+// of `memberIndexes` that belong to its threshold group.
 type ephemeralKeyPairGeneratingMember struct {
 	*member
 
@@ -121,19 +121,6 @@ type symmetricKeyGeneratingMember struct {
 	symmetricKeys map[group.MemberIndex]ephemeral.SymmetricKey
 }
 
-// markInactiveMembers takes all messages from the previous DKG protocol
-// execution phase and marks all member who did not send a message as IA.
-func (skgm *symmetricKeyGeneratingMember) markInactiveMembers(
-	ephemeralPubKeyMessages []*ephemeralPublicKeyMessage,
-) {
-	filter := skgm.inactiveMemberFilter()
-	for _, message := range ephemeralPubKeyMessages {
-		filter.MarkMemberAsActive(message.senderID)
-	}
-
-	filter.FlushInactiveMembers()
-}
-
 // initializeTssRoundOne returns a member to perform next protocol operations.
 func (skgm *symmetricKeyGeneratingMember) initializeTssRoundOne() (
 	*tssRoundOneMember,
@@ -144,7 +131,7 @@ func (skgm *symmetricKeyGeneratingMember) initializeTssRoundOne() (
 	// beginning of the protocol.
 	tssPartyID, groupTssPartiesIDs := common.GenerateTssPartiesIDs(
 		skgm.id,
-		skgm.group.OperatingMemberIDs(),
+		skgm.group.OperatingMemberIndexes(),
 		skgm.identityConverter,
 	)
 
@@ -205,19 +192,6 @@ type tssRoundTwoMember struct {
 	*tssRoundOneMember
 }
 
-// markInactiveMembers takes all messages from the previous DKG protocol
-// execution phase and marks all member who did not send a message as inactive.
-func (trtm *tssRoundTwoMember) markInactiveMembers(
-	tssRoundOneMessages []*tssRoundOneMessage,
-) {
-	filter := trtm.inactiveMemberFilter()
-	for _, message := range tssRoundOneMessages {
-		filter.MarkMemberAsActive(message.senderID)
-	}
-
-	filter.FlushInactiveMembers()
-}
-
 // initializeTssRoundThree returns a member to perform next protocol operations.
 func (trtm *tssRoundTwoMember) initializeTssRoundThree() *tssRoundThreeMember {
 	return &tssRoundThreeMember{
@@ -229,19 +203,6 @@ func (trtm *tssRoundTwoMember) initializeTssRoundThree() *tssRoundThreeMember {
 // group performing the third round of the TSS keygen.
 type tssRoundThreeMember struct {
 	*tssRoundTwoMember
-}
-
-// markInactiveMembers takes all messages from the previous DKG protocol
-// execution phase and marks all member who did not send a message as IA.
-func (trtm *tssRoundThreeMember) markInactiveMembers(
-	tssRoundTwoMessages []*tssRoundTwoMessage,
-) {
-	filter := trtm.inactiveMemberFilter()
-	for _, message := range tssRoundTwoMessages {
-		filter.MarkMemberAsActive(message.senderID)
-	}
-
-	filter.FlushInactiveMembers()
 }
 
 // initializeFinalization returns a member to perform next protocol operations.
@@ -260,51 +221,12 @@ type finalizingMember struct {
 	tssResult keygen.LocalPartySaveData
 }
 
-// markInactiveMembers takes all messages from the previous DKG protocol
-// execution phase and marks all member who did not send a message as IA.
-func (fm *finalizingMember) markInactiveMembers(
-	tssRoundThreeMessages []*tssRoundThreeMessage,
-) {
-	filter := fm.inactiveMemberFilter()
-	for _, message := range tssRoundThreeMessages {
-		filter.MarkMemberAsActive(message.senderID)
-	}
-
-	filter.FlushInactiveMembers()
-}
-
 // Result is the successful computation of the distributed key generation process.
 func (fm *finalizingMember) Result() *Result {
 	return &Result{
 		Group:           fm.group,
 		PrivateKeyShare: tecdsa.NewPrivateKeyShare(fm.tssResult),
 	}
-}
-
-// initializeConfirmation returns a member to perform next protocol operations.
-func (fm *finalizingMember) initializeConfirmation() *confirmingMember {
-	return &confirmingMember{
-		finalizingMember: fm,
-	}
-}
-
-// confirmingMember represents one member of the given group confirming a
-// successful course of the distributed key generation process.
-type confirmingMember struct {
-	*finalizingMember
-}
-
-// markInactiveMembers takes all messages from the previous DKG protocol
-// execution phase and marks all member who did not send a message as IA.
-func (cm *confirmingMember) markInactiveMembers(
-	tssFinalizationMessages []*tssFinalizationMessage,
-) {
-	filter := cm.inactiveMemberFilter()
-	for _, message := range tssFinalizationMessages {
-		filter.MarkMemberAsActive(message.senderID)
-	}
-
-	filter.FlushInactiveMembers()
 }
 
 // signingMember represents a group member sharing their preferred DKG result hash

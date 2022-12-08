@@ -20,6 +20,7 @@ import (
 	chainEthereum "github.com/keep-network/keep-core/pkg/chain/ethereum"
 	ethereumBeacon "github.com/keep-network/keep-core/pkg/chain/ethereum/beacon/gen"
 	ethereumEcdsa "github.com/keep-network/keep-core/pkg/chain/ethereum/ecdsa/gen"
+	ethereumTbtc "github.com/keep-network/keep-core/pkg/chain/ethereum/tbtc/gen"
 	ethereumThreshold "github.com/keep-network/keep-core/pkg/chain/ethereum/threshold/gen"
 )
 
@@ -78,6 +79,13 @@ var cmdFlagsTests = map[string]struct {
 		flagValue:             "1.25 ether",
 		expectedValueFromFlag: big.NewInt(1250000000000000000),
 		defaultValue:          big.NewInt(500000000000000000),
+	},
+	"bitcoin.electrum.url": {
+		readValueFunc:         func(c *config.Config) interface{} { return c.Bitcoin.Electrum.URL },
+		flagName:              "--bitcoin.electrum.url",
+		flagValue:             "url.to.electrum:18332",
+		expectedValueFromFlag: "url.to.electrum:18332",
+		defaultValue:          "",
 	},
 	"network.bootstrap": {
 		readValueFunc:         func(c *config.Config) interface{} { return c.LibP2P.Bootstrap },
@@ -182,6 +190,13 @@ var cmdFlagsTests = map[string]struct {
 		expectedValueFromFlag: 101,
 		defaultValue:          runtime.GOMAXPROCS(0),
 	},
+	"tbtc.maintainer.bitcoinDifficulty": {
+		readValueFunc:         func(c *config.Config) interface{} { return c.Tbtc.Maintainer.BitcoinDifficulty },
+		flagName:              "--bitcoinDifficulty",
+		flagValue:             "", // don't provide any value
+		expectedValueFromFlag: true,
+		defaultValue:          false,
+	},
 	"developer.randomBeaconAddress": {
 		readValueFunc: func(c *config.Config) interface{} {
 			address, _ := c.Ethereum.ContractAddress(chainEthereum.RandomBeaconContractName)
@@ -210,9 +225,7 @@ var cmdFlagsTests = map[string]struct {
 		flagName:              "--developer.bridgeAddress",
 		flagValue:             "0xd21DE06574811450E722a33D8093558E8c04eacc",
 		expectedValueFromFlag: common.HexToAddress("0xd21DE06574811450E722a33D8093558E8c04eacc"),
-		// FIXME: Commented out temporarily for mainnet build.
-		// defaultValue: common.HexToAddress(ethereumTbtc.BridgeAddress),
-		defaultValue: common.HexToAddress("0x0000000000000000000000000000000000000000"),
+		defaultValue:          common.HexToAddress(ethereumTbtc.BridgeAddress),
 	},
 	"developer.tokenStakingAddress": {
 		readValueFunc: func(c *config.Config) interface{} {
@@ -260,6 +273,7 @@ func TestFlags_ReadConfigFromFlagsWithDefaults(t *testing.T) {
 	args := []string{
 		cmdFlagsTests["ethereum.url"].flagName, cmdFlagsTests["ethereum.url"].flagValue,
 		cmdFlagsTests["ethereum.keyFile"].flagName, cmdFlagsTests["ethereum.keyFile"].flagValue,
+		cmdFlagsTests["bitcoin.electrum.url"].flagName, cmdFlagsTests["bitcoin.electrum.url"].flagValue,
 		cmdFlagsTests["storage.dir"].flagName, cmdFlagsTests["storage.dir"].flagValue,
 	}
 	testCommand.SetArgs(args)
@@ -289,7 +303,9 @@ func TestFlags_Mixed(t *testing.T) {
 		"--config", "../test/config_flags.toml",
 		"--ethereum.url", "https://api.url.com/123eth",
 		"--ethereum.keyFile", "./keyfile-path/from/flag",
+		"--bitcoin.electrum.url", "url.to.electrum:18332",
 		"--network.port", "7469",
+		"--bitcoinDifficulty",
 	}
 	testCommand.SetArgs(args)
 
@@ -309,6 +325,11 @@ func TestFlags_Mixed(t *testing.T) {
 			readValueFunc: func(c *config.Config) interface{} { return c.Ethereum.Account.KeyFile },
 			expectedValue: "./keyfile-path/from/flag",
 		},
+		// Properties provided in the config file and overwritten by the flags.
+		"bitcoin.electrum.url": {
+			readValueFunc: func(c *config.Config) interface{} { return c.Bitcoin.Electrum.URL },
+			expectedValue: "url.to.electrum:18332",
+		},
 		"network.port": {
 			readValueFunc: func(c *config.Config) interface{} { return c.LibP2P.Port },
 			expectedValue: 7469,
@@ -321,6 +342,11 @@ func TestFlags_Mixed(t *testing.T) {
 		"storage.dir": {
 			readValueFunc: func(c *config.Config) interface{} { return c.Storage.Dir },
 			expectedValue: "/my/secure/location",
+		},
+		// Properties not defined in the config file, but set with flags.
+		"tbtc.maintainer.bitcoinDifficulty": {
+			readValueFunc: func(c *config.Config) interface{} { return c.Tbtc.Maintainer.BitcoinDifficulty },
+			expectedValue: true,
 		},
 	}
 

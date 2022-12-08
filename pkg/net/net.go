@@ -2,6 +2,7 @@ package net
 
 import (
 	"context"
+
 	"github.com/keep-network/keep-core/pkg/internal/pb"
 	"github.com/keep-network/keep-core/pkg/operator"
 )
@@ -14,7 +15,7 @@ const (
 	// that retransmit the message with a constant frequency.
 	StandardRetransmissionStrategy RetransmissionStrategy = iota
 	// BackoffRetransmissionStrategy is a retransmission strategy that
-	// retransmit the message with an exponentially increasing delay between
+	// retransmits the message with an exponentially increasing delay between
 	// subsequent retransmissions.
 	BackoffRetransmissionStrategy
 )
@@ -109,13 +110,13 @@ type BroadcastChannel interface {
 	// conform to the marshalling interface. Message will be periodically
 	// retransmitted by the channel for the lifetime of the provided context
 	// according to the default StandardRetransmissionStrategy. Retransmission
-	// strategy can be set through the `strategy` vararg. If the vararg is
-	// given more than one value, the first value is used as the valid
-	// strategy.
+	// strategy can be set through the `retransmissionStrategy` vararg. If the
+	// vararg is given more than one value, the first value is used as the
+	// valid strategy.
 	Send(
 		ctx context.Context,
 		message TaggedMarshaler,
-		strategy ...RetransmissionStrategy,
+		retransmissionStrategy ...RetransmissionStrategy,
 	) error
 	// Recv installs a message handler that will receive messages from the
 	// channel for the entire lifetime of the provided context.
