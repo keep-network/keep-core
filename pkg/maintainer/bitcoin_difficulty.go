@@ -238,7 +238,7 @@ func (bdm *BitcoinDifficultyMaintainer) proveNextEpoch() error {
 		}
 
 		logger.Infof(
-			"Successfully submitted block headers [%d:%d] for epoch %d to "+
+			"successfully submitted block headers [%d:%d] for epoch %d to "+
 				"the Bitcoin difficulty chain",
 			firstBlockHeaderHeight,
 			lastBlockHeaderHeight,
@@ -246,14 +246,14 @@ func (bdm *BitcoinDifficultyMaintainer) proveNextEpoch() error {
 		)
 	} else if currentBlockNumber >= newEpochHeight {
 		logger.Infof(
-			"The Bitcoin difficulty chain has to be synced with the "+
+			"the Bitcoin difficulty chain has to be synced with the "+
 				"Bitcoin blockchain; waiting for [%d] new blocks to "+
 				"be mined to form a headers chain for retarget",
 			lastBlockHeaderHeight-currentBlockNumber,
 		)
 	} else {
 		logger.Infof(
-			"The Bitcoin difficulty chain is up-to-date with the Bitcoin " +
+			"the Bitcoin difficulty chain is up-to-date with the Bitcoin " +
 				"blockchain",
 		)
 	}
