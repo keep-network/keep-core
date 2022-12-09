@@ -2,12 +2,12 @@ package maintainer
 
 import (
 	"context"
-	"fmt"
 	"reflect"
 	"testing"
 	"time"
 
 	"github.com/keep-network/keep-core/pkg/bitcoin"
+	"github.com/keep-network/keep-core/pkg/internal/testutils"
 )
 
 func TestVerifySubmissionEligibility(t *testing.T) {
@@ -21,10 +21,7 @@ func TestVerifySubmissionEligibility(t *testing.T) {
 			ready:                 false,
 			authorizationRequired: false,
 			operatorAuthorized:    false,
-			expectedError: fmt.Errorf(
-				"genesis has not been performed in the Bitcoin difficulty " +
-					"chain",
-			),
+			expectedError:         errNoGenesis,
 		},
 		"authorization not required": {
 			ready:                 true,
@@ -36,10 +33,7 @@ func TestVerifySubmissionEligibility(t *testing.T) {
 			ready:                 true,
 			authorizationRequired: true,
 			operatorAuthorized:    false,
-			expectedError: fmt.Errorf(
-				"bitcoin difficulty maintainer has not been authorized to " +
-					"submit block headers",
-			),
+			expectedError:         errNotAuthorized,
 		},
 		"operator authorized": {
 			ready:                 true,
@@ -69,13 +63,11 @@ func TestVerifySubmissionEligibility(t *testing.T) {
 			}
 
 			err := bitcoinDifficultyMaintainer.verifySubmissionEligibility()
-			if !reflect.DeepEqual(test.expectedError, err) {
-				t.Errorf(
-					"unexpected error\nexpected: %v\nactual:   %v\n",
-					test.expectedError,
-					err,
-				)
-			}
+			testutils.AssertAnyErrorInChainMatchesTarget(
+				t,
+				test.expectedError,
+				err,
+			)
 		})
 	}
 }
@@ -256,17 +248,7 @@ func TestProveEpochs_ErrorVerifyingSubmissionEligibility(t *testing.T) {
 	}
 
 	err := bitcoinDifficultyMaintainer.proveEpochs(ctx)
-	expectedError := fmt.Errorf(
-		"cannot proceed with proving Bitcoin blockchain epochs [bitcoin " +
-			"difficulty maintainer has not been authorized to submit block headers]",
-	)
-	if !reflect.DeepEqual(expectedError, err) {
-		t.Errorf(
-			"unexpected error\nexpected: %v\nactual:   %v\n",
-			expectedError,
-			err,
-		)
-	}
+	testutils.AssertAnyErrorInChainMatchesTarget(t, errNotAuthorized, err)
 }
 
 func TestProveEpochs_ErrorProvingSingleEpoch(t *testing.T) {
@@ -294,17 +276,7 @@ func TestProveEpochs_ErrorProvingSingleEpoch(t *testing.T) {
 	}
 
 	err := bitcoinDifficultyMaintainer.proveEpochs(ctx)
-	expectedError := fmt.Errorf(
-		"cannot prove Bitcoin blockchain epoch [failed to get current block " +
-			"number [blockchain does not contain any blocks]]",
-	)
-	if !reflect.DeepEqual(expectedError, err) {
-		t.Errorf(
-			"unexpected error\nexpected: %v\nactual:   %v\n",
-			expectedError,
-			err,
-		)
-	}
+	testutils.AssertAnyErrorInChainMatchesTarget(t, errNoBlocksSet, err)
 }
 
 func TestProveEpochs_Successful(t *testing.T) {
@@ -360,16 +332,9 @@ func TestProveEpochs_Successful(t *testing.T) {
 		time.Sleep(time.Second)
 		cancelCtx()
 	}()
-	err := bitcoinDifficultyMaintainer.proveEpochs(ctx)
 
-	expectedError := fmt.Errorf("context canceled")
-	if !reflect.DeepEqual(expectedError, err) {
-		t.Errorf(
-			"unexpected error\nexpected: %v\nactual:   %v\n",
-			expectedError,
-			err,
-		)
-	}
+	err := bitcoinDifficultyMaintainer.proveEpochs(ctx)
+	testutils.AssertAnyErrorInChainMatchesTarget(t, context.Canceled, err)
 }
 
 func TestBitcoinDifficultyMaintainer_Integration(t *testing.T) {

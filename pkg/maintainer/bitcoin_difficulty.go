@@ -26,6 +26,16 @@ const (
 
 var logger = log.Logger("keep-maintainer-bitcoin-difficulty")
 
+var (
+	errNotAuthorized = fmt.Errorf(
+		"bitcoin difficulty maintainer has not been authorized to submit " +
+			"block headers",
+	)
+	errNoGenesis = fmt.Errorf(
+		"genesis has not been performed in the Bitcoin difficulty chain",
+	)
+)
+
 func initializeBitcoinDifficultyMaintainer(
 	ctx context.Context,
 	btcChain bitcoin.Chain,
@@ -67,7 +77,7 @@ func (bdm *BitcoinDifficultyMaintainer) startControlLoop(ctx context.Context) {
 		if err != nil {
 			logger.Errorf(
 				"restarting Bitcoin difficulty maintainer due to error while "+
-					"proving Bitcoin blockchain epochs [%v]",
+					"proving Bitcoin blockchain epochs: [%v]",
 				err,
 			)
 		}
@@ -84,14 +94,17 @@ func (bdm *BitcoinDifficultyMaintainer) startControlLoop(ctx context.Context) {
 func (bdm *BitcoinDifficultyMaintainer) proveEpochs(ctx context.Context) error {
 	if err := bdm.verifySubmissionEligibility(); err != nil {
 		return fmt.Errorf(
-			"cannot proceed with proving Bitcoin blockchain epochs [%v]",
+			"cannot proceed with proving Bitcoin blockchain epochs: [%w]",
 			err,
 		)
 	}
 
 	for {
 		if err := bdm.proveNextEpoch(); err != nil {
-			return fmt.Errorf("cannot prove Bitcoin blockchain epoch [%v]", err)
+			return fmt.Errorf(
+				"cannot prove Bitcoin blockchain epoch: [%w]",
+				err,
+			)
 		}
 
 		select {
@@ -108,22 +121,20 @@ func (bdm *BitcoinDifficultyMaintainer) verifySubmissionEligibility() error {
 	isReady, err := bdm.chain.Ready()
 	if err != nil {
 		return fmt.Errorf(
-			"cannot check whether genesis has been performed [%v]",
+			"cannot check whether genesis has been performed: [%w]",
 			err,
 		)
 	}
 
 	if !isReady {
-		return fmt.Errorf(
-			"genesis has not been performed in the Bitcoin difficulty chain",
-		)
+		return errNoGenesis
 	}
 
 	authorizationRequired, err := bdm.chain.AuthorizationRequired()
 	if err != nil {
 		return fmt.Errorf(
 			"cannot check whether authorization is required to submit "+
-				"block headers [%v]",
+				"block headers: [%w]",
 			err,
 		)
 	}
@@ -138,16 +149,13 @@ func (bdm *BitcoinDifficultyMaintainer) verifySubmissionEligibility() error {
 	if err != nil {
 		return fmt.Errorf(
 			"cannot check whether Bitcoin difficulty maintainer is authorized "+
-				"to submit block headers [%v]",
+				"to submit block headers: [%w]",
 			err,
 		)
 	}
 
 	if !isAuthorized {
-		return fmt.Errorf(
-			"bitcoin difficulty maintainer has not been authorized to submit " +
-				"block headers",
-		)
+		return errNotAuthorized
 	}
 
 	return nil
@@ -160,7 +168,7 @@ func (bdm *BitcoinDifficultyMaintainer) proveNextEpoch() error {
 	currentBlockNumber, err := bdm.btcChain.GetCurrentBlockNumber()
 	if err != nil {
 		return fmt.Errorf(
-			"failed to get current block number [%v]",
+			"failed to get current block number: [%w]",
 			err,
 		)
 	}
@@ -169,7 +177,7 @@ func (bdm *BitcoinDifficultyMaintainer) proveNextEpoch() error {
 	currentEpoch, err := bdm.chain.CurrentEpoch()
 	if err != nil {
 		return fmt.Errorf(
-			"failed to get current epoch [%v]",
+			"failed to get current epoch: [%w]",
 			err,
 		)
 	}
@@ -178,7 +186,7 @@ func (bdm *BitcoinDifficultyMaintainer) proveNextEpoch() error {
 	proofLength, err := bdm.chain.ProofLength()
 	if err != nil {
 		return fmt.Errorf(
-			"failed to get proof length [%v]",
+			"failed to get proof length: [%w]",
 			err,
 		)
 	}
@@ -214,7 +222,7 @@ func (bdm *BitcoinDifficultyMaintainer) proveNextEpoch() error {
 		)
 		if err != nil {
 			return fmt.Errorf(
-				"failed to get block headers from Bitcoin chain [%v]",
+				"failed to get block headers from Bitcoin chain: [%w]",
 				err,
 			)
 		}
@@ -222,7 +230,7 @@ func (bdm *BitcoinDifficultyMaintainer) proveNextEpoch() error {
 		if err := bdm.chain.Retarget(headers); err != nil {
 			return fmt.Errorf(
 				"failed to submit block headers from range [%d:%d] to "+
-					"the Bitcoin difficulty chain [%v]",
+					"the Bitcoin difficulty chain: [%w]",
 				firstBlockHeaderHeight,
 				lastBlockHeaderHeight,
 				err,
@@ -266,7 +274,7 @@ func (bdm *BitcoinDifficultyMaintainer) getBlockHeaders(
 		header, err := bdm.btcChain.GetBlockHeader(height)
 		if err != nil {
 			return []*bitcoin.BlockHeader{}, fmt.Errorf(
-				"failed to get block header at height %d: [%v]",
+				"failed to get block header at height %d: [%w]",
 				height,
 				err,
 			)

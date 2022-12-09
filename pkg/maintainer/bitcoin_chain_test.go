@@ -6,6 +6,8 @@ import (
 	"github.com/keep-network/keep-core/pkg/bitcoin"
 )
 
+var errNoBlocksSet = fmt.Errorf("blockchain does not contain any blocks")
+
 // localBitcoinChain represents a local Bitcoin chain.
 type localBitcoinChain struct {
 	blockHeaders map[uint]*bitcoin.BlockHeader
@@ -51,7 +53,7 @@ func (lc *localBitcoinChain) GetCurrentBlockNumber() (uint, error) {
 	}
 
 	if blockchainTip == 0 {
-		return 0, fmt.Errorf("blockchain does not contain any blocks")
+		return 0, errNoBlocksSet
 	}
 
 	return blockchainTip, nil
