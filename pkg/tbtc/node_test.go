@@ -36,7 +36,7 @@ func TestNode_GetSigningExecutor(t *testing.T) {
 	// required to make the node controlling the signer's wallet.
 	keyStorePersistence := createMockKeyStorePersistence(t, signer)
 
-	node := newNode(
+	node, err := newNode(
 		localChain,
 		localProvider,
 		keyStorePersistence,
@@ -44,6 +44,9 @@ func TestNode_GetSigningExecutor(t *testing.T) {
 		generator.StartScheduler(),
 		Config{},
 	)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	walletPublicKey := signer.wallet.publicKey
 	walletPublicKeyBytes, err := marshalPublicKey(walletPublicKey)

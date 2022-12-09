@@ -63,7 +63,18 @@ func Initialize(
 	config Config,
 	clientInfo *clientinfo.Registry,
 ) error {
-	node := newNode(chain, netProvider, keyStorePersistence, workPersistence, scheduler, config)
+	node, err := newNode(
+		chain,
+		netProvider,
+		keyStorePersistence,
+		workPersistence,
+		scheduler,
+		config,
+	)
+	if err != nil {
+		return fmt.Errorf("cannot set up TBTC node: [%v]", err)
+	}
+
 	deduplicator := newDeduplicator()
 
 	if clientInfo != nil {
@@ -78,7 +89,7 @@ func Initialize(
 		)
 	}
 
-	err := sortition.MonitorPool(
+	err = sortition.MonitorPool(
 		ctx,
 		logger,
 		chain,
@@ -121,6 +132,35 @@ func Initialize(
 			node.joinDKGIfEligible(
 				event.Seed,
 				event.BlockNumber,
+			)
+		}()
+	})
+
+	_ = chain.OnDKGResultSubmitted(func(event *DKGResultSubmittedEvent) {
+		go func() {
+			if ok := deduplicator.notifyDKGResultSubmitted(
+				event.ResultHash,
+			); !ok {
+				logger.Warnf(
+					"DKG result with hash [0x%x] and starting "+
+						"block [%v] has been already processed",
+					event.ResultHash,
+					event.BlockNumber,
+				)
+				return
+			}
+
+			logger.Infof(
+				"DKG result with hash [0x%x] submitted at block [%v]",
+				event.ResultHash,
+				event.BlockNumber,
+			)
+
+			node.validateDKG(
+				event.Seed,
+				event.BlockNumber,
+				event.Result,
+				event.ResultHash,
 			)
 		}()
 	})

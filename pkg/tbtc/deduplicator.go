@@ -1,6 +1,7 @@
 package tbtc
 
 import (
+	"encoding/hex"
 	"github.com/keep-network/keep-common/pkg/cache"
 	"math/big"
 	"time"
@@ -10,6 +11,9 @@ const (
 	// DKGSeedCachePeriod is the time period the cache maintains
 	// the DKG seed corresponding to a DKG instance.
 	DKGSeedCachePeriod = 7 * 24 * time.Hour
+	// DKGResultHashCachePeriod is the time period the cache maintains
+	// the given DKG result hash.
+	DKGResultHashCachePeriod = 7 * 24 * time.Hour
 )
 
 // deduplicator decides whether the given event should be handled by the
@@ -24,13 +28,16 @@ const (
 //
 // Those events are supported:
 // - DKG started
+// - DKG result submitted
 type deduplicator struct {
-	dkgSeedCache *cache.TimeCache
+	dkgSeedCache       *cache.TimeCache
+	dkgResultHashCache *cache.TimeCache
 }
 
 func newDeduplicator() *deduplicator {
 	return &deduplicator{
-		dkgSeedCache: cache.NewTimeCache(DKGSeedCachePeriod),
+		dkgSeedCache:       cache.NewTimeCache(DKGSeedCachePeriod),
+		dkgResultHashCache: cache.NewTimeCache(DKGResultHashCachePeriod),
 	}
 }
 
@@ -53,5 +60,27 @@ func (d *deduplicator) notifyDKGStarted(
 
 	// Otherwise, the DKG seed is a duplicate and the client should not proceed
 	// with the execution.
+	return false
+}
+
+// notifyDKGResultSubmitted notifies the client wants to start some actions
+// upon the DKG result submission. It returns boolean indicating whether the
+// client should proceed with the actions or ignore the event as a duplicate.
+func (d *deduplicator) notifyDKGResultSubmitted(
+	newDKGResultHash [32]byte,
+) bool {
+	d.dkgResultHashCache.Sweep()
+
+	// The cache key is the hexadecimal representation of the hash.
+	cacheKey := hex.EncodeToString(newDKGResultHash[:])
+	// If the key is not in the cache, that means the result was not handled
+	// yet and the client should proceed with the execution.
+	if !d.dkgResultHashCache.Has(cacheKey) {
+		d.dkgResultHashCache.Add(cacheKey)
+		return true
+	}
+
+	// Otherwise, the DKG result is a duplicate and the client should not
+	// proceed with the execution.
 	return false
 }

@@ -5,6 +5,7 @@ import (
 	"crypto/ecdsa"
 	"encoding/hex"
 	"fmt"
+	"github.com/keep-network/keep-core/pkg/chain"
 	"math/big"
 	"sync"
 
@@ -59,7 +60,7 @@ func newNode(
 	workPersistence persistence.BasicHandle,
 	scheduler *generator.Scheduler,
 	config Config,
-) *node {
+) (*node, error) {
 	walletRegistry := newWalletRegistry(keyStorePersistance)
 
 	latch := generator.NewProtocolLatch()
@@ -73,9 +74,16 @@ func newNode(
 		signingExecutors: make(map[string]*signingExecutor),
 	}
 
+	operatorID, operatorAddress, err := node.operator()
+	if err != nil {
+		return nil, fmt.Errorf("cannot get node operator data: [%v]", err)
+	}
+
 	// TODO: This chicken and egg problem should be solved when
 	// waitForBlockHeight becomes a part of BlockHeightWaiter interface.
 	node.dkgExecutor = newDkgExecutor(
+		operatorID,
+		operatorAddress,
 		chain,
 		netProvider,
 		walletRegistry,
@@ -86,7 +94,27 @@ func newNode(
 		node.waitForBlockHeight,
 	)
 
-	return node
+	return node, nil
+}
+
+// operatorAddress returns the node's operator data.
+func (n *node) operator() (chain.OperatorID, chain.Address, error) {
+	_, operatorPublicKey, err := n.chain.OperatorKeyPair()
+	if err != nil {
+		return 0, "", fmt.Errorf("failed to get operator public key: [%v]", err)
+	}
+
+	operatorAddress, err := n.chain.Signing().PublicKeyToAddress(operatorPublicKey)
+	if err != nil {
+		return 0, "", fmt.Errorf("failed to get operator address: [%v]", err)
+	}
+
+	operatorID, err := n.chain.GetOperatorID(operatorAddress)
+	if err != nil {
+		return 0, "", fmt.Errorf("failed to get operator ID: [%v]", err)
+	}
+
+	return operatorID, operatorAddress, nil
 }
 
 // joinDKGIfEligible takes a seed value and undergoes the process of the
@@ -96,6 +124,20 @@ func newNode(
 // completes the on-chain operation.
 func (n *node) joinDKGIfEligible(seed *big.Int, startBlock uint64) {
 	n.dkgExecutor.executeDkgIfEligible(seed, startBlock)
+}
+
+// validateDKG performs the submitted DKG result validation process.
+// If the result is not valid, this function submits an on-chain result
+// challenge. If the result is valid and the given node was involved in the DKG,
+// this function schedules an on-chain approve that is submitted once the
+// challenge period elapses.
+func (n *node) validateDKG(
+	seed *big.Int,
+	submissionBlock uint64,
+	result *DKGChainResult,
+	resultHash [32]byte,
+) {
+	n.dkgExecutor.executeDkgValidation(seed, submissionBlock, result, resultHash)
 }
 
 // getSigningExecutor gets the signing executor responsible for executing

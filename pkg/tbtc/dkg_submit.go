@@ -85,6 +85,8 @@ func newDkgResultSubmitter(
 // chain. In the process, it checks if the number of signatures is above
 // the required threshold, whether the result was already submitted and waits
 // until the member is eligible for DKG result submission.
+//
+// TODO: Adjust the delays to be block-based and take the timeout into account.
 func (drs *dkgResultSubmitter) SubmitResult(
 	ctx context.Context,
 	memberIndex group.MemberIndex,

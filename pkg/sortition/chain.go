@@ -64,4 +64,7 @@ type Chain interface {
 	// Returns true if operator is a beta operator, false otherwise.
 	// Chaosnet status does not matter.
 	IsBetaOperator() (bool, error)
+
+	// GetOperatorID returns the operator ID for the given operator address.
+	GetOperatorID(operatorAddress chain.Address) (chain.OperatorID, error)
 }

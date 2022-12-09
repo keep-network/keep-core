@@ -231,3 +231,73 @@ func TestComputeDkgResultHash(t *testing.T) {
 		hex.EncodeToString(hash[:]),
 	)
 }
+
+func TestParseDkgResultValidationOutcome(t *testing.T) {
+	isValid, err := parseDkgResultValidationOutcome(
+		&struct {
+			bool
+			string
+		}{
+			true,
+			"",
+		},
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	testutils.AssertBoolsEqual(t, "validation outcome", true, isValid)
+
+	isValid, err = parseDkgResultValidationOutcome(
+		&struct {
+			bool
+			string
+		}{
+			false,
+			"",
+		},
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	testutils.AssertBoolsEqual(t, "validation outcome", false, isValid)
+
+	_, err = parseDkgResultValidationOutcome(
+		struct {
+			bool
+			string
+		}{
+			true,
+			"",
+		},
+	)
+	expectedErr := fmt.Errorf("result validation outcome is not a pointer")
+	if !reflect.DeepEqual(expectedErr, err) {
+		t.Errorf(
+			"unexpected error\n"+
+				"expected: [%v]\n"+
+				"actual:   [%v]",
+			expectedErr,
+			err,
+		)
+	}
+
+	_, err = parseDkgResultValidationOutcome(
+		&struct {
+			string
+			bool
+		}{
+			"",
+			true,
+		},
+	)
+	expectedErr = fmt.Errorf("cannot parse result validation outcome")
+	if !reflect.DeepEqual(expectedErr, err) {
+		t.Errorf(
+			"unexpected error\n"+
+				"expected: [%v]\n"+
+				"actual:   [%v]",
+			expectedErr,
+			err,
+		)
+	}
+}

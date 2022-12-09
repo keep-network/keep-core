@@ -30,12 +30,20 @@ const (
 	// given member to avoid all members submitting the same DKG result at the
 	// same time.
 	dkgResultSubmissionDelayStep = 10 * time.Second
+	// dkgResultApprovalDelayStepBlocks determines the delay step in blocks
+	// that is used to calculate the approval delay period that should be
+	// respected by the given member to avoid all members approving the same
+	// DKG result at the same time.
+	dkgResultApprovalDelayStepBlocks = 5
 )
 
 // dkgExecutor is a component responsible for the full execution of ECDSA
 // Distributed Key Generation: determining members selected to the signing
 // group, executing off-chain protocol, and publishing the result to the chain.
 type dkgExecutor struct {
+	operatorID      chain.OperatorID
+	operatorAddress chain.Address
+
 	chain          Chain
 	netProvider    net.Provider
 	walletRegistry *walletRegistry
@@ -50,6 +58,8 @@ type dkgExecutor struct {
 // newDkgExecutor creates a new instance of dkgExecutor struct. There should
 // be only one instance of dkgExecutor.
 func newDkgExecutor(
+	operatorID chain.OperatorID,
+	operatorAddress chain.Address,
 	chain Chain,
 	netProvider net.Provider,
 	walletRegistry *walletRegistry,
@@ -71,12 +81,14 @@ func newDkgExecutor(
 	)
 
 	return &dkgExecutor{
-		chain:          chain,
-		netProvider:    netProvider,
-		walletRegistry: walletRegistry,
-		protocolLatch:  protocolLatch,
-		tecdsaExecutor: tecdsaExecutor,
-		waitForBlockFn: waitForBlockFn,
+		operatorID:      operatorID,
+		operatorAddress: operatorAddress,
+		chain:           chain,
+		netProvider:     netProvider,
+		walletRegistry:  walletRegistry,
+		protocolLatch:   protocolLatch,
+		tecdsaExecutor:  tecdsaExecutor,
+		waitForBlockFn:  waitForBlockFn,
 	}
 }
 
@@ -163,20 +175,10 @@ func (de *dkgExecutor) checkEligibility(
 		)
 	}
 
-	_, operatorPublicKey, err := de.chain.OperatorKeyPair()
-	if err != nil {
-		return nil, nil, fmt.Errorf("failed to get operator public key: [%v]", err)
-	}
-
-	operatorAddress, err := de.chain.Signing().PublicKeyToAddress(operatorPublicKey)
-	if err != nil {
-		return nil, nil, fmt.Errorf("failed to get operator address: [%v]", err)
-	}
-
 	indexes := make([]uint8, 0)
 	for index, operator := range groupSelectionResult.OperatorsAddresses {
 		// See if we are amongst those chosen
-		if operator == operatorAddress {
+		if operator == de.operatorAddress {
 			// The group member index should be in range [1, groupSize] so we
 			// need to add 1.
 			indexes = append(indexes, uint8(index)+1)
@@ -530,6 +532,145 @@ func (de *dkgExecutor) submitDkgResult(
 		newDkgResultSubmitter(dkgLogger, de.chain, groupSelectionResult),
 		dkgResult,
 	)
+}
+
+// executeDkgValidation performs the submitted DKG result validation process.
+// If the result is not valid, this function submits an on-chain result
+// challenge. If the result is valid and the given node was involved in the DKG,
+// this function schedules an on-chain approve that is submitted once the
+// challenge period elapses.
+func (de *dkgExecutor) executeDkgValidation(
+	seed *big.Int,
+	submissionBlock uint64,
+	result *DKGChainResult,
+	resultHash [32]byte,
+) {
+	dkgLogger := logger.With(
+		zap.String("seed", fmt.Sprintf("0x%x", seed)),
+		zap.String("resultHash", fmt.Sprintf("0x%x", resultHash)),
+	)
+
+	isValid, err := de.chain.IsDKGResultValid(result)
+	if err != nil {
+		dkgLogger.Errorf("cannot validate DKG result: [%v]", err)
+		return
+	}
+
+	if !isValid {
+		dkgLogger.Infof("DKG result is invalid")
+
+		err = de.chain.ChallengeDKGResult(result)
+		if err != nil {
+			dkgLogger.Errorf("cannot challenge invalid DKG result: [%v]", err)
+			return
+		}
+
+		dkgLogger.Infof("challenged invalid DKG result")
+
+		return
+	}
+
+	dkgLogger.Infof("DKG result is valid")
+
+	// Determine the member indexes controlled by this node's operator.
+	memberIndexes := make([]group.MemberIndex, 0)
+	for index, operatorID := range result.Members {
+		if operatorID == de.operatorID {
+			// The group member index should be in range [1, groupSize] so we
+			// need to add 1.
+			memberIndexes = append(memberIndexes, group.MemberIndex(index+1))
+		}
+	}
+
+	if len(memberIndexes) == 0 {
+		dkgLogger.Infof("not eligible for DKG result approval")
+		return
+	}
+
+	dkgLogger.Infof("scheduling DKG result approval")
+
+	parameters, err := de.chain.DKGParameters()
+	if err != nil {
+		dkgLogger.Errorf("cannot get current DKG parameters: [%v]", err)
+		return
+	}
+
+	// The challenge period starts at the result submission block and lasts
+	// for challengePeriodBlocks.
+	challengePeriodEndBlock := submissionBlock + parameters.ChallengePeriodBlocks
+	// The approval is possible one block after the challenge period end.
+	// The result submitter has precedence for approvePrecedencePeriodBlocks.
+	approvePrecedencePeriodStartBlock := challengePeriodEndBlock + 1
+	// Everyone else can approve once the precedence period ends.
+	approvePeriodStartBlock := approvePrecedencePeriodStartBlock +
+		parameters.ApprovePrecedencePeriodBlocks
+
+	for _, currentMemberIndex := range memberIndexes {
+		go func(memberIndex group.MemberIndex) {
+			var approveBlock uint64
+
+			if memberIndex == result.SubmitterMemberIndex {
+				// The submitter can approve earlier, during the precedence
+				// period.
+				approveBlock = approvePrecedencePeriodStartBlock
+			} else {
+				// Everyone else must approve after the precedence period ends.
+				// Each member preserves a delay according to their index
+				// to avoid simultaneous approval.
+				delayBlocks := uint64(memberIndex-1) * dkgResultApprovalDelayStepBlocks
+				approveBlock = approvePeriodStartBlock + delayBlocks
+			}
+
+			dkgLogger.Infof(
+				"[member:%v] waiting for block [%v] to approve DKG result",
+				memberIndex,
+				approveBlock,
+			)
+
+			ctx, cancelCtx := context.WithCancel(context.Background())
+			defer cancelCtx()
+
+			subscription := de.chain.OnDKGResultApproved(
+				func(event *DKGResultApprovedEvent) {
+					cancelCtx()
+				},
+			)
+			defer subscription.Unsubscribe()
+
+			err := de.waitForBlockFn(ctx, approveBlock)
+			if err != nil {
+				dkgLogger.Errorf(
+					"[member:%v] error while waiting for DKG result "+
+						"approve block: [%v]",
+					memberIndex,
+					err,
+				)
+				return
+			}
+
+			// If the context got cancelled that means the result was approved
+			// by someone else.
+			if ctx.Err() != nil {
+				dkgLogger.Infof(
+					"[member:%v] DKG result approved by someone else",
+					memberIndex,
+				)
+				return
+			}
+
+			err = de.chain.ApproveDKGResult(result)
+			if err != nil {
+				dkgLogger.Errorf(
+					"[member:%v] cannot approve DKG result: [%v]",
+					memberIndex,
+					err,
+				)
+				return
+			}
+
+			dkgLogger.Errorf("[member:%v] approved DKG result", memberIndex)
+		}(currentMemberIndex)
+	}
 }
 
 // finalSigningGroup takes three parameters:

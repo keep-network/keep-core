@@ -165,7 +165,7 @@ func setupSigningExecutor(t *testing.T) *signingExecutor {
 
 	keyStorePersistence := createMockKeyStorePersistence(t, signers...)
 
-	node := newNode(
+	node, err := newNode(
 		localChain,
 		localProvider,
 		keyStorePersistence,
@@ -173,6 +173,9 @@ func setupSigningExecutor(t *testing.T) *signingExecutor {
 		generator.StartScheduler(),
 		Config{},
 	)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	executor, ok, err := node.getSigningExecutor(signers[0].wallet.publicKey)
 	if err != nil {

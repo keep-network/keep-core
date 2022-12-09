@@ -3,6 +3,7 @@ package tbtc
 import (
 	"context"
 	"fmt"
+	"github.com/keep-network/keep-core/pkg/chain"
 	"reflect"
 	"testing"
 	"time"
@@ -219,15 +220,49 @@ func TestVerifySignature_VerificationError(t *testing.T) {
 }
 
 func TestSubmitResult_MemberSubmitsResult(t *testing.T) {
-	chain := Connect(5, 4, 3)
-	dkgResultSubmitter := newDkgResultSubmitter(&testutils.MockLogger{}, chain, nil)
+	const (
+		groupSize       = 5
+		groupQuorum     = 4
+		honestThreshold = 3
+	)
+
+	localChain := Connect(groupSize, groupQuorum, honestThreshold)
+
+	err := localChain.startDKG()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	operatorID, operatorAddress, err := localChain.operator()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var operatorsIDs chain.OperatorIDs
+	var operatorsAddresses chain.Addresses
+
+	for memberIndex := uint8(1); memberIndex <= groupSize; memberIndex++ {
+		operatorsIDs = append(operatorsIDs, operatorID)
+		operatorsAddresses = append(operatorsAddresses, operatorAddress)
+	}
+
+	groupSelectionResult := &GroupSelectionResult{
+		OperatorsIDs:       operatorsIDs,
+		OperatorsAddresses: operatorsAddresses,
+	}
+
+	dkgResultSubmitter := newDkgResultSubmitter(
+		&testutils.MockLogger{},
+		localChain,
+		groupSelectionResult,
+	)
 
 	testData, err := tecdsatest.LoadPrivateKeyShareTestFixtures(1)
 	if err != nil {
 		t.Fatalf("failed to load test data: [%v]", err)
 	}
 	result := &dkg.Result{
-		Group:           group.NewGroup(32, 64),
+		Group:           group.NewGroup(groupSize-honestThreshold, groupSize),
 		PrivateKeyShare: tecdsa.NewPrivateKeyShare(testData[0]),
 	}
 
@@ -252,30 +287,64 @@ func TestSubmitResult_MemberSubmitsResult(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	expectedActiveWallet, err := result.GroupPublicKeyBytes()
+	expectedGroupPublicKey, err := result.GroupPublicKeyBytes()
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	if !reflect.DeepEqual(expectedActiveWallet, chain.activeWallet) {
+	if !reflect.DeepEqual(expectedGroupPublicKey, localChain.dkgResult.GroupPublicKey) {
 		t.Errorf(
-			"unexpected active wallet bytes \nexpected: [0x%x]\nactual:   [0x%x]\n",
-			expectedActiveWallet,
-			chain.activeWallet,
+			"unexpected group public key \nexpected: [0x%x]\nactual:   [0x%x]\n",
+			expectedGroupPublicKey,
+			localChain.dkgResult.GroupPublicKey,
 		)
 	}
 }
 
 func TestSubmitResult_MemberDoesNotSubmitResult(t *testing.T) {
-	chain := Connect(5, 4, 3)
-	dkgResultSubmitter := newDkgResultSubmitter(&testutils.MockLogger{}, chain, nil)
+	const (
+		groupSize       = 5
+		groupQuorum     = 4
+		honestThreshold = 3
+	)
+
+	localChain := Connect(groupSize, groupQuorum, honestThreshold)
+
+	err := localChain.startDKG()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	operatorID, operatorAddress, err := localChain.operator()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var operatorsIDs chain.OperatorIDs
+	var operatorsAddresses chain.Addresses
+
+	for memberIndex := uint8(1); memberIndex <= groupSize; memberIndex++ {
+		operatorsIDs = append(operatorsIDs, operatorID)
+		operatorsAddresses = append(operatorsAddresses, operatorAddress)
+	}
+
+	groupSelectionResult := &GroupSelectionResult{
+		OperatorsIDs:       operatorsIDs,
+		OperatorsAddresses: operatorsAddresses,
+	}
+
+	dkgResultSubmitter := newDkgResultSubmitter(
+		&testutils.MockLogger{},
+		localChain,
+		groupSelectionResult,
+	)
 
 	testData, err := tecdsatest.LoadPrivateKeyShareTestFixtures(1)
 	if err != nil {
 		t.Fatalf("failed to load test data: [%v]", err)
 	}
 	result := &dkg.Result{
-		Group:           group.NewGroup(32, 64),
+		Group:           group.NewGroup(groupSize-honestThreshold, groupSize),
 		PrivateKeyShare: tecdsa.NewPrivateKeyShare(testData[0]),
 	}
 	signatures := map[group.MemberIndex][]byte{
@@ -326,38 +395,72 @@ func TestSubmitResult_MemberDoesNotSubmitResult(t *testing.T) {
 		t.Fatal(secondMemberErr)
 	}
 
-	if chain.resultSubmitterIndex != firstMemberIndex {
+	if localChain.dkgResult.SubmitterMemberIndex != firstMemberIndex {
 		t.Errorf(
 			"unexpected result submitter index \nexpected: %v\nactual:   %v\n",
 			firstMemberIndex,
-			chain.resultSubmitterIndex,
+			localChain.dkgResult.SubmitterMemberIndex,
 		)
 	}
 
-	expectedActiveWallet, err := result.GroupPublicKeyBytes()
+	expectedGroupPublicKey, err := result.GroupPublicKeyBytes()
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	if !reflect.DeepEqual(expectedActiveWallet, chain.activeWallet) {
+	if !reflect.DeepEqual(expectedGroupPublicKey, localChain.dkgResult.GroupPublicKey) {
 		t.Errorf(
-			"unexpected active wallet bytes \nexpected: [0x%x]\nactual:   [0x%x]\n",
-			expectedActiveWallet,
-			chain.activeWallet,
+			"unexpected group public key \nexpected: [0x%x]\nactual:   [0x%x]\n",
+			expectedGroupPublicKey,
+			localChain.dkgResult.GroupPublicKey,
 		)
 	}
 }
 
 func TestSubmitResult_TooFewSignatures(t *testing.T) {
-	chain := Connect(5, 4, 3)
-	dkgResultSubmitter := newDkgResultSubmitter(&testutils.MockLogger{}, chain, nil)
+	const (
+		groupSize       = 5
+		groupQuorum     = 4
+		honestThreshold = 3
+	)
+
+	localChain := Connect(groupSize, groupQuorum, honestThreshold)
+
+	err := localChain.startDKG()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	operatorID, operatorAddress, err := localChain.operator()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var operatorsIDs chain.OperatorIDs
+	var operatorsAddresses chain.Addresses
+
+	for memberIndex := uint8(1); memberIndex <= groupSize; memberIndex++ {
+		operatorsIDs = append(operatorsIDs, operatorID)
+		operatorsAddresses = append(operatorsAddresses, operatorAddress)
+	}
+
+	groupSelectionResult := &GroupSelectionResult{
+		OperatorsIDs:       operatorsIDs,
+		OperatorsAddresses: operatorsAddresses,
+	}
+
+	dkgResultSubmitter := newDkgResultSubmitter(
+		&testutils.MockLogger{},
+		localChain,
+		groupSelectionResult,
+	)
 
 	testData, err := tecdsatest.LoadPrivateKeyShareTestFixtures(1)
 	if err != nil {
 		t.Fatalf("failed to load test data: [%v]", err)
 	}
 	result := &dkg.Result{
-		Group:           group.NewGroup(32, 64),
+		Group:           group.NewGroup(groupSize-honestThreshold, groupSize),
 		PrivateKeyShare: tecdsa.NewPrivateKeyShare(testData[0]),
 	}
 

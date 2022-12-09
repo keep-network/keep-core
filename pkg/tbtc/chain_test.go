@@ -1,8 +1,10 @@
 package tbtc
 
 import (
+	"encoding/binary"
 	"fmt"
 	"math/big"
+	"reflect"
 	"sync"
 
 	"github.com/keep-network/keep-core/pkg/chain"
@@ -14,32 +16,37 @@ import (
 	"golang.org/x/crypto/sha3"
 )
 
+const localChainOperatorID = chain.OperatorID(1)
+
 var errNilDKGResult = fmt.Errorf("nil DKG result")
 
 type localChain struct {
 	dkgResultSubmissionHandlersMutex sync.Mutex
 	dkgResultSubmissionHandlers      map[int]func(submission *DKGResultSubmittedEvent)
 
-	resultSubmissionMutex sync.Mutex
-	activeWallet          []byte
-	resultSubmitterIndex  group.MemberIndex
+	dkgResultApprovalHandlersMutex sync.Mutex
+	dkgResultApprovalHandlers      map[int]func(submission *DKGResultApprovedEvent)
+
+	dkgMutex       sync.Mutex
+	dkgState       DKGState
+	dkgResult      *DKGChainResult
+	dkgResultValid bool
 
 	blockCounter       chain.BlockCounter
 	chainConfig        *ChainConfig
 	operatorPrivateKey *operator.PrivateKey
+
+	operatorsIDs map[chain.Address]chain.OperatorID
 }
 
-// GetConfig returns the chain configuration.
 func (lc *localChain) GetConfig() *ChainConfig {
 	return lc.chainConfig
 }
 
-// BlockCounter returns the block counter associated with the chain.
 func (lc *localChain) BlockCounter() (chain.BlockCounter, error) {
 	return lc.blockCounter, nil
 }
 
-// Signing returns the signing associated with the chain.
 func (lc *localChain) Signing() chain.Signing {
 	return local_v1.NewSigner(lc.operatorPrivateKey)
 }
@@ -49,7 +56,7 @@ func (lc *localChain) OperatorKeyPair() (
 	*operator.PublicKey,
 	error,
 ) {
-	panic("unsupported")
+	return lc.operatorPrivateKey, &lc.operatorPrivateKey.PublicKey, nil
 }
 
 func (lc *localChain) OperatorToStakingProvider() (chain.Address, bool, error) {
@@ -100,6 +107,12 @@ func (lc *localChain) IsBetaOperator() (bool, error) {
 	panic("unsupported")
 }
 
+func (lc *localChain) GetOperatorID(
+	operatorAddress chain.Address,
+) (chain.OperatorID, error) {
+	return lc.operatorsIDs[operatorAddress], nil
+}
+
 func (lc *localChain) SelectGroup() (*GroupSelectionResult, error) {
 	panic("not implemented")
 }
@@ -110,8 +123,6 @@ func (lc *localChain) OnDKGStarted(
 	panic("unsupported")
 }
 
-// OnDKGResultSubmitted registers a callback that is invoked when an on-chain
-// notification of the DKG result submission is seen.
 func (lc *localChain) OnDKGResultSubmitted(
 	handler func(event *DKGResultSubmittedEvent),
 ) subscription.EventSubscription {
@@ -129,26 +140,58 @@ func (lc *localChain) OnDKGResultSubmitted(
 	})
 }
 
-// SubmitDKGResult submits the DKG result to the chain, along with signatures
-// over result hash from group participants supporting the result.
+func (lc *localChain) OnDKGResultApproved(
+	handler func(event *DKGResultApprovedEvent),
+) subscription.EventSubscription {
+	lc.dkgResultApprovalHandlersMutex.Lock()
+	defer lc.dkgResultApprovalHandlersMutex.Unlock()
+
+	handlerID := local_v1.GenerateHandlerID()
+	lc.dkgResultApprovalHandlers[handlerID] = handler
+
+	return subscription.NewEventSubscription(func() {
+		lc.dkgResultApprovalHandlersMutex.Lock()
+		defer lc.dkgResultApprovalHandlersMutex.Unlock()
+
+		delete(lc.dkgResultApprovalHandlers, handlerID)
+	})
+}
+
+func (lc *localChain) startDKG() error {
+	lc.dkgMutex.Lock()
+	defer lc.dkgMutex.Unlock()
+
+	if lc.dkgState != Idle {
+		return fmt.Errorf("DKG not idle")
+	}
+
+	lc.dkgState = AwaitingResult
+
+	return nil
+}
+
 func (lc *localChain) SubmitDKGResult(
 	memberIndex group.MemberIndex,
-	dkgResult *dkg.Result,
+	tecdsaDkgResult *dkg.Result,
 	signatures map[group.MemberIndex][]byte,
 	groupSelectionResult *GroupSelectionResult,
 ) error {
 	lc.dkgResultSubmissionHandlersMutex.Lock()
 	defer lc.dkgResultSubmissionHandlersMutex.Unlock()
 
-	lc.resultSubmissionMutex.Lock()
-	defer lc.resultSubmissionMutex.Unlock()
+	lc.dkgMutex.Lock()
+	defer lc.dkgMutex.Unlock()
+
+	if lc.dkgState != AwaitingResult {
+		return fmt.Errorf("not awaiting DKG result")
+	}
 
 	blockNumber, err := lc.blockCounter.CurrentBlock()
 	if err != nil {
 		return fmt.Errorf("failed to get the current block")
 	}
 
-	groupPublicKeyBytes, err := dkgResult.GroupPublicKeyBytes()
+	groupPublicKeyBytes, err := tecdsaDkgResult.GroupPublicKeyBytes()
 	if err != nil {
 		return fmt.Errorf(
 			"failed to extract group public key bytes from the result [%v]",
@@ -156,47 +199,196 @@ func (lc *localChain) SubmitDKGResult(
 		)
 	}
 
+	signingMembersIndexes := make([]group.MemberIndex, 0)
+	signaturesConcatenation := make([]byte, 0)
+	for memberIndex, signature := range signatures {
+		signingMembersIndexes = append(signingMembersIndexes, memberIndex)
+		signaturesConcatenation = append(signaturesConcatenation, signature...)
+	}
+
+	operatingMembersIndexes := tecdsaDkgResult.Group.OperatingMemberIndexes()
+	operatingOperatorsIDsBytes := make([]byte, 0)
+	for _, operatingMemberID := range operatingMembersIndexes {
+		operatorIDBytes := make([]byte, 4)
+		operatorID := groupSelectionResult.OperatorsIDs[operatingMemberID-1]
+		binary.BigEndian.PutUint32(operatorIDBytes, operatorID)
+
+		operatingOperatorsIDsBytes = append(
+			operatingOperatorsIDsBytes,
+			operatorIDBytes...,
+		)
+	}
+
+	result := &DKGChainResult{
+		SubmitterMemberIndex:     memberIndex,
+		GroupPublicKey:           groupPublicKeyBytes,
+		MisbehavedMembersIndexes: tecdsaDkgResult.MisbehavedMembersIndexes(),
+		Signatures:               signaturesConcatenation,
+		SigningMembersIndexes:    signingMembersIndexes,
+		Members:                  groupSelectionResult.OperatorsIDs,
+		MembersHash:              sha3.Sum256(operatingOperatorsIDsBytes),
+	}
+
+	resultHash := computeTestDkgResultHash(result)
+
 	for _, handler := range lc.dkgResultSubmissionHandlers {
 		handler(&DKGResultSubmittedEvent{
-			MemberIndex:         uint32(memberIndex),
-			GroupPublicKeyBytes: groupPublicKeyBytes,
-			Misbehaved:          dkgResult.MisbehavedMembersIndexes(),
-			BlockNumber:         blockNumber,
+			Seed:        nil,
+			ResultHash:  resultHash,
+			Result:      result,
+			BlockNumber: blockNumber,
 		})
 	}
 
-	lc.activeWallet = groupPublicKeyBytes
-	lc.resultSubmitterIndex = memberIndex
+	lc.dkgState = Challenge
+	lc.dkgResult = result
+	lc.dkgResultValid = true
 
 	return nil
 }
 
-// GetDKGState returns the current state of the DKG procedure.
 func (lc *localChain) GetDKGState() (DKGState, error) {
-	return AwaitingResult, nil
+	lc.dkgMutex.Lock()
+	defer lc.dkgMutex.Unlock()
+
+	return lc.dkgState, nil
 }
 
-// CalculateDKGResultHash calculates 256-bit hash of DKG result using SHA3-256
-// hashing algorithm.
 func (lc *localChain) CalculateDKGResultHash(
 	startBlock uint64,
-	result *dkg.Result,
+	tecdsaDkgResult *dkg.Result,
 ) (dkg.ResultHash, error) {
-	if result == nil {
+	if tecdsaDkgResult == nil {
 		return dkg.ResultHash{}, errNilDKGResult
 	}
 
-	encodedDKGResult := fmt.Sprint(result)
+	encodedDKGResult := fmt.Sprint(tecdsaDkgResult)
 	dkgResultHash := dkg.ResultHash(
 		sha3.Sum256([]byte(encodedDKGResult)),
 	)
 	return dkgResultHash, nil
 }
 
+func (lc *localChain) IsDKGResultValid(dkgResult *DKGChainResult) (bool, error) {
+	lc.dkgMutex.Lock()
+	defer lc.dkgMutex.Unlock()
+
+	if lc.dkgState != Challenge {
+		return false, fmt.Errorf("not in DKG result challenge period")
+	}
+
+	if !reflect.DeepEqual(dkgResult, lc.dkgResult) {
+		return false, fmt.Errorf("result does not match the submitted one")
+	}
+
+	return lc.dkgResultValid, nil
+}
+
+func (lc *localChain) invalidateDKGResult(dkgResult *DKGChainResult) error {
+	lc.dkgMutex.Lock()
+	defer lc.dkgMutex.Unlock()
+
+	if lc.dkgState != Challenge {
+		return fmt.Errorf("not in DKG result challenge period")
+	}
+
+	if !reflect.DeepEqual(dkgResult, lc.dkgResult) {
+		return fmt.Errorf("result does not match the submitted one")
+	}
+
+	lc.dkgResultValid = false
+
+	return nil
+}
+
+func (lc *localChain) ChallengeDKGResult(dkgResult *DKGChainResult) error {
+	lc.dkgMutex.Lock()
+	defer lc.dkgMutex.Unlock()
+
+	if lc.dkgState != Challenge {
+		return fmt.Errorf("not in DKG result challenge period")
+	}
+
+	if !reflect.DeepEqual(dkgResult, lc.dkgResult) {
+		return fmt.Errorf("result does not match the submitted one")
+	}
+
+	if lc.dkgResultValid {
+		return fmt.Errorf("submitted result is valid")
+	}
+
+	lc.dkgState = AwaitingResult
+	lc.dkgResult = nil
+	lc.dkgResultValid = false
+
+	return nil
+}
+
+func (lc *localChain) ApproveDKGResult(dkgResult *DKGChainResult) error {
+	lc.dkgResultApprovalHandlersMutex.Lock()
+	defer lc.dkgResultApprovalHandlersMutex.Unlock()
+
+	lc.dkgMutex.Lock()
+	defer lc.dkgMutex.Unlock()
+
+	if lc.dkgState != Challenge {
+		return fmt.Errorf("not in DKG result challenge period")
+	}
+
+	if !reflect.DeepEqual(dkgResult, lc.dkgResult) {
+		return fmt.Errorf("result does not match the submitted one")
+	}
+
+	if !lc.dkgResultValid {
+		return fmt.Errorf("submitted result is invalid")
+	}
+
+	blockNumber, err := lc.blockCounter.CurrentBlock()
+	if err != nil {
+		return fmt.Errorf("failed to get the current block")
+	}
+
+	for _, handler := range lc.dkgResultApprovalHandlers {
+		handler(&DKGResultApprovedEvent{
+			ResultHash:  computeTestDkgResultHash(dkgResult),
+			Approver:    "",
+			BlockNumber: blockNumber,
+		})
+	}
+
+	lc.dkgState = Idle
+	lc.dkgResult = nil
+	lc.dkgResultValid = false
+
+	return nil
+}
+
+func (lc *localChain) DKGParameters() (*DKGParameters, error) {
+	return &DKGParameters{
+		SubmissionTimeoutBlocks:       10,
+		ChallengePeriodBlocks:         20,
+		ApprovePrecedencePeriodBlocks: 5,
+	}, nil
+}
+
 func (lc *localChain) OnHeartbeatRequested(
 	handler func(event *HeartbeatRequestedEvent),
 ) subscription.EventSubscription {
 	panic("unsupported")
+}
+
+func (lc *localChain) operator() (chain.OperatorID, chain.Address, error) {
+	_, operatorPublicKey, err := lc.OperatorKeyPair()
+	if err != nil {
+		return 0, "", err
+	}
+
+	operatorAddress, err := lc.Signing().PublicKeyToAddress(operatorPublicKey)
+	if err != nil {
+		return 0, "", err
+	}
+
+	return localChainOperatorID, operatorAddress, nil
 }
 
 // Connect sets up the local chain.
@@ -234,12 +426,25 @@ func ConnectWithKey(
 		HonestThreshold: honestThreshold,
 	}
 
-	return &localChain{
+	localChain := &localChain{
 		dkgResultSubmissionHandlers: make(
 			map[int]func(submission *DKGResultSubmittedEvent),
+		),
+		dkgResultApprovalHandlers: make(
+			map[int]func(submission *DKGResultApprovedEvent),
 		),
 		blockCounter:       blockCounter,
 		chainConfig:        chainConfig,
 		operatorPrivateKey: operatorPrivateKey,
+		operatorsIDs:       make(map[chain.Address]chain.OperatorID),
 	}
+
+	operatorID, operatorAddress, _ := localChain.operator()
+	localChain.operatorsIDs[operatorAddress] = operatorID
+
+	return localChain
+}
+
+func computeTestDkgResultHash(result *DKGChainResult) [32]byte {
+	return sha3.Sum256(result.GroupPublicKey)
 }

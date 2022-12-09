@@ -54,11 +54,17 @@ type DistributedKeyGenerationChain interface {
 		func(event *DKGResultSubmittedEvent),
 	) subscription.EventSubscription
 
+	// OnDKGResultApproved registers a callback that is invoked when an on-chain
+	// notification of the DKG result approval is seen.
+	OnDKGResultApproved(
+		func(event *DKGResultApprovedEvent),
+	) subscription.EventSubscription
+
 	// SubmitDKGResult submits the DKG result to the chain, along with signatures
 	// over result hash from group participants supporting the result.
 	SubmitDKGResult(
 		memberIndex group.MemberIndex,
-		dkgResult *dkg.Result,
+		tecdsaDkgResult *dkg.Result,
 		signatures map[group.MemberIndex][]byte,
 		groupSelectionResult *GroupSelectionResult,
 	) error
@@ -70,8 +76,32 @@ type DistributedKeyGenerationChain interface {
 	// specific for the chain. Operation is performed off-chain.
 	CalculateDKGResultHash(
 		startBlock uint64,
-		result *dkg.Result,
+		tecdsaDkgResult *dkg.Result,
 	) (dkg.ResultHash, error)
+
+	// IsDKGResultValid checks whether the submitted DKG result is valid from
+	// the on-chain contract standpoint.
+	IsDKGResultValid(dkgResult *DKGChainResult) (bool, error)
+
+	// ChallengeDKGResult challenges the submitted DKG result.
+	ChallengeDKGResult(dkgResult *DKGChainResult) error
+
+	// ApproveDKGResult approves the submitted DKG result.
+	ApproveDKGResult(dkgResult *DKGChainResult) error
+
+	// DKGParameters gets the current value of DKG-specific control parameters.
+	DKGParameters() (*DKGParameters, error)
+}
+
+// DKGChainResult represents a DKG result submitted to the chain.
+type DKGChainResult struct {
+	SubmitterMemberIndex     group.MemberIndex
+	GroupPublicKey           []byte
+	MisbehavedMembersIndexes []group.MemberIndex
+	Signatures               []byte
+	SigningMembersIndexes    []group.MemberIndex
+	Members                  chain.OperatorIDs
+	MembersHash              [32]byte
 }
 
 // DKGStartedEvent represents a DKG start event.
@@ -80,16 +110,28 @@ type DKGStartedEvent struct {
 	BlockNumber uint64
 }
 
-// DKGResultSubmittedEvent represents a DKG result submission event. It is emitted
-// after a submitted DKG result is positively validated on the chain. It contains
-// the index of the member who submitted the result and a final public key of
-// the group.
+// DKGResultSubmittedEvent represents a DKG result submission event. It is
+// emitted after a submitted DKG result lands on the chain.
 type DKGResultSubmittedEvent struct {
-	MemberIndex         uint32
-	GroupPublicKeyBytes []byte
-	Misbehaved          []uint8
-
+	Seed        *big.Int
+	ResultHash  [32]byte
+	Result      *DKGChainResult
 	BlockNumber uint64
+}
+
+// DKGResultApprovedEvent represents a DKG result approval event. It is
+// emitted after a submitted DKG result is approved as a valid result.
+type DKGResultApprovedEvent struct {
+	ResultHash  [32]byte
+	Approver    chain.Address
+	BlockNumber uint64
+}
+
+// DKGParameters contains values of DKG-specific control parameters.
+type DKGParameters struct {
+	SubmissionTimeoutBlocks       uint64
+	ChallengePeriodBlocks         uint64
+	ApprovePrecedencePeriodBlocks uint64
 }
 
 // BridgeChain defines the subset of the TBTC chain interface that pertains

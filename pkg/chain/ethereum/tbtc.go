@@ -10,6 +10,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 	"math/big"
+	"reflect"
 
 	"github.com/keep-network/keep-common/pkg/chain/ethereum"
 	"github.com/keep-network/keep-core/pkg/chain"
@@ -24,12 +25,10 @@ import (
 	"github.com/keep-network/keep-core/pkg/tecdsa/dkg"
 )
 
-// TODO: implement DKG result challenge functions
-
 // Definitions of contract names.
 const (
-	// Deprecated: The wallet registry address is taken from the Bridge.
-	// TODO: Remove that field from the config template.
+	// TODO: The WalletRegistry address is taken from the Bridge contract.
+	//       Remove the possibility of passing it through the config.
 	WalletRegistryContractName = "WalletRegistry"
 	BridgeContractName         = "Bridge"
 )
@@ -319,6 +318,14 @@ func (tc *TbtcChain) IsBetaOperator() (bool, error) {
 	return tc.sortitionPool.IsBetaOperator(tc.key.Address)
 }
 
+func (tc *TbtcChain) GetOperatorID(
+	operatorAddress chain.Address,
+) (chain.OperatorID, error) {
+	return tc.sortitionPool.GetOperatorID(
+		common.HexToAddress(operatorAddress.String()),
+	)
+}
+
 // SelectGroup returns the group members selected for the current group
 // selection. The function returns an error if the chain's state does not allow
 // for group selection at the moment.
@@ -377,23 +384,85 @@ func (tc *TbtcChain) OnDKGResultSubmitted(
 		result ecdsaabi.EcdsaDkgResult,
 		blockNumber uint64,
 	) {
-		if err := validateMemberIndex(result.SubmitterMemberIndex); err != nil {
+		tbtcResult, err := convertDkgResultToTbtcFormat(result)
+		if err != nil {
 			logger.Errorf(
-				"unexpected submitter member index in DKGResultSubmitted event: [%v]",
+				"unexpected DKG result in DKGResultSubmitted event: [%v]",
 				err,
 			)
 			return
 		}
 
 		handler(&tbtc.DKGResultSubmittedEvent{
-			MemberIndex:         uint32(result.SubmitterMemberIndex.Uint64()),
-			GroupPublicKeyBytes: result.GroupPubKey,
-			Misbehaved:          result.MisbehavedMembersIndices,
-			BlockNumber:         blockNumber,
+			Seed:        seed,
+			ResultHash:  resultHash,
+			Result:      tbtcResult,
+			BlockNumber: blockNumber,
 		})
 	}
 
-	return tc.walletRegistry.DkgResultSubmittedEvent(nil, nil, nil).OnEvent(onEvent)
+	return tc.walletRegistry.
+		DkgResultSubmittedEvent(nil, nil, nil).
+		OnEvent(onEvent)
+}
+
+// convertDkgResultToTbtcFormat converts the WalletRegistry-specific DKG
+// result to the format applicable for the TBTC application.
+func convertDkgResultToTbtcFormat(
+	result ecdsaabi.EcdsaDkgResult,
+) (*tbtc.DKGChainResult, error) {
+	if err := validateMemberIndex(result.SubmitterMemberIndex); err != nil {
+		return nil, fmt.Errorf(
+			"unexpected submitter member index: [%v]",
+			err,
+		)
+	}
+
+	signingMembersIndexes := make(
+		[]group.MemberIndex,
+		len(result.SigningMembersIndices),
+	)
+	for i, memberIndex := range result.SigningMembersIndices {
+		if err := validateMemberIndex(memberIndex); err != nil {
+			return nil, fmt.Errorf(
+				"unexpected signing member index: [%v]",
+				err,
+			)
+		}
+
+		signingMembersIndexes[i] = group.MemberIndex(memberIndex.Uint64())
+	}
+
+	return &tbtc.DKGChainResult{
+		SubmitterMemberIndex:     group.MemberIndex(result.SubmitterMemberIndex.Uint64()),
+		GroupPublicKey:           result.GroupPubKey,
+		MisbehavedMembersIndexes: result.MisbehavedMembersIndices,
+		Signatures:               result.Signatures,
+		SigningMembersIndexes:    signingMembersIndexes,
+		Members:                  result.Members,
+		MembersHash:              result.MembersHash,
+	}, nil
+}
+
+// convertTbtcDkgResultToEcdsaFormat converts the TBTC-specific DKG result to
+// the format applicable for the WalletRegistry.
+func convertDkgResultToChainFormat(
+	result *tbtc.DKGChainResult,
+) ecdsaabi.EcdsaDkgResult {
+	signingMembersIndices := make([]*big.Int, len(result.SigningMembersIndexes))
+	for i, memberIndex := range result.SigningMembersIndexes {
+		signingMembersIndices[i] = big.NewInt(int64(memberIndex))
+	}
+
+	return ecdsaabi.EcdsaDkgResult{
+		SubmitterMemberIndex:     big.NewInt(int64(result.SubmitterMemberIndex)),
+		GroupPubKey:              result.GroupPublicKey,
+		MisbehavedMembersIndices: result.MisbehavedMembersIndexes,
+		Signatures:               result.Signatures,
+		SigningMembersIndices:    signingMembersIndices,
+		Members:                  result.Members,
+		MembersHash:              result.MembersHash,
+	}
 }
 
 func validateMemberIndex(chainMemberIndex *big.Int) error {
@@ -405,14 +474,34 @@ func validateMemberIndex(chainMemberIndex *big.Int) error {
 	return nil
 }
 
+func (tc *TbtcChain) OnDKGResultApproved(
+	handler func(event *tbtc.DKGResultApprovedEvent),
+) subscription.EventSubscription {
+	onEvent := func(
+		ResultHash [32]byte,
+		Approver common.Address,
+		blockNumber uint64,
+	) {
+		handler(&tbtc.DKGResultApprovedEvent{
+			ResultHash:  ResultHash,
+			Approver:    chain.Address(Approver.Hex()),
+			BlockNumber: blockNumber,
+		})
+	}
+
+	return tc.walletRegistry.
+		DkgResultApprovedEvent(nil, nil, nil).
+		OnEvent(onEvent)
+}
+
 func (tc *TbtcChain) SubmitDKGResult(
 	memberIndex group.MemberIndex,
-	dkgResult *dkg.Result,
+	tecdsaDkgResult *dkg.Result,
 	signatures map[group.MemberIndex][]byte,
 	groupSelectionResult *tbtc.GroupSelectionResult,
 ) error {
 	serializedKey, err := convertPubKeyToChainFormat(
-		dkgResult.PrivateKeyShare.PublicKey(),
+		tecdsaDkgResult.PrivateKeyShare.PublicKey(),
 	)
 	if err != nil {
 		return fmt.Errorf("could not serialize the public key: [%v]", err)
@@ -425,7 +514,7 @@ func (tc *TbtcChain) SubmitDKGResult(
 		return fmt.Errorf("could not convert signatures to chain format: [%v]", err)
 	}
 
-	operatingMembersIndexes := dkgResult.Group.OperatingMemberIndexes()
+	operatingMembersIndexes := tecdsaDkgResult.Group.OperatingMemberIndexes()
 	operatingOperatorsIDs := make([]chain.OperatorID, len(operatingMembersIndexes))
 	for i, operatingMemberID := range operatingMembersIndexes {
 		operatingOperatorsIDs[i] = groupSelectionResult.OperatorsIDs[operatingMemberID-1]
@@ -439,7 +528,7 @@ func (tc *TbtcChain) SubmitDKGResult(
 	_, err = tc.walletRegistry.SubmitDkgResult(ecdsaabi.EcdsaDkgResult{
 		SubmitterMemberIndex:     big.NewInt(int64(memberIndex)),
 		GroupPubKey:              serializedKey[:],
-		MisbehavedMembersIndices: dkgResult.MisbehavedMembersIndexes(),
+		MisbehavedMembersIndices: tecdsaDkgResult.MisbehavedMembersIndexes(),
 		Signatures:               signatureBytes,
 		SigningMembersIndices:    signingMemberIndices,
 		Members:                  groupSelectionResult.OperatorsIDs,
@@ -551,9 +640,9 @@ func (tc *TbtcChain) GetDKGState() (tbtc.DKGState, error) {
 // Hashes calculated off-chain and on-chain must always match.
 func (tc *TbtcChain) CalculateDKGResultHash(
 	startBlock uint64,
-	result *dkg.Result,
+	tecdsaDkgResult *dkg.Result,
 ) (dkg.ResultHash, error) {
-	groupPublicKey, err := result.GroupPublicKeyBytes()
+	groupPublicKey, err := tecdsaDkgResult.GroupPublicKeyBytes()
 	if err != nil {
 		return dkg.ResultHash{}, err
 	}
@@ -561,7 +650,7 @@ func (tc *TbtcChain) CalculateDKGResultHash(
 	return computeDkgResultHash(
 		tc.chainID,
 		groupPublicKey,
-		result.MisbehavedMembersIndexes(),
+		tecdsaDkgResult.MisbehavedMembersIndexes(),
 		big.NewInt(int64(startBlock)),
 	)
 }
@@ -610,6 +699,73 @@ func computeDkgResultHash(
 	)
 
 	return dkg.ResultHash(crypto.Keccak256Hash(prefixedBytesHash)), nil
+}
+
+func (tc *TbtcChain) IsDKGResultValid(
+	dkgResult *tbtc.DKGChainResult,
+) (bool, error) {
+	outcome, err := tc.walletRegistry.IsDkgResultValid(
+		convertDkgResultToChainFormat(dkgResult),
+	)
+	if err != nil {
+		return false, fmt.Errorf("cannot check result validity: [%v]", err)
+	}
+
+	return parseDkgResultValidationOutcome(outcome)
+}
+
+// parseDkgResultValidationOutcome parses the DKG validation outcome and returns
+// a boolean indicating whether the result is valid or not. The outcome parameter
+// must be a pointer to a struct containing a boolean flag as the first field.
+//
+// TODO: Find a better way to get the validity flag. This would require
+//       changes in the contracts binding generator.
+func parseDkgResultValidationOutcome(
+	outcome interface{},
+) (bool, error) {
+	value := reflect.ValueOf(outcome)
+	switch value.Kind() {
+	case reflect.Pointer:
+	default:
+		return false, fmt.Errorf("result validation outcome is not a pointer")
+	}
+
+	field := value.Elem().Field(0)
+	switch field.Kind() {
+	case reflect.Bool:
+		return field.Bool(), nil
+	default:
+		return false, fmt.Errorf("cannot parse result validation outcome")
+	}
+}
+
+func (tc *TbtcChain) ChallengeDKGResult(dkgResult *tbtc.DKGChainResult) error {
+	_, err := tc.walletRegistry.ChallengeDkgResult(
+		convertDkgResultToChainFormat(dkgResult),
+	)
+
+	return err
+}
+
+func (tc *TbtcChain) ApproveDKGResult(dkgResult *tbtc.DKGChainResult) error {
+	_, err := tc.walletRegistry.ApproveDkgResult(
+		convertDkgResultToChainFormat(dkgResult),
+	)
+
+	return err
+}
+
+func (tc *TbtcChain) DKGParameters() (*tbtc.DKGParameters, error) {
+	parameters, err := tc.walletRegistry.DkgParameters()
+	if err != nil {
+		return nil, err
+	}
+
+	return &tbtc.DKGParameters{
+		SubmissionTimeoutBlocks:       parameters.ResultSubmissionTimeout.Uint64(),
+		ChallengePeriodBlocks:         parameters.ResultChallengePeriodLength.Uint64(),
+		ApprovePrecedencePeriodBlocks: parameters.SubmitterPrecedencePeriodLength.Uint64(),
+	}, nil
 }
 
 // OnHeartbeatRequested runs a heartbeat loop that produces a heartbeat
