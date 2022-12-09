@@ -1,8 +1,9 @@
 package gjkr
 
 import (
-	"github.com/ipfs/go-log/v2"
 	"math/big"
+
+	"github.com/ipfs/go-log/v2"
 
 	bn256 "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
 	"github.com/keep-network/keep-core/pkg/crypto/ephemeral"
@@ -42,7 +43,7 @@ type LocalMember struct {
 
 // EphemeralKeyPairGeneratingMember represents one member in a distributed key
 // generating group performing ephemeral key pair generation. It has a full list
-// of `memberIDs` that belong to its threshold group.
+// of `memberIndexes` that belong to its threshold group.
 //
 // Executes Phase 1 of the protocol.
 type EphemeralKeyPairGeneratingMember struct {

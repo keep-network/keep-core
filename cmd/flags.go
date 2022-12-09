@@ -3,6 +3,7 @@ package cmd
 import (
 	"fmt"
 	"math/big"
+	"strings"
 
 	"github.com/spf13/cobra"
 
@@ -11,6 +12,7 @@ import (
 	"github.com/keep-network/keep-common/pkg/cmd/flag"
 	"github.com/keep-network/keep-common/pkg/rate"
 	"github.com/keep-network/keep-core/config"
+	"github.com/keep-network/keep-core/pkg/bitcoin/electrum"
 	chainEthereum "github.com/keep-network/keep-core/pkg/chain/ethereum"
 	"github.com/keep-network/keep-core/pkg/clientinfo"
 	"github.com/keep-network/keep-core/pkg/net/libp2p"
@@ -160,9 +162,54 @@ func initBitcoinElectrumFlags(cmd *cobra.Command, cfg *config.Config) {
 		&cfg.Bitcoin.Electrum.URL,
 		"bitcoin.electrum.url",
 		"",
-		"URL for Bitcoin electrum client connection.",
+		"URL to the Electrum server in format: `hostname:port`.",
 	)
-	// TODO: Initialize other config options from `electrum.Config`
+
+	electrum.ProtocolVarFlag(
+		cmd.Flags(),
+		&cfg.Bitcoin.Electrum.Protocol,
+		"bitcoin.electrum.protocol",
+		electrum.TCP,
+		fmt.Sprintf(
+			"Electrum server connection protocol (one of: %s).",
+			strings.Join([]string{electrum.TCP.String(), electrum.SSL.String()}, ", "),
+		),
+	)
+
+	cmd.Flags().DurationVar(
+		&cfg.Bitcoin.Electrum.ConnectTimeout,
+		"bitcoin.electrum.connectTimeout",
+		electrum.DefaultConnectTimeout,
+		"Timeout for a single attempt of Electrum connection establishment.",
+	)
+
+	cmd.Flags().DurationVar(
+		&cfg.Bitcoin.Electrum.ConnectRetryTimeout,
+		"bitcoin.electrum.connectRetryTimeout",
+		electrum.DefaultConnectRetryTimeout,
+		"Timeout for Electrum connection establishment retries.",
+	)
+
+	cmd.Flags().DurationVar(
+		&cfg.Bitcoin.Electrum.RequestTimeout,
+		"bitcoin.electrum.requestTimeout",
+		electrum.DefaultRequestTimeout,
+		"Timeout for a single attempt of Electrum protocol request.",
+	)
+
+	cmd.Flags().DurationVar(
+		&cfg.Bitcoin.Electrum.RequestRetryTimeout,
+		"bitcoin.electrum.requestRetryTimeout",
+		electrum.DefaultRequestRetryTimeout,
+		"Timeout for Electrum protocol request retries.",
+	)
+
+	cmd.Flags().DurationVar(
+		&cfg.Bitcoin.Electrum.KeepAliveInterval,
+		"bitcoin.electrum.keepAliveInterval",
+		electrum.DefaultKeepAliveInterval,
+		"Interval for connection keep alive requests.",
+	)
 }
 
 // Initialize flags for Network configuration.

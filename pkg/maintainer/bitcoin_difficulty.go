@@ -165,7 +165,7 @@ func (bdm *BitcoinDifficultyMaintainer) verifySubmissionEligibility() error {
 // difficulty chain if there is a Bitcoin blockchain epoch to be proven.
 func (bdm *BitcoinDifficultyMaintainer) proveNextEpoch() error {
 	// The height of the Bitcoin blockchain.
-	currentBlockNumber, err := bdm.btcChain.GetCurrentBlockNumber()
+	currentBlockHeight, err := bdm.btcChain.GetLatestBlockHeight()
 	if err != nil {
 		return fmt.Errorf(
 			"failed to get current block number: [%w]",
@@ -215,7 +215,7 @@ func (bdm *BitcoinDifficultyMaintainer) proveNextEpoch() error {
 	// The required range of block headers can be pulled from the Bitcoin
 	// blockchain only if the blockchain height is equal to or greater than
 	// the end of the range.
-	if currentBlockNumber >= lastBlockHeaderHeight {
+	if currentBlockHeight >= lastBlockHeaderHeight {
 		headers, err := bdm.getBlockHeaders(
 			firstBlockHeaderHeight,
 			lastBlockHeaderHeight,
@@ -244,12 +244,12 @@ func (bdm *BitcoinDifficultyMaintainer) proveNextEpoch() error {
 			lastBlockHeaderHeight,
 			newEpoch,
 		)
-	} else if currentBlockNumber >= newEpochHeight {
+	} else if currentBlockHeight >= newEpochHeight {
 		logger.Infof(
 			"the Bitcoin difficulty chain has to be synced with the "+
 				"Bitcoin blockchain; waiting for [%d] new blocks to "+
 				"be mined to form a headers chain for retarget",
-			lastBlockHeaderHeight-currentBlockNumber,
+			lastBlockHeaderHeight-currentBlockHeight,
 		)
 	} else {
 		logger.Infof(

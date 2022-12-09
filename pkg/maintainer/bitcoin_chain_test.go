@@ -42,9 +42,9 @@ func (lc *localBitcoinChain) BroadcastTransaction(
 	panic("unsupported")
 }
 
-// GetCurrentBlockNumber gets the number of the current block. If the
-// current block was not determined, this function returns an error.
-func (lc *localBitcoinChain) GetCurrentBlockNumber() (uint, error) {
+// GetLatestBlockHeight gets the height of the latest block (tip). If the
+// latest block was not determined, this function returns an error.
+func (lc *localBitcoinChain) GetLatestBlockHeight() (uint, error) {
 	blockchainTip := uint(0)
 	for blockHeaderHeight := range lc.blockHeaders {
 		if blockHeaderHeight > blockchainTip {

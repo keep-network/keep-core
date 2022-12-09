@@ -68,7 +68,7 @@ func Initialize(
 			"tbtc",
 			map[string]clientinfo.Source{
 				"pre_params_count": func() float64 {
-					return float64(node.dkgExecutor.PreParamsCount())
+					return float64(node.dkgExecutor.preParamsCount())
 				},
 			},
 		)
@@ -192,7 +192,7 @@ type enoughPreParamsInPoolPolicy struct {
 }
 
 func (eppip *enoughPreParamsInPoolPolicy) ShouldJoin() bool {
-	paramsInPool := eppip.node.dkgExecutor.PreParamsCount()
+	paramsInPool := eppip.node.dkgExecutor.preParamsCount()
 	poolSize := eppip.config.PreParamsPoolSize
 	return paramsInPool >= poolSize
 }

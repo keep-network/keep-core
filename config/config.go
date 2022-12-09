@@ -37,12 +37,18 @@ const (
 // Config is the top level config structure.
 type Config struct {
 	Ethereum   commonEthereum.Config
-	Bitcoin    electrum.BitcoinConfig
+	Bitcoin    BitcoinConfig
 	LibP2P     libp2p.Config `mapstructure:"network"`
 	Storage    storage.Config
 	ClientInfo clientinfo.Config
 	Maintainer maintainer.Config
 	Tbtc       tbtc.Config
+}
+
+// BitcoinConfig defines the configuration for Bitcoin.
+type BitcoinConfig struct {
+	// Electrum defines the configuration for the Electrum client.
+	Electrum electrum.Config
 }
 
 // Bind the flags to the viper configuration. Viper reads configuration from
