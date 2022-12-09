@@ -46,6 +46,28 @@ KeyFile = "/Users/someuser/ethereum/data/keystore/UTC--2018-03-11T01-37-33.20276
 #
 # BalanceAlertThreshold = "0.5 ether" # 0.5 ether (default value)
 
+[bitcoin.electrum]
+# URL to the Electrum server in format: `hostname:port`.
+URL = "electrumx.server.io:50001"
+
+# Electrum server connection protocol (`TCP` or `SSL`).
+# Protocol = "tcp"
+
+# Timeout for a single attempt of Electrum connection establishment.
+# ConnectTimeout = "10s"
+
+# Timeout for Electrum connection establishment retries.
+# ConnectRetryTimeout = "1m"
+
+# Timeout for a single attempt of Electrum protocol request.
+# RequestTimeout = "30s"
+
+# Timeout for Electrum protocol request retries.
+# RequestRetryTimeout = "2m"
+
+# Interval for connection keep alive requests.
+# KeepAliveInterval = "5m"
+
 [network]
 Bootstrap = false
 Peers = [
