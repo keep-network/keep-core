@@ -9,5 +9,5 @@ import (
 type BitcoinDifficultyChain interface {
 	// Retarget adds a new epoch to the Bitcoin difficulty relay by providing
 	// a proof of the difficulty before and after the retarget.
-	Retarget(headers []bitcoin.BlockHeader) error
+	Retarget(headers []*bitcoin.BlockHeader) error
 }

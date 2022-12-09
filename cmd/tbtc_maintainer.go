@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/keep-network/keep-core/config"
+	"github.com/keep-network/keep-core/pkg/chain/ethereum"
 	"github.com/keep-network/keep-core/pkg/tbtc/maintainer"
 	"github.com/spf13/cobra"
 )
@@ -47,13 +48,15 @@ func tbtcMaintainer(cmd *cobra.Command, args []string) error {
 	// 	return fmt.Errorf("could not connect to Electrum chain: [%v]", err)
 	// }
 
-	// TODO: Add connection to the Tbtc chain:
-	// tbtcChain, err := newTbtcChain(config)
-	// if err != nil {
-	// 	return fmt.Errorf("could not connect to Tbtc chain: [%v]", err)
-	// }
+	chain, err := ethereum.ConnectBitcoinDifficulty(ctx, clientConfig.Ethereum)
+	if err != nil {
+		return fmt.Errorf(
+			"could not connect to Bitcoin difficulty chain: [%v]",
+			err,
+		)
+	}
 
-	maintainer.Initialize(ctx, clientConfig.Tbtc.Maintainer, nil, nil)
+	maintainer.Initialize(ctx, clientConfig.Tbtc.Maintainer, nil, chain)
 
 	<-ctx.Done()
 	return fmt.Errorf("unexpected context cancellation")
