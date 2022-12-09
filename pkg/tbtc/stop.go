@@ -22,6 +22,8 @@ import (
 // was produced.
 type StopPill struct {
 	attemptNumber uint64
+	dkgSeed       string // empty if the stop pill is sent for signing
+	messageToSign string // empty if the stop pill is sent for DKG
 }
 
 func (sp *StopPill) Type() string {
@@ -31,6 +33,8 @@ func (sp *StopPill) Type() string {
 func (sp *StopPill) Marshal() ([]byte, error) {
 	return proto.Marshal(&pb.StopPill{
 		AttemptNumber: sp.attemptNumber,
+		DkgSeed:       sp.dkgSeed,
+		MessageToSign: sp.messageToSign,
 	})
 }
 
@@ -41,6 +45,8 @@ func (sp *StopPill) Unmarshal(bytes []byte) error {
 	}
 
 	sp.attemptNumber = pbStopPill.AttemptNumber
+	sp.dkgSeed = pbStopPill.DkgSeed
+	sp.messageToSign = pbStopPill.MessageToSign
 
 	return nil
 }
@@ -51,24 +57,31 @@ func registerStopPillUnmarshaller(channel net.BroadcastChannel) {
 	})
 }
 
-func sendStopPill(
+func sendDkgStopPill(
 	ctx context.Context,
 	broadcastChannel net.BroadcastChannel,
+	dkgSeed string,
 	attemptNumber uint,
 ) error {
-	stopPill := &StopPill{uint64(attemptNumber)}
+	stopPill := &StopPill{
+		attemptNumber: uint64(attemptNumber),
+		dkgSeed:       dkgSeed,
+	}
 	return broadcastChannel.Send(ctx, stopPill)
 }
 
-func cancelContextOnStopSignal(
+func cancelDkgContextOnStopSignal(
 	ctx context.Context,
 	cancelFn func(),
 	broadcastChannel net.BroadcastChannel,
+	dkgSeed string,
 ) {
 	broadcastChannel.Recv(ctx, func(msg net.Message) {
-		switch msg.Payload().(type) {
+		switch stopPill := msg.Payload().(type) {
 		case *StopPill:
-			cancelFn()
+			if stopPill.dkgSeed == dkgSeed {
+				cancelFn()
+			}
 		}
 	})
 }

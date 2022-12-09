@@ -7,6 +7,19 @@ import (
 	"github.com/keep-network/keep-core/pkg/operator"
 )
 
+// RetransmissionStrategy represents a specific retransmission strategy.
+type RetransmissionStrategy int
+
+const (
+	// StandardRetransmissionStrategy is the default retransmission strategy
+	// that retransmit the message with a constant frequency.
+	StandardRetransmissionStrategy RetransmissionStrategy = iota
+	// BackoffRetransmissionStrategy is a retransmission strategy that
+	// retransmits the message with an exponentially increasing delay between
+	// subsequent retransmissions.
+	BackoffRetransmissionStrategy
+)
+
 // TransportIdentifier represents a protocol-level identifier. It is an opaque
 // type to the network layer.
 type TransportIdentifier interface {
@@ -93,14 +106,18 @@ type TaggedUnmarshaler interface {
 type BroadcastChannel interface {
 	// Name returns the name of this broadcast channel.
 	Name() string
-	// Send function publishes a message m to the channel. Message m needs to
+	// Send function publishes a message to the channel. Message needs to
 	// conform to the marshalling interface. Message will be periodically
-	// retransmitted by the channel for the lifetime of the provided context.
-	// The provided context is used to identify the retransmission routine of
-	// the given message. If there is a need to use a single context to send
-	// multiple messages, it is recommended to use a separate child context
-	// for each message. Otherwise, only the last message will be retransmitted.
-	Send(ctx context.Context, m TaggedMarshaler) error
+	// retransmitted by the channel for the lifetime of the provided context
+	// according to the default StandardRetransmissionStrategy. Retransmission
+	// strategy can be set through the `retransmissionStrategy` vararg. If the
+	// vararg is given more than one value, the first value is used as the
+	// valid strategy.
+	Send(
+		ctx context.Context,
+		message TaggedMarshaler,
+		retransmissionStrategy ...RetransmissionStrategy,
+	) error
 	// Recv installs a message handler that will receive messages from the
 	// channel for the entire lifetime of the provided context.
 	// When the context is done, handler is automatically unregistered and

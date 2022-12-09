@@ -1,0 +1,10 @@
+syntax = "proto3";
+
+option go_package = "./pb";
+package announcer;
+
+message AnnouncementMessage {
+  uint32 senderID = 1;
+  string protocolID = 2;
+  string sessionID = 3;
+}

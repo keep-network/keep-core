@@ -23,6 +23,7 @@ func TestRetransmitExpectedNumberOfTimes(t *testing.T) {
 			atomic.AddUint64(&retransmissionsCount, 1)
 			return nil
 		},
+		WithStandardStrategy(),
 	)
 
 	<-ctx.Done()

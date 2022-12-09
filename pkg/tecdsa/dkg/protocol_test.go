@@ -1313,144 +1313,6 @@ func TestVerifyDKGResultSignatures(t *testing.T) {
 				3:                         []byte("sign 3"),
 			},
 		},
-		"multiple messages from other member with different signatures for " +
-			"the preferred result and the first signature is invalid": {
-			messagesWithOutcomes: []messageWithOutcome{
-				{
-					&resultSignatureMessage{
-						senderID:   2,
-						resultHash: ResultHash{11: 11},
-						signature:  []byte("bad sign"),
-						publicKey:  []byte("pubKey 2"),
-						sessionID:  "session-1",
-					},
-					&verificationOutcome{
-						isValid: false,
-						err:     nil,
-					},
-				},
-				{
-					&resultSignatureMessage{
-						senderID:   2,
-						resultHash: ResultHash{11: 11},
-						signature:  []byte("sign 2"),
-						publicKey:  []byte("pubKey 2"),
-						sessionID:  "session-1",
-					},
-					&verificationOutcome{
-						isValid: true,
-						err:     nil,
-					},
-				},
-			},
-			expectedValidSignatures: map[group.MemberIndex][]byte{
-				signingMember.memberIndex: signingMember.selfDKGResultSignature,
-			},
-		},
-		"multiple messages from other member with different signatures for " +
-			"the preferred result and the first signature is valid": {
-			messagesWithOutcomes: []messageWithOutcome{
-				{
-					&resultSignatureMessage{
-						senderID:   2,
-						resultHash: ResultHash{11: 11},
-						signature:  []byte("sign 2"),
-						publicKey:  []byte("pubKey 2"),
-						sessionID:  "session-1",
-					},
-					&verificationOutcome{
-						isValid: true,
-						err:     nil,
-					},
-				},
-				{
-					&resultSignatureMessage{
-						senderID:   2,
-						resultHash: ResultHash{11: 11},
-						signature:  []byte("bad sign"),
-						publicKey:  []byte("pubKey 2"),
-						sessionID:  "session-1",
-					},
-					&verificationOutcome{
-						isValid: false,
-						err:     nil,
-					},
-				},
-			},
-			expectedValidSignatures: map[group.MemberIndex][]byte{
-				signingMember.memberIndex: signingMember.selfDKGResultSignature,
-				2:                         []byte("sign 2"),
-			},
-		},
-		"multiple messages from other member for different results and the " +
-			"result in the first message is different than the preferred one": {
-			messagesWithOutcomes: []messageWithOutcome{
-				{
-					&resultSignatureMessage{
-						senderID:   2,
-						resultHash: ResultHash{12: 12},
-						signature:  []byte("sign 2"),
-						publicKey:  []byte("pubKey 2"),
-						sessionID:  "session-1",
-					},
-					&verificationOutcome{
-						isValid: true,
-						err:     nil,
-					},
-				},
-				{
-					&resultSignatureMessage{
-						senderID:   2,
-						resultHash: ResultHash{11: 11},
-						signature:  []byte("sign 2"),
-						publicKey:  []byte("pubKey 2"),
-						sessionID:  "session-1",
-					},
-					&verificationOutcome{
-						isValid: true,
-						err:     nil,
-					},
-				},
-			},
-			expectedValidSignatures: map[group.MemberIndex][]byte{
-				signingMember.memberIndex: signingMember.selfDKGResultSignature,
-			},
-		},
-		"multiple messages from other member for different results and the " +
-			"result in the first message is the same as the preferred one": {
-			messagesWithOutcomes: []messageWithOutcome{
-				{
-					&resultSignatureMessage{
-						senderID:   2,
-						resultHash: ResultHash{11: 11},
-						signature:  []byte("sign 2"),
-						publicKey:  []byte("pubKey 2"),
-						sessionID:  "session-1",
-					},
-					&verificationOutcome{
-						isValid: true,
-						err:     nil,
-					},
-				},
-				{
-					&resultSignatureMessage{
-						senderID:   2,
-						resultHash: ResultHash{12: 12},
-						signature:  []byte("bad sign"),
-						publicKey:  []byte("pubKey 2"),
-						sessionID:  "session-1",
-					},
-					&verificationOutcome{
-						isValid: true,
-						err:     nil,
-					},
-				},
-			},
-			expectedValidSignatures: map[group.MemberIndex][]byte{
-				signingMember.memberIndex: signingMember.selfDKGResultSignature,
-				2:                         []byte("sign 2"),
-			},
-		},
 		"received a message from other member with signature for result " +
 			"different than preferred": {
 			messagesWithOutcomes: []messageWithOutcome{
@@ -1513,171 +1375,6 @@ func TestVerifyDKGResultSignatures(t *testing.T) {
 				signingMember.memberIndex: signingMember.selfDKGResultSignature,
 			},
 		},
-		"mixed cases with correct and incorrect messages from other members": {
-			messagesWithOutcomes: []messageWithOutcome{
-				// multiple signatures from the same member for the preferred
-				// result - the first one is valid
-				{
-					&resultSignatureMessage{
-						senderID:   2,
-						resultHash: ResultHash{11: 11},
-						signature:  []byte("sign 2"),
-						publicKey:  []byte("pubKey 2"),
-						sessionID:  "session-1",
-					},
-					&verificationOutcome{
-						isValid: true,
-						err:     nil,
-					},
-				},
-				{
-					&resultSignatureMessage{
-						senderID:   2,
-						resultHash: ResultHash{11: 11},
-						signature:  []byte("bad sign"),
-						publicKey:  []byte("pubKey 3"),
-						sessionID:  "session-1",
-					},
-					&verificationOutcome{
-						isValid: false,
-						err:     nil,
-					},
-				},
-				// multiple signatures from the same member for the preferred
-				// result - the first one is invalid
-				{
-					&resultSignatureMessage{
-						senderID:   3,
-						resultHash: ResultHash{11: 11},
-						signature:  []byte("bad sign"),
-						publicKey:  []byte("pubKey 3"),
-						sessionID:  "session-1",
-					},
-					&verificationOutcome{
-						isValid: false,
-						err:     nil,
-					},
-				},
-				{
-					&resultSignatureMessage{
-						senderID:   3,
-						resultHash: ResultHash{11: 11},
-						signature:  []byte("sign 3"),
-						publicKey:  []byte("pubKey 3"),
-						sessionID:  "session-1",
-					},
-					&verificationOutcome{
-						isValid: true,
-						err:     nil,
-					},
-				},
-				// valid signature supporting the same result as preferred
-				{
-					&resultSignatureMessage{
-						senderID:   4,
-						resultHash: ResultHash{11: 11},
-						signature:  []byte("sign 4"),
-						publicKey:  []byte("pubKey 4"),
-						sessionID:  "session-1",
-					},
-					&verificationOutcome{
-						isValid: true,
-						err:     nil,
-					},
-				},
-				// member supporting different result than preferred
-				{
-					&resultSignatureMessage{
-						senderID:   5,
-						resultHash: ResultHash{12: 12},
-						signature:  []byte("sign 5"),
-						publicKey:  []byte("pubKey 5"),
-						sessionID:  "session-1",
-					},
-					&verificationOutcome{
-						isValid: true,
-						err:     nil,
-					},
-				},
-				// multiple messages from the same member with different results -
-				// the first one contains preferred result
-				{
-					&resultSignatureMessage{
-						senderID:   6,
-						resultHash: ResultHash{11: 11},
-						signature:  []byte("sign 6"),
-						publicKey:  []byte("pubKey 6"),
-						sessionID:  "session-1",
-					},
-					&verificationOutcome{
-						isValid: true,
-						err:     nil,
-					},
-				},
-				{
-					&resultSignatureMessage{
-						senderID:   6,
-						resultHash: ResultHash{12: 12},
-						signature:  []byte("sign 6"),
-						publicKey:  []byte("pubKey 6"),
-						sessionID:  "session-1",
-					},
-					&verificationOutcome{
-						isValid: true,
-						err:     nil,
-					},
-				},
-				// multiple messages from the same member with different results -
-				// the first one contains result different than the preferred one
-				{
-					&resultSignatureMessage{
-						senderID:   7,
-						resultHash: ResultHash{12: 12},
-						signature:  []byte("sign 7"),
-						publicKey:  []byte("pubKey 7"),
-						sessionID:  "session-1",
-					},
-					&verificationOutcome{
-						isValid: true,
-						err:     nil,
-					},
-				},
-				{
-					&resultSignatureMessage{
-						senderID:   7,
-						resultHash: ResultHash{11: 11},
-						signature:  []byte("sign 7"),
-						publicKey:  []byte("pubKey 7"),
-						sessionID:  "session-1",
-					},
-					&verificationOutcome{
-						isValid: true,
-						err:     nil,
-					},
-				},
-				// message from member results in an error during signature
-				// verification
-				{
-					&resultSignatureMessage{
-						senderID:   8,
-						resultHash: ResultHash{11: 11},
-						signature:  []byte("sign 8"),
-						publicKey:  []byte("pubKey 8"),
-						sessionID:  "session-1",
-					},
-					&verificationOutcome{
-						isValid: false,
-						err:     fmt.Errorf("dummy error"),
-					},
-				},
-			},
-			expectedValidSignatures: map[group.MemberIndex][]byte{
-				signingMember.memberIndex: signingMember.selfDKGResultSignature,
-				2:                         []byte("sign 2"),
-				4:                         []byte("sign 4"),
-				6:                         []byte("sign 6"),
-			},
-		},
 	}
 
 	for testName, test := range tests {
@@ -1717,15 +1414,17 @@ func TestSubmitDKGResult(t *testing.T) {
 		22: []byte("signature 22"),
 		33: []byte("signature 33"),
 	}
-	startBlockNumber := 123
 
 	resultSubmitter := newMockResultSubmitter()
 	resultSubmitter.setSubmittingOutcome(result, nil)
 
+	ctx, cancelCtx := context.WithCancel(context.Background())
+	defer cancelCtx()
+
 	err := submittingMember.submitDKGResult(
+		ctx,
 		result,
 		signatures,
-		uint64(startBlockNumber),
 		resultSubmitter,
 	)
 	if err != nil {
@@ -1742,15 +1441,17 @@ func TestSubmitDKGResult_ErrorDuringSubmitting(t *testing.T) {
 		22: []byte("signature 22"),
 		33: []byte("signature 33"),
 	}
-	startBlockNumber := 123
 
 	resultSubmitter := newMockResultSubmitter()
 	resultSubmitter.setSubmittingOutcome(result, fmt.Errorf("dummy error"))
 
+	ctx, cancelCtx := context.WithCancel(context.Background())
+	defer cancelCtx()
+
 	err := submittingMember.submitDKGResult(
+		ctx,
 		result,
 		signatures,
-		uint64(startBlockNumber),
 		resultSubmitter,
 	)
 	expectedErr := fmt.Errorf("failed to submit DKG result [dummy error]")
@@ -1760,66 +1461,6 @@ func TestSubmitDKGResult_ErrorDuringSubmitting(t *testing.T) {
 			expectedErr,
 			err,
 		)
-	}
-}
-
-func TestDeduplicateBySender(t *testing.T) {
-	tests := map[string]struct {
-		inputItems          []*mockSenderItem
-		expectedOutputItems []*mockSenderItem
-	}{
-		"no duplicates": {
-			inputItems: []*mockSenderItem{
-				{1},
-				{2},
-				{3},
-				{4},
-				{5},
-			},
-			expectedOutputItems: []*mockSenderItem{
-				{1},
-				{2},
-				{3},
-				{4},
-				{5},
-			},
-		},
-		"duplicates": {
-			inputItems: []*mockSenderItem{
-				{1},
-				{2},
-				{2},
-				{3},
-				{4},
-				{1},
-				{5},
-			},
-			expectedOutputItems: []*mockSenderItem{
-				{1},
-				{2},
-				{3},
-				{4},
-				{5},
-			},
-		},
-		"empty input list": {
-			inputItems:          []*mockSenderItem{},
-			expectedOutputItems: []*mockSenderItem{},
-		},
-		"nil input list": {
-			inputItems:          nil,
-			expectedOutputItems: []*mockSenderItem{},
-		},
-	}
-
-	for testName, test := range tests {
-		t.Run(testName, func(t *testing.T) {
-			actualOutputItems := deduplicateBySender(test.inputItems)
-
-			if !reflect.DeepEqual(test.expectedOutputItems, actualOutputItems) {
-				t.Errorf("unexpected output items")
-			}
-		})
 	}
 }
 
@@ -2353,10 +1994,10 @@ func (mrs *mockResultSubmitter) setSubmittingOutcome(result *Result, err error) 
 }
 
 func (mrs *mockResultSubmitter) SubmitResult(
+	ctx context.Context,
 	memberIndex group.MemberIndex,
 	result *Result,
 	signatures map[group.MemberIndex][]byte,
-	startBlockNumber uint64,
 ) error {
 	if err, ok := mrs.submittingOutcomes[result]; ok {
 		return err
@@ -2364,12 +2005,4 @@ func (mrs *mockResultSubmitter) SubmitResult(
 	return fmt.Errorf(
 		"could not find submitting outcome for the result",
 	)
-}
-
-type mockSenderItem struct {
-	senderID group.MemberIndex
-}
-
-func (msi *mockSenderItem) SenderID() group.MemberIndex {
-	return msi.senderID
 }

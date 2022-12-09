@@ -5,10 +5,14 @@ package tbtc;
 
 message StopPill {
     uint64 attemptNumber = 1;
+    string dkgSeed = 2;
+    string messageToSign = 3;
 }
 
-message SigningAnnouncementMessage {
+message SigningDoneMessage {
     uint32 senderID = 1;
     bytes message = 2;
     uint64 attemptNumber = 3;
+    bytes signature = 4;
+    uint64 endBlock = 5;
 }

@@ -2,6 +2,7 @@ package tecdsa
 
 import (
 	"fmt"
+	"math"
 	"math/big"
 
 	"github.com/bnb-chain/tss-lib/crypto"
@@ -165,6 +166,33 @@ func (pks *PrivateKeyShare) Unmarshal(bytes []byte) error {
 	data.H2j = unmarshalBigIntSlice(pbData.GetH2J())
 
 	pks.data = *data
+
+	return nil
+}
+
+// Marshal converts the Signature to a byte array.
+func (s *Signature) Marshal() ([]byte, error) {
+	return proto.Marshal(&pb.Signature{
+		R:          s.R.Bytes(),
+		S:          s.S.Bytes(),
+		RecoveryID: int32(s.RecoveryID),
+	})
+}
+
+// Unmarshal converts a byte array back to the Signature.
+func (s *Signature) Unmarshal(bytes []byte) error {
+	pbMsg := pb.Signature{}
+	if err := proto.Unmarshal(bytes, &pbMsg); err != nil {
+		return fmt.Errorf("failed to unmarshal Signature: [%v]", err)
+	}
+
+	if id := pbMsg.RecoveryID; id > math.MaxInt8 || id < math.MinInt8 {
+		return fmt.Errorf("invalid recovery ID value: [%v]", id)
+	}
+
+	s.R = new(big.Int).SetBytes(pbMsg.R)
+	s.S = new(big.Int).SetBytes(pbMsg.S)
+	s.RecoveryID = int8(pbMsg.RecoveryID)
 
 	return nil
 }

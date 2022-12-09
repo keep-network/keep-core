@@ -8,9 +8,16 @@ import (
 
 // Ticker controls the frequency of retransmissions.
 type Ticker struct {
-	ticks         <-chan uint64
+	ticks <-chan uint64
+
 	handlersMutex sync.Mutex
-	handlers      map[context.Context]func()
+	handlers      map[uint64]*handler
+	nextHandlerId uint64
+}
+
+type handler struct {
+	ctx context.Context
+	fn  func()
 }
 
 // NewTicker creates and starts a new Ticker for the provided channel.
@@ -19,7 +26,7 @@ type Ticker struct {
 func NewTicker(ticks <-chan uint64) *Ticker {
 	ticker := &Ticker{
 		ticks:    ticks,
-		handlers: make(map[context.Context]func()),
+		handlers: make(map[uint64]*handler),
 	}
 
 	go ticker.start()
@@ -56,13 +63,13 @@ func (t *Ticker) start() {
 	for range t.ticks {
 		t.handlersMutex.Lock()
 
-		for ctx, handler := range t.handlers {
-			if ctx.Err() != nil {
-				delete(t.handlers, ctx)
+		for id, handler := range t.handlers {
+			if handler.ctx.Err() != nil {
+				delete(t.handlers, id)
 				continue
 			}
 
-			handler()
+			handler.fn()
 		}
 
 		t.handlersMutex.Unlock()
@@ -73,8 +80,9 @@ func (t *Ticker) start() {
 	}
 }
 
-func (t *Ticker) onTick(ctx context.Context, handler func()) {
+func (t *Ticker) onTick(ctx context.Context, fn func()) {
 	t.handlersMutex.Lock()
-	t.handlers[ctx] = handler
+	t.nextHandlerId++
+	t.handlers[t.nextHandlerId] = &handler{ctx, fn}
 	t.handlersMutex.Unlock()
 }

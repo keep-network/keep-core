@@ -13,7 +13,7 @@ func TestWalletRegistry_RegisterSigner(t *testing.T) {
 
 	walletRegistry := newWalletRegistry(persistenceHandle)
 
-	signer := sampleSigner(t)
+	signer := createMockSigner(t)
 
 	walletStorageKey := getWalletStorageKey(signer.wallet.publicKey)
 
@@ -53,7 +53,7 @@ func TestWalletRegistry_GetSigners(t *testing.T) {
 
 	walletRegistry := newWalletRegistry(persistenceHandle)
 
-	signer := sampleSigner(t)
+	signer := createMockSigner(t)
 
 	err := walletRegistry.registerSigner(signer)
 	if err != nil {
@@ -75,7 +75,7 @@ func TestWalletRegistry_GetSigners(t *testing.T) {
 }
 
 func TestWalletRegistry_PrePopulateWalletCache(t *testing.T) {
-	signer := sampleSigner(t)
+	signer := createMockSigner(t)
 	signerBytes, err := signer.Marshal()
 	if err != nil {
 		t.Fatal(err)
@@ -120,7 +120,7 @@ func TestWalletStorage_SaveSigner(t *testing.T) {
 
 	walletStorage := newWalletStorage(persistenceHandle)
 
-	signer := sampleSigner(t)
+	signer := createMockSigner(t)
 
 	err := walletStorage.saveSigner(signer)
 	if err != nil {
@@ -136,7 +136,7 @@ func TestWalletStorage_SaveSigner(t *testing.T) {
 }
 
 func TestWalletStorage_LoadSigners(t *testing.T) {
-	signer := sampleSigner(t)
+	signer := createMockSigner(t)
 	signerBytes, err := signer.Marshal()
 	if err != nil {
 		t.Fatal(err)
@@ -221,6 +221,10 @@ func (mph *mockPersistenceHandle) ReadAll() (
 }
 
 func (mph *mockPersistenceHandle) Archive(directory string) error {
+	panic("not implemented")
+}
+
+func (mph *mockPersistenceHandle) Delete(directory string, name string) error {
 	panic("not implemented")
 }
 

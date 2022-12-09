@@ -1,9 +1,10 @@
 package result
 
 import (
-	beaconchain "github.com/keep-network/keep-core/pkg/beacon/chain"
 	"math/big"
 	"testing"
+
+	beaconchain "github.com/keep-network/keep-core/pkg/beacon/chain"
 
 	bn256 "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
 	"github.com/keep-network/keep-core/pkg/beacon/gjkr"
@@ -15,14 +16,14 @@ func TestConvertResult(t *testing.T) {
 	marshalledPublicKey := publicKey.Marshal()
 
 	var tests = map[string]struct {
-		disqualifiedMemberIDs []group.MemberIndex
-		inactiveMemberIDs     []group.MemberIndex
-		gjkrResult            *gjkr.Result
-		expectedResult        *beaconchain.DKGResult
+		disqualifiedMemberIndexes []group.MemberIndex
+		inactiveMemberIndexes     []group.MemberIndex
+		gjkrResult                *gjkr.Result
+		expectedResult            *beaconchain.DKGResult
 	}{
 		"group public key not provided, DQ and IA empty": {
-			disqualifiedMemberIDs: []group.MemberIndex{},
-			inactiveMemberIDs:     []group.MemberIndex{},
+			disqualifiedMemberIndexes: []group.MemberIndex{},
+			inactiveMemberIndexes:     []group.MemberIndex{},
 			gjkrResult: &gjkr.Result{
 				GroupPublicKey: nil,
 				Group:          group.NewGroup(32, 64),
@@ -33,8 +34,8 @@ func TestConvertResult(t *testing.T) {
 			},
 		},
 		"group public key provided, DQ and IA empty": {
-			disqualifiedMemberIDs: []group.MemberIndex{},
-			inactiveMemberIDs:     []group.MemberIndex{},
+			disqualifiedMemberIndexes: []group.MemberIndex{},
+			inactiveMemberIndexes:     []group.MemberIndex{},
 			gjkrResult: &gjkr.Result{
 				GroupPublicKey: publicKey,
 				Group:          group.NewGroup(32, 64),
@@ -45,8 +46,8 @@ func TestConvertResult(t *testing.T) {
 			},
 		},
 		"group public key provided, both DQ and IA non-empty": {
-			disqualifiedMemberIDs: []group.MemberIndex{1, 4, 3, 50},
-			inactiveMemberIDs:     []group.MemberIndex{5, 3, 50},
+			disqualifiedMemberIndexes: []group.MemberIndex{1, 4, 3, 50},
+			inactiveMemberIndexes:     []group.MemberIndex{5, 3, 50},
 			gjkrResult: &gjkr.Result{
 				GroupPublicKey: publicKey,
 				Group:          group.NewGroup(32, 64),
@@ -57,8 +58,8 @@ func TestConvertResult(t *testing.T) {
 			},
 		},
 		"group public key provided, DQ empty, IA non-empty": {
-			disqualifiedMemberIDs: []group.MemberIndex{},
-			inactiveMemberIDs:     []group.MemberIndex{5},
+			disqualifiedMemberIndexes: []group.MemberIndex{},
+			inactiveMemberIndexes:     []group.MemberIndex{5},
 			gjkrResult: &gjkr.Result{
 				GroupPublicKey: publicKey,
 				Group:          group.NewGroup(32, 64),
@@ -69,8 +70,8 @@ func TestConvertResult(t *testing.T) {
 			},
 		},
 		"group public key provided, DQ non-empty, IA empty": {
-			disqualifiedMemberIDs: []group.MemberIndex{60, 1, 5},
-			inactiveMemberIDs:     []group.MemberIndex{},
+			disqualifiedMemberIndexes: []group.MemberIndex{60, 1, 5},
+			inactiveMemberIndexes:     []group.MemberIndex{},
 			gjkrResult: &gjkr.Result{
 				GroupPublicKey: publicKey,
 				Group:          group.NewGroup(32, 64),
@@ -82,11 +83,11 @@ func TestConvertResult(t *testing.T) {
 		},
 	}
 	for _, test := range tests {
-		for _, disqualifiedMember := range test.disqualifiedMemberIDs {
+		for _, disqualifiedMember := range test.disqualifiedMemberIndexes {
 			test.gjkrResult.Group.MarkMemberAsDisqualified(disqualifiedMember)
 		}
 
-		for _, inactiveMember := range test.inactiveMemberIDs {
+		for _, inactiveMember := range test.inactiveMemberIndexes {
 			test.gjkrResult.Group.MarkMemberAsInactive(inactiveMember)
 		}
 

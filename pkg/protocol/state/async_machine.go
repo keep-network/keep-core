@@ -9,15 +9,10 @@ import (
 	"github.com/keep-network/keep-core/pkg/net"
 )
 
-// For the entire time of initiating the state transition, messages are not
-// handled. We use a buffer to unblock producers and let them perform optional
-// filtering/validation during that time. The size of that buffer should not be
-// lower than the number of messages which can be delivered by the broadcast
-// channel during the time the state is blocked on initiation.
-// The async version of the state machine does not require a strict
-// synchronization between participants, so this number is also the maximum
-// number of messages that could be delivered when the current machine is
-// blocked on initiation and the rest of participants advance with work.
+// asyncReceiveBuffer is a buffer for messages received from the broadcast
+// channel used when the state machine's current state is temporarily too slow
+// to handle them. The asynchronous state machine tries to read from this buffer
+// all the time.
 const asyncReceiveBuffer = 512
 
 // The time interval with which the CanTransition of the AsyncState condition
@@ -73,22 +68,22 @@ func NewAsyncMachine(
 // Execute state machine starting with initial state up to finalization. It
 // requires the broadcast channel to be pre-initialized.
 func (am *AsyncMachine) Execute() (AsyncState, error) {
+	recvCtx, cancelRecvCtx := context.WithCancel(am.ctx)
+	defer cancelRecvCtx()
+
 	recvChan := make(chan net.Message, asyncReceiveBuffer)
 	handler := func(msg net.Message) {
 		recvChan <- msg
 	}
-	am.channel.Recv(am.ctx, handler)
+	am.channel.Recv(recvCtx, handler)
 
 	currentState := am.initialState
 
-	onStateDone, err := asyncStateTransition(
+	onStateDone := asyncStateTransition(
 		am.ctx,
 		am.logger,
 		currentState,
 	)
-	if err != nil {
-		return nil, err
-	}
 
 	for {
 		select {
@@ -103,7 +98,15 @@ func (am *AsyncMachine) Execute() (AsyncState, error) {
 				)
 			}
 
-		case <-onStateDone:
+		case err := <-onStateDone:
+			if err != nil {
+				return nil, fmt.Errorf(
+					"failed to initiate state [%T]: [%w]",
+					currentState,
+					err,
+				)
+			}
+
 			nextState, err := currentState.Next()
 			if err != nil {
 				return nil, fmt.Errorf(
@@ -123,40 +126,44 @@ func (am *AsyncMachine) Execute() (AsyncState, error) {
 			}
 
 			currentState = nextState
-			onStateDone, err = asyncStateTransition(
+			onStateDone = asyncStateTransition(
 				am.ctx,
 				am.logger,
 				currentState,
 			)
-			if err != nil {
-				return nil, err
-			}
+
 		case <-am.ctx.Done():
 			return nil, am.ctx.Err()
 		}
 	}
 }
 
+// asyncStateTransition kicks of the state initiation calling Initiate()
+// function and returns the channel that gets closed when the initiation is
+// done. In case the initiation failed, the channel receives an error from
+// the Initiate() call. This was, the message Recv loop in the state machine
+// is not blocked for the time of initiation.
 func asyncStateTransition(
 	ctx context.Context,
 	logger log.StandardLogger,
 	currentState AsyncState,
-) (<-chan interface{}, error) {
+) <-chan error {
 	logger.Infof(
 		"[member:%v,state:%T] transitioning to a new state",
 		currentState.MemberIndex(),
 		currentState,
 	)
 
-	err := currentState.Initiate(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("failed to initiate new state [%w]", err)
-	}
-
-	onDone := make(chan interface{})
-	ticker := time.NewTicker(transitionCheckInterval)
+	onDone := make(chan error)
 
 	go func() {
+		err := currentState.Initiate(ctx)
+		if err != nil {
+			onDone <- err
+			return
+		}
+
+		ticker := time.NewTicker(transitionCheckInterval)
 		defer ticker.Stop()
 
 		for {
@@ -178,5 +185,5 @@ func asyncStateTransition(
 		currentState,
 	)
 
-	return onDone, nil
+	return onDone
 }

@@ -35,6 +35,8 @@ func initFlags(
 		switch category {
 		case config.Ethereum:
 			initEthereumFlags(cmd, cfg)
+		case config.BitcoinElectrum:
+			initBitcoinElectrumFlags(cmd, cfg)
 		case config.Network:
 			initNetworkFlags(cmd, cfg)
 		case config.Storage:
@@ -150,6 +152,17 @@ func initEthereumFlags(cmd *cobra.Command, cfg *config.Config) {
 	)
 }
 
+// Initialize flags for Bitcoin electrum configuration.
+func initBitcoinElectrumFlags(cmd *cobra.Command, cfg *config.Config) {
+	cmd.Flags().StringVar(
+		&cfg.Bitcoin.Electrum.URL,
+		"bitcoin.electrum.url",
+		"",
+		"URL for Bitcoin electrum client connection.",
+	)
+	// TODO: Initialize other config options from `electrum.Config`
+}
+
 // Initialize flags for Network configuration.
 func initNetworkFlags(cmd *cobra.Command, cfg *config.Config) {
 	cmd.Flags().BoolVar(
@@ -257,6 +270,13 @@ func initTbtcFlags(cmd *cobra.Command, cfg *config.Config) {
 		"tbtc.keyGenerationConcurrency",
 		tbtc.DefaultKeyGenerationConcurrency,
 		"tECDSA key generation concurrency.",
+	)
+
+	cmd.Flags().BoolVar(
+		&cfg.Tbtc.Maintainer.BitcoinDifficulty,
+		"bitcoinDifficulty",
+		false,
+		"start Bitcoin difficulty maintainer",
 	)
 }
 
