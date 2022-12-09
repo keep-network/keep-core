@@ -3,6 +3,12 @@ package tbtc
 import (
 	"context"
 	"fmt"
+	"math/big"
+	"strings"
+	"sync"
+	"testing"
+	"time"
+
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/chain/local_v1"
 	"github.com/keep-network/keep-core/pkg/internal/testutils"
@@ -12,11 +18,9 @@ import (
 	"github.com/keep-network/keep-core/pkg/tecdsa"
 	"github.com/keep-network/keep-core/pkg/tecdsa/signing"
 	"golang.org/x/exp/slices"
-	"math/big"
-	"sync"
-	"testing"
 )
 
+// TestSigningDoneCheck is a happy path test.
 func TestSigningDoneCheck(t *testing.T) {
 	chainConfig := &ChainConfig{
 		GroupSize:       5,
@@ -49,7 +53,7 @@ func TestSigningDoneCheck(t *testing.T) {
 
 	type outcome struct {
 		memberIndex group.MemberIndex
-		signature   *tecdsa.Signature
+		result      *signing.Result
 		endBlock    uint64
 		err         error
 	}
@@ -62,37 +66,36 @@ func TestSigningDoneCheck(t *testing.T) {
 		go func(memberIndex group.MemberIndex) {
 			defer wg.Done()
 
+			doneCheck.listen(
+				ctx,
+				message,
+				attemptNumber,
+				attemptTimeoutBlock,
+				attemptMemberIndexes,
+			)
+
 			if slices.Contains(attemptMemberIndexes, memberIndex) {
-				endBlock, err := doneCheck.exchange(
+				err := doneCheck.signalDone(
 					ctx,
 					memberIndex,
 					message,
 					attemptNumber,
-					attemptTimeoutBlock,
-					attemptMemberIndexes,
 					result,
 					500+uint64(memberIndex),
 				)
-				outcomesChan <- &outcome{
-					memberIndex: memberIndex,
-					signature:   result.Signature,
-					endBlock:    endBlock,
-					err:         err,
+				if err != nil {
+					outcomesChan <- &outcome{err: err}
+					return
 				}
-			} else {
-				result, endBlock, err := doneCheck.listen(
-					ctx,
-					message,
-					attemptNumber,
-					attemptTimeoutBlock,
-					attemptMemberIndexes,
-				)
-				outcomesChan <- &outcome{
-					memberIndex: memberIndex,
-					signature:   result.Signature,
-					endBlock:    endBlock,
-					err:         err,
-				}
+			}
+
+			result, endBlock, err := doneCheck.waitUntilAllDone(ctx)
+
+			outcomesChan <- &outcome{
+				memberIndex: memberIndex,
+				result:      result,
+				endBlock:    endBlock,
+				err:         err,
 			}
 		}(memberIndex)
 	}
@@ -104,14 +107,26 @@ func TestSigningDoneCheck(t *testing.T) {
 	expectedEndBlock := 503
 
 	for outcome := range outcomesChan {
-		if !result.Signature.Equals(outcome.signature) {
+		if outcome.err != nil {
+			t.Errorf(
+				"unexpected error for member [%v]: [%v]",
+				outcome.memberIndex,
+				outcome.err,
+			)
+		}
+
+		if outcome.result == nil {
+			t.Errorf("unexpected nil result")
+		}
+
+		if !result.Signature.Equals(outcome.result.Signature) {
 			t.Errorf(
 				"unexpected signature for member [%v]\n"+
 					"expected: [%v]\n"+
 					"actual:   [%v]",
 				outcome.memberIndex,
 				result.Signature,
-				outcome.signature,
+				outcome.result.Signature,
 			)
 		}
 
@@ -121,14 +136,158 @@ func TestSigningDoneCheck(t *testing.T) {
 			expectedEndBlock,
 			int(outcome.endBlock),
 		)
+	}
+}
 
-		if outcome.err != nil {
-			t.Errorf(
-				"unexpected error for member [%v]: [%v]",
-				outcome.memberIndex,
-				outcome.err,
-			)
+// TestSigningDoneCheck_MissingConfirmation covers scenario when one member
+// did not provide a done check on time.
+func TestSigningDoneCheck_MissingConfirmation(t *testing.T) {
+	chainConfig := &ChainConfig{
+		GroupSize:       5,
+		GroupQuorum:     4,
+		HonestThreshold: 3,
+	}
+
+	doneCheck := setupSigningDoneCheck(t, chainConfig)
+
+	memberIndexes := make([]group.MemberIndex, doneCheck.groupSize)
+	for i := range memberIndexes {
+		memberIndex := group.MemberIndex(i + 1)
+		memberIndexes[i] = memberIndex
+	}
+
+	ctx, cancelCtx := context.WithTimeout(context.Background(), 100*time.Millisecond)
+	defer cancelCtx()
+
+	message := big.NewInt(100)
+	attemptNumber := uint64(1)
+	attemptTimeoutBlock := uint64(1000)
+	attemptMemberIndexes := memberIndexes[:chainConfig.HonestThreshold]
+	result := &signing.Result{
+		Signature: &tecdsa.Signature{
+			R:          big.NewInt(200),
+			S:          big.NewInt(300),
+			RecoveryID: 2,
+		},
+	}
+
+	doneCheck.listen(
+		ctx,
+		message,
+		attemptNumber,
+		attemptTimeoutBlock,
+		attemptMemberIndexes,
+	)
+
+	for i := 1; i < chainConfig.HonestThreshold; i++ {
+		err := doneCheck.signalDone(
+			ctx,
+			uint8(i),
+			message,
+			attemptNumber,
+			result,
+			100,
+		)
+		if err != nil {
+			t.Fatal(err)
 		}
+	}
+
+	returnedResult, endBlock, err := doneCheck.waitUntilAllDone(ctx)
+
+	if returnedResult != nil {
+		t.Errorf("expected nil result, has [%v]", returnedResult)
+	}
+	testutils.AssertIntsEqual(t, "end block", 0, int(endBlock))
+	testutils.AssertErrorsSame(t, errWaitDoneTimedOut, err)
+}
+
+// TestSigningDoneCheck_AnotherSignature covers scenario when one member
+// did provide signature other than other members.
+func TestSigningDoneCheck_AnotherSignature(t *testing.T) {
+	chainConfig := &ChainConfig{
+		GroupSize:       5,
+		GroupQuorum:     4,
+		HonestThreshold: 3,
+	}
+
+	doneCheck := setupSigningDoneCheck(t, chainConfig)
+
+	memberIndexes := make([]group.MemberIndex, doneCheck.groupSize)
+	for i := range memberIndexes {
+		memberIndex := group.MemberIndex(i + 1)
+		memberIndexes[i] = memberIndex
+	}
+
+	ctx, cancelCtx := context.WithCancel(context.Background())
+	defer cancelCtx()
+
+	message := big.NewInt(100)
+	attemptNumber := uint64(1)
+	attemptTimeoutBlock := uint64(1000)
+	attemptMemberIndexes := memberIndexes[:chainConfig.HonestThreshold]
+	correctResult := &signing.Result{
+		Signature: &tecdsa.Signature{
+			R:          big.NewInt(200),
+			S:          big.NewInt(300),
+			RecoveryID: 2,
+		},
+	}
+	incorrectResult := &signing.Result{
+		Signature: &tecdsa.Signature{
+			R:          big.NewInt(201),
+			S:          big.NewInt(300),
+			RecoveryID: 2,
+		},
+	}
+
+	doneCheck.listen(
+		ctx,
+		message,
+		attemptNumber,
+		attemptTimeoutBlock,
+		attemptMemberIndexes,
+	)
+
+	// chainConfig.HonestThreshold members provide correct signature
+	for i := 1; i < chainConfig.HonestThreshold; i++ {
+		err := doneCheck.signalDone(
+			ctx,
+			uint8(i),
+			message,
+			attemptNumber,
+			correctResult,
+			100,
+		)
+		if err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	// one member provides incorrect signature
+	err := doneCheck.signalDone(
+		ctx,
+		uint8(chainConfig.HonestThreshold),
+		message,
+		attemptNumber,
+		incorrectResult,
+		100,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Give some time for the message handler goroutine
+	time.Sleep(100 * time.Millisecond)
+
+	returnedResult, endBlock, err := doneCheck.waitUntilAllDone(ctx)
+
+	if returnedResult != nil {
+		t.Errorf("expected nil result, has [%v]", returnedResult)
+	}
+	testutils.AssertIntsEqual(t, "end block", 0, int(endBlock))
+	if !strings.Contains(err.Error(), "not matching signatures detected") {
+		t.Errorf("unexpected error: [%v]", err)
 	}
 }
 

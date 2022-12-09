@@ -53,7 +53,7 @@ func (mf *InactiveMemberFilter) FlushInactiveMembers() {
 		return false
 	}
 
-	for _, operatingMemberID := range mf.group.OperatingMemberIDs() {
+	for _, operatingMemberID := range mf.group.OperatingMemberIndexes() {
 		if !isActive(operatingMemberID) {
 			mf.logger.Warnf(
 				"[member:%v] marking member [%v] as inactive",

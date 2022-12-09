@@ -690,8 +690,8 @@ github.com/kami-zh/go-capturer v0.0.0-20171211120116-e492ea43421d/go.mod h1:P2vi
 github.com/karalabe/usb v0.0.2/go.mod h1:Od972xHfMJowv7NGVDiWVxk2zxnWgjLlJzE+F4F7AGU=
 github.com/keep-network/go-electrum v0.0.0-20220912200153-b862ac442cf9 h1:cx5nKmxEWl0cOQX8zzhmCqpCjZUwfhRGDodYfmDBd7g=
 github.com/keep-network/go-electrum v0.0.0-20220912200153-b862ac442cf9/go.mod h1:EjLxYzaf/28gOdSRlifeLfjoOA6aUjtJZhwaZPnjL9c=
-github.com/keep-network/keep-common v1.7.1-0.20221202150054-6bb1ab62d428 h1:GGjXmuX50APWdFc6sf8m7pc/YodvhcjlAidZ/0Z+Bu0=
-github.com/keep-network/keep-common v1.7.1-0.20221202150054-6bb1ab62d428/go.mod h1:OmaZrnZODf6RJ95yUn2kBjy8Z4u2npPJQkSiyimluto=
+github.com/keep-network/keep-common v1.7.1-0.20221209141213-c5370c90bf9f h1:hSQHUILojmmMsYOkLgGoPbHSWIcgxj11JBjF9tbqvg0=
+github.com/keep-network/keep-common v1.7.1-0.20221209141213-c5370c90bf9f/go.mod h1:OmaZrnZODf6RJ95yUn2kBjy8Z4u2npPJQkSiyimluto=
 github.com/keep-network/tss-lib v1.3.3-0.20220826121242-73ee9558285f h1:8tCqIjMDoexUwaKFCcNH8moYUkl0LINeCLXnfag57No=
 github.com/keep-network/tss-lib v1.3.3-0.20220826121242-73ee9558285f/go.mod h1:avz+lZjqmDB/5aleGe1JBxYKY6BzMmFlhZ0VmuifpsU=
 github.com/kisielk/errcheck v1.1.0/go.mod h1:EZBBE59ingxPouuu3KfxchcWSUPOHkagtvWXihfKN4Q=
