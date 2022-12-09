@@ -11,7 +11,13 @@
     },
     "Bitcoin": {
         "Electrum": {
-            "URL": "url.to.electrum:18332"
+            "URL": "url.to.electrum:18332",
+            "Protocol": "ssl",
+            "ConnectTimeout": "54s",
+            "ConnectRetryTimeout": "3m12s",
+            "RequestTimeout": "1m34s",
+            "RequestRetryTimeout": "5m",
+            "KeepAliveInterval": "12m"
         }
     },
     "Network": {
