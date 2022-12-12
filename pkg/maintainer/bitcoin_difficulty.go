@@ -100,17 +100,24 @@ func (bdm *BitcoinDifficultyMaintainer) proveEpochs(ctx context.Context) error {
 	}
 
 	for {
-		if err := bdm.proveNextEpoch(); err != nil {
+		epochProven, err := bdm.proveNextEpoch(ctx)
+		if err != nil {
 			return fmt.Errorf(
 				"cannot prove Bitcoin blockchain epoch: [%w]",
 				err,
 			)
 		}
 
-		select {
-		case <-time.After(bdm.epochProvenBackOffTime):
-		case <-ctx.Done():
-			return ctx.Err()
+		// Sleep for some time if the Bitcoin epoch was not proven (i.e. Bitcoin
+		// difficulty chain is up-to-date or there are not enough block headers
+		// in the new epoch). Do not sleep if a Bitcoin epoch was proven as
+		// there are likely more Bitcoin epochs to prove.
+		if !epochProven {
+			select {
+			case <-time.After(bdm.epochProvenBackOffTime):
+			case <-ctx.Done():
+				return ctx.Err()
+			}
 		}
 	}
 }
@@ -162,13 +169,19 @@ func (bdm *BitcoinDifficultyMaintainer) verifySubmissionEligibility() error {
 }
 
 // proveNextEpoch proves a single Bitcoin blockchain epoch in the Bitcoin
-// difficulty chain if there is a Bitcoin blockchain epoch to be proven.
-func (bdm *BitcoinDifficultyMaintainer) proveNextEpoch() error {
+// difficulty chain if there is an epoch to be proven. If it was possible to
+// prove an epoch, it returns true. If it was not possible (i.e. Bitcoin
+// difficulty chain is up-to-date or there are not enough headers in the new
+// Bitcoin epoch), it returns false.
+func (bdm *BitcoinDifficultyMaintainer) proveNextEpoch(ctx context.Context) (
+	bool,
+	error,
+) {
 	// The height of the Bitcoin blockchain.
 	currentBlockHeight, err := bdm.btcChain.GetLatestBlockHeight()
 	if err != nil {
-		return fmt.Errorf(
-			"failed to get current block number: [%w]",
+		return false, fmt.Errorf(
+			"failed to get latest block height: [%w]",
 			err,
 		)
 	}
@@ -176,7 +189,7 @@ func (bdm *BitcoinDifficultyMaintainer) proveNextEpoch() error {
 	// The current epoch proven in the Bitcoin difficulty chain.
 	currentEpoch, err := bdm.chain.CurrentEpoch()
 	if err != nil {
-		return fmt.Errorf(
+		return false, fmt.Errorf(
 			"failed to get current epoch: [%w]",
 			err,
 		)
@@ -185,7 +198,7 @@ func (bdm *BitcoinDifficultyMaintainer) proveNextEpoch() error {
 	// The number of blocks required for each side of a retarget proof.
 	proofLength, err := bdm.chain.ProofLength()
 	if err != nil {
-		return fmt.Errorf(
+		return false, fmt.Errorf(
 			"failed to get proof length: [%w]",
 			err,
 		)
@@ -221,14 +234,14 @@ func (bdm *BitcoinDifficultyMaintainer) proveNextEpoch() error {
 			lastBlockHeaderHeight,
 		)
 		if err != nil {
-			return fmt.Errorf(
+			return false, fmt.Errorf(
 				"failed to get block headers from Bitcoin chain: [%w]",
 				err,
 			)
 		}
 
 		if err := bdm.chain.Retarget(headers); err != nil {
-			return fmt.Errorf(
+			return false, fmt.Errorf(
 				"failed to submit block headers from range [%d:%d] to "+
 					"the Bitcoin difficulty chain: [%w]",
 				firstBlockHeaderHeight,
@@ -237,14 +250,26 @@ func (bdm *BitcoinDifficultyMaintainer) proveNextEpoch() error {
 			)
 		}
 
+		if err := bdm.waitForCurrentEpochUpdate(ctx, uint64(newEpoch)); err != nil {
+			return false, fmt.Errorf(
+				"error while waiting for current Bitcoin difficulty epoch "+
+					"update: [%w]",
+				err,
+			)
+		}
+
 		logger.Infof(
-			"successfully submitted block headers [%d:%d] for epoch %d to "+
-				"the Bitcoin difficulty chain",
+			"successfully submitted block headers [%d:%d] to the Bitcoin "+
+				"difficulty chain. The current proven epoch is %d.",
 			firstBlockHeaderHeight,
 			lastBlockHeaderHeight,
 			newEpoch,
 		)
-	} else if currentBlockHeight >= newEpochHeight {
+
+		return true, nil
+	}
+
+	if currentBlockHeight >= newEpochHeight {
 		logger.Infof(
 			"the Bitcoin difficulty chain has to be synced with the "+
 				"Bitcoin blockchain; waiting for [%d] new blocks to "+
@@ -258,7 +283,7 @@ func (bdm *BitcoinDifficultyMaintainer) proveNextEpoch() error {
 		)
 	}
 
-	return nil
+	return false, nil
 }
 
 // getBlockHeaders returns block headers from the given range.
@@ -284,4 +309,37 @@ func (bdm *BitcoinDifficultyMaintainer) getBlockHeaders(
 	}
 
 	return headers, nil
+}
+
+// waitForCurrentEpochUpdate waits until the current epoch in the Bitcoin
+// difficulty chain is equal to or higher than the provided target epoch.
+func (bdm *BitcoinDifficultyMaintainer) waitForCurrentEpochUpdate(
+	ctx context.Context,
+	targetEpoch uint64,
+) error {
+	for {
+		currentEpoch, err := bdm.chain.CurrentEpoch()
+		if err != nil {
+			return fmt.Errorf("failed to get current epoch: [%w]", err)
+		}
+
+		if currentEpoch >= targetEpoch {
+			break
+		}
+
+		logger.Infof(
+			"waiting for bitcoin difficulty chain to reach epoch %d, "+
+				"current proven epoch is %d",
+			targetEpoch,
+			currentEpoch,
+		)
+
+		select {
+		case <-time.After(time.Second):
+		case <-ctx.Done():
+			return ctx.Err()
+		}
+	}
+
+	return nil
 }

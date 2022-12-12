@@ -73,6 +73,9 @@ func TestVerifySubmissionEligibility(t *testing.T) {
 }
 
 func TestProveNextEpoch(t *testing.T) {
+	ctx, cancelCtx := context.WithCancel(context.Background())
+	defer cancelCtx()
+
 	btcChain := connectLocalBitcoinChain()
 
 	// Set three block headers on each side of the retarget. The old epoch
@@ -141,9 +144,18 @@ func TestProveNextEpoch(t *testing.T) {
 		restartBackOffTime:     defaultRestartBackoffTime,
 	}
 
-	err := bitcoinDifficultyMaintainer.proveNextEpoch()
+	result, err := bitcoinDifficultyMaintainer.proveNextEpoch(ctx)
 	if err != nil {
 		t.Fatal(err)
+	}
+
+	expectedResult := true
+	if result != expectedResult {
+		t.Fatalf(
+			"unexpected result returned\nexpected: %v\nactual:   %v\n",
+			expectedResult,
+			result,
+		)
 	}
 
 	expectedNumberOfRetargetEvents := 1
@@ -175,6 +187,21 @@ func TestProveNextEpoch(t *testing.T) {
 				"expected: %v\nactual:   %v\n",
 			expectedNewDifficulty,
 			eventsNewDifficulty,
+		)
+	}
+
+	// Call once more, this time without any new epoch to prove
+	result, err = bitcoinDifficultyMaintainer.proveNextEpoch(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	expectedResult = false
+	if result != expectedResult {
+		t.Fatalf(
+			"unexpected result returned\nexpected: %v\nactual:   %v\n",
+			expectedResult,
+			result,
 		)
 	}
 }
@@ -229,6 +256,97 @@ func TestGetBlockHeaders(t *testing.T) {
 	if !reflect.DeepEqual(expectedHeaders, headers) {
 		t.Errorf("\nexpected: %v\nactual:   %v", expectedHeaders, headers)
 	}
+}
+
+func TestWaitForCurrentEpochUpdate_Successful(t *testing.T) {
+	ctx, cancelCtx := context.WithCancel(context.Background())
+	defer cancelCtx()
+
+	currentEpoch := uint64(299)
+	targetEpoch := uint64(300)
+
+	difficultyChain := connectLocalBitcoinDifficultyChain()
+	difficultyChain.SetCurrentEpoch(currentEpoch)
+
+	bitcoinDifficultyMaintainer := &BitcoinDifficultyMaintainer{
+		btcChain:               nil,
+		chain:                  difficultyChain,
+		epochProvenBackOffTime: 2 * time.Second,
+		restartBackOffTime:     2 * time.Second,
+	}
+
+	// Run function on a goroutine. The function should wait until the current
+	// epoch is set to the target epoch.
+	errChan := make(chan error, 1)
+	go func() {
+		err := bitcoinDifficultyMaintainer.waitForCurrentEpochUpdate(
+			ctx,
+			targetEpoch,
+		)
+
+		errChan <- err
+	}()
+
+	// Make sure the function keeps waiting for the current epoch to be updated.
+	select {
+	case <-time.After(1500 * time.Millisecond):
+	case <-errChan:
+		t.Fatal("Unexpected return from function")
+	}
+
+	// Update the current epoch to allow the waiting function to return.
+	difficultyChain.SetCurrentEpoch(targetEpoch)
+	select {
+	case <-time.After(1500 * time.Millisecond):
+		t.Fatal("Function did not return on time")
+	case err := <-errChan:
+		if err != nil {
+			t.Fatal(err)
+		}
+	}
+}
+
+func TestWaitForCurrentEpochUpdate_Cancelled(t *testing.T) {
+	ctx, cancelCtx := context.WithCancel(context.Background())
+	defer cancelCtx()
+
+	currentEpoch := uint64(299)
+	targetEpoch := uint64(300)
+
+	difficultyChain := connectLocalBitcoinDifficultyChain()
+	difficultyChain.SetCurrentEpoch(currentEpoch)
+
+	bitcoinDifficultyMaintainer := &BitcoinDifficultyMaintainer{
+		btcChain:               nil,
+		chain:                  difficultyChain,
+		epochProvenBackOffTime: 2 * time.Second,
+		restartBackOffTime:     2 * time.Second,
+	}
+
+	// Run function on a goroutine. The function should wait until the current
+	// epoch is set to the target epoch.
+	errChan := make(chan error, 1)
+	go func() {
+		err := bitcoinDifficultyMaintainer.waitForCurrentEpochUpdate(
+			ctx,
+			targetEpoch,
+		)
+
+		errChan <- err
+	}()
+
+	// Cancel context while the function is waiting for current epoch to be
+	// updated.
+	cancelCtx()
+
+	var err error
+	select {
+	case <-time.After(1500 * time.Millisecond):
+		t.Fatal("Function did not return on time")
+	case err = <-errChan:
+	}
+
+	testutils.AssertAnyErrorInChainMatchesTarget(t, context.Canceled, err)
 }
 
 func TestProveEpochs_ErrorVerifyingSubmissionEligibility(t *testing.T) {
@@ -372,9 +490,8 @@ func TestBitcoinDifficultyMaintainer_Integration(t *testing.T) {
 	// maintainer started processing headers.
 	time.Sleep(100 * time.Millisecond)
 
-	//************ Prove epoch for the first time ************
-	// Set headers in the Bitcoin chain. The headers will be used to prove
-	// epochs 300 and 301 in this and subsequent tests.
+	//************ Prove two epochs ************
+	// Set block headers for epochs 300 and 301 in the Bitcoin chain.
 	blockHeaders := map[uint]*bitcoin.BlockHeader{
 		604799: { // Last block of the epoch 299
 			Version:                 0,
@@ -408,22 +525,6 @@ func TestBitcoinDifficultyMaintainer_Integration(t *testing.T) {
 			Bits:                    3333333,
 			Nonce:                   60,
 		},
-		608831: { // Last block of the epoch 301
-			Version:                 0,
-			PreviousBlockHeaderHash: bitcoin.Hash{},
-			MerkleRootHash:          bitcoin.Hash{},
-			Time:                    1000600,
-			Bits:                    3333333,
-			Nonce:                   70,
-		},
-		608832: { // First block of the epoch 302
-			Version:                 0,
-			PreviousBlockHeaderHash: bitcoin.Hash{},
-			MerkleRootHash:          bitcoin.Hash{},
-			Time:                    1000700,
-			Bits:                    4444444,
-			Nonce:                   80,
-		},
 	}
 	btcChain.SetBlockHeaders(blockHeaders)
 
@@ -432,7 +533,7 @@ func TestBitcoinDifficultyMaintainer_Integration(t *testing.T) {
 	time.Sleep(restartBackOffTime)
 
 	// Make sure the first new epoch has been proven.
-	expectedNumberOfRetargetEvents := 1
+	expectedNumberOfRetargetEvents := 2
 	retargetEvents := difficultyChain.RetargetEvents()
 	if len(retargetEvents) != expectedNumberOfRetargetEvents {
 		t.Fatalf(
@@ -464,22 +565,6 @@ func TestBitcoinDifficultyMaintainer_Integration(t *testing.T) {
 		)
 	}
 
-	//************ Prove epoch for the second time ************
-	// Wait for the Bitcoin difficulty maintainer to try processing headers
-	// again after the previous successful attempt.
-	time.Sleep(epochProvenBackOffTime)
-
-	// Make sure the second new epoch has been proven.
-	expectedNumberOfRetargetEvents = 2
-	retargetEvents = difficultyChain.RetargetEvents()
-	if len(retargetEvents) != expectedNumberOfRetargetEvents {
-		t.Fatalf(
-			"unexpected number of retarget events\nexpected: %v\nactual:   %v\n",
-			expectedNumberOfRetargetEvents,
-			len(retargetEvents),
-		)
-	}
-
 	eventsOldDifficulty = retargetEvents[1].oldDifficulty
 	expectedOldDifficulty = blockHeaders[606815].Bits
 	if eventsOldDifficulty != expectedOldDifficulty {
@@ -506,9 +591,30 @@ func TestBitcoinDifficultyMaintainer_Integration(t *testing.T) {
 	// Cancel the context to force the Bitcoin difficulty maintainer to stop.
 	cancelCtx()
 
+	// Set block headers for epoch 302 in the Bitcoin chain.
+	blockHeaders = map[uint]*bitcoin.BlockHeader{
+		608831: { // Last block of the epoch 301
+			Version:                 0,
+			PreviousBlockHeaderHash: bitcoin.Hash{},
+			MerkleRootHash:          bitcoin.Hash{},
+			Time:                    1000600,
+			Bits:                    3333333,
+			Nonce:                   70,
+		},
+		608832: { // First block of the epoch 302
+			Version:                 0,
+			PreviousBlockHeaderHash: bitcoin.Hash{},
+			MerkleRootHash:          bitcoin.Hash{},
+			Time:                    1000700,
+			Bits:                    4444444,
+			Nonce:                   80,
+		},
+	}
+	btcChain.SetBlockHeaders(blockHeaders)
+
 	// Wait before proceeding with testing. If the Bitcoin difficulty maintainer
 	// has not stopped, it will prove another epoch.
-	time.Sleep(epochProvenBackOffTime)
+	time.Sleep(restartBackOffTime)
 
 	// Make sure the Bitcoin difficulty maintainer has stopped and the number
 	// of proven epochs has not changed.
