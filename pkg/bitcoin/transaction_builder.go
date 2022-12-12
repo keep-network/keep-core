@@ -13,7 +13,7 @@ import (
 // TransactionBuilder is a component that is responsible for the whole
 // transaction creation process. It assembles an unsigned transaction,
 // prepares it for signing, and applies the given signatures in order to
-// produce a full-fledged signed transaction that can be spread across
+// produce a full-fledged signed transaction that can be broadcast across
 // the Bitcoin network. The builder IS NOT SAFE for concurrent use.
 type TransactionBuilder struct {
 	chain       Chain
