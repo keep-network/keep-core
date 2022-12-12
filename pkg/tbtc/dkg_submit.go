@@ -3,8 +3,6 @@ package tbtc
 import (
 	"context"
 	"fmt"
-	"time"
-
 	"github.com/ipfs/go-log/v2"
 	"github.com/keep-network/keep-core/pkg/protocol/group"
 	"github.com/keep-network/keep-core/pkg/tecdsa/dkg"
@@ -67,26 +65,29 @@ type dkgResultSubmitter struct {
 	dkgLogger            log.StandardLogger
 	chain                Chain
 	groupSelectionResult *GroupSelectionResult
+
+	waitForBlockFn waitForBlockFn
 }
 
 func newDkgResultSubmitter(
 	dkgLogger log.StandardLogger,
 	chain Chain,
 	groupSelectionResult *GroupSelectionResult,
+	waitForBlockFn waitForBlockFn,
 ) *dkgResultSubmitter {
 	return &dkgResultSubmitter{
 		dkgLogger:            dkgLogger,
 		chain:                chain,
 		groupSelectionResult: groupSelectionResult,
+		waitForBlockFn:       waitForBlockFn,
 	}
 }
 
 // SubmitResult submits the DKG result along with submitting signatures to the
 // chain. In the process, it checks if the number of signatures is above
 // the required threshold, whether the result was already submitted and waits
-// until the member is eligible for DKG result submission.
-//
-// TODO: Adjust the delays to be block-based and take the timeout into account.
+// until the member is eligible for DKG result submission or the given context
+// is done, whichever comes first.
 func (drs *dkgResultSubmitter) SubmitResult(
 	ctx context.Context,
 	memberIndex group.MemberIndex,
@@ -103,15 +104,6 @@ func (drs *dkgResultSubmitter) SubmitResult(
 		)
 	}
 
-	resultSubmittedChan := make(chan uint64)
-
-	subscription := drs.chain.OnDKGResultSubmitted(
-		func(event *DKGResultSubmittedEvent) {
-			resultSubmittedChan <- event.BlockNumber
-		},
-	)
-	defer subscription.Unsubscribe()
-
 	dkgState, err := drs.chain.GetDKGState()
 	if err != nil {
 		return fmt.Errorf("could not check DKG state: [%w]", err)
@@ -127,61 +119,74 @@ func (drs *dkgResultSubmitter) SubmitResult(
 		return nil
 	}
 
-	submissionDelay := time.Duration(memberIndex-1) * dkgResultSubmissionDelayStep
+	blockCounter, err := drs.chain.BlockCounter()
+	if err != nil {
+		return err
+	}
+
+	// We can't determine a common block at which the publication starts.
+	// However, all we want here is to ensure the members does not submit
+	// in the same time. This can be achieved by simply using the index-based
+	// delay starting from the current block.
+	currentBlock, err := blockCounter.CurrentBlock()
+	if err != nil {
+		return fmt.Errorf("cannot get current block: [%v]", err)
+	}
+	delayBlocks := uint64(memberIndex-1) * dkgResultSubmissionDelayStepBlocks
+	submissionBlock := currentBlock + delayBlocks
 
 	drs.dkgLogger.Infof(
-		"[member:%v] waiting [%v] to submit",
+		"[member:%v] waiting for block [%v] to submit DKG result",
 		memberIndex,
-		submissionDelay,
+		submissionBlock,
 	)
 
-	submissionTimer := time.NewTimer(submissionDelay)
-	defer submissionTimer.Stop()
-
-	for {
-		select {
-		case <-submissionTimer.C:
-			// Member becomes eligible to submit the result. Result submission
-			// would trigger the sender side of the result submission event
-			// listener but also cause the receiver side (this select)
-			// termination that will result with a dangling goroutine blocked
-			// forever on the `onSubmittedResultChan` channel. This would
-			// cause a resource leak. In order to avoid that, we should
-			// unsubscribe from the result submission event listener before
-			// submitting the result.
-			subscription.Unsubscribe()
-
-			publicKeyBytes, err := result.GroupPublicKeyBytes()
-			if err != nil {
-				return fmt.Errorf("cannot get public key bytes [%w]", err)
-			}
-
-			drs.dkgLogger.Infof(
-				"[member:%v] submitting DKG result with public key [0x%x] and "+
-					"[%v] supporting member signatures",
-				memberIndex,
-				publicKeyBytes,
-				len(signatures),
-			)
-
-			return drs.chain.SubmitDKGResult(
-				memberIndex,
-				result,
-				signatures,
-				drs.groupSelectionResult,
-			)
-		case blockNumber := <-resultSubmittedChan:
-			drs.dkgLogger.Infof(
-				"[member:%v] leaving; DKG result submitted by other member "+
-					"at block [%v]",
-				memberIndex,
-				blockNumber,
-			)
-			// A result has been submitted by other member. Leave without
-			// publishing the result.
-			return nil
-		case <-ctx.Done():
-			return fmt.Errorf("result publication timed out")
-		}
+	err = drs.waitForBlockFn(ctx, submissionBlock)
+	if err != nil {
+		return fmt.Errorf(
+			"error while waiting for DKG result submission block: [%v]",
+			err,
+		)
 	}
+
+	// If the context was cancelled and the on-chain DKG state is Challenge,
+	// that means the result was submitted by someone else and the submission
+	// process can be deemed as successful. Another state means that the DKG
+	// timeout was hit.
+	if ctx.Err() != nil {
+		dkgState, err := drs.chain.GetDKGState()
+		if err != nil {
+			return fmt.Errorf("could not check DKG state: [%w]", err)
+		}
+
+		if dkgState == Challenge {
+			drs.dkgLogger.Infof(
+				"[member:%v] DKG result submitted by other member",
+				memberIndex,
+			)
+			return nil
+		}
+
+		return fmt.Errorf("DKG timed out")
+	}
+
+	publicKeyBytes, err := result.GroupPublicKeyBytes()
+	if err != nil {
+		return fmt.Errorf("cannot get public key bytes [%w]", err)
+	}
+
+	drs.dkgLogger.Infof(
+		"[member:%v] submitting DKG result with public key [0x%x] and "+
+			"[%v] supporting member signatures",
+		memberIndex,
+		publicKeyBytes,
+		len(signatures),
+	)
+
+	return drs.chain.SubmitDKGResult(
+		memberIndex,
+		result,
+		signatures,
+		drs.groupSelectionResult,
+	)
 }

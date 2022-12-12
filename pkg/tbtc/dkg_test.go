@@ -291,31 +291,12 @@ func TestDkgExecutor_ExecuteDkgValidation(t *testing.T) {
 				}
 			}
 
-			waitForBlockFn := func(ctx context.Context, block uint64) error {
-				blockCounter, err := localChain.BlockCounter()
-				if err != nil {
-					return err
-				}
-
-				wait, err := blockCounter.BlockHeightWaiter(block)
-				if err != nil {
-					return err
-				}
-
-				select {
-				case <-wait:
-				case <-ctx.Done():
-				}
-
-				return nil
-			}
-
 			// Setting only the fields really needed for this test.
 			dkgExecutor := &dkgExecutor{
 				operatorID:      operatorID,
 				operatorAddress: operatorAddress,
 				chain:           localChain,
-				waitForBlockFn:  waitForBlockFn,
+				waitForBlockFn:  testWaitForBlockFn(localChain),
 			}
 
 			eventChan := make(chan interface{}, 1)
@@ -460,5 +441,26 @@ func TestFinalSigningGroup(t *testing.T) {
 				)
 			}
 		})
+	}
+}
+
+func testWaitForBlockFn(localChain *localChain) waitForBlockFn {
+	return func(ctx context.Context, block uint64) error {
+		blockCounter, err := localChain.BlockCounter()
+		if err != nil {
+			return err
+		}
+
+		wait, err := blockCounter.BlockHeightWaiter(block)
+		if err != nil {
+			return err
+		}
+
+		select {
+		case <-wait:
+		case <-ctx.Done():
+		}
+
+		return nil
 	}
 }

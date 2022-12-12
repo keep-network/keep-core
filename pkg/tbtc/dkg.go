@@ -19,17 +19,15 @@ import (
 	"github.com/keep-network/keep-core/pkg/tecdsa/dkg"
 )
 
-// TODO: Revisit those constants, especially dkgResultSubmissionDelayStep
-// which should be bigger once the contract integration is ready.
 const (
 	// dkgAttemptMaxBlockDuration determines the maximum block duration of a
 	// single DKG attempt.
 	dkgAttemptMaxBlockDuration = 150
-	// dkgResultSubmissionDelayStep determines the delay step that is used to
-	// calculate the submission delay time that should be respected by the
-	// given member to avoid all members submitting the same DKG result at the
-	// same time.
-	dkgResultSubmissionDelayStep = 10 * time.Second
+	// dkgResultSubmissionDelayStep determines the delay step in blocks that
+	// is used to calculate the submission delay period that should be respected
+	// by the given member to avoid all members submitting the same DKG result
+	// at the same time.
+	dkgResultSubmissionDelayStepBlocks = 5
 	// dkgResultApprovalDelayStepBlocks determines the delay step in blocks
 	// that is used to calculate the approval delay period that should be
 	// respected by the given member to avoid all members approving the same
@@ -500,26 +498,31 @@ func (de *dkgExecutor) submitDkgResult(
 	groupSelectionResult *GroupSelectionResult,
 	startBlock uint64,
 ) error {
-	// Set up the publication stop signal that should allow to
-	// perform all the result-signing-related actions and
-	// handle the worst case when the result is submitted by the
-	// last group member.
-	chainConfig := de.chain.GetConfig()
-	publicationTimeout := time.Duration(chainConfig.GroupSize) *
-		dkgResultSubmissionDelayStep
-	publicationCtx, cancelPublicationCtx := context.WithTimeout(
+	dkgParameters, err := de.chain.DKGParameters()
+	if err != nil {
+		return fmt.Errorf("cannot get DKG parameters: [%v]", err)
+	}
+
+	// Set up a publication context that is cancelled on the DKG timeout block.
+	// This is the latest block at which the result is accepted by the chain
+	// so there is no point to wait for an explicit timeout notification.
+	dkgTimeoutBlock := startBlock + dkgParameters.SubmissionTimeoutBlocks
+	publicationCtx, cancelPublicationCtx := withCancelOnBlock(
 		context.Background(),
-		publicationTimeout,
+		dkgTimeoutBlock,
+		de.waitForBlockFn,
 	)
-	// TODO: Call cancelPublicationCtx() when the result is
-	//       available and published and remove this goroutine.
-	//       This goroutine is duplicating context.WithTimeout work
-	//       right now but is here to emphasize the need of manual
-	//       context cancellation.
-	go func() {
-		defer cancelPublicationCtx()
-		time.Sleep(publicationTimeout)
-	}()
+
+	// Set up an early context cancellation in case of the happy path. It is
+	// important to cancel the publication context here as that context drives
+	// the retransmission of messages exchanged as part of the publication phase.
+	// Retransmitting those messages until the timeout would cause unnecessary
+	// network load.
+	subscription := de.chain.OnDKGResultSubmitted(
+		func(*DKGResultSubmittedEvent) {
+			cancelPublicationCtx()
+		})
+	defer subscription.Unsubscribe()
 
 	return dkg.Publish(
 		publicationCtx,
@@ -529,7 +532,7 @@ func (de *dkgExecutor) submitDkgResult(
 		broadcastChannel,
 		membershipValidator,
 		newDkgResultSigner(de.chain, startBlock),
-		newDkgResultSubmitter(dkgLogger, de.chain, groupSelectionResult),
+		newDkgResultSubmitter(dkgLogger, de.chain, groupSelectionResult, de.waitForBlockFn),
 		dkgResult,
 	)
 }

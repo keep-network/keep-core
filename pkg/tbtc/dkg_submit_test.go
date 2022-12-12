@@ -255,6 +255,7 @@ func TestSubmitResult_MemberSubmitsResult(t *testing.T) {
 		&testutils.MockLogger{},
 		localChain,
 		groupSelectionResult,
+		testWaitForBlockFn(localChain),
 	)
 
 	testData, err := tecdsatest.LoadPrivateKeyShareTestFixtures(1)
@@ -301,7 +302,7 @@ func TestSubmitResult_MemberSubmitsResult(t *testing.T) {
 	}
 }
 
-func TestSubmitResult_MemberDoesNotSubmitResult(t *testing.T) {
+func TestSubmitResult_AnotherMemberSubmitsResult(t *testing.T) {
 	const (
 		groupSize       = 5
 		groupQuorum     = 4
@@ -337,6 +338,7 @@ func TestSubmitResult_MemberDoesNotSubmitResult(t *testing.T) {
 		&testutils.MockLogger{},
 		localChain,
 		groupSelectionResult,
+		testWaitForBlockFn(localChain),
 	)
 
 	testData, err := tecdsatest.LoadPrivateKeyShareTestFixtures(1)
@@ -356,6 +358,13 @@ func TestSubmitResult_MemberDoesNotSubmitResult(t *testing.T) {
 
 	ctx, cancelCtx := context.WithCancel(context.Background())
 	defer cancelCtx()
+
+	// Set up a global listener that will cancel the common context upon result
+	// submission. That mimics the real-world scenario.
+	localChain.OnDKGResultSubmitted(
+		func(event *DKGResultSubmittedEvent) {
+			cancelCtx()
+		})
 
 	secondMemberSubmissionChannel := make(chan error)
 
@@ -391,7 +400,7 @@ func TestSubmitResult_MemberDoesNotSubmitResult(t *testing.T) {
 
 	// Check that the second member returned without errors
 	secondMemberErr := <-secondMemberSubmissionChannel
-	if err != nil {
+	if secondMemberErr != nil {
 		t.Fatal(secondMemberErr)
 	}
 
@@ -413,6 +422,83 @@ func TestSubmitResult_MemberDoesNotSubmitResult(t *testing.T) {
 			"unexpected group public key \nexpected: [0x%x]\nactual:   [0x%x]\n",
 			expectedGroupPublicKey,
 			localChain.dkgResult.GroupPublicKey,
+		)
+	}
+}
+
+func TestSubmitResult_Timeout(t *testing.T) {
+	const (
+		groupSize       = 5
+		groupQuorum     = 4
+		honestThreshold = 3
+	)
+
+	localChain := Connect(groupSize, groupQuorum, honestThreshold)
+
+	err := localChain.startDKG()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	operatorID, operatorAddress, err := localChain.operator()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var operatorsIDs chain.OperatorIDs
+	var operatorsAddresses chain.Addresses
+
+	for memberIndex := uint8(1); memberIndex <= groupSize; memberIndex++ {
+		operatorsIDs = append(operatorsIDs, operatorID)
+		operatorsAddresses = append(operatorsAddresses, operatorAddress)
+	}
+
+	groupSelectionResult := &GroupSelectionResult{
+		OperatorsIDs:       operatorsIDs,
+		OperatorsAddresses: operatorsAddresses,
+	}
+
+	dkgResultSubmitter := newDkgResultSubmitter(
+		&testutils.MockLogger{},
+		localChain,
+		groupSelectionResult,
+		testWaitForBlockFn(localChain),
+	)
+
+	testData, err := tecdsatest.LoadPrivateKeyShareTestFixtures(1)
+	if err != nil {
+		t.Fatalf("failed to load test data: [%v]", err)
+	}
+	result := &dkg.Result{
+		Group:           group.NewGroup(groupSize-honestThreshold, groupSize),
+		PrivateKeyShare: tecdsa.NewPrivateKeyShare(testData[0]),
+	}
+
+	memberIndex := group.MemberIndex(1)
+	signatures := map[group.MemberIndex][]byte{
+		1: []byte("signature 1"),
+		2: []byte("signature 2"),
+		3: []byte("signature 3"),
+		4: []byte("signature 4"),
+	}
+
+	ctx, cancelCtx := context.WithCancel(context.Background())
+
+	// Simulate the case when timeout occurs and the context gets cancelled.
+	cancelCtx()
+
+	err = dkgResultSubmitter.SubmitResult(
+		ctx,
+		memberIndex,
+		result,
+		signatures,
+	)
+	expectedErr := fmt.Errorf("DKG timed out")
+	if !reflect.DeepEqual(expectedErr, err) {
+		t.Errorf(
+			"unexpected error\nexpected: %v\nactual:   %v\n",
+			expectedErr,
+			err,
 		)
 	}
 }
@@ -453,6 +539,7 @@ func TestSubmitResult_TooFewSignatures(t *testing.T) {
 		&testutils.MockLogger{},
 		localChain,
 		groupSelectionResult,
+		testWaitForBlockFn(localChain),
 	)
 
 	testData, err := tecdsatest.LoadPrivateKeyShareTestFixtures(1)
