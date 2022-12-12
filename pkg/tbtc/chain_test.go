@@ -27,6 +27,9 @@ type localChain struct {
 	dkgResultApprovalHandlersMutex sync.Mutex
 	dkgResultApprovalHandlers      map[int]func(submission *DKGResultApprovedEvent)
 
+	dkgResultChallengeHandlersMutex sync.Mutex
+	dkgResultChallengeHandlers      map[int]func(submission *DKGResultChallengedEvent)
+
 	dkgMutex       sync.Mutex
 	dkgState       DKGState
 	dkgResult      *DKGChainResult
@@ -137,6 +140,23 @@ func (lc *localChain) OnDKGResultSubmitted(
 		defer lc.dkgResultSubmissionHandlersMutex.Unlock()
 
 		delete(lc.dkgResultSubmissionHandlers, handlerID)
+	})
+}
+
+func (lc *localChain) OnDKGResultChallenged(
+	handler func(event *DKGResultChallengedEvent),
+) subscription.EventSubscription {
+	lc.dkgResultChallengeHandlersMutex.Lock()
+	defer lc.dkgResultChallengeHandlersMutex.Unlock()
+
+	handlerID := local_v1.GenerateHandlerID()
+	lc.dkgResultChallengeHandlers[handlerID] = handler
+
+	return subscription.NewEventSubscription(func() {
+		lc.dkgResultChallengeHandlersMutex.Lock()
+		defer lc.dkgResultChallengeHandlersMutex.Unlock()
+
+		delete(lc.dkgResultChallengeHandlers, handlerID)
 	})
 }
 
@@ -302,6 +322,9 @@ func (lc *localChain) invalidateDKGResult(dkgResult *DKGChainResult) error {
 }
 
 func (lc *localChain) ChallengeDKGResult(dkgResult *DKGChainResult) error {
+	lc.dkgResultChallengeHandlersMutex.Lock()
+	defer lc.dkgResultChallengeHandlersMutex.Unlock()
+
 	lc.dkgMutex.Lock()
 	defer lc.dkgMutex.Unlock()
 
@@ -315,6 +338,20 @@ func (lc *localChain) ChallengeDKGResult(dkgResult *DKGChainResult) error {
 
 	if lc.dkgResultValid {
 		return fmt.Errorf("submitted result is valid")
+	}
+
+	blockNumber, err := lc.blockCounter.CurrentBlock()
+	if err != nil {
+		return fmt.Errorf("failed to get the current block")
+	}
+
+	for _, handler := range lc.dkgResultChallengeHandlers {
+		handler(&DKGResultChallengedEvent{
+			ResultHash:  computeTestDkgResultHash(dkgResult),
+			Challenger:  "",
+			Reason:      "",
+			BlockNumber: blockNumber,
+		})
 	}
 
 	lc.dkgState = AwaitingResult
@@ -366,7 +403,7 @@ func (lc *localChain) ApproveDKGResult(dkgResult *DKGChainResult) error {
 func (lc *localChain) DKGParameters() (*DKGParameters, error) {
 	return &DKGParameters{
 		SubmissionTimeoutBlocks:       10,
-		ChallengePeriodBlocks:         20,
+		ChallengePeriodBlocks:         15,
 		ApprovePrecedencePeriodBlocks: 5,
 	}, nil
 }
@@ -432,6 +469,9 @@ func ConnectWithKey(
 		),
 		dkgResultApprovalHandlers: make(
 			map[int]func(submission *DKGResultApprovedEvent),
+		),
+		dkgResultChallengeHandlers: make(
+			map[int]func(submission *DKGResultChallengedEvent),
 		),
 		blockCounter:       blockCounter,
 		chainConfig:        chainConfig,

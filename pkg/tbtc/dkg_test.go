@@ -3,6 +3,8 @@ package tbtc
 import (
 	"context"
 	"fmt"
+	"golang.org/x/crypto/sha3"
+	"golang.org/x/exp/slices"
 	"reflect"
 	"testing"
 	"time"
@@ -162,7 +164,6 @@ func TestDkgExecutor_RegisterSigner(t *testing.T) {
 	}
 }
 
-// TODO: Refactor this test scenario and add more paths.
 func TestDkgExecutor_ExecuteDkgValidation(t *testing.T) {
 	testData, err := tecdsatest.LoadPrivateKeyShareTestFixtures(1)
 	if err != nil {
@@ -175,125 +176,197 @@ func TestDkgExecutor_ExecuteDkgValidation(t *testing.T) {
 		honestThreshold = 2
 	)
 
-	localChain := Connect(groupSize, groupQuorum, honestThreshold)
-
-	operatorID, operatorAddress, err := localChain.operator()
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	signatures := make(map[group.MemberIndex][]byte)
-	var operatorsIDs chain.OperatorIDs
-	var operatorsAddresses chain.Addresses
-
-	for memberIndex := uint8(1); memberIndex <= groupSize; memberIndex++ {
-		signatures[memberIndex] = []byte{memberIndex}
-		operatorsIDs = append(operatorsIDs, operatorID)
-		operatorsAddresses = append(operatorsAddresses, operatorAddress)
-	}
-
-	submitterMemberIndex := group.MemberIndex(2)
-
 	tecdsaDkgResult := &dkg.Result{
 		Group:           group.NewGroup(groupSize-honestThreshold, groupSize),
 		PrivateKeyShare: tecdsa.NewPrivateKeyShare(testData[0]),
 	}
 
-	groupSelectionResult := &GroupSelectionResult{
-		OperatorsIDs:       operatorsIDs,
-		OperatorsAddresses: operatorsAddresses,
+	groupPublicKey, err := tecdsaDkgResult.GroupPublicKeyBytes()
+	if err != nil {
+		t.Fatal(err)
 	}
 
-	dkgResultSubmittedEventChan := make(chan *DKGResultSubmittedEvent, 1)
-	_ = localChain.OnDKGResultSubmitted(
-		func(event *DKGResultSubmittedEvent) {
-			dkgResultSubmittedEventChan <- event
+	var tests = map[string]struct {
+		submitterMemberIndex     group.MemberIndex
+		controlledMembersIndexes []group.MemberIndex
+		resultValid              bool
+		expectedEvent            interface{}
+		expectedDkgState         DKGState
+	}{
+		"result approved by the submitter": {
+			submitterMemberIndex:     group.MemberIndex(2),
+			controlledMembersIndexes: []group.MemberIndex{1, 2, 3, 4, 5},
+			resultValid:              true,
+			expectedEvent: &DKGResultApprovedEvent{
+				ResultHash: sha3.Sum256(groupPublicKey),
+				Approver:   "",
+				// 16 is the next block after 15 blocks of the challenge period
+				BlockNumber: 16,
+			},
+			expectedDkgState: Idle,
 		},
-	)
-
-	err = localChain.startDKG()
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	err = localChain.SubmitDKGResult(
-		submitterMemberIndex,
-		tecdsaDkgResult,
-		signatures,
-		groupSelectionResult,
-	)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	dkgResultSubmittedEvent := <-dkgResultSubmittedEventChan
-
-	waitForBlockFn := func(ctx context.Context, block uint64) error {
-		blockCounter, err := localChain.BlockCounter()
-		if err != nil {
-			return err
-		}
-
-		wait, err := blockCounter.BlockHeightWaiter(block)
-		if err != nil {
-			return err
-		}
-
-		select {
-		case <-wait:
-		case <-ctx.Done():
-		}
-
-		return nil
-	}
-
-	// Setting only the fields really needed for this test.
-	dkgExecutor := &dkgExecutor{
-		operatorID:      operatorID,
-		operatorAddress: operatorAddress,
-		chain:           localChain,
-		waitForBlockFn:  waitForBlockFn,
-	}
-
-	dkgResultApprovedEventChan := make(chan *DKGResultApprovedEvent, 1)
-	_ = localChain.OnDKGResultApproved(
-		func(event *DKGResultApprovedEvent) {
-			dkgResultApprovedEventChan <- event
+		"result approved by a non-submitter": {
+			submitterMemberIndex:     group.MemberIndex(1),
+			controlledMembersIndexes: []group.MemberIndex{2, 3, 4, 5},
+			resultValid:              true,
+			expectedEvent: &DKGResultApprovedEvent{
+				ResultHash: sha3.Sum256(groupPublicKey),
+				Approver:   "",
+				// 26 is the next block after 15 blocks of the challenge period,
+				// 5 blocks of the precedence period, and 5 blocks of the delay
+				// for member 2
+				BlockNumber: 26,
+			},
+			expectedDkgState: Idle,
 		},
-	)
-
-	dkgExecutor.executeDkgValidation(
-		dkgResultSubmittedEvent.Seed,
-		dkgResultSubmittedEvent.BlockNumber,
-		dkgResultSubmittedEvent.Result,
-		dkgResultSubmittedEvent.ResultHash,
-	)
-
-	var dkgResultApprovedEvent *DKGResultApprovedEvent
-	select {
-	case dkgResultApprovedEvent = <-dkgResultApprovedEventChan:
-	case <-time.After(1 * time.Minute):
+		"result challenged": {
+			submitterMemberIndex:     group.MemberIndex(2),
+			controlledMembersIndexes: []group.MemberIndex{1, 2, 3, 4, 5},
+			resultValid:              false,
+			expectedEvent: &DKGResultChallengedEvent{
+				ResultHash:  sha3.Sum256(groupPublicKey),
+				Challenger:  "",
+				Reason:      "",
+				BlockNumber: 0, // challenge is submitted immediately
+			},
+			expectedDkgState: AwaitingResult,
+		},
 	}
 
-	if dkgResultApprovedEvent == nil {
-		t.Errorf("expected approval did not happen")
-	}
+	for testName, test := range tests {
+		t.Run(testName, func(t *testing.T) {
+			localChain := Connect(groupSize, groupQuorum, honestThreshold)
 
-	if dkgResultApprovedEvent != nil {
-		testutils.AssertIntsEqual(
-			t,
-			"approval block",
-			21,
-			int(dkgResultApprovedEvent.BlockNumber),
-		)
-	}
+			operatorID, operatorAddress, err := localChain.operator()
+			if err != nil {
+				t.Fatal(err)
+			}
 
-	dkgState, err := localChain.GetDKGState()
-	if err != nil {
-		t.Fatal(err)
-	}
+			signatures := make(map[group.MemberIndex][]byte)
+			operatorsIDs := make(chain.OperatorIDs, groupSize)
+			operatorsAddresses := make(chain.Addresses, groupSize)
 
-	testutils.AssertIntsEqual(t, "DKG state", int(Idle), int(dkgState))
+			for memberIndex := uint8(1); memberIndex <= groupSize; memberIndex++ {
+				signatures[memberIndex] = []byte{memberIndex}
+
+				if slices.Contains(test.controlledMembersIndexes, memberIndex) {
+					operatorsIDs[memberIndex-1] = operatorID
+					operatorsAddresses[memberIndex-1] = operatorAddress
+				}
+			}
+
+			groupSelectionResult := &GroupSelectionResult{
+				OperatorsIDs:       operatorsIDs,
+				OperatorsAddresses: operatorsAddresses,
+			}
+
+			dkgResultSubmittedEventChan := make(chan *DKGResultSubmittedEvent, 1)
+			_ = localChain.OnDKGResultSubmitted(
+				func(event *DKGResultSubmittedEvent) {
+					dkgResultSubmittedEventChan <- event
+				},
+			)
+
+			err = localChain.startDKG()
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			err = localChain.SubmitDKGResult(
+				test.submitterMemberIndex,
+				tecdsaDkgResult,
+				signatures,
+				groupSelectionResult,
+			)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			dkgResultSubmittedEvent := <-dkgResultSubmittedEventChan
+
+			if !test.resultValid {
+				err = localChain.invalidateDKGResult(dkgResultSubmittedEvent.Result)
+				if err != nil {
+					t.Fatal(err)
+				}
+			}
+
+			waitForBlockFn := func(ctx context.Context, block uint64) error {
+				blockCounter, err := localChain.BlockCounter()
+				if err != nil {
+					return err
+				}
+
+				wait, err := blockCounter.BlockHeightWaiter(block)
+				if err != nil {
+					return err
+				}
+
+				select {
+				case <-wait:
+				case <-ctx.Done():
+				}
+
+				return nil
+			}
+
+			// Setting only the fields really needed for this test.
+			dkgExecutor := &dkgExecutor{
+				operatorID:      operatorID,
+				operatorAddress: operatorAddress,
+				chain:           localChain,
+				waitForBlockFn:  waitForBlockFn,
+			}
+
+			eventChan := make(chan interface{}, 1)
+
+			_ = localChain.OnDKGResultChallenged(
+				func(event *DKGResultChallengedEvent) {
+					eventChan <- event
+				},
+			)
+			_ = localChain.OnDKGResultApproved(
+				func(event *DKGResultApprovedEvent) {
+					eventChan <- event
+				},
+			)
+
+			dkgExecutor.executeDkgValidation(
+				dkgResultSubmittedEvent.Seed,
+				dkgResultSubmittedEvent.BlockNumber,
+				dkgResultSubmittedEvent.Result,
+				dkgResultSubmittedEvent.ResultHash,
+			)
+
+			var event interface{}
+			select {
+			case event = <-eventChan:
+			case <-time.After(1 * time.Minute):
+			}
+
+			if !reflect.DeepEqual(test.expectedEvent, event) {
+				t.Errorf(
+					"unexpected event\n"+
+						"expected: [%+v]\n"+
+						"actual:   [%+v]",
+					test.expectedEvent,
+					event,
+				)
+			}
+
+			dkgState, err := localChain.GetDKGState()
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			testutils.AssertIntsEqual(
+				t,
+				"DKG state",
+				int(test.expectedDkgState),
+				int(dkgState),
+			)
+		})
+	}
 }
 
 func TestFinalSigningGroup(t *testing.T) {

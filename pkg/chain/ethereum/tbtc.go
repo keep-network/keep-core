@@ -474,17 +474,39 @@ func validateMemberIndex(chainMemberIndex *big.Int) error {
 	return nil
 }
 
+func (tc *TbtcChain) OnDKGResultChallenged(
+	handler func(event *tbtc.DKGResultChallengedEvent),
+) subscription.EventSubscription {
+	onEvent := func(
+		resultHash [32]byte,
+		challenger common.Address,
+		reason string,
+		blockNumber uint64,
+	) {
+		handler(&tbtc.DKGResultChallengedEvent{
+			ResultHash:  resultHash,
+			Challenger:  chain.Address(challenger.Hex()),
+			Reason:      reason,
+			BlockNumber: blockNumber,
+		})
+	}
+
+	return tc.walletRegistry.
+		DkgResultChallengedEvent(nil, nil, nil).
+		OnEvent(onEvent)
+}
+
 func (tc *TbtcChain) OnDKGResultApproved(
 	handler func(event *tbtc.DKGResultApprovedEvent),
 ) subscription.EventSubscription {
 	onEvent := func(
-		ResultHash [32]byte,
-		Approver common.Address,
+		resultHash [32]byte,
+		approver common.Address,
 		blockNumber uint64,
 	) {
 		handler(&tbtc.DKGResultApprovedEvent{
-			ResultHash:  ResultHash,
-			Approver:    chain.Address(Approver.Hex()),
+			ResultHash:  resultHash,
+			Approver:    chain.Address(approver.Hex()),
 			BlockNumber: blockNumber,
 		})
 	}

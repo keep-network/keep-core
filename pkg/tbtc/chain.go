@@ -54,6 +54,12 @@ type DistributedKeyGenerationChain interface {
 		func(event *DKGResultSubmittedEvent),
 	) subscription.EventSubscription
 
+	// OnDKGResultChallenged registers a callback that is invoked when an
+	// on-chain notification of the DKG result challenge is seen.
+	OnDKGResultChallenged(
+		func(event *DKGResultChallengedEvent),
+	) subscription.EventSubscription
+
 	// OnDKGResultApproved registers a callback that is invoked when an on-chain
 	// notification of the DKG result approval is seen.
 	OnDKGResultApproved(
@@ -116,6 +122,15 @@ type DKGResultSubmittedEvent struct {
 	Seed        *big.Int
 	ResultHash  [32]byte
 	Result      *DKGChainResult
+	BlockNumber uint64
+}
+
+// DKGResultChallengedEvent represents a DKG result challenge event. It is
+// emitted after a submitted DKG result is challenged as an invalid result.
+type DKGResultChallengedEvent struct {
+	ResultHash  [32]byte
+	Challenger  chain.Address
+	Reason      string
 	BlockNumber uint64
 }
 
