@@ -15,6 +15,32 @@ import (
 	"golang.org/x/exp/slices"
 )
 
+const (
+	// dkgAttemptAnnouncementDelayBlocks determines the duration of the
+	// announcement phase delay that is preserved before starting the
+	// announcement phase.
+	dkgAttemptAnnouncementDelayBlocks = 1
+	// dkgAttemptAnnouncementActiveBlocks determines the duration of the
+	// announcement phase that is performed at the beginning of each DKG
+	// attempt.
+	dkgAttemptAnnouncementActiveBlocks = 5
+	// dkgAttemptProtocolBlocks determines the maximum block duration of the
+	// actual protocol computations.
+	dkgAttemptMaximumProtocolBlocks = 150
+	// dkgAttemptCoolDownBlocks determines the duration of the cool down
+	// period that is preserved between subsequent DKG attempts.
+	dkgAttemptCoolDownBlocks = 5
+)
+
+// dkgAttemptMaximumBlocks returns the maximum block duration of a single
+// DKG attempt.
+func dkgAttemptMaximumBlocks() uint {
+	return dkgAttemptAnnouncementDelayBlocks +
+		dkgAttemptAnnouncementActiveBlocks +
+		dkgAttemptMaximumProtocolBlocks +
+		dkgAttemptCoolDownBlocks
+}
+
 // dkgAnnouncer represents a component responsible for exchanging readiness
 // announcements for the given DKG attempt for the given seed.
 type dkgAnnouncer interface {
@@ -110,20 +136,17 @@ func (drl *dkgRetryLoop) start(
 		//
 		// That said, we need to increment the previous attempt start
 		// block by the number of blocks equal to the protocol duration and
-		// by some additional delay blocks. We need a small fixed delay in
+		// by some additional delay blocks. We need a small cool down in
 		// order to mitigate all corner cases where the actual attempt duration
 		// was slightly longer than the expected duration determined by the
-		// dkg.ProtocolBlocks function.
+		// dkgAttemptMaximumProtocolBlocks constant.
 		//
 		// For example, the attempt may fail at the end of the protocol but the
 		// error is returned after some time and more blocks than expected are
 		// mined in the meantime.
 		if drl.attemptCounter > 1 {
 			drl.attemptStartBlock = drl.attemptStartBlock +
-				drl.announcementDelayBlocks +
-				drl.announcementActiveBlocks +
-				dkgAttemptMaxBlockDuration +
-				drl.attemptDelayBlocks
+				uint64(dkgAttemptMaximumBlocks())
 		}
 
 		announcementStartBlock := drl.attemptStartBlock + drl.announcementDelayBlocks
