@@ -3,12 +3,6 @@ syntax = "proto3";
 option go_package = "./pb";
 package tbtc;
 
-message StopPill {
-    uint64 attemptNumber = 1;
-    string dkgSeed = 2;
-    string messageToSign = 3;
-}
-
 message SigningDoneMessage {
     uint32 senderID = 1;
     bytes message = 2;

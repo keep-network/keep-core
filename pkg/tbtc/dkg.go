@@ -203,7 +203,6 @@ func (de *dkgExecutor) setupBroadcastChannel(
 	}
 
 	dkg.RegisterUnmarshallers(broadcastChannel)
-	registerStopPillUnmarshaller(broadcastChannel)
 
 	err = broadcastChannel.SetFilter(membershipValidator.IsInGroup)
 	if err != nil {
@@ -275,12 +274,6 @@ func (de *dkgExecutor) generateSigningGroup(
 				7*24*time.Hour,
 			)
 			defer cancelLoopCtx()
-			cancelDkgContextOnStopSignal(
-				loopCtx,
-				cancelLoopCtx,
-				broadcastChannel,
-				seed.Text(16),
-			)
 
 			result, err := retryLoop.start(
 				loopCtx,
@@ -348,28 +341,6 @@ func (de *dkgExecutor) generateSigningGroup(
 
 						return nil, err
 					}
-
-					// Schedule the stop pill to be sent a fixed amount of
-					// time after the result is returned. Do not do it
-					// immediately as other members can be very close
-					// to produce the result as well. This mechanism should
-					// be more sophisticated but since it is temporary, we
-					// can live with it for now.
-					go func() {
-						time.Sleep(1 * time.Minute)
-						if err := sendDkgStopPill(
-							loopCtx,
-							broadcastChannel,
-							seed.Text(16),
-							attempt.number,
-						); err != nil {
-							dkgLogger.Errorf(
-								"[member:%v] could not send the stop pill: [%v]",
-								memberIndex,
-								err,
-							)
-						}
-					}()
 
 					return result, nil
 				},
