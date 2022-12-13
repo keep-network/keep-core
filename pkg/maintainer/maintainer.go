@@ -21,7 +21,7 @@ func Initialize(
 			ctx,
 			btcChain,
 			chain,
-			defaultEpochProvenBackOffTime,
+			defaultIdleBackOffTime,
 			defaultRestartBackoffTime,
 		)
 	}

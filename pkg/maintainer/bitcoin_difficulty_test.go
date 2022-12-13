@@ -56,10 +56,10 @@ func TestVerifySubmissionEligibility(t *testing.T) {
 			)
 
 			bitcoinDifficultyMaintainer := &BitcoinDifficultyMaintainer{
-				btcChain:               nil,
-				chain:                  difficultyChain,
-				epochProvenBackOffTime: defaultEpochProvenBackOffTime,
-				restartBackOffTime:     defaultRestartBackoffTime,
+				btcChain:           nil,
+				chain:              difficultyChain,
+				idleBackOffTime:    defaultIdleBackOffTime,
+				restartBackOffTime: defaultRestartBackoffTime,
 			}
 
 			err := bitcoinDifficultyMaintainer.verifySubmissionEligibility()
@@ -138,10 +138,10 @@ func TestProveNextEpoch(t *testing.T) {
 	difficultyChain.SetProofLength(3)
 
 	bitcoinDifficultyMaintainer := &BitcoinDifficultyMaintainer{
-		btcChain:               btcChain,
-		chain:                  difficultyChain,
-		epochProvenBackOffTime: defaultEpochProvenBackOffTime,
-		restartBackOffTime:     defaultRestartBackoffTime,
+		btcChain:           btcChain,
+		chain:              difficultyChain,
+		idleBackOffTime:    defaultIdleBackOffTime,
+		restartBackOffTime: defaultRestartBackoffTime,
 	}
 
 	result, err := bitcoinDifficultyMaintainer.proveNextEpoch(ctx)
@@ -238,10 +238,10 @@ func TestGetBlockHeaders(t *testing.T) {
 	btcChain.SetBlockHeaders(blockHeaders)
 
 	bitcoinDifficultyMaintainer := &BitcoinDifficultyMaintainer{
-		btcChain:               btcChain,
-		chain:                  nil,
-		epochProvenBackOffTime: defaultEpochProvenBackOffTime,
-		restartBackOffTime:     defaultRestartBackoffTime,
+		btcChain:           btcChain,
+		chain:              nil,
+		idleBackOffTime:    defaultIdleBackOffTime,
+		restartBackOffTime: defaultRestartBackoffTime,
 	}
 
 	headers, err := bitcoinDifficultyMaintainer.getBlockHeaders(700000, 700002)
@@ -269,10 +269,10 @@ func TestWaitForCurrentEpochUpdate_Successful(t *testing.T) {
 	difficultyChain.SetCurrentEpoch(currentEpoch)
 
 	bitcoinDifficultyMaintainer := &BitcoinDifficultyMaintainer{
-		btcChain:               nil,
-		chain:                  difficultyChain,
-		epochProvenBackOffTime: 2 * time.Second,
-		restartBackOffTime:     2 * time.Second,
+		btcChain:           nil,
+		chain:              difficultyChain,
+		idleBackOffTime:    2 * time.Second,
+		restartBackOffTime: 2 * time.Second,
 	}
 
 	// Run function on a goroutine. The function should wait until the current
@@ -317,10 +317,10 @@ func TestWaitForCurrentEpochUpdate_Cancelled(t *testing.T) {
 	difficultyChain.SetCurrentEpoch(currentEpoch)
 
 	bitcoinDifficultyMaintainer := &BitcoinDifficultyMaintainer{
-		btcChain:               nil,
-		chain:                  difficultyChain,
-		epochProvenBackOffTime: 2 * time.Second,
-		restartBackOffTime:     2 * time.Second,
+		btcChain:           nil,
+		chain:              difficultyChain,
+		idleBackOffTime:    2 * time.Second,
+		restartBackOffTime: 2 * time.Second,
 	}
 
 	// Run function on a goroutine. The function should wait until the current
@@ -359,10 +359,10 @@ func TestProveEpochs_ErrorVerifyingSubmissionEligibility(t *testing.T) {
 	difficultyChain.SetAuthorizationRequired(true)
 
 	bitcoinDifficultyMaintainer := &BitcoinDifficultyMaintainer{
-		btcChain:               nil,
-		chain:                  difficultyChain,
-		epochProvenBackOffTime: defaultEpochProvenBackOffTime,
-		restartBackOffTime:     defaultRestartBackoffTime,
+		btcChain:           nil,
+		chain:              difficultyChain,
+		idleBackOffTime:    defaultIdleBackOffTime,
+		restartBackOffTime: defaultRestartBackoffTime,
 	}
 
 	err := bitcoinDifficultyMaintainer.proveEpochs(ctx)
@@ -387,10 +387,10 @@ func TestProveEpochs_ErrorProvingSingleEpoch(t *testing.T) {
 	btcChain := connectLocalBitcoinChain()
 
 	bitcoinDifficultyMaintainer := &BitcoinDifficultyMaintainer{
-		btcChain:               btcChain,
-		chain:                  difficultyChain,
-		epochProvenBackOffTime: defaultEpochProvenBackOffTime,
-		restartBackOffTime:     defaultRestartBackoffTime,
+		btcChain:           btcChain,
+		chain:              difficultyChain,
+		idleBackOffTime:    defaultIdleBackOffTime,
+		restartBackOffTime: defaultRestartBackoffTime,
 	}
 
 	err := bitcoinDifficultyMaintainer.proveEpochs(ctx)
@@ -438,10 +438,10 @@ func TestProveEpochs_Successful(t *testing.T) {
 	btcChain.SetBlockHeaders(blockHeaders)
 
 	bitcoinDifficultyMaintainer := &BitcoinDifficultyMaintainer{
-		btcChain:               btcChain,
-		chain:                  difficultyChain,
-		epochProvenBackOffTime: 2 * time.Second,
-		restartBackOffTime:     2 * time.Second,
+		btcChain:           btcChain,
+		chain:              difficultyChain,
+		idleBackOffTime:    2 * time.Second,
+		restartBackOffTime: 2 * time.Second,
 	}
 
 	// Run a goroutine that will cancel the context while the maintainer is
@@ -473,14 +473,14 @@ func TestBitcoinDifficultyMaintainer_Integration(t *testing.T) {
 
 	btcChain := connectLocalBitcoinChain()
 
-	epochProvenBackOffTime := 500 * time.Millisecond
+	idleBackOffTime := 500 * time.Millisecond
 	restartBackOffTime := 1 * time.Second
 
 	initializeBitcoinDifficultyMaintainer(
 		ctx,
 		btcChain,
 		difficultyChain,
-		epochProvenBackOffTime,
+		idleBackOffTime,
 		restartBackOffTime,
 	)
 

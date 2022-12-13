@@ -10,15 +10,17 @@ import (
 )
 
 const (
-	// Default value for back-off time which should be applied when the bitcoin
+	// Default value for back-off time which should be applied when the Bitcoin
 	// difficulty maintainer is restarted. It helps to avoid being flooded with
 	// error logs in case of a permanent error in the Bitcoin difficulty
 	// maintainer.
 	defaultRestartBackoffTime = 120 * time.Second
 
-	// Default value for backoff time which should be applied after each attempt
-	// to prove a single Bitcoin epoch.
-	defaultEpochProvenBackOffTime = 60 * time.Second
+	// Default value for back-off time which should be applied when there are no
+	// more Bitcoin epochs to be proven because the difficulty maintainer is
+	// up-to-date with the Bitcoin blockchain or there are not enough blocks yet
+	// to prove the new epoch.
+	defaultIdleBackOffTime = 60 * time.Second
 
 	// The number of blocks in a Bitcoin difficulty epoch.
 	bitcoinDifficultyEpochLength = 2016
@@ -40,14 +42,14 @@ func initializeBitcoinDifficultyMaintainer(
 	ctx context.Context,
 	btcChain bitcoin.Chain,
 	chain BitcoinDifficultyChain,
-	epochProvenBackOffTime time.Duration,
+	idleBackOffTime time.Duration,
 	restartBackOffTime time.Duration,
 ) {
 	bitcoinDifficultyMaintainer := &BitcoinDifficultyMaintainer{
-		btcChain:               btcChain,
-		chain:                  chain,
-		epochProvenBackOffTime: epochProvenBackOffTime,
-		restartBackOffTime:     restartBackOffTime,
+		btcChain:           btcChain,
+		chain:              chain,
+		idleBackOffTime:    idleBackOffTime,
+		restartBackOffTime: restartBackOffTime,
 	}
 
 	go bitcoinDifficultyMaintainer.startControlLoop(ctx)
@@ -59,8 +61,8 @@ type BitcoinDifficultyMaintainer struct {
 	btcChain bitcoin.Chain
 	chain    BitcoinDifficultyChain
 
-	epochProvenBackOffTime time.Duration
-	restartBackOffTime     time.Duration
+	idleBackOffTime    time.Duration
+	restartBackOffTime time.Duration
 }
 
 // startControlLoop starts the loop responsible for controlling the Bitcoin
@@ -114,7 +116,7 @@ func (bdm *BitcoinDifficultyMaintainer) proveEpochs(ctx context.Context) error {
 		// there are likely more Bitcoin epochs to prove.
 		if !epochProven {
 			select {
-			case <-time.After(bdm.epochProvenBackOffTime):
+			case <-time.After(bdm.idleBackOffTime):
 			case <-ctx.Done():
 				return ctx.Err()
 			}
