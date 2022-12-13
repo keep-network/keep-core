@@ -33,35 +33,16 @@ type BlockHeader struct {
 // serialization format:
 // [Version][PreviousBlockHeaderHash][MerkleRootHash][Time][Bits][Nonce].
 func (bh *BlockHeader) Serialize() [BlockHeaderByteLength]byte {
-	var buffer bytes.Buffer
+	buffer := &bytes.Buffer{}
 
-	// version
-	version := make([]byte, 4)
-	binary.LittleEndian.PutUint32(version, uint32(bh.Version))
-	buffer.Write(version)
-
-	// prev block
+	binary.Write(buffer, binary.LittleEndian, bh.Version)
 	buffer.Write(bh.PreviousBlockHeaderHash[:])
-
-	// merkle root
 	buffer.Write(bh.MerkleRootHash[:])
+	binary.Write(buffer, binary.LittleEndian, bh.Time)
+	binary.Write(buffer, binary.LittleEndian, bh.Bits)
+	binary.Write(buffer, binary.LittleEndian, bh.Nonce)
 
-	// time
-	time := make([]byte, 4)
-	binary.LittleEndian.PutUint32(time, uint32(bh.Time))
-	buffer.Write(time)
-
-	// bits
-	bits := make([]byte, 4)
-	binary.LittleEndian.PutUint32(bits, uint32(bh.Bits))
-	buffer.Write(bits)
-
-	// nonce
-	nonce := make([]byte, 4)
-	binary.LittleEndian.PutUint32(nonce, uint32(bh.Nonce))
-	buffer.Write(nonce)
-
-	result := [BlockHeaderByteLength]byte{}
+	var result [BlockHeaderByteLength]byte
 	copy(result[:], buffer.Bytes())
 
 	return result
