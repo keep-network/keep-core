@@ -2,6 +2,7 @@ package tbtc
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"go.uber.org/zap"
 	"math/big"
@@ -259,8 +260,19 @@ func (de *dkgExecutor) generateSigningGroup(
 			defer cancelCtx()
 
 			subscription := de.chain.OnDKGResultSubmitted(
-				func(*DKGResultSubmittedEvent) {
-					cancelCtx()
+				func(event *DKGResultSubmittedEvent) {
+					defer cancelCtx()
+
+					dkgLogger.Infof(
+						"[member:%v] DKG result with group public "+
+							"key [0x%x] and result hash [0x%x] submitted "+
+							"at block [%v] by member [%v]",
+						memberIndex,
+						event.Result.GroupPublicKey,
+						event.ResultHash,
+						event.BlockNumber,
+						event.Result.SubmitterMemberIndex,
+					)
 				})
 			defer subscription.Unsubscribe()
 
@@ -351,8 +363,17 @@ func (de *dkgExecutor) generateSigningGroup(
 				},
 			)
 			if err != nil {
+				if errors.Is(err, context.Canceled) {
+					dkgLogger.Infof(
+						"[member:%v] DKG is no longer awaiting the result; "+
+							"aborting DKG protocol execution",
+						memberIndex,
+					)
+					return
+				}
+
 				dkgLogger.Errorf(
-					"[member:%v] failed to execute dkg: [%v]",
+					"[member:%v] failed to execute DKG: [%v]",
 					memberIndex,
 					err,
 				)
@@ -374,7 +395,7 @@ func (de *dkgExecutor) generateSigningGroup(
 
 			dkgLogger.Infof("registered %s", signer)
 
-			err = de.submitDkgResult(
+			err = de.publishDkgResult(
 				ctx,
 				dkgLogger,
 				seed,
@@ -386,11 +407,21 @@ func (de *dkgExecutor) generateSigningGroup(
 				startBlock,
 			)
 			if err != nil {
+				if errors.Is(err, context.Canceled) {
+					dkgLogger.Infof(
+						"[member:%v] DKG is no longer awaiting the result; "+
+							"aborting DKG result publication",
+						memberIndex,
+					)
+					return
+				}
+
 				dkgLogger.Errorf(
-					"[member:%v] DKG result publication process failed [%v]",
+					"[member:%v] DKG result publication failed [%v]",
 					memberIndex,
 					err,
 				)
+				return
 			}
 		}()
 	}
@@ -452,8 +483,8 @@ func (de *dkgExecutor) registerSigner(
 	return signer, nil
 }
 
-// submitDkgResult submits the DKG result to the chain.
-func (de *dkgExecutor) submitDkgResult(
+// publishDkgResult performs the DKG result publication process.
+func (de *dkgExecutor) publishDkgResult(
 	ctx context.Context,
 	dkgLogger log.StandardLogger,
 	seed *big.Int,
@@ -490,6 +521,7 @@ func (de *dkgExecutor) executeDkgValidation(
 ) {
 	dkgLogger := logger.With(
 		zap.String("seed", fmt.Sprintf("0x%x", seed)),
+		zap.String("groupPublicKey", fmt.Sprintf("0x%x", result.GroupPublicKey)),
 		zap.String("resultHash", fmt.Sprintf("0x%x", resultHash)),
 	)
 

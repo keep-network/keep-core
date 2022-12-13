@@ -224,7 +224,7 @@ func TestDkgRetryLoop(t *testing.T) {
 			dkgAttemptFn: func(attempt *dkgAttemptParams) (*dkg.Result, error) {
 				return nil, fmt.Errorf("invalid data")
 			},
-			expectedErr:         nil,
+			expectedErr:         context.Canceled,
 			expectedResult:      nil,
 			expectedLastAttempt: nil,
 		},

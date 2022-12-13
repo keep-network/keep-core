@@ -113,7 +113,7 @@ func (drs *dkgResultSubmitter) SubmitResult(
 		// Someone who was ahead of us in the queue submitted the result. Giving up.
 		drs.dkgLogger.Infof(
 			"[member:%v] DKG is no longer awaiting the result; "+
-				"aborting DKG result submission",
+				"aborting DKG result on-chain submission",
 			memberIndex,
 		)
 		return nil
@@ -149,37 +149,28 @@ func (drs *dkgResultSubmitter) SubmitResult(
 		)
 	}
 
-	// If the context was cancelled and the on-chain DKG state is Challenge,
-	// that means the result was submitted by someone else and the submission
-	// process can be deemed as successful. Another state means that the DKG
-	// timeout was hit.
 	if ctx.Err() != nil {
-		dkgState, err := drs.chain.GetDKGState()
-		if err != nil {
-			return fmt.Errorf("could not check DKG state: [%w]", err)
-		}
-
-		if dkgState == Challenge {
-			drs.dkgLogger.Infof(
-				"[member:%v] DKG result submitted by other member",
-				memberIndex,
-			)
-			return nil
-		}
-
-		return fmt.Errorf("DKG timed out")
+		// The context was cancelled by the upstream. Regardless of the cause,
+		// that means the DKG is no longer awaiting the result, and we can
+		// safely return.
+		drs.dkgLogger.Infof(
+			"[member:%v] DKG is no longer awaiting the result; "+
+				"aborting DKG result on-chain submission",
+			memberIndex,
+		)
+		return nil
 	}
 
-	publicKeyBytes, err := result.GroupPublicKeyBytes()
+	groupPublicKey, err := result.GroupPublicKeyBytes()
 	if err != nil {
-		return fmt.Errorf("cannot get public key bytes [%w]", err)
+		return fmt.Errorf("cannot get group public key bytes [%w]", err)
 	}
 
 	drs.dkgLogger.Infof(
-		"[member:%v] submitting DKG result with public key [0x%x] and "+
-			"[%v] supporting member signatures",
+		"[member:%v] submitting DKG result with group public "+
+			"key [0x%x] and [%v] supporting member signatures",
 		memberIndex,
-		publicKeyBytes,
+		groupPublicKey,
 		len(signatures),
 	)
 

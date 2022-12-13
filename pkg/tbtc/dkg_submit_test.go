@@ -426,7 +426,7 @@ func TestSubmitResult_AnotherMemberSubmitsResult(t *testing.T) {
 	}
 }
 
-func TestSubmitResult_Timeout(t *testing.T) {
+func TestSubmitResult_ContextCancelled(t *testing.T) {
 	const (
 		groupSize       = 5
 		groupQuorum     = 4
@@ -493,13 +493,8 @@ func TestSubmitResult_Timeout(t *testing.T) {
 		result,
 		signatures,
 	)
-	expectedErr := fmt.Errorf("DKG timed out")
-	if !reflect.DeepEqual(expectedErr, err) {
-		t.Errorf(
-			"unexpected error\nexpected: %v\nactual:   %v\n",
-			expectedErr,
-			err,
-		)
+	if err != nil {
+		t.Errorf("unexpected error [%v]", err)
 	}
 }
 

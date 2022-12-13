@@ -203,7 +203,7 @@ func (drl *dkgRetryLoop) start(
 
 		// Check the loop stop signal.
 		if ctx.Err() != nil {
-			return nil, nil
+			return nil, ctx.Err()
 		}
 
 		if len(readyMembersIndexes) >= drl.chainConfig.GroupQuorum {
