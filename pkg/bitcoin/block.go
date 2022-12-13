@@ -1,5 +1,10 @@
 package bitcoin
 
+import (
+	"bytes"
+	"encoding/binary"
+)
+
 // BlockHeaderByteLength is the byte length of a serialized block header.
 const BlockHeaderByteLength = 80
 
@@ -28,10 +33,38 @@ type BlockHeader struct {
 // serialization format:
 // [Version][PreviousBlockHeaderHash][MerkleRootHash][Time][Bits][Nonce].
 func (bh *BlockHeader) Serialize() [BlockHeaderByteLength]byte {
-	// TODO: Implementation of the Serialize function that concatenates all
-	//       serialized fields of the block header into a single byte array.
-	//       All numbers should be serialized to an InternalByteOrder byte array.
-	return [BlockHeaderByteLength]byte{}
+	var buffer bytes.Buffer
+
+	// version
+	version := make([]byte, 4)
+	binary.LittleEndian.PutUint32(version, uint32(bh.Version))
+	buffer.Write(version)
+
+	// prev block
+	buffer.Write(bh.PreviousBlockHeaderHash[:])
+
+	// merkle root
+	buffer.Write(bh.MerkleRootHash[:])
+
+	// time
+	time := make([]byte, 4)
+	binary.LittleEndian.PutUint32(time, uint32(bh.Time))
+	buffer.Write(time)
+
+	// bits
+	bits := make([]byte, 4)
+	binary.LittleEndian.PutUint32(bits, uint32(bh.Bits))
+	buffer.Write(bits)
+
+	// nonce
+	nonce := make([]byte, 4)
+	binary.LittleEndian.PutUint32(nonce, uint32(bh.Nonce))
+	buffer.Write(nonce)
+
+	result := [BlockHeaderByteLength]byte{}
+	copy(result[:], buffer.Bytes())
+
+	return result
 }
 
 // Hash calculates the block header's hash as the double SHA-256 of the
