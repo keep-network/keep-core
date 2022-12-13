@@ -733,7 +733,7 @@ func (tc *TbtcChain) IsDKGResultValid(
 		return false, fmt.Errorf("cannot check result validity: [%v]", err)
 	}
 
-	return parseDkgResultValidationOutcome(outcome)
+	return parseDkgResultValidationOutcome(&outcome)
 }
 
 // parseDkgResultValidationOutcome parses the DKG validation outcome and returns
