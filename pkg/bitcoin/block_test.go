@@ -6,6 +6,9 @@ import (
 )
 
 func TestBlockHeaderSerialize(t *testing.T) {
+	// Test data comes from a Bitcoin testnet block:
+	// https://live.blockcypher.com/btc-testnet/block/000000000000002af10911b8db32ed34dc6ea6515f84af5f7b82973c9a839e6d/
+
 	previousBlockHeaderHash, err := NewHashFromString(
 		"000000000066450030efdf72f233ed2495547a32295deea1e2f3a16b1e50a3a5",
 		ReversedByteOrder,
