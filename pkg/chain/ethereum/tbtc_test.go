@@ -47,13 +47,15 @@ func TestConvertSignaturesToChainFormat(t *testing.T) {
 	invalidSignature := common.LeftPadBytes([]byte("invalid"), signatureSize-1)
 
 	var tests = map[string]struct {
-		signaturesMap map[group.MemberIndex][]byte
-		expectedError error
+		signaturesMap   map[group.MemberIndex][]byte
+		expectedIndices []*big.Int
+		expectedError   error
 	}{
 		"one valid signature": {
 			signaturesMap: map[uint8][]byte{
 				1: signature1,
 			},
+			expectedIndices: []*big.Int{big.NewInt(1)},
 		},
 		"five valid signatures": {
 			signaturesMap: map[group.MemberIndex][]byte{
@@ -62,6 +64,13 @@ func TestConvertSignaturesToChainFormat(t *testing.T) {
 				4: signature4,
 				5: signature5,
 				2: signature2,
+			},
+			expectedIndices: []*big.Int{
+				big.NewInt(1),
+				big.NewInt(2),
+				big.NewInt(3),
+				big.NewInt(4),
+				big.NewInt(5),
 			},
 		},
 		"invalid signature": {
@@ -86,12 +95,15 @@ func TestConvertSignaturesToChainFormat(t *testing.T) {
 			}
 
 			if test.expectedError == nil {
-				testutils.AssertIntsEqual(
-					t,
-					"member indices slice length",
-					len(test.signaturesMap),
-					len(indicesSlice),
-				)
+				if !reflect.DeepEqual(test.expectedIndices, indicesSlice) {
+					t.Errorf(
+						"unexpected indices\n"+
+							"expected: [%v]\n"+
+							"actual:   [%v]\n",
+						test.expectedIndices,
+						indicesSlice,
+					)
+				}
 
 				testutils.AssertIntsEqual(
 					t,
@@ -201,8 +213,8 @@ func TestComputeDkgResultHash(t *testing.T) {
 	chainID := big.NewInt(1)
 
 	groupPublicKey, err := hex.DecodeString(
-		"04989d253b17a6a0f41838b84ff0d20e8898f9d7b1a98f2564da4cc29dcf8581d9" +
-			"d218b65e7d91c752f7b22eaceb771a9af3a6f3d3f010a5d471a1aeef7d7713af",
+		"989d253b17a6a0f41838b84ff0d20e8898f9d7b1a98f2564da4cc29dcf8581d9d" +
+			"218b65e7d91c752f7b22eaceb771a9af3a6f3d3f010a5d471a1aeef7d7713af",
 	)
 	if err != nil {
 		t.Fatal(err)
@@ -222,7 +234,7 @@ func TestComputeDkgResultHash(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	expectedHash := "ff0bcba04ba8f389a063c6405d8fd3e383eb0d2649f41d3e0a937c550149131a"
+	expectedHash := "268db8d03b32209e47f79cdf35784f0bb4e803525ec01f94b76ba9cac6b108ca"
 
 	testutils.AssertStringsEqual(
 		t,

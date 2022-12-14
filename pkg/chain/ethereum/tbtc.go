@@ -11,6 +11,7 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	"math/big"
 	"reflect"
+	"sort"
 
 	"github.com/keep-network/keep-common/pkg/chain/ethereum"
 	"github.com/keep-network/keep-core/pkg/chain"
@@ -583,17 +584,28 @@ func computeOperatorsIDsHash(operatorsIDs chain.OperatorIDs) ([32]byte, error) {
 func convertSignaturesToChainFormat(
 	signatures map[group.MemberIndex][]byte,
 ) ([]*big.Int, []byte, error) {
+	membersIndexes := make([]group.MemberIndex, 0)
+	for memberIndex := range signatures {
+		membersIndexes = append(membersIndexes, memberIndex)
+	}
+
+	sort.Slice(membersIndexes, func(i, j int) bool {
+		return membersIndexes[i] < membersIndexes[j]
+	})
+
 	signatureSize := 65
 
 	var membersIndices []*big.Int
 	var signaturesSlice []byte
 
-	for memberIndex, signature := range signatures {
-		if len(signatures[memberIndex]) != signatureSize {
+	for _, memberIndex := range membersIndexes {
+		signature := signatures[memberIndex]
+
+		if len(signature) != signatureSize {
 			return nil, nil, fmt.Errorf(
 				"invalid signature size for member [%v] got [%d] bytes but [%d] bytes required",
 				memberIndex,
-				len(signatures[memberIndex]),
+				len(signature),
 				signatureSize,
 			)
 		}
