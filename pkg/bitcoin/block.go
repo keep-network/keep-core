@@ -1,7 +1,7 @@
 package bitcoin
 
 import (
-	"bytes"
+	// "bytes"
 	"encoding/binary"
 )
 
@@ -33,17 +33,31 @@ type BlockHeader struct {
 // serialization format:
 // [Version][PreviousBlockHeaderHash][MerkleRootHash][Time][Bits][Nonce].
 func (bh *BlockHeader) Serialize() [BlockHeaderByteLength]byte {
-	buffer := &bytes.Buffer{}
-
-	binary.Write(buffer, binary.LittleEndian, bh.Version)
-	buffer.Write(bh.PreviousBlockHeaderHash[:])
-	buffer.Write(bh.MerkleRootHash[:])
-	binary.Write(buffer, binary.LittleEndian, bh.Time)
-	binary.Write(buffer, binary.LittleEndian, bh.Bits)
-	binary.Write(buffer, binary.LittleEndian, bh.Nonce)
-
 	var result [BlockHeaderByteLength]byte
-	copy(result[:], buffer.Bytes())
+	offset := 0
+
+	// Version
+	binary.LittleEndian.PutUint32(result[offset:], uint32(bh.Version))
+	offset += 4
+
+	// PreviousBlockHeaderHash
+	copy(result[offset:], bh.PreviousBlockHeaderHash[:])
+	offset += len(bh.PreviousBlockHeaderHash)
+
+	// MerkleRootHash
+	copy(result[offset:], bh.MerkleRootHash[:])
+	offset += len(bh.MerkleRootHash)
+
+	// Time
+	binary.LittleEndian.PutUint32(result[offset:], bh.Time)
+	offset += 4
+
+	// Bits
+	binary.LittleEndian.PutUint32(result[offset:], bh.Bits)
+	offset += 4
+
+	// Nonce
+	binary.LittleEndian.PutUint32(result[offset:], bh.Nonce)
 
 	return result
 }
