@@ -20,7 +20,9 @@ type Result struct {
 }
 
 // GroupPublicKeyBytes returns the public key corresponding to the private
-// key share generated during the DKG protocol execution.
+// key share generated during the DKG protocol execution. The resulting
+// slice has 65 bytes and starts with the 04 prefix denoting an uncompressed
+// key.
 func (r *Result) GroupPublicKeyBytes() ([]byte, error) {
 	if r.PrivateKeyShare == nil {
 		return nil, fmt.Errorf(

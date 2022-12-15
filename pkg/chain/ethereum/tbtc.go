@@ -681,9 +681,13 @@ func (tc *TbtcChain) CalculateDKGResultHash(
 		return dkg.ResultHash{}, err
 	}
 
+	// Crop the 04 prefix as the computeDkgResultHash function expects an
+	// unprefixed 64-byte public key,
+	unprefixedGroupPublicKey := groupPublicKey[1:]
+
 	return computeDkgResultHash(
 		tc.chainID,
-		groupPublicKey,
+		unprefixedGroupPublicKey,
 		tecdsaDkgResult.MisbehavedMembersIndexes(),
 		big.NewInt(int64(startBlock)),
 	)
@@ -697,6 +701,12 @@ func computeDkgResultHash(
 	misbehavedMembersIndexes []group.MemberIndex,
 	startBlock *big.Int,
 ) (dkg.ResultHash, error) {
+	publicKeySize := 64
+
+	if len(groupPublicKey) != publicKeySize {
+		return dkg.ResultHash{}, fmt.Errorf("wrong group public key length")
+	}
+
 	uint256Type, err := abi.NewType("uint256", "uint256", nil)
 	if err != nil {
 		return dkg.ResultHash{}, err
@@ -722,7 +732,7 @@ func computeDkgResultHash(
 		startBlock,
 	)
 	if err != nil {
-		return [32]byte{}, err
+		return dkg.ResultHash{}, err
 	}
 
 	return dkg.ResultHash(crypto.Keccak256Hash(bytes)), nil

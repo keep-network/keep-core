@@ -643,7 +643,7 @@ func (de *dkgExecutor) executeDkgValidation(
 				return
 			}
 
-			dkgLogger.Errorf("[member:%v] approved DKG result", memberIndex)
+			dkgLogger.Infof("[member:%v] approved DKG result", memberIndex)
 		}(currentMemberIndex)
 	}
 }
