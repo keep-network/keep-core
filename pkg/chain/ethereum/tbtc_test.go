@@ -234,7 +234,7 @@ func TestComputeDkgResultHash(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	expectedHash := "268db8d03b32209e47f79cdf35784f0bb4e803525ec01f94b76ba9cac6b108ca"
+	expectedHash := "25f917154586c2be0b6364f5c4758580e535bc01ed4881211000c9267aef3a3b"
 
 	testutils.AssertStringsEqual(
 		t,

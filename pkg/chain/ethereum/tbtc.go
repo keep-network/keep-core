@@ -725,14 +725,7 @@ func computeDkgResultHash(
 		return [32]byte{}, err
 	}
 
-	bytesHash := crypto.Keccak256(bytes)
-
-	prefixedBytesHash := append(
-		[]byte(fmt.Sprintf("\x19Ethereum Signed Message:\n%v", len(bytesHash))),
-		bytesHash...,
-	)
-
-	return dkg.ResultHash(crypto.Keccak256Hash(prefixedBytesHash)), nil
+	return dkg.ResultHash(crypto.Keccak256Hash(bytes)), nil
 }
 
 func (tc *TbtcChain) IsDKGResultValid(
