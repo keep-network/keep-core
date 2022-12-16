@@ -325,6 +325,16 @@ func initTbtcFlags(cmd *cobra.Command, cfg *config.Config) {
 		false,
 		"start Bitcoin difficulty maintainer",
 	)
+
+	// TODO: Once https://github.com/keep-network/keep-core/pull/3394 is merged
+	//       move initializing of the `wallet` flag from `initTbtcFlags` to
+	//       `initMaintainerFlags`.
+	cmd.Flags().BoolVar(
+		&cfg.Tbtc.Maintainer.Wallet,
+		"wallet",
+		false,
+		"start wallet maintainer",
+	)
 }
 
 // Initialize flags for Developer configuration.

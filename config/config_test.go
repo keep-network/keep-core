@@ -171,6 +171,10 @@ func TestReadConfigFromFile(t *testing.T) {
 			readValueFunc: func(c *Config) interface{} { return c.Tbtc.Maintainer.BitcoinDifficulty },
 			expectedValue: true,
 		},
+		"Tbtc.Maintainer.Wallet": {
+			readValueFunc: func(c *Config) interface{} { return c.Tbtc.Maintainer.Wallet },
+			expectedValue: true,
+		},
 	}
 
 	for _, filePath := range filePaths {

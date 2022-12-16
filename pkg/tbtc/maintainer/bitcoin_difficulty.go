@@ -8,7 +8,8 @@ import (
 	"github.com/keep-network/keep-core/pkg/bitcoin"
 )
 
-var logger = log.Logger("keep-maintainer-bitcoin-difficulty")
+// TODO: Store the logger inside Bitcoin difficulty maintainer.
+var btcDiffLogger = log.Logger("keep-maintainer-bitcoin-difficulty")
 
 func newBitcoinDifficultyMaintainer(
 	ctx context.Context,
@@ -35,10 +36,10 @@ type BitcoinDifficultyMaintainer struct {
 // startControlLoop launches the loop responsible for controlling the Bitcoin
 // difficulty maintainer.
 func (r *BitcoinDifficultyMaintainer) startControlLoop(ctx context.Context) {
-	logger.Info("starting Bitcoin difficulty maintainer")
+	btcDiffLogger.Info("starting Bitcoin difficulty maintainer")
 
 	defer func() {
-		logger.Info("stopping Bitcoin difficulty maintainer")
+		btcDiffLogger.Info("stopping Bitcoin difficulty maintainer")
 	}()
 
 	for {
@@ -47,7 +48,7 @@ func (r *BitcoinDifficultyMaintainer) startControlLoop(ctx context.Context) {
 			return
 		default:
 			// TODO: Implement the maintainer loop. For now just print a message.
-			logger.Info("Bitcoin difficulty maintainer is working")
+			btcDiffLogger.Info("Bitcoin difficulty maintainer is working")
 		}
 
 		time.Sleep(1 * time.Second)

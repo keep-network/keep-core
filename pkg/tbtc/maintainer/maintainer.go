@@ -14,10 +14,14 @@ func Initialize(
 ) {
 	// If none of the maintainers was specified in the config (i.e. no option was
 	// provided to the `maintainer` command), all maintainers should be launched.
-	launchAll := !config.BitcoinDifficulty
+	launchAll := !config.BitcoinDifficulty && !config.Wallet
 
 	if config.BitcoinDifficulty || launchAll {
 		newBitcoinDifficultyMaintainer(ctx, btcChain, chain)
+	}
+
+	if config.Wallet || launchAll {
+		newWalletMaintainer(ctx, chain)
 	}
 
 	// TODO: Allow for launching multiple maintainers here. Every flag

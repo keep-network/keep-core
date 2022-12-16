@@ -42,7 +42,8 @@
     },
     "Tbtc": {
         "Maintainer": {
-            "BitcoinDifficulty": true
+            "BitcoinDifficulty": true,
+            "Wallet": true
         }
     },
     "Developer": {

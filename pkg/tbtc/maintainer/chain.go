@@ -11,3 +11,8 @@ type BitcoinDifficultyChain interface {
 	// a proof of the difficulty before and after the retarget.
 	Retarget(headers []bitcoin.BlockHeader) error
 }
+
+// TODO: Description
+type WalletChain interface {
+	// TODO: Implement
+}
