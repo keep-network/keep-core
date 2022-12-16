@@ -3,11 +3,12 @@ package tbtc
 import (
 	"encoding/hex"
 	"fmt"
+	"testing"
+
 	"github.com/keep-network/keep-core/pkg/bitcoin"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/internal/tbtctest"
 	"github.com/keep-network/keep-core/pkg/internal/testutils"
-	"testing"
 )
 
 func TestAssembleDepositSweepTransaction(t *testing.T) {
@@ -80,14 +81,14 @@ func TestAssembleDepositSweepTransaction(t *testing.T) {
 			testutils.AssertStringsEqual(
 				t,
 				"sweep transaction hash",
-				scenario.ExpectedSweepTransactionHash.String(bitcoin.InternalByteOrder),
-				transaction.Hash().String(bitcoin.InternalByteOrder),
+				scenario.ExpectedSweepTransactionHash.Hex(bitcoin.InternalByteOrder),
+				transaction.Hash().Hex(bitcoin.InternalByteOrder),
 			)
 			testutils.AssertStringsEqual(
 				t,
 				"sweep transaction witness hash",
-				scenario.ExpectedSweepTransactionWitnessHash.String(bitcoin.InternalByteOrder),
-				transaction.WitnessHash().String(bitcoin.InternalByteOrder),
+				scenario.ExpectedSweepTransactionWitnessHash.Hex(bitcoin.InternalByteOrder),
+				transaction.WitnessHash().Hex(bitcoin.InternalByteOrder),
 			)
 		})
 	}
@@ -125,7 +126,7 @@ func (mbc *mockBitcoinChain) BroadcastTransaction(
 	panic("not implemented")
 }
 
-func (mbc *mockBitcoinChain) GetCurrentBlockNumber() (uint, error) {
+func (mbc *mockBitcoinChain) GetLatestBlockHeight() (uint, error) {
 	panic("not implemented")
 }
 
