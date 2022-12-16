@@ -3,11 +3,12 @@ package bitcoin
 import (
 	"crypto/ecdsa"
 	"fmt"
+	"math/big"
+
 	"github.com/btcsuite/btcd/btcec"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/btcsuite/btcd/txscript"
 	"github.com/btcsuite/btcd/wire"
-	"math/big"
 )
 
 // TransactionBuilder is a component that is responsible for the whole
@@ -142,7 +143,7 @@ func (tb *TransactionBuilder) getScript(
 	if err != nil {
 		return nil, fmt.Errorf(
 			"cannot get transaction with hash [%s]: [%v]",
-			hash.String(InternalByteOrder),
+			hash.Hex(InternalByteOrder),
 			err,
 		)
 	}

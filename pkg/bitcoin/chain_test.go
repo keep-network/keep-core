@@ -34,7 +34,7 @@ func (lc *localChain) BroadcastTransaction(
 	panic("not implemented")
 }
 
-func (lc *localChain) GetCurrentBlockNumber() (uint, error) {
+func (lc *localChain) GetLatestBlockHeight() (uint, error) {
 	panic("not implemented")
 }
 

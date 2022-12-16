@@ -4,10 +4,11 @@ import (
 	"crypto/ecdsa"
 	"crypto/elliptic"
 	"encoding/hex"
-	"github.com/btcsuite/btcd/btcec"
-	"github.com/keep-network/keep-core/pkg/internal/testutils"
 	"reflect"
 	"testing"
+
+	"github.com/btcsuite/btcd/btcec"
+	"github.com/keep-network/keep-core/pkg/internal/testutils"
 )
 
 func TestTransaction_SerializeRoundtrip(t *testing.T) {
@@ -80,7 +81,7 @@ func TestTransaction_Hash(t *testing.T) {
 		t,
 		"hash",
 		expectedHash,
-		hash.String(ReversedByteOrder),
+		hash.Hex(ReversedByteOrder),
 	)
 }
 
@@ -93,7 +94,7 @@ func TestTransaction_WitnessHash(t *testing.T) {
 		t,
 		"hash",
 		expectedHash,
-		hash.String(ReversedByteOrder),
+		hash.Hex(ReversedByteOrder),
 	)
 }
 

@@ -2,10 +2,11 @@ package bitcoin
 
 import (
 	"fmt"
-	"github.com/keep-network/keep-core/pkg/internal/testutils"
 	"math/big"
 	"reflect"
 	"testing"
+
+	"github.com/keep-network/keep-core/pkg/internal/testutils"
 )
 
 func TestNewTransactionBuilder(t *testing.T) {
@@ -461,7 +462,7 @@ func assertInternalInput(
 	testutils.AssertStringsEqual(
 		t,
 		"outpoint's transaction hash",
-		expected.Outpoint.TransactionHash.String(ReversedByteOrder),
+		expected.Outpoint.TransactionHash.Hex(ReversedByteOrder),
 		internalInput.PreviousOutPoint.Hash.String(),
 	)
 
