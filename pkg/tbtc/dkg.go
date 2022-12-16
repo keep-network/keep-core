@@ -559,7 +559,7 @@ func (de *dkgExecutor) executeDkgValidation(
 
 	if len(memberIndexes) == 0 {
 		dkgLogger.Infof(
-			"not eligible for DKG result approval; my operator " +
+			"not eligible for DKG result approval; my operator "+
 				"ID [%v] is not among DKG participants [%v]",
 			de.operatorID,
 			result.Members,
