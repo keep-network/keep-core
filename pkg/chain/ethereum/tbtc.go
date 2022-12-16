@@ -132,6 +132,7 @@ func newTbtcChain(
 
 	return &TbtcChain{
 		baseChain:      baseChain,
+		bridge:         bridge,
 		walletRegistry: walletRegistry,
 		sortitionPool:  sortitionPool,
 	}, nil
