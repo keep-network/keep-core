@@ -540,7 +540,7 @@ func (de *dkgExecutor) executeDkgValidation(
 			return
 		}
 
-		dkgLogger.Infof("challenged invalid DKG result")
+		dkgLogger.Infof("challenging invalid DKG result")
 
 		return
 	}
@@ -643,7 +643,7 @@ func (de *dkgExecutor) executeDkgValidation(
 				return
 			}
 
-			dkgLogger.Infof("[member:%v] approved DKG result", memberIndex)
+			dkgLogger.Infof("[member:%v] approving DKG result", memberIndex)
 		}(currentMemberIndex)
 	}
 }
