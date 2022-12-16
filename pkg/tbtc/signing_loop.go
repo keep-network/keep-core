@@ -56,24 +56,24 @@ type signingAnnouncer interface {
 // signingDoneCheckStrategy is a strategy that determines the way of signaling
 // a successful signature calculation across all signing group members.
 type signingDoneCheckStrategy interface {
-	exchange(
-		ctx context.Context,
-		memberIndex group.MemberIndex,
-		message *big.Int,
-		attemptNumber uint64,
-		attemptTimeoutBlock uint64,
-		attemptMembersIndexes []group.MemberIndex,
-		result *signing.Result,
-		endBlock uint64,
-	) (uint64, error)
-
 	listen(
 		ctx context.Context,
 		message *big.Int,
 		attemptNumber uint64,
 		attemptTimeoutBlock uint64,
 		attemptMembersIndexes []group.MemberIndex,
-	) (*signing.Result, uint64, error)
+	)
+
+	signalDone(
+		ctx context.Context,
+		memberIndex group.MemberIndex,
+		message *big.Int,
+		attemptNumber uint64,
+		result *signing.Result,
+		endBlock uint64,
+	) error
+
+	waitUntilAllDone(ctx context.Context) (*signing.Result, uint64, error)
 }
 
 // signingRetryLoop is a struct that encapsulates the signing retry logic.
@@ -286,6 +286,14 @@ func (srl *signingRetryLoop) start(
 		// participants have a chance to receive signingDoneMessage.
 		doneCheckTimeoutCtx, _ := withCancelOnBlock(ctx, timeoutBlock, waitForBlockFn)
 
+		srl.doneCheck.listen(
+			doneCheckTimeoutCtx,
+			srl.message,
+			uint64(srl.attemptCounter),
+			timeoutBlock,
+			includedMembersIndexes,
+		)
+
 		if !attemptSkipped {
 			srl.logger.Infof(
 				"[member:%v] eligible for attempt [%v]",
@@ -316,19 +324,17 @@ func (srl *signingRetryLoop) start(
 				srl.attemptCounter,
 			)
 
-			latestEndBlock, err := srl.doneCheck.exchange(
+			err = srl.doneCheck.signalDone(
 				doneCheckTimeoutCtx,
 				srl.signingGroupMemberIndex,
 				srl.message,
 				uint64(srl.attemptCounter),
-				timeoutBlock,
-				includedMembersIndexes,
 				result,
 				endBlock,
 			)
 			if err != nil {
 				srl.logger.Warnf(
-					"[member:%v] cannot exchange signing done checks "+
+					"[member:%v] cannot send signing done signal "+
 						"for attempt [%v]: [%v]; starting next attempt",
 					srl.signingGroupMemberIndex,
 					srl.attemptCounter,
@@ -336,12 +342,6 @@ func (srl *signingRetryLoop) start(
 				)
 				continue
 			}
-
-			return &signingRetryLoopResult{
-				result:              result,
-				latestEndBlock:      latestEndBlock,
-				attemptTimeoutBlock: timeoutBlock,
-			}, nil
 		} else {
 			srl.logger.Infof(
 				"[member:%v] not eligible for attempt [%v]; "+
@@ -349,31 +349,25 @@ func (srl *signingRetryLoop) start(
 				srl.signingGroupMemberIndex,
 				srl.attemptCounter,
 			)
-
-			result, latestEndBlock, err := srl.doneCheck.listen(
-				doneCheckTimeoutCtx,
-				srl.message,
-				uint64(srl.attemptCounter),
-				timeoutBlock,
-				includedMembersIndexes,
-			)
-			if err != nil {
-				srl.logger.Warnf(
-					"[member:%v] cannot listen for signing done "+
-						"checks for attempt [%v]: [%v]; starting next attempt",
-					srl.signingGroupMemberIndex,
-					srl.attemptCounter,
-					err,
-				)
-				continue
-			}
-
-			return &signingRetryLoopResult{
-				result:              result,
-				latestEndBlock:      latestEndBlock,
-				attemptTimeoutBlock: timeoutBlock,
-			}, nil
 		}
+
+		result, latestEndBlock, err := srl.doneCheck.waitUntilAllDone(doneCheckTimeoutCtx)
+		if err != nil {
+			srl.logger.Warnf(
+				"[member:%v] cannot wait for signing done "+
+					"checks for attempt [%v]: [%v]; starting next attempt",
+				srl.signingGroupMemberIndex,
+				srl.attemptCounter,
+				err,
+			)
+			continue
+		}
+
+		return &signingRetryLoopResult{
+			result:              result,
+			latestEndBlock:      latestEndBlock,
+			attemptTimeoutBlock: timeoutBlock,
+		}, nil
 	}
 }
 

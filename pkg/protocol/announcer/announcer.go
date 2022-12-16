@@ -14,6 +14,14 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
+// announceReceiveBuffer is a buffer for messages received from the broadcast
+// channel needed when the announcer's consumer is temporarily too slow to
+// handle them. Keep in mind that although we expect only 51 announce messages,
+// it may happen that the announcer receives retransmissions of messages from
+// the previous signing protocol and before they are filtered out as not
+// interesting for the announcer, they are buffered in the channel.
+const announceReceiveBuffer = 512
+
 // announcementMessage represents a message that is used to announce
 // member's participation in the given session of the protocol.
 type announcementMessage struct {
@@ -59,19 +67,16 @@ func (am *announcementMessage) Type() string {
 // readiness announcement over the provided broadcast channel.
 type Announcer struct {
 	protocolID          string
-	groupSize           int
 	broadcastChannel    net.BroadcastChannel
 	membershipValidator *group.MembershipValidator
 }
 
 // New creates a new instance of the Announcer. It expects a unique protocol
-// identifier, the size of the group performing the protocol, a broadcast
-// channel configured to mediate between group members, and a membership
-// validator configured to validate the group membership of announcements
-// senders.
+// identifier, a broadcast channel configured to mediate between group members,
+// and a membership validator configured to validate the group membership of
+// announcements senders.
 func New(
 	protocolID string,
-	groupSize int,
 	broadcastChannel net.BroadcastChannel,
 	membershipValidator *group.MembershipValidator,
 ) *Announcer {
@@ -81,7 +86,6 @@ func New(
 
 	return &Announcer{
 		protocolID:          protocolID,
-		groupSize:           groupSize,
 		broadcastChannel:    broadcastChannel,
 		membershipValidator: membershipValidator,
 	}
@@ -100,7 +104,8 @@ func (a *Announcer) Announce(
 	[]group.MemberIndex,
 	error,
 ) {
-	messagesChan := make(chan net.Message, a.groupSize)
+	messagesChan := make(chan net.Message, announceReceiveBuffer)
+
 	a.broadcastChannel.Recv(ctx, func(message net.Message) {
 		messagesChan <- message
 	})

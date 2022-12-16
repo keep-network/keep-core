@@ -49,7 +49,7 @@ func TestDecideMemberFate_HappyPath(t *testing.T) {
 		Misbehaved:     []byte{7, 10},
 	}
 
-	operatingMemberIDs, err := decideMemberFate(
+	operatingMemberIndexes, err := decideMemberFate(
 		playerIndex,
 		gjkrResult,
 		dkgResultChannel,
@@ -65,12 +65,12 @@ func TestDecideMemberFate_HappyPath(t *testing.T) {
 		)
 	}
 
-	expectedOperatingMemberIDs := []group.MemberIndex{1, 2, 3, 4, 5, 6, 8, 9}
-	if !reflect.DeepEqual(expectedOperatingMemberIDs, operatingMemberIDs) {
+	expectedOperatingMemberIndexes := []group.MemberIndex{1, 2, 3, 4, 5, 6, 8, 9}
+	if !reflect.DeepEqual(expectedOperatingMemberIndexes, operatingMemberIndexes) {
 		t.Errorf(
 			"unexpected operating members\nexpected: %v\nactual:   %v\n",
-			expectedOperatingMemberIDs,
-			operatingMemberIDs,
+			expectedOperatingMemberIndexes,
+			operatingMemberIndexes,
 		)
 	}
 }

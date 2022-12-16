@@ -2,9 +2,10 @@ package bitcoin
 
 import (
 	"fmt"
-	"github.com/keep-network/keep-core/pkg/internal/testutils"
 	"reflect"
 	"testing"
+
+	"github.com/keep-network/keep-core/pkg/internal/testutils"
 )
 
 func TestHashConversions(t *testing.T) {
@@ -21,16 +22,23 @@ func TestHashConversions(t *testing.T) {
 
 	testutils.AssertStringsEqual(
 		t,
-		"hash string in the internal byte order",
+		"hex encode in the internal byte order",
 		hashString,
-		hash.String(InternalByteOrder),
+		hash.Hex(InternalByteOrder),
 	)
 
 	testutils.AssertStringsEqual(
 		t,
-		"hash string in the reversed byte order",
+		"hex encode in the reversed byte order",
 		reversedHashString,
-		hash.String(ReversedByteOrder),
+		hash.Hex(ReversedByteOrder),
+	)
+
+	testutils.AssertStringsEqual(
+		t,
+		"hash string with the default string serialization",
+		hashString,
+		hash.String(),
 	)
 
 	// Create the same hash using the hash string in the reversed byte order.

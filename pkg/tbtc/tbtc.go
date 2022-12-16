@@ -14,6 +14,7 @@ import (
 	"github.com/keep-network/keep-core/pkg/generator"
 	"github.com/keep-network/keep-core/pkg/net"
 	"github.com/keep-network/keep-core/pkg/sortition"
+	"github.com/keep-network/keep-core/pkg/tbtc/maintainer"
 )
 
 // TODO: Unit tests for `tbtc.go`.
@@ -44,6 +45,9 @@ type Config struct {
 	PreParamsGenerationConcurrency int
 	// Concurrency level for key-generation for tECDSA.
 	KeyGenerationConcurrency int
+
+	// Maintainer defines the configuration for the tBTC maintainer.
+	Maintainer maintainer.Config
 }
 
 // Initialize kicks off the TBTC by initializing internal state, ensuring
@@ -68,7 +72,7 @@ func Initialize(
 			"tbtc",
 			map[string]clientinfo.Source{
 				"pre_params_count": func() float64 {
-					return float64(node.dkgExecutor.PreParamsCount())
+					return float64(node.dkgExecutor.preParamsCount())
 				},
 			},
 		)
@@ -192,7 +196,7 @@ type enoughPreParamsInPoolPolicy struct {
 }
 
 func (eppip *enoughPreParamsInPoolPolicy) ShouldJoin() bool {
-	paramsInPool := eppip.node.dkgExecutor.PreParamsCount()
+	paramsInPool := eppip.node.dkgExecutor.preParamsCount()
 	poolSize := eppip.config.PreParamsPoolSize
 	return paramsInPool >= poolSize
 }

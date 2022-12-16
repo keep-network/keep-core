@@ -90,7 +90,7 @@ func (m *member) initializeEphemeralKeysGeneration() *ephemeralKeyPairGenerating
 
 // ephemeralKeyPairGeneratingMember represents one member in a distributed key
 // generating group performing ephemeral key pair generation. It has a full list
-// of `memberIDs` that belong to its threshold group.
+// of `memberIndexes` that belong to its threshold group.
 type ephemeralKeyPairGeneratingMember struct {
 	*member
 
@@ -131,7 +131,7 @@ func (skgm *symmetricKeyGeneratingMember) initializeTssRoundOne() (
 	// beginning of the protocol.
 	tssPartyID, groupTssPartiesIDs := common.GenerateTssPartiesIDs(
 		skgm.id,
-		skgm.group.OperatingMemberIDs(),
+		skgm.group.OperatingMemberIndexes(),
 		skgm.identityConverter,
 	)
 

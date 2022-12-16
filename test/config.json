@@ -9,6 +9,17 @@
         "MaxGasFeeCap": "148 Gwei",
         "BalanceAlertThreshold": "2.3 ether"
     },
+    "Bitcoin": {
+        "Electrum": {
+            "URL": "url.to.electrum:18332",
+            "Protocol": "ssl",
+            "ConnectTimeout": "54s",
+            "ConnectRetryTimeout": "3m12s",
+            "RequestTimeout": "1m34s",
+            "RequestRetryTimeout": "5m",
+            "KeepAliveInterval": "12m"
+        }
+    },
     "Network": {
         "Port": 27001,
         "Peers": [
@@ -28,6 +39,11 @@
         "Port": 3498,
         "NetworkMetricsTick": "43s",
         "EthereumMetricsTick": "1m27s"
+    },
+    "Tbtc": {
+        "Maintainer": {
+            "BitcoinDifficulty": true
+        }
     },
     "Developer": {
         "RandomBeaconAddress": "0xcf64c2a367341170cb4e09cf8c0ed137d8473ceb",
