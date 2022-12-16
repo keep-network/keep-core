@@ -114,6 +114,10 @@ func (n *node) operator() (chain.OperatorID, chain.Address, error) {
 		return 0, "", fmt.Errorf("failed to get operator ID: [%v]", err)
 	}
 
+	if operatorID == 0 {
+		return 0, "", fmt.Errorf("failed to get operator ID")
+	}
+
 	return operatorID, operatorAddress, nil
 }
 
