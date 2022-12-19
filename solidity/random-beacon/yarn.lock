@@ -1390,9 +1390,9 @@
     "@openzeppelin/contracts" "^4.1.0"
 
 "@threshold-network/solidity-contracts@development":
-  version "1.3.0-dev.1"
-  resolved "https://registry.yarnpkg.com/@threshold-network/solidity-contracts/-/solidity-contracts-1.3.0-dev.1.tgz#ffcebfc26c6190a4fa73fb808a6f0f37be45409f"
-  integrity sha512-mBrv2uZqLRYPCbiao/s8f7FD85PVmX3e8Nq1lGSz9vEPfFQ2dvuD8/Tn/ADcdnYpAkCt2aP3eq/xcOucs8Fl9A==
+  version "1.3.0-dev.2"
+  resolved "https://registry.yarnpkg.com/@threshold-network/solidity-contracts/-/solidity-contracts-1.3.0-dev.2.tgz#e3589004aff366d9f034e51b1be8832d01c81d47"
+  integrity sha512-qJulhTwYW7ZKVIgpqWVdQE9R45OgxjmqLaGp2gAv3hvlAUUsC+dnxub1kaQfDqQcZmwzZvtHcxLXYtHg4Cs2ug==
   dependencies:
     "@keep-network/keep-core" ">1.8.1-dev <1.8.1-goerli"
     "@openzeppelin/contracts" "~4.5.0"
