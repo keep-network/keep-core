@@ -3,11 +3,12 @@ package tbtc
 import (
 	"context"
 	"fmt"
-	"golang.org/x/crypto/sha3"
-	"golang.org/x/exp/slices"
 	"reflect"
 	"testing"
 	"time"
+
+	"golang.org/x/crypto/sha3"
+	"golang.org/x/exp/slices"
 
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/internal/tecdsatest"
@@ -293,7 +294,9 @@ func TestDkgExecutor_ExecuteDkgValidation(t *testing.T) {
 
 			// Setting only the fields really needed for this test.
 			dkgExecutor := &dkgExecutor{
-				operatorID:      operatorID,
+				operatorIDFn: func() (chain.OperatorID, error) {
+					return operatorID, nil
+				},
 				operatorAddress: operatorAddress,
 				chain:           localChain,
 				waitForBlockFn:  testWaitForBlockFn(localChain),

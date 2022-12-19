@@ -4,9 +4,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"go.uber.org/zap"
 	"math/big"
 	"sort"
+
+	"go.uber.org/zap"
 
 	"github.com/ipfs/go-log/v2"
 	"github.com/keep-network/keep-common/pkg/persistence"
@@ -35,7 +36,7 @@ const (
 // Distributed Key Generation: determining members selected to the signing
 // group, executing off-chain protocol, and publishing the result to the chain.
 type dkgExecutor struct {
-	operatorID      chain.OperatorID
+	operatorIDFn    func() (chain.OperatorID, error)
 	operatorAddress chain.Address
 
 	chain          Chain
@@ -52,7 +53,7 @@ type dkgExecutor struct {
 // newDkgExecutor creates a new instance of dkgExecutor struct. There should
 // be only one instance of dkgExecutor.
 func newDkgExecutor(
-	operatorID chain.OperatorID,
+	operatorIDFn func() (chain.OperatorID, error),
 	operatorAddress chain.Address,
 	chain Chain,
 	netProvider net.Provider,
@@ -75,7 +76,7 @@ func newDkgExecutor(
 	)
 
 	return &dkgExecutor{
-		operatorID:      operatorID,
+		operatorIDFn:    operatorIDFn,
 		operatorAddress: operatorAddress,
 		chain:           chain,
 		netProvider:     netProvider,
@@ -547,10 +548,16 @@ func (de *dkgExecutor) executeDkgValidation(
 
 	dkgLogger.Infof("DKG result is valid")
 
+	operatorID, err := de.operatorIDFn()
+	if err != nil {
+		dkgLogger.Errorf("cannot get node's operator ID: [%v]", err)
+		return
+	}
+
 	// Determine the member indexes controlled by this node's operator.
 	memberIndexes := make([]group.MemberIndex, 0)
-	for index, operatorID := range result.Members {
-		if operatorID == de.operatorID {
+	for index, memberOperatorID := range result.Members {
+		if memberOperatorID == operatorID {
 			// The group member index should be in range [1, groupSize] so we
 			// need to add 1.
 			memberIndexes = append(memberIndexes, group.MemberIndex(index+1))
@@ -561,7 +568,7 @@ func (de *dkgExecutor) executeDkgValidation(
 		dkgLogger.Infof(
 			"not eligible for DKG result approval; my operator "+
 				"ID [%v] is not among DKG participants [%v]",
-			de.operatorID,
+			operatorID,
 			result.Members,
 		)
 		return

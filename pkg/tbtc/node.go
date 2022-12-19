@@ -5,9 +5,10 @@ import (
 	"crypto/ecdsa"
 	"encoding/hex"
 	"fmt"
-	"github.com/keep-network/keep-core/pkg/chain"
 	"math/big"
 	"sync"
+
+	"github.com/keep-network/keep-core/pkg/chain"
 
 	"go.uber.org/zap"
 
@@ -74,15 +75,18 @@ func newNode(
 		signingExecutors: make(map[string]*signingExecutor),
 	}
 
-	operatorID, operatorAddress, err := node.operator()
+	// Only the operator address is known at this point and can be pre-fetched.
+	// The operator ID must be determined later as the operator may not be in
+	// the sortition pool yet.
+	operatorAddress, err := node.operatorAddress()
 	if err != nil {
-		return nil, fmt.Errorf("cannot get node operator data: [%v]", err)
+		return nil, fmt.Errorf("cannot get node's operator adress: [%v]", err)
 	}
 
 	// TODO: This chicken and egg problem should be solved when
 	// waitForBlockHeight becomes a part of BlockHeightWaiter interface.
 	node.dkgExecutor = newDkgExecutor(
-		operatorID,
+		node.operatorID,
 		operatorAddress,
 		chain,
 		netProvider,
@@ -97,28 +101,37 @@ func newNode(
 	return node, nil
 }
 
-// operatorAddress returns the node's operator data.
-func (n *node) operator() (chain.OperatorID, chain.Address, error) {
+// operatorAddress returns the node's operator address.
+func (n *node) operatorAddress() (chain.Address, error) {
 	_, operatorPublicKey, err := n.chain.OperatorKeyPair()
 	if err != nil {
-		return 0, "", fmt.Errorf("failed to get operator public key: [%v]", err)
+		return "", fmt.Errorf("failed to get operator public key: [%v]", err)
 	}
 
 	operatorAddress, err := n.chain.Signing().PublicKeyToAddress(operatorPublicKey)
 	if err != nil {
-		return 0, "", fmt.Errorf("failed to get operator address: [%v]", err)
+		return "", fmt.Errorf(
+			"failed to convert operator public key to address: [%v]",
+			err,
+		)
+	}
+
+	return operatorAddress, nil
+}
+
+// operatorAddress returns the node's operator ID.
+func (n *node) operatorID() (chain.OperatorID, error) {
+	operatorAddress, err := n.operatorAddress()
+	if err != nil {
+		return 0, fmt.Errorf("failed to get operator address: [%v]", err)
 	}
 
 	operatorID, err := n.chain.GetOperatorID(operatorAddress)
 	if err != nil {
-		return 0, "", fmt.Errorf("failed to get operator ID: [%v]", err)
+		return 0, fmt.Errorf("failed to get operator ID: [%v]", err)
 	}
 
-	if operatorID == 0 {
-		return 0, "", fmt.Errorf("failed to get operator ID")
-	}
-
-	return operatorID, operatorAddress, nil
+	return operatorID, nil
 }
 
 // joinDKGIfEligible takes a seed value and undergoes the process of the
