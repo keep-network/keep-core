@@ -21,6 +21,7 @@ import (
 	chainEthereum "github.com/keep-network/keep-core/pkg/chain/ethereum"
 	ethereumBeacon "github.com/keep-network/keep-core/pkg/chain/ethereum/beacon/gen"
 	ethereumEcdsa "github.com/keep-network/keep-core/pkg/chain/ethereum/ecdsa/gen"
+	ethereumTbtc "github.com/keep-network/keep-core/pkg/chain/ethereum/tbtc/gen"
 	ethereumThreshold "github.com/keep-network/keep-core/pkg/chain/ethereum/threshold/gen"
 )
 
@@ -267,9 +268,17 @@ var cmdFlagsTests = map[string]struct {
 		flagName:              "--developer.bridgeAddress",
 		flagValue:             "0xd21DE06574811450E722a33D8093558E8c04eacc",
 		expectedValueFromFlag: common.HexToAddress("0xd21DE06574811450E722a33D8093558E8c04eacc"),
-		// FIXME: Commented out temporarily for mainnet build.
-		// defaultValue: common.HexToAddress(ethereumTbtc.BridgeAddress),
-		defaultValue: common.HexToAddress("0x0000000000000000000000000000000000000000"),
+		defaultValue:          common.HexToAddress(ethereumTbtc.BridgeAddress),
+	},
+	"developer.lightRelayAddress": {
+		readValueFunc: func(c *config.Config) interface{} {
+			address, _ := c.Ethereum.ContractAddress(chainEthereum.LightRelayContractName)
+			return address
+		},
+		flagName:              "--developer.lightRelayAddress",
+		flagValue:             "0x68e20afD773fDF1231B5cbFeA7040e73e79cAc36",
+		expectedValueFromFlag: common.HexToAddress("0x68e20afD773fDF1231B5cbFeA7040e73e79cAc36"),
+		defaultValue:          common.HexToAddress(ethereumTbtc.LightRelayAddress),
 	},
 	"developer.tokenStakingAddress": {
 		readValueFunc: func(c *config.Config) interface{} {

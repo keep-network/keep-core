@@ -116,15 +116,15 @@ func TestRevealMisbehavedMembersShares(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	expectedDisqualifiedMemberIDs := make([]group.MemberIndex, 0)
+	expectedDisqualifiedMemberIndexes := make([]group.MemberIndex, 0)
 	for _, disqualifiedMember := range disqualifiedMembers {
-		expectedDisqualifiedMemberIDs = append(expectedDisqualifiedMemberIDs, disqualifiedMember.ID)
+		expectedDisqualifiedMemberIndexes = append(expectedDisqualifiedMemberIndexes, disqualifiedMember.ID)
 	}
-	expectedDisqualifiedMemberIDs = append(expectedDisqualifiedMemberIDs, invalidRevealingMember.ID)
-	if !reflect.DeepEqual(expectedDisqualifiedMemberIDs, member1.group.DisqualifiedMemberIDs()) {
+	expectedDisqualifiedMemberIndexes = append(expectedDisqualifiedMemberIndexes, invalidRevealingMember.ID)
+	if !reflect.DeepEqual(expectedDisqualifiedMemberIndexes, member1.group.DisqualifiedMemberIndexes()) {
 		t.Fatalf("\nexpected: %v\nactual:   %v\n",
-			expectedDisqualifiedMemberIDs,
-			member1.group.DisqualifiedMemberIDs(),
+			expectedDisqualifiedMemberIndexes,
+			member1.group.DisqualifiedMemberIndexes(),
 		)
 	}
 

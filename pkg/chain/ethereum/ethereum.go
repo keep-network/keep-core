@@ -123,6 +123,42 @@ func Connect(
 		nil
 }
 
+// ConnectBitcoinDifficulty creates Bitcoin difficulty chain handle.
+func ConnectBitcoinDifficulty(
+	ctx context.Context,
+	config ethereum.Config,
+) (
+	*BitcoinDifficultyChain,
+	error,
+) {
+	client, err := ethclient.Dial(config.URL)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"error Connecting to Ethereum Server: %s [%v]",
+			config.URL,
+			err,
+		)
+	}
+
+	baseChain, err := newBaseChain(ctx, config, client)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"could not create base chain handle: [%v]",
+			err,
+		)
+	}
+
+	bitcoinDifficultyChain, err := NewBitcoinDifficultyChain(config, baseChain)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"could not create Bitcoin difficulty chain handle: [%v]",
+			err,
+		)
+	}
+
+	return bitcoinDifficultyChain, nil
+}
+
 func validateContractsAddresses(
 	config ethereum.Config,
 	beaconChain *BeaconChain,

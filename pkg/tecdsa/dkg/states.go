@@ -53,7 +53,7 @@ func (ekpgs *ephemeralKeyPairGenerationState) Receive(netMessage net.Message) er
 
 func (ekpgs *ephemeralKeyPairGenerationState) CanTransition() bool {
 	messagingDone := len(receivedMessages[*ephemeralPublicKeyMessage](ekpgs.BaseAsyncState)) ==
-		len(ekpgs.member.group.OperatingMemberIDs())-1
+		len(ekpgs.member.group.OperatingMemberIndexes())-1
 
 	return messagingDone
 }
@@ -165,7 +165,7 @@ func (tros *tssRoundOneState) Receive(netMessage net.Message) error {
 
 func (tros *tssRoundOneState) CanTransition() bool {
 	messagingDone := len(receivedMessages[*tssRoundOneMessage](tros.BaseAsyncState)) ==
-		len(tros.member.group.OperatingMemberIDs())-1
+		len(tros.member.group.OperatingMemberIndexes())-1
 
 	return messagingDone
 }
@@ -227,7 +227,7 @@ func (trts *tssRoundTwoState) Receive(netMessage net.Message) error {
 
 func (trts *tssRoundTwoState) CanTransition() bool {
 	messagingDone := len(receivedMessages[*tssRoundTwoMessage](trts.BaseAsyncState)) ==
-		len(trts.member.group.OperatingMemberIDs())-1
+		len(trts.member.group.OperatingMemberIndexes())-1
 
 	return messagingDone
 }
@@ -289,7 +289,7 @@ func (trts *tssRoundThreeState) Receive(netMessage net.Message) error {
 
 func (trts *tssRoundThreeState) CanTransition() bool {
 	messagingDone := len(receivedMessages[*tssRoundThreeMessage](trts.BaseAsyncState)) ==
-		len(trts.member.group.OperatingMemberIDs())-1
+		len(trts.member.group.OperatingMemberIndexes())-1
 
 	return messagingDone
 }
@@ -351,7 +351,7 @@ func (fs *finalizationState) Receive(netMessage net.Message) error {
 
 func (fs *finalizationState) CanTransition() bool {
 	messagingDone := len(receivedMessages[*tssFinalizationMessage](fs.BaseAsyncState)) ==
-		len(fs.member.group.OperatingMemberIDs())-1
+		len(fs.member.group.OperatingMemberIndexes())-1
 
 	return messagingDone
 }
@@ -441,7 +441,7 @@ func (rss *resultSigningState) CanTransition() bool {
 	// bound the signing state to a fixed duration and one can move to the
 	// next state as soon as possible.
 	messagingDone := len(receivedMessages[*resultSignatureMessage](rss.BaseAsyncState)) ==
-		len(rss.member.group.OperatingMemberIDs())-1
+		len(rss.member.group.OperatingMemberIndexes())-1
 
 	return messagingDone
 }

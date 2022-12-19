@@ -8,9 +8,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/keep-network/keep-core/pkg/internal/testutils"
-
 	"github.com/keep-network/keep-core/pkg/chain"
+	"github.com/keep-network/keep-core/pkg/internal/testutils"
 	"github.com/keep-network/keep-core/pkg/protocol/group"
 	"github.com/keep-network/keep-core/pkg/tecdsa"
 	"github.com/keep-network/keep-core/pkg/tecdsa/signing"
@@ -58,8 +57,7 @@ func TestSigningRetryLoop(t *testing.T) {
 		ctxFn                       func() (context.Context, context.CancelFunc)
 		incomingAnnouncementsFn     func(sessionID string) ([]group.MemberIndex, error)
 		signingAttemptFn            signingAttemptFn
-		exchangeDoneChecksOutcomeFn func(attemptNumber uint64, endBlock uint64) (uint64, error)
-		listenDoneChecksOutcomeFn   func(attemptNumber uint64) (*signing.Result, uint64, error)
+		waitUntilAllDoneOutcomeFn   func(attemptNumber uint64) (*signing.Result, uint64, error)
 		expectedOutgoingDoneChecks  []*signingDoneMessage
 		expectedErr                 error
 		expectedResult              *signingRetryLoopResult
@@ -81,13 +79,10 @@ func TestSigningRetryLoop(t *testing.T) {
 			) (*signing.Result, uint64, error) {
 				return testResult, 215, nil // an arbitrary end block
 			},
-			exchangeDoneChecksOutcomeFn: func(
-				attemptNumber uint64,
-				endBlock uint64,
-			) (uint64, error) {
+			waitUntilAllDoneOutcomeFn: func(attemptNumber uint64) (*signing.Result, uint64, error) {
 				// Simulate that the done check phase determines the same
 				// end block as the executing signer.
-				return endBlock, nil
+				return testResult, 215, nil
 			},
 			expectedOutgoingDoneChecks: []*signingDoneMessage{
 				{
@@ -131,13 +126,10 @@ func TestSigningRetryLoop(t *testing.T) {
 			) (*signing.Result, uint64, error) {
 				return testResult, 215, nil // an arbitrary end block
 			},
-			exchangeDoneChecksOutcomeFn: func(
-				attemptNumber uint64,
-				endBlock uint64,
-			) (uint64, error) {
+			waitUntilAllDoneOutcomeFn: func(attemptNumber uint64) (*signing.Result, uint64, error) {
 				// Simulate that the done check phase determines the same
 				// end block as the executing signer.
-				return endBlock, nil
+				return testResult, 215, nil
 			},
 			expectedOutgoingDoneChecks: []*signingDoneMessage{
 				{
@@ -185,13 +177,10 @@ func TestSigningRetryLoop(t *testing.T) {
 			) (*signing.Result, uint64, error) {
 				return testResult, 260, nil // an arbitrary end block
 			},
-			exchangeDoneChecksOutcomeFn: func(
-				attemptNumber uint64,
-				endBlock uint64,
-			) (uint64, error) {
+			waitUntilAllDoneOutcomeFn: func(attemptNumber uint64) (*signing.Result, uint64, error) {
 				// Simulate that the done check phase determines the same
 				// end block as the executing signer.
-				return endBlock, nil
+				return testResult, 260, nil
 			},
 			expectedOutgoingDoneChecks: []*signingDoneMessage{
 				{
@@ -241,13 +230,10 @@ func TestSigningRetryLoop(t *testing.T) {
 			) (*signing.Result, uint64, error) {
 				return testResult, 260, nil // an arbitrary end block
 			},
-			exchangeDoneChecksOutcomeFn: func(
-				attemptNumber uint64,
-				endBlock uint64,
-			) (uint64, error) {
+			waitUntilAllDoneOutcomeFn: func(attemptNumber uint64) (*signing.Result, uint64, error) {
 				// Simulate that the done check phase determines the same
 				// end block as the executing signer.
-				return endBlock, nil
+				return testResult, 260, nil
 			},
 			expectedOutgoingDoneChecks: []*signingDoneMessage{
 				{
@@ -297,13 +283,10 @@ func TestSigningRetryLoop(t *testing.T) {
 
 				return testResult, 260, nil // an arbitrary end block
 			},
-			exchangeDoneChecksOutcomeFn: func(
-				attemptNumber uint64,
-				endBlock uint64,
-			) (uint64, error) {
+			waitUntilAllDoneOutcomeFn: func(attemptNumber uint64) (*signing.Result, uint64, error) {
 				// Simulate that the done check phase determines the same
 				// end block as the executing signer.
-				return endBlock, nil
+				return testResult, 260, nil
 			},
 			expectedOutgoingDoneChecks: []*signingDoneMessage{
 				{
@@ -349,9 +332,7 @@ func TestSigningRetryLoop(t *testing.T) {
 			) (*signing.Result, uint64, error) {
 				return nil, 0, fmt.Errorf("invalid data")
 			},
-			listenDoneChecksOutcomeFn: func(
-				attemptNumber uint64,
-			) (*signing.Result, uint64, error) {
+			waitUntilAllDoneOutcomeFn: func(attemptNumber uint64) (*signing.Result, uint64, error) {
 				// Simulate the result and the end block have been determined
 				// by listening for signing done checks.
 				if attemptNumber == 2 {
@@ -380,7 +361,7 @@ func TestSigningRetryLoop(t *testing.T) {
 			// second attempt for which member 2 is eventually excluded.
 			outgoingAnnouncementsCount: 2,
 		},
-		"done checks exchange error": {
+		"done checks wait error": {
 			signingGroupMemberIndex: 4,
 			ctxFn: func() (context.Context, context.CancelFunc) {
 				return context.WithTimeout(context.Background(), 10*time.Second)
@@ -403,18 +384,15 @@ func TestSigningRetryLoop(t *testing.T) {
 
 				panic("undefined behavior")
 			},
-			exchangeDoneChecksOutcomeFn: func(
-				attemptNumber uint64,
-				endBlock uint64,
-			) (uint64, error) {
+			waitUntilAllDoneOutcomeFn: func(attemptNumber uint64) (*signing.Result, uint64, error) {
 				// Fail the done check for the first attempt.
 				if attemptNumber == 1 {
-					return 0, fmt.Errorf("network error")
+					return nil, 0, fmt.Errorf("network error")
 				}
 
 				// Simulate that the done check phase determines the same
 				// end block as the executing signer.
-				return endBlock, nil
+				return testResult, 260, nil
 			},
 			expectedOutgoingDoneChecks: []*signingDoneMessage{
 				{
@@ -444,73 +422,6 @@ func TestSigningRetryLoop(t *testing.T) {
 			// from the second attempt: 1, 2 and 5. The additional exclusion
 			// round that trims the included members list to the honest
 			// threshold size adds member 9 to the final excluded members list.
-			expectedLastExecutedAttempt: &signingAttemptParams{
-				number:                 2,
-				startBlock:             247, // 206 + 1 * (6 + 30 + 5)
-				timeoutBlock:           277, // start block of the second attempt + 30
-				excludedMembersIndexes: []group.MemberIndex{1, 2, 5, 9},
-			},
-			outgoingAnnouncementsCount: 2,
-		},
-		"done checks listen error": {
-			signingGroupMemberIndex: 8,
-			ctxFn: func() (context.Context, context.CancelFunc) {
-				return context.WithTimeout(context.Background(), 10*time.Second)
-			},
-			incomingAnnouncementsFn: func(
-				sessionID string,
-			) ([]group.MemberIndex, error) {
-				return signingGroupMembersIndexes, nil
-			},
-			signingAttemptFn: func(
-				attempt *signingAttemptParams,
-			) (*signing.Result, uint64, error) {
-				if attempt.number == 2 {
-					return testResult, 260, nil // an arbitrary end block
-				}
-
-				panic("undefined behavior")
-			},
-			listenDoneChecksOutcomeFn: func(
-				attemptNumber uint64,
-			) (*signing.Result, uint64, error) {
-				// Fail the done check for the first attempt.
-				if attemptNumber == 1 {
-					return nil, 260, fmt.Errorf("network error")
-				}
-
-				panic("undefined behavior")
-			},
-			exchangeDoneChecksOutcomeFn: func(
-				attemptNumber uint64,
-				endBlock uint64,
-			) (uint64, error) {
-				// Simulate that the done check phase determines the same
-				// end block as the executing signer.
-				return endBlock, nil
-			},
-			expectedOutgoingDoneChecks: []*signingDoneMessage{
-				{
-					senderID:      8,
-					message:       message,
-					attemptNumber: 2,
-					signature:     testResult.Signature,
-					endBlock:      260,
-				},
-			},
-			expectedErr: nil,
-			expectedResult: &signingRetryLoopResult{
-				result:              testResult,
-				latestEndBlock:      260, // the end block resolved by the done check phase
-				attemptTimeoutBlock: 277, // start block of the second attempt + 30
-			},
-			// Member 8 is the executing one and is excluded from the first attempt.
-			// The first attempt done check listen fails and the signing random
-			// retry algorithm invoked with the test seed excludes 3
-			// members (6 is the honest threshold) from the second attempt:
-			// 1, 2 and 5. The additional exclusion round that trims the
-			// included members list to the honest threshold size adds
-			//member 9 to the final excluded members list.
 			expectedLastExecutedAttempt: &signingAttemptParams{
 				number:                 2,
 				startBlock:             247, // 206 + 1 * (6 + 30 + 5)
@@ -551,8 +462,7 @@ func TestSigningRetryLoop(t *testing.T) {
 			}
 
 			doneCheck := &mockSigningDoneCheck{
-				exchangeDoneChecksOutcomeFn: test.exchangeDoneChecksOutcomeFn,
-				listenDoneChecksOutcomeFn:   test.listenDoneChecksOutcomeFn,
+				waitUntilAllDoneOutcomeFn: test.waitUntilAllDoneOutcomeFn,
 			}
 
 			retryLoop := newSigningRetryLoop(
@@ -673,37 +583,9 @@ func (msa *mockSigningAnnouncer) Announce(
 }
 
 type mockSigningDoneCheck struct {
-	outgoingDoneChecks []*signingDoneMessage
-
-	exchangeDoneChecksOutcomeFn func(
-		attemptNumber uint64,
-		endBlock uint64,
-	) (uint64, error)
-
-	listenDoneChecksOutcomeFn func(
-		attemptNumber uint64,
-	) (*signing.Result, uint64, error)
-}
-
-func (msdc *mockSigningDoneCheck) exchange(
-	ctx context.Context,
-	memberIndex group.MemberIndex,
-	message *big.Int,
-	attemptNumber uint64,
-	attemptTimeoutBlock uint64,
-	attemptMembersIndexes []group.MemberIndex,
-	result *signing.Result,
-	endBlock uint64,
-) (uint64, error) {
-	msdc.outgoingDoneChecks = append(msdc.outgoingDoneChecks, &signingDoneMessage{
-		senderID:      memberIndex,
-		message:       message,
-		attemptNumber: attemptNumber,
-		signature:     result.Signature,
-		endBlock:      endBlock,
-	})
-
-	return msdc.exchangeDoneChecksOutcomeFn(attemptNumber, endBlock)
+	outgoingDoneChecks        []*signingDoneMessage
+	currentAttemptNumber      uint64
+	waitUntilAllDoneOutcomeFn func(attemptNumber uint64) (*signing.Result, uint64, error)
 }
 
 func (msdc *mockSigningDoneCheck) listen(
@@ -712,6 +594,29 @@ func (msdc *mockSigningDoneCheck) listen(
 	attemptNumber uint64,
 	attemptTimeoutBlock uint64,
 	attemptMembersIndexes []group.MemberIndex,
-) (*signing.Result, uint64, error) {
-	return msdc.listenDoneChecksOutcomeFn(attemptNumber)
+) {
+	msdc.currentAttemptNumber = attemptNumber
+}
+
+func (msdc *mockSigningDoneCheck) signalDone(
+	ctx context.Context,
+	memberIndex group.MemberIndex,
+	message *big.Int,
+	attemptNumber uint64,
+	result *signing.Result,
+	endBlock uint64,
+) error {
+	msdc.outgoingDoneChecks = append(msdc.outgoingDoneChecks, &signingDoneMessage{
+		senderID:      memberIndex,
+		message:       message,
+		attemptNumber: attemptNumber,
+		signature:     result.Signature,
+		endBlock:      endBlock,
+	})
+
+	return nil
+}
+
+func (msdc *mockSigningDoneCheck) waitUntilAllDone(ctx context.Context) (*signing.Result, uint64, error) {
+	return msdc.waitUntilAllDoneOutcomeFn(msdc.currentAttemptNumber)
 }
