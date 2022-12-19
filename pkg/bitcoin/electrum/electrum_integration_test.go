@@ -29,22 +29,26 @@ var configs = map[string]Config{
 	"electrs-esplora tcp": {
 		URL:                 "electrum.blockstream.info:60001",
 		Protocol:            TCP,
-		RequestRetryTimeout: timeout,
+		RequestTimeout:      timeout,
+		RequestRetryTimeout: timeout * 2,
 	},
 	"electrs-esplora ssl": {
 		URL:                 "electrum.blockstream.info:60002",
 		Protocol:            SSL,
-		RequestRetryTimeout: timeout,
+		RequestTimeout:      timeout,
+		RequestRetryTimeout: timeout * 3,
 	},
 	"electrumx ssl": {
 		URL:                 "testnet.hsmiths.com:53012",
 		Protocol:            SSL,
-		RequestRetryTimeout: timeout,
+		RequestTimeout:      timeout,
+		RequestRetryTimeout: timeout * 2,
 	},
 	"fulcrum ssl": {
 		URL:                 "blackie.c3-soft.com:57006",
 		Protocol:            SSL,
-		RequestRetryTimeout: timeout,
+		RequestTimeout:      timeout,
+		RequestRetryTimeout: timeout * 2,
 	},
 	// TODO: Add Keep's electrum server
 }
@@ -88,7 +92,7 @@ func TestGetTransaction_Negative_Integration(t *testing.T) {
 			expectedErrorMsg := fmt.Sprintf(
 				"failed to get raw transaction with ID [%s]: [retry timeout [%s] exceeded; most recent error: [request failed: [missing transaction]]]",
 				invalidTxID.Hex(bitcoin.ReversedByteOrder),
-				timeout,
+				config.RequestRetryTimeout,
 			)
 
 			// As a workaround for the problem described in https://github.com/checksum0/go-electrum/issues/5
@@ -98,7 +102,7 @@ func TestGetTransaction_Negative_Integration(t *testing.T) {
 				expectedErrorMsg = fmt.Sprintf(
 					"failed to get raw transaction with ID [%s]: [retry timeout [%s] exceeded; most recent error: [request failed: [Unmarshal received message failed: json: cannot unmarshal object into Go struct field response.error of type string]]]",
 					invalidTxID.Hex(bitcoin.ReversedByteOrder),
-					timeout,
+					config.RequestRetryTimeout,
 				)
 			}
 
@@ -157,7 +161,7 @@ func TestGetTransactionConfirmations_Negative_Integration(t *testing.T) {
 			expectedErrorMsg := fmt.Sprintf(
 				"failed to get raw transaction with ID [%s]: [retry timeout [%s] exceeded; most recent error: [request failed: [missing transaction]]]",
 				invalidTxID.Hex(bitcoin.ReversedByteOrder),
-				timeout,
+				config.RequestRetryTimeout,
 			)
 
 			// As a workaround for the problem described in https://github.com/checksum0/go-electrum/issues/5
@@ -167,7 +171,7 @@ func TestGetTransactionConfirmations_Negative_Integration(t *testing.T) {
 				expectedErrorMsg = fmt.Sprintf(
 					"failed to get raw transaction with ID [%s]: [retry timeout [%s] exceeded; most recent error: [request failed: [Unmarshal received message failed: json: cannot unmarshal object into Go struct field response.error of type string]]]",
 					invalidTxID.Hex(bitcoin.ReversedByteOrder),
-					timeout,
+					config.RequestRetryTimeout,
 				)
 			}
 
@@ -261,7 +265,7 @@ func TestGetBlockHeader_Negative_Integration(t *testing.T) {
 
 			expectedErrorMsg := fmt.Sprintf(
 				"failed to get block header: [retry timeout [%s] exceeded; most recent error: [request failed: [missing header]]]",
-				timeout,
+				config.RequestRetryTimeout,
 			)
 
 			// As a workaround for the problem described in https://github.com/checksum0/go-electrum/issues/5
@@ -270,7 +274,7 @@ func TestGetBlockHeader_Negative_Integration(t *testing.T) {
 			if slices.Contains(replaceErrorMsgForTests, testName) {
 				expectedErrorMsg = fmt.Sprintf(
 					"failed to get block header: [retry timeout [%s] exceeded; most recent error: [request failed: [Unmarshal received message failed: json: cannot unmarshal object into Go struct field response.error of type string]]]",
-					timeout,
+					config.RequestRetryTimeout,
 				)
 			}
 
