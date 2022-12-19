@@ -294,3 +294,19 @@ func newTestConnection(t *testing.T, config Config) bitcoin.Chain {
 
 	return electrum
 }
+
+func assertConfirmationsCloseTo(t *testing.T, expected uint, actual uint) {
+	delta := uint(2)
+
+	min := expected - delta
+	max := expected + delta
+
+	if min > actual || actual > max {
+		t.Errorf(
+			"confirmations number %d out of expected range: [%d,%d]",
+			actual,
+			min,
+			max,
+		)
+	}
+}
