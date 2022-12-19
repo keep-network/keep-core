@@ -18,7 +18,9 @@ require (
 	github.com/bnb-chain/tss-lib v1.3.5
 	github.com/btcsuite/btcd v0.23.1
 	github.com/btcsuite/btcd/btcec/v2 v2.2.0
+	github.com/btcsuite/btcd/chaincfg/chainhash v1.0.1
 	github.com/btcsuite/btcd/v2 v2.0.0-00010101000000-000000000000
+	github.com/btcsuite/btcutil v1.0.3-0.20201208143702-a53e38424cce
 	github.com/checksum0/go-electrum v0.0.0-20220912200153-b862ac442cf9
 	github.com/ethereum/go-ethereum v1.10.19
 	github.com/go-test/deep v1.0.8
@@ -55,9 +57,7 @@ require (
 	github.com/benbjohnson/clock v1.3.0 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/btcsuite/btcd/btcutil v1.1.1 // indirect
-	github.com/btcsuite/btcd/chaincfg/chainhash v1.0.1 // indirect
 	github.com/btcsuite/btclog v0.0.0-20170628155309-84c8d2346e9f // indirect
-	github.com/btcsuite/btcutil v1.0.3-0.20201208143702-a53e38424cce // indirect
 	github.com/cespare/xxhash/v2 v2.1.2 // indirect
 	github.com/cheekybits/genny v1.0.0 // indirect
 	github.com/containerd/cgroups v0.0.0-20201119153540-4cbc285b3327 // indirect
