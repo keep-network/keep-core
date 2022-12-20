@@ -586,9 +586,10 @@ func computeOperatorsIDsHash(operatorsIDs chain.OperatorIDs) ([32]byte, error) {
 }
 
 // convertSignaturesToChainFormat converts signatures map to two slices. First
-// slice contains indices of members from the map, second slice is a slice of
-// concatenated signatures. Signatures and member indices are returned in the
-// matching order. It requires each signature to be exactly 65-byte long.
+// slice contains indices of members from the map, sorted in ascending order
+// as required by the contract. The second slice is a slice of concatenated
+// signatures. Signatures and member indices are returned in the matching order.
+// It requires each signature to be exactly 65-byte long.
 func convertSignaturesToChainFormat(
 	signatures map[group.MemberIndex][]byte,
 ) ([]*big.Int, []byte, error) {
