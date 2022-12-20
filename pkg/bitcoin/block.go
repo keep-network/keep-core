@@ -1,9 +1,6 @@
 package bitcoin
 
-import (
-	// "bytes"
-	"encoding/binary"
-)
+import "encoding/binary"
 
 // BlockHeaderByteLength is the byte length of a serialized block header.
 const BlockHeaderByteLength = 80
