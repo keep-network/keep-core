@@ -54,7 +54,7 @@ func tbtcMaintainer(cmd *cobra.Command, args []string) error {
 	// 	return fmt.Errorf("could not connect to Tbtc chain: [%v]", err)
 	// }
 
-	maintainer.Initialize(ctx, clientConfig.Tbtc.Maintainer, bitcoinChain, nil)
+	maintainer.Initialize(ctx, clientConfig.Tbtc.Maintainer, bitcoinChain, nil, nil)
 
 	<-ctx.Done()
 	return fmt.Errorf("unexpected context cancellation")
