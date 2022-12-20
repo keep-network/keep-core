@@ -933,7 +933,7 @@ func (tc *TbtcChain) activeWalletPublicKey() ([]byte, bool, error) {
 		)
 	}
 
-	if walletPublicKeyHash == [20]byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0} {
+	if walletPublicKeyHash == [20]byte{} {
 		return nil, false, nil
 	}
 
