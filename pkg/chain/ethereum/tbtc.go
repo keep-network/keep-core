@@ -6,12 +6,13 @@ import (
 	"crypto/sha256"
 	"encoding/binary"
 	"fmt"
-	"github.com/ethereum/go-ethereum/accounts/abi"
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/crypto"
 	"math/big"
 	"reflect"
 	"sort"
+
+	"github.com/ethereum/go-ethereum/accounts/abi"
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/crypto"
 
 	"github.com/keep-network/keep-common/pkg/chain/ethereum"
 	"github.com/keep-network/keep-core/pkg/chain"
@@ -675,58 +676,57 @@ func (tc *TbtcChain) GetDKGState() (tbtc.DKGState, error) {
 	return state, err
 }
 
-// CalculateDKGResultHash calculates Keccak-256 hash of the DKG result. Operation
-// is performed off-chain.
-//
-// It first encodes the result using solidity ABI and then calculates Keccak-256
-// hash over it. This corresponds to the DKG result hash calculation on-chain.
-// Hashes calculated off-chain and on-chain must always match.
-func (tc *TbtcChain) CalculateDKGResultHash(
+// CalculateDKGResultSignatureHash calculates a 32-byte hash that is used
+// to produce a signature supporting the given group public key computed
+// as result of the given DKG process. The groupPublicKey parameter must
+// be an uncompressed 65-byte public key with 04 prefix. The
+// misbehavedMembersIndexes parameter should contain indexes of members
+// that were considered as misbehaved during the DKG process. The startBlock
+// argument is the block at which the given DKG process started.
+func (tc *TbtcChain) CalculateDKGResultSignatureHash(
+	groupPublicKey []byte,
+	misbehavedMembersIndexes []group.MemberIndex,
 	startBlock uint64,
-	tecdsaDkgResult *dkg.Result,
-) (dkg.ResultHash, error) {
-	groupPublicKey, err := tecdsaDkgResult.GroupPublicKeyBytes()
-	if err != nil {
-		return dkg.ResultHash{}, err
-	}
-
+) (dkg.ResultSignatureHash, error) {
 	// Crop the 04 prefix as the computeDkgResultHash function expects an
 	// unprefixed 64-byte public key,
 	unprefixedGroupPublicKey := groupPublicKey[1:]
 
-	return computeDkgResultHash(
+	return calculateDKGResultSignatureHash(
 		tc.chainID,
 		unprefixedGroupPublicKey,
-		tecdsaDkgResult.MisbehavedMembersIndexes(),
+		misbehavedMembersIndexes,
 		big.NewInt(int64(startBlock)),
 	)
 }
 
 // computeDkgResultHash computes the keccak256 hash for the given DKG result
 // parameters.
-func computeDkgResultHash(
+func calculateDKGResultSignatureHash(
 	chainID *big.Int,
 	groupPublicKey []byte,
 	misbehavedMembersIndexes []group.MemberIndex,
 	startBlock *big.Int,
-) (dkg.ResultHash, error) {
+) (dkg.ResultSignatureHash, error) {
 	publicKeySize := 64
 
 	if len(groupPublicKey) != publicKeySize {
-		return dkg.ResultHash{}, fmt.Errorf("wrong group public key length")
+		return dkg.ResultSignatureHash{}, fmt.Errorf(
+			"wrong group public key length",
+		)
 	}
 
 	uint256Type, err := abi.NewType("uint256", "uint256", nil)
 	if err != nil {
-		return dkg.ResultHash{}, err
+		return dkg.ResultSignatureHash{}, err
 	}
 	bytesType, err := abi.NewType("bytes", "bytes", nil)
 	if err != nil {
-		return dkg.ResultHash{}, err
+		return dkg.ResultSignatureHash{}, err
 	}
 	uint8SliceType, err := abi.NewType("uint8[]", "uint8[]", nil)
 	if err != nil {
-		return dkg.ResultHash{}, err
+		return dkg.ResultSignatureHash{}, err
 	}
 
 	bytes, err := abi.Arguments{
@@ -741,10 +741,10 @@ func computeDkgResultHash(
 		startBlock,
 	)
 	if err != nil {
-		return dkg.ResultHash{}, err
+		return dkg.ResultSignatureHash{}, err
 	}
 
-	return dkg.ResultHash(crypto.Keccak256Hash(bytes)), nil
+	return dkg.ResultSignatureHash(crypto.Keccak256Hash(bytes)), nil
 }
 
 func (tc *TbtcChain) IsDKGResultValid(

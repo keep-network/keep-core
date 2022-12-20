@@ -3,6 +3,7 @@ package tbtc
 import (
 	"context"
 	"fmt"
+
 	"github.com/ipfs/go-log/v2"
 	"github.com/keep-network/keep-core/pkg/protocol/group"
 	"github.com/keep-network/keep-core/pkg/tecdsa/dkg"
@@ -25,7 +26,20 @@ func newDkgResultSigner(chain Chain, dkgStartBlock uint64) *dkgResultSigner {
 // SignResult signs the provided DKG result. It returns the information
 // pertaining to the signing process: public key, signature, result hash.
 func (drs *dkgResultSigner) SignResult(result *dkg.Result) (*dkg.SignedResult, error) {
-	resultHash, err := drs.chain.CalculateDKGResultHash(drs.dkgStartBlock, result)
+	if result == nil {
+		return nil, fmt.Errorf("result is nil")
+	}
+
+	groupPublicKey, err := result.GroupPublicKeyBytes()
+	if err != nil {
+		return nil, fmt.Errorf("cannot get group public key: [%v]", err)
+	}
+
+	resultHash, err := drs.chain.CalculateDKGResultSignatureHash(
+		groupPublicKey,
+		result.MisbehavedMembersIndexes(),
+		drs.dkgStartBlock,
+	)
 	if err != nil {
 		return nil, fmt.Errorf(
 			"dkg result hash calculation failed [%w]",

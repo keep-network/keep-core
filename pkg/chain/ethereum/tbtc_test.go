@@ -5,10 +5,11 @@ import (
 	"crypto/ecdsa"
 	"encoding/hex"
 	"fmt"
-	"github.com/keep-network/keep-core/pkg/chain"
 	"math/big"
 	"reflect"
 	"testing"
+
+	"github.com/keep-network/keep-core/pkg/chain"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/keep-network/keep-core/pkg/internal/testutils"
@@ -209,7 +210,7 @@ func TestValidateMemberIndex(t *testing.T) {
 	}
 }
 
-func TestComputeDkgResultHash(t *testing.T) {
+func TestCalculateDKGResultSignatureHash(t *testing.T) {
 	chainID := big.NewInt(1)
 
 	groupPublicKey, err := hex.DecodeString(
@@ -224,7 +225,7 @@ func TestComputeDkgResultHash(t *testing.T) {
 
 	startBlock := big.NewInt(2000)
 
-	hash, err := computeDkgResultHash(
+	hash, err := calculateDKGResultSignatureHash(
 		chainID,
 		groupPublicKey,
 		misbehavedMembersIndexes,

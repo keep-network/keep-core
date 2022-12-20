@@ -78,12 +78,18 @@ type DistributedKeyGenerationChain interface {
 	// GetDKGState returns the current state of the DKG procedure.
 	GetDKGState() (DKGState, error)
 
-	// CalculateDKGResultHash calculates 256-bit hash of DKG result in standard
-	// specific for the chain. Operation is performed off-chain.
-	CalculateDKGResultHash(
+	// CalculateDKGResultSignatureHash calculates a 32-byte hash that is used
+	// to produce a signature supporting the given group public key computed
+	// as result of the given DKG process. The groupPublicKey parameter must
+	// be an uncompressed 65-byte public key with 04 prefix. The
+	// misbehavedMembersIndexes parameter should contain indexes of members
+	// that were considered as misbehaved during the DKG process. The startBlock
+	// argument is the block at which the given DKG process started.
+	CalculateDKGResultSignatureHash(
+		groupPublicKey []byte,
+		misbehavedMembersIndexes []group.MemberIndex,
 		startBlock uint64,
-		tecdsaDkgResult *dkg.Result,
-	) (dkg.ResultHash, error)
+	) (dkg.ResultSignatureHash, error)
 
 	// IsDKGResultValid checks whether the submitted DKG result is valid from
 	// the on-chain contract standpoint.
@@ -98,6 +104,10 @@ type DistributedKeyGenerationChain interface {
 	// DKGParameters gets the current value of DKG-specific control parameters.
 	DKGParameters() (*DKGParameters, error)
 }
+
+// DKGChainResultHash represents a hash of the DKGChainResult. The algorithm
+// used is specific to the chain.
+type DKGChainResultHash [32]byte
 
 // DKGChainResult represents a DKG result submitted to the chain.
 type DKGChainResult struct {
@@ -120,7 +130,7 @@ type DKGStartedEvent struct {
 // emitted after a submitted DKG result lands on the chain.
 type DKGResultSubmittedEvent struct {
 	Seed        *big.Int
-	ResultHash  [32]byte
+	ResultHash  DKGChainResultHash
 	Result      *DKGChainResult
 	BlockNumber uint64
 }
@@ -128,7 +138,7 @@ type DKGResultSubmittedEvent struct {
 // DKGResultChallengedEvent represents a DKG result challenge event. It is
 // emitted after a submitted DKG result is challenged as an invalid result.
 type DKGResultChallengedEvent struct {
-	ResultHash  [32]byte
+	ResultHash  DKGChainResultHash
 	Challenger  chain.Address
 	Reason      string
 	BlockNumber uint64
@@ -137,7 +147,7 @@ type DKGResultChallengedEvent struct {
 // DKGResultApprovedEvent represents a DKG result approval event. It is
 // emitted after a submitted DKG result is approved as a valid result.
 type DKGResultApprovedEvent struct {
-	ResultHash  [32]byte
+	ResultHash  DKGChainResultHash
 	Approver    chain.Address
 	BlockNumber uint64
 }

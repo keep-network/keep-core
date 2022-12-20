@@ -3,10 +3,11 @@ package tbtc
 import (
 	"context"
 	"fmt"
-	"github.com/keep-network/keep-core/pkg/chain"
 	"reflect"
 	"testing"
 	"time"
+
+	"github.com/keep-network/keep-core/pkg/chain"
 
 	"github.com/keep-network/keep-core/pkg/internal/tecdsatest"
 	"github.com/keep-network/keep-core/pkg/internal/testutils"
@@ -26,7 +27,7 @@ func TestSignResult_SigningSuccessful(t *testing.T) {
 		t.Fatalf("failed to load test data: [%v]", err)
 	}
 	result := &dkg.Result{
-		Group:           group.NewGroup(32, 64),
+		Group:           group.NewGroup(2, 5),
 		PrivateKeyShare: tecdsa.NewPrivateKeyShare(testData[0]),
 	}
 
@@ -49,8 +50,19 @@ func TestSignResult_SigningSuccessful(t *testing.T) {
 		)
 	}
 
-	expectedDKGResultHash := dkg.ResultHash(
-		sha3.Sum256([]byte(fmt.Sprint(result))),
+	groupPublicKey, err := result.GroupPublicKeyBytes()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	expectedDKGResultHash := dkg.ResultSignatureHash(
+		sha3.Sum256(
+			[]byte(fmt.Sprint(
+				groupPublicKey,
+				result.MisbehavedMembersIndexes(),
+				dkgStartBlock,
+			)),
+		),
 	)
 	if expectedDKGResultHash != signedResult.ResultHash {
 		t.Errorf(
@@ -90,10 +102,7 @@ func TestSignResult_ErrorDuringDkgResultHashCalculation(t *testing.T) {
 	// Use nil as the DKG result to cause hash calculation error
 	_, err := dkgResultSigner.SignResult(nil)
 
-	expectedError := fmt.Errorf(
-		"dkg result hash calculation failed [%w]",
-		errNilDKGResult,
-	)
+	expectedError := fmt.Errorf("result is nil")
 	if !reflect.DeepEqual(expectedError, err) {
 		t.Errorf(
 			"unexpected error\nexpected: %v\nactual:   %v\n",
@@ -113,7 +122,7 @@ func TestVerifySignature_VerificationSuccessful(t *testing.T) {
 		t.Fatalf("failed to load test data: [%v]", err)
 	}
 	result := &dkg.Result{
-		Group:           group.NewGroup(32, 64),
+		Group:           group.NewGroup(2, 5),
 		PrivateKeyShare: tecdsa.NewPrivateKeyShare(testData[0]),
 	}
 
@@ -146,7 +155,7 @@ func TestVerifySignature_VerificationFailure(t *testing.T) {
 	}
 
 	result := &dkg.Result{
-		Group:           group.NewGroup(32, 64),
+		Group:           group.NewGroup(2, 5),
 		PrivateKeyShare: tecdsa.NewPrivateKeyShare(testData[0]),
 	}
 	signedResult, err := dkgResultSigner.SignResult(result)
@@ -155,9 +164,10 @@ func TestVerifySignature_VerificationFailure(t *testing.T) {
 	}
 
 	anotherResult := &dkg.Result{
-		Group:           group.NewGroup(30, 64),
+		Group:           group.NewGroup(2, 5),
 		PrivateKeyShare: tecdsa.NewPrivateKeyShare(testData[0]),
 	}
+	anotherResult.Group.MarkMemberAsInactive(3)
 	anotherSignedResult, err := dkgResultSigner.SignResult(anotherResult)
 	if err != nil {
 		t.Fatal(err)
@@ -173,9 +183,9 @@ func TestVerifySignature_VerificationFailure(t *testing.T) {
 	}
 
 	if verificationSuccessful {
-		t.Fatal(
-			"Expected unsuccessful verification of signature, but it was " +
-				"successful",
+		t.Errorf(
+			"expected unsuccessful verification of signature, " +
+				"but it was successful",
 		)
 	}
 }
@@ -191,7 +201,7 @@ func TestVerifySignature_VerificationError(t *testing.T) {
 	}
 
 	result := &dkg.Result{
-		Group:           group.NewGroup(32, 64),
+		Group:           group.NewGroup(2, 5),
 		PrivateKeyShare: tecdsa.NewPrivateKeyShare(testData[0]),
 	}
 	signedResult, err := dkgResultSigner.SignResult(result)

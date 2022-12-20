@@ -63,20 +63,21 @@ func (r *Result) MisbehavedMembersIndexes() []group.MemberIndex {
 	return sorted
 }
 
-const ResultHashByteSize = 32
+const ResultSignatureHashByteSize = 32
 
-// ResultHash is a 256-bit hash of DKG Result. The hashing algorithm used
-// depends on the client code.
-type ResultHash [ResultHashByteSize]byte
+// ResultSignatureHash is a signature hash of the DKG Result. The hashing
+// algorithm used depends on the client code.
+type ResultSignatureHash [ResultSignatureHashByteSize]byte
 
-// ResultHashFromBytes converts bytes slice to DKG Result Hash. It requires
-// provided bytes slice size to be exactly 32 bytes.
-func ResultHashFromBytes(bytes []byte) (ResultHash, error) {
-	var hash ResultHash
+// ResultSignatureHashFromBytes converts bytes slice to ResultSignatureHash.
+// It requires provided bytes slice size to be exactly
+// ResultSignatureHashByteSize.
+func ResultSignatureHashFromBytes(bytes []byte) (ResultSignatureHash, error) {
+	var hash ResultSignatureHash
 
-	if len(bytes) != ResultHashByteSize {
+	if len(bytes) != ResultSignatureHashByteSize {
 		return hash, fmt.Errorf(
-			"bytes length is not equal %v", ResultHashByteSize,
+			"bytes length is not equal %v", ResultSignatureHashByteSize,
 		)
 	}
 	copy(hash[:], bytes[:])

@@ -124,7 +124,7 @@ func (e *Executor) PreParamsCount() int {
 type SignedResult struct {
 	PublicKey  []byte
 	Signature  []byte
-	ResultHash ResultHash
+	ResultHash ResultSignatureHash
 }
 
 // ResultSigner is the interface that provides ability to sign the DKG result

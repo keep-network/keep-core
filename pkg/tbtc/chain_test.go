@@ -18,8 +18,6 @@ import (
 
 const localChainOperatorID = chain.OperatorID(1)
 
-var errNilDKGResult = fmt.Errorf("nil DKG result")
-
 type localChain struct {
 	dkgResultSubmissionHandlersMutex sync.Mutex
 	dkgResultSubmissionHandlers      map[int]func(submission *DKGResultSubmittedEvent)
@@ -274,19 +272,22 @@ func (lc *localChain) GetDKGState() (DKGState, error) {
 	return lc.dkgState, nil
 }
 
-func (lc *localChain) CalculateDKGResultHash(
+func (lc *localChain) CalculateDKGResultSignatureHash(
+	groupPublicKey []byte,
+	misbehavedMembersIndexes []group.MemberIndex,
 	startBlock uint64,
-	tecdsaDkgResult *dkg.Result,
-) (dkg.ResultHash, error) {
-	if tecdsaDkgResult == nil {
-		return dkg.ResultHash{}, errNilDKGResult
+) (dkg.ResultSignatureHash, error) {
+	if len(groupPublicKey) == 0 {
+		return dkg.ResultSignatureHash{}, fmt.Errorf("group public key has zero length")
 	}
 
-	encodedDKGResult := fmt.Sprint(tecdsaDkgResult)
-	dkgResultHash := dkg.ResultHash(
-		sha3.Sum256([]byte(encodedDKGResult)),
+	encoded := fmt.Sprint(
+		groupPublicKey,
+		misbehavedMembersIndexes,
+		startBlock,
 	)
-	return dkgResultHash, nil
+
+	return sha3.Sum256([]byte(encoded)), nil
 }
 
 func (lc *localChain) IsDKGResultValid(dkgResult *DKGChainResult) (bool, error) {
