@@ -243,7 +243,12 @@ func TestSubmitResult_MemberSubmitsResult(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	operatorID, operatorAddress, err := localChain.operator()
+	operatorAddress, err := localChain.operatorAddress()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	operatorID, err := localChain.GetOperatorID(operatorAddress)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -326,7 +331,12 @@ func TestSubmitResult_AnotherMemberSubmitsResult(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	operatorID, operatorAddress, err := localChain.operator()
+	operatorAddress, err := localChain.operatorAddress()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	operatorID, err := localChain.GetOperatorID(operatorAddress)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -450,7 +460,12 @@ func TestSubmitResult_ContextCancelled(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	operatorID, operatorAddress, err := localChain.operator()
+	operatorAddress, err := localChain.operatorAddress()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	operatorID, err := localChain.GetOperatorID(operatorAddress)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -522,7 +537,12 @@ func TestSubmitResult_TooFewSignatures(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	operatorID, operatorAddress, err := localChain.operator()
+	operatorAddress, err := localChain.operatorAddress()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	operatorID, err := localChain.GetOperatorID(operatorAddress)
 	if err != nil {
 		t.Fatal(err)
 	}

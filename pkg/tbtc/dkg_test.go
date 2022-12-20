@@ -238,7 +238,12 @@ func TestDkgExecutor_ExecuteDkgValidation(t *testing.T) {
 		t.Run(testName, func(t *testing.T) {
 			localChain := Connect(groupSize, groupQuorum, honestThreshold)
 
-			operatorID, operatorAddress, err := localChain.operator()
+			operatorAddress, err := localChain.operatorAddress()
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			operatorID, err := localChain.GetOperatorID(operatorAddress)
 			if err != nil {
 				t.Fatal(err)
 			}

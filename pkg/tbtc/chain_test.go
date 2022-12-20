@@ -38,8 +38,6 @@ type localChain struct {
 	blockCounter       chain.BlockCounter
 	chainConfig        *ChainConfig
 	operatorPrivateKey *operator.PrivateKey
-
-	operatorsIDs map[chain.Address]chain.OperatorID
 }
 
 func (lc *localChain) GetConfig() *ChainConfig {
@@ -113,7 +111,16 @@ func (lc *localChain) IsBetaOperator() (bool, error) {
 func (lc *localChain) GetOperatorID(
 	operatorAddress chain.Address,
 ) (chain.OperatorID, error) {
-	return lc.operatorsIDs[operatorAddress], nil
+	thisOperatorAddress, err := lc.operatorAddress()
+	if err != nil {
+		return 0, err
+	}
+
+	if thisOperatorAddress != operatorAddress {
+		return 0, fmt.Errorf("local chain allows for one operator only")
+	}
+
+	return localChainOperatorID, nil
 }
 
 func (lc *localChain) SelectGroup() (*GroupSelectionResult, error) {
@@ -420,18 +427,13 @@ func (lc *localChain) OnHeartbeatRequested(
 	panic("unsupported")
 }
 
-func (lc *localChain) operator() (chain.OperatorID, chain.Address, error) {
+func (lc *localChain) operatorAddress() (chain.Address, error) {
 	_, operatorPublicKey, err := lc.OperatorKeyPair()
 	if err != nil {
-		return 0, "", err
+		return "", err
 	}
 
-	operatorAddress, err := lc.Signing().PublicKeyToAddress(operatorPublicKey)
-	if err != nil {
-		return 0, "", err
-	}
-
-	return localChainOperatorID, operatorAddress, nil
+	return lc.Signing().PublicKeyToAddress(operatorPublicKey)
 }
 
 // Connect sets up the local chain.
@@ -482,11 +484,7 @@ func ConnectWithKey(
 		blockCounter:       blockCounter,
 		chainConfig:        chainConfig,
 		operatorPrivateKey: operatorPrivateKey,
-		operatorsIDs:       make(map[chain.Address]chain.OperatorID),
 	}
-
-	operatorID, operatorAddress, _ := localChain.operator()
-	localChain.operatorsIDs[operatorAddress] = operatorID
 
 	return localChain
 }
