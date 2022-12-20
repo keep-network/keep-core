@@ -64,9 +64,7 @@ type dkgRetryLoop struct {
 
 	chainConfig *ChainConfig
 
-	announcer                dkgAnnouncer
-	announcementDelayBlocks  uint64
-	announcementActiveBlocks uint64
+	announcer dkgAnnouncer
 
 	attemptCounter    uint
 	attemptStartBlock uint64
@@ -93,18 +91,16 @@ func newDkgRetryLoop(
 	attemptSeed := int64(binary.BigEndian.Uint64(seedSha256[:8]))
 
 	return &dkgRetryLoop{
-		logger:                   logger,
-		seed:                     seed,
-		memberIndex:              memberIndex,
-		selectedOperators:        selectedOperators,
-		chainConfig:              chainConfig,
-		announcer:                announcer,
-		announcementDelayBlocks:  1,
-		announcementActiveBlocks: 5,
-		attemptCounter:           0,
-		attemptStartBlock:        initialStartBlock,
-		attemptSeed:              attemptSeed,
-		attemptDelayBlocks:       5,
+		logger:             logger,
+		seed:               seed,
+		memberIndex:        memberIndex,
+		selectedOperators:  selectedOperators,
+		chainConfig:        chainConfig,
+		announcer:          announcer,
+		attemptCounter:     0,
+		attemptStartBlock:  initialStartBlock,
+		attemptSeed:        attemptSeed,
+		attemptDelayBlocks: 5,
 	}
 }
 
@@ -149,7 +145,7 @@ func (drl *dkgRetryLoop) start(
 				uint64(dkgAttemptMaximumBlocks())
 		}
 
-		announcementStartBlock := drl.attemptStartBlock + drl.announcementDelayBlocks
+		announcementStartBlock := drl.attemptStartBlock + dkgAttemptAnnouncementDelayBlocks
 		err := waitForBlockFn(ctx, announcementStartBlock)
 		if err != nil {
 			return nil, fmt.Errorf(
@@ -163,7 +159,7 @@ func (drl *dkgRetryLoop) start(
 
 		// Set up the announcement phase stop signal.
 		announceCtx, cancelAnnounceCtx := context.WithCancel(ctx)
-		announcementEndBlock := announcementStartBlock + drl.announcementActiveBlocks
+		announcementEndBlock := announcementStartBlock + dkgAttemptAnnouncementActiveBlocks
 		go func() {
 			defer cancelAnnounceCtx()
 
