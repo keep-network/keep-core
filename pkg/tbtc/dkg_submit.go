@@ -30,7 +30,7 @@ func (drs *dkgResultSigner) SignResult(result *dkg.Result) (*dkg.SignedResult, e
 		return nil, fmt.Errorf("result is nil")
 	}
 
-	groupPublicKey, err := result.GroupPublicKeyBytes()
+	groupPublicKey, err := result.GroupPublicKey()
 	if err != nil {
 		return nil, fmt.Errorf("cannot get group public key: [%v]", err)
 	}

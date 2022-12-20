@@ -3,6 +3,7 @@ package ethereum
 import (
 	"context"
 	"crypto/ecdsa"
+	"crypto/elliptic"
 	"crypto/sha256"
 	"encoding/binary"
 	"fmt"
@@ -677,31 +678,43 @@ func (tc *TbtcChain) GetDKGState() (tbtc.DKGState, error) {
 }
 
 // CalculateDKGResultSignatureHash calculates a 32-byte hash that is used
-// to produce a signature supporting the given group public key computed
-// as result of the given DKG process. The groupPublicKey parameter must
-// be an uncompressed 65-byte public key with 04 prefix. The
-// misbehavedMembersIndexes parameter should contain indexes of members
-// that were considered as misbehaved during the DKG process. The startBlock
-// argument is the block at which the given DKG process started.
+// to produce a signature supporting the given groupPublicKey computed
+// as result of the given DKG process. The misbehavedMembersIndexes parameter
+// should contain indexes of members that were considered as misbehaved
+// during the DKG process. The startBlock argument is the block at which
+// the given DKG process started.
 func (tc *TbtcChain) CalculateDKGResultSignatureHash(
-	groupPublicKey []byte,
+	groupPublicKey *ecdsa.PublicKey,
 	misbehavedMembersIndexes []group.MemberIndex,
 	startBlock uint64,
 ) (dkg.ResultSignatureHash, error) {
-	// Crop the 04 prefix as the computeDkgResultHash function expects an
-	// unprefixed 64-byte public key,
-	unprefixedGroupPublicKey := groupPublicKey[1:]
+	groupPublicKeyBytes := elliptic.Marshal(
+		groupPublicKey.Curve,
+		groupPublicKey.X,
+		groupPublicKey.Y,
+	)
+	// Crop the 04 prefix as the calculateDKGResultSignatureHash function
+	// expects an unprefixed 64-byte public key,
+	unprefixedGroupPublicKeyBytes := groupPublicKeyBytes[1:]
+
+	// Sort misbehavedMembersIndexes slice in ascending order as expected
+	// by the calculateDKGResultSignatureHash function.
+	sort.Slice(misbehavedMembersIndexes[:], func(i, j int) bool {
+		return misbehavedMembersIndexes[i] < misbehavedMembersIndexes[j]
+	})
 
 	return calculateDKGResultSignatureHash(
 		tc.chainID,
-		unprefixedGroupPublicKey,
+		unprefixedGroupPublicKeyBytes,
 		misbehavedMembersIndexes,
 		big.NewInt(int64(startBlock)),
 	)
 }
 
 // computeDkgResultHash computes the keccak256 hash for the given DKG result
-// parameters.
+// parameters. It expects that the groupPublicKey is a 64-byte uncompressed
+// public key without the 04 prefix and misbehavedMembersIndexes slice is
+// sorted in ascending order. Those expectations are forced by the contract.
 func calculateDKGResultSignatureHash(
 	chainID *big.Int,
 	groupPublicKey []byte,

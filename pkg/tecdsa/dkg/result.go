@@ -1,6 +1,7 @@
 package dkg
 
 import (
+	"crypto/ecdsa"
 	"crypto/elliptic"
 	"fmt"
 	"sort"
@@ -19,18 +20,27 @@ type Result struct {
 	PrivateKeyShare *tecdsa.PrivateKeyShare
 }
 
-// GroupPublicKeyBytes returns the public key corresponding to the private
-// key share generated during the DKG protocol execution. The resulting
-// slice has 65 bytes and starts with the 04 prefix denoting an uncompressed
-// key.
-func (r *Result) GroupPublicKeyBytes() ([]byte, error) {
+// GroupPublicKey returns the public key corresponding to the private
+// key share generated during the DKG protocol execution.
+func (r *Result) GroupPublicKey() (*ecdsa.PublicKey, error) {
 	if r.PrivateKeyShare == nil {
 		return nil, fmt.Errorf(
 			"cannot retrieve group public key as private key share is nil",
 		)
 	}
 
-	publicKey := r.PrivateKeyShare.PublicKey()
+	return r.PrivateKeyShare.PublicKey(), nil
+}
+
+// GroupPublicKeyBytes returns the public key corresponding to the private
+// key share generated during the DKG protocol execution. The resulting
+// slice has 65 bytes and starts with the 04 prefix denoting an uncompressed
+// key.
+func (r *Result) GroupPublicKeyBytes() ([]byte, error) {
+	publicKey, err := r.GroupPublicKey()
+	if err != nil {
+		return nil, err
+	}
 
 	return elliptic.Marshal(
 		publicKey.Curve,

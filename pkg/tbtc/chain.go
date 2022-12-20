@@ -1,6 +1,7 @@
 package tbtc
 
 import (
+	"crypto/ecdsa"
 	"math/big"
 
 	"github.com/keep-network/keep-core/pkg/chain"
@@ -79,14 +80,13 @@ type DistributedKeyGenerationChain interface {
 	GetDKGState() (DKGState, error)
 
 	// CalculateDKGResultSignatureHash calculates a 32-byte hash that is used
-	// to produce a signature supporting the given group public key computed
-	// as result of the given DKG process. The groupPublicKey parameter must
-	// be an uncompressed 65-byte public key with 04 prefix. The
-	// misbehavedMembersIndexes parameter should contain indexes of members
-	// that were considered as misbehaved during the DKG process. The startBlock
-	// argument is the block at which the given DKG process started.
+	// to produce a signature supporting the given groupPublicKey computed
+	// as result of the given DKG process. The misbehavedMembersIndexes parameter
+	// should contain indexes of members that were considered as misbehaved
+	// during the DKG process. The startBlock argument is the block at which
+	// the given DKG process started.
 	CalculateDKGResultSignatureHash(
-		groupPublicKey []byte,
+		groupPublicKey *ecdsa.PublicKey,
 		misbehavedMembersIndexes []group.MemberIndex,
 		startBlock uint64,
 	) (dkg.ResultSignatureHash, error)

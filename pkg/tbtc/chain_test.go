@@ -1,6 +1,7 @@
 package tbtc
 
 import (
+	"crypto/ecdsa"
 	"encoding/binary"
 	"fmt"
 	"math/big"
@@ -273,12 +274,12 @@ func (lc *localChain) GetDKGState() (DKGState, error) {
 }
 
 func (lc *localChain) CalculateDKGResultSignatureHash(
-	groupPublicKey []byte,
+	groupPublicKey *ecdsa.PublicKey,
 	misbehavedMembersIndexes []group.MemberIndex,
 	startBlock uint64,
 ) (dkg.ResultSignatureHash, error) {
-	if len(groupPublicKey) == 0 {
-		return dkg.ResultSignatureHash{}, fmt.Errorf("group public key has zero length")
+	if groupPublicKey == nil {
+		return dkg.ResultSignatureHash{}, fmt.Errorf("group public key is nil")
 	}
 
 	encoded := fmt.Sprint(

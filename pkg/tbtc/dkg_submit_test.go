@@ -50,7 +50,7 @@ func TestSignResult_SigningSuccessful(t *testing.T) {
 		)
 	}
 
-	groupPublicKey, err := result.GroupPublicKeyBytes()
+	groupPublicKey, err := result.GroupPublicKey()
 	if err != nil {
 		t.Fatal(err)
 	}
