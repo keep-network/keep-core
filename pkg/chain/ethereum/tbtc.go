@@ -350,10 +350,15 @@ func (tc *TbtcChain) SelectGroup() (*tbtc.GroupSelectionResult, error) {
 		)
 	}
 
+	// Should not happen as this is guaranteed by the contract but, just in case.
+	if len(operatorsIDs) != len(operatorsAddresses) {
+		return nil, fmt.Errorf("operators IDs and addresses mismatch")
+	}
+
 	ids := make([]chain.OperatorID, len(operatorsIDs))
 	addresses := make([]chain.Address, len(operatorsIDs))
 	for i := range ids {
-		ids[i] = chain.OperatorID(operatorsIDs[i])
+		ids[i] = operatorsIDs[i]
 		addresses[i] = chain.Address(operatorsAddresses[i].String())
 	}
 
