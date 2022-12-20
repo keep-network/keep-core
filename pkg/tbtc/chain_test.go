@@ -6,6 +6,7 @@ import (
 	"encoding/binary"
 	"fmt"
 	"math/big"
+	"math/rand"
 	"reflect"
 	"sync"
 
@@ -139,7 +140,7 @@ func (lc *localChain) OnDKGResultSubmitted(
 	lc.dkgResultSubmissionHandlersMutex.Lock()
 	defer lc.dkgResultSubmissionHandlersMutex.Unlock()
 
-	handlerID := local_v1.GenerateHandlerID()
+	handlerID := generateHandlerID()
 	lc.dkgResultSubmissionHandlers[handlerID] = handler
 
 	return subscription.NewEventSubscription(func() {
@@ -156,7 +157,7 @@ func (lc *localChain) OnDKGResultChallenged(
 	lc.dkgResultChallengeHandlersMutex.Lock()
 	defer lc.dkgResultChallengeHandlersMutex.Unlock()
 
-	handlerID := local_v1.GenerateHandlerID()
+	handlerID := generateHandlerID()
 	lc.dkgResultChallengeHandlers[handlerID] = handler
 
 	return subscription.NewEventSubscription(func() {
@@ -173,7 +174,7 @@ func (lc *localChain) OnDKGResultApproved(
 	lc.dkgResultApprovalHandlersMutex.Lock()
 	defer lc.dkgResultApprovalHandlersMutex.Unlock()
 
-	handlerID := local_v1.GenerateHandlerID()
+	handlerID := generateHandlerID()
 	lc.dkgResultApprovalHandlers[handlerID] = handler
 
 	return subscription.NewEventSubscription(func() {
@@ -491,4 +492,10 @@ func ConnectWithKey(
 
 func computeDkgChainResultHash(result *DKGChainResult) DKGChainResultHash {
 	return sha3.Sum256(result.GroupPublicKey)
+}
+
+func generateHandlerID() int {
+	// #nosec G404 (insecure random number source (rand))
+	// Local chain implementation doesn't require secure randomness.
+	return rand.Int()
 }
