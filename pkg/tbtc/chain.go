@@ -67,14 +67,19 @@ type DistributedKeyGenerationChain interface {
 		func(event *DKGResultApprovedEvent),
 	) subscription.EventSubscription
 
-	// SubmitDKGResult submits the DKG result to the chain, along with signatures
-	// over result hash from group participants supporting the result.
-	SubmitDKGResult(
-		memberIndex group.MemberIndex,
-		tecdsaDkgResult *dkg.Result,
+	// AssembleDKGResult assembles the DKG chain result according to the rules
+	// expected by the given chain.
+	AssembleDKGResult(
+		submitterMemberIndex group.MemberIndex,
+		groupPublicKey *ecdsa.PublicKey,
+		operatingMembersIndexes []group.MemberIndex,
+		misbehavedMembersIndexes []group.MemberIndex,
 		signatures map[group.MemberIndex][]byte,
 		groupSelectionResult *GroupSelectionResult,
-	) error
+	) (*DKGChainResult, error)
+
+	// SubmitDKGResult submits the DKG result to the chain.
+	SubmitDKGResult(dkgResult *DKGChainResult) error
 
 	// GetDKGState returns the current state of the DKG procedure.
 	GetDKGState() (DKGState, error)

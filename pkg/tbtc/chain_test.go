@@ -2,6 +2,7 @@ package tbtc
 
 import (
 	"crypto/ecdsa"
+	"crypto/elliptic"
 	"encoding/binary"
 	"fmt"
 	"math/big"
@@ -189,11 +190,52 @@ func (lc *localChain) startDKG() error {
 	return nil
 }
 
-func (lc *localChain) SubmitDKGResult(
-	memberIndex group.MemberIndex,
-	tecdsaDkgResult *dkg.Result,
+func (lc *localChain) AssembleDKGResult(
+	submitterMemberIndex group.MemberIndex,
+	groupPublicKey *ecdsa.PublicKey,
+	operatingMembersIndexes []group.MemberIndex,
+	misbehavedMembersIndexes []group.MemberIndex,
 	signatures map[group.MemberIndex][]byte,
 	groupSelectionResult *GroupSelectionResult,
+) (*DKGChainResult, error) {
+	groupPublicKeyBytes := elliptic.Marshal(
+		groupPublicKey.Curve,
+		groupPublicKey.X,
+		groupPublicKey.Y,
+	)
+
+	signingMembersIndexes := make([]group.MemberIndex, 0)
+	signaturesConcatenation := make([]byte, 0)
+	for memberIndex, signature := range signatures {
+		signingMembersIndexes = append(signingMembersIndexes, memberIndex)
+		signaturesConcatenation = append(signaturesConcatenation, signature...)
+	}
+
+	operatingOperatorsIDsBytes := make([]byte, 0)
+	for _, operatingMemberID := range operatingMembersIndexes {
+		operatorIDBytes := make([]byte, 4)
+		operatorID := groupSelectionResult.OperatorsIDs[operatingMemberID-1]
+		binary.BigEndian.PutUint32(operatorIDBytes, operatorID)
+
+		operatingOperatorsIDsBytes = append(
+			operatingOperatorsIDsBytes,
+			operatorIDBytes...,
+		)
+	}
+
+	return &DKGChainResult{
+		SubmitterMemberIndex:     submitterMemberIndex,
+		GroupPublicKey:           groupPublicKeyBytes,
+		MisbehavedMembersIndexes: misbehavedMembersIndexes,
+		Signatures:               signaturesConcatenation,
+		SigningMembersIndexes:    signingMembersIndexes,
+		Members:                  groupSelectionResult.OperatorsIDs,
+		MembersHash:              sha3.Sum256(operatingOperatorsIDsBytes),
+	}, nil
+}
+
+func (lc *localChain) SubmitDKGResult(
+	dkgResult *DKGChainResult,
 ) error {
 	lc.dkgResultSubmissionHandlersMutex.Lock()
 	defer lc.dkgResultSubmissionHandlersMutex.Unlock()
@@ -210,57 +252,19 @@ func (lc *localChain) SubmitDKGResult(
 		return fmt.Errorf("failed to get the current block")
 	}
 
-	groupPublicKeyBytes, err := tecdsaDkgResult.GroupPublicKeyBytes()
-	if err != nil {
-		return fmt.Errorf(
-			"failed to extract group public key bytes from the result [%v]",
-			err,
-		)
-	}
-
-	signingMembersIndexes := make([]group.MemberIndex, 0)
-	signaturesConcatenation := make([]byte, 0)
-	for memberIndex, signature := range signatures {
-		signingMembersIndexes = append(signingMembersIndexes, memberIndex)
-		signaturesConcatenation = append(signaturesConcatenation, signature...)
-	}
-
-	operatingMembersIndexes := tecdsaDkgResult.Group.OperatingMemberIndexes()
-	operatingOperatorsIDsBytes := make([]byte, 0)
-	for _, operatingMemberID := range operatingMembersIndexes {
-		operatorIDBytes := make([]byte, 4)
-		operatorID := groupSelectionResult.OperatorsIDs[operatingMemberID-1]
-		binary.BigEndian.PutUint32(operatorIDBytes, operatorID)
-
-		operatingOperatorsIDsBytes = append(
-			operatingOperatorsIDsBytes,
-			operatorIDBytes...,
-		)
-	}
-
-	result := &DKGChainResult{
-		SubmitterMemberIndex:     memberIndex,
-		GroupPublicKey:           groupPublicKeyBytes,
-		MisbehavedMembersIndexes: tecdsaDkgResult.MisbehavedMembersIndexes(),
-		Signatures:               signaturesConcatenation,
-		SigningMembersIndexes:    signingMembersIndexes,
-		Members:                  groupSelectionResult.OperatorsIDs,
-		MembersHash:              sha3.Sum256(operatingOperatorsIDsBytes),
-	}
-
-	resultHash := computeTestDkgResultHash(result)
+	resultHash := computeDkgChainResultHash(dkgResult)
 
 	for _, handler := range lc.dkgResultSubmissionHandlers {
 		handler(&DKGResultSubmittedEvent{
 			Seed:        nil,
 			ResultHash:  resultHash,
-			Result:      result,
+			Result:      dkgResult,
 			BlockNumber: blockNumber,
 		})
 	}
 
 	lc.dkgState = Challenge
-	lc.dkgResult = result
+	lc.dkgResult = dkgResult
 	lc.dkgResultValid = true
 
 	return nil
@@ -349,7 +353,7 @@ func (lc *localChain) ChallengeDKGResult(dkgResult *DKGChainResult) error {
 
 	for _, handler := range lc.dkgResultChallengeHandlers {
 		handler(&DKGResultChallengedEvent{
-			ResultHash:  computeTestDkgResultHash(dkgResult),
+			ResultHash:  computeDkgChainResultHash(dkgResult),
 			Challenger:  "",
 			Reason:      "",
 			BlockNumber: blockNumber,
@@ -389,7 +393,7 @@ func (lc *localChain) ApproveDKGResult(dkgResult *DKGChainResult) error {
 
 	for _, handler := range lc.dkgResultApprovalHandlers {
 		handler(&DKGResultApprovedEvent{
-			ResultHash:  computeTestDkgResultHash(dkgResult),
+			ResultHash:  computeDkgChainResultHash(dkgResult),
 			Approver:    "",
 			BlockNumber: blockNumber,
 		})
@@ -487,6 +491,6 @@ func ConnectWithKey(
 	return localChain
 }
 
-func computeTestDkgResultHash(result *DKGChainResult) [32]byte {
+func computeDkgChainResultHash(result *DKGChainResult) DKGChainResultHash {
 	return sha3.Sum256(result.GroupPublicKey)
 }

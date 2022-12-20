@@ -175,23 +175,29 @@ func (drs *dkgResultSubmitter) SubmitResult(
 		return nil
 	}
 
-	groupPublicKey, err := result.GroupPublicKeyBytes()
-	if err != nil {
-		return fmt.Errorf("cannot get group public key bytes [%w]", err)
-	}
-
 	drs.dkgLogger.Infof(
-		"[member:%v] submitting DKG result with group public "+
-			"key [0x%x] and [%v] supporting member signatures",
+		"[member:%v] submitting DKG result with [%v] supporting "+
+			"member signatures",
 		memberIndex,
-		groupPublicKey,
 		len(signatures),
 	)
 
-	return drs.chain.SubmitDKGResult(
+	groupPublicKey, err := result.GroupPublicKey()
+	if err != nil {
+		return fmt.Errorf("cannot get group public key [%w]", err)
+	}
+
+	dkgResult, err := drs.chain.AssembleDKGResult(
 		memberIndex,
-		result,
+		groupPublicKey,
+		result.Group.OperatingMemberIndexes(),
+		result.MisbehavedMembersIndexes(),
 		signatures,
 		drs.groupSelectionResult,
 	)
+	if err != nil {
+		return fmt.Errorf("cannot assemble DKG chain result [%w]", err)
+	}
+
+	return drs.chain.SubmitDKGResult(dkgResult)
 }

@@ -395,7 +395,7 @@ func (tc *TbtcChain) OnDKGResultSubmitted(
 		result ecdsaabi.EcdsaDkgResult,
 		blockNumber uint64,
 	) {
-		tbtcResult, err := convertDkgResultToTbtcFormat(result)
+		tbtcResult, err := convertDkgResultFromAbiType(result)
 		if err != nil {
 			logger.Errorf(
 				"unexpected DKG result in DKGResultSubmitted event: [%v]",
@@ -417,9 +417,9 @@ func (tc *TbtcChain) OnDKGResultSubmitted(
 		OnEvent(onEvent)
 }
 
-// convertDkgResultToTbtcFormat converts the WalletRegistry-specific DKG
+// convertDkgResultFromAbiType converts the WalletRegistry-specific DKG
 // result to the format applicable for the TBTC application.
-func convertDkgResultToTbtcFormat(
+func convertDkgResultFromAbiType(
 	result ecdsaabi.EcdsaDkgResult,
 ) (*tbtc.DKGChainResult, error) {
 	if err := validateMemberIndex(result.SubmitterMemberIndex); err != nil {
@@ -455,9 +455,9 @@ func convertDkgResultToTbtcFormat(
 	}, nil
 }
 
-// convertTbtcDkgResultToEcdsaFormat converts the TBTC-specific DKG result to
-// the format applicable for the WalletRegistry.
-func convertDkgResultToChainFormat(
+// convertDkgResultToAbiType converts the TBTC-specific DKG result to
+// the format applicable for the WalletRegistry ABI.
+func convertDkgResultToAbiType(
 	result *tbtc.DKGChainResult,
 ) ecdsaabi.EcdsaDkgResult {
 	signingMembersIndices := make([]*big.Int, len(result.SigningMembersIndexes))
@@ -527,46 +527,75 @@ func (tc *TbtcChain) OnDKGResultApproved(
 		OnEvent(onEvent)
 }
 
-func (tc *TbtcChain) SubmitDKGResult(
-	memberIndex group.MemberIndex,
-	tecdsaDkgResult *dkg.Result,
+// AssembleDKGResult assembles the DKG chain result according to the rules
+// expected by the given chain.
+func (tc *TbtcChain) AssembleDKGResult(
+	submitterMemberIndex group.MemberIndex,
+	groupPublicKey *ecdsa.PublicKey,
+	operatingMembersIndexes []group.MemberIndex,
+	misbehavedMembersIndexes []group.MemberIndex,
 	signatures map[group.MemberIndex][]byte,
 	groupSelectionResult *tbtc.GroupSelectionResult,
-) error {
-	serializedKey, err := convertPubKeyToChainFormat(
-		tecdsaDkgResult.PrivateKeyShare.PublicKey(),
-	)
+) (*tbtc.DKGChainResult, error) {
+	serializedGroupPublicKey, err := convertPubKeyToChainFormat(groupPublicKey)
 	if err != nil {
-		return fmt.Errorf("could not serialize the public key: [%v]", err)
+		return nil, fmt.Errorf(
+			"could not convert group public key to chain format: [%v]",
+			err,
+		)
 	}
+
+	// Sort misbehavedMembersIndexes slice in ascending order as expected
+	// by the on-chain contract.
+	sort.Slice(misbehavedMembersIndexes[:], func(i, j int) bool {
+		return misbehavedMembersIndexes[i] < misbehavedMembersIndexes[j]
+	})
 
 	signingMemberIndices, signatureBytes, err := convertSignaturesToChainFormat(
 		signatures,
 	)
 	if err != nil {
-		return fmt.Errorf("could not convert signatures to chain format: [%v]", err)
+		return nil, fmt.Errorf(
+			"could not convert signatures to chain format: [%v]",
+			err,
+		)
 	}
 
-	operatingMembersIndexes := tecdsaDkgResult.Group.OperatingMemberIndexes()
+	// Sort operatingOperatorsIDs slice in ascending order as the slice
+	// holding the operators IDs used to compute the members hash is
+	// expected to be sorted in the same way.
+	sort.Slice(operatingMembersIndexes[:], func(i, j int) bool {
+		return operatingMembersIndexes[i] < operatingMembersIndexes[j]
+	})
+
 	operatingOperatorsIDs := make([]chain.OperatorID, len(operatingMembersIndexes))
-	for i, operatingMemberID := range operatingMembersIndexes {
-		operatingOperatorsIDs[i] = groupSelectionResult.OperatorsIDs[operatingMemberID-1]
+	for i, operatingMemberIndex := range operatingMembersIndexes {
+		operatingOperatorsIDs[i] =
+			groupSelectionResult.OperatorsIDs[operatingMemberIndex-1]
 	}
 
 	membersHash, err := computeOperatorsIDsHash(operatingOperatorsIDs)
 	if err != nil {
-		return fmt.Errorf("could not compute members hash: [%v]", err)
+		return nil, fmt.Errorf("could not compute members hash: [%v]", err)
 	}
 
-	_, err = tc.walletRegistry.SubmitDkgResult(ecdsaabi.EcdsaDkgResult{
-		SubmitterMemberIndex:     big.NewInt(int64(memberIndex)),
-		GroupPubKey:              serializedKey[:],
-		MisbehavedMembersIndices: tecdsaDkgResult.MisbehavedMembersIndexes(),
+	return &tbtc.DKGChainResult{
+		SubmitterMemberIndex:     submitterMemberIndex,
+		GroupPublicKey:           serializedGroupPublicKey[:],
+		MisbehavedMembersIndexes: misbehavedMembersIndexes,
 		Signatures:               signatureBytes,
-		SigningMembersIndices:    signingMemberIndices,
+		SigningMembersIndexes:    signingMemberIndices,
 		Members:                  groupSelectionResult.OperatorsIDs,
 		MembersHash:              membersHash,
-	})
+	}, nil
+}
+
+func (tc *TbtcChain) SubmitDKGResult(
+	dkgResult *tbtc.DKGChainResult,
+) error {
+	_, err := tc.walletRegistry.SubmitDkgResult(
+		convertDkgResultToAbiType(dkgResult),
+	)
 
 	return err
 }
@@ -594,7 +623,7 @@ func computeOperatorsIDsHash(operatorsIDs chain.OperatorIDs) ([32]byte, error) {
 // It requires each signature to be exactly 65-byte long.
 func convertSignaturesToChainFormat(
 	signatures map[group.MemberIndex][]byte,
-) ([]*big.Int, []byte, error) {
+) ([]group.MemberIndex, []byte, error) {
 	membersIndexes := make([]group.MemberIndex, 0)
 	for memberIndex := range signatures {
 		membersIndexes = append(membersIndexes, memberIndex)
@@ -606,7 +635,6 @@ func convertSignaturesToChainFormat(
 
 	signatureSize := 65
 
-	var membersIndices []*big.Int
 	var signaturesSlice []byte
 
 	for _, memberIndex := range membersIndexes {
@@ -620,11 +648,11 @@ func convertSignaturesToChainFormat(
 				signatureSize,
 			)
 		}
-		membersIndices = append(membersIndices, big.NewInt(int64(memberIndex)))
+
 		signaturesSlice = append(signaturesSlice, signature...)
 	}
 
-	return membersIndices, signaturesSlice, nil
+	return membersIndexes, signaturesSlice, nil
 }
 
 // convertPubKeyToChainFormat takes X and Y coordinates of a signer's public key
@@ -764,7 +792,7 @@ func (tc *TbtcChain) IsDKGResultValid(
 	dkgResult *tbtc.DKGChainResult,
 ) (bool, error) {
 	outcome, err := tc.walletRegistry.IsDkgResultValid(
-		convertDkgResultToChainFormat(dkgResult),
+		convertDkgResultToAbiType(dkgResult),
 	)
 	if err != nil {
 		return false, fmt.Errorf("cannot check result validity: [%v]", err)
@@ -800,7 +828,7 @@ func parseDkgResultValidationOutcome(
 
 func (tc *TbtcChain) ChallengeDKGResult(dkgResult *tbtc.DKGChainResult) error {
 	_, err := tc.walletRegistry.ChallengeDkgResult(
-		convertDkgResultToChainFormat(dkgResult),
+		convertDkgResultToAbiType(dkgResult),
 	)
 
 	return err
@@ -808,7 +836,7 @@ func (tc *TbtcChain) ChallengeDKGResult(dkgResult *tbtc.DKGChainResult) error {
 
 func (tc *TbtcChain) ApproveDKGResult(dkgResult *tbtc.DKGChainResult) error {
 	_, err := tc.walletRegistry.ApproveDkgResult(
-		convertDkgResultToChainFormat(dkgResult),
+		convertDkgResultToAbiType(dkgResult),
 	)
 
 	return err

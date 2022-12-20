@@ -273,12 +273,24 @@ func TestDkgExecutor_ExecuteDkgValidation(t *testing.T) {
 				t.Fatal(err)
 			}
 
-			err = localChain.SubmitDKGResult(
+			groupPublicKey, err := tecdsaDkgResult.GroupPublicKey()
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			dkgResult, err := localChain.AssembleDKGResult(
 				test.submitterMemberIndex,
-				tecdsaDkgResult,
+				groupPublicKey,
+				tecdsaDkgResult.Group.OperatingMemberIndexes(),
+				tecdsaDkgResult.MisbehavedMembersIndexes(),
 				signatures,
 				groupSelectionResult,
 			)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			err = localChain.SubmitDKGResult(dkgResult)
 			if err != nil {
 				t.Fatal(err)
 			}

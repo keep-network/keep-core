@@ -49,14 +49,14 @@ func TestConvertSignaturesToChainFormat(t *testing.T) {
 
 	var tests = map[string]struct {
 		signaturesMap   map[group.MemberIndex][]byte
-		expectedIndices []*big.Int
+		expectedIndices []group.MemberIndex
 		expectedError   error
 	}{
 		"one valid signature": {
 			signaturesMap: map[uint8][]byte{
 				1: signature1,
 			},
-			expectedIndices: []*big.Int{big.NewInt(1)},
+			expectedIndices: []group.MemberIndex{1},
 		},
 		"five valid signatures": {
 			signaturesMap: map[group.MemberIndex][]byte{
@@ -66,13 +66,7 @@ func TestConvertSignaturesToChainFormat(t *testing.T) {
 				5: signature5,
 				2: signature2,
 			},
-			expectedIndices: []*big.Int{
-				big.NewInt(1),
-				big.NewInt(2),
-				big.NewInt(3),
-				big.NewInt(4),
-				big.NewInt(5),
-			},
+			expectedIndices: []group.MemberIndex{1, 2, 3, 4, 5},
 		},
 		"invalid signature": {
 			signaturesMap: map[group.MemberIndex][]byte{
@@ -114,9 +108,7 @@ func TestConvertSignaturesToChainFormat(t *testing.T) {
 				)
 			}
 
-			for i, actualMemberIndex := range indicesSlice {
-				memberIndex := group.MemberIndex(actualMemberIndex.Uint64())
-
+			for i, memberIndex := range indicesSlice {
 				actualSignature := signaturesSlice[signatureSize*i : signatureSize*(i+1)]
 				if !bytes.Equal(
 					test.signaturesMap[memberIndex],
@@ -124,7 +116,7 @@ func TestConvertSignaturesToChainFormat(t *testing.T) {
 				) {
 					t.Errorf(
 						"invalid signatures for member %v\nexpected: %v\nactual:   %v\n",
-						actualMemberIndex,
+						memberIndex,
 						test.signaturesMap[memberIndex],
 						actualSignature,
 					)
