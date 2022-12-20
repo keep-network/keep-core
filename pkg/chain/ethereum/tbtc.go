@@ -320,6 +320,8 @@ func (tc *TbtcChain) IsBetaOperator() (bool, error) {
 	return tc.sortitionPool.IsBetaOperator(tc.key.Address)
 }
 
+// GetOperatorID returns the ID number of the given operator address. An ID
+// number of 0 means the operator has not been allocated an ID number yet.
 func (tc *TbtcChain) GetOperatorID(
 	operatorAddress chain.Address,
 ) (chain.OperatorID, error) {

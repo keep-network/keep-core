@@ -233,6 +233,8 @@ func (bc *BeaconChain) IsBetaOperator() (bool, error) {
 	return bc.sortitionPool.IsBetaOperator(bc.key.Address)
 }
 
+// GetOperatorID returns the ID number of the given operator address. An ID
+// number of 0 means the operator has not been allocated an ID number yet.
 func (bc *BeaconChain) GetOperatorID(
 	operatorAddress chain.Address,
 ) (chain.OperatorID, error) {
