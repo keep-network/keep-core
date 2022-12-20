@@ -108,6 +108,7 @@ func newDkgRetryLoop(
 type dkgAttemptParams struct {
 	number                 uint
 	startBlock             uint64
+	timeoutBlock           uint64
 	excludedMembersIndexes []group.MemberIndex
 }
 
@@ -238,6 +239,8 @@ func (drl *dkgRetryLoop) start(
 			drl.memberIndex,
 		)
 
+		timeoutBlock := announcementEndBlock + dkgAttemptMaximumProtocolBlocks
+
 		var result *dkg.Result
 		var attemptErr error
 
@@ -245,6 +248,7 @@ func (drl *dkgRetryLoop) start(
 			result, attemptErr = dkgAttemptFn(&dkgAttemptParams{
 				number:                 drl.attemptCounter,
 				startBlock:             announcementEndBlock,
+				timeoutBlock:           timeoutBlock,
 				excludedMembersIndexes: excludedMembersIndexes,
 			})
 		} else {

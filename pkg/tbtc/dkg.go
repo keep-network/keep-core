@@ -300,6 +300,7 @@ func (de *dkgExecutor) generateSigningGroup(
 					dkgAttemptLogger := dkgLogger.With(
 						zap.Uint("attempt", attempt.number),
 						zap.Uint64("attemptStartBlock", attempt.startBlock),
+						zap.Uint64("attemptTimeoutBlock", attempt.timeoutBlock),
 					)
 
 					dkgAttemptLogger.Infof(
@@ -311,25 +312,11 @@ func (de *dkgExecutor) generateSigningGroup(
 					)
 
 					// Set up the attempt timeout signal.
-					attemptCtx, cancelAttemptCtx := context.WithCancel(
+					attemptCtx, _ := withCancelOnBlock(
 						ctx,
+						attempt.timeoutBlock,
+						de.waitForBlockFn,
 					)
-					go func() {
-						defer cancelAttemptCtx()
-
-						err := de.waitForBlockFn(
-							ctx,
-							attempt.startBlock+dkgAttemptMaximumProtocolBlocks,
-						)
-						if err != nil {
-							dkgAttemptLogger.Warnf(
-								"[member:%v] failed waiting for "+
-									"attempt stop signal: [%v]",
-								memberIndex,
-								err,
-							)
-						}
-					}()
 
 					// sessionID must be different for each attempt.
 					sessionID := fmt.Sprintf(
