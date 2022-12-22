@@ -165,9 +165,6 @@ func Initialize(
 		}()
 	})
 
-	// TODO: Repeat DKG in case of the result challenge and archive the
-	//       signers stored for the invalid result.
-
 	_ = chain.OnHeartbeatRequested(func(event *HeartbeatRequestedEvent) {
 		go func() {
 			// There is no need to deduplicate. Test loop events are unique.
