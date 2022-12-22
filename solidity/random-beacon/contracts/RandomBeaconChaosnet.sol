@@ -19,20 +19,21 @@ import "./libraries/Callback.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
 /// @title Keep Random Beacon Stub
-/// @notice Keep Random Beacon stub contract that will be used temporarly until
+/// @notice Keep Random Beacon stub contract that will be used temporarily until
 ///         the real-world random beacon client implementation is ready.
 /// @dev Used for testing purposes only.
 contract RandomBeaconChaosnet is IRandomBeacon, Ownable {
     using Callback for Callback.Data;
-
-    /// @notice Arbitrary relay entry - Euler's number
-    uint256 public constant entry = 271828182845904523536028747135266249;
 
     /// @notice Relay entry callback gas limit.
     uint256 public constant _callbackGasLimit = 64_000;
 
     /// @notice Authorized addresses that can request a relay entry.
     mapping(address => bool) public authorizedRequesters;
+
+    /// @notice Arbitrary number used to generate a relay entry. Initially set
+    //          to the Euler's number.
+    uint256 internal seed = 271828182845904523536028747135266249;
 
     Callback.Data internal callback;
 
@@ -56,7 +57,14 @@ contract RandomBeaconChaosnet is IRandomBeacon, Ownable {
 
         callback.setCallbackContract(callbackContract);
 
-        callback.executeCallback(entry, _callbackGasLimit);
+        uint256 relayEntry = uint256(keccak256(abi.encodePacked(seed)));
+        callback.executeCallback(relayEntry, _callbackGasLimit);
+
+        // Update the seed number so that a different relay entry is produced
+        // every time this function is called. Using the same seed would result
+        // in the same group of wallet operators being selected in
+        // `WalletRegistry`.
+        seed++;
     }
 
     /// @notice Authorizes a requester of the relay entry.
