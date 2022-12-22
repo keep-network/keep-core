@@ -1364,17 +1364,13 @@
   dependencies:
     defer-to-connect "^1.0.1"
 
-"@tenderly/hardhat-tenderly@>=1.0.13 <1.2.0":
-  version "1.1.6"
-  resolved "https://registry.yarnpkg.com/@tenderly/hardhat-tenderly/-/hardhat-tenderly-1.1.6.tgz#b706c7c337ebae7ecd314df3e8ee3d244ed1de08"
-  integrity sha512-B6vVdDAxQwjahrvsxjNirJW2ynDENLBD8LLFy8sYVJ+RCb4B8HXT1IGSceqpySNPr2iLYcD5cKC/YCHX+/O48Q==
+"@tenderly/hardhat-tenderly@1.0.12":
+  version "1.0.12"
+  resolved "https://registry.yarnpkg.com/@tenderly/hardhat-tenderly/-/hardhat-tenderly-1.0.12.tgz#fa64da2bf2f6d35a1c131ac9ccaf2f7e8b189a50"
+  integrity sha512-zx2zVpbBxGWVp+aLgf59sZR5lxdqfq/PjqUhga6+iazukQNu/Y6pLfVnCcF1ggvLsf7gnMjwLe3YEx/GxCAykQ==
   dependencies:
-    "@ethersproject/bignumber" "^5.6.2"
-    "@nomiclabs/hardhat-ethers" "^2.0.6"
     axios "^0.21.1"
-    ethers "^5.6.8"
     fs-extra "^9.0.1"
-    hardhat-deploy "^0.11.10"
     js-yaml "^3.14.0"
 
 "@thesis-co/eslint-config@github:thesis/eslint-config#v0.2.0":
@@ -5115,7 +5111,7 @@ ethers@^5.0.1, ethers@^5.0.2, ethers@^5.4.7:
     "@ethersproject/web" "5.4.0"
     "@ethersproject/wordlists" "5.4.0"
 
-ethers@^5.5.3, ethers@^5.6.8:
+ethers@^5.5.3:
   version "5.7.2"
   resolved "https://registry.yarnpkg.com/ethers/-/ethers-5.7.2.tgz#3a7deeabbb8c030d4126b24f84e525466145872e"
   integrity sha512-wswUsmWo1aOK8rR7DIKiWSw9DbLWe6x98Jrn8wcTflTVvaXhAMaB5zGAXy0GYQEQp9iO1iSHWVyARQm11zUtyg==
@@ -6024,25 +6020,6 @@ hardhat-dependency-compiler@^1.1.2:
   version "1.1.2"
   resolved "https://registry.yarnpkg.com/hardhat-dependency-compiler/-/hardhat-dependency-compiler-1.1.2.tgz#02867b7c6dd3de4924d9d3d6593feab8408f1eeb"
   integrity sha512-LVnsPSZnGvzWVvlpewlkPKlPtFP/S9V41RC1fd/ygZc4jkG8ubNlfE82nwiGw5oPueHSmFi6TACgmyrEOokK8w==
-
-hardhat-deploy@^0.11.10:
-  version "0.11.22"
-  resolved "https://registry.yarnpkg.com/hardhat-deploy/-/hardhat-deploy-0.11.22.tgz#9799c0266a0fc40c84690de54760f1b4dae5e487"
-  integrity sha512-ZhHVNB7Jo2l8Is+KIAk9F8Q3d7pptyiX+nsNbIFXztCz81kaP+6kxNODRBqRCy7SOD3It4+iKCL6tWsPAA/jVQ==
-  dependencies:
-    "@types/qs" "^6.9.7"
-    axios "^0.21.1"
-    chalk "^4.1.2"
-    chokidar "^3.5.2"
-    debug "^4.3.2"
-    enquirer "^2.3.6"
-    ethers "^5.5.3"
-    form-data "^4.0.0"
-    fs-extra "^10.0.0"
-    match-all "^1.2.6"
-    murmur-128 "^0.2.1"
-    qs "^6.9.4"
-    zksync-web3 "^0.8.1"
 
 hardhat-deploy@^0.11.11:
   version "0.11.12"
@@ -11763,8 +11740,3 @@ zksync-web3@^0.7.8:
   version "0.7.8"
   resolved "https://registry.yarnpkg.com/zksync-web3/-/zksync-web3-0.7.8.tgz#a6e2cf8539cb725474afaa26feb8400d3842a1fc"
   integrity sha512-xWQbqMJhNx7uTepq0ZB71xkl3gYB/r6UYzwoUlxfZAhwWc+eRFOG7qPM+fWAXk4X0UoQYG5+ottKJaE3wuNgUg==
-
-zksync-web3@^0.8.1:
-  version "0.8.1"
-  resolved "https://registry.yarnpkg.com/zksync-web3/-/zksync-web3-0.8.1.tgz#db289d8f6caf61f4d5ddc471fa3448d93208dc14"
-  integrity sha512-1A4aHPQ3MyuGjpv5X/8pVEN+MdZqMjfVmiweQSRjOlklXYu65wT9BGEOtCmMs5d3gIvLp4ssfTeuR5OCKOD2kw==
