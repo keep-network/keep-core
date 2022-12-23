@@ -687,15 +687,14 @@
     openzeppelin-solidity "2.4.0"
 
 "@keep-network/random-beacon@development":
-  version "2.0.0-dev.75"
-  resolved "https://registry.yarnpkg.com/@keep-network/random-beacon/-/random-beacon-2.0.0-dev.75.tgz#6c8e71237b3d4aa6151975a7d1ea4e2a0a14f250"
-  integrity sha512-sMA/ihwHrIslIXG/ymgl6g5WQXIEdlSW/lBZUfH5+i2sC+8Xhq+wxKh7G8DOqtX0R4QYnvf4hZWwBHT7pVUD3w==
+  version "2.1.0-dev.1"
+  resolved "https://registry.yarnpkg.com/@keep-network/random-beacon/-/random-beacon-2.1.0-dev.1.tgz#197422cef030cb61b0b88fc08a59292a9efb3b28"
+  integrity sha512-ppCPriGEhyc2Aw30wu0ujLphs6wRUdPYR345Knts8tx/z+D49Xg+3JA5tcUiPgXBnJnJJ00sk6uHXdhUS3LLDg==
   dependencies:
-    "@keep-network/hardhat-helpers" "^0.6.0-pre.15"
     "@keep-network/sortition-pools" "^2.0.0-pre.16"
     "@openzeppelin/contracts" "^4.6.0"
     "@thesis/solidity-contracts" "github:thesis/solidity-contracts#4985bcf"
-    "@threshold-network/solidity-contracts" "1.2.0-dev.24"
+    "@threshold-network/solidity-contracts" "1.3.0-dev.2"
 
 "@keep-network/sortition-pools@^2.0.0-pre.16":
   version "2.0.0-pre.16"
@@ -1117,10 +1116,10 @@
   dependencies:
     "@openzeppelin/contracts" "^4.1.0"
 
-"@threshold-network/solidity-contracts@1.2.0-dev.24", "@threshold-network/solidity-contracts@development":
-  version "1.2.0-dev.24"
-  resolved "https://registry.yarnpkg.com/@threshold-network/solidity-contracts/-/solidity-contracts-1.2.0-dev.24.tgz#a6ec0d22bebd0829a70663bc72a6a49713b6fec8"
-  integrity sha512-lNNrsTDhOyqZNNfJ/1lffcCTRoV5CepTvHQWlsIQS5ku/QYFU8MldfRxITNbJSkySYdBA9VGSyiGYM3zSyJAOg==
+"@threshold-network/solidity-contracts@1.3.0-dev.2", "@threshold-network/solidity-contracts@development":
+  version "1.3.0-dev.2"
+  resolved "https://registry.yarnpkg.com/@threshold-network/solidity-contracts/-/solidity-contracts-1.3.0-dev.2.tgz#e3589004aff366d9f034e51b1be8832d01c81d47"
+  integrity sha512-qJulhTwYW7ZKVIgpqWVdQE9R45OgxjmqLaGp2gAv3hvlAUUsC+dnxub1kaQfDqQcZmwzZvtHcxLXYtHg4Cs2ug==
   dependencies:
     "@keep-network/keep-core" ">1.8.1-dev <1.8.1-goerli"
     "@openzeppelin/contracts" "~4.5.0"

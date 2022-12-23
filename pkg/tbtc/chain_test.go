@@ -226,12 +226,10 @@ func ConnectWithKey(
 ) *localChain {
 	blockCounter, _ := local_v1.BlockCounter()
 
-	resultPublicationBlockStep := uint64(3)
 	chainConfig := &ChainConfig{
-		GroupSize:                  groupSize,
-		GroupQuorum:                groupQuorum,
-		HonestThreshold:            honestThreshold,
-		ResultPublicationBlockStep: resultPublicationBlockStep,
+		GroupSize:       groupSize,
+		GroupQuorum:     groupQuorum,
+		HonestThreshold: honestThreshold,
 	}
 
 	return &localChain{

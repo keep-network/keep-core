@@ -8,6 +8,7 @@ on:
       - main
     paths:
       - "solidity/ecdsa/**"
+      - ".github/workflows/contracts-ecdsa.yml"
   pull_request:
   # We intend to use `workflow dispatch` in two different situations/paths:
   # 1. If a workflow will be manually dispatched from branch named
@@ -52,6 +53,7 @@ jobs:
           filters: |
             path-filter:
               - './solidity/ecdsa/**'
+              - './.github/workflows/contracts-ecdsa.yml'
 
   contracts-lint:
     needs: contracts-detect-changes
@@ -67,7 +69,7 @@ jobs:
 
       - uses: actions/setup-node@v3
         with:
-          node-version: "14.x"
+          node-version: "18.x"
           cache: "yarn"
           cache-dependency-path: solidity/ecdsa/yarn.lock
 
@@ -94,13 +96,13 @@ jobs:
 
       - uses: actions/setup-node@v3
         with:
-          node-version: "14.x"
+          node-version: "18.x"
           cache: "yarn"
           cache-dependency-path: solidity/ecdsa/yarn.lock
 
       - uses: actions/setup-python@v4
         with:
-          python-version: 3.8.5
+          python-version: 3.10.8
 
       - name: Install Solidity
         env:
@@ -137,7 +139,7 @@ jobs:
 
       - uses: actions/setup-node@v3
         with:
-          node-version: "14.x"
+          node-version: "18.x"
           cache: "yarn"
           cache-dependency-path: solidity/ecdsa/yarn.lock
 
@@ -165,7 +167,7 @@ jobs:
 
       - uses: actions/setup-node@v3
         with:
-          node-version: "14.x"
+          node-version: "18.x"
           cache: "yarn"
           cache-dependency-path: solidity/ecdsa/yarn.lock
 
@@ -196,7 +198,7 @@ jobs:
 
       - uses: actions/setup-node@v3
         with:
-          node-version: "14.x"
+          node-version: "18.x"
           cache: "yarn"
           cache-dependency-path: solidity/ecdsa/yarn.lock
           registry-url: "https://registry.npmjs.org"
@@ -294,7 +296,7 @@ jobs:
 
       - uses: actions/setup-node@v3
         with:
-          node-version: "14.x"
+          node-version: "18.x"
           cache: "yarn"
           cache-dependency-path: solidity/ecdsa/yarn.lock
           registry-url: "https://registry.npmjs.org"

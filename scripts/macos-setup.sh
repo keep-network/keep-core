@@ -20,7 +20,7 @@ go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
 echo "Installing precommit requirements..."
 brew list pre-commit &>/dev/null || brew install pre-commit
 go install golang.org/x/tools/cmd/goimports@latest
-go install golang.org/x/lint/golint@latest
+go install honnef.co/go/tools/cmd/staticcheck@latest
 
 echo "Installing jq..."
 brew list jq &>/dev/null || brew install jq

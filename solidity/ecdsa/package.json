@@ -34,8 +34,8 @@
     "prepublishOnly": "hardhat prepare-artifacts --network $npm_config_network"
   },
   "devDependencies": {
-    "@keep-network/hardhat-helpers": "^0.6.0-pre.15",
     "@defi-wonderland/smock": "^2.0.7",
+    "@keep-network/hardhat-helpers": "^0.6.0-pre.15",
     "@keep-network/hardhat-local-networks-config": "^0.1.0-pre.4",
     "@nomiclabs/hardhat-ethers": "^2.0.6",
     "@nomiclabs/hardhat-etherscan": "^3.1.0",

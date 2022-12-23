@@ -2,15 +2,28 @@ module github.com/keep-network/keep-core
 
 go 1.18
 
-// Temporary replacement until v1.28.2 is released containing `protodelim` package.
-// See https://github.com/protocolbuffers/protobuf-go/commit/fb0abd915897428ccfdd6b03b48ad8219751ee54
-replace google.golang.org/protobuf/dev => google.golang.org/protobuf v1.28.2-0.20220831092852-f930b1dc76e8
+replace (
+	// btcd in version v.0.23 extracted `btcd/btcec` to a separate package `btcd/btcec/v2`.
+	// Some of the dependencies still require the old version, which we workaround
+	// here:
+	github.com/btcsuite/btcd => github.com/btcsuite/btcd v0.22.3
+	github.com/btcsuite/btcd/v2 => github.com/btcsuite/btcd v0.23.4
+	github.com/checksum0/go-electrum => github.com/keep-network/go-electrum v0.0.0-20220912200153-b862ac442cf9
+	// Temporary replacement until v1.28.2 is released containing `protodelim` package.
+	// See https://github.com/protocolbuffers/protobuf-go/commit/fb0abd915897428ccfdd6b03b48ad8219751ee54
+	google.golang.org/protobuf/dev => google.golang.org/protobuf v1.28.2-0.20220831092852-f930b1dc76e8
+)
 
 require (
 	github.com/bnb-chain/tss-lib v1.3.5
-	github.com/btcsuite/btcd v0.22.1
+	github.com/btcsuite/btcd v0.23.1
 	github.com/btcsuite/btcd/btcec/v2 v2.2.0
+	github.com/btcsuite/btcd/chaincfg/chainhash v1.0.1
+	github.com/btcsuite/btcd/v2 v2.0.0-00010101000000-000000000000
+	github.com/btcsuite/btcutil v1.0.3-0.20201208143702-a53e38424cce
+	github.com/checksum0/go-electrum v0.0.0-20220912200153-b862ac442cf9
 	github.com/ethereum/go-ethereum v1.10.19
+	github.com/go-test/deep v1.0.8
 	github.com/google/gofuzz v1.1.1-0.20200604201612-c04b05f3adfa
 	github.com/hashicorp/go-multierror v1.1.1
 	github.com/ipfs/go-datastore v0.5.1
@@ -18,7 +31,7 @@ require (
 	github.com/ipfs/go-log v1.0.5
 	github.com/ipfs/go-log/v2 v2.5.1
 	github.com/jbenet/goprocess v0.1.4
-	github.com/keep-network/keep-common v1.7.1-0.20220927141039-5689702dc79f
+	github.com/keep-network/keep-common v1.7.1-0.20221209141213-c5370c90bf9f
 	github.com/libp2p/go-addr-util v0.2.0
 	github.com/libp2p/go-libp2p v0.20.1
 	github.com/libp2p/go-libp2p-core v0.16.1
@@ -32,6 +45,8 @@ require (
 	go.uber.org/zap v1.21.0
 	golang.org/x/crypto v0.0.0-20220525230936-793ad666bf5e
 	golang.org/x/exp v0.0.0-20220426173459-3bcf042a4bf5
+	golang.org/x/sync v0.0.0-20220601150217-0de741cfad7f
+	golang.org/x/term v0.0.0-20210927222741-03fcf44c2211
 	google.golang.org/protobuf v1.28.1
 	google.golang.org/protobuf/dev v0.0.0-00010101000000-000000000000
 )
@@ -41,14 +56,15 @@ require (
 	github.com/agl/ed25519 v0.0.0-20170116200512-5312a6153412 // indirect
 	github.com/benbjohnson/clock v1.3.0 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
-	github.com/btcsuite/btcd/chaincfg/chainhash v1.0.1 // indirect
-	github.com/btcsuite/btcutil v1.0.3-0.20201208143702-a53e38424cce // indirect
+	github.com/btcsuite/btcd/btcutil v1.1.1 // indirect
+	github.com/btcsuite/btclog v0.0.0-20170628155309-84c8d2346e9f // indirect
 	github.com/cespare/xxhash/v2 v2.1.2 // indirect
 	github.com/cheekybits/genny v1.0.0 // indirect
 	github.com/containerd/cgroups v0.0.0-20201119153540-4cbc285b3327 // indirect
 	github.com/coreos/go-systemd/v22 v22.3.2 // indirect
 	github.com/davidlazar/go-crypto v0.0.0-20200604182044-b73af7476f6c // indirect
 	github.com/deckarep/golang-set v1.8.0 // indirect
+	github.com/decred/dcrd/crypto/blake256 v1.0.0 // indirect
 	github.com/decred/dcrd/dcrec/edwards/v2 v2.0.0 // indirect
 	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.0.1 // indirect
 	github.com/docker/go-units v0.4.0 // indirect
@@ -168,9 +184,7 @@ require (
 	go.uber.org/multierr v1.8.0 // indirect
 	golang.org/x/mod v0.6.0-dev.0.20220419223038-86c51ed26bb4 // indirect
 	golang.org/x/net v0.0.0-20220520000938-2e3eb7b945c2 // indirect
-	golang.org/x/sync v0.0.0-20220601150217-0de741cfad7f // indirect
 	golang.org/x/sys v0.0.0-20220715151400-c0bba94af5f8 // indirect
-	golang.org/x/term v0.0.0-20210927222741-03fcf44c2211 // indirect
 	golang.org/x/text v0.3.7 // indirect
 	golang.org/x/time v0.0.0-20210220033141-f8bda1e9f3ba // indirect
 	golang.org/x/tools v0.1.11 // indirect

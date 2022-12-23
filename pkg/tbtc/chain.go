@@ -104,7 +104,7 @@ type BridgeChain interface {
 //       is integrated with real on-chain contracts.
 type SignatureRequestedEvent struct {
 	WalletPublicKey []byte
-	Message         *big.Int
+	Messages        []*big.Int
 	BlockNumber     uint64
 }
 
@@ -138,9 +138,6 @@ type ChainConfig struct {
 	// HonestThreshold is the minimum number of active participants behaving
 	// according to the protocol needed to generate a signature.
 	HonestThreshold int
-	// ResultPublicationBlockStep is the duration (in blocks) that has to pass
-	// between publication attempts made by individual members.
-	ResultPublicationBlockStep uint64
 }
 
 // DishonestThreshold is the maximum number of misbehaving participants for

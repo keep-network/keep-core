@@ -22,11 +22,10 @@ local:
 
 all: get_artifacts generate build release cmd-help
 
-# FIXME: tbtc module was removed as it's not used in the client. Add it back
-# while implementing tbtc integration.
 modules := beacon \
 	ecdsa \
-	threshold
+	threshold \
+	tbtc
 
 # Required by get_npm_package function.
 npm_beacon_package := @keep-network/random-beacon

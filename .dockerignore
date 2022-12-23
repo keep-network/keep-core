@@ -35,3 +35,8 @@ token-tracker/
 # Legacy V1 contracts bindings.
 # We won't generate new bindings in the docker build process, but use the existing ones.
 !pkg/chain/gen
+
+# Contract addresses.
+# We do not want to overwrite extracted contract addresses with empty content while
+# coping local root directory to docker image context.
+**/gen/_address/*
