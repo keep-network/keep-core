@@ -13,6 +13,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"golang.org/x/exp/slices"
 
+	"github.com/keep-network/keep-core/pkg/bitcoin/electrum"
 	"github.com/keep-network/keep-core/pkg/chain/ethereum"
 	ethereumBeacon "github.com/keep-network/keep-core/pkg/chain/ethereum/beacon/gen"
 	ethereumEcdsa "github.com/keep-network/keep-core/pkg/chain/ethereum/ecdsa/gen"
@@ -70,6 +71,7 @@ func TestReadConfigFromFile(t *testing.T) {
 				"walletregistry": "0x143ba24e66fce8bca22f7d739f9a932c519b1c76",
 				"tokenstaking":   "0xa363a197f1bbb8877f50350234e3f15fb4175457",
 				"bridge":         "0x138D2a0c87BA9f6BE1DCc13D6224A6aCE9B6b6F0",
+				"lightrelay":     "0x68e20afD773fDF1231B5cbFeA7040e73e79cAc36",
 			},
 		},
 		"Developer - RandomBeacon": {
@@ -100,9 +102,42 @@ func TestReadConfigFromFile(t *testing.T) {
 			},
 			expectedValue: "0x138D2a0c87BA9f6BE1DCc13D6224A6aCE9B6b6F0",
 		},
+		"Ethereum.Developer - LightRelay": {
+			readValueFunc: func(c *Config) interface{} {
+				address, _ := c.Ethereum.ContractAddress(
+					ethereum.LightRelayContractName,
+				)
+				return address.String()
+			},
+			expectedValue: "0x68e20afD773fDF1231B5cbFeA7040e73e79cAc36",
+		},
 		"Bitcoin.Electrum.URL": {
 			readValueFunc: func(c *Config) interface{} { return c.Bitcoin.Electrum.URL },
 			expectedValue: "url.to.electrum:18332",
+		},
+		"Bitcoin.Electrum.Protocol": {
+			readValueFunc: func(c *Config) interface{} { return c.Bitcoin.Electrum.Protocol },
+			expectedValue: electrum.SSL,
+		},
+		"Bitcoin.Electrum.ConnectTimeout": {
+			readValueFunc: func(c *Config) interface{} { return c.Bitcoin.Electrum.ConnectTimeout },
+			expectedValue: 54 * time.Second,
+		},
+		"Bitcoin.Electrum.ConnectRetryTimeout": {
+			readValueFunc: func(c *Config) interface{} { return c.Bitcoin.Electrum.ConnectRetryTimeout },
+			expectedValue: 192 * time.Second,
+		},
+		"Bitcoin.Electrum.RequestTimeout": {
+			readValueFunc: func(c *Config) interface{} { return c.Bitcoin.Electrum.RequestTimeout },
+			expectedValue: 94 * time.Second,
+		},
+		"Bitcoin.Electrum.RequestRetryTimeout": {
+			readValueFunc: func(c *Config) interface{} { return c.Bitcoin.Electrum.RequestRetryTimeout },
+			expectedValue: 300 * time.Second,
+		},
+		"Bitcoin.Electrum.KeepAliveInterval": {
+			readValueFunc: func(c *Config) interface{} { return c.Bitcoin.Electrum.KeepAliveInterval },
+			expectedValue: 720 * time.Second,
 		},
 		"Network.Port": {
 			readValueFunc: func(c *Config) interface{} { return c.LibP2P.Port },

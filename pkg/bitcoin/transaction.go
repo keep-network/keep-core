@@ -1,5 +1,23 @@
 package bitcoin
 
+import "bytes"
+
+// TransactionSerializationFormat represents the Bitcoin transaction
+// serialization format.
+type TransactionSerializationFormat int
+
+const (
+	// Standard is the traditional transaction serialization format
+	// [version][inputs][outputs][locktime].
+	Standard TransactionSerializationFormat = iota
+
+	// Witness is the witness transaction serialization format
+	// [version][marker][flag][inputs][outputs][witness][locktime]
+	// introduced by BIP-0141. For reference, see:
+	// https://github.com/bitcoin/bips/blob/master/bip-0141.mediawiki#specification
+	Witness
+)
+
 // Transaction represents a Bitcoin transaction. For reference, see:
 // https://developer.bitcoin.org/reference/transactions.html#raw-transaction-format
 type Transaction struct {
@@ -15,36 +33,95 @@ type Transaction struct {
 	Locktime uint32
 }
 
-// Serialize serializes the transaction to a byte array using the traditional
-// serialization format: [version][inputs][outputs][locktime].
-func (t *Transaction) Serialize() []byte {
-	// TODO: Implementation of the Serialize function that consists of the following
-	//       (see https://hongchao.me/anatomy-of-raw-bitcoin-transaction for reference):
-	//       1. Serialize t.Version to an InternalByteOrder byte array.
-	//       2. Serialize t.Inputs as follows:
-	//          2.1. Serialize each input separately. All numbers should be
-	//               serialized to an InternalByteOrder byte array.
-	//          2.2. Concatenate serialized inputs into a single array
-	//               preserving the inputs order.
-	//          2.3. Prepend the concatenation with its length encoded
-	//               as an CompactSizeUint.
-	//       3. Serialize t.Outputs just like t.Inputs.
-	//       4. Serialize t.Locktime to an InternalByteOrder byte array.
+// Serialize serializes the transaction to a byte array using the specified
+// serialization format. The actual result depends on the transaction type
+// as described below.
+//
+// If the transaction CONTAINS witness inputs and Serialize is called with:
+// - Standard serialization format, the result is actually in the Standard
+//   format and does not include witness data referring to the witness inputs
+// - Witness serialization format, the result is actually in the Witness
+//   format and includes witness data referring to the witness inputs
+//
+// If the transaction DOES NOT CONTAIN witness inputs and Serialize is
+// called with:
+// - Standard serialization format, the result is actually in the Standard
+//   format
+// - Witness serialization format, the result is actually in the Standard
+//   format because there are no witness inputs whose data can be included
+//
+// By default, the Witness format is used and that can be changed using the
+// optional format argument. The Witness format is used by default as it
+// fits more use cases.
+func (t *Transaction) Serialize(
+	format ...TransactionSerializationFormat,
+) []byte {
+	internal := newInternalTransaction()
+	internal.fromTransaction(t)
+
+	resolvedFormat := Witness
+
+	if len(format) == 1 {
+		resolvedFormat = format[0]
+	}
+
+	switch resolvedFormat {
+	case Standard:
+		buffer := bytes.NewBuffer(
+			make([]byte, 0, internal.SerializeSizeStripped()),
+		)
+		err := internal.SerializeNoWitness(buffer)
+		if err != nil {
+			return nil
+		}
+		return buffer.Bytes()
+	case Witness:
+		buffer := bytes.NewBuffer(
+			make([]byte, 0, internal.SerializeSize()),
+		)
+		err := internal.Serialize(buffer)
+		if err != nil {
+			return nil
+		}
+		return buffer.Bytes()
+	default:
+		panic("unknown transaction serialization format")
+	}
+}
+
+// Deserialize deserializes the given byte array to a Transaction.
+func (t *Transaction) Deserialize(data []byte) error {
+	internal := newInternalTransaction()
+	err := internal.Deserialize(bytes.NewReader(data))
+	if err != nil {
+		return err
+	}
+
+	transaction := internal.toTransaction()
+
+	t.Version = transaction.Version
+	t.Inputs = transaction.Inputs
+	t.Outputs = transaction.Outputs
+	t.Locktime = transaction.Locktime
+
 	return nil
 }
 
 // Hash calculates the transaction's hash as the double SHA-256 of the
-// traditional serialization format: [version][inputs][outputs][locktime].
-// The outcome is equivalent to the txid field defined in the Bitcoin
-// specification. Do not confuse it with the wtxid field defined by BIP 141.
-// For reference, see:
-// https://github.com/bitcoin/bips/blob/master/bip-0141.mediawiki#transaction-id
+// Standard serialization format. The outcome is equivalent to the txid field
+// defined in the Bitcoin specification and is used as transaction identifier.
 func (t *Transaction) Hash() Hash {
-	// TODO: Implementation of the Hash function that consists of the following:
-	//       1. Call t.Serialize() to get the serialized transaction.
-	//       2. Compute the double SHA-256 over the serialized transaction.
-	//       3. Construct the Hash instance appropriately.
-	return Hash{}
+	return ComputeHash(t.Serialize(Standard))
+}
+
+// WitnessHash calculates the transaction's witness hash as the double SHA-256
+// of the Witness serialization format. The outcome is equivalent to the
+// wtxid field defined by BIP-0141. The outcome of WitnessHash is equivalent
+// to the result of Hash for non-witness transactions, i.e. transaction which
+// does not have witness inputs. For reference, see:
+// https://github.com/bitcoin/bips/blob/master/bip-0141.mediawiki#transaction-id
+func (t *Transaction) WitnessHash() Hash {
+	return ComputeHash(t.Serialize(Witness))
 }
 
 // TransactionOutpoint represents a Bitcoin transaction outpoint.
@@ -66,10 +143,18 @@ type TransactionInput struct {
 	Outpoint *TransactionOutpoint
 	// SignatureScript is a script-language script that satisfies the conditions
 	// placed in the outpoint's public key script (see TransactionOutput.PublicKeyScript).
-	// This slice must start with the byte-length of the script encoded as a
-	// CompactSizeUint. This field is not set (nil or empty) for SegWit
-	// transactions.
+	// This slice MUST NOT start with the byte-length of the script encoded as
+	// a CompactSizeUint as this is done during transaction serialization.
+	// This field is not set (nil or empty) for SegWit transaction inputs.
+	// That means it is mutually exclusive with the below Witness field.
 	SignatureScript []byte
+	// Witness holds the witness data for the given input. It should be interpreted
+	// as a stack with one or many elements. Individual elements MUST NOT start
+	// with the byte-length of the script encoded as a CompactSizeUint as this
+	// is done during transaction serialization. This field is not set
+	// (nil or empty) for non-SegWit transaction inputs. That means it is
+	// mutually exclusive with the above SignatureScript field.
+	Witness [][]byte
 	// Sequence is the sequence number for this input. Default value
 	// is 0xffffffff. For reference, see:
 	// https://developer.bitcoin.org/devguide/transactions.html#locktime-and-sequence-number
@@ -82,8 +167,8 @@ type TransactionOutput struct {
 	// Value denotes the number of satoshis to spend. Zero is a valid value.
 	Value int64
 	// PublicKeyScript defines the conditions that must be satisfied to spend
-	// this output. This slice must start with the byte-length of the script
-	// encoded as CompactSizeUint
+	// this output. This slice MUST NOT start with the byte-length of the script
+	// encoded as CompactSizeUint as this is done during transaction serialization.
 	PublicKeyScript []byte
 }
 

@@ -26,7 +26,7 @@ spec:
       - ReadWriteOnce
       resources:
         requests:
-          storage: 512Mi
+          storage: 4096Mi
   template:
     metadata:
       labels:
@@ -231,7 +231,7 @@ spec:
       - ReadWriteOnce
       resources:
         requests:
-          storage: 512Mi
+          storage: 4096Mi
   template:
     metadata:
       labels:
@@ -436,7 +436,7 @@ spec:
       - ReadWriteOnce
       resources:
         requests:
-          storage: 512Mi
+          storage: 4096Mi
   template:
     metadata:
       labels:
@@ -639,7 +639,7 @@ spec:
       - ReadWriteOnce
       resources:
         requests:
-          storage: 512Mi
+          storage: 4096Mi
   template:
     metadata:
       labels:
@@ -842,7 +842,7 @@ spec:
       - ReadWriteOnce
       resources:
         requests:
-          storage: 512Mi
+          storage: 4096Mi
   template:
     metadata:
       labels:
@@ -1045,7 +1045,7 @@ spec:
       - ReadWriteOnce
       resources:
         requests:
-          storage: 512Mi
+          storage: 4096Mi
   template:
     metadata:
       labels:
@@ -1248,7 +1248,7 @@ spec:
       - ReadWriteOnce
       resources:
         requests:
-          storage: 512Mi
+          storage: 4096Mi
   template:
     metadata:
       labels:
@@ -1451,7 +1451,7 @@ spec:
       - ReadWriteOnce
       resources:
         requests:
-          storage: 512Mi
+          storage: 4096Mi
   template:
     metadata:
       labels:
@@ -1654,7 +1654,7 @@ spec:
       - ReadWriteOnce
       resources:
         requests:
-          storage: 512Mi
+          storage: 4096Mi
   template:
     metadata:
       labels:
@@ -1857,7 +1857,7 @@ spec:
       - ReadWriteOnce
       resources:
         requests:
-          storage: 512Mi
+          storage: 4096Mi
   template:
     metadata:
       labels:
