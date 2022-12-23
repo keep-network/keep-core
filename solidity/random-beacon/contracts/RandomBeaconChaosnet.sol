@@ -31,9 +31,9 @@ contract RandomBeaconChaosnet is IRandomBeacon, Ownable {
     /// @notice Authorized addresses that can request a relay entry.
     mapping(address => bool) public authorizedRequesters;
 
-    /// @notice Arbitrary number used to generate a relay entry. Initially set
-    //          to the Euler's number, updated after each relay entry request.
-    uint256 internal seed = 271828182845904523536028747135266249;
+    /// @notice Arbitrary relay entry. Initially set to the Euler's number.
+    ///         It's updated after each relay entry request.
+    uint256 internal entry = 271828182845904523536028747135266249;
 
     Callback.Data internal callback;
 
@@ -57,15 +57,11 @@ contract RandomBeaconChaosnet is IRandomBeacon, Ownable {
 
         callback.setCallbackContract(callbackContract);
 
-        uint256 relayEntry = uint256(keccak256(abi.encodePacked(seed)));
+        // Update the entry so that a different group of wallet operators is
+        // selected in `WalletRegistry` on each request.
+        entry = uint256(keccak256(abi.encodePacked(entry)));
 
-        // Update the seed number so that a different relay entry is produced
-        // every time this function is called. Using the same seed would result
-        // in the same group of wallet operators being selected in
-        // `WalletRegistry`.
-        seed++;
-
-        callback.executeCallback(relayEntry, _callbackGasLimit);
+        callback.executeCallback(entry, _callbackGasLimit);
     }
 
     /// @notice Authorizes a requester of the relay entry.
