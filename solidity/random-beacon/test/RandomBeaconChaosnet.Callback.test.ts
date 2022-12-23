@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-extra-semi */
 
 import { ethers, helpers } from "hardhat"
+import { BigNumber } from "ethers"
 import { expect } from "chai"
 
 import type {
@@ -44,14 +45,6 @@ describe("RandomBeaconChaosnet - Callback", () => {
   })
 
   describe("requestRelayEntry", () => {
-    before(async () => {
-      await createSnapshot()
-    })
-
-    after(async () => {
-      await restoreSnapshot()
-    })
-
     context("when requester is not authorized", () => {
       it("should revert", async () => {
         await expect(
@@ -64,26 +57,50 @@ describe("RandomBeaconChaosnet - Callback", () => {
 
     context("when requester is authorized", () => {
       before(async () => {
+        await createSnapshot()
+
         await randomBeaconChaosnet
           .connect(deployer)
           .setRequesterAuthorization(requester.address, true)
       })
-      context("when passed a callback address", () => {
-        it("should be set to a callback contract address", async () => {
+
+      after(async () => {
+        await restoreSnapshot()
+      })
+
+      context("when called once", () => {
+        before(async () => {
           await createSnapshot()
 
           await randomBeaconChaosnet
             .connect(requester)
             .requestRelayEntry(callbackContract.address)
+        })
 
-          expect(await randomBeaconChaosnet.getCallbackContract()).to.equal(
-            callbackContract.address
-          )
-
+        after(async () => {
           await restoreSnapshot()
         })
 
-        it("should be set to the latest callback address", async () => {
+        it("should be set to a callback contract address", async () => {
+          expect(await randomBeaconChaosnet.getCallbackContract()).to.equal(
+            callbackContract.address
+          )
+        })
+
+        it("should execute callback with proper entry", async () => {
+          expect(await callbackContract.lastEntry()).to.equal(
+            // The entry is keccak-256 of the initial value stored in
+            // the RandomBeaconChaosnet contract
+            BigNumber.from(
+              "86322480231844907215266847458792959757192550318770676212332984" +
+                "332154459033029"
+            )
+          )
+        })
+      })
+
+      context("when called twice", () => {
+        before(async () => {
           await createSnapshot()
 
           await randomBeaconChaosnet
@@ -93,12 +110,37 @@ describe("RandomBeaconChaosnet - Callback", () => {
           await randomBeaconChaosnet
             .connect(requester)
             .requestRelayEntry(callbackContract1.address)
+        })
 
+        after(async () => {
+          await restoreSnapshot()
+        })
+
+        it("should be set to the latest callback contract address", async () => {
           expect(await randomBeaconChaosnet.getCallbackContract()).to.equal(
             callbackContract1.address
           )
+        })
 
-          await restoreSnapshot()
+        it("should execute the first callback with proper entry", async () => {
+          expect(await callbackContract.lastEntry()).to.equal(
+            // The entry is keccak-256 of the initial value stored in
+            // the RandomBeaconChaosnet contract
+            BigNumber.from(
+              "86322480231844907215266847458792959757192550318770676212332984" +
+                "332154459033029"
+            )
+          )
+        })
+
+        it("should execute the second callback with proper entry", async () => {
+          // The entry is keccak-256 of the previous entry
+          expect(await callbackContract1.lastEntry()).to.equal(
+            BigNumber.from(
+              "45055825411044151981109535788320043556123542984485670123474642" +
+                "322436340913380"
+            )
+          )
         })
       })
     })
