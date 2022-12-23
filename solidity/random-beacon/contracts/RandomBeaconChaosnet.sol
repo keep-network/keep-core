@@ -18,7 +18,7 @@ import "./api/IRandomBeacon.sol";
 import "./libraries/Callback.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
-/// @title Keep Random Beacon Stub
+/// @title Keep Random Beacon Chaosnet Stub
 /// @notice Keep Random Beacon stub contract that will be used temporarily until
 ///         the real-world random beacon client implementation is ready.
 /// @dev Used for testing purposes only.
@@ -32,7 +32,7 @@ contract RandomBeaconChaosnet is IRandomBeacon, Ownable {
     mapping(address => bool) public authorizedRequesters;
 
     /// @notice Arbitrary number used to generate a relay entry. Initially set
-    //          to the Euler's number.
+    //          to the Euler's number, updated after each relay entry request.
     uint256 internal seed = 271828182845904523536028747135266249;
 
     Callback.Data internal callback;
