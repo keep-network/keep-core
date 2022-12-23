@@ -58,13 +58,14 @@ contract RandomBeaconChaosnet is IRandomBeacon, Ownable {
         callback.setCallbackContract(callbackContract);
 
         uint256 relayEntry = uint256(keccak256(abi.encodePacked(seed)));
-        callback.executeCallback(relayEntry, _callbackGasLimit);
 
         // Update the seed number so that a different relay entry is produced
         // every time this function is called. Using the same seed would result
         // in the same group of wallet operators being selected in
         // `WalletRegistry`.
         seed++;
+
+        callback.executeCallback(relayEntry, _callbackGasLimit);
     }
 
     /// @notice Authorizes a requester of the relay entry.
