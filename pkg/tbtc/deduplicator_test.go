@@ -2,10 +2,11 @@ package tbtc
 
 import (
 	"encoding/hex"
-	"github.com/keep-network/keep-common/pkg/cache"
 	"math/big"
 	"testing"
 	"time"
+
+	"github.com/keep-network/keep-common/pkg/cache"
 )
 
 const testDKGSeedCachePeriod = 1 * time.Second
@@ -66,20 +67,38 @@ func TestNotifyDKGResultSubmitted(t *testing.T) {
 	var hash2 [32]byte
 	copy(hash2[:], hash2Bytes)
 
-	// Add the first hash.
-	canProcess := deduplicator.notifyDKGResultSubmitted(hash1)
+	// Add the original parameters.
+	canProcess := deduplicator.notifyDKGResultSubmitted(big.NewInt(100), hash1, 500)
 	if !canProcess {
 		t.Fatal("should be allowed to process")
 	}
 
-	// Add the second hash.
-	canProcess = deduplicator.notifyDKGResultSubmitted(hash2)
+	// Add with different seed.
+	canProcess = deduplicator.notifyDKGResultSubmitted(big.NewInt(101), hash1, 500)
 	if !canProcess {
 		t.Fatal("should be allowed to process")
 	}
 
-	// Add the first hash before caching period elapses.
-	canProcess = deduplicator.notifyDKGResultSubmitted(hash1)
+	// Add with different result hash.
+	canProcess = deduplicator.notifyDKGResultSubmitted(big.NewInt(100), hash2, 500)
+	if !canProcess {
+		t.Fatal("should be allowed to process")
+	}
+
+	// Add with different result block.
+	canProcess = deduplicator.notifyDKGResultSubmitted(big.NewInt(100), hash1, 501)
+	if !canProcess {
+		t.Fatal("should be allowed to process")
+	}
+
+	// Add with all different parameters.
+	canProcess = deduplicator.notifyDKGResultSubmitted(big.NewInt(101), hash2, 501)
+	if !canProcess {
+		t.Fatal("should be allowed to process")
+	}
+
+	// Add the original parameters before caching period elapses.
+	canProcess = deduplicator.notifyDKGResultSubmitted(big.NewInt(100), hash1, 500)
 	if canProcess {
 		t.Fatal("should not be allowed to process")
 	}
@@ -87,8 +106,8 @@ func TestNotifyDKGResultSubmitted(t *testing.T) {
 	// Wait until caching period elapses.
 	time.Sleep(testDKGResultHashCachePeriod)
 
-	// Add the first hash again.
-	canProcess = deduplicator.notifyDKGResultSubmitted(hash1)
+	// Add the original parameters again.
+	canProcess = deduplicator.notifyDKGResultSubmitted(big.NewInt(100), hash1, 500)
 	if !canProcess {
 		t.Fatal("should be allowed to process")
 	}

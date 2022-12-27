@@ -30,6 +30,11 @@ const (
 	// respected by the given member to avoid all members approving the same
 	// DKG result at the same time.
 	dkgResultApprovalDelayStepBlocks = 5
+	// dkgResultChallengeConfirmationBlocks determines the block length of
+	// the confirmation period that is preserved after a DKG result challenge
+	// submission. Once the period elapses, the DKG state is checked to confirm
+	// the challenge was accepted successfully.
+	dkgResultChallengeConfirmationBlocks = 20
 )
 
 // dkgExecutor is a component responsible for the full execution of ECDSA
@@ -513,6 +518,8 @@ func (de *dkgExecutor) executeDkgValidation(
 		zap.String("resultHash", fmt.Sprintf("0x%x", resultHash)),
 	)
 
+	dkgLogger.Infof("starting DKG result validation")
+
 	isValid, err := de.chain.IsDKGResultValid(result)
 	if err != nil {
 		dkgLogger.Errorf("cannot validate DKG result: [%v]", err)
@@ -522,15 +529,61 @@ func (de *dkgExecutor) executeDkgValidation(
 	if !isValid {
 		dkgLogger.Infof("DKG result is invalid")
 
-		err = de.chain.ChallengeDKGResult(result)
-		if err != nil {
-			dkgLogger.Errorf("cannot challenge invalid DKG result: [%v]", err)
-			return
+		i := uint64(0)
+
+		// Challenges are done along with DKG state confirmations. This is
+		// needed to handle chain reorgs that may wipe out the block holding
+		// the challenge transaction. The state check done upon the confirmation
+		// block makes sure the submitted challenge changed the DKG state
+		// as expected. If the DKG state was not changed, the challenge is
+		// re-submitted.
+		for {
+			i++
+
+			err = de.chain.ChallengeDKGResult(result)
+			if err != nil {
+				dkgLogger.Errorf(
+					"cannot challenge invalid DKG result: [%v]",
+					err,
+				)
+				return
+			}
+
+			confirmationBlock := submissionBlock +
+				(i * dkgResultChallengeConfirmationBlocks)
+
+			dkgLogger.Infof(
+				"challenging invalid DKG result; waiting for "+
+					"block [%v] to confirm DKG state",
+				confirmationBlock,
+			)
+
+			err := de.waitForBlockFn(context.Background(), confirmationBlock)
+			if err != nil {
+				dkgLogger.Errorf(
+					"error while waiting for challenge confirmation: [%v]",
+					err,
+				)
+				return
+			}
+
+			state, err := de.chain.GetDKGState()
+			if err != nil {
+				dkgLogger.Errorf("cannot check DKG state: [%v]", err)
+				return
+			}
+
+			if state != Challenge {
+				dkgLogger.Infof(
+					"invalid DKG result challenged successfully",
+				)
+				return
+			}
+
+			dkgLogger.Infof(
+				"invalid DKG result still not challenged; retrying",
+			)
 		}
-
-		dkgLogger.Infof("challenging invalid DKG result")
-
-		return
 	}
 
 	dkgLogger.Infof("DKG result is valid")

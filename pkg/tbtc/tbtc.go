@@ -139,20 +139,25 @@ func Initialize(
 	_ = chain.OnDKGResultSubmitted(func(event *DKGResultSubmittedEvent) {
 		go func() {
 			if ok := deduplicator.notifyDKGResultSubmitted(
+				event.Seed,
 				event.ResultHash,
+				event.BlockNumber,
 			); !ok {
 				logger.Warnf(
-					"DKG result with hash [0x%x] and starting "+
-						"block [%v] has been already processed",
+					"Result with hash [0x%x] for DKG with seed [0x%x] "+
+						"and starting block [%v] has been already processed",
 					event.ResultHash,
+					event.Seed,
 					event.BlockNumber,
 				)
 				return
 			}
 
 			logger.Infof(
-				"DKG result with hash [0x%x] submitted at block [%v]",
+				"Result with hash [0x%x] for DKG with seed [0x%x] "+
+					"submitted at block [%v]",
 				event.ResultHash,
+				event.Seed,
 				event.BlockNumber,
 			)
 

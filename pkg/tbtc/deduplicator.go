@@ -2,9 +2,11 @@ package tbtc
 
 import (
 	"encoding/hex"
-	"github.com/keep-network/keep-common/pkg/cache"
 	"math/big"
+	"strconv"
 	"time"
+
+	"github.com/keep-network/keep-common/pkg/cache"
 )
 
 const (
@@ -67,12 +69,16 @@ func (d *deduplicator) notifyDKGStarted(
 // upon the DKG result submission. It returns boolean indicating whether the
 // client should proceed with the actions or ignore the event as a duplicate.
 func (d *deduplicator) notifyDKGResultSubmitted(
-	newDKGResultHash [32]byte,
+	newDKGResultSeed *big.Int,
+	newDKGResultHash DKGChainResultHash,
+	newDKGResultBlock uint64,
 ) bool {
 	d.dkgResultHashCache.Sweep()
 
-	// The cache key is the hexadecimal representation of the hash.
-	cacheKey := hex.EncodeToString(newDKGResultHash[:])
+	cacheKey := newDKGResultSeed.Text(16) +
+		hex.EncodeToString(newDKGResultHash[:]) +
+		strconv.Itoa(int(newDKGResultBlock))
+
 	// If the key is not in the cache, that means the result was not handled
 	// yet and the client should proceed with the execution.
 	if !d.dkgResultHashCache.Has(cacheKey) {
