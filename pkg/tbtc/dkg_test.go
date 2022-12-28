@@ -213,10 +213,10 @@ func TestDkgExecutor_ExecuteDkgValidation(t *testing.T) {
 			expectedEvent: &DKGResultApprovedEvent{
 				ResultHash: sha3.Sum256(groupPublicKey),
 				Approver:   "",
-				// 26 is the next block after 15 blocks of the challenge period,
-				// 5 blocks of the precedence period, and 5 blocks of the delay
+				// 36 is the next block after 15 blocks of the challenge period,
+				// 5 blocks of the precedence period, and 15 blocks of the delay
 				// for member 2
-				BlockNumber: 26,
+				BlockNumber: 36,
 			},
 			expectedDkgState: Idle,
 		},

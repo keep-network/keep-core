@@ -24,12 +24,12 @@ const (
 	// is used to calculate the submission delay period that should be respected
 	// by the given member to avoid all members submitting the same DKG result
 	// at the same time.
-	dkgResultSubmissionDelayStepBlocks = 5
+	dkgResultSubmissionDelayStepBlocks = 15
 	// dkgResultApprovalDelayStepBlocks determines the delay step in blocks
 	// that is used to calculate the approval delay period that should be
 	// respected by the given member to avoid all members approving the same
 	// DKG result at the same time.
-	dkgResultApprovalDelayStepBlocks = 5
+	dkgResultApprovalDelayStepBlocks = 15
 	// dkgResultChallengeConfirmationBlocks determines the block length of
 	// the confirmation period that is preserved after a DKG result challenge
 	// submission. Once the period elapses, the DKG state is checked to confirm
