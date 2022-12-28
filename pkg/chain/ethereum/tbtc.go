@@ -603,8 +603,8 @@ func computeOperatorsIDsHash(operatorsIDs chain.OperatorIDs) ([32]byte, error) {
 	return crypto.Keccak256Hash(bytes), nil
 }
 
-// convertSignaturesToChainFormat converts signatures map to two slices. First
-// slice contains indices of members from the map, sorted in ascending order
+// convertSignaturesToChainFormat converts signatures map to two slices. The
+// first slice contains indices of members from the map, sorted in ascending order
 // as required by the contract. The second slice is a slice of concatenated
 // signatures. Signatures and member indices are returned in the matching order.
 // It requires each signature to be exactly 65-byte long.
