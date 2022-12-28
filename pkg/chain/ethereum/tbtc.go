@@ -871,34 +871,32 @@ func (tc *TbtcChain) OnHeartbeatRequested(
 						continue
 					}
 
-					if len(walletPublicKey) > 0 {
-						prefixBytes := make([]byte, 8)
+					prefixBytes := make([]byte, 8)
+					binary.BigEndian.PutUint64(
+						prefixBytes,
+						0xffffffffffffffff,
+					)
+
+					messages := make([]*big.Int, 5)
+					for i := range messages {
+						suffixBytes := make([]byte, 8)
 						binary.BigEndian.PutUint64(
-							prefixBytes,
-							0xffffffffffffffff,
+							suffixBytes,
+							block+uint64(i),
 						)
 
-						messages := make([]*big.Int, 5)
-						for i := range messages {
-							suffixBytes := make([]byte, 8)
-							binary.BigEndian.PutUint64(
-								suffixBytes,
-								block+uint64(i),
-							)
+						preimage := append(prefixBytes, suffixBytes...)
+						preimageSha256 := sha256.Sum256(preimage)
+						message := sha256.Sum256(preimageSha256[:])
 
-							preimage := append(prefixBytes, suffixBytes...)
-							preimageSha256 := sha256.Sum256(preimage)
-							message := sha256.Sum256(preimageSha256[:])
-
-							messages[i] = new(big.Int).SetBytes(message[:])
-						}
-
-						go handler(&tbtc.HeartbeatRequestedEvent{
-							WalletPublicKey: walletPublicKey,
-							Messages:        messages,
-							BlockNumber:     block,
-						})
+						messages[i] = new(big.Int).SetBytes(message[:])
 					}
+
+					go handler(&tbtc.HeartbeatRequestedEvent{
+						WalletPublicKey: walletPublicKey,
+						Messages:        messages,
+						BlockNumber:     block,
+					})
 				}
 			case <-ctx.Done():
 				return
