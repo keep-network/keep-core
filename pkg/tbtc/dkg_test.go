@@ -24,14 +24,13 @@ func TestDkgExecutor_RegisterSigner(t *testing.T) {
 		t.Fatalf("failed to load test data: [%v]", err)
 	}
 
-	const (
-		groupSize          = 5
-		groupQuorum        = 3
-		honestThreshold    = 2
-		dishonestThreshold = 3
-	)
+	groupParameters := &GroupParameters{
+		GroupSize:       5,
+		GroupQuorum:     3,
+		HonestThreshold: 2,
+	}
 
-	localChain := Connect(groupSize, groupQuorum, honestThreshold)
+	localChain := Connect()
 
 	selectedOperators := []chain.Address{
 		"0xAA",
@@ -93,11 +92,12 @@ func TestDkgExecutor_RegisterSigner(t *testing.T) {
 
 			dkgExecutor := &dkgExecutor{
 				// setting only the fields really needed for this test
-				chain:          localChain,
-				walletRegistry: walletRegistry,
+				groupParameters: groupParameters,
+				chain:           localChain,
+				walletRegistry:  walletRegistry,
 			}
 
-			group := group.NewGroup(dishonestThreshold, groupSize)
+			group := group.NewGroup(groupParameters.DishonestThreshold(), groupParameters.GroupSize)
 			for _, disqualifiedMember := range test.disqualifiedMemberIndexes {
 				group.MarkMemberAsDisqualified(disqualifiedMember)
 			}
@@ -171,14 +171,14 @@ func TestDkgExecutor_ExecuteDkgValidation(t *testing.T) {
 		t.Fatalf("failed to load test data: [%v]", err)
 	}
 
-	const (
-		groupSize       = 5
-		groupQuorum     = 3
-		honestThreshold = 2
-	)
+	groupParameters := &GroupParameters{
+		GroupSize:       5,
+		GroupQuorum:     3,
+		HonestThreshold: 2,
+	}
 
 	tecdsaDkgResult := &dkg.Result{
-		Group:           group.NewGroup(groupSize-honestThreshold, groupSize),
+		Group:           group.NewGroup(groupParameters.DishonestThreshold(), groupParameters.GroupSize),
 		PrivateKeyShare: tecdsa.NewPrivateKeyShare(testData[0]),
 	}
 
@@ -236,7 +236,7 @@ func TestDkgExecutor_ExecuteDkgValidation(t *testing.T) {
 
 	for testName, test := range tests {
 		t.Run(testName, func(t *testing.T) {
-			localChain := Connect(groupSize, groupQuorum, honestThreshold)
+			localChain := Connect()
 
 			operatorAddress, err := localChain.operatorAddress()
 			if err != nil {
@@ -249,10 +249,10 @@ func TestDkgExecutor_ExecuteDkgValidation(t *testing.T) {
 			}
 
 			signatures := make(map[group.MemberIndex][]byte)
-			operatorsIDs := make(chain.OperatorIDs, groupSize)
-			operatorsAddresses := make(chain.Addresses, groupSize)
+			operatorsIDs := make(chain.OperatorIDs, groupParameters.GroupSize)
+			operatorsAddresses := make(chain.Addresses, groupParameters.GroupSize)
 
-			for memberIndex := uint8(1); memberIndex <= groupSize; memberIndex++ {
+			for memberIndex := uint8(1); int(memberIndex) <= groupParameters.GroupSize; memberIndex++ {
 				signatures[memberIndex] = []byte{memberIndex}
 
 				if slices.Contains(test.controlledMembersIndexes, memberIndex) {
@@ -311,6 +311,7 @@ func TestDkgExecutor_ExecuteDkgValidation(t *testing.T) {
 
 			// Setting only the fields really needed for this test.
 			dkgExecutor := &dkgExecutor{
+				groupParameters: groupParameters,
 				operatorIDFn: func() (chain.OperatorID, error) {
 					return operatorID, nil
 				},
@@ -371,7 +372,7 @@ func TestDkgExecutor_ExecuteDkgValidation(t *testing.T) {
 }
 
 func TestFinalSigningGroup(t *testing.T) {
-	chainConfig := &ChainConfig{
+	groupParameters := &GroupParameters{
 		GroupSize:       5,
 		GroupQuorum:     3,
 		HonestThreshold: 2,
@@ -422,7 +423,7 @@ func TestFinalSigningGroup(t *testing.T) {
 				finalSigningGroup(
 					test.selectedOperators,
 					test.operatingMembersIndexes,
-					chainConfig,
+					groupParameters,
 				)
 
 			if !reflect.DeepEqual(test.expectedError, err) {

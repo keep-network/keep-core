@@ -19,7 +19,7 @@ import (
 func TestDkgRetryLoop(t *testing.T) {
 	seed := big.NewInt(100)
 
-	chainConfig := &ChainConfig{
+	groupParameters := &GroupParameters{
 		GroupSize:       10,
 		GroupQuorum:     8,
 		HonestThreshold: 6,
@@ -249,7 +249,7 @@ func TestDkgRetryLoop(t *testing.T) {
 				200,
 				test.memberIndex,
 				selectedOperators,
-				chainConfig,
+				groupParameters,
 				announcer,
 			)
 

@@ -62,7 +62,7 @@ type dkgRetryLoop struct {
 	memberIndex       group.MemberIndex
 	selectedOperators chain.Addresses
 
-	chainConfig *ChainConfig
+	groupParameters *GroupParameters
 
 	announcer dkgAnnouncer
 
@@ -80,7 +80,7 @@ func newDkgRetryLoop(
 	initialStartBlock uint64,
 	memberIndex group.MemberIndex,
 	selectedOperators chain.Addresses,
-	chainConfig *ChainConfig,
+	groupParameters *GroupParameters,
 	announcer dkgAnnouncer,
 ) *dkgRetryLoop {
 	// Compute the 8-byte seed needed for the random retry algorithm. We take
@@ -95,7 +95,7 @@ func newDkgRetryLoop(
 		seed:               seed,
 		memberIndex:        memberIndex,
 		selectedOperators:  selectedOperators,
-		chainConfig:        chainConfig,
+		groupParameters:    groupParameters,
 		announcer:          announcer,
 		attemptCounter:     0,
 		attemptStartBlock:  initialStartBlock,
@@ -203,7 +203,7 @@ func (drl *dkgRetryLoop) start(
 			return nil, ctx.Err()
 		}
 
-		if len(readyMembersIndexes) >= drl.chainConfig.GroupQuorum {
+		if len(readyMembersIndexes) >= drl.groupParameters.GroupQuorum {
 			drl.logger.Infof(
 				"[member:%v] completed announcement phase for attempt [%v] "+
 					"with quorum of [%v] members ready to perform DKG",
@@ -345,7 +345,7 @@ func (drl *dkgRetryLoop) qualifiedOperatorsSet(
 		readyOperators,
 		drl.attemptSeed,
 		retryCount,
-		uint(drl.chainConfig.GroupQuorum),
+		uint(drl.groupParameters.GroupQuorum),
 	)
 	if err != nil {
 		return nil, fmt.Errorf(

@@ -41,6 +41,8 @@ const (
 // Distributed Key Generation: determining members selected to the signing
 // group, executing off-chain protocol, and publishing the result to the chain.
 type dkgExecutor struct {
+	groupParameters *GroupParameters
+
 	operatorIDFn    func() (chain.OperatorID, error)
 	operatorAddress chain.Address
 
@@ -58,6 +60,7 @@ type dkgExecutor struct {
 // newDkgExecutor creates a new instance of dkgExecutor struct. There should
 // be only one instance of dkgExecutor.
 func newDkgExecutor(
+	groupParameters *GroupParameters,
 	operatorIDFn func() (chain.OperatorID, error),
 	operatorAddress chain.Address,
 	chain Chain,
@@ -81,6 +84,7 @@ func newDkgExecutor(
 	)
 
 	return &dkgExecutor{
+		groupParameters: groupParameters,
 		operatorIDFn:    operatorIDFn,
 		operatorAddress: operatorAddress,
 		chain:           chain,
@@ -168,7 +172,7 @@ func (de *dkgExecutor) checkEligibility(
 		groupSelectionResult.OperatorsAddresses,
 	)
 
-	if len(groupSelectionResult.OperatorsAddresses) > de.chain.GetConfig().GroupSize {
+	if len(groupSelectionResult.OperatorsAddresses) > de.groupParameters.GroupSize {
 		return nil, nil, fmt.Errorf(
 			"group size larger than supported: [%v]",
 			len(groupSelectionResult.OperatorsAddresses),
@@ -240,8 +244,6 @@ func (de *dkgExecutor) generateSigningGroup(
 		return
 	}
 
-	chainConfig := de.chain.GetConfig()
-
 	dkgParameters, err := de.chain.DKGParameters()
 	if err != nil {
 		dkgLogger.Errorf("cannot get DKG parameters: [%v]", err)
@@ -294,7 +296,7 @@ func (de *dkgExecutor) generateSigningGroup(
 				startBlock,
 				memberIndex,
 				groupSelectionResult.OperatorsAddresses,
-				chainConfig,
+				de.groupParameters,
 				announcer,
 			)
 
@@ -312,7 +314,7 @@ func (de *dkgExecutor) generateSigningGroup(
 						"[member:%v] scheduled dkg attempt "+
 							"with [%v] group members (excluded: [%v])",
 						memberIndex,
-						chainConfig.GroupSize-len(attempt.excludedMembersIndexes),
+						de.groupParameters.GroupSize-len(attempt.excludedMembersIndexes),
 						attempt.excludedMembersIndexes,
 					)
 
@@ -336,8 +338,8 @@ func (de *dkgExecutor) generateSigningGroup(
 						seed,
 						sessionID,
 						memberIndex,
-						chainConfig.GroupSize,
-						chainConfig.DishonestThreshold(),
+						de.groupParameters.GroupSize,
+						de.groupParameters.DishonestThreshold(),
 						attempt.excludedMembersIndexes,
 						broadcastChannel,
 						membershipValidator,
@@ -429,7 +431,6 @@ func (de *dkgExecutor) registerSigner(
 	memberIndex group.MemberIndex,
 	selectedSigningGroupOperators chain.Addresses,
 ) (*signer, error) {
-	chainConfig := de.chain.GetConfig()
 	// Final signing group may differ from the original DKG
 	// group outputted by the sortition protocol. One need to
 	// determine the final signing group based on the selected
@@ -439,7 +440,7 @@ func (de *dkgExecutor) registerSigner(
 		finalSigningGroup(
 			selectedSigningGroupOperators,
 			operatingMemberIndexes,
-			chainConfig,
+			de.groupParameters,
 		)
 	if err != nil {
 		return nil, fmt.Errorf("failed to resolve final signing group members")
@@ -496,7 +497,13 @@ func (de *dkgExecutor) publishDkgResult(
 		broadcastChannel,
 		membershipValidator,
 		newDkgResultSigner(de.chain, startBlock),
-		newDkgResultSubmitter(dkgLogger, de.chain, groupSelectionResult, de.waitForBlockFn),
+		newDkgResultSubmitter(
+			dkgLogger,
+			de.chain,
+			de.groupParameters,
+			groupSelectionResult,
+			de.waitForBlockFn,
+		),
 		dkgResult,
 	)
 }
@@ -729,14 +736,14 @@ func (de *dkgExecutor) executeDkgValidation(
 func finalSigningGroup(
 	selectedOperators []chain.Address,
 	operatingMembersIndexes []group.MemberIndex,
-	chainConfig *ChainConfig,
+	groupParameters *GroupParameters,
 ) (
 	[]chain.Address,
 	map[group.MemberIndex]group.MemberIndex,
 	error,
 ) {
-	if len(selectedOperators) != chainConfig.GroupSize ||
-		len(operatingMembersIndexes) < chainConfig.GroupQuorum {
+	if len(selectedOperators) != groupParameters.GroupSize ||
+		len(operatingMembersIndexes) < groupParameters.GroupQuorum {
 		return nil, nil, fmt.Errorf("invalid input parameters")
 	}
 

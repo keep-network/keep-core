@@ -24,6 +24,26 @@ var logger = log.Logger("keep-tbtc")
 // ProtocolName denotes the name of the protocol defined by this package.
 const ProtocolName = "tbtc"
 
+// GroupParameters is a structure grouping TBTC group parameters.
+type GroupParameters struct {
+	// GroupSize is the target size of a group in TBTC.
+	GroupSize int
+	// GroupQuorum is the minimum number of active participants behaving
+	// according to the protocol needed to generate a group in TBTC. This value
+	// is smaller than the GroupSize and bigger than the HonestThreshold.
+	GroupQuorum int
+	// HonestThreshold is the minimum number of active participants behaving
+	// according to the protocol needed to generate a signature.
+	HonestThreshold int
+}
+
+// DishonestThreshold is the maximum number of misbehaving participants for
+// which it is still possible to generate a signature. Misbehaviour is any
+// misconduct to the protocol, including inactivity.
+func (gp *GroupParameters) DishonestThreshold() int {
+	return gp.GroupSize - gp.HonestThreshold
+}
+
 const (
 	DefaultPreParamsPoolSize              = 1000
 	DefaultPreParamsGenerationTimeout     = 2 * time.Minute
@@ -63,7 +83,14 @@ func Initialize(
 	config Config,
 	clientInfo *clientinfo.Registry,
 ) error {
+	groupParameters := &GroupParameters{
+		GroupSize:       100,
+		GroupQuorum:     90,
+		HonestThreshold: 51,
+	}
+
 	node, err := newNode(
+		groupParameters,
 		chain,
 		netProvider,
 		keyStorePersistence,

@@ -46,7 +46,7 @@ type signingExecutor struct {
 	signers             []*signer
 	broadcastChannel    net.BroadcastChannel
 	membershipValidator *group.MembershipValidator
-	chainConfig         *ChainConfig
+	groupParameters     *GroupParameters
 	protocolLatch       *generator.ProtocolLatch
 
 	// currentBlockFn is a function used to get the current block.
@@ -64,7 +64,7 @@ func newSigningExecutor(
 	signers []*signer,
 	broadcastChannel net.BroadcastChannel,
 	membershipValidator *group.MembershipValidator,
-	chainConfig *ChainConfig,
+	groupParameters *GroupParameters,
 	protocolLatch *generator.ProtocolLatch,
 	currentBlockFn func() (uint64, error),
 	waitForBlockFn waitForBlockFn,
@@ -75,7 +75,7 @@ func newSigningExecutor(
 		signers:              signers,
 		broadcastChannel:     broadcastChannel,
 		membershipValidator:  membershipValidator,
-		chainConfig:          chainConfig,
+		groupParameters:      groupParameters,
 		protocolLatch:        protocolLatch,
 		currentBlockFn:       currentBlockFn,
 		waitForBlockFn:       waitForBlockFn,
@@ -219,7 +219,7 @@ func (se *signingExecutor) sign(
 			)
 
 			doneCheck := newSigningDoneCheck(
-				se.chainConfig.GroupSize,
+				se.groupParameters.GroupSize,
 				se.broadcastChannel,
 				se.membershipValidator,
 			)
@@ -230,7 +230,7 @@ func (se *signingExecutor) sign(
 				startBlock,
 				signer.signingGroupMemberIndex,
 				wallet.signingGroupOperators,
-				se.chainConfig,
+				se.groupParameters,
 				announcer,
 				doneCheck,
 			)
@@ -300,7 +300,7 @@ func (se *signingExecutor) sign(
 						signer.privateKeyShare,
 						wallet.groupSize(),
 						wallet.groupDishonestThreshold(
-							se.chainConfig.HonestThreshold,
+							se.groupParameters.HonestThreshold,
 						),
 						attempt.excludedMembersIndexes,
 						se.broadcastChannel,

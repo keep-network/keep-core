@@ -37,12 +37,7 @@ type localChain struct {
 	dkgResultValid bool
 
 	blockCounter       chain.BlockCounter
-	chainConfig        *ChainConfig
 	operatorPrivateKey *operator.PrivateKey
-}
-
-func (lc *localChain) GetConfig() *ChainConfig {
-	return lc.chainConfig
 }
 
 func (lc *localChain) BlockCounter() (chain.BlockCounter, error) {
@@ -438,39 +433,19 @@ func (lc *localChain) operatorAddress() (chain.Address, error) {
 }
 
 // Connect sets up the local chain.
-func Connect(
-	groupSize int,
-	groupQuorum int,
-	honestThreshold int,
-) *localChain {
+func Connect() *localChain {
 	operatorPrivateKey, _, err := operator.GenerateKeyPair(local_v1.DefaultCurve)
 	if err != nil {
 		panic(err)
 	}
 
-	return ConnectWithKey(
-		groupSize,
-		groupQuorum,
-		honestThreshold,
-		operatorPrivateKey,
-	)
+	return ConnectWithKey(operatorPrivateKey)
 }
 
 // ConnectWithKey sets up the local chain using the provided operator private
 // key.
-func ConnectWithKey(
-	groupSize int,
-	groupQuorum int,
-	honestThreshold int,
-	operatorPrivateKey *operator.PrivateKey,
-) *localChain {
+func ConnectWithKey(operatorPrivateKey *operator.PrivateKey) *localChain {
 	blockCounter, _ := local_v1.BlockCounter()
-
-	chainConfig := &ChainConfig{
-		GroupSize:       groupSize,
-		GroupQuorum:     groupQuorum,
-		HonestThreshold: honestThreshold,
-	}
 
 	localChain := &localChain{
 		dkgResultSubmissionHandlers: make(
@@ -483,7 +458,6 @@ func ConnectWithKey(
 			map[int]func(submission *DKGResultChallengedEvent),
 		),
 		blockCounter:       blockCounter,
-		chainConfig:        chainConfig,
 		operatorPrivateKey: operatorPrivateKey,
 	}
 

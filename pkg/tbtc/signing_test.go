@@ -108,7 +108,7 @@ func TestSigningExecutor_SignBatch(t *testing.T) {
 // setupSigningExecutor sets up an instance of the signing executor ready
 // to perform test signing.
 func setupSigningExecutor(t *testing.T) *signingExecutor {
-	chainConfig := &ChainConfig{
+	groupParameters := &GroupParameters{
 		GroupSize:       5,
 		GroupQuorum:     4,
 		HonestThreshold: 3,
@@ -121,12 +121,7 @@ func setupSigningExecutor(t *testing.T) *signingExecutor {
 		t.Fatal(err)
 	}
 
-	localChain := ConnectWithKey(
-		chainConfig.GroupSize,
-		chainConfig.GroupQuorum,
-		chainConfig.HonestThreshold,
-		operatorPrivateKey,
-	)
+	localChain := ConnectWithKey(operatorPrivateKey)
 
 	localProvider := local.ConnectWithKey(operatorPublicKey)
 
@@ -138,12 +133,12 @@ func setupSigningExecutor(t *testing.T) *signingExecutor {
 	}
 
 	var operators []chain.Address
-	for i := 0; i < chainConfig.GroupSize; i++ {
+	for i := 0; i < groupParameters.GroupSize; i++ {
 		operators = append(operators, operatorAddress)
 	}
 
 	testData, err := tecdsatest.LoadPrivateKeyShareTestFixtures(
-		chainConfig.GroupSize,
+		groupParameters.GroupSize,
 	)
 	if err != nil {
 		t.Fatalf("failed to load test data: [%v]", err)
@@ -166,6 +161,7 @@ func setupSigningExecutor(t *testing.T) *signingExecutor {
 	keyStorePersistence := createMockKeyStorePersistence(t, signers...)
 
 	node, err := newNode(
+		groupParameters,
 		localChain,
 		localProvider,
 		keyStorePersistence,

@@ -22,13 +22,13 @@ import (
 
 // TestSigningDoneCheck is a happy path test.
 func TestSigningDoneCheck(t *testing.T) {
-	chainConfig := &ChainConfig{
+	groupParameters := &GroupParameters{
 		GroupSize:       5,
 		GroupQuorum:     4,
 		HonestThreshold: 3,
 	}
 
-	doneCheck := setupSigningDoneCheck(t, chainConfig)
+	doneCheck := setupSigningDoneCheck(t, groupParameters)
 
 	memberIndexes := make([]group.MemberIndex, doneCheck.groupSize)
 	for i := range memberIndexes {
@@ -42,7 +42,7 @@ func TestSigningDoneCheck(t *testing.T) {
 	message := big.NewInt(100)
 	attemptNumber := uint64(2)
 	attemptTimeoutBlock := uint64(1000)
-	attemptMemberIndexes := memberIndexes[:chainConfig.HonestThreshold]
+	attemptMemberIndexes := memberIndexes[:groupParameters.HonestThreshold]
 	result := &signing.Result{
 		Signature: &tecdsa.Signature{
 			R:          big.NewInt(200),
@@ -142,13 +142,13 @@ func TestSigningDoneCheck(t *testing.T) {
 // TestSigningDoneCheck_MissingConfirmation covers scenario when one member
 // did not provide a done check on time.
 func TestSigningDoneCheck_MissingConfirmation(t *testing.T) {
-	chainConfig := &ChainConfig{
+	groupParameters := &GroupParameters{
 		GroupSize:       5,
 		GroupQuorum:     4,
 		HonestThreshold: 3,
 	}
 
-	doneCheck := setupSigningDoneCheck(t, chainConfig)
+	doneCheck := setupSigningDoneCheck(t, groupParameters)
 
 	memberIndexes := make([]group.MemberIndex, doneCheck.groupSize)
 	for i := range memberIndexes {
@@ -162,7 +162,7 @@ func TestSigningDoneCheck_MissingConfirmation(t *testing.T) {
 	message := big.NewInt(100)
 	attemptNumber := uint64(1)
 	attemptTimeoutBlock := uint64(1000)
-	attemptMemberIndexes := memberIndexes[:chainConfig.HonestThreshold]
+	attemptMemberIndexes := memberIndexes[:groupParameters.HonestThreshold]
 	result := &signing.Result{
 		Signature: &tecdsa.Signature{
 			R:          big.NewInt(200),
@@ -179,7 +179,7 @@ func TestSigningDoneCheck_MissingConfirmation(t *testing.T) {
 		attemptMemberIndexes,
 	)
 
-	for i := 1; i < chainConfig.HonestThreshold; i++ {
+	for i := 1; i < groupParameters.HonestThreshold; i++ {
 		err := doneCheck.signalDone(
 			ctx,
 			uint8(i),
@@ -205,13 +205,13 @@ func TestSigningDoneCheck_MissingConfirmation(t *testing.T) {
 // TestSigningDoneCheck_AnotherSignature covers scenario when one member
 // did provide signature other than other members.
 func TestSigningDoneCheck_AnotherSignature(t *testing.T) {
-	chainConfig := &ChainConfig{
+	groupParameters := &GroupParameters{
 		GroupSize:       5,
 		GroupQuorum:     4,
 		HonestThreshold: 3,
 	}
 
-	doneCheck := setupSigningDoneCheck(t, chainConfig)
+	doneCheck := setupSigningDoneCheck(t, groupParameters)
 
 	memberIndexes := make([]group.MemberIndex, doneCheck.groupSize)
 	for i := range memberIndexes {
@@ -225,7 +225,7 @@ func TestSigningDoneCheck_AnotherSignature(t *testing.T) {
 	message := big.NewInt(100)
 	attemptNumber := uint64(1)
 	attemptTimeoutBlock := uint64(1000)
-	attemptMemberIndexes := memberIndexes[:chainConfig.HonestThreshold]
+	attemptMemberIndexes := memberIndexes[:groupParameters.HonestThreshold]
 	correctResult := &signing.Result{
 		Signature: &tecdsa.Signature{
 			R:          big.NewInt(200),
@@ -249,8 +249,8 @@ func TestSigningDoneCheck_AnotherSignature(t *testing.T) {
 		attemptMemberIndexes,
 	)
 
-	// chainConfig.HonestThreshold members provide correct signature
-	for i := 1; i < chainConfig.HonestThreshold; i++ {
+	// groupParameters.HonestThreshold members provide correct signature
+	for i := 1; i < groupParameters.HonestThreshold; i++ {
 		err := doneCheck.signalDone(
 			ctx,
 			uint8(i),
@@ -267,7 +267,7 @@ func TestSigningDoneCheck_AnotherSignature(t *testing.T) {
 	// one member provides incorrect signature
 	err := doneCheck.signalDone(
 		ctx,
-		uint8(chainConfig.HonestThreshold),
+		uint8(groupParameters.HonestThreshold),
 		message,
 		attemptNumber,
 		incorrectResult,
@@ -295,7 +295,7 @@ func TestSigningDoneCheck_AnotherSignature(t *testing.T) {
 // to perform test checks.
 func setupSigningDoneCheck(
 	t *testing.T,
-	chainConfig *ChainConfig,
+	groupParameters *GroupParameters,
 ) *signingDoneCheck {
 	operatorPrivateKey, operatorPublicKey, err := operator.GenerateKeyPair(
 		local_v1.DefaultCurve,
@@ -304,12 +304,7 @@ func setupSigningDoneCheck(
 		t.Fatal(err)
 	}
 
-	localChain := ConnectWithKey(
-		chainConfig.GroupSize,
-		chainConfig.GroupQuorum,
-		chainConfig.HonestThreshold,
-		operatorPrivateKey,
-	)
+	localChain := ConnectWithKey(operatorPrivateKey)
 
 	localProvider := local.ConnectWithKey(operatorPublicKey)
 
@@ -321,7 +316,7 @@ func setupSigningDoneCheck(
 	}
 
 	var operators []chain.Address
-	for i := 0; i < chainConfig.GroupSize; i++ {
+	for i := 0; i < groupParameters.GroupSize; i++ {
 		operators = append(operators, operatorAddress)
 	}
 
@@ -337,7 +332,7 @@ func setupSigningDoneCheck(
 	)
 
 	return newSigningDoneCheck(
-		chainConfig.GroupSize,
+		groupParameters.GroupSize,
 		broadcastChannel,
 		membershipValidator,
 	)

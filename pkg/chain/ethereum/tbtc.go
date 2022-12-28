@@ -140,19 +140,6 @@ func newTbtcChain(
 	}, nil
 }
 
-// GetConfig returns the expected configuration of the TBTC module.
-func (tc *TbtcChain) GetConfig() *tbtc.ChainConfig {
-	groupSize := 100
-	groupQuorum := 90
-	honestThreshold := 51
-
-	return &tbtc.ChainConfig{
-		GroupSize:       groupSize,
-		GroupQuorum:     groupQuorum,
-		HonestThreshold: honestThreshold,
-	}
-}
-
 // Staking returns address of the TokenStaking contract the WalletRegistry is
 // connected to.
 func (tc *TbtcChain) Staking() (chain.Address, error) {

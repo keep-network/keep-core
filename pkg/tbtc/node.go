@@ -41,6 +41,8 @@ const (
 
 // node represents the current state of an ECDSA node.
 type node struct {
+	groupParameters *GroupParameters
+
 	chain          Chain
 	netProvider    net.Provider
 	walletRegistry *walletRegistry
@@ -55,6 +57,7 @@ type node struct {
 }
 
 func newNode(
+	groupParameters *GroupParameters,
 	chain Chain,
 	netProvider net.Provider,
 	keyStorePersistance persistence.ProtectedHandle,
@@ -68,6 +71,7 @@ func newNode(
 	scheduler.RegisterProtocol(latch)
 
 	node := &node{
+		groupParameters:  groupParameters,
 		chain:            chain,
 		netProvider:      netProvider,
 		walletRegistry:   walletRegistry,
@@ -86,6 +90,7 @@ func newNode(
 	// TODO: This chicken and egg problem should be solved when
 	// waitForBlockHeight becomes a part of BlockHeightWaiter interface.
 	node.dkgExecutor = newDkgExecutor(
+		node.groupParameters,
 		node.operatorID,
 		operatorAddress,
 		chain,
@@ -238,7 +243,7 @@ func (n *node) getSigningExecutor(
 		signers,
 		broadcastChannel,
 		membershipValidator,
-		n.chain.GetConfig(),
+		n.groupParameters,
 		n.protocolLatch,
 		blockCounter.CurrentBlock,
 		n.waitForBlockHeight,
