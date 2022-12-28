@@ -726,8 +726,8 @@ func (tc *TbtcChain) CalculateDKGResultSignatureHash(
 	)
 }
 
-// computeDkgResultHash computes the keccak256 hash for the given DKG result
-// parameters. It expects that the groupPublicKey is a 64-byte uncompressed
+// calculateDKGResultSignatureHash computes the keccak256 hash for the given DKG
+// result parameters. It expects that the groupPublicKey is a 64-byte uncompressed
 // public key without the 04 prefix and misbehavedMembersIndexes slice is
 // sorted in ascending order. Those expectations are forced by the contract.
 func calculateDKGResultSignatureHash(
