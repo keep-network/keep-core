@@ -736,6 +736,9 @@ func (de *dkgExecutor) executeDkgValidation(
 // operatingMembersIndexes: [5, 1, 3]
 // finalOperators: [0xAA, 0xCC, 0xEE]
 // finalMembersIndexes: [1:1, 3:2, 5:3]
+//
+// Please see docs of IdentityConverter from pkg/tecdsa/common for more
+// information about shifting indexes.
 func finalSigningGroup(
 	selectedOperators []chain.Address,
 	operatingMembersIndexes []group.MemberIndex,
