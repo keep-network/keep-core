@@ -7,7 +7,6 @@ import (
 	"testing"
 	"time"
 
-	"golang.org/x/crypto/sha3"
 	"golang.org/x/exp/slices"
 
 	"github.com/keep-network/keep-core/pkg/chain"
@@ -16,6 +15,7 @@ import (
 	"github.com/keep-network/keep-core/pkg/protocol/group"
 	"github.com/keep-network/keep-core/pkg/tecdsa"
 	"github.com/keep-network/keep-core/pkg/tecdsa/dkg"
+	"golang.org/x/crypto/sha3"
 )
 
 func TestDkgExecutor_RegisterSigner(t *testing.T) {
@@ -189,15 +189,14 @@ func TestDkgExecutor_ExecuteDkgValidation(t *testing.T) {
 
 	var tests = map[string]struct {
 		submitterMemberIndex     group.MemberIndex
-		controlledMembersIndexes []group.MemberIndex
 		resultValid              bool
+		rejectedApprovalsIndexes []int
 		expectedEvent            interface{}
 		expectedDkgState         DKGState
 	}{
 		"result approved by the submitter": {
-			submitterMemberIndex:     group.MemberIndex(2),
-			controlledMembersIndexes: []group.MemberIndex{1, 2, 3, 4, 5},
-			resultValid:              true,
+			submitterMemberIndex: group.MemberIndex(1),
+			resultValid:          true,
 			expectedEvent: &DKGResultApprovedEvent{
 				ResultHash: sha3.Sum256(groupPublicKey),
 				Approver:   "",
@@ -207,9 +206,12 @@ func TestDkgExecutor_ExecuteDkgValidation(t *testing.T) {
 			expectedDkgState: Idle,
 		},
 		"result approved by a non-submitter": {
-			submitterMemberIndex:     group.MemberIndex(1),
-			controlledMembersIndexes: []group.MemberIndex{2, 3, 4, 5},
-			resultValid:              true,
+			submitterMemberIndex: group.MemberIndex(1),
+			resultValid:          true,
+			// Reject the first approval (with index 0) that will be made by
+			// member 1 (the submitter) in order to force the member 2 to
+			// approve after the precedence period.
+			rejectedApprovalsIndexes: []int{0},
 			expectedEvent: &DKGResultApprovedEvent{
 				ResultHash: sha3.Sum256(groupPublicKey),
 				Approver:   "",
@@ -221,9 +223,8 @@ func TestDkgExecutor_ExecuteDkgValidation(t *testing.T) {
 			expectedDkgState: Idle,
 		},
 		"result challenged": {
-			submitterMemberIndex:     group.MemberIndex(2),
-			controlledMembersIndexes: []group.MemberIndex{1, 2, 3, 4, 5},
-			resultValid:              false,
+			submitterMemberIndex: group.MemberIndex(1),
+			resultValid:          false,
 			expectedEvent: &DKGResultChallengedEvent{
 				ResultHash:  sha3.Sum256(groupPublicKey),
 				Challenger:  "",
@@ -237,6 +238,16 @@ func TestDkgExecutor_ExecuteDkgValidation(t *testing.T) {
 	for testName, test := range tests {
 		t.Run(testName, func(t *testing.T) {
 			localChain := Connect()
+
+			approvalIndex := 0
+			localChain.dkgResultApprovalGuard = func() bool {
+				rejectedApproval := slices.Contains(
+					test.rejectedApprovalsIndexes,
+					approvalIndex,
+				)
+				approvalIndex++
+				return !rejectedApproval
+			}
 
 			operatorAddress, err := localChain.operatorAddress()
 			if err != nil {
@@ -254,11 +265,8 @@ func TestDkgExecutor_ExecuteDkgValidation(t *testing.T) {
 
 			for memberIndex := uint8(1); int(memberIndex) <= groupParameters.GroupSize; memberIndex++ {
 				signatures[memberIndex] = []byte{memberIndex}
-
-				if slices.Contains(test.controlledMembersIndexes, memberIndex) {
-					operatorsIDs[memberIndex-1] = operatorID
-					operatorsAddresses[memberIndex-1] = operatorAddress
-				}
+				operatorsIDs[memberIndex-1] = operatorID
+				operatorsAddresses[memberIndex-1] = operatorAddress
 			}
 
 			groupSelectionResult := &GroupSelectionResult{

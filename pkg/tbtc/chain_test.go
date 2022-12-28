@@ -28,6 +28,8 @@ type localChain struct {
 	dkgResultApprovalHandlersMutex sync.Mutex
 	dkgResultApprovalHandlers      map[int]func(submission *DKGResultApprovedEvent)
 
+	dkgResultApprovalGuard func() bool
+
 	dkgResultChallengeHandlersMutex sync.Mutex
 	dkgResultChallengeHandlers      map[int]func(submission *DKGResultChallengedEvent)
 
@@ -387,6 +389,10 @@ func (lc *localChain) ApproveDKGResult(dkgResult *DKGChainResult) error {
 
 	if !lc.dkgResultValid {
 		return fmt.Errorf("submitted result is invalid")
+	}
+
+	if lc.dkgResultApprovalGuard != nil && !lc.dkgResultApprovalGuard() {
+		return fmt.Errorf("rejected by guard")
 	}
 
 	blockNumber, err := lc.blockCounter.CurrentBlock()
