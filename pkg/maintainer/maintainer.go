@@ -17,7 +17,13 @@ func Initialize(
 	launchAll := !config.BitcoinDifficulty
 
 	if config.BitcoinDifficulty || launchAll {
-		newBitcoinDifficultyMaintainer(ctx, btcChain, chain)
+		initializeBitcoinDifficultyMaintainer(
+			ctx,
+			btcChain,
+			chain,
+			bitcoinDifficultyDefaultIdleBackOffTime,
+			bitcoinDifficultyDefaultRestartBackoffTime,
+		)
 	}
 
 	// TODO: Allow for launching multiple maintainers here. Every flag

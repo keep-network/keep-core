@@ -9,39 +9,39 @@ import (
 	"github.com/keep-network/keep-core/config"
 	"github.com/keep-network/keep-core/pkg/bitcoin/electrum"
 	"github.com/keep-network/keep-core/pkg/chain/ethereum"
-	"github.com/keep-network/keep-core/pkg/tbtc/maintainer"
+	"github.com/keep-network/keep-core/pkg/maintainer"
 )
 
-// TbtcMaintainerCommand contains the definition of the tBTC maintainer
-// command-line subcommand.
-var TbtcMaintainerCommand = &cobra.Command{
+// MaintainerCommand contains the definition of the maintainer command-line
+// subcommand.
+var MaintainerCommand = &cobra.Command{
 	Use:   "maintainer",
-	Short: `(experimental) Starts tBTC maintainers`,
-	Long:  `(experimental) The maintainer command starts tBTC maintainers`,
+	Short: `(experimental) Starts maintainers`,
+	Long:  `(experimental) The maintainer command starts maintainers`,
 	PreRun: func(cmd *cobra.Command, args []string) {
 		if err := clientConfig.ReadConfig(
 			configFilePath,
 			cmd.Flags(),
-			config.TbtcMaintainerCategories...,
+			config.MaintainerCategories...,
 		); err != nil {
 			logger.Fatalf("error reading config: %v", err)
 		}
 	},
-	RunE: tbtcMaintainer,
+	RunE: maintainers,
 }
 
 func init() {
 	initFlags(
-		TbtcMaintainerCommand,
+		MaintainerCommand,
 		&configFilePath,
 		clientConfig,
-		config.TbtcMaintainerCategories...,
+		config.MaintainerCategories...,
 	)
 }
 
-// tbtcMaintainer initializes maintainer tasks specified by flags passed to the
+// maintainers initializes maintainer tasks specified by flags passed to the
 // maintainer command.
-func tbtcMaintainer(cmd *cobra.Command, args []string) error {
+func maintainers(cmd *cobra.Command, args []string) error {
 	ctx := context.Background()
 
 	btcChain, err := electrum.Connect(ctx, clientConfig.Bitcoin.Electrum)
@@ -57,7 +57,7 @@ func tbtcMaintainer(cmd *cobra.Command, args []string) error {
 		)
 	}
 
-	maintainer.Initialize(ctx, clientConfig.Tbtc.Maintainer, btcChain, chain)
+	maintainer.Initialize(ctx, clientConfig.Maintainer, btcChain, chain)
 
 	<-ctx.Done()
 	return fmt.Errorf("unexpected context cancellation")
