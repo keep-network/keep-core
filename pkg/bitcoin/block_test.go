@@ -3,6 +3,8 @@ package bitcoin
 import (
 	"encoding/hex"
 	"testing"
+
+	"github.com/keep-network/keep-core/pkg/internal/testutils"
 )
 
 func TestBlockHeaderSerialize(t *testing.T) {
@@ -36,7 +38,7 @@ func TestBlockHeaderSerialize(t *testing.T) {
 
 	actualSerializedHeader := blockHeader.Serialize()
 
-	expectedSerializedHeaderBytes, err := hex.DecodeString(
+	expectedSerializedHeader, err := hex.DecodeString(
 		"04000020a5a3501e6ba1f3e2a1ee5d29327a549524ed33f272dfef30004566000000" +
 			"0000e27d241ca36de831ab17e6729056c14a383e7a3f43d56254f846b4964977" +
 			"5112939edd612ac0001abbaa602e",
@@ -45,14 +47,9 @@ func TestBlockHeaderSerialize(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	var expectedSerializedHeader [80]byte
-	copy(expectedSerializedHeader[:], expectedSerializedHeaderBytes)
-
-	if expectedSerializedHeader != actualSerializedHeader {
-		t.Errorf(
-			"\nexpected: %v\nactual:   %v",
-			expectedSerializedHeader,
-			actualSerializedHeader,
-		)
-	}
+	testutils.AssertBytesEqual(
+		t,
+		expectedSerializedHeader,
+		actualSerializedHeader[:],
+	)
 }
