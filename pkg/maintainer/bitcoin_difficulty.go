@@ -95,7 +95,7 @@ func (bdm *bitcoinDifficultyMaintainer) startControlLoop(ctx context.Context) {
 func (bdm *bitcoinDifficultyMaintainer) proveEpochs(ctx context.Context) error {
 	if err := bdm.verifySubmissionEligibility(); err != nil {
 		return fmt.Errorf(
-			"cannot proceed with proving Bitcoin blockchain epochs: [%w]",
+			"cannot verify submission eligibility: [%w]",
 			err,
 		)
 	}
@@ -261,7 +261,7 @@ func (bdm *bitcoinDifficultyMaintainer) proveNextEpoch(ctx context.Context) (
 
 		logger.Infof(
 			"successfully submitted block headers [%d:%d] to the Bitcoin "+
-				"difficulty chain. The current proven epoch is %d.",
+				"difficulty chain; the current proven epoch is [%d]",
 			firstBlockHeaderHeight,
 			lastBlockHeaderHeight,
 			newEpoch,
