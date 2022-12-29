@@ -58,8 +58,8 @@ func TestVerifySubmissionEligibility(t *testing.T) {
 			bitcoinDifficultyMaintainer := &BitcoinDifficultyMaintainer{
 				btcChain:           nil,
 				chain:              difficultyChain,
-				idleBackOffTime:    defaultIdleBackOffTime,
-				restartBackOffTime: defaultRestartBackoffTime,
+				idleBackOffTime:    bitcoinDifficultyDefaultIdleBackOffTime,
+				restartBackOffTime: bitcoinDifficultyDefaultRestartBackoffTime,
 			}
 
 			err := bitcoinDifficultyMaintainer.verifySubmissionEligibility()
@@ -140,8 +140,8 @@ func TestProveNextEpoch(t *testing.T) {
 	bitcoinDifficultyMaintainer := &BitcoinDifficultyMaintainer{
 		btcChain:           btcChain,
 		chain:              difficultyChain,
-		idleBackOffTime:    defaultIdleBackOffTime,
-		restartBackOffTime: defaultRestartBackoffTime,
+		idleBackOffTime:    bitcoinDifficultyDefaultIdleBackOffTime,
+		restartBackOffTime: bitcoinDifficultyDefaultRestartBackoffTime,
 	}
 
 	result, err := bitcoinDifficultyMaintainer.proveNextEpoch(ctx)
@@ -240,8 +240,8 @@ func TestGetBlockHeaders(t *testing.T) {
 	bitcoinDifficultyMaintainer := &BitcoinDifficultyMaintainer{
 		btcChain:           btcChain,
 		chain:              nil,
-		idleBackOffTime:    defaultIdleBackOffTime,
-		restartBackOffTime: defaultRestartBackoffTime,
+		idleBackOffTime:    bitcoinDifficultyDefaultIdleBackOffTime,
+		restartBackOffTime: bitcoinDifficultyDefaultRestartBackoffTime,
 	}
 
 	headers, err := bitcoinDifficultyMaintainer.getBlockHeaders(700000, 700002)
@@ -361,8 +361,8 @@ func TestProveEpochs_ErrorVerifyingSubmissionEligibility(t *testing.T) {
 	bitcoinDifficultyMaintainer := &BitcoinDifficultyMaintainer{
 		btcChain:           nil,
 		chain:              difficultyChain,
-		idleBackOffTime:    defaultIdleBackOffTime,
-		restartBackOffTime: defaultRestartBackoffTime,
+		idleBackOffTime:    bitcoinDifficultyDefaultIdleBackOffTime,
+		restartBackOffTime: bitcoinDifficultyDefaultRestartBackoffTime,
 	}
 
 	err := bitcoinDifficultyMaintainer.proveEpochs(ctx)
@@ -389,8 +389,8 @@ func TestProveEpochs_ErrorProvingSingleEpoch(t *testing.T) {
 	bitcoinDifficultyMaintainer := &BitcoinDifficultyMaintainer{
 		btcChain:           btcChain,
 		chain:              difficultyChain,
-		idleBackOffTime:    defaultIdleBackOffTime,
-		restartBackOffTime: defaultRestartBackoffTime,
+		idleBackOffTime:    bitcoinDifficultyDefaultIdleBackOffTime,
+		restartBackOffTime: bitcoinDifficultyDefaultRestartBackoffTime,
 	}
 
 	err := bitcoinDifficultyMaintainer.proveEpochs(ctx)
