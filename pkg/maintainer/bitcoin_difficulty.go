@@ -296,6 +296,9 @@ func (bdm *bitcoinDifficultyMaintainer) getBlockHeaders(
 ) {
 	var headers []*bitcoin.BlockHeader
 
+	// TODO: Consider modifying the Bitcoin chain to return multiple block
+	//       headers: GetBlockHeaders(startHeight, count). Return multiple
+	//       block headers with one call instead of iterating.
 	for height := firstHeaderHeight; height <= lastHeaderHeight; height++ {
 		header, err := bdm.btcChain.GetBlockHeader(height)
 		if err != nil {
