@@ -55,7 +55,7 @@ func TestVerifySubmissionEligibility(t *testing.T) {
 				test.operatorAuthorized,
 			)
 
-			bitcoinDifficultyMaintainer := &BitcoinDifficultyMaintainer{
+			bitcoinDifficultyMaintainer := &bitcoinDifficultyMaintainer{
 				btcChain:           nil,
 				chain:              difficultyChain,
 				idleBackOffTime:    bitcoinDifficultyDefaultIdleBackOffTime,
@@ -137,7 +137,7 @@ func TestProveNextEpoch(t *testing.T) {
 	difficultyChain.SetCurrentEpoch(299)
 	difficultyChain.SetProofLength(3)
 
-	bitcoinDifficultyMaintainer := &BitcoinDifficultyMaintainer{
+	bitcoinDifficultyMaintainer := &bitcoinDifficultyMaintainer{
 		btcChain:           btcChain,
 		chain:              difficultyChain,
 		idleBackOffTime:    bitcoinDifficultyDefaultIdleBackOffTime,
@@ -237,7 +237,7 @@ func TestGetBlockHeaders(t *testing.T) {
 	}
 	btcChain.SetBlockHeaders(blockHeaders)
 
-	bitcoinDifficultyMaintainer := &BitcoinDifficultyMaintainer{
+	bitcoinDifficultyMaintainer := &bitcoinDifficultyMaintainer{
 		btcChain:           btcChain,
 		chain:              nil,
 		idleBackOffTime:    bitcoinDifficultyDefaultIdleBackOffTime,
@@ -268,7 +268,7 @@ func TestWaitForCurrentEpochUpdate_Successful(t *testing.T) {
 	difficultyChain := connectLocalBitcoinDifficultyChain()
 	difficultyChain.SetCurrentEpoch(currentEpoch)
 
-	bitcoinDifficultyMaintainer := &BitcoinDifficultyMaintainer{
+	bitcoinDifficultyMaintainer := &bitcoinDifficultyMaintainer{
 		btcChain:           nil,
 		chain:              difficultyChain,
 		idleBackOffTime:    2 * time.Second,
@@ -316,7 +316,7 @@ func TestWaitForCurrentEpochUpdate_Cancelled(t *testing.T) {
 	difficultyChain := connectLocalBitcoinDifficultyChain()
 	difficultyChain.SetCurrentEpoch(currentEpoch)
 
-	bitcoinDifficultyMaintainer := &BitcoinDifficultyMaintainer{
+	bitcoinDifficultyMaintainer := &bitcoinDifficultyMaintainer{
 		btcChain:           nil,
 		chain:              difficultyChain,
 		idleBackOffTime:    2 * time.Second,
@@ -358,7 +358,7 @@ func TestProveEpochs_ErrorVerifyingSubmissionEligibility(t *testing.T) {
 	difficultyChain.SetReady(true)
 	difficultyChain.SetAuthorizationRequired(true)
 
-	bitcoinDifficultyMaintainer := &BitcoinDifficultyMaintainer{
+	bitcoinDifficultyMaintainer := &bitcoinDifficultyMaintainer{
 		btcChain:           nil,
 		chain:              difficultyChain,
 		idleBackOffTime:    bitcoinDifficultyDefaultIdleBackOffTime,
@@ -386,7 +386,7 @@ func TestProveEpochs_ErrorProvingSingleEpoch(t *testing.T) {
 	// Do not set block headers in the Bitcoin chain to trigger an error.
 	btcChain := connectLocalBitcoinChain()
 
-	bitcoinDifficultyMaintainer := &BitcoinDifficultyMaintainer{
+	bitcoinDifficultyMaintainer := &bitcoinDifficultyMaintainer{
 		btcChain:           btcChain,
 		chain:              difficultyChain,
 		idleBackOffTime:    bitcoinDifficultyDefaultIdleBackOffTime,
@@ -437,7 +437,7 @@ func TestProveEpochs_Successful(t *testing.T) {
 	}
 	btcChain.SetBlockHeaders(blockHeaders)
 
-	bitcoinDifficultyMaintainer := &BitcoinDifficultyMaintainer{
+	bitcoinDifficultyMaintainer := &bitcoinDifficultyMaintainer{
 		btcChain:           btcChain,
 		chain:              difficultyChain,
 		idleBackOffTime:    2 * time.Second,

@@ -45,7 +45,7 @@ func initializeBitcoinDifficultyMaintainer(
 	idleBackOffTime time.Duration,
 	restartBackOffTime time.Duration,
 ) {
-	bitcoinDifficultyMaintainer := &BitcoinDifficultyMaintainer{
+	bitcoinDifficultyMaintainer := &bitcoinDifficultyMaintainer{
 		btcChain:           btcChain,
 		chain:              chain,
 		idleBackOffTime:    idleBackOffTime,
@@ -55,9 +55,9 @@ func initializeBitcoinDifficultyMaintainer(
 	go bitcoinDifficultyMaintainer.startControlLoop(ctx)
 }
 
-// BitcoinDifficultyMaintainer is the part of maintainer responsible for
+// bitcoinDifficultyMaintainer is the part of maintainer responsible for
 // maintaining the state of the Bitcoin difficulty on-chain contract.
-type BitcoinDifficultyMaintainer struct {
+type bitcoinDifficultyMaintainer struct {
 	btcChain bitcoin.Chain
 	chain    BitcoinDifficultyChain
 
@@ -67,7 +67,7 @@ type BitcoinDifficultyMaintainer struct {
 
 // startControlLoop starts the loop responsible for controlling the Bitcoin
 // difficulty maintainer.
-func (bdm *BitcoinDifficultyMaintainer) startControlLoop(ctx context.Context) {
+func (bdm *bitcoinDifficultyMaintainer) startControlLoop(ctx context.Context) {
 	logger.Info("starting Bitcoin difficulty maintainer")
 
 	defer func() {
@@ -93,7 +93,7 @@ func (bdm *BitcoinDifficultyMaintainer) startControlLoop(ctx context.Context) {
 }
 
 // proveEpochs proves Bitcoin blockchain epochs in the Bitcoin difficulty chain.
-func (bdm *BitcoinDifficultyMaintainer) proveEpochs(ctx context.Context) error {
+func (bdm *bitcoinDifficultyMaintainer) proveEpochs(ctx context.Context) error {
 	if err := bdm.verifySubmissionEligibility(); err != nil {
 		return fmt.Errorf(
 			"cannot proceed with proving Bitcoin blockchain epochs: [%w]",
@@ -126,7 +126,7 @@ func (bdm *BitcoinDifficultyMaintainer) proveEpochs(ctx context.Context) error {
 
 // verifySubmissionEligibility verifies whether a maintainer is eligible to
 // submit block headers to the Bitcoin difficulty chain.
-func (bdm *BitcoinDifficultyMaintainer) verifySubmissionEligibility() error {
+func (bdm *bitcoinDifficultyMaintainer) verifySubmissionEligibility() error {
 	isReady, err := bdm.chain.Ready()
 	if err != nil {
 		return fmt.Errorf(
@@ -175,7 +175,7 @@ func (bdm *BitcoinDifficultyMaintainer) verifySubmissionEligibility() error {
 // prove an epoch, it returns true. If it was not possible (i.e. Bitcoin
 // difficulty chain is up-to-date or there are not enough headers in the new
 // Bitcoin epoch), it returns false.
-func (bdm *BitcoinDifficultyMaintainer) proveNextEpoch(ctx context.Context) (
+func (bdm *bitcoinDifficultyMaintainer) proveNextEpoch(ctx context.Context) (
 	bool,
 	error,
 ) {
@@ -289,7 +289,7 @@ func (bdm *BitcoinDifficultyMaintainer) proveNextEpoch(ctx context.Context) (
 }
 
 // getBlockHeaders returns block headers from the given range.
-func (bdm *BitcoinDifficultyMaintainer) getBlockHeaders(
+func (bdm *bitcoinDifficultyMaintainer) getBlockHeaders(
 	firstHeaderHeight,
 	lastHeaderHeight uint,
 ) (
@@ -315,7 +315,7 @@ func (bdm *BitcoinDifficultyMaintainer) getBlockHeaders(
 
 // waitForCurrentEpochUpdate waits until the current epoch in the Bitcoin
 // difficulty chain is equal to or higher than the provided target epoch.
-func (bdm *BitcoinDifficultyMaintainer) waitForCurrentEpochUpdate(
+func (bdm *bitcoinDifficultyMaintainer) waitForCurrentEpochUpdate(
 	ctx context.Context,
 	targetEpoch uint64,
 ) error {
