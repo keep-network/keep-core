@@ -78,8 +78,7 @@ func (bdm *bitcoinDifficultyMaintainer) startControlLoop(ctx context.Context) {
 		err := bdm.proveEpochs(ctx)
 		if err != nil {
 			logger.Errorf(
-				"restarting Bitcoin difficulty maintainer due to error while "+
-					"proving Bitcoin blockchain epochs: [%v]",
+				"error while proving Bitcoin epochs: [%v]; restarting maintainer",
 				err,
 			)
 		}
