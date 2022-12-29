@@ -26,7 +26,7 @@ const (
 	bitcoinDifficultyEpochLength = 2016
 )
 
-var logger = log.Logger("keep-maintainer-bitcoin-difficulty")
+var logger = log.Logger("maintainer-btcdiff")
 
 var (
 	errNotAuthorized = fmt.Errorf(
