@@ -35,7 +35,7 @@ spec:
         accessModes: [ReadWriteOnce]
         resources:
           requests:
-            storage: 512Mi
+            storage: 4096Mi
   template:
     metadata:
       labels: #@ labels()

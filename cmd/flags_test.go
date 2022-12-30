@@ -233,8 +233,8 @@ var cmdFlagsTests = map[string]struct {
 		expectedValueFromFlag: 101,
 		defaultValue:          runtime.GOMAXPROCS(0),
 	},
-	"tbtc.maintainer.bitcoinDifficulty": {
-		readValueFunc:         func(c *config.Config) interface{} { return c.Tbtc.Maintainer.BitcoinDifficulty },
+	"maintainer.bitcoinDifficulty": {
+		readValueFunc:         func(c *config.Config) interface{} { return c.Maintainer.BitcoinDifficulty },
 		flagName:              "--bitcoinDifficulty",
 		flagValue:             "", // don't provide any value
 		expectedValueFromFlag: true,
@@ -269,6 +269,16 @@ var cmdFlagsTests = map[string]struct {
 		flagValue:             "0xd21DE06574811450E722a33D8093558E8c04eacc",
 		expectedValueFromFlag: common.HexToAddress("0xd21DE06574811450E722a33D8093558E8c04eacc"),
 		defaultValue:          common.HexToAddress(ethereumTbtc.BridgeAddress),
+	},
+	"developer.lightRelayAddress": {
+		readValueFunc: func(c *config.Config) interface{} {
+			address, _ := c.Ethereum.ContractAddress(chainEthereum.LightRelayContractName)
+			return address
+		},
+		flagName:              "--developer.lightRelayAddress",
+		flagValue:             "0x68e20afD773fDF1231B5cbFeA7040e73e79cAc36",
+		expectedValueFromFlag: common.HexToAddress("0x68e20afD773fDF1231B5cbFeA7040e73e79cAc36"),
+		defaultValue:          common.HexToAddress(ethereumTbtc.LightRelayAddress),
 	},
 	"developer.tokenStakingAddress": {
 		readValueFunc: func(c *config.Config) interface{} {
@@ -387,8 +397,8 @@ func TestFlags_Mixed(t *testing.T) {
 			expectedValue: "/my/secure/location",
 		},
 		// Properties not defined in the config file, but set with flags.
-		"tbtc.maintainer.bitcoinDifficulty": {
-			readValueFunc: func(c *config.Config) interface{} { return c.Tbtc.Maintainer.BitcoinDifficulty },
+		"maintainer.bitcoinDifficulty": {
+			readValueFunc: func(c *config.Config) interface{} { return c.Maintainer.BitcoinDifficulty },
 			expectedValue: true,
 		},
 	}

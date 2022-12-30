@@ -14,7 +14,6 @@ import (
 	"github.com/keep-network/keep-core/pkg/generator"
 	"github.com/keep-network/keep-core/pkg/net"
 	"github.com/keep-network/keep-core/pkg/sortition"
-	"github.com/keep-network/keep-core/pkg/tbtc/maintainer"
 )
 
 // TODO: Unit tests for `tbtc.go`.
@@ -65,9 +64,6 @@ type Config struct {
 	PreParamsGenerationConcurrency int
 	// Concurrency level for key-generation for tECDSA.
 	KeyGenerationConcurrency int
-
-	// Maintainer defines the configuration for the tBTC maintainer.
-	Maintainer maintainer.Config
 }
 
 // Initialize kicks off the TBTC by initializing internal state, ensuring

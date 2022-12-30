@@ -1,8 +1,8 @@
 = keep-core
 
-https://github.com/keep-network/keep-core/actions/workflows/contracts-ecdsa.yml[image:https://img.shields.io/github/workflow/status/keep-network/keep-core/Solidity%20ECDSA/main?event=push&label=ECDSA%20contracts%20build[ECDSA contracts build status]]
-https://github.com/keep-network/keep-core/actions/workflows/contracts-random-beacon.yml[image:https://img.shields.io/github/workflow/status/keep-network/keep-core/Solidity%20Random%20Beacon/main?event=push&label=Random%20Beacon%20contracts%20build[Random Beacon contracts build status]]
-https://github.com/keep-network/keep-core/actions/workflows/client.yml[image:https://img.shields.io/github/workflow/status/keep-network/keep-core/Client/main?event=push&label=Client build[Go client build status]]
+https://github.com/keep-network/keep-core/actions/workflows/contracts-ecdsa.yml[image:https://img.shields.io/github/actions/workflow/status/keep-network/keep-core/contracts-ecdsa.yml?branch=main&event=push&label=ECDSA%20contracts%20build[ECDSA contracts build status]]
+https://github.com/keep-network/keep-core/actions/workflows/contracts-random-beacon.yml[image:https://img.shields.io/github/actions/workflow/status/keep-network/keep-core/contracts-random-beacon.yml?branch=main&event=push&label=Random%20Beacon%20contracts%20build[Random Beacon contracts build status]]
+https://github.com/keep-network/keep-core/actions/workflows/client.yml[image:https://img.shields.io/github/actions/workflow/status/keep-network/keep-core/client.yml?branch=main&event=push&label=Client build[Go client build status]]
 https://docs.threshold.network[image:https://img.shields.io/badge/docs-website-green.svg[Docs]]
 https://discord.gg/threshold[image:https://img.shields.io/badge/chat-Discord-5865f2.svg[Chat with us on Discord]]
 

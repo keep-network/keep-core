@@ -48,6 +48,7 @@ func convertRawTransaction(rawTx string) (*bitcoin.Transaction, error) {
 				OutputIndex:     vin.PreviousOutPoint.Index,
 			},
 			SignatureScript: vin.SignatureScript,
+			Witness:         vin.Witness,
 			Sequence:        vin.Sequence,
 		}
 
