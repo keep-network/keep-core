@@ -11,11 +11,11 @@ const MerkleDist = require("../merkle_dist/merkle_dist.js")
 
 // The following parameters must be modified for each distribution
 const bonusWeight = 0.0
-const preWeight = 0.75
-const tbtcv2Weight = 0.25
-const startTime = 1667260800 // Nov 1st 2022 00:00:00 GMT
-const endTime = 1669852800 // Dec 1st 2022 00:00:00 GMT
-const lastDistribution = "2022-11-01"
+const preWeight = 0.625
+const tbtcv2Weight = 0.375
+const startTime = 1669852800 // Dec 1st 2022 00:00:00 GMT
+const endTime = 1672531200 // Jan 1st 2023 00:00:00 GMT
+const lastDistribution = "2022-12-01"
 
 const tbtcv2ScriptPath = "src/tbtcv2-rewards/"
 const graphqlApi =
@@ -87,11 +87,8 @@ async function main() {
       distPath + "/MerkleInputBonusRewards.json",
       JSON.stringify(bonusRewards, null, 4)
     )
-    // TODO: change MerkleInputOngoingRewards.json to MerkleInputPreRewards.json
-    // for December distribution (the distribution that is going to be released
-    // on 2023/01/01)
     preRewards = JSON.parse(
-      fs.readFileSync(`${lastDistPath}/MerkleInputOngoingRewards.json`)
+      fs.readFileSync(`${lastDistPath}/MerkleInputPreRewards.json`)
     )
     preRewards = MerkleDist.combineMerkleInputs(preRewards, earnedPreRewards)
     fs.writeFileSync(
