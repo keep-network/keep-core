@@ -1,12 +1,10 @@
 // Script that verifies if a claim proof of a specified account is valid
+// Use: node src/scripts/verify_merkle_dist.js <YYYY-MM-DD>
 
 const { MerkleTree } = require("merkletreejs")
 const BigNumber = require("bignumber.js")
 const keccak256 = require("keccak256")
 const fs = require("fs")
-
-// Merkle Distribution JSON file location
-const PROOF_PATH = "distributions/2022-07-15/MerkleDist.json"
 
 function verifyProof(wallet, beneficiary, amount, proof, root) {
   amount = BigNumber(amount)
@@ -18,9 +16,13 @@ function verifyProof(wallet, beneficiary, amount, proof, root) {
 }
 
 function main() {
+  const args = process.argv.slice(2)
+  const distDate = args[0]
+  const proofPath = `distributions/${distDate}/MerkleDist.json`
+
   let proofVerification = true
 
-  const json = JSON.parse(fs.readFileSync(PROOF_PATH, { encoding: "utf8" }))
+  const json = JSON.parse(fs.readFileSync(proofPath, { encoding: "utf8" }))
   if (typeof json !== "object") throw new Error("Invalid JSON")
 
   const merkleRoot = json.merkleRoot
