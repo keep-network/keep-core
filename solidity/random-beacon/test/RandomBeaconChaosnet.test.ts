@@ -159,7 +159,8 @@ describe("RandomBeaconChaosnet", () => {
             .connect(deployer)
             .setRequesterAuthorization(requester.address, true)
 
-          // Request relay entry twice
+          // Ensure the initial value of entry stored in the contract is updated
+          // by requesting a relay entry twice.
           await randomBeaconChaosnet
             .connect(requester)
             .requestRelayEntry(callbackContract.address)

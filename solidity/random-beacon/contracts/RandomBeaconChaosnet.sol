@@ -17,9 +17,9 @@ pragma solidity 0.8.17;
 import "./api/IRandomBeacon.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
-/// @title Keep Random Beacon Chaosnet Stub
-/// @notice Keep Random Beacon stub contract that will be used temporarily until
-///         the real-world random beacon client implementation is ready.
+/// @title Keep Random Beacon Chaosnet
+/// @notice A stub contract that will be used temporarily until the real-world
+///         random beacon client implementation is ready.
 contract RandomBeaconChaosnet is IRandomBeacon, Ownable {
     /// @notice Authorized addresses that can request a relay entry.
     mapping(address => bool) public authorizedRequesters;
@@ -33,11 +33,9 @@ contract RandomBeaconChaosnet is IRandomBeacon, Ownable {
         bool isAuthorized
     );
 
-    /// @notice Request relay entry stub function sets a callback contract
-    ///         and executes a callback with an arbitrary relay entry number.
+    /// @notice Executes the callback with an arbitrary relay entry number.
     /// @param callbackContract Beacon consumer callback contract - Wallet Registry
-    /// @dev    Despite being a stub function, a requester still needs to be
-    ///         authorized by the owner.
+    /// @dev The caller must be an authorized requester.
     function requestRelayEntry(IRandomBeaconConsumer callbackContract)
         external
     {
