@@ -17,6 +17,9 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
     waitConfirmations: 1,
   })
 
+  // TODO: In case of deployment for mainnet and chaosnet WalletRegistry should
+  //       have RAndomBeaconChaosnet set in the constructor, not RandomBeacon.
+
   const [walletRegistry, proxyDeployment] = await helpers.upgrades.deployProxy(
     "WalletRegistry",
     {
