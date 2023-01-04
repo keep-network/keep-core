@@ -321,9 +321,12 @@ contract WalletRegistry is
         // DKG result challenge period length is set to 48h as well, assuming
         // 15s block time.
         //
-        // DKG result submission timeout, gives each member 20 blocks to submit
-        // the result. Assuming 15s block time, it is ~8h to submit the result
-        // in the pessimistic case.
+        // DKG result submission timeout covers:
+        // - 20 blocks required to confirm the DkgStarted event off-chain
+        // - 5 retries of the off-chain protocol that takes 161 blocks at most
+        // - 15 blocks to submit the result for each of the 100 members
+        // That gives: 20 + (5 * 161) + (15 * 100) = 2325
+        //
         //
         // The original DKG result submitter has 20 blocks to approve it before
         // anyone else can do that.
@@ -334,7 +337,7 @@ contract WalletRegistry is
         dkg.setSeedTimeout(11_520);
         dkg.setResultChallengePeriodLength(11_520);
         dkg.setResultChallengeExtraGas(50_000);
-        dkg.setResultSubmissionTimeout(100 * 20);
+        dkg.setResultSubmissionTimeout(2325);
         dkg.setSubmitterPrecedencePeriodLength(20);
 
         // Gas parameters were adjusted based on Ethereum state in April 2022.
