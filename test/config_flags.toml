@@ -5,6 +5,10 @@
 # KeyFile is expected to be overwritten by a flag.
 KeyFile = "/tmp/UTC--2018-03-11T01-37-33.202765887Z--c2a56884538778bacd91aa5bf343bf882c5fb18b"
 
+[bitcoin.electrum]
+# URL is expected to be overwritten by a flag.
+URL = "another.url.to.electrum:18332"
+
 [network]
 # Port is expected to be overwritten by a flag.
 Port = 27001
@@ -13,8 +17,6 @@ Port = 27001
 # Dir is expected to be read from the file, not passed as a flag.
 Dir = "/my/secure/location"
 
-[metrics]
+[clientinfo]
 # Port is expected to be read from the file, not passed as a flag.
 Port = 3097
-
-# Diagnostics.Port is expected not to be provided in file nor passes as a flag. A default value should be used.

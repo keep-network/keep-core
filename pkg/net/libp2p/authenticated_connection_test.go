@@ -54,7 +54,6 @@ func TestPinnedAndMessageKeyMismatch(t *testing.T) {
 		ac.initializePipe()
 
 		maliciousInitiatorHijacksHonestRun(t, ac)
-		return
 	}(initiatorConn, initiator.peerID, initiator.networkPrivateKey, responder.peerID, responder.networkPrivateKey)
 
 	_, err = newAuthenticatedInboundConnection(
@@ -154,17 +153,17 @@ func TestHandshake(t *testing.T) {
 	msg := []byte("brown fox blue tail")
 	go func(authnOutboundConn *authenticatedConnection, msg []byte) {
 		if _, err := authnOutboundConn.Write(msg); err != nil {
-			t.Fatal(err)
+			t.Error(err)
 		}
 	}(authnOutboundConn, msg)
 
 	msgContainer := make([]byte, len(msg))
 	if _, err := io.ReadFull(authnInboundConn.Conn, msgContainer); err != nil {
-		t.Fatal(err)
+		t.Error(err)
 	}
 
 	if string(msgContainer) != string(msg) {
-		t.Fatalf("message mismatch got %v, want %v", string(msgContainer), string(msg))
+		t.Errorf("message mismatch got %v, want %v", string(msgContainer), string(msg))
 	}
 }
 

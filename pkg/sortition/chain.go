@@ -57,4 +57,14 @@ type Chain interface {
 
 	// Restores reward eligibility for the operator.
 	RestoreRewardEligibility() error
+
+	// Returns true if the chaosnet phase is active, false otherwise.
+	IsChaosnetActive() (bool, error)
+
+	// Returns true if operator is a beta operator, false otherwise.
+	// Chaosnet status does not matter.
+	IsBetaOperator() (bool, error)
+
+	// GetOperatorID returns the operator ID for the given operator address.
+	GetOperatorID(operatorAddress chain.Address) (chain.OperatorID, error)
 }

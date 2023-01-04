@@ -8,8 +8,6 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
 
   const RandomBeacon = await deployments.get("RandomBeacon")
 
-  deployments.log("authorizing the RandomBeacon in the ReimbursementPool")
-
   await execute(
     "ReimbursementPool",
     { from: deployer, log: true, waitConfirmations: 1 },

@@ -16,7 +16,7 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   })
 
   if (hre.network.tags.etherscan) {
-    await helpers.etherscan.verify(ReimbursementPool, "ReimbursementPool")
+    await helpers.etherscan.verify(ReimbursementPool)
   }
 
   if (hre.network.tags.tenderly) {

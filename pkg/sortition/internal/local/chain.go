@@ -32,6 +32,9 @@ type Chain struct {
 	ineligibleForRewardsUntil      map[chain.Address]*big.Int
 	ineligibleForRewardsUntilMutex sync.RWMutex
 
+	isChaosnetActive bool
+	isBetaOperator   bool
+
 	isPoolLocked     bool
 	currentTimestamp *big.Int
 }
@@ -204,6 +207,20 @@ func (c *Chain) RestoreRewardEligibility() error {
 	return nil
 }
 
+func (c *Chain) IsChaosnetActive() (bool, error) {
+	return c.isChaosnetActive, nil
+}
+
+func (c *Chain) IsBetaOperator() (bool, error) {
+	return c.isBetaOperator, nil
+}
+
+func (c *Chain) GetOperatorID(
+	operatorAddress chain.Address,
+) (chain.OperatorID, error) {
+	panic("unsupported")
+}
+
 func (c *Chain) SetCurrentTimestamp(currentTimestamp *big.Int) {
 	c.currentTimestamp = currentTimestamp
 }
@@ -213,4 +230,12 @@ func (c *Chain) SetRewardIneligibility(until *big.Int) {
 	defer c.ineligibleForRewardsUntilMutex.Unlock()
 
 	c.ineligibleForRewardsUntil[c.operatorAddress] = until
+}
+
+func (c *Chain) SetChaosnetStatus(isChaosnetActive bool) {
+	c.isChaosnetActive = isChaosnetActive
+}
+
+func (c *Chain) SetBetaOperatorStatus(isBeta bool) {
+	c.isBetaOperator = isBeta
 }

@@ -1,13 +1,14 @@
 package dkg
 
 import (
+	"context"
 	"fmt"
 	"math/big"
 	"time"
 
-	"github.com/ipfs/go-log"
+	"github.com/ipfs/go-log/v2"
 
-	"github.com/keep-network/keep-core/pkg/chain"
+	"github.com/keep-network/keep-common/pkg/persistence"
 	"github.com/keep-network/keep-core/pkg/generator"
 	"github.com/keep-network/keep-core/pkg/net"
 	"github.com/keep-network/keep-core/pkg/protocol/group"
@@ -16,7 +17,6 @@ import (
 
 // Executor represents an ECDSA distributed key generation process executor.
 type Executor struct {
-	logger                   log.StandardLogger
 	tssPreParamsPool         *tssPreParamsPool
 	keyGenerationConcurrency int
 }
@@ -25,6 +25,7 @@ type Executor struct {
 func NewExecutor(
 	logger log.StandardLogger,
 	scheduler *generator.Scheduler,
+	persistence persistence.BasicHandle,
 	preParamsPoolSize int,
 	preParamsGenerationTimeout time.Duration,
 	preParamsGenerationDelay time.Duration,
@@ -36,10 +37,10 @@ func NewExecutor(
 		keyGenerationConcurrency,
 	)
 	return &Executor{
-		logger: logger,
 		tssPreParamsPool: newTssPreParamsPool(
 			logger,
 			scheduler,
+			persistence,
 			preParamsPoolSize,
 			preParamsGenerationTimeout,
 			preParamsGenerationDelay,
@@ -58,23 +59,21 @@ func NewExecutor(
 // group by passing a non-empty excludedMembers slice holding the members that
 // should be excluded.
 func (e *Executor) Execute(
+	ctx context.Context,
+	logger log.StandardLogger,
 	seed *big.Int,
 	sessionID string,
-	startBlockNumber uint64,
 	memberIndex group.MemberIndex,
 	groupSize int,
 	dishonestThreshold int,
-	excludedMembers []group.MemberIndex,
-	blockCounter chain.BlockCounter,
+	excludedMembersIndexes []group.MemberIndex,
 	channel net.BroadcastChannel,
 	membershipValidator *group.MembershipValidator,
-) (*Result, uint64, error) {
-	e.logger.Debugf("[member:%v] initializing member", memberIndex)
-
-	registerUnmarshallers(channel)
+) (*Result, error) {
+	logger.Debugf("[member:%v] initializing member", memberIndex)
 
 	member := newMember(
-		e.logger,
+		logger,
 		seed,
 		memberIndex,
 		groupSize,
@@ -87,34 +86,36 @@ func (e *Executor) Execute(
 
 	// Mark excluded members as disqualified in order to not exchange messages
 	// with them and have them recorded as misbehaving in the final result.
-	for _, excludedMember := range excludedMembers {
-		if excludedMember != member.id {
-			member.group.MarkMemberAsDisqualified(excludedMember)
+	for _, excludedMemberIndex := range excludedMembersIndexes {
+		if excludedMemberIndex != member.id {
+			member.group.MarkMemberAsDisqualified(excludedMemberIndex)
 		}
 	}
 
 	initialState := &ephemeralKeyPairGenerationState{
-		channel: channel,
-		member:  member.initializeEphemeralKeysGeneration(),
+		BaseAsyncState: state.NewBaseAsyncState(),
+		channel:        channel,
+		member:         member.initializeEphemeralKeysGeneration(),
 	}
 
-	stateMachine := state.NewMachine(e.logger, channel, blockCounter, initialState)
+	stateMachine := state.NewAsyncMachine(logger, ctx, channel, initialState)
 
-	lastState, endBlockNumber, err := stateMachine.Execute(startBlockNumber)
+	lastState, err := stateMachine.Execute()
 	if err != nil {
-		return nil, 0, err
+		return nil, err
 	}
 
 	finalizationState, ok := lastState.(*finalizationState)
 	if !ok {
-		return nil, 0, fmt.Errorf("execution ended on state: %T", lastState)
+		return nil, fmt.Errorf("execution ended on state: %T", lastState)
 	}
 
-	return finalizationState.result(), endBlockNumber, nil
+	return finalizationState.result(), nil
 }
 
-func (e *Executor) PreParamsPool() *tssPreParamsPool {
-	return e.tssPreParamsPool
+// PreParamsCount returns the current count of the DKG pre-parameters.
+func (e *Executor) PreParamsCount() int {
+	return e.tssPreParamsPool.ParametersCount()
 }
 
 // SignedResult represents information pertaining to the process of signing
@@ -123,7 +124,7 @@ func (e *Executor) PreParamsPool() *tssPreParamsPool {
 type SignedResult struct {
 	PublicKey  []byte
 	Signature  []byte
-	ResultHash ResultHash
+	ResultHash ResultSignatureHash
 }
 
 // ResultSigner is the interface that provides ability to sign the DKG result
@@ -142,21 +143,20 @@ type ResultSigner interface {
 type ResultSubmitter interface {
 	// SubmitResult submits the DKG result along with the supporting signatures.
 	SubmitResult(
+		ctx context.Context,
 		memberIndex group.MemberIndex,
 		result *Result,
 		signatures map[group.MemberIndex][]byte,
-		startBlockNumber uint64,
 	) error
 }
 
 // Publish signs the DKG result for the given group member, collects signatures
 // from other members and verifies them, and submits the DKG result.
 func Publish(
+	ctx context.Context,
 	logger log.StandardLogger,
 	sessionID string,
-	publicationStartBlock uint64,
 	memberIndex group.MemberIndex,
-	blockCounter chain.BlockCounter,
 	channel net.BroadcastChannel,
 	membershipValidator *group.MembershipValidator,
 	resultSigner ResultSigner,
@@ -164,10 +164,10 @@ func Publish(
 	result *Result,
 ) error {
 	initialState := &resultSigningState{
+		BaseAsyncState:  state.NewBaseAsyncState(),
 		channel:         channel,
 		resultSigner:    resultSigner,
 		resultSubmitter: resultSubmitter,
-		blockCounter:    blockCounter,
 		member: newSigningMember(
 			logger,
 			memberIndex,
@@ -175,14 +175,12 @@ func Publish(
 			membershipValidator,
 			sessionID,
 		),
-		result:                  result,
-		signatureMessages:       make([]*resultSignatureMessage, 0),
-		signingStartBlockHeight: publicationStartBlock,
+		result: result,
 	}
 
-	stateMachine := state.NewMachine(logger, channel, blockCounter, initialState)
+	stateMachine := state.NewAsyncMachine(logger, ctx, channel, initialState)
 
-	lastState, _, err := stateMachine.Execute(publicationStartBlock)
+	lastState, err := stateMachine.Execute()
 	if err != nil {
 		return err
 	}
@@ -195,10 +193,10 @@ func Publish(
 	return nil
 }
 
-// registerUnmarshallers initializes the given broadcast channel to be able to
+// RegisterUnmarshallers initializes the given broadcast channel to be able to
 // perform DKG protocol interactions by registering all the required protocol
 // message unmarshallers.
-func registerUnmarshallers(channel net.BroadcastChannel) {
+func RegisterUnmarshallers(channel net.BroadcastChannel) {
 	channel.SetUnmarshaler(func() net.TaggedUnmarshaler {
 		return &ephemeralPublicKeyMessage{}
 	})
@@ -210,6 +208,9 @@ func registerUnmarshallers(channel net.BroadcastChannel) {
 	})
 	channel.SetUnmarshaler(func() net.TaggedUnmarshaler {
 		return &tssRoundThreeMessage{}
+	})
+	channel.SetUnmarshaler(func() net.TaggedUnmarshaler {
+		return &tssFinalizationMessage{}
 	})
 	channel.SetUnmarshaler(func() net.TaggedUnmarshaler {
 		return &resultSignatureMessage{}

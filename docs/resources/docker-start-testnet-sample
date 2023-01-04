@@ -15,7 +15,6 @@ docker run --detach \
     --log-opt max-file=3 \
     -p 3919:3919 \
     -p 9601:9601 \
-    -p 9701:9701 \
     us-docker.pkg.dev/keep-test-f3e0/public/keep-client:latest \
     start \
     --goerli \

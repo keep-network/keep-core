@@ -2,9 +2,10 @@
 .*
 
 # Top-level directories unrelated to the build.
-docs/
+docs*/
 infrastructure/
 scripts/
+tmp/
 
 # Top-level files unrealted to the build.
 CODEOWNERS
@@ -19,11 +20,23 @@ Dockerfile
 solidity-v1/
 solidity/
 
+# Token Stakedrop stuff.
+token-stakedrop/
+
+# Token Tracker stuff.
+token-tracker/
+
 # Go stuff.
 **/gen/_contracts
-**/gen/*/**/*.go
+**/gen/**/*.go
+!**/gen/gen.go
 !**/gen/cmd/cmd.go
 
 # Legacy V1 contracts bindings.
 # We won't generate new bindings in the docker build process, but use the existing ones.
 !pkg/chain/gen
+
+# Contract addresses.
+# We do not want to overwrite extracted contract addresses with empty content while
+# coping local root directory to docker image context.
+**/gen/_address/*

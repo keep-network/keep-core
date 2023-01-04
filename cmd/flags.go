@@ -3,6 +3,7 @@ package cmd
 import (
 	"fmt"
 	"math/big"
+	"strings"
 
 	"github.com/spf13/cobra"
 
@@ -11,8 +12,9 @@ import (
 	"github.com/keep-network/keep-common/pkg/cmd/flag"
 	"github.com/keep-network/keep-common/pkg/rate"
 	"github.com/keep-network/keep-core/config"
+	"github.com/keep-network/keep-core/pkg/bitcoin/electrum"
 	chainEthereum "github.com/keep-network/keep-core/pkg/chain/ethereum"
-	"github.com/keep-network/keep-core/pkg/metrics"
+	"github.com/keep-network/keep-core/pkg/clientinfo"
 	"github.com/keep-network/keep-core/pkg/net/libp2p"
 	"github.com/keep-network/keep-core/pkg/tbtc"
 )
@@ -35,16 +37,18 @@ func initFlags(
 		switch category {
 		case config.Ethereum:
 			initEthereumFlags(cmd, cfg)
+		case config.BitcoinElectrum:
+			initBitcoinElectrumFlags(cmd, cfg)
 		case config.Network:
 			initNetworkFlags(cmd, cfg)
 		case config.Storage:
 			initStorageFlags(cmd, cfg)
-		case config.Metrics:
-			initMetricsFlags(cmd, cfg)
-		case config.Diagnostics:
-			initDiagnosticsFlags(cmd, cfg)
+		case config.ClientInfo:
+			initClientInfoFlags(cmd, cfg)
 		case config.Tbtc:
 			initTbtcFlags(cmd, cfg)
+		case config.Maintainer:
+			initMaintainerFlags(cmd, cfg)
 		case config.Developer:
 			initDeveloperFlags(cmd)
 		}
@@ -152,8 +156,71 @@ func initEthereumFlags(cmd *cobra.Command, cfg *config.Config) {
 	)
 }
 
+// Initialize flags for Bitcoin electrum configuration.
+func initBitcoinElectrumFlags(cmd *cobra.Command, cfg *config.Config) {
+	cmd.Flags().StringVar(
+		&cfg.Bitcoin.Electrum.URL,
+		"bitcoin.electrum.url",
+		"",
+		"URL to the Electrum server in format: `hostname:port`.",
+	)
+
+	electrum.ProtocolVarFlag(
+		cmd.Flags(),
+		&cfg.Bitcoin.Electrum.Protocol,
+		"bitcoin.electrum.protocol",
+		electrum.TCP,
+		fmt.Sprintf(
+			"Electrum server connection protocol (one of: %s).",
+			strings.Join([]string{electrum.TCP.String(), electrum.SSL.String()}, ", "),
+		),
+	)
+
+	cmd.Flags().DurationVar(
+		&cfg.Bitcoin.Electrum.ConnectTimeout,
+		"bitcoin.electrum.connectTimeout",
+		electrum.DefaultConnectTimeout,
+		"Timeout for a single attempt of Electrum connection establishment.",
+	)
+
+	cmd.Flags().DurationVar(
+		&cfg.Bitcoin.Electrum.ConnectRetryTimeout,
+		"bitcoin.electrum.connectRetryTimeout",
+		electrum.DefaultConnectRetryTimeout,
+		"Timeout for Electrum connection establishment retries.",
+	)
+
+	cmd.Flags().DurationVar(
+		&cfg.Bitcoin.Electrum.RequestTimeout,
+		"bitcoin.electrum.requestTimeout",
+		electrum.DefaultRequestTimeout,
+		"Timeout for a single attempt of Electrum protocol request.",
+	)
+
+	cmd.Flags().DurationVar(
+		&cfg.Bitcoin.Electrum.RequestRetryTimeout,
+		"bitcoin.electrum.requestRetryTimeout",
+		electrum.DefaultRequestRetryTimeout,
+		"Timeout for Electrum protocol request retries.",
+	)
+
+	cmd.Flags().DurationVar(
+		&cfg.Bitcoin.Electrum.KeepAliveInterval,
+		"bitcoin.electrum.keepAliveInterval",
+		electrum.DefaultKeepAliveInterval,
+		"Interval for connection keep alive requests.",
+	)
+}
+
 // Initialize flags for Network configuration.
 func initNetworkFlags(cmd *cobra.Command, cfg *config.Config) {
+	cmd.Flags().BoolVar(
+		&cfg.LibP2P.Bootstrap,
+		"network.bootstrap",
+		false,
+		"Run the client in bootstrap mode.",
+	)
+
 	cmd.Flags().StringSliceVar(
 		&cfg.LibP2P.Peers,
 		"network.peers",
@@ -194,37 +261,27 @@ func initStorageFlags(cmd *cobra.Command, cfg *config.Config) {
 	)
 }
 
-// Initialize flags for Metrics configuration.
-func initMetricsFlags(cmd *cobra.Command, cfg *config.Config) {
+// Initialize flags for ClientInfo configuration.
+func initClientInfoFlags(cmd *cobra.Command, cfg *config.Config) {
 	cmd.Flags().IntVar(
-		&cfg.Metrics.Port,
-		"metrics.port",
+		&cfg.ClientInfo.Port,
+		"clientInfo.port",
 		9601,
-		"Metrics HTTP server listening port.",
+		"Client Info HTTP server listening port.",
 	)
 
 	cmd.Flags().DurationVar(
-		&cfg.Metrics.NetworkMetricsTick,
-		"metrics.networkMetricsTick",
-		metrics.DefaultNetworkMetricsTick,
-		"Network metrics check tick in seconds.",
+		&cfg.ClientInfo.NetworkMetricsTick,
+		"clientInfo.networkMetricsTick",
+		clientinfo.DefaultNetworkMetricsTick,
+		"Client Info network metrics check tick in seconds.",
 	)
 
 	cmd.Flags().DurationVar(
-		&cfg.Metrics.EthereumMetricsTick,
-		"metrics.ethereumMetricsTick",
-		metrics.DefaultEthereumMetricsTick,
-		"Ethereum metrics check tick in seconds.",
-	)
-}
-
-// Initialize flags for Diagnostics configuration.
-func initDiagnosticsFlags(cmd *cobra.Command, cfg *config.Config) {
-	cmd.Flags().IntVar(
-		&cfg.Diagnostics.Port,
-		"diagnostics.port",
-		9701,
-		"Diagnostics HTTP server listening port.",
+		&cfg.ClientInfo.EthereumMetricsTick,
+		"clientInfo.ethereumMetricsTick",
+		clientinfo.DefaultEthereumMetricsTick,
+		"Client info Ethereum metrics check tick in seconds.",
 	)
 }
 
@@ -265,6 +322,16 @@ func initTbtcFlags(cmd *cobra.Command, cfg *config.Config) {
 	)
 }
 
+// Initialize flags for Maintainer configuration.
+func initMaintainerFlags(command *cobra.Command, cfg *config.Config) {
+	command.Flags().BoolVar(
+		&cfg.Maintainer.BitcoinDifficulty,
+		"bitcoinDifficulty",
+		false,
+		"start Bitcoin difficulty maintainer",
+	)
+}
+
 // Initialize flags for Developer configuration.
 func initDeveloperFlags(command *cobra.Command) {
 	initContractAddressFlag := func(contractName string) {
@@ -279,6 +346,7 @@ func initDeveloperFlags(command *cobra.Command) {
 	}
 
 	initContractAddressFlag(chainEthereum.BridgeContractName)
+	initContractAddressFlag(chainEthereum.LightRelayContractName)
 	initContractAddressFlag(chainEthereum.RandomBeaconContractName)
 	initContractAddressFlag(chainEthereum.TokenStakingContractName)
 	initContractAddressFlag(chainEthereum.WalletRegistryContractName)

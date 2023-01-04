@@ -1,0 +1,12 @@
+syntax = "proto3";
+
+option go_package = "./pb";
+package tbtc;
+
+message SigningDoneMessage {
+    uint32 senderID = 1;
+    bytes message = 2;
+    uint64 attemptNumber = 3;
+    bytes signature = 4;
+    uint64 endBlock = 5;
+}

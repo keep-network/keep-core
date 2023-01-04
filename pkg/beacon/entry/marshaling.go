@@ -16,7 +16,7 @@ const maxMemberIndex = 255
 
 func validateMemberIndex(protoIndex uint32) error {
 	if protoIndex > maxMemberIndex {
-		return fmt.Errorf("Invalid member index value: [%v]", protoIndex)
+		return fmt.Errorf("invalid member index value: [%v]", protoIndex)
 	}
 	return nil
 }
@@ -30,8 +30,9 @@ func (*SignatureShareMessage) Type() string {
 // network communication.
 func (ssm *SignatureShareMessage) Marshal() ([]byte, error) {
 	pbSignatureShare := pb.SignatureShare{
-		SenderID: uint32(ssm.senderID),
-		Share:    ssm.shareBytes,
+		SenderID:  uint32(ssm.senderID),
+		Share:     ssm.shareBytes,
+		SessionID: ssm.sessionID,
 	}
 
 	return proto.Marshal(&pbSignatureShare)
@@ -51,6 +52,7 @@ func (ssm *SignatureShareMessage) Unmarshal(bytes []byte) error {
 	}
 	ssm.senderID = group.MemberIndex(pbSignatureShare.SenderID)
 	ssm.shareBytes = pbSignatureShare.Share
+	ssm.sessionID = pbSignatureShare.SessionID
 
 	return nil
 }

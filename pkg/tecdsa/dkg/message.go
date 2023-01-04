@@ -7,6 +7,16 @@ import (
 
 const messageTypePrefix = "tecdsa_dkg/"
 
+// message holds common traits of all signing protocol messages.
+type message interface {
+	// SenderID returns protocol-level identifier of the message sender.
+	SenderID() group.MemberIndex
+	// SessionID returns the session identifier of the message.
+	SessionID() string
+	// Type returns the exact type of the message.
+	Type() string
+}
+
 // ephemeralPublicKeyMessage is a message payload that carries the sender's
 // ephemeral public keys generated for all other group members.
 //
@@ -25,6 +35,11 @@ func (epkm *ephemeralPublicKeyMessage) SenderID() group.MemberIndex {
 	return epkm.senderID
 }
 
+// SessionID returns the session identifier of the message.
+func (epkm *ephemeralPublicKeyMessage) SessionID() string {
+	return epkm.sessionID
+}
+
 // Type returns a string describing an ephemeralPublicKeyMessage type for
 // marshaling purposes.
 func (epkm *ephemeralPublicKeyMessage) Type() string {
@@ -36,13 +51,18 @@ func (epkm *ephemeralPublicKeyMessage) Type() string {
 type tssRoundOneMessage struct {
 	senderID group.MemberIndex
 
-	payload   []byte
-	sessionID string
+	broadcastPayload []byte
+	sessionID        string
 }
 
 // SenderID returns protocol-level identifier of the message sender.
 func (trom *tssRoundOneMessage) SenderID() group.MemberIndex {
 	return trom.senderID
+}
+
+// SessionID returns the session identifier of the message.
+func (trom *tssRoundOneMessage) SessionID() string {
+	return trom.sessionID
 }
 
 // Type returns a string describing an tssRoundOneMessage type for
@@ -66,6 +86,11 @@ func (trtm *tssRoundTwoMessage) SenderID() group.MemberIndex {
 	return trtm.senderID
 }
 
+// SessionID returns the session identifier of the message.
+func (trtm *tssRoundTwoMessage) SessionID() string {
+	return trtm.sessionID
+}
+
 // Type returns a string describing an tssRoundTwoMessage type for
 // marshaling purposes.
 func (trtm *tssRoundTwoMessage) Type() string {
@@ -77,8 +102,8 @@ func (trtm *tssRoundTwoMessage) Type() string {
 type tssRoundThreeMessage struct {
 	senderID group.MemberIndex
 
-	payload   []byte
-	sessionID string
+	broadcastPayload []byte
+	sessionID        string
 }
 
 // SenderID returns protocol-level identifier of the message sender.
@@ -86,10 +111,39 @@ func (trtm *tssRoundThreeMessage) SenderID() group.MemberIndex {
 	return trtm.senderID
 }
 
+// SessionID returns the session identifier of the message.
+func (trtm *tssRoundThreeMessage) SessionID() string {
+	return trtm.sessionID
+}
+
 // Type returns a string describing an tssRoundThreeMessage type for
 // marshaling purposes.
 func (trtm *tssRoundThreeMessage) Type() string {
 	return messageTypePrefix + "tss_round_three_message"
+}
+
+// tssFinalizationMessage is a message payload that carries the sender's TSS
+// finalization confirmation.
+type tssFinalizationMessage struct {
+	senderID group.MemberIndex
+
+	sessionID string
+}
+
+// SenderID returns protocol-level identifier of the message sender.
+func (tfm *tssFinalizationMessage) SenderID() group.MemberIndex {
+	return tfm.senderID
+}
+
+// SessionID returns the session identifier of the message.
+func (tfm *tssFinalizationMessage) SessionID() string {
+	return tfm.sessionID
+}
+
+// Type returns a string describing an tssFinalizationMessage type for
+// marshaling purposes.
+func (tfm *tssFinalizationMessage) Type() string {
+	return messageTypePrefix + "tss_finalization_message"
 }
 
 // resultSignatureMessage is a message payload that carries a hash of
@@ -99,7 +153,7 @@ func (trtm *tssRoundThreeMessage) Type() string {
 type resultSignatureMessage struct {
 	senderID group.MemberIndex
 
-	resultHash ResultHash
+	resultHash ResultSignatureHash
 	signature  []byte
 	publicKey  []byte
 	sessionID  string
@@ -108,6 +162,11 @@ type resultSignatureMessage struct {
 // SenderID returns protocol-level identifier of the message sender.
 func (rsm *resultSignatureMessage) SenderID() group.MemberIndex {
 	return rsm.senderID
+}
+
+// SessionID returns the session identifier of the message.
+func (rsm *resultSignatureMessage) SessionID() string {
+	return rsm.sessionID
 }
 
 // Type returns a string describing an resultSignatureMessage type for

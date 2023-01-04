@@ -6,11 +6,13 @@ package gjkr;
 message EphemeralPublicKey {
     uint32 senderID = 1;
     map<uint32, bytes> ephemeralPublicKeys = 2;
+    string sessionID = 3;
 }
 
 message MemberCommitments {
     uint32 senderID = 1;
     repeated bytes commitments = 2;
+    string sessionID = 3;
 }
 
 message PeerShares {
@@ -21,24 +23,29 @@ message PeerShares {
 
     uint32 senderID = 1;
     map<uint32, Shares> shares = 2;
+    string sessionID = 3;
 }
 
 message SecretSharesAccusations {
     uint32 senderID = 1;
     map<uint32, bytes> accusedMembersKeys = 2;
+    string sessionID = 3;
 }
 
 message MemberPublicKeySharePoints {
     uint32 senderID = 1;
     repeated bytes publicKeySharePoints = 2;
+    string sessionID = 3;
 }
 
 message PointsAccusations {
     uint32 senderID = 1;
     map<uint32, bytes> accusedMembersKeys = 2;
+    string sessionID = 3;
 }
 
 message MisbehavedEphemeralKeys {
     uint32 senderID = 1;
     map<uint32, bytes> privateKeys = 2;
+    string sessionID = 3;
 }

@@ -1,0 +1,3 @@
+groups:
+  # TODO: Define some common rules to record: https://prometheus.io/docs/prometheus/latest/configuration/recording_rules/
+  # TODO: Define some alerts: https://prometheus.io/docs/prometheus/latest/configuration/alerting_rules/

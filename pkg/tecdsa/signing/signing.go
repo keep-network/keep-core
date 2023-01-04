@@ -1,14 +1,16 @@
 package signing
 
 import (
+	"context"
 	"fmt"
-	"github.com/ipfs/go-log"
-	"github.com/keep-network/keep-core/pkg/chain"
+	"math/big"
+
+	"github.com/keep-network/keep-core/pkg/protocol/state"
+
+	"github.com/ipfs/go-log/v2"
 	"github.com/keep-network/keep-core/pkg/net"
 	"github.com/keep-network/keep-core/pkg/protocol/group"
-	"github.com/keep-network/keep-core/pkg/protocol/state"
 	"github.com/keep-network/keep-core/pkg/tecdsa"
-	"math/big"
 )
 
 // Execute runs the tECDSA signing protocol, given a message to sign,
@@ -20,22 +22,19 @@ import (
 // group by passing a non-empty excludedMembers slice holding the members that
 // should be excluded.
 func Execute(
+	ctx context.Context,
 	logger log.StandardLogger,
 	message *big.Int,
 	sessionID string,
-	startBlockNumber uint64,
 	memberIndex group.MemberIndex,
 	privateKeyShare *tecdsa.PrivateKeyShare,
 	groupSize int,
 	dishonestThreshold int,
-	excludedMembers []group.MemberIndex,
-	blockCounter chain.BlockCounter,
+	excludedMembersIndexes []group.MemberIndex,
 	channel net.BroadcastChannel,
 	membershipValidator *group.MembershipValidator,
 ) (*Result, error) {
 	logger.Debugf("[member:%v] initializing member", memberIndex)
-
-	registerUnmarshallers(channel)
 
 	member := newMember(
 		logger,
@@ -50,20 +49,21 @@ func Execute(
 
 	// Mark excluded members as disqualified in order to not exchange messages
 	// with them.
-	for _, excludedMember := range excludedMembers {
-		if excludedMember != member.id {
-			member.group.MarkMemberAsDisqualified(excludedMember)
+	for _, excludedMemberIndex := range excludedMembersIndexes {
+		if excludedMemberIndex != member.id {
+			member.group.MarkMemberAsDisqualified(excludedMemberIndex)
 		}
 	}
 
 	initialState := &ephemeralKeyPairGenerationState{
-		channel: channel,
-		member:  member.initializeEphemeralKeysGeneration(),
+		BaseAsyncState: state.NewBaseAsyncState(),
+		channel:        channel,
+		member:         member.initializeEphemeralKeysGeneration(),
 	}
 
-	stateMachine := state.NewMachine(logger, channel, blockCounter, initialState)
+	stateMachine := state.NewAsyncMachine(logger, ctx, channel, initialState)
 
-	lastState, _, err := stateMachine.Execute(startBlockNumber)
+	lastState, err := stateMachine.Execute()
 	if err != nil {
 		return nil, err
 	}
@@ -76,10 +76,10 @@ func Execute(
 	return finalizationState.result(), nil
 }
 
-// registerUnmarshallers initializes the given broadcast channel to be able to
+// RegisterUnmarshallers initializes the given broadcast channel to be able to
 // perform signing protocol interactions by registering all the required
 // protocol message unmarshallers.
-func registerUnmarshallers(channel net.BroadcastChannel) {
+func RegisterUnmarshallers(channel net.BroadcastChannel) {
 	channel.SetUnmarshaler(func() net.TaggedUnmarshaler {
 		return &ephemeralPublicKeyMessage{}
 	})

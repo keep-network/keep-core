@@ -51,11 +51,14 @@ func init() {
 
 	EcdsaSortitionPoolCommand.AddCommand(
 		espCanRestoreRewardEligibilityCommand(),
+		espChaosnetOwnerCommand(),
 		espGetAvailableRewardsCommand(),
 		espGetIDOperatorCommand(),
 		espGetOperatorIDCommand(),
 		espGetPoolWeightCommand(),
 		espIneligibleEarnedRewardsCommand(),
+		espIsBetaOperatorCommand(),
+		espIsChaosnetActiveCommand(),
 		espIsEligibleForRewardsCommand(),
 		espIsLockedCommand(),
 		espIsOperatorInPoolCommand(),
@@ -67,11 +70,13 @@ func init() {
 		espRewardTokenCommand(),
 		espRewardsEligibilityRestorableAtCommand(),
 		espTotalWeightCommand(),
+		espDeactivateChaosnetCommand(),
 		espInsertOperatorCommand(),
 		espLockCommand(),
 		espReceiveApprovalCommand(),
 		espRenounceOwnershipCommand(),
 		espRestoreRewardEligibilityCommand(),
+		espTransferChaosnetOwnerRoleCommand(),
 		espTransferOwnershipCommand(),
 		espUnlockCommand(),
 		espUpdateOperatorStatusCommand(),
@@ -115,6 +120,40 @@ func espCanRestoreRewardEligibility(c *cobra.Command, args []string) error {
 
 	result, err := contract.CanRestoreRewardEligibilityAtBlock(
 		arg_operator,
+		cmd.BlockFlagValue.Int,
+	)
+
+	if err != nil {
+		return err
+	}
+
+	cmd.PrintOutput(result)
+
+	return nil
+}
+
+func espChaosnetOwnerCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "chaosnet-owner",
+		Short:                 "Calls the view method chaosnetOwner on the EcdsaSortitionPool contract.",
+		Args:                  cmd.ArgCountChecker(0),
+		RunE:                  espChaosnetOwner,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	cmd.InitConstFlags(c)
+
+	return c
+}
+
+func espChaosnetOwner(c *cobra.Command, args []string) error {
+	contract, err := initializeEcdsaSortitionPool(c)
+	if err != nil {
+		return err
+	}
+
+	result, err := contract.ChaosnetOwnerAtBlock(
 		cmd.BlockFlagValue.Int,
 	)
 
@@ -321,6 +360,83 @@ func espIneligibleEarnedRewards(c *cobra.Command, args []string) error {
 	}
 
 	result, err := contract.IneligibleEarnedRewardsAtBlock(
+		cmd.BlockFlagValue.Int,
+	)
+
+	if err != nil {
+		return err
+	}
+
+	cmd.PrintOutput(result)
+
+	return nil
+}
+
+func espIsBetaOperatorCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "is-beta-operator [arg0]",
+		Short:                 "Calls the view method isBetaOperator on the EcdsaSortitionPool contract.",
+		Args:                  cmd.ArgCountChecker(1),
+		RunE:                  espIsBetaOperator,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	cmd.InitConstFlags(c)
+
+	return c
+}
+
+func espIsBetaOperator(c *cobra.Command, args []string) error {
+	contract, err := initializeEcdsaSortitionPool(c)
+	if err != nil {
+		return err
+	}
+
+	arg0, err := chainutil.AddressFromHex(args[0])
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter arg0, a address, from passed value %v",
+			args[0],
+		)
+	}
+
+	result, err := contract.IsBetaOperatorAtBlock(
+		arg0,
+		cmd.BlockFlagValue.Int,
+	)
+
+	if err != nil {
+		return err
+	}
+
+	cmd.PrintOutput(result)
+
+	return nil
+}
+
+func espIsChaosnetActiveCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "is-chaosnet-active",
+		Short:                 "Calls the view method isChaosnetActive on the EcdsaSortitionPool contract.",
+		Args:                  cmd.ArgCountChecker(0),
+		RunE:                  espIsChaosnetActive,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	cmd.InitConstFlags(c)
+
+	return c
+}
+
+func espIsChaosnetActive(c *cobra.Command, args []string) error {
+	contract, err := initializeEcdsaSortitionPool(c)
+	if err != nil {
+		return err
+	}
+
+	result, err := contract.IsChaosnetActiveAtBlock(
 		cmd.BlockFlagValue.Int,
 	)
 
@@ -762,6 +878,55 @@ func espTotalWeight(c *cobra.Command, args []string) error {
 
 /// ------------------- Non-const methods -------------------
 
+func espDeactivateChaosnetCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "deactivate-chaosnet",
+		Short:                 "Calls the nonpayable method deactivateChaosnet on the EcdsaSortitionPool contract.",
+		Args:                  cmd.ArgCountChecker(0),
+		RunE:                  espDeactivateChaosnet,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	c.PreRunE = cmd.NonConstArgsChecker
+	cmd.InitNonConstFlags(c)
+
+	return c
+}
+
+func espDeactivateChaosnet(c *cobra.Command, args []string) error {
+	contract, err := initializeEcdsaSortitionPool(c)
+	if err != nil {
+		return err
+	}
+
+	var (
+		transaction *types.Transaction
+	)
+
+	if shouldSubmit, _ := c.Flags().GetBool(cmd.SubmitFlag); shouldSubmit {
+		// Do a regular submission. Take payable into account.
+		transaction, err = contract.DeactivateChaosnet()
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput(transaction.Hash())
+	} else {
+		// Do a call.
+		err = contract.CallDeactivateChaosnet(
+			cmd.BlockFlagValue.Int,
+		)
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput("success")
+	}
+
+	return nil
+}
+
 func espInsertOperatorCommand() *cobra.Command {
 	c := &cobra.Command{
 		Use:                   "insert-operator [arg_operator] [arg_authorizedStake]",
@@ -1064,6 +1229,66 @@ func espRestoreRewardEligibility(c *cobra.Command, args []string) error {
 		// Do a call.
 		err = contract.CallRestoreRewardEligibility(
 			arg_operator,
+			cmd.BlockFlagValue.Int,
+		)
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput("success")
+	}
+
+	return nil
+}
+
+func espTransferChaosnetOwnerRoleCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "transfer-chaosnet-owner-role [arg_newChaosnetOwner]",
+		Short:                 "Calls the nonpayable method transferChaosnetOwnerRole on the EcdsaSortitionPool contract.",
+		Args:                  cmd.ArgCountChecker(1),
+		RunE:                  espTransferChaosnetOwnerRole,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	c.PreRunE = cmd.NonConstArgsChecker
+	cmd.InitNonConstFlags(c)
+
+	return c
+}
+
+func espTransferChaosnetOwnerRole(c *cobra.Command, args []string) error {
+	contract, err := initializeEcdsaSortitionPool(c)
+	if err != nil {
+		return err
+	}
+
+	arg_newChaosnetOwner, err := chainutil.AddressFromHex(args[0])
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter arg_newChaosnetOwner, a address, from passed value %v",
+			args[0],
+		)
+	}
+
+	var (
+		transaction *types.Transaction
+	)
+
+	if shouldSubmit, _ := c.Flags().GetBool(cmd.SubmitFlag); shouldSubmit {
+		// Do a regular submission. Take payable into account.
+		transaction, err = contract.TransferChaosnetOwnerRole(
+			arg_newChaosnetOwner,
+		)
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput(transaction.Hash())
+	} else {
+		// Do a call.
+		err = contract.CallTransferChaosnetOwnerRole(
+			arg_newChaosnetOwner,
 			cmd.BlockFlagValue.Int,
 		)
 		if err != nil {

@@ -20,7 +20,6 @@ import (
 var logger = log.Logger("keep-chainlocal")
 
 var seedGroupPublicKey = []byte("seed to group public key")
-var seedRelayEntry = big.NewInt(123456789)
 var groupActiveTime = uint64(10)
 var relayRequestTimeout = uint64(8)
 
@@ -59,7 +58,7 @@ func (c *localChain) BlockCounter() (chain.BlockCounter, error) {
 }
 
 func (c *localChain) Signing() chain.Signing {
-	return newSigner(c.operatorPrivateKey)
+	return NewSigner(c.operatorPrivateKey)
 }
 
 func (c *localChain) OperatorKeyPair() (*operator.PrivateKey, *operator.PublicKey, error) {
@@ -99,7 +98,7 @@ func (c *localChain) OnRelayEntrySubmitted(
 	c.handlerMutex.Lock()
 	defer c.handlerMutex.Unlock()
 
-	handlerID := generateHandlerID()
+	handlerID := GenerateHandlerID()
 	c.relayEntryHandlers[handlerID] = handler
 
 	return subscription.NewEventSubscription(func() {
@@ -120,7 +119,7 @@ func (c *localChain) OnRelayEntryRequested(
 	c.handlerMutex.Lock()
 	defer c.handlerMutex.Unlock()
 
-	handlerID := generateHandlerID()
+	handlerID := GenerateHandlerID()
 	c.relayRequestHandlers[handlerID] = handler
 
 	return subscription.NewEventSubscription(func() {
@@ -131,7 +130,7 @@ func (c *localChain) OnRelayEntryRequested(
 	})
 }
 
-func (c *localChain) SelectGroup(seed *big.Int) ([]chain.Address, error) {
+func (c *localChain) SelectGroup(seed *big.Int) (chain.Addresses, error) {
 	panic("not implemented")
 }
 
@@ -141,7 +140,7 @@ func (c *localChain) OnGroupRegistered(
 	c.handlerMutex.Lock()
 	defer c.handlerMutex.Unlock()
 
-	handlerID := generateHandlerID()
+	handlerID := GenerateHandlerID()
 
 	c.groupRegisteredHandlers[handlerID] = handler
 
@@ -228,7 +227,7 @@ func (c *localChain) IsStaleGroup(groupPublicKey []byte) (bool, error) {
 	}
 
 	for _, group := range c.groups {
-		if bytes.Compare(group.groupPublicKey, groupPublicKey) == 0 {
+		if bytes.Equal(group.groupPublicKey, groupPublicKey) {
 			return group.registrationBlockHeight+groupActiveTime+relayRequestTimeout < currentBlock, nil
 		}
 	}
@@ -238,7 +237,7 @@ func (c *localChain) IsStaleGroup(groupPublicKey []byte) (bool, error) {
 
 func (c *localChain) IsGroupRegistered(groupPublicKey []byte) (bool, error) {
 	for _, group := range c.groups {
-		if bytes.Compare(group.groupPublicKey, groupPublicKey) == 0 {
+		if bytes.Equal(group.groupPublicKey, groupPublicKey) {
 			return true, nil
 		}
 	}
@@ -307,7 +306,7 @@ func (c *localChain) OnDKGStarted(
 	c.handlerMutex.Lock()
 	defer c.handlerMutex.Unlock()
 
-	handlerID := generateHandlerID()
+	handlerID := GenerateHandlerID()
 	c.dkgStartedHandlers[handlerID] = handler
 
 	return subscription.NewEventSubscription(func() {
@@ -324,7 +323,7 @@ func (c *localChain) OnDKGResultSubmitted(
 	c.handlerMutex.Lock()
 	defer c.handlerMutex.Unlock()
 
-	handlerID := generateHandlerID()
+	handlerID := GenerateHandlerID()
 	c.resultSubmissionHandlers[handlerID] = handler
 
 	return subscription.NewEventSubscription(func() {
@@ -427,7 +426,21 @@ func (c *localChain) RestoreRewardEligibility() error {
 	panic("unsupported")
 }
 
-func generateHandlerID() int {
+func (c *localChain) IsChaosnetActive() (bool, error) {
+	panic("unsupported")
+}
+
+func (c *localChain) IsBetaOperator() (bool, error) {
+	panic("unsupported")
+}
+
+func (c *localChain) GetOperatorID(
+	operatorAddress chain.Address,
+) (chain.OperatorID, error) {
+	panic("unsupported")
+}
+
+func GenerateHandlerID() int {
 	// #nosec G404 (insecure random number source (rand))
 	// Local chain implementation doesn't require secure randomness.
 	return rand.Int()

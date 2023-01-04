@@ -1,15 +1,21 @@
 package tbtc
 
 import (
-	"github.com/keep-network/keep-common/pkg/cache"
+	"encoding/hex"
 	"math/big"
+	"strconv"
 	"time"
+
+	"github.com/keep-network/keep-common/pkg/cache"
 )
 
 const (
 	// DKGSeedCachePeriod is the time period the cache maintains
 	// the DKG seed corresponding to a DKG instance.
 	DKGSeedCachePeriod = 7 * 24 * time.Hour
+	// DKGResultHashCachePeriod is the time period the cache maintains
+	// the given DKG result hash.
+	DKGResultHashCachePeriod = 7 * 24 * time.Hour
 )
 
 // deduplicator decides whether the given event should be handled by the
@@ -24,13 +30,16 @@ const (
 //
 // Those events are supported:
 // - DKG started
+// - DKG result submitted
 type deduplicator struct {
-	dkgSeedCache *cache.TimeCache
+	dkgSeedCache       *cache.TimeCache
+	dkgResultHashCache *cache.TimeCache
 }
 
 func newDeduplicator() *deduplicator {
 	return &deduplicator{
-		dkgSeedCache: cache.NewTimeCache(DKGSeedCachePeriod),
+		dkgSeedCache:       cache.NewTimeCache(DKGSeedCachePeriod),
+		dkgResultHashCache: cache.NewTimeCache(DKGResultHashCachePeriod),
 	}
 }
 
@@ -53,5 +62,31 @@ func (d *deduplicator) notifyDKGStarted(
 
 	// Otherwise, the DKG seed is a duplicate and the client should not proceed
 	// with the execution.
+	return false
+}
+
+// notifyDKGResultSubmitted notifies the client wants to start some actions
+// upon the DKG result submission. It returns boolean indicating whether the
+// client should proceed with the actions or ignore the event as a duplicate.
+func (d *deduplicator) notifyDKGResultSubmitted(
+	newDKGResultSeed *big.Int,
+	newDKGResultHash DKGChainResultHash,
+	newDKGResultBlock uint64,
+) bool {
+	d.dkgResultHashCache.Sweep()
+
+	cacheKey := newDKGResultSeed.Text(16) +
+		hex.EncodeToString(newDKGResultHash[:]) +
+		strconv.Itoa(int(newDKGResultBlock))
+
+	// If the key is not in the cache, that means the result was not handled
+	// yet and the client should proceed with the execution.
+	if !d.dkgResultHashCache.Has(cacheKey) {
+		d.dkgResultHashCache.Add(cacheKey)
+		return true
+	}
+
+	// Otherwise, the DKG result is a duplicate and the client should not
+	// proceed with the execution.
 	return false
 }

@@ -32,6 +32,20 @@ type wallet struct {
 	signingGroupOperators []chain.Address
 }
 
+// groupSize returns the actual size of the wallet's signing group. This
+// value may be different from the GroupParameters.GroupSize parameter as some
+// candidates may be excluded during distributed key generation.
+func (w *wallet) groupSize() int {
+	return len(w.signingGroupOperators)
+}
+
+// groupDishonestThreshold returns the dishonest threshold for the wallet's
+// signing group. The returned value is computed using the wallet's actual
+// signing group size for the given honest threshold provided as argument.
+func (w *wallet) groupDishonestThreshold(honestThreshold int) int {
+	return w.groupSize() - honestThreshold
+}
+
 func (w *wallet) String() string {
 	publicKey := elliptic.Marshal(
 		w.publicKey.Curve,

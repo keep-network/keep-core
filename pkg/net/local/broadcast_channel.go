@@ -3,9 +3,10 @@ package local
 import (
 	"context"
 	"fmt"
-	"github.com/keep-network/keep-core/pkg/operator"
 	"sync"
 	"sync/atomic"
+
+	"github.com/keep-network/keep-core/pkg/operator"
 
 	"github.com/keep-network/keep-core/pkg/net"
 	"github.com/keep-network/keep-core/pkg/net/internal"
@@ -39,7 +40,11 @@ func (lc *localChannel) Name() string {
 	return lc.name
 }
 
-func (lc *localChannel) Send(ctx context.Context, message net.TaggedMarshaler) error {
+func (lc *localChannel) Send(
+	ctx context.Context,
+	message net.TaggedMarshaler,
+	retransmissionStrategy ...net.RetransmissionStrategy,
+) error {
 	bytes, err := message.Marshal()
 	if err != nil {
 		return err
@@ -61,10 +66,18 @@ func (lc *localChannel) Send(ctx context.Context, message net.TaggedMarshaler) e
 	netMessage := internal.BasicMessage(
 		lc.identifier,
 		unmarshaled,
-		"local",
+		message.Type(),
 		operatorPublicKeyBytes,
 		lc.nextSeqno(),
 	)
+
+	var strategy net.RetransmissionStrategy
+	switch len(retransmissionStrategy) {
+	case 1:
+		strategy = retransmissionStrategy[0]
+	default:
+		strategy = net.StandardRetransmissionStrategy
+	}
 
 	retransmission.ScheduleRetransmissions(
 		ctx,
@@ -73,6 +86,7 @@ func (lc *localChannel) Send(ctx context.Context, message net.TaggedMarshaler) e
 		func() error {
 			return broadcastMessage(lc.name, netMessage)
 		},
+		retransmission.WithStrategy(strategy),
 	)
 
 	return broadcastMessage(lc.name, netMessage)
@@ -88,7 +102,7 @@ func (lc *localChannel) deliver(message net.Message) {
 		select {
 		case handler.channel <- message:
 		default:
-			logger.Warningf("handler too slow, dropping message")
+			logger.Warnf("handler too slow, dropping message")
 		}
 	}
 }

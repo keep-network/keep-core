@@ -186,7 +186,7 @@ func TestConcurrentPublishResult(t *testing.T) {
 					initialBlock,
 				)
 				if err != nil {
-					t.Fatal(err)
+					t.Error(err)
 				}
 
 				currentBlock, _ := blockCounter.CurrentBlock()
@@ -202,7 +202,7 @@ func TestConcurrentPublishResult(t *testing.T) {
 					initialBlock,
 				)
 				if err != nil {
-					t.Fatal(err)
+					t.Error(err)
 				}
 
 				currentBlock, _ := blockCounter.CurrentBlock()
@@ -210,10 +210,10 @@ func TestConcurrentPublishResult(t *testing.T) {
 			}()
 
 			if result1 := <-result1Chan; result1 != expectedBlockEnd1 {
-				t.Fatalf("\nexpected: %v\nactual:   %v\n", expectedBlockEnd1, result1)
+				t.Errorf("\nexpected: %v\nactual:   %v\n", expectedBlockEnd1, result1)
 			}
 			if result2 := <-result2Chan; result2 != expectedBlockEnd2 {
-				t.Fatalf("\nexpected: %v\nactual:   %v\n", expectedBlockEnd2, result2)
+				t.Errorf("\nexpected: %v\nactual:   %v\n", expectedBlockEnd2, result2)
 			}
 		})
 	}

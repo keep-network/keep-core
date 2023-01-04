@@ -1223,10 +1223,8 @@ func TestExecute_InvalidMemberIndex(t *testing.T) {
 // of a chosen member established with the rest of the members. Knowledge of
 // these symmetric keys is required to test some scenarios.
 type manInTheMiddle struct {
-	senderIndex   group.MemberIndex
-	receiverIndex group.MemberIndex
-
-	seed *big.Int
+	senderIndex group.MemberIndex
+	seed        *big.Int
 
 	// phase 1
 	ephemeralKeyPairs map[group.MemberIndex]*ephemeral.KeyPair

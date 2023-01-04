@@ -2,10 +2,6 @@
 // and auxiliary tools that help during group-related operations.
 package group
 
-// TODO: Adjust the nomenclature to be about `memberIndex` not `memberID`.
-//       Rename all public functions as well. See:
-//       https://github.com/keep-network/keep-core/pull/3112#discussion_r933165274
-
 // MemberIndex is an index of a member in a group. The maximum member index
 // value is 255.
 type MemberIndex = uint8
@@ -19,40 +15,40 @@ type Group struct {
 	// The maximum number of misbehaving participants for which it is still
 	// possible to generate a signature.
 	dishonestThreshold int
-	// IDs of all disqualified members of the group.
-	disqualifiedMemberIDs []MemberIndex
-	// IDs of all inactive members of the group.
-	inactiveMemberIDs []MemberIndex
-	// All member IDs in this group.
-	memberIDs []MemberIndex
+	// Indexes of all disqualified members of the group.
+	disqualifiedMemberIndexes []MemberIndex
+	// Indexes of all inactive members of the group.
+	inactiveMemberIndexes []MemberIndex
+	// All member indexes in this group.
+	memberIndexes []MemberIndex
 }
 
-// NewGroup creates a new Group with the provided dishonest threshold, member
-// identifiers, and empty IA and DQ members list.
+// NewGroup creates a new Group with the provided dishonest threshold and empty
+// IA and DQ members list.
 func NewGroup(dishonestThreshold int, size int) *Group {
-	memberIDs := make([]MemberIndex, size)
+	memberIndexes := make([]MemberIndex, size)
 	for i := 0; i < size; i++ {
-		memberIDs[i] = MemberIndex(i + 1)
+		memberIndexes[i] = MemberIndex(i + 1)
 	}
 
 	return &Group{
-		dishonestThreshold:    dishonestThreshold,
-		disqualifiedMemberIDs: []MemberIndex{},
-		inactiveMemberIDs:     []MemberIndex{},
-		memberIDs:             memberIDs,
+		dishonestThreshold:        dishonestThreshold,
+		disqualifiedMemberIndexes: []MemberIndex{},
+		inactiveMemberIndexes:     []MemberIndex{},
+		memberIndexes:             memberIndexes,
 	}
 }
 
-// MemberIDs returns IDs of all group members, as initially selected to the
-// group. Returned list contains IDs of all members, including those marked as
-// inactive or disqualified.
-func (g *Group) MemberIDs() []MemberIndex {
-	return g.memberIDs
+// MemberIndexes returns indexes of all group members, as initially selected to
+// the group. Returned list contains indexes of all members, including those
+// marked as inactive or disqualified.
+func (g *Group) MemberIndexes() []MemberIndex {
+	return g.memberIndexes
 }
 
 // GroupSize returns the full size of the group, including IA and DQ members.
 func (g *Group) GroupSize() int {
-	return len(g.memberIDs)
+	return len(g.memberIndexes)
 }
 
 // DishonestThreshold returns value of the dishonest members threshold as set
@@ -67,24 +63,24 @@ func (g *Group) HonestThreshold() int {
 	return g.GroupSize() - g.DishonestThreshold()
 }
 
-// DisqualifiedMemberIDs returns indexes of all group members that have been
+// DisqualifiedMemberIndexes returns indexes of all group members that have been
 // disqualified during the protocol execution.
-func (g *Group) DisqualifiedMemberIDs() []MemberIndex {
-	return g.disqualifiedMemberIDs
+func (g *Group) DisqualifiedMemberIndexes() []MemberIndex {
+	return g.disqualifiedMemberIndexes
 }
 
-// InactiveMemberIDs returns indexes of all group members that have been marked
-// as inactive during the protocol execution.
-func (g *Group) InactiveMemberIDs() []MemberIndex {
-	return g.inactiveMemberIDs
+// InactiveMemberIndexes returns indexes of all group members that have been
+// marked as inactive during the protocol execution.
+func (g *Group) InactiveMemberIndexes() []MemberIndex {
+	return g.inactiveMemberIndexes
 }
 
-// OperatingMemberIDs returns IDs of all group members that are active and have
-// not been disqualified. All those members are properly operating in the group
-// at the moment of calling this method.
-func (g *Group) OperatingMemberIDs() []MemberIndex {
+// OperatingMemberIndexes returns indexes of all group members that are active
+// and have not been disqualified. All those members are properly operating in
+// the group at the moment of calling this method.
+func (g *Group) OperatingMemberIndexes() []MemberIndex {
 	operatingMembers := make([]MemberIndex, 0)
-	for _, member := range g.MemberIDs() {
+	for _, member := range g.MemberIndexes() {
 		if g.IsOperating(member) {
 			operatingMembers = append(operatingMembers, member)
 		}
@@ -93,35 +89,35 @@ func (g *Group) OperatingMemberIDs() []MemberIndex {
 	return operatingMembers
 }
 
-// MarkMemberAsDisqualified adds the member with the given ID to the list of
+// MarkMemberAsDisqualified adds the member with the given index to the list of
 // disqualified members. If the member is not a part of the group, is already
 // disqualified or marked as inactive, method does nothing.
-func (g *Group) MarkMemberAsDisqualified(memberID MemberIndex) {
-	if g.IsOperating(memberID) {
-		g.disqualifiedMemberIDs = append(g.disqualifiedMemberIDs, memberID)
+func (g *Group) MarkMemberAsDisqualified(memberIndex MemberIndex) {
+	if g.IsOperating(memberIndex) {
+		g.disqualifiedMemberIndexes = append(g.disqualifiedMemberIndexes, memberIndex)
 	}
 }
 
-// MarkMemberAsInactive adds the member with the given ID to the list of
+// MarkMemberAsInactive adds the member with the given index to the list of
 // inactive members. If the member is not a part of the group, is already
 // disqualified or marked as inactive, method does nothing.
-func (g *Group) MarkMemberAsInactive(memberID MemberIndex) {
-	if g.IsOperating(memberID) {
-		g.inactiveMemberIDs = append(g.inactiveMemberIDs, memberID)
+func (g *Group) MarkMemberAsInactive(memberIndex MemberIndex) {
+	if g.IsOperating(memberIndex) {
+		g.inactiveMemberIndexes = append(g.inactiveMemberIndexes, memberIndex)
 	}
 }
 
 // IsOperating returns true if member with the given index has not been marked
 // as IA or DQ in the group.
-func (g *Group) IsOperating(memberID MemberIndex) bool {
-	return g.isInGroup(memberID) &&
-		!g.isInactive(memberID) &&
-		!g.isDisqualified(memberID)
+func (g *Group) IsOperating(memberIndex MemberIndex) bool {
+	return g.isInGroup(memberIndex) &&
+		!g.isInactive(memberIndex) &&
+		!g.isDisqualified(memberIndex)
 }
 
-func (g *Group) isInGroup(memberID MemberIndex) bool {
-	for _, groupMember := range g.MemberIDs() {
-		if groupMember == memberID {
+func (g *Group) isInGroup(memberIndex MemberIndex) bool {
+	for _, groupMember := range g.MemberIndexes() {
+		if groupMember == memberIndex {
 			return true
 		}
 	}
@@ -129,9 +125,9 @@ func (g *Group) isInGroup(memberID MemberIndex) bool {
 	return false
 }
 
-func (g *Group) isInactive(memberID MemberIndex) bool {
-	for _, inactiveMemberID := range g.inactiveMemberIDs {
-		if memberID == inactiveMemberID {
+func (g *Group) isInactive(memberIndex MemberIndex) bool {
+	for _, inactiveMemberIndex := range g.inactiveMemberIndexes {
+		if memberIndex == inactiveMemberIndex {
 			return true
 		}
 	}
@@ -139,9 +135,9 @@ func (g *Group) isInactive(memberID MemberIndex) bool {
 	return false
 }
 
-func (g *Group) isDisqualified(memberID MemberIndex) bool {
-	for _, disqualifiedMemberID := range g.disqualifiedMemberIDs {
-		if memberID == disqualifiedMemberID {
+func (g *Group) isDisqualified(memberIndex MemberIndex) bool {
+	for _, disqualifiedMemberIndex := range g.disqualifiedMemberIndexes {
+		if memberIndex == disqualifiedMemberIndex {
 			return true
 		}
 	}

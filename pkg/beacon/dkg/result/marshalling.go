@@ -17,7 +17,7 @@ const maxMemberIndex = 255
 
 func validateMemberIndex(protoIndex uint32) error {
 	if protoIndex > maxMemberIndex {
-		return fmt.Errorf("Invalid member index value: [%v]", protoIndex)
+		return fmt.Errorf("invalid member index value: [%v]", protoIndex)
 	}
 	return nil
 }
@@ -36,6 +36,7 @@ func (d *DKGResultHashSignatureMessage) Marshal() ([]byte, error) {
 		ResultHash:  d.resultHash[:],
 		Signature:   d.signature,
 		PublicKey:   d.publicKey,
+		SessionID:   d.sessionID,
 	})
 }
 
@@ -60,6 +61,7 @@ func (d *DKGResultHashSignatureMessage) Unmarshal(bytes []byte) error {
 
 	d.signature = pbMsg.Signature
 	d.publicKey = pbMsg.PublicKey
+	d.sessionID = pbMsg.SessionID
 
 	return nil
 }

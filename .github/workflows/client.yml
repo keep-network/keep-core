@@ -1,4 +1,4 @@
-name: Go
+name: Client
 
 on:
   schedule:
@@ -27,6 +27,8 @@ on:
         description: "Git reference to checkout (e.g. branch name)"
         required: false
         default: "main"
+
+# TODO: Implement automatic releases creation on tags push with https://github.com/softprops/action-gh-release
 
 jobs:
   client-detect-changes:
@@ -80,9 +82,9 @@ jobs:
             ${{ runner.os }}-buildx-
 
       - name: Build Docker Build Image
-        uses: docker/build-push-action@v2
+        uses: docker/build-push-action@v3
         with:
-          target: gobuild
+          target: build-docker
           tags: go-build-env
           build-args: |
             VERSION=${{ env.version }}
@@ -90,6 +92,7 @@ jobs:
           load: true # load image to local registry to use it in next steps
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,dest=/tmp/.buildx-cache-new
+          context: .
 
       - name: Run Go tests
         run: |
@@ -100,12 +103,14 @@ jobs:
 
       - name: Build Docker Runtime Image
         if: github.event_name != 'workflow_dispatch'
-        uses: docker/build-push-action@v2
+        uses: docker/build-push-action@v3
         with:
+          target: runtime-docker
           labels: |
             version=${{ env.version }}
             revision=${{ env.revision }}
           push: false
+          context: .
 
       - name: Login to Google Container Registry
         if: github.event_name == 'workflow_dispatch'
@@ -117,14 +122,16 @@ jobs:
 
       - name: Build and publish Docker Runtime Image
         if: github.event_name == 'workflow_dispatch'
-        uses: docker/build-push-action@v2
+        uses: docker/build-push-action@v3
         env:
           IMAGE_NAME: "keep-client"
         with:
-          # GCR image should be named according to following convention:
-          # HOSTNAME/PROJECT-ID/IMAGE:TAG
-          # We don't use TAG yet, will be added at later stages of work on RFC-18.
-          tags: ${{ env.GCR_REGISTRY_URL }}/${{ env.GOOGLE_PROJECT_ID }}/${{ env.IMAGE_NAME }}
+          target: runtime-docker
+          tags: |
+            ${{ env.GCR_REGISTRY_URL }}/${{ env.GOOGLE_PROJECT_ID }}/${{ env.IMAGE_NAME }}
+            ${{ env.GCR_REGISTRY_URL }}/${{ env.GOOGLE_PROJECT_ID }}/${{ env.IMAGE_NAME }}:${{ env.version }}
+            ${{ env.GCR_REGISTRY_URL }}/${{ env.GOOGLE_PROJECT_ID }}/${{ env.IMAGE_NAME }}:${{ github.event.inputs.environment }}
+            ${{ env.GCR_REGISTRY_URL }}/${{ env.GOOGLE_PROJECT_ID }}/${{ env.IMAGE_NAME }}:${{ env.version }}-${{ github.event.inputs.environment }}
           labels: |
             version=${{ env.version }}
             revision=${{ env.revision }}
@@ -133,6 +140,39 @@ jobs:
             VERSION=${{ env.version }}
             REVISION=${{ env.revision }}
           push: true
+          context: .
+
+      - name: Build Client Binaries
+        uses: docker/build-push-action@v3
+        with:
+          target: output-bins
+          outputs: type=local,dest=./out/bin/
+          build-args: |
+            ENVIRONMENT=${{ github.event.inputs.environment }}
+            VERSION=${{ env.version }}
+            REVISION=${{ env.revision }}
+          push: false
+          context: .
+
+      - name: Archive Client Binaries
+        uses: actions/upload-artifact@v3
+        with:
+          name: binaries
+          path: |
+            out/bin/*.tar.gz
+            out/bin/*.md5
+            out/bin/*.sha256
+
+      - name: Publish Client Binaries
+        if: github.event_name == 'workflow_dispatch'
+        uses: thesis/gcp-storage-bucket-action@v3.1.0
+        with:
+          service-key: ${{ secrets.KEEP_TEST_CLIENT_BINARIES_UPLOADER_SERVICE_KEY_JSON_BASE64 }}
+          # TODO: Change to keep-prd-210b once mainnet setup is done and we are sure we want to publish mainnet builds automatically.
+          project: keep-test-f3e0
+          bucket-name: keep-test-client-binaries
+          bucket-path: ${{ github.event.inputs.environment }}/${{ env.version }}
+          build-folder: out/bin
 
       - name: Notify CI about completion of the workflow
         if: github.event_name == 'workflow_dispatch'
@@ -145,7 +185,7 @@ jobs:
           environment: ${{ github.event.inputs.environment }}
           upstream_builds: ${{ github.event.inputs.upstream_builds }}
           upstream_ref: ${{ github.event.inputs.upstream_ref }}
-          version: ${{ github.sha }} # TODO: replace with version once versioning ready
+          version: ${{ env.version }}
 
       - # Temp fix - move cache instead of copying (added below step and
         # modified value of `cache-to`).
@@ -193,3 +233,33 @@ jobs:
             gofmt -d -e .
             exit 1
           fi
+
+  client-vet:
+    needs: client-detect-changes
+    if: |
+      github.event_name == 'push'
+        || needs.client-detect-changes.outputs.path-filter == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-go@v3
+        with:
+          go-version-file: "go.mod"
+      - run: go vet
+
+  client-lint:
+    needs: client-detect-changes
+    if: |
+      github.event_name == 'push'
+        || needs.client-detect-changes.outputs.path-filter == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-go@v3
+        with:
+          go-version-file: "go.mod"
+      - name: Staticcheck
+        uses: dominikh/staticcheck-action@v1.2.0
+        with:
+          version: "2022.1.3"
+          install-go: false

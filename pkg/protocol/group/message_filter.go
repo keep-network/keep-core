@@ -1,6 +1,6 @@
 package group
 
-import "github.com/ipfs/go-log"
+import "github.com/ipfs/go-log/v2"
 
 // InactiveMemberFilter is a proxy facilitates filtering out inactive members
 // in the given phase and registering their final list in the Group.
@@ -53,9 +53,9 @@ func (mf *InactiveMemberFilter) FlushInactiveMembers() {
 		return false
 	}
 
-	for _, operatingMemberID := range mf.group.OperatingMemberIDs() {
+	for _, operatingMemberID := range mf.group.OperatingMemberIndexes() {
 		if !isActive(operatingMemberID) {
-			mf.logger.Warningf(
+			mf.logger.Warnf(
 				"[member:%v] marking member [%v] as inactive",
 				mf.selfMemberID,
 				operatingMemberID,

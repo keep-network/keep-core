@@ -206,7 +206,7 @@ func TestResolveSecretSharesAccusations(t *testing.T) {
 				t.Fatalf("\nexpected: %s\nactual:   %s\n", test.expectedError, err)
 			}
 
-			result := justifyingMember.group.DisqualifiedMemberIDs()
+			result := justifyingMember.group.DisqualifiedMemberIndexes()
 			if !reflect.DeepEqual(result, test.expectedResult) {
 				t.Fatalf("\nexpected: %d\nactual:   %d\n", test.expectedResult, result)
 			}
@@ -361,7 +361,7 @@ func TestResolvePublicKeySharePointsAccusationsMessages(t *testing.T) {
 			shares := make(map[group.MemberIndex]*peerShares)
 			shares[test.accuserID] = &peerShares{encryptedShareS, encryptedShareT}
 			justifyingMember.evidenceLog.PutPeerSharesMessage(
-				&PeerSharesMessage{test.accusedID, shares},
+				&PeerSharesMessage{test.accusedID, shares, "session-1"},
 			)
 
 			if test.modifyEvidenceLog != nil {
@@ -389,7 +389,7 @@ func TestResolvePublicKeySharePointsAccusationsMessages(t *testing.T) {
 				t.Fatal(err)
 			}
 
-			result := justifyingMember.group.DisqualifiedMemberIDs()
+			result := justifyingMember.group.DisqualifiedMemberIndexes()
 			if !reflect.DeepEqual(result, test.expectedResult) {
 				t.Fatalf("\nexpected: %d\nactual:   %d\n", test.expectedResult, result)
 			}
@@ -445,7 +445,7 @@ func TestResolveSecretSharesAccusationsIncorrectAccussedMemberId(t *testing.T) {
 				t.Fatalf("resolving of secret shares accusation messages failed [%s]", err)
 			}
 
-			actualDisqualified := justifyingMember.group.DisqualifiedMemberIDs()
+			actualDisqualified := justifyingMember.group.DisqualifiedMemberIndexes()
 			if !reflect.DeepEqual(actualDisqualified, test.expectedDisqualified) {
 				t.Fatalf(
 					"unexpected members disqualified\nexpected: %d\nactual:   %d\n",
@@ -505,7 +505,7 @@ func TestResolvePublicKeySharePointsAccusationsIncorrectAccusedMemberId(t *testi
 				t.Fatalf("resolving of public key share points accusation messages failed [%s]", err)
 			}
 
-			actualDisqualified := justifyingMember.group.DisqualifiedMemberIDs()
+			actualDisqualified := justifyingMember.group.DisqualifiedMemberIndexes()
 			if !reflect.DeepEqual(actualDisqualified, test.expectedDisqualified) {
 				t.Fatalf(
 					"unexpected members disqualified\nexpected: %d\nactual:   %d\n",

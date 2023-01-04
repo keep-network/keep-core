@@ -2,7 +2,7 @@ package entry
 
 import (
 	"fmt"
-	"github.com/ipfs/go-log"
+	"github.com/ipfs/go-log/v2"
 	"math/big"
 
 	beaconchain "github.com/keep-network/keep-core/pkg/beacon/chain"

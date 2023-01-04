@@ -4,10 +4,12 @@ import (
 	"bytes"
 	"encoding/hex"
 	"fmt"
+	"sync"
+
 	"github.com/ipfs/go-log"
+
 	beaconchain "github.com/keep-network/keep-core/pkg/beacon/chain"
 	"github.com/keep-network/keep-core/pkg/beacon/dkg"
-	"sync"
 
 	"github.com/keep-network/keep-common/pkg/persistence"
 )
@@ -37,7 +39,7 @@ type Membership struct {
 func NewGroupRegistry(
 	logger log.StandardLogger,
 	beaconChain beaconchain.GroupRegistrationInterface,
-	persistence persistence.Handle,
+	persistence persistence.ProtectedHandle,
 ) *Groups {
 	return &Groups{
 		logger:      logger,

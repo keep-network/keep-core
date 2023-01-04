@@ -1,4 +1,4 @@
-FROM golang:1.18.3-alpine3.16 AS gobuild
+FROM golang:1.18.3-alpine3.16 AS build-sources
 
 ENV GOPATH=/go \
 	GOBIN=/go/bin \
@@ -11,7 +11,7 @@ ENV GOPATH=/go \
 RUN apk add --update --no-cache \
 	g++ \
 	linux-headers \
-	protobuf \
+	protobuf-dev \
 	git \
 	make \
 	nodejs \
@@ -34,7 +34,7 @@ COPY go.mod go.sum $APP_DIR/
 RUN go mod download
 
 # Install code generators.
-RUN cd /go/pkg/mod/google.golang.org/protobuf@v1.28.1/cmd/protoc-gen-go/ && go install .
+RUN go install google.golang.org/protobuf/cmd/protoc-gen-go@v1.28.1
 
 # Copy source code for generation.
 COPY ./pkg/beacon/dkg/result/gen $APP_DIR/pkg/beacon/dkg/result/gen
@@ -51,10 +51,10 @@ COPY ./pkg/tbtc/gen $APP_DIR/pkg/tbtc/gen
 COPY ./pkg/tecdsa/dkg/gen $APP_DIR/pkg/tecdsa/dkg/gen
 COPY ./pkg/tecdsa/signing/gen $APP_DIR/pkg/tecdsa/signing/gen
 COPY ./pkg/tecdsa/gen $APP_DIR/pkg/tecdsa/gen
+COPY ./pkg/protocol/announcer/gen $APP_DIR/pkg/protocol/announcer/gen
 
-# If ENVIRONMENT is not set it will download NPM packages versions
-# published and tagged as `development`.
-ARG ENVIRONMENT=development
+# Environment is to download published and tagged NPM packages versions.
+ARG ENVIRONMENT
 
 COPY ./Makefile $APP_DIR/Makefile
 RUN make get_artifacts environment=$ENVIRONMENT
@@ -65,22 +65,59 @@ RUN make generate environment=$ENVIRONMENT
 
 COPY ./ $APP_DIR/
 
+#
+# Build Docker Image
+#
+FROM build-sources AS build-docker
+
+WORKDIR $APP_DIR
+
 # Client Versioning.
 ARG VERSION
 ARG REVISION
 
-RUN GOOS=linux make build version=$VERSION revision=$REVISION && \
-	mv $APP_NAME $BIN_PATH
+RUN GOOS=linux make build \
+	version=$VERSION \
+	revision=$REVISION
 
-FROM alpine:3.16
+FROM alpine:3.16 as runtime-docker
 
 ENV APP_NAME=keep-client \
+	APP_DIR=/go/src/github.com/keep-network/keep-core \
 	BIN_PATH=/usr/local/bin
 
-COPY --from=gobuild $BIN_PATH/$APP_NAME $BIN_PATH
+COPY --from=build-docker $APP_DIR/$APP_NAME $BIN_PATH
 
 # ENTRYPOINT cant handle ENV variables.
 ENTRYPOINT ["keep-client"]
 
 # docker caches more when using CMD [] resulting in a faster build.
 CMD []
+
+#
+# Build Binaries
+#
+FROM golang:1.18.3-bullseye AS build-bins
+
+ENV APP_DIR=/go/src/github.com/keep-network/keep-core
+
+WORKDIR $APP_DIR
+
+COPY --from=build-sources $APP_DIR $APP_DIR
+
+ARG ENVIRONMENT
+
+# Client Versioning.
+ARG VERSION
+ARG REVISION
+
+RUN make release \
+	environment=$ENVIRONMENT \
+	version=$VERSION \
+	revision=$REVISION
+
+FROM scratch as output-bins
+
+ENV APP_DIR=/go/src/github.com/keep-network/keep-core
+
+COPY --from=build-bins $APP_DIR/out/bin .

@@ -71,7 +71,7 @@ func Bootstrap(
 		ctx := goprocessctx.OnClosingContext(worker)
 
 		if err := bootstrapRound(ctx, host, cfg); err != nil {
-			logger.Warningf("bootstrap round error: [%v]", err)
+			logger.Warnf("bootstrap round error: [%v]", err)
 		}
 
 		<-doneWithRound
@@ -169,7 +169,7 @@ func bootstrapConnect(
 			ph.Peerstore().AddAddrs(p.ID, p.Addrs, peerstore.PermanentAddrTTL)
 
 			if err := ph.Connect(ctx, p); err != nil {
-				logger.Warningf(
+				logger.Warnf(
 					"could not establish connection with bootstrap peer [%v]: [%v]",
 					p.ID,
 					err,

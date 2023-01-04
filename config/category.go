@@ -5,21 +5,42 @@ type Category int
 const (
 	General Category = iota
 	Ethereum
+	BitcoinElectrum
 	Network
 	Storage
-	Metrics
-	Diagnostics
+	ClientInfo
 	Tbtc
+	Maintainer
 	Developer
 )
 
-var AllCategories = []Category{
+// StartCmdCategories are categories needed for the start command.
+var StartCmdCategories = []Category{
 	General,
 	Ethereum,
 	Network,
 	Storage,
-	Metrics,
-	Diagnostics,
+	ClientInfo,
 	Tbtc,
+	Developer,
+}
+
+// MaintainerCategories are categories needed for the maintainer command.
+var MaintainerCategories = []Category{
+	Ethereum,
+	BitcoinElectrum,
+	Maintainer,
+}
+
+// AllCategories are all available categories.
+var AllCategories = []Category{
+	General,
+	Ethereum,
+	BitcoinElectrum,
+	Network,
+	Storage,
+	ClientInfo,
+	Tbtc,
+	Maintainer,
 	Developer,
 }

@@ -7,17 +7,17 @@ import (
 	"sync"
 
 	"github.com/hashicorp/go-multierror"
-	"github.com/keep-network/keep-core/pkg/chain"
-	"github.com/keep-network/keep-core/pkg/operator"
 
 	"github.com/ethereum/go-ethereum/accounts/keystore"
 	"github.com/ethereum/go-ethereum/ethclient"
-
 	"github.com/ipfs/go-log"
+
 	"github.com/keep-network/keep-common/pkg/chain/ethereum"
 	"github.com/keep-network/keep-common/pkg/chain/ethereum/ethutil"
 	"github.com/keep-network/keep-common/pkg/rate"
+	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/chain/ethereum/threshold/gen/contract"
+	"github.com/keep-network/keep-core/pkg/operator"
 )
 
 // Definitions of contract names.
@@ -123,6 +123,42 @@ func Connect(
 		nil
 }
 
+// ConnectBitcoinDifficulty creates Bitcoin difficulty chain handle.
+func ConnectBitcoinDifficulty(
+	ctx context.Context,
+	config ethereum.Config,
+) (
+	*BitcoinDifficultyChain,
+	error,
+) {
+	client, err := ethclient.Dial(config.URL)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"error Connecting to Ethereum Server: %s [%v]",
+			config.URL,
+			err,
+		)
+	}
+
+	baseChain, err := newBaseChain(ctx, config, client)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"could not create base chain handle: [%v]",
+			err,
+		)
+	}
+
+	bitcoinDifficultyChain, err := NewBitcoinDifficultyChain(config, baseChain)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"could not create Bitcoin difficulty chain handle: [%v]",
+			err,
+		)
+	}
+
+	return bitcoinDifficultyChain, nil
+}
+
 func validateContractsAddresses(
 	config ethereum.Config,
 	beaconChain *BeaconChain,
@@ -179,6 +215,18 @@ func newBaseChain(
 		return nil, fmt.Errorf(
 			"failed to resolve Ethereum chain id: [%v]",
 			err,
+		)
+	}
+
+	if config.Network != ethereum.Developer &&
+		big.NewInt(config.Network.ChainID()).Cmp(chainID) != 0 {
+		return nil, fmt.Errorf(
+			"chain id returned from ethereum api [%s] "+
+				"doesn't match the expected chain id [%d] for [%s] network; "+
+				"please verify the configured ethereum.url",
+			chainID.String(),
+			config.Network.ChainID(),
+			config.Network,
 		)
 	}
 

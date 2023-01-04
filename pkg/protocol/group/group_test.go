@@ -88,9 +88,9 @@ func TestMarkMemberAsDisqualified(t *testing.T) {
 	for testName, test := range tests {
 		t.Run(testName, func(t *testing.T) {
 			group := &Group{
-				memberIDs:             test.initialMembers,
-				disqualifiedMemberIDs: []MemberIndex{},
-				inactiveMemberIDs:     []MemberIndex{},
+				memberIndexes:             test.initialMembers,
+				disqualifiedMemberIndexes: []MemberIndex{},
+				inactiveMemberIndexes:     []MemberIndex{},
 			}
 
 			if test.updateFunc != nil {
@@ -99,23 +99,23 @@ func TestMarkMemberAsDisqualified(t *testing.T) {
 
 			if !reflect.DeepEqual(
 				test.expectedDisqualifiedMembers,
-				group.disqualifiedMemberIDs,
+				group.disqualifiedMemberIndexes,
 			) {
 				t.Fatalf(
 					"unexpected list of disqualified members\nexpected: %v\nactual:   %v\n",
 					test.expectedDisqualifiedMembers,
-					group.disqualifiedMemberIDs,
+					group.disqualifiedMemberIndexes,
 				)
 			}
 
 			if !reflect.DeepEqual(
 				test.expectedInactiveMembers,
-				group.inactiveMemberIDs,
+				group.inactiveMemberIndexes,
 			) {
 				t.Fatalf(
 					"unexpected list of inactive members\nexpected: %v\nactual:   %v\n",
 					test.expectedInactiveMembers,
-					group.inactiveMemberIDs,
+					group.inactiveMemberIndexes,
 				)
 			}
 		})
@@ -124,7 +124,7 @@ func TestMarkMemberAsDisqualified(t *testing.T) {
 
 func TestIsDisqualified(t *testing.T) {
 	group := &Group{
-		memberIDs: []MemberIndex{19, 11, 31, 33},
+		memberIndexes: []MemberIndex{19, 11, 31, 33},
 	}
 
 	if group.isDisqualified(19) {
@@ -140,7 +140,7 @@ func TestIsDisqualified(t *testing.T) {
 
 func TestIsInactive(t *testing.T) {
 	group := &Group{
-		memberIDs: []MemberIndex{19, 11, 31, 33},
+		memberIndexes: []MemberIndex{19, 11, 31, 33},
 	}
 
 	if group.isInactive(31) {
@@ -207,13 +207,13 @@ func TestOperatingMembers(t *testing.T) {
 	for testName, test := range tests {
 		t.Run(testName, func(t *testing.T) {
 			group := &Group{}
-			group.memberIDs = test.initialMembers
+			group.memberIndexes = test.initialMembers
 
 			if test.updateFunc != nil {
 				test.updateFunc(group)
 			}
 
-			operatingMembers := group.OperatingMemberIDs()
+			operatingMembers := group.OperatingMemberIndexes()
 			if !reflect.DeepEqual(
 				test.expectedOperatingMembers,
 				operatingMembers,

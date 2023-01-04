@@ -2,6 +2,7 @@ package generator
 
 import (
 	"context"
+	"fmt"
 	"math/big"
 	"runtime"
 	"sort"
@@ -20,7 +21,7 @@ func TestGetNow(t *testing.T) {
 	defer scheduler.stop()
 
 	for {
-		if pool.CurrentSize() == 5 {
+		if pool.ParametersCount() == 5 {
 			break
 		}
 		// Yield the processor so that the generation goroutines could do their
@@ -69,13 +70,51 @@ func TestStop(t *testing.T) {
 	// give some time for the generation process to stop and capture the number
 	// of parameters generated
 	time.Sleep(10 * time.Millisecond)
-	size := pool.CurrentSize()
+	parametersCount := pool.ParametersCount()
 
 	// wait some time and make sure no new parameters are generated
 	time.Sleep(20 * time.Millisecond)
-	if size != pool.CurrentSize() {
+	if parametersCount != pool.ParametersCount() {
 		t.Errorf("expected no new parameters to be generated")
 	}
+}
+
+// TestStopBlocked ensures the pool honors the stop signal send to the scheduler
+// and it does not keep generating parameters even if at the time of receiving
+// the stop signal, the pool was blocked on its capacity.
+func TestStopBlocked(t *testing.T) {
+	// the pool has a capacity of only one parameter
+	const poolSize = 1
+	pool, scheduler, _ := newTestPool(poolSize)
+
+	// give some time to generate the parameter and stop
+	time.Sleep(25 * time.Millisecond)
+	scheduler.stop()
+
+	// give some time for the generation process to stop and capture the number
+	// of parameters generated
+	time.Sleep(10 * time.Millisecond)
+	parametersCount := pool.ParametersCount()
+	testutils.AssertIntsEqual(
+		t,
+		"number of parameters in the pool",
+		poolSize,
+		parametersCount,
+	)
+
+	// take one parameter from the pool
+	pool.GetNow()
+
+	// no new parameters should be generated, the process is stopped
+	// even if the new parameter was generated, it should not be added to
+	// the pool
+	parametersCount = pool.ParametersCount()
+	testutils.AssertIntsEqual(
+		t,
+		"number of parameters in the pool",
+		0,
+		parametersCount,
+	)
 }
 
 // TestStopNoNils ensures no nil result is added to the pool when the context
@@ -94,7 +133,7 @@ func TestStopNoNils(t *testing.T) {
 	// give some time for the generation process to stop
 	time.Sleep(10 * time.Millisecond)
 
-	if pool.CurrentSize() != 0 {
+	if pool.ParametersCount() != 0 {
 		t.Errorf("expected no parameters to be generated")
 	}
 }
@@ -110,8 +149,23 @@ func TestPersist(t *testing.T) {
 	// give some time for the generation process to stop
 	time.Sleep(10 * time.Millisecond)
 
-	if pool.CurrentSize() != persistence.parameterCount() {
-		t.Errorf("not all parameters have been persisted")
+	// There are only two possible valid states:
+	// 1. All parameters that have been generated are persisted and available
+	//    in the pool. It happens when the context was stopped at the time of
+	//    generating the next parameter.
+	// 2. There is one more parameter persisted than available in the pool.
+	//    It happens when the context was stopped during persisting the
+	//    generated parameter.
+	//
+	// Both states are valid. We are fine if the generated parameter is
+	// persisted and not added to the pool but it would not be correct to add
+	// a parameter to the pool before first persisting it given how GetNow() is
+	// constructed: get from the pool, then delete from persistence, and return.
+	poolParametersCount := pool.ParametersCount()
+	persistenceParametersCount := persistence.parameterCount()
+	if poolParametersCount != persistenceParametersCount &&
+		poolParametersCount+1 != persistenceParametersCount {
+		t.Errorf("too few parameters have been persisted")
 	}
 }
 
@@ -205,33 +259,34 @@ type mockPersistence struct {
 	mutex   sync.RWMutex
 }
 
-func (mp *mockPersistence) Save(element *big.Int) error {
+func (mp *mockPersistence) Save(element *big.Int) (*Persisted[big.Int], error) {
 	mp.mutex.Lock()
 	defer mp.mutex.Unlock()
 
-	mp.storage[element.String()] = element
-	return nil
+	id := calcID(element)
+	mp.storage[id] = element
+	return &Persisted[big.Int]{*element, id}, nil
 }
 
-func (mp *mockPersistence) Delete(element *big.Int) error {
+func (mp *mockPersistence) Delete(persisted *Persisted[big.Int]) error {
 	mp.mutex.Lock()
 	defer mp.mutex.Unlock()
 
-	delete(mp.storage, element.String())
+	delete(mp.storage, persisted.ID)
 	return nil
 }
 
-func (mp *mockPersistence) ReadAll() ([]*big.Int, error) {
+func (mp *mockPersistence) ReadAll() ([]*Persisted[big.Int], error) {
 	mp.mutex.RLock()
 	defer mp.mutex.RUnlock()
 
-	all := make([]*big.Int, 0, len(mp.storage))
+	all := make([]*Persisted[big.Int], 0, len(mp.storage))
 	for _, v := range mp.storage {
-		all = append(all, v)
+		all = append(all, &Persisted[big.Int]{*v, calcID(v)})
 	}
 	// sorting is needed for TestReadAll
 	sort.Slice(all, func(i, j int) bool {
-		return all[i].Cmp(all[j]) < 0
+		return all[i].Data.Cmp(&all[j].Data) < 0
 	})
 	return all, nil
 }
@@ -247,6 +302,10 @@ func (mp *mockPersistence) isPresent(element *big.Int) bool {
 	mp.mutex.RLock()
 	defer mp.mutex.RUnlock()
 
-	_, ok := mp.storage[element.String()]
+	_, ok := mp.storage[calcID(element)]
 	return ok
+}
+
+func calcID(element *big.Int) string {
+	return fmt.Sprintf("id_%s", element.Text(16))
 }

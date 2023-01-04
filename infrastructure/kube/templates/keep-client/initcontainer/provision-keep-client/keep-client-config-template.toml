@@ -26,5 +26,5 @@
 [Storage]
   DataDir = ""
 
-[Metrics]
+[ClientInfo]
   Port = ""

@@ -85,6 +85,7 @@ func TestShouldAcceptMessage(t *testing.T) {
 				groupSize-honestThreshold,
 				membershipValdator,
 				big.NewInt(100),
+				"session-1",
 			)
 			if err != nil {
 				t.Fatal(err)

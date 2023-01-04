@@ -4,8 +4,10 @@ import (
 	"fmt"
 	"math/big"
 
+	"github.com/bnb-chain/tss-lib/crypto/paillier"
 	"github.com/bnb-chain/tss-lib/ecdsa/keygen"
 	"google.golang.org/protobuf/proto"
+	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/keep-network/keep-core/pkg/crypto/ephemeral"
 	"github.com/keep-network/keep-core/pkg/protocol/group"
@@ -55,9 +57,9 @@ func (epkm *ephemeralPublicKeyMessage) Unmarshal(bytes []byte) error {
 // network communication.
 func (trom *tssRoundOneMessage) Marshal() ([]byte, error) {
 	return proto.Marshal(&pb.TSSRoundOneMessage{
-		SenderID:  uint32(trom.senderID),
-		Payload:   trom.payload,
-		SessionID: trom.sessionID,
+		SenderID:         uint32(trom.senderID),
+		BroadcastPayload: trom.broadcastPayload,
+		SessionID:        trom.sessionID,
 	})
 }
 
@@ -73,7 +75,7 @@ func (trom *tssRoundOneMessage) Unmarshal(bytes []byte) error {
 	}
 
 	trom.senderID = group.MemberIndex(pbMsg.SenderID)
-	trom.payload = pbMsg.Payload
+	trom.broadcastPayload = pbMsg.BroadcastPayload
 	trom.sessionID = pbMsg.SessionID
 
 	return nil
@@ -127,9 +129,9 @@ func (trtm *tssRoundTwoMessage) Unmarshal(bytes []byte) error {
 // network communication.
 func (trtm *tssRoundThreeMessage) Marshal() ([]byte, error) {
 	return proto.Marshal(&pb.TSSRoundThreeMessage{
-		SenderID:  uint32(trtm.senderID),
-		Payload:   trtm.payload,
-		SessionID: trtm.sessionID,
+		SenderID:         uint32(trtm.senderID),
+		BroadcastPayload: trtm.broadcastPayload,
+		SessionID:        trtm.sessionID,
 	})
 }
 
@@ -145,8 +147,35 @@ func (trtm *tssRoundThreeMessage) Unmarshal(bytes []byte) error {
 	}
 
 	trtm.senderID = group.MemberIndex(pbMsg.SenderID)
-	trtm.payload = pbMsg.Payload
+	trtm.broadcastPayload = pbMsg.BroadcastPayload
 	trtm.sessionID = pbMsg.SessionID
+
+	return nil
+}
+
+// Marshal converts this tssFinalizationMessage to a byte array suitable for
+// network communication.
+func (tfm *tssFinalizationMessage) Marshal() ([]byte, error) {
+	return proto.Marshal(&pb.TSSFinalizationMessage{
+		SenderID:  uint32(tfm.senderID),
+		SessionID: tfm.sessionID,
+	})
+}
+
+// Unmarshal converts a byte array produced by Marshal to an
+// tssFinalizationMessage.
+func (tfm *tssFinalizationMessage) Unmarshal(bytes []byte) error {
+	pbMsg := pb.TSSFinalizationMessage{}
+	if err := proto.Unmarshal(bytes, &pbMsg); err != nil {
+		return err
+	}
+
+	if err := validateMemberIndex(pbMsg.SenderID); err != nil {
+		return err
+	}
+
+	tfm.senderID = group.MemberIndex(pbMsg.SenderID)
+	tfm.sessionID = pbMsg.SessionID
 
 	return nil
 }
@@ -220,7 +249,7 @@ func (rsm *resultSignatureMessage) Unmarshal(bytes []byte) error {
 	}
 	rsm.senderID = group.MemberIndex(pbMsg.SenderID)
 
-	resultHash, err := ResultHashFromBytes(pbMsg.ResultHash)
+	resultHash, err := ResultSignatureHashFromBytes(pbMsg.ResultHash)
 	if err != nil {
 		return err
 	}
@@ -236,6 +265,13 @@ func (rsm *resultSignatureMessage) Unmarshal(bytes []byte) error {
 // Marshal converts the PreParams to a byte array.
 func (pp *PreParams) Marshal() ([]byte, error) {
 	localPreParams := &pb.PreParams_LocalPreParams{
+		PaillierSK: &pb.PreParams_PrivateKey{
+			PublicKey: &pb.PreParams_PublicKey{
+				N: pp.data.PaillierSK.N.Bytes(),
+			},
+			LambdaN: pp.data.PaillierSK.LambdaN.Bytes(),
+			PhiN:    pp.data.PaillierSK.PhiN.Bytes(),
+		},
 		NTilde: pp.data.NTildei.Bytes(),
 		H1I:    pp.data.H1i.Bytes(),
 		H2I:    pp.data.H2i.Bytes(),
@@ -246,7 +282,8 @@ func (pp *PreParams) Marshal() ([]byte, error) {
 	}
 
 	return proto.Marshal(&pb.PreParams{
-		Data: localPreParams,
+		Data:              localPreParams,
+		CreationTimestamp: timestamppb.New(pp.creationTimestamp),
 	})
 }
 
@@ -258,6 +295,13 @@ func (pp *PreParams) Unmarshal(bytes []byte) error {
 	}
 
 	pp.data = &keygen.LocalPreParams{
+		PaillierSK: &paillier.PrivateKey{
+			PublicKey: paillier.PublicKey{
+				N: new(big.Int).SetBytes(pbPreParams.Data.GetPaillierSK().GetPublicKey().GetN()),
+			},
+			LambdaN: new(big.Int).SetBytes(pbPreParams.Data.GetPaillierSK().GetLambdaN()),
+			PhiN:    new(big.Int).SetBytes(pbPreParams.Data.GetPaillierSK().GetPhiN()),
+		},
 		NTildei: new(big.Int).SetBytes(pbPreParams.Data.GetNTilde()),
 		H1i:     new(big.Int).SetBytes(pbPreParams.Data.GetH1I()),
 		H2i:     new(big.Int).SetBytes(pbPreParams.Data.GetH2I()),
@@ -266,6 +310,7 @@ func (pp *PreParams) Unmarshal(bytes []byte) error {
 		P:       new(big.Int).SetBytes(pbPreParams.Data.GetP()),
 		Q:       new(big.Int).SetBytes(pbPreParams.Data.GetQ()),
 	}
+	pp.creationTimestamp = pbPreParams.CreationTimestamp.AsTime()
 
 	return nil
 }

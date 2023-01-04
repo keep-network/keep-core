@@ -11,11 +11,12 @@ import (
 	"github.com/mitchellh/mapstructure"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
-	"golang.org/x/crypto/ssh/terminal"
+	"golang.org/x/term"
 
 	commonEthereum "github.com/keep-network/keep-common/pkg/chain/ethereum"
-	"github.com/keep-network/keep-core/pkg/diagnostics"
-	"github.com/keep-network/keep-core/pkg/metrics"
+	"github.com/keep-network/keep-core/pkg/bitcoin/electrum"
+	"github.com/keep-network/keep-core/pkg/clientinfo"
+	"github.com/keep-network/keep-core/pkg/maintainer"
 	"github.com/keep-network/keep-core/pkg/net/libp2p"
 	"github.com/keep-network/keep-core/pkg/storage"
 	"github.com/keep-network/keep-core/pkg/tbtc"
@@ -35,12 +36,19 @@ const (
 
 // Config is the top level config structure.
 type Config struct {
-	Ethereum    commonEthereum.Config
-	LibP2P      libp2p.Config `mapstructure:"network"`
-	Storage     storage.Config
-	Metrics     metrics.Config
-	Diagnostics diagnostics.Config
-	Tbtc        tbtc.Config
+	Ethereum   commonEthereum.Config
+	Bitcoin    BitcoinConfig
+	LibP2P     libp2p.Config `mapstructure:"network"`
+	Storage    storage.Config
+	ClientInfo clientinfo.Config
+	Maintainer maintainer.Config
+	Tbtc       tbtc.Config
+}
+
+// BitcoinConfig defines the configuration for Bitcoin.
+type BitcoinConfig struct {
+	// Electrum defines the configuration for the Electrum client.
+	Electrum electrum.Config
 }
 
 // Bind the flags to the viper configuration. Viper reads configuration from
@@ -170,6 +178,12 @@ func validateConfig(config *Config, categories ...Category) error {
 					"missing value for ethereum.keyFile; see ethereum section in configuration",
 				))
 			}
+		case BitcoinElectrum:
+			if config.Bitcoin.Electrum.URL == "" {
+				result = multierror.Append(result, fmt.Errorf(
+					"missing value for bitcoin.electrum.url; see bitcoin electrum section in configuration",
+				))
+			}
 		case Network:
 			if config.LibP2P.Port == 0 {
 				result = multierror.Append(result, fmt.Errorf(
@@ -230,7 +244,7 @@ func unmarshalConfig(config *Config) error {
 // capturing the password.
 func readPassword(prompt string) (string, error) {
 	fmt.Print(prompt)
-	bytePassword, err := terminal.ReadPassword(int(syscall.Stdin))
+	bytePassword, err := term.ReadPassword(int(syscall.Stdin))
 	fmt.Print("\n")
 	if err != nil {
 		return "", fmt.Errorf("unable to read password, error [%s]", err)

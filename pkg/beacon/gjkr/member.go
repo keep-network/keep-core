@@ -1,8 +1,9 @@
 package gjkr
 
 import (
-	"github.com/ipfs/go-log"
 	"math/big"
+
+	"github.com/ipfs/go-log/v2"
 
 	bn256 "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
 	"github.com/keep-network/keep-core/pkg/crypto/ephemeral"
@@ -29,6 +30,9 @@ type memberCore struct {
 
 	// Cryptographic protocol parameters, the same for all members in the group.
 	protocolParameters *protocolParameters
+
+	// Identifier of the particular DKG session this member is part of.
+	sessionID string
 }
 
 // LocalMember represents one member in a threshold group, prior to the
@@ -39,7 +43,7 @@ type LocalMember struct {
 
 // EphemeralKeyPairGeneratingMember represents one member in a distributed key
 // generating group performing ephemeral key pair generation. It has a full list
-// of `memberIDs` that belong to its threshold group.
+// of `memberIndexes` that belong to its threshold group.
 //
 // Executes Phase 1 of the protocol.
 type EphemeralKeyPairGeneratingMember struct {
@@ -235,6 +239,7 @@ func NewMember(
 	dishonestThreshold int,
 	membershipValidator *group.MembershipValidator,
 	seed *big.Int,
+	sessionID string,
 ) (*LocalMember, error) {
 	return &LocalMember{
 		memberCore: &memberCore{
@@ -244,6 +249,7 @@ func NewMember(
 			membershipValidator,
 			newDkgEvidenceLog(),
 			newProtocolParameters(seed),
+			sessionID,
 		},
 	}, nil
 }

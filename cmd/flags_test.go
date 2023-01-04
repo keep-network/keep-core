@@ -11,11 +11,13 @@ import (
 	"testing"
 	"time"
 
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/spf13/cobra"
 	"golang.org/x/exp/slices"
 
 	commonEthereum "github.com/keep-network/keep-common/pkg/chain/ethereum"
 	"github.com/keep-network/keep-core/config"
+	"github.com/keep-network/keep-core/pkg/bitcoin/electrum"
 	chainEthereum "github.com/keep-network/keep-core/pkg/chain/ethereum"
 	ethereumBeacon "github.com/keep-network/keep-core/pkg/chain/ethereum/beacon/gen"
 	ethereumEcdsa "github.com/keep-network/keep-core/pkg/chain/ethereum/ecdsa/gen"
@@ -79,6 +81,62 @@ var cmdFlagsTests = map[string]struct {
 		expectedValueFromFlag: big.NewInt(1250000000000000000),
 		defaultValue:          big.NewInt(500000000000000000),
 	},
+	"bitcoin.electrum.url": {
+		readValueFunc:         func(c *config.Config) interface{} { return c.Bitcoin.Electrum.URL },
+		flagName:              "--bitcoin.electrum.url",
+		flagValue:             "url.to.electrum:18332",
+		expectedValueFromFlag: "url.to.electrum:18332",
+		defaultValue:          "",
+	},
+	"bitcoin.electrum.protocol": {
+		readValueFunc:         func(c *config.Config) interface{} { return c.Bitcoin.Electrum.Protocol },
+		flagName:              "--bitcoin.electrum.protocol",
+		flagValue:             "ssl",
+		expectedValueFromFlag: electrum.SSL,
+		defaultValue:          electrum.TCP,
+	},
+	"bitcoin.electrum.connectTimeout": {
+		readValueFunc:         func(c *config.Config) interface{} { return c.Bitcoin.Electrum.ConnectTimeout },
+		flagName:              "--bitcoin.electrum.connectTimeout",
+		flagValue:             "5m45s",
+		expectedValueFromFlag: 345 * time.Second,
+		defaultValue:          10 * time.Second,
+	},
+	"bitcoin.electrum.connectRetryTimeout": {
+		readValueFunc:         func(c *config.Config) interface{} { return c.Bitcoin.Electrum.ConnectRetryTimeout },
+		flagName:              "--bitcoin.electrum.connectRetryTimeout",
+		flagValue:             "124s",
+		expectedValueFromFlag: 124 * time.Second,
+		defaultValue:          60 * time.Second,
+	},
+	"bitcoin.electrum.requestTimeout": {
+		readValueFunc:         func(c *config.Config) interface{} { return c.Bitcoin.Electrum.RequestTimeout },
+		flagName:              "--bitcoin.electrum.requestTimeout",
+		flagValue:             "43s",
+		expectedValueFromFlag: 43 * time.Second,
+		defaultValue:          30 * time.Second,
+	},
+	"bitcoin.electrum.requestRetryTimeout": {
+		readValueFunc:         func(c *config.Config) interface{} { return c.Bitcoin.Electrum.RequestRetryTimeout },
+		flagName:              "--bitcoin.electrum.requestRetryTimeout",
+		flagValue:             "10m",
+		expectedValueFromFlag: 600 * time.Second,
+		defaultValue:          120 * time.Second,
+	},
+	"bitcoin.electrum.keepAliveInterval": {
+		readValueFunc:         func(c *config.Config) interface{} { return c.Bitcoin.Electrum.KeepAliveInterval },
+		flagName:              "--bitcoin.electrum.keepAliveInterval",
+		flagValue:             "11m",
+		expectedValueFromFlag: 660 * time.Second,
+		defaultValue:          300 * time.Second,
+	},
+	"network.bootstrap": {
+		readValueFunc:         func(c *config.Config) interface{} { return c.LibP2P.Bootstrap },
+		flagName:              "--network.bootstrap",
+		flagValue:             "true",
+		expectedValueFromFlag: true,
+		defaultValue:          false,
+	},
 	"network.port": {
 		readValueFunc:         func(c *config.Config) interface{} { return c.LibP2P.Port },
 		flagName:              "--network.port",
@@ -119,40 +177,33 @@ var cmdFlagsTests = map[string]struct {
 		flagValue:     "./flagged/location/dude",
 		defaultValue:  "",
 	},
-	"metrics.port": {
-		readValueFunc:         func(c *config.Config) interface{} { return c.Metrics.Port },
-		flagName:              "--metrics.port",
+	"clientInfo.port": {
+		readValueFunc:         func(c *config.Config) interface{} { return c.ClientInfo.Port },
+		flagName:              "--clientInfo.port",
 		flagValue:             "9870",
 		expectedValueFromFlag: 9870,
 		defaultValue:          9601,
 	},
-	"metrics.networkMetricsTick": {
-		readValueFunc:         func(c *config.Config) interface{} { return c.Metrics.NetworkMetricsTick },
-		flagName:              "--metrics.networkMetricsTick",
+	"clientInfo.networkMetricsTick": {
+		readValueFunc:         func(c *config.Config) interface{} { return c.ClientInfo.NetworkMetricsTick },
+		flagName:              "--clientInfo.networkMetricsTick",
 		flagValue:             "3m9s",
 		expectedValueFromFlag: 189 * time.Second,
 		defaultValue:          1 * time.Minute,
 	},
-	"metrics.ethereumMetricsTick": {
-		readValueFunc:         func(c *config.Config) interface{} { return c.Metrics.EthereumMetricsTick },
-		flagName:              "--metrics.ethereumMetricsTick",
+	"clientInfo.ethereumMetricsTick": {
+		readValueFunc:         func(c *config.Config) interface{} { return c.ClientInfo.EthereumMetricsTick },
+		flagName:              "--clientInfo.ethereumMetricsTick",
 		flagValue:             "1m16s",
 		expectedValueFromFlag: 76 * time.Second,
 		defaultValue:          10 * time.Minute,
-	},
-	"diagnostics.port": {
-		readValueFunc:         func(c *config.Config) interface{} { return c.Diagnostics.Port },
-		flagName:              "--diagnostics.port",
-		flagValue:             "6089",
-		expectedValueFromFlag: 6089,
-		defaultValue:          9701,
 	},
 	"tbtc.preParamsPoolSize": {
 		readValueFunc:         func(c *config.Config) interface{} { return c.Tbtc.PreParamsPoolSize },
 		flagName:              "--tbtc.preParamsPoolSize",
 		flagValue:             "75",
 		expectedValueFromFlag: 75,
-		defaultValue:          3000,
+		defaultValue:          1000,
 	},
 	"tbtc.preParamsGenerationTimeout": {
 		readValueFunc:         func(c *config.Config) interface{} { return c.Tbtc.PreParamsGenerationTimeout },
@@ -182,45 +233,62 @@ var cmdFlagsTests = map[string]struct {
 		expectedValueFromFlag: 101,
 		defaultValue:          runtime.GOMAXPROCS(0),
 	},
+	"maintainer.bitcoinDifficulty": {
+		readValueFunc:         func(c *config.Config) interface{} { return c.Maintainer.BitcoinDifficulty },
+		flagName:              "--bitcoinDifficulty",
+		flagValue:             "", // don't provide any value
+		expectedValueFromFlag: true,
+		defaultValue:          false,
+	},
 	"developer.randomBeaconAddress": {
 		readValueFunc: func(c *config.Config) interface{} {
 			address, _ := c.Ethereum.ContractAddress(chainEthereum.RandomBeaconContractName)
-			return address.String()
+			return address
 		},
 		flagName:              "--developer.randomBeaconAddress",
 		flagValue:             "0x3b292d36468bc7fd481987818ef2e4d28202a0ed",
-		expectedValueFromFlag: "0x3B292D36468bC7fd481987818ef2E4d28202A0eD",
-		defaultValue:          ethereumBeacon.RandomBeaconAddress,
+		expectedValueFromFlag: common.HexToAddress("0x3B292D36468bC7fd481987818ef2E4d28202A0eD"),
+		defaultValue:          common.HexToAddress(ethereumBeacon.RandomBeaconAddress),
 	},
 	"developer.walletRegistryAddress": {
 		readValueFunc: func(c *config.Config) interface{} {
 			address, _ := c.Ethereum.ContractAddress(chainEthereum.WalletRegistryContractName)
-			return address.String()
+			return address
 		},
 		flagName:              "--developer.walletRegistryAddress",
 		flagValue:             "0xb76707515c3f908411b5211863a7581589a1e31f",
-		expectedValueFromFlag: "0xB76707515C3f908411B5211863A7581589a1E31F",
-		defaultValue:          ethereumEcdsa.WalletRegistryAddress,
+		expectedValueFromFlag: common.HexToAddress("0xB76707515C3f908411B5211863A7581589a1E31F"),
+		defaultValue:          common.HexToAddress(ethereumEcdsa.WalletRegistryAddress),
 	},
 	"developer.bridgeAddress": {
 		readValueFunc: func(c *config.Config) interface{} {
 			address, _ := c.Ethereum.ContractAddress(chainEthereum.BridgeContractName)
-			return address.String()
+			return address
 		},
 		flagName:              "--developer.bridgeAddress",
 		flagValue:             "0xd21DE06574811450E722a33D8093558E8c04eacc",
-		expectedValueFromFlag: "0xd21DE06574811450E722a33D8093558E8c04eacc",
-		defaultValue:          ethereumTbtc.BridgeAddress,
+		expectedValueFromFlag: common.HexToAddress("0xd21DE06574811450E722a33D8093558E8c04eacc"),
+		defaultValue:          common.HexToAddress(ethereumTbtc.BridgeAddress),
+	},
+	"developer.lightRelayAddress": {
+		readValueFunc: func(c *config.Config) interface{} {
+			address, _ := c.Ethereum.ContractAddress(chainEthereum.LightRelayContractName)
+			return address
+		},
+		flagName:              "--developer.lightRelayAddress",
+		flagValue:             "0x68e20afD773fDF1231B5cbFeA7040e73e79cAc36",
+		expectedValueFromFlag: common.HexToAddress("0x68e20afD773fDF1231B5cbFeA7040e73e79cAc36"),
+		defaultValue:          common.HexToAddress(ethereumTbtc.LightRelayAddress),
 	},
 	"developer.tokenStakingAddress": {
 		readValueFunc: func(c *config.Config) interface{} {
 			address, _ := c.Ethereum.ContractAddress(chainEthereum.TokenStakingContractName)
-			return address.String()
+			return address
 		},
 		flagName:              "--developer.tokenStakingAddress",
 		flagValue:             "0x861b021462e7864a7413edf0113030b892978617",
-		expectedValueFromFlag: "0x861b021462e7864a7413edF0113030B892978617",
-		defaultValue:          ethereumThreshold.TokenStakingAddress,
+		expectedValueFromFlag: common.HexToAddress("0x861b021462e7864a7413edF0113030B892978617"),
+		defaultValue:          common.HexToAddress(ethereumThreshold.TokenStakingAddress),
 	},
 }
 
@@ -258,6 +326,7 @@ func TestFlags_ReadConfigFromFlagsWithDefaults(t *testing.T) {
 	args := []string{
 		cmdFlagsTests["ethereum.url"].flagName, cmdFlagsTests["ethereum.url"].flagValue,
 		cmdFlagsTests["ethereum.keyFile"].flagName, cmdFlagsTests["ethereum.keyFile"].flagValue,
+		cmdFlagsTests["bitcoin.electrum.url"].flagName, cmdFlagsTests["bitcoin.electrum.url"].flagValue,
 		cmdFlagsTests["storage.dir"].flagName, cmdFlagsTests["storage.dir"].flagValue,
 	}
 	testCommand.SetArgs(args)
@@ -287,7 +356,9 @@ func TestFlags_Mixed(t *testing.T) {
 		"--config", "../test/config_flags.toml",
 		"--ethereum.url", "https://api.url.com/123eth",
 		"--ethereum.keyFile", "./keyfile-path/from/flag",
+		"--bitcoin.electrum.url", "url.to.electrum:18332",
 		"--network.port", "7469",
+		"--bitcoinDifficulty",
 	}
 	testCommand.SetArgs(args)
 
@@ -307,23 +378,28 @@ func TestFlags_Mixed(t *testing.T) {
 			readValueFunc: func(c *config.Config) interface{} { return c.Ethereum.Account.KeyFile },
 			expectedValue: "./keyfile-path/from/flag",
 		},
+		// Properties provided in the config file and overwritten by the flags.
+		"bitcoin.electrum.url": {
+			readValueFunc: func(c *config.Config) interface{} { return c.Bitcoin.Electrum.URL },
+			expectedValue: "url.to.electrum:18332",
+		},
 		"network.port": {
 			readValueFunc: func(c *config.Config) interface{} { return c.LibP2P.Port },
 			expectedValue: 7469,
 		},
 		// Properties defined in the config file, not set with flags.
-		"metrics.port": {
-			readValueFunc: func(c *config.Config) interface{} { return c.Metrics.Port },
+		"clientInfo.port": {
+			readValueFunc: func(c *config.Config) interface{} { return c.ClientInfo.Port },
 			expectedValue: 3097,
 		},
 		"storage.dir": {
 			readValueFunc: func(c *config.Config) interface{} { return c.Storage.Dir },
 			expectedValue: "/my/secure/location",
 		},
-		// Properties not provided in the config file nor set with flags. Use defaults.
-		"diagnostics.port": {
-			readValueFunc: func(c *config.Config) interface{} { return c.Diagnostics.Port },
-			expectedValue: 9701,
+		// Properties not defined in the config file, but set with flags.
+		"maintainer.bitcoinDifficulty": {
+			readValueFunc: func(c *config.Config) interface{} { return c.Maintainer.BitcoinDifficulty },
+			expectedValue: true,
 		},
 	}
 

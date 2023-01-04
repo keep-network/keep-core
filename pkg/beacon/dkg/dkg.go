@@ -6,7 +6,7 @@ import (
 	"math/big"
 	"sort"
 
-	"github.com/ipfs/go-log"
+	"github.com/ipfs/go-log/v2"
 
 	beaconchain "github.com/keep-network/keep-core/pkg/beacon/chain"
 	dkgResult "github.com/keep-network/keep-core/pkg/beacon/dkg/result"
@@ -38,14 +38,17 @@ func ExecuteDKG(
 	gjkr.RegisterUnmarshallers(channel)
 	dkgResult.RegisterUnmarshallers(channel)
 
+	sessionID := seed.Text(16)
+
 	gjkrResult, gjkrEndBlockHeight, err := gjkr.Execute(
 		logger,
+		seed,
+		sessionID,
 		memberIndex,
 		beaconConfig.GroupSize,
 		blockCounter,
 		channel,
 		beaconConfig.DishonestThreshold(),
-		seed,
 		membershipValidator,
 		startBlockHeight,
 	)
@@ -59,7 +62,7 @@ func ExecuteDKG(
 
 	startPublicationBlockHeight := gjkrEndBlockHeight
 
-	operatingMemberIDs := gjkrResult.Group.OperatingMemberIDs()
+	operatingMemberIndexes := gjkrResult.Group.OperatingMemberIndexes()
 
 	dkgResultChannel := make(chan *event.DKGResultSubmission)
 	dkgResultSubscription := beaconChain.OnDKGResultSubmitted(
@@ -71,6 +74,7 @@ func ExecuteDKG(
 
 	err = dkgResult.Publish(
 		logger,
+		sessionID,
 		memberIndex,
 		gjkrResult.Group,
 		membershipValidator,
@@ -87,13 +91,13 @@ func ExecuteDKG(
 		// chain for the result published by any other group member and based
 		// on that, we decide whether we should stay in the final group
 		// or drop our membership.
-		logger.Warningf(
+		logger.Warnf(
 			"[member:%v] DKG result publication process failed [%v]",
 			memberIndex,
 			err,
 		)
 
-		if operatingMemberIDs, err = decideMemberFate(
+		if operatingMemberIndexes, err = decideMemberFate(
 			memberIndex,
 			gjkrResult,
 			dkgResultChannel,
@@ -107,7 +111,7 @@ func ExecuteDKG(
 
 	groupOperators, err := resolveGroupOperators(
 		selectedOperators,
-		operatingMemberIDs,
+		operatingMemberIndexes,
 		beaconConfig,
 	)
 	if err != nil {
@@ -176,14 +180,14 @@ func decideMemberFate(
 
 	// Construct a new view of the operating members according to the accepted
 	// DKG result.
-	operatingMemberIDs := make([]group.MemberIndex, 0)
-	for _, memberID := range gjkrResult.Group.MemberIDs() {
+	operatingMemberIndexes := make([]group.MemberIndex, 0)
+	for _, memberID := range gjkrResult.Group.MemberIndexes() {
 		if _, isMisbehaved := misbehavedSet[memberID]; !isMisbehaved {
-			operatingMemberIDs = append(operatingMemberIDs, memberID)
+			operatingMemberIndexes = append(operatingMemberIndexes, memberID)
 		}
 	}
 
-	return operatingMemberIDs, nil
+	return operatingMemberIndexes, nil
 }
 
 func waitForDkgResultEvent(

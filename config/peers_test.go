@@ -4,6 +4,8 @@ import (
 	"reflect"
 	"testing"
 
+	"golang.org/x/exp/slices"
+
 	commonEthereum "github.com/keep-network/keep-common/pkg/chain/ethereum"
 )
 
@@ -13,8 +15,12 @@ func TestResolvePeers(t *testing.T) {
 		expectedPeers []string
 		expectedError error
 	}{
-		// TODO: Add mainnet support
-		// "mainnet network": {},
+		"mainnet network": {
+			network: commonEthereum.Mainnet,
+			expectedPeers: []string{
+				"/dns4/bst-a01.tbtc.boar.network/tcp/5001/ipfs/16Uiu2HAmAmCrLuUmnBgpavU8y8JBUN6jWAQ93JwydZy3ABRyY6wU",
+				"/dns4/bst-b01.tbtc.boar.network/tcp/5001/ipfs/16Uiu2HAm4w5HdJQxBnadGRepaiGfWVvtMzhdAGZVcrf9i71mv69V",
+			}},
 		"goerli network": {
 			network: commonEthereum.Goerli,
 			expectedPeers: []string{
@@ -45,12 +51,14 @@ func TestResolvePeers(t *testing.T) {
 				)
 			}
 
-			if !reflect.DeepEqual(test.expectedPeers, cfg.LibP2P.Peers) {
-				t.Errorf(
-					"unexpected peers\nexpected: %v\nactual:   %v\n",
-					test.expectedPeers,
-					cfg.LibP2P.Peers,
-				)
+			for _, expectedPeer := range test.expectedPeers {
+				if !slices.Contains(cfg.LibP2P.Peers, expectedPeer) {
+					t.Errorf(
+						"expected peer %v is not included in the resolved peers list: %v",
+						expectedPeer,
+						cfg.LibP2P.Peers,
+					)
+				}
 			}
 		})
 	}

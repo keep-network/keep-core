@@ -42,6 +42,7 @@ func TestRevealMisbehavedMembersKeys(t *testing.T) {
 	expectedResult := &MisbehavedEphemeralKeysMessage{
 		senderID:    firstMember.ID,
 		privateKeys: expectedDisqualifiedKeys,
+		sessionID:   "session-1",
 	}
 
 	result, err := firstMember.RevealMisbehavedMembersKeys()
@@ -96,9 +97,8 @@ func TestRevealMisbehavedMembersShares(t *testing.T) {
 			break
 		}
 	}
-	if _, ok := expectedDisqualifiedShares[clearedMember.ID][invalidRevealingMember.ID]; ok {
-		delete(expectedDisqualifiedShares[clearedMember.ID], invalidRevealingMember.ID)
-	}
+
+	delete(expectedDisqualifiedShares[clearedMember.ID], invalidRevealingMember.ID)
 
 	// Fill `expectedMembersForReconstruction` slice stored in `member1` state
 	// with disqualified members ids. Without this, `member1` will not be able
@@ -116,15 +116,15 @@ func TestRevealMisbehavedMembersShares(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	expectedDisqualifiedMemberIDs := make([]group.MemberIndex, 0)
+	expectedDisqualifiedMemberIndexes := make([]group.MemberIndex, 0)
 	for _, disqualifiedMember := range disqualifiedMembers {
-		expectedDisqualifiedMemberIDs = append(expectedDisqualifiedMemberIDs, disqualifiedMember.ID)
+		expectedDisqualifiedMemberIndexes = append(expectedDisqualifiedMemberIndexes, disqualifiedMember.ID)
 	}
-	expectedDisqualifiedMemberIDs = append(expectedDisqualifiedMemberIDs, invalidRevealingMember.ID)
-	if !reflect.DeepEqual(expectedDisqualifiedMemberIDs, member1.group.DisqualifiedMemberIDs()) {
+	expectedDisqualifiedMemberIndexes = append(expectedDisqualifiedMemberIndexes, invalidRevealingMember.ID)
+	if !reflect.DeepEqual(expectedDisqualifiedMemberIndexes, member1.group.DisqualifiedMemberIndexes()) {
 		t.Fatalf("\nexpected: %v\nactual:   %v\n",
-			expectedDisqualifiedMemberIDs,
-			member1.group.DisqualifiedMemberIDs(),
+			expectedDisqualifiedMemberIndexes,
+			member1.group.DisqualifiedMemberIndexes(),
 		)
 	}
 
@@ -187,7 +187,7 @@ func generateDisqualifiedMemberShares(
 	for _, disqualifiedMember := range disqualifiedMembers {
 		disqualifiedMemberShares[disqualifiedMember.ID] = make(map[group.MemberIndex]*big.Int)
 		// Simulate message broadcasted by disqualified member in Phase 3.
-		peerSharesMessage := newPeerSharesMessage(disqualifiedMember.ID)
+		peerSharesMessage := newPeerSharesMessage(disqualifiedMember.ID, "session-1")
 		commitments := make([]*bn256.G1, 0)
 
 		for i, otherMember := range otherMembers {
@@ -368,7 +368,7 @@ func TestReconstructMisbehavedIndividualKeys(t *testing.T) {
 
 	for _, disqualifiedMember := range disqualifiedMembers {
 		// Simulate message broadcasted by disqualified member in Phase 3.
-		peerSharesMessage := newPeerSharesMessage(disqualifiedMember.ID)
+		peerSharesMessage := newPeerSharesMessage(disqualifiedMember.ID, "session-1")
 		commitments := make([]*bn256.G1, 0)
 
 		for i, otherMember := range otherMembers {
