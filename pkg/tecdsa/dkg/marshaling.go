@@ -249,7 +249,7 @@ func (rsm *resultSignatureMessage) Unmarshal(bytes []byte) error {
 	}
 	rsm.senderID = group.MemberIndex(pbMsg.SenderID)
 
-	resultHash, err := ResultHashFromBytes(pbMsg.ResultHash)
+	resultHash, err := ResultSignatureHashFromBytes(pbMsg.ResultHash)
 	if err != nil {
 		return err
 	}

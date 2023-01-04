@@ -293,7 +293,7 @@ func TestFuzzResultSignatureMessage_MarshalingRoundtrip(t *testing.T) {
 	for i := 0; i < 10; i++ {
 		var (
 			senderID   group.MemberIndex
-			resultHash ResultHash
+			resultHash ResultSignatureHash
 			signature  []byte
 			publicKey  []byte
 			sessionID  string

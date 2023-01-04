@@ -1185,7 +1185,7 @@ func TestSignDKGResult(t *testing.T) {
 
 	publicKey := []byte("publicKey")
 	signature := []byte("signature")
-	resultHash := ResultHash{0: 11, 6: 22, 31: 33}
+	resultHash := ResultSignatureHash{0: 11, 6: 22, 31: 33}
 
 	resultSigner := newMockResultSigner(publicKey)
 	resultSigner.setSigningOutcome(result, &signingOutcome{
@@ -1245,7 +1245,7 @@ func TestSignDKGResult_ErrorDuringSigning(t *testing.T) {
 	resultSigner := newMockResultSigner([]byte("publicKey"))
 	resultSigner.setSigningOutcome(result, &signingOutcome{
 		signature:  []byte("signature"),
-		resultHash: ResultHash{0: 11, 6: 22, 31: 33},
+		resultHash: ResultSignatureHash{0: 11, 6: 22, 31: 33},
 		err:        fmt.Errorf("dummy error"),
 	})
 
@@ -1266,7 +1266,7 @@ func TestSignDKGResult_ErrorDuringSigning(t *testing.T) {
 
 func TestVerifyDKGResultSignatures(t *testing.T) {
 	signingMember := initializeSigningMember()
-	signingMember.preferredDKGResultHash = ResultHash{11: 11}
+	signingMember.preferredDKGResultHash = ResultSignatureHash{11: 11}
 	signingMember.selfDKGResultSignature = []byte("sign 1")
 
 	type messageWithOutcome struct {
@@ -1283,7 +1283,7 @@ func TestVerifyDKGResultSignatures(t *testing.T) {
 				{
 					&resultSignatureMessage{
 						senderID:   2,
-						resultHash: ResultHash{11: 11},
+						resultHash: ResultSignatureHash{11: 11},
 						signature:  []byte("sign 2"),
 						publicKey:  []byte("pubKey 2"),
 						sessionID:  "session-1",
@@ -1296,7 +1296,7 @@ func TestVerifyDKGResultSignatures(t *testing.T) {
 				{
 					&resultSignatureMessage{
 						senderID:   3,
-						resultHash: ResultHash{11: 11},
+						resultHash: ResultSignatureHash{11: 11},
 						signature:  []byte("sign 3"),
 						publicKey:  []byte("pubKey 3"),
 						sessionID:  "session-1",
@@ -1319,7 +1319,7 @@ func TestVerifyDKGResultSignatures(t *testing.T) {
 				{
 					&resultSignatureMessage{
 						senderID:   2,
-						resultHash: ResultHash{12: 12},
+						resultHash: ResultSignatureHash{12: 12},
 						signature:  []byte("sign 2"),
 						publicKey:  []byte("pubKey 2"),
 						sessionID:  "session-1",
@@ -1340,7 +1340,7 @@ func TestVerifyDKGResultSignatures(t *testing.T) {
 				{
 					&resultSignatureMessage{
 						senderID:   2,
-						resultHash: ResultHash{11: 11},
+						resultHash: ResultSignatureHash{11: 11},
 						signature:  []byte("sign 2"),
 						publicKey:  []byte("pubKey 2"),
 						sessionID:  "session-1",
@@ -1360,7 +1360,7 @@ func TestVerifyDKGResultSignatures(t *testing.T) {
 				{
 					&resultSignatureMessage{
 						senderID:   2,
-						resultHash: ResultHash{11: 11},
+						resultHash: ResultSignatureHash{11: 11},
 						signature:  []byte("bad sign"),
 						publicKey:  []byte("pubKey 2"),
 						sessionID:  "session-1",
@@ -1900,7 +1900,7 @@ func newTssPreParams(
 
 type signingOutcome struct {
 	signature  []byte
-	resultHash ResultHash
+	resultHash ResultSignatureHash
 	err        error
 }
 
@@ -1974,7 +1974,7 @@ func (mrs *mockResultSigner) VerifySignature(signedResult *SignedResult) (bool, 
 func signatureVerificationKey(
 	publicKey []byte,
 	signature []byte,
-	resultHash ResultHash,
+	resultHash ResultSignatureHash,
 ) string {
 	return fmt.Sprintf("%s-%s-%s", publicKey, signature, resultHash[:])
 }

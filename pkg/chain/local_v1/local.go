@@ -434,6 +434,12 @@ func (c *localChain) IsBetaOperator() (bool, error) {
 	panic("unsupported")
 }
 
+func (c *localChain) GetOperatorID(
+	operatorAddress chain.Address,
+) (chain.OperatorID, error) {
+	panic("unsupported")
+}
+
 func GenerateHandlerID() int {
 	// #nosec G404 (insecure random number source (rand))
 	// Local chain implementation doesn't require secure randomness.

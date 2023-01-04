@@ -15,6 +15,32 @@ import (
 	"golang.org/x/exp/slices"
 )
 
+const (
+	// dkgAttemptAnnouncementDelayBlocks determines the duration of the
+	// announcement phase delay that is preserved before starting the
+	// announcement phase.
+	dkgAttemptAnnouncementDelayBlocks = 1
+	// dkgAttemptAnnouncementActiveBlocks determines the duration of the
+	// announcement phase that is performed at the beginning of each DKG
+	// attempt.
+	dkgAttemptAnnouncementActiveBlocks = 5
+	// dkgAttemptProtocolBlocks determines the maximum block duration of the
+	// actual protocol computations.
+	dkgAttemptMaximumProtocolBlocks = 150
+	// dkgAttemptCoolDownBlocks determines the duration of the cool down
+	// period that is preserved between subsequent DKG attempts.
+	dkgAttemptCoolDownBlocks = 5
+)
+
+// dkgAttemptMaximumBlocks returns the maximum block duration of a single
+// DKG attempt.
+func dkgAttemptMaximumBlocks() uint {
+	return dkgAttemptAnnouncementDelayBlocks +
+		dkgAttemptAnnouncementActiveBlocks +
+		dkgAttemptMaximumProtocolBlocks +
+		dkgAttemptCoolDownBlocks
+}
+
 // dkgAnnouncer represents a component responsible for exchanging readiness
 // announcements for the given DKG attempt for the given seed.
 type dkgAnnouncer interface {
@@ -36,11 +62,9 @@ type dkgRetryLoop struct {
 	memberIndex       group.MemberIndex
 	selectedOperators chain.Addresses
 
-	chainConfig *ChainConfig
+	groupParameters *GroupParameters
 
-	announcer                dkgAnnouncer
-	announcementDelayBlocks  uint64
-	announcementActiveBlocks uint64
+	announcer dkgAnnouncer
 
 	attemptCounter    uint
 	attemptStartBlock uint64
@@ -56,7 +80,7 @@ func newDkgRetryLoop(
 	initialStartBlock uint64,
 	memberIndex group.MemberIndex,
 	selectedOperators chain.Addresses,
-	chainConfig *ChainConfig,
+	groupParameters *GroupParameters,
 	announcer dkgAnnouncer,
 ) *dkgRetryLoop {
 	// Compute the 8-byte seed needed for the random retry algorithm. We take
@@ -67,18 +91,16 @@ func newDkgRetryLoop(
 	attemptSeed := int64(binary.BigEndian.Uint64(seedSha256[:8]))
 
 	return &dkgRetryLoop{
-		logger:                   logger,
-		seed:                     seed,
-		memberIndex:              memberIndex,
-		selectedOperators:        selectedOperators,
-		chainConfig:              chainConfig,
-		announcer:                announcer,
-		announcementDelayBlocks:  1,
-		announcementActiveBlocks: 5,
-		attemptCounter:           0,
-		attemptStartBlock:        initialStartBlock,
-		attemptSeed:              attemptSeed,
-		attemptDelayBlocks:       5,
+		logger:             logger,
+		seed:               seed,
+		memberIndex:        memberIndex,
+		selectedOperators:  selectedOperators,
+		groupParameters:    groupParameters,
+		announcer:          announcer,
+		attemptCounter:     0,
+		attemptStartBlock:  initialStartBlock,
+		attemptSeed:        attemptSeed,
+		attemptDelayBlocks: 5,
 	}
 }
 
@@ -86,6 +108,7 @@ func newDkgRetryLoop(
 type dkgAttemptParams struct {
 	number                 uint
 	startBlock             uint64
+	timeoutBlock           uint64
 	excludedMembersIndexes []group.MemberIndex
 }
 
@@ -110,23 +133,20 @@ func (drl *dkgRetryLoop) start(
 		//
 		// That said, we need to increment the previous attempt start
 		// block by the number of blocks equal to the protocol duration and
-		// by some additional delay blocks. We need a small fixed delay in
+		// by some additional delay blocks. We need a small cool down in
 		// order to mitigate all corner cases where the actual attempt duration
 		// was slightly longer than the expected duration determined by the
-		// dkg.ProtocolBlocks function.
+		// dkgAttemptMaximumProtocolBlocks constant.
 		//
 		// For example, the attempt may fail at the end of the protocol but the
 		// error is returned after some time and more blocks than expected are
 		// mined in the meantime.
 		if drl.attemptCounter > 1 {
 			drl.attemptStartBlock = drl.attemptStartBlock +
-				drl.announcementDelayBlocks +
-				drl.announcementActiveBlocks +
-				dkgAttemptMaxBlockDuration +
-				drl.attemptDelayBlocks
+				uint64(dkgAttemptMaximumBlocks())
 		}
 
-		announcementStartBlock := drl.attemptStartBlock + drl.announcementDelayBlocks
+		announcementStartBlock := drl.attemptStartBlock + dkgAttemptAnnouncementDelayBlocks
 		err := waitForBlockFn(ctx, announcementStartBlock)
 		if err != nil {
 			return nil, fmt.Errorf(
@@ -140,7 +160,7 @@ func (drl *dkgRetryLoop) start(
 
 		// Set up the announcement phase stop signal.
 		announceCtx, cancelAnnounceCtx := context.WithCancel(ctx)
-		announcementEndBlock := announcementStartBlock + drl.announcementActiveBlocks
+		announcementEndBlock := announcementStartBlock + dkgAttemptAnnouncementActiveBlocks
 		go func() {
 			defer cancelAnnounceCtx()
 
@@ -180,10 +200,10 @@ func (drl *dkgRetryLoop) start(
 
 		// Check the loop stop signal.
 		if ctx.Err() != nil {
-			return nil, nil
+			return nil, ctx.Err()
 		}
 
-		if len(readyMembersIndexes) >= drl.chainConfig.GroupQuorum {
+		if len(readyMembersIndexes) >= drl.groupParameters.GroupQuorum {
 			drl.logger.Infof(
 				"[member:%v] completed announcement phase for attempt [%v] "+
 					"with quorum of [%v] members ready to perform DKG",
@@ -219,6 +239,8 @@ func (drl *dkgRetryLoop) start(
 			drl.memberIndex,
 		)
 
+		timeoutBlock := announcementEndBlock + dkgAttemptMaximumProtocolBlocks
+
 		var result *dkg.Result
 		var attemptErr error
 
@@ -226,6 +248,7 @@ func (drl *dkgRetryLoop) start(
 			result, attemptErr = dkgAttemptFn(&dkgAttemptParams{
 				number:                 drl.attemptCounter,
 				startBlock:             announcementEndBlock,
+				timeoutBlock:           timeoutBlock,
 				excludedMembersIndexes: excludedMembersIndexes,
 			})
 		} else {
@@ -322,7 +345,7 @@ func (drl *dkgRetryLoop) qualifiedOperatorsSet(
 		readyOperators,
 		drl.attemptSeed,
 		retryCount,
-		uint(drl.chainConfig.GroupQuorum),
+		uint(drl.groupParameters.GroupQuorum),
 	)
 	if err != nil {
 		return nil, fmt.Errorf(

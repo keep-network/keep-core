@@ -23,6 +23,26 @@ var logger = log.Logger("keep-tbtc")
 // ProtocolName denotes the name of the protocol defined by this package.
 const ProtocolName = "tbtc"
 
+// GroupParameters is a structure grouping TBTC group parameters.
+type GroupParameters struct {
+	// GroupSize is the target size of a group in TBTC.
+	GroupSize int
+	// GroupQuorum is the minimum number of active participants behaving
+	// according to the protocol needed to generate a group in TBTC. This value
+	// is smaller than the GroupSize and bigger than the HonestThreshold.
+	GroupQuorum int
+	// HonestThreshold is the minimum number of active participants behaving
+	// according to the protocol needed to generate a signature.
+	HonestThreshold int
+}
+
+// DishonestThreshold is the maximum number of misbehaving participants for
+// which it is still possible to generate a signature. Misbehaviour is any
+// misconduct to the protocol, including inactivity.
+func (gp *GroupParameters) DishonestThreshold() int {
+	return gp.GroupSize - gp.HonestThreshold
+}
+
 const (
 	DefaultPreParamsPoolSize              = 1000
 	DefaultPreParamsGenerationTimeout     = 2 * time.Minute
@@ -59,7 +79,25 @@ func Initialize(
 	config Config,
 	clientInfo *clientinfo.Registry,
 ) error {
-	node := newNode(chain, netProvider, keyStorePersistence, workPersistence, scheduler, config)
+	groupParameters := &GroupParameters{
+		GroupSize:       100,
+		GroupQuorum:     90,
+		HonestThreshold: 51,
+	}
+
+	node, err := newNode(
+		groupParameters,
+		chain,
+		netProvider,
+		keyStorePersistence,
+		workPersistence,
+		scheduler,
+		config,
+	)
+	if err != nil {
+		return fmt.Errorf("cannot set up TBTC node: [%v]", err)
+	}
+
 	deduplicator := newDeduplicator()
 
 	if clientInfo != nil {
@@ -74,7 +112,7 @@ func Initialize(
 		)
 	}
 
-	err := sortition.MonitorPool(
+	err = sortition.MonitorPool(
 		ctx,
 		logger,
 		chain,
@@ -121,9 +159,41 @@ func Initialize(
 		}()
 	})
 
-	// TODO: This is a temporary signing loop trigger that should be removed
-	//       once the client is integrated with real on-chain contracts.
-	_ = chain.OnSignatureRequested(func(event *SignatureRequestedEvent) {
+	_ = chain.OnDKGResultSubmitted(func(event *DKGResultSubmittedEvent) {
+		go func() {
+			if ok := deduplicator.notifyDKGResultSubmitted(
+				event.Seed,
+				event.ResultHash,
+				event.BlockNumber,
+			); !ok {
+				logger.Warnf(
+					"Result with hash [0x%x] for DKG with seed [0x%x] "+
+						"and starting block [%v] has been already processed",
+					event.ResultHash,
+					event.Seed,
+					event.BlockNumber,
+				)
+				return
+			}
+
+			logger.Infof(
+				"Result with hash [0x%x] for DKG with seed [0x%x] "+
+					"submitted at block [%v]",
+				event.ResultHash,
+				event.Seed,
+				event.BlockNumber,
+			)
+
+			node.validateDKG(
+				event.Seed,
+				event.BlockNumber,
+				event.Result,
+				event.ResultHash,
+			)
+		}()
+	})
+
+	_ = chain.OnHeartbeatRequested(func(event *HeartbeatRequestedEvent) {
 		go func() {
 			// There is no need to deduplicate. Test loop events are unique.
 			messagesDigests := make([]string, len(event.Messages))
@@ -137,7 +207,7 @@ func Initialize(
 			}
 
 			logger.Infof(
-				"signature of messages [%s] requested from "+
+				"heartbeat [%s] requested from "+
 					"wallet [0x%x] at block [%v]",
 				strings.Join(messagesDigests, ", "),
 				event.WalletPublicKey,
@@ -171,7 +241,7 @@ func Initialize(
 			}
 
 			logger.Infof(
-				"generated [%v] signatures for messages [%s] as "+
+				"generated [%v] signatures for heartbeat [%s] as "+
 					"requested from wallet [0x%x] at block [%v]",
 				len(signatures),
 				strings.Join(messagesDigests, ", "),

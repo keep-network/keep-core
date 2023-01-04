@@ -242,7 +242,7 @@ type signingMember struct {
 	// Identifier of the particular DKG session this member is part of.
 	sessionID string
 	// Hash of DKG result preferred by the current participant.
-	preferredDKGResultHash ResultHash
+	preferredDKGResultHash ResultSignatureHash
 	// Signature over preferredDKGResultHash calculated by the member.
 	selfDKGResultSignature []byte
 }

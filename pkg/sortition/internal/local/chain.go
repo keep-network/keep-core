@@ -215,6 +215,12 @@ func (c *Chain) IsBetaOperator() (bool, error) {
 	return c.isBetaOperator, nil
 }
 
+func (c *Chain) GetOperatorID(
+	operatorAddress chain.Address,
+) (chain.OperatorID, error) {
+	panic("unsupported")
+}
+
 func (c *Chain) SetCurrentTimestamp(currentTimestamp *big.Int) {
 	c.currentTimestamp = currentTimestamp
 }

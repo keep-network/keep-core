@@ -19,7 +19,7 @@ import (
 func TestDkgRetryLoop(t *testing.T) {
 	seed := big.NewInt(100)
 
-	chainConfig := &ChainConfig{
+	groupParameters := &GroupParameters{
 		GroupSize:       10,
 		GroupQuorum:     8,
 		HonestThreshold: 6,
@@ -80,6 +80,7 @@ func TestDkgRetryLoop(t *testing.T) {
 			expectedLastAttempt: &dkgAttemptParams{
 				number:                 1,
 				startBlock:             206,
+				timeoutBlock:           356, // start block + 150
 				excludedMembersIndexes: []group.MemberIndex{},
 			},
 		},
@@ -103,6 +104,7 @@ func TestDkgRetryLoop(t *testing.T) {
 			expectedLastAttempt: &dkgAttemptParams{
 				number:                 1,
 				startBlock:             206,
+				timeoutBlock:           356, // start block + 150
 				excludedMembersIndexes: []group.MemberIndex{9, 10},
 			},
 		},
@@ -129,6 +131,7 @@ func TestDkgRetryLoop(t *testing.T) {
 			expectedLastAttempt: &dkgAttemptParams{
 				number:                 2,
 				startBlock:             367, // 206 + 1 * (6 + 150 + 5)
+				timeoutBlock:           517, // start block + 150
 				excludedMembersIndexes: []group.MemberIndex{2, 5},
 			},
 		},
@@ -153,6 +156,7 @@ func TestDkgRetryLoop(t *testing.T) {
 			expectedLastAttempt: &dkgAttemptParams{
 				number:                 2,
 				startBlock:             367, // 206 + 1 * (6 + 150 + 5)
+				timeoutBlock:           517, // start block + 150
 				excludedMembersIndexes: []group.MemberIndex{2, 5},
 			},
 		},
@@ -180,6 +184,7 @@ func TestDkgRetryLoop(t *testing.T) {
 			expectedLastAttempt: &dkgAttemptParams{
 				number:                 2,
 				startBlock:             367, // 206 + 1 * (6 + 150 + 5)
+				timeoutBlock:           517, // start block + 150
 				excludedMembersIndexes: []group.MemberIndex{2, 5},
 			},
 		},
@@ -207,6 +212,7 @@ func TestDkgRetryLoop(t *testing.T) {
 			expectedLastAttempt: &dkgAttemptParams{
 				number:                 3,
 				startBlock:             528, // 206 + 2 * (6 + 150 + 5)
+				timeoutBlock:           678, // start block + 150
 				excludedMembersIndexes: []group.MemberIndex{9},
 			},
 		},
@@ -224,7 +230,7 @@ func TestDkgRetryLoop(t *testing.T) {
 			dkgAttemptFn: func(attempt *dkgAttemptParams) (*dkg.Result, error) {
 				return nil, fmt.Errorf("invalid data")
 			},
-			expectedErr:         nil,
+			expectedErr:         context.Canceled,
 			expectedResult:      nil,
 			expectedLastAttempt: nil,
 		},
@@ -243,7 +249,7 @@ func TestDkgRetryLoop(t *testing.T) {
 				200,
 				test.memberIndex,
 				selectedOperators,
-				chainConfig,
+				groupParameters,
 				announcer,
 			)
 

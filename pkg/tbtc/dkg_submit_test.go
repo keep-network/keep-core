@@ -7,6 +7,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/keep-network/keep-core/pkg/chain"
+
 	"github.com/keep-network/keep-core/pkg/internal/tecdsatest"
 	"github.com/keep-network/keep-core/pkg/internal/testutils"
 	"github.com/keep-network/keep-core/pkg/protocol/group"
@@ -16,15 +18,16 @@ import (
 )
 
 func TestSignResult_SigningSuccessful(t *testing.T) {
-	chain := Connect(5, 4, 3)
-	dkgResultSigner := newDkgResultSigner(chain)
+	chain := Connect()
+	dkgStartBlock := uint64(2000)
+	dkgResultSigner := newDkgResultSigner(chain, dkgStartBlock)
 
 	testData, err := tecdsatest.LoadPrivateKeyShareTestFixtures(1)
 	if err != nil {
 		t.Fatalf("failed to load test data: [%v]", err)
 	}
 	result := &dkg.Result{
-		Group:           group.NewGroup(32, 64),
+		Group:           group.NewGroup(2, 5),
 		PrivateKeyShare: tecdsa.NewPrivateKeyShare(testData[0]),
 	}
 
@@ -47,8 +50,19 @@ func TestSignResult_SigningSuccessful(t *testing.T) {
 		)
 	}
 
-	expectedDKGResultHash := dkg.ResultHash(
-		sha3.Sum256([]byte(fmt.Sprint(result))),
+	groupPublicKey, err := result.GroupPublicKey()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	expectedDKGResultHash := dkg.ResultSignatureHash(
+		sha3.Sum256(
+			[]byte(fmt.Sprint(
+				groupPublicKey,
+				result.MisbehavedMembersIndexes(),
+				dkgStartBlock,
+			)),
+		),
 	)
 	if expectedDKGResultHash != signedResult.ResultHash {
 		t.Errorf(
@@ -81,16 +95,14 @@ func TestSignResult_SigningSuccessful(t *testing.T) {
 }
 
 func TestSignResult_ErrorDuringDkgResultHashCalculation(t *testing.T) {
-	chain := Connect(5, 4, 3)
-	dkgResultSigner := newDkgResultSigner(chain)
+	chain := Connect()
+	dkgStartBlock := uint64(2000)
+	dkgResultSigner := newDkgResultSigner(chain, dkgStartBlock)
 
 	// Use nil as the DKG result to cause hash calculation error
 	_, err := dkgResultSigner.SignResult(nil)
 
-	expectedError := fmt.Errorf(
-		"dkg result hash calculation failed [%w]",
-		errNilDKGResult,
-	)
+	expectedError := fmt.Errorf("result is nil")
 	if !reflect.DeepEqual(expectedError, err) {
 		t.Errorf(
 			"unexpected error\nexpected: %v\nactual:   %v\n",
@@ -101,15 +113,16 @@ func TestSignResult_ErrorDuringDkgResultHashCalculation(t *testing.T) {
 }
 
 func TestVerifySignature_VerificationSuccessful(t *testing.T) {
-	chain := Connect(5, 4, 3)
-	dkgResultSigner := newDkgResultSigner(chain)
+	chain := Connect()
+	dkgStartBlock := uint64(2000)
+	dkgResultSigner := newDkgResultSigner(chain, dkgStartBlock)
 
 	testData, err := tecdsatest.LoadPrivateKeyShareTestFixtures(1)
 	if err != nil {
 		t.Fatalf("failed to load test data: [%v]", err)
 	}
 	result := &dkg.Result{
-		Group:           group.NewGroup(32, 64),
+		Group:           group.NewGroup(2, 5),
 		PrivateKeyShare: tecdsa.NewPrivateKeyShare(testData[0]),
 	}
 
@@ -132,8 +145,9 @@ func TestVerifySignature_VerificationSuccessful(t *testing.T) {
 }
 
 func TestVerifySignature_VerificationFailure(t *testing.T) {
-	chain := Connect(5, 4, 3)
-	dkgResultSigner := newDkgResultSigner(chain)
+	chain := Connect()
+	dkgStartBlock := uint64(2000)
+	dkgResultSigner := newDkgResultSigner(chain, dkgStartBlock)
 
 	testData, err := tecdsatest.LoadPrivateKeyShareTestFixtures(1)
 	if err != nil {
@@ -141,7 +155,7 @@ func TestVerifySignature_VerificationFailure(t *testing.T) {
 	}
 
 	result := &dkg.Result{
-		Group:           group.NewGroup(32, 64),
+		Group:           group.NewGroup(2, 5),
 		PrivateKeyShare: tecdsa.NewPrivateKeyShare(testData[0]),
 	}
 	signedResult, err := dkgResultSigner.SignResult(result)
@@ -150,9 +164,10 @@ func TestVerifySignature_VerificationFailure(t *testing.T) {
 	}
 
 	anotherResult := &dkg.Result{
-		Group:           group.NewGroup(30, 64),
+		Group:           group.NewGroup(2, 5),
 		PrivateKeyShare: tecdsa.NewPrivateKeyShare(testData[0]),
 	}
+	anotherResult.Group.MarkMemberAsInactive(3)
 	anotherSignedResult, err := dkgResultSigner.SignResult(anotherResult)
 	if err != nil {
 		t.Fatal(err)
@@ -168,16 +183,17 @@ func TestVerifySignature_VerificationFailure(t *testing.T) {
 	}
 
 	if verificationSuccessful {
-		t.Fatal(
-			"Expected unsuccessful verification of signature, but it was " +
-				"successful",
+		t.Errorf(
+			"expected unsuccessful verification of signature, " +
+				"but it was successful",
 		)
 	}
 }
 
 func TestVerifySignature_VerificationError(t *testing.T) {
-	chain := Connect(5, 4, 3)
-	dkgResultSigner := newDkgResultSigner(chain)
+	chain := Connect()
+	dkgStartBlock := uint64(2000)
+	dkgResultSigner := newDkgResultSigner(chain, dkgStartBlock)
 
 	testData, err := tecdsatest.LoadPrivateKeyShareTestFixtures(1)
 	if err != nil {
@@ -185,7 +201,7 @@ func TestVerifySignature_VerificationError(t *testing.T) {
 	}
 
 	result := &dkg.Result{
-		Group:           group.NewGroup(32, 64),
+		Group:           group.NewGroup(2, 5),
 		PrivateKeyShare: tecdsa.NewPrivateKeyShare(testData[0]),
 	}
 	signedResult, err := dkgResultSigner.SignResult(result)
@@ -214,15 +230,56 @@ func TestVerifySignature_VerificationError(t *testing.T) {
 }
 
 func TestSubmitResult_MemberSubmitsResult(t *testing.T) {
-	chain := Connect(5, 4, 3)
-	dkgResultSubmitter := newDkgResultSubmitter(&testutils.MockLogger{}, chain)
+	groupParameters := &GroupParameters{
+		GroupSize:       5,
+		GroupQuorum:     4,
+		HonestThreshold: 3,
+	}
+
+	localChain := Connect()
+
+	err := localChain.startDKG()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	operatorAddress, err := localChain.operatorAddress()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	operatorID, err := localChain.GetOperatorID(operatorAddress)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var operatorsIDs chain.OperatorIDs
+	var operatorsAddresses chain.Addresses
+
+	for memberIndex := uint8(1); int(memberIndex) <= groupParameters.GroupSize; memberIndex++ {
+		operatorsIDs = append(operatorsIDs, operatorID)
+		operatorsAddresses = append(operatorsAddresses, operatorAddress)
+	}
+
+	groupSelectionResult := &GroupSelectionResult{
+		OperatorsIDs:       operatorsIDs,
+		OperatorsAddresses: operatorsAddresses,
+	}
+
+	dkgResultSubmitter := newDkgResultSubmitter(
+		&testutils.MockLogger{},
+		localChain,
+		groupParameters,
+		groupSelectionResult,
+		testWaitForBlockFn(localChain),
+	)
 
 	testData, err := tecdsatest.LoadPrivateKeyShareTestFixtures(1)
 	if err != nil {
 		t.Fatalf("failed to load test data: [%v]", err)
 	}
 	result := &dkg.Result{
-		Group:           group.NewGroup(32, 64),
+		Group:           group.NewGroup(groupParameters.DishonestThreshold(), groupParameters.GroupSize),
 		PrivateKeyShare: tecdsa.NewPrivateKeyShare(testData[0]),
 	}
 
@@ -247,30 +304,71 @@ func TestSubmitResult_MemberSubmitsResult(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	expectedActiveWallet, err := result.GroupPublicKeyBytes()
+	expectedGroupPublicKey, err := result.GroupPublicKeyBytes()
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	if !reflect.DeepEqual(expectedActiveWallet, chain.activeWallet) {
+	if !reflect.DeepEqual(expectedGroupPublicKey, localChain.dkgResult.GroupPublicKey) {
 		t.Errorf(
-			"unexpected active wallet bytes \nexpected: [0x%x]\nactual:   [0x%x]\n",
-			expectedActiveWallet,
-			chain.activeWallet,
+			"unexpected group public key \nexpected: [0x%x]\nactual:   [0x%x]\n",
+			expectedGroupPublicKey,
+			localChain.dkgResult.GroupPublicKey,
 		)
 	}
 }
 
-func TestSubmitResult_MemberDoesNotSubmitsResult(t *testing.T) {
-	chain := Connect(5, 4, 3)
-	dkgResultSubmitter := newDkgResultSubmitter(&testutils.MockLogger{}, chain)
+func TestSubmitResult_AnotherMemberSubmitsResult(t *testing.T) {
+	groupParameters := &GroupParameters{
+		GroupSize:       5,
+		GroupQuorum:     4,
+		HonestThreshold: 3,
+	}
+
+	localChain := Connect()
+
+	err := localChain.startDKG()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	operatorAddress, err := localChain.operatorAddress()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	operatorID, err := localChain.GetOperatorID(operatorAddress)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var operatorsIDs chain.OperatorIDs
+	var operatorsAddresses chain.Addresses
+
+	for memberIndex := uint8(1); int(memberIndex) <= groupParameters.GroupSize; memberIndex++ {
+		operatorsIDs = append(operatorsIDs, operatorID)
+		operatorsAddresses = append(operatorsAddresses, operatorAddress)
+	}
+
+	groupSelectionResult := &GroupSelectionResult{
+		OperatorsIDs:       operatorsIDs,
+		OperatorsAddresses: operatorsAddresses,
+	}
+
+	dkgResultSubmitter := newDkgResultSubmitter(
+		&testutils.MockLogger{},
+		localChain,
+		groupParameters,
+		groupSelectionResult,
+		testWaitForBlockFn(localChain),
+	)
 
 	testData, err := tecdsatest.LoadPrivateKeyShareTestFixtures(1)
 	if err != nil {
 		t.Fatalf("failed to load test data: [%v]", err)
 	}
 	result := &dkg.Result{
-		Group:           group.NewGroup(32, 64),
+		Group:           group.NewGroup(groupParameters.DishonestThreshold(), groupParameters.GroupSize),
 		PrivateKeyShare: tecdsa.NewPrivateKeyShare(testData[0]),
 	}
 	signatures := map[group.MemberIndex][]byte{
@@ -282,6 +380,13 @@ func TestSubmitResult_MemberDoesNotSubmitsResult(t *testing.T) {
 
 	ctx, cancelCtx := context.WithCancel(context.Background())
 	defer cancelCtx()
+
+	// Set up a global listener that will cancel the common context upon result
+	// submission. That mimics the real-world scenario.
+	localChain.OnDKGResultSubmitted(
+		func(event *DKGResultSubmittedEvent) {
+			cancelCtx()
+		})
 
 	secondMemberSubmissionChannel := make(chan error)
 
@@ -317,42 +422,161 @@ func TestSubmitResult_MemberDoesNotSubmitsResult(t *testing.T) {
 
 	// Check that the second member returned without errors
 	secondMemberErr := <-secondMemberSubmissionChannel
-	if err != nil {
+	if secondMemberErr != nil {
 		t.Fatal(secondMemberErr)
 	}
 
-	if chain.resultSubmitterIndex != firstMemberIndex {
+	if localChain.dkgResult.SubmitterMemberIndex != firstMemberIndex {
 		t.Errorf(
 			"unexpected result submitter index \nexpected: %v\nactual:   %v\n",
 			firstMemberIndex,
-			chain.resultSubmitterIndex,
+			localChain.dkgResult.SubmitterMemberIndex,
 		)
 	}
 
-	expectedActiveWallet, err := result.GroupPublicKeyBytes()
+	expectedGroupPublicKey, err := result.GroupPublicKeyBytes()
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	if !reflect.DeepEqual(expectedActiveWallet, chain.activeWallet) {
+	if !reflect.DeepEqual(expectedGroupPublicKey, localChain.dkgResult.GroupPublicKey) {
 		t.Errorf(
-			"unexpected active wallet bytes \nexpected: [0x%x]\nactual:   [0x%x]\n",
-			expectedActiveWallet,
-			chain.activeWallet,
+			"unexpected group public key \nexpected: [0x%x]\nactual:   [0x%x]\n",
+			expectedGroupPublicKey,
+			localChain.dkgResult.GroupPublicKey,
 		)
 	}
 }
 
-func TestSubmitResult_TooFewSignatures(t *testing.T) {
-	chain := Connect(5, 4, 3)
-	dkgResultSubmitter := newDkgResultSubmitter(&testutils.MockLogger{}, chain)
+func TestSubmitResult_ContextCancelled(t *testing.T) {
+	groupParameters := &GroupParameters{
+		GroupSize:       5,
+		GroupQuorum:     4,
+		HonestThreshold: 3,
+	}
+
+	localChain := Connect()
+
+	err := localChain.startDKG()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	operatorAddress, err := localChain.operatorAddress()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	operatorID, err := localChain.GetOperatorID(operatorAddress)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var operatorsIDs chain.OperatorIDs
+	var operatorsAddresses chain.Addresses
+
+	for memberIndex := uint8(1); int(memberIndex) <= groupParameters.GroupSize; memberIndex++ {
+		operatorsIDs = append(operatorsIDs, operatorID)
+		operatorsAddresses = append(operatorsAddresses, operatorAddress)
+	}
+
+	groupSelectionResult := &GroupSelectionResult{
+		OperatorsIDs:       operatorsIDs,
+		OperatorsAddresses: operatorsAddresses,
+	}
+
+	dkgResultSubmitter := newDkgResultSubmitter(
+		&testutils.MockLogger{},
+		localChain,
+		groupParameters,
+		groupSelectionResult,
+		testWaitForBlockFn(localChain),
+	)
 
 	testData, err := tecdsatest.LoadPrivateKeyShareTestFixtures(1)
 	if err != nil {
 		t.Fatalf("failed to load test data: [%v]", err)
 	}
 	result := &dkg.Result{
-		Group:           group.NewGroup(32, 64),
+		Group:           group.NewGroup(groupParameters.DishonestThreshold(), groupParameters.GroupSize),
+		PrivateKeyShare: tecdsa.NewPrivateKeyShare(testData[0]),
+	}
+
+	memberIndex := group.MemberIndex(1)
+	signatures := map[group.MemberIndex][]byte{
+		1: []byte("signature 1"),
+		2: []byte("signature 2"),
+		3: []byte("signature 3"),
+		4: []byte("signature 4"),
+	}
+
+	ctx, cancelCtx := context.WithCancel(context.Background())
+
+	// Simulate the case when timeout occurs and the context gets cancelled.
+	cancelCtx()
+
+	err = dkgResultSubmitter.SubmitResult(
+		ctx,
+		memberIndex,
+		result,
+		signatures,
+	)
+	if err != nil {
+		t.Errorf("unexpected error [%v]", err)
+	}
+}
+
+func TestSubmitResult_TooFewSignatures(t *testing.T) {
+	groupParameters := &GroupParameters{
+		GroupSize:       5,
+		GroupQuorum:     4,
+		HonestThreshold: 3,
+	}
+
+	localChain := Connect()
+
+	err := localChain.startDKG()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	operatorAddress, err := localChain.operatorAddress()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	operatorID, err := localChain.GetOperatorID(operatorAddress)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var operatorsIDs chain.OperatorIDs
+	var operatorsAddresses chain.Addresses
+
+	for memberIndex := uint8(1); int(memberIndex) <= groupParameters.GroupSize; memberIndex++ {
+		operatorsIDs = append(operatorsIDs, operatorID)
+		operatorsAddresses = append(operatorsAddresses, operatorAddress)
+	}
+
+	groupSelectionResult := &GroupSelectionResult{
+		OperatorsIDs:       operatorsIDs,
+		OperatorsAddresses: operatorsAddresses,
+	}
+
+	dkgResultSubmitter := newDkgResultSubmitter(
+		&testutils.MockLogger{},
+		localChain,
+		groupParameters,
+		groupSelectionResult,
+		testWaitForBlockFn(localChain),
+	)
+
+	testData, err := tecdsatest.LoadPrivateKeyShareTestFixtures(1)
+	if err != nil {
+		t.Fatalf("failed to load test data: [%v]", err)
+	}
+	result := &dkg.Result{
+		Group:           group.NewGroup(groupParameters.DishonestThreshold(), groupParameters.GroupSize),
 		PrivateKeyShare: tecdsa.NewPrivateKeyShare(testData[0]),
 	}
 

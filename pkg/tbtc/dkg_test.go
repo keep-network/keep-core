@@ -1,9 +1,13 @@
 package tbtc
 
 import (
+	"context"
 	"fmt"
 	"reflect"
 	"testing"
+	"time"
+
+	"golang.org/x/exp/slices"
 
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/internal/tecdsatest"
@@ -11,22 +15,22 @@ import (
 	"github.com/keep-network/keep-core/pkg/protocol/group"
 	"github.com/keep-network/keep-core/pkg/tecdsa"
 	"github.com/keep-network/keep-core/pkg/tecdsa/dkg"
+	"golang.org/x/crypto/sha3"
 )
 
-func TestRegisterSigner(t *testing.T) {
+func TestDkgExecutor_RegisterSigner(t *testing.T) {
 	testData, err := tecdsatest.LoadPrivateKeyShareTestFixtures(1)
 	if err != nil {
 		t.Fatalf("failed to load test data: [%v]", err)
 	}
 
-	const (
-		groupSize          = 5
-		groupQuorum        = 3
-		honestThreshold    = 2
-		dishonestThreshold = 3
-	)
+	groupParameters := &GroupParameters{
+		GroupSize:       5,
+		GroupQuorum:     3,
+		HonestThreshold: 2,
+	}
 
-	localChain := Connect(groupSize, groupQuorum, honestThreshold)
+	localChain := Connect()
 
 	selectedOperators := []chain.Address{
 		"0xAA",
@@ -88,11 +92,12 @@ func TestRegisterSigner(t *testing.T) {
 
 			dkgExecutor := &dkgExecutor{
 				// setting only the fields really needed for this test
-				chain:          localChain,
-				walletRegistry: walletRegistry,
+				groupParameters: groupParameters,
+				chain:           localChain,
+				walletRegistry:  walletRegistry,
 			}
 
-			group := group.NewGroup(dishonestThreshold, groupSize)
+			group := group.NewGroup(groupParameters.DishonestThreshold(), groupParameters.GroupSize)
 			for _, disqualifiedMember := range test.disqualifiedMemberIndexes {
 				group.MarkMemberAsDisqualified(disqualifiedMember)
 			}
@@ -160,8 +165,222 @@ func TestRegisterSigner(t *testing.T) {
 	}
 }
 
+func TestDkgExecutor_ExecuteDkgValidation(t *testing.T) {
+	testData, err := tecdsatest.LoadPrivateKeyShareTestFixtures(1)
+	if err != nil {
+		t.Fatalf("failed to load test data: [%v]", err)
+	}
+
+	groupParameters := &GroupParameters{
+		GroupSize:       5,
+		GroupQuorum:     3,
+		HonestThreshold: 2,
+	}
+
+	tecdsaDkgResult := &dkg.Result{
+		Group:           group.NewGroup(groupParameters.DishonestThreshold(), groupParameters.GroupSize),
+		PrivateKeyShare: tecdsa.NewPrivateKeyShare(testData[0]),
+	}
+
+	groupPublicKey, err := tecdsaDkgResult.GroupPublicKeyBytes()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var tests = map[string]struct {
+		submitterMemberIndex     group.MemberIndex
+		resultValid              bool
+		rejectedApprovalsIndexes []int
+		expectedEvent            interface{}
+		expectedDkgState         DKGState
+	}{
+		"result approved by the submitter": {
+			submitterMemberIndex: group.MemberIndex(1),
+			resultValid:          true,
+			expectedEvent: &DKGResultApprovedEvent{
+				ResultHash: sha3.Sum256(groupPublicKey),
+				Approver:   "",
+				// 16 is the next block after 15 blocks of the challenge period
+				BlockNumber: 16,
+			},
+			expectedDkgState: Idle,
+		},
+		"result approved by a non-submitter": {
+			submitterMemberIndex: group.MemberIndex(1),
+			resultValid:          true,
+			// Reject the first approval (with index 0) that will be made by
+			// member 1 (the submitter) in order to force the member 2 to
+			// approve after the precedence period.
+			rejectedApprovalsIndexes: []int{0},
+			expectedEvent: &DKGResultApprovedEvent{
+				ResultHash: sha3.Sum256(groupPublicKey),
+				Approver:   "",
+				// 36 is the next block after 15 blocks of the challenge period,
+				// 5 blocks of the precedence period, and 15 blocks of the delay
+				// for member 2
+				BlockNumber: 36,
+			},
+			expectedDkgState: Idle,
+		},
+		"result challenged": {
+			submitterMemberIndex: group.MemberIndex(1),
+			resultValid:          false,
+			expectedEvent: &DKGResultChallengedEvent{
+				ResultHash:  sha3.Sum256(groupPublicKey),
+				Challenger:  "",
+				Reason:      "",
+				BlockNumber: 0, // challenge is submitted immediately
+			},
+			expectedDkgState: AwaitingResult,
+		},
+	}
+
+	for testName, test := range tests {
+		t.Run(testName, func(t *testing.T) {
+			localChain := Connect()
+
+			approvalIndex := 0
+			localChain.dkgResultApprovalGuard = func() bool {
+				rejectedApproval := slices.Contains(
+					test.rejectedApprovalsIndexes,
+					approvalIndex,
+				)
+				approvalIndex++
+				return !rejectedApproval
+			}
+
+			operatorAddress, err := localChain.operatorAddress()
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			operatorID, err := localChain.GetOperatorID(operatorAddress)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			signatures := make(map[group.MemberIndex][]byte)
+			operatorsIDs := make(chain.OperatorIDs, groupParameters.GroupSize)
+			operatorsAddresses := make(chain.Addresses, groupParameters.GroupSize)
+
+			for memberIndex := uint8(1); int(memberIndex) <= groupParameters.GroupSize; memberIndex++ {
+				signatures[memberIndex] = []byte{memberIndex}
+				operatorsIDs[memberIndex-1] = operatorID
+				operatorsAddresses[memberIndex-1] = operatorAddress
+			}
+
+			groupSelectionResult := &GroupSelectionResult{
+				OperatorsIDs:       operatorsIDs,
+				OperatorsAddresses: operatorsAddresses,
+			}
+
+			dkgResultSubmittedEventChan := make(chan *DKGResultSubmittedEvent, 1)
+			_ = localChain.OnDKGResultSubmitted(
+				func(event *DKGResultSubmittedEvent) {
+					dkgResultSubmittedEventChan <- event
+				},
+			)
+
+			err = localChain.startDKG()
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			groupPublicKey, err := tecdsaDkgResult.GroupPublicKey()
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			dkgResult, err := localChain.AssembleDKGResult(
+				test.submitterMemberIndex,
+				groupPublicKey,
+				tecdsaDkgResult.Group.OperatingMemberIndexes(),
+				tecdsaDkgResult.MisbehavedMembersIndexes(),
+				signatures,
+				groupSelectionResult,
+			)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			err = localChain.SubmitDKGResult(dkgResult)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			dkgResultSubmittedEvent := <-dkgResultSubmittedEventChan
+
+			if !test.resultValid {
+				err = localChain.invalidateDKGResult(dkgResultSubmittedEvent.Result)
+				if err != nil {
+					t.Fatal(err)
+				}
+			}
+
+			// Setting only the fields really needed for this test.
+			dkgExecutor := &dkgExecutor{
+				groupParameters: groupParameters,
+				operatorIDFn: func() (chain.OperatorID, error) {
+					return operatorID, nil
+				},
+				operatorAddress: operatorAddress,
+				chain:           localChain,
+				waitForBlockFn:  testWaitForBlockFn(localChain),
+			}
+
+			eventChan := make(chan interface{}, 1)
+
+			_ = localChain.OnDKGResultChallenged(
+				func(event *DKGResultChallengedEvent) {
+					eventChan <- event
+				},
+			)
+			_ = localChain.OnDKGResultApproved(
+				func(event *DKGResultApprovedEvent) {
+					eventChan <- event
+				},
+			)
+
+			dkgExecutor.executeDkgValidation(
+				dkgResultSubmittedEvent.Seed,
+				dkgResultSubmittedEvent.BlockNumber,
+				dkgResultSubmittedEvent.Result,
+				dkgResultSubmittedEvent.ResultHash,
+			)
+
+			var event interface{}
+			select {
+			case event = <-eventChan:
+			case <-time.After(1 * time.Minute):
+			}
+
+			if !reflect.DeepEqual(test.expectedEvent, event) {
+				t.Errorf(
+					"unexpected event\n"+
+						"expected: [%+v]\n"+
+						"actual:   [%+v]",
+					test.expectedEvent,
+					event,
+				)
+			}
+
+			dkgState, err := localChain.GetDKGState()
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			testutils.AssertIntsEqual(
+				t,
+				"DKG state",
+				int(test.expectedDkgState),
+				int(dkgState),
+			)
+		})
+	}
+}
+
 func TestFinalSigningGroup(t *testing.T) {
-	chainConfig := &ChainConfig{
+	groupParameters := &GroupParameters{
 		GroupSize:       5,
 		GroupQuorum:     3,
 		HonestThreshold: 2,
@@ -212,7 +431,7 @@ func TestFinalSigningGroup(t *testing.T) {
 				finalSigningGroup(
 					test.selectedOperators,
 					test.operatingMembersIndexes,
-					chainConfig,
+					groupParameters,
 				)
 
 			if !reflect.DeepEqual(test.expectedError, err) {
@@ -251,5 +470,26 @@ func TestFinalSigningGroup(t *testing.T) {
 				)
 			}
 		})
+	}
+}
+
+func testWaitForBlockFn(localChain *localChain) waitForBlockFn {
+	return func(ctx context.Context, block uint64) error {
+		blockCounter, err := localChain.BlockCounter()
+		if err != nil {
+			return err
+		}
+
+		wait, err := blockCounter.BlockHeightWaiter(block)
+		if err != nil {
+			return err
+		}
+
+		select {
+		case <-wait:
+		case <-ctx.Done():
+		}
+
+		return nil
 	}
 }

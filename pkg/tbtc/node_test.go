@@ -17,17 +17,13 @@ import (
 )
 
 func TestNode_GetSigningExecutor(t *testing.T) {
-	chainConfig := &ChainConfig{
+	groupParameters := &GroupParameters{
 		GroupSize:       5,
 		GroupQuorum:     4,
 		HonestThreshold: 3,
 	}
 
-	localChain := Connect(
-		chainConfig.GroupSize,
-		chainConfig.GroupQuorum,
-		chainConfig.HonestThreshold,
-	)
+	localChain := Connect()
 	localProvider := local.Connect()
 
 	signer := createMockSigner(t)
@@ -36,7 +32,8 @@ func TestNode_GetSigningExecutor(t *testing.T) {
 	// required to make the node controlling the signer's wallet.
 	keyStorePersistence := createMockKeyStorePersistence(t, signer)
 
-	node := newNode(
+	node, err := newNode(
+		groupParameters,
 		localChain,
 		localProvider,
 		keyStorePersistence,
@@ -44,6 +41,9 @@ func TestNode_GetSigningExecutor(t *testing.T) {
 		generator.StartScheduler(),
 		Config{},
 	)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	walletPublicKey := signer.wallet.publicKey
 	walletPublicKeyBytes, err := marshalPublicKey(walletPublicKey)

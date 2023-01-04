@@ -153,7 +153,7 @@ func (tfm *tssFinalizationMessage) Type() string {
 type resultSignatureMessage struct {
 	senderID group.MemberIndex
 
-	resultHash ResultHash
+	resultHash ResultSignatureHash
 	signature  []byte
 	publicKey  []byte
 	sessionID  string

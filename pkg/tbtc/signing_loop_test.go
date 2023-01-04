@@ -18,7 +18,7 @@ import (
 func TestSigningRetryLoop(t *testing.T) {
 	message := big.NewInt(100)
 
-	chainConfig := &ChainConfig{
+	groupParameters := &GroupParameters{
 		GroupSize:       10,
 		HonestThreshold: 6,
 	}
@@ -471,7 +471,7 @@ func TestSigningRetryLoop(t *testing.T) {
 				200,
 				test.signingGroupMemberIndex,
 				signingGroupOperators,
-				chainConfig,
+				groupParameters,
 				announcer,
 				doneCheck,
 			)
