@@ -10,7 +10,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
   const RandomBeacon = await deployments.getOrNull("RandomBeacon")
 
-  const isRandomBeaconNeed = function () {
+  const isRandomBeaconNeeded = function () {
     if (hre.network.tags.chaosnet) {
       return false
     }
@@ -22,7 +22,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
   if (RandomBeacon && helpers.address.isValid(RandomBeacon.address)) {
     log(`using existing RandomBeacon at ${RandomBeacon.address}`)
-  } else if (isRandomBeaconNeed()) {
+  } else if (isRandomBeaconNeeded()) {
     throw new Error("deployed RandomBeacon contract not found")
   }
   // We don't deploy a stub of the RandomBeacon contract as unit tests mock
