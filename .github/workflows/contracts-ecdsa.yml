@@ -1,3 +1,4 @@
+# DO NOT MERGE!!!!
 name: Solidity ECDSA
 
 on:
@@ -171,18 +172,18 @@ jobs:
           cache: "yarn"
           cache-dependency-path: solidity/ecdsa/yarn.lock
 
-      - name: Install dependencies
-        run: yarn install --frozen-lockfile
+      # - name: Install dependencies
+      #   run: yarn install --frozen-lockfile
 
-      - name: Deploy contracts
-        run: yarn deploy:test
+      # - name: Deploy contracts
+      #   run: yarn deploy:test
 
-      - name: Build Docker Image
-        uses: ./.github/actions/docker-build-push
-        with:
-          imageName: keep-ecdsa-hardhat
-          push: false
-          context: ./solidity/ecdsa
+      # - name: Build Docker Image
+      #   uses: ./.github/actions/docker-build-push
+      #   with:
+      #     imageName: keep-ecdsa-hardhat
+      #     push: false
+      #     context: ./solidity/ecdsa
 
   contracts-deployment-testnet:
     needs: [contracts-build-and-test]
@@ -242,122 +243,122 @@ jobs:
           ETHERSCAN_API_KEY: ${{ secrets.ETHERSCAN_API_KEY }}
         run: yarn deploy --network ${{ github.event.inputs.environment }}
 
-      - name: Bump up package version
-        id: npm-version-bump
-        uses: keep-network/npm-version-bump@v2
-        with:
-          work-dir: solidity/ecdsa
-          environment: ${{ github.event.inputs.environment }}
-          branch: ${{ github.ref }}
-          commit: ${{ github.sha }}
+  #     - name: Bump up package version
+  #       id: npm-version-bump
+  #       uses: keep-network/npm-version-bump@v2
+  #       with:
+  #         work-dir: solidity/ecdsa
+  #         environment: ${{ github.event.inputs.environment }}
+  #         branch: ${{ github.ref }}
+  #         commit: ${{ github.sha }}
 
-      - name: Publish to npm
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-        run: npm publish --access=public --tag ${{ github.event.inputs.environment }} --network=${{ github.event.inputs.environment }}
+  #     - name: Publish to npm
+  #       env:
+  #         NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+  #       run: npm publish --access=public --tag ${{ github.event.inputs.environment }} --network=${{ github.event.inputs.environment }}
 
-      - name: Build and Publish Docker image
-        uses: ./.github/actions/docker-build-push
-        with:
-          environment: ${{ github.event.inputs.environment }}
-          imageName: keep-ecdsa-hardhat
-          context: ./solidity/ecdsa
-          push: true
-          gcrJsonKey: ${{ secrets.KEEP_TEST_GCR_JSON_KEY }}
+  #     - name: Build and Publish Docker image
+  #       uses: ./.github/actions/docker-build-push
+  #       with:
+  #         environment: ${{ github.event.inputs.environment }}
+  #         imageName: keep-ecdsa-hardhat
+  #         context: ./solidity/ecdsa
+  #         push: true
+  #         gcrJsonKey: ${{ secrets.KEEP_TEST_GCR_JSON_KEY }}
 
-      - name: Notify CI about completion of the workflow
-        uses: keep-network/ci/actions/notify-workflow-completed@v2
-        env:
-          GITHUB_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
-        with:
-          module: "github.com/keep-network/keep-core/ecdsa"
-          url: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
-          environment: ${{ github.event.inputs.environment }}
-          upstream_builds: ${{ github.event.inputs.upstream_builds }}
-          upstream_ref: ${{ github.event.inputs.upstream_ref }}
-          version: ${{ steps.npm-version-bump.outputs.version }}
+  #     - name: Notify CI about completion of the workflow
+  #       uses: keep-network/ci/actions/notify-workflow-completed@v2
+  #       env:
+  #         GITHUB_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
+  #       with:
+  #         module: "github.com/keep-network/keep-core/ecdsa"
+  #         url: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
+  #         environment: ${{ github.event.inputs.environment }}
+  #         upstream_builds: ${{ github.event.inputs.upstream_builds }}
+  #         upstream_ref: ${{ github.event.inputs.upstream_ref }}
+  #         version: ${{ steps.npm-version-bump.outputs.version }}
 
-  # This job is responsible for publishing packackes with slightly modified
-  # contracts. The modifications are there to help with the process of testing
-  # some features on the T Token Dashboard. The job starts only if workflow
-  # gets triggered by the `workflow_dispatch` event on the branch called
-  # `dapp-development`.
-  contracts-dapp-development-deployment-testnet:
-    needs: [contracts-build-and-test]
-    if: |
-      github.event_name == 'workflow_dispatch'
-        && github.ref == 'refs/heads/dapp-development'
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: ./solidity/ecdsa
-    steps:
-      - uses: actions/checkout@v3
+  # # This job is responsible for publishing packackes with slightly modified
+  # # contracts. The modifications are there to help with the process of testing
+  # # some features on the T Token Dashboard. The job starts only if workflow
+  # # gets triggered by the `workflow_dispatch` event on the branch called
+  # # `dapp-development`.
+  # contracts-dapp-development-deployment-testnet:
+  #   needs: [contracts-build-and-test]
+  #   if: |
+  #     github.event_name == 'workflow_dispatch'
+  #       && github.ref == 'refs/heads/dapp-development'
+  #   runs-on: ubuntu-latest
+  #   defaults:
+  #     run:
+  #       working-directory: ./solidity/ecdsa
+  #   steps:
+  #     - uses: actions/checkout@v3
 
-      - uses: actions/setup-node@v3
-        with:
-          node-version: "18.x"
-          cache: "yarn"
-          cache-dependency-path: solidity/ecdsa/yarn.lock
-          registry-url: "https://registry.npmjs.org"
+  #     - uses: actions/setup-node@v3
+  #       with:
+  #         node-version: "18.x"
+  #         cache: "yarn"
+  #         cache-dependency-path: solidity/ecdsa/yarn.lock
+  #         registry-url: "https://registry.npmjs.org"
 
-      - name: Install dependencies
-        run: yarn install --frozen-lockfile
+  #     - name: Install dependencies
+  #       run: yarn install --frozen-lockfile
 
-      - name: Get upstream packages versions
-        uses: keep-network/ci/actions/upstream-builds-query@v2
-        id: upstream-builds-query
-        with:
-          upstream-builds: ${{ github.event.inputs.upstream_builds }}
-          query: |
-            threshold-contracts-version = github.com/threshold-network/solidity-contracts#version
-            random-beacon-version = github.com/keep-network/keep-core/random-beacon#version
+  #     - name: Get upstream packages versions
+  #       uses: keep-network/ci/actions/upstream-builds-query@v2
+  #       id: upstream-builds-query
+  #       with:
+  #         upstream-builds: ${{ github.event.inputs.upstream_builds }}
+  #         query: |
+  #           threshold-contracts-version = github.com/threshold-network/solidity-contracts#version
+  #           random-beacon-version = github.com/keep-network/keep-core/random-beacon#version
 
-      - name: Resolve latest contracts
-        run: |
-          yarn upgrade \
-            @threshold-network/solidity-contracts@${{ steps.upstream-builds-query.outputs.threshold-contracts-version }} \
-            @keep-network/random-beacon@${{ steps.upstream-builds-query.outputs.random-beacon-version }} \
-            @keep-network/sortition-pools
+  #     - name: Resolve latest contracts
+  #       run: |
+  #         yarn upgrade \
+  #           @threshold-network/solidity-contracts@${{ steps.upstream-builds-query.outputs.threshold-contracts-version }} \
+  #           @keep-network/random-beacon@${{ steps.upstream-builds-query.outputs.random-beacon-version }} \
+  #           @keep-network/sortition-pools
       
-      - name: Deploy contracts
-        env:
-          CHAIN_API_URL: ${{ secrets.GOERLI_ETH_HOSTNAME_HTTP }}
-          ACCOUNTS_PRIVATE_KEYS: ${{ secrets.DAPP_DEV_GOERLI_ETH_CONTRACT_OWNER_PRIVATE_KEY }}
-          ETHERSCAN_API_KEY: ${{ secrets.ETHERSCAN_API_KEY }}
-        run: yarn deploy --network ${{ github.event.inputs.environment }}
+  #     - name: Deploy contracts
+  #       env:
+  #         CHAIN_API_URL: ${{ secrets.GOERLI_ETH_HOSTNAME_HTTP }}
+  #         ACCOUNTS_PRIVATE_KEYS: ${{ secrets.DAPP_DEV_GOERLI_ETH_CONTRACT_OWNER_PRIVATE_KEY }}
+  #         ETHERSCAN_API_KEY: ${{ secrets.ETHERSCAN_API_KEY }}
+  #       run: yarn deploy --network ${{ github.event.inputs.environment }}
 
-      - name: Bump up package version
-        id: npm-version-bump
-        uses: keep-network/npm-version-bump@v2
-        with:
-          work-dir: solidity/ecdsa
-          environment: dapp-dev-${{ github.event.inputs.environment }}
-          branch: ${{ github.ref }}
-          commit: ${{ github.sha }}
+  #     - name: Bump up package version
+  #       id: npm-version-bump
+  #       uses: keep-network/npm-version-bump@v2
+  #       with:
+  #         work-dir: solidity/ecdsa
+  #         environment: dapp-dev-${{ github.event.inputs.environment }}
+  #         branch: ${{ github.ref }}
+  #         commit: ${{ github.sha }}
 
-      - name: Publish to npm
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-        run: npm publish --access=public --tag dapp-development-${{ github.event.inputs.environment }} --network=${{ github.event.inputs.environment }}
+  #     - name: Publish to npm
+  #       env:
+  #         NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+  #       run: npm publish --access=public --tag dapp-development-${{ github.event.inputs.environment }} --network=${{ github.event.inputs.environment }}
 
-      - name: Build and Publish Docker image
-        uses: ./.github/actions/docker-build-push
-        with:
-          environment: ${{ github.event.inputs.environment }}
-          imageName: keep-ecdsa-hardhat-dapp-dev
-          context: ./solidity/ecdsa
-          push: true
-          gcrJsonKey: ${{ secrets.KEEP_TEST_GCR_JSON_KEY }}
+  #     - name: Build and Publish Docker image
+  #       uses: ./.github/actions/docker-build-push
+  #       with:
+  #         environment: ${{ github.event.inputs.environment }}
+  #         imageName: keep-ecdsa-hardhat-dapp-dev
+  #         context: ./solidity/ecdsa
+  #         push: true
+  #         gcrJsonKey: ${{ secrets.KEEP_TEST_GCR_JSON_KEY }}
 
-      - name: Notify CI about completion of the workflow
-        uses: keep-network/ci/actions/notify-workflow-completed@v2
-        env:
-          GITHUB_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
-        with:
-          module: "github.com/keep-network/keep-core/ecdsa"
-          url: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
-          environment: ${{ github.event.inputs.environment }}
-          upstream_builds: ${{ github.event.inputs.upstream_builds }}
-          upstream_ref: dapp-development
-          version: ${{ steps.npm-version-bump.outputs.version }}
+  #     - name: Notify CI about completion of the workflow
+  #       uses: keep-network/ci/actions/notify-workflow-completed@v2
+  #       env:
+  #         GITHUB_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
+  #       with:
+  #         module: "github.com/keep-network/keep-core/ecdsa"
+  #         url: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
+  #         environment: ${{ github.event.inputs.environment }}
+  #         upstream_builds: ${{ github.event.inputs.upstream_builds }}
+  #         upstream_ref: dapp-development
+  #         version: ${{ steps.npm-version-bump.outputs.version }}
