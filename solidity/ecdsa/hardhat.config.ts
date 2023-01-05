@@ -118,7 +118,7 @@ const config: HardhatUserConfig = {
       accounts: process.env.ACCOUNTS_PRIVATE_KEYS
         ? process.env.ACCOUNTS_PRIVATE_KEYS.split(",")
         : undefined,
-      tags: ["etherscan", "tenderly"],
+      tags: ["etherscan"],
     },
     mainnet: {
       url: process.env.CHAIN_API_URL || "",
