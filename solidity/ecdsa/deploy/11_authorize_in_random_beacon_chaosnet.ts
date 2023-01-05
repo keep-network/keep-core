@@ -8,10 +8,6 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
 
   const WalletRegistry = await deployments.get("WalletRegistry")
 
-  // TODO: Who should execute the transaction - the deployer or the governance?
-  // TODO: This step should only be executed when both conditions are true:
-  //       1) we are deploying for mainnet
-  //       2) we are in the chaosnet phase
   await execute(
     "RandomBeaconChaosnet",
     { from: deployer, log: true, waitConfirmations: 1 },
@@ -24,4 +20,4 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
 export default func
 
 func.tags = ["WalletRegistryAuthorizeInBeaconChaosnet"]
-func.dependencies = ["WalletRegistry"]
+func.dependencies = ["RandomBeaconChaosnet", "WalletRegistry"]

@@ -5,10 +5,10 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   const { getNamedAccounts, deployments, ethers, helpers } = hre
   const { deployer } = await getNamedAccounts()
 
+  const RandomBeaconChaosnet = await deployments.get("RandomBeaconChaosnet")
   const EcdsaSortitionPool = await deployments.get("EcdsaSortitionPool")
   const TokenStaking = await deployments.get("TokenStaking")
   const ReimbursementPool = await deployments.get("ReimbursementPool")
-  const RandomBeacon = await deployments.get("RandomBeacon")
   const EcdsaDkgValidator = await deployments.get("EcdsaDkgValidator")
 
   const EcdsaInactivity = await deployments.deploy("EcdsaInactivity", {
@@ -16,9 +16,6 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
     log: true,
     waitConfirmations: 1,
   })
-
-  // TODO: In case of deployment for mainnet and chaosnet WalletRegistry should
-  //       have RAndomBeaconChaosnet set in the constructor, not RandomBeacon.
 
   const [walletRegistry, proxyDeployment] = await helpers.upgrades.deployProxy(
     "WalletRegistry",
@@ -29,7 +26,7 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
           : undefined,
       initializerArgs: [
         EcdsaDkgValidator.address,
-        RandomBeacon.address,
+        RandomBeaconChaosnet.address,
         ReimbursementPool.address,
       ],
       factoryOpts: {
@@ -77,7 +74,7 @@ export default func
 func.tags = ["WalletRegistry"]
 func.dependencies = [
   "ReimbursementPool",
-  "RandomBeacon",
+  "RandomBeaconChaosnet",
   "EcdsaSortitionPool",
   "TokenStaking",
   "EcdsaDkgValidator",

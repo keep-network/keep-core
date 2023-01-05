@@ -24,7 +24,3 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 export default func
 
 func.tags = ["RandomBeaconChaosnet"]
-
-// Only execute for mainnet.
-func.skip = async (hre: HardhatRuntimeEnvironment): Promise<boolean> =>
-  hre.network.name !== "mainnet"
