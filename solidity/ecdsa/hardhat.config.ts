@@ -146,17 +146,17 @@ const config: HardhatUserConfig = {
     },
     governance: {
       default: 2,
-      goerli: 0,
+      goerli: "0xCac19049825F370dB0836cB0d8E4D024F78eb2eB", // Dev team
       mainnet: "0x9f6e831c8f8939dc0c830c6e492e7cef4f9c2f5f", // Threshold Council
     },
     chaosnetOwner: {
       default: 3,
-      goerli: 0,
+      goerli: "0xCac19049825F370dB0836cB0d8E4D024F78eb2eB", // Dev team
       mainnet: "0x9f6e831c8f8939dc0c830c6e492e7cef4f9c2f5f", // Threshold Council
     },
     esdm: {
       default: 4,
-      goerli: 0,
+      goerli: "0xCac19049825F370dB0836cB0d8E4D024F78eb2eB", // Dev team
       mainnet: "0x9f6e831c8f8939dc0c830c6e492e7cef4f9c2f5f", // Threshold Council
     },
   },
