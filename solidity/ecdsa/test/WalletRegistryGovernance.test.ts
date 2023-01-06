@@ -1,4 +1,4 @@
-import { deployments, ethers, helpers, getUnnamedAccounts } from "hardhat"
+import { deployments, ethers, helpers } from "hardhat"
 import { expect } from "chai"
 
 import { constants, params, updateWalletRegistryParams } from "./fixtures"

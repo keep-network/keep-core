@@ -1029,14 +1029,14 @@
     openzeppelin-solidity "2.4.0"
 
 "@keep-network/random-beacon@development":
-  version "2.1.0-dev.1"
-  resolved "https://registry.yarnpkg.com/@keep-network/random-beacon/-/random-beacon-2.1.0-dev.1.tgz#197422cef030cb61b0b88fc08a59292a9efb3b28"
-  integrity sha512-ppCPriGEhyc2Aw30wu0ujLphs6wRUdPYR345Knts8tx/z+D49Xg+3JA5tcUiPgXBnJnJJ00sk6uHXdhUS3LLDg==
+  version "2.1.0-dev.4"
+  resolved "https://registry.yarnpkg.com/@keep-network/random-beacon/-/random-beacon-2.1.0-dev.4.tgz#464115a0dd262d217c605763491c8668b2a3fa82"
+  integrity sha512-8mWbODZKFyV96RurPUwxhdf0HBGwlv9QGqCUo7SGtIxpqRTJPCHj86NjtD/ktqFPcPamc8WqlGUi2JGVntoqSg==
   dependencies:
     "@keep-network/sortition-pools" "^2.0.0-pre.16"
     "@openzeppelin/contracts" "^4.6.0"
     "@thesis/solidity-contracts" "github:thesis/solidity-contracts#4985bcf"
-    "@threshold-network/solidity-contracts" "1.3.0-dev.2"
+    "@threshold-network/solidity-contracts" "1.3.0-dev.3"
 
 "@keep-network/sortition-pools@^2.0.0-pre.16":
   version "2.0.0-pre.16"
@@ -1462,7 +1462,17 @@
   dependencies:
     "@openzeppelin/contracts" "^4.1.0"
 
-"@threshold-network/solidity-contracts@1.3.0-dev.2", "@threshold-network/solidity-contracts@development":
+"@threshold-network/solidity-contracts@1.3.0-dev.3":
+  version "1.3.0-dev.3"
+  resolved "https://registry.yarnpkg.com/@threshold-network/solidity-contracts/-/solidity-contracts-1.3.0-dev.3.tgz#aa896b80a083ca8a7cb5219e3c9d1c47e3d86b03"
+  integrity sha512-BNm5+JKrFvg9hZ02Sp/A+vKs1PQB37rYdcZqLrLhvwDFzHFvL+XA2IXqvN1CznQTeehwnX3DtCcONTVP42i56A==
+  dependencies:
+    "@keep-network/keep-core" ">1.8.1-dev <1.8.1-goerli"
+    "@openzeppelin/contracts" "~4.5.0"
+    "@openzeppelin/contracts-upgradeable" "~4.5.2"
+    "@thesis/solidity-contracts" "github:thesis/solidity-contracts#4985bcf"
+
+"@threshold-network/solidity-contracts@development":
   version "1.3.0-dev.2"
   resolved "https://registry.yarnpkg.com/@threshold-network/solidity-contracts/-/solidity-contracts-1.3.0-dev.2.tgz#e3589004aff366d9f034e51b1be8832d01c81d47"
   integrity sha512-qJulhTwYW7ZKVIgpqWVdQE9R45OgxjmqLaGp2gAv3hvlAUUsC+dnxub1kaQfDqQcZmwzZvtHcxLXYtHg4Cs2ug==
