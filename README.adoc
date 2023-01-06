@@ -34,7 +34,7 @@ https://github.com/keep-network/keep-ecdsa[keep-ecdsa].
 
 == Getting Started
 
-A good place to start is the link:docs/[the docs directory].
+A good place to start is link:docs/[the docs directory].
 
 === Running a Node
 
