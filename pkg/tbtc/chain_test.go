@@ -131,6 +131,12 @@ func (lc *localChain) OnDKGStarted(
 	panic("unsupported")
 }
 
+func (lc *localChain) PastDKGStartedEvents(
+	filter *DKGStartedEventFilter,
+) ([]*DKGStartedEvent, error) {
+	panic("unsupported")
+}
+
 func (lc *localChain) OnDKGResultSubmitted(
 	handler func(event *DKGResultSubmittedEvent),
 ) subscription.EventSubscription {

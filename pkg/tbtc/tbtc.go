@@ -146,16 +146,61 @@ func Initialize(
 				return
 			}
 
+			confirmationBlock := event.BlockNumber + dkgStartedConfirmationBlocks
+
 			logger.Infof(
-				"DKG started with seed [0x%x] at block [%v]",
+				"observed DKG started event with seed [0x%x] and "+
+					"starting block [%v]; waiting for block [%v] to confirm",
 				event.Seed,
 				event.BlockNumber,
+				confirmationBlock,
 			)
 
-			node.joinDKGIfEligible(
-				event.Seed,
-				event.BlockNumber,
-			)
+			err := node.waitForBlockHeight(ctx, confirmationBlock)
+			if err != nil {
+				logger.Errorf("failed to confirm DKG started event: [%v]", err)
+				return
+			}
+
+			dkgState, err := chain.GetDKGState()
+			if err != nil {
+				logger.Errorf("failed to check DKG state: [%v]", err)
+				return
+			}
+
+			if dkgState == AwaitingResult {
+				// Fetch all past DKG started events starting from one
+				// confirmation period before the original event's block.
+				pastEvents, err := chain.PastDKGStartedEvents(
+					&DKGStartedEventFilter{
+						StartBlock: event.BlockNumber - dkgStartedConfirmationBlocks,
+					},
+				)
+				if err != nil {
+					logger.Errorf("failed to get past DKG started events: [%v]", err)
+					return
+				}
+
+				lastEvent := pastEvents[len(pastEvents)-1]
+
+				logger.Infof(
+					"DKG started with seed [0x%x] at block [%v]",
+					lastEvent.Seed,
+					lastEvent.BlockNumber,
+				)
+
+				node.joinDKGIfEligible(
+					lastEvent.Seed,
+					lastEvent.BlockNumber,
+				)
+			} else {
+				logger.Infof(
+					"DKG started event with seed [0x%x] and starting "+
+						"block [%v] was not confirmed",
+					event.Seed,
+					event.BlockNumber,
+				)
+			}
 		}()
 	})
 

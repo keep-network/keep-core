@@ -20,6 +20,10 @@ import (
 )
 
 const (
+	// dkgStartedConfirmationBlocks determines the block length of the
+	// confirmation period that is preserved after a DKG start. Once the period
+	// elapses, the DKG state is checked to confirm the protocol can be started.
+	dkgStartedConfirmationBlocks = 20
 	// dkgResultSubmissionDelayStep determines the delay step in blocks that
 	// is used to calculate the submission delay period that should be respected
 	// by the given member to avoid all members submitting the same DKG result
