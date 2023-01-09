@@ -140,19 +140,6 @@ func newTbtcChain(
 	}, nil
 }
 
-// GetConfig returns the expected configuration of the TBTC module.
-func (tc *TbtcChain) GetConfig() *tbtc.ChainConfig {
-	groupSize := 100
-	groupQuorum := 90
-	honestThreshold := 51
-
-	return &tbtc.ChainConfig{
-		GroupSize:       groupSize,
-		GroupQuorum:     groupQuorum,
-		HonestThreshold: honestThreshold,
-	}
-}
-
 // Staking returns address of the TokenStaking contract the WalletRegistry is
 // connected to.
 func (tc *TbtcChain) Staking() (chain.Address, error) {
@@ -616,8 +603,8 @@ func computeOperatorsIDsHash(operatorsIDs chain.OperatorIDs) ([32]byte, error) {
 	return crypto.Keccak256Hash(bytes), nil
 }
 
-// convertSignaturesToChainFormat converts signatures map to two slices. First
-// slice contains indices of members from the map, sorted in ascending order
+// convertSignaturesToChainFormat converts signatures map to two slices. The
+// first slice contains indices of members from the map, sorted in ascending order
 // as required by the contract. The second slice is a slice of concatenated
 // signatures. Signatures and member indices are returned in the matching order.
 // It requires each signature to be exactly 65-byte long.
@@ -739,8 +726,8 @@ func (tc *TbtcChain) CalculateDKGResultSignatureHash(
 	)
 }
 
-// computeDkgResultHash computes the keccak256 hash for the given DKG result
-// parameters. It expects that the groupPublicKey is a 64-byte uncompressed
+// calculateDKGResultSignatureHash computes the keccak256 hash for the given DKG
+// result parameters. It expects that the groupPublicKey is a 64-byte uncompressed
 // public key without the 04 prefix and misbehavedMembersIndexes slice is
 // sorted in ascending order. Those expectations are forced by the contract.
 func calculateDKGResultSignatureHash(
@@ -884,34 +871,32 @@ func (tc *TbtcChain) OnHeartbeatRequested(
 						continue
 					}
 
-					if len(walletPublicKey) > 0 {
-						prefixBytes := make([]byte, 8)
+					prefixBytes := make([]byte, 8)
+					binary.BigEndian.PutUint64(
+						prefixBytes,
+						0xffffffffffffffff,
+					)
+
+					messages := make([]*big.Int, 5)
+					for i := range messages {
+						suffixBytes := make([]byte, 8)
 						binary.BigEndian.PutUint64(
-							prefixBytes,
-							0xffffffffffffffff,
+							suffixBytes,
+							block+uint64(i),
 						)
 
-						messages := make([]*big.Int, 5)
-						for i := range messages {
-							suffixBytes := make([]byte, 8)
-							binary.BigEndian.PutUint64(
-								suffixBytes,
-								block+uint64(i),
-							)
+						preimage := append(prefixBytes, suffixBytes...)
+						preimageSha256 := sha256.Sum256(preimage)
+						message := sha256.Sum256(preimageSha256[:])
 
-							preimage := append(prefixBytes, suffixBytes...)
-							preimageSha256 := sha256.Sum256(preimage)
-							message := sha256.Sum256(preimageSha256[:])
-
-							messages[i] = new(big.Int).SetBytes(message[:])
-						}
-
-						go handler(&tbtc.HeartbeatRequestedEvent{
-							WalletPublicKey: walletPublicKey,
-							Messages:        messages,
-							BlockNumber:     block,
-						})
+						messages[i] = new(big.Int).SetBytes(message[:])
 					}
+
+					go handler(&tbtc.HeartbeatRequestedEvent{
+						WalletPublicKey: walletPublicKey,
+						Messages:        messages,
+						BlockNumber:     block,
+					})
 				}
 			case <-ctx.Done():
 				return

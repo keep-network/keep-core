@@ -76,8 +76,10 @@ func (drs *dkgResultSigner) VerifySignature(signedResult *dkg.SignedResult) (boo
 
 // dkgResultSubmitter is responsible for submitting the DKG result to the chain.
 type dkgResultSubmitter struct {
-	dkgLogger            log.StandardLogger
+	dkgLogger log.StandardLogger
+
 	chain                Chain
+	groupParameters      *GroupParameters
 	groupSelectionResult *GroupSelectionResult
 
 	waitForBlockFn waitForBlockFn
@@ -86,6 +88,7 @@ type dkgResultSubmitter struct {
 func newDkgResultSubmitter(
 	dkgLogger log.StandardLogger,
 	chain Chain,
+	groupParameters *GroupParameters,
 	groupSelectionResult *GroupSelectionResult,
 	waitForBlockFn waitForBlockFn,
 ) *dkgResultSubmitter {
@@ -93,6 +96,7 @@ func newDkgResultSubmitter(
 		dkgLogger:            dkgLogger,
 		chain:                chain,
 		groupSelectionResult: groupSelectionResult,
+		groupParameters:      groupParameters,
 		waitForBlockFn:       waitForBlockFn,
 	}
 }
@@ -108,13 +112,11 @@ func (drs *dkgResultSubmitter) SubmitResult(
 	result *dkg.Result,
 	signatures map[group.MemberIndex][]byte,
 ) error {
-	config := drs.chain.GetConfig()
-
-	if len(signatures) < config.GroupQuorum {
+	if len(signatures) < drs.groupParameters.GroupQuorum {
 		return fmt.Errorf(
 			"could not submit result with [%v] signatures for group quorum [%v]",
 			len(signatures),
-			config.GroupQuorum,
+			drs.groupParameters.GroupQuorum,
 		)
 	}
 

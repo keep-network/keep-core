@@ -47,6 +47,8 @@ func initFlags(
 			initClientInfoFlags(cmd, cfg)
 		case config.Tbtc:
 			initTbtcFlags(cmd, cfg)
+		case config.Maintainer:
+			initMaintainerFlags(cmd, cfg)
 		case config.Developer:
 			initDeveloperFlags(cmd)
 		}
@@ -318,19 +320,19 @@ func initTbtcFlags(cmd *cobra.Command, cfg *config.Config) {
 		tbtc.DefaultKeyGenerationConcurrency,
 		"tECDSA key generation concurrency.",
 	)
+}
 
+// Initialize flags for Maintainer configuration.
+func initMaintainerFlags(cmd *cobra.Command, cfg *config.Config) {
 	cmd.Flags().BoolVar(
-		&cfg.Tbtc.Maintainer.BitcoinDifficulty,
+		&cfg.Maintainer.BitcoinDifficulty,
 		"bitcoinDifficulty",
 		false,
 		"start Bitcoin difficulty maintainer",
 	)
 
-	// TODO: Once https://github.com/keep-network/keep-core/pull/3394 is merged
-	//       move initializing of the `wallet` flag from `initTbtcFlags` to
-	//       `initMaintainerFlags`.
 	cmd.Flags().BoolVar(
-		&cfg.Tbtc.Maintainer.Wallet,
+		&cfg.Maintainer.Wallet,
 		"wallet",
 		false,
 		"start wallet maintainer",
@@ -351,6 +353,7 @@ func initDeveloperFlags(command *cobra.Command) {
 	}
 
 	initContractAddressFlag(chainEthereum.BridgeContractName)
+	initContractAddressFlag(chainEthereum.LightRelayContractName)
 	initContractAddressFlag(chainEthereum.RandomBeaconContractName)
 	initContractAddressFlag(chainEthereum.TokenStakingContractName)
 	initContractAddressFlag(chainEthereum.WalletRegistryContractName)

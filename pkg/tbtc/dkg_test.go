@@ -7,7 +7,6 @@ import (
 	"testing"
 	"time"
 
-	"golang.org/x/crypto/sha3"
 	"golang.org/x/exp/slices"
 
 	"github.com/keep-network/keep-core/pkg/chain"
@@ -16,6 +15,7 @@ import (
 	"github.com/keep-network/keep-core/pkg/protocol/group"
 	"github.com/keep-network/keep-core/pkg/tecdsa"
 	"github.com/keep-network/keep-core/pkg/tecdsa/dkg"
+	"golang.org/x/crypto/sha3"
 )
 
 func TestDkgExecutor_RegisterSigner(t *testing.T) {
@@ -24,14 +24,13 @@ func TestDkgExecutor_RegisterSigner(t *testing.T) {
 		t.Fatalf("failed to load test data: [%v]", err)
 	}
 
-	const (
-		groupSize          = 5
-		groupQuorum        = 3
-		honestThreshold    = 2
-		dishonestThreshold = 3
-	)
+	groupParameters := &GroupParameters{
+		GroupSize:       5,
+		GroupQuorum:     3,
+		HonestThreshold: 2,
+	}
 
-	localChain := Connect(groupSize, groupQuorum, honestThreshold)
+	localChain := Connect()
 
 	selectedOperators := []chain.Address{
 		"0xAA",
@@ -93,11 +92,12 @@ func TestDkgExecutor_RegisterSigner(t *testing.T) {
 
 			dkgExecutor := &dkgExecutor{
 				// setting only the fields really needed for this test
-				chain:          localChain,
-				walletRegistry: walletRegistry,
+				groupParameters: groupParameters,
+				chain:           localChain,
+				walletRegistry:  walletRegistry,
 			}
 
-			group := group.NewGroup(dishonestThreshold, groupSize)
+			group := group.NewGroup(groupParameters.DishonestThreshold(), groupParameters.GroupSize)
 			for _, disqualifiedMember := range test.disqualifiedMemberIndexes {
 				group.MarkMemberAsDisqualified(disqualifiedMember)
 			}
@@ -171,14 +171,14 @@ func TestDkgExecutor_ExecuteDkgValidation(t *testing.T) {
 		t.Fatalf("failed to load test data: [%v]", err)
 	}
 
-	const (
-		groupSize       = 5
-		groupQuorum     = 3
-		honestThreshold = 2
-	)
+	groupParameters := &GroupParameters{
+		GroupSize:       5,
+		GroupQuorum:     3,
+		HonestThreshold: 2,
+	}
 
 	tecdsaDkgResult := &dkg.Result{
-		Group:           group.NewGroup(groupSize-honestThreshold, groupSize),
+		Group:           group.NewGroup(groupParameters.DishonestThreshold(), groupParameters.GroupSize),
 		PrivateKeyShare: tecdsa.NewPrivateKeyShare(testData[0]),
 	}
 
@@ -189,15 +189,14 @@ func TestDkgExecutor_ExecuteDkgValidation(t *testing.T) {
 
 	var tests = map[string]struct {
 		submitterMemberIndex     group.MemberIndex
-		controlledMembersIndexes []group.MemberIndex
 		resultValid              bool
+		rejectedApprovalsIndexes []int
 		expectedEvent            interface{}
 		expectedDkgState         DKGState
 	}{
 		"result approved by the submitter": {
-			submitterMemberIndex:     group.MemberIndex(2),
-			controlledMembersIndexes: []group.MemberIndex{1, 2, 3, 4, 5},
-			resultValid:              true,
+			submitterMemberIndex: group.MemberIndex(1),
+			resultValid:          true,
 			expectedEvent: &DKGResultApprovedEvent{
 				ResultHash: sha3.Sum256(groupPublicKey),
 				Approver:   "",
@@ -207,23 +206,25 @@ func TestDkgExecutor_ExecuteDkgValidation(t *testing.T) {
 			expectedDkgState: Idle,
 		},
 		"result approved by a non-submitter": {
-			submitterMemberIndex:     group.MemberIndex(1),
-			controlledMembersIndexes: []group.MemberIndex{2, 3, 4, 5},
-			resultValid:              true,
+			submitterMemberIndex: group.MemberIndex(1),
+			resultValid:          true,
+			// Reject the first approval (with index 0) that will be made by
+			// member 1 (the submitter) in order to force the member 2 to
+			// approve after the precedence period.
+			rejectedApprovalsIndexes: []int{0},
 			expectedEvent: &DKGResultApprovedEvent{
 				ResultHash: sha3.Sum256(groupPublicKey),
 				Approver:   "",
-				// 26 is the next block after 15 blocks of the challenge period,
-				// 5 blocks of the precedence period, and 5 blocks of the delay
+				// 36 is the next block after 15 blocks of the challenge period,
+				// 5 blocks of the precedence period, and 15 blocks of the delay
 				// for member 2
-				BlockNumber: 26,
+				BlockNumber: 36,
 			},
 			expectedDkgState: Idle,
 		},
 		"result challenged": {
-			submitterMemberIndex:     group.MemberIndex(2),
-			controlledMembersIndexes: []group.MemberIndex{1, 2, 3, 4, 5},
-			resultValid:              false,
+			submitterMemberIndex: group.MemberIndex(1),
+			resultValid:          false,
 			expectedEvent: &DKGResultChallengedEvent{
 				ResultHash:  sha3.Sum256(groupPublicKey),
 				Challenger:  "",
@@ -236,7 +237,17 @@ func TestDkgExecutor_ExecuteDkgValidation(t *testing.T) {
 
 	for testName, test := range tests {
 		t.Run(testName, func(t *testing.T) {
-			localChain := Connect(groupSize, groupQuorum, honestThreshold)
+			localChain := Connect()
+
+			approvalIndex := 0
+			localChain.dkgResultApprovalGuard = func() bool {
+				rejectedApproval := slices.Contains(
+					test.rejectedApprovalsIndexes,
+					approvalIndex,
+				)
+				approvalIndex++
+				return !rejectedApproval
+			}
 
 			operatorAddress, err := localChain.operatorAddress()
 			if err != nil {
@@ -249,16 +260,13 @@ func TestDkgExecutor_ExecuteDkgValidation(t *testing.T) {
 			}
 
 			signatures := make(map[group.MemberIndex][]byte)
-			operatorsIDs := make(chain.OperatorIDs, groupSize)
-			operatorsAddresses := make(chain.Addresses, groupSize)
+			operatorsIDs := make(chain.OperatorIDs, groupParameters.GroupSize)
+			operatorsAddresses := make(chain.Addresses, groupParameters.GroupSize)
 
-			for memberIndex := uint8(1); memberIndex <= groupSize; memberIndex++ {
+			for memberIndex := uint8(1); int(memberIndex) <= groupParameters.GroupSize; memberIndex++ {
 				signatures[memberIndex] = []byte{memberIndex}
-
-				if slices.Contains(test.controlledMembersIndexes, memberIndex) {
-					operatorsIDs[memberIndex-1] = operatorID
-					operatorsAddresses[memberIndex-1] = operatorAddress
-				}
+				operatorsIDs[memberIndex-1] = operatorID
+				operatorsAddresses[memberIndex-1] = operatorAddress
 			}
 
 			groupSelectionResult := &GroupSelectionResult{
@@ -311,6 +319,7 @@ func TestDkgExecutor_ExecuteDkgValidation(t *testing.T) {
 
 			// Setting only the fields really needed for this test.
 			dkgExecutor := &dkgExecutor{
+				groupParameters: groupParameters,
 				operatorIDFn: func() (chain.OperatorID, error) {
 					return operatorID, nil
 				},
@@ -371,7 +380,7 @@ func TestDkgExecutor_ExecuteDkgValidation(t *testing.T) {
 }
 
 func TestFinalSigningGroup(t *testing.T) {
-	chainConfig := &ChainConfig{
+	groupParameters := &GroupParameters{
 		GroupSize:       5,
 		GroupQuorum:     3,
 		HonestThreshold: 2,
@@ -422,7 +431,7 @@ func TestFinalSigningGroup(t *testing.T) {
 				finalSigningGroup(
 					test.selectedOperators,
 					test.operatingMembersIndexes,
-					chainConfig,
+					groupParameters,
 				)
 
 			if !reflect.DeepEqual(test.expectedError, err) {

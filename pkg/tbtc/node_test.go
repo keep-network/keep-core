@@ -17,17 +17,13 @@ import (
 )
 
 func TestNode_GetSigningExecutor(t *testing.T) {
-	chainConfig := &ChainConfig{
+	groupParameters := &GroupParameters{
 		GroupSize:       5,
 		GroupQuorum:     4,
 		HonestThreshold: 3,
 	}
 
-	localChain := Connect(
-		chainConfig.GroupSize,
-		chainConfig.GroupQuorum,
-		chainConfig.HonestThreshold,
-	)
+	localChain := Connect()
 	localProvider := local.Connect()
 
 	signer := createMockSigner(t)
@@ -37,6 +33,7 @@ func TestNode_GetSigningExecutor(t *testing.T) {
 	keyStorePersistence := createMockKeyStorePersistence(t, signer)
 
 	node, err := newNode(
+		groupParameters,
 		localChain,
 		localProvider,
 		keyStorePersistence,

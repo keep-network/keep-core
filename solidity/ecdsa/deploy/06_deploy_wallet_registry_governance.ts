@@ -7,7 +7,8 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
 
   const WalletRegistry = await deployments.get("WalletRegistry")
 
-  const GOVERNANCE_DELAY = 604800 // 1 week
+  // 60 seconds for Goerli. 1 week otherwise.
+  const GOVERNANCE_DELAY = hre.network.name === "goerli" ? 60 : 604800
 
   const WalletRegistryGovernance = await deployments.deploy(
     "WalletRegistryGovernance",

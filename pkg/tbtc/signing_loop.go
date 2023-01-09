@@ -85,7 +85,7 @@ type signingRetryLoop struct {
 	signingGroupMemberIndex group.MemberIndex
 	signingGroupOperators   chain.Addresses
 
-	chainConfig *ChainConfig
+	groupParameters *GroupParameters
 
 	announcer signingAnnouncer
 
@@ -102,7 +102,7 @@ func newSigningRetryLoop(
 	initialStartBlock uint64,
 	signingGroupMemberIndex group.MemberIndex,
 	signingGroupOperators chain.Addresses,
-	chainConfig *ChainConfig,
+	groupParameters *GroupParameters,
 	announcer signingAnnouncer,
 	doneCheck signingDoneCheckStrategy,
 ) *signingRetryLoop {
@@ -118,7 +118,7 @@ func newSigningRetryLoop(
 		message:                 message,
 		signingGroupMemberIndex: signingGroupMemberIndex,
 		signingGroupOperators:   signingGroupOperators,
-		chainConfig:             chainConfig,
+		groupParameters:         groupParameters,
 		announcer:               announcer,
 		attemptCounter:          0,
 		attemptStartBlock:       initialStartBlock,
@@ -235,7 +235,7 @@ func (srl *signingRetryLoop) start(
 			return nil, ctx.Err()
 		}
 
-		if len(readyMembersIndexes) >= srl.chainConfig.HonestThreshold {
+		if len(readyMembersIndexes) >= srl.groupParameters.HonestThreshold {
 			srl.logger.Infof(
 				"[member:%v] completed announcement phase for attempt [%v] "+
 					"with honest majority of [%v] members ready to sign",
@@ -433,7 +433,7 @@ func (srl *signingRetryLoop) qualifiedOperatorsSet(
 		readySigningGroupOperators,
 		srl.attemptSeed,
 		retryCount,
-		uint(srl.chainConfig.HonestThreshold),
+		uint(srl.groupParameters.HonestThreshold),
 	)
 	if err != nil {
 		return nil, fmt.Errorf(
@@ -472,7 +472,7 @@ func (srl *signingRetryLoop) excludedMembersIndexes(
 
 	// Make sure we always use just the smallest required count of
 	// signing members for performance reasons
-	if len(includedMembersIndexes) > srl.chainConfig.HonestThreshold {
+	if len(includedMembersIndexes) > srl.groupParameters.HonestThreshold {
 		// #nosec G404 (insecure random number source (rand))
 		// Shuffling does not require secure randomness.
 		rng := rand.New(rand.NewSource(
@@ -492,7 +492,7 @@ func (srl *signingRetryLoop) excludedMembersIndexes(
 		// the excluded members list.
 		excludedMembersIndexes = append(
 			excludedMembersIndexes,
-			includedMembersIndexes[srl.chainConfig.HonestThreshold:]...,
+			includedMembersIndexes[srl.groupParameters.HonestThreshold:]...,
 		)
 		// Sort the resulting excluded members list in ascending order.
 		sort.Slice(excludedMembersIndexes, func(i, j int) bool {

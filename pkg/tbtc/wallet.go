@@ -33,8 +33,8 @@ type wallet struct {
 }
 
 // groupSize returns the actual size of the wallet's signing group. This
-// value may be different from the `GroupSize` parameter of the chain config
-// as some candidates may be excluded during distributed key generation.
+// value may be different from the GroupParameters.GroupSize parameter as some
+// candidates may be excluded during distributed key generation.
 func (w *wallet) groupSize() int {
 	return len(w.signingGroupOperators)
 }

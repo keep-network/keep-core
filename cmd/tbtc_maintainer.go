@@ -8,7 +8,7 @@ import (
 
 	"github.com/keep-network/keep-core/config"
 	"github.com/keep-network/keep-core/pkg/bitcoin/electrum"
-	"github.com/keep-network/keep-core/pkg/tbtc/maintainer"
+	"github.com/keep-network/keep-core/pkg/maintainer"
 )
 
 // TbtcMaintainerCommand contains the definition of the tBTC maintainer
@@ -21,7 +21,7 @@ var TbtcMaintainerCommand = &cobra.Command{
 		if err := clientConfig.ReadConfig(
 			configFilePath,
 			cmd.Flags(),
-			config.TbtcMaintainerCategories...,
+			config.MaintainerCategories...,
 		); err != nil {
 			logger.Fatalf("error reading config: %v", err)
 		}
@@ -34,7 +34,7 @@ func init() {
 		TbtcMaintainerCommand,
 		&configFilePath,
 		clientConfig,
-		config.TbtcMaintainerCategories...,
+		config.MaintainerCategories...,
 	)
 }
 
@@ -54,7 +54,7 @@ func tbtcMaintainer(cmd *cobra.Command, args []string) error {
 	// 	return fmt.Errorf("could not connect to Tbtc chain: [%v]", err)
 	// }
 
-	maintainer.Initialize(ctx, clientConfig.Tbtc.Maintainer, bitcoinChain, nil, nil)
+	maintainer.Initialize(ctx, clientConfig.Maintainer, bitcoinChain, nil, nil)
 
 	<-ctx.Done()
 	return fmt.Errorf("unexpected context cancellation")

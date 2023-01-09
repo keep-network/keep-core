@@ -24,18 +24,25 @@ const (
 	// is used to calculate the submission delay period that should be respected
 	// by the given member to avoid all members submitting the same DKG result
 	// at the same time.
-	dkgResultSubmissionDelayStepBlocks = 5
+	dkgResultSubmissionDelayStepBlocks = 15
 	// dkgResultApprovalDelayStepBlocks determines the delay step in blocks
 	// that is used to calculate the approval delay period that should be
 	// respected by the given member to avoid all members approving the same
 	// DKG result at the same time.
-	dkgResultApprovalDelayStepBlocks = 5
+	dkgResultApprovalDelayStepBlocks = 15
+	// dkgResultChallengeConfirmationBlocks determines the block length of
+	// the confirmation period that is preserved after a DKG result challenge
+	// submission. Once the period elapses, the DKG state is checked to confirm
+	// the challenge was accepted successfully.
+	dkgResultChallengeConfirmationBlocks = 20
 )
 
 // dkgExecutor is a component responsible for the full execution of ECDSA
 // Distributed Key Generation: determining members selected to the signing
 // group, executing off-chain protocol, and publishing the result to the chain.
 type dkgExecutor struct {
+	groupParameters *GroupParameters
+
 	operatorIDFn    func() (chain.OperatorID, error)
 	operatorAddress chain.Address
 
@@ -53,6 +60,7 @@ type dkgExecutor struct {
 // newDkgExecutor creates a new instance of dkgExecutor struct. There should
 // be only one instance of dkgExecutor.
 func newDkgExecutor(
+	groupParameters *GroupParameters,
 	operatorIDFn func() (chain.OperatorID, error),
 	operatorAddress chain.Address,
 	chain Chain,
@@ -76,6 +84,7 @@ func newDkgExecutor(
 	)
 
 	return &dkgExecutor{
+		groupParameters: groupParameters,
 		operatorIDFn:    operatorIDFn,
 		operatorAddress: operatorAddress,
 		chain:           chain,
@@ -163,7 +172,7 @@ func (de *dkgExecutor) checkEligibility(
 		groupSelectionResult.OperatorsAddresses,
 	)
 
-	if len(groupSelectionResult.OperatorsAddresses) > de.chain.GetConfig().GroupSize {
+	if len(groupSelectionResult.OperatorsAddresses) > de.groupParameters.GroupSize {
 		return nil, nil, fmt.Errorf(
 			"group size larger than supported: [%v]",
 			len(groupSelectionResult.OperatorsAddresses),
@@ -235,8 +244,6 @@ func (de *dkgExecutor) generateSigningGroup(
 		return
 	}
 
-	chainConfig := de.chain.GetConfig()
-
 	dkgParameters, err := de.chain.DKGParameters()
 	if err != nil {
 		dkgLogger.Errorf("cannot get DKG parameters: [%v]", err)
@@ -260,6 +267,9 @@ func (de *dkgExecutor) generateSigningGroup(
 			)
 			defer cancelCtx()
 
+			// TODO: This subscription has to be updated once we implement
+			//       re-submitting DKG result to the chain after a challenge.
+			//       See https://github.com/keep-network/keep-core/issues/3450
 			subscription := de.chain.OnDKGResultSubmitted(
 				func(event *DKGResultSubmittedEvent) {
 					defer cancelCtx()
@@ -289,7 +299,7 @@ func (de *dkgExecutor) generateSigningGroup(
 				startBlock,
 				memberIndex,
 				groupSelectionResult.OperatorsAddresses,
-				chainConfig,
+				de.groupParameters,
 				announcer,
 			)
 
@@ -307,7 +317,7 @@ func (de *dkgExecutor) generateSigningGroup(
 						"[member:%v] scheduled dkg attempt "+
 							"with [%v] group members (excluded: [%v])",
 						memberIndex,
-						chainConfig.GroupSize-len(attempt.excludedMembersIndexes),
+						de.groupParameters.GroupSize-len(attempt.excludedMembersIndexes),
 						attempt.excludedMembersIndexes,
 					)
 
@@ -331,8 +341,8 @@ func (de *dkgExecutor) generateSigningGroup(
 						seed,
 						sessionID,
 						memberIndex,
-						chainConfig.GroupSize,
-						chainConfig.DishonestThreshold(),
+						de.groupParameters.GroupSize,
+						de.groupParameters.DishonestThreshold(),
 						attempt.excludedMembersIndexes,
 						broadcastChannel,
 						membershipValidator,
@@ -424,7 +434,6 @@ func (de *dkgExecutor) registerSigner(
 	memberIndex group.MemberIndex,
 	selectedSigningGroupOperators chain.Addresses,
 ) (*signer, error) {
-	chainConfig := de.chain.GetConfig()
 	// Final signing group may differ from the original DKG
 	// group outputted by the sortition protocol. One need to
 	// determine the final signing group based on the selected
@@ -434,7 +443,7 @@ func (de *dkgExecutor) registerSigner(
 		finalSigningGroup(
 			selectedSigningGroupOperators,
 			operatingMemberIndexes,
-			chainConfig,
+			de.groupParameters,
 		)
 	if err != nil {
 		return nil, fmt.Errorf("failed to resolve final signing group members")
@@ -491,7 +500,13 @@ func (de *dkgExecutor) publishDkgResult(
 		broadcastChannel,
 		membershipValidator,
 		newDkgResultSigner(de.chain, startBlock),
-		newDkgResultSubmitter(dkgLogger, de.chain, groupSelectionResult, de.waitForBlockFn),
+		newDkgResultSubmitter(
+			dkgLogger,
+			de.chain,
+			de.groupParameters,
+			groupSelectionResult,
+			de.waitForBlockFn,
+		),
 		dkgResult,
 	)
 }
@@ -513,6 +528,8 @@ func (de *dkgExecutor) executeDkgValidation(
 		zap.String("resultHash", fmt.Sprintf("0x%x", resultHash)),
 	)
 
+	dkgLogger.Infof("starting DKG result validation")
+
 	isValid, err := de.chain.IsDKGResultValid(result)
 	if err != nil {
 		dkgLogger.Errorf("cannot validate DKG result: [%v]", err)
@@ -522,15 +539,61 @@ func (de *dkgExecutor) executeDkgValidation(
 	if !isValid {
 		dkgLogger.Infof("DKG result is invalid")
 
-		err = de.chain.ChallengeDKGResult(result)
-		if err != nil {
-			dkgLogger.Errorf("cannot challenge invalid DKG result: [%v]", err)
-			return
+		i := uint64(0)
+
+		// Challenges are done along with DKG state confirmations. This is
+		// needed to handle chain reorgs that may wipe out the block holding
+		// the challenge transaction. The state check done upon the confirmation
+		// block makes sure the submitted challenge changed the DKG state
+		// as expected. If the DKG state was not changed, the challenge is
+		// re-submitted.
+		for {
+			i++
+
+			err = de.chain.ChallengeDKGResult(result)
+			if err != nil {
+				dkgLogger.Errorf(
+					"cannot challenge invalid DKG result: [%v]",
+					err,
+				)
+				return
+			}
+
+			confirmationBlock := submissionBlock +
+				(i * dkgResultChallengeConfirmationBlocks)
+
+			dkgLogger.Infof(
+				"challenging invalid DKG result; waiting for "+
+					"block [%v] to confirm DKG state",
+				confirmationBlock,
+			)
+
+			err := de.waitForBlockFn(context.Background(), confirmationBlock)
+			if err != nil {
+				dkgLogger.Errorf(
+					"error while waiting for challenge confirmation: [%v]",
+					err,
+				)
+				return
+			}
+
+			state, err := de.chain.GetDKGState()
+			if err != nil {
+				dkgLogger.Errorf("cannot check DKG state: [%v]", err)
+				return
+			}
+
+			if state != Challenge {
+				dkgLogger.Infof(
+					"invalid DKG result challenged successfully",
+				)
+				return
+			}
+
+			dkgLogger.Infof(
+				"invalid DKG result still not challenged; retrying",
+			)
 		}
-
-		dkgLogger.Infof("challenging invalid DKG result")
-
-		return
 	}
 
 	dkgLogger.Infof("DKG result is valid")
@@ -673,17 +736,20 @@ func (de *dkgExecutor) executeDkgValidation(
 // operatingMembersIndexes: [5, 1, 3]
 // finalOperators: [0xAA, 0xCC, 0xEE]
 // finalMembersIndexes: [1:1, 3:2, 5:3]
+//
+// Please see docs of IdentityConverter from pkg/tecdsa/common for more
+// information about shifting indexes.
 func finalSigningGroup(
 	selectedOperators []chain.Address,
 	operatingMembersIndexes []group.MemberIndex,
-	chainConfig *ChainConfig,
+	groupParameters *GroupParameters,
 ) (
 	[]chain.Address,
 	map[group.MemberIndex]group.MemberIndex,
 	error,
 ) {
-	if len(selectedOperators) != chainConfig.GroupSize ||
-		len(operatingMembersIndexes) < chainConfig.GroupQuorum {
+	if len(selectedOperators) != groupParameters.GroupSize ||
+		len(operatingMembersIndexes) < groupParameters.GroupQuorum {
 		return nil, nil, fmt.Errorf("invalid input parameters")
 	}
 

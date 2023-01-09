@@ -18,7 +18,13 @@ func Initialize(
 	launchAll := !config.BitcoinDifficulty && !config.Wallet
 
 	if config.BitcoinDifficulty || launchAll {
-		newBitcoinDifficultyMaintainer(ctx, btcChain, btcDiffChain)
+		initializeBitcoinDifficultyMaintainer(
+			ctx,
+			btcChain,
+			btcDiffChain,
+			bitcoinDifficultyDefaultIdleBackOffTime,
+			bitcoinDifficultyDefaultRestartBackoffTime,
+		)
 	}
 
 	if config.Wallet || launchAll {

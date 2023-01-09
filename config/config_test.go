@@ -71,6 +71,7 @@ func TestReadConfigFromFile(t *testing.T) {
 				"walletregistry": "0x143ba24e66fce8bca22f7d739f9a932c519b1c76",
 				"tokenstaking":   "0xa363a197f1bbb8877f50350234e3f15fb4175457",
 				"bridge":         "0x138D2a0c87BA9f6BE1DCc13D6224A6aCE9B6b6F0",
+				"lightrelay":     "0x68e20afD773fDF1231B5cbFeA7040e73e79cAc36",
 			},
 		},
 		"Developer - RandomBeacon": {
@@ -100,6 +101,15 @@ func TestReadConfigFromFile(t *testing.T) {
 				return address.String()
 			},
 			expectedValue: "0x138D2a0c87BA9f6BE1DCc13D6224A6aCE9B6b6F0",
+		},
+		"Ethereum.Developer - LightRelay": {
+			readValueFunc: func(c *Config) interface{} {
+				address, _ := c.Ethereum.ContractAddress(
+					ethereum.LightRelayContractName,
+				)
+				return address.String()
+			},
+			expectedValue: "0x68e20afD773fDF1231B5cbFeA7040e73e79cAc36",
 		},
 		"Bitcoin.Electrum.URL": {
 			readValueFunc: func(c *Config) interface{} { return c.Bitcoin.Electrum.URL },
@@ -167,12 +177,12 @@ func TestReadConfigFromFile(t *testing.T) {
 			readValueFunc: func(c *Config) interface{} { return c.ClientInfo.EthereumMetricsTick },
 			expectedValue: 87 * time.Second,
 		},
-		"Tbtc.Maintainer.BitcoinDifficulty": {
-			readValueFunc: func(c *Config) interface{} { return c.Tbtc.Maintainer.BitcoinDifficulty },
+		"Maintainer.BitcoinDifficulty": {
+			readValueFunc: func(c *Config) interface{} { return c.Maintainer.BitcoinDifficulty },
 			expectedValue: true,
 		},
-		"Tbtc.Maintainer.Wallet": {
-			readValueFunc: func(c *Config) interface{} { return c.Tbtc.Maintainer.Wallet },
+		"Maintainer.Wallet": {
+			readValueFunc: func(c *Config) interface{} { return c.Maintainer.Wallet },
 			expectedValue: true,
 		},
 	}

@@ -10,6 +10,7 @@ const (
 	Storage
 	ClientInfo
 	Tbtc
+	Maintainer
 	Developer
 )
 
@@ -24,11 +25,11 @@ var StartCmdCategories = []Category{
 	Developer,
 }
 
-// TbtcMaintainerCategories are categories needed for the tBTC maintainer command.
-var TbtcMaintainerCategories = []Category{
+// MaintainerCategories are categories needed for the maintainer command.
+var MaintainerCategories = []Category{
 	Ethereum,
 	BitcoinElectrum,
-	Tbtc,
+	Maintainer,
 }
 
 // AllCategories are all available categories.
@@ -40,5 +41,6 @@ var AllCategories = []Category{
 	Storage,
 	ClientInfo,
 	Tbtc,
+	Maintainer,
 	Developer,
 }

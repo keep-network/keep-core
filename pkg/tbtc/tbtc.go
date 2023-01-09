@@ -14,7 +14,6 @@ import (
 	"github.com/keep-network/keep-core/pkg/generator"
 	"github.com/keep-network/keep-core/pkg/net"
 	"github.com/keep-network/keep-core/pkg/sortition"
-	"github.com/keep-network/keep-core/pkg/tbtc/maintainer"
 )
 
 // TODO: Unit tests for `tbtc.go`.
@@ -23,6 +22,26 @@ var logger = log.Logger("keep-tbtc")
 
 // ProtocolName denotes the name of the protocol defined by this package.
 const ProtocolName = "tbtc"
+
+// GroupParameters is a structure grouping TBTC group parameters.
+type GroupParameters struct {
+	// GroupSize is the target size of a group in TBTC.
+	GroupSize int
+	// GroupQuorum is the minimum number of active participants behaving
+	// according to the protocol needed to generate a group in TBTC. This value
+	// is smaller than the GroupSize and bigger than the HonestThreshold.
+	GroupQuorum int
+	// HonestThreshold is the minimum number of active participants behaving
+	// according to the protocol needed to generate a signature.
+	HonestThreshold int
+}
+
+// DishonestThreshold is the maximum number of misbehaving participants for
+// which it is still possible to generate a signature. Misbehaviour is any
+// misconduct to the protocol, including inactivity.
+func (gp *GroupParameters) DishonestThreshold() int {
+	return gp.GroupSize - gp.HonestThreshold
+}
 
 const (
 	DefaultPreParamsPoolSize              = 1000
@@ -45,9 +64,6 @@ type Config struct {
 	PreParamsGenerationConcurrency int
 	// Concurrency level for key-generation for tECDSA.
 	KeyGenerationConcurrency int
-
-	// Maintainer defines the configuration for the tBTC maintainer.
-	Maintainer maintainer.Config
 }
 
 // Initialize kicks off the TBTC by initializing internal state, ensuring
@@ -63,7 +79,14 @@ func Initialize(
 	config Config,
 	clientInfo *clientinfo.Registry,
 ) error {
+	groupParameters := &GroupParameters{
+		GroupSize:       100,
+		GroupQuorum:     90,
+		HonestThreshold: 51,
+	}
+
 	node, err := newNode(
+		groupParameters,
 		chain,
 		netProvider,
 		keyStorePersistence,
@@ -139,20 +162,25 @@ func Initialize(
 	_ = chain.OnDKGResultSubmitted(func(event *DKGResultSubmittedEvent) {
 		go func() {
 			if ok := deduplicator.notifyDKGResultSubmitted(
+				event.Seed,
 				event.ResultHash,
+				event.BlockNumber,
 			); !ok {
 				logger.Warnf(
-					"DKG result with hash [0x%x] and starting "+
-						"block [%v] has been already processed",
+					"Result with hash [0x%x] for DKG with seed [0x%x] "+
+						"and starting block [%v] has been already processed",
 					event.ResultHash,
+					event.Seed,
 					event.BlockNumber,
 				)
 				return
 			}
 
 			logger.Infof(
-				"DKG result with hash [0x%x] submitted at block [%v]",
+				"Result with hash [0x%x] for DKG with seed [0x%x] "+
+					"submitted at block [%v]",
 				event.ResultHash,
+				event.Seed,
 				event.BlockNumber,
 			)
 
@@ -164,9 +192,6 @@ func Initialize(
 			)
 		}()
 	})
-
-	// TODO: Repeat DKG in case of the result challenge and archive the
-	//       signers stored for the invalid result.
 
 	_ = chain.OnHeartbeatRequested(func(event *HeartbeatRequestedEvent) {
 		go func() {

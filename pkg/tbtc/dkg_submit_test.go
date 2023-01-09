@@ -18,7 +18,7 @@ import (
 )
 
 func TestSignResult_SigningSuccessful(t *testing.T) {
-	chain := Connect(5, 4, 3)
+	chain := Connect()
 	dkgStartBlock := uint64(2000)
 	dkgResultSigner := newDkgResultSigner(chain, dkgStartBlock)
 
@@ -95,7 +95,7 @@ func TestSignResult_SigningSuccessful(t *testing.T) {
 }
 
 func TestSignResult_ErrorDuringDkgResultHashCalculation(t *testing.T) {
-	chain := Connect(5, 4, 3)
+	chain := Connect()
 	dkgStartBlock := uint64(2000)
 	dkgResultSigner := newDkgResultSigner(chain, dkgStartBlock)
 
@@ -113,7 +113,7 @@ func TestSignResult_ErrorDuringDkgResultHashCalculation(t *testing.T) {
 }
 
 func TestVerifySignature_VerificationSuccessful(t *testing.T) {
-	chain := Connect(5, 4, 3)
+	chain := Connect()
 	dkgStartBlock := uint64(2000)
 	dkgResultSigner := newDkgResultSigner(chain, dkgStartBlock)
 
@@ -145,7 +145,7 @@ func TestVerifySignature_VerificationSuccessful(t *testing.T) {
 }
 
 func TestVerifySignature_VerificationFailure(t *testing.T) {
-	chain := Connect(5, 4, 3)
+	chain := Connect()
 	dkgStartBlock := uint64(2000)
 	dkgResultSigner := newDkgResultSigner(chain, dkgStartBlock)
 
@@ -191,7 +191,7 @@ func TestVerifySignature_VerificationFailure(t *testing.T) {
 }
 
 func TestVerifySignature_VerificationError(t *testing.T) {
-	chain := Connect(5, 4, 3)
+	chain := Connect()
 	dkgStartBlock := uint64(2000)
 	dkgResultSigner := newDkgResultSigner(chain, dkgStartBlock)
 
@@ -230,13 +230,13 @@ func TestVerifySignature_VerificationError(t *testing.T) {
 }
 
 func TestSubmitResult_MemberSubmitsResult(t *testing.T) {
-	const (
-		groupSize       = 5
-		groupQuorum     = 4
-		honestThreshold = 3
-	)
+	groupParameters := &GroupParameters{
+		GroupSize:       5,
+		GroupQuorum:     4,
+		HonestThreshold: 3,
+	}
 
-	localChain := Connect(groupSize, groupQuorum, honestThreshold)
+	localChain := Connect()
 
 	err := localChain.startDKG()
 	if err != nil {
@@ -256,7 +256,7 @@ func TestSubmitResult_MemberSubmitsResult(t *testing.T) {
 	var operatorsIDs chain.OperatorIDs
 	var operatorsAddresses chain.Addresses
 
-	for memberIndex := uint8(1); memberIndex <= groupSize; memberIndex++ {
+	for memberIndex := uint8(1); int(memberIndex) <= groupParameters.GroupSize; memberIndex++ {
 		operatorsIDs = append(operatorsIDs, operatorID)
 		operatorsAddresses = append(operatorsAddresses, operatorAddress)
 	}
@@ -269,6 +269,7 @@ func TestSubmitResult_MemberSubmitsResult(t *testing.T) {
 	dkgResultSubmitter := newDkgResultSubmitter(
 		&testutils.MockLogger{},
 		localChain,
+		groupParameters,
 		groupSelectionResult,
 		testWaitForBlockFn(localChain),
 	)
@@ -278,7 +279,7 @@ func TestSubmitResult_MemberSubmitsResult(t *testing.T) {
 		t.Fatalf("failed to load test data: [%v]", err)
 	}
 	result := &dkg.Result{
-		Group:           group.NewGroup(groupSize-honestThreshold, groupSize),
+		Group:           group.NewGroup(groupParameters.DishonestThreshold(), groupParameters.GroupSize),
 		PrivateKeyShare: tecdsa.NewPrivateKeyShare(testData[0]),
 	}
 
@@ -318,13 +319,13 @@ func TestSubmitResult_MemberSubmitsResult(t *testing.T) {
 }
 
 func TestSubmitResult_AnotherMemberSubmitsResult(t *testing.T) {
-	const (
-		groupSize       = 5
-		groupQuorum     = 4
-		honestThreshold = 3
-	)
+	groupParameters := &GroupParameters{
+		GroupSize:       5,
+		GroupQuorum:     4,
+		HonestThreshold: 3,
+	}
 
-	localChain := Connect(groupSize, groupQuorum, honestThreshold)
+	localChain := Connect()
 
 	err := localChain.startDKG()
 	if err != nil {
@@ -344,7 +345,7 @@ func TestSubmitResult_AnotherMemberSubmitsResult(t *testing.T) {
 	var operatorsIDs chain.OperatorIDs
 	var operatorsAddresses chain.Addresses
 
-	for memberIndex := uint8(1); memberIndex <= groupSize; memberIndex++ {
+	for memberIndex := uint8(1); int(memberIndex) <= groupParameters.GroupSize; memberIndex++ {
 		operatorsIDs = append(operatorsIDs, operatorID)
 		operatorsAddresses = append(operatorsAddresses, operatorAddress)
 	}
@@ -357,6 +358,7 @@ func TestSubmitResult_AnotherMemberSubmitsResult(t *testing.T) {
 	dkgResultSubmitter := newDkgResultSubmitter(
 		&testutils.MockLogger{},
 		localChain,
+		groupParameters,
 		groupSelectionResult,
 		testWaitForBlockFn(localChain),
 	)
@@ -366,7 +368,7 @@ func TestSubmitResult_AnotherMemberSubmitsResult(t *testing.T) {
 		t.Fatalf("failed to load test data: [%v]", err)
 	}
 	result := &dkg.Result{
-		Group:           group.NewGroup(groupSize-honestThreshold, groupSize),
+		Group:           group.NewGroup(groupParameters.DishonestThreshold(), groupParameters.GroupSize),
 		PrivateKeyShare: tecdsa.NewPrivateKeyShare(testData[0]),
 	}
 	signatures := map[group.MemberIndex][]byte{
@@ -447,13 +449,13 @@ func TestSubmitResult_AnotherMemberSubmitsResult(t *testing.T) {
 }
 
 func TestSubmitResult_ContextCancelled(t *testing.T) {
-	const (
-		groupSize       = 5
-		groupQuorum     = 4
-		honestThreshold = 3
-	)
+	groupParameters := &GroupParameters{
+		GroupSize:       5,
+		GroupQuorum:     4,
+		HonestThreshold: 3,
+	}
 
-	localChain := Connect(groupSize, groupQuorum, honestThreshold)
+	localChain := Connect()
 
 	err := localChain.startDKG()
 	if err != nil {
@@ -473,7 +475,7 @@ func TestSubmitResult_ContextCancelled(t *testing.T) {
 	var operatorsIDs chain.OperatorIDs
 	var operatorsAddresses chain.Addresses
 
-	for memberIndex := uint8(1); memberIndex <= groupSize; memberIndex++ {
+	for memberIndex := uint8(1); int(memberIndex) <= groupParameters.GroupSize; memberIndex++ {
 		operatorsIDs = append(operatorsIDs, operatorID)
 		operatorsAddresses = append(operatorsAddresses, operatorAddress)
 	}
@@ -486,6 +488,7 @@ func TestSubmitResult_ContextCancelled(t *testing.T) {
 	dkgResultSubmitter := newDkgResultSubmitter(
 		&testutils.MockLogger{},
 		localChain,
+		groupParameters,
 		groupSelectionResult,
 		testWaitForBlockFn(localChain),
 	)
@@ -495,7 +498,7 @@ func TestSubmitResult_ContextCancelled(t *testing.T) {
 		t.Fatalf("failed to load test data: [%v]", err)
 	}
 	result := &dkg.Result{
-		Group:           group.NewGroup(groupSize-honestThreshold, groupSize),
+		Group:           group.NewGroup(groupParameters.DishonestThreshold(), groupParameters.GroupSize),
 		PrivateKeyShare: tecdsa.NewPrivateKeyShare(testData[0]),
 	}
 
@@ -524,13 +527,13 @@ func TestSubmitResult_ContextCancelled(t *testing.T) {
 }
 
 func TestSubmitResult_TooFewSignatures(t *testing.T) {
-	const (
-		groupSize       = 5
-		groupQuorum     = 4
-		honestThreshold = 3
-	)
+	groupParameters := &GroupParameters{
+		GroupSize:       5,
+		GroupQuorum:     4,
+		HonestThreshold: 3,
+	}
 
-	localChain := Connect(groupSize, groupQuorum, honestThreshold)
+	localChain := Connect()
 
 	err := localChain.startDKG()
 	if err != nil {
@@ -550,7 +553,7 @@ func TestSubmitResult_TooFewSignatures(t *testing.T) {
 	var operatorsIDs chain.OperatorIDs
 	var operatorsAddresses chain.Addresses
 
-	for memberIndex := uint8(1); memberIndex <= groupSize; memberIndex++ {
+	for memberIndex := uint8(1); int(memberIndex) <= groupParameters.GroupSize; memberIndex++ {
 		operatorsIDs = append(operatorsIDs, operatorID)
 		operatorsAddresses = append(operatorsAddresses, operatorAddress)
 	}
@@ -563,6 +566,7 @@ func TestSubmitResult_TooFewSignatures(t *testing.T) {
 	dkgResultSubmitter := newDkgResultSubmitter(
 		&testutils.MockLogger{},
 		localChain,
+		groupParameters,
 		groupSelectionResult,
 		testWaitForBlockFn(localChain),
 	)
@@ -572,7 +576,7 @@ func TestSubmitResult_TooFewSignatures(t *testing.T) {
 		t.Fatalf("failed to load test data: [%v]", err)
 	}
 	result := &dkg.Result{
-		Group:           group.NewGroup(groupSize-honestThreshold, groupSize),
+		Group:           group.NewGroup(groupParameters.DishonestThreshold(), groupParameters.GroupSize),
 		PrivateKeyShare: tecdsa.NewPrivateKeyShare(testData[0]),
 	}
 
