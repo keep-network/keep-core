@@ -189,9 +189,17 @@ func Initialize(
 					lastEvent.BlockNumber,
 				)
 
+				// The off-chain protocol should be started as close as possible
+				// to the current block or even further. Starting the off-chain
+				// protocol with a past block will likely cause a failure of the
+				// first attempt as the start block is used to synchronize
+				// the announcements and the state machine. Here we ensure
+				// a proper start point by delaying the execution by the
+				// confirmation period length.
 				node.joinDKGIfEligible(
 					lastEvent.Seed,
 					lastEvent.BlockNumber,
+					dkgStartedConfirmationBlocks,
 				)
 			} else {
 				logger.Infof(

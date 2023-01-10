@@ -108,10 +108,12 @@ func (de *dkgExecutor) preParamsCount() int {
 // executeDkgIfEligible is the main function of dkgExecutor. It performs the
 // full execution of ECDSA Distributed Key Generation: determining members
 // selected to the signing group, executing off-chain protocol, and publishing
-// the result to the chain.
+// the result to the chain. The execution can be delayed by an arbitrary number
+// of blocks using the delayBlocks argument.
 func (de *dkgExecutor) executeDkgIfEligible(
 	seed *big.Int,
 	startBlock uint64,
+	delayBlocks uint64,
 ) {
 	dkgLogger := logger.With(
 		zap.String("seed", fmt.Sprintf("0x%x", seed)),
@@ -149,6 +151,7 @@ func (de *dkgExecutor) executeDkgIfEligible(
 			memberIndexes,
 			groupSelectionResult,
 			startBlock,
+			delayBlocks,
 		)
 	} else {
 		dkgLogger.Infof("not eligible for DKG")
@@ -228,13 +231,15 @@ func (de *dkgExecutor) setupBroadcastChannel(
 
 // generateSigningGroup executes off-chain protocol for each member controlled
 // by the current operator and upon successful execution of the protocol
-// publishes the result to the chain.
+// publishes the result to the chain. The execution can be delayed by an
+// arbitrary number of blocks using the delayBlocks argument.
 func (de *dkgExecutor) generateSigningGroup(
 	dkgLogger *zap.SugaredLogger,
 	seed *big.Int,
 	memberIndexes []uint8,
 	groupSelectionResult *GroupSelectionResult,
 	startBlock uint64,
+	delayBlocks uint64,
 ) {
 	membershipValidator := group.NewMembershipValidator(
 		dkgLogger,
@@ -300,7 +305,7 @@ func (de *dkgExecutor) generateSigningGroup(
 			retryLoop := newDkgRetryLoop(
 				dkgLogger,
 				seed,
-				startBlock,
+				startBlock+delayBlocks,
 				memberIndex,
 				groupSelectionResult.OperatorsAddresses,
 				de.groupParameters,
