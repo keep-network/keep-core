@@ -1,7 +1,4 @@
-import type {
-  HardhatRuntimeEnvironment,
-  HardhatNetworkConfig,
-} from "hardhat/types"
+import type { HardhatRuntimeEnvironment } from "hardhat/types"
 import type { DeployFunction } from "hardhat-deploy/types"
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
@@ -12,16 +9,6 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     "RandomBeaconChaosnet"
   )
 
-  const isRandomBeaconChaosnetNeeded = function () {
-    if (hre.network.tags.chaosnet) {
-      return true
-    }
-    if (!hre.network.tags.allowStubs) {
-      return true
-    }
-    return (hre.network.config as HardhatNetworkConfig)?.forking?.enabled
-  }
-
   if (
     RandomBeaconChaosnet &&
     helpers.address.isValid(RandomBeaconChaosnet.address)
@@ -29,7 +16,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     log(
       `using existing RandomBeaconChaosnet at ${RandomBeaconChaosnet.address}`
     )
-  } else if (isRandomBeaconChaosnetNeeded()) {
+  } else {
     throw new Error("deployed RandomBeaconChaosnet contract not found")
   }
 }
@@ -37,3 +24,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 export default func
 
 func.tags = ["RandomBeaconChaosnet"]
+
+// Only execute for chaosnet deployments.
+func.skip = async (hre: HardhatRuntimeEnvironment): Promise<boolean> =>
+  !hre.network.tags.chaosnet

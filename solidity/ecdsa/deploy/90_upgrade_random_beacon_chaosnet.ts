@@ -6,21 +6,21 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   const { governance } = await getNamedAccounts()
   const { execute } = deployments
 
-  const RandomBeacon = await deployments.get("RandomBeacon")
+  const RandomBeaconChaosnet = await deployments.get("RandomBeaconChaosnet")
 
   await execute(
     "WalletRegistryGovernance",
     { from: governance, log: true, waitConfirmations: 1 },
     "upgradeRandomBeacon",
-    RandomBeacon.address
+    RandomBeaconChaosnet.address
   )
 }
 
 export default func
 
-func.tags = ["UpgradeRandomBeacon"]
-func.dependencies = ["RandomBeacon", "WalletRegistryGovernance"]
+func.tags = ["UpgradeRandomBeaconChaosnet"]
+func.dependencies = ["RandomBeaconChaosnet", "WalletRegistryTransferGovernance"]
 
-// Skip for chaosnet deployments.
+// Only execute for chaosnet deployments.
 func.skip = async (hre: HardhatRuntimeEnvironment): Promise<boolean> =>
-  hre.network.tags.chaosnet
+  !hre.network.tags.chaosnet

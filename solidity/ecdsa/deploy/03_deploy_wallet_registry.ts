@@ -5,10 +5,10 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   const { getNamedAccounts, deployments, ethers, helpers } = hre
   const { deployer } = await getNamedAccounts()
 
-  const RandomBeaconChaosnet = await deployments.get("RandomBeaconChaosnet")
   const EcdsaSortitionPool = await deployments.get("EcdsaSortitionPool")
   const TokenStaking = await deployments.get("TokenStaking")
   const ReimbursementPool = await deployments.get("ReimbursementPool")
+  const RandomBeacon = await deployments.get("RandomBeacon")
   const EcdsaDkgValidator = await deployments.get("EcdsaDkgValidator")
 
   const EcdsaInactivity = await deployments.deploy("EcdsaInactivity", {
@@ -26,7 +26,7 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
           : undefined,
       initializerArgs: [
         EcdsaDkgValidator.address,
-        RandomBeaconChaosnet.address,
+        RandomBeacon.address,
         ReimbursementPool.address,
       ],
       factoryOpts: {
@@ -74,7 +74,7 @@ export default func
 func.tags = ["WalletRegistry"]
 func.dependencies = [
   "ReimbursementPool",
-  "RandomBeaconChaosnet",
+  "RandomBeacon",
   "EcdsaSortitionPool",
   "TokenStaking",
   "EcdsaDkgValidator",

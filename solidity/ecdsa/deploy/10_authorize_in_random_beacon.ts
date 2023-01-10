@@ -27,7 +27,3 @@ export default func
 
 func.tags = ["WalletRegistryAuthorizeInBeacon"]
 func.dependencies = ["RandomBeaconGovernance", "WalletRegistry"]
-
-// Skip for chaosnet deployments.
-func.skip = async (hre: HardhatRuntimeEnvironment): Promise<boolean> =>
-  hre.network.tags.chaosnet
