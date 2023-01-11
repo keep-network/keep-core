@@ -98,7 +98,7 @@ const config: HardhatUserConfig = {
     development: {
       url: "http://localhost:8545",
       chainId: 1101,
-      tags: ["allowStubs"],
+      tags: ["allowStubs", "chaosnet"],
     },
     goerli: {
       url: process.env.CHAIN_API_URL || "",
@@ -106,7 +106,7 @@ const config: HardhatUserConfig = {
       accounts: process.env.ACCOUNTS_PRIVATE_KEYS
         ? process.env.ACCOUNTS_PRIVATE_KEYS.split(",")
         : undefined,
-      tags: ["etherscan", "tenderly"],
+      tags: ["etherscan", "tenderly", "chaosnet"],
     },
     mainnet: {
       url: process.env.CHAIN_API_URL || "",
