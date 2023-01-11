@@ -33,3 +33,7 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
 export default func
 
 func.tags = ["RandomBeaconChaosnet"]
+
+// Only execute for chaosnet deployments.
+func.skip = async (hre: HardhatRuntimeEnvironment): Promise<boolean> =>
+  !hre.network.tags.chaosnet
