@@ -138,7 +138,7 @@ func Initialize(
 				event.Seed,
 			); !ok {
 				logger.Infof(
-					"DKG started event with seed [0x%x] has been " +
+					"DKG started event with seed [0x%x] has been "+
 						"already processed",
 					event.Seed,
 				)
