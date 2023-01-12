@@ -110,7 +110,7 @@ const config: HardhatUserConfig = {
     development: {
       url: "http://localhost:8545",
       chainId: 1101,
-      tags: ["allowStubs"],
+      tags: ["allowStubs", "useRandomBeaconChaosnet"],
     },
     goerli: {
       url: process.env.CHAIN_API_URL || "",
@@ -118,7 +118,7 @@ const config: HardhatUserConfig = {
       accounts: process.env.ACCOUNTS_PRIVATE_KEYS
         ? process.env.ACCOUNTS_PRIVATE_KEYS.split(",")
         : undefined,
-      tags: ["etherscan", "tenderly"],
+      tags: ["etherscan", "tenderly", "useRandomBeaconChaosnet"],
     },
     mainnet: {
       url: process.env.CHAIN_API_URL || "",
@@ -126,7 +126,7 @@ const config: HardhatUserConfig = {
       accounts: process.env.CONTRACT_OWNER_ACCOUNT_PRIVATE_KEY
         ? [process.env.CONTRACT_OWNER_ACCOUNT_PRIVATE_KEY]
         : undefined,
-      tags: ["etherscan", "tenderly"],
+      tags: ["etherscan", "tenderly", "useRandomBeaconChaosnet"],
     },
   },
   // // Define local networks configuration file path to load networks from the file.
