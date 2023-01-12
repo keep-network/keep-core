@@ -270,7 +270,6 @@ func (lc *localChain) SubmitDKGResult(
 
 	lc.dkgState = Challenge
 	lc.dkgResult = dkgResult
-	lc.dkgResultValid = true
 
 	return nil
 }
@@ -304,30 +303,16 @@ func (lc *localChain) IsDKGResultValid(dkgResult *DKGChainResult) (bool, error) 
 	lc.dkgMutex.Lock()
 	defer lc.dkgMutex.Unlock()
 
-	if lc.dkgState != Challenge {
-		return false, fmt.Errorf("not in DKG result challenge period")
-	}
-
-	if !reflect.DeepEqual(dkgResult, lc.dkgResult) {
-		return false, fmt.Errorf("result does not match the submitted one")
-	}
-
 	return lc.dkgResultValid, nil
 }
 
-func (lc *localChain) invalidateDKGResult(dkgResult *DKGChainResult) error {
+func (lc *localChain) setDKGResultValidity(
+	isValid bool,
+) error {
 	lc.dkgMutex.Lock()
 	defer lc.dkgMutex.Unlock()
 
-	if lc.dkgState != Challenge {
-		return fmt.Errorf("not in DKG result challenge period")
-	}
-
-	if !reflect.DeepEqual(dkgResult, lc.dkgResult) {
-		return fmt.Errorf("result does not match the submitted one")
-	}
-
-	lc.dkgResultValid = false
+	lc.dkgResultValid = isValid
 
 	return nil
 }
@@ -367,7 +352,6 @@ func (lc *localChain) ChallengeDKGResult(dkgResult *DKGChainResult) error {
 
 	lc.dkgState = AwaitingResult
 	lc.dkgResult = nil
-	lc.dkgResultValid = false
 
 	return nil
 }
@@ -410,7 +394,6 @@ func (lc *localChain) ApproveDKGResult(dkgResult *DKGChainResult) error {
 
 	lc.dkgState = Idle
 	lc.dkgResult = nil
-	lc.dkgResultValid = false
 
 	return nil
 }
