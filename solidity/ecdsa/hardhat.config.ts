@@ -126,7 +126,7 @@ const config: HardhatUserConfig = {
       accounts: process.env.CONTRACT_OWNER_ACCOUNT_PRIVATE_KEY
         ? [process.env.CONTRACT_OWNER_ACCOUNT_PRIVATE_KEY]
         : undefined,
-      tags: ["etherscan", "tenderly"],
+      tags: ["etherscan", "tenderly", "useRandomBeaconChaosnet"],
     },
   },
   // // Define local networks configuration file path to load networks from the file.
