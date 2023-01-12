@@ -180,6 +180,12 @@ func Initialize(
 					return
 				}
 
+				// Should not happen but just in case.
+				if len(pastEvents) == 0 {
+					logger.Errorf("no past DKG started events")
+					return
+				}
+
 				lastEvent := pastEvents[len(pastEvents)-1]
 
 				logger.Infof(
