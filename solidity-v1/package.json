@@ -35,7 +35,7 @@
     "openzeppelin-solidity": "2.4.0"
   },
   "devDependencies": {
-    "@celo/contractkit": "^1.0.1",
+    "@celo/contractkit": "^3.1.0",
     "@openzeppelin/test-environment": "^0.1.9",
     "@openzeppelin/test-helpers": "^0.5.5",
     "@truffle/hdwallet-provider": "^2.0.10",
@@ -50,7 +50,7 @@
     "eslint-config-keep": "github:keep-network/eslint-config-keep#0.3.0",
     "eth-gas-reporter": "^0.2.14",
     "ethereumjs-abi": "^0.6.5",
-    "mocha": "^7.1.1",
+    "mocha": "^10.2.0",
     "mocha-junit-reporter": "^1.23.1",
     "prettier": "^2.2.1",
     "prettier-plugin-solidity": "^1.0.0-beta.2 ",
