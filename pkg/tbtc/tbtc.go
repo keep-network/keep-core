@@ -137,11 +137,10 @@ func Initialize(
 			if ok := deduplicator.notifyDKGStarted(
 				event.Seed,
 			); !ok {
-				logger.Warnf(
-					"DKG started event with seed [0x%x] and "+
-						"starting block [%v] has been already processed",
+				logger.Infof(
+					"DKG started event with seed [0x%x] has been " +
+						"already processed",
 					event.Seed,
-					event.BlockNumber,
 				)
 				return
 			}
