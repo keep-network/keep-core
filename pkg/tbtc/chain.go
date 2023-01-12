@@ -49,6 +49,14 @@ type DistributedKeyGenerationChain interface {
 		func(event *DKGStartedEvent),
 	) subscription.EventSubscription
 
+	// PastDKGStartedEvents fetches past DKG started events according to the
+	// provided filter or unfiltered if the filter is nil. Returned events
+	// are sorted by the block number in the ascending order, i.e. the latest
+	// event is at the end of the slice.
+	PastDKGStartedEvents(
+		filter *DKGStartedEventFilter,
+	) ([]*DKGStartedEvent, error)
+
 	// OnDKGResultSubmitted registers a callback that is invoked when an on-chain
 	// notification of the DKG result submission is seen.
 	OnDKGResultSubmitted(
@@ -129,6 +137,13 @@ type DKGChainResult struct {
 type DKGStartedEvent struct {
 	Seed        *big.Int
 	BlockNumber uint64
+}
+
+// DKGStartedEventFilter is a component allowing to filter DKGStartedEvent.
+type DKGStartedEventFilter struct {
+	StartBlock uint64
+	EndBlock   *uint64
+	Seed       []*big.Int
 }
 
 // DKGResultSubmittedEvent represents a DKG result submission event. It is

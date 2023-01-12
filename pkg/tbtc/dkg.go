@@ -20,6 +20,10 @@ import (
 )
 
 const (
+	// dkgStartedConfirmationBlocks determines the block length of the
+	// confirmation period that is preserved after a DKG start. Once the period
+	// elapses, the DKG state is checked to confirm the protocol can be started.
+	dkgStartedConfirmationBlocks = 20
 	// dkgResultSubmissionDelayStep determines the delay step in blocks that
 	// is used to calculate the submission delay period that should be respected
 	// by the given member to avoid all members submitting the same DKG result
@@ -104,10 +108,14 @@ func (de *dkgExecutor) preParamsCount() int {
 // executeDkgIfEligible is the main function of dkgExecutor. It performs the
 // full execution of ECDSA Distributed Key Generation: determining members
 // selected to the signing group, executing off-chain protocol, and publishing
-// the result to the chain.
+// the result to the chain. The execution can be delayed by an arbitrary number
+// of blocks using the delayBlocks argument. This allows confirming the state
+// on-chain - e.g. wait for the required number of confirming blocks - before
+//executing the off-chain action.
 func (de *dkgExecutor) executeDkgIfEligible(
 	seed *big.Int,
 	startBlock uint64,
+	delayBlocks uint64,
 ) {
 	dkgLogger := logger.With(
 		zap.String("seed", fmt.Sprintf("0x%x", seed)),
@@ -145,6 +153,7 @@ func (de *dkgExecutor) executeDkgIfEligible(
 			memberIndexes,
 			groupSelectionResult,
 			startBlock,
+			delayBlocks,
 		)
 	} else {
 		dkgLogger.Infof("not eligible for DKG")
@@ -224,13 +233,19 @@ func (de *dkgExecutor) setupBroadcastChannel(
 
 // generateSigningGroup executes off-chain protocol for each member controlled
 // by the current operator and upon successful execution of the protocol
-// publishes the result to the chain.
+// publishes the result to the chain. The execution can be delayed by an
+// arbitrary number of blocks using the delayBlocks argument. This allows
+// confirming the state on-chain - e.g. wait for the required number of
+// confirming blocks - before executing the off-chain action. Note that the
+// startBlock represents the block at which DKG started on-chain. This is
+// important for the result submission.
 func (de *dkgExecutor) generateSigningGroup(
 	dkgLogger *zap.SugaredLogger,
 	seed *big.Int,
 	memberIndexes []uint8,
 	groupSelectionResult *GroupSelectionResult,
 	startBlock uint64,
+	delayBlocks uint64,
 ) {
 	membershipValidator := group.NewMembershipValidator(
 		dkgLogger,
@@ -296,7 +311,7 @@ func (de *dkgExecutor) generateSigningGroup(
 			retryLoop := newDkgRetryLoop(
 				dkgLogger,
 				seed,
-				startBlock,
+				startBlock+delayBlocks,
 				memberIndex,
 				groupSelectionResult.OperatorsAddresses,
 				de.groupParameters,

@@ -373,6 +373,43 @@ func (tc *TbtcChain) OnDKGStarted(
 	return tc.walletRegistry.DkgStartedEvent(nil, nil).OnEvent(onEvent)
 }
 
+func (tc *TbtcChain) PastDKGStartedEvents(
+	filter *tbtc.DKGStartedEventFilter,
+) ([]*tbtc.DKGStartedEvent, error) {
+	var startBlock uint64
+	var endBlock *uint64
+	var seed []*big.Int
+
+	if filter != nil {
+		startBlock = filter.StartBlock
+		endBlock = filter.EndBlock
+		seed = filter.Seed
+	}
+
+	events, err := tc.walletRegistry.PastDkgStartedEvents(
+		startBlock,
+		endBlock,
+		seed,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	dkgStartedEvents := make([]*tbtc.DKGStartedEvent, len(events))
+	for i, event := range events {
+		dkgStartedEvents[i] = &tbtc.DKGStartedEvent{
+			Seed:        event.Seed,
+			BlockNumber: event.Raw.BlockNumber,
+		}
+	}
+
+	sort.SliceStable(dkgStartedEvents, func(i, j int) bool {
+		return dkgStartedEvents[i].BlockNumber < dkgStartedEvents[j].BlockNumber
+	})
+
+	return dkgStartedEvents, err
+}
+
 func (tc *TbtcChain) OnDKGResultSubmitted(
 	handler func(event *tbtc.DKGResultSubmittedEvent),
 ) subscription.EventSubscription {
