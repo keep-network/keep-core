@@ -109,7 +109,9 @@ func (de *dkgExecutor) preParamsCount() int {
 // full execution of ECDSA Distributed Key Generation: determining members
 // selected to the signing group, executing off-chain protocol, and publishing
 // the result to the chain. The execution can be delayed by an arbitrary number
-// of blocks using the delayBlocks argument.
+// of blocks using the delayBlocks argument. This allows confirming the state
+// on-chain - e.g. wait for the required number of confirming blocks - before
+//executing the off-chain action.
 func (de *dkgExecutor) executeDkgIfEligible(
 	seed *big.Int,
 	startBlock uint64,
@@ -232,7 +234,9 @@ func (de *dkgExecutor) setupBroadcastChannel(
 // generateSigningGroup executes off-chain protocol for each member controlled
 // by the current operator and upon successful execution of the protocol
 // publishes the result to the chain. The execution can be delayed by an
-// arbitrary number of blocks using the delayBlocks argument.
+// arbitrary number of blocks using the delayBlocks argument. This allows
+// confirming the state on-chain - e.g. wait for the required number of
+// confirming blocks - before executing the off-chain action.
 func (de *dkgExecutor) generateSigningGroup(
 	dkgLogger *zap.SugaredLogger,
 	seed *big.Int,
