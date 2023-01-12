@@ -170,6 +170,9 @@ func Initialize(
 			if dkgState == AwaitingResult {
 				// Fetch all past DKG started events starting from one
 				// confirmation period before the original event's block.
+				// If there was a chain reorg, the event we received could be
+				// moved to a block with a lower number than the one
+				// we received.
 				pastEvents, err := chain.PastDKGStartedEvents(
 					&DKGStartedEventFilter{
 						StartBlock: event.BlockNumber - dkgStartedConfirmationBlocks,
