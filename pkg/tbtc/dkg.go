@@ -236,7 +236,9 @@ func (de *dkgExecutor) setupBroadcastChannel(
 // publishes the result to the chain. The execution can be delayed by an
 // arbitrary number of blocks using the delayBlocks argument. This allows
 // confirming the state on-chain - e.g. wait for the required number of
-// confirming blocks - before executing the off-chain action.
+// confirming blocks - before executing the off-chain action. Note that the
+// startBlock represents the block at which DKG started on-chain. This is
+// important for the result submission.
 func (de *dkgExecutor) generateSigningGroup(
 	dkgLogger *zap.SugaredLogger,
 	seed *big.Int,
