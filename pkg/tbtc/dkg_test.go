@@ -310,11 +310,9 @@ func TestDkgExecutor_ExecuteDkgValidation(t *testing.T) {
 
 			dkgResultSubmittedEvent := <-dkgResultSubmittedEventChan
 
-			if !test.resultValid {
-				err = localChain.invalidateDKGResult(dkgResultSubmittedEvent.Result)
-				if err != nil {
-					t.Fatal(err)
-				}
+			err = localChain.setDKGResultValidity(test.resultValid)
+			if err != nil {
+				t.Fatal(err)
 			}
 
 			// Setting only the fields really needed for this test.

@@ -135,6 +135,32 @@ func (drs *dkgResultSubmitter) SubmitResult(
 		return nil
 	}
 
+	groupPublicKey, err := result.GroupPublicKey()
+	if err != nil {
+		return fmt.Errorf("cannot get group public key [%w]", err)
+	}
+
+	dkgResult, err := drs.chain.AssembleDKGResult(
+		memberIndex,
+		groupPublicKey,
+		result.Group.OperatingMemberIndexes(),
+		result.MisbehavedMembersIndexes(),
+		signatures,
+		drs.groupSelectionResult,
+	)
+	if err != nil {
+		return fmt.Errorf("cannot assemble DKG chain result [%w]", err)
+	}
+
+	isValid, err := drs.chain.IsDKGResultValid(dkgResult)
+	if err != nil {
+		return fmt.Errorf("cannot validate DKG result: [%w]", err)
+	}
+
+	if !isValid {
+		return fmt.Errorf("invalid DKG result")
+	}
+
 	blockCounter, err := drs.chain.BlockCounter()
 	if err != nil {
 		return err
@@ -183,23 +209,6 @@ func (drs *dkgResultSubmitter) SubmitResult(
 		memberIndex,
 		len(signatures),
 	)
-
-	groupPublicKey, err := result.GroupPublicKey()
-	if err != nil {
-		return fmt.Errorf("cannot get group public key [%w]", err)
-	}
-
-	dkgResult, err := drs.chain.AssembleDKGResult(
-		memberIndex,
-		groupPublicKey,
-		result.Group.OperatingMemberIndexes(),
-		result.MisbehavedMembersIndexes(),
-		signatures,
-		drs.groupSelectionResult,
-	)
-	if err != nil {
-		return fmt.Errorf("cannot assemble DKG chain result [%w]", err)
-	}
 
 	return drs.chain.SubmitDKGResult(dkgResult)
 }
