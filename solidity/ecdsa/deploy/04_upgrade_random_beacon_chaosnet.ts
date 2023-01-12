@@ -3,7 +3,7 @@ import type { DeployFunction } from "hardhat-deploy/types"
 
 const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   const { getNamedAccounts, deployments } = hre
-  const { governance } = await getNamedAccounts()
+  const { deployer } = await getNamedAccounts()
   const { execute } = deployments
 
   const RandomBeaconChaosnet = await deployments.get("RandomBeaconChaosnet")
@@ -13,8 +13,8 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   // `WalletRegistry` before the random beacon functionalities in the client
   // are ready.
   await execute(
-    "WalletRegistryGovernance",
-    { from: governance, log: true, waitConfirmations: 1 },
+    "WalletRegistry",
+    { from: deployer, log: true, waitConfirmations: 1 },
     "upgradeRandomBeacon",
     RandomBeaconChaosnet.address
   )
@@ -23,7 +23,7 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
 export default func
 
 func.tags = ["UpgradeRandomBeaconChaosnet"]
-func.dependencies = ["RandomBeaconChaosnet", "WalletRegistryTransferGovernance"]
+func.dependencies = ["RandomBeaconChaosnet", "WalletRegistry"]
 
 func.skip = async (hre: HardhatRuntimeEnvironment): Promise<boolean> =>
   !hre.network.tags.useRandomBeaconChaosnet
