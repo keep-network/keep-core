@@ -7,6 +7,7 @@ import (
 	"crypto/sha256"
 	"encoding/binary"
 	"fmt"
+	"github.com/keep-network/keep-common/pkg/chain/ethereum/ethutil"
 	"math/big"
 	"reflect"
 	"sort"
@@ -859,8 +860,22 @@ func (tc *TbtcChain) ChallengeDKGResult(dkgResult *tbtc.DKGChainResult) error {
 }
 
 func (tc *TbtcChain) ApproveDKGResult(dkgResult *tbtc.DKGChainResult) error {
-	_, err := tc.walletRegistry.ApproveDkgResult(
-		convertDkgResultToAbiType(dkgResult),
+	result := convertDkgResultToAbiType(dkgResult)
+
+	gasEstimate, err := tc.walletRegistry.ApproveDkgResultGasEstimate(result)
+	if err != nil {
+		return err
+	}
+
+	// The original estimate for this contract call turned out to be too low.
+	// Here we add a 20% margin to overcome out of gas problems.
+	gasEstimateWithMargin := float64(gasEstimate) * float64(1.2)
+
+	_, err = tc.walletRegistry.ApproveDkgResult(
+		result,
+		ethutil.TransactionOptions{
+			GasLimit: uint64(gasEstimateWithMargin),
+		},
 	)
 
 	return err
