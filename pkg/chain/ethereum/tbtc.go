@@ -868,7 +868,7 @@ func (tc *TbtcChain) ApproveDKGResult(dkgResult *tbtc.DKGChainResult) error {
 	}
 
 	// The original estimate for this contract call turned out to be too low.
-	// Here we add a 20% margin to overcome out of gas problems.
+	// Here we add a 20% margin to overcome the gas problems.
 	gasEstimateWithMargin := float64(gasEstimate) * float64(1.2)
 
 	_, err = tc.walletRegistry.ApproveDkgResult(
