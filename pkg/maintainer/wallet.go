@@ -16,27 +16,24 @@ const (
 	defaultRestartBackoffTime = 120 * time.Second
 )
 
-// TODO: Store the logger inside the wallet maintainer.
-var walletLogger = log.Logger("keep-maintainer-wallet")
-
-func newWalletMaintainer(
+func initializeWalletMaintainer(
 	ctx context.Context,
 	chain WalletChain,
 	restartBackOffTime time.Duration,
-) *WalletMaintainer {
+) {
 	walletMaintainer := &WalletMaintainer{
+		logger:             log.Logger("keep-maintainer-wallet"),
 		chain:              chain,
 		restartBackOffTime: restartBackOffTime,
 	}
 
 	go walletMaintainer.startControlLoop(ctx)
-
-	return walletMaintainer
 }
 
 // TODO: Description
 type WalletMaintainer struct {
-	chain WalletChain
+	logger log.StandardLogger
+	chain  WalletChain
 
 	restartBackOffTime time.Duration
 }
@@ -44,16 +41,16 @@ type WalletMaintainer struct {
 // startControlLoop launches the loop responsible for controlling the wallet
 // maintainer.
 func (wm *WalletMaintainer) startControlLoop(ctx context.Context) {
-	walletLogger.Info("starting wallet maintainer")
+	wm.logger.Info("starting wallet maintainer")
 
 	defer func() {
-		walletLogger.Info("stopping wallet maintainer")
+		wm.logger.Info("stopping wallet maintainer")
 	}()
 
 	for {
 		err := wm.checkWallet(ctx)
 		if err != nil {
-			walletLogger.Errorf(
+			wm.logger.Errorf(
 				"restarting wallet maintainer due to error while checking "+
 					"wallet: [%v]",
 				err,

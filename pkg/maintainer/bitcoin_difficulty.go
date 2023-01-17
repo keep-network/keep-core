@@ -26,9 +26,6 @@ const (
 	bitcoinDifficultyEpochLength = 2016
 )
 
-// TODO: Store the logger inside Bitcoin difficulty maintainer.
-var btcDiffLogger = log.Logger("keep-maintainer-bitcoin-difficulty")
-
 var (
 	errNotAuthorized = fmt.Errorf(
 		"bitcoin difficulty maintainer has not been authorized to submit " +
@@ -47,6 +44,7 @@ func initializeBitcoinDifficultyMaintainer(
 	restartBackOffTime time.Duration,
 ) {
 	bitcoinDifficultyMaintainer := &bitcoinDifficultyMaintainer{
+		logger:             log.Logger("keep-maintainer-bitcoin-difficulty"),
 		btcChain:           btcChain,
 		chain:              chain,
 		idleBackOffTime:    idleBackOffTime,
@@ -59,6 +57,7 @@ func initializeBitcoinDifficultyMaintainer(
 // bitcoinDifficultyMaintainer is the part of maintainer responsible for
 // maintaining the state of the Bitcoin difficulty on-chain contract.
 type bitcoinDifficultyMaintainer struct {
+	logger   log.StandardLogger
 	btcChain bitcoin.Chain
 	chain    BitcoinDifficultyChain
 
@@ -69,16 +68,16 @@ type bitcoinDifficultyMaintainer struct {
 // startControlLoop starts the loop responsible for controlling the Bitcoin
 // difficulty maintainer.
 func (bdm *bitcoinDifficultyMaintainer) startControlLoop(ctx context.Context) {
-	btcDiffLogger.Info("starting Bitcoin difficulty maintainer")
+	bdm.logger.Info("starting Bitcoin difficulty maintainer")
 
 	defer func() {
-		btcDiffLogger.Info("stopping Bitcoin difficulty maintainer")
+		bdm.logger.Info("stopping Bitcoin difficulty maintainer")
 	}()
 
 	for {
 		err := bdm.proveEpochs(ctx)
 		if err != nil {
-			btcDiffLogger.Errorf(
+			bdm.logger.Errorf(
 				"error while proving Bitcoin epochs: [%v]; restarting maintainer",
 				err,
 			)
@@ -260,7 +259,7 @@ func (bdm *bitcoinDifficultyMaintainer) proveNextEpoch(ctx context.Context) (
 			)
 		}
 
-		btcDiffLogger.Infof(
+		bdm.logger.Infof(
 			"successfully submitted block headers [%d:%d] to the Bitcoin "+
 				"difficulty chain; the current proven epoch is [%d]",
 			firstBlockHeaderHeight,
@@ -272,14 +271,14 @@ func (bdm *bitcoinDifficultyMaintainer) proveNextEpoch(ctx context.Context) (
 	}
 
 	if currentBlockHeight >= newEpochHeight {
-		btcDiffLogger.Infof(
+		bdm.logger.Infof(
 			"the Bitcoin difficulty chain has to be synced with the "+
 				"Bitcoin blockchain; waiting for [%d] new blocks to "+
 				"be mined to form a headers chain for retarget",
 			lastBlockHeaderHeight-currentBlockHeight,
 		)
 	} else {
-		btcDiffLogger.Infof(
+		bdm.logger.Infof(
 			"the Bitcoin difficulty chain is up-to-date with the Bitcoin " +
 				"blockchain",
 		)
@@ -332,7 +331,7 @@ func (bdm *bitcoinDifficultyMaintainer) waitForCurrentEpochUpdate(
 			break
 		}
 
-		btcDiffLogger.Infof(
+		bdm.logger.Infof(
 			"waiting for bitcoin difficulty chain to reach epoch %d, "+
 				"current proven epoch is %d",
 			targetEpoch,

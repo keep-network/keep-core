@@ -28,7 +28,7 @@ func Initialize(
 	}
 
 	if config.Wallet || launchAll {
-		newWalletMaintainer(ctx, walletChain, defaultRestartBackoffTime)
+		initializeWalletMaintainer(ctx, walletChain, defaultRestartBackoffTime)
 	}
 
 	// TODO: Allow for launching multiple maintainers here. Every flag
