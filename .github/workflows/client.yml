@@ -58,6 +58,8 @@ jobs:
         with:
           # Fetch the whole history for the `git describe` command to work.
           fetch-depth: 0
+          # For testing purposes checkout old ref
+          ref: '4c6eef5a88b1eb55a9b4ff453da33c13499589bf'
 
       - name: Resolve versions
         run: |
@@ -124,7 +126,8 @@ jobs:
         if: github.event_name == 'workflow_dispatch'
         uses: docker/build-push-action@v3
         env:
-          IMAGE_NAME: "keep-client"
+          # For testing purposes, build WIP version of the client
+          IMAGE_NAME: "keep-client-wip"
         with:
           target: runtime-docker
           tags: |
