@@ -58,8 +58,6 @@ jobs:
         with:
           # Fetch the whole history for the `git describe` command to work.
           fetch-depth: 0
-          # For testing purposes checkout old ref
-          ref: '4c6eef5a88b1eb55a9b4ff453da33c13499589bf'
 
       - name: Resolve versions
         run: |
@@ -74,7 +72,12 @@ jobs:
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v1
-        # Temporarily fixing version to older `buildx` that worked in the past
+        # TODO: Version of `buildx` temporarily fixed to `0.9.1`. When workflow
+        # was run on `0.10.0`, unwanted files were ending up in the GCR. The
+        # root cause of the issue is not known at the moment, needs to be
+        # investigated in the future. Possibly related to the `--provenance
+        # mode=max` argument which gets added to build command when `0.10.0` is
+        # used. 
         with:
           version: v0.9.1
 
@@ -129,8 +132,7 @@ jobs:
         if: github.event_name == 'workflow_dispatch'
         uses: docker/build-push-action@v3
         env:
-          # For testing purposes, build WIP version of the client
-          IMAGE_NAME: "keep-client-wip"
+          IMAGE_NAME: "keep-client"
         with:
           target: runtime-docker
           tags: |
