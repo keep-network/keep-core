@@ -165,7 +165,11 @@ jobs:
 
       - name: Publish Client Binaries
         if: github.event_name == 'workflow_dispatch'
-        uses: thesis/gcp-storage-bucket-action@v3.1.0
+        # Temporarily we run the action in version from `alpine-version-413.0.0`
+        # branch, which contains a fix for the issue introduced in the `414.0.0`
+        # version (`rsync` fails for users with no `storage.buckets.get` 
+        # permission.
+        uses: thesis/gcp-storage-bucket-action@alpine-version-413.0.0 
         with:
           service-key: ${{ secrets.KEEP_TEST_CLIENT_BINARIES_UPLOADER_SERVICE_KEY_JSON_BASE64 }}
           # TODO: Change to keep-prd-210b once mainnet setup is done and we are sure we want to publish mainnet builds automatically.
