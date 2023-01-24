@@ -5682,7 +5682,7 @@ func (wr *WalletRegistry) watchAuthorizationDecreaseApproved(
 	}
 
 	thresholdViolatedFn := func(elapsed time.Duration) {
-		wrLogger.Errorf(
+		wrLogger.Warnf(
 			"subscription to event AuthorizationDecreaseApproved had to be "+
 				"retried [%s] since the last attempt; please inspect "+
 				"host chain connectivity",
@@ -5885,7 +5885,7 @@ func (wr *WalletRegistry) watchAuthorizationDecreaseRequested(
 	}
 
 	thresholdViolatedFn := func(elapsed time.Duration) {
-		wrLogger.Errorf(
+		wrLogger.Warnf(
 			"subscription to event AuthorizationDecreaseRequested had to be "+
 				"retried [%s] since the last attempt; please inspect "+
 				"host chain connectivity",
@@ -6088,7 +6088,7 @@ func (wr *WalletRegistry) watchAuthorizationIncreased(
 	}
 
 	thresholdViolatedFn := func(elapsed time.Duration) {
-		wrLogger.Errorf(
+		wrLogger.Warnf(
 			"subscription to event AuthorizationIncreased had to be "+
 				"retried [%s] since the last attempt; please inspect "+
 				"host chain connectivity",
@@ -6275,7 +6275,7 @@ func (wr *WalletRegistry) watchAuthorizationParametersUpdated(
 	}
 
 	thresholdViolatedFn := func(elapsed time.Duration) {
-		wrLogger.Errorf(
+		wrLogger.Warnf(
 			"subscription to event AuthorizationParametersUpdated had to be "+
 				"retried [%s] since the last attempt; please inspect "+
 				"host chain connectivity",
@@ -6465,7 +6465,7 @@ func (wr *WalletRegistry) watchDkgMaliciousResultSlashed(
 	}
 
 	thresholdViolatedFn := func(elapsed time.Duration) {
-		wrLogger.Errorf(
+		wrLogger.Warnf(
 			"subscription to event DkgMaliciousResultSlashed had to be "+
 				"retried [%s] since the last attempt; please inspect "+
 				"host chain connectivity",
@@ -6657,7 +6657,7 @@ func (wr *WalletRegistry) watchDkgMaliciousResultSlashingFailed(
 	}
 
 	thresholdViolatedFn := func(elapsed time.Duration) {
-		wrLogger.Errorf(
+		wrLogger.Warnf(
 			"subscription to event DkgMaliciousResultSlashingFailed had to be "+
 				"retried [%s] since the last attempt; please inspect "+
 				"host chain connectivity",
@@ -6846,7 +6846,7 @@ func (wr *WalletRegistry) watchDkgParametersUpdated(
 	}
 
 	thresholdViolatedFn := func(elapsed time.Duration) {
-		wrLogger.Errorf(
+		wrLogger.Warnf(
 			"subscription to event DkgParametersUpdated had to be "+
 				"retried [%s] since the last attempt; please inspect "+
 				"host chain connectivity",
@@ -7041,7 +7041,7 @@ func (wr *WalletRegistry) watchDkgResultApproved(
 	}
 
 	thresholdViolatedFn := func(elapsed time.Duration) {
-		wrLogger.Errorf(
+		wrLogger.Warnf(
 			"subscription to event DkgResultApproved had to be "+
 				"retried [%s] since the last attempt; please inspect "+
 				"host chain connectivity",
@@ -7242,7 +7242,7 @@ func (wr *WalletRegistry) watchDkgResultChallenged(
 	}
 
 	thresholdViolatedFn := func(elapsed time.Duration) {
-		wrLogger.Errorf(
+		wrLogger.Warnf(
 			"subscription to event DkgResultChallenged had to be "+
 				"retried [%s] since the last attempt; please inspect "+
 				"host chain connectivity",
@@ -7443,7 +7443,7 @@ func (wr *WalletRegistry) watchDkgResultSubmitted(
 	}
 
 	thresholdViolatedFn := func(elapsed time.Duration) {
-		wrLogger.Errorf(
+		wrLogger.Warnf(
 			"subscription to event DkgResultSubmitted had to be "+
 				"retried [%s] since the last attempt; please inspect "+
 				"host chain connectivity",
@@ -7624,7 +7624,7 @@ func (wr *WalletRegistry) watchDkgSeedTimedOut(
 	}
 
 	thresholdViolatedFn := func(elapsed time.Duration) {
-		wrLogger.Errorf(
+		wrLogger.Warnf(
 			"subscription to event DkgSeedTimedOut had to be "+
 				"retried [%s] since the last attempt; please inspect "+
 				"host chain connectivity",
@@ -7810,7 +7810,7 @@ func (wr *WalletRegistry) watchDkgStarted(
 	}
 
 	thresholdViolatedFn := func(elapsed time.Duration) {
-		wrLogger.Errorf(
+		wrLogger.Warnf(
 			"subscription to event DkgStarted had to be "+
 				"retried [%s] since the last attempt; please inspect "+
 				"host chain connectivity",
@@ -7989,7 +7989,7 @@ func (wr *WalletRegistry) watchDkgStateLocked(
 	}
 
 	thresholdViolatedFn := func(elapsed time.Duration) {
-		wrLogger.Errorf(
+		wrLogger.Warnf(
 			"subscription to event DkgStateLocked had to be "+
 				"retried [%s] since the last attempt; please inspect "+
 				"host chain connectivity",
@@ -8166,7 +8166,7 @@ func (wr *WalletRegistry) watchDkgTimedOut(
 	}
 
 	thresholdViolatedFn := func(elapsed time.Duration) {
-		wrLogger.Errorf(
+		wrLogger.Warnf(
 			"subscription to event DkgTimedOut had to be "+
 				"retried [%s] since the last attempt; please inspect "+
 				"host chain connectivity",
@@ -8353,7 +8353,7 @@ func (wr *WalletRegistry) watchGasParametersUpdated(
 	}
 
 	thresholdViolatedFn := func(elapsed time.Duration) {
-		wrLogger.Errorf(
+		wrLogger.Warnf(
 			"subscription to event GasParametersUpdated had to be "+
 				"retried [%s] since the last attempt; please inspect "+
 				"host chain connectivity",
@@ -8534,7 +8534,7 @@ func (wr *WalletRegistry) watchGovernanceTransferred(
 	}
 
 	thresholdViolatedFn := func(elapsed time.Duration) {
-		wrLogger.Errorf(
+		wrLogger.Warnf(
 			"subscription to event GovernanceTransferred had to be "+
 				"retried [%s] since the last attempt; please inspect "+
 				"host chain connectivity",
@@ -8724,7 +8724,7 @@ func (wr *WalletRegistry) watchInactivityClaimed(
 	}
 
 	thresholdViolatedFn := func(elapsed time.Duration) {
-		wrLogger.Errorf(
+		wrLogger.Warnf(
 			"subscription to event InactivityClaimed had to be "+
 				"retried [%s] since the last attempt; please inspect "+
 				"host chain connectivity",
@@ -8905,7 +8905,7 @@ func (wr *WalletRegistry) watchInitialized(
 	}
 
 	thresholdViolatedFn := func(elapsed time.Duration) {
-		wrLogger.Errorf(
+		wrLogger.Warnf(
 			"subscription to event Initialized had to be "+
 				"retried [%s] since the last attempt; please inspect "+
 				"host chain connectivity",
@@ -9104,7 +9104,7 @@ func (wr *WalletRegistry) watchInvoluntaryAuthorizationDecreaseFailed(
 	}
 
 	thresholdViolatedFn := func(elapsed time.Duration) {
-		wrLogger.Errorf(
+		wrLogger.Warnf(
 			"subscription to event InvoluntaryAuthorizationDecreaseFailed had to be "+
 				"retried [%s] since the last attempt; please inspect "+
 				"host chain connectivity",
@@ -9303,7 +9303,7 @@ func (wr *WalletRegistry) watchOperatorJoinedSortitionPool(
 	}
 
 	thresholdViolatedFn := func(elapsed time.Duration) {
-		wrLogger.Errorf(
+		wrLogger.Warnf(
 			"subscription to event OperatorJoinedSortitionPool had to be "+
 				"retried [%s] since the last attempt; please inspect "+
 				"host chain connectivity",
@@ -9502,7 +9502,7 @@ func (wr *WalletRegistry) watchOperatorRegistered(
 	}
 
 	thresholdViolatedFn := func(elapsed time.Duration) {
-		wrLogger.Errorf(
+		wrLogger.Warnf(
 			"subscription to event OperatorRegistered had to be "+
 				"retried [%s] since the last attempt; please inspect "+
 				"host chain connectivity",
@@ -9701,7 +9701,7 @@ func (wr *WalletRegistry) watchOperatorStatusUpdated(
 	}
 
 	thresholdViolatedFn := func(elapsed time.Duration) {
-		wrLogger.Errorf(
+		wrLogger.Warnf(
 			"subscription to event OperatorStatusUpdated had to be "+
 				"retried [%s] since the last attempt; please inspect "+
 				"host chain connectivity",
@@ -9884,7 +9884,7 @@ func (wr *WalletRegistry) watchRandomBeaconUpgraded(
 	}
 
 	thresholdViolatedFn := func(elapsed time.Duration) {
-		wrLogger.Errorf(
+		wrLogger.Warnf(
 			"subscription to event RandomBeaconUpgraded had to be "+
 				"retried [%s] since the last attempt; please inspect "+
 				"host chain connectivity",
@@ -10063,7 +10063,7 @@ func (wr *WalletRegistry) watchReimbursementPoolUpdated(
 	}
 
 	thresholdViolatedFn := func(elapsed time.Duration) {
-		wrLogger.Errorf(
+		wrLogger.Warnf(
 			"subscription to event ReimbursementPoolUpdated had to be "+
 				"retried [%s] since the last attempt; please inspect "+
 				"host chain connectivity",
@@ -10244,7 +10244,7 @@ func (wr *WalletRegistry) watchRewardParametersUpdated(
 	}
 
 	thresholdViolatedFn := func(elapsed time.Duration) {
-		wrLogger.Errorf(
+		wrLogger.Warnf(
 			"subscription to event RewardParametersUpdated had to be "+
 				"retried [%s] since the last attempt; please inspect "+
 				"host chain connectivity",
@@ -10432,7 +10432,7 @@ func (wr *WalletRegistry) watchRewardsWithdrawn(
 	}
 
 	thresholdViolatedFn := func(elapsed time.Duration) {
-		wrLogger.Errorf(
+		wrLogger.Warnf(
 			"subscription to event RewardsWithdrawn had to be "+
 				"retried [%s] since the last attempt; please inspect "+
 				"host chain connectivity",
@@ -10613,7 +10613,7 @@ func (wr *WalletRegistry) watchSlashingParametersUpdated(
 	}
 
 	thresholdViolatedFn := func(elapsed time.Duration) {
-		wrLogger.Errorf(
+		wrLogger.Warnf(
 			"subscription to event SlashingParametersUpdated had to be "+
 				"retried [%s] since the last attempt; please inspect "+
 				"host chain connectivity",
@@ -10799,7 +10799,7 @@ func (wr *WalletRegistry) watchWalletClosed(
 	}
 
 	thresholdViolatedFn := func(elapsed time.Duration) {
-		wrLogger.Errorf(
+		wrLogger.Warnf(
 			"subscription to event WalletClosed had to be "+
 				"retried [%s] since the last attempt; please inspect "+
 				"host chain connectivity",
@@ -10996,7 +10996,7 @@ func (wr *WalletRegistry) watchWalletCreated(
 	}
 
 	thresholdViolatedFn := func(elapsed time.Duration) {
-		wrLogger.Errorf(
+		wrLogger.Warnf(
 			"subscription to event WalletCreated had to be "+
 				"retried [%s] since the last attempt; please inspect "+
 				"host chain connectivity",
@@ -11179,7 +11179,7 @@ func (wr *WalletRegistry) watchWalletOwnerUpdated(
 	}
 
 	thresholdViolatedFn := func(elapsed time.Duration) {
-		wrLogger.Errorf(
+		wrLogger.Warnf(
 			"subscription to event WalletOwnerUpdated had to be "+
 				"retried [%s] since the last attempt; please inspect "+
 				"host chain connectivity",

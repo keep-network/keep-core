@@ -3082,7 +3082,7 @@ func (esp *EcdsaSortitionPool) watchBetaOperatorsAdded(
 	}
 
 	thresholdViolatedFn := func(elapsed time.Duration) {
-		espLogger.Errorf(
+		espLogger.Warnf(
 			"subscription to event BetaOperatorsAdded had to be "+
 				"retried [%s] since the last attempt; please inspect "+
 				"host chain connectivity",
@@ -3259,7 +3259,7 @@ func (esp *EcdsaSortitionPool) watchChaosnetDeactivated(
 	}
 
 	thresholdViolatedFn := func(elapsed time.Duration) {
-		espLogger.Errorf(
+		espLogger.Warnf(
 			"subscription to event ChaosnetDeactivated had to be "+
 				"retried [%s] since the last attempt; please inspect "+
 				"host chain connectivity",
@@ -3440,7 +3440,7 @@ func (esp *EcdsaSortitionPool) watchChaosnetOwnerRoleTransferred(
 	}
 
 	thresholdViolatedFn := func(elapsed time.Duration) {
-		espLogger.Errorf(
+		espLogger.Warnf(
 			"subscription to event ChaosnetOwnerRoleTransferred had to be "+
 				"retried [%s] since the last attempt; please inspect "+
 				"host chain connectivity",
@@ -3621,7 +3621,7 @@ func (esp *EcdsaSortitionPool) watchIneligibleForRewards(
 	}
 
 	thresholdViolatedFn := func(elapsed time.Duration) {
-		espLogger.Errorf(
+		espLogger.Warnf(
 			"subscription to event IneligibleForRewards had to be "+
 				"retried [%s] since the last attempt; please inspect "+
 				"host chain connectivity",
@@ -3816,7 +3816,7 @@ func (esp *EcdsaSortitionPool) watchOwnershipTransferred(
 	}
 
 	thresholdViolatedFn := func(elapsed time.Duration) {
-		espLogger.Errorf(
+		espLogger.Warnf(
 			"subscription to event OwnershipTransferred had to be "+
 				"retried [%s] since the last attempt; please inspect "+
 				"host chain connectivity",
@@ -4015,7 +4015,7 @@ func (esp *EcdsaSortitionPool) watchRewardEligibilityRestored(
 	}
 
 	thresholdViolatedFn := func(elapsed time.Duration) {
-		espLogger.Errorf(
+		espLogger.Warnf(
 			"subscription to event RewardEligibilityRestored had to be "+
 				"retried [%s] since the last attempt; please inspect "+
 				"host chain connectivity",

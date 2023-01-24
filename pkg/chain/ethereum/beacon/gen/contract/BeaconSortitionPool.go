@@ -3082,7 +3082,7 @@ func (bsp *BeaconSortitionPool) watchBetaOperatorsAdded(
 	}
 
 	thresholdViolatedFn := func(elapsed time.Duration) {
-		bspLogger.Errorf(
+		bspLogger.Warnf(
 			"subscription to event BetaOperatorsAdded had to be "+
 				"retried [%s] since the last attempt; please inspect "+
 				"host chain connectivity",
@@ -3259,7 +3259,7 @@ func (bsp *BeaconSortitionPool) watchChaosnetDeactivated(
 	}
 
 	thresholdViolatedFn := func(elapsed time.Duration) {
-		bspLogger.Errorf(
+		bspLogger.Warnf(
 			"subscription to event ChaosnetDeactivated had to be "+
 				"retried [%s] since the last attempt; please inspect "+
 				"host chain connectivity",
@@ -3440,7 +3440,7 @@ func (bsp *BeaconSortitionPool) watchChaosnetOwnerRoleTransferred(
 	}
 
 	thresholdViolatedFn := func(elapsed time.Duration) {
-		bspLogger.Errorf(
+		bspLogger.Warnf(
 			"subscription to event ChaosnetOwnerRoleTransferred had to be "+
 				"retried [%s] since the last attempt; please inspect "+
 				"host chain connectivity",
@@ -3621,7 +3621,7 @@ func (bsp *BeaconSortitionPool) watchIneligibleForRewards(
 	}
 
 	thresholdViolatedFn := func(elapsed time.Duration) {
-		bspLogger.Errorf(
+		bspLogger.Warnf(
 			"subscription to event IneligibleForRewards had to be "+
 				"retried [%s] since the last attempt; please inspect "+
 				"host chain connectivity",
@@ -3816,7 +3816,7 @@ func (bsp *BeaconSortitionPool) watchOwnershipTransferred(
 	}
 
 	thresholdViolatedFn := func(elapsed time.Duration) {
-		bspLogger.Errorf(
+		bspLogger.Warnf(
 			"subscription to event OwnershipTransferred had to be "+
 				"retried [%s] since the last attempt; please inspect "+
 				"host chain connectivity",
@@ -4015,7 +4015,7 @@ func (bsp *BeaconSortitionPool) watchRewardEligibilityRestored(
 	}
 
 	thresholdViolatedFn := func(elapsed time.Duration) {
-		bspLogger.Errorf(
+		bspLogger.Warnf(
 			"subscription to event RewardEligibilityRestored had to be "+
 				"retried [%s] since the last attempt; please inspect "+
 				"host chain connectivity",

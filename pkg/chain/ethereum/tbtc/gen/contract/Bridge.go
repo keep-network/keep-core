@@ -6064,7 +6064,7 @@ func (b *Bridge) watchDepositParametersUpdated(
 	}
 
 	thresholdViolatedFn := func(elapsed time.Duration) {
-		bLogger.Errorf(
+		bLogger.Warnf(
 			"subscription to event DepositParametersUpdated had to be "+
 				"retried [%s] since the last attempt; please inspect "+
 				"host chain connectivity",
@@ -6273,7 +6273,7 @@ func (b *Bridge) watchDepositRevealed(
 	}
 
 	thresholdViolatedFn := func(elapsed time.Duration) {
-		bLogger.Errorf(
+		bLogger.Warnf(
 			"subscription to event DepositRevealed had to be "+
 				"retried [%s] since the last attempt; please inspect "+
 				"host chain connectivity",
@@ -6458,7 +6458,7 @@ func (b *Bridge) watchDepositsSwept(
 	}
 
 	thresholdViolatedFn := func(elapsed time.Duration) {
-		bLogger.Errorf(
+		bLogger.Warnf(
 			"subscription to event DepositsSwept had to be "+
 				"retried [%s] since the last attempt; please inspect "+
 				"host chain connectivity",
@@ -6646,7 +6646,7 @@ func (b *Bridge) watchFraudChallengeDefeatTimedOut(
 	}
 
 	thresholdViolatedFn := func(elapsed time.Duration) {
-		bLogger.Errorf(
+		bLogger.Warnf(
 			"subscription to event FraudChallengeDefeatTimedOut had to be "+
 				"retried [%s] since the last attempt; please inspect "+
 				"host chain connectivity",
@@ -6836,7 +6836,7 @@ func (b *Bridge) watchFraudChallengeDefeated(
 	}
 
 	thresholdViolatedFn := func(elapsed time.Duration) {
-		bLogger.Errorf(
+		bLogger.Warnf(
 			"subscription to event FraudChallengeDefeated had to be "+
 				"retried [%s] since the last attempt; please inspect "+
 				"host chain connectivity",
@@ -7032,7 +7032,7 @@ func (b *Bridge) watchFraudChallengeSubmitted(
 	}
 
 	thresholdViolatedFn := func(elapsed time.Duration) {
-		bLogger.Errorf(
+		bLogger.Warnf(
 			"subscription to event FraudChallengeSubmitted had to be "+
 				"retried [%s] since the last attempt; please inspect "+
 				"host chain connectivity",
@@ -7219,7 +7219,7 @@ func (b *Bridge) watchFraudParametersUpdated(
 	}
 
 	thresholdViolatedFn := func(elapsed time.Duration) {
-		bLogger.Errorf(
+		bLogger.Warnf(
 			"subscription to event FraudParametersUpdated had to be "+
 				"retried [%s] since the last attempt; please inspect "+
 				"host chain connectivity",
@@ -7400,7 +7400,7 @@ func (b *Bridge) watchGovernanceTransferred(
 	}
 
 	thresholdViolatedFn := func(elapsed time.Duration) {
-		bLogger.Errorf(
+		bLogger.Warnf(
 			"subscription to event GovernanceTransferred had to be "+
 				"retried [%s] since the last attempt; please inspect "+
 				"host chain connectivity",
@@ -7579,7 +7579,7 @@ func (b *Bridge) watchInitialized(
 	}
 
 	thresholdViolatedFn := func(elapsed time.Duration) {
-		bLogger.Errorf(
+		bLogger.Warnf(
 			"subscription to event Initialized had to be "+
 				"retried [%s] since the last attempt; please inspect "+
 				"host chain connectivity",
@@ -7769,7 +7769,7 @@ func (b *Bridge) watchMovedFundsSweepTimedOut(
 	}
 
 	thresholdViolatedFn := func(elapsed time.Duration) {
-		bLogger.Errorf(
+		bLogger.Warnf(
 			"subscription to event MovedFundsSweepTimedOut had to be "+
 				"retried [%s] since the last attempt; please inspect "+
 				"host chain connectivity",
@@ -7959,7 +7959,7 @@ func (b *Bridge) watchMovedFundsSwept(
 	}
 
 	thresholdViolatedFn := func(elapsed time.Duration) {
-		bLogger.Errorf(
+		bLogger.Warnf(
 			"subscription to event MovedFundsSwept had to be "+
 				"retried [%s] since the last attempt; please inspect "+
 				"host chain connectivity",
@@ -8147,7 +8147,7 @@ func (b *Bridge) watchMovingFundsBelowDustReported(
 	}
 
 	thresholdViolatedFn := func(elapsed time.Duration) {
-		bLogger.Errorf(
+		bLogger.Warnf(
 			"subscription to event MovingFundsBelowDustReported had to be "+
 				"retried [%s] since the last attempt; please inspect "+
 				"host chain connectivity",
@@ -8339,7 +8339,7 @@ func (b *Bridge) watchMovingFundsCommitmentSubmitted(
 	}
 
 	thresholdViolatedFn := func(elapsed time.Duration) {
-		bLogger.Errorf(
+		bLogger.Warnf(
 			"subscription to event MovingFundsCommitmentSubmitted had to be "+
 				"retried [%s] since the last attempt; please inspect "+
 				"host chain connectivity",
@@ -8529,7 +8529,7 @@ func (b *Bridge) watchMovingFundsCompleted(
 	}
 
 	thresholdViolatedFn := func(elapsed time.Duration) {
-		bLogger.Errorf(
+		bLogger.Warnf(
 			"subscription to event MovingFundsCompleted had to be "+
 				"retried [%s] since the last attempt; please inspect "+
 				"host chain connectivity",
@@ -8730,7 +8730,7 @@ func (b *Bridge) watchMovingFundsParametersUpdated(
 	}
 
 	thresholdViolatedFn := func(elapsed time.Duration) {
-		bLogger.Errorf(
+		bLogger.Warnf(
 			"subscription to event MovingFundsParametersUpdated had to be "+
 				"retried [%s] since the last attempt; please inspect "+
 				"host chain connectivity",
@@ -8916,7 +8916,7 @@ func (b *Bridge) watchMovingFundsTimedOut(
 	}
 
 	thresholdViolatedFn := func(elapsed time.Duration) {
-		bLogger.Errorf(
+		bLogger.Warnf(
 			"subscription to event MovingFundsTimedOut had to be "+
 				"retried [%s] since the last attempt; please inspect "+
 				"host chain connectivity",
@@ -9104,7 +9104,7 @@ func (b *Bridge) watchMovingFundsTimeoutReset(
 	}
 
 	thresholdViolatedFn := func(elapsed time.Duration) {
-		bLogger.Errorf(
+		bLogger.Warnf(
 			"subscription to event MovingFundsTimeoutReset had to be "+
 				"retried [%s] since the last attempt; please inspect "+
 				"host chain connectivity",
@@ -9301,7 +9301,7 @@ func (b *Bridge) watchNewWalletRegistered(
 	}
 
 	thresholdViolatedFn := func(elapsed time.Duration) {
-		bLogger.Errorf(
+		bLogger.Warnf(
 			"subscription to event NewWalletRegistered had to be "+
 				"retried [%s] since the last attempt; please inspect "+
 				"host chain connectivity",
@@ -9482,7 +9482,7 @@ func (b *Bridge) watchNewWalletRequested(
 	}
 
 	thresholdViolatedFn := func(elapsed time.Duration) {
-		bLogger.Errorf(
+		bLogger.Warnf(
 			"subscription to event NewWalletRequested had to be "+
 				"retried [%s] since the last attempt; please inspect "+
 				"host chain connectivity",
@@ -9673,7 +9673,7 @@ func (b *Bridge) watchRedemptionParametersUpdated(
 	}
 
 	thresholdViolatedFn := func(elapsed time.Duration) {
-		bLogger.Errorf(
+		bLogger.Warnf(
 			"subscription to event RedemptionParametersUpdated had to be "+
 				"retried [%s] since the last attempt; please inspect "+
 				"host chain connectivity",
@@ -9876,7 +9876,7 @@ func (b *Bridge) watchRedemptionRequested(
 	}
 
 	thresholdViolatedFn := func(elapsed time.Duration) {
-		bLogger.Errorf(
+		bLogger.Warnf(
 			"subscription to event RedemptionRequested had to be "+
 				"retried [%s] since the last attempt; please inspect "+
 				"host chain connectivity",
@@ -10068,7 +10068,7 @@ func (b *Bridge) watchRedemptionTimedOut(
 	}
 
 	thresholdViolatedFn := func(elapsed time.Duration) {
-		bLogger.Errorf(
+		bLogger.Warnf(
 			"subscription to event RedemptionTimedOut had to be "+
 				"retried [%s] since the last attempt; please inspect "+
 				"host chain connectivity",
@@ -10258,7 +10258,7 @@ func (b *Bridge) watchRedemptionsCompleted(
 	}
 
 	thresholdViolatedFn := func(elapsed time.Duration) {
-		bLogger.Errorf(
+		bLogger.Warnf(
 			"subscription to event RedemptionsCompleted had to be "+
 				"retried [%s] since the last attempt; please inspect "+
 				"host chain connectivity",
@@ -10448,7 +10448,7 @@ func (b *Bridge) watchSpvMaintainerStatusUpdated(
 	}
 
 	thresholdViolatedFn := func(elapsed time.Duration) {
-		bLogger.Errorf(
+		bLogger.Warnf(
 			"subscription to event SpvMaintainerStatusUpdated had to be "+
 				"retried [%s] since the last attempt; please inspect "+
 				"host chain connectivity",
@@ -10638,7 +10638,7 @@ func (b *Bridge) watchVaultStatusUpdated(
 	}
 
 	thresholdViolatedFn := func(elapsed time.Duration) {
-		bLogger.Errorf(
+		bLogger.Warnf(
 			"subscription to event VaultStatusUpdated had to be "+
 				"retried [%s] since the last attempt; please inspect "+
 				"host chain connectivity",
@@ -10835,7 +10835,7 @@ func (b *Bridge) watchWalletClosed(
 	}
 
 	thresholdViolatedFn := func(elapsed time.Duration) {
-		bLogger.Errorf(
+		bLogger.Warnf(
 			"subscription to event WalletClosed had to be "+
 				"retried [%s] since the last attempt; please inspect "+
 				"host chain connectivity",
@@ -11034,7 +11034,7 @@ func (b *Bridge) watchWalletClosing(
 	}
 
 	thresholdViolatedFn := func(elapsed time.Duration) {
-		bLogger.Errorf(
+		bLogger.Warnf(
 			"subscription to event WalletClosing had to be "+
 				"retried [%s] since the last attempt; please inspect "+
 				"host chain connectivity",
@@ -11233,7 +11233,7 @@ func (b *Bridge) watchWalletMovingFunds(
 	}
 
 	thresholdViolatedFn := func(elapsed time.Duration) {
-		bLogger.Errorf(
+		bLogger.Warnf(
 			"subscription to event WalletMovingFunds had to be "+
 				"retried [%s] since the last attempt; please inspect "+
 				"host chain connectivity",
@@ -11428,7 +11428,7 @@ func (b *Bridge) watchWalletParametersUpdated(
 	}
 
 	thresholdViolatedFn := func(elapsed time.Duration) {
-		bLogger.Errorf(
+		bLogger.Warnf(
 			"subscription to event WalletParametersUpdated had to be "+
 				"retried [%s] since the last attempt; please inspect "+
 				"host chain connectivity",
@@ -11623,7 +11623,7 @@ func (b *Bridge) watchWalletTerminated(
 	}
 
 	thresholdViolatedFn := func(elapsed time.Duration) {
-		bLogger.Errorf(
+		bLogger.Warnf(
 			"subscription to event WalletTerminated had to be "+
 				"retried [%s] since the last attempt; please inspect "+
 				"host chain connectivity",
