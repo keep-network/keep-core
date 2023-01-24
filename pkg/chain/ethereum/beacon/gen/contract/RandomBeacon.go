@@ -5677,7 +5677,7 @@ func (rb *RandomBeacon) watchAuthorizationDecreaseApproved(
 	}
 
 	thresholdViolatedFn := func(elapsed time.Duration) {
-		rbLogger.Errorf(
+		rbLogger.Warnf(
 			"subscription to event AuthorizationDecreaseApproved had to be "+
 				"retried [%s] since the last attempt; please inspect "+
 				"host chain connectivity",
@@ -5880,7 +5880,7 @@ func (rb *RandomBeacon) watchAuthorizationDecreaseRequested(
 	}
 
 	thresholdViolatedFn := func(elapsed time.Duration) {
-		rbLogger.Errorf(
+		rbLogger.Warnf(
 			"subscription to event AuthorizationDecreaseRequested had to be "+
 				"retried [%s] since the last attempt; please inspect "+
 				"host chain connectivity",
@@ -6083,7 +6083,7 @@ func (rb *RandomBeacon) watchAuthorizationIncreased(
 	}
 
 	thresholdViolatedFn := func(elapsed time.Duration) {
-		rbLogger.Errorf(
+		rbLogger.Warnf(
 			"subscription to event AuthorizationIncreased had to be "+
 				"retried [%s] since the last attempt; please inspect "+
 				"host chain connectivity",
@@ -6270,7 +6270,7 @@ func (rb *RandomBeacon) watchAuthorizationParametersUpdated(
 	}
 
 	thresholdViolatedFn := func(elapsed time.Duration) {
-		rbLogger.Errorf(
+		rbLogger.Warnf(
 			"subscription to event AuthorizationParametersUpdated had to be "+
 				"retried [%s] since the last attempt; please inspect "+
 				"host chain connectivity",
@@ -6451,7 +6451,7 @@ func (rb *RandomBeacon) watchCallbackFailed(
 	}
 
 	thresholdViolatedFn := func(elapsed time.Duration) {
-		rbLogger.Errorf(
+		rbLogger.Warnf(
 			"subscription to event CallbackFailed had to be "+
 				"retried [%s] since the last attempt; please inspect "+
 				"host chain connectivity",
@@ -6641,7 +6641,7 @@ func (rb *RandomBeacon) watchDkgMaliciousResultSlashed(
 	}
 
 	thresholdViolatedFn := func(elapsed time.Duration) {
-		rbLogger.Errorf(
+		rbLogger.Warnf(
 			"subscription to event DkgMaliciousResultSlashed had to be "+
 				"retried [%s] since the last attempt; please inspect "+
 				"host chain connectivity",
@@ -6833,7 +6833,7 @@ func (rb *RandomBeacon) watchDkgMaliciousResultSlashingFailed(
 	}
 
 	thresholdViolatedFn := func(elapsed time.Duration) {
-		rbLogger.Errorf(
+		rbLogger.Warnf(
 			"subscription to event DkgMaliciousResultSlashingFailed had to be "+
 				"retried [%s] since the last attempt; please inspect "+
 				"host chain connectivity",
@@ -7030,7 +7030,7 @@ func (rb *RandomBeacon) watchDkgResultApproved(
 	}
 
 	thresholdViolatedFn := func(elapsed time.Duration) {
-		rbLogger.Errorf(
+		rbLogger.Warnf(
 			"subscription to event DkgResultApproved had to be "+
 				"retried [%s] since the last attempt; please inspect "+
 				"host chain connectivity",
@@ -7231,7 +7231,7 @@ func (rb *RandomBeacon) watchDkgResultChallenged(
 	}
 
 	thresholdViolatedFn := func(elapsed time.Duration) {
-		rbLogger.Errorf(
+		rbLogger.Warnf(
 			"subscription to event DkgResultChallenged had to be "+
 				"retried [%s] since the last attempt; please inspect "+
 				"host chain connectivity",
@@ -7432,7 +7432,7 @@ func (rb *RandomBeacon) watchDkgResultSubmitted(
 	}
 
 	thresholdViolatedFn := func(elapsed time.Duration) {
-		rbLogger.Errorf(
+		rbLogger.Warnf(
 			"subscription to event DkgResultSubmitted had to be "+
 				"retried [%s] since the last attempt; please inspect "+
 				"host chain connectivity",
@@ -7613,7 +7613,7 @@ func (rb *RandomBeacon) watchDkgSeedTimedOut(
 	}
 
 	thresholdViolatedFn := func(elapsed time.Duration) {
-		rbLogger.Errorf(
+		rbLogger.Warnf(
 			"subscription to event DkgSeedTimedOut had to be "+
 				"retried [%s] since the last attempt; please inspect "+
 				"host chain connectivity",
@@ -7799,7 +7799,7 @@ func (rb *RandomBeacon) watchDkgStarted(
 	}
 
 	thresholdViolatedFn := func(elapsed time.Duration) {
-		rbLogger.Errorf(
+		rbLogger.Warnf(
 			"subscription to event DkgStarted had to be "+
 				"retried [%s] since the last attempt; please inspect "+
 				"host chain connectivity",
@@ -7978,7 +7978,7 @@ func (rb *RandomBeacon) watchDkgStateLocked(
 	}
 
 	thresholdViolatedFn := func(elapsed time.Duration) {
-		rbLogger.Errorf(
+		rbLogger.Warnf(
 			"subscription to event DkgStateLocked had to be "+
 				"retried [%s] since the last attempt; please inspect "+
 				"host chain connectivity",
@@ -8155,7 +8155,7 @@ func (rb *RandomBeacon) watchDkgTimedOut(
 	}
 
 	thresholdViolatedFn := func(elapsed time.Duration) {
-		rbLogger.Errorf(
+		rbLogger.Warnf(
 			"subscription to event DkgTimedOut had to be "+
 				"retried [%s] since the last attempt; please inspect "+
 				"host chain connectivity",
@@ -8340,7 +8340,7 @@ func (rb *RandomBeacon) watchGasParametersUpdated(
 	}
 
 	thresholdViolatedFn := func(elapsed time.Duration) {
-		rbLogger.Errorf(
+		rbLogger.Warnf(
 			"subscription to event GasParametersUpdated had to be "+
 				"retried [%s] since the last attempt; please inspect "+
 				"host chain connectivity",
@@ -8521,7 +8521,7 @@ func (rb *RandomBeacon) watchGovernanceTransferred(
 	}
 
 	thresholdViolatedFn := func(elapsed time.Duration) {
-		rbLogger.Errorf(
+		rbLogger.Warnf(
 			"subscription to event GovernanceTransferred had to be "+
 				"retried [%s] since the last attempt; please inspect "+
 				"host chain connectivity",
@@ -8710,7 +8710,7 @@ func (rb *RandomBeacon) watchGroupCreationParametersUpdated(
 	}
 
 	thresholdViolatedFn := func(elapsed time.Duration) {
-		rbLogger.Errorf(
+		rbLogger.Warnf(
 			"subscription to event GroupCreationParametersUpdated had to be "+
 				"retried [%s] since the last attempt; please inspect "+
 				"host chain connectivity",
@@ -8905,7 +8905,7 @@ func (rb *RandomBeacon) watchGroupRegistered(
 	}
 
 	thresholdViolatedFn := func(elapsed time.Duration) {
-		rbLogger.Errorf(
+		rbLogger.Warnf(
 			"subscription to event GroupRegistered had to be "+
 				"retried [%s] since the last attempt; please inspect "+
 				"host chain connectivity",
@@ -9099,7 +9099,7 @@ func (rb *RandomBeacon) watchInactivityClaimed(
 	}
 
 	thresholdViolatedFn := func(elapsed time.Duration) {
-		rbLogger.Errorf(
+		rbLogger.Warnf(
 			"subscription to event InactivityClaimed had to be "+
 				"retried [%s] since the last attempt; please inspect "+
 				"host chain connectivity",
@@ -9300,7 +9300,7 @@ func (rb *RandomBeacon) watchInvoluntaryAuthorizationDecreaseFailed(
 	}
 
 	thresholdViolatedFn := func(elapsed time.Duration) {
-		rbLogger.Errorf(
+		rbLogger.Warnf(
 			"subscription to event InvoluntaryAuthorizationDecreaseFailed had to be "+
 				"retried [%s] since the last attempt; please inspect "+
 				"host chain connectivity",
@@ -9499,7 +9499,7 @@ func (rb *RandomBeacon) watchOperatorJoinedSortitionPool(
 	}
 
 	thresholdViolatedFn := func(elapsed time.Duration) {
-		rbLogger.Errorf(
+		rbLogger.Warnf(
 			"subscription to event OperatorJoinedSortitionPool had to be "+
 				"retried [%s] since the last attempt; please inspect "+
 				"host chain connectivity",
@@ -9698,7 +9698,7 @@ func (rb *RandomBeacon) watchOperatorRegistered(
 	}
 
 	thresholdViolatedFn := func(elapsed time.Duration) {
-		rbLogger.Errorf(
+		rbLogger.Warnf(
 			"subscription to event OperatorRegistered had to be "+
 				"retried [%s] since the last attempt; please inspect "+
 				"host chain connectivity",
@@ -9897,7 +9897,7 @@ func (rb *RandomBeacon) watchOperatorStatusUpdated(
 	}
 
 	thresholdViolatedFn := func(elapsed time.Duration) {
-		rbLogger.Errorf(
+		rbLogger.Warnf(
 			"subscription to event OperatorStatusUpdated had to be "+
 				"retried [%s] since the last attempt; please inspect "+
 				"host chain connectivity",
@@ -10080,7 +10080,7 @@ func (rb *RandomBeacon) watchReimbursementPoolUpdated(
 	}
 
 	thresholdViolatedFn := func(elapsed time.Duration) {
-		rbLogger.Errorf(
+		rbLogger.Warnf(
 			"subscription to event ReimbursementPoolUpdated had to be "+
 				"retried [%s] since the last attempt; please inspect "+
 				"host chain connectivity",
@@ -10270,7 +10270,7 @@ func (rb *RandomBeacon) watchRelayEntryDelaySlashed(
 	}
 
 	thresholdViolatedFn := func(elapsed time.Duration) {
-		rbLogger.Errorf(
+		rbLogger.Warnf(
 			"subscription to event RelayEntryDelaySlashed had to be "+
 				"retried [%s] since the last attempt; please inspect "+
 				"host chain connectivity",
@@ -10462,7 +10462,7 @@ func (rb *RandomBeacon) watchRelayEntryDelaySlashingFailed(
 	}
 
 	thresholdViolatedFn := func(elapsed time.Duration) {
-		rbLogger.Errorf(
+		rbLogger.Warnf(
 			"subscription to event RelayEntryDelaySlashingFailed had to be "+
 				"retried [%s] since the last attempt; please inspect "+
 				"host chain connectivity",
@@ -10647,7 +10647,7 @@ func (rb *RandomBeacon) watchRelayEntryParametersUpdated(
 	}
 
 	thresholdViolatedFn := func(elapsed time.Duration) {
-		rbLogger.Errorf(
+		rbLogger.Warnf(
 			"subscription to event RelayEntryParametersUpdated had to be "+
 				"retried [%s] since the last attempt; please inspect "+
 				"host chain connectivity",
@@ -10837,7 +10837,7 @@ func (rb *RandomBeacon) watchRelayEntryRequested(
 	}
 
 	thresholdViolatedFn := func(elapsed time.Duration) {
-		rbLogger.Errorf(
+		rbLogger.Warnf(
 			"subscription to event RelayEntryRequested had to be "+
 				"retried [%s] since the last attempt; please inspect "+
 				"host chain connectivity",
@@ -11029,7 +11029,7 @@ func (rb *RandomBeacon) watchRelayEntrySubmitted(
 	}
 
 	thresholdViolatedFn := func(elapsed time.Duration) {
-		rbLogger.Errorf(
+		rbLogger.Warnf(
 			"subscription to event RelayEntrySubmitted had to be "+
 				"retried [%s] since the last attempt; please inspect "+
 				"host chain connectivity",
@@ -11219,7 +11219,7 @@ func (rb *RandomBeacon) watchRelayEntryTimedOut(
 	}
 
 	thresholdViolatedFn := func(elapsed time.Duration) {
-		rbLogger.Errorf(
+		rbLogger.Warnf(
 			"subscription to event RelayEntryTimedOut had to be "+
 				"retried [%s] since the last attempt; please inspect "+
 				"host chain connectivity",
@@ -11411,7 +11411,7 @@ func (rb *RandomBeacon) watchRelayEntryTimeoutSlashed(
 	}
 
 	thresholdViolatedFn := func(elapsed time.Duration) {
-		rbLogger.Errorf(
+		rbLogger.Warnf(
 			"subscription to event RelayEntryTimeoutSlashed had to be "+
 				"retried [%s] since the last attempt; please inspect "+
 				"host chain connectivity",
@@ -11603,7 +11603,7 @@ func (rb *RandomBeacon) watchRelayEntryTimeoutSlashingFailed(
 	}
 
 	thresholdViolatedFn := func(elapsed time.Duration) {
-		rbLogger.Errorf(
+		rbLogger.Warnf(
 			"subscription to event RelayEntryTimeoutSlashingFailed had to be "+
 				"retried [%s] since the last attempt; please inspect "+
 				"host chain connectivity",
@@ -11793,7 +11793,7 @@ func (rb *RandomBeacon) watchRequesterAuthorizationUpdated(
 	}
 
 	thresholdViolatedFn := func(elapsed time.Duration) {
-		rbLogger.Errorf(
+		rbLogger.Warnf(
 			"subscription to event RequesterAuthorizationUpdated had to be "+
 				"retried [%s] since the last attempt; please inspect "+
 				"host chain connectivity",
@@ -11980,7 +11980,7 @@ func (rb *RandomBeacon) watchRewardParametersUpdated(
 	}
 
 	thresholdViolatedFn := func(elapsed time.Duration) {
-		rbLogger.Errorf(
+		rbLogger.Warnf(
 			"subscription to event RewardParametersUpdated had to be "+
 				"retried [%s] since the last attempt; please inspect "+
 				"host chain connectivity",
@@ -12168,7 +12168,7 @@ func (rb *RandomBeacon) watchRewardsWithdrawn(
 	}
 
 	thresholdViolatedFn := func(elapsed time.Duration) {
-		rbLogger.Errorf(
+		rbLogger.Warnf(
 			"subscription to event RewardsWithdrawn had to be "+
 				"retried [%s] since the last attempt; please inspect "+
 				"host chain connectivity",
@@ -12353,7 +12353,7 @@ func (rb *RandomBeacon) watchSlashingParametersUpdated(
 	}
 
 	thresholdViolatedFn := func(elapsed time.Duration) {
-		rbLogger.Errorf(
+		rbLogger.Warnf(
 			"subscription to event SlashingParametersUpdated had to be "+
 				"retried [%s] since the last attempt; please inspect "+
 				"host chain connectivity",
@@ -12543,7 +12543,7 @@ func (rb *RandomBeacon) watchUnauthorizedSigningSlashed(
 	}
 
 	thresholdViolatedFn := func(elapsed time.Duration) {
-		rbLogger.Errorf(
+		rbLogger.Warnf(
 			"subscription to event UnauthorizedSigningSlashed had to be "+
 				"retried [%s] since the last attempt; please inspect "+
 				"host chain connectivity",
@@ -12735,7 +12735,7 @@ func (rb *RandomBeacon) watchUnauthorizedSigningSlashingFailed(
 	}
 
 	thresholdViolatedFn := func(elapsed time.Duration) {
-		rbLogger.Errorf(
+		rbLogger.Warnf(
 			"subscription to event UnauthorizedSigningSlashingFailed had to be "+
 				"retried [%s] since the last attempt; please inspect "+
 				"host chain connectivity",

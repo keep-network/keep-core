@@ -1901,7 +1901,7 @@ func (lr *LightRelay) watchAuthorizationRequirementChanged(
 	}
 
 	thresholdViolatedFn := func(elapsed time.Duration) {
-		lrLogger.Errorf(
+		lrLogger.Warnf(
 			"subscription to event AuthorizationRequirementChanged had to be "+
 				"retried [%s] since the last attempt; please inspect "+
 				"host chain connectivity",
@@ -2080,7 +2080,7 @@ func (lr *LightRelay) watchGenesis(
 	}
 
 	thresholdViolatedFn := func(elapsed time.Duration) {
-		lrLogger.Errorf(
+		lrLogger.Warnf(
 			"subscription to event Genesis had to be "+
 				"retried [%s] since the last attempt; please inspect "+
 				"host chain connectivity",
@@ -2275,7 +2275,7 @@ func (lr *LightRelay) watchOwnershipTransferred(
 	}
 
 	thresholdViolatedFn := func(elapsed time.Duration) {
-		lrLogger.Errorf(
+		lrLogger.Warnf(
 			"subscription to event OwnershipTransferred had to be "+
 				"retried [%s] since the last attempt; please inspect "+
 				"host chain connectivity",
@@ -2458,7 +2458,7 @@ func (lr *LightRelay) watchProofLengthChanged(
 	}
 
 	thresholdViolatedFn := func(elapsed time.Duration) {
-		lrLogger.Errorf(
+		lrLogger.Warnf(
 			"subscription to event ProofLengthChanged had to be "+
 				"retried [%s] since the last attempt; please inspect "+
 				"host chain connectivity",
@@ -2639,7 +2639,7 @@ func (lr *LightRelay) watchRetarget(
 	}
 
 	thresholdViolatedFn := func(elapsed time.Duration) {
-		lrLogger.Errorf(
+		lrLogger.Warnf(
 			"subscription to event Retarget had to be "+
 				"retried [%s] since the last attempt; please inspect "+
 				"host chain connectivity",
@@ -2818,7 +2818,7 @@ func (lr *LightRelay) watchSubmitterAuthorized(
 	}
 
 	thresholdViolatedFn := func(elapsed time.Duration) {
-		lrLogger.Errorf(
+		lrLogger.Warnf(
 			"subscription to event SubmitterAuthorized had to be "+
 				"retried [%s] since the last attempt; please inspect "+
 				"host chain connectivity",
@@ -2997,7 +2997,7 @@ func (lr *LightRelay) watchSubmitterDeauthorized(
 	}
 
 	thresholdViolatedFn := func(elapsed time.Duration) {
-		lrLogger.Errorf(
+		lrLogger.Warnf(
 			"subscription to event SubmitterDeauthorized had to be "+
 				"retried [%s] since the last attempt; please inspect "+
 				"host chain connectivity",
