@@ -58,7 +58,7 @@ spec:
               valueFrom:
                 secretKeyRef:
                   name: eth-network-goerli
-                  key: ws-url
+                  key: http-url
             - name: ELECTRUM_API_URL
               valueFrom:
                 configMapKeyRef:
