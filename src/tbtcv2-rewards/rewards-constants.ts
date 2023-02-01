@@ -15,3 +15,4 @@ export const HUNDRED = 100
 export const IS_VERSION_SATISFIED = "isVersionSatisfied"
 export const APR = 15 // percent
 export const SECONDS_IN_YEAR = 31536000
+export const PROMETHEUS_SAMPLING_TOLERANCE = 1800 // 30min
