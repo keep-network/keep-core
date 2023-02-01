@@ -16,6 +16,8 @@ invalidation for every participant.
   - `verify_proof.js`: verify Merkle proof of a distribution.
   - `stake_history.js`: fetch the information of a particular staker, including staking history.
   - `claimed_rewards.js`: calculate the Threshold rewards that has been already claimed.
+- `distributions`:Threshold staking rewards' distributions. Here it is contained the Merkle Root of
+  each distribution and the cumulative rewards earned by each stake.
 
 ## Installation
 
