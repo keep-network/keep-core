@@ -34,6 +34,7 @@ import {
   HUNDRED,
   APR,
   SECONDS_IN_YEAR,
+  PROMETHEUS_SAMPLING_TOLERANCE,
 } from "./rewards-constants"
 
 program
@@ -362,7 +363,14 @@ export async function calculateRewards() {
         allowedDelayEndTimestamp = endRewardsTimestamp
       }
 
-      if (latestRegisteredBuildVersionTimestmap <= allowedDelayEndTimestamp) {
+      // It might happen that the 'latestRegisteredBuildVersionTimestmap' will
+      // exceed the end of the rewards interval timestamp by 1-15min because of
+      // the Prometheus sampling. For this check, we need to adjust for the Prometheus
+      // sampling and add 30min just to be on the safe side.
+      if (
+        latestRegisteredBuildVersionTimestmap <=
+        allowedDelayEndTimestamp + PROMETHEUS_SAMPLING_TOLERANCE
+      ) {
         // A client's version can be on either 2 latest versions
         requirements.set(
           IS_VERSION_SATISFIED,
