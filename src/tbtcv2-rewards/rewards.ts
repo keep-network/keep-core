@@ -113,7 +113,9 @@ export async function calculateRewards() {
 
   const rewardsInterval = endRewardsTimestamp - startRewardsTimestamp
   // periodic rate rounded and adjusted because BigNumber can't operate on floating numbers.
-  const periodicRate = Math.round(APR * (rewardsInterval / SECONDS_IN_YEAR) * PRECISION)
+  const periodicRate = Math.round(
+    APR * (rewardsInterval / SECONDS_IN_YEAR) * PRECISION
+  )
   const currentBlockNumber = await provider.getBlockNumber()
 
   // Query for bootstrap data that has peer instances grouped by operators
