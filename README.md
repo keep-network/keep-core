@@ -16,6 +16,16 @@ invalidation for every participant.
   - `verify_proof.js`: verify Merkle proof of a distribution.
   - `stake_history.js`: fetch the information of a particular staker, including staking history.
   - `claimed_rewards.js`: calculate the Threshold rewards that has been already claimed.
+- `distributions`:Threshold staking rewards' distributions. Here it is contained the Merkle Root of
+  each distribution and the cumulative rewards earned by each stake.
+  - `YYYY-MM-DD/MerkleDist.json`: includes the Merkle distribution itself: every stake that earned
+    rewards and its Merkle proofs. Also includes the Merkle Root. The amount shown here is the
+    accumulation of rewards earned over time.
+  - `YYYY-MM-DD/MerkleInput[].json`: includes the rewards earned over time for each Threshold
+    application plus [bonus
+    rewards](https://forum.threshold.network/t/tip-020-interim-era-incentive-schemes-1-one-off-migration-stake-bonus-2-ongoing-stable-yield/297).
+  - `distributions.json`: includes the cumulative rewards earned by all stakes shown on a monthly
+    basis.
 
 ## Installation
 

@@ -30,6 +30,7 @@ async function main() {
   let tbtcv2Rewards = {}
   const endDate = new Date(endTime * 1000).toISOString().slice(0, 10)
   const distPath = `distributions/${endDate}`
+  const distributionsFilePath = "distributions/distributions.json"
   const tbtcv2RewardsDetailsPath = `${distPath}/tBTCv2-rewards-details/`
   const lastDistPath = `distributions/${lastDistribution}`
   const tbtcv2Script =
@@ -47,12 +48,14 @@ async function main() {
     return
   }
 
+  // Bonus rewards calculation
   if (bonusWeight > 0) {
     console.log("Calculating bonus rewards...")
     const bonusStakes = await Subgraph.getBonusStakes(graphqlApi)
     earnedBonusRewards = Rewards.calculateBonusRewards(bonusStakes, bonusWeight)
   }
 
+  // PRE rewards calculation
   if (preWeight > 0) {
     console.log("Calculating PRE rewards...")
     const preStakes = await Subgraph.getPreStakes(
@@ -63,6 +66,7 @@ async function main() {
     earnedPreRewards = await Rewards.calculatePreRewards(preStakes, preWeight)
   }
 
+  // tBTCv2 rewards calculation
   if (tbtcv2Weight > 0) {
     console.log("Calculating tBTCv2 rewards...")
     shell.exec(`cd ${tbtcv2ScriptPath} && ${tbtcv2Script}`)
@@ -75,6 +79,7 @@ async function main() {
     )
   }
 
+  // Add rewards earned to cumulative totals
   try {
     bonusRewards = JSON.parse(
       fs.readFileSync(`${lastDistPath}/MerkleInputBonusRewards.json`)
@@ -118,8 +123,10 @@ async function main() {
   let merkleInput = MerkleDist.combineMerkleInputs(bonusRewards, preRewards)
   merkleInput = MerkleDist.combineMerkleInputs(merkleInput, tbtcv2Rewards)
 
+  // Generate the Merkle distribution
   const merkleDist = MerkleDist.genMerkleDist(merkleInput)
 
+  // Write the Merkle distribution to JSON file
   try {
     fs.writeFileSync(
       distPath + "/MerkleInputTotalRewards.json",
@@ -133,6 +140,15 @@ async function main() {
     console.error(err)
     return
   }
+
+  // Write the total amount in distributions JSON file
+  const distributions = JSON.parse(fs.readFileSync(distributionsFilePath))
+  distributions.LatestCumulativeAmount = merkleDist.totalAmount
+  distributions.CumulativeAmountByDistribution[endDate] = merkleDist.totalAmount
+  fs.writeFileSync(
+    distributionsFilePath,
+    JSON.stringify(distributions, null, 4)
+  )
 
   console.log("Total accumulated amount of rewards: ", merkleDist.totalAmount)
 }
