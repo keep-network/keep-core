@@ -13,8 +13,8 @@ const MerkleDist = require("../merkle_dist/merkle_dist.js")
 const bonusWeight = 0.0
 const preWeight = 0.5
 const tbtcv2Weight = 0.5
-const startTime = 1672531200 // Jan 1st 2023 00:00:00 GMT
-const endTime = 1675209600 // Feb 1st 2023 00:00:00 GMT
+const startTime = new Date("2023-01-01T00:00:00+00:00").getTime() / 1000
+const endTime = new Date("2023-02-01T00:00:00+00:00").getTime() / 1000
 const lastDistribution = "2023-01-01"
 
 const tbtcv2ScriptPath = "src/tbtcv2-rewards/"
@@ -134,7 +134,7 @@ async function main() {
     return
   }
 
-  console.log("Total amount of rewards: ", merkleDist.totalAmount)
+  console.log("Total accumulated amount of rewards: ", merkleDist.totalAmount)
 }
 
 ;(async () => {
