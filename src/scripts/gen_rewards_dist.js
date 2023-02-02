@@ -143,7 +143,7 @@ async function main() {
 
   // Write the total amount in distributions JSON file
   const distributions = JSON.parse(fs.readFileSync(distributionsFilePath))
-  distributions.LastCumulativeAmount = merkleDist.totalAmount
+  distributions.LatestCumulativeAmount = merkleDist.totalAmount
   distributions.CumulativeAmountByDistribution[endDate] = merkleDist.totalAmount
   fs.writeFileSync(
     distributionsFilePath,
