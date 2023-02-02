@@ -19,7 +19,7 @@ invalidation for every participant.
 - `distributions`:Threshold staking rewards' distributions. Here it is contained the Merkle Root of
   each distribution and the cumulative rewards earned by each stake.
   - `YYYY-MM-DD/MerkleDist.json`: includes the Merkle distribution itself: every stake that earned
-    rewards and its Merkle proofs. Also includes the Merkle Root. The amount here shown here is the
+    rewards and its Merkle proofs. Also includes the Merkle Root. The amount shown here is the
     accumulation of rewards earned over time.
   - `YYYY-MM-DD/MerkleInput[].json`: includes the rewards earned over time for each Threshold
     application plus [bonus
