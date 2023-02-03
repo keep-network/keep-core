@@ -36,7 +36,7 @@ The following attacks are excluded from the Bug Bounty program:
 The following activities are prohibited by this bug bounty program:
 
 - Any testing with mainnet or public testnet contracts; all testing should be done on private testnets.
-- Attempting phishing or other social engineering attacks against our employees and/or customers.
+- Attempting phishing or other social engineering attacks against our contributors and/or users.
 - Any denial of service attacks.
 - Automated testing of services that generates significant amounts of traffic.
 - Public disclosure of an unpatched vulnerability in an embargoed bounty.
