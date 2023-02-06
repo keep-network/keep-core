@@ -1,6 +1,6 @@
-# Security Policy
+= Security Policy
 
-## Reporting a Vulnerability
+== Reporting a Vulnerability
 
 If you identify vulnerabilities with any Threshold Network code, please email `security@threshold.network` with relevant information to your findings. We will work with researchers to coordinate vulnerability disclosure between our stakers, partners, and users to ensure the successful mitigation of vulnerabilities.
 
@@ -16,7 +16,7 @@ The Threshold team will try to make an initial assessment of a bug's relevance, 
 
 The Threshold DAO does have a bug bounty available, which is dispensed on a case-by-case basis.
 
-## Bug Bounty Program
+== Bug Bounty Program
 
 The following Bug Bounty amounts were approved by the DAO in https://forum.threshold.network/t/tip-041-establish-a-bug-bounty-program/453[TIP-041]  proposal:
 
