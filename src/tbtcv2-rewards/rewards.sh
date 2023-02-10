@@ -157,30 +157,17 @@ git remote set-url origin ${KEEP_CORE_REPO}
 git fetch --all --tags --prune
 allTags=($(git tag --sort=-version:refname --list 'v[0-9]*.*-m[0-9]*'))
 latestTag=${allTags[0]}
-latestTimestamp=$(git show -s --format=%ct ${latestTag}^{commit})
+latestTimestamp=($(git tag --sort=-version:refname --list 'v[0-9]*.*-m[0-9]*' --format '%(creatordate:unix)' | head -n 1))
 latestTagTimestamp="${latestTag}_$latestTimestamp"
 
+# There are at least 2 tags available at this point of time
+secondToLatestTag=${allTags[1]}
+secondToLatestTagTimestamp="${secondToLatestTag}_$(git tag --sort=-version:refname --list 'v[0-9]*.*-m[0-9]*' --format '%(creatordate:unix)' | head -n 2 | tail -1)"
+
 tagsInRewardInterval=()
+tagsInRewardInterval+=($latestTagTimestamp)
+tagsInRewardInterval+=($secondToLatestTagTimestamp)
 
-if [ ${#allTags[@]} -gt 1 ]; then
-  secondToLatestTag=${allTags[1]}
-  secondToLatestTagTimestamp="${secondToLatestTag}_$(git show -s --format=%ct ${secondToLatestTag}^{commit})"
-  if [ $latestTimestamp -gt $REWARDS_START_DATE ] && [ $latestTimestamp -lt $REWARDS_END_DATE ]; then
-    # The latest tag was created within the rewards interval dates.
-    tagsInRewardInterval+=($latestTagTimestamp)
-    tagsInRewardInterval+=($secondToLatestTagTimestamp)
-  elif [ $latestTimestamp -gt $REWARDS_END_DATE ]; then
-    # The latest tag was created after the given rewards interval. Take a
-    # second to latest tag.
-    tagsInRewardInterval+=($secondToLatestTagTimestamp)
-  fi
-fi
-
-if [ ${#tagsInRewardInterval[@]} -eq 0 ]; then
-  # There is only one tag or the latest tag was created before the start rewards
-  # interval and it is continue being the latest tag. (No new releases)
-  tagsInRewardInterval+=($latestTagTimestamp)
-fi
 
 # Converting array to string so we can pass to the rewards-requirements.ts
 printf -v tags '%s|' "${tagsInRewardInterval[@]}"
