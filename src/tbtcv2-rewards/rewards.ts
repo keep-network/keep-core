@@ -34,7 +34,6 @@ import {
   HUNDRED,
   APR,
   SECONDS_IN_YEAR,
-  PROMETHEUS_SAMPLING_TOLERANCE,
 } from "./rewards-constants"
 
 program
@@ -322,74 +321,93 @@ export async function calculateRewards() {
 
     requirements.set(IS_PRE_PARAMS_SATISFIED, isPrePramsSatisfied)
 
-    /// Version requirement
-    let {
-      instanceWithLatestBuildVersion,
-      latestRegisteredBuildVersionTimestmap,
-    } = await checkVersion(operatorAddress, rewardsInterval, instancesData)
+    // keep-core client already has at least 2 released versions
+    const latestClient = clientReleases[0].split("_")
+    const latestClientTag = latestClient[0]
+    const latestClientTagTimestamp = Number(latestClient[1])
+    const secondToLatestClient = clientReleases[1].split("_")
+    const secondToLatestClientTag = secondToLatestClient[0]
 
-    if (instanceWithLatestBuildVersion === undefined) {
-      console.log(
-        `Cannot determine a client version. No Rewards were calculated for operator ${operatorAddress}`
-      )
-      continue
-    }
+    const instances = await processInstances(
+      operatorAddress,
+      rewardsInterval,
+      instancesData
+    )
 
-    // This is an example to illustrate a client's build version requirement.
-    // A client must be either on the second to latest version or latest.
-    //                       v1 or v2                v2
-    //           |-------------------------------\|-------|
-    // Timeline -|-------------*------------------*-------|->
-    //         Sep1            v2             v2+delay   Sep30
-    // Where:
-    // v2 was released Sep10
-    // delay = 14days
-    // v2 + delay = Sep10 + 14days = Sep24
-    // Between Sep1 - Sep24 a client is allowed to run v1 or v2
-    // Between Sep24 - Sep30 a client is allowed to run only v2
-
-    const buildVersion = instanceWithLatestBuildVersion.metric.version
-    const latestClientRelease = clientReleases[0].split("_")
-    const latestClientTag = latestClientRelease[0]
-    const latestClientReleaseTimestamp = latestClientRelease[1]
-    if (clientReleases.length > 1) {
-      // A client is allowed to be on either of the two latest releases.
-      const secondToLatestClientRelease = clientReleases[1].split("_")
-      const secondToLatestClientTag = secondToLatestClientRelease[0]
-
-      let allowedDelayEndTimestamp =
-        latestClientReleaseTimestamp + ALLOWED_UPGRADE_DELAY
-      if (allowedDelayEndTimestamp > endRewardsTimestamp) {
-        allowedDelayEndTimestamp = endRewardsTimestamp
+    const upgradeCutoffDate = latestClientTagTimestamp + ALLOWED_UPGRADE_DELAY
+    requirements.set(IS_VERSION_SATISFIED, true)
+    if (upgradeCutoffDate < startRewardsTimestamp) {
+      // v1-|-------v1 or v2------|------------------v2 only--------------|
+      // ---|---------------------|---------|-----------------------------|--->
+      //  v2tag                 cutoff     Feb1                          Feb28
+      // All the instances must run on the latest version during the rewards
+      // interval in Feb.
+      for (let i = 0; i < instances.length; i++) {
+        if (instances[i].buildVersion != latestClientTag) {
+          requirements.set(IS_VERSION_SATISFIED, false)
+        }
       }
-
-      // It might happen that the 'latestRegisteredBuildVersionTimestmap' will
-      // exceed the end of the rewards interval timestamp by 1-15min because of
-      // the Prometheus sampling. For this check, we need to adjust for the Prometheus
-      // sampling and add 30min just to be on the safe side.
-      if (
-        latestRegisteredBuildVersionTimestmap <=
-        allowedDelayEndTimestamp + PROMETHEUS_SAMPLING_TOLERANCE
-      ) {
-        // A client's version can be on either 2 latest versions
-        requirements.set(
-          IS_VERSION_SATISFIED,
-          buildVersion.includes(latestClientTag) ||
-            buildVersion.includes(secondToLatestClientTag)
-        )
-      } else {
-        // The allowed delay for an upgrade is over. A client should be on the
-        // latest build version.
-        requirements.set(
-          IS_VERSION_SATISFIED,
-          buildVersion.includes(latestClientTag)
-        )
+    } else if (upgradeCutoffDate < endRewardsTimestamp) {
+      // -v1-|-------v1 or v2---------|--------v2 only--------|
+      // ----|---------|--------------|-----------------------|--->
+      //   v2tag     Feb1          cutoff                  Feb28
+      // All the instances between (upgradeCutoffDate : endRewardsTimestamp]
+      // must run on the latest version
+      for (let i = instances.length - 1; i >= 0; i--) {
+        if (
+          instances[i].lastRegisteredTimestamp > upgradeCutoffDate &&
+          !instances[i].buildVersion.includes(latestClientTag)
+        ) {
+          // After the cutoff day a node operator still run an instance with an
+          // older version. No rewards.
+          requirements.set(IS_VERSION_SATISFIED, false)
+          // No need to check further since at least one instance run on the
+          // older version after the cutoff day.
+          break
+        } else {
+          // It might happen that a node operator stopped an instance before the
+          // upgrade cutoff date that happens to be right before the interval
+          // end date. However, it might still be eligible for rewards because
+          // of the uptime requirement.
+          if (
+            !(
+              instances[i].buildVersion.includes(latestClientTag) ||
+              instances[i].buildVersion.includes(secondToLatestClientTag)
+            )
+          ) {
+            // Instance run on the older version than 2 latest.
+            requirements.set(IS_VERSION_SATISFIED, false)
+          }
+          // No need to check other instances.
+          break
+        }
       }
     } else {
-      requirements.set(
-        IS_VERSION_SATISFIED,
-        buildVersion.includes(latestClientTag)
-      )
+      // ------------v1------------|-----------v1 or v2---------|---v2 only--->
+      // --|-----------------------|---------------|------------|-->
+      //  Feb1                   v2tag           Feb28        cutoff
+      // All the instances between [latestClientTagTimestamp : endRewardsTimestamp]
+      // must run either on secondToLatest or the latest version
+      for (let i = instances.length - 1; i >= 0; i--) {
+        if (instances[i].lastRegisteredTimestamp >= latestClientTagTimestamp) {
+          if (
+            !(
+              instances[i].buildVersion.includes(latestClientTag) ||
+              instances[i].buildVersion.includes(secondToLatestClientTag)
+            )
+          ) {
+            // A client run a version older than 2 latest allowed. No rewards.
+            requirements.set(IS_VERSION_SATISFIED, false)
+            break
+          }
+        } else {
+          if (!instances[i].buildVersion.includes(secondToLatestClientTag)) {
+            requirements.set(IS_VERSION_SATISFIED, false)
+          }
+          // No need to check other instances before the latestClientTagTimestamp.
+          break
+        }
+      }
     }
 
     /// Start assembling peer data and weighted authorizations
@@ -693,7 +711,9 @@ async function checkPreParams(
   return preParamsAvg >= requiredPreParams
 }
 
-async function checkVersion(
+// Query Prometheus and fetch instances that run on either of two latest client
+// versions and mark their first and last registered timestamp.
+async function processInstances(
   operatorAddress: string,
   rewardsInterval: number,
   instancesData: Map<string, Map<string, string | number>>
@@ -701,26 +721,27 @@ async function checkVersion(
   const buildVersionInstancesParams = {
     query: `client_info{chain_address="${operatorAddress}", job="${prometheusJob}"}[${rewardsInterval}s:${QUERY_RESOLUTION}s] offset ${offset}s`,
   }
-  // Get build versions of instances in rewards interval
+  // Get instances data for a given rewards interval
   const queryBuildVersionInstances = (
     await queryPrometheus(prometheusAPIQuery, buildVersionInstancesParams)
   ).data.result
 
-  let instanceWithLatestBuildVersion
-  let latestRegisteredBuildVersionTimestmap = 0 // min number
+  let instances = []
 
   // Determine client's build version for it all it's instances
   for (let i = 0; i < queryBuildVersionInstances.length; i++) {
     const instance = queryBuildVersionInstances[i]
-    // Find latest registered timestamp in a given instance
-    if (
-      instance.values[instance.values.length - 1][0] >
-      latestRegisteredBuildVersionTimestmap
-    ) {
-      latestRegisteredBuildVersionTimestmap =
-        instance.values[instance.values.length - 1][0]
-      instanceWithLatestBuildVersion = instance
+
+    const instanceTimestampsVersionInfo = {
+      // First timestamp registered by Prometheus for a given instance
+      firstRegisteredTimestamp: instance.values[0][0],
+      // Last timestamp registered by Prometheus for a given instance
+      lastRegisteredTimestamp: instance.values[instance.values.length - 1][0],
+      buildVersion: instance.metric.version,
     }
+
+    instances.push(instanceTimestampsVersionInfo)
+
     const dataInstance = instancesData.get(instance.metric.instance)
     if (dataInstance !== undefined) {
       dataInstance.set(VERSION, instance.metric.version)
@@ -729,10 +750,13 @@ async function checkVersion(
       console.error("Instance must be present for a given rewards interval.")
     }
   }
-  return {
-    instanceWithLatestBuildVersion,
-    latestRegisteredBuildVersionTimestmap,
-  }
+
+  // Sort instances in ascending order by first registration timestamp
+  instances.sort((a, b) =>
+    a.firstRegisteredTimestamp > b.firstRegisteredTimestamp ? 1 : -1
+  )
+
+  return instances
 }
 
 function convertToObject(map: Map<string, Map<string, any>>) {
