@@ -33,6 +33,11 @@ spec:
                     secretKeyRef:
                       name: tbtc-v2-monitoring-config
                       key: ethereum-url
+                - name: ELECTRUM_URL
+                  valueFrom:
+                    secretKeyRef:
+                      name: tbtc-v2-monitoring-config
+                      key: electrum-url
                 - name: LARGE_DEPOSIT_THRESHOLD_SAT
                   valueFrom:
                     configMapKeyRef:
