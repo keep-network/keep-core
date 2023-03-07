@@ -14,15 +14,6 @@ spec:
       type: btc-difficulty
       network: goerli
   serviceName: btc-difficulty-maintainer
-  #volumeClaimTemplates:
-  # - metadata:
-  #     name: btc-difficulty-maintainer-data
-  #   spec:
-  #     accessModes:
-  #     - ReadWriteOnce
-  #     resources:
-  #       requests:
-  #         storage: 4096Mi
   template:
     metadata:
       labels:
@@ -31,9 +22,6 @@ spec:
         network: goerli
     spec:
       volumes:
-        # - name: btc-difficulty-maintainer-data
-        #   persistentVolumeClaim:
-        #     claimName: btc-difficulty-maintainer-data
       - name: eth-account-keyfile
         configMap:
           name: eth-account-info
@@ -48,8 +36,6 @@ spec:
             requests:
               cpu: 1500m
               memory: 512M
-          ports:
-          # TODO: Fill with proper data
           env:
           - name: KEEP_ETHEREUM_PASSWORD
             valueFrom:
@@ -62,7 +48,8 @@ spec:
                 name: eth-network-goerli
                 key: ws-url
           envFrom:
-          # TODO: Fill with proper data
+          - configMapRef:
+            name: keep-client-config
           volumeMounts:
           - name: eth-account-keyfile
             mountPath: /mnt/keep-client/keyfile
@@ -80,3 +67,5 @@ spec:
           - wss://electrumx-server.tbtc.network:8443
           - bitcoin.electrum.protocol
           - wss
+          # TODO: Most likely the address of the Goerli LightRelay will have to
+          #       be passed
