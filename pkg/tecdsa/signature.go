@@ -1,9 +1,11 @@
 package tecdsa
 
 import (
+	"encoding/hex"
 	"fmt"
-	"github.com/bnb-chain/tss-lib/common"
 	"math/big"
+
+	"github.com/bnb-chain/tss-lib/common"
 )
 
 // Signature holds a signature in a form of two big.Int `r` and `s` values and
@@ -38,9 +40,9 @@ func NewSignature(data *common.SignatureData) *Signature {
 // as hexadecimals.
 func (s *Signature) String() string {
 	return fmt.Sprintf(
-		"R: %#x, S: %#x, RecoveryID: %d",
-		s.R,
-		s.S,
+		"R: 0x%s, S: 0x%s, RecoveryID: %d",
+		hex.EncodeToString(s.R.Bytes()),
+		hex.EncodeToString(s.S.Bytes()),
 		s.RecoveryID,
 	)
 }
