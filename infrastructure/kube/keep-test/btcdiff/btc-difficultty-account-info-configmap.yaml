@@ -1,0 +1,9 @@
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: btc-difficulty-maintainer-info
+  namespace: default
+data:
+  btc-difficulty-maintainer-address: "0xb6de33ba76ca8565e8f9acd2281f5de97c9f529d"
+  btc-difficulty-maintainer-keyfile: |
+    {"address":"b6de33ba76ca8565e8f9acd2281f5de97c9f529d","crypto":{"cipher":"aes-128-ctr","ciphertext":"3732dc390a7d191aea730cd3ff78f84794cbb394aa308a1439ddf1f917a20033","cipherparams":{"iv":"79c4176845ad922d35efb9459630627b"},"kdf":"scrypt","kdfparams":{"dklen":32,"n":262144,"p":1,"r":8,"salt":"75d97237dbbf5d7ae25a547f8d70526377d75bf415795d3ecceefd76feb732ce"},"mac":"d158cf9858504a74d3b2542949b7821fb782062643985c4594f5201aad93c863"},"id":"5f59967d-4777-4ae0-835a-a705321a1f30","version":3}
