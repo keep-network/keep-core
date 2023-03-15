@@ -58,14 +58,17 @@ spec:
           - maintainer
           args:
           - --bitcoinDifficulty
-          - --goerli
+          - --developer # run as developer to be able to set LightRelay address
           - --ethereum.url
           - $(ETH_WS_URL)
           - --ethereum.keyFile
           - /mnt/keep-client/keyfile/account-0-keyfile
-          - bitcoin.electrum.url
+          - --bitcoin.electrum.url
           - wss://electrumx-server.tbtc.network:8443
-          - bitcoin.electrum.protocol
+          - --bitcoin.electrum.protocol
           - wss
-          # TODO: Most likely the address of the Goerli LightRelay will have to
-          #       be passed
+          - --developer.LightRelayAddress 0xEf47bfE31d60c802fBA84d6E40ac266f605C8558
+          # temporarily pass dummy addresses for test purposes
+          - --developer.RandomBeaconAddress 0x0000000000000000000000000000000000000000
+          - --developer.WalletRegistryAddress 0x0000000000000000000000000000000000000000
+          - --developer.TokenStakingAddress 0x0000000000000000000000000000000000000000
