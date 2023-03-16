@@ -24,10 +24,10 @@ spec:
       volumes:
       - name: eth-account-keyfile
         configMap:
-          name: eth-account-info
+          name: btc-difficulty-maintainer-info
           items:
-          - key: account-0-keyfile
-            path: account-0-keyfile
+          - key: btc-difficulty-maintainer-keyfile
+            path: btc-difficulty-maintainer-keyfile
       containers:
         - name: btc-difficulty-maintainer
           image: gcr.io/keep-test-f3e0/keep-client:latest
@@ -40,8 +40,8 @@ spec:
           - name: KEEP_ETHEREUM_PASSWORD
             valueFrom:
               secretKeyRef:
-                name: eth-account-passphrases
-                key: account-0
+                name: btc-difficulty-maintainer
+                key: eth-account-password
           - name: ETH_WS_URL
             valueFrom:
               secretKeyRef:
@@ -62,7 +62,7 @@ spec:
           - --ethereum.url
           - $(ETH_WS_URL)
           - --ethereum.keyFile
-          - /mnt/keep-client/keyfile/account-0-keyfile
+          - /mnt/keep-client/keyfile/btc-difficulty-maintainer-keyfile
           - --bitcoin.electrum.url
           - wss://electrumx-server.tbtc.network:8443
           - --bitcoin.electrum.protocol
