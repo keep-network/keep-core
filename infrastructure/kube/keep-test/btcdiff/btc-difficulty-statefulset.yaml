@@ -49,10 +49,10 @@ spec:
                 key: ws-url
           envFrom:
           - configMapRef:
-            name: keep-client-config
+            name: btc-difficulty-maintainer-config
           volumeMounts:
           - name: eth-account-keyfile
-            mountPath: /mnt/keep-client/keyfile
+            mountPath: /mnt/btc-difficulty-maintainer/keyfile
           command:
           - keep-client
           - maintainer
@@ -62,7 +62,7 @@ spec:
           - --ethereum.url
           - $(ETH_WS_URL)
           - --ethereum.keyFile
-          - /mnt/keep-client/keyfile/btc-difficulty-maintainer-keyfile
+          - /mnt/btc-difficulty-maintainer/keyfile/btc-difficulty-maintainer-keyfile
           - --bitcoin.electrum.url
           - wss://electrumx-server.tbtc.network:8443
           - --bitcoin.electrum.protocol
