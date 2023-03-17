@@ -28,6 +28,12 @@ spec:
           items:
           - key: btc-difficulty-maintainer-keyfile
             path: btc-difficulty-maintainer-keyfile
+      - name: btc-difficulty-maintainer-config
+        configMap:
+          name: btc-difficulty-maintainer-config
+          items:
+          - key: btc-difficulty-maintainer-config
+            path: btc-difficulty-maintainer-config.toml
       containers:
         - name: btc-difficulty-maintainer
           image: gcr.io/keep-test-f3e0/keep-client:latest
@@ -37,6 +43,8 @@ spec:
               cpu: 1500m
               memory: 512M
           env:
+          - name: LOG_LEVEL
+            value: info
           - name: KEEP_ETHEREUM_PASSWORD
             valueFrom:
               secretKeyRef:
@@ -47,28 +55,25 @@ spec:
               secretKeyRef:
                 name: eth-network-goerli
                 key: ws-url
-          envFrom:
-          - configMapRef:
-            name: btc-difficulty-maintainer-config
           volumeMounts:
           - name: eth-account-keyfile
             mountPath: /mnt/btc-difficulty-maintainer/keyfile
+          - name: btc-difficulty-maintainer-config
+            mountPath: /mnt/btc-difficulty-maintainer/config
           command:
           - keep-client
           - maintainer
           args:
           - --bitcoinDifficulty
-          - --developer # run as developer to be able to set LightRelay address
+          # run as developer to be able to set LightRelay address
+          - --developer
           - --ethereum.url
           - $(ETH_WS_URL)
           - --ethereum.keyFile
           - /mnt/btc-difficulty-maintainer/keyfile/btc-difficulty-maintainer-keyfile
           - --bitcoin.electrum.url
-          - wss://electrumx-server.tbtc.network:8443
+          - "electrum.blockstream.info:50001"
           - --bitcoin.electrum.protocol
-          - wss
-          - --developer.LightRelayAddress 0xEf47bfE31d60c802fBA84d6E40ac266f605C8558
-          # temporarily pass dummy addresses for test purposes
-          - --developer.RandomBeaconAddress 0x0000000000000000000000000000000000000000
-          - --developer.WalletRegistryAddress 0x0000000000000000000000000000000000000000
-          - --developer.TokenStakingAddress 0x0000000000000000000000000000000000000000
+          - "TCP"
+          - --config
+          - /mnt/btc-difficulty-maintainer/config/btc-difficulty-maintainer-config.toml
