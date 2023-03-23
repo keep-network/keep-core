@@ -56,6 +56,7 @@ func NewBitcoinDifficultyChain(
 	}
 
 	return &BitcoinDifficultyChain{
+		baseChain:  baseChain,
 		lightRelay: lightRelay,
 	}, nil
 }
