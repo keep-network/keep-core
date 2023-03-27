@@ -32,7 +32,7 @@ spec:
         configMap:
           name: btc-difficulty-maintainer-config
           items:
-          - key: btc-difficulty-maintainer-config
+          - key: btc-difficulty-maintainer-config.toml
             path: btc-difficulty-maintainer-config.toml
       containers:
         - name: btc-difficulty-maintainer
@@ -48,7 +48,7 @@ spec:
           - name: KEEP_ETHEREUM_PASSWORD
             valueFrom:
               secretKeyRef:
-                name: btc-difficulty-maintainer
+                name: btc-difficulty-maintainer-eth-password
                 key: eth-account-password
           - name: ETH_WS_URL
             valueFrom:

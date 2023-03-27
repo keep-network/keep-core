@@ -1,0 +1,27 @@
+resources:
+  - btc-difficulty-statefulset.yaml
+
+namespace: default
+
+commonLabels:
+  app: maintainer
+  type: btc-difficulty
+  network: goerli
+
+configMapGenerator:
+  - name: btc-difficulty-maintainer-info
+    files:
+      - keyfile/btc-difficulty-maintainer-keyfile
+  - name: btc-difficulty-maintainer-config
+    files:
+      - config/btc-difficulty-maintainer-config.toml
+
+secretGenerator:
+  - name: btc-difficulty-maintainer-eth-password
+    files:
+      - .secret/eth-account-password
+
+generatorOptions:
+  disableNameSuffixHash: true
+  annotations:
+    note: generated
