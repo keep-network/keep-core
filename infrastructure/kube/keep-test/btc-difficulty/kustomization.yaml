@@ -15,6 +15,9 @@ configMapGenerator:
   - name: btc-difficulty-maintainer-config
     files:
       - config/keep-client-config.toml
+  - name: electrum-api-mainnet
+    literals:
+      - electrumx-url-tcp=electrum.blockstream.info:50001
 
 secretGenerator:
   - name: btc-difficulty-maintainer-eth-accounts-password
