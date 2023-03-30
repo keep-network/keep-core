@@ -14,7 +14,7 @@ configMapGenerator:
       - keyfile/btc-difficulty-maintainer-keyfile
   - name: btc-difficulty-maintainer-config
     files:
-      - config/btc-difficulty-maintainer-config.toml
+      - config/keep-client-config.toml
 
 secretGenerator:
   - name: btc-difficulty-maintainer-eth-password

@@ -32,8 +32,8 @@ spec:
         configMap:
           name: btc-difficulty-maintainer-config
           items:
-          - key: btc-difficulty-maintainer-config.toml
-            path: btc-difficulty-maintainer-config.toml
+          - key: keep-client-config.toml
+            path: keep-client-config.toml
       containers:
         - name: btc-difficulty-maintainer
           image: gcr.io/keep-test-f3e0/keep-client:latest
@@ -76,4 +76,4 @@ spec:
           - --bitcoin.electrum.protocol
           - "TCP"
           - --config
-          - /mnt/btc-difficulty-maintainer/config/btc-difficulty-maintainer-config.toml
+          - /mnt/btc-difficulty-maintainer/config/keep-client-config.toml
