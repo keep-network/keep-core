@@ -17,7 +17,7 @@ configMapGenerator:
       - config/keep-client-config.toml
 
 secretGenerator:
-  - name: btc-difficulty-maintainer-eth-password
+  - name: btc-difficulty-maintainer-eth-accounts-password
     files:
       - .secret/eth-account-password
 

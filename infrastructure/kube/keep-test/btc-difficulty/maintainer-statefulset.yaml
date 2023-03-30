@@ -48,7 +48,7 @@ spec:
           - name: KEEP_ETHEREUM_PASSWORD
             valueFrom:
               secretKeyRef:
-                name: btc-difficulty-maintainer-eth-password
+                name: btc-difficulty-maintainer-eth-accounts-password
                 key: eth-account-password
           - name: ETH_WS_URL
             valueFrom:
