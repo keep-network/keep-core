@@ -9,7 +9,7 @@ commonLabels:
   network: goerli
 
 configMapGenerator:
-  - name: btc-difficulty-maintainer-info
+  - name: btc-difficulty-maintainer-accounts-info
     files:
       - config/btc-difficulty-maintainer-keyfile
   - name: btc-difficulty-maintainer-config
