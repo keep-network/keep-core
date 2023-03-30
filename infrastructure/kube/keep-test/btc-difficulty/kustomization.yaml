@@ -1,5 +1,5 @@
 resources:
-  - btc-difficulty-statefulset.yaml
+  - maintainer-statefulset.yaml
 
 namespace: default
 
