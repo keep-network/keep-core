@@ -312,6 +312,43 @@ func Initialize(
 		}()
 	})
 
+	_ = chain.OnDepositSweepProposalSubmitted(func(event *DepositSweepProposalSubmittedEvent) {
+		go func() {
+			if ok := deduplicator.notifyDepositSweepProposalSubmitted(
+				nil,
+			); !ok {
+				logger.Infof(
+					"deposit sweep proposal has been already processed",
+				)
+				return
+			}
+
+			confirmationBlock := event.BlockNumber + depositSweepProposalConfirmationBlocks
+
+			logger.Infof(
+				"observed deposit sweep proposal at block [%v]; " +
+					"waiting for block [%v] to confirm",
+				event.BlockNumber,
+				confirmationBlock,
+			)
+
+			err := node.waitForBlockHeight(ctx, confirmationBlock)
+			if err != nil {
+				logger.Errorf("failed to confirm deposit sweep proposal: [%v]", err)
+				return
+			}
+
+			// TODO: State check.
+			confirmed := true
+
+			if confirmed {
+
+			} else {
+				// TODO: Log that the event was not confirmed.
+			}
+		}()
+	})
+
 	return nil
 }
 
