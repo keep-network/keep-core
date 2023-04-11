@@ -2,6 +2,7 @@ package tbtc
 
 import (
 	"crypto/ecdsa"
+	"github.com/keep-network/keep-core/pkg/bitcoin"
 	"math/big"
 
 	"github.com/keep-network/keep-core/pkg/chain"
@@ -196,6 +197,34 @@ type HeartbeatRequestedEvent struct {
 	BlockNumber     uint64
 }
 
+// WalletCoordinatorChain defines the subset of the TBTC chain interface that
+// pertains specifically to the tBTC wallet coordination.
+type WalletCoordinatorChain interface {
+	// OnDepositSweepProposalSubmitted registers a callback that is invoked when
+	// an on-chain notification of the deposit sweep proposal submission is seen.
+	OnDepositSweepProposalSubmitted(
+		func(event *DepositSweepProposalSubmittedEvent),
+	) subscription.EventSubscription
+}
+
+// DepositSweepProposal represents a deposit sweep proposal submitted to the chain.
+type DepositSweepProposal struct {
+	WalletPubKeyHash [20]byte
+	DepositsKeys []struct{
+		FundingTxHash      bitcoin.Hash
+		FundingOutputIndex uint32
+	}
+	SweepTxFee *big.Int
+}
+
+// DepositSweepProposalSubmittedEvent represents a deposit sweep proposal
+// submission event.
+type DepositSweepProposalSubmittedEvent struct {
+	Proposal          *DepositSweepProposal
+	ProposalSubmitter chain.Address
+	BlockNumber       uint64
+}
+
 // Chain represents the interface that the TBTC module expects to interact
 // with the anchoring blockchain on.
 type Chain interface {
@@ -211,4 +240,5 @@ type Chain interface {
 	GroupSelectionChain
 	DistributedKeyGenerationChain
 	BridgeChain
+	WalletCoordinatorChain
 }
