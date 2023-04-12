@@ -996,3 +996,10 @@ func (tc *TbtcChain) activeWalletPublicKey() ([]byte, bool, error) {
 
 	return publicKeyBytes, true, nil
 }
+
+func (tc *TbtcChain) OnDepositSweepProposalSubmitted(
+	handler func(event *tbtc.DepositSweepProposalSubmittedEvent),
+) subscription.EventSubscription {
+	// TODO: Implementation.
+	panic("not implemented")
+}
