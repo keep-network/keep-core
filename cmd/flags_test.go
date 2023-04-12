@@ -290,6 +290,16 @@ var cmdFlagsTests = map[string]struct {
 		expectedValueFromFlag: common.HexToAddress("0x861b021462e7864a7413edF0113030B892978617"),
 		defaultValue:          common.HexToAddress(ethereumThreshold.TokenStakingAddress),
 	},
+	"developer.walletCoordinatorAddress": {
+		readValueFunc: func(c *config.Config) interface{} {
+			address, _ := c.Ethereum.ContractAddress(chainEthereum.WalletCoordinatorContractName)
+			return address
+		},
+		flagName:              "--developer.walletCoordinatorAddress",
+		flagValue:             "0xE7d33d8AA55B73a93059a24b900366894684a497",
+		expectedValueFromFlag: common.HexToAddress("0xE7d33d8AA55B73a93059a24b900366894684a497"),
+		defaultValue:          common.HexToAddress(ethereumTbtc.WalletCoordinatorAddress),
+	},
 }
 
 func TestFlags_ReadConfigFromFlags(t *testing.T) {

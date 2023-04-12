@@ -33,17 +33,19 @@ import (
 const (
 	// TODO: The WalletRegistry address is taken from the Bridge contract.
 	//       Remove the possibility of passing it through the config.
-	WalletRegistryContractName = "WalletRegistry"
-	BridgeContractName         = "Bridge"
+	WalletRegistryContractName    = "WalletRegistry"
+	BridgeContractName            = "Bridge"
+	WalletCoordinatorContractName = "WalletCoordinator"
 )
 
 // TbtcChain represents a TBTC-specific chain handle.
 type TbtcChain struct {
 	*baseChain
 
-	bridge         *tbtccontract.Bridge
-	walletRegistry *ecdsacontract.WalletRegistry
-	sortitionPool  *ecdsacontract.EcdsaSortitionPool
+	bridge            *tbtccontract.Bridge
+	walletRegistry    *ecdsacontract.WalletRegistry
+	sortitionPool     *ecdsacontract.EcdsaSortitionPool
+	walletCoordinator *tbtccontract.WalletCoordinator
 }
 
 // NewTbtcChain construct a new instance of the TBTC-specific Ethereum
@@ -133,11 +135,41 @@ func newTbtcChain(
 		)
 	}
 
+	walletCoordinatorAddress, err := config.ContractAddress(
+		WalletCoordinatorContractName,
+	)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"failed to resolve %s contract address: [%v]",
+			WalletCoordinatorContractName,
+			err,
+		)
+	}
+
+	walletCoordinator, err :=
+		tbtccontract.NewWalletCoordinator(
+			walletCoordinatorAddress,
+			baseChain.chainID,
+			baseChain.key,
+			baseChain.client,
+			baseChain.nonceManager,
+			baseChain.miningWaiter,
+			baseChain.blockCounter,
+			baseChain.transactionMutex,
+		)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"failed to attach to WalletCoordinator contract: [%v]",
+			err,
+		)
+	}
+
 	return &TbtcChain{
-		baseChain:      baseChain,
-		bridge:         bridge,
-		walletRegistry: walletRegistry,
-		sortitionPool:  sortitionPool,
+		baseChain:         baseChain,
+		bridge:            bridge,
+		walletRegistry:    walletRegistry,
+		sortitionPool:     sortitionPool,
+		walletCoordinator: walletCoordinator,
 	}, nil
 }
 
