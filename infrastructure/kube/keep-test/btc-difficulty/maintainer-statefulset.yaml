@@ -1,0 +1,84 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: btc-difficulty-maintainer
+  labels:
+    app: maintainer
+    type: btc-difficulty
+    network: goerli
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: maintainer
+      type: btc-difficulty
+      network: goerli
+  serviceName: btc-difficulty-maintainer
+  template:
+    metadata:
+      labels:
+        app: maintainer
+        type: btc-difficulty
+        network: goerli
+    spec:
+      volumes:
+      - name: eth-account-keyfile
+        configMap:
+          name: btc-difficulty-maintainer-accounts-info
+          items:
+          - key: btc-difficulty-maintainer-keyfile
+            path: btc-difficulty-maintainer-keyfile
+      - name: btc-difficulty-maintainer-config
+        configMap:
+          name: btc-difficulty-maintainer-config
+          items:
+          - key: keep-client-config.toml
+            path: keep-client-config.toml
+      containers:
+        - name: btc-difficulty-maintainer
+          image: gcr.io/keep-test-f3e0/keep-client:latest
+          imagePullPolicy: Always
+          resources:
+            requests:
+              cpu: 1500m
+              memory: 512M
+          env:
+          - name: LOG_LEVEL
+            value: info
+          - name: KEEP_ETHEREUM_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: btc-difficulty-maintainer-eth-accounts-password
+                key: eth-account-password
+          - name: ETH_WS_URL
+            valueFrom:
+              secretKeyRef:
+                name: eth-network-goerli
+                key: ws-url
+          - name: ELECTRUM_API_URL
+            valueFrom:
+              configMapKeyRef:
+                name: electrum-api-mainnet
+                key: electrumx-url-tcp
+          volumeMounts:
+          - name: eth-account-keyfile
+            mountPath: /mnt/btc-difficulty-maintainer/keyfile
+          - name: btc-difficulty-maintainer-config
+            mountPath: /mnt/btc-difficulty-maintainer/config
+          command:
+          - keep-client
+          - maintainer
+          args:
+          - --bitcoinDifficulty
+          # run as developer to be able to set LightRelay address
+          - --developer
+          - --ethereum.url
+          - $(ETH_WS_URL)
+          - --ethereum.keyFile
+          - /mnt/btc-difficulty-maintainer/keyfile/btc-difficulty-maintainer-keyfile
+          - --bitcoin.electrum.url
+          - $(ELECTRUM_API_URL)
+          - --bitcoin.electrum.protocol
+          - "TCP"
+          - --config
+          - /mnt/btc-difficulty-maintainer/config/keep-client-config.toml
