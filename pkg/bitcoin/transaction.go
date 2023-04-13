@@ -1,6 +1,10 @@
 package bitcoin
 
-import "bytes"
+import (
+	"bytes"
+	"encoding/binary"
+	"github.com/btcsuite/btcd/wire"
+)
 
 // TransactionSerializationFormat represents the Bitcoin transaction
 // serialization format.
@@ -87,6 +91,60 @@ func (t *Transaction) Serialize(
 	default:
 		panic("unknown transaction serialization format")
 	}
+}
+
+// SerializeVersion serializes the transaction version to a little-endian
+// 4-byte array.
+func (t *Transaction) SerializeVersion() [4]byte {
+	result := [4]byte{}
+	binary.LittleEndian.PutUint32(result[:], uint32(t.Version))
+	return result
+}
+
+// SerializeInputs serializes the transaction inputs to a byte array prepended
+// with a CompactSizeUint denoting the total number of inputs.
+func (t *Transaction) SerializeInputs() []byte {
+	internal := newInternalTransaction()
+	internal.fromTransaction(t)
+
+	inputsByteSize := wire.VarIntSerializeSize(uint64(len(internal.TxIn)))
+	for _, txIn := range internal.TxIn {
+		inputsByteSize += txIn.SerializeSize()
+	}
+
+	// The first 4 bytes are version. The input vector starts at the 5th byte.
+	startingByte := 4
+	endingByte := startingByte + inputsByteSize
+
+	return t.Serialize(Standard)[startingByte:endingByte]
+}
+
+// SerializeOutputs serializes the transaction outputs to a byte array prepended
+// with a CompactSizeUint denoting the total number of outputs.
+func (t *Transaction) SerializeOutputs() []byte {
+	internal := newInternalTransaction()
+	internal.fromTransaction(t)
+
+	outputsByteSize := wire.VarIntSerializeSize(uint64(len(internal.TxOut)))
+	for _, txOut := range internal.TxOut {
+		outputsByteSize += txOut.SerializeSize()
+	}
+
+	serializedTx := t.Serialize(Standard)
+
+	// The last 4 bytes are locktime. The output vector ends just before it.
+	endingByte := len(serializedTx) - 4
+	startingByte := endingByte - outputsByteSize
+
+	return serializedTx[startingByte:endingByte]
+}
+
+// SerializeLocktime serializes the transaction locktime to a little-endian
+// 4-byte array.
+func (t *Transaction) SerializeLocktime() [4]byte {
+	result := [4]byte{}
+	binary.LittleEndian.PutUint32(result[:], t.Locktime)
+	return result
 }
 
 // Deserialize deserializes the given byte array to a Transaction.
