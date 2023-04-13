@@ -8,9 +8,11 @@ import (
 	"encoding/binary"
 	"fmt"
 	"github.com/keep-network/keep-common/pkg/chain/ethereum/ethutil"
+	"github.com/keep-network/keep-core/pkg/bitcoin"
 	"math/big"
 	"reflect"
 	"sort"
+	"time"
 
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
@@ -20,6 +22,7 @@ import (
 	"github.com/keep-network/keep-core/pkg/chain"
 	ecdsaabi "github.com/keep-network/keep-core/pkg/chain/ethereum/ecdsa/gen/abi"
 	ecdsacontract "github.com/keep-network/keep-core/pkg/chain/ethereum/ecdsa/gen/contract"
+	tbtcabi "github.com/keep-network/keep-core/pkg/chain/ethereum/tbtc/gen/abi"
 	tbtccontract "github.com/keep-network/keep-core/pkg/chain/ethereum/tbtc/gen/contract"
 	"github.com/keep-network/keep-core/pkg/internal/byteutils"
 	"github.com/keep-network/keep-core/pkg/operator"
@@ -1032,6 +1035,110 @@ func (tc *TbtcChain) activeWalletPublicKey() ([]byte, bool, error) {
 func (tc *TbtcChain) OnDepositSweepProposalSubmitted(
 	handler func(event *tbtc.DepositSweepProposalSubmittedEvent),
 ) subscription.EventSubscription {
-	// TODO: Implementation.
-	panic("not implemented")
+	onEvent := func(
+		proposal tbtcabi.WalletCoordinatorDepositSweepProposal,
+		proposalSubmitter common.Address,
+		blockNumber uint64,
+	) {
+		handler(&tbtc.DepositSweepProposalSubmittedEvent{
+			Proposal:          convertDepositSweepProposalFromAbiType(proposal),
+			ProposalSubmitter: chain.Address(proposalSubmitter.Hex()),
+			BlockNumber:       blockNumber,
+		})
+	}
+
+	return tc.walletCoordinator.
+		DepositSweepProposalSubmittedEvent(nil, nil).
+		OnEvent(onEvent)
+}
+
+func convertDepositSweepProposalFromAbiType(
+	proposal tbtcabi.WalletCoordinatorDepositSweepProposal,
+) *tbtc.DepositSweepProposal {
+	depositsKeys := make(
+		[]struct{
+			FundingTxHash      bitcoin.Hash
+			FundingOutputIndex uint32
+		},
+		len(proposal.DepositsKeys),
+	)
+
+	for i, depositKey := range proposal.DepositsKeys {
+		// We can map the depositKey.FundingTxHash field directly to the
+		// bitcoin.Hash type. This is because depositKey.FundingTxHash is
+		// a [32]byte type representing a hash in the bitcoin.InternalByteOrder,
+		// just as bitcoin.Hash assumes.
+		depositsKeys[i] = struct {
+			FundingTxHash      bitcoin.Hash
+			FundingOutputIndex uint32
+		}{
+			FundingTxHash:      depositKey.FundingTxHash,
+			FundingOutputIndex: depositKey.FundingOutputIndex,
+		}
+	}
+
+	return &tbtc.DepositSweepProposal{
+		WalletPubKeyHash: proposal.WalletPubKeyHash,
+		DepositsKeys:     depositsKeys,
+		SweepTxFee:       proposal.SweepTxFee,
+	}
+}
+
+func convertDepositSweepProposalToAbiType(
+	proposal *tbtc.DepositSweepProposal,
+) tbtcabi.WalletCoordinatorDepositSweepProposal {
+	depositsKeys := make(
+		[]tbtcabi.WalletCoordinatorDepositKey,
+		len(proposal.DepositsKeys),
+	)
+
+	for i, depositKey := range proposal.DepositsKeys {
+		// We can map the depositKey.FundingTxHash field directly to the
+		// [32]byte type. This is because depositKey.FundingTxHash is
+		// a bitcoin.Hash type representing a hash in the
+		// bitcoin.InternalByteOrder, just as the on-chain contract assumes.
+		depositsKeys[i] = tbtcabi.WalletCoordinatorDepositKey{
+			FundingTxHash:      depositKey.FundingTxHash,
+			FundingOutputIndex: depositKey.FundingOutputIndex,
+		}
+	}
+
+	return tbtcabi.WalletCoordinatorDepositSweepProposal{
+		WalletPubKeyHash: proposal.WalletPubKeyHash,
+		DepositsKeys:     depositsKeys,
+		SweepTxFee:       proposal.SweepTxFee,
+	}
+}
+
+func (tc *TbtcChain) GetWalletLock(
+	walletPublicKeyHash [20]byte,
+) (time.Time, tbtc.WalletAction, error) {
+	lock, err := tc.walletCoordinator.WalletLock(walletPublicKeyHash)
+	if err != nil {
+		return time.Time{}, 0, fmt.Errorf("cannot get wallet lock from chain: [%v]", err)
+	}
+
+	cause, err := parseWalletAction(lock.Cause)
+	if err != nil {
+		return time.Time{}, 0, fmt.Errorf("cannot parse wallet lock cause: [%v]", err)
+	}
+
+	return time.Unix(int64(lock.ExpiresAt), 0), cause, nil
+}
+
+func parseWalletAction(value uint8) (tbtc.WalletAction, error) {
+	switch value {
+	case 0:
+		return tbtc.IdleWallet, nil
+	case 1:
+		return tbtc.DepositSweep, nil
+	case 2:
+		return tbtc.Redemption, nil
+	case 3:
+		return tbtc.MovingFunds, nil
+	case 4:
+		return tbtc.MovedFundsSweep, nil
+	default:
+		return 0, fmt.Errorf("unexpected wallet action value: [%v]", value)
+	}
 }

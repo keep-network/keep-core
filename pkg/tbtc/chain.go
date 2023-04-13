@@ -4,6 +4,7 @@ import (
 	"crypto/ecdsa"
 	"github.com/keep-network/keep-core/pkg/bitcoin"
 	"math/big"
+	"time"
 
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/operator"
@@ -205,6 +206,14 @@ type WalletCoordinatorChain interface {
 	OnDepositSweepProposalSubmitted(
 		func(event *DepositSweepProposalSubmittedEvent),
 	) subscription.EventSubscription
+
+	// GetWalletLock gets the current wallet lock for the given wallet.
+	// Returned values represent the expiration time and the cause of the lock.
+	// The expiration time can be UNIX timestamp 0 which means there is no lock
+	// on the wallet at the given moment.
+	GetWalletLock(
+		walletPublicKeyHash [20]byte,
+	) (time.Time, WalletAction, error)
 }
 
 // DepositSweepProposal represents a deposit sweep proposal submitted to the chain.
