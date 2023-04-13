@@ -17,7 +17,7 @@ RUN apk add --update --no-cache \
 	nodejs \
 	npm \
 	bash \
-    perl \
+	perl \
 	python3 \
 	tar \
 	jq && \
