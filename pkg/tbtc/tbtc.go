@@ -314,38 +314,101 @@ func Initialize(
 
 	_ = chain.OnDepositSweepProposalSubmitted(func(event *DepositSweepProposalSubmittedEvent) {
 		go func() {
+			walletPublicKeyHash := event.Proposal.WalletPubKeyHash
+
 			if ok := deduplicator.notifyDepositSweepProposalSubmitted(
 				event.Proposal,
 			); !ok {
 				logger.Infof(
-					"deposit sweep proposal has been already processed",
+					"deposit sweep proposal for wallet PKH [0x%x] "+
+						"has been already processed",
+					walletPublicKeyHash,
 				)
 				return
 			}
 
-			confirmationBlock := event.BlockNumber + depositSweepProposalConfirmationBlocks
+			confirmationBlock := event.BlockNumber +
+				depositSweepProposalConfirmationBlocks
 
 			logger.Infof(
-				"observed deposit sweep proposal at block [%v]; "+
-					"waiting for block [%v] to confirm",
+				"observed deposit sweep proposal for wallet PKH [0x%x] "+
+					"at block [%v]; waiting for block [%v] to confirm",
+				walletPublicKeyHash,
 				event.BlockNumber,
 				confirmationBlock,
 			)
 
 			err := node.waitForBlockHeight(ctx, confirmationBlock)
 			if err != nil {
-				logger.Errorf("failed to confirm deposit sweep proposal: [%v]", err)
+				logger.Errorf(
+					"failed to confirm deposit sweep proposal for "+
+						"wallet PKH [0x%x]: [%v]",
+					walletPublicKeyHash,
+					err,
+				)
 				return
 			}
 
-			// TODO: How should we confirm the event?
-			confirmed := true
+			expiresAt, cause, err := chain.GetWalletLock(
+				walletPublicKeyHash,
+			)
+			if err != nil {
+				logger.Errorf(
+					"failed to get lock for wallet PKH [0x%x]: [%v]",
+					walletPublicKeyHash,
+					err,
+				)
+				return
+			}
 
-			if confirmed {
-				// TODO: Do your job!
+			// The event is confirmed if the wallet is locked due to a deposit
+			// sweep action.
+			if time.Now().Before(expiresAt) && cause == DepositSweep {
+				// Fetch all past deposit sweep proposal events starting from one
+				// confirmation period before the original event's block.
+				// If there was a chain reorg, the event we received could be
+				// moved to a block with a lower number than the one
+				// we received.
+				pastEvents, err := chain.PastDepositSweepProposalSubmittedEvents(
+					&DepositSweepProposalSubmittedEventFilter{
+						StartBlock: event.BlockNumber -
+							depositSweepProposalConfirmationBlocks,
+						WalletPublicKeyHash: walletPublicKeyHash,
+					},
+				)
+				if err != nil {
+					logger.Errorf(
+						"failed to get past deposit sweep proposal "+
+							"events for wallet PKH [0x%x]: [%v]",
+						walletPublicKeyHash,
+						err,
+					)
+					return
+				}
+
+				// Should not happen but just in case.
+				if len(pastEvents) == 0 {
+					logger.Errorf(
+						"no past deposit sweep proposal events for "+
+							"wallet PKH [0x%x]",
+						walletPublicKeyHash,
+					)
+					return
+				}
+
+				lastEvent := pastEvents[len(pastEvents)-1]
+
+				// TODO: Validate the proposal, assemble, sign and
+				//       broadcast the sweep tx.
+				logger.Infof(
+					"received deposit sweep proposal [%+v]",
+					lastEvent.Proposal,
+				)
 			} else {
 				logger.Infof(
-					"deposit sweep proposal at block [%v] was not confirmed",
+					"deposit sweep proposal for wallet PKH [0x%x] "+
+						"at block [%v] was not confirmed",
+					walletPublicKeyHash,
 					event.BlockNumber,
 				)
 			}

@@ -433,6 +433,12 @@ func (lc *localChain) OnDepositSweepProposalSubmitted(
 	panic("unsupported")
 }
 
+func (lc *localChain) PastDepositSweepProposalSubmittedEvents(
+	filter *DepositSweepProposalSubmittedEventFilter,
+) ([]*DepositSweepProposalSubmittedEvent, error) {
+	panic("unsupported")
+}
+
 func (lc *localChain) GetWalletLock(walletPublicKeyHash [20]byte) (
 	time.Time,
 	WalletAction,

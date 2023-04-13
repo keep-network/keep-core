@@ -1052,6 +1052,66 @@ func (tc *TbtcChain) OnDepositSweepProposalSubmitted(
 		OnEvent(onEvent)
 }
 
+func (tc *TbtcChain) PastDepositSweepProposalSubmittedEvents(
+	filter *tbtc.DepositSweepProposalSubmittedEventFilter,
+) ([]*tbtc.DepositSweepProposalSubmittedEvent, error) {
+	var startBlock uint64
+	var endBlock *uint64
+	var proposalSubmitter []common.Address
+	var walletPublicKeyHash [20]byte
+
+	if filter != nil {
+		startBlock = filter.StartBlock
+		endBlock = filter.EndBlock
+
+		for _, ps := range filter.ProposalSubmitter {
+			proposalSubmitter = append(
+				proposalSubmitter,
+				common.HexToAddress(ps.String()),
+			)
+		}
+
+		walletPublicKeyHash = filter.WalletPublicKeyHash
+	}
+
+	events, err := tc.walletCoordinator.PastDepositSweepProposalSubmittedEvents(
+		startBlock,
+		endBlock,
+		proposalSubmitter,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	convertedEvents := make([]*tbtc.DepositSweepProposalSubmittedEvent, 0)
+	for _, event := range events {
+		// If the wallet PKH filter is set, omit all events that target
+		// different wallets.
+		if walletPublicKeyHash != [20]byte{} {
+			if event.Proposal.WalletPubKeyHash != walletPublicKeyHash {
+				continue
+			}
+		}
+
+		convertedEvent := &tbtc.DepositSweepProposalSubmittedEvent{
+			Proposal:          convertDepositSweepProposalFromAbiType(event.Proposal),
+			ProposalSubmitter: chain.Address(event.ProposalSubmitter.Hex()),
+			BlockNumber:       event.Raw.BlockNumber,
+		}
+
+		convertedEvents = append(convertedEvents, convertedEvent)
+	}
+
+	sort.SliceStable(
+		convertedEvents,
+		func(i, j int) bool {
+			return convertedEvents[i].BlockNumber < convertedEvents[j].BlockNumber
+		},
+	)
+
+	return convertedEvents, err
+}
+
 func convertDepositSweepProposalFromAbiType(
 	proposal tbtcabi.WalletCoordinatorDepositSweepProposal,
 ) *tbtc.DepositSweepProposal {
