@@ -214,6 +214,21 @@ type WalletCoordinatorChain interface {
 	GetWalletLock(
 		walletPublicKeyHash [20]byte,
 	) (time.Time, WalletAction, error)
+
+	// ValidateDepositSweepProposal validates the given deposit sweep proposal
+	// against the chain. It requires some additional data about the deposits
+	// that must be fetched externally. Returns true if the given proposal
+	// is valid and an error otherwise.
+	ValidateDepositSweepProposal(
+		proposal *DepositSweepProposal,
+		depositsExtraInfo []struct{
+			fundingTx        *bitcoin.Transaction
+			BlindingFactor   [8]byte
+			WalletPubKeyHash [20]byte
+			RefundPubKeyHash [20]byte
+			RefundLocktime   [4]byte
+		},
+	) (bool, error)
 }
 
 // DepositSweepProposal represents a deposit sweep proposal submitted to the chain.

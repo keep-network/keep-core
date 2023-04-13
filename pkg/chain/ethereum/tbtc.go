@@ -1142,3 +1142,47 @@ func parseWalletAction(value uint8) (tbtc.WalletAction, error) {
 		return 0, fmt.Errorf("unexpected wallet action value: [%v]", value)
 	}
 }
+
+func (tc *TbtcChain) ValidateDepositSweepProposal(
+	proposal *tbtc.DepositSweepProposal,
+	depositsExtraInfo []struct{
+	fundingTx        *bitcoin.Transaction
+	BlindingFactor   [8]byte
+	WalletPubKeyHash [20]byte
+	RefundPubKeyHash [20]byte
+	RefundLocktime   [4]byte
+},
+) (bool, error) {
+	dei := make([]tbtcabi.WalletCoordinatorDepositExtraInfo, len(depositsExtraInfo))
+	for i, depositExtraInfo := range depositsExtraInfo {
+		fundingTx := tbtcabi.BitcoinTxInfo2{
+			Version:      depositExtraInfo.fundingTx.SerializeVersion(),
+			InputVector:  depositExtraInfo.fundingTx.SerializeInputs(),
+			OutputVector: depositExtraInfo.fundingTx.SerializeOutputs(),
+			Locktime:     depositExtraInfo.fundingTx.SerializeLocktime(),
+		}
+
+		dei[i] = tbtcabi.WalletCoordinatorDepositExtraInfo{
+			FundingTx:        fundingTx,
+			BlindingFactor:   depositExtraInfo.BlindingFactor,
+			WalletPubKeyHash: depositExtraInfo.WalletPubKeyHash,
+			RefundPubKeyHash: depositExtraInfo.RefundPubKeyHash,
+			RefundLocktime:   depositExtraInfo.RefundLocktime,
+		}
+	}
+
+	valid, err := tc.walletCoordinator.ValidateDepositSweepProposal(
+		convertDepositSweepProposalToAbiType(proposal),
+		dei,
+	)
+	if err != nil {
+		return false, fmt.Errorf("validation failed: [%v]", err)
+	}
+
+	// Should never happen but just in case.
+	if !valid {
+		return false, fmt.Errorf("unexpected validation result")
+	}
+
+	return true, nil
+}
