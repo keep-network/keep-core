@@ -7,12 +7,13 @@ import (
 	"crypto/sha256"
 	"encoding/binary"
 	"fmt"
-	"github.com/keep-network/keep-common/pkg/chain/ethereum/ethutil"
-	"github.com/keep-network/keep-core/pkg/bitcoin"
 	"math/big"
 	"reflect"
 	"sort"
 	"time"
+
+	"github.com/keep-network/keep-common/pkg/chain/ethereum/ethutil"
+	"github.com/keep-network/keep-core/pkg/bitcoin"
 
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
@@ -1052,11 +1053,71 @@ func (tc *TbtcChain) OnDepositSweepProposalSubmitted(
 		OnEvent(onEvent)
 }
 
+func (tc *TbtcChain) PastDepositSweepProposalSubmittedEvents(
+	filter *tbtc.DepositSweepProposalSubmittedEventFilter,
+) ([]*tbtc.DepositSweepProposalSubmittedEvent, error) {
+	var startBlock uint64
+	var endBlock *uint64
+	var proposalSubmitter []common.Address
+	var walletPublicKeyHash [20]byte
+
+	if filter != nil {
+		startBlock = filter.StartBlock
+		endBlock = filter.EndBlock
+
+		for _, ps := range filter.ProposalSubmitter {
+			proposalSubmitter = append(
+				proposalSubmitter,
+				common.HexToAddress(ps.String()),
+			)
+		}
+
+		walletPublicKeyHash = filter.WalletPublicKeyHash
+	}
+
+	events, err := tc.walletCoordinator.PastDepositSweepProposalSubmittedEvents(
+		startBlock,
+		endBlock,
+		proposalSubmitter,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	convertedEvents := make([]*tbtc.DepositSweepProposalSubmittedEvent, 0)
+	for _, event := range events {
+		// If the wallet PKH filter is set, omit all events that target
+		// different wallets.
+		if walletPublicKeyHash != [20]byte{} {
+			if event.Proposal.WalletPubKeyHash != walletPublicKeyHash {
+				continue
+			}
+		}
+
+		convertedEvent := &tbtc.DepositSweepProposalSubmittedEvent{
+			Proposal:          convertDepositSweepProposalFromAbiType(event.Proposal),
+			ProposalSubmitter: chain.Address(event.ProposalSubmitter.Hex()),
+			BlockNumber:       event.Raw.BlockNumber,
+		}
+
+		convertedEvents = append(convertedEvents, convertedEvent)
+	}
+
+	sort.SliceStable(
+		convertedEvents,
+		func(i, j int) bool {
+			return convertedEvents[i].BlockNumber < convertedEvents[j].BlockNumber
+		},
+	)
+
+	return convertedEvents, err
+}
+
 func convertDepositSweepProposalFromAbiType(
 	proposal tbtcabi.WalletCoordinatorDepositSweepProposal,
 ) *tbtc.DepositSweepProposal {
 	depositsKeys := make(
-		[]struct{
+		[]struct {
 			FundingTxHash      bitcoin.Hash
 			FundingOutputIndex uint32
 		},
@@ -1078,32 +1139,6 @@ func convertDepositSweepProposalFromAbiType(
 	}
 
 	return &tbtc.DepositSweepProposal{
-		WalletPubKeyHash: proposal.WalletPubKeyHash,
-		DepositsKeys:     depositsKeys,
-		SweepTxFee:       proposal.SweepTxFee,
-	}
-}
-
-func convertDepositSweepProposalToAbiType(
-	proposal *tbtc.DepositSweepProposal,
-) tbtcabi.WalletCoordinatorDepositSweepProposal {
-	depositsKeys := make(
-		[]tbtcabi.WalletCoordinatorDepositKey,
-		len(proposal.DepositsKeys),
-	)
-
-	for i, depositKey := range proposal.DepositsKeys {
-		// We can map the depositKey.FundingTxHash field directly to the
-		// [32]byte type. This is because depositKey.FundingTxHash is
-		// a bitcoin.Hash type representing a hash in the
-		// bitcoin.InternalByteOrder, just as the on-chain contract assumes.
-		depositsKeys[i] = tbtcabi.WalletCoordinatorDepositKey{
-			FundingTxHash:      depositKey.FundingTxHash,
-			FundingOutputIndex: depositKey.FundingOutputIndex,
-		}
-	}
-
-	return tbtcabi.WalletCoordinatorDepositSweepProposal{
 		WalletPubKeyHash: proposal.WalletPubKeyHash,
 		DepositsKeys:     depositsKeys,
 		SweepTxFee:       proposal.SweepTxFee,
@@ -1145,13 +1180,13 @@ func parseWalletAction(value uint8) (tbtc.WalletAction, error) {
 
 func (tc *TbtcChain) ValidateDepositSweepProposal(
 	proposal *tbtc.DepositSweepProposal,
-	depositsExtraInfo []struct{
-	fundingTx        *bitcoin.Transaction
-	BlindingFactor   [8]byte
-	WalletPubKeyHash [20]byte
-	RefundPubKeyHash [20]byte
-	RefundLocktime   [4]byte
-},
+	depositsExtraInfo []struct {
+		fundingTx        *bitcoin.Transaction
+		BlindingFactor   [8]byte
+		WalletPubKeyHash [20]byte
+		RefundPubKeyHash [20]byte
+		RefundLocktime   [4]byte
+	},
 ) (bool, error) {
 	dei := make([]tbtcabi.WalletCoordinatorDepositExtraInfo, len(depositsExtraInfo))
 	for i, depositExtraInfo := range depositsExtraInfo {
