@@ -5,11 +5,6 @@ import (
 	"crypto/elliptic"
 	"encoding/binary"
 	"fmt"
-	"math/big"
-	"math/rand"
-	"reflect"
-	"sync"
-
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/chain/local_v1"
 	"github.com/keep-network/keep-core/pkg/operator"
@@ -17,6 +12,11 @@ import (
 	"github.com/keep-network/keep-core/pkg/subscription"
 	"github.com/keep-network/keep-core/pkg/tecdsa/dkg"
 	"golang.org/x/crypto/sha3"
+	"math/big"
+	"math/rand"
+	"reflect"
+	"sync"
+	"time"
 )
 
 const localChainOperatorID = chain.OperatorID(1)
@@ -425,6 +425,20 @@ func (lc *localChain) operatorAddress() (chain.Address, error) {
 	}
 
 	return lc.Signing().PublicKeyToAddress(operatorPublicKey)
+}
+
+func (lc *localChain) OnDepositSweepProposalSubmitted(
+	handler func(event *DepositSweepProposalSubmittedEvent),
+) subscription.EventSubscription {
+	panic("unsupported")
+}
+
+func (lc *localChain) GetWalletLock(walletPublicKeyHash [20]byte) (
+	time.Time,
+	WalletAction,
+	error,
+) {
+	panic("unsupported")
 }
 
 // Connect sets up the local chain.

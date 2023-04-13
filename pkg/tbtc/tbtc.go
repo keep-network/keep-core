@@ -314,8 +314,9 @@ func Initialize(
 
 	_ = chain.OnDepositSweepProposalSubmitted(func(event *DepositSweepProposalSubmittedEvent) {
 		go func() {
-			// TODO: Implement actual deduplication.
-			if ok := deduplicator.notifyDepositSweepProposalSubmitted(); !ok {
+			if ok := deduplicator.notifyDepositSweepProposalSubmitted(
+				event.Proposal,
+			); !ok {
 				logger.Infof(
 					"deposit sweep proposal has been already processed",
 				)
@@ -325,7 +326,7 @@ func Initialize(
 			confirmationBlock := event.BlockNumber + depositSweepProposalConfirmationBlocks
 
 			logger.Infof(
-				"observed deposit sweep proposal at block [%v]; " +
+				"observed deposit sweep proposal at block [%v]; "+
 					"waiting for block [%v] to confirm",
 				event.BlockNumber,
 				confirmationBlock,

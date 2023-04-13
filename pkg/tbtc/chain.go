@@ -219,7 +219,7 @@ type WalletCoordinatorChain interface {
 // DepositSweepProposal represents a deposit sweep proposal submitted to the chain.
 type DepositSweepProposal struct {
 	WalletPubKeyHash [20]byte
-	DepositsKeys []struct{
+	DepositsKeys     []struct {
 		FundingTxHash      bitcoin.Hash
 		FundingOutputIndex uint32
 	}

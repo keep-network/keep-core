@@ -1056,7 +1056,7 @@ func convertDepositSweepProposalFromAbiType(
 	proposal tbtcabi.WalletCoordinatorDepositSweepProposal,
 ) *tbtc.DepositSweepProposal {
 	depositsKeys := make(
-		[]struct{
+		[]struct {
 			FundingTxHash      bitcoin.Hash
 			FundingOutputIndex uint32
 		},
