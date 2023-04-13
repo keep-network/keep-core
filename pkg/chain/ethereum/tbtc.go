@@ -1144,32 +1144,6 @@ func convertDepositSweepProposalFromAbiType(
 	}
 }
 
-func convertDepositSweepProposalToAbiType(
-	proposal *tbtc.DepositSweepProposal,
-) tbtcabi.WalletCoordinatorDepositSweepProposal {
-	depositsKeys := make(
-		[]tbtcabi.WalletCoordinatorDepositKey,
-		len(proposal.DepositsKeys),
-	)
-
-	for i, depositKey := range proposal.DepositsKeys {
-		// We can map the depositKey.FundingTxHash field directly to the
-		// [32]byte type. This is because depositKey.FundingTxHash is
-		// a bitcoin.Hash type representing a hash in the
-		// bitcoin.InternalByteOrder, just as the on-chain contract assumes.
-		depositsKeys[i] = tbtcabi.WalletCoordinatorDepositKey{
-			FundingTxHash:      depositKey.FundingTxHash,
-			FundingOutputIndex: depositKey.FundingOutputIndex,
-		}
-	}
-
-	return tbtcabi.WalletCoordinatorDepositSweepProposal{
-		WalletPubKeyHash: proposal.WalletPubKeyHash,
-		DepositsKeys:     depositsKeys,
-		SweepTxFee:       proposal.SweepTxFee,
-	}
-}
-
 func (tc *TbtcChain) GetWalletLock(
 	walletPublicKeyHash [20]byte,
 ) (time.Time, tbtc.WalletAction, error) {
