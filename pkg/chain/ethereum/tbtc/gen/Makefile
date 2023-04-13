@@ -12,6 +12,8 @@ required_contracts := Bridge LightRelay WalletCoordinator
 # that version contains some breaking changes that make the upgrade non-trivial.
 # As a short-term workaround, we use some Makefile shenanigans to slightly rename
 # the conflicting BitcoinTxInfo struct in the WalletCoordinator output file.
+# We use perl for that purpose as sed is not cross-platform and works a bit
+# differently on GNU and BSD.
 #
 # TODO: Remove once go-ethereum is upgraded to v1.11.
 define after_abi_hook
