@@ -41,6 +41,7 @@ func initializeContractAddressesAliases() {
 	aliasEthereumContract(chainEthereum.WalletRegistryContractName)
 	aliasEthereumContract(chainEthereum.BridgeContractName)
 	aliasEthereumContract(chainEthereum.LightRelayContractName)
+	aliasEthereumContract(chainEthereum.LightRelayMaintainerProxyContractName)
 }
 
 // resolveContractsAddresses verifies if contracts addresses are configured, if not
@@ -76,6 +77,10 @@ func (c *Config) resolveContractsAddresses() {
 	resolveContractAddress(
 		chainEthereum.LightRelayContractName,
 		ethereumTbtc.LightRelayAddress,
+	)
+	resolveContractAddress(
+		chainEthereum.LightRelayMaintainerProxyContractName,
+		ethereumTbtc.LightRelayMaintainerProxyAddress,
 	)
 	resolveContractAddress(
 		chainEthereum.TokenStakingContractName,
