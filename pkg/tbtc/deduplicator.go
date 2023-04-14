@@ -1,6 +1,9 @@
 package tbtc
 
 import (
+	"bytes"
+	"crypto/sha256"
+	"encoding/binary"
 	"encoding/hex"
 	"math/big"
 	"strconv"
@@ -16,6 +19,9 @@ const (
 	// DKGResultHashCachePeriod is the time period the cache maintains
 	// the given DKG result hash.
 	DKGResultHashCachePeriod = 7 * 24 * time.Hour
+	// DepositSweepProposalCachePeriod is the time period the cache maintains
+	// the given deposit sweep proposal.
+	DepositSweepProposalCachePeriod = 7 * 24 * time.Hour
 )
 
 // deduplicator decides whether the given event should be handled by the
@@ -31,15 +37,18 @@ const (
 // Those events are supported:
 // - DKG started
 // - DKG result submitted
+// - Deposit sweep proposal submission
 type deduplicator struct {
-	dkgSeedCache       *cache.TimeCache
-	dkgResultHashCache *cache.TimeCache
+	dkgSeedCache              *cache.TimeCache
+	dkgResultHashCache        *cache.TimeCache
+	depositSweepProposalCache *cache.TimeCache
 }
 
 func newDeduplicator() *deduplicator {
 	return &deduplicator{
-		dkgSeedCache:       cache.NewTimeCache(DKGSeedCachePeriod),
-		dkgResultHashCache: cache.NewTimeCache(DKGResultHashCachePeriod),
+		dkgSeedCache:              cache.NewTimeCache(DKGSeedCachePeriod),
+		dkgResultHashCache:        cache.NewTimeCache(DKGResultHashCachePeriod),
+		depositSweepProposalCache: cache.NewTimeCache(DepositSweepProposalCachePeriod),
 	}
 }
 
@@ -87,6 +96,48 @@ func (d *deduplicator) notifyDKGResultSubmitted(
 	}
 
 	// Otherwise, the DKG result is a duplicate and the client should not
+	// proceed with the execution.
+	return false
+}
+
+// notifyDepositSweepProposalSubmitted notifies the client wants to start some
+// actions upon the deposit sweep proposal submission. It returns boolean
+// indicating whether the client should proceed with the actions or ignore the
+// event as a duplicate.
+func (d *deduplicator) notifyDepositSweepProposalSubmitted(
+	newProposal *DepositSweepProposal,
+) bool {
+	d.depositSweepProposalCache.Sweep()
+
+	// We build the cache key by hashing the concatenation of relevant fields
+	// of the proposal. It may be tempting to extract that code into a general
+	// "hash code" function exposed by the DepositSweepProposal type but this
+	// is not necessarily a good idea. The deduplicator is responsible for
+	// detecting duplicates and construction of cache keys is part of that job.
+	// Extracting this logic outside would push that responsibility out of the
+	// deduplicator control. That is dangerous as deduplication logic could
+	// be implicitly changeable from the outside and lead to serious bugs.
+	var buffer bytes.Buffer
+	buffer.Write(newProposal.WalletPubKeyHash[:])
+	for _, depositKey := range newProposal.DepositsKeys {
+		buffer.Write(depositKey.FundingTxHash[:])
+		fundingOutputIndex := make([]byte, 4)
+		binary.BigEndian.PutUint32(fundingOutputIndex, depositKey.FundingOutputIndex)
+		buffer.Write(fundingOutputIndex)
+	}
+	buffer.Write(newProposal.SweepTxFee.Bytes())
+
+	bufferSha256 := sha256.Sum256(buffer.Bytes())
+	cacheKey := hex.EncodeToString(bufferSha256[:])
+
+	// If the key is not in the cache, that means the proposal was not handled
+	// yet and the client should proceed with the execution.
+	if !d.depositSweepProposalCache.Has(cacheKey) {
+		d.depositSweepProposalCache.Add(cacheKey)
+		return true
+	}
+
+	// Otherwise, the proposal is a duplicate and the client should not
 	// proceed with the execution.
 	return false
 }

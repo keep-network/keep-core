@@ -40,6 +40,7 @@ abi/%.abi: ${artifacts_dir}/%.json
 abi/%.go: abi/%.abi
 	$(info $* - generating Ethereum bindings)
 	@go run github.com/ethereum/go-ethereum/cmd/abigen --abi $< --pkg abi --type $* --out $@
+	$(call after_abi_hook,$*)
 
 # Extract address of a contract from an artifact. Artfifacts that are published
 # with `development` tag are not accessible on developers' environments, so we

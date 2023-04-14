@@ -9,6 +9,17 @@ import (
 	"github.com/keep-network/keep-core/pkg/tecdsa"
 )
 
+// WalletAction represents actions that can be performed by a wallet.
+type WalletAction uint8
+
+const (
+	IdleWallet WalletAction = iota
+	DepositSweep
+	Redemption
+	MovingFunds
+	MovedFundsSweep
+)
+
 // wallet represents a tBTC wallet. A wallet is one of the basic building
 // blocks of the system that takes BTC under custody during the deposit
 // process and gives that BTC back during redemptions.

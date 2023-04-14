@@ -2,7 +2,9 @@ package tbtc
 
 import (
 	"crypto/ecdsa"
+	"github.com/keep-network/keep-core/pkg/bitcoin"
 	"math/big"
+	"time"
 
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/operator"
@@ -196,6 +198,59 @@ type HeartbeatRequestedEvent struct {
 	BlockNumber     uint64
 }
 
+// WalletCoordinatorChain defines the subset of the TBTC chain interface that
+// pertains specifically to the tBTC wallet coordination.
+type WalletCoordinatorChain interface {
+	// OnDepositSweepProposalSubmitted registers a callback that is invoked when
+	// an on-chain notification of the deposit sweep proposal submission is seen.
+	OnDepositSweepProposalSubmitted(
+		func(event *DepositSweepProposalSubmittedEvent),
+	) subscription.EventSubscription
+
+	// PastDepositSweepProposalSubmittedEvents fetches past deposit sweep
+	// proposal events according to the provided filter or unfiltered if the
+	// filter is nil. Returned events are sorted by the block number in the
+	// ascending order, i.e. the latest event is at the end of the slice.
+	PastDepositSweepProposalSubmittedEvents(
+		filter *DepositSweepProposalSubmittedEventFilter,
+	) ([]*DepositSweepProposalSubmittedEvent, error)
+
+	// GetWalletLock gets the current wallet lock for the given wallet.
+	// Returned values represent the expiration time and the cause of the lock.
+	// The expiration time can be UNIX timestamp 0 which means there is no lock
+	// on the wallet at the given moment.
+	GetWalletLock(
+		walletPublicKeyHash [20]byte,
+	) (time.Time, WalletAction, error)
+}
+
+// DepositSweepProposal represents a deposit sweep proposal submitted to the chain.
+type DepositSweepProposal struct {
+	WalletPubKeyHash [20]byte
+	DepositsKeys     []struct {
+		FundingTxHash      bitcoin.Hash
+		FundingOutputIndex uint32
+	}
+	SweepTxFee *big.Int
+}
+
+// DepositSweepProposalSubmittedEvent represents a deposit sweep proposal
+// submission event.
+type DepositSweepProposalSubmittedEvent struct {
+	Proposal          *DepositSweepProposal
+	ProposalSubmitter chain.Address
+	BlockNumber       uint64
+}
+
+// DepositSweepProposalSubmittedEventFilter is a component allowing to
+// filter DepositSweepProposalSubmittedEvent.
+type DepositSweepProposalSubmittedEventFilter struct {
+	StartBlock          uint64
+	EndBlock            *uint64
+	ProposalSubmitter   []chain.Address
+	WalletPublicKeyHash [20]byte
+}
+
 // Chain represents the interface that the TBTC module expects to interact
 // with the anchoring blockchain on.
 type Chain interface {
@@ -211,4 +266,5 @@ type Chain interface {
 	GroupSelectionChain
 	DistributedKeyGenerationChain
 	BridgeChain
+	WalletCoordinatorChain
 }
