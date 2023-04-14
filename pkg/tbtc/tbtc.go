@@ -393,7 +393,7 @@ func Initialize(
 			} else {
 				logger.Infof(
 					"deposit sweep proposal for wallet PKH [0x%x] "+
-						"at block [%v] was not confirmed; existing wallet lock " +
+						"at block [%v] was not confirmed; existing wallet lock "+
 						"has unexpected expiration time [%s] and/or cause [%v]",
 					walletPublicKeyHash,
 					event.BlockNumber,
