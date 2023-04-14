@@ -15,7 +15,8 @@ required_contracts := Bridge LightRelay WalletCoordinator
 # We use perl for that purpose as sed is not cross-platform and works a bit
 # differently on GNU and BSD.
 #
-# TODO: Remove once go-ethereum is upgraded to v1.11.
+# TODO: Remove once go-ethereum is upgraded to v1.11. See issue:
+#       https://github.com/keep-network/keep-core/issues/3524
 define after_abi_hook
 	$(eval type := $(1))
 	$(if $(filter $(type),WalletCoordinator),$(call fix_wallet_coordinator_collision))
