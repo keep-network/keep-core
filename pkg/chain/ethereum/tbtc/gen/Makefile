@@ -1,7 +1,7 @@
 npm_package_name=@keep-network/tbtc-v2
 
 # Contracts for which the bindings should be generated.
-required_contracts := Bridge LightRelay WalletCoordinator
+required_contracts := Bridge LightRelay LightRelayMaintainerProxy WalletCoordinator
 
 # There is a bug in the currently used abigen version (v1.10.19) that makes it
 # re-declaring structs used by multiple contracts
