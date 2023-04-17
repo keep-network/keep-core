@@ -922,6 +922,11 @@ func espDeactivateChaosnet(c *cobra.Command, args []string) error {
 		}
 
 		cmd.PrintOutput("success")
+
+		cmd.PrintOutput(
+			"the transaction was not submitted to the chain; " +
+				"please add the `--submit` flag",
+		)
 	}
 
 	return nil
@@ -991,6 +996,11 @@ func espInsertOperator(c *cobra.Command, args []string) error {
 		}
 
 		cmd.PrintOutput("success")
+
+		cmd.PrintOutput(
+			"the transaction was not submitted to the chain; " +
+				"please add the `--submit` flag",
+		)
 	}
 
 	return nil
@@ -1040,6 +1050,11 @@ func espLock(c *cobra.Command, args []string) error {
 		}
 
 		cmd.PrintOutput("success")
+
+		cmd.PrintOutput(
+			"the transaction was not submitted to the chain; " +
+				"please add the `--submit` flag",
+		)
 	}
 
 	return nil
@@ -1127,6 +1142,11 @@ func espReceiveApproval(c *cobra.Command, args []string) error {
 		}
 
 		cmd.PrintOutput("success")
+
+		cmd.PrintOutput(
+			"the transaction was not submitted to the chain; " +
+				"please add the `--submit` flag",
+		)
 	}
 
 	return nil
@@ -1176,6 +1196,11 @@ func espRenounceOwnership(c *cobra.Command, args []string) error {
 		}
 
 		cmd.PrintOutput("success")
+
+		cmd.PrintOutput(
+			"the transaction was not submitted to the chain; " +
+				"please add the `--submit` flag",
+		)
 	}
 
 	return nil
@@ -1236,6 +1261,11 @@ func espRestoreRewardEligibility(c *cobra.Command, args []string) error {
 		}
 
 		cmd.PrintOutput("success")
+
+		cmd.PrintOutput(
+			"the transaction was not submitted to the chain; " +
+				"please add the `--submit` flag",
+		)
 	}
 
 	return nil
@@ -1296,6 +1326,11 @@ func espTransferChaosnetOwnerRole(c *cobra.Command, args []string) error {
 		}
 
 		cmd.PrintOutput("success")
+
+		cmd.PrintOutput(
+			"the transaction was not submitted to the chain; " +
+				"please add the `--submit` flag",
+		)
 	}
 
 	return nil
@@ -1356,6 +1391,11 @@ func espTransferOwnership(c *cobra.Command, args []string) error {
 		}
 
 		cmd.PrintOutput("success")
+
+		cmd.PrintOutput(
+			"the transaction was not submitted to the chain; " +
+				"please add the `--submit` flag",
+		)
 	}
 
 	return nil
@@ -1405,6 +1445,11 @@ func espUnlock(c *cobra.Command, args []string) error {
 		}
 
 		cmd.PrintOutput("success")
+
+		cmd.PrintOutput(
+			"the transaction was not submitted to the chain; " +
+				"please add the `--submit` flag",
+		)
 	}
 
 	return nil
@@ -1474,6 +1519,11 @@ func espUpdateOperatorStatus(c *cobra.Command, args []string) error {
 		}
 
 		cmd.PrintOutput("success")
+
+		cmd.PrintOutput(
+			"the transaction was not submitted to the chain; " +
+				"please add the `--submit` flag",
+		)
 	}
 
 	return nil
@@ -1534,6 +1584,11 @@ func espWithdrawIneligible(c *cobra.Command, args []string) error {
 		}
 
 		cmd.PrintOutput("success")
+
+		cmd.PrintOutput(
+			"the transaction was not submitted to the chain; " +
+				"please add the `--submit` flag",
+		)
 	}
 
 	return nil
@@ -1604,6 +1659,11 @@ func espWithdrawRewards(c *cobra.Command, args []string) error {
 		}
 
 		cmd.PrintOutput(result)
+
+		cmd.PrintOutput(
+			"the transaction was not submitted to the chain; " +
+				"please add the `--submit` flag",
+		)
 	}
 
 	return nil

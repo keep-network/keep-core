@@ -56,6 +56,7 @@ func init() {
 		wrDkgParametersCommand(),
 		wrEligibleStakeCommand(),
 		wrGasParametersCommand(),
+		wrGetDkgDataCommand(),
 		wrGetWalletCreationStateCommand(),
 		wrGovernanceCommand(),
 		wrHasDkgTimedOutCommand(),
@@ -285,6 +286,40 @@ func wrGasParameters(c *cobra.Command, args []string) error {
 	}
 
 	result, err := contract.GasParametersAtBlock(
+		cmd.BlockFlagValue.Int,
+	)
+
+	if err != nil {
+		return err
+	}
+
+	cmd.PrintOutput(result)
+
+	return nil
+}
+
+func wrGetDkgDataCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "get-dkg-data",
+		Short:                 "Calls the view method getDkgData on the WalletRegistry contract.",
+		Args:                  cmd.ArgCountChecker(0),
+		RunE:                  wrGetDkgData,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	cmd.InitConstFlags(c)
+
+	return c
+}
+
+func wrGetDkgData(c *cobra.Command, args []string) error {
+	contract, err := initializeWalletRegistry(c)
+	if err != nil {
+		return err
+	}
+
+	result, err := contract.GetDkgDataAtBlock(
 		cmd.BlockFlagValue.Int,
 	)
 
@@ -1094,6 +1129,11 @@ func wrApproveAuthorizationDecrease(c *cobra.Command, args []string) error {
 		}
 
 		cmd.PrintOutput("success")
+
+		cmd.PrintOutput(
+			"the transaction was not submitted to the chain; " +
+				"please add the `--submit` flag",
+		)
 	}
 
 	return nil
@@ -1151,6 +1191,11 @@ func wrApproveDkgResult(c *cobra.Command, args []string) error {
 		}
 
 		cmd.PrintOutput("success")
+
+		cmd.PrintOutput(
+			"the transaction was not submitted to the chain; " +
+				"please add the `--submit` flag",
+		)
 	}
 
 	return nil
@@ -1229,6 +1274,11 @@ func wrAuthorizationDecreaseRequested(c *cobra.Command, args []string) error {
 		}
 
 		cmd.PrintOutput("success")
+
+		cmd.PrintOutput(
+			"the transaction was not submitted to the chain; " +
+				"please add the `--submit` flag",
+		)
 	}
 
 	return nil
@@ -1307,6 +1357,11 @@ func wrAuthorizationIncreased(c *cobra.Command, args []string) error {
 		}
 
 		cmd.PrintOutput("success")
+
+		cmd.PrintOutput(
+			"the transaction was not submitted to the chain; " +
+				"please add the `--submit` flag",
+		)
 	}
 
 	return nil
@@ -1376,6 +1431,11 @@ func wrBeaconCallback(c *cobra.Command, args []string) error {
 		}
 
 		cmd.PrintOutput("success")
+
+		cmd.PrintOutput(
+			"the transaction was not submitted to the chain; " +
+				"please add the `--submit` flag",
+		)
 	}
 
 	return nil
@@ -1433,6 +1493,11 @@ func wrChallengeDkgResult(c *cobra.Command, args []string) error {
 		}
 
 		cmd.PrintOutput("success")
+
+		cmd.PrintOutput(
+			"the transaction was not submitted to the chain; " +
+				"please add the `--submit` flag",
+		)
 	}
 
 	return nil
@@ -1511,6 +1576,11 @@ func wrInitialize(c *cobra.Command, args []string) error {
 		}
 
 		cmd.PrintOutput("success")
+
+		cmd.PrintOutput(
+			"the transaction was not submitted to the chain; " +
+				"please add the `--submit` flag",
+		)
 	}
 
 	return nil
@@ -1589,6 +1659,11 @@ func wrInvoluntaryAuthorizationDecrease(c *cobra.Command, args []string) error {
 		}
 
 		cmd.PrintOutput("success")
+
+		cmd.PrintOutput(
+			"the transaction was not submitted to the chain; " +
+				"please add the `--submit` flag",
+		)
 	}
 
 	return nil
@@ -1638,6 +1713,11 @@ func wrJoinSortitionPool(c *cobra.Command, args []string) error {
 		}
 
 		cmd.PrintOutput("success")
+
+		cmd.PrintOutput(
+			"the transaction was not submitted to the chain; " +
+				"please add the `--submit` flag",
+		)
 	}
 
 	return nil
@@ -1687,6 +1767,11 @@ func wrNotifyDkgTimeout(c *cobra.Command, args []string) error {
 		}
 
 		cmd.PrintOutput("success")
+
+		cmd.PrintOutput(
+			"the transaction was not submitted to the chain; " +
+				"please add the `--submit` flag",
+		)
 	}
 
 	return nil
@@ -1736,6 +1821,11 @@ func wrNotifySeedTimeout(c *cobra.Command, args []string) error {
 		}
 
 		cmd.PrintOutput("success")
+
+		cmd.PrintOutput(
+			"the transaction was not submitted to the chain; " +
+				"please add the `--submit` flag",
+		)
 	}
 
 	return nil
@@ -1796,6 +1886,11 @@ func wrRegisterOperator(c *cobra.Command, args []string) error {
 		}
 
 		cmd.PrintOutput("success")
+
+		cmd.PrintOutput(
+			"the transaction was not submitted to the chain; " +
+				"please add the `--submit` flag",
+		)
 	}
 
 	return nil
@@ -1845,6 +1940,11 @@ func wrRequestNewWallet(c *cobra.Command, args []string) error {
 		}
 
 		cmd.PrintOutput("success")
+
+		cmd.PrintOutput(
+			"the transaction was not submitted to the chain; " +
+				"please add the `--submit` flag",
+		)
 	}
 
 	return nil
@@ -1902,6 +2002,11 @@ func wrSubmitDkgResult(c *cobra.Command, args []string) error {
 		}
 
 		cmd.PrintOutput("success")
+
+		cmd.PrintOutput(
+			"the transaction was not submitted to the chain; " +
+				"please add the `--submit` flag",
+		)
 	}
 
 	return nil
@@ -1962,6 +2067,11 @@ func wrTransferGovernance(c *cobra.Command, args []string) error {
 		}
 
 		cmd.PrintOutput("success")
+
+		cmd.PrintOutput(
+			"the transaction was not submitted to the chain; " +
+				"please add the `--submit` flag",
+		)
 	}
 
 	return nil
@@ -2040,6 +2150,11 @@ func wrUpdateAuthorizationParameters(c *cobra.Command, args []string) error {
 		}
 
 		cmd.PrintOutput("success")
+
+		cmd.PrintOutput(
+			"the transaction was not submitted to the chain; " +
+				"please add the `--submit` flag",
+		)
 	}
 
 	return nil
@@ -2136,6 +2251,11 @@ func wrUpdateDkgParameters(c *cobra.Command, args []string) error {
 		}
 
 		cmd.PrintOutput("success")
+
+		cmd.PrintOutput(
+			"the transaction was not submitted to the chain; " +
+				"please add the `--submit` flag",
+		)
 	}
 
 	return nil
@@ -2232,6 +2352,11 @@ func wrUpdateGasParameters(c *cobra.Command, args []string) error {
 		}
 
 		cmd.PrintOutput("success")
+
+		cmd.PrintOutput(
+			"the transaction was not submitted to the chain; " +
+				"please add the `--submit` flag",
+		)
 	}
 
 	return nil
@@ -2292,6 +2417,11 @@ func wrUpdateOperatorStatus(c *cobra.Command, args []string) error {
 		}
 
 		cmd.PrintOutput("success")
+
+		cmd.PrintOutput(
+			"the transaction was not submitted to the chain; " +
+				"please add the `--submit` flag",
+		)
 	}
 
 	return nil
@@ -2352,6 +2482,11 @@ func wrUpdateReimbursementPool(c *cobra.Command, args []string) error {
 		}
 
 		cmd.PrintOutput("success")
+
+		cmd.PrintOutput(
+			"the transaction was not submitted to the chain; " +
+				"please add the `--submit` flag",
+		)
 	}
 
 	return nil
@@ -2421,6 +2556,11 @@ func wrUpdateRewardParameters(c *cobra.Command, args []string) error {
 		}
 
 		cmd.PrintOutput("success")
+
+		cmd.PrintOutput(
+			"the transaction was not submitted to the chain; " +
+				"please add the `--submit` flag",
+		)
 	}
 
 	return nil
@@ -2481,6 +2621,11 @@ func wrUpdateSlashingParameters(c *cobra.Command, args []string) error {
 		}
 
 		cmd.PrintOutput("success")
+
+		cmd.PrintOutput(
+			"the transaction was not submitted to the chain; " +
+				"please add the `--submit` flag",
+		)
 	}
 
 	return nil
@@ -2541,6 +2686,11 @@ func wrUpdateWalletOwner(c *cobra.Command, args []string) error {
 		}
 
 		cmd.PrintOutput("success")
+
+		cmd.PrintOutput(
+			"the transaction was not submitted to the chain; " +
+				"please add the `--submit` flag",
+		)
 	}
 
 	return nil
@@ -2601,6 +2751,11 @@ func wrUpgradeRandomBeacon(c *cobra.Command, args []string) error {
 		}
 
 		cmd.PrintOutput("success")
+
+		cmd.PrintOutput(
+			"the transaction was not submitted to the chain; " +
+				"please add the `--submit` flag",
+		)
 	}
 
 	return nil
@@ -2661,6 +2816,11 @@ func wrWithdrawIneligibleRewards(c *cobra.Command, args []string) error {
 		}
 
 		cmd.PrintOutput("success")
+
+		cmd.PrintOutput(
+			"the transaction was not submitted to the chain; " +
+				"please add the `--submit` flag",
+		)
 	}
 
 	return nil
@@ -2721,6 +2881,11 @@ func wrWithdrawRewards(c *cobra.Command, args []string) error {
 		}
 
 		cmd.PrintOutput("success")
+
+		cmd.PrintOutput(
+			"the transaction was not submitted to the chain; " +
+				"please add the `--submit` flag",
+		)
 	}
 
 	return nil

@@ -1971,6 +1971,154 @@ func (b *Bridge) NotifyWalletClosingPeriodElapsedGasEstimate(
 }
 
 // Transaction submission.
+func (b *Bridge) ProcessPendingMovedFundsSweepRequest(
+	arg_walletPubKeyHash [20]byte,
+	arg_utxo abi.BitcoinTxUTXO,
+
+	transactionOptions ...chainutil.TransactionOptions,
+) (*types.Transaction, error) {
+	bLogger.Debug(
+		"submitting transaction processPendingMovedFundsSweepRequest",
+		" params: ",
+		fmt.Sprint(
+			arg_walletPubKeyHash,
+			arg_utxo,
+		),
+	)
+
+	b.transactionMutex.Lock()
+	defer b.transactionMutex.Unlock()
+
+	// create a copy
+	transactorOptions := new(bind.TransactOpts)
+	*transactorOptions = *b.transactorOptions
+
+	if len(transactionOptions) > 1 {
+		return nil, fmt.Errorf(
+			"could not process multiple transaction options sets",
+		)
+	} else if len(transactionOptions) > 0 {
+		transactionOptions[0].Apply(transactorOptions)
+	}
+
+	nonce, err := b.nonceManager.CurrentNonce()
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve account nonce: %v", err)
+	}
+
+	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
+
+	transaction, err := b.contract.ProcessPendingMovedFundsSweepRequest(
+		transactorOptions,
+		arg_walletPubKeyHash,
+		arg_utxo,
+	)
+	if err != nil {
+		return transaction, b.errorResolver.ResolveError(
+			err,
+			b.transactorOptions.From,
+			nil,
+			"processPendingMovedFundsSweepRequest",
+			arg_walletPubKeyHash,
+			arg_utxo,
+		)
+	}
+
+	bLogger.Infof(
+		"submitted transaction processPendingMovedFundsSweepRequest with id: [%s] and nonce [%v]",
+		transaction.Hash(),
+		transaction.Nonce(),
+	)
+
+	go b.miningWaiter.ForceMining(
+		transaction,
+		transactorOptions,
+		func(newTransactorOptions *bind.TransactOpts) (*types.Transaction, error) {
+			// If original transactor options has a non-zero gas limit, that
+			// means the client code set it on their own. In that case, we
+			// should rewrite the gas limit from the original transaction
+			// for each resubmission. If the gas limit is not set by the client
+			// code, let the the submitter re-estimate the gas limit on each
+			// resubmission.
+			if transactorOptions.GasLimit != 0 {
+				newTransactorOptions.GasLimit = transactorOptions.GasLimit
+			}
+
+			transaction, err := b.contract.ProcessPendingMovedFundsSweepRequest(
+				newTransactorOptions,
+				arg_walletPubKeyHash,
+				arg_utxo,
+			)
+			if err != nil {
+				return nil, b.errorResolver.ResolveError(
+					err,
+					b.transactorOptions.From,
+					nil,
+					"processPendingMovedFundsSweepRequest",
+					arg_walletPubKeyHash,
+					arg_utxo,
+				)
+			}
+
+			bLogger.Infof(
+				"submitted transaction processPendingMovedFundsSweepRequest with id: [%s] and nonce [%v]",
+				transaction.Hash(),
+				transaction.Nonce(),
+			)
+
+			return transaction, nil
+		},
+	)
+
+	b.nonceManager.IncrementNonce()
+
+	return transaction, err
+}
+
+// Non-mutating call, not a transaction submission.
+func (b *Bridge) CallProcessPendingMovedFundsSweepRequest(
+	arg_walletPubKeyHash [20]byte,
+	arg_utxo abi.BitcoinTxUTXO,
+	blockNumber *big.Int,
+) error {
+	var result interface{} = nil
+
+	err := chainutil.CallAtBlock(
+		b.transactorOptions.From,
+		blockNumber, nil,
+		b.contractABI,
+		b.caller,
+		b.errorResolver,
+		b.contractAddress,
+		"processPendingMovedFundsSweepRequest",
+		&result,
+		arg_walletPubKeyHash,
+		arg_utxo,
+	)
+
+	return err
+}
+
+func (b *Bridge) ProcessPendingMovedFundsSweepRequestGasEstimate(
+	arg_walletPubKeyHash [20]byte,
+	arg_utxo abi.BitcoinTxUTXO,
+) (uint64, error) {
+	var result uint64
+
+	result, err := chainutil.EstimateGas(
+		b.callerOptions.From,
+		b.contractAddress,
+		"processPendingMovedFundsSweepRequest",
+		b.contractABI,
+		b.transactor,
+		arg_walletPubKeyHash,
+		arg_utxo,
+	)
+
+	return result, err
+}
+
+// Transaction submission.
 func (b *Bridge) ReceiveBalanceApproval(
 	arg_balanceOwner common.Address,
 	arg_amount *big.Int,
@@ -2721,6 +2869,1396 @@ func (b *Bridge) RevealDepositGasEstimate(
 }
 
 // Transaction submission.
+func (b *Bridge) SetActiveWallet(
+	arg_activeWalletPubKeyHash [20]byte,
+
+	transactionOptions ...chainutil.TransactionOptions,
+) (*types.Transaction, error) {
+	bLogger.Debug(
+		"submitting transaction setActiveWallet",
+		" params: ",
+		fmt.Sprint(
+			arg_activeWalletPubKeyHash,
+		),
+	)
+
+	b.transactionMutex.Lock()
+	defer b.transactionMutex.Unlock()
+
+	// create a copy
+	transactorOptions := new(bind.TransactOpts)
+	*transactorOptions = *b.transactorOptions
+
+	if len(transactionOptions) > 1 {
+		return nil, fmt.Errorf(
+			"could not process multiple transaction options sets",
+		)
+	} else if len(transactionOptions) > 0 {
+		transactionOptions[0].Apply(transactorOptions)
+	}
+
+	nonce, err := b.nonceManager.CurrentNonce()
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve account nonce: %v", err)
+	}
+
+	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
+
+	transaction, err := b.contract.SetActiveWallet(
+		transactorOptions,
+		arg_activeWalletPubKeyHash,
+	)
+	if err != nil {
+		return transaction, b.errorResolver.ResolveError(
+			err,
+			b.transactorOptions.From,
+			nil,
+			"setActiveWallet",
+			arg_activeWalletPubKeyHash,
+		)
+	}
+
+	bLogger.Infof(
+		"submitted transaction setActiveWallet with id: [%s] and nonce [%v]",
+		transaction.Hash(),
+		transaction.Nonce(),
+	)
+
+	go b.miningWaiter.ForceMining(
+		transaction,
+		transactorOptions,
+		func(newTransactorOptions *bind.TransactOpts) (*types.Transaction, error) {
+			// If original transactor options has a non-zero gas limit, that
+			// means the client code set it on their own. In that case, we
+			// should rewrite the gas limit from the original transaction
+			// for each resubmission. If the gas limit is not set by the client
+			// code, let the the submitter re-estimate the gas limit on each
+			// resubmission.
+			if transactorOptions.GasLimit != 0 {
+				newTransactorOptions.GasLimit = transactorOptions.GasLimit
+			}
+
+			transaction, err := b.contract.SetActiveWallet(
+				newTransactorOptions,
+				arg_activeWalletPubKeyHash,
+			)
+			if err != nil {
+				return nil, b.errorResolver.ResolveError(
+					err,
+					b.transactorOptions.From,
+					nil,
+					"setActiveWallet",
+					arg_activeWalletPubKeyHash,
+				)
+			}
+
+			bLogger.Infof(
+				"submitted transaction setActiveWallet with id: [%s] and nonce [%v]",
+				transaction.Hash(),
+				transaction.Nonce(),
+			)
+
+			return transaction, nil
+		},
+	)
+
+	b.nonceManager.IncrementNonce()
+
+	return transaction, err
+}
+
+// Non-mutating call, not a transaction submission.
+func (b *Bridge) CallSetActiveWallet(
+	arg_activeWalletPubKeyHash [20]byte,
+	blockNumber *big.Int,
+) error {
+	var result interface{} = nil
+
+	err := chainutil.CallAtBlock(
+		b.transactorOptions.From,
+		blockNumber, nil,
+		b.contractABI,
+		b.caller,
+		b.errorResolver,
+		b.contractAddress,
+		"setActiveWallet",
+		&result,
+		arg_activeWalletPubKeyHash,
+	)
+
+	return err
+}
+
+func (b *Bridge) SetActiveWalletGasEstimate(
+	arg_activeWalletPubKeyHash [20]byte,
+) (uint64, error) {
+	var result uint64
+
+	result, err := chainutil.EstimateGas(
+		b.callerOptions.From,
+		b.contractAddress,
+		"setActiveWallet",
+		b.contractABI,
+		b.transactor,
+		arg_activeWalletPubKeyHash,
+	)
+
+	return result, err
+}
+
+// Transaction submission.
+func (b *Bridge) SetDepositDustThreshold(
+	arg__depositDustThreshold uint64,
+
+	transactionOptions ...chainutil.TransactionOptions,
+) (*types.Transaction, error) {
+	bLogger.Debug(
+		"submitting transaction setDepositDustThreshold",
+		" params: ",
+		fmt.Sprint(
+			arg__depositDustThreshold,
+		),
+	)
+
+	b.transactionMutex.Lock()
+	defer b.transactionMutex.Unlock()
+
+	// create a copy
+	transactorOptions := new(bind.TransactOpts)
+	*transactorOptions = *b.transactorOptions
+
+	if len(transactionOptions) > 1 {
+		return nil, fmt.Errorf(
+			"could not process multiple transaction options sets",
+		)
+	} else if len(transactionOptions) > 0 {
+		transactionOptions[0].Apply(transactorOptions)
+	}
+
+	nonce, err := b.nonceManager.CurrentNonce()
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve account nonce: %v", err)
+	}
+
+	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
+
+	transaction, err := b.contract.SetDepositDustThreshold(
+		transactorOptions,
+		arg__depositDustThreshold,
+	)
+	if err != nil {
+		return transaction, b.errorResolver.ResolveError(
+			err,
+			b.transactorOptions.From,
+			nil,
+			"setDepositDustThreshold",
+			arg__depositDustThreshold,
+		)
+	}
+
+	bLogger.Infof(
+		"submitted transaction setDepositDustThreshold with id: [%s] and nonce [%v]",
+		transaction.Hash(),
+		transaction.Nonce(),
+	)
+
+	go b.miningWaiter.ForceMining(
+		transaction,
+		transactorOptions,
+		func(newTransactorOptions *bind.TransactOpts) (*types.Transaction, error) {
+			// If original transactor options has a non-zero gas limit, that
+			// means the client code set it on their own. In that case, we
+			// should rewrite the gas limit from the original transaction
+			// for each resubmission. If the gas limit is not set by the client
+			// code, let the the submitter re-estimate the gas limit on each
+			// resubmission.
+			if transactorOptions.GasLimit != 0 {
+				newTransactorOptions.GasLimit = transactorOptions.GasLimit
+			}
+
+			transaction, err := b.contract.SetDepositDustThreshold(
+				newTransactorOptions,
+				arg__depositDustThreshold,
+			)
+			if err != nil {
+				return nil, b.errorResolver.ResolveError(
+					err,
+					b.transactorOptions.From,
+					nil,
+					"setDepositDustThreshold",
+					arg__depositDustThreshold,
+				)
+			}
+
+			bLogger.Infof(
+				"submitted transaction setDepositDustThreshold with id: [%s] and nonce [%v]",
+				transaction.Hash(),
+				transaction.Nonce(),
+			)
+
+			return transaction, nil
+		},
+	)
+
+	b.nonceManager.IncrementNonce()
+
+	return transaction, err
+}
+
+// Non-mutating call, not a transaction submission.
+func (b *Bridge) CallSetDepositDustThreshold(
+	arg__depositDustThreshold uint64,
+	blockNumber *big.Int,
+) error {
+	var result interface{} = nil
+
+	err := chainutil.CallAtBlock(
+		b.transactorOptions.From,
+		blockNumber, nil,
+		b.contractABI,
+		b.caller,
+		b.errorResolver,
+		b.contractAddress,
+		"setDepositDustThreshold",
+		&result,
+		arg__depositDustThreshold,
+	)
+
+	return err
+}
+
+func (b *Bridge) SetDepositDustThresholdGasEstimate(
+	arg__depositDustThreshold uint64,
+) (uint64, error) {
+	var result uint64
+
+	result, err := chainutil.EstimateGas(
+		b.callerOptions.From,
+		b.contractAddress,
+		"setDepositDustThreshold",
+		b.contractABI,
+		b.transactor,
+		arg__depositDustThreshold,
+	)
+
+	return result, err
+}
+
+// Transaction submission.
+func (b *Bridge) SetDepositRevealAheadPeriod(
+	arg__depositRevealAheadPeriod uint32,
+
+	transactionOptions ...chainutil.TransactionOptions,
+) (*types.Transaction, error) {
+	bLogger.Debug(
+		"submitting transaction setDepositRevealAheadPeriod",
+		" params: ",
+		fmt.Sprint(
+			arg__depositRevealAheadPeriod,
+		),
+	)
+
+	b.transactionMutex.Lock()
+	defer b.transactionMutex.Unlock()
+
+	// create a copy
+	transactorOptions := new(bind.TransactOpts)
+	*transactorOptions = *b.transactorOptions
+
+	if len(transactionOptions) > 1 {
+		return nil, fmt.Errorf(
+			"could not process multiple transaction options sets",
+		)
+	} else if len(transactionOptions) > 0 {
+		transactionOptions[0].Apply(transactorOptions)
+	}
+
+	nonce, err := b.nonceManager.CurrentNonce()
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve account nonce: %v", err)
+	}
+
+	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
+
+	transaction, err := b.contract.SetDepositRevealAheadPeriod(
+		transactorOptions,
+		arg__depositRevealAheadPeriod,
+	)
+	if err != nil {
+		return transaction, b.errorResolver.ResolveError(
+			err,
+			b.transactorOptions.From,
+			nil,
+			"setDepositRevealAheadPeriod",
+			arg__depositRevealAheadPeriod,
+		)
+	}
+
+	bLogger.Infof(
+		"submitted transaction setDepositRevealAheadPeriod with id: [%s] and nonce [%v]",
+		transaction.Hash(),
+		transaction.Nonce(),
+	)
+
+	go b.miningWaiter.ForceMining(
+		transaction,
+		transactorOptions,
+		func(newTransactorOptions *bind.TransactOpts) (*types.Transaction, error) {
+			// If original transactor options has a non-zero gas limit, that
+			// means the client code set it on their own. In that case, we
+			// should rewrite the gas limit from the original transaction
+			// for each resubmission. If the gas limit is not set by the client
+			// code, let the the submitter re-estimate the gas limit on each
+			// resubmission.
+			if transactorOptions.GasLimit != 0 {
+				newTransactorOptions.GasLimit = transactorOptions.GasLimit
+			}
+
+			transaction, err := b.contract.SetDepositRevealAheadPeriod(
+				newTransactorOptions,
+				arg__depositRevealAheadPeriod,
+			)
+			if err != nil {
+				return nil, b.errorResolver.ResolveError(
+					err,
+					b.transactorOptions.From,
+					nil,
+					"setDepositRevealAheadPeriod",
+					arg__depositRevealAheadPeriod,
+				)
+			}
+
+			bLogger.Infof(
+				"submitted transaction setDepositRevealAheadPeriod with id: [%s] and nonce [%v]",
+				transaction.Hash(),
+				transaction.Nonce(),
+			)
+
+			return transaction, nil
+		},
+	)
+
+	b.nonceManager.IncrementNonce()
+
+	return transaction, err
+}
+
+// Non-mutating call, not a transaction submission.
+func (b *Bridge) CallSetDepositRevealAheadPeriod(
+	arg__depositRevealAheadPeriod uint32,
+	blockNumber *big.Int,
+) error {
+	var result interface{} = nil
+
+	err := chainutil.CallAtBlock(
+		b.transactorOptions.From,
+		blockNumber, nil,
+		b.contractABI,
+		b.caller,
+		b.errorResolver,
+		b.contractAddress,
+		"setDepositRevealAheadPeriod",
+		&result,
+		arg__depositRevealAheadPeriod,
+	)
+
+	return err
+}
+
+func (b *Bridge) SetDepositRevealAheadPeriodGasEstimate(
+	arg__depositRevealAheadPeriod uint32,
+) (uint64, error) {
+	var result uint64
+
+	result, err := chainutil.EstimateGas(
+		b.callerOptions.From,
+		b.contractAddress,
+		"setDepositRevealAheadPeriod",
+		b.contractABI,
+		b.transactor,
+		arg__depositRevealAheadPeriod,
+	)
+
+	return result, err
+}
+
+// Transaction submission.
+func (b *Bridge) SetDepositTxMaxFee(
+	arg__depositTxMaxFee uint64,
+
+	transactionOptions ...chainutil.TransactionOptions,
+) (*types.Transaction, error) {
+	bLogger.Debug(
+		"submitting transaction setDepositTxMaxFee",
+		" params: ",
+		fmt.Sprint(
+			arg__depositTxMaxFee,
+		),
+	)
+
+	b.transactionMutex.Lock()
+	defer b.transactionMutex.Unlock()
+
+	// create a copy
+	transactorOptions := new(bind.TransactOpts)
+	*transactorOptions = *b.transactorOptions
+
+	if len(transactionOptions) > 1 {
+		return nil, fmt.Errorf(
+			"could not process multiple transaction options sets",
+		)
+	} else if len(transactionOptions) > 0 {
+		transactionOptions[0].Apply(transactorOptions)
+	}
+
+	nonce, err := b.nonceManager.CurrentNonce()
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve account nonce: %v", err)
+	}
+
+	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
+
+	transaction, err := b.contract.SetDepositTxMaxFee(
+		transactorOptions,
+		arg__depositTxMaxFee,
+	)
+	if err != nil {
+		return transaction, b.errorResolver.ResolveError(
+			err,
+			b.transactorOptions.From,
+			nil,
+			"setDepositTxMaxFee",
+			arg__depositTxMaxFee,
+		)
+	}
+
+	bLogger.Infof(
+		"submitted transaction setDepositTxMaxFee with id: [%s] and nonce [%v]",
+		transaction.Hash(),
+		transaction.Nonce(),
+	)
+
+	go b.miningWaiter.ForceMining(
+		transaction,
+		transactorOptions,
+		func(newTransactorOptions *bind.TransactOpts) (*types.Transaction, error) {
+			// If original transactor options has a non-zero gas limit, that
+			// means the client code set it on their own. In that case, we
+			// should rewrite the gas limit from the original transaction
+			// for each resubmission. If the gas limit is not set by the client
+			// code, let the the submitter re-estimate the gas limit on each
+			// resubmission.
+			if transactorOptions.GasLimit != 0 {
+				newTransactorOptions.GasLimit = transactorOptions.GasLimit
+			}
+
+			transaction, err := b.contract.SetDepositTxMaxFee(
+				newTransactorOptions,
+				arg__depositTxMaxFee,
+			)
+			if err != nil {
+				return nil, b.errorResolver.ResolveError(
+					err,
+					b.transactorOptions.From,
+					nil,
+					"setDepositTxMaxFee",
+					arg__depositTxMaxFee,
+				)
+			}
+
+			bLogger.Infof(
+				"submitted transaction setDepositTxMaxFee with id: [%s] and nonce [%v]",
+				transaction.Hash(),
+				transaction.Nonce(),
+			)
+
+			return transaction, nil
+		},
+	)
+
+	b.nonceManager.IncrementNonce()
+
+	return transaction, err
+}
+
+// Non-mutating call, not a transaction submission.
+func (b *Bridge) CallSetDepositTxMaxFee(
+	arg__depositTxMaxFee uint64,
+	blockNumber *big.Int,
+) error {
+	var result interface{} = nil
+
+	err := chainutil.CallAtBlock(
+		b.transactorOptions.From,
+		blockNumber, nil,
+		b.contractABI,
+		b.caller,
+		b.errorResolver,
+		b.contractAddress,
+		"setDepositTxMaxFee",
+		&result,
+		arg__depositTxMaxFee,
+	)
+
+	return err
+}
+
+func (b *Bridge) SetDepositTxMaxFeeGasEstimate(
+	arg__depositTxMaxFee uint64,
+) (uint64, error) {
+	var result uint64
+
+	result, err := chainutil.EstimateGas(
+		b.callerOptions.From,
+		b.contractAddress,
+		"setDepositTxMaxFee",
+		b.contractABI,
+		b.transactor,
+		arg__depositTxMaxFee,
+	)
+
+	return result, err
+}
+
+// Transaction submission.
+func (b *Bridge) SetMovedFundsSweepTxMaxTotalFee(
+	arg__movedFundsSweepTxMaxTotalFee uint64,
+
+	transactionOptions ...chainutil.TransactionOptions,
+) (*types.Transaction, error) {
+	bLogger.Debug(
+		"submitting transaction setMovedFundsSweepTxMaxTotalFee",
+		" params: ",
+		fmt.Sprint(
+			arg__movedFundsSweepTxMaxTotalFee,
+		),
+	)
+
+	b.transactionMutex.Lock()
+	defer b.transactionMutex.Unlock()
+
+	// create a copy
+	transactorOptions := new(bind.TransactOpts)
+	*transactorOptions = *b.transactorOptions
+
+	if len(transactionOptions) > 1 {
+		return nil, fmt.Errorf(
+			"could not process multiple transaction options sets",
+		)
+	} else if len(transactionOptions) > 0 {
+		transactionOptions[0].Apply(transactorOptions)
+	}
+
+	nonce, err := b.nonceManager.CurrentNonce()
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve account nonce: %v", err)
+	}
+
+	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
+
+	transaction, err := b.contract.SetMovedFundsSweepTxMaxTotalFee(
+		transactorOptions,
+		arg__movedFundsSweepTxMaxTotalFee,
+	)
+	if err != nil {
+		return transaction, b.errorResolver.ResolveError(
+			err,
+			b.transactorOptions.From,
+			nil,
+			"setMovedFundsSweepTxMaxTotalFee",
+			arg__movedFundsSweepTxMaxTotalFee,
+		)
+	}
+
+	bLogger.Infof(
+		"submitted transaction setMovedFundsSweepTxMaxTotalFee with id: [%s] and nonce [%v]",
+		transaction.Hash(),
+		transaction.Nonce(),
+	)
+
+	go b.miningWaiter.ForceMining(
+		transaction,
+		transactorOptions,
+		func(newTransactorOptions *bind.TransactOpts) (*types.Transaction, error) {
+			// If original transactor options has a non-zero gas limit, that
+			// means the client code set it on their own. In that case, we
+			// should rewrite the gas limit from the original transaction
+			// for each resubmission. If the gas limit is not set by the client
+			// code, let the the submitter re-estimate the gas limit on each
+			// resubmission.
+			if transactorOptions.GasLimit != 0 {
+				newTransactorOptions.GasLimit = transactorOptions.GasLimit
+			}
+
+			transaction, err := b.contract.SetMovedFundsSweepTxMaxTotalFee(
+				newTransactorOptions,
+				arg__movedFundsSweepTxMaxTotalFee,
+			)
+			if err != nil {
+				return nil, b.errorResolver.ResolveError(
+					err,
+					b.transactorOptions.From,
+					nil,
+					"setMovedFundsSweepTxMaxTotalFee",
+					arg__movedFundsSweepTxMaxTotalFee,
+				)
+			}
+
+			bLogger.Infof(
+				"submitted transaction setMovedFundsSweepTxMaxTotalFee with id: [%s] and nonce [%v]",
+				transaction.Hash(),
+				transaction.Nonce(),
+			)
+
+			return transaction, nil
+		},
+	)
+
+	b.nonceManager.IncrementNonce()
+
+	return transaction, err
+}
+
+// Non-mutating call, not a transaction submission.
+func (b *Bridge) CallSetMovedFundsSweepTxMaxTotalFee(
+	arg__movedFundsSweepTxMaxTotalFee uint64,
+	blockNumber *big.Int,
+) error {
+	var result interface{} = nil
+
+	err := chainutil.CallAtBlock(
+		b.transactorOptions.From,
+		blockNumber, nil,
+		b.contractABI,
+		b.caller,
+		b.errorResolver,
+		b.contractAddress,
+		"setMovedFundsSweepTxMaxTotalFee",
+		&result,
+		arg__movedFundsSweepTxMaxTotalFee,
+	)
+
+	return err
+}
+
+func (b *Bridge) SetMovedFundsSweepTxMaxTotalFeeGasEstimate(
+	arg__movedFundsSweepTxMaxTotalFee uint64,
+) (uint64, error) {
+	var result uint64
+
+	result, err := chainutil.EstimateGas(
+		b.callerOptions.From,
+		b.contractAddress,
+		"setMovedFundsSweepTxMaxTotalFee",
+		b.contractABI,
+		b.transactor,
+		arg__movedFundsSweepTxMaxTotalFee,
+	)
+
+	return result, err
+}
+
+// Transaction submission.
+func (b *Bridge) SetPendingMovedFundsSweepRequest(
+	arg_walletPubKeyHash [20]byte,
+	arg_utxo abi.BitcoinTxUTXO,
+
+	transactionOptions ...chainutil.TransactionOptions,
+) (*types.Transaction, error) {
+	bLogger.Debug(
+		"submitting transaction setPendingMovedFundsSweepRequest",
+		" params: ",
+		fmt.Sprint(
+			arg_walletPubKeyHash,
+			arg_utxo,
+		),
+	)
+
+	b.transactionMutex.Lock()
+	defer b.transactionMutex.Unlock()
+
+	// create a copy
+	transactorOptions := new(bind.TransactOpts)
+	*transactorOptions = *b.transactorOptions
+
+	if len(transactionOptions) > 1 {
+		return nil, fmt.Errorf(
+			"could not process multiple transaction options sets",
+		)
+	} else if len(transactionOptions) > 0 {
+		transactionOptions[0].Apply(transactorOptions)
+	}
+
+	nonce, err := b.nonceManager.CurrentNonce()
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve account nonce: %v", err)
+	}
+
+	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
+
+	transaction, err := b.contract.SetPendingMovedFundsSweepRequest(
+		transactorOptions,
+		arg_walletPubKeyHash,
+		arg_utxo,
+	)
+	if err != nil {
+		return transaction, b.errorResolver.ResolveError(
+			err,
+			b.transactorOptions.From,
+			nil,
+			"setPendingMovedFundsSweepRequest",
+			arg_walletPubKeyHash,
+			arg_utxo,
+		)
+	}
+
+	bLogger.Infof(
+		"submitted transaction setPendingMovedFundsSweepRequest with id: [%s] and nonce [%v]",
+		transaction.Hash(),
+		transaction.Nonce(),
+	)
+
+	go b.miningWaiter.ForceMining(
+		transaction,
+		transactorOptions,
+		func(newTransactorOptions *bind.TransactOpts) (*types.Transaction, error) {
+			// If original transactor options has a non-zero gas limit, that
+			// means the client code set it on their own. In that case, we
+			// should rewrite the gas limit from the original transaction
+			// for each resubmission. If the gas limit is not set by the client
+			// code, let the the submitter re-estimate the gas limit on each
+			// resubmission.
+			if transactorOptions.GasLimit != 0 {
+				newTransactorOptions.GasLimit = transactorOptions.GasLimit
+			}
+
+			transaction, err := b.contract.SetPendingMovedFundsSweepRequest(
+				newTransactorOptions,
+				arg_walletPubKeyHash,
+				arg_utxo,
+			)
+			if err != nil {
+				return nil, b.errorResolver.ResolveError(
+					err,
+					b.transactorOptions.From,
+					nil,
+					"setPendingMovedFundsSweepRequest",
+					arg_walletPubKeyHash,
+					arg_utxo,
+				)
+			}
+
+			bLogger.Infof(
+				"submitted transaction setPendingMovedFundsSweepRequest with id: [%s] and nonce [%v]",
+				transaction.Hash(),
+				transaction.Nonce(),
+			)
+
+			return transaction, nil
+		},
+	)
+
+	b.nonceManager.IncrementNonce()
+
+	return transaction, err
+}
+
+// Non-mutating call, not a transaction submission.
+func (b *Bridge) CallSetPendingMovedFundsSweepRequest(
+	arg_walletPubKeyHash [20]byte,
+	arg_utxo abi.BitcoinTxUTXO,
+	blockNumber *big.Int,
+) error {
+	var result interface{} = nil
+
+	err := chainutil.CallAtBlock(
+		b.transactorOptions.From,
+		blockNumber, nil,
+		b.contractABI,
+		b.caller,
+		b.errorResolver,
+		b.contractAddress,
+		"setPendingMovedFundsSweepRequest",
+		&result,
+		arg_walletPubKeyHash,
+		arg_utxo,
+	)
+
+	return err
+}
+
+func (b *Bridge) SetPendingMovedFundsSweepRequestGasEstimate(
+	arg_walletPubKeyHash [20]byte,
+	arg_utxo abi.BitcoinTxUTXO,
+) (uint64, error) {
+	var result uint64
+
+	result, err := chainutil.EstimateGas(
+		b.callerOptions.From,
+		b.contractAddress,
+		"setPendingMovedFundsSweepRequest",
+		b.contractABI,
+		b.transactor,
+		arg_walletPubKeyHash,
+		arg_utxo,
+	)
+
+	return result, err
+}
+
+// Transaction submission.
+func (b *Bridge) SetProcessedMovedFundsSweepRequests(
+	arg_utxos []abi.BitcoinTxUTXO,
+
+	transactionOptions ...chainutil.TransactionOptions,
+) (*types.Transaction, error) {
+	bLogger.Debug(
+		"submitting transaction setProcessedMovedFundsSweepRequests",
+		" params: ",
+		fmt.Sprint(
+			arg_utxos,
+		),
+	)
+
+	b.transactionMutex.Lock()
+	defer b.transactionMutex.Unlock()
+
+	// create a copy
+	transactorOptions := new(bind.TransactOpts)
+	*transactorOptions = *b.transactorOptions
+
+	if len(transactionOptions) > 1 {
+		return nil, fmt.Errorf(
+			"could not process multiple transaction options sets",
+		)
+	} else if len(transactionOptions) > 0 {
+		transactionOptions[0].Apply(transactorOptions)
+	}
+
+	nonce, err := b.nonceManager.CurrentNonce()
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve account nonce: %v", err)
+	}
+
+	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
+
+	transaction, err := b.contract.SetProcessedMovedFundsSweepRequests(
+		transactorOptions,
+		arg_utxos,
+	)
+	if err != nil {
+		return transaction, b.errorResolver.ResolveError(
+			err,
+			b.transactorOptions.From,
+			nil,
+			"setProcessedMovedFundsSweepRequests",
+			arg_utxos,
+		)
+	}
+
+	bLogger.Infof(
+		"submitted transaction setProcessedMovedFundsSweepRequests with id: [%s] and nonce [%v]",
+		transaction.Hash(),
+		transaction.Nonce(),
+	)
+
+	go b.miningWaiter.ForceMining(
+		transaction,
+		transactorOptions,
+		func(newTransactorOptions *bind.TransactOpts) (*types.Transaction, error) {
+			// If original transactor options has a non-zero gas limit, that
+			// means the client code set it on their own. In that case, we
+			// should rewrite the gas limit from the original transaction
+			// for each resubmission. If the gas limit is not set by the client
+			// code, let the the submitter re-estimate the gas limit on each
+			// resubmission.
+			if transactorOptions.GasLimit != 0 {
+				newTransactorOptions.GasLimit = transactorOptions.GasLimit
+			}
+
+			transaction, err := b.contract.SetProcessedMovedFundsSweepRequests(
+				newTransactorOptions,
+				arg_utxos,
+			)
+			if err != nil {
+				return nil, b.errorResolver.ResolveError(
+					err,
+					b.transactorOptions.From,
+					nil,
+					"setProcessedMovedFundsSweepRequests",
+					arg_utxos,
+				)
+			}
+
+			bLogger.Infof(
+				"submitted transaction setProcessedMovedFundsSweepRequests with id: [%s] and nonce [%v]",
+				transaction.Hash(),
+				transaction.Nonce(),
+			)
+
+			return transaction, nil
+		},
+	)
+
+	b.nonceManager.IncrementNonce()
+
+	return transaction, err
+}
+
+// Non-mutating call, not a transaction submission.
+func (b *Bridge) CallSetProcessedMovedFundsSweepRequests(
+	arg_utxos []abi.BitcoinTxUTXO,
+	blockNumber *big.Int,
+) error {
+	var result interface{} = nil
+
+	err := chainutil.CallAtBlock(
+		b.transactorOptions.From,
+		blockNumber, nil,
+		b.contractABI,
+		b.caller,
+		b.errorResolver,
+		b.contractAddress,
+		"setProcessedMovedFundsSweepRequests",
+		&result,
+		arg_utxos,
+	)
+
+	return err
+}
+
+func (b *Bridge) SetProcessedMovedFundsSweepRequestsGasEstimate(
+	arg_utxos []abi.BitcoinTxUTXO,
+) (uint64, error) {
+	var result uint64
+
+	result, err := chainutil.EstimateGas(
+		b.callerOptions.From,
+		b.contractAddress,
+		"setProcessedMovedFundsSweepRequests",
+		b.contractABI,
+		b.transactor,
+		arg_utxos,
+	)
+
+	return result, err
+}
+
+// Transaction submission.
+func (b *Bridge) SetRedemptionDustThreshold(
+	arg__redemptionDustThreshold uint64,
+
+	transactionOptions ...chainutil.TransactionOptions,
+) (*types.Transaction, error) {
+	bLogger.Debug(
+		"submitting transaction setRedemptionDustThreshold",
+		" params: ",
+		fmt.Sprint(
+			arg__redemptionDustThreshold,
+		),
+	)
+
+	b.transactionMutex.Lock()
+	defer b.transactionMutex.Unlock()
+
+	// create a copy
+	transactorOptions := new(bind.TransactOpts)
+	*transactorOptions = *b.transactorOptions
+
+	if len(transactionOptions) > 1 {
+		return nil, fmt.Errorf(
+			"could not process multiple transaction options sets",
+		)
+	} else if len(transactionOptions) > 0 {
+		transactionOptions[0].Apply(transactorOptions)
+	}
+
+	nonce, err := b.nonceManager.CurrentNonce()
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve account nonce: %v", err)
+	}
+
+	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
+
+	transaction, err := b.contract.SetRedemptionDustThreshold(
+		transactorOptions,
+		arg__redemptionDustThreshold,
+	)
+	if err != nil {
+		return transaction, b.errorResolver.ResolveError(
+			err,
+			b.transactorOptions.From,
+			nil,
+			"setRedemptionDustThreshold",
+			arg__redemptionDustThreshold,
+		)
+	}
+
+	bLogger.Infof(
+		"submitted transaction setRedemptionDustThreshold with id: [%s] and nonce [%v]",
+		transaction.Hash(),
+		transaction.Nonce(),
+	)
+
+	go b.miningWaiter.ForceMining(
+		transaction,
+		transactorOptions,
+		func(newTransactorOptions *bind.TransactOpts) (*types.Transaction, error) {
+			// If original transactor options has a non-zero gas limit, that
+			// means the client code set it on their own. In that case, we
+			// should rewrite the gas limit from the original transaction
+			// for each resubmission. If the gas limit is not set by the client
+			// code, let the the submitter re-estimate the gas limit on each
+			// resubmission.
+			if transactorOptions.GasLimit != 0 {
+				newTransactorOptions.GasLimit = transactorOptions.GasLimit
+			}
+
+			transaction, err := b.contract.SetRedemptionDustThreshold(
+				newTransactorOptions,
+				arg__redemptionDustThreshold,
+			)
+			if err != nil {
+				return nil, b.errorResolver.ResolveError(
+					err,
+					b.transactorOptions.From,
+					nil,
+					"setRedemptionDustThreshold",
+					arg__redemptionDustThreshold,
+				)
+			}
+
+			bLogger.Infof(
+				"submitted transaction setRedemptionDustThreshold with id: [%s] and nonce [%v]",
+				transaction.Hash(),
+				transaction.Nonce(),
+			)
+
+			return transaction, nil
+		},
+	)
+
+	b.nonceManager.IncrementNonce()
+
+	return transaction, err
+}
+
+// Non-mutating call, not a transaction submission.
+func (b *Bridge) CallSetRedemptionDustThreshold(
+	arg__redemptionDustThreshold uint64,
+	blockNumber *big.Int,
+) error {
+	var result interface{} = nil
+
+	err := chainutil.CallAtBlock(
+		b.transactorOptions.From,
+		blockNumber, nil,
+		b.contractABI,
+		b.caller,
+		b.errorResolver,
+		b.contractAddress,
+		"setRedemptionDustThreshold",
+		&result,
+		arg__redemptionDustThreshold,
+	)
+
+	return err
+}
+
+func (b *Bridge) SetRedemptionDustThresholdGasEstimate(
+	arg__redemptionDustThreshold uint64,
+) (uint64, error) {
+	var result uint64
+
+	result, err := chainutil.EstimateGas(
+		b.callerOptions.From,
+		b.contractAddress,
+		"setRedemptionDustThreshold",
+		b.contractABI,
+		b.transactor,
+		arg__redemptionDustThreshold,
+	)
+
+	return result, err
+}
+
+// Transaction submission.
+func (b *Bridge) SetRedemptionTreasuryFeeDivisor(
+	arg__redemptionTreasuryFeeDivisor uint64,
+
+	transactionOptions ...chainutil.TransactionOptions,
+) (*types.Transaction, error) {
+	bLogger.Debug(
+		"submitting transaction setRedemptionTreasuryFeeDivisor",
+		" params: ",
+		fmt.Sprint(
+			arg__redemptionTreasuryFeeDivisor,
+		),
+	)
+
+	b.transactionMutex.Lock()
+	defer b.transactionMutex.Unlock()
+
+	// create a copy
+	transactorOptions := new(bind.TransactOpts)
+	*transactorOptions = *b.transactorOptions
+
+	if len(transactionOptions) > 1 {
+		return nil, fmt.Errorf(
+			"could not process multiple transaction options sets",
+		)
+	} else if len(transactionOptions) > 0 {
+		transactionOptions[0].Apply(transactorOptions)
+	}
+
+	nonce, err := b.nonceManager.CurrentNonce()
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve account nonce: %v", err)
+	}
+
+	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
+
+	transaction, err := b.contract.SetRedemptionTreasuryFeeDivisor(
+		transactorOptions,
+		arg__redemptionTreasuryFeeDivisor,
+	)
+	if err != nil {
+		return transaction, b.errorResolver.ResolveError(
+			err,
+			b.transactorOptions.From,
+			nil,
+			"setRedemptionTreasuryFeeDivisor",
+			arg__redemptionTreasuryFeeDivisor,
+		)
+	}
+
+	bLogger.Infof(
+		"submitted transaction setRedemptionTreasuryFeeDivisor with id: [%s] and nonce [%v]",
+		transaction.Hash(),
+		transaction.Nonce(),
+	)
+
+	go b.miningWaiter.ForceMining(
+		transaction,
+		transactorOptions,
+		func(newTransactorOptions *bind.TransactOpts) (*types.Transaction, error) {
+			// If original transactor options has a non-zero gas limit, that
+			// means the client code set it on their own. In that case, we
+			// should rewrite the gas limit from the original transaction
+			// for each resubmission. If the gas limit is not set by the client
+			// code, let the the submitter re-estimate the gas limit on each
+			// resubmission.
+			if transactorOptions.GasLimit != 0 {
+				newTransactorOptions.GasLimit = transactorOptions.GasLimit
+			}
+
+			transaction, err := b.contract.SetRedemptionTreasuryFeeDivisor(
+				newTransactorOptions,
+				arg__redemptionTreasuryFeeDivisor,
+			)
+			if err != nil {
+				return nil, b.errorResolver.ResolveError(
+					err,
+					b.transactorOptions.From,
+					nil,
+					"setRedemptionTreasuryFeeDivisor",
+					arg__redemptionTreasuryFeeDivisor,
+				)
+			}
+
+			bLogger.Infof(
+				"submitted transaction setRedemptionTreasuryFeeDivisor with id: [%s] and nonce [%v]",
+				transaction.Hash(),
+				transaction.Nonce(),
+			)
+
+			return transaction, nil
+		},
+	)
+
+	b.nonceManager.IncrementNonce()
+
+	return transaction, err
+}
+
+// Non-mutating call, not a transaction submission.
+func (b *Bridge) CallSetRedemptionTreasuryFeeDivisor(
+	arg__redemptionTreasuryFeeDivisor uint64,
+	blockNumber *big.Int,
+) error {
+	var result interface{} = nil
+
+	err := chainutil.CallAtBlock(
+		b.transactorOptions.From,
+		blockNumber, nil,
+		b.contractABI,
+		b.caller,
+		b.errorResolver,
+		b.contractAddress,
+		"setRedemptionTreasuryFeeDivisor",
+		&result,
+		arg__redemptionTreasuryFeeDivisor,
+	)
+
+	return err
+}
+
+func (b *Bridge) SetRedemptionTreasuryFeeDivisorGasEstimate(
+	arg__redemptionTreasuryFeeDivisor uint64,
+) (uint64, error) {
+	var result uint64
+
+	result, err := chainutil.EstimateGas(
+		b.callerOptions.From,
+		b.contractAddress,
+		"setRedemptionTreasuryFeeDivisor",
+		b.contractABI,
+		b.transactor,
+		arg__redemptionTreasuryFeeDivisor,
+	)
+
+	return result, err
+}
+
+// Transaction submission.
+func (b *Bridge) SetSpentMainUtxos(
+	arg_utxos []abi.BitcoinTxUTXO,
+
+	transactionOptions ...chainutil.TransactionOptions,
+) (*types.Transaction, error) {
+	bLogger.Debug(
+		"submitting transaction setSpentMainUtxos",
+		" params: ",
+		fmt.Sprint(
+			arg_utxos,
+		),
+	)
+
+	b.transactionMutex.Lock()
+	defer b.transactionMutex.Unlock()
+
+	// create a copy
+	transactorOptions := new(bind.TransactOpts)
+	*transactorOptions = *b.transactorOptions
+
+	if len(transactionOptions) > 1 {
+		return nil, fmt.Errorf(
+			"could not process multiple transaction options sets",
+		)
+	} else if len(transactionOptions) > 0 {
+		transactionOptions[0].Apply(transactorOptions)
+	}
+
+	nonce, err := b.nonceManager.CurrentNonce()
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve account nonce: %v", err)
+	}
+
+	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
+
+	transaction, err := b.contract.SetSpentMainUtxos(
+		transactorOptions,
+		arg_utxos,
+	)
+	if err != nil {
+		return transaction, b.errorResolver.ResolveError(
+			err,
+			b.transactorOptions.From,
+			nil,
+			"setSpentMainUtxos",
+			arg_utxos,
+		)
+	}
+
+	bLogger.Infof(
+		"submitted transaction setSpentMainUtxos with id: [%s] and nonce [%v]",
+		transaction.Hash(),
+		transaction.Nonce(),
+	)
+
+	go b.miningWaiter.ForceMining(
+		transaction,
+		transactorOptions,
+		func(newTransactorOptions *bind.TransactOpts) (*types.Transaction, error) {
+			// If original transactor options has a non-zero gas limit, that
+			// means the client code set it on their own. In that case, we
+			// should rewrite the gas limit from the original transaction
+			// for each resubmission. If the gas limit is not set by the client
+			// code, let the the submitter re-estimate the gas limit on each
+			// resubmission.
+			if transactorOptions.GasLimit != 0 {
+				newTransactorOptions.GasLimit = transactorOptions.GasLimit
+			}
+
+			transaction, err := b.contract.SetSpentMainUtxos(
+				newTransactorOptions,
+				arg_utxos,
+			)
+			if err != nil {
+				return nil, b.errorResolver.ResolveError(
+					err,
+					b.transactorOptions.From,
+					nil,
+					"setSpentMainUtxos",
+					arg_utxos,
+				)
+			}
+
+			bLogger.Infof(
+				"submitted transaction setSpentMainUtxos with id: [%s] and nonce [%v]",
+				transaction.Hash(),
+				transaction.Nonce(),
+			)
+
+			return transaction, nil
+		},
+	)
+
+	b.nonceManager.IncrementNonce()
+
+	return transaction, err
+}
+
+// Non-mutating call, not a transaction submission.
+func (b *Bridge) CallSetSpentMainUtxos(
+	arg_utxos []abi.BitcoinTxUTXO,
+	blockNumber *big.Int,
+) error {
+	var result interface{} = nil
+
+	err := chainutil.CallAtBlock(
+		b.transactorOptions.From,
+		blockNumber, nil,
+		b.contractABI,
+		b.caller,
+		b.errorResolver,
+		b.contractAddress,
+		"setSpentMainUtxos",
+		&result,
+		arg_utxos,
+	)
+
+	return err
+}
+
+func (b *Bridge) SetSpentMainUtxosGasEstimate(
+	arg_utxos []abi.BitcoinTxUTXO,
+) (uint64, error) {
+	var result uint64
+
+	result, err := chainutil.EstimateGas(
+		b.callerOptions.From,
+		b.contractAddress,
+		"setSpentMainUtxos",
+		b.contractABI,
+		b.transactor,
+		arg_utxos,
+	)
+
+	return result, err
+}
+
+// Transaction submission.
 func (b *Bridge) SetSpvMaintainerStatus(
 	arg_spvMaintainer common.Address,
 	arg_isTrusted bool,
@@ -2869,6 +4407,144 @@ func (b *Bridge) SetSpvMaintainerStatusGasEstimate(
 }
 
 // Transaction submission.
+func (b *Bridge) SetSweptDeposits(
+	arg_utxos []abi.BitcoinTxUTXO,
+
+	transactionOptions ...chainutil.TransactionOptions,
+) (*types.Transaction, error) {
+	bLogger.Debug(
+		"submitting transaction setSweptDeposits",
+		" params: ",
+		fmt.Sprint(
+			arg_utxos,
+		),
+	)
+
+	b.transactionMutex.Lock()
+	defer b.transactionMutex.Unlock()
+
+	// create a copy
+	transactorOptions := new(bind.TransactOpts)
+	*transactorOptions = *b.transactorOptions
+
+	if len(transactionOptions) > 1 {
+		return nil, fmt.Errorf(
+			"could not process multiple transaction options sets",
+		)
+	} else if len(transactionOptions) > 0 {
+		transactionOptions[0].Apply(transactorOptions)
+	}
+
+	nonce, err := b.nonceManager.CurrentNonce()
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve account nonce: %v", err)
+	}
+
+	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
+
+	transaction, err := b.contract.SetSweptDeposits(
+		transactorOptions,
+		arg_utxos,
+	)
+	if err != nil {
+		return transaction, b.errorResolver.ResolveError(
+			err,
+			b.transactorOptions.From,
+			nil,
+			"setSweptDeposits",
+			arg_utxos,
+		)
+	}
+
+	bLogger.Infof(
+		"submitted transaction setSweptDeposits with id: [%s] and nonce [%v]",
+		transaction.Hash(),
+		transaction.Nonce(),
+	)
+
+	go b.miningWaiter.ForceMining(
+		transaction,
+		transactorOptions,
+		func(newTransactorOptions *bind.TransactOpts) (*types.Transaction, error) {
+			// If original transactor options has a non-zero gas limit, that
+			// means the client code set it on their own. In that case, we
+			// should rewrite the gas limit from the original transaction
+			// for each resubmission. If the gas limit is not set by the client
+			// code, let the the submitter re-estimate the gas limit on each
+			// resubmission.
+			if transactorOptions.GasLimit != 0 {
+				newTransactorOptions.GasLimit = transactorOptions.GasLimit
+			}
+
+			transaction, err := b.contract.SetSweptDeposits(
+				newTransactorOptions,
+				arg_utxos,
+			)
+			if err != nil {
+				return nil, b.errorResolver.ResolveError(
+					err,
+					b.transactorOptions.From,
+					nil,
+					"setSweptDeposits",
+					arg_utxos,
+				)
+			}
+
+			bLogger.Infof(
+				"submitted transaction setSweptDeposits with id: [%s] and nonce [%v]",
+				transaction.Hash(),
+				transaction.Nonce(),
+			)
+
+			return transaction, nil
+		},
+	)
+
+	b.nonceManager.IncrementNonce()
+
+	return transaction, err
+}
+
+// Non-mutating call, not a transaction submission.
+func (b *Bridge) CallSetSweptDeposits(
+	arg_utxos []abi.BitcoinTxUTXO,
+	blockNumber *big.Int,
+) error {
+	var result interface{} = nil
+
+	err := chainutil.CallAtBlock(
+		b.transactorOptions.From,
+		blockNumber, nil,
+		b.contractABI,
+		b.caller,
+		b.errorResolver,
+		b.contractAddress,
+		"setSweptDeposits",
+		&result,
+		arg_utxos,
+	)
+
+	return err
+}
+
+func (b *Bridge) SetSweptDepositsGasEstimate(
+	arg_utxos []abi.BitcoinTxUTXO,
+) (uint64, error) {
+	var result uint64
+
+	result, err := chainutil.EstimateGas(
+		b.callerOptions.From,
+		b.contractAddress,
+		"setSweptDeposits",
+		b.contractABI,
+		b.transactor,
+		arg_utxos,
+	)
+
+	return result, err
+}
+
+// Transaction submission.
 func (b *Bridge) SetVaultStatus(
 	arg_vault common.Address,
 	arg_isTrusted bool,
@@ -3011,6 +4687,302 @@ func (b *Bridge) SetVaultStatusGasEstimate(
 		b.transactor,
 		arg_vault,
 		arg_isTrusted,
+	)
+
+	return result, err
+}
+
+// Transaction submission.
+func (b *Bridge) SetWallet(
+	arg_walletPubKeyHash [20]byte,
+	arg_wallet abi.WalletsWallet,
+
+	transactionOptions ...chainutil.TransactionOptions,
+) (*types.Transaction, error) {
+	bLogger.Debug(
+		"submitting transaction setWallet",
+		" params: ",
+		fmt.Sprint(
+			arg_walletPubKeyHash,
+			arg_wallet,
+		),
+	)
+
+	b.transactionMutex.Lock()
+	defer b.transactionMutex.Unlock()
+
+	// create a copy
+	transactorOptions := new(bind.TransactOpts)
+	*transactorOptions = *b.transactorOptions
+
+	if len(transactionOptions) > 1 {
+		return nil, fmt.Errorf(
+			"could not process multiple transaction options sets",
+		)
+	} else if len(transactionOptions) > 0 {
+		transactionOptions[0].Apply(transactorOptions)
+	}
+
+	nonce, err := b.nonceManager.CurrentNonce()
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve account nonce: %v", err)
+	}
+
+	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
+
+	transaction, err := b.contract.SetWallet(
+		transactorOptions,
+		arg_walletPubKeyHash,
+		arg_wallet,
+	)
+	if err != nil {
+		return transaction, b.errorResolver.ResolveError(
+			err,
+			b.transactorOptions.From,
+			nil,
+			"setWallet",
+			arg_walletPubKeyHash,
+			arg_wallet,
+		)
+	}
+
+	bLogger.Infof(
+		"submitted transaction setWallet with id: [%s] and nonce [%v]",
+		transaction.Hash(),
+		transaction.Nonce(),
+	)
+
+	go b.miningWaiter.ForceMining(
+		transaction,
+		transactorOptions,
+		func(newTransactorOptions *bind.TransactOpts) (*types.Transaction, error) {
+			// If original transactor options has a non-zero gas limit, that
+			// means the client code set it on their own. In that case, we
+			// should rewrite the gas limit from the original transaction
+			// for each resubmission. If the gas limit is not set by the client
+			// code, let the the submitter re-estimate the gas limit on each
+			// resubmission.
+			if transactorOptions.GasLimit != 0 {
+				newTransactorOptions.GasLimit = transactorOptions.GasLimit
+			}
+
+			transaction, err := b.contract.SetWallet(
+				newTransactorOptions,
+				arg_walletPubKeyHash,
+				arg_wallet,
+			)
+			if err != nil {
+				return nil, b.errorResolver.ResolveError(
+					err,
+					b.transactorOptions.From,
+					nil,
+					"setWallet",
+					arg_walletPubKeyHash,
+					arg_wallet,
+				)
+			}
+
+			bLogger.Infof(
+				"submitted transaction setWallet with id: [%s] and nonce [%v]",
+				transaction.Hash(),
+				transaction.Nonce(),
+			)
+
+			return transaction, nil
+		},
+	)
+
+	b.nonceManager.IncrementNonce()
+
+	return transaction, err
+}
+
+// Non-mutating call, not a transaction submission.
+func (b *Bridge) CallSetWallet(
+	arg_walletPubKeyHash [20]byte,
+	arg_wallet abi.WalletsWallet,
+	blockNumber *big.Int,
+) error {
+	var result interface{} = nil
+
+	err := chainutil.CallAtBlock(
+		b.transactorOptions.From,
+		blockNumber, nil,
+		b.contractABI,
+		b.caller,
+		b.errorResolver,
+		b.contractAddress,
+		"setWallet",
+		&result,
+		arg_walletPubKeyHash,
+		arg_wallet,
+	)
+
+	return err
+}
+
+func (b *Bridge) SetWalletGasEstimate(
+	arg_walletPubKeyHash [20]byte,
+	arg_wallet abi.WalletsWallet,
+) (uint64, error) {
+	var result uint64
+
+	result, err := chainutil.EstimateGas(
+		b.callerOptions.From,
+		b.contractAddress,
+		"setWallet",
+		b.contractABI,
+		b.transactor,
+		arg_walletPubKeyHash,
+		arg_wallet,
+	)
+
+	return result, err
+}
+
+// Transaction submission.
+func (b *Bridge) SetWalletMainUtxo(
+	arg_walletPubKeyHash [20]byte,
+	arg_utxo abi.BitcoinTxUTXO,
+
+	transactionOptions ...chainutil.TransactionOptions,
+) (*types.Transaction, error) {
+	bLogger.Debug(
+		"submitting transaction setWalletMainUtxo",
+		" params: ",
+		fmt.Sprint(
+			arg_walletPubKeyHash,
+			arg_utxo,
+		),
+	)
+
+	b.transactionMutex.Lock()
+	defer b.transactionMutex.Unlock()
+
+	// create a copy
+	transactorOptions := new(bind.TransactOpts)
+	*transactorOptions = *b.transactorOptions
+
+	if len(transactionOptions) > 1 {
+		return nil, fmt.Errorf(
+			"could not process multiple transaction options sets",
+		)
+	} else if len(transactionOptions) > 0 {
+		transactionOptions[0].Apply(transactorOptions)
+	}
+
+	nonce, err := b.nonceManager.CurrentNonce()
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve account nonce: %v", err)
+	}
+
+	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
+
+	transaction, err := b.contract.SetWalletMainUtxo(
+		transactorOptions,
+		arg_walletPubKeyHash,
+		arg_utxo,
+	)
+	if err != nil {
+		return transaction, b.errorResolver.ResolveError(
+			err,
+			b.transactorOptions.From,
+			nil,
+			"setWalletMainUtxo",
+			arg_walletPubKeyHash,
+			arg_utxo,
+		)
+	}
+
+	bLogger.Infof(
+		"submitted transaction setWalletMainUtxo with id: [%s] and nonce [%v]",
+		transaction.Hash(),
+		transaction.Nonce(),
+	)
+
+	go b.miningWaiter.ForceMining(
+		transaction,
+		transactorOptions,
+		func(newTransactorOptions *bind.TransactOpts) (*types.Transaction, error) {
+			// If original transactor options has a non-zero gas limit, that
+			// means the client code set it on their own. In that case, we
+			// should rewrite the gas limit from the original transaction
+			// for each resubmission. If the gas limit is not set by the client
+			// code, let the the submitter re-estimate the gas limit on each
+			// resubmission.
+			if transactorOptions.GasLimit != 0 {
+				newTransactorOptions.GasLimit = transactorOptions.GasLimit
+			}
+
+			transaction, err := b.contract.SetWalletMainUtxo(
+				newTransactorOptions,
+				arg_walletPubKeyHash,
+				arg_utxo,
+			)
+			if err != nil {
+				return nil, b.errorResolver.ResolveError(
+					err,
+					b.transactorOptions.From,
+					nil,
+					"setWalletMainUtxo",
+					arg_walletPubKeyHash,
+					arg_utxo,
+				)
+			}
+
+			bLogger.Infof(
+				"submitted transaction setWalletMainUtxo with id: [%s] and nonce [%v]",
+				transaction.Hash(),
+				transaction.Nonce(),
+			)
+
+			return transaction, nil
+		},
+	)
+
+	b.nonceManager.IncrementNonce()
+
+	return transaction, err
+}
+
+// Non-mutating call, not a transaction submission.
+func (b *Bridge) CallSetWalletMainUtxo(
+	arg_walletPubKeyHash [20]byte,
+	arg_utxo abi.BitcoinTxUTXO,
+	blockNumber *big.Int,
+) error {
+	var result interface{} = nil
+
+	err := chainutil.CallAtBlock(
+		b.transactorOptions.From,
+		blockNumber, nil,
+		b.contractABI,
+		b.caller,
+		b.errorResolver,
+		b.contractAddress,
+		"setWalletMainUtxo",
+		&result,
+		arg_walletPubKeyHash,
+		arg_utxo,
+	)
+
+	return err
+}
+
+func (b *Bridge) SetWalletMainUtxoGasEstimate(
+	arg_walletPubKeyHash [20]byte,
+	arg_utxo abi.BitcoinTxUTXO,
+) (uint64, error) {
+	var result uint64
+
+	result, err := chainutil.EstimateGas(
+		b.callerOptions.From,
+		b.contractAddress,
+		"setWalletMainUtxo",
+		b.contractABI,
+		b.transactor,
+		arg_walletPubKeyHash,
+		arg_utxo,
 	)
 
 	return result, err
@@ -4015,6 +5987,154 @@ func (b *Bridge) SubmitRedemptionProofGasEstimate(
 }
 
 // Transaction submission.
+func (b *Bridge) TimeoutPendingMovedFundsSweepRequest(
+	arg_walletPubKeyHash [20]byte,
+	arg_utxo abi.BitcoinTxUTXO,
+
+	transactionOptions ...chainutil.TransactionOptions,
+) (*types.Transaction, error) {
+	bLogger.Debug(
+		"submitting transaction timeoutPendingMovedFundsSweepRequest",
+		" params: ",
+		fmt.Sprint(
+			arg_walletPubKeyHash,
+			arg_utxo,
+		),
+	)
+
+	b.transactionMutex.Lock()
+	defer b.transactionMutex.Unlock()
+
+	// create a copy
+	transactorOptions := new(bind.TransactOpts)
+	*transactorOptions = *b.transactorOptions
+
+	if len(transactionOptions) > 1 {
+		return nil, fmt.Errorf(
+			"could not process multiple transaction options sets",
+		)
+	} else if len(transactionOptions) > 0 {
+		transactionOptions[0].Apply(transactorOptions)
+	}
+
+	nonce, err := b.nonceManager.CurrentNonce()
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve account nonce: %v", err)
+	}
+
+	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
+
+	transaction, err := b.contract.TimeoutPendingMovedFundsSweepRequest(
+		transactorOptions,
+		arg_walletPubKeyHash,
+		arg_utxo,
+	)
+	if err != nil {
+		return transaction, b.errorResolver.ResolveError(
+			err,
+			b.transactorOptions.From,
+			nil,
+			"timeoutPendingMovedFundsSweepRequest",
+			arg_walletPubKeyHash,
+			arg_utxo,
+		)
+	}
+
+	bLogger.Infof(
+		"submitted transaction timeoutPendingMovedFundsSweepRequest with id: [%s] and nonce [%v]",
+		transaction.Hash(),
+		transaction.Nonce(),
+	)
+
+	go b.miningWaiter.ForceMining(
+		transaction,
+		transactorOptions,
+		func(newTransactorOptions *bind.TransactOpts) (*types.Transaction, error) {
+			// If original transactor options has a non-zero gas limit, that
+			// means the client code set it on their own. In that case, we
+			// should rewrite the gas limit from the original transaction
+			// for each resubmission. If the gas limit is not set by the client
+			// code, let the the submitter re-estimate the gas limit on each
+			// resubmission.
+			if transactorOptions.GasLimit != 0 {
+				newTransactorOptions.GasLimit = transactorOptions.GasLimit
+			}
+
+			transaction, err := b.contract.TimeoutPendingMovedFundsSweepRequest(
+				newTransactorOptions,
+				arg_walletPubKeyHash,
+				arg_utxo,
+			)
+			if err != nil {
+				return nil, b.errorResolver.ResolveError(
+					err,
+					b.transactorOptions.From,
+					nil,
+					"timeoutPendingMovedFundsSweepRequest",
+					arg_walletPubKeyHash,
+					arg_utxo,
+				)
+			}
+
+			bLogger.Infof(
+				"submitted transaction timeoutPendingMovedFundsSweepRequest with id: [%s] and nonce [%v]",
+				transaction.Hash(),
+				transaction.Nonce(),
+			)
+
+			return transaction, nil
+		},
+	)
+
+	b.nonceManager.IncrementNonce()
+
+	return transaction, err
+}
+
+// Non-mutating call, not a transaction submission.
+func (b *Bridge) CallTimeoutPendingMovedFundsSweepRequest(
+	arg_walletPubKeyHash [20]byte,
+	arg_utxo abi.BitcoinTxUTXO,
+	blockNumber *big.Int,
+) error {
+	var result interface{} = nil
+
+	err := chainutil.CallAtBlock(
+		b.transactorOptions.From,
+		blockNumber, nil,
+		b.contractABI,
+		b.caller,
+		b.errorResolver,
+		b.contractAddress,
+		"timeoutPendingMovedFundsSweepRequest",
+		&result,
+		arg_walletPubKeyHash,
+		arg_utxo,
+	)
+
+	return err
+}
+
+func (b *Bridge) TimeoutPendingMovedFundsSweepRequestGasEstimate(
+	arg_walletPubKeyHash [20]byte,
+	arg_utxo abi.BitcoinTxUTXO,
+) (uint64, error) {
+	var result uint64
+
+	result, err := chainutil.EstimateGas(
+		b.callerOptions.From,
+		b.contractAddress,
+		"timeoutPendingMovedFundsSweepRequest",
+		b.contractABI,
+		b.transactor,
+		arg_walletPubKeyHash,
+		arg_utxo,
+	)
+
+	return result, err
+}
+
+// Transaction submission.
 func (b *Bridge) TransferGovernance(
 	arg_newGovernance common.Address,
 
@@ -4919,6 +7039,144 @@ func (b *Bridge) UpdateRedemptionParametersGasEstimate(
 		arg_redemptionTimeout,
 		arg_redemptionTimeoutSlashingAmount,
 		arg_redemptionTimeoutNotifierRewardMultiplier,
+	)
+
+	return result, err
+}
+
+// Transaction submission.
+func (b *Bridge) UpdateTreasury(
+	arg_treasury common.Address,
+
+	transactionOptions ...chainutil.TransactionOptions,
+) (*types.Transaction, error) {
+	bLogger.Debug(
+		"submitting transaction updateTreasury",
+		" params: ",
+		fmt.Sprint(
+			arg_treasury,
+		),
+	)
+
+	b.transactionMutex.Lock()
+	defer b.transactionMutex.Unlock()
+
+	// create a copy
+	transactorOptions := new(bind.TransactOpts)
+	*transactorOptions = *b.transactorOptions
+
+	if len(transactionOptions) > 1 {
+		return nil, fmt.Errorf(
+			"could not process multiple transaction options sets",
+		)
+	} else if len(transactionOptions) > 0 {
+		transactionOptions[0].Apply(transactorOptions)
+	}
+
+	nonce, err := b.nonceManager.CurrentNonce()
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve account nonce: %v", err)
+	}
+
+	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
+
+	transaction, err := b.contract.UpdateTreasury(
+		transactorOptions,
+		arg_treasury,
+	)
+	if err != nil {
+		return transaction, b.errorResolver.ResolveError(
+			err,
+			b.transactorOptions.From,
+			nil,
+			"updateTreasury",
+			arg_treasury,
+		)
+	}
+
+	bLogger.Infof(
+		"submitted transaction updateTreasury with id: [%s] and nonce [%v]",
+		transaction.Hash(),
+		transaction.Nonce(),
+	)
+
+	go b.miningWaiter.ForceMining(
+		transaction,
+		transactorOptions,
+		func(newTransactorOptions *bind.TransactOpts) (*types.Transaction, error) {
+			// If original transactor options has a non-zero gas limit, that
+			// means the client code set it on their own. In that case, we
+			// should rewrite the gas limit from the original transaction
+			// for each resubmission. If the gas limit is not set by the client
+			// code, let the the submitter re-estimate the gas limit on each
+			// resubmission.
+			if transactorOptions.GasLimit != 0 {
+				newTransactorOptions.GasLimit = transactorOptions.GasLimit
+			}
+
+			transaction, err := b.contract.UpdateTreasury(
+				newTransactorOptions,
+				arg_treasury,
+			)
+			if err != nil {
+				return nil, b.errorResolver.ResolveError(
+					err,
+					b.transactorOptions.From,
+					nil,
+					"updateTreasury",
+					arg_treasury,
+				)
+			}
+
+			bLogger.Infof(
+				"submitted transaction updateTreasury with id: [%s] and nonce [%v]",
+				transaction.Hash(),
+				transaction.Nonce(),
+			)
+
+			return transaction, nil
+		},
+	)
+
+	b.nonceManager.IncrementNonce()
+
+	return transaction, err
+}
+
+// Non-mutating call, not a transaction submission.
+func (b *Bridge) CallUpdateTreasury(
+	arg_treasury common.Address,
+	blockNumber *big.Int,
+) error {
+	var result interface{} = nil
+
+	err := chainutil.CallAtBlock(
+		b.transactorOptions.From,
+		blockNumber, nil,
+		b.contractABI,
+		b.caller,
+		b.errorResolver,
+		b.contractAddress,
+		"updateTreasury",
+		&result,
+		arg_treasury,
+	)
+
+	return err
+}
+
+func (b *Bridge) UpdateTreasuryGasEstimate(
+	arg_treasury common.Address,
+) (uint64, error) {
+	var result uint64
+
+	result, err := chainutil.EstimateGas(
+		b.callerOptions.From,
+		b.contractAddress,
+		"updateTreasury",
+		b.contractABI,
+		b.transactor,
+		arg_treasury,
 	)
 
 	return result, err
@@ -10494,6 +12752,185 @@ func (b *Bridge) PastSpvMaintainerStatusUpdatedEvents(
 	}
 
 	events := make([]*abi.BridgeSpvMaintainerStatusUpdated, 0)
+
+	for iterator.Next() {
+		event := iterator.Event
+		events = append(events, event)
+	}
+
+	return events, nil
+}
+
+func (b *Bridge) TreasuryUpdatedEvent(
+	opts *ethereum.SubscribeOpts,
+) *BTreasuryUpdatedSubscription {
+	if opts == nil {
+		opts = new(ethereum.SubscribeOpts)
+	}
+	if opts.Tick == 0 {
+		opts.Tick = chainutil.DefaultSubscribeOptsTick
+	}
+	if opts.PastBlocks == 0 {
+		opts.PastBlocks = chainutil.DefaultSubscribeOptsPastBlocks
+	}
+
+	return &BTreasuryUpdatedSubscription{
+		b,
+		opts,
+	}
+}
+
+type BTreasuryUpdatedSubscription struct {
+	contract *Bridge
+	opts     *ethereum.SubscribeOpts
+}
+
+type bridgeTreasuryUpdatedFunc func(
+	Treasury common.Address,
+	blockNumber uint64,
+)
+
+func (tus *BTreasuryUpdatedSubscription) OnEvent(
+	handler bridgeTreasuryUpdatedFunc,
+) subscription.EventSubscription {
+	eventChan := make(chan *abi.BridgeTreasuryUpdated)
+	ctx, cancelCtx := context.WithCancel(context.Background())
+
+	go func() {
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case event := <-eventChan:
+				handler(
+					event.Treasury,
+					event.Raw.BlockNumber,
+				)
+			}
+		}
+	}()
+
+	sub := tus.Pipe(eventChan)
+	return subscription.NewEventSubscription(func() {
+		sub.Unsubscribe()
+		cancelCtx()
+	})
+}
+
+func (tus *BTreasuryUpdatedSubscription) Pipe(
+	sink chan *abi.BridgeTreasuryUpdated,
+) subscription.EventSubscription {
+	ctx, cancelCtx := context.WithCancel(context.Background())
+	go func() {
+		ticker := time.NewTicker(tus.opts.Tick)
+		defer ticker.Stop()
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-ticker.C:
+				lastBlock, err := tus.contract.blockCounter.CurrentBlock()
+				if err != nil {
+					bLogger.Errorf(
+						"subscription failed to pull events: [%v]",
+						err,
+					)
+				}
+				fromBlock := lastBlock - tus.opts.PastBlocks
+
+				bLogger.Infof(
+					"subscription monitoring fetching past TreasuryUpdated events "+
+						"starting from block [%v]",
+					fromBlock,
+				)
+				events, err := tus.contract.PastTreasuryUpdatedEvents(
+					fromBlock,
+					nil,
+				)
+				if err != nil {
+					bLogger.Errorf(
+						"subscription failed to pull events: [%v]",
+						err,
+					)
+					continue
+				}
+				bLogger.Infof(
+					"subscription monitoring fetched [%v] past TreasuryUpdated events",
+					len(events),
+				)
+
+				for _, event := range events {
+					sink <- event
+				}
+			}
+		}
+	}()
+
+	sub := tus.contract.watchTreasuryUpdated(
+		sink,
+	)
+
+	return subscription.NewEventSubscription(func() {
+		sub.Unsubscribe()
+		cancelCtx()
+	})
+}
+
+func (b *Bridge) watchTreasuryUpdated(
+	sink chan *abi.BridgeTreasuryUpdated,
+) event.Subscription {
+	subscribeFn := func(ctx context.Context) (event.Subscription, error) {
+		return b.contract.WatchTreasuryUpdated(
+			&bind.WatchOpts{Context: ctx},
+			sink,
+		)
+	}
+
+	thresholdViolatedFn := func(elapsed time.Duration) {
+		bLogger.Warnf(
+			"subscription to event TreasuryUpdated had to be "+
+				"retried [%s] since the last attempt; please inspect "+
+				"host chain connectivity",
+			elapsed,
+		)
+	}
+
+	subscriptionFailedFn := func(err error) {
+		bLogger.Errorf(
+			"subscription to event TreasuryUpdated failed "+
+				"with error: [%v]; resubscription attempt will be "+
+				"performed",
+			err,
+		)
+	}
+
+	return chainutil.WithResubscription(
+		chainutil.SubscriptionBackoffMax,
+		subscribeFn,
+		chainutil.SubscriptionAlertThreshold,
+		thresholdViolatedFn,
+		subscriptionFailedFn,
+	)
+}
+
+func (b *Bridge) PastTreasuryUpdatedEvents(
+	startBlock uint64,
+	endBlock *uint64,
+) ([]*abi.BridgeTreasuryUpdated, error) {
+	iterator, err := b.contract.FilterTreasuryUpdated(
+		&bind.FilterOpts{
+			Start: startBlock,
+			End:   endBlock,
+		},
+	)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"error retrieving past TreasuryUpdated events: [%v]",
+			err,
+		)
+	}
+
+	events := make([]*abi.BridgeTreasuryUpdated, 0)
 
 	for iterator.Next() {
 		event := iterator.Event

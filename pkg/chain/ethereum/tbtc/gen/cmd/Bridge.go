@@ -76,6 +76,12 @@ func init() {
 		bReceiveBalanceApprovalCommand(),
 		bRequestNewWalletCommand(),
 		bRevealDepositCommand(),
+		bSetDepositDustThresholdCommand(),
+		bSetDepositRevealAheadPeriodCommand(),
+		bSetDepositTxMaxFeeCommand(),
+		bSetMovedFundsSweepTxMaxTotalFeeCommand(),
+		bSetRedemptionDustThresholdCommand(),
+		bSetRedemptionTreasuryFeeDivisorCommand(),
 		bSetSpvMaintainerStatusCommand(),
 		bSetVaultStatusCommand(),
 		bSubmitDepositSweepProofCommand(),
@@ -86,6 +92,7 @@ func init() {
 		bUpdateFraudParametersCommand(),
 		bUpdateMovingFundsParametersCommand(),
 		bUpdateRedemptionParametersCommand(),
+		bUpdateTreasuryCommand(),
 		bUpdateWalletParametersCommand(),
 	)
 
@@ -844,6 +851,11 @@ func bDefeatFraudChallenge(c *cobra.Command, args []string) error {
 		}
 
 		cmd.PrintOutput("success")
+
+		cmd.PrintOutput(
+			"the transaction was not submitted to the chain; " +
+				"please add the `--submit` flag",
+		)
 	}
 
 	return nil
@@ -913,6 +925,11 @@ func bDefeatFraudChallengeWithHeartbeat(c *cobra.Command, args []string) error {
 		}
 
 		cmd.PrintOutput("success")
+
+		cmd.PrintOutput(
+			"the transaction was not submitted to the chain; " +
+				"please add the `--submit` flag",
+		)
 	}
 
 	return nil
@@ -1018,6 +1035,11 @@ func bInitialize(c *cobra.Command, args []string) error {
 		}
 
 		cmd.PrintOutput("success")
+
+		cmd.PrintOutput(
+			"the transaction was not submitted to the chain; " +
+				"please add the `--submit` flag",
+		)
 	}
 
 	return nil
@@ -1096,6 +1118,11 @@ func bReceiveBalanceApproval(c *cobra.Command, args []string) error {
 		}
 
 		cmd.PrintOutput("success")
+
+		cmd.PrintOutput(
+			"the transaction was not submitted to the chain; " +
+				"please add the `--submit` flag",
+		)
 	}
 
 	return nil
@@ -1153,6 +1180,11 @@ func bRequestNewWallet(c *cobra.Command, args []string) error {
 		}
 
 		cmd.PrintOutput("success")
+
+		cmd.PrintOutput(
+			"the transaction was not submitted to the chain; " +
+				"please add the `--submit` flag",
+		)
 	}
 
 	return nil
@@ -1217,6 +1249,401 @@ func bRevealDeposit(c *cobra.Command, args []string) error {
 		}
 
 		cmd.PrintOutput("success")
+
+		cmd.PrintOutput(
+			"the transaction was not submitted to the chain; " +
+				"please add the `--submit` flag",
+		)
+	}
+
+	return nil
+}
+
+func bSetDepositDustThresholdCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "set-deposit-dust-threshold [arg__depositDustThreshold]",
+		Short:                 "Calls the nonpayable method setDepositDustThreshold on the Bridge contract.",
+		Args:                  cmd.ArgCountChecker(1),
+		RunE:                  bSetDepositDustThreshold,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	c.PreRunE = cmd.NonConstArgsChecker
+	cmd.InitNonConstFlags(c)
+
+	return c
+}
+
+func bSetDepositDustThreshold(c *cobra.Command, args []string) error {
+	contract, err := initializeBridge(c)
+	if err != nil {
+		return err
+	}
+
+	arg__depositDustThreshold, err := decode.ParseUint[uint64](args[0], 64)
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter arg__depositDustThreshold, a uint64, from passed value %v",
+			args[0],
+		)
+	}
+
+	var (
+		transaction *types.Transaction
+	)
+
+	if shouldSubmit, _ := c.Flags().GetBool(cmd.SubmitFlag); shouldSubmit {
+		// Do a regular submission. Take payable into account.
+		transaction, err = contract.SetDepositDustThreshold(
+			arg__depositDustThreshold,
+		)
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput(transaction.Hash())
+	} else {
+		// Do a call.
+		err = contract.CallSetDepositDustThreshold(
+			arg__depositDustThreshold,
+			cmd.BlockFlagValue.Int,
+		)
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput("success")
+
+		cmd.PrintOutput(
+			"the transaction was not submitted to the chain; " +
+				"please add the `--submit` flag",
+		)
+	}
+
+	return nil
+}
+
+func bSetDepositRevealAheadPeriodCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "set-deposit-reveal-ahead-period [arg__depositRevealAheadPeriod]",
+		Short:                 "Calls the nonpayable method setDepositRevealAheadPeriod on the Bridge contract.",
+		Args:                  cmd.ArgCountChecker(1),
+		RunE:                  bSetDepositRevealAheadPeriod,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	c.PreRunE = cmd.NonConstArgsChecker
+	cmd.InitNonConstFlags(c)
+
+	return c
+}
+
+func bSetDepositRevealAheadPeriod(c *cobra.Command, args []string) error {
+	contract, err := initializeBridge(c)
+	if err != nil {
+		return err
+	}
+
+	arg__depositRevealAheadPeriod, err := decode.ParseUint[uint32](args[0], 32)
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter arg__depositRevealAheadPeriod, a uint32, from passed value %v",
+			args[0],
+		)
+	}
+
+	var (
+		transaction *types.Transaction
+	)
+
+	if shouldSubmit, _ := c.Flags().GetBool(cmd.SubmitFlag); shouldSubmit {
+		// Do a regular submission. Take payable into account.
+		transaction, err = contract.SetDepositRevealAheadPeriod(
+			arg__depositRevealAheadPeriod,
+		)
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput(transaction.Hash())
+	} else {
+		// Do a call.
+		err = contract.CallSetDepositRevealAheadPeriod(
+			arg__depositRevealAheadPeriod,
+			cmd.BlockFlagValue.Int,
+		)
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput("success")
+
+		cmd.PrintOutput(
+			"the transaction was not submitted to the chain; " +
+				"please add the `--submit` flag",
+		)
+	}
+
+	return nil
+}
+
+func bSetDepositTxMaxFeeCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "set-deposit-tx-max-fee [arg__depositTxMaxFee]",
+		Short:                 "Calls the nonpayable method setDepositTxMaxFee on the Bridge contract.",
+		Args:                  cmd.ArgCountChecker(1),
+		RunE:                  bSetDepositTxMaxFee,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	c.PreRunE = cmd.NonConstArgsChecker
+	cmd.InitNonConstFlags(c)
+
+	return c
+}
+
+func bSetDepositTxMaxFee(c *cobra.Command, args []string) error {
+	contract, err := initializeBridge(c)
+	if err != nil {
+		return err
+	}
+
+	arg__depositTxMaxFee, err := decode.ParseUint[uint64](args[0], 64)
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter arg__depositTxMaxFee, a uint64, from passed value %v",
+			args[0],
+		)
+	}
+
+	var (
+		transaction *types.Transaction
+	)
+
+	if shouldSubmit, _ := c.Flags().GetBool(cmd.SubmitFlag); shouldSubmit {
+		// Do a regular submission. Take payable into account.
+		transaction, err = contract.SetDepositTxMaxFee(
+			arg__depositTxMaxFee,
+		)
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput(transaction.Hash())
+	} else {
+		// Do a call.
+		err = contract.CallSetDepositTxMaxFee(
+			arg__depositTxMaxFee,
+			cmd.BlockFlagValue.Int,
+		)
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput("success")
+
+		cmd.PrintOutput(
+			"the transaction was not submitted to the chain; " +
+				"please add the `--submit` flag",
+		)
+	}
+
+	return nil
+}
+
+func bSetMovedFundsSweepTxMaxTotalFeeCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "set-moved-funds-sweep-tx-max-total-fee [arg__movedFundsSweepTxMaxTotalFee]",
+		Short:                 "Calls the nonpayable method setMovedFundsSweepTxMaxTotalFee on the Bridge contract.",
+		Args:                  cmd.ArgCountChecker(1),
+		RunE:                  bSetMovedFundsSweepTxMaxTotalFee,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	c.PreRunE = cmd.NonConstArgsChecker
+	cmd.InitNonConstFlags(c)
+
+	return c
+}
+
+func bSetMovedFundsSweepTxMaxTotalFee(c *cobra.Command, args []string) error {
+	contract, err := initializeBridge(c)
+	if err != nil {
+		return err
+	}
+
+	arg__movedFundsSweepTxMaxTotalFee, err := decode.ParseUint[uint64](args[0], 64)
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter arg__movedFundsSweepTxMaxTotalFee, a uint64, from passed value %v",
+			args[0],
+		)
+	}
+
+	var (
+		transaction *types.Transaction
+	)
+
+	if shouldSubmit, _ := c.Flags().GetBool(cmd.SubmitFlag); shouldSubmit {
+		// Do a regular submission. Take payable into account.
+		transaction, err = contract.SetMovedFundsSweepTxMaxTotalFee(
+			arg__movedFundsSweepTxMaxTotalFee,
+		)
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput(transaction.Hash())
+	} else {
+		// Do a call.
+		err = contract.CallSetMovedFundsSweepTxMaxTotalFee(
+			arg__movedFundsSweepTxMaxTotalFee,
+			cmd.BlockFlagValue.Int,
+		)
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput("success")
+
+		cmd.PrintOutput(
+			"the transaction was not submitted to the chain; " +
+				"please add the `--submit` flag",
+		)
+	}
+
+	return nil
+}
+
+func bSetRedemptionDustThresholdCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "set-redemption-dust-threshold [arg__redemptionDustThreshold]",
+		Short:                 "Calls the nonpayable method setRedemptionDustThreshold on the Bridge contract.",
+		Args:                  cmd.ArgCountChecker(1),
+		RunE:                  bSetRedemptionDustThreshold,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	c.PreRunE = cmd.NonConstArgsChecker
+	cmd.InitNonConstFlags(c)
+
+	return c
+}
+
+func bSetRedemptionDustThreshold(c *cobra.Command, args []string) error {
+	contract, err := initializeBridge(c)
+	if err != nil {
+		return err
+	}
+
+	arg__redemptionDustThreshold, err := decode.ParseUint[uint64](args[0], 64)
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter arg__redemptionDustThreshold, a uint64, from passed value %v",
+			args[0],
+		)
+	}
+
+	var (
+		transaction *types.Transaction
+	)
+
+	if shouldSubmit, _ := c.Flags().GetBool(cmd.SubmitFlag); shouldSubmit {
+		// Do a regular submission. Take payable into account.
+		transaction, err = contract.SetRedemptionDustThreshold(
+			arg__redemptionDustThreshold,
+		)
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput(transaction.Hash())
+	} else {
+		// Do a call.
+		err = contract.CallSetRedemptionDustThreshold(
+			arg__redemptionDustThreshold,
+			cmd.BlockFlagValue.Int,
+		)
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput("success")
+
+		cmd.PrintOutput(
+			"the transaction was not submitted to the chain; " +
+				"please add the `--submit` flag",
+		)
+	}
+
+	return nil
+}
+
+func bSetRedemptionTreasuryFeeDivisorCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "set-redemption-treasury-fee-divisor [arg__redemptionTreasuryFeeDivisor]",
+		Short:                 "Calls the nonpayable method setRedemptionTreasuryFeeDivisor on the Bridge contract.",
+		Args:                  cmd.ArgCountChecker(1),
+		RunE:                  bSetRedemptionTreasuryFeeDivisor,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	c.PreRunE = cmd.NonConstArgsChecker
+	cmd.InitNonConstFlags(c)
+
+	return c
+}
+
+func bSetRedemptionTreasuryFeeDivisor(c *cobra.Command, args []string) error {
+	contract, err := initializeBridge(c)
+	if err != nil {
+		return err
+	}
+
+	arg__redemptionTreasuryFeeDivisor, err := decode.ParseUint[uint64](args[0], 64)
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter arg__redemptionTreasuryFeeDivisor, a uint64, from passed value %v",
+			args[0],
+		)
+	}
+
+	var (
+		transaction *types.Transaction
+	)
+
+	if shouldSubmit, _ := c.Flags().GetBool(cmd.SubmitFlag); shouldSubmit {
+		// Do a regular submission. Take payable into account.
+		transaction, err = contract.SetRedemptionTreasuryFeeDivisor(
+			arg__redemptionTreasuryFeeDivisor,
+		)
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput(transaction.Hash())
+	} else {
+		// Do a call.
+		err = contract.CallSetRedemptionTreasuryFeeDivisor(
+			arg__redemptionTreasuryFeeDivisor,
+			cmd.BlockFlagValue.Int,
+		)
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput("success")
+
+		cmd.PrintOutput(
+			"the transaction was not submitted to the chain; " +
+				"please add the `--submit` flag",
+		)
 	}
 
 	return nil
@@ -1286,6 +1713,11 @@ func bSetSpvMaintainerStatus(c *cobra.Command, args []string) error {
 		}
 
 		cmd.PrintOutput("success")
+
+		cmd.PrintOutput(
+			"the transaction was not submitted to the chain; " +
+				"please add the `--submit` flag",
+		)
 	}
 
 	return nil
@@ -1355,6 +1787,11 @@ func bSetVaultStatus(c *cobra.Command, args []string) error {
 		}
 
 		cmd.PrintOutput("success")
+
+		cmd.PrintOutput(
+			"the transaction was not submitted to the chain; " +
+				"please add the `--submit` flag",
+		)
 	}
 
 	return nil
@@ -1435,6 +1872,11 @@ func bSubmitDepositSweepProof(c *cobra.Command, args []string) error {
 		}
 
 		cmd.PrintOutput("success")
+
+		cmd.PrintOutput(
+			"the transaction was not submitted to the chain; " +
+				"please add the `--submit` flag",
+		)
 	}
 
 	return nil
@@ -1511,6 +1953,11 @@ func bSubmitFraudChallenge(c *cobra.Command, args []string) error {
 		}
 
 		cmd.PrintOutput("success")
+
+		cmd.PrintOutput(
+			"the transaction was not submitted to the chain; " +
+				"please add the `--submit` flag",
+		)
 	}
 
 	return nil
@@ -1582,6 +2029,11 @@ func bSubmitMovedFundsSweepProof(c *cobra.Command, args []string) error {
 		}
 
 		cmd.PrintOutput("success")
+
+		cmd.PrintOutput(
+			"the transaction was not submitted to the chain; " +
+				"please add the `--submit` flag",
+		)
 	}
 
 	return nil
@@ -1642,6 +2094,11 @@ func bTransferGovernance(c *cobra.Command, args []string) error {
 		}
 
 		cmd.PrintOutput("success")
+
+		cmd.PrintOutput(
+			"the transaction was not submitted to the chain; " +
+				"please add the `--submit` flag",
+		)
 	}
 
 	return nil
@@ -1729,6 +2186,11 @@ func bUpdateDepositParameters(c *cobra.Command, args []string) error {
 		}
 
 		cmd.PrintOutput("success")
+
+		cmd.PrintOutput(
+			"the transaction was not submitted to the chain; " +
+				"please add the `--submit` flag",
+		)
 	}
 
 	return nil
@@ -1816,6 +2278,11 @@ func bUpdateFraudParameters(c *cobra.Command, args []string) error {
 		}
 
 		cmd.PrintOutput("success")
+
+		cmd.PrintOutput(
+			"the transaction was not submitted to the chain; " +
+				"please add the `--submit` flag",
+		)
 	}
 
 	return nil
@@ -1966,6 +2433,11 @@ func bUpdateMovingFundsParameters(c *cobra.Command, args []string) error {
 		}
 
 		cmd.PrintOutput("success")
+
+		cmd.PrintOutput(
+			"the transaction was not submitted to the chain; " +
+				"please add the `--submit` flag",
+		)
 	}
 
 	return nil
@@ -2080,6 +2552,76 @@ func bUpdateRedemptionParameters(c *cobra.Command, args []string) error {
 		}
 
 		cmd.PrintOutput("success")
+
+		cmd.PrintOutput(
+			"the transaction was not submitted to the chain; " +
+				"please add the `--submit` flag",
+		)
+	}
+
+	return nil
+}
+
+func bUpdateTreasuryCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "update-treasury [arg_treasury]",
+		Short:                 "Calls the nonpayable method updateTreasury on the Bridge contract.",
+		Args:                  cmd.ArgCountChecker(1),
+		RunE:                  bUpdateTreasury,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	c.PreRunE = cmd.NonConstArgsChecker
+	cmd.InitNonConstFlags(c)
+
+	return c
+}
+
+func bUpdateTreasury(c *cobra.Command, args []string) error {
+	contract, err := initializeBridge(c)
+	if err != nil {
+		return err
+	}
+
+	arg_treasury, err := chainutil.AddressFromHex(args[0])
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter arg_treasury, a address, from passed value %v",
+			args[0],
+		)
+	}
+
+	var (
+		transaction *types.Transaction
+	)
+
+	if shouldSubmit, _ := c.Flags().GetBool(cmd.SubmitFlag); shouldSubmit {
+		// Do a regular submission. Take payable into account.
+		transaction, err = contract.UpdateTreasury(
+			arg_treasury,
+		)
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput(transaction.Hash())
+	} else {
+		// Do a call.
+		err = contract.CallUpdateTreasury(
+			arg_treasury,
+			cmd.BlockFlagValue.Int,
+		)
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput("success")
+
+		cmd.PrintOutput(
+			"the transaction was not submitted to the chain; " +
+				"please add the `--submit` flag",
+		)
 	}
 
 	return nil
@@ -2194,6 +2736,11 @@ func bUpdateWalletParameters(c *cobra.Command, args []string) error {
 		}
 
 		cmd.PrintOutput("success")
+
+		cmd.PrintOutput(
+			"the transaction was not submitted to the chain; " +
+				"please add the `--submit` flag",
+		)
 	}
 
 	return nil
