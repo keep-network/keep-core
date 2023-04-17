@@ -5,6 +5,7 @@ import (
 	"crypto/ecdsa"
 	"encoding/hex"
 	"fmt"
+	"github.com/keep-network/keep-core/pkg/bitcoin"
 	"math/big"
 	"sync"
 
@@ -44,21 +45,23 @@ type node struct {
 	groupParameters *GroupParameters
 
 	chain          Chain
+	btcChain       bitcoin.Chain
 	netProvider    net.Provider
 	walletRegistry *walletRegistry
 	protocolLatch  *generator.ProtocolLatch
 
 	dkgExecutor *dkgExecutor
 
-	signingExecutorsMutex sync.Mutex
-	// signingExecutors is the cache holding signing executors for specific wallets.
+	walletExecutorsMutex sync.Mutex
+	// walletExecutors is the cache holding executors for specific wallets.
 	// The cache key is the uncompressed public key (with 04 prefix) of the wallet.
-	signingExecutors map[string]*signingExecutor
+	walletExecutors map[string]*walletExecutor
 }
 
 func newNode(
 	groupParameters *GroupParameters,
 	chain Chain,
+	btcChain bitcoin.Chain,
 	netProvider net.Provider,
 	keyStorePersistance persistence.ProtectedHandle,
 	workPersistence persistence.BasicHandle,
@@ -73,10 +76,11 @@ func newNode(
 	node := &node{
 		groupParameters:  groupParameters,
 		chain:            chain,
+		btcChain:         btcChain,
 		netProvider:      netProvider,
 		walletRegistry:   walletRegistry,
 		protocolLatch:    latch,
-		signingExecutors: make(map[string]*signingExecutor),
+		walletExecutors:  make(map[string]*walletExecutor),
 	}
 
 	// Only the operator address is known at this point and can be pre-fetched.
@@ -169,15 +173,15 @@ func (n *node) validateDKG(
 	n.dkgExecutor.executeDkgValidation(seed, submissionBlock, result, resultHash)
 }
 
-// getSigningExecutor gets the signing executor responsible for executing
-// signing related to a specific wallet whose part is controlled by this node.
-// The second boolean return value indicates whether the node controls at least
-// one signer for the given wallet.
-func (n *node) getSigningExecutor(
+// getWalletExecutor gets the executor responsible for executing actions related
+// to a specific wallet whose part is controlled by this node. The second boolean
+// return value indicates whether the node controls at least one signer for the
+// given wallet.
+func (n *node) getWalletExecutor(
 	walletPublicKey *ecdsa.PublicKey,
-) (*signingExecutor, bool, error) {
-	n.signingExecutorsMutex.Lock()
-	defer n.signingExecutorsMutex.Unlock()
+) (*walletExecutor, bool, error) {
+	n.walletExecutorsMutex.Lock()
+	defer n.walletExecutorsMutex.Unlock()
 
 	walletPublicKeyBytes, err := marshalPublicKey(walletPublicKey)
 	if err != nil {
@@ -186,7 +190,7 @@ func (n *node) getSigningExecutor(
 
 	executorKey := hex.EncodeToString(walletPublicKeyBytes)
 
-	if executor, exists := n.signingExecutors[executorKey]; exists {
+	if executor, exists := n.walletExecutors[executorKey]; exists {
 		return executor, true, nil
 	}
 
@@ -246,7 +250,7 @@ func (n *node) getSigningExecutor(
 		)
 	}
 
-	executor := newSigningExecutor(
+	signingExecutor := newSigningExecutor(
 		signers,
 		broadcastChannel,
 		membershipValidator,
@@ -257,9 +261,44 @@ func (n *node) getSigningExecutor(
 		signingAttemptsLimit,
 	)
 
-	n.signingExecutors[executorKey] = executor
+	walletExecutor := newWalletExecutor(signingExecutor)
 
-	return executor, true, nil
+	n.walletExecutors[executorKey] = walletExecutor
+
+	return walletExecutor, true, nil
+}
+
+// TODO: Documentation
+func (n *node) handleDepositSweepProposal(
+	proposal *DepositSweepProposal,
+	startBlock uint64,
+	delayBlocks uint64,
+) {
+	// TODO: Get wallet public key based on proposal.WalletPubKeyHash.
+	var walletPublicKey *ecdsa.PublicKey
+
+	executor, ok, err := n.getWalletExecutor(walletPublicKey)
+	if err != nil {
+		logger.Errorf("cannot get wallet executor: [%v]", err)
+		return
+	}
+	if !ok {
+		logger.Infof(
+			"node does not control signers of wallet "+
+				"with public key [0x%x]",
+			walletPublicKey,
+		)
+		return
+	}
+
+	// TODO: Construct the action instance properly.
+	action := newDepositSweepAction()
+
+	err = executor.submit(action)
+	if err != nil {
+		logger.Errorf("wallet executor returned error: [%v]", err)
+		return
+	}
 }
 
 // waitForBlockFn represents a function blocking the execution until the given

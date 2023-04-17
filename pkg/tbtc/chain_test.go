@@ -441,7 +441,7 @@ func (lc *localChain) PastDepositSweepProposalSubmittedEvents(
 
 func (lc *localChain) GetWalletLock(walletPublicKeyHash [20]byte) (
 	time.Time,
-	WalletAction,
+	WalletActionType,
 	error,
 ) {
 	panic("unsupported")

@@ -1,24 +1,83 @@
 package tbtc
 
 import (
+	"context"
 	"crypto/ecdsa"
 	"crypto/elliptic"
 	"fmt"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/protocol/group"
 	"github.com/keep-network/keep-core/pkg/tecdsa"
+	"golang.org/x/sync/semaphore"
+	"math/big"
 )
 
-// WalletAction represents actions that can be performed by a wallet.
-type WalletAction uint8
+// WalletActionType represents actions types that can be performed by a wallet.
+type WalletActionType uint8
 
 const (
-	IdleWallet WalletAction = iota
+	Noop WalletActionType = iota
 	DepositSweep
 	Redemption
 	MovingFunds
 	MovedFundsSweep
 )
+
+// walletAction represents an action that can be performed by the wallet
+// execution layer (i.e. the walletExecutor).
+type walletAction interface {
+	// run triggers the action execution. This function expects the signingExecutor
+	// specific for the wallet executing the walletAction.
+	run(signingExecutor *signingExecutor) error
+
+	// actionType returns the specific type of the walletAction.
+	actionType() WalletActionType
+}
+
+// errWalletExecutorBusy is an error returned when the walletExecutor
+// cannot execute the submitted walletAction due to an ongoing work.
+var errWalletExecutorBusy = fmt.Errorf("wallet executor is busy")
+
+// walletExecutor is the execution layer for walletAction.
+type walletExecutor struct {
+	lock *semaphore.Weighted
+
+	signingExecutor *signingExecutor
+}
+
+func newWalletExecutor(signingExecutor *signingExecutor) *walletExecutor {
+	return &walletExecutor{
+		lock:            semaphore.NewWeighted(1),
+		signingExecutor: signingExecutor,
+	}
+}
+
+// submit sends a walletAction to the walletExecutor. There is no guarantee
+// the executor will actually perform the submitted action. The exact
+// behavior depends on the executor internal state. In case the action
+// is rejected by the executor, an error is returned.
+func (we *walletExecutor) submit(action walletAction) error {
+	if lockAcquired := we.lock.TryAcquire(1); !lockAcquired {
+		return errWalletExecutorBusy
+	}
+	defer we.lock.Release(1)
+
+	return action.run(we.signingExecutor)
+}
+
+// signBatch triggers signing of a messages batch. This method is basically a
+// wrapper of the signingExecutor.signBatch method. It allows signing arbitrary
+// data using the wallet execution layer, without the need of obtaining the
+// lower-level signingExecutor. However, usage of this method should be limited
+// to the minimum in favor of walletAction mechanism that should be the first
+// choice, especially for more sophisticated actions.
+func (we *walletExecutor) signBatch(
+	ctx context.Context,
+	messages []*big.Int,
+	startBlock uint64,
+) ([]*tecdsa.Signature, error) {
+	return we.signingExecutor.signBatch(ctx, messages, startBlock)
+}
 
 // wallet represents a tBTC wallet. A wallet is one of the basic building
 // blocks of the system that takes BTC under custody during the deposit

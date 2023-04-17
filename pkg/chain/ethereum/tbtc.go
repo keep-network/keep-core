@@ -1173,13 +1173,13 @@ func convertDepositSweepProposalToAbiType(
 
 func (tc *TbtcChain) GetWalletLock(
 	walletPublicKeyHash [20]byte,
-) (time.Time, tbtc.WalletAction, error) {
+) (time.Time, tbtc.WalletActionType, error) {
 	lock, err := tc.walletCoordinator.WalletLock(walletPublicKeyHash)
 	if err != nil {
 		return time.Time{}, 0, fmt.Errorf("cannot get wallet lock from chain: [%v]", err)
 	}
 
-	cause, err := parseWalletAction(lock.Cause)
+	cause, err := parseWalletActionType(lock.Cause)
 	if err != nil {
 		return time.Time{}, 0, fmt.Errorf("cannot parse wallet lock cause: [%v]", err)
 	}
@@ -1187,7 +1187,7 @@ func (tc *TbtcChain) GetWalletLock(
 	return time.Unix(int64(lock.ExpiresAt), 0), cause, nil
 }
 
-func parseWalletAction(value uint8) (tbtc.WalletAction, error) {
+func parseWalletActionType(value uint8) (tbtc.WalletActionType, error) {
 	switch value {
 	case 0:
 		return tbtc.IdleWallet, nil
@@ -1207,28 +1207,25 @@ func parseWalletAction(value uint8) (tbtc.WalletAction, error) {
 func (tc *TbtcChain) ValidateDepositSweepProposal(
 	proposal *tbtc.DepositSweepProposal,
 	depositsExtraInfo []struct {
-		fundingTx        *bitcoin.Transaction
-		BlindingFactor   [8]byte
-		WalletPubKeyHash [20]byte
-		RefundPubKeyHash [20]byte
-		RefundLocktime   [4]byte
+		*tbtc.Deposit
+		FundingTx *bitcoin.Transaction
 	},
-) (bool, error) {
+) error {
 	dei := make([]tbtcabi.WalletCoordinatorDepositExtraInfo, len(depositsExtraInfo))
 	for i, depositExtraInfo := range depositsExtraInfo {
 		fundingTx := tbtcabi.BitcoinTxInfo2{
-			Version:      depositExtraInfo.fundingTx.SerializeVersion(),
-			InputVector:  depositExtraInfo.fundingTx.SerializeInputs(),
-			OutputVector: depositExtraInfo.fundingTx.SerializeOutputs(),
-			Locktime:     depositExtraInfo.fundingTx.SerializeLocktime(),
+			Version:      depositExtraInfo.FundingTx.SerializeVersion(),
+			InputVector:  depositExtraInfo.FundingTx.SerializeInputs(),
+			OutputVector: depositExtraInfo.FundingTx.SerializeOutputs(),
+			Locktime:     depositExtraInfo.FundingTx.SerializeLocktime(),
 		}
 
 		dei[i] = tbtcabi.WalletCoordinatorDepositExtraInfo{
 			FundingTx:        fundingTx,
-			BlindingFactor:   depositExtraInfo.BlindingFactor,
-			WalletPubKeyHash: depositExtraInfo.WalletPubKeyHash,
-			RefundPubKeyHash: depositExtraInfo.RefundPubKeyHash,
-			RefundLocktime:   depositExtraInfo.RefundLocktime,
+			BlindingFactor:   depositExtraInfo.Deposit.BlindingFactor,
+			WalletPubKeyHash: depositExtraInfo.Deposit.WalletPublicKeyHash,
+			RefundPubKeyHash: depositExtraInfo.Deposit.RefundPublicKeyHash,
+			RefundLocktime:   depositExtraInfo.Deposit.RefundLocktime,
 		}
 	}
 
@@ -1237,13 +1234,13 @@ func (tc *TbtcChain) ValidateDepositSweepProposal(
 		dei,
 	)
 	if err != nil {
-		return false, fmt.Errorf("validation failed: [%v]", err)
+		return fmt.Errorf("validation failed: [%v]", err)
 	}
 
 	// Should never happen but just in case.
 	if !valid {
-		return false, fmt.Errorf("unexpected validation result")
+		return fmt.Errorf("unexpected validation result")
 	}
 
-	return true, nil
+	return nil
 }

@@ -13,6 +13,22 @@ const (
 	depositSweepProposalConfirmationBlocks = 20
 )
 
+// depositSweepAction is a deposit sweep walletAction.
+type depositSweepAction struct {}
+
+func newDepositSweepAction() *depositSweepAction {
+	return &depositSweepAction{}
+}
+
+func (dsa *depositSweepAction) run(signingExecutor *signingExecutor) error {
+	// TODO: Implementation.
+	panic("not implemented yet")
+}
+
+func (dsa *depositSweepAction) actionType() WalletActionType {
+	return DepositSweep
+}
+
 // assembleDepositSweepTransaction constructs an unsigned deposit sweep Bitcoin
 // transaction.
 //
@@ -29,7 +45,7 @@ func assembleDepositSweepTransaction(
 	bitcoinChain bitcoin.Chain,
 	walletPublicKey *ecdsa.PublicKey,
 	walletMainUtxo *bitcoin.UnspentTransactionOutput,
-	deposits []*deposit,
+	deposits []*Deposit,
 	fee int64,
 ) (*bitcoin.TransactionBuilder, error) {
 	if len(deposits) < 1 {
@@ -49,7 +65,7 @@ func assembleDepositSweepTransaction(
 	}
 
 	for i, deposit := range deposits {
-		depositScript, err := deposit.script()
+		depositScript, err := deposit.Script()
 		if err != nil {
 			return nil, fmt.Errorf(
 				"cannot get script for deposit [%v]: [%v]",
@@ -58,7 +74,7 @@ func assembleDepositSweepTransaction(
 			)
 		}
 
-		err = builder.AddScriptHashInput(deposit.utxo, depositScript)
+		err = builder.AddScriptHashInput(deposit.Utxo, depositScript)
 		if err != nil {
 			return nil, fmt.Errorf(
 				"cannot add input pointing to deposit [%v] UTXO: [%v]",

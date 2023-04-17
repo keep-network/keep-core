@@ -3,6 +3,7 @@ package tbtc
 import (
 	"context"
 	"fmt"
+	"github.com/keep-network/keep-core/pkg/bitcoin"
 	"runtime"
 	"strings"
 	"time"
@@ -72,6 +73,7 @@ type Config struct {
 func Initialize(
 	ctx context.Context,
 	chain Chain,
+	btcChain bitcoin.Chain,
 	netProvider net.Provider,
 	keyStorePersistence persistence.ProtectedHandle,
 	workPersistence persistence.BasicHandle,
@@ -88,6 +90,7 @@ func Initialize(
 	node, err := newNode(
 		groupParameters,
 		chain,
+		btcChain,
 		netProvider,
 		keyStorePersistence,
 		workPersistence,
@@ -275,11 +278,11 @@ func Initialize(
 				event.BlockNumber,
 			)
 
-			executor, ok, err := node.getSigningExecutor(
+			executor, ok, err := node.getWalletExecutor(
 				unmarshalPublicKey(event.WalletPublicKey),
 			)
 			if err != nil {
-				logger.Errorf("cannot get signing executor: [%v]", err)
+				logger.Errorf("cannot get wallet executor: [%v]", err)
 				return
 			}
 			if !ok {
@@ -384,11 +387,18 @@ func Initialize(
 			// The event is confirmed if the wallet is locked due to a deposit
 			// sweep action.
 			if time.Now().Before(expiresAt) && cause == DepositSweep {
-				// TODO: Validate the proposal, assemble, sign and
-				//       broadcast the sweep tx.
 				logger.Infof(
-					"received deposit sweep proposal [%+v]",
+					"deposit sweep proposal submitted for " +
+						"wallet PKH [0x%x] at block [%v] by [%v]",
+					walletPublicKeyHash,
+					event.BlockNumber,
+					event.ProposalSubmitter,
+				)
+
+				node.handleDepositSweepProposal(
 					event.Proposal,
+					event.BlockNumber,
+					depositSweepProposalConfirmationBlocks,
 				)
 			} else {
 				logger.Infof(
