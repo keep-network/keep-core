@@ -6,6 +6,13 @@ import (
 	"github.com/keep-network/keep-core/pkg/bitcoin"
 )
 
+const (
+	// depositSweepProposalConfirmationBlocks determines the block length of the
+	// confirmation period that is preserved after a deposit sweep proposal
+	// submission.
+	depositSweepProposalConfirmationBlocks = 20
+)
+
 // assembleDepositSweepTransaction constructs an unsigned deposit sweep Bitcoin
 // transaction.
 //

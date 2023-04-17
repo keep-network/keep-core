@@ -8,9 +8,11 @@ import (
 	"encoding/binary"
 	"fmt"
 	"github.com/keep-network/keep-common/pkg/chain/ethereum/ethutil"
+	"github.com/keep-network/keep-core/pkg/bitcoin"
 	"math/big"
 	"reflect"
 	"sort"
+	"time"
 
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
@@ -20,6 +22,7 @@ import (
 	"github.com/keep-network/keep-core/pkg/chain"
 	ecdsaabi "github.com/keep-network/keep-core/pkg/chain/ethereum/ecdsa/gen/abi"
 	ecdsacontract "github.com/keep-network/keep-core/pkg/chain/ethereum/ecdsa/gen/contract"
+	tbtcabi "github.com/keep-network/keep-core/pkg/chain/ethereum/tbtc/gen/abi"
 	tbtccontract "github.com/keep-network/keep-core/pkg/chain/ethereum/tbtc/gen/contract"
 	"github.com/keep-network/keep-core/pkg/internal/byteutils"
 	"github.com/keep-network/keep-core/pkg/operator"
@@ -33,17 +36,19 @@ import (
 const (
 	// TODO: The WalletRegistry address is taken from the Bridge contract.
 	//       Remove the possibility of passing it through the config.
-	WalletRegistryContractName = "WalletRegistry"
-	BridgeContractName         = "Bridge"
+	WalletRegistryContractName    = "WalletRegistry"
+	BridgeContractName            = "Bridge"
+	WalletCoordinatorContractName = "WalletCoordinator"
 )
 
 // TbtcChain represents a TBTC-specific chain handle.
 type TbtcChain struct {
 	*baseChain
 
-	bridge         *tbtccontract.Bridge
-	walletRegistry *ecdsacontract.WalletRegistry
-	sortitionPool  *ecdsacontract.EcdsaSortitionPool
+	bridge            *tbtccontract.Bridge
+	walletRegistry    *ecdsacontract.WalletRegistry
+	sortitionPool     *ecdsacontract.EcdsaSortitionPool
+	walletCoordinator *tbtccontract.WalletCoordinator
 }
 
 // NewTbtcChain construct a new instance of the TBTC-specific Ethereum
@@ -133,11 +138,41 @@ func newTbtcChain(
 		)
 	}
 
+	walletCoordinatorAddress, err := config.ContractAddress(
+		WalletCoordinatorContractName,
+	)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"failed to resolve %s contract address: [%v]",
+			WalletCoordinatorContractName,
+			err,
+		)
+	}
+
+	walletCoordinator, err :=
+		tbtccontract.NewWalletCoordinator(
+			walletCoordinatorAddress,
+			baseChain.chainID,
+			baseChain.key,
+			baseChain.client,
+			baseChain.nonceManager,
+			baseChain.miningWaiter,
+			baseChain.blockCounter,
+			baseChain.transactionMutex,
+		)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"failed to attach to WalletCoordinator contract: [%v]",
+			err,
+		)
+	}
+
 	return &TbtcChain{
-		baseChain:      baseChain,
-		bridge:         bridge,
-		walletRegistry: walletRegistry,
-		sortitionPool:  sortitionPool,
+		baseChain:         baseChain,
+		bridge:            bridge,
+		walletRegistry:    walletRegistry,
+		sortitionPool:     sortitionPool,
+		walletCoordinator: walletCoordinator,
 	}, nil
 }
 
@@ -995,4 +1030,149 @@ func (tc *TbtcChain) activeWalletPublicKey() ([]byte, bool, error) {
 	publicKeyBytes = append(publicKeyBytes, registryWalletData.PublicKeyY[:]...)
 
 	return publicKeyBytes, true, nil
+}
+
+func (tc *TbtcChain) OnDepositSweepProposalSubmitted(
+	handler func(event *tbtc.DepositSweepProposalSubmittedEvent),
+) subscription.EventSubscription {
+	onEvent := func(
+		proposal tbtcabi.WalletCoordinatorDepositSweepProposal,
+		proposalSubmitter common.Address,
+		blockNumber uint64,
+	) {
+		handler(&tbtc.DepositSweepProposalSubmittedEvent{
+			Proposal:          convertDepositSweepProposalFromAbiType(proposal),
+			ProposalSubmitter: chain.Address(proposalSubmitter.Hex()),
+			BlockNumber:       blockNumber,
+		})
+	}
+
+	return tc.walletCoordinator.
+		DepositSweepProposalSubmittedEvent(nil, nil).
+		OnEvent(onEvent)
+}
+
+func (tc *TbtcChain) PastDepositSweepProposalSubmittedEvents(
+	filter *tbtc.DepositSweepProposalSubmittedEventFilter,
+) ([]*tbtc.DepositSweepProposalSubmittedEvent, error) {
+	var startBlock uint64
+	var endBlock *uint64
+	var proposalSubmitter []common.Address
+	var walletPublicKeyHash [20]byte
+
+	if filter != nil {
+		startBlock = filter.StartBlock
+		endBlock = filter.EndBlock
+
+		for _, ps := range filter.ProposalSubmitter {
+			proposalSubmitter = append(
+				proposalSubmitter,
+				common.HexToAddress(ps.String()),
+			)
+		}
+
+		walletPublicKeyHash = filter.WalletPublicKeyHash
+	}
+
+	events, err := tc.walletCoordinator.PastDepositSweepProposalSubmittedEvents(
+		startBlock,
+		endBlock,
+		proposalSubmitter,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	convertedEvents := make([]*tbtc.DepositSweepProposalSubmittedEvent, 0)
+	for _, event := range events {
+		// If the wallet PKH filter is set, omit all events that target
+		// different wallets.
+		if walletPublicKeyHash != [20]byte{} {
+			if event.Proposal.WalletPubKeyHash != walletPublicKeyHash {
+				continue
+			}
+		}
+
+		convertedEvent := &tbtc.DepositSweepProposalSubmittedEvent{
+			Proposal:          convertDepositSweepProposalFromAbiType(event.Proposal),
+			ProposalSubmitter: chain.Address(event.ProposalSubmitter.Hex()),
+			BlockNumber:       event.Raw.BlockNumber,
+		}
+
+		convertedEvents = append(convertedEvents, convertedEvent)
+	}
+
+	sort.SliceStable(
+		convertedEvents,
+		func(i, j int) bool {
+			return convertedEvents[i].BlockNumber < convertedEvents[j].BlockNumber
+		},
+	)
+
+	return convertedEvents, err
+}
+
+func convertDepositSweepProposalFromAbiType(
+	proposal tbtcabi.WalletCoordinatorDepositSweepProposal,
+) *tbtc.DepositSweepProposal {
+	depositsKeys := make(
+		[]struct {
+			FundingTxHash      bitcoin.Hash
+			FundingOutputIndex uint32
+		},
+		len(proposal.DepositsKeys),
+	)
+
+	for i, depositKey := range proposal.DepositsKeys {
+		// We can map the depositKey.FundingTxHash field directly to the
+		// bitcoin.Hash type. This is because depositKey.FundingTxHash is
+		// a [32]byte type representing a hash in the bitcoin.InternalByteOrder,
+		// just as bitcoin.Hash assumes.
+		depositsKeys[i] = struct {
+			FundingTxHash      bitcoin.Hash
+			FundingOutputIndex uint32
+		}{
+			FundingTxHash:      depositKey.FundingTxHash,
+			FundingOutputIndex: depositKey.FundingOutputIndex,
+		}
+	}
+
+	return &tbtc.DepositSweepProposal{
+		WalletPubKeyHash: proposal.WalletPubKeyHash,
+		DepositsKeys:     depositsKeys,
+		SweepTxFee:       proposal.SweepTxFee,
+	}
+}
+
+func (tc *TbtcChain) GetWalletLock(
+	walletPublicKeyHash [20]byte,
+) (time.Time, tbtc.WalletAction, error) {
+	lock, err := tc.walletCoordinator.WalletLock(walletPublicKeyHash)
+	if err != nil {
+		return time.Time{}, 0, fmt.Errorf("cannot get wallet lock from chain: [%v]", err)
+	}
+
+	cause, err := parseWalletAction(lock.Cause)
+	if err != nil {
+		return time.Time{}, 0, fmt.Errorf("cannot parse wallet lock cause: [%v]", err)
+	}
+
+	return time.Unix(int64(lock.ExpiresAt), 0), cause, nil
+}
+
+func parseWalletAction(value uint8) (tbtc.WalletAction, error) {
+	switch value {
+	case 0:
+		return tbtc.IdleWallet, nil
+	case 1:
+		return tbtc.DepositSweep, nil
+	case 2:
+		return tbtc.Redemption, nil
+	case 3:
+		return tbtc.MovingFunds, nil
+	case 4:
+		return tbtc.MovedFundsSweep, nil
+	default:
+		return 0, fmt.Errorf("unexpected wallet action value: [%v]", value)
+	}
 }
