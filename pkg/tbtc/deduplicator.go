@@ -109,6 +109,14 @@ func (d *deduplicator) notifyDepositSweepProposalSubmitted(
 ) bool {
 	d.depositSweepProposalCache.Sweep()
 
+	// We build the cache key by hashing the concatenation of relevant fields
+	// of the proposal. It may be tempting to extract that code into a general
+	// "hash code" function exposed by the DepositSweepProposal type but this
+	// is not necessarily a good idea. The deduplicator is responsible for
+	// detecting duplicates and construction of cache keys is part of that job.
+	// Extracting this logic outside would push that responsibility out of the
+	// deduplicator control. That is dangerous as deduplication logic could
+	// be implicitly changeable from the outside and lead to serious bugs.
 	var buffer bytes.Buffer
 	buffer.Write(newProposal.WalletPubKeyHash[:])
 	for _, depositKey := range newProposal.DepositsKeys {

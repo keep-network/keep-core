@@ -8,6 +8,8 @@ ENV GOPATH=/go \
 	BIN_PATH=/usr/local/bin \
 	LD_LIBRARY_PATH=/usr/local/lib/
 
+# TODO: Remove perl once go-ethereum is upgraded to 1.11.
+#       See pkg/chain/ethereum/tbtc/gen/Makefile and after_abi_hook for details.
 RUN apk add --update --no-cache \
 	g++ \
 	linux-headers \
