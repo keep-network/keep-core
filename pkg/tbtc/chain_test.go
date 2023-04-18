@@ -5,6 +5,7 @@ import (
 	"crypto/elliptic"
 	"encoding/binary"
 	"fmt"
+	"github.com/keep-network/keep-core/pkg/bitcoin"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/chain/local_v1"
 	"github.com/keep-network/keep-core/pkg/operator"
@@ -444,6 +445,16 @@ func (lc *localChain) GetWalletLock(walletPublicKeyHash [20]byte) (
 	WalletActionType,
 	error,
 ) {
+	panic("unsupported")
+}
+
+func (lc *localChain) ValidateDepositSweepProposal(
+	proposal *DepositSweepProposal,
+	depositsExtraInfo []struct {
+		*Deposit
+		FundingTx *bitcoin.Transaction
+	},
+) error {
 	panic("unsupported")
 }
 

@@ -16,7 +16,7 @@ import (
 	"testing"
 )
 
-func TestNode_GetSigningExecutor(t *testing.T) {
+func TestNode_GetWalletExecutor(t *testing.T) {
 	groupParameters := &GroupParameters{
 		GroupSize:       5,
 		GroupQuorum:     4,
@@ -35,6 +35,7 @@ func TestNode_GetSigningExecutor(t *testing.T) {
 	node, err := newNode(
 		groupParameters,
 		localChain,
+		nil, // TODO: Set a proper mock of the bitcoin.Chain.
 		localProvider,
 		keyStorePersistence,
 		&mockPersistenceHandle{},
@@ -55,10 +56,10 @@ func TestNode_GetSigningExecutor(t *testing.T) {
 		t,
 		"cache size",
 		0,
-		len(node.signingExecutors),
+		len(node.walletExecutors),
 	)
 
-	executor, ok, err := node.getSigningExecutor(walletPublicKey)
+	walletExecutor, ok, err := node.getWalletExecutor(walletPublicKey)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -70,17 +71,17 @@ func TestNode_GetSigningExecutor(t *testing.T) {
 		t,
 		"cache size",
 		1,
-		len(node.signingExecutors),
+		len(node.walletExecutors),
 	)
 
 	testutils.AssertIntsEqual(
 		t,
 		"signers count",
 		1,
-		len(executor.signers),
+		len(walletExecutor.signingExecutor.signers),
 	)
 
-	if !reflect.DeepEqual(signer, executor.signers[0]) {
+	if !reflect.DeepEqual(signer, walletExecutor.signingExecutor.signers[0]) {
 		t.Errorf("executor holds an unexpected signer")
 	}
 
@@ -93,10 +94,10 @@ func TestNode_GetSigningExecutor(t *testing.T) {
 		t,
 		"broadcast channel",
 		expectedChannel,
-		executor.broadcastChannel.Name(),
+		walletExecutor.signingExecutor.broadcastChannel.Name(),
 	)
 
-	_, ok, err = node.getSigningExecutor(walletPublicKey)
+	_, ok, err = node.getWalletExecutor(walletPublicKey)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -110,7 +111,7 @@ func TestNode_GetSigningExecutor(t *testing.T) {
 		t,
 		"cache size",
 		1,
-		len(node.signingExecutors),
+		len(node.walletExecutors),
 	)
 
 	// Construct an arbitrary public key representing a wallet that is not
@@ -123,7 +124,7 @@ func TestNode_GetSigningExecutor(t *testing.T) {
 		Y:     y,
 	}
 
-	_, ok, err = node.getSigningExecutor(nonControlledWalletPublicKey)
+	_, ok, err = node.getWalletExecutor(nonControlledWalletPublicKey)
 	if err != nil {
 		t.Fatal(err)
 	}
