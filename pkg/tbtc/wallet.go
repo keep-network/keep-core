@@ -1,15 +1,15 @@
 package tbtc
 
 import (
-	"context"
 	"crypto/ecdsa"
 	"crypto/elliptic"
+	"encoding/hex"
 	"fmt"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/protocol/group"
 	"github.com/keep-network/keep-core/pkg/tecdsa"
-	"golang.org/x/sync/semaphore"
-	"math/big"
+	"go.uber.org/zap"
+	"sync"
 )
 
 // WalletActionType represents actions types that can be performed by a wallet.
@@ -23,65 +23,101 @@ const (
 	MovedFundsSweep
 )
 
-// walletAction represents an action that can be performed by the wallet
-// execution layer (i.e. the walletExecutor).
+func (wat WalletActionType) String() string {
+	switch wat {
+	case Noop:
+		return "Noop"
+	case DepositSweep:
+		return "DepositSweep"
+	case Redemption:
+		return "Redemption"
+	case MovingFunds:
+		return "MovingFunds"
+	case MovedFundsSweep:
+		return "MovedFundsSweep"
+	default:
+		panic("unknown wallet action type")
+	}
+}
+
+// walletAction represents an action that can be performed by the wallet.
 type walletAction interface {
-	// run triggers the action execution. This function expects the signingExecutor
-	// specific for the wallet executing the walletAction.
-	run(signingExecutor *signingExecutor) error
+	// execute carries out the walletAction until completion.
+	execute() error
+
+	// wallet returns the wallet the walletAction is bound to.
+	wallet() wallet
 
 	// actionType returns the specific type of the walletAction.
 	actionType() WalletActionType
 }
 
-// errWalletExecutorBusy is an error returned when the walletExecutor
-// cannot execute the submitted walletAction due to an ongoing work.
-var errWalletExecutorBusy = fmt.Errorf("wallet executor is busy")
+// errWalletBusy is an error returned when the waller cannot execute the
+// requested walletAction due to an ongoing work.
+var errWalletBusy = fmt.Errorf("wallet is busy")
 
-// walletExecutor is the execution layer for walletAction.
-type walletExecutor struct {
-	lock *semaphore.Weighted
-
-	signingExecutor *signingExecutor
+// walletDispatcher is a component responsible for dispatching wallet actions
+// to specific wallets.
+type walletDispatcher struct {
+	actionsMutex sync.Mutex
+	// actions is the mapping holding the currently executed action of the
+	// given wallet. The mapping key is the uncompressed public key
+	// (with 04 prefix) of the wallet.
+	actions map[string]WalletActionType
 }
 
-func newWalletExecutor(signingExecutor *signingExecutor) *walletExecutor {
-	return &walletExecutor{
-		lock:            semaphore.NewWeighted(1),
-		signingExecutor: signingExecutor,
+func newWalletDispatcher() *walletDispatcher {
+	return &walletDispatcher{
+		actions: make(map[string]WalletActionType),
 	}
 }
 
-// submit sends a walletAction to the walletExecutor. There is no guarantee
-// the executor will actually perform the submitted action. The exact
-// behavior depends on the executor internal state. In case the action
-// is rejected by the executor, an error is returned.
-func (we *walletExecutor) submit(action walletAction) error {
-	if lockAcquired := we.lock.TryAcquire(1); !lockAcquired {
-		return errWalletExecutorBusy
+// dispatch sends the given walletAction for execution. If the wallet is
+// already busy, an errWalletBusy error is returned and the action is ignored.
+func (wd *walletDispatcher) dispatch(action walletAction) error {
+	wd.actionsMutex.Lock()
+	defer wd.actionsMutex.Unlock()
+
+	walletPublicKeyBytes, err := marshalPublicKey(action.wallet().publicKey)
+	if err != nil {
+		return fmt.Errorf("cannot marshal wallet public key: [%v]", err)
 	}
-	defer we.lock.Release(1)
 
-	return action.run(we.signingExecutor)
-}
+	walletActionLogger := logger.With(
+		zap.String("wallet", fmt.Sprintf("0x%x", walletPublicKeyBytes)),
+		zap.String("action", action.actionType().String()),
+	)
 
-// signBatch triggers signing of a messages batch. This method is basically a
-// wrapper of the signingExecutor.signBatch method. It allows signing arbitrary
-// data using the wallet execution layer, without the need of obtaining the
-// lower-level signingExecutor. However, usage of this method should be limited
-// to the minimum in favor of walletAction mechanism that should be the first
-// choice, especially for more sophisticated actions.
-func (we *walletExecutor) signBatch(
-	ctx context.Context,
-	messages []*big.Int,
-	startBlock uint64,
-) ([]*tecdsa.Signature, error) {
-	if lockAcquired := we.lock.TryAcquire(1); !lockAcquired {
-		return nil, errWalletExecutorBusy
+	key := hex.EncodeToString(walletPublicKeyBytes)
+
+	if _, ok := wd.actions[key]; ok {
+		return errWalletBusy
 	}
-	defer we.lock.Release(1)
 
-	return we.signingExecutor.signBatch(ctx, messages, startBlock)
+	wd.actions[key] = action.actionType()
+
+	go func() {
+		defer func() {
+			wd.actionsMutex.Lock()
+			delete(wd.actions, key)
+			wd.actionsMutex.Unlock()
+		}()
+
+		walletActionLogger.Infof("starting action execution")
+
+		err := action.execute()
+		if err != nil {
+			walletActionLogger.Errorf(
+				"action execution terminated with error: [%v]",
+				err,
+			)
+			return
+		}
+
+		walletActionLogger.Errorf("action execution terminated with success")
+	}()
+
+	return nil
 }
 
 // wallet represents a tBTC wallet. A wallet is one of the basic building

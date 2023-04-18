@@ -118,6 +118,26 @@ func (wr *walletRegistry) getSigners(
 	return nil
 }
 
+// getWalletByPublicKeyHash gets the given wallet by its 20-byte wallet
+// public key hash. Second boolean return value denotes whether the wallet
+// was found in the registry or not.
+func (wr *walletRegistry) getWalletByPublicKeyHash(
+	walletPublicKeyHash [20]byte,
+) (wallet, bool) {
+	wr.mutex.Lock()
+	defer wr.mutex.Unlock()
+
+	for _, value := range wr.walletCache {
+		if value.walletPublicKeyHash == walletPublicKeyHash {
+			// All signers belong to one wallet. Take that wallet from the
+			// first signer.
+			return value.signers[0].wallet, true
+		}
+	}
+
+	return wallet{}, false
+}
+
 // walletStorage is the component that persists data of the wallets managed
 // by the given node using the underlying persistence layer. It should be
 // used directly only by the walletRegistry.

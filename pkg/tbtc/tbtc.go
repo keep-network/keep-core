@@ -278,11 +278,11 @@ func Initialize(
 				event.BlockNumber,
 			)
 
-			executor, ok, err := node.getWalletExecutor(
+			executor, ok, err := node.getSigningExecutor(
 				unmarshalPublicKey(event.WalletPublicKey),
 			)
 			if err != nil {
-				logger.Errorf("cannot get wallet executor: [%v]", err)
+				logger.Errorf("cannot get signing executor: [%v]", err)
 				return
 			}
 			if !ok {

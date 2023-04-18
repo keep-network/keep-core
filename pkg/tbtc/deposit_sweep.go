@@ -14,15 +14,28 @@ const (
 )
 
 // depositSweepAction is a deposit sweep walletAction.
-type depositSweepAction struct{}
-
-func newDepositSweepAction() *depositSweepAction {
-	return &depositSweepAction{}
+type depositSweepAction struct {
+	actionWallet    wallet
+	signingExecutor *signingExecutor
 }
 
-func (dsa *depositSweepAction) run(signingExecutor *signingExecutor) error {
+func newDepositSweepAction(
+	wallet wallet,
+	signingExecutor *signingExecutor,
+) *depositSweepAction {
+	return &depositSweepAction{
+		actionWallet:    wallet,
+		signingExecutor: signingExecutor,
+	}
+}
+
+func (dsa *depositSweepAction) execute() error {
 	// TODO: Implementation.
 	panic("not implemented yet")
+}
+
+func (dsa *depositSweepAction) wallet() wallet {
+	return dsa.actionWallet
 }
 
 func (dsa *depositSweepAction) actionType() WalletActionType {

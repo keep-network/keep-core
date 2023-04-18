@@ -52,10 +52,12 @@ type node struct {
 
 	dkgExecutor *dkgExecutor
 
-	walletExecutorsMutex sync.Mutex
-	// walletExecutors is the cache holding executors for specific wallets.
+	signingExecutorsMutex sync.Mutex
+	// signingExecutors is the cache holding signing executors for specific wallets.
 	// The cache key is the uncompressed public key (with 04 prefix) of the wallet.
-	walletExecutors map[string]*walletExecutor
+	signingExecutors map[string]*signingExecutor
+
+	walletDispatcher *walletDispatcher
 }
 
 func newNode(
@@ -74,13 +76,14 @@ func newNode(
 	scheduler.RegisterProtocol(latch)
 
 	node := &node{
-		groupParameters: groupParameters,
-		chain:           chain,
-		btcChain:        btcChain,
-		netProvider:     netProvider,
-		walletRegistry:  walletRegistry,
-		protocolLatch:   latch,
-		walletExecutors: make(map[string]*walletExecutor),
+		groupParameters:  groupParameters,
+		chain:            chain,
+		btcChain:         btcChain,
+		netProvider:      netProvider,
+		walletRegistry:   walletRegistry,
+		protocolLatch:    latch,
+		signingExecutors: make(map[string]*signingExecutor),
+		walletDispatcher: newWalletDispatcher(),
 	}
 
 	// Only the operator address is known at this point and can be pre-fetched.
@@ -173,15 +176,15 @@ func (n *node) validateDKG(
 	n.dkgExecutor.executeDkgValidation(seed, submissionBlock, result, resultHash)
 }
 
-// getWalletExecutor gets the executor responsible for executing actions related
-// to a specific wallet whose part is controlled by this node. The second boolean
-// return value indicates whether the node controls at least one signer for the
-// given wallet.
-func (n *node) getWalletExecutor(
+// getSigningExecutor gets the signing executor responsible for executing
+// signing related to a specific wallet whose part is controlled by this node.
+// The second boolean return value indicates whether the node controls at least
+// one signer for the given wallet.
+func (n *node) getSigningExecutor(
 	walletPublicKey *ecdsa.PublicKey,
-) (*walletExecutor, bool, error) {
-	n.walletExecutorsMutex.Lock()
-	defer n.walletExecutorsMutex.Unlock()
+) (*signingExecutor, bool, error) {
+	n.signingExecutorsMutex.Lock()
+	defer n.signingExecutorsMutex.Unlock()
 
 	walletPublicKeyBytes, err := marshalPublicKey(walletPublicKey)
 	if err != nil {
@@ -190,7 +193,7 @@ func (n *node) getWalletExecutor(
 
 	executorKey := hex.EncodeToString(walletPublicKeyBytes)
 
-	if executor, exists := n.walletExecutors[executorKey]; exists {
+	if executor, exists := n.signingExecutors[executorKey]; exists {
 		return executor, true, nil
 	}
 
@@ -250,7 +253,7 @@ func (n *node) getWalletExecutor(
 		)
 	}
 
-	signingExecutor := newSigningExecutor(
+	executor := newSigningExecutor(
 		signers,
 		broadcastChannel,
 		membershipValidator,
@@ -261,44 +264,63 @@ func (n *node) getWalletExecutor(
 		signingAttemptsLimit,
 	)
 
-	walletExecutor := newWalletExecutor(signingExecutor)
+	n.signingExecutors[executorKey] = executor
 
-	n.walletExecutors[executorKey] = walletExecutor
-
-	return walletExecutor, true, nil
+	return executor, true, nil
 }
 
-// TODO: Documentation
+// handleDepositSweepProposal handles an incoming deposit sweep proposal.
+// First, it determines whether the node is supposed to do an action by checking
+// whether any of the proposal's target wallet signers are under node's control.
+// If so, this function orchestrates and dispatches an appropriate wallet action.
 func (n *node) handleDepositSweepProposal(
 	proposal *DepositSweepProposal,
 	startBlock uint64,
 	delayBlocks uint64,
 ) {
-	// TODO: Get wallet public key based on proposal.WalletPubKeyHash.
-	var walletPublicKey *ecdsa.PublicKey
-
-	executor, ok, err := n.getWalletExecutor(walletPublicKey)
-	if err != nil {
-		logger.Errorf("cannot get wallet executor: [%v]", err)
-		return
-	}
+	wallet, ok := n.walletRegistry.getWalletByPublicKeyHash(
+		proposal.WalletPubKeyHash,
+	)
 	if !ok {
 		logger.Infof(
-			"node does not control signers of wallet "+
-				"with public key [0x%x]",
-			walletPublicKey,
+			"node does not control signers of wallet PKH [0x%x]; "+
+				"ignoring the received deposit sweep proposal",
+			proposal.WalletPubKeyHash,
 		)
 		return
 	}
 
-	// TODO: Construct the action instance properly.
-	action := newDepositSweepAction()
-
-	err = executor.submit(action)
+	// No need to check the boolean flag returned by getSigningExecutor.
+	// We know the node controls some wallet signers as we just got the wallet
+	// from the registry using their public key hash.
+	signingExecutor, _, err := n.getSigningExecutor(wallet.publicKey)
 	if err != nil {
-		logger.Errorf("wallet executor returned error: [%v]", err)
+		logger.Errorf("cannot get signing executor: [%v]", err)
 		return
 	}
+
+	action := newDepositSweepAction(wallet, signingExecutor)
+
+	walletPublicKeyBytes, err := marshalPublicKey(wallet.publicKey)
+	if err != nil {
+		logger.Errorf("cannot marshal wallet public key: [%v]", err)
+		return
+	}
+
+	walletActionLogger := logger.With(
+		zap.String("wallet", fmt.Sprintf("0x%x", walletPublicKeyBytes)),
+		zap.String("action", action.actionType().String()),
+	)
+
+	walletActionLogger.Infof("dispatching wallet action")
+
+	err = n.walletDispatcher.dispatch(action)
+	if err != nil {
+		logger.Errorf("cannot dispatch wallet action: [%v]", err)
+		return
+	}
+
+	walletActionLogger.Infof("wallet action dispatched successfully")
 }
 
 // waitForBlockFn represents a function blocking the execution until the given

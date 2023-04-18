@@ -174,7 +174,7 @@ func setupSigningExecutor(t *testing.T) *signingExecutor {
 		t.Fatal(err)
 	}
 
-	walletExecutor, ok, err := node.getWalletExecutor(signers[0].wallet.publicKey)
+	executor, ok, err := node.getSigningExecutor(signers[0].wallet.publicKey)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -184,7 +184,7 @@ func setupSigningExecutor(t *testing.T) *signingExecutor {
 
 	// Test block counter is much quicker than the real world one.
 	// Set more attempts to give more time for computations.
-	walletExecutor.signingExecutor.signingAttemptsLimit *= 3
+	executor.signingAttemptsLimit *= 3
 
-	return walletExecutor.signingExecutor
+	return executor
 }

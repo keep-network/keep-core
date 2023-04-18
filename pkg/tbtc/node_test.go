@@ -16,7 +16,7 @@ import (
 	"testing"
 )
 
-func TestNode_GetWalletExecutor(t *testing.T) {
+func TestNode_GetSigningExecutor(t *testing.T) {
 	groupParameters := &GroupParameters{
 		GroupSize:       5,
 		GroupQuorum:     4,
@@ -56,10 +56,10 @@ func TestNode_GetWalletExecutor(t *testing.T) {
 		t,
 		"cache size",
 		0,
-		len(node.walletExecutors),
+		len(node.signingExecutors),
 	)
 
-	walletExecutor, ok, err := node.getWalletExecutor(walletPublicKey)
+	executor, ok, err := node.getSigningExecutor(walletPublicKey)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -71,17 +71,17 @@ func TestNode_GetWalletExecutor(t *testing.T) {
 		t,
 		"cache size",
 		1,
-		len(node.walletExecutors),
+		len(node.signingExecutors),
 	)
 
 	testutils.AssertIntsEqual(
 		t,
 		"signers count",
 		1,
-		len(walletExecutor.signingExecutor.signers),
+		len(executor.signers),
 	)
 
-	if !reflect.DeepEqual(signer, walletExecutor.signingExecutor.signers[0]) {
+	if !reflect.DeepEqual(signer, executor.signers[0]) {
 		t.Errorf("executor holds an unexpected signer")
 	}
 
@@ -94,10 +94,10 @@ func TestNode_GetWalletExecutor(t *testing.T) {
 		t,
 		"broadcast channel",
 		expectedChannel,
-		walletExecutor.signingExecutor.broadcastChannel.Name(),
+		executor.broadcastChannel.Name(),
 	)
 
-	_, ok, err = node.getWalletExecutor(walletPublicKey)
+	_, ok, err = node.getSigningExecutor(walletPublicKey)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -111,7 +111,7 @@ func TestNode_GetWalletExecutor(t *testing.T) {
 		t,
 		"cache size",
 		1,
-		len(node.walletExecutors),
+		len(node.signingExecutors),
 	)
 
 	// Construct an arbitrary public key representing a wallet that is not
@@ -124,7 +124,7 @@ func TestNode_GetWalletExecutor(t *testing.T) {
 		Y:     y,
 	}
 
-	_, ok, err = node.getWalletExecutor(nonControlledWalletPublicKey)
+	_, ok, err = node.getSigningExecutor(nonControlledWalletPublicKey)
 	if err != nil {
 		t.Fatal(err)
 	}
