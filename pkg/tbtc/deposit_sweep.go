@@ -14,7 +14,7 @@ const (
 )
 
 // depositSweepAction is a deposit sweep walletAction.
-type depositSweepAction struct {}
+type depositSweepAction struct{}
 
 func newDepositSweepAction() *depositSweepAction {
 	return &depositSweepAction{}

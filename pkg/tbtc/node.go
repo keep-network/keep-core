@@ -74,13 +74,13 @@ func newNode(
 	scheduler.RegisterProtocol(latch)
 
 	node := &node{
-		groupParameters:  groupParameters,
-		chain:            chain,
-		btcChain:         btcChain,
-		netProvider:      netProvider,
-		walletRegistry:   walletRegistry,
-		protocolLatch:    latch,
-		walletExecutors:  make(map[string]*walletExecutor),
+		groupParameters: groupParameters,
+		chain:           chain,
+		btcChain:        btcChain,
+		netProvider:     netProvider,
+		walletRegistry:  walletRegistry,
+		protocolLatch:   latch,
+		walletExecutors: make(map[string]*walletExecutor),
 	}
 
 	// Only the operator address is known at this point and can be pre-fetched.

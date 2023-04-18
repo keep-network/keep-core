@@ -388,7 +388,7 @@ func Initialize(
 			// sweep action.
 			if time.Now().Before(expiresAt) && cause == DepositSweep {
 				logger.Infof(
-					"deposit sweep proposal submitted for " +
+					"deposit sweep proposal submitted for "+
 						"wallet PKH [0x%x] at block [%v] by [%v]",
 					walletPublicKeyHash,
 					event.BlockNumber,

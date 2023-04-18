@@ -120,7 +120,6 @@ func start(cmd *cobra.Command) error {
 			return fmt.Errorf("could not connect to Electrum chain: [%v]", err)
 		}
 
-
 		storage, err := storage.Initialize(
 			clientConfig.Storage,
 			clientConfig.Ethereum.KeyFilePassword,
