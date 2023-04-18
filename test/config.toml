@@ -38,6 +38,7 @@ EthereumMetricsTick = "1m27s"
 
 [maintainer]
 BitcoinDifficulty = true
+Wallet = true
 
 [developer]
 RandomBeaconAddress = "0xcf64c2a367341170cb4e09cf8c0ed137d8473ceb"

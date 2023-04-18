@@ -6,5 +6,6 @@ type Config struct {
 	// should be started.
 	BitcoinDifficulty bool
 
-	// TODO: Add options for other maintainer tasks, e.g. spv
+	// Wallet indicates whether the wallet maintainer should be started.
+	Wallet bool
 }

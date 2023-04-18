@@ -240,6 +240,13 @@ var cmdFlagsTests = map[string]struct {
 		expectedValueFromFlag: true,
 		defaultValue:          false,
 	},
+	"tbtc.maintainer.wallet": {
+		readValueFunc:         func(c *config.Config) interface{} { return c.Maintainer.Wallet },
+		flagName:              "--wallet",
+		flagValue:             "", // don't provide any value
+		expectedValueFromFlag: true,
+		defaultValue:          false,
+	},
 	"developer.randomBeaconAddress": {
 		readValueFunc: func(c *config.Config) interface{} {
 			address, _ := c.Ethereum.ContractAddress(chainEthereum.RandomBeaconContractName)

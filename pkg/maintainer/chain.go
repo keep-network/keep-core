@@ -39,3 +39,36 @@ type BitcoinDifficultyChain interface {
 	// retarget proof.
 	ProofLength() (uint64, error)
 }
+
+// TODO: Description
+type WalletChain interface {
+	ActiveWalletPubKeyHash() ([20]byte, error)
+
+	// GetWalletCreationState returns the wallet current wallet creation state
+	// in the wallet registry.
+	GetWalletCreationState() (DKGState, error)
+
+	WalletParameters() (
+		walletCreationPeriod uint32,
+		walletCreationMinBtcBalance uint64,
+		walletCreationMaxBtcBalance uint64,
+		err error,
+	)
+
+	GetWalletInfo(walletPubKeyHash [20]byte) (
+		publicKeyBytes []byte,
+		mainUtxoHash [32]byte,
+		createdAt uint32,
+		err error,
+	)
+}
+
+// TODO: Reuse the tbtc.DKGState. It cannot be used now because of a import cycle.
+type DKGState int
+
+const (
+	Idle DKGState = iota
+	AwaitingSeed
+	AwaitingResult
+	Challenge
+)

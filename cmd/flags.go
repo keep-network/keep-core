@@ -323,12 +323,19 @@ func initTbtcFlags(cmd *cobra.Command, cfg *config.Config) {
 }
 
 // Initialize flags for Maintainer configuration.
-func initMaintainerFlags(command *cobra.Command, cfg *config.Config) {
-	command.Flags().BoolVar(
+func initMaintainerFlags(cmd *cobra.Command, cfg *config.Config) {
+	cmd.Flags().BoolVar(
 		&cfg.Maintainer.BitcoinDifficulty,
 		"bitcoinDifficulty",
 		false,
 		"start Bitcoin difficulty maintainer",
+	)
+
+	cmd.Flags().BoolVar(
+		&cfg.Maintainer.Wallet,
+		"wallet",
+		false,
+		"start wallet maintainer",
 	)
 }
 

@@ -49,7 +49,7 @@ func maintainers(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("could not connect to Electrum chain: [%v]", err)
 	}
 
-	chain, err := ethereum.ConnectBitcoinDifficulty(ctx, clientConfig.Ethereum)
+	btcDiffChain, err := ethereum.ConnectBitcoinDifficulty(ctx, clientConfig.Ethereum)
 	if err != nil {
 		return fmt.Errorf(
 			"could not connect to Bitcoin difficulty chain: [%v]",
@@ -57,7 +57,7 @@ func maintainers(cmd *cobra.Command, args []string) error {
 		)
 	}
 
-	maintainer.Initialize(ctx, clientConfig.Maintainer, btcChain, chain)
+	maintainer.Initialize(ctx, clientConfig.Maintainer, btcChain, btcDiffChain, nil)
 
 	<-ctx.Done()
 	return fmt.Errorf("unexpected context cancellation")

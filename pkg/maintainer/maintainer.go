@@ -10,20 +10,25 @@ func Initialize(
 	ctx context.Context,
 	config Config,
 	btcChain bitcoin.Chain,
-	chain BitcoinDifficultyChain,
+	btcDiffChain BitcoinDifficultyChain,
+	walletChain WalletChain,
 ) {
 	// If none of the maintainers was specified in the config (i.e. no option was
 	// provided to the `maintainer` command), all maintainers should be launched.
-	launchAll := !config.BitcoinDifficulty
+	launchAll := !config.BitcoinDifficulty && !config.Wallet
 
 	if config.BitcoinDifficulty || launchAll {
 		initializeBitcoinDifficultyMaintainer(
 			ctx,
 			btcChain,
-			chain,
+			btcDiffChain,
 			bitcoinDifficultyDefaultIdleBackOffTime,
 			bitcoinDifficultyDefaultRestartBackoffTime,
 		)
+	}
+
+	if config.Wallet || launchAll {
+		initializeWalletMaintainer(ctx, walletChain, defaultRestartBackoffTime)
 	}
 
 	// TODO: Allow for launching multiple maintainers here. Every flag
