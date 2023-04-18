@@ -1190,7 +1190,7 @@ func (tc *TbtcChain) GetWalletLock(
 func parseWalletActionType(value uint8) (tbtc.WalletActionType, error) {
 	switch value {
 	case 0:
-		return tbtc.IdleWallet, nil
+		return tbtc.Noop, nil
 	case 1:
 		return tbtc.DepositSweep, nil
 	case 2:
