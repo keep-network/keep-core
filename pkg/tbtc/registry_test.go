@@ -1,6 +1,7 @@
 package tbtc
 
 import (
+	"github.com/keep-network/keep-core/pkg/bitcoin"
 	"reflect"
 	"testing"
 
@@ -33,10 +34,17 @@ func TestWalletRegistry_RegisterSigner(t *testing.T) {
 		t,
 		"registered wallet signers count",
 		1,
-		len(walletRegistry.walletCache[walletStorageKey]),
+		len(walletRegistry.walletCache[walletStorageKey].signers),
 	)
 
-	if !reflect.DeepEqual(signer, walletRegistry.walletCache[walletStorageKey][0]) {
+	expectedWalletPublicKeyHash := bitcoin.PublicKeyHash(signer.wallet.publicKey)
+	testutils.AssertBytesEqual(
+		t,
+		expectedWalletPublicKeyHash[:],
+		walletRegistry.walletCache[walletStorageKey].walletPublicKeyHash[:],
+	)
+
+	if !reflect.DeepEqual(signer, walletRegistry.walletCache[walletStorageKey].signers[0]) {
 		t.Errorf("registered wallet signer differs from the original one")
 	}
 
@@ -103,14 +111,21 @@ func TestWalletRegistry_PrePopulateWalletCache(t *testing.T) {
 		len(walletRegistry.walletCache),
 	)
 
+	expectedWalletPublicKeyHash := bitcoin.PublicKeyHash(signer.wallet.publicKey)
+	testutils.AssertBytesEqual(
+		t,
+		expectedWalletPublicKeyHash[:],
+		walletRegistry.walletCache[walletStorageKey].walletPublicKeyHash[:],
+	)
+
 	testutils.AssertIntsEqual(
 		t,
 		"loaded wallet signers count",
 		1,
-		len(walletRegistry.walletCache[walletStorageKey]),
+		len(walletRegistry.walletCache[walletStorageKey].signers),
 	)
 
-	if !reflect.DeepEqual(signer, walletRegistry.walletCache[walletStorageKey][0]) {
+	if !reflect.DeepEqual(signer, walletRegistry.walletCache[walletStorageKey].signers[0]) {
 		t.Errorf("loaded wallet signer differs from the original one")
 	}
 }

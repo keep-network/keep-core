@@ -163,6 +163,7 @@ func setupSigningExecutor(t *testing.T) *signingExecutor {
 	node, err := newNode(
 		groupParameters,
 		localChain,
+		nil, // TODO: Set a proper mock of the bitcoin.Chain.
 		localProvider,
 		keyStorePersistence,
 		&mockPersistenceHandle{},
@@ -173,7 +174,7 @@ func setupSigningExecutor(t *testing.T) *signingExecutor {
 		t.Fatal(err)
 	}
 
-	executor, ok, err := node.getSigningExecutor(signers[0].wallet.publicKey)
+	walletExecutor, ok, err := node.getWalletExecutor(signers[0].wallet.publicKey)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -183,7 +184,7 @@ func setupSigningExecutor(t *testing.T) *signingExecutor {
 
 	// Test block counter is much quicker than the real world one.
 	// Set more attempts to give more time for computations.
-	executor.signingAttemptsLimit *= 3
+	walletExecutor.signingExecutor.signingAttemptsLimit *= 3
 
-	return executor
+	return walletExecutor.signingExecutor
 }
