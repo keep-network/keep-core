@@ -76,6 +76,11 @@ func (we *walletExecutor) signBatch(
 	messages []*big.Int,
 	startBlock uint64,
 ) ([]*tecdsa.Signature, error) {
+	if lockAcquired := we.lock.TryAcquire(1); !lockAcquired {
+		return nil, errWalletExecutorBusy
+	}
+	defer we.lock.Release(1)
+
 	return we.signingExecutor.signBatch(ctx, messages, startBlock)
 }
 
