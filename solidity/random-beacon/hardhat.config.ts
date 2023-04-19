@@ -10,6 +10,7 @@ import "hardhat-contract-sizer"
 import "@typechain/hardhat"
 import "hardhat-dependency-compiler"
 import "./tasks"
+import "solidity-docgen"
 
 import { task } from "hardhat/config"
 
@@ -191,6 +192,12 @@ const config: HardhatUserConfig = {
   gasReporter: {
     currency: "USD",
     coinmarketcap: process.env.COINMARKETCAP_API_KEY,
+  },
+  docgen: {
+    outputDir: "generated-docs",
+    templates: "docgen-templates",
+    pages: "single", // `single`, `items` or `files`
+    exclude: ["./test"],
   },
 }
 
