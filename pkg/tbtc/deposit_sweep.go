@@ -4,6 +4,7 @@ import (
 	"crypto/ecdsa"
 	"fmt"
 	"github.com/keep-network/keep-core/pkg/bitcoin"
+	"go.uber.org/zap"
 )
 
 const (
@@ -11,31 +12,133 @@ const (
 	// confirmation period that is preserved after a deposit sweep proposal
 	// submission.
 	depositSweepProposalConfirmationBlocks = 20
+	// depositSweepRequiredFundingTxConfirmations determines the minimum
+	// number of confirmations that are needed for a deposit funding transaction
+	// in order to consider it a valid part of the deposit sweep proposal.
+	depositSweepRequiredFundingTxConfirmations = 6
 )
 
 // depositSweepAction is a deposit sweep walletAction.
 type depositSweepAction struct {
-	actionWallet    wallet
+	chain           Chain
+	btcChain        bitcoin.Chain
+	sweepingWallet  wallet
 	signingExecutor *signingExecutor
+	proposal        *DepositSweepProposal
 }
 
 func newDepositSweepAction(
-	wallet wallet,
+	chain Chain,
+	btcChain bitcoin.Chain,
+	sweepingWallet wallet,
 	signingExecutor *signingExecutor,
+	proposal *DepositSweepProposal,
 ) *depositSweepAction {
 	return &depositSweepAction{
-		actionWallet:    wallet,
+		chain:           chain,
+		btcChain:        btcChain,
+		sweepingWallet:  sweepingWallet,
 		signingExecutor: signingExecutor,
+		proposal:        proposal,
 	}
 }
 
 func (dsa *depositSweepAction) execute() error {
-	// TODO: Implementation.
-	panic("not implemented yet")
+	walletPublicKeyBytes, err := marshalPublicKey(dsa.wallet().publicKey)
+	if err != nil {
+		return fmt.Errorf("cannot marshal wallet public key: [%v]", err)
+	}
+
+	actionLogger := logger.With(
+		zap.String("wallet", fmt.Sprintf("0x%x", walletPublicKeyBytes)),
+		zap.String("action", dsa.actionType().String()),
+	)
+
+	depositExtraInfo := make(
+		[]struct {
+			*Deposit
+			FundingTx *bitcoin.Transaction
+		},
+		len(dsa.proposal.DepositsKeys),
+	)
+
+	depositsCount := len(dsa.proposal.DepositsKeys)
+
+	for i, depositKey := range dsa.proposal.DepositsKeys {
+		depositDisplayIndex := fmt.Sprintf("%v/%v", i+1, depositsCount)
+
+		depositLogger := actionLogger.With(
+			zap.String(
+				"depositFundingTxHash",
+				fmt.Sprintf("0x%x", depositKey.FundingTxHash),
+			),
+			zap.String("depositIndex", depositDisplayIndex),
+		)
+
+		depositLogger.Infof("checking confirmations count for deposit's funding tx")
+
+		confirmations, err := dsa.btcChain.GetTransactionConfirmations(
+			depositKey.FundingTxHash,
+		)
+		if err != nil {
+			return fmt.Errorf(
+				"cannot get funding tx confirmations count "+
+					"for deposit [%v]: [%v]",
+				depositDisplayIndex,
+				err,
+			)
+		}
+
+		if confirmations < depositSweepRequiredFundingTxConfirmations {
+			return fmt.Errorf(
+				"funding tx of deposit [%v] has only [%v/%v] of "+
+					"required confirmations",
+				depositDisplayIndex,
+				confirmations,
+				depositSweepRequiredFundingTxConfirmations,
+			)
+		}
+
+		depositLogger.Infof("fetching deposit's extra data")
+
+		fundingTx, err := dsa.btcChain.GetTransaction(depositKey.FundingTxHash)
+		if err != nil {
+			return fmt.Errorf(
+				"cannot get funding tx data for deposit [%v]: [%v]",
+				depositDisplayIndex,
+				err,
+			)
+		}
+
+		// TODO: Fetch deposit extra info.
+
+		depositExtraInfo[i] = struct {
+			*Deposit
+			FundingTx *bitcoin.Transaction
+		}{
+			Deposit:   nil,
+			FundingTx: fundingTx,
+		}
+	}
+
+	err = dsa.chain.ValidateDepositSweepProposal(dsa.proposal, depositExtraInfo)
+	if err != nil {
+		return fmt.Errorf("deposit sweep proposal is invalid: [%v]", err)
+	}
+
+	actionLogger.Infof("deposit sweep proposal is valid")
+
+	// TODO: Do the following:
+	//       - Construct the transaction
+	//       - Sign
+	//       - Broadcast
+	//       - Monitor
+
+	return nil
 }
 
 func (dsa *depositSweepAction) wallet() wallet {
-	return dsa.actionWallet
+	return dsa.sweepingWallet
 }
 
 func (dsa *depositSweepAction) actionType() WalletActionType {

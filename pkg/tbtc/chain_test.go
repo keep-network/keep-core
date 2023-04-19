@@ -419,6 +419,12 @@ func (lc *localChain) OnHeartbeatRequested(
 	panic("unsupported")
 }
 
+func (lc *localChain) PastDepositRevealedEvents(
+	filter *DepositRevealedEventFilter,
+) ([]*DepositRevealedEvent, error) {
+	panic("unsupported")
+}
+
 func (lc *localChain) operatorAddress() (chain.Address, error) {
 	_, operatorPublicKey, err := lc.OperatorKeyPair()
 	if err != nil {

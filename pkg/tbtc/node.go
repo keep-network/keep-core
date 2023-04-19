@@ -279,16 +279,30 @@ func (n *node) handleDepositSweepProposal(
 	delayBlocks uint64,
 ) {
 	wallet, ok := n.walletRegistry.getWalletByPublicKeyHash(
-		proposal.WalletPubKeyHash,
+		proposal.WalletPublicKeyHash,
 	)
 	if !ok {
 		logger.Infof(
 			"node does not control signers of wallet PKH [0x%x]; "+
 				"ignoring the received deposit sweep proposal",
-			proposal.WalletPubKeyHash,
+			proposal.WalletPublicKeyHash,
 		)
 		return
 	}
+
+	walletPublicKeyBytes, err := marshalPublicKey(wallet.publicKey)
+	if err != nil {
+		logger.Errorf("cannot marshal wallet public key: [%v]", err)
+		return
+	}
+
+	logger.Infof(
+		"node controls signers of wallet PKH [0x%x]; "+
+			"plain-text uncompressed public key of that wallet is [0x%x]; "+
+			"starting orchestration of the deposit sweep action",
+		proposal.WalletPublicKeyHash,
+		walletPublicKeyBytes,
+	)
 
 	// No need to check the boolean flag returned by getSigningExecutor.
 	// We know the node controls some wallet signers as we just got the wallet
@@ -299,13 +313,13 @@ func (n *node) handleDepositSweepProposal(
 		return
 	}
 
-	action := newDepositSweepAction(wallet, signingExecutor)
-
-	walletPublicKeyBytes, err := marshalPublicKey(wallet.publicKey)
-	if err != nil {
-		logger.Errorf("cannot marshal wallet public key: [%v]", err)
-		return
-	}
+	action := newDepositSweepAction(
+		n.chain,
+		n.btcChain,
+		wallet,
+		signingExecutor,
+		proposal,
+	)
 
 	walletActionLogger := logger.With(
 		zap.String("wallet", fmt.Sprintf("0x%x", walletPublicKeyBytes)),

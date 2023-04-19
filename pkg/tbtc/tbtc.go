@@ -337,7 +337,7 @@ func Initialize(
 	// e.g. redemption.
 	_ = chain.OnDepositSweepProposalSubmitted(func(event *DepositSweepProposalSubmittedEvent) {
 		go func() {
-			walletPublicKeyHash := event.Proposal.WalletPubKeyHash
+			walletPublicKeyHash := event.Proposal.WalletPublicKeyHash
 
 			if ok := deduplicator.notifyDepositSweepProposalSubmitted(
 				event.Proposal,

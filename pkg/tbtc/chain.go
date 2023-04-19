@@ -190,6 +190,14 @@ type BridgeChain interface {
 	OnHeartbeatRequested(
 		func(event *HeartbeatRequestedEvent),
 	) subscription.EventSubscription
+
+	// PastDepositRevealedEvents fetches past deposit reveal events according
+	// to the provided filter or unfiltered if the filter is nil. Returned
+	// events are sorted by the block number in the ascending order, i.e. the
+	// latest event is at the end of the slice.
+	PastDepositRevealedEvents(
+		filter *DepositRevealedEventFilter,
+	) ([]*DepositRevealedEvent, error)
 }
 
 // HeartbeatRequestedEvent represents a Bridge heartbeat request event.
@@ -197,6 +205,28 @@ type HeartbeatRequestedEvent struct {
 	WalletPublicKey []byte
 	Messages        []*big.Int
 	BlockNumber     uint64
+}
+
+// DepositRevealedEvent represents a deposit reveal event.
+type DepositRevealedEvent struct {
+	FundingTxHash       bitcoin.Hash
+	FundingOutputIndex  uint32
+	Depositor           chain.Address
+	Amount              uint64
+	BlindingFactor      [8]byte
+	WalletPublicKeyHash [20]byte
+	RefundPublicKeyHash [20]byte
+	RefundLocktime      [4]byte
+	Vault               *chain.Address
+	BlockNumber         uint64
+}
+
+// DepositRevealedEventFilter is a component allowing to filter DepositRevealedEvent.
+type DepositRevealedEventFilter struct {
+	StartBlock          uint64
+	EndBlock            *uint64
+	Depositor           []chain.Address
+	WalletPublicKeyHash [][20]byte
 }
 
 // WalletCoordinatorChain defines the subset of the TBTC chain interface that
@@ -239,8 +269,8 @@ type WalletCoordinatorChain interface {
 
 // DepositSweepProposal represents a deposit sweep proposal submitted to the chain.
 type DepositSweepProposal struct {
-	WalletPubKeyHash [20]byte
-	DepositsKeys     []struct {
+	WalletPublicKeyHash [20]byte
+	DepositsKeys        []struct {
 		FundingTxHash      bitcoin.Hash
 		FundingOutputIndex uint32
 	}

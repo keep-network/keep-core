@@ -997,6 +997,72 @@ func (tc *TbtcChain) OnHeartbeatRequested(
 	})
 }
 
+func (tc *TbtcChain) PastDepositRevealedEvents(
+	filter *tbtc.DepositRevealedEventFilter,
+) ([]*tbtc.DepositRevealedEvent, error) {
+	var startBlock uint64
+	var endBlock *uint64
+	var depositor []common.Address
+	var walletPublicKeyHash [][20]byte
+
+	if filter != nil {
+		startBlock = filter.StartBlock
+		endBlock = filter.EndBlock
+
+		for _, d := range filter.Depositor {
+			depositor = append(depositor, common.HexToAddress(d.String()))
+		}
+
+		walletPublicKeyHash = filter.WalletPublicKeyHash
+	}
+
+	events, err := tc.bridge.PastDepositRevealedEvents(
+		startBlock,
+		endBlock,
+		depositor,
+		walletPublicKeyHash,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	convertedEvents := make([]*tbtc.DepositRevealedEvent, 0)
+	for _, event := range events {
+		var vault *chain.Address
+		if event.Vault != [20]byte{} {
+			v := chain.Address(event.Vault.Hex())
+			vault = &v
+		}
+
+		convertedEvent := &tbtc.DepositRevealedEvent{
+			// We can map the event.FundingTxHash field directly to the
+			// bitcoin.Hash type. This is because event.FundingTxHash is
+			// a [32]byte type representing a hash in the bitcoin.InternalByteOrder,
+			// just as bitcoin.Hash assumes.
+			FundingTxHash:       event.FundingTxHash,
+			FundingOutputIndex:  event.FundingOutputIndex,
+			Depositor:           chain.Address(event.Depositor.Hex()),
+			Amount:              event.Amount,
+			BlindingFactor:      event.BlindingFactor,
+			WalletPublicKeyHash: event.WalletPubKeyHash,
+			RefundPublicKeyHash: event.RefundPubKeyHash,
+			RefundLocktime:      event.RefundLocktime,
+			Vault:               vault,
+		}
+
+		convertedEvents = append(convertedEvents, convertedEvent)
+	}
+
+	sort.SliceStable(
+		convertedEvents,
+		func(i, j int) bool {
+			return convertedEvents[i].BlockNumber < convertedEvents[j].BlockNumber
+		},
+	)
+
+	return convertedEvents, err
+}
+
 func (tc *TbtcChain) activeWalletPublicKey() ([]byte, bool, error) {
 	walletPublicKeyHash, err := tc.bridge.ActiveWalletPubKeyHash()
 	if err != nil {
@@ -1139,9 +1205,9 @@ func convertDepositSweepProposalFromAbiType(
 	}
 
 	return &tbtc.DepositSweepProposal{
-		WalletPubKeyHash: proposal.WalletPubKeyHash,
-		DepositsKeys:     depositsKeys,
-		SweepTxFee:       proposal.SweepTxFee,
+		WalletPublicKeyHash: proposal.WalletPubKeyHash,
+		DepositsKeys:        depositsKeys,
+		SweepTxFee:          proposal.SweepTxFee,
 	}
 }
 
@@ -1165,7 +1231,7 @@ func convertDepositSweepProposalToAbiType(
 	}
 
 	return tbtcabi.WalletCoordinatorDepositSweepProposal{
-		WalletPubKeyHash: proposal.WalletPubKeyHash,
+		WalletPubKeyHash: proposal.WalletPublicKeyHash,
 		DepositsKeys:     depositsKeys,
 		SweepTxFee:       proposal.SweepTxFee,
 	}
