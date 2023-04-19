@@ -67,7 +67,7 @@ jobs:
       destinationRepo: threshold-network/threshold
       destinationFolder: ./docs/app-development/random-beacon/random-beacon-api
       destinationBranch: main
-      userEmail: thesis-valkyrie@users.noreply.github.com
+      userEmail: valkyrie@thesis.co
       userName: Valkyrie
     secrets:
       githubToken: ${{ secrets.THRESHOLD_DOCS_GITHUB_TOKEN }}
