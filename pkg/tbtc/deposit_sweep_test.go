@@ -30,16 +30,18 @@ func TestAssembleDepositSweepTransaction(t *testing.T) {
 
 			deposits := make([]*Deposit, len(scenario.Deposits))
 			for i, d := range scenario.Deposits {
+				vault := chain.Address(
+					hex.EncodeToString(d.Vault[:]),
+				)
+
 				deposits[i] = &Deposit{
 					Utxo:                d.Utxo,
-					Depositor:           d.Depositor,
+					Depositor:           chain.Address(hex.EncodeToString(d.Depositor[:])),
 					BlindingFactor:      d.BlindingFactor,
 					WalletPublicKeyHash: d.WalletPublicKeyHash,
 					RefundPublicKeyHash: d.RefundPublicKeyHash,
 					RefundLocktime:      d.RefundLocktime,
-					Vault: chain.Address(
-						hex.EncodeToString(d.Vault[:]),
-					),
+					Vault:               &vault,
 				}
 			}
 

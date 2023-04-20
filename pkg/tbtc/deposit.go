@@ -19,7 +19,7 @@ type Deposit struct {
 	// represents the deposit on the Bitcoin chain.
 	Utxo *bitcoin.UnspentTransactionOutput
 	// Depositor is the depositor's address on the host chain.
-	Depositor [20]byte
+	Depositor chain.Address
 	// BlindingFactor is an 8-byte arbitrary value that allows to distinguish
 	// deposits from the same depositor.
 	BlindingFactor [8]byte
@@ -31,15 +31,23 @@ type Deposit struct {
 	RefundLocktime [4]byte
 	// Vault is an optional field that holds the host chain address of the
 	// target vault.
-	Vault chain.Address
+	Vault *chain.Address
 }
 
 // Script constructs the deposit P2(W)SH Bitcoin script. This function
 // assumes the deposit's fields are correctly set.
 func (d *Deposit) Script() ([]byte, error) {
+	depositorBytes, err := hex.DecodeString(d.Depositor.String())
+	if err != nil {
+		return nil, fmt.Errorf("cannot decode depositor field: [%v]", err)
+	}
+	if len(depositorBytes) != 20 {
+		return nil, fmt.Errorf("wrong byte length of depositor field")
+	}
+
 	script := fmt.Sprintf(
 		depositScriptFormat,
-		hex.EncodeToString(d.Depositor[:]),
+		hex.EncodeToString(depositorBytes),
 		hex.EncodeToString(d.BlindingFactor[:]),
 		hex.EncodeToString(d.WalletPublicKeyHash[:]),
 		hex.EncodeToString(d.RefundPublicKeyHash[:]),

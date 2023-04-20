@@ -229,6 +229,24 @@ type DepositRevealedEvent struct {
 	BlockNumber         uint64
 }
 
+func (dre *DepositRevealedEvent) unpack() *Deposit {
+	return &Deposit{
+		Utxo: &bitcoin.UnspentTransactionOutput{
+			Outpoint: &bitcoin.TransactionOutpoint{
+				TransactionHash: dre.FundingTxHash,
+				OutputIndex:     dre.FundingOutputIndex,
+			},
+			Value: int64(dre.Amount),
+		},
+		Depositor:           dre.Depositor,
+		BlindingFactor:      dre.BlindingFactor,
+		WalletPublicKeyHash: dre.WalletPublicKeyHash,
+		RefundPublicKeyHash: dre.RefundPublicKeyHash,
+		RefundLocktime:      dre.RefundLocktime,
+		Vault:               dre.Vault,
+	}
+}
+
 // DepositRevealedEventFilter is a component allowing to filter DepositRevealedEvent.
 type DepositRevealedEventFilter struct {
 	StartBlock          uint64

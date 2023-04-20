@@ -17,7 +17,7 @@ func TestDeposit_Script(t *testing.T) {
 
 	// Fill only the fields relevant for script computation.
 	d := new(Deposit)
-	copy(d.Depositor[:], hexToSlice("934b98637ca318a4d6e7ca6ffd1690b8e77df637"))
+	d.Depositor = "934b98637ca318a4d6e7ca6ffd1690b8e77df637"
 	copy(d.BlindingFactor[:], hexToSlice("f9f0c90d00039523"))
 	copy(d.WalletPublicKeyHash[:], hexToSlice("8db50eb52063ea9d98b3eac91489a90f738986f6"))
 	copy(d.RefundPublicKeyHash[:], hexToSlice("28e081f285138ccbe389c1eb8985716230129f89"))

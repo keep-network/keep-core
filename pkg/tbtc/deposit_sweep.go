@@ -4,6 +4,7 @@ import (
 	"crypto/ecdsa"
 	"fmt"
 	"github.com/keep-network/keep-core/pkg/bitcoin"
+	"github.com/keep-network/keep-core/pkg/chain"
 	"go.uber.org/zap"
 )
 
@@ -64,6 +65,8 @@ func (dsa *depositSweepAction) execute() error {
 
 	depositsCount := len(dsa.proposal.DepositsKeys)
 
+	actionLogger.Infof("gathering prerequisties for proposal validation")
+
 	for i, depositKey := range dsa.proposal.DepositsKeys {
 		depositDisplayIndex := fmt.Sprintf("%v/%v", i+1, depositsCount)
 
@@ -110,16 +113,92 @@ func (dsa *depositSweepAction) execute() error {
 			)
 		}
 
-		// TODO: Fetch deposit extra info.
+		depositRequest, err := dsa.chain.GetDepositRequest(
+			depositKey.FundingTxHash,
+			depositKey.FundingOutputIndex,
+		)
+		if err != nil {
+			return fmt.Errorf(
+				"cannot get on-chain request data for deposit [%v]: [%v]",
+				depositDisplayIndex,
+				err,
+			)
+		}
+
+		// Worth mentioning this should be treated as an estimation, giving
+		// the caveats mentioned in the docstring of GetBlockNumberByTimestamp.
+		revealBlock, err := dsa.chain.GetBlockNumberByTimestamp(
+			uint64(depositRequest.RevealedAt.Unix()),
+		)
+		if err != nil {
+			return fmt.Errorf(
+				"cannot estimate reveal block for deposit [%v]: [%v]",
+				depositDisplayIndex,
+				err,
+			)
+		}
+
+		// We need to fetch the past DepositRevealed event for the given deposit.
+		// It may be tempting to fetch such events for all deposit keys
+		// in the proposal using a single call, however, this solution has
+		// serious downsides. Popular chain clients have limitations
+		// for fetching past chain events regarding the requested block
+		// range and/or returned data size. In this context, it is better to
+		// do several well-tailored calls than a single general one.
+		// We estimated the revealBlock so, we know the event was emitted
+		// at this block or somewhere close. It makes sense to establish
+		// a small margin and fetch past DepositRevealed events from range
+		// [revealBlock - margin, revealBlock + margin] in order to handle
+		// possible inaccuracies of revealBlock estimation. Moreover,
+		// we use the depositor address and wallet PKH as additional filters
+		// to limit the size of returned data.
+		revealBlockMargin := uint64(10)
+		startBlock := revealBlock - revealBlockMargin
+		endBlock := revealBlock + revealBlockMargin
+
+		events, err := dsa.chain.PastDepositRevealedEvents(&DepositRevealedEventFilter{
+			StartBlock:          startBlock,
+			EndBlock:            &endBlock,
+			Depositor:           []chain.Address{depositRequest.Depositor},
+			WalletPublicKeyHash: [][20]byte{dsa.proposal.WalletPublicKeyHash},
+		})
+		if err != nil {
+			return fmt.Errorf(
+				"cannot get on-chain DepositRevealed events for deposit [%v]: [%v]",
+				depositDisplayIndex,
+				err,
+			)
+		}
+
+		// There may be multiple events returned for the provided filter.
+		// Find the one matching our depositKey.
+		var matchingEvent *DepositRevealedEvent
+		for _, event := range events {
+			if event.FundingTxHash == depositKey.FundingTxHash &&
+				event.FundingOutputIndex == depositKey.FundingOutputIndex {
+				matchingEvent = event
+				break
+			}
+		}
+
+		if matchingEvent == nil {
+			return fmt.Errorf(
+				"no matching DepositRevealed event for deposit [%v]: [%v]",
+				depositDisplayIndex,
+				err,
+			)
+		}
 
 		depositExtraInfo[i] = struct {
 			*Deposit
 			FundingTx *bitcoin.Transaction
 		}{
-			Deposit:   nil,
+			Deposit:   matchingEvent.unpack(),
 			FundingTx: fundingTx,
 		}
 	}
+
+	actionLogger.Infof("calling chain for proposal validation")
 
 	err = dsa.chain.ValidateDepositSweepProposal(dsa.proposal, depositExtraInfo)
 	if err != nil {
