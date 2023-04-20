@@ -59,6 +59,13 @@ func (lc *localChain) OperatorKeyPair() (
 	return lc.operatorPrivateKey, &lc.operatorPrivateKey.PublicKey, nil
 }
 
+func (lc *localChain) GetBlockNumberByTimestamp(timestamp uint64) (
+	uint64,
+	error,
+) {
+	panic("unsupported")
+}
+
 func (lc *localChain) OperatorToStakingProvider() (chain.Address, bool, error) {
 	panic("unsupported")
 }
@@ -422,6 +429,13 @@ func (lc *localChain) OnHeartbeatRequested(
 func (lc *localChain) PastDepositRevealedEvents(
 	filter *DepositRevealedEventFilter,
 ) ([]*DepositRevealedEvent, error) {
+	panic("unsupported")
+}
+
+func (lc *localChain) GetDepositRequest(
+	fundingTxHash bitcoin.Hash,
+	fundingOutputIndex uint32,
+) (*DepositChainRequest, error) {
 	panic("unsupported")
 }
 
