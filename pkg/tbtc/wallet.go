@@ -114,7 +114,7 @@ func (wd *walletDispatcher) dispatch(action walletAction) error {
 			return
 		}
 
-		walletActionLogger.Errorf("action execution terminated with success")
+		walletActionLogger.Infof("action execution terminated with success")
 	}()
 
 	return nil
