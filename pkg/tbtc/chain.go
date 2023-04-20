@@ -198,6 +198,14 @@ type BridgeChain interface {
 	PastDepositRevealedEvents(
 		filter *DepositRevealedEventFilter,
 	) ([]*DepositRevealedEvent, error)
+
+	// GetDepositRequest gets the on-chain deposit request for the given
+	// funding transaction hash and output index. Returns an error if the
+	// deposit was not found.
+	GetDepositRequest(
+		fundingTxHash bitcoin.Hash,
+		fundingOutputIndex uint32,
+	) (*DepositChainRequest, error)
 }
 
 // HeartbeatRequestedEvent represents a Bridge heartbeat request event.
@@ -227,6 +235,16 @@ type DepositRevealedEventFilter struct {
 	EndBlock            *uint64
 	Depositor           []chain.Address
 	WalletPublicKeyHash [][20]byte
+}
+
+// DepositChainRequest represents a deposit request stored on-chain.
+type DepositChainRequest struct {
+	Depositor   chain.Address
+	Amount      uint64
+	RevealedAt  time.Time
+	Vault       *chain.Address
+	TreasuryFee uint64
+	SweptAt     time.Time
 }
 
 // WalletCoordinatorChain defines the subset of the TBTC chain interface that

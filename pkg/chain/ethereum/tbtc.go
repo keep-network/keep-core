@@ -1063,6 +1063,59 @@ func (tc *TbtcChain) PastDepositRevealedEvents(
 	return convertedEvents, err
 }
 
+func (tc *TbtcChain) GetDepositRequest(
+	fundingTxHash bitcoin.Hash,
+	fundingOutputIndex uint32,
+) (*tbtc.DepositChainRequest, error) {
+	depositKey := buildDepositKey(fundingTxHash, fundingOutputIndex)
+
+	depositRequest, err := tc.bridge.Deposits(depositKey)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"cannot get deposit request for key [0x%x]: [%v]",
+			depositKey.Text(16),
+			err,
+		)
+	}
+
+	// Deposit not found.
+	if depositRequest.RevealedAt == 0 {
+		return nil, fmt.Errorf(
+			"no deposit request for key [0x%x]",
+			depositKey.Text(16),
+		)
+	}
+
+	var vault *chain.Address
+	if depositRequest.Vault != [20]byte{} {
+		v := chain.Address(depositRequest.Vault.Hex())
+		vault = &v
+	}
+
+	return &tbtc.DepositChainRequest{
+		Depositor:   chain.Address(depositRequest.Depositor.Hex()),
+		Amount:      depositRequest.Amount,
+		RevealedAt:  time.Unix(int64(depositRequest.RevealedAt), 0),
+		Vault:       vault,
+		TreasuryFee: depositRequest.TreasuryFee,
+		SweptAt:     time.Unix(int64(depositRequest.SweptAt), 0),
+	}, nil
+}
+
+func buildDepositKey(
+	fundingTxHash bitcoin.Hash,
+	fundingOutputIndex uint32,
+) *big.Int {
+	fundingOutputIndexBytes := make([]byte, 4)
+	binary.BigEndian.PutUint32(fundingOutputIndexBytes, fundingOutputIndex)
+
+	depositKey := crypto.Keccak256Hash(
+		append(fundingTxHash[:], fundingOutputIndexBytes...),
+	)
+
+	return depositKey.Big()
+}
+
 func (tc *TbtcChain) activeWalletPublicKey() ([]byte, bool, error) {
 	walletPublicKeyHash, err := tc.bridge.ActiveWalletPubKeyHash()
 	if err != nil {
