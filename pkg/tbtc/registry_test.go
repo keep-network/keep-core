@@ -1,7 +1,10 @@
 package tbtc
 
 import (
+	"crypto/ecdsa"
 	"github.com/keep-network/keep-core/pkg/bitcoin"
+	"github.com/keep-network/keep-core/pkg/tecdsa"
+	"math/big"
 	"reflect"
 	"testing"
 
@@ -79,6 +82,52 @@ func TestWalletRegistry_GetSigners(t *testing.T) {
 
 	if !reflect.DeepEqual(signer, fetchedSigners[0]) {
 		t.Errorf("fetched wallet signer differs from the original one")
+	}
+}
+
+func TestWalletRegistry_getWalletByPublicKeyHash(t *testing.T) {
+	persistenceHandle := &mockPersistenceHandle{}
+
+	walletRegistry := newWalletRegistry(persistenceHandle)
+
+	signer := createMockSigner(t)
+
+	err := walletRegistry.registerSigner(signer)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	walletPublicKeyHash := bitcoin.PublicKeyHash(signer.wallet.publicKey)
+
+	wallet, ok := walletRegistry.getWalletByPublicKeyHash(walletPublicKeyHash)
+	if !ok {
+		t.Error("should return a wallet")
+	}
+
+	testutils.AssertStringsEqual(t, "wallet", signer.wallet.String(), wallet.String())
+}
+
+func TestWalletRegistry_getWalletByPublicKeyHash_NotFound(t *testing.T) {
+	persistenceHandle := &mockPersistenceHandle{}
+
+	walletRegistry := newWalletRegistry(persistenceHandle)
+
+	signer := createMockSigner(t)
+
+	err := walletRegistry.registerSigner(signer)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	walletPublicKeyHash := bitcoin.PublicKeyHash(&ecdsa.PublicKey{
+		Curve: tecdsa.Curve,
+		X:     big.NewInt(100),
+		Y:     big.NewInt(200),
+	})
+
+	_, ok := walletRegistry.getWalletByPublicKeyHash(walletPublicKeyHash)
+	if ok {
+		t.Error("should not return a wallet")
 	}
 }
 
