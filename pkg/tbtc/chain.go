@@ -304,6 +304,14 @@ type Chain interface {
 	// OperatorKeyPair returns the key pair of the operator assigned to this
 	// chain handle.
 	OperatorKeyPair() (*operator.PrivateKey, *operator.PublicKey, error)
+	// GetBlockNumberByTimestamp gets the block number for the given timestamp.
+	// In the best case, the block with the exact same timestamp is returned.
+	// If the aforementioned is not possible, it tries to return the closest
+	// possible block. However, there may be cases where another close block
+	// is returned instead of the closest one. This may happen if the actual
+	// average block time of the relevant block span strongly diverges from
+	// the usual average block time of the chain.
+	GetBlockNumberByTimestamp(timestamp uint64) (uint64, error)
 
 	sortition.Chain
 	GroupSelectionChain
