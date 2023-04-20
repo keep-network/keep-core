@@ -85,6 +85,21 @@ func NewBitcoinDifficultyChain(
 		)
 	}
 
+	retrievedLightRelayAddress, err := lightRelayMaintainerProxy.LightRelay()
+	if err != nil {
+		return nil, fmt.Errorf(
+			"failed to retrieve the relay address from LightRelayMaintainerProxy "+
+				"contract: [%v]",
+			err,
+		)
+	}
+
+	// Verify the LightRelay set in LightRelayMaintainerProxy is the same
+	// instance as the one set in the client via configuration.
+	if lightRelayAddress != retrievedLightRelayAddress {
+		return nil, fmt.Errorf("mismatch between LightRelay addresses")
+	}
+
 	return &BitcoinDifficultyChain{
 		baseChain:                 baseChain,
 		lightRelay:                lightRelay,
@@ -120,7 +135,7 @@ func (bdc *BitcoinDifficultyChain) Retarget(headers []*bitcoin.BlockHeader) erro
 		serializedHeader := header.Serialize()
 		serializedHeaders = append(serializedHeaders, serializedHeader[:]...)
 	}
-	_, err := bdc.lightRelay.Retarget(serializedHeaders)
+	_, err := bdc.LightRelayMaintainerProxy.Retarget(serializedHeaders)
 	return err
 }
 
