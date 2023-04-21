@@ -1356,7 +1356,8 @@ func (tc *TbtcChain) ValidateDepositSweepProposal(
 		return fmt.Errorf("validation failed: [%v]", err)
 	}
 
-	// Should never happen but just in case.
+	// Should never happen because `validateDepositSweepProposal` returns true
+	// or reverts (returns an error) but do the check just in case.
 	if !valid {
 		return fmt.Errorf("unexpected validation result")
 	}
