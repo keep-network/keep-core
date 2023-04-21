@@ -14,8 +14,9 @@ const (
 	// submission.
 	depositSweepProposalConfirmationBlocks = 20
 	// depositSweepRequiredFundingTxConfirmations determines the minimum
-	// number of confirmations that are needed for a deposit funding transaction
-	// in order to consider it a valid part of the deposit sweep proposal.
+	// number of confirmations that are needed for a deposit funding Bitcoin
+	// transaction in order to consider it a valid part of the deposit sweep
+	// proposal.
 	depositSweepRequiredFundingTxConfirmations = 6
 )
 
@@ -66,7 +67,7 @@ func (dsa *depositSweepAction) execute() error {
 
 	depositsCount := len(dsa.proposal.DepositsKeys)
 
-	actionLogger.Infof("gathering prerequisties for proposal validation")
+	actionLogger.Infof("gathering prerequisites for proposal validation")
 
 	for i, depositKey := range dsa.proposal.DepositsKeys {
 		depositDisplayIndex := fmt.Sprintf("%v/%v", i+1, depositsCount)
