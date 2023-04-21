@@ -290,6 +290,25 @@ func (n *node) handleDepositSweepProposal(
 		return
 	}
 
+	signingExecutor, ok, err := n.getSigningExecutor(wallet.publicKey)
+	if err != nil {
+		logger.Errorf("cannot get signing executor: [%v]", err)
+		return
+	}
+	// This check is actually redundant. We know the node controls some
+	// wallet signers as we just got the wallet from the registry using their
+	// public key hash. However, we are doing it just in case. The API
+	// contract of getWalletByPublicKeyHash and/or getSigningExecutor may
+	// change one day.
+	if !ok {
+		logger.Infof(
+			"node does not control signers of wallet PKH [0x%x]; "+
+				"ignoring the received deposit sweep proposal",
+			proposal.WalletPublicKeyHash,
+		)
+		return
+	}
+
 	walletPublicKeyBytes, err := marshalPublicKey(wallet.publicKey)
 	if err != nil {
 		logger.Errorf("cannot marshal wallet public key: [%v]", err)
@@ -303,15 +322,6 @@ func (n *node) handleDepositSweepProposal(
 		proposal.WalletPublicKeyHash,
 		walletPublicKeyBytes,
 	)
-
-	// No need to check the boolean flag returned by getSigningExecutor.
-	// We know the node controls some wallet signers as we just got the wallet
-	// from the registry using their public key hash.
-	signingExecutor, _, err := n.getSigningExecutor(wallet.publicKey)
-	if err != nil {
-		logger.Errorf("cannot get signing executor: [%v]", err)
-		return
-	}
 
 	action := newDepositSweepAction(
 		n.chain,
