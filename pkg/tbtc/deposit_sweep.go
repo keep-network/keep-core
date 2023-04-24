@@ -10,8 +10,8 @@ import (
 
 const (
 	// depositSweepProposalConfirmationBlocks determines the block length of the
-	// confirmation period that is preserved after a deposit sweep proposal
-	// submission.
+	// confirmation period on the host chain that is preserved after a deposit
+	// sweep proposal submission.
 	depositSweepProposalConfirmationBlocks = 20
 	// depositSweepRequiredFundingTxConfirmations determines the minimum
 	// number of confirmations that are needed for a deposit funding Bitcoin
