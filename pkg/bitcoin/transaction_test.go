@@ -165,7 +165,12 @@ func TestTransaction_WitnessHash(t *testing.T) {
 }
 
 // transactionFixture returns a real testnet transaction:
-// https://live.blockcypher.com/btc-testnet/tx/435d4aff6d4bc34134877bd3213c17970142fdd04d4113d534120033b9eecb2e
+// https://live.blockcypher.com/btc-testnet/tx/435d4aff6d4bc34134877bd3213c17970142fdd04d4113d534120033b9eecb2e.
+//
+// All hashes passed to hexToHash function uses human-friendly bitcoin.ReversedByteOrder
+// so, those hashes can be checked in block explorers as is. Based on them, hexToHash
+// constructs proper instances of bitcoin.Hash and converts them to
+// bitcoin.InternalByteOrder for serialization.
 func transactionFixture(t *testing.T) *Transaction {
 	tx := new(Transaction)
 
