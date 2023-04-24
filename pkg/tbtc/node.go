@@ -57,7 +57,7 @@ type node struct {
 	// protocolLatch makes sure no expensive number generator operations are
 	// running when signing or generating a wallet key are executed. The
 	// protocolLatch is used by dkgExecutor and signingExecutor.
-	protocolLatch  *generator.ProtocolLatch
+	protocolLatch *generator.ProtocolLatch
 
 	// dkgExecutor encapsulates the logic of distributed key generation.
 	//
