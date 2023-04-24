@@ -216,6 +216,7 @@ type HeartbeatRequestedEvent struct {
 }
 
 // DepositRevealedEvent represents a deposit reveal event.
+// The Vault field is nil if the deposit does not target any vault on-chain.
 type DepositRevealedEvent struct {
 	FundingTxHash       bitcoin.Hash
 	FundingOutputIndex  uint32
@@ -256,6 +257,7 @@ type DepositRevealedEventFilter struct {
 }
 
 // DepositChainRequest represents a deposit request stored on-chain.
+// The Vault field is nil if the deposit does not target any vault on-chain.
 type DepositChainRequest struct {
 	Depositor   chain.Address
 	Amount      uint64
