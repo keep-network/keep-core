@@ -127,8 +127,6 @@ func (dsa *depositSweepAction) execute() error {
 			)
 		}
 
-		// Worth mentioning this should be treated as an estimation, giving
-		// the caveats mentioned in the docstring of GetBlockNumberByTimestamp.
 		revealBlock, err := dsa.chain.GetBlockNumberByTimestamp(
 			uint64(depositRequest.RevealedAt.Unix()),
 		)
