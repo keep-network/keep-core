@@ -48,16 +48,31 @@ type node struct {
 	btcChain       bitcoin.Chain
 	netProvider    net.Provider
 	walletRegistry *walletRegistry
+
+	// walletDispatcher ensures only one action is executed by a wallet at
+	// a time. All possible activities of a created wallet must be represented
+	// by appropriate actions dispatched through this component.
+	walletDispatcher *walletDispatcher
+
+	// protocolLatch makes sure no expensive number generator operations are
+	// running when signing or generating a wallet key are executed. The
+	// protocolLatch is used by dkgExecutor and signingExecutor.
 	protocolLatch  *generator.ProtocolLatch
 
+	// dkgExecutor encapsulates the logic of distributed key generation.
+	//
+	// dkgExecutor MUST NOT be used outside this struct.
 	dkgExecutor *dkgExecutor
 
 	signingExecutorsMutex sync.Mutex
 	// signingExecutors is the cache holding signing executors for specific wallets.
 	// The cache key is the uncompressed public key (with 04 prefix) of the wallet.
+	// signingExecutor encapsulates the generic logic of signing messages.
+	//
+	// signingExecutors MUST NOT be used outside this struct. Please use
+	// wallet actions and walletDispatcher to execute an action on an existing
+	// wallet.
 	signingExecutors map[string]*signingExecutor
-
-	walletDispatcher *walletDispatcher
 }
 
 func newNode(
@@ -81,9 +96,9 @@ func newNode(
 		btcChain:         btcChain,
 		netProvider:      netProvider,
 		walletRegistry:   walletRegistry,
+		walletDispatcher: newWalletDispatcher(),
 		protocolLatch:    latch,
 		signingExecutors: make(map[string]*signingExecutor),
-		walletDispatcher: newWalletDispatcher(),
 	}
 
 	// Only the operator address is known at this point and can be pre-fetched.
