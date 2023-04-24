@@ -322,10 +322,13 @@ func (bc *baseChain) OperatorKeyPair() (
 // GetBlockNumberByTimestamp gets the block number for the given timestamp.
 // In the best case, the block with the exact same timestamp is returned.
 // If the aforementioned is not possible, it tries to return the closest
-// possible block. However, there may be cases where another close block
-// is returned instead of the closest one. This may happen if the actual
-// average block time of the relevant block span strongly diverges from
-// the usual average block time of the chain.
+// possible block.
+//
+// WARNING: THIS FUNCTION MAY NOT BE PERFORMANT FOR BLOCKS EARLIER THAN 15537393
+// (SEPTEMBER 15, 2022, AT 1:42:42 EST) BEFORE THE ETH2 MERGE. PRE-MERGE
+// AVERAGE BLOCK TIME WAS HIGHER THAN THE VALUE ASSUMED WITHIN THIS FUNCTION
+// SO MORE OVERSHOOTS WILL BE DONE DURING THE BLOCK PREDICTION. OVERSHOOTS
+// MUST BE COMPENSATED BY ADDITIONAL CLIENT CALLS THAT TAKE TIME.
 func (bc *baseChain) GetBlockNumberByTimestamp(
 	timestamp uint64,
 ) (uint64, error) {
@@ -344,7 +347,7 @@ func (bc *baseChain) GetBlockNumberByTimestamp(
 	}
 
 	// The Ethereum average block time (https://etherscan.io/chart/blocktime)
-	// is slightly over 12 most of the time. If we assume it to be 12 here,
+	// is slightly over 12s most of the time. If we assume it to be 12s here,
 	// the below for-loop will often overshoot and hit blocks that are before
 	// the requested timestamp. That means we will often fall into the second
 	// compensation for-loop that walks forward block by block thus more

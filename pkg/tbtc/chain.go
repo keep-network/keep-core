@@ -349,10 +349,7 @@ type Chain interface {
 	// GetBlockNumberByTimestamp gets the block number for the given timestamp.
 	// In the best case, the block with the exact same timestamp is returned.
 	// If the aforementioned is not possible, it tries to return the closest
-	// possible block. However, there may be cases where another close block
-	// is returned instead of the closest one. This may happen if the actual
-	// average block time of the relevant block span strongly diverges from
-	// the usual average block time of the chain.
+	// possible block.
 	GetBlockNumberByTimestamp(timestamp uint64) (uint64, error)
 
 	sortition.Chain
