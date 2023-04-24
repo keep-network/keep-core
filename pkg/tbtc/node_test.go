@@ -35,6 +35,7 @@ func TestNode_GetSigningExecutor(t *testing.T) {
 	node, err := newNode(
 		groupParameters,
 		localChain,
+		nil, // TODO: Set a proper mock of the bitcoin.Chain.
 		localProvider,
 		keyStorePersistence,
 		&mockPersistenceHandle{},

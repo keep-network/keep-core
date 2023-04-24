@@ -118,7 +118,7 @@ func (d *deduplicator) notifyDepositSweepProposalSubmitted(
 	// deduplicator control. That is dangerous as deduplication logic could
 	// be implicitly changeable from the outside and lead to serious bugs.
 	var buffer bytes.Buffer
-	buffer.Write(newProposal.WalletPubKeyHash[:])
+	buffer.Write(newProposal.WalletPublicKeyHash[:])
 	for _, depositKey := range newProposal.DepositsKeys {
 		buffer.Write(depositKey.FundingTxHash[:])
 		fundingOutputIndex := make([]byte, 4)

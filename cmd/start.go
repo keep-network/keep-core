@@ -3,6 +3,7 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"github.com/keep-network/keep-core/pkg/bitcoin/electrum"
 
 	"github.com/spf13/cobra"
 
@@ -114,6 +115,11 @@ func start(cmd *cobra.Command) error {
 	// Skip initialization for bootstrap nodes as they are only used for network
 	// discovery.
 	if !clientConfig.LibP2P.Bootstrap {
+		btcChain, err := electrum.Connect(ctx, clientConfig.Bitcoin.Electrum)
+		if err != nil {
+			return fmt.Errorf("could not connect to Electrum chain: [%v]", err)
+		}
+
 		storage, err := storage.Initialize(
 			clientConfig.Storage,
 			clientConfig.Ethereum.KeyFilePassword,
@@ -166,6 +172,7 @@ func start(cmd *cobra.Command) error {
 		err = tbtc.Initialize(
 			ctx,
 			tbtcChain,
+			btcChain,
 			netProvider,
 			tbtcKeyStorePersistence,
 			tbtcDataPersistence,

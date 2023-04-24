@@ -5,6 +5,7 @@ import (
 	"crypto/elliptic"
 	"encoding/binary"
 	"fmt"
+	"github.com/keep-network/keep-core/pkg/bitcoin"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/chain/local_v1"
 	"github.com/keep-network/keep-core/pkg/operator"
@@ -56,6 +57,13 @@ func (lc *localChain) OperatorKeyPair() (
 	error,
 ) {
 	return lc.operatorPrivateKey, &lc.operatorPrivateKey.PublicKey, nil
+}
+
+func (lc *localChain) GetBlockNumberByTimestamp(timestamp uint64) (
+	uint64,
+	error,
+) {
+	panic("unsupported")
 }
 
 func (lc *localChain) OperatorToStakingProvider() (chain.Address, bool, error) {
@@ -418,6 +426,19 @@ func (lc *localChain) OnHeartbeatRequested(
 	panic("unsupported")
 }
 
+func (lc *localChain) PastDepositRevealedEvents(
+	filter *DepositRevealedEventFilter,
+) ([]*DepositRevealedEvent, error) {
+	panic("unsupported")
+}
+
+func (lc *localChain) GetDepositRequest(
+	fundingTxHash bitcoin.Hash,
+	fundingOutputIndex uint32,
+) (*DepositChainRequest, error) {
+	panic("unsupported")
+}
+
 func (lc *localChain) operatorAddress() (chain.Address, error) {
 	_, operatorPublicKey, err := lc.OperatorKeyPair()
 	if err != nil {
@@ -441,9 +462,19 @@ func (lc *localChain) PastDepositSweepProposalSubmittedEvents(
 
 func (lc *localChain) GetWalletLock(walletPublicKeyHash [20]byte) (
 	time.Time,
-	WalletAction,
+	WalletActionType,
 	error,
 ) {
+	panic("unsupported")
+}
+
+func (lc *localChain) ValidateDepositSweepProposal(
+	proposal *DepositSweepProposal,
+	depositsExtraInfo []struct {
+		*Deposit
+		FundingTx *bitcoin.Transaction
+	},
+) error {
 	panic("unsupported")
 }
 

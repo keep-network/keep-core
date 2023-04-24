@@ -3,6 +3,7 @@ package tbtc
 import (
 	"context"
 	"fmt"
+	"github.com/keep-network/keep-core/pkg/bitcoin"
 	"runtime"
 	"strings"
 	"time"
@@ -72,6 +73,7 @@ type Config struct {
 func Initialize(
 	ctx context.Context,
 	chain Chain,
+	btcChain bitcoin.Chain,
 	netProvider net.Provider,
 	keyStorePersistence persistence.ProtectedHandle,
 	workPersistence persistence.BasicHandle,
@@ -88,6 +90,7 @@ func Initialize(
 	node, err := newNode(
 		groupParameters,
 		chain,
+		btcChain,
 		netProvider,
 		keyStorePersistence,
 		workPersistence,
@@ -254,6 +257,8 @@ func Initialize(
 		}()
 	})
 
+	// TODO: Make heartbeats a proper walletAction managed by the WalletCoordinator
+	//       contract and do not use signingExecutor directly.
 	_ = chain.OnHeartbeatRequested(func(event *HeartbeatRequestedEvent) {
 		go func() {
 			// There is no need to deduplicate. Test loop events are unique.
@@ -334,7 +339,7 @@ func Initialize(
 	// e.g. redemption.
 	_ = chain.OnDepositSweepProposalSubmitted(func(event *DepositSweepProposalSubmittedEvent) {
 		go func() {
-			walletPublicKeyHash := event.Proposal.WalletPubKeyHash
+			walletPublicKeyHash := event.Proposal.WalletPublicKeyHash
 
 			if ok := deduplicator.notifyDepositSweepProposalSubmitted(
 				event.Proposal,
@@ -384,11 +389,18 @@ func Initialize(
 			// The event is confirmed if the wallet is locked due to a deposit
 			// sweep action.
 			if time.Now().Before(expiresAt) && cause == DepositSweep {
-				// TODO: Validate the proposal, assemble, sign and
-				//       broadcast the sweep tx.
 				logger.Infof(
-					"received deposit sweep proposal [%+v]",
+					"deposit sweep proposal submitted for "+
+						"wallet PKH [0x%x] at block [%v] by [%v]",
+					walletPublicKeyHash,
+					event.BlockNumber,
+					event.ProposalSubmitter,
+				)
+
+				node.handleDepositSweepProposal(
 					event.Proposal,
+					event.BlockNumber,
+					depositSweepProposalConfirmationBlocks,
 				)
 			} else {
 				logger.Infof(

@@ -2,9 +2,10 @@ package tbtc
 
 import (
 	"crypto/ecdsa"
-	"github.com/keep-network/keep-core/pkg/bitcoin"
 	"math/big"
 	"time"
+
+	"github.com/keep-network/keep-core/pkg/bitcoin"
 
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/operator"
@@ -189,6 +190,22 @@ type BridgeChain interface {
 	OnHeartbeatRequested(
 		func(event *HeartbeatRequestedEvent),
 	) subscription.EventSubscription
+
+	// PastDepositRevealedEvents fetches past deposit reveal events according
+	// to the provided filter or unfiltered if the filter is nil. Returned
+	// events are sorted by the block number in the ascending order, i.e. the
+	// latest event is at the end of the slice.
+	PastDepositRevealedEvents(
+		filter *DepositRevealedEventFilter,
+	) ([]*DepositRevealedEvent, error)
+
+	// GetDepositRequest gets the on-chain deposit request for the given
+	// funding transaction hash and output index. Returns an error if the
+	// deposit was not found.
+	GetDepositRequest(
+		fundingTxHash bitcoin.Hash,
+		fundingOutputIndex uint32,
+	) (*DepositChainRequest, error)
 }
 
 // HeartbeatRequestedEvent represents a Bridge heartbeat request event.
@@ -196,6 +213,62 @@ type HeartbeatRequestedEvent struct {
 	WalletPublicKey []byte
 	Messages        []*big.Int
 	BlockNumber     uint64
+}
+
+// DepositRevealedEvent represents a deposit reveal event.
+//
+// The Vault field is nil if the deposit does not target any vault on-chain.
+type DepositRevealedEvent struct {
+	FundingTxHash       bitcoin.Hash
+	FundingOutputIndex  uint32
+	Depositor           chain.Address
+	Amount              uint64
+	BlindingFactor      [8]byte
+	WalletPublicKeyHash [20]byte
+	RefundPublicKeyHash [20]byte
+	RefundLocktime      [4]byte
+	Vault               *chain.Address
+	BlockNumber         uint64
+}
+
+func (dre *DepositRevealedEvent) unpack() *Deposit {
+	return &Deposit{
+		Utxo: &bitcoin.UnspentTransactionOutput{
+			Outpoint: &bitcoin.TransactionOutpoint{
+				TransactionHash: dre.FundingTxHash,
+				OutputIndex:     dre.FundingOutputIndex,
+			},
+			Value: int64(dre.Amount),
+		},
+		Depositor:           dre.Depositor,
+		BlindingFactor:      dre.BlindingFactor,
+		WalletPublicKeyHash: dre.WalletPublicKeyHash,
+		RefundPublicKeyHash: dre.RefundPublicKeyHash,
+		RefundLocktime:      dre.RefundLocktime,
+		Vault:               dre.Vault,
+	}
+}
+
+// DepositRevealedEventFilter is a component allowing to filter DepositRevealedEvent.
+type DepositRevealedEventFilter struct {
+	StartBlock          uint64
+	EndBlock            *uint64
+	Depositor           []chain.Address
+	WalletPublicKeyHash [][20]byte
+}
+
+// DepositChainRequest represents a deposit request stored on-chain.
+// This is a deposit revealed to the Bridge and recorded on-chain. There is no
+// guarantee this deposit actually happened on the Bitcoin side.
+//
+// The Vault field is nil if the deposit does not target any vault on-chain.
+type DepositChainRequest struct {
+	Depositor   chain.Address
+	Amount      uint64
+	RevealedAt  time.Time
+	Vault       *chain.Address
+	TreasuryFee uint64
+	SweptAt     time.Time
 }
 
 // WalletCoordinatorChain defines the subset of the TBTC chain interface that
@@ -221,13 +294,25 @@ type WalletCoordinatorChain interface {
 	// on the wallet at the given moment.
 	GetWalletLock(
 		walletPublicKeyHash [20]byte,
-	) (time.Time, WalletAction, error)
+	) (time.Time, WalletActionType, error)
+
+	// ValidateDepositSweepProposal validates the given deposit sweep proposal
+	// against the chain. It requires some additional data about the deposits
+	// that must be fetched externally. Returns an error if the proposal is
+	// not valid or nil otherwise.
+	ValidateDepositSweepProposal(
+		proposal *DepositSweepProposal,
+		depositsExtraInfo []struct {
+			*Deposit
+			FundingTx *bitcoin.Transaction
+		},
+	) error
 }
 
 // DepositSweepProposal represents a deposit sweep proposal submitted to the chain.
 type DepositSweepProposal struct {
-	WalletPubKeyHash [20]byte
-	DepositsKeys     []struct {
+	WalletPublicKeyHash [20]byte
+	DepositsKeys        []struct {
 		FundingTxHash      bitcoin.Hash
 		FundingOutputIndex uint32
 	}
@@ -261,6 +346,11 @@ type Chain interface {
 	// OperatorKeyPair returns the key pair of the operator assigned to this
 	// chain handle.
 	OperatorKeyPair() (*operator.PrivateKey, *operator.PublicKey, error)
+	// GetBlockNumberByTimestamp gets the block number for the given timestamp.
+	// In the best case, the block with the exact same timestamp is returned.
+	// If the aforementioned is not possible, it tries to return the closest
+	// possible block.
+	GetBlockNumberByTimestamp(timestamp uint64) (uint64, error)
 
 	sortition.Chain
 	GroupSelectionChain

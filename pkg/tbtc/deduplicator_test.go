@@ -133,7 +133,7 @@ func TestNotifyDepositSweepProposalSubmitted(t *testing.T) {
 
 	// Original proposal.
 	proposal := &DepositSweepProposal{
-		WalletPubKeyHash: [20]byte{1, 2, 3, 4, 5, 1, 2, 3, 4, 5, 1, 2, 3, 4, 5, 1, 2, 3, 4, 5},
+		WalletPublicKeyHash: [20]byte{1, 2, 3, 4, 5, 1, 2, 3, 4, 5, 1, 2, 3, 4, 5, 1, 2, 3, 4, 5},
 		DepositsKeys: []struct {
 			FundingTxHash      bitcoin.Hash
 			FundingOutputIndex uint32
@@ -146,7 +146,7 @@ func TestNotifyDepositSweepProposalSubmitted(t *testing.T) {
 
 	// Proposal with different wallet.
 	proposalDiffWallet := &DepositSweepProposal{
-		WalletPubKeyHash: [20]byte{2, 2, 3, 4, 5, 1, 2, 3, 4, 5, 1, 2, 3, 4, 5, 1, 2, 3, 4, 5},
+		WalletPublicKeyHash: [20]byte{2, 2, 3, 4, 5, 1, 2, 3, 4, 5, 1, 2, 3, 4, 5, 1, 2, 3, 4, 5},
 		DepositsKeys: []struct {
 			FundingTxHash      bitcoin.Hash
 			FundingOutputIndex uint32
@@ -159,7 +159,7 @@ func TestNotifyDepositSweepProposalSubmitted(t *testing.T) {
 
 	// Proposal with different deposits.
 	proposalDiffDeposits := &DepositSweepProposal{
-		WalletPubKeyHash: [20]byte{1, 2, 3, 4, 5, 1, 2, 3, 4, 5, 1, 2, 3, 4, 5, 1, 2, 3, 4, 5},
+		WalletPublicKeyHash: [20]byte{1, 2, 3, 4, 5, 1, 2, 3, 4, 5, 1, 2, 3, 4, 5, 1, 2, 3, 4, 5},
 		DepositsKeys: []struct {
 			FundingTxHash      bitcoin.Hash
 			FundingOutputIndex uint32
@@ -172,7 +172,7 @@ func TestNotifyDepositSweepProposalSubmitted(t *testing.T) {
 
 	// Proposal with same deposits but in different order.
 	proposalDiffDepositsOrder := &DepositSweepProposal{
-		WalletPubKeyHash: [20]byte{1, 2, 3, 4, 5, 1, 2, 3, 4, 5, 1, 2, 3, 4, 5, 1, 2, 3, 4, 5},
+		WalletPublicKeyHash: [20]byte{1, 2, 3, 4, 5, 1, 2, 3, 4, 5, 1, 2, 3, 4, 5, 1, 2, 3, 4, 5},
 		DepositsKeys: []struct {
 			FundingTxHash      bitcoin.Hash
 			FundingOutputIndex uint32
@@ -185,7 +185,7 @@ func TestNotifyDepositSweepProposalSubmitted(t *testing.T) {
 
 	// Proposal with different sweep tx fee.
 	proposalDiffSweepTxFee := &DepositSweepProposal{
-		WalletPubKeyHash: [20]byte{1, 2, 3, 4, 5, 1, 2, 3, 4, 5, 1, 2, 3, 4, 5, 1, 2, 3, 4, 5},
+		WalletPublicKeyHash: [20]byte{1, 2, 3, 4, 5, 1, 2, 3, 4, 5, 1, 2, 3, 4, 5, 1, 2, 3, 4, 5},
 		DepositsKeys: []struct {
 			FundingTxHash      bitcoin.Hash
 			FundingOutputIndex uint32

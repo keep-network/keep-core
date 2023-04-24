@@ -3,22 +3,122 @@ package tbtc
 import (
 	"crypto/ecdsa"
 	"crypto/elliptic"
+	"encoding/hex"
 	"fmt"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/protocol/group"
 	"github.com/keep-network/keep-core/pkg/tecdsa"
+	"go.uber.org/zap"
+	"sync"
 )
 
-// WalletAction represents actions that can be performed by a wallet.
-type WalletAction uint8
+// WalletActionType represents actions types that can be performed by a wallet.
+type WalletActionType uint8
 
 const (
-	IdleWallet WalletAction = iota
+	Noop WalletActionType = iota
 	DepositSweep
 	Redemption
 	MovingFunds
 	MovedFundsSweep
 )
+
+func (wat WalletActionType) String() string {
+	switch wat {
+	case Noop:
+		return "Noop"
+	case DepositSweep:
+		return "DepositSweep"
+	case Redemption:
+		return "Redemption"
+	case MovingFunds:
+		return "MovingFunds"
+	case MovedFundsSweep:
+		return "MovedFundsSweep"
+	default:
+		panic("unknown wallet action type")
+	}
+}
+
+// walletAction represents an action that can be performed by the wallet.
+type walletAction interface {
+	// execute carries out the walletAction until completion.
+	execute() error
+
+	// wallet returns the wallet the walletAction is bound to.
+	wallet() wallet
+
+	// actionType returns the specific type of the walletAction.
+	actionType() WalletActionType
+}
+
+// errWalletBusy is an error returned when the waller cannot execute the
+// requested walletAction due to an ongoing work.
+var errWalletBusy = fmt.Errorf("wallet is busy")
+
+// walletDispatcher is a component responsible for dispatching wallet actions
+// to specific wallets.
+type walletDispatcher struct {
+	actionsMutex sync.Mutex
+	// actions is the mapping holding the currently executed action of the
+	// given wallet. The mapping key is the uncompressed public key
+	// (with 04 prefix) of the wallet.
+	actions map[string]WalletActionType
+}
+
+func newWalletDispatcher() *walletDispatcher {
+	return &walletDispatcher{
+		actions: make(map[string]WalletActionType),
+	}
+}
+
+// dispatch sends the given walletAction for execution. If the wallet is
+// already busy, an errWalletBusy error is returned and the action is ignored.
+func (wd *walletDispatcher) dispatch(action walletAction) error {
+	wd.actionsMutex.Lock()
+	defer wd.actionsMutex.Unlock()
+
+	walletPublicKeyBytes, err := marshalPublicKey(action.wallet().publicKey)
+	if err != nil {
+		return fmt.Errorf("cannot marshal wallet public key: [%v]", err)
+	}
+
+	walletActionLogger := logger.With(
+		zap.String("wallet", fmt.Sprintf("0x%x", walletPublicKeyBytes)),
+		zap.String("action", action.actionType().String()),
+	)
+
+	key := hex.EncodeToString(walletPublicKeyBytes)
+
+	if _, ok := wd.actions[key]; ok {
+		return errWalletBusy
+	}
+
+	wd.actions[key] = action.actionType()
+
+	go func() {
+		defer func() {
+			wd.actionsMutex.Lock()
+			delete(wd.actions, key)
+			wd.actionsMutex.Unlock()
+		}()
+
+		walletActionLogger.Infof("starting action execution")
+
+		err := action.execute()
+		if err != nil {
+			walletActionLogger.Errorf(
+				"action execution terminated with error: [%v]",
+				err,
+			)
+			return
+		}
+
+		walletActionLogger.Infof("action execution terminated with success")
+	}()
+
+	return nil
+}
 
 // wallet represents a tBTC wallet. A wallet is one of the basic building
 // blocks of the system that takes BTC under custody during the deposit
