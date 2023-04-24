@@ -257,6 +257,8 @@ func Initialize(
 		}()
 	})
 
+	// TODO: Make heartbeats a proper walletAction managed by the WalletCoordinator
+	//       contract and do not use signingExecutor directly.
 	_ = chain.OnHeartbeatRequested(func(event *HeartbeatRequestedEvent) {
 		go func() {
 			// There is no need to deduplicate. Test loop events are unique.
