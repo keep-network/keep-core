@@ -2,6 +2,7 @@ package tbtc
 
 import (
 	"encoding/hex"
+	"github.com/keep-network/keep-core/pkg/bitcoin"
 	"math/big"
 	"testing"
 	"time"
@@ -11,6 +12,7 @@ import (
 
 const testDKGSeedCachePeriod = 1 * time.Second
 const testDKGResultHashCachePeriod = 1 * time.Second
+const testDepositSweepProposalCachePeriod = 1 * time.Second
 
 func TestNotifyDKGStarted(t *testing.T) {
 	deduplicator := deduplicator{
@@ -108,6 +110,133 @@ func TestNotifyDKGResultSubmitted(t *testing.T) {
 
 	// Add the original parameters again.
 	canProcess = deduplicator.notifyDKGResultSubmitted(big.NewInt(100), hash1, 500)
+	if !canProcess {
+		t.Fatal("should be allowed to process")
+	}
+}
+
+func TestNotifyDepositSweepProposalSubmitted(t *testing.T) {
+	deduplicator := deduplicator{
+		depositSweepProposalCache: cache.NewTimeCache(
+			testDepositSweepProposalCachePeriod,
+		),
+	}
+
+	newHash := func(t *testing.T, value string) bitcoin.Hash {
+		hash, err := bitcoin.NewHashFromString(value, bitcoin.InternalByteOrder)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		return hash
+	}
+
+	// Original proposal.
+	proposal := &DepositSweepProposal{
+		WalletPublicKeyHash: [20]byte{1, 2, 3, 4, 5, 1, 2, 3, 4, 5, 1, 2, 3, 4, 5, 1, 2, 3, 4, 5},
+		DepositsKeys: []struct {
+			FundingTxHash      bitcoin.Hash
+			FundingOutputIndex uint32
+		}{
+			{newHash(t, "74d0e353cdba99a6c17ce2cfeab62a26c09b5eb756eccdcfb83dbc12e67b18bc"), 4},
+			{newHash(t, "f8eaf242a55ea15e602f9f990e33f67f99dfbe25d1802bbde63cc1caabf99668"), 0},
+		},
+		SweepTxFee: big.NewInt(1000),
+	}
+
+	// Proposal with different wallet.
+	proposalDiffWallet := &DepositSweepProposal{
+		WalletPublicKeyHash: [20]byte{2, 2, 3, 4, 5, 1, 2, 3, 4, 5, 1, 2, 3, 4, 5, 1, 2, 3, 4, 5},
+		DepositsKeys: []struct {
+			FundingTxHash      bitcoin.Hash
+			FundingOutputIndex uint32
+		}{
+			{newHash(t, "74d0e353cdba99a6c17ce2cfeab62a26c09b5eb756eccdcfb83dbc12e67b18bc"), 4},
+			{newHash(t, "f8eaf242a55ea15e602f9f990e33f67f99dfbe25d1802bbde63cc1caabf99668"), 0},
+		},
+		SweepTxFee: big.NewInt(1000),
+	}
+
+	// Proposal with different deposits.
+	proposalDiffDeposits := &DepositSweepProposal{
+		WalletPublicKeyHash: [20]byte{1, 2, 3, 4, 5, 1, 2, 3, 4, 5, 1, 2, 3, 4, 5, 1, 2, 3, 4, 5},
+		DepositsKeys: []struct {
+			FundingTxHash      bitcoin.Hash
+			FundingOutputIndex uint32
+		}{
+			{newHash(t, "84d0e353cdba99a6c17ce2cfeab62a26c09b5eb756eccdcfb83dbc12e67b18bc"), 4},
+			{newHash(t, "f8eaf242a55ea15e602f9f990e33f67f99dfbe25d1802bbde63cc1caabf99668"), 0},
+		},
+		SweepTxFee: big.NewInt(1000),
+	}
+
+	// Proposal with same deposits but in different order.
+	proposalDiffDepositsOrder := &DepositSweepProposal{
+		WalletPublicKeyHash: [20]byte{1, 2, 3, 4, 5, 1, 2, 3, 4, 5, 1, 2, 3, 4, 5, 1, 2, 3, 4, 5},
+		DepositsKeys: []struct {
+			FundingTxHash      bitcoin.Hash
+			FundingOutputIndex uint32
+		}{
+			{newHash(t, "f8eaf242a55ea15e602f9f990e33f67f99dfbe25d1802bbde63cc1caabf99668"), 0},
+			{newHash(t, "74d0e353cdba99a6c17ce2cfeab62a26c09b5eb756eccdcfb83dbc12e67b18bc"), 4},
+		},
+		SweepTxFee: big.NewInt(1000),
+	}
+
+	// Proposal with different sweep tx fee.
+	proposalDiffSweepTxFee := &DepositSweepProposal{
+		WalletPublicKeyHash: [20]byte{1, 2, 3, 4, 5, 1, 2, 3, 4, 5, 1, 2, 3, 4, 5, 1, 2, 3, 4, 5},
+		DepositsKeys: []struct {
+			FundingTxHash      bitcoin.Hash
+			FundingOutputIndex uint32
+		}{
+			{newHash(t, "74d0e353cdba99a6c17ce2cfeab62a26c09b5eb756eccdcfb83dbc12e67b18bc"), 4},
+			{newHash(t, "f8eaf242a55ea15e602f9f990e33f67f99dfbe25d1802bbde63cc1caabf99668"), 0},
+		},
+		SweepTxFee: big.NewInt(1001),
+	}
+
+	// Add the original proposal.
+	canProcess := deduplicator.notifyDepositSweepProposalSubmitted(proposal)
+	if !canProcess {
+		t.Fatal("should be allowed to process")
+	}
+
+	// Add the original proposal before caching period elapses.
+	canProcess = deduplicator.notifyDepositSweepProposalSubmitted(proposal)
+	if canProcess {
+		t.Fatal("should not be allowed to process")
+	}
+
+	// Add the proposal with different wallet.
+	canProcess = deduplicator.notifyDepositSweepProposalSubmitted(proposalDiffWallet)
+	if !canProcess {
+		t.Fatal("should be allowed to process")
+	}
+
+	// Add the proposal with different deposits.
+	canProcess = deduplicator.notifyDepositSweepProposalSubmitted(proposalDiffDeposits)
+	if !canProcess {
+		t.Fatal("should be allowed to process")
+	}
+
+	// Add the proposal with different deposits order.
+	canProcess = deduplicator.notifyDepositSweepProposalSubmitted(proposalDiffDepositsOrder)
+	if !canProcess {
+		t.Fatal("should be allowed to process")
+	}
+
+	// Add the proposal with different sweep tx fee.
+	canProcess = deduplicator.notifyDepositSweepProposalSubmitted(proposalDiffSweepTxFee)
+	if !canProcess {
+		t.Fatal("should be allowed to process")
+	}
+
+	// Wait until caching period elapses.
+	time.Sleep(testDepositSweepProposalCachePeriod)
+
+	// Add the original proposal again.
+	canProcess = deduplicator.notifyDepositSweepProposalSubmitted(proposal)
 	if !canProcess {
 		t.Fatal("should be allowed to process")
 	}

@@ -29,4 +29,10 @@ var (
 	LightRelayMaintainerProxyAddress string = strings.TrimSpace(
 		lightRelayMaintainerProxyAddressFileContent,
 	)
+
+	//go:embed _address/WalletCoordinator
+	walletCoordinatorAddressFileContent string
+
+	// WalletCoordinatorAddress is a WalletCoordinator contract's address read from the NPM package.
+	WalletCoordinatorAddress string = strings.TrimSpace(walletCoordinatorAddressFileContent)
 )

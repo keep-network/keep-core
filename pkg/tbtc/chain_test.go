@@ -5,11 +5,7 @@ import (
 	"crypto/elliptic"
 	"encoding/binary"
 	"fmt"
-	"math/big"
-	"math/rand"
-	"reflect"
-	"sync"
-
+	"github.com/keep-network/keep-core/pkg/bitcoin"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/chain/local_v1"
 	"github.com/keep-network/keep-core/pkg/operator"
@@ -17,6 +13,11 @@ import (
 	"github.com/keep-network/keep-core/pkg/subscription"
 	"github.com/keep-network/keep-core/pkg/tecdsa/dkg"
 	"golang.org/x/crypto/sha3"
+	"math/big"
+	"math/rand"
+	"reflect"
+	"sync"
+	"time"
 )
 
 const localChainOperatorID = chain.OperatorID(1)
@@ -56,6 +57,13 @@ func (lc *localChain) OperatorKeyPair() (
 	error,
 ) {
 	return lc.operatorPrivateKey, &lc.operatorPrivateKey.PublicKey, nil
+}
+
+func (lc *localChain) GetBlockNumberByTimestamp(timestamp uint64) (
+	uint64,
+	error,
+) {
+	panic("unsupported")
 }
 
 func (lc *localChain) OperatorToStakingProvider() (chain.Address, bool, error) {
@@ -418,6 +426,19 @@ func (lc *localChain) OnHeartbeatRequested(
 	panic("unsupported")
 }
 
+func (lc *localChain) PastDepositRevealedEvents(
+	filter *DepositRevealedEventFilter,
+) ([]*DepositRevealedEvent, error) {
+	panic("unsupported")
+}
+
+func (lc *localChain) GetDepositRequest(
+	fundingTxHash bitcoin.Hash,
+	fundingOutputIndex uint32,
+) (*DepositChainRequest, error) {
+	panic("unsupported")
+}
+
 func (lc *localChain) operatorAddress() (chain.Address, error) {
 	_, operatorPublicKey, err := lc.OperatorKeyPair()
 	if err != nil {
@@ -425,6 +446,36 @@ func (lc *localChain) operatorAddress() (chain.Address, error) {
 	}
 
 	return lc.Signing().PublicKeyToAddress(operatorPublicKey)
+}
+
+func (lc *localChain) OnDepositSweepProposalSubmitted(
+	handler func(event *DepositSweepProposalSubmittedEvent),
+) subscription.EventSubscription {
+	panic("unsupported")
+}
+
+func (lc *localChain) PastDepositSweepProposalSubmittedEvents(
+	filter *DepositSweepProposalSubmittedEventFilter,
+) ([]*DepositSweepProposalSubmittedEvent, error) {
+	panic("unsupported")
+}
+
+func (lc *localChain) GetWalletLock(walletPublicKeyHash [20]byte) (
+	time.Time,
+	WalletActionType,
+	error,
+) {
+	panic("unsupported")
+}
+
+func (lc *localChain) ValidateDepositSweepProposal(
+	proposal *DepositSweepProposal,
+	depositsExtraInfo []struct {
+		*Deposit
+		FundingTx *bitcoin.Transaction
+	},
+) error {
+	panic("unsupported")
 }
 
 // Connect sets up the local chain.
