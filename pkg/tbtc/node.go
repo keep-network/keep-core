@@ -8,6 +8,7 @@ import (
 	"github.com/keep-network/keep-core/pkg/bitcoin"
 	"math/big"
 	"sync"
+	"time"
 
 	"github.com/keep-network/keep-core/pkg/chain"
 
@@ -290,6 +291,7 @@ func (n *node) getSigningExecutor(
 // If so, this function orchestrates and dispatches an appropriate wallet action.
 func (n *node) handleDepositSweepProposal(
 	proposal *DepositSweepProposal,
+	proposalExpiresAt time.Time,
 	startBlock uint64,
 	delayBlocks uint64,
 ) {
@@ -350,6 +352,7 @@ func (n *node) handleDepositSweepProposal(
 		signingExecutor,
 		proposal,
 		proposalProcessingStartBlock,
+		proposalExpiresAt,
 	)
 
 	walletActionLogger := logger.With(

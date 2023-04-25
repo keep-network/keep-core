@@ -7,6 +7,7 @@ import (
 	"github.com/keep-network/keep-core/pkg/bitcoin"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"go.uber.org/zap"
+	"time"
 )
 
 const (
@@ -19,16 +20,28 @@ const (
 	// transaction in order to consider it a valid part of the deposit sweep
 	// proposal.
 	depositSweepRequiredFundingTxConfirmations = 6
+	// depositSweepSigningTimeoutSafetyMargin determines the duration of the
+	// safety margin that must be preserved between the signing timeout
+	// and the timeout of the entire deposit sweep action. This safety
+	// margin prevents against the case where signing completes late and there
+	// is not enough time to broadcast the sweep transaction properly.
+	// In such a case, wallet signatures may leak and make the wallet subject
+	// of fraud accusations. Usage of the safety margin ensures there is enough
+	// time to perform post-signing steps of the deposit sweep action.
+	depositSweepSigningTimeoutSafetyMargin = 1 * time.Hour
 )
 
 // depositSweepAction is a deposit sweep walletAction.
 type depositSweepAction struct {
-	chain                        Chain
-	btcChain                     bitcoin.Chain
-	sweepingWallet               wallet
-	signingExecutor              *signingExecutor
+	chain    Chain
+	btcChain bitcoin.Chain
+
+	sweepingWallet  wallet
+	signingExecutor *signingExecutor
+
 	proposal                     *DepositSweepProposal
 	proposalProcessingStartBlock uint64
+	proposalExpiresAt            time.Time
 }
 
 func newDepositSweepAction(
@@ -38,6 +51,7 @@ func newDepositSweepAction(
 	signingExecutor *signingExecutor,
 	proposal *DepositSweepProposal,
 	proposalProcessingStartBlock uint64,
+	proposalExpiresAt time.Time,
 ) *depositSweepAction {
 	return &depositSweepAction{
 		chain:                        chain,
@@ -46,6 +60,7 @@ func newDepositSweepAction(
 		signingExecutor:              signingExecutor,
 		proposal:                     proposal,
 		proposalProcessingStartBlock: proposalProcessingStartBlock,
+		proposalExpiresAt:            proposalExpiresAt,
 	}
 }
 
@@ -257,8 +272,16 @@ func (dsa *depositSweepAction) execute() error {
 
 	actionLogger.Infof("signing deposit sweep transaction's sig hashes")
 
+	// Make sure signing times out far before the entire action.
+	signingTimesOutAt := dsa.proposalExpiresAt.Add(-depositSweepSigningTimeoutSafetyMargin)
+	signingCtx, cancelSigningCtx := context.WithTimeout(
+		context.Background(),
+		time.Until(signingTimesOutAt),
+	)
+	defer cancelSigningCtx()
+
 	signatures, err := dsa.signingExecutor.signBatch(
-		context.TODO(), // TODO: Add a context that will expire a little bit before the wallet lock time.
+		signingCtx,
 		sigHashes,
 		dsa.proposalProcessingStartBlock, // TODO: Add some blocks to compensate the time used for proposal validation.
 	)
@@ -292,6 +315,8 @@ func (dsa *depositSweepAction) execute() error {
 
 	actionLogger.Infof("broadcasting deposit sweep transaction")
 
+	// TODO: Current logic will cause multiple nodes to submit in the same time.
+	//       Improve the situation.
 	err = dsa.btcChain.BroadcastTransaction(sweepTx)
 	if err != nil {
 		return fmt.Errorf(
@@ -302,7 +327,7 @@ func (dsa *depositSweepAction) execute() error {
 
 	actionLogger.Infof("monitoring deposit sweep transaction")
 
-	// TODO: Monitor for 6 confirmations.
+	// TODO: Monitor the broadcasted transaction.
 
 	actionLogger.Infof("deposit sweep transaction broadcast successfully")
 
