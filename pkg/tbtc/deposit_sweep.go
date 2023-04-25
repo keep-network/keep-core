@@ -29,6 +29,15 @@ const (
 	// of fraud accusations. Usage of the safety margin ensures there is enough
 	// time to perform post-signing steps of the deposit sweep action.
 	depositSweepSigningTimeoutSafetyMargin = 1 * time.Hour
+	// depositSweepSigningDelayBlocks determines the per-deposit delay in
+	// blocks that must be preserved before starting the deposit sweep
+	// transaction signing process. This delay aims to reflect the time taken
+	// by pre-signing steps that must be done for a single deposit.
+	// Multiplying this constant by the number of proposal's deposits
+	// allows to determine the total delay that must be added to the proposal
+	// processing start block in order to designate a sane signing start block
+	// and maximize chances for a successful signing process.
+	depositSweepSigningDelayBlocks = 10
 )
 
 // depositSweepAction is a deposit sweep walletAction.
@@ -280,10 +289,16 @@ func (dsa *depositSweepAction) execute() error {
 	)
 	defer cancelSigningCtx()
 
+	// Make sure the signing start block takes into account the time elapsed
+	// during pre-signing steps, i.e. gathering deposit data and proposal
+	// validation.
+	signingStartBlock := dsa.proposalProcessingStartBlock +
+		uint64(depositsCount*depositSweepSigningDelayBlocks)
+
 	signatures, err := dsa.signingExecutor.signBatch(
 		signingCtx,
 		sigHashes,
-		dsa.proposalProcessingStartBlock, // TODO: Add some blocks to compensate the time used for proposal validation.
+		signingStartBlock,
 	)
 	if err != nil {
 		return fmt.Errorf(
@@ -315,7 +330,7 @@ func (dsa *depositSweepAction) execute() error {
 
 	actionLogger.Infof("broadcasting deposit sweep transaction")
 
-	// TODO: Current logic will cause multiple nodes to submit in the same time.
+	// TODO: Current logic will cause multiple nodes to broadcast in the same time.
 	//       Improve the situation.
 	err = dsa.btcChain.BroadcastTransaction(sweepTx)
 	if err != nil {
