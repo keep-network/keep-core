@@ -67,12 +67,13 @@ func TestReadConfigFromFile(t *testing.T) {
 		"Ethereum.Developer - map": {
 			readValueFunc: func(c *Config) interface{} { return c.Ethereum.ContractAddresses },
 			expectedValue: map[string]string{
-				"randombeacon":      "0xcf64c2a367341170cb4e09cf8c0ed137d8473ceb",
-				"walletregistry":    "0x143ba24e66fce8bca22f7d739f9a932c519b1c76",
-				"tokenstaking":      "0xa363a197f1bbb8877f50350234e3f15fb4175457",
-				"bridge":            "0x138D2a0c87BA9f6BE1DCc13D6224A6aCE9B6b6F0",
-				"lightrelay":        "0x68e20afD773fDF1231B5cbFeA7040e73e79cAc36",
-				"walletcoordinator": "0xfdc315b0e608b7cDE9166D9D69a1506779e3E0CA",
+				"randombeacon":              "0xcf64c2a367341170cb4e09cf8c0ed137d8473ceb",
+				"walletregistry":            "0x143ba24e66fce8bca22f7d739f9a932c519b1c76",
+				"tokenstaking":              "0xa363a197f1bbb8877f50350234e3f15fb4175457",
+				"bridge":                    "0x138D2a0c87BA9f6BE1DCc13D6224A6aCE9B6b6F0",
+				"lightrelay":                "0x68e20afD773fDF1231B5cbFeA7040e73e79cAc36",
+				"lightrelaymaintainerproxy": "0x30cd93828613D5945A2916a22E0f0e9bC561EAB5",
+				"walletcoordinator":         "0xfdc315b0e608b7cDE9166D9D69a1506779e3E0CA",
 			},
 		},
 		"Developer - RandomBeacon": {
@@ -111,6 +112,15 @@ func TestReadConfigFromFile(t *testing.T) {
 				return address.String()
 			},
 			expectedValue: "0x68e20afD773fDF1231B5cbFeA7040e73e79cAc36",
+		},
+		"Ethereum.Developer - LightRelayMaintainerProxy": {
+			readValueFunc: func(c *Config) interface{} {
+				address, _ := c.Ethereum.ContractAddress(
+					ethereum.LightRelayMaintainerProxyContractName,
+				)
+				return address.String()
+			},
+			expectedValue: "0x30cd93828613D5945A2916a22E0f0e9bC561EAB5",
 		},
 		"Ethereum.Developer - WalletCoordinator": {
 			readValueFunc: func(c *Config) interface{} {
