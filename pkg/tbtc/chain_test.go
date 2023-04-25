@@ -446,6 +446,12 @@ func (lc *localChain) GetWallet(walletPublicKeyHash [20]byte) (
 	panic("unsupported")
 }
 
+func (lc *localChain) ComputeMainUtxoHash(
+	mainUtxo *bitcoin.UnspentTransactionOutput,
+) [32]byte {
+	panic("unsupported")
+}
+
 func (lc *localChain) operatorAddress() (chain.Address, error) {
 	_, operatorPublicKey, err := lc.OperatorKeyPair()
 	if err != nil {

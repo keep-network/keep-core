@@ -210,6 +210,10 @@ type BridgeChain interface {
 	// GetWallet gets the on-chain data for the given wallet. Returns an error
 	// if the wallet was not found.
 	GetWallet(walletPublicKeyHash [20]byte) (*WalletChainData, error)
+
+	// ComputeMainUtxoHash computes the hash of the provided main UTXO
+	// according to the on-chain Bridge rules.
+	ComputeMainUtxoHash(mainUtxo *bitcoin.UnspentTransactionOutput) [32]byte
 }
 
 // HeartbeatRequestedEvent represents a Bridge heartbeat request event.

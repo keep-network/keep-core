@@ -1135,6 +1135,31 @@ func (tc *TbtcChain) GetWallet(
 	}, nil
 }
 
+func (tc *TbtcChain) ComputeMainUtxoHash(
+	mainUtxo *bitcoin.UnspentTransactionOutput,
+) [32]byte {
+	return computeMainUtxoHash(mainUtxo)
+}
+
+func computeMainUtxoHash(mainUtxo *bitcoin.UnspentTransactionOutput) [32]byte {
+	outputIndexBytes := make([]byte, 4)
+	binary.BigEndian.PutUint32(outputIndexBytes, mainUtxo.Outpoint.OutputIndex)
+
+	valueBytes := make([]byte, 8)
+	binary.BigEndian.PutUint64(valueBytes, uint64(mainUtxo.Value))
+
+	mainUtxoHash := crypto.Keccak256Hash(
+		append(
+			append(
+				mainUtxo.Outpoint.TransactionHash[:],
+				outputIndexBytes...,
+			), valueBytes...,
+		),
+	)
+
+	return mainUtxoHash
+}
+
 func buildDepositKey(
 	fundingTxHash bitcoin.Hash,
 	fundingOutputIndex uint32,
