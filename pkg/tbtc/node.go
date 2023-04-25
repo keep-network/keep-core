@@ -338,12 +338,18 @@ func (n *node) handleDepositSweepProposal(
 		walletPublicKeyBytes,
 	)
 
+	// The proposal's processing started after a confirmation period represented
+	// by the delayBlocks parameter. Hence, we must add it to the original
+	// startBlock.
+	proposalProcessingStartBlock := startBlock + delayBlocks
+
 	action := newDepositSweepAction(
 		n.chain,
 		n.btcChain,
 		wallet,
 		signingExecutor,
 		proposal,
+		proposalProcessingStartBlock,
 	)
 
 	walletActionLogger := logger.With(

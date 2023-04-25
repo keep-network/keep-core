@@ -1,6 +1,7 @@
 package tbtc
 
 import (
+	"context"
 	"crypto/ecdsa"
 	"fmt"
 	"github.com/keep-network/keep-core/pkg/bitcoin"
@@ -22,11 +23,12 @@ const (
 
 // depositSweepAction is a deposit sweep walletAction.
 type depositSweepAction struct {
-	chain           Chain
-	btcChain        bitcoin.Chain
-	sweepingWallet  wallet
-	signingExecutor *signingExecutor
-	proposal        *DepositSweepProposal
+	chain                        Chain
+	btcChain                     bitcoin.Chain
+	sweepingWallet               wallet
+	signingExecutor              *signingExecutor
+	proposal                     *DepositSweepProposal
+	proposalProcessingStartBlock uint64
 }
 
 func newDepositSweepAction(
@@ -35,13 +37,15 @@ func newDepositSweepAction(
 	sweepingWallet wallet,
 	signingExecutor *signingExecutor,
 	proposal *DepositSweepProposal,
+	proposalProcessingStartBlock uint64,
 ) *depositSweepAction {
 	return &depositSweepAction{
-		chain:           chain,
-		btcChain:        btcChain,
-		sweepingWallet:  sweepingWallet,
-		signingExecutor: signingExecutor,
-		proposal:        proposal,
+		chain:                        chain,
+		btcChain:                     btcChain,
+		sweepingWallet:               sweepingWallet,
+		signingExecutor:              signingExecutor,
+		proposal:                     proposal,
+		proposalProcessingStartBlock: proposalProcessingStartBlock,
 	}
 }
 
@@ -205,13 +209,93 @@ func (dsa *depositSweepAction) execute() error {
 		return fmt.Errorf("deposit sweep proposal is invalid: [%v]", err)
 	}
 
-	actionLogger.Infof("deposit sweep proposal is valid")
+	actionLogger.Infof(
+		"deposit sweep proposal is valid; assembling deposit sweep transaction",
+	)
 
-	// TODO: Do the following:
-	//       - Construct the transaction
-	//       - Sign
-	//       - Broadcast
-	//       - Monitor
+	// TODO: Determine the wallet main UTXO.
+	var walletMainUtxo *bitcoin.UnspentTransactionOutput
+
+	deposits := make([]*Deposit, len(depositExtraInfo))
+	for i, dei := range depositExtraInfo {
+		deposits[i] = dei.Deposit
+	}
+
+	unsignedSweepTx, err := assembleDepositSweepTransaction(
+		dsa.btcChain,
+		dsa.wallet().publicKey,
+		walletMainUtxo,
+		deposits,
+		dsa.proposal.SweepTxFee.Int64(),
+	)
+	if err != nil {
+		return fmt.Errorf(
+			"error while bulding deposit sweep transaction: [%v]",
+			err,
+		)
+	}
+
+	actionLogger.Infof("computing deposit sweep transaction's sig hashes")
+
+	sigHashes, err := unsignedSweepTx.ComputeSignatureHashes()
+	if err != nil {
+		return fmt.Errorf(
+			"error while computing deposit sweep transaction's "+
+				"sig hashes: [%v]",
+			err,
+		)
+	}
+
+	actionLogger.Infof("signing deposit sweep transaction's sig hashes")
+
+	signatures, err := dsa.signingExecutor.signBatch(
+		context.TODO(), // TODO: Add a context that will expire a little bit before the wallet lock time.
+		sigHashes,
+		dsa.proposalProcessingStartBlock, // TODO: Add some blocks to compensate the time used for proposal validation.
+	)
+	if err != nil {
+		return fmt.Errorf(
+			"error while signing deposit sweep transaction's "+
+				"sig hashes: [%v]",
+			err,
+		)
+	}
+
+	actionLogger.Infof("applying deposit sweep transaction's signatures")
+
+	containers := make([]*bitcoin.SignatureContainer, len(signatures))
+	for i, signature := range signatures {
+		containers[i] = &bitcoin.SignatureContainer{
+			R:         signature.R,
+			S:         signature.S,
+			PublicKey: dsa.wallet().publicKey,
+		}
+	}
+
+	sweepTx, err := unsignedSweepTx.AddSignatures(containers)
+	if err != nil {
+		return fmt.Errorf(
+			"error while applying deposit sweep transaction's "+
+				"signatures: [%v]",
+			err,
+		)
+	}
+
+	actionLogger.Infof("broadcasting deposit sweep transaction")
+
+	err = dsa.btcChain.BroadcastTransaction(sweepTx)
+	if err != nil {
+		return fmt.Errorf(
+			"error while broadcasting deposit sweep transaction: [%v]",
+			err,
+		)
+	}
+
+	actionLogger.Infof("monitoring deposit sweep transaction")
+
+	// TODO: Monitor for 6 confirmations.
+
+	actionLogger.Infof("deposit sweep transaction broadcast successfully")
 
 	return nil
 }
