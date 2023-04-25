@@ -138,6 +138,13 @@ func (mbc *mockBitcoinChain) GetBlockHeader(
 	panic("not implemented")
 }
 
+func (mbc *mockBitcoinChain) GetTransactionsForPublicKeyHash(
+	publicKeyHash [20]byte,
+	limit int,
+) ([]*bitcoin.Transaction, error) {
+	panic("not implemented")
+}
+
 func (mbc *mockBitcoinChain) addTransaction(
 	transaction *bitcoin.Transaction,
 ) error {
