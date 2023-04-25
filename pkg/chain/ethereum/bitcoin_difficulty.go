@@ -115,16 +115,12 @@ func (bdc *BitcoinDifficultyChain) Ready() (bool, error) {
 	return bdc.lightRelay.Ready()
 }
 
-// AuthorizationRequired checks whether the relay requires the address
-// submitting a retarget to be authorised in advance by governance.
-func (bdc *BitcoinDifficultyChain) AuthorizationRequired() (bool, error) {
-	return bdc.lightRelay.AuthorizationRequired()
-}
-
 // IsAuthorized checks whether the given address has been authorised by
 // governance to submit a retarget.
 func (bdc *BitcoinDifficultyChain) IsAuthorized(address chain.Address) (bool, error) {
-	return bdc.lightRelay.IsAuthorized(common.HexToAddress(address.String()))
+	return bdc.LightRelayMaintainerProxy.IsAuthorized(
+		common.HexToAddress(address.String()),
+	)
 }
 
 // Retarget adds a new epoch to the relay by providing a proof of the difficulty

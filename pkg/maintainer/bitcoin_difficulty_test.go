@@ -12,34 +12,24 @@ import (
 
 func TestVerifySubmissionEligibility(t *testing.T) {
 	tests := map[string]struct {
-		ready                 bool
-		authorizationRequired bool
-		operatorAuthorized    bool
-		expectedError         error
+		ready              bool
+		operatorAuthorized bool
+		expectedError      error
 	}{
 		"chain not ready": {
-			ready:                 false,
-			authorizationRequired: false,
-			operatorAuthorized:    false,
-			expectedError:         errNoGenesis,
-		},
-		"authorization not required": {
-			ready:                 true,
-			authorizationRequired: false,
-			operatorAuthorized:    false,
-			expectedError:         nil,
+			ready:              false,
+			operatorAuthorized: false,
+			expectedError:      errNoGenesis,
 		},
 		"operator not authorized": {
-			ready:                 true,
-			authorizationRequired: true,
-			operatorAuthorized:    false,
-			expectedError:         errNotAuthorized,
+			ready:              true,
+			operatorAuthorized: false,
+			expectedError:      errNotAuthorized,
 		},
 		"operator authorized": {
-			ready:                 true,
-			authorizationRequired: true,
-			operatorAuthorized:    true,
-			expectedError:         nil,
+			ready:              true,
+			operatorAuthorized: true,
+			expectedError:      nil,
 		},
 	}
 
@@ -49,7 +39,6 @@ func TestVerifySubmissionEligibility(t *testing.T) {
 			operatorAddress := difficultyChain.Signing().Address()
 
 			difficultyChain.SetReady(test.ready)
-			difficultyChain.SetAuthorizationRequired(test.authorizationRequired)
 			difficultyChain.SetAuthorizedOperator(
 				operatorAddress,
 				test.operatorAuthorized,

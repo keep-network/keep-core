@@ -138,19 +138,6 @@ func (bdm *bitcoinDifficultyMaintainer) verifySubmissionEligibility() error {
 		return errNoGenesis
 	}
 
-	authorizationRequired, err := bdm.chain.AuthorizationRequired()
-	if err != nil {
-		return fmt.Errorf(
-			"cannot check whether authorization is required to submit "+
-				"block headers: [%w]",
-			err,
-		)
-	}
-
-	if !authorizationRequired {
-		return nil
-	}
-
 	maintainerAddress := bdm.chain.Signing().Address()
 
 	isAuthorized, err := bdm.chain.IsAuthorized(maintainerAddress)

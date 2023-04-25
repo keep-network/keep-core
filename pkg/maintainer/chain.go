@@ -14,10 +14,6 @@ type BitcoinDifficultyChain interface {
 	// otherwise the prevEpochDifficulty will be uninitialized and zero.
 	Ready() (bool, error)
 
-	// AuthorizationRequired checks whether the relay requires the address
-	// submitting a retarget to be authorised in advance by governance.
-	AuthorizationRequired() (bool, error)
-
 	// IsAuthorized checks whether the given address has been authorized by
 	// governance to submit a retarget.
 	IsAuthorized(address chain.Address) (bool, error)
