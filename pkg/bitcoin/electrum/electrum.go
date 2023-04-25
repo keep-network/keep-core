@@ -7,6 +7,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"math"
+	"sort"
 	"strings"
 	"sync"
 	"time"
@@ -298,6 +299,158 @@ func (c *Connection) GetBlockHeader(
 	}
 
 	return blockHeader, nil
+}
+
+// GetTransactionsForPublicKeyHash get confirmed transactions that pays the
+// given public key hash using either a P2PKH or P2WPKH script. The returned
+// transactions are ordered by block height in the ascending order, i.e.
+// the latest transaction is at the end of the list. The returned list does
+// not contain unconfirmed transactions living in the mempool at the moment
+// of request. The returned transactions list can be limited using the
+// `limit` parameter. For example, if `limit` is set to `5`, only the
+// latest five transactions will be returned.
+func (c *Connection) GetTransactionsForPublicKeyHash(
+	publicKeyHash [20]byte,
+	limit int,
+) ([]*bitcoin.Transaction, error) {
+	p2pkh, err := bitcoin.PayToPublicKeyHash(publicKeyHash)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"cannot build P2PKH for public key hash [0x%x]: [%v]",
+			publicKeyHash,
+			err,
+		)
+	}
+
+	p2wpkh, err := bitcoin.PayToWitnessPublicKeyHash(publicKeyHash)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"cannot build P2WPKH for public key hash [0x%x]: [%v]",
+			publicKeyHash,
+			err,
+		)
+	}
+
+	p2pkhItems, err := c.getConfirmedScriptHistory(p2pkh)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"cannot get P2PKH history for public key hash [0x%x]: [%v]",
+			publicKeyHash,
+			err,
+		)
+	}
+
+	p2wpkhItems, err := c.getConfirmedScriptHistory(p2wpkh)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"cannot get P2WPKH history for public key hash [0x%x]: [%v]",
+			publicKeyHash,
+			err,
+		)
+	}
+
+	items := append(p2pkhItems, p2wpkhItems...)
+
+	sort.SliceStable(
+		items,
+		func(i, j int) bool {
+			return items[i].blockHeight < items[j].blockHeight
+		},
+	)
+
+	var selectedItems []*scriptHistoryItem
+	if len(items) > limit {
+		selectedItems = items[len(items)-limit:]
+	} else {
+		selectedItems = items
+	}
+
+	transactions := make([]*bitcoin.Transaction, len(selectedItems))
+	for i, item := range selectedItems {
+		transaction, err := c.GetTransaction(item.txHash)
+		if err != nil {
+			return nil, fmt.Errorf("cannot get transaction: [%v]", err)
+		}
+
+		transactions[i] = transaction
+	}
+
+	return transactions, nil
+}
+
+type scriptHistoryItem struct {
+	txHash      bitcoin.Hash
+	blockHeight int32
+}
+
+// getConfirmedScriptHistory returns a history of confirmed transactions for
+// the given script (P2PKH, P2WPKH, P2SH, P2WSH, etc.). The returned list
+// is sorted by the block height in the ascending order, i.e. the latest
+// transaction is at the end of the list. The resulting list does not contain
+// unconfirmed transactions living in the mempool at the moment of request.
+func (c *Connection) getConfirmedScriptHistory(
+	script []byte,
+) ([]*scriptHistoryItem, error) {
+	scriptHash := sha256.Sum256(script)
+	reversedScriptHash := byteutils.Reverse(scriptHash[:])
+	reversedScriptHashString := hex.EncodeToString(reversedScriptHash)
+
+	items, err := requestWithRetry(
+		c,
+		func(
+			ctx context.Context,
+			client *electrum.Client,
+		) ([]*electrum.GetMempoolResult, error) {
+			return client.GetHistory(ctx, reversedScriptHashString)
+		})
+	if err != nil {
+		return nil, fmt.Errorf(
+			"failed to get history for script [0x%x]: [%v]",
+			script,
+			err,
+		)
+	}
+
+	// According to https://electrumx.readthedocs.io/en/latest/protocol-methods.html#blockchain-scripthash-get-history
+	// unconfirmed items living in the mempool are appended at the end of the
+	// returned list and their height value is either -1 or 0. That means
+	// we need to take all items with height >0 to obtain a confirmed txs
+	// history.
+	confirmedItems := make([]*scriptHistoryItem, 0)
+	for _, item := range items {
+		if item.Height > 0 {
+			txHash, err := bitcoin.NewHashFromString(
+				item.Hash,
+				bitcoin.ReversedByteOrder,
+			)
+			if err != nil {
+				return nil, fmt.Errorf(
+					"cannot parse hash [%s]: [%v]",
+					item.Hash,
+					err,
+				)
+			}
+
+			confirmedItems = append(
+				confirmedItems, &scriptHistoryItem{
+					txHash:      txHash,
+					blockHeight: item.Height,
+				},
+			)
+		}
+	}
+
+	// The list returned from client.GetHistory is sorted by the block height
+	// in the ascending order though we are sorting it again just in case
+	// (e.g. API contract changes).
+	sort.SliceStable(
+		confirmedItems,
+		func(i, j int) bool {
+			return confirmedItems[i].blockHeight < confirmedItems[j].blockHeight
+		},
+	)
+
+	return confirmedItems, nil
 }
 
 func (c *Connection) electrumConnect() error {

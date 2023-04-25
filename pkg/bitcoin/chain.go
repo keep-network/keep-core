@@ -28,4 +28,17 @@ type Chain interface {
 	// block with the given height was not found on the chain, this function
 	// returns an error.
 	GetBlockHeader(blockHeight uint) (*BlockHeader, error)
+
+	// GetTransactionsForPublicKeyHash get confirmed transactions that pays the
+	// given public key hash using either a P2PKH or P2WPKH script. The returned
+	// transactions are ordered by block height in the ascending order, i.e.
+	// the latest transaction is at the end of the list. The returned list does
+	// not contain unconfirmed transactions living in the mempool at the moment
+	// of request. The returned transactions list can be limited using the
+	// `limit` parameter. For example, if `limit` is set to `5`, only the
+	// latest five transactions will be returned.
+	GetTransactionsForPublicKeyHash(
+		publicKeyHash [20]byte,
+		limit int,
+	) ([]*Transaction, error)
 }

@@ -5,8 +5,10 @@ package electrum
 
 import (
 	"context"
+	"encoding/hex"
 	"fmt"
 	"math"
+	"reflect"
 	"testing"
 	"time"
 
@@ -284,6 +286,56 @@ func TestGetBlockHeader_Negative_Integration(t *testing.T) {
 					"invalid error\nexpected: %v\nactual:   %v",
 					expectedErrorMsg,
 					err,
+				)
+			}
+		})
+	}
+}
+
+func TestGetTransactionsForPublicKeyHash_Integration(t *testing.T) {
+	var publicKeyHash [20]byte
+	publicKeyHashBytes, err := hex.DecodeString("e6f9d74726b19b75f16fe1e9feaec048aa4fa1d0")
+	if err != nil {
+		t.Fatal(err)
+	}
+	copy(publicKeyHash[:], publicKeyHashBytes)
+
+	// To determine the expected five latest transactions for comparison, we
+	// use a block explorer to browse the history for the two addresses the
+	// e6f9d74726b19b75f16fe1e9feaec048aa4fa1d0 public key hash translates to:
+	//
+	// - P2WPKH testnet address: https://live.blockcypher.com/btc-testnet/address/tb1qumuaw3exkxdhtut0u85latkqfz4ylgwstkdzsx (P2W
+	// - P2PKH testnet address: https://live.blockcypher.com/btc-testnet/address/n2aF1Rj6PK26quhGRo8YoRQYjwm37Zjnkb
+	//
+	// Then, we take all transactions for both addresses and pick the latest five.
+	expectedHashes := []string{
+		"f65bc5029251f0042aedb37f90dbb2bfb63a2e81694beef9cae5ec62e954c22e",
+		"44863a79ce2b8fec9792403d5048506e50ffa7338191db0e6c30d3d3358ea2f6",
+		"4c6b33b7c0550e0e536a5d119ac7189d71e1296fcb0c258e0c115356895bc0e6",
+		"605edd75ae0b4fa7cfc7aae8f1399119e9d7ecc212e6253156b60d60f4925d44",
+		"4f9affc5b418385d5aa61e23caa0b55156bf0682d5fedf2d905446f3f88aec6c",
+	}
+
+	for testName, config := range configs {
+		t.Run(testName, func(t *testing.T) {
+			electrum := newTestConnection(t, config)
+
+			transactions, err := electrum.GetTransactionsForPublicKeyHash(publicKeyHash, 5)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			hashes := make([]string, len(transactions))
+			for i, transaction := range transactions {
+				hash := transaction.Hash()
+				hashes[i] = hash.Hex(bitcoin.ReversedByteOrder)
+			}
+
+			if !reflect.DeepEqual(expectedHashes, hashes) {
+				t.Errorf(
+					"unexpected transactions\nexpected: %v\nactual:   %v",
+					expectedHashes,
+					hashes,
 				)
 			}
 		})
