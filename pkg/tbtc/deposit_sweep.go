@@ -213,8 +213,17 @@ func (dsa *depositSweepAction) execute() error {
 		"deposit sweep proposal is valid; assembling deposit sweep transaction",
 	)
 
-	// TODO: Determine the wallet main UTXO.
-	var walletMainUtxo *bitcoin.UnspentTransactionOutput
+	walletMainUtxo, err := DetermineWalletMainUtxo(
+		dsa.wallet().publicKey,
+		dsa.chain,
+		dsa.btcChain,
+	)
+	if err != nil {
+		return fmt.Errorf(
+			"error while determining wallet's main UTXO: [%v]",
+			err,
+		)
+	}
 
 	deposits := make([]*Deposit, len(depositExtraInfo))
 	for i, dei := range depositExtraInfo {
