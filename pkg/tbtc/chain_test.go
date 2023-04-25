@@ -439,6 +439,13 @@ func (lc *localChain) GetDepositRequest(
 	panic("unsupported")
 }
 
+func (lc *localChain) GetWallet(walletPublicKeyHash [20]byte) (
+	*WalletChainData,
+	error,
+) {
+	panic("unsupported")
+}
+
 func (lc *localChain) operatorAddress() (chain.Address, error) {
 	_, operatorPublicKey, err := lc.OperatorKeyPair()
 	if err != nil {
