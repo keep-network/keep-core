@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"runtime"
-	"strings"
 	"time"
 
 	"github.com/keep-network/keep-core/pkg/bitcoin"
@@ -254,66 +253,6 @@ func Initialize(
 				event.BlockNumber,
 				event.Result,
 				event.ResultHash,
-			)
-		}()
-	})
-
-	// TODO: Make heartbeats a proper walletAction managed by the WalletCoordinator
-	//       contract and do not use signingExecutor directly.
-	_ = chain.OnHeartbeatRequested(func(event *HeartbeatRequestedEvent) {
-		go func() {
-			// There is no need to deduplicate. Test loop events are unique.
-			messagesDigests := make([]string, len(event.Messages))
-			for i, message := range event.Messages {
-				bytes := message.Bytes()
-				messagesDigests[i] = fmt.Sprintf(
-					"0x%x...%x",
-					bytes[:2],
-					bytes[len(bytes)-2:],
-				)
-			}
-
-			logger.Infof(
-				"heartbeat [%s] requested from "+
-					"wallet [0x%x] at block [%v]",
-				strings.Join(messagesDigests, ", "),
-				event.WalletPublicKey,
-				event.BlockNumber,
-			)
-
-			executor, ok, err := node.getSigningExecutor(
-				unmarshalPublicKey(event.WalletPublicKey),
-			)
-			if err != nil {
-				logger.Errorf("cannot get signing executor: [%v]", err)
-				return
-			}
-			if !ok {
-				logger.Infof(
-					"node does not control signers of wallet "+
-						"with public key [0x%x]",
-					event.WalletPublicKey,
-				)
-				return
-			}
-
-			signatures, err := executor.signBatch(
-				context.TODO(),
-				event.Messages,
-				event.BlockNumber,
-			)
-			if err != nil {
-				logger.Errorf("cannot sign batch: [%v]", err)
-				return
-			}
-
-			logger.Infof(
-				"generated [%v] signatures for heartbeat [%s] as "+
-					"requested from wallet [0x%x] at block [%v]",
-				len(signatures),
-				strings.Join(messagesDigests, ", "),
-				event.WalletPublicKey,
-				event.BlockNumber,
 			)
 		}()
 	})

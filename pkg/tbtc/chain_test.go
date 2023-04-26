@@ -421,12 +421,6 @@ func (lc *localChain) DKGParameters() (*DKGParameters, error) {
 	}, nil
 }
 
-func (lc *localChain) OnHeartbeatRequested(
-	handler func(event *HeartbeatRequestedEvent),
-) subscription.EventSubscription {
-	panic("unsupported")
-}
-
 func (lc *localChain) PastDepositRevealedEvents(
 	filter *DepositRevealedEventFilter,
 ) ([]*DepositRevealedEvent, error) {
@@ -449,8 +443,8 @@ func (lc *localChain) operatorAddress() (chain.Address, error) {
 	return lc.Signing().PublicKeyToAddress(operatorPublicKey)
 }
 
-func (lc *localChain) OnHeartbeatRequestedSubmitted(
-	handler func(event *HeartbeatRequestedSubmittedEvent),
+func (lc *localChain) OnHeartbeatRequestSubmitted(
+	handler func(event *HeartbeatRequestSubmittedEvent),
 ) subscription.EventSubscription {
 	panic("unsupported")
 }

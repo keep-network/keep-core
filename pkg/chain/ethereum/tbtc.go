@@ -1,10 +1,8 @@
 package ethereum
 
 import (
-	"context"
 	"crypto/ecdsa"
 	"crypto/elliptic"
-	"crypto/sha256"
 	"encoding/binary"
 	"fmt"
 	"math/big"
@@ -930,73 +928,6 @@ func (tc *TbtcChain) DKGParameters() (*tbtc.DKGParameters, error) {
 	}, nil
 }
 
-// OnHeartbeatRequested runs a heartbeat loop that produces a heartbeat
-// request every ~8 hours. A single heartbeat request consists of 5 messages
-// that must be signed sequentially.
-func (tc *TbtcChain) OnHeartbeatRequested(
-	handler func(event *tbtc.HeartbeatRequestedEvent),
-) subscription.EventSubscription {
-	ctx, cancelCtx := context.WithCancel(context.Background())
-	blocksChan := tc.blockCounter.WatchBlocks(ctx)
-
-	go func() {
-		for {
-			select {
-			case block := <-blocksChan:
-				// Generate a heartbeat every 2400 block, i.e. ~8 hours.
-				if block%2400 == 0 {
-					walletPublicKey, ok, err := tc.activeWalletPublicKey()
-					if err != nil {
-						logger.Errorf(
-							"cannot get active wallet for heartbeat request: [%v]",
-							err,
-						)
-						continue
-					}
-
-					if !ok {
-						logger.Infof("there is no active wallet for heartbeat at the moment")
-						continue
-					}
-
-					prefixBytes := make([]byte, 8)
-					binary.BigEndian.PutUint64(
-						prefixBytes,
-						0xffffffffffffffff,
-					)
-
-					messages := make([]*big.Int, 5)
-					for i := range messages {
-						suffixBytes := make([]byte, 8)
-						binary.BigEndian.PutUint64(
-							suffixBytes,
-							block+uint64(i),
-						)
-
-						preimage := append(prefixBytes, suffixBytes...)
-						preimageSha256 := sha256.Sum256(preimage)
-						message := sha256.Sum256(preimageSha256[:])
-
-						messages[i] = new(big.Int).SetBytes(message[:])
-					}
-
-					go handler(&tbtc.HeartbeatRequestedEvent{
-						WalletPublicKey: walletPublicKey,
-						Messages:        messages,
-						BlockNumber:     block,
-					})
-				}
-			case <-ctx.Done():
-				return
-			}
-		}
-	}()
-
-	return subscription.NewEventSubscription(func() {
-		cancelCtx()
-	})
-}
-
 func (tc *TbtcChain) PastDepositRevealedEvents(
 	filter *tbtc.DepositRevealedEventFilter,
 ) ([]*tbtc.DepositRevealedEvent, error) {
@@ -1152,15 +1083,15 @@ func (tc *TbtcChain) activeWalletPublicKey() ([]byte, bool, error) {
 	return publicKeyBytes, true, nil
 }
 
-func (tc *TbtcChain) OnHeartbeatRequestedSubmitted(
-	handler func(event *tbtc.HeartbeatRequestedSubmittedEvent),
+func (tc *TbtcChain) OnHeartbeatRequestSubmitted(
+	handler func(event *tbtc.HeartbeatRequestSubmittedEvent),
 ) subscription.EventSubscription {
 	onEvent := func(
 		walletPubKeyHash [20]byte,
 		message []byte,
 		blockNumber uint64,
 	) {
-		handler(&tbtc.HeartbeatRequestedSubmittedEvent{
+		handler(&tbtc.HeartbeatRequestSubmittedEvent{
 			WalletPublicKeyHash: walletPubKeyHash,
 			Message:             message,
 			BlockNumber:         blockNumber,
