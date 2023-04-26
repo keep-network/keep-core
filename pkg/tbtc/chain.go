@@ -274,6 +274,12 @@ type DepositChainRequest struct {
 // WalletCoordinatorChain defines the subset of the TBTC chain interface that
 // pertains specifically to the tBTC wallet coordination.
 type WalletCoordinatorChain interface {
+	// OnHeartbeatRequestedSubmitted registers a callback that is invoked when
+	// an on-chain notification of the wallet heartbeat request is seen.
+	OnHeartbeatRequestedSubmitted(
+		handler func(event *HeartbeatRequestedSubmittedEvent),
+	) subscription.EventSubscription
+
 	// OnDepositSweepProposalSubmitted registers a callback that is invoked when
 	// an on-chain notification of the deposit sweep proposal submission is seen.
 	OnDepositSweepProposalSubmitted(
@@ -307,6 +313,14 @@ type WalletCoordinatorChain interface {
 			FundingTx *bitcoin.Transaction
 		},
 	) error
+}
+
+// HeartbeatRequestedSubmittedEvent represents a wallet heartbeat request
+// submitted to the chain.
+type HeartbeatRequestedSubmittedEvent struct {
+	WalletPublicKeyHash [20]byte
+	Message             []byte
+	BlockNumber         uint64
 }
 
 // DepositSweepProposal represents a deposit sweep proposal submitted to the chain.

@@ -1152,6 +1152,24 @@ func (tc *TbtcChain) activeWalletPublicKey() ([]byte, bool, error) {
 	return publicKeyBytes, true, nil
 }
 
+func (tc *TbtcChain) OnHeartbeatRequestedSubmitted(
+	handler func(event *tbtc.HeartbeatRequestedSubmittedEvent),
+) subscription.EventSubscription {
+	onEvent := func(
+		walletPubKeyHash [20]byte,
+		message []byte,
+		blockNumber uint64,
+	) {
+		handler(&tbtc.HeartbeatRequestedSubmittedEvent{
+			WalletPublicKeyHash: walletPubKeyHash,
+			Message:             message,
+			BlockNumber:         blockNumber,
+		})
+	}
+
+	return tc.walletCoordinator.HeartbeatRequestSubmittedEvent(nil).OnEvent(onEvent)
+}
+
 func (tc *TbtcChain) OnDepositSweepProposalSubmitted(
 	handler func(event *tbtc.DepositSweepProposalSubmittedEvent),
 ) subscription.EventSubscription {
