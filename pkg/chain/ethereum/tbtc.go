@@ -1047,42 +1047,6 @@ func buildDepositKey(
 	return depositKey.Big()
 }
 
-func (tc *TbtcChain) activeWalletPublicKey() ([]byte, bool, error) {
-	walletPublicKeyHash, err := tc.bridge.ActiveWalletPubKeyHash()
-	if err != nil {
-		return nil, false, fmt.Errorf(
-			"cannot get active wallet public key hash: [%v]",
-			err,
-		)
-	}
-
-	if walletPublicKeyHash == [20]byte{} {
-		return nil, false, nil
-	}
-
-	bridgeWalletData, err := tc.bridge.Wallets(walletPublicKeyHash)
-	if err != nil {
-		return nil, false, fmt.Errorf(
-			"cannot get active wallet data from Bridge: [%v]",
-			err,
-		)
-	}
-
-	registryWalletData, err := tc.walletRegistry.GetWallet(bridgeWalletData.EcdsaWalletID)
-	if err != nil {
-		return nil, false, fmt.Errorf(
-			"cannot get active wallet data from WalletRegistry: [%v]",
-			err,
-		)
-	}
-
-	publicKeyBytes := []byte{0x04} // pre-fill with uncompressed ECDSA public key prefix
-	publicKeyBytes = append(publicKeyBytes, registryWalletData.PublicKeyX[:]...)
-	publicKeyBytes = append(publicKeyBytes, registryWalletData.PublicKeyY[:]...)
-
-	return publicKeyBytes, true, nil
-}
-
 func (tc *TbtcChain) OnHeartbeatRequestSubmitted(
 	handler func(event *tbtc.HeartbeatRequestSubmittedEvent),
 ) subscription.EventSubscription {
