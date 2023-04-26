@@ -314,6 +314,7 @@ type WalletCoordinatorChain interface {
 type HeartbeatRequestSubmittedEvent struct {
 	WalletPublicKeyHash [20]byte
 	Message             []byte
+	Coordinator         chain.Address
 	BlockNumber         uint64
 }
 

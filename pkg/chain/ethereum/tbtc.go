@@ -1053,16 +1053,18 @@ func (tc *TbtcChain) OnHeartbeatRequestSubmitted(
 	onEvent := func(
 		walletPubKeyHash [20]byte,
 		message []byte,
+		coordinator common.Address,
 		blockNumber uint64,
 	) {
 		handler(&tbtc.HeartbeatRequestSubmittedEvent{
 			WalletPublicKeyHash: walletPubKeyHash,
 			Message:             message,
+			Coordinator:         chain.Address(coordinator.Hex()),
 			BlockNumber:         blockNumber,
 		})
 	}
 
-	return tc.walletCoordinator.HeartbeatRequestSubmittedEvent(nil).OnEvent(onEvent)
+	return tc.walletCoordinator.HeartbeatRequestSubmittedEvent(nil, nil).OnEvent(onEvent)
 }
 
 func (tc *TbtcChain) OnDepositSweepProposalSubmitted(
