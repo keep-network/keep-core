@@ -255,7 +255,7 @@ func (dsa *depositSweepAction) execute() error {
 	)
 
 	walletMainUtxo, err := DetermineWalletMainUtxo(
-		dsa.wallet().publicKey,
+		bitcoin.PublicKeyHash(dsa.wallet().publicKey),
 		dsa.chain,
 		dsa.btcChain,
 	)

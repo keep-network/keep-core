@@ -19,7 +19,7 @@ func TestAssembleDepositSweepTransaction(t *testing.T) {
 
 	for _, scenario := range scenarios {
 		t.Run(scenario.Title, func(t *testing.T) {
-			bitcoinChain := newMockBitcoinChain()
+			bitcoinChain := newLocalBitcoinChain()
 
 			for _, transaction := range scenario.InputTransactions {
 				err := bitcoinChain.addTransaction(transaction)
@@ -94,67 +94,4 @@ func TestAssembleDepositSweepTransaction(t *testing.T) {
 			)
 		})
 	}
-}
-
-type mockBitcoinChain struct {
-	transactions map[bitcoin.Hash]*bitcoin.Transaction
-}
-
-func newMockBitcoinChain() *mockBitcoinChain {
-	return &mockBitcoinChain{
-		transactions: make(map[bitcoin.Hash]*bitcoin.Transaction),
-	}
-}
-
-func (mbc *mockBitcoinChain) GetTransaction(
-	transactionHash bitcoin.Hash,
-) (*bitcoin.Transaction, error) {
-	if transaction, exists := mbc.transactions[transactionHash]; exists {
-		return transaction, nil
-	}
-
-	return nil, fmt.Errorf("transaction not found")
-}
-
-func (mbc *mockBitcoinChain) GetTransactionConfirmations(
-	transactionHash bitcoin.Hash,
-) (uint, error) {
-	panic("not implemented")
-}
-
-func (mbc *mockBitcoinChain) BroadcastTransaction(
-	transaction *bitcoin.Transaction,
-) error {
-	panic("not implemented")
-}
-
-func (mbc *mockBitcoinChain) GetLatestBlockHeight() (uint, error) {
-	panic("not implemented")
-}
-
-func (mbc *mockBitcoinChain) GetBlockHeader(
-	blockNumber uint,
-) (*bitcoin.BlockHeader, error) {
-	panic("not implemented")
-}
-
-func (mbc *mockBitcoinChain) GetTransactionsForPublicKeyHash(
-	publicKeyHash [20]byte,
-	limit int,
-) ([]*bitcoin.Transaction, error) {
-	panic("not implemented")
-}
-
-func (mbc *mockBitcoinChain) addTransaction(
-	transaction *bitcoin.Transaction,
-) error {
-	transactionHash := transaction.Hash()
-
-	if _, exists := mbc.transactions[transactionHash]; exists {
-		return fmt.Errorf("transaction already exists")
-	}
-
-	mbc.transactions[transactionHash] = transaction
-
-	return nil
 }

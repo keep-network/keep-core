@@ -304,7 +304,7 @@ func TestGetTransactionsForPublicKeyHash_Integration(t *testing.T) {
 	// use a block explorer to browse the history for the two addresses the
 	// e6f9d74726b19b75f16fe1e9feaec048aa4fa1d0 public key hash translates to:
 	//
-	// - P2WPKH testnet address: https://live.blockcypher.com/btc-testnet/address/tb1qumuaw3exkxdhtut0u85latkqfz4ylgwstkdzsx (P2W
+	// - P2WPKH testnet address: https://live.blockcypher.com/btc-testnet/address/tb1qumuaw3exkxdhtut0u85latkqfz4ylgwstkdzsx
 	// - P2PKH testnet address: https://live.blockcypher.com/btc-testnet/address/n2aF1Rj6PK26quhGRo8YoRQYjwm37Zjnkb
 	//
 	// Then, we take all transactions for both addresses and pick the latest five.

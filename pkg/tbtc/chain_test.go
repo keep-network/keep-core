@@ -3,6 +3,7 @@ package tbtc
 import (
 	"crypto/ecdsa"
 	"crypto/elliptic"
+	"crypto/sha256"
 	"encoding/binary"
 	"fmt"
 	"math/big"
@@ -39,6 +40,9 @@ type localChain struct {
 	dkgState       DKGState
 	dkgResult      *DKGChainResult
 	dkgResultValid bool
+
+	walletsMutex sync.Mutex
+	wallets      map[[20]byte]*WalletChainData
 
 	blockCounter       chain.BlockCounter
 	operatorPrivateKey *operator.PrivateKey
@@ -438,13 +442,46 @@ func (lc *localChain) GetWallet(walletPublicKeyHash [20]byte) (
 	*WalletChainData,
 	error,
 ) {
-	panic("unsupported")
+	lc.walletsMutex.Lock()
+	defer lc.walletsMutex.Unlock()
+
+	walletChainData, ok := lc.wallets[walletPublicKeyHash]
+	if !ok {
+		return nil, fmt.Errorf("no wallet for given PKH")
+	}
+
+	return walletChainData, nil
+}
+
+func (lc *localChain) setWallet(
+	walletPublicKeyHash [20]byte,
+	walletChainData *WalletChainData,
+) {
+	lc.walletsMutex.Lock()
+	defer lc.walletsMutex.Unlock()
+
+	lc.wallets[walletPublicKeyHash] = walletChainData
 }
 
 func (lc *localChain) ComputeMainUtxoHash(
 	mainUtxo *bitcoin.UnspentTransactionOutput,
 ) [32]byte {
-	panic("unsupported")
+	outputIndexBytes := make([]byte, 4)
+	binary.BigEndian.PutUint32(outputIndexBytes, mainUtxo.Outpoint.OutputIndex)
+
+	valueBytes := make([]byte, 8)
+	binary.BigEndian.PutUint64(valueBytes, uint64(mainUtxo.Value))
+
+	mainUtxoHash := sha256.Sum256(
+		append(
+			append(
+				mainUtxo.Outpoint.TransactionHash[:],
+				outputIndexBytes...,
+			), valueBytes...,
+		),
+	)
+
+	return mainUtxoHash
 }
 
 func (lc *localChain) operatorAddress() (chain.Address, error) {
@@ -517,6 +554,7 @@ func ConnectWithKey(operatorPrivateKey *operator.PrivateKey) *localChain {
 		dkgResultChallengeHandlers: make(
 			map[int]func(submission *DKGResultChallengedEvent),
 		),
+		wallets:            make(map[[20]byte]*WalletChainData),
 		blockCounter:       blockCounter,
 		operatorPrivateKey: operatorPrivateKey,
 	}

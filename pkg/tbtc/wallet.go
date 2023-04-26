@@ -187,12 +187,10 @@ func (w *wallet) String() string {
 // TARGETING THE GIVEN WALLET PUBLIC KEY HASH. HOWEVER, SUCH A CASE IS
 // VERY UNLIKELY.
 func DetermineWalletMainUtxo(
-	walletPublicKey *ecdsa.PublicKey,
+	walletPublicKeyHash [20]byte,
 	bridgeChain BridgeChain,
 	btcChain bitcoin.Chain,
 ) (*bitcoin.UnspentTransactionOutput, error) {
-	walletPublicKeyHash := bitcoin.PublicKeyHash(walletPublicKey)
-
 	walletChainData, err := bridgeChain.GetWallet(walletPublicKeyHash)
 	if err != nil {
 		return nil, fmt.Errorf("cannot get on-chain data for wallet: [%v]", err)
