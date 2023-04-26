@@ -181,6 +181,11 @@ func (w *wallet) String() string {
 // currently registered in the Bridge on-chain contract. The returned
 // main UTXO can be nil if the wallet does not have a main UTXO registered
 // in the Bridge at the moment.
+//
+// WARNING: THIS FUNCTION CANNOT DETERMINE THE MAIN UTXO IF IT COMES FROM A
+// BITCOIN TRANSACTION THAT IS NOT ONE OF THE LATEST FIVE TRANSACTIONS
+// TARGETING THE GIVEN WALLET PUBLIC KEY HASH. HOWEVER, SUCH A CASE IS
+// VERY UNLIKELY.
 func DetermineWalletMainUtxo(
 	walletPublicKey *ecdsa.PublicKey,
 	bridgeChain BridgeChain,
