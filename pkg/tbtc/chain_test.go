@@ -5,6 +5,12 @@ import (
 	"crypto/elliptic"
 	"encoding/binary"
 	"fmt"
+	"math/big"
+	"math/rand"
+	"reflect"
+	"sync"
+	"time"
+
 	"github.com/keep-network/keep-core/pkg/bitcoin"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/chain/local_v1"
@@ -13,11 +19,6 @@ import (
 	"github.com/keep-network/keep-core/pkg/subscription"
 	"github.com/keep-network/keep-core/pkg/tecdsa/dkg"
 	"golang.org/x/crypto/sha3"
-	"math/big"
-	"math/rand"
-	"reflect"
-	"sync"
-	"time"
 )
 
 const localChainOperatorID = chain.OperatorID(1)
@@ -420,12 +421,6 @@ func (lc *localChain) DKGParameters() (*DKGParameters, error) {
 	}, nil
 }
 
-func (lc *localChain) OnHeartbeatRequested(
-	handler func(event *HeartbeatRequestedEvent),
-) subscription.EventSubscription {
-	panic("unsupported")
-}
-
 func (lc *localChain) PastDepositRevealedEvents(
 	filter *DepositRevealedEventFilter,
 ) ([]*DepositRevealedEvent, error) {
@@ -446,6 +441,12 @@ func (lc *localChain) operatorAddress() (chain.Address, error) {
 	}
 
 	return lc.Signing().PublicKeyToAddress(operatorPublicKey)
+}
+
+func (lc *localChain) OnHeartbeatRequestSubmitted(
+	handler func(event *HeartbeatRequestSubmittedEvent),
+) subscription.EventSubscription {
+	panic("unsupported")
 }
 
 func (lc *localChain) OnDepositSweepProposalSubmitted(
