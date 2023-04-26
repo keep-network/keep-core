@@ -185,12 +185,6 @@ type DKGParameters struct {
 // BridgeChain defines the subset of the TBTC chain interface that pertains
 // specifically to the tBTC Bridge operations.
 type BridgeChain interface {
-	// OnHeartbeatRequested registers a callback that is invoked when an
-	// on-chain notification of the Bridge heartbeat request is seen.
-	OnHeartbeatRequested(
-		func(event *HeartbeatRequestedEvent),
-	) subscription.EventSubscription
-
 	// PastDepositRevealedEvents fetches past deposit reveal events according
 	// to the provided filter or unfiltered if the filter is nil. Returned
 	// events are sorted by the block number in the ascending order, i.e. the
@@ -295,6 +289,12 @@ type WalletChainData struct {
 // WalletCoordinatorChain defines the subset of the TBTC chain interface that
 // pertains specifically to the tBTC wallet coordination.
 type WalletCoordinatorChain interface {
+	// OnHeartbeatRequestSubmitted registers a callback that is invoked when
+	// an on-chain notification of the wallet heartbeat request is seen.
+	OnHeartbeatRequestSubmitted(
+		handler func(event *HeartbeatRequestSubmittedEvent),
+	) subscription.EventSubscription
+
 	// OnDepositSweepProposalSubmitted registers a callback that is invoked when
 	// an on-chain notification of the deposit sweep proposal submission is seen.
 	OnDepositSweepProposalSubmitted(
@@ -330,6 +330,14 @@ type WalletCoordinatorChain interface {
 	) error
 }
 
+// HeartbeatRequestSubmittedEvent represents a wallet heartbeat request
+// submitted to the chain.
+type HeartbeatRequestSubmittedEvent struct {
+	WalletPublicKeyHash [20]byte
+	Message             []byte
+	BlockNumber         uint64
+}
+
 // DepositSweepProposal represents a deposit sweep proposal submitted to the chain.
 type DepositSweepProposal struct {
 	WalletPublicKeyHash [20]byte
@@ -343,9 +351,9 @@ type DepositSweepProposal struct {
 // DepositSweepProposalSubmittedEvent represents a deposit sweep proposal
 // submission event.
 type DepositSweepProposalSubmittedEvent struct {
-	Proposal          *DepositSweepProposal
-	ProposalSubmitter chain.Address
-	BlockNumber       uint64
+	Proposal    *DepositSweepProposal
+	Coordinator chain.Address
+	BlockNumber uint64
 }
 
 // DepositSweepProposalSubmittedEventFilter is a component allowing to
@@ -353,7 +361,7 @@ type DepositSweepProposalSubmittedEvent struct {
 type DepositSweepProposalSubmittedEventFilter struct {
 	StartBlock          uint64
 	EndBlock            *uint64
-	ProposalSubmitter   []chain.Address
+	Coordinator         []chain.Address
 	WalletPublicKeyHash [20]byte
 }
 

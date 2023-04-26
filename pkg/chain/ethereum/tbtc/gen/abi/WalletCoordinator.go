@@ -58,15 +58,9 @@ type WalletCoordinatorDepositSweepProposal struct {
 	SweepTxFee       *big.Int
 }
 
-// WalletCoordinatorWalletMemberContext is an auto generated low-level Go binding around an user-defined struct.
-type WalletCoordinatorWalletMemberContext struct {
-	WalletMembersIDs  []uint32
-	WalletMemberIndex *big.Int
-}
-
 // WalletCoordinatorMetaData contains all meta data concerning the WalletCoordinator contract.
 var WalletCoordinatorMetaData = &bind.MetaData{
-	ABI: "[{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint32\",\"name\":\"depositMinAge\",\"type\":\"uint32\"}],\"name\":\"DepositMinAgeUpdated\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint32\",\"name\":\"depositRefundSafetyMargin\",\"type\":\"uint32\"}],\"name\":\"DepositRefundSafetyMarginUpdated\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint16\",\"name\":\"depositSweepMaxSize\",\"type\":\"uint16\"}],\"name\":\"DepositSweepMaxSizeUpdated\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint32\",\"name\":\"depositSweepProposalSubmissionGasOffset\",\"type\":\"uint32\"}],\"name\":\"DepositSweepProposalSubmissionGasOffsetUpdated\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"components\":[{\"internalType\":\"bytes20\",\"name\":\"walletPubKeyHash\",\"type\":\"bytes20\"},{\"components\":[{\"internalType\":\"bytes32\",\"name\":\"fundingTxHash\",\"type\":\"bytes32\"},{\"internalType\":\"uint32\",\"name\":\"fundingOutputIndex\",\"type\":\"uint32\"}],\"internalType\":\"structWalletCoordinator.DepositKey[]\",\"name\":\"depositsKeys\",\"type\":\"tuple[]\"},{\"internalType\":\"uint256\",\"name\":\"sweepTxFee\",\"type\":\"uint256\"}],\"indexed\":false,\"internalType\":\"structWalletCoordinator.DepositSweepProposal\",\"name\":\"proposal\",\"type\":\"tuple\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"proposalSubmitter\",\"type\":\"address\"}],\"name\":\"DepositSweepProposalSubmitted\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint32\",\"name\":\"depositSweepProposalValidity\",\"type\":\"uint32\"}],\"name\":\"DepositSweepProposalValidityUpdated\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint8\",\"name\":\"version\",\"type\":\"uint8\"}],\"name\":\"Initialized\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"previousOwner\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"OwnershipTransferred\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"proposalSubmitter\",\"type\":\"address\"}],\"name\":\"ProposalSubmitterAdded\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"proposalSubmitter\",\"type\":\"address\"}],\"name\":\"ProposalSubmitterRemoved\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"address\",\"name\":\"newReimbursementPool\",\"type\":\"address\"}],\"name\":\"ReimbursementPoolUpdated\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"bytes20\",\"name\":\"walletPubKeyHash\",\"type\":\"bytes20\"}],\"name\":\"WalletManuallyUnlocked\",\"type\":\"event\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"proposalSubmitter\",\"type\":\"address\"}],\"name\":\"addProposalSubmitter\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"bridge\",\"outputs\":[{\"internalType\":\"contractBridge\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"depositMinAge\",\"outputs\":[{\"internalType\":\"uint32\",\"name\":\"\",\"type\":\"uint32\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"depositRefundSafetyMargin\",\"outputs\":[{\"internalType\":\"uint32\",\"name\":\"\",\"type\":\"uint32\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"depositSweepMaxSize\",\"outputs\":[{\"internalType\":\"uint16\",\"name\":\"\",\"type\":\"uint16\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"depositSweepProposalSubmissionGasOffset\",\"outputs\":[{\"internalType\":\"uint32\",\"name\":\"\",\"type\":\"uint32\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"depositSweepProposalValidity\",\"outputs\":[{\"internalType\":\"uint32\",\"name\":\"\",\"type\":\"uint32\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"contractBridge\",\"name\":\"_bridge\",\"type\":\"address\"}],\"name\":\"initialize\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"name\":\"isProposalSubmitter\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"owner\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"reimbursementPool\",\"outputs\":[{\"internalType\":\"contractReimbursementPool\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"proposalSubmitter\",\"type\":\"address\"}],\"name\":\"removeProposalSubmitter\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"renounceOwnership\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"components\":[{\"internalType\":\"bytes20\",\"name\":\"walletPubKeyHash\",\"type\":\"bytes20\"},{\"components\":[{\"internalType\":\"bytes32\",\"name\":\"fundingTxHash\",\"type\":\"bytes32\"},{\"internalType\":\"uint32\",\"name\":\"fundingOutputIndex\",\"type\":\"uint32\"}],\"internalType\":\"structWalletCoordinator.DepositKey[]\",\"name\":\"depositsKeys\",\"type\":\"tuple[]\"},{\"internalType\":\"uint256\",\"name\":\"sweepTxFee\",\"type\":\"uint256\"}],\"internalType\":\"structWalletCoordinator.DepositSweepProposal\",\"name\":\"proposal\",\"type\":\"tuple\"},{\"components\":[{\"internalType\":\"uint32[]\",\"name\":\"walletMembersIDs\",\"type\":\"uint32[]\"},{\"internalType\":\"uint256\",\"name\":\"walletMemberIndex\",\"type\":\"uint256\"}],\"internalType\":\"structWalletCoordinator.WalletMemberContext\",\"name\":\"walletMemberContext\",\"type\":\"tuple\"}],\"name\":\"submitDepositSweepProposal\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"components\":[{\"internalType\":\"bytes20\",\"name\":\"walletPubKeyHash\",\"type\":\"bytes20\"},{\"components\":[{\"internalType\":\"bytes32\",\"name\":\"fundingTxHash\",\"type\":\"bytes32\"},{\"internalType\":\"uint32\",\"name\":\"fundingOutputIndex\",\"type\":\"uint32\"}],\"internalType\":\"structWalletCoordinator.DepositKey[]\",\"name\":\"depositsKeys\",\"type\":\"tuple[]\"},{\"internalType\":\"uint256\",\"name\":\"sweepTxFee\",\"type\":\"uint256\"}],\"internalType\":\"structWalletCoordinator.DepositSweepProposal\",\"name\":\"proposal\",\"type\":\"tuple\"},{\"components\":[{\"internalType\":\"uint32[]\",\"name\":\"walletMembersIDs\",\"type\":\"uint32[]\"},{\"internalType\":\"uint256\",\"name\":\"walletMemberIndex\",\"type\":\"uint256\"}],\"internalType\":\"structWalletCoordinator.WalletMemberContext\",\"name\":\"walletMemberContext\",\"type\":\"tuple\"}],\"name\":\"submitDepositSweepProposalWithReimbursement\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"transferOwnership\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes20\",\"name\":\"walletPubKeyHash\",\"type\":\"bytes20\"}],\"name\":\"unlockWallet\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint32\",\"name\":\"_depositMinAge\",\"type\":\"uint32\"}],\"name\":\"updateDepositMinAge\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint32\",\"name\":\"_depositRefundSafetyMargin\",\"type\":\"uint32\"}],\"name\":\"updateDepositRefundSafetyMargin\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint16\",\"name\":\"_depositSweepMaxSize\",\"type\":\"uint16\"}],\"name\":\"updateDepositSweepMaxSize\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint32\",\"name\":\"_depositSweepProposalSubmissionGasOffset\",\"type\":\"uint32\"}],\"name\":\"updateDepositSweepProposalSubmissionGasOffset\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint32\",\"name\":\"_depositSweepProposalValidity\",\"type\":\"uint32\"}],\"name\":\"updateDepositSweepProposalValidity\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"contractReimbursementPool\",\"name\":\"_reimbursementPool\",\"type\":\"address\"}],\"name\":\"updateReimbursementPool\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"components\":[{\"internalType\":\"bytes20\",\"name\":\"walletPubKeyHash\",\"type\":\"bytes20\"},{\"components\":[{\"internalType\":\"bytes32\",\"name\":\"fundingTxHash\",\"type\":\"bytes32\"},{\"internalType\":\"uint32\",\"name\":\"fundingOutputIndex\",\"type\":\"uint32\"}],\"internalType\":\"structWalletCoordinator.DepositKey[]\",\"name\":\"depositsKeys\",\"type\":\"tuple[]\"},{\"internalType\":\"uint256\",\"name\":\"sweepTxFee\",\"type\":\"uint256\"}],\"internalType\":\"structWalletCoordinator.DepositSweepProposal\",\"name\":\"proposal\",\"type\":\"tuple\"},{\"components\":[{\"components\":[{\"internalType\":\"bytes4\",\"name\":\"version\",\"type\":\"bytes4\"},{\"internalType\":\"bytes\",\"name\":\"inputVector\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"outputVector\",\"type\":\"bytes\"},{\"internalType\":\"bytes4\",\"name\":\"locktime\",\"type\":\"bytes4\"}],\"internalType\":\"structBitcoinTx.Info\",\"name\":\"fundingTx\",\"type\":\"tuple\"},{\"internalType\":\"bytes8\",\"name\":\"blindingFactor\",\"type\":\"bytes8\"},{\"internalType\":\"bytes20\",\"name\":\"walletPubKeyHash\",\"type\":\"bytes20\"},{\"internalType\":\"bytes20\",\"name\":\"refundPubKeyHash\",\"type\":\"bytes20\"},{\"internalType\":\"bytes4\",\"name\":\"refundLocktime\",\"type\":\"bytes4\"}],\"internalType\":\"structWalletCoordinator.DepositExtraInfo[]\",\"name\":\"depositsExtraInfo\",\"type\":\"tuple[]\"}],\"name\":\"validateDepositSweepProposal\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes20\",\"name\":\"\",\"type\":\"bytes20\"}],\"name\":\"walletLock\",\"outputs\":[{\"internalType\":\"uint32\",\"name\":\"expiresAt\",\"type\":\"uint32\"},{\"internalType\":\"enumWalletCoordinator.WalletAction\",\"name\":\"cause\",\"type\":\"uint8\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"walletRegistry\",\"outputs\":[{\"internalType\":\"contractIWalletRegistry\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"}]",
+	ABI: "[{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"coordinator\",\"type\":\"address\"}],\"name\":\"CoordinatorAdded\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"coordinator\",\"type\":\"address\"}],\"name\":\"CoordinatorRemoved\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint32\",\"name\":\"depositSweepProposalValidity\",\"type\":\"uint32\"},{\"indexed\":false,\"internalType\":\"uint32\",\"name\":\"depositMinAge\",\"type\":\"uint32\"},{\"indexed\":false,\"internalType\":\"uint32\",\"name\":\"depositRefundSafetyMargin\",\"type\":\"uint32\"},{\"indexed\":false,\"internalType\":\"uint16\",\"name\":\"depositSweepMaxSize\",\"type\":\"uint16\"},{\"indexed\":false,\"internalType\":\"uint32\",\"name\":\"depositSweepProposalSubmissionGasOffset\",\"type\":\"uint32\"}],\"name\":\"DepositSweepProposalParametersUpdated\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"components\":[{\"internalType\":\"bytes20\",\"name\":\"walletPubKeyHash\",\"type\":\"bytes20\"},{\"components\":[{\"internalType\":\"bytes32\",\"name\":\"fundingTxHash\",\"type\":\"bytes32\"},{\"internalType\":\"uint32\",\"name\":\"fundingOutputIndex\",\"type\":\"uint32\"}],\"internalType\":\"structWalletCoordinator.DepositKey[]\",\"name\":\"depositsKeys\",\"type\":\"tuple[]\"},{\"internalType\":\"uint256\",\"name\":\"sweepTxFee\",\"type\":\"uint256\"}],\"indexed\":false,\"internalType\":\"structWalletCoordinator.DepositSweepProposal\",\"name\":\"proposal\",\"type\":\"tuple\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"coordinator\",\"type\":\"address\"}],\"name\":\"DepositSweepProposalSubmitted\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint32\",\"name\":\"heartbeatRequestValidity\",\"type\":\"uint32\"},{\"indexed\":false,\"internalType\":\"uint32\",\"name\":\"heartbeatRequestGasOffset\",\"type\":\"uint32\"}],\"name\":\"HeartbeatRequestParametersUpdated\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"bytes20\",\"name\":\"walletPubKeyHash\",\"type\":\"bytes20\"},{\"indexed\":false,\"internalType\":\"bytes\",\"name\":\"message\",\"type\":\"bytes\"}],\"name\":\"HeartbeatRequestSubmitted\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint8\",\"name\":\"version\",\"type\":\"uint8\"}],\"name\":\"Initialized\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"previousOwner\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"OwnershipTransferred\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"address\",\"name\":\"newReimbursementPool\",\"type\":\"address\"}],\"name\":\"ReimbursementPoolUpdated\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"bytes20\",\"name\":\"walletPubKeyHash\",\"type\":\"bytes20\"}],\"name\":\"WalletManuallyUnlocked\",\"type\":\"event\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"coordinator\",\"type\":\"address\"}],\"name\":\"addCoordinator\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"bridge\",\"outputs\":[{\"internalType\":\"contractBridge\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"depositMinAge\",\"outputs\":[{\"internalType\":\"uint32\",\"name\":\"\",\"type\":\"uint32\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"depositRefundSafetyMargin\",\"outputs\":[{\"internalType\":\"uint32\",\"name\":\"\",\"type\":\"uint32\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"depositSweepMaxSize\",\"outputs\":[{\"internalType\":\"uint16\",\"name\":\"\",\"type\":\"uint16\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"depositSweepProposalSubmissionGasOffset\",\"outputs\":[{\"internalType\":\"uint32\",\"name\":\"\",\"type\":\"uint32\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"depositSweepProposalValidity\",\"outputs\":[{\"internalType\":\"uint32\",\"name\":\"\",\"type\":\"uint32\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"heartbeatRequestGasOffset\",\"outputs\":[{\"internalType\":\"uint32\",\"name\":\"\",\"type\":\"uint32\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"heartbeatRequestValidity\",\"outputs\":[{\"internalType\":\"uint32\",\"name\":\"\",\"type\":\"uint32\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"contractBridge\",\"name\":\"_bridge\",\"type\":\"address\"}],\"name\":\"initialize\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"name\":\"isCoordinator\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"owner\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"reimbursementPool\",\"outputs\":[{\"internalType\":\"contractReimbursementPool\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"coordinator\",\"type\":\"address\"}],\"name\":\"removeCoordinator\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"renounceOwnership\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes20\",\"name\":\"walletPubKeyHash\",\"type\":\"bytes20\"},{\"internalType\":\"bytes\",\"name\":\"message\",\"type\":\"bytes\"}],\"name\":\"requestHeartbeat\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes20\",\"name\":\"walletPubKeyHash\",\"type\":\"bytes20\"},{\"internalType\":\"bytes\",\"name\":\"message\",\"type\":\"bytes\"}],\"name\":\"requestHeartbeatWithReimbursement\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"components\":[{\"internalType\":\"bytes20\",\"name\":\"walletPubKeyHash\",\"type\":\"bytes20\"},{\"components\":[{\"internalType\":\"bytes32\",\"name\":\"fundingTxHash\",\"type\":\"bytes32\"},{\"internalType\":\"uint32\",\"name\":\"fundingOutputIndex\",\"type\":\"uint32\"}],\"internalType\":\"structWalletCoordinator.DepositKey[]\",\"name\":\"depositsKeys\",\"type\":\"tuple[]\"},{\"internalType\":\"uint256\",\"name\":\"sweepTxFee\",\"type\":\"uint256\"}],\"internalType\":\"structWalletCoordinator.DepositSweepProposal\",\"name\":\"proposal\",\"type\":\"tuple\"}],\"name\":\"submitDepositSweepProposal\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"components\":[{\"internalType\":\"bytes20\",\"name\":\"walletPubKeyHash\",\"type\":\"bytes20\"},{\"components\":[{\"internalType\":\"bytes32\",\"name\":\"fundingTxHash\",\"type\":\"bytes32\"},{\"internalType\":\"uint32\",\"name\":\"fundingOutputIndex\",\"type\":\"uint32\"}],\"internalType\":\"structWalletCoordinator.DepositKey[]\",\"name\":\"depositsKeys\",\"type\":\"tuple[]\"},{\"internalType\":\"uint256\",\"name\":\"sweepTxFee\",\"type\":\"uint256\"}],\"internalType\":\"structWalletCoordinator.DepositSweepProposal\",\"name\":\"proposal\",\"type\":\"tuple\"}],\"name\":\"submitDepositSweepProposalWithReimbursement\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"transferOwnership\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes20\",\"name\":\"walletPubKeyHash\",\"type\":\"bytes20\"}],\"name\":\"unlockWallet\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint32\",\"name\":\"_depositSweepProposalValidity\",\"type\":\"uint32\"},{\"internalType\":\"uint32\",\"name\":\"_depositMinAge\",\"type\":\"uint32\"},{\"internalType\":\"uint32\",\"name\":\"_depositRefundSafetyMargin\",\"type\":\"uint32\"},{\"internalType\":\"uint16\",\"name\":\"_depositSweepMaxSize\",\"type\":\"uint16\"},{\"internalType\":\"uint32\",\"name\":\"_depositSweepProposalSubmissionGasOffset\",\"type\":\"uint32\"}],\"name\":\"updateDepositSweepProposalParameters\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint32\",\"name\":\"_heartbeatRequestValidity\",\"type\":\"uint32\"},{\"internalType\":\"uint32\",\"name\":\"_heartbeatRequestGasOffset\",\"type\":\"uint32\"}],\"name\":\"updateHeartbeatRequestParameters\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"contractReimbursementPool\",\"name\":\"_reimbursementPool\",\"type\":\"address\"}],\"name\":\"updateReimbursementPool\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"components\":[{\"internalType\":\"bytes20\",\"name\":\"walletPubKeyHash\",\"type\":\"bytes20\"},{\"components\":[{\"internalType\":\"bytes32\",\"name\":\"fundingTxHash\",\"type\":\"bytes32\"},{\"internalType\":\"uint32\",\"name\":\"fundingOutputIndex\",\"type\":\"uint32\"}],\"internalType\":\"structWalletCoordinator.DepositKey[]\",\"name\":\"depositsKeys\",\"type\":\"tuple[]\"},{\"internalType\":\"uint256\",\"name\":\"sweepTxFee\",\"type\":\"uint256\"}],\"internalType\":\"structWalletCoordinator.DepositSweepProposal\",\"name\":\"proposal\",\"type\":\"tuple\"},{\"components\":[{\"components\":[{\"internalType\":\"bytes4\",\"name\":\"version\",\"type\":\"bytes4\"},{\"internalType\":\"bytes\",\"name\":\"inputVector\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"outputVector\",\"type\":\"bytes\"},{\"internalType\":\"bytes4\",\"name\":\"locktime\",\"type\":\"bytes4\"}],\"internalType\":\"structBitcoinTx.Info\",\"name\":\"fundingTx\",\"type\":\"tuple\"},{\"internalType\":\"bytes8\",\"name\":\"blindingFactor\",\"type\":\"bytes8\"},{\"internalType\":\"bytes20\",\"name\":\"walletPubKeyHash\",\"type\":\"bytes20\"},{\"internalType\":\"bytes20\",\"name\":\"refundPubKeyHash\",\"type\":\"bytes20\"},{\"internalType\":\"bytes4\",\"name\":\"refundLocktime\",\"type\":\"bytes4\"}],\"internalType\":\"structWalletCoordinator.DepositExtraInfo[]\",\"name\":\"depositsExtraInfo\",\"type\":\"tuple[]\"}],\"name\":\"validateDepositSweepProposal\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes20\",\"name\":\"\",\"type\":\"bytes20\"}],\"name\":\"walletLock\",\"outputs\":[{\"internalType\":\"uint32\",\"name\":\"expiresAt\",\"type\":\"uint32\"},{\"internalType\":\"enumWalletCoordinator.WalletAction\",\"name\":\"cause\",\"type\":\"uint8\"}],\"stateMutability\":\"view\",\"type\":\"function\"}]",
 }
 
 // WalletCoordinatorABI is the input ABI used to generate the binding from.
@@ -401,12 +395,74 @@ func (_WalletCoordinator *WalletCoordinatorCallerSession) DepositSweepProposalVa
 	return _WalletCoordinator.Contract.DepositSweepProposalValidity(&_WalletCoordinator.CallOpts)
 }
 
-// IsProposalSubmitter is a free data retrieval call binding the contract method 0x213f7df7.
+// HeartbeatRequestGasOffset is a free data retrieval call binding the contract method 0xa34fff59.
 //
-// Solidity: function isProposalSubmitter(address ) view returns(bool)
-func (_WalletCoordinator *WalletCoordinatorCaller) IsProposalSubmitter(opts *bind.CallOpts, arg0 common.Address) (bool, error) {
+// Solidity: function heartbeatRequestGasOffset() view returns(uint32)
+func (_WalletCoordinator *WalletCoordinatorCaller) HeartbeatRequestGasOffset(opts *bind.CallOpts) (uint32, error) {
 	var out []interface{}
-	err := _WalletCoordinator.contract.Call(opts, &out, "isProposalSubmitter", arg0)
+	err := _WalletCoordinator.contract.Call(opts, &out, "heartbeatRequestGasOffset")
+
+	if err != nil {
+		return *new(uint32), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(uint32)).(*uint32)
+
+	return out0, err
+
+}
+
+// HeartbeatRequestGasOffset is a free data retrieval call binding the contract method 0xa34fff59.
+//
+// Solidity: function heartbeatRequestGasOffset() view returns(uint32)
+func (_WalletCoordinator *WalletCoordinatorSession) HeartbeatRequestGasOffset() (uint32, error) {
+	return _WalletCoordinator.Contract.HeartbeatRequestGasOffset(&_WalletCoordinator.CallOpts)
+}
+
+// HeartbeatRequestGasOffset is a free data retrieval call binding the contract method 0xa34fff59.
+//
+// Solidity: function heartbeatRequestGasOffset() view returns(uint32)
+func (_WalletCoordinator *WalletCoordinatorCallerSession) HeartbeatRequestGasOffset() (uint32, error) {
+	return _WalletCoordinator.Contract.HeartbeatRequestGasOffset(&_WalletCoordinator.CallOpts)
+}
+
+// HeartbeatRequestValidity is a free data retrieval call binding the contract method 0x7fbf9b39.
+//
+// Solidity: function heartbeatRequestValidity() view returns(uint32)
+func (_WalletCoordinator *WalletCoordinatorCaller) HeartbeatRequestValidity(opts *bind.CallOpts) (uint32, error) {
+	var out []interface{}
+	err := _WalletCoordinator.contract.Call(opts, &out, "heartbeatRequestValidity")
+
+	if err != nil {
+		return *new(uint32), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(uint32)).(*uint32)
+
+	return out0, err
+
+}
+
+// HeartbeatRequestValidity is a free data retrieval call binding the contract method 0x7fbf9b39.
+//
+// Solidity: function heartbeatRequestValidity() view returns(uint32)
+func (_WalletCoordinator *WalletCoordinatorSession) HeartbeatRequestValidity() (uint32, error) {
+	return _WalletCoordinator.Contract.HeartbeatRequestValidity(&_WalletCoordinator.CallOpts)
+}
+
+// HeartbeatRequestValidity is a free data retrieval call binding the contract method 0x7fbf9b39.
+//
+// Solidity: function heartbeatRequestValidity() view returns(uint32)
+func (_WalletCoordinator *WalletCoordinatorCallerSession) HeartbeatRequestValidity() (uint32, error) {
+	return _WalletCoordinator.Contract.HeartbeatRequestValidity(&_WalletCoordinator.CallOpts)
+}
+
+// IsCoordinator is a free data retrieval call binding the contract method 0xaec32099.
+//
+// Solidity: function isCoordinator(address ) view returns(bool)
+func (_WalletCoordinator *WalletCoordinatorCaller) IsCoordinator(opts *bind.CallOpts, arg0 common.Address) (bool, error) {
+	var out []interface{}
+	err := _WalletCoordinator.contract.Call(opts, &out, "isCoordinator", arg0)
 
 	if err != nil {
 		return *new(bool), err
@@ -418,18 +474,18 @@ func (_WalletCoordinator *WalletCoordinatorCaller) IsProposalSubmitter(opts *bin
 
 }
 
-// IsProposalSubmitter is a free data retrieval call binding the contract method 0x213f7df7.
+// IsCoordinator is a free data retrieval call binding the contract method 0xaec32099.
 //
-// Solidity: function isProposalSubmitter(address ) view returns(bool)
-func (_WalletCoordinator *WalletCoordinatorSession) IsProposalSubmitter(arg0 common.Address) (bool, error) {
-	return _WalletCoordinator.Contract.IsProposalSubmitter(&_WalletCoordinator.CallOpts, arg0)
+// Solidity: function isCoordinator(address ) view returns(bool)
+func (_WalletCoordinator *WalletCoordinatorSession) IsCoordinator(arg0 common.Address) (bool, error) {
+	return _WalletCoordinator.Contract.IsCoordinator(&_WalletCoordinator.CallOpts, arg0)
 }
 
-// IsProposalSubmitter is a free data retrieval call binding the contract method 0x213f7df7.
+// IsCoordinator is a free data retrieval call binding the contract method 0xaec32099.
 //
-// Solidity: function isProposalSubmitter(address ) view returns(bool)
-func (_WalletCoordinator *WalletCoordinatorCallerSession) IsProposalSubmitter(arg0 common.Address) (bool, error) {
-	return _WalletCoordinator.Contract.IsProposalSubmitter(&_WalletCoordinator.CallOpts, arg0)
+// Solidity: function isCoordinator(address ) view returns(bool)
+func (_WalletCoordinator *WalletCoordinatorCallerSession) IsCoordinator(arg0 common.Address) (bool, error) {
+	return _WalletCoordinator.Contract.IsCoordinator(&_WalletCoordinator.CallOpts, arg0)
 }
 
 // Owner is a free data retrieval call binding the contract method 0x8da5cb5b.
@@ -570,56 +626,25 @@ func (_WalletCoordinator *WalletCoordinatorCallerSession) WalletLock(arg0 [20]by
 	return _WalletCoordinator.Contract.WalletLock(&_WalletCoordinator.CallOpts, arg0)
 }
 
-// WalletRegistry is a free data retrieval call binding the contract method 0xab7aa6ad.
+// AddCoordinator is a paid mutator transaction binding the contract method 0xfbd6d77e.
 //
-// Solidity: function walletRegistry() view returns(address)
-func (_WalletCoordinator *WalletCoordinatorCaller) WalletRegistry(opts *bind.CallOpts) (common.Address, error) {
-	var out []interface{}
-	err := _WalletCoordinator.contract.Call(opts, &out, "walletRegistry")
-
-	if err != nil {
-		return *new(common.Address), err
-	}
-
-	out0 := *abi.ConvertType(out[0], new(common.Address)).(*common.Address)
-
-	return out0, err
-
+// Solidity: function addCoordinator(address coordinator) returns()
+func (_WalletCoordinator *WalletCoordinatorTransactor) AddCoordinator(opts *bind.TransactOpts, coordinator common.Address) (*types.Transaction, error) {
+	return _WalletCoordinator.contract.Transact(opts, "addCoordinator", coordinator)
 }
 
-// WalletRegistry is a free data retrieval call binding the contract method 0xab7aa6ad.
+// AddCoordinator is a paid mutator transaction binding the contract method 0xfbd6d77e.
 //
-// Solidity: function walletRegistry() view returns(address)
-func (_WalletCoordinator *WalletCoordinatorSession) WalletRegistry() (common.Address, error) {
-	return _WalletCoordinator.Contract.WalletRegistry(&_WalletCoordinator.CallOpts)
+// Solidity: function addCoordinator(address coordinator) returns()
+func (_WalletCoordinator *WalletCoordinatorSession) AddCoordinator(coordinator common.Address) (*types.Transaction, error) {
+	return _WalletCoordinator.Contract.AddCoordinator(&_WalletCoordinator.TransactOpts, coordinator)
 }
 
-// WalletRegistry is a free data retrieval call binding the contract method 0xab7aa6ad.
+// AddCoordinator is a paid mutator transaction binding the contract method 0xfbd6d77e.
 //
-// Solidity: function walletRegistry() view returns(address)
-func (_WalletCoordinator *WalletCoordinatorCallerSession) WalletRegistry() (common.Address, error) {
-	return _WalletCoordinator.Contract.WalletRegistry(&_WalletCoordinator.CallOpts)
-}
-
-// AddProposalSubmitter is a paid mutator transaction binding the contract method 0x8e323a99.
-//
-// Solidity: function addProposalSubmitter(address proposalSubmitter) returns()
-func (_WalletCoordinator *WalletCoordinatorTransactor) AddProposalSubmitter(opts *bind.TransactOpts, proposalSubmitter common.Address) (*types.Transaction, error) {
-	return _WalletCoordinator.contract.Transact(opts, "addProposalSubmitter", proposalSubmitter)
-}
-
-// AddProposalSubmitter is a paid mutator transaction binding the contract method 0x8e323a99.
-//
-// Solidity: function addProposalSubmitter(address proposalSubmitter) returns()
-func (_WalletCoordinator *WalletCoordinatorSession) AddProposalSubmitter(proposalSubmitter common.Address) (*types.Transaction, error) {
-	return _WalletCoordinator.Contract.AddProposalSubmitter(&_WalletCoordinator.TransactOpts, proposalSubmitter)
-}
-
-// AddProposalSubmitter is a paid mutator transaction binding the contract method 0x8e323a99.
-//
-// Solidity: function addProposalSubmitter(address proposalSubmitter) returns()
-func (_WalletCoordinator *WalletCoordinatorTransactorSession) AddProposalSubmitter(proposalSubmitter common.Address) (*types.Transaction, error) {
-	return _WalletCoordinator.Contract.AddProposalSubmitter(&_WalletCoordinator.TransactOpts, proposalSubmitter)
+// Solidity: function addCoordinator(address coordinator) returns()
+func (_WalletCoordinator *WalletCoordinatorTransactorSession) AddCoordinator(coordinator common.Address) (*types.Transaction, error) {
+	return _WalletCoordinator.Contract.AddCoordinator(&_WalletCoordinator.TransactOpts, coordinator)
 }
 
 // Initialize is a paid mutator transaction binding the contract method 0xc4d66de8.
@@ -643,25 +668,25 @@ func (_WalletCoordinator *WalletCoordinatorTransactorSession) Initialize(_bridge
 	return _WalletCoordinator.Contract.Initialize(&_WalletCoordinator.TransactOpts, _bridge)
 }
 
-// RemoveProposalSubmitter is a paid mutator transaction binding the contract method 0x3a4159c8.
+// RemoveCoordinator is a paid mutator transaction binding the contract method 0x8cb5a0c0.
 //
-// Solidity: function removeProposalSubmitter(address proposalSubmitter) returns()
-func (_WalletCoordinator *WalletCoordinatorTransactor) RemoveProposalSubmitter(opts *bind.TransactOpts, proposalSubmitter common.Address) (*types.Transaction, error) {
-	return _WalletCoordinator.contract.Transact(opts, "removeProposalSubmitter", proposalSubmitter)
+// Solidity: function removeCoordinator(address coordinator) returns()
+func (_WalletCoordinator *WalletCoordinatorTransactor) RemoveCoordinator(opts *bind.TransactOpts, coordinator common.Address) (*types.Transaction, error) {
+	return _WalletCoordinator.contract.Transact(opts, "removeCoordinator", coordinator)
 }
 
-// RemoveProposalSubmitter is a paid mutator transaction binding the contract method 0x3a4159c8.
+// RemoveCoordinator is a paid mutator transaction binding the contract method 0x8cb5a0c0.
 //
-// Solidity: function removeProposalSubmitter(address proposalSubmitter) returns()
-func (_WalletCoordinator *WalletCoordinatorSession) RemoveProposalSubmitter(proposalSubmitter common.Address) (*types.Transaction, error) {
-	return _WalletCoordinator.Contract.RemoveProposalSubmitter(&_WalletCoordinator.TransactOpts, proposalSubmitter)
+// Solidity: function removeCoordinator(address coordinator) returns()
+func (_WalletCoordinator *WalletCoordinatorSession) RemoveCoordinator(coordinator common.Address) (*types.Transaction, error) {
+	return _WalletCoordinator.Contract.RemoveCoordinator(&_WalletCoordinator.TransactOpts, coordinator)
 }
 
-// RemoveProposalSubmitter is a paid mutator transaction binding the contract method 0x3a4159c8.
+// RemoveCoordinator is a paid mutator transaction binding the contract method 0x8cb5a0c0.
 //
-// Solidity: function removeProposalSubmitter(address proposalSubmitter) returns()
-func (_WalletCoordinator *WalletCoordinatorTransactorSession) RemoveProposalSubmitter(proposalSubmitter common.Address) (*types.Transaction, error) {
-	return _WalletCoordinator.Contract.RemoveProposalSubmitter(&_WalletCoordinator.TransactOpts, proposalSubmitter)
+// Solidity: function removeCoordinator(address coordinator) returns()
+func (_WalletCoordinator *WalletCoordinatorTransactorSession) RemoveCoordinator(coordinator common.Address) (*types.Transaction, error) {
+	return _WalletCoordinator.Contract.RemoveCoordinator(&_WalletCoordinator.TransactOpts, coordinator)
 }
 
 // RenounceOwnership is a paid mutator transaction binding the contract method 0x715018a6.
@@ -685,46 +710,88 @@ func (_WalletCoordinator *WalletCoordinatorTransactorSession) RenounceOwnership(
 	return _WalletCoordinator.Contract.RenounceOwnership(&_WalletCoordinator.TransactOpts)
 }
 
-// SubmitDepositSweepProposal is a paid mutator transaction binding the contract method 0x1c6710dd.
+// RequestHeartbeat is a paid mutator transaction binding the contract method 0x6348c439.
 //
-// Solidity: function submitDepositSweepProposal((bytes20,(bytes32,uint32)[],uint256) proposal, (uint32[],uint256) walletMemberContext) returns()
-func (_WalletCoordinator *WalletCoordinatorTransactor) SubmitDepositSweepProposal(opts *bind.TransactOpts, proposal WalletCoordinatorDepositSweepProposal, walletMemberContext WalletCoordinatorWalletMemberContext) (*types.Transaction, error) {
-	return _WalletCoordinator.contract.Transact(opts, "submitDepositSweepProposal", proposal, walletMemberContext)
+// Solidity: function requestHeartbeat(bytes20 walletPubKeyHash, bytes message) returns()
+func (_WalletCoordinator *WalletCoordinatorTransactor) RequestHeartbeat(opts *bind.TransactOpts, walletPubKeyHash [20]byte, message []byte) (*types.Transaction, error) {
+	return _WalletCoordinator.contract.Transact(opts, "requestHeartbeat", walletPubKeyHash, message)
 }
 
-// SubmitDepositSweepProposal is a paid mutator transaction binding the contract method 0x1c6710dd.
+// RequestHeartbeat is a paid mutator transaction binding the contract method 0x6348c439.
 //
-// Solidity: function submitDepositSweepProposal((bytes20,(bytes32,uint32)[],uint256) proposal, (uint32[],uint256) walletMemberContext) returns()
-func (_WalletCoordinator *WalletCoordinatorSession) SubmitDepositSweepProposal(proposal WalletCoordinatorDepositSweepProposal, walletMemberContext WalletCoordinatorWalletMemberContext) (*types.Transaction, error) {
-	return _WalletCoordinator.Contract.SubmitDepositSweepProposal(&_WalletCoordinator.TransactOpts, proposal, walletMemberContext)
+// Solidity: function requestHeartbeat(bytes20 walletPubKeyHash, bytes message) returns()
+func (_WalletCoordinator *WalletCoordinatorSession) RequestHeartbeat(walletPubKeyHash [20]byte, message []byte) (*types.Transaction, error) {
+	return _WalletCoordinator.Contract.RequestHeartbeat(&_WalletCoordinator.TransactOpts, walletPubKeyHash, message)
 }
 
-// SubmitDepositSweepProposal is a paid mutator transaction binding the contract method 0x1c6710dd.
+// RequestHeartbeat is a paid mutator transaction binding the contract method 0x6348c439.
 //
-// Solidity: function submitDepositSweepProposal((bytes20,(bytes32,uint32)[],uint256) proposal, (uint32[],uint256) walletMemberContext) returns()
-func (_WalletCoordinator *WalletCoordinatorTransactorSession) SubmitDepositSweepProposal(proposal WalletCoordinatorDepositSweepProposal, walletMemberContext WalletCoordinatorWalletMemberContext) (*types.Transaction, error) {
-	return _WalletCoordinator.Contract.SubmitDepositSweepProposal(&_WalletCoordinator.TransactOpts, proposal, walletMemberContext)
+// Solidity: function requestHeartbeat(bytes20 walletPubKeyHash, bytes message) returns()
+func (_WalletCoordinator *WalletCoordinatorTransactorSession) RequestHeartbeat(walletPubKeyHash [20]byte, message []byte) (*types.Transaction, error) {
+	return _WalletCoordinator.Contract.RequestHeartbeat(&_WalletCoordinator.TransactOpts, walletPubKeyHash, message)
 }
 
-// SubmitDepositSweepProposalWithReimbursement is a paid mutator transaction binding the contract method 0xc1790d77.
+// RequestHeartbeatWithReimbursement is a paid mutator transaction binding the contract method 0x34173c2d.
 //
-// Solidity: function submitDepositSweepProposalWithReimbursement((bytes20,(bytes32,uint32)[],uint256) proposal, (uint32[],uint256) walletMemberContext) returns()
-func (_WalletCoordinator *WalletCoordinatorTransactor) SubmitDepositSweepProposalWithReimbursement(opts *bind.TransactOpts, proposal WalletCoordinatorDepositSweepProposal, walletMemberContext WalletCoordinatorWalletMemberContext) (*types.Transaction, error) {
-	return _WalletCoordinator.contract.Transact(opts, "submitDepositSweepProposalWithReimbursement", proposal, walletMemberContext)
+// Solidity: function requestHeartbeatWithReimbursement(bytes20 walletPubKeyHash, bytes message) returns()
+func (_WalletCoordinator *WalletCoordinatorTransactor) RequestHeartbeatWithReimbursement(opts *bind.TransactOpts, walletPubKeyHash [20]byte, message []byte) (*types.Transaction, error) {
+	return _WalletCoordinator.contract.Transact(opts, "requestHeartbeatWithReimbursement", walletPubKeyHash, message)
 }
 
-// SubmitDepositSweepProposalWithReimbursement is a paid mutator transaction binding the contract method 0xc1790d77.
+// RequestHeartbeatWithReimbursement is a paid mutator transaction binding the contract method 0x34173c2d.
 //
-// Solidity: function submitDepositSweepProposalWithReimbursement((bytes20,(bytes32,uint32)[],uint256) proposal, (uint32[],uint256) walletMemberContext) returns()
-func (_WalletCoordinator *WalletCoordinatorSession) SubmitDepositSweepProposalWithReimbursement(proposal WalletCoordinatorDepositSweepProposal, walletMemberContext WalletCoordinatorWalletMemberContext) (*types.Transaction, error) {
-	return _WalletCoordinator.Contract.SubmitDepositSweepProposalWithReimbursement(&_WalletCoordinator.TransactOpts, proposal, walletMemberContext)
+// Solidity: function requestHeartbeatWithReimbursement(bytes20 walletPubKeyHash, bytes message) returns()
+func (_WalletCoordinator *WalletCoordinatorSession) RequestHeartbeatWithReimbursement(walletPubKeyHash [20]byte, message []byte) (*types.Transaction, error) {
+	return _WalletCoordinator.Contract.RequestHeartbeatWithReimbursement(&_WalletCoordinator.TransactOpts, walletPubKeyHash, message)
 }
 
-// SubmitDepositSweepProposalWithReimbursement is a paid mutator transaction binding the contract method 0xc1790d77.
+// RequestHeartbeatWithReimbursement is a paid mutator transaction binding the contract method 0x34173c2d.
 //
-// Solidity: function submitDepositSweepProposalWithReimbursement((bytes20,(bytes32,uint32)[],uint256) proposal, (uint32[],uint256) walletMemberContext) returns()
-func (_WalletCoordinator *WalletCoordinatorTransactorSession) SubmitDepositSweepProposalWithReimbursement(proposal WalletCoordinatorDepositSweepProposal, walletMemberContext WalletCoordinatorWalletMemberContext) (*types.Transaction, error) {
-	return _WalletCoordinator.Contract.SubmitDepositSweepProposalWithReimbursement(&_WalletCoordinator.TransactOpts, proposal, walletMemberContext)
+// Solidity: function requestHeartbeatWithReimbursement(bytes20 walletPubKeyHash, bytes message) returns()
+func (_WalletCoordinator *WalletCoordinatorTransactorSession) RequestHeartbeatWithReimbursement(walletPubKeyHash [20]byte, message []byte) (*types.Transaction, error) {
+	return _WalletCoordinator.Contract.RequestHeartbeatWithReimbursement(&_WalletCoordinator.TransactOpts, walletPubKeyHash, message)
+}
+
+// SubmitDepositSweepProposal is a paid mutator transaction binding the contract method 0x742b386b.
+//
+// Solidity: function submitDepositSweepProposal((bytes20,(bytes32,uint32)[],uint256) proposal) returns()
+func (_WalletCoordinator *WalletCoordinatorTransactor) SubmitDepositSweepProposal(opts *bind.TransactOpts, proposal WalletCoordinatorDepositSweepProposal) (*types.Transaction, error) {
+	return _WalletCoordinator.contract.Transact(opts, "submitDepositSweepProposal", proposal)
+}
+
+// SubmitDepositSweepProposal is a paid mutator transaction binding the contract method 0x742b386b.
+//
+// Solidity: function submitDepositSweepProposal((bytes20,(bytes32,uint32)[],uint256) proposal) returns()
+func (_WalletCoordinator *WalletCoordinatorSession) SubmitDepositSweepProposal(proposal WalletCoordinatorDepositSweepProposal) (*types.Transaction, error) {
+	return _WalletCoordinator.Contract.SubmitDepositSweepProposal(&_WalletCoordinator.TransactOpts, proposal)
+}
+
+// SubmitDepositSweepProposal is a paid mutator transaction binding the contract method 0x742b386b.
+//
+// Solidity: function submitDepositSweepProposal((bytes20,(bytes32,uint32)[],uint256) proposal) returns()
+func (_WalletCoordinator *WalletCoordinatorTransactorSession) SubmitDepositSweepProposal(proposal WalletCoordinatorDepositSweepProposal) (*types.Transaction, error) {
+	return _WalletCoordinator.Contract.SubmitDepositSweepProposal(&_WalletCoordinator.TransactOpts, proposal)
+}
+
+// SubmitDepositSweepProposalWithReimbursement is a paid mutator transaction binding the contract method 0x6ed6405f.
+//
+// Solidity: function submitDepositSweepProposalWithReimbursement((bytes20,(bytes32,uint32)[],uint256) proposal) returns()
+func (_WalletCoordinator *WalletCoordinatorTransactor) SubmitDepositSweepProposalWithReimbursement(opts *bind.TransactOpts, proposal WalletCoordinatorDepositSweepProposal) (*types.Transaction, error) {
+	return _WalletCoordinator.contract.Transact(opts, "submitDepositSweepProposalWithReimbursement", proposal)
+}
+
+// SubmitDepositSweepProposalWithReimbursement is a paid mutator transaction binding the contract method 0x6ed6405f.
+//
+// Solidity: function submitDepositSweepProposalWithReimbursement((bytes20,(bytes32,uint32)[],uint256) proposal) returns()
+func (_WalletCoordinator *WalletCoordinatorSession) SubmitDepositSweepProposalWithReimbursement(proposal WalletCoordinatorDepositSweepProposal) (*types.Transaction, error) {
+	return _WalletCoordinator.Contract.SubmitDepositSweepProposalWithReimbursement(&_WalletCoordinator.TransactOpts, proposal)
+}
+
+// SubmitDepositSweepProposalWithReimbursement is a paid mutator transaction binding the contract method 0x6ed6405f.
+//
+// Solidity: function submitDepositSweepProposalWithReimbursement((bytes20,(bytes32,uint32)[],uint256) proposal) returns()
+func (_WalletCoordinator *WalletCoordinatorTransactorSession) SubmitDepositSweepProposalWithReimbursement(proposal WalletCoordinatorDepositSweepProposal) (*types.Transaction, error) {
+	return _WalletCoordinator.Contract.SubmitDepositSweepProposalWithReimbursement(&_WalletCoordinator.TransactOpts, proposal)
 }
 
 // TransferOwnership is a paid mutator transaction binding the contract method 0xf2fde38b.
@@ -769,109 +836,46 @@ func (_WalletCoordinator *WalletCoordinatorTransactorSession) UnlockWallet(walle
 	return _WalletCoordinator.Contract.UnlockWallet(&_WalletCoordinator.TransactOpts, walletPubKeyHash)
 }
 
-// UpdateDepositMinAge is a paid mutator transaction binding the contract method 0x0dc1b8df.
+// UpdateDepositSweepProposalParameters is a paid mutator transaction binding the contract method 0x5486032e.
 //
-// Solidity: function updateDepositMinAge(uint32 _depositMinAge) returns()
-func (_WalletCoordinator *WalletCoordinatorTransactor) UpdateDepositMinAge(opts *bind.TransactOpts, _depositMinAge uint32) (*types.Transaction, error) {
-	return _WalletCoordinator.contract.Transact(opts, "updateDepositMinAge", _depositMinAge)
+// Solidity: function updateDepositSweepProposalParameters(uint32 _depositSweepProposalValidity, uint32 _depositMinAge, uint32 _depositRefundSafetyMargin, uint16 _depositSweepMaxSize, uint32 _depositSweepProposalSubmissionGasOffset) returns()
+func (_WalletCoordinator *WalletCoordinatorTransactor) UpdateDepositSweepProposalParameters(opts *bind.TransactOpts, _depositSweepProposalValidity uint32, _depositMinAge uint32, _depositRefundSafetyMargin uint32, _depositSweepMaxSize uint16, _depositSweepProposalSubmissionGasOffset uint32) (*types.Transaction, error) {
+	return _WalletCoordinator.contract.Transact(opts, "updateDepositSweepProposalParameters", _depositSweepProposalValidity, _depositMinAge, _depositRefundSafetyMargin, _depositSweepMaxSize, _depositSweepProposalSubmissionGasOffset)
 }
 
-// UpdateDepositMinAge is a paid mutator transaction binding the contract method 0x0dc1b8df.
+// UpdateDepositSweepProposalParameters is a paid mutator transaction binding the contract method 0x5486032e.
 //
-// Solidity: function updateDepositMinAge(uint32 _depositMinAge) returns()
-func (_WalletCoordinator *WalletCoordinatorSession) UpdateDepositMinAge(_depositMinAge uint32) (*types.Transaction, error) {
-	return _WalletCoordinator.Contract.UpdateDepositMinAge(&_WalletCoordinator.TransactOpts, _depositMinAge)
+// Solidity: function updateDepositSweepProposalParameters(uint32 _depositSweepProposalValidity, uint32 _depositMinAge, uint32 _depositRefundSafetyMargin, uint16 _depositSweepMaxSize, uint32 _depositSweepProposalSubmissionGasOffset) returns()
+func (_WalletCoordinator *WalletCoordinatorSession) UpdateDepositSweepProposalParameters(_depositSweepProposalValidity uint32, _depositMinAge uint32, _depositRefundSafetyMargin uint32, _depositSweepMaxSize uint16, _depositSweepProposalSubmissionGasOffset uint32) (*types.Transaction, error) {
+	return _WalletCoordinator.Contract.UpdateDepositSweepProposalParameters(&_WalletCoordinator.TransactOpts, _depositSweepProposalValidity, _depositMinAge, _depositRefundSafetyMargin, _depositSweepMaxSize, _depositSweepProposalSubmissionGasOffset)
 }
 
-// UpdateDepositMinAge is a paid mutator transaction binding the contract method 0x0dc1b8df.
+// UpdateDepositSweepProposalParameters is a paid mutator transaction binding the contract method 0x5486032e.
 //
-// Solidity: function updateDepositMinAge(uint32 _depositMinAge) returns()
-func (_WalletCoordinator *WalletCoordinatorTransactorSession) UpdateDepositMinAge(_depositMinAge uint32) (*types.Transaction, error) {
-	return _WalletCoordinator.Contract.UpdateDepositMinAge(&_WalletCoordinator.TransactOpts, _depositMinAge)
+// Solidity: function updateDepositSweepProposalParameters(uint32 _depositSweepProposalValidity, uint32 _depositMinAge, uint32 _depositRefundSafetyMargin, uint16 _depositSweepMaxSize, uint32 _depositSweepProposalSubmissionGasOffset) returns()
+func (_WalletCoordinator *WalletCoordinatorTransactorSession) UpdateDepositSweepProposalParameters(_depositSweepProposalValidity uint32, _depositMinAge uint32, _depositRefundSafetyMargin uint32, _depositSweepMaxSize uint16, _depositSweepProposalSubmissionGasOffset uint32) (*types.Transaction, error) {
+	return _WalletCoordinator.Contract.UpdateDepositSweepProposalParameters(&_WalletCoordinator.TransactOpts, _depositSweepProposalValidity, _depositMinAge, _depositRefundSafetyMargin, _depositSweepMaxSize, _depositSweepProposalSubmissionGasOffset)
 }
 
-// UpdateDepositRefundSafetyMargin is a paid mutator transaction binding the contract method 0x6ff913c3.
+// UpdateHeartbeatRequestParameters is a paid mutator transaction binding the contract method 0x85a0924c.
 //
-// Solidity: function updateDepositRefundSafetyMargin(uint32 _depositRefundSafetyMargin) returns()
-func (_WalletCoordinator *WalletCoordinatorTransactor) UpdateDepositRefundSafetyMargin(opts *bind.TransactOpts, _depositRefundSafetyMargin uint32) (*types.Transaction, error) {
-	return _WalletCoordinator.contract.Transact(opts, "updateDepositRefundSafetyMargin", _depositRefundSafetyMargin)
+// Solidity: function updateHeartbeatRequestParameters(uint32 _heartbeatRequestValidity, uint32 _heartbeatRequestGasOffset) returns()
+func (_WalletCoordinator *WalletCoordinatorTransactor) UpdateHeartbeatRequestParameters(opts *bind.TransactOpts, _heartbeatRequestValidity uint32, _heartbeatRequestGasOffset uint32) (*types.Transaction, error) {
+	return _WalletCoordinator.contract.Transact(opts, "updateHeartbeatRequestParameters", _heartbeatRequestValidity, _heartbeatRequestGasOffset)
 }
 
-// UpdateDepositRefundSafetyMargin is a paid mutator transaction binding the contract method 0x6ff913c3.
+// UpdateHeartbeatRequestParameters is a paid mutator transaction binding the contract method 0x85a0924c.
 //
-// Solidity: function updateDepositRefundSafetyMargin(uint32 _depositRefundSafetyMargin) returns()
-func (_WalletCoordinator *WalletCoordinatorSession) UpdateDepositRefundSafetyMargin(_depositRefundSafetyMargin uint32) (*types.Transaction, error) {
-	return _WalletCoordinator.Contract.UpdateDepositRefundSafetyMargin(&_WalletCoordinator.TransactOpts, _depositRefundSafetyMargin)
+// Solidity: function updateHeartbeatRequestParameters(uint32 _heartbeatRequestValidity, uint32 _heartbeatRequestGasOffset) returns()
+func (_WalletCoordinator *WalletCoordinatorSession) UpdateHeartbeatRequestParameters(_heartbeatRequestValidity uint32, _heartbeatRequestGasOffset uint32) (*types.Transaction, error) {
+	return _WalletCoordinator.Contract.UpdateHeartbeatRequestParameters(&_WalletCoordinator.TransactOpts, _heartbeatRequestValidity, _heartbeatRequestGasOffset)
 }
 
-// UpdateDepositRefundSafetyMargin is a paid mutator transaction binding the contract method 0x6ff913c3.
+// UpdateHeartbeatRequestParameters is a paid mutator transaction binding the contract method 0x85a0924c.
 //
-// Solidity: function updateDepositRefundSafetyMargin(uint32 _depositRefundSafetyMargin) returns()
-func (_WalletCoordinator *WalletCoordinatorTransactorSession) UpdateDepositRefundSafetyMargin(_depositRefundSafetyMargin uint32) (*types.Transaction, error) {
-	return _WalletCoordinator.Contract.UpdateDepositRefundSafetyMargin(&_WalletCoordinator.TransactOpts, _depositRefundSafetyMargin)
-}
-
-// UpdateDepositSweepMaxSize is a paid mutator transaction binding the contract method 0x9f41e13b.
-//
-// Solidity: function updateDepositSweepMaxSize(uint16 _depositSweepMaxSize) returns()
-func (_WalletCoordinator *WalletCoordinatorTransactor) UpdateDepositSweepMaxSize(opts *bind.TransactOpts, _depositSweepMaxSize uint16) (*types.Transaction, error) {
-	return _WalletCoordinator.contract.Transact(opts, "updateDepositSweepMaxSize", _depositSweepMaxSize)
-}
-
-// UpdateDepositSweepMaxSize is a paid mutator transaction binding the contract method 0x9f41e13b.
-//
-// Solidity: function updateDepositSweepMaxSize(uint16 _depositSweepMaxSize) returns()
-func (_WalletCoordinator *WalletCoordinatorSession) UpdateDepositSweepMaxSize(_depositSweepMaxSize uint16) (*types.Transaction, error) {
-	return _WalletCoordinator.Contract.UpdateDepositSweepMaxSize(&_WalletCoordinator.TransactOpts, _depositSweepMaxSize)
-}
-
-// UpdateDepositSweepMaxSize is a paid mutator transaction binding the contract method 0x9f41e13b.
-//
-// Solidity: function updateDepositSweepMaxSize(uint16 _depositSweepMaxSize) returns()
-func (_WalletCoordinator *WalletCoordinatorTransactorSession) UpdateDepositSweepMaxSize(_depositSweepMaxSize uint16) (*types.Transaction, error) {
-	return _WalletCoordinator.Contract.UpdateDepositSweepMaxSize(&_WalletCoordinator.TransactOpts, _depositSweepMaxSize)
-}
-
-// UpdateDepositSweepProposalSubmissionGasOffset is a paid mutator transaction binding the contract method 0xb82bc399.
-//
-// Solidity: function updateDepositSweepProposalSubmissionGasOffset(uint32 _depositSweepProposalSubmissionGasOffset) returns()
-func (_WalletCoordinator *WalletCoordinatorTransactor) UpdateDepositSweepProposalSubmissionGasOffset(opts *bind.TransactOpts, _depositSweepProposalSubmissionGasOffset uint32) (*types.Transaction, error) {
-	return _WalletCoordinator.contract.Transact(opts, "updateDepositSweepProposalSubmissionGasOffset", _depositSweepProposalSubmissionGasOffset)
-}
-
-// UpdateDepositSweepProposalSubmissionGasOffset is a paid mutator transaction binding the contract method 0xb82bc399.
-//
-// Solidity: function updateDepositSweepProposalSubmissionGasOffset(uint32 _depositSweepProposalSubmissionGasOffset) returns()
-func (_WalletCoordinator *WalletCoordinatorSession) UpdateDepositSweepProposalSubmissionGasOffset(_depositSweepProposalSubmissionGasOffset uint32) (*types.Transaction, error) {
-	return _WalletCoordinator.Contract.UpdateDepositSweepProposalSubmissionGasOffset(&_WalletCoordinator.TransactOpts, _depositSweepProposalSubmissionGasOffset)
-}
-
-// UpdateDepositSweepProposalSubmissionGasOffset is a paid mutator transaction binding the contract method 0xb82bc399.
-//
-// Solidity: function updateDepositSweepProposalSubmissionGasOffset(uint32 _depositSweepProposalSubmissionGasOffset) returns()
-func (_WalletCoordinator *WalletCoordinatorTransactorSession) UpdateDepositSweepProposalSubmissionGasOffset(_depositSweepProposalSubmissionGasOffset uint32) (*types.Transaction, error) {
-	return _WalletCoordinator.Contract.UpdateDepositSweepProposalSubmissionGasOffset(&_WalletCoordinator.TransactOpts, _depositSweepProposalSubmissionGasOffset)
-}
-
-// UpdateDepositSweepProposalValidity is a paid mutator transaction binding the contract method 0x23a1c307.
-//
-// Solidity: function updateDepositSweepProposalValidity(uint32 _depositSweepProposalValidity) returns()
-func (_WalletCoordinator *WalletCoordinatorTransactor) UpdateDepositSweepProposalValidity(opts *bind.TransactOpts, _depositSweepProposalValidity uint32) (*types.Transaction, error) {
-	return _WalletCoordinator.contract.Transact(opts, "updateDepositSweepProposalValidity", _depositSweepProposalValidity)
-}
-
-// UpdateDepositSweepProposalValidity is a paid mutator transaction binding the contract method 0x23a1c307.
-//
-// Solidity: function updateDepositSweepProposalValidity(uint32 _depositSweepProposalValidity) returns()
-func (_WalletCoordinator *WalletCoordinatorSession) UpdateDepositSweepProposalValidity(_depositSweepProposalValidity uint32) (*types.Transaction, error) {
-	return _WalletCoordinator.Contract.UpdateDepositSweepProposalValidity(&_WalletCoordinator.TransactOpts, _depositSweepProposalValidity)
-}
-
-// UpdateDepositSweepProposalValidity is a paid mutator transaction binding the contract method 0x23a1c307.
-//
-// Solidity: function updateDepositSweepProposalValidity(uint32 _depositSweepProposalValidity) returns()
-func (_WalletCoordinator *WalletCoordinatorTransactorSession) UpdateDepositSweepProposalValidity(_depositSweepProposalValidity uint32) (*types.Transaction, error) {
-	return _WalletCoordinator.Contract.UpdateDepositSweepProposalValidity(&_WalletCoordinator.TransactOpts, _depositSweepProposalValidity)
+// Solidity: function updateHeartbeatRequestParameters(uint32 _heartbeatRequestValidity, uint32 _heartbeatRequestGasOffset) returns()
+func (_WalletCoordinator *WalletCoordinatorTransactorSession) UpdateHeartbeatRequestParameters(_heartbeatRequestValidity uint32, _heartbeatRequestGasOffset uint32) (*types.Transaction, error) {
+	return _WalletCoordinator.Contract.UpdateHeartbeatRequestParameters(&_WalletCoordinator.TransactOpts, _heartbeatRequestValidity, _heartbeatRequestGasOffset)
 }
 
 // UpdateReimbursementPool is a paid mutator transaction binding the contract method 0x7b35b4e6.
@@ -895,9 +899,9 @@ func (_WalletCoordinator *WalletCoordinatorTransactorSession) UpdateReimbursemen
 	return _WalletCoordinator.Contract.UpdateReimbursementPool(&_WalletCoordinator.TransactOpts, _reimbursementPool)
 }
 
-// WalletCoordinatorDepositMinAgeUpdatedIterator is returned from FilterDepositMinAgeUpdated and is used to iterate over the raw logs and unpacked data for DepositMinAgeUpdated events raised by the WalletCoordinator contract.
-type WalletCoordinatorDepositMinAgeUpdatedIterator struct {
-	Event *WalletCoordinatorDepositMinAgeUpdated // Event containing the contract specifics and raw log
+// WalletCoordinatorCoordinatorAddedIterator is returned from FilterCoordinatorAdded and is used to iterate over the raw logs and unpacked data for CoordinatorAdded events raised by the WalletCoordinator contract.
+type WalletCoordinatorCoordinatorAddedIterator struct {
+	Event *WalletCoordinatorCoordinatorAdded // Event containing the contract specifics and raw log
 
 	contract *bind.BoundContract // Generic contract to use for unpacking event data
 	event    string              // Event name to use for unpacking event data
@@ -911,7 +915,7 @@ type WalletCoordinatorDepositMinAgeUpdatedIterator struct {
 // Next advances the iterator to the subsequent event, returning whether there
 // are any more events found. In case of a retrieval or parsing error, false is
 // returned and Error() can be queried for the exact failure.
-func (it *WalletCoordinatorDepositMinAgeUpdatedIterator) Next() bool {
+func (it *WalletCoordinatorCoordinatorAddedIterator) Next() bool {
 	// If the iterator failed, stop iterating
 	if it.fail != nil {
 		return false
@@ -920,7 +924,7 @@ func (it *WalletCoordinatorDepositMinAgeUpdatedIterator) Next() bool {
 	if it.done {
 		select {
 		case log := <-it.logs:
-			it.Event = new(WalletCoordinatorDepositMinAgeUpdated)
+			it.Event = new(WalletCoordinatorCoordinatorAdded)
 			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
 				it.fail = err
 				return false
@@ -935,7 +939,7 @@ func (it *WalletCoordinatorDepositMinAgeUpdatedIterator) Next() bool {
 	// Iterator still in progress, wait for either a data or an error event
 	select {
 	case log := <-it.logs:
-		it.Event = new(WalletCoordinatorDepositMinAgeUpdated)
+		it.Event = new(WalletCoordinatorCoordinatorAdded)
 		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
 			it.fail = err
 			return false
@@ -951,41 +955,51 @@ func (it *WalletCoordinatorDepositMinAgeUpdatedIterator) Next() bool {
 }
 
 // Error returns any retrieval or parsing error occurred during filtering.
-func (it *WalletCoordinatorDepositMinAgeUpdatedIterator) Error() error {
+func (it *WalletCoordinatorCoordinatorAddedIterator) Error() error {
 	return it.fail
 }
 
 // Close terminates the iteration process, releasing any pending underlying
 // resources.
-func (it *WalletCoordinatorDepositMinAgeUpdatedIterator) Close() error {
+func (it *WalletCoordinatorCoordinatorAddedIterator) Close() error {
 	it.sub.Unsubscribe()
 	return nil
 }
 
-// WalletCoordinatorDepositMinAgeUpdated represents a DepositMinAgeUpdated event raised by the WalletCoordinator contract.
-type WalletCoordinatorDepositMinAgeUpdated struct {
-	DepositMinAge uint32
-	Raw           types.Log // Blockchain specific contextual infos
+// WalletCoordinatorCoordinatorAdded represents a CoordinatorAdded event raised by the WalletCoordinator contract.
+type WalletCoordinatorCoordinatorAdded struct {
+	Coordinator common.Address
+	Raw         types.Log // Blockchain specific contextual infos
 }
 
-// FilterDepositMinAgeUpdated is a free log retrieval operation binding the contract event 0xeda69d960fc800ae7f67255cd8b42b338c24e1a655053127fff8bf88a2480d3f.
+// FilterCoordinatorAdded is a free log retrieval operation binding the contract event 0x56e6c5206d2baab7a01569b19d84b5963ca9f96e10f55076b5e5987fbf780cf5.
 //
-// Solidity: event DepositMinAgeUpdated(uint32 depositMinAge)
-func (_WalletCoordinator *WalletCoordinatorFilterer) FilterDepositMinAgeUpdated(opts *bind.FilterOpts) (*WalletCoordinatorDepositMinAgeUpdatedIterator, error) {
+// Solidity: event CoordinatorAdded(address indexed coordinator)
+func (_WalletCoordinator *WalletCoordinatorFilterer) FilterCoordinatorAdded(opts *bind.FilterOpts, coordinator []common.Address) (*WalletCoordinatorCoordinatorAddedIterator, error) {
 
-	logs, sub, err := _WalletCoordinator.contract.FilterLogs(opts, "DepositMinAgeUpdated")
+	var coordinatorRule []interface{}
+	for _, coordinatorItem := range coordinator {
+		coordinatorRule = append(coordinatorRule, coordinatorItem)
+	}
+
+	logs, sub, err := _WalletCoordinator.contract.FilterLogs(opts, "CoordinatorAdded", coordinatorRule)
 	if err != nil {
 		return nil, err
 	}
-	return &WalletCoordinatorDepositMinAgeUpdatedIterator{contract: _WalletCoordinator.contract, event: "DepositMinAgeUpdated", logs: logs, sub: sub}, nil
+	return &WalletCoordinatorCoordinatorAddedIterator{contract: _WalletCoordinator.contract, event: "CoordinatorAdded", logs: logs, sub: sub}, nil
 }
 
-// WatchDepositMinAgeUpdated is a free log subscription operation binding the contract event 0xeda69d960fc800ae7f67255cd8b42b338c24e1a655053127fff8bf88a2480d3f.
+// WatchCoordinatorAdded is a free log subscription operation binding the contract event 0x56e6c5206d2baab7a01569b19d84b5963ca9f96e10f55076b5e5987fbf780cf5.
 //
-// Solidity: event DepositMinAgeUpdated(uint32 depositMinAge)
-func (_WalletCoordinator *WalletCoordinatorFilterer) WatchDepositMinAgeUpdated(opts *bind.WatchOpts, sink chan<- *WalletCoordinatorDepositMinAgeUpdated) (event.Subscription, error) {
+// Solidity: event CoordinatorAdded(address indexed coordinator)
+func (_WalletCoordinator *WalletCoordinatorFilterer) WatchCoordinatorAdded(opts *bind.WatchOpts, sink chan<- *WalletCoordinatorCoordinatorAdded, coordinator []common.Address) (event.Subscription, error) {
 
-	logs, sub, err := _WalletCoordinator.contract.WatchLogs(opts, "DepositMinAgeUpdated")
+	var coordinatorRule []interface{}
+	for _, coordinatorItem := range coordinator {
+		coordinatorRule = append(coordinatorRule, coordinatorItem)
+	}
+
+	logs, sub, err := _WalletCoordinator.contract.WatchLogs(opts, "CoordinatorAdded", coordinatorRule)
 	if err != nil {
 		return nil, err
 	}
@@ -995,8 +1009,8 @@ func (_WalletCoordinator *WalletCoordinatorFilterer) WatchDepositMinAgeUpdated(o
 			select {
 			case log := <-logs:
 				// New log arrived, parse the event and forward to the user
-				event := new(WalletCoordinatorDepositMinAgeUpdated)
-				if err := _WalletCoordinator.contract.UnpackLog(event, "DepositMinAgeUpdated", log); err != nil {
+				event := new(WalletCoordinatorCoordinatorAdded)
+				if err := _WalletCoordinator.contract.UnpackLog(event, "CoordinatorAdded", log); err != nil {
 					return err
 				}
 				event.Raw = log
@@ -1017,21 +1031,21 @@ func (_WalletCoordinator *WalletCoordinatorFilterer) WatchDepositMinAgeUpdated(o
 	}), nil
 }
 
-// ParseDepositMinAgeUpdated is a log parse operation binding the contract event 0xeda69d960fc800ae7f67255cd8b42b338c24e1a655053127fff8bf88a2480d3f.
+// ParseCoordinatorAdded is a log parse operation binding the contract event 0x56e6c5206d2baab7a01569b19d84b5963ca9f96e10f55076b5e5987fbf780cf5.
 //
-// Solidity: event DepositMinAgeUpdated(uint32 depositMinAge)
-func (_WalletCoordinator *WalletCoordinatorFilterer) ParseDepositMinAgeUpdated(log types.Log) (*WalletCoordinatorDepositMinAgeUpdated, error) {
-	event := new(WalletCoordinatorDepositMinAgeUpdated)
-	if err := _WalletCoordinator.contract.UnpackLog(event, "DepositMinAgeUpdated", log); err != nil {
+// Solidity: event CoordinatorAdded(address indexed coordinator)
+func (_WalletCoordinator *WalletCoordinatorFilterer) ParseCoordinatorAdded(log types.Log) (*WalletCoordinatorCoordinatorAdded, error) {
+	event := new(WalletCoordinatorCoordinatorAdded)
+	if err := _WalletCoordinator.contract.UnpackLog(event, "CoordinatorAdded", log); err != nil {
 		return nil, err
 	}
 	event.Raw = log
 	return event, nil
 }
 
-// WalletCoordinatorDepositRefundSafetyMarginUpdatedIterator is returned from FilterDepositRefundSafetyMarginUpdated and is used to iterate over the raw logs and unpacked data for DepositRefundSafetyMarginUpdated events raised by the WalletCoordinator contract.
-type WalletCoordinatorDepositRefundSafetyMarginUpdatedIterator struct {
-	Event *WalletCoordinatorDepositRefundSafetyMarginUpdated // Event containing the contract specifics and raw log
+// WalletCoordinatorCoordinatorRemovedIterator is returned from FilterCoordinatorRemoved and is used to iterate over the raw logs and unpacked data for CoordinatorRemoved events raised by the WalletCoordinator contract.
+type WalletCoordinatorCoordinatorRemovedIterator struct {
+	Event *WalletCoordinatorCoordinatorRemoved // Event containing the contract specifics and raw log
 
 	contract *bind.BoundContract // Generic contract to use for unpacking event data
 	event    string              // Event name to use for unpacking event data
@@ -1045,7 +1059,7 @@ type WalletCoordinatorDepositRefundSafetyMarginUpdatedIterator struct {
 // Next advances the iterator to the subsequent event, returning whether there
 // are any more events found. In case of a retrieval or parsing error, false is
 // returned and Error() can be queried for the exact failure.
-func (it *WalletCoordinatorDepositRefundSafetyMarginUpdatedIterator) Next() bool {
+func (it *WalletCoordinatorCoordinatorRemovedIterator) Next() bool {
 	// If the iterator failed, stop iterating
 	if it.fail != nil {
 		return false
@@ -1054,7 +1068,7 @@ func (it *WalletCoordinatorDepositRefundSafetyMarginUpdatedIterator) Next() bool
 	if it.done {
 		select {
 		case log := <-it.logs:
-			it.Event = new(WalletCoordinatorDepositRefundSafetyMarginUpdated)
+			it.Event = new(WalletCoordinatorCoordinatorRemoved)
 			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
 				it.fail = err
 				return false
@@ -1069,7 +1083,7 @@ func (it *WalletCoordinatorDepositRefundSafetyMarginUpdatedIterator) Next() bool
 	// Iterator still in progress, wait for either a data or an error event
 	select {
 	case log := <-it.logs:
-		it.Event = new(WalletCoordinatorDepositRefundSafetyMarginUpdated)
+		it.Event = new(WalletCoordinatorCoordinatorRemoved)
 		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
 			it.fail = err
 			return false
@@ -1085,41 +1099,51 @@ func (it *WalletCoordinatorDepositRefundSafetyMarginUpdatedIterator) Next() bool
 }
 
 // Error returns any retrieval or parsing error occurred during filtering.
-func (it *WalletCoordinatorDepositRefundSafetyMarginUpdatedIterator) Error() error {
+func (it *WalletCoordinatorCoordinatorRemovedIterator) Error() error {
 	return it.fail
 }
 
 // Close terminates the iteration process, releasing any pending underlying
 // resources.
-func (it *WalletCoordinatorDepositRefundSafetyMarginUpdatedIterator) Close() error {
+func (it *WalletCoordinatorCoordinatorRemovedIterator) Close() error {
 	it.sub.Unsubscribe()
 	return nil
 }
 
-// WalletCoordinatorDepositRefundSafetyMarginUpdated represents a DepositRefundSafetyMarginUpdated event raised by the WalletCoordinator contract.
-type WalletCoordinatorDepositRefundSafetyMarginUpdated struct {
-	DepositRefundSafetyMargin uint32
-	Raw                       types.Log // Blockchain specific contextual infos
+// WalletCoordinatorCoordinatorRemoved represents a CoordinatorRemoved event raised by the WalletCoordinator contract.
+type WalletCoordinatorCoordinatorRemoved struct {
+	Coordinator common.Address
+	Raw         types.Log // Blockchain specific contextual infos
 }
 
-// FilterDepositRefundSafetyMarginUpdated is a free log retrieval operation binding the contract event 0xcb0c11e4086618176ceab0afd46b7fa25688cf2a6566ed4845f1fb530571faee.
+// FilterCoordinatorRemoved is a free log retrieval operation binding the contract event 0xcf15831020102bbbe0547b0c3460aa49715f2646e0911760d2b069e0fb2f62a1.
 //
-// Solidity: event DepositRefundSafetyMarginUpdated(uint32 depositRefundSafetyMargin)
-func (_WalletCoordinator *WalletCoordinatorFilterer) FilterDepositRefundSafetyMarginUpdated(opts *bind.FilterOpts) (*WalletCoordinatorDepositRefundSafetyMarginUpdatedIterator, error) {
+// Solidity: event CoordinatorRemoved(address indexed coordinator)
+func (_WalletCoordinator *WalletCoordinatorFilterer) FilterCoordinatorRemoved(opts *bind.FilterOpts, coordinator []common.Address) (*WalletCoordinatorCoordinatorRemovedIterator, error) {
 
-	logs, sub, err := _WalletCoordinator.contract.FilterLogs(opts, "DepositRefundSafetyMarginUpdated")
+	var coordinatorRule []interface{}
+	for _, coordinatorItem := range coordinator {
+		coordinatorRule = append(coordinatorRule, coordinatorItem)
+	}
+
+	logs, sub, err := _WalletCoordinator.contract.FilterLogs(opts, "CoordinatorRemoved", coordinatorRule)
 	if err != nil {
 		return nil, err
 	}
-	return &WalletCoordinatorDepositRefundSafetyMarginUpdatedIterator{contract: _WalletCoordinator.contract, event: "DepositRefundSafetyMarginUpdated", logs: logs, sub: sub}, nil
+	return &WalletCoordinatorCoordinatorRemovedIterator{contract: _WalletCoordinator.contract, event: "CoordinatorRemoved", logs: logs, sub: sub}, nil
 }
 
-// WatchDepositRefundSafetyMarginUpdated is a free log subscription operation binding the contract event 0xcb0c11e4086618176ceab0afd46b7fa25688cf2a6566ed4845f1fb530571faee.
+// WatchCoordinatorRemoved is a free log subscription operation binding the contract event 0xcf15831020102bbbe0547b0c3460aa49715f2646e0911760d2b069e0fb2f62a1.
 //
-// Solidity: event DepositRefundSafetyMarginUpdated(uint32 depositRefundSafetyMargin)
-func (_WalletCoordinator *WalletCoordinatorFilterer) WatchDepositRefundSafetyMarginUpdated(opts *bind.WatchOpts, sink chan<- *WalletCoordinatorDepositRefundSafetyMarginUpdated) (event.Subscription, error) {
+// Solidity: event CoordinatorRemoved(address indexed coordinator)
+func (_WalletCoordinator *WalletCoordinatorFilterer) WatchCoordinatorRemoved(opts *bind.WatchOpts, sink chan<- *WalletCoordinatorCoordinatorRemoved, coordinator []common.Address) (event.Subscription, error) {
 
-	logs, sub, err := _WalletCoordinator.contract.WatchLogs(opts, "DepositRefundSafetyMarginUpdated")
+	var coordinatorRule []interface{}
+	for _, coordinatorItem := range coordinator {
+		coordinatorRule = append(coordinatorRule, coordinatorItem)
+	}
+
+	logs, sub, err := _WalletCoordinator.contract.WatchLogs(opts, "CoordinatorRemoved", coordinatorRule)
 	if err != nil {
 		return nil, err
 	}
@@ -1129,8 +1153,8 @@ func (_WalletCoordinator *WalletCoordinatorFilterer) WatchDepositRefundSafetyMar
 			select {
 			case log := <-logs:
 				// New log arrived, parse the event and forward to the user
-				event := new(WalletCoordinatorDepositRefundSafetyMarginUpdated)
-				if err := _WalletCoordinator.contract.UnpackLog(event, "DepositRefundSafetyMarginUpdated", log); err != nil {
+				event := new(WalletCoordinatorCoordinatorRemoved)
+				if err := _WalletCoordinator.contract.UnpackLog(event, "CoordinatorRemoved", log); err != nil {
 					return err
 				}
 				event.Raw = log
@@ -1151,21 +1175,21 @@ func (_WalletCoordinator *WalletCoordinatorFilterer) WatchDepositRefundSafetyMar
 	}), nil
 }
 
-// ParseDepositRefundSafetyMarginUpdated is a log parse operation binding the contract event 0xcb0c11e4086618176ceab0afd46b7fa25688cf2a6566ed4845f1fb530571faee.
+// ParseCoordinatorRemoved is a log parse operation binding the contract event 0xcf15831020102bbbe0547b0c3460aa49715f2646e0911760d2b069e0fb2f62a1.
 //
-// Solidity: event DepositRefundSafetyMarginUpdated(uint32 depositRefundSafetyMargin)
-func (_WalletCoordinator *WalletCoordinatorFilterer) ParseDepositRefundSafetyMarginUpdated(log types.Log) (*WalletCoordinatorDepositRefundSafetyMarginUpdated, error) {
-	event := new(WalletCoordinatorDepositRefundSafetyMarginUpdated)
-	if err := _WalletCoordinator.contract.UnpackLog(event, "DepositRefundSafetyMarginUpdated", log); err != nil {
+// Solidity: event CoordinatorRemoved(address indexed coordinator)
+func (_WalletCoordinator *WalletCoordinatorFilterer) ParseCoordinatorRemoved(log types.Log) (*WalletCoordinatorCoordinatorRemoved, error) {
+	event := new(WalletCoordinatorCoordinatorRemoved)
+	if err := _WalletCoordinator.contract.UnpackLog(event, "CoordinatorRemoved", log); err != nil {
 		return nil, err
 	}
 	event.Raw = log
 	return event, nil
 }
 
-// WalletCoordinatorDepositSweepMaxSizeUpdatedIterator is returned from FilterDepositSweepMaxSizeUpdated and is used to iterate over the raw logs and unpacked data for DepositSweepMaxSizeUpdated events raised by the WalletCoordinator contract.
-type WalletCoordinatorDepositSweepMaxSizeUpdatedIterator struct {
-	Event *WalletCoordinatorDepositSweepMaxSizeUpdated // Event containing the contract specifics and raw log
+// WalletCoordinatorDepositSweepProposalParametersUpdatedIterator is returned from FilterDepositSweepProposalParametersUpdated and is used to iterate over the raw logs and unpacked data for DepositSweepProposalParametersUpdated events raised by the WalletCoordinator contract.
+type WalletCoordinatorDepositSweepProposalParametersUpdatedIterator struct {
+	Event *WalletCoordinatorDepositSweepProposalParametersUpdated // Event containing the contract specifics and raw log
 
 	contract *bind.BoundContract // Generic contract to use for unpacking event data
 	event    string              // Event name to use for unpacking event data
@@ -1179,7 +1203,7 @@ type WalletCoordinatorDepositSweepMaxSizeUpdatedIterator struct {
 // Next advances the iterator to the subsequent event, returning whether there
 // are any more events found. In case of a retrieval or parsing error, false is
 // returned and Error() can be queried for the exact failure.
-func (it *WalletCoordinatorDepositSweepMaxSizeUpdatedIterator) Next() bool {
+func (it *WalletCoordinatorDepositSweepProposalParametersUpdatedIterator) Next() bool {
 	// If the iterator failed, stop iterating
 	if it.fail != nil {
 		return false
@@ -1188,7 +1212,7 @@ func (it *WalletCoordinatorDepositSweepMaxSizeUpdatedIterator) Next() bool {
 	if it.done {
 		select {
 		case log := <-it.logs:
-			it.Event = new(WalletCoordinatorDepositSweepMaxSizeUpdated)
+			it.Event = new(WalletCoordinatorDepositSweepProposalParametersUpdated)
 			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
 				it.fail = err
 				return false
@@ -1203,7 +1227,7 @@ func (it *WalletCoordinatorDepositSweepMaxSizeUpdatedIterator) Next() bool {
 	// Iterator still in progress, wait for either a data or an error event
 	select {
 	case log := <-it.logs:
-		it.Event = new(WalletCoordinatorDepositSweepMaxSizeUpdated)
+		it.Event = new(WalletCoordinatorDepositSweepProposalParametersUpdated)
 		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
 			it.fail = err
 			return false
@@ -1219,175 +1243,45 @@ func (it *WalletCoordinatorDepositSweepMaxSizeUpdatedIterator) Next() bool {
 }
 
 // Error returns any retrieval or parsing error occurred during filtering.
-func (it *WalletCoordinatorDepositSweepMaxSizeUpdatedIterator) Error() error {
+func (it *WalletCoordinatorDepositSweepProposalParametersUpdatedIterator) Error() error {
 	return it.fail
 }
 
 // Close terminates the iteration process, releasing any pending underlying
 // resources.
-func (it *WalletCoordinatorDepositSweepMaxSizeUpdatedIterator) Close() error {
+func (it *WalletCoordinatorDepositSweepProposalParametersUpdatedIterator) Close() error {
 	it.sub.Unsubscribe()
 	return nil
 }
 
-// WalletCoordinatorDepositSweepMaxSizeUpdated represents a DepositSweepMaxSizeUpdated event raised by the WalletCoordinator contract.
-type WalletCoordinatorDepositSweepMaxSizeUpdated struct {
-	DepositSweepMaxSize uint16
-	Raw                 types.Log // Blockchain specific contextual infos
-}
-
-// FilterDepositSweepMaxSizeUpdated is a free log retrieval operation binding the contract event 0xcc7b63f885d59808f386320218caf8e6bdaa095b61927dea4e59f9cf6954beab.
-//
-// Solidity: event DepositSweepMaxSizeUpdated(uint16 depositSweepMaxSize)
-func (_WalletCoordinator *WalletCoordinatorFilterer) FilterDepositSweepMaxSizeUpdated(opts *bind.FilterOpts) (*WalletCoordinatorDepositSweepMaxSizeUpdatedIterator, error) {
-
-	logs, sub, err := _WalletCoordinator.contract.FilterLogs(opts, "DepositSweepMaxSizeUpdated")
-	if err != nil {
-		return nil, err
-	}
-	return &WalletCoordinatorDepositSweepMaxSizeUpdatedIterator{contract: _WalletCoordinator.contract, event: "DepositSweepMaxSizeUpdated", logs: logs, sub: sub}, nil
-}
-
-// WatchDepositSweepMaxSizeUpdated is a free log subscription operation binding the contract event 0xcc7b63f885d59808f386320218caf8e6bdaa095b61927dea4e59f9cf6954beab.
-//
-// Solidity: event DepositSweepMaxSizeUpdated(uint16 depositSweepMaxSize)
-func (_WalletCoordinator *WalletCoordinatorFilterer) WatchDepositSweepMaxSizeUpdated(opts *bind.WatchOpts, sink chan<- *WalletCoordinatorDepositSweepMaxSizeUpdated) (event.Subscription, error) {
-
-	logs, sub, err := _WalletCoordinator.contract.WatchLogs(opts, "DepositSweepMaxSizeUpdated")
-	if err != nil {
-		return nil, err
-	}
-	return event.NewSubscription(func(quit <-chan struct{}) error {
-		defer sub.Unsubscribe()
-		for {
-			select {
-			case log := <-logs:
-				// New log arrived, parse the event and forward to the user
-				event := new(WalletCoordinatorDepositSweepMaxSizeUpdated)
-				if err := _WalletCoordinator.contract.UnpackLog(event, "DepositSweepMaxSizeUpdated", log); err != nil {
-					return err
-				}
-				event.Raw = log
-
-				select {
-				case sink <- event:
-				case err := <-sub.Err():
-					return err
-				case <-quit:
-					return nil
-				}
-			case err := <-sub.Err():
-				return err
-			case <-quit:
-				return nil
-			}
-		}
-	}), nil
-}
-
-// ParseDepositSweepMaxSizeUpdated is a log parse operation binding the contract event 0xcc7b63f885d59808f386320218caf8e6bdaa095b61927dea4e59f9cf6954beab.
-//
-// Solidity: event DepositSweepMaxSizeUpdated(uint16 depositSweepMaxSize)
-func (_WalletCoordinator *WalletCoordinatorFilterer) ParseDepositSweepMaxSizeUpdated(log types.Log) (*WalletCoordinatorDepositSweepMaxSizeUpdated, error) {
-	event := new(WalletCoordinatorDepositSweepMaxSizeUpdated)
-	if err := _WalletCoordinator.contract.UnpackLog(event, "DepositSweepMaxSizeUpdated", log); err != nil {
-		return nil, err
-	}
-	event.Raw = log
-	return event, nil
-}
-
-// WalletCoordinatorDepositSweepProposalSubmissionGasOffsetUpdatedIterator is returned from FilterDepositSweepProposalSubmissionGasOffsetUpdated and is used to iterate over the raw logs and unpacked data for DepositSweepProposalSubmissionGasOffsetUpdated events raised by the WalletCoordinator contract.
-type WalletCoordinatorDepositSweepProposalSubmissionGasOffsetUpdatedIterator struct {
-	Event *WalletCoordinatorDepositSweepProposalSubmissionGasOffsetUpdated // Event containing the contract specifics and raw log
-
-	contract *bind.BoundContract // Generic contract to use for unpacking event data
-	event    string              // Event name to use for unpacking event data
-
-	logs chan types.Log        // Log channel receiving the found contract events
-	sub  ethereum.Subscription // Subscription for errors, completion and termination
-	done bool                  // Whether the subscription completed delivering logs
-	fail error                 // Occurred error to stop iteration
-}
-
-// Next advances the iterator to the subsequent event, returning whether there
-// are any more events found. In case of a retrieval or parsing error, false is
-// returned and Error() can be queried for the exact failure.
-func (it *WalletCoordinatorDepositSweepProposalSubmissionGasOffsetUpdatedIterator) Next() bool {
-	// If the iterator failed, stop iterating
-	if it.fail != nil {
-		return false
-	}
-	// If the iterator completed, deliver directly whatever's available
-	if it.done {
-		select {
-		case log := <-it.logs:
-			it.Event = new(WalletCoordinatorDepositSweepProposalSubmissionGasOffsetUpdated)
-			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
-				it.fail = err
-				return false
-			}
-			it.Event.Raw = log
-			return true
-
-		default:
-			return false
-		}
-	}
-	// Iterator still in progress, wait for either a data or an error event
-	select {
-	case log := <-it.logs:
-		it.Event = new(WalletCoordinatorDepositSweepProposalSubmissionGasOffsetUpdated)
-		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
-			it.fail = err
-			return false
-		}
-		it.Event.Raw = log
-		return true
-
-	case err := <-it.sub.Err():
-		it.done = true
-		it.fail = err
-		return it.Next()
-	}
-}
-
-// Error returns any retrieval or parsing error occurred during filtering.
-func (it *WalletCoordinatorDepositSweepProposalSubmissionGasOffsetUpdatedIterator) Error() error {
-	return it.fail
-}
-
-// Close terminates the iteration process, releasing any pending underlying
-// resources.
-func (it *WalletCoordinatorDepositSweepProposalSubmissionGasOffsetUpdatedIterator) Close() error {
-	it.sub.Unsubscribe()
-	return nil
-}
-
-// WalletCoordinatorDepositSweepProposalSubmissionGasOffsetUpdated represents a DepositSweepProposalSubmissionGasOffsetUpdated event raised by the WalletCoordinator contract.
-type WalletCoordinatorDepositSweepProposalSubmissionGasOffsetUpdated struct {
+// WalletCoordinatorDepositSweepProposalParametersUpdated represents a DepositSweepProposalParametersUpdated event raised by the WalletCoordinator contract.
+type WalletCoordinatorDepositSweepProposalParametersUpdated struct {
+	DepositSweepProposalValidity            uint32
+	DepositMinAge                           uint32
+	DepositRefundSafetyMargin               uint32
+	DepositSweepMaxSize                     uint16
 	DepositSweepProposalSubmissionGasOffset uint32
 	Raw                                     types.Log // Blockchain specific contextual infos
 }
 
-// FilterDepositSweepProposalSubmissionGasOffsetUpdated is a free log retrieval operation binding the contract event 0xafb79fa073ff248ba2f1cd9798891f4ee776a03c9f860eccdebcb1837305a197.
+// FilterDepositSweepProposalParametersUpdated is a free log retrieval operation binding the contract event 0xc36fe6b9d74f864b5e345edc3435eb451a80669ec78c8357cc15e3a1d3897a73.
 //
-// Solidity: event DepositSweepProposalSubmissionGasOffsetUpdated(uint32 depositSweepProposalSubmissionGasOffset)
-func (_WalletCoordinator *WalletCoordinatorFilterer) FilterDepositSweepProposalSubmissionGasOffsetUpdated(opts *bind.FilterOpts) (*WalletCoordinatorDepositSweepProposalSubmissionGasOffsetUpdatedIterator, error) {
+// Solidity: event DepositSweepProposalParametersUpdated(uint32 depositSweepProposalValidity, uint32 depositMinAge, uint32 depositRefundSafetyMargin, uint16 depositSweepMaxSize, uint32 depositSweepProposalSubmissionGasOffset)
+func (_WalletCoordinator *WalletCoordinatorFilterer) FilterDepositSweepProposalParametersUpdated(opts *bind.FilterOpts) (*WalletCoordinatorDepositSweepProposalParametersUpdatedIterator, error) {
 
-	logs, sub, err := _WalletCoordinator.contract.FilterLogs(opts, "DepositSweepProposalSubmissionGasOffsetUpdated")
+	logs, sub, err := _WalletCoordinator.contract.FilterLogs(opts, "DepositSweepProposalParametersUpdated")
 	if err != nil {
 		return nil, err
 	}
-	return &WalletCoordinatorDepositSweepProposalSubmissionGasOffsetUpdatedIterator{contract: _WalletCoordinator.contract, event: "DepositSweepProposalSubmissionGasOffsetUpdated", logs: logs, sub: sub}, nil
+	return &WalletCoordinatorDepositSweepProposalParametersUpdatedIterator{contract: _WalletCoordinator.contract, event: "DepositSweepProposalParametersUpdated", logs: logs, sub: sub}, nil
 }
 
-// WatchDepositSweepProposalSubmissionGasOffsetUpdated is a free log subscription operation binding the contract event 0xafb79fa073ff248ba2f1cd9798891f4ee776a03c9f860eccdebcb1837305a197.
+// WatchDepositSweepProposalParametersUpdated is a free log subscription operation binding the contract event 0xc36fe6b9d74f864b5e345edc3435eb451a80669ec78c8357cc15e3a1d3897a73.
 //
-// Solidity: event DepositSweepProposalSubmissionGasOffsetUpdated(uint32 depositSweepProposalSubmissionGasOffset)
-func (_WalletCoordinator *WalletCoordinatorFilterer) WatchDepositSweepProposalSubmissionGasOffsetUpdated(opts *bind.WatchOpts, sink chan<- *WalletCoordinatorDepositSweepProposalSubmissionGasOffsetUpdated) (event.Subscription, error) {
+// Solidity: event DepositSweepProposalParametersUpdated(uint32 depositSweepProposalValidity, uint32 depositMinAge, uint32 depositRefundSafetyMargin, uint16 depositSweepMaxSize, uint32 depositSweepProposalSubmissionGasOffset)
+func (_WalletCoordinator *WalletCoordinatorFilterer) WatchDepositSweepProposalParametersUpdated(opts *bind.WatchOpts, sink chan<- *WalletCoordinatorDepositSweepProposalParametersUpdated) (event.Subscription, error) {
 
-	logs, sub, err := _WalletCoordinator.contract.WatchLogs(opts, "DepositSweepProposalSubmissionGasOffsetUpdated")
+	logs, sub, err := _WalletCoordinator.contract.WatchLogs(opts, "DepositSweepProposalParametersUpdated")
 	if err != nil {
 		return nil, err
 	}
@@ -1397,8 +1291,8 @@ func (_WalletCoordinator *WalletCoordinatorFilterer) WatchDepositSweepProposalSu
 			select {
 			case log := <-logs:
 				// New log arrived, parse the event and forward to the user
-				event := new(WalletCoordinatorDepositSweepProposalSubmissionGasOffsetUpdated)
-				if err := _WalletCoordinator.contract.UnpackLog(event, "DepositSweepProposalSubmissionGasOffsetUpdated", log); err != nil {
+				event := new(WalletCoordinatorDepositSweepProposalParametersUpdated)
+				if err := _WalletCoordinator.contract.UnpackLog(event, "DepositSweepProposalParametersUpdated", log); err != nil {
 					return err
 				}
 				event.Raw = log
@@ -1419,12 +1313,12 @@ func (_WalletCoordinator *WalletCoordinatorFilterer) WatchDepositSweepProposalSu
 	}), nil
 }
 
-// ParseDepositSweepProposalSubmissionGasOffsetUpdated is a log parse operation binding the contract event 0xafb79fa073ff248ba2f1cd9798891f4ee776a03c9f860eccdebcb1837305a197.
+// ParseDepositSweepProposalParametersUpdated is a log parse operation binding the contract event 0xc36fe6b9d74f864b5e345edc3435eb451a80669ec78c8357cc15e3a1d3897a73.
 //
-// Solidity: event DepositSweepProposalSubmissionGasOffsetUpdated(uint32 depositSweepProposalSubmissionGasOffset)
-func (_WalletCoordinator *WalletCoordinatorFilterer) ParseDepositSweepProposalSubmissionGasOffsetUpdated(log types.Log) (*WalletCoordinatorDepositSweepProposalSubmissionGasOffsetUpdated, error) {
-	event := new(WalletCoordinatorDepositSweepProposalSubmissionGasOffsetUpdated)
-	if err := _WalletCoordinator.contract.UnpackLog(event, "DepositSweepProposalSubmissionGasOffsetUpdated", log); err != nil {
+// Solidity: event DepositSweepProposalParametersUpdated(uint32 depositSweepProposalValidity, uint32 depositMinAge, uint32 depositRefundSafetyMargin, uint16 depositSweepMaxSize, uint32 depositSweepProposalSubmissionGasOffset)
+func (_WalletCoordinator *WalletCoordinatorFilterer) ParseDepositSweepProposalParametersUpdated(log types.Log) (*WalletCoordinatorDepositSweepProposalParametersUpdated, error) {
+	event := new(WalletCoordinatorDepositSweepProposalParametersUpdated)
+	if err := _WalletCoordinator.contract.UnpackLog(event, "DepositSweepProposalParametersUpdated", log); err != nil {
 		return nil, err
 	}
 	event.Raw = log
@@ -1500,22 +1394,22 @@ func (it *WalletCoordinatorDepositSweepProposalSubmittedIterator) Close() error 
 
 // WalletCoordinatorDepositSweepProposalSubmitted represents a DepositSweepProposalSubmitted event raised by the WalletCoordinator contract.
 type WalletCoordinatorDepositSweepProposalSubmitted struct {
-	Proposal          WalletCoordinatorDepositSweepProposal
-	ProposalSubmitter common.Address
-	Raw               types.Log // Blockchain specific contextual infos
+	Proposal    WalletCoordinatorDepositSweepProposal
+	Coordinator common.Address
+	Raw         types.Log // Blockchain specific contextual infos
 }
 
 // FilterDepositSweepProposalSubmitted is a free log retrieval operation binding the contract event 0xe17b4ed4828b9f018ca549cfd5f662e5551408093b1db16d94b9cd242e6df171.
 //
-// Solidity: event DepositSweepProposalSubmitted((bytes20,(bytes32,uint32)[],uint256) proposal, address indexed proposalSubmitter)
-func (_WalletCoordinator *WalletCoordinatorFilterer) FilterDepositSweepProposalSubmitted(opts *bind.FilterOpts, proposalSubmitter []common.Address) (*WalletCoordinatorDepositSweepProposalSubmittedIterator, error) {
+// Solidity: event DepositSweepProposalSubmitted((bytes20,(bytes32,uint32)[],uint256) proposal, address indexed coordinator)
+func (_WalletCoordinator *WalletCoordinatorFilterer) FilterDepositSweepProposalSubmitted(opts *bind.FilterOpts, coordinator []common.Address) (*WalletCoordinatorDepositSweepProposalSubmittedIterator, error) {
 
-	var proposalSubmitterRule []interface{}
-	for _, proposalSubmitterItem := range proposalSubmitter {
-		proposalSubmitterRule = append(proposalSubmitterRule, proposalSubmitterItem)
+	var coordinatorRule []interface{}
+	for _, coordinatorItem := range coordinator {
+		coordinatorRule = append(coordinatorRule, coordinatorItem)
 	}
 
-	logs, sub, err := _WalletCoordinator.contract.FilterLogs(opts, "DepositSweepProposalSubmitted", proposalSubmitterRule)
+	logs, sub, err := _WalletCoordinator.contract.FilterLogs(opts, "DepositSweepProposalSubmitted", coordinatorRule)
 	if err != nil {
 		return nil, err
 	}
@@ -1524,15 +1418,15 @@ func (_WalletCoordinator *WalletCoordinatorFilterer) FilterDepositSweepProposalS
 
 // WatchDepositSweepProposalSubmitted is a free log subscription operation binding the contract event 0xe17b4ed4828b9f018ca549cfd5f662e5551408093b1db16d94b9cd242e6df171.
 //
-// Solidity: event DepositSweepProposalSubmitted((bytes20,(bytes32,uint32)[],uint256) proposal, address indexed proposalSubmitter)
-func (_WalletCoordinator *WalletCoordinatorFilterer) WatchDepositSweepProposalSubmitted(opts *bind.WatchOpts, sink chan<- *WalletCoordinatorDepositSweepProposalSubmitted, proposalSubmitter []common.Address) (event.Subscription, error) {
+// Solidity: event DepositSweepProposalSubmitted((bytes20,(bytes32,uint32)[],uint256) proposal, address indexed coordinator)
+func (_WalletCoordinator *WalletCoordinatorFilterer) WatchDepositSweepProposalSubmitted(opts *bind.WatchOpts, sink chan<- *WalletCoordinatorDepositSweepProposalSubmitted, coordinator []common.Address) (event.Subscription, error) {
 
-	var proposalSubmitterRule []interface{}
-	for _, proposalSubmitterItem := range proposalSubmitter {
-		proposalSubmitterRule = append(proposalSubmitterRule, proposalSubmitterItem)
+	var coordinatorRule []interface{}
+	for _, coordinatorItem := range coordinator {
+		coordinatorRule = append(coordinatorRule, coordinatorItem)
 	}
 
-	logs, sub, err := _WalletCoordinator.contract.WatchLogs(opts, "DepositSweepProposalSubmitted", proposalSubmitterRule)
+	logs, sub, err := _WalletCoordinator.contract.WatchLogs(opts, "DepositSweepProposalSubmitted", coordinatorRule)
 	if err != nil {
 		return nil, err
 	}
@@ -1566,7 +1460,7 @@ func (_WalletCoordinator *WalletCoordinatorFilterer) WatchDepositSweepProposalSu
 
 // ParseDepositSweepProposalSubmitted is a log parse operation binding the contract event 0xe17b4ed4828b9f018ca549cfd5f662e5551408093b1db16d94b9cd242e6df171.
 //
-// Solidity: event DepositSweepProposalSubmitted((bytes20,(bytes32,uint32)[],uint256) proposal, address indexed proposalSubmitter)
+// Solidity: event DepositSweepProposalSubmitted((bytes20,(bytes32,uint32)[],uint256) proposal, address indexed coordinator)
 func (_WalletCoordinator *WalletCoordinatorFilterer) ParseDepositSweepProposalSubmitted(log types.Log) (*WalletCoordinatorDepositSweepProposalSubmitted, error) {
 	event := new(WalletCoordinatorDepositSweepProposalSubmitted)
 	if err := _WalletCoordinator.contract.UnpackLog(event, "DepositSweepProposalSubmitted", log); err != nil {
@@ -1576,9 +1470,9 @@ func (_WalletCoordinator *WalletCoordinatorFilterer) ParseDepositSweepProposalSu
 	return event, nil
 }
 
-// WalletCoordinatorDepositSweepProposalValidityUpdatedIterator is returned from FilterDepositSweepProposalValidityUpdated and is used to iterate over the raw logs and unpacked data for DepositSweepProposalValidityUpdated events raised by the WalletCoordinator contract.
-type WalletCoordinatorDepositSweepProposalValidityUpdatedIterator struct {
-	Event *WalletCoordinatorDepositSweepProposalValidityUpdated // Event containing the contract specifics and raw log
+// WalletCoordinatorHeartbeatRequestParametersUpdatedIterator is returned from FilterHeartbeatRequestParametersUpdated and is used to iterate over the raw logs and unpacked data for HeartbeatRequestParametersUpdated events raised by the WalletCoordinator contract.
+type WalletCoordinatorHeartbeatRequestParametersUpdatedIterator struct {
+	Event *WalletCoordinatorHeartbeatRequestParametersUpdated // Event containing the contract specifics and raw log
 
 	contract *bind.BoundContract // Generic contract to use for unpacking event data
 	event    string              // Event name to use for unpacking event data
@@ -1592,7 +1486,7 @@ type WalletCoordinatorDepositSweepProposalValidityUpdatedIterator struct {
 // Next advances the iterator to the subsequent event, returning whether there
 // are any more events found. In case of a retrieval or parsing error, false is
 // returned and Error() can be queried for the exact failure.
-func (it *WalletCoordinatorDepositSweepProposalValidityUpdatedIterator) Next() bool {
+func (it *WalletCoordinatorHeartbeatRequestParametersUpdatedIterator) Next() bool {
 	// If the iterator failed, stop iterating
 	if it.fail != nil {
 		return false
@@ -1601,7 +1495,7 @@ func (it *WalletCoordinatorDepositSweepProposalValidityUpdatedIterator) Next() b
 	if it.done {
 		select {
 		case log := <-it.logs:
-			it.Event = new(WalletCoordinatorDepositSweepProposalValidityUpdated)
+			it.Event = new(WalletCoordinatorHeartbeatRequestParametersUpdated)
 			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
 				it.fail = err
 				return false
@@ -1616,7 +1510,7 @@ func (it *WalletCoordinatorDepositSweepProposalValidityUpdatedIterator) Next() b
 	// Iterator still in progress, wait for either a data or an error event
 	select {
 	case log := <-it.logs:
-		it.Event = new(WalletCoordinatorDepositSweepProposalValidityUpdated)
+		it.Event = new(WalletCoordinatorHeartbeatRequestParametersUpdated)
 		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
 			it.fail = err
 			return false
@@ -1632,41 +1526,42 @@ func (it *WalletCoordinatorDepositSweepProposalValidityUpdatedIterator) Next() b
 }
 
 // Error returns any retrieval or parsing error occurred during filtering.
-func (it *WalletCoordinatorDepositSweepProposalValidityUpdatedIterator) Error() error {
+func (it *WalletCoordinatorHeartbeatRequestParametersUpdatedIterator) Error() error {
 	return it.fail
 }
 
 // Close terminates the iteration process, releasing any pending underlying
 // resources.
-func (it *WalletCoordinatorDepositSweepProposalValidityUpdatedIterator) Close() error {
+func (it *WalletCoordinatorHeartbeatRequestParametersUpdatedIterator) Close() error {
 	it.sub.Unsubscribe()
 	return nil
 }
 
-// WalletCoordinatorDepositSweepProposalValidityUpdated represents a DepositSweepProposalValidityUpdated event raised by the WalletCoordinator contract.
-type WalletCoordinatorDepositSweepProposalValidityUpdated struct {
-	DepositSweepProposalValidity uint32
-	Raw                          types.Log // Blockchain specific contextual infos
+// WalletCoordinatorHeartbeatRequestParametersUpdated represents a HeartbeatRequestParametersUpdated event raised by the WalletCoordinator contract.
+type WalletCoordinatorHeartbeatRequestParametersUpdated struct {
+	HeartbeatRequestValidity  uint32
+	HeartbeatRequestGasOffset uint32
+	Raw                       types.Log // Blockchain specific contextual infos
 }
 
-// FilterDepositSweepProposalValidityUpdated is a free log retrieval operation binding the contract event 0x085a81d11ac3cf6033d185eccdfc414b8a20da29a555406c068a0a1fdac8afea.
+// FilterHeartbeatRequestParametersUpdated is a free log retrieval operation binding the contract event 0xe67c0a182190bf283264290d7208533d5936483c98baee174eeac036b081360a.
 //
-// Solidity: event DepositSweepProposalValidityUpdated(uint32 depositSweepProposalValidity)
-func (_WalletCoordinator *WalletCoordinatorFilterer) FilterDepositSweepProposalValidityUpdated(opts *bind.FilterOpts) (*WalletCoordinatorDepositSweepProposalValidityUpdatedIterator, error) {
+// Solidity: event HeartbeatRequestParametersUpdated(uint32 heartbeatRequestValidity, uint32 heartbeatRequestGasOffset)
+func (_WalletCoordinator *WalletCoordinatorFilterer) FilterHeartbeatRequestParametersUpdated(opts *bind.FilterOpts) (*WalletCoordinatorHeartbeatRequestParametersUpdatedIterator, error) {
 
-	logs, sub, err := _WalletCoordinator.contract.FilterLogs(opts, "DepositSweepProposalValidityUpdated")
+	logs, sub, err := _WalletCoordinator.contract.FilterLogs(opts, "HeartbeatRequestParametersUpdated")
 	if err != nil {
 		return nil, err
 	}
-	return &WalletCoordinatorDepositSweepProposalValidityUpdatedIterator{contract: _WalletCoordinator.contract, event: "DepositSweepProposalValidityUpdated", logs: logs, sub: sub}, nil
+	return &WalletCoordinatorHeartbeatRequestParametersUpdatedIterator{contract: _WalletCoordinator.contract, event: "HeartbeatRequestParametersUpdated", logs: logs, sub: sub}, nil
 }
 
-// WatchDepositSweepProposalValidityUpdated is a free log subscription operation binding the contract event 0x085a81d11ac3cf6033d185eccdfc414b8a20da29a555406c068a0a1fdac8afea.
+// WatchHeartbeatRequestParametersUpdated is a free log subscription operation binding the contract event 0xe67c0a182190bf283264290d7208533d5936483c98baee174eeac036b081360a.
 //
-// Solidity: event DepositSweepProposalValidityUpdated(uint32 depositSweepProposalValidity)
-func (_WalletCoordinator *WalletCoordinatorFilterer) WatchDepositSweepProposalValidityUpdated(opts *bind.WatchOpts, sink chan<- *WalletCoordinatorDepositSweepProposalValidityUpdated) (event.Subscription, error) {
+// Solidity: event HeartbeatRequestParametersUpdated(uint32 heartbeatRequestValidity, uint32 heartbeatRequestGasOffset)
+func (_WalletCoordinator *WalletCoordinatorFilterer) WatchHeartbeatRequestParametersUpdated(opts *bind.WatchOpts, sink chan<- *WalletCoordinatorHeartbeatRequestParametersUpdated) (event.Subscription, error) {
 
-	logs, sub, err := _WalletCoordinator.contract.WatchLogs(opts, "DepositSweepProposalValidityUpdated")
+	logs, sub, err := _WalletCoordinator.contract.WatchLogs(opts, "HeartbeatRequestParametersUpdated")
 	if err != nil {
 		return nil, err
 	}
@@ -1676,8 +1571,8 @@ func (_WalletCoordinator *WalletCoordinatorFilterer) WatchDepositSweepProposalVa
 			select {
 			case log := <-logs:
 				// New log arrived, parse the event and forward to the user
-				event := new(WalletCoordinatorDepositSweepProposalValidityUpdated)
-				if err := _WalletCoordinator.contract.UnpackLog(event, "DepositSweepProposalValidityUpdated", log); err != nil {
+				event := new(WalletCoordinatorHeartbeatRequestParametersUpdated)
+				if err := _WalletCoordinator.contract.UnpackLog(event, "HeartbeatRequestParametersUpdated", log); err != nil {
 					return err
 				}
 				event.Raw = log
@@ -1698,12 +1593,147 @@ func (_WalletCoordinator *WalletCoordinatorFilterer) WatchDepositSweepProposalVa
 	}), nil
 }
 
-// ParseDepositSweepProposalValidityUpdated is a log parse operation binding the contract event 0x085a81d11ac3cf6033d185eccdfc414b8a20da29a555406c068a0a1fdac8afea.
+// ParseHeartbeatRequestParametersUpdated is a log parse operation binding the contract event 0xe67c0a182190bf283264290d7208533d5936483c98baee174eeac036b081360a.
 //
-// Solidity: event DepositSweepProposalValidityUpdated(uint32 depositSweepProposalValidity)
-func (_WalletCoordinator *WalletCoordinatorFilterer) ParseDepositSweepProposalValidityUpdated(log types.Log) (*WalletCoordinatorDepositSweepProposalValidityUpdated, error) {
-	event := new(WalletCoordinatorDepositSweepProposalValidityUpdated)
-	if err := _WalletCoordinator.contract.UnpackLog(event, "DepositSweepProposalValidityUpdated", log); err != nil {
+// Solidity: event HeartbeatRequestParametersUpdated(uint32 heartbeatRequestValidity, uint32 heartbeatRequestGasOffset)
+func (_WalletCoordinator *WalletCoordinatorFilterer) ParseHeartbeatRequestParametersUpdated(log types.Log) (*WalletCoordinatorHeartbeatRequestParametersUpdated, error) {
+	event := new(WalletCoordinatorHeartbeatRequestParametersUpdated)
+	if err := _WalletCoordinator.contract.UnpackLog(event, "HeartbeatRequestParametersUpdated", log); err != nil {
+		return nil, err
+	}
+	event.Raw = log
+	return event, nil
+}
+
+// WalletCoordinatorHeartbeatRequestSubmittedIterator is returned from FilterHeartbeatRequestSubmitted and is used to iterate over the raw logs and unpacked data for HeartbeatRequestSubmitted events raised by the WalletCoordinator contract.
+type WalletCoordinatorHeartbeatRequestSubmittedIterator struct {
+	Event *WalletCoordinatorHeartbeatRequestSubmitted // Event containing the contract specifics and raw log
+
+	contract *bind.BoundContract // Generic contract to use for unpacking event data
+	event    string              // Event name to use for unpacking event data
+
+	logs chan types.Log        // Log channel receiving the found contract events
+	sub  ethereum.Subscription // Subscription for errors, completion and termination
+	done bool                  // Whether the subscription completed delivering logs
+	fail error                 // Occurred error to stop iteration
+}
+
+// Next advances the iterator to the subsequent event, returning whether there
+// are any more events found. In case of a retrieval or parsing error, false is
+// returned and Error() can be queried for the exact failure.
+func (it *WalletCoordinatorHeartbeatRequestSubmittedIterator) Next() bool {
+	// If the iterator failed, stop iterating
+	if it.fail != nil {
+		return false
+	}
+	// If the iterator completed, deliver directly whatever's available
+	if it.done {
+		select {
+		case log := <-it.logs:
+			it.Event = new(WalletCoordinatorHeartbeatRequestSubmitted)
+			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+				it.fail = err
+				return false
+			}
+			it.Event.Raw = log
+			return true
+
+		default:
+			return false
+		}
+	}
+	// Iterator still in progress, wait for either a data or an error event
+	select {
+	case log := <-it.logs:
+		it.Event = new(WalletCoordinatorHeartbeatRequestSubmitted)
+		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+			it.fail = err
+			return false
+		}
+		it.Event.Raw = log
+		return true
+
+	case err := <-it.sub.Err():
+		it.done = true
+		it.fail = err
+		return it.Next()
+	}
+}
+
+// Error returns any retrieval or parsing error occurred during filtering.
+func (it *WalletCoordinatorHeartbeatRequestSubmittedIterator) Error() error {
+	return it.fail
+}
+
+// Close terminates the iteration process, releasing any pending underlying
+// resources.
+func (it *WalletCoordinatorHeartbeatRequestSubmittedIterator) Close() error {
+	it.sub.Unsubscribe()
+	return nil
+}
+
+// WalletCoordinatorHeartbeatRequestSubmitted represents a HeartbeatRequestSubmitted event raised by the WalletCoordinator contract.
+type WalletCoordinatorHeartbeatRequestSubmitted struct {
+	WalletPubKeyHash [20]byte
+	Message          []byte
+	Raw              types.Log // Blockchain specific contextual infos
+}
+
+// FilterHeartbeatRequestSubmitted is a free log retrieval operation binding the contract event 0x4dd09cf8f23ce69b68c7dc12fe74c2172499ca3168ea632bd03e5b62838d6130.
+//
+// Solidity: event HeartbeatRequestSubmitted(bytes20 walletPubKeyHash, bytes message)
+func (_WalletCoordinator *WalletCoordinatorFilterer) FilterHeartbeatRequestSubmitted(opts *bind.FilterOpts) (*WalletCoordinatorHeartbeatRequestSubmittedIterator, error) {
+
+	logs, sub, err := _WalletCoordinator.contract.FilterLogs(opts, "HeartbeatRequestSubmitted")
+	if err != nil {
+		return nil, err
+	}
+	return &WalletCoordinatorHeartbeatRequestSubmittedIterator{contract: _WalletCoordinator.contract, event: "HeartbeatRequestSubmitted", logs: logs, sub: sub}, nil
+}
+
+// WatchHeartbeatRequestSubmitted is a free log subscription operation binding the contract event 0x4dd09cf8f23ce69b68c7dc12fe74c2172499ca3168ea632bd03e5b62838d6130.
+//
+// Solidity: event HeartbeatRequestSubmitted(bytes20 walletPubKeyHash, bytes message)
+func (_WalletCoordinator *WalletCoordinatorFilterer) WatchHeartbeatRequestSubmitted(opts *bind.WatchOpts, sink chan<- *WalletCoordinatorHeartbeatRequestSubmitted) (event.Subscription, error) {
+
+	logs, sub, err := _WalletCoordinator.contract.WatchLogs(opts, "HeartbeatRequestSubmitted")
+	if err != nil {
+		return nil, err
+	}
+	return event.NewSubscription(func(quit <-chan struct{}) error {
+		defer sub.Unsubscribe()
+		for {
+			select {
+			case log := <-logs:
+				// New log arrived, parse the event and forward to the user
+				event := new(WalletCoordinatorHeartbeatRequestSubmitted)
+				if err := _WalletCoordinator.contract.UnpackLog(event, "HeartbeatRequestSubmitted", log); err != nil {
+					return err
+				}
+				event.Raw = log
+
+				select {
+				case sink <- event:
+				case err := <-sub.Err():
+					return err
+				case <-quit:
+					return nil
+				}
+			case err := <-sub.Err():
+				return err
+			case <-quit:
+				return nil
+			}
+		}
+	}), nil
+}
+
+// ParseHeartbeatRequestSubmitted is a log parse operation binding the contract event 0x4dd09cf8f23ce69b68c7dc12fe74c2172499ca3168ea632bd03e5b62838d6130.
+//
+// Solidity: event HeartbeatRequestSubmitted(bytes20 walletPubKeyHash, bytes message)
+func (_WalletCoordinator *WalletCoordinatorFilterer) ParseHeartbeatRequestSubmitted(log types.Log) (*WalletCoordinatorHeartbeatRequestSubmitted, error) {
+	event := new(WalletCoordinatorHeartbeatRequestSubmitted)
+	if err := _WalletCoordinator.contract.UnpackLog(event, "HeartbeatRequestSubmitted", log); err != nil {
 		return nil, err
 	}
 	event.Raw = log
@@ -1991,294 +2021,6 @@ func (_WalletCoordinator *WalletCoordinatorFilterer) WatchOwnershipTransferred(o
 func (_WalletCoordinator *WalletCoordinatorFilterer) ParseOwnershipTransferred(log types.Log) (*WalletCoordinatorOwnershipTransferred, error) {
 	event := new(WalletCoordinatorOwnershipTransferred)
 	if err := _WalletCoordinator.contract.UnpackLog(event, "OwnershipTransferred", log); err != nil {
-		return nil, err
-	}
-	event.Raw = log
-	return event, nil
-}
-
-// WalletCoordinatorProposalSubmitterAddedIterator is returned from FilterProposalSubmitterAdded and is used to iterate over the raw logs and unpacked data for ProposalSubmitterAdded events raised by the WalletCoordinator contract.
-type WalletCoordinatorProposalSubmitterAddedIterator struct {
-	Event *WalletCoordinatorProposalSubmitterAdded // Event containing the contract specifics and raw log
-
-	contract *bind.BoundContract // Generic contract to use for unpacking event data
-	event    string              // Event name to use for unpacking event data
-
-	logs chan types.Log        // Log channel receiving the found contract events
-	sub  ethereum.Subscription // Subscription for errors, completion and termination
-	done bool                  // Whether the subscription completed delivering logs
-	fail error                 // Occurred error to stop iteration
-}
-
-// Next advances the iterator to the subsequent event, returning whether there
-// are any more events found. In case of a retrieval or parsing error, false is
-// returned and Error() can be queried for the exact failure.
-func (it *WalletCoordinatorProposalSubmitterAddedIterator) Next() bool {
-	// If the iterator failed, stop iterating
-	if it.fail != nil {
-		return false
-	}
-	// If the iterator completed, deliver directly whatever's available
-	if it.done {
-		select {
-		case log := <-it.logs:
-			it.Event = new(WalletCoordinatorProposalSubmitterAdded)
-			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
-				it.fail = err
-				return false
-			}
-			it.Event.Raw = log
-			return true
-
-		default:
-			return false
-		}
-	}
-	// Iterator still in progress, wait for either a data or an error event
-	select {
-	case log := <-it.logs:
-		it.Event = new(WalletCoordinatorProposalSubmitterAdded)
-		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
-			it.fail = err
-			return false
-		}
-		it.Event.Raw = log
-		return true
-
-	case err := <-it.sub.Err():
-		it.done = true
-		it.fail = err
-		return it.Next()
-	}
-}
-
-// Error returns any retrieval or parsing error occurred during filtering.
-func (it *WalletCoordinatorProposalSubmitterAddedIterator) Error() error {
-	return it.fail
-}
-
-// Close terminates the iteration process, releasing any pending underlying
-// resources.
-func (it *WalletCoordinatorProposalSubmitterAddedIterator) Close() error {
-	it.sub.Unsubscribe()
-	return nil
-}
-
-// WalletCoordinatorProposalSubmitterAdded represents a ProposalSubmitterAdded event raised by the WalletCoordinator contract.
-type WalletCoordinatorProposalSubmitterAdded struct {
-	ProposalSubmitter common.Address
-	Raw               types.Log // Blockchain specific contextual infos
-}
-
-// FilterProposalSubmitterAdded is a free log retrieval operation binding the contract event 0xe7005265f76a2d6482aaa3a0e969edd45868e3210ff126216a0425f83af1ef20.
-//
-// Solidity: event ProposalSubmitterAdded(address indexed proposalSubmitter)
-func (_WalletCoordinator *WalletCoordinatorFilterer) FilterProposalSubmitterAdded(opts *bind.FilterOpts, proposalSubmitter []common.Address) (*WalletCoordinatorProposalSubmitterAddedIterator, error) {
-
-	var proposalSubmitterRule []interface{}
-	for _, proposalSubmitterItem := range proposalSubmitter {
-		proposalSubmitterRule = append(proposalSubmitterRule, proposalSubmitterItem)
-	}
-
-	logs, sub, err := _WalletCoordinator.contract.FilterLogs(opts, "ProposalSubmitterAdded", proposalSubmitterRule)
-	if err != nil {
-		return nil, err
-	}
-	return &WalletCoordinatorProposalSubmitterAddedIterator{contract: _WalletCoordinator.contract, event: "ProposalSubmitterAdded", logs: logs, sub: sub}, nil
-}
-
-// WatchProposalSubmitterAdded is a free log subscription operation binding the contract event 0xe7005265f76a2d6482aaa3a0e969edd45868e3210ff126216a0425f83af1ef20.
-//
-// Solidity: event ProposalSubmitterAdded(address indexed proposalSubmitter)
-func (_WalletCoordinator *WalletCoordinatorFilterer) WatchProposalSubmitterAdded(opts *bind.WatchOpts, sink chan<- *WalletCoordinatorProposalSubmitterAdded, proposalSubmitter []common.Address) (event.Subscription, error) {
-
-	var proposalSubmitterRule []interface{}
-	for _, proposalSubmitterItem := range proposalSubmitter {
-		proposalSubmitterRule = append(proposalSubmitterRule, proposalSubmitterItem)
-	}
-
-	logs, sub, err := _WalletCoordinator.contract.WatchLogs(opts, "ProposalSubmitterAdded", proposalSubmitterRule)
-	if err != nil {
-		return nil, err
-	}
-	return event.NewSubscription(func(quit <-chan struct{}) error {
-		defer sub.Unsubscribe()
-		for {
-			select {
-			case log := <-logs:
-				// New log arrived, parse the event and forward to the user
-				event := new(WalletCoordinatorProposalSubmitterAdded)
-				if err := _WalletCoordinator.contract.UnpackLog(event, "ProposalSubmitterAdded", log); err != nil {
-					return err
-				}
-				event.Raw = log
-
-				select {
-				case sink <- event:
-				case err := <-sub.Err():
-					return err
-				case <-quit:
-					return nil
-				}
-			case err := <-sub.Err():
-				return err
-			case <-quit:
-				return nil
-			}
-		}
-	}), nil
-}
-
-// ParseProposalSubmitterAdded is a log parse operation binding the contract event 0xe7005265f76a2d6482aaa3a0e969edd45868e3210ff126216a0425f83af1ef20.
-//
-// Solidity: event ProposalSubmitterAdded(address indexed proposalSubmitter)
-func (_WalletCoordinator *WalletCoordinatorFilterer) ParseProposalSubmitterAdded(log types.Log) (*WalletCoordinatorProposalSubmitterAdded, error) {
-	event := new(WalletCoordinatorProposalSubmitterAdded)
-	if err := _WalletCoordinator.contract.UnpackLog(event, "ProposalSubmitterAdded", log); err != nil {
-		return nil, err
-	}
-	event.Raw = log
-	return event, nil
-}
-
-// WalletCoordinatorProposalSubmitterRemovedIterator is returned from FilterProposalSubmitterRemoved and is used to iterate over the raw logs and unpacked data for ProposalSubmitterRemoved events raised by the WalletCoordinator contract.
-type WalletCoordinatorProposalSubmitterRemovedIterator struct {
-	Event *WalletCoordinatorProposalSubmitterRemoved // Event containing the contract specifics and raw log
-
-	contract *bind.BoundContract // Generic contract to use for unpacking event data
-	event    string              // Event name to use for unpacking event data
-
-	logs chan types.Log        // Log channel receiving the found contract events
-	sub  ethereum.Subscription // Subscription for errors, completion and termination
-	done bool                  // Whether the subscription completed delivering logs
-	fail error                 // Occurred error to stop iteration
-}
-
-// Next advances the iterator to the subsequent event, returning whether there
-// are any more events found. In case of a retrieval or parsing error, false is
-// returned and Error() can be queried for the exact failure.
-func (it *WalletCoordinatorProposalSubmitterRemovedIterator) Next() bool {
-	// If the iterator failed, stop iterating
-	if it.fail != nil {
-		return false
-	}
-	// If the iterator completed, deliver directly whatever's available
-	if it.done {
-		select {
-		case log := <-it.logs:
-			it.Event = new(WalletCoordinatorProposalSubmitterRemoved)
-			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
-				it.fail = err
-				return false
-			}
-			it.Event.Raw = log
-			return true
-
-		default:
-			return false
-		}
-	}
-	// Iterator still in progress, wait for either a data or an error event
-	select {
-	case log := <-it.logs:
-		it.Event = new(WalletCoordinatorProposalSubmitterRemoved)
-		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
-			it.fail = err
-			return false
-		}
-		it.Event.Raw = log
-		return true
-
-	case err := <-it.sub.Err():
-		it.done = true
-		it.fail = err
-		return it.Next()
-	}
-}
-
-// Error returns any retrieval or parsing error occurred during filtering.
-func (it *WalletCoordinatorProposalSubmitterRemovedIterator) Error() error {
-	return it.fail
-}
-
-// Close terminates the iteration process, releasing any pending underlying
-// resources.
-func (it *WalletCoordinatorProposalSubmitterRemovedIterator) Close() error {
-	it.sub.Unsubscribe()
-	return nil
-}
-
-// WalletCoordinatorProposalSubmitterRemoved represents a ProposalSubmitterRemoved event raised by the WalletCoordinator contract.
-type WalletCoordinatorProposalSubmitterRemoved struct {
-	ProposalSubmitter common.Address
-	Raw               types.Log // Blockchain specific contextual infos
-}
-
-// FilterProposalSubmitterRemoved is a free log retrieval operation binding the contract event 0x4017c4f3f844d24f56ade93af205a7ed01bf7f858b90f4b62206be460af2d226.
-//
-// Solidity: event ProposalSubmitterRemoved(address indexed proposalSubmitter)
-func (_WalletCoordinator *WalletCoordinatorFilterer) FilterProposalSubmitterRemoved(opts *bind.FilterOpts, proposalSubmitter []common.Address) (*WalletCoordinatorProposalSubmitterRemovedIterator, error) {
-
-	var proposalSubmitterRule []interface{}
-	for _, proposalSubmitterItem := range proposalSubmitter {
-		proposalSubmitterRule = append(proposalSubmitterRule, proposalSubmitterItem)
-	}
-
-	logs, sub, err := _WalletCoordinator.contract.FilterLogs(opts, "ProposalSubmitterRemoved", proposalSubmitterRule)
-	if err != nil {
-		return nil, err
-	}
-	return &WalletCoordinatorProposalSubmitterRemovedIterator{contract: _WalletCoordinator.contract, event: "ProposalSubmitterRemoved", logs: logs, sub: sub}, nil
-}
-
-// WatchProposalSubmitterRemoved is a free log subscription operation binding the contract event 0x4017c4f3f844d24f56ade93af205a7ed01bf7f858b90f4b62206be460af2d226.
-//
-// Solidity: event ProposalSubmitterRemoved(address indexed proposalSubmitter)
-func (_WalletCoordinator *WalletCoordinatorFilterer) WatchProposalSubmitterRemoved(opts *bind.WatchOpts, sink chan<- *WalletCoordinatorProposalSubmitterRemoved, proposalSubmitter []common.Address) (event.Subscription, error) {
-
-	var proposalSubmitterRule []interface{}
-	for _, proposalSubmitterItem := range proposalSubmitter {
-		proposalSubmitterRule = append(proposalSubmitterRule, proposalSubmitterItem)
-	}
-
-	logs, sub, err := _WalletCoordinator.contract.WatchLogs(opts, "ProposalSubmitterRemoved", proposalSubmitterRule)
-	if err != nil {
-		return nil, err
-	}
-	return event.NewSubscription(func(quit <-chan struct{}) error {
-		defer sub.Unsubscribe()
-		for {
-			select {
-			case log := <-logs:
-				// New log arrived, parse the event and forward to the user
-				event := new(WalletCoordinatorProposalSubmitterRemoved)
-				if err := _WalletCoordinator.contract.UnpackLog(event, "ProposalSubmitterRemoved", log); err != nil {
-					return err
-				}
-				event.Raw = log
-
-				select {
-				case sink <- event:
-				case err := <-sub.Err():
-					return err
-				case <-quit:
-					return nil
-				}
-			case err := <-sub.Err():
-				return err
-			case <-quit:
-				return nil
-			}
-		}
-	}), nil
-}
-
-// ParseProposalSubmitterRemoved is a log parse operation binding the contract event 0x4017c4f3f844d24f56ade93af205a7ed01bf7f858b90f4b62206be460af2d226.
-//
-// Solidity: event ProposalSubmitterRemoved(address indexed proposalSubmitter)
-func (_WalletCoordinator *WalletCoordinatorFilterer) ParseProposalSubmitterRemoved(log types.Log) (*WalletCoordinatorProposalSubmitterRemoved, error) {
-	event := new(WalletCoordinatorProposalSubmitterRemoved)
-	if err := _WalletCoordinator.contract.UnpackLog(event, "ProposalSubmitterRemoved", log); err != nil {
 		return nil, err
 	}
 	event.Raw = log

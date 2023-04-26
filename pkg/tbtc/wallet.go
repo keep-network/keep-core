@@ -6,12 +6,13 @@ import (
 	"crypto/elliptic"
 	"encoding/hex"
 	"fmt"
+	"sync"
+
 	"github.com/keep-network/keep-core/pkg/bitcoin"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/protocol/group"
 	"github.com/keep-network/keep-core/pkg/tecdsa"
 	"go.uber.org/zap"
-	"sync"
 )
 
 // WalletActionType represents actions types that can be performed by a wallet.
@@ -19,6 +20,7 @@ type WalletActionType uint8
 
 const (
 	Noop WalletActionType = iota
+	Heartbeat
 	DepositSweep
 	Redemption
 	MovingFunds
@@ -29,6 +31,8 @@ func (wat WalletActionType) String() string {
 	switch wat {
 	case Noop:
 		return "Noop"
+	case Heartbeat:
+		return "Heartbeat"
 	case DepositSweep:
 		return "DepositSweep"
 	case Redemption:
