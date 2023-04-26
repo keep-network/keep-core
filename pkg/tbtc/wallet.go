@@ -254,7 +254,7 @@ func DetermineWalletMainUtxo(
 		}
 	}
 
-	return nil, nil
+	return nil, fmt.Errorf("main UTXO not found")
 }
 
 // signer represents a threshold signer of a tBTC wallet. A signer holds
