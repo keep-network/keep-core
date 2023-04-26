@@ -3,10 +3,11 @@ package tbtc
 import (
 	"context"
 	"fmt"
-	"github.com/keep-network/keep-core/pkg/bitcoin"
 	"runtime"
 	"strings"
 	"time"
+
+	"github.com/keep-network/keep-core/pkg/bitcoin"
 
 	"github.com/ipfs/go-log"
 
@@ -394,7 +395,7 @@ func Initialize(
 						"wallet PKH [0x%x] at block [%v] by [%v]",
 					walletPublicKeyHash,
 					event.BlockNumber,
-					event.ProposalSubmitter,
+					event.Coordinator,
 				)
 
 				node.handleDepositSweepProposal(

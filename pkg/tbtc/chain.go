@@ -322,9 +322,9 @@ type DepositSweepProposal struct {
 // DepositSweepProposalSubmittedEvent represents a deposit sweep proposal
 // submission event.
 type DepositSweepProposalSubmittedEvent struct {
-	Proposal          *DepositSweepProposal
-	ProposalSubmitter chain.Address
-	BlockNumber       uint64
+	Proposal    *DepositSweepProposal
+	Coordinator chain.Address
+	BlockNumber uint64
 }
 
 // DepositSweepProposalSubmittedEventFilter is a component allowing to
@@ -332,7 +332,7 @@ type DepositSweepProposalSubmittedEvent struct {
 type DepositSweepProposalSubmittedEventFilter struct {
 	StartBlock          uint64
 	EndBlock            *uint64
-	ProposalSubmitter   []chain.Address
+	Coordinator         []chain.Address
 	WalletPublicKeyHash [20]byte
 }
 

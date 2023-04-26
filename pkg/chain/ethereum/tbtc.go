@@ -1157,13 +1157,13 @@ func (tc *TbtcChain) OnDepositSweepProposalSubmitted(
 ) subscription.EventSubscription {
 	onEvent := func(
 		proposal tbtcabi.WalletCoordinatorDepositSweepProposal,
-		proposalSubmitter common.Address,
+		coordinator common.Address,
 		blockNumber uint64,
 	) {
 		handler(&tbtc.DepositSweepProposalSubmittedEvent{
-			Proposal:          convertDepositSweepProposalFromAbiType(proposal),
-			ProposalSubmitter: chain.Address(proposalSubmitter.Hex()),
-			BlockNumber:       blockNumber,
+			Proposal:    convertDepositSweepProposalFromAbiType(proposal),
+			Coordinator: chain.Address(coordinator.Hex()),
+			BlockNumber: blockNumber,
 		})
 	}
 
@@ -1177,16 +1177,16 @@ func (tc *TbtcChain) PastDepositSweepProposalSubmittedEvents(
 ) ([]*tbtc.DepositSweepProposalSubmittedEvent, error) {
 	var startBlock uint64
 	var endBlock *uint64
-	var proposalSubmitter []common.Address
+	var coordinator []common.Address
 	var walletPublicKeyHash [20]byte
 
 	if filter != nil {
 		startBlock = filter.StartBlock
 		endBlock = filter.EndBlock
 
-		for _, ps := range filter.ProposalSubmitter {
-			proposalSubmitter = append(
-				proposalSubmitter,
+		for _, ps := range filter.Coordinator {
+			coordinator = append(
+				coordinator,
 				common.HexToAddress(ps.String()),
 			)
 		}
@@ -1197,7 +1197,7 @@ func (tc *TbtcChain) PastDepositSweepProposalSubmittedEvents(
 	events, err := tc.walletCoordinator.PastDepositSweepProposalSubmittedEvents(
 		startBlock,
 		endBlock,
-		proposalSubmitter,
+		coordinator,
 	)
 	if err != nil {
 		return nil, err
@@ -1214,9 +1214,9 @@ func (tc *TbtcChain) PastDepositSweepProposalSubmittedEvents(
 		}
 
 		convertedEvent := &tbtc.DepositSweepProposalSubmittedEvent{
-			Proposal:          convertDepositSweepProposalFromAbiType(event.Proposal),
-			ProposalSubmitter: chain.Address(event.ProposalSubmitter.Hex()),
-			BlockNumber:       event.Raw.BlockNumber,
+			Proposal:    convertDepositSweepProposalFromAbiType(event.Proposal),
+			Coordinator: chain.Address(event.Coordinator.Hex()),
+			BlockNumber: event.Raw.BlockNumber,
 		}
 
 		convertedEvents = append(convertedEvents, convertedEvent)
@@ -1311,12 +1311,14 @@ func parseWalletActionType(value uint8) (tbtc.WalletActionType, error) {
 	case 0:
 		return tbtc.Noop, nil
 	case 1:
-		return tbtc.DepositSweep, nil
+		return tbtc.Heartbeat, nil
 	case 2:
-		return tbtc.Redemption, nil
+		return tbtc.DepositSweep, nil
 	case 3:
-		return tbtc.MovingFunds, nil
+		return tbtc.Redemption, nil
 	case 4:
+		return tbtc.MovingFunds, nil
+	case 5:
 		return tbtc.MovedFundsSweep, nil
 	default:
 		return 0, fmt.Errorf("unexpected wallet action value: [%v]", value)
