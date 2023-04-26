@@ -13,14 +13,16 @@ import (
 
 // Definitions of contract names.
 const (
-	LightRelayContractName = "LightRelay"
+	LightRelayContractName                = "LightRelay"
+	LightRelayMaintainerProxyContractName = "LightRelayMaintainerProxy"
 )
 
 // BitcoinDifficultyChain represents a Bitcoin difficulty-specific chain handle.
 type BitcoinDifficultyChain struct {
 	*baseChain
 
-	lightRelay *contract.LightRelay
+	lightRelay                *contract.LightRelay
+	LightRelayMaintainerProxy *contract.LightRelayMaintainerProxy
 }
 
 // NewBitcoinDifficultyChain construct a new instance of the Bitcoin difficulty
@@ -55,9 +57,38 @@ func NewBitcoinDifficultyChain(
 		)
 	}
 
+	lightRelayMaintainerProxyAddress, err := config.ContractAddress(
+		LightRelayMaintainerProxyContractName,
+	)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"failed to attach to LightRelayMaintainerProxy contract: [%v]",
+			err,
+		)
+	}
+
+	lightRelayMaintainerProxy, err :=
+		contract.NewLightRelayMaintainerProxy(
+			lightRelayMaintainerProxyAddress,
+			baseChain.chainID,
+			baseChain.key,
+			baseChain.client,
+			baseChain.nonceManager,
+			baseChain.miningWaiter,
+			baseChain.blockCounter,
+			baseChain.transactionMutex,
+		)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"failed to attach to LightRelayMaintainerProxy contract: [%v]",
+			err,
+		)
+	}
+
 	return &BitcoinDifficultyChain{
-		baseChain:  baseChain,
-		lightRelay: lightRelay,
+		baseChain:                 baseChain,
+		lightRelay:                lightRelay,
+		LightRelayMaintainerProxy: lightRelayMaintainerProxy,
 	}, nil
 }
 
