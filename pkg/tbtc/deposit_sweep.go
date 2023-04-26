@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/ecdsa"
 	"fmt"
+	"github.com/ipfs/go-log/v2"
 	"github.com/keep-network/keep-core/pkg/bitcoin"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"go.uber.org/zap"
@@ -38,6 +39,21 @@ const (
 	// processing start block in order to designate a sane signing start block
 	// and maximize chances for a successful signing process.
 	depositSweepSigningDelayBlocks = 10
+	// depositSweepBroadcastTimeout determines the time window for deposit
+	// sweep transaction broadcast. It is guaranteed that at least
+	// depositSweepSigningTimeoutSafetyMargin is preserved for the broadcast
+	// step. However, the happy path for the broadcast step is usually quick
+	// and few retries are needed to recover from temporary problems. That
+	// said, if the broadcast step does not succeed in a tight timeframe,
+	// there is no point to retry for the entire possible time window.
+	// Hence, the timeout for broadcast step is set as 25% of the entire
+	// time widow determined by depositSweepSigningTimeoutSafetyMargin.
+	depositSweepBroadcastTimeout = depositSweepSigningTimeoutSafetyMargin / 4
+	// depositSweepBroadcastCheckDelay determines the delay that must
+	// be preserved between transaction broadcast and the check that ensures
+	// the transaction is known on the Bitcoin chain. This delay is needed
+	// as spreading the transaction over the Bitcoin network takes time.
+	depositSweepBroadcastCheckDelay = 1 * time.Minute
 )
 
 // depositSweepAction is a deposit sweep walletAction.
@@ -83,6 +99,7 @@ func (dsa *depositSweepAction) execute() error {
 	actionLogger := logger.With(
 		zap.String("wallet", fmt.Sprintf("0x%x", walletPublicKeyBytes)),
 		zap.String("action", dsa.actionType().String()),
+		zap.Uint64("startBlock", dsa.proposalProcessingStartBlock),
 	)
 
 	depositExtraInfo := make(
@@ -328,25 +345,88 @@ func (dsa *depositSweepAction) execute() error {
 		)
 	}
 
-	actionLogger.Infof("broadcasting deposit sweep transaction")
+	broadcastLogger := actionLogger.With(
+		zap.String("sweepTxHash", fmt.Sprintf("0x%x", sweepTx.Hash())),
+	)
 
-	// TODO: Current logic will cause multiple nodes to broadcast in the same time.
-	//       Improve the situation.
-	err = dsa.btcChain.BroadcastTransaction(sweepTx)
-	if err != nil {
-		return fmt.Errorf(
-			"error while broadcasting deposit sweep transaction: [%v]",
-			err,
-		)
+	return dsa.broadcastTransaction(
+		broadcastLogger,
+		sweepTx,
+		depositSweepBroadcastTimeout,
+		depositSweepBroadcastCheckDelay,
+	)
+}
+
+func (dsa *depositSweepAction) broadcastTransaction(
+	broadcastLogger log.StandardLogger,
+	sweepTx *bitcoin.Transaction,
+	timeout time.Duration,
+	checkDelay time.Duration,
+) error {
+	sweepTxHash := sweepTx.Hash()
+
+	broadcastCtx, cancelBroadcastCtx := context.WithTimeout(
+		context.Background(),
+		timeout,
+	)
+	defer cancelBroadcastCtx()
+
+	broadcastAttempt := 0
+
+	for {
+		select {
+		case <-broadcastCtx.Done():
+			return fmt.Errorf("broadcast timeout exceeded")
+		default:
+			broadcastAttempt++
+
+			broadcastLogger.Infof(
+				"broadcasting deposit sweep transaction on "+
+					"the Bitcoin chain - attempt [%v]",
+				broadcastAttempt,
+			)
+
+			err := dsa.btcChain.BroadcastTransaction(sweepTx)
+			if err != nil {
+				broadcastLogger.Warnf(
+					"broadcasting failed: [%v]; transaction could be "+
+						"broadcasted by another wallet operators though",
+					err,
+				)
+			} else {
+				broadcastLogger.Infof("broadcasting completed")
+			}
+
+			broadcastLogger.Infof(
+				"waiting [%v] before checking whether the "+
+					"transaction is known on Bitcoin chain",
+				checkDelay,
+			)
+
+			select {
+			case <-time.After(checkDelay):
+			case <-broadcastCtx.Done():
+				return fmt.Errorf("broadcast timeout exceeded")
+			}
+
+			broadcastLogger.Infof(
+				"checking whether the transaction is known on Bitcoin chain",
+			)
+
+			_, err = dsa.btcChain.GetTransactionConfirmations(sweepTxHash)
+			if err != nil {
+				broadcastLogger.Warnf(
+					"cannot say whether the transaction is known "+
+						"on Bitcoin chain; check returned an error: [%v]",
+					err,
+				)
+				continue
+			}
+
+			broadcastLogger.Infof("transaction is known on Bitcoin chain")
+			return nil
+		}
 	}
-
-	actionLogger.Infof("monitoring deposit sweep transaction")
-
-	// TODO: Monitor the broadcasted transaction.
-
-	actionLogger.Infof("deposit sweep transaction broadcast successfully")
-
-	return nil
 }
 
 func (dsa *depositSweepAction) wallet() wallet {
