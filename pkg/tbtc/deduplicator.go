@@ -19,6 +19,9 @@ const (
 	// DKGResultHashCachePeriod is the time period the cache maintains
 	// the given DKG result hash.
 	DKGResultHashCachePeriod = 7 * 24 * time.Hour
+	// HeartbeatRequestCachePeriod is the time period the cache maintains
+	// the given heartbeat request.
+	HeartbeatRequestCachePeriod = 24 * time.Hour
 	// DepositSweepProposalCachePeriod is the time period the cache maintains
 	// the given deposit sweep proposal.
 	DepositSweepProposalCachePeriod = 7 * 24 * time.Hour
@@ -30,17 +33,19 @@ const (
 // Event subscription may emit the same event two or more times. The same event
 // can be emitted right after it's been emitted for the first time. The same
 // event can also be emitted a long time after it's been emitted for the first
-// time. It is deduplicator's responsibility to decide whether the given
+// time. It is the deduplicator's responsibility to decide whether the given
 // event is a duplicate and should be ignored or if it is not a duplicate and
 // should be handled.
 //
 // Those events are supported:
 // - DKG started
 // - DKG result submitted
+// - Heartbeat request submission
 // - Deposit sweep proposal submission
 type deduplicator struct {
 	dkgSeedCache              *cache.TimeCache
 	dkgResultHashCache        *cache.TimeCache
+	heartbeatRequestCache     *cache.TimeCache
 	depositSweepProposalCache *cache.TimeCache
 }
 
@@ -48,6 +53,7 @@ func newDeduplicator() *deduplicator {
 	return &deduplicator{
 		dkgSeedCache:              cache.NewTimeCache(DKGSeedCachePeriod),
 		dkgResultHashCache:        cache.NewTimeCache(DKGResultHashCachePeriod),
+		heartbeatRequestCache:     cache.NewTimeCache(HeartbeatRequestCachePeriod),
 		depositSweepProposalCache: cache.NewTimeCache(DepositSweepProposalCachePeriod),
 	}
 }
@@ -96,6 +102,35 @@ func (d *deduplicator) notifyDKGResultSubmitted(
 	}
 
 	// Otherwise, the DKG result is a duplicate and the client should not
+	// proceed with the execution.
+	return false
+}
+
+// notifyHeartbeatRequestSubmitted notifies the client wants to start some
+// actions upon the heartbeat request submitted. It returns boolean indicating
+// whether the client should proceed with the actions or ignore the event as
+// a duplicate.
+func (d *deduplicator) notifyHeartbeatRequestSubmitted(
+	walletPublicKeyHash [20]byte,
+	message []byte,
+) bool {
+	d.heartbeatRequestCache.Sweep()
+
+	var buffer bytes.Buffer
+	buffer.Write(walletPublicKeyHash[:])
+	buffer.Write(message)
+
+	bufferSha256 := sha256.Sum256(buffer.Bytes())
+	cacheKey := hex.EncodeToString(bufferSha256[:])
+
+	// If the key is not in the cache, that means the request was not handled
+	// yet and the client should proceed with the execution.
+	if !d.heartbeatRequestCache.Has(cacheKey) {
+		d.heartbeatRequestCache.Add(cacheKey)
+		return true
+	}
+
+	// Otherwise, the request is a duplicate and the client should not
 	// proceed with the execution.
 	return false
 }

@@ -2,16 +2,18 @@ package tbtc
 
 import (
 	"encoding/hex"
-	"github.com/keep-network/keep-core/pkg/bitcoin"
 	"math/big"
 	"testing"
 	"time"
+
+	"github.com/keep-network/keep-core/pkg/bitcoin"
 
 	"github.com/keep-network/keep-common/pkg/cache"
 )
 
 const testDKGSeedCachePeriod = 1 * time.Second
 const testDKGResultHashCachePeriod = 1 * time.Second
+const testHeartbeatRequestCachePeriod = 1 * time.Second
 const testDepositSweepProposalCachePeriod = 1 * time.Second
 
 func TestNotifyDKGStarted(t *testing.T) {
@@ -110,6 +112,50 @@ func TestNotifyDKGResultSubmitted(t *testing.T) {
 
 	// Add the original parameters again.
 	canProcess = deduplicator.notifyDKGResultSubmitted(big.NewInt(100), hash1, 500)
+	if !canProcess {
+		t.Fatal("should be allowed to process")
+	}
+}
+
+func TestNotifyHeartbeatRequestSubmitted(t *testing.T) {
+	deduplicator := deduplicator{
+		heartbeatRequestCache: cache.NewTimeCache(testHeartbeatRequestCachePeriod),
+	}
+
+	walletPublicKeyHash1 := [20]byte{1, 2, 3, 4, 5, 1, 2, 3, 4, 5, 1, 2, 3, 4, 5, 1, 2, 3, 4, 5}
+	walletPublicKeyHash2 := [20]byte{2, 2, 3, 4, 5, 1, 2, 3, 4, 5, 1, 2, 3, 4, 5, 1, 2, 3, 4, 6}
+	heartbeatMessage1 := []byte{1, 2}
+	heartbeatMessage2 := []byte{3, 4}
+
+	// Original heartbeat request
+	canProcess := deduplicator.notifyHeartbeatRequestSubmitted(walletPublicKeyHash1, heartbeatMessage1)
+	if !canProcess {
+		t.Fatal("should be allowed to process")
+	}
+
+	// With another message
+	canProcess = deduplicator.notifyHeartbeatRequestSubmitted(walletPublicKeyHash1, heartbeatMessage2)
+	if !canProcess {
+		t.Fatal("should be allowed to process")
+	}
+
+	// With another wallet
+	canProcess = deduplicator.notifyHeartbeatRequestSubmitted(walletPublicKeyHash2, heartbeatMessage1)
+	if !canProcess {
+		t.Fatal("should be allowed to process")
+	}
+
+	// With the same wallet and message
+	canProcess = deduplicator.notifyHeartbeatRequestSubmitted(walletPublicKeyHash1, heartbeatMessage1)
+	if canProcess {
+		t.Fatal("should not be allowed to process")
+	}
+
+	// Wait until caching period elapses.
+	time.Sleep(testHeartbeatRequestCachePeriod)
+
+	// With the same wallet and message again
+	canProcess = deduplicator.notifyHeartbeatRequestSubmitted(walletPublicKeyHash1, heartbeatMessage1)
 	if !canProcess {
 		t.Fatal("should be allowed to process")
 	}
