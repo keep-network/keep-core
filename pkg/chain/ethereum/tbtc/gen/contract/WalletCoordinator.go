@@ -3403,6 +3403,7 @@ func (wc *WalletCoordinator) PastHeartbeatRequestParametersUpdatedEvents(
 
 func (wc *WalletCoordinator) HeartbeatRequestSubmittedEvent(
 	opts *ethereum.SubscribeOpts,
+	coordinatorFilter []common.Address,
 ) *WcHeartbeatRequestSubmittedSubscription {
 	if opts == nil {
 		opts = new(ethereum.SubscribeOpts)
@@ -3417,17 +3418,20 @@ func (wc *WalletCoordinator) HeartbeatRequestSubmittedEvent(
 	return &WcHeartbeatRequestSubmittedSubscription{
 		wc,
 		opts,
+		coordinatorFilter,
 	}
 }
 
 type WcHeartbeatRequestSubmittedSubscription struct {
-	contract *WalletCoordinator
-	opts     *ethereum.SubscribeOpts
+	contract          *WalletCoordinator
+	opts              *ethereum.SubscribeOpts
+	coordinatorFilter []common.Address
 }
 
 type walletCoordinatorHeartbeatRequestSubmittedFunc func(
 	WalletPubKeyHash [20]byte,
 	Message []byte,
+	Coordinator common.Address,
 	blockNumber uint64,
 )
 
@@ -3446,6 +3450,7 @@ func (hrss *WcHeartbeatRequestSubmittedSubscription) OnEvent(
 				handler(
 					event.WalletPubKeyHash,
 					event.Message,
+					event.Coordinator,
 					event.Raw.BlockNumber,
 				)
 			}
@@ -3488,6 +3493,7 @@ func (hrss *WcHeartbeatRequestSubmittedSubscription) Pipe(
 				events, err := hrss.contract.PastHeartbeatRequestSubmittedEvents(
 					fromBlock,
 					nil,
+					hrss.coordinatorFilter,
 				)
 				if err != nil {
 					wcLogger.Errorf(
@@ -3510,6 +3516,7 @@ func (hrss *WcHeartbeatRequestSubmittedSubscription) Pipe(
 
 	sub := hrss.contract.watchHeartbeatRequestSubmitted(
 		sink,
+		hrss.coordinatorFilter,
 	)
 
 	return subscription.NewEventSubscription(func() {
@@ -3520,11 +3527,13 @@ func (hrss *WcHeartbeatRequestSubmittedSubscription) Pipe(
 
 func (wc *WalletCoordinator) watchHeartbeatRequestSubmitted(
 	sink chan *abi.WalletCoordinatorHeartbeatRequestSubmitted,
+	coordinatorFilter []common.Address,
 ) event.Subscription {
 	subscribeFn := func(ctx context.Context) (event.Subscription, error) {
 		return wc.contract.WatchHeartbeatRequestSubmitted(
 			&bind.WatchOpts{Context: ctx},
 			sink,
+			coordinatorFilter,
 		)
 	}
 
@@ -3558,12 +3567,14 @@ func (wc *WalletCoordinator) watchHeartbeatRequestSubmitted(
 func (wc *WalletCoordinator) PastHeartbeatRequestSubmittedEvents(
 	startBlock uint64,
 	endBlock *uint64,
+	coordinatorFilter []common.Address,
 ) ([]*abi.WalletCoordinatorHeartbeatRequestSubmitted, error) {
 	iterator, err := wc.contract.FilterHeartbeatRequestSubmitted(
 		&bind.FilterOpts{
 			Start: startBlock,
 			End:   endBlock,
 		},
+		coordinatorFilter,
 	)
 	if err != nil {
 		return nil, fmt.Errorf(
