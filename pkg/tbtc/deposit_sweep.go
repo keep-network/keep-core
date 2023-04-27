@@ -102,6 +102,67 @@ func (dsa *depositSweepAction) execute() error {
 		zap.Uint64("startBlock", dsa.proposalProcessingStartBlock),
 	)
 
+	validateProposalLogger := actionLogger.With(
+		zap.String("step", "validateProposal"),
+	)
+
+	validatedDeposits, err := dsa.validateProposal(
+		validateProposalLogger,
+		depositSweepRequiredFundingTxConfirmations,
+	)
+	if err != nil {
+		return fmt.Errorf("validate proposal step failed: [%v]", err)
+	}
+
+	walletMainUtxo, err := DetermineWalletMainUtxo(
+		bitcoin.PublicKeyHash(dsa.wallet().publicKey),
+		dsa.chain,
+		dsa.btcChain,
+	)
+	if err != nil {
+		return fmt.Errorf(
+			"error while determining wallet's main UTXO: [%v]",
+			err,
+		)
+	}
+
+	createTxLogger := actionLogger.With(
+		zap.String("step", "createTransaction"),
+	)
+
+	sweepTx, err := dsa.createTransaction(
+		createTxLogger,
+		walletMainUtxo,
+		validatedDeposits,
+		depositSweepSigningTimeoutSafetyMargin,
+		depositSweepSigningDelayBlocks,
+	)
+	if err != nil {
+		return fmt.Errorf("create transaction step failed: [%v]", err)
+	}
+
+	broadcastTxLogger := actionLogger.With(
+		zap.String("step", "broadcastTransaction"),
+		zap.String("sweepTxHash", fmt.Sprintf("0x%x", sweepTx.Hash())),
+	)
+
+	err = dsa.broadcastTransaction(
+		broadcastTxLogger,
+		sweepTx,
+		depositSweepBroadcastTimeout,
+		depositSweepBroadcastCheckDelay,
+	)
+	if err != nil {
+		return fmt.Errorf("broadcast transaction step failed: [%v]", err)
+	}
+
+	return nil
+}
+
+func (dsa *depositSweepAction) validateProposal(
+	validateProposalLogger log.StandardLogger,
+	requiredFundingTxConfirmations uint,
+) ([]*Deposit, error) {
 	depositExtraInfo := make(
 		[]struct {
 			*Deposit
@@ -110,28 +171,21 @@ func (dsa *depositSweepAction) execute() error {
 		len(dsa.proposal.DepositsKeys),
 	)
 
-	depositsCount := len(dsa.proposal.DepositsKeys)
-
-	actionLogger.Infof("gathering prerequisites for proposal validation")
+	validateProposalLogger.Infof("gathering prerequisites for proposal validation")
 
 	for i, depositKey := range dsa.proposal.DepositsKeys {
-		depositDisplayIndex := fmt.Sprintf("%v/%v", i+1, depositsCount)
+		depositDisplayIndex := fmt.Sprintf("%v/%v", i+1, len(dsa.proposal.DepositsKeys))
 
-		depositLogger := actionLogger.With(
-			zap.String(
-				"depositFundingTxHash",
-				fmt.Sprintf("0x%x", depositKey.FundingTxHash),
-			),
-			zap.String("depositIndex", depositDisplayIndex),
+		validateProposalLogger.Infof(
+			"deposit [%v] - checking confirmations count for funding tx",
+			depositDisplayIndex,
 		)
-
-		depositLogger.Infof("checking confirmations count for deposit's funding tx")
 
 		confirmations, err := dsa.btcChain.GetTransactionConfirmations(
 			depositKey.FundingTxHash,
 		)
 		if err != nil {
-			return fmt.Errorf(
+			return nil, fmt.Errorf(
 				"cannot get funding tx confirmations count "+
 					"for deposit [%v]: [%v]",
 				depositDisplayIndex,
@@ -139,21 +193,24 @@ func (dsa *depositSweepAction) execute() error {
 			)
 		}
 
-		if confirmations < depositSweepRequiredFundingTxConfirmations {
-			return fmt.Errorf(
+		if confirmations < requiredFundingTxConfirmations {
+			return nil, fmt.Errorf(
 				"funding tx of deposit [%v] has only [%v/%v] of "+
 					"required confirmations",
 				depositDisplayIndex,
 				confirmations,
-				depositSweepRequiredFundingTxConfirmations,
+				requiredFundingTxConfirmations,
 			)
 		}
 
-		depositLogger.Infof("fetching deposit's extra data")
+		validateProposalLogger.Infof(
+			"deposit [%v] - fetching deposit's extra data",
+			depositDisplayIndex,
+		)
 
 		fundingTx, err := dsa.btcChain.GetTransaction(depositKey.FundingTxHash)
 		if err != nil {
-			return fmt.Errorf(
+			return nil, fmt.Errorf(
 				"cannot get funding tx data for deposit [%v]: [%v]",
 				depositDisplayIndex,
 				err,
@@ -165,7 +222,7 @@ func (dsa *depositSweepAction) execute() error {
 			depositKey.FundingOutputIndex,
 		)
 		if err != nil {
-			return fmt.Errorf(
+			return nil, fmt.Errorf(
 				"cannot get on-chain request data for deposit [%v]: [%v]",
 				depositDisplayIndex,
 				err,
@@ -176,7 +233,7 @@ func (dsa *depositSweepAction) execute() error {
 			uint64(depositRequest.RevealedAt.Unix()),
 		)
 		if err != nil {
-			return fmt.Errorf(
+			return nil, fmt.Errorf(
 				"cannot estimate reveal block for deposit [%v]: [%v]",
 				depositDisplayIndex,
 				err,
@@ -208,7 +265,7 @@ func (dsa *depositSweepAction) execute() error {
 			WalletPublicKeyHash: [][20]byte{dsa.proposal.WalletPublicKeyHash},
 		})
 		if err != nil {
-			return fmt.Errorf(
+			return nil, fmt.Errorf(
 				"cannot get on-chain DepositRevealed events for deposit [%v]: [%v]",
 				depositDisplayIndex,
 				err,
@@ -227,7 +284,7 @@ func (dsa *depositSweepAction) execute() error {
 		}
 
 		if matchingEvent == nil {
-			return fmt.Errorf(
+			return nil, fmt.Errorf(
 				"no matching DepositRevealed event for deposit [%v]: [%v]",
 				depositDisplayIndex,
 				err,
@@ -243,33 +300,33 @@ func (dsa *depositSweepAction) execute() error {
 		}
 	}
 
-	actionLogger.Infof("calling chain for proposal validation")
+	validateProposalLogger.Infof("calling chain for proposal validation")
 
-	err = dsa.chain.ValidateDepositSweepProposal(dsa.proposal, depositExtraInfo)
+	err := dsa.chain.ValidateDepositSweepProposal(dsa.proposal, depositExtraInfo)
 	if err != nil {
-		return fmt.Errorf("deposit sweep proposal is invalid: [%v]", err)
+		return nil, fmt.Errorf("deposit sweep proposal is invalid: [%v]", err)
 	}
 
-	actionLogger.Infof(
-		"deposit sweep proposal is valid; assembling deposit sweep transaction",
+	validateProposalLogger.Infof(
+		"deposit sweep proposal is valid",
 	)
-
-	walletMainUtxo, err := DetermineWalletMainUtxo(
-		bitcoin.PublicKeyHash(dsa.wallet().publicKey),
-		dsa.chain,
-		dsa.btcChain,
-	)
-	if err != nil {
-		return fmt.Errorf(
-			"error while determining wallet's main UTXO: [%v]",
-			err,
-		)
-	}
 
 	deposits := make([]*Deposit, len(depositExtraInfo))
 	for i, dei := range depositExtraInfo {
 		deposits[i] = dei.Deposit
 	}
+
+	return deposits, nil
+}
+
+func (dsa *depositSweepAction) createTransaction(
+	createTxLogger log.StandardLogger,
+	walletMainUtxo *bitcoin.UnspentTransactionOutput,
+	deposits []*Deposit,
+	signingTimeoutSafetyMargin time.Duration,
+	signingDelayBlocks int,
+) (*bitcoin.Transaction, error) {
+	createTxLogger.Infof("creating deposit sweep transaction")
 
 	unsignedSweepTx, err := assembleDepositSweepTransaction(
 		dsa.btcChain,
@@ -279,27 +336,27 @@ func (dsa *depositSweepAction) execute() error {
 		dsa.proposal.SweepTxFee.Int64(),
 	)
 	if err != nil {
-		return fmt.Errorf(
-			"error while bulding deposit sweep transaction: [%v]",
+		return nil, fmt.Errorf(
+			"error while assembling deposit sweep transaction: [%v]",
 			err,
 		)
 	}
 
-	actionLogger.Infof("computing deposit sweep transaction's sig hashes")
+	createTxLogger.Infof("computing deposit sweep transaction's sig hashes")
 
 	sigHashes, err := unsignedSweepTx.ComputeSignatureHashes()
 	if err != nil {
-		return fmt.Errorf(
+		return nil, fmt.Errorf(
 			"error while computing deposit sweep transaction's "+
 				"sig hashes: [%v]",
 			err,
 		)
 	}
 
-	actionLogger.Infof("signing deposit sweep transaction's sig hashes")
+	createTxLogger.Infof("signing deposit sweep transaction's sig hashes")
 
 	// Make sure signing times out far before the entire action.
-	signingTimesOutAt := dsa.proposalExpiresAt.Add(-depositSweepSigningTimeoutSafetyMargin)
+	signingTimesOutAt := dsa.proposalExpiresAt.Add(-signingTimeoutSafetyMargin)
 	signingCtx, cancelSigningCtx := context.WithTimeout(
 		context.Background(),
 		time.Until(signingTimesOutAt),
@@ -310,7 +367,7 @@ func (dsa *depositSweepAction) execute() error {
 	// during pre-signing steps, i.e. gathering deposit data and proposal
 	// validation.
 	signingStartBlock := dsa.proposalProcessingStartBlock +
-		uint64(depositsCount*depositSweepSigningDelayBlocks)
+		uint64(len(deposits)*signingDelayBlocks)
 
 	signatures, err := dsa.signingExecutor.signBatch(
 		signingCtx,
@@ -318,14 +375,14 @@ func (dsa *depositSweepAction) execute() error {
 		signingStartBlock,
 	)
 	if err != nil {
-		return fmt.Errorf(
+		return nil, fmt.Errorf(
 			"error while signing deposit sweep transaction's "+
 				"sig hashes: [%v]",
 			err,
 		)
 	}
 
-	actionLogger.Infof("applying deposit sweep transaction's signatures")
+	createTxLogger.Infof("applying deposit sweep transaction's signatures")
 
 	containers := make([]*bitcoin.SignatureContainer, len(signatures))
 	for i, signature := range signatures {
@@ -338,27 +395,20 @@ func (dsa *depositSweepAction) execute() error {
 
 	sweepTx, err := unsignedSweepTx.AddSignatures(containers)
 	if err != nil {
-		return fmt.Errorf(
+		return nil, fmt.Errorf(
 			"error while applying deposit sweep transaction's "+
 				"signatures: [%v]",
 			err,
 		)
 	}
 
-	broadcastLogger := actionLogger.With(
-		zap.String("sweepTxHash", fmt.Sprintf("0x%x", sweepTx.Hash())),
-	)
+	createTxLogger.Infof("deposit sweep transaction created successfully")
 
-	return dsa.broadcastTransaction(
-		broadcastLogger,
-		sweepTx,
-		depositSweepBroadcastTimeout,
-		depositSweepBroadcastCheckDelay,
-	)
+	return sweepTx, nil
 }
 
 func (dsa *depositSweepAction) broadcastTransaction(
-	broadcastLogger log.StandardLogger,
+	broadcastTxLogger log.StandardLogger,
 	sweepTx *bitcoin.Transaction,
 	timeout time.Duration,
 	checkDelay time.Duration,
@@ -380,7 +430,7 @@ func (dsa *depositSweepAction) broadcastTransaction(
 		default:
 			broadcastAttempt++
 
-			broadcastLogger.Infof(
+			broadcastTxLogger.Infof(
 				"broadcasting deposit sweep transaction on "+
 					"the Bitcoin chain - attempt [%v]",
 				broadcastAttempt,
@@ -388,16 +438,16 @@ func (dsa *depositSweepAction) broadcastTransaction(
 
 			err := dsa.btcChain.BroadcastTransaction(sweepTx)
 			if err != nil {
-				broadcastLogger.Warnf(
+				broadcastTxLogger.Warnf(
 					"broadcasting failed: [%v]; transaction could be "+
 						"broadcasted by another wallet operators though",
 					err,
 				)
 			} else {
-				broadcastLogger.Infof("broadcasting completed")
+				broadcastTxLogger.Infof("broadcasting completed")
 			}
 
-			broadcastLogger.Infof(
+			broadcastTxLogger.Infof(
 				"waiting [%v] before checking whether the "+
 					"transaction is known on Bitcoin chain",
 				checkDelay,
@@ -409,13 +459,13 @@ func (dsa *depositSweepAction) broadcastTransaction(
 				return fmt.Errorf("broadcast timeout exceeded")
 			}
 
-			broadcastLogger.Infof(
+			broadcastTxLogger.Infof(
 				"checking whether the transaction is known on Bitcoin chain",
 			)
 
 			_, err = dsa.btcChain.GetTransactionConfirmations(sweepTxHash)
 			if err != nil {
-				broadcastLogger.Warnf(
+				broadcastTxLogger.Warnf(
 					"cannot say whether the transaction is known "+
 						"on Bitcoin chain; check returned an error: [%v]",
 					err,
@@ -423,7 +473,7 @@ func (dsa *depositSweepAction) broadcastTransaction(
 				continue
 			}
 
-			broadcastLogger.Infof("transaction is known on Bitcoin chain")
+			broadcastTxLogger.Infof("transaction is known on Bitcoin chain")
 			return nil
 		}
 	}
