@@ -9,6 +9,7 @@ import (
 	"github.com/keep-network/keep-core/pkg/bitcoin"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/chain/ethereum/tbtc/gen/contract"
+	"github.com/keep-network/keep-core/pkg/maintainer"
 )
 
 // Definitions of contract names.
@@ -28,10 +29,13 @@ type BitcoinDifficultyChain struct {
 // NewBitcoinDifficultyChain construct a new instance of the Bitcoin difficulty
 // - specific Ethereum chain handle.
 func NewBitcoinDifficultyChain(
-	config ethereum.Config,
+	ethereumConfig ethereum.Config,
+	maintainerConfig maintainer.Config,
 	baseChain *baseChain,
 ) (*BitcoinDifficultyChain, error) {
-	lightRelayAddress, err := config.ContractAddress(LightRelayContractName)
+	lightRelayAddress, err := ethereumConfig.ContractAddress(
+		LightRelayContractName,
+	)
 	if err != nil {
 		return nil, fmt.Errorf(
 			"failed to attach to LightRelay contract: [%v]",
@@ -57,7 +61,18 @@ func NewBitcoinDifficultyChain(
 		)
 	}
 
-	lightRelayMaintainerProxyAddress, err := config.ContractAddress(
+	// If the Bitcoin difficulty should be updated directly via LightRelay,
+	// quit early without creating a handle to LightRelayMaintainerProxy.
+	if !maintainerConfig.UseBitcoinDifficultyProxy {
+		return &BitcoinDifficultyChain{
+			baseChain:                 baseChain,
+			lightRelay:                lightRelay,
+			LightRelayMaintainerProxy: nil,
+		}, nil
+	}
+
+	// The Bitcoin difficulty should be updated via LightRelayMaintainerProxy.
+	lightRelayMaintainerProxyAddress, err := ethereumConfig.ContractAddress(
 		LightRelayMaintainerProxyContractName,
 	)
 	if err != nil {
@@ -131,6 +146,14 @@ func (bdc *BitcoinDifficultyChain) Retarget(headers []*bitcoin.BlockHeader) erro
 		serializedHeader := header.Serialize()
 		serializedHeaders = append(serializedHeaders, serializedHeader[:]...)
 	}
+
+	if bdc.LightRelayMaintainerProxy == nil {
+		// Update Bitcoin difficulty directly via LightRelay.
+		_, err := bdc.lightRelay.Retarget(serializedHeaders)
+		return err
+	}
+
+	// Update Bitcoin difficulty via LightRelayMaintainerProxy.
 	_, err := bdc.LightRelayMaintainerProxy.Retarget(serializedHeaders)
 	return err
 }
