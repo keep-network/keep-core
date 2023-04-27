@@ -158,7 +158,7 @@ func TestDetermineWalletMainUtxo(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		err = bitcoinChain.addTransaction(transaction)
+		err = bitcoinChain.BroadcastTransaction(transaction)
 		if err != nil {
 			t.Fatal(err)
 		}

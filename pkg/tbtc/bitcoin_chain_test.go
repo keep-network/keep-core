@@ -36,13 +36,33 @@ func (lbc *localBitcoinChain) GetTransaction(
 func (lbc *localBitcoinChain) GetTransactionConfirmations(
 	transactionHash bitcoin.Hash,
 ) (uint, error) {
-	panic("not implemented")
+	for index, transaction := range lbc.transactions {
+		if transaction.Hash() == transactionHash {
+			confirmations := len(lbc.transactions) - index
+			return uint(confirmations), nil
+		}
+	}
+
+	return 0, fmt.Errorf("transaction not found")
 }
 
 func (lbc *localBitcoinChain) BroadcastTransaction(
 	transaction *bitcoin.Transaction,
 ) error {
-	panic("not implemented")
+	lbc.transactionsMutex.Lock()
+	defer lbc.transactionsMutex.Unlock()
+
+	transactionHash := transaction.Hash()
+
+	for _, existingTransaction := range lbc.transactions {
+		if transactionHash == existingTransaction.Hash() {
+			return fmt.Errorf("transaction already exists")
+		}
+	}
+
+	lbc.transactions = append(lbc.transactions, transaction)
+
+	return nil
 }
 
 func (lbc *localBitcoinChain) GetLatestBlockHeight() (uint, error) {
@@ -89,23 +109,4 @@ func (lbc *localBitcoinChain) GetTransactionsForPublicKeyHash(
 	}
 
 	return matchingTransactions, nil
-}
-
-func (lbc *localBitcoinChain) addTransaction(
-	transaction *bitcoin.Transaction,
-) error {
-	lbc.transactionsMutex.Lock()
-	defer lbc.transactionsMutex.Unlock()
-
-	transactionHash := transaction.Hash()
-
-	for _, existingTransaction := range lbc.transactions {
-		if transactionHash == existingTransaction.Hash() {
-			return fmt.Errorf("transaction already exists")
-		}
-	}
-
-	lbc.transactions = append(lbc.transactions, transaction)
-
-	return nil
 }

@@ -7,7 +7,9 @@ import (
 	"github.com/ipfs/go-log/v2"
 	"github.com/keep-network/keep-core/pkg/bitcoin"
 	"github.com/keep-network/keep-core/pkg/chain"
+	"github.com/keep-network/keep-core/pkg/tecdsa"
 	"go.uber.org/zap"
+	"math/big"
 	"time"
 )
 
@@ -56,36 +58,58 @@ const (
 	depositSweepBroadcastCheckDelay = 1 * time.Minute
 )
 
+// depositSweepSigningExecutor is an interface meant to decouple the
+// specific implementation of the signing executor from the deposit sweep
+// action
+type depositSweepSigningExecutor interface {
+	signBatch(
+		ctx context.Context,
+		messages []*big.Int,
+		startBlock uint64,
+	) ([]*tecdsa.Signature, error)
+}
+
 // depositSweepAction is a deposit sweep walletAction.
 type depositSweepAction struct {
 	chain    Chain
 	btcChain bitcoin.Chain
 
 	sweepingWallet  wallet
-	signingExecutor *signingExecutor
+	signingExecutor depositSweepSigningExecutor
 
 	proposal                     *DepositSweepProposal
 	proposalProcessingStartBlock uint64
 	proposalExpiresAt            time.Time
+
+	requiredFundingTxConfirmations uint
+	signingTimeoutSafetyMargin     time.Duration
+	signingDelayBlocks             int
+	broadcastTimeout               time.Duration
+	broadcastCheckDelay            time.Duration
 }
 
 func newDepositSweepAction(
 	chain Chain,
 	btcChain bitcoin.Chain,
 	sweepingWallet wallet,
-	signingExecutor *signingExecutor,
+	signingExecutor depositSweepSigningExecutor,
 	proposal *DepositSweepProposal,
 	proposalProcessingStartBlock uint64,
 	proposalExpiresAt time.Time,
 ) *depositSweepAction {
 	return &depositSweepAction{
-		chain:                        chain,
-		btcChain:                     btcChain,
-		sweepingWallet:               sweepingWallet,
-		signingExecutor:              signingExecutor,
-		proposal:                     proposal,
-		proposalProcessingStartBlock: proposalProcessingStartBlock,
-		proposalExpiresAt:            proposalExpiresAt,
+		chain:                          chain,
+		btcChain:                       btcChain,
+		sweepingWallet:                 sweepingWallet,
+		signingExecutor:                signingExecutor,
+		proposal:                       proposal,
+		proposalProcessingStartBlock:   proposalProcessingStartBlock,
+		proposalExpiresAt:              proposalExpiresAt,
+		requiredFundingTxConfirmations: depositSweepRequiredFundingTxConfirmations,
+		signingTimeoutSafetyMargin:     depositSweepSigningTimeoutSafetyMargin,
+		signingDelayBlocks:             depositSweepSigningDelayBlocks,
+		broadcastTimeout:               depositSweepBroadcastTimeout,
+		broadcastCheckDelay:            depositSweepBroadcastCheckDelay,
 	}
 }
 
@@ -106,10 +130,7 @@ func (dsa *depositSweepAction) execute() error {
 		zap.String("step", "validateProposal"),
 	)
 
-	validatedDeposits, err := dsa.validateProposal(
-		validateProposalLogger,
-		depositSweepRequiredFundingTxConfirmations,
-	)
+	validatedDeposits, err := dsa.validateProposal(validateProposalLogger)
 	if err != nil {
 		return fmt.Errorf("validate proposal step failed: [%v]", err)
 	}
@@ -134,8 +155,6 @@ func (dsa *depositSweepAction) execute() error {
 		createTxLogger,
 		walletMainUtxo,
 		validatedDeposits,
-		depositSweepSigningTimeoutSafetyMargin,
-		depositSweepSigningDelayBlocks,
 	)
 	if err != nil {
 		return fmt.Errorf("create transaction step failed: [%v]", err)
@@ -146,12 +165,7 @@ func (dsa *depositSweepAction) execute() error {
 		zap.String("sweepTxHash", fmt.Sprintf("0x%x", sweepTx.Hash())),
 	)
 
-	err = dsa.broadcastTransaction(
-		broadcastTxLogger,
-		sweepTx,
-		depositSweepBroadcastTimeout,
-		depositSweepBroadcastCheckDelay,
-	)
+	err = dsa.broadcastTransaction(broadcastTxLogger, sweepTx)
 	if err != nil {
 		return fmt.Errorf("broadcast transaction step failed: [%v]", err)
 	}
@@ -161,7 +175,6 @@ func (dsa *depositSweepAction) execute() error {
 
 func (dsa *depositSweepAction) validateProposal(
 	validateProposalLogger log.StandardLogger,
-	requiredFundingTxConfirmations uint,
 ) ([]*Deposit, error) {
 	depositExtraInfo := make(
 		[]struct {
@@ -193,13 +206,13 @@ func (dsa *depositSweepAction) validateProposal(
 			)
 		}
 
-		if confirmations < requiredFundingTxConfirmations {
+		if confirmations < dsa.requiredFundingTxConfirmations {
 			return nil, fmt.Errorf(
 				"funding tx of deposit [%v] has only [%v/%v] of "+
 					"required confirmations",
 				depositDisplayIndex,
 				confirmations,
-				requiredFundingTxConfirmations,
+				dsa.requiredFundingTxConfirmations,
 			)
 		}
 
@@ -323,8 +336,6 @@ func (dsa *depositSweepAction) createTransaction(
 	createTxLogger log.StandardLogger,
 	walletMainUtxo *bitcoin.UnspentTransactionOutput,
 	deposits []*Deposit,
-	signingTimeoutSafetyMargin time.Duration,
-	signingDelayBlocks int,
 ) (*bitcoin.Transaction, error) {
 	createTxLogger.Infof("creating deposit sweep transaction")
 
@@ -356,7 +367,7 @@ func (dsa *depositSweepAction) createTransaction(
 	createTxLogger.Infof("signing deposit sweep transaction's sig hashes")
 
 	// Make sure signing times out far before the entire action.
-	signingTimesOutAt := dsa.proposalExpiresAt.Add(-signingTimeoutSafetyMargin)
+	signingTimesOutAt := dsa.proposalExpiresAt.Add(-dsa.signingTimeoutSafetyMargin)
 	signingCtx, cancelSigningCtx := context.WithTimeout(
 		context.Background(),
 		time.Until(signingTimesOutAt),
@@ -367,7 +378,7 @@ func (dsa *depositSweepAction) createTransaction(
 	// during pre-signing steps, i.e. gathering deposit data and proposal
 	// validation.
 	signingStartBlock := dsa.proposalProcessingStartBlock +
-		uint64(len(deposits)*signingDelayBlocks)
+		uint64(len(deposits)*dsa.signingDelayBlocks)
 
 	signatures, err := dsa.signingExecutor.signBatch(
 		signingCtx,
@@ -410,14 +421,12 @@ func (dsa *depositSweepAction) createTransaction(
 func (dsa *depositSweepAction) broadcastTransaction(
 	broadcastTxLogger log.StandardLogger,
 	sweepTx *bitcoin.Transaction,
-	timeout time.Duration,
-	checkDelay time.Duration,
 ) error {
 	sweepTxHash := sweepTx.Hash()
 
 	broadcastCtx, cancelBroadcastCtx := context.WithTimeout(
 		context.Background(),
-		timeout,
+		dsa.broadcastTimeout,
 	)
 	defer cancelBroadcastCtx()
 
@@ -450,11 +459,11 @@ func (dsa *depositSweepAction) broadcastTransaction(
 			broadcastTxLogger.Infof(
 				"waiting [%v] before checking whether the "+
 					"transaction is known on Bitcoin chain",
-				checkDelay,
+				dsa.broadcastCheckDelay,
 			)
 
 			select {
-			case <-time.After(checkDelay):
+			case <-time.After(dsa.broadcastCheckDelay):
 			case <-broadcastCtx.Done():
 				return fmt.Errorf("broadcast timeout exceeded")
 			}
