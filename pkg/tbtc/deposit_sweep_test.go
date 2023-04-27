@@ -18,6 +18,7 @@ import (
 	"github.com/keep-network/keep-core/pkg/internal/testutils"
 )
 
+// TODO: Think about covering unhappy paths for specific steps of the deposit sweep action.
 func TestDepositSweepAction_Execute(t *testing.T) {
 	scenarios, err := tbtctest.LoadDepositSweepTestScenarios()
 	if err != nil {

@@ -113,7 +113,6 @@ func newDepositSweepAction(
 	}
 }
 
-// TODO: Cover this function with unit tests once everything is completed.
 func (dsa *depositSweepAction) execute() error {
 	walletPublicKeyBytes, err := marshalPublicKey(dsa.wallet().publicKey)
 	if err != nil {
