@@ -27,6 +27,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/keep-network/keep-core/pkg/bitcoin"
+	"github.com/keep-network/keep-core/pkg/chain"
 	"io/fs"
 	"io/ioutil"
 	"math/big"
@@ -43,12 +44,12 @@ const (
 // Deposit holds the deposit data in the given test scenario.
 type Deposit struct {
 	Utxo                *bitcoin.UnspentTransactionOutput
-	Depositor           [20]byte
+	Depositor           chain.Address
 	BlindingFactor      [8]byte
 	WalletPublicKeyHash [20]byte
 	RefundPublicKeyHash [20]byte
 	RefundLocktime      [4]byte
-	Vault               [20]byte
+	Vault               *chain.Address
 }
 
 // DepositSweepTestScenario represents a deposit sweep test scenario.

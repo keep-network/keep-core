@@ -76,6 +76,13 @@ func (lc *localBitcoinChain) GetBlockHeader(
 	return blockHeader, nil
 }
 
+func (lc *localBitcoinChain) GetTransactionsForPublicKeyHash(
+	publicKeyHash [20]byte,
+	limit int,
+) ([]*bitcoin.Transaction, error) {
+	panic("unsupported")
+}
+
 // SetBlockHeaders sets internal headers for testing purposes.
 func (lc *localBitcoinChain) SetBlockHeaders(
 	blockHeaders map[uint]*bitcoin.BlockHeader,

@@ -1,9 +1,12 @@
 package tbtc
 
 import (
+	"bytes"
 	"crypto/ecdsa"
 	"crypto/elliptic"
+	"crypto/sha256"
 	"encoding/binary"
+	"encoding/hex"
 	"fmt"
 	"math/big"
 	"math/rand"
@@ -40,6 +43,21 @@ type localChain struct {
 	dkgResult      *DKGChainResult
 	dkgResultValid bool
 
+	walletsMutex sync.Mutex
+	wallets      map[[20]byte]*WalletChainData
+
+	depositRequestsMutex sync.Mutex
+	depositRequests      map[[32]byte]*DepositChainRequest
+
+	blocksByTimestampMutex sync.Mutex
+	blocksByTimestamp      map[uint64]uint64
+
+	pastDepositRevealedEventsMutex sync.Mutex
+	pastDepositRevealedEvents      map[[32]byte][]*DepositRevealedEvent
+
+	depositSweepProposalValidationsMutex sync.Mutex
+	depositSweepProposalValidations      map[[32]byte]bool
+
 	blockCounter       chain.BlockCounter
 	operatorPrivateKey *operator.PrivateKey
 }
@@ -64,7 +82,22 @@ func (lc *localChain) GetBlockNumberByTimestamp(timestamp uint64) (
 	uint64,
 	error,
 ) {
-	panic("unsupported")
+	lc.blocksByTimestampMutex.Lock()
+	defer lc.blocksByTimestampMutex.Unlock()
+
+	block, ok := lc.blocksByTimestamp[timestamp]
+	if !ok {
+		return 0, fmt.Errorf("block not found")
+	}
+
+	return block, nil
+}
+
+func (lc *localChain) setBlockNumberByTimestamp(timestamp uint64, block uint64) {
+	lc.blocksByTimestampMutex.Lock()
+	defer lc.blocksByTimestampMutex.Unlock()
+
+	lc.blocksByTimestamp[timestamp] = block
 }
 
 func (lc *localChain) OperatorToStakingProvider() (chain.Address, bool, error) {
@@ -424,14 +457,154 @@ func (lc *localChain) DKGParameters() (*DKGParameters, error) {
 func (lc *localChain) PastDepositRevealedEvents(
 	filter *DepositRevealedEventFilter,
 ) ([]*DepositRevealedEvent, error) {
-	panic("unsupported")
+	lc.pastDepositRevealedEventsMutex.Lock()
+	defer lc.pastDepositRevealedEventsMutex.Unlock()
+
+	eventsKey, err := buildPastDepositRevealedEventsKey(filter)
+	if err != nil {
+		return nil, err
+	}
+
+	events, ok := lc.pastDepositRevealedEvents[eventsKey]
+	if !ok {
+		return nil, fmt.Errorf("no events for given filter")
+	}
+
+	return events, nil
+}
+
+func (lc *localChain) setPastDepositRevealedEvents(
+	filter *DepositRevealedEventFilter,
+	events []*DepositRevealedEvent,
+) error {
+	lc.pastDepositRevealedEventsMutex.Lock()
+	defer lc.pastDepositRevealedEventsMutex.Unlock()
+
+	eventsKey, err := buildPastDepositRevealedEventsKey(filter)
+	if err != nil {
+		return err
+	}
+
+	lc.pastDepositRevealedEvents[eventsKey] = events
+
+	return nil
+}
+
+func buildPastDepositRevealedEventsKey(
+	filter *DepositRevealedEventFilter,
+) ([32]byte, error) {
+	var buffer bytes.Buffer
+
+	startBlock := make([]byte, 8)
+	binary.BigEndian.PutUint64(startBlock, filter.StartBlock)
+	buffer.Write(startBlock)
+
+	if filter.EndBlock != nil {
+		endBlock := make([]byte, 8)
+		binary.BigEndian.PutUint64(startBlock, *filter.EndBlock)
+		buffer.Write(endBlock)
+	}
+
+	for _, depositor := range filter.Depositor {
+		depositorBytes, err := hex.DecodeString(depositor.String())
+		if err != nil {
+			return [32]byte{}, err
+		}
+
+		buffer.Write(depositorBytes)
+	}
+
+	for _, walletPublicKeyHash := range filter.WalletPublicKeyHash {
+		buffer.Write(walletPublicKeyHash[:])
+	}
+
+	return sha256.Sum256(buffer.Bytes()), nil
 }
 
 func (lc *localChain) GetDepositRequest(
 	fundingTxHash bitcoin.Hash,
 	fundingOutputIndex uint32,
 ) (*DepositChainRequest, error) {
-	panic("unsupported")
+	lc.depositRequestsMutex.Lock()
+	defer lc.depositRequestsMutex.Unlock()
+
+	requestKey := buildDepositRequestKey(fundingTxHash, fundingOutputIndex)
+
+	request, ok := lc.depositRequests[requestKey]
+	if !ok {
+		return nil, fmt.Errorf("no request for given key")
+	}
+
+	return request, nil
+}
+
+func (lc *localChain) setDepositRequest(
+	fundingTxHash bitcoin.Hash,
+	fundingOutputIndex uint32,
+	request *DepositChainRequest,
+) {
+	lc.depositRequestsMutex.Lock()
+	defer lc.depositRequestsMutex.Unlock()
+
+	requestKey := buildDepositRequestKey(fundingTxHash, fundingOutputIndex)
+
+	lc.depositRequests[requestKey] = request
+}
+
+func buildDepositRequestKey(
+	fundingTxHash bitcoin.Hash,
+	fundingOutputIndex uint32,
+) [32]byte {
+	fundingOutputIndexBytes := make([]byte, 4)
+	binary.BigEndian.PutUint32(fundingOutputIndexBytes, fundingOutputIndex)
+
+	return sha256.Sum256(append(fundingTxHash[:], fundingOutputIndexBytes...))
+}
+
+func (lc *localChain) GetWallet(walletPublicKeyHash [20]byte) (
+	*WalletChainData,
+	error,
+) {
+	lc.walletsMutex.Lock()
+	defer lc.walletsMutex.Unlock()
+
+	walletChainData, ok := lc.wallets[walletPublicKeyHash]
+	if !ok {
+		return nil, fmt.Errorf("no wallet for given PKH")
+	}
+
+	return walletChainData, nil
+}
+
+func (lc *localChain) setWallet(
+	walletPublicKeyHash [20]byte,
+	walletChainData *WalletChainData,
+) {
+	lc.walletsMutex.Lock()
+	defer lc.walletsMutex.Unlock()
+
+	lc.wallets[walletPublicKeyHash] = walletChainData
+}
+
+func (lc *localChain) ComputeMainUtxoHash(
+	mainUtxo *bitcoin.UnspentTransactionOutput,
+) [32]byte {
+	outputIndexBytes := make([]byte, 4)
+	binary.BigEndian.PutUint32(outputIndexBytes, mainUtxo.Outpoint.OutputIndex)
+
+	valueBytes := make([]byte, 8)
+	binary.BigEndian.PutUint64(valueBytes, uint64(mainUtxo.Value))
+
+	mainUtxoHash := sha256.Sum256(
+		append(
+			append(
+				mainUtxo.Outpoint.TransactionHash[:],
+				outputIndexBytes...,
+			), valueBytes...,
+		),
+	)
+
+	return mainUtxoHash
 }
 
 func (lc *localChain) operatorAddress() (chain.Address, error) {
@@ -476,7 +649,81 @@ func (lc *localChain) ValidateDepositSweepProposal(
 		FundingTx *bitcoin.Transaction
 	},
 ) error {
-	panic("unsupported")
+	lc.depositSweepProposalValidationsMutex.Lock()
+	defer lc.depositSweepProposalValidationsMutex.Unlock()
+
+	key, err := buildDepositSweepProposalValidationKey(proposal, depositsExtraInfo)
+	if err != nil {
+		return err
+	}
+
+	result, ok := lc.depositSweepProposalValidations[key]
+	if !ok {
+		return fmt.Errorf("validation result unknown")
+	}
+
+	if !result {
+		return fmt.Errorf("validation failed")
+	}
+
+	return nil
+}
+
+func (lc *localChain) setDepositSweepProposalValidationResult(
+	proposal *DepositSweepProposal,
+	depositsExtraInfo []struct {
+		*Deposit
+		FundingTx *bitcoin.Transaction
+	},
+	result bool,
+) error {
+	lc.depositSweepProposalValidationsMutex.Lock()
+	defer lc.depositSweepProposalValidationsMutex.Unlock()
+
+	key, err := buildDepositSweepProposalValidationKey(proposal, depositsExtraInfo)
+	if err != nil {
+		return err
+	}
+
+	lc.depositSweepProposalValidations[key] = result
+
+	return nil
+}
+
+func buildDepositSweepProposalValidationKey(
+	proposal *DepositSweepProposal,
+	depositsExtraInfo []struct {
+		*Deposit
+		FundingTx *bitcoin.Transaction
+	},
+) ([32]byte, error) {
+	var buffer bytes.Buffer
+
+	buffer.Write(proposal.WalletPublicKeyHash[:])
+
+	for _, deposit := range proposal.DepositsKeys {
+		buffer.Write(deposit.FundingTxHash[:])
+
+		fundingOutputIndex := make([]byte, 4)
+		binary.BigEndian.PutUint32(fundingOutputIndex, deposit.FundingOutputIndex)
+		buffer.Write(fundingOutputIndex)
+	}
+
+	buffer.Write(proposal.SweepTxFee.Bytes())
+
+	for _, extra := range depositsExtraInfo {
+		depositScript, err := extra.Deposit.Script()
+		if err != nil {
+			return [32]byte{}, err
+		}
+
+		buffer.Write(depositScript)
+
+		fundingTxHash := extra.FundingTx.Hash()
+		buffer.Write(fundingTxHash[:])
+	}
+
+	return sha256.Sum256(buffer.Bytes()), nil
 }
 
 // Connect sets up the local chain.
@@ -504,8 +751,13 @@ func ConnectWithKey(operatorPrivateKey *operator.PrivateKey) *localChain {
 		dkgResultChallengeHandlers: make(
 			map[int]func(submission *DKGResultChallengedEvent),
 		),
-		blockCounter:       blockCounter,
-		operatorPrivateKey: operatorPrivateKey,
+		wallets:                         make(map[[20]byte]*WalletChainData),
+		depositRequests:                 make(map[[32]byte]*DepositChainRequest),
+		blocksByTimestamp:               make(map[uint64]uint64),
+		pastDepositRevealedEvents:       make(map[[32]byte][]*DepositRevealedEvent),
+		depositSweepProposalValidations: make(map[[32]byte]bool),
+		blockCounter:                    blockCounter,
+		operatorPrivateKey:              operatorPrivateKey,
 	}
 
 	return localChain

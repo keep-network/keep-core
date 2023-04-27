@@ -1033,6 +1033,64 @@ func (tc *TbtcChain) GetDepositRequest(
 	}, nil
 }
 
+func (tc *TbtcChain) GetWallet(
+	walletPublicKeyHash [20]byte,
+) (*tbtc.WalletChainData, error) {
+	wallet, err := tc.bridge.Wallets(walletPublicKeyHash)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"cannot get wallet for public key hash [0x%x]: [%v]",
+			walletPublicKeyHash,
+			err,
+		)
+	}
+
+	// Wallet not found.
+	if wallet.CreatedAt == 0 {
+		return nil, fmt.Errorf(
+			"no wallet for public key hash [0x%x]",
+			wallet,
+		)
+	}
+
+	return &tbtc.WalletChainData{
+		EcdsaWalletID:                          wallet.EcdsaWalletID,
+		MainUtxoHash:                           wallet.MainUtxoHash,
+		PendingRedemptionsValue:                wallet.PendingRedemptionsValue,
+		CreatedAt:                              time.Unix(int64(wallet.CreatedAt), 0),
+		MovingFundsRequestedAt:                 time.Unix(int64(wallet.MovingFundsRequestedAt), 0),
+		ClosingStartedAt:                       time.Unix(int64(wallet.ClosingStartedAt), 0),
+		PendingMovedFundsSweepRequestsCount:    wallet.PendingMovedFundsSweepRequestsCount,
+		State:                                  wallet.State,
+		MovingFundsTargetWalletsCommitmentHash: wallet.MovingFundsTargetWalletsCommitmentHash,
+	}, nil
+}
+
+func (tc *TbtcChain) ComputeMainUtxoHash(
+	mainUtxo *bitcoin.UnspentTransactionOutput,
+) [32]byte {
+	return computeMainUtxoHash(mainUtxo)
+}
+
+func computeMainUtxoHash(mainUtxo *bitcoin.UnspentTransactionOutput) [32]byte {
+	outputIndexBytes := make([]byte, 4)
+	binary.BigEndian.PutUint32(outputIndexBytes, mainUtxo.Outpoint.OutputIndex)
+
+	valueBytes := make([]byte, 8)
+	binary.BigEndian.PutUint64(valueBytes, uint64(mainUtxo.Value))
+
+	mainUtxoHash := crypto.Keccak256Hash(
+		append(
+			append(
+				mainUtxo.Outpoint.TransactionHash[:],
+				outputIndexBytes...,
+			), valueBytes...,
+		),
+	)
+
+	return mainUtxoHash
+}
+
 func buildDepositKey(
 	fundingTxHash bitcoin.Hash,
 	fundingOutputIndex uint32,

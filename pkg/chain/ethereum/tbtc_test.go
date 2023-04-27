@@ -308,6 +308,34 @@ func TestParseDkgResultValidationOutcome(t *testing.T) {
 	}
 }
 
+func TestComputeMainUtxoHash(t *testing.T) {
+	transactionHash, err := bitcoin.NewHashFromString(
+		"089bd0671a4481c3584919b4b9b6751cb3f8586dab41cb157adec43fd10ccc00",
+		bitcoin.InternalByteOrder,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	mainUtxo := &bitcoin.UnspentTransactionOutput{
+		Outpoint: &bitcoin.TransactionOutpoint{
+			TransactionHash: transactionHash,
+			OutputIndex:     5,
+		},
+		Value: 143565433,
+	}
+
+	mainUtxoHash := computeMainUtxoHash(mainUtxo)
+
+	expectedMainUtxoHash, err := hex.DecodeString(
+		"1216f8e993c4c57d3c4c971c0d2651140fc4ab09d41960d9ccd7b41fdcd270d6",
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	testutils.AssertBytesEqual(t, expectedMainUtxoHash, mainUtxoHash[:])
+}
+
 // Test data based on: https://etherscan.io/tx/0x97c7a293127a604da77f7ef8daf4b19da2bf04327dd891b6d717eaef89bd8bca
 func TestBuildDepositKey(t *testing.T) {
 	fundingTxHash, err := bitcoin.NewHashFromString(

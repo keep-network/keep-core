@@ -339,6 +339,7 @@ func Initialize(
 
 				node.handleDepositSweepProposal(
 					event.Proposal,
+					expiresAt,
 					event.BlockNumber,
 					depositSweepProposalConfirmationBlocks,
 				)

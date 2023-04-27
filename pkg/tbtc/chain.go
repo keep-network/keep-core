@@ -200,6 +200,14 @@ type BridgeChain interface {
 		fundingTxHash bitcoin.Hash,
 		fundingOutputIndex uint32,
 	) (*DepositChainRequest, error)
+
+	// GetWallet gets the on-chain data for the given wallet. Returns an error
+	// if the wallet was not found.
+	GetWallet(walletPublicKeyHash [20]byte) (*WalletChainData, error)
+
+	// ComputeMainUtxoHash computes the hash of the provided main UTXO
+	// according to the on-chain Bridge rules.
+	ComputeMainUtxoHash(mainUtxo *bitcoin.UnspentTransactionOutput) [32]byte
 }
 
 // HeartbeatRequestedEvent represents a Bridge heartbeat request event.
@@ -263,6 +271,19 @@ type DepositChainRequest struct {
 	Vault       *chain.Address
 	TreasuryFee uint64
 	SweptAt     time.Time
+}
+
+// WalletChainData represents wallet data stored on-chain.
+type WalletChainData struct {
+	EcdsaWalletID                          [32]byte
+	MainUtxoHash                           [32]byte
+	PendingRedemptionsValue                uint64
+	CreatedAt                              time.Time
+	MovingFundsRequestedAt                 time.Time
+	ClosingStartedAt                       time.Time
+	PendingMovedFundsSweepRequestsCount    uint32
+	State                                  uint8
+	MovingFundsTargetWalletsCommitmentHash [32]byte
 }
 
 // WalletCoordinatorChain defines the subset of the TBTC chain interface that
