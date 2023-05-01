@@ -694,6 +694,8 @@ github.com/keep-network/keep-common v1.7.1-0.20221209141213-c5370c90bf9f h1:hSQH
 github.com/keep-network/keep-common v1.7.1-0.20221209141213-c5370c90bf9f/go.mod h1:OmaZrnZODf6RJ95yUn2kBjy8Z4u2npPJQkSiyimluto=
 github.com/keep-network/keep-common v1.7.1-0.20230124141416-6f84b758111f h1:pNg8ZPT+Um8YZn0ebgAyGzifPB8fA6IjXreI++Pq5T0=
 github.com/keep-network/keep-common v1.7.1-0.20230124141416-6f84b758111f/go.mod h1:OmaZrnZODf6RJ95yUn2kBjy8Z4u2npPJQkSiyimluto=
+github.com/keep-network/keep-common v1.7.1-0.20230501122407-5cc3757ccf0d h1:6AiGKgOEmwO1Cri87bMfmxgF8ZgE5HIJOQUO7nZszh0=
+github.com/keep-network/keep-common v1.7.1-0.20230501122407-5cc3757ccf0d/go.mod h1:OmaZrnZODf6RJ95yUn2kBjy8Z4u2npPJQkSiyimluto=
 github.com/keep-network/tss-lib v1.3.3-0.20220826121242-73ee9558285f h1:8tCqIjMDoexUwaKFCcNH8moYUkl0LINeCLXnfag57No=
 github.com/keep-network/tss-lib v1.3.3-0.20220826121242-73ee9558285f/go.mod h1:avz+lZjqmDB/5aleGe1JBxYKY6BzMmFlhZ0VmuifpsU=
 github.com/kisielk/errcheck v1.1.0/go.mod h1:EZBBE59ingxPouuu3KfxchcWSUPOHkagtvWXihfKN4Q=
