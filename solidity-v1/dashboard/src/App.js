@@ -38,6 +38,10 @@ const AppLayout = () => {
     <>
       <AppHeader />
       <section className="app__content">
+        <div className="bg-yellow-400 text-center text-yellow-900">
+          This is a legacy dashboard. Only a small part of the features are
+          still supported.
+        </div>
         <Routing />
       </section>
     </>
