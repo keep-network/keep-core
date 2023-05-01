@@ -285,7 +285,7 @@ func Initialize(
 			if ok := deduplicator.notifyHeartbeatRequestSubmitted(
 				walletPublicKeyHash,
 				message,
-			); ok {
+			); !ok {
 				logger.Infof(
 					"heartbeat request for wallet PKH [0x%x] and message [0x%x] "+
 						"has been already processed",
