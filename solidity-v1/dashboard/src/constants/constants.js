@@ -124,8 +124,6 @@ export const MODAL_TYPES = {
   GrantTokensWithdrawn: "GrantTokensWithdrawn",
   CopyStake: "CopyStake",
   ConfirmReleaseTokensFromGrant: "ConfirmReleaseTokensFromGrant",
-  WarningBeforeCovPoolDeposit: "WarningBeforeCovPoolDeposit",
-  InitiateCovPoolDeposit: "InitiateCovPoolDeposit",
   InitiateCovPoolWithdraw: "InitiateCovPoolWithdraw",
   CovPoolWithdrawInitialized: "CovPoolWithdrawInitialized",
   CovPoolClaimTokens: "CovPoolClaimTokens",

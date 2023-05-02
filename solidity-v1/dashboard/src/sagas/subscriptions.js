@@ -18,8 +18,6 @@ import {
   ADD_STAKE_TO_THRESHOLD_AUTH_DATA,
 } from "../actions"
 import {
-  assetPoolDepositedEventEmitted,
-  COVERAGE_POOL_FETCH_COV_POOL_DATA_SUCCESS,
   coveragePoolWithdrawalCompletedEventEmitted,
   coveragePoolWithdrawalInitiatedEventEmitted,
   riskManagerAuctionClosedEventEmitted,
@@ -740,20 +738,6 @@ function* updateOperatorData() {
 export function* subscribeToOperatorUndelegateEvent() {
   yield take(FETCH_OPERATOR_DELEGATIONS_SUCCESS)
   yield fork(updateOperatorData)
-}
-
-export function* observeAssetPoolDepositedEvent() {
-  yield take(COVERAGE_POOL_FETCH_COV_POOL_DATA_SUCCESS)
-
-  const assetPoolContract = Keep.coveragePoolV1.assetPoolContract.instance
-
-  yield fork(
-    subscribeToEventAndEmitData,
-    assetPoolContract,
-    EVENTS.COVERAGE_POOLS.DEPOSITED,
-    assetPoolDepositedEventEmitted,
-    `AssetPool.${EVENTS.COVERAGE_POOLS.DEPOSITED}`
-  )
 }
 
 export function* observeWithdrawalInitiatedEvent() {

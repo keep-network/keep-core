@@ -30,8 +30,6 @@ import {
 } from "./staking"
 import { AddKeep, WithdrawKeep } from "./liquidity"
 import {
-  InitiateDeposit,
-  WarningBeforeDeposit,
   InitiateWithdraw,
   WithdrawInitialized,
   ClaimTokens,
@@ -82,8 +80,6 @@ const MODAL_TYPE_TO_COMPONENT = {
   [MODAL_TYPES.UndelegationInitiated]: UndelegationInitiated,
   [MODAL_TYPES.CopyStake]: CopyStake,
   [MODAL_TYPES.ConfirmReleaseTokensFromGrant]: ConfirmReleaseTokensFromGrant,
-  [MODAL_TYPES.WarningBeforeCovPoolDeposit]: WarningBeforeDeposit,
-  [MODAL_TYPES.InitiateCovPoolDeposit]: InitiateDeposit,
   [MODAL_TYPES.InitiateCovPoolWithdraw]: InitiateWithdraw,
   [MODAL_TYPES.CovPoolWithdrawInitialized]: WithdrawInitialized,
   [MODAL_TYPES.CovPoolClaimTokens]: ClaimTokens,

@@ -12,14 +12,12 @@ import {
   COVERAGE_POOL_FETCH_TVL_REQUEST,
   COVERAGE_POOL_FETCH_TVL_ERROR,
   COVERAGE_POOL_FETCH_COV_POOL_DATA_REQUEST,
-  COVERAGE_POOL_ASSET_POOL_DEPOSITED_EVENT_EMITTED,
   fetchTvlStart,
   fetchTvlSuccess,
   fetchCovPoolDataStart,
   fetchCovPoolDataSuccess,
   covTokenUpdated,
   COVERAGE_POOL_FETCH_COV_POOL_DATA_ERROR,
-  COVERAGE_POOL_DEPOSIT_ASSET_POOL,
   fetchAPYStart,
   COVERAGE_POOL_FETCH_APY_ERROR,
   fetchAPYSuccess,
@@ -161,87 +159,6 @@ export function* watchFetchCovPoolData() {
     identifyTaskByAddress,
     fetchCovPoolData
   )
-}
-
-export function* subscribeToAssetPoolDepositedEvent() {
-  const requestChan = yield actionChannel(
-    COVERAGE_POOL_ASSET_POOL_DEPOSITED_EVENT_EMITTED
-  )
-
-  while (true) {
-    const {
-      payload: { event },
-    } = yield take(requestChan)
-    const {
-      returnValues: { underwriter, covAmount, amount },
-    } = event
-    const { covTotalSupply, covBalance, covTokensAvailableToWithdraw } =
-      yield select(selectors.getCoveragePool)
-
-    const address = yield select(selectors.getUserAddress)
-    const isAddressedToCurrentAddress = isSameEthAddress(address, underwriter)
-
-    const updatedCovTotalSupply = add(covTotalSupply, covAmount).toString()
-    const updatedCovBalance = isAddressedToCurrentAddress
-      ? add(covBalance, covAmount).toString()
-      : covBalance
-    const updatedcovTokensAvailableToWithdraw = isAddressedToCurrentAddress
-      ? add(covTokensAvailableToWithdraw, covAmount).toString()
-      : covTokensAvailableToWithdraw
-
-    const shareOfPool = yield call(
-      Keep.coveragePoolV1.shareOfPool,
-      updatedCovTotalSupply,
-      updatedCovBalance
-    )
-
-    const estimatedKeepBalance = yield call(
-      Keep.coveragePoolV1.estimatedCollateralTokenBalance,
-      shareOfPool
-    )
-    const tvl = yield call(Keep.coveragePoolV1.totalValueLocked)
-
-    if (isAddressedToCurrentAddress) {
-      yield put(
-        showModal({
-          modalType: MODAL_TYPES.InitiateCovPoolDeposit,
-          modalProps: {
-            amount,
-            transactionHash: event.transactionHash,
-            balanceAmount: updatedCovBalance,
-            estimatedBalanceAmountInKeep: estimatedKeepBalance,
-            covKEEPReceived: covAmount,
-            covTotalSupply: updatedCovTotalSupply,
-            totalValueLocked: tvl,
-          },
-        })
-      )
-    }
-
-    const estimatedRewards = yield call(
-      Keep.coveragePoolV1.estimatedRewards,
-      address,
-      shareOfPool
-    )
-
-    const keepInUSD = yield call(Keep.exchangeService.getKeepTokenPriceInUSD)
-    const tvlInUSD = keepInUSD.multipliedBy(KEEP.toTokenUnit(tvl)).toFormat(2)
-    const apy = yield call(Keep.coveragePoolV1.apy)
-
-    yield put(
-      covTokenUpdated({
-        covBalance: updatedCovBalance,
-        covTokensAvailableToWithdraw: updatedcovTokensAvailableToWithdraw,
-        covTotalSupply: updatedCovTotalSupply,
-        shareOfPool,
-        estimatedKeepBalance,
-        estimatedRewards,
-        totalValueLocked: tvl,
-        totalValueLockedInUSD: tvlInUSD,
-        apy,
-      })
-    )
-  }
 }
 
 export function* subscribeToWithdrawalInitiatedEvent() {
@@ -415,29 +332,6 @@ export function* subscribeToAuctionClosedEvent() {
       })
     )
   }
-}
-
-function* depositAssetPool(action) {
-  const { payload } = action
-  const { amount } = payload
-
-  const assetPoolAddress = Keep.coveragePoolV1.assetPoolContract.address
-
-  yield call(sendTransaction, {
-    payload: {
-      contract: Keep.coveragePoolV1.collateralToken.instance,
-      methodName: "approveAndCall",
-      args: [assetPoolAddress, amount, []],
-    },
-  })
-}
-
-function* depositAssetPoolWorker(action) {
-  yield call(submitButtonHelper, depositAssetPool, action)
-}
-
-export function* watchDepositAssetPool() {
-  yield takeEvery(COVERAGE_POOL_DEPOSIT_ASSET_POOL, depositAssetPoolWorker)
 }
 
 function* withdrawAssetPool(action) {
