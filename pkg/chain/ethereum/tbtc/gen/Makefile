@@ -1,7 +1,8 @@
 npm_package_name=@keep-network/tbtc-v2
 
 # Contracts for which the bindings should be generated.
-required_contracts := Bridge LightRelay LightRelayMaintainerProxy WalletCoordinator
+# TODO: Add LightRelayMaintainerProxy once it is deployed on goerli.
+required_contracts := Bridge LightRelay WalletCoordinator
 
 # There is a bug in the currently used abigen version (v1.10.19) that makes it
 # re-declaring structs used by multiple contracts
