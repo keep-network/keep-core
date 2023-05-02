@@ -40,7 +40,7 @@ const (
 	WalletCoordinatorContractName = "WalletCoordinator"
 )
 
-// TbtcChain represents a TBTC-specific chain handle.
+// TbtcChain represents a TBTC-specific chain handle
 type TbtcChain struct {
 	*baseChain
 
@@ -865,7 +865,8 @@ func (tc *TbtcChain) IsDKGResultValid(
 // must be a pointer to a struct containing a boolean flag as the first field.
 //
 // TODO: Find a better way to get the validity flag. This would require
-//       changes in the contracts binding generator.
+//
+//	changes in the contracts binding generator.
 func parseDkgResultValidationOutcome(
 	outcome interface{},
 ) (bool, error) {
