@@ -1,10 +1,8 @@
 package ethereum
 
 import (
-	"context"
 	"crypto/ecdsa"
 	"crypto/elliptic"
-	"crypto/sha256"
 	"encoding/binary"
 	"fmt"
 	"math/big"
@@ -930,73 +928,6 @@ func (tc *TbtcChain) DKGParameters() (*tbtc.DKGParameters, error) {
 	}, nil
 }
 
-// OnHeartbeatRequested runs a heartbeat loop that produces a heartbeat
-// request every ~8 hours. A single heartbeat request consists of 5 messages
-// that must be signed sequentially.
-func (tc *TbtcChain) OnHeartbeatRequested(
-	handler func(event *tbtc.HeartbeatRequestedEvent),
-) subscription.EventSubscription {
-	ctx, cancelCtx := context.WithCancel(context.Background())
-	blocksChan := tc.blockCounter.WatchBlocks(ctx)
-
-	go func() {
-		for {
-			select {
-			case block := <-blocksChan:
-				// Generate a heartbeat every 2400 block, i.e. ~8 hours.
-				if block%2400 == 0 {
-					walletPublicKey, ok, err := tc.activeWalletPublicKey()
-					if err != nil {
-						logger.Errorf(
-							"cannot get active wallet for heartbeat request: [%v]",
-							err,
-						)
-						continue
-					}
-
-					if !ok {
-						logger.Infof("there is no active wallet for heartbeat at the moment")
-						continue
-					}
-
-					prefixBytes := make([]byte, 8)
-					binary.BigEndian.PutUint64(
-						prefixBytes,
-						0xffffffffffffffff,
-					)
-
-					messages := make([]*big.Int, 5)
-					for i := range messages {
-						suffixBytes := make([]byte, 8)
-						binary.BigEndian.PutUint64(
-							suffixBytes,
-							block+uint64(i),
-						)
-
-						preimage := append(prefixBytes, suffixBytes...)
-						preimageSha256 := sha256.Sum256(preimage)
-						message := sha256.Sum256(preimageSha256[:])
-
-						messages[i] = new(big.Int).SetBytes(message[:])
-					}
-
-					go handler(&tbtc.HeartbeatRequestedEvent{
-						WalletPublicKey: walletPublicKey,
-						Messages:        messages,
-						BlockNumber:     block,
-					})
-				}
-			case <-ctx.Done():
-				return
-			}
-		}
-	}()
-
-	return subscription.NewEventSubscription(func() {
-		cancelCtx()
-	})
-}
-
 func (tc *TbtcChain) PastDepositRevealedEvents(
 	filter *tbtc.DepositRevealedEventFilter,
 ) ([]*tbtc.DepositRevealedEvent, error) {
@@ -1102,6 +1033,64 @@ func (tc *TbtcChain) GetDepositRequest(
 	}, nil
 }
 
+func (tc *TbtcChain) GetWallet(
+	walletPublicKeyHash [20]byte,
+) (*tbtc.WalletChainData, error) {
+	wallet, err := tc.bridge.Wallets(walletPublicKeyHash)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"cannot get wallet for public key hash [0x%x]: [%v]",
+			walletPublicKeyHash,
+			err,
+		)
+	}
+
+	// Wallet not found.
+	if wallet.CreatedAt == 0 {
+		return nil, fmt.Errorf(
+			"no wallet for public key hash [0x%x]",
+			wallet,
+		)
+	}
+
+	return &tbtc.WalletChainData{
+		EcdsaWalletID:                          wallet.EcdsaWalletID,
+		MainUtxoHash:                           wallet.MainUtxoHash,
+		PendingRedemptionsValue:                wallet.PendingRedemptionsValue,
+		CreatedAt:                              time.Unix(int64(wallet.CreatedAt), 0),
+		MovingFundsRequestedAt:                 time.Unix(int64(wallet.MovingFundsRequestedAt), 0),
+		ClosingStartedAt:                       time.Unix(int64(wallet.ClosingStartedAt), 0),
+		PendingMovedFundsSweepRequestsCount:    wallet.PendingMovedFundsSweepRequestsCount,
+		State:                                  wallet.State,
+		MovingFundsTargetWalletsCommitmentHash: wallet.MovingFundsTargetWalletsCommitmentHash,
+	}, nil
+}
+
+func (tc *TbtcChain) ComputeMainUtxoHash(
+	mainUtxo *bitcoin.UnspentTransactionOutput,
+) [32]byte {
+	return computeMainUtxoHash(mainUtxo)
+}
+
+func computeMainUtxoHash(mainUtxo *bitcoin.UnspentTransactionOutput) [32]byte {
+	outputIndexBytes := make([]byte, 4)
+	binary.BigEndian.PutUint32(outputIndexBytes, mainUtxo.Outpoint.OutputIndex)
+
+	valueBytes := make([]byte, 8)
+	binary.BigEndian.PutUint64(valueBytes, uint64(mainUtxo.Value))
+
+	mainUtxoHash := crypto.Keccak256Hash(
+		append(
+			append(
+				mainUtxo.Outpoint.TransactionHash[:],
+				outputIndexBytes...,
+			), valueBytes...,
+		),
+	)
+
+	return mainUtxoHash
+}
+
 func buildDepositKey(
 	fundingTxHash bitcoin.Hash,
 	fundingOutputIndex uint32,
@@ -1116,40 +1105,24 @@ func buildDepositKey(
 	return depositKey.Big()
 }
 
-func (tc *TbtcChain) activeWalletPublicKey() ([]byte, bool, error) {
-	walletPublicKeyHash, err := tc.bridge.ActiveWalletPubKeyHash()
-	if err != nil {
-		return nil, false, fmt.Errorf(
-			"cannot get active wallet public key hash: [%v]",
-			err,
-		)
+func (tc *TbtcChain) OnHeartbeatRequestSubmitted(
+	handler func(event *tbtc.HeartbeatRequestSubmittedEvent),
+) subscription.EventSubscription {
+	onEvent := func(
+		walletPubKeyHash [20]byte,
+		message []byte,
+		coordinator common.Address,
+		blockNumber uint64,
+	) {
+		handler(&tbtc.HeartbeatRequestSubmittedEvent{
+			WalletPublicKeyHash: walletPubKeyHash,
+			Message:             message,
+			Coordinator:         chain.Address(coordinator.Hex()),
+			BlockNumber:         blockNumber,
+		})
 	}
 
-	if walletPublicKeyHash == [20]byte{} {
-		return nil, false, nil
-	}
-
-	bridgeWalletData, err := tc.bridge.Wallets(walletPublicKeyHash)
-	if err != nil {
-		return nil, false, fmt.Errorf(
-			"cannot get active wallet data from Bridge: [%v]",
-			err,
-		)
-	}
-
-	registryWalletData, err := tc.walletRegistry.GetWallet(bridgeWalletData.EcdsaWalletID)
-	if err != nil {
-		return nil, false, fmt.Errorf(
-			"cannot get active wallet data from WalletRegistry: [%v]",
-			err,
-		)
-	}
-
-	publicKeyBytes := []byte{0x04} // pre-fill with uncompressed ECDSA public key prefix
-	publicKeyBytes = append(publicKeyBytes, registryWalletData.PublicKeyX[:]...)
-	publicKeyBytes = append(publicKeyBytes, registryWalletData.PublicKeyY[:]...)
-
-	return publicKeyBytes, true, nil
+	return tc.walletCoordinator.HeartbeatRequestSubmittedEvent(nil, nil).OnEvent(onEvent)
 }
 
 func (tc *TbtcChain) OnDepositSweepProposalSubmitted(
@@ -1157,13 +1130,13 @@ func (tc *TbtcChain) OnDepositSweepProposalSubmitted(
 ) subscription.EventSubscription {
 	onEvent := func(
 		proposal tbtcabi.WalletCoordinatorDepositSweepProposal,
-		proposalSubmitter common.Address,
+		coordinator common.Address,
 		blockNumber uint64,
 	) {
 		handler(&tbtc.DepositSweepProposalSubmittedEvent{
-			Proposal:          convertDepositSweepProposalFromAbiType(proposal),
-			ProposalSubmitter: chain.Address(proposalSubmitter.Hex()),
-			BlockNumber:       blockNumber,
+			Proposal:    convertDepositSweepProposalFromAbiType(proposal),
+			Coordinator: chain.Address(coordinator.Hex()),
+			BlockNumber: blockNumber,
 		})
 	}
 
@@ -1177,16 +1150,16 @@ func (tc *TbtcChain) PastDepositSweepProposalSubmittedEvents(
 ) ([]*tbtc.DepositSweepProposalSubmittedEvent, error) {
 	var startBlock uint64
 	var endBlock *uint64
-	var proposalSubmitter []common.Address
+	var coordinator []common.Address
 	var walletPublicKeyHash [20]byte
 
 	if filter != nil {
 		startBlock = filter.StartBlock
 		endBlock = filter.EndBlock
 
-		for _, ps := range filter.ProposalSubmitter {
-			proposalSubmitter = append(
-				proposalSubmitter,
+		for _, ps := range filter.Coordinator {
+			coordinator = append(
+				coordinator,
 				common.HexToAddress(ps.String()),
 			)
 		}
@@ -1197,7 +1170,7 @@ func (tc *TbtcChain) PastDepositSweepProposalSubmittedEvents(
 	events, err := tc.walletCoordinator.PastDepositSweepProposalSubmittedEvents(
 		startBlock,
 		endBlock,
-		proposalSubmitter,
+		coordinator,
 	)
 	if err != nil {
 		return nil, err
@@ -1214,9 +1187,9 @@ func (tc *TbtcChain) PastDepositSweepProposalSubmittedEvents(
 		}
 
 		convertedEvent := &tbtc.DepositSweepProposalSubmittedEvent{
-			Proposal:          convertDepositSweepProposalFromAbiType(event.Proposal),
-			ProposalSubmitter: chain.Address(event.ProposalSubmitter.Hex()),
-			BlockNumber:       event.Raw.BlockNumber,
+			Proposal:    convertDepositSweepProposalFromAbiType(event.Proposal),
+			Coordinator: chain.Address(event.Coordinator.Hex()),
+			BlockNumber: event.Raw.BlockNumber,
 		}
 
 		convertedEvents = append(convertedEvents, convertedEvent)
@@ -1311,12 +1284,14 @@ func parseWalletActionType(value uint8) (tbtc.WalletActionType, error) {
 	case 0:
 		return tbtc.Noop, nil
 	case 1:
-		return tbtc.DepositSweep, nil
+		return tbtc.Heartbeat, nil
 	case 2:
-		return tbtc.Redemption, nil
+		return tbtc.DepositSweep, nil
 	case 3:
-		return tbtc.MovingFunds, nil
+		return tbtc.Redemption, nil
 	case 4:
+		return tbtc.MovingFunds, nil
+	case 5:
 		return tbtc.MovedFundsSweep, nil
 	default:
 		return 0, fmt.Errorf("unexpected wallet action value: [%v]", value)

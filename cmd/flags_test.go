@@ -226,7 +226,7 @@ var cmdFlagsTests = map[string]struct {
 		expectedValueFromFlag: 2,
 		defaultValue:          1,
 	},
-	"tbtc.keyGenConcurrency": {
+	"tbtc.keyGenerationConcurrency": {
 		readValueFunc:         func(c *config.Config) interface{} { return c.Tbtc.KeyGenerationConcurrency },
 		flagName:              "--tbtc.keyGenerationConcurrency",
 		flagValue:             "101",

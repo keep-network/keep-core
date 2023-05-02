@@ -185,12 +185,6 @@ type DKGParameters struct {
 // BridgeChain defines the subset of the TBTC chain interface that pertains
 // specifically to the tBTC Bridge operations.
 type BridgeChain interface {
-	// OnHeartbeatRequested registers a callback that is invoked when an
-	// on-chain notification of the Bridge heartbeat request is seen.
-	OnHeartbeatRequested(
-		func(event *HeartbeatRequestedEvent),
-	) subscription.EventSubscription
-
 	// PastDepositRevealedEvents fetches past deposit reveal events according
 	// to the provided filter or unfiltered if the filter is nil. Returned
 	// events are sorted by the block number in the ascending order, i.e. the
@@ -206,6 +200,14 @@ type BridgeChain interface {
 		fundingTxHash bitcoin.Hash,
 		fundingOutputIndex uint32,
 	) (*DepositChainRequest, error)
+
+	// GetWallet gets the on-chain data for the given wallet. Returns an error
+	// if the wallet was not found.
+	GetWallet(walletPublicKeyHash [20]byte) (*WalletChainData, error)
+
+	// ComputeMainUtxoHash computes the hash of the provided main UTXO
+	// according to the on-chain Bridge rules.
+	ComputeMainUtxoHash(mainUtxo *bitcoin.UnspentTransactionOutput) [32]byte
 }
 
 // HeartbeatRequestedEvent represents a Bridge heartbeat request event.
@@ -271,9 +273,28 @@ type DepositChainRequest struct {
 	SweptAt     time.Time
 }
 
+// WalletChainData represents wallet data stored on-chain.
+type WalletChainData struct {
+	EcdsaWalletID                          [32]byte
+	MainUtxoHash                           [32]byte
+	PendingRedemptionsValue                uint64
+	CreatedAt                              time.Time
+	MovingFundsRequestedAt                 time.Time
+	ClosingStartedAt                       time.Time
+	PendingMovedFundsSweepRequestsCount    uint32
+	State                                  uint8
+	MovingFundsTargetWalletsCommitmentHash [32]byte
+}
+
 // WalletCoordinatorChain defines the subset of the TBTC chain interface that
 // pertains specifically to the tBTC wallet coordination.
 type WalletCoordinatorChain interface {
+	// OnHeartbeatRequestSubmitted registers a callback that is invoked when
+	// an on-chain notification of the wallet heartbeat request is seen.
+	OnHeartbeatRequestSubmitted(
+		handler func(event *HeartbeatRequestSubmittedEvent),
+	) subscription.EventSubscription
+
 	// OnDepositSweepProposalSubmitted registers a callback that is invoked when
 	// an on-chain notification of the deposit sweep proposal submission is seen.
 	OnDepositSweepProposalSubmitted(
@@ -309,6 +330,15 @@ type WalletCoordinatorChain interface {
 	) error
 }
 
+// HeartbeatRequestSubmittedEvent represents a wallet heartbeat request
+// submitted to the chain.
+type HeartbeatRequestSubmittedEvent struct {
+	WalletPublicKeyHash [20]byte
+	Message             []byte
+	Coordinator         chain.Address
+	BlockNumber         uint64
+}
+
 // DepositSweepProposal represents a deposit sweep proposal submitted to the chain.
 type DepositSweepProposal struct {
 	WalletPublicKeyHash [20]byte
@@ -322,9 +352,9 @@ type DepositSweepProposal struct {
 // DepositSweepProposalSubmittedEvent represents a deposit sweep proposal
 // submission event.
 type DepositSweepProposalSubmittedEvent struct {
-	Proposal          *DepositSweepProposal
-	ProposalSubmitter chain.Address
-	BlockNumber       uint64
+	Proposal    *DepositSweepProposal
+	Coordinator chain.Address
+	BlockNumber uint64
 }
 
 // DepositSweepProposalSubmittedEventFilter is a component allowing to
@@ -332,7 +362,7 @@ type DepositSweepProposalSubmittedEvent struct {
 type DepositSweepProposalSubmittedEventFilter struct {
 	StartBlock          uint64
 	EndBlock            *uint64
-	ProposalSubmitter   []chain.Address
+	Coordinator         []chain.Address
 	WalletPublicKeyHash [20]byte
 }
 

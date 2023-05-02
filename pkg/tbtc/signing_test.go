@@ -163,7 +163,7 @@ func setupSigningExecutor(t *testing.T) *signingExecutor {
 	node, err := newNode(
 		groupParameters,
 		localChain,
-		nil, // TODO: Set a proper mock of the bitcoin.Chain.
+		newLocalBitcoinChain(),
 		localProvider,
 		keyStorePersistence,
 		&mockPersistenceHandle{},

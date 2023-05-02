@@ -105,16 +105,16 @@ func NewWalletCoordinator(
 // ----- Non-const Methods ------
 
 // Transaction submission.
-func (wc *WalletCoordinator) AddProposalSubmitter(
-	arg_proposalSubmitter common.Address,
+func (wc *WalletCoordinator) AddCoordinator(
+	arg_coordinator common.Address,
 
 	transactionOptions ...chainutil.TransactionOptions,
 ) (*types.Transaction, error) {
 	wcLogger.Debug(
-		"submitting transaction addProposalSubmitter",
+		"submitting transaction addCoordinator",
 		" params: ",
 		fmt.Sprint(
-			arg_proposalSubmitter,
+			arg_coordinator,
 		),
 	)
 
@@ -140,22 +140,22 @@ func (wc *WalletCoordinator) AddProposalSubmitter(
 
 	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
 
-	transaction, err := wc.contract.AddProposalSubmitter(
+	transaction, err := wc.contract.AddCoordinator(
 		transactorOptions,
-		arg_proposalSubmitter,
+		arg_coordinator,
 	)
 	if err != nil {
 		return transaction, wc.errorResolver.ResolveError(
 			err,
 			wc.transactorOptions.From,
 			nil,
-			"addProposalSubmitter",
-			arg_proposalSubmitter,
+			"addCoordinator",
+			arg_coordinator,
 		)
 	}
 
 	wcLogger.Infof(
-		"submitted transaction addProposalSubmitter with id: [%s] and nonce [%v]",
+		"submitted transaction addCoordinator with id: [%s] and nonce [%v]",
 		transaction.Hash(),
 		transaction.Nonce(),
 	)
@@ -174,22 +174,22 @@ func (wc *WalletCoordinator) AddProposalSubmitter(
 				newTransactorOptions.GasLimit = transactorOptions.GasLimit
 			}
 
-			transaction, err := wc.contract.AddProposalSubmitter(
+			transaction, err := wc.contract.AddCoordinator(
 				newTransactorOptions,
-				arg_proposalSubmitter,
+				arg_coordinator,
 			)
 			if err != nil {
 				return nil, wc.errorResolver.ResolveError(
 					err,
 					wc.transactorOptions.From,
 					nil,
-					"addProposalSubmitter",
-					arg_proposalSubmitter,
+					"addCoordinator",
+					arg_coordinator,
 				)
 			}
 
 			wcLogger.Infof(
-				"submitted transaction addProposalSubmitter with id: [%s] and nonce [%v]",
+				"submitted transaction addCoordinator with id: [%s] and nonce [%v]",
 				transaction.Hash(),
 				transaction.Nonce(),
 			)
@@ -204,8 +204,8 @@ func (wc *WalletCoordinator) AddProposalSubmitter(
 }
 
 // Non-mutating call, not a transaction submission.
-func (wc *WalletCoordinator) CallAddProposalSubmitter(
-	arg_proposalSubmitter common.Address,
+func (wc *WalletCoordinator) CallAddCoordinator(
+	arg_coordinator common.Address,
 	blockNumber *big.Int,
 ) error {
 	var result interface{} = nil
@@ -217,26 +217,26 @@ func (wc *WalletCoordinator) CallAddProposalSubmitter(
 		wc.caller,
 		wc.errorResolver,
 		wc.contractAddress,
-		"addProposalSubmitter",
+		"addCoordinator",
 		&result,
-		arg_proposalSubmitter,
+		arg_coordinator,
 	)
 
 	return err
 }
 
-func (wc *WalletCoordinator) AddProposalSubmitterGasEstimate(
-	arg_proposalSubmitter common.Address,
+func (wc *WalletCoordinator) AddCoordinatorGasEstimate(
+	arg_coordinator common.Address,
 ) (uint64, error) {
 	var result uint64
 
 	result, err := chainutil.EstimateGas(
 		wc.callerOptions.From,
 		wc.contractAddress,
-		"addProposalSubmitter",
+		"addCoordinator",
 		wc.contractABI,
 		wc.transactor,
-		arg_proposalSubmitter,
+		arg_coordinator,
 	)
 
 	return result, err
@@ -381,16 +381,16 @@ func (wc *WalletCoordinator) InitializeGasEstimate(
 }
 
 // Transaction submission.
-func (wc *WalletCoordinator) RemoveProposalSubmitter(
-	arg_proposalSubmitter common.Address,
+func (wc *WalletCoordinator) RemoveCoordinator(
+	arg_coordinator common.Address,
 
 	transactionOptions ...chainutil.TransactionOptions,
 ) (*types.Transaction, error) {
 	wcLogger.Debug(
-		"submitting transaction removeProposalSubmitter",
+		"submitting transaction removeCoordinator",
 		" params: ",
 		fmt.Sprint(
-			arg_proposalSubmitter,
+			arg_coordinator,
 		),
 	)
 
@@ -416,22 +416,22 @@ func (wc *WalletCoordinator) RemoveProposalSubmitter(
 
 	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
 
-	transaction, err := wc.contract.RemoveProposalSubmitter(
+	transaction, err := wc.contract.RemoveCoordinator(
 		transactorOptions,
-		arg_proposalSubmitter,
+		arg_coordinator,
 	)
 	if err != nil {
 		return transaction, wc.errorResolver.ResolveError(
 			err,
 			wc.transactorOptions.From,
 			nil,
-			"removeProposalSubmitter",
-			arg_proposalSubmitter,
+			"removeCoordinator",
+			arg_coordinator,
 		)
 	}
 
 	wcLogger.Infof(
-		"submitted transaction removeProposalSubmitter with id: [%s] and nonce [%v]",
+		"submitted transaction removeCoordinator with id: [%s] and nonce [%v]",
 		transaction.Hash(),
 		transaction.Nonce(),
 	)
@@ -450,22 +450,22 @@ func (wc *WalletCoordinator) RemoveProposalSubmitter(
 				newTransactorOptions.GasLimit = transactorOptions.GasLimit
 			}
 
-			transaction, err := wc.contract.RemoveProposalSubmitter(
+			transaction, err := wc.contract.RemoveCoordinator(
 				newTransactorOptions,
-				arg_proposalSubmitter,
+				arg_coordinator,
 			)
 			if err != nil {
 				return nil, wc.errorResolver.ResolveError(
 					err,
 					wc.transactorOptions.From,
 					nil,
-					"removeProposalSubmitter",
-					arg_proposalSubmitter,
+					"removeCoordinator",
+					arg_coordinator,
 				)
 			}
 
 			wcLogger.Infof(
-				"submitted transaction removeProposalSubmitter with id: [%s] and nonce [%v]",
+				"submitted transaction removeCoordinator with id: [%s] and nonce [%v]",
 				transaction.Hash(),
 				transaction.Nonce(),
 			)
@@ -480,8 +480,8 @@ func (wc *WalletCoordinator) RemoveProposalSubmitter(
 }
 
 // Non-mutating call, not a transaction submission.
-func (wc *WalletCoordinator) CallRemoveProposalSubmitter(
-	arg_proposalSubmitter common.Address,
+func (wc *WalletCoordinator) CallRemoveCoordinator(
+	arg_coordinator common.Address,
 	blockNumber *big.Int,
 ) error {
 	var result interface{} = nil
@@ -493,26 +493,26 @@ func (wc *WalletCoordinator) CallRemoveProposalSubmitter(
 		wc.caller,
 		wc.errorResolver,
 		wc.contractAddress,
-		"removeProposalSubmitter",
+		"removeCoordinator",
 		&result,
-		arg_proposalSubmitter,
+		arg_coordinator,
 	)
 
 	return err
 }
 
-func (wc *WalletCoordinator) RemoveProposalSubmitterGasEstimate(
-	arg_proposalSubmitter common.Address,
+func (wc *WalletCoordinator) RemoveCoordinatorGasEstimate(
+	arg_coordinator common.Address,
 ) (uint64, error) {
 	var result uint64
 
 	result, err := chainutil.EstimateGas(
 		wc.callerOptions.From,
 		wc.contractAddress,
-		"removeProposalSubmitter",
+		"removeCoordinator",
 		wc.contractABI,
 		wc.transactor,
-		arg_proposalSubmitter,
+		arg_coordinator,
 	)
 
 	return result, err
@@ -643,9 +643,304 @@ func (wc *WalletCoordinator) RenounceOwnershipGasEstimate() (uint64, error) {
 }
 
 // Transaction submission.
+func (wc *WalletCoordinator) RequestHeartbeat(
+	arg_walletPubKeyHash [20]byte,
+	arg_message []byte,
+
+	transactionOptions ...chainutil.TransactionOptions,
+) (*types.Transaction, error) {
+	wcLogger.Debug(
+		"submitting transaction requestHeartbeat",
+		" params: ",
+		fmt.Sprint(
+			arg_walletPubKeyHash,
+			arg_message,
+		),
+	)
+
+	wc.transactionMutex.Lock()
+	defer wc.transactionMutex.Unlock()
+
+	// create a copy
+	transactorOptions := new(bind.TransactOpts)
+	*transactorOptions = *wc.transactorOptions
+
+	if len(transactionOptions) > 1 {
+		return nil, fmt.Errorf(
+			"could not process multiple transaction options sets",
+		)
+	} else if len(transactionOptions) > 0 {
+		transactionOptions[0].Apply(transactorOptions)
+	}
+
+	nonce, err := wc.nonceManager.CurrentNonce()
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve account nonce: %v", err)
+	}
+
+	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
+
+	transaction, err := wc.contract.RequestHeartbeat(
+		transactorOptions,
+		arg_walletPubKeyHash,
+		arg_message,
+	)
+	if err != nil {
+		return transaction, wc.errorResolver.ResolveError(
+			err,
+			wc.transactorOptions.From,
+			nil,
+			"requestHeartbeat",
+			arg_walletPubKeyHash,
+			arg_message,
+		)
+	}
+
+	wcLogger.Infof(
+		"submitted transaction requestHeartbeat with id: [%s] and nonce [%v]",
+		transaction.Hash(),
+		transaction.Nonce(),
+	)
+
+	go wc.miningWaiter.ForceMining(
+		transaction,
+		transactorOptions,
+		func(newTransactorOptions *bind.TransactOpts) (*types.Transaction, error) {
+			// If original transactor options has a non-zero gas limit, that
+			// means the client code set it on their own. In that case, we
+			// should rewrite the gas limit from the original transaction
+			// for each resubmission. If the gas limit is not set by the client
+			// code, let the the submitter re-estimate the gas limit on each
+			// resubmission.
+			if transactorOptions.GasLimit != 0 {
+				newTransactorOptions.GasLimit = transactorOptions.GasLimit
+			}
+
+			transaction, err := wc.contract.RequestHeartbeat(
+				newTransactorOptions,
+				arg_walletPubKeyHash,
+				arg_message,
+			)
+			if err != nil {
+				return nil, wc.errorResolver.ResolveError(
+					err,
+					wc.transactorOptions.From,
+					nil,
+					"requestHeartbeat",
+					arg_walletPubKeyHash,
+					arg_message,
+				)
+			}
+
+			wcLogger.Infof(
+				"submitted transaction requestHeartbeat with id: [%s] and nonce [%v]",
+				transaction.Hash(),
+				transaction.Nonce(),
+			)
+
+			return transaction, nil
+		},
+	)
+
+	wc.nonceManager.IncrementNonce()
+
+	return transaction, err
+}
+
+// Non-mutating call, not a transaction submission.
+func (wc *WalletCoordinator) CallRequestHeartbeat(
+	arg_walletPubKeyHash [20]byte,
+	arg_message []byte,
+	blockNumber *big.Int,
+) error {
+	var result interface{} = nil
+
+	err := chainutil.CallAtBlock(
+		wc.transactorOptions.From,
+		blockNumber, nil,
+		wc.contractABI,
+		wc.caller,
+		wc.errorResolver,
+		wc.contractAddress,
+		"requestHeartbeat",
+		&result,
+		arg_walletPubKeyHash,
+		arg_message,
+	)
+
+	return err
+}
+
+func (wc *WalletCoordinator) RequestHeartbeatGasEstimate(
+	arg_walletPubKeyHash [20]byte,
+	arg_message []byte,
+) (uint64, error) {
+	var result uint64
+
+	result, err := chainutil.EstimateGas(
+		wc.callerOptions.From,
+		wc.contractAddress,
+		"requestHeartbeat",
+		wc.contractABI,
+		wc.transactor,
+		arg_walletPubKeyHash,
+		arg_message,
+	)
+
+	return result, err
+}
+
+// Transaction submission.
+func (wc *WalletCoordinator) RequestHeartbeatWithReimbursement(
+	arg_walletPubKeyHash [20]byte,
+	arg_message []byte,
+
+	transactionOptions ...chainutil.TransactionOptions,
+) (*types.Transaction, error) {
+	wcLogger.Debug(
+		"submitting transaction requestHeartbeatWithReimbursement",
+		" params: ",
+		fmt.Sprint(
+			arg_walletPubKeyHash,
+			arg_message,
+		),
+	)
+
+	wc.transactionMutex.Lock()
+	defer wc.transactionMutex.Unlock()
+
+	// create a copy
+	transactorOptions := new(bind.TransactOpts)
+	*transactorOptions = *wc.transactorOptions
+
+	if len(transactionOptions) > 1 {
+		return nil, fmt.Errorf(
+			"could not process multiple transaction options sets",
+		)
+	} else if len(transactionOptions) > 0 {
+		transactionOptions[0].Apply(transactorOptions)
+	}
+
+	nonce, err := wc.nonceManager.CurrentNonce()
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve account nonce: %v", err)
+	}
+
+	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
+
+	transaction, err := wc.contract.RequestHeartbeatWithReimbursement(
+		transactorOptions,
+		arg_walletPubKeyHash,
+		arg_message,
+	)
+	if err != nil {
+		return transaction, wc.errorResolver.ResolveError(
+			err,
+			wc.transactorOptions.From,
+			nil,
+			"requestHeartbeatWithReimbursement",
+			arg_walletPubKeyHash,
+			arg_message,
+		)
+	}
+
+	wcLogger.Infof(
+		"submitted transaction requestHeartbeatWithReimbursement with id: [%s] and nonce [%v]",
+		transaction.Hash(),
+		transaction.Nonce(),
+	)
+
+	go wc.miningWaiter.ForceMining(
+		transaction,
+		transactorOptions,
+		func(newTransactorOptions *bind.TransactOpts) (*types.Transaction, error) {
+			// If original transactor options has a non-zero gas limit, that
+			// means the client code set it on their own. In that case, we
+			// should rewrite the gas limit from the original transaction
+			// for each resubmission. If the gas limit is not set by the client
+			// code, let the the submitter re-estimate the gas limit on each
+			// resubmission.
+			if transactorOptions.GasLimit != 0 {
+				newTransactorOptions.GasLimit = transactorOptions.GasLimit
+			}
+
+			transaction, err := wc.contract.RequestHeartbeatWithReimbursement(
+				newTransactorOptions,
+				arg_walletPubKeyHash,
+				arg_message,
+			)
+			if err != nil {
+				return nil, wc.errorResolver.ResolveError(
+					err,
+					wc.transactorOptions.From,
+					nil,
+					"requestHeartbeatWithReimbursement",
+					arg_walletPubKeyHash,
+					arg_message,
+				)
+			}
+
+			wcLogger.Infof(
+				"submitted transaction requestHeartbeatWithReimbursement with id: [%s] and nonce [%v]",
+				transaction.Hash(),
+				transaction.Nonce(),
+			)
+
+			return transaction, nil
+		},
+	)
+
+	wc.nonceManager.IncrementNonce()
+
+	return transaction, err
+}
+
+// Non-mutating call, not a transaction submission.
+func (wc *WalletCoordinator) CallRequestHeartbeatWithReimbursement(
+	arg_walletPubKeyHash [20]byte,
+	arg_message []byte,
+	blockNumber *big.Int,
+) error {
+	var result interface{} = nil
+
+	err := chainutil.CallAtBlock(
+		wc.transactorOptions.From,
+		blockNumber, nil,
+		wc.contractABI,
+		wc.caller,
+		wc.errorResolver,
+		wc.contractAddress,
+		"requestHeartbeatWithReimbursement",
+		&result,
+		arg_walletPubKeyHash,
+		arg_message,
+	)
+
+	return err
+}
+
+func (wc *WalletCoordinator) RequestHeartbeatWithReimbursementGasEstimate(
+	arg_walletPubKeyHash [20]byte,
+	arg_message []byte,
+) (uint64, error) {
+	var result uint64
+
+	result, err := chainutil.EstimateGas(
+		wc.callerOptions.From,
+		wc.contractAddress,
+		"requestHeartbeatWithReimbursement",
+		wc.contractABI,
+		wc.transactor,
+		arg_walletPubKeyHash,
+		arg_message,
+	)
+
+	return result, err
+}
+
+// Transaction submission.
 func (wc *WalletCoordinator) SubmitDepositSweepProposal(
 	arg_proposal abi.WalletCoordinatorDepositSweepProposal,
-	arg_walletMemberContext abi.WalletCoordinatorWalletMemberContext,
 
 	transactionOptions ...chainutil.TransactionOptions,
 ) (*types.Transaction, error) {
@@ -654,7 +949,6 @@ func (wc *WalletCoordinator) SubmitDepositSweepProposal(
 		" params: ",
 		fmt.Sprint(
 			arg_proposal,
-			arg_walletMemberContext,
 		),
 	)
 
@@ -683,7 +977,6 @@ func (wc *WalletCoordinator) SubmitDepositSweepProposal(
 	transaction, err := wc.contract.SubmitDepositSweepProposal(
 		transactorOptions,
 		arg_proposal,
-		arg_walletMemberContext,
 	)
 	if err != nil {
 		return transaction, wc.errorResolver.ResolveError(
@@ -692,7 +985,6 @@ func (wc *WalletCoordinator) SubmitDepositSweepProposal(
 			nil,
 			"submitDepositSweepProposal",
 			arg_proposal,
-			arg_walletMemberContext,
 		)
 	}
 
@@ -719,7 +1011,6 @@ func (wc *WalletCoordinator) SubmitDepositSweepProposal(
 			transaction, err := wc.contract.SubmitDepositSweepProposal(
 				newTransactorOptions,
 				arg_proposal,
-				arg_walletMemberContext,
 			)
 			if err != nil {
 				return nil, wc.errorResolver.ResolveError(
@@ -728,7 +1019,6 @@ func (wc *WalletCoordinator) SubmitDepositSweepProposal(
 					nil,
 					"submitDepositSweepProposal",
 					arg_proposal,
-					arg_walletMemberContext,
 				)
 			}
 
@@ -750,7 +1040,6 @@ func (wc *WalletCoordinator) SubmitDepositSweepProposal(
 // Non-mutating call, not a transaction submission.
 func (wc *WalletCoordinator) CallSubmitDepositSweepProposal(
 	arg_proposal abi.WalletCoordinatorDepositSweepProposal,
-	arg_walletMemberContext abi.WalletCoordinatorWalletMemberContext,
 	blockNumber *big.Int,
 ) error {
 	var result interface{} = nil
@@ -765,7 +1054,6 @@ func (wc *WalletCoordinator) CallSubmitDepositSweepProposal(
 		"submitDepositSweepProposal",
 		&result,
 		arg_proposal,
-		arg_walletMemberContext,
 	)
 
 	return err
@@ -773,7 +1061,6 @@ func (wc *WalletCoordinator) CallSubmitDepositSweepProposal(
 
 func (wc *WalletCoordinator) SubmitDepositSweepProposalGasEstimate(
 	arg_proposal abi.WalletCoordinatorDepositSweepProposal,
-	arg_walletMemberContext abi.WalletCoordinatorWalletMemberContext,
 ) (uint64, error) {
 	var result uint64
 
@@ -784,7 +1071,6 @@ func (wc *WalletCoordinator) SubmitDepositSweepProposalGasEstimate(
 		wc.contractABI,
 		wc.transactor,
 		arg_proposal,
-		arg_walletMemberContext,
 	)
 
 	return result, err
@@ -793,7 +1079,6 @@ func (wc *WalletCoordinator) SubmitDepositSweepProposalGasEstimate(
 // Transaction submission.
 func (wc *WalletCoordinator) SubmitDepositSweepProposalWithReimbursement(
 	arg_proposal abi.WalletCoordinatorDepositSweepProposal,
-	arg_walletMemberContext abi.WalletCoordinatorWalletMemberContext,
 
 	transactionOptions ...chainutil.TransactionOptions,
 ) (*types.Transaction, error) {
@@ -802,7 +1087,6 @@ func (wc *WalletCoordinator) SubmitDepositSweepProposalWithReimbursement(
 		" params: ",
 		fmt.Sprint(
 			arg_proposal,
-			arg_walletMemberContext,
 		),
 	)
 
@@ -831,7 +1115,6 @@ func (wc *WalletCoordinator) SubmitDepositSweepProposalWithReimbursement(
 	transaction, err := wc.contract.SubmitDepositSweepProposalWithReimbursement(
 		transactorOptions,
 		arg_proposal,
-		arg_walletMemberContext,
 	)
 	if err != nil {
 		return transaction, wc.errorResolver.ResolveError(
@@ -840,7 +1123,6 @@ func (wc *WalletCoordinator) SubmitDepositSweepProposalWithReimbursement(
 			nil,
 			"submitDepositSweepProposalWithReimbursement",
 			arg_proposal,
-			arg_walletMemberContext,
 		)
 	}
 
@@ -867,7 +1149,6 @@ func (wc *WalletCoordinator) SubmitDepositSweepProposalWithReimbursement(
 			transaction, err := wc.contract.SubmitDepositSweepProposalWithReimbursement(
 				newTransactorOptions,
 				arg_proposal,
-				arg_walletMemberContext,
 			)
 			if err != nil {
 				return nil, wc.errorResolver.ResolveError(
@@ -876,7 +1157,6 @@ func (wc *WalletCoordinator) SubmitDepositSweepProposalWithReimbursement(
 					nil,
 					"submitDepositSweepProposalWithReimbursement",
 					arg_proposal,
-					arg_walletMemberContext,
 				)
 			}
 
@@ -898,7 +1178,6 @@ func (wc *WalletCoordinator) SubmitDepositSweepProposalWithReimbursement(
 // Non-mutating call, not a transaction submission.
 func (wc *WalletCoordinator) CallSubmitDepositSweepProposalWithReimbursement(
 	arg_proposal abi.WalletCoordinatorDepositSweepProposal,
-	arg_walletMemberContext abi.WalletCoordinatorWalletMemberContext,
 	blockNumber *big.Int,
 ) error {
 	var result interface{} = nil
@@ -913,7 +1192,6 @@ func (wc *WalletCoordinator) CallSubmitDepositSweepProposalWithReimbursement(
 		"submitDepositSweepProposalWithReimbursement",
 		&result,
 		arg_proposal,
-		arg_walletMemberContext,
 	)
 
 	return err
@@ -921,7 +1199,6 @@ func (wc *WalletCoordinator) CallSubmitDepositSweepProposalWithReimbursement(
 
 func (wc *WalletCoordinator) SubmitDepositSweepProposalWithReimbursementGasEstimate(
 	arg_proposal abi.WalletCoordinatorDepositSweepProposal,
-	arg_walletMemberContext abi.WalletCoordinatorWalletMemberContext,
 ) (uint64, error) {
 	var result uint64
 
@@ -932,7 +1209,6 @@ func (wc *WalletCoordinator) SubmitDepositSweepProposalWithReimbursementGasEstim
 		wc.contractABI,
 		wc.transactor,
 		arg_proposal,
-		arg_walletMemberContext,
 	)
 
 	return result, err
@@ -1215,429 +1491,23 @@ func (wc *WalletCoordinator) UnlockWalletGasEstimate(
 }
 
 // Transaction submission.
-func (wc *WalletCoordinator) UpdateDepositMinAge(
+func (wc *WalletCoordinator) UpdateDepositSweepProposalParameters(
+	arg__depositSweepProposalValidity uint32,
 	arg__depositMinAge uint32,
-
-	transactionOptions ...chainutil.TransactionOptions,
-) (*types.Transaction, error) {
-	wcLogger.Debug(
-		"submitting transaction updateDepositMinAge",
-		" params: ",
-		fmt.Sprint(
-			arg__depositMinAge,
-		),
-	)
-
-	wc.transactionMutex.Lock()
-	defer wc.transactionMutex.Unlock()
-
-	// create a copy
-	transactorOptions := new(bind.TransactOpts)
-	*transactorOptions = *wc.transactorOptions
-
-	if len(transactionOptions) > 1 {
-		return nil, fmt.Errorf(
-			"could not process multiple transaction options sets",
-		)
-	} else if len(transactionOptions) > 0 {
-		transactionOptions[0].Apply(transactorOptions)
-	}
-
-	nonce, err := wc.nonceManager.CurrentNonce()
-	if err != nil {
-		return nil, fmt.Errorf("failed to retrieve account nonce: %v", err)
-	}
-
-	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
-
-	transaction, err := wc.contract.UpdateDepositMinAge(
-		transactorOptions,
-		arg__depositMinAge,
-	)
-	if err != nil {
-		return transaction, wc.errorResolver.ResolveError(
-			err,
-			wc.transactorOptions.From,
-			nil,
-			"updateDepositMinAge",
-			arg__depositMinAge,
-		)
-	}
-
-	wcLogger.Infof(
-		"submitted transaction updateDepositMinAge with id: [%s] and nonce [%v]",
-		transaction.Hash(),
-		transaction.Nonce(),
-	)
-
-	go wc.miningWaiter.ForceMining(
-		transaction,
-		transactorOptions,
-		func(newTransactorOptions *bind.TransactOpts) (*types.Transaction, error) {
-			// If original transactor options has a non-zero gas limit, that
-			// means the client code set it on their own. In that case, we
-			// should rewrite the gas limit from the original transaction
-			// for each resubmission. If the gas limit is not set by the client
-			// code, let the the submitter re-estimate the gas limit on each
-			// resubmission.
-			if transactorOptions.GasLimit != 0 {
-				newTransactorOptions.GasLimit = transactorOptions.GasLimit
-			}
-
-			transaction, err := wc.contract.UpdateDepositMinAge(
-				newTransactorOptions,
-				arg__depositMinAge,
-			)
-			if err != nil {
-				return nil, wc.errorResolver.ResolveError(
-					err,
-					wc.transactorOptions.From,
-					nil,
-					"updateDepositMinAge",
-					arg__depositMinAge,
-				)
-			}
-
-			wcLogger.Infof(
-				"submitted transaction updateDepositMinAge with id: [%s] and nonce [%v]",
-				transaction.Hash(),
-				transaction.Nonce(),
-			)
-
-			return transaction, nil
-		},
-	)
-
-	wc.nonceManager.IncrementNonce()
-
-	return transaction, err
-}
-
-// Non-mutating call, not a transaction submission.
-func (wc *WalletCoordinator) CallUpdateDepositMinAge(
-	arg__depositMinAge uint32,
-	blockNumber *big.Int,
-) error {
-	var result interface{} = nil
-
-	err := chainutil.CallAtBlock(
-		wc.transactorOptions.From,
-		blockNumber, nil,
-		wc.contractABI,
-		wc.caller,
-		wc.errorResolver,
-		wc.contractAddress,
-		"updateDepositMinAge",
-		&result,
-		arg__depositMinAge,
-	)
-
-	return err
-}
-
-func (wc *WalletCoordinator) UpdateDepositMinAgeGasEstimate(
-	arg__depositMinAge uint32,
-) (uint64, error) {
-	var result uint64
-
-	result, err := chainutil.EstimateGas(
-		wc.callerOptions.From,
-		wc.contractAddress,
-		"updateDepositMinAge",
-		wc.contractABI,
-		wc.transactor,
-		arg__depositMinAge,
-	)
-
-	return result, err
-}
-
-// Transaction submission.
-func (wc *WalletCoordinator) UpdateDepositRefundSafetyMargin(
 	arg__depositRefundSafetyMargin uint32,
-
-	transactionOptions ...chainutil.TransactionOptions,
-) (*types.Transaction, error) {
-	wcLogger.Debug(
-		"submitting transaction updateDepositRefundSafetyMargin",
-		" params: ",
-		fmt.Sprint(
-			arg__depositRefundSafetyMargin,
-		),
-	)
-
-	wc.transactionMutex.Lock()
-	defer wc.transactionMutex.Unlock()
-
-	// create a copy
-	transactorOptions := new(bind.TransactOpts)
-	*transactorOptions = *wc.transactorOptions
-
-	if len(transactionOptions) > 1 {
-		return nil, fmt.Errorf(
-			"could not process multiple transaction options sets",
-		)
-	} else if len(transactionOptions) > 0 {
-		transactionOptions[0].Apply(transactorOptions)
-	}
-
-	nonce, err := wc.nonceManager.CurrentNonce()
-	if err != nil {
-		return nil, fmt.Errorf("failed to retrieve account nonce: %v", err)
-	}
-
-	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
-
-	transaction, err := wc.contract.UpdateDepositRefundSafetyMargin(
-		transactorOptions,
-		arg__depositRefundSafetyMargin,
-	)
-	if err != nil {
-		return transaction, wc.errorResolver.ResolveError(
-			err,
-			wc.transactorOptions.From,
-			nil,
-			"updateDepositRefundSafetyMargin",
-			arg__depositRefundSafetyMargin,
-		)
-	}
-
-	wcLogger.Infof(
-		"submitted transaction updateDepositRefundSafetyMargin with id: [%s] and nonce [%v]",
-		transaction.Hash(),
-		transaction.Nonce(),
-	)
-
-	go wc.miningWaiter.ForceMining(
-		transaction,
-		transactorOptions,
-		func(newTransactorOptions *bind.TransactOpts) (*types.Transaction, error) {
-			// If original transactor options has a non-zero gas limit, that
-			// means the client code set it on their own. In that case, we
-			// should rewrite the gas limit from the original transaction
-			// for each resubmission. If the gas limit is not set by the client
-			// code, let the the submitter re-estimate the gas limit on each
-			// resubmission.
-			if transactorOptions.GasLimit != 0 {
-				newTransactorOptions.GasLimit = transactorOptions.GasLimit
-			}
-
-			transaction, err := wc.contract.UpdateDepositRefundSafetyMargin(
-				newTransactorOptions,
-				arg__depositRefundSafetyMargin,
-			)
-			if err != nil {
-				return nil, wc.errorResolver.ResolveError(
-					err,
-					wc.transactorOptions.From,
-					nil,
-					"updateDepositRefundSafetyMargin",
-					arg__depositRefundSafetyMargin,
-				)
-			}
-
-			wcLogger.Infof(
-				"submitted transaction updateDepositRefundSafetyMargin with id: [%s] and nonce [%v]",
-				transaction.Hash(),
-				transaction.Nonce(),
-			)
-
-			return transaction, nil
-		},
-	)
-
-	wc.nonceManager.IncrementNonce()
-
-	return transaction, err
-}
-
-// Non-mutating call, not a transaction submission.
-func (wc *WalletCoordinator) CallUpdateDepositRefundSafetyMargin(
-	arg__depositRefundSafetyMargin uint32,
-	blockNumber *big.Int,
-) error {
-	var result interface{} = nil
-
-	err := chainutil.CallAtBlock(
-		wc.transactorOptions.From,
-		blockNumber, nil,
-		wc.contractABI,
-		wc.caller,
-		wc.errorResolver,
-		wc.contractAddress,
-		"updateDepositRefundSafetyMargin",
-		&result,
-		arg__depositRefundSafetyMargin,
-	)
-
-	return err
-}
-
-func (wc *WalletCoordinator) UpdateDepositRefundSafetyMarginGasEstimate(
-	arg__depositRefundSafetyMargin uint32,
-) (uint64, error) {
-	var result uint64
-
-	result, err := chainutil.EstimateGas(
-		wc.callerOptions.From,
-		wc.contractAddress,
-		"updateDepositRefundSafetyMargin",
-		wc.contractABI,
-		wc.transactor,
-		arg__depositRefundSafetyMargin,
-	)
-
-	return result, err
-}
-
-// Transaction submission.
-func (wc *WalletCoordinator) UpdateDepositSweepMaxSize(
 	arg__depositSweepMaxSize uint16,
-
-	transactionOptions ...chainutil.TransactionOptions,
-) (*types.Transaction, error) {
-	wcLogger.Debug(
-		"submitting transaction updateDepositSweepMaxSize",
-		" params: ",
-		fmt.Sprint(
-			arg__depositSweepMaxSize,
-		),
-	)
-
-	wc.transactionMutex.Lock()
-	defer wc.transactionMutex.Unlock()
-
-	// create a copy
-	transactorOptions := new(bind.TransactOpts)
-	*transactorOptions = *wc.transactorOptions
-
-	if len(transactionOptions) > 1 {
-		return nil, fmt.Errorf(
-			"could not process multiple transaction options sets",
-		)
-	} else if len(transactionOptions) > 0 {
-		transactionOptions[0].Apply(transactorOptions)
-	}
-
-	nonce, err := wc.nonceManager.CurrentNonce()
-	if err != nil {
-		return nil, fmt.Errorf("failed to retrieve account nonce: %v", err)
-	}
-
-	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
-
-	transaction, err := wc.contract.UpdateDepositSweepMaxSize(
-		transactorOptions,
-		arg__depositSweepMaxSize,
-	)
-	if err != nil {
-		return transaction, wc.errorResolver.ResolveError(
-			err,
-			wc.transactorOptions.From,
-			nil,
-			"updateDepositSweepMaxSize",
-			arg__depositSweepMaxSize,
-		)
-	}
-
-	wcLogger.Infof(
-		"submitted transaction updateDepositSweepMaxSize with id: [%s] and nonce [%v]",
-		transaction.Hash(),
-		transaction.Nonce(),
-	)
-
-	go wc.miningWaiter.ForceMining(
-		transaction,
-		transactorOptions,
-		func(newTransactorOptions *bind.TransactOpts) (*types.Transaction, error) {
-			// If original transactor options has a non-zero gas limit, that
-			// means the client code set it on their own. In that case, we
-			// should rewrite the gas limit from the original transaction
-			// for each resubmission. If the gas limit is not set by the client
-			// code, let the the submitter re-estimate the gas limit on each
-			// resubmission.
-			if transactorOptions.GasLimit != 0 {
-				newTransactorOptions.GasLimit = transactorOptions.GasLimit
-			}
-
-			transaction, err := wc.contract.UpdateDepositSweepMaxSize(
-				newTransactorOptions,
-				arg__depositSweepMaxSize,
-			)
-			if err != nil {
-				return nil, wc.errorResolver.ResolveError(
-					err,
-					wc.transactorOptions.From,
-					nil,
-					"updateDepositSweepMaxSize",
-					arg__depositSweepMaxSize,
-				)
-			}
-
-			wcLogger.Infof(
-				"submitted transaction updateDepositSweepMaxSize with id: [%s] and nonce [%v]",
-				transaction.Hash(),
-				transaction.Nonce(),
-			)
-
-			return transaction, nil
-		},
-	)
-
-	wc.nonceManager.IncrementNonce()
-
-	return transaction, err
-}
-
-// Non-mutating call, not a transaction submission.
-func (wc *WalletCoordinator) CallUpdateDepositSweepMaxSize(
-	arg__depositSweepMaxSize uint16,
-	blockNumber *big.Int,
-) error {
-	var result interface{} = nil
-
-	err := chainutil.CallAtBlock(
-		wc.transactorOptions.From,
-		blockNumber, nil,
-		wc.contractABI,
-		wc.caller,
-		wc.errorResolver,
-		wc.contractAddress,
-		"updateDepositSweepMaxSize",
-		&result,
-		arg__depositSweepMaxSize,
-	)
-
-	return err
-}
-
-func (wc *WalletCoordinator) UpdateDepositSweepMaxSizeGasEstimate(
-	arg__depositSweepMaxSize uint16,
-) (uint64, error) {
-	var result uint64
-
-	result, err := chainutil.EstimateGas(
-		wc.callerOptions.From,
-		wc.contractAddress,
-		"updateDepositSweepMaxSize",
-		wc.contractABI,
-		wc.transactor,
-		arg__depositSweepMaxSize,
-	)
-
-	return result, err
-}
-
-// Transaction submission.
-func (wc *WalletCoordinator) UpdateDepositSweepProposalSubmissionGasOffset(
 	arg__depositSweepProposalSubmissionGasOffset uint32,
 
 	transactionOptions ...chainutil.TransactionOptions,
 ) (*types.Transaction, error) {
 	wcLogger.Debug(
-		"submitting transaction updateDepositSweepProposalSubmissionGasOffset",
+		"submitting transaction updateDepositSweepProposalParameters",
 		" params: ",
 		fmt.Sprint(
+			arg__depositSweepProposalValidity,
+			arg__depositMinAge,
+			arg__depositRefundSafetyMargin,
+			arg__depositSweepMaxSize,
 			arg__depositSweepProposalSubmissionGasOffset,
 		),
 	)
@@ -1664,8 +1534,12 @@ func (wc *WalletCoordinator) UpdateDepositSweepProposalSubmissionGasOffset(
 
 	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
 
-	transaction, err := wc.contract.UpdateDepositSweepProposalSubmissionGasOffset(
+	transaction, err := wc.contract.UpdateDepositSweepProposalParameters(
 		transactorOptions,
+		arg__depositSweepProposalValidity,
+		arg__depositMinAge,
+		arg__depositRefundSafetyMargin,
+		arg__depositSweepMaxSize,
 		arg__depositSweepProposalSubmissionGasOffset,
 	)
 	if err != nil {
@@ -1673,13 +1547,17 @@ func (wc *WalletCoordinator) UpdateDepositSweepProposalSubmissionGasOffset(
 			err,
 			wc.transactorOptions.From,
 			nil,
-			"updateDepositSweepProposalSubmissionGasOffset",
+			"updateDepositSweepProposalParameters",
+			arg__depositSweepProposalValidity,
+			arg__depositMinAge,
+			arg__depositRefundSafetyMargin,
+			arg__depositSweepMaxSize,
 			arg__depositSweepProposalSubmissionGasOffset,
 		)
 	}
 
 	wcLogger.Infof(
-		"submitted transaction updateDepositSweepProposalSubmissionGasOffset with id: [%s] and nonce [%v]",
+		"submitted transaction updateDepositSweepProposalParameters with id: [%s] and nonce [%v]",
 		transaction.Hash(),
 		transaction.Nonce(),
 	)
@@ -1698,8 +1576,12 @@ func (wc *WalletCoordinator) UpdateDepositSweepProposalSubmissionGasOffset(
 				newTransactorOptions.GasLimit = transactorOptions.GasLimit
 			}
 
-			transaction, err := wc.contract.UpdateDepositSweepProposalSubmissionGasOffset(
+			transaction, err := wc.contract.UpdateDepositSweepProposalParameters(
 				newTransactorOptions,
+				arg__depositSweepProposalValidity,
+				arg__depositMinAge,
+				arg__depositRefundSafetyMargin,
+				arg__depositSweepMaxSize,
 				arg__depositSweepProposalSubmissionGasOffset,
 			)
 			if err != nil {
@@ -1707,13 +1589,17 @@ func (wc *WalletCoordinator) UpdateDepositSweepProposalSubmissionGasOffset(
 					err,
 					wc.transactorOptions.From,
 					nil,
-					"updateDepositSweepProposalSubmissionGasOffset",
+					"updateDepositSweepProposalParameters",
+					arg__depositSweepProposalValidity,
+					arg__depositMinAge,
+					arg__depositRefundSafetyMargin,
+					arg__depositSweepMaxSize,
 					arg__depositSweepProposalSubmissionGasOffset,
 				)
 			}
 
 			wcLogger.Infof(
-				"submitted transaction updateDepositSweepProposalSubmissionGasOffset with id: [%s] and nonce [%v]",
+				"submitted transaction updateDepositSweepProposalParameters with id: [%s] and nonce [%v]",
 				transaction.Hash(),
 				transaction.Nonce(),
 			)
@@ -1728,7 +1614,11 @@ func (wc *WalletCoordinator) UpdateDepositSweepProposalSubmissionGasOffset(
 }
 
 // Non-mutating call, not a transaction submission.
-func (wc *WalletCoordinator) CallUpdateDepositSweepProposalSubmissionGasOffset(
+func (wc *WalletCoordinator) CallUpdateDepositSweepProposalParameters(
+	arg__depositSweepProposalValidity uint32,
+	arg__depositMinAge uint32,
+	arg__depositRefundSafetyMargin uint32,
+	arg__depositSweepMaxSize uint16,
 	arg__depositSweepProposalSubmissionGasOffset uint32,
 	blockNumber *big.Int,
 ) error {
@@ -1741,15 +1631,23 @@ func (wc *WalletCoordinator) CallUpdateDepositSweepProposalSubmissionGasOffset(
 		wc.caller,
 		wc.errorResolver,
 		wc.contractAddress,
-		"updateDepositSweepProposalSubmissionGasOffset",
+		"updateDepositSweepProposalParameters",
 		&result,
+		arg__depositSweepProposalValidity,
+		arg__depositMinAge,
+		arg__depositRefundSafetyMargin,
+		arg__depositSweepMaxSize,
 		arg__depositSweepProposalSubmissionGasOffset,
 	)
 
 	return err
 }
 
-func (wc *WalletCoordinator) UpdateDepositSweepProposalSubmissionGasOffsetGasEstimate(
+func (wc *WalletCoordinator) UpdateDepositSweepProposalParametersGasEstimate(
+	arg__depositSweepProposalValidity uint32,
+	arg__depositMinAge uint32,
+	arg__depositRefundSafetyMargin uint32,
+	arg__depositSweepMaxSize uint16,
 	arg__depositSweepProposalSubmissionGasOffset uint32,
 ) (uint64, error) {
 	var result uint64
@@ -1757,9 +1655,13 @@ func (wc *WalletCoordinator) UpdateDepositSweepProposalSubmissionGasOffsetGasEst
 	result, err := chainutil.EstimateGas(
 		wc.callerOptions.From,
 		wc.contractAddress,
-		"updateDepositSweepProposalSubmissionGasOffset",
+		"updateDepositSweepProposalParameters",
 		wc.contractABI,
 		wc.transactor,
+		arg__depositSweepProposalValidity,
+		arg__depositMinAge,
+		arg__depositRefundSafetyMargin,
+		arg__depositSweepMaxSize,
 		arg__depositSweepProposalSubmissionGasOffset,
 	)
 
@@ -1767,16 +1669,18 @@ func (wc *WalletCoordinator) UpdateDepositSweepProposalSubmissionGasOffsetGasEst
 }
 
 // Transaction submission.
-func (wc *WalletCoordinator) UpdateDepositSweepProposalValidity(
-	arg__depositSweepProposalValidity uint32,
+func (wc *WalletCoordinator) UpdateHeartbeatRequestParameters(
+	arg__heartbeatRequestValidity uint32,
+	arg__heartbeatRequestGasOffset uint32,
 
 	transactionOptions ...chainutil.TransactionOptions,
 ) (*types.Transaction, error) {
 	wcLogger.Debug(
-		"submitting transaction updateDepositSweepProposalValidity",
+		"submitting transaction updateHeartbeatRequestParameters",
 		" params: ",
 		fmt.Sprint(
-			arg__depositSweepProposalValidity,
+			arg__heartbeatRequestValidity,
+			arg__heartbeatRequestGasOffset,
 		),
 	)
 
@@ -1802,22 +1706,24 @@ func (wc *WalletCoordinator) UpdateDepositSweepProposalValidity(
 
 	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
 
-	transaction, err := wc.contract.UpdateDepositSweepProposalValidity(
+	transaction, err := wc.contract.UpdateHeartbeatRequestParameters(
 		transactorOptions,
-		arg__depositSweepProposalValidity,
+		arg__heartbeatRequestValidity,
+		arg__heartbeatRequestGasOffset,
 	)
 	if err != nil {
 		return transaction, wc.errorResolver.ResolveError(
 			err,
 			wc.transactorOptions.From,
 			nil,
-			"updateDepositSweepProposalValidity",
-			arg__depositSweepProposalValidity,
+			"updateHeartbeatRequestParameters",
+			arg__heartbeatRequestValidity,
+			arg__heartbeatRequestGasOffset,
 		)
 	}
 
 	wcLogger.Infof(
-		"submitted transaction updateDepositSweepProposalValidity with id: [%s] and nonce [%v]",
+		"submitted transaction updateHeartbeatRequestParameters with id: [%s] and nonce [%v]",
 		transaction.Hash(),
 		transaction.Nonce(),
 	)
@@ -1836,22 +1742,24 @@ func (wc *WalletCoordinator) UpdateDepositSweepProposalValidity(
 				newTransactorOptions.GasLimit = transactorOptions.GasLimit
 			}
 
-			transaction, err := wc.contract.UpdateDepositSweepProposalValidity(
+			transaction, err := wc.contract.UpdateHeartbeatRequestParameters(
 				newTransactorOptions,
-				arg__depositSweepProposalValidity,
+				arg__heartbeatRequestValidity,
+				arg__heartbeatRequestGasOffset,
 			)
 			if err != nil {
 				return nil, wc.errorResolver.ResolveError(
 					err,
 					wc.transactorOptions.From,
 					nil,
-					"updateDepositSweepProposalValidity",
-					arg__depositSweepProposalValidity,
+					"updateHeartbeatRequestParameters",
+					arg__heartbeatRequestValidity,
+					arg__heartbeatRequestGasOffset,
 				)
 			}
 
 			wcLogger.Infof(
-				"submitted transaction updateDepositSweepProposalValidity with id: [%s] and nonce [%v]",
+				"submitted transaction updateHeartbeatRequestParameters with id: [%s] and nonce [%v]",
 				transaction.Hash(),
 				transaction.Nonce(),
 			)
@@ -1866,8 +1774,9 @@ func (wc *WalletCoordinator) UpdateDepositSweepProposalValidity(
 }
 
 // Non-mutating call, not a transaction submission.
-func (wc *WalletCoordinator) CallUpdateDepositSweepProposalValidity(
-	arg__depositSweepProposalValidity uint32,
+func (wc *WalletCoordinator) CallUpdateHeartbeatRequestParameters(
+	arg__heartbeatRequestValidity uint32,
+	arg__heartbeatRequestGasOffset uint32,
 	blockNumber *big.Int,
 ) error {
 	var result interface{} = nil
@@ -1879,26 +1788,29 @@ func (wc *WalletCoordinator) CallUpdateDepositSweepProposalValidity(
 		wc.caller,
 		wc.errorResolver,
 		wc.contractAddress,
-		"updateDepositSweepProposalValidity",
+		"updateHeartbeatRequestParameters",
 		&result,
-		arg__depositSweepProposalValidity,
+		arg__heartbeatRequestValidity,
+		arg__heartbeatRequestGasOffset,
 	)
 
 	return err
 }
 
-func (wc *WalletCoordinator) UpdateDepositSweepProposalValidityGasEstimate(
-	arg__depositSweepProposalValidity uint32,
+func (wc *WalletCoordinator) UpdateHeartbeatRequestParametersGasEstimate(
+	arg__heartbeatRequestValidity uint32,
+	arg__heartbeatRequestGasOffset uint32,
 ) (uint64, error) {
 	var result uint64
 
 	result, err := chainutil.EstimateGas(
 		wc.callerOptions.From,
 		wc.contractAddress,
-		"updateDepositSweepProposalValidity",
+		"updateHeartbeatRequestParameters",
 		wc.contractABI,
 		wc.transactor,
-		arg__depositSweepProposalValidity,
+		arg__heartbeatRequestValidity,
+		arg__heartbeatRequestGasOffset,
 	)
 
 	return result, err
@@ -2266,10 +2178,84 @@ func (wc *WalletCoordinator) DepositSweepProposalValidityAtBlock(
 	return result, err
 }
 
-func (wc *WalletCoordinator) IsProposalSubmitter(
+func (wc *WalletCoordinator) HeartbeatRequestGasOffset() (uint32, error) {
+	result, err := wc.contract.HeartbeatRequestGasOffset(
+		wc.callerOptions,
+	)
+
+	if err != nil {
+		return result, wc.errorResolver.ResolveError(
+			err,
+			wc.callerOptions.From,
+			nil,
+			"heartbeatRequestGasOffset",
+		)
+	}
+
+	return result, err
+}
+
+func (wc *WalletCoordinator) HeartbeatRequestGasOffsetAtBlock(
+	blockNumber *big.Int,
+) (uint32, error) {
+	var result uint32
+
+	err := chainutil.CallAtBlock(
+		wc.callerOptions.From,
+		blockNumber,
+		nil,
+		wc.contractABI,
+		wc.caller,
+		wc.errorResolver,
+		wc.contractAddress,
+		"heartbeatRequestGasOffset",
+		&result,
+	)
+
+	return result, err
+}
+
+func (wc *WalletCoordinator) HeartbeatRequestValidity() (uint32, error) {
+	result, err := wc.contract.HeartbeatRequestValidity(
+		wc.callerOptions,
+	)
+
+	if err != nil {
+		return result, wc.errorResolver.ResolveError(
+			err,
+			wc.callerOptions.From,
+			nil,
+			"heartbeatRequestValidity",
+		)
+	}
+
+	return result, err
+}
+
+func (wc *WalletCoordinator) HeartbeatRequestValidityAtBlock(
+	blockNumber *big.Int,
+) (uint32, error) {
+	var result uint32
+
+	err := chainutil.CallAtBlock(
+		wc.callerOptions.From,
+		blockNumber,
+		nil,
+		wc.contractABI,
+		wc.caller,
+		wc.errorResolver,
+		wc.contractAddress,
+		"heartbeatRequestValidity",
+		&result,
+	)
+
+	return result, err
+}
+
+func (wc *WalletCoordinator) IsCoordinator(
 	arg0 common.Address,
 ) (bool, error) {
-	result, err := wc.contract.IsProposalSubmitter(
+	result, err := wc.contract.IsCoordinator(
 		wc.callerOptions,
 		arg0,
 	)
@@ -2279,7 +2265,7 @@ func (wc *WalletCoordinator) IsProposalSubmitter(
 			err,
 			wc.callerOptions.From,
 			nil,
-			"isProposalSubmitter",
+			"isCoordinator",
 			arg0,
 		)
 	}
@@ -2287,7 +2273,7 @@ func (wc *WalletCoordinator) IsProposalSubmitter(
 	return result, err
 }
 
-func (wc *WalletCoordinator) IsProposalSubmitterAtBlock(
+func (wc *WalletCoordinator) IsCoordinatorAtBlock(
 	arg0 common.Address,
 	blockNumber *big.Int,
 ) (bool, error) {
@@ -2301,7 +2287,7 @@ func (wc *WalletCoordinator) IsProposalSubmitterAtBlock(
 		wc.caller,
 		wc.errorResolver,
 		wc.contractAddress,
-		"isProposalSubmitter",
+		"isCoordinator",
 		&result,
 		arg0,
 	)
@@ -2479,48 +2465,12 @@ func (wc *WalletCoordinator) WalletLockAtBlock(
 	return result, err
 }
 
-func (wc *WalletCoordinator) WalletRegistry() (common.Address, error) {
-	result, err := wc.contract.WalletRegistry(
-		wc.callerOptions,
-	)
-
-	if err != nil {
-		return result, wc.errorResolver.ResolveError(
-			err,
-			wc.callerOptions.From,
-			nil,
-			"walletRegistry",
-		)
-	}
-
-	return result, err
-}
-
-func (wc *WalletCoordinator) WalletRegistryAtBlock(
-	blockNumber *big.Int,
-) (common.Address, error) {
-	var result common.Address
-
-	err := chainutil.CallAtBlock(
-		wc.callerOptions.From,
-		blockNumber,
-		nil,
-		wc.contractABI,
-		wc.caller,
-		wc.errorResolver,
-		wc.contractAddress,
-		"walletRegistry",
-		&result,
-	)
-
-	return result, err
-}
-
 // ------ Events -------
 
-func (wc *WalletCoordinator) DepositMinAgeUpdatedEvent(
+func (wc *WalletCoordinator) CoordinatorAddedEvent(
 	opts *ethereum.SubscribeOpts,
-) *WcDepositMinAgeUpdatedSubscription {
+	coordinatorFilter []common.Address,
+) *WcCoordinatorAddedSubscription {
 	if opts == nil {
 		opts = new(ethereum.SubscribeOpts)
 	}
@@ -2531,563 +2481,405 @@ func (wc *WalletCoordinator) DepositMinAgeUpdatedEvent(
 		opts.PastBlocks = chainutil.DefaultSubscribeOptsPastBlocks
 	}
 
-	return &WcDepositMinAgeUpdatedSubscription{
+	return &WcCoordinatorAddedSubscription{
+		wc,
+		opts,
+		coordinatorFilter,
+	}
+}
+
+type WcCoordinatorAddedSubscription struct {
+	contract          *WalletCoordinator
+	opts              *ethereum.SubscribeOpts
+	coordinatorFilter []common.Address
+}
+
+type walletCoordinatorCoordinatorAddedFunc func(
+	Coordinator common.Address,
+	blockNumber uint64,
+)
+
+func (cas *WcCoordinatorAddedSubscription) OnEvent(
+	handler walletCoordinatorCoordinatorAddedFunc,
+) subscription.EventSubscription {
+	eventChan := make(chan *abi.WalletCoordinatorCoordinatorAdded)
+	ctx, cancelCtx := context.WithCancel(context.Background())
+
+	go func() {
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case event := <-eventChan:
+				handler(
+					event.Coordinator,
+					event.Raw.BlockNumber,
+				)
+			}
+		}
+	}()
+
+	sub := cas.Pipe(eventChan)
+	return subscription.NewEventSubscription(func() {
+		sub.Unsubscribe()
+		cancelCtx()
+	})
+}
+
+func (cas *WcCoordinatorAddedSubscription) Pipe(
+	sink chan *abi.WalletCoordinatorCoordinatorAdded,
+) subscription.EventSubscription {
+	ctx, cancelCtx := context.WithCancel(context.Background())
+	go func() {
+		ticker := time.NewTicker(cas.opts.Tick)
+		defer ticker.Stop()
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-ticker.C:
+				lastBlock, err := cas.contract.blockCounter.CurrentBlock()
+				if err != nil {
+					wcLogger.Errorf(
+						"subscription failed to pull events: [%v]",
+						err,
+					)
+				}
+				fromBlock := lastBlock - cas.opts.PastBlocks
+
+				wcLogger.Infof(
+					"subscription monitoring fetching past CoordinatorAdded events "+
+						"starting from block [%v]",
+					fromBlock,
+				)
+				events, err := cas.contract.PastCoordinatorAddedEvents(
+					fromBlock,
+					nil,
+					cas.coordinatorFilter,
+				)
+				if err != nil {
+					wcLogger.Errorf(
+						"subscription failed to pull events: [%v]",
+						err,
+					)
+					continue
+				}
+				wcLogger.Infof(
+					"subscription monitoring fetched [%v] past CoordinatorAdded events",
+					len(events),
+				)
+
+				for _, event := range events {
+					sink <- event
+				}
+			}
+		}
+	}()
+
+	sub := cas.contract.watchCoordinatorAdded(
+		sink,
+		cas.coordinatorFilter,
+	)
+
+	return subscription.NewEventSubscription(func() {
+		sub.Unsubscribe()
+		cancelCtx()
+	})
+}
+
+func (wc *WalletCoordinator) watchCoordinatorAdded(
+	sink chan *abi.WalletCoordinatorCoordinatorAdded,
+	coordinatorFilter []common.Address,
+) event.Subscription {
+	subscribeFn := func(ctx context.Context) (event.Subscription, error) {
+		return wc.contract.WatchCoordinatorAdded(
+			&bind.WatchOpts{Context: ctx},
+			sink,
+			coordinatorFilter,
+		)
+	}
+
+	thresholdViolatedFn := func(elapsed time.Duration) {
+		wcLogger.Warnf(
+			"subscription to event CoordinatorAdded had to be "+
+				"retried [%s] since the last attempt; please inspect "+
+				"host chain connectivity",
+			elapsed,
+		)
+	}
+
+	subscriptionFailedFn := func(err error) {
+		wcLogger.Errorf(
+			"subscription to event CoordinatorAdded failed "+
+				"with error: [%v]; resubscription attempt will be "+
+				"performed",
+			err,
+		)
+	}
+
+	return chainutil.WithResubscription(
+		chainutil.SubscriptionBackoffMax,
+		subscribeFn,
+		chainutil.SubscriptionAlertThreshold,
+		thresholdViolatedFn,
+		subscriptionFailedFn,
+	)
+}
+
+func (wc *WalletCoordinator) PastCoordinatorAddedEvents(
+	startBlock uint64,
+	endBlock *uint64,
+	coordinatorFilter []common.Address,
+) ([]*abi.WalletCoordinatorCoordinatorAdded, error) {
+	iterator, err := wc.contract.FilterCoordinatorAdded(
+		&bind.FilterOpts{
+			Start: startBlock,
+			End:   endBlock,
+		},
+		coordinatorFilter,
+	)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"error retrieving past CoordinatorAdded events: [%v]",
+			err,
+		)
+	}
+
+	events := make([]*abi.WalletCoordinatorCoordinatorAdded, 0)
+
+	for iterator.Next() {
+		event := iterator.Event
+		events = append(events, event)
+	}
+
+	return events, nil
+}
+
+func (wc *WalletCoordinator) CoordinatorRemovedEvent(
+	opts *ethereum.SubscribeOpts,
+	coordinatorFilter []common.Address,
+) *WcCoordinatorRemovedSubscription {
+	if opts == nil {
+		opts = new(ethereum.SubscribeOpts)
+	}
+	if opts.Tick == 0 {
+		opts.Tick = chainutil.DefaultSubscribeOptsTick
+	}
+	if opts.PastBlocks == 0 {
+		opts.PastBlocks = chainutil.DefaultSubscribeOptsPastBlocks
+	}
+
+	return &WcCoordinatorRemovedSubscription{
+		wc,
+		opts,
+		coordinatorFilter,
+	}
+}
+
+type WcCoordinatorRemovedSubscription struct {
+	contract          *WalletCoordinator
+	opts              *ethereum.SubscribeOpts
+	coordinatorFilter []common.Address
+}
+
+type walletCoordinatorCoordinatorRemovedFunc func(
+	Coordinator common.Address,
+	blockNumber uint64,
+)
+
+func (crs *WcCoordinatorRemovedSubscription) OnEvent(
+	handler walletCoordinatorCoordinatorRemovedFunc,
+) subscription.EventSubscription {
+	eventChan := make(chan *abi.WalletCoordinatorCoordinatorRemoved)
+	ctx, cancelCtx := context.WithCancel(context.Background())
+
+	go func() {
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case event := <-eventChan:
+				handler(
+					event.Coordinator,
+					event.Raw.BlockNumber,
+				)
+			}
+		}
+	}()
+
+	sub := crs.Pipe(eventChan)
+	return subscription.NewEventSubscription(func() {
+		sub.Unsubscribe()
+		cancelCtx()
+	})
+}
+
+func (crs *WcCoordinatorRemovedSubscription) Pipe(
+	sink chan *abi.WalletCoordinatorCoordinatorRemoved,
+) subscription.EventSubscription {
+	ctx, cancelCtx := context.WithCancel(context.Background())
+	go func() {
+		ticker := time.NewTicker(crs.opts.Tick)
+		defer ticker.Stop()
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-ticker.C:
+				lastBlock, err := crs.contract.blockCounter.CurrentBlock()
+				if err != nil {
+					wcLogger.Errorf(
+						"subscription failed to pull events: [%v]",
+						err,
+					)
+				}
+				fromBlock := lastBlock - crs.opts.PastBlocks
+
+				wcLogger.Infof(
+					"subscription monitoring fetching past CoordinatorRemoved events "+
+						"starting from block [%v]",
+					fromBlock,
+				)
+				events, err := crs.contract.PastCoordinatorRemovedEvents(
+					fromBlock,
+					nil,
+					crs.coordinatorFilter,
+				)
+				if err != nil {
+					wcLogger.Errorf(
+						"subscription failed to pull events: [%v]",
+						err,
+					)
+					continue
+				}
+				wcLogger.Infof(
+					"subscription monitoring fetched [%v] past CoordinatorRemoved events",
+					len(events),
+				)
+
+				for _, event := range events {
+					sink <- event
+				}
+			}
+		}
+	}()
+
+	sub := crs.contract.watchCoordinatorRemoved(
+		sink,
+		crs.coordinatorFilter,
+	)
+
+	return subscription.NewEventSubscription(func() {
+		sub.Unsubscribe()
+		cancelCtx()
+	})
+}
+
+func (wc *WalletCoordinator) watchCoordinatorRemoved(
+	sink chan *abi.WalletCoordinatorCoordinatorRemoved,
+	coordinatorFilter []common.Address,
+) event.Subscription {
+	subscribeFn := func(ctx context.Context) (event.Subscription, error) {
+		return wc.contract.WatchCoordinatorRemoved(
+			&bind.WatchOpts{Context: ctx},
+			sink,
+			coordinatorFilter,
+		)
+	}
+
+	thresholdViolatedFn := func(elapsed time.Duration) {
+		wcLogger.Warnf(
+			"subscription to event CoordinatorRemoved had to be "+
+				"retried [%s] since the last attempt; please inspect "+
+				"host chain connectivity",
+			elapsed,
+		)
+	}
+
+	subscriptionFailedFn := func(err error) {
+		wcLogger.Errorf(
+			"subscription to event CoordinatorRemoved failed "+
+				"with error: [%v]; resubscription attempt will be "+
+				"performed",
+			err,
+		)
+	}
+
+	return chainutil.WithResubscription(
+		chainutil.SubscriptionBackoffMax,
+		subscribeFn,
+		chainutil.SubscriptionAlertThreshold,
+		thresholdViolatedFn,
+		subscriptionFailedFn,
+	)
+}
+
+func (wc *WalletCoordinator) PastCoordinatorRemovedEvents(
+	startBlock uint64,
+	endBlock *uint64,
+	coordinatorFilter []common.Address,
+) ([]*abi.WalletCoordinatorCoordinatorRemoved, error) {
+	iterator, err := wc.contract.FilterCoordinatorRemoved(
+		&bind.FilterOpts{
+			Start: startBlock,
+			End:   endBlock,
+		},
+		coordinatorFilter,
+	)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"error retrieving past CoordinatorRemoved events: [%v]",
+			err,
+		)
+	}
+
+	events := make([]*abi.WalletCoordinatorCoordinatorRemoved, 0)
+
+	for iterator.Next() {
+		event := iterator.Event
+		events = append(events, event)
+	}
+
+	return events, nil
+}
+
+func (wc *WalletCoordinator) DepositSweepProposalParametersUpdatedEvent(
+	opts *ethereum.SubscribeOpts,
+) *WcDepositSweepProposalParametersUpdatedSubscription {
+	if opts == nil {
+		opts = new(ethereum.SubscribeOpts)
+	}
+	if opts.Tick == 0 {
+		opts.Tick = chainutil.DefaultSubscribeOptsTick
+	}
+	if opts.PastBlocks == 0 {
+		opts.PastBlocks = chainutil.DefaultSubscribeOptsPastBlocks
+	}
+
+	return &WcDepositSweepProposalParametersUpdatedSubscription{
 		wc,
 		opts,
 	}
 }
 
-type WcDepositMinAgeUpdatedSubscription struct {
+type WcDepositSweepProposalParametersUpdatedSubscription struct {
 	contract *WalletCoordinator
 	opts     *ethereum.SubscribeOpts
 }
 
-type walletCoordinatorDepositMinAgeUpdatedFunc func(
+type walletCoordinatorDepositSweepProposalParametersUpdatedFunc func(
+	DepositSweepProposalValidity uint32,
 	DepositMinAge uint32,
-	blockNumber uint64,
-)
-
-func (dmaus *WcDepositMinAgeUpdatedSubscription) OnEvent(
-	handler walletCoordinatorDepositMinAgeUpdatedFunc,
-) subscription.EventSubscription {
-	eventChan := make(chan *abi.WalletCoordinatorDepositMinAgeUpdated)
-	ctx, cancelCtx := context.WithCancel(context.Background())
-
-	go func() {
-		for {
-			select {
-			case <-ctx.Done():
-				return
-			case event := <-eventChan:
-				handler(
-					event.DepositMinAge,
-					event.Raw.BlockNumber,
-				)
-			}
-		}
-	}()
-
-	sub := dmaus.Pipe(eventChan)
-	return subscription.NewEventSubscription(func() {
-		sub.Unsubscribe()
-		cancelCtx()
-	})
-}
-
-func (dmaus *WcDepositMinAgeUpdatedSubscription) Pipe(
-	sink chan *abi.WalletCoordinatorDepositMinAgeUpdated,
-) subscription.EventSubscription {
-	ctx, cancelCtx := context.WithCancel(context.Background())
-	go func() {
-		ticker := time.NewTicker(dmaus.opts.Tick)
-		defer ticker.Stop()
-		for {
-			select {
-			case <-ctx.Done():
-				return
-			case <-ticker.C:
-				lastBlock, err := dmaus.contract.blockCounter.CurrentBlock()
-				if err != nil {
-					wcLogger.Errorf(
-						"subscription failed to pull events: [%v]",
-						err,
-					)
-				}
-				fromBlock := lastBlock - dmaus.opts.PastBlocks
-
-				wcLogger.Infof(
-					"subscription monitoring fetching past DepositMinAgeUpdated events "+
-						"starting from block [%v]",
-					fromBlock,
-				)
-				events, err := dmaus.contract.PastDepositMinAgeUpdatedEvents(
-					fromBlock,
-					nil,
-				)
-				if err != nil {
-					wcLogger.Errorf(
-						"subscription failed to pull events: [%v]",
-						err,
-					)
-					continue
-				}
-				wcLogger.Infof(
-					"subscription monitoring fetched [%v] past DepositMinAgeUpdated events",
-					len(events),
-				)
-
-				for _, event := range events {
-					sink <- event
-				}
-			}
-		}
-	}()
-
-	sub := dmaus.contract.watchDepositMinAgeUpdated(
-		sink,
-	)
-
-	return subscription.NewEventSubscription(func() {
-		sub.Unsubscribe()
-		cancelCtx()
-	})
-}
-
-func (wc *WalletCoordinator) watchDepositMinAgeUpdated(
-	sink chan *abi.WalletCoordinatorDepositMinAgeUpdated,
-) event.Subscription {
-	subscribeFn := func(ctx context.Context) (event.Subscription, error) {
-		return wc.contract.WatchDepositMinAgeUpdated(
-			&bind.WatchOpts{Context: ctx},
-			sink,
-		)
-	}
-
-	thresholdViolatedFn := func(elapsed time.Duration) {
-		wcLogger.Warnf(
-			"subscription to event DepositMinAgeUpdated had to be "+
-				"retried [%s] since the last attempt; please inspect "+
-				"host chain connectivity",
-			elapsed,
-		)
-	}
-
-	subscriptionFailedFn := func(err error) {
-		wcLogger.Errorf(
-			"subscription to event DepositMinAgeUpdated failed "+
-				"with error: [%v]; resubscription attempt will be "+
-				"performed",
-			err,
-		)
-	}
-
-	return chainutil.WithResubscription(
-		chainutil.SubscriptionBackoffMax,
-		subscribeFn,
-		chainutil.SubscriptionAlertThreshold,
-		thresholdViolatedFn,
-		subscriptionFailedFn,
-	)
-}
-
-func (wc *WalletCoordinator) PastDepositMinAgeUpdatedEvents(
-	startBlock uint64,
-	endBlock *uint64,
-) ([]*abi.WalletCoordinatorDepositMinAgeUpdated, error) {
-	iterator, err := wc.contract.FilterDepositMinAgeUpdated(
-		&bind.FilterOpts{
-			Start: startBlock,
-			End:   endBlock,
-		},
-	)
-	if err != nil {
-		return nil, fmt.Errorf(
-			"error retrieving past DepositMinAgeUpdated events: [%v]",
-			err,
-		)
-	}
-
-	events := make([]*abi.WalletCoordinatorDepositMinAgeUpdated, 0)
-
-	for iterator.Next() {
-		event := iterator.Event
-		events = append(events, event)
-	}
-
-	return events, nil
-}
-
-func (wc *WalletCoordinator) DepositRefundSafetyMarginUpdatedEvent(
-	opts *ethereum.SubscribeOpts,
-) *WcDepositRefundSafetyMarginUpdatedSubscription {
-	if opts == nil {
-		opts = new(ethereum.SubscribeOpts)
-	}
-	if opts.Tick == 0 {
-		opts.Tick = chainutil.DefaultSubscribeOptsTick
-	}
-	if opts.PastBlocks == 0 {
-		opts.PastBlocks = chainutil.DefaultSubscribeOptsPastBlocks
-	}
-
-	return &WcDepositRefundSafetyMarginUpdatedSubscription{
-		wc,
-		opts,
-	}
-}
-
-type WcDepositRefundSafetyMarginUpdatedSubscription struct {
-	contract *WalletCoordinator
-	opts     *ethereum.SubscribeOpts
-}
-
-type walletCoordinatorDepositRefundSafetyMarginUpdatedFunc func(
 	DepositRefundSafetyMargin uint32,
-	blockNumber uint64,
-)
-
-func (drsmus *WcDepositRefundSafetyMarginUpdatedSubscription) OnEvent(
-	handler walletCoordinatorDepositRefundSafetyMarginUpdatedFunc,
-) subscription.EventSubscription {
-	eventChan := make(chan *abi.WalletCoordinatorDepositRefundSafetyMarginUpdated)
-	ctx, cancelCtx := context.WithCancel(context.Background())
-
-	go func() {
-		for {
-			select {
-			case <-ctx.Done():
-				return
-			case event := <-eventChan:
-				handler(
-					event.DepositRefundSafetyMargin,
-					event.Raw.BlockNumber,
-				)
-			}
-		}
-	}()
-
-	sub := drsmus.Pipe(eventChan)
-	return subscription.NewEventSubscription(func() {
-		sub.Unsubscribe()
-		cancelCtx()
-	})
-}
-
-func (drsmus *WcDepositRefundSafetyMarginUpdatedSubscription) Pipe(
-	sink chan *abi.WalletCoordinatorDepositRefundSafetyMarginUpdated,
-) subscription.EventSubscription {
-	ctx, cancelCtx := context.WithCancel(context.Background())
-	go func() {
-		ticker := time.NewTicker(drsmus.opts.Tick)
-		defer ticker.Stop()
-		for {
-			select {
-			case <-ctx.Done():
-				return
-			case <-ticker.C:
-				lastBlock, err := drsmus.contract.blockCounter.CurrentBlock()
-				if err != nil {
-					wcLogger.Errorf(
-						"subscription failed to pull events: [%v]",
-						err,
-					)
-				}
-				fromBlock := lastBlock - drsmus.opts.PastBlocks
-
-				wcLogger.Infof(
-					"subscription monitoring fetching past DepositRefundSafetyMarginUpdated events "+
-						"starting from block [%v]",
-					fromBlock,
-				)
-				events, err := drsmus.contract.PastDepositRefundSafetyMarginUpdatedEvents(
-					fromBlock,
-					nil,
-				)
-				if err != nil {
-					wcLogger.Errorf(
-						"subscription failed to pull events: [%v]",
-						err,
-					)
-					continue
-				}
-				wcLogger.Infof(
-					"subscription monitoring fetched [%v] past DepositRefundSafetyMarginUpdated events",
-					len(events),
-				)
-
-				for _, event := range events {
-					sink <- event
-				}
-			}
-		}
-	}()
-
-	sub := drsmus.contract.watchDepositRefundSafetyMarginUpdated(
-		sink,
-	)
-
-	return subscription.NewEventSubscription(func() {
-		sub.Unsubscribe()
-		cancelCtx()
-	})
-}
-
-func (wc *WalletCoordinator) watchDepositRefundSafetyMarginUpdated(
-	sink chan *abi.WalletCoordinatorDepositRefundSafetyMarginUpdated,
-) event.Subscription {
-	subscribeFn := func(ctx context.Context) (event.Subscription, error) {
-		return wc.contract.WatchDepositRefundSafetyMarginUpdated(
-			&bind.WatchOpts{Context: ctx},
-			sink,
-		)
-	}
-
-	thresholdViolatedFn := func(elapsed time.Duration) {
-		wcLogger.Warnf(
-			"subscription to event DepositRefundSafetyMarginUpdated had to be "+
-				"retried [%s] since the last attempt; please inspect "+
-				"host chain connectivity",
-			elapsed,
-		)
-	}
-
-	subscriptionFailedFn := func(err error) {
-		wcLogger.Errorf(
-			"subscription to event DepositRefundSafetyMarginUpdated failed "+
-				"with error: [%v]; resubscription attempt will be "+
-				"performed",
-			err,
-		)
-	}
-
-	return chainutil.WithResubscription(
-		chainutil.SubscriptionBackoffMax,
-		subscribeFn,
-		chainutil.SubscriptionAlertThreshold,
-		thresholdViolatedFn,
-		subscriptionFailedFn,
-	)
-}
-
-func (wc *WalletCoordinator) PastDepositRefundSafetyMarginUpdatedEvents(
-	startBlock uint64,
-	endBlock *uint64,
-) ([]*abi.WalletCoordinatorDepositRefundSafetyMarginUpdated, error) {
-	iterator, err := wc.contract.FilterDepositRefundSafetyMarginUpdated(
-		&bind.FilterOpts{
-			Start: startBlock,
-			End:   endBlock,
-		},
-	)
-	if err != nil {
-		return nil, fmt.Errorf(
-			"error retrieving past DepositRefundSafetyMarginUpdated events: [%v]",
-			err,
-		)
-	}
-
-	events := make([]*abi.WalletCoordinatorDepositRefundSafetyMarginUpdated, 0)
-
-	for iterator.Next() {
-		event := iterator.Event
-		events = append(events, event)
-	}
-
-	return events, nil
-}
-
-func (wc *WalletCoordinator) DepositSweepMaxSizeUpdatedEvent(
-	opts *ethereum.SubscribeOpts,
-) *WcDepositSweepMaxSizeUpdatedSubscription {
-	if opts == nil {
-		opts = new(ethereum.SubscribeOpts)
-	}
-	if opts.Tick == 0 {
-		opts.Tick = chainutil.DefaultSubscribeOptsTick
-	}
-	if opts.PastBlocks == 0 {
-		opts.PastBlocks = chainutil.DefaultSubscribeOptsPastBlocks
-	}
-
-	return &WcDepositSweepMaxSizeUpdatedSubscription{
-		wc,
-		opts,
-	}
-}
-
-type WcDepositSweepMaxSizeUpdatedSubscription struct {
-	contract *WalletCoordinator
-	opts     *ethereum.SubscribeOpts
-}
-
-type walletCoordinatorDepositSweepMaxSizeUpdatedFunc func(
 	DepositSweepMaxSize uint16,
-	blockNumber uint64,
-)
-
-func (dsmsus *WcDepositSweepMaxSizeUpdatedSubscription) OnEvent(
-	handler walletCoordinatorDepositSweepMaxSizeUpdatedFunc,
-) subscription.EventSubscription {
-	eventChan := make(chan *abi.WalletCoordinatorDepositSweepMaxSizeUpdated)
-	ctx, cancelCtx := context.WithCancel(context.Background())
-
-	go func() {
-		for {
-			select {
-			case <-ctx.Done():
-				return
-			case event := <-eventChan:
-				handler(
-					event.DepositSweepMaxSize,
-					event.Raw.BlockNumber,
-				)
-			}
-		}
-	}()
-
-	sub := dsmsus.Pipe(eventChan)
-	return subscription.NewEventSubscription(func() {
-		sub.Unsubscribe()
-		cancelCtx()
-	})
-}
-
-func (dsmsus *WcDepositSweepMaxSizeUpdatedSubscription) Pipe(
-	sink chan *abi.WalletCoordinatorDepositSweepMaxSizeUpdated,
-) subscription.EventSubscription {
-	ctx, cancelCtx := context.WithCancel(context.Background())
-	go func() {
-		ticker := time.NewTicker(dsmsus.opts.Tick)
-		defer ticker.Stop()
-		for {
-			select {
-			case <-ctx.Done():
-				return
-			case <-ticker.C:
-				lastBlock, err := dsmsus.contract.blockCounter.CurrentBlock()
-				if err != nil {
-					wcLogger.Errorf(
-						"subscription failed to pull events: [%v]",
-						err,
-					)
-				}
-				fromBlock := lastBlock - dsmsus.opts.PastBlocks
-
-				wcLogger.Infof(
-					"subscription monitoring fetching past DepositSweepMaxSizeUpdated events "+
-						"starting from block [%v]",
-					fromBlock,
-				)
-				events, err := dsmsus.contract.PastDepositSweepMaxSizeUpdatedEvents(
-					fromBlock,
-					nil,
-				)
-				if err != nil {
-					wcLogger.Errorf(
-						"subscription failed to pull events: [%v]",
-						err,
-					)
-					continue
-				}
-				wcLogger.Infof(
-					"subscription monitoring fetched [%v] past DepositSweepMaxSizeUpdated events",
-					len(events),
-				)
-
-				for _, event := range events {
-					sink <- event
-				}
-			}
-		}
-	}()
-
-	sub := dsmsus.contract.watchDepositSweepMaxSizeUpdated(
-		sink,
-	)
-
-	return subscription.NewEventSubscription(func() {
-		sub.Unsubscribe()
-		cancelCtx()
-	})
-}
-
-func (wc *WalletCoordinator) watchDepositSweepMaxSizeUpdated(
-	sink chan *abi.WalletCoordinatorDepositSweepMaxSizeUpdated,
-) event.Subscription {
-	subscribeFn := func(ctx context.Context) (event.Subscription, error) {
-		return wc.contract.WatchDepositSweepMaxSizeUpdated(
-			&bind.WatchOpts{Context: ctx},
-			sink,
-		)
-	}
-
-	thresholdViolatedFn := func(elapsed time.Duration) {
-		wcLogger.Warnf(
-			"subscription to event DepositSweepMaxSizeUpdated had to be "+
-				"retried [%s] since the last attempt; please inspect "+
-				"host chain connectivity",
-			elapsed,
-		)
-	}
-
-	subscriptionFailedFn := func(err error) {
-		wcLogger.Errorf(
-			"subscription to event DepositSweepMaxSizeUpdated failed "+
-				"with error: [%v]; resubscription attempt will be "+
-				"performed",
-			err,
-		)
-	}
-
-	return chainutil.WithResubscription(
-		chainutil.SubscriptionBackoffMax,
-		subscribeFn,
-		chainutil.SubscriptionAlertThreshold,
-		thresholdViolatedFn,
-		subscriptionFailedFn,
-	)
-}
-
-func (wc *WalletCoordinator) PastDepositSweepMaxSizeUpdatedEvents(
-	startBlock uint64,
-	endBlock *uint64,
-) ([]*abi.WalletCoordinatorDepositSweepMaxSizeUpdated, error) {
-	iterator, err := wc.contract.FilterDepositSweepMaxSizeUpdated(
-		&bind.FilterOpts{
-			Start: startBlock,
-			End:   endBlock,
-		},
-	)
-	if err != nil {
-		return nil, fmt.Errorf(
-			"error retrieving past DepositSweepMaxSizeUpdated events: [%v]",
-			err,
-		)
-	}
-
-	events := make([]*abi.WalletCoordinatorDepositSweepMaxSizeUpdated, 0)
-
-	for iterator.Next() {
-		event := iterator.Event
-		events = append(events, event)
-	}
-
-	return events, nil
-}
-
-func (wc *WalletCoordinator) DepositSweepProposalSubmissionGasOffsetUpdatedEvent(
-	opts *ethereum.SubscribeOpts,
-) *WcDepositSweepProposalSubmissionGasOffsetUpdatedSubscription {
-	if opts == nil {
-		opts = new(ethereum.SubscribeOpts)
-	}
-	if opts.Tick == 0 {
-		opts.Tick = chainutil.DefaultSubscribeOptsTick
-	}
-	if opts.PastBlocks == 0 {
-		opts.PastBlocks = chainutil.DefaultSubscribeOptsPastBlocks
-	}
-
-	return &WcDepositSweepProposalSubmissionGasOffsetUpdatedSubscription{
-		wc,
-		opts,
-	}
-}
-
-type WcDepositSweepProposalSubmissionGasOffsetUpdatedSubscription struct {
-	contract *WalletCoordinator
-	opts     *ethereum.SubscribeOpts
-}
-
-type walletCoordinatorDepositSweepProposalSubmissionGasOffsetUpdatedFunc func(
 	DepositSweepProposalSubmissionGasOffset uint32,
 	blockNumber uint64,
 )
 
-func (dspsgous *WcDepositSweepProposalSubmissionGasOffsetUpdatedSubscription) OnEvent(
-	handler walletCoordinatorDepositSweepProposalSubmissionGasOffsetUpdatedFunc,
+func (dsppus *WcDepositSweepProposalParametersUpdatedSubscription) OnEvent(
+	handler walletCoordinatorDepositSweepProposalParametersUpdatedFunc,
 ) subscription.EventSubscription {
-	eventChan := make(chan *abi.WalletCoordinatorDepositSweepProposalSubmissionGasOffsetUpdated)
+	eventChan := make(chan *abi.WalletCoordinatorDepositSweepProposalParametersUpdated)
 	ctx, cancelCtx := context.WithCancel(context.Background())
 
 	go func() {
@@ -3097,6 +2889,10 @@ func (dspsgous *WcDepositSweepProposalSubmissionGasOffsetUpdatedSubscription) On
 				return
 			case event := <-eventChan:
 				handler(
+					event.DepositSweepProposalValidity,
+					event.DepositMinAge,
+					event.DepositRefundSafetyMargin,
+					event.DepositSweepMaxSize,
 					event.DepositSweepProposalSubmissionGasOffset,
 					event.Raw.BlockNumber,
 				)
@@ -3104,40 +2900,40 @@ func (dspsgous *WcDepositSweepProposalSubmissionGasOffsetUpdatedSubscription) On
 		}
 	}()
 
-	sub := dspsgous.Pipe(eventChan)
+	sub := dsppus.Pipe(eventChan)
 	return subscription.NewEventSubscription(func() {
 		sub.Unsubscribe()
 		cancelCtx()
 	})
 }
 
-func (dspsgous *WcDepositSweepProposalSubmissionGasOffsetUpdatedSubscription) Pipe(
-	sink chan *abi.WalletCoordinatorDepositSweepProposalSubmissionGasOffsetUpdated,
+func (dsppus *WcDepositSweepProposalParametersUpdatedSubscription) Pipe(
+	sink chan *abi.WalletCoordinatorDepositSweepProposalParametersUpdated,
 ) subscription.EventSubscription {
 	ctx, cancelCtx := context.WithCancel(context.Background())
 	go func() {
-		ticker := time.NewTicker(dspsgous.opts.Tick)
+		ticker := time.NewTicker(dsppus.opts.Tick)
 		defer ticker.Stop()
 		for {
 			select {
 			case <-ctx.Done():
 				return
 			case <-ticker.C:
-				lastBlock, err := dspsgous.contract.blockCounter.CurrentBlock()
+				lastBlock, err := dsppus.contract.blockCounter.CurrentBlock()
 				if err != nil {
 					wcLogger.Errorf(
 						"subscription failed to pull events: [%v]",
 						err,
 					)
 				}
-				fromBlock := lastBlock - dspsgous.opts.PastBlocks
+				fromBlock := lastBlock - dsppus.opts.PastBlocks
 
 				wcLogger.Infof(
-					"subscription monitoring fetching past DepositSweepProposalSubmissionGasOffsetUpdated events "+
+					"subscription monitoring fetching past DepositSweepProposalParametersUpdated events "+
 						"starting from block [%v]",
 					fromBlock,
 				)
-				events, err := dspsgous.contract.PastDepositSweepProposalSubmissionGasOffsetUpdatedEvents(
+				events, err := dsppus.contract.PastDepositSweepProposalParametersUpdatedEvents(
 					fromBlock,
 					nil,
 				)
@@ -3149,7 +2945,7 @@ func (dspsgous *WcDepositSweepProposalSubmissionGasOffsetUpdatedSubscription) Pi
 					continue
 				}
 				wcLogger.Infof(
-					"subscription monitoring fetched [%v] past DepositSweepProposalSubmissionGasOffsetUpdated events",
+					"subscription monitoring fetched [%v] past DepositSweepProposalParametersUpdated events",
 					len(events),
 				)
 
@@ -3160,7 +2956,7 @@ func (dspsgous *WcDepositSweepProposalSubmissionGasOffsetUpdatedSubscription) Pi
 		}
 	}()
 
-	sub := dspsgous.contract.watchDepositSweepProposalSubmissionGasOffsetUpdated(
+	sub := dsppus.contract.watchDepositSweepProposalParametersUpdated(
 		sink,
 	)
 
@@ -3170,11 +2966,11 @@ func (dspsgous *WcDepositSweepProposalSubmissionGasOffsetUpdatedSubscription) Pi
 	})
 }
 
-func (wc *WalletCoordinator) watchDepositSweepProposalSubmissionGasOffsetUpdated(
-	sink chan *abi.WalletCoordinatorDepositSweepProposalSubmissionGasOffsetUpdated,
+func (wc *WalletCoordinator) watchDepositSweepProposalParametersUpdated(
+	sink chan *abi.WalletCoordinatorDepositSweepProposalParametersUpdated,
 ) event.Subscription {
 	subscribeFn := func(ctx context.Context) (event.Subscription, error) {
-		return wc.contract.WatchDepositSweepProposalSubmissionGasOffsetUpdated(
+		return wc.contract.WatchDepositSweepProposalParametersUpdated(
 			&bind.WatchOpts{Context: ctx},
 			sink,
 		)
@@ -3182,7 +2978,7 @@ func (wc *WalletCoordinator) watchDepositSweepProposalSubmissionGasOffsetUpdated
 
 	thresholdViolatedFn := func(elapsed time.Duration) {
 		wcLogger.Warnf(
-			"subscription to event DepositSweepProposalSubmissionGasOffsetUpdated had to be "+
+			"subscription to event DepositSweepProposalParametersUpdated had to be "+
 				"retried [%s] since the last attempt; please inspect "+
 				"host chain connectivity",
 			elapsed,
@@ -3191,7 +2987,7 @@ func (wc *WalletCoordinator) watchDepositSweepProposalSubmissionGasOffsetUpdated
 
 	subscriptionFailedFn := func(err error) {
 		wcLogger.Errorf(
-			"subscription to event DepositSweepProposalSubmissionGasOffsetUpdated failed "+
+			"subscription to event DepositSweepProposalParametersUpdated failed "+
 				"with error: [%v]; resubscription attempt will be "+
 				"performed",
 			err,
@@ -3207,11 +3003,11 @@ func (wc *WalletCoordinator) watchDepositSweepProposalSubmissionGasOffsetUpdated
 	)
 }
 
-func (wc *WalletCoordinator) PastDepositSweepProposalSubmissionGasOffsetUpdatedEvents(
+func (wc *WalletCoordinator) PastDepositSweepProposalParametersUpdatedEvents(
 	startBlock uint64,
 	endBlock *uint64,
-) ([]*abi.WalletCoordinatorDepositSweepProposalSubmissionGasOffsetUpdated, error) {
-	iterator, err := wc.contract.FilterDepositSweepProposalSubmissionGasOffsetUpdated(
+) ([]*abi.WalletCoordinatorDepositSweepProposalParametersUpdated, error) {
+	iterator, err := wc.contract.FilterDepositSweepProposalParametersUpdated(
 		&bind.FilterOpts{
 			Start: startBlock,
 			End:   endBlock,
@@ -3219,12 +3015,12 @@ func (wc *WalletCoordinator) PastDepositSweepProposalSubmissionGasOffsetUpdatedE
 	)
 	if err != nil {
 		return nil, fmt.Errorf(
-			"error retrieving past DepositSweepProposalSubmissionGasOffsetUpdated events: [%v]",
+			"error retrieving past DepositSweepProposalParametersUpdated events: [%v]",
 			err,
 		)
 	}
 
-	events := make([]*abi.WalletCoordinatorDepositSweepProposalSubmissionGasOffsetUpdated, 0)
+	events := make([]*abi.WalletCoordinatorDepositSweepProposalParametersUpdated, 0)
 
 	for iterator.Next() {
 		event := iterator.Event
@@ -3236,7 +3032,7 @@ func (wc *WalletCoordinator) PastDepositSweepProposalSubmissionGasOffsetUpdatedE
 
 func (wc *WalletCoordinator) DepositSweepProposalSubmittedEvent(
 	opts *ethereum.SubscribeOpts,
-	proposalSubmitterFilter []common.Address,
+	coordinatorFilter []common.Address,
 ) *WcDepositSweepProposalSubmittedSubscription {
 	if opts == nil {
 		opts = new(ethereum.SubscribeOpts)
@@ -3251,19 +3047,19 @@ func (wc *WalletCoordinator) DepositSweepProposalSubmittedEvent(
 	return &WcDepositSweepProposalSubmittedSubscription{
 		wc,
 		opts,
-		proposalSubmitterFilter,
+		coordinatorFilter,
 	}
 }
 
 type WcDepositSweepProposalSubmittedSubscription struct {
-	contract                *WalletCoordinator
-	opts                    *ethereum.SubscribeOpts
-	proposalSubmitterFilter []common.Address
+	contract          *WalletCoordinator
+	opts              *ethereum.SubscribeOpts
+	coordinatorFilter []common.Address
 }
 
 type walletCoordinatorDepositSweepProposalSubmittedFunc func(
 	Proposal abi.WalletCoordinatorDepositSweepProposal,
-	ProposalSubmitter common.Address,
+	Coordinator common.Address,
 	blockNumber uint64,
 )
 
@@ -3281,7 +3077,7 @@ func (dspss *WcDepositSweepProposalSubmittedSubscription) OnEvent(
 			case event := <-eventChan:
 				handler(
 					event.Proposal,
-					event.ProposalSubmitter,
+					event.Coordinator,
 					event.Raw.BlockNumber,
 				)
 			}
@@ -3324,7 +3120,7 @@ func (dspss *WcDepositSweepProposalSubmittedSubscription) Pipe(
 				events, err := dspss.contract.PastDepositSweepProposalSubmittedEvents(
 					fromBlock,
 					nil,
-					dspss.proposalSubmitterFilter,
+					dspss.coordinatorFilter,
 				)
 				if err != nil {
 					wcLogger.Errorf(
@@ -3347,7 +3143,7 @@ func (dspss *WcDepositSweepProposalSubmittedSubscription) Pipe(
 
 	sub := dspss.contract.watchDepositSweepProposalSubmitted(
 		sink,
-		dspss.proposalSubmitterFilter,
+		dspss.coordinatorFilter,
 	)
 
 	return subscription.NewEventSubscription(func() {
@@ -3358,13 +3154,13 @@ func (dspss *WcDepositSweepProposalSubmittedSubscription) Pipe(
 
 func (wc *WalletCoordinator) watchDepositSweepProposalSubmitted(
 	sink chan *abi.WalletCoordinatorDepositSweepProposalSubmitted,
-	proposalSubmitterFilter []common.Address,
+	coordinatorFilter []common.Address,
 ) event.Subscription {
 	subscribeFn := func(ctx context.Context) (event.Subscription, error) {
 		return wc.contract.WatchDepositSweepProposalSubmitted(
 			&bind.WatchOpts{Context: ctx},
 			sink,
-			proposalSubmitterFilter,
+			coordinatorFilter,
 		)
 	}
 
@@ -3398,14 +3194,14 @@ func (wc *WalletCoordinator) watchDepositSweepProposalSubmitted(
 func (wc *WalletCoordinator) PastDepositSweepProposalSubmittedEvents(
 	startBlock uint64,
 	endBlock *uint64,
-	proposalSubmitterFilter []common.Address,
+	coordinatorFilter []common.Address,
 ) ([]*abi.WalletCoordinatorDepositSweepProposalSubmitted, error) {
 	iterator, err := wc.contract.FilterDepositSweepProposalSubmitted(
 		&bind.FilterOpts{
 			Start: startBlock,
 			End:   endBlock,
 		},
-		proposalSubmitterFilter,
+		coordinatorFilter,
 	)
 	if err != nil {
 		return nil, fmt.Errorf(
@@ -3424,9 +3220,9 @@ func (wc *WalletCoordinator) PastDepositSweepProposalSubmittedEvents(
 	return events, nil
 }
 
-func (wc *WalletCoordinator) DepositSweepProposalValidityUpdatedEvent(
+func (wc *WalletCoordinator) HeartbeatRequestParametersUpdatedEvent(
 	opts *ethereum.SubscribeOpts,
-) *WcDepositSweepProposalValidityUpdatedSubscription {
+) *WcHeartbeatRequestParametersUpdatedSubscription {
 	if opts == nil {
 		opts = new(ethereum.SubscribeOpts)
 	}
@@ -3437,26 +3233,27 @@ func (wc *WalletCoordinator) DepositSweepProposalValidityUpdatedEvent(
 		opts.PastBlocks = chainutil.DefaultSubscribeOptsPastBlocks
 	}
 
-	return &WcDepositSweepProposalValidityUpdatedSubscription{
+	return &WcHeartbeatRequestParametersUpdatedSubscription{
 		wc,
 		opts,
 	}
 }
 
-type WcDepositSweepProposalValidityUpdatedSubscription struct {
+type WcHeartbeatRequestParametersUpdatedSubscription struct {
 	contract *WalletCoordinator
 	opts     *ethereum.SubscribeOpts
 }
 
-type walletCoordinatorDepositSweepProposalValidityUpdatedFunc func(
-	DepositSweepProposalValidity uint32,
+type walletCoordinatorHeartbeatRequestParametersUpdatedFunc func(
+	HeartbeatRequestValidity uint32,
+	HeartbeatRequestGasOffset uint32,
 	blockNumber uint64,
 )
 
-func (dspvus *WcDepositSweepProposalValidityUpdatedSubscription) OnEvent(
-	handler walletCoordinatorDepositSweepProposalValidityUpdatedFunc,
+func (hrpus *WcHeartbeatRequestParametersUpdatedSubscription) OnEvent(
+	handler walletCoordinatorHeartbeatRequestParametersUpdatedFunc,
 ) subscription.EventSubscription {
-	eventChan := make(chan *abi.WalletCoordinatorDepositSweepProposalValidityUpdated)
+	eventChan := make(chan *abi.WalletCoordinatorHeartbeatRequestParametersUpdated)
 	ctx, cancelCtx := context.WithCancel(context.Background())
 
 	go func() {
@@ -3466,47 +3263,48 @@ func (dspvus *WcDepositSweepProposalValidityUpdatedSubscription) OnEvent(
 				return
 			case event := <-eventChan:
 				handler(
-					event.DepositSweepProposalValidity,
+					event.HeartbeatRequestValidity,
+					event.HeartbeatRequestGasOffset,
 					event.Raw.BlockNumber,
 				)
 			}
 		}
 	}()
 
-	sub := dspvus.Pipe(eventChan)
+	sub := hrpus.Pipe(eventChan)
 	return subscription.NewEventSubscription(func() {
 		sub.Unsubscribe()
 		cancelCtx()
 	})
 }
 
-func (dspvus *WcDepositSweepProposalValidityUpdatedSubscription) Pipe(
-	sink chan *abi.WalletCoordinatorDepositSweepProposalValidityUpdated,
+func (hrpus *WcHeartbeatRequestParametersUpdatedSubscription) Pipe(
+	sink chan *abi.WalletCoordinatorHeartbeatRequestParametersUpdated,
 ) subscription.EventSubscription {
 	ctx, cancelCtx := context.WithCancel(context.Background())
 	go func() {
-		ticker := time.NewTicker(dspvus.opts.Tick)
+		ticker := time.NewTicker(hrpus.opts.Tick)
 		defer ticker.Stop()
 		for {
 			select {
 			case <-ctx.Done():
 				return
 			case <-ticker.C:
-				lastBlock, err := dspvus.contract.blockCounter.CurrentBlock()
+				lastBlock, err := hrpus.contract.blockCounter.CurrentBlock()
 				if err != nil {
 					wcLogger.Errorf(
 						"subscription failed to pull events: [%v]",
 						err,
 					)
 				}
-				fromBlock := lastBlock - dspvus.opts.PastBlocks
+				fromBlock := lastBlock - hrpus.opts.PastBlocks
 
 				wcLogger.Infof(
-					"subscription monitoring fetching past DepositSweepProposalValidityUpdated events "+
+					"subscription monitoring fetching past HeartbeatRequestParametersUpdated events "+
 						"starting from block [%v]",
 					fromBlock,
 				)
-				events, err := dspvus.contract.PastDepositSweepProposalValidityUpdatedEvents(
+				events, err := hrpus.contract.PastHeartbeatRequestParametersUpdatedEvents(
 					fromBlock,
 					nil,
 				)
@@ -3518,7 +3316,7 @@ func (dspvus *WcDepositSweepProposalValidityUpdatedSubscription) Pipe(
 					continue
 				}
 				wcLogger.Infof(
-					"subscription monitoring fetched [%v] past DepositSweepProposalValidityUpdated events",
+					"subscription monitoring fetched [%v] past HeartbeatRequestParametersUpdated events",
 					len(events),
 				)
 
@@ -3529,7 +3327,7 @@ func (dspvus *WcDepositSweepProposalValidityUpdatedSubscription) Pipe(
 		}
 	}()
 
-	sub := dspvus.contract.watchDepositSweepProposalValidityUpdated(
+	sub := hrpus.contract.watchHeartbeatRequestParametersUpdated(
 		sink,
 	)
 
@@ -3539,11 +3337,11 @@ func (dspvus *WcDepositSweepProposalValidityUpdatedSubscription) Pipe(
 	})
 }
 
-func (wc *WalletCoordinator) watchDepositSweepProposalValidityUpdated(
-	sink chan *abi.WalletCoordinatorDepositSweepProposalValidityUpdated,
+func (wc *WalletCoordinator) watchHeartbeatRequestParametersUpdated(
+	sink chan *abi.WalletCoordinatorHeartbeatRequestParametersUpdated,
 ) event.Subscription {
 	subscribeFn := func(ctx context.Context) (event.Subscription, error) {
-		return wc.contract.WatchDepositSweepProposalValidityUpdated(
+		return wc.contract.WatchHeartbeatRequestParametersUpdated(
 			&bind.WatchOpts{Context: ctx},
 			sink,
 		)
@@ -3551,7 +3349,7 @@ func (wc *WalletCoordinator) watchDepositSweepProposalValidityUpdated(
 
 	thresholdViolatedFn := func(elapsed time.Duration) {
 		wcLogger.Warnf(
-			"subscription to event DepositSweepProposalValidityUpdated had to be "+
+			"subscription to event HeartbeatRequestParametersUpdated had to be "+
 				"retried [%s] since the last attempt; please inspect "+
 				"host chain connectivity",
 			elapsed,
@@ -3560,7 +3358,7 @@ func (wc *WalletCoordinator) watchDepositSweepProposalValidityUpdated(
 
 	subscriptionFailedFn := func(err error) {
 		wcLogger.Errorf(
-			"subscription to event DepositSweepProposalValidityUpdated failed "+
+			"subscription to event HeartbeatRequestParametersUpdated failed "+
 				"with error: [%v]; resubscription attempt will be "+
 				"performed",
 			err,
@@ -3576,11 +3374,11 @@ func (wc *WalletCoordinator) watchDepositSweepProposalValidityUpdated(
 	)
 }
 
-func (wc *WalletCoordinator) PastDepositSweepProposalValidityUpdatedEvents(
+func (wc *WalletCoordinator) PastHeartbeatRequestParametersUpdatedEvents(
 	startBlock uint64,
 	endBlock *uint64,
-) ([]*abi.WalletCoordinatorDepositSweepProposalValidityUpdated, error) {
-	iterator, err := wc.contract.FilterDepositSweepProposalValidityUpdated(
+) ([]*abi.WalletCoordinatorHeartbeatRequestParametersUpdated, error) {
+	iterator, err := wc.contract.FilterHeartbeatRequestParametersUpdated(
 		&bind.FilterOpts{
 			Start: startBlock,
 			End:   endBlock,
@@ -3588,12 +3386,204 @@ func (wc *WalletCoordinator) PastDepositSweepProposalValidityUpdatedEvents(
 	)
 	if err != nil {
 		return nil, fmt.Errorf(
-			"error retrieving past DepositSweepProposalValidityUpdated events: [%v]",
+			"error retrieving past HeartbeatRequestParametersUpdated events: [%v]",
 			err,
 		)
 	}
 
-	events := make([]*abi.WalletCoordinatorDepositSweepProposalValidityUpdated, 0)
+	events := make([]*abi.WalletCoordinatorHeartbeatRequestParametersUpdated, 0)
+
+	for iterator.Next() {
+		event := iterator.Event
+		events = append(events, event)
+	}
+
+	return events, nil
+}
+
+func (wc *WalletCoordinator) HeartbeatRequestSubmittedEvent(
+	opts *ethereum.SubscribeOpts,
+	coordinatorFilter []common.Address,
+) *WcHeartbeatRequestSubmittedSubscription {
+	if opts == nil {
+		opts = new(ethereum.SubscribeOpts)
+	}
+	if opts.Tick == 0 {
+		opts.Tick = chainutil.DefaultSubscribeOptsTick
+	}
+	if opts.PastBlocks == 0 {
+		opts.PastBlocks = chainutil.DefaultSubscribeOptsPastBlocks
+	}
+
+	return &WcHeartbeatRequestSubmittedSubscription{
+		wc,
+		opts,
+		coordinatorFilter,
+	}
+}
+
+type WcHeartbeatRequestSubmittedSubscription struct {
+	contract          *WalletCoordinator
+	opts              *ethereum.SubscribeOpts
+	coordinatorFilter []common.Address
+}
+
+type walletCoordinatorHeartbeatRequestSubmittedFunc func(
+	WalletPubKeyHash [20]byte,
+	Message []byte,
+	Coordinator common.Address,
+	blockNumber uint64,
+)
+
+func (hrss *WcHeartbeatRequestSubmittedSubscription) OnEvent(
+	handler walletCoordinatorHeartbeatRequestSubmittedFunc,
+) subscription.EventSubscription {
+	eventChan := make(chan *abi.WalletCoordinatorHeartbeatRequestSubmitted)
+	ctx, cancelCtx := context.WithCancel(context.Background())
+
+	go func() {
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case event := <-eventChan:
+				handler(
+					event.WalletPubKeyHash,
+					event.Message,
+					event.Coordinator,
+					event.Raw.BlockNumber,
+				)
+			}
+		}
+	}()
+
+	sub := hrss.Pipe(eventChan)
+	return subscription.NewEventSubscription(func() {
+		sub.Unsubscribe()
+		cancelCtx()
+	})
+}
+
+func (hrss *WcHeartbeatRequestSubmittedSubscription) Pipe(
+	sink chan *abi.WalletCoordinatorHeartbeatRequestSubmitted,
+) subscription.EventSubscription {
+	ctx, cancelCtx := context.WithCancel(context.Background())
+	go func() {
+		ticker := time.NewTicker(hrss.opts.Tick)
+		defer ticker.Stop()
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-ticker.C:
+				lastBlock, err := hrss.contract.blockCounter.CurrentBlock()
+				if err != nil {
+					wcLogger.Errorf(
+						"subscription failed to pull events: [%v]",
+						err,
+					)
+				}
+				fromBlock := lastBlock - hrss.opts.PastBlocks
+
+				wcLogger.Infof(
+					"subscription monitoring fetching past HeartbeatRequestSubmitted events "+
+						"starting from block [%v]",
+					fromBlock,
+				)
+				events, err := hrss.contract.PastHeartbeatRequestSubmittedEvents(
+					fromBlock,
+					nil,
+					hrss.coordinatorFilter,
+				)
+				if err != nil {
+					wcLogger.Errorf(
+						"subscription failed to pull events: [%v]",
+						err,
+					)
+					continue
+				}
+				wcLogger.Infof(
+					"subscription monitoring fetched [%v] past HeartbeatRequestSubmitted events",
+					len(events),
+				)
+
+				for _, event := range events {
+					sink <- event
+				}
+			}
+		}
+	}()
+
+	sub := hrss.contract.watchHeartbeatRequestSubmitted(
+		sink,
+		hrss.coordinatorFilter,
+	)
+
+	return subscription.NewEventSubscription(func() {
+		sub.Unsubscribe()
+		cancelCtx()
+	})
+}
+
+func (wc *WalletCoordinator) watchHeartbeatRequestSubmitted(
+	sink chan *abi.WalletCoordinatorHeartbeatRequestSubmitted,
+	coordinatorFilter []common.Address,
+) event.Subscription {
+	subscribeFn := func(ctx context.Context) (event.Subscription, error) {
+		return wc.contract.WatchHeartbeatRequestSubmitted(
+			&bind.WatchOpts{Context: ctx},
+			sink,
+			coordinatorFilter,
+		)
+	}
+
+	thresholdViolatedFn := func(elapsed time.Duration) {
+		wcLogger.Warnf(
+			"subscription to event HeartbeatRequestSubmitted had to be "+
+				"retried [%s] since the last attempt; please inspect "+
+				"host chain connectivity",
+			elapsed,
+		)
+	}
+
+	subscriptionFailedFn := func(err error) {
+		wcLogger.Errorf(
+			"subscription to event HeartbeatRequestSubmitted failed "+
+				"with error: [%v]; resubscription attempt will be "+
+				"performed",
+			err,
+		)
+	}
+
+	return chainutil.WithResubscription(
+		chainutil.SubscriptionBackoffMax,
+		subscribeFn,
+		chainutil.SubscriptionAlertThreshold,
+		thresholdViolatedFn,
+		subscriptionFailedFn,
+	)
+}
+
+func (wc *WalletCoordinator) PastHeartbeatRequestSubmittedEvents(
+	startBlock uint64,
+	endBlock *uint64,
+	coordinatorFilter []common.Address,
+) ([]*abi.WalletCoordinatorHeartbeatRequestSubmitted, error) {
+	iterator, err := wc.contract.FilterHeartbeatRequestSubmitted(
+		&bind.FilterOpts{
+			Start: startBlock,
+			End:   endBlock,
+		},
+		coordinatorFilter,
+	)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"error retrieving past HeartbeatRequestSubmitted events: [%v]",
+			err,
+		)
+	}
+
+	events := make([]*abi.WalletCoordinatorHeartbeatRequestSubmitted, 0)
 
 	for iterator.Next() {
 		event := iterator.Event
@@ -3972,382 +3962,6 @@ func (wc *WalletCoordinator) PastOwnershipTransferredEvents(
 	}
 
 	events := make([]*abi.WalletCoordinatorOwnershipTransferred, 0)
-
-	for iterator.Next() {
-		event := iterator.Event
-		events = append(events, event)
-	}
-
-	return events, nil
-}
-
-func (wc *WalletCoordinator) ProposalSubmitterAddedEvent(
-	opts *ethereum.SubscribeOpts,
-	proposalSubmitterFilter []common.Address,
-) *WcProposalSubmitterAddedSubscription {
-	if opts == nil {
-		opts = new(ethereum.SubscribeOpts)
-	}
-	if opts.Tick == 0 {
-		opts.Tick = chainutil.DefaultSubscribeOptsTick
-	}
-	if opts.PastBlocks == 0 {
-		opts.PastBlocks = chainutil.DefaultSubscribeOptsPastBlocks
-	}
-
-	return &WcProposalSubmitterAddedSubscription{
-		wc,
-		opts,
-		proposalSubmitterFilter,
-	}
-}
-
-type WcProposalSubmitterAddedSubscription struct {
-	contract                *WalletCoordinator
-	opts                    *ethereum.SubscribeOpts
-	proposalSubmitterFilter []common.Address
-}
-
-type walletCoordinatorProposalSubmitterAddedFunc func(
-	ProposalSubmitter common.Address,
-	blockNumber uint64,
-)
-
-func (psas *WcProposalSubmitterAddedSubscription) OnEvent(
-	handler walletCoordinatorProposalSubmitterAddedFunc,
-) subscription.EventSubscription {
-	eventChan := make(chan *abi.WalletCoordinatorProposalSubmitterAdded)
-	ctx, cancelCtx := context.WithCancel(context.Background())
-
-	go func() {
-		for {
-			select {
-			case <-ctx.Done():
-				return
-			case event := <-eventChan:
-				handler(
-					event.ProposalSubmitter,
-					event.Raw.BlockNumber,
-				)
-			}
-		}
-	}()
-
-	sub := psas.Pipe(eventChan)
-	return subscription.NewEventSubscription(func() {
-		sub.Unsubscribe()
-		cancelCtx()
-	})
-}
-
-func (psas *WcProposalSubmitterAddedSubscription) Pipe(
-	sink chan *abi.WalletCoordinatorProposalSubmitterAdded,
-) subscription.EventSubscription {
-	ctx, cancelCtx := context.WithCancel(context.Background())
-	go func() {
-		ticker := time.NewTicker(psas.opts.Tick)
-		defer ticker.Stop()
-		for {
-			select {
-			case <-ctx.Done():
-				return
-			case <-ticker.C:
-				lastBlock, err := psas.contract.blockCounter.CurrentBlock()
-				if err != nil {
-					wcLogger.Errorf(
-						"subscription failed to pull events: [%v]",
-						err,
-					)
-				}
-				fromBlock := lastBlock - psas.opts.PastBlocks
-
-				wcLogger.Infof(
-					"subscription monitoring fetching past ProposalSubmitterAdded events "+
-						"starting from block [%v]",
-					fromBlock,
-				)
-				events, err := psas.contract.PastProposalSubmitterAddedEvents(
-					fromBlock,
-					nil,
-					psas.proposalSubmitterFilter,
-				)
-				if err != nil {
-					wcLogger.Errorf(
-						"subscription failed to pull events: [%v]",
-						err,
-					)
-					continue
-				}
-				wcLogger.Infof(
-					"subscription monitoring fetched [%v] past ProposalSubmitterAdded events",
-					len(events),
-				)
-
-				for _, event := range events {
-					sink <- event
-				}
-			}
-		}
-	}()
-
-	sub := psas.contract.watchProposalSubmitterAdded(
-		sink,
-		psas.proposalSubmitterFilter,
-	)
-
-	return subscription.NewEventSubscription(func() {
-		sub.Unsubscribe()
-		cancelCtx()
-	})
-}
-
-func (wc *WalletCoordinator) watchProposalSubmitterAdded(
-	sink chan *abi.WalletCoordinatorProposalSubmitterAdded,
-	proposalSubmitterFilter []common.Address,
-) event.Subscription {
-	subscribeFn := func(ctx context.Context) (event.Subscription, error) {
-		return wc.contract.WatchProposalSubmitterAdded(
-			&bind.WatchOpts{Context: ctx},
-			sink,
-			proposalSubmitterFilter,
-		)
-	}
-
-	thresholdViolatedFn := func(elapsed time.Duration) {
-		wcLogger.Warnf(
-			"subscription to event ProposalSubmitterAdded had to be "+
-				"retried [%s] since the last attempt; please inspect "+
-				"host chain connectivity",
-			elapsed,
-		)
-	}
-
-	subscriptionFailedFn := func(err error) {
-		wcLogger.Errorf(
-			"subscription to event ProposalSubmitterAdded failed "+
-				"with error: [%v]; resubscription attempt will be "+
-				"performed",
-			err,
-		)
-	}
-
-	return chainutil.WithResubscription(
-		chainutil.SubscriptionBackoffMax,
-		subscribeFn,
-		chainutil.SubscriptionAlertThreshold,
-		thresholdViolatedFn,
-		subscriptionFailedFn,
-	)
-}
-
-func (wc *WalletCoordinator) PastProposalSubmitterAddedEvents(
-	startBlock uint64,
-	endBlock *uint64,
-	proposalSubmitterFilter []common.Address,
-) ([]*abi.WalletCoordinatorProposalSubmitterAdded, error) {
-	iterator, err := wc.contract.FilterProposalSubmitterAdded(
-		&bind.FilterOpts{
-			Start: startBlock,
-			End:   endBlock,
-		},
-		proposalSubmitterFilter,
-	)
-	if err != nil {
-		return nil, fmt.Errorf(
-			"error retrieving past ProposalSubmitterAdded events: [%v]",
-			err,
-		)
-	}
-
-	events := make([]*abi.WalletCoordinatorProposalSubmitterAdded, 0)
-
-	for iterator.Next() {
-		event := iterator.Event
-		events = append(events, event)
-	}
-
-	return events, nil
-}
-
-func (wc *WalletCoordinator) ProposalSubmitterRemovedEvent(
-	opts *ethereum.SubscribeOpts,
-	proposalSubmitterFilter []common.Address,
-) *WcProposalSubmitterRemovedSubscription {
-	if opts == nil {
-		opts = new(ethereum.SubscribeOpts)
-	}
-	if opts.Tick == 0 {
-		opts.Tick = chainutil.DefaultSubscribeOptsTick
-	}
-	if opts.PastBlocks == 0 {
-		opts.PastBlocks = chainutil.DefaultSubscribeOptsPastBlocks
-	}
-
-	return &WcProposalSubmitterRemovedSubscription{
-		wc,
-		opts,
-		proposalSubmitterFilter,
-	}
-}
-
-type WcProposalSubmitterRemovedSubscription struct {
-	contract                *WalletCoordinator
-	opts                    *ethereum.SubscribeOpts
-	proposalSubmitterFilter []common.Address
-}
-
-type walletCoordinatorProposalSubmitterRemovedFunc func(
-	ProposalSubmitter common.Address,
-	blockNumber uint64,
-)
-
-func (psrs *WcProposalSubmitterRemovedSubscription) OnEvent(
-	handler walletCoordinatorProposalSubmitterRemovedFunc,
-) subscription.EventSubscription {
-	eventChan := make(chan *abi.WalletCoordinatorProposalSubmitterRemoved)
-	ctx, cancelCtx := context.WithCancel(context.Background())
-
-	go func() {
-		for {
-			select {
-			case <-ctx.Done():
-				return
-			case event := <-eventChan:
-				handler(
-					event.ProposalSubmitter,
-					event.Raw.BlockNumber,
-				)
-			}
-		}
-	}()
-
-	sub := psrs.Pipe(eventChan)
-	return subscription.NewEventSubscription(func() {
-		sub.Unsubscribe()
-		cancelCtx()
-	})
-}
-
-func (psrs *WcProposalSubmitterRemovedSubscription) Pipe(
-	sink chan *abi.WalletCoordinatorProposalSubmitterRemoved,
-) subscription.EventSubscription {
-	ctx, cancelCtx := context.WithCancel(context.Background())
-	go func() {
-		ticker := time.NewTicker(psrs.opts.Tick)
-		defer ticker.Stop()
-		for {
-			select {
-			case <-ctx.Done():
-				return
-			case <-ticker.C:
-				lastBlock, err := psrs.contract.blockCounter.CurrentBlock()
-				if err != nil {
-					wcLogger.Errorf(
-						"subscription failed to pull events: [%v]",
-						err,
-					)
-				}
-				fromBlock := lastBlock - psrs.opts.PastBlocks
-
-				wcLogger.Infof(
-					"subscription monitoring fetching past ProposalSubmitterRemoved events "+
-						"starting from block [%v]",
-					fromBlock,
-				)
-				events, err := psrs.contract.PastProposalSubmitterRemovedEvents(
-					fromBlock,
-					nil,
-					psrs.proposalSubmitterFilter,
-				)
-				if err != nil {
-					wcLogger.Errorf(
-						"subscription failed to pull events: [%v]",
-						err,
-					)
-					continue
-				}
-				wcLogger.Infof(
-					"subscription monitoring fetched [%v] past ProposalSubmitterRemoved events",
-					len(events),
-				)
-
-				for _, event := range events {
-					sink <- event
-				}
-			}
-		}
-	}()
-
-	sub := psrs.contract.watchProposalSubmitterRemoved(
-		sink,
-		psrs.proposalSubmitterFilter,
-	)
-
-	return subscription.NewEventSubscription(func() {
-		sub.Unsubscribe()
-		cancelCtx()
-	})
-}
-
-func (wc *WalletCoordinator) watchProposalSubmitterRemoved(
-	sink chan *abi.WalletCoordinatorProposalSubmitterRemoved,
-	proposalSubmitterFilter []common.Address,
-) event.Subscription {
-	subscribeFn := func(ctx context.Context) (event.Subscription, error) {
-		return wc.contract.WatchProposalSubmitterRemoved(
-			&bind.WatchOpts{Context: ctx},
-			sink,
-			proposalSubmitterFilter,
-		)
-	}
-
-	thresholdViolatedFn := func(elapsed time.Duration) {
-		wcLogger.Warnf(
-			"subscription to event ProposalSubmitterRemoved had to be "+
-				"retried [%s] since the last attempt; please inspect "+
-				"host chain connectivity",
-			elapsed,
-		)
-	}
-
-	subscriptionFailedFn := func(err error) {
-		wcLogger.Errorf(
-			"subscription to event ProposalSubmitterRemoved failed "+
-				"with error: [%v]; resubscription attempt will be "+
-				"performed",
-			err,
-		)
-	}
-
-	return chainutil.WithResubscription(
-		chainutil.SubscriptionBackoffMax,
-		subscribeFn,
-		chainutil.SubscriptionAlertThreshold,
-		thresholdViolatedFn,
-		subscriptionFailedFn,
-	)
-}
-
-func (wc *WalletCoordinator) PastProposalSubmitterRemovedEvents(
-	startBlock uint64,
-	endBlock *uint64,
-	proposalSubmitterFilter []common.Address,
-) ([]*abi.WalletCoordinatorProposalSubmitterRemoved, error) {
-	iterator, err := wc.contract.FilterProposalSubmitterRemoved(
-		&bind.FilterOpts{
-			Start: startBlock,
-			End:   endBlock,
-		},
-		proposalSubmitterFilter,
-	)
-	if err != nil {
-		return nil, fmt.Errorf(
-			"error retrieving past ProposalSubmitterRemoved events: [%v]",
-			err,
-		)
-	}
-
-	events := make([]*abi.WalletCoordinatorProposalSubmitterRemoved, 0)
 
 	for iterator.Next() {
 		event := iterator.Event
