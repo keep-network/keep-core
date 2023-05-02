@@ -282,6 +282,7 @@ export const MODAL_TYPES = {
   AuthorizedButNotStakedToTWarningModal:
     "AuthorizedButNotStakedToTWarningModal",
   ContactYourGrantManagerWarning: "ContactYourGrantManagerWarning",
+  LegacyDashboard: "LegacyDashboard",
 }
 
 export const COV_POOL_TIMELINE_STEPS = {

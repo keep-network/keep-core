@@ -1,4 +1,4 @@
-import React from "react"
+import React, { useEffect } from "react"
 import { Provider } from "react-redux"
 import { BrowserRouter as Router } from "react-router-dom"
 import store from "./store"
@@ -14,6 +14,8 @@ import useAutoWalletAddressInjectIntoUrl from "./hooks/useAutoWalletAddressInjec
 import useModalWindowForMobileUsers from "./hooks/useModalWindowForMobileUsers"
 import { ModalRoot } from "./components/modal"
 import NavLink from "./components/NavLink"
+import { useModal } from "./hooks/useModal"
+import { MODAL_TYPES } from "./constants/constants"
 
 const App = () => (
   <Provider store={store}>
@@ -49,6 +51,13 @@ const AppLayout = () => {
 }
 
 const AppHeader = () => {
+  const { openModal } = useModal()
+
+  // TODO: open only once.
+  useEffect(() => {
+    openModal(MODAL_TYPES.LegacyDashboard)
+  }, [openModal])
+
   return (
     <header className="app__header">
       <NavLink to="/overview" className="app-logo">
