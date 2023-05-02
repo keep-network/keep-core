@@ -18,7 +18,6 @@ import { messageType } from "../components/Message"
 import {
   OPERATOR_DELEGATION_UNDELEGATED,
   FETCH_OPERATOR_DELEGATIONS_SUCCESS,
-  tbtcV2Migration,
   REMOVE_STAKE_FROM_THRESHOLD_AUTH_DATA,
   ADD_STAKE_TO_THRESHOLD_AUTH_DATA,
 } from "../actions"
@@ -1119,34 +1118,6 @@ export function* observeWithdrawalCompletedEvent() {
     EVENTS.COVERAGE_POOLS.WITHDRAWAL_COMPLETED,
     coveragePoolWithdrawalCompletedEventEmitted,
     `AssetPool.${EVENTS.COVERAGE_POOLS.WITHDRAWAL_COMPLETED}`
-  )
-}
-
-export function* observeTBTCV2MintedEvent() {
-  yield take(tbtcV2Migration.TBTCV2_MIGRATION_FETCH_DATA_SUCCESS)
-
-  const vendingMachine = Keep.tBTCV2Migration.vendingMachine.instance
-
-  yield fork(
-    subscribeToEventAndEmitData,
-    vendingMachine,
-    "Minted",
-    tbtcV2Migration.TBTCV2_TOKEN_MINTED_EVENT_EMITTED,
-    "VendingMachine.Minted"
-  )
-}
-
-export function* observeTBTCV2UnmintedEvent() {
-  yield take(tbtcV2Migration.TBTCV2_MIGRATION_FETCH_DATA_SUCCESS)
-
-  const vendingMachine = Keep.tBTCV2Migration.vendingMachine.instance
-
-  yield fork(
-    subscribeToEventAndEmitData,
-    vendingMachine,
-    "Unminted",
-    tbtcV2Migration.TBTCV2_TOKEN_UNMINTED_EVENT_EMITTED,
-    "VendingMachine.Unminted"
   )
 }
 

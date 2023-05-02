@@ -29,7 +29,6 @@ import {
   ConfirmReleaseTokensFromGrant,
 } from "./staking"
 import { AddKeep, WithdrawKeep } from "./liquidity"
-import { ConfirmMigration, MigrationCompleted } from "./tbtc-migration"
 import {
   InitiateDeposit,
   WarningBeforeDeposit,
@@ -82,8 +81,6 @@ const MODAL_TYPE_TO_COMPONENT = {
   [MODAL_TYPES.UndelegateStake]: UndelegateStake,
   [MODAL_TYPES.UndelegationInitiated]: UndelegationInitiated,
   [MODAL_TYPES.CopyStake]: CopyStake,
-  [MODAL_TYPES.ConfirmTBTCMigration]: ConfirmMigration,
-  [MODAL_TYPES.TBTCMigrationCompleted]: MigrationCompleted,
   [MODAL_TYPES.ConfirmReleaseTokensFromGrant]: ConfirmReleaseTokensFromGrant,
   [MODAL_TYPES.WarningBeforeCovPoolDeposit]: WarningBeforeDeposit,
   [MODAL_TYPES.InitiateCovPoolDeposit]: InitiateDeposit,

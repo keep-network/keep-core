@@ -15,7 +15,6 @@ import LiquidityPage from "../pages/liquidity"
 import Chip from "./Chip"
 import NavLink from "./NavLink"
 import CoveragePoolPage from "../pages/coverage-pools"
-import TBTCMigrationPage from "../pages/tbtc-migration"
 import ThresholdPage from "../pages/threshold"
 
 const styles = {
@@ -44,13 +43,7 @@ export const SideMenu = (props) => {
         <NavLinkSection
           label="upgrade"
           icon={<Icons.Star />}
-          subroutes={[
-            {
-              ...TBTCMigrationPage.route,
-              title: "TBTC v2.0",
-            },
-            ThresholdPage.route,
-          ]}
+          subroutes={[ThresholdPage.route]}
         />
         <NavLinkSection
           label="work"

@@ -46,9 +46,6 @@ export const LINK = {
     docs: "https://github.com/keep-network/coverage-pools/blob/main/docs/design.adoc",
     covKeepAddress: "0x2aa24dac5e494e7b028ed43023530e5769df5d8b",
   },
-  tbtcMigration: {
-    docs: "https://coda.io/@keep-network/how-to-mint-tbtc-v2-with-etherscan",
-  },
   pools: {
     saddle: {
       tbtc: "https://saddle.exchange/#/pools/tbtc/deposit",
@@ -225,11 +222,6 @@ export const AUTH_CONTRACTS_LABEL = {
   THRESHOLD_TOKEN_STAKING: "Threshold Staking",
 }
 
-export const TBTC_TOKEN_VERSION = {
-  v1: "v1",
-  v2: "v2",
-}
-
 /**
  * Enum defines a supported types of Modals
  * @readonly
@@ -261,8 +253,6 @@ export const MODAL_TYPES = {
   StakingTokensClaimed: "StakingTokensClaimed",
   GrantTokensWithdrawn: "GrantTokensWithdrawn",
   CopyStake: "CopyStake",
-  ConfirmTBTCMigration: "ConfirmTBTCMigration",
-  TBTCMigrationCompleted: "TBTCMigrationCompleted",
   ConfirmReleaseTokensFromGrant: "ConfirmReleaseTokensFromGrant",
   WarningBeforeCovPoolDeposit: "WarningBeforeCovPoolDeposit",
   InitiateCovPoolDeposit: "InitiateCovPoolDeposit",
