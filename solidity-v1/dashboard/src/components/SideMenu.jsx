@@ -11,7 +11,6 @@ import ResourcesPage from "../pages/ResourcesPage"
 import * as Icons from "./Icons"
 import Divider from "./Divider"
 import { isEmptyArray } from "../utils/array.utils"
-import LiquidityPage from "../pages/liquidity"
 import Chip from "./Chip"
 import NavLink from "./NavLink"
 import CoveragePoolPage from "../pages/coverage-pools"
@@ -55,7 +54,6 @@ export const SideMenu = (props) => {
           icon={<Icons.FeesVector />}
           subroutes={[
             CoveragePoolPage.route,
-            LiquidityPage.route,
             EarningsPage.route,
             RewardsPage.route,
           ]}

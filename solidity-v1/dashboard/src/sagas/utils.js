@@ -1,11 +1,9 @@
 import { call, put, take, race } from "redux-saga/effects"
 import { Web3Loaded, ContractsLoaded } from "../contracts"
-import { LiquidityRewardsFactory } from "../services/liquidity-rewards"
 import { createSubcribeToContractEventChannel } from "./web3"
 import { isString } from "../utils/general.utils"
 import { modalActions } from "../actions"
 
-/** @typedef { import("../services/liquidity-rewards").LiquidityRewards} LiquidityRewards */
 /** @typedef { import("web3-eth-contract").Contract} Web3jsContract */
 /** @typedef {import("../constants/constants").MODAL_TYPES} ModalTypes */
 
@@ -49,33 +47,6 @@ export function* logError(errorActionType, error, payload = {}) {
 export function* logErrorAndThrow(errorActionType, error, payload = {}) {
   yield* logError(errorActionType, error, payload)
   throw error
-}
-
-/**
- *
- * @param {Object} liquidityRewardPair - Liquidity reward data.
- * @param {string} liquidityRewardPair.pool - The type of pool.
- * @param {string} liquidityRewardPair.contractName - The LPRewards contract
- * name for a given liquidity pair.
- * @param {Object} liquidityRewardPair.options - Additional options that define the pool.
- * @return {LiquidityRewards} Liquidity rewards wrapper.
- */
-export function* getLPRewardsWrapper(liquidityRewardPair) {
-  const contracts = yield getContractsContext()
-  const web3 = yield getWeb3Context()
-
-  if (!liquidityRewardPair.contractName) return null
-
-  const LPRewardsContract = contracts[liquidityRewardPair.contractName]
-  const LiquidityRewards = yield call(
-    [LiquidityRewardsFactory, LiquidityRewardsFactory.initialize],
-    liquidityRewardPair.pool,
-    LPRewardsContract,
-    web3,
-    liquidityRewardPair.options
-  )
-
-  return LiquidityRewards
 }
 
 export const identifyTaskByAddress = (action) =>
