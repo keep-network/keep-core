@@ -50,6 +50,19 @@ const AppLayout = () => {
   )
 }
 
+const styles = {
+  legacyBadge: {
+    wrapper: {
+      marginTop: "1.5rem",
+      padding: "0 2.75rem",
+      borderRadius: "4px",
+    },
+    text: {
+      fontWeight: 600,
+    },
+  },
+}
+
 const AppHeader = () => {
   const { openModal } = useModal()
 
@@ -60,6 +73,12 @@ const AppHeader = () => {
 
   return (
     <header className="app__header">
+      <div
+        className="bg-yellow-300 text-yellow-900 self-center"
+        style={styles.legacyBadge.wrapper}
+      >
+        <h6 style={styles.legacyBadge.text}>LEGACY</h6>
+      </div>
       <NavLink to="/overview" className="app-logo">
         <Icons.KeepDashboardLogo />
       </NavLink>
