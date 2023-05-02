@@ -42,12 +42,14 @@ func initializeBitcoinDifficultyMaintainer(
 	ctx context.Context,
 	btcChain bitcoin.Chain,
 	chain BitcoinDifficultyChain,
+	disableProxy bool,
 	idleBackOffTime time.Duration,
 	restartBackOffTime time.Duration,
 ) {
 	bitcoinDifficultyMaintainer := &bitcoinDifficultyMaintainer{
 		btcChain:           btcChain,
 		chain:              chain,
+		disableProxy:       disableProxy,
 		idleBackOffTime:    idleBackOffTime,
 		restartBackOffTime: restartBackOffTime,
 	}

@@ -332,10 +332,10 @@ func initMaintainerFlags(command *cobra.Command, cfg *config.Config) {
 	)
 
 	command.Flags().BoolVar(
-		&cfg.Maintainer.UseBitcoinDifficultyProxy,
-		"useBitcoinDifficultyProxy",
+		&cfg.Maintainer.DisableBitcoinDifficultyProxy,
+		"disableBitcoinDifficultyProxy",
 		false,
-		"use Bitcoin difficulty proxy",
+		"disable Bitcoin difficulty proxy",
 	)
 }
 

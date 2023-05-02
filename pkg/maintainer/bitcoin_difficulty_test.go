@@ -469,6 +469,7 @@ func TestBitcoinDifficultyMaintainer_Integration(t *testing.T) {
 		ctx,
 		btcChain,
 		difficultyChain,
+		false,
 		idleBackOffTime,
 		restartBackOffTime,
 	)

@@ -240,9 +240,9 @@ var cmdFlagsTests = map[string]struct {
 		expectedValueFromFlag: true,
 		defaultValue:          false,
 	},
-	"maintainer.useBitcoinDifficultyProxy": {
-		readValueFunc:         func(c *config.Config) interface{} { return c.Maintainer.UseBitcoinDifficultyProxy },
-		flagName:              "--useBitcoinDifficultyProxy",
+	"maintainer.disableBitcoinDifficultyProxy": {
+		readValueFunc:         func(c *config.Config) interface{} { return c.Maintainer.DisableBitcoinDifficultyProxy },
+		flagName:              "--disableBitcoinDifficultyProxy",
 		flagValue:             "", // don't provide any value
 		expectedValueFromFlag: true,
 		defaultValue:          false,
