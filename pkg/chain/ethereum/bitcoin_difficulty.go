@@ -23,7 +23,7 @@ type BitcoinDifficultyChain struct {
 	*baseChain
 
 	lightRelay                *contract.LightRelay
-	LightRelayMaintainerProxy *contract.LightRelayMaintainerProxy
+	lightRelayMaintainerProxy *contract.LightRelayMaintainerProxy
 }
 
 // NewBitcoinDifficultyChain construct a new instance of the Bitcoin difficulty
@@ -67,7 +67,7 @@ func NewBitcoinDifficultyChain(
 		return &BitcoinDifficultyChain{
 			baseChain:                 baseChain,
 			lightRelay:                lightRelay,
-			LightRelayMaintainerProxy: nil,
+			lightRelayMaintainerProxy: nil,
 		}, nil
 	}
 
@@ -118,7 +118,7 @@ func NewBitcoinDifficultyChain(
 	return &BitcoinDifficultyChain{
 		baseChain:                 baseChain,
 		lightRelay:                lightRelay,
-		LightRelayMaintainerProxy: lightRelayMaintainerProxy,
+		lightRelayMaintainerProxy: lightRelayMaintainerProxy,
 	}, nil
 }
 
@@ -130,16 +130,40 @@ func (bdc *BitcoinDifficultyChain) Ready() (bool, error) {
 	return bdc.lightRelay.Ready()
 }
 
-// IsAuthorized checks whether the given address has been authorised by
-// governance to submit a retarget.
+// IsAuthorized checks whether the given address has been authorized to submit
+// a retarget directly to LightRelay. This function should be used when
+// retargetting via LightRelayMaintainerProxy is disabled.
 func (bdc *BitcoinDifficultyChain) IsAuthorized(address chain.Address) (bool, error) {
-	return bdc.LightRelayMaintainerProxy.IsAuthorized(
+	authorizationRequired, err := bdc.lightRelay.AuthorizationRequired()
+	if err != nil {
+		return false, fmt.Errorf(
+			"cannot check whether authorization is required to submit "+
+				"block headers: [%w]",
+			err,
+		)
+	}
+
+	if !authorizationRequired {
+		return true, nil
+	}
+
+	return bdc.lightRelay.IsAuthorized(
+		common.HexToAddress(address.String()),
+	)
+}
+
+// IsAuthorizedForRefund checks whether the given address has been authorized to
+// submit a retarget via LightRelayMaintainerProxy. This function should be used
+// when retargetting via LightRelayMaintainerProxy is not disabled.
+func (bdc *BitcoinDifficultyChain) IsAuthorizedForRefund(address chain.Address) (bool, error) {
+	return bdc.lightRelayMaintainerProxy.IsAuthorized(
 		common.HexToAddress(address.String()),
 	)
 }
 
 // Retarget adds a new epoch to the relay by providing a proof of the difficulty
-// before and after the retarget.
+// before and after the retarget. The cost of calling this function is not
+// refunded to the caller.
 func (bdc *BitcoinDifficultyChain) Retarget(headers []*bitcoin.BlockHeader) error {
 	var serializedHeaders []byte
 	for _, header := range headers {
@@ -147,14 +171,23 @@ func (bdc *BitcoinDifficultyChain) Retarget(headers []*bitcoin.BlockHeader) erro
 		serializedHeaders = append(serializedHeaders, serializedHeader[:]...)
 	}
 
-	if bdc.LightRelayMaintainerProxy == nil {
-		// Update Bitcoin difficulty directly via LightRelay.
-		_, err := bdc.lightRelay.Retarget(serializedHeaders)
-		return err
+	// Update Bitcoin difficulty directly via LightRelay.
+	_, err := bdc.lightRelay.Retarget(serializedHeaders)
+	return err
+}
+
+// RetargetWithRefund adds a new epoch to the relay by providing a proof of the
+// difficulty before and after the retarget. The cost of calling this function
+// is refunded to the caller.
+func (bdc *BitcoinDifficultyChain) RetargetWithRefund(headers []*bitcoin.BlockHeader) error {
+	var serializedHeaders []byte
+	for _, header := range headers {
+		serializedHeader := header.Serialize()
+		serializedHeaders = append(serializedHeaders, serializedHeader[:]...)
 	}
 
 	// Update Bitcoin difficulty via LightRelayMaintainerProxy.
-	_, err := bdc.LightRelayMaintainerProxy.Retarget(serializedHeaders)
+	_, err := bdc.lightRelayMaintainerProxy.Retarget(serializedHeaders)
 	return err
 }
 

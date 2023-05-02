@@ -37,9 +37,20 @@ func (lbdc *localBitcoinDifficultyChain) AuthorizationRequired() (bool, error) {
 	return lbdc.authorizationRequired, nil
 }
 
-// IsAuthorized checks whether the given address has been authorized by
-// governance to submit a retarget.
+// IsAuthorized checks whether the given address has been authorized to
+// submit a retarget directly to LightRelay. This function should be used
+// when retargetting via LightRelayMaintainerProxy is disabled.
 func (lbdc *localBitcoinDifficultyChain) IsAuthorized(
+	address chain.Address,
+) (bool, error) {
+	return lbdc.authorizedOperators[address], nil
+}
+
+// IsAuthorizedForRefund checks whether the given address has been
+// authorized to submit a retarget via LightRelayMaintainerProxy. This
+// function should be used when retargetting via LightRelayMaintainerProxy
+// is not disabled.
+func (lbdc *localBitcoinDifficultyChain) IsAuthorizedForRefund(
 	address chain.Address,
 ) (bool, error) {
 	return lbdc.authorizedOperators[address], nil
@@ -66,6 +77,15 @@ func (lbdc *localBitcoinDifficultyChain) Retarget(
 	lbdc.currentEpoch++
 
 	return nil
+}
+
+// RetargetWithRefund adds a new epoch to the relay by providing a proof of
+// the difficulty before and after the retarget. The cost of calling this
+// function is refunded to the caller.
+func (lbdc *localBitcoinDifficultyChain) RetargetWithRefund(
+	headers []*bitcoin.BlockHeader,
+) error {
+	return lbdc.Retarget(headers)
 }
 
 // CurrentEpoch returns the number of the latest difficulty epoch which is
