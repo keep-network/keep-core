@@ -2,12 +2,13 @@ package tbtc
 
 import (
 	"context"
-	"crypto/sha256"
 	"fmt"
 	"math/big"
 	"time"
 
 	"github.com/ipfs/go-log/v2"
+	"github.com/keep-network/keep-core/pkg/bitcoin"
+	"github.com/keep-network/keep-core/pkg/tecdsa"
 )
 
 const (
@@ -24,12 +25,22 @@ const (
 	heartbeatRequestTimeoutSafetyMargin = 5 * time.Minute
 )
 
+// heartbeatSigningExecutor is an interface meant to decouple the specific
+// implementation of the signing executor from the heartbeat action.
+type heartbeatSigningExecutor interface {
+	sign(
+		ctx context.Context,
+		message *big.Int,
+		startBlock uint64,
+	) (*tecdsa.Signature, uint64, error)
+}
+
 // heartbeatAction is a walletAction implementation handling heartbeat requests
 // from the wallet coordinator.
 type heartbeatAction struct {
 	logger           log.StandardLogger
 	executingWallet  wallet
-	signingExecutor  *signingExecutor
+	signingExecutor  heartbeatSigningExecutor
 	message          []byte
 	startBlock       uint64
 	requestExpiresAt time.Time
@@ -38,7 +49,7 @@ type heartbeatAction struct {
 func newHeartbeatAction(
 	logger log.StandardLogger,
 	executingWallet wallet,
-	signingExecutor *signingExecutor,
+	signingExecutor heartbeatSigningExecutor,
 	message []byte,
 	startBlock uint64,
 	requestExpiresAt time.Time,
@@ -54,8 +65,7 @@ func newHeartbeatAction(
 }
 
 func (ha *heartbeatAction) execute() error {
-	preimageSha256 := sha256.Sum256(ha.message)
-	messageBytes := sha256.Sum256(preimageSha256[:])
+	messageBytes := bitcoin.ComputeHash(ha.message)
 	messageToSign := new(big.Int).SetBytes(messageBytes[:])
 
 	heartbeatCtx, cancelHeartbeatCtx := context.WithTimeout(
