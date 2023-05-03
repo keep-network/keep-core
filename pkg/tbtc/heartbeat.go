@@ -65,6 +65,9 @@ func newHeartbeatAction(
 }
 
 func (ha *heartbeatAction) execute() error {
+	// TODO: When implementing the moving funds action we should make sure
+	// heartbeats are not executed by unstaking clients.
+
 	messageBytes := bitcoin.ComputeHash(ha.message)
 	messageToSign := new(big.Int).SetBytes(messageBytes[:])
 
