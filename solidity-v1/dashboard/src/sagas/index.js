@@ -29,10 +29,7 @@ const loginRequiredSagas = [
   ...Object.values(keepToTStaking),
 ]
 
-const sagas = [
-  ...Object.values(messagesSaga),
-  ...Object.values(coveragePool),
-]
+const sagas = [...Object.values(messagesSaga), ...Object.values(coveragePool)]
 
 export default function* rootSaga() {
   yield all(sagas.map(fork))

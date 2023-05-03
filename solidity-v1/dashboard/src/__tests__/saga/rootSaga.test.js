@@ -32,10 +32,7 @@ jest.mock("../../connectors/trezor", () => ({
   TrezorConnector: Object,
 }))
 
-const sagas = [
-  ...Object.values(messagesSaga),
-  ...Object.values(coveragePool),
-]
+const sagas = [...Object.values(messagesSaga), ...Object.values(coveragePool)]
 
 const loginRequiredSagas = [
   ...Object.values(delegateStakeSaga),
