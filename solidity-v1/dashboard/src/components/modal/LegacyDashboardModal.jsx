@@ -40,7 +40,7 @@ const LegacyDashboardModalBase = ({ onClose }) => {
         <h3 style={styles.body.title}>
           The Keep Network dashboard is functioning as a legacy dashboard.
         </h3>
-        <div className="text-big text-grey-70 mb-3">
+        <div className="text-big text-grey-70 mb-1">
           <p className="mb-1">
             This means only the following features are supported anymore:
           </p>
