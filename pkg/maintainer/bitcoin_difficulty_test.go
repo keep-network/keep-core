@@ -96,137 +96,177 @@ func TestVerifySubmissionEligibility(t *testing.T) {
 }
 
 func TestProveNextEpoch(t *testing.T) {
-	ctx, cancelCtx := context.WithCancel(context.Background())
-	defer cancelCtx()
-
-	btcChain := connectLocalBitcoinChain()
-
-	// Set three block headers on each side of the retarget. The old epoch
-	// number is 299, the new epoch number is 300.
-	blockHeaders := map[uint]*bitcoin.BlockHeader{
-		604797: {
-			Version:                 0,
-			PreviousBlockHeaderHash: bitcoin.Hash{},
-			MerkleRootHash:          bitcoin.Hash{},
-			Time:                    1000000,
-			Bits:                    1111111,
-			Nonce:                   10,
+	tests := []struct {
+		name         string
+		disableProxy bool
+	}{
+		{
+			name:         "proxy disabled",
+			disableProxy: true,
 		},
-		604798: {
-			Version:                 0,
-			PreviousBlockHeaderHash: bitcoin.Hash{},
-			MerkleRootHash:          bitcoin.Hash{},
-			Time:                    1000100,
-			Bits:                    1111111,
-			Nonce:                   20,
-		},
-		604799: { // Last block of the old epoch (epoch 299)
-			Version:                 0,
-			PreviousBlockHeaderHash: bitcoin.Hash{},
-			MerkleRootHash:          bitcoin.Hash{},
-			Time:                    1000200,
-			Bits:                    1111111,
-			Nonce:                   30,
-		},
-		604800: { // First block of the new epoch (epoch 300)
-			Version:                 0,
-			PreviousBlockHeaderHash: bitcoin.Hash{},
-			MerkleRootHash:          bitcoin.Hash{},
-			Time:                    1000300,
-			Bits:                    2222222,
-			Nonce:                   40,
-		},
-		604801: {
-			Version:                 0,
-			PreviousBlockHeaderHash: bitcoin.Hash{},
-			MerkleRootHash:          bitcoin.Hash{},
-			Time:                    1000400,
-			Bits:                    2222222,
-			Nonce:                   50,
-		},
-		604802: {
-			Version:                 0,
-			PreviousBlockHeaderHash: bitcoin.Hash{},
-			MerkleRootHash:          bitcoin.Hash{},
-			Time:                    1000500,
-			Bits:                    2222222,
-			Nonce:                   60,
+		{
+			name:         "proxy enabled",
+			disableProxy: false,
 		},
 	}
-	btcChain.SetBlockHeaders(blockHeaders)
 
-	difficultyChain := connectLocalBitcoinDifficultyChain()
-
-	difficultyChain.SetCurrentEpoch(299)
-	difficultyChain.SetProofLength(3)
-
-	bitcoinDifficultyMaintainer := &bitcoinDifficultyMaintainer{
-		btcChain:           btcChain,
-		chain:              difficultyChain,
-		disableProxy:       true,
-		idleBackOffTime:    bitcoinDifficultyDefaultIdleBackOffTime,
-		restartBackOffTime: bitcoinDifficultyDefaultRestartBackoffTime,
+	createBlockHeaders := func() map[uint]*bitcoin.BlockHeader {
+		return map[uint]*bitcoin.BlockHeader{
+			604797: {
+				Version:                 0,
+				PreviousBlockHeaderHash: bitcoin.Hash{},
+				MerkleRootHash:          bitcoin.Hash{},
+				Time:                    1000000,
+				Bits:                    1111111,
+				Nonce:                   10,
+			},
+			604798: {
+				Version:                 0,
+				PreviousBlockHeaderHash: bitcoin.Hash{},
+				MerkleRootHash:          bitcoin.Hash{},
+				Time:                    1000100,
+				Bits:                    1111111,
+				Nonce:                   20,
+			},
+			604799: { // Last block of the old epoch (epoch 299)
+				Version:                 0,
+				PreviousBlockHeaderHash: bitcoin.Hash{},
+				MerkleRootHash:          bitcoin.Hash{},
+				Time:                    1000200,
+				Bits:                    1111111,
+				Nonce:                   30,
+			},
+			604800: { // First block of the new epoch (epoch 300)
+				Version:                 0,
+				PreviousBlockHeaderHash: bitcoin.Hash{},
+				MerkleRootHash:          bitcoin.Hash{},
+				Time:                    1000300,
+				Bits:                    2222222,
+				Nonce:                   40,
+			},
+			604801: {
+				Version:                 0,
+				PreviousBlockHeaderHash: bitcoin.Hash{},
+				MerkleRootHash:          bitcoin.Hash{},
+				Time:                    1000400,
+				Bits:                    2222222,
+				Nonce:                   50,
+			},
+			604802: {
+				Version:                 0,
+				PreviousBlockHeaderHash: bitcoin.Hash{},
+				MerkleRootHash:          bitcoin.Hash{},
+				Time:                    1000500,
+				Bits:                    2222222,
+				Nonce:                   60,
+			},
+		}
 	}
 
-	result, err := bitcoinDifficultyMaintainer.proveNextEpoch(ctx)
-	if err != nil {
-		t.Fatal(err)
+	runProveNextEpochAssertions := func(
+		t *testing.T,
+		ctx context.Context,
+		bitcoinDifficultyMaintainer *bitcoinDifficultyMaintainer,
+		blockHeaders map[uint]*bitcoin.BlockHeader,
+		difficultyChain *localBitcoinDifficultyChain,
+	) {
+		result, err := bitcoinDifficultyMaintainer.proveNextEpoch(ctx)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		expectedResult := true
+		if result != expectedResult {
+			t.Fatalf(
+				"unexpected result returned\nexpected: %v\nactual:   %v\n",
+				expectedResult,
+				result,
+			)
+		}
+
+		var retargetEvents []*RetargetEvent
+		if bitcoinDifficultyMaintainer.disableProxy {
+			retargetEvents = difficultyChain.RetargetEvents()
+		} else {
+			retargetEvents = difficultyChain.RetargetWithRefundEvents()
+		}
+
+		expectedNumberOfRetargetEvents := 1
+		if len(retargetEvents) != expectedNumberOfRetargetEvents {
+			t.Fatalf(
+				"unexpected number of retarget events\nexpected: %v\nactual:   %v\n",
+				expectedNumberOfRetargetEvents,
+				len(retargetEvents),
+			)
+		}
+
+		eventsOldDifficulty := retargetEvents[0].oldDifficulty
+		expectedOldDifficulty := blockHeaders[604799].Bits
+		if eventsOldDifficulty != expectedOldDifficulty {
+			t.Fatalf(
+				"unexpected old difficulty of the retarget event \n"+
+					"expected: %v\nactual:   %v\n",
+				expectedOldDifficulty,
+				eventsOldDifficulty,
+			)
+		}
+
+		eventsNewDifficulty := retargetEvents[0].newDifficulty
+		expectedNewDifficulty := blockHeaders[604800].Bits
+		if eventsNewDifficulty != expectedNewDifficulty {
+			t.Fatalf(
+				"unexpected new difficulty of the retarget event \n"+
+					"expected: %v\nactual:   %v\n",
+				expectedNewDifficulty,
+				eventsNewDifficulty,
+			)
+		}
+
+		// Call once more, this time without any new epoch to prove
+		result, err = bitcoinDifficultyMaintainer.proveNextEpoch(ctx)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		expectedResult = false
+		if result != expectedResult {
+			t.Fatalf(
+				"unexpected result returned\nexpected: %v\nactual:   %v\n",
+				expectedResult,
+				result,
+			)
+		}
 	}
 
-	expectedResult := true
-	if result != expectedResult {
-		t.Fatalf(
-			"unexpected result returned\nexpected: %v\nactual:   %v\n",
-			expectedResult,
-			result,
-		)
-	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			ctx, cancelCtx := context.WithCancel(context.Background())
+			defer cancelCtx()
 
-	expectedNumberOfRetargetEvents := 1
-	retargetEvents := difficultyChain.RetargetEvents()
-	if len(retargetEvents) != expectedNumberOfRetargetEvents {
-		t.Fatalf(
-			"unexpected number of retarget events\nexpected: %v\nactual:   %v\n",
-			expectedNumberOfRetargetEvents,
-			len(retargetEvents),
-		)
-	}
+			btcChain := connectLocalBitcoinChain()
+			blockHeaders := createBlockHeaders()
+			btcChain.SetBlockHeaders(blockHeaders)
 
-	eventsOldDifficulty := retargetEvents[0].oldDifficulty
-	expectedOldDifficulty := blockHeaders[604799].Bits
-	if eventsOldDifficulty != expectedOldDifficulty {
-		t.Fatalf(
-			"unexpected old difficulty of the retarget event \n"+
-				"expected: %v\nactual:   %v\n",
-			expectedOldDifficulty,
-			eventsOldDifficulty,
-		)
-	}
+			difficultyChain := connectLocalBitcoinDifficultyChain()
+			difficultyChain.SetCurrentEpoch(299)
+			difficultyChain.SetProofLength(3)
 
-	eventsNewDifficulty := retargetEvents[0].newDifficulty
-	expectedNewDifficulty := blockHeaders[604800].Bits
-	if eventsNewDifficulty != expectedNewDifficulty {
-		t.Fatalf(
-			"unexpected new difficulty of the retarget event \n"+
-				"expected: %v\nactual:   %v\n",
-			expectedNewDifficulty,
-			eventsNewDifficulty,
-		)
-	}
+			bitcoinDifficultyMaintainer := &bitcoinDifficultyMaintainer{
+				btcChain:           btcChain,
+				chain:              difficultyChain,
+				disableProxy:       tc.disableProxy,
+				idleBackOffTime:    bitcoinDifficultyDefaultIdleBackOffTime,
+				restartBackOffTime: bitcoinDifficultyDefaultRestartBackoffTime,
+			}
 
-	// Call once more, this time without any new epoch to prove
-	result, err = bitcoinDifficultyMaintainer.proveNextEpoch(ctx)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	expectedResult = false
-	if result != expectedResult {
-		t.Fatalf(
-			"unexpected result returned\nexpected: %v\nactual:   %v\n",
-			expectedResult,
-			result,
-		)
+			runProveNextEpochAssertions(
+				t,
+				ctx,
+				bitcoinDifficultyMaintainer,
+				blockHeaders,
+				difficultyChain,
+			)
+		})
 	}
 }
 

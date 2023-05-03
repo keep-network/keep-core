@@ -23,7 +23,8 @@ type localBitcoinDifficultyChain struct {
 	authorizedOperators          map[chain.Address]bool
 	authorizedForRefundOperators map[chain.Address]bool
 
-	retargetEvents []*RetargetEvent
+	retargetEvents           []*RetargetEvent
+	retargetWithRefundEvents []*RetargetEvent
 }
 
 // Ready checks whether the relay is active (i.e. genesis has been performed).
@@ -79,7 +80,20 @@ func (lbdc *localBitcoinDifficultyChain) Retarget(
 func (lbdc *localBitcoinDifficultyChain) RetargetWithRefund(
 	headers []*bitcoin.BlockHeader,
 ) error {
-	return lbdc.Retarget(headers)
+	// For simplicity, store block header bits instead of their difficulty
+	// targets.
+	retargetEvent := &RetargetEvent{
+		oldDifficulty: headers[len(headers)/2-1].Bits,
+		newDifficulty: headers[len(headers)/2].Bits,
+	}
+	lbdc.retargetWithRefundEvents = append(
+		lbdc.retargetWithRefundEvents,
+		retargetEvent,
+	)
+
+	lbdc.currentEpoch++
+
+	return nil
 }
 
 // CurrentEpoch returns the number of the latest difficulty epoch which is
@@ -132,6 +146,11 @@ func (lbdc *localBitcoinDifficultyChain) SetProofLength(proofLength uint64) {
 // RetargetEvents returns all invocations of the Retarget method.
 func (lbdc *localBitcoinDifficultyChain) RetargetEvents() []*RetargetEvent {
 	return lbdc.retargetEvents
+}
+
+// RetargetWithRefundEvents returns all invocations of the Retarget method.
+func (lbdc *localBitcoinDifficultyChain) RetargetWithRefundEvents() []*RetargetEvent {
+	return lbdc.retargetWithRefundEvents
 }
 
 // connectLocalBitcoinDifficultyChain connects to the local Bitcoin difficulty
