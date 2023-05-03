@@ -4,13 +4,15 @@ import (
 	"context"
 	"crypto/ecdsa"
 	"fmt"
+	"math/big"
+	"time"
+
 	"github.com/ipfs/go-log/v2"
+	"go.uber.org/zap"
+
 	"github.com/keep-network/keep-core/pkg/bitcoin"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/tecdsa"
-	"go.uber.org/zap"
-	"math/big"
-	"time"
 )
 
 const (
@@ -129,7 +131,13 @@ func (dsa *depositSweepAction) execute() error {
 		zap.String("step", "validateProposal"),
 	)
 
-	validatedDeposits, err := dsa.validateProposal(validateProposalLogger)
+	validatedDeposits, err := ValidateDepositSweepProposal(
+		validateProposalLogger,
+		dsa.proposal,
+		depositSweepRequiredFundingTxConfirmations,
+		dsa.chain,
+		dsa.btcChain,
+	)
 	if err != nil {
 		return fmt.Errorf("validate proposal step failed: [%v]", err)
 	}
@@ -172,28 +180,34 @@ func (dsa *depositSweepAction) execute() error {
 	return nil
 }
 
-func (dsa *depositSweepAction) validateProposal(
+// ValidateDepositSweepProposal checks the deposit sweep proposal with on-chain
+// validation rules and verifies transactions on the Bitcoin chain.
+func ValidateDepositSweepProposal(
 	validateProposalLogger log.StandardLogger,
+	proposal *DepositSweepProposal,
+	requiredFundingTxConfirmations uint,
+	tbtcChain Chain,
+	btcChain bitcoin.Chain,
 ) ([]*Deposit, error) {
 	depositExtraInfo := make(
 		[]struct {
 			*Deposit
 			FundingTx *bitcoin.Transaction
 		},
-		len(dsa.proposal.DepositsKeys),
+		len(proposal.DepositsKeys),
 	)
 
 	validateProposalLogger.Infof("gathering prerequisites for proposal validation")
 
-	for i, depositKey := range dsa.proposal.DepositsKeys {
-		depositDisplayIndex := fmt.Sprintf("%v/%v", i+1, len(dsa.proposal.DepositsKeys))
+	for i, depositKey := range proposal.DepositsKeys {
+		depositDisplayIndex := fmt.Sprintf("%v/%v", i+1, len(proposal.DepositsKeys))
 
 		validateProposalLogger.Infof(
 			"deposit [%v] - checking confirmations count for funding tx",
 			depositDisplayIndex,
 		)
 
-		confirmations, err := dsa.btcChain.GetTransactionConfirmations(
+		confirmations, err := btcChain.GetTransactionConfirmations(
 			depositKey.FundingTxHash,
 		)
 		if err != nil {
@@ -205,13 +219,13 @@ func (dsa *depositSweepAction) validateProposal(
 			)
 		}
 
-		if confirmations < dsa.requiredFundingTxConfirmations {
+		if confirmations < requiredFundingTxConfirmations {
 			return nil, fmt.Errorf(
 				"funding tx of deposit [%v] has only [%v/%v] of "+
 					"required confirmations",
 				depositDisplayIndex,
 				confirmations,
-				dsa.requiredFundingTxConfirmations,
+				requiredFundingTxConfirmations,
 			)
 		}
 
@@ -220,7 +234,7 @@ func (dsa *depositSweepAction) validateProposal(
 			depositDisplayIndex,
 		)
 
-		fundingTx, err := dsa.btcChain.GetTransaction(depositKey.FundingTxHash)
+		fundingTx, err := btcChain.GetTransaction(depositKey.FundingTxHash)
 		if err != nil {
 			return nil, fmt.Errorf(
 				"cannot get funding tx data for deposit [%v]: [%v]",
@@ -229,7 +243,7 @@ func (dsa *depositSweepAction) validateProposal(
 			)
 		}
 
-		depositRequest, err := dsa.chain.GetDepositRequest(
+		depositRequest, err := tbtcChain.GetDepositRequest(
 			depositKey.FundingTxHash,
 			depositKey.FundingOutputIndex,
 		)
@@ -241,7 +255,7 @@ func (dsa *depositSweepAction) validateProposal(
 			)
 		}
 
-		revealBlock, err := dsa.chain.GetBlockNumberByTimestamp(
+		revealBlock, err := tbtcChain.GetBlockNumberByTimestamp(
 			uint64(depositRequest.RevealedAt.Unix()),
 		)
 		if err != nil {
@@ -270,11 +284,11 @@ func (dsa *depositSweepAction) validateProposal(
 		startBlock := revealBlock - revealBlockMargin
 		endBlock := revealBlock + revealBlockMargin
 
-		events, err := dsa.chain.PastDepositRevealedEvents(&DepositRevealedEventFilter{
+		events, err := tbtcChain.PastDepositRevealedEvents(&DepositRevealedEventFilter{
 			StartBlock:          startBlock,
 			EndBlock:            &endBlock,
 			Depositor:           []chain.Address{depositRequest.Depositor},
-			WalletPublicKeyHash: [][20]byte{dsa.proposal.WalletPublicKeyHash},
+			WalletPublicKeyHash: [][20]byte{proposal.WalletPublicKeyHash},
 		})
 		if err != nil {
 			return nil, fmt.Errorf(
@@ -314,7 +328,7 @@ func (dsa *depositSweepAction) validateProposal(
 
 	validateProposalLogger.Infof("calling chain for proposal validation")
 
-	err := dsa.chain.ValidateDepositSweepProposal(dsa.proposal, depositExtraInfo)
+	err := tbtcChain.ValidateDepositSweepProposal(proposal, depositExtraInfo)
 	if err != nil {
 		return nil, fmt.Errorf("deposit sweep proposal is invalid: [%v]", err)
 	}
