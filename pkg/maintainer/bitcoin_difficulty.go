@@ -162,8 +162,8 @@ func (bdm *bitcoinDifficultyMaintainer) verifySubmissionEligibility() error {
 		return nil
 	}
 
-	// Retargetting will be done via `LightRelayMaintainerProxy`` with refunding.
-	isAuthorizedForRefunding, err := bdm.chain.IsAuthorizedForRefund(
+	// Retargetting will be done via `LightRelayMaintainerProxy` with refunding.
+	isAuthorizedForRefund, err := bdm.chain.IsAuthorizedForRefund(
 		maintainerAddress,
 	)
 	if err != nil {
@@ -174,7 +174,7 @@ func (bdm *bitcoinDifficultyMaintainer) verifySubmissionEligibility() error {
 		)
 	}
 
-	if !isAuthorizedForRefunding {
+	if !isAuthorizedForRefund {
 		return errNotAuthorized
 	}
 

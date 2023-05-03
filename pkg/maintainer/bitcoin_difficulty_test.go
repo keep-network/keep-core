@@ -12,24 +12,53 @@ import (
 
 func TestVerifySubmissionEligibility(t *testing.T) {
 	tests := map[string]struct {
-		ready              bool
-		operatorAuthorized bool
-		expectedError      error
+		ready                       bool
+		operatorAuthorized          bool
+		operatorAuthorizedForRefund bool
+		disableProxy                bool
+		expectedError               error
 	}{
-		"chain not ready": {
-			ready:              false,
-			operatorAuthorized: false,
-			expectedError:      errNoGenesis,
+		"chain not ready, enabled proxy": {
+			ready:                       false,
+			operatorAuthorized:          false,
+			operatorAuthorizedForRefund: false,
+			disableProxy:                false,
+			expectedError:               errNoGenesis,
 		},
-		"operator not authorized": {
-			ready:              true,
-			operatorAuthorized: false,
-			expectedError:      errNotAuthorized,
+		"chain not ready, disabled proxy": {
+			ready:                       false,
+			operatorAuthorized:          false,
+			operatorAuthorizedForRefund: false,
+			disableProxy:                true,
+			expectedError:               errNoGenesis,
 		},
-		"operator authorized": {
-			ready:              true,
-			operatorAuthorized: true,
-			expectedError:      nil,
+		"operator not authorized, enabled proxy": {
+			ready:                       true,
+			operatorAuthorized:          false,
+			operatorAuthorizedForRefund: false,
+			disableProxy:                false,
+			expectedError:               errNotAuthorized,
+		},
+		"operator not authorized, disabled proxy": {
+			ready:                       true,
+			operatorAuthorized:          false,
+			operatorAuthorizedForRefund: false,
+			disableProxy:                true,
+			expectedError:               errNotAuthorized,
+		},
+		"operator authorized, enabled proxy": {
+			ready:                       true,
+			operatorAuthorized:          false,
+			operatorAuthorizedForRefund: true,
+			disableProxy:                false,
+			expectedError:               nil,
+		},
+		"operator authorized, disabled proxy": {
+			ready:                       true,
+			operatorAuthorized:          true,
+			operatorAuthorizedForRefund: false,
+			disableProxy:                true,
+			expectedError:               nil,
 		},
 	}
 
@@ -43,10 +72,15 @@ func TestVerifySubmissionEligibility(t *testing.T) {
 				operatorAddress,
 				test.operatorAuthorized,
 			)
+			difficultyChain.SetAuthorizedForRefundOperator(
+				operatorAddress,
+				test.operatorAuthorizedForRefund,
+			)
 
 			bitcoinDifficultyMaintainer := &bitcoinDifficultyMaintainer{
 				btcChain:           nil,
 				chain:              difficultyChain,
+				disableProxy:       test.disableProxy,
 				idleBackOffTime:    bitcoinDifficultyDefaultIdleBackOffTime,
 				restartBackOffTime: bitcoinDifficultyDefaultRestartBackoffTime,
 			}
@@ -345,7 +379,6 @@ func TestProveEpochs_ErrorVerifyingSubmissionEligibility(t *testing.T) {
 	// Do not authorize the maintainer to trigger an error.
 	difficultyChain := connectLocalBitcoinDifficultyChain()
 	difficultyChain.SetReady(true)
-	difficultyChain.SetAuthorizationRequired(true)
 
 	bitcoinDifficultyMaintainer := &bitcoinDifficultyMaintainer{
 		btcChain:           nil,
@@ -366,7 +399,6 @@ func TestProveEpochs_ErrorProvingSingleEpoch(t *testing.T) {
 	maintainerAddress := difficultyChain.Signing().Address()
 
 	difficultyChain.SetReady(true)
-	difficultyChain.SetAuthorizationRequired(true)
 	difficultyChain.SetAuthorizedOperator(
 		maintainerAddress,
 		true,
@@ -394,7 +426,6 @@ func TestProveEpochs_Successful(t *testing.T) {
 	maintainerAddress := difficultyChain.Signing().Address()
 
 	difficultyChain.SetReady(true)
-	difficultyChain.SetAuthorizationRequired(true)
 	difficultyChain.SetAuthorizedOperator(
 		maintainerAddress,
 		true,
@@ -452,7 +483,6 @@ func TestBitcoinDifficultyMaintainer_Integration(t *testing.T) {
 	maintainerAddress := difficultyChain.Signing().Address()
 
 	difficultyChain.SetReady(true)
-	difficultyChain.SetAuthorizationRequired(true)
 	difficultyChain.SetAuthorizedOperator(
 		maintainerAddress,
 		true,
