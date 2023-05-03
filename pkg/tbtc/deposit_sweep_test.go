@@ -209,7 +209,7 @@ func TestDepositSweepAction_Execute(t *testing.T) {
 			)
 
 			action := newDepositSweepAction(
-				logger,
+				logger.With(),
 				hostChain,
 				bitcoinChain,
 				wallet,

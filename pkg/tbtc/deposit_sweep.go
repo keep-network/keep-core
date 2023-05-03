@@ -72,7 +72,7 @@ type depositSweepSigningExecutor interface {
 
 // depositSweepAction is a deposit sweep walletAction.
 type depositSweepAction struct {
-	logger   log.StandardLogger
+	logger   *zap.SugaredLogger
 	chain    Chain
 	btcChain bitcoin.Chain
 
@@ -91,7 +91,7 @@ type depositSweepAction struct {
 }
 
 func newDepositSweepAction(
-	logger log.StandardLogger,
+	logger *zap.SugaredLogger,
 	chain Chain,
 	btcChain bitcoin.Chain,
 	sweepingWallet wallet,
@@ -118,7 +118,7 @@ func newDepositSweepAction(
 }
 
 func (dsa *depositSweepAction) execute() error {
-	validateProposalLogger := logger.With(
+	validateProposalLogger := dsa.logger.With(
 		zap.String("step", "validateProposal"),
 	)
 
