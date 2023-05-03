@@ -257,7 +257,7 @@ func (bdm *bitcoinDifficultyMaintainer) proveNextEpoch(ctx context.Context) (
 			if err := bdm.chain.Retarget(headers); err != nil {
 				return false, fmt.Errorf(
 					"failed to submit block headers from range [%d:%d] via "+
-						"via Retarget: [%w]",
+						"Retarget: [%w]",
 					firstBlockHeaderHeight,
 					lastBlockHeaderHeight,
 					err,
@@ -267,7 +267,7 @@ func (bdm *bitcoinDifficultyMaintainer) proveNextEpoch(ctx context.Context) (
 			if err := bdm.chain.RetargetWithRefund(headers); err != nil {
 				return false, fmt.Errorf(
 					"failed to submit block headers from range [%d:%d] via "+
-						"via RetargetWithRefund: [%w]",
+						"RetargetWithRefund: [%w]",
 					firstBlockHeaderHeight,
 					lastBlockHeaderHeight,
 					err,
