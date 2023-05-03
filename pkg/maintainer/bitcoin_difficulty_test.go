@@ -163,6 +163,7 @@ func TestProveNextEpoch(t *testing.T) {
 	bitcoinDifficultyMaintainer := &bitcoinDifficultyMaintainer{
 		btcChain:           btcChain,
 		chain:              difficultyChain,
+		disableProxy:       true,
 		idleBackOffTime:    bitcoinDifficultyDefaultIdleBackOffTime,
 		restartBackOffTime: bitcoinDifficultyDefaultRestartBackoffTime,
 	}
@@ -263,6 +264,7 @@ func TestGetBlockHeaders(t *testing.T) {
 	bitcoinDifficultyMaintainer := &bitcoinDifficultyMaintainer{
 		btcChain:           btcChain,
 		chain:              nil,
+		disableProxy:       true,
 		idleBackOffTime:    bitcoinDifficultyDefaultIdleBackOffTime,
 		restartBackOffTime: bitcoinDifficultyDefaultRestartBackoffTime,
 	}
@@ -294,6 +296,7 @@ func TestWaitForCurrentEpochUpdate_Successful(t *testing.T) {
 	bitcoinDifficultyMaintainer := &bitcoinDifficultyMaintainer{
 		btcChain:           nil,
 		chain:              difficultyChain,
+		disableProxy:       true,
 		idleBackOffTime:    2 * time.Second,
 		restartBackOffTime: 2 * time.Second,
 	}
@@ -342,6 +345,7 @@ func TestWaitForCurrentEpochUpdate_Cancelled(t *testing.T) {
 	bitcoinDifficultyMaintainer := &bitcoinDifficultyMaintainer{
 		btcChain:           nil,
 		chain:              difficultyChain,
+		disableProxy:       true,
 		idleBackOffTime:    2 * time.Second,
 		restartBackOffTime: 2 * time.Second,
 	}
@@ -383,6 +387,7 @@ func TestProveEpochs_ErrorVerifyingSubmissionEligibility(t *testing.T) {
 	bitcoinDifficultyMaintainer := &bitcoinDifficultyMaintainer{
 		btcChain:           nil,
 		chain:              difficultyChain,
+		disableProxy:       true,
 		idleBackOffTime:    bitcoinDifficultyDefaultIdleBackOffTime,
 		restartBackOffTime: bitcoinDifficultyDefaultRestartBackoffTime,
 	}
@@ -410,6 +415,7 @@ func TestProveEpochs_ErrorProvingSingleEpoch(t *testing.T) {
 	bitcoinDifficultyMaintainer := &bitcoinDifficultyMaintainer{
 		btcChain:           btcChain,
 		chain:              difficultyChain,
+		disableProxy:       true,
 		idleBackOffTime:    bitcoinDifficultyDefaultIdleBackOffTime,
 		restartBackOffTime: bitcoinDifficultyDefaultRestartBackoffTime,
 	}
@@ -460,6 +466,7 @@ func TestProveEpochs_Successful(t *testing.T) {
 	bitcoinDifficultyMaintainer := &bitcoinDifficultyMaintainer{
 		btcChain:           btcChain,
 		chain:              difficultyChain,
+		disableProxy:       true,
 		idleBackOffTime:    2 * time.Second,
 		restartBackOffTime: 2 * time.Second,
 	}
@@ -499,7 +506,7 @@ func TestBitcoinDifficultyMaintainer_Integration(t *testing.T) {
 		ctx,
 		btcChain,
 		difficultyChain,
-		false,
+		true,
 		idleBackOffTime,
 		restartBackOffTime,
 	)
