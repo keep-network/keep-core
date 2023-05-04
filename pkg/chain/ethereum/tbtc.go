@@ -1231,9 +1231,10 @@ func convertDepositSweepProposalFromAbiType(
 	}
 
 	return &tbtc.DepositSweepProposal{
-		WalletPublicKeyHash: proposal.WalletPubKeyHash,
-		DepositsKeys:        depositsKeys,
-		SweepTxFee:          proposal.SweepTxFee,
+		WalletPublicKeyHash:  proposal.WalletPubKeyHash,
+		DepositsKeys:         depositsKeys,
+		SweepTxFee:           proposal.SweepTxFee,
+		DepositsRevealBlocks: proposal.DepositsRevealBlocks,
 	}
 }
 
@@ -1257,9 +1258,10 @@ func convertDepositSweepProposalToAbiType(
 	}
 
 	return tbtcabi.WalletCoordinatorDepositSweepProposal{
-		WalletPubKeyHash: proposal.WalletPublicKeyHash,
-		DepositsKeys:     depositsKeys,
-		SweepTxFee:       proposal.SweepTxFee,
+		WalletPubKeyHash:     proposal.WalletPublicKeyHash,
+		DepositsKeys:         depositsKeys,
+		SweepTxFee:           proposal.SweepTxFee,
+		DepositsRevealBlocks: proposal.DepositsRevealBlocks,
 	}
 }
 
