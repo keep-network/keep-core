@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"github.com/ipfs/go-log/v2"
 	"github.com/keep-network/keep-core/pkg/bitcoin"
-	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/tecdsa"
 	"go.uber.org/zap"
 	"math/big"
@@ -185,6 +184,10 @@ func (dsa *depositSweepAction) validateProposal(
 
 	validateProposalLogger.Infof("gathering prerequisites for proposal validation")
 
+	if len(dsa.proposal.DepositsKeys) != len(dsa.proposal.DepositsRevealBlocks) {
+		return nil, fmt.Errorf("proposal's reveal blocks list has a wrong length")
+	}
+
 	for i, depositKey := range dsa.proposal.DepositsKeys {
 		depositDisplayIndex := fmt.Sprintf("%v/%v", i+1, len(dsa.proposal.DepositsKeys))
 
@@ -229,28 +232,7 @@ func (dsa *depositSweepAction) validateProposal(
 			)
 		}
 
-		depositRequest, err := dsa.chain.GetDepositRequest(
-			depositKey.FundingTxHash,
-			depositKey.FundingOutputIndex,
-		)
-		if err != nil {
-			return nil, fmt.Errorf(
-				"cannot get on-chain request data for deposit [%v]: [%v]",
-				depositDisplayIndex,
-				err,
-			)
-		}
-
-		revealBlock, err := dsa.chain.GetBlockNumberByTimestamp(
-			uint64(depositRequest.RevealedAt.Unix()),
-		)
-		if err != nil {
-			return nil, fmt.Errorf(
-				"cannot estimate reveal block for deposit [%v]: [%v]",
-				depositDisplayIndex,
-				err,
-			)
-		}
+		revealBlock := dsa.proposal.DepositsRevealBlocks[i].Uint64()
 
 		// We need to fetch the past DepositRevealed event for the given deposit.
 		// It may be tempting to fetch such events for all deposit keys
@@ -259,21 +241,12 @@ func (dsa *depositSweepAction) validateProposal(
 		// for fetching past chain events regarding the requested block
 		// range and/or returned data size. In this context, it is better to
 		// do several well-tailored calls than a single general one.
-		// We estimated the revealBlock so, we know the event was emitted
-		// at this block or somewhere close. It makes sense to establish
-		// a small margin and fetch past DepositRevealed events from range
-		// [revealBlock - margin, revealBlock + margin] in order to handle
-		// possible inaccuracies of revealBlock estimation. Moreover,
-		// we use the depositor address and wallet PKH as additional filters
-		// to limit the size of returned data.
-		revealBlockMargin := uint64(10)
-		startBlock := revealBlock - revealBlockMargin
-		endBlock := revealBlock + revealBlockMargin
-
+		// We have the revealBlock passed by the coordinator within the proposal
+		// so, we can use it to make a narrow call. Moreover, we use the
+		// wallet PKH as additional filter to limit the size of returned data.
 		events, err := dsa.chain.PastDepositRevealedEvents(&DepositRevealedEventFilter{
-			StartBlock:          startBlock,
-			EndBlock:            &endBlock,
-			Depositor:           []chain.Address{depositRequest.Depositor},
+			StartBlock:          revealBlock,
+			EndBlock:            &revealBlock,
 			WalletPublicKeyHash: [][20]byte{dsa.proposal.WalletPublicKeyHash},
 		})
 		if err != nil {

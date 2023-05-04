@@ -13,7 +13,6 @@ import (
 	"time"
 
 	"github.com/keep-network/keep-core/pkg/bitcoin"
-	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/internal/tbtctest"
 	"github.com/keep-network/keep-core/pkg/internal/testutils"
 )
@@ -60,6 +59,8 @@ func TestDepositSweepAction_Execute(t *testing.T) {
 				FundingTx *bitcoin.Transaction
 			}, len(scenario.Deposits))
 
+			depositsRevealBlocks := make([]*big.Int, len(scenario.Deposits))
+
 			// Record all necessary deposits' data on the local host chain.
 			for i, deposit := range scenario.Deposits {
 				fundingTxHash := deposit.Utxo.Outpoint.TransactionHash
@@ -86,45 +87,23 @@ func TestDepositSweepAction_Execute(t *testing.T) {
 					FundingTx: fundingTx,
 				}
 
-				// Build the deposit revealed time and block based on the
-				// deposit index. Those fields can be arbitrary values, but
-				// it is good to keep them consistent.
-				depositRevealedAt := now.Add(-time.Duration(i+1) * time.Hour)
-				depositRevealedBlock := uint64(100 * i)
-
-				// The deposit sweep action looks for deposit requests,
-				// so we need to simulate such a request exists.
-				hostChain.setDepositRequest(
-					fundingTxHash,
-					fundingOutputIndex,
-					&DepositChainRequest{
-						Depositor:  deposit.Depositor,
-						RevealedAt: depositRevealedAt,
-					},
-				)
-
-				// The deposit sweep action will seek for the reveal block
-				// based on the reveal time. We need to set the local host
-				// chain accordingly.
-				hostChain.setBlockNumberByTimestamp(
-					uint64(depositRevealedAt.Unix()),
-					depositRevealedBlock,
-				)
+				// Build the deposit reveal block based on the deposit index.
+				// This field can be an arbitrary value, but it is good to keep
+				// it consistent.
+				depositRevealBlock := uint64(100 * i)
+				depositsRevealBlocks[i] = big.NewInt(int64(depositRevealBlock))
 
 				// The deposit sweep action will look for past deposit
 				// revealed events using a specific filter. We need to make
 				// sure the local host chain will return the expected result
 				// for that filter. We need to build the startBlock and endBlock
-				// filter's parameters using the same value of revealBlockMargin
-				// as used within the depositSweepAction.execute function.
-				// We also need to use the correct depositor and wallet PKH.
-				startBlock := depositRevealedBlock - 10
-				endBlock := depositRevealedBlock + 10
+				// filter's parameters using the depositRevealBlock value
+				// as done within the depositSweepAction.execute function.
+				// We also need to use the correct wallet PKH.
 				err = hostChain.setPastDepositRevealedEvents(
 					&DepositRevealedEventFilter{
-						StartBlock:          startBlock,
-						EndBlock:            &endBlock,
-						Depositor:           []chain.Address{deposit.Depositor},
+						StartBlock:          depositRevealBlock,
+						EndBlock:            &depositRevealBlock,
 						WalletPublicKeyHash: [][20]byte{walletPublicKeyHash},
 					},
 					[]*DepositRevealedEvent{
@@ -138,7 +117,7 @@ func TestDepositSweepAction_Execute(t *testing.T) {
 							RefundPublicKeyHash: deposit.RefundPublicKeyHash,
 							RefundLocktime:      deposit.RefundLocktime,
 							Vault:               deposit.Vault,
-							BlockNumber:         depositRevealedBlock,
+							BlockNumber:         depositRevealBlock,
 						},
 					},
 				)
@@ -149,9 +128,10 @@ func TestDepositSweepAction_Execute(t *testing.T) {
 
 			// Build the sweep proposal based on the scenario data.
 			proposal := &DepositSweepProposal{
-				WalletPublicKeyHash: walletPublicKeyHash,
-				DepositsKeys:        depositsKeys,
-				SweepTxFee:          big.NewInt(scenario.Fee),
+				WalletPublicKeyHash:  walletPublicKeyHash,
+				DepositsKeys:         depositsKeys,
+				SweepTxFee:           big.NewInt(scenario.Fee),
+				DepositsRevealBlocks: depositsRevealBlocks,
 			}
 
 			// Choose an arbitrary start block and expiration time.

@@ -346,7 +346,8 @@ type DepositSweepProposal struct {
 		FundingTxHash      bitcoin.Hash
 		FundingOutputIndex uint32
 	}
-	SweepTxFee *big.Int
+	SweepTxFee           *big.Int
+	DepositsRevealBlocks []*big.Int
 }
 
 // DepositSweepProposalSubmittedEvent represents a deposit sweep proposal
