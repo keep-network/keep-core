@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/keep-network/keep-core/pkg/bitcoin"
 	"github.com/keep-network/keep-core/pkg/chain"
+	"strings"
 )
 
 // depositScriptFormat is the format of the deposit P2(W)SH Bitcoin script
@@ -37,7 +38,9 @@ type Deposit struct {
 // Script constructs the deposit P2(W)SH Bitcoin script. This function
 // assumes the deposit's fields are correctly set.
 func (d *Deposit) Script() ([]byte, error) {
-	depositorBytes, err := hex.DecodeString(d.Depositor.String())
+	depositorBytes, err := hex.DecodeString(
+		strings.TrimPrefix(d.Depositor.String(), "0x"),
+	)
 	if err != nil {
 		return nil, fmt.Errorf("cannot decode depositor field: [%v]", err)
 	}
