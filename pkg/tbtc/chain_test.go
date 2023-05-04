@@ -726,6 +726,10 @@ func buildDepositSweepProposalValidationKey(
 	return sha256.Sum256(buffer.Bytes()), nil
 }
 
+func (lc *localChain) SubmitDepositSweepProposal(proposal *DepositSweepProposal) error {
+	panic("unsupported")
+}
+
 // Connect sets up the local chain.
 func Connect() *localChain {
 	operatorPrivateKey, _, err := operator.GenerateKeyPair(local_v1.DefaultCurve)
