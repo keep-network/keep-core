@@ -30,6 +30,7 @@ func ProposeSweep(
 	walletStr string,
 	fee int64,
 	btcTransactionsStr []string,
+	dryRun bool,
 ) error {
 	walletPublicKeyHash, err := hexToWalletPublicKeyHash(walletStr)
 	if err != nil {
@@ -47,7 +48,7 @@ func ProposeSweep(
 		SweepTxFee:          big.NewInt(fee),
 	}
 
-	// TODO: Add no-verify flag
+	logger.Infof("validating the proposal...")
 	if _, err := tbtc.ValidateDepositSweepProposal(
 		logger,
 		proposal,
@@ -58,9 +59,11 @@ func ProposeSweep(
 		return fmt.Errorf("failed to verify deposit sweep proposal: %v", err)
 	}
 
-	// TODO: Add dry-run flag
-	if err := tbtcChain.SubmitDepositSweepProposal(proposal); err != nil {
-		return fmt.Errorf("failed to submit deposit sweep proposal: %v", err)
+	if !dryRun {
+		logger.Infof("submitting the proposal...")
+		if err := tbtcChain.SubmitDepositSweepProposal(proposal); err != nil {
+			return fmt.Errorf("failed to submit deposit sweep proposal: %v", err)
+		}
 	}
 
 	return nil

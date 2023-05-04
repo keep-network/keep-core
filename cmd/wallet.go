@@ -16,6 +16,7 @@ var (
 	hideSweptFlagName    = "hide-swept"
 	sortByAmountFlagName = "sort-amount"
 	feeFlagName          = "fee"
+	dryRunFlagName       = "dry-run"
 )
 
 // WalletCommand contains the definition of tBTC wallets tools.
@@ -103,6 +104,11 @@ var sweepCommand = cobra.Command{
 			return fmt.Errorf("failed to find fee flag: %v", err)
 		}
 
+		dryRun, err := cmd.Flags().GetBool(dryRunFlagName)
+		if err != nil {
+			return fmt.Errorf("failed to find fee flag: %v", err)
+		}
+
 		_, tbtcChain, _, _, _, err := ethereum.Connect(cmd.Context(), clientConfig.Ethereum)
 		if err != nil {
 			return fmt.Errorf(
@@ -115,7 +121,8 @@ var sweepCommand = cobra.Command{
 		if err != nil {
 			return fmt.Errorf("could not connect to Electrum chain: [%v]", err)
 		}
-		return walletcmd.ProposeSweep(tbtcChain, btcChain, wallet, fee, args)
+
+		return walletcmd.ProposeSweep(tbtcChain, btcChain, wallet, fee, args, dryRun)
 	},
 }
 
@@ -172,6 +179,12 @@ func init() {
 		feeFlagName,
 		0,
 		"fee for bitcoin transaction",
+	)
+
+	sweepCommand.Flags().Bool(
+		dryRunFlagName,
+		false,
+		"don't submit a proposal to the chain",
 	)
 
 	WalletCommand.AddCommand(&sweepCommand)
