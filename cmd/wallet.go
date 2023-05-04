@@ -136,14 +136,13 @@ func init() {
 		config.General, config.Ethereum, config.BitcoinElectrum,
 	)
 
-	// Wallet Command
-	WalletCommand.PersistentFlags().String(
+	// Deposits Subcommand
+	depositsCommand.Flags().String(
 		walletFlagName,
 		"",
 		"wallet public key hash",
 	)
 
-	// Deposits Subcommand
 	depositsCommand.Flags().Bool(
 		hideSweptFlagName,
 		false,
@@ -159,6 +158,12 @@ func init() {
 	WalletCommand.AddCommand(&depositsCommand)
 
 	// Sweep Subcommand
+	sweepCommand.Flags().String(
+		walletFlagName,
+		"",
+		"wallet public key hash",
+	)
+
 	if err := sweepCommand.MarkFlagRequired(walletFlagName); err != nil {
 		logger.Panicf("failed to mark wallet flag as required: %v", err)
 	}
