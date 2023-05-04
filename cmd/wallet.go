@@ -7,6 +7,7 @@ import (
 
 	walletcmd "github.com/keep-network/keep-core/cmd/wallet"
 	"github.com/keep-network/keep-core/config"
+	"github.com/keep-network/keep-core/pkg/bitcoin/electrum"
 	"github.com/keep-network/keep-core/pkg/chain/ethereum"
 )
 
@@ -14,6 +15,7 @@ var (
 	walletFlagName       = "wallet"
 	hideSweptFlagName    = "hide-swept"
 	sortByAmountFlagName = "sort-amount"
+	feeFlagName          = "fee"
 )
 
 // WalletCommand contains the definition of tBTC wallets tools.
@@ -68,6 +70,64 @@ var depositsCommand = cobra.Command{
 	},
 }
 
+var sweepCommand = cobra.Command{
+	Use:              "sweep",
+	Short:            "propose deposits sweep",
+	Long:             sweepCommandDescription,
+	TraverseChildren: true,
+	Args: func(cmd *cobra.Command, args []string) error {
+		if err := cobra.MinimumNArgs(1)(cmd, args); err != nil {
+			return err
+		}
+
+		for _, arg := range args {
+			if !walletcmd.BitcoinTxRegexp.MatchString(arg) {
+				return fmt.Errorf(
+					"argument [%s] doesn't match pattern: <unprefixed transaction hash>:<output index>",
+					arg,
+				)
+			}
+		}
+		return nil
+	},
+	RunE: func(cmd *cobra.Command, args []string) error {
+		ctx := cmd.Context()
+
+		wallet, err := cmd.Flags().GetString(walletFlagName)
+		if err != nil {
+			return fmt.Errorf("failed to find wallet flag: %v", err)
+		}
+
+		fee, err := cmd.Flags().GetInt64(feeFlagName)
+		if err != nil {
+			return fmt.Errorf("failed to find fee flag: %v", err)
+		}
+
+		_, tbtcChain, _, _, _, err := ethereum.Connect(cmd.Context(), clientConfig.Ethereum)
+		if err != nil {
+			return fmt.Errorf(
+				"could not connect to Ethereum chain: [%v]",
+				err,
+			)
+		}
+
+		btcChain, err := electrum.Connect(ctx, clientConfig.Bitcoin.Electrum)
+		if err != nil {
+			return fmt.Errorf("could not connect to Electrum chain: [%v]", err)
+		}
+		return walletcmd.ProposeSweep(tbtcChain, btcChain, wallet, fee, args)
+	},
+}
+
+var sweepCommandDescription = `Submits a deposits sweep proposal to the chain.
+Expects --wallet and --fee flags along with bitcoin transactions to sweep provided
+as arguments.
+
+Bitcoin transactions should be provided in the following format:
+<unprefixed transaction hash>:<output index>
+e.g. bd99d1d0a61fd104925d9b7ac997958aa8af570418b3fde091f7bfc561608865:1
+`
+
 func init() {
 	initFlags(
 		WalletCommand,
@@ -97,4 +157,17 @@ func init() {
 	)
 
 	WalletCommand.AddCommand(&depositsCommand)
+
+	// Sweep Subcommand
+	if err := sweepCommand.MarkFlagRequired(walletFlagName); err != nil {
+		logger.Panicf("failed to mark wallet flag as required: %v", err)
+	}
+
+	sweepCommand.Flags().Int64(
+		feeFlagName,
+		0,
+		"fee for bitcoin transaction",
+	)
+
+	WalletCommand.AddCommand(&sweepCommand)
 }
