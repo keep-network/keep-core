@@ -328,6 +328,9 @@ type WalletCoordinatorChain interface {
 			FundingTx *bitcoin.Transaction
 		},
 	) error
+
+	// SubmitDepositSweepProposal submits a deposit sweep proposal to the chain.
+	SubmitDepositSweepProposal(proposal *DepositSweepProposal) error
 }
 
 // HeartbeatRequestSubmittedEvent represents a wallet heartbeat request
