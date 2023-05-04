@@ -93,6 +93,7 @@ func (lc *localChain) GetBlockNumberByTimestamp(timestamp uint64) (
 	return block, nil
 }
 
+//lint:ignore U1000 This function can be useful for future.
 func (lc *localChain) setBlockNumberByTimestamp(timestamp uint64, block uint64) {
 	lc.blocksByTimestampMutex.Lock()
 	defer lc.blocksByTimestampMutex.Unlock()
@@ -538,6 +539,7 @@ func (lc *localChain) GetDepositRequest(
 	return request, nil
 }
 
+//lint:ignore U1000 This function can be useful for future.
 func (lc *localChain) setDepositRequest(
 	fundingTxHash bitcoin.Hash,
 	fundingOutputIndex uint32,
