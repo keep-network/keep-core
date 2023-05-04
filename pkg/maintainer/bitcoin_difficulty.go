@@ -42,12 +42,14 @@ func initializeBitcoinDifficultyMaintainer(
 	ctx context.Context,
 	btcChain bitcoin.Chain,
 	chain BitcoinDifficultyChain,
+	disableProxy bool,
 	idleBackOffTime time.Duration,
 	restartBackOffTime time.Duration,
 ) {
 	bitcoinDifficultyMaintainer := &bitcoinDifficultyMaintainer{
 		btcChain:           btcChain,
 		chain:              chain,
+		disableProxy:       disableProxy,
 		idleBackOffTime:    idleBackOffTime,
 		restartBackOffTime: restartBackOffTime,
 	}
@@ -60,6 +62,8 @@ func initializeBitcoinDifficultyMaintainer(
 type bitcoinDifficultyMaintainer struct {
 	btcChain bitcoin.Chain
 	chain    BitcoinDifficultyChain
+
+	disableProxy bool
 
 	idleBackOffTime    time.Duration
 	restartBackOffTime time.Duration
@@ -138,31 +142,39 @@ func (bdm *bitcoinDifficultyMaintainer) verifySubmissionEligibility() error {
 		return errNoGenesis
 	}
 
-	authorizationRequired, err := bdm.chain.AuthorizationRequired()
-	if err != nil {
-		return fmt.Errorf(
-			"cannot check whether authorization is required to submit "+
-				"block headers: [%w]",
-			err,
-		)
-	}
+	maintainerAddress := bdm.chain.Signing().Address()
 
-	if !authorizationRequired {
+	if bdm.disableProxy {
+		// Retargetting will be done directly via `LightRelay` without refunding.
+		isAuthorized, err := bdm.chain.IsAuthorized(maintainerAddress)
+		if err != nil {
+			return fmt.Errorf(
+				"cannot check whether Bitcoin difficulty maintainer is authorized "+
+					"to submit block headers: [%w]",
+				err,
+			)
+		}
+
+		if !isAuthorized {
+			return errNotAuthorized
+		}
+
 		return nil
 	}
 
-	maintainerAddress := bdm.chain.Signing().Address()
-
-	isAuthorized, err := bdm.chain.IsAuthorized(maintainerAddress)
+	// Retargetting will be done via `LightRelayMaintainerProxy` with refunding.
+	isAuthorizedForRefund, err := bdm.chain.IsAuthorizedForRefund(
+		maintainerAddress,
+	)
 	if err != nil {
 		return fmt.Errorf(
 			"cannot check whether Bitcoin difficulty maintainer is authorized "+
-				"to submit block headers: [%w]",
+				"to submit block headers with refunding: [%w]",
 			err,
 		)
 	}
 
-	if !isAuthorized {
+	if !isAuthorizedForRefund {
 		return errNotAuthorized
 	}
 
@@ -241,14 +253,26 @@ func (bdm *bitcoinDifficultyMaintainer) proveNextEpoch(ctx context.Context) (
 			)
 		}
 
-		if err := bdm.chain.Retarget(headers); err != nil {
-			return false, fmt.Errorf(
-				"failed to submit block headers from range [%d:%d] to "+
-					"the Bitcoin difficulty chain: [%w]",
-				firstBlockHeaderHeight,
-				lastBlockHeaderHeight,
-				err,
-			)
+		if bdm.disableProxy {
+			if err := bdm.chain.Retarget(headers); err != nil {
+				return false, fmt.Errorf(
+					"failed to submit block headers from range [%d:%d] via "+
+						"Retarget: [%w]",
+					firstBlockHeaderHeight,
+					lastBlockHeaderHeight,
+					err,
+				)
+			}
+		} else {
+			if err := bdm.chain.RetargetWithRefund(headers); err != nil {
+				return false, fmt.Errorf(
+					"failed to submit block headers from range [%d:%d] via "+
+						"RetargetWithRefund: [%w]",
+					firstBlockHeaderHeight,
+					lastBlockHeaderHeight,
+					err,
+				)
+			}
 		}
 
 		if err := bdm.waitForCurrentEpochUpdate(ctx, uint64(newEpoch)); err != nil {

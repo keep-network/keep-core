@@ -14,20 +14,29 @@ type BitcoinDifficultyChain interface {
 	// otherwise the prevEpochDifficulty will be uninitialized and zero.
 	Ready() (bool, error)
 
-	// AuthorizationRequired checks whether the relay requires the address
-	// submitting a retarget to be authorised in advance by governance.
-	AuthorizationRequired() (bool, error)
-
-	// IsAuthorized checks whether the given address has been authorized by
-	// governance to submit a retarget.
+	// IsAuthorized checks whether the given address has been authorized to
+	// submit a retarget directly to LightRelay. This function should be used
+	// when retargetting via LightRelayMaintainerProxy is disabled.
 	IsAuthorized(address chain.Address) (bool, error)
+
+	// IsAuthorizedForRefund checks whether the given address has been
+	// authorized to submit a retarget via LightRelayMaintainerProxy. This
+	// function should be used when retargetting via LightRelayMaintainerProxy
+	// is not disabled.
+	IsAuthorizedForRefund(address chain.Address) (bool, error)
 
 	// Signing returns the signing associated with the chain.
 	Signing() chain.Signing
 
-	// Retarget adds a new epoch to the relay by providing a proof
-	// of the difficulty before and after the retarget.
+	// Retarget adds a new epoch to the relay by providing a proof of the
+	// difficulty before and after the retarget. The cost of calling this
+	// function is not refunded to the caller.
 	Retarget(headers []*bitcoin.BlockHeader) error
+
+	// RetargetWithRefund adds a new epoch to the relay by providing a proof of
+	// the difficulty before and after the retarget. The cost of calling this
+	// function is refunded to the caller.
+	RetargetWithRefund(headers []*bitcoin.BlockHeader) error
 
 	// CurrentEpoch returns the number of the latest difficulty epoch which is
 	// proven to the relay. If the genesis epoch's number is set correctly, and

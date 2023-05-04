@@ -21,6 +21,7 @@ func Initialize(
 			ctx,
 			btcChain,
 			chain,
+			config.DisableBitcoinDifficultyProxy,
 			bitcoinDifficultyDefaultIdleBackOffTime,
 			bitcoinDifficultyDefaultRestartBackoffTime,
 		)

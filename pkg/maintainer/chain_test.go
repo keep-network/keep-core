@@ -19,11 +19,12 @@ type localBitcoinDifficultyChain struct {
 	currentEpoch uint64
 	proofLength  uint64
 
-	ready                 bool
-	authorizationRequired bool
-	authorizedOperators   map[chain.Address]bool
+	ready                        bool
+	authorizedOperators          map[chain.Address]bool
+	authorizedForRefundOperators map[chain.Address]bool
 
-	retargetEvents []*RetargetEvent
+	retargetEvents           []*RetargetEvent
+	retargetWithRefundEvents []*RetargetEvent
 }
 
 // Ready checks whether the relay is active (i.e. genesis has been performed).
@@ -31,18 +32,23 @@ func (lbdc *localBitcoinDifficultyChain) Ready() (bool, error) {
 	return lbdc.ready, nil
 }
 
-// AuthorizationRequired checks whether the relay requires the address
-// submitting a retarget to be authorised in advance by governance.
-func (lbdc *localBitcoinDifficultyChain) AuthorizationRequired() (bool, error) {
-	return lbdc.authorizationRequired, nil
-}
-
-// IsAuthorized checks whether the given address has been authorized by
-// governance to submit a retarget.
+// IsAuthorized checks whether the given address has been authorized to
+// submit a retarget directly to LightRelay. This function should be used
+// when retargetting via LightRelayMaintainerProxy is disabled.
 func (lbdc *localBitcoinDifficultyChain) IsAuthorized(
 	address chain.Address,
 ) (bool, error) {
 	return lbdc.authorizedOperators[address], nil
+}
+
+// IsAuthorizedForRefund checks whether the given address has been
+// authorized to submit a retarget via LightRelayMaintainerProxy. This
+// function should be used when retargetting via LightRelayMaintainerProxy
+// is not disabled.
+func (lbdc *localBitcoinDifficultyChain) IsAuthorizedForRefund(
+	address chain.Address,
+) (bool, error) {
+	return lbdc.authorizedForRefundOperators[address], nil
 }
 
 // Signing returns the signing associated with the chain.
@@ -68,6 +74,28 @@ func (lbdc *localBitcoinDifficultyChain) Retarget(
 	return nil
 }
 
+// RetargetWithRefund adds a new epoch to the relay by providing a proof of
+// the difficulty before and after the retarget. The cost of calling this
+// function is refunded to the caller.
+func (lbdc *localBitcoinDifficultyChain) RetargetWithRefund(
+	headers []*bitcoin.BlockHeader,
+) error {
+	// For simplicity, store block header bits instead of their difficulty
+	// targets.
+	retargetEvent := &RetargetEvent{
+		oldDifficulty: headers[len(headers)/2-1].Bits,
+		newDifficulty: headers[len(headers)/2].Bits,
+	}
+	lbdc.retargetWithRefundEvents = append(
+		lbdc.retargetWithRefundEvents,
+		retargetEvent,
+	)
+
+	lbdc.currentEpoch++
+
+	return nil
+}
+
 // CurrentEpoch returns the number of the latest difficulty epoch which is
 // proven to the relay. If the genesis epoch's number is set correctly, and
 // retargets along the way have been legitimate, this equals the height of
@@ -87,12 +115,6 @@ func (lbdc *localBitcoinDifficultyChain) SetReady(ready bool) {
 	lbdc.ready = ready
 }
 
-// SetAuthorizationRequired sets chain's authorization requirement to true
-// or false.
-func (lbdc *localBitcoinDifficultyChain) SetAuthorizationRequired(required bool) {
-	lbdc.authorizationRequired = required
-}
-
 // SetAuthorizedOperator sets the given operator address as either authorized or
 // unauthorized.
 func (lbdc *localBitcoinDifficultyChain) SetAuthorizedOperator(
@@ -100,6 +122,15 @@ func (lbdc *localBitcoinDifficultyChain) SetAuthorizedOperator(
 	authorized bool,
 ) {
 	lbdc.authorizedOperators[operatorAddress] = authorized
+}
+
+// SetAuthorizedForRefundOperator sets the given operator address as either
+// authorized or unauthorized for refund.
+func (lbdc *localBitcoinDifficultyChain) SetAuthorizedForRefundOperator(
+	operatorAddress chain.Address,
+	authorized bool,
+) {
+	lbdc.authorizedForRefundOperators[operatorAddress] = authorized
 }
 
 // SetCurrentEpoch sets the current proven epoch in the chain.
@@ -117,6 +148,11 @@ func (lbdc *localBitcoinDifficultyChain) RetargetEvents() []*RetargetEvent {
 	return lbdc.retargetEvents
 }
 
+// RetargetWithRefundEvents returns all invocations of the Retarget method.
+func (lbdc *localBitcoinDifficultyChain) RetargetWithRefundEvents() []*RetargetEvent {
+	return lbdc.retargetWithRefundEvents
+}
+
 // connectLocalBitcoinDifficultyChain connects to the local Bitcoin difficulty
 // chain and returns a chain handle.
 func connectLocalBitcoinDifficultyChain() *localBitcoinDifficultyChain {
@@ -126,7 +162,8 @@ func connectLocalBitcoinDifficultyChain() *localBitcoinDifficultyChain {
 	}
 
 	return &localBitcoinDifficultyChain{
-		operatorPrivateKey:  operatorPrivateKey,
-		authorizedOperators: make(map[chain.Address]bool),
+		operatorPrivateKey:           operatorPrivateKey,
+		authorizedOperators:          make(map[chain.Address]bool),
+		authorizedForRefundOperators: make(map[chain.Address]bool),
 	}
 }

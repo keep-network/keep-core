@@ -49,7 +49,11 @@ func maintainers(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("could not connect to Electrum chain: [%v]", err)
 	}
 
-	chain, err := ethereum.ConnectBitcoinDifficulty(ctx, clientConfig.Ethereum)
+	chain, err := ethereum.ConnectBitcoinDifficulty(
+		ctx,
+		clientConfig.Ethereum,
+		clientConfig.Maintainer,
+	)
 	if err != nil {
 		return fmt.Errorf(
 			"could not connect to Bitcoin difficulty chain: [%v]",
