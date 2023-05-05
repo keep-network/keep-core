@@ -123,7 +123,7 @@ func getDeposits(tbtcChain tbtc.Chain, walletPublicKeyHashString string) ([]depo
 			walletPublicKeyHash:           event.WalletPublicKeyHash,
 			depositKey:                    depositKey,
 			revealBlock:                   event.BlockNumber,
-			isSwept:                       depositRequest.SweptAt.After(depositRequest.RevealedAt),
+			isSwept:                       depositRequest.SweptAt.Unix() != 0,
 			fundingTransactionHash:        event.FundingTxHash,
 			fundingTransactionOutputIndex: event.FundingOutputIndex,
 			amountBtc:                     convertSatToBtc(float64(depositRequest.Amount)),
