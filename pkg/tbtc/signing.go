@@ -126,7 +126,7 @@ func (se *signingExecutor) signBatch(
 
 	signingBatchLogger := logger.With(
 		zap.String("wallet", fmt.Sprintf("0x%x", walletPublicKeyBytes)),
-		zap.String("signingMessages", strings.Join(messagesDigests, ", ")),
+		zap.String("signedMessages", strings.Join(messagesDigests, ", ")),
 	)
 
 	signingStartBlock := startBlock // start block for the first signing
@@ -135,7 +135,7 @@ func (se *signingExecutor) signBatch(
 
 	for i, message := range messages {
 		signingBatchMessageLogger := signingBatchLogger.With(
-			zap.String("signingMessage", fmt.Sprintf("0x%x", message)),
+			zap.String("signedMessage", fmt.Sprintf("0x%x", message)),
 			zap.String("index", fmt.Sprintf("%v/%v", i+1, len(messages))),
 		)
 
@@ -191,7 +191,7 @@ func (se *signingExecutor) sign(
 
 	signingLogger := logger.With(
 		zap.String("wallet", fmt.Sprintf("0x%x", walletPublicKeyBytes)),
-		zap.String("signingMessage", fmt.Sprintf("0x%x", message)),
+		zap.String("signedMessage", fmt.Sprintf("0x%x", message)),
 		zap.Uint64("signingStartBlock", startBlock),
 		zap.Uint64("signingTimeoutBlock", loopTimeoutBlock),
 	)
