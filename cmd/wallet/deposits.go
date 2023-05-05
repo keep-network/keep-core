@@ -25,6 +25,7 @@ type depositEntry struct {
 	fundingTransactionHash        bitcoin.Hash
 	fundingTransactionOutputIndex uint32
 	amountBtc                     float64
+	// TODO: Add Bitcoin confirmations number
 }
 
 // ListDeposits gets deposits from the chain.
