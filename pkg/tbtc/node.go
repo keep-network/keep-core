@@ -464,6 +464,9 @@ func (n *node) handleDepositSweepProposal(
 // block height.
 type waitForBlockFn func(context.Context, uint64) error
 
+// getCurrentBlockFn represents a function returning the current block height.
+type getCurrentBlockFn func() (uint64, error)
+
 // TODO: this should become a part of BlockHeightWaiter interface.
 func (n *node) waitForBlockHeight(ctx context.Context, blockHeight uint64) error {
 	blockCounter, err := n.chain.BlockCounter()
