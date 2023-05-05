@@ -227,10 +227,10 @@ txOutLoop:
 func (c *Connection) BroadcastTransaction(
 	transaction *bitcoin.Transaction,
 ) error {
-	rawTx := transaction.Serialize()
+	rawTx := hex.EncodeToString(transaction.Serialize())
 
 	rawTxLogger := logger.With(
-		zap.String("rawTx", hex.EncodeToString(rawTx)),
+		zap.String("rawTx", rawTx),
 	)
 	rawTxLogger.Debugf("broadcasting transaction")
 
@@ -239,7 +239,7 @@ func (c *Connection) BroadcastTransaction(
 	response, err := requestWithRetry(
 		c,
 		func(ctx context.Context, client *electrum.Client) (string, error) {
-			return client.BroadcastTransaction(ctx, string(rawTx))
+			return client.BroadcastTransaction(ctx, rawTx)
 		})
 	if err != nil {
 		return fmt.Errorf("failed to broadcast the transaction: [%w]", err)
