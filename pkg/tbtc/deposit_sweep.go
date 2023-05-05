@@ -160,7 +160,7 @@ func (dsa *depositSweepAction) execute() error {
 
 	broadcastTxLogger := actionLogger.With(
 		zap.String("step", "broadcastTransaction"),
-		zap.String("sweepTxHash", fmt.Sprintf("0x%x", sweepTx.Hash())),
+		zap.String("sweepTxHash", sweepTx.Hash().Hex(bitcoin.ReversedByteOrder)),
 	)
 
 	err = dsa.broadcastTransaction(broadcastTxLogger, sweepTx)
