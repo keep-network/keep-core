@@ -7,6 +7,7 @@ import (
 
 	walletcmd "github.com/keep-network/keep-core/cmd/wallet"
 	"github.com/keep-network/keep-core/config"
+	"github.com/keep-network/keep-core/pkg/bitcoin/electrum"
 	"github.com/keep-network/keep-core/pkg/chain/ethereum"
 )
 
@@ -59,12 +60,23 @@ var depositsCommand = cobra.Command{
 		_, tbtcChain, _, _, _, err := ethereum.Connect(ctx, clientConfig.Ethereum)
 		if err != nil {
 			return fmt.Errorf(
-				"could not connect to Bitcoin difficulty chain: [%v]",
+				"could not connect to Ethereum chain: [%v]",
 				err,
 			)
 		}
 
-		return walletcmd.ListDeposits(tbtcChain, wallet, hideSwept, sortByAmount)
+		btcChain, err := electrum.Connect(ctx, clientConfig.Bitcoin.Electrum)
+		if err != nil {
+			return fmt.Errorf("could not connect to Electrum chain: [%v]", err)
+		}
+
+		return walletcmd.ListDeposits(
+			tbtcChain,
+			btcChain,
+			wallet,
+			hideSwept,
+			sortByAmount,
+		)
 	},
 }
 

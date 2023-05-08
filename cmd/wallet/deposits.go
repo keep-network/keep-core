@@ -25,17 +25,22 @@ type depositEntry struct {
 	fundingTransactionHash        bitcoin.Hash
 	fundingTransactionOutputIndex uint32
 	amountBtc                     float64
-	// TODO: Add Bitcoin confirmations number
+	confirmations                 uint
 }
 
 // ListDeposits gets deposits from the chain.
 func ListDeposits(
 	tbtcChain tbtc.Chain,
+	btcChain bitcoin.Chain,
 	walletPublicKeyHashString string,
 	hideSwept bool,
 	sortByAmount bool,
 ) error {
-	deposits, err := getDeposits(tbtcChain, walletPublicKeyHashString)
+	deposits, err := getDeposits(
+		tbtcChain,
+		btcChain,
+		walletPublicKeyHashString,
+	)
 	if err != nil {
 		return fmt.Errorf(
 			"failed to get deposits: [%w]",
@@ -82,7 +87,11 @@ func removeSwept(deposits []depositEntry) []depositEntry {
 	return result
 }
 
-func getDeposits(tbtcChain tbtc.Chain, walletPublicKeyHashString string) ([]depositEntry, error) {
+func getDeposits(
+	tbtcChain tbtc.Chain,
+	btcChain bitcoin.Chain,
+	walletPublicKeyHashString string,
+) ([]depositEntry, error) {
 	logger.Infof("reading deposits from chain...")
 
 	filter := &tbtc.DepositRevealedEventFilter{}
@@ -119,6 +128,14 @@ func getDeposits(tbtcChain tbtc.Chain, walletPublicKeyHashString string) ([]depo
 			)
 		}
 
+		confirmations, err := btcChain.GetTransactionConfirmations(event.FundingTxHash)
+		if err != nil {
+			logger.Errorf(
+				"failed to get bitcoin transaction confirmations: [%v]",
+				err,
+			)
+		}
+
 		result[i] = depositEntry{
 			walletPublicKeyHash:           event.WalletPublicKeyHash,
 			depositKey:                    depositKey,
@@ -127,6 +144,7 @@ func getDeposits(tbtcChain tbtc.Chain, walletPublicKeyHashString string) ([]depo
 			fundingTransactionHash:        event.FundingTxHash,
 			fundingTransactionOutputIndex: event.FundingOutputIndex,
 			amountBtc:                     convertSatToBtc(float64(depositRequest.Amount)),
+			confirmations:                 confirmations,
 		}
 	}
 
@@ -135,10 +153,10 @@ func getDeposits(tbtcChain tbtc.Chain, walletPublicKeyHashString string) ([]depo
 
 func printTable(deposits []depositEntry) error {
 	w := tabwriter.NewWriter(os.Stdout, 2, 4, 1, ' ', tabwriter.AlignRight)
-	fmt.Fprintf(w, "index\twallet\tvalue (BTC)\tdeposit key\tfunding transaction\tswept\t\n")
+	fmt.Fprintf(w, "index\twallet\tvalue (BTC)\tdeposit key\tfunding transaction\tconfirmations\tswept\t\n")
 
 	for i, deposit := range deposits {
-		fmt.Fprintf(w, "%d\t%s\t%.5f\t%s\t%s\t%v\t\n",
+		fmt.Fprintf(w, "%d\t%s\t%.5f\t%s\t%s\t%d\t%t\t\n",
 			i,
 			"0x"+hex.EncodeToString(deposit.walletPublicKeyHash[:]),
 			deposit.amountBtc,
@@ -148,6 +166,7 @@ func printTable(deposits []depositEntry) error {
 				deposit.fundingTransactionHash.Hex(bitcoin.ReversedByteOrder),
 				deposit.fundingTransactionOutputIndex,
 			),
+			deposit.confirmations,
 			deposit.isSwept,
 		)
 	}
