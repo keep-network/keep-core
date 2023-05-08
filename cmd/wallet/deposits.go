@@ -1,7 +1,6 @@
 package walletcmd
 
 import (
-	"encoding/binary"
 	"encoding/hex"
 	"fmt"
 	"os"
@@ -9,7 +8,6 @@ import (
 	"text/tabwriter"
 
 	"github.com/ethereum/go-ethereum/common/hexutil"
-	"github.com/ethereum/go-ethereum/crypto"
 
 	"github.com/keep-network/keep-core/pkg/bitcoin"
 	"github.com/keep-network/keep-core/pkg/tbtc"
@@ -144,7 +142,7 @@ func getDeposits(
 	for i, event := range depositRevealedEvents {
 		logger.Debugf("getting details of deposit %d/%d", i+1, len(depositRevealedEvents))
 
-		depositKey := buildDepositKey(event.FundingTxHash, event.FundingOutputIndex)
+		depositKey := tbtcChain.BuildDepositKey(event.FundingTxHash, event.FundingOutputIndex)
 
 		depositRequest, err := tbtcChain.GetDepositRequest(event.FundingTxHash, event.FundingOutputIndex)
 		if err != nil {
@@ -164,7 +162,7 @@ func getDeposits(
 
 		result[i] = depositEntry{
 			walletPublicKeyHash:           event.WalletPublicKeyHash,
-			depositKey:                    depositKey,
+			depositKey:                    hexutil.Encode(depositKey.Bytes()),
 			revealBlock:                   event.BlockNumber,
 			isSwept:                       depositRequest.SweptAt.Unix() != 0,
 			fundingTransactionHash:        event.FundingTxHash,
@@ -214,20 +212,6 @@ func hexToWalletPublicKeyHash(str string) ([20]byte, error) {
 	copy(walletPublicKeyHash[:], walletHex)
 
 	return walletPublicKeyHash, nil
-}
-
-func buildDepositKey(
-	fundingTxHash bitcoin.Hash,
-	fundingOutputIndex uint32,
-) string {
-	fundingOutputIndexBytes := make([]byte, 4)
-	binary.BigEndian.PutUint32(fundingOutputIndexBytes, fundingOutputIndex)
-
-	depositKey := crypto.Keccak256Hash(
-		append(fundingTxHash[:], fundingOutputIndexBytes...),
-	)
-
-	return depositKey.Hex()
 }
 
 func convertSatToBtc(sats float64) float64 {
