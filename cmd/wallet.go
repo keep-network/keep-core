@@ -5,10 +5,10 @@ import (
 
 	"github.com/spf13/cobra"
 
-	walletcmd "github.com/keep-network/keep-core/cmd/wallet"
 	"github.com/keep-network/keep-core/config"
 	"github.com/keep-network/keep-core/pkg/bitcoin/electrum"
 	"github.com/keep-network/keep-core/pkg/chain/ethereum"
+	"github.com/keep-network/keep-core/pkg/coordinator"
 )
 
 var (
@@ -82,7 +82,7 @@ var depositsCommand = cobra.Command{
 			return fmt.Errorf("could not connect to Electrum chain: [%v]", err)
 		}
 
-		return walletcmd.ListDeposits(
+		return coordinator.ListDeposits(
 			tbtcChain,
 			btcChain,
 			wallet,
