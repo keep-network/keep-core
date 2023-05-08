@@ -19,10 +19,10 @@ var (
 	tailFlagName         = "tail"
 )
 
-// WalletCommand contains the definition of tBTC wallets tools.
-var WalletCommand = &cobra.Command{
-	Use:              "wallet",
-	Short:            "tBTC wallets tools",
+// CoordinatorCommand contains the definition of tBTC Wallet Coordinator tools.
+var CoordinatorCommand = &cobra.Command{
+	Use:              "coordinator",
+	Short:            "tBTC Wallet Coordinator Tools",
 	Long:             "The tool exposes commands for interactions with tBTC wallets.",
 	TraverseChildren: true,
 	PersistentPreRun: func(cmd *cobra.Command, args []string) {
@@ -38,7 +38,7 @@ var WalletCommand = &cobra.Command{
 
 var depositsCommand = cobra.Command{
 	Use:              "deposits",
-	Short:            "get deposits",
+	Short:            "get list of deposits",
 	Long:             "Gets tBTC deposits details from the chain and prints them.",
 	TraverseChildren: true,
 	RunE: func(cmd *cobra.Command, args []string) error {
@@ -96,14 +96,14 @@ var depositsCommand = cobra.Command{
 
 func init() {
 	initFlags(
-		WalletCommand,
+		CoordinatorCommand,
 		&configFilePath,
 		clientConfig,
 		config.General, config.Ethereum, config.BitcoinElectrum,
 	)
 
-	// Wallet Command
-	WalletCommand.PersistentFlags().String(
+	// Coordinator Command
+	CoordinatorCommand.PersistentFlags().String(
 		walletFlagName,
 		"",
 		"wallet public key hash",
@@ -134,5 +134,5 @@ func init() {
 		"get tail of deposits",
 	)
 
-	WalletCommand.AddCommand(&depositsCommand)
+	CoordinatorCommand.AddCommand(&depositsCommand)
 }
