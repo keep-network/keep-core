@@ -343,7 +343,7 @@ func (n *node) handleHeartbeatRequest(
 		walletPublicKeyBytes,
 	)
 
-	// The  request processing started after a confirmation period represented
+	// The request processing started after a confirmation period represented
 	// by the delayBlocks parameter. Hence, we must add it to the original
 	// startBlock.
 	heartbeatRequestProcessingStartBlock := startBlock + delayBlocks

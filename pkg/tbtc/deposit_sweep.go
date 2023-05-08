@@ -139,7 +139,7 @@ func (dsa *depositSweepAction) execute() error {
 		)
 	}
 
-	createTxLogger := logger.With(
+	createTxLogger := dsa.logger.With(
 		zap.String("step", "createTransaction"),
 	)
 
@@ -152,7 +152,7 @@ func (dsa *depositSweepAction) execute() error {
 		return fmt.Errorf("create transaction step failed: [%v]", err)
 	}
 
-	broadcastTxLogger := logger.With(
+	broadcastTxLogger := dsa.logger.With(
 		zap.String("step", "broadcastTransaction"),
 		zap.String("sweepTxHash", fmt.Sprintf("0x%x", sweepTx.Hash())),
 	)
