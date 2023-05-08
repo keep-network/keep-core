@@ -7,9 +7,8 @@ import (
 	"sort"
 	"text/tabwriter"
 
-	"github.com/ethereum/go-ethereum/common/hexutil"
-
 	"github.com/keep-network/keep-core/pkg/bitcoin"
+	"github.com/keep-network/keep-core/pkg/internal/hexutils"
 	"github.com/keep-network/keep-core/pkg/tbtc"
 )
 
@@ -162,7 +161,7 @@ func getDeposits(
 
 		result[i] = depositEntry{
 			walletPublicKeyHash:           event.WalletPublicKeyHash,
-			depositKey:                    hexutil.Encode(depositKey.Bytes()),
+			depositKey:                    hexutils.Encode(depositKey.Bytes()),
 			revealBlock:                   event.BlockNumber,
 			isSwept:                       depositRequest.SweptAt.Unix() != 0,
 			fundingTransactionHash:        event.FundingTxHash,
@@ -203,7 +202,7 @@ func printTable(deposits []depositEntry) error {
 }
 
 func hexToWalletPublicKeyHash(str string) ([20]byte, error) {
-	walletHex, err := hexutil.Decode(str)
+	walletHex, err := hexutils.Decode(str)
 	if err != nil {
 		return [20]byte{}, fmt.Errorf("failed to parse arguments: %w", err)
 	}
