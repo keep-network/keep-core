@@ -134,7 +134,10 @@ func getDeposits(
 			allDepositRevealedEvents[len(allDepositRevealedEvents)-tail:]...,
 		)
 	} else {
-		copy(depositRevealedEvents, allDepositRevealedEvents)
+		depositRevealedEvents = append(
+			depositRevealedEvents,
+			allDepositRevealedEvents...,
+		)
 	}
 
 	result := make([]depositEntry, len(depositRevealedEvents))
