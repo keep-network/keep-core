@@ -35,11 +35,16 @@ func ListDeposits(
 	walletPublicKeyHashString string,
 	hideSwept bool,
 	sortByAmount bool,
+	head int,
+	tail int,
 ) error {
 	deposits, err := getDeposits(
 		tbtcChain,
 		btcChain,
 		walletPublicKeyHashString,
+		sortByAmount,
+		head,
+		tail,
 	)
 	if err != nil {
 		return fmt.Errorf(
@@ -55,17 +60,6 @@ func ListDeposits(
 	// Filter
 	if hideSwept {
 		deposits = removeSwept(deposits)
-	}
-
-	// Order
-	sort.SliceStable(deposits, func(i, j int) bool {
-		return deposits[i].revealBlock > deposits[j].revealBlock
-	})
-
-	if sortByAmount {
-		sort.SliceStable(deposits, func(i, j int) bool {
-			return deposits[i].amountBtc < deposits[j].amountBtc
-		})
 	}
 
 	// Print
@@ -91,6 +85,9 @@ func getDeposits(
 	tbtcChain tbtc.Chain,
 	btcChain bitcoin.Chain,
 	walletPublicKeyHashString string,
+	sortByAmount bool,
+	head int,
+	tail int,
 ) ([]depositEntry, error) {
 	logger.Infof("reading deposits from chain...")
 
@@ -104,7 +101,7 @@ func getDeposits(
 		filter.WalletPublicKeyHash = [][20]byte{walletPublicKeyHash}
 	}
 
-	depositRevealedEvent, err := tbtcChain.PastDepositRevealedEvents(filter)
+	allDepositRevealedEvents, err := tbtcChain.PastDepositRevealedEvents(filter)
 	if err != nil {
 		return []depositEntry{}, fmt.Errorf(
 			"failed to get past deposit revealed events: [%w]",
@@ -112,11 +109,40 @@ func getDeposits(
 		)
 	}
 
-	logger.Infof("found %d DepositRevealed events", len(depositRevealedEvent))
+	logger.Infof("found %d DepositRevealed events", len(allDepositRevealedEvents))
 
-	result := make([]depositEntry, len(depositRevealedEvent))
-	for i, event := range depositRevealedEvent {
-		logger.Debugf("getting details of deposit %d/%d", i+1, len(depositRevealedEvent))
+	// Order
+	sort.SliceStable(allDepositRevealedEvents, func(i, j int) bool {
+		return allDepositRevealedEvents[i].BlockNumber > allDepositRevealedEvents[j].BlockNumber
+	})
+
+	if sortByAmount {
+		sort.SliceStable(allDepositRevealedEvents, func(i, j int) bool {
+			return allDepositRevealedEvents[i].Amount < allDepositRevealedEvents[j].Amount
+		})
+	}
+
+	// Filter
+	depositRevealedEvents := []*tbtc.DepositRevealedEvent{}
+
+	if len(allDepositRevealedEvents) > head+tail && (head > 0 || tail > 0) {
+		// Head
+		depositRevealedEvents = append(
+			depositRevealedEvents,
+			allDepositRevealedEvents[:head]...,
+		)
+		// Tail
+		depositRevealedEvents = append(
+			depositRevealedEvents,
+			allDepositRevealedEvents[len(allDepositRevealedEvents)-tail:]...,
+		)
+	} else {
+		copy(depositRevealedEvents, allDepositRevealedEvents)
+	}
+
+	result := make([]depositEntry, len(depositRevealedEvents))
+	for i, event := range depositRevealedEvents {
+		logger.Debugf("getting details of deposit %d/%d", i+1, len(depositRevealedEvents))
 
 		depositKey := buildDepositKey(event.FundingTxHash, event.FundingOutputIndex)
 

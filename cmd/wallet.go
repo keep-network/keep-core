@@ -15,6 +15,8 @@ var (
 	walletFlagName       = "wallet"
 	hideSweptFlagName    = "hide-swept"
 	sortByAmountFlagName = "sort-amount"
+	headFlagName         = "head"
+	tailFlagName         = "tail"
 )
 
 // WalletCommand contains the definition of tBTC wallets tools.
@@ -57,6 +59,16 @@ var depositsCommand = cobra.Command{
 			return fmt.Errorf("failed to find show swept flag: %v", err)
 		}
 
+		head, err := cmd.Flags().GetInt(headFlagName)
+		if err != nil {
+			return fmt.Errorf("failed to find head flag: %v", err)
+		}
+
+		tail, err := cmd.Flags().GetInt(tailFlagName)
+		if err != nil {
+			return fmt.Errorf("failed to find tail flag: %v", err)
+		}
+
 		_, tbtcChain, _, _, _, err := ethereum.Connect(ctx, clientConfig.Ethereum)
 		if err != nil {
 			return fmt.Errorf(
@@ -76,6 +88,8 @@ var depositsCommand = cobra.Command{
 			wallet,
 			hideSwept,
 			sortByAmount,
+			head,
+			tail,
 		)
 	},
 }
@@ -106,6 +120,18 @@ func init() {
 		sortByAmountFlagName,
 		false,
 		"sort by deposit amount",
+	)
+
+	depositsCommand.Flags().Int(
+		headFlagName,
+		0,
+		"get head of deposits",
+	)
+
+	depositsCommand.Flags().Int(
+		tailFlagName,
+		0,
+		"get tail of deposits",
 	)
 
 	WalletCommand.AddCommand(&depositsCommand)
