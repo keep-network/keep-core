@@ -208,6 +208,10 @@ type BridgeChain interface {
 	// ComputeMainUtxoHash computes the hash of the provided main UTXO
 	// according to the on-chain Bridge rules.
 	ComputeMainUtxoHash(mainUtxo *bitcoin.UnspentTransactionOutput) [32]byte
+
+	// BuildDepositKey calculates a deposit key for the given funding transaction
+	// which is an unique identifier for a deposit on-chain.
+	BuildDepositKey(fundingTxHash bitcoin.Hash, fundingOutputIndex uint32) *big.Int
 }
 
 // HeartbeatRequestedEvent represents a Bridge heartbeat request event.
