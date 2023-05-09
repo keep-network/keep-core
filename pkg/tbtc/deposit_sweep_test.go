@@ -179,12 +179,10 @@ func TestDepositSweepAction_Execute(t *testing.T) {
 			// Set up the signing executor mock to return the signatures from
 			// the test fixture when called with the expected parameters.
 			// Note that the start block is set based on the proposal
-			// processing start block incremented by the same delay value
-			// as done within the action.
+			// processing start block as done within the action.
 			signingExecutor.setSignatures(
 				scenario.ExpectedSigHashes,
-				proposalProcessingStartBlock+
-					uint64(len(depositsKeys)*depositSweepSigningDelayBlocks),
+				proposalProcessingStartBlock,
 				rawSignatures,
 			)
 

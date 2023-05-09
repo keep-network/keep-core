@@ -32,15 +32,6 @@ const (
 	// of fraud accusations. Usage of the safety margin ensures there is enough
 	// time to perform post-signing steps of the deposit sweep action.
 	depositSweepSigningTimeoutSafetyMargin = 1 * time.Hour
-	// depositSweepSigningDelayBlocks determines the per-deposit delay in
-	// blocks that must be preserved before starting the deposit sweep
-	// transaction signing process. This delay aims to reflect the time taken
-	// by pre-signing steps that must be done for a single deposit.
-	// Multiplying this constant by the number of proposal's deposits
-	// allows to determine the total delay that must be added to the proposal
-	// processing start block in order to designate a sane signing start block
-	// and maximize chances for a successful signing process.
-	depositSweepSigningDelayBlocks = 10
 	// depositSweepBroadcastTimeout determines the time window for deposit
 	// sweep transaction broadcast. It is guaranteed that at least
 	// depositSweepSigningTimeoutSafetyMargin is preserved for the broadcast
@@ -84,7 +75,6 @@ type depositSweepAction struct {
 
 	requiredFundingTxConfirmations uint
 	signingTimeoutSafetyMargin     time.Duration
-	signingDelayBlocks             int
 	broadcastTimeout               time.Duration
 	broadcastCheckDelay            time.Duration
 }
@@ -110,7 +100,6 @@ func newDepositSweepAction(
 		proposalExpiresAt:              proposalExpiresAt,
 		requiredFundingTxConfirmations: depositSweepRequiredFundingTxConfirmations,
 		signingTimeoutSafetyMargin:     depositSweepSigningTimeoutSafetyMargin,
-		signingDelayBlocks:             depositSweepSigningDelayBlocks,
 		broadcastTimeout:               depositSweepBroadcastTimeout,
 		broadcastCheckDelay:            depositSweepBroadcastCheckDelay,
 	}
@@ -339,16 +328,10 @@ func (dsa *depositSweepAction) createTransaction(
 	)
 	defer cancelSigningCtx()
 
-	// Make sure the signing start block takes into account the time elapsed
-	// during pre-signing steps, i.e. gathering deposit data and proposal
-	// validation.
-	signingStartBlock := dsa.proposalProcessingStartBlock +
-		uint64(len(deposits)*dsa.signingDelayBlocks)
-
 	signatures, err := dsa.signingExecutor.signBatch(
 		signingCtx,
 		sigHashes,
-		signingStartBlock,
+		dsa.proposalProcessingStartBlock,
 	)
 	if err != nil {
 		return nil, fmt.Errorf(
