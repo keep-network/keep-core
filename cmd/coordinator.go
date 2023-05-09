@@ -106,11 +106,12 @@ var proposeDepositsSweepCommand = cobra.Command{
 			return err
 		}
 
-		for _, arg := range args {
-			if !coordinator.BitcoinTxRegexp.MatchString(arg) {
+		for i, arg := range args {
+			if err := coordinator.ValidateDepositString(arg); err != nil {
 				return fmt.Errorf(
-					"argument [%s] doesn't match pattern: <unprefixed transaction hash>:<output index>:<reveal block number>",
-					arg,
+					"argument [%d] failed validation: %v",
+					i,
+					err,
 				)
 			}
 		}
@@ -156,10 +157,7 @@ the chain.
 Expects --wallet and --fee flags along with deposits to sweep provided
 as arguments.
 
-Deposit details should be provided in the following format:
-<unprefixed bitcoin transaction hash>:<bitcoin transaction output index>:<ethereum reveal block number>
-e.g. bd99d1d0a61fd104925d9b7ac997958aa8af570418b3fde091f7bfc561608865:1:8392394
-`
+` + coordinator.DepositsFormatDescription
 
 func init() {
 	initFlags(

@@ -17,11 +17,18 @@ type btcTransactions = struct {
 
 const requiredFundingTxConfirmations = uint(6)
 
-// BitcoinTxRegexp defines a format in which bitcoin transactions are expected
-// to be provided as strings.
-// The format is: <unprefixed transaction hash>:<output index>
-// e.g. bd99d1d0a61fd104925d9b7ac997958aa8af570418b3fde091f7bfc561608865:1:8392394
-var BitcoinTxRegexp = regexp.MustCompile(`^([[:xdigit:]]+):(\d+):(\d+)$`)
+var (
+	DepositsFormatDescription = `Deposits details should be provided as strings containing:
+  - bitcoin transaction hash (unprefixed bitcoin transaction hash in reverse (RPC) order),
+  - bitcoin transaction output index,
+  - ethereum block number when the deposit was revealed to the chain.
+The properties should be separated by semicolons, in the following format:
+` + depositsFormatPattern + `
+e.g. bd99d1d0a61fd104925d9b7ac997958aa8af570418b3fde091f7bfc561608865:1:8392394
+`
+	depositsFormatPattern = "<unprefixed bitcoin transaction hash>:<bitcoin transaction output index>:<ethereum reveal block number>"
+	depositsFormatRegexp  = regexp.MustCompile(`^([[:xdigit:]]+):(\d+):(\d+)$`)
+)
 
 // ProposeDepositsSweep handles deposit sweep proposal request submission.
 func ProposeDepositsSweep(
@@ -75,7 +82,7 @@ func parseDeposits(depositsStrings []string) ([]btcTransactions, []*big.Int, err
 	depositsRevealBlocks := make([]*big.Int, len(depositsStrings))
 
 	for i, depositString := range depositsStrings {
-		matched := BitcoinTxRegexp.FindStringSubmatch(depositString)
+		matched := depositsFormatRegexp.FindStringSubmatch(depositString)
 		if len(matched) != 4 {
 			return nil, nil, fmt.Errorf("failed to parse deposit: [%s]", depositString)
 		}
@@ -105,4 +112,16 @@ func parseDeposits(depositsStrings []string) ([]btcTransactions, []*big.Int, err
 	}
 
 	return depositsKeys, depositsRevealBlocks, nil
+}
+
+// ValidateDepositString validates format of the string containing deposit details.
+func ValidateDepositString(depositString string) error {
+	if !depositsFormatRegexp.MatchString(depositString) {
+		return fmt.Errorf(
+			"[%s] doesn't match pattern: %s",
+			depositString,
+			depositsFormatPattern,
+		)
+	}
+	return nil
 }
