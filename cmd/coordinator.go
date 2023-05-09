@@ -202,7 +202,7 @@ func init() {
 
 	CoordinatorCommand.AddCommand(&listDepositsCommand)
 
-	// Sweep Subcommand
+	// Propose Deposits Sweep Subcommand
 	proposeDepositsSweepCommand.Flags().String(
 		walletFlagName,
 		"",
