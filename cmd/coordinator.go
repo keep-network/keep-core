@@ -214,7 +214,7 @@ func init() {
 	proposeDepositsSweepCommand.Flags().Int64(
 		feeFlagName,
 		0,
-		"fee for bitcoin transaction",
+		"fee for the entire bitcoin transaction (satoshi)",
 	)
 
 	proposeDepositsSweepCommand.Flags().Bool(
