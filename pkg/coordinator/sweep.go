@@ -83,6 +83,8 @@ func parseDeposits(depositsStrings []string) ([]btcTransaction, []*big.Int, erro
 
 	for i, depositString := range depositsStrings {
 		matched := depositsFormatRegexp.FindStringSubmatch(depositString)
+		// Check if number of resolved entries match expected number of groups
+		// for the given regexp.
 		if len(matched) != 4 {
 			return nil, nil, fmt.Errorf("failed to parse deposit: [%s]", depositString)
 		}
