@@ -36,7 +36,7 @@ func ProposeDepositsSweep(
 	btcChain bitcoin.Chain,
 	walletStr string,
 	fee int64,
-	btcTransactionsStr []string,
+	depositsString []string,
 	dryRun bool,
 ) error {
 	walletPublicKeyHash, err := hexToWalletPublicKeyHash(walletStr)
@@ -44,7 +44,7 @@ func ProposeDepositsSweep(
 		return fmt.Errorf("failed extract wallet public key hash: %v", err)
 	}
 
-	btcTransactions, depositsRevealBlocks, err := parseDeposits(btcTransactionsStr)
+	btcTransactions, depositsRevealBlocks, err := parseDeposits(depositsString)
 	if err != nil {
 		return fmt.Errorf("failed to parse arguments: %w", err)
 	}
