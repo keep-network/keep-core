@@ -70,8 +70,7 @@ spec:
           - maintainer
           args:
           - --bitcoinDifficulty
-          # run as developer to be able to set LightRelay address
-          - --developer
+          - --goerli
           - --ethereum.url
           - $(ETH_WS_URL)
           - --ethereum.keyFile
