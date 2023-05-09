@@ -38,8 +38,8 @@ var CoordinatorCommand = &cobra.Command{
 	},
 }
 
-var depositsCommand = cobra.Command{
-	Use:              "deposits",
+var listDepositsCommand = cobra.Command{
+	Use:              "list-deposits",
 	Short:            "get list of deposits",
 	Long:             "Gets tBTC deposits details from the chain and prints them.",
 	TraverseChildren: true,
@@ -96,10 +96,10 @@ var depositsCommand = cobra.Command{
 	},
 }
 
-var sweepCommand = cobra.Command{
-	Use:              "sweep",
+var proposeDepositsSweepCommand = cobra.Command{
+	Use:              "propose-deposits-sweep",
 	Short:            "propose deposits sweep",
-	Long:             sweepCommandDescription,
+	Long:             proposeDepositsSweepCommandDescription,
 	TraverseChildren: true,
 	Args: func(cmd *cobra.Command, args []string) error {
 		if err := cobra.MinimumNArgs(1)(cmd, args); err != nil {
@@ -147,11 +147,12 @@ var sweepCommand = cobra.Command{
 			return fmt.Errorf("could not connect to Electrum chain: [%v]", err)
 		}
 
-		return coordinator.ProposeSweep(tbtcChain, btcChain, wallet, fee, args, dryRun)
+		return coordinator.ProposeDepositsSweep(tbtcChain, btcChain, wallet, fee, args, dryRun)
 	},
 }
 
-var sweepCommandDescription = `Submits a deposits sweep proposal to the chain.
+var proposeDepositsSweepCommandDescription = `Submits a deposits sweep proposal to 
+the chain.
 Expects --wallet and --fee flags along with bitcoin transactions to sweep provided
 as arguments.
 
@@ -169,60 +170,60 @@ func init() {
 	)
 
 	// Deposits Subcommand
-	depositsCommand.Flags().String(
+	listDepositsCommand.Flags().String(
 		walletFlagName,
 		"",
 		"wallet public key hash",
 	)
 
-	depositsCommand.Flags().Bool(
+	listDepositsCommand.Flags().Bool(
 		hideSweptFlagName,
 		false,
 		"hide swept deposits",
 	)
 
-	depositsCommand.Flags().Bool(
+	listDepositsCommand.Flags().Bool(
 		sortByAmountFlagName,
 		false,
 		"sort by deposit amount",
 	)
 
-	depositsCommand.Flags().Int(
+	listDepositsCommand.Flags().Int(
 		headFlagName,
 		0,
 		"get head of deposits",
 	)
 
-	depositsCommand.Flags().Int(
+	listDepositsCommand.Flags().Int(
 		tailFlagName,
 		0,
 		"get tail of deposits",
 	)
 
-	CoordinatorCommand.AddCommand(&depositsCommand)
+	CoordinatorCommand.AddCommand(&listDepositsCommand)
 
 	// Sweep Subcommand
-	sweepCommand.Flags().String(
+	proposeDepositsSweepCommand.Flags().String(
 		walletFlagName,
 		"",
 		"wallet public key hash",
 	)
 
-	if err := sweepCommand.MarkFlagRequired(walletFlagName); err != nil {
+	if err := proposeDepositsSweepCommand.MarkFlagRequired(walletFlagName); err != nil {
 		logger.Panicf("failed to mark wallet flag as required: %v", err)
 	}
 
-	sweepCommand.Flags().Int64(
+	proposeDepositsSweepCommand.Flags().Int64(
 		feeFlagName,
 		0,
 		"fee for bitcoin transaction",
 	)
 
-	sweepCommand.Flags().Bool(
+	proposeDepositsSweepCommand.Flags().Bool(
 		dryRunFlagName,
 		false,
 		"don't submit a proposal to the chain",
 	)
 
-	CoordinatorCommand.AddCommand(&sweepCommand)
+	CoordinatorCommand.AddCommand(&proposeDepositsSweepCommand)
 }

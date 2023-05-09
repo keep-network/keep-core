@@ -23,8 +23,8 @@ const requiredFundingTxConfirmations = uint(6)
 // e.g. bd99d1d0a61fd104925d9b7ac997958aa8af570418b3fde091f7bfc561608865:1
 var BitcoinTxRegexp = regexp.MustCompile(`^([[:xdigit:]]+):(\d+)$`)
 
-// ProposeSweep handles deposit sweep proposal request submission.
-func ProposeSweep(
+// ProposeDepositsSweep handles deposit sweep proposal request submission.
+func ProposeDepositsSweep(
 	tbtcChain tbtc.Chain,
 	btcChain bitcoin.Chain,
 	walletStr string,
