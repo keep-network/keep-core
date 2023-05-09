@@ -125,7 +125,7 @@ func (dsa *depositSweepAction) execute() error {
 	validatedDeposits, err := ValidateDepositSweepProposal(
 		validateProposalLogger,
 		dsa.proposal,
-		depositSweepRequiredFundingTxConfirmations,
+		dsa.requiredFundingTxConfirmations,
 		dsa.chain,
 		dsa.btcChain,
 	)
