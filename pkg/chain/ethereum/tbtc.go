@@ -1353,7 +1353,7 @@ func (tc *TbtcChain) ValidateDepositSweepProposal(
 func (tc *TbtcChain) SubmitDepositSweepProposal(
 	proposal *tbtc.DepositSweepProposal,
 ) error {
-	_, err := tc.walletCoordinator.SubmitDepositSweepProposalGasEstimate(
+	_, err := tc.walletCoordinator.SubmitDepositSweepProposal(
 		convertDepositSweepProposalToAbiType(proposal),
 	)
 
