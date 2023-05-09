@@ -109,7 +109,7 @@ var proposeDepositsSweepCommand = cobra.Command{
 		for _, arg := range args {
 			if !coordinator.BitcoinTxRegexp.MatchString(arg) {
 				return fmt.Errorf(
-					"argument [%s] doesn't match pattern: <unprefixed transaction hash>:<output index>",
+					"argument [%s] doesn't match pattern: <unprefixed transaction hash>:<output index>:<reveal block number>",
 					arg,
 				)
 			}
@@ -153,12 +153,12 @@ var proposeDepositsSweepCommand = cobra.Command{
 
 var proposeDepositsSweepCommandDescription = `Submits a deposits sweep proposal to 
 the chain.
-Expects --wallet and --fee flags along with bitcoin transactions to sweep provided
+Expects --wallet and --fee flags along with deposits to sweep provided
 as arguments.
 
-Bitcoin transactions should be provided in the following format:
-<unprefixed transaction hash>:<output index>
-e.g. bd99d1d0a61fd104925d9b7ac997958aa8af570418b3fde091f7bfc561608865:1
+Deposit details should be provided in the following format:
+<unprefixed bitcoin transaction hash>:<bitcoin transaction output index>:<ethereum reveal block number>
+e.g. bd99d1d0a61fd104925d9b7ac997958aa8af570418b3fde091f7bfc561608865:1:8392394
 `
 
 func init() {

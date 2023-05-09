@@ -179,7 +179,7 @@ func getDeposits(
 
 func printTable(deposits []depositEntry) error {
 	w := tabwriter.NewWriter(os.Stdout, 2, 4, 1, ' ', tabwriter.AlignRight)
-	fmt.Fprintf(w, "index\twallet\tvalue (BTC)\tdeposit key\tfunding transaction\tconfirmations\tswept\t\n")
+	fmt.Fprintf(w, "index\twallet\tvalue (BTC)\tdeposit key\trevealed deposit data\tconfirmations\tswept\t\n")
 
 	for i, deposit := range deposits {
 		fmt.Fprintf(w, "%d\t%s\t%.5f\t%s\t%s\t%d\t%t\t\n",
@@ -188,9 +188,10 @@ func printTable(deposits []depositEntry) error {
 			deposit.amountBtc,
 			deposit.depositKey,
 			fmt.Sprintf(
-				"%s:%d",
+				"%s:%d:%d",
 				deposit.fundingTransactionHash.Hex(bitcoin.ReversedByteOrder),
 				deposit.fundingTransactionOutputIndex,
+				deposit.revealBlock,
 			),
 			deposit.confirmations,
 			deposit.isSwept,
