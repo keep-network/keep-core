@@ -57,8 +57,6 @@ spec:
           volumeMounts:
           - name: eth-account-keyfile
             mountPath: /mnt/btc-difficulty-maintainer/keyfile
-          - name: btc-difficulty-maintainer-config
-            mountPath: /mnt/btc-difficulty-maintainer/config
           command:
           - keep-client
           - maintainer
