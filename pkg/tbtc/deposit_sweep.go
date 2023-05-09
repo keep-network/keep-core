@@ -4,12 +4,13 @@ import (
 	"context"
 	"crypto/ecdsa"
 	"fmt"
+	"math/big"
+	"time"
+
 	"github.com/ipfs/go-log/v2"
 	"github.com/keep-network/keep-core/pkg/bitcoin"
 	"github.com/keep-network/keep-core/pkg/tecdsa"
 	"go.uber.org/zap"
-	"math/big"
-	"time"
 )
 
 const (
@@ -70,6 +71,7 @@ type depositSweepSigningExecutor interface {
 
 // depositSweepAction is a deposit sweep walletAction.
 type depositSweepAction struct {
+	logger   *zap.SugaredLogger
 	chain    Chain
 	btcChain bitcoin.Chain
 
@@ -88,6 +90,7 @@ type depositSweepAction struct {
 }
 
 func newDepositSweepAction(
+	logger *zap.SugaredLogger,
 	chain Chain,
 	btcChain bitcoin.Chain,
 	sweepingWallet wallet,
@@ -97,6 +100,7 @@ func newDepositSweepAction(
 	proposalExpiresAt time.Time,
 ) *depositSweepAction {
 	return &depositSweepAction{
+		logger:                         logger,
 		chain:                          chain,
 		btcChain:                       btcChain,
 		sweepingWallet:                 sweepingWallet,
@@ -113,18 +117,7 @@ func newDepositSweepAction(
 }
 
 func (dsa *depositSweepAction) execute() error {
-	walletPublicKeyBytes, err := marshalPublicKey(dsa.wallet().publicKey)
-	if err != nil {
-		return fmt.Errorf("cannot marshal wallet public key: [%v]", err)
-	}
-
-	actionLogger := logger.With(
-		zap.String("wallet", fmt.Sprintf("0x%x", walletPublicKeyBytes)),
-		zap.String("action", dsa.actionType().String()),
-		zap.Uint64("startBlock", dsa.proposalProcessingStartBlock),
-	)
-
-	validateProposalLogger := actionLogger.With(
+	validateProposalLogger := dsa.logger.With(
 		zap.String("step", "validateProposal"),
 	)
 
@@ -145,7 +138,7 @@ func (dsa *depositSweepAction) execute() error {
 		)
 	}
 
-	createTxLogger := actionLogger.With(
+	createTxLogger := dsa.logger.With(
 		zap.String("step", "createTransaction"),
 	)
 
@@ -158,7 +151,7 @@ func (dsa *depositSweepAction) execute() error {
 		return fmt.Errorf("create transaction step failed: [%v]", err)
 	}
 
-	broadcastTxLogger := actionLogger.With(
+	broadcastTxLogger := dsa.logger.With(
 		zap.String("step", "broadcastTransaction"),
 		zap.String("sweepTxHash", sweepTx.Hash().Hex(bitcoin.ReversedByteOrder)),
 	)

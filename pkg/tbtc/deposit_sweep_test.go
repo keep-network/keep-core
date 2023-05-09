@@ -6,11 +6,12 @@ import (
 	"crypto/sha256"
 	"encoding/binary"
 	"fmt"
-	"github.com/keep-network/keep-core/pkg/tecdsa"
 	"math/big"
 	"sync"
 	"testing"
 	"time"
+
+	"github.com/keep-network/keep-core/pkg/tecdsa"
 
 	"github.com/keep-network/keep-core/pkg/bitcoin"
 	"github.com/keep-network/keep-core/pkg/internal/tbtctest"
@@ -188,6 +189,7 @@ func TestDepositSweepAction_Execute(t *testing.T) {
 			)
 
 			action := newDepositSweepAction(
+				logger.With(),
 				hostChain,
 				bitcoinChain,
 				wallet,

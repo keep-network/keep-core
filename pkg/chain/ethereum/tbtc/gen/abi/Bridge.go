@@ -70,7 +70,6 @@ type DepositDepositRequest struct {
 // DepositDepositRevealInfo is an auto generated low-level Go binding around an user-defined struct.
 type DepositDepositRevealInfo struct {
 	FundingOutputIndex uint32
-	Depositor          common.Address
 	BlindingFactor     [8]byte
 	WalletPubKeyHash   [20]byte
 	RefundPubKeyHash   [20]byte
@@ -1693,6 +1692,27 @@ func (_Bridge *BridgeSession) UpdateRedemptionParameters(redemptionDustThreshold
 // Solidity: function updateRedemptionParameters(uint64 redemptionDustThreshold, uint64 redemptionTreasuryFeeDivisor, uint64 redemptionTxMaxFee, uint64 redemptionTxMaxTotalFee, uint32 redemptionTimeout, uint96 redemptionTimeoutSlashingAmount, uint32 redemptionTimeoutNotifierRewardMultiplier) returns()
 func (_Bridge *BridgeTransactorSession) UpdateRedemptionParameters(redemptionDustThreshold uint64, redemptionTreasuryFeeDivisor uint64, redemptionTxMaxFee uint64, redemptionTxMaxTotalFee uint64, redemptionTimeout uint32, redemptionTimeoutSlashingAmount *big.Int, redemptionTimeoutNotifierRewardMultiplier uint32) (*types.Transaction, error) {
 	return _Bridge.Contract.UpdateRedemptionParameters(&_Bridge.TransactOpts, redemptionDustThreshold, redemptionTreasuryFeeDivisor, redemptionTxMaxFee, redemptionTxMaxTotalFee, redemptionTimeout, redemptionTimeoutSlashingAmount, redemptionTimeoutNotifierRewardMultiplier)
+}
+
+// UpdateTreasury is a paid mutator transaction binding the contract method 0x7f51bb1f.
+//
+// Solidity: function updateTreasury(address treasury) returns()
+func (_Bridge *BridgeTransactor) UpdateTreasury(opts *bind.TransactOpts, treasury common.Address) (*types.Transaction, error) {
+	return _Bridge.contract.Transact(opts, "updateTreasury", treasury)
+}
+
+// UpdateTreasury is a paid mutator transaction binding the contract method 0x7f51bb1f.
+//
+// Solidity: function updateTreasury(address treasury) returns()
+func (_Bridge *BridgeSession) UpdateTreasury(treasury common.Address) (*types.Transaction, error) {
+	return _Bridge.Contract.UpdateTreasury(&_Bridge.TransactOpts, treasury)
+}
+
+// UpdateTreasury is a paid mutator transaction binding the contract method 0x7f51bb1f.
+//
+// Solidity: function updateTreasury(address treasury) returns()
+func (_Bridge *BridgeTransactorSession) UpdateTreasury(treasury common.Address) (*types.Transaction, error) {
+	return _Bridge.Contract.UpdateTreasury(&_Bridge.TransactOpts, treasury)
 }
 
 // UpdateWalletParameters is a paid mutator transaction binding the contract method 0x883d6a11.
@@ -5166,6 +5186,140 @@ func (_Bridge *BridgeFilterer) WatchSpvMaintainerStatusUpdated(opts *bind.WatchO
 func (_Bridge *BridgeFilterer) ParseSpvMaintainerStatusUpdated(log types.Log) (*BridgeSpvMaintainerStatusUpdated, error) {
 	event := new(BridgeSpvMaintainerStatusUpdated)
 	if err := _Bridge.contract.UnpackLog(event, "SpvMaintainerStatusUpdated", log); err != nil {
+		return nil, err
+	}
+	event.Raw = log
+	return event, nil
+}
+
+// BridgeTreasuryUpdatedIterator is returned from FilterTreasuryUpdated and is used to iterate over the raw logs and unpacked data for TreasuryUpdated events raised by the Bridge contract.
+type BridgeTreasuryUpdatedIterator struct {
+	Event *BridgeTreasuryUpdated // Event containing the contract specifics and raw log
+
+	contract *bind.BoundContract // Generic contract to use for unpacking event data
+	event    string              // Event name to use for unpacking event data
+
+	logs chan types.Log        // Log channel receiving the found contract events
+	sub  ethereum.Subscription // Subscription for errors, completion and termination
+	done bool                  // Whether the subscription completed delivering logs
+	fail error                 // Occurred error to stop iteration
+}
+
+// Next advances the iterator to the subsequent event, returning whether there
+// are any more events found. In case of a retrieval or parsing error, false is
+// returned and Error() can be queried for the exact failure.
+func (it *BridgeTreasuryUpdatedIterator) Next() bool {
+	// If the iterator failed, stop iterating
+	if it.fail != nil {
+		return false
+	}
+	// If the iterator completed, deliver directly whatever's available
+	if it.done {
+		select {
+		case log := <-it.logs:
+			it.Event = new(BridgeTreasuryUpdated)
+			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+				it.fail = err
+				return false
+			}
+			it.Event.Raw = log
+			return true
+
+		default:
+			return false
+		}
+	}
+	// Iterator still in progress, wait for either a data or an error event
+	select {
+	case log := <-it.logs:
+		it.Event = new(BridgeTreasuryUpdated)
+		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+			it.fail = err
+			return false
+		}
+		it.Event.Raw = log
+		return true
+
+	case err := <-it.sub.Err():
+		it.done = true
+		it.fail = err
+		return it.Next()
+	}
+}
+
+// Error returns any retrieval or parsing error occurred during filtering.
+func (it *BridgeTreasuryUpdatedIterator) Error() error {
+	return it.fail
+}
+
+// Close terminates the iteration process, releasing any pending underlying
+// resources.
+func (it *BridgeTreasuryUpdatedIterator) Close() error {
+	it.sub.Unsubscribe()
+	return nil
+}
+
+// BridgeTreasuryUpdated represents a TreasuryUpdated event raised by the Bridge contract.
+type BridgeTreasuryUpdated struct {
+	Treasury common.Address
+	Raw      types.Log // Blockchain specific contextual infos
+}
+
+// FilterTreasuryUpdated is a free log retrieval operation binding the contract event 0x7dae230f18360d76a040c81f050aa14eb9d6dc7901b20fc5d855e2a20fe814d1.
+//
+// Solidity: event TreasuryUpdated(address treasury)
+func (_Bridge *BridgeFilterer) FilterTreasuryUpdated(opts *bind.FilterOpts) (*BridgeTreasuryUpdatedIterator, error) {
+
+	logs, sub, err := _Bridge.contract.FilterLogs(opts, "TreasuryUpdated")
+	if err != nil {
+		return nil, err
+	}
+	return &BridgeTreasuryUpdatedIterator{contract: _Bridge.contract, event: "TreasuryUpdated", logs: logs, sub: sub}, nil
+}
+
+// WatchTreasuryUpdated is a free log subscription operation binding the contract event 0x7dae230f18360d76a040c81f050aa14eb9d6dc7901b20fc5d855e2a20fe814d1.
+//
+// Solidity: event TreasuryUpdated(address treasury)
+func (_Bridge *BridgeFilterer) WatchTreasuryUpdated(opts *bind.WatchOpts, sink chan<- *BridgeTreasuryUpdated) (event.Subscription, error) {
+
+	logs, sub, err := _Bridge.contract.WatchLogs(opts, "TreasuryUpdated")
+	if err != nil {
+		return nil, err
+	}
+	return event.NewSubscription(func(quit <-chan struct{}) error {
+		defer sub.Unsubscribe()
+		for {
+			select {
+			case log := <-logs:
+				// New log arrived, parse the event and forward to the user
+				event := new(BridgeTreasuryUpdated)
+				if err := _Bridge.contract.UnpackLog(event, "TreasuryUpdated", log); err != nil {
+					return err
+				}
+				event.Raw = log
+
+				select {
+				case sink <- event:
+				case err := <-sub.Err():
+					return err
+				case <-quit:
+					return nil
+				}
+			case err := <-sub.Err():
+				return err
+			case <-quit:
+				return nil
+			}
+		}
+	}), nil
+}
+
+// ParseTreasuryUpdated is a log parse operation binding the contract event 0x7dae230f18360d76a040c81f050aa14eb9d6dc7901b20fc5d855e2a20fe814d1.
+//
+// Solidity: event TreasuryUpdated(address treasury)
+func (_Bridge *BridgeFilterer) ParseTreasuryUpdated(log types.Log) (*BridgeTreasuryUpdated, error) {
+	event := new(BridgeTreasuryUpdated)
+	if err := _Bridge.contract.UnpackLog(event, "TreasuryUpdated", log); err != nil {
 		return nil, err
 	}
 	event.Raw = log

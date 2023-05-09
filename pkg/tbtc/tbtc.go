@@ -257,6 +257,110 @@ func Initialize(
 		}()
 	})
 
+	// Set up a handler of a wallet heartbeat request coming from the
+	// WalletCoordinator on-chain contract. Once an event is seen, a handler
+	// goroutine makes sure that the observed event is not duplicate, waits
+	// a fixed confirmation period, and ensures the on-chain state justifies
+	// the occurrence of the event. Once done, the original event is used
+	// to trigger the heartbeat request action. The handler does not care about
+	// possible subsequent events being a result of chain reorgs. This is because
+	// the WalletCoordinator contract is just a coordination point based on
+	// the chain consensus. If enough clients received the event, they should
+	// follow it and execute a heartbeat signing. The message for that heartbeat
+	// request was validated in the contract, so even if there was a reorg and
+	// another event landed on the canonical chain later, the signature
+	// will still be valid and not lead to fraud. The only reason the handler
+	// waits a fixed confirmation period after receiving the coordination event
+	// is to make sure the right type of action is executed given different types
+	// of actions may have different lock times. We do not want to run into a
+	// situation when the majority of clients execute heartbeat with N blocks
+	// wallet lock time and the chain has M < N blocks wallet lock time because
+	// the canonical chain - as a result of a reorg - is supposed to execute
+	// e.g. redemption.
+	_ = chain.OnHeartbeatRequestSubmitted(func(event *HeartbeatRequestSubmittedEvent) {
+		go func() {
+			walletPublicKeyHash := event.WalletPublicKeyHash
+			message := event.Message
+
+			if ok := deduplicator.notifyHeartbeatRequestSubmitted(
+				walletPublicKeyHash,
+				message,
+			); !ok {
+				logger.Infof(
+					"heartbeat request for wallet PKH [0x%x] and message [0x%x] "+
+						"has been already processed",
+					walletPublicKeyHash,
+					message,
+				)
+				return
+			}
+
+			confirmationBlock := event.BlockNumber +
+				heartbeatRequestConfirmationBlocks
+
+			logger.Infof(
+				"observed heartbeat request for wallet PKH [0x%x] "+
+					"at block [%v]; waiting for block [%v] to confirm",
+				walletPublicKeyHash,
+				event.BlockNumber,
+				confirmationBlock,
+			)
+
+			err := node.waitForBlockHeight(ctx, confirmationBlock)
+			if err != nil {
+				logger.Errorf(
+					"failed to confirm heartbeat request for "+
+						"wallet PKH [0x%x]: [%v]",
+					walletPublicKeyHash,
+					err,
+				)
+				return
+			}
+
+			expiresAt, cause, err := chain.GetWalletLock(
+				walletPublicKeyHash,
+			)
+			if err != nil {
+				logger.Errorf(
+					"failed to get lock for wallet PKH [0x%x]: [%v]",
+					walletPublicKeyHash,
+					err,
+				)
+				return
+			}
+
+			// The event is confirmed if the wallet is locked due to a heartbeat
+			// action.
+			if time.Now().Before(expiresAt) && cause == Heartbeat {
+				logger.Infof(
+					"heartbeat request submitted for "+
+						"wallet PKH [0x%x] at block [%v] by [%v]",
+					walletPublicKeyHash,
+					event.BlockNumber,
+					event.Coordinator,
+				)
+
+				node.handleHeartbeatRequest(
+					walletPublicKeyHash,
+					message,
+					expiresAt,
+					event.BlockNumber,
+					heartbeatRequestConfirmationBlocks,
+				)
+			} else {
+				logger.Infof(
+					"heartbeat request for wallet PKH [0x%x] "+
+						"at block [%v] was not confirmed; existing wallet lock "+
+						"has unexpected expiration time [%s] and/or cause [%v]",
+					walletPublicKeyHash,
+					event.BlockNumber,
+					expiresAt,
+					cause,
+				)
+			}
+		}()
+	})
+
 	// Set up a handler of deposit sweep proposals coming from the
 	// WalletCoordinator on-chain contract. Once an event is seen, a handler
 	// goroutine makes sure that the observed event is not a duplicate, waits

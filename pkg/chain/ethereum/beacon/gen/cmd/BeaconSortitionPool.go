@@ -69,6 +69,7 @@ func init() {
 		bspPoolWeightDivisorCommand(),
 		bspRewardTokenCommand(),
 		bspRewardsEligibilityRestorableAtCommand(),
+		bspSelectGroupCommand(),
 		bspTotalWeightCommand(),
 		bspDeactivateChaosnetCommand(),
 		bspInsertOperatorCommand(),
@@ -842,6 +843,57 @@ func bspRewardsEligibilityRestorableAt(c *cobra.Command, args []string) error {
 	return nil
 }
 
+func bspSelectGroupCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "select-group [arg_groupSize] [arg_seed]",
+		Short:                 "Calls the view method selectGroup on the BeaconSortitionPool contract.",
+		Args:                  cmd.ArgCountChecker(2),
+		RunE:                  bspSelectGroup,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	cmd.InitConstFlags(c)
+
+	return c
+}
+
+func bspSelectGroup(c *cobra.Command, args []string) error {
+	contract, err := initializeBeaconSortitionPool(c)
+	if err != nil {
+		return err
+	}
+
+	arg_groupSize, err := hexutil.DecodeBig(args[0])
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter arg_groupSize, a uint256, from passed value %v",
+			args[0],
+		)
+	}
+	arg_seed, err := decode.ParseBytes32(args[1])
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter arg_seed, a bytes32, from passed value %v",
+			args[1],
+		)
+	}
+
+	result, err := contract.SelectGroupAtBlock(
+		arg_groupSize,
+		arg_seed,
+		cmd.BlockFlagValue.Int,
+	)
+
+	if err != nil {
+		return err
+	}
+
+	cmd.PrintOutput(result)
+
+	return nil
+}
+
 func bspTotalWeightCommand() *cobra.Command {
 	c := &cobra.Command{
 		Use:                   "total-weight",
@@ -922,6 +974,11 @@ func bspDeactivateChaosnet(c *cobra.Command, args []string) error {
 		}
 
 		cmd.PrintOutput("success")
+
+		cmd.PrintOutput(
+			"the transaction was not submitted to the chain; " +
+				"please add the `--submit` flag",
+		)
 	}
 
 	return nil
@@ -991,6 +1048,11 @@ func bspInsertOperator(c *cobra.Command, args []string) error {
 		}
 
 		cmd.PrintOutput("success")
+
+		cmd.PrintOutput(
+			"the transaction was not submitted to the chain; " +
+				"please add the `--submit` flag",
+		)
 	}
 
 	return nil
@@ -1040,6 +1102,11 @@ func bspLock(c *cobra.Command, args []string) error {
 		}
 
 		cmd.PrintOutput("success")
+
+		cmd.PrintOutput(
+			"the transaction was not submitted to the chain; " +
+				"please add the `--submit` flag",
+		)
 	}
 
 	return nil
@@ -1127,6 +1194,11 @@ func bspReceiveApproval(c *cobra.Command, args []string) error {
 		}
 
 		cmd.PrintOutput("success")
+
+		cmd.PrintOutput(
+			"the transaction was not submitted to the chain; " +
+				"please add the `--submit` flag",
+		)
 	}
 
 	return nil
@@ -1176,6 +1248,11 @@ func bspRenounceOwnership(c *cobra.Command, args []string) error {
 		}
 
 		cmd.PrintOutput("success")
+
+		cmd.PrintOutput(
+			"the transaction was not submitted to the chain; " +
+				"please add the `--submit` flag",
+		)
 	}
 
 	return nil
@@ -1236,6 +1313,11 @@ func bspRestoreRewardEligibility(c *cobra.Command, args []string) error {
 		}
 
 		cmd.PrintOutput("success")
+
+		cmd.PrintOutput(
+			"the transaction was not submitted to the chain; " +
+				"please add the `--submit` flag",
+		)
 	}
 
 	return nil
@@ -1296,6 +1378,11 @@ func bspTransferChaosnetOwnerRole(c *cobra.Command, args []string) error {
 		}
 
 		cmd.PrintOutput("success")
+
+		cmd.PrintOutput(
+			"the transaction was not submitted to the chain; " +
+				"please add the `--submit` flag",
+		)
 	}
 
 	return nil
@@ -1356,6 +1443,11 @@ func bspTransferOwnership(c *cobra.Command, args []string) error {
 		}
 
 		cmd.PrintOutput("success")
+
+		cmd.PrintOutput(
+			"the transaction was not submitted to the chain; " +
+				"please add the `--submit` flag",
+		)
 	}
 
 	return nil
@@ -1405,6 +1497,11 @@ func bspUnlock(c *cobra.Command, args []string) error {
 		}
 
 		cmd.PrintOutput("success")
+
+		cmd.PrintOutput(
+			"the transaction was not submitted to the chain; " +
+				"please add the `--submit` flag",
+		)
 	}
 
 	return nil
@@ -1474,6 +1571,11 @@ func bspUpdateOperatorStatus(c *cobra.Command, args []string) error {
 		}
 
 		cmd.PrintOutput("success")
+
+		cmd.PrintOutput(
+			"the transaction was not submitted to the chain; " +
+				"please add the `--submit` flag",
+		)
 	}
 
 	return nil
@@ -1534,6 +1636,11 @@ func bspWithdrawIneligible(c *cobra.Command, args []string) error {
 		}
 
 		cmd.PrintOutput("success")
+
+		cmd.PrintOutput(
+			"the transaction was not submitted to the chain; " +
+				"please add the `--submit` flag",
+		)
 	}
 
 	return nil
@@ -1604,6 +1711,11 @@ func bspWithdrawRewards(c *cobra.Command, args []string) error {
 		}
 
 		cmd.PrintOutput(result)
+
+		cmd.PrintOutput(
+			"the transaction was not submitted to the chain; " +
+				"please add the `--submit` flag",
+		)
 	}
 
 	return nil
