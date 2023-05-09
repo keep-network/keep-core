@@ -70,14 +70,14 @@ func ProposeDepositsSweep(
 	return nil
 }
 
-func parseDeposits(str []string) ([]btcTransactions, []*big.Int, error) {
-	var depositKeys = []btcTransactions{}
-	var depositsRevealBlocks = []*big.Int{}
+func parseDeposits(depositsStrings []string) ([]btcTransactions, []*big.Int, error) {
+	depositsKeys := make([]btcTransactions, len(depositsStrings))
+	depositsRevealBlocks := make([]*big.Int, len(depositsStrings))
 
-	for _, arg := range str {
-		matched := BitcoinTxRegexp.FindStringSubmatch(arg)
+	for i, depositString := range depositsStrings {
+		matched := BitcoinTxRegexp.FindStringSubmatch(depositString)
 		if len(matched) != 4 {
-			return nil, nil, fmt.Errorf("failed to parse argument: [%s]", arg)
+			return nil, nil, fmt.Errorf("failed to parse deposit: [%s]", depositString)
 		}
 
 		txHash, err := bitcoin.NewHashFromString(matched[1], bitcoin.ReversedByteOrder)
@@ -96,13 +96,13 @@ func parseDeposits(str []string) ([]btcTransactions, []*big.Int, error) {
 			return nil, nil, fmt.Errorf("invalid reveal block number [%s]: %v", matched[3], err)
 		}
 
-		depositKeys = append(depositKeys, btcTransactions{
+		depositsKeys[i] = btcTransactions{
 			FundingTxHash:      txHash,
 			FundingOutputIndex: uint32(outputIndex),
-		})
+		}
 
-		depositsRevealBlocks = append(depositsRevealBlocks, big.NewInt(revealBlock))
+		depositsRevealBlocks[i] = big.NewInt(revealBlock)
 	}
 
-	return depositKeys, depositsRevealBlocks, nil
+	return depositsKeys, depositsRevealBlocks, nil
 }
