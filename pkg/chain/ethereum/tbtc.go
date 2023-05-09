@@ -979,6 +979,7 @@ func (tc *TbtcChain) PastDepositRevealedEvents(
 			RefundPublicKeyHash: event.RefundPubKeyHash,
 			RefundLocktime:      event.RefundLocktime,
 			Vault:               vault,
+			BlockNumber:         event.Raw.BlockNumber,
 		}
 
 		convertedEvents = append(convertedEvents, convertedEvent)
