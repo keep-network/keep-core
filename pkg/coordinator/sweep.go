@@ -10,7 +10,7 @@ import (
 	"github.com/keep-network/keep-core/pkg/tbtc"
 )
 
-type btcTransactions = struct {
+type btcTransaction = struct {
 	FundingTxHash      bitcoin.Hash
 	FundingOutputIndex uint32
 }
@@ -77,8 +77,8 @@ func ProposeDepositsSweep(
 	return nil
 }
 
-func parseDeposits(depositsStrings []string) ([]btcTransactions, []*big.Int, error) {
-	depositsKeys := make([]btcTransactions, len(depositsStrings))
+func parseDeposits(depositsStrings []string) ([]btcTransaction, []*big.Int, error) {
+	depositsKeys := make([]btcTransaction, len(depositsStrings))
 	depositsRevealBlocks := make([]*big.Int, len(depositsStrings))
 
 	for i, depositString := range depositsStrings {
@@ -103,7 +103,7 @@ func parseDeposits(depositsStrings []string) ([]btcTransactions, []*big.Int, err
 			return nil, nil, fmt.Errorf("invalid reveal block number [%s]: %v", matched[3], err)
 		}
 
-		depositsKeys[i] = btcTransactions{
+		depositsKeys[i] = btcTransaction{
 			FundingTxHash:      txHash,
 			FundingOutputIndex: uint32(outputIndex),
 		}
