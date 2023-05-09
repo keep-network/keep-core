@@ -31,7 +31,7 @@ require (
 	github.com/ipfs/go-log v1.0.5
 	github.com/ipfs/go-log/v2 v2.5.1
 	github.com/jbenet/goprocess v0.1.4
-	github.com/keep-network/keep-common v1.7.1-0.20230124141416-6f84b758111f
+	github.com/keep-network/keep-common v1.7.1-0.20230501122407-5cc3757ccf0d
 	github.com/libp2p/go-addr-util v0.2.0
 	github.com/libp2p/go-libp2p v0.20.1
 	github.com/libp2p/go-libp2p-core v0.16.1
@@ -47,7 +47,7 @@ require (
 	golang.org/x/exp v0.0.0-20220426173459-3bcf042a4bf5
 	golang.org/x/sync v0.0.0-20220601150217-0de741cfad7f
 	golang.org/x/term v0.0.0-20210927222741-03fcf44c2211
-	google.golang.org/protobuf v1.28.1
+	google.golang.org/protobuf v1.30.0
 	google.golang.org/protobuf/dev v0.0.0-00010101000000-000000000000
 )
 
@@ -64,7 +64,6 @@ require (
 	github.com/coreos/go-systemd/v22 v22.3.2 // indirect
 	github.com/davidlazar/go-crypto v0.0.0-20200604182044-b73af7476f6c // indirect
 	github.com/deckarep/golang-set v1.8.0 // indirect
-	github.com/decred/dcrd/crypto/blake256 v1.0.0 // indirect
 	github.com/decred/dcrd/dcrec/edwards/v2 v2.0.0 // indirect
 	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.0.1 // indirect
 	github.com/docker/go-units v0.4.0 // indirect

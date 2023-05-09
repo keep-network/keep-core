@@ -1,4 +1,4 @@
-package walletcmd
+package coordinator
 
 import (
 	"fmt"

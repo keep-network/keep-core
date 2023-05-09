@@ -14,6 +14,8 @@ import (
 	"sync"
 	"time"
 
+	"golang.org/x/crypto/sha3"
+
 	"github.com/keep-network/keep-core/pkg/bitcoin"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/chain/local_v1"
@@ -21,7 +23,6 @@ import (
 	"github.com/keep-network/keep-core/pkg/protocol/group"
 	"github.com/keep-network/keep-core/pkg/subscription"
 	"github.com/keep-network/keep-core/pkg/tecdsa/dkg"
-	"golang.org/x/crypto/sha3"
 )
 
 const localChainOperatorID = chain.OperatorID(1)
@@ -93,6 +94,7 @@ func (lc *localChain) GetBlockNumberByTimestamp(timestamp uint64) (
 	return block, nil
 }
 
+//lint:ignore U1000 This function can be useful for future.
 func (lc *localChain) setBlockNumberByTimestamp(timestamp uint64, block uint64) {
 	lc.blocksByTimestampMutex.Lock()
 	defer lc.blocksByTimestampMutex.Unlock()
@@ -538,6 +540,7 @@ func (lc *localChain) GetDepositRequest(
 	return request, nil
 }
 
+//lint:ignore U1000 This function can be useful for future.
 func (lc *localChain) setDepositRequest(
 	fundingTxHash bitcoin.Hash,
 	fundingOutputIndex uint32,
@@ -549,6 +552,15 @@ func (lc *localChain) setDepositRequest(
 	requestKey := buildDepositRequestKey(fundingTxHash, fundingOutputIndex)
 
 	lc.depositRequests[requestKey] = request
+}
+
+func (lc *localChain) BuildDepositKey(
+	fundingTxHash bitcoin.Hash,
+	fundingOutputIndex uint32,
+) *big.Int {
+	depositKeyBytes := buildDepositRequestKey(fundingTxHash, fundingOutputIndex)
+
+	return new(big.Int).SetBytes(depositKeyBytes[:])
 }
 
 func buildDepositRequestKey(

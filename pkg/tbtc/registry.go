@@ -5,8 +5,9 @@ import (
 	"crypto/elliptic"
 	"encoding/hex"
 	"fmt"
-	"github.com/keep-network/keep-core/pkg/bitcoin"
 	"sync"
+
+	"github.com/keep-network/keep-core/pkg/bitcoin"
 
 	"github.com/keep-network/keep-common/pkg/persistence"
 )
@@ -44,13 +45,6 @@ func newWalletRegistry(persistence persistence.ProtectedHandle) *walletRegistry 
 	walletSigners := walletStorage.loadSigners()
 	if len(walletSigners) > 0 {
 		for walletStorageKey, signers := range walletSigners {
-			logger.Infof(
-				"wallet signing group [0x%v] loaded from storage "+
-					"with [%v] members",
-				walletStorageKey,
-				len(signers),
-			)
-
 			// We need to extract the wallet from the signers array. The
 			// walletStorage.loadSigners function guarantees there is always
 			// at least one signer for the given walletStorageKey so, we
@@ -58,11 +52,20 @@ func newWalletRegistry(persistence persistence.ProtectedHandle) *walletRegistry 
 			// wallet from the first signer as the wallet is same for all of
 			// them.
 			wallet := signers[0].wallet
+			walletPublicKeyHash := bitcoin.PublicKeyHash(wallet.publicKey)
 
 			walletCache[walletStorageKey] = &walletCacheValue{
-				walletPublicKeyHash: bitcoin.PublicKeyHash(wallet.publicKey),
+				walletPublicKeyHash: walletPublicKeyHash,
 				signers:             signers,
 			}
+
+			logger.Infof(
+				"wallet signing group [0x%v] loaded from storage "+
+					"with [%v] members and wallet public key hash [0x%x]",
+				walletStorageKey,
+				len(signers),
+				walletPublicKeyHash,
+			)
 		}
 	} else {
 		logger.Infof("no wallet signing groups found in the storage")

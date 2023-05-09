@@ -3,11 +3,12 @@ package ethereum
 import (
 	"context"
 	"fmt"
-	"github.com/ethereum/go-ethereum/core/types"
-	"github.com/hashicorp/go-multierror"
 	"math/big"
 	"sync"
 	"time"
+
+	"github.com/ethereum/go-ethereum/core/types"
+	"github.com/hashicorp/go-multierror"
 
 	"github.com/ethereum/go-ethereum/accounts/keystore"
 	"github.com/ethereum/go-ethereum/ethclient"
@@ -18,6 +19,7 @@ import (
 	"github.com/keep-network/keep-common/pkg/rate"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/chain/ethereum/threshold/gen/contract"
+	"github.com/keep-network/keep-core/pkg/maintainer"
 	"github.com/keep-network/keep-core/pkg/operator"
 )
 
@@ -127,21 +129,22 @@ func Connect(
 // ConnectBitcoinDifficulty creates Bitcoin difficulty chain handle.
 func ConnectBitcoinDifficulty(
 	ctx context.Context,
-	config ethereum.Config,
+	ethereumConfig ethereum.Config,
+	maintainerConfig maintainer.Config,
 ) (
 	*BitcoinDifficultyChain,
 	error,
 ) {
-	client, err := ethclient.Dial(config.URL)
+	client, err := ethclient.Dial(ethereumConfig.URL)
 	if err != nil {
 		return nil, fmt.Errorf(
 			"error Connecting to Ethereum Server: %s [%v]",
-			config.URL,
+			ethereumConfig.URL,
 			err,
 		)
 	}
 
-	baseChain, err := newBaseChain(ctx, config, client)
+	baseChain, err := newBaseChain(ctx, ethereumConfig, client)
 	if err != nil {
 		return nil, fmt.Errorf(
 			"could not create base chain handle: [%v]",
@@ -149,7 +152,11 @@ func ConnectBitcoinDifficulty(
 		)
 	}
 
-	bitcoinDifficultyChain, err := NewBitcoinDifficultyChain(config, baseChain)
+	bitcoinDifficultyChain, err := NewBitcoinDifficultyChain(
+		ethereumConfig,
+		maintainerConfig,
+		baseChain,
+	)
 	if err != nil {
 		return nil, fmt.Errorf(
 			"could not create Bitcoin difficulty chain handle: [%v]",

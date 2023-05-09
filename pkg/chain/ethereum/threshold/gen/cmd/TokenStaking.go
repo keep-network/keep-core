@@ -1240,6 +1240,11 @@ func tsApproveApplication(c *cobra.Command, args []string) error {
 		}
 
 		cmd.PrintOutput("success")
+
+		cmd.PrintOutput(
+			"the transaction was not submitted to the chain; " +
+				"please add the `--submit` flag",
+		)
 	}
 
 	return nil
@@ -1301,6 +1306,11 @@ func tsApproveAuthorizationDecrease(c *cobra.Command, args []string) error {
 		}
 
 		cmd.PrintOutput(result)
+
+		cmd.PrintOutput(
+			"the transaction was not submitted to the chain; " +
+				"please add the `--submit` flag",
+		)
 	}
 
 	return nil
@@ -1370,6 +1380,11 @@ func tsDelegateVoting(c *cobra.Command, args []string) error {
 		}
 
 		cmd.PrintOutput("success")
+
+		cmd.PrintOutput(
+			"the transaction was not submitted to the chain; " +
+				"please add the `--submit` flag",
+		)
 	}
 
 	return nil
@@ -1430,6 +1445,11 @@ func tsDisableApplication(c *cobra.Command, args []string) error {
 		}
 
 		cmd.PrintOutput("success")
+
+		cmd.PrintOutput(
+			"the transaction was not submitted to the chain; " +
+				"please add the `--submit` flag",
+		)
 	}
 
 	return nil
@@ -1499,6 +1519,11 @@ func tsForceDecreaseAuthorization(c *cobra.Command, args []string) error {
 		}
 
 		cmd.PrintOutput("success")
+
+		cmd.PrintOutput(
+			"the transaction was not submitted to the chain; " +
+				"please add the `--submit` flag",
+		)
 	}
 
 	return nil
@@ -1577,6 +1602,11 @@ func tsIncreaseAuthorization(c *cobra.Command, args []string) error {
 		}
 
 		cmd.PrintOutput("success")
+
+		cmd.PrintOutput(
+			"the transaction was not submitted to the chain; " +
+				"please add the `--submit` flag",
+		)
 	}
 
 	return nil
@@ -1626,6 +1656,11 @@ func tsInitialize(c *cobra.Command, args []string) error {
 		}
 
 		cmd.PrintOutput("success")
+
+		cmd.PrintOutput(
+			"the transaction was not submitted to the chain; " +
+				"please add the `--submit` flag",
+		)
 	}
 
 	return nil
@@ -1686,6 +1721,11 @@ func tsNotifyKeepStakeDiscrepancy(c *cobra.Command, args []string) error {
 		}
 
 		cmd.PrintOutput("success")
+
+		cmd.PrintOutput(
+			"the transaction was not submitted to the chain; " +
+				"please add the `--submit` flag",
+		)
 	}
 
 	return nil
@@ -1746,6 +1786,11 @@ func tsNotifyNuStakeDiscrepancy(c *cobra.Command, args []string) error {
 		}
 
 		cmd.PrintOutput("success")
+
+		cmd.PrintOutput(
+			"the transaction was not submitted to the chain; " +
+				"please add the `--submit` flag",
+		)
 	}
 
 	return nil
@@ -1806,6 +1851,11 @@ func tsPauseApplication(c *cobra.Command, args []string) error {
 		}
 
 		cmd.PrintOutput("success")
+
+		cmd.PrintOutput(
+			"the transaction was not submitted to the chain; " +
+				"please add the `--submit` flag",
+		)
 	}
 
 	return nil
@@ -1866,6 +1916,11 @@ func tsProcessSlashing(c *cobra.Command, args []string) error {
 		}
 
 		cmd.PrintOutput("success")
+
+		cmd.PrintOutput(
+			"the transaction was not submitted to the chain; " +
+				"please add the `--submit` flag",
+		)
 	}
 
 	return nil
@@ -1926,6 +1981,11 @@ func tsPushNotificationReward(c *cobra.Command, args []string) error {
 		}
 
 		cmd.PrintOutput("success")
+
+		cmd.PrintOutput(
+			"the transaction was not submitted to the chain; " +
+				"please add the `--submit` flag",
+		)
 	}
 
 	return nil
@@ -1986,6 +2046,11 @@ func tsRefreshKeepStakeOwner(c *cobra.Command, args []string) error {
 		}
 
 		cmd.PrintOutput("success")
+
+		cmd.PrintOutput(
+			"the transaction was not submitted to the chain; " +
+				"please add the `--submit` flag",
+		)
 	}
 
 	return nil
@@ -2064,6 +2129,11 @@ func tsRequestAuthorizationDecrease(c *cobra.Command, args []string) error {
 		}
 
 		cmd.PrintOutput("success")
+
+		cmd.PrintOutput(
+			"the transaction was not submitted to the chain; " +
+				"please add the `--submit` flag",
+		)
 	}
 
 	return nil
@@ -2124,6 +2194,11 @@ func tsRequestAuthorizationDecrease0(c *cobra.Command, args []string) error {
 		}
 
 		cmd.PrintOutput("success")
+
+		cmd.PrintOutput(
+			"the transaction was not submitted to the chain; " +
+				"please add the `--submit` flag",
+		)
 	}
 
 	return nil
@@ -2184,6 +2259,11 @@ func tsSetAuthorizationCeiling(c *cobra.Command, args []string) error {
 		}
 
 		cmd.PrintOutput("success")
+
+		cmd.PrintOutput(
+			"the transaction was not submitted to the chain; " +
+				"please add the `--submit` flag",
+		)
 	}
 
 	return nil
@@ -2244,6 +2324,11 @@ func tsSetMinimumStakeAmount(c *cobra.Command, args []string) error {
 		}
 
 		cmd.PrintOutput("success")
+
+		cmd.PrintOutput(
+			"the transaction was not submitted to the chain; " +
+				"please add the `--submit` flag",
+		)
 	}
 
 	return nil
@@ -2304,6 +2389,11 @@ func tsSetNotificationReward(c *cobra.Command, args []string) error {
 		}
 
 		cmd.PrintOutput("success")
+
+		cmd.PrintOutput(
+			"the transaction was not submitted to the chain; " +
+				"please add the `--submit` flag",
+		)
 	}
 
 	return nil
@@ -2373,6 +2463,11 @@ func tsSetPanicButton(c *cobra.Command, args []string) error {
 		}
 
 		cmd.PrintOutput("success")
+
+		cmd.PrintOutput(
+			"the transaction was not submitted to the chain; " +
+				"please add the `--submit` flag",
+		)
 	}
 
 	return nil
@@ -2442,6 +2537,11 @@ func tsSetStakeDiscrepancyPenalty(c *cobra.Command, args []string) error {
 		}
 
 		cmd.PrintOutput("success")
+
+		cmd.PrintOutput(
+			"the transaction was not submitted to the chain; " +
+				"please add the `--submit` flag",
+		)
 	}
 
 	return nil
@@ -2529,6 +2629,11 @@ func tsStake(c *cobra.Command, args []string) error {
 		}
 
 		cmd.PrintOutput("success")
+
+		cmd.PrintOutput(
+			"the transaction was not submitted to the chain; " +
+				"please add the `--submit` flag",
+		)
 	}
 
 	return nil
@@ -2589,6 +2694,11 @@ func tsStakeKeep(c *cobra.Command, args []string) error {
 		}
 
 		cmd.PrintOutput("success")
+
+		cmd.PrintOutput(
+			"the transaction was not submitted to the chain; " +
+				"please add the `--submit` flag",
+		)
 	}
 
 	return nil
@@ -2667,6 +2777,11 @@ func tsStakeNu(c *cobra.Command, args []string) error {
 		}
 
 		cmd.PrintOutput("success")
+
+		cmd.PrintOutput(
+			"the transaction was not submitted to the chain; " +
+				"please add the `--submit` flag",
+		)
 	}
 
 	return nil
@@ -2736,6 +2851,11 @@ func tsTopUp(c *cobra.Command, args []string) error {
 		}
 
 		cmd.PrintOutput("success")
+
+		cmd.PrintOutput(
+			"the transaction was not submitted to the chain; " +
+				"please add the `--submit` flag",
+		)
 	}
 
 	return nil
@@ -2796,6 +2916,11 @@ func tsTopUpKeep(c *cobra.Command, args []string) error {
 		}
 
 		cmd.PrintOutput("success")
+
+		cmd.PrintOutput(
+			"the transaction was not submitted to the chain; " +
+				"please add the `--submit` flag",
+		)
 	}
 
 	return nil
@@ -2856,6 +2981,11 @@ func tsTopUpNu(c *cobra.Command, args []string) error {
 		}
 
 		cmd.PrintOutput("success")
+
+		cmd.PrintOutput(
+			"the transaction was not submitted to the chain; " +
+				"please add the `--submit` flag",
+		)
 	}
 
 	return nil
@@ -2916,6 +3046,11 @@ func tsTransferGovernance(c *cobra.Command, args []string) error {
 		}
 
 		cmd.PrintOutput("success")
+
+		cmd.PrintOutput(
+			"the transaction was not submitted to the chain; " +
+				"please add the `--submit` flag",
+		)
 	}
 
 	return nil
@@ -2976,6 +3111,11 @@ func tsUnstakeAll(c *cobra.Command, args []string) error {
 		}
 
 		cmd.PrintOutput("success")
+
+		cmd.PrintOutput(
+			"the transaction was not submitted to the chain; " +
+				"please add the `--submit` flag",
+		)
 	}
 
 	return nil
@@ -3036,6 +3176,11 @@ func tsUnstakeKeep(c *cobra.Command, args []string) error {
 		}
 
 		cmd.PrintOutput("success")
+
+		cmd.PrintOutput(
+			"the transaction was not submitted to the chain; " +
+				"please add the `--submit` flag",
+		)
 	}
 
 	return nil
@@ -3105,6 +3250,11 @@ func tsUnstakeNu(c *cobra.Command, args []string) error {
 		}
 
 		cmd.PrintOutput("success")
+
+		cmd.PrintOutput(
+			"the transaction was not submitted to the chain; " +
+				"please add the `--submit` flag",
+		)
 	}
 
 	return nil
@@ -3174,6 +3324,11 @@ func tsUnstakeT(c *cobra.Command, args []string) error {
 		}
 
 		cmd.PrintOutput("success")
+
+		cmd.PrintOutput(
+			"the transaction was not submitted to the chain; " +
+				"please add the `--submit` flag",
+		)
 	}
 
 	return nil
@@ -3243,6 +3398,11 @@ func tsWithdrawNotificationReward(c *cobra.Command, args []string) error {
 		}
 
 		cmd.PrintOutput("success")
+
+		cmd.PrintOutput(
+			"the transaction was not submitted to the chain; " +
+				"please add the `--submit` flag",
+		)
 	}
 
 	return nil

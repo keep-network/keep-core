@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"sync"
 
+	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/ethclient"
 
@@ -61,13 +62,17 @@ func init() {
 		wcIsCoordinatorCommand(),
 		wcOwnerCommand(),
 		wcReimbursementPoolCommand(),
+		wcWalletLockCommand(),
 		wcAddCoordinatorCommand(),
 		wcInitializeCommand(),
 		wcRemoveCoordinatorCommand(),
 		wcRenounceOwnershipCommand(),
+		wcRequestHeartbeatCommand(),
+		wcRequestHeartbeatWithReimbursementCommand(),
 		wcSubmitDepositSweepProposalCommand(),
 		wcSubmitDepositSweepProposalWithReimbursementCommand(),
 		wcTransferOwnershipCommand(),
+		wcUnlockWalletCommand(),
 		wcUpdateDepositSweepProposalParametersCommand(),
 		wcUpdateHeartbeatRequestParametersCommand(),
 		wcUpdateReimbursementPoolCommand(),
@@ -461,6 +466,49 @@ func wcReimbursementPool(c *cobra.Command, args []string) error {
 	return nil
 }
 
+func wcWalletLockCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "wallet-lock [arg0]",
+		Short:                 "Calls the view method walletLock on the WalletCoordinator contract.",
+		Args:                  cmd.ArgCountChecker(1),
+		RunE:                  wcWalletLock,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	cmd.InitConstFlags(c)
+
+	return c
+}
+
+func wcWalletLock(c *cobra.Command, args []string) error {
+	contract, err := initializeWalletCoordinator(c)
+	if err != nil {
+		return err
+	}
+
+	arg0, err := decode.ParseBytes20(args[0])
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter arg0, a bytes20, from passed value %v",
+			args[0],
+		)
+	}
+
+	result, err := contract.WalletLockAtBlock(
+		arg0,
+		cmd.BlockFlagValue.Int,
+	)
+
+	if err != nil {
+		return err
+	}
+
+	cmd.PrintOutput(result)
+
+	return nil
+}
+
 /// ------------------- Non-const methods -------------------
 
 func wcAddCoordinatorCommand() *cobra.Command {
@@ -712,6 +760,154 @@ func wcRenounceOwnership(c *cobra.Command, args []string) error {
 	return nil
 }
 
+func wcRequestHeartbeatCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "request-heartbeat [arg_walletPubKeyHash] [arg_message]",
+		Short:                 "Calls the nonpayable method requestHeartbeat on the WalletCoordinator contract.",
+		Args:                  cmd.ArgCountChecker(2),
+		RunE:                  wcRequestHeartbeat,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	c.PreRunE = cmd.NonConstArgsChecker
+	cmd.InitNonConstFlags(c)
+
+	return c
+}
+
+func wcRequestHeartbeat(c *cobra.Command, args []string) error {
+	contract, err := initializeWalletCoordinator(c)
+	if err != nil {
+		return err
+	}
+
+	arg_walletPubKeyHash, err := decode.ParseBytes20(args[0])
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter arg_walletPubKeyHash, a bytes20, from passed value %v",
+			args[0],
+		)
+	}
+	arg_message, err := hexutil.Decode(args[1])
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter arg_message, a bytes, from passed value %v",
+			args[1],
+		)
+	}
+
+	var (
+		transaction *types.Transaction
+	)
+
+	if shouldSubmit, _ := c.Flags().GetBool(cmd.SubmitFlag); shouldSubmit {
+		// Do a regular submission. Take payable into account.
+		transaction, err = contract.RequestHeartbeat(
+			arg_walletPubKeyHash,
+			arg_message,
+		)
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput(transaction.Hash())
+	} else {
+		// Do a call.
+		err = contract.CallRequestHeartbeat(
+			arg_walletPubKeyHash,
+			arg_message,
+			cmd.BlockFlagValue.Int,
+		)
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput("success")
+
+		cmd.PrintOutput(
+			"the transaction was not submitted to the chain; " +
+				"please add the `--submit` flag",
+		)
+	}
+
+	return nil
+}
+
+func wcRequestHeartbeatWithReimbursementCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "request-heartbeat-with-reimbursement [arg_walletPubKeyHash] [arg_message]",
+		Short:                 "Calls the nonpayable method requestHeartbeatWithReimbursement on the WalletCoordinator contract.",
+		Args:                  cmd.ArgCountChecker(2),
+		RunE:                  wcRequestHeartbeatWithReimbursement,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	c.PreRunE = cmd.NonConstArgsChecker
+	cmd.InitNonConstFlags(c)
+
+	return c
+}
+
+func wcRequestHeartbeatWithReimbursement(c *cobra.Command, args []string) error {
+	contract, err := initializeWalletCoordinator(c)
+	if err != nil {
+		return err
+	}
+
+	arg_walletPubKeyHash, err := decode.ParseBytes20(args[0])
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter arg_walletPubKeyHash, a bytes20, from passed value %v",
+			args[0],
+		)
+	}
+	arg_message, err := hexutil.Decode(args[1])
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter arg_message, a bytes, from passed value %v",
+			args[1],
+		)
+	}
+
+	var (
+		transaction *types.Transaction
+	)
+
+	if shouldSubmit, _ := c.Flags().GetBool(cmd.SubmitFlag); shouldSubmit {
+		// Do a regular submission. Take payable into account.
+		transaction, err = contract.RequestHeartbeatWithReimbursement(
+			arg_walletPubKeyHash,
+			arg_message,
+		)
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput(transaction.Hash())
+	} else {
+		// Do a call.
+		err = contract.CallRequestHeartbeatWithReimbursement(
+			arg_walletPubKeyHash,
+			arg_message,
+			cmd.BlockFlagValue.Int,
+		)
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput("success")
+
+		cmd.PrintOutput(
+			"the transaction was not submitted to the chain; " +
+				"please add the `--submit` flag",
+		)
+	}
+
+	return nil
+}
+
 func wcSubmitDepositSweepProposalCommand() *cobra.Command {
 	c := &cobra.Command{
 		Use:                   "submit-deposit-sweep-proposal [arg_proposal_json]",
@@ -884,6 +1080,71 @@ func wcTransferOwnership(c *cobra.Command, args []string) error {
 		// Do a call.
 		err = contract.CallTransferOwnership(
 			arg_newOwner,
+			cmd.BlockFlagValue.Int,
+		)
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput("success")
+
+		cmd.PrintOutput(
+			"the transaction was not submitted to the chain; " +
+				"please add the `--submit` flag",
+		)
+	}
+
+	return nil
+}
+
+func wcUnlockWalletCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "unlock-wallet [arg_walletPubKeyHash]",
+		Short:                 "Calls the nonpayable method unlockWallet on the WalletCoordinator contract.",
+		Args:                  cmd.ArgCountChecker(1),
+		RunE:                  wcUnlockWallet,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	c.PreRunE = cmd.NonConstArgsChecker
+	cmd.InitNonConstFlags(c)
+
+	return c
+}
+
+func wcUnlockWallet(c *cobra.Command, args []string) error {
+	contract, err := initializeWalletCoordinator(c)
+	if err != nil {
+		return err
+	}
+
+	arg_walletPubKeyHash, err := decode.ParseBytes20(args[0])
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter arg_walletPubKeyHash, a bytes20, from passed value %v",
+			args[0],
+		)
+	}
+
+	var (
+		transaction *types.Transaction
+	)
+
+	if shouldSubmit, _ := c.Flags().GetBool(cmd.SubmitFlag); shouldSubmit {
+		// Do a regular submission. Take payable into account.
+		transaction, err = contract.UnlockWallet(
+			arg_walletPubKeyHash,
+		)
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput(transaction.Hash())
+	} else {
+		// Do a call.
+		err = contract.CallUnlockWallet(
+			arg_walletPubKeyHash,
 			cmd.BlockFlagValue.Int,
 		)
 		if err != nil {

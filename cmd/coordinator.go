@@ -5,24 +5,26 @@ import (
 
 	"github.com/spf13/cobra"
 
-	walletcmd "github.com/keep-network/keep-core/cmd/wallet"
 	"github.com/keep-network/keep-core/config"
 	"github.com/keep-network/keep-core/pkg/bitcoin/electrum"
 	"github.com/keep-network/keep-core/pkg/chain/ethereum"
+	"github.com/keep-network/keep-core/pkg/coordinator"
 )
 
 var (
 	walletFlagName       = "wallet"
 	hideSweptFlagName    = "hide-swept"
 	sortByAmountFlagName = "sort-amount"
+	headFlagName         = "head"
+	tailFlagName         = "tail"
 	feeFlagName          = "fee"
 	dryRunFlagName       = "dry-run"
 )
 
-// WalletCommand contains the definition of tBTC wallets tools.
-var WalletCommand = &cobra.Command{
-	Use:              "wallet",
-	Short:            "tBTC wallets tools",
+// CoordinatorCommand contains the definition of tBTC Wallet Coordinator tools.
+var CoordinatorCommand = &cobra.Command{
+	Use:              "coordinator",
+	Short:            "tBTC Wallet Coordinator Tools",
 	Long:             "The tool exposes commands for interactions with tBTC wallets.",
 	TraverseChildren: true,
 	PersistentPreRun: func(cmd *cobra.Command, args []string) {
@@ -38,7 +40,7 @@ var WalletCommand = &cobra.Command{
 
 var depositsCommand = cobra.Command{
 	Use:              "deposits",
-	Short:            "get deposits",
+	Short:            "get list of deposits",
 	Long:             "Gets tBTC deposits details from the chain and prints them.",
 	TraverseChildren: true,
 	RunE: func(cmd *cobra.Command, args []string) error {
@@ -59,15 +61,38 @@ var depositsCommand = cobra.Command{
 			return fmt.Errorf("failed to find show swept flag: %v", err)
 		}
 
+		head, err := cmd.Flags().GetInt(headFlagName)
+		if err != nil {
+			return fmt.Errorf("failed to find head flag: %v", err)
+		}
+
+		tail, err := cmd.Flags().GetInt(tailFlagName)
+		if err != nil {
+			return fmt.Errorf("failed to find tail flag: %v", err)
+		}
+
 		_, tbtcChain, _, _, _, err := ethereum.Connect(ctx, clientConfig.Ethereum)
 		if err != nil {
 			return fmt.Errorf(
-				"could not connect to Bitcoin difficulty chain: [%v]",
+				"could not connect to Ethereum chain: [%v]",
 				err,
 			)
 		}
 
-		return walletcmd.ListDeposits(tbtcChain, wallet, hideSwept, sortByAmount)
+		btcChain, err := electrum.Connect(ctx, clientConfig.Bitcoin.Electrum)
+		if err != nil {
+			return fmt.Errorf("could not connect to Electrum chain: [%v]", err)
+		}
+
+		return coordinator.ListDeposits(
+			tbtcChain,
+			btcChain,
+			wallet,
+			hideSwept,
+			sortByAmount,
+			head,
+			tail,
+		)
 	},
 }
 
@@ -82,7 +107,7 @@ var sweepCommand = cobra.Command{
 		}
 
 		for _, arg := range args {
-			if !walletcmd.BitcoinTxRegexp.MatchString(arg) {
+			if !coordinator.BitcoinTxRegexp.MatchString(arg) {
 				return fmt.Errorf(
 					"argument [%s] doesn't match pattern: <unprefixed transaction hash>:<output index>",
 					arg,
@@ -122,7 +147,7 @@ var sweepCommand = cobra.Command{
 			return fmt.Errorf("could not connect to Electrum chain: [%v]", err)
 		}
 
-		return walletcmd.ProposeSweep(tbtcChain, btcChain, wallet, fee, args, dryRun)
+		return coordinator.ProposeSweep(tbtcChain, btcChain, wallet, fee, args, dryRun)
 	},
 }
 
@@ -137,7 +162,7 @@ e.g. bd99d1d0a61fd104925d9b7ac997958aa8af570418b3fde091f7bfc561608865:1
 
 func init() {
 	initFlags(
-		WalletCommand,
+		CoordinatorCommand,
 		&configFilePath,
 		clientConfig,
 		config.General, config.Ethereum, config.BitcoinElectrum,
@@ -162,7 +187,19 @@ func init() {
 		"sort by deposit amount",
 	)
 
-	WalletCommand.AddCommand(&depositsCommand)
+	depositsCommand.Flags().Int(
+		headFlagName,
+		0,
+		"get head of deposits",
+	)
+
+	depositsCommand.Flags().Int(
+		tailFlagName,
+		0,
+		"get tail of deposits",
+	)
+
+	CoordinatorCommand.AddCommand(&depositsCommand)
 
 	// Sweep Subcommand
 	sweepCommand.Flags().String(
@@ -187,5 +224,5 @@ func init() {
 		"don't submit a proposal to the chain",
 	)
 
-	WalletCommand.AddCommand(&sweepCommand)
+	CoordinatorCommand.AddCommand(&sweepCommand)
 }

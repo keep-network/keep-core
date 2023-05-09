@@ -5,10 +5,11 @@ import (
 	"crypto/ecdsa"
 	"encoding/hex"
 	"fmt"
-	"github.com/keep-network/keep-core/pkg/bitcoin"
 	"math/big"
 	"sync"
 	"time"
+
+	"github.com/keep-network/keep-core/pkg/bitcoin"
 
 	"github.com/keep-network/keep-core/pkg/chain"
 
@@ -285,6 +286,93 @@ func (n *node) getSigningExecutor(
 	return executor, true, nil
 }
 
+// handleHeartbeatRequest handles an incoming wallet heartbeat request.
+// First, it determines whether the node is supposed to do an action by checking
+// whether any of the request's target wallet signers are under the node's control.
+// If so, this function orchestrates and dispatches an appropriate wallet action.
+func (n *node) handleHeartbeatRequest(
+	walletPublicKeyHash [20]byte,
+	message []byte,
+	requestExpiresAt time.Time,
+	startBlock uint64,
+	delayBlocks uint64,
+) {
+	wallet, ok := n.walletRegistry.getWalletByPublicKeyHash(
+		walletPublicKeyHash,
+	)
+	if !ok {
+		logger.Infof(
+			"node does not control signers of wallet PKH [0x%x]; "+
+				"ignoring the received heartbeat request",
+			walletPublicKeyHash,
+		)
+		return
+	}
+
+	signingExecutor, ok, err := n.getSigningExecutor(wallet.publicKey)
+	if err != nil {
+		logger.Errorf("cannot get signing executor: [%v]", err)
+		return
+	}
+
+	// This check is actually redundant. We know the node controls some
+	// wallet signers as we just got the wallet from the registry using their
+	// public key hash. However, we are doing it just in case. The API
+	// contract of getWalletByPublicKeyHash and/or getSigningExecutor may
+	// change one day.
+	if !ok {
+		logger.Infof(
+			"node does not control signers of wallet PKH [0x%x]; "+
+				"ignoring the received heartbeat request",
+			walletPublicKeyHash,
+		)
+		return
+	}
+
+	walletPublicKeyBytes, err := marshalPublicKey(wallet.publicKey)
+	if err != nil {
+		logger.Errorf("cannot marshal wallet public key: [%v]", err)
+		return
+	}
+
+	logger.Infof(
+		"node controls signers of wallet PKH [0x%x]; "+
+			"plain-text uncompressed public key of that wallet is [0x%x]; "+
+			"starting orchestration of the heartbeat action",
+		walletPublicKeyHash,
+		walletPublicKeyBytes,
+	)
+
+	// The request processing started after a confirmation period represented
+	// by the delayBlocks parameter. Hence, we must add it to the original
+	// startBlock.
+	heartbeatRequestProcessingStartBlock := startBlock + delayBlocks
+
+	walletActionLogger := logger.With(
+		zap.String("wallet", fmt.Sprintf("0x%x", walletPublicKeyBytes)),
+		zap.String("action", Heartbeat.String()),
+		zap.Uint64("startBlock", heartbeatRequestProcessingStartBlock),
+	)
+	walletActionLogger.Infof("dispatching wallet action")
+
+	action := newHeartbeatAction(
+		walletActionLogger,
+		wallet,
+		signingExecutor,
+		message,
+		heartbeatRequestProcessingStartBlock,
+		requestExpiresAt,
+	)
+
+	err = n.walletDispatcher.dispatch(action)
+	if err != nil {
+		walletActionLogger.Errorf("cannot dispatch wallet action: [%v]", err)
+		return
+	}
+
+	walletActionLogger.Infof("wallet action dispatched successfully")
+}
+
 // handleDepositSweepProposal handles an incoming deposit sweep proposal.
 // First, it determines whether the node is supposed to do an action by checking
 // whether any of the proposal's target wallet signers are under node's control.
@@ -345,7 +433,15 @@ func (n *node) handleDepositSweepProposal(
 	// startBlock.
 	proposalProcessingStartBlock := startBlock + delayBlocks
 
+	walletActionLogger := logger.With(
+		zap.String("wallet", fmt.Sprintf("0x%x", walletPublicKeyBytes)),
+		zap.String("action", DepositSweep.String()),
+		zap.Uint64("startBlock", proposalProcessingStartBlock),
+	)
+	walletActionLogger.Infof("dispatching wallet action")
+
 	action := newDepositSweepAction(
+		walletActionLogger,
 		n.chain,
 		n.btcChain,
 		wallet,
@@ -355,16 +451,9 @@ func (n *node) handleDepositSweepProposal(
 		proposalExpiresAt,
 	)
 
-	walletActionLogger := logger.With(
-		zap.String("wallet", fmt.Sprintf("0x%x", walletPublicKeyBytes)),
-		zap.String("action", action.actionType().String()),
-	)
-
-	walletActionLogger.Infof("dispatching wallet action")
-
 	err = n.walletDispatcher.dispatch(action)
 	if err != nil {
-		logger.Errorf("cannot dispatch wallet action: [%v]", err)
+		walletActionLogger.Errorf("cannot dispatch wallet action: [%v]", err)
 		return
 	}
 

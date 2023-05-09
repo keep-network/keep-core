@@ -11,7 +11,6 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/keep-network/keep-core/pkg/bitcoin"
-	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/tecdsa"
 )
 
@@ -73,6 +72,7 @@ type depositSweepSigningExecutor interface {
 
 // depositSweepAction is a deposit sweep walletAction.
 type depositSweepAction struct {
+	logger   *zap.SugaredLogger
 	chain    Chain
 	btcChain bitcoin.Chain
 
@@ -91,6 +91,7 @@ type depositSweepAction struct {
 }
 
 func newDepositSweepAction(
+	logger *zap.SugaredLogger,
 	chain Chain,
 	btcChain bitcoin.Chain,
 	sweepingWallet wallet,
@@ -100,6 +101,7 @@ func newDepositSweepAction(
 	proposalExpiresAt time.Time,
 ) *depositSweepAction {
 	return &depositSweepAction{
+		logger:                         logger,
 		chain:                          chain,
 		btcChain:                       btcChain,
 		sweepingWallet:                 sweepingWallet,
@@ -116,18 +118,7 @@ func newDepositSweepAction(
 }
 
 func (dsa *depositSweepAction) execute() error {
-	walletPublicKeyBytes, err := marshalPublicKey(dsa.wallet().publicKey)
-	if err != nil {
-		return fmt.Errorf("cannot marshal wallet public key: [%v]", err)
-	}
-
-	actionLogger := logger.With(
-		zap.String("wallet", fmt.Sprintf("0x%x", walletPublicKeyBytes)),
-		zap.String("action", dsa.actionType().String()),
-		zap.Uint64("startBlock", dsa.proposalProcessingStartBlock),
-	)
-
-	validateProposalLogger := actionLogger.With(
+	validateProposalLogger := dsa.logger.With(
 		zap.String("step", "validateProposal"),
 	)
 
@@ -154,7 +145,7 @@ func (dsa *depositSweepAction) execute() error {
 		)
 	}
 
-	createTxLogger := actionLogger.With(
+	createTxLogger := dsa.logger.With(
 		zap.String("step", "createTransaction"),
 	)
 
@@ -167,9 +158,9 @@ func (dsa *depositSweepAction) execute() error {
 		return fmt.Errorf("create transaction step failed: [%v]", err)
 	}
 
-	broadcastTxLogger := actionLogger.With(
+	broadcastTxLogger := dsa.logger.With(
 		zap.String("step", "broadcastTransaction"),
-		zap.String("sweepTxHash", fmt.Sprintf("0x%x", sweepTx.Hash())),
+		zap.String("sweepTxHash", sweepTx.Hash().Hex(bitcoin.ReversedByteOrder)),
 	)
 
 	err = dsa.broadcastTransaction(broadcastTxLogger, sweepTx)
@@ -198,6 +189,10 @@ func ValidateDepositSweepProposal(
 	)
 
 	validateProposalLogger.Infof("gathering prerequisites for proposal validation")
+
+	if len(proposal.DepositsKeys) != len(proposal.DepositsRevealBlocks) {
+		return nil, fmt.Errorf("proposal's reveal blocks list has a wrong length")
+	}
 
 	for i, depositKey := range proposal.DepositsKeys {
 		depositDisplayIndex := fmt.Sprintf("%v/%v", i+1, len(proposal.DepositsKeys))
@@ -243,28 +238,7 @@ func ValidateDepositSweepProposal(
 			)
 		}
 
-		depositRequest, err := tbtcChain.GetDepositRequest(
-			depositKey.FundingTxHash,
-			depositKey.FundingOutputIndex,
-		)
-		if err != nil {
-			return nil, fmt.Errorf(
-				"cannot get on-chain request data for deposit [%v]: [%v]",
-				depositDisplayIndex,
-				err,
-			)
-		}
-
-		revealBlock, err := tbtcChain.GetBlockNumberByTimestamp(
-			uint64(depositRequest.RevealedAt.Unix()),
-		)
-		if err != nil {
-			return nil, fmt.Errorf(
-				"cannot estimate reveal block for deposit [%v]: [%v]",
-				depositDisplayIndex,
-				err,
-			)
-		}
+		revealBlock := proposal.DepositsRevealBlocks[i].Uint64()
 
 		// We need to fetch the past DepositRevealed event for the given deposit.
 		// It may be tempting to fetch such events for all deposit keys
@@ -273,21 +247,12 @@ func ValidateDepositSweepProposal(
 		// for fetching past chain events regarding the requested block
 		// range and/or returned data size. In this context, it is better to
 		// do several well-tailored calls than a single general one.
-		// We estimated the revealBlock so, we know the event was emitted
-		// at this block or somewhere close. It makes sense to establish
-		// a small margin and fetch past DepositRevealed events from range
-		// [revealBlock - margin, revealBlock + margin] in order to handle
-		// possible inaccuracies of revealBlock estimation. Moreover,
-		// we use the depositor address and wallet PKH as additional filters
-		// to limit the size of returned data.
-		revealBlockMargin := uint64(10)
-		startBlock := revealBlock - revealBlockMargin
-		endBlock := revealBlock + revealBlockMargin
-
+		// We have the revealBlock passed by the coordinator within the proposal
+		// so, we can use it to make a narrow call. Moreover, we use the
+		// wallet PKH as additional filter to limit the size of returned data.
 		events, err := tbtcChain.PastDepositRevealedEvents(&DepositRevealedEventFilter{
-			StartBlock:          startBlock,
-			EndBlock:            &endBlock,
-			Depositor:           []chain.Address{depositRequest.Depositor},
+			StartBlock:          revealBlock,
+			EndBlock:            &revealBlock,
 			WalletPublicKeyHash: [][20]byte{proposal.WalletPublicKeyHash},
 		})
 		if err != nil {

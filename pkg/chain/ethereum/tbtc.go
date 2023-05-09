@@ -864,8 +864,8 @@ func (tc *TbtcChain) IsDKGResultValid(
 // a boolean indicating whether the result is valid or not. The outcome parameter
 // must be a pointer to a struct containing a boolean flag as the first field.
 //
-// TODO: Find a better way to get the validity flag. This would require
-//       changes in the contracts binding generator.
+// TODO: Find a better way to get the validity flag. This would require changes
+// in the contracts binding generator.
 func parseDkgResultValidationOutcome(
 	outcome interface{},
 ) (bool, error) {
@@ -1091,6 +1091,13 @@ func computeMainUtxoHash(mainUtxo *bitcoin.UnspentTransactionOutput) [32]byte {
 	return mainUtxoHash
 }
 
+func (tc *TbtcChain) BuildDepositKey(
+	fundingTxHash bitcoin.Hash,
+	fundingOutputIndex uint32,
+) *big.Int {
+	return buildDepositKey(fundingTxHash, fundingOutputIndex)
+}
+
 func buildDepositKey(
 	fundingTxHash bitcoin.Hash,
 	fundingOutputIndex uint32,
@@ -1231,9 +1238,10 @@ func convertDepositSweepProposalFromAbiType(
 	}
 
 	return &tbtc.DepositSweepProposal{
-		WalletPublicKeyHash: proposal.WalletPubKeyHash,
-		DepositsKeys:        depositsKeys,
-		SweepTxFee:          proposal.SweepTxFee,
+		WalletPublicKeyHash:  proposal.WalletPubKeyHash,
+		DepositsKeys:         depositsKeys,
+		SweepTxFee:           proposal.SweepTxFee,
+		DepositsRevealBlocks: proposal.DepositsRevealBlocks,
 	}
 }
 
@@ -1257,9 +1265,10 @@ func convertDepositSweepProposalToAbiType(
 	}
 
 	return tbtcabi.WalletCoordinatorDepositSweepProposal{
-		WalletPubKeyHash: proposal.WalletPublicKeyHash,
-		DepositsKeys:     depositsKeys,
-		SweepTxFee:       proposal.SweepTxFee,
+		WalletPubKeyHash:     proposal.WalletPublicKeyHash,
+		DepositsKeys:         depositsKeys,
+		SweepTxFee:           proposal.SweepTxFee,
+		DepositsRevealBlocks: proposal.DepositsRevealBlocks,
 	}
 }
 
