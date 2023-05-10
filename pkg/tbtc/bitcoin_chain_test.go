@@ -110,3 +110,9 @@ func (lbc *localBitcoinChain) GetTransactionsForPublicKeyHash(
 
 	return matchingTransactions, nil
 }
+
+func (lbc *localBitcoinChain) GetMempoolForPublicKeyHash(
+	publicKeyHash [20]byte,
+) ([]*bitcoin.Transaction, error) {
+	panic("not implemented")
+}
