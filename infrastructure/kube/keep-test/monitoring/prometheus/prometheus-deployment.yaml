@@ -20,7 +20,7 @@ spec:
         runAsNonRoot: true
       containers:
         - name: prometheus
-          image: prom/prometheus:v2.39.1
+          image: prom/prometheus:v2.43.1
           args:
             - --config.file=/etc/prometheus/config.yaml
             - --storage.tsdb.path=/etc/prometheus/data
