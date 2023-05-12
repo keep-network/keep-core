@@ -49,8 +49,8 @@ type signingExecutor struct {
 	groupParameters     *GroupParameters
 	protocolLatch       *generator.ProtocolLatch
 
-	// currentBlockFn is a function used to get the current block.
-	currentBlockFn func() (uint64, error)
+	// getCurrentBlockFn is a function used to get the current block.
+	getCurrentBlockFn getCurrentBlockFn
 	// waitForBlockFn is a function used to wait for the given block.
 	waitForBlockFn waitForBlockFn
 
@@ -66,7 +66,7 @@ func newSigningExecutor(
 	membershipValidator *group.MembershipValidator,
 	groupParameters *GroupParameters,
 	protocolLatch *generator.ProtocolLatch,
-	currentBlockFn func() (uint64, error),
+	getCurrentBlockFn getCurrentBlockFn,
 	waitForBlockFn waitForBlockFn,
 	signingAttemptsLimit uint,
 ) *signingExecutor {
@@ -77,7 +77,7 @@ func newSigningExecutor(
 		membershipValidator:  membershipValidator,
 		groupParameters:      groupParameters,
 		protocolLatch:        protocolLatch,
-		currentBlockFn:       currentBlockFn,
+		getCurrentBlockFn:    getCurrentBlockFn,
 		waitForBlockFn:       waitForBlockFn,
 		signingAttemptsLimit: signingAttemptsLimit,
 	}
@@ -256,6 +256,7 @@ func (se *signingExecutor) sign(
 			loopResult, err := retryLoop.start(
 				loopCtx,
 				se.waitForBlockFn,
+				se.getCurrentBlockFn,
 				func(attempt *signingAttemptParams) (*signing.Result, uint64, error) {
 					signingAttemptLogger := signingLogger.With(
 						zap.Uint("attemptNumber", attempt.number),
@@ -310,7 +311,7 @@ func (se *signingExecutor) sign(
 						return nil, 0, err
 					}
 
-					endBlock, err := se.currentBlockFn()
+					endBlock, err := se.getCurrentBlockFn()
 					if err != nil {
 						return nil, 0, err
 					}

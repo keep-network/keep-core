@@ -10,11 +10,15 @@ import (
 type localBitcoinChain struct {
 	transactionsMutex sync.Mutex
 	transactions      []*bitcoin.Transaction
+
+	mempoolMutex sync.Mutex
+	mempool      []*bitcoin.Transaction
 }
 
 func newLocalBitcoinChain() *localBitcoinChain {
 	return &localBitcoinChain{
 		transactions: make([]*bitcoin.Transaction, 0),
+		mempool:      make([]*bitcoin.Transaction, 0),
 	}
 }
 
@@ -106,6 +110,37 @@ func (lbc *localBitcoinChain) GetTransactionsForPublicKeyHash(
 
 	if len(matchingTransactions) > limit {
 		return matchingTransactions[len(matchingTransactions)-limit:], nil
+	}
+
+	return matchingTransactions, nil
+}
+
+func (lbc *localBitcoinChain) GetMempoolForPublicKeyHash(
+	publicKeyHash [20]byte,
+) ([]*bitcoin.Transaction, error) {
+	lbc.mempoolMutex.Lock()
+	defer lbc.mempoolMutex.Unlock()
+
+	p2pkh, err := bitcoin.PayToPublicKeyHash(publicKeyHash)
+	if err != nil {
+		return nil, err
+	}
+
+	p2wpkh, err := bitcoin.PayToWitnessPublicKeyHash(publicKeyHash)
+	if err != nil {
+		return nil, err
+	}
+
+	matchingTransactions := make([]*bitcoin.Transaction, 0)
+
+	for _, transaction := range lbc.mempool {
+		for _, output := range transaction.Outputs {
+			script := output.PublicKeyScript
+			if bytes.Equal(script, p2pkh) || bytes.Equal(script, p2wpkh) {
+				matchingTransactions = append(matchingTransactions, transaction)
+				break
+			}
+		}
 	}
 
 	return matchingTransactions, nil

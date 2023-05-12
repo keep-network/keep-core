@@ -8,9 +8,10 @@ import (
 	"time"
 
 	"github.com/ipfs/go-log/v2"
+	"go.uber.org/zap"
+
 	"github.com/keep-network/keep-core/pkg/bitcoin"
 	"github.com/keep-network/keep-core/pkg/tecdsa"
-	"go.uber.org/zap"
 )
 
 const (
@@ -32,15 +33,6 @@ const (
 	// of fraud accusations. Usage of the safety margin ensures there is enough
 	// time to perform post-signing steps of the deposit sweep action.
 	depositSweepSigningTimeoutSafetyMargin = 1 * time.Hour
-	// depositSweepSigningDelayBlocks determines the per-deposit delay in
-	// blocks that must be preserved before starting the deposit sweep
-	// transaction signing process. This delay aims to reflect the time taken
-	// by pre-signing steps that must be done for a single deposit.
-	// Multiplying this constant by the number of proposal's deposits
-	// allows to determine the total delay that must be added to the proposal
-	// processing start block in order to designate a sane signing start block
-	// and maximize chances for a successful signing process.
-	depositSweepSigningDelayBlocks = 10
 	// depositSweepBroadcastTimeout determines the time window for deposit
 	// sweep transaction broadcast. It is guaranteed that at least
 	// depositSweepSigningTimeoutSafetyMargin is preserved for the broadcast
@@ -84,7 +76,6 @@ type depositSweepAction struct {
 
 	requiredFundingTxConfirmations uint
 	signingTimeoutSafetyMargin     time.Duration
-	signingDelayBlocks             int
 	broadcastTimeout               time.Duration
 	broadcastCheckDelay            time.Duration
 }
@@ -110,7 +101,6 @@ func newDepositSweepAction(
 		proposalExpiresAt:              proposalExpiresAt,
 		requiredFundingTxConfirmations: depositSweepRequiredFundingTxConfirmations,
 		signingTimeoutSafetyMargin:     depositSweepSigningTimeoutSafetyMargin,
-		signingDelayBlocks:             depositSweepSigningDelayBlocks,
 		broadcastTimeout:               depositSweepBroadcastTimeout,
 		broadcastCheckDelay:            depositSweepBroadcastCheckDelay,
 	}
@@ -121,7 +111,13 @@ func (dsa *depositSweepAction) execute() error {
 		zap.String("step", "validateProposal"),
 	)
 
-	validatedDeposits, err := dsa.validateProposal(validateProposalLogger)
+	validatedDeposits, err := ValidateDepositSweepProposal(
+		validateProposalLogger,
+		dsa.proposal,
+		dsa.requiredFundingTxConfirmations,
+		dsa.chain,
+		dsa.btcChain,
+	)
 	if err != nil {
 		return fmt.Errorf("validate proposal step failed: [%v]", err)
 	}
@@ -134,6 +130,15 @@ func (dsa *depositSweepAction) execute() error {
 	if err != nil {
 		return fmt.Errorf(
 			"error while determining wallet's main UTXO: [%v]",
+			err,
+		)
+	}
+
+	err = dsa.ensureWalletSyncedBetweenChains(walletMainUtxo)
+	if err != nil {
+		return fmt.Errorf(
+			"error while ensuring wallet state is synced between "+
+				"BTC and host chain: [%v]",
 			err,
 		)
 	}
@@ -164,32 +169,38 @@ func (dsa *depositSweepAction) execute() error {
 	return nil
 }
 
-func (dsa *depositSweepAction) validateProposal(
+// ValidateDepositSweepProposal checks the deposit sweep proposal with on-chain
+// validation rules and verifies transactions on the Bitcoin chain.
+func ValidateDepositSweepProposal(
 	validateProposalLogger log.StandardLogger,
+	proposal *DepositSweepProposal,
+	requiredFundingTxConfirmations uint,
+	tbtcChain Chain,
+	btcChain bitcoin.Chain,
 ) ([]*Deposit, error) {
 	depositExtraInfo := make(
 		[]struct {
 			*Deposit
 			FundingTx *bitcoin.Transaction
 		},
-		len(dsa.proposal.DepositsKeys),
+		len(proposal.DepositsKeys),
 	)
 
 	validateProposalLogger.Infof("gathering prerequisites for proposal validation")
 
-	if len(dsa.proposal.DepositsKeys) != len(dsa.proposal.DepositsRevealBlocks) {
+	if len(proposal.DepositsKeys) != len(proposal.DepositsRevealBlocks) {
 		return nil, fmt.Errorf("proposal's reveal blocks list has a wrong length")
 	}
 
-	for i, depositKey := range dsa.proposal.DepositsKeys {
-		depositDisplayIndex := fmt.Sprintf("%v/%v", i+1, len(dsa.proposal.DepositsKeys))
+	for i, depositKey := range proposal.DepositsKeys {
+		depositDisplayIndex := fmt.Sprintf("%v/%v", i+1, len(proposal.DepositsKeys))
 
 		validateProposalLogger.Infof(
 			"deposit [%v] - checking confirmations count for funding tx",
 			depositDisplayIndex,
 		)
 
-		confirmations, err := dsa.btcChain.GetTransactionConfirmations(
+		confirmations, err := btcChain.GetTransactionConfirmations(
 			depositKey.FundingTxHash,
 		)
 		if err != nil {
@@ -201,13 +212,13 @@ func (dsa *depositSweepAction) validateProposal(
 			)
 		}
 
-		if confirmations < dsa.requiredFundingTxConfirmations {
+		if confirmations < requiredFundingTxConfirmations {
 			return nil, fmt.Errorf(
 				"funding tx of deposit [%v] has only [%v/%v] of "+
 					"required confirmations",
 				depositDisplayIndex,
 				confirmations,
-				dsa.requiredFundingTxConfirmations,
+				requiredFundingTxConfirmations,
 			)
 		}
 
@@ -216,7 +227,7 @@ func (dsa *depositSweepAction) validateProposal(
 			depositDisplayIndex,
 		)
 
-		fundingTx, err := dsa.btcChain.GetTransaction(depositKey.FundingTxHash)
+		fundingTx, err := btcChain.GetTransaction(depositKey.FundingTxHash)
 		if err != nil {
 			return nil, fmt.Errorf(
 				"cannot get funding tx data for deposit [%v]: [%v]",
@@ -225,7 +236,7 @@ func (dsa *depositSweepAction) validateProposal(
 			)
 		}
 
-		revealBlock := dsa.proposal.DepositsRevealBlocks[i].Uint64()
+		revealBlock := proposal.DepositsRevealBlocks[i].Uint64()
 
 		// We need to fetch the past DepositRevealed event for the given deposit.
 		// It may be tempting to fetch such events for all deposit keys
@@ -237,10 +248,10 @@ func (dsa *depositSweepAction) validateProposal(
 		// We have the revealBlock passed by the coordinator within the proposal
 		// so, we can use it to make a narrow call. Moreover, we use the
 		// wallet PKH as additional filter to limit the size of returned data.
-		events, err := dsa.chain.PastDepositRevealedEvents(&DepositRevealedEventFilter{
+		events, err := tbtcChain.PastDepositRevealedEvents(&DepositRevealedEventFilter{
 			StartBlock:          revealBlock,
 			EndBlock:            &revealBlock,
-			WalletPublicKeyHash: [][20]byte{dsa.proposal.WalletPublicKeyHash},
+			WalletPublicKeyHash: [][20]byte{proposal.WalletPublicKeyHash},
 		})
 		if err != nil {
 			return nil, fmt.Errorf(
@@ -280,7 +291,7 @@ func (dsa *depositSweepAction) validateProposal(
 
 	validateProposalLogger.Infof("calling chain for proposal validation")
 
-	err := dsa.chain.ValidateDepositSweepProposal(dsa.proposal, depositExtraInfo)
+	err := tbtcChain.ValidateDepositSweepProposal(proposal, depositExtraInfo)
 	if err != nil {
 		return nil, fmt.Errorf("deposit sweep proposal is invalid: [%v]", err)
 	}
@@ -295,6 +306,92 @@ func (dsa *depositSweepAction) validateProposal(
 	}
 
 	return deposits, nil
+}
+
+// ensureWalletSyncedBetweenChains makes sure all actions taken by the wallet
+// on the Bitcoin chain are reflected in the host chain Bridge. This translates
+// to two conditions that must be met:
+// - The wallet main UTXO registered in the host chain Bridge comes from the
+//   latest BTC transaction OR wallet main UTXO is unset and wallet's BTC
+//   transaction history is empty. This condition ensures that all expected SPV
+//   proofs of confirmed BTC transactions were submitted to the host chain Bridge
+//   thus the wallet state held known to the Bridge matches the actual state
+//   on the BTC chain.
+// - There are no pending BTC transactions in the mempool. This condition
+//   ensures the wallet doesn't currently perform any action on the BTC chain.
+//   Such a transactions indicate a possible state change in the future
+//   but their outcome cannot be determined at this stage so, the wallet
+//   should not perform new actions at the moment.
+func (dsa *depositSweepAction) ensureWalletSyncedBetweenChains(
+	walletMainUtxo *bitcoin.UnspentTransactionOutput,
+) error {
+	walletPublicKeyHash := bitcoin.PublicKeyHash(dsa.wallet().publicKey)
+
+	// Take the recent transactions history for the wallet.
+	history, err := dsa.btcChain.GetTransactionsForPublicKeyHash(walletPublicKeyHash, 5)
+	if err != nil {
+		return fmt.Errorf("cannot get transactions history: [%v]", err)
+	}
+
+	if walletMainUtxo != nil {
+		// If the wallet main UTXO exists, the transaction history must
+		// contain at least one item. If it is empty, something went
+		// really wrong. This should never happen but check this scenario
+		// just in case.
+		if len(history) == 0 {
+			return fmt.Errorf(
+				"wallet main UTXO exists but there are no BTC " +
+					"transactions produced by the wallet",
+			)
+		}
+
+		// The transaction history is not empty for sure. Take the latest BTC
+		// transaction from the history.
+		latestTransaction := history[len(history)-1]
+
+		// Make sure the wallet main UTXO comes from the latest transaction.
+		// That means all expected SPV proofs were submitted to the Bridge.
+		// If the wallet main UTXO transaction hash doesn't match the latest
+		// transaction, that means the SPV proof for the latest transaction was
+		// not submitted to the Bridge yet.
+		//
+		// Note that it is enough to check that the wallet main UTXO transaction
+		// hash matches the latest transaction hash. There is no way the main
+		// UTXO changes and the transaction hash stays the same. The Bridge
+		// enforces that all wallet transactions form a sequence and refer
+		// each other.
+		if walletMainUtxo.Outpoint.TransactionHash != latestTransaction.Hash() {
+			return fmt.Errorf(
+				"wallet main UTXO doesn't come from the latest BTC transaction",
+			)
+		}
+	} else {
+		// If the wallet main UTXO doesn't exist, the transaction history must
+		// be empty. If it is not, that could mean there is a Bitcoin transaction
+		// produced by the wallet whose SPV proof was not submitted to
+		// the Bridge yet.
+		if len(history) != 0 {
+			return fmt.Errorf(
+				"wallet main UTXO doesn't exist but there are BTC " +
+					"transactions produced by the wallet",
+			)
+		}
+	}
+
+	// Regardless of the main UTXO state, we need to make sure that
+	// no pending wallet transactions exist in the mempool. That way,
+	// we are handling a plenty of corner cases like transactions races
+	// that could potentially lead to fraudulent transactions and funds loss.
+	mempool, err := dsa.btcChain.GetMempoolForPublicKeyHash(walletPublicKeyHash)
+	if err != nil {
+		return fmt.Errorf("cannot get mempool: [%v]", err)
+	}
+
+	if len(mempool) != 0 {
+		return fmt.Errorf("unconfirmed transactions exist in the mempool")
+	}
+
+	return nil
 }
 
 func (dsa *depositSweepAction) createTransaction(
@@ -339,16 +436,10 @@ func (dsa *depositSweepAction) createTransaction(
 	)
 	defer cancelSigningCtx()
 
-	// Make sure the signing start block takes into account the time elapsed
-	// during pre-signing steps, i.e. gathering deposit data and proposal
-	// validation.
-	signingStartBlock := dsa.proposalProcessingStartBlock +
-		uint64(len(deposits)*dsa.signingDelayBlocks)
-
 	signatures, err := dsa.signingExecutor.signBatch(
 		signingCtx,
 		sigHashes,
-		signingStartBlock,
+		dsa.proposalProcessingStartBlock,
 	)
 	if err != nil {
 		return nil, fmt.Errorf(

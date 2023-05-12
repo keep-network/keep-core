@@ -453,6 +453,119 @@ func (c *Connection) getConfirmedScriptHistory(
 	return confirmedItems, nil
 }
 
+// GetMempoolForPublicKeyHash gets the unconfirmed mempool transactions
+// that pays the given public key hash using either a P2PKH or P2WPKH script.
+// The returned transactions are in an indefinite order.
+func (c *Connection) GetMempoolForPublicKeyHash(
+	publicKeyHash [20]byte,
+) ([]*bitcoin.Transaction, error) {
+	p2pkh, err := bitcoin.PayToPublicKeyHash(publicKeyHash)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"cannot build P2PKH for public key hash [0x%x]: [%v]",
+			publicKeyHash,
+			err,
+		)
+	}
+
+	p2wpkh, err := bitcoin.PayToWitnessPublicKeyHash(publicKeyHash)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"cannot build P2WPKH for public key hash [0x%x]: [%v]",
+			publicKeyHash,
+			err,
+		)
+	}
+
+	p2pkhItems, err := c.getScriptMempool(p2pkh)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"cannot get P2PKH mempool items for public key hash [0x%x]: [%v]",
+			publicKeyHash,
+			err,
+		)
+	}
+
+	p2wpkhItems, err := c.getScriptMempool(p2wpkh)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"cannot get P2WPKH mempool items for public key hash [0x%x]: [%v]",
+			publicKeyHash,
+			err,
+		)
+	}
+
+	items := append(p2pkhItems, p2wpkhItems...)
+
+	transactions := make([]*bitcoin.Transaction, len(items))
+	for i, item := range items {
+		transaction, err := c.GetTransaction(item.txHash)
+		if err != nil {
+			return nil, fmt.Errorf("cannot get transaction: [%v]", err)
+		}
+
+		transactions[i] = transaction
+	}
+
+	return transactions, nil
+}
+
+type scriptMempoolItem struct {
+	txHash      bitcoin.Hash
+	blockHeight int32
+	fee         uint32
+}
+
+// getScriptMempool returns unconfirmed mempool transactions for
+// the given script (P2PKH, P2WPKH, P2SH, P2WSH, etc.). The returned list
+// is in an indefinite order.
+func (c *Connection) getScriptMempool(
+	script []byte,
+) ([]*scriptMempoolItem, error) {
+	scriptHash := sha256.Sum256(script)
+	reversedScriptHash := byteutils.Reverse(scriptHash[:])
+	reversedScriptHashString := hex.EncodeToString(reversedScriptHash)
+
+	items, err := requestWithRetry(
+		c,
+		func(
+			ctx context.Context,
+			client *electrum.Client,
+		) ([]*electrum.GetMempoolResult, error) {
+			return client.GetMempool(ctx, reversedScriptHashString)
+		})
+	if err != nil {
+		return nil, fmt.Errorf(
+			"failed to get mempool for script [0x%x]: [%v]",
+			script,
+			err,
+		)
+	}
+
+	convertedItems := make([]*scriptMempoolItem, len(items))
+	for i, item := range items {
+		txHash, err := bitcoin.NewHashFromString(
+			item.Hash,
+			bitcoin.ReversedByteOrder,
+		)
+		if err != nil {
+			return nil, fmt.Errorf(
+				"cannot parse hash [%s]: [%v]",
+				item.Hash,
+				err,
+			)
+		}
+
+		convertedItems[i] = &scriptMempoolItem{
+			txHash:      txHash,
+			blockHeight: item.Height,
+			fee:         item.Fee,
+		}
+	}
+
+	return convertedItems, nil
+}
+
 func (c *Connection) electrumConnect() error {
 	var client *electrum.Client
 	var err error

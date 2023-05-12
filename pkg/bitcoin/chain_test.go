@@ -51,6 +51,12 @@ func (lc *localChain) GetTransactionsForPublicKeyHash(
 	panic("not implemented")
 }
 
+func (lc *localChain) GetMempoolForPublicKeyHash(
+	publicKeyHash [20]byte,
+) ([]*Transaction, error) {
+	panic("not implemented")
+}
+
 func (lc *localChain) addTransaction(
 	transaction *Transaction,
 ) error {

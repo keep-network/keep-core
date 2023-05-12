@@ -1,10 +1,11 @@
 package hexutils
 
 import (
-	"bytes"
 	"fmt"
 	"reflect"
 	"testing"
+
+	"github.com/keep-network/keep-core/pkg/internal/testutils"
 )
 
 type unmarshalTest struct {
@@ -60,9 +61,8 @@ func TestDecode(t *testing.T) {
 			if !reflect.DeepEqual(err, test.wantErr) {
 				t.Fatalf("unexpected error\nexpected: %v\nactual:   %v", test.wantErr, err)
 			}
-			if !bytes.Equal(test.want, dec) {
-				t.Errorf("unexpected result\nexpected: %v\nactual:   %v", test.want, dec)
-			}
+
+			testutils.AssertBytesEqual(t, test.want, dec)
 		})
 	}
 }

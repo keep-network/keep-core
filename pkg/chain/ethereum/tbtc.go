@@ -979,6 +979,7 @@ func (tc *TbtcChain) PastDepositRevealedEvents(
 			RefundPublicKeyHash: event.RefundPubKeyHash,
 			RefundLocktime:      event.RefundLocktime,
 			Vault:               vault,
+			BlockNumber:         event.Raw.BlockNumber,
 		}
 
 		convertedEvents = append(convertedEvents, convertedEvent)
@@ -1347,4 +1348,14 @@ func (tc *TbtcChain) ValidateDepositSweepProposal(
 	}
 
 	return nil
+}
+
+func (tc *TbtcChain) SubmitDepositSweepProposal(
+	proposal *tbtc.DepositSweepProposal,
+) error {
+	_, err := tc.walletCoordinator.SubmitDepositSweepProposal(
+		convertDepositSweepProposalToAbiType(proposal),
+	)
+
+	return err
 }

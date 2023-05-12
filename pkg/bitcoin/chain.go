@@ -29,7 +29,7 @@ type Chain interface {
 	// returns an error.
 	GetBlockHeader(blockHeight uint) (*BlockHeader, error)
 
-	// GetTransactionsForPublicKeyHash get confirmed transactions that pays the
+	// GetTransactionsForPublicKeyHash gets the confirmed transactions that pays the
 	// given public key hash using either a P2PKH or P2WPKH script. The returned
 	// transactions are ordered by block height in the ascending order, i.e.
 	// the latest transaction is at the end of the list. The returned list does
@@ -41,4 +41,9 @@ type Chain interface {
 		publicKeyHash [20]byte,
 		limit int,
 	) ([]*Transaction, error)
+
+	// GetMempoolForPublicKeyHash gets the unconfirmed mempool transactions
+	// that pays the given public key hash using either a P2PKH or P2WPKH script.
+	// The returned transactions are in an indefinite order.
+	GetMempoolForPublicKeyHash(publicKeyHash [20]byte) ([]*Transaction, error)
 }
