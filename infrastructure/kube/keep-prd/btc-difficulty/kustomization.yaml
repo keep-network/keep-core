@@ -6,15 +6,12 @@ namespace: default
 commonLabels:
   app: maintainer
   type: btc-difficulty
-  network: goerli
+  network: mainnet
 
 configMapGenerator:
   - name: btc-difficulty-maintainer-accounts-info
     files:
       - config/btc-difficulty-maintainer-keyfile
-  - name: btc-difficulty-maintainer-config
-    files:
-      - config/keep-client-config.toml
   - name: electrum-api-mainnet
     literals:
       - electrumx-url-tcp=electrum.blockstream.info:50001

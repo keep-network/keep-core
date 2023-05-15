@@ -5,21 +5,21 @@ metadata:
   labels:
     app: maintainer
     type: btc-difficulty
-    network: goerli
+    network: mainnet
 spec:
   replicas: 1
   selector:
     matchLabels:
       app: maintainer
       type: btc-difficulty
-      network: goerli
+      network: mainnet
   serviceName: btc-difficulty-maintainer
   template:
     metadata:
       labels:
         app: maintainer
         type: btc-difficulty
-        network: goerli
+        network: mainnet
     spec:
       volumes:
       - name: eth-account-keyfile
@@ -28,15 +28,9 @@ spec:
           items:
           - key: btc-difficulty-maintainer-keyfile
             path: btc-difficulty-maintainer-keyfile
-      - name: btc-difficulty-maintainer-config
-        configMap:
-          name: btc-difficulty-maintainer-config
-          items:
-          - key: keep-client-config.toml
-            path: keep-client-config.toml
       containers:
         - name: btc-difficulty-maintainer
-          image: gcr.io/keep-prd-210b/keep-client:latest # TODO: Check if this a correct url
+          image: gcr.io/keep-prd-210b/keep-client:latest
           imagePullPolicy: Always
           resources:
             requests:
@@ -53,7 +47,7 @@ spec:
           - name: ETH_WS_URL
             valueFrom:
               secretKeyRef:
-                name: eth-network-goerli
+                name: eth-network-mainnet
                 key: ws-url
           - name: ELECTRUM_API_URL
             valueFrom:
@@ -63,15 +57,12 @@ spec:
           volumeMounts:
           - name: eth-account-keyfile
             mountPath: /mnt/btc-difficulty-maintainer/keyfile
-          - name: btc-difficulty-maintainer-config
-            mountPath: /mnt/btc-difficulty-maintainer/config
           command:
           - keep-client
           - maintainer
           args:
           - --bitcoinDifficulty
-          # run as developer to be able to set LightRelay address
-          - --developer
+          - --mainnet
           - --ethereum.url
           - $(ETH_WS_URL)
           - --ethereum.keyFile
@@ -80,5 +71,3 @@ spec:
           - $(ELECTRUM_API_URL)
           - --bitcoin.electrum.protocol
           - "TCP"
-          - --config
-          - /mnt/btc-difficulty-maintainer/config/keep-client-config.toml
