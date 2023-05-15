@@ -117,7 +117,7 @@ Port = 9601
 # PreParamsGenerationTimeout = "2m"
 # PreParamsGenerationDelay = "10s"
 # PreParamsGenerationConcurrency = 1
-# KeyGenConcurrency = 1
+# KeyGenerationConcurrency = 1
 
 # Developer options to work with locally deployed contracts
 #
@@ -126,3 +126,4 @@ Port = 9601
 # RandomBeaconAddress = "0xBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB"
 # WalletRegistryAddress = "0xBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB"
 # BridgeAddress = "0xBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB"
+# WalletCoordinatorAddress = "0xBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB"

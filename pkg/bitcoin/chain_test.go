@@ -44,6 +44,19 @@ func (lc *localChain) GetBlockHeader(
 	panic("not implemented")
 }
 
+func (lc *localChain) GetTransactionsForPublicKeyHash(
+	publicKeyHash [20]byte,
+	limit int,
+) ([]*Transaction, error) {
+	panic("not implemented")
+}
+
+func (lc *localChain) GetMempoolForPublicKeyHash(
+	publicKeyHash [20]byte,
+) ([]*Transaction, error) {
+	panic("not implemented")
+}
+
 func (lc *localChain) addTransaction(
 	transaction *Transaction,
 ) error {

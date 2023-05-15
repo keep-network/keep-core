@@ -4,8 +4,9 @@ import (
 	"context"
 	"fmt"
 	"runtime"
-	"strings"
 	"time"
+
+	"github.com/keep-network/keep-core/pkg/bitcoin"
 
 	"github.com/ipfs/go-log"
 
@@ -72,6 +73,7 @@ type Config struct {
 func Initialize(
 	ctx context.Context,
 	chain Chain,
+	btcChain bitcoin.Chain,
 	netProvider net.Provider,
 	keyStorePersistence persistence.ProtectedHandle,
 	workPersistence persistence.BasicHandle,
@@ -88,6 +90,7 @@ func Initialize(
 	node, err := newNode(
 		groupParameters,
 		chain,
+		btcChain,
 		netProvider,
 		keyStorePersistence,
 		workPersistence,
@@ -254,61 +257,207 @@ func Initialize(
 		}()
 	})
 
-	_ = chain.OnHeartbeatRequested(func(event *HeartbeatRequestedEvent) {
+	// Set up a handler of a wallet heartbeat request coming from the
+	// WalletCoordinator on-chain contract. Once an event is seen, a handler
+	// goroutine makes sure that the observed event is not duplicate, waits
+	// a fixed confirmation period, and ensures the on-chain state justifies
+	// the occurrence of the event. Once done, the original event is used
+	// to trigger the heartbeat request action. The handler does not care about
+	// possible subsequent events being a result of chain reorgs. This is because
+	// the WalletCoordinator contract is just a coordination point based on
+	// the chain consensus. If enough clients received the event, they should
+	// follow it and execute a heartbeat signing. The message for that heartbeat
+	// request was validated in the contract, so even if there was a reorg and
+	// another event landed on the canonical chain later, the signature
+	// will still be valid and not lead to fraud. The only reason the handler
+	// waits a fixed confirmation period after receiving the coordination event
+	// is to make sure the right type of action is executed given different types
+	// of actions may have different lock times. We do not want to run into a
+	// situation when the majority of clients execute heartbeat with N blocks
+	// wallet lock time and the chain has M < N blocks wallet lock time because
+	// the canonical chain - as a result of a reorg - is supposed to execute
+	// e.g. redemption.
+	_ = chain.OnHeartbeatRequestSubmitted(func(event *HeartbeatRequestSubmittedEvent) {
 		go func() {
-			// There is no need to deduplicate. Test loop events are unique.
-			messagesDigests := make([]string, len(event.Messages))
-			for i, message := range event.Messages {
-				bytes := message.Bytes()
-				messagesDigests[i] = fmt.Sprintf(
-					"0x%x...%x",
-					bytes[:2],
-					bytes[len(bytes)-2:],
-				)
-			}
+			walletPublicKeyHash := event.WalletPublicKeyHash
+			message := event.Message
 
-			logger.Infof(
-				"heartbeat [%s] requested from "+
-					"wallet [0x%x] at block [%v]",
-				strings.Join(messagesDigests, ", "),
-				event.WalletPublicKey,
-				event.BlockNumber,
-			)
-
-			executor, ok, err := node.getSigningExecutor(
-				unmarshalPublicKey(event.WalletPublicKey),
-			)
-			if err != nil {
-				logger.Errorf("cannot get signing executor: [%v]", err)
-				return
-			}
-			if !ok {
+			if ok := deduplicator.notifyHeartbeatRequestSubmitted(
+				walletPublicKeyHash,
+				message,
+			); !ok {
 				logger.Infof(
-					"node does not control signers of wallet "+
-						"with public key [0x%x]",
-					event.WalletPublicKey,
+					"heartbeat request for wallet PKH [0x%x] and message [0x%x] "+
+						"has been already processed",
+					walletPublicKeyHash,
+					message,
 				)
 				return
 			}
 
-			signatures, err := executor.signBatch(
-				context.TODO(),
-				event.Messages,
+			confirmationBlock := event.BlockNumber +
+				heartbeatRequestConfirmationBlocks
+
+			logger.Infof(
+				"observed heartbeat request for wallet PKH [0x%x] "+
+					"at block [%v]; waiting for block [%v] to confirm",
+				walletPublicKeyHash,
 				event.BlockNumber,
+				confirmationBlock,
 			)
+
+			err := node.waitForBlockHeight(ctx, confirmationBlock)
 			if err != nil {
-				logger.Errorf("cannot sign batch: [%v]", err)
+				logger.Errorf(
+					"failed to confirm heartbeat request for "+
+						"wallet PKH [0x%x]: [%v]",
+					walletPublicKeyHash,
+					err,
+				)
 				return
 			}
 
-			logger.Infof(
-				"generated [%v] signatures for heartbeat [%s] as "+
-					"requested from wallet [0x%x] at block [%v]",
-				len(signatures),
-				strings.Join(messagesDigests, ", "),
-				event.WalletPublicKey,
-				event.BlockNumber,
+			expiresAt, cause, err := chain.GetWalletLock(
+				walletPublicKeyHash,
 			)
+			if err != nil {
+				logger.Errorf(
+					"failed to get lock for wallet PKH [0x%x]: [%v]",
+					walletPublicKeyHash,
+					err,
+				)
+				return
+			}
+
+			// The event is confirmed if the wallet is locked due to a heartbeat
+			// action.
+			if time.Now().Before(expiresAt) && cause == Heartbeat {
+				logger.Infof(
+					"heartbeat request submitted for "+
+						"wallet PKH [0x%x] at block [%v] by [%v]",
+					walletPublicKeyHash,
+					event.BlockNumber,
+					event.Coordinator,
+				)
+
+				node.handleHeartbeatRequest(
+					walletPublicKeyHash,
+					message,
+					expiresAt,
+					event.BlockNumber,
+					heartbeatRequestConfirmationBlocks,
+				)
+			} else {
+				logger.Infof(
+					"heartbeat request for wallet PKH [0x%x] "+
+						"at block [%v] was not confirmed; existing wallet lock "+
+						"has unexpected expiration time [%s] and/or cause [%v]",
+					walletPublicKeyHash,
+					event.BlockNumber,
+					expiresAt,
+					cause,
+				)
+			}
+		}()
+	})
+
+	// Set up a handler of deposit sweep proposals coming from the
+	// WalletCoordinator on-chain contract. Once an event is seen, a handler
+	// goroutine makes sure that the observed event is not a duplicate, waits
+	// a fixed confirmation period, and ensures the on-chain state justifies
+	// the occurrence of the event. Once done, the original event is used
+	// to trigger the deposit sweep action. The handler does not care about
+	// possible subsequent events being result of chain reorgs. This is because
+	// the WalletCoordinator contract is just a coordination point based on
+	// the chain consensus. If enough clients received the event, they should
+	// follow it and execute a signature. All input parameters for that
+	// signature are validated, so even if there was a reorg and another event
+	// landed on the canonical chain later, the first signature will still be
+	// valid and approved by Bitcoin. The only reason the handler waits a
+	// fixed confirmation period after receiving the coordination event is to
+	// make sure the right type of action is executed given different types of
+	// actions may have different lock times. We do not want to run into a
+	// situation when the majority of clients execute sweep with N blocks wallet
+	// lock time and the chain has M < N blocks wallet lock time because the
+	// canonical chain - as a result of a reorg - is supposed to execute
+	// e.g. redemption.
+	_ = chain.OnDepositSweepProposalSubmitted(func(event *DepositSweepProposalSubmittedEvent) {
+		go func() {
+			walletPublicKeyHash := event.Proposal.WalletPublicKeyHash
+
+			if ok := deduplicator.notifyDepositSweepProposalSubmitted(
+				event.Proposal,
+			); !ok {
+				logger.Infof(
+					"deposit sweep proposal for wallet PKH [0x%x] "+
+						"has been already processed",
+					walletPublicKeyHash,
+				)
+				return
+			}
+
+			confirmationBlock := event.BlockNumber +
+				depositSweepProposalConfirmationBlocks
+
+			logger.Infof(
+				"observed deposit sweep proposal for wallet PKH [0x%x] "+
+					"at block [%v]; waiting for block [%v] to confirm",
+				walletPublicKeyHash,
+				event.BlockNumber,
+				confirmationBlock,
+			)
+
+			err := node.waitForBlockHeight(ctx, confirmationBlock)
+			if err != nil {
+				logger.Errorf(
+					"failed to confirm deposit sweep proposal for "+
+						"wallet PKH [0x%x]: [%v]",
+					walletPublicKeyHash,
+					err,
+				)
+				return
+			}
+
+			expiresAt, cause, err := chain.GetWalletLock(
+				walletPublicKeyHash,
+			)
+			if err != nil {
+				logger.Errorf(
+					"failed to get lock for wallet PKH [0x%x]: [%v]",
+					walletPublicKeyHash,
+					err,
+				)
+				return
+			}
+
+			// The event is confirmed if the wallet is locked due to a deposit
+			// sweep action.
+			if time.Now().Before(expiresAt) && cause == DepositSweep {
+				logger.Infof(
+					"deposit sweep proposal submitted for "+
+						"wallet PKH [0x%x] at block [%v] by [%v]",
+					walletPublicKeyHash,
+					event.BlockNumber,
+					event.Coordinator,
+				)
+
+				node.handleDepositSweepProposal(
+					event.Proposal,
+					expiresAt,
+					event.BlockNumber,
+					depositSweepProposalConfirmationBlocks,
+				)
+			} else {
+				logger.Infof(
+					"deposit sweep proposal for wallet PKH [0x%x] "+
+						"at block [%v] was not confirmed; existing wallet lock "+
+						"has unexpected expiration time [%s] and/or cause [%v]",
+					walletPublicKeyHash,
+					event.BlockNumber,
+					expiresAt,
+					cause,
+				)
+			}
 		}()
 	})
 

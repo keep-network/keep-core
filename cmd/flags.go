@@ -330,6 +330,13 @@ func initMaintainerFlags(command *cobra.Command, cfg *config.Config) {
 		false,
 		"start Bitcoin difficulty maintainer",
 	)
+
+	command.Flags().BoolVar(
+		&cfg.Maintainer.DisableBitcoinDifficultyProxy,
+		"disableBitcoinDifficultyProxy",
+		false,
+		"disable Bitcoin difficulty proxy",
+	)
 }
 
 // Initialize flags for Developer configuration.
@@ -347,7 +354,9 @@ func initDeveloperFlags(command *cobra.Command) {
 
 	initContractAddressFlag(chainEthereum.BridgeContractName)
 	initContractAddressFlag(chainEthereum.LightRelayContractName)
+	initContractAddressFlag(chainEthereum.LightRelayMaintainerProxyContractName)
 	initContractAddressFlag(chainEthereum.RandomBeaconContractName)
 	initContractAddressFlag(chainEthereum.TokenStakingContractName)
 	initContractAddressFlag(chainEthereum.WalletRegistryContractName)
+	initContractAddressFlag(chainEthereum.WalletCoordinatorContractName)
 }

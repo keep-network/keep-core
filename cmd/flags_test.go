@@ -226,7 +226,7 @@ var cmdFlagsTests = map[string]struct {
 		expectedValueFromFlag: 2,
 		defaultValue:          1,
 	},
-	"tbtc.keyGenConcurrency": {
+	"tbtc.keyGenerationConcurrency": {
 		readValueFunc:         func(c *config.Config) interface{} { return c.Tbtc.KeyGenerationConcurrency },
 		flagName:              "--tbtc.keyGenerationConcurrency",
 		flagValue:             "101",
@@ -236,6 +236,13 @@ var cmdFlagsTests = map[string]struct {
 	"maintainer.bitcoinDifficulty": {
 		readValueFunc:         func(c *config.Config) interface{} { return c.Maintainer.BitcoinDifficulty },
 		flagName:              "--bitcoinDifficulty",
+		flagValue:             "", // don't provide any value
+		expectedValueFromFlag: true,
+		defaultValue:          false,
+	},
+	"maintainer.disableBitcoinDifficultyProxy": {
+		readValueFunc:         func(c *config.Config) interface{} { return c.Maintainer.DisableBitcoinDifficultyProxy },
+		flagName:              "--disableBitcoinDifficultyProxy",
 		flagValue:             "", // don't provide any value
 		expectedValueFromFlag: true,
 		defaultValue:          false,
@@ -280,6 +287,16 @@ var cmdFlagsTests = map[string]struct {
 		expectedValueFromFlag: common.HexToAddress("0x68e20afD773fDF1231B5cbFeA7040e73e79cAc36"),
 		defaultValue:          common.HexToAddress(ethereumTbtc.LightRelayAddress),
 	},
+	"developer.lightRelayMaintainerProxyAddress": {
+		readValueFunc: func(c *config.Config) interface{} {
+			address, _ := c.Ethereum.ContractAddress(chainEthereum.LightRelayMaintainerProxyContractName)
+			return address
+		},
+		flagName:              "--developer.lightRelayMaintainerProxyAddress",
+		flagValue:             "0x30cd93828613D5945A2916a22E0f0e9bC561EAB5",
+		expectedValueFromFlag: common.HexToAddress("0x30cd93828613D5945A2916a22E0f0e9bC561EAB5"),
+		defaultValue:          common.HexToAddress(ethereumTbtc.LightRelayMaintainerProxyAddress),
+	},
 	"developer.tokenStakingAddress": {
 		readValueFunc: func(c *config.Config) interface{} {
 			address, _ := c.Ethereum.ContractAddress(chainEthereum.TokenStakingContractName)
@@ -289,6 +306,16 @@ var cmdFlagsTests = map[string]struct {
 		flagValue:             "0x861b021462e7864a7413edf0113030b892978617",
 		expectedValueFromFlag: common.HexToAddress("0x861b021462e7864a7413edF0113030B892978617"),
 		defaultValue:          common.HexToAddress(ethereumThreshold.TokenStakingAddress),
+	},
+	"developer.walletCoordinatorAddress": {
+		readValueFunc: func(c *config.Config) interface{} {
+			address, _ := c.Ethereum.ContractAddress(chainEthereum.WalletCoordinatorContractName)
+			return address
+		},
+		flagName:              "--developer.walletCoordinatorAddress",
+		flagValue:             "0xE7d33d8AA55B73a93059a24b900366894684a497",
+		expectedValueFromFlag: common.HexToAddress("0xE7d33d8AA55B73a93059a24b900366894684a497"),
+		defaultValue:          common.HexToAddress(ethereumTbtc.WalletCoordinatorAddress),
 	},
 }
 

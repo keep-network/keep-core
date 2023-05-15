@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"github.com/keep-network/keep-core/pkg/bitcoin"
+	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/tecdsa"
 	"math/big"
 )
@@ -72,12 +73,17 @@ func (dsts *DepositSweepTestScenario) UnmarshalJSON(data []byte) error {
 		d := new(Deposit)
 
 		d.Utxo = deposit.Utxo.convert()
-		copy(d.Depositor[:], hexToSlice(deposit.Depositor))
+		d.Depositor = chain.Address(deposit.Depositor)
 		copy(d.BlindingFactor[:], hexToSlice(deposit.BlindingFactor))
 		copy(d.WalletPublicKeyHash[:], hexToSlice(deposit.WalletPublicKeyHash))
 		copy(d.RefundPublicKeyHash[:], hexToSlice(deposit.RefundPublicKeyHash))
 		copy(d.RefundLocktime[:], hexToSlice(deposit.RefundLocktime))
-		copy(d.Vault[:], hexToSlice(deposit.Vault))
+
+		var vault *chain.Address
+		if v := chain.Address(deposit.Vault); len(v.String()) > 0 {
+			vault = &v
+		}
+		d.Vault = vault
 
 		dsts.Deposits = append(dsts.Deposits, d)
 	}

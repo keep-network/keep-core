@@ -20,4 +20,19 @@ var (
 	// LightRelayAddress is a LightRelay contract's address read from the NPM
 	// package.
 	LightRelayAddress string = strings.TrimSpace(lightRelayAddressFileContent)
+
+	//go:embed _address/LightRelayMaintainerProxy
+	lightRelayMaintainerProxyAddressFileContent string
+
+	// LightRelayMaintainerProxyAddress is a LightRelayMaintainerProxy contract's
+	// address read from the NPM package.
+	LightRelayMaintainerProxyAddress string = strings.TrimSpace(
+		lightRelayMaintainerProxyAddressFileContent,
+	)
+
+	//go:embed _address/WalletCoordinator
+	walletCoordinatorAddressFileContent string
+
+	// WalletCoordinatorAddress is a WalletCoordinator contract's address read from the NPM package.
+	WalletCoordinatorAddress string = strings.TrimSpace(walletCoordinatorAddressFileContent)
 )

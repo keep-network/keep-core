@@ -96,8 +96,10 @@ func buildContractAddresses(lineLength int, prefix, suffix string, ethereumConfi
 
 	contractNames := []string{
 		chainEthereum.RandomBeaconContractName,
+		chainEthereum.BridgeContractName,
 		chainEthereum.WalletRegistryContractName,
 		chainEthereum.TokenStakingContractName,
+		chainEthereum.WalletCoordinatorContractName,
 	}
 
 	entries := []string{}

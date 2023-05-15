@@ -18,6 +18,7 @@ const (
 var StartCmdCategories = []Category{
 	General,
 	Ethereum,
+	BitcoinElectrum,
 	Network,
 	Storage,
 	ClientInfo,
