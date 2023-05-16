@@ -333,8 +333,11 @@ type WalletCoordinatorChain interface {
 		},
 	) error
 
-	// SubmitDepositSweepProposal submits a deposit sweep proposal to the chain.
-	SubmitDepositSweepProposal(proposal *DepositSweepProposal) error
+	// SubmitDepositSweepProposalWithReimbursement submits a deposit sweep
+	// proposal to the chain. It reimburses the gas cost to the caller.
+	SubmitDepositSweepProposalWithReimbursement(
+		proposal *DepositSweepProposal,
+	) error
 }
 
 // HeartbeatRequestSubmittedEvent represents a wallet heartbeat request

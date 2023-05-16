@@ -1350,10 +1350,10 @@ func (tc *TbtcChain) ValidateDepositSweepProposal(
 	return nil
 }
 
-func (tc *TbtcChain) SubmitDepositSweepProposal(
+func (tc *TbtcChain) SubmitDepositSweepProposalWithReimbursement(
 	proposal *tbtc.DepositSweepProposal,
 ) error {
-	_, err := tc.walletCoordinator.SubmitDepositSweepProposal(
+	_, err := tc.walletCoordinator.SubmitDepositSweepProposalWithReimbursement(
 		convertDepositSweepProposalToAbiType(proposal),
 	)
 
