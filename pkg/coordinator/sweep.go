@@ -69,7 +69,7 @@ func ProposeDepositsSweep(
 
 	if !dryRun {
 		logger.Infof("submitting the proposal...")
-		if err := tbtcChain.SubmitDepositSweepProposal(proposal); err != nil {
+		if err := tbtcChain.SubmitDepositSweepProposalWithReimbursement(proposal); err != nil {
 			return fmt.Errorf("failed to submit deposit sweep proposal: %v", err)
 		}
 	}

@@ -738,7 +738,9 @@ func buildDepositSweepProposalValidationKey(
 	return sha256.Sum256(buffer.Bytes()), nil
 }
 
-func (lc *localChain) SubmitDepositSweepProposal(proposal *DepositSweepProposal) error {
+func (lc *localChain) SubmitDepositSweepProposalWithReimbursement(
+	proposal *DepositSweepProposal,
+) error {
 	panic("unsupported")
 }
 
