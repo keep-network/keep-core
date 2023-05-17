@@ -15,6 +15,9 @@
 # Infrastructure
 /infrastructure/gcp/service-accounts*
 
+# Secret directory used in Kubernetes configurations
+/infrastructure/kube/**/.secret/
+
 # Keys
 keystore/
 keep_accounts

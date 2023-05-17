@@ -6,7 +6,7 @@ namespace: default
 commonLabels:
   app: maintainer
   type: btc-difficulty
-  network: goerli
+  network: mainnet
 
 configMapGenerator:
   - name: btc-difficulty-maintainer-eth-accounts-info
