@@ -8,7 +8,7 @@ replace (
 	// here:
 	github.com/btcsuite/btcd => github.com/btcsuite/btcd v0.22.3
 	github.com/btcsuite/btcd/v2 => github.com/btcsuite/btcd v0.23.4
-	github.com/checksum0/go-electrum => github.com/keep-network/go-electrum v0.0.0-20230516120351-221d51b9fd27
+	github.com/checksum0/go-electrum => github.com/keep-network/go-electrum v0.0.0-20230516144526-567f2c1de4bc
 	// Temporary replacement until v1.28.2 is released containing `protodelim` package.
 	// See https://github.com/protocolbuffers/protobuf-go/commit/fb0abd915897428ccfdd6b03b48ad8219751ee54
 	google.golang.org/protobuf/dev => google.golang.org/protobuf v1.28.2-0.20220831092852-f930b1dc76e8
