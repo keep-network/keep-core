@@ -19,7 +19,7 @@ configMapGenerator:
 secretGenerator:
   - name: btc-difficulty-maintainer-eth-accounts-password
     files:
-      - .secret/eth-account-password
+      - .secret/btc-difficulty-maintainer-password
 
 generatorOptions:
   disableNameSuffixHash: true
