@@ -22,12 +22,12 @@ spec:
         network: mainnet
     spec:
       volumes:
-      - name: eth-account-keyfile
-        configMap:
-          name: btc-difficulty-maintainer-accounts-info
-          items:
-          - key: btc-difficulty-maintainer-keyfile
-            path: btc-difficulty-maintainer-keyfile
+        - name: eth-account-keyfile
+          configMap:
+            name: btc-difficulty-maintainer-accounts-info
+            items:
+              - key: btc-difficulty-maintainer-keyfile
+                path: btc-difficulty-maintainer-keyfile
       containers:
         - name: btc-difficulty-maintainer
           image: gcr.io/keep-prd-210b/keep-client:latest
@@ -37,37 +37,37 @@ spec:
               cpu: 1500m
               memory: 512M
           env:
-          - name: LOG_LEVEL
-            value: info
-          - name: KEEP_ETHEREUM_PASSWORD
-            valueFrom:
-              secretKeyRef:
-                name: btc-difficulty-maintainer-eth-accounts-password
-                key: eth-account-password
-          - name: ETH_WS_URL
-            valueFrom:
-              secretKeyRef:
-                name: eth-network-mainnet
-                key: ws-url
-          - name: ELECTRUM_API_URL
-            valueFrom:
-              configMapKeyRef:
-                name: electrum-api-mainnet
-                key: electrumx-url-tcp
+            - name: LOG_LEVEL
+              value: info
+            - name: KEEP_ETHEREUM_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: btc-difficulty-maintainer-eth-accounts-password
+                  key: eth-account-password
+            - name: ETH_WS_URL
+              valueFrom:
+                secretKeyRef:
+                  name: eth-network-mainnet
+                  key: ws-url
+            - name: ELECTRUM_API_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: electrum-api-mainnet
+                  key: electrumx-url-tcp
           volumeMounts:
-          - name: eth-account-keyfile
-            mountPath: /mnt/btc-difficulty-maintainer/keyfile
+            - name: eth-account-keyfile
+              mountPath: /mnt/btc-difficulty-maintainer/keyfile
           command:
-          - keep-client
-          - maintainer
+            - keep-client
+            - maintainer
           args:
-          - --bitcoinDifficulty
-          - --mainnet
-          - --ethereum.url
-          - $(ETH_WS_URL)
-          - --ethereum.keyFile
-          - /mnt/btc-difficulty-maintainer/keyfile/btc-difficulty-maintainer-keyfile
-          - --bitcoin.electrum.url
-          - $(ELECTRUM_API_URL)
-          - --bitcoin.electrum.protocol
-          - "TCP"
+            - --bitcoinDifficulty
+            - --mainnet
+            - --ethereum.url
+            - $(ETH_WS_URL)
+            - --ethereum.keyFile
+            - /mnt/btc-difficulty-maintainer/keyfile/btc-difficulty-maintainer-keyfile
+            - --bitcoin.electrum.url
+            - $(ELECTRUM_API_URL)
+            - --bitcoin.electrum.protocol
+            - "TCP"
