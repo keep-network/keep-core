@@ -9,7 +9,7 @@ commonLabels:
   network: goerli
 
 configMapGenerator:
-  - name: btc-difficulty-maintainer-accounts-info
+  - name: btc-difficulty-maintainer-eth-accounts-info
     files:
       - .secret/btc-difficulty-maintainer-keyfile
   - name: electrum-api-mainnet

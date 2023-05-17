@@ -24,7 +24,7 @@ spec:
       volumes:
         - name: eth-account-keyfile
           configMap:
-            name: btc-difficulty-maintainer-accounts-info
+            name: btc-difficulty-maintainer-eth-accounts-info
             items:
               - key: btc-difficulty-maintainer-keyfile
                 path: btc-difficulty-maintainer-keyfile
