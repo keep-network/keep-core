@@ -43,7 +43,7 @@ spec:
             valueFrom:
               secretKeyRef:
                 name: btc-difficulty-maintainer-eth-accounts-password
-                key: eth-account-password
+                key: btc-difficulty-maintainer-password
           - name: ETH_WS_URL
             valueFrom:
               secretKeyRef:

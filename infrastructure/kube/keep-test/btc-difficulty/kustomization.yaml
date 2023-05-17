@@ -11,7 +11,7 @@ commonLabels:
 configMapGenerator:
   - name: btc-difficulty-maintainer-accounts-info
     files:
-      - config/btc-difficulty-maintainer-keyfile
+      - .secret/btc-difficulty-maintainer-keyfile
   - name: electrum-api-mainnet
     literals:
       - electrumx-url-tcp=electrum.blockstream.info:50001
@@ -19,7 +19,7 @@ configMapGenerator:
 secretGenerator:
   - name: btc-difficulty-maintainer-eth-accounts-password
     files:
-      - .secret/eth-account-password
+      - .secret/btc-difficulty-maintainer-password
 
 generatorOptions:
   disableNameSuffixHash: true
