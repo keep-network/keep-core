@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"github.com/keep-network/keep-core/pkg/bitcoin"
 	"os"
 	"strings"
 	"syscall"
@@ -47,6 +48,7 @@ type Config struct {
 
 // BitcoinConfig defines the configuration for Bitcoin.
 type BitcoinConfig struct {
+	bitcoin.Network
 	// Electrum defines the configuration for the Electrum client.
 	Electrum electrum.Config
 }
@@ -60,28 +62,32 @@ func bindFlags(flagSet *pflag.FlagSet) error {
 	return nil
 }
 
-// Resolve ethereum network based on the set boolean flags.
-func (c *Config) resolveEthereumNetwork(flagSet *pflag.FlagSet) error {
+// Resolve Ethereum and Bitcoin networks based on the set boolean flags.
+func (c *Config) resolveChainsNetworks(flagSet *pflag.FlagSet) error {
 	var err error
 
-	c.Ethereum.Network, err = func() (commonEthereum.Network, error) {
+	c.Ethereum.Network, c.Bitcoin.Network, err = func() (
+		commonEthereum.Network,
+		bitcoin.Network,
+		error,
+	) {
 		isGoerli, err := flagSet.GetBool(commonEthereum.Goerli.String())
 		if err != nil {
-			return commonEthereum.Unknown, err
+			return commonEthereum.Unknown, bitcoin.Unknown, err
 		}
 		if isGoerli {
-			return commonEthereum.Goerli, nil
+			return commonEthereum.Goerli, bitcoin.Testnet, nil
 		}
 
 		isDeveloper, err := flagSet.GetBool(commonEthereum.Developer.String())
 		if err != nil {
-			return commonEthereum.Unknown, err
+			return commonEthereum.Unknown, bitcoin.Unknown, err
 		}
 		if isDeveloper {
-			return commonEthereum.Developer, nil
+			return commonEthereum.Developer, bitcoin.Regtest, nil
 		}
 
-		return commonEthereum.Mainnet, nil
+		return commonEthereum.Mainnet, bitcoin.Mainnet, nil
 	}()
 
 	return err
@@ -97,8 +103,8 @@ func (c *Config) ReadConfig(configFilePath string, flagSet *pflag.FlagSet, categ
 			return fmt.Errorf("unable to bind the flags: [%w]", err)
 		}
 
-		if err := c.resolveEthereumNetwork(flagSet); err != nil {
-			return fmt.Errorf("unable to resolve ethereum network: [%w]", err)
+		if err := c.resolveChainsNetworks(flagSet); err != nil {
+			return fmt.Errorf("unable to resolve chains networks: [%w]", err)
 		}
 	}
 
@@ -125,6 +131,12 @@ func (c *Config) ReadConfig(configFilePath string, flagSet *pflag.FlagSet, categ
 	err := c.resolvePeers()
 	if err != nil {
 		return fmt.Errorf("failed to resolve peers: %w", err)
+	}
+
+	// Resolve Electrum server.
+	err = c.resolveElectrum()
+	if err != nil {
+		return fmt.Errorf("failed to resolve Electrum: %w", err)
 	}
 
 	// Validate configuration.
