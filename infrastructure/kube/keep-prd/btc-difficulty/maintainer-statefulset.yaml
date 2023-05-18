@@ -53,7 +53,7 @@ spec:
               valueFrom:
                 configMapKeyRef:
                   name: electrum-api-mainnet
-                  key: electrumx-url-tcp
+                  key: electrumx-url-ssl
           volumeMounts:
             - name: eth-account-keyfile
               mountPath: /mnt/btc-difficulty-maintainer/keyfile
@@ -70,4 +70,4 @@ spec:
             - --bitcoin.electrum.url
             - $(ELECTRUM_API_URL)
             - --bitcoin.electrum.protocol
-            - "TCP"
+            - "SSL"
