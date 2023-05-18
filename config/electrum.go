@@ -85,7 +85,8 @@ func (c *Config) resolveElectrum() error {
 		return fmt.Errorf("failed to read default Electrum configs: [%v]", err)
 	}
 
-	// Pick a single Electrum config randomly.
+	// #nosec G404 (insecure random number source (rand))
+	// Picking up an Electrum server does not require secure randomness.
 	config := configs[rand.Intn(len(configs))]
 
 	// Set only the URL and Protocol fields in the original config. Other
