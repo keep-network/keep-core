@@ -1,0 +1,13 @@
+resources:
+  - ../../../templates/bitcoin/bcoin
+
+namespace: default
+
+secretGenerator:
+  - name: bcoin
+    behavior: merge
+    envs:
+      - .env.secret
+
+patches:
+  - path: set_network.yaml
