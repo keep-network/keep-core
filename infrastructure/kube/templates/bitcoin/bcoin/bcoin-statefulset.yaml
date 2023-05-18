@@ -1,0 +1,74 @@
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: bcoin
+  labels:
+    app: bitcoin-node
+    type: bcoin
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: bitcoin-node
+      type: bcoin
+  serviceName: bcoin
+  template:
+    metadata:
+      labels:
+        app: bitcoin-node
+        type: bcoin
+    spec:
+      containers:
+        - name: bcoin
+          image: gcr.io/keep-test-f3e0/bcoin
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 18332
+              protocol: TCP
+            - containerPort: 18333
+              protocol: TCP
+          env:
+            - name: BCOIN_NETWORK
+              value: main
+            - name: BCOIN_HTTP_HOST
+              value: "0.0.0.0"
+            - name: BCOIN_HTTP_PORT
+              value: "18332"
+            - name: BCOIN_PORT
+              value: "18333"
+            - name: BCOIN_PUBLIC_HOST
+              value: 34.67.230.233
+            - name: BCOIN_PUBLIC_PORT
+              value: "18333"
+            - name: BCOIN_LOG_LEVEL
+              value: info
+            - name: BCOIN_PREFIX
+              value: /mnt/.bcoin
+            - name: BCOIN_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: bcoin
+                  key: http-api-key
+            - name: BCOIN_INDEX_TX
+              value: "true"
+            - name: BCOIN_REPLACE_BY_FEE
+              value: "true"
+            - name: BCOIN_COINBASE_ADDRESS
+              value: ""
+          volumeMounts:
+            - name: bcoin-data
+              mountPath: /mnt/.bcoin
+          command: ["bcoin"]
+      volumes:
+        - name: bcoin-data
+          persistentVolumeClaim:
+            claimName: bcoin-data
+  volumeClaimTemplates:
+    - metadata:
+        name: bcoin-data
+      spec:
+        accessModes: [ReadWriteOnce]
+        resources:
+          requests:
+            storage: 40Gi

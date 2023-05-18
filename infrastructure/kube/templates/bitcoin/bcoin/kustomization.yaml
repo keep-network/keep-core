@@ -1,0 +1,16 @@
+resources:
+  - bcoin-service.yaml
+  - bcoin-statefulset.yaml
+
+namespace: default
+
+secretGenerator:
+  - name: bcoin
+    behavior: create
+    envs:
+      - .env.template
+
+generatorOptions:
+  disableNameSuffixHash: true
+  annotations:
+    note: generated
