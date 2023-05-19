@@ -292,6 +292,97 @@ func TestGetBlockHeader_Negative_Integration(t *testing.T) {
 	}
 }
 
+func TestGetTransactionMerkle_Integration(t *testing.T) {
+	transactionHash, err := bitcoin.NewHashFromString(
+		"72e7fd57c2adb1ed2305c4247486ff79aec363296f02ec65be141904f80d214e",
+		bitcoin.InternalByteOrder,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	blockHeight := uint(1569342)
+
+	expectedResult := &bitcoin.TransactionMerkleBranch{
+		BlockHeight: 1569342,
+		Merkle: []string{
+			"8b5bbb5bdf6727bf70fad4f46fe4eaab04c98119ffbd2d95c29adf32d26f8452",
+			"53637bacb07965e4a8220836861d1b16c6da29f10ea9ab53fc4eca73074f98b9",
+			"0267e738108d094ceb05217e2942e9c2a4c6389ac47f476f572c9a319ce4dfbc",
+			"34e00deec50c48d99678ca2b52b82d6d5432326159c69e7233d0dde0924874b4",
+			"7a53435e6c86a3620cdbae510901f17958f0540314214379197874ed8ed7a913",
+			"6315dbb7ce350ceaa16cd4c35c5a147005e8b38ca1e9531bd7320629e8d17f5b",
+			"40380cdadc0206646208871e952af9dcfdff2f104305ce463aed5eeaf7725d2f",
+			"5d74bae6a71fd1cff2416865460583319a40343650bd4bb89de0a6ae82097037",
+			"296ddccfc659e0009aad117c8ed15fb6ff81c2bade73fbc89666a22708d233f9",
+		},
+		Position: 176,
+	}
+
+	for testName, config := range configs {
+		t.Run(testName, func(t *testing.T) {
+			electrum := newTestConnection(t, config)
+
+			result, err := electrum.GetTransactionMerkle(
+				transactionHash,
+				blockHeight,
+			)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			if diff := deep.Equal(result, expectedResult); diff != nil {
+				t.Errorf("compare failed: %v", diff)
+			}
+		})
+	}
+}
+
+func TestGetTransactionMerkle_Negative_Integration(t *testing.T) {
+	replaceErrorMsgForTests := []string{"electrumx ssl", "fulcrum ssl"}
+
+	for testName, config := range configs {
+		t.Run(testName, func(t *testing.T) {
+			electrum := newTestConnection(t, config)
+
+			expectedErrorMsg := fmt.Sprintf(
+				"failed to get merkle proof: [retry timeout [%s] exceeded; most recent error: [request failed: [tx not found or is unconfirmed]]]",
+				config.RequestRetryTimeout,
+			)
+
+			// As a workaround for the problem described in https://github.com/checksum0/go-electrum/issues/5
+			// we use an alternative expected error message for servers
+			// that are not correctly supported by the electrum client.
+			if slices.Contains(replaceErrorMsgForTests, testName) {
+				expectedErrorMsg = fmt.Sprintf(
+					"failed to get merkle proof: [retry timeout [%s] exceeded; most recent error: [request failed: [Unmarshal received message failed: json: cannot unmarshal object into Go struct field response.error of type string]]]",
+					config.RequestRetryTimeout,
+				)
+			}
+
+			transactionHash, err := bitcoin.NewHashFromString(
+				// use incorrect hash
+				"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+				bitcoin.InternalByteOrder,
+			)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			blockHeight := uint(math.MaxUint32) // use incorrect height
+
+			_, err = electrum.GetTransactionMerkle(transactionHash, blockHeight)
+			if err.Error() != expectedErrorMsg {
+				t.Errorf(
+					"invalid error\nexpected: %v\nactual:   %v",
+					expectedErrorMsg,
+					err,
+				)
+			}
+		})
+	}
+}
+
 func TestGetTransactionsForPublicKeyHash_Integration(t *testing.T) {
 	var publicKeyHash [20]byte
 	publicKeyHashBytes, err := hex.DecodeString("e6f9d74726b19b75f16fe1e9feaec048aa4fa1d0")

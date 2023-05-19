@@ -44,6 +44,13 @@ func (lc *localChain) GetBlockHeader(
 	panic("not implemented")
 }
 
+func (lc *localChain) GetTransactionMerkle(
+	transactionHash Hash,
+	blockHeight uint,
+) (*TransactionMerkleBranch, error) {
+	panic("not implemented")
+}
+
 func (lc *localChain) GetTransactionsForPublicKeyHash(
 	publicKeyHash [20]byte,
 	limit int,

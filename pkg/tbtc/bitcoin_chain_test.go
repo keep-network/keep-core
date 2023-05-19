@@ -3,8 +3,9 @@ package tbtc
 import (
 	"bytes"
 	"fmt"
-	"github.com/keep-network/keep-core/pkg/bitcoin"
 	"sync"
+
+	"github.com/keep-network/keep-core/pkg/bitcoin"
 )
 
 type localBitcoinChain struct {
@@ -76,6 +77,13 @@ func (lbc *localBitcoinChain) GetLatestBlockHeight() (uint, error) {
 func (lbc *localBitcoinChain) GetBlockHeader(
 	blockNumber uint,
 ) (*bitcoin.BlockHeader, error) {
+	panic("not implemented")
+}
+
+func (lbc *localBitcoinChain) GetTransactionMerkle(
+	transactionHash bitcoin.Hash,
+	blockHeight uint,
+) (*bitcoin.TransactionMerkleBranch, error) {
 	panic("not implemented")
 }
 

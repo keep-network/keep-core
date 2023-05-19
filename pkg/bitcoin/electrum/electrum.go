@@ -301,7 +301,39 @@ func (c *Connection) GetBlockHeader(
 	return blockHeader, nil
 }
 
-// GetTransactionsForPublicKeyHash get confirmed transactions that pays the
+// GetTransactionMerkle gets the Merkle branch for a given transaction.
+// The transaction's hash and the block the transaction was included in the
+// blockchain need to be provided.
+func (c *Connection) GetTransactionMerkle(
+	transactionHash bitcoin.Hash,
+	blockHeight uint,
+) (*bitcoin.TransactionMerkleBranch, error) {
+	getMerkleProofResult, err := requestWithRetry(
+		c,
+		func(
+			ctx context.Context,
+			client *electrum.Client,
+		) (*electrum.GetMerkleProofResult, error) {
+			return client.GetMerkleProof(
+				ctx,
+				transactionHash.String(),
+				uint32(blockHeight),
+			)
+		},
+	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get merkle proof: [%w]", err)
+	}
+
+	transactionMerkle := convertMerkleProof(getMerkleProofResult)
+	if err != nil {
+		return nil, fmt.Errorf("failed to convert merkle proof: %w", err)
+	}
+
+	return transactionMerkle, nil
+}
+
+// GetTransactionsForPublicKeyHash gets confirmed transactions that pays the
 // given public key hash using either a P2PKH or P2WPKH script. The returned
 // transactions are ordered by block height in the ascending order, i.e.
 // the latest transaction is at the end of the list. The returned list does
