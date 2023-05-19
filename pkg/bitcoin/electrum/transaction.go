@@ -71,10 +71,10 @@ func convertRawTransaction(rawTx string) (*bitcoin.Transaction, error) {
 // to the format expected by the bitcoin.Chain interface.
 func convertMerkleProof(
 	electrumResult *electrum.GetMerkleProofResult,
-) *bitcoin.TransactionMerkleBranch {
-	return &bitcoin.TransactionMerkleBranch{
+) *bitcoin.TransactionMerkleProof {
+	return &bitcoin.TransactionMerkleProof{
 		BlockHeight: uint(electrumResult.Height),
-		Merkle:      electrumResult.Merkle,
+		MerkleNodes: electrumResult.Merkle,
 		Position:    uint(electrumResult.Position),
 	}
 }

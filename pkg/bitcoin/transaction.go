@@ -240,17 +240,17 @@ type UnspentTransactionOutput struct {
 	Value int64
 }
 
-// TransactionMerkleBranch holds information about the merkle branch to
-// a confirmed transaction.
-type TransactionMerkleBranch struct {
+// TransactionMerkleProof holds information about the merkle branch to a
+// confirmed transaction.
+type TransactionMerkleProof struct {
 	// BlockHeight is the height of the block the transaction was confirmed in.
 	BlockHeight uint
 
-	// Merkle is a list of transaction hashes the current hash is paired with,
-	// recursively, in order to trace up to obtain the merkle root of the
+	// MerkleNodes is a list of transaction hashes the current hash is paired
+	// with, recursively, in order to trace up to obtain the merkle root of the
 	// including block, deepest pairing first. Each hash is an unprefixed hex
 	// string.
-	Merkle []string
+	MerkleNodes []string
 
 	// Position is the 0-based index of the transaction's position in the block.
 	Position uint

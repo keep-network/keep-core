@@ -35,7 +35,7 @@ type Chain interface {
 	GetTransactionMerkleProof(
 		transactionHash Hash,
 		blockHeight uint,
-	) (*TransactionMerkleBranch, error)
+	) (*TransactionMerkleProof, error)
 
 	// GetTransactionsForPublicKeyHash gets the confirmed transactions that pays the
 	// given public key hash using either a P2PKH or P2WPKH script. The returned

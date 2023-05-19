@@ -307,7 +307,7 @@ func (c *Connection) GetBlockHeader(
 func (c *Connection) GetTransactionMerkleProof(
 	transactionHash bitcoin.Hash,
 	blockHeight uint,
-) (*bitcoin.TransactionMerkleBranch, error) {
+) (*bitcoin.TransactionMerkleProof, error) {
 	getMerkleProofResult, err := requestWithRetry(
 		c,
 		func(

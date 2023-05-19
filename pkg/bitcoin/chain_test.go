@@ -47,7 +47,7 @@ func (lc *localChain) GetBlockHeader(
 func (lc *localChain) GetTransactionMerkleProof(
 	transactionHash Hash,
 	blockHeight uint,
-) (*TransactionMerkleBranch, error) {
+) (*TransactionMerkleProof, error) {
 	panic("not implemented")
 }
 
