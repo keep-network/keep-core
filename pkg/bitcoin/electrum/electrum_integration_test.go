@@ -86,6 +86,12 @@ var (
 		esploraElectrs: "errNo: 0, errMsg: missing transaction",
 	}
 
+	missingTransactionInBlockMsgs = map[serverImplementation]string{
+		electrumX:      "errNo: 1, errMsg: tx aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa not in block at height 123,456",
+		fulcrum:        "errNo: 1, errMsg: No transaction matching the requested hash found at height 123456",
+		esploraElectrs: "errNo: 0, errMsg: tx not found or is unconfirmed",
+	}
+
 	missingHeaderServerMsgs = map[serverImplementation]string{
 		electrumX:      "errNo: 1, errMsg: height 4,294,967,295 out of range",
 		fulcrum:        "errNo: 1, errMsg: Invalid height",
@@ -322,9 +328,9 @@ func TestGetTransactionMerkleProof_Integration(t *testing.T) {
 		Position: 176,
 	}
 
-	for testName, config := range configs {
+	for testName, config := range testConfigs {
 		t.Run(testName, func(t *testing.T) {
-			electrum := newTestConnection(t, config)
+			electrum := newTestConnection(t, config.clientConfig)
 
 			result, err := electrum.GetTransactionMerkleProof(
 				transactionHash,
@@ -342,26 +348,15 @@ func TestGetTransactionMerkleProof_Integration(t *testing.T) {
 }
 
 func TestGetTransactionMerkleProof_Negative_Integration(t *testing.T) {
-	replaceErrorMsgForTests := []string{"electrumx ssl", "fulcrum ssl"}
-
-	for testName, config := range configs {
+	for testName, config := range testConfigs {
 		t.Run(testName, func(t *testing.T) {
-			electrum := newTestConnection(t, config)
+			electrum := newTestConnection(t, config.clientConfig)
 
 			expectedErrorMsg := fmt.Sprintf(
-				"failed to get merkle proof: [retry timeout [%s] exceeded; most recent error: [request failed: [tx not found or is unconfirmed]]]",
-				config.RequestRetryTimeout,
+				"failed to get merkle proof: [retry timeout [%s] exceeded; most recent error: [request failed: [%s]]]",
+				config.clientConfig.RequestRetryTimeout,
+				missingTransactionInBlockMsgs[config.serverImplementation],
 			)
-
-			// As a workaround for the problem described in https://github.com/checksum0/go-electrum/issues/5
-			// we use an alternative expected error message for servers
-			// that are not correctly supported by the electrum client.
-			if slices.Contains(replaceErrorMsgForTests, testName) {
-				expectedErrorMsg = fmt.Sprintf(
-					"failed to get merkle proof: [retry timeout [%s] exceeded; most recent error: [request failed: [Unmarshal received message failed: json: cannot unmarshal object into Go struct field response.error of type string]]]",
-					config.RequestRetryTimeout,
-				)
-			}
 
 			transactionHash, err := bitcoin.NewHashFromString(
 				// use incorrect hash
@@ -372,8 +367,7 @@ func TestGetTransactionMerkleProof_Negative_Integration(t *testing.T) {
 				t.Fatal(err)
 			}
 
-			blockHeight := uint(math.MaxUint32) // use incorrect height
-
+			blockHeight := uint(123456)
 			_, err = electrum.GetTransactionMerkleProof(
 				transactionHash,
 				blockHeight,
