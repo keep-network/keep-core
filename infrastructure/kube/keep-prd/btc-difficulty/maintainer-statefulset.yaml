@@ -5,21 +5,21 @@ metadata:
   labels:
     app: maintainer
     type: btc-difficulty
-    network: goerli
+    network: mainnet
 spec:
   replicas: 1
   selector:
     matchLabels:
       app: maintainer
       type: btc-difficulty
-      network: goerli
+      network: mainnet
   serviceName: btc-difficulty-maintainer
   template:
     metadata:
       labels:
         app: maintainer
         type: btc-difficulty
-        network: goerli
+        network: mainnet
     spec:
       volumes:
         - name: eth-account-keyfile
@@ -30,7 +30,7 @@ spec:
                 path: btc-difficulty-maintainer-keyfile
       containers:
         - name: btc-difficulty-maintainer
-          image: gcr.io/keep-test-f3e0/keep-client:latest
+          image: gcr.io/keep-prd-210b/keep-client:latest
           imagePullPolicy: Always
           resources:
             requests:
@@ -47,13 +47,13 @@ spec:
             - name: ETH_WS_URL
               valueFrom:
                 secretKeyRef:
-                  name: eth-network-goerli
+                  name: eth-network-mainnet
                   key: ws-url
             - name: ELECTRUM_API_URL
               valueFrom:
                 configMapKeyRef:
                   name: electrum-api-mainnet
-                  key: electrumx-url-tcp
+                  key: electrumx-url-ssl
           volumeMounts:
             - name: eth-account-keyfile
               mountPath: /mnt/btc-difficulty-maintainer/keyfile
@@ -62,7 +62,7 @@ spec:
             - maintainer
           args:
             - --bitcoinDifficulty
-            - --goerli
+            - --mainnet
             - --ethereum.url
             - $(ETH_WS_URL)
             - --ethereum.keyFile
@@ -70,4 +70,4 @@ spec:
             - --bitcoin.electrum.url
             - $(ELECTRUM_API_URL)
             - --bitcoin.electrum.protocol
-            - "TCP"
+            - "SSL"

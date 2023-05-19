@@ -13,7 +13,6 @@ import (
 	"time"
 
 	"github.com/go-test/deep"
-	"golang.org/x/exp/slices"
 
 	"github.com/keep-network/keep-core/pkg/bitcoin"
 
@@ -25,39 +24,78 @@ import (
 
 const timeout = 2 * time.Second
 
+type serverImplementation int
+
+const (
+	electrumX serverImplementation = iota
+	fulcrum
+	esploraElectrs
+)
+
+type testConfig struct {
+	clientConfig         Config
+	serverImplementation serverImplementation
+}
+
 // Servers details were taken from a public Electrum servers list published
 // at https://1209k.com/bitcoin-eye/ele.php?chain=tbtc.
-var configs = map[string]Config{
+var testConfigs = map[string]testConfig{
 	"electrs-esplora tcp": {
-		URL:                 "electrum.blockstream.info:60001",
-		Protocol:            TCP,
-		RequestTimeout:      timeout,
-		RequestRetryTimeout: timeout * 2,
+		clientConfig: Config{
+			URL:                 "electrum.blockstream.info:60001",
+			Protocol:            TCP,
+			RequestTimeout:      timeout,
+			RequestRetryTimeout: timeout * 2,
+		},
+		serverImplementation: esploraElectrs,
 	},
 	"electrs-esplora ssl": {
-		URL:                 "electrum.blockstream.info:60002",
-		Protocol:            SSL,
-		RequestTimeout:      timeout,
-		RequestRetryTimeout: timeout * 3,
+		clientConfig: Config{
+			URL:                 "electrum.blockstream.info:60002",
+			Protocol:            SSL,
+			RequestTimeout:      timeout,
+			RequestRetryTimeout: timeout * 3,
+		},
+		serverImplementation: esploraElectrs,
 	},
 	"electrumx ssl": {
-		URL:                 "testnet.hsmiths.com:53012",
-		Protocol:            SSL,
-		RequestTimeout:      timeout,
-		RequestRetryTimeout: timeout * 2,
+		clientConfig: Config{
+			URL:                 "testnet.qtornado.com:51002",
+			Protocol:            SSL,
+			RequestTimeout:      timeout,
+			RequestRetryTimeout: timeout * 2,
+		},
+		serverImplementation: electrumX,
 	},
 	"fulcrum ssl": {
-		URL:                 "blackie.c3-soft.com:57006",
-		Protocol:            SSL,
-		RequestTimeout:      timeout,
-		RequestRetryTimeout: timeout * 2,
+		clientConfig: Config{
+			URL:                 "blackie.c3-soft.com:57006",
+			Protocol:            SSL,
+			RequestTimeout:      timeout,
+			RequestRetryTimeout: timeout * 2,
+		},
+		serverImplementation: fulcrum,
 	},
 	// TODO: Add Keep's electrum server
 }
 
+var (
+	missingTransactionServerMsgs = map[serverImplementation]string{
+		electrumX:      "errNo: 2, errMsg: daemon error: DaemonError({'code': -5, 'message': 'No such mempool or blockchain transaction. Use gettransaction for wallet transactions.'})",
+		fulcrum:        "errNo: 2, errMsg: daemon error: DaemonError({'code': -5, 'message': 'No such mempool or blockchain transaction. Use gettransaction for wallet transactions.'})",
+		esploraElectrs: "errNo: 0, errMsg: missing transaction",
+	}
+
+	missingHeaderServerMsgs = map[serverImplementation]string{
+		electrumX:      "errNo: 1, errMsg: height 4,294,967,295 out of range",
+		fulcrum:        "errNo: 1, errMsg: Invalid height",
+		esploraElectrs: "errNo: 0, errMsg: missing header",
+	}
+)
+
 func TestGetTransaction_Integration(t *testing.T) {
-	for testName, config := range configs {
-		electrum := newTestConnection(t, config)
+	for testName, config := range testConfigs {
+		electrum := newTestConnection(t, config.clientConfig)
 
 		t.Run(testName, func(t *testing.T) {
 			for txName, tx := range testData.Transactions {
@@ -85,28 +123,16 @@ func TestGetTransaction_Negative_Integration(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	replaceErrorMsgForTests := []string{"electrumx ssl", "fulcrum ssl"}
-
-	for testName, config := range configs {
+	for testName, config := range testConfigs {
 		t.Run(testName, func(t *testing.T) {
-			electrum := newTestConnection(t, config)
+			electrum := newTestConnection(t, config.clientConfig)
 
 			expectedErrorMsg := fmt.Sprintf(
-				"failed to get raw transaction with ID [%s]: [retry timeout [%s] exceeded; most recent error: [request failed: [missing transaction]]]",
+				"failed to get raw transaction with ID [%s]: [retry timeout [%s] exceeded; most recent error: [request failed: [%s]]]",
 				invalidTxID.Hex(bitcoin.ReversedByteOrder),
-				config.RequestRetryTimeout,
+				config.clientConfig.RequestRetryTimeout,
+				missingTransactionServerMsgs[config.serverImplementation],
 			)
-
-			// As a workaround for the problem described in https://github.com/checksum0/go-electrum/issues/5
-			// we use an alternative expected error message for servers
-			// that are not correctly supported by the electrum client.
-			if slices.Contains(replaceErrorMsgForTests, testName) {
-				expectedErrorMsg = fmt.Sprintf(
-					"failed to get raw transaction with ID [%s]: [retry timeout [%s] exceeded; most recent error: [request failed: [Unmarshal received message failed: json: cannot unmarshal object into Go struct field response.error of type string]]]",
-					invalidTxID.Hex(bitcoin.ReversedByteOrder),
-					config.RequestRetryTimeout,
-				)
-			}
 
 			_, err := electrum.GetTransaction(invalidTxID)
 			if err.Error() != expectedErrorMsg {
@@ -121,9 +147,9 @@ func TestGetTransaction_Negative_Integration(t *testing.T) {
 }
 
 func TestGetTransactionConfirmations_Integration(t *testing.T) {
-	for testName, config := range configs {
+	for testName, config := range testConfigs {
 		t.Run(testName, func(t *testing.T) {
-			electrum := newTestConnection(t, config)
+			electrum := newTestConnection(t, config.clientConfig)
 
 			for txName, tx := range testData.Transactions {
 				t.Run(txName, func(t *testing.T) {
@@ -154,28 +180,16 @@ func TestGetTransactionConfirmations_Negative_Integration(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	replaceErrorMsgForTests := []string{"electrumx ssl", "fulcrum ssl"}
-
-	for testName, config := range configs {
+	for testName, config := range testConfigs {
 		t.Run(testName, func(t *testing.T) {
-			electrum := newTestConnection(t, config)
+			electrum := newTestConnection(t, config.clientConfig)
 
 			expectedErrorMsg := fmt.Sprintf(
-				"failed to get raw transaction with ID [%s]: [retry timeout [%s] exceeded; most recent error: [request failed: [missing transaction]]]",
+				"failed to get raw transaction with ID [%s]: [retry timeout [%s] exceeded; most recent error: [request failed: [%s]]]",
 				invalidTxID.Hex(bitcoin.ReversedByteOrder),
-				config.RequestRetryTimeout,
+				config.clientConfig.RequestRetryTimeout,
+				missingTransactionServerMsgs[config.serverImplementation],
 			)
-
-			// As a workaround for the problem described in https://github.com/checksum0/go-electrum/issues/5
-			// we use an alternative expected error message for servers
-			// that are not correctly supported by the electrum client.
-			if slices.Contains(replaceErrorMsgForTests, testName) {
-				expectedErrorMsg = fmt.Sprintf(
-					"failed to get raw transaction with ID [%s]: [retry timeout [%s] exceeded; most recent error: [request failed: [Unmarshal received message failed: json: cannot unmarshal object into Go struct field response.error of type string]]]",
-					invalidTxID.Hex(bitcoin.ReversedByteOrder),
-					config.RequestRetryTimeout,
-				)
-			}
 
 			_, err := electrum.GetTransactionConfirmations(invalidTxID)
 			if err.Error() != expectedErrorMsg {
@@ -192,9 +206,9 @@ func TestGetTransactionConfirmations_Negative_Integration(t *testing.T) {
 func TestGetLatestBlockHeight_Integration(t *testing.T) {
 	expectedResult := uint(2404094)
 
-	for testName, config := range configs {
+	for testName, config := range testConfigs {
 		t.Run(testName, func(t *testing.T) {
-			electrum := newTestConnection(t, config)
+			electrum := newTestConnection(t, config.clientConfig)
 
 			result, err := electrum.GetLatestBlockHeight()
 			if err != nil {
@@ -240,9 +254,9 @@ func TestGetBlockHeader_Integration(t *testing.T) {
 		Nonce:                   778087099,
 	}
 
-	for testName, config := range configs {
+	for testName, config := range testConfigs {
 		t.Run(testName, func(t *testing.T) {
-			electrum := newTestConnection(t, config)
+			electrum := newTestConnection(t, config.clientConfig)
 
 			result, err := electrum.GetBlockHeader(blockHeight)
 			if err != nil {
@@ -259,26 +273,15 @@ func TestGetBlockHeader_Integration(t *testing.T) {
 func TestGetBlockHeader_Negative_Integration(t *testing.T) {
 	blockHeight := uint(math.MaxUint32)
 
-	replaceErrorMsgForTests := []string{"electrumx ssl", "fulcrum ssl"}
-
-	for testName, config := range configs {
+	for testName, config := range testConfigs {
 		t.Run(testName, func(t *testing.T) {
-			electrum := newTestConnection(t, config)
+			electrum := newTestConnection(t, config.clientConfig)
 
 			expectedErrorMsg := fmt.Sprintf(
-				"failed to get block header: [retry timeout [%s] exceeded; most recent error: [request failed: [missing header]]]",
-				config.RequestRetryTimeout,
+				"failed to get block header: [retry timeout [%s] exceeded; most recent error: [request failed: [%s]]]",
+				config.clientConfig.RequestRetryTimeout,
+				missingHeaderServerMsgs[config.serverImplementation],
 			)
-
-			// As a workaround for the problem described in https://github.com/checksum0/go-electrum/issues/5
-			// we use an alternative expected error message for servers
-			// that are not correctly supported by the electrum client.
-			if slices.Contains(replaceErrorMsgForTests, testName) {
-				expectedErrorMsg = fmt.Sprintf(
-					"failed to get block header: [retry timeout [%s] exceeded; most recent error: [request failed: [Unmarshal received message failed: json: cannot unmarshal object into Go struct field response.error of type string]]]",
-					config.RequestRetryTimeout,
-				)
-			}
 
 			_, err := electrum.GetBlockHeader(blockHeight)
 			if err.Error() != expectedErrorMsg {
@@ -410,9 +413,9 @@ func TestGetTransactionsForPublicKeyHash_Integration(t *testing.T) {
 		"4f9affc5b418385d5aa61e23caa0b55156bf0682d5fedf2d905446f3f88aec6c",
 	}
 
-	for testName, config := range configs {
+	for testName, config := range testConfigs {
 		t.Run(testName, func(t *testing.T) {
-			electrum := newTestConnection(t, config)
+			electrum := newTestConnection(t, config.clientConfig)
 
 			transactions, err := electrum.GetTransactionsForPublicKeyHash(publicKeyHash, 5)
 			if err != nil {
