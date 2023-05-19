@@ -48,6 +48,8 @@ KeyFile = "/Users/someuser/ethereum/data/keystore/UTC--2018-03-11T01-37-33.20276
 
 [bitcoin.electrum]
 # URL to the Electrum server in format: `hostname:port`.
+# Should be uncommented only when using a custom Electrum server. Otherwise,
+# one of the default embedded servers is selected randomly at startup.
 URL = "electrumx.server.io:50001"
 
 # Electrum server connection protocol (`TCP` or `SSL`).
