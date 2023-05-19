@@ -305,7 +305,7 @@ func TestGetTransactionMerkleProof_Integration(t *testing.T) {
 
 	expectedResult := &bitcoin.TransactionMerkleProof{
 		BlockHeight: 1569342,
-		Merkle: []string{
+		MerkleNodes: []string{
 			"8b5bbb5bdf6727bf70fad4f46fe4eaab04c98119ffbd2d95c29adf32d26f8452",
 			"53637bacb07965e4a8220836861d1b16c6da29f10ea9ab53fc4eca73074f98b9",
 			"0267e738108d094ceb05217e2942e9c2a4c6389ac47f476f572c9a319ce4dfbc",
