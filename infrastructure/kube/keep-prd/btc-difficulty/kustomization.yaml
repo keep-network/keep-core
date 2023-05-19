@@ -14,7 +14,7 @@ configMapGenerator:
       - .secret/btc-difficulty-maintainer-keyfile
   - name: electrum-api-mainnet
     literals:
-      - electrumx-url-tcp=electrum.blockstream.info:50001
+      - electrumx-url-ssl=electrumx.default.svc.cluster.local:443
 
 secretGenerator:
   - name: btc-difficulty-maintainer-eth-accounts-password
