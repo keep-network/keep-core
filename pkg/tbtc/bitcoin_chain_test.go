@@ -80,7 +80,7 @@ func (lbc *localBitcoinChain) GetBlockHeader(
 	panic("not implemented")
 }
 
-func (lbc *localBitcoinChain) GetTransactionMerkle(
+func (lbc *localBitcoinChain) GetTransactionMerkleProof(
 	transactionHash bitcoin.Hash,
 	blockHeight uint,
 ) (*bitcoin.TransactionMerkleBranch, error) {

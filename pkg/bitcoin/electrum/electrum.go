@@ -301,10 +301,10 @@ func (c *Connection) GetBlockHeader(
 	return blockHeader, nil
 }
 
-// GetTransactionMerkle gets the Merkle branch for a given transaction.
+// GetTransactionMerkleProof gets the Merkle proof for a given transaction.
 // The transaction's hash and the block the transaction was included in the
 // blockchain need to be provided.
-func (c *Connection) GetTransactionMerkle(
+func (c *Connection) GetTransactionMerkleProof(
 	transactionHash bitcoin.Hash,
 	blockHeight uint,
 ) (*bitcoin.TransactionMerkleBranch, error) {

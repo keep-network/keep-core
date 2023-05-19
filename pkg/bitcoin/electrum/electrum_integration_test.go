@@ -292,7 +292,7 @@ func TestGetBlockHeader_Negative_Integration(t *testing.T) {
 	}
 }
 
-func TestGetTransactionMerkle_Integration(t *testing.T) {
+func TestGetTransactionMerkleProof_Integration(t *testing.T) {
 	transactionHash, err := bitcoin.NewHashFromString(
 		"72e7fd57c2adb1ed2305c4247486ff79aec363296f02ec65be141904f80d214e",
 		bitcoin.InternalByteOrder,
@@ -323,7 +323,7 @@ func TestGetTransactionMerkle_Integration(t *testing.T) {
 		t.Run(testName, func(t *testing.T) {
 			electrum := newTestConnection(t, config)
 
-			result, err := electrum.GetTransactionMerkle(
+			result, err := electrum.GetTransactionMerkleProof(
 				transactionHash,
 				blockHeight,
 			)
@@ -338,7 +338,7 @@ func TestGetTransactionMerkle_Integration(t *testing.T) {
 	}
 }
 
-func TestGetTransactionMerkle_Negative_Integration(t *testing.T) {
+func TestGetTransactionMerkleProof_Negative_Integration(t *testing.T) {
 	replaceErrorMsgForTests := []string{"electrumx ssl", "fulcrum ssl"}
 
 	for testName, config := range configs {
@@ -371,7 +371,10 @@ func TestGetTransactionMerkle_Negative_Integration(t *testing.T) {
 
 			blockHeight := uint(math.MaxUint32) // use incorrect height
 
-			_, err = electrum.GetTransactionMerkle(transactionHash, blockHeight)
+			_, err = electrum.GetTransactionMerkleProof(
+				transactionHash,
+				blockHeight,
+			)
 			if err.Error() != expectedErrorMsg {
 				t.Errorf(
 					"invalid error\nexpected: %v\nactual:   %v",

@@ -29,10 +29,10 @@ type Chain interface {
 	// returns an error.
 	GetBlockHeader(blockHeight uint) (*BlockHeader, error)
 
-	// GetTransactionMerkle gets the Merkle branch for a given transaction.
+	// GetTransactionMerkleProof gets the Merkle proof for a given transaction.
 	// The transaction's hash and the block the transaction was included in the
 	// blockchain need to be provided.
-	GetTransactionMerkle(
+	GetTransactionMerkleProof(
 		transactionHash Hash,
 		blockHeight uint,
 	) (*TransactionMerkleBranch, error)

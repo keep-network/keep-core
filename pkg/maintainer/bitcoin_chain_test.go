@@ -76,7 +76,7 @@ func (lc *localBitcoinChain) GetBlockHeader(
 	return blockHeader, nil
 }
 
-func (lc *localBitcoinChain) GetTransactionMerkle(
+func (lc *localBitcoinChain) GetTransactionMerkleProof(
 	transactionHash bitcoin.Hash,
 	blockHeight uint,
 ) (*bitcoin.TransactionMerkleBranch, error) {
