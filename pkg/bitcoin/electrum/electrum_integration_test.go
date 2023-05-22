@@ -303,8 +303,8 @@ func TestGetBlockHeader_Negative_Integration(t *testing.T) {
 
 func TestGetTransactionMerkleProof_Integration(t *testing.T) {
 	transactionHash, err := bitcoin.NewHashFromString(
-		"72e7fd57c2adb1ed2305c4247486ff79aec363296f02ec65be141904f80d214e",
-		bitcoin.InternalByteOrder,
+		"4e210df8041914be65ec026f2963c3ae79ff867424c40523edb1adc257fde772",
+		bitcoin.ReversedByteOrder,
 	)
 	if err != nil {
 		t.Fatal(err)
