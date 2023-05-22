@@ -3,7 +3,6 @@ package cmd
 import (
 	"fmt"
 	"math/big"
-	"strings"
 
 	"github.com/spf13/cobra"
 
@@ -163,18 +162,7 @@ func initBitcoinElectrumFlags(cmd *cobra.Command, cfg *config.Config) {
 		&cfg.Bitcoin.Electrum.URL,
 		"bitcoin.electrum.url",
 		"",
-		"URL to the Electrum server in format: `hostname:port`.",
-	)
-
-	electrum.ProtocolVarFlag(
-		cmd.Flags(),
-		&cfg.Bitcoin.Electrum.Protocol,
-		"bitcoin.electrum.protocol",
-		electrum.TCP,
-		fmt.Sprintf(
-			"Electrum server connection protocol (one of: %s).",
-			strings.Join([]string{electrum.TCP.String(), electrum.SSL.String()}, ", "),
-		),
+		"URL to the Electrum server in format: `scheme://hostname:port`.",
 	)
 
 	cmd.Flags().DurationVar(
