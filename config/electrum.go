@@ -13,9 +13,15 @@ import (
 //go:embed _electrum_urls/*
 var electrumURLs embed.FS
 
-// readElectrumConfigs reads Electrum configs from an embedded file for the
+// readElectrumUrls reads Electrum URLs from an embedded file for the
 // given Bitcoin network.
-func readElectrumConfigs(network bitcoin.Network) ([]electrum.Config, error) {
+func readElectrumUrls(network bitcoin.Network) (
+	[]*struct {
+		host     string
+		protocol electrum.Protocol
+	},
+	error,
+) {
 	file, err := electrumURLs.ReadFile(fmt.Sprintf("_electrum_urls/%s", network))
 	if err != nil {
 		return nil, fmt.Errorf("cannot read URLs file: [%v]", err)
@@ -23,7 +29,10 @@ func readElectrumConfigs(network bitcoin.Network) ([]electrum.Config, error) {
 
 	urlsStrings := cleanStrings(strings.Split(string(file), "\n"))
 
-	configs := make([]electrum.Config, len(urlsStrings))
+	urls := make([]*struct {
+		host     string
+		protocol electrum.Protocol
+	}, len(urlsStrings))
 
 	for i, urlString := range urlsStrings {
 		url, err := neturl.Parse(urlString)
@@ -43,13 +52,16 @@ func readElectrumConfigs(network bitcoin.Network) ([]electrum.Config, error) {
 			)
 		}
 
-		configs[i] = electrum.Config{
-			URL:      url.Host,
-			Protocol: protocol,
+		urls[i] = &struct {
+			host     string
+			protocol electrum.Protocol
+		}{
+			host:     url.Host,
+			protocol: protocol,
 		}
 	}
 
-	return configs, nil
+	return urls, nil
 }
 
 // resolveElectrum checks if Electrum is already configured. If the Electrum URL
@@ -80,19 +92,19 @@ func (c *Config) resolveElectrum() error {
 		network,
 	)
 
-	configs, err := readElectrumConfigs(network)
+	urls, err := readElectrumUrls(network)
 	if err != nil {
-		return fmt.Errorf("failed to read default Electrum configs: [%v]", err)
+		return fmt.Errorf("failed to read default Electrum URLs: [%v]", err)
 	}
 
 	// #nosec G404 (insecure random number source (rand))
 	// Picking up an Electrum server does not require secure randomness.
-	config := configs[rand.Intn(len(configs))]
+	selectedUrl := urls[rand.Intn(len(urls))]
 
 	// Set only the URL and Protocol fields in the original config. Other
 	// fields may be already set, and we don't want to override them.
-	c.Bitcoin.Electrum.URL = config.URL
-	c.Bitcoin.Electrum.Protocol = config.Protocol
+	c.Bitcoin.Electrum.URL = selectedUrl.host
+	c.Bitcoin.Electrum.Protocol = selectedUrl.protocol
 
 	return nil
 }
