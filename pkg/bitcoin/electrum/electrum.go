@@ -325,12 +325,7 @@ func (c *Connection) GetTransactionMerkleProof(
 		return nil, fmt.Errorf("failed to get merkle proof: [%w]", err)
 	}
 
-	transactionMerkle := convertMerkleProof(getMerkleProofResult)
-	if err != nil {
-		return nil, fmt.Errorf("failed to convert merkle proof: %w", err)
-	}
-
-	return transactionMerkle, nil
+	return convertMerkleProof(getMerkleProofResult), nil
 }
 
 // GetTransactionsForPublicKeyHash gets confirmed transactions that pays the
