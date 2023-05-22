@@ -3,7 +3,6 @@ package electrum
 import (
 	"context"
 	"crypto/sha256"
-	"crypto/tls"
 	"encoding/hex"
 	"fmt"
 	"math"
@@ -570,15 +569,11 @@ func (c *Connection) electrumConnect() error {
 	var client *electrum.Client
 	var err error
 
-	// TODO: Implement certificate verification to be able to disable the `InsecureSkipVerify: true` workaround.
-	// #nosec G402 (TLS InsecureSkipVerify set true)
-	tlsConfig := &tls.Config{InsecureSkipVerify: true}
-
 	logger.Debug("establishing connection to electrum server...")
 	client, err = connectWithRetry(
 		c,
 		func(ctx context.Context) (*electrum.Client, error) {
-			return electrum.NewClient(ctx, c.config.URL, tlsConfig)
+			return electrum.NewClient(ctx, c.config.URL, nil)
 		},
 	)
 
