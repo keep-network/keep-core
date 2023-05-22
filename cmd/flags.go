@@ -83,6 +83,7 @@ func initGlobalEthereumFlags(cmd *cobra.Command) {
 		"Mainnet network",
 	)
 
+	// TODO: Rename `--goerli` flag to `--testnet` (see https://github.com/keep-network/keep-core/pull/3576#discussion_r1200216303).
 	cmd.PersistentFlags().Bool(
 		commonEthereum.Goerli.String(),
 		false,
