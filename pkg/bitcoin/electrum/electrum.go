@@ -569,30 +569,18 @@ func (c *Connection) getScriptMempool(
 func (c *Connection) electrumConnect() error {
 	var client *electrum.Client
 	var err error
-	switch c.config.Protocol {
-	case TCP:
-		logger.Debug("establishing TCP connection to electrum server...")
-		client, err = connectWithRetry(
-			c,
-			func(ctx context.Context) (*electrum.Client, error) {
-				return electrum.NewClientTCP(ctx, c.config.URL)
-			},
-		)
-	case SSL:
-		// TODO: Implement certificate verification to be able to disable the `InsecureSkipVerify: true` workaround.
-		// #nosec G402 (TLS InsecureSkipVerify set true)
-		tlsConfig := &tls.Config{InsecureSkipVerify: true}
 
-		logger.Debug("establishing SSL connection to electrum server...")
-		client, err = connectWithRetry(
-			c,
-			func(ctx context.Context) (*electrum.Client, error) {
-				return electrum.NewClientSSL(ctx, c.config.URL, tlsConfig)
-			},
-		)
-	default:
-		err = fmt.Errorf("unsupported protocol: [%s]", c.config.Protocol)
-	}
+	// TODO: Implement certificate verification to be able to disable the `InsecureSkipVerify: true` workaround.
+	// #nosec G402 (TLS InsecureSkipVerify set true)
+	tlsConfig := &tls.Config{InsecureSkipVerify: true}
+
+	logger.Debug("establishing connection to electrum server...")
+	client, err = connectWithRetry(
+		c,
+		func(ctx context.Context) (*electrum.Client, error) {
+			return electrum.NewClient(ctx, c.config.URL, tlsConfig)
+		},
+	)
 
 	if err == nil {
 		c.client = client
