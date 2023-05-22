@@ -566,6 +566,38 @@ func (c *Connection) getScriptMempool(
 	return convertedItems, nil
 }
 
+// EstimateSatPerVByteFee returns the estimated sat/vbyte fee for a
+// transaction to be confirmed within the given number blocks.
+func (c *Connection) EstimateSatPerVByteFee(blocks uint32) (int64, error) {
+	// According to Electrum protocol docs, the returned fee is BTC/KB.
+	btcPerKbFee, err := requestWithRetry(
+		c,
+		func(
+			ctx context.Context,
+			client *electrum.Client,
+		) (float32, error) {
+			return client.GetFee(ctx, blocks)
+		})
+	if err != nil {
+		return 0, fmt.Errorf("failed to get fee: [%v]", err)
+	}
+
+	// According to Electrum protocol docs, if the daemon does not have
+	// enough information to make an estimate, the integer -1 is returned.
+	if btcPerKbFee < 0 {
+		return 0, fmt.Errorf(
+			"daemon does not have enough information to make an estimate",
+		)
+	}
+
+	// To convert from BTC/KB to sat/vbyte, we need to multiply by 1e8/1e3.
+	satPerVByte := (1e8 / 1e3) * float64(btcPerKbFee)
+	// Make sure the minimum returned sat/vbyte fee is always 1.
+	satPerVByte = math.Max(satPerVByte, 1)
+
+	return int64(math.Round(satPerVByte)), nil
+}
+
 func (c *Connection) electrumConnect() error {
 	var client *electrum.Client
 	var err error

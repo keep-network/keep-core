@@ -1,6 +1,7 @@
 package bitcoin
 
 import (
+	"fmt"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/btcsuite/btcd/mempool"
 	"github.com/btcsuite/btcd/txscript"
@@ -215,4 +216,43 @@ func (tse *TransactionSizeEstimator) VirtualSize() (int64, error) {
 	}
 
 	return mempool.GetTxVirtualSize(btcutil.NewTx(tse.internal.MsgTx)), nil
+}
+
+// TransactionFeeEstimator is a component allowing to estimate the total fee
+// for the given transaction virtual size.
+type TransactionFeeEstimator struct {
+	chain Chain
+}
+
+func NewTransactionFeeEstimator(chain Chain) *TransactionFeeEstimator {
+	return &TransactionFeeEstimator{chain: chain}
+}
+
+// EstimateFee estimates the total fee for the given transaction virtual size,
+// assuming the transaction is supposed to be confirmed within the next Bitcoin
+// block. The desired confirmation period can be adjusted using the optional
+// `blocks` argument.
+func (tfe *TransactionFeeEstimator) EstimateFee(
+	transactionVirtualSize int64,
+	blocks ...uint32,
+) (int64, error) {
+	resolvedBlocks := uint32(1)
+
+	if len(blocks) == 1 {
+		resolvedBlocks = blocks[0]
+	}
+
+	satPerVByteFee, err := tfe.chain.EstimateSatPerVByteFee(resolvedBlocks)
+	if err != nil {
+		return 0, fmt.Errorf("cannot get estimated sat/vbyte fee: [%v]", err)
+	}
+
+	fee := satPerVByteFee * transactionVirtualSize
+
+	// Just in case check.
+	if fee <= 0 {
+		return 0, fmt.Errorf("estimated fee is less than or equal zero")
+	}
+
+	return fee, nil
 }

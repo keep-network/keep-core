@@ -46,4 +46,8 @@ type Chain interface {
 	// that pays the given public key hash using either a P2PKH or P2WPKH script.
 	// The returned transactions are in an indefinite order.
 	GetMempoolForPublicKeyHash(publicKeyHash [20]byte) ([]*Transaction, error)
+
+	// EstimateSatPerVByteFee returns the estimated sat/vbyte fee for a
+	// transaction to be confirmed within the given number blocks.
+	EstimateSatPerVByteFee(blocks uint32) (int64, error)
 }

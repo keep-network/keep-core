@@ -85,3 +85,23 @@ func TestTransactionSizeEstimator_VirtualSize(t *testing.T) {
 		})
 	}
 }
+
+func TestTransactionFeeEstimator_EstimateFee(t *testing.T) {
+	chain := newLocalChain()
+
+	chain.setSatPerVByteFee(50)
+
+	estimator := NewTransactionFeeEstimator(chain)
+
+	fee, err := estimator.EstimateFee(250)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	testutils.AssertIntsEqual(
+		t,
+		"estimated fee",
+		12500,
+		int(fee),
+	)
+}
