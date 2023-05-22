@@ -203,7 +203,9 @@ var estimateDepositsSweepFeeCommandDescription = "Estimates the satoshi fee for 
 	"containing a specific count of input deposits. All estimations" +
 	"assume the wallet main UTXO is used as one of the transaction's input" +
 	"so the estimation may be overpriced for the very first sweep " +
-	"transaction of each wallet."
+	"transaction of each wallet. If the estimated fee exceeds the maximum " +
+	"fee allowed by the Bridge contract, the maximum fee is returned as " +
+	"result"
 
 func init() {
 	initFlags(
