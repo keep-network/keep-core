@@ -348,6 +348,16 @@ func TestGetTransactionMerkleProof_Integration(t *testing.T) {
 }
 
 func TestGetTransactionMerkleProof_Negative_Integration(t *testing.T) {
+	incorrectTransactionHash, err := bitcoin.NewHashFromString(
+		"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+		bitcoin.InternalByteOrder,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	blockHeight := uint(123456)
+
 	for testName, config := range testConfigs {
 		t.Run(testName, func(t *testing.T) {
 			electrum := newTestConnection(t, config.clientConfig)
@@ -358,18 +368,8 @@ func TestGetTransactionMerkleProof_Negative_Integration(t *testing.T) {
 				missingTransactionInBlockMsgs[config.serverImplementation],
 			)
 
-			transactionHash, err := bitcoin.NewHashFromString(
-				// use incorrect hash
-				"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-				bitcoin.InternalByteOrder,
-			)
-			if err != nil {
-				t.Fatal(err)
-			}
-
-			blockHeight := uint(123456)
 			_, err = electrum.GetTransactionMerkleProof(
-				transactionHash,
+				incorrectTransactionHash,
 				blockHeight,
 			)
 			if err.Error() != expectedErrorMsg {
