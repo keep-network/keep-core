@@ -6,6 +6,7 @@ import (
 	"math/big"
 	"os"
 	"regexp"
+	"sort"
 	"strconv"
 	"text/tabwriter"
 
@@ -143,10 +144,10 @@ func EstimateDepositsSweepFee(
 	}
 
 	fees := make(map[int]int64)
-	var feesKeys []int
+	var depositsCountKeys []int
 
 	if depositsCount > 0 {
-		feesKeys = append(feesKeys, depositsCount)
+		depositsCountKeys = append(depositsCountKeys, depositsCount)
 	} else {
 		sweepMaxSize, err := tbtcChain.GetDepositSweepMaxSize()
 		if err != nil {
@@ -154,21 +155,25 @@ func EstimateDepositsSweepFee(
 		}
 
 		for i := 1; i <= int(sweepMaxSize); i++ {
-			feesKeys = append(feesKeys, i)
+			depositsCountKeys = append(depositsCountKeys, i)
 		}
 	}
 
-	for _, feeKey := range feesKeys {
-		fee, err := estimateDepositsSweepFee(btcChain, feeKey, perDepositMaxFee)
+	for _, depositsCountKey := range depositsCountKeys {
+		fee, err := estimateDepositsSweepFee(
+			btcChain,
+			depositsCountKey,
+			perDepositMaxFee,
+		)
 		if err != nil {
 			return fmt.Errorf(
 				"cannot estimate fee for deposits count [%v]: [%v]",
-				feeKey,
+				depositsCountKey,
 				err,
 			)
 		}
 
-		fees[feeKey] = fee
+		fees[depositsCountKey] = fee
 	}
 
 	err = printDepositsSweepFeeTable(fees)
@@ -226,12 +231,21 @@ func printDepositsSweepFeeTable(fees map[int]int64) error {
 		return err
 	}
 
-	for depositsCount, fee := range fees {
+	var depositsCountKeys []int
+	for depositsCountKey := range fees {
+		depositsCountKeys = append(depositsCountKeys, depositsCountKey)
+	}
+
+	sort.Slice(depositsCountKeys, func(i, j int) bool {
+		return depositsCountKeys[i] < depositsCountKeys[j]
+	})
+
+	for _, depositsCountKey := range depositsCountKeys {
 		_, err := fmt.Fprintf(
 			writer,
 			"%v\t%v\t\n",
-			depositsCount,
-			fee,
+			depositsCountKey,
+			fees[depositsCountKey],
 		)
 		if err != nil {
 			return err
