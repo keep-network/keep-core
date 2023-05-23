@@ -141,13 +141,12 @@ func ValidateDepositString(depositString string) error {
 // specific deposits counts are printed as table to the standard output,
 // for example:
 //
-// -----------------------------------
-// deposits count total fee (satoshis)
-//              1                  201
-//              2                  292
-//              3                  384
-//              4                  475
-// -----------------------------------
+// ---------------------------------------------
+// deposits count total fee (satoshis) sat/vbyte
+//              1                  201         1
+//              2                  292         1
+//              3                  384         1
+// ---------------------------------------------
 //
 // While making estimations, this function assumes a sweep transaction
 // consists of:
@@ -171,7 +170,10 @@ func EstimateDepositsSweepFee(
 		return fmt.Errorf("cannot get deposit tx max fee: [%v]", err)
 	}
 
-	fees := make(map[int]int64)
+	fees := make(map[int]struct {
+		totalFee       int64
+		satPerVByteFee int64
+	})
 	var depositsCountKeys []int
 
 	if depositsCount > 0 {
@@ -188,7 +190,7 @@ func EstimateDepositsSweepFee(
 	}
 
 	for _, depositsCountKey := range depositsCountKeys {
-		fee, err := estimateDepositsSweepFee(
+		totalFee, satPerVByteFee, err := estimateDepositsSweepFee(
 			btcChain,
 			depositsCountKey,
 			perDepositMaxFee,
@@ -201,7 +203,13 @@ func EstimateDepositsSweepFee(
 			)
 		}
 
-		fees[depositsCountKey] = fee
+		fees[depositsCountKey] = struct {
+			totalFee       int64
+			satPerVByteFee int64
+		}{
+			totalFee:       totalFee,
+			satPerVByteFee: satPerVByteFee,
+		}
 	}
 
 	err = printDepositsSweepFeeTable(fees)
@@ -216,7 +224,7 @@ func estimateDepositsSweepFee(
 	btcChain bitcoin.Chain,
 	depositsCount int,
 	perDepositMaxFee uint64,
-) (int64, error) {
+) (int64, int64, error) {
 	transactionSize, err := bitcoin.NewTransactionSizeEstimator().
 		// 1 P2WPKH main UTXO input.
 		AddPublicKeyHashInputs(1, true).
@@ -226,25 +234,32 @@ func estimateDepositsSweepFee(
 		AddPublicKeyHashOutputs(1, true).
 		VirtualSize()
 	if err != nil {
-		return 0, fmt.Errorf("cannot estimate transaction virtual size: [%v]", err)
+		return 0, 0, fmt.Errorf("cannot estimate transaction virtual size: [%v]", err)
 	}
 
 	feeEstimator := bitcoin.NewTransactionFeeEstimator(btcChain)
 
-	fee, err := feeEstimator.EstimateFee(transactionSize)
+	totalFee, err := feeEstimator.EstimateFee(transactionSize)
 	if err != nil {
-		return 0, fmt.Errorf("cannot estimate transaction fee: [%v]", err)
+		return 0, 0, fmt.Errorf("cannot estimate transaction fee: [%v]", err)
 	}
 
-	// Compute the maximum possible fee for the entire sweep transaction.
-	maxFee := uint64(depositsCount) * perDepositMaxFee
-	// Make sure the proposed fee does not exceed the maximum possible fee.
-	fee = int64(math.Min(float64(fee), float64(maxFee)))
+	// Compute the maximum possible total fee for the entire sweep transaction.
+	totalMaxFee := uint64(depositsCount) * perDepositMaxFee
+	// Make sure the proposed total fee does not exceed the maximum possible total fee.
+	totalFee = int64(math.Min(float64(totalFee), float64(totalMaxFee)))
+	// Compute the actual sat/vbyte fee for informational purposes.
+	satPerVByteFee := math.Round(float64(totalFee) / float64(transactionSize))
 
-	return fee, nil
+	return totalFee, int64(satPerVByteFee), nil
 }
 
-func printDepositsSweepFeeTable(fees map[int]int64) error {
+func printDepositsSweepFeeTable(
+	fees map[int]struct {
+		totalFee       int64
+		satPerVByteFee int64
+	},
+) error {
 	writer := tabwriter.NewWriter(
 		os.Stdout,
 		2,
@@ -254,7 +269,7 @@ func printDepositsSweepFeeTable(fees map[int]int64) error {
 		tabwriter.AlignRight,
 	)
 
-	_, err := fmt.Fprintf(writer, "deposits count\ttotal fee (satoshis)\t\n")
+	_, err := fmt.Fprintf(writer, "deposits count\ttotal fee (satoshis)\tsat/vbyte\t\n")
 	if err != nil {
 		return err
 	}
@@ -271,9 +286,10 @@ func printDepositsSweepFeeTable(fees map[int]int64) error {
 	for _, depositsCountKey := range depositsCountKeys {
 		_, err := fmt.Fprintf(
 			writer,
-			"%v\t%v\t\n",
+			"%v\t%v\t%v\t\n",
 			depositsCountKey,
-			fees[depositsCountKey],
+			fees[depositsCountKey].totalFee,
+			fees[depositsCountKey].satPerVByteFee,
 		)
 		if err != nil {
 			return err
