@@ -22,6 +22,10 @@ import (
 	"github.com/keep-network/keep-core/pkg/internal/byteutils"
 )
 
+// TODO: Some problems with Electrum re-connect were detected while developing
+//       integration tests: https://github.com/keep-network/keep-core/issues/3586.
+//       Make sure the problem is resolved soon.
+
 var (
 	supportedProtocolVersions = []string{"1.4"}
 	logger                    = log.Logger("keep-electrum")
@@ -564,6 +568,47 @@ func (c *Connection) getScriptMempool(
 	}
 
 	return convertedItems, nil
+}
+
+// EstimateSatPerVByteFee returns the estimated sat/vbyte fee for a
+// transaction to be confirmed within the given number of blocks.
+func (c *Connection) EstimateSatPerVByteFee(blocks uint32) (int64, error) {
+	// According to Electrum protocol docs, the returned fee is BTC/KB.
+	btcPerKbFee, err := requestWithRetry(
+		c,
+		func(
+			ctx context.Context,
+			client *electrum.Client,
+		) (float32, error) {
+			// TODO: client.GetFee calls Electrum's blockchain.estimatefee underneath.
+			//       According to https://electrumx.readthedocs.io/en/latest/protocol-methods.html#blockchain-estimatefee,
+			//       the blockchain.estimatefee function will be deprecated
+			//       since version 1.4.2 of the protocol. We need to replace it
+			//       somehow once it disappears from Electrum implementations.
+			return client.GetFee(ctx, blocks)
+		})
+	if err != nil {
+		return 0, fmt.Errorf("failed to get fee: [%v]", err)
+	}
+
+	// According to Electrum protocol docs, if the daemon does not have
+	// enough information to make an estimate, the integer -1 is returned.
+	if btcPerKbFee < 0 {
+		return 0, fmt.Errorf(
+			"daemon does not have enough information to make an estimate",
+		)
+	}
+
+	return convertBtcKbToSatVByte(btcPerKbFee), nil
+}
+
+func convertBtcKbToSatVByte(btcPerKbFee float32) int64 {
+	// To convert from BTC/KB to sat/vbyte, we need to multiply by 1e8/1e3.
+	satPerVByte := (1e8 / 1e3) * float64(btcPerKbFee)
+	// Make sure the minimum returned sat/vbyte fee is always 1.
+	satPerVByte = math.Max(satPerVByte, 1)
+	// Round the returned fee to be an integer.
+	return int64(math.Round(satPerVByte))
 }
 
 func (c *Connection) electrumConnect() error {

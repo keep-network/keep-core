@@ -2,7 +2,6 @@ package maintainer
 
 import (
 	"fmt"
-
 	"github.com/keep-network/keep-core/pkg/bitcoin"
 )
 
@@ -94,6 +93,12 @@ func (lc *localBitcoinChain) SetBlockHeaders(
 	blockHeaders map[uint]*bitcoin.BlockHeader,
 ) {
 	lc.blockHeaders = blockHeaders
+}
+
+func (lc *localBitcoinChain) EstimateSatPerVByteFee(
+	blocks uint32,
+) (int64, error) {
+	panic("unsupported")
 }
 
 // connectLocalBitcoinChain connects to the local Bitcoin chain and returns
