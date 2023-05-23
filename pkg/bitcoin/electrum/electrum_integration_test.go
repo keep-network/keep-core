@@ -345,6 +345,24 @@ func TestGetTransactionsForPublicKeyHash_Integration(t *testing.T) {
 	}
 }
 
+func TestEstimateSatPerVByteFee_Integration(t *testing.T) {
+	for testName, config := range testConfigs {
+		t.Run(testName, func(t *testing.T) {
+			electrum := newTestConnection(t, config.clientConfig)
+
+			satPerVByteFee, err := electrum.EstimateSatPerVByteFee(1)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			// We expect the fee is always at least 1.
+			if satPerVByteFee < 1 {
+				t.Errorf("returned fee is below 1")
+			}
+		})
+	}
+}
+
 func newTestConnection(t *testing.T, config Config) bitcoin.Chain {
 	electrum, err := Connect(context.Background(), config)
 	if err != nil {

@@ -595,12 +595,16 @@ func (c *Connection) EstimateSatPerVByteFee(blocks uint32) (int64, error) {
 		)
 	}
 
+	return convertBtcKbToSatVByte(btcPerKbFee), nil
+}
+
+func convertBtcKbToSatVByte(btcPerKbFee float32) int64 {
 	// To convert from BTC/KB to sat/vbyte, we need to multiply by 1e8/1e3.
 	satPerVByte := (1e8 / 1e3) * float64(btcPerKbFee)
 	// Make sure the minimum returned sat/vbyte fee is always 1.
 	satPerVByte = math.Max(satPerVByte, 1)
-
-	return int64(math.Round(satPerVByte)), nil
+	// Round the returned fee to be an integer.
+	return int64(math.Round(satPerVByte))
 }
 
 func (c *Connection) electrumConnect() error {
