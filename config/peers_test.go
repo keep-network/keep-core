@@ -6,23 +6,23 @@ import (
 
 	"golang.org/x/exp/slices"
 
-	commonEthereum "github.com/keep-network/keep-common/pkg/chain/ethereum"
+	"github.com/keep-network/keep-core/config/network"
 )
 
 func TestResolvePeers(t *testing.T) {
 	var tests = map[string]struct {
-		network       commonEthereum.Network
+		network       network.Type
 		expectedPeers []string
 		expectedError error
 	}{
 		"mainnet network": {
-			network: commonEthereum.Mainnet,
+			network: network.Mainnet,
 			expectedPeers: []string{
 				"/dns4/bst-a01.tbtc.boar.network/tcp/5001/ipfs/16Uiu2HAmAmCrLuUmnBgpavU8y8JBUN6jWAQ93JwydZy3ABRyY6wU",
 				"/dns4/bst-b01.tbtc.boar.network/tcp/5001/ipfs/16Uiu2HAm4w5HdJQxBnadGRepaiGfWVvtMzhdAGZVcrf9i71mv69V",
 			}},
 		"goerli network": {
-			network: commonEthereum.Goerli,
+			network: network.Testnet,
 			expectedPeers: []string{
 				"/dns4/bootstrap-0.test.keep.network/tcp/3919/ipfs/16Uiu2HAmCcfVpHwfBKNFbQuhvGuFXHVLQ65gB4sJm7HyrcZuLttH",
 				"/dns4/bootstrap-1.test.keep.network/tcp/3919/ipfs/16Uiu2HAm3eJtyFKAttzJ85NLMromHuRg4yyum3CREMf6CHBBV6KY",
@@ -30,19 +30,18 @@ func TestResolvePeers(t *testing.T) {
 			},
 		},
 		"developer network": {
-			network: commonEthereum.Developer,
+			network: network.Developer,
 		},
 		"unknown network": {
-			network: commonEthereum.Unknown,
+			network: network.Unknown,
 		},
 	}
 
 	for testName, test := range tests {
 		t.Run(testName, func(t *testing.T) {
 			cfg := &Config{}
-			cfg.Ethereum.Network = test.network
 
-			err := cfg.resolvePeers()
+			err := cfg.resolvePeers(test.network)
 			if !reflect.DeepEqual(test.expectedError, err) {
 				t.Errorf(
 					"unexpected error\nexpected: %+v\nactual:   %+v\n",

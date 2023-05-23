@@ -44,8 +44,8 @@ Flags:
 Global Flags:
   -c, --config string   Path to the configuration file. Supported formats: TOML, YAML, JSON.
       --developer       Developer network
-      --goerli          Görli network
-      --mainnet         Mainnet network
+      --mainnet         Mainnet network (DEPRECATED)
+      --testnet         Testnet network
 
 Environment variables:
     KEEP_ETHEREUM_PASSWORD    Password for Keep operator account keyfile decryption.
