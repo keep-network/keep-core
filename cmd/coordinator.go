@@ -202,18 +202,20 @@ var estimateDepositsSweepFeeCommand = cobra.Command{
 	},
 }
 
-var estimateDepositsSweepFeeCommandDescription = "Estimates the satoshi fee for the entire Bitcoin deposits sweep " +
-	"transaction, based on the number of input deposits. By default, " +
-	"provides estimations for transactions containing a various number" +
-	"of input deposits, from 1 up to the maximum count allowed by the " +
-	"WalletCoordinator contract. The --deposits-count flag can be " +
-	"used to obtain a fee estimation for a Bitcoin sweep transaction" +
-	"containing a specific count of input deposits. All estimations" +
-	"assume the wallet main UTXO is used as one of the transaction's input" +
-	"so the estimation may be overpriced for the very first sweep " +
-	"transaction of each wallet. If the estimated fee exceeds the maximum " +
-	"fee allowed by the Bridge contract, the maximum fee is returned as " +
-	"result"
+var estimateDepositsSweepFeeCommandDescription = "Estimates the satoshi " +
+	"fee for the entire Bitcoin deposits sweep transaction, based on " +
+	"the number of input deposits. By default, provides estimations for " +
+	"transactions containing a various number of input deposits, from 1 up " +
+	"to the maximum count allowed by the WalletCoordinator contract. " +
+	"The --deposits-count flag can be used to obtain a fee estimation for " +
+	"a Bitcoin sweep transaction containing a specific count of input " +
+	"deposits. All estimations assume the wallet main UTXO is used as one " +
+	"of the transaction's input so the estimation may be overpriced for " +
+	"the very first sweep transaction of each wallet. Estimations also " +
+	"assume only P2WSH deposits are part of the transaction so the " +
+	"estimation may be underpriced if the actual transaction contains " +
+	"legacy P2SH deposits. If the estimated fee exceeds the maximum fee " +
+	"allowed by the Bridge contract, the maximum fee is returned as result"
 
 func init() {
 	initFlags(

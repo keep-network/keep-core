@@ -133,6 +133,34 @@ func ValidateDepositString(depositString string) error {
 	return nil
 }
 
+// EstimateDepositsSweepFee computes the total fee for the Bitcoin deposits
+// sweep transaction for the given depositsCount. If the provided depositsCount
+// is 0, this function computes the total fee for Bitcoin deposits sweep
+// transactions containing a various number of input deposits, from 1 up to the
+// maximum count allowed by the WalletCoordinator contract. Computed fees for
+// specific deposits counts are printed as table to the standard output,
+// for example:
+//
+// -----------------------------------
+// deposits count total fee (satoshis)
+//              1                  201
+//              2                  292
+//              3                  384
+//              4                  475
+// -----------------------------------
+//
+// While making estimations, this function assumes a sweep transaction
+// consists of:
+// - 1 P2WPKH input being the current wallet main UTXO. That means the produced
+//   fees may be overestimated for the very first sweep transaction of
+//   each wallet.
+// - N P2WSH inputs representing the deposits. Worth noting that real
+//   transactions may contain legacy P2SH deposits as well so produced fees may
+//   be underestimated in some rare cases.
+// - 1 P2WPKH output
+//
+// If any of the estimated fees exceed the maximum fee allowed by the Bridge
+// contract, the maximum fee is returned as result.
 func EstimateDepositsSweepFee(
 	tbtcChain tbtc.Chain,
 	btcChain bitcoin.Chain,
