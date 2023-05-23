@@ -308,6 +308,8 @@ func (c *Connection) GetTransactionMerkleProof(
 	transactionHash bitcoin.Hash,
 	blockHeight uint,
 ) (*bitcoin.TransactionMerkleProof, error) {
+	txID := transactionHash.Hex(bitcoin.ReversedByteOrder)
+
 	getMerkleProofResult, err := requestWithRetry(
 		c,
 		func(
@@ -316,7 +318,7 @@ func (c *Connection) GetTransactionMerkleProof(
 		) (*electrum.GetMerkleProofResult, error) {
 			return client.GetMerkleProof(
 				ctx,
-				transactionHash.String(),
+				txID,
 				uint32(blockHeight),
 			)
 		},
