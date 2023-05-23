@@ -226,7 +226,7 @@ func printDepositsSweepFeeTable(fees map[int]int64) error {
 		tabwriter.AlignRight,
 	)
 
-	_, err := fmt.Fprintf(writer, "deposits count\tfee (satoshis)\t\n")
+	_, err := fmt.Fprintf(writer, "deposits count\ttotal fee (satoshis)\t\n")
 	if err != nil {
 		return err
 	}
