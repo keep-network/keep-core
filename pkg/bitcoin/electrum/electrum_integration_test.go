@@ -329,7 +329,7 @@ func TestGetTransactionMerkleProof_Integration(t *testing.T) {
 func TestGetTransactionMerkleProof_Negative_Integration(t *testing.T) {
 	incorrectTransactionHash, err := bitcoin.NewHashFromString(
 		"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-		bitcoin.InternalByteOrder,
+		bitcoin.ReversedByteOrder,
 	)
 	if err != nil {
 		t.Fatal(err)
