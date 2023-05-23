@@ -227,6 +227,7 @@ var TxMerkleProof = struct {
 	BlockHeigh  uint
 	MerkleProof bitcoin.TransactionMerkleProof
 }{
+	// https://blockstream.info/testnet/api/tx/72e7fd57c2adb1ed2305c4247486ff79aec363296f02ec65be141904f80d214e
 	TxHash: hashFromString(
 		"72e7fd57c2adb1ed2305c4247486ff79aec363296f02ec65be141904f80d214e",
 	),
