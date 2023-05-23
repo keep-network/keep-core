@@ -576,6 +576,11 @@ func (c *Connection) EstimateSatPerVByteFee(blocks uint32) (int64, error) {
 			ctx context.Context,
 			client *electrum.Client,
 		) (float32, error) {
+			// TODO: client.GetFee calls Electrum's blockchain.estimatefee underneath.
+			//       According to https://electrumx.readthedocs.io/en/latest/protocol-methods.html#blockchain-estimatefee,
+			//       the blockchain.estimatefee function will be deprecated
+			//       since version 1.4.2 of the protocol. We need to replace it
+			//       somehow once it disappears from Electrum implementations.
 			return client.GetFee(ctx, blocks)
 		})
 	if err != nil {
