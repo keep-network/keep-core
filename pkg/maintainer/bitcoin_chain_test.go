@@ -75,6 +75,13 @@ func (lc *localBitcoinChain) GetBlockHeader(
 	return blockHeader, nil
 }
 
+func (lc *localBitcoinChain) GetTransactionMerkleProof(
+	transactionHash bitcoin.Hash,
+	blockHeight uint,
+) (*bitcoin.TransactionMerkleProof, error) {
+	panic("unsupported")
+}
+
 func (lc *localBitcoinChain) GetTransactionsForPublicKeyHash(
 	publicKeyHash [20]byte,
 	limit int,

@@ -86,6 +86,12 @@ var (
 		esploraElectrs: "errNo: 0, errMsg: missing transaction",
 	}
 
+	missingTransactionInBlockMsgs = map[serverImplementation]string{
+		electrumX:      "errNo: 1, errMsg: tx aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa not in block at height 123,456",
+		fulcrum:        "errNo: 1, errMsg: No transaction matching the requested hash found at height 123456",
+		esploraElectrs: "errNo: 0, errMsg: tx not found or is unconfirmed",
+	}
+
 	missingHeaderServerMsgs = map[serverImplementation]string{
 		electrumX:      "errNo: 1, errMsg: height 4,294,967,295 out of range",
 		fulcrum:        "errNo: 1, errMsg: Invalid height",
@@ -284,6 +290,67 @@ func TestGetBlockHeader_Negative_Integration(t *testing.T) {
 			)
 
 			_, err := electrum.GetBlockHeader(blockHeight)
+			if err.Error() != expectedErrorMsg {
+				t.Errorf(
+					"invalid error\nexpected: %v\nactual:   %v",
+					expectedErrorMsg,
+					err,
+				)
+			}
+		})
+	}
+}
+
+func TestGetTransactionMerkleProof_Integration(t *testing.T) {
+	transactionHash := testData.TxMerkleProof.TxHash
+	blockHeight := testData.TxMerkleProof.BlockHeigh
+
+	expectedResult := &testData.TxMerkleProof.MerkleProof
+
+	for testName, config := range testConfigs {
+		t.Run(testName, func(t *testing.T) {
+			electrum := newTestConnection(t, config.clientConfig)
+
+			result, err := electrum.GetTransactionMerkleProof(
+				transactionHash,
+				blockHeight,
+			)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			if diff := deep.Equal(result, expectedResult); diff != nil {
+				t.Errorf("compare failed: %v", diff)
+			}
+		})
+	}
+}
+
+func TestGetTransactionMerkleProof_Negative_Integration(t *testing.T) {
+	incorrectTransactionHash, err := bitcoin.NewHashFromString(
+		"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+		bitcoin.ReversedByteOrder,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	blockHeight := uint(123456)
+
+	for testName, config := range testConfigs {
+		t.Run(testName, func(t *testing.T) {
+			electrum := newTestConnection(t, config.clientConfig)
+
+			expectedErrorMsg := fmt.Sprintf(
+				"failed to get merkle proof: [retry timeout [%s] exceeded; most recent error: [request failed: [%s]]]",
+				config.clientConfig.RequestRetryTimeout,
+				missingTransactionInBlockMsgs[config.serverImplementation],
+			)
+
+			_, err = electrum.GetTransactionMerkleProof(
+				incorrectTransactionHash,
+				blockHeight,
+			)
 			if err.Error() != expectedErrorMsg {
 				t.Errorf(
 					"invalid error\nexpected: %v\nactual:   %v",
