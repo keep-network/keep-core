@@ -14,17 +14,17 @@ import (
 var (
 	// listDepositsCommand:
 	// proposeDepositsSweepCommand:
-	walletFlagName        = "wallet"
+	walletFlagName = "wallet"
 
 	// listDepositsCommand:
-	hideSweptFlagName     = "hide-swept"
-	sortByAmountFlagName  = "sort-amount"
-	headFlagName          = "head"
-	tailFlagName          = "tail"
+	hideSweptFlagName    = "hide-swept"
+	sortByAmountFlagName = "sort-amount"
+	headFlagName         = "head"
+	tailFlagName         = "tail"
 
 	// proposeDepositsSweepCommand:
-	feeFlagName           = "fee"
-	dryRunFlagName        = "dry-run"
+	feeFlagName    = "fee"
+	dryRunFlagName = "dry-run"
 
 	// estimateDepositsSweepFeeCommand:
 	depositsCountFlagName = "deposits-count"
