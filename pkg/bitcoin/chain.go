@@ -48,6 +48,6 @@ type Chain interface {
 	GetMempoolForPublicKeyHash(publicKeyHash [20]byte) ([]*Transaction, error)
 
 	// EstimateSatPerVByteFee returns the estimated sat/vbyte fee for a
-	// transaction to be confirmed within the given number blocks.
+	// transaction to be confirmed within the given number of blocks.
 	EstimateSatPerVByteFee(blocks uint32) (int64, error)
 }

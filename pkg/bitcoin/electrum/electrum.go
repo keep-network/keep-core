@@ -567,7 +567,7 @@ func (c *Connection) getScriptMempool(
 }
 
 // EstimateSatPerVByteFee returns the estimated sat/vbyte fee for a
-// transaction to be confirmed within the given number blocks.
+// transaction to be confirmed within the given number of blocks.
 func (c *Connection) EstimateSatPerVByteFee(blocks uint32) (int64, error) {
 	// According to Electrum protocol docs, the returned fee is BTC/KB.
 	btcPerKbFee, err := requestWithRetry(
