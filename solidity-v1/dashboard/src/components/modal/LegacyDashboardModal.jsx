@@ -56,20 +56,27 @@ export const LegacyDashboardModal = ({ isOpen, onClose, size }) => {
         <ModalBody>
           <Icons.LegacyDappIllustration style={styles.body.illustration} />
           <h3 style={styles.body.title}>
-            The Keep Network dashboard is functioning as a legacy dashboard.
+            The Keep Network Dashboard is in legacy mode.
           </h3>
           <div className="text-big text-grey-70 mb-1">
             <p className="mb-1">
-              This means only the following features are supported anymore:
+              Only the following features are supported in legacy mode:
             </p>
             <List className="ml-3">
-              <List.Item>stake delegation/undelegation</List.Item>
-              <List.Item>token grant withdawal</List.Item>
-              <List.Item>stake upgrade for Threshold Network</List.Item>
+              <List.Item>Stake delegation/undelegation</List.Item>
+              <List.Item>Token grant withdawal</List.Item>
+              <List.Item>Stake upgrade for Threshold Network</List.Item>
             </List>
             <p className="mb-0 mt-1">
-              For the tBTC v2 dApp and Threshold Network staking access the
-              Threshold dashboard.
+              Visit{" "}
+              <a
+                href={LINK.thresholdDapp}
+                rel="noopener noreferrer"
+                target="_blank"
+              >
+                Threshold Dashboard
+              </a>{" "}
+              for the tBTC v2 dApp and staking in Threshold Network.
             </p>
           </div>
         </ModalBody>
