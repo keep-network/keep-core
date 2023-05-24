@@ -92,8 +92,18 @@ jobs:
           load: true # load image to local registry to use it in next steps
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,dest=/tmp/.buildx-cache-new
-          outputs: type=docker,dest=/tmp/go-build-env-image.tar
           context: .
+
+      # Since build-push-action doesn't support outputing an image to multiple outputs
+      # we need to save it in a separate step. See: https://github.com/moby/buildkit/issues/1555
+      # Once multiple outputs are supported we can replace this step with
+      # `outputs` property configured in `Build Docker Build Image`:
+      #   outputs: |
+      #      type=image
+      #      type=docker,dest=/tmp/go-build-env-image.tar
+      - name: Save Docker Build Image
+        run: |
+          docker save --output /tmp/go-build-env-image.tar go-build-env
 
       - name: Upload Docker Build Image
         uses: actions/upload-artifact@v3
