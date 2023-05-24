@@ -64,7 +64,7 @@ export const LegacyDashboardModal = ({ isOpen, onClose, size }) => {
             </p>
             <List className="ml-3">
               <List.Item>Stake delegation/undelegation</List.Item>
-              <List.Item>Token grant withdawal</List.Item>
+              <List.Item>Token grant withdrawal</List.Item>
               <List.Item>Stake upgrade for Threshold Network</List.Item>
             </List>
             <p className="mb-0 mt-1">
