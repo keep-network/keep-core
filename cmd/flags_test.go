@@ -17,7 +17,6 @@ import (
 
 	commonEthereum "github.com/keep-network/keep-common/pkg/chain/ethereum"
 	"github.com/keep-network/keep-core/config"
-	"github.com/keep-network/keep-core/pkg/bitcoin/electrum"
 	chainEthereum "github.com/keep-network/keep-core/pkg/chain/ethereum"
 	ethereumBeacon "github.com/keep-network/keep-core/pkg/chain/ethereum/beacon/gen"
 	ethereumEcdsa "github.com/keep-network/keep-core/pkg/chain/ethereum/ecdsa/gen"
@@ -84,16 +83,9 @@ var cmdFlagsTests = map[string]struct {
 	"bitcoin.electrum.url": {
 		readValueFunc:         func(c *config.Config) interface{} { return c.Bitcoin.Electrum.URL },
 		flagName:              "--bitcoin.electrum.url",
-		flagValue:             "url.to.electrum:18332",
-		expectedValueFromFlag: "url.to.electrum:18332",
+		flagValue:             "tcp://url.to.electrum:18332",
+		expectedValueFromFlag: "tcp://url.to.electrum:18332",
 		defaultValue:          "",
-	},
-	"bitcoin.electrum.protocol": {
-		readValueFunc:         func(c *config.Config) interface{} { return c.Bitcoin.Electrum.Protocol },
-		flagName:              "--bitcoin.electrum.protocol",
-		flagValue:             "ssl",
-		expectedValueFromFlag: electrum.SSL,
-		defaultValue:          electrum.TCP,
 	},
 	"bitcoin.electrum.connectTimeout": {
 		readValueFunc:         func(c *config.Config) interface{} { return c.Bitcoin.Electrum.ConnectTimeout },
@@ -383,7 +375,7 @@ func TestFlags_Mixed(t *testing.T) {
 		"--config", "../test/config_flags.toml",
 		"--ethereum.url", "https://api.url.com/123eth",
 		"--ethereum.keyFile", "./keyfile-path/from/flag",
-		"--bitcoin.electrum.url", "url.to.electrum:18332",
+		"--bitcoin.electrum.url", "ssl://url.to.electrum:18332",
 		"--network.port", "7469",
 		"--bitcoinDifficulty",
 	}
@@ -408,7 +400,7 @@ func TestFlags_Mixed(t *testing.T) {
 		// Properties provided in the config file and overwritten by the flags.
 		"bitcoin.electrum.url": {
 			readValueFunc: func(c *config.Config) interface{} { return c.Bitcoin.Electrum.URL },
-			expectedValue: "url.to.electrum:18332",
+			expectedValue: "ssl://url.to.electrum:18332",
 		},
 		"network.port": {
 			readValueFunc: func(c *config.Config) interface{} { return c.LibP2P.Port },
