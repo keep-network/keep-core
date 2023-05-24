@@ -2,10 +2,12 @@ package config
 
 import (
 	"fmt"
-	"github.com/keep-network/keep-core/pkg/bitcoin"
 	"os"
 	"strings"
 	"syscall"
+
+	"github.com/keep-network/keep-core/config/network"
+	"github.com/keep-network/keep-core/pkg/bitcoin"
 
 	"github.com/hashicorp/go-multierror"
 	"github.com/ipfs/go-log"
@@ -63,34 +65,34 @@ func bindFlags(flagSet *pflag.FlagSet) error {
 }
 
 // Resolve Ethereum and Bitcoin networks based on the set boolean flags.
-func (c *Config) resolveChainsNetworks(flagSet *pflag.FlagSet) error {
-	var err error
-
-	c.Ethereum.Network, c.Bitcoin.Network, err = func() (
-		commonEthereum.Network,
-		bitcoin.Network,
+func (c *Config) resolveNetworks(flagSet *pflag.FlagSet) (network.Type, error) {
+	clientNetwork, err := func() (
+		network.Type,
 		error,
 	) {
-		isGoerli, err := flagSet.GetBool(commonEthereum.Goerli.String())
+		isTestnet, err := flagSet.GetBool(network.Testnet.String())
 		if err != nil {
-			return commonEthereum.Unknown, bitcoin.Unknown, err
+			return network.Unknown, err
 		}
-		if isGoerli {
-			return commonEthereum.Goerli, bitcoin.Testnet, nil
+		if isTestnet {
+			return network.Testnet, nil
 		}
 
-		isDeveloper, err := flagSet.GetBool(commonEthereum.Developer.String())
+		isDeveloper, err := flagSet.GetBool(network.Developer.String())
 		if err != nil {
-			return commonEthereum.Unknown, bitcoin.Unknown, err
+			return network.Unknown, err
 		}
 		if isDeveloper {
-			return commonEthereum.Developer, bitcoin.Regtest, nil
+			return network.Developer, nil
 		}
 
-		return commonEthereum.Mainnet, bitcoin.Mainnet, nil
+		return network.Mainnet, nil
 	}()
 
-	return err
+	c.Ethereum.Network = clientNetwork.Ethereum()
+	c.Bitcoin.Network = clientNetwork.Bitcoin()
+
+	return clientNetwork, err
 }
 
 // ReadConfig reads in the configuration file at `configFilePath` and flags defined in
@@ -98,13 +100,25 @@ func (c *Config) resolveChainsNetworks(flagSet *pflag.FlagSet) error {
 func (c *Config) ReadConfig(configFilePath string, flagSet *pflag.FlagSet, categories ...Category) error {
 	initializeContractAddressesAliases()
 
+	clientNetwork := network.Mainnet
 	if flagSet != nil {
 		if err := bindFlags(flagSet); err != nil {
 			return fmt.Errorf("unable to bind the flags: [%w]", err)
 		}
 
-		if err := c.resolveChainsNetworks(flagSet); err != nil {
-			return fmt.Errorf("unable to resolve chains networks: [%w]", err)
+		var err error
+		clientNetwork, err = c.resolveNetworks(flagSet)
+		if err != nil {
+			return fmt.Errorf("unable to resolve networks: [%w]", err)
+		}
+
+		// TODO: Remove the mainnet flag.
+		// DEPRECATED
+		if isMainnet, err := flagSet.GetBool(network.Mainnet.String()); err == nil && isMainnet {
+			logger.Warnf(
+				"--%s flag is deprecated, to run the client against the mainnet don't provide any network flag",
+				network.Mainnet.String(),
+			)
 		}
 	}
 
@@ -128,7 +142,7 @@ func (c *Config) ReadConfig(configFilePath string, flagSet *pflag.FlagSet, categ
 	c.resolveContractsAddresses()
 
 	// Resolve network peers.
-	err := c.resolvePeers()
+	err := c.resolvePeers(clientNetwork)
 	if err != nil {
 		return fmt.Errorf("failed to resolve peers: %w", err)
 	}
