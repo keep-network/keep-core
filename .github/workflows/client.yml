@@ -292,7 +292,7 @@ jobs:
         uses: actions/download-artifact@v2
         with:
           name: go-build-env-image
-          path: /tmp/go-build-env-image.tar
+          path: /tmp
 
       - name: Load Docker Build Image
         run: |
