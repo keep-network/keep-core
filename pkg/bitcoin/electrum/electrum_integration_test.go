@@ -44,8 +44,8 @@ var testConfigs = map[string]testConfig{
 		clientConfig: Config{
 			URL:                 "electrum.blockstream.info:60001",
 			Protocol:            TCP,
-			RequestTimeout:      timeout,
-			RequestRetryTimeout: timeout * 2,
+			RequestTimeout:      timeout * 3,
+			RequestRetryTimeout: timeout * 10,
 		},
 		serverImplementation: esploraElectrs,
 	},
@@ -53,8 +53,8 @@ var testConfigs = map[string]testConfig{
 		clientConfig: Config{
 			URL:                 "electrum.blockstream.info:60002",
 			Protocol:            SSL,
-			RequestTimeout:      timeout,
-			RequestRetryTimeout: timeout * 3,
+			RequestTimeout:      timeout * 3,
+			RequestRetryTimeout: timeout * 10,
 		},
 		serverImplementation: esploraElectrs,
 	},
