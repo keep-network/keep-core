@@ -33,8 +33,14 @@ const (
 )
 
 type testConfig struct {
-	clientConfig         Config
-	serverImplementation serverImplementation
+	clientConfig  Config
+	errorMessages expectedErrorMessages
+}
+
+type expectedErrorMessages struct {
+	missingTransaction        string
+	missingBlockHeader        string
+	missingTransactionInBlock string
 }
 
 // Servers details were taken from a public Electrum servers list published
@@ -42,62 +48,73 @@ type testConfig struct {
 var testConfigs = map[string]testConfig{
 	"electrs-esplora tcp": {
 		clientConfig: Config{
-			URL:                 "electrum.blockstream.info:60001",
-			Protocol:            TCP,
+			URL:                 "tcp://electrum.blockstream.info:60001",
 			RequestTimeout:      timeout * 3,
 			RequestRetryTimeout: timeout * 10,
 		},
-		serverImplementation: esploraElectrs,
+		errorMessages: expectedErrorMessages{
+			missingTransaction:        "errNo: 0, errMsg: missing transaction",
+			missingBlockHeader:        "errNo: 0, errMsg: missing header",
+			missingTransactionInBlock: "errNo: 0, errMsg: tx not found or is unconfirmed",
+		},
 	},
 	"electrs-esplora ssl": {
 		clientConfig: Config{
-			URL:                 "electrum.blockstream.info:60002",
-			Protocol:            SSL,
+			URL:                 "ssl://electrum.blockstream.info:60002",
 			RequestTimeout:      timeout * 3,
 			RequestRetryTimeout: timeout * 10,
 		},
-		serverImplementation: esploraElectrs,
+		errorMessages: expectedErrorMessages{
+			missingTransaction:        "errNo: 0, errMsg: missing transaction",
+			missingBlockHeader:        "errNo: 0, errMsg: missing header",
+			missingTransactionInBlock: "errNo: 0, errMsg: tx not found or is unconfirmed",
+		},
 	},
-	"electrumx ssl": {
+	"electrumx tcp": {
 		clientConfig: Config{
-			URL:                 "testnet.qtornado.com:51002",
-			Protocol:            SSL,
+			URL:                 "tcp://tn.not.fyi:55001",
 			RequestTimeout:      timeout,
 			RequestRetryTimeout: timeout * 2,
 		},
-		serverImplementation: electrumX,
+		errorMessages: expectedErrorMessages{
+			missingTransaction:        "errNo: 2, errMsg: daemon error: DaemonError({'code': -5, 'message': 'No such mempool or blockchain transaction. Use gettransaction for wallet transactions.'})",
+			missingBlockHeader:        "errNo: 1, errMsg: height 4,294,967,295 out of range",
+			missingTransactionInBlock: "errNo: 1, errMsg: tx aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa not in block at height 123,456",
+		},
 	},
-	"fulcrum ssl": {
+	"electrumx wss": {
 		clientConfig: Config{
-			URL:                 "blackie.c3-soft.com:57006",
-			Protocol:            SSL,
+			URL:                 "wss://electrumx-server.test.tbtc.network:8443",
 			RequestTimeout:      timeout,
 			RequestRetryTimeout: timeout * 2,
 		},
-		serverImplementation: fulcrum,
+		errorMessages: expectedErrorMessages{
+			missingTransaction:        "errNo: 2, errMsg: daemon error: DaemonError({'message': 'Transaction not found.', 'code': -1})",
+			missingBlockHeader:        "errNo: 1, errMsg: height 4,294,967,295 out of range",
+			missingTransactionInBlock: "errNo: 1, errMsg: tx aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa not in block at height 123,456",
+		},
 	},
-	// TODO: Add Keep's electrum server
+	"fulcrum tcp": {
+		clientConfig: Config{
+			URL:                 "tcp://testnet.aranguren.org:51001",
+			RequestTimeout:      timeout,
+			RequestRetryTimeout: timeout * 2,
+		},
+		errorMessages: expectedErrorMessages{
+			missingTransaction:        "errNo: 2, errMsg: daemon error: DaemonError({'code': -5, 'message': 'No such mempool or blockchain transaction. Use gettransaction for wallet transactions.'})",
+			missingBlockHeader:        "errNo: 1, errMsg: Invalid height",
+			missingTransactionInBlock: "errNo: 1, errMsg: No transaction matching the requested hash found at height 123456",
+		},
+	},
 }
 
-var (
-	missingTransactionServerMsgs = map[serverImplementation]string{
-		electrumX:      "errNo: 2, errMsg: daemon error: DaemonError({'code': -5, 'message': 'No such mempool or blockchain transaction. Use gettransaction for wallet transactions.'})",
-		fulcrum:        "errNo: 2, errMsg: daemon error: DaemonError({'code': -5, 'message': 'No such mempool or blockchain transaction. Use gettransaction for wallet transactions.'})",
-		esploraElectrs: "errNo: 0, errMsg: missing transaction",
+func TestConnect_Integration(t *testing.T) {
+	for testName, config := range testConfigs {
+		t.Run(testName, func(t *testing.T) {
+			newTestConnection(t, config.clientConfig)
+		})
 	}
-
-	missingTransactionInBlockMsgs = map[serverImplementation]string{
-		electrumX:      "errNo: 1, errMsg: tx aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa not in block at height 123,456",
-		fulcrum:        "errNo: 1, errMsg: No transaction matching the requested hash found at height 123456",
-		esploraElectrs: "errNo: 0, errMsg: tx not found or is unconfirmed",
-	}
-
-	missingHeaderServerMsgs = map[serverImplementation]string{
-		electrumX:      "errNo: 1, errMsg: height 4,294,967,295 out of range",
-		fulcrum:        "errNo: 1, errMsg: Invalid height",
-		esploraElectrs: "errNo: 0, errMsg: missing header",
-	}
-)
+}
 
 func TestGetTransaction_Integration(t *testing.T) {
 	for testName, config := range testConfigs {
@@ -137,11 +154,11 @@ func TestGetTransaction_Negative_Integration(t *testing.T) {
 				"failed to get raw transaction with ID [%s]: [retry timeout [%s] exceeded; most recent error: [request failed: [%s]]]",
 				invalidTxID.Hex(bitcoin.ReversedByteOrder),
 				config.clientConfig.RequestRetryTimeout,
-				missingTransactionServerMsgs[config.serverImplementation],
+				config.errorMessages.missingTransaction,
 			)
 
 			_, err := electrum.GetTransaction(invalidTxID)
-			if err.Error() != expectedErrorMsg {
+			if err == nil || err.Error() != expectedErrorMsg {
 				t.Errorf(
 					"invalid error\nexpected: %v\nactual:   %v",
 					expectedErrorMsg,
@@ -194,11 +211,11 @@ func TestGetTransactionConfirmations_Negative_Integration(t *testing.T) {
 				"failed to get raw transaction with ID [%s]: [retry timeout [%s] exceeded; most recent error: [request failed: [%s]]]",
 				invalidTxID.Hex(bitcoin.ReversedByteOrder),
 				config.clientConfig.RequestRetryTimeout,
-				missingTransactionServerMsgs[config.serverImplementation],
+				config.errorMessages.missingTransaction,
 			)
 
 			_, err := electrum.GetTransactionConfirmations(invalidTxID)
-			if err.Error() != expectedErrorMsg {
+			if err == nil || err.Error() != expectedErrorMsg {
 				t.Errorf(
 					"invalid error\nexpected: %v\nactual:   %v",
 					expectedErrorMsg,
@@ -286,7 +303,7 @@ func TestGetBlockHeader_Negative_Integration(t *testing.T) {
 			expectedErrorMsg := fmt.Sprintf(
 				"failed to get block header: [retry timeout [%s] exceeded; most recent error: [request failed: [%s]]]",
 				config.clientConfig.RequestRetryTimeout,
-				missingHeaderServerMsgs[config.serverImplementation],
+				config.errorMessages.missingBlockHeader,
 			)
 
 			_, err := electrum.GetBlockHeader(blockHeight)
@@ -344,7 +361,7 @@ func TestGetTransactionMerkleProof_Negative_Integration(t *testing.T) {
 			expectedErrorMsg := fmt.Sprintf(
 				"failed to get merkle proof: [retry timeout [%s] exceeded; most recent error: [request failed: [%s]]]",
 				config.clientConfig.RequestRetryTimeout,
-				missingTransactionInBlockMsgs[config.serverImplementation],
+				config.errorMessages.missingTransactionInBlock,
 			)
 
 			_, err = electrum.GetTransactionMerkleProof(

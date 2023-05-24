@@ -1,54 +1,33 @@
 package config
 
 import (
-	"github.com/keep-network/keep-core/pkg/bitcoin"
-	"github.com/keep-network/keep-core/pkg/bitcoin/electrum"
-	"golang.org/x/exp/slices"
 	"reflect"
 	"testing"
+
+	"github.com/keep-network/keep-core/pkg/bitcoin"
 )
 
 func TestResolveElectrum(t *testing.T) {
 	var tests = map[string]struct {
-		network         bitcoin.Network
-		expectedConfigs []electrum.Config
-		expectedError   error
+		network       bitcoin.Network
+		expectedURL   string
+		expectedError error
 	}{
 		"mainnet network": {
-			network: bitcoin.Mainnet,
-			expectedConfigs: []electrum.Config{
-				{
-					URL:      "electrum.blockstream.info:50002",
-					Protocol: electrum.SSL,
-				},
-			},
+			network:     bitcoin.Mainnet,
+			expectedURL: "ssl://electrum.blockstream.info:50002",
 		},
 		"testnet network": {
-			network: bitcoin.Testnet,
-			expectedConfigs: []electrum.Config{
-				{
-					URL:      "electrum.blockstream.info:60002",
-					Protocol: electrum.SSL,
-				},
-			},
+			network:     bitcoin.Testnet,
+			expectedURL: "ssl://electrum.blockstream.info:60002",
 		},
 		"regtest network": {
-			network: bitcoin.Regtest,
-			expectedConfigs: []electrum.Config{
-				{
-					URL:      "",
-					Protocol: electrum.Unknown,
-				},
-			},
+			network:     bitcoin.Regtest,
+			expectedURL: "",
 		},
 		"unknown network": {
-			network: bitcoin.Unknown,
-			expectedConfigs: []electrum.Config{
-				{
-					URL:      "",
-					Protocol: electrum.Unknown,
-				},
-			},
+			network:     bitcoin.Unknown,
+			expectedURL: "",
 		},
 	}
 
@@ -67,13 +46,13 @@ func TestResolveElectrum(t *testing.T) {
 			}
 
 			resolvedConfig := cfg.Bitcoin.Electrum
-			if !slices.Contains(test.expectedConfigs, resolvedConfig) {
+			if !reflect.DeepEqual(test.expectedURL, resolvedConfig.URL) {
 				t.Errorf(
-					"expected configs set doesn't contain resolved config\n"+
+					"expected URL doesn't match resolved URL\n"+
 						"expected: %+v\n"+
 						"actual:   %+v\n",
-					test.expectedConfigs,
-					resolvedConfig,
+					test.expectedURL,
+					resolvedConfig.URL,
 				)
 			}
 		})

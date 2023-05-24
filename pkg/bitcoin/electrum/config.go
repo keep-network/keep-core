@@ -22,10 +22,8 @@ const (
 
 // Config holds configurable properties.
 type Config struct {
-	// URL to the Electrum server in format: `hostname:port`.
+	// URL to the Electrum server in format: `scheme://hostname:port`.
 	URL string
-	// Electrum server connection protocol (`TCP` or `SSL`).
-	Protocol Protocol
 	// Timeout for a single attempt of Electrum connection establishment.
 	ConnectTimeout time.Duration
 	// Timeout for Electrum connection establishment retries.
