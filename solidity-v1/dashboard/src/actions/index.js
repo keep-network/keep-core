@@ -1,4 +1,3 @@
-import * as TBTCV2MigrationActions from "./tbtc-migration"
 import * as KeepBalanceActions from "./keep-balance"
 import * as modal from "./modal"
 
@@ -62,10 +61,6 @@ export const ADD_STAKE_TO_THRESHOLD_AUTH_DATA =
   "threshold/add_stake_to_threshold_auth_data"
 export const REMOVE_STAKE_FROM_THRESHOLD_AUTH_DATA =
   "threshold/remove_stake_from_threshold_auth_data"
-
-export const tbtcV2Migration = {
-  ...TBTCV2MigrationActions,
-}
 
 export const keepBalanceActions = {
   ...KeepBalanceActions,

@@ -2,7 +2,6 @@ package maintainer
 
 import (
 	"fmt"
-
 	"github.com/keep-network/keep-core/pkg/bitcoin"
 )
 
@@ -76,6 +75,13 @@ func (lc *localBitcoinChain) GetBlockHeader(
 	return blockHeader, nil
 }
 
+func (lc *localBitcoinChain) GetTransactionMerkleProof(
+	transactionHash bitcoin.Hash,
+	blockHeight uint,
+) (*bitcoin.TransactionMerkleProof, error) {
+	panic("unsupported")
+}
+
 func (lc *localBitcoinChain) GetTransactionsForPublicKeyHash(
 	publicKeyHash [20]byte,
 	limit int,
@@ -94,6 +100,12 @@ func (lc *localBitcoinChain) SetBlockHeaders(
 	blockHeaders map[uint]*bitcoin.BlockHeader,
 ) {
 	lc.blockHeaders = blockHeaders
+}
+
+func (lc *localBitcoinChain) EstimateSatPerVByteFee(
+	blocks uint32,
+) (int64, error) {
+	panic("unsupported")
 }
 
 // connectLocalBitcoinChain connects to the local Bitcoin chain and returns

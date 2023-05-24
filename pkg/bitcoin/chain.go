@@ -29,6 +29,14 @@ type Chain interface {
 	// returns an error.
 	GetBlockHeader(blockHeight uint) (*BlockHeader, error)
 
+	// GetTransactionMerkleProof gets the Merkle proof for a given transaction.
+	// The transaction's hash and the block the transaction was included in the
+	// blockchain need to be provided.
+	GetTransactionMerkleProof(
+		transactionHash Hash,
+		blockHeight uint,
+	) (*TransactionMerkleProof, error)
+
 	// GetTransactionsForPublicKeyHash gets the confirmed transactions that pays the
 	// given public key hash using either a P2PKH or P2WPKH script. The returned
 	// transactions are ordered by block height in the ascending order, i.e.
@@ -46,4 +54,8 @@ type Chain interface {
 	// that pays the given public key hash using either a P2PKH or P2WPKH script.
 	// The returned transactions are in an indefinite order.
 	GetMempoolForPublicKeyHash(publicKeyHash [20]byte) ([]*Transaction, error)
+
+	// EstimateSatPerVByteFee returns the estimated sat/vbyte fee for a
+	// transaction to be confirmed within the given number of blocks.
+	EstimateSatPerVByteFee(blocks uint32) (int64, error)
 }

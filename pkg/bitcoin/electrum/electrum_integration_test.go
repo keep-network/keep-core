@@ -38,8 +38,9 @@ type testConfig struct {
 }
 
 type expectedErrorMessages struct {
-	missingTransaction string
-	missingBlockHeader string
+	missingTransaction        string
+	missingBlockHeader        string
+	missingTransactionInBlock string
 }
 
 // Servers details were taken from a public Electrum servers list published
@@ -52,8 +53,9 @@ var testConfigs = map[string]testConfig{
 			RequestRetryTimeout: timeout * 5,
 		},
 		errorMessages: expectedErrorMessages{
-			missingTransaction: "errNo: 0, errMsg: missing transaction",
-			missingBlockHeader: "errNo: 0, errMsg: missing header",
+			missingTransaction:        "errNo: 0, errMsg: missing transaction",
+			missingBlockHeader:        "errNo: 0, errMsg: missing header",
+			missingTransactionInBlock: "errNo: 0, errMsg: tx not found or is unconfirmed",
 		},
 	},
 	"electrs-esplora ssl": {
@@ -63,8 +65,9 @@ var testConfigs = map[string]testConfig{
 			RequestRetryTimeout: timeout * 5,
 		},
 		errorMessages: expectedErrorMessages{
-			missingTransaction: "errNo: 0, errMsg: missing transaction",
-			missingBlockHeader: "errNo: 0, errMsg: missing header",
+			missingTransaction:        "errNo: 0, errMsg: missing transaction",
+			missingBlockHeader:        "errNo: 0, errMsg: missing header",
+			missingTransactionInBlock: "errNo: 0, errMsg: tx not found or is unconfirmed",
 		},
 	},
 	"electrumx tcp": {
@@ -74,8 +77,9 @@ var testConfigs = map[string]testConfig{
 			RequestRetryTimeout: timeout * 2,
 		},
 		errorMessages: expectedErrorMessages{
-			missingTransaction: "errNo: 2, errMsg: daemon error: DaemonError({'code': -5, 'message': 'No such mempool or blockchain transaction. Use gettransaction for wallet transactions.'})",
-			missingBlockHeader: "errNo: 1, errMsg: height 4,294,967,295 out of range",
+			missingTransaction:        "errNo: 2, errMsg: daemon error: DaemonError({'code': -5, 'message': 'No such mempool or blockchain transaction. Use gettransaction for wallet transactions.'})",
+			missingBlockHeader:        "errNo: 1, errMsg: height 4,294,967,295 out of range",
+			missingTransactionInBlock: "errNo: 1, errMsg: tx aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa not in block at height 123,456",
 		},
 	},
 	"electrumx wss": {
@@ -85,8 +89,9 @@ var testConfigs = map[string]testConfig{
 			RequestRetryTimeout: timeout * 2,
 		},
 		errorMessages: expectedErrorMessages{
-			missingTransaction: "errNo: 2, errMsg: daemon error: DaemonError({'message': 'Transaction not found.', 'code': -1})",
-			missingBlockHeader: "errNo: 1, errMsg: height 4,294,967,295 out of range",
+			missingTransaction:        "errNo: 2, errMsg: daemon error: DaemonError({'message': 'Transaction not found.', 'code': -1})",
+			missingBlockHeader:        "errNo: 1, errMsg: height 4,294,967,295 out of range",
+			missingTransactionInBlock: "errNo: 1, errMsg: tx aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa not in block at height 123,456",
 		},
 	},
 	"fulcrum tcp": {
@@ -96,8 +101,9 @@ var testConfigs = map[string]testConfig{
 			RequestRetryTimeout: timeout * 2,
 		},
 		errorMessages: expectedErrorMessages{
-			missingTransaction: "errNo: 2, errMsg: daemon error: DaemonError({'code': -5, 'message': 'No such mempool or blockchain transaction. Use gettransaction for wallet transactions.'})",
-			missingBlockHeader: "errNo: 1, errMsg: Invalid height",
+			missingTransaction:        "errNo: 2, errMsg: daemon error: DaemonError({'code': -5, 'message': 'No such mempool or blockchain transaction. Use gettransaction for wallet transactions.'})",
+			missingBlockHeader:        "errNo: 1, errMsg: Invalid height",
+			missingTransactionInBlock: "errNo: 1, errMsg: No transaction matching the requested hash found at height 123456",
 		},
 	},
 }
@@ -312,6 +318,67 @@ func TestGetBlockHeader_Negative_Integration(t *testing.T) {
 	}
 }
 
+func TestGetTransactionMerkleProof_Integration(t *testing.T) {
+	transactionHash := testData.TxMerkleProof.TxHash
+	blockHeight := testData.TxMerkleProof.BlockHeigh
+
+	expectedResult := &testData.TxMerkleProof.MerkleProof
+
+	for testName, config := range testConfigs {
+		t.Run(testName, func(t *testing.T) {
+			electrum := newTestConnection(t, config.clientConfig)
+
+			result, err := electrum.GetTransactionMerkleProof(
+				transactionHash,
+				blockHeight,
+			)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			if diff := deep.Equal(result, expectedResult); diff != nil {
+				t.Errorf("compare failed: %v", diff)
+			}
+		})
+	}
+}
+
+func TestGetTransactionMerkleProof_Negative_Integration(t *testing.T) {
+	incorrectTransactionHash, err := bitcoin.NewHashFromString(
+		"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+		bitcoin.ReversedByteOrder,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	blockHeight := uint(123456)
+
+	for testName, config := range testConfigs {
+		t.Run(testName, func(t *testing.T) {
+			electrum := newTestConnection(t, config.clientConfig)
+
+			expectedErrorMsg := fmt.Sprintf(
+				"failed to get merkle proof: [retry timeout [%s] exceeded; most recent error: [request failed: [%s]]]",
+				config.clientConfig.RequestRetryTimeout,
+				config.errorMessages.missingTransactionInBlock,
+			)
+
+			_, err = electrum.GetTransactionMerkleProof(
+				incorrectTransactionHash,
+				blockHeight,
+			)
+			if err.Error() != expectedErrorMsg {
+				t.Errorf(
+					"invalid error\nexpected: %v\nactual:   %v",
+					expectedErrorMsg,
+					err,
+				)
+			}
+		})
+	}
+}
+
 func TestGetTransactionsForPublicKeyHash_Integration(t *testing.T) {
 	var publicKeyHash [20]byte
 	publicKeyHashBytes, err := hex.DecodeString("e6f9d74726b19b75f16fe1e9feaec048aa4fa1d0")
@@ -357,6 +424,24 @@ func TestGetTransactionsForPublicKeyHash_Integration(t *testing.T) {
 					expectedHashes,
 					hashes,
 				)
+			}
+		})
+	}
+}
+
+func TestEstimateSatPerVByteFee_Integration(t *testing.T) {
+	for testName, config := range testConfigs {
+		t.Run(testName, func(t *testing.T) {
+			electrum := newTestConnection(t, config.clientConfig)
+
+			satPerVByteFee, err := electrum.EstimateSatPerVByteFee(1)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			// We expect the fee is always at least 1.
+			if satPerVByteFee < 1 {
+				t.Errorf("returned fee is below 1")
 			}
 		})
 	}

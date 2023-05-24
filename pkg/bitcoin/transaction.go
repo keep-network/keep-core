@@ -3,6 +3,7 @@ package bitcoin
 import (
 	"bytes"
 	"encoding/binary"
+
 	"github.com/btcsuite/btcd/wire"
 )
 
@@ -42,17 +43,17 @@ type Transaction struct {
 // as described below.
 //
 // If the transaction CONTAINS witness inputs and Serialize is called with:
-// - Standard serialization format, the result is actually in the Standard
-//   format and does not include witness data referring to the witness inputs
-// - Witness serialization format, the result is actually in the Witness
-//   format and includes witness data referring to the witness inputs
+//   - Standard serialization format, the result is actually in the Standard
+//     format and does not include witness data referring to the witness inputs
+//   - Witness serialization format, the result is actually in the Witness
+//     format and includes witness data referring to the witness inputs
 //
 // If the transaction DOES NOT CONTAIN witness inputs and Serialize is
 // called with:
-// - Standard serialization format, the result is actually in the Standard
-//   format
-// - Witness serialization format, the result is actually in the Standard
-//   format because there are no witness inputs whose data can be included
+//   - Standard serialization format, the result is actually in the Standard
+//     format
+//   - Witness serialization format, the result is actually in the Standard
+//     format because there are no witness inputs whose data can be included
 //
 // By default, the Witness format is used and that can be changed using the
 // optional format argument. The Witness format is used by default as it
@@ -237,4 +238,20 @@ type UnspentTransactionOutput struct {
 	Outpoint *TransactionOutpoint
 	// Value denotes the number of unspent satoshis.
 	Value int64
+}
+
+// TransactionMerkleProof holds information about the merkle branch to a
+// confirmed transaction.
+type TransactionMerkleProof struct {
+	// BlockHeight is the height of the block the transaction was confirmed in.
+	BlockHeight uint
+
+	// MerkleNodes is a list of transaction hashes the current hash is paired
+	// with, recursively, in order to trace up to obtain the merkle root of the
+	// including block, deepest pairing first. Each hash is an unprefixed hex
+	// string.
+	MerkleNodes []string
+
+	// Position is the 0-based index of the transaction's position in the block.
+	Position uint
 }

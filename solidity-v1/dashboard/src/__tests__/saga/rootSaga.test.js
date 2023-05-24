@@ -12,12 +12,9 @@ import {
 import * as copyStakeSaga from "../../sagas/copy-stake"
 import * as subscriptions from "../../sagas/subscriptions"
 import * as keepTokenBalance from "../../sagas/keep-balance"
-import * as rewards from "../../sagas/rewards"
-import * as liquidityRewards from "../../sagas/liquidity-rewards"
 import * as operator from "../../sagas/operartor"
 import * as authorization from "../../sagas/authorization"
 import * as coveragePool from "../../sagas/coverage-pool"
-import * as tbtcMigration from "../../sagas/tbtc-migration"
 
 // TODO: Mock globally
 // Mock TrezorConnector due to `This version of trezor-connect is not suitable
@@ -35,14 +32,7 @@ jest.mock("../../connectors/trezor", () => ({
   TrezorConnector: Object,
 }))
 
-const { watchFetchLiquidityRewardsAPY, ...restliquidityRewards } =
-  liquidityRewards
-
-const sagas = [
-  ...Object.values(messagesSaga),
-  watchFetchLiquidityRewardsAPY,
-  ...Object.values(coveragePool),
-]
+const sagas = [...Object.values(messagesSaga), ...Object.values(coveragePool)]
 
 const loginRequiredSagas = [
   ...Object.values(delegateStakeSaga),
@@ -52,8 +42,6 @@ const loginRequiredSagas = [
   ...Object.values(copyStakeSaga),
   ...Object.values(subscriptions),
   ...Object.values(keepTokenBalance),
-  ...Object.values(rewards),
-  ...Object.values(restliquidityRewards),
   ...Object.values(operator),
   ...Object.values(authorization),
   ...Object.values(tbtcMigration),

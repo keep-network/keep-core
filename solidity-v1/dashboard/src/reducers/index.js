@@ -5,13 +5,11 @@ import keepTokenBalance from "./keep-balance"
 import staking from "./staking"
 import tokenGrants from "./token-grant"
 import rewards from "./rewards"
-import liquidityRewards from "./liquidity-rewards"
 import notificationsData from "./notifications-data"
 import operator from "./operator"
 import authorization from "./authorization"
 import transactions from "./transactions"
 import coveragePool from "./coverage-pool"
-import tbtcV2Migration from "./tbtc-migration"
 import modal from "./modal"
 import thresholdAuthorization from "./threshold-authorization"
 
@@ -32,14 +30,12 @@ const reducers = combineReducers({
   staking,
   tokenGrants,
   rewards,
-  liquidityRewards,
   app,
   notificationsData,
   operator,
   authorization,
   transactions,
   coveragePool,
-  tbtcV2Migration,
   modal,
   thresholdAuthorization,
 })

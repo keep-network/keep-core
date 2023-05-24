@@ -210,8 +210,18 @@ type BridgeChain interface {
 	ComputeMainUtxoHash(mainUtxo *bitcoin.UnspentTransactionOutput) [32]byte
 
 	// BuildDepositKey calculates a deposit key for the given funding transaction
-	// which is an unique identifier for a deposit on-chain.
+	// which is a unique identifier for a deposit on-chain.
 	BuildDepositKey(fundingTxHash bitcoin.Hash, fundingOutputIndex uint32) *big.Int
+
+	// GetDepositParameters gets the current value of parameters relevant
+	// for the depositing process.
+	GetDepositParameters() (
+		dustThreshold uint64,
+		treasuryFeeDivisor uint64,
+		txMaxFee uint64,
+		revealAheadPeriod uint32,
+		err error,
+	)
 }
 
 // HeartbeatRequestedEvent represents a Bridge heartbeat request event.
@@ -338,6 +348,10 @@ type WalletCoordinatorChain interface {
 	SubmitDepositSweepProposalWithReimbursement(
 		proposal *DepositSweepProposal,
 	) error
+
+	// GetDepositSweepMaxSize gets the maximum number of deposits that can
+	// be part of a deposit sweep proposal.
+	GetDepositSweepMaxSize() (uint16, error)
 }
 
 // HeartbeatRequestSubmittedEvent represents a wallet heartbeat request
