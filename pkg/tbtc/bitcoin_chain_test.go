@@ -3,8 +3,9 @@ package tbtc
 import (
 	"bytes"
 	"fmt"
-	"github.com/keep-network/keep-core/pkg/bitcoin"
 	"sync"
+
+	"github.com/keep-network/keep-core/pkg/bitcoin"
 )
 
 type localBitcoinChain struct {
@@ -79,6 +80,13 @@ func (lbc *localBitcoinChain) GetBlockHeader(
 	panic("not implemented")
 }
 
+func (lbc *localBitcoinChain) GetTransactionMerkleProof(
+	transactionHash bitcoin.Hash,
+	blockHeight uint,
+) (*bitcoin.TransactionMerkleProof, error) {
+	panic("not implemented")
+}
+
 func (lbc *localBitcoinChain) GetTransactionsForPublicKeyHash(
 	publicKeyHash [20]byte,
 	limit int,
@@ -144,4 +152,10 @@ func (lbc *localBitcoinChain) GetMempoolForPublicKeyHash(
 	}
 
 	return matchingTransactions, nil
+}
+
+func (lbc *localBitcoinChain) EstimateSatPerVByteFee(
+	blocks uint32,
+) (int64, error) {
+	panic("unsupported")
 }

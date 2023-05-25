@@ -1,9 +1,16 @@
 package bitcoin
 
-import "fmt"
+import (
+	"fmt"
+	"sync"
+)
 
 type localChain struct {
-	transactions map[Hash]*Transaction
+	transactionsMutex sync.Mutex
+	transactions      map[Hash]*Transaction
+
+	satPerVByteFeeMutex sync.Mutex
+	satPerVByteFee      int64
 }
 
 func newLocalChain() *localChain {
@@ -15,6 +22,9 @@ func newLocalChain() *localChain {
 func (lc *localChain) GetTransaction(
 	transactionHash Hash,
 ) (*Transaction, error) {
+	lc.transactionsMutex.Lock()
+	defer lc.transactionsMutex.Unlock()
+
 	if transaction, exists := lc.transactions[transactionHash]; exists {
 		return transaction, nil
 	}
@@ -44,6 +54,13 @@ func (lc *localChain) GetBlockHeader(
 	panic("not implemented")
 }
 
+func (lc *localChain) GetTransactionMerkleProof(
+	transactionHash Hash,
+	blockHeight uint,
+) (*TransactionMerkleProof, error) {
+	panic("not implemented")
+}
+
 func (lc *localChain) GetTransactionsForPublicKeyHash(
 	publicKeyHash [20]byte,
 	limit int,
@@ -57,9 +74,30 @@ func (lc *localChain) GetMempoolForPublicKeyHash(
 	panic("not implemented")
 }
 
+func (lc *localChain) EstimateSatPerVByteFee(
+	blocks uint32,
+) (int64, error) {
+	lc.satPerVByteFeeMutex.Lock()
+	defer lc.satPerVByteFeeMutex.Unlock()
+
+	return lc.satPerVByteFee, nil
+}
+
+func (lc *localChain) setSatPerVByteFee(
+	satPerVByteFee int64,
+) {
+	lc.satPerVByteFeeMutex.Lock()
+	defer lc.satPerVByteFeeMutex.Unlock()
+
+	lc.satPerVByteFee = satPerVByteFee
+}
+
 func (lc *localChain) addTransaction(
 	transaction *Transaction,
 ) error {
+	lc.transactionsMutex.Lock()
+	defer lc.transactionsMutex.Unlock()
+
 	transactionHash := transaction.Hash()
 
 	if _, exists := lc.transactions[transactionHash]; exists {

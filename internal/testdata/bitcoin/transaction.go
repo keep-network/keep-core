@@ -220,6 +220,35 @@ var Transactions = map[string]struct {
 	},
 }
 
+// TxMerkleProof holds details of the transaction Merkle proof data used as a
+// test vector.
+var TxMerkleProof = struct {
+	TxHash      bitcoin.Hash
+	BlockHeigh  uint
+	MerkleProof bitcoin.TransactionMerkleProof
+}{
+	// https://blockstream.info/testnet/api/tx/72e7fd57c2adb1ed2305c4247486ff79aec363296f02ec65be141904f80d214e
+	TxHash: hashFromString(
+		"72e7fd57c2adb1ed2305c4247486ff79aec363296f02ec65be141904f80d214e",
+	),
+	BlockHeigh: 1569342,
+	MerkleProof: bitcoin.TransactionMerkleProof{
+		BlockHeight: 1569342,
+		MerkleNodes: []string{
+			"8b5bbb5bdf6727bf70fad4f46fe4eaab04c98119ffbd2d95c29adf32d26f8452",
+			"53637bacb07965e4a8220836861d1b16c6da29f10ea9ab53fc4eca73074f98b9",
+			"0267e738108d094ceb05217e2942e9c2a4c6389ac47f476f572c9a319ce4dfbc",
+			"34e00deec50c48d99678ca2b52b82d6d5432326159c69e7233d0dde0924874b4",
+			"7a53435e6c86a3620cdbae510901f17958f0540314214379197874ed8ed7a913",
+			"6315dbb7ce350ceaa16cd4c35c5a147005e8b38ca1e9531bd7320629e8d17f5b",
+			"40380cdadc0206646208871e952af9dcfdff2f104305ce463aed5eeaf7725d2f",
+			"5d74bae6a71fd1cff2416865460583319a40343650bd4bb89de0a6ae82097037",
+			"296ddccfc659e0009aad117c8ed15fb6ff81c2bade73fbc89666a22708d233f9",
+		},
+		Position: 176,
+	},
+}
+
 func hashFromString(s string) bitcoin.Hash {
 	hash, err := bitcoin.NewHashFromString(
 		s,

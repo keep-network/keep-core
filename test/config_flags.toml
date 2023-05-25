@@ -7,7 +7,7 @@ KeyFile = "/tmp/UTC--2018-03-11T01-37-33.202765887Z--c2a56884538778bacd91aa5bf34
 
 [bitcoin.electrum]
 # URL is expected to be overwritten by a flag.
-URL = "another.url.to.electrum:18332"
+URL = "tcp://another.url.to.electrum:18332"
 
 [network]
 # Port is expected to be overwritten by a flag.

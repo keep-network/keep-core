@@ -14,6 +14,7 @@ import useAutoWalletAddressInjectIntoUrl from "./hooks/useAutoWalletAddressInjec
 import useModalWindowForMobileUsers from "./hooks/useModalWindowForMobileUsers"
 import { ModalRoot } from "./components/modal"
 import NavLink from "./components/NavLink"
+import { useShowLegacyDappModal } from "./hooks/useShowLegacyDappModal"
 
 const App = () => (
   <Provider store={store}>
@@ -33,20 +34,44 @@ const AppLayout = () => {
   useAutoWalletAddressInjectIntoUrl()
   useSubscribeToConnectorEvents()
   useModalWindowForMobileUsers()
+  useShowLegacyDappModal()
 
   return (
     <>
       <AppHeader />
       <section className="app__content">
+        <div className="bg-yellow-400 text-center text-yellow-900">
+          This is a legacy dashboard. Only a small part of the features are
+          still supported.
+        </div>
         <Routing />
       </section>
     </>
   )
 }
 
+const styles = {
+  legacyBadge: {
+    wrapper: {
+      marginTop: "1.5rem",
+      padding: "0 2.75rem",
+      borderRadius: "4px",
+    },
+    text: {
+      fontWeight: 600,
+    },
+  },
+}
+
 const AppHeader = () => {
   return (
     <header className="app__header">
+      <div
+        className="bg-yellow-300 text-yellow-900 self-center"
+        style={styles.legacyBadge.wrapper}
+      >
+        <h6 style={styles.legacyBadge.text}>LEGACY</h6>
+      </div>
       <NavLink to="/overview" className="app-logo">
         <Icons.KeepDashboardLogo />
       </NavLink>

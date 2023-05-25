@@ -12,13 +12,22 @@ import (
 )
 
 var (
-	walletFlagName       = "wallet"
+	// listDepositsCommand:
+	// proposeDepositsSweepCommand:
+	walletFlagName = "wallet"
+
+	// listDepositsCommand:
 	hideSweptFlagName    = "hide-swept"
 	sortByAmountFlagName = "sort-amount"
 	headFlagName         = "head"
 	tailFlagName         = "tail"
-	feeFlagName          = "fee"
-	dryRunFlagName       = "dry-run"
+
+	// proposeDepositsSweepCommand:
+	feeFlagName    = "fee"
+	dryRunFlagName = "dry-run"
+
+	// estimateDepositsSweepFeeCommand:
+	depositsCountFlagName = "deposits-count"
 )
 
 // CoordinatorCommand contains the definition of tBTC Wallet Coordinator tools.
@@ -53,12 +62,12 @@ var listDepositsCommand = cobra.Command{
 
 		hideSwept, err := cmd.Flags().GetBool(hideSweptFlagName)
 		if err != nil {
-			return fmt.Errorf("failed to find show swept flag: %v", err)
+			return fmt.Errorf("failed to find hide swept flag: %v", err)
 		}
 
 		sortByAmount, err := cmd.Flags().GetBool(sortByAmountFlagName)
 		if err != nil {
-			return fmt.Errorf("failed to find show swept flag: %v", err)
+			return fmt.Errorf("failed to find sort by amount flag: %v", err)
 		}
 
 		head, err := cmd.Flags().GetInt(headFlagName)
@@ -132,7 +141,7 @@ var proposeDepositsSweepCommand = cobra.Command{
 
 		dryRun, err := cmd.Flags().GetBool(dryRunFlagName)
 		if err != nil {
-			return fmt.Errorf("failed to find fee flag: %v", err)
+			return fmt.Errorf("failed to find dry run flag: %v", err)
 		}
 
 		_, tbtcChain, _, _, _, err := ethereum.Connect(cmd.Context(), clientConfig.Ethereum)
@@ -158,6 +167,55 @@ Expects --wallet and --fee flags along with deposits to sweep provided
 as arguments.
 
 ` + coordinator.DepositsFormatDescription
+
+var estimateDepositsSweepFeeCommand = cobra.Command{
+	Use:              "estimate-deposits-sweep-fee",
+	Short:            "estimates deposits sweep fee",
+	Long:             estimateDepositsSweepFeeCommandDescription,
+	TraverseChildren: true,
+	RunE: func(cmd *cobra.Command, args []string) error {
+		ctx := cmd.Context()
+
+		depositsCount, err := cmd.Flags().GetInt(depositsCountFlagName)
+		if err != nil {
+			return fmt.Errorf("failed to find deposits count flag: %v", err)
+		}
+
+		_, tbtcChain, _, _, _, err := ethereum.Connect(ctx, clientConfig.Ethereum)
+		if err != nil {
+			return fmt.Errorf(
+				"could not connect to Ethereum chain: [%v]",
+				err,
+			)
+		}
+
+		btcChain, err := electrum.Connect(ctx, clientConfig.Bitcoin.Electrum)
+		if err != nil {
+			return fmt.Errorf("could not connect to Electrum chain: [%v]", err)
+		}
+
+		return coordinator.EstimateDepositsSweepFee(
+			tbtcChain,
+			btcChain,
+			depositsCount,
+		)
+	},
+}
+
+var estimateDepositsSweepFeeCommandDescription = "Estimates the satoshi " +
+	"fee for the entire Bitcoin deposits sweep transaction, based on " +
+	"the number of input deposits. By default, provides estimations for " +
+	"transactions containing a various number of input deposits, from 1 up " +
+	"to the maximum count allowed by the WalletCoordinator contract. " +
+	"The --deposits-count flag can be used to obtain a fee estimation for " +
+	"a Bitcoin sweep transaction containing a specific count of input " +
+	"deposits. All estimations assume the wallet main UTXO is used as one " +
+	"of the transaction's input so the estimation may be overpriced for " +
+	"the very first sweep transaction of each wallet. Estimations also " +
+	"assume only P2WSH deposits are part of the transaction so the " +
+	"estimation may be underpriced if the actual transaction contains " +
+	"legacy P2SH deposits. If the estimated fee exceeds the maximum fee " +
+	"allowed by the Bridge contract, the maximum fee is returned as result"
 
 func init() {
 	initFlags(
@@ -224,4 +282,14 @@ func init() {
 	)
 
 	CoordinatorCommand.AddCommand(&proposeDepositsSweepCommand)
+
+	// Estimate Deposits Sweep Fee Subcommand.
+
+	estimateDepositsSweepFeeCommand.Flags().Int(
+		depositsCountFlagName,
+		0,
+		"get estimation for a specific count of input deposits",
+	)
+
+	CoordinatorCommand.AddCommand(&estimateDepositsSweepFeeCommand)
 }

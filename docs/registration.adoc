@@ -104,7 +104,7 @@ docker run \
     $OPERATOR_ADDRESS
 ----
 
-NOTE: icon:flask[] For Testnet add `--goerli` flag to the commands executed above.
+NOTE: icon:flask[] For Testnet add `--testnet` flag to the commands executed above.
 
 [#register-operator-web]
 === Via Web Browser

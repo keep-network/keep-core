@@ -563,6 +563,16 @@ func (lc *localChain) BuildDepositKey(
 	return new(big.Int).SetBytes(depositKeyBytes[:])
 }
 
+func (lc *localChain) GetDepositParameters() (
+	dustThreshold uint64,
+	treasuryFeeDivisor uint64,
+	txMaxFee uint64,
+	revealAheadPeriod uint32,
+	err error,
+) {
+	panic("unsupported")
+}
+
 func buildDepositRequestKey(
 	fundingTxHash bitcoin.Hash,
 	fundingOutputIndex uint32,
@@ -741,6 +751,10 @@ func buildDepositSweepProposalValidationKey(
 func (lc *localChain) SubmitDepositSweepProposalWithReimbursement(
 	proposal *DepositSweepProposal,
 ) error {
+	panic("unsupported")
+}
+
+func (lc *localChain) GetDepositSweepMaxSize() (uint16, error) {
 	panic("unsupported")
 }
 

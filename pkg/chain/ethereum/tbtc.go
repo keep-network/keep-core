@@ -1099,6 +1099,27 @@ func (tc *TbtcChain) BuildDepositKey(
 	return buildDepositKey(fundingTxHash, fundingOutputIndex)
 }
 
+func (tc *TbtcChain) GetDepositParameters() (
+	dustThreshold uint64,
+	treasuryFeeDivisor uint64,
+	txMaxFee uint64,
+	revealAheadPeriod uint32,
+	err error,
+) {
+	parameters, callErr := tc.bridge.DepositParameters()
+	if callErr != nil {
+		err = callErr
+		return
+	}
+
+	dustThreshold = parameters.DepositDustThreshold
+	treasuryFeeDivisor = parameters.DepositTreasuryFeeDivisor
+	txMaxFee = parameters.DepositTxMaxFee
+	revealAheadPeriod = parameters.DepositRevealAheadPeriod
+
+	return
+}
+
 func buildDepositKey(
 	fundingTxHash bitcoin.Hash,
 	fundingOutputIndex uint32,
@@ -1358,4 +1379,8 @@ func (tc *TbtcChain) SubmitDepositSweepProposalWithReimbursement(
 	)
 
 	return err
+}
+
+func (tc *TbtcChain) GetDepositSweepMaxSize() (uint16, error) {
+	return tc.walletCoordinator.DepositSweepMaxSize()
 }
