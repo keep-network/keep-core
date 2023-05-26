@@ -3,6 +3,10 @@ resources:
   - bitcoind-statefulset.yaml
   - bitcoind-storageclass.yaml
 
+commonLabels:
+  chain: bitcoin
+  app: bitcoind
+
 configMapGenerator:
   - name: bitcoind
     literals:
