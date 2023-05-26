@@ -53,6 +53,10 @@ spec:
             - name: network
               containerPort: 8333
               protocol: TCP
+          resources:
+            requests:
+              cpu: 100m
+              memory: 2Gi
           volumeMounts:
             - mountPath: /mnt/bitcoind/data
               name: bitcoind-data
