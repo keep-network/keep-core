@@ -1,4 +1,5 @@
 resources:
+  - bitcoind-service.yaml
   - bitcoind-statefulset.yaml
   - bitcoind-storageclass.yaml
 
