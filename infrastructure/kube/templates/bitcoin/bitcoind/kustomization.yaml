@@ -10,7 +10,6 @@ commonLabels:
 configMapGenerator:
   - name: bitcoind
     literals:
-      - rpc-host=bitcoind.default.svc.cluster.local:8332
       - chain=main
 
 secretGenerator:
