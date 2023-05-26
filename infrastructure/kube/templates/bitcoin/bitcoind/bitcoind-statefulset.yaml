@@ -3,22 +3,10 @@ apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   name: bitcoind
-  labels:
-    app: bitcoind
-    type: bitcoind
 spec:
-  podManagementPolicy: OrderedReady
   replicas: 1
   serviceName: bitcoind
-  selector:
-    matchLabels:
-      app: bitcoind
-      type: bitcoind
   template:
-    metadata:
-      labels:
-        app: bitcoind
-        type: bitcoind
     spec:
       containers:
         - name: bitcoind
