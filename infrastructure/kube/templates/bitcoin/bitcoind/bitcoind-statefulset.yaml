@@ -63,4 +63,7 @@ spec:
           - ReadWriteOnce
         resources:
           requests:
-            storage: 40Gi
+            # Estimated required storage based on the network:
+            # - for mainnet: 600 Gi (default)
+            # - for testnet: 40 Gi
+            storage: 600Gi
