@@ -68,7 +68,7 @@ spec:
     - metadata:
         name: bitcoind-data
       spec:
-        storageClassName: standard
+        storageClassName: bitcoind
         accessModes:
           - ReadWriteOnce
         resources:
