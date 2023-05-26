@@ -53,6 +53,19 @@ spec:
             - name: network
               containerPort: 8333
               protocol: TCP
+          livenessProbe:
+            tcpSocket:
+              port: rpc
+            initialDelaySeconds: 20
+            periodSeconds: 10
+          # TODO: Define readiness probe based on: https://bitcoin.stackexchange.com/a/103370
+          # readinessProbe:
+          #   exec:
+          #     command:
+          #       - bitcoin-cli
+          #       - getblockcount
+          #   initialDelaySeconds: 20
+          #   periodSeconds: 15
           resources:
             requests:
               cpu: 100m
