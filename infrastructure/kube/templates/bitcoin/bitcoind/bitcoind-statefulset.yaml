@@ -10,10 +10,10 @@ spec:
     spec:
       containers:
         - name: bitcoind
-          image: gcr.io/keep-test-f3e0/bitcoind:latest
+          image: keepnetwork/bitcoind:0.0.1
           imagePullPolicy: Always
           command:
-            - /app/bitcoind
+            - bitcoind
             - -chain=$(CHAIN)
             - -datadir=/mnt/bitcoind/data
             - -rpcport=8332
