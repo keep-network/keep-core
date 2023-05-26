@@ -22,6 +22,8 @@ spec:
             - -rpcallowip=0.0.0.0/0
             - -rpcuser=$(RPC_USER)
             - -rpcpassword=$(RPC_PASSWORD)
+            - -disablewallet=1
+            - -txindex=1
           env:
             - name: RPC_USER
               valueFrom:
