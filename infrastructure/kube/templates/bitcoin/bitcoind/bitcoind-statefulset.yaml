@@ -8,6 +8,12 @@ spec:
   serviceName: bitcoind
   template:
     spec:
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        # https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#configure-volume-permission-and-ownership-change-policy-for-pods
+        fsGroupChangePolicy: "OnRootMismatch"
       containers:
         - name: bitcoind
           image: keepnetwork/bitcoind:0.0.1
