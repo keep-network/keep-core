@@ -89,7 +89,7 @@ var testConfigs = map[string]testConfig{
 			RequestRetryTimeout: timeout * 2,
 		},
 		errorMessages: expectedErrorMessages{
-			missingTransaction:        "errNo: 2, errMsg: daemon error: DaemonError({'message': 'Transaction not found.', 'code': -1})",
+			missingTransaction:        "errNo: 2, errMsg: daemon error: DaemonError({'code': -5, 'message': 'No such mempool or blockchain transaction. Use gettransaction for wallet transactions.'})",
 			missingBlockHeader:        "errNo: 1, errMsg: height 4,294,967,295 out of range",
 			missingTransactionInBlock: "errNo: 1, errMsg: tx aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa not in block at height 123,456",
 		},
