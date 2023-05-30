@@ -248,10 +248,161 @@ var TxMerkleProof = struct {
 	},
 }
 
+type BitcoinChainData struct {
+	TransactionHash            bitcoin.Hash
+	Transaction                bitcoin.Transaction
+	AccumulatedTxConfirmations uint
+	LatestBlockHeight          uint
+	HeadersChain               map[uint]*bitcoin.BlockHeader
+	TransactionMerkleProof     *bitcoin.TransactionMerkleProof
+}
+
+var AssembleProof = map[string]struct {
+	RequiredConfirmations uint
+	BitcoinChainData      BitcoinChainData
+	ExpectedProof         bitcoin.Proof
+	ExpectedTransaction   bitcoin.Transaction
+}{
+	"single input": {
+		RequiredConfirmations: 6,
+		BitcoinChainData: BitcoinChainData{
+			TransactionHash: hashFromString(
+				"44c568bc0eac07a2a9c2b46829be5b5d46e7d00e17bfb613f506a75ccf86a473",
+			),
+			Transaction: bitcoin.Transaction{
+				Version: 1, // TODO: provide proper version
+				Inputs: []*bitcoin.TransactionInput{
+					{
+						Outpoint: &bitcoin.TransactionOutpoint{
+							TransactionHash: hashFromString(
+								"8ee67b585eeb682bf6907ea311282540ee53edf605e0f09757226a4dc3e72a67",
+							),
+							OutputIndex: 0,
+						},
+						SignatureScript: decodeString(""),
+					},
+				},
+			},
+			AccumulatedTxConfirmations: 7,
+			HeadersChain: map[uint]*bitcoin.BlockHeader{
+				2164152: &bitcoin.BlockHeader{
+					Version: 536928260,
+					PreviousBlockHeaderHash: hashFromStringInternal(
+						"732d33ea35d62f9488cff5d64c0d702afd5d88092230ddfcc45f000000000000",
+					),
+					MerkleRootHash: hashFromStringInternal(
+						"196283ba24a3f5bad91ef95338aa6d214c934f2c1392e39a0447377fe5b0a04b",
+					),
+					Time:  1646051559,
+					Bits:  486604799,
+					Nonce: 655015664,
+				},
+				2164153: &bitcoin.BlockHeader{
+					Version: 536870916,
+					PreviousBlockHeaderHash: hashFromStringInternal(
+						"6c318b23e5c42e86ef3edd080e50c9c233b9f0b6d186bd57e413000000000000",
+					),
+					MerkleRootHash: hashFromStringInternal(
+						"21fb8cda200bff4fec1338d85a1e005bb4d729d908a7c5c232ecd0713231d044",
+					),
+					Time:  1646051678,
+					Bits:  436420333,
+					Nonce: 1850098555,
+				},
+				2164154: &bitcoin.BlockHeader{
+					Version: 536928260,
+					PreviousBlockHeaderHash: hashFromStringInternal(
+						"f416898d79d4a46fa6c54f190ad3d502bad8aa3afdec0714aa00000000000000",
+					),
+					MerkleRootHash: hashFromStringInternal(
+						"0603a5cc15e5906cb4eac9f747869fdc9be856e76a110b4f87da90db20f9fbe2",
+					),
+					Time:  1646051727,
+					Bits:  436420333,
+					Nonce: 3687046933,
+				},
+				2164155: &bitcoin.BlockHeader{
+					Version: 536870916,
+					PreviousBlockHeaderHash: hashFromStringInternal(
+						"642125b3910fdaead521b57955e28893d89f8ce7fd3ba1dd6d01000000000000",
+					),
+					MerkleRootHash: hashFromStringInternal(
+						"f9e17a266a2267ee02d5ab82a75a76805db821a13abd2e80e0950d883311e535",
+					),
+					Time:  1646051933,
+					Bits:  436420333,
+					Nonce: 3288530142,
+				},
+				2164156: &bitcoin.BlockHeader{
+					Version: 536870916,
+					PreviousBlockHeaderHash: hashFromStringInternal(
+						"5b6de55e069be71b21a62cd140dc7031225f7258dc758f19ea01000000000000",
+					),
+					MerkleRootHash: hashFromStringInternal(
+						"139966d27d9ed0c0c1ed9162c2fea2ccf0ba212706f6bc421d0a2b6211de040d"),
+					Time:  1646052378,
+					Bits:  436420333,
+					Nonce: 2404591175,
+				},
+				2164157: &bitcoin.BlockHeader{
+					Version: 536928260,
+					PreviousBlockHeaderHash: hashFromStringInternal(
+						"8475e15e0314635d32abf04c761fee528d6a3f2db3b3d1379800000000000000",
+					),
+					MerkleRootHash: hashFromStringInternal(
+						"2a3fa06fecd9dd4bf2e25e22a95d4f65435d5c5b42bcf498b4e756f9f4ea67ce",
+					),
+					Time:  1646052769,
+					Bits:  436420333,
+					Nonce: 2901638045,
+				},
+				2164158: &bitcoin.BlockHeader{
+					Version: 536870912,
+					PreviousBlockHeaderHash: hashFromStringInternal(
+						"3f16d450c51853a4cd9569d225028aa08ab6139eee31f4f67a01000000000000",
+					),
+					MerkleRootHash: hashFromStringInternal(
+						"4cda79bc48b970de2fb29c3f38626eb9d70d8bae7b92aad09f2a0ad2d2f334d3",
+					),
+					Time:  1646053979,
+					Bits:  486604799,
+					Nonce: 398626564,
+				},
+			},
+			TransactionMerkleProof: &bitcoin.TransactionMerkleProof{
+				BlockHeight: 2164152,
+				MerkleNodes: []string{
+					"122b07a0611ce48cf91fdd97af55d5fa42386ccf41da7612869112c6f2afff7b",
+					"0c33ea7a4510f83b76cec05ffe8a2d196ec62e9b730c65f03f558eeedd76587a",
+					"1f904114a4a9cf51b5a53414473ffbfd11fed3af5086effb39bc19557db6172d",
+					"268033a093cecffa216503032b021959ab572a3e5562fae21c5977b602d17613",
+					"807c774bd8255f1788338fb3a38bdef77c038e6a84eb598c395e67adad3aad43",
+					"9acf100cd329feb55131d58f4573db1fb9b90ff2059ce9c9b393871227c26969",
+					"9c12869b3507cbe390e665c3d3a764e39a9ea88b184dbe5723533d8c4dbc760a",
+				},
+				Position: 11,
+			},
+		},
+	},
+}
+
 func hashFromString(s string) bitcoin.Hash {
 	hash, err := bitcoin.NewHashFromString(
 		s,
 		bitcoin.ReversedByteOrder,
+	)
+	if err != nil {
+		panic(err)
+	}
+
+	return hash
+}
+
+// TODO: Replace with the above function
+func hashFromStringInternal(s string) bitcoin.Hash {
+	hash, err := bitcoin.NewHashFromString(
+		s,
+		bitcoin.InternalByteOrder,
 	)
 	if err != nil {
 		panic(err)

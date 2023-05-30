@@ -10,7 +10,10 @@ var errNoBlocksSet = fmt.Errorf("blockchain does not contain any blocks")
 
 // localBitcoinChain represents a local Bitcoin chain.
 type localBitcoinChain struct {
-	blockHeaders map[uint]*bitcoin.BlockHeader
+	blockHeaders             map[uint]*bitcoin.BlockHeader
+	transactions             map[bitcoin.Hash]*bitcoin.Transaction
+	transactionMerkleProof   *bitcoin.TransactionMerkleProof
+	transactionConfirmations map[bitcoin.Hash]uint
 }
 
 // GetTransaction gets the transaction with the given transaction hash.
@@ -19,7 +22,14 @@ type localBitcoinChain struct {
 func (lc *localBitcoinChain) GetTransaction(
 	transactionHash bitcoin.Hash,
 ) (*bitcoin.Transaction, error) {
-	panic("unsupported")
+	transaction, found := lc.transactions[transactionHash]
+	if !found {
+		return nil, fmt.Errorf(
+			"transaction with hash %v does not exist", transactionHash,
+		)
+	}
+
+	return transaction, nil
 }
 
 // GetTransactionConfirmations gets the number of confirmations for the
@@ -28,7 +38,7 @@ func (lc *localBitcoinChain) GetTransaction(
 func (lc *localBitcoinChain) GetTransactionConfirmations(
 	transactionHash bitcoin.Hash,
 ) (uint, error) {
-	panic("unsupported")
+	return lc.transactionConfirmations[transactionHash], nil
 }
 
 // BroadcastTransaction broadcasts the given transaction over the
@@ -80,7 +90,7 @@ func (lc *localBitcoinChain) GetTransactionMerkleProof(
 	transactionHash bitcoin.Hash,
 	blockHeight uint,
 ) (*bitcoin.TransactionMerkleProof, error) {
-	panic("unsupported")
+	return lc.transactionMerkleProof, nil
 }
 
 func (lc *localBitcoinChain) GetTransactionsForPublicKeyHash(
@@ -101,6 +111,29 @@ func (lc *localBitcoinChain) SetBlockHeaders(
 	blockHeaders map[uint]*bitcoin.BlockHeader,
 ) {
 	lc.blockHeaders = blockHeaders
+}
+
+// SetTransactions sets internal transactions for testing purposes.
+func (lc *localBitcoinChain) SetTransactions(
+	transactions map[bitcoin.Hash]*bitcoin.Transaction,
+) {
+	lc.transactions = transactions
+}
+
+// SetTransactionMerkleProof sets internal transaction Merkle proof for testing
+// purposes.
+func (lc *localBitcoinChain) SetTransactionMerkleProof(
+	transactionMerkleProof *bitcoin.TransactionMerkleProof,
+) {
+	lc.transactionMerkleProof = transactionMerkleProof
+}
+
+// SetTransactionConfirmations sets internal amounts of transaction
+// confirmations for testing purposes.
+func (lc *localBitcoinChain) SetTransactionConfirmations(
+	transactionConfirmations map[bitcoin.Hash]uint,
+) {
+	lc.transactionConfirmations = transactionConfirmations
 }
 
 // connectLocalBitcoinChain connects to the local Bitcoin chain and returns

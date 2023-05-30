@@ -72,7 +72,7 @@ func (bh *BlockHeader) Hash() Hash {
 
 // Proof contains data required to perform a proof that a given transaction was
 // included in the Bitcoin blockchain.
-type Proof struct {
+type Proof struct { // TODO: Possibly make it contain transaction data
 	// MerkleProof is the merkle proof of transaction inclusion in a block, as
 	// an un-prefixed hex string.
 	MerkleProof string
