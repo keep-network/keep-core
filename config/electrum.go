@@ -38,7 +38,7 @@ func readElectrumUrls(network bitcoin.Network) (
 // resolveElectrum checks if Electrum is already configured. If the Electrum URL
 // is empty it reads the Electrum configs from the embedded list for the given
 // network and picks up one randomly.
-func (c *Config) resolveElectrum() error {
+func (c *Config) resolveElectrum(rng *rand.Rand) error {
 	network := c.Bitcoin.Network
 
 	// Return if Electrum is already set.
@@ -70,7 +70,7 @@ func (c *Config) resolveElectrum() error {
 
 	// #nosec G404 (insecure random number source (rand))
 	// Picking up an Electrum server does not require secure randomness.
-	selectedURL := urls[rand.Intn(len(urls))]
+	selectedURL := urls[rng.Intn(len(urls))]
 
 	// Set only the URL in the original config. Other fields may be already set,
 	// and we don't want to override them.

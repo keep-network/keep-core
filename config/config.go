@@ -2,9 +2,11 @@ package config
 
 import (
 	"fmt"
+	"math/rand"
 	"os"
 	"strings"
 	"syscall"
+	"time"
 
 	"github.com/keep-network/keep-core/config/network"
 	"github.com/keep-network/keep-core/pkg/bitcoin"
@@ -148,7 +150,7 @@ func (c *Config) ReadConfig(configFilePath string, flagSet *pflag.FlagSet, categ
 	}
 
 	// Resolve Electrum server.
-	err = c.resolveElectrum()
+	err = c.resolveElectrum(rand.New(rand.NewSource(time.Now().UnixNano())))
 	if err != nil {
 		return fmt.Errorf("failed to resolve Electrum: %w", err)
 	}
