@@ -26,7 +26,7 @@ func TestResolvePeers(t *testing.T) {
 			expectedPeers: []string{
 				"/dns4/bootstrap-0.test.keep.network/tcp/3919/ipfs/16Uiu2HAmCcfVpHwfBKNFbQuhvGuFXHVLQ65gB4sJm7HyrcZuLttH",
 				"/dns4/bootstrap-1.test.keep.network/tcp/3919/ipfs/16Uiu2HAm3eJtyFKAttzJ85NLMromHuRg4yyum3CREMf6CHBBV6KY",
-				"/dns4/bst-a01.test.keep.boar.network/tcp/6004/ipfs/16Uiu2HAmSLDSahiKyTbCNNu8wJmZAsiKF7wuYJ8mogY8ZuAG1jhu",
+				"/dns4/bst-a01.test.keep.boar.network/tcp/6001/ipfs/16Uiu2HAmSLDSahiKyTbCNNu8wJmZAsiKF7wuYJ8mogY8ZuAG1jhu",
 			},
 		},
 		"developer network": {
