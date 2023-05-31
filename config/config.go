@@ -150,6 +150,8 @@ func (c *Config) ReadConfig(configFilePath string, flagSet *pflag.FlagSet, categ
 	}
 
 	// Resolve Electrum server.
+	// #nosec G404 (insecure random number source (rand))
+	// Picking up an Electrum server does not require secure randomness.
 	err = c.resolveElectrum(rand.New(rand.NewSource(time.Now().UnixNano())))
 	if err != nil {
 		return fmt.Errorf("failed to resolve Electrum: %w", err)
