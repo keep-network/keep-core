@@ -8,7 +8,7 @@ import (
 	"github.com/keep-network/keep-core/pkg/bitcoin"
 )
 
-func TestAssembleTransactionProof(t *testing.T) {
+func TestAssembleTransactionProof_SingleInputTransaction(t *testing.T) {
 	// TODO: Rewrite to parametrized test once more cases are added.
 	transactionHash := testData.AssembleProof["single input"].BitcoinChainData.TransactionHash
 	transaction := testData.AssembleProof["single input"].BitcoinChainData.Transaction
@@ -17,6 +17,7 @@ func TestAssembleTransactionProof(t *testing.T) {
 	blockHeaders := testData.AssembleProof["single input"].BitcoinChainData.HeadersChain
 	transactionMerkleProof := testData.AssembleProof["single input"].BitcoinChainData.TransactionMerkleProof
 	expectedProof := testData.AssembleProof["single input"].ExpectedProof
+	expectedTx := &transaction
 
 	bitcoinChain := connectLocalBitcoinChain()
 
@@ -33,7 +34,7 @@ func TestAssembleTransactionProof(t *testing.T) {
 	bitcoinChain.SetBlockHeaders(blockHeaders)
 	bitcoinChain.SetTransactionMerkleProof(transactionMerkleProof)
 
-	_, proof, err := AssembleTransactionProof(
+	tx, proof, err := AssembleTransactionProof(
 		transactionHash,
 		requiredConfirmations,
 		bitcoinChain,
@@ -43,8 +44,17 @@ func TestAssembleTransactionProof(t *testing.T) {
 	}
 
 	if !reflect.DeepEqual(expectedProof, proof) {
-		t.Errorf("unexpected proof\nexpected: %v\nactual:   %v\n", expectedProof, proof)
+		t.Errorf(
+			"unexpected proof\nexpected: %v\nactual:   %v\n",
+			expectedProof,
+			proof,
+		)
 	}
-
-	// TODO: Add check for the returned transaction.
+	if !reflect.DeepEqual(expectedTx, tx) {
+		t.Errorf(
+			"unexpected transaction\nexpected: %v\nactual:   %v\n",
+			expectedTx,
+			tx,
+		)
+	}
 }

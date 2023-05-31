@@ -283,6 +283,14 @@ var AssembleProof = map[string]struct {
 						SignatureScript: decodeString(""),
 					},
 				},
+				Outputs: []*bitcoin.TransactionOutput{
+					{
+						Value: 8400,
+						PublicKeyScript: decodeString(
+							"00148db50eb52063ea9d98b3eac91489a90f738986f6",
+						),
+					},
+				},
 			},
 			AccumulatedTxConfirmations: 7,
 			HeadersChain: map[uint]*bitcoin.BlockHeader{

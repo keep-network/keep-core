@@ -21,7 +21,9 @@ func AssembleTransactionProof(
 		return nil, nil, err
 	}
 
-	confirmations, err := bitcoinClient.GetTransactionConfirmations(transactionHash)
+	confirmations, err := bitcoinClient.GetTransactionConfirmations(
+		transactionHash,
+	)
 	if err != nil {
 		return nil, nil, err
 	}
