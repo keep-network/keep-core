@@ -43,3 +43,18 @@ const (
 	// Bitcoin specification.
 	ReversedByteOrder
 )
+
+// Network is a type used for Bitcoin networks enumeration.
+type Network int
+
+// Bitcoin networks enumeration.
+const (
+	Unknown Network = iota
+	Mainnet
+	Testnet
+	Regtest
+)
+
+func (n Network) String() string {
+	return []string{"unknown", "mainnet", "testnet", "regtest"}[n]
+}

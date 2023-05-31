@@ -153,3 +153,9 @@ func (lbc *localBitcoinChain) GetMempoolForPublicKeyHash(
 
 	return matchingTransactions, nil
 }
+
+func (lbc *localBitcoinChain) EstimateSatPerVByteFee(
+	blocks uint32,
+) (int64, error) {
+	panic("unsupported")
+}

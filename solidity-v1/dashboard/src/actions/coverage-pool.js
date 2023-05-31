@@ -12,9 +12,6 @@ export const COVERAGE_POOL_FETCH_COV_POOL_DATA_SUCCESS =
 export const COVERAGE_POOL_FETCH_COV_POOL_DATA_ERROR =
   "coverage_pool/fetch_cov_pool_data_error"
 
-export const COVERAGE_POOL_ASSET_POOL_DEPOSITED_EVENT_EMITTED =
-  "coverage_pool/asset_pool_deposited_event_emitted"
-
 export const COVERAGE_POOL_WITHDRAWAL_INITIATED_EVENT_EMITTED =
   "coverage_pool/withdrawal_initiated_event_emitted"
 
@@ -27,7 +24,6 @@ export const RISK_MANAGER_AUCTION_CREATED_EVENT_EMITTED =
 export const RISK_MANAGER_AUCTION_CLOSED_EVENT_EMITTED =
   "risk_manager/auction_closed_event_emitted"
 
-export const COVERAGE_POOL_DEPOSIT_ASSET_POOL = "coverage_pool/deposit"
 export const COVERAGE_POOL_WITHDRAW_ASSET_POOL = "coverage_pool/withdraw"
 export const COVERAGE_POOL_CLAIM_TOKENS_FROM_WITHDRAWAL =
   "coverage_pool/claim_tokens"
@@ -92,13 +88,6 @@ export const fetchCovPoolDataSuccess = (data) => {
   }
 }
 
-export const assetPoolDepositedEventEmitted = (event) => {
-  return {
-    type: COVERAGE_POOL_ASSET_POOL_DEPOSITED_EVENT_EMITTED,
-    payload: { event },
-  }
-}
-
 export const coveragePoolWithdrawalInitiatedEventEmitted = (event) => {
   return {
     type: COVERAGE_POOL_WITHDRAWAL_INITIATED_EVENT_EMITTED,
@@ -142,16 +131,6 @@ export const covTokenUpdated = (data) => {
   return {
     type: COVERAGE_POOL_COV_TOKEN_UPDATED,
     payload: data,
-  }
-}
-
-export const depositAssetPool = (amount, meta) => {
-  return {
-    type: COVERAGE_POOL_DEPOSIT_ASSET_POOL,
-    payload: {
-      amount,
-    },
-    meta,
   }
 }
 

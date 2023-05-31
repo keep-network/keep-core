@@ -8,7 +8,7 @@ replace (
 	// here:
 	github.com/btcsuite/btcd => github.com/btcsuite/btcd v0.22.3
 	github.com/btcsuite/btcd/v2 => github.com/btcsuite/btcd v0.23.4
-	github.com/checksum0/go-electrum => github.com/keep-network/go-electrum v0.0.0-20230516144526-567f2c1de4bc
+	github.com/checksum0/go-electrum => github.com/keep-network/go-electrum v0.0.0-20230524074410-befe891c2f8c
 	// Temporary replacement until v1.28.2 is released containing `protodelim` package.
 	// See https://github.com/protocolbuffers/protobuf-go/commit/fb0abd915897428ccfdd6b03b48ad8219751ee54
 	google.golang.org/protobuf/dev => google.golang.org/protobuf v1.28.2-0.20220831092852-f930b1dc76e8
@@ -24,6 +24,7 @@ require (
 	github.com/checksum0/go-electrum v0.0.0-20220912200153-b862ac442cf9
 	github.com/ethereum/go-ethereum v1.10.19
 	github.com/go-test/deep v1.0.8
+	github.com/golang/protobuf v1.5.2
 	github.com/google/gofuzz v1.1.1-0.20200604201612-c04b05f3adfa
 	github.com/hashicorp/go-multierror v1.1.1
 	github.com/ipfs/go-datastore v0.5.1
@@ -53,6 +54,7 @@ require (
 
 require (
 	github.com/StackExchange/wmi v0.0.0-20180116203802-5d049714c4a6 // indirect
+	github.com/aead/siphash v1.0.1 // indirect
 	github.com/agl/ed25519 v0.0.0-20170116200512-5312a6153412 // indirect
 	github.com/benbjohnson/clock v1.3.0 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
@@ -76,7 +78,6 @@ require (
 	github.com/go-task/slim-sprig v0.0.0-20210107165309-348f09dbbbc0 // indirect
 	github.com/godbus/dbus/v5 v5.0.4 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
-	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/google/gopacket v1.1.19 // indirect
 	github.com/google/uuid v1.3.0 // indirect
 	github.com/gorilla/websocket v1.5.0 // indirect
@@ -105,6 +106,7 @@ require (
 	github.com/ipld/go-ipld-prime v0.16.0 // indirect
 	github.com/jackpal/go-nat-pmp v1.0.2 // indirect
 	github.com/jbenet/go-temp-err-catcher v0.1.0 // indirect
+	github.com/kkdai/bstream v0.0.0-20161212061736-f391b8402d23 // indirect
 	github.com/klauspost/compress v1.15.1 // indirect
 	github.com/klauspost/cpuid/v2 v2.0.12 // indirect
 	github.com/koron/go-ssdp v0.0.2 // indirect

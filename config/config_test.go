@@ -13,7 +13,6 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"golang.org/x/exp/slices"
 
-	"github.com/keep-network/keep-core/pkg/bitcoin/electrum"
 	"github.com/keep-network/keep-core/pkg/chain/ethereum"
 	ethereumBeacon "github.com/keep-network/keep-core/pkg/chain/ethereum/beacon/gen"
 	ethereumEcdsa "github.com/keep-network/keep-core/pkg/chain/ethereum/ecdsa/gen"
@@ -131,12 +130,9 @@ func TestReadConfigFromFile(t *testing.T) {
 		},
 		"Bitcoin.Electrum.URL": {
 			readValueFunc: func(c *Config) interface{} { return c.Bitcoin.Electrum.URL },
-			expectedValue: "url.to.electrum:18332",
+			expectedValue: "ssl://url.to.electrum:18332",
 		},
-		"Bitcoin.Electrum.Protocol": {
-			readValueFunc: func(c *Config) interface{} { return c.Bitcoin.Electrum.Protocol },
-			expectedValue: electrum.SSL,
-		},
+
 		"Bitcoin.Electrum.ConnectTimeout": {
 			readValueFunc: func(c *Config) interface{} { return c.Bitcoin.Electrum.ConnectTimeout },
 			expectedValue: 54 * time.Second,

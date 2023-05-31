@@ -3,7 +3,6 @@ package electrum
 import (
 	"context"
 	"crypto/sha256"
-	"crypto/tls"
 	"encoding/hex"
 	"fmt"
 	"math"
@@ -21,6 +20,10 @@ import (
 	"github.com/keep-network/keep-core/pkg/bitcoin"
 	"github.com/keep-network/keep-core/pkg/internal/byteutils"
 )
+
+// TODO: Some problems with Electrum re-connect were detected while developing
+//       integration tests: https://github.com/keep-network/keep-core/issues/3586.
+//       Make sure the problem is resolved soon.
 
 var (
 	supportedProtocolVersions = []string{"1.4"}
@@ -597,33 +600,58 @@ func (c *Connection) getScriptMempool(
 	return convertedItems, nil
 }
 
+// EstimateSatPerVByteFee returns the estimated sat/vbyte fee for a
+// transaction to be confirmed within the given number of blocks.
+func (c *Connection) EstimateSatPerVByteFee(blocks uint32) (int64, error) {
+	// According to Electrum protocol docs, the returned fee is BTC/KB.
+	btcPerKbFee, err := requestWithRetry(
+		c,
+		func(
+			ctx context.Context,
+			client *electrum.Client,
+		) (float32, error) {
+			// TODO: client.GetFee calls Electrum's blockchain.estimatefee underneath.
+			//       According to https://electrumx.readthedocs.io/en/latest/protocol-methods.html#blockchain-estimatefee,
+			//       the blockchain.estimatefee function will be deprecated
+			//       since version 1.4.2 of the protocol. We need to replace it
+			//       somehow once it disappears from Electrum implementations.
+			return client.GetFee(ctx, blocks)
+		})
+	if err != nil {
+		return 0, fmt.Errorf("failed to get fee: [%v]", err)
+	}
+
+	// According to Electrum protocol docs, if the daemon does not have
+	// enough information to make an estimate, the integer -1 is returned.
+	if btcPerKbFee < 0 {
+		return 0, fmt.Errorf(
+			"daemon does not have enough information to make an estimate",
+		)
+	}
+
+	return convertBtcKbToSatVByte(btcPerKbFee), nil
+}
+
+func convertBtcKbToSatVByte(btcPerKbFee float32) int64 {
+	// To convert from BTC/KB to sat/vbyte, we need to multiply by 1e8/1e3.
+	satPerVByte := (1e8 / 1e3) * float64(btcPerKbFee)
+	// Make sure the minimum returned sat/vbyte fee is always 1.
+	satPerVByte = math.Max(satPerVByte, 1)
+	// Round the returned fee to be an integer.
+	return int64(math.Round(satPerVByte))
+}
+
 func (c *Connection) electrumConnect() error {
 	var client *electrum.Client
 	var err error
-	switch c.config.Protocol {
-	case TCP:
-		logger.Debug("establishing TCP connection to electrum server...")
-		client, err = connectWithRetry(
-			c,
-			func(ctx context.Context) (*electrum.Client, error) {
-				return electrum.NewClientTCP(ctx, c.config.URL)
-			},
-		)
-	case SSL:
-		// TODO: Implement certificate verification to be able to disable the `InsecureSkipVerify: true` workaround.
-		// #nosec G402 (TLS InsecureSkipVerify set true)
-		tlsConfig := &tls.Config{InsecureSkipVerify: true}
 
-		logger.Debug("establishing SSL connection to electrum server...")
-		client, err = connectWithRetry(
-			c,
-			func(ctx context.Context) (*electrum.Client, error) {
-				return electrum.NewClientSSL(ctx, c.config.URL, tlsConfig)
-			},
-		)
-	default:
-		err = fmt.Errorf("unsupported protocol: [%s]", c.config.Protocol)
-	}
+	logger.Debug("establishing connection to electrum server...")
+	client, err = connectWithRetry(
+		c,
+		func(ctx context.Context) (*electrum.Client, error) {
+			return electrum.NewClient(ctx, c.config.URL, nil)
+		},
+	)
 
 	if err == nil {
 		c.client = client

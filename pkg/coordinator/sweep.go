@@ -2,9 +2,13 @@ package coordinator
 
 import (
 	"fmt"
+	"math"
 	"math/big"
+	"os"
 	"regexp"
+	"sort"
 	"strconv"
+	"text/tabwriter"
 
 	"github.com/keep-network/keep-core/pkg/bitcoin"
 	"github.com/keep-network/keep-core/pkg/tbtc"
@@ -16,6 +20,7 @@ type btcTransaction = struct {
 }
 
 const requiredFundingTxConfirmations = uint(6)
+const depositScriptByteSize = 92
 
 var (
 	DepositsFormatDescription = `Deposits details should be provided as strings containing:
@@ -125,5 +130,175 @@ func ValidateDepositString(depositString string) error {
 			depositsFormatPattern,
 		)
 	}
+	return nil
+}
+
+// EstimateDepositsSweepFee computes the total fee for the Bitcoin deposits
+// sweep transaction for the given depositsCount. If the provided depositsCount
+// is 0, this function computes the total fee for Bitcoin deposits sweep
+// transactions containing a various number of input deposits, from 1 up to the
+// maximum count allowed by the WalletCoordinator contract. Computed fees for
+// specific deposits counts are printed as table to the standard output,
+// for example:
+//
+// ---------------------------------------------
+// deposits count total fee (satoshis) sat/vbyte
+//              1                  201         1
+//              2                  292         1
+//              3                  384         1
+// ---------------------------------------------
+//
+// While making estimations, this function assumes a sweep transaction
+// consists of:
+// - 1 P2WPKH input being the current wallet main UTXO. That means the produced
+//   fees may be overestimated for the very first sweep transaction of
+//   each wallet.
+// - N P2WSH inputs representing the deposits. Worth noting that real
+//   transactions may contain legacy P2SH deposits as well so produced fees may
+//   be underestimated in some rare cases.
+// - 1 P2WPKH output
+//
+// If any of the estimated fees exceed the maximum fee allowed by the Bridge
+// contract, the maximum fee is returned as result.
+func EstimateDepositsSweepFee(
+	tbtcChain tbtc.Chain,
+	btcChain bitcoin.Chain,
+	depositsCount int,
+) error {
+	_, _, perDepositMaxFee, _, err := tbtcChain.GetDepositParameters()
+	if err != nil {
+		return fmt.Errorf("cannot get deposit tx max fee: [%v]", err)
+	}
+
+	fees := make(map[int]struct {
+		totalFee       int64
+		satPerVByteFee int64
+	})
+	var depositsCountKeys []int
+
+	if depositsCount > 0 {
+		depositsCountKeys = append(depositsCountKeys, depositsCount)
+	} else {
+		sweepMaxSize, err := tbtcChain.GetDepositSweepMaxSize()
+		if err != nil {
+			return fmt.Errorf("cannot get sweep max size: [%v]", sweepMaxSize)
+		}
+
+		for i := 1; i <= int(sweepMaxSize); i++ {
+			depositsCountKeys = append(depositsCountKeys, i)
+		}
+	}
+
+	for _, depositsCountKey := range depositsCountKeys {
+		totalFee, satPerVByteFee, err := estimateDepositsSweepFee(
+			btcChain,
+			depositsCountKey,
+			perDepositMaxFee,
+		)
+		if err != nil {
+			return fmt.Errorf(
+				"cannot estimate fee for deposits count [%v]: [%v]",
+				depositsCountKey,
+				err,
+			)
+		}
+
+		fees[depositsCountKey] = struct {
+			totalFee       int64
+			satPerVByteFee int64
+		}{
+			totalFee:       totalFee,
+			satPerVByteFee: satPerVByteFee,
+		}
+	}
+
+	err = printDepositsSweepFeeTable(fees)
+	if err != nil {
+		return fmt.Errorf("cannot print fees table: [%v]", err)
+	}
+
+	return nil
+}
+
+func estimateDepositsSweepFee(
+	btcChain bitcoin.Chain,
+	depositsCount int,
+	perDepositMaxFee uint64,
+) (int64, int64, error) {
+	transactionSize, err := bitcoin.NewTransactionSizeEstimator().
+		// 1 P2WPKH main UTXO input.
+		AddPublicKeyHashInputs(1, true).
+		// depositsCount P2WSH deposit inputs.
+		AddScriptHashInputs(depositsCount, depositScriptByteSize, true).
+		// 1 P2WPKH output.
+		AddPublicKeyHashOutputs(1, true).
+		VirtualSize()
+	if err != nil {
+		return 0, 0, fmt.Errorf("cannot estimate transaction virtual size: [%v]", err)
+	}
+
+	feeEstimator := bitcoin.NewTransactionFeeEstimator(btcChain)
+
+	totalFee, err := feeEstimator.EstimateFee(transactionSize)
+	if err != nil {
+		return 0, 0, fmt.Errorf("cannot estimate transaction fee: [%v]", err)
+	}
+
+	// Compute the maximum possible total fee for the entire sweep transaction.
+	totalMaxFee := uint64(depositsCount) * perDepositMaxFee
+	// Make sure the proposed total fee does not exceed the maximum possible total fee.
+	totalFee = int64(math.Min(float64(totalFee), float64(totalMaxFee)))
+	// Compute the actual sat/vbyte fee for informational purposes.
+	satPerVByteFee := math.Round(float64(totalFee) / float64(transactionSize))
+
+	return totalFee, int64(satPerVByteFee), nil
+}
+
+func printDepositsSweepFeeTable(
+	fees map[int]struct {
+		totalFee       int64
+		satPerVByteFee int64
+	},
+) error {
+	writer := tabwriter.NewWriter(
+		os.Stdout,
+		2,
+		4,
+		1,
+		' ',
+		tabwriter.AlignRight,
+	)
+
+	_, err := fmt.Fprintf(writer, "deposits count\ttotal fee (satoshis)\tsat/vbyte\t\n")
+	if err != nil {
+		return err
+	}
+
+	var depositsCountKeys []int
+	for depositsCountKey := range fees {
+		depositsCountKeys = append(depositsCountKeys, depositsCountKey)
+	}
+
+	sort.Slice(depositsCountKeys, func(i, j int) bool {
+		return depositsCountKeys[i] < depositsCountKeys[j]
+	})
+
+	for _, depositsCountKey := range depositsCountKeys {
+		_, err := fmt.Fprintf(
+			writer,
+			"%v\t%v\t%v\t\n",
+			depositsCountKey,
+			fees[depositsCountKey].totalFee,
+			fees[depositsCountKey].satPerVByteFee,
+		)
+		if err != nil {
+			return err
+		}
+	}
+
+	if err := writer.Flush(); err != nil {
+		return fmt.Errorf("failed to flush the writer: %v", err)
+	}
+
 	return nil
 }

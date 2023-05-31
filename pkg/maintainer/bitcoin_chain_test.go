@@ -136,6 +136,12 @@ func (lc *localBitcoinChain) SetTransactionConfirmations(
 	lc.transactionConfirmations = transactionConfirmations
 }
 
+func (lc *localBitcoinChain) EstimateSatPerVByteFee(
+	blocks uint32,
+) (int64, error) {
+	panic("unsupported")
+}
+
 // connectLocalBitcoinChain connects to the local Bitcoin chain and returns
 // a chain handle.
 func connectLocalBitcoinChain() *localBitcoinChain {
