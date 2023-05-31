@@ -1,6 +1,7 @@
 package maintainer
 
 import (
+	"reflect"
 	"testing"
 
 	testData "github.com/keep-network/keep-core/internal/testdata/bitcoin"
@@ -15,6 +16,7 @@ func TestAssembleTransactionProof(t *testing.T) {
 	requiredConfirmations := testData.AssembleProof["single input"].RequiredConfirmations
 	blockHeaders := testData.AssembleProof["single input"].BitcoinChainData.HeadersChain
 	transactionMerkleProof := testData.AssembleProof["single input"].BitcoinChainData.TransactionMerkleProof
+	expectedProof := testData.AssembleProof["single input"].ExpectedProof
 
 	bitcoinChain := connectLocalBitcoinChain()
 
@@ -29,10 +31,9 @@ func TestAssembleTransactionProof(t *testing.T) {
 	bitcoinChain.SetTransactionConfirmations(transactionConfirmations)
 
 	bitcoinChain.SetBlockHeaders(blockHeaders)
-
 	bitcoinChain.SetTransactionMerkleProof(transactionMerkleProof)
 
-	_, _, err := AssembleTransactionProof(
+	_, proof, err := AssembleTransactionProof(
 		transactionHash,
 		requiredConfirmations,
 		bitcoinChain,
@@ -41,5 +42,9 @@ func TestAssembleTransactionProof(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	// TODO: Add check for the returned proof and transaction.
+	if !reflect.DeepEqual(expectedProof, proof) {
+		t.Errorf("unexpected proof\nexpected: %v\nactual:   %v\n", expectedProof, proof)
+	}
+
+	// TODO: Add check for the returned transaction.
 }

@@ -261,7 +261,7 @@ type BitcoinChainData struct {
 var AssembleProof = map[string]struct {
 	RequiredConfirmations uint
 	BitcoinChainData      BitcoinChainData
-	ExpectedProof         bitcoin.Proof
+	ExpectedProof         *bitcoin.Proof
 	ExpectedTransaction   bitcoin.Transaction
 }{
 	"single input": {
@@ -373,16 +373,45 @@ var AssembleProof = map[string]struct {
 			TransactionMerkleProof: &bitcoin.TransactionMerkleProof{
 				BlockHeight: 2164152,
 				MerkleNodes: []string{
-					"122b07a0611ce48cf91fdd97af55d5fa42386ccf41da7612869112c6f2afff7b",
-					"0c33ea7a4510f83b76cec05ffe8a2d196ec62e9b730c65f03f558eeedd76587a",
-					"1f904114a4a9cf51b5a53414473ffbfd11fed3af5086effb39bc19557db6172d",
-					"268033a093cecffa216503032b021959ab572a3e5562fae21c5977b602d17613",
-					"807c774bd8255f1788338fb3a38bdef77c038e6a84eb598c395e67adad3aad43",
-					"9acf100cd329feb55131d58f4573db1fb9b90ff2059ce9c9b393871227c26969",
-					"9c12869b3507cbe390e665c3d3a764e39a9ea88b184dbe5723533d8c4dbc760a",
+					"7bffaff2c61291861276da41cf6c3842fad555af97dd1ff98ce41c61a0072b12",
+					"7a5876ddee8e553ff0650c739b2ec66e192d8afe5fc0ce763bf810457aea330c",
+					"2d17b67d5519bc39fbef8650afd3fe11fdfb3f471434a5b551cfa9a41441901f",
+					"1376d102b677591ce2fa62553e2a57ab5919022b03036521facfce93a0338026",
+					"43ad3aadad675e398c59eb846a8e037cf7de8ba3b38f3388175f25d84b777c80",
+					"6969c227128793b3c9e99c05f20fb9b91fdb73458fd53151b5fe29d30c10cf9a",
+					"0a76bc4d8c3d532357be4d188ba89e9ae364a7d3c365e690e3cb07359b86129c",
 				},
 				Position: 11,
 			},
+		},
+		ExpectedProof: &bitcoin.Proof{
+			MerkleProof: decodeString(
+				"122b07a0611ce48cf91fdd97af55d5fa42386ccf41da7612869112c6f2afff7b0c" +
+					"33ea7a4510f83b76cec05ffe8a2d196ec62e9b730c65f03f558eeedd76587a1f90" +
+					"4114a4a9cf51b5a53414473ffbfd11fed3af5086effb39bc19557db6172d268033" +
+					"a093cecffa216503032b021959ab572a3e5562fae21c5977b602d17613807c774b" +
+					"d8255f1788338fb3a38bdef77c038e6a84eb598c395e67adad3aad439acf100cd3" +
+					"29feb55131d58f4573db1fb9b90ff2059ce9c9b393871227c269699c12869b3507" +
+					"cbe390e665c3d3a764e39a9ea88b184dbe5723533d8c4dbc760a",
+			),
+			TxIndexInBlock: 11,
+			BitcoinHeaders: decodeString(
+				"04e00020732d33ea35d62f9488cff5d64c0d702afd5d88092230ddfcc45f000000" +
+					"000000196283ba24a3f5bad91ef95338aa6d214c934f2c1392e39a0447377fe5b0" +
+					"a04be7c01c62ffff001df0be0a27040000206c318b23e5c42e86ef3edd080e50c9" +
+					"c233b9f0b6d186bd57e41300000000000021fb8cda200bff4fec1338d85a1e005b" +
+					"b4d729d908a7c5c232ecd0713231d0445ec11c62ed3e031a7b43466e04e00020f4" +
+					"16898d79d4a46fa6c54f190ad3d502bad8aa3afdec0714aa000000000000000603" +
+					"a5cc15e5906cb4eac9f747869fdc9be856e76a110b4f87da90db20f9fbe28fc11c" +
+					"62ed3e031a15dfc3db04000020642125b3910fdaead521b57955e28893d89f8ce7" +
+					"fd3ba1dd6d01000000000000f9e17a266a2267ee02d5ab82a75a76805db821a13a" +
+					"bd2e80e0950d883311e5355dc21c62ed3e031adefc02c4040000205b6de55e069b" +
+					"e71b21a62cd140dc7031225f7258dc758f19ea01000000000000139966d27d9ed0" +
+					"c0c1ed9162c2fea2ccf0ba212706f6bc421d0a2b6211de040d1ac41c62ed3e031a" +
+					"4726538f04e000208475e15e0314635d32abf04c761fee528d6a3f2db3b3d13798" +
+					"000000000000002a3fa06fecd9dd4bf2e25e22a95d4f65435d5c5b42bcf498b4e7" +
+					"56f9f4ea67cea1c51c62ed3e031a9d7bf3ac",
+			),
 		},
 	},
 }

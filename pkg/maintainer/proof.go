@@ -44,7 +44,7 @@ func AssembleTransactionProof(
 	headersChain, err := getHeadersChain(
 		bitcoinClient,
 		txBlockHeight,
-		requiredConfirmations-1,
+		requiredConfirmations,
 	)
 	if err != nil {
 		return nil, nil, err
@@ -78,20 +78,20 @@ func AssembleTransactionProof(
 // needs to be provided. The transaction inclusion proof in hexadecimal form is
 // returned.
 func CreateMerkleProof(txMerkleBranch *bitcoin.TransactionMerkleProof) (
-	string,
+	[]byte,
 	error,
 ) {
 	var proof bytes.Buffer
 
-	for _, item := range txMerkleBranch.MerkleNodes {
-		hashBytes, err := hex.DecodeString(item)
+	for _, node := range txMerkleBranch.MerkleNodes {
+		hashBytes, err := hex.DecodeString(node)
 		if err != nil {
-			return "", err
+			return nil, err
 		}
 		reversedHash := reverseBytes(hashBytes)
 		proof.Write(reversedHash)
 	}
-	return hex.EncodeToString(proof.Bytes()), nil
+	return proof.Bytes(), nil
 }
 
 // reverseBytes reverses the order of bytes in a byte slice.
@@ -105,22 +105,24 @@ func reverseBytes(b []byte) []byte {
 }
 
 // getHeadersChain gets a chain of Bitcoin block headers that starts at the
-// provided block height and has the specified number of subsequent headers.
+// provided block height and has the specified chain length.
 func getHeadersChain(
 	bitcoinClient bitcoin.Chain,
 	blockHeight uint,
 	chainLength uint,
-) ([]*bitcoin.BlockHeader, error) {
+) ([]byte, error) {
 	// TODO: Consider modifying the Bitcoin chain so that it can return
 	//       multiple headers
-	var blockHeaders []*bitcoin.BlockHeader
+	var headersChain bytes.Buffer
 
-	for i := blockHeight; i <= blockHeight+chainLength; i++ {
+	for i := blockHeight; i < blockHeight+chainLength; i++ {
 		blockHeader, err := bitcoinClient.GetBlockHeader(i)
 		if err != nil {
 			return nil, err
 		}
-		blockHeaders = append(blockHeaders, blockHeader)
+		serializedBlockHeader := blockHeader.Serialize()
+		headersChain.Write(serializedBlockHeader[:])
 	}
-	return blockHeaders, nil
+
+	return headersChain.Bytes(), nil
 }
