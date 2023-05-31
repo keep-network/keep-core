@@ -26,6 +26,9 @@ func TestResolveElectrum(t *testing.T) {
 					URL: "wss://electrum.boar.network:2083",
 				},
 				{
+					URL: "wss://bitcoin.threshold.p2p.org:50004",
+				},
+				{
 					URL:               "ssl://electrum.blockstream.info:50002",
 					KeepAliveInterval: 55 * time.Second,
 				},
