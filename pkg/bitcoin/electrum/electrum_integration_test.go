@@ -24,14 +24,6 @@ import (
 
 const timeout = 2 * time.Second
 
-type serverImplementation int
-
-const (
-	electrumX serverImplementation = iota
-	fulcrum
-	esploraElectrs
-)
-
 type testConfig struct {
 	clientConfig  Config
 	errorMessages expectedErrorMessages
