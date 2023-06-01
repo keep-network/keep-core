@@ -249,23 +249,27 @@ var TxMerkleProof = struct {
 	},
 }
 
-type BitcoinChainData struct {
-	TransactionHash            bitcoin.Hash
-	Transaction                bitcoin.Transaction
-	AccumulatedTxConfirmations uint
-	HeadersChain               map[uint]*bitcoin.BlockHeader
-	TransactionMerkleProof     *bitcoin.TransactionMerkleProof
-}
-
 var AssembleProof = map[string]struct {
 	RequiredConfirmations uint
-	BitcoinChainData      BitcoinChainData
-	ExpectedProof         *bitcoin.Proof
-	ExpectedTransaction   bitcoin.Transaction
+	BitcoinChainData      struct {
+		TransactionHash            bitcoin.Hash
+		Transaction                bitcoin.Transaction
+		AccumulatedTxConfirmations uint
+		HeadersChain               map[uint]*bitcoin.BlockHeader
+		TransactionMerkleProof     *bitcoin.TransactionMerkleProof
+	}
+	ExpectedProof       *bitcoin.Proof
+	ExpectedTransaction bitcoin.Transaction
 }{
 	"single input": {
 		RequiredConfirmations: 6,
-		BitcoinChainData: BitcoinChainData{
+		BitcoinChainData: struct {
+			TransactionHash            bitcoin.Hash
+			Transaction                bitcoin.Transaction
+			AccumulatedTxConfirmations uint
+			HeadersChain               map[uint]*bitcoin.BlockHeader
+			TransactionMerkleProof     *bitcoin.TransactionMerkleProof
+		}{
 			TransactionHash: hashFromString(
 				"44c568bc0eac07a2a9c2b46829be5b5d46e7d00e17bfb613f506a75ccf86a473",
 			),
@@ -421,10 +425,15 @@ var AssembleProof = map[string]struct {
 			),
 		},
 	},
-
 	"multiple inputs": {
 		RequiredConfirmations: 6,
-		BitcoinChainData: BitcoinChainData{
+		BitcoinChainData: struct {
+			TransactionHash            bitcoin.Hash
+			Transaction                bitcoin.Transaction
+			AccumulatedTxConfirmations uint
+			HeadersChain               map[uint]*bitcoin.BlockHeader
+			TransactionMerkleProof     *bitcoin.TransactionMerkleProof
+		}{
 			TransactionHash: hashFromString(
 				"5083822ed0b8d0bc661362b778e666cb572ff6d5152193992dd69d3207995753",
 			),
