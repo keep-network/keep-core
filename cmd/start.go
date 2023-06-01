@@ -104,40 +104,12 @@ func start(cmd *cobra.Command) error {
 			return fmt.Errorf("could not connect to Electrum chain: [%v]", err)
 		}
 
-		storage, err := storage.Initialize(
-			clientConfig.Storage,
-			clientConfig.Ethereum.KeyFilePassword,
-		)
+		beaconKeyStorePersistence,
+			tbtcKeyStorePersistence,
+			tbtcDataPersistence,
+			err := initializePersistence()
 		if err != nil {
-			return fmt.Errorf("cannot initialize storage: [%w]", err)
-		}
-
-		beaconKeyStorePersistence, err := storage.InitializeKeyStorePersistence(
-			"beacon",
-		)
-		if err != nil {
-			return fmt.Errorf(
-				"cannot initialize beacon keystore persistence: [%w]",
-				err,
-			)
-		}
-
-		tbtcKeyStorePersistence, err := storage.InitializeKeyStorePersistence(
-			"tbtc",
-		)
-		if err != nil {
-			return fmt.Errorf(
-				"cannot initialize tbtc keystore persistence: [%w]",
-				err,
-			)
-		}
-
-		tbtcDataPersistence, err := storage.InitializeWorkPersistence("tbtc")
-		if err != nil {
-			return fmt.Errorf(
-				"cannot initialize tbtc data persistence: [%w]",
-				err,
-			)
+			return fmt.Errorf("cannot initialize persistance: [%w]", err)
 		}
 
 		scheduler := generator.StartScheduler()
@@ -257,4 +229,49 @@ func initializeClientInfo(
 	)
 
 	return registry
+}
+
+func initializePersistence() (
+	beaconKeyStorePersistence persistence.ProtectedHandle,
+	tbtcKeyStorePersistence persistence.ProtectedHandle,
+	tbtcDataPersistence persistence.BasicHandle,
+	err error,
+) {
+	storage, err := storage.Initialize(
+		clientConfig.Storage,
+		clientConfig.Ethereum.KeyFilePassword,
+	)
+	if err != nil {
+		return nil, nil, nil, fmt.Errorf("cannot initialize storage: [%w]", err)
+	}
+
+	beaconKeyStorePersistence, err = storage.InitializeKeyStorePersistence(
+		"beacon",
+	)
+	if err != nil {
+		return nil, nil, nil, fmt.Errorf(
+			"cannot initialize beacon keystore persistence: [%w]",
+			err,
+		)
+	}
+
+	tbtcKeyStorePersistence, err = storage.InitializeKeyStorePersistence(
+		"tbtc",
+	)
+	if err != nil {
+		return nil, nil, nil, fmt.Errorf(
+			"cannot initialize tbtc keystore persistence: [%w]",
+			err,
+		)
+	}
+
+	tbtcDataPersistence, err = storage.InitializeWorkPersistence("tbtc")
+	if err != nil {
+		return nil, nil, nil, fmt.Errorf(
+			"cannot initialize tbtc data persistence: [%w]",
+			err,
+		)
+	}
+
+	return
 }
