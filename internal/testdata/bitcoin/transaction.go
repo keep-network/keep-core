@@ -249,6 +249,8 @@ var TxMerkleProof = struct {
 	},
 }
 
+// AssembleProof holds details of the transaction proof data used as a test
+// vector.
 var AssembleProof = map[string]struct {
 	RequiredConfirmations uint
 	BitcoinChainData      struct {
@@ -261,6 +263,7 @@ var AssembleProof = map[string]struct {
 	ExpectedProof       *bitcoin.Proof
 	ExpectedTransaction bitcoin.Transaction
 }{
+	// https://blockstream.info/testnet/api/tx/44c568bc0eac07a2a9c2b46829be5b5d46e7d00e17bfb613f506a75ccf86a473
 	"single input": {
 		RequiredConfirmations: 6,
 		BitcoinChainData: struct {
@@ -426,6 +429,7 @@ var AssembleProof = map[string]struct {
 			),
 		},
 	},
+	// https://blockstream.info/testnet/api/tx/5083822ed0b8d0bc661362b778e666cb572ff6d5152193992dd69d3207995753
 	"multiple inputs": {
 		RequiredConfirmations: 6,
 		BitcoinChainData: struct {
