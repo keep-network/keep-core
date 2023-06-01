@@ -299,11 +299,11 @@ var AssembleProof = map[string]struct {
 			HeadersChain: map[uint]*bitcoin.BlockHeader{
 				2164152: &bitcoin.BlockHeader{
 					Version: 536928260,
-					PreviousBlockHeaderHash: hashFromStringInternal(
-						"732d33ea35d62f9488cff5d64c0d702afd5d88092230ddfcc45f000000000000",
+					PreviousBlockHeaderHash: hashFromString(
+						"0000000000005fc4fcdd302209885dfd2a700d4cd6f5cf88942fd635ea332d73",
 					),
-					MerkleRootHash: hashFromStringInternal(
-						"196283ba24a3f5bad91ef95338aa6d214c934f2c1392e39a0447377fe5b0a04b",
+					MerkleRootHash: hashFromString(
+						"4ba0b0e57f3747049ae392132c4f934c216daa3853f91ed9baf5a324ba836219",
 					),
 					Time:  1646051559,
 					Bits:  486604799,
@@ -311,11 +311,11 @@ var AssembleProof = map[string]struct {
 				},
 				2164153: &bitcoin.BlockHeader{
 					Version: 536870916,
-					PreviousBlockHeaderHash: hashFromStringInternal(
-						"6c318b23e5c42e86ef3edd080e50c9c233b9f0b6d186bd57e413000000000000",
+					PreviousBlockHeaderHash: hashFromString(
+						"00000000000013e457bd86d1b6f0b933c2c9500e08dd3eef862ec4e5238b316c",
 					),
-					MerkleRootHash: hashFromStringInternal(
-						"21fb8cda200bff4fec1338d85a1e005bb4d729d908a7c5c232ecd0713231d044",
+					MerkleRootHash: hashFromString(
+						"44d0313271d0ec32c2c5a708d929d7b45b001e5ad83813ec4fff0b20da8cfb21",
 					),
 					Time:  1646051678,
 					Bits:  436420333,
@@ -323,11 +323,11 @@ var AssembleProof = map[string]struct {
 				},
 				2164154: &bitcoin.BlockHeader{
 					Version: 536928260,
-					PreviousBlockHeaderHash: hashFromStringInternal(
-						"f416898d79d4a46fa6c54f190ad3d502bad8aa3afdec0714aa00000000000000",
+					PreviousBlockHeaderHash: hashFromString(
+						"00000000000000aa1407ecfd3aaad8ba02d5d30a194fc5a66fa4d4798d8916f4",
 					),
-					MerkleRootHash: hashFromStringInternal(
-						"0603a5cc15e5906cb4eac9f747869fdc9be856e76a110b4f87da90db20f9fbe2",
+					MerkleRootHash: hashFromString(
+						"e2fbf920db90da874f0b116ae756e89bdc9f8647f7c9eab46c90e515cca50306",
 					),
 					Time:  1646051727,
 					Bits:  436420333,
@@ -335,11 +335,11 @@ var AssembleProof = map[string]struct {
 				},
 				2164155: &bitcoin.BlockHeader{
 					Version: 536870916,
-					PreviousBlockHeaderHash: hashFromStringInternal(
-						"642125b3910fdaead521b57955e28893d89f8ce7fd3ba1dd6d01000000000000",
+					PreviousBlockHeaderHash: hashFromString(
+						"000000000000016ddda13bfde78c9fd89388e25579b521d5eada0f91b3252164",
 					),
-					MerkleRootHash: hashFromStringInternal(
-						"f9e17a266a2267ee02d5ab82a75a76805db821a13abd2e80e0950d883311e535",
+					MerkleRootHash: hashFromString(
+						"35e51133880d95e0802ebd3aa121b85d80765aa782abd502ee67226a267ae1f9",
 					),
 					Time:  1646051933,
 					Bits:  436420333,
@@ -347,22 +347,23 @@ var AssembleProof = map[string]struct {
 				},
 				2164156: &bitcoin.BlockHeader{
 					Version: 536870916,
-					PreviousBlockHeaderHash: hashFromStringInternal(
-						"5b6de55e069be71b21a62cd140dc7031225f7258dc758f19ea01000000000000",
+					PreviousBlockHeaderHash: hashFromString(
+						"00000000000001ea198f75dc58725f223170dc40d12ca6211be79b065ee56d5b",
 					),
-					MerkleRootHash: hashFromStringInternal(
-						"139966d27d9ed0c0c1ed9162c2fea2ccf0ba212706f6bc421d0a2b6211de040d"),
+					MerkleRootHash: hashFromString(
+						"0d04de11622b0a1d42bcf6062721baf0cca2fec26291edc1c0d09e7dd2669913",
+					),
 					Time:  1646052378,
 					Bits:  436420333,
 					Nonce: 2404591175,
 				},
 				2164157: &bitcoin.BlockHeader{
 					Version: 536928260,
-					PreviousBlockHeaderHash: hashFromStringInternal(
-						"8475e15e0314635d32abf04c761fee528d6a3f2db3b3d1379800000000000000",
+					PreviousBlockHeaderHash: hashFromString(
+						"000000000000009837d1b3b32d3f6a8d52ee1f764cf0ab325d6314035ee17584",
 					),
-					MerkleRootHash: hashFromStringInternal(
-						"2a3fa06fecd9dd4bf2e25e22a95d4f65435d5c5b42bcf498b4e756f9f4ea67ce",
+					MerkleRootHash: hashFromString(
+						"ce67eaf4f956e7b498f4bc425b5c5d43654f5da9225ee2f24bddd9ec6fa03f2a",
 					),
 					Time:  1646052769,
 					Bits:  436420333,
@@ -370,11 +371,11 @@ var AssembleProof = map[string]struct {
 				},
 				2164158: &bitcoin.BlockHeader{
 					Version: 536870912,
-					PreviousBlockHeaderHash: hashFromStringInternal(
-						"3f16d450c51853a4cd9569d225028aa08ab6139eee31f4f67a01000000000000",
+					PreviousBlockHeaderHash: hashFromString(
+						"000000000000017af6f431ee9e13b68aa08a0225d26995cda45318c550d4163f",
 					),
-					MerkleRootHash: hashFromStringInternal(
-						"4cda79bc48b970de2fb29c3f38626eb9d70d8bae7b92aad09f2a0ad2d2f334d3",
+					MerkleRootHash: hashFromString(
+						"d334f3d2d20a2a9fd0aa927bae8b0dd7b96e62383f9cb22fde70b948bc79da4c",
 					),
 					Time:  1646053979,
 					Bits:  486604799,
@@ -488,11 +489,11 @@ var AssembleProof = map[string]struct {
 			HeadersChain: map[uint]*bitcoin.BlockHeader{
 				2164155: &bitcoin.BlockHeader{
 					Version: 536870916,
-					PreviousBlockHeaderHash: hashFromStringInternal(
-						"642125b3910fdaead521b57955e28893d89f8ce7fd3ba1dd6d01000000000000",
+					PreviousBlockHeaderHash: hashFromString(
+						"000000000000016ddda13bfde78c9fd89388e25579b521d5eada0f91b3252164",
 					),
-					MerkleRootHash: hashFromStringInternal(
-						"f9e17a266a2267ee02d5ab82a75a76805db821a13abd2e80e0950d883311e535",
+					MerkleRootHash: hashFromString(
+						"35e51133880d95e0802ebd3aa121b85d80765aa782abd502ee67226a267ae1f9",
 					),
 					Time:  1646051933,
 					Bits:  436420333,
@@ -500,11 +501,11 @@ var AssembleProof = map[string]struct {
 				},
 				2164156: &bitcoin.BlockHeader{
 					Version: 536870916,
-					PreviousBlockHeaderHash: hashFromStringInternal(
-						"5b6de55e069be71b21a62cd140dc7031225f7258dc758f19ea01000000000000",
+					PreviousBlockHeaderHash: hashFromString(
+						"00000000000001ea198f75dc58725f223170dc40d12ca6211be79b065ee56d5b",
 					),
-					MerkleRootHash: hashFromStringInternal(
-						"139966d27d9ed0c0c1ed9162c2fea2ccf0ba212706f6bc421d0a2b6211de040d",
+					MerkleRootHash: hashFromString(
+						"0d04de11622b0a1d42bcf6062721baf0cca2fec26291edc1c0d09e7dd2669913",
 					),
 					Time:  1646052378,
 					Bits:  436420333,
@@ -512,11 +513,11 @@ var AssembleProof = map[string]struct {
 				},
 				2164157: &bitcoin.BlockHeader{
 					Version: 536928260,
-					PreviousBlockHeaderHash: hashFromStringInternal(
-						"8475e15e0314635d32abf04c761fee528d6a3f2db3b3d1379800000000000000",
+					PreviousBlockHeaderHash: hashFromString(
+						"000000000000009837d1b3b32d3f6a8d52ee1f764cf0ab325d6314035ee17584",
 					),
-					MerkleRootHash: hashFromStringInternal(
-						"2a3fa06fecd9dd4bf2e25e22a95d4f65435d5c5b42bcf498b4e756f9f4ea67ce",
+					MerkleRootHash: hashFromString(
+						"ce67eaf4f956e7b498f4bc425b5c5d43654f5da9225ee2f24bddd9ec6fa03f2a",
 					),
 					Time:  1646052769,
 					Bits:  436420333,
@@ -524,11 +525,11 @@ var AssembleProof = map[string]struct {
 				},
 				2164158: &bitcoin.BlockHeader{
 					Version: 536870912,
-					PreviousBlockHeaderHash: hashFromStringInternal(
-						"3f16d450c51853a4cd9569d225028aa08ab6139eee31f4f67a01000000000000",
+					PreviousBlockHeaderHash: hashFromString(
+						"000000000000017af6f431ee9e13b68aa08a0225d26995cda45318c550d4163f",
 					),
-					MerkleRootHash: hashFromStringInternal(
-						"4cda79bc48b970de2fb29c3f38626eb9d70d8bae7b92aad09f2a0ad2d2f334d3",
+					MerkleRootHash: hashFromString(
+						"d334f3d2d20a2a9fd0aa927bae8b0dd7b96e62383f9cb22fde70b948bc79da4c",
 					),
 					Time:  1646053979,
 					Bits:  486604799,
@@ -536,11 +537,11 @@ var AssembleProof = map[string]struct {
 				},
 				2164159: &bitcoin.BlockHeader{
 					Version: 536870912,
-					PreviousBlockHeaderHash: hashFromStringInternal(
-						"687e487acbf5eb375c631a15127fbf7d80ca084461e7f26f92c509b600000000",
+					PreviousBlockHeaderHash: hashFromString(
+						"00000000b609c5926ff2e7614408ca807dbf7f12151a635c37ebf5cb7a487e68",
 					),
-					MerkleRootHash: hashFromStringInternal(
-						"6fad33bd7c8d651bd6dc86c286f0a99340b668f019b9e97a59fd392c36c4f469",
+					MerkleRootHash: hashFromString(
+						"69f4c4362c39fd597ae9b919f068b64093a9f086c286dcd61b658d7cbd33ad6f",
 					),
 					Time:  1646055184,
 					Bits:  486604799,
@@ -548,11 +549,11 @@ var AssembleProof = map[string]struct {
 				},
 				2164160: &bitcoin.BlockHeader{
 					Version: 536870916,
-					PreviousBlockHeaderHash: hashFromStringInternal(
-						"40f4c65610f26f06c4365305b956934501713e01c2fc08b919e0bc1b00000000",
+					PreviousBlockHeaderHash: hashFromString(
+						"000000001bbce019b908fcc2013e7101459356b9055336c4066ff21056c6f440",
 					),
-					MerkleRootHash: hashFromStringInternal(
-						"e401a6a884ba015e83c6fe2cd363e877ef03982e81eaff4e2c95af1e23a670f4",
+					MerkleRootHash: hashFromString(
+						"f470a6231eaf952c4effea812e9803ef77e863d32cfec6835e01ba84a8a601e4",
 					),
 					Time:  1646056455,
 					Bits:  486604799,
@@ -605,19 +606,6 @@ func hashFromString(s string) bitcoin.Hash {
 	hash, err := bitcoin.NewHashFromString(
 		s,
 		bitcoin.ReversedByteOrder,
-	)
-	if err != nil {
-		panic(err)
-	}
-
-	return hash
-}
-
-// TODO: Replace with the above function
-func hashFromStringInternal(s string) bitcoin.Hash {
-	hash, err := bitcoin.NewHashFromString(
-		s,
-		bitcoin.InternalByteOrder,
 	)
 	if err != nil {
 		panic(err)
