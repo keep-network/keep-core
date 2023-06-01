@@ -105,7 +105,7 @@ func start(cmd *cobra.Command) error {
 			tbtcDataPersistence,
 			err := initializePersistence()
 		if err != nil {
-			return fmt.Errorf("cannot initialize persistance: [%w]", err)
+			return fmt.Errorf("cannot initialize persistence: [%w]", err)
 		}
 
 		scheduler := generator.StartScheduler()
