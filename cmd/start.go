@@ -114,7 +114,7 @@ func start(cmd *cobra.Command) error {
 	// Initialize beacon and tbtc only for non-bootstrap nodes.
 	// Skip initialization for bootstrap nodes as they are only used for network
 	// discovery.
-	if !clientConfig.LibP2P.Bootstrap {
+	if !isBootstrap() {
 		btcChain, err := electrum.Connect(ctx, clientConfig.Bitcoin.Electrum)
 		if err != nil {
 			return fmt.Errorf("could not connect to Electrum chain: [%v]", err)
@@ -189,6 +189,9 @@ func start(cmd *cobra.Command) error {
 	return fmt.Errorf("shutting down the node because its context has ended")
 }
 
+func isBootstrap() bool {
+	return clientConfig.LibP2P.Bootstrap
+}
 func initializeClientInfo(
 	ctx context.Context,
 	config *config.Config,
