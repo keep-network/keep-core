@@ -253,7 +253,6 @@ type BitcoinChainData struct {
 	TransactionHash            bitcoin.Hash
 	Transaction                bitcoin.Transaction
 	AccumulatedTxConfirmations uint
-	LatestBlockHeight          uint
 	HeadersChain               map[uint]*bitcoin.BlockHeader
 	TransactionMerkleProof     *bitcoin.TransactionMerkleProof
 }
@@ -419,6 +418,175 @@ var AssembleProof = map[string]struct {
 					"4726538f04e000208475e15e0314635d32abf04c761fee528d6a3f2db3b3d13798" +
 					"000000000000002a3fa06fecd9dd4bf2e25e22a95d4f65435d5c5b42bcf498b4e7" +
 					"56f9f4ea67cea1c51c62ed3e031a9d7bf3ac",
+			),
+		},
+	},
+
+	"multiple inputs": {
+		RequiredConfirmations: 6,
+		BitcoinChainData: BitcoinChainData{
+			TransactionHash: hashFromString(
+				"5083822ed0b8d0bc661362b778e666cb572ff6d5152193992dd69d3207995753",
+			),
+			Transaction: bitcoin.Transaction{
+				Version: 1, // TODO: provide proper version
+				Inputs: []*bitcoin.TransactionInput{
+					{
+						Outpoint: &bitcoin.TransactionOutpoint{
+							TransactionHash: hashFromString(
+								"ea4d9e45f8c1b8a187c007f36ba1e9b201e8511182c7083c4edcaf9325b2998f",
+							),
+							OutputIndex: 0,
+						},
+						SignatureScript: decodeString(""),
+					},
+					{
+						Outpoint: &bitcoin.TransactionOutpoint{
+							TransactionHash: hashFromString(
+								"c844ff4c1781c884bb5e80392398b81b984d7106367ae16675f132bd1a7f33fd",
+							),
+							OutputIndex: 0,
+						},
+						SignatureScript: decodeString(""),
+					}, {
+						Outpoint: &bitcoin.TransactionOutpoint{
+							TransactionHash: hashFromString(
+								"44c568bc0eac07a2a9c2b46829be5b5d46e7d00e17bfb613f506a75ccf86a473",
+							),
+							OutputIndex: 0,
+						},
+						SignatureScript: decodeString(""),
+					}, {
+						Outpoint: &bitcoin.TransactionOutpoint{
+							TransactionHash: hashFromString(
+								"f548c00e464764e112826450a00cf005ca771a6108a629b559b6c60a519e4378",
+							),
+							OutputIndex: 0,
+						},
+						SignatureScript: decodeString(""),
+					},
+				},
+				Outputs: []*bitcoin.TransactionOutput{
+					{
+						Value: 39800,
+						PublicKeyScript: decodeString(
+							"00148db50eb52063ea9d98b3eac91489a90f738986f6",
+						),
+					},
+				},
+			},
+			AccumulatedTxConfirmations: 6,
+			HeadersChain: map[uint]*bitcoin.BlockHeader{
+				2164155: &bitcoin.BlockHeader{
+					Version: 536870916,
+					PreviousBlockHeaderHash: hashFromStringInternal(
+						"642125b3910fdaead521b57955e28893d89f8ce7fd3ba1dd6d01000000000000",
+					),
+					MerkleRootHash: hashFromStringInternal(
+						"f9e17a266a2267ee02d5ab82a75a76805db821a13abd2e80e0950d883311e535",
+					),
+					Time:  1646051933,
+					Bits:  436420333,
+					Nonce: 3288530142,
+				},
+				2164156: &bitcoin.BlockHeader{
+					Version: 536870916,
+					PreviousBlockHeaderHash: hashFromStringInternal(
+						"5b6de55e069be71b21a62cd140dc7031225f7258dc758f19ea01000000000000",
+					),
+					MerkleRootHash: hashFromStringInternal(
+						"139966d27d9ed0c0c1ed9162c2fea2ccf0ba212706f6bc421d0a2b6211de040d",
+					),
+					Time:  1646052378,
+					Bits:  436420333,
+					Nonce: 2404591175,
+				},
+				2164157: &bitcoin.BlockHeader{
+					Version: 536928260,
+					PreviousBlockHeaderHash: hashFromStringInternal(
+						"8475e15e0314635d32abf04c761fee528d6a3f2db3b3d1379800000000000000",
+					),
+					MerkleRootHash: hashFromStringInternal(
+						"2a3fa06fecd9dd4bf2e25e22a95d4f65435d5c5b42bcf498b4e756f9f4ea67ce",
+					),
+					Time:  1646052769,
+					Bits:  436420333,
+					Nonce: 2901638045,
+				},
+				2164158: &bitcoin.BlockHeader{
+					Version: 536870912,
+					PreviousBlockHeaderHash: hashFromStringInternal(
+						"3f16d450c51853a4cd9569d225028aa08ab6139eee31f4f67a01000000000000",
+					),
+					MerkleRootHash: hashFromStringInternal(
+						"4cda79bc48b970de2fb29c3f38626eb9d70d8bae7b92aad09f2a0ad2d2f334d3",
+					),
+					Time:  1646053979,
+					Bits:  486604799,
+					Nonce: 398626564,
+				},
+				2164159: &bitcoin.BlockHeader{
+					Version: 536870912,
+					PreviousBlockHeaderHash: hashFromStringInternal(
+						"687e487acbf5eb375c631a15127fbf7d80ca084461e7f26f92c509b600000000",
+					),
+					MerkleRootHash: hashFromStringInternal(
+						"6fad33bd7c8d651bd6dc86c286f0a99340b668f019b9e97a59fd392c36c4f469",
+					),
+					Time:  1646055184,
+					Bits:  486604799,
+					Nonce: 2863431488,
+				},
+				2164160: &bitcoin.BlockHeader{
+					Version: 536870916,
+					PreviousBlockHeaderHash: hashFromStringInternal(
+						"40f4c65610f26f06c4365305b956934501713e01c2fc08b919e0bc1b00000000",
+					),
+					MerkleRootHash: hashFromStringInternal(
+						"e401a6a884ba015e83c6fe2cd363e877ef03982e81eaff4e2c95af1e23a670f4",
+					),
+					Time:  1646056455,
+					Bits:  486604799,
+					Nonce: 407750232,
+				},
+			},
+			TransactionMerkleProof: &bitcoin.TransactionMerkleProof{
+				BlockHeight: 2164155,
+				MerkleNodes: []string{
+					"322cfdf3ca53cf597b6f08e93489b9a1cfa1f5958c3657474b0d8f5efb5ca92e",
+					"82aedffef6c9670375effee25740fecce143d21f8abf98307235b7ebd31ad4d1",
+					"837fa041b9a8f5b42353fdf8981e3b7a78c61858852e43058bfe6cacf9eab5a3",
+					"a51612d3f3f857e95803a4d86aa6dbbe2e756dc2ed6cc0e04630e8baf597e377",
+					"a00501650e0c4f8a1e07a5d6d5bc5e75e4c75de61a65f0410cce354bbae78686",
+				},
+				Position: 6,
+			},
+		},
+		ExpectedProof: &bitcoin.Proof{
+			MerkleProof: decodeString(
+				"2ea95cfb5e8f0d4b4757368c95f5a1cfa1b98934e9086f7b59cf53caf3fd2c32d1d" +
+					"41ad3ebb735723098bf8a1fd243e1ccfe4057e2feef750367c9f6fedfae82a3b5ea" +
+					"f9ac6cfe8b05432e855818c6787a3b1e98f8fd5323b4f5a8b941a07f8377e397f5b" +
+					"ae83046e0c06cedc26d752ebedba66ad8a40358e957f8f3d31216a58686e7ba4b35" +
+					"ce0c41f0651ae65dc7e4755ebcd5d6a5071e8a4f0c0e650105a0",
+			),
+			TxIndexInBlock: 6,
+			BitcoinHeaders: decodeString(
+				"04000020642125b3910fdaead521b57955e28893d89f8ce7fd3ba1dd6d010000000" +
+					"00000f9e17a266a2267ee02d5ab82a75a76805db821a13abd2e80e0950d883311e5" +
+					"355dc21c62ed3e031adefc02c4040000205b6de55e069be71b21a62cd140dc70312" +
+					"25f7258dc758f19ea01000000000000139966d27d9ed0c0c1ed9162c2fea2ccf0ba" +
+					"212706f6bc421d0a2b6211de040d1ac41c62ed3e031a4726538f04e000208475e15" +
+					"e0314635d32abf04c761fee528d6a3f2db3b3d13798000000000000002a3fa06fec" +
+					"d9dd4bf2e25e22a95d4f65435d5c5b42bcf498b4e756f9f4ea67cea1c51c62ed3e0" +
+					"31a9d7bf3ac000000203f16d450c51853a4cd9569d225028aa08ab6139eee31f4f6" +
+					"7a010000000000004cda79bc48b970de2fb29c3f38626eb9d70d8bae7b92aad09f2" +
+					"a0ad2d2f334d35bca1c62ffff001d048fc21700000020687e487acbf5eb375c631a" +
+					"15127fbf7d80ca084461e7f26f92c509b6000000006fad33bd7c8d651bd6dc86c28" +
+					"6f0a99340b668f019b9e97a59fd392c36c4f46910cf1c62ffff001d407facaa0400" +
+					"002040f4c65610f26f06c4365305b956934501713e01c2fc08b919e0bc1b0000000" +
+					"0e401a6a884ba015e83c6fe2cd363e877ef03982e81eaff4e2c95af1e23a670f407" +
+					"d41c62ffff001d58c64d18",
 			),
 		},
 	},

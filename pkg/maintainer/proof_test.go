@@ -58,3 +58,54 @@ func TestAssembleTransactionProof_SingleInputTransaction(t *testing.T) {
 		)
 	}
 }
+
+func TestAssembleTransactionProof_MultipleInputsTransaction(t *testing.T) {
+	// TODO: Rewrite to parametrized test once more cases are added.
+	transactionHash := testData.AssembleProof["multiple inputs"].BitcoinChainData.TransactionHash
+	transaction := testData.AssembleProof["multiple inputs"].BitcoinChainData.Transaction
+	accumulatedConfirmations := testData.AssembleProof["multiple inputs"].BitcoinChainData.AccumulatedTxConfirmations
+	requiredConfirmations := testData.AssembleProof["multiple inputs"].RequiredConfirmations
+	blockHeaders := testData.AssembleProof["multiple inputs"].BitcoinChainData.HeadersChain
+	transactionMerkleProof := testData.AssembleProof["multiple inputs"].BitcoinChainData.TransactionMerkleProof
+	expectedProof := testData.AssembleProof["multiple inputs"].ExpectedProof
+	expectedTx := &transaction
+
+	bitcoinChain := connectLocalBitcoinChain()
+
+	var transactions = map[bitcoin.Hash]*bitcoin.Transaction{
+		transactionHash: &transaction,
+	}
+	bitcoinChain.SetTransactions(transactions)
+
+	var transactionConfirmations = map[bitcoin.Hash]uint{
+		transactionHash: accumulatedConfirmations,
+	}
+	bitcoinChain.SetTransactionConfirmations(transactionConfirmations)
+
+	bitcoinChain.SetBlockHeaders(blockHeaders)
+	bitcoinChain.SetTransactionMerkleProof(transactionMerkleProof)
+
+	tx, proof, err := AssembleTransactionProof(
+		transactionHash,
+		requiredConfirmations,
+		bitcoinChain,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if !reflect.DeepEqual(expectedProof, proof) {
+		t.Errorf(
+			"unexpected proof\nexpected: %v\nactual:   %v\n",
+			expectedProof,
+			proof,
+		)
+	}
+	if !reflect.DeepEqual(expectedTx, tx) {
+		t.Errorf(
+			"unexpected transaction\nexpected: %v\nactual:   %v\n",
+			expectedTx,
+			tx,
+		)
+	}
+}
