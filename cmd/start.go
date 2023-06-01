@@ -70,30 +70,14 @@ func start(cmd *cobra.Command) error {
 		return fmt.Errorf("error connecting to Ethereum node: [%v]", err)
 	}
 
-	bootstrapPeersPublicKeys, err := libp2p.ExtractPeersPublicKeys(
-		clientConfig.LibP2P.Peers,
-	)
-	if err != nil {
-		return fmt.Errorf(
-			"error extracting bootstrap peers public keys: [%v]",
-			err,
-		)
-	}
-
-	firewall := firewall.AnyApplicationPolicy(
-		[]firewall.Application{beaconChain, tbtcChain},
-		firewall.NewAllowList(bootstrapPeersPublicKeys),
-	)
-
-	netProvider, err := libp2p.Connect(
+	netProvider, err := initializeNetwork(
 		ctx,
-		clientConfig.LibP2P,
+		[]firewall.Application{beaconChain, tbtcChain},
 		operatorPrivateKey,
-		firewall,
-		retransmission.NewTicker(blockCounter.WatchBlocks(ctx)),
+		blockCounter,
 	)
 	if err != nil {
-		return fmt.Errorf("failed while creating the network provider: [%v]", err)
+		return fmt.Errorf("cannot initialize network: [%v]", err)
 	}
 
 	nodeHeader(
@@ -192,6 +176,42 @@ func start(cmd *cobra.Command) error {
 func isBootstrap() bool {
 	return clientConfig.LibP2P.Bootstrap
 }
+
+func initializeNetwork(
+	ctx context.Context,
+	applications []firewall.Application,
+	operatorPrivateKey *operator.PrivateKey,
+	blockCounter chain.BlockCounter,
+) (net.Provider, error) {
+	bootstrapPeersPublicKeys, err := libp2p.ExtractPeersPublicKeys(
+		clientConfig.LibP2P.Peers,
+	)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"error extracting bootstrap peers public keys: [%v]",
+			err,
+		)
+	}
+
+	firewall := firewall.AnyApplicationPolicy(
+		applications,
+		firewall.NewAllowList(bootstrapPeersPublicKeys),
+	)
+
+	netProvider, err := libp2p.Connect(
+		ctx,
+		clientConfig.LibP2P,
+		operatorPrivateKey,
+		firewall,
+		retransmission.NewTicker(blockCounter.WatchBlocks(ctx)),
+	)
+	if err != nil {
+		return nil, fmt.Errorf("failed while creating the network provider: [%v]", err)
+	}
+
+	return netProvider, nil
+}
+
 func initializeClientInfo(
 	ctx context.Context,
 	config *config.Config,
