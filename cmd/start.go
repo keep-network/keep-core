@@ -80,13 +80,6 @@ func start(cmd *cobra.Command) error {
 		return fmt.Errorf("cannot initialize network: [%v]", err)
 	}
 
-	nodeHeader(
-		netProvider.ConnectionManager().AddrStrings(),
-		beaconChain.Signing().Address().String(),
-		clientConfig.LibP2P.Port,
-		clientConfig.Ethereum,
-	)
-
 	clientInfoRegistry := initializeClientInfo(
 		ctx,
 		clientConfig,
@@ -140,6 +133,13 @@ func start(cmd *cobra.Command) error {
 			return fmt.Errorf("error initializing TBTC: [%v]", err)
 		}
 	}
+
+	nodeHeader(
+		netProvider.ConnectionManager().AddrStrings(),
+		beaconChain.Signing().Address().String(),
+		clientConfig.LibP2P.Port,
+		clientConfig.Ethereum,
+	)
 
 	<-ctx.Done()
 	return fmt.Errorf("shutting down the node because its context has ended")
