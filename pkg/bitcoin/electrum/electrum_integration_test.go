@@ -1,79 +1,137 @@
 //go:build integration
-// +build integration
 
-package electrum
+package electrum_test
 
 import (
 	"context"
-	"encoding/hex"
 	"fmt"
 	"math"
 	"reflect"
+	"strings"
 	"testing"
 	"time"
+
+	"golang.org/x/exp/slices"
 
 	"github.com/go-test/deep"
 
 	"github.com/keep-network/keep-core/pkg/bitcoin"
+	"github.com/keep-network/keep-core/pkg/bitcoin/electrum"
 
 	testData "github.com/keep-network/keep-core/internal/testdata/bitcoin"
-)
 
-// TODO: Include integration test in the CI.
-// To run the tests execute `go test -v -tags=integration ./...`
+	_ "unsafe"
+
+	_ "github.com/keep-network/keep-core/config"
+)
 
 const timeout = 2 * time.Second
 
 const blockDelta = 2
 
 type testConfig struct {
-	clientConfig  Config
-	errorMessages expectedErrorMessages
+	clientConfig electrum.Config
+	network      bitcoin.Network
 }
 
 // Servers details were taken from a public Electrum servers list published
 // at https://1209k.com/bitcoin-eye/ele.php?chain=tbtc.
 var testConfigs = map[string]testConfig{
 	"electrs-esplora tcp": {
-		clientConfig: Config{
+		clientConfig: electrum.Config{
 			URL:                 "tcp://electrum.blockstream.info:60001",
 			RequestTimeout:      timeout * 3,
-			RequestRetryTimeout: timeout * 10,
+			RequestRetryTimeout: timeout * 6,
 		},
+		network: bitcoin.Testnet,
 	},
 	"electrs-esplora ssl": {
-		clientConfig: Config{
+		clientConfig: electrum.Config{
 			URL:                 "ssl://electrum.blockstream.info:60002",
-			RequestTimeout:      timeout * 3,
-			RequestRetryTimeout: timeout * 10,
+			RequestTimeout:      timeout * 2,
+			RequestRetryTimeout: timeout * 5,
 		},
+		network: bitcoin.Testnet,
 	},
 	"electrumx tcp": {
-		clientConfig: Config{
+		clientConfig: electrum.Config{
 			URL:                 "tcp://tn.not.fyi:55001",
 			RequestTimeout:      timeout,
 			RequestRetryTimeout: timeout * 2,
 		},
+		network: bitcoin.Testnet,
 	},
 	"electrumx wss": {
-		clientConfig: Config{
+		clientConfig: electrum.Config{
 			URL:                 "wss://electrumx-server.test.tbtc.network:8443",
 			RequestTimeout:      timeout,
 			RequestRetryTimeout: timeout * 2,
 		},
+		network: bitcoin.Testnet,
 	},
 	"fulcrum tcp": {
-		clientConfig: Config{
-			URL:                 "tcp://testnet.aranguren.org:51001",
+		clientConfig: electrum.Config{
+			URL:                 "tcp://blackie.c3-soft.com:57005",
 			RequestTimeout:      timeout,
 			RequestRetryTimeout: timeout * 2,
 		},
+		network: bitcoin.Testnet,
 	},
 }
 
 var invalidTxID bitcoin.Hash
 
+//go:linkname readEmbeddedServers github.com/keep-network/keep-core/config.readElectrumUrls
+func readEmbeddedServers(network bitcoin.Network) ([]string, error)
+
 func init() {
+	var err error
+
+	readServers := func(network bitcoin.Network) error {
+		servers, err := readEmbeddedServers(network)
+		if err != nil {
+			return err
+		}
+
+		for _, server := range servers {
+			serverName := fmt.Sprintf("embedded/%s/%s", network.String(), server)
+			testConfigs[serverName] = testConfig{
+				clientConfig: electrum.Config{
+					URL:                 server,
+					RequestTimeout:      timeout * 2,
+					RequestRetryTimeout: timeout * 4,
+				},
+				network: network,
+			}
+		}
+		return nil
+	}
+
+	if err := readServers(bitcoin.Testnet); err != nil {
+		panic(err)
+	}
+
+	if err := readServers(bitcoin.Mainnet); err != nil {
+		panic(err)
+	}
+
+	// Remove duplicates
+	urls := make(map[string]string)
+	for key, server := range testConfigs {
+		firstName, ok := urls[server.clientConfig.URL]
+		if ok {
+			delete(urls, key)
+			fmt.Printf(
+				"removed server [%s] as a server with the same URL [%s] is already registered under [%s] name\n",
+				key,
+				server.clientConfig.URL,
+				firstName,
+			)
+			continue
+		}
+		urls[server.clientConfig.URL] = key
+	}
+
 	invalidTxID, err = bitcoin.NewHashFromString(
 		"9489457dc2c5a461a0b86394741ef57731605f2c628102de9f4d90afee9ac794",
 		bitcoin.ReversedByteOrder,
