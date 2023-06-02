@@ -84,19 +84,20 @@ func init() {
 }
 
 func TestConnect_Integration(t *testing.T) {
-	for testName, config := range testConfigs {
+	for testName, testConfig := range testConfigs {
 		t.Run(testName, func(t *testing.T) {
-			newTestConnection(t, config.clientConfig)
+			_, cancelCtx := newTestConnection(t, testConfig.clientConfig)
+			defer cancelCtx()
 		})
 	}
 }
 
 func TestGetTransaction_Integration(t *testing.T) {
-	for testName, config := range testConfigs {
-		electrum := newTestConnection(t, config.clientConfig)
-
+	for testName, testConfig := range testConfigs {
 		t.Run(testName, func(t *testing.T) {
 			for txName, tx := range testData.Transactions {
+			electrum, cancelCtx := newTestConnection(t, testConfig.clientConfig)
+			defer cancelCtx()
 				t.Run(txName, func(t *testing.T) {
 					result, err := electrum.GetTransaction(tx.TxHash)
 					if err != nil {
@@ -123,7 +124,8 @@ func TestGetTransaction_Negative_Integration(t *testing.T) {
 
 	for testName, config := range testConfigs {
 		t.Run(testName, func(t *testing.T) {
-			electrum := newTestConnection(t, config.clientConfig)
+			electrum, cancelCtx := newTestConnection(t, testConfig.clientConfig)
+			defer cancelCtx()
 
 			_, err := electrum.GetTransaction(invalidTxID)
 
@@ -141,9 +143,10 @@ func TestGetTransaction_Negative_Integration(t *testing.T) {
 }
 
 func TestGetTransactionConfirmations_Integration(t *testing.T) {
-	for testName, config := range testConfigs {
+	for testName, testConfig := range testConfigs {
 		t.Run(testName, func(t *testing.T) {
-			electrum := newTestConnection(t, config.clientConfig)
+			electrum, cancelCtx := newTestConnection(t, testConfig.clientConfig)
+			defer cancelCtx()
 
 			for txName, tx := range testData.Transactions {
 				t.Run(txName, func(t *testing.T) {
@@ -166,9 +169,10 @@ func TestGetTransactionConfirmations_Integration(t *testing.T) {
 }
 
 func TestGetTransactionConfirmations_Negative_Integration(t *testing.T) {
-	for testName, config := range testConfigs {
+	for testName, testConfig := range testConfigs {
 		t.Run(testName, func(t *testing.T) {
-			electrum := newTestConnection(t, config.clientConfig)
+			electrum, cancelCtx := newTestConnection(t, testConfig.clientConfig)
+			defer cancelCtx()
 
 			_, err := electrum.GetTransactionConfirmations(invalidTxID)
 
@@ -188,9 +192,10 @@ func TestGetTransactionConfirmations_Negative_Integration(t *testing.T) {
 func TestGetLatestBlockHeight_Integration(t *testing.T) {
 	expectedResult := uint(2404094)
 
-	for testName, config := range testConfigs {
+	for testName, testConfig := range testConfigs {
 		t.Run(testName, func(t *testing.T) {
-			electrum := newTestConnection(t, config.clientConfig)
+			electrum, cancelCtx := newTestConnection(t, testConfig.clientConfig)
+			defer cancelCtx()
 
 			result, err := electrum.GetLatestBlockHeight()
 			if err != nil {
@@ -255,9 +260,10 @@ func TestGetBlockHeader_Integration(t *testing.T) {
 func TestGetBlockHeader_Negative_Integration(t *testing.T) {
 	blockHeight := uint(math.MaxUint32)
 
-	for testName, config := range testConfigs {
+	for testName, testConfig := range testConfigs {
 		t.Run(testName, func(t *testing.T) {
-			electrum := newTestConnection(t, config.clientConfig)
+			electrum, cancelCtx := newTestConnection(t, testConfig.clientConfig)
+			defer cancelCtx()
 
 			_, err := electrum.GetBlockHeader(blockHeight)
 
@@ -277,9 +283,10 @@ func TestGetTransactionMerkleProof_Integration(t *testing.T) {
 
 	expectedResult := &testData.TxMerkleProof.MerkleProof
 
-	for testName, config := range testConfigs {
+	for testName, testConfig := range testConfigs {
 		t.Run(testName, func(t *testing.T) {
-			electrum := newTestConnection(t, config.clientConfig)
+		electrum, cancelCtx := newTestConnection(t, testConfig.clientConfig)
+			defer cancelCtx()
 
 			result, err := electrum.GetTransactionMerkleProof(
 				transactionHash,
@@ -299,9 +306,10 @@ func TestGetTransactionMerkleProof_Integration(t *testing.T) {
 func TestGetTransactionMerkleProof_Negative_Integration(t *testing.T) {
 	blockHeight := uint(123456)
 
-	for testName, config := range testConfigs {
+	for testName, testConfig := range testConfigs {
 		t.Run(testName, func(t *testing.T) {
-			electrum := newTestConnection(t, config.clientConfig)
+			electrum, cancelCtx := newTestConnection(t, testConfig.clientConfig)
+			defer cancelCtx()
 
 			_, err := electrum.GetTransactionMerkleProof(
 				invalidTxID,
@@ -344,7 +352,8 @@ func TestGetTransactionsForPublicKeyHash_Integration(t *testing.T) {
 
 	for testName, config := range testConfigs {
 		t.Run(testName, func(t *testing.T) {
-			electrum := newTestConnection(t, config.clientConfig)
+			electrum, cancelCtx := newTestConnection(t, testConfig.clientConfig)
+			defer cancelCtx()
 
 			transactions, err := electrum.GetTransactionsForPublicKeyHash(publicKeyHash, 5)
 			if err != nil {
@@ -369,9 +378,10 @@ func TestGetTransactionsForPublicKeyHash_Integration(t *testing.T) {
 }
 
 func TestEstimateSatPerVByteFee_Integration(t *testing.T) {
-	for testName, config := range testConfigs {
+	for testName, testConfig := range testConfigs {
 		t.Run(testName, func(t *testing.T) {
-			electrum := newTestConnection(t, config.clientConfig)
+			electrum, cancelCtx := newTestConnection(t, testConfig.clientConfig)
+			defer cancelCtx()
 
 			satPerVByteFee, err := electrum.EstimateSatPerVByteFee(1)
 			if err != nil {
@@ -386,13 +396,14 @@ func TestEstimateSatPerVByteFee_Integration(t *testing.T) {
 	}
 }
 
-func newTestConnection(t *testing.T, config Config) bitcoin.Chain {
-	electrum, err := Connect(context.Background(), config)
+func newTestConnection(t *testing.T, config electrum.Config) (bitcoin.Chain, context.CancelFunc) {
+	ctx, cancelCtx := context.WithCancel(context.Background())
+	electrum, err := electrum.Connect(ctx, config)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	return electrum
+	return electrum, cancelCtx
 }
 
 func assertNumberCloseTo(t *testing.T, expected uint, actual uint, delta uint) {
