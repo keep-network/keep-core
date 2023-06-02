@@ -166,14 +166,6 @@ func TestGetTransactionConfirmations_Integration(t *testing.T) {
 }
 
 func TestGetTransactionConfirmations_Negative_Integration(t *testing.T) {
-	invalidTxID, err := bitcoin.NewHashFromString(
-		"ecc246ac58e682c8edccabb6476bb5482df541847b774085cdb8bfc53165cd34",
-		bitcoin.ReversedByteOrder,
-	)
-	if err != nil {
-		t.Fatal(err)
-	}
-
 	for testName, config := range testConfigs {
 		t.Run(testName, func(t *testing.T) {
 			electrum := newTestConnection(t, config.clientConfig)
