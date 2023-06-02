@@ -24,6 +24,8 @@ import (
 
 const timeout = 2 * time.Second
 
+const blockDelta = 2
+
 type testConfig struct {
 	clientConfig  Config
 	errorMessages expectedErrorMessages
@@ -156,7 +158,7 @@ func TestGetTransactionConfirmations_Integration(t *testing.T) {
 						t.Fatal(err)
 					}
 
-					assertConfirmationsCloseTo(t, expectedConfirmations, result)
+					assertNumberCloseTo(t, expectedConfirmations, result, blockDelta)
 				})
 			}
 		})
@@ -401,15 +403,13 @@ func newTestConnection(t *testing.T, config Config) bitcoin.Chain {
 	return electrum
 }
 
-func assertConfirmationsCloseTo(t *testing.T, expected uint, actual uint) {
-	delta := uint(2)
-
+func assertNumberCloseTo(t *testing.T, expected uint, actual uint, delta uint) {
 	min := expected - delta
 	max := expected + delta
 
 	if min > actual || actual > max {
 		t.Errorf(
-			"confirmations number %d out of expected range: [%d,%d]",
+			"value %d is out of expected range: [%d,%d]",
 			actual,
 			min,
 			max,
