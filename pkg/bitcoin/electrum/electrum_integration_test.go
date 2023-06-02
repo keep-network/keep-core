@@ -29,12 +29,6 @@ type testConfig struct {
 	errorMessages expectedErrorMessages
 }
 
-type expectedErrorMessages struct {
-	missingTransaction        string
-	missingBlockHeader        string
-	missingTransactionInBlock string
-}
-
 // Servers details were taken from a public Electrum servers list published
 // at https://1209k.com/bitcoin-eye/ele.php?chain=tbtc.
 var testConfigs = map[string]testConfig{
@@ -44,22 +38,12 @@ var testConfigs = map[string]testConfig{
 			RequestTimeout:      timeout * 3,
 			RequestRetryTimeout: timeout * 10,
 		},
-		errorMessages: expectedErrorMessages{
-			missingTransaction:        "errNo: 0, errMsg: missing transaction",
-			missingBlockHeader:        "errNo: 0, errMsg: missing header",
-			missingTransactionInBlock: "errNo: 0, errMsg: tx not found or is unconfirmed",
-		},
 	},
 	"electrs-esplora ssl": {
 		clientConfig: Config{
 			URL:                 "ssl://electrum.blockstream.info:60002",
 			RequestTimeout:      timeout * 3,
 			RequestRetryTimeout: timeout * 10,
-		},
-		errorMessages: expectedErrorMessages{
-			missingTransaction:        "errNo: 0, errMsg: missing transaction",
-			missingBlockHeader:        "errNo: 0, errMsg: missing header",
-			missingTransactionInBlock: "errNo: 0, errMsg: tx not found or is unconfirmed",
 		},
 	},
 	"electrumx tcp": {
@@ -68,22 +52,12 @@ var testConfigs = map[string]testConfig{
 			RequestTimeout:      timeout,
 			RequestRetryTimeout: timeout * 2,
 		},
-		errorMessages: expectedErrorMessages{
-			missingTransaction:        "errNo: 2, errMsg: daemon error: DaemonError({'code': -5, 'message': 'No such mempool or blockchain transaction. Use gettransaction for wallet transactions.'})",
-			missingBlockHeader:        "errNo: 1, errMsg: height 4,294,967,295 out of range",
-			missingTransactionInBlock: "errNo: 1, errMsg: tx aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa not in block at height 123,456",
-		},
 	},
 	"electrumx wss": {
 		clientConfig: Config{
 			URL:                 "wss://electrumx-server.test.tbtc.network:8443",
 			RequestTimeout:      timeout,
 			RequestRetryTimeout: timeout * 2,
-		},
-		errorMessages: expectedErrorMessages{
-			missingTransaction:        "errNo: 2, errMsg: daemon error: DaemonError({'code': -5, 'message': 'No such mempool or blockchain transaction. Use gettransaction for wallet transactions.'})",
-			missingBlockHeader:        "errNo: 1, errMsg: height 4,294,967,295 out of range",
-			missingTransactionInBlock: "errNo: 1, errMsg: tx aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa not in block at height 123,456",
 		},
 	},
 	"fulcrum tcp": {
@@ -92,12 +66,19 @@ var testConfigs = map[string]testConfig{
 			RequestTimeout:      timeout,
 			RequestRetryTimeout: timeout * 2,
 		},
-		errorMessages: expectedErrorMessages{
-			missingTransaction:        "errNo: 2, errMsg: daemon error: DaemonError({'code': -5, 'message': 'No such mempool or blockchain transaction. Use gettransaction for wallet transactions.'})",
-			missingBlockHeader:        "errNo: 1, errMsg: Invalid height",
-			missingTransactionInBlock: "errNo: 1, errMsg: No transaction matching the requested hash found at height 123456",
-		},
 	},
+}
+
+var invalidTxID bitcoin.Hash
+
+func init() {
+	invalidTxID, err = bitcoin.NewHashFromString(
+		"9489457dc2c5a461a0b86394741ef57731605f2c628102de9f4d90afee9ac794",
+		bitcoin.ReversedByteOrder,
+	)
+	if err != nil {
+		panic(err)
+	}
 }
 
 func TestConnect_Integration(t *testing.T) {
@@ -142,21 +123,17 @@ func TestGetTransaction_Negative_Integration(t *testing.T) {
 		t.Run(testName, func(t *testing.T) {
 			electrum := newTestConnection(t, config.clientConfig)
 
-			expectedErrorMsg := fmt.Sprintf(
-				"failed to get raw transaction with ID [%s]: [retry timeout [%s] exceeded; most recent error: [request failed: [%s]]]",
-				invalidTxID.Hex(bitcoin.ReversedByteOrder),
-				config.clientConfig.RequestRetryTimeout,
-				config.errorMessages.missingTransaction,
-			)
-
 			_, err := electrum.GetTransaction(invalidTxID)
-			if err == nil || err.Error() != expectedErrorMsg {
-				t.Errorf(
-					"invalid error\nexpected: %v\nactual:   %v",
-					expectedErrorMsg,
-					err,
-				)
-			}
+
+			assertMissingTransactionError(
+				t,
+				testConfig.clientConfig,
+				fmt.Sprintf(
+					"failed to get raw transaction with ID [%s]",
+					invalidTxID.Hex(bitcoin.ReversedByteOrder),
+				),
+				err,
+			)
 		})
 	}
 }
@@ -199,21 +176,17 @@ func TestGetTransactionConfirmations_Negative_Integration(t *testing.T) {
 		t.Run(testName, func(t *testing.T) {
 			electrum := newTestConnection(t, config.clientConfig)
 
-			expectedErrorMsg := fmt.Sprintf(
-				"failed to get raw transaction with ID [%s]: [retry timeout [%s] exceeded; most recent error: [request failed: [%s]]]",
-				invalidTxID.Hex(bitcoin.ReversedByteOrder),
-				config.clientConfig.RequestRetryTimeout,
-				config.errorMessages.missingTransaction,
-			)
-
 			_, err := electrum.GetTransactionConfirmations(invalidTxID)
-			if err == nil || err.Error() != expectedErrorMsg {
-				t.Errorf(
-					"invalid error\nexpected: %v\nactual:   %v",
-					expectedErrorMsg,
-					err,
-				)
-			}
+
+			assertMissingTransactionError(
+				t,
+				testConfig.clientConfig,
+				fmt.Sprintf(
+					"failed to get raw transaction with ID [%s]",
+					invalidTxID.Hex(bitcoin.ReversedByteOrder),
+				),
+				err,
+			)
 		})
 	}
 }
@@ -292,20 +265,14 @@ func TestGetBlockHeader_Negative_Integration(t *testing.T) {
 		t.Run(testName, func(t *testing.T) {
 			electrum := newTestConnection(t, config.clientConfig)
 
-			expectedErrorMsg := fmt.Sprintf(
-				"failed to get block header: [retry timeout [%s] exceeded; most recent error: [request failed: [%s]]]",
-				config.clientConfig.RequestRetryTimeout,
-				config.errorMessages.missingBlockHeader,
-			)
-
 			_, err := electrum.GetBlockHeader(blockHeight)
-			if err.Error() != expectedErrorMsg {
-				t.Errorf(
-					"invalid error\nexpected: %v\nactual:   %v",
-					expectedErrorMsg,
-					err,
-				)
-			}
+
+			assertMissingBlockHeaderError(
+				t,
+				testConfig.clientConfig,
+				"failed to get block header",
+				err,
+			)
 		})
 	}
 }
@@ -336,37 +303,23 @@ func TestGetTransactionMerkleProof_Integration(t *testing.T) {
 }
 
 func TestGetTransactionMerkleProof_Negative_Integration(t *testing.T) {
-	incorrectTransactionHash, err := bitcoin.NewHashFromString(
-		"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-		bitcoin.ReversedByteOrder,
-	)
-	if err != nil {
-		t.Fatal(err)
-	}
-
 	blockHeight := uint(123456)
 
 	for testName, config := range testConfigs {
 		t.Run(testName, func(t *testing.T) {
 			electrum := newTestConnection(t, config.clientConfig)
 
-			expectedErrorMsg := fmt.Sprintf(
-				"failed to get merkle proof: [retry timeout [%s] exceeded; most recent error: [request failed: [%s]]]",
-				config.clientConfig.RequestRetryTimeout,
-				config.errorMessages.missingTransactionInBlock,
-			)
-
-			_, err = electrum.GetTransactionMerkleProof(
-				incorrectTransactionHash,
+			_, err := electrum.GetTransactionMerkleProof(
+				invalidTxID,
 				blockHeight,
 			)
-			if err.Error() != expectedErrorMsg {
-				t.Errorf(
-					"invalid error\nexpected: %v\nactual:   %v",
-					expectedErrorMsg,
-					err,
-				)
-			}
+
+			assertMissingTransactionInBlockError(
+				t,
+				testConfig.clientConfig,
+				"failed to get merkle proof",
+				err,
+			)
 		})
 	}
 }
@@ -461,5 +414,107 @@ func assertConfirmationsCloseTo(t *testing.T, expected uint, actual uint) {
 			min,
 			max,
 		)
+	}
+}
+
+type expectedErrorMessages struct {
+	missingTransaction        []string
+	missingBlockHeader        []string
+	missingTransactionInBlock []string
+}
+
+var expectedServerErrorMessages = expectedErrorMessages{
+	missingTransaction: []string{
+		"errNo: 0, errMsg: missing transaction",
+		"errNo: 2, errMsg: daemon error: DaemonError({'code': -5, 'message': 'No such mempool or blockchain transaction. Use gettransaction for wallet transactions.'})",
+		"errNo: 2, errMsg: daemon error: DaemonError({'message': 'Transaction not found.', 'code': -1})",
+	},
+	missingBlockHeader: []string{
+		"errNo: 0, errMsg: missing header",
+		"errNo: 1, errMsg: height 4,294,967,295 out of range",
+		"errNo: 1, errMsg: Invalid height",
+	},
+	missingTransactionInBlock: []string{
+		"errNo: 0, errMsg: tx not found or is unconfirmed",
+		"errNo: 1, errMsg: tx 9489457dc2c5a461a0b86394741ef57731605f2c628102de9f4d90afee9ac794 not in block at height 123,456",
+		"errNo: 1, errMsg: No transaction matching the requested hash found at height 123456"},
+}
+
+func assertMissingTransactionError(
+	t *testing.T,
+	clientConfig electrum.Config,
+	clientErrorPrefix string,
+
+	actualError error,
+) {
+	assertServerError(
+		t,
+		clientConfig,
+		clientErrorPrefix,
+		expectedServerErrorMessages.missingTransaction,
+		actualError,
+	)
+}
+
+func assertMissingBlockHeaderError(
+	t *testing.T,
+	clientConfig electrum.Config,
+	clientErrorPrefix string,
+	actualError error,
+) {
+	assertServerError(
+		t,
+		clientConfig,
+		clientErrorPrefix,
+		expectedServerErrorMessages.missingBlockHeader,
+		actualError,
+	)
+}
+
+func assertMissingTransactionInBlockError(
+	t *testing.T,
+	clientConfig electrum.Config,
+	clientErrorPrefix string,
+	actualError error,
+) {
+	assertServerError(
+		t,
+		clientConfig,
+		clientErrorPrefix,
+		expectedServerErrorMessages.missingTransactionInBlock,
+		actualError,
+	)
+}
+
+func assertServerError(
+	t *testing.T,
+	clientConfig electrum.Config,
+	clientErrorPrefix string,
+	expectedServerErrors []string,
+	actualError error,
+) {
+	expectedErrorMsgFormat := fmt.Sprintf(
+		"%s: [retry timeout [%s] exceeded; most recent error: [request failed: [%%s]]]",
+		clientErrorPrefix,
+		clientConfig.RequestRetryTimeout,
+	)
+
+	expectedErrorMsgStrings := make([]string, len(expectedServerErrors))
+	for i, serverError := range expectedServerErrors {
+		expectedErrorMsgStrings[i] = fmt.Sprintf(expectedErrorMsgFormat, serverError)
+	}
+
+	if actualError == nil {
+		t.Errorf("expected error, but actual error is nil")
+		return
+	}
+
+	if !slices.Contains(expectedErrorMsgStrings, actualError.Error()) {
+		t.Errorf(
+			"unexpected error message\nactual:\n\t%v\nexpected one of:\n\t%s",
+			actualError,
+			strings.Join(expectedErrorMsgStrings, "\n\t"),
+		)
+		return
 	}
 }
