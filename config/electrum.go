@@ -72,7 +72,7 @@ func (c *Config) resolveElectrum(rng *rand.Rand) error {
 	// Picking up an Electrum server does not require secure randomness.
 	selectedURL := urls[rng.Intn(len(urls))]
 
-	logger.Infof("Auto-selecting Electrum server: [%v]", selectedURL)
+	logger.Infof("auto-selecting Electrum server: [%v]", selectedURL)
 
 	// Set only the URL in the original config. Other fields may be already set,
 	// and we don't want to override them.
