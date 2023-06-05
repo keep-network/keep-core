@@ -153,7 +153,6 @@ func TestConnect_Integration(t *testing.T) {
 func TestGetTransaction_Integration(t *testing.T) {
 	for testName, testConfig := range testConfigs {
 		t.Run(testName, func(t *testing.T) {
-			for txName, tx := range testData.Transactions {
 			electrum, cancelCtx := newTestConnection(t, testConfig.clientConfig)
 			defer cancelCtx()
 
