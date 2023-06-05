@@ -277,7 +277,7 @@ var AssembleProof = map[string]struct {
 				"44c568bc0eac07a2a9c2b46829be5b5d46e7d00e17bfb613f506a75ccf86a473",
 			),
 			Transaction: bitcoin.Transaction{
-				Version: 1, // TODO: provide proper version
+				Version: 1,
 				Inputs: []*bitcoin.TransactionInput{
 					{
 						Outpoint: &bitcoin.TransactionOutpoint{
@@ -297,6 +297,7 @@ var AssembleProof = map[string]struct {
 						),
 					},
 				},
+				Locktime: 0,
 			},
 			AccumulatedTxConfirmations: 7,
 			HeadersChain: map[uint]*bitcoin.BlockHeader{
@@ -443,7 +444,7 @@ var AssembleProof = map[string]struct {
 				"5083822ed0b8d0bc661362b778e666cb572ff6d5152193992dd69d3207995753",
 			),
 			Transaction: bitcoin.Transaction{
-				Version: 1, // TODO: provide proper version
+				Version: 1,
 				Inputs: []*bitcoin.TransactionInput{
 					{
 						Outpoint: &bitcoin.TransactionOutpoint{
@@ -488,6 +489,7 @@ var AssembleProof = map[string]struct {
 						),
 					},
 				},
+				Locktime: 0,
 			},
 			AccumulatedTxConfirmations: 6,
 			HeadersChain: map[uint]*bitcoin.BlockHeader{
