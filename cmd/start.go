@@ -62,11 +62,6 @@ Environment variables:
 func start(cmd *cobra.Command) error {
 	ctx := context.Background()
 
-	logger.Infof(
-		"Starting the client against [%s] ethereum network...",
-		clientConfig.Ethereum.Network,
-	)
-
 	beaconChain, tbtcChain, blockCounter, signing, operatorPrivateKey, err :=
 		ethereum.Connect(ctx, clientConfig.Ethereum)
 	if err != nil {
