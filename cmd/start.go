@@ -3,6 +3,7 @@ package cmd
 import (
 	"context"
 	"fmt"
+
 	"github.com/keep-network/keep-core/pkg/bitcoin/electrum"
 
 	"github.com/spf13/cobra"
@@ -58,11 +59,6 @@ Environment variables:
 // start starts a node
 func start(cmd *cobra.Command) error {
 	ctx := context.Background()
-
-	logger.Infof(
-		"Starting the client against [%s] ethereum network...",
-		clientConfig.Ethereum.Network,
-	)
 
 	beaconChain, tbtcChain, blockCounter, signing, operatorPrivateKey, err :=
 		ethereum.Connect(ctx, clientConfig.Ethereum)

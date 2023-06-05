@@ -92,6 +92,12 @@ func (c *Config) resolveNetworks(flagSet *pflag.FlagSet) (network.Type, error) {
 	c.Ethereum.Network = clientNetwork.Ethereum()
 	c.Bitcoin.Network = clientNetwork.Bitcoin()
 
+	logger.Infof(
+		"using [%v] Ethereum network and [%v] Bitcoin network",
+		c.Ethereum.Network,
+		c.Bitcoin.Network,
+	)
+
 	return clientNetwork, err
 }
 

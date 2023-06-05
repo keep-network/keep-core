@@ -65,6 +65,8 @@ func (c *Config) resolveElectrum() error {
 	// Picking up an Electrum server does not require secure randomness.
 	selectedURL := urls[rand.Intn(len(urls))]
 
+	logger.Infof("Auto-selecting Electrum server: [%v]", selectedURL)
+
 	// Set only the URL in the original config. Other fields may be already set,
 	// and we don't want to override them.
 	c.Bitcoin.Electrum.URL = selectedURL

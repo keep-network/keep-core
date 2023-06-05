@@ -679,8 +679,7 @@ func (c *Connection) verifyServer() error {
 	}
 
 	logger.Infof(
-		"connected to [%s] electrum server [version: [%s], protocol: [%s]]",
-		c.config.URL,
+		"connected to electrum server [version: [%s], protocol: [%s]]",
 		server.version,
 		server.protocol,
 	)
