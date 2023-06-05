@@ -25,7 +25,7 @@ import (
 	_ "github.com/keep-network/keep-core/config"
 )
 
-const timeout = 2 * time.Second
+const timeout = 4 * time.Second
 
 const blockDelta = 2
 
