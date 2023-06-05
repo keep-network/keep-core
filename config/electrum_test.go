@@ -1,60 +1,101 @@
 package config
 
 import (
+	"math/rand"
 	"reflect"
 	"testing"
+	"time"
+
+	"github.com/go-test/deep"
 
 	"github.com/keep-network/keep-core/pkg/bitcoin"
+	"github.com/keep-network/keep-core/pkg/bitcoin/electrum"
 )
 
 func TestResolveElectrum(t *testing.T) {
-	var tests = map[string]struct {
-		network       bitcoin.Network
-		expectedURL   string
-		expectedError error
+	var tests = map[bitcoin.Network]struct {
+		expectedConfig []electrum.Config
+		expectedError  error
 	}{
-		"mainnet network": {
-			network:     bitcoin.Mainnet,
-			expectedURL: "ssl://electrum.blockstream.info:50002",
+		bitcoin.Mainnet: {
+			expectedConfig: []electrum.Config{
+				{
+					URL: "wss://electrumx-server.tbtc.network:8443",
+				},
+				{
+					URL: "wss://electrum.boar.network:2083",
+				},
+				{
+					URL: "wss://bitcoin.threshold.p2p.org:50004",
+				},
+				{
+					URL:               "ssl://electrum.blockstream.info:50002",
+					KeepAliveInterval: 55 * time.Second,
+				},
+			},
 		},
-		"testnet network": {
-			network:     bitcoin.Testnet,
-			expectedURL: "ssl://electrum.blockstream.info:60002",
+		bitcoin.Testnet: {
+			expectedConfig: []electrum.Config{
+				{
+					URL: "wss://electrumx-server.test.tbtc.network:8443",
+				},
+				{
+					URL:               "ssl://electrum.blockstream.info:60002",
+					KeepAliveInterval: 55 * time.Second,
+				},
+			}},
+		bitcoin.Regtest: {
+			expectedConfig: []electrum.Config{
+				{
+					URL:               "",
+					KeepAliveInterval: 0,
+				},
+			},
 		},
-		"regtest network": {
-			network:     bitcoin.Regtest,
-			expectedURL: "",
-		},
-		"unknown network": {
-			network:     bitcoin.Unknown,
-			expectedURL: "",
+		bitcoin.Unknown: {
+			expectedConfig: []electrum.Config{
+				{
+					URL:               "",
+					KeepAliveInterval: 0,
+				},
+			},
 		},
 	}
 
-	for testName, test := range tests {
-		t.Run(testName, func(t *testing.T) {
-			cfg := &Config{}
-			cfg.Bitcoin.Network = test.network
+	for bitcoinNetwork, test := range tests {
+		t.Run(bitcoinNetwork.String(), func(t *testing.T) {
+			for i, expectedConfig := range test.expectedConfig {
+				rand := rand.New(&fakeRandSource{int64(i)})
 
-			err := cfg.resolveElectrum()
-			if !reflect.DeepEqual(test.expectedError, err) {
-				t.Errorf(
-					"unexpected error\nexpected: %+v\nactual:   %+v\n",
-					test.expectedError,
-					err,
-				)
-			}
+				cfg := &Config{}
+				cfg.Bitcoin.Network = bitcoinNetwork
 
-			resolvedConfig := cfg.Bitcoin.Electrum
-			if !reflect.DeepEqual(test.expectedURL, resolvedConfig.URL) {
-				t.Errorf(
-					"expected URL doesn't match resolved URL\n"+
-						"expected: %+v\n"+
-						"actual:   %+v\n",
-					test.expectedURL,
-					resolvedConfig.URL,
-				)
+				err := cfg.resolveElectrum(rand)
+				if !reflect.DeepEqual(test.expectedError, err) {
+					t.Errorf(
+						"unexpected error\nexpected: %+v\nactual:   %+v\n",
+						test.expectedError,
+						err,
+					)
+				}
+
+				resolvedConfig := cfg.Bitcoin.Electrum
+
+				if diff := deep.Equal(resolvedConfig, expectedConfig); diff != nil {
+					t.Errorf("compare failed: %v", diff)
+				}
 			}
 		})
 	}
+}
+
+type fakeRandSource struct {
+	expectedValue int64
+}
+
+func (s *fakeRandSource) Int63() int64 {
+	return s.expectedValue << 32
+}
+func (s *fakeRandSource) Seed(expectedValue int64) {
+	s.expectedValue = expectedValue
 }
