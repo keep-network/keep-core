@@ -7,6 +7,7 @@ import (
 
 	"github.com/keep-network/keep-core/pkg/bitcoin"
 
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/operator"
 	"github.com/keep-network/keep-core/pkg/protocol/group"
@@ -356,6 +357,16 @@ type WalletCoordinatorChain interface {
 	// GetDepositSweepMaxSize gets the maximum number of deposits that can
 	// be part of a deposit sweep proposal.
 	GetDepositSweepMaxSize() (uint16, error)
+
+	// SubmitDepositSweepProof submits the deposit sweep proof. It is used to
+	// prove the deposit sweep Bitcoin transaction and updates depositors'
+	// balances.
+	SubmitDepositSweepProof(
+		proof *bitcoin.Proof,
+		transaction *bitcoin.Transaction,
+		mainUTXO *bitcoin.UnspentTransactionOutput,
+		vault common.Address,
+	) error
 }
 
 // HeartbeatRequestSubmittedEvent represents a wallet heartbeat request

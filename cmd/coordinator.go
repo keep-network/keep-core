@@ -5,6 +5,7 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/keep-network/keep-core/config"
 	"github.com/keep-network/keep-core/pkg/bitcoin"
 	"github.com/keep-network/keep-core/pkg/bitcoin/electrum"
@@ -279,12 +280,20 @@ var submitDepositSweepProofCommand = cobra.Command{
 			return fmt.Errorf("failed to assemble transaction proof: %v", err)
 		}
 
-		fmt.Println("transaction: ", transaction)
-		fmt.Println("proof: ", proof)
-
-		// TODO: Convert transaction's fields into byte arrays.
 		// TODO: Get the wallet's main UTXO.
-		// TODO: Submit the gathered data to the Bridge contract.
+		mainUTXO := &bitcoin.UnspentTransactionOutput{}
+
+		// TODO: Get the wallet's vault.
+		vault := common.Address{}
+
+		if err := tbtcChain.SubmitDepositSweepProof(
+			proof,
+			transaction,
+			mainUTXO,
+			vault,
+		); err != nil {
+			return fmt.Errorf("failed to submit deposit sweep proof: %v", err)
+		}
 
 		return nil
 	},
