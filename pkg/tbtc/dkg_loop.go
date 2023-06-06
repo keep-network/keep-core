@@ -26,7 +26,7 @@ const (
 	dkgAttemptAnnouncementActiveBlocks = 5
 	// dkgAttemptProtocolBlocks determines the maximum block duration of the
 	// actual protocol computations.
-	dkgAttemptMaximumProtocolBlocks = 150
+	dkgAttemptMaximumProtocolBlocks = 200
 	// dkgAttemptCoolDownBlocks determines the duration of the cool down
 	// period that is preserved between subsequent DKG attempts.
 	dkgAttemptCoolDownBlocks = 5
