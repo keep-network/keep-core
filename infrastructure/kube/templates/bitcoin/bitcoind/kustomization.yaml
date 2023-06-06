@@ -2,6 +2,7 @@ resources:
   - bitcoind-service.yaml
   - bitcoind-statefulset.yaml
   - bitcoind-storageclass.yaml
+  - bitcoind-volumesnapshotclass.yaml
 
 commonLabels:
   chain: bitcoin
