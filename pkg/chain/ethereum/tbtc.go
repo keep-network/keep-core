@@ -1120,6 +1120,10 @@ func (tc *TbtcChain) GetDepositParameters() (
 	return
 }
 
+func (tc *TbtcChain) TxProofDifficultyFactor() (*big.Int, error) {
+	return tc.bridge.TxProofDifficultyFactor()
+}
+
 func buildDepositKey(
 	fundingTxHash bitcoin.Hash,
 	fundingOutputIndex uint32,

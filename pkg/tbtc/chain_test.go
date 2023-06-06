@@ -573,6 +573,10 @@ func (lc *localChain) GetDepositParameters() (
 	panic("unsupported")
 }
 
+func (lc *localChain) TxProofDifficultyFactor() (*big.Int, error) {
+	panic("unsupported")
+}
+
 func buildDepositRequestKey(
 	fundingTxHash bitcoin.Hash,
 	fundingOutputIndex uint32,

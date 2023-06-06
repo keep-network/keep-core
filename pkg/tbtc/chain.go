@@ -222,6 +222,10 @@ type BridgeChain interface {
 		revealAheadPeriod uint32,
 		err error,
 	)
+
+	// TxProofDifficultyFactor returns the number of confirmations on the
+	// Bitcoin chain required to successfully evaluate an SPV proof.
+	TxProofDifficultyFactor() (*big.Int, error)
 }
 
 // HeartbeatRequestedEvent represents a Bridge heartbeat request event.

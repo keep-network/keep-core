@@ -6,9 +6,11 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/keep-network/keep-core/config"
+	"github.com/keep-network/keep-core/pkg/bitcoin"
 	"github.com/keep-network/keep-core/pkg/bitcoin/electrum"
 	"github.com/keep-network/keep-core/pkg/chain/ethereum"
 	"github.com/keep-network/keep-core/pkg/coordinator"
+	"github.com/keep-network/keep-core/pkg/maintainer"
 )
 
 var (
@@ -28,6 +30,9 @@ var (
 
 	// estimateDepositsSweepFeeCommand:
 	depositsCountFlagName = "deposits-count"
+
+	// submitDepositSweepProofCommand:
+	transactionHashFlagName = "transaction-hash"
 )
 
 // CoordinatorCommand contains the definition of tBTC Wallet Coordinator tools.
@@ -161,7 +166,7 @@ var proposeDepositsSweepCommand = cobra.Command{
 	},
 }
 
-var proposeDepositsSweepCommandDescription = `Submits a deposits sweep proposal to 
+var proposeDepositsSweepCommandDescription = `Submits a deposits sweep proposal to
 the chain.
 Expects --wallet and --fee flags along with deposits to sweep provided
 as arguments.
@@ -216,6 +221,77 @@ var estimateDepositsSweepFeeCommandDescription = "Estimates the satoshi " +
 	"estimation may be underpriced if the actual transaction contains " +
 	"legacy P2SH deposits. If the estimated fee exceeds the maximum fee " +
 	"allowed by the Bridge contract, the maximum fee is returned as result"
+
+var submitDepositSweepProofCommand = cobra.Command{
+	Use:              "submit-deposit-sweep-proof",
+	Short:            "submit deposit sweep proof",
+	Long:             submitDepositSweepProofCommandDescription,
+	TraverseChildren: true,
+	RunE: func(cmd *cobra.Command, args []string) error {
+		ctx := cmd.Context()
+
+		_, tbtcChain, _, _, _, err := ethereum.Connect(
+			ctx,
+			clientConfig.Ethereum,
+		)
+		if err != nil {
+			return fmt.Errorf(
+				"could not connect to Ethereum chain: [%v]",
+				err,
+			)
+		}
+
+		btcChain, err := electrum.Connect(ctx, clientConfig.Bitcoin.Electrum)
+		if err != nil {
+			return fmt.Errorf("could not connect to Electrum chain: %v", err)
+		}
+
+		transactionHashFlag, err := cmd.Flags().GetString(transactionHashFlagName)
+		if err != nil {
+			return fmt.Errorf("failed to find transaction hash flag: %v", err)
+		}
+
+		transactionHash, err := bitcoin.NewHashFromString(
+			transactionHashFlag,
+			bitcoin.ReversedByteOrder,
+		)
+		if err != nil {
+			return fmt.Errorf("failed to parse transaction hash flag: %v", err)
+		}
+
+		// TODO: Due to how the Bridge contract checks the accumulated difficulty
+		//       it may be necessary to increment the required confirmations
+		//       by one.
+		requiredConfirmations, err := tbtcChain.TxProofDifficultyFactor()
+		if err != nil {
+			return fmt.Errorf(
+				"failed to get transaction proof difficulty factor: %v",
+				err,
+			)
+		}
+
+		transaction, proof, err := maintainer.AssembleTransactionProof(
+			transactionHash,
+			uint(requiredConfirmations.Uint64()),
+			btcChain,
+		)
+		if err != nil {
+			return fmt.Errorf("failed to assemble transaction proof: %v", err)
+		}
+
+		fmt.Println("transaction: ", transaction)
+		fmt.Println("proof: ", proof)
+
+		// TODO: Convert transaction's fields into byte arrays.
+		// TODO: Get the wallet's main UTXO.
+		// TODO: Submit the gathered data to the Bridge contract.
+
+		return nil
+	},
+}
+
+var submitDepositSweepProofCommandDescription = "Submits deposit sweep proof " +
+	"to the Bridge contract"
 
 func init() {
 	initFlags(
@@ -292,4 +368,15 @@ func init() {
 	)
 
 	CoordinatorCommand.AddCommand(&estimateDepositsSweepFeeCommand)
+
+	// Submit Deposit Sweep Proof Subcommand.
+
+	submitDepositSweepProofCommand.Flags().String(
+		transactionHashFlagName,
+		"",
+		"transaction hash the proof will be prepared for (the format should "+
+			"be the same as in Bitcoin explorers)",
+	)
+
+	CoordinatorCommand.AddCommand(&submitDepositSweepProofCommand)
 }
