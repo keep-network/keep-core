@@ -16,11 +16,6 @@ func AssembleTransactionProof(
 	requiredConfirmations uint,
 	btcChain bitcoin.Chain,
 ) (*bitcoin.Transaction, *bitcoin.SpvProof, error) {
-	transaction, err := btcChain.GetTransaction(transactionHash)
-	if err != nil {
-		return nil, nil, err
-	}
-
 	confirmations, err := btcChain.GetTransactionConfirmations(
 		transactionHash,
 	)
@@ -34,6 +29,11 @@ func AssembleTransactionProof(
 			confirmations,
 			requiredConfirmations,
 		)
+	}
+
+	transaction, err := btcChain.GetTransaction(transactionHash)
+	if err != nil {
+		return nil, nil, err
 	}
 
 	latestBlockHeight, err := btcChain.GetLatestBlockHeight()
