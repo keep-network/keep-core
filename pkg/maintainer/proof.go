@@ -14,14 +14,14 @@ import (
 func AssembleTransactionProof(
 	transactionHash bitcoin.Hash,
 	requiredConfirmations uint,
-	bitcoinClient bitcoin.Chain,
+	btcChain bitcoin.Chain,
 ) (*bitcoin.Transaction, *bitcoin.SpvProof, error) {
-	transaction, err := bitcoinClient.GetTransaction(transactionHash)
+	transaction, err := btcChain.GetTransaction(transactionHash)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	confirmations, err := bitcoinClient.GetTransactionConfirmations(
+	confirmations, err := btcChain.GetTransactionConfirmations(
 		transactionHash,
 	)
 	if err != nil {
@@ -36,7 +36,7 @@ func AssembleTransactionProof(
 		)
 	}
 
-	latestBlockHeight, err := bitcoinClient.GetLatestBlockHeight()
+	latestBlockHeight, err := btcChain.GetLatestBlockHeight()
 	if err != nil {
 		return nil, nil, err
 	}
@@ -44,7 +44,7 @@ func AssembleTransactionProof(
 	txBlockHeight := latestBlockHeight - confirmations + 1
 
 	headersChain, err := getHeadersChain(
-		bitcoinClient,
+		btcChain,
 		txBlockHeight,
 		requiredConfirmations,
 	)
@@ -52,7 +52,7 @@ func AssembleTransactionProof(
 		return nil, nil, err
 	}
 
-	merkleBranch, err := bitcoinClient.GetTransactionMerkleProof(
+	merkleBranch, err := btcChain.GetTransactionMerkleProof(
 		transactionHash,
 		txBlockHeight,
 	)
