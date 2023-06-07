@@ -29,6 +29,7 @@ patches:
       metadata:
         name: bitcoind
       spec:
+        replicas: 2
         volumeClaimTemplates:
           - metadata:
               name: bitcoind-data
