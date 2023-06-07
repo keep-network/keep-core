@@ -60,7 +60,7 @@ func AssembleTransactionProof(
 		return nil, nil, err
 	}
 
-	merkleProof, err := CreateMerkleProof(merkleBranch)
+	merkleProof, err := createMerkleProof(merkleBranch)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to create Merkle proof [%w]", err)
 	}
@@ -74,12 +74,12 @@ func AssembleTransactionProof(
 	return transaction, proof, nil
 }
 
-// CreateMerkleProof creates a proof of transaction inclusion in the block by
+// createMerkleProof creates a proof of transaction inclusion in the block by
 // concatenating 32-byte-long hash values. The values are converted to the
 // little endian form. The branch of a Merkle tree leading to a transaction
 // needs to be provided. The transaction inclusion proof in hexadecimal form is
 // returned.
-func CreateMerkleProof(txMerkleBranch *bitcoin.TransactionMerkleProof) (
+func createMerkleProof(txMerkleBranch *bitcoin.TransactionMerkleProof) (
 	[]byte,
 	error,
 ) {
