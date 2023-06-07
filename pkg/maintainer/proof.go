@@ -15,7 +15,7 @@ func AssembleTransactionProof(
 	transactionHash bitcoin.Hash,
 	requiredConfirmations uint,
 	bitcoinClient bitcoin.Chain,
-) (*bitcoin.Transaction, *bitcoin.Proof, error) {
+) (*bitcoin.Transaction, *bitcoin.SpvProof, error) {
 	transaction, err := bitcoinClient.GetTransaction(transactionHash)
 	if err != nil {
 		return nil, nil, err
@@ -65,7 +65,7 @@ func AssembleTransactionProof(
 		return nil, nil, fmt.Errorf("failed to create Merkle proof [%w]", err)
 	}
 
-	proof := &bitcoin.Proof{
+	proof := &bitcoin.SpvProof{
 		MerkleProof:    merkleProof,
 		TxIndexInBlock: merkleBranch.Position,
 		BitcoinHeaders: headersChain,

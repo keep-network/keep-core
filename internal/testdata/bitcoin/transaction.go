@@ -259,7 +259,7 @@ var SpvProof = map[string]struct {
 		HeadersChain               map[uint]*bitcoin.BlockHeader
 		TransactionMerkleProof     *bitcoin.TransactionMerkleProof
 	}
-	ExpectedProof       *bitcoin.Proof
+	ExpectedProof       *bitcoin.SpvProof
 	ExpectedTransaction bitcoin.Transaction
 }{
 	// https://blockstream.info/testnet/api/tx/44c568bc0eac07a2a9c2b46829be5b5d46e7d00e17bfb613f506a75ccf86a473
@@ -399,7 +399,7 @@ var SpvProof = map[string]struct {
 				Position: 11,
 			},
 		},
-		ExpectedProof: &bitcoin.Proof{
+		ExpectedProof: &bitcoin.SpvProof{
 			MerkleProof: decodeString(
 				"122b07a0611ce48cf91fdd97af55d5fa42386ccf41da7612869112c6f2afff7b0c" +
 					"33ea7a4510f83b76cec05ffe8a2d196ec62e9b730c65f03f558eeedd76587a1f90" +
@@ -577,7 +577,7 @@ var SpvProof = map[string]struct {
 				Position: 6,
 			},
 		},
-		ExpectedProof: &bitcoin.Proof{
+		ExpectedProof: &bitcoin.SpvProof{
 			MerkleProof: decodeString(
 				"2ea95cfb5e8f0d4b4757368c95f5a1cfa1b98934e9086f7b59cf53caf3fd2c32d1d" +
 					"41ad3ebb735723098bf8a1fd243e1ccfe4057e2feef750367c9f6fedfae82a3b5ea" +
