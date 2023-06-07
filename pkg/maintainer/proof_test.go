@@ -9,7 +9,7 @@ import (
 )
 
 func TestAssembleTransactionProof(t *testing.T) {
-	for testName, test := range testData.AssembleProof {
+	for testName, test := range testData.SpvProof {
 		t.Run(testName, func(t *testing.T) {
 			requiredConfirmations := test.RequiredConfirmations
 			transactionHash := test.BitcoinChainData.TransactionHash

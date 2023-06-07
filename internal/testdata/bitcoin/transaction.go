@@ -249,9 +249,8 @@ var TxMerkleProof = struct {
 	},
 }
 
-// AssembleProof holds details of the transaction proof data used as a test
-// vector.
-var AssembleProof = map[string]struct {
+// SpvProof holds details of the transaction proof data used as a test vector.
+var SpvProof = map[string]struct {
 	RequiredConfirmations uint
 	BitcoinChainData      struct {
 		TransactionHash            bitcoin.Hash
