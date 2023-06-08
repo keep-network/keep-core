@@ -7,10 +7,6 @@ spec:
   replicas: 1
   serviceName: electrumx
   template:
-    metadata:
-      labels:
-        app: bitcoin
-        type: electrumx
     spec:
       securityContext:
         runAsUser: 1000
