@@ -25,7 +25,7 @@ patches:
         name: electrumx
       spec:
         type: LoadBalancer
-        loadBalancerIP: 104.154.128.47
+        loadBalancerIP: 35.223.16.19
   - target:
       kind: StatefulSet
       name: electrumx
