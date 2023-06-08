@@ -8,6 +8,21 @@ import (
 	"time"
 )
 
+// RedemptionTransactionShape is an enum describing the shape of
+// a Bitcoin redemption transaction.
+type RedemptionTransactionShape uint8
+
+const (
+	// ChangeFirstRedemption is a shape where the change output is the first one
+	// in the transaction output vector. This shape makes the change's position
+	// fixed and leverages some SPV proof cost optimizations made in the Bridge
+	// implementation.
+	ChangeFirstRedemption RedemptionTransactionShape = iota
+	// ChangeLastRedemption is a shape where the change output is the last one
+	// in the transaction output vector.
+	ChangeLastRedemption
+)
+
 // RedemptionRequest represents a tBTC redemption request.
 type RedemptionRequest struct {
 	// Redeemer is the redeemer's address on the host chain.
@@ -45,12 +60,20 @@ func assembleRedemptionTransaction(
 	walletMainUtxo *bitcoin.UnspentTransactionOutput,
 	requests []*RedemptionRequest,
 	fee int64,
+	shape ...RedemptionTransactionShape,
 ) (*bitcoin.TransactionBuilder, error) {
+	resolvedShape := ChangeFirstRedemption
+	if len(shape) == 1 {
+		resolvedShape = shape[0]
+	}
+
 	if walletMainUtxo == nil {
 		return nil, fmt.Errorf("wallet main UTXO is required")
 	}
 
-	if len(requests) < 1 {
+	redemptionsCount := int64(len(requests))
+
+	if redemptionsCount < 1 {
 		return nil, fmt.Errorf("at least one redemption request is required")
 	}
 
@@ -64,21 +87,22 @@ func assembleRedemptionTransaction(
 		)
 	}
 
-	redemptionsCount := int64(len(requests))
-
 	feePerRedemptionRemainder := fee % redemptionsCount
 	feePerRedemption := (fee - feePerRedemptionRemainder) / redemptionsCount
 
-	redemptionOutputs := make([]*bitcoin.TransactionOutput, redemptionsCount)
+	// Helper variable that will hold the summarized value of all redemption
+	// outputs. The change value will not be counted in here.
 	totalRedemptionOutputsValue := int64(0)
 
-	// Build a list of redemption outputs based on the provided redemption
-	// requests but do not add them to the transaction builder yet.
-	// We want to put the change output (constructed in the next step) at the
-	// first place in order to make its position predictable and leverage
-	// some SPV proof cost optimizations made in the Bridge implementation.
-	// That means no outputs can be added to the builder until the change
-	// output is there.
+	// List that will hold all transaction outputs, i.e. redemption outputs
+	// and the possible change output.
+	outputs := make([]*bitcoin.TransactionOutput, 0)
+
+	// Create redemption outputs based on the provided redemption requests but
+	// do not add them to the transaction builder yet. The builder cannot be
+	// filled right now due to the change output that will be constructed in the
+	// next step and whose position in the transaction output vector depends on
+	// the requested RedemptionTransactionShape.
 	for i, request := range requests {
 		// The redeemable amount for a redemption request is the difference
 		// between the requested amount and treasury fee computed upon
@@ -94,10 +118,12 @@ func assembleRedemptionTransaction(
 
 		totalRedemptionOutputsValue += redemptionOutputValue
 
-		redemptionOutputs[i] = &bitcoin.TransactionOutput{
+		redemptionOutput := &bitcoin.TransactionOutput{
 			Value:           redemptionOutputValue,
 			PublicKeyScript: request.RedeemerOutputScript,
 		}
+
+		outputs = append(outputs, redemptionOutput)
 	}
 
 	// We know that the total fee of a Bitcoin transaction is the difference
@@ -110,6 +136,7 @@ func assembleRedemptionTransaction(
 		totalRedemptionOutputsValue -
 		fee
 
+	// If we can have a non-zero change, construct it.
 	if changeOutputValue > 0 {
 		changeOutputScript, err := bitcoin.PayToWitnessPublicKeyHash(
 			bitcoin.PublicKeyHash(walletPublicKey),
@@ -121,14 +148,24 @@ func assembleRedemptionTransaction(
 			)
 		}
 
-		builder.AddOutput(&bitcoin.TransactionOutput{
+		changeOutput := &bitcoin.TransactionOutput{
 			Value:           changeOutputValue,
 			PublicKeyScript: changeOutputScript,
-		})
+		}
+
+		switch resolvedShape {
+		case ChangeFirstRedemption:
+			outputs = append([]*bitcoin.TransactionOutput{changeOutput}, outputs...)
+		case ChangeLastRedemption:
+			outputs = append(outputs, changeOutput)
+		default:
+			panic("unknown redemption transaction shape")
+		}
 	}
 
-	for _, redemptionOutput := range redemptionOutputs {
-		builder.AddOutput(redemptionOutput)
+	// Finally, fill the builder with outputs constructed so far.
+	for _, output := range outputs {
+		builder.AddOutput(output)
 	}
 
 	return builder, nil

@@ -40,6 +40,7 @@ func TestAssembleRedemptionTransaction(t *testing.T) {
 				scenario.WalletMainUtxo,
 				requests,
 				scenario.Fee,
+				ChangeLastRedemption,
 			)
 			if err != nil {
 				t.Fatal(err)
