@@ -48,8 +48,8 @@ var testConfigs = map[string]testConfig{
 	"electrs-esplora ssl": {
 		clientConfig: electrum.Config{
 			URL:                 "ssl://electrum.blockstream.info:60002",
-			RequestTimeout:      timeout * 2,
-			RequestRetryTimeout: timeout * 5,
+			RequestTimeout:      timeout * 3,
+			RequestRetryTimeout: timeout * 6,
 		},
 		network: bitcoin.Testnet,
 	},
