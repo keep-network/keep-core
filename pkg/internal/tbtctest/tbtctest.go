@@ -25,6 +25,26 @@
 //   a single P2PKH redeemer script and a P2WPKH change.
 //   For reference see:
 //   https://live.blockcypher.com/btc-testnet/tx/c437f1117db977682334b53a71fbe63a42aab42f6e0976c35b69977f86308c20
+//
+// - redemption_scenario_1.json: Bitcoin redemption transaction that paid
+//   a single P2WPKH redeemer script and a P2WPKH change.
+//   For reference see:
+//   https://live.blockcypher.com/btc-testnet/tx/925e61dc31396e7f2cbcc8bc9b4009b4f24ba679257762df078b7e9b875ea110
+//
+// - redemption_scenario_2.json: Bitcoin redemption transaction that paid
+//   a single P2SH redeemer script and a P2WPKH change.
+//   For reference see:
+//   https://live.blockcypher.com/btc-testnet/tx/ef25c9c8f4df673def035c0c1880278c90030b3c94a56668109001a591c2c521
+//
+// - redemption_scenario_3.json: Bitcoin redemption transaction that paid
+//   a single P2WSH redeemer script and a P2WPKH change.
+//   For reference see:
+//   https://live.blockcypher.com/btc-testnet/tx/3d28bb5bf73379da51bc683f4d0ed31d7b024466c619d80ebd9378077d900be3
+//
+// - redemption_scenario_4.json: Bitcoin redemption transaction that paid multiple
+//   redeemer scripts (P2PKH, P2WPKH, P2SH and P2WSH) and a P2WPKH change.
+//   For reference see:
+//   https://live.blockcypher.com/btc-testnet/tx/f70ff89fd2b6226183e4b8143cc5f0f457f05dd1dca0c6151ab66f4523d972b7
 package tbtctest
 
 import (
