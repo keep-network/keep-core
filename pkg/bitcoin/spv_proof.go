@@ -1,27 +1,35 @@
-package maintainer
+package bitcoin
 
 import (
 	"bytes"
 	"encoding/hex"
 	"fmt"
 
-	"github.com/keep-network/keep-core/pkg/bitcoin"
+	"github.com/keep-network/keep-core/pkg/internal/byteutils"
 )
 
-// AssembleTransactionProof assembles a proof that a given transaction was
-// included in the blockchain and has accumulated the required number of
-// confirmations.
-func AssembleTransactionProof(
-	transactionHash bitcoin.Hash,
-	requiredConfirmations uint,
-	bitcoinClient bitcoin.Chain,
-) (*bitcoin.Transaction, *bitcoin.Proof, error) {
-	transaction, err := bitcoinClient.GetTransaction(transactionHash)
-	if err != nil {
-		return nil, nil, err
-	}
+// SpvProof contains data required to perform a proof that a given transaction
+// was included in the Bitcoin blockchain.
+type SpvProof struct {
+	// MerkleProof is the Merkle proof of transaction inclusion in a block.
+	MerkleProof []byte
 
-	confirmations, err := bitcoinClient.GetTransactionConfirmations(
+	// TxIndexInBlock is the transaction index in the block (0-indexed).
+	TxIndexInBlock uint
+
+	// BitcoinHeaders is a chain of block headers that form confirmations of
+	// blockchain inclusion.
+	BitcoinHeaders []byte
+}
+
+// AssembleSpvProof assembles a proof that a given transaction was included in
+// the blockchain and has accumulated the required number of confirmations.
+func AssembleSpvProof(
+	transactionHash Hash,
+	requiredConfirmations uint,
+	btcChain Chain,
+) (*Transaction, *SpvProof, error) {
+	confirmations, err := btcChain.GetTransactionConfirmations(
 		transactionHash,
 	)
 	if err != nil {
@@ -36,7 +44,12 @@ func AssembleTransactionProof(
 		)
 	}
 
-	latestBlockHeight, err := bitcoinClient.GetLatestBlockHeight()
+	transaction, err := btcChain.GetTransaction(transactionHash)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	latestBlockHeight, err := btcChain.GetLatestBlockHeight()
 	if err != nil {
 		return nil, nil, err
 	}
@@ -44,7 +57,7 @@ func AssembleTransactionProof(
 	txBlockHeight := latestBlockHeight - confirmations + 1
 
 	headersChain, err := getHeadersChain(
-		bitcoinClient,
+		btcChain,
 		txBlockHeight,
 		requiredConfirmations,
 	)
@@ -52,7 +65,7 @@ func AssembleTransactionProof(
 		return nil, nil, err
 	}
 
-	merkleBranch, err := bitcoinClient.GetTransactionMerkleProof(
+	merkleBranch, err := btcChain.GetTransactionMerkleProof(
 		transactionHash,
 		txBlockHeight,
 	)
@@ -60,12 +73,12 @@ func AssembleTransactionProof(
 		return nil, nil, err
 	}
 
-	merkleProof, err := CreateMerkleProof(merkleBranch)
+	merkleProof, err := createMerkleProof(merkleBranch)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to create Merkle proof [%w]", err)
 	}
 
-	proof := &bitcoin.Proof{
+	proof := &SpvProof{
 		MerkleProof:    merkleProof,
 		TxIndexInBlock: merkleBranch.Position,
 		BitcoinHeaders: headersChain,
@@ -74,12 +87,12 @@ func AssembleTransactionProof(
 	return transaction, proof, nil
 }
 
-// CreateMerkleProof creates a proof of transaction inclusion in the block by
+// createMerkleProof creates a proof of transaction inclusion in the block by
 // concatenating 32-byte-long hash values. The values are converted to the
 // little endian form. The branch of a Merkle tree leading to a transaction
 // needs to be provided. The transaction inclusion proof in hexadecimal form is
 // returned.
-func CreateMerkleProof(txMerkleBranch *bitcoin.TransactionMerkleProof) (
+func createMerkleProof(txMerkleBranch *TransactionMerkleProof) (
 	[]byte,
 	error,
 ) {
@@ -90,35 +103,25 @@ func CreateMerkleProof(txMerkleBranch *bitcoin.TransactionMerkleProof) (
 		if err != nil {
 			return nil, err
 		}
-		reversedHash := reverseBytes(hashBytes)
+		reversedHash := byteutils.Reverse(hashBytes)
 		proof.Write(reversedHash)
 	}
 	return proof.Bytes(), nil
 }
 
-// reverseBytes reverses the order of bytes in a byte slice.
-func reverseBytes(b []byte) []byte {
-	length := len(b)
-	reversed := make([]byte, length)
-	for i := 0; i < length; i++ {
-		reversed[i] = b[length-1-i]
-	}
-	return reversed
-}
-
 // getHeadersChain gets a chain of Bitcoin block headers that starts at the
 // provided block height and has the specified chain length.
 func getHeadersChain(
-	bitcoinClient bitcoin.Chain,
+	btcChain Chain,
 	blockHeight uint,
 	chainLength uint,
 ) ([]byte, error) {
-	// TODO: Consider modifying the Bitcoin chain so that it can return
-	//       multiple headers
+	// TODO: Consider exposing a function in the Bitcoin chain for returning
+	//       multiple block headers with one call.
 	var headersChain bytes.Buffer
 
 	for i := blockHeight; i < blockHeight+chainLength; i++ {
-		blockHeader, err := bitcoinClient.GetBlockHeader(i)
+		blockHeader, err := btcChain.GetBlockHeader(i)
 		if err != nil {
 			return nil, err
 		}

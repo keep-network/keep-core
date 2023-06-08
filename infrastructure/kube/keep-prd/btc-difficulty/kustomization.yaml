@@ -12,9 +12,9 @@ configMapGenerator:
   - name: btc-difficulty-maintainer-eth-accounts-info
     files:
       - .secret/btc-difficulty-maintainer-keyfile
-  - name: electrum-api-mainnet
+  - name: btc-difficulty-maintainer
     literals:
-      - electrumx-url-ssl=electrumx.default.svc.cluster.local:443
+      - electrum-url=tcp://electrumx.bitcoin:80
 
 secretGenerator:
   - name: btc-difficulty-maintainer-eth-accounts-password

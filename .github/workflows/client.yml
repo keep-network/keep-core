@@ -47,6 +47,23 @@ jobs:
             path-filter:
               - './!((docs-v1|docs|infrastructure|scripts|solidity-v1|token-stakedrop)/**)'
 
+  electrum-integration-detect-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      path-filter: ${{ steps.filter.outputs.path-filter }}
+    steps:
+      - uses: actions/checkout@v3
+        if: github.event_name == 'pull_request'
+
+      - uses: dorny/paths-filter@v2
+        if: github.event_name == 'pull_request'
+        id: filter
+        with:
+          filters: |
+            path-filter:
+              - './config/_electrum_urls/**'
+              - './pkg/bitcoin/electrum/**'
+
   client-build-test-publish:
     needs: client-detect-changes
     if: |
@@ -282,7 +299,10 @@ jobs:
           install-go: false
 
   client-integration-test:
-    needs: client-build-test-publish
+    needs: [electrum-integration-detect-changes, client-build-test-publish]
+    if: |
+      github.event_name != 'pull_request'
+        || needs.electrum-integration-detect-changes.outputs.path-filter == 'true'
     runs-on: ubuntu-latest
     steps:
       - name: Set up Docker Buildx

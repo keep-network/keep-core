@@ -283,8 +283,6 @@ func (c *Connection) GetLatestBlockHeight() (uint, error) {
 func (c *Connection) GetBlockHeader(
 	blockHeight uint,
 ) (*bitcoin.BlockHeader, error) {
-	// TODO: Consider changing the function so that it returns an array of
-	//       headers instead of a single one.
 	getBlockHeaderResult, err := requestWithRetry(
 		c,
 		func(
