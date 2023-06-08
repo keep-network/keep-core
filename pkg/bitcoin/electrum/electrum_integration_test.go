@@ -53,14 +53,6 @@ var testConfigs = map[string]testConfig{
 		},
 		network: bitcoin.Testnet,
 	},
-	"electrumx tcp": {
-		clientConfig: electrum.Config{
-			URL:                 "tcp://tn.not.fyi:55001",
-			RequestTimeout:      timeout,
-			RequestRetryTimeout: timeout * 2,
-		},
-		network: bitcoin.Testnet,
-	},
 	"electrumx wss": {
 		clientConfig: electrum.Config{
 			URL:                 "wss://electrumx-server.test.tbtc.network:8443",
