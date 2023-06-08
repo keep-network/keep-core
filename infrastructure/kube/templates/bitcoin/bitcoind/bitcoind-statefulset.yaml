@@ -87,6 +87,6 @@ spec:
         resources:
           requests:
             # Estimated required storage based on the network:
-            # - for mainnet: 600 Gi (default)
+            # - for mainnet: 650 Gi (default)
             # - for testnet: 40 Gi
-            storage: 600Gi
+            storage: 650Gi
