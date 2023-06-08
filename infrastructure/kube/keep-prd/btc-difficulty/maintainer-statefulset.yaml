@@ -30,7 +30,7 @@ spec:
                 path: btc-difficulty-maintainer-keyfile
       containers:
         - name: btc-difficulty-maintainer
-          image: gcr.io/keep-prd-210b/keep-client:latest
+          image: gcr.io/keep-prd-210b/keep-client:v2.0.0-m3
           imagePullPolicy: Always
           resources:
             requests:
@@ -52,8 +52,8 @@ spec:
             - name: ELECTRUM_API_URL
               valueFrom:
                 configMapKeyRef:
-                  name: electrum-api-mainnet
-                  key: electrumx-url-ssl
+                  name: btc-difficulty-maintainer
+                  key: electrum-url
           volumeMounts:
             - name: eth-account-keyfile
               mountPath: /mnt/btc-difficulty-maintainer/keyfile
@@ -62,12 +62,9 @@ spec:
             - maintainer
           args:
             - --bitcoinDifficulty
-            - --mainnet
             - --ethereum.url
             - $(ETH_WS_URL)
             - --ethereum.keyFile
             - /mnt/btc-difficulty-maintainer/keyfile/btc-difficulty-maintainer-keyfile
             - --bitcoin.electrum.url
             - $(ELECTRUM_API_URL)
-            - --bitcoin.electrum.protocol
-            - "SSL"

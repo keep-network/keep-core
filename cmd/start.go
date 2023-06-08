@@ -3,7 +3,11 @@ package cmd
 import (
 	"context"
 	"fmt"
+
+	"github.com/keep-network/keep-common/pkg/persistence"
 	"github.com/keep-network/keep-core/pkg/bitcoin/electrum"
+	"github.com/keep-network/keep-core/pkg/operator"
+	"github.com/keep-network/keep-core/pkg/storage"
 
 	"github.com/spf13/cobra"
 
@@ -18,7 +22,6 @@ import (
 	"github.com/keep-network/keep-core/pkg/net"
 	"github.com/keep-network/keep-core/pkg/net/libp2p"
 	"github.com/keep-network/keep-core/pkg/net/retransmission"
-	"github.com/keep-network/keep-core/pkg/storage"
 	"github.com/keep-network/keep-core/pkg/tbtc"
 )
 
@@ -59,49 +62,21 @@ Environment variables:
 func start(cmd *cobra.Command) error {
 	ctx := context.Background()
 
-	logger.Infof(
-		"Starting the client against [%s] ethereum network...",
-		clientConfig.Ethereum.Network,
-	)
-
 	beaconChain, tbtcChain, blockCounter, signing, operatorPrivateKey, err :=
 		ethereum.Connect(ctx, clientConfig.Ethereum)
 	if err != nil {
 		return fmt.Errorf("error connecting to Ethereum node: [%v]", err)
 	}
 
-	bootstrapPeersPublicKeys, err := libp2p.ExtractPeersPublicKeys(
-		clientConfig.LibP2P.Peers,
-	)
-	if err != nil {
-		return fmt.Errorf(
-			"error extracting bootstrap peers public keys: [%v]",
-			err,
-		)
-	}
-
-	firewall := firewall.AnyApplicationPolicy(
-		[]firewall.Application{beaconChain, tbtcChain},
-		firewall.NewAllowList(bootstrapPeersPublicKeys),
-	)
-
-	netProvider, err := libp2p.Connect(
+	netProvider, err := initializeNetwork(
 		ctx,
-		clientConfig.LibP2P,
+		[]firewall.Application{beaconChain, tbtcChain},
 		operatorPrivateKey,
-		firewall,
-		retransmission.NewTicker(blockCounter.WatchBlocks(ctx)),
+		blockCounter,
 	)
 	if err != nil {
-		return fmt.Errorf("failed while creating the network provider: [%v]", err)
+		return fmt.Errorf("cannot initialize network: [%v]", err)
 	}
-
-	nodeHeader(
-		netProvider.ConnectionManager().AddrStrings(),
-		beaconChain.Signing().Address().String(),
-		clientConfig.LibP2P.Port,
-		clientConfig.Ethereum,
-	)
 
 	clientInfoRegistry := initializeClientInfo(
 		ctx,
@@ -114,46 +89,18 @@ func start(cmd *cobra.Command) error {
 	// Initialize beacon and tbtc only for non-bootstrap nodes.
 	// Skip initialization for bootstrap nodes as they are only used for network
 	// discovery.
-	if !clientConfig.LibP2P.Bootstrap {
+	if !isBootstrap() {
 		btcChain, err := electrum.Connect(ctx, clientConfig.Bitcoin.Electrum)
 		if err != nil {
 			return fmt.Errorf("could not connect to Electrum chain: [%v]", err)
 		}
 
-		storage, err := storage.Initialize(
-			clientConfig.Storage,
-			clientConfig.Ethereum.KeyFilePassword,
-		)
+		beaconKeyStorePersistence,
+			tbtcKeyStorePersistence,
+			tbtcDataPersistence,
+			err := initializePersistence()
 		if err != nil {
-			return fmt.Errorf("cannot initialize storage: [%w]", err)
-		}
-
-		beaconKeyStorePersistence, err := storage.InitializeKeyStorePersistence(
-			"beacon",
-		)
-		if err != nil {
-			return fmt.Errorf(
-				"cannot initialize beacon keystore persistence: [%w]",
-				err,
-			)
-		}
-
-		tbtcKeyStorePersistence, err := storage.InitializeKeyStorePersistence(
-			"tbtc",
-		)
-		if err != nil {
-			return fmt.Errorf(
-				"cannot initialize tbtc keystore persistence: [%w]",
-				err,
-			)
-		}
-
-		tbtcDataPersistence, err := storage.InitializeWorkPersistence("tbtc")
-		if err != nil {
-			return fmt.Errorf(
-				"cannot initialize tbtc data persistence: [%w]",
-				err,
-			)
+			return fmt.Errorf("cannot initialize persistence: [%w]", err)
 		}
 
 		scheduler := generator.StartScheduler()
@@ -185,8 +132,54 @@ func start(cmd *cobra.Command) error {
 		}
 	}
 
+	nodeHeader(
+		netProvider.ConnectionManager().AddrStrings(),
+		beaconChain.Signing().Address().String(),
+		clientConfig.LibP2P.Port,
+		clientConfig.Ethereum,
+	)
+
 	<-ctx.Done()
 	return fmt.Errorf("shutting down the node because its context has ended")
+}
+
+func isBootstrap() bool {
+	return clientConfig.LibP2P.Bootstrap
+}
+
+func initializeNetwork(
+	ctx context.Context,
+	applications []firewall.Application,
+	operatorPrivateKey *operator.PrivateKey,
+	blockCounter chain.BlockCounter,
+) (net.Provider, error) {
+	bootstrapPeersPublicKeys, err := libp2p.ExtractPeersPublicKeys(
+		clientConfig.LibP2P.Peers,
+	)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"error extracting bootstrap peers public keys: [%v]",
+			err,
+		)
+	}
+
+	firewall := firewall.AnyApplicationPolicy(
+		applications,
+		firewall.NewAllowList(bootstrapPeersPublicKeys),
+	)
+
+	netProvider, err := libp2p.Connect(
+		ctx,
+		clientConfig.LibP2P,
+		operatorPrivateKey,
+		firewall,
+		retransmission.NewTicker(blockCounter.WatchBlocks(ctx)),
+	)
+	if err != nil {
+		return nil, fmt.Errorf("failed while creating the network provider: [%v]", err)
+	}
+
+	return netProvider, nil
 }
 
 func initializeClientInfo(
@@ -234,4 +227,49 @@ func initializeClientInfo(
 	)
 
 	return registry
+}
+
+func initializePersistence() (
+	beaconKeyStorePersistence persistence.ProtectedHandle,
+	tbtcKeyStorePersistence persistence.ProtectedHandle,
+	tbtcDataPersistence persistence.BasicHandle,
+	err error,
+) {
+	storage, err := storage.Initialize(
+		clientConfig.Storage,
+		clientConfig.Ethereum.KeyFilePassword,
+	)
+	if err != nil {
+		return nil, nil, nil, fmt.Errorf("cannot initialize storage: [%w]", err)
+	}
+
+	beaconKeyStorePersistence, err = storage.InitializeKeyStorePersistence(
+		"beacon",
+	)
+	if err != nil {
+		return nil, nil, nil, fmt.Errorf(
+			"cannot initialize beacon keystore persistence: [%w]",
+			err,
+		)
+	}
+
+	tbtcKeyStorePersistence, err = storage.InitializeKeyStorePersistence(
+		"tbtc",
+	)
+	if err != nil {
+		return nil, nil, nil, fmt.Errorf(
+			"cannot initialize tbtc keystore persistence: [%w]",
+			err,
+		)
+	}
+
+	tbtcDataPersistence, err = storage.InitializeWorkPersistence("tbtc")
+	if err != nil {
+		return nil, nil, nil, fmt.Errorf(
+			"cannot initialize tbtc data persistence: [%w]",
+			err,
+		)
+	}
+
+	return
 }

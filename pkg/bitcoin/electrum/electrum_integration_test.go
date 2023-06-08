@@ -24,14 +24,6 @@ import (
 
 const timeout = 2 * time.Second
 
-type serverImplementation int
-
-const (
-	electrumX serverImplementation = iota
-	fulcrum
-	esploraElectrs
-)
-
 type testConfig struct {
 	clientConfig  Config
 	errorMessages expectedErrorMessages
@@ -49,8 +41,8 @@ var testConfigs = map[string]testConfig{
 	"electrs-esplora tcp": {
 		clientConfig: Config{
 			URL:                 "tcp://electrum.blockstream.info:60001",
-			RequestTimeout:      timeout,
-			RequestRetryTimeout: timeout * 5,
+			RequestTimeout:      timeout * 3,
+			RequestRetryTimeout: timeout * 10,
 		},
 		errorMessages: expectedErrorMessages{
 			missingTransaction:        "errNo: 0, errMsg: missing transaction",
@@ -61,8 +53,8 @@ var testConfigs = map[string]testConfig{
 	"electrs-esplora ssl": {
 		clientConfig: Config{
 			URL:                 "ssl://electrum.blockstream.info:60002",
-			RequestTimeout:      timeout,
-			RequestRetryTimeout: timeout * 5,
+			RequestTimeout:      timeout * 3,
+			RequestRetryTimeout: timeout * 10,
 		},
 		errorMessages: expectedErrorMessages{
 			missingTransaction:        "errNo: 0, errMsg: missing transaction",
