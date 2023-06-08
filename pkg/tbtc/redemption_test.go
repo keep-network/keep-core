@@ -1,10 +1,11 @@
 package tbtc
 
 import (
+	"testing"
+
 	"github.com/keep-network/keep-core/pkg/bitcoin"
 	"github.com/keep-network/keep-core/pkg/internal/tbtctest"
 	"github.com/keep-network/keep-core/pkg/internal/testutils"
-	"testing"
 )
 
 func TestAssembleRedemptionTransaction(t *testing.T) {
@@ -34,12 +35,16 @@ func TestAssembleRedemptionTransaction(t *testing.T) {
 				}
 			}
 
+			feeDistribution := func(requests []*RedemptionRequest) []int64 {
+				return scenario.FeeShares
+			}
+
 			builder, err := assembleRedemptionTransaction(
 				bitcoinChain,
 				scenario.WalletPublicKey,
 				scenario.WalletMainUtxo,
 				requests,
-				scenario.Fee,
+				feeDistribution,
 				ChangeLastRedemption,
 			)
 			if err != nil {

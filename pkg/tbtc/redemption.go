@@ -3,9 +3,10 @@ package tbtc
 import (
 	"crypto/ecdsa"
 	"fmt"
+	"time"
+
 	"github.com/keep-network/keep-core/pkg/bitcoin"
 	"github.com/keep-network/keep-core/pkg/chain"
-	"time"
 )
 
 // RedemptionTransactionShape is an enum describing the shape of
@@ -43,6 +44,39 @@ type RedemptionRequest struct {
 	RequestedAt time.Time
 }
 
+// redemptionFeeDistributionFn calculates the redemption transaction fee
+// distribution for the given redemption requests. The resulting list
+// contains the fee shares ordered in the same way as the input requests, i.e.
+// the first fee share corresponds to the first request and so on.
+type redemptionFeeDistributionFn func([]*RedemptionRequest) []int64
+
+// withRedemptionTotalFee is a fee distribution function that takes a
+// total transaction fee and distributes it evenly over all redemption requests.
+// If the fee cannot be divided evenly, the last request incurs the remainder.
+//
+// TODO: Remove the ignore statement once this function is used.
+//lint:ignore U1000 will be needed soon.
+func withRedemptionTotalFee(totalFee int64) redemptionFeeDistributionFn {
+	return func(requests []*RedemptionRequest) []int64 {
+		requestsCount := int64(len(requests))
+		remainder := totalFee % requestsCount
+		feePerRequest := (totalFee - remainder) / requestsCount
+
+		feeShares := make([]int64, requestsCount)
+		for i := range requests {
+			feeShare := feePerRequest
+
+			if i == len(requests)-1 {
+				feeShare += remainder
+			}
+
+			feeShares[i] = feeShare
+		}
+
+		return feeShares
+	}
+}
+
 // assembleRedemptionTransaction constructs an unsigned redemption Bitcoin
 // transaction.
 //
@@ -59,7 +93,7 @@ func assembleRedemptionTransaction(
 	walletPublicKey *ecdsa.PublicKey,
 	walletMainUtxo *bitcoin.UnspentTransactionOutput,
 	requests []*RedemptionRequest,
-	fee int64,
+	feeDistribution redemptionFeeDistributionFn,
 	shape ...RedemptionTransactionShape,
 ) (*bitcoin.TransactionBuilder, error) {
 	resolvedShape := ChangeFirstRedemption
@@ -71,9 +105,7 @@ func assembleRedemptionTransaction(
 		return nil, fmt.Errorf("wallet main UTXO is required")
 	}
 
-	redemptionsCount := int64(len(requests))
-
-	if redemptionsCount < 1 {
+	if len(requests) < 1 {
 		return nil, fmt.Errorf("at least one redemption request is required")
 	}
 
@@ -87,13 +119,13 @@ func assembleRedemptionTransaction(
 		)
 	}
 
-	feePerRedemptionRemainder := fee % redemptionsCount
-	feePerRedemption := (fee - feePerRedemptionRemainder) / redemptionsCount
-
+	// Calculate the transaction fee shares for all redemption requests.
+	feeShares := feeDistribution(requests)
+	// Helper variable that will hold the total Bitcoin transaction fee.
+	totalFee := int64(0)
 	// Helper variable that will hold the summarized value of all redemption
 	// outputs. The change value will not be counted in here.
 	totalRedemptionOutputsValue := int64(0)
-
 	// List that will hold all transaction outputs, i.e. redemption outputs
 	// and the possible change output.
 	outputs := make([]*bitcoin.TransactionOutput, 0)
@@ -109,13 +141,12 @@ func assembleRedemptionTransaction(
 		// request creation.
 		redeemableAmount := int64(request.RequestedAmount - request.TreasuryFee)
 		// The actual value of the redemption output is the difference between
-		// the request's redeemable amount and fee per redemption.
-		redemptionOutputValue := redeemableAmount - feePerRedemption
-		// Make the last redemption incur the fee remainder.
-		if i == len(requests)-1 {
-			redemptionOutputValue -= feePerRedemptionRemainder
-		}
+		// the request's redeemable amount and share of the transaction fee
+		// incurred by the given request.
+		feeShare := feeShares[i]
+		redemptionOutputValue := redeemableAmount - feeShare
 
+		totalFee += feeShare
 		totalRedemptionOutputsValue += redemptionOutputValue
 
 		redemptionOutput := &bitcoin.TransactionOutput{
@@ -134,7 +165,7 @@ func assembleRedemptionTransaction(
 	// change_value = main_utxo_input_value - redemption_outputs_value - fee
 	changeOutputValue := builder.TotalInputsValue() -
 		totalRedemptionOutputsValue -
-		fee
+		totalFee
 
 	// If we can have a non-zero change, construct it.
 	if changeOutputValue > 0 {

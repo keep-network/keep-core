@@ -99,7 +99,7 @@ type RedemptionTestScenario struct {
 	WalletMainUtxo     *bitcoin.UnspentTransactionOutput
 	RedemptionRequests []*RedemptionRequest
 	InputTransaction   *bitcoin.Transaction
-	Fee                int64
+	FeeShares          []int64
 	Signature          *bitcoin.SignatureContainer
 
 	ExpectedSigHash                          *big.Int

@@ -5,11 +5,12 @@ import (
 	"crypto/elliptic"
 	"encoding/hex"
 	"encoding/json"
+	"math/big"
+	"time"
+
 	"github.com/keep-network/keep-core/pkg/bitcoin"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/tecdsa"
-	"math/big"
-	"time"
 )
 
 // UnmarshalJSON implements a custom JSON unmarshaling logic to produce a
@@ -166,7 +167,7 @@ func (rts *RedemptionTestScenario) UnmarshalJSON(data []byte) error {
 			RequestedAt          int64
 		}
 		InputTransaction                         string
-		Fee                                      int64
+		FeeShares                                []int64
 		Signature                                signature
 		ExpectedSigHash                          string
 		ExpectedRedemptionTransaction            string
@@ -224,8 +225,8 @@ func (rts *RedemptionTestScenario) UnmarshalJSON(data []byte) error {
 		return err
 	}
 
-	// Unmarshal fee.
-	rts.Fee = unmarshaled.Fee
+	// Unmarshal fee shares.
+	rts.FeeShares = append(rts.FeeShares, unmarshaled.FeeShares...)
 
 	// Unmarshal signature.
 	rts.Signature = unmarshaled.Signature.convert(rts.WalletPublicKey)
