@@ -20,6 +20,11 @@
 //   one input (a P2WSH deposit) was swept into a P2WPKH main UTXO.
 //   For reference see:
 //   https://live.blockcypher.com/btc-testnet/tx/9efc9d555233e12e06378a35a7b988d54f7043b5c3156adc79c7af0a0fd6f1a0
+//
+// - redemption_scenario_0.json: Bitcoin redemption transaction that paid
+//   a single P2PKH redeemer script and a P2WPKH change.
+//   For reference see:
+//   https://live.blockcypher.com/btc-testnet/tx/c437f1117db977682334b53a71fbe63a42aab42f6e0976c35b69977f86308c20
 package tbtctest
 
 import (
