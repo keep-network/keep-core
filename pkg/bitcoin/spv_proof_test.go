@@ -12,8 +12,7 @@ import (
 var SpvProofData = map[string]struct {
 	RequiredConfirmations uint
 	BitcoinChainData      struct {
-		TransactionHash            Hash
-		Transaction                Transaction
+		TransactionHex             string
 		AccumulatedTxConfirmations uint
 		HeadersChain               map[uint]*BlockHeader
 		TransactionMerkleProof     *TransactionMerkleProof
@@ -25,38 +24,12 @@ var SpvProofData = map[string]struct {
 	"single input": {
 		RequiredConfirmations: 6,
 		BitcoinChainData: struct {
-			TransactionHash            Hash
-			Transaction                Transaction
+			TransactionHex             string
 			AccumulatedTxConfirmations uint
 			HeadersChain               map[uint]*BlockHeader
 			TransactionMerkleProof     *TransactionMerkleProof
 		}{
-			TransactionHash: hashFromString(
-				"44c568bc0eac07a2a9c2b46829be5b5d46e7d00e17bfb613f506a75ccf86a473",
-			),
-			Transaction: Transaction{
-				Version: 1,
-				Inputs: []*TransactionInput{
-					{
-						Outpoint: &TransactionOutpoint{
-							TransactionHash: hashFromString(
-								"8ee67b585eeb682bf6907ea311282540ee53edf605e0f09757226a4dc3e72a67",
-							),
-							OutputIndex: 0,
-						},
-						SignatureScript: decodeString(""),
-					},
-				},
-				Outputs: []*TransactionOutput{
-					{
-						Value: 8400,
-						PublicKeyScript: decodeString(
-							"00148db50eb52063ea9d98b3eac91489a90f738986f6",
-						),
-					},
-				},
-				Locktime: 0,
-			},
+			TransactionHex:             "01000000000101672ae7c34d6a225797f0e005f6ed53ee40252811a37e90f62b68eb5e587be68e0000000000ffffffff01d0200000000000001600148db50eb52063ea9d98b3eac91489a90f738986f603483045022100b12afadf68ad9781600f065e0b09e22058ca2293aa86ac38add3ca7cfb01b3b7022009ecce0c1c3ebd26569c6b0d60e15b4675860737487d1b7c782439acf4709bdf012103989d253b17a6a0f41838b84ff0d20e8898f9d7b1a98f2564da4cc29dcf8581d95c14934b98637ca318a4d6e7ca6ffd1690b8e77df6377508f9f0c90d000395237576a9148db50eb52063ea9d98b3eac91489a90f738986f68763ac6776a914e257eccafbc07c381642ce6e7e55120fb077fbed8804e0250162b175ac6800000000",
 			AccumulatedTxConfirmations: 7,
 			HeadersChain: map[uint]*BlockHeader{
 				2164152: {
@@ -192,63 +165,12 @@ var SpvProofData = map[string]struct {
 	"multiple inputs": {
 		RequiredConfirmations: 6,
 		BitcoinChainData: struct {
-			TransactionHash            Hash
-			Transaction                Transaction
+			TransactionHex             string
 			AccumulatedTxConfirmations uint
 			HeadersChain               map[uint]*BlockHeader
 			TransactionMerkleProof     *TransactionMerkleProof
 		}{
-			TransactionHash: hashFromString(
-				"5083822ed0b8d0bc661362b778e666cb572ff6d5152193992dd69d3207995753",
-			),
-			Transaction: Transaction{
-				Version: 1,
-				Inputs: []*TransactionInput{
-					{
-						Outpoint: &TransactionOutpoint{
-							TransactionHash: hashFromString(
-								"ea4d9e45f8c1b8a187c007f36ba1e9b201e8511182c7083c4edcaf9325b2998f",
-							),
-							OutputIndex: 0,
-						},
-						SignatureScript: decodeString(""),
-					},
-					{
-						Outpoint: &TransactionOutpoint{
-							TransactionHash: hashFromString(
-								"c844ff4c1781c884bb5e80392398b81b984d7106367ae16675f132bd1a7f33fd",
-							),
-							OutputIndex: 0,
-						},
-						SignatureScript: decodeString(""),
-					}, {
-						Outpoint: &TransactionOutpoint{
-							TransactionHash: hashFromString(
-								"44c568bc0eac07a2a9c2b46829be5b5d46e7d00e17bfb613f506a75ccf86a473",
-							),
-							OutputIndex: 0,
-						},
-						SignatureScript: decodeString(""),
-					}, {
-						Outpoint: &TransactionOutpoint{
-							TransactionHash: hashFromString(
-								"f548c00e464764e112826450a00cf005ca771a6108a629b559b6c60a519e4378",
-							),
-							OutputIndex: 0,
-						},
-						SignatureScript: decodeString(""),
-					},
-				},
-				Outputs: []*TransactionOutput{
-					{
-						Value: 39800,
-						PublicKeyScript: decodeString(
-							"00148db50eb52063ea9d98b3eac91489a90f738986f6",
-						),
-					},
-				},
-				Locktime: 0,
-			},
+			TransactionHex:             "010000000001048f99b22593afdc4e3c08c7821151e801b2e9a16bf307c087a1b8c1f8459e4dea00000000c9483045022100bb54f2717647b2f2c5370b5f12b55e27f97a6e2009dcd21fca08527df949e1fd022058bc3cd1dd739b89b9e4cda43b13bc59cfb15663b80cbfa3edb4539107bba35d012103989d253b17a6a0f41838b84ff0d20e8898f9d7b1a98f2564da4cc29dcf8581d94c5c14934b98637ca318a4d6e7ca6ffd1690b8e77df6377508f9f0c90d000395237576a9148db50eb52063ea9d98b3eac91489a90f738986f68763ac6776a914e257eccafbc07c381642ce6e7e55120fb077fbed8804e0250162b175ac68fffffffffd337f1abd32f17566e17a3606714d981bb8982339805ebb84c881174cff44c80000000000ffffffff73a486cf5ca706f513b6bf170ed0e7465d5bbe2968b4c2a9a207ac0ebc68c5440000000000ffffffff78439e510ac6b659b529a608611a77ca05f00ca050648212e16447460ec048f50000000000ffffffff01789b0000000000001600148db50eb52063ea9d98b3eac91489a90f738986f6000347304402205199b28a3b4a81579fe4ea99925380b298e28ca38a3b14e50f12daec87945449022065c5034f96ed785aa10b3817c501ecc59f1abf329fad07229170c3dd5f53bc91012103989d253b17a6a0f41838b84ff0d20e8898f9d7b1a98f2564da4cc29dcf8581d95c14934b98637ca318a4d6e7ca6ffd1690b8e77df6377508f9f0c90d000395237576a9148db50eb52063ea9d98b3eac91489a90f738986f68763ac6776a914e257eccafbc07c381642ce6e7e55120fb077fbed8804e0250162b175ac680247304402201b2a3b03a1088c6bbc406e96a6017e52ce86c0897541c9bb59d94179daa84f8702204b1e665bd43bbe968e1d89b15c5f0b5551011fa4caf2fbb7eb22d89a38fad04d012103989d253b17a6a0f41838b84ff0d20e8898f9d7b1a98f2564da4cc29dcf8581d903473044022007ce54f21a2f5233bd046c4600bcb1c874aaf9053b1d7ee7d47eb134b695fbed022002e8684548b7a3cdaecb8c6393244c396c15e1ebaedb53e2fcc6c5cea7310490012103989d253b17a6a0f41838b84ff0d20e8898f9d7b1a98f2564da4cc29dcf8581d95c14934b98637ca318a4d6e7ca6ffd1690b8e77df6377508f9f0c90d000395237576a9148db50eb52063ea9d98b3eac91489a90f738986f68763ac6776a914e257eccafbc07c381642ce6e7e55120fb077fbed8804e0250162b175ac6800000000",
 			AccumulatedTxConfirmations: 6,
 			HeadersChain: map[uint]*BlockHeader{
 				2164155: {
@@ -390,30 +312,28 @@ func decodeString(s string) []byte {
 func TestAssembleTransactionProof(t *testing.T) {
 	for testName, test := range SpvProofData {
 		t.Run(testName, func(t *testing.T) {
+			transaction := transactionFrom(t, test.BitcoinChainData.TransactionHex)
+			transactionHash := transaction.Hash()
 			requiredConfirmations := test.RequiredConfirmations
-			transactionHash := test.BitcoinChainData.TransactionHash
-			transaction := test.BitcoinChainData.Transaction
 			accumulatedConfirmations := test.BitcoinChainData.AccumulatedTxConfirmations
 			blockHeaders := test.BitcoinChainData.HeadersChain
 			transactionMerkleProof := test.BitcoinChainData.TransactionMerkleProof
 			expectedProof := test.ExpectedProof
-			expectedTx := &transaction
+			expectedTx := transaction
 
-			// bitcoinChain := connectLocalBitcoinChain()
-			bitcoinChain := newLocalSpvChain()
-
-			var transactions = map[Hash]*Transaction{
-				transactionHash: &transaction,
+			bitcoinChain := newLocalChain()
+			bitcoinChain.addTransaction(transaction)
+			bitcoinChain.addTransactionConfirmations(
+				transactionHash,
+				accumulatedConfirmations,
+			)
+			for blockNumber, blockHeader := range blockHeaders {
+				bitcoinChain.addBlockHeader(blockNumber, blockHeader)
 			}
-			bitcoinChain.setTransactions(transactions)
-
-			var transactionConfirmations = map[Hash]uint{
-				transactionHash: accumulatedConfirmations,
-			}
-			bitcoinChain.setTransactionConfirmations(transactionConfirmations)
-
-			bitcoinChain.setBlockHeaders(blockHeaders)
-			bitcoinChain.setTransactionMerkleProof(transactionMerkleProof)
+			bitcoinChain.addTransactionMerkleProof(
+				transactionHash,
+				transactionMerkleProof,
+			)
 
 			tx, proof, err := AssembleSpvProof(
 				transactionHash,
