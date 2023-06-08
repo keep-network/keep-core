@@ -201,7 +201,6 @@ func TestGetTransactionConfirmations_Integration(t *testing.T) {
 	for testName, testConfig := range testConfigs {
 		t.Run(testName, func(t *testing.T) {
 			electrum, cancelCtx := newTestConnection(t, testConfig.clientConfig)
-			defer cancelCtx()
 
 			for txName, tx := range testData.Transactions[testConfig.network] {
 				t.Run(txName, func(t *testing.T) {
@@ -219,6 +218,8 @@ func TestGetTransactionConfirmations_Integration(t *testing.T) {
 					assertNumberCloseTo(t, expectedConfirmations, result, blockDelta)
 				})
 			}
+
+			cancelCtx()
 		})
 	}
 }
