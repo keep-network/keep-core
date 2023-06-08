@@ -4,7 +4,6 @@ import (
 	"math/rand"
 	"reflect"
 	"testing"
-	"time"
 
 	"github.com/go-test/deep"
 
@@ -28,20 +27,12 @@ func TestResolveElectrum(t *testing.T) {
 				{
 					URL: "wss://bitcoin.threshold.p2p.org:50004",
 				},
-				{
-					URL:               "ssl://electrum.blockstream.info:50002",
-					KeepAliveInterval: 55 * time.Second,
-				},
 			},
 		},
 		bitcoin.Testnet: {
 			expectedConfig: []electrum.Config{
 				{
 					URL: "wss://electrumx-server.test.tbtc.network:8443",
-				},
-				{
-					URL:               "ssl://electrum.blockstream.info:60002",
-					KeepAliveInterval: 55 * time.Second,
 				},
 			}},
 		bitcoin.Regtest: {
