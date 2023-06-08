@@ -120,16 +120,16 @@ func reverseBytes(b []byte) []byte {
 // getHeadersChain gets a chain of Bitcoin block headers that starts at the
 // provided block height and has the specified chain length.
 func getHeadersChain(
-	bitcoinClient Chain,
+	btcChain Chain,
 	blockHeight uint,
 	chainLength uint,
 ) ([]byte, error) {
-	// TODO: Consider modifying the Bitcoin chain so that it can return
-	//       multiple headers
+	// TODO: Consider exposing a function in the Bitcoin chain for returning
+	//       multiple block headers with one call.
 	var headersChain bytes.Buffer
 
 	for i := blockHeight; i < blockHeight+chainLength; i++ {
-		blockHeader, err := bitcoinClient.GetBlockHeader(i)
+		blockHeader, err := btcChain.GetBlockHeader(i)
 		if err != nil {
 			return nil, err
 		}
