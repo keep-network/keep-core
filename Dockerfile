@@ -1,4 +1,4 @@
-FROM golang:1.18.3-alpine3.16 AS build-sources
+FROM golang:1.18.10-alpine3.16 AS build-sources
 
 ENV GOPATH=/go \
 	GOBIN=/go/bin \
