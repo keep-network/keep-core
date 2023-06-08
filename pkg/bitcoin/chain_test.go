@@ -9,13 +9,25 @@ type localChain struct {
 	transactionsMutex sync.Mutex
 	transactions      map[Hash]*Transaction
 
+	transactionConfirmationsMutex sync.Mutex
+	transactionConfirmations      map[Hash]uint
+
+	merkleProofsMutex sync.Mutex
+	merkleProofs      map[Hash]*TransactionMerkleProof
+
+	blockHeadersMutex sync.Mutex
+	blockHeaders      map[uint]*BlockHeader
+
 	satPerVByteFeeMutex sync.Mutex
 	satPerVByteFee      int64
 }
 
 func newLocalChain() *localChain {
 	return &localChain{
-		transactions: make(map[Hash]*Transaction),
+		transactions:             make(map[Hash]*Transaction),
+		transactionConfirmations: make(map[Hash]uint),
+		merkleProofs:             make(map[Hash]*TransactionMerkleProof),
+		blockHeaders:             make(map[uint]*BlockHeader),
 	}
 }
 
@@ -32,12 +44,6 @@ func (lc *localChain) GetTransaction(
 	return nil, fmt.Errorf("transaction not found")
 }
 
-func (lc *localChain) GetTransactionConfirmations(
-	transactionHash Hash,
-) (uint, error) {
-	panic("not implemented")
-}
-
 func (lc *localChain) BroadcastTransaction(
 	transaction *Transaction,
 ) error {
@@ -45,20 +51,62 @@ func (lc *localChain) BroadcastTransaction(
 }
 
 func (lc *localChain) GetLatestBlockHeight() (uint, error) {
-	panic("not implemented")
+	lc.blockHeadersMutex.Lock()
+	defer lc.blockHeadersMutex.Unlock()
+
+	// Return the highest block header's height.
+	blockchainTip := uint(0)
+	for blockHeaderHeight := range lc.blockHeaders {
+		if blockHeaderHeight > blockchainTip {
+			blockchainTip = blockHeaderHeight
+		}
+	}
+
+	if blockchainTip == 0 {
+		return 0, fmt.Errorf("block headers not found")
+	}
+
+	return blockchainTip, nil
 }
 
 func (lc *localChain) GetBlockHeader(
 	blockNumber uint,
 ) (*BlockHeader, error) {
-	panic("not implemented")
+	lc.blockHeadersMutex.Lock()
+	defer lc.blockHeadersMutex.Unlock()
+
+	if blockHeader, exists := lc.blockHeaders[blockNumber]; exists {
+		return blockHeader, nil
+	}
+
+	return nil, fmt.Errorf("block header not found")
 }
 
 func (lc *localChain) GetTransactionMerkleProof(
 	transactionHash Hash,
 	blockHeight uint,
 ) (*TransactionMerkleProof, error) {
-	panic("not implemented")
+	lc.merkleProofsMutex.Lock()
+	defer lc.merkleProofsMutex.Unlock()
+
+	if merkleProof, exists := lc.merkleProofs[transactionHash]; exists {
+		return merkleProof, nil
+	}
+
+	return nil, fmt.Errorf("transaction not found")
+}
+
+func (lc *localChain) GetTransactionConfirmations(
+	transactionHash Hash,
+) (uint, error) {
+	lc.transactionConfirmationsMutex.Lock()
+	defer lc.transactionConfirmationsMutex.Unlock()
+
+	if transactionConfirmations, exists := lc.transactionConfirmations[transactionHash]; exists {
+		return transactionConfirmations, nil
+	}
+
+	return 0, fmt.Errorf("transaction not found")
 }
 
 func (lc *localChain) GetTransactionsForPublicKeyHash(
@@ -105,6 +153,54 @@ func (lc *localChain) addTransaction(
 	}
 
 	lc.transactions[transactionHash] = transaction
+
+	return nil
+}
+
+func (lc *localChain) addTransactionConfirmations(
+	transactionHash Hash,
+	transactionConfirmations uint,
+) error {
+	lc.transactionConfirmationsMutex.Lock()
+	defer lc.transactionConfirmationsMutex.Unlock()
+
+	if _, exists := lc.transactionConfirmations[transactionHash]; exists {
+		return fmt.Errorf("transaction confirmations already set")
+	}
+
+	lc.transactionConfirmations[transactionHash] = transactionConfirmations
+
+	return nil
+}
+
+func (lc *localChain) addTransactionMerkleProof(
+	transactionHash Hash,
+	merkleProof *TransactionMerkleProof,
+) error {
+	lc.merkleProofsMutex.Lock()
+	defer lc.merkleProofsMutex.Unlock()
+
+	if _, exists := lc.merkleProofs[transactionHash]; exists {
+		return fmt.Errorf("merkle proof already set")
+	}
+
+	lc.merkleProofs[transactionHash] = merkleProof
+
+	return nil
+}
+
+func (lc *localChain) addBlockHeader(
+	blockNumber uint,
+	blockHeader *BlockHeader,
+) error {
+	lc.blockHeadersMutex.Lock()
+	defer lc.blockHeadersMutex.Unlock()
+
+	if _, exists := lc.blockHeaders[blockNumber]; exists {
+		return fmt.Errorf("block header already exists")
+	}
+
+	lc.blockHeaders[blockNumber] = blockHeader
 
 	return nil
 }
