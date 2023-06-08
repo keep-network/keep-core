@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"encoding/hex"
 	"fmt"
+
+	"github.com/keep-network/keep-core/pkg/internal/byteutils"
 )
 
 // SpvProof contains data required to perform a proof that a given transaction
@@ -101,20 +103,10 @@ func createMerkleProof(txMerkleBranch *TransactionMerkleProof) (
 		if err != nil {
 			return nil, err
 		}
-		reversedHash := reverseBytes(hashBytes)
+		reversedHash := byteutils.Reverse(hashBytes)
 		proof.Write(reversedHash)
 	}
 	return proof.Bytes(), nil
-}
-
-// reverseBytes reverses the order of bytes in a byte slice.
-func reverseBytes(b []byte) []byte {
-	length := len(b)
-	reversed := make([]byte, length)
-	for i := 0; i < length; i++ {
-		reversed[i] = b[length-1-i]
-	}
-	return reversed
 }
 
 // getHeadersChain gets a chain of Bitcoin block headers that starts at the
