@@ -259,8 +259,7 @@ var SpvProof = map[string]struct {
 		HeadersChain               map[uint]*bitcoin.BlockHeader
 		TransactionMerkleProof     *bitcoin.TransactionMerkleProof
 	}
-	ExpectedProof       *bitcoin.SpvProof
-	ExpectedTransaction bitcoin.Transaction
+	ExpectedProof *bitcoin.SpvProof
 }{
 	// https://blockstream.info/testnet/api/tx/44c568bc0eac07a2a9c2b46829be5b5d46e7d00e17bfb613f506a75ccf86a473
 	"single input": {
