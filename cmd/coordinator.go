@@ -11,7 +11,6 @@ import (
 	"github.com/keep-network/keep-core/pkg/bitcoin/electrum"
 	"github.com/keep-network/keep-core/pkg/chain/ethereum"
 	"github.com/keep-network/keep-core/pkg/coordinator"
-	"github.com/keep-network/keep-core/pkg/maintainer"
 )
 
 var (
@@ -271,7 +270,7 @@ var submitDepositSweepProofCommand = cobra.Command{
 			)
 		}
 
-		transaction, proof, err := maintainer.AssembleTransactionProof(
+		transaction, proof, err := bitcoin.AssembleSpvProof(
 			transactionHash,
 			uint(requiredConfirmations.Uint64()),
 			btcChain,
