@@ -34,11 +34,13 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
+	"time"
 )
 
 const (
 	testDataDirFormat              = "%s/testdata"
 	depositSweepTestDataFilePrefix = "deposit_sweep_scenario"
+	redemptionTestDataFilePrefix   = "redemption_scenario"
 )
 
 // Deposit holds the deposit data in the given test scenario.
@@ -71,7 +73,43 @@ type DepositSweepTestScenario struct {
 
 // LoadDepositSweepTestScenarios loads all scenarios related with deposit sweep.
 func LoadDepositSweepTestScenarios() ([]*DepositSweepTestScenario, error) {
-	filePaths, err := detectTestDataFiles(depositSweepTestDataFilePrefix)
+	return loadTestScenarios[*DepositSweepTestScenario](depositSweepTestDataFilePrefix)
+}
+
+// RedemptionRequest holds the redemption request data in the given test scenario.
+type RedemptionRequest struct {
+	Redeemer             chain.Address
+	RedeemerOutputScript []byte
+	RequestedAmount      uint64
+	TreasuryFee          uint64
+	TxMaxFee             uint64
+	RequestedAt          time.Time
+}
+
+// RedemptionTestScenario represents a redemption test scenario.
+type RedemptionTestScenario struct {
+	Title              string
+	WalletPublicKey    *ecdsa.PublicKey
+	WalletPrivateKey   *big.Int
+	WalletMainUtxo     *bitcoin.UnspentTransactionOutput
+	RedemptionRequests []*RedemptionRequest
+	InputTransaction   *bitcoin.Transaction
+	Fee                int64
+	Signature          *bitcoin.SignatureContainer
+
+	ExpectedSigHash                          *big.Int
+	ExpectedRedemptionTransaction            *bitcoin.Transaction
+	ExpectedRedemptionTransactionHash        bitcoin.Hash
+	ExpectedRedemptionTransactionWitnessHash bitcoin.Hash
+}
+
+// LoadRedemptionTestScenarios loads all scenarios related with redemption.
+func LoadRedemptionTestScenarios() ([]*RedemptionTestScenario, error) {
+	return loadTestScenarios[*RedemptionTestScenario](redemptionTestDataFilePrefix)
+}
+
+func loadTestScenarios[T json.Unmarshaler](testDataFilePrefix string) ([]T, error) {
+	filePaths, err := detectTestDataFiles(testDataFilePrefix)
 	if err != nil {
 		return nil, fmt.Errorf(
 			"cannot detect test data files: [%v]",
@@ -79,7 +117,7 @@ func LoadDepositSweepTestScenarios() ([]*DepositSweepTestScenario, error) {
 		)
 	}
 
-	scenarios := make([]*DepositSweepTestScenario, 0)
+	scenarios := make([]T, 0)
 
 	for _, filePath := range filePaths {
 		// #nosec G304 (file path provided as taint input)
@@ -94,7 +132,7 @@ func LoadDepositSweepTestScenarios() ([]*DepositSweepTestScenario, error) {
 			)
 		}
 
-		var scenario DepositSweepTestScenario
+		var scenario T
 		if err = json.Unmarshal(fileBytes, &scenario); err != nil {
 			return nil, fmt.Errorf(
 				"cannot unmarshal scenario for file [%v]: [%v]",
@@ -103,7 +141,7 @@ func LoadDepositSweepTestScenarios() ([]*DepositSweepTestScenario, error) {
 			)
 		}
 
-		scenarios = append(scenarios, &scenario)
+		scenarios = append(scenarios, scenario)
 	}
 
 	return scenarios, nil
