@@ -13,7 +13,7 @@ import (
 )
 
 type depositEntry struct {
-	walletPublicKeyHash [20]byte
+	walletPublicKeyHash WalletPublicKeyHash
 
 	depositKey  string
 	revealBlock uint64
@@ -184,7 +184,7 @@ func printTable(deposits []depositEntry) error {
 	for i, deposit := range deposits {
 		fmt.Fprintf(w, "%d\t%s\t%.5f\t%s\t%s\t%d\t%t\t\n",
 			i,
-			"0x"+hex.EncodeToString(deposit.walletPublicKeyHash[:]),
+			deposit.walletPublicKeyHash,
 			deposit.amountBtc,
 			deposit.depositKey,
 			fmt.Sprintf(
@@ -203,18 +203,6 @@ func printTable(deposits []depositEntry) error {
 	}
 
 	return nil
-}
-
-func hexToWalletPublicKeyHash(str string) ([20]byte, error) {
-	walletHex, err := hexutils.Decode(str)
-	if err != nil {
-		return [20]byte{}, fmt.Errorf("failed to parse arguments: %w", err)
-	}
-
-	var walletPublicKeyHash [20]byte
-	copy(walletPublicKeyHash[:], walletHex)
-
-	return walletPublicKeyHash, nil
 }
 
 func convertSatToBtc(sats float64) float64 {
