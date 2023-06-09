@@ -3,6 +3,7 @@ package cmd
 import (
 	"fmt"
 
+	"github.com/btcsuite/btcd/txscript"
 	"github.com/spf13/cobra"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -276,11 +277,13 @@ var submitDepositSweepProofCommand = cobra.Command{
 			btcChain,
 		)
 		if err != nil {
-			return fmt.Errorf("failed to assemble transaction proof: %v", err)
+			return fmt.Errorf("failed to assemble transaction spv proof: %v", err)
 		}
 
-		// TODO: Get the wallet's main UTXO.
-		mainUTXO := &bitcoin.UnspentTransactionOutput{}
+		mainUTXO, err := extractMainUTXO(btcChain, transaction)
+		if err != nil {
+			return fmt.Errorf("failed to extract main UTXO: %v", err)
+		}
 
 		// TODO: Get the wallet's vault.
 		vault := common.Address{}
@@ -296,6 +299,52 @@ var submitDepositSweepProofCommand = cobra.Command{
 
 		return nil
 	},
+}
+
+func extractMainUTXO(btcChain bitcoin.Chain, transaction *bitcoin.Transaction) (
+	*bitcoin.UnspentTransactionOutput,
+	error,
+) {
+	var mainUTXO *bitcoin.UnspentTransactionOutput = nil
+
+	for _, input := range transaction.Inputs {
+		outpointTransactionHash := input.Outpoint.TransactionHash
+		outpointIndex := input.Outpoint.OutputIndex
+
+		previousTransaction, err := btcChain.GetTransaction(
+			outpointTransactionHash,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get previous transaction: %v", err)
+		}
+
+		publicKeyScript := previousTransaction.Outputs[outpointIndex].PublicKeyScript
+		value := previousTransaction.Outputs[outpointIndex].Value
+		scriptClass := txscript.GetScriptClass(publicKeyScript)
+
+		if scriptClass == txscript.PubKeyHashTy ||
+			scriptClass == txscript.WitnessV0PubKeyHashTy {
+			if mainUTXO == nil {
+				mainUTXO = &bitcoin.UnspentTransactionOutput{
+					Outpoint: &bitcoin.TransactionOutpoint{
+						TransactionHash: outpointTransactionHash,
+						OutputIndex:     outpointIndex,
+					},
+					Value: value,
+				}
+			} else {
+				return nil, fmt.Errorf(
+					"deposit sweep transaction has incorrect structure")
+			}
+		} else if scriptClass != txscript.ScriptHashTy &&
+			scriptClass != txscript.WitnessV0ScriptHashTy {
+			return nil, fmt.Errorf(
+				"deposit sweep transaction has incorrect input types",
+			)
+		}
+	}
+
+	return mainUTXO, nil
 }
 
 var submitDepositSweepProofCommandDescription = "Submits deposit sweep proof " +
