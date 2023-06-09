@@ -93,7 +93,7 @@ cd $BEACON_SOL_PATH
 printf "${LOG_START}Installing beacon YARN dependencies...${LOG_END}"
 yarn install
 
-if [ "$NETWORK" == "development" ]; then
+if [ "$NETWORK" == "development" || "$NETWORK" == "docker" ]; then
   printf "${LOG_START}Unlocking ethereum accounts...${LOG_END}"
   KEEP_ETHEREUM_PASSWORD=$KEEP_ETHEREUM_PASSWORD \
     npx hardhat unlock-accounts --network $NETWORK

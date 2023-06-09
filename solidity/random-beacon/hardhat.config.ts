@@ -100,6 +100,11 @@ const config: HardhatUserConfig = {
       chainId: 1101,
       tags: ["allowStubs"],
     },
+    docker: {
+      url: "geth:8545",
+      chainId: 1101,
+      tags: ["allowStubs"],
+    },
     goerli: {
       url: process.env.CHAIN_API_URL || "",
       chainId: 5,
@@ -162,6 +167,9 @@ const config: HardhatUserConfig = {
       // For development environment we expect the local dependencies to be linked
       // with `yarn link` command.
       development: [
+        "node_modules/@threshold-network/solidity-contracts/deployments/development",
+      ],
+      docker: [
         "node_modules/@threshold-network/solidity-contracts/deployments/development",
       ],
       goerli: ["node_modules/@threshold-network/solidity-contracts/artifacts"],
