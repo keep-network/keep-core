@@ -14,14 +14,14 @@ import (
 type RedemptionTransactionShape uint8
 
 const (
-	// ChangeFirstRedemption is a shape where the change output is the first one
+	// RedemptionChangeFirst is a shape where the change output is the first one
 	// in the transaction output vector. This shape makes the change's position
 	// fixed and leverages some SPV proof cost optimizations made in the Bridge
 	// implementation.
-	ChangeFirstRedemption RedemptionTransactionShape = iota
-	// ChangeLastRedemption is a shape where the change output is the last one
+	RedemptionChangeFirst RedemptionTransactionShape = iota
+	// RedemptionChangeLast is a shape where the change output is the last one
 	// in the transaction output vector.
-	ChangeLastRedemption
+	RedemptionChangeLast
 )
 
 // RedemptionRequest represents a tBTC redemption request.
@@ -96,7 +96,7 @@ func assembleRedemptionTransaction(
 	feeDistribution redemptionFeeDistributionFn,
 	shape ...RedemptionTransactionShape,
 ) (*bitcoin.TransactionBuilder, error) {
-	resolvedShape := ChangeFirstRedemption
+	resolvedShape := RedemptionChangeFirst
 	if len(shape) == 1 {
 		resolvedShape = shape[0]
 	}
@@ -185,9 +185,9 @@ func assembleRedemptionTransaction(
 		}
 
 		switch resolvedShape {
-		case ChangeFirstRedemption:
+		case RedemptionChangeFirst:
 			outputs = append([]*bitcoin.TransactionOutput{changeOutput}, outputs...)
-		case ChangeLastRedemption:
+		case RedemptionChangeLast:
 			outputs = append(outputs, changeOutput)
 		default:
 			panic("unknown redemption transaction shape")
