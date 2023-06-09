@@ -127,7 +127,7 @@ func FindDepositsToSweep(
 		for _, registeredWallet := range walletRegisteredEvents {
 			logger.Infof(
 				"fetching deposits from wallet [%s]...",
-				registeredWallet.WalletPublicKeyHash,
+				hexutils.Encode(registeredWallet.WalletPublicKeyHash[:]),
 			)
 
 			unsweptDeposits, err := getDepositsToSweepFromWallet(
