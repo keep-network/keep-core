@@ -113,7 +113,7 @@ func TestWithRedemptionTotalFee(t *testing.T) {
 		"total fee indivisible by the requests count": {
 			totalFee:          10000,
 			requestsCount:     6,
-			expectedFeeShares: []int64{1666, 1666, 1666, 1666, 1670},
+			expectedFeeShares: []int64{1666, 1666, 1666, 1666, 1666, 1670},
 		},
 	}
 
