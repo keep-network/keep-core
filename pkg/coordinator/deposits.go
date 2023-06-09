@@ -1,7 +1,7 @@
 package coordinator
 
 import (
-	"encoding/hex"
+	"errors"
 	"fmt"
 	"os"
 	"sort"
@@ -10,6 +10,12 @@ import (
 	"github.com/keep-network/keep-core/pkg/bitcoin"
 	"github.com/keep-network/keep-core/pkg/internal/hexutils"
 	"github.com/keep-network/keep-core/pkg/tbtc"
+)
+
+var (
+	// ErrNoDepositsToSweep throws an error if no deposits that could be swept
+	// have been found.
+	ErrNoDepositsToSweep = errors.New("no deposits to sweep")
 )
 
 type depositEntry struct {
@@ -25,23 +31,21 @@ type depositEntry struct {
 	confirmations                 uint
 }
 
-// ListDeposits gets deposits from the chain.
+// ListDeposits gets deposits from the chain and prints them to standard output.
 func ListDeposits(
 	tbtcChain tbtc.Chain,
 	btcChain bitcoin.Chain,
-	walletPublicKeyHashString string,
-	hideSwept bool,
-	sortByAmount bool,
+	walletPublicKeyHash *WalletPublicKeyHash,
 	head int,
-	tail int,
+	skipSwept bool,
 ) error {
 	deposits, err := getDeposits(
 		tbtcChain,
 		btcChain,
-		walletPublicKeyHashString,
-		sortByAmount,
+		walletPublicKeyHash,
 		head,
-		tail,
+		skipSwept,
+		false,
 	)
 	if err != nil {
 		return fmt.Errorf(
@@ -54,11 +58,6 @@ func ListDeposits(
 		return fmt.Errorf("no deposits found")
 	}
 
-	// Filter
-	if hideSwept {
-		deposits = removeSwept(deposits)
-	}
-
 	// Print
 	if err := printTable(deposits); err != nil {
 		return fmt.Errorf("failed to print deposits table: %v", err)
@@ -67,38 +66,22 @@ func ListDeposits(
 	return nil
 }
 
-func removeSwept(deposits []depositEntry) []depositEntry {
-	result := []depositEntry{}
-	for _, deposit := range deposits {
-		if deposit.isSwept {
-			continue
-		}
-		result = append(result, deposit)
-	}
-	return result
-}
-
 func getDeposits(
 	tbtcChain tbtc.Chain,
 	btcChain bitcoin.Chain,
-	walletPublicKeyHashString string,
-	sortByAmount bool,
-	head int,
-	tail int,
+	walletPublicKeyHash *WalletPublicKeyHash,
+	maxNumberOfDeposits int,
+	skipSwept bool,
+	skipUnconfirmed bool,
 ) ([]depositEntry, error) {
-	logger.Infof("reading deposits from chain...")
+	logger.Infof("reading revealed deposits from chain...")
 
 	filter := &tbtc.DepositRevealedEventFilter{}
-	if len(walletPublicKeyHashString) > 0 {
-		walletPublicKeyHash, err := hexToWalletPublicKeyHash(walletPublicKeyHashString)
-		if err != nil {
-			return []depositEntry{}, fmt.Errorf("failed to extract wallet public key hash: %v", err)
-		}
-
-		filter.WalletPublicKeyHash = [][20]byte{walletPublicKeyHash}
+	if walletPublicKeyHash != nil {
+		filter.WalletPublicKeyHash = [][20]byte{*walletPublicKeyHash}
 	}
 
-	allDepositRevealedEvents, err := tbtcChain.PastDepositRevealedEvents(filter)
+	depositRevealedEvents, err := tbtcChain.PastDepositRevealedEvents(filter)
 	if err != nil {
 		return []depositEntry{}, fmt.Errorf(
 			"failed to get past deposit revealed events: [%w]",
@@ -106,42 +89,26 @@ func getDeposits(
 		)
 	}
 
-	logger.Infof("found %d DepositRevealed events", len(allDepositRevealedEvents))
+	logger.Infof("found %d DepositRevealed events", len(depositRevealedEvents))
 
-	// Order
-	sort.SliceStable(allDepositRevealedEvents, func(i, j int) bool {
-		return allDepositRevealedEvents[i].BlockNumber > allDepositRevealedEvents[j].BlockNumber
+	// Take the oldest first
+	sort.SliceStable(depositRevealedEvents, func(i, j int) bool {
+		return depositRevealedEvents[i].BlockNumber < depositRevealedEvents[j].BlockNumber
 	})
 
-	if sortByAmount {
-		sort.SliceStable(allDepositRevealedEvents, func(i, j int) bool {
-			return allDepositRevealedEvents[i].Amount < allDepositRevealedEvents[j].Amount
-		})
+	logger.Infof("getting deposits details...")
+
+	resultSliceCapacity := len(depositRevealedEvents)
+	if maxNumberOfDeposits > 0 {
+		resultSliceCapacity = maxNumberOfDeposits
 	}
 
-	// Filter
-	depositRevealedEvents := []*tbtc.DepositRevealedEvent{}
-
-	if len(allDepositRevealedEvents) > head+tail && (head > 0 || tail > 0) {
-		// Head
-		depositRevealedEvents = append(
-			depositRevealedEvents,
-			allDepositRevealedEvents[:head]...,
-		)
-		// Tail
-		depositRevealedEvents = append(
-			depositRevealedEvents,
-			allDepositRevealedEvents[len(allDepositRevealedEvents)-tail:]...,
-		)
-	} else {
-		depositRevealedEvents = append(
-			depositRevealedEvents,
-			allDepositRevealedEvents...,
-		)
-	}
-
-	result := make([]depositEntry, len(depositRevealedEvents))
+	result := make([]depositEntry, 0, resultSliceCapacity)
 	for i, event := range depositRevealedEvents {
+		if len(result) == cap(result) {
+			break
+		}
+
 		logger.Debugf("getting details of deposit %d/%d", i+1, len(depositRevealedEvents))
 
 		depositKey := tbtcChain.BuildDepositKey(event.FundingTxHash, event.FundingOutputIndex)
@@ -154,6 +121,12 @@ func getDeposits(
 			)
 		}
 
+		isSwept := depositRequest.SweptAt.Unix() != 0
+		if skipSwept && isSwept {
+			logger.Debugf("deposit %d/%d is already swept", i+1, len(depositRevealedEvents))
+			continue
+		}
+
 		confirmations, err := btcChain.GetTransactionConfirmations(event.FundingTxHash)
 		if err != nil {
 			logger.Errorf(
@@ -162,16 +135,27 @@ func getDeposits(
 			)
 		}
 
-		result[i] = depositEntry{
-			walletPublicKeyHash:           event.WalletPublicKeyHash,
-			depositKey:                    hexutils.Encode(depositKey.Bytes()),
-			revealBlock:                   event.BlockNumber,
-			isSwept:                       depositRequest.SweptAt.Unix() != 0,
-			fundingTransactionHash:        event.FundingTxHash,
-			fundingTransactionOutputIndex: event.FundingOutputIndex,
-			amountBtc:                     convertSatToBtc(float64(depositRequest.Amount)),
-			confirmations:                 confirmations,
+		if skipUnconfirmed && confirmations < tbtc.DepositSweepRequiredFundingTxConfirmations {
+			logger.Debugf(
+				"deposit %d/%d funding transaction doesn't have enough confirmations: %d/%d",
+				i+1, len(depositRevealedEvents),
+				confirmations, tbtc.DepositSweepRequiredFundingTxConfirmations)
+			continue
 		}
+
+		result = append(
+			result,
+			depositEntry{
+				walletPublicKeyHash:           event.WalletPublicKeyHash,
+				depositKey:                    hexutils.Encode(depositKey.Bytes()),
+				revealBlock:                   event.BlockNumber,
+				isSwept:                       isSwept,
+				fundingTransactionHash:        event.FundingTxHash,
+				fundingTransactionOutputIndex: event.FundingOutputIndex,
+				amountBtc:                     convertSatToBtc(float64(depositRequest.Amount)),
+				confirmations:                 confirmations,
+			},
+		)
 	}
 
 	return result, nil

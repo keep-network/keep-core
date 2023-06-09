@@ -17,10 +17,8 @@ var (
 	walletFlagName = "wallet"
 
 	// listDepositsCommand:
-	hideSweptFlagName    = "hide-swept"
-	sortByAmountFlagName = "sort-amount"
-	headFlagName         = "head"
-	tailFlagName         = "tail"
+	hideSweptFlagName = "hide-swept"
+	headFlagName      = "head"
 
 	// proposeDepositsSweepCommand:
 	feeFlagName    = "fee"
@@ -65,19 +63,9 @@ var listDepositsCommand = cobra.Command{
 			return fmt.Errorf("failed to find hide swept flag: %v", err)
 		}
 
-		sortByAmount, err := cmd.Flags().GetBool(sortByAmountFlagName)
-		if err != nil {
-			return fmt.Errorf("failed to find sort by amount flag: %v", err)
-		}
-
 		head, err := cmd.Flags().GetInt(headFlagName)
 		if err != nil {
 			return fmt.Errorf("failed to find head flag: %v", err)
-		}
-
-		tail, err := cmd.Flags().GetInt(tailFlagName)
-		if err != nil {
-			return fmt.Errorf("failed to find tail flag: %v", err)
 		}
 
 		_, tbtcChain, _, _, _, err := ethereum.Connect(ctx, clientConfig.Ethereum)
@@ -93,14 +81,22 @@ var listDepositsCommand = cobra.Command{
 			return fmt.Errorf("could not connect to Electrum chain: [%v]", err)
 		}
 
+		var walletPublicKeyHash *coordinator.WalletPublicKeyHash
+		if len(wallet) > 0 {
+			wpkh, err := coordinator.NewWalletPublicKeyHash(wallet)
+			if err != nil {
+				return fmt.Errorf("failed extract wallet public key hash: %v", err)
+			}
+
+			walletPublicKeyHash = &wpkh
+		}
+
 		return coordinator.ListDeposits(
 			tbtcChain,
 			btcChain,
-			wallet,
-			hideSwept,
-			sortByAmount,
+			walletPublicKeyHash,
 			head,
-			tail,
+			hideSwept,
 		)
 	},
 }
@@ -238,22 +234,10 @@ func init() {
 		"hide swept deposits",
 	)
 
-	listDepositsCommand.Flags().Bool(
-		sortByAmountFlagName,
-		false,
-		"sort by deposit amount",
-	)
-
 	listDepositsCommand.Flags().Int(
 		headFlagName,
 		0,
 		"get head of deposits",
-	)
-
-	listDepositsCommand.Flags().Int(
-		tailFlagName,
-		0,
-		"get tail of deposits",
 	)
 
 	CoordinatorCommand.AddCommand(&listDepositsCommand)
