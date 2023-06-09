@@ -113,7 +113,7 @@ const config: HardhatUserConfig = {
       tags: ["allowStubs", "useRandomBeaconChaosnet"],
     },
     docker: {
-      url: "geth:8545",
+      url: "http://geth:8545",
       chainId: 1101,
       tags: ["allowStubs", "useRandomBeaconChaosnet"],
     },
