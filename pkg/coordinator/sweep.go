@@ -92,7 +92,7 @@ func ProposeDepositsSweep(
 		DepositsRevealBlocks: depositsRevealBlocks,
 	}
 
-	logger.Infof("validating the proposal...")
+	logger.Infof("validating the deposit sweep proposal...")
 	if _, err := tbtc.ValidateDepositSweepProposal(
 		logger,
 		proposal,
@@ -104,7 +104,7 @@ func ProposeDepositsSweep(
 	}
 
 	if !dryRun {
-		logger.Infof("submitting the proposal...")
+		logger.Infof("submitting the deposit sweep proposal...")
 		if err := tbtcChain.SubmitDepositSweepProposalWithReimbursement(proposal); err != nil {
 			return fmt.Errorf("failed to submit deposit sweep proposal: %v", err)
 		}
