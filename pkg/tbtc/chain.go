@@ -364,7 +364,7 @@ type WalletCoordinatorChain interface {
 	SubmitDepositSweepProof(
 		proof *bitcoin.SpvProof,
 		transaction *bitcoin.Transaction,
-		mainUTXO *bitcoin.UnspentTransactionOutput,
+		mainUTXO bitcoin.UnspentTransactionOutput,
 		vault common.Address,
 	) error
 }

@@ -766,7 +766,7 @@ func (lc *localChain) GetDepositSweepMaxSize() (uint16, error) {
 func (lc *localChain) SubmitDepositSweepProof(
 	proof *bitcoin.SpvProof,
 	transaction *bitcoin.Transaction,
-	mainUTXO *bitcoin.UnspentTransactionOutput,
+	mainUTXO bitcoin.UnspentTransactionOutput,
 	vault common.Address,
 ) error {
 	panic("unsupported")

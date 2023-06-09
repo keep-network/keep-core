@@ -10,6 +10,7 @@ import (
 	"github.com/keep-network/keep-core/config"
 	"github.com/keep-network/keep-core/pkg/bitcoin"
 	"github.com/keep-network/keep-core/pkg/bitcoin/electrum"
+	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/chain/ethereum"
 	"github.com/keep-network/keep-core/pkg/coordinator"
 )
@@ -280,13 +281,13 @@ var submitDepositSweepProofCommand = cobra.Command{
 			return fmt.Errorf("failed to assemble transaction spv proof: %v", err)
 		}
 
-		mainUTXO, err := extractMainUTXO(btcChain, transaction)
+		mainUTXO, vault, err := parseTransactionInputs(
+			btcChain,
+			*tbtcChain,
+			transaction)
 		if err != nil {
-			return fmt.Errorf("failed to extract main UTXO: %v", err)
+			return fmt.Errorf("error while parsing transaction inputs: %v", err)
 		}
-
-		// TODO: Get the wallet's vault.
-		vault := common.Address{}
 
 		if err := tbtcChain.SubmitDepositSweepProof(
 			proof,
@@ -301,11 +302,35 @@ var submitDepositSweepProofCommand = cobra.Command{
 	},
 }
 
-func extractMainUTXO(btcChain bitcoin.Chain, transaction *bitcoin.Transaction) (
-	*bitcoin.UnspentTransactionOutput,
+func convertVaultAddress(vault *chain.Address) common.Address {
+	if vault == nil {
+		return common.Address{}
+	}
+
+	return common.HexToAddress(string(*vault))
+}
+
+func parseTransactionInputs(
+	btcChain bitcoin.Chain,
+	tbtcChain ethereum.TbtcChain,
+	transaction *bitcoin.Transaction,
+) (
+	bitcoin.UnspentTransactionOutput,
+	common.Address,
 	error,
 ) {
+	// Represents the main UTXO of the deposit sweep transaction. Nil if there
+	// was no main UTXO.
 	var mainUTXO *bitcoin.UnspentTransactionOutput = nil
+
+	// Stores the vault address of the deposits. Each deposit should have the
+	// same value of vault. The zero-filled value indicates there was no vault
+	// value set for the deposits.
+	var vault = common.Address{}
+
+	// This flag checks if at least one deposit input has been found during
+	// deposit processing.
+	var depositAlreadyProcessed = false
 
 	for _, input := range transaction.Inputs {
 		outpointTransactionHash := input.Outpoint.TransactionHash
@@ -315,7 +340,10 @@ func extractMainUTXO(btcChain bitcoin.Chain, transaction *bitcoin.Transaction) (
 			outpointTransactionHash,
 		)
 		if err != nil {
-			return nil, fmt.Errorf("failed to get previous transaction: %v", err)
+			return bitcoin.UnspentTransactionOutput{}, common.Address{}, fmt.Errorf(
+				"failed to get previous transaction: %v",
+				err,
+			)
 		}
 
 		publicKeyScript := previousTransaction.Outputs[outpointIndex].PublicKeyScript
@@ -333,18 +361,56 @@ func extractMainUTXO(btcChain bitcoin.Chain, transaction *bitcoin.Transaction) (
 					Value: value,
 				}
 			} else {
-				return nil, fmt.Errorf(
-					"deposit sweep transaction has incorrect structure")
+				return bitcoin.UnspentTransactionOutput{}, common.Address{}, fmt.Errorf(
+					"deposit sweep transaction has incorrect structure",
+				)
 			}
-		} else if scriptClass != txscript.ScriptHashTy &&
-			scriptClass != txscript.WitnessV0ScriptHashTy {
-			return nil, fmt.Errorf(
+		} else if scriptClass == txscript.ScriptHashTy ||
+			scriptClass == txscript.WitnessV0ScriptHashTy {
+
+			deposit, err := tbtcChain.GetDepositRequest(
+				outpointTransactionHash,
+				outpointIndex,
+			)
+			if err != nil {
+				return bitcoin.UnspentTransactionOutput{}, common.Address{}, fmt.Errorf(
+					"failed to get deposit request: %v",
+					err,
+				)
+			}
+
+			if depositAlreadyProcessed {
+				if vault != convertVaultAddress(deposit.Vault) {
+					return bitcoin.UnspentTransactionOutput{}, common.Address{}, fmt.Errorf(
+						"swept deposits have different vaults",
+					)
+				}
+			} else {
+				// The first deposit input has been encountered, save the vault
+				// and require subsequent deposit inputs to have the same vault.
+				vault = convertVaultAddress(deposit.Vault)
+				depositAlreadyProcessed = true
+			}
+
+		} else {
+			return bitcoin.UnspentTransactionOutput{}, common.Address{}, fmt.Errorf(
 				"deposit sweep transaction has incorrect input types",
 			)
 		}
 	}
 
-	return mainUTXO, nil
+	// If none of the input was main UTXO, return zero-filled main UTXO.
+	if mainUTXO == nil {
+		mainUTXO = &bitcoin.UnspentTransactionOutput{
+			Outpoint: &bitcoin.TransactionOutpoint{
+				TransactionHash: bitcoin.Hash{},
+				OutputIndex:     0,
+			},
+			Value: 0,
+		}
+	}
+
+	return *mainUTXO, vault, nil
 }
 
 var submitDepositSweepProofCommandDescription = "Submits deposit sweep proof " +
