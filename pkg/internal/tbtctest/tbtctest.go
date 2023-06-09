@@ -45,6 +45,11 @@
 //   redeemer scripts (P2PKH, P2WPKH, P2SH and P2WSH) and a P2WPKH change.
 //   For reference see:
 //   https://live.blockcypher.com/btc-testnet/tx/f70ff89fd2b6226183e4b8143cc5f0f457f05dd1dca0c6151ab66f4523d972b7
+//
+// - redemption_scenario_5.json: Bitcoin redemption transaction that paid multiple
+//   redeemer scripts (P2PKH, P2WPKH) without a change.
+//   For reference see:
+//   https://live.blockcypher.com/btc-testnet/tx/afcdf8f91273b73abc40018873978c22bbb7c3d8d669ef2faffa0c4b0898c8eb
 package tbtctest
 
 import (
