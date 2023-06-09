@@ -51,6 +51,29 @@ func ProposeDepositsSweep(
 	deposits []DepositSweepDetails,
 	dryRun bool,
 ) error {
+	// Estimate fee if it's missing.
+	if fee <= 0 {
+		logger.Infof("estimating sweep transaction fee...")
+		var err error
+		_, _, perDepositMaxFee, _, err := tbtcChain.GetDepositParameters()
+		if err != nil {
+			return fmt.Errorf("cannot get deposit tx max fee: [%w]", err)
+		}
+
+		estimatedFee, _, err := estimateDepositsSweepFee(
+			btcChain,
+			len(deposits),
+			perDepositMaxFee,
+		)
+		if err != nil {
+			return fmt.Errorf("cannot estimate sweep transaction fee: [%w]", err)
+		}
+
+		fee = estimatedFee
+	}
+
+	logger.Infof("sweep transaction fee: [%d]", fee)
+
 	logger.Infof("preparing a deposit sweep proposal...")
 	btcTransactions := make([]btcTransaction, len(deposits))
 	depositsRevealBlocks := make([]*big.Int, len(deposits))
