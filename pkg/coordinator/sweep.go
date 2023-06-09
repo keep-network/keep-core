@@ -35,23 +35,31 @@ e.g. bd99d1d0a61fd104925d9b7ac997958aa8af570418b3fde091f7bfc561608865:1:8392394
 	depositsFormatRegexp  = regexp.MustCompile(`^([[:xdigit:]]+):(\d+):(\d+)$`)
 )
 
+// DepositSweepDetails contains deposit's data required for sweeping.
+type DepositSweepDetails struct {
+	FundingTransactionHash        bitcoin.Hash
+	FundingTransactionOutputIndex uint32
+	RevealBlock                   uint64
+}
+
 // ProposeDepositsSweep handles deposit sweep proposal request submission.
 func ProposeDepositsSweep(
 	tbtcChain tbtc.Chain,
 	btcChain bitcoin.Chain,
-	walletStr string,
+	walletPublicKeyHash WalletPublicKeyHash,
 	fee int64,
-	depositsString []string,
+	deposits []DepositSweepDetails,
 	dryRun bool,
 ) error {
-	walletPublicKeyHash, err := hexToWalletPublicKeyHash(walletStr)
-	if err != nil {
-		return fmt.Errorf("failed extract wallet public key hash: %v", err)
-	}
-
-	btcTransactions, depositsRevealBlocks, err := parseDeposits(depositsString)
-	if err != nil {
-		return fmt.Errorf("failed to parse arguments: %w", err)
+	logger.Infof("preparing a deposit sweep proposal...")
+	btcTransactions := make([]btcTransaction, len(deposits))
+	depositsRevealBlocks := make([]*big.Int, len(deposits))
+	for i, deposit := range deposits {
+		btcTransactions[i] = btcTransaction{
+			FundingTxHash:      deposit.FundingTransactionHash,
+			FundingOutputIndex: deposit.FundingTransactionOutputIndex,
+		}
+		depositsRevealBlocks[i] = big.NewInt(int64(deposit.RevealBlock))
 	}
 
 	proposal := &tbtc.DepositSweepProposal{
@@ -82,43 +90,42 @@ func ProposeDepositsSweep(
 	return nil
 }
 
-func parseDeposits(depositsStrings []string) ([]btcTransaction, []*big.Int, error) {
-	depositsKeys := make([]btcTransaction, len(depositsStrings))
-	depositsRevealBlocks := make([]*big.Int, len(depositsStrings))
+// ParseDepositsToSweep decodes a list of deposits details required for sweeping.
+func ParseDepositsToSweep(depositsStrings []string) ([]DepositSweepDetails, error) {
+	deposits := make([]DepositSweepDetails, len(depositsStrings))
 
 	for i, depositString := range depositsStrings {
 		matched := depositsFormatRegexp.FindStringSubmatch(depositString)
 		// Check if number of resolved entries match expected number of groups
 		// for the given regexp.
 		if len(matched) != 4 {
-			return nil, nil, fmt.Errorf("failed to parse deposit: [%s]", depositString)
+			return nil, fmt.Errorf("failed to parse deposit: [%s]", depositString)
 		}
 
 		txHash, err := bitcoin.NewHashFromString(matched[1], bitcoin.ReversedByteOrder)
 		if err != nil {
-			return nil, nil, fmt.Errorf("invalid bitcoin transaction hash [%s]: %v", matched[1], err)
+			return nil, fmt.Errorf("invalid bitcoin transaction hash [%s]: %v", matched[1], err)
 
 		}
 
 		outputIndex, err := strconv.ParseInt(matched[2], 10, 32)
 		if err != nil {
-			return nil, nil, fmt.Errorf("invalid bitcoin transaction output index [%s]: %v", matched[2], err)
+			return nil, fmt.Errorf("invalid bitcoin transaction output index [%s]: %v", matched[2], err)
 		}
 
-		revealBlock, err := strconv.ParseInt(matched[3], 10, 32)
+		revealBlock, err := strconv.ParseUint(matched[3], 10, 32)
 		if err != nil {
-			return nil, nil, fmt.Errorf("invalid reveal block number [%s]: %v", matched[3], err)
+			return nil, fmt.Errorf("invalid reveal block number [%s]: %v", matched[3], err)
 		}
 
-		depositsKeys[i] = btcTransaction{
-			FundingTxHash:      txHash,
-			FundingOutputIndex: uint32(outputIndex),
+		deposits[i] = DepositSweepDetails{
+			FundingTransactionHash:        txHash,
+			FundingTransactionOutputIndex: uint32(outputIndex),
+			RevealBlock:                   revealBlock,
 		}
-
-		depositsRevealBlocks[i] = big.NewInt(revealBlock)
 	}
 
-	return depositsKeys, depositsRevealBlocks, nil
+	return deposits, nil
 }
 
 // ValidateDepositString validates format of the string containing deposit details.
