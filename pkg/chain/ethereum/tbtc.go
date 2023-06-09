@@ -1034,6 +1034,52 @@ func (tc *TbtcChain) GetDepositRequest(
 	}, nil
 }
 
+func (tc *TbtcChain) PastNewWalletRegisteredEvents(
+	filter *tbtc.NewWalletRegisteredEventFilter,
+) ([]*tbtc.NewWalletRegisteredEvent, error) {
+	var startBlock uint64
+	var endBlock *uint64
+	var ecdsaWalletID [][32]byte
+	var walletPublicKeyHash [][20]byte
+
+	if filter != nil {
+		startBlock = filter.StartBlock
+		endBlock = filter.EndBlock
+		ecdsaWalletID = filter.EcdsaWalletID
+		walletPublicKeyHash = filter.WalletPublicKeyHash
+	}
+
+	events, err := tc.bridge.PastNewWalletRegisteredEvents(
+		startBlock,
+		endBlock,
+		ecdsaWalletID,
+		walletPublicKeyHash,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	convertedEvents := make([]*tbtc.NewWalletRegisteredEvent, 0)
+	for _, event := range events {
+		convertedEvent := &tbtc.NewWalletRegisteredEvent{
+			EcdsaWalletID:       event.EcdsaWalletID,
+			WalletPublicKeyHash: event.WalletPubKeyHash,
+			BlockNumber:         event.Raw.BlockNumber,
+		}
+
+		convertedEvents = append(convertedEvents, convertedEvent)
+	}
+
+	sort.SliceStable(
+		convertedEvents,
+		func(i, j int) bool {
+			return convertedEvents[i].BlockNumber < convertedEvents[j].BlockNumber
+		},
+	)
+
+	return convertedEvents, err
+}
+
 func (tc *TbtcChain) GetWallet(
 	walletPublicKeyHash [20]byte,
 ) (*tbtc.WalletChainData, error) {
