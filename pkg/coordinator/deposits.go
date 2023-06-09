@@ -66,6 +66,132 @@ func ListDeposits(
 	return nil
 }
 
+// FindDepositsToSweep finds deposits that can be swept.
+// If a wallet public key hash is provided, it will find unswept deposits for the
+// given wallet. If a wallet public key hash is nil, it will check all wallets
+// starting from the oldest one to find a first wallet containing unswept deposits
+// and return those deposits.
+// maxNumberOfDeposits is used as a ceiling for the number of deposits in the
+// result. If number of discovered deposits meets the maxNumberOfDeposits the
+// function will stop fetching more deposits.
+// This function will return a wallet public key hash and a list of deposits from
+// the wallet that can be swept.
+// Deposits with insufficient number of funding transaction confirmations will
+// not be taken into consideration for sweeping.
+// The result will not mix deposits for different wallets.
+// If no unswept deposits were found the function will return ErrNoDepositsToSweep
+// error.
+// TODO: Add unit tests
+// TODO: Cache immutable data
+// TODO: Don't call chain for old data
+func FindDepositsToSweep(
+	tbtcChain tbtc.Chain,
+	btcChain bitcoin.Chain,
+	walletPublicKeyHash *WalletPublicKeyHash,
+	maxNumberOfDeposits uint16,
+) (WalletPublicKeyHash, []DepositSweepDetails, error) {
+	logger.Infof("deposit sweep max size: %d", maxNumberOfDeposits)
+
+	getDepositsToSweepFromWallet := func(walletToSweep WalletPublicKeyHash) ([]depositEntry, error) {
+		unsweptDeposits, err := getDeposits(
+			tbtcChain,
+			btcChain,
+			&walletToSweep,
+			int(maxNumberOfDeposits),
+			true,
+			true,
+		)
+		if err != nil {
+			return nil,
+				fmt.Errorf(
+					"failed to get deposits for [%s] wallet: [%w]",
+					walletToSweep,
+					err,
+				)
+		}
+		return unsweptDeposits, nil
+	}
+
+	depositsToSweep := make([]depositEntry, 0, maxNumberOfDeposits)
+	// If walletPublicKeyHash is not provided we need to find a wallet that has
+	// unswept deposits.
+	if walletPublicKeyHash == nil {
+		walletRegisteredEvents, err := tbtcChain.PastNewWalletRegisteredEvents(nil)
+		if err != nil {
+			return WalletPublicKeyHash{}, nil, fmt.Errorf("failed to get registered wallets: [%w]", err)
+		}
+
+		// TODO: Optimization: Determine which wallets are already fully swept and
+		// cannot take any new deposits so we don't query them again.
+
+		for _, registeredWallet := range walletRegisteredEvents {
+			logger.Infof(
+				"fetching deposits from wallet [%s]...",
+				registeredWallet.WalletPublicKeyHash,
+			)
+
+			unsweptDeposits, err := getDepositsToSweepFromWallet(
+				registeredWallet.WalletPublicKeyHash,
+			)
+			if err != nil {
+				return WalletPublicKeyHash{}, nil, err
+			}
+
+			// Check if there are any unswept deposits in this wallet. If so
+			// sweep this wallet and don't check other wallets.
+			if len(unsweptDeposits) > 0 {
+				walletPublicKeyHash = (*WalletPublicKeyHash)(&registeredWallet.WalletPublicKeyHash)
+				depositsToSweep = unsweptDeposits
+				break
+			}
+		}
+	} else {
+		logger.Infof("fetching deposits from wallet [%s]...", walletPublicKeyHash)
+		unsweptDeposits, err := getDepositsToSweepFromWallet(
+			*walletPublicKeyHash,
+		)
+		if err != nil {
+			return [20]byte{}, nil, err
+		}
+		depositsToSweep = unsweptDeposits
+	}
+
+	if len(depositsToSweep) == 0 {
+		return [20]byte{}, nil, ErrNoDepositsToSweep
+	}
+
+	logger.Infof(
+		"found [%d] deposits to sweep for wallet [%s]",
+		len(depositsToSweep),
+		walletPublicKeyHash,
+	)
+
+	for i, deposit := range depositsToSweep {
+		logger.Debugf(
+			"deposit [%d/%d] - %s",
+			i+1,
+			len(depositsToSweep),
+			fmt.Sprintf(
+				"depositKey: [%s], reveal block: [%d], funding transaction: [%s], output index: [%d]",
+				deposit.depositKey,
+				deposit.revealBlock,
+				deposit.fundingTransactionHash.Hex(bitcoin.ReversedByteOrder),
+				deposit.fundingTransactionOutputIndex,
+			))
+	}
+
+	result := make([]DepositSweepDetails, len(depositsToSweep))
+	for i, deposit := range depositsToSweep {
+		result[i] = DepositSweepDetails{
+			FundingTransactionHash:        deposit.fundingTransactionHash,
+			FundingTransactionOutputIndex: deposit.fundingTransactionOutputIndex,
+			RevealBlock:                   deposit.revealBlock,
+		}
+	}
+
+	return *walletPublicKeyHash, result, nil
+}
+
 func getDeposits(
 	tbtcChain tbtc.Chain,
 	btcChain bitcoin.Chain,
