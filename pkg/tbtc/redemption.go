@@ -53,9 +53,6 @@ type redemptionFeeDistributionFn func([]*RedemptionRequest) []int64
 // withRedemptionTotalFee is a fee distribution function that takes a
 // total transaction fee and distributes it evenly over all redemption requests.
 // If the fee cannot be divided evenly, the last request incurs the remainder.
-//
-// TODO: Remove the ignore statement once this function is used.
-//lint:ignore U1000 will be needed soon.
 func withRedemptionTotalFee(totalFee int64) redemptionFeeDistributionFn {
 	return func(requests []*RedemptionRequest) []int64 {
 		requestsCount := int64(len(requests))

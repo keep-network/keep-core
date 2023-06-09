@@ -1,6 +1,7 @@
 package tbtc
 
 import (
+	"reflect"
 	"testing"
 
 	"github.com/keep-network/keep-core/pkg/bitcoin"
@@ -94,6 +95,43 @@ func TestAssembleRedemptionTransaction(t *testing.T) {
 				scenario.ExpectedRedemptionTransactionWitnessHash.Hex(bitcoin.InternalByteOrder),
 				transaction.WitnessHash().Hex(bitcoin.InternalByteOrder),
 			)
+		})
+	}
+}
+
+func TestWithRedemptionTotalFee(t *testing.T) {
+	var tests = map[string]struct {
+		totalFee          int64
+		requestsCount     int
+		expectedFeeShares []int64
+	}{
+		"total fee divisible by the requests count": {
+			totalFee:          10000,
+			requestsCount:     5,
+			expectedFeeShares: []int64{2000, 2000, 2000, 2000, 2000},
+		},
+		"total fee indivisible by the requests count": {
+			totalFee:          10000,
+			requestsCount:     6,
+			expectedFeeShares: []int64{1666, 1666, 1666, 1666, 1670},
+		},
+	}
+
+	for testName, test := range tests {
+		t.Run(testName, func(t *testing.T) {
+			requests := make([]*RedemptionRequest, test.requestsCount)
+
+			feeShares := withRedemptionTotalFee(test.totalFee)(requests)
+
+			if !reflect.DeepEqual(test.expectedFeeShares, feeShares) {
+				t.Errorf(
+					"unexpected fee shares\n"+
+						"expected: [%v]\n"+
+						"actual:   [%v]",
+					test.expectedFeeShares,
+					feeShares,
+				)
+			}
 		})
 	}
 }
