@@ -302,6 +302,9 @@ var submitDepositSweepProofCommand = cobra.Command{
 	},
 }
 
+// convertVaultAddress converts the vault's address from the chain's address
+// to the common address. If the chain's address is nil, the returned value
+// is zero-filled.
 func convertVaultAddress(vault *chain.Address) common.Address {
 	if vault == nil {
 		return common.Address{}
@@ -310,6 +313,8 @@ func convertVaultAddress(vault *chain.Address) common.Address {
 	return common.HexToAddress(string(*vault))
 }
 
+// parseTransactionInputs parses the transaction's inputs and returns the main
+// UTXO and the vault.
 func parseTransactionInputs(
 	btcChain bitcoin.Chain,
 	tbtcChain ethereum.TbtcChain,
