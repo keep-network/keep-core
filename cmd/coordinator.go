@@ -253,6 +253,11 @@ var submitDepositSweepProofCommand = cobra.Command{
 			return fmt.Errorf("failed to find transaction hash flag: %v", err)
 		}
 
+		logger.Infof(
+			"Preparing deposit sweep proof for transaction: %s",
+			transactionHashFlag,
+		)
+
 		transactionHash, err := bitcoin.NewHashFromString(
 			transactionHashFlag,
 			bitcoin.ReversedByteOrder,
@@ -304,6 +309,11 @@ var submitDepositSweepProofCommand = cobra.Command{
 		); err != nil {
 			return fmt.Errorf("failed to submit deposit sweep proof: %v", err)
 		}
+
+		logger.Infof(
+			"Successfully submitted deposit sweep proof for transaction: %s",
+			transactionHashFlag,
+		)
 
 		return nil
 	},
