@@ -8,6 +8,7 @@ import (
 
 	"github.com/keep-network/keep-core/pkg/bitcoin"
 	"github.com/keep-network/keep-core/pkg/coordinator"
+	"github.com/keep-network/keep-core/pkg/internal/hexutils"
 	"github.com/keep-network/keep-core/pkg/tbtc"
 )
 
@@ -50,36 +51,20 @@ func (dsts *FindDepositsToSweepTestScenario) UnmarshalJSON(data []byte) error {
 
 	// Unmarshal max number of deposits.
 	if len(unmarshaled.WalletPublicKeyHash) > 0 {
-		walletPublicKeyHash, err := coordinator.NewWalletPublicKeyHash(unmarshaled.WalletPublicKeyHash)
-		if err != nil {
-			return fmt.Errorf(
-				"failed to unmarshal wallet public key hash: [%w]",
-				err,
-			)
-		}
-
-		dsts.WalletPublicKeyHash = &walletPublicKeyHash
+		copy(dsts.WalletPublicKeyHash[:], hexToSlice(unmarshaled.WalletPublicKeyHash))
 	}
 
 	dsts.MaxNumberOfDeposits = unmarshaled.MaxNumberOfDeposits
 
 	// Unmarshal wallets.
-	for i, wallet := range unmarshaled.Wallets {
+	for _, wallet := range unmarshaled.Wallets {
 		w := new(Wallet)
-		walletPublicKeyHash, err := coordinator.NewWalletPublicKeyHash(wallet.WalletPublicKeyHash)
-		if err != nil {
-			return fmt.Errorf(
-				"failed to unmarshal wallet public key hash for deposit [%d/%d]: [%w]",
-				i,
-				len(unmarshaled.Deposits),
-				err,
-			)
-		}
 
-		w.WalletPublicKeyHash = walletPublicKeyHash
+		copy(w.WalletPublicKeyHash[:], hexToSlice(wallet.WalletPublicKeyHash))
 		w.RegistrationBlockNumber = wallet.RegistrationBlockNumber
 
 		dsts.Wallets = append(dsts.Wallets, w)
+		// TODO: CHANGE TO USE i
 	}
 	// Unmarshal deposits.
 	for i, deposit := range unmarshaled.Deposits {
@@ -95,20 +80,11 @@ func (dsts *FindDepositsToSweepTestScenario) UnmarshalJSON(data []byte) error {
 			)
 		}
 
-		walletPublicKeyHash, err := coordinator.NewWalletPublicKeyHash(deposit.WalletPublicKeyHash)
-		if err != nil {
-			return fmt.Errorf(
-				"failed to unmarshal wallet public key hash for deposit [%d/%d]: [%w]",
-				i,
-				len(unmarshaled.Deposits),
-				err,
-			)
-		}
+		copy(d.WalletPublicKeyHash[:], hexToSlice(deposit.WalletPublicKeyHash))
 
 		d.FundingTxHash = fundingTxHash
 		d.FundingOutputIndex = deposit.FundingOutputIndex
 		d.FundingTxConfirmations = deposit.FundingTxConfirmations
-		d.WalletPublicKeyHash = walletPublicKeyHash
 		d.RevealBlockNumber = deposit.RevealBlockNumber
 		d.SweptAt = time.Unix(deposit.SweptAt, 0)
 
@@ -117,14 +93,7 @@ func (dsts *FindDepositsToSweepTestScenario) UnmarshalJSON(data []byte) error {
 
 	// Unmarshal expected wallet public key has.
 	if len(unmarshaled.ExpectedWalletPublicKeyHash) > 0 {
-		expectedWalletPublicKeyHash, err := coordinator.NewWalletPublicKeyHash(unmarshaled.ExpectedWalletPublicKeyHash)
-		if err != nil {
-			return fmt.Errorf(
-				"failed to unmarshal expected wallet public key hash: [%w]",
-				err,
-			)
-		}
-		dsts.ExpectedWalletPublicKeyHash = expectedWalletPublicKeyHash
+		copy(dsts.ExpectedWalletPublicKeyHash[:], hexToSlice(unmarshaled.ExpectedWalletPublicKeyHash))
 	}
 
 	// Unmarshal expected unswept deposits.
@@ -164,16 +133,8 @@ type depositSweepProposal struct {
 func (dsp *depositSweepProposal) convert() (*tbtc.DepositSweepProposal, error) {
 	result := &tbtc.DepositSweepProposal{}
 
-	var err error
-
 	if len(dsp.WalletPublicKeyHash) > 0 {
-		result.WalletPublicKeyHash, err = coordinator.NewWalletPublicKeyHash(dsp.WalletPublicKeyHash)
-		if err != nil {
-			return nil, fmt.Errorf(
-				"failed to unmarshal wallet public key hash: [%w]",
-				err,
-			)
-		}
+		copy(result.WalletPublicKeyHash[:], hexToSlice(dsp.WalletPublicKeyHash))
 	}
 
 	result.DepositsKeys = make([]struct {
@@ -234,15 +195,7 @@ func (psts *ProposeSweepTestScenario) UnmarshalJSON(data []byte) error {
 
 	// Unmarshal wallet public key hash.
 	if len(unmarshaled.WalletPublicKeyHash) > 0 {
-		walletPublicKeyHash, err := coordinator.NewWalletPublicKeyHash(unmarshaled.WalletPublicKeyHash)
-		if err != nil {
-			return fmt.Errorf(
-				"failed to unmarshal wallet public key hash: [%w]",
-				err,
-			)
-		}
-
-		psts.WalletPublicKeyHash = walletPublicKeyHash
+		copy(psts.WalletPublicKeyHash[:], hexToSlice(unmarshaled.WalletPublicKeyHash))
 	}
 
 	// Unmarshal deposit transaction max fee.
@@ -286,4 +239,17 @@ func (psts *ProposeSweepTestScenario) UnmarshalJSON(data []byte) error {
 	}
 
 	return nil
+}
+
+func hexToSlice(hexString string) []byte {
+	if len(hexString) == 0 {
+		return []byte{}
+	}
+
+	bytes, err := hexutils.Decode(hexString)
+	if err != nil {
+		panic(err)
+	}
+
+	return bytes
 }
