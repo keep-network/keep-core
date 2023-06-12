@@ -352,6 +352,9 @@ func parseTransactionInputs(
 
 		if scriptClass == txscript.PubKeyHashTy ||
 			scriptClass == txscript.WitnessV0PubKeyHashTy {
+			// The input is P2PKH or P2WPKH, so we found main UTXO. There should
+			// be at most one main UTXO. If any input of this kind has already
+			// been found, report an error.
 			if mainUTXO == nil {
 				mainUTXO = &bitcoin.UnspentTransactionOutput{
 					Outpoint: &bitcoin.TransactionOutpoint{
@@ -367,7 +370,10 @@ func parseTransactionInputs(
 			}
 		} else if scriptClass == txscript.ScriptHashTy ||
 			scriptClass == txscript.WitnessV0ScriptHashTy {
-
+			// The input is P2SH or P2WSH, so we found a deposit input. All
+			// the deposits should have the same vault set or no vault at all.
+			// If the vault if different than the vault from any previous
+			// deposit input, report an error.
 			deposit, err := tbtcChain.GetDepositRequest(
 				outpointTransactionHash,
 				outpointIndex,
@@ -393,6 +399,8 @@ func parseTransactionInputs(
 			}
 
 		} else {
+			// The type of the input is neither P2PKH, P2WPKH, P2SH or P2WSH.
+			// Report an error.
 			return bitcoin.UnspentTransactionOutput{}, common.Address{}, fmt.Errorf(
 				"deposit sweep transaction has incorrect input types",
 			)
