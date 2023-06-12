@@ -89,7 +89,7 @@ func FindDepositsToSweep(
 	btcChain bitcoin.Chain,
 	walletPublicKeyHash *WalletPublicKeyHash,
 	maxNumberOfDeposits uint16,
-) (WalletPublicKeyHash, []DepositSweepDetails, error) {
+) (WalletPublicKeyHash, []*DepositSweepDetails, error) {
 	logger.Infof("deposit sweep max size: %d", maxNumberOfDeposits)
 
 	getDepositsToSweepFromWallet := func(walletToSweep WalletPublicKeyHash) ([]depositEntry, error) {
@@ -185,9 +185,9 @@ func FindDepositsToSweep(
 			))
 	}
 
-	result := make([]DepositSweepDetails, len(depositsToSweep))
+	result := make([]*DepositSweepDetails, len(depositsToSweep))
 	for i, deposit := range depositsToSweep {
-		result[i] = DepositSweepDetails{
+		result[i] = &DepositSweepDetails{
 			FundingTransactionHash:        deposit.fundingTransactionHash,
 			FundingTransactionOutputIndex: deposit.fundingTransactionOutputIndex,
 			RevealBlock:                   deposit.revealBlock,
