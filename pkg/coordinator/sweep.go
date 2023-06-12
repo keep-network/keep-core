@@ -19,7 +19,6 @@ type btcTransaction = struct {
 	FundingOutputIndex uint32
 }
 
-const requiredFundingTxConfirmations = uint(6)
 const depositScriptByteSize = 92
 
 var (
@@ -96,7 +95,7 @@ func ProposeDepositsSweep(
 	if _, err := tbtc.ValidateDepositSweepProposal(
 		logger,
 		proposal,
-		requiredFundingTxConfirmations,
+		tbtc.DepositSweepRequiredFundingTxConfirmations,
 		tbtcChain,
 		btcChain,
 	); err != nil {
