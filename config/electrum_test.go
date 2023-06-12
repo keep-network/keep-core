@@ -27,6 +27,9 @@ func TestResolveElectrum(t *testing.T) {
 				{
 					URL: "wss://bitcoin.threshold.p2p.org:50004",
 				},
+				{
+					URL: "wss://electrumx.prod-utility-eks-us-west-2.staked.cloud:443",
+				},
 			},
 		},
 		bitcoin.Testnet: {
