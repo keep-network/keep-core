@@ -81,7 +81,8 @@ func withRedemptionTotalFee(totalFee int64) redemptionFeeDistributionFn {
 // must be set accordingly. The requests slice must contain at least one element.
 // The fee shares applied to specific requests according to the provided
 // feeDistribution function are not validated in any way so must be chosen with
-// respect to the system limitations.
+// respect to the system limitations. The shape argument is optional - if not
+// provided the RedemptionChangeFirst value is used by default.
 //
 // The resulting bitcoin.TransactionBuilder instance holds all the data
 // necessary to sign the transaction and obtain a bitcoin.Transaction instance
