@@ -86,7 +86,7 @@ var listDepositsCommand = cobra.Command{
 		if len(wallet) > 0 {
 			wpkh, err := coordinator.NewWalletPublicKeyHash(wallet)
 			if err != nil {
-				return fmt.Errorf("failed extract wallet public key hash: %v", err)
+				return fmt.Errorf("failed to extract wallet public key hash: %v", err)
 			}
 
 			walletPublicKeyHash = &wpkh
