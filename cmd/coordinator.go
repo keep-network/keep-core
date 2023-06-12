@@ -186,7 +186,6 @@ var proposeDepositsSweepCommand = cobra.Command{
 				walletPublicKeyHash,
 				depositSweepMaxSize,
 			)
-
 			if err != nil {
 				return fmt.Errorf("failed to prepare deposits sweep proposal: %v", err)
 			}
