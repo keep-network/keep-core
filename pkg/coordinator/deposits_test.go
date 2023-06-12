@@ -15,7 +15,7 @@ import (
 func TestFindDepositsToSweep(t *testing.T) {
 	log.SetLogLevel("*", "DEBUG")
 
-	scenarios, err := coordinatortest.LoadDepositsSweepTestScenarios()
+	scenarios, err := coordinatortest.LoadFindDepositsToSweepTestScenario()
 	if err != nil {
 		t.Fatal(err)
 	}

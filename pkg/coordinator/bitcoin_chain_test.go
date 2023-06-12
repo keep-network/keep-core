@@ -8,21 +8,43 @@ import (
 )
 
 type localBitcoinChain struct {
-	transactionsMutex sync.Mutex
-
+	transactionsMutex         sync.Mutex
+	transactions              map[bitcoin.Hash]*bitcoin.Transaction
 	transactionsConfirmations map[bitcoin.Hash]uint
+
+	feeMutex                 sync.Mutex
+	satPerVByteFeeEstimation map[uint32]int64
 }
 
 func newLocalBitcoinChain() *localBitcoinChain {
 	return &localBitcoinChain{
+		transactions:              make(map[bitcoin.Hash]*bitcoin.Transaction),
 		transactionsConfirmations: make(map[bitcoin.Hash]uint),
+		satPerVByteFeeEstimation:  make(map[uint32]int64),
 	}
 }
 
 func (lbc *localBitcoinChain) GetTransaction(
 	transactionHash bitcoin.Hash,
 ) (*bitcoin.Transaction, error) {
-	panic("unsupported")
+	lbc.transactionsMutex.Lock()
+	defer lbc.transactionsMutex.Unlock()
+
+	transaction, ok := lbc.transactions[transactionHash]
+	if !ok {
+		return nil, fmt.Errorf("transaction not found")
+	}
+	return transaction, nil
+}
+
+func (lbc *localBitcoinChain) setTransaction(
+	transactionHash bitcoin.Hash,
+	transaction *bitcoin.Transaction,
+) {
+	lbc.transactionsMutex.Lock()
+	defer lbc.transactionsMutex.Unlock()
+
+	lbc.transactions[transactionHash] = transaction
 }
 
 func (lbc *localBitcoinChain) GetTransactionConfirmations(
@@ -84,5 +106,18 @@ func (lbc *localBitcoinChain) GetMempoolForPublicKeyHash(
 func (lbc *localBitcoinChain) EstimateSatPerVByteFee(
 	blocks uint32,
 ) (int64, error) {
-	panic("unsupported")
+	lbc.feeMutex.Lock()
+	defer lbc.feeMutex.Unlock()
+
+	return lbc.satPerVByteFeeEstimation[blocks], nil
+}
+
+func (lbc *localBitcoinChain) setEstimateSatPerVByteFee(
+	blocks uint32,
+	fee int64,
+) {
+	lbc.feeMutex.Lock()
+	defer lbc.feeMutex.Unlock()
+
+	lbc.satPerVByteFeeEstimation[blocks] = fee
 }

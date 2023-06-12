@@ -14,11 +14,13 @@ import (
 
 	"github.com/keep-network/keep-core/pkg/bitcoin"
 	"github.com/keep-network/keep-core/pkg/coordinator"
+	"github.com/keep-network/keep-core/pkg/tbtc"
 )
 
 const (
-	testDataDirFormat               = "%s/testdata"
-	depositsSweepTestDataFilePrefix = "deposits_sweep_scenario"
+	testDataDirFormat                      = "%s/testdata"
+	findDepositsToSweepTestDataFilePrefix  = "find_deposits"
+	proposeDepositsSweepTestDataFilePrefix = "propose_sweep"
 )
 
 // Wallet holds the wallet data in the given test scenario.
@@ -39,8 +41,8 @@ type Deposit struct {
 	SweptAt           time.Time
 }
 
-// DepositsSweepTestScenario represents a deposit sweep test scenario.
-type DepositsSweepTestScenario struct {
+// FindDepositsToSweepTestScenario represents a deposit sweep test scenario.
+type FindDepositsToSweepTestScenario struct {
 	Title string
 
 	MaxNumberOfDeposits uint16
@@ -51,11 +53,14 @@ type DepositsSweepTestScenario struct {
 
 	ExpectedWalletPublicKeyHash coordinator.WalletPublicKeyHash
 	ExpectedUnsweptDeposits     []*coordinator.DepositSweepDetails
+
+	SweepTxFee             int64
+	EstimateSatPerVByteFee int64
 }
 
-// LoadDepositsSweepTestScenarios loads all scenarios related with deposit sweep.
-func LoadDepositsSweepTestScenarios() ([]*DepositsSweepTestScenario, error) {
-	filePaths, err := detectTestDataFiles(depositsSweepTestDataFilePrefix)
+// LoadFindDepositsToSweepTestScenario loads all scenarios related with deposit sweep.
+func LoadFindDepositsToSweepTestScenario() ([]*FindDepositsToSweepTestScenario, error) {
+	filePaths, err := detectTestDataFiles(findDepositsToSweepTestDataFilePrefix)
 	if err != nil {
 		return nil, fmt.Errorf(
 			"cannot detect test data files: [%v]",
@@ -63,7 +68,7 @@ func LoadDepositsSweepTestScenarios() ([]*DepositsSweepTestScenario, error) {
 		)
 	}
 
-	scenarios := make([]*DepositsSweepTestScenario, 0)
+	scenarios := make([]*FindDepositsToSweepTestScenario, 0)
 
 	for _, filePath := range filePaths {
 		// #nosec G304 (file path provided as taint input)
@@ -78,7 +83,78 @@ func LoadDepositsSweepTestScenarios() ([]*DepositsSweepTestScenario, error) {
 			)
 		}
 
-		var scenario DepositsSweepTestScenario
+		var scenario FindDepositsToSweepTestScenario
+		if err = json.Unmarshal(fileBytes, &scenario); err != nil {
+			return nil, fmt.Errorf(
+				"cannot unmarshal scenario for file [%v]: [%v]",
+				filePath,
+				err,
+			)
+		}
+
+		scenarios = append(scenarios, &scenario)
+	}
+
+	return scenarios, nil
+}
+
+type ProposeSweepDepositsData struct {
+	coordinator.DepositSweepDetails
+	Transaction            *bitcoin.Transaction
+	FundingTxConfirmations uint
+}
+
+// ProposeSweepTestScenario represents a deposit sweep test scenario.
+type ProposeSweepTestScenario struct {
+	Title string
+
+	WalletPublicKeyHash          coordinator.WalletPublicKeyHash
+	DepositTxMaxFee              uint64
+	Deposits                     []*ProposeSweepDepositsData
+	SweepTxFee                   int64
+	EstimateSatPerVByteFee       int64
+	ExpectedDepositSweepProposal *tbtc.DepositSweepProposal
+}
+
+func (p *ProposeSweepTestScenario) DepositsSweepDetails() []*coordinator.DepositSweepDetails {
+	result := make([]*coordinator.DepositSweepDetails, len(p.Deposits))
+	for i, d := range p.Deposits {
+		result[i] = &coordinator.DepositSweepDetails{
+			FundingTxHash:      d.FundingTxHash,
+			FundingOutputIndex: d.FundingOutputIndex,
+			RevealBlock:        d.RevealBlock,
+		}
+	}
+
+	return result
+}
+
+// LoadProposeSweepTestScenario loads all scenarios related with deposit sweep.
+func LoadProposeSweepTestScenario() ([]*ProposeSweepTestScenario, error) {
+	filePaths, err := detectTestDataFiles(proposeDepositsSweepTestDataFilePrefix)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"cannot detect test data files: [%v]",
+			err,
+		)
+	}
+
+	scenarios := make([]*ProposeSweepTestScenario, 0)
+
+	for _, filePath := range filePaths {
+		// #nosec G304 (file path provided as taint input)
+		// This line is used to read a test fixture file.
+		// There is no user input.
+		fileBytes, err := ioutil.ReadFile(filePath)
+		if err != nil {
+			return nil, fmt.Errorf(
+				"cannot read file [%v]: [%v]",
+				filePath,
+				err,
+			)
+		}
+
+		var scenario ProposeSweepTestScenario
 		if err = json.Unmarshal(fileBytes, &scenario); err != nil {
 			return nil, fmt.Errorf(
 				"cannot unmarshal scenario for file [%v]: [%v]",
