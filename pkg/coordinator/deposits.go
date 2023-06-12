@@ -1,7 +1,6 @@
 package coordinator
 
 import (
-	"errors"
 	"fmt"
 	"os"
 	"sort"
@@ -10,12 +9,6 @@ import (
 	"github.com/keep-network/keep-core/pkg/bitcoin"
 	"github.com/keep-network/keep-core/pkg/internal/hexutils"
 	"github.com/keep-network/keep-core/pkg/tbtc"
-)
-
-var (
-	// ErrNoDepositsToSweep throws an error if no deposits that could be swept
-	// have been found.
-	ErrNoDepositsToSweep = errors.New("no deposits to sweep")
 )
 
 type depositEntry struct {
@@ -79,8 +72,6 @@ func ListDeposits(
 // Deposits with insufficient number of funding transaction confirmations will
 // not be taken into consideration for sweeping.
 // The result will not mix deposits for different wallets.
-// If no unswept deposits were found the function will return ErrNoDepositsToSweep
-// error.
 // TODO: Add unit tests
 // TODO: Cache immutable data
 // TODO: Don't call chain for old data
@@ -165,7 +156,7 @@ func FindDepositsToSweep(
 	}
 
 	if len(depositsToSweep) == 0 {
-		return [20]byte{}, nil, ErrNoDepositsToSweep
+		return [20]byte{}, nil, nil
 	}
 
 	logger.Infof(

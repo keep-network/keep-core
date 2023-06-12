@@ -9,7 +9,6 @@ import (
 	"github.com/keep-network/keep-core/pkg/coordinator"
 	"github.com/keep-network/keep-core/pkg/internal/coordinatortest"
 	"github.com/keep-network/keep-core/pkg/internal/hexutils"
-	"github.com/keep-network/keep-core/pkg/internal/testutils"
 	"github.com/keep-network/keep-core/pkg/tbtc"
 )
 
@@ -70,9 +69,7 @@ func TestFindDepositsToSweep(t *testing.T) {
 				scenario.MaxNumberOfDeposits,
 			)
 
-			if len(scenario.ExpectedUnsweptDeposits) == 0 {
-				testutils.AssertErrorsSame(t, err, coordinator.ErrNoDepositsToSweep)
-			} else if err != nil {
+			if err != nil {
 				t.Fatal(err)
 			}
 
