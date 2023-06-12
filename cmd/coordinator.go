@@ -261,10 +261,7 @@ var submitDepositSweepProofCommand = cobra.Command{
 			return fmt.Errorf("failed to parse transaction hash flag: %v", err)
 		}
 
-		// TODO: Due to how the Bridge contract checks the accumulated difficulty
-		//       it may be necessary to increment the required confirmations
-		//       by one.
-		requiredConfirmations, err := tbtcChain.TxProofDifficultyFactor()
+		txProofDifficulty, err := tbtcChain.TxProofDifficultyFactor()
 		if err != nil {
 			return fmt.Errorf(
 				"failed to get transaction proof difficulty factor: %v",
@@ -272,9 +269,18 @@ var submitDepositSweepProofCommand = cobra.Command{
 			)
 		}
 
+		// Increase the required confirmations by one. The Bridge calculates
+		// the required difficulty of a chain of block headers by multiplying
+		// the difficulty of the first block header by the difficulty factor.
+		// If the block headers happen to span the Bitcoin epoch difficulty
+		// change and there is a drop of difficulty between the epochs, the sum
+		// of difficulties from the headers chain may be too low. Adding one
+		// more block header will ensure the sum of difficulties is high enough.
+		requiredConfirmations := uint(txProofDifficulty.Uint64()) + 1
+
 		transaction, proof, err := bitcoin.AssembleSpvProof(
 			transactionHash,
-			uint(requiredConfirmations.Uint64()),
+			requiredConfirmations,
 			btcChain,
 		)
 		if err != nil {
@@ -284,7 +290,8 @@ var submitDepositSweepProofCommand = cobra.Command{
 		mainUTXO, vault, err := parseTransactionInputs(
 			btcChain,
 			*tbtcChain,
-			transaction)
+			transaction,
+		)
 		if err != nil {
 			return fmt.Errorf("error while parsing transaction inputs: %v", err)
 		}
@@ -402,7 +409,6 @@ func parseTransactionInputs(
 				vault = convertVaultAddress(deposit.Vault)
 				depositAlreadyProcessed = true
 			}
-
 		} else {
 			// The type of the input is neither P2PKH, P2WPKH, P2SH or P2WSH.
 			// Report an error.
