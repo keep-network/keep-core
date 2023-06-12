@@ -6,13 +6,9 @@ import (
 	"github.com/keep-network/keep-core/pkg/internal/hexutils"
 )
 
-// TODO: Consider moving it to the tbtc package.
-// WalletPublicKeyHash is a type representing a public key hash of the wallet.
-type WalletPublicKeyHash [20]byte
-
 // NewWalletPublicKeyHash decodes a wallet public key hash from a string.
-func NewWalletPublicKeyHash(str string) (WalletPublicKeyHash, error) {
-	var result WalletPublicKeyHash
+func NewWalletPublicKeyHash(str string) ([20]byte, error) {
+	var result [20]byte
 
 	walletHex, err := hexutils.Decode(str)
 	if err != nil {
@@ -26,8 +22,4 @@ func NewWalletPublicKeyHash(str string) (WalletPublicKeyHash, error) {
 	copy(result[:], walletHex)
 
 	return result, nil
-}
-
-func (w WalletPublicKeyHash) String() string {
-	return hexutils.Encode(w[:])
 }

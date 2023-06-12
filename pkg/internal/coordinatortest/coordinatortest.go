@@ -25,7 +25,7 @@ const (
 
 // Wallet holds the wallet data in the given test scenario.
 type Wallet struct {
-	WalletPublicKeyHash     coordinator.WalletPublicKeyHash
+	WalletPublicKeyHash     [20]byte
 	RegistrationBlockNumber uint64
 }
 
@@ -35,7 +35,7 @@ type Deposit struct {
 	FundingOutputIndex     uint32
 	FundingTxConfirmations uint
 
-	WalletPublicKeyHash coordinator.WalletPublicKeyHash
+	WalletPublicKeyHash [20]byte
 
 	RevealBlockNumber uint64
 	SweptAt           time.Time
@@ -46,12 +46,12 @@ type FindDepositsToSweepTestScenario struct {
 	Title string
 
 	MaxNumberOfDeposits uint16
-	WalletPublicKeyHash *coordinator.WalletPublicKeyHash
+	WalletPublicKeyHash *[20]byte
 
 	Wallets  []*Wallet
 	Deposits []*Deposit
 
-	ExpectedWalletPublicKeyHash coordinator.WalletPublicKeyHash
+	ExpectedWalletPublicKeyHash [20]byte
 	ExpectedUnsweptDeposits     []*coordinator.DepositSweepDetails
 
 	SweepTxFee             int64
@@ -108,7 +108,7 @@ type ProposeSweepDepositsData struct {
 type ProposeSweepTestScenario struct {
 	Title string
 
-	WalletPublicKeyHash          coordinator.WalletPublicKeyHash
+	WalletPublicKeyHash          [20]byte
 	DepositTxMaxFee              uint64
 	Deposits                     []*ProposeSweepDepositsData
 	SweepTxFee                   int64

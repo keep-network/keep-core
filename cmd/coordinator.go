@@ -82,7 +82,7 @@ var listDepositsCommand = cobra.Command{
 			return fmt.Errorf("could not connect to Electrum chain: [%v]", err)
 		}
 
-		var walletPublicKeyHash *coordinator.WalletPublicKeyHash
+		var walletPublicKeyHash *[20]byte
 		if len(wallet) > 0 {
 			wpkh, err := coordinator.NewWalletPublicKeyHash(wallet)
 			if err != nil {
@@ -155,7 +155,7 @@ var proposeDepositsSweepCommand = cobra.Command{
 			return fmt.Errorf("could not connect to Electrum chain: [%v]", err)
 		}
 
-		var walletPublicKeyHash *coordinator.WalletPublicKeyHash
+		var walletPublicKeyHash *[20]byte
 		if len(wallet) > 0 {
 			wpkh, err := coordinator.NewWalletPublicKeyHash(wallet)
 			if err != nil {
@@ -179,7 +179,7 @@ var proposeDepositsSweepCommand = cobra.Command{
 				return fmt.Errorf("failed extract wallet public key hash: %v", err)
 			}
 		} else {
-			var wpkh coordinator.WalletPublicKeyHash
+			var wpkh [20]byte
 			wpkh, deposits, err = coordinator.FindDepositsToSweep(
 				tbtcChain,
 				btcChain,

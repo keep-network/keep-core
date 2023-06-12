@@ -19,7 +19,7 @@ var (
 )
 
 type depositEntry struct {
-	walletPublicKeyHash WalletPublicKeyHash
+	walletPublicKeyHash [20]byte
 
 	depositKey  string
 	revealBlock uint64
@@ -35,7 +35,7 @@ type depositEntry struct {
 func ListDeposits(
 	tbtcChain tbtc.Chain,
 	btcChain bitcoin.Chain,
-	walletPublicKeyHash *WalletPublicKeyHash,
+	walletPublicKeyHash *[20]byte,
 	head int,
 	skipSwept bool,
 ) error {
@@ -87,12 +87,12 @@ func ListDeposits(
 func FindDepositsToSweep(
 	tbtcChain tbtc.Chain,
 	btcChain bitcoin.Chain,
-	walletPublicKeyHash *WalletPublicKeyHash,
+	walletPublicKeyHash *[20]byte,
 	maxNumberOfDeposits uint16,
-) (WalletPublicKeyHash, []*DepositSweepDetails, error) {
+) ([20]byte, []*DepositSweepDetails, error) {
 	logger.Infof("deposit sweep max size: %d", maxNumberOfDeposits)
 
-	getDepositsToSweepFromWallet := func(walletToSweep WalletPublicKeyHash) ([]depositEntry, error) {
+	getDepositsToSweepFromWallet := func(walletToSweep [20]byte) ([]depositEntry, error) {
 		unsweptDeposits, err := getDeposits(
 			tbtcChain,
 			btcChain,
@@ -118,7 +118,7 @@ func FindDepositsToSweep(
 	if walletPublicKeyHash == nil {
 		walletRegisteredEvents, err := tbtcChain.PastNewWalletRegisteredEvents(nil)
 		if err != nil {
-			return WalletPublicKeyHash{}, nil, fmt.Errorf("failed to get registered wallets: [%w]", err)
+			return [20]byte{}, nil, fmt.Errorf("failed to get registered wallets: [%w]", err)
 		}
 
 		// Take the oldest first
@@ -139,19 +139,22 @@ func FindDepositsToSweep(
 				registeredWallet.WalletPublicKeyHash,
 			)
 			if err != nil {
-				return WalletPublicKeyHash{}, nil, err
+				return [20]byte{}, nil, err
 			}
 
 			// Check if there are any unswept deposits in this wallet. If so
 			// sweep this wallet and don't check other wallets.
 			if len(unsweptDeposits) > 0 {
-				walletPublicKeyHash = (*WalletPublicKeyHash)(&registeredWallet.WalletPublicKeyHash)
+				walletPublicKeyHash = (*[20]byte)(&registeredWallet.WalletPublicKeyHash)
 				depositsToSweep = unsweptDeposits
 				break
 			}
 		}
 	} else {
-		logger.Infof("fetching deposits from wallet [%s]...", walletPublicKeyHash)
+		logger.Infof(
+			"fetching deposits from wallet [%s]...",
+			hexutils.Encode(walletPublicKeyHash[:]),
+		)
 		unsweptDeposits, err := getDepositsToSweepFromWallet(
 			*walletPublicKeyHash,
 		)
@@ -168,7 +171,7 @@ func FindDepositsToSweep(
 	logger.Infof(
 		"found [%d] deposits to sweep for wallet [%s]",
 		len(depositsToSweep),
-		walletPublicKeyHash,
+		hexutils.Encode(walletPublicKeyHash[:]),
 	)
 
 	for i, deposit := range depositsToSweep {
@@ -200,7 +203,7 @@ func FindDepositsToSweep(
 func getDeposits(
 	tbtcChain tbtc.Chain,
 	btcChain bitcoin.Chain,
-	walletPublicKeyHash *WalletPublicKeyHash,
+	walletPublicKeyHash *[20]byte,
 	maxNumberOfDeposits int,
 	skipSwept bool,
 	skipUnconfirmed bool,
@@ -299,7 +302,7 @@ func printTable(deposits []depositEntry) error {
 	for i, deposit := range deposits {
 		fmt.Fprintf(w, "%d\t%s\t%.5f\t%s\t%s\t%d\t%t\t\n",
 			i,
-			deposit.walletPublicKeyHash,
+			hexutils.Encode(deposit.walletPublicKeyHash[:]),
 			deposit.amountBtc,
 			deposit.depositKey,
 			fmt.Sprintf(

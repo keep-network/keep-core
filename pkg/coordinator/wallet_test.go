@@ -10,7 +10,7 @@ import (
 
 var walletPublicKeyHashTests = []struct {
 	input          string
-	expectedResult WalletPublicKeyHash
+	expectedResult [20]byte
 	wantErr        error // if set, decoding must fail
 }{
 	// invalid
@@ -20,12 +20,12 @@ var walletPublicKeyHashTests = []struct {
 	{input: `0x5bee2805df9fcea4691c442fe4c1a33f7288e2`, wantErr: fmt.Errorf("invalid bytes length: [19], expected: [20]")},
 	{input: `000f4224b6858eee7f8999e6299c056c6405bbede0`, wantErr: fmt.Errorf("invalid bytes length: [21], expected: [20]")},
 	// valid
-	{input: `0x48b88e1074c33c7a934f781220e1a4523f1768c0`, expectedResult: WalletPublicKeyHash{72, 184, 142, 16, 116, 195, 60, 122, 147, 79, 120, 18, 32, 225, 164, 82, 63, 23, 104, 192}},
-	{input: `0x00008e1074c33c7a934f781220e1a4523f1768c0`, expectedResult: WalletPublicKeyHash{00, 00, 142, 16, 116, 195, 60, 122, 147, 79, 120, 18, 32, 225, 164, 82, 63, 23, 104, 192}},
-	{input: `0x48b88e1074c33c7a934f781220e1a4523f000000`, expectedResult: WalletPublicKeyHash{72, 184, 142, 16, 116, 195, 60, 122, 147, 79, 120, 18, 32, 225, 164, 82, 63, 00, 00, 00}},
+	{input: `0x48b88e1074c33c7a934f781220e1a4523f1768c0`, expectedResult: [20]byte{72, 184, 142, 16, 116, 195, 60, 122, 147, 79, 120, 18, 32, 225, 164, 82, 63, 23, 104, 192}},
+	{input: `0x00008e1074c33c7a934f781220e1a4523f1768c0`, expectedResult: [20]byte{00, 00, 142, 16, 116, 195, 60, 122, 147, 79, 120, 18, 32, 225, 164, 82, 63, 23, 104, 192}},
+	{input: `0x48b88e1074c33c7a934f781220e1a4523f000000`, expectedResult: [20]byte{72, 184, 142, 16, 116, 195, 60, 122, 147, 79, 120, 18, 32, 225, 164, 82, 63, 00, 00, 00}},
 }
 
-func TestWalletPublicKeyHashRoundTrip(t *testing.T) {
+func TestNewWalletPublicKeyHash(t *testing.T) {
 	for _, test := range walletPublicKeyHashTests {
 		t.Run(test.input, func(t *testing.T) {
 			actualResult, err := NewWalletPublicKeyHash(test.input)
@@ -34,25 +34,6 @@ func TestWalletPublicKeyHashRoundTrip(t *testing.T) {
 			}
 
 			testutils.AssertBytesEqual(t, test.expectedResult[:], actualResult[:])
-
-			if test.wantErr == nil {
-				if actualResult.String() != test.input {
-					t.Fatalf(
-						"unexpected String() result\nexpected: %v\nactual:   %v",
-						test.input,
-						actualResult.String(),
-					)
-				}
-
-				// Make sure %s formatting works fine.
-				if fmt.Sprintf("%s", actualResult) != test.input {
-					t.Fatalf(
-						"unexpected format string result\nexpected: %v\nactual:   %v",
-						test.input,
-						fmt.Sprintf("%s", actualResult),
-					)
-				}
-			}
 		})
 	}
 }

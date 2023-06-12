@@ -8,6 +8,7 @@ import (
 
 	"github.com/keep-network/keep-core/pkg/coordinator"
 	"github.com/keep-network/keep-core/pkg/internal/coordinatortest"
+	"github.com/keep-network/keep-core/pkg/internal/hexutils"
 	"github.com/keep-network/keep-core/pkg/internal/testutils"
 	"github.com/keep-network/keep-core/pkg/tbtc"
 )
@@ -76,7 +77,11 @@ func TestFindDepositsToSweep(t *testing.T) {
 			}
 
 			if actualWallet != expectedWallet {
-				t.Errorf("invalid wallet public key hash\nexpected: %s\nactual:   %s", expectedWallet, actualWallet)
+				t.Errorf(
+					"invalid wallet public key hash\nexpected: %s\nactual:   %s",
+					hexutils.Encode(expectedWallet[:]),
+					hexutils.Encode(actualWallet[:]),
+				)
 			}
 
 			if diff := deep.Equal(actualDeposits, scenario.ExpectedUnsweptDeposits); diff != nil {

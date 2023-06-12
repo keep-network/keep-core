@@ -45,7 +45,7 @@ type DepositSweepDetails struct {
 func ProposeDepositsSweep(
 	tbtcChain tbtc.Chain,
 	btcChain bitcoin.Chain,
-	walletPublicKeyHash WalletPublicKeyHash,
+	walletPublicKeyHash [20]byte,
 	fee int64,
 	deposits []*DepositSweepDetails,
 	dryRun bool,
