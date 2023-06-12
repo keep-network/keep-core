@@ -50,6 +50,10 @@ func ProposeDepositsSweep(
 	deposits []*DepositSweepDetails,
 	dryRun bool,
 ) error {
+	if len(deposits) == 0 {
+		return fmt.Errorf("deposits list is empty")
+	}
+
 	// Estimate fee if it's missing.
 	if fee <= 0 {
 		logger.Infof("estimating sweep transaction fee...")
