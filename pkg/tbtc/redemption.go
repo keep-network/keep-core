@@ -77,8 +77,7 @@ func withRedemptionTotalFee(totalFee int64) redemptionFeeDistributionFn {
 // assembleRedemptionTransaction constructs an unsigned redemption Bitcoin
 // transaction.
 //
-// Regarding input arguments, the walletMainUtxo parameter is mandatory and
-// must be set accordingly. The requests slice must contain at least one element.
+// Regarding input arguments, the requests slice must contain at least one element.
 // The fee shares applied to specific requests according to the provided
 // feeDistribution function are not validated in any way so must be chosen with
 // respect to the system limitations. The shape argument is optional - if not
