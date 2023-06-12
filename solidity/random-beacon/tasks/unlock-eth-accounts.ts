@@ -6,7 +6,7 @@ task("unlock-accounts", "Unlock ethereum accounts").setAction(
   async (args, hre) => {
     const { ethers } = hre
 
-    if (hre.network.name === "development") {
+    if (hre.network.name === "development" || hre.network.name === "docker") {
       const password = process.env.KEEP_ETHEREUM_PASSWORD || "password"
 
       const provider = new ethers.providers.JsonRpcProvider(
