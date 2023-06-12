@@ -1,7 +1,7 @@
 package tbtc
 
 import (
-	"reflect"
+	"github.com/go-test/deep"
 	"testing"
 
 	"github.com/keep-network/keep-core/pkg/bitcoin"
@@ -123,7 +123,7 @@ func TestWithRedemptionTotalFee(t *testing.T) {
 
 			feeShares := withRedemptionTotalFee(test.totalFee)(requests)
 
-			if !reflect.DeepEqual(test.expectedFeeShares, feeShares) {
+			if diff := deep.Equal(test.expectedFeeShares, feeShares); diff != nil {
 				t.Errorf(
 					"unexpected fee shares\n"+
 						"expected: [%v]\n"+
