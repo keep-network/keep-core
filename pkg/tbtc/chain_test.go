@@ -56,9 +56,6 @@ type localChain struct {
 	pastDepositRevealedEventsMutex sync.Mutex
 	pastDepositRevealedEvents      map[[32]byte][]*DepositRevealedEvent
 
-	pastNewWalletRegisteredEventsMutex  sync.Mutex
-	pastNewWalletRegisteredEventsEvents map[[32]byte][]*NewWalletRegisteredEvent
-
 	depositSweepProposalValidationsMutex sync.Mutex
 	depositSweepProposalValidations      map[[32]byte]bool
 
@@ -557,49 +554,10 @@ func (lc *localChain) setDepositRequest(
 	lc.depositRequests[requestKey] = request
 }
 
-func buildPastNewWalletRegisteredEventsKey(
-	filter *NewWalletRegisteredEventFilter,
-) ([32]byte, error) {
-	var buffer bytes.Buffer
-
-	startBlock := make([]byte, 8)
-	binary.BigEndian.PutUint64(startBlock, filter.StartBlock)
-	buffer.Write(startBlock)
-
-	if filter.EndBlock != nil {
-		endBlock := make([]byte, 8)
-		binary.BigEndian.PutUint64(startBlock, *filter.EndBlock)
-		buffer.Write(endBlock)
-	}
-
-	for _, ecdsaWalletID := range filter.EcdsaWalletID {
-		buffer.Write(ecdsaWalletID[:])
-	}
-
-	for _, walletPublicKeyHash := range filter.WalletPublicKeyHash {
-		buffer.Write(walletPublicKeyHash[:])
-	}
-
-	return sha256.Sum256(buffer.Bytes()), nil
-}
-
 func (lc *localChain) PastNewWalletRegisteredEvents(
 	filter *NewWalletRegisteredEventFilter,
 ) ([]*NewWalletRegisteredEvent, error) {
-	lc.pastNewWalletRegisteredEventsMutex.Lock()
-	defer lc.pastNewWalletRegisteredEventsMutex.Unlock()
-
-	eventsKey, err := buildPastNewWalletRegisteredEventsKey(filter)
-	if err != nil {
-		return nil, err
-	}
-
-	events, ok := lc.pastNewWalletRegisteredEventsEvents[eventsKey]
-	if !ok {
-		return nil, fmt.Errorf("no events for given filter")
-	}
-
-	return events, nil
+	panic("unsupported")
 }
 
 func (lc *localChain) BuildDepositKey(
