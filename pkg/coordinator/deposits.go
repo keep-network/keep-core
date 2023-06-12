@@ -72,9 +72,7 @@ func ListDeposits(
 // Deposits with insufficient number of funding transaction confirmations will
 // not be taken into consideration for sweeping.
 // The result will not mix deposits for different wallets.
-// TODO: Add unit tests
 // TODO: Cache immutable data
-// TODO: Don't call chain for old data
 func FindDepositsToSweep(
 	tbtcChain tbtc.Chain,
 	btcChain bitcoin.Chain,
