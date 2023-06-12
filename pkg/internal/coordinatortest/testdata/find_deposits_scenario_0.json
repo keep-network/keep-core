@@ -26,6 +26,14 @@
       "SweptAt": 102
     },
     {
+      "RevealBlockNumber": 7,
+      "WalletPublicKeyHash": "0x928d992e5f5b71de51a1b40fcc4056b99a88a647",
+      "FundingTxHash": "8356227b87fb191d61cff2455cd3f8c33ae208c69a7698b5baf1a331db6d4d8f",
+      "FundingOutputIndex": 2,
+      "FundingTxConfirmations": 34,
+      "SweptAt": 0
+    },
+    {
       "RevealBlockNumber": 11,
       "WalletPublicKeyHash": "0x03b74d6893ad46dfdd01b9e0e3b3385f4fce2d1e",
       "FundingTxHash": "d91868ca43db4deb96047d727a5e782f282864fde2d9364f8c562c8998ba64bf",

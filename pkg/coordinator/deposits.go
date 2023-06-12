@@ -117,10 +117,10 @@ func FindDepositsToSweep(
 			return walletRegisteredEvents[i].BlockNumber < walletRegisteredEvents[j].BlockNumber
 		})
 
-		// TODO: Optimization: Determine which wallets are already fully swept and
-		// cannot take any new deposits so we don't query them again.
+		// Only two the most recently created wallets are sweeping.
+		sweepingWallets := walletRegisteredEvents[len(walletRegisteredEvents)-2:]
 
-		for _, registeredWallet := range walletRegisteredEvents {
+		for _, registeredWallet := range sweepingWallets {
 			logger.Infof(
 				"fetching deposits from wallet [%s]...",
 				hexutils.Encode(registeredWallet.WalletPublicKeyHash[:]),
