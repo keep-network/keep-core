@@ -48,7 +48,7 @@ func ProposeDepositsSweep(
 	btcChain bitcoin.Chain,
 	walletPublicKeyHash WalletPublicKeyHash,
 	fee int64,
-	deposits []DepositSweepDetails,
+	deposits []*DepositSweepDetails,
 	dryRun bool,
 ) error {
 	// Estimate fee if it's missing.
@@ -114,8 +114,8 @@ func ProposeDepositsSweep(
 }
 
 // ParseDepositsToSweep decodes a list of deposits details required for sweeping.
-func ParseDepositsToSweep(depositsStrings []string) ([]DepositSweepDetails, error) {
-	deposits := make([]DepositSweepDetails, len(depositsStrings))
+func ParseDepositsToSweep(depositsStrings []string) ([]*DepositSweepDetails, error) {
+	deposits := make([]*DepositSweepDetails, len(depositsStrings))
 
 	for i, depositString := range depositsStrings {
 		matched := depositsFormatRegexp.FindStringSubmatch(depositString)
@@ -141,7 +141,7 @@ func ParseDepositsToSweep(depositsStrings []string) ([]DepositSweepDetails, erro
 			return nil, fmt.Errorf("invalid reveal block number [%s]: %v", matched[3], err)
 		}
 
-		deposits[i] = DepositSweepDetails{
+		deposits[i] = &DepositSweepDetails{
 			FundingTransactionHash:        txHash,
 			FundingTransactionOutputIndex: uint32(outputIndex),
 			RevealBlock:                   revealBlock,

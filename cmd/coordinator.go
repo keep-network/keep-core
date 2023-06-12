@@ -172,7 +172,7 @@ var proposeDepositsSweepCommand = cobra.Command{
 			}
 		}
 
-		var deposits []coordinator.DepositSweepDetails
+		var deposits []*coordinator.DepositSweepDetails
 		if len(args) > 0 {
 			deposits, err = coordinator.ParseDepositsToSweep(args)
 			if err != nil {
