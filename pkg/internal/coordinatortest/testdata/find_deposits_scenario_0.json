@@ -30,11 +30,19 @@
       "WalletPublicKeyHash": "0x03b74d6893ad46dfdd01b9e0e3b3385f4fce2d1e",
       "FundingTxHash": "d91868ca43db4deb96047d727a5e782f282864fde2d9364f8c562c8998ba64bf",
       "FundingOutputIndex": 1,
-      "FundingTxConfirmations": 20,
+      "FundingTxConfirmations": 6,
       "SweptAt": 0
     },
     {
       "RevealBlockNumber": 12,
+      "WalletPublicKeyHash": "0x03b74d6893ad46dfdd01b9e0e3b3385f4fce2d1e",
+      "FundingTxHash": "22703dae51de3c45ded183a39a345c101e108df32d50a1d9282e95dee67b9cfd",
+      "FundingOutputIndex": 0,
+      "FundingTxConfirmations": 5,
+      "SweptAt": 0
+    },
+    {
+      "RevealBlockNumber": 13,
       "WalletPublicKeyHash": "0x03b74d6893ad46dfdd01b9e0e3b3385f4fce2d1e",
       "FundingTxHash": "c693aaa540d22bd7cf70c17cb71c1d789ea68138d87fdb6ea70e450effeb2137",
       "FundingOutputIndex": 0,
