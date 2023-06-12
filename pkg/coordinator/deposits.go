@@ -85,7 +85,7 @@ func ListDeposits(
 // TODO: Cache immutable data
 // TODO: Don't call chain for old data
 func FindDepositsToSweep(
-	tbtcChain tbtc.Chain,
+	tbtcChain TbtcChain,
 	btcChain bitcoin.Chain,
 	walletPublicKeyHash *WalletPublicKeyHash,
 	maxNumberOfDeposits uint16,
@@ -198,7 +198,7 @@ func FindDepositsToSweep(
 }
 
 func getDeposits(
-	tbtcChain tbtc.Chain,
+	tbtcChain TbtcChain,
 	btcChain bitcoin.Chain,
 	walletPublicKeyHash *WalletPublicKeyHash,
 	maxNumberOfDeposits int,
