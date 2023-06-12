@@ -38,9 +38,18 @@ func TestWalletPublicKeyHashRoundTrip(t *testing.T) {
 			if test.wantErr == nil {
 				if actualResult.String() != test.input {
 					t.Fatalf(
-						"unexpected string\nexpected: %v\nactual:   %v",
+						"unexpected String() result\nexpected: %v\nactual:   %v",
 						test.input,
 						actualResult.String(),
+					)
+				}
+
+				// Make sure %s formatting works fine.
+				if fmt.Sprintf("%s", actualResult) != test.input {
+					t.Fatalf(
+						"unexpected format string result\nexpected: %v\nactual:   %v",
+						test.input,
+						fmt.Sprintf("%s", actualResult),
 					)
 				}
 			}
