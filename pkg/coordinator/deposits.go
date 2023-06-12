@@ -35,7 +35,7 @@ type depositEntry struct {
 func ListDeposits(
 	tbtcChain tbtc.Chain,
 	btcChain bitcoin.Chain,
-	walletPublicKeyHash *[20]byte,
+	walletPublicKeyHash [20]byte,
 	head int,
 	skipSwept bool,
 ) error {
@@ -87,7 +87,7 @@ func ListDeposits(
 func FindDepositsToSweep(
 	tbtcChain tbtc.Chain,
 	btcChain bitcoin.Chain,
-	walletPublicKeyHash *[20]byte,
+	walletPublicKeyHash [20]byte,
 	maxNumberOfDeposits uint16,
 ) ([20]byte, []*DepositSweepDetails, error) {
 	logger.Infof("deposit sweep max size: %d", maxNumberOfDeposits)
@@ -96,7 +96,7 @@ func FindDepositsToSweep(
 		unsweptDeposits, err := getDeposits(
 			tbtcChain,
 			btcChain,
-			&walletToSweep,
+			walletToSweep,
 			int(maxNumberOfDeposits),
 			true,
 			true,
@@ -115,7 +115,7 @@ func FindDepositsToSweep(
 	depositsToSweep := make([]depositEntry, 0, maxNumberOfDeposits)
 	// If walletPublicKeyHash is not provided we need to find a wallet that has
 	// unswept deposits.
-	if walletPublicKeyHash == nil {
+	if walletPublicKeyHash == [20]byte{} {
 		walletRegisteredEvents, err := tbtcChain.PastNewWalletRegisteredEvents(nil)
 		if err != nil {
 			return [20]byte{}, nil, fmt.Errorf("failed to get registered wallets: [%w]", err)
@@ -145,7 +145,7 @@ func FindDepositsToSweep(
 			// Check if there are any unswept deposits in this wallet. If so
 			// sweep this wallet and don't check other wallets.
 			if len(unsweptDeposits) > 0 {
-				walletPublicKeyHash = (*[20]byte)(&registeredWallet.WalletPublicKeyHash)
+				walletPublicKeyHash = registeredWallet.WalletPublicKeyHash
 				depositsToSweep = unsweptDeposits
 				break
 			}
@@ -156,7 +156,7 @@ func FindDepositsToSweep(
 			hexutils.Encode(walletPublicKeyHash[:]),
 		)
 		unsweptDeposits, err := getDepositsToSweepFromWallet(
-			*walletPublicKeyHash,
+			walletPublicKeyHash,
 		)
 		if err != nil {
 			return [20]byte{}, nil, err
@@ -197,13 +197,13 @@ func FindDepositsToSweep(
 		}
 	}
 
-	return *walletPublicKeyHash, result, nil
+	return walletPublicKeyHash, result, nil
 }
 
 func getDeposits(
 	tbtcChain tbtc.Chain,
 	btcChain bitcoin.Chain,
-	walletPublicKeyHash *[20]byte,
+	walletPublicKeyHash [20]byte,
 	maxNumberOfDeposits int,
 	skipSwept bool,
 	skipUnconfirmed bool,
@@ -211,8 +211,8 @@ func getDeposits(
 	logger.Infof("reading revealed deposits from chain...")
 
 	filter := &tbtc.DepositRevealedEventFilter{}
-	if walletPublicKeyHash != nil {
-		filter.WalletPublicKeyHash = [][20]byte{*walletPublicKeyHash}
+	if walletPublicKeyHash != [20]byte{} {
+		filter.WalletPublicKeyHash = [][20]byte{walletPublicKeyHash}
 	}
 
 	depositRevealedEvents, err := tbtcChain.PastDepositRevealedEvents(filter)

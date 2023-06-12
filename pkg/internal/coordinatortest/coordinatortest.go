@@ -46,7 +46,7 @@ type FindDepositsToSweepTestScenario struct {
 	Title string
 
 	MaxNumberOfDeposits uint16
-	WalletPublicKeyHash *[20]byte
+	WalletPublicKeyHash [20]byte
 
 	Wallets  []*Wallet
 	Deposits []*Deposit
