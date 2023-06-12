@@ -121,6 +121,11 @@ func FindDepositsToSweep(
 			return WalletPublicKeyHash{}, nil, fmt.Errorf("failed to get registered wallets: [%w]", err)
 		}
 
+		// Take the oldest first
+		sort.SliceStable(walletRegisteredEvents, func(i, j int) bool {
+			return walletRegisteredEvents[i].BlockNumber < walletRegisteredEvents[j].BlockNumber
+		})
+
 		// TODO: Optimization: Determine which wallets are already fully swept and
 		// cannot take any new deposits so we don't query them again.
 
