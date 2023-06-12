@@ -37,9 +37,9 @@ e.g. bd99d1d0a61fd104925d9b7ac997958aa8af570418b3fde091f7bfc561608865:1:8392394
 
 // DepositSweepDetails contains deposit's data required for sweeping.
 type DepositSweepDetails struct {
-	FundingTransactionHash        bitcoin.Hash
-	FundingTransactionOutputIndex uint32
-	RevealBlock                   uint64
+	FundingTxHash      bitcoin.Hash
+	FundingOutputIndex uint32
+	RevealBlock        uint64
 }
 
 // ProposeDepositsSweep handles deposit sweep proposal request submission.
@@ -79,8 +79,8 @@ func ProposeDepositsSweep(
 	depositsRevealBlocks := make([]*big.Int, len(deposits))
 	for i, deposit := range deposits {
 		btcTransactions[i] = btcTransaction{
-			FundingTxHash:      deposit.FundingTransactionHash,
-			FundingOutputIndex: deposit.FundingTransactionOutputIndex,
+			FundingTxHash:      deposit.FundingTxHash,
+			FundingOutputIndex: deposit.FundingOutputIndex,
 		}
 		depositsRevealBlocks[i] = big.NewInt(int64(deposit.RevealBlock))
 	}
@@ -142,9 +142,9 @@ func ParseDepositsToSweep(depositsStrings []string) ([]*DepositSweepDetails, err
 		}
 
 		deposits[i] = &DepositSweepDetails{
-			FundingTransactionHash:        txHash,
-			FundingTransactionOutputIndex: uint32(outputIndex),
-			RevealBlock:                   revealBlock,
+			FundingTxHash:      txHash,
+			FundingOutputIndex: uint32(outputIndex),
+			RevealBlock:        revealBlock,
 		}
 	}
 

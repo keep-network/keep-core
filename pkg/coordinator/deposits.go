@@ -25,10 +25,10 @@ type depositEntry struct {
 	revealBlock uint64
 	isSwept     bool
 
-	fundingTransactionHash        bitcoin.Hash
-	fundingTransactionOutputIndex uint32
-	amountBtc                     float64
-	confirmations                 uint
+	fundingTxHash      bitcoin.Hash
+	fundingOutputIndex uint32
+	amountBtc          float64
+	confirmations      uint
 }
 
 // ListDeposits gets deposits from the chain and prints them to standard output.
@@ -180,17 +180,17 @@ func FindDepositsToSweep(
 				"depositKey: [%s], reveal block: [%d], funding transaction: [%s], output index: [%d]",
 				deposit.depositKey,
 				deposit.revealBlock,
-				deposit.fundingTransactionHash.Hex(bitcoin.ReversedByteOrder),
-				deposit.fundingTransactionOutputIndex,
+				deposit.fundingTxHash.Hex(bitcoin.ReversedByteOrder),
+				deposit.fundingOutputIndex,
 			))
 	}
 
 	result := make([]*DepositSweepDetails, len(depositsToSweep))
 	for i, deposit := range depositsToSweep {
 		result[i] = &DepositSweepDetails{
-			FundingTransactionHash:        deposit.fundingTransactionHash,
-			FundingTransactionOutputIndex: deposit.fundingTransactionOutputIndex,
-			RevealBlock:                   deposit.revealBlock,
+			FundingTxHash:      deposit.fundingTxHash,
+			FundingOutputIndex: deposit.fundingOutputIndex,
+			RevealBlock:        deposit.revealBlock,
 		}
 	}
 
@@ -277,14 +277,14 @@ func getDeposits(
 		result = append(
 			result,
 			depositEntry{
-				walletPublicKeyHash:           event.WalletPublicKeyHash,
-				depositKey:                    hexutils.Encode(depositKey.Bytes()),
-				revealBlock:                   event.BlockNumber,
-				isSwept:                       isSwept,
-				fundingTransactionHash:        event.FundingTxHash,
-				fundingTransactionOutputIndex: event.FundingOutputIndex,
-				amountBtc:                     convertSatToBtc(float64(depositRequest.Amount)),
-				confirmations:                 confirmations,
+				walletPublicKeyHash: event.WalletPublicKeyHash,
+				depositKey:          hexutils.Encode(depositKey.Bytes()),
+				revealBlock:         event.BlockNumber,
+				isSwept:             isSwept,
+				fundingTxHash:       event.FundingTxHash,
+				fundingOutputIndex:  event.FundingOutputIndex,
+				amountBtc:           convertSatToBtc(float64(depositRequest.Amount)),
+				confirmations:       confirmations,
 			},
 		)
 	}
@@ -304,8 +304,8 @@ func printTable(deposits []depositEntry) error {
 			deposit.depositKey,
 			fmt.Sprintf(
 				"%s:%d:%d",
-				deposit.fundingTransactionHash.Hex(bitcoin.ReversedByteOrder),
-				deposit.fundingTransactionOutputIndex,
+				deposit.fundingTxHash.Hex(bitcoin.ReversedByteOrder),
+				deposit.fundingOutputIndex,
 				deposit.revealBlock,
 			),
 			deposit.confirmations,
