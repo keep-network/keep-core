@@ -1,0 +1,56 @@
+{
+  "Title": "multiple redemptions with witness change",
+  "WalletPublicKey": "04989d253b17a6a0f41838b84ff0d20e8898f9d7b1a98f2564da4cc29dcf8581d9d218b65e7d91c752f7b22eaceb771a9af3a6f3d3f010a5d471a1aeef7d7713af",
+  "WalletPrivateKey": "7c246a5d2fcf476fd6f805cb8174b1cf441b13ea414e5560ca2bdc963aeb7d0c",
+  "WalletMainUtxo": {
+    "Outpoint": {
+      "TransactionHash": "3d28bb5bf73379da51bc683f4d0ed31d7b024466c619d80ebd9378077d900be3",
+      "OutputIndex": 1
+    },
+    "Value": 1429580
+  },
+  "RedemptionRequests": [
+    {
+      "Redeemer": "82883a4c7a8dd73ef165deb402d432613615ced4",
+      "RedeemerOutputScript": "76a9144130879211c54df460e484ddf9aac009cb38ee7488ac",
+      "RequestedAmount": 18000,
+      "TreasuryFee": 1000,
+      "TxMaxFee": 1100,
+      "RequestedAt": 1650623240
+    },
+    {
+      "Redeemer": "82883a4c7a8dd73ef165deb402d432613615ced4",
+      "RedeemerOutputScript": "00144130879211c54df460e484ddf9aac009cb38ee74",
+      "RequestedAmount": 13000,
+      "TreasuryFee": 800,
+      "TxMaxFee": 900,
+      "RequestedAt": 1650623240
+    },
+    {
+      "Redeemer": "82883a4c7a8dd73ef165deb402d432613615ced4",
+      "RedeemerOutputScript": "a9143ec459d0f3c29286ae5df5fcc421e2786024277e87",
+      "RequestedAmount": 12000,
+      "TreasuryFee": 1100,
+      "TxMaxFee": 1000,
+      "RequestedAt": 1650623240
+    },
+    {
+      "Redeemer": "82883a4c7a8dd73ef165deb402d432613615ced4",
+      "RedeemerOutputScript": "002086a303cdd2e2eab1d1679f1a813835dc5a1b65321077cdccaf08f98cbf04ca96",
+      "RequestedAmount": 15000,
+      "TreasuryFee": 700,
+      "TxMaxFee": 1400,
+      "RequestedAt": 1650623240
+    }
+  ],
+  "InputTransaction": "0100000000010121c5c291a50190106866a5943c0b03908c2780180c5c03ef3d67dff4c8c925ef0100000000ffffffff02f03c00000000000022002086a303cdd2e2eab1d1679f1a813835dc5a1b65321077cdccaf08f98cbf04ca964cd01500000000001600148db50eb52063ea9d98b3eac91489a90f738986f602483045022100bef6177f72f434248271cf5d18c1ce6add52dcf533ddda215240a858cb63cd070220016a68c457f84f01108e1b001e8f81a9b073a3e08511265614318fa0d395ef4d012103989d253b17a6a0f41838b84ff0d20e8898f9d7b1a98f2564da4cc29dcf8581d900000000",
+  "FeeShares": [1100, 900, 1000, 1400],
+  "Signature": {
+    "R": "adc5b0cffc65444cf16873eb57cb702414ee36ca907ad3cf57676abe83c0f805",
+    "S": "4a206d9b55eeee05d9647e95d15ed5143eaad6cc8c5bc2c1919b69addc18db29"
+  },
+  "ExpectedSigHash": "47dcf9446a031f96ce0c1fad52533f3888e5c861d4eab105315a2ad6bb505eef",
+  "ExpectedRedemptionTransaction": "01000000000101e30b907d077893bd0ed819c66644027b1dd30e4d3f68bc51da7933f75bbb283d0100000000ffffffff051c3e0000000000001976a9144130879211c54df460e484ddf9aac009cb38ee7488ac242c0000000000001600144130879211c54df460e484ddf9aac009cb38ee74ac2600000000000017a9143ec459d0f3c29286ae5df5fcc421e2786024277e87643200000000000022002086a303cdd2e2eab1d1679f1a813835dc5a1b65321077cdccaf08f98cbf04ca96ccfb1400000000001600148db50eb52063ea9d98b3eac91489a90f738986f602483045022100adc5b0cffc65444cf16873eb57cb702414ee36ca907ad3cf57676abe83c0f80502204a206d9b55eeee05d9647e95d15ed5143eaad6cc8c5bc2c1919b69addc18db29012103989d253b17a6a0f41838b84ff0d20e8898f9d7b1a98f2564da4cc29dcf8581d900000000",
+  "ExpectedRedemptionTransactionHash": "f70ff89fd2b6226183e4b8143cc5f0f457f05dd1dca0c6151ab66f4523d972b7",
+  "ExpectedRedemptionTransactionWitnessHash": "dc748a8f2f9496c10bf4260e036886a1470f45da94eb0c3ab80c3afbdf0731da"
+}
