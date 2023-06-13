@@ -64,7 +64,6 @@ func (dsts *FindDepositsToSweepTestScenario) UnmarshalJSON(data []byte) error {
 		w.RegistrationBlockNumber = wallet.RegistrationBlockNumber
 
 		dsts.Wallets = append(dsts.Wallets, w)
-		// TODO: CHANGE TO USE i
 	}
 	// Unmarshal deposits.
 	for i, deposit := range unmarshaled.Deposits {
@@ -91,7 +90,7 @@ func (dsts *FindDepositsToSweepTestScenario) UnmarshalJSON(data []byte) error {
 		dsts.Deposits = append(dsts.Deposits, d)
 	}
 
-	// Unmarshal expected wallet public key has.
+	// Unmarshal expected wallet public key hash.
 	if len(unmarshaled.ExpectedWalletPublicKeyHash) > 0 {
 		copy(dsts.ExpectedWalletPublicKeyHash[:], hexToSlice(unmarshaled.ExpectedWalletPublicKeyHash))
 	}
