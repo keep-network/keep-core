@@ -5,19 +5,12 @@ import (
 	"fmt"
 	"math/rand"
 	"strings"
-	"time"
 
 	"github.com/keep-network/keep-core/pkg/bitcoin"
 )
 
 //go:embed _electrum_urls/*
 var electrumURLs embed.FS
-
-// Keep Alive Interval value used for Blockstream's electrum connections.
-// This value is used only if a Blockstream's server is randomly selected from
-// the list of embedded Electrum servers. It does not apply if a Blockstream's
-// server connection is explicitly set in the client's configuration.
-var blockstreamKeepAliveInterval = 55 * time.Second
 
 // readElectrumUrls reads Electrum URLs from an embedded file for the
 // given Bitcoin network.
@@ -77,15 +70,6 @@ func (c *Config) resolveElectrum(rng *rand.Rand) error {
 	// Set only the URL in the original config. Other fields may be already set,
 	// and we don't want to override them.
 	c.Bitcoin.Electrum.URL = selectedURL
-
-	// Blockstream's servers timeout session after 60 seconds of inactivity which
-	// is much shorter than expected 600 seconds. To workaround connection drops
-	// and logs pollution with warning we reduce the KeepAliveInterval for the
-	// Blockstream's servers to less than 60 seconds.
-	if c.Bitcoin.Electrum.KeepAliveInterval == 0 &&
-		strings.Contains(selectedURL, "electrum.blockstream.info") {
-		c.Bitcoin.Electrum.KeepAliveInterval = blockstreamKeepAliveInterval
-	}
 
 	return nil
 }

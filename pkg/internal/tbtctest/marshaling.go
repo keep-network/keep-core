@@ -5,10 +5,12 @@ import (
 	"crypto/elliptic"
 	"encoding/hex"
 	"encoding/json"
+	"math/big"
+	"time"
+
 	"github.com/keep-network/keep-core/pkg/bitcoin"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/tecdsa"
-	"math/big"
 )
 
 // UnmarshalJSON implements a custom JSON unmarshaling logic to produce a
@@ -139,6 +141,120 @@ func (dsts *DepositSweepTestScenario) UnmarshalJSON(data []byte) error {
 	// Unmarshal expected sweep transaction witness hash.
 	dsts.ExpectedSweepTransactionWitnessHash, err = bitcoin.NewHashFromString(
 		unmarshaled.ExpectedSweepTransactionWitnessHash,
+		bitcoin.ReversedByteOrder,
+	)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// UnmarshalJSON implements a custom JSON unmarshaling logic to produce a
+// proper RedemptionTestScenario.
+func (rts *RedemptionTestScenario) UnmarshalJSON(data []byte) error {
+	type redemptionTestScenario struct {
+		Title              string
+		WalletPublicKey    string
+		WalletPrivateKey   string
+		WalletMainUtxo     *utxo
+		RedemptionRequests []struct {
+			Redeemer             string
+			RedeemerOutputScript string
+			RequestedAmount      uint64
+			TreasuryFee          uint64
+			TxMaxFee             uint64
+			RequestedAt          int64
+		}
+		InputTransaction                         string
+		FeeShares                                []int64
+		Signature                                signature
+		ExpectedSigHash                          string
+		ExpectedRedemptionTransaction            string
+		ExpectedRedemptionTransactionHash        string
+		ExpectedRedemptionTransactionWitnessHash string
+	}
+
+	var unmarshaled redemptionTestScenario
+
+	err := json.Unmarshal(data, &unmarshaled)
+	if err != nil {
+		return err
+	}
+
+	// Unmarshal title.
+	rts.Title = unmarshaled.Title
+
+	// Unmarshal wallet public key.
+	x, y := elliptic.Unmarshal(
+		tecdsa.Curve,
+		hexToSlice(unmarshaled.WalletPublicKey),
+	)
+	rts.WalletPublicKey = &ecdsa.PublicKey{
+		Curve: tecdsa.Curve,
+		X:     x,
+		Y:     y,
+	}
+
+	// Unmarshal wallet private key.
+	rts.WalletPrivateKey = new(big.Int).SetBytes(
+		hexToSlice(unmarshaled.WalletPrivateKey),
+	)
+
+	// Unmarshal wallet main UTXO.
+	rts.WalletMainUtxo = unmarshaled.WalletMainUtxo.convert()
+
+	// Unmarshal redemption requests.
+	for _, request := range unmarshaled.RedemptionRequests {
+		r := new(RedemptionRequest)
+
+		r.Redeemer = chain.Address(request.Redeemer)
+		r.RedeemerOutputScript = hexToSlice(request.RedeemerOutputScript)
+		r.RequestedAmount = request.RequestedAmount
+		r.TreasuryFee = request.TreasuryFee
+		r.TxMaxFee = request.TxMaxFee
+		r.RequestedAt = time.Unix(request.RequestedAt, 0)
+
+		rts.RedemptionRequests = append(rts.RedemptionRequests, r)
+	}
+
+	// Unmarshal input transaction.
+	rts.InputTransaction = new(bitcoin.Transaction)
+	err = rts.InputTransaction.Deserialize(hexToSlice(unmarshaled.InputTransaction))
+	if err != nil {
+		return err
+	}
+
+	// Unmarshal fee shares.
+	rts.FeeShares = append(rts.FeeShares, unmarshaled.FeeShares...)
+
+	// Unmarshal signature.
+	rts.Signature = unmarshaled.Signature.convert(rts.WalletPublicKey)
+
+	// Unmarshal expected signature hash.
+	rts.ExpectedSigHash = new(big.Int).SetBytes(hexToSlice(unmarshaled.ExpectedSigHash))
+
+	// Unmarshal expected redemption transaction.
+	rts.ExpectedRedemptionTransaction = new(bitcoin.Transaction)
+	err = rts.ExpectedRedemptionTransaction.Deserialize(
+		hexToSlice(unmarshaled.ExpectedRedemptionTransaction),
+	)
+	if err != nil {
+		return err
+	}
+
+	// Unmarshal expected redemption transaction hash.
+	rts.ExpectedRedemptionTransactionHash, err = bitcoin.NewHashFromString(
+		unmarshaled.ExpectedRedemptionTransactionHash,
+		bitcoin.ReversedByteOrder,
+	)
+	if err != nil {
+		return err
+	}
+
+	// Unmarshal expected redemption transaction witness hash.
+	rts.ExpectedRedemptionTransactionWitnessHash, err = bitcoin.NewHashFromString(
+		unmarshaled.ExpectedRedemptionTransactionWitnessHash,
 		bitcoin.ReversedByteOrder,
 	)
 	if err != nil {

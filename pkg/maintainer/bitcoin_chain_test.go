@@ -2,6 +2,7 @@ package maintainer
 
 import (
 	"fmt"
+
 	"github.com/keep-network/keep-core/pkg/bitcoin"
 )
 
@@ -15,7 +16,7 @@ type localBitcoinChain struct {
 // GetTransaction gets the transaction with the given transaction hash.
 // If the transaction with the given hash was not found on the chain,
 // this function returns an error.
-func (lc *localBitcoinChain) GetTransaction(
+func (lbc *localBitcoinChain) GetTransaction(
 	transactionHash bitcoin.Hash,
 ) (*bitcoin.Transaction, error) {
 	panic("unsupported")
@@ -24,7 +25,7 @@ func (lc *localBitcoinChain) GetTransaction(
 // GetTransactionConfirmations gets the number of confirmations for the
 // transaction with the given transaction hash. If the transaction with the
 // given hash was not found on the chain, this function returns an error.
-func (lc *localBitcoinChain) GetTransactionConfirmations(
+func (lbc *localBitcoinChain) GetTransactionConfirmations(
 	transactionHash bitcoin.Hash,
 ) (uint, error) {
 	panic("unsupported")
@@ -35,7 +36,7 @@ func (lc *localBitcoinChain) GetTransactionConfirmations(
 // done, this function returns an error. This function does not give any
 // guarantees regarding transaction mining. The transaction may be mined or
 // rejected eventually.
-func (lc *localBitcoinChain) BroadcastTransaction(
+func (lbc *localBitcoinChain) BroadcastTransaction(
 	transaction *bitcoin.Transaction,
 ) error {
 	panic("unsupported")
@@ -43,9 +44,9 @@ func (lc *localBitcoinChain) BroadcastTransaction(
 
 // GetLatestBlockHeight gets the height of the latest block (tip). If the
 // latest block was not determined, this function returns an error.
-func (lc *localBitcoinChain) GetLatestBlockHeight() (uint, error) {
+func (lbc *localBitcoinChain) GetLatestBlockHeight() (uint, error) {
 	blockchainTip := uint(0)
-	for blockHeaderHeight := range lc.blockHeaders {
+	for blockHeaderHeight := range lbc.blockHeaders {
 		if blockHeaderHeight > blockchainTip {
 			blockchainTip = blockHeaderHeight
 		}
@@ -61,10 +62,10 @@ func (lc *localBitcoinChain) GetLatestBlockHeight() (uint, error) {
 // GetBlockHeader gets the block header for the given block number. If the
 // block with the given number was not found on the chain, this function
 // returns an error.
-func (lc *localBitcoinChain) GetBlockHeader(
+func (lbc *localBitcoinChain) GetBlockHeader(
 	blockNumber uint,
 ) (*bitcoin.BlockHeader, error) {
-	blockHeader, found := lc.blockHeaders[blockNumber]
+	blockHeader, found := lbc.blockHeaders[blockNumber]
 	if !found {
 		return nil, fmt.Errorf(
 			"block header at height %v does not exist",
@@ -75,34 +76,34 @@ func (lc *localBitcoinChain) GetBlockHeader(
 	return blockHeader, nil
 }
 
-func (lc *localBitcoinChain) GetTransactionMerkleProof(
+func (lbc *localBitcoinChain) GetTransactionMerkleProof(
 	transactionHash bitcoin.Hash,
 	blockHeight uint,
 ) (*bitcoin.TransactionMerkleProof, error) {
 	panic("unsupported")
 }
 
-func (lc *localBitcoinChain) GetTransactionsForPublicKeyHash(
+func (lbc *localBitcoinChain) GetTransactionsForPublicKeyHash(
 	publicKeyHash [20]byte,
 	limit int,
 ) ([]*bitcoin.Transaction, error) {
 	panic("unsupported")
 }
 
-func (lc *localBitcoinChain) GetMempoolForPublicKeyHash(
+func (lbc *localBitcoinChain) GetMempoolForPublicKeyHash(
 	publicKeyHash [20]byte,
 ) ([]*bitcoin.Transaction, error) {
 	panic("unsupported")
 }
 
 // SetBlockHeaders sets internal headers for testing purposes.
-func (lc *localBitcoinChain) SetBlockHeaders(
+func (lbc *localBitcoinChain) SetBlockHeaders(
 	blockHeaders map[uint]*bitcoin.BlockHeader,
 ) {
-	lc.blockHeaders = blockHeaders
+	lbc.blockHeaders = blockHeaders
 }
 
-func (lc *localBitcoinChain) EstimateSatPerVByteFee(
+func (lbc *localBitcoinChain) EstimateSatPerVByteFee(
 	blocks uint32,
 ) (int64, error) {
 	panic("unsupported")
