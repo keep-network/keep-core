@@ -71,7 +71,7 @@
   "dependencies": {
     "@keep-network/random-beacon": "development",
     "@keep-network/sortition-pools": "^2.0.0-pre.16",
-    "@openzeppelin/contracts": "^4.6.0",
+    "@openzeppelin/contracts": "4.7.3",
     "@openzeppelin/contracts-upgradeable": "^4.6.0",
     "@threshold-network/solidity-contracts": "development"
   },
