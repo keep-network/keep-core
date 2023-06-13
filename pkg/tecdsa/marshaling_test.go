@@ -2,19 +2,21 @@ package tecdsa
 
 import (
 	"crypto/elliptic"
-	fuzz "github.com/google/gofuzz"
 	"math/big"
 	"reflect"
 	"testing"
 
+	fuzz "github.com/google/gofuzz"
+
 	"github.com/bnb-chain/tss-lib/crypto"
+
 	"github.com/keep-network/keep-core/pkg/internal/pbutils"
-	"github.com/keep-network/keep-core/pkg/internal/tecdsatest"
 	"github.com/keep-network/keep-core/pkg/internal/testutils"
+	"github.com/keep-network/keep-core/pkg/tecdsa/internal/test"
 )
 
 func TestPrivateKeyShareMarshalling(t *testing.T) {
-	testData, err := tecdsatest.LoadPrivateKeyShareTestFixtures(1)
+	testData, err := test.LoadPrivateKeyShareTestFixtures(1)
 	if err != nil {
 		t.Fatalf("failed to load test data: [%v]", err)
 	}
@@ -32,7 +34,7 @@ func TestPrivateKeyShareMarshalling(t *testing.T) {
 }
 
 func TestPrivateKeyShareMarshalling_NonTECDSAKey(t *testing.T) {
-	testData, err := tecdsatest.LoadPrivateKeyShareTestFixtures(1)
+	testData, err := test.LoadPrivateKeyShareTestFixtures(1)
 	if err != nil {
 		t.Fatalf("failed to load test data: [%v]", err)
 	}
