@@ -56,6 +56,7 @@ func init() {
 		wrDkgParametersCommand(),
 		wrEligibleStakeCommand(),
 		wrGasParametersCommand(),
+		wrGetDkgDataCommand(),
 		wrGetWalletCommand(),
 		wrGetWalletCreationStateCommand(),
 		wrGetWalletPublicKeyCommand(),
@@ -87,6 +88,7 @@ func init() {
 		wrBeaconCallbackCommand(),
 		wrChallengeDkgResultCommand(),
 		wrCloseWalletCommand(),
+		wrForceAddWalletCommand(),
 		wrInitializeCommand(),
 		wrInvoluntaryAuthorizationDecreaseCommand(),
 		wrJoinSortitionPoolCommand(),
@@ -290,6 +292,40 @@ func wrGasParameters(c *cobra.Command, args []string) error {
 	}
 
 	result, err := contract.GasParametersAtBlock(
+		cmd.BlockFlagValue.Int,
+	)
+
+	if err != nil {
+		return err
+	}
+
+	cmd.PrintOutput(result)
+
+	return nil
+}
+
+func wrGetDkgDataCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "get-dkg-data",
+		Short:                 "Calls the view method getDkgData on the WalletRegistry contract.",
+		Args:                  cmd.ArgCountChecker(0),
+		RunE:                  wrGetDkgData,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	cmd.InitConstFlags(c)
+
+	return c
+}
+
+func wrGetDkgData(c *cobra.Command, args []string) error {
+	contract, err := initializeWalletRegistry(c)
+	if err != nil {
+		return err
+	}
+
+	result, err := contract.GetDkgDataAtBlock(
 		cmd.BlockFlagValue.Int,
 	)
 
@@ -1693,6 +1729,80 @@ func wrCloseWallet(c *cobra.Command, args []string) error {
 		// Do a call.
 		err = contract.CallCloseWallet(
 			arg_walletID,
+			cmd.BlockFlagValue.Int,
+		)
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput("success")
+
+		cmd.PrintOutput(
+			"the transaction was not submitted to the chain; " +
+				"please add the `--submit` flag",
+		)
+	}
+
+	return nil
+}
+
+func wrForceAddWalletCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "force-add-wallet [arg_groupPubKey] [arg_membersIdsHash]",
+		Short:                 "Calls the nonpayable method forceAddWallet on the WalletRegistry contract.",
+		Args:                  cmd.ArgCountChecker(2),
+		RunE:                  wrForceAddWallet,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	c.PreRunE = cmd.NonConstArgsChecker
+	cmd.InitNonConstFlags(c)
+
+	return c
+}
+
+func wrForceAddWallet(c *cobra.Command, args []string) error {
+	contract, err := initializeWalletRegistry(c)
+	if err != nil {
+		return err
+	}
+
+	arg_groupPubKey, err := hexutil.Decode(args[0])
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter arg_groupPubKey, a bytes, from passed value %v",
+			args[0],
+		)
+	}
+	arg_membersIdsHash, err := decode.ParseBytes32(args[1])
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter arg_membersIdsHash, a bytes32, from passed value %v",
+			args[1],
+		)
+	}
+
+	var (
+		transaction *types.Transaction
+	)
+
+	if shouldSubmit, _ := c.Flags().GetBool(cmd.SubmitFlag); shouldSubmit {
+		// Do a regular submission. Take payable into account.
+		transaction, err = contract.ForceAddWallet(
+			arg_groupPubKey,
+			arg_membersIdsHash,
+		)
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput(transaction.Hash())
+	} else {
+		// Do a call.
+		err = contract.CallForceAddWallet(
+			arg_groupPubKey,
+			arg_membersIdsHash,
 			cmd.BlockFlagValue.Int,
 		)
 		if err != nil {
