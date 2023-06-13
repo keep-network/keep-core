@@ -144,6 +144,10 @@ func TestConnect_Integration(t *testing.T) {
 
 func TestGetTransaction_Integration(t *testing.T) {
 	for testName, testConfig := range testConfigs {
+		// Capture range variables.
+		testName := testName
+		testConfig := testConfig
+
 		t.Run(testName, func(t *testing.T) {
 			t.Parallel()
 
@@ -168,6 +172,10 @@ func TestGetTransaction_Integration(t *testing.T) {
 
 func TestGetTransaction_Negative_Integration(t *testing.T) {
 	for testName, testConfig := range testConfigs {
+		// Capture range variables.
+		testName := testName
+		testConfig := testConfig
+
 		t.Run(testName, func(t *testing.T) {
 			t.Parallel()
 
