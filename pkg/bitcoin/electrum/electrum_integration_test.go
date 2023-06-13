@@ -210,6 +210,7 @@ func TestGetTransactionConfirmations_Integration(t *testing.T) {
 				})
 			}
 
+			time.Sleep(time.Second)
 			cancelCtx()
 		})
 	}
