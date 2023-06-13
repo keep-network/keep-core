@@ -105,19 +105,18 @@ func FindDepositsToSweep(
 	// If walletPublicKeyHash is not provided we need to find a wallet that has
 	// unswept deposits.
 	if walletPublicKeyHash == [20]byte{} {
-		logger.Infof("checking two latest wallets...")
 		walletRegisteredEvents, err := tbtcChain.PastNewWalletRegisteredEvents(nil)
 		if err != nil {
 			return [20]byte{}, nil, fmt.Errorf("failed to get registered wallets: [%w]", err)
 		}
 
-		// Take the newest first
+		// Take the oldest first
 		sort.SliceStable(walletRegisteredEvents, func(i, j int) bool {
-			return walletRegisteredEvents[i].BlockNumber > walletRegisteredEvents[j].BlockNumber
+			return walletRegisteredEvents[i].BlockNumber < walletRegisteredEvents[j].BlockNumber
 		})
 
 		// Only two the most recently created wallets are sweeping.
-		sweepingWallets := walletRegisteredEvents[:2]
+		sweepingWallets := walletRegisteredEvents[len(walletRegisteredEvents)-2:]
 
 		for _, registeredWallet := range sweepingWallets {
 			logger.Infof(
