@@ -50,6 +50,9 @@ func (lbc *localBitcoinChain) setTransaction(
 func (lbc *localBitcoinChain) GetTransactionConfirmations(
 	transactionHash bitcoin.Hash,
 ) (uint, error) {
+	lbc.transactionsMutex.Lock()
+	defer lbc.transactionsMutex.Unlock()
+
 	if confirmations, ok := lbc.transactionsConfirmations[transactionHash]; ok {
 		return confirmations, nil
 	}
