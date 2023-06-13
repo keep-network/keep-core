@@ -167,7 +167,7 @@ func FindDepositsToSweep(
 	)
 
 	for i, deposit := range depositsToSweep {
-		logger.Debugf(
+		logger.Infof(
 			"deposit [%d/%d] - %s",
 			i+1,
 			len(depositsToSweep),
