@@ -289,13 +289,14 @@ var TransactionsForPublicKeyHash = map[bitcoin.Network]struct {
 			hashFromString("4f9affc5b418385d5aa61e23caa0b55156bf0682d5fedf2d905446f3f88aec6c"),
 		},
 	},
-	// TODO: Replace with actual Mainnet transactions for a tBTC Wallet Public Key Hash:
-	// `0b462faec647aaa958eb1bc39f5febb6f340aa99`
 	bitcoin.Mainnet: {
-		PublicKeyHash: decodeString("8b68f350bde79b8b43f8307e53715058c7060ede"),
+		PublicKeyHash: decodeString("b0ba76edfe18e81365bddd1d46511a57a4ff8dce"),
 		Transactions: []bitcoin.Hash{
-			hashFromString("5d5f922ea4e8332089a342c75b42ddd15420c3c3718e4873d062574778dce41d"),
-			hashFromString("58ad823d81167bcb8f85c5471a8562242cf3fd26e1b18fc33b2c30335a4da332"),
+			hashFromString("ea0b6862d4934e9910cb74984093267989bab7c61d508337bbb976165eb22553"),
+			hashFromString("78304889f2363d546dfe4af788e405464dd67fc1a057d7a6d45a8cf617f5f773"),
+			hashFromString("c11feea0f8b9e256e0a70ad58f88c7e3800d8ffbfb85edf7169629584a97a7ab"),
+			hashFromString("5cebf53de9cfde661e1193faf540727d4619399a289283e7b009f6953e49e769"),
+			hashFromString("4be52bc1873bcc9a3195d4075161cf686ba3856977cedd2fc43f13491755ff59"),
 		},
 	},
 }
