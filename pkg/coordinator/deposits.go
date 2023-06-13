@@ -101,7 +101,7 @@ func FindDepositsToSweep(
 		return unsweptDeposits, nil
 	}
 
-	depositsToSweep := make([]depositEntry, 0, maxNumberOfDeposits)
+	var depositsToSweep []depositEntry
 	// If walletPublicKeyHash is not provided we need to find a wallet that has
 	// unswept deposits.
 	if walletPublicKeyHash == [20]byte{} {
