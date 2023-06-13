@@ -6,7 +6,6 @@ import (
 	"context"
 	"fmt"
 	"math"
-	"reflect"
 	"strings"
 	"testing"
 	"time"
@@ -408,12 +407,8 @@ func TestGetTransactionsForPublicKeyHash_Integration(t *testing.T) {
 				actualHashes[i] = transaction.Hash()
 			}
 
-			if !reflect.DeepEqual(expectedHashes, actualHashes) {
-				t.Errorf(
-					"unexpected transactions\nexpected: %v\nactual:   %v",
-					expectedHashes,
-					actualHashes,
-				)
+			if diff := deep.Equal(actualHashes, expectedHashes); diff != nil {
+				t.Errorf("compare failed: %v", diff)
 			}
 		})
 	}
