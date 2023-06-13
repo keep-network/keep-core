@@ -115,8 +115,11 @@ func FindDepositsToSweep(
 			return walletRegisteredEvents[i].BlockNumber < walletRegisteredEvents[j].BlockNumber
 		})
 
+		sweepingWallets := walletRegisteredEvents
 		// Only two the most recently created wallets are sweeping.
-		sweepingWallets := walletRegisteredEvents[len(walletRegisteredEvents)-2:]
+		if len(walletRegisteredEvents) >= 2 {
+			sweepingWallets = walletRegisteredEvents[len(walletRegisteredEvents)-2:]
+		}
 
 		for _, registeredWallet := range sweepingWallets {
 			logger.Infof(
