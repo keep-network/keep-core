@@ -24,7 +24,8 @@ import (
 	_ "github.com/keep-network/keep-core/config"
 )
 
-const timeout = 4 * time.Second
+const requestTimeout = 4 * time.Second
+const requestRetryTimeout = requestTimeout * 2
 
 const blockDelta = 2
 
@@ -39,32 +40,32 @@ var testConfigs = map[string]testConfig{
 	"electrs-esplora tcp": {
 		clientConfig: electrum.Config{
 			URL:                 "tcp://electrum.blockstream.info:60001",
-			RequestTimeout:      timeout * 3,
-			RequestRetryTimeout: timeout * 6,
+			RequestTimeout:      requestTimeout * 2,
+			RequestRetryTimeout: requestRetryTimeout * 2,
 		},
 		network: bitcoin.Testnet,
 	},
 	"electrs-esplora ssl": {
 		clientConfig: electrum.Config{
 			URL:                 "ssl://electrum.blockstream.info:60002",
-			RequestTimeout:      timeout * 3,
-			RequestRetryTimeout: timeout * 6,
+			RequestTimeout:      requestTimeout * 2,
+			RequestRetryTimeout: requestRetryTimeout * 2,
 		},
 		network: bitcoin.Testnet,
 	},
 	"electrumx wss": {
 		clientConfig: electrum.Config{
 			URL:                 "wss://electrumx-server.test.tbtc.network:8443",
-			RequestTimeout:      timeout,
-			RequestRetryTimeout: timeout * 2,
+			RequestTimeout:      requestTimeout,
+			RequestRetryTimeout: requestRetryTimeout,
 		},
 		network: bitcoin.Testnet,
 	},
 	"fulcrum tcp": {
 		clientConfig: electrum.Config{
 			URL:                 "tcp://blackie.c3-soft.com:57005",
-			RequestTimeout:      timeout,
-			RequestRetryTimeout: timeout * 2,
+			RequestTimeout:      requestTimeout,
+			RequestRetryTimeout: requestRetryTimeout,
 		},
 		network: bitcoin.Testnet,
 	},
@@ -89,8 +90,8 @@ func init() {
 			testConfigs[serverName] = testConfig{
 				clientConfig: electrum.Config{
 					URL:                 server,
-					RequestTimeout:      timeout * 2,
-					RequestRetryTimeout: timeout * 4,
+					RequestTimeout:      requestTimeout,
+					RequestRetryTimeout: requestRetryTimeout,
 				},
 				network: network,
 			}
