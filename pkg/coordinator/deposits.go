@@ -135,7 +135,7 @@ func FindDepositsToSweep(
 			}
 
 			// Check if there are any unswept deposits in this wallet. If so
-			// sweep this wallet and don't check other wallets.
+			// sweep this wallet and don't check the other wallet.
 			if len(unsweptDeposits) > 0 {
 				walletPublicKeyHash = registeredWallet.WalletPublicKeyHash
 				depositsToSweep = unsweptDeposits
