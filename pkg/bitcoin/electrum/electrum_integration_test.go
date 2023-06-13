@@ -112,7 +112,7 @@ func init() {
 	for key, server := range testConfigs {
 		firstName, ok := urls[server.clientConfig.URL]
 		if ok {
-			delete(urls, key)
+			delete(testConfigs, key)
 			fmt.Printf(
 				"removed server [%s] as a server with the same URL [%s] is already registered under [%s] name\n",
 				key,
