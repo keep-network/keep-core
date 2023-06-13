@@ -3,6 +3,7 @@ package electrum_test
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"math"
 	"strings"
@@ -160,8 +161,14 @@ func TestGetTransaction_Integration(t *testing.T) {
 						t.Fatal(err)
 					}
 
-					if diff := deep.Equal(result, &tx.BitcoinTx); diff != nil {
-						t.Errorf("compare failed: %v", diff)
+					expectedResult := &tx.BitcoinTx
+					if diff := deep.Equal(result, expectedResult); diff != nil {
+						t.Errorf(
+							"compare failed: %v\nactual: %s\nexpected: %s",
+							diff,
+							toJson(result),
+							toJson(expectedResult),
+						)
 					}
 				})
 			}
@@ -566,4 +573,13 @@ func assertServerError(
 		)
 		return
 	}
+}
+
+func toJson(val interface{}) string {
+	b, err := json.Marshal(val)
+	if err != nil {
+		panic(err)
+	}
+
+	return string(b)
 }
