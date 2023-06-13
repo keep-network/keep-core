@@ -27,8 +27,8 @@ type localTbtcChain struct {
 	pastDepositRevealedEventsMutex sync.Mutex
 	pastDepositRevealedEvents      map[[32]byte][]*tbtc.DepositRevealedEvent
 
-	pastNewWalletRegisteredEventsMutex  sync.Mutex
-	pastNewWalletRegisteredEventsEvents map[[32]byte][]*tbtc.NewWalletRegisteredEvent
+	pastNewWalletRegisteredEventsMutex sync.Mutex
+	pastNewWalletRegisteredEvents      map[[32]byte][]*tbtc.NewWalletRegisteredEvent
 
 	depositParametersMutex sync.Mutex
 	depositParameters      depositParameters
@@ -49,10 +49,10 @@ type depositParameters = struct {
 
 func newLocalTbtcChain() *localTbtcChain {
 	return &localTbtcChain{
-		depositRequests:                     make(map[[32]byte]*tbtc.DepositChainRequest),
-		pastDepositRevealedEvents:           make(map[[32]byte][]*tbtc.DepositRevealedEvent),
-		pastNewWalletRegisteredEventsEvents: make(map[[32]byte][]*tbtc.NewWalletRegisteredEvent),
-		depositSweepProposalValidations:     make(map[[32]byte]bool),
+		depositRequests:                 make(map[[32]byte]*tbtc.DepositChainRequest),
+		pastDepositRevealedEvents:       make(map[[32]byte][]*tbtc.DepositRevealedEvent),
+		pastNewWalletRegisteredEvents:   make(map[[32]byte][]*tbtc.NewWalletRegisteredEvent),
+		depositSweepProposalValidations: make(map[[32]byte]bool),
 	}
 }
 
@@ -316,7 +316,7 @@ func (lc *localTbtcChain) PastNewWalletRegisteredEvents(
 		return nil, err
 	}
 
-	events, ok := lc.pastNewWalletRegisteredEventsEvents[eventsKey]
+	events, ok := lc.pastNewWalletRegisteredEvents[eventsKey]
 	if !ok {
 		return nil, fmt.Errorf("no events for given filter")
 	}
@@ -336,12 +336,12 @@ func (lc *localTbtcChain) addPastNewWalletRegisteredEvent(
 		return err
 	}
 
-	if _, ok := lc.pastNewWalletRegisteredEventsEvents[eventsKey]; !ok {
-		lc.pastNewWalletRegisteredEventsEvents[eventsKey] = []*tbtc.NewWalletRegisteredEvent{}
+	if _, ok := lc.pastNewWalletRegisteredEvents[eventsKey]; !ok {
+		lc.pastNewWalletRegisteredEvents[eventsKey] = []*tbtc.NewWalletRegisteredEvent{}
 	}
 
-	lc.pastNewWalletRegisteredEventsEvents[eventsKey] = append(
-		lc.pastNewWalletRegisteredEventsEvents[eventsKey],
+	lc.pastNewWalletRegisteredEvents[eventsKey] = append(
+		lc.pastNewWalletRegisteredEvents[eventsKey],
 		event,
 	)
 
