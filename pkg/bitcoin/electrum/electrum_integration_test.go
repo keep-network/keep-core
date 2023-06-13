@@ -1,5 +1,3 @@
-//go:build integration
-
 package electrum_test
 
 import (
@@ -24,7 +22,7 @@ import (
 	_ "github.com/keep-network/keep-core/config"
 )
 
-const requestTimeout = 4 * time.Second
+const requestTimeout = 5 * time.Second
 const requestRetryTimeout = requestTimeout * 2
 
 const blockDelta = 2
@@ -64,8 +62,8 @@ var testConfigs = map[string]testConfig{
 	"fulcrum tcp": {
 		clientConfig: electrum.Config{
 			URL:                 "tcp://blackie.c3-soft.com:57005",
-			RequestTimeout:      requestTimeout,
-			RequestRetryTimeout: requestRetryTimeout,
+			RequestTimeout:      requestTimeout * 2,
+			RequestRetryTimeout: requestRetryTimeout * 2,
 		},
 		network: bitcoin.Testnet,
 	},
