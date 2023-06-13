@@ -8,14 +8,14 @@ import (
 
 	"github.com/keep-network/keep-core/pkg/bitcoin"
 	"github.com/keep-network/keep-core/pkg/coordinator"
-	"github.com/keep-network/keep-core/pkg/internal/coordinatortest"
+	"github.com/keep-network/keep-core/pkg/coordinator/internal/test"
 	"github.com/keep-network/keep-core/pkg/tbtc"
 )
 
 func TestProposeDepositsSweep(t *testing.T) {
 	log.SetLogLevel("*", "DEBUG")
 
-	scenarios, err := coordinatortest.LoadProposeSweepTestScenario()
+	scenarios, err := test.LoadProposeSweepTestScenario()
 	if err != nil {
 		t.Fatal(err)
 	}

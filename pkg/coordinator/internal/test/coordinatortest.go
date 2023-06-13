@@ -1,6 +1,4 @@
-// Package coordinatortest contains scenarios meant to be used for pkg/coordinator
-// package tests.
-package coordinatortest
+package test
 
 import (
 	"encoding/json"

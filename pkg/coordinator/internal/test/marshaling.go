@@ -1,4 +1,4 @@
-package coordinatortest
+package test
 
 import (
 	"encoding/json"

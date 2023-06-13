@@ -7,7 +7,8 @@ import (
 	"github.com/ipfs/go-log"
 
 	"github.com/keep-network/keep-core/pkg/coordinator"
-	"github.com/keep-network/keep-core/pkg/internal/coordinatortest"
+	"github.com/keep-network/keep-core/pkg/coordinator/internal/test"
+
 	"github.com/keep-network/keep-core/pkg/internal/hexutils"
 	"github.com/keep-network/keep-core/pkg/tbtc"
 )
@@ -15,7 +16,7 @@ import (
 func TestFindDepositsToSweep(t *testing.T) {
 	log.SetLogLevel("*", "DEBUG")
 
-	scenarios, err := coordinatortest.LoadFindDepositsToSweepTestScenario()
+	scenarios, err := test.LoadFindDepositsToSweepTestScenario()
 	if err != nil {
 		t.Fatal(err)
 	}
