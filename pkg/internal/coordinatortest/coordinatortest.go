@@ -41,7 +41,7 @@ type Deposit struct {
 	SweptAt           time.Time
 }
 
-// FindDepositsToSweepTestScenario represents a deposit sweep test scenario.
+// FindDepositsToSweepTestScenario represents a test scenario of finding deposits to sweep.
 type FindDepositsToSweepTestScenario struct {
 	Title string
 
@@ -104,7 +104,7 @@ type ProposeSweepDepositsData struct {
 	FundingTxConfirmations uint
 }
 
-// ProposeSweepTestScenario represents a deposit sweep test scenario.
+// ProposeSweepTestScenario represents a test scenario of proposing deposits sweep.
 type ProposeSweepTestScenario struct {
 	Title string
 
