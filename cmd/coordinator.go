@@ -302,8 +302,8 @@ var submitDepositSweepProofCommand = cobra.Command{
 		}
 
 		if err := tbtcChain.SubmitDepositSweepProof(
-			proof,
 			transaction,
+			proof,
 			mainUTXO,
 			vault,
 		); err != nil {

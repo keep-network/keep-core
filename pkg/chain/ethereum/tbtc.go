@@ -1125,8 +1125,8 @@ func (tc *TbtcChain) TxProofDifficultyFactor() (*big.Int, error) {
 }
 
 func (tc *TbtcChain) SubmitDepositSweepProof(
-	proof *bitcoin.SpvProof,
 	transaction *bitcoin.Transaction,
+	proof *bitcoin.SpvProof,
 	mainUTXO bitcoin.UnspentTransactionOutput,
 	vault common.Address,
 ) error {
