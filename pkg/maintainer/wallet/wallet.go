@@ -10,27 +10,33 @@ import (
 	"github.com/keep-network/keep-core/pkg/bitcoin"
 )
 
-const (
-	redemptionInterval = 3 * time.Hour
-	sweepInterval      = 48 * time.Hour
-)
-
 var logger = log.Logger("keep-maintainer-wallet")
 
 type walletMaintainer struct {
 	chain    Chain
 	btcChain bitcoin.Chain
+	config   Config
 }
 
 // Initialize and start Wallet Coordination Maintainer.
 func Initialize(
 	parentCtx context.Context,
+	config Config,
 	chain Chain,
 	btcChain bitcoin.Chain,
+
 ) {
+	if config.RedemptionInterval == 0 {
+		config.RedemptionInterval = DefaultRedemptionInterval
+	}
+	if config.SweepInterval == 0 {
+		config.SweepInterval = DefaultSweepInterval
+	}
+
 	wm := &walletMaintainer{
 		chain:    chain,
 		btcChain: btcChain,
+		config:   config,
 	}
 
 	go wm.startControlLoop(parentCtx)
@@ -63,7 +69,7 @@ func (wm *walletMaintainer) startControlLoop(ctx context.Context) {
 			return
 		case <-redemptionTicker.C:
 			// TODO: Implement
-			sweepTicker.Reset(redemptionInterval)
+			sweepTicker.Reset(wm.config.RedemptionInterval)
 		case <-sweepTicker.C:
 			// TODO: Synchronize sweeps with redemptions. Sweep should be proposed only
 			// if there are no pending redemptions. Redemptions take priority over sweeps.
@@ -71,9 +77,9 @@ func (wm *walletMaintainer) startControlLoop(ctx context.Context) {
 				logger.Errorf("failed to run sweep task: [%w]")
 			}
 
-			logger.Infof("sweep task run completed; next run in [%s]", sweepInterval)
+			logger.Infof("sweep task run completed; next run in [%s]", wm.config.SweepInterval)
 
-			sweepTicker.Reset(sweepInterval)
+			sweepTicker.Reset(wm.config.SweepInterval)
 		}
 	}
 }

@@ -328,7 +328,7 @@ func initMaintainerFlags(command *cobra.Command, cfg *config.Config) {
 	)
 
 	command.Flags().BoolVar(
-		&cfg.Maintainer.WalletCoordination,
+		&cfg.Maintainer.WalletCoordination.Enabled,
 		"walletCoordination",
 		false,
 		"start wallet coordination maintainer",

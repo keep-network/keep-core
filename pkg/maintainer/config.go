@@ -1,5 +1,7 @@
 package maintainer
 
+import "github.com/keep-network/keep-core/pkg/maintainer/wallet"
+
 // Config contains maintainer configuration.
 type Config struct {
 	// BitcoinDifficulty indicates whether the Bitcoin difficulty maintainer
@@ -13,9 +15,6 @@ type Config struct {
 	// the relay.
 	DisableBitcoinDifficultyProxy bool
 
-	// WalletCoordination indicates whether the Wallet Coordination maintainer
-	// should be started.
-	WalletCoordination bool
-
+	WalletCoordination wallet.Config
 	// TODO: Add options for other maintainer tasks, e.g. spv
 }
