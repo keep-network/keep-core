@@ -4,9 +4,11 @@ import (
 	"crypto/ecdsa"
 	"crypto/elliptic"
 	"encoding/hex"
-	"github.com/btcsuite/btcd/btcec"
-	"github.com/keep-network/keep-core/pkg/internal/testutils"
 	"testing"
+
+	"github.com/btcsuite/btcd/btcec"
+
+	"github.com/keep-network/keep-core/internal/testutils"
 )
 
 func TestPublicKeyHash(t *testing.T) {

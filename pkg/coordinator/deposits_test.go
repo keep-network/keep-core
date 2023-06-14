@@ -9,7 +9,7 @@ import (
 	"github.com/keep-network/keep-core/pkg/coordinator"
 	"github.com/keep-network/keep-core/pkg/coordinator/internal/test"
 
-	"github.com/keep-network/keep-core/pkg/internal/hexutils"
+	"github.com/keep-network/keep-core/internal/hexutils"
 	"github.com/keep-network/keep-core/pkg/tbtc"
 )
 

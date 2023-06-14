@@ -6,9 +6,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/keep-network/keep-core/internal/testutils"
 	"github.com/keep-network/keep-core/pkg/bitcoin"
 	"github.com/keep-network/keep-core/pkg/chain"
-	"github.com/keep-network/keep-core/pkg/internal/testutils"
 )
 
 func TestVerifySubmissionEligibility(t *testing.T) {

@@ -6,8 +6,8 @@ import (
 	"sort"
 	"text/tabwriter"
 
+	"github.com/keep-network/keep-core/internal/hexutils"
 	"github.com/keep-network/keep-core/pkg/bitcoin"
-	"github.com/keep-network/keep-core/pkg/internal/hexutils"
 	"github.com/keep-network/keep-core/pkg/tbtc"
 )
 

@@ -9,12 +9,13 @@ import (
 
 	"github.com/keep-network/keep-core/pkg/chain"
 
+	"golang.org/x/crypto/sha3"
+
+	"github.com/keep-network/keep-core/internal/testutils"
 	"github.com/keep-network/keep-core/pkg/internal/tecdsatest"
-	"github.com/keep-network/keep-core/pkg/internal/testutils"
 	"github.com/keep-network/keep-core/pkg/protocol/group"
 	"github.com/keep-network/keep-core/pkg/tecdsa"
 	"github.com/keep-network/keep-core/pkg/tecdsa/dkg"
-	"golang.org/x/crypto/sha3"
 )
 
 func TestSignResult_SigningSuccessful(t *testing.T) {

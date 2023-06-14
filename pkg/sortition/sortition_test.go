@@ -9,7 +9,8 @@ import (
 	"time"
 
 	"github.com/ipfs/go-log"
-	"github.com/keep-network/keep-core/pkg/internal/testutils"
+
+	"github.com/keep-network/keep-core/internal/testutils"
 	"github.com/keep-network/keep-core/pkg/sortition/internal/local"
 )
 
