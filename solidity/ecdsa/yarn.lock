@@ -1028,10 +1028,10 @@
     "@openzeppelin/upgrades" "^2.7.2"
     openzeppelin-solidity "2.4.0"
 
-"@keep-network/random-beacon@2.1.0-dev.12":
-  version "2.1.0-dev.12"
-  resolved "https://registry.yarnpkg.com/@keep-network/random-beacon/-/random-beacon-2.1.0-dev.12.tgz#df238753b65c0098a1a5ae7e98a00dc063bb08dd"
-  integrity sha512-WVZT0BEF9uZn73P3X69lO041FoKsiWXZqcj7uV6hC//kOwS/BAtaWLHldbt1NEXdr/iG2THeDpg4Lfttd1p5Uw==
+"@keep-network/random-beacon@development":
+  version "2.1.0-dev.13"
+  resolved "https://registry.yarnpkg.com/@keep-network/random-beacon/-/random-beacon-2.1.0-dev.13.tgz#8b4d20456e17cb76531a25c98370d3a6da8c8be5"
+  integrity sha512-o5+LvzQB5Sqnpbu5Wr97HvU63rlw9v/O5ZGxDiWe4XwzFhC/FEnza+uWgWm1IJkFVrQj/DzYokqkzgANx/lBnA==
   dependencies:
     "@keep-network/sortition-pools" "^2.0.0-pre.16"
     "@openzeppelin/contracts" "4.7.3"
