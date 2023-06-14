@@ -3,8 +3,12 @@ package maintainer
 import (
 	"context"
 
+	"github.com/ipfs/go-log/v2"
+
 	"github.com/keep-network/keep-core/pkg/bitcoin"
 )
+
+var logger = log.Logger("keep-maintainer")
 
 func Initialize(
 	ctx context.Context,

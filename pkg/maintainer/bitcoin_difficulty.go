@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/ipfs/go-log"
 	"github.com/keep-network/keep-core/pkg/bitcoin"
 )
 
@@ -25,8 +24,6 @@ const (
 	// The number of blocks in a Bitcoin difficulty epoch.
 	bitcoinDifficultyEpochLength = 2016
 )
-
-var logger = log.Logger("maintainer-btcdiff")
 
 var (
 	errNotAuthorized = fmt.Errorf(
