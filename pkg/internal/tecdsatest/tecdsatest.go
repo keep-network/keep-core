@@ -1,4 +1,4 @@
-package test
+package tecdsatest
 
 import (
 	"encoding/json"
