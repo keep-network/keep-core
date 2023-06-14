@@ -20,6 +20,37 @@
 //   one input (a P2WSH deposit) was swept into a P2WPKH main UTXO.
 //   For reference see:
 //   https://live.blockcypher.com/btc-testnet/tx/9efc9d555233e12e06378a35a7b988d54f7043b5c3156adc79c7af0a0fd6f1a0
+//
+// - redemption_scenario_0.json: Bitcoin redemption transaction that uses a
+//   single P2WPKH input to pay a single P2PKH redeemer script and a P2WPKH change.
+//   For reference see:
+//   https://live.blockcypher.com/btc-testnet/tx/c437f1117db977682334b53a71fbe63a42aab42f6e0976c35b69977f86308c20
+//
+// - redemption_scenario_1.json: Bitcoin redemption transaction that uses a
+//   single P2WPKH input to pay a single P2WPKH redeemer script and a P2WPKH change.
+//   For reference see:
+//   https://live.blockcypher.com/btc-testnet/tx/925e61dc31396e7f2cbcc8bc9b4009b4f24ba679257762df078b7e9b875ea110
+//
+// - redemption_scenario_2.json: Bitcoin redemption transaction that uses a
+//   single P2WPKH input to pay a single P2SH redeemer script and a P2WPKH change.
+//   For reference see:
+//   https://live.blockcypher.com/btc-testnet/tx/ef25c9c8f4df673def035c0c1880278c90030b3c94a56668109001a591c2c521
+//
+// - redemption_scenario_3.json: Bitcoin redemption transaction that uses a
+//   single P2WPKH input to pay a single P2WSH redeemer script and a P2WPKH change.
+//   For reference see:
+//   https://live.blockcypher.com/btc-testnet/tx/3d28bb5bf73379da51bc683f4d0ed31d7b024466c619d80ebd9378077d900be3
+//
+// - redemption_scenario_4.json: Bitcoin redemption transaction that uses a
+//   single P2WPKH input to pay redeemer scripts (P2PKH, P2WPKH, P2SH and P2WSH)
+//   and a P2WPKH change.
+//   For reference see:
+//   https://live.blockcypher.com/btc-testnet/tx/f70ff89fd2b6226183e4b8143cc5f0f457f05dd1dca0c6151ab66f4523d972b7
+//
+// - redemption_scenario_5.json: Bitcoin redemption transaction that uses a
+//   single P2WPKH input to pay redeemer scripts (P2PKH, P2WPKH) without a change.
+//   For reference see:
+//   https://live.blockcypher.com/btc-testnet/tx/afcdf8f91273b73abc40018873978c22bbb7c3d8d669ef2faffa0c4b0898c8eb
 package tbtctest
 
 import (
@@ -34,11 +65,13 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
+	"time"
 )
 
 const (
 	testDataDirFormat              = "%s/testdata"
 	depositSweepTestDataFilePrefix = "deposit_sweep_scenario"
+	redemptionTestDataFilePrefix   = "redemption_scenario"
 )
 
 // Deposit holds the deposit data in the given test scenario.
@@ -71,7 +104,43 @@ type DepositSweepTestScenario struct {
 
 // LoadDepositSweepTestScenarios loads all scenarios related with deposit sweep.
 func LoadDepositSweepTestScenarios() ([]*DepositSweepTestScenario, error) {
-	filePaths, err := detectTestDataFiles(depositSweepTestDataFilePrefix)
+	return loadTestScenarios[*DepositSweepTestScenario](depositSweepTestDataFilePrefix)
+}
+
+// RedemptionRequest holds the redemption request data in the given test scenario.
+type RedemptionRequest struct {
+	Redeemer             chain.Address
+	RedeemerOutputScript []byte
+	RequestedAmount      uint64
+	TreasuryFee          uint64
+	TxMaxFee             uint64
+	RequestedAt          time.Time
+}
+
+// RedemptionTestScenario represents a redemption test scenario.
+type RedemptionTestScenario struct {
+	Title              string
+	WalletPublicKey    *ecdsa.PublicKey
+	WalletPrivateKey   *big.Int
+	WalletMainUtxo     *bitcoin.UnspentTransactionOutput
+	RedemptionRequests []*RedemptionRequest
+	InputTransaction   *bitcoin.Transaction
+	FeeShares          []int64
+	Signature          *bitcoin.SignatureContainer
+
+	ExpectedSigHash                          *big.Int
+	ExpectedRedemptionTransaction            *bitcoin.Transaction
+	ExpectedRedemptionTransactionHash        bitcoin.Hash
+	ExpectedRedemptionTransactionWitnessHash bitcoin.Hash
+}
+
+// LoadRedemptionTestScenarios loads all scenarios related with redemption.
+func LoadRedemptionTestScenarios() ([]*RedemptionTestScenario, error) {
+	return loadTestScenarios[*RedemptionTestScenario](redemptionTestDataFilePrefix)
+}
+
+func loadTestScenarios[T json.Unmarshaler](testDataFilePrefix string) ([]T, error) {
+	filePaths, err := detectTestDataFiles(testDataFilePrefix)
 	if err != nil {
 		return nil, fmt.Errorf(
 			"cannot detect test data files: [%v]",
@@ -79,7 +148,7 @@ func LoadDepositSweepTestScenarios() ([]*DepositSweepTestScenario, error) {
 		)
 	}
 
-	scenarios := make([]*DepositSweepTestScenario, 0)
+	scenarios := make([]T, 0)
 
 	for _, filePath := range filePaths {
 		// #nosec G304 (file path provided as taint input)
@@ -94,7 +163,7 @@ func LoadDepositSweepTestScenarios() ([]*DepositSweepTestScenario, error) {
 			)
 		}
 
-		var scenario DepositSweepTestScenario
+		var scenario T
 		if err = json.Unmarshal(fileBytes, &scenario); err != nil {
 			return nil, fmt.Errorf(
 				"cannot unmarshal scenario for file [%v]: [%v]",
@@ -103,7 +172,7 @@ func LoadDepositSweepTestScenarios() ([]*DepositSweepTestScenario, error) {
 			)
 		}
 
-		scenarios = append(scenarios, &scenario)
+		scenarios = append(scenarios, scenario)
 	}
 
 	return scenarios, nil

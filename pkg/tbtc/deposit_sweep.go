@@ -555,10 +555,10 @@ func (dsa *depositSweepAction) actionType() WalletActionType {
 // assembleDepositSweepTransaction constructs an unsigned deposit sweep Bitcoin
 // transaction.
 //
-// Regarding input arguments, the walletPublicKey parameter is optional and
+// Regarding input arguments, the walletMainUtxo parameter is optional and
 // can be set as nil if the wallet does not have a main UTXO at the moment.
 // The deposits slice must contain at least one element. The fee argument
-// is not validated anyway so must be chosen with respect to the system
+// is not validated in any way so must be chosen with respect to the system
 // limitations.
 //
 // The resulting bitcoin.TransactionBuilder instance holds all the data
