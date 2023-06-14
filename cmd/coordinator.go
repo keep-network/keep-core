@@ -86,7 +86,7 @@ var listDepositsCommand = cobra.Command{
 		var walletPublicKeyHash [20]byte
 		if len(wallet) > 0 {
 			var err error
-			walletPublicKeyHash, err = coordinator.NewWalletPublicKeyHash(wallet)
+			walletPublicKeyHash, err = newWalletPublicKeyHash(wallet)
 			if err != nil {
 				return fmt.Errorf("failed to extract wallet public key hash: %v", err)
 			}
@@ -158,7 +158,7 @@ var proposeDepositsSweepCommand = cobra.Command{
 		var walletPublicKeyHash [20]byte
 		if len(wallet) > 0 {
 			var err error
-			walletPublicKeyHash, err = coordinator.NewWalletPublicKeyHash(wallet)
+			walletPublicKeyHash, err = newWalletPublicKeyHash(wallet)
 			if err != nil {
 				return fmt.Errorf("failed extract wallet public key hash: %v", err)
 			}
@@ -329,4 +329,21 @@ func init() {
 	)
 
 	CoordinatorCommand.AddCommand(&estimateDepositsSweepFeeCommand)
+}
+
+func newWalletPublicKeyHash(str string) ([20]byte, error) {
+	var result [20]byte
+
+	walletHex, err := hexutils.Decode(str)
+	if err != nil {
+		return result, err
+	}
+
+	if len(walletHex) != 20 {
+		return result, fmt.Errorf("invalid bytes length: [%d], expected: [%d]", len(walletHex), 20)
+	}
+
+	copy(result[:], walletHex)
+
+	return result, nil
 }

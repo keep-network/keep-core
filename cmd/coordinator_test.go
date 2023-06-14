@@ -1,11 +1,11 @@
-package coordinator
+package cmd
 
 import (
 	"fmt"
 	"reflect"
 	"testing"
 
-	"github.com/keep-network/keep-core/pkg/internal/testutils"
+	"github.com/keep-network/keep-core/internal/testutils"
 )
 
 var walletPublicKeyHashTests = []struct {
@@ -28,7 +28,7 @@ var walletPublicKeyHashTests = []struct {
 func TestNewWalletPublicKeyHash(t *testing.T) {
 	for _, test := range walletPublicKeyHashTests {
 		t.Run(test.input, func(t *testing.T) {
-			actualResult, err := NewWalletPublicKeyHash(test.input)
+			actualResult, err := newWalletPublicKeyHash(test.input)
 			if !reflect.DeepEqual(err, test.wantErr) {
 				t.Fatalf("unexpected error\nexpected: %v\nactual:   %v", test.wantErr, err)
 			}
