@@ -21,23 +21,14 @@ import (
 )
 
 type localTbtcChain struct {
-	depositRequestsMutex sync.Mutex
-	depositRequests      map[[32]byte]*tbtc.DepositChainRequest
+	mutex sync.Mutex
 
-	pastDepositRevealedEventsMutex sync.Mutex
-	pastDepositRevealedEvents      map[[32]byte][]*tbtc.DepositRevealedEvent
-
-	pastNewWalletRegisteredEventsMutex sync.Mutex
-	pastNewWalletRegisteredEvents      map[[32]byte][]*tbtc.NewWalletRegisteredEvent
-
-	depositParametersMutex sync.Mutex
-	depositParameters      depositParameters
-
-	depositSweepProposalValidationsMutex sync.Mutex
-	depositSweepProposalValidations      map[[32]byte]bool
-
-	depositSweepProposalsMutex sync.Mutex
-	depositSweepProposals      []*tbtc.DepositSweepProposal
+	depositRequests                 map[[32]byte]*tbtc.DepositChainRequest
+	pastDepositRevealedEvents       map[[32]byte][]*tbtc.DepositRevealedEvent
+	pastNewWalletRegisteredEvents   map[[32]byte][]*tbtc.NewWalletRegisteredEvent
+	depositParameters               depositParameters
+	depositSweepProposalValidations map[[32]byte]bool
+	depositSweepProposals           []*tbtc.DepositSweepProposal
 }
 
 type depositParameters = struct {
@@ -204,8 +195,8 @@ func (lc *localTbtcChain) GetOperatorID(operatorAddress chain.Address) (chain.Op
 func (lc *localTbtcChain) PastDepositRevealedEvents(
 	filter *tbtc.DepositRevealedEventFilter,
 ) ([]*tbtc.DepositRevealedEvent, error) {
-	lc.pastDepositRevealedEventsMutex.Lock()
-	defer lc.pastDepositRevealedEventsMutex.Unlock()
+	lc.mutex.Lock()
+	defer lc.mutex.Unlock()
 
 	eventsKey, err := buildPastDepositRevealedEventsKey(filter)
 	if err != nil {
@@ -224,8 +215,8 @@ func (lc *localTbtcChain) addPastDepositRevealedEvent(
 	filter *tbtc.DepositRevealedEventFilter,
 	event *tbtc.DepositRevealedEvent,
 ) error {
-	lc.pastDepositRevealedEventsMutex.Lock()
-	defer lc.pastDepositRevealedEventsMutex.Unlock()
+	lc.mutex.Lock()
+	defer lc.mutex.Unlock()
 
 	eventsKey, err := buildPastDepositRevealedEventsKey(filter)
 	if err != nil {
@@ -279,8 +270,8 @@ func (lc *localTbtcChain) GetDepositRequest(
 	fundingTxHash bitcoin.Hash,
 	fundingOutputIndex uint32,
 ) (*tbtc.DepositChainRequest, error) {
-	lc.depositRequestsMutex.Lock()
-	defer lc.depositRequestsMutex.Unlock()
+	lc.mutex.Lock()
+	defer lc.mutex.Unlock()
 
 	requestKey := buildDepositRequestKey(fundingTxHash, fundingOutputIndex)
 
@@ -297,8 +288,8 @@ func (lc *localTbtcChain) setDepositRequest(
 	fundingOutputIndex uint32,
 	request *tbtc.DepositChainRequest,
 ) {
-	lc.depositRequestsMutex.Lock()
-	defer lc.depositRequestsMutex.Unlock()
+	lc.mutex.Lock()
+	defer lc.mutex.Unlock()
 
 	requestKey := buildDepositRequestKey(fundingTxHash, fundingOutputIndex)
 
@@ -308,8 +299,8 @@ func (lc *localTbtcChain) setDepositRequest(
 func (lc *localTbtcChain) PastNewWalletRegisteredEvents(
 	filter *tbtc.NewWalletRegisteredEventFilter,
 ) ([]*tbtc.NewWalletRegisteredEvent, error) {
-	lc.pastNewWalletRegisteredEventsMutex.Lock()
-	defer lc.pastNewWalletRegisteredEventsMutex.Unlock()
+	lc.mutex.Lock()
+	defer lc.mutex.Unlock()
 
 	eventsKey, err := buildPastNewWalletRegisteredEventsKey(filter)
 	if err != nil {
@@ -328,8 +319,8 @@ func (lc *localTbtcChain) addPastNewWalletRegisteredEvent(
 	filter *tbtc.NewWalletRegisteredEventFilter,
 	event *tbtc.NewWalletRegisteredEvent,
 ) error {
-	lc.pastNewWalletRegisteredEventsMutex.Lock()
-	defer lc.pastNewWalletRegisteredEventsMutex.Unlock()
+	lc.mutex.Lock()
+	defer lc.mutex.Unlock()
 
 	eventsKey, err := buildPastNewWalletRegisteredEventsKey(filter)
 	if err != nil {
@@ -409,8 +400,8 @@ func (lc *localTbtcChain) GetDepositParameters() (
 	revealAheadPeriod uint32,
 	err error,
 ) {
-	lc.depositParametersMutex.Lock()
-	defer lc.depositParametersMutex.Unlock()
+	lc.mutex.Lock()
+	defer lc.mutex.Unlock()
 
 	return lc.depositParameters.dustThreshold,
 		lc.depositParameters.treasuryFeeDivisor,
@@ -425,8 +416,8 @@ func (lc *localTbtcChain) setDepositParameters(
 	txMaxFee uint64,
 	revealAheadPeriod uint32,
 ) {
-	lc.depositParametersMutex.Lock()
-	defer lc.depositParametersMutex.Unlock()
+	lc.mutex.Lock()
+	defer lc.mutex.Unlock()
 
 	lc.depositParameters = depositParameters{
 		dustThreshold:      dustThreshold,
@@ -467,8 +458,8 @@ func (lc *localTbtcChain) ValidateDepositSweepProposal(
 		FundingTx *bitcoin.Transaction
 	},
 ) error {
-	lc.depositSweepProposalValidationsMutex.Lock()
-	defer lc.depositSweepProposalValidationsMutex.Unlock()
+	lc.mutex.Lock()
+	defer lc.mutex.Unlock()
 
 	key, err := buildDepositSweepProposalValidationKey(proposal)
 	if err != nil {
@@ -495,8 +486,8 @@ func (lc *localTbtcChain) setDepositSweepProposalValidationResult(
 	},
 	result bool,
 ) error {
-	lc.depositSweepProposalValidationsMutex.Lock()
-	defer lc.depositSweepProposalValidationsMutex.Unlock()
+	lc.mutex.Lock()
+	defer lc.mutex.Unlock()
 
 	key, err := buildDepositSweepProposalValidationKey(proposal)
 	if err != nil {
@@ -531,8 +522,8 @@ func buildDepositSweepProposalValidationKey(
 func (lc *localTbtcChain) SubmitDepositSweepProposalWithReimbursement(
 	proposal *tbtc.DepositSweepProposal,
 ) error {
-	lc.depositSweepProposalsMutex.Lock()
-	defer lc.depositSweepProposalsMutex.Unlock()
+	lc.mutex.Lock()
+	defer lc.mutex.Unlock()
 
 	lc.depositSweepProposals = append(lc.depositSweepProposals, proposal)
 

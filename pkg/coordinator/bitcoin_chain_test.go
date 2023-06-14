@@ -8,12 +8,11 @@ import (
 )
 
 type localBitcoinChain struct {
-	transactionsMutex         sync.Mutex
+	mutex sync.Mutex
+
 	transactions              map[bitcoin.Hash]*bitcoin.Transaction
 	transactionsConfirmations map[bitcoin.Hash]uint
-
-	feeMutex                 sync.Mutex
-	satPerVByteFeeEstimation map[uint32]int64
+	satPerVByteFeeEstimation  map[uint32]int64
 }
 
 func newLocalBitcoinChain() *localBitcoinChain {
@@ -27,8 +26,8 @@ func newLocalBitcoinChain() *localBitcoinChain {
 func (lbc *localBitcoinChain) GetTransaction(
 	transactionHash bitcoin.Hash,
 ) (*bitcoin.Transaction, error) {
-	lbc.transactionsMutex.Lock()
-	defer lbc.transactionsMutex.Unlock()
+	lbc.mutex.Lock()
+	defer lbc.mutex.Unlock()
 
 	transaction, ok := lbc.transactions[transactionHash]
 	if !ok {
@@ -41,8 +40,8 @@ func (lbc *localBitcoinChain) setTransaction(
 	transactionHash bitcoin.Hash,
 	transaction *bitcoin.Transaction,
 ) {
-	lbc.transactionsMutex.Lock()
-	defer lbc.transactionsMutex.Unlock()
+	lbc.mutex.Lock()
+	defer lbc.mutex.Unlock()
 
 	lbc.transactions[transactionHash] = transaction
 }
@@ -50,8 +49,8 @@ func (lbc *localBitcoinChain) setTransaction(
 func (lbc *localBitcoinChain) GetTransactionConfirmations(
 	transactionHash bitcoin.Hash,
 ) (uint, error) {
-	lbc.transactionsMutex.Lock()
-	defer lbc.transactionsMutex.Unlock()
+	lbc.mutex.Lock()
+	defer lbc.mutex.Unlock()
 
 	if confirmations, ok := lbc.transactionsConfirmations[transactionHash]; ok {
 		return confirmations, nil
@@ -64,8 +63,8 @@ func (lbc *localBitcoinChain) setTransactionConfirmations(
 	transactionHash bitcoin.Hash,
 	confirmations uint,
 ) {
-	lbc.transactionsMutex.Lock()
-	defer lbc.transactionsMutex.Unlock()
+	lbc.mutex.Lock()
+	defer lbc.mutex.Unlock()
 
 	lbc.transactionsConfirmations[transactionHash] = confirmations
 }
@@ -109,8 +108,8 @@ func (lbc *localBitcoinChain) GetMempoolForPublicKeyHash(
 func (lbc *localBitcoinChain) EstimateSatPerVByteFee(
 	blocks uint32,
 ) (int64, error) {
-	lbc.feeMutex.Lock()
-	defer lbc.feeMutex.Unlock()
+	lbc.mutex.Lock()
+	defer lbc.mutex.Unlock()
 
 	return lbc.satPerVByteFeeEstimation[blocks], nil
 }
@@ -119,8 +118,8 @@ func (lbc *localBitcoinChain) setEstimateSatPerVByteFee(
 	blocks uint32,
 	fee int64,
 ) {
-	lbc.feeMutex.Lock()
-	defer lbc.feeMutex.Unlock()
+	lbc.mutex.Lock()
+	defer lbc.mutex.Unlock()
 
 	lbc.satPerVByteFeeEstimation[blocks] = fee
 }
