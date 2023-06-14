@@ -8,6 +8,8 @@ import (
 	"github.com/keep-network/keep-core/pkg/bitcoin"
 )
 
+// TODO: Move bitcoin difficulty maintainer module to `pkg/maintainer/btcdiff`.
+
 const (
 	// Default value for back-off time which should be applied when the Bitcoin
 	// difficulty maintainer is restarted. It helps to avoid being flooded with
