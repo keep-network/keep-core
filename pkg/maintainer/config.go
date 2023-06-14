@@ -13,5 +13,9 @@ type Config struct {
 	// the relay.
 	DisableBitcoinDifficultyProxy bool
 
+	// WalletCoordination indicates whether the Wallet Coordination maintainer
+	// should be started.
+	WalletCoordination bool
+
 	// TODO: Add options for other maintainer tasks, e.g. spv
 }

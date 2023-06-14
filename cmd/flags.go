@@ -326,6 +326,13 @@ func initMaintainerFlags(command *cobra.Command, cfg *config.Config) {
 		false,
 		"disable Bitcoin difficulty proxy",
 	)
+
+	command.Flags().BoolVar(
+		&cfg.Maintainer.WalletCoordination,
+		"walletCoordination",
+		false,
+		"start wallet coordination maintainer",
+	)
 }
 
 // Initialize flags for Developer configuration.
