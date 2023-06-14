@@ -201,6 +201,14 @@ type BridgeChain interface {
 		fundingOutputIndex uint32,
 	) (*DepositChainRequest, error)
 
+	// PastNewWalletRegisteredEvents fetches past new wallet registered events
+	// according to the provided filter or unfiltered if the filter is nil. Returned
+	// events are sorted by the block number in the ascending order, i.e. the
+	// latest event is at the end of the slice.
+	PastNewWalletRegisteredEvents(
+		filter *NewWalletRegisteredEventFilter,
+	) ([]*NewWalletRegisteredEvent, error)
+
 	// GetWallet gets the on-chain data for the given wallet. Returns an error
 	// if the wallet was not found.
 	GetWallet(walletPublicKeyHash [20]byte) (*WalletChainData, error)
@@ -285,6 +293,21 @@ type DepositChainRequest struct {
 	Vault       *chain.Address
 	TreasuryFee uint64
 	SweptAt     time.Time
+}
+
+// NewWalletRegisteredEvent represents a new wallet registered event.
+type NewWalletRegisteredEvent struct {
+	EcdsaWalletID       [32]byte
+	WalletPublicKeyHash [20]byte
+	BlockNumber         uint64
+}
+
+// NewWalletRegisteredEventFilter is a component allowing to filter NewWalletRegisteredEvent.
+type NewWalletRegisteredEventFilter struct {
+	StartBlock          uint64
+	EndBlock            *uint64
+	EcdsaWalletID       [][32]byte
+	WalletPublicKeyHash [][20]byte
 }
 
 // WalletChainData represents wallet data stored on-chain.

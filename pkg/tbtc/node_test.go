@@ -4,16 +4,17 @@ import (
 	"crypto/ecdsa"
 	"encoding/hex"
 	"fmt"
+	"reflect"
+	"testing"
+
 	"github.com/keep-network/keep-common/pkg/persistence"
+	"github.com/keep-network/keep-core/internal/testutils"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/generator"
 	"github.com/keep-network/keep-core/pkg/internal/tecdsatest"
-	"github.com/keep-network/keep-core/pkg/internal/testutils"
 	"github.com/keep-network/keep-core/pkg/net/local"
 	"github.com/keep-network/keep-core/pkg/protocol/group"
 	"github.com/keep-network/keep-core/pkg/tecdsa"
-	"reflect"
-	"testing"
 )
 
 func TestNode_GetSigningExecutor(t *testing.T) {

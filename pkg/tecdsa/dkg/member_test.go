@@ -8,9 +8,10 @@ import (
 	"github.com/bnb-chain/tss-lib/tss"
 
 	"github.com/bnb-chain/tss-lib/ecdsa/keygen"
+
+	"github.com/keep-network/keep-core/internal/testutils"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/chain/local_v1"
-	"github.com/keep-network/keep-core/pkg/internal/testutils"
 	"github.com/keep-network/keep-core/pkg/operator"
 	"github.com/keep-network/keep-core/pkg/protocol/group"
 )

@@ -1,8 +1,9 @@
 package electrum
 
 import (
-	"github.com/keep-network/keep-core/pkg/internal/testutils"
 	"testing"
+
+	"github.com/keep-network/keep-core/internal/testutils"
 )
 
 func TestConvertBtcKbToSatVByte(t *testing.T) {

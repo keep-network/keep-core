@@ -8,7 +8,8 @@ import (
 	"testing"
 
 	"github.com/btcsuite/btcd/btcec"
-	"github.com/keep-network/keep-core/pkg/internal/testutils"
+
+	"github.com/keep-network/keep-core/internal/testutils"
 )
 
 func TestTransaction_SerializeRoundtrip(t *testing.T) {

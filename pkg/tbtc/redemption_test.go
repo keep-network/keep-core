@@ -1,12 +1,13 @@
 package tbtc
 
 import (
-	"github.com/go-test/deep"
 	"testing"
 
+	"github.com/go-test/deep"
+
+	"github.com/keep-network/keep-core/internal/testutils"
 	"github.com/keep-network/keep-core/pkg/bitcoin"
 	"github.com/keep-network/keep-core/pkg/internal/tbtctest"
-	"github.com/keep-network/keep-core/pkg/internal/testutils"
 )
 
 func TestAssembleRedemptionTransaction(t *testing.T) {

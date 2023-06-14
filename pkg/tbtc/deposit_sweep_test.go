@@ -13,9 +13,9 @@ import (
 
 	"github.com/keep-network/keep-core/pkg/tecdsa"
 
+	"github.com/keep-network/keep-core/internal/testutils"
 	"github.com/keep-network/keep-core/pkg/bitcoin"
 	"github.com/keep-network/keep-core/pkg/internal/tbtctest"
-	"github.com/keep-network/keep-core/pkg/internal/testutils"
 )
 
 // TODO: Think about covering unhappy paths for specific steps of the deposit sweep action.

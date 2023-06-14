@@ -1,9 +1,10 @@
 package bitcoin
 
 import (
-	"github.com/keep-network/keep-core/pkg/internal/testutils"
 	"reflect"
 	"testing"
+
+	"github.com/keep-network/keep-core/internal/testutils"
 )
 
 func TestTransactionSizeEstimator_VirtualSize(t *testing.T) {

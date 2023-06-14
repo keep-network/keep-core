@@ -3,14 +3,16 @@ package common
 import (
 	"bytes"
 	"fmt"
-	"github.com/bnb-chain/tss-lib/tss"
-	"github.com/keep-network/keep-core/pkg/crypto/ephemeral"
-	"github.com/keep-network/keep-core/pkg/internal/testutils"
-	"github.com/keep-network/keep-core/pkg/protocol/group"
 	"math/big"
 	"reflect"
 	"strconv"
 	"testing"
+
+	"github.com/bnb-chain/tss-lib/tss"
+
+	"github.com/keep-network/keep-core/internal/testutils"
+	"github.com/keep-network/keep-core/pkg/crypto/ephemeral"
+	"github.com/keep-network/keep-core/pkg/protocol/group"
 )
 
 func TestGenerateTssPartiesIDs(t *testing.T) {

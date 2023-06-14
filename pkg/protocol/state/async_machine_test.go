@@ -11,7 +11,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/keep-network/keep-core/pkg/internal/testutils"
+	"github.com/keep-network/keep-core/internal/testutils"
 	"github.com/keep-network/keep-core/pkg/net"
 	netlocal "github.com/keep-network/keep-core/pkg/net/local"
 	"github.com/keep-network/keep-core/pkg/protocol/group"
@@ -220,9 +220,7 @@ func (sls *simpleLoggingState) MemberIndex() group.MemberIndex {
 // State used for TestAsyncExecute_FailingState
 //
 
-//
 // failingState fails the execution on Initiate after doing some computations
-//
 type failingState struct {
 }
 
@@ -247,10 +245,8 @@ func (tas *failingState) MemberIndex() group.MemberIndex {
 // States used for TestAsyncExecute and TestAsyncExecute_ContextCancelled
 //
 
-//
 // testAsyncState1 can transition to the next state immediately;
 // it is not receiving or sending any messages.
-//
 type testAsyncState1 struct {
 	*BaseAsyncState
 
@@ -280,10 +276,8 @@ func (tas *testAsyncState1) Next() (AsyncState, error) {
 }
 func (tas *testAsyncState1) MemberIndex() group.MemberIndex { return tas.memberIndex }
 
-//
 // testAsyncState2 waits for `partyCount` messages to be received;
 // it is sending one message immediately upon the initiation.
-//
 type testAsyncState2 struct {
 	*testAsyncState1
 }
@@ -306,10 +300,8 @@ func (tas *testAsyncState2) Next() (AsyncState, error) {
 }
 func (tas *testAsyncState2) MemberIndex() group.MemberIndex { return tas.memberIndex }
 
-//
 // testAsyncState3 waits for `partyCount` messages to be received.
 // It is sending one message after some random delay upon the initiation.
-//
 type testAsyncState3 struct {
 	*testAsyncState2
 }
@@ -334,9 +326,7 @@ func (tas *testAsyncState3) Next() (AsyncState, error) {
 }
 func (tas *testAsyncState3) MemberIndex() group.MemberIndex { return tas.memberIndex }
 
-//
 // testAsyncState2 message
-//
 type round2Message struct {
 	Type_   string `json:"type"`
 	Payload string `json:"payload"`
@@ -358,9 +348,7 @@ func newRound2Message(payload string) *round2Message {
 	}
 }
 
-//
 // testAsyncState3 message
-//
 type round3Message struct {
 	Type_   string `json:"type"`
 	Payload string `json:"payload"`
