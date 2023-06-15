@@ -226,14 +226,14 @@ var cmdFlagsTests = map[string]struct {
 		defaultValue:          runtime.GOMAXPROCS(0),
 	},
 	"maintainer.bitcoinDifficulty": {
-		readValueFunc:         func(c *config.Config) interface{} { return c.Maintainer.BitcoinDifficulty },
+		readValueFunc:         func(c *config.Config) interface{} { return c.Maintainer.BitcoinDifficulty.Enabled },
 		flagName:              "--bitcoinDifficulty",
 		flagValue:             "", // don't provide any value
 		expectedValueFromFlag: true,
 		defaultValue:          false,
 	},
 	"maintainer.disableBitcoinDifficultyProxy": {
-		readValueFunc:         func(c *config.Config) interface{} { return c.Maintainer.DisableBitcoinDifficultyProxy },
+		readValueFunc:         func(c *config.Config) interface{} { return c.Maintainer.BitcoinDifficulty.DisableProxy },
 		flagName:              "--disableBitcoinDifficultyProxy",
 		flagValue:             "", // don't provide any value
 		expectedValueFromFlag: true,
@@ -417,7 +417,7 @@ func TestFlags_Mixed(t *testing.T) {
 		},
 		// Properties not defined in the config file, but set with flags.
 		"maintainer.bitcoinDifficulty": {
-			readValueFunc: func(c *config.Config) interface{} { return c.Maintainer.BitcoinDifficulty },
+			readValueFunc: func(c *config.Config) interface{} { return c.Maintainer.BitcoinDifficulty.Enabled },
 			expectedValue: true,
 		},
 	}

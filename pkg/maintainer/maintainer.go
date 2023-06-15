@@ -6,6 +6,7 @@ import (
 	"github.com/ipfs/go-log/v2"
 
 	"github.com/keep-network/keep-core/pkg/bitcoin"
+	"github.com/keep-network/keep-core/pkg/maintainer/btcdiff"
 	"github.com/keep-network/keep-core/pkg/maintainer/wallet"
 )
 
@@ -15,21 +16,19 @@ func Initialize(
 	ctx context.Context,
 	config Config,
 	btcChain bitcoin.Chain,
-	btcDiffChain BitcoinDifficultyChain,
+	btcDiffChain btcdiff.Chain,
 	coordinatorChain wallet.Chain,
 ) {
 	// If none of the maintainers was specified in the config (i.e. no option was
 	// provided to the `maintainer` command), all maintainers should be launched.
-	launchAll := !config.BitcoinDifficulty && !config.WalletCoordination.Enabled
+	launchAll := !config.BitcoinDifficulty.Enabled && !config.WalletCoordination.Enabled
 
-	if config.BitcoinDifficulty || launchAll {
-		initializeBitcoinDifficultyMaintainer(
+	if config.BitcoinDifficulty.Enabled || launchAll {
+		btcdiff.Initialize(
 			ctx,
+			config.BitcoinDifficulty,
 			btcChain,
 			btcDiffChain,
-			config.DisableBitcoinDifficultyProxy,
-			bitcoinDifficultyDefaultIdleBackOffTime,
-			bitcoinDifficultyDefaultRestartBackoffTime,
 		)
 	}
 

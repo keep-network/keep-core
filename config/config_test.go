@@ -191,12 +191,12 @@ func TestReadConfigFromFile(t *testing.T) {
 			readValueFunc: func(c *Config) interface{} { return c.ClientInfo.EthereumMetricsTick },
 			expectedValue: 87 * time.Second,
 		},
-		"Maintainer.BitcoinDifficulty": {
-			readValueFunc: func(c *Config) interface{} { return c.Maintainer.BitcoinDifficulty },
+		"Maintainer.BitcoinDifficulty.Enabled": {
+			readValueFunc: func(c *Config) interface{} { return c.Maintainer.BitcoinDifficulty.Enabled },
 			expectedValue: true,
 		},
-		"Maintainer.DisableBitcoinDifficultyProxy": {
-			readValueFunc: func(c *Config) interface{} { return c.Maintainer.DisableBitcoinDifficultyProxy },
+		"Maintainer.BitcoinDifficulty.DisableProxy": {
+			readValueFunc: func(c *Config) interface{} { return c.Maintainer.BitcoinDifficulty.DisableProxy },
 			expectedValue: true,
 		},
 	}

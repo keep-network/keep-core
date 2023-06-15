@@ -314,14 +314,14 @@ func initTbtcFlags(cmd *cobra.Command, cfg *config.Config) {
 // Initialize flags for Maintainer configuration.
 func initMaintainerFlags(command *cobra.Command, cfg *config.Config) {
 	command.Flags().BoolVar(
-		&cfg.Maintainer.BitcoinDifficulty,
+		&cfg.Maintainer.BitcoinDifficulty.Enabled,
 		"bitcoinDifficulty",
 		false,
 		"start Bitcoin difficulty maintainer",
 	)
 
 	command.Flags().BoolVar(
-		&cfg.Maintainer.DisableBitcoinDifficultyProxy,
+		&cfg.Maintainer.BitcoinDifficulty.DisableProxy,
 		"disableBitcoinDifficultyProxy",
 		false,
 		"disable Bitcoin difficulty proxy",
