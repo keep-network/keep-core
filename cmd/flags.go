@@ -339,7 +339,7 @@ func initMaintainerFlags(command *cobra.Command, cfg *config.Config) {
 		&cfg.Maintainer.WalletCoordination.RedemptionInterval,
 		"walletCoordination.redemptionInterval",
 		wallet.DefaultRedemptionInterval,
-		"The time interval in which pending redemptions transactions are checked.",
+		"The time interval in which pending redemptions requests are checked.",
 	)
 
 	command.Flags().DurationVar(

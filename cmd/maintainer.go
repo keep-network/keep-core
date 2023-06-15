@@ -67,7 +67,7 @@ func maintainers(cmd *cobra.Command, args []string) error {
 	)
 	if err != nil {
 		return fmt.Errorf(
-			"could not connect to Bitcoin difficulty chain: [%v]",
+			"could not connect to tBTC chain: [%v]",
 			err,
 		)
 	}
