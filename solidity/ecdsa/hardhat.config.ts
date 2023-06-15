@@ -108,7 +108,7 @@ const config: HardhatUserConfig = {
       tags: ["allowStubs"],
     },
     development: {
-      url: "http://localhost:8545",
+      url: "http://geth:8545",
       chainId: 1101,
       tags: ["allowStubs", "useRandomBeaconChaosnet"],
     },
