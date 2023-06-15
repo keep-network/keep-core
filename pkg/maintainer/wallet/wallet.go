@@ -65,12 +65,18 @@ func (wm *walletMaintainer) startControlLoop(ctx context.Context) {
 	for {
 		select {
 		case <-ctx.Done():
-			logger.Infof("tBTC Deposits Sweep Maintainer closed")
+			logger.Info("tBTC Deposits Sweep Maintainer closed")
 			return
 		case <-redemptionTicker.C:
+			logger.Info("starting redemption task execution...")
+
 			// TODO: Implement
-			sweepTicker.Reset(wm.config.RedemptionInterval)
+
+			logger.Infof("redemption task run completed; next run in [%s]", wm.config.RedemptionInterval)
+			redemptionTicker.Reset(wm.config.RedemptionInterval)
 		case <-sweepTicker.C:
+			logger.Info("starting sweep task execution...")
+
 			// TODO: Synchronize sweeps with redemptions. Sweep should be proposed only
 			// if there are no pending redemptions. Redemptions take priority over sweeps.
 			if err := wm.runSweepTask(ctx); err != nil {
@@ -78,7 +84,6 @@ func (wm *walletMaintainer) startControlLoop(ctx context.Context) {
 			}
 
 			logger.Infof("sweep task run completed; next run in [%s]", wm.config.SweepInterval)
-
 			sweepTicker.Reset(wm.config.SweepInterval)
 		}
 	}
