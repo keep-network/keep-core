@@ -1,64 +1,62 @@
 // Package tbtctest contains scenarios meant to be used for Bitcoin-related
 // tests in the pkg/tbtc package. Here are the details of specific scenarios:
 //
-// - deposit_sweep_scenario_0.json: Bitcoin deposit sweep transaction in which
-//   three inputs (a P2WPKH main UTXO, a P2SH deposit, and a P2WSH deposit)
-//   were swept into a P2WPKH main UTXO. For reference see:
-//   https://live.blockcypher.com/btc-testnet/tx/435d4aff6d4bc34134877bd3213c17970142fdd04d4113d534120033b9eecb2e
+//   - deposit_sweep_scenario_0.json: Bitcoin deposit sweep transaction in which
+//     three inputs (a P2WPKH main UTXO, a P2SH deposit, and a P2WSH deposit)
+//     were swept into a P2WPKH main UTXO. For reference see:
+//     https://live.blockcypher.com/btc-testnet/tx/435d4aff6d4bc34134877bd3213c17970142fdd04d4113d534120033b9eecb2e
 //
-// - deposit_sweep_scenario_1.json: Bitcoin deposit sweep transaction in which
-//   two inputs (a P2SH deposit, and a P2WSH deposit) were swept into a P2WPKH
-//   main UTXO. For reference see:
-//   https://live.blockcypher.com/btc-testnet/tx/f8eaf242a55ea15e602f9f990e33f67f99dfbe25d1802bbde63cc1caabf99668
+//   - deposit_sweep_scenario_1.json: Bitcoin deposit sweep transaction in which
+//     two inputs (a P2SH deposit, and a P2WSH deposit) were swept into a P2WPKH
+//     main UTXO. For reference see:
+//     https://live.blockcypher.com/btc-testnet/tx/f8eaf242a55ea15e602f9f990e33f67f99dfbe25d1802bbde63cc1caabf99668
 //
-// - deposit_sweep_scenario_2.json: Bitcoin deposit sweep transaction in which
-//   one input (a P2SH deposit) was swept into a P2WPKH main UTXO.
-//   For reference see:
-//   https://live.blockcypher.com/btc-testnet/tx/f5b9ad4e8cd5317925319ebc64dc923092bef3b56429c6b1bc2261bbdc73f351
+//   - deposit_sweep_scenario_2.json: Bitcoin deposit sweep transaction in which
+//     one input (a P2SH deposit) was swept into a P2WPKH main UTXO.
+//     For reference see:
+//     https://live.blockcypher.com/btc-testnet/tx/f5b9ad4e8cd5317925319ebc64dc923092bef3b56429c6b1bc2261bbdc73f351
 //
-// - deposit_sweep_scenario_3.json: Bitcoin deposit sweep transaction in which
-//   one input (a P2WSH deposit) was swept into a P2WPKH main UTXO.
-//   For reference see:
-//   https://live.blockcypher.com/btc-testnet/tx/9efc9d555233e12e06378a35a7b988d54f7043b5c3156adc79c7af0a0fd6f1a0
+//   - deposit_sweep_scenario_3.json: Bitcoin deposit sweep transaction in which
+//     one input (a P2WSH deposit) was swept into a P2WPKH main UTXO.
+//     For reference see:
+//     https://live.blockcypher.com/btc-testnet/tx/9efc9d555233e12e06378a35a7b988d54f7043b5c3156adc79c7af0a0fd6f1a0
 //
-// - redemption_scenario_0.json: Bitcoin redemption transaction that uses a
-//   single P2WPKH input to pay a single P2PKH redeemer script and a P2WPKH change.
-//   For reference see:
-//   https://live.blockcypher.com/btc-testnet/tx/c437f1117db977682334b53a71fbe63a42aab42f6e0976c35b69977f86308c20
+//   - redemption_scenario_0.json: Bitcoin redemption transaction that uses a
+//     single P2WPKH input to pay a single P2PKH redeemer script and a P2WPKH change.
+//     For reference see:
+//     https://live.blockcypher.com/btc-testnet/tx/c437f1117db977682334b53a71fbe63a42aab42f6e0976c35b69977f86308c20
 //
-// - redemption_scenario_1.json: Bitcoin redemption transaction that uses a
-//   single P2WPKH input to pay a single P2WPKH redeemer script and a P2WPKH change.
-//   For reference see:
-//   https://live.blockcypher.com/btc-testnet/tx/925e61dc31396e7f2cbcc8bc9b4009b4f24ba679257762df078b7e9b875ea110
+//   - redemption_scenario_1.json: Bitcoin redemption transaction that uses a
+//     single P2WPKH input to pay a single P2WPKH redeemer script and a P2WPKH change.
+//     For reference see:
+//     https://live.blockcypher.com/btc-testnet/tx/925e61dc31396e7f2cbcc8bc9b4009b4f24ba679257762df078b7e9b875ea110
 //
-// - redemption_scenario_2.json: Bitcoin redemption transaction that uses a
-//   single P2WPKH input to pay a single P2SH redeemer script and a P2WPKH change.
-//   For reference see:
-//   https://live.blockcypher.com/btc-testnet/tx/ef25c9c8f4df673def035c0c1880278c90030b3c94a56668109001a591c2c521
+//   - redemption_scenario_2.json: Bitcoin redemption transaction that uses a
+//     single P2WPKH input to pay a single P2SH redeemer script and a P2WPKH change.
+//     For reference see:
+//     https://live.blockcypher.com/btc-testnet/tx/ef25c9c8f4df673def035c0c1880278c90030b3c94a56668109001a591c2c521
 //
-// - redemption_scenario_3.json: Bitcoin redemption transaction that uses a
-//   single P2WPKH input to pay a single P2WSH redeemer script and a P2WPKH change.
-//   For reference see:
-//   https://live.blockcypher.com/btc-testnet/tx/3d28bb5bf73379da51bc683f4d0ed31d7b024466c619d80ebd9378077d900be3
+//   - redemption_scenario_3.json: Bitcoin redemption transaction that uses a
+//     single P2WPKH input to pay a single P2WSH redeemer script and a P2WPKH change.
+//     For reference see:
+//     https://live.blockcypher.com/btc-testnet/tx/3d28bb5bf73379da51bc683f4d0ed31d7b024466c619d80ebd9378077d900be3
 //
-// - redemption_scenario_4.json: Bitcoin redemption transaction that uses a
-//   single P2WPKH input to pay redeemer scripts (P2PKH, P2WPKH, P2SH and P2WSH)
-//   and a P2WPKH change.
-//   For reference see:
-//   https://live.blockcypher.com/btc-testnet/tx/f70ff89fd2b6226183e4b8143cc5f0f457f05dd1dca0c6151ab66f4523d972b7
+//   - redemption_scenario_4.json: Bitcoin redemption transaction that uses a
+//     single P2WPKH input to pay redeemer scripts (P2PKH, P2WPKH, P2SH and P2WSH)
+//     and a P2WPKH change.
+//     For reference see:
+//     https://live.blockcypher.com/btc-testnet/tx/f70ff89fd2b6226183e4b8143cc5f0f457f05dd1dca0c6151ab66f4523d972b7
 //
-// - redemption_scenario_5.json: Bitcoin redemption transaction that uses a
-//   single P2WPKH input to pay redeemer scripts (P2PKH, P2WPKH) without a change.
-//   For reference see:
-//   https://live.blockcypher.com/btc-testnet/tx/afcdf8f91273b73abc40018873978c22bbb7c3d8d669ef2faffa0c4b0898c8eb
-package tbtctest
+//   - redemption_scenario_5.json: Bitcoin redemption transaction that uses a
+//     single P2WPKH input to pay redeemer scripts (P2PKH, P2WPKH) without a change.
+//     For reference see:
+//     https://live.blockcypher.com/btc-testnet/tx/afcdf8f91273b73abc40018873978c22bbb7c3d8d669ef2faffa0c4b0898c8eb
+package test
 
 import (
 	"crypto/ecdsa"
 	"encoding/json"
 	"fmt"
-	"github.com/keep-network/keep-core/pkg/bitcoin"
-	"github.com/keep-network/keep-core/pkg/chain"
 	"io/fs"
 	"io/ioutil"
 	"math/big"
@@ -66,6 +64,9 @@ import (
 	"runtime"
 	"strings"
 	"time"
+
+	"github.com/keep-network/keep-core/pkg/bitcoin"
+	"github.com/keep-network/keep-core/pkg/chain"
 )
 
 const (

@@ -7,11 +7,11 @@ import (
 
 	"github.com/keep-network/keep-core/internal/testutils"
 	"github.com/keep-network/keep-core/pkg/bitcoin"
-	"github.com/keep-network/keep-core/pkg/internal/tbtctest"
+	"github.com/keep-network/keep-core/pkg/tbtc/internal/test"
 )
 
 func TestAssembleRedemptionTransaction(t *testing.T) {
-	scenarios, err := tbtctest.LoadRedemptionTestScenarios()
+	scenarios, err := test.LoadRedemptionTestScenarios()
 	if err != nil {
 		t.Fatal(err)
 	}
