@@ -26,14 +26,14 @@ type depositEntry struct {
 
 // ListDeposits gets deposits from the chain and prints them to standard output.
 func ListDeposits(
-	tbtcChain tbtc.Chain,
+	chain Chain,
 	btcChain bitcoin.Chain,
 	walletPublicKeyHash [20]byte,
 	head int,
 	skipSwept bool,
 ) error {
 	deposits, err := getDeposits(
-		tbtcChain,
+		chain,
 		btcChain,
 		walletPublicKeyHash,
 		head,
@@ -74,7 +74,7 @@ func ListDeposits(
 // The result will not mix deposits for different wallets.
 // TODO: Cache immutable data
 func FindDepositsToSweep(
-	tbtcChain tbtc.Chain,
+	chain Chain,
 	btcChain bitcoin.Chain,
 	walletPublicKeyHash [20]byte,
 	maxNumberOfDeposits uint16,
@@ -83,7 +83,7 @@ func FindDepositsToSweep(
 
 	getDepositsToSweepFromWallet := func(walletToSweep [20]byte) ([]depositEntry, error) {
 		unsweptDeposits, err := getDeposits(
-			tbtcChain,
+			chain,
 			btcChain,
 			walletToSweep,
 			int(maxNumberOfDeposits),
@@ -105,7 +105,7 @@ func FindDepositsToSweep(
 	// If walletPublicKeyHash is not provided we need to find a wallet that has
 	// unswept deposits.
 	if walletPublicKeyHash == [20]byte{} {
-		walletRegisteredEvents, err := tbtcChain.PastNewWalletRegisteredEvents(nil)
+		walletRegisteredEvents, err := chain.PastNewWalletRegisteredEvents(nil)
 		if err != nil {
 			return [20]byte{}, nil, fmt.Errorf("failed to get registered wallets: [%w]", err)
 		}
@@ -193,7 +193,7 @@ func FindDepositsToSweep(
 }
 
 func getDeposits(
-	tbtcChain tbtc.Chain,
+	chain Chain,
 	btcChain bitcoin.Chain,
 	walletPublicKeyHash [20]byte,
 	maxNumberOfDeposits int,
@@ -207,7 +207,7 @@ func getDeposits(
 		filter.WalletPublicKeyHash = [][20]byte{walletPublicKeyHash}
 	}
 
-	depositRevealedEvents, err := tbtcChain.PastDepositRevealedEvents(filter)
+	depositRevealedEvents, err := chain.PastDepositRevealedEvents(filter)
 	if err != nil {
 		return []depositEntry{}, fmt.Errorf(
 			"failed to get past deposit revealed events: [%w]",
@@ -237,9 +237,9 @@ func getDeposits(
 
 		logger.Debugf("getting details of deposit %d/%d", i+1, len(depositRevealedEvents))
 
-		depositKey := tbtcChain.BuildDepositKey(event.FundingTxHash, event.FundingOutputIndex)
+		depositKey := chain.BuildDepositKey(event.FundingTxHash, event.FundingOutputIndex)
 
-		depositRequest, err := tbtcChain.GetDepositRequest(event.FundingTxHash, event.FundingOutputIndex)
+		depositRequest, err := chain.GetDepositRequest(event.FundingTxHash, event.FundingOutputIndex)
 		if err != nil {
 			return result, fmt.Errorf(
 				"failed to get deposit request: [%w]",
