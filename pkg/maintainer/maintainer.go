@@ -23,6 +23,10 @@ func Initialize(
 	// provided to the `maintainer` command), all maintainers should be launched.
 	launchAll := !config.BitcoinDifficulty.Enabled && !config.WalletCoordination.Enabled
 
+	if launchAll {
+		logger.Info("initializing all maintainer modules...")
+	}
+
 	if config.BitcoinDifficulty.Enabled || launchAll {
 		btcdiff.Initialize(
 			ctx,
