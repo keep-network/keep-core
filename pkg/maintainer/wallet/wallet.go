@@ -13,9 +13,9 @@ import (
 var logger = log.Logger("keep-maintainer-wallet")
 
 type walletMaintainer struct {
+	config   Config
 	chain    Chain
 	btcChain bitcoin.Chain
-	config   Config
 }
 
 // Initialize and start Wallet Coordination Maintainer.
@@ -34,9 +34,9 @@ func Initialize(
 	}
 
 	wm := &walletMaintainer{
+		config:   config,
 		chain:    chain,
 		btcChain: btcChain,
-		config:   config,
 	}
 
 	go wm.startControlLoop(parentCtx)
