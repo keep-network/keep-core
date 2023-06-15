@@ -211,6 +211,11 @@ func initializeClientInfo(
 		config.ClientInfo.EthereumMetricsTick,
 	)
 
+	registry.ObserveEthBlockNumber(
+		blockCounter,
+		config.ClientInfo.EthereumMetricsTick,
+	)
+
 	registry.RegisterMetricClientInfo(build.Version)
 
 	registry.RegisterConnectedPeersSource(netProvider, signing)
