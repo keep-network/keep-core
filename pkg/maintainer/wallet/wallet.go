@@ -50,10 +50,8 @@ func (wm *walletMaintainer) startControlLoop(ctx context.Context) {
 	logger.Info("starting wallet coordination maintainer")
 	defer logger.Info("stopping wallet coordination maintainer")
 
-	// TODO: Cache time of the last execution in the disk storage, so after a
-	// restart the client will wait instead of executing the task right away.
-	initialRedemptionDelay := 10 * time.Second
-	initialSweepDelay := 10 * time.Second
+	initialRedemptionDelay := 5 * time.Second
+	initialSweepDelay := 60 * time.Second
 
 	redemptionTicker := time.NewTicker(initialRedemptionDelay)
 	defer redemptionTicker.Stop()
