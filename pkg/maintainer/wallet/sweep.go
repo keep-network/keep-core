@@ -23,6 +23,11 @@ func (wm *walletMaintainer) runSweepTask(ctx context.Context) error {
 		return fmt.Errorf("failed to prepare deposits sweep proposal: %v", err)
 	}
 
+	if len(deposits) == 0 {
+		logger.Info("no deposits to sweep")
+		return nil
+	}
+
 	return wm.runOnceWalletUnlocked(
 		ctx,
 		walletPublicKeyHash,
