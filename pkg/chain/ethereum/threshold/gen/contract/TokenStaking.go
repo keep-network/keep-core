@@ -1787,6 +1787,144 @@ func (ts *TokenStaking) PushNotificationRewardGasEstimate(
 }
 
 // Transaction submission.
+func (ts *TokenStaking) RefreshKeepStakeOwner(
+	arg_stakingProvider common.Address,
+
+	transactionOptions ...chainutil.TransactionOptions,
+) (*types.Transaction, error) {
+	tsLogger.Debug(
+		"submitting transaction refreshKeepStakeOwner",
+		" params: ",
+		fmt.Sprint(
+			arg_stakingProvider,
+		),
+	)
+
+	ts.transactionMutex.Lock()
+	defer ts.transactionMutex.Unlock()
+
+	// create a copy
+	transactorOptions := new(bind.TransactOpts)
+	*transactorOptions = *ts.transactorOptions
+
+	if len(transactionOptions) > 1 {
+		return nil, fmt.Errorf(
+			"could not process multiple transaction options sets",
+		)
+	} else if len(transactionOptions) > 0 {
+		transactionOptions[0].Apply(transactorOptions)
+	}
+
+	nonce, err := ts.nonceManager.CurrentNonce()
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve account nonce: %v", err)
+	}
+
+	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
+
+	transaction, err := ts.contract.RefreshKeepStakeOwner(
+		transactorOptions,
+		arg_stakingProvider,
+	)
+	if err != nil {
+		return transaction, ts.errorResolver.ResolveError(
+			err,
+			ts.transactorOptions.From,
+			nil,
+			"refreshKeepStakeOwner",
+			arg_stakingProvider,
+		)
+	}
+
+	tsLogger.Infof(
+		"submitted transaction refreshKeepStakeOwner with id: [%s] and nonce [%v]",
+		transaction.Hash(),
+		transaction.Nonce(),
+	)
+
+	go ts.miningWaiter.ForceMining(
+		transaction,
+		transactorOptions,
+		func(newTransactorOptions *bind.TransactOpts) (*types.Transaction, error) {
+			// If original transactor options has a non-zero gas limit, that
+			// means the client code set it on their own. In that case, we
+			// should rewrite the gas limit from the original transaction
+			// for each resubmission. If the gas limit is not set by the client
+			// code, let the the submitter re-estimate the gas limit on each
+			// resubmission.
+			if transactorOptions.GasLimit != 0 {
+				newTransactorOptions.GasLimit = transactorOptions.GasLimit
+			}
+
+			transaction, err := ts.contract.RefreshKeepStakeOwner(
+				newTransactorOptions,
+				arg_stakingProvider,
+			)
+			if err != nil {
+				return nil, ts.errorResolver.ResolveError(
+					err,
+					ts.transactorOptions.From,
+					nil,
+					"refreshKeepStakeOwner",
+					arg_stakingProvider,
+				)
+			}
+
+			tsLogger.Infof(
+				"submitted transaction refreshKeepStakeOwner with id: [%s] and nonce [%v]",
+				transaction.Hash(),
+				transaction.Nonce(),
+			)
+
+			return transaction, nil
+		},
+	)
+
+	ts.nonceManager.IncrementNonce()
+
+	return transaction, err
+}
+
+// Non-mutating call, not a transaction submission.
+func (ts *TokenStaking) CallRefreshKeepStakeOwner(
+	arg_stakingProvider common.Address,
+	blockNumber *big.Int,
+) error {
+	var result interface{} = nil
+
+	err := chainutil.CallAtBlock(
+		ts.transactorOptions.From,
+		blockNumber, nil,
+		ts.contractABI,
+		ts.caller,
+		ts.errorResolver,
+		ts.contractAddress,
+		"refreshKeepStakeOwner",
+		&result,
+		arg_stakingProvider,
+	)
+
+	return err
+}
+
+func (ts *TokenStaking) RefreshKeepStakeOwnerGasEstimate(
+	arg_stakingProvider common.Address,
+) (uint64, error) {
+	var result uint64
+
+	result, err := chainutil.EstimateGas(
+		ts.callerOptions.From,
+		ts.contractAddress,
+		"refreshKeepStakeOwner",
+		ts.contractABI,
+		ts.transactor,
+		arg_stakingProvider,
+	)
+
+	return result, err
+}
+
+// Transaction submission.
 func (ts *TokenStaking) RequestAuthorizationDecrease(
 	arg_stakingProvider common.Address,
 	arg_application common.Address,

@@ -88,6 +88,7 @@ func init() {
 		tsPauseApplicationCommand(),
 		tsProcessSlashingCommand(),
 		tsPushNotificationRewardCommand(),
+		tsRefreshKeepStakeOwnerCommand(),
 		tsRequestAuthorizationDecreaseCommand(),
 		tsRequestAuthorizationDecrease0Command(),
 		tsSetAuthorizationCeilingCommand(),
@@ -1973,6 +1974,71 @@ func tsPushNotificationReward(c *cobra.Command, args []string) error {
 		// Do a call.
 		err = contract.CallPushNotificationReward(
 			arg_reward,
+			cmd.BlockFlagValue.Int,
+		)
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput("success")
+
+		cmd.PrintOutput(
+			"the transaction was not submitted to the chain; " +
+				"please add the `--submit` flag",
+		)
+	}
+
+	return nil
+}
+
+func tsRefreshKeepStakeOwnerCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "refresh-keep-stake-owner [arg_stakingProvider]",
+		Short:                 "Calls the nonpayable method refreshKeepStakeOwner on the TokenStaking contract.",
+		Args:                  cmd.ArgCountChecker(1),
+		RunE:                  tsRefreshKeepStakeOwner,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	c.PreRunE = cmd.NonConstArgsChecker
+	cmd.InitNonConstFlags(c)
+
+	return c
+}
+
+func tsRefreshKeepStakeOwner(c *cobra.Command, args []string) error {
+	contract, err := initializeTokenStaking(c)
+	if err != nil {
+		return err
+	}
+
+	arg_stakingProvider, err := chainutil.AddressFromHex(args[0])
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter arg_stakingProvider, a address, from passed value %v",
+			args[0],
+		)
+	}
+
+	var (
+		transaction *types.Transaction
+	)
+
+	if shouldSubmit, _ := c.Flags().GetBool(cmd.SubmitFlag); shouldSubmit {
+		// Do a regular submission. Take payable into account.
+		transaction, err = contract.RefreshKeepStakeOwner(
+			arg_stakingProvider,
+		)
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput(transaction.Hash())
+	} else {
+		// Do a call.
+		err = contract.CallRefreshKeepStakeOwner(
+			arg_stakingProvider,
 			cmd.BlockFlagValue.Int,
 		)
 		if err != nil {
