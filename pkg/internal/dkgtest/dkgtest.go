@@ -6,12 +6,13 @@ import (
 	"context"
 	"crypto/rand"
 	"fmt"
-	"github.com/keep-network/keep-core/pkg/internal/testutils"
 	"math"
 	"math/big"
 	"sync"
 	"testing"
 	"time"
+
+	"github.com/keep-network/keep-core/internal/testutils"
 
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/chain/local_v1"

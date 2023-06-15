@@ -2,8 +2,9 @@ package tbtc
 
 import (
 	"encoding/hex"
-	"github.com/keep-network/keep-core/pkg/internal/testutils"
 	"testing"
+
+	"github.com/keep-network/keep-core/internal/testutils"
 )
 
 func TestDeposit_Script(t *testing.T) {

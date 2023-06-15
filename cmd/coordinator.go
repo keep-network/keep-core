@@ -6,6 +6,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/keep-network/keep-core/config"
+	"github.com/keep-network/keep-core/internal/hexutils"
 	"github.com/keep-network/keep-core/pkg/bitcoin/electrum"
 	"github.com/keep-network/keep-core/pkg/chain/ethereum"
 	"github.com/keep-network/keep-core/pkg/coordinator"
@@ -17,14 +18,13 @@ var (
 	walletFlagName = "wallet"
 
 	// listDepositsCommand:
-	hideSweptFlagName    = "hide-swept"
-	sortByAmountFlagName = "sort-amount"
-	headFlagName         = "head"
-	tailFlagName         = "tail"
+	hideSweptFlagName = "hide-swept"
+	headFlagName      = "head"
 
 	// proposeDepositsSweepCommand:
-	feeFlagName    = "fee"
-	dryRunFlagName = "dry-run"
+	feeFlagName                 = "fee"
+	depositSweepMaxSizeFlagName = "deposit-sweep-max-size"
+	dryRunFlagName              = "dry-run"
 
 	// estimateDepositsSweepFeeCommand:
 	depositsCountFlagName = "deposits-count"
@@ -65,19 +65,9 @@ var listDepositsCommand = cobra.Command{
 			return fmt.Errorf("failed to find hide swept flag: %v", err)
 		}
 
-		sortByAmount, err := cmd.Flags().GetBool(sortByAmountFlagName)
-		if err != nil {
-			return fmt.Errorf("failed to find sort by amount flag: %v", err)
-		}
-
 		head, err := cmd.Flags().GetInt(headFlagName)
 		if err != nil {
 			return fmt.Errorf("failed to find head flag: %v", err)
-		}
-
-		tail, err := cmd.Flags().GetInt(tailFlagName)
-		if err != nil {
-			return fmt.Errorf("failed to find tail flag: %v", err)
 		}
 
 		_, tbtcChain, _, _, _, err := ethereum.Connect(ctx, clientConfig.Ethereum)
@@ -93,14 +83,21 @@ var listDepositsCommand = cobra.Command{
 			return fmt.Errorf("could not connect to Electrum chain: [%v]", err)
 		}
 
+		var walletPublicKeyHash [20]byte
+		if len(wallet) > 0 {
+			var err error
+			walletPublicKeyHash, err = newWalletPublicKeyHash(wallet)
+			if err != nil {
+				return fmt.Errorf("failed to extract wallet public key hash: %v", err)
+			}
+		}
+
 		return coordinator.ListDeposits(
 			tbtcChain,
 			btcChain,
-			wallet,
-			hideSwept,
-			sortByAmount,
+			walletPublicKeyHash,
 			head,
-			tail,
+			hideSwept,
 		)
 	},
 }
@@ -111,10 +108,6 @@ var proposeDepositsSweepCommand = cobra.Command{
 	Long:             proposeDepositsSweepCommandDescription,
 	TraverseChildren: true,
 	Args: func(cmd *cobra.Command, args []string) error {
-		if err := cobra.MinimumNArgs(1)(cmd, args); err != nil {
-			return err
-		}
-
 		for i, arg := range args {
 			if err := coordinator.ValidateDepositString(arg); err != nil {
 				return fmt.Errorf(
@@ -139,6 +132,11 @@ var proposeDepositsSweepCommand = cobra.Command{
 			return fmt.Errorf("failed to find fee flag: %v", err)
 		}
 
+		depositSweepMaxSize, err := cmd.Flags().GetUint16(depositSweepMaxSizeFlagName)
+		if err != nil {
+			return fmt.Errorf("failed to find fee flag: %v", err)
+		}
+
 		dryRun, err := cmd.Flags().GetBool(dryRunFlagName)
 		if err != nil {
 			return fmt.Errorf("failed to find dry run flag: %v", err)
@@ -157,7 +155,56 @@ var proposeDepositsSweepCommand = cobra.Command{
 			return fmt.Errorf("could not connect to Electrum chain: [%v]", err)
 		}
 
-		return coordinator.ProposeDepositsSweep(tbtcChain, btcChain, wallet, fee, args, dryRun)
+		var walletPublicKeyHash [20]byte
+		if len(wallet) > 0 {
+			var err error
+			walletPublicKeyHash, err = newWalletPublicKeyHash(wallet)
+			if err != nil {
+				return fmt.Errorf("failed extract wallet public key hash: %v", err)
+			}
+		}
+
+		if depositSweepMaxSize == 0 {
+			depositSweepMaxSize, err = tbtcChain.GetDepositSweepMaxSize()
+			if err != nil {
+				return fmt.Errorf("failed to get deposit sweep max size: [%v]", err)
+			}
+		}
+
+		var deposits []*coordinator.DepositSweepDetails
+		if len(args) > 0 {
+			deposits, err = coordinator.ParseDepositsToSweep(args)
+			if err != nil {
+				return fmt.Errorf("failed extract wallet public key hash: %v", err)
+			}
+		} else {
+			walletPublicKeyHash, deposits, err = coordinator.FindDepositsToSweep(
+				tbtcChain,
+				btcChain,
+				walletPublicKeyHash,
+				depositSweepMaxSize,
+			)
+			if err != nil {
+				return fmt.Errorf("failed to prepare deposits sweep proposal: %v", err)
+			}
+		}
+
+		if len(deposits) > int(depositSweepMaxSize) {
+			return fmt.Errorf(
+				"deposits number [%d] is greater than deposit sweep max size [%d]",
+				len(deposits),
+				depositSweepMaxSize,
+			)
+		}
+
+		return coordinator.ProposeDepositsSweep(
+			tbtcChain,
+			btcChain,
+			walletPublicKeyHash,
+			fee,
+			deposits,
+			dryRun,
+		)
 	},
 }
 
@@ -238,22 +285,10 @@ func init() {
 		"hide swept deposits",
 	)
 
-	listDepositsCommand.Flags().Bool(
-		sortByAmountFlagName,
-		false,
-		"sort by deposit amount",
-	)
-
 	listDepositsCommand.Flags().Int(
 		headFlagName,
 		0,
 		"get head of deposits",
-	)
-
-	listDepositsCommand.Flags().Int(
-		tailFlagName,
-		0,
-		"get tail of deposits",
 	)
 
 	CoordinatorCommand.AddCommand(&listDepositsCommand)
@@ -265,14 +300,16 @@ func init() {
 		"wallet public key hash",
 	)
 
-	if err := proposeDepositsSweepCommand.MarkFlagRequired(walletFlagName); err != nil {
-		logger.Panicf("failed to mark wallet flag as required: %v", err)
-	}
-
 	proposeDepositsSweepCommand.Flags().Int64(
 		feeFlagName,
 		0,
 		"fee for the entire bitcoin transaction (satoshi)",
+	)
+
+	proposeDepositsSweepCommand.Flags().Uint16(
+		depositSweepMaxSizeFlagName,
+		0,
+		"maximum count of deposits that can be swept within a single sweep",
 	)
 
 	proposeDepositsSweepCommand.Flags().Bool(
@@ -292,4 +329,21 @@ func init() {
 	)
 
 	CoordinatorCommand.AddCommand(&estimateDepositsSweepFeeCommand)
+}
+
+func newWalletPublicKeyHash(str string) ([20]byte, error) {
+	var result [20]byte
+
+	walletHex, err := hexutils.Decode(str)
+	if err != nil {
+		return result, err
+	}
+
+	if len(walletHex) != 20 {
+		return result, fmt.Errorf("invalid bytes length: [%d], expected: [%d]", len(walletHex), 20)
+	}
+
+	copy(result[:], walletHex)
+
+	return result, nil
 }

@@ -2,14 +2,15 @@ package tbtc
 
 import (
 	"crypto/ecdsa"
-	"github.com/keep-network/keep-core/pkg/bitcoin"
-	"github.com/keep-network/keep-core/pkg/tecdsa"
 	"math/big"
 	"reflect"
 	"testing"
 
+	"github.com/keep-network/keep-core/pkg/bitcoin"
+	"github.com/keep-network/keep-core/pkg/tecdsa"
+
 	"github.com/keep-network/keep-common/pkg/persistence"
-	"github.com/keep-network/keep-core/pkg/internal/testutils"
+	"github.com/keep-network/keep-core/internal/testutils"
 )
 
 func TestWalletRegistry_RegisterSigner(t *testing.T) {

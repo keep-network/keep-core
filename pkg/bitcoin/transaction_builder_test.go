@@ -6,7 +6,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/keep-network/keep-core/pkg/internal/testutils"
+	"github.com/keep-network/keep-core/internal/testutils"
 )
 
 func TestNewTransactionBuilder(t *testing.T) {

@@ -3,8 +3,8 @@ package dkgtest
 import (
 	"testing"
 
+	"github.com/keep-network/keep-core/internal/testutils"
 	"github.com/keep-network/keep-core/pkg/altbn128"
-	"github.com/keep-network/keep-core/pkg/internal/testutils"
 	"github.com/keep-network/keep-core/pkg/protocol/group"
 )
 

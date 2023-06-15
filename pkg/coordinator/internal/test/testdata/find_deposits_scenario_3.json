@@ -1,0 +1,37 @@
+{
+  "Title": "Auto-select wallet when there is just one wallet",
+  "MaxNumberOfDeposits": 3,
+  "WalletPublicKeyHash": "",
+  "Wallets": [
+    {
+      "WalletPublicKeyHash": "0x928d992e5f5b71de51a1b40fcc4056b99a88a647",
+      "RegistrationBlockNumber": 5
+    }
+  ],
+  "Deposits": [
+    {
+      "RevealBlockNumber": 6,
+      "WalletPublicKeyHash": "0x928d992e5f5b71de51a1b40fcc4056b99a88a647",
+      "FundingTxHash": "dbc6166e149995ef4ed6428d23703756971256ab19954e099fdf2a96fa332251",
+      "FundingOutputIndex": 1,
+      "FundingTxConfirmations": 20,
+      "SweptAt": 102
+    },
+    {
+      "RevealBlockNumber": 7,
+      "WalletPublicKeyHash": "0x928d992e5f5b71de51a1b40fcc4056b99a88a647",
+      "FundingTxHash": "8356227b87fb191d61cff2455cd3f8c33ae208c69a7698b5baf1a331db6d4d8f",
+      "FundingOutputIndex": 2,
+      "FundingTxConfirmations": 34,
+      "SweptAt": 0
+    }
+  ],
+  "ExpectedWalletPublicKeyHash": "0x928d992e5f5b71de51a1b40fcc4056b99a88a647",
+  "ExpectedUnsweptDeposits": [
+    {
+      "RevealBlockNumber": 7,
+      "FundingTxHash": "8356227b87fb191d61cff2455cd3f8c33ae208c69a7698b5baf1a331db6d4d8f",
+      "FundingOutputIndex": 2
+    }
+  ]
+}

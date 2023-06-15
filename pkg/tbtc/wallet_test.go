@@ -6,13 +6,14 @@ import (
 	"crypto/ecdsa"
 	"encoding/hex"
 	"fmt"
-	"github.com/keep-network/keep-core/pkg/bitcoin"
-	"github.com/keep-network/keep-core/pkg/internal/testutils"
-	"github.com/keep-network/keep-core/pkg/tecdsa"
 	"math/big"
 	"reflect"
 	"testing"
 	"time"
+
+	"github.com/keep-network/keep-core/internal/testutils"
+	"github.com/keep-network/keep-core/pkg/bitcoin"
+	"github.com/keep-network/keep-core/pkg/tecdsa"
 )
 
 func TestWalletDispatcher_Dispatch(t *testing.T) {

@@ -6,7 +6,8 @@ import (
 	"testing"
 
 	bn256 "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
-	"github.com/keep-network/keep-core/pkg/internal/testutils"
+
+	"github.com/keep-network/keep-core/internal/testutils"
 )
 
 func TestSignAndVerify(t *testing.T) {

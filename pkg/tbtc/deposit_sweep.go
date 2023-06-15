@@ -19,11 +19,11 @@ const (
 	// confirmation period on the host chain that is preserved after a deposit
 	// sweep proposal submission.
 	depositSweepProposalConfirmationBlocks = 20
-	// depositSweepRequiredFundingTxConfirmations determines the minimum
+	// DepositSweepRequiredFundingTxConfirmations determines the minimum
 	// number of confirmations that are needed for a deposit funding Bitcoin
 	// transaction in order to consider it a valid part of the deposit sweep
 	// proposal.
-	depositSweepRequiredFundingTxConfirmations = 6
+	DepositSweepRequiredFundingTxConfirmations = 6
 	// depositSweepSigningTimeoutSafetyMargin determines the duration of the
 	// safety margin that must be preserved between the signing timeout
 	// and the timeout of the entire deposit sweep action. This safety
@@ -99,7 +99,7 @@ func newDepositSweepAction(
 		proposal:                       proposal,
 		proposalProcessingStartBlock:   proposalProcessingStartBlock,
 		proposalExpiresAt:              proposalExpiresAt,
-		requiredFundingTxConfirmations: depositSweepRequiredFundingTxConfirmations,
+		requiredFundingTxConfirmations: DepositSweepRequiredFundingTxConfirmations,
 		signingTimeoutSafetyMargin:     depositSweepSigningTimeoutSafetyMargin,
 		broadcastTimeout:               depositSweepBroadcastTimeout,
 		broadcastCheckDelay:            depositSweepBroadcastCheckDelay,

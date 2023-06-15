@@ -13,8 +13,8 @@ import (
 
 	"github.com/keep-network/keep-core/pkg/tecdsa"
 
+	"github.com/keep-network/keep-core/internal/testutils"
 	"github.com/keep-network/keep-core/pkg/bitcoin"
-	"github.com/keep-network/keep-core/pkg/internal/testutils"
 	"github.com/keep-network/keep-core/pkg/tbtc/internal/test"
 )
 
