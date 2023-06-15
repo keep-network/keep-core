@@ -118,7 +118,7 @@ if [ "$SKIP_DEPLOYMENT" != true ]; then
   fi
 
   cd "$THRESHOLD_SOL_PATH"
-  git checkout 314e053da1c53706bfde786990ccc6f4b9e76f0d
+  git checkout be696e981afb8dacc110ef71b559ef4cc6f69710
 
   printf "${LOG_START}Building threshold-network/solidity-contracts...${LOG_END}"
   yarn install && yarn clean && yarn build
