@@ -43,6 +43,11 @@
         "BitcoinDifficulty": {
             "Enabled": true,
             "DisableProxy": true
+        },
+        "WalletCoordination": {
+          "Enabled": true,
+          "RedemptionInterval": "13h",
+          "SweepInterval": "64h"
         }
     },
     "Developer": {

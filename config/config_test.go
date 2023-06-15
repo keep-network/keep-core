@@ -199,6 +199,18 @@ func TestReadConfigFromFile(t *testing.T) {
 			readValueFunc: func(c *Config) interface{} { return c.Maintainer.BitcoinDifficulty.DisableProxy },
 			expectedValue: true,
 		},
+		"Maintainer.WalletCoordination.Enabled": {
+			readValueFunc: func(c *Config) interface{} { return c.Maintainer.WalletCoordination.Enabled },
+			expectedValue: true,
+		},
+		"Maintainer.WalletCoordination.RedemptionInterval": {
+			readValueFunc: func(c *Config) interface{} { return c.Maintainer.WalletCoordination.RedemptionInterval },
+			expectedValue: 13 * time.Hour,
+		},
+		"Maintainer.WalletCoordination.SweepInterval": {
+			readValueFunc: func(c *Config) interface{} { return c.Maintainer.WalletCoordination.SweepInterval },
+			expectedValue: 64 * time.Hour,
+		},
 	}
 
 	for _, filePath := range filePaths {
