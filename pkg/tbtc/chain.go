@@ -381,10 +381,10 @@ type WalletCoordinatorChain interface {
 	// be part of a deposit sweep proposal.
 	GetDepositSweepMaxSize() (uint16, error)
 
-	// SubmitDepositSweepProof submits the deposit sweep proof. It is used to
-	// prove the deposit sweep Bitcoin transaction and updates depositors'
-	// balances.
-	SubmitDepositSweepProof(
+	// SubmitDepositSweepProofWithReimbursement submits the deposit sweep proof
+	// via MaintainerProxy. It is used to prove the deposit sweep Bitcoin
+	// transaction and update depositors' balances. The caller is reimbursed.
+	SubmitDepositSweepProofWithReimbursement(
 		transaction *bitcoin.Transaction,
 		proof *bitcoin.SpvProof,
 		mainUTXO bitcoin.UnspentTransactionOutput,

@@ -348,13 +348,16 @@ var submitDepositSweepProofCommand = cobra.Command{
 			return fmt.Errorf("error while parsing transaction inputs: %v", err)
 		}
 
-		if err := tbtcChain.SubmitDepositSweepProof(
+		if err := tbtcChain.SubmitDepositSweepProofWithReimbursement(
 			transaction,
 			proof,
 			mainUTXO,
 			vault,
 		); err != nil {
-			return fmt.Errorf("failed to submit deposit sweep proof: %v", err)
+			return fmt.Errorf(
+				"failed to submit deposit sweep proof with reimbursement: %v",
+				err,
+			)
 		}
 
 		logger.Infof(
