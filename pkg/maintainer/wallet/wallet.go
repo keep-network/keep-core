@@ -67,13 +67,18 @@ func (wm *walletMaintainer) startControlLoop(ctx context.Context) {
 		case <-ctx.Done():
 			return
 		case <-redemptionTicker.C:
+			// Set the ticker to the expected interval.
+			redemptionTicker.Reset(wm.config.RedemptionInterval)
+
 			logger.Info("starting redemption task execution...")
 
 			// TODO: Implement
 
 			logger.Infof("redemption task run completed; next run in [%s]", wm.config.RedemptionInterval)
-			redemptionTicker.Reset(wm.config.RedemptionInterval)
 		case <-sweepTicker.C:
+			// Set the ticker to the expected interval.
+			sweepTicker.Reset(wm.config.SweepInterval)
+
 			logger.Info("starting sweep task execution...")
 
 			if err := wm.runSweepTask(ctx); err != nil {
@@ -81,7 +86,6 @@ func (wm *walletMaintainer) startControlLoop(ctx context.Context) {
 			}
 
 			logger.Infof("sweep task run completed; next run in [%s]", wm.config.SweepInterval)
-			sweepTicker.Reset(wm.config.SweepInterval)
 		}
 	}
 }
