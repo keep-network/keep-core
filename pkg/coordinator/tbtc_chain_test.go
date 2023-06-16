@@ -11,6 +11,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/keep-network/keep-core/pkg/bitcoin"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/operator"
@@ -410,6 +411,10 @@ func (lc *localTbtcChain) GetDepositParameters() (
 		nil
 }
 
+func (lc *localTbtcChain) TxProofDifficultyFactor() (*big.Int, error) {
+	panic("unsupported")
+}
+
 func (lc *localTbtcChain) setDepositParameters(
 	dustThreshold uint64,
 	treasuryFeeDivisor uint64,
@@ -531,5 +536,14 @@ func (lc *localTbtcChain) SubmitDepositSweepProposalWithReimbursement(
 }
 
 func (lc *localTbtcChain) GetDepositSweepMaxSize() (uint16, error) {
+	panic("unsupported")
+}
+
+func (lc *localTbtcChain) SubmitDepositSweepProof(
+	transaction *bitcoin.Transaction,
+	proof *bitcoin.SpvProof,
+	mainUTXO bitcoin.UnspentTransactionOutput,
+	vault common.Address,
+) error {
 	panic("unsupported")
 }
