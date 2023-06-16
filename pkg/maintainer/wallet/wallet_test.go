@@ -9,7 +9,7 @@ import (
 	"github.com/keep-network/keep-core/pkg/tbtc"
 )
 
-func TestRunOnceWalletUnlocked_WhenLocked(t *testing.T) {
+func TestRunIfWalletUnlocked_WhenLocked(t *testing.T) {
 	localChain := newLocalChain()
 
 	walletPublicKeyHash := [20]byte{1}
@@ -22,12 +22,8 @@ func TestRunOnceWalletUnlocked_WhenLocked(t *testing.T) {
 		tbtc.Heartbeat,
 	)
 
-	funFunc := func() error {
-		if time.Now().Before(lockExpiration) {
-			return fmt.Errorf("too early")
-		}
-
-		return nil
+	runFunc := func() error {
+		return fmt.Errorf("boom, you should not run me")
 	}
 
 	wm := &walletMaintainer{
@@ -36,30 +32,25 @@ func TestRunOnceWalletUnlocked_WhenLocked(t *testing.T) {
 		btcChain: newLocalBitcoinChain(),
 	}
 
-	err := wm.runOnceWalletUnlocked(
+	err := wm.runIfWalletUnlocked(
 		context.Background(),
 		walletPublicKeyHash,
-		funFunc,
+		tbtc.DepositSweep,
+		runFunc,
 	)
 	if err != nil {
 		t.Fatal(err)
 	}
 }
 
-func TestRunOnceWalletUnlocked_WhenUnlocked(t *testing.T) {
+func TestRunIfWalletUnlocked_WhenUnlocked(t *testing.T) {
 	localChain := newLocalChain()
 
 	walletPublicKeyHash := [20]byte{2}
 
-	lockExpiration := time.Now().Add(500 * time.Millisecond)
-
 	localChain.resetWalletLock(walletPublicKeyHash)
 
-	funFunc := func() error {
-		if time.Now().After(lockExpiration) {
-			return fmt.Errorf("too late")
-		}
-
+	runFunc := func() error {
 		return nil
 	}
 
@@ -69,10 +60,11 @@ func TestRunOnceWalletUnlocked_WhenUnlocked(t *testing.T) {
 		btcChain: newLocalBitcoinChain(),
 	}
 
-	err := wm.runOnceWalletUnlocked(
+	err := wm.runIfWalletUnlocked(
 		context.Background(),
 		walletPublicKeyHash,
-		funFunc,
+		tbtc.DepositSweep,
+		runFunc,
 	)
 	if err != nil {
 		t.Fatal(err)

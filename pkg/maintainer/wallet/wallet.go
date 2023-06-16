@@ -10,6 +10,7 @@ import (
 
 	"github.com/keep-network/keep-core/internal/hexutils"
 	"github.com/keep-network/keep-core/pkg/bitcoin"
+	"github.com/keep-network/keep-core/pkg/tbtc"
 )
 
 var logger = log.Logger("keep-maintainer-wallet")
@@ -90,12 +91,13 @@ func (wm *walletMaintainer) startControlLoop(ctx context.Context) {
 	}
 }
 
-func (wm *walletMaintainer) runOnceWalletUnlocked(
+func (wm *walletMaintainer) runIfWalletUnlocked(
 	ctx context.Context,
 	walletPublicKeyHash [20]byte,
+	currentWalletAction tbtc.WalletActionType,
 	runFunc func() error,
 ) error {
-	lockExpiration, walletAction, err := wm.chain.GetWalletLock(walletPublicKeyHash)
+	lockExpiration, lockWalletAction, err := wm.chain.GetWalletLock(walletPublicKeyHash)
 	if err != nil {
 		return fmt.Errorf(
 			"failed to get wallet lock for wallet public key hash [%s]: [%w]",
@@ -106,17 +108,12 @@ func (wm *walletMaintainer) runOnceWalletUnlocked(
 
 	if lockExpiration.After(time.Now()) {
 		logger.Infof(
-			"wallet is locked due to [%s] action until [%s]; waiting...",
-			walletAction.String(),
+			"wallet is locked due to [%s] action until [%s]; skipping [%s] execution...",
+			lockWalletAction.String(),
 			lockExpiration.String(),
+			currentWalletAction.String(),
 		)
-
-		select {
-		case <-ctx.Done():
-			return nil
-		case <-time.After(time.Until(lockExpiration)):
-			break
-		}
+		return nil
 	}
 
 	return runFunc()

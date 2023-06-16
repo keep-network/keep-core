@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/keep-network/keep-core/pkg/coordinator"
+	"github.com/keep-network/keep-core/pkg/tbtc"
 )
 
 func (wm *walletMaintainer) runSweepTask(ctx context.Context) error {
@@ -28,9 +29,10 @@ func (wm *walletMaintainer) runSweepTask(ctx context.Context) error {
 		return nil
 	}
 
-	return wm.runOnceWalletUnlocked(
+	return wm.runIfWalletUnlocked(
 		ctx,
 		walletPublicKeyHash,
+		tbtc.DepositSweep,
 		func() error {
 			return coordinator.ProposeDepositsSweep(
 				wm.chain,
