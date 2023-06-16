@@ -417,6 +417,14 @@ func parseTransactionInputs(
 	// deposit processing.
 	var depositAlreadyProcessed = false
 
+	// Perform a sanity check: a deposit sweep transaction must have exactly one
+	// output.
+	if len(transaction.Outputs) != 1 {
+		return bitcoin.UnspentTransactionOutput{}, common.Address{}, fmt.Errorf(
+			"deposit sweep transaction has more than one output",
+		)
+	}
+
 	for _, input := range transaction.Inputs {
 		outpointTransactionHash := input.Outpoint.TransactionHash
 		outpointIndex := input.Outpoint.OutputIndex
@@ -450,7 +458,8 @@ func parseTransactionInputs(
 				}
 			} else {
 				return bitcoin.UnspentTransactionOutput{}, common.Address{}, fmt.Errorf(
-					"deposit sweep transaction has incorrect structure",
+					"deposit sweep transaction has more than one non-deposit " +
+						"inputs",
 				)
 			}
 		} else if scriptClass == txscript.ScriptHashTy ||
