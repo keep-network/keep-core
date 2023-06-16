@@ -35,6 +35,7 @@ var (
 
 	// submitDepositSweepProofCommand:
 	transactionHashFlagName = "transaction-hash"
+	confirmationsFlagName   = "confirmations"
 )
 
 // CoordinatorCommand contains the definition of tBTC Wallet Coordinator tools.
@@ -300,11 +301,6 @@ var submitDepositSweepProofCommand = cobra.Command{
 			return fmt.Errorf("failed to find transaction hash flag: %v", err)
 		}
 
-		logger.Infof(
-			"Preparing deposit sweep proof for transaction: %s",
-			transactionHashFlag,
-		)
-
 		transactionHash, err := bitcoin.NewHashFromString(
 			transactionHashFlag,
 			bitcoin.ReversedByteOrder,
@@ -313,22 +309,39 @@ var submitDepositSweepProofCommand = cobra.Command{
 			return fmt.Errorf("failed to parse transaction hash flag: %v", err)
 		}
 
-		txProofDifficulty, err := tbtcChain.TxProofDifficultyFactor()
+		// Allow the caller to request a specific number of confirmations.
+		// The Bridge calculates the required difficulty of a chain of block
+		// headers by multiplying the difficulty of the first block header by
+		// the difficulty factor. If the block headers happen to span the
+		// Bitcoin epoch difficulty change and there is a drop of difficulty
+		// between the epochs, the sum of difficulties from the headers chain
+		// may be too low. Allowing the caller to specify a greater number of
+		// confirmations will ensure the transaction can be proven.
+		requiredConfirmations, err := cmd.Flags().GetUint(confirmationsFlagName)
 		if err != nil {
-			return fmt.Errorf(
-				"failed to get transaction proof difficulty factor: %v",
-				err,
-			)
+			return fmt.Errorf("failed to get confirmations flag: %v", err)
 		}
 
-		// Increase the required confirmations by one. The Bridge calculates
-		// the required difficulty of a chain of block headers by multiplying
-		// the difficulty of the first block header by the difficulty factor.
-		// If the block headers happen to span the Bitcoin epoch difficulty
-		// change and there is a drop of difficulty between the epochs, the sum
-		// of difficulties from the headers chain may be too low. Adding one
-		// more block header will ensure the sum of difficulties is high enough.
-		requiredConfirmations := uint(txProofDifficulty.Uint64()) + 1
+		if requiredConfirmations == 0 {
+			// The caller did not specify the number of confirmations. Use the
+			// default  value stored onchain.
+			txProofDifficulty, err := tbtcChain.TxProofDifficultyFactor()
+			if err != nil {
+				return fmt.Errorf(
+					"failed to get transaction proof difficulty factor: %v",
+					err,
+				)
+			}
+
+			requiredConfirmations = uint(txProofDifficulty.Int64())
+		}
+
+		logger.Infof(
+			"Preparing deposit sweep proof for transaction %s with %v "+
+				"confirmations",
+			transactionHashFlag,
+			requiredConfirmations,
+		)
 
 		transaction, proof, err := bitcoin.AssembleSpvProof(
 			transactionHash,
@@ -568,6 +581,16 @@ func init() {
 		"",
 		"transaction hash the proof will be prepared for (the format should "+
 			"be the same as in Bitcoin explorers)",
+	)
+
+	submitDepositSweepProofCommand.Flags().Uint(
+		confirmationsFlagName,
+		0,
+		"(optional) number of confirmations that will be provided in the proof. "+
+			"This is an optional parameter that can be used in a rare event when "+
+			"more confirmations are required to perform a successful proof "+
+			"validation. If this parameter is not provided, the default value, "+
+			"retrieved from the Bridge, will be used",
 	)
 
 	CoordinatorCommand.AddCommand(&submitDepositSweepProofCommand)
