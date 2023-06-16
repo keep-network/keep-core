@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/keep-network/keep-core/pkg/internal/testutils"
+	"github.com/keep-network/keep-core/internal/testutils"
 	"github.com/keep-network/keep-core/pkg/tecdsa"
 )
 

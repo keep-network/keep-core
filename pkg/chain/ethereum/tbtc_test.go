@@ -5,15 +5,17 @@ import (
 	"crypto/ecdsa"
 	"encoding/hex"
 	"fmt"
-	"github.com/keep-network/keep-core/pkg/bitcoin"
 	"math/big"
 	"reflect"
 	"testing"
 
+	"github.com/keep-network/keep-core/pkg/bitcoin"
+
 	"github.com/keep-network/keep-core/pkg/chain"
 
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/keep-network/keep-core/pkg/internal/testutils"
+
+	"github.com/keep-network/keep-core/internal/testutils"
 	"github.com/keep-network/keep-core/pkg/protocol/group"
 )
 

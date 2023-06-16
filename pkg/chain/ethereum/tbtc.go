@@ -37,6 +37,7 @@ const (
 	//       Remove the possibility of passing it through the config.
 	WalletRegistryContractName    = "WalletRegistry"
 	BridgeContractName            = "Bridge"
+	MaintainerProxyContractName   = "MaintainerProxy"
 	WalletCoordinatorContractName = "WalletCoordinator"
 )
 
@@ -45,6 +46,7 @@ type TbtcChain struct {
 	*baseChain
 
 	bridge            *tbtccontract.Bridge
+	maintainerProxy   *tbtccontract.MaintainerProxy
 	walletRegistry    *ecdsacontract.WalletRegistry
 	sortitionPool     *ecdsacontract.EcdsaSortitionPool
 	walletCoordinator *tbtccontract.WalletCoordinator
@@ -79,6 +81,33 @@ func newTbtcChain(
 	if err != nil {
 		return nil, fmt.Errorf(
 			"failed to attach to Bridge contract: [%v]",
+			err,
+		)
+	}
+
+	maintainerProxyAddress, err := config.ContractAddress(MaintainerProxyContractName)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"failed to resolve %s contract address: [%v]",
+			MaintainerProxyContractName,
+			err,
+		)
+	}
+
+	maintainerProxy, err :=
+		tbtccontract.NewMaintainerProxy(
+			maintainerProxyAddress,
+			baseChain.chainID,
+			baseChain.key,
+			baseChain.client,
+			baseChain.nonceManager,
+			baseChain.miningWaiter,
+			baseChain.blockCounter,
+			baseChain.transactionMutex,
+		)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"failed to attach to MaintainerProxy contract: [%v]",
 			err,
 		)
 	}
@@ -169,6 +198,7 @@ func newTbtcChain(
 	return &TbtcChain{
 		baseChain:         baseChain,
 		bridge:            bridge,
+		maintainerProxy:   maintainerProxy,
 		walletRegistry:    walletRegistry,
 		sortitionPool:     sortitionPool,
 		walletCoordinator: walletCoordinator,
@@ -1032,6 +1062,52 @@ func (tc *TbtcChain) GetDepositRequest(
 		TreasuryFee: depositRequest.TreasuryFee,
 		SweptAt:     time.Unix(int64(depositRequest.SweptAt), 0),
 	}, nil
+}
+
+func (tc *TbtcChain) PastNewWalletRegisteredEvents(
+	filter *tbtc.NewWalletRegisteredEventFilter,
+) ([]*tbtc.NewWalletRegisteredEvent, error) {
+	var startBlock uint64
+	var endBlock *uint64
+	var ecdsaWalletID [][32]byte
+	var walletPublicKeyHash [][20]byte
+
+	if filter != nil {
+		startBlock = filter.StartBlock
+		endBlock = filter.EndBlock
+		ecdsaWalletID = filter.EcdsaWalletID
+		walletPublicKeyHash = filter.WalletPublicKeyHash
+	}
+
+	events, err := tc.bridge.PastNewWalletRegisteredEvents(
+		startBlock,
+		endBlock,
+		ecdsaWalletID,
+		walletPublicKeyHash,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	convertedEvents := make([]*tbtc.NewWalletRegisteredEvent, 0)
+	for _, event := range events {
+		convertedEvent := &tbtc.NewWalletRegisteredEvent{
+			EcdsaWalletID:       event.EcdsaWalletID,
+			WalletPublicKeyHash: event.WalletPubKeyHash,
+			BlockNumber:         event.Raw.BlockNumber,
+		}
+
+		convertedEvents = append(convertedEvents, convertedEvent)
+	}
+
+	sort.SliceStable(
+		convertedEvents,
+		func(i, j int) bool {
+			return convertedEvents[i].BlockNumber < convertedEvents[j].BlockNumber
+		},
+	)
+
+	return convertedEvents, err
 }
 
 func (tc *TbtcChain) GetWallet(

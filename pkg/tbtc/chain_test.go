@@ -555,6 +555,12 @@ func (lc *localChain) setDepositRequest(
 	lc.depositRequests[requestKey] = request
 }
 
+func (lc *localChain) PastNewWalletRegisteredEvents(
+	filter *NewWalletRegisteredEventFilter,
+) ([]*NewWalletRegisteredEvent, error) {
+	panic("unsupported")
+}
+
 func (lc *localChain) BuildDepositKey(
 	fundingTxHash bitcoin.Hash,
 	fundingOutputIndex uint32,

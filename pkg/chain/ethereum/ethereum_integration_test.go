@@ -5,12 +5,13 @@ package ethereum
 
 import (
 	"fmt"
-	"github.com/ethereum/go-ethereum/ethclient"
-	"github.com/keep-network/keep-common/pkg/chain/ethereum/ethutil"
-	"github.com/keep-network/keep-core/pkg/internal/testutils"
 	"reflect"
 	"testing"
 	"time"
+
+	"github.com/ethereum/go-ethereum/ethclient"
+	"github.com/keep-network/keep-common/pkg/chain/ethereum/ethutil"
+	"github.com/keep-network/keep-core/internal/testutils"
 )
 
 // TODO: Include integration test in the CI.

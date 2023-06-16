@@ -17,6 +17,10 @@
 
 # Secret directory used in Kubernetes configurations
 /infrastructure/kube/**/.secret/
+/infrastructure/kube/**/*.secret
+
+# Backup directory for local copies of Kubernetes configurations
+/infrastructure/kube/**/.backup/
 
 # Keys
 keystore/
