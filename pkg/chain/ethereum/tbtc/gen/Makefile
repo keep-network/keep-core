@@ -32,6 +32,7 @@ define fix_maintainer_proxy_collision
 	@perl -pi -e s,BitcoinTxInfo,BitcoinTxInfo3,g ./abi/MaintainerProxy.go
 endef
 
+# See explanation in https://github.com/keep-network/keep-common/issues/117.
 define after_contract_hook
 	$(eval type := $(1))
 	$(if $(filter $(type),MaintainerProxy),$(call fix_maintainer_proxy_contract_collision))
