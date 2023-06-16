@@ -65,7 +65,6 @@ func (wm *walletMaintainer) startControlLoop(ctx context.Context) {
 	for {
 		select {
 		case <-ctx.Done():
-			logger.Info("tBTC Deposits Sweep Maintainer closed")
 			return
 		case <-redemptionTicker.C:
 			logger.Info("starting redemption task execution...")
