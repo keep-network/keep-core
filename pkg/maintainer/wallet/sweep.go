@@ -10,7 +10,7 @@ import (
 func (wm *walletMaintainer) runSweepTask(ctx context.Context) error {
 	depositSweepMaxSize, err := wm.chain.GetDepositSweepMaxSize()
 	if err != nil {
-		return fmt.Errorf("failed to get deposit sweep max size: [%v]", err)
+		return fmt.Errorf("failed to get deposit sweep max size: [%w]", err)
 	}
 
 	walletPublicKeyHash, deposits, err := coordinator.FindDepositsToSweep(
@@ -20,7 +20,7 @@ func (wm *walletMaintainer) runSweepTask(ctx context.Context) error {
 		depositSweepMaxSize,
 	)
 	if err != nil {
-		return fmt.Errorf("failed to prepare deposits sweep proposal: %v", err)
+		return fmt.Errorf("failed to prepare deposits sweep proposal: [%w]", err)
 	}
 
 	if len(deposits) == 0 {
