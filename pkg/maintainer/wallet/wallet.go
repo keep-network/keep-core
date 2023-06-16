@@ -77,8 +77,6 @@ func (wm *walletMaintainer) startControlLoop(ctx context.Context) {
 		case <-sweepTicker.C:
 			logger.Info("starting sweep task execution...")
 
-			// TODO: Synchronize sweeps with redemptions. Sweep should be proposed only
-			// if there are no pending redemptions. Redemptions take priority over sweeps.
 			if err := wm.runSweepTask(ctx); err != nil {
 				logger.Errorf("failed to run sweep task: [%v]", err)
 			}
