@@ -100,7 +100,7 @@ func (wm *walletMaintainer) runOnceWalletUnlocked(
 		)
 	}
 
-	if lockExpiration.Unix() > 0 {
+	if lockExpiration.After(time.Now()) {
 		logger.Infof(
 			"wallet is locked due to [%s] action until [%s]; waiting...",
 			walletAction.String(),
