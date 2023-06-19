@@ -598,7 +598,7 @@ func init() {
 		transactionHashFlagName,
 		"",
 		"transaction hash the proof will be prepared for (the format should "+
-			"be the same as in Bitcoin explorers)",
+			"be the same as in Bitcoin explorers).",
 	)
 
 	submitDepositSweepProofCommand.Flags().Uint(
@@ -608,7 +608,7 @@ func init() {
 			"This is an optional parameter that can be used in a rare event when "+
 			"more confirmations are required to perform a successful proof "+
 			"validation. If this parameter is not provided, the default value, "+
-			"retrieved from the Bridge, will be used",
+			"retrieved from the Bridge will be used.",
 	)
 
 	CoordinatorCommand.AddCommand(&submitDepositSweepProofCommand)
