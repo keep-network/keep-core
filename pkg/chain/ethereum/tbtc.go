@@ -37,6 +37,7 @@ const (
 	//       Remove the possibility of passing it through the config.
 	WalletRegistryContractName    = "WalletRegistry"
 	BridgeContractName            = "Bridge"
+	MaintainerProxyContractName   = "MaintainerProxy"
 	WalletCoordinatorContractName = "WalletCoordinator"
 )
 
@@ -45,6 +46,7 @@ type TbtcChain struct {
 	*baseChain
 
 	bridge            *tbtccontract.Bridge
+	maintainerProxy   *tbtccontract.MaintainerProxy
 	walletRegistry    *ecdsacontract.WalletRegistry
 	sortitionPool     *ecdsacontract.EcdsaSortitionPool
 	walletCoordinator *tbtccontract.WalletCoordinator
@@ -79,6 +81,33 @@ func newTbtcChain(
 	if err != nil {
 		return nil, fmt.Errorf(
 			"failed to attach to Bridge contract: [%v]",
+			err,
+		)
+	}
+
+	maintainerProxyAddress, err := config.ContractAddress(MaintainerProxyContractName)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"failed to resolve %s contract address: [%v]",
+			MaintainerProxyContractName,
+			err,
+		)
+	}
+
+	maintainerProxy, err :=
+		tbtccontract.NewMaintainerProxy(
+			maintainerProxyAddress,
+			baseChain.chainID,
+			baseChain.key,
+			baseChain.client,
+			baseChain.nonceManager,
+			baseChain.miningWaiter,
+			baseChain.blockCounter,
+			baseChain.transactionMutex,
+		)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"failed to attach to MaintainerProxy contract: [%v]",
 			err,
 		)
 	}
@@ -169,6 +198,7 @@ func newTbtcChain(
 	return &TbtcChain{
 		baseChain:         baseChain,
 		bridge:            bridge,
+		maintainerProxy:   maintainerProxy,
 		walletRegistry:    walletRegistry,
 		sortitionPool:     sortitionPool,
 		walletCoordinator: walletCoordinator,

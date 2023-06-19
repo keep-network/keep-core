@@ -57,6 +57,7 @@ endif
 contract/%.go cmd/%.go: abi/%.abi abi/%.go _address/% ${artifacts_dir}/%.json
 	$(info $* - generating Keep bindings)
 	@go run github.com/keep-network/keep-common/tools/generators/ethereum $< contract/$*.go cmd/$*.go
+	$(call after_contract_hook,$*)
 
 # Don't remove intermediate files that got generated.
 .PRECIOUS: abi/%.abi abi/%.go _address/%

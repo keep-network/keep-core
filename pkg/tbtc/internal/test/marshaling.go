@@ -1,4 +1,4 @@
-package tbtctest
+package test
 
 import (
 	"crypto/ecdsa"

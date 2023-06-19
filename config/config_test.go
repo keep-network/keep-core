@@ -70,6 +70,7 @@ func TestReadConfigFromFile(t *testing.T) {
 				"walletregistry":            "0x143ba24e66fce8bca22f7d739f9a932c519b1c76",
 				"tokenstaking":              "0xa363a197f1bbb8877f50350234e3f15fb4175457",
 				"bridge":                    "0x138D2a0c87BA9f6BE1DCc13D6224A6aCE9B6b6F0",
+				"maintainerproxy":           "0xC6D21c2871586A2B098c0ad043fF0D47a3c7e7ae",
 				"lightrelay":                "0x68e20afD773fDF1231B5cbFeA7040e73e79cAc36",
 				"lightrelaymaintainerproxy": "0x30cd93828613D5945A2916a22E0f0e9bC561EAB5",
 				"walletcoordinator":         "0xfdc315b0e608b7cDE9166D9D69a1506779e3E0CA",
@@ -102,6 +103,13 @@ func TestReadConfigFromFile(t *testing.T) {
 				return address.String()
 			},
 			expectedValue: "0x138D2a0c87BA9f6BE1DCc13D6224A6aCE9B6b6F0",
+		},
+		"Ethereum.Developer - MaintainerProxy": {
+			readValueFunc: func(c *Config) interface{} {
+				address, _ := c.Ethereum.ContractAddress(ethereum.MaintainerProxyContractName)
+				return address.String()
+			},
+			expectedValue: "0xC6D21c2871586A2B098c0ad043fF0D47a3c7e7ae",
 		},
 		"Ethereum.Developer - LightRelay": {
 			readValueFunc: func(c *Config) interface{} {

@@ -15,12 +15,12 @@ import (
 
 	"github.com/keep-network/keep-core/internal/testutils"
 	"github.com/keep-network/keep-core/pkg/bitcoin"
-	"github.com/keep-network/keep-core/pkg/internal/tbtctest"
+	"github.com/keep-network/keep-core/pkg/tbtc/internal/test"
 )
 
 // TODO: Think about covering unhappy paths for specific steps of the deposit sweep action.
 func TestDepositSweepAction_Execute(t *testing.T) {
-	scenarios, err := tbtctest.LoadDepositSweepTestScenarios()
+	scenarios, err := test.LoadDepositSweepTestScenarios()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -228,7 +228,7 @@ func TestDepositSweepAction_Execute(t *testing.T) {
 }
 
 func TestAssembleDepositSweepTransaction(t *testing.T) {
-	scenarios, err := tbtctest.LoadDepositSweepTestScenarios()
+	scenarios, err := test.LoadDepositSweepTestScenarios()
 	if err != nil {
 		t.Fatal(err)
 	}

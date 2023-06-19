@@ -290,6 +290,16 @@ var cmdFlagsTests = map[string]struct {
 		expectedValueFromFlag: common.HexToAddress("0xd21DE06574811450E722a33D8093558E8c04eacc"),
 		defaultValue:          common.HexToAddress(ethereumTbtc.BridgeAddress),
 	},
+	"developer.maintainerProxyAddress": {
+		readValueFunc: func(c *config.Config) interface{} {
+			address, _ := c.Ethereum.ContractAddress(chainEthereum.MaintainerProxyContractName)
+			return address
+		},
+		flagName:              "--developer.maintainerProxyAddress",
+		flagValue:             "0xC6D21c2871586A2B098c0ad043fF0D47a3c7e7ae",
+		expectedValueFromFlag: common.HexToAddress("0xC6D21c2871586A2B098c0ad043fF0D47a3c7e7ae"),
+		defaultValue:          common.HexToAddress(ethereumTbtc.MaintainerProxyAddress),
+	},
 	"developer.lightRelayAddress": {
 		readValueFunc: func(c *config.Config) interface{} {
 			address, _ := c.Ethereum.ContractAddress(chainEthereum.LightRelayContractName)
