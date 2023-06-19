@@ -42,6 +42,7 @@ const (
 // - DKG result submitted
 // - Heartbeat request submission
 // - Deposit sweep proposal submission
+// - Redemption proposal submission
 type deduplicator struct {
 	dkgSeedCache              *cache.TimeCache
 	dkgResultHashCache        *cache.TimeCache
@@ -175,4 +176,15 @@ func (d *deduplicator) notifyDepositSweepProposalSubmitted(
 	// Otherwise, the proposal is a duplicate and the client should not
 	// proceed with the execution.
 	return false
+}
+
+// notifyRedemptionProposalSubmitted notifies the client wants to start some
+// actions upon the redemption proposal submission. It returns boolean
+// indicating whether the client should proceed with the actions or ignore the
+// event as a duplicate.
+func (d *deduplicator) notifyRedemptionProposalSubmitted(
+	newProposal *RedemptionProposal,
+) bool {
+	// TODO: Implementation.
+	panic("not implemented yet")
 }

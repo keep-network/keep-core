@@ -1477,3 +1477,10 @@ func (tc *TbtcChain) SubmitDepositSweepProposalWithReimbursement(
 func (tc *TbtcChain) GetDepositSweepMaxSize() (uint16, error) {
 	return tc.walletCoordinator.DepositSweepMaxSize()
 }
+
+func (tc *TbtcChain) OnRedemptionProposalSubmitted(
+	func(event *tbtc.RedemptionProposalSubmittedEvent),
+) subscription.EventSubscription {
+	// TODO: Implementation.
+	panic("not implemented yet")
+}

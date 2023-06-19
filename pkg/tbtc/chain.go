@@ -375,6 +375,12 @@ type WalletCoordinatorChain interface {
 	// GetDepositSweepMaxSize gets the maximum number of deposits that can
 	// be part of a deposit sweep proposal.
 	GetDepositSweepMaxSize() (uint16, error)
+
+	// OnRedemptionProposalSubmitted registers a callback that is invoked when
+	// an on-chain notification of the redemption proposal submission is seen.
+	OnRedemptionProposalSubmitted(
+		func(event *RedemptionProposalSubmittedEvent),
+	) subscription.EventSubscription
 }
 
 // HeartbeatRequestSubmittedEvent represents a wallet heartbeat request
@@ -412,6 +418,21 @@ type DepositSweepProposalSubmittedEventFilter struct {
 	EndBlock            *uint64
 	Coordinator         []chain.Address
 	WalletPublicKeyHash [20]byte
+}
+
+// RedemptionProposalSubmittedEvent represents a redemption proposal
+// submission event.
+type RedemptionProposalSubmittedEvent struct {
+	Proposal    *RedemptionProposal
+	Coordinator chain.Address
+	BlockNumber uint64
+}
+
+// RedemptionProposal represents a redemption proposal submitted to the chain.
+type RedemptionProposal struct {
+	WalletPublicKeyHash    [20]byte
+	RedeemersOutputScripts [][]byte
+	RedemptionTxFee        *big.Int
 }
 
 // Chain represents the interface that the TBTC module expects to interact

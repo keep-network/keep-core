@@ -764,6 +764,12 @@ func (lc *localChain) GetDepositSweepMaxSize() (uint16, error) {
 	panic("unsupported")
 }
 
+func (lc *localChain) OnRedemptionProposalSubmitted(
+	func(event *RedemptionProposalSubmittedEvent),
+) subscription.EventSubscription {
+	panic("unsupported")
+}
+
 // Connect sets up the local chain.
 func Connect() *localChain {
 	operatorPrivateKey, _, err := operator.GenerateKeyPair(local_v1.DefaultCurve)

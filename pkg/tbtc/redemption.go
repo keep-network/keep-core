@@ -9,6 +9,13 @@ import (
 	"github.com/keep-network/keep-core/pkg/chain"
 )
 
+const (
+	// redemptionProposalConfirmationBlocks determines the block length of the
+	// confirmation period on the host chain that is preserved after a
+	// redemption proposal submission.
+	redemptionProposalConfirmationBlocks = 20
+)
+
 // RedemptionTransactionShape is an enum describing the shape of
 // a Bitcoin redemption transaction.
 type RedemptionTransactionShape uint8

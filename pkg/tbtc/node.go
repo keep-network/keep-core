@@ -460,6 +460,20 @@ func (n *node) handleDepositSweepProposal(
 	walletActionLogger.Infof("wallet action dispatched successfully")
 }
 
+// handleRedemptionProposal handles an incoming redemption proposal.
+// First, it determines whether the node is supposed to do an action by checking
+// whether any of the proposal's target wallet signers are under node's control.
+// If so, this function orchestrates and dispatches an appropriate wallet action.
+func (n *node) handleRedemptionProposal(
+	proposal *RedemptionProposal,
+	proposalExpiresAt time.Time,
+	startBlock uint64,
+	delayBlocks uint64,
+) {
+	// TODO: Implementation.
+	panic("not implemented yet")
+}
+
 // waitForBlockFn represents a function blocking the execution until the given
 // block height.
 type waitForBlockFn func(context.Context, uint64) error
