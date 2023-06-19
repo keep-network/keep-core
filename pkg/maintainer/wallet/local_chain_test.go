@@ -7,6 +7,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/keep-network/keep-core/pkg/bitcoin"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/operator"
@@ -219,6 +220,10 @@ func (lc *localChain) GetDepositParameters() (
 	panic("unsupported")
 }
 
+func (lc *localChain) TxProofDifficultyFactor() (*big.Int, error) {
+	panic("unsupported")
+}
+
 func (lc *localChain) OnHeartbeatRequestSubmitted(
 	handler func(event *tbtc.HeartbeatRequestSubmittedEvent),
 ) subscription.EventSubscription {
@@ -294,5 +299,14 @@ func (lc *localChain) SubmitDepositSweepProposalWithReimbursement(
 }
 
 func (lc *localChain) GetDepositSweepMaxSize() (uint16, error) {
+	panic("unsupported")
+}
+
+func (lc *localChain) SubmitDepositSweepProofWithReimbursement(
+	transaction *bitcoin.Transaction,
+	proof *bitcoin.SpvProof,
+	mainUTXO bitcoin.UnspentTransactionOutput,
+	vault common.Address,
+) error {
 	panic("unsupported")
 }
