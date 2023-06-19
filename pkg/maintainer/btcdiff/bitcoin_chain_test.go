@@ -1,4 +1,4 @@
-package maintainer
+package btcdiff
 
 import (
 	"fmt"

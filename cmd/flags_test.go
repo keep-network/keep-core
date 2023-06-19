@@ -226,18 +226,39 @@ var cmdFlagsTests = map[string]struct {
 		defaultValue:          runtime.GOMAXPROCS(0),
 	},
 	"maintainer.bitcoinDifficulty": {
-		readValueFunc:         func(c *config.Config) interface{} { return c.Maintainer.BitcoinDifficulty },
+		readValueFunc:         func(c *config.Config) interface{} { return c.Maintainer.BitcoinDifficulty.Enabled },
 		flagName:              "--bitcoinDifficulty",
 		flagValue:             "", // don't provide any value
 		expectedValueFromFlag: true,
 		defaultValue:          false,
 	},
-	"maintainer.disableBitcoinDifficultyProxy": {
-		readValueFunc:         func(c *config.Config) interface{} { return c.Maintainer.DisableBitcoinDifficultyProxy },
-		flagName:              "--disableBitcoinDifficultyProxy",
+	"maintainer.bitcoinDifficulty.disableProxy": {
+		readValueFunc:         func(c *config.Config) interface{} { return c.Maintainer.BitcoinDifficulty.DisableProxy },
+		flagName:              "--bitcoinDifficulty.disableProxy",
 		flagValue:             "", // don't provide any value
 		expectedValueFromFlag: true,
 		defaultValue:          false,
+	},
+	"maintainer.walletCoordination": {
+		readValueFunc:         func(c *config.Config) interface{} { return c.Maintainer.WalletCoordination.Enabled },
+		flagName:              "--walletCoordination",
+		flagValue:             "", // don't provide any value
+		expectedValueFromFlag: true,
+		defaultValue:          false,
+	},
+	"maintainer.walletCoordination.redemptionInterval": {
+		readValueFunc:         func(c *config.Config) interface{} { return c.Maintainer.WalletCoordination.RedemptionInterval },
+		flagName:              "--walletCoordination.redemptionInterval",
+		flagValue:             "7h",
+		expectedValueFromFlag: 7 * time.Hour,
+		defaultValue:          3 * time.Hour,
+	},
+	"maintainer.walletCoordination.sweepInterval": {
+		readValueFunc:         func(c *config.Config) interface{} { return c.Maintainer.WalletCoordination.SweepInterval },
+		flagName:              "--walletCoordination.sweepInterval",
+		flagValue:             "35h",
+		expectedValueFromFlag: 35 * time.Hour,
+		defaultValue:          48 * time.Hour,
 	},
 	"developer.randomBeaconAddress": {
 		readValueFunc: func(c *config.Config) interface{} {
@@ -427,7 +448,7 @@ func TestFlags_Mixed(t *testing.T) {
 		},
 		// Properties not defined in the config file, but set with flags.
 		"maintainer.bitcoinDifficulty": {
-			readValueFunc: func(c *config.Config) interface{} { return c.Maintainer.BitcoinDifficulty },
+			readValueFunc: func(c *config.Config) interface{} { return c.Maintainer.BitcoinDifficulty.Enabled },
 			expectedValue: true,
 		},
 	}

@@ -1,4 +1,4 @@
-package maintainer
+package btcdiff
 
 import (
 	"context"
@@ -79,11 +79,13 @@ func TestVerifySubmissionEligibility(t *testing.T) {
 			)
 
 			bitcoinDifficultyMaintainer := &bitcoinDifficultyMaintainer{
-				btcChain:           nil,
-				chain:              difficultyChain,
-				disableProxy:       test.disableProxy,
-				idleBackOffTime:    bitcoinDifficultyDefaultIdleBackOffTime,
-				restartBackOffTime: bitcoinDifficultyDefaultRestartBackoffTime,
+				config: Config{
+					DisableProxy:       test.disableProxy,
+					IdleBackOffTime:    bitcoinDifficultyDefaultIdleBackOffTime,
+					RestartBackOffTime: bitcoinDifficultyDefaultRestartBackoffTime,
+				},
+				btcChain: nil,
+				chain:    difficultyChain,
 			}
 
 			err := bitcoinDifficultyMaintainer.verifySubmissionEligibility()
@@ -186,7 +188,7 @@ func TestProveNextEpoch(t *testing.T) {
 		}
 
 		var retargetEvents []*RetargetEvent
-		if bitcoinDifficultyMaintainer.disableProxy {
+		if bitcoinDifficultyMaintainer.config.DisableProxy {
 			retargetEvents = difficultyChain.RetargetEvents()
 		} else {
 			retargetEvents = difficultyChain.RetargetWithRefundEvents()
@@ -253,11 +255,13 @@ func TestProveNextEpoch(t *testing.T) {
 			difficultyChain.SetProofLength(3)
 
 			bitcoinDifficultyMaintainer := &bitcoinDifficultyMaintainer{
-				btcChain:           btcChain,
-				chain:              difficultyChain,
-				disableProxy:       test.disableProxy,
-				idleBackOffTime:    bitcoinDifficultyDefaultIdleBackOffTime,
-				restartBackOffTime: bitcoinDifficultyDefaultRestartBackoffTime,
+				config: Config{
+					DisableProxy:       test.disableProxy,
+					IdleBackOffTime:    bitcoinDifficultyDefaultIdleBackOffTime,
+					RestartBackOffTime: bitcoinDifficultyDefaultRestartBackoffTime,
+				},
+				btcChain: btcChain,
+				chain:    difficultyChain,
 			}
 
 			runProveNextEpochAssertions(
@@ -303,11 +307,13 @@ func TestGetBlockHeaders(t *testing.T) {
 	btcChain.SetBlockHeaders(blockHeaders)
 
 	bitcoinDifficultyMaintainer := &bitcoinDifficultyMaintainer{
-		btcChain:           btcChain,
-		chain:              nil,
-		disableProxy:       true,
-		idleBackOffTime:    bitcoinDifficultyDefaultIdleBackOffTime,
-		restartBackOffTime: bitcoinDifficultyDefaultRestartBackoffTime,
+		btcChain: btcChain,
+		chain:    nil,
+		config: Config{
+			DisableProxy:       true,
+			IdleBackOffTime:    bitcoinDifficultyDefaultIdleBackOffTime,
+			RestartBackOffTime: bitcoinDifficultyDefaultRestartBackoffTime,
+		},
 	}
 
 	headers, err := bitcoinDifficultyMaintainer.getBlockHeaders(700000, 700002)
@@ -335,11 +341,13 @@ func TestWaitForCurrentEpochUpdate_Successful(t *testing.T) {
 	difficultyChain.SetCurrentEpoch(currentEpoch)
 
 	bitcoinDifficultyMaintainer := &bitcoinDifficultyMaintainer{
-		btcChain:           nil,
-		chain:              difficultyChain,
-		disableProxy:       true,
-		idleBackOffTime:    2 * time.Second,
-		restartBackOffTime: 2 * time.Second,
+		btcChain: nil,
+		chain:    difficultyChain,
+		config: Config{
+			DisableProxy:       true,
+			IdleBackOffTime:    2 * time.Second,
+			RestartBackOffTime: 2 * time.Second,
+		},
 	}
 
 	// Run function on a goroutine. The function should wait until the current
@@ -384,11 +392,13 @@ func TestWaitForCurrentEpochUpdate_Cancelled(t *testing.T) {
 	difficultyChain.SetCurrentEpoch(currentEpoch)
 
 	bitcoinDifficultyMaintainer := &bitcoinDifficultyMaintainer{
-		btcChain:           nil,
-		chain:              difficultyChain,
-		disableProxy:       true,
-		idleBackOffTime:    2 * time.Second,
-		restartBackOffTime: 2 * time.Second,
+		btcChain: nil,
+		chain:    difficultyChain,
+		config: Config{
+			DisableProxy:       true,
+			IdleBackOffTime:    2 * time.Second,
+			RestartBackOffTime: 2 * time.Second,
+		},
 	}
 
 	// Run function on a goroutine. The function should wait until the current
@@ -426,11 +436,13 @@ func TestProveEpochs_ErrorVerifyingSubmissionEligibility(t *testing.T) {
 	difficultyChain.SetReady(true)
 
 	bitcoinDifficultyMaintainer := &bitcoinDifficultyMaintainer{
-		btcChain:           nil,
-		chain:              difficultyChain,
-		disableProxy:       true,
-		idleBackOffTime:    bitcoinDifficultyDefaultIdleBackOffTime,
-		restartBackOffTime: bitcoinDifficultyDefaultRestartBackoffTime,
+		btcChain: nil,
+		chain:    difficultyChain,
+		config: Config{
+			DisableProxy:       true,
+			IdleBackOffTime:    bitcoinDifficultyDefaultIdleBackOffTime,
+			RestartBackOffTime: bitcoinDifficultyDefaultRestartBackoffTime,
+		},
 	}
 
 	err := bitcoinDifficultyMaintainer.proveEpochs(ctx)
@@ -454,11 +466,14 @@ func TestProveEpochs_ErrorProvingSingleEpoch(t *testing.T) {
 	btcChain := connectLocalBitcoinChain()
 
 	bitcoinDifficultyMaintainer := &bitcoinDifficultyMaintainer{
-		btcChain:           btcChain,
-		chain:              difficultyChain,
-		disableProxy:       true,
-		idleBackOffTime:    bitcoinDifficultyDefaultIdleBackOffTime,
-		restartBackOffTime: bitcoinDifficultyDefaultRestartBackoffTime,
+		btcChain: btcChain,
+		chain:    difficultyChain,
+
+		config: Config{
+			DisableProxy:       true,
+			IdleBackOffTime:    bitcoinDifficultyDefaultIdleBackOffTime,
+			RestartBackOffTime: bitcoinDifficultyDefaultRestartBackoffTime,
+		},
 	}
 
 	err := bitcoinDifficultyMaintainer.proveEpochs(ctx)
@@ -505,11 +520,13 @@ func TestProveEpochs_Successful(t *testing.T) {
 	btcChain.SetBlockHeaders(blockHeaders)
 
 	bitcoinDifficultyMaintainer := &bitcoinDifficultyMaintainer{
-		btcChain:           btcChain,
-		chain:              difficultyChain,
-		disableProxy:       true,
-		idleBackOffTime:    2 * time.Second,
-		restartBackOffTime: 2 * time.Second,
+		btcChain: btcChain,
+		chain:    difficultyChain,
+		config: Config{
+			DisableProxy:       true,
+			IdleBackOffTime:    2 * time.Second,
+			RestartBackOffTime: 2 * time.Second,
+		},
 	}
 
 	// Run a goroutine that will cancel the context while the maintainer is
@@ -593,13 +610,17 @@ func TestBitcoinDifficultyMaintainer_Integration(t *testing.T) {
 			idleBackOffTime := 500 * time.Millisecond
 			restartBackOffTime := 1 * time.Second
 
-			initializeBitcoinDifficultyMaintainer(
+			config := Config{
+				DisableProxy:       test.disableProxy,
+				IdleBackOffTime:    idleBackOffTime,
+				RestartBackOffTime: restartBackOffTime,
+			}
+
+			Initialize(
 				ctx,
+				config,
 				btcChain,
 				difficultyChain,
-				test.disableProxy,
-				idleBackOffTime,
-				restartBackOffTime,
 			)
 
 			//************ Loop restart on error ************
