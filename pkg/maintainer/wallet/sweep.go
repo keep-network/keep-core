@@ -40,7 +40,7 @@ func (wm *walletMaintainer) runSweepTask(ctx context.Context) error {
 				walletPublicKeyHash,
 				0,
 				deposits,
-				true, // TODO: Change dry run argument to false
+				false,
 			)
 		},
 	)
