@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/keep-network/keep-core/internal/testutils"
 	"github.com/keep-network/keep-core/pkg/tbtc"
 )
 
@@ -43,28 +44,44 @@ func TestRunIfWalletUnlocked_WhenLocked(t *testing.T) {
 }
 
 func TestRunIfWalletUnlocked_WhenUnlocked(t *testing.T) {
-	localChain := newLocalChain()
-
-	walletPublicKeyHash := [20]byte{2}
-
-	localChain.resetWalletLock(walletPublicKeyHash)
-
-	runFunc := func() error {
-		return nil
+	tests := map[string]struct{ expectedError error }{
+		"no error in runFunc": {
+			expectedError: nil,
+		},
+		"propagate error from runFunc": {
+			expectedError: fmt.Errorf("boom, propagate up up up"),
+		},
 	}
 
-	wm := &walletMaintainer{
-		config: Config{},
-		chain:  localChain,
-	}
+	for testName, test := range tests {
+		t.Run(testName, func(t *testing.T) {
+			localChain := newLocalChain()
 
-	err := wm.runIfWalletUnlocked(
-		context.Background(),
-		walletPublicKeyHash,
-		tbtc.DepositSweep,
-		runFunc,
-	)
-	if err != nil {
-		t.Fatal(err)
+			walletPublicKeyHash := [20]byte{2}
+
+			localChain.resetWalletLock(walletPublicKeyHash)
+
+			wasCalled := make(chan bool, 1)
+			runFunc := func() error {
+				wasCalled <- true
+				return test.expectedError
+			}
+
+			wm := &walletMaintainer{
+				config: Config{},
+				chain:  localChain,
+			}
+
+			err := wm.runIfWalletUnlocked(
+				context.Background(),
+				walletPublicKeyHash,
+				tbtc.DepositSweep,
+				runFunc,
+			)
+
+			<-wasCalled
+
+			testutils.AssertErrorsSame(t, test.expectedError, err)
+		})
 	}
 }
