@@ -601,6 +601,8 @@ func init() {
 			"be the same as in Bitcoin explorers).",
 	)
 
+	submitDepositSweepProofCommand.MarkFlagRequired(transactionHashFlagName)
+
 	submitDepositSweepProofCommand.Flags().Uint(
 		confirmationsFlagName,
 		0,
