@@ -273,7 +273,7 @@ var estimateDepositsSweepFeeCommandDescription = "Estimates the satoshi " +
 var submitDepositSweepProofCommand = cobra.Command{
 	Use:              "submit-deposit-sweep-proof",
 	Short:            "submit deposit sweep proof",
-	Long:             submitDepositSweepProofCommandDescription,
+	Long:             "Submits deposit sweep proof to the Bridge contract",
 	TraverseChildren: true,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		ctx := cmd.Context()
@@ -361,9 +361,6 @@ var submitDepositSweepProofCommand = cobra.Command{
 		return nil
 	},
 }
-
-var submitDepositSweepProofCommandDescription = "Submits deposit sweep proof " +
-	"to the Bridge contract"
 
 func init() {
 	initFlags(
