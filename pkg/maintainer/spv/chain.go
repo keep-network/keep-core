@@ -1,8 +1,9 @@
 package spv
 
 import (
-	"github.com/ethereum/go-ethereum/common"
+	"math/big"
 
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/keep-network/keep-core/pkg/bitcoin"
 	"github.com/keep-network/keep-core/pkg/tbtc"
 )
@@ -25,4 +26,8 @@ type Chain interface {
 		fundingTxHash bitcoin.Hash,
 		fundingOutputIndex uint32,
 	) (*tbtc.DepositChainRequest, error)
+
+	// TxProofDifficultyFactor returns the number of confirmations on the
+	// Bitcoin chain required to successfully evaluate an SPV proof.
+	TxProofDifficultyFactor() (*big.Int, error)
 }

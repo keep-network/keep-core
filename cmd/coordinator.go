@@ -323,25 +323,9 @@ var submitDepositSweepProofCommand = cobra.Command{
 			return fmt.Errorf("failed to get confirmations flag: [%v]", err)
 		}
 
-		if requiredConfirmations == 0 {
-			// The caller did not specify the number of confirmations. Use the
-			// default  value stored onchain.
-			txProofDifficulty, err := tbtcChain.TxProofDifficultyFactor()
-			if err != nil {
-				return fmt.Errorf(
-					"failed to get transaction proof difficulty factor: [%v]",
-					err,
-				)
-			}
-
-			requiredConfirmations = uint(txProofDifficulty.Int64())
-		}
-
 		logger.Infof(
-			"Submitting deposit sweep proof for transaction [%s] with [%v] "+
-				"confirmations",
+			"Submitting deposit sweep proof for transaction [%s]",
 			transactionHashFlag,
-			requiredConfirmations,
 		)
 
 		if err = spv.SubmitDepositSweepProof(

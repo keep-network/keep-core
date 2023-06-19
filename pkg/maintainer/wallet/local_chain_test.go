@@ -219,10 +219,6 @@ func (lc *localChain) GetDepositParameters() (
 	panic("unsupported")
 }
 
-func (lc *localChain) TxProofDifficultyFactor() (*big.Int, error) {
-	panic("unsupported")
-}
-
 func (lc *localChain) OnHeartbeatRequestSubmitted(
 	handler func(event *tbtc.HeartbeatRequestSubmittedEvent),
 ) subscription.EventSubscription {

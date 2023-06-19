@@ -10,13 +10,28 @@ import (
 )
 
 // SubmitDepositSweepProof prepares deposit sweep proof for the given
-// transaction and submits it to the onchain contract.
+// transaction and submits it to the onchain contract. If the number of required
+// confirmations is `0`, the value is read from the chain.
 func SubmitDepositSweepProof(
 	transactionHash bitcoin.Hash,
 	requiredConfirmations uint,
 	btcChain bitcoin.Chain,
 	spvChain Chain,
 ) error {
+	if requiredConfirmations == 0 {
+		// The caller did not specify the number of confirmations. Use the
+		// default value stored onchain.
+		txProofDifficulty, err := spvChain.TxProofDifficultyFactor()
+		if err != nil {
+			return fmt.Errorf(
+				"failed to get transaction proof difficulty factor: [%v]",
+				err,
+			)
+		}
+
+		requiredConfirmations = uint(txProofDifficulty.Int64())
+	}
+
 	transaction, proof, err := bitcoin.AssembleSpvProof(
 		transactionHash,
 		requiredConfirmations,
