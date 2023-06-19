@@ -440,7 +440,11 @@ func init() {
 			"be the same as in Bitcoin explorers).",
 	)
 
-	submitDepositSweepProofCommand.MarkFlagRequired(transactionHashFlagName)
+	if err := submitDepositSweepProofCommand.MarkFlagRequired(
+		transactionHashFlagName,
+	); err != nil {
+		logger.Fatalf("failed to mark flag required: [%v]", err)
+	}
 
 	submitDepositSweepProofCommand.Flags().Uint(
 		confirmationsFlagName,
