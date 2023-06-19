@@ -7,7 +7,6 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/keep-network/keep-core/pkg/bitcoin"
 	"github.com/keep-network/keep-core/pkg/chain"
-	"github.com/keep-network/keep-core/pkg/tbtc"
 )
 
 // SubmitDepositSweepProof prepares deposit sweep proof for the given
@@ -16,7 +15,7 @@ func SubmitDepositSweepProof(
 	transactionHash bitcoin.Hash,
 	requiredConfirmations uint,
 	btcChain bitcoin.Chain,
-	tbtcChain tbtc.Chain,
+	spvChain Chain,
 ) error {
 	transaction, proof, err := bitcoin.AssembleSpvProof(
 		transactionHash,
@@ -32,7 +31,7 @@ func SubmitDepositSweepProof(
 
 	mainUTXO, vault, err := parseTransactionInputs(
 		btcChain,
-		tbtcChain,
+		spvChain,
 		transaction,
 	)
 	if err != nil {
@@ -42,7 +41,7 @@ func SubmitDepositSweepProof(
 		)
 	}
 
-	if err := tbtcChain.SubmitDepositSweepProofWithReimbursement(
+	if err := spvChain.SubmitDepositSweepProofWithReimbursement(
 		transaction,
 		proof,
 		mainUTXO,
@@ -61,7 +60,7 @@ func SubmitDepositSweepProof(
 // UTXO and the vault.
 func parseTransactionInputs(
 	btcChain bitcoin.Chain,
-	tbtcChain tbtc.Chain,
+	spvChain Chain,
 	transaction *bitcoin.Transaction,
 ) (
 	bitcoin.UnspentTransactionOutput,
@@ -132,7 +131,7 @@ func parseTransactionInputs(
 			// the deposits should have the same vault set or no vault at all.
 			// If the vault if different than the vault from any previous
 			// deposit input, report an error.
-			deposit, err := tbtcChain.GetDepositRequest(
+			deposit, err := spvChain.GetDepositRequest(
 				outpointTransactionHash,
 				outpointIndex,
 			)

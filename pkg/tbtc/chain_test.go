@@ -16,7 +16,6 @@ import (
 
 	"golang.org/x/crypto/sha3"
 
-	"github.com/ethereum/go-ethereum/common"
 	"github.com/keep-network/keep-core/pkg/bitcoin"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/chain/local_v1"
@@ -766,15 +765,6 @@ func (lc *localChain) SubmitDepositSweepProposalWithReimbursement(
 }
 
 func (lc *localChain) GetDepositSweepMaxSize() (uint16, error) {
-	panic("unsupported")
-}
-
-func (lc *localChain) SubmitDepositSweepProofWithReimbursement(
-	transaction *bitcoin.Transaction,
-	proof *bitcoin.SpvProof,
-	mainUTXO bitcoin.UnspentTransactionOutput,
-	vault common.Address,
-) error {
 	panic("unsupported")
 }
 
