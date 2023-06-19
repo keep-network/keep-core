@@ -9,6 +9,7 @@ import (
 
 	"github.com/keep-network/keep-core/pkg/bitcoin"
 	"github.com/keep-network/keep-core/pkg/chain"
+	"github.com/keep-network/keep-core/pkg/coordinator"
 	"github.com/keep-network/keep-core/pkg/operator"
 	"github.com/keep-network/keep-core/pkg/protocol/group"
 	"github.com/keep-network/keep-core/pkg/subscription"
@@ -197,6 +198,19 @@ func (lc *localChain) PastNewWalletRegisteredEvents(
 	panic("unsupported")
 }
 
+func (lc *localChain) PastRedemptionRequestedEvents(
+	filter *coordinator.RedemptionRequestedEventFilter,
+) ([]*coordinator.RedemptionRequestedEvent, error) {
+	panic("unsupported")
+}
+
+func (lc *localChain) GetPendingRedemptionRequest(
+	redeemerOutputScript []byte,
+	walletPublicKeyHash [20]byte,
+) (*coordinator.RedemptionChainRequest, error) {
+	panic("unsupported")
+}
+
 func (lc *localChain) GetWallet(walletPublicKeyHash [20]byte) (*tbtc.WalletChainData, error) {
 	panic("unsupported")
 }
@@ -209,11 +223,28 @@ func (lc *localChain) BuildDepositKey(fundingTxHash bitcoin.Hash, fundingOutputI
 	panic("unsupported")
 }
 
+func (lc *localChain) BuildRedemptionKey(redeemerOutputScript []byte, walletPublicKeyHash [20]byte) *big.Int {
+	panic("unsupported")
+}
+
 func (lc *localChain) GetDepositParameters() (
 	dustThreshold uint64,
 	treasuryFeeDivisor uint64,
 	txMaxFee uint64,
 	revealAheadPeriod uint32,
+	err error,
+) {
+	panic("unsupported")
+}
+
+func (lc *localChain) GetRedemptionParameters() (
+	dustThreshold uint64,
+	treasuryFeeDivisor uint64,
+	txMaxFee uint64,
+	txMaxTotalFee uint64,
+	timeout uint32,
+	timeoutSlashingAmount *big.Int,
+	timeoutNotifierRewardMultiplier uint32,
 	err error,
 ) {
 	panic("unsupported")
@@ -293,6 +324,20 @@ func (lc *localChain) SubmitDepositSweepProposalWithReimbursement(
 	panic("unsupported")
 }
 
+func (lc *localChain) SubmitRedemptionProposalWithReimbursement(
+	proposal *coordinator.RedemptionProposal,
+) error {
+	panic("unsupported")
+}
+
 func (lc *localChain) GetDepositSweepMaxSize() (uint16, error) {
+	panic("unsupported")
+}
+
+func (lc *localChain) GetRedemptionMaxSize() (uint16, error) {
+	panic("unsupported")
+}
+
+func (lc *localChain) GetRedemptionRequestMinAge() (uint32, error) {
 	panic("unsupported")
 }
