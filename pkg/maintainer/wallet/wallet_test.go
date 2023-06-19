@@ -27,9 +27,8 @@ func TestRunIfWalletUnlocked_WhenLocked(t *testing.T) {
 	}
 
 	wm := &walletMaintainer{
-		config:   Config{},
-		chain:    localChain,
-		btcChain: newLocalBitcoinChain(),
+		config: Config{},
+		chain:  localChain,
 	}
 
 	err := wm.runIfWalletUnlocked(
@@ -55,9 +54,8 @@ func TestRunIfWalletUnlocked_WhenUnlocked(t *testing.T) {
 	}
 
 	wm := &walletMaintainer{
-		config:   Config{},
-		chain:    localChain,
-		btcChain: newLocalBitcoinChain(),
+		config: Config{},
+		chain:  localChain,
 	}
 
 	err := wm.runIfWalletUnlocked(
