@@ -27,7 +27,6 @@ func Initialize(
 	config Config,
 	chain Chain,
 	btcChain bitcoin.Chain,
-
 ) {
 	if config.RedemptionInterval == 0 {
 		config.RedemptionInterval = DefaultRedemptionInterval
