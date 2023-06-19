@@ -293,12 +293,12 @@ var submitDepositSweepProofCommand = cobra.Command{
 
 		btcChain, err := electrum.Connect(ctx, clientConfig.Bitcoin.Electrum)
 		if err != nil {
-			return fmt.Errorf("could not connect to Electrum chain: %v", err)
+			return fmt.Errorf("could not connect to Electrum chain: [%v]", err)
 		}
 
 		transactionHashFlag, err := cmd.Flags().GetString(transactionHashFlagName)
 		if err != nil {
-			return fmt.Errorf("failed to find transaction hash flag: %v", err)
+			return fmt.Errorf("failed to find transaction hash flag: [%v]", err)
 		}
 
 		transactionHash, err := bitcoin.NewHashFromString(
@@ -306,7 +306,10 @@ var submitDepositSweepProofCommand = cobra.Command{
 			bitcoin.ReversedByteOrder,
 		)
 		if err != nil {
-			return fmt.Errorf("failed to parse transaction hash flag: %v", err)
+			return fmt.Errorf(
+				"failed to parse transaction hash flag: [%v]",
+				err,
+			)
 		}
 
 		// Allow the caller to request a specific number of confirmations.
@@ -319,7 +322,7 @@ var submitDepositSweepProofCommand = cobra.Command{
 		// confirmations will ensure the transaction can be proven.
 		requiredConfirmations, err := cmd.Flags().GetUint(confirmationsFlagName)
 		if err != nil {
-			return fmt.Errorf("failed to get confirmations flag: %v", err)
+			return fmt.Errorf("failed to get confirmations flag: [%v]", err)
 		}
 
 		if requiredConfirmations == 0 {
@@ -328,7 +331,7 @@ var submitDepositSweepProofCommand = cobra.Command{
 			txProofDifficulty, err := tbtcChain.TxProofDifficultyFactor()
 			if err != nil {
 				return fmt.Errorf(
-					"failed to get transaction proof difficulty factor: %v",
+					"failed to get transaction proof difficulty factor: [%v]",
 					err,
 				)
 			}
@@ -337,7 +340,7 @@ var submitDepositSweepProofCommand = cobra.Command{
 		}
 
 		logger.Infof(
-			"Preparing deposit sweep proof for transaction %s with %v "+
+			"Preparing deposit sweep proof for transaction [%s] with [%v] "+
 				"confirmations",
 			transactionHashFlag,
 			requiredConfirmations,
@@ -349,7 +352,10 @@ var submitDepositSweepProofCommand = cobra.Command{
 			btcChain,
 		)
 		if err != nil {
-			return fmt.Errorf("failed to assemble transaction spv proof: %v", err)
+			return fmt.Errorf(
+				"failed to assemble transaction spv proof: [%v]",
+				err,
+			)
 		}
 
 		mainUTXO, vault, err := parseTransactionInputs(
@@ -358,7 +364,10 @@ var submitDepositSweepProofCommand = cobra.Command{
 			transaction,
 		)
 		if err != nil {
-			return fmt.Errorf("error while parsing transaction inputs: %v", err)
+			return fmt.Errorf(
+				"error while parsing transaction inputs: [%v]",
+				err,
+			)
 		}
 
 		if err := tbtcChain.SubmitDepositSweepProofWithReimbursement(
@@ -368,13 +377,13 @@ var submitDepositSweepProofCommand = cobra.Command{
 			vault,
 		); err != nil {
 			return fmt.Errorf(
-				"failed to submit deposit sweep proof with reimbursement: %v",
+				"failed to submit deposit sweep proof with reimbursement: [%v]",
 				err,
 			)
 		}
 
 		logger.Infof(
-			"Successfully submitted deposit sweep proof for transaction: %s",
+			"Successfully submitted deposit sweep proof for transaction: [%s]",
 			transactionHashFlag,
 		)
 
@@ -434,7 +443,7 @@ func parseTransactionInputs(
 		)
 		if err != nil {
 			return bitcoin.UnspentTransactionOutput{}, common.Address{}, fmt.Errorf(
-				"failed to get previous transaction: %v",
+				"failed to get previous transaction: [%v]",
 				err,
 			)
 		}
@@ -474,7 +483,7 @@ func parseTransactionInputs(
 			)
 			if err != nil {
 				return bitcoin.UnspentTransactionOutput{}, common.Address{}, fmt.Errorf(
-					"failed to get deposit request: %v",
+					"failed to get deposit request: [%v]",
 					err,
 				)
 			}
