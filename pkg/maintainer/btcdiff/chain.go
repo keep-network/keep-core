@@ -1,13 +1,13 @@
-package maintainer
+package btcdiff
 
 import (
 	"github.com/keep-network/keep-core/pkg/bitcoin"
 	"github.com/keep-network/keep-core/pkg/chain"
 )
 
-// BitcoinDifficultyChain is an interface that provides the ability to
+// Chain is an interface that provides the ability to
 // communicate with the Bitcoin difficulty on-chain contract.
-type BitcoinDifficultyChain interface {
+type Chain interface {
 	// Ready checks whether the relay is active (i.e. genesis has been performed).
 	// Note that if the relay is used by querying the current and previous epoch
 	// difficulty, at least one retarget needs to be provided after genesis;

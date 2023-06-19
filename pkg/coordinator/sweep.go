@@ -43,7 +43,7 @@ type DepositSweepDetails struct {
 
 // ProposeDepositsSweep handles deposit sweep proposal request submission.
 func ProposeDepositsSweep(
-	tbtcChain tbtc.Chain,
+	chain Chain,
 	btcChain bitcoin.Chain,
 	walletPublicKeyHash [20]byte,
 	fee int64,
@@ -58,7 +58,7 @@ func ProposeDepositsSweep(
 	if fee <= 0 {
 		logger.Infof("estimating sweep transaction fee...")
 		var err error
-		_, _, perDepositMaxFee, _, err := tbtcChain.GetDepositParameters()
+		_, _, perDepositMaxFee, _, err := chain.GetDepositParameters()
 		if err != nil {
 			return fmt.Errorf("cannot get deposit tx max fee: [%w]", err)
 		}
@@ -100,7 +100,7 @@ func ProposeDepositsSweep(
 		logger,
 		proposal,
 		tbtc.DepositSweepRequiredFundingTxConfirmations,
-		tbtcChain,
+		chain,
 		btcChain,
 	); err != nil {
 		return fmt.Errorf("failed to verify deposit sweep proposal: %v", err)
@@ -108,7 +108,7 @@ func ProposeDepositsSweep(
 
 	if !dryRun {
 		logger.Infof("submitting the deposit sweep proposal...")
-		if err := tbtcChain.SubmitDepositSweepProposalWithReimbursement(proposal); err != nil {
+		if err := chain.SubmitDepositSweepProposalWithReimbursement(proposal); err != nil {
 			return fmt.Errorf("failed to submit deposit sweep proposal: %v", err)
 		}
 	}
@@ -176,29 +176,31 @@ func ValidateDepositString(depositString string) error {
 //
 // ---------------------------------------------
 // deposits count total fee (satoshis) sat/vbyte
-//              1                  201         1
-//              2                  292         1
-//              3                  384         1
+//
+//	1                  201         1
+//	2                  292         1
+//	3                  384         1
+//
 // ---------------------------------------------
 //
 // While making estimations, this function assumes a sweep transaction
 // consists of:
-// - 1 P2WPKH input being the current wallet main UTXO. That means the produced
-//   fees may be overestimated for the very first sweep transaction of
-//   each wallet.
-// - N P2WSH inputs representing the deposits. Worth noting that real
-//   transactions may contain legacy P2SH deposits as well so produced fees may
-//   be underestimated in some rare cases.
-// - 1 P2WPKH output
+//   - 1 P2WPKH input being the current wallet main UTXO. That means the produced
+//     fees may be overestimated for the very first sweep transaction of
+//     each wallet.
+//   - N P2WSH inputs representing the deposits. Worth noting that real
+//     transactions may contain legacy P2SH deposits as well so produced fees may
+//     be underestimated in some rare cases.
+//   - 1 P2WPKH output
 //
 // If any of the estimated fees exceed the maximum fee allowed by the Bridge
 // contract, the maximum fee is returned as result.
 func EstimateDepositsSweepFee(
-	tbtcChain tbtc.Chain,
+	chain Chain,
 	btcChain bitcoin.Chain,
 	depositsCount int,
 ) error {
-	_, _, perDepositMaxFee, _, err := tbtcChain.GetDepositParameters()
+	_, _, perDepositMaxFee, _, err := chain.GetDepositParameters()
 	if err != nil {
 		return fmt.Errorf("cannot get deposit tx max fee: [%v]", err)
 	}
@@ -212,7 +214,7 @@ func EstimateDepositsSweepFee(
 	if depositsCount > 0 {
 		depositsCountKeys = append(depositsCountKeys, depositsCount)
 	} else {
-		sweepMaxSize, err := tbtcChain.GetDepositSweepMaxSize()
+		sweepMaxSize, err := chain.GetDepositSweepMaxSize()
 		if err != nil {
 			return fmt.Errorf("cannot get sweep max size: [%v]", sweepMaxSize)
 		}

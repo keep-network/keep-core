@@ -15,6 +15,7 @@ import (
 	"github.com/keep-network/keep-core/pkg/bitcoin/electrum"
 	chainEthereum "github.com/keep-network/keep-core/pkg/chain/ethereum"
 	"github.com/keep-network/keep-core/pkg/clientinfo"
+	"github.com/keep-network/keep-core/pkg/maintainer/wallet"
 	"github.com/keep-network/keep-core/pkg/net/libp2p"
 	"github.com/keep-network/keep-core/pkg/tbtc"
 )
@@ -314,17 +315,38 @@ func initTbtcFlags(cmd *cobra.Command, cfg *config.Config) {
 // Initialize flags for Maintainer configuration.
 func initMaintainerFlags(command *cobra.Command, cfg *config.Config) {
 	command.Flags().BoolVar(
-		&cfg.Maintainer.BitcoinDifficulty,
+		&cfg.Maintainer.BitcoinDifficulty.Enabled,
 		"bitcoinDifficulty",
 		false,
-		"start Bitcoin difficulty maintainer",
+		"Start Bitcoin difficulty maintainer.",
 	)
 
 	command.Flags().BoolVar(
-		&cfg.Maintainer.DisableBitcoinDifficultyProxy,
-		"disableBitcoinDifficultyProxy",
+		&cfg.Maintainer.BitcoinDifficulty.DisableProxy,
+		"bitcoinDifficulty.disableProxy",
 		false,
-		"disable Bitcoin difficulty proxy",
+		"Disable Bitcoin difficulty proxy.",
+	)
+
+	command.Flags().BoolVar(
+		&cfg.Maintainer.WalletCoordination.Enabled,
+		"walletCoordination",
+		false,
+		"Start wallet coordination maintainer.",
+	)
+
+	command.Flags().DurationVar(
+		&cfg.Maintainer.WalletCoordination.RedemptionInterval,
+		"walletCoordination.redemptionInterval",
+		wallet.DefaultRedemptionInterval,
+		"The time interval in which pending redemptions requests are checked.",
+	)
+
+	command.Flags().DurationVar(
+		&cfg.Maintainer.WalletCoordination.SweepInterval,
+		"walletCoordination.sweepInterval",
+		wallet.DefaultSweepInterval,
+		"The time interval in which unswept deposits are checked.",
 	)
 }
 

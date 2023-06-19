@@ -199,13 +199,25 @@ func TestReadConfigFromFile(t *testing.T) {
 			readValueFunc: func(c *Config) interface{} { return c.ClientInfo.EthereumMetricsTick },
 			expectedValue: 87 * time.Second,
 		},
-		"Maintainer.BitcoinDifficulty": {
-			readValueFunc: func(c *Config) interface{} { return c.Maintainer.BitcoinDifficulty },
+		"Maintainer.BitcoinDifficulty.Enabled": {
+			readValueFunc: func(c *Config) interface{} { return c.Maintainer.BitcoinDifficulty.Enabled },
 			expectedValue: true,
 		},
-		"Maintainer.DisableBitcoinDifficultyProxy": {
-			readValueFunc: func(c *Config) interface{} { return c.Maintainer.DisableBitcoinDifficultyProxy },
+		"Maintainer.BitcoinDifficulty.DisableProxy": {
+			readValueFunc: func(c *Config) interface{} { return c.Maintainer.BitcoinDifficulty.DisableProxy },
 			expectedValue: true,
+		},
+		"Maintainer.WalletCoordination.Enabled": {
+			readValueFunc: func(c *Config) interface{} { return c.Maintainer.WalletCoordination.Enabled },
+			expectedValue: true,
+		},
+		"Maintainer.WalletCoordination.RedemptionInterval": {
+			readValueFunc: func(c *Config) interface{} { return c.Maintainer.WalletCoordination.RedemptionInterval },
+			expectedValue: 13 * time.Hour,
+		},
+		"Maintainer.WalletCoordination.SweepInterval": {
+			readValueFunc: func(c *Config) interface{} { return c.Maintainer.WalletCoordination.SweepInterval },
+			expectedValue: 64 * time.Hour,
 		},
 	}
 

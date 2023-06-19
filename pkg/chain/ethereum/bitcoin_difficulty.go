@@ -64,7 +64,7 @@ func NewBitcoinDifficultyChain(
 
 	// If the Bitcoin difficulty should be updated directly via LightRelay,
 	// quit early without creating a handle to LightRelayMaintainerProxy.
-	if maintainerConfig.DisableBitcoinDifficultyProxy {
+	if maintainerConfig.BitcoinDifficulty.DisableProxy {
 		return &BitcoinDifficultyChain{
 			baseChain:                 baseChain,
 			lightRelay:                lightRelay,

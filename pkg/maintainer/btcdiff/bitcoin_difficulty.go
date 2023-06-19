@@ -1,13 +1,16 @@
-package maintainer
+package btcdiff
 
 import (
 	"context"
 	"fmt"
 	"time"
 
-	"github.com/ipfs/go-log"
+	"github.com/ipfs/go-log/v2"
+
 	"github.com/keep-network/keep-core/pkg/bitcoin"
 )
+
+var logger = log.Logger("keep-maintainer-btcdiff")
 
 const (
 	// Default value for back-off time which should be applied when the Bitcoin
@@ -26,8 +29,6 @@ const (
 	bitcoinDifficultyEpochLength = 2016
 )
 
-var logger = log.Logger("maintainer-btcdiff")
-
 var (
 	errNotAuthorized = fmt.Errorf(
 		"bitcoin difficulty maintainer has not been authorized to submit " +
@@ -38,20 +39,23 @@ var (
 	)
 )
 
-func initializeBitcoinDifficultyMaintainer(
+func Initialize(
 	ctx context.Context,
+	config Config,
 	btcChain bitcoin.Chain,
-	chain BitcoinDifficultyChain,
-	disableProxy bool,
-	idleBackOffTime time.Duration,
-	restartBackOffTime time.Duration,
+	chain Chain,
 ) {
+	if config.RestartBackOffTime == 0 {
+		config.RestartBackOffTime = bitcoinDifficultyDefaultRestartBackoffTime
+	}
+	if config.IdleBackOffTime == 0 {
+		config.IdleBackOffTime = bitcoinDifficultyDefaultIdleBackOffTime
+	}
+
 	bitcoinDifficultyMaintainer := &bitcoinDifficultyMaintainer{
-		btcChain:           btcChain,
-		chain:              chain,
-		disableProxy:       disableProxy,
-		idleBackOffTime:    idleBackOffTime,
-		restartBackOffTime: restartBackOffTime,
+		config:   config,
+		btcChain: btcChain,
+		chain:    chain,
 	}
 
 	go bitcoinDifficultyMaintainer.startControlLoop(ctx)
@@ -60,13 +64,9 @@ func initializeBitcoinDifficultyMaintainer(
 // bitcoinDifficultyMaintainer is the part of maintainer responsible for
 // maintaining the state of the Bitcoin difficulty on-chain contract.
 type bitcoinDifficultyMaintainer struct {
+	config   Config
 	btcChain bitcoin.Chain
-	chain    BitcoinDifficultyChain
-
-	disableProxy bool
-
-	idleBackOffTime    time.Duration
-	restartBackOffTime time.Duration
+	chain    Chain
 }
 
 // startControlLoop starts the loop responsible for controlling the Bitcoin
@@ -88,7 +88,7 @@ func (bdm *bitcoinDifficultyMaintainer) startControlLoop(ctx context.Context) {
 		}
 
 		select {
-		case <-time.After(bdm.restartBackOffTime):
+		case <-time.After(bdm.config.RestartBackOffTime):
 		case <-ctx.Done():
 			return
 		}
@@ -119,7 +119,7 @@ func (bdm *bitcoinDifficultyMaintainer) proveEpochs(ctx context.Context) error {
 		// there are likely more Bitcoin epochs to prove.
 		if !epochProven {
 			select {
-			case <-time.After(bdm.idleBackOffTime):
+			case <-time.After(bdm.config.IdleBackOffTime):
 			case <-ctx.Done():
 				return ctx.Err()
 			}
@@ -144,7 +144,7 @@ func (bdm *bitcoinDifficultyMaintainer) verifySubmissionEligibility() error {
 
 	maintainerAddress := bdm.chain.Signing().Address()
 
-	if bdm.disableProxy {
+	if bdm.config.DisableProxy {
 		// Retargetting will be done directly via `LightRelay` without refunding.
 		isAuthorized, err := bdm.chain.IsAuthorized(maintainerAddress)
 		if err != nil {
@@ -253,7 +253,7 @@ func (bdm *bitcoinDifficultyMaintainer) proveNextEpoch(ctx context.Context) (
 			)
 		}
 
-		if bdm.disableProxy {
+		if bdm.config.DisableProxy {
 			if err := bdm.chain.Retarget(headers); err != nil {
 				return false, fmt.Errorf(
 					"failed to submit block headers from range [%d:%d] via "+
