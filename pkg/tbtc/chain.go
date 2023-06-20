@@ -431,7 +431,7 @@ type RedemptionProposalSubmittedEvent struct {
 // RedemptionProposal represents a redemption proposal submitted to the chain.
 type RedemptionProposal struct {
 	WalletPublicKeyHash    [20]byte
-	RedeemersOutputScripts [][]byte
+	RedeemersOutputScripts []bitcoin.Script
 	RedemptionTxFee        *big.Int
 }
 
