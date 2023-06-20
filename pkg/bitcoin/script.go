@@ -4,6 +4,7 @@ import (
 	"crypto/ecdsa"
 	"crypto/elliptic"
 	"crypto/sha256"
+	"fmt"
 	"github.com/btcsuite/btcd/txscript"
 	"github.com/btcsuite/btcutil"
 )
@@ -11,6 +12,27 @@ import (
 // Script represents an arbitrary Bitcoin script, NOT prepended with the
 // byte-length of the script
 type Script []byte
+
+// NewScriptFromVarLenData construct a Script instance based on the provided
+// variable length data prepended with a CompactSizeUint.
+func NewScriptFromVarLenData(varLenData []byte) (Script, error) {
+	// Extract the CompactSizeUint value that holds the byte length of the script.
+	// Also, extract the byte length of the CompactSizeUint itself.
+	scriptByteLength, compactByteLength, err := readCompactSizeUint(varLenData)
+	if err != nil {
+		return nil, fmt.Errorf("cannot read compact size uint: [%v]", err)
+	}
+
+	// Make sure the combined byte length of the script and the byte length
+	// of the CompactSizeUint matches the total byte length of the variable
+	// length data. Otherwise, the input data slice is malformed.
+	if uint64(scriptByteLength)+uint64(compactByteLength) != uint64(len(varLenData)) {
+		return nil, fmt.Errorf("malformed var len data")
+	}
+
+	// Extract the actual script by omitting the leading CompactSizeUint.
+	return varLenData[compactByteLength:], nil
+}
 
 // PublicKeyHash constructs the 20-byte public key hash by applying SHA-256
 // then RIPEMD-160 on the provided ECDSA public key.

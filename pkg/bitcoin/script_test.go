@@ -4,12 +4,67 @@ import (
 	"crypto/ecdsa"
 	"crypto/elliptic"
 	"encoding/hex"
+	"fmt"
+	"reflect"
 	"testing"
 
 	"github.com/btcsuite/btcd/btcec"
 
 	"github.com/keep-network/keep-core/internal/testutils"
 )
+
+func TestNewScriptFromVarLenData(t *testing.T) {
+	fromHex := func(hexString string) []byte {
+		bytes, err := hex.DecodeString(hexString)
+		if err != nil {
+			t.Fatal(err)
+		}
+		return bytes
+	}
+
+	var tests = map[string]struct {
+		data           []byte
+		expectedScript Script
+		expectedErr    error
+	}{
+		"proper variable length data": {
+			data:           fromHex("1600148db50eb52063ea9d98b3eac91489a90f738986f6"),
+			expectedScript: fromHex("00148db50eb52063ea9d98b3eac91489a90f738986f6"),
+		},
+		"nil variable length data": {
+			data:        nil,
+			expectedErr: fmt.Errorf("cannot read compact size uint: [EOF]"),
+		},
+		"variable length data with missing script": {
+			data:        fromHex("16"),
+			expectedErr: fmt.Errorf("malformed var len data"),
+		},
+		"variable length data with missing compact size uint": {
+			data:        fromHex("00148db50eb52063ea9d98b3eac91489a90f738986f6"),
+			expectedErr: fmt.Errorf("malformed var len data"),
+		},
+		"variable length data with wrong compact size uint value": {
+			data:        fromHex("1500148db50eb52063ea9d98b3eac91489a90f738986f6"),
+			expectedErr: fmt.Errorf("malformed var len data"),
+		},
+	}
+
+	for testName, test := range tests {
+		t.Run(testName, func(t *testing.T) {
+			script, err := NewScriptFromVarLenData(test.data)
+
+			if !reflect.DeepEqual(test.expectedErr, err) {
+				t.Errorf(
+					"unexpected error\nexpected: %+v\nactual:   %+v\n",
+					test.expectedErr,
+					err,
+				)
+			}
+
+			testutils.AssertBytesEqual(t, test.expectedScript, script)
+		})
+	}
+}
 
 func TestPublicKeyHash(t *testing.T) {
 	// An arbitrary uncompressed public key.
