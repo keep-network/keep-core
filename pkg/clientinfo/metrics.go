@@ -16,7 +16,6 @@ const (
 	ConnectedPeersCountMetricName     = "connected_peers_count"
 	ConnectedBootstrapCountMetricName = "connected_bootstrap_count"
 	EthConnectivityMetricName         = "eth_connectivity"
-	EthLatestBlockNumberMetricName    = "eth_latest_block_number"
 	ClientInfoMetricName              = "client_info"
 )
 
@@ -94,29 +93,6 @@ func (r *Registry) ObserveEthConnectivity(
 
 	r.observe(
 		EthConnectivityMetricName,
-		input,
-		validateTick(tick, DefaultEthereumMetricsTick),
-	)
-}
-
-// ObserveEthBlockNumber triggers an observation process of the
-// eth_latest_block_number metric.
-func (r *Registry) ObserveEthBlockNumber(
-	blockCounter chain.BlockCounter,
-	tick time.Duration,
-) {
-	input := func() float64 {
-		currentBlock, err := blockCounter.CurrentBlock()
-
-		if err != nil {
-			return 0
-		}
-
-		return float64(currentBlock)
-	}
-
-	r.observe(
-		EthLatestBlockNumberMetricName,
 		input,
 		validateTick(tick, DefaultEthereumMetricsTick),
 	)
