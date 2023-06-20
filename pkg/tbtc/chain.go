@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/keep-network/keep-core/pkg/bitcoin"
-
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/operator"
 	"github.com/keep-network/keep-core/pkg/protocol/group"

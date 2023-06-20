@@ -1196,6 +1196,42 @@ func (tc *TbtcChain) GetDepositParameters() (
 	return
 }
 
+func (tc *TbtcChain) TxProofDifficultyFactor() (*big.Int, error) {
+	return tc.bridge.TxProofDifficultyFactor()
+}
+
+func (tc *TbtcChain) SubmitDepositSweepProofWithReimbursement(
+	transaction *bitcoin.Transaction,
+	proof *bitcoin.SpvProof,
+	mainUTXO bitcoin.UnspentTransactionOutput,
+	vault common.Address,
+) error {
+	bitcoinTxInfo := tbtcabi.BitcoinTxInfo3{
+		Version:      transaction.SerializeVersion(),
+		InputVector:  transaction.SerializeInputs(),
+		OutputVector: transaction.SerializeOutputs(),
+		Locktime:     transaction.SerializeLocktime(),
+	}
+	sweepProof := tbtcabi.BitcoinTxProof2{
+		MerkleProof:    proof.MerkleProof,
+		TxIndexInBlock: big.NewInt(int64(proof.TxIndexInBlock)),
+		BitcoinHeaders: proof.BitcoinHeaders,
+	}
+	utxo := tbtcabi.BitcoinTxUTXO2{
+		TxHash:        mainUTXO.Outpoint.TransactionHash,
+		TxOutputIndex: mainUTXO.Outpoint.OutputIndex,
+		TxOutputValue: uint64(mainUTXO.Value),
+	}
+
+	_, err := tc.maintainerProxy.SubmitDepositSweepProof(
+		bitcoinTxInfo,
+		sweepProof,
+		utxo,
+		vault,
+	)
+	return err
+}
+
 func buildDepositKey(
 	fundingTxHash bitcoin.Hash,
 	fundingOutputIndex uint32,

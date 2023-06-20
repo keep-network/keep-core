@@ -33,6 +33,7 @@ Flags:
       --tbtc.preParamsGenerationConcurrency int             tECDSA pre-parameters generation concurrency. (default 1)
       --tbtc.keyGenerationConcurrency int                   tECDSA key generation concurrency. (default number of cores)
       --developer.bridgeAddress string                      Address of the Bridge smart contract
+      --developer.maintainerProxyAddress string             Address of the MaintainerProxy smart contract
       --developer.lightRelayAddress string                  Address of the LightRelay smart contract
       --developer.lightRelayMaintainerProxyAddress string   Address of the LightRelayMaintainerProxy smart contract
       --developer.randomBeaconAddress string                Address of the RandomBeacon smart contract

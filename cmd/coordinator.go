@@ -7,9 +7,11 @@ import (
 
 	"github.com/keep-network/keep-core/config"
 	"github.com/keep-network/keep-core/internal/hexutils"
+	"github.com/keep-network/keep-core/pkg/bitcoin"
 	"github.com/keep-network/keep-core/pkg/bitcoin/electrum"
 	"github.com/keep-network/keep-core/pkg/chain/ethereum"
 	"github.com/keep-network/keep-core/pkg/coordinator"
+	"github.com/keep-network/keep-core/pkg/maintainer/spv"
 )
 
 var (
@@ -28,6 +30,10 @@ var (
 
 	// estimateDepositsSweepFeeCommand:
 	depositsCountFlagName = "deposits-count"
+
+	// submitDepositSweepProofCommand:
+	transactionHashFlagName = "transaction-hash"
+	confirmationsFlagName   = "confirmations"
 )
 
 // CoordinatorCommand contains the definition of tBTC Wallet Coordinator tools.
@@ -208,7 +214,7 @@ var proposeDepositsSweepCommand = cobra.Command{
 	},
 }
 
-var proposeDepositsSweepCommandDescription = `Submits a deposits sweep proposal to 
+var proposeDepositsSweepCommandDescription = `Submits a deposits sweep proposal to
 the chain.
 Expects --wallet and --fee flags along with deposits to sweep provided
 as arguments.
@@ -263,6 +269,82 @@ var estimateDepositsSweepFeeCommandDescription = "Estimates the satoshi " +
 	"estimation may be underpriced if the actual transaction contains " +
 	"legacy P2SH deposits. If the estimated fee exceeds the maximum fee " +
 	"allowed by the Bridge contract, the maximum fee is returned as result"
+
+var submitDepositSweepProofCommand = cobra.Command{
+	Use:              "submit-deposit-sweep-proof",
+	Short:            "submit deposit sweep proof",
+	Long:             "Submits deposit sweep proof to the Bridge contract",
+	TraverseChildren: true,
+	RunE: func(cmd *cobra.Command, args []string) error {
+		ctx := cmd.Context()
+
+		_, tbtcChain, _, _, _, err := ethereum.Connect(
+			ctx,
+			clientConfig.Ethereum,
+		)
+		if err != nil {
+			return fmt.Errorf(
+				"could not connect to Ethereum chain: [%v]",
+				err,
+			)
+		}
+
+		btcChain, err := electrum.Connect(ctx, clientConfig.Bitcoin.Electrum)
+		if err != nil {
+			return fmt.Errorf("could not connect to Electrum chain: [%v]", err)
+		}
+
+		transactionHashFlag, err := cmd.Flags().GetString(transactionHashFlagName)
+		if err != nil {
+			return fmt.Errorf("failed to find transaction hash flag: [%v]", err)
+		}
+
+		transactionHash, err := bitcoin.NewHashFromString(
+			transactionHashFlag,
+			bitcoin.ReversedByteOrder,
+		)
+		if err != nil {
+			return fmt.Errorf(
+				"failed to parse transaction hash flag: [%v]",
+				err,
+			)
+		}
+
+		// Allow the caller to request a specific number of confirmations.
+		// The Bridge calculates the required difficulty of a chain of block
+		// headers by multiplying the difficulty of the first block header by
+		// the difficulty factor. If the block headers happen to span the
+		// Bitcoin epoch difficulty change and there is a drop of difficulty
+		// between the epochs, the sum of difficulties from the headers chain
+		// may be too low. Allowing the caller to specify a greater number of
+		// confirmations will ensure the transaction can be proven.
+		requiredConfirmations, err := cmd.Flags().GetUint(confirmationsFlagName)
+		if err != nil {
+			return fmt.Errorf("failed to get confirmations flag: [%v]", err)
+		}
+
+		logger.Infof(
+			"Submitting deposit sweep proof for transaction [%s]",
+			transactionHashFlag,
+		)
+
+		if err = spv.SubmitDepositSweepProof(
+			transactionHash,
+			requiredConfirmations,
+			btcChain,
+			tbtcChain,
+		); err != nil {
+			return fmt.Errorf("failed to submit deposit sweep proof [%v]", err)
+		}
+
+		logger.Infof(
+			"Successfully submitted deposit sweep proof for transaction: [%s]",
+			transactionHashFlag,
+		)
+
+		return nil
+	},
+}
 
 func init() {
 	initFlags(
@@ -329,6 +411,33 @@ func init() {
 	)
 
 	CoordinatorCommand.AddCommand(&estimateDepositsSweepFeeCommand)
+
+	// Submit Deposit Sweep Proof Subcommand.
+
+	submitDepositSweepProofCommand.Flags().String(
+		transactionHashFlagName,
+		"",
+		"transaction hash the proof will be prepared for (the format should "+
+			"be the same as in Bitcoin explorers).",
+	)
+
+	if err := submitDepositSweepProofCommand.MarkFlagRequired(
+		transactionHashFlagName,
+	); err != nil {
+		logger.Fatalf("failed to mark flag required: [%v]", err)
+	}
+
+	submitDepositSweepProofCommand.Flags().Uint(
+		confirmationsFlagName,
+		0,
+		"(optional) number of confirmations that will be provided in the proof. "+
+			"This is an optional parameter that can be used in a rare event when "+
+			"more confirmations are required to perform a successful proof "+
+			"validation. If this parameter is not provided, the default value, "+
+			"retrieved from the Bridge will be used.",
+	)
+
+	CoordinatorCommand.AddCommand(&submitDepositSweepProofCommand)
 }
 
 func newWalletPublicKeyHash(str string) ([20]byte, error) {
