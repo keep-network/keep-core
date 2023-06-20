@@ -1479,8 +1479,57 @@ func (tc *TbtcChain) GetDepositSweepMaxSize() (uint16, error) {
 }
 
 func (tc *TbtcChain) OnRedemptionProposalSubmitted(
-	func(event *tbtc.RedemptionProposalSubmittedEvent),
+	handler func(event *tbtc.RedemptionProposalSubmittedEvent),
 ) subscription.EventSubscription {
-	// TODO: Implementation.
-	panic("not implemented yet")
+	onEvent := func(
+		proposal tbtcabi.WalletCoordinatorRedemptionProposal,
+		coordinator common.Address,
+		blockNumber uint64,
+	) {
+		tbtcProposal, err := convertRedemptionProposalFromAbiType(proposal)
+		if err != nil {
+			logger.Errorf(
+				"unexpected proposal in RedemptionProposalSubmitted event: [%v]",
+				err,
+			)
+			return
+		}
+
+		handler(&tbtc.RedemptionProposalSubmittedEvent{
+			Proposal:    tbtcProposal,
+			Coordinator: chain.Address(coordinator.Hex()),
+			BlockNumber: blockNumber,
+		})
+	}
+
+	return tc.walletCoordinator.
+		RedemptionProposalSubmittedEvent(nil, nil).
+		OnEvent(onEvent)
+}
+
+func convertRedemptionProposalFromAbiType(
+	proposal tbtcabi.WalletCoordinatorRedemptionProposal,
+) (*tbtc.RedemptionProposal, error) {
+	redeemersOutputScripts := make(
+		[]bitcoin.Script,
+		len(proposal.RedeemersOutputScripts),
+	)
+
+	for i, script := range proposal.RedeemersOutputScripts {
+		// The on-chain script representation is prepended with the script's
+		// byte-length while bitcoin.Script is not. We need to remove the
+		// length prefix.
+		parsedScript, err := bitcoin.NewScriptFromVarLenData(script)
+		if err != nil {
+			return nil, fmt.Errorf("cannot parse redeemer output script: [%v]", err)
+		}
+
+		redeemersOutputScripts[i] = parsedScript
+	}
+
+	return &tbtc.RedemptionProposal{
+		WalletPublicKeyHash:    proposal.WalletPubKeyHash,
+		RedeemersOutputScripts: redeemersOutputScripts,
+		RedemptionTxFee:        proposal.RedemptionTxFee,
+	}, nil
 }
