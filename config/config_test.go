@@ -219,6 +219,10 @@ func TestReadConfigFromFile(t *testing.T) {
 			readValueFunc: func(c *Config) interface{} { return c.Maintainer.WalletCoordination.SweepInterval },
 			expectedValue: 64 * time.Hour,
 		},
+		"Maintainer.Spv.Enabled": {
+			readValueFunc: func(c *Config) interface{} { return c.Maintainer.Spv.Enabled },
+			expectedValue: true,
+		},
 	}
 
 	for _, filePath := range filePaths {

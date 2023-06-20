@@ -48,6 +48,9 @@
           "Enabled": true,
           "RedemptionInterval": "13h",
           "SweepInterval": "64h"
+        },
+        "Spv": {
+            "Enabled": true
         }
     },
     "Developer": {

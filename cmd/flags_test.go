@@ -260,6 +260,13 @@ var cmdFlagsTests = map[string]struct {
 		expectedValueFromFlag: 35 * time.Hour,
 		defaultValue:          48 * time.Hour,
 	},
+	"maintainer.spv": {
+		readValueFunc:         func(c *config.Config) interface{} { return c.Maintainer.Spv.Enabled },
+		flagName:              "--spv",
+		flagValue:             "", // don't provide any value
+		expectedValueFromFlag: true,
+		defaultValue:          false,
+	},
 	"developer.randomBeaconAddress": {
 		readValueFunc: func(c *config.Config) interface{} {
 			address, _ := c.Ethereum.ContractAddress(chainEthereum.RandomBeaconContractName)
