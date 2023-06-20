@@ -1223,12 +1223,32 @@ func (tc *TbtcChain) SubmitDepositSweepProofWithReimbursement(
 		TxOutputValue: uint64(mainUTXO.Value),
 	}
 
-	_, err := tc.maintainerProxy.SubmitDepositSweepProof(
+	gasEstimate, err := tc.maintainerProxy.SubmitDepositSweepProofGasEstimate(
 		bitcoinTxInfo,
 		sweepProof,
 		utxo,
 		vault,
 	)
+	if err != nil {
+		return err
+	}
+
+	// The original estimate for this contract call is too low and the call
+	// fails on reimbursing the submitter. Example:
+	// 0xe27a92883e0e64da8a3a54a15a260ea2f4d3d48470129ac5c09bfe9637d7e114
+	// Here we add a 20% margin to overcome the gas problems.
+	gasEstimateWithMargin := float64(gasEstimate) * float64(1.2)
+
+	_, err = tc.maintainerProxy.SubmitDepositSweepProof(
+		bitcoinTxInfo,
+		sweepProof,
+		utxo,
+		vault,
+		ethutil.TransactionOptions{
+			GasLimit: uint64(gasEstimateWithMargin),
+		},
+	)
+
 	return err
 }
 
@@ -1493,7 +1513,7 @@ func (tc *TbtcChain) SubmitDepositSweepProposalWithReimbursement(
 		return err
 	}
 
-	// The original estimate for this contract call turned is low and the call
+	// The original estimate for this contract call is too low and the call
 	// fails on reimbursing the submitter. Examples:
 	// 0x5711df32d785140ca6b5b12c87f818a6c5d75d10445a12a7d3d75caadb40c0ac
 	// 0xf9a8c0b0ecceb673e19eed7af7c9963cdd929468fb3818e9a8c3b8c59dc6ef85
