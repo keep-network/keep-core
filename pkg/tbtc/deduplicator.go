@@ -25,6 +25,9 @@ const (
 	// DepositSweepProposalCachePeriod is the time period the cache maintains
 	// the given deposit sweep proposal.
 	DepositSweepProposalCachePeriod = 7 * 24 * time.Hour
+	// RedemptionProposalCachePeriod is the time period the cache maintains
+	// the given redemption proposal.
+	RedemptionProposalCachePeriod = 24 * time.Hour
 )
 
 // deduplicator decides whether the given event should be handled by the
@@ -48,6 +51,7 @@ type deduplicator struct {
 	dkgResultHashCache        *cache.TimeCache
 	heartbeatRequestCache     *cache.TimeCache
 	depositSweepProposalCache *cache.TimeCache
+	redemptionProposalCache   *cache.TimeCache
 }
 
 func newDeduplicator() *deduplicator {
@@ -56,6 +60,7 @@ func newDeduplicator() *deduplicator {
 		dkgResultHashCache:        cache.NewTimeCache(DKGResultHashCachePeriod),
 		heartbeatRequestCache:     cache.NewTimeCache(HeartbeatRequestCachePeriod),
 		depositSweepProposalCache: cache.NewTimeCache(DepositSweepProposalCachePeriod),
+		redemptionProposalCache:   cache.NewTimeCache(RedemptionProposalCachePeriod),
 	}
 }
 
@@ -185,6 +190,34 @@ func (d *deduplicator) notifyDepositSweepProposalSubmitted(
 func (d *deduplicator) notifyRedemptionProposalSubmitted(
 	newProposal *RedemptionProposal,
 ) bool {
-	// TODO: Implementation.
-	panic("not implemented yet")
+	d.redemptionProposalCache.Sweep()
+
+	// We build the cache key by hashing the concatenation of relevant fields
+	// of the proposal. It may be tempting to extract that code into a general
+	// "hash code" function exposed by the RedemptionProposal type but this
+	// is not necessarily a good idea. The deduplicator is responsible for
+	// detecting duplicates and construction of cache keys is part of that job.
+	// Extracting this logic outside would push that responsibility out of the
+	// deduplicator control. That is dangerous as deduplication logic could
+	// be implicitly changeable from the outside and lead to serious bugs.
+	var buffer bytes.Buffer
+	buffer.Write(newProposal.WalletPublicKeyHash[:])
+	for _, script := range newProposal.RedeemersOutputScripts {
+		buffer.Write(script)
+	}
+	buffer.Write(newProposal.RedemptionTxFee.Bytes())
+
+	bufferSha256 := sha256.Sum256(buffer.Bytes())
+	cacheKey := hex.EncodeToString(bufferSha256[:])
+
+	// If the key is not in the cache, that means the proposal was not handled
+	// yet and the client should proceed with the execution.
+	if !d.redemptionProposalCache.Has(cacheKey) {
+		d.redemptionProposalCache.Add(cacheKey)
+		return true
+	}
+
+	// Otherwise, the proposal is a duplicate and the client should not
+	// proceed with the execution.
+	return false
 }
