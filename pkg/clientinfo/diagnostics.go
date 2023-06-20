@@ -12,6 +12,7 @@ import (
 type Diagnostics struct {
 	ClientInfo     Client `json:"client_info"`
 	ConnectedPeers []Peer `json:"connected_peers"`
+	ChainInfo      Chain  `json:"chain_info"`
 }
 
 // Client describes data structure of client information.
@@ -27,6 +28,11 @@ type Peer struct {
 	ChainAddress          string   `json:"chain_address"`
 	NetworkID             string   `json:"network_id"`
 	NetworkMultiAddresses []string `json:"multiaddrs"`
+}
+
+// Chain describes data structure of chains information.
+type Chain struct {
+	EthBlockNumber uint64 `json:"latest_eth_block_number"`
 }
 
 // ApplicationInfo describes data structure of application information.
@@ -111,6 +117,32 @@ func (r *Registry) RegisterClientInfoSource(
 		bytes, err := json.Marshal(clientInfo)
 		if err != nil {
 			logger.Error("error on serializing client info to JSON: [%v]", err)
+			return ""
+		}
+
+		return string(bytes)
+	})
+}
+
+// RegisterChainInfo registers the diagnostics source providing
+// information about chains.
+func (r *Registry) RegisterChainInfo(
+	blockCounter chain.BlockCounter,
+) {
+	r.RegisterDiagnosticSource("chain_info", func() string {
+		currentBlock, err := blockCounter.CurrentBlock()
+
+		if err != nil {
+			return ""
+		}
+
+		chainInfo := Chain{
+			EthBlockNumber: currentBlock,
+		}
+
+		bytes, err := json.Marshal(chainInfo)
+		if err != nil {
+			logger.Error("error on serializing chain info to JSON: [%v]", err)
 			return ""
 		}
 

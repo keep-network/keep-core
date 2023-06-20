@@ -226,6 +226,8 @@ func initializeClientInfo(
 		build.Revision,
 	)
 
+	registry.RegisterChainInfo(blockCounter)
+
 	logger.Infof(
 		"enabled client info endpoint on port [%v]",
 		config.ClientInfo.Port,
