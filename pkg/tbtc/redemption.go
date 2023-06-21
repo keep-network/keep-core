@@ -133,13 +133,89 @@ func (ra *redemptionAction) execute() error {
 		zap.String("step", "validateProposal"),
 	)
 
-	_, err := ValidateRedemptionProposal(
+	validatedRequests, err := ValidateRedemptionProposal(
 		validateProposalLogger,
 		ra.proposal,
 		ra.chain,
 	)
 	if err != nil {
 		return fmt.Errorf("validate proposal step failed: [%v]", err)
+	}
+
+	walletPublicKeyHash := bitcoin.PublicKeyHash(ra.wallet().publicKey)
+
+	walletMainUtxo, err := DetermineWalletMainUtxo(
+		walletPublicKeyHash,
+		ra.chain,
+		ra.btcChain,
+	)
+	if err != nil {
+		return fmt.Errorf(
+			"error while determining wallet's main UTXO: [%v]",
+			err,
+		)
+	}
+
+	// Proposal validation should detect this but let's make a check just
+	// in case.
+	if walletMainUtxo == nil {
+		return fmt.Errorf("redeeming wallet has no main UTXO")
+	}
+
+	err = EnsureWalletSyncedBetweenChains(
+		walletPublicKeyHash,
+		walletMainUtxo,
+		ra.btcChain,
+	)
+	if err != nil {
+		return fmt.Errorf(
+			"error while ensuring wallet state is synced between "+
+				"BTC and host chain: [%v]",
+			err,
+		)
+	}
+
+	unsignedRedemptionTx, err := assembleRedemptionTransaction(
+		ra.btcChain,
+		ra.wallet().publicKey,
+		walletMainUtxo,
+		validatedRequests,
+		withRedemptionTotalFee(ra.proposal.RedemptionTxFee.Int64()),
+	)
+	if err != nil {
+		return fmt.Errorf(
+			"error while assembling redemption transaction: [%v]",
+			err,
+		)
+	}
+
+	signTxLogger := ra.logger.With(
+		zap.String("step", "signTransaction"),
+	)
+
+	redemptionTx, err := ra.transactionExecutor.signTransaction(
+		signTxLogger,
+		unsignedRedemptionTx,
+		ra.proposalProcessingStartBlock,
+		ra.proposalExpiresAt.Add(-ra.signingTimeoutSafetyMargin),
+	)
+	if err != nil {
+		return fmt.Errorf("sign transaction step failed: [%v]", err)
+	}
+
+	broadcastTxLogger := ra.logger.With(
+		zap.String("step", "broadcastTransaction"),
+		zap.String("redemptionTxHash", redemptionTx.Hash().Hex(bitcoin.ReversedByteOrder)),
+	)
+
+	err = ra.transactionExecutor.broadcastTransaction(
+		broadcastTxLogger,
+		redemptionTx,
+		ra.broadcastTimeout,
+		ra.broadcastCheckDelay,
+	)
+	if err != nil {
+		return fmt.Errorf("broadcast transaction step failed: [%v]", err)
 	}
 
 	return nil
