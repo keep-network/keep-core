@@ -3,13 +3,14 @@ package tbtc
 import (
 	"context"
 	"fmt"
+	"math"
 	"math/big"
 	"reflect"
 	"testing"
 	"time"
 
+	"github.com/keep-network/keep-core/internal/testutils"
 	"github.com/keep-network/keep-core/pkg/chain"
-	"github.com/keep-network/keep-core/pkg/internal/testutils"
 	"github.com/keep-network/keep-core/pkg/protocol/group"
 	"github.com/keep-network/keep-core/pkg/tecdsa"
 	"github.com/keep-network/keep-core/pkg/tecdsa/signing"
@@ -55,6 +56,7 @@ func TestSigningRetryLoop(t *testing.T) {
 	var tests = map[string]struct {
 		signingGroupMemberIndex     group.MemberIndex
 		ctxFn                       func() (context.Context, context.CancelFunc)
+		currentBlockFn              getCurrentBlockFn
 		incomingAnnouncementsFn     func(sessionID string) ([]group.MemberIndex, error)
 		signingAttemptFn            signingAttemptFn
 		waitUntilAllDoneOutcomeFn   func(attemptNumber uint64) (*signing.Result, uint64, error)
@@ -68,6 +70,9 @@ func TestSigningRetryLoop(t *testing.T) {
 			signingGroupMemberIndex: 1,
 			ctxFn: func() (context.Context, context.CancelFunc) {
 				return context.WithTimeout(context.Background(), 10*time.Second)
+			},
+			currentBlockFn: func() (uint64, error) {
+				return 200, nil // same as the initial start block
 			},
 			incomingAnnouncementsFn: func(
 				sessionID string,
@@ -115,6 +120,9 @@ func TestSigningRetryLoop(t *testing.T) {
 			ctxFn: func() (context.Context, context.CancelFunc) {
 				return context.WithTimeout(context.Background(), 10*time.Second)
 			},
+			currentBlockFn: func() (uint64, error) {
+				return 200, nil // same as the initial start block
+			},
 			incomingAnnouncementsFn: func(
 				sessionID string,
 			) ([]group.MemberIndex, error) {
@@ -161,6 +169,9 @@ func TestSigningRetryLoop(t *testing.T) {
 			signingGroupMemberIndex: 3,
 			ctxFn: func() (context.Context, context.CancelFunc) {
 				return context.WithTimeout(context.Background(), 10*time.Second)
+			},
+			currentBlockFn: func() (uint64, error) {
+				return 200, nil // same as the initial start block
 			},
 			incomingAnnouncementsFn: func(
 				sessionID string,
@@ -216,6 +227,9 @@ func TestSigningRetryLoop(t *testing.T) {
 			ctxFn: func() (context.Context, context.CancelFunc) {
 				return context.WithTimeout(context.Background(), 10*time.Second)
 			},
+			currentBlockFn: func() (uint64, error) {
+				return 200, nil // same as the initial start block
+			},
 			incomingAnnouncementsFn: func(
 				sessionID string,
 			) ([]group.MemberIndex, error) {
@@ -268,6 +282,9 @@ func TestSigningRetryLoop(t *testing.T) {
 			signingGroupMemberIndex: 4,
 			ctxFn: func() (context.Context, context.CancelFunc) {
 				return context.WithTimeout(context.Background(), 10*time.Second)
+			},
+			currentBlockFn: func() (uint64, error) {
+				return 200, nil // same as the initial start block
 			},
 			incomingAnnouncementsFn: func(
 				sessionID string,
@@ -322,6 +339,9 @@ func TestSigningRetryLoop(t *testing.T) {
 			ctxFn: func() (context.Context, context.CancelFunc) {
 				return context.WithTimeout(context.Background(), 10*time.Second)
 			},
+			currentBlockFn: func() (uint64, error) {
+				return 200, nil // same as the initial start block
+			},
 			incomingAnnouncementsFn: func(
 				sessionID string,
 			) ([]group.MemberIndex, error) {
@@ -365,6 +385,9 @@ func TestSigningRetryLoop(t *testing.T) {
 			signingGroupMemberIndex: 4,
 			ctxFn: func() (context.Context, context.CancelFunc) {
 				return context.WithTimeout(context.Background(), 10*time.Second)
+			},
+			currentBlockFn: func() (uint64, error) {
+				return 200, nil // same as the initial start block
 			},
 			incomingAnnouncementsFn: func(
 				sessionID string,
@@ -438,6 +461,9 @@ func TestSigningRetryLoop(t *testing.T) {
 				cancelCtx()
 				return ctx, cancelCtx
 			},
+			currentBlockFn: func() (uint64, error) {
+				return 200, nil // same as the initial start block
+			},
 			incomingAnnouncementsFn: func(
 				sessionID string,
 			) ([]group.MemberIndex, error) {
@@ -451,6 +477,87 @@ func TestSigningRetryLoop(t *testing.T) {
 			expectedErr:                 context.Canceled,
 			expectedResult:              nil,
 			expectedLastExecutedAttempt: nil,
+		},
+		"signing in the past": {
+			signingGroupMemberIndex: 1,
+			ctxFn: func() (context.Context, context.CancelFunc) {
+				return context.WithTimeout(context.Background(), 50*time.Millisecond)
+			},
+			currentBlockFn: func() (uint64, error) {
+				return math.MaxUint64, nil // all attempts should be skipped
+			},
+			incomingAnnouncementsFn: func(
+				sessionID string,
+			) ([]group.MemberIndex, error) {
+				return signingGroupMembersIndexes, nil
+			},
+			signingAttemptFn: func(
+				attempt *signingAttemptParams,
+			) (*signing.Result, uint64, error) {
+				return nil, 0, fmt.Errorf("invalid data")
+			},
+			// The retry loop keeps skipping all attempts because they are all
+			// ending announcement phase in the past block. It keeps retrying
+			// until the context deadline is exceeded.
+			expectedErr:                 context.DeadlineExceeded,
+			expectedResult:              nil,
+			expectedLastExecutedAttempt: nil,
+		},
+		"first attempt in the past": {
+			signingGroupMemberIndex: 3,
+			ctxFn: func() (context.Context, context.CancelFunc) {
+				return context.WithTimeout(context.Background(), 1*time.Second)
+			},
+			currentBlockFn: func() (uint64, error) {
+				// The initial start block is 200 and the announcement takes 6
+				// blocks; we are at the end of the announcement phase so the
+				// first attempt should be skipped.
+				return 206, nil
+			},
+			incomingAnnouncementsFn: func(
+				sessionID string,
+			) ([]group.MemberIndex, error) {
+				return signingGroupMembersIndexes, nil
+			},
+			signingAttemptFn: func(
+				attempt *signingAttemptParams,
+			) (*signing.Result, uint64, error) {
+				return testResult, 260, nil // an arbitrary end block
+			},
+			waitUntilAllDoneOutcomeFn: func(attemptNumber uint64) (*signing.Result, uint64, error) {
+				// Simulate that the done check phase determines the same
+				// end block as the executing signer.
+				return testResult, 260, nil
+			},
+			expectedOutgoingDoneChecks: []*signingDoneMessage{
+				{
+					senderID:      3,
+					message:       message,
+					attemptNumber: 2,
+					signature:     testResult.Signature,
+					endBlock:      260,
+				},
+			},
+			expectedErr: nil,
+			expectedResult: &signingRetryLoopResult{
+				result:              testResult,
+				latestEndBlock:      260, // the end block resolved by the done check phase
+				attemptTimeoutBlock: 277, // start block of the second attempt + 30
+			},
+			// Member 3 is the executing one. The first attempt's announcement
+			// is skipped and the signing random retry algorithm invoked with the
+			// test seed excludes 3 members (6 is the honest threshold) from the
+			// second attempt: 1, 2 and 5. The additional exclusion round that
+			// trims the included members list to the honest threshold size
+			// adds member 9 to the final excluded members list.
+			expectedLastExecutedAttempt: &signingAttemptParams{
+				number:                 2,
+				startBlock:             247, // 206 + 1 * (6 + 30 + 5)
+				timeoutBlock:           277, // start block of the second attempt + 30
+				excludedMembersIndexes: []group.MemberIndex{1, 2, 5, 9},
+			},
+			// just the second announcement, the first one was skipped
+			outgoingAnnouncementsCount: 1,
 		},
 	}
 
@@ -486,6 +593,7 @@ func TestSigningRetryLoop(t *testing.T) {
 				func(context.Context, uint64) error {
 					return nil
 				},
+				test.currentBlockFn,
 				func(params *signingAttemptParams) (*signing.Result, uint64, error) {
 					lastExecutedAttempt = params
 					return test.signingAttemptFn(params)

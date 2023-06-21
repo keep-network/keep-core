@@ -2,9 +2,14 @@ package config
 
 import (
 	"fmt"
+	"math/rand"
 	"os"
 	"strings"
 	"syscall"
+	"time"
+
+	"github.com/keep-network/keep-core/config/network"
+	"github.com/keep-network/keep-core/pkg/bitcoin"
 
 	"github.com/hashicorp/go-multierror"
 	"github.com/ipfs/go-log"
@@ -47,6 +52,7 @@ type Config struct {
 
 // BitcoinConfig defines the configuration for Bitcoin.
 type BitcoinConfig struct {
+	bitcoin.Network
 	// Electrum defines the configuration for the Electrum client.
 	Electrum electrum.Config
 }
@@ -60,31 +66,41 @@ func bindFlags(flagSet *pflag.FlagSet) error {
 	return nil
 }
 
-// Resolve ethereum network based on the set boolean flags.
-func (c *Config) resolveEthereumNetwork(flagSet *pflag.FlagSet) error {
-	var err error
-
-	c.Ethereum.Network, err = func() (commonEthereum.Network, error) {
-		isGoerli, err := flagSet.GetBool(commonEthereum.Goerli.String())
+// Resolve Ethereum and Bitcoin networks based on the set boolean flags.
+func (c *Config) resolveNetworks(flagSet *pflag.FlagSet) (network.Type, error) {
+	clientNetwork, err := func() (
+		network.Type,
+		error,
+	) {
+		isTestnet, err := flagSet.GetBool(network.Testnet.String())
 		if err != nil {
-			return commonEthereum.Unknown, err
+			return network.Unknown, err
 		}
-		if isGoerli {
-			return commonEthereum.Goerli, nil
+		if isTestnet {
+			return network.Testnet, nil
 		}
 
-		isDeveloper, err := flagSet.GetBool(commonEthereum.Developer.String())
+		isDeveloper, err := flagSet.GetBool(network.Developer.String())
 		if err != nil {
-			return commonEthereum.Unknown, err
+			return network.Unknown, err
 		}
 		if isDeveloper {
-			return commonEthereum.Developer, nil
+			return network.Developer, nil
 		}
 
-		return commonEthereum.Mainnet, nil
+		return network.Mainnet, nil
 	}()
 
-	return err
+	c.Ethereum.Network = clientNetwork.Ethereum()
+	c.Bitcoin.Network = clientNetwork.Bitcoin()
+
+	logger.Infof(
+		"using [%v] Ethereum network and [%v] Bitcoin network",
+		c.Ethereum.Network,
+		c.Bitcoin.Network,
+	)
+
+	return clientNetwork, err
 }
 
 // ReadConfig reads in the configuration file at `configFilePath` and flags defined in
@@ -92,13 +108,25 @@ func (c *Config) resolveEthereumNetwork(flagSet *pflag.FlagSet) error {
 func (c *Config) ReadConfig(configFilePath string, flagSet *pflag.FlagSet, categories ...Category) error {
 	initializeContractAddressesAliases()
 
+	clientNetwork := network.Mainnet
 	if flagSet != nil {
 		if err := bindFlags(flagSet); err != nil {
 			return fmt.Errorf("unable to bind the flags: [%w]", err)
 		}
 
-		if err := c.resolveEthereumNetwork(flagSet); err != nil {
-			return fmt.Errorf("unable to resolve ethereum network: [%w]", err)
+		var err error
+		clientNetwork, err = c.resolveNetworks(flagSet)
+		if err != nil {
+			return fmt.Errorf("unable to resolve networks: [%w]", err)
+		}
+
+		// TODO: Remove the mainnet flag.
+		// DEPRECATED
+		if isMainnet, err := flagSet.GetBool(network.Mainnet.String()); err == nil && isMainnet {
+			logger.Warnf(
+				"--%s flag is deprecated, to run the client against the mainnet don't provide any network flag",
+				network.Mainnet.String(),
+			)
 		}
 	}
 
@@ -122,9 +150,17 @@ func (c *Config) ReadConfig(configFilePath string, flagSet *pflag.FlagSet, categ
 	c.resolveContractsAddresses()
 
 	// Resolve network peers.
-	err := c.resolvePeers()
+	err := c.resolvePeers(clientNetwork)
 	if err != nil {
 		return fmt.Errorf("failed to resolve peers: %w", err)
+	}
+
+	// Resolve Electrum server.
+	// #nosec G404 (insecure random number source (rand))
+	// Picking up an Electrum server does not require secure randomness.
+	err = c.resolveElectrum(rand.New(rand.NewSource(time.Now().UnixNano())))
+	if err != nil {
+		return fmt.Errorf("failed to resolve Electrum: %w", err)
 	}
 
 	// Validate configuration.

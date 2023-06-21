@@ -84,6 +84,7 @@ export { ReactComponent as QuestionFill } from "../static/svg/question-fill.svg"
 export { ReactComponent as EarnThresholdTokens } from "../static/svg/earn-threshold-tokens.svg"
 export { ReactComponent as Money } from "../static/svg/money.svg"
 export { ReactComponent as CovKeep } from "../static/svg/keep-symbol.svg"
+export { ReactComponent as LegacyDappIllustration } from "../static/svg/legacy-dapp-modal.svg"
 
 const Badge = ({ height, width }) => (
   <svg

@@ -8,9 +8,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/keep-network/keep-core/internal/testutils"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/internal/tecdsatest"
-	"github.com/keep-network/keep-core/pkg/internal/testutils"
 	"github.com/keep-network/keep-core/pkg/protocol/group"
 	"github.com/keep-network/keep-core/pkg/tecdsa"
 	"github.com/keep-network/keep-core/pkg/tecdsa/dkg"
@@ -80,7 +80,7 @@ func TestDkgRetryLoop(t *testing.T) {
 			expectedLastAttempt: &dkgAttemptParams{
 				number:                 1,
 				startBlock:             206,
-				timeoutBlock:           356, // start block + 150
+				timeoutBlock:           406, // start block + 200
 				excludedMembersIndexes: []group.MemberIndex{},
 			},
 		},
@@ -104,7 +104,7 @@ func TestDkgRetryLoop(t *testing.T) {
 			expectedLastAttempt: &dkgAttemptParams{
 				number:                 1,
 				startBlock:             206,
-				timeoutBlock:           356, // start block + 150
+				timeoutBlock:           406, // start block + 200
 				excludedMembersIndexes: []group.MemberIndex{9, 10},
 			},
 		},
@@ -130,8 +130,8 @@ func TestDkgRetryLoop(t *testing.T) {
 			// readiness.
 			expectedLastAttempt: &dkgAttemptParams{
 				number:                 2,
-				startBlock:             367, // 206 + 1 * (6 + 150 + 5)
-				timeoutBlock:           517, // start block + 150
+				startBlock:             417, // 206 + 1 * (6 + 200 + 5)
+				timeoutBlock:           617, // start block + 200
 				excludedMembersIndexes: []group.MemberIndex{2, 5},
 			},
 		},
@@ -155,8 +155,8 @@ func TestDkgRetryLoop(t *testing.T) {
 			// First attempt fails due to the announcer error.
 			expectedLastAttempt: &dkgAttemptParams{
 				number:                 2,
-				startBlock:             367, // 206 + 1 * (6 + 150 + 5)
-				timeoutBlock:           517, // start block + 150
+				startBlock:             417, // 206 + 1 * (6 + 200 + 5)
+				timeoutBlock:           617, // start block + 200
 				excludedMembersIndexes: []group.MemberIndex{2, 5},
 			},
 		},
@@ -183,8 +183,8 @@ func TestDkgRetryLoop(t *testing.T) {
 			// given seed.
 			expectedLastAttempt: &dkgAttemptParams{
 				number:                 2,
-				startBlock:             367, // 206 + 1 * (6 + 150 + 5)
-				timeoutBlock:           517, // start block + 150
+				startBlock:             417, // 206 + 1 * (6 + 200 + 5)
+				timeoutBlock:           617, // start block + 150
 				excludedMembersIndexes: []group.MemberIndex{2, 5},
 			},
 		},
@@ -211,8 +211,8 @@ func TestDkgRetryLoop(t *testing.T) {
 			// member 5 skips attempt 2 and succeeds on attempt 3.
 			expectedLastAttempt: &dkgAttemptParams{
 				number:                 3,
-				startBlock:             528, // 206 + 2 * (6 + 150 + 5)
-				timeoutBlock:           678, // start block + 150
+				startBlock:             628, // 206 + 2 * (6 + 200 + 5)
+				timeoutBlock:           828, // start block + 200
 				excludedMembersIndexes: []group.MemberIndex{9},
 			},
 		},

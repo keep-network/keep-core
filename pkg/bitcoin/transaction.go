@@ -1,6 +1,11 @@
 package bitcoin
 
-import "bytes"
+import (
+	"bytes"
+	"encoding/binary"
+
+	"github.com/btcsuite/btcd/wire"
+)
 
 // TransactionSerializationFormat represents the Bitcoin transaction
 // serialization format.
@@ -38,17 +43,17 @@ type Transaction struct {
 // as described below.
 //
 // If the transaction CONTAINS witness inputs and Serialize is called with:
-// - Standard serialization format, the result is actually in the Standard
-//   format and does not include witness data referring to the witness inputs
-// - Witness serialization format, the result is actually in the Witness
-//   format and includes witness data referring to the witness inputs
+//   - Standard serialization format, the result is actually in the Standard
+//     format and does not include witness data referring to the witness inputs
+//   - Witness serialization format, the result is actually in the Witness
+//     format and includes witness data referring to the witness inputs
 //
 // If the transaction DOES NOT CONTAIN witness inputs and Serialize is
 // called with:
-// - Standard serialization format, the result is actually in the Standard
-//   format
-// - Witness serialization format, the result is actually in the Standard
-//   format because there are no witness inputs whose data can be included
+//   - Standard serialization format, the result is actually in the Standard
+//     format
+//   - Witness serialization format, the result is actually in the Standard
+//     format because there are no witness inputs whose data can be included
 //
 // By default, the Witness format is used and that can be changed using the
 // optional format argument. The Witness format is used by default as it
@@ -87,6 +92,60 @@ func (t *Transaction) Serialize(
 	default:
 		panic("unknown transaction serialization format")
 	}
+}
+
+// SerializeVersion serializes the transaction version to a little-endian
+// 4-byte array.
+func (t *Transaction) SerializeVersion() [4]byte {
+	result := [4]byte{}
+	binary.LittleEndian.PutUint32(result[:], uint32(t.Version))
+	return result
+}
+
+// SerializeInputs serializes the transaction inputs to a byte array prepended
+// with a CompactSizeUint denoting the total number of inputs.
+func (t *Transaction) SerializeInputs() []byte {
+	internal := newInternalTransaction()
+	internal.fromTransaction(t)
+
+	inputsByteSize := wire.VarIntSerializeSize(uint64(len(internal.TxIn)))
+	for _, txIn := range internal.TxIn {
+		inputsByteSize += txIn.SerializeSize()
+	}
+
+	// The first 4 bytes are version. The input vector starts at the 5th byte.
+	startingByte := 4
+	endingByte := startingByte + inputsByteSize
+
+	return t.Serialize(Standard)[startingByte:endingByte]
+}
+
+// SerializeOutputs serializes the transaction outputs to a byte array prepended
+// with a CompactSizeUint denoting the total number of outputs.
+func (t *Transaction) SerializeOutputs() []byte {
+	internal := newInternalTransaction()
+	internal.fromTransaction(t)
+
+	outputsByteSize := wire.VarIntSerializeSize(uint64(len(internal.TxOut)))
+	for _, txOut := range internal.TxOut {
+		outputsByteSize += txOut.SerializeSize()
+	}
+
+	serializedTx := t.Serialize(Standard)
+
+	// The last 4 bytes are locktime. The output vector ends just before it.
+	endingByte := len(serializedTx) - 4
+	startingByte := endingByte - outputsByteSize
+
+	return serializedTx[startingByte:endingByte]
+}
+
+// SerializeLocktime serializes the transaction locktime to a little-endian
+// 4-byte array.
+func (t *Transaction) SerializeLocktime() [4]byte {
+	result := [4]byte{}
+	binary.LittleEndian.PutUint32(result[:], t.Locktime)
+	return result
 }
 
 // Deserialize deserializes the given byte array to a Transaction.
@@ -167,9 +226,10 @@ type TransactionOutput struct {
 	// Value denotes the number of satoshis to spend. Zero is a valid value.
 	Value int64
 	// PublicKeyScript defines the conditions that must be satisfied to spend
-	// this output. This slice MUST NOT start with the byte-length of the script
-	// encoded as CompactSizeUint as this is done during transaction serialization.
-	PublicKeyScript []byte
+	// this output. As stated in the Script docstring, this field MUST NOT
+	// start with the byte-length of the script encoded as CompactSizeUint as
+	// this is done during transaction serialization.
+	PublicKeyScript Script
 }
 
 // UnspentTransactionOutput represents an unspent output (UTXO) of a Bitcoin
@@ -179,4 +239,20 @@ type UnspentTransactionOutput struct {
 	Outpoint *TransactionOutpoint
 	// Value denotes the number of unspent satoshis.
 	Value int64
+}
+
+// TransactionMerkleProof holds information about the merkle branch to a
+// confirmed transaction.
+type TransactionMerkleProof struct {
+	// BlockHeight is the height of the block the transaction was confirmed in.
+	BlockHeight uint
+
+	// MerkleNodes is a list of transaction hashes the current hash is paired
+	// with, recursively, in order to trace up to obtain the merkle root of the
+	// including block, deepest pairing first. Each hash is an unprefixed hex
+	// string.
+	MerkleNodes []string
+
+	// Position is the 0-based index of the transaction's position in the block.
+	Position uint
 }

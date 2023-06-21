@@ -9,12 +9,9 @@ commonLabels:
   network: goerli
 
 configMapGenerator:
-  - name: btc-difficulty-maintainer-accounts-info
+  - name: btc-difficulty-maintainer-eth-accounts-info
     files:
-      - config/btc-difficulty-maintainer-keyfile
-  - name: btc-difficulty-maintainer-config
-    files:
-      - config/keep-client-config.toml
+      - .secret/btc-difficulty-maintainer-keyfile
   - name: electrum-api-mainnet
     literals:
       - electrumx-url-tcp=electrum.blockstream.info:50001
@@ -22,7 +19,7 @@ configMapGenerator:
 secretGenerator:
   - name: btc-difficulty-maintainer-eth-accounts-password
     files:
-      - .secret/eth-account-password
+      - .secret/btc-difficulty-maintainer-password
 
 generatorOptions:
   disableNameSuffixHash: true

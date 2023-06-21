@@ -10,15 +10,10 @@ import * as copyStakeSaga from "./copy-stake"
 import * as subscriptions from "./subscriptions"
 import * as keepTokenBalance from "./keep-balance"
 import * as rewards from "./rewards"
-import * as liquidityRewards from "./liquidity-rewards"
 import * as operator from "./operartor"
 import * as authorization from "./authorization"
 import * as coveragePool from "./coverage-pool"
-import * as tbtcV2Migration from "./tbtc-migration"
 import * as keepToTStaking from "./keep-to-t-staking"
-
-const { watchFetchLiquidityRewardsAPY, ...restliquidityRewards } =
-  liquidityRewards
 
 const loginRequiredSagas = [
   ...Object.values(delegateStakeSaga),
@@ -29,18 +24,12 @@ const loginRequiredSagas = [
   ...Object.values(subscriptions),
   ...Object.values(keepTokenBalance),
   ...Object.values(rewards),
-  ...Object.values(restliquidityRewards),
   ...Object.values(operator),
   ...Object.values(authorization),
-  ...Object.values(tbtcV2Migration),
   ...Object.values(keepToTStaking),
 ]
 
-const sagas = [
-  ...Object.values(messagesSaga),
-  watchFetchLiquidityRewardsAPY,
-  ...Object.values(coveragePool),
-]
+const sagas = [...Object.values(messagesSaga), ...Object.values(coveragePool)]
 
 export default function* rootSaga() {
   yield all(sagas.map(fork))

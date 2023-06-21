@@ -85,11 +85,13 @@ spec:
               mountPath: /mnt/keep-client/keyfile
           command: ["keep-client", "start"]
           args:
-            - --goerli
+            - --testnet
             - --ethereum.url
             - $(ETH_WS_URL)
             - "--ethereum.keyFile"
             -  #@ "/mnt/keep-client/keyfile/" + account() + "-keyfile"
+            - --bitcoin.electrum.url
+            - $(ELECTRUM_TCP_URL)
             - "--storage.dir"
             - "/mnt/keep-client/data"
             - "--network.port"

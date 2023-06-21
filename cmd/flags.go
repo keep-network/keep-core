@@ -3,7 +3,6 @@ package cmd
 import (
 	"fmt"
 	"math/big"
-	"strings"
 
 	"github.com/spf13/cobra"
 
@@ -12,9 +11,11 @@ import (
 	"github.com/keep-network/keep-common/pkg/cmd/flag"
 	"github.com/keep-network/keep-common/pkg/rate"
 	"github.com/keep-network/keep-core/config"
+	"github.com/keep-network/keep-core/config/network"
 	"github.com/keep-network/keep-core/pkg/bitcoin/electrum"
 	chainEthereum "github.com/keep-network/keep-core/pkg/chain/ethereum"
 	"github.com/keep-network/keep-core/pkg/clientinfo"
+	"github.com/keep-network/keep-core/pkg/maintainer/wallet"
 	"github.com/keep-network/keep-core/pkg/net/libp2p"
 	"github.com/keep-network/keep-core/pkg/tbtc"
 )
@@ -24,7 +25,7 @@ func initGlobalFlags(
 	configFilePath *string,
 ) {
 	initGlobalConfigFlags(cmd, configFilePath)
-	initGlobalEthereumFlags(cmd)
+	initGlobalNetworkFlags(cmd)
 }
 
 func initFlags(
@@ -70,35 +71,35 @@ func initGlobalConfigFlags(cmd *cobra.Command, configFilePath *string) {
 	)
 }
 
-// Initializes boolean flags for Ethereum network configuration. The flags can be used
-// to run a client for a specific Ethereum network, e.g. add `--goerli` to the client
-// start command to run the client against Görli Ethereum network. Only one flag
+// Initializes boolean flags for network configuration. The flags can be used
+// to run a client for a specific network, e.g. add `--testnet` to the client
+// start command to run the client against test networks. Only one flag
 // from this set is allowed.
-func initGlobalEthereumFlags(cmd *cobra.Command) {
-	// TODO: Consider removing `--mainnet` flag. For now it's here to reduce a confusion
-	// when developing and testing the client.
+func initGlobalNetworkFlags(cmd *cobra.Command) {
+	// TODO: Remove the mainnet flag.
+	// DEPRECATED
 	cmd.PersistentFlags().Bool(
-		commonEthereum.Mainnet.String(),
+		network.Mainnet.String(),
 		false,
-		"Mainnet network",
+		"Mainnet network (DEPRECATED)",
 	)
 
 	cmd.PersistentFlags().Bool(
-		commonEthereum.Goerli.String(),
+		network.Testnet.String(),
 		false,
-		"Görli network",
+		"Testnet network",
 	)
 
 	cmd.PersistentFlags().Bool(
-		commonEthereum.Developer.String(),
+		network.Developer.String(),
 		false,
 		"Developer network",
 	)
 
 	cmd.MarkFlagsMutuallyExclusive(
-		commonEthereum.Mainnet.String(),
-		commonEthereum.Goerli.String(),
-		commonEthereum.Developer.String(),
+		network.Mainnet.String(), // TODO: Remove the mainnet flag.
+		network.Testnet.String(),
+		network.Developer.String(),
 	)
 }
 
@@ -162,18 +163,7 @@ func initBitcoinElectrumFlags(cmd *cobra.Command, cfg *config.Config) {
 		&cfg.Bitcoin.Electrum.URL,
 		"bitcoin.electrum.url",
 		"",
-		"URL to the Electrum server in format: `hostname:port`.",
-	)
-
-	electrum.ProtocolVarFlag(
-		cmd.Flags(),
-		&cfg.Bitcoin.Electrum.Protocol,
-		"bitcoin.electrum.protocol",
-		electrum.TCP,
-		fmt.Sprintf(
-			"Electrum server connection protocol (one of: %s).",
-			strings.Join([]string{electrum.TCP.String(), electrum.SSL.String()}, ", "),
-		),
+		"URL to the Electrum server in format: `scheme://hostname:port`.",
 	)
 
 	cmd.Flags().DurationVar(
@@ -325,10 +315,38 @@ func initTbtcFlags(cmd *cobra.Command, cfg *config.Config) {
 // Initialize flags for Maintainer configuration.
 func initMaintainerFlags(command *cobra.Command, cfg *config.Config) {
 	command.Flags().BoolVar(
-		&cfg.Maintainer.BitcoinDifficulty,
+		&cfg.Maintainer.BitcoinDifficulty.Enabled,
 		"bitcoinDifficulty",
 		false,
-		"start Bitcoin difficulty maintainer",
+		"Start Bitcoin difficulty maintainer.",
+	)
+
+	command.Flags().BoolVar(
+		&cfg.Maintainer.BitcoinDifficulty.DisableProxy,
+		"bitcoinDifficulty.disableProxy",
+		false,
+		"Disable Bitcoin difficulty proxy.",
+	)
+
+	command.Flags().BoolVar(
+		&cfg.Maintainer.WalletCoordination.Enabled,
+		"walletCoordination",
+		false,
+		"Start wallet coordination maintainer.",
+	)
+
+	command.Flags().DurationVar(
+		&cfg.Maintainer.WalletCoordination.RedemptionInterval,
+		"walletCoordination.redemptionInterval",
+		wallet.DefaultRedemptionInterval,
+		"The time interval in which pending redemptions requests are checked.",
+	)
+
+	command.Flags().DurationVar(
+		&cfg.Maintainer.WalletCoordination.SweepInterval,
+		"walletCoordination.sweepInterval",
+		wallet.DefaultSweepInterval,
+		"The time interval in which unswept deposits are checked.",
 	)
 }
 
@@ -346,7 +364,9 @@ func initDeveloperFlags(command *cobra.Command) {
 	}
 
 	initContractAddressFlag(chainEthereum.BridgeContractName)
+	initContractAddressFlag(chainEthereum.MaintainerProxyContractName)
 	initContractAddressFlag(chainEthereum.LightRelayContractName)
+	initContractAddressFlag(chainEthereum.LightRelayMaintainerProxyContractName)
 	initContractAddressFlag(chainEthereum.RandomBeaconContractName)
 	initContractAddressFlag(chainEthereum.TokenStakingContractName)
 	initContractAddressFlag(chainEthereum.WalletRegistryContractName)

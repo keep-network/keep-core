@@ -5,18 +5,20 @@ import (
 	"crypto/ecdsa"
 	"encoding/hex"
 	"fmt"
-	"github.com/bnb-chain/tss-lib/common"
-	"github.com/bnb-chain/tss-lib/tss"
-	"github.com/keep-network/keep-core/pkg/crypto/ephemeral"
-	"github.com/keep-network/keep-core/pkg/internal/tecdsatest"
-	"github.com/keep-network/keep-core/pkg/internal/testutils"
-	"github.com/keep-network/keep-core/pkg/protocol/group"
-	"github.com/keep-network/keep-core/pkg/tecdsa"
 	"math/big"
 	"reflect"
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/bnb-chain/tss-lib/common"
+	"github.com/bnb-chain/tss-lib/tss"
+
+	"github.com/keep-network/keep-core/internal/testutils"
+	"github.com/keep-network/keep-core/pkg/crypto/ephemeral"
+	"github.com/keep-network/keep-core/pkg/internal/tecdsatest"
+	"github.com/keep-network/keep-core/pkg/protocol/group"
+	"github.com/keep-network/keep-core/pkg/tecdsa"
 )
 
 // TODO: This file contains unit tests that stress each protocol phase

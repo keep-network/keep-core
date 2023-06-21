@@ -5,7 +5,9 @@ import (
 	"fmt"
 	"math/big"
 	"sync"
+	"time"
 
+	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/hashicorp/go-multierror"
 
 	"github.com/ethereum/go-ethereum/accounts/keystore"
@@ -17,6 +19,7 @@ import (
 	"github.com/keep-network/keep-common/pkg/rate"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/chain/ethereum/threshold/gen/contract"
+	"github.com/keep-network/keep-core/pkg/maintainer"
 	"github.com/keep-network/keep-core/pkg/operator"
 )
 
@@ -126,21 +129,22 @@ func Connect(
 // ConnectBitcoinDifficulty creates Bitcoin difficulty chain handle.
 func ConnectBitcoinDifficulty(
 	ctx context.Context,
-	config ethereum.Config,
+	ethereumConfig ethereum.Config,
+	maintainerConfig maintainer.Config,
 ) (
 	*BitcoinDifficultyChain,
 	error,
 ) {
-	client, err := ethclient.Dial(config.URL)
+	client, err := ethclient.Dial(ethereumConfig.URL)
 	if err != nil {
 		return nil, fmt.Errorf(
 			"error Connecting to Ethereum Server: %s [%v]",
-			config.URL,
+			ethereumConfig.URL,
 			err,
 		)
 	}
 
-	baseChain, err := newBaseChain(ctx, config, client)
+	baseChain, err := newBaseChain(ctx, ethereumConfig, client)
 	if err != nil {
 		return nil, fmt.Errorf(
 			"could not create base chain handle: [%v]",
@@ -148,7 +152,11 @@ func ConnectBitcoinDifficulty(
 		)
 	}
 
-	bitcoinDifficultyChain, err := NewBitcoinDifficultyChain(config, baseChain)
+	bitcoinDifficultyChain, err := NewBitcoinDifficultyChain(
+		ethereumConfig,
+		maintainerConfig,
+		baseChain,
+	)
 	if err != nil {
 		return nil, fmt.Errorf(
 			"could not create Bitcoin difficulty chain handle: [%v]",
@@ -316,6 +324,147 @@ func (bc *baseChain) OperatorKeyPair() (
 	}
 
 	return privateKey, publicKey, nil
+}
+
+// GetBlockNumberByTimestamp gets the block number for the given timestamp.
+// In the best case, the block with the exact same timestamp is returned.
+// If the aforementioned is not possible, it tries to return the closest
+// possible block.
+//
+// WARNING: THIS FUNCTION MAY NOT BE PERFORMANT FOR BLOCKS EARLIER THAN 15537393
+// (SEPTEMBER 15, 2022, AT 1:42:42 EST) BEFORE THE ETH2 MERGE. PRE-MERGE
+// AVERAGE BLOCK TIME WAS HIGHER THAN THE VALUE ASSUMED WITHIN THIS FUNCTION
+// SO MORE OVERSHOOTS WILL BE DONE DURING THE BLOCK PREDICTION. OVERSHOOTS
+// MUST BE COMPENSATED BY ADDITIONAL CLIENT CALLS THAT TAKE TIME.
+func (bc *baseChain) GetBlockNumberByTimestamp(
+	timestamp uint64,
+) (uint64, error) {
+	block, err := bc.currentBlock()
+	if err != nil {
+		return 0, fmt.Errorf("cannot get current block: [%v]", err)
+	}
+
+	if block.Time() < timestamp {
+		return 0, fmt.Errorf("requested timestamp is in the future")
+	}
+
+	// Corner case shortcut.
+	if block.Time() == timestamp {
+		return block.NumberU64(), nil
+	}
+
+	// The Ethereum average block time (https://etherscan.io/chart/blocktime)
+	// is slightly over 12s most of the time. If we assume it to be 12s here,
+	// the below for-loop will often overshoot and hit blocks that are before
+	// the requested timestamp. That means we will often fall into the second
+	// compensation for-loop that walks forward block by block thus more
+	// client calls will be made and more time will be needed. Instead of that,
+	// we are assuming a slightly greater average block time than the actual
+	// one. In this case, the below for-loop will often end with blocks
+	// that are slightly after the requested timestamp. To compensate this case,
+	// we can just compare the obtained block with the previous one and chose
+	// the better one.
+	const averageBlockTime = 13
+
+	for block.Time() > timestamp {
+		// timeDiff is always >0 due to the for-loop condition.
+		timeDiff := block.Time() - timestamp
+		// blockDiff is an integer whose value can be:
+		// - >=1 if timeDiff >= averageBlockTime
+		// - ==0 if timeDiff < averageBlockTime
+		// It cannot be <0 as timeDiff is always >0.
+		blockDiff := timeDiff / averageBlockTime
+		// blockDiff equal to 0 would cause an infinite loop as it would always
+		// fetch the same block so, we must break.
+		if blockDiff < 1 {
+			break
+		}
+
+		block, err = bc.blockByNumber(block.NumberU64() - blockDiff)
+		if err != nil {
+			return 0, fmt.Errorf("cannot get block: [%v]", err)
+		}
+	}
+
+	// Once we quit the above for-loop, the following cases are possible:
+	// - Case 1: block.Time() < timestamp
+	// - Case 2: block.Time() > timestamp (difference is < averageBlockTime)
+	// - Case 3: block.Time() == timestamp
+	//
+	// First, try to reduce Case 1 by walking forward block by block until
+	// we achieve Case 2 or 3.
+	for block.Time() < timestamp {
+		block, err = bc.blockByNumber(block.NumberU64() + 1)
+		if err != nil {
+			return 0, fmt.Errorf("cannot get block: [%v]", err)
+		}
+	}
+	// At this point, only Case 2 or 3 are possible. If we have Case 2,
+	// just get the previous block and compare which one lies closer to
+	// the requested timestamp.
+	if block.Time() > timestamp {
+		previousBlock, err := bc.blockByNumber(block.NumberU64() - 1)
+		if err != nil {
+			return 0, fmt.Errorf("cannot get block: [%v]", err)
+		}
+
+		return closerBlock(timestamp, previousBlock, block).NumberU64(), nil
+	}
+
+	return block.NumberU64(), nil
+}
+
+// currentBlock fetches the current block.
+func (bc *baseChain) currentBlock() (*types.Block, error) {
+	currentBlockNumber, err := bc.blockCounter.CurrentBlock()
+	if err != nil {
+		return nil, err
+	}
+
+	currentBlock, err := bc.blockByNumber(currentBlockNumber)
+	if err != nil {
+		return nil, err
+	}
+
+	return currentBlock, nil
+}
+
+// blockByNumber returns the block for the given block number. Times out
+// if the underlying client call takes more than 10 seconds.
+func (bc *baseChain) blockByNumber(number uint64) (*types.Block, error) {
+	ctx, cancelCtx := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancelCtx()
+
+	return bc.client.BlockByNumber(ctx, big.NewInt(int64(number)))
+}
+
+// closerBlock check timestamps of blocks b1 and b2 and returns the block
+// whose timestamp lies closer to the requested timestamp. If the distance
+// is same for both blocks, the block with greater block number is returned.
+func closerBlock(timestamp uint64, b1, b2 *types.Block) *types.Block {
+	abs := func(x int64) int64 {
+		if x < 0 {
+			return -x
+		}
+		return x
+	}
+
+	b1Diff := abs(int64(b1.Time() - timestamp))
+	b2Diff := abs(int64(b2.Time() - timestamp))
+
+	// If the differences are same, return the block with greater number.
+	if b1Diff == b2Diff {
+		if b2.NumberU64() > b1.NumberU64() {
+			return b2
+		}
+		return b1
+	}
+
+	// Return the block whose timestamp is closer to the requested timestamp.
+	if b1Diff < b2Diff {
+		return b1
+	}
+	return b2
 }
 
 // wrapClientAddons wraps the client instance with add-ons like logging, rate

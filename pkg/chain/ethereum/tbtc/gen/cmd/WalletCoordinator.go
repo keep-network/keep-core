@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"sync"
 
+	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/ethclient"
 
@@ -56,22 +57,33 @@ func init() {
 		wcDepositSweepMaxSizeCommand(),
 		wcDepositSweepProposalSubmissionGasOffsetCommand(),
 		wcDepositSweepProposalValidityCommand(),
-		wcIsProposalSubmitterCommand(),
+		wcHeartbeatRequestGasOffsetCommand(),
+		wcHeartbeatRequestValidityCommand(),
+		wcIsCoordinatorCommand(),
 		wcOwnerCommand(),
+		wcRedemptionMaxSizeCommand(),
+		wcRedemptionProposalSubmissionGasOffsetCommand(),
+		wcRedemptionProposalValidityCommand(),
+		wcRedemptionRequestMinAgeCommand(),
+		wcRedemptionRequestTimeoutSafetyMarginCommand(),
 		wcReimbursementPoolCommand(),
-		wcWalletRegistryCommand(),
-		wcAddProposalSubmitterCommand(),
+		wcValidateRedemptionProposalCommand(),
+		wcWalletLockCommand(),
+		wcAddCoordinatorCommand(),
 		wcInitializeCommand(),
-		wcRemoveProposalSubmitterCommand(),
+		wcRemoveCoordinatorCommand(),
 		wcRenounceOwnershipCommand(),
+		wcRequestHeartbeatCommand(),
+		wcRequestHeartbeatWithReimbursementCommand(),
 		wcSubmitDepositSweepProposalCommand(),
 		wcSubmitDepositSweepProposalWithReimbursementCommand(),
+		wcSubmitRedemptionProposalCommand(),
+		wcSubmitRedemptionProposalWithReimbursementCommand(),
 		wcTransferOwnershipCommand(),
-		wcUpdateDepositMinAgeCommand(),
-		wcUpdateDepositRefundSafetyMarginCommand(),
-		wcUpdateDepositSweepMaxSizeCommand(),
-		wcUpdateDepositSweepProposalSubmissionGasOffsetCommand(),
-		wcUpdateDepositSweepProposalValidityCommand(),
+		wcUnlockWalletCommand(),
+		wcUpdateDepositSweepProposalParametersCommand(),
+		wcUpdateHeartbeatRequestParametersCommand(),
+		wcUpdateRedemptionProposalParametersCommand(),
 		wcUpdateReimbursementPoolCommand(),
 	)
 
@@ -284,12 +296,12 @@ func wcDepositSweepProposalValidity(c *cobra.Command, args []string) error {
 	return nil
 }
 
-func wcIsProposalSubmitterCommand() *cobra.Command {
+func wcHeartbeatRequestGasOffsetCommand() *cobra.Command {
 	c := &cobra.Command{
-		Use:                   "is-proposal-submitter [arg0]",
-		Short:                 "Calls the view method isProposalSubmitter on the WalletCoordinator contract.",
-		Args:                  cmd.ArgCountChecker(1),
-		RunE:                  wcIsProposalSubmitter,
+		Use:                   "heartbeat-request-gas-offset",
+		Short:                 "Calls the view method heartbeatRequestGasOffset on the WalletCoordinator contract.",
+		Args:                  cmd.ArgCountChecker(0),
+		RunE:                  wcHeartbeatRequestGasOffset,
 		SilenceUsage:          true,
 		DisableFlagsInUseLine: true,
 	}
@@ -299,7 +311,75 @@ func wcIsProposalSubmitterCommand() *cobra.Command {
 	return c
 }
 
-func wcIsProposalSubmitter(c *cobra.Command, args []string) error {
+func wcHeartbeatRequestGasOffset(c *cobra.Command, args []string) error {
+	contract, err := initializeWalletCoordinator(c)
+	if err != nil {
+		return err
+	}
+
+	result, err := contract.HeartbeatRequestGasOffsetAtBlock(
+		cmd.BlockFlagValue.Int,
+	)
+
+	if err != nil {
+		return err
+	}
+
+	cmd.PrintOutput(result)
+
+	return nil
+}
+
+func wcHeartbeatRequestValidityCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "heartbeat-request-validity",
+		Short:                 "Calls the view method heartbeatRequestValidity on the WalletCoordinator contract.",
+		Args:                  cmd.ArgCountChecker(0),
+		RunE:                  wcHeartbeatRequestValidity,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	cmd.InitConstFlags(c)
+
+	return c
+}
+
+func wcHeartbeatRequestValidity(c *cobra.Command, args []string) error {
+	contract, err := initializeWalletCoordinator(c)
+	if err != nil {
+		return err
+	}
+
+	result, err := contract.HeartbeatRequestValidityAtBlock(
+		cmd.BlockFlagValue.Int,
+	)
+
+	if err != nil {
+		return err
+	}
+
+	cmd.PrintOutput(result)
+
+	return nil
+}
+
+func wcIsCoordinatorCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "is-coordinator [arg0]",
+		Short:                 "Calls the view method isCoordinator on the WalletCoordinator contract.",
+		Args:                  cmd.ArgCountChecker(1),
+		RunE:                  wcIsCoordinator,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	cmd.InitConstFlags(c)
+
+	return c
+}
+
+func wcIsCoordinator(c *cobra.Command, args []string) error {
 	contract, err := initializeWalletCoordinator(c)
 	if err != nil {
 		return err
@@ -313,7 +393,7 @@ func wcIsProposalSubmitter(c *cobra.Command, args []string) error {
 		)
 	}
 
-	result, err := contract.IsProposalSubmitterAtBlock(
+	result, err := contract.IsCoordinatorAtBlock(
 		arg0,
 		cmd.BlockFlagValue.Int,
 	)
@@ -361,6 +441,176 @@ func wcOwner(c *cobra.Command, args []string) error {
 	return nil
 }
 
+func wcRedemptionMaxSizeCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "redemption-max-size",
+		Short:                 "Calls the view method redemptionMaxSize on the WalletCoordinator contract.",
+		Args:                  cmd.ArgCountChecker(0),
+		RunE:                  wcRedemptionMaxSize,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	cmd.InitConstFlags(c)
+
+	return c
+}
+
+func wcRedemptionMaxSize(c *cobra.Command, args []string) error {
+	contract, err := initializeWalletCoordinator(c)
+	if err != nil {
+		return err
+	}
+
+	result, err := contract.RedemptionMaxSizeAtBlock(
+		cmd.BlockFlagValue.Int,
+	)
+
+	if err != nil {
+		return err
+	}
+
+	cmd.PrintOutput(result)
+
+	return nil
+}
+
+func wcRedemptionProposalSubmissionGasOffsetCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "redemption-proposal-submission-gas-offset",
+		Short:                 "Calls the view method redemptionProposalSubmissionGasOffset on the WalletCoordinator contract.",
+		Args:                  cmd.ArgCountChecker(0),
+		RunE:                  wcRedemptionProposalSubmissionGasOffset,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	cmd.InitConstFlags(c)
+
+	return c
+}
+
+func wcRedemptionProposalSubmissionGasOffset(c *cobra.Command, args []string) error {
+	contract, err := initializeWalletCoordinator(c)
+	if err != nil {
+		return err
+	}
+
+	result, err := contract.RedemptionProposalSubmissionGasOffsetAtBlock(
+		cmd.BlockFlagValue.Int,
+	)
+
+	if err != nil {
+		return err
+	}
+
+	cmd.PrintOutput(result)
+
+	return nil
+}
+
+func wcRedemptionProposalValidityCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "redemption-proposal-validity",
+		Short:                 "Calls the view method redemptionProposalValidity on the WalletCoordinator contract.",
+		Args:                  cmd.ArgCountChecker(0),
+		RunE:                  wcRedemptionProposalValidity,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	cmd.InitConstFlags(c)
+
+	return c
+}
+
+func wcRedemptionProposalValidity(c *cobra.Command, args []string) error {
+	contract, err := initializeWalletCoordinator(c)
+	if err != nil {
+		return err
+	}
+
+	result, err := contract.RedemptionProposalValidityAtBlock(
+		cmd.BlockFlagValue.Int,
+	)
+
+	if err != nil {
+		return err
+	}
+
+	cmd.PrintOutput(result)
+
+	return nil
+}
+
+func wcRedemptionRequestMinAgeCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "redemption-request-min-age",
+		Short:                 "Calls the view method redemptionRequestMinAge on the WalletCoordinator contract.",
+		Args:                  cmd.ArgCountChecker(0),
+		RunE:                  wcRedemptionRequestMinAge,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	cmd.InitConstFlags(c)
+
+	return c
+}
+
+func wcRedemptionRequestMinAge(c *cobra.Command, args []string) error {
+	contract, err := initializeWalletCoordinator(c)
+	if err != nil {
+		return err
+	}
+
+	result, err := contract.RedemptionRequestMinAgeAtBlock(
+		cmd.BlockFlagValue.Int,
+	)
+
+	if err != nil {
+		return err
+	}
+
+	cmd.PrintOutput(result)
+
+	return nil
+}
+
+func wcRedemptionRequestTimeoutSafetyMarginCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "redemption-request-timeout-safety-margin",
+		Short:                 "Calls the view method redemptionRequestTimeoutSafetyMargin on the WalletCoordinator contract.",
+		Args:                  cmd.ArgCountChecker(0),
+		RunE:                  wcRedemptionRequestTimeoutSafetyMargin,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	cmd.InitConstFlags(c)
+
+	return c
+}
+
+func wcRedemptionRequestTimeoutSafetyMargin(c *cobra.Command, args []string) error {
+	contract, err := initializeWalletCoordinator(c)
+	if err != nil {
+		return err
+	}
+
+	result, err := contract.RedemptionRequestTimeoutSafetyMarginAtBlock(
+		cmd.BlockFlagValue.Int,
+	)
+
+	if err != nil {
+		return err
+	}
+
+	cmd.PrintOutput(result)
+
+	return nil
+}
+
 func wcReimbursementPoolCommand() *cobra.Command {
 	c := &cobra.Command{
 		Use:                   "reimbursement-pool",
@@ -395,12 +645,12 @@ func wcReimbursementPool(c *cobra.Command, args []string) error {
 	return nil
 }
 
-func wcWalletRegistryCommand() *cobra.Command {
+func wcValidateRedemptionProposalCommand() *cobra.Command {
 	c := &cobra.Command{
-		Use:                   "wallet-registry",
-		Short:                 "Calls the view method walletRegistry on the WalletCoordinator contract.",
-		Args:                  cmd.ArgCountChecker(0),
-		RunE:                  wcWalletRegistry,
+		Use:                   "validate-redemption-proposal [arg_proposal_json]",
+		Short:                 "Calls the view method validateRedemptionProposal on the WalletCoordinator contract.",
+		Args:                  cmd.ArgCountChecker(1),
+		RunE:                  wcValidateRedemptionProposal,
 		SilenceUsage:          true,
 		DisableFlagsInUseLine: true,
 	}
@@ -410,13 +660,62 @@ func wcWalletRegistryCommand() *cobra.Command {
 	return c
 }
 
-func wcWalletRegistry(c *cobra.Command, args []string) error {
+func wcValidateRedemptionProposal(c *cobra.Command, args []string) error {
 	contract, err := initializeWalletCoordinator(c)
 	if err != nil {
 		return err
 	}
 
-	result, err := contract.WalletRegistryAtBlock(
+	arg_proposal_json := abi.WalletCoordinatorRedemptionProposal{}
+	if err := json.Unmarshal([]byte(args[0]), &arg_proposal_json); err != nil {
+		return fmt.Errorf("failed to unmarshal arg_proposal_json to abi.WalletCoordinatorRedemptionProposal: %w", err)
+	}
+
+	result, err := contract.ValidateRedemptionProposalAtBlock(
+		arg_proposal_json,
+		cmd.BlockFlagValue.Int,
+	)
+
+	if err != nil {
+		return err
+	}
+
+	cmd.PrintOutput(result)
+
+	return nil
+}
+
+func wcWalletLockCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "wallet-lock [arg0]",
+		Short:                 "Calls the view method walletLock on the WalletCoordinator contract.",
+		Args:                  cmd.ArgCountChecker(1),
+		RunE:                  wcWalletLock,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	cmd.InitConstFlags(c)
+
+	return c
+}
+
+func wcWalletLock(c *cobra.Command, args []string) error {
+	contract, err := initializeWalletCoordinator(c)
+	if err != nil {
+		return err
+	}
+
+	arg0, err := decode.ParseBytes20(args[0])
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter arg0, a bytes20, from passed value %v",
+			args[0],
+		)
+	}
+
+	result, err := contract.WalletLockAtBlock(
+		arg0,
 		cmd.BlockFlagValue.Int,
 	)
 
@@ -431,12 +730,12 @@ func wcWalletRegistry(c *cobra.Command, args []string) error {
 
 /// ------------------- Non-const methods -------------------
 
-func wcAddProposalSubmitterCommand() *cobra.Command {
+func wcAddCoordinatorCommand() *cobra.Command {
 	c := &cobra.Command{
-		Use:                   "add-proposal-submitter [arg_proposalSubmitter]",
-		Short:                 "Calls the nonpayable method addProposalSubmitter on the WalletCoordinator contract.",
+		Use:                   "add-coordinator [arg_coordinator]",
+		Short:                 "Calls the nonpayable method addCoordinator on the WalletCoordinator contract.",
 		Args:                  cmd.ArgCountChecker(1),
-		RunE:                  wcAddProposalSubmitter,
+		RunE:                  wcAddCoordinator,
 		SilenceUsage:          true,
 		DisableFlagsInUseLine: true,
 	}
@@ -447,16 +746,16 @@ func wcAddProposalSubmitterCommand() *cobra.Command {
 	return c
 }
 
-func wcAddProposalSubmitter(c *cobra.Command, args []string) error {
+func wcAddCoordinator(c *cobra.Command, args []string) error {
 	contract, err := initializeWalletCoordinator(c)
 	if err != nil {
 		return err
 	}
 
-	arg_proposalSubmitter, err := chainutil.AddressFromHex(args[0])
+	arg_coordinator, err := chainutil.AddressFromHex(args[0])
 	if err != nil {
 		return fmt.Errorf(
-			"couldn't parse parameter arg_proposalSubmitter, a address, from passed value %v",
+			"couldn't parse parameter arg_coordinator, a address, from passed value %v",
 			args[0],
 		)
 	}
@@ -467,8 +766,8 @@ func wcAddProposalSubmitter(c *cobra.Command, args []string) error {
 
 	if shouldSubmit, _ := c.Flags().GetBool(cmd.SubmitFlag); shouldSubmit {
 		// Do a regular submission. Take payable into account.
-		transaction, err = contract.AddProposalSubmitter(
-			arg_proposalSubmitter,
+		transaction, err = contract.AddCoordinator(
+			arg_coordinator,
 		)
 		if err != nil {
 			return err
@@ -477,8 +776,8 @@ func wcAddProposalSubmitter(c *cobra.Command, args []string) error {
 		cmd.PrintOutput(transaction.Hash())
 	} else {
 		// Do a call.
-		err = contract.CallAddProposalSubmitter(
-			arg_proposalSubmitter,
+		err = contract.CallAddCoordinator(
+			arg_coordinator,
 			cmd.BlockFlagValue.Int,
 		)
 		if err != nil {
@@ -561,12 +860,12 @@ func wcInitialize(c *cobra.Command, args []string) error {
 	return nil
 }
 
-func wcRemoveProposalSubmitterCommand() *cobra.Command {
+func wcRemoveCoordinatorCommand() *cobra.Command {
 	c := &cobra.Command{
-		Use:                   "remove-proposal-submitter [arg_proposalSubmitter]",
-		Short:                 "Calls the nonpayable method removeProposalSubmitter on the WalletCoordinator contract.",
+		Use:                   "remove-coordinator [arg_coordinator]",
+		Short:                 "Calls the nonpayable method removeCoordinator on the WalletCoordinator contract.",
 		Args:                  cmd.ArgCountChecker(1),
-		RunE:                  wcRemoveProposalSubmitter,
+		RunE:                  wcRemoveCoordinator,
 		SilenceUsage:          true,
 		DisableFlagsInUseLine: true,
 	}
@@ -577,16 +876,16 @@ func wcRemoveProposalSubmitterCommand() *cobra.Command {
 	return c
 }
 
-func wcRemoveProposalSubmitter(c *cobra.Command, args []string) error {
+func wcRemoveCoordinator(c *cobra.Command, args []string) error {
 	contract, err := initializeWalletCoordinator(c)
 	if err != nil {
 		return err
 	}
 
-	arg_proposalSubmitter, err := chainutil.AddressFromHex(args[0])
+	arg_coordinator, err := chainutil.AddressFromHex(args[0])
 	if err != nil {
 		return fmt.Errorf(
-			"couldn't parse parameter arg_proposalSubmitter, a address, from passed value %v",
+			"couldn't parse parameter arg_coordinator, a address, from passed value %v",
 			args[0],
 		)
 	}
@@ -597,8 +896,8 @@ func wcRemoveProposalSubmitter(c *cobra.Command, args []string) error {
 
 	if shouldSubmit, _ := c.Flags().GetBool(cmd.SubmitFlag); shouldSubmit {
 		// Do a regular submission. Take payable into account.
-		transaction, err = contract.RemoveProposalSubmitter(
-			arg_proposalSubmitter,
+		transaction, err = contract.RemoveCoordinator(
+			arg_coordinator,
 		)
 		if err != nil {
 			return err
@@ -607,8 +906,8 @@ func wcRemoveProposalSubmitter(c *cobra.Command, args []string) error {
 		cmd.PrintOutput(transaction.Hash())
 	} else {
 		// Do a call.
-		err = contract.CallRemoveProposalSubmitter(
-			arg_proposalSubmitter,
+		err = contract.CallRemoveCoordinator(
+			arg_coordinator,
 			cmd.BlockFlagValue.Int,
 		)
 		if err != nil {
@@ -680,11 +979,159 @@ func wcRenounceOwnership(c *cobra.Command, args []string) error {
 	return nil
 }
 
+func wcRequestHeartbeatCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "request-heartbeat [arg_walletPubKeyHash] [arg_message]",
+		Short:                 "Calls the nonpayable method requestHeartbeat on the WalletCoordinator contract.",
+		Args:                  cmd.ArgCountChecker(2),
+		RunE:                  wcRequestHeartbeat,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	c.PreRunE = cmd.NonConstArgsChecker
+	cmd.InitNonConstFlags(c)
+
+	return c
+}
+
+func wcRequestHeartbeat(c *cobra.Command, args []string) error {
+	contract, err := initializeWalletCoordinator(c)
+	if err != nil {
+		return err
+	}
+
+	arg_walletPubKeyHash, err := decode.ParseBytes20(args[0])
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter arg_walletPubKeyHash, a bytes20, from passed value %v",
+			args[0],
+		)
+	}
+	arg_message, err := hexutil.Decode(args[1])
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter arg_message, a bytes, from passed value %v",
+			args[1],
+		)
+	}
+
+	var (
+		transaction *types.Transaction
+	)
+
+	if shouldSubmit, _ := c.Flags().GetBool(cmd.SubmitFlag); shouldSubmit {
+		// Do a regular submission. Take payable into account.
+		transaction, err = contract.RequestHeartbeat(
+			arg_walletPubKeyHash,
+			arg_message,
+		)
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput(transaction.Hash())
+	} else {
+		// Do a call.
+		err = contract.CallRequestHeartbeat(
+			arg_walletPubKeyHash,
+			arg_message,
+			cmd.BlockFlagValue.Int,
+		)
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput("success")
+
+		cmd.PrintOutput(
+			"the transaction was not submitted to the chain; " +
+				"please add the `--submit` flag",
+		)
+	}
+
+	return nil
+}
+
+func wcRequestHeartbeatWithReimbursementCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "request-heartbeat-with-reimbursement [arg_walletPubKeyHash] [arg_message]",
+		Short:                 "Calls the nonpayable method requestHeartbeatWithReimbursement on the WalletCoordinator contract.",
+		Args:                  cmd.ArgCountChecker(2),
+		RunE:                  wcRequestHeartbeatWithReimbursement,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	c.PreRunE = cmd.NonConstArgsChecker
+	cmd.InitNonConstFlags(c)
+
+	return c
+}
+
+func wcRequestHeartbeatWithReimbursement(c *cobra.Command, args []string) error {
+	contract, err := initializeWalletCoordinator(c)
+	if err != nil {
+		return err
+	}
+
+	arg_walletPubKeyHash, err := decode.ParseBytes20(args[0])
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter arg_walletPubKeyHash, a bytes20, from passed value %v",
+			args[0],
+		)
+	}
+	arg_message, err := hexutil.Decode(args[1])
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter arg_message, a bytes, from passed value %v",
+			args[1],
+		)
+	}
+
+	var (
+		transaction *types.Transaction
+	)
+
+	if shouldSubmit, _ := c.Flags().GetBool(cmd.SubmitFlag); shouldSubmit {
+		// Do a regular submission. Take payable into account.
+		transaction, err = contract.RequestHeartbeatWithReimbursement(
+			arg_walletPubKeyHash,
+			arg_message,
+		)
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput(transaction.Hash())
+	} else {
+		// Do a call.
+		err = contract.CallRequestHeartbeatWithReimbursement(
+			arg_walletPubKeyHash,
+			arg_message,
+			cmd.BlockFlagValue.Int,
+		)
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput("success")
+
+		cmd.PrintOutput(
+			"the transaction was not submitted to the chain; " +
+				"please add the `--submit` flag",
+		)
+	}
+
+	return nil
+}
+
 func wcSubmitDepositSweepProposalCommand() *cobra.Command {
 	c := &cobra.Command{
-		Use:                   "submit-deposit-sweep-proposal [arg_proposal_json] [arg_walletMemberContext_json]",
+		Use:                   "submit-deposit-sweep-proposal [arg_proposal_json]",
 		Short:                 "Calls the nonpayable method submitDepositSweepProposal on the WalletCoordinator contract.",
-		Args:                  cmd.ArgCountChecker(2),
+		Args:                  cmd.ArgCountChecker(1),
 		RunE:                  wcSubmitDepositSweepProposal,
 		SilenceUsage:          true,
 		DisableFlagsInUseLine: true,
@@ -707,11 +1154,6 @@ func wcSubmitDepositSweepProposal(c *cobra.Command, args []string) error {
 		return fmt.Errorf("failed to unmarshal arg_proposal_json to abi.WalletCoordinatorDepositSweepProposal: %w", err)
 	}
 
-	arg_walletMemberContext_json := abi.WalletCoordinatorWalletMemberContext{}
-	if err := json.Unmarshal([]byte(args[1]), &arg_walletMemberContext_json); err != nil {
-		return fmt.Errorf("failed to unmarshal arg_walletMemberContext_json to abi.WalletCoordinatorWalletMemberContext: %w", err)
-	}
-
 	var (
 		transaction *types.Transaction
 	)
@@ -720,7 +1162,6 @@ func wcSubmitDepositSweepProposal(c *cobra.Command, args []string) error {
 		// Do a regular submission. Take payable into account.
 		transaction, err = contract.SubmitDepositSweepProposal(
 			arg_proposal_json,
-			arg_walletMemberContext_json,
 		)
 		if err != nil {
 			return err
@@ -731,7 +1172,6 @@ func wcSubmitDepositSweepProposal(c *cobra.Command, args []string) error {
 		// Do a call.
 		err = contract.CallSubmitDepositSweepProposal(
 			arg_proposal_json,
-			arg_walletMemberContext_json,
 			cmd.BlockFlagValue.Int,
 		)
 		if err != nil {
@@ -751,9 +1191,9 @@ func wcSubmitDepositSweepProposal(c *cobra.Command, args []string) error {
 
 func wcSubmitDepositSweepProposalWithReimbursementCommand() *cobra.Command {
 	c := &cobra.Command{
-		Use:                   "submit-deposit-sweep-proposal-with-reimbursement [arg_proposal_json] [arg_walletMemberContext_json]",
+		Use:                   "submit-deposit-sweep-proposal-with-reimbursement [arg_proposal_json]",
 		Short:                 "Calls the nonpayable method submitDepositSweepProposalWithReimbursement on the WalletCoordinator contract.",
-		Args:                  cmd.ArgCountChecker(2),
+		Args:                  cmd.ArgCountChecker(1),
 		RunE:                  wcSubmitDepositSweepProposalWithReimbursement,
 		SilenceUsage:          true,
 		DisableFlagsInUseLine: true,
@@ -776,11 +1216,6 @@ func wcSubmitDepositSweepProposalWithReimbursement(c *cobra.Command, args []stri
 		return fmt.Errorf("failed to unmarshal arg_proposal_json to abi.WalletCoordinatorDepositSweepProposal: %w", err)
 	}
 
-	arg_walletMemberContext_json := abi.WalletCoordinatorWalletMemberContext{}
-	if err := json.Unmarshal([]byte(args[1]), &arg_walletMemberContext_json); err != nil {
-		return fmt.Errorf("failed to unmarshal arg_walletMemberContext_json to abi.WalletCoordinatorWalletMemberContext: %w", err)
-	}
-
 	var (
 		transaction *types.Transaction
 	)
@@ -789,7 +1224,6 @@ func wcSubmitDepositSweepProposalWithReimbursement(c *cobra.Command, args []stri
 		// Do a regular submission. Take payable into account.
 		transaction, err = contract.SubmitDepositSweepProposalWithReimbursement(
 			arg_proposal_json,
-			arg_walletMemberContext_json,
 		)
 		if err != nil {
 			return err
@@ -800,7 +1234,130 @@ func wcSubmitDepositSweepProposalWithReimbursement(c *cobra.Command, args []stri
 		// Do a call.
 		err = contract.CallSubmitDepositSweepProposalWithReimbursement(
 			arg_proposal_json,
-			arg_walletMemberContext_json,
+			cmd.BlockFlagValue.Int,
+		)
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput("success")
+
+		cmd.PrintOutput(
+			"the transaction was not submitted to the chain; " +
+				"please add the `--submit` flag",
+		)
+	}
+
+	return nil
+}
+
+func wcSubmitRedemptionProposalCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "submit-redemption-proposal [arg_proposal_json]",
+		Short:                 "Calls the nonpayable method submitRedemptionProposal on the WalletCoordinator contract.",
+		Args:                  cmd.ArgCountChecker(1),
+		RunE:                  wcSubmitRedemptionProposal,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	c.PreRunE = cmd.NonConstArgsChecker
+	cmd.InitNonConstFlags(c)
+
+	return c
+}
+
+func wcSubmitRedemptionProposal(c *cobra.Command, args []string) error {
+	contract, err := initializeWalletCoordinator(c)
+	if err != nil {
+		return err
+	}
+
+	arg_proposal_json := abi.WalletCoordinatorRedemptionProposal{}
+	if err := json.Unmarshal([]byte(args[0]), &arg_proposal_json); err != nil {
+		return fmt.Errorf("failed to unmarshal arg_proposal_json to abi.WalletCoordinatorRedemptionProposal: %w", err)
+	}
+
+	var (
+		transaction *types.Transaction
+	)
+
+	if shouldSubmit, _ := c.Flags().GetBool(cmd.SubmitFlag); shouldSubmit {
+		// Do a regular submission. Take payable into account.
+		transaction, err = contract.SubmitRedemptionProposal(
+			arg_proposal_json,
+		)
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput(transaction.Hash())
+	} else {
+		// Do a call.
+		err = contract.CallSubmitRedemptionProposal(
+			arg_proposal_json,
+			cmd.BlockFlagValue.Int,
+		)
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput("success")
+
+		cmd.PrintOutput(
+			"the transaction was not submitted to the chain; " +
+				"please add the `--submit` flag",
+		)
+	}
+
+	return nil
+}
+
+func wcSubmitRedemptionProposalWithReimbursementCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "submit-redemption-proposal-with-reimbursement [arg_proposal_json]",
+		Short:                 "Calls the nonpayable method submitRedemptionProposalWithReimbursement on the WalletCoordinator contract.",
+		Args:                  cmd.ArgCountChecker(1),
+		RunE:                  wcSubmitRedemptionProposalWithReimbursement,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	c.PreRunE = cmd.NonConstArgsChecker
+	cmd.InitNonConstFlags(c)
+
+	return c
+}
+
+func wcSubmitRedemptionProposalWithReimbursement(c *cobra.Command, args []string) error {
+	contract, err := initializeWalletCoordinator(c)
+	if err != nil {
+		return err
+	}
+
+	arg_proposal_json := abi.WalletCoordinatorRedemptionProposal{}
+	if err := json.Unmarshal([]byte(args[0]), &arg_proposal_json); err != nil {
+		return fmt.Errorf("failed to unmarshal arg_proposal_json to abi.WalletCoordinatorRedemptionProposal: %w", err)
+	}
+
+	var (
+		transaction *types.Transaction
+	)
+
+	if shouldSubmit, _ := c.Flags().GetBool(cmd.SubmitFlag); shouldSubmit {
+		// Do a regular submission. Take payable into account.
+		transaction, err = contract.SubmitRedemptionProposalWithReimbursement(
+			arg_proposal_json,
+		)
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput(transaction.Hash())
+	} else {
+		// Do a call.
+		err = contract.CallSubmitRedemptionProposalWithReimbursement(
+			arg_proposal_json,
 			cmd.BlockFlagValue.Int,
 		)
 		if err != nil {
@@ -883,12 +1440,12 @@ func wcTransferOwnership(c *cobra.Command, args []string) error {
 	return nil
 }
 
-func wcUpdateDepositMinAgeCommand() *cobra.Command {
+func wcUnlockWalletCommand() *cobra.Command {
 	c := &cobra.Command{
-		Use:                   "update-deposit-min-age [arg__depositMinAge]",
-		Short:                 "Calls the nonpayable method updateDepositMinAge on the WalletCoordinator contract.",
+		Use:                   "unlock-wallet [arg_walletPubKeyHash]",
+		Short:                 "Calls the nonpayable method unlockWallet on the WalletCoordinator contract.",
 		Args:                  cmd.ArgCountChecker(1),
-		RunE:                  wcUpdateDepositMinAge,
+		RunE:                  wcUnlockWallet,
 		SilenceUsage:          true,
 		DisableFlagsInUseLine: true,
 	}
@@ -899,16 +1456,16 @@ func wcUpdateDepositMinAgeCommand() *cobra.Command {
 	return c
 }
 
-func wcUpdateDepositMinAge(c *cobra.Command, args []string) error {
+func wcUnlockWallet(c *cobra.Command, args []string) error {
 	contract, err := initializeWalletCoordinator(c)
 	if err != nil {
 		return err
 	}
 
-	arg__depositMinAge, err := decode.ParseUint[uint32](args[0], 32)
+	arg_walletPubKeyHash, err := decode.ParseBytes20(args[0])
 	if err != nil {
 		return fmt.Errorf(
-			"couldn't parse parameter arg__depositMinAge, a uint32, from passed value %v",
+			"couldn't parse parameter arg_walletPubKeyHash, a bytes20, from passed value %v",
 			args[0],
 		)
 	}
@@ -919,8 +1476,8 @@ func wcUpdateDepositMinAge(c *cobra.Command, args []string) error {
 
 	if shouldSubmit, _ := c.Flags().GetBool(cmd.SubmitFlag); shouldSubmit {
 		// Do a regular submission. Take payable into account.
-		transaction, err = contract.UpdateDepositMinAge(
-			arg__depositMinAge,
+		transaction, err = contract.UnlockWallet(
+			arg_walletPubKeyHash,
 		)
 		if err != nil {
 			return err
@@ -929,8 +1486,8 @@ func wcUpdateDepositMinAge(c *cobra.Command, args []string) error {
 		cmd.PrintOutput(transaction.Hash())
 	} else {
 		// Do a call.
-		err = contract.CallUpdateDepositMinAge(
-			arg__depositMinAge,
+		err = contract.CallUnlockWallet(
+			arg_walletPubKeyHash,
 			cmd.BlockFlagValue.Int,
 		)
 		if err != nil {
@@ -948,12 +1505,12 @@ func wcUpdateDepositMinAge(c *cobra.Command, args []string) error {
 	return nil
 }
 
-func wcUpdateDepositRefundSafetyMarginCommand() *cobra.Command {
+func wcUpdateDepositSweepProposalParametersCommand() *cobra.Command {
 	c := &cobra.Command{
-		Use:                   "update-deposit-refund-safety-margin [arg__depositRefundSafetyMargin]",
-		Short:                 "Calls the nonpayable method updateDepositRefundSafetyMargin on the WalletCoordinator contract.",
-		Args:                  cmd.ArgCountChecker(1),
-		RunE:                  wcUpdateDepositRefundSafetyMargin,
+		Use:                   "update-deposit-sweep-proposal-parameters [arg__depositSweepProposalValidity] [arg__depositMinAge] [arg__depositRefundSafetyMargin] [arg__depositSweepMaxSize] [arg__depositSweepProposalSubmissionGasOffset]",
+		Short:                 "Calls the nonpayable method updateDepositSweepProposalParameters on the WalletCoordinator contract.",
+		Args:                  cmd.ArgCountChecker(5),
+		RunE:                  wcUpdateDepositSweepProposalParameters,
 		SilenceUsage:          true,
 		DisableFlagsInUseLine: true,
 	}
@@ -964,202 +1521,7 @@ func wcUpdateDepositRefundSafetyMarginCommand() *cobra.Command {
 	return c
 }
 
-func wcUpdateDepositRefundSafetyMargin(c *cobra.Command, args []string) error {
-	contract, err := initializeWalletCoordinator(c)
-	if err != nil {
-		return err
-	}
-
-	arg__depositRefundSafetyMargin, err := decode.ParseUint[uint32](args[0], 32)
-	if err != nil {
-		return fmt.Errorf(
-			"couldn't parse parameter arg__depositRefundSafetyMargin, a uint32, from passed value %v",
-			args[0],
-		)
-	}
-
-	var (
-		transaction *types.Transaction
-	)
-
-	if shouldSubmit, _ := c.Flags().GetBool(cmd.SubmitFlag); shouldSubmit {
-		// Do a regular submission. Take payable into account.
-		transaction, err = contract.UpdateDepositRefundSafetyMargin(
-			arg__depositRefundSafetyMargin,
-		)
-		if err != nil {
-			return err
-		}
-
-		cmd.PrintOutput(transaction.Hash())
-	} else {
-		// Do a call.
-		err = contract.CallUpdateDepositRefundSafetyMargin(
-			arg__depositRefundSafetyMargin,
-			cmd.BlockFlagValue.Int,
-		)
-		if err != nil {
-			return err
-		}
-
-		cmd.PrintOutput("success")
-
-		cmd.PrintOutput(
-			"the transaction was not submitted to the chain; " +
-				"please add the `--submit` flag",
-		)
-	}
-
-	return nil
-}
-
-func wcUpdateDepositSweepMaxSizeCommand() *cobra.Command {
-	c := &cobra.Command{
-		Use:                   "update-deposit-sweep-max-size [arg__depositSweepMaxSize]",
-		Short:                 "Calls the nonpayable method updateDepositSweepMaxSize on the WalletCoordinator contract.",
-		Args:                  cmd.ArgCountChecker(1),
-		RunE:                  wcUpdateDepositSweepMaxSize,
-		SilenceUsage:          true,
-		DisableFlagsInUseLine: true,
-	}
-
-	c.PreRunE = cmd.NonConstArgsChecker
-	cmd.InitNonConstFlags(c)
-
-	return c
-}
-
-func wcUpdateDepositSweepMaxSize(c *cobra.Command, args []string) error {
-	contract, err := initializeWalletCoordinator(c)
-	if err != nil {
-		return err
-	}
-
-	arg__depositSweepMaxSize, err := decode.ParseUint[uint16](args[0], 16)
-	if err != nil {
-		return fmt.Errorf(
-			"couldn't parse parameter arg__depositSweepMaxSize, a uint16, from passed value %v",
-			args[0],
-		)
-	}
-
-	var (
-		transaction *types.Transaction
-	)
-
-	if shouldSubmit, _ := c.Flags().GetBool(cmd.SubmitFlag); shouldSubmit {
-		// Do a regular submission. Take payable into account.
-		transaction, err = contract.UpdateDepositSweepMaxSize(
-			arg__depositSweepMaxSize,
-		)
-		if err != nil {
-			return err
-		}
-
-		cmd.PrintOutput(transaction.Hash())
-	} else {
-		// Do a call.
-		err = contract.CallUpdateDepositSweepMaxSize(
-			arg__depositSweepMaxSize,
-			cmd.BlockFlagValue.Int,
-		)
-		if err != nil {
-			return err
-		}
-
-		cmd.PrintOutput("success")
-
-		cmd.PrintOutput(
-			"the transaction was not submitted to the chain; " +
-				"please add the `--submit` flag",
-		)
-	}
-
-	return nil
-}
-
-func wcUpdateDepositSweepProposalSubmissionGasOffsetCommand() *cobra.Command {
-	c := &cobra.Command{
-		Use:                   "update-deposit-sweep-proposal-submission-gas-offset [arg__depositSweepProposalSubmissionGasOffset]",
-		Short:                 "Calls the nonpayable method updateDepositSweepProposalSubmissionGasOffset on the WalletCoordinator contract.",
-		Args:                  cmd.ArgCountChecker(1),
-		RunE:                  wcUpdateDepositSweepProposalSubmissionGasOffset,
-		SilenceUsage:          true,
-		DisableFlagsInUseLine: true,
-	}
-
-	c.PreRunE = cmd.NonConstArgsChecker
-	cmd.InitNonConstFlags(c)
-
-	return c
-}
-
-func wcUpdateDepositSweepProposalSubmissionGasOffset(c *cobra.Command, args []string) error {
-	contract, err := initializeWalletCoordinator(c)
-	if err != nil {
-		return err
-	}
-
-	arg__depositSweepProposalSubmissionGasOffset, err := decode.ParseUint[uint32](args[0], 32)
-	if err != nil {
-		return fmt.Errorf(
-			"couldn't parse parameter arg__depositSweepProposalSubmissionGasOffset, a uint32, from passed value %v",
-			args[0],
-		)
-	}
-
-	var (
-		transaction *types.Transaction
-	)
-
-	if shouldSubmit, _ := c.Flags().GetBool(cmd.SubmitFlag); shouldSubmit {
-		// Do a regular submission. Take payable into account.
-		transaction, err = contract.UpdateDepositSweepProposalSubmissionGasOffset(
-			arg__depositSweepProposalSubmissionGasOffset,
-		)
-		if err != nil {
-			return err
-		}
-
-		cmd.PrintOutput(transaction.Hash())
-	} else {
-		// Do a call.
-		err = contract.CallUpdateDepositSweepProposalSubmissionGasOffset(
-			arg__depositSweepProposalSubmissionGasOffset,
-			cmd.BlockFlagValue.Int,
-		)
-		if err != nil {
-			return err
-		}
-
-		cmd.PrintOutput("success")
-
-		cmd.PrintOutput(
-			"the transaction was not submitted to the chain; " +
-				"please add the `--submit` flag",
-		)
-	}
-
-	return nil
-}
-
-func wcUpdateDepositSweepProposalValidityCommand() *cobra.Command {
-	c := &cobra.Command{
-		Use:                   "update-deposit-sweep-proposal-validity [arg__depositSweepProposalValidity]",
-		Short:                 "Calls the nonpayable method updateDepositSweepProposalValidity on the WalletCoordinator contract.",
-		Args:                  cmd.ArgCountChecker(1),
-		RunE:                  wcUpdateDepositSweepProposalValidity,
-		SilenceUsage:          true,
-		DisableFlagsInUseLine: true,
-	}
-
-	c.PreRunE = cmd.NonConstArgsChecker
-	cmd.InitNonConstFlags(c)
-
-	return c
-}
-
-func wcUpdateDepositSweepProposalValidity(c *cobra.Command, args []string) error {
+func wcUpdateDepositSweepProposalParameters(c *cobra.Command, args []string) error {
 	contract, err := initializeWalletCoordinator(c)
 	if err != nil {
 		return err
@@ -1172,6 +1534,34 @@ func wcUpdateDepositSweepProposalValidity(c *cobra.Command, args []string) error
 			args[0],
 		)
 	}
+	arg__depositMinAge, err := decode.ParseUint[uint32](args[1], 32)
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter arg__depositMinAge, a uint32, from passed value %v",
+			args[1],
+		)
+	}
+	arg__depositRefundSafetyMargin, err := decode.ParseUint[uint32](args[2], 32)
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter arg__depositRefundSafetyMargin, a uint32, from passed value %v",
+			args[2],
+		)
+	}
+	arg__depositSweepMaxSize, err := decode.ParseUint[uint16](args[3], 16)
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter arg__depositSweepMaxSize, a uint16, from passed value %v",
+			args[3],
+		)
+	}
+	arg__depositSweepProposalSubmissionGasOffset, err := decode.ParseUint[uint32](args[4], 32)
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter arg__depositSweepProposalSubmissionGasOffset, a uint32, from passed value %v",
+			args[4],
+		)
+	}
 
 	var (
 		transaction *types.Transaction
@@ -1179,8 +1569,12 @@ func wcUpdateDepositSweepProposalValidity(c *cobra.Command, args []string) error
 
 	if shouldSubmit, _ := c.Flags().GetBool(cmd.SubmitFlag); shouldSubmit {
 		// Do a regular submission. Take payable into account.
-		transaction, err = contract.UpdateDepositSweepProposalValidity(
+		transaction, err = contract.UpdateDepositSweepProposalParameters(
 			arg__depositSweepProposalValidity,
+			arg__depositMinAge,
+			arg__depositRefundSafetyMargin,
+			arg__depositSweepMaxSize,
+			arg__depositSweepProposalSubmissionGasOffset,
 		)
 		if err != nil {
 			return err
@@ -1189,8 +1583,187 @@ func wcUpdateDepositSweepProposalValidity(c *cobra.Command, args []string) error
 		cmd.PrintOutput(transaction.Hash())
 	} else {
 		// Do a call.
-		err = contract.CallUpdateDepositSweepProposalValidity(
+		err = contract.CallUpdateDepositSweepProposalParameters(
 			arg__depositSweepProposalValidity,
+			arg__depositMinAge,
+			arg__depositRefundSafetyMargin,
+			arg__depositSweepMaxSize,
+			arg__depositSweepProposalSubmissionGasOffset,
+			cmd.BlockFlagValue.Int,
+		)
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput("success")
+
+		cmd.PrintOutput(
+			"the transaction was not submitted to the chain; " +
+				"please add the `--submit` flag",
+		)
+	}
+
+	return nil
+}
+
+func wcUpdateHeartbeatRequestParametersCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "update-heartbeat-request-parameters [arg__heartbeatRequestValidity] [arg__heartbeatRequestGasOffset]",
+		Short:                 "Calls the nonpayable method updateHeartbeatRequestParameters on the WalletCoordinator contract.",
+		Args:                  cmd.ArgCountChecker(2),
+		RunE:                  wcUpdateHeartbeatRequestParameters,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	c.PreRunE = cmd.NonConstArgsChecker
+	cmd.InitNonConstFlags(c)
+
+	return c
+}
+
+func wcUpdateHeartbeatRequestParameters(c *cobra.Command, args []string) error {
+	contract, err := initializeWalletCoordinator(c)
+	if err != nil {
+		return err
+	}
+
+	arg__heartbeatRequestValidity, err := decode.ParseUint[uint32](args[0], 32)
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter arg__heartbeatRequestValidity, a uint32, from passed value %v",
+			args[0],
+		)
+	}
+	arg__heartbeatRequestGasOffset, err := decode.ParseUint[uint32](args[1], 32)
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter arg__heartbeatRequestGasOffset, a uint32, from passed value %v",
+			args[1],
+		)
+	}
+
+	var (
+		transaction *types.Transaction
+	)
+
+	if shouldSubmit, _ := c.Flags().GetBool(cmd.SubmitFlag); shouldSubmit {
+		// Do a regular submission. Take payable into account.
+		transaction, err = contract.UpdateHeartbeatRequestParameters(
+			arg__heartbeatRequestValidity,
+			arg__heartbeatRequestGasOffset,
+		)
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput(transaction.Hash())
+	} else {
+		// Do a call.
+		err = contract.CallUpdateHeartbeatRequestParameters(
+			arg__heartbeatRequestValidity,
+			arg__heartbeatRequestGasOffset,
+			cmd.BlockFlagValue.Int,
+		)
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput("success")
+
+		cmd.PrintOutput(
+			"the transaction was not submitted to the chain; " +
+				"please add the `--submit` flag",
+		)
+	}
+
+	return nil
+}
+
+func wcUpdateRedemptionProposalParametersCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "update-redemption-proposal-parameters [arg__redemptionProposalValidity] [arg__redemptionRequestMinAge] [arg__redemptionRequestTimeoutSafetyMargin] [arg__redemptionMaxSize] [arg__redemptionProposalSubmissionGasOffset]",
+		Short:                 "Calls the nonpayable method updateRedemptionProposalParameters on the WalletCoordinator contract.",
+		Args:                  cmd.ArgCountChecker(5),
+		RunE:                  wcUpdateRedemptionProposalParameters,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	c.PreRunE = cmd.NonConstArgsChecker
+	cmd.InitNonConstFlags(c)
+
+	return c
+}
+
+func wcUpdateRedemptionProposalParameters(c *cobra.Command, args []string) error {
+	contract, err := initializeWalletCoordinator(c)
+	if err != nil {
+		return err
+	}
+
+	arg__redemptionProposalValidity, err := decode.ParseUint[uint32](args[0], 32)
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter arg__redemptionProposalValidity, a uint32, from passed value %v",
+			args[0],
+		)
+	}
+	arg__redemptionRequestMinAge, err := decode.ParseUint[uint32](args[1], 32)
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter arg__redemptionRequestMinAge, a uint32, from passed value %v",
+			args[1],
+		)
+	}
+	arg__redemptionRequestTimeoutSafetyMargin, err := decode.ParseUint[uint32](args[2], 32)
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter arg__redemptionRequestTimeoutSafetyMargin, a uint32, from passed value %v",
+			args[2],
+		)
+	}
+	arg__redemptionMaxSize, err := decode.ParseUint[uint16](args[3], 16)
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter arg__redemptionMaxSize, a uint16, from passed value %v",
+			args[3],
+		)
+	}
+	arg__redemptionProposalSubmissionGasOffset, err := decode.ParseUint[uint32](args[4], 32)
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter arg__redemptionProposalSubmissionGasOffset, a uint32, from passed value %v",
+			args[4],
+		)
+	}
+
+	var (
+		transaction *types.Transaction
+	)
+
+	if shouldSubmit, _ := c.Flags().GetBool(cmd.SubmitFlag); shouldSubmit {
+		// Do a regular submission. Take payable into account.
+		transaction, err = contract.UpdateRedemptionProposalParameters(
+			arg__redemptionProposalValidity,
+			arg__redemptionRequestMinAge,
+			arg__redemptionRequestTimeoutSafetyMargin,
+			arg__redemptionMaxSize,
+			arg__redemptionProposalSubmissionGasOffset,
+		)
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput(transaction.Hash())
+	} else {
+		// Do a call.
+		err = contract.CallUpdateRedemptionProposalParameters(
+			arg__redemptionProposalValidity,
+			arg__redemptionRequestMinAge,
+			arg__redemptionRequestTimeoutSafetyMargin,
+			arg__redemptionMaxSize,
+			arg__redemptionProposalSubmissionGasOffset,
 			cmd.BlockFlagValue.Int,
 		)
 		if err != nil {

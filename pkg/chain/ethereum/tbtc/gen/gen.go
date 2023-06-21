@@ -14,6 +14,15 @@ var (
 	// BridgeAddress is a Bridge contract's address read from the NPM package.
 	BridgeAddress string = strings.TrimSpace(bridgeAddressFileContent)
 
+	//go:embed _address/MaintainerProxy
+	maintainerProxyAddressFileContent string
+
+	// MaintainerProxyAddress is a MaintainerProxy contract's address read from
+	// the NPM package.
+	MaintainerProxyAddress string = strings.TrimSpace(
+		maintainerProxyAddressFileContent,
+	)
+
 	//go:embed _address/LightRelay
 	lightRelayAddressFileContent string
 

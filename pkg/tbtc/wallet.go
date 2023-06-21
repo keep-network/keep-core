@@ -1,24 +1,130 @@
 package tbtc
 
 import (
+	"bytes"
 	"crypto/ecdsa"
 	"crypto/elliptic"
+	"encoding/hex"
 	"fmt"
+	"sync"
+
+	"github.com/keep-network/keep-core/pkg/bitcoin"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/protocol/group"
 	"github.com/keep-network/keep-core/pkg/tecdsa"
+	"go.uber.org/zap"
 )
 
-// WalletAction represents actions that can be performed by a wallet.
-type WalletAction uint8
+// WalletActionType represents actions types that can be performed by a wallet.
+type WalletActionType uint8
 
 const (
-	IdleWallet WalletAction = iota
+	Noop WalletActionType = iota
+	Heartbeat
 	DepositSweep
 	Redemption
 	MovingFunds
 	MovedFundsSweep
 )
+
+func (wat WalletActionType) String() string {
+	switch wat {
+	case Noop:
+		return "Noop"
+	case Heartbeat:
+		return "Heartbeat"
+	case DepositSweep:
+		return "DepositSweep"
+	case Redemption:
+		return "Redemption"
+	case MovingFunds:
+		return "MovingFunds"
+	case MovedFundsSweep:
+		return "MovedFundsSweep"
+	default:
+		panic("unknown wallet action type")
+	}
+}
+
+// walletAction represents an action that can be performed by the wallet.
+type walletAction interface {
+	// execute carries out the walletAction until completion.
+	execute() error
+
+	// wallet returns the wallet the walletAction is bound to.
+	wallet() wallet
+
+	// actionType returns the specific type of the walletAction.
+	actionType() WalletActionType
+}
+
+// errWalletBusy is an error returned when the waller cannot execute the
+// requested walletAction due to an ongoing work.
+var errWalletBusy = fmt.Errorf("wallet is busy")
+
+// walletDispatcher is a component responsible for dispatching wallet actions
+// to specific wallets.
+type walletDispatcher struct {
+	actionsMutex sync.Mutex
+	// actions is the mapping holding the currently executed action of the
+	// given wallet. The mapping key is the uncompressed public key
+	// (with 04 prefix) of the wallet.
+	actions map[string]WalletActionType
+}
+
+func newWalletDispatcher() *walletDispatcher {
+	return &walletDispatcher{
+		actions: make(map[string]WalletActionType),
+	}
+}
+
+// dispatch sends the given walletAction for execution. If the wallet is
+// already busy, an errWalletBusy error is returned and the action is ignored.
+func (wd *walletDispatcher) dispatch(action walletAction) error {
+	wd.actionsMutex.Lock()
+	defer wd.actionsMutex.Unlock()
+
+	walletPublicKeyBytes, err := marshalPublicKey(action.wallet().publicKey)
+	if err != nil {
+		return fmt.Errorf("cannot marshal wallet public key: [%v]", err)
+	}
+
+	walletActionLogger := logger.With(
+		zap.String("wallet", fmt.Sprintf("0x%x", walletPublicKeyBytes)),
+		zap.String("action", action.actionType().String()),
+	)
+
+	key := hex.EncodeToString(walletPublicKeyBytes)
+
+	if _, ok := wd.actions[key]; ok {
+		return errWalletBusy
+	}
+
+	wd.actions[key] = action.actionType()
+
+	go func() {
+		defer func() {
+			wd.actionsMutex.Lock()
+			delete(wd.actions, key)
+			wd.actionsMutex.Unlock()
+		}()
+
+		walletActionLogger.Infof("starting action execution")
+
+		err := action.execute()
+		if err != nil {
+			walletActionLogger.Errorf(
+				"action execution terminated with error: [%v]",
+				err,
+			)
+			return
+		}
+
+		walletActionLogger.Infof("action execution terminated with success")
+	}()
+
+	return nil
+}
 
 // wallet represents a tBTC wallet. A wallet is one of the basic building
 // blocks of the system that takes BTC under custody during the deposit
@@ -69,6 +175,89 @@ func (w *wallet) String() string {
 		publicKey,
 		len(w.signingGroupOperators),
 	)
+}
+
+// DetermineWalletMainUtxo determines the plain-text wallet main UTXO
+// currently registered in the Bridge on-chain contract. The returned
+// main UTXO can be nil if the wallet does not have a main UTXO registered
+// in the Bridge at the moment.
+//
+// WARNING: THIS FUNCTION CANNOT DETERMINE THE MAIN UTXO IF IT COMES FROM A
+// BITCOIN TRANSACTION THAT IS NOT ONE OF THE LATEST FIVE TRANSACTIONS
+// TARGETING THE GIVEN WALLET PUBLIC KEY HASH. HOWEVER, SUCH A CASE IS
+// VERY UNLIKELY.
+func DetermineWalletMainUtxo(
+	walletPublicKeyHash [20]byte,
+	bridgeChain BridgeChain,
+	btcChain bitcoin.Chain,
+) (*bitcoin.UnspentTransactionOutput, error) {
+	walletChainData, err := bridgeChain.GetWallet(walletPublicKeyHash)
+	if err != nil {
+		return nil, fmt.Errorf("cannot get on-chain data for wallet: [%v]", err)
+	}
+
+	// Valid case when the wallet doesn't have a main UTXO registered into
+	// the Bridge.
+	if walletChainData.MainUtxoHash == [32]byte{} {
+		return nil, nil
+	}
+
+	// The wallet main UTXO registered in the Bridge almost always comes
+	// from the latest BTC transaction made by the wallet. However, there may
+	// be cases where the BTC transaction was made but their SPV proof is
+	// not yet submitted to the Bridge thus the registered main UTXO points
+	// to the second last BTC transaction. In theory, such a gap between
+	// the actual latest BTC transaction and the registered main UTXO in
+	// the Bridge may be even wider. To cover the worst possible cases, we
+	// always take the five latest transactions made by the wallet for
+	// consideration.
+	transactions, err := btcChain.GetTransactionsForPublicKeyHash(walletPublicKeyHash, 5)
+	if err != nil {
+		return nil, fmt.Errorf("cannot get transactions history for wallet: [%v]", err)
+	}
+
+	walletP2PKH, err := bitcoin.PayToPublicKeyHash(walletPublicKeyHash)
+	if err != nil {
+		return nil, fmt.Errorf("cannot construct P2PKH for wallet: [%v]", err)
+	}
+	walletP2WPKH, err := bitcoin.PayToWitnessPublicKeyHash(walletPublicKeyHash)
+	if err != nil {
+		return nil, fmt.Errorf("cannot construct P2WPKH for wallet: [%v]", err)
+	}
+
+	// Start iterating from the latest transaction as the chance it matches
+	// the wallet main UTXO is the highest.
+	for i := len(transactions) - 1; i >= 0; i-- {
+		transaction := transactions[i]
+
+		// Iterate over transaction's outputs and find the one that targets
+		// the wallet public key hash.
+		for outputIndex, output := range transaction.Outputs {
+			script := output.PublicKeyScript
+			matchesWallet := bytes.Equal(script, walletP2PKH) ||
+				bytes.Equal(script, walletP2WPKH)
+
+			// Once the right output is found, check whether their hash
+			// matches the main UTXO hash stored on-chain. If so, this
+			// UTXO is the one we are looking for.
+			if matchesWallet {
+				utxo := &bitcoin.UnspentTransactionOutput{
+					Outpoint: &bitcoin.TransactionOutpoint{
+						TransactionHash: transaction.Hash(),
+						OutputIndex:     uint32(outputIndex),
+					},
+					Value: output.Value,
+				}
+
+				if bridgeChain.ComputeMainUtxoHash(utxo) ==
+					walletChainData.MainUtxoHash {
+					return utxo, nil
+				}
+			}
+		}
+	}
+
+	return nil, fmt.Errorf("main UTXO not found")
 }
 
 // signer represents a threshold signer of a tBTC wallet. A signer holds

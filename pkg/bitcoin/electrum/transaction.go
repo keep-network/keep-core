@@ -6,7 +6,7 @@ import (
 	"fmt"
 
 	"github.com/btcsuite/btcd/v2/wire"
-
+	"github.com/checksum0/go-electrum/electrum"
 	"github.com/keep-network/keep-core/pkg/bitcoin"
 )
 
@@ -65,4 +65,16 @@ func convertRawTransaction(rawTx string) (*bitcoin.Transaction, error) {
 	}
 
 	return result, nil
+}
+
+// convertMerkleProof transforms a MerkleProof returned from Electrum protocol
+// to the format expected by the bitcoin.Chain interface.
+func convertMerkleProof(
+	electrumResult *electrum.GetMerkleProofResult,
+) *bitcoin.TransactionMerkleProof {
+	return &bitcoin.TransactionMerkleProof{
+		BlockHeight: uint(electrumResult.Height),
+		MerkleNodes: electrumResult.Merkle,
+		Position:    uint(electrumResult.Position),
+	}
 }

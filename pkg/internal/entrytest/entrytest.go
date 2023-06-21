@@ -7,15 +7,17 @@ import (
 	"context"
 	"crypto/rand"
 	"fmt"
-	beaconchain "github.com/keep-network/keep-core/pkg/beacon/chain"
-	"github.com/keep-network/keep-core/pkg/chain"
-	"github.com/keep-network/keep-core/pkg/chain/local_v1"
-	"github.com/keep-network/keep-core/pkg/internal/testutils"
 	"math/big"
 	"sync"
 	"time"
 
+	"github.com/keep-network/keep-core/internal/testutils"
+	beaconchain "github.com/keep-network/keep-core/pkg/beacon/chain"
+	"github.com/keep-network/keep-core/pkg/chain"
+	"github.com/keep-network/keep-core/pkg/chain/local_v1"
+
 	bn256 "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
+
 	"github.com/keep-network/keep-core/pkg/internal/interception"
 	"github.com/keep-network/keep-core/pkg/operator"
 

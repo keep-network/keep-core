@@ -1,7 +1,6 @@
 import React, { useEffect } from "react"
 import { useDispatch, useSelector } from "react-redux"
 import {
-  DepositForm,
   MetricsSection,
   WithdrawAmountForm,
 } from "../../components/coverage-pools"
@@ -29,7 +28,7 @@ import * as Icons from "../../components/Icons"
 import { ViewInBlockExplorer } from "../../components/ViewInBlockExplorer"
 
 const CoveragePoolPage = () => {
-  const { openConfirmationModal, openModal } = useModal()
+  const { openModal } = useModal()
   const dispatch = useDispatch()
   const {
     totalValueLocked,
@@ -45,10 +44,7 @@ const CoveragePoolPage = () => {
     totalCoverageClaimed,
     withdrawalDelay,
     withdrawalInitiatedTimestamp,
-    hasRiskManagerOpenAuctions,
   } = useSelector((state) => state.coveragePool)
-
-  const keepTokenBalance = useSelector((state) => state.keepTokenBalance)
 
   const address = useWeb3Address()
 
@@ -64,24 +60,6 @@ const CoveragePoolPage = () => {
       dispatch(fetchCovPoolDataRequest(address))
     }
   }, [dispatch, address])
-
-  const onSubmitDepositForm = async (values) => {
-    const { tokenAmount } = values
-    const amount = KEEP.fromTokenUnit(tokenAmount).toString()
-    if (hasRiskManagerOpenAuctions) {
-      await openConfirmationModal(MODAL_TYPES.WarningBeforeCovPoolDeposit)
-    }
-    openModal(MODAL_TYPES.InitiateCovPoolDeposit, {
-      amount,
-      estimatedBalanceAmountInKeep: Keep.coveragePoolV1.estimatedBalanceFor(
-        covBalance,
-        covTotalSupply,
-        totalValueLocked
-      ),
-      totalValueLocked,
-      covTotalSupply,
-    })
-  }
 
   const onSubmitWithdrawForm = async (values) => {
     const { withdrawAmount } = values
@@ -116,21 +94,6 @@ const CoveragePoolPage = () => {
         />
       </OnlyIf>
       <section className="coverage-pool__deposit-wrapper">
-        <section className="tile coverage-pool__deposit-form">
-          <div className={"flex row center"}>
-            <h3>Deposit</h3>
-            <ResourceTooltip
-              tooltipClassName={"ml-1"}
-              {...resourceTooltipProps.covPoolsDeposit}
-            />
-          </div>
-          <DepositForm
-            onSubmit={onSubmitDepositForm}
-            tokenAmount={keepTokenBalance.value}
-            apy={apy}
-          />
-        </section>
-
         <section className="tile coverage-pool__balance">
           <div className="coverage-pool__balance-title mb-1">
             <h3>Balance</h3>

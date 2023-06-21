@@ -7,3 +7,4 @@ data:
   LOG_LEVEL: "keep*=info tss-lib=warn"
   GOLOG_LOG_FMT: json
   # GOLOG_OUTPUT: stdout
+  ELECTRUM_TCP_URL: tcp://electrumx.bitcoin-testnet:80

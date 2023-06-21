@@ -2,15 +2,17 @@ package tecdsa
 
 import (
 	"crypto/elliptic"
-	fuzz "github.com/google/gofuzz"
 	"math/big"
 	"reflect"
 	"testing"
 
+	fuzz "github.com/google/gofuzz"
+
 	"github.com/bnb-chain/tss-lib/crypto"
+
+	"github.com/keep-network/keep-core/internal/testutils"
 	"github.com/keep-network/keep-core/pkg/internal/pbutils"
 	"github.com/keep-network/keep-core/pkg/internal/tecdsatest"
-	"github.com/keep-network/keep-core/pkg/internal/testutils"
 )
 
 func TestPrivateKeyShareMarshalling(t *testing.T) {

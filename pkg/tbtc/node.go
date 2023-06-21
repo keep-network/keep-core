@@ -7,6 +7,9 @@ import (
 	"fmt"
 	"math/big"
 	"sync"
+	"time"
+
+	"github.com/keep-network/keep-core/pkg/bitcoin"
 
 	"github.com/keep-network/keep-core/pkg/chain"
 
@@ -44,21 +47,40 @@ type node struct {
 	groupParameters *GroupParameters
 
 	chain          Chain
+	btcChain       bitcoin.Chain
 	netProvider    net.Provider
 	walletRegistry *walletRegistry
-	protocolLatch  *generator.ProtocolLatch
 
+	// walletDispatcher ensures only one action is executed by a wallet at
+	// a time. All possible activities of a created wallet must be represented
+	// by appropriate actions dispatched through this component.
+	walletDispatcher *walletDispatcher
+
+	// protocolLatch makes sure no expensive number generator operations are
+	// running when signing or generating a wallet key are executed. The
+	// protocolLatch is used by dkgExecutor and signingExecutor.
+	protocolLatch *generator.ProtocolLatch
+
+	// dkgExecutor encapsulates the logic of distributed key generation.
+	//
+	// dkgExecutor MUST NOT be used outside this struct.
 	dkgExecutor *dkgExecutor
 
 	signingExecutorsMutex sync.Mutex
 	// signingExecutors is the cache holding signing executors for specific wallets.
 	// The cache key is the uncompressed public key (with 04 prefix) of the wallet.
+	// signingExecutor encapsulates the generic logic of signing messages.
+	//
+	// signingExecutors MUST NOT be used outside this struct. Please use
+	// wallet actions and walletDispatcher to execute an action on an existing
+	// wallet.
 	signingExecutors map[string]*signingExecutor
 }
 
 func newNode(
 	groupParameters *GroupParameters,
 	chain Chain,
+	btcChain bitcoin.Chain,
 	netProvider net.Provider,
 	keyStorePersistance persistence.ProtectedHandle,
 	workPersistence persistence.BasicHandle,
@@ -73,8 +95,10 @@ func newNode(
 	node := &node{
 		groupParameters:  groupParameters,
 		chain:            chain,
+		btcChain:         btcChain,
 		netProvider:      netProvider,
 		walletRegistry:   walletRegistry,
+		walletDispatcher: newWalletDispatcher(),
 		protocolLatch:    latch,
 		signingExecutors: make(map[string]*signingExecutor),
 	}
@@ -262,9 +286,200 @@ func (n *node) getSigningExecutor(
 	return executor, true, nil
 }
 
+// handleHeartbeatRequest handles an incoming wallet heartbeat request.
+// First, it determines whether the node is supposed to do an action by checking
+// whether any of the request's target wallet signers are under the node's control.
+// If so, this function orchestrates and dispatches an appropriate wallet action.
+func (n *node) handleHeartbeatRequest(
+	walletPublicKeyHash [20]byte,
+	message []byte,
+	requestExpiresAt time.Time,
+	startBlock uint64,
+	delayBlocks uint64,
+) {
+	wallet, ok := n.walletRegistry.getWalletByPublicKeyHash(
+		walletPublicKeyHash,
+	)
+	if !ok {
+		logger.Infof(
+			"node does not control signers of wallet PKH [0x%x]; "+
+				"ignoring the received heartbeat request",
+			walletPublicKeyHash,
+		)
+		return
+	}
+
+	signingExecutor, ok, err := n.getSigningExecutor(wallet.publicKey)
+	if err != nil {
+		logger.Errorf("cannot get signing executor: [%v]", err)
+		return
+	}
+
+	// This check is actually redundant. We know the node controls some
+	// wallet signers as we just got the wallet from the registry using their
+	// public key hash. However, we are doing it just in case. The API
+	// contract of getWalletByPublicKeyHash and/or getSigningExecutor may
+	// change one day.
+	if !ok {
+		logger.Infof(
+			"node does not control signers of wallet PKH [0x%x]; "+
+				"ignoring the received heartbeat request",
+			walletPublicKeyHash,
+		)
+		return
+	}
+
+	walletPublicKeyBytes, err := marshalPublicKey(wallet.publicKey)
+	if err != nil {
+		logger.Errorf("cannot marshal wallet public key: [%v]", err)
+		return
+	}
+
+	logger.Infof(
+		"node controls signers of wallet PKH [0x%x]; "+
+			"plain-text uncompressed public key of that wallet is [0x%x]; "+
+			"starting orchestration of the heartbeat action",
+		walletPublicKeyHash,
+		walletPublicKeyBytes,
+	)
+
+	// The request processing started after a confirmation period represented
+	// by the delayBlocks parameter. Hence, we must add it to the original
+	// startBlock.
+	heartbeatRequestProcessingStartBlock := startBlock + delayBlocks
+
+	walletActionLogger := logger.With(
+		zap.String("wallet", fmt.Sprintf("0x%x", walletPublicKeyBytes)),
+		zap.String("action", Heartbeat.String()),
+		zap.Uint64("startBlock", heartbeatRequestProcessingStartBlock),
+	)
+	walletActionLogger.Infof("dispatching wallet action")
+
+	action := newHeartbeatAction(
+		walletActionLogger,
+		wallet,
+		signingExecutor,
+		message,
+		heartbeatRequestProcessingStartBlock,
+		requestExpiresAt,
+	)
+
+	err = n.walletDispatcher.dispatch(action)
+	if err != nil {
+		walletActionLogger.Errorf("cannot dispatch wallet action: [%v]", err)
+		return
+	}
+
+	walletActionLogger.Infof("wallet action dispatched successfully")
+}
+
+// handleDepositSweepProposal handles an incoming deposit sweep proposal.
+// First, it determines whether the node is supposed to do an action by checking
+// whether any of the proposal's target wallet signers are under node's control.
+// If so, this function orchestrates and dispatches an appropriate wallet action.
+func (n *node) handleDepositSweepProposal(
+	proposal *DepositSweepProposal,
+	proposalExpiresAt time.Time,
+	startBlock uint64,
+	delayBlocks uint64,
+) {
+	wallet, ok := n.walletRegistry.getWalletByPublicKeyHash(
+		proposal.WalletPublicKeyHash,
+	)
+	if !ok {
+		logger.Infof(
+			"node does not control signers of wallet PKH [0x%x]; "+
+				"ignoring the received deposit sweep proposal",
+			proposal.WalletPublicKeyHash,
+		)
+		return
+	}
+
+	signingExecutor, ok, err := n.getSigningExecutor(wallet.publicKey)
+	if err != nil {
+		logger.Errorf("cannot get signing executor: [%v]", err)
+		return
+	}
+	// This check is actually redundant. We know the node controls some
+	// wallet signers as we just got the wallet from the registry using their
+	// public key hash. However, we are doing it just in case. The API
+	// contract of getWalletByPublicKeyHash and/or getSigningExecutor may
+	// change one day.
+	if !ok {
+		logger.Infof(
+			"node does not control signers of wallet PKH [0x%x]; "+
+				"ignoring the received deposit sweep proposal",
+			proposal.WalletPublicKeyHash,
+		)
+		return
+	}
+
+	walletPublicKeyBytes, err := marshalPublicKey(wallet.publicKey)
+	if err != nil {
+		logger.Errorf("cannot marshal wallet public key: [%v]", err)
+		return
+	}
+
+	logger.Infof(
+		"node controls signers of wallet PKH [0x%x]; "+
+			"plain-text uncompressed public key of that wallet is [0x%x]; "+
+			"starting orchestration of the deposit sweep action",
+		proposal.WalletPublicKeyHash,
+		walletPublicKeyBytes,
+	)
+
+	// The proposal's processing started after a confirmation period represented
+	// by the delayBlocks parameter. Hence, we must add it to the original
+	// startBlock.
+	proposalProcessingStartBlock := startBlock + delayBlocks
+
+	walletActionLogger := logger.With(
+		zap.String("wallet", fmt.Sprintf("0x%x", walletPublicKeyBytes)),
+		zap.String("action", DepositSweep.String()),
+		zap.Uint64("startBlock", proposalProcessingStartBlock),
+	)
+	walletActionLogger.Infof("dispatching wallet action")
+
+	action := newDepositSweepAction(
+		walletActionLogger,
+		n.chain,
+		n.btcChain,
+		wallet,
+		signingExecutor,
+		proposal,
+		proposalProcessingStartBlock,
+		proposalExpiresAt,
+	)
+
+	err = n.walletDispatcher.dispatch(action)
+	if err != nil {
+		walletActionLogger.Errorf("cannot dispatch wallet action: [%v]", err)
+		return
+	}
+
+	walletActionLogger.Infof("wallet action dispatched successfully")
+}
+
+// handleRedemptionProposal handles an incoming redemption proposal.
+// First, it determines whether the node is supposed to do an action by checking
+// whether any of the proposal's target wallet signers are under node's control.
+// If so, this function orchestrates and dispatches an appropriate wallet action.
+func (n *node) handleRedemptionProposal(
+	proposal *RedemptionProposal,
+	proposalExpiresAt time.Time,
+	startBlock uint64,
+	delayBlocks uint64,
+) {
+	// TODO: Implementation.
+	panic("not implemented yet")
+}
+
 // waitForBlockFn represents a function blocking the execution until the given
 // block height.
 type waitForBlockFn func(context.Context, uint64) error
+
+// getCurrentBlockFn represents a function returning the current block height.
+type getCurrentBlockFn func() (uint64, error)
 
 // TODO: this should become a part of BlockHeightWaiter interface.
 func (n *node) waitForBlockHeight(ctx context.Context, blockHeight uint64) error {

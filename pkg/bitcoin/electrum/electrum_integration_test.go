@@ -1,72 +1,175 @@
 //go:build integration
-// +build integration
 
-package electrum
+package electrum_test
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"math"
+	"strings"
 	"testing"
 	"time"
 
-	"github.com/go-test/deep"
 	"golang.org/x/exp/slices"
 
+	"github.com/go-test/deep"
+
 	"github.com/keep-network/keep-core/pkg/bitcoin"
+	"github.com/keep-network/keep-core/pkg/bitcoin/electrum"
 
 	testData "github.com/keep-network/keep-core/internal/testdata/bitcoin"
+
+	_ "unsafe"
+
+	_ "github.com/keep-network/keep-core/config"
 )
 
-// TODO: Include integration test in the CI.
-// To run the tests execute `go test -v -tags=integration ./...`
+const requestTimeout = 5 * time.Second
+const requestRetryTimeout = requestTimeout * 2
 
-const timeout = 2 * time.Second
+const blockDelta = 2
+
+type testConfig struct {
+	clientConfig electrum.Config
+	network      bitcoin.Network
+}
 
 // Servers details were taken from a public Electrum servers list published
 // at https://1209k.com/bitcoin-eye/ele.php?chain=tbtc.
-var configs = map[string]Config{
+var testConfigs = map[string]testConfig{
 	"electrs-esplora tcp": {
-		URL:                 "electrum.blockstream.info:60001",
-		Protocol:            TCP,
-		RequestTimeout:      timeout,
-		RequestRetryTimeout: timeout * 2,
+		clientConfig: electrum.Config{
+			URL:                 "tcp://electrum.blockstream.info:60001",
+			RequestTimeout:      requestTimeout * 2,
+			RequestRetryTimeout: requestRetryTimeout * 2,
+		},
+		network: bitcoin.Testnet,
 	},
 	"electrs-esplora ssl": {
-		URL:                 "electrum.blockstream.info:60002",
-		Protocol:            SSL,
-		RequestTimeout:      timeout,
-		RequestRetryTimeout: timeout * 3,
+		clientConfig: electrum.Config{
+			URL:                 "ssl://electrum.blockstream.info:60002",
+			RequestTimeout:      requestTimeout * 2,
+			RequestRetryTimeout: requestRetryTimeout * 2,
+		},
+		network: bitcoin.Testnet,
 	},
-	"electrumx ssl": {
-		URL:                 "testnet.hsmiths.com:53012",
-		Protocol:            SSL,
-		RequestTimeout:      timeout,
-		RequestRetryTimeout: timeout * 2,
+	"electrumx wss": {
+		clientConfig: electrum.Config{
+			URL:                 "wss://electrumx-server.test.tbtc.network:8443",
+			RequestTimeout:      requestTimeout,
+			RequestRetryTimeout: requestRetryTimeout,
+		},
+		network: bitcoin.Testnet,
 	},
-	"fulcrum ssl": {
-		URL:                 "blackie.c3-soft.com:57006",
-		Protocol:            SSL,
-		RequestTimeout:      timeout,
-		RequestRetryTimeout: timeout * 2,
+	"fulcrum tcp": {
+		clientConfig: electrum.Config{
+			URL:                 "tcp://blackie.c3-soft.com:57005",
+			RequestTimeout:      requestTimeout * 2,
+			RequestRetryTimeout: requestRetryTimeout * 2,
+		},
+		network: bitcoin.Testnet,
 	},
-	// TODO: Add Keep's electrum server
+}
+
+var invalidTxID bitcoin.Hash
+
+//go:linkname readEmbeddedServers github.com/keep-network/keep-core/config.readElectrumUrls
+func readEmbeddedServers(network bitcoin.Network) ([]string, error)
+
+func init() {
+	var err error
+
+	readServers := func(network bitcoin.Network) error {
+		servers, err := readEmbeddedServers(network)
+		if err != nil {
+			return err
+		}
+
+		for _, server := range servers {
+			serverName := fmt.Sprintf("embedded/%s/%s", network.String(), server)
+			testConfigs[serverName] = testConfig{
+				clientConfig: electrum.Config{
+					URL:                 server,
+					RequestTimeout:      requestTimeout,
+					RequestRetryTimeout: requestRetryTimeout,
+				},
+				network: network,
+			}
+		}
+		return nil
+	}
+
+	if err := readServers(bitcoin.Testnet); err != nil {
+		panic(err)
+	}
+
+	if err := readServers(bitcoin.Mainnet); err != nil {
+		panic(err)
+	}
+
+	// Remove duplicates
+	urls := make(map[string]string)
+	for key, server := range testConfigs {
+		firstName, ok := urls[server.clientConfig.URL]
+		if ok {
+			delete(testConfigs, key)
+			fmt.Printf(
+				"removed server [%s] as a server with the same URL [%s] is already registered under [%s] name\n",
+				key,
+				server.clientConfig.URL,
+				firstName,
+			)
+			continue
+		}
+		urls[server.clientConfig.URL] = key
+	}
+
+	invalidTxID, err = bitcoin.NewHashFromString(
+		"9489457dc2c5a461a0b86394741ef57731605f2c628102de9f4d90afee9ac794",
+		bitcoin.ReversedByteOrder,
+	)
+	if err != nil {
+		panic(err)
+	}
+}
+
+func TestConnect_Integration(t *testing.T) {
+	for testName, testConfig := range testConfigs {
+		t.Run(testName, func(t *testing.T) {
+			_, cancelCtx := newTestConnection(t, testConfig.clientConfig)
+			defer cancelCtx()
+		})
+	}
 }
 
 func TestGetTransaction_Integration(t *testing.T) {
-	for testName, config := range configs {
-		electrum := newTestConnection(t, config)
+	for testName, testConfig := range testConfigs {
+		// Capture range variables.
+		testName := testName
+		testConfig := testConfig
 
 		t.Run(testName, func(t *testing.T) {
-			for txName, tx := range testData.Transactions {
+			t.Parallel()
+
+			electrum, cancelCtx := newTestConnection(t, testConfig.clientConfig)
+			defer cancelCtx()
+
+			for txName, tx := range testData.Transactions[testConfig.network] {
 				t.Run(txName, func(t *testing.T) {
 					result, err := electrum.GetTransaction(tx.TxHash)
 					if err != nil {
 						t.Fatal(err)
 					}
 
-					if diff := deep.Equal(result, &tx.BitcoinTx); diff != nil {
-						t.Errorf("compare failed: %v", diff)
+					expectedResult := &tx.BitcoinTx
+					if diff := deep.Equal(result, expectedResult); diff != nil {
+						t.Errorf(
+							"compare failed: %v\nactual: %s\nexpected: %s",
+							diff,
+							toJson(result),
+							toJson(expectedResult),
+						)
 					}
 				})
 			}
@@ -75,55 +178,39 @@ func TestGetTransaction_Integration(t *testing.T) {
 }
 
 func TestGetTransaction_Negative_Integration(t *testing.T) {
-	invalidTxID, err := bitcoin.NewHashFromString(
-		"ecc246ac58e682c8edccabb6476bb5482df541847b774085cdb8bfc53165cd34",
-		bitcoin.ReversedByteOrder,
-	)
-	if err != nil {
-		t.Fatal(err)
-	}
+	for testName, testConfig := range testConfigs {
+		// Capture range variables.
+		testName := testName
+		testConfig := testConfig
 
-	replaceErrorMsgForTests := []string{"electrumx ssl", "fulcrum ssl"}
-
-	for testName, config := range configs {
 		t.Run(testName, func(t *testing.T) {
-			electrum := newTestConnection(t, config)
+			t.Parallel()
 
-			expectedErrorMsg := fmt.Sprintf(
-				"failed to get raw transaction with ID [%s]: [retry timeout [%s] exceeded; most recent error: [request failed: [missing transaction]]]",
-				invalidTxID.Hex(bitcoin.ReversedByteOrder),
-				config.RequestRetryTimeout,
-			)
-
-			// As a workaround for the problem described in https://github.com/checksum0/go-electrum/issues/5
-			// we use an alternative expected error message for servers
-			// that are not correctly supported by the electrum client.
-			if slices.Contains(replaceErrorMsgForTests, testName) {
-				expectedErrorMsg = fmt.Sprintf(
-					"failed to get raw transaction with ID [%s]: [retry timeout [%s] exceeded; most recent error: [request failed: [Unmarshal received message failed: json: cannot unmarshal object into Go struct field response.error of type string]]]",
-					invalidTxID.Hex(bitcoin.ReversedByteOrder),
-					config.RequestRetryTimeout,
-				)
-			}
+			electrum, cancelCtx := newTestConnection(t, testConfig.clientConfig)
+			defer cancelCtx()
 
 			_, err := electrum.GetTransaction(invalidTxID)
-			if err.Error() != expectedErrorMsg {
-				t.Errorf(
-					"invalid error\nexpected: %v\nactual:   %v",
-					expectedErrorMsg,
-					err,
-				)
-			}
+
+			assertMissingTransactionError(
+				t,
+				testConfig.clientConfig,
+				fmt.Sprintf(
+					"failed to get raw transaction with ID [%s]",
+					invalidTxID.Hex(bitcoin.ReversedByteOrder),
+				),
+				err,
+			)
 		})
 	}
 }
 
 func TestGetTransactionConfirmations_Integration(t *testing.T) {
-	for testName, config := range configs {
+	for testName, testConfig := range testConfigs {
 		t.Run(testName, func(t *testing.T) {
-			electrum := newTestConnection(t, config)
+			electrum, cancelCtx := newTestConnection(t, testConfig.clientConfig)
+			defer cancelCtx()
 
-			for txName, tx := range testData.Transactions {
+			for txName, tx := range testData.Transactions[testConfig.network] {
 				t.Run(txName, func(t *testing.T) {
 					latestBlockHeight, err := electrum.GetLatestBlockHeight()
 					if err != nil {
@@ -136,113 +223,147 @@ func TestGetTransactionConfirmations_Integration(t *testing.T) {
 						t.Fatal(err)
 					}
 
-					assertConfirmationsCloseTo(t, expectedConfirmations, result)
+					assertNumberCloseTo(t, expectedConfirmations, result, blockDelta)
 				})
 			}
+
+			// We add sleep as a workaround for https://github.com/checksum0/go-electrum/issues/10
+			time.Sleep(time.Second)
 		})
 	}
 }
 
 func TestGetTransactionConfirmations_Negative_Integration(t *testing.T) {
-	invalidTxID, err := bitcoin.NewHashFromString(
-		"ecc246ac58e682c8edccabb6476bb5482df541847b774085cdb8bfc53165cd34",
-		bitcoin.ReversedByteOrder,
-	)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	replaceErrorMsgForTests := []string{"electrumx ssl", "fulcrum ssl"}
-
-	for testName, config := range configs {
+	for testName, testConfig := range testConfigs {
 		t.Run(testName, func(t *testing.T) {
-			electrum := newTestConnection(t, config)
-
-			expectedErrorMsg := fmt.Sprintf(
-				"failed to get raw transaction with ID [%s]: [retry timeout [%s] exceeded; most recent error: [request failed: [missing transaction]]]",
-				invalidTxID.Hex(bitcoin.ReversedByteOrder),
-				config.RequestRetryTimeout,
-			)
-
-			// As a workaround for the problem described in https://github.com/checksum0/go-electrum/issues/5
-			// we use an alternative expected error message for servers
-			// that are not correctly supported by the electrum client.
-			if slices.Contains(replaceErrorMsgForTests, testName) {
-				expectedErrorMsg = fmt.Sprintf(
-					"failed to get raw transaction with ID [%s]: [retry timeout [%s] exceeded; most recent error: [request failed: [Unmarshal received message failed: json: cannot unmarshal object into Go struct field response.error of type string]]]",
-					invalidTxID.Hex(bitcoin.ReversedByteOrder),
-					config.RequestRetryTimeout,
-				)
-			}
+			electrum, cancelCtx := newTestConnection(t, testConfig.clientConfig)
+			defer cancelCtx()
 
 			_, err := electrum.GetTransactionConfirmations(invalidTxID)
-			if err.Error() != expectedErrorMsg {
-				t.Errorf(
-					"invalid error\nexpected: %v\nactual:   %v",
-					expectedErrorMsg,
-					err,
-				)
-			}
+
+			assertMissingTransactionError(
+				t,
+				testConfig.clientConfig,
+				fmt.Sprintf(
+					"failed to get raw transaction with ID [%s]",
+					invalidTxID.Hex(bitcoin.ReversedByteOrder),
+				),
+				err,
+			)
 		})
 	}
 }
 
 func TestGetLatestBlockHeight_Integration(t *testing.T) {
-	expectedResult := uint(2404094)
+	expectedBlockHeightRef := map[string]uint{}
+	results := map[string]map[string]uint{}
 
-	for testName, config := range configs {
-		t.Run(testName, func(t *testing.T) {
-			electrum := newTestConnection(t, config)
+	for testName, testConfig := range testConfigs {
+		t.Run(testName+"_get", func(t *testing.T) {
+			electrum, cancelCtx := newTestConnection(t, testConfig.clientConfig)
+			defer cancelCtx()
 
 			result, err := electrum.GetLatestBlockHeight()
 			if err != nil {
 				t.Fatal(err)
 			}
 
-			if result < expectedResult {
+			if result == 0 {
 				t.Errorf(
-					"invalid result (greater or equal match)\nexpected: %v\nactual:   %v",
-					expectedResult,
-					result,
+					"returned block height is 0",
 				)
 			}
+
+			if _, ok := results[testConfig.network.String()]; !ok {
+				results[testConfig.network.String()] = map[string]uint{}
+			}
+			results[testConfig.network.String()][testName] = result
+
+			ref := expectedBlockHeightRef[testConfig.network.String()]
+			// Store the highest value as a reference.
+			if result > ref {
+				expectedBlockHeightRef[testConfig.network.String()] = result
+			}
+
+		})
+	}
+
+	for testName, config := range testConfigs {
+		t.Run(testName+"_compare", func(t *testing.T) {
+			result := results[config.network.String()][testName]
+			ref := expectedBlockHeightRef[config.network.String()]
+
+			assertNumberCloseTo(t, ref, result, blockDelta)
 		})
 	}
 }
 
 func TestGetBlockHeader_Integration(t *testing.T) {
-	blockHeight := uint(2135502)
-
-	previousBlockHeaderHash, err := bitcoin.NewHashFromString(
-		"000000000066450030efdf72f233ed2495547a32295deea1e2f3a16b1e50a3a5",
-		bitcoin.ReversedByteOrder,
-	)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	merkleRootHash, err := bitcoin.NewHashFromString(
-		"1251774996b446f85462d5433f7a3e384ac1569072e617ab31e86da31c247de2",
-		bitcoin.ReversedByteOrder,
-	)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	expectedResult := &bitcoin.BlockHeader{
-		Version:                 536870916,
-		PreviousBlockHeaderHash: previousBlockHeaderHash,
-		MerkleRootHash:          merkleRootHash,
-		Time:                    1641914003,
-		Bits:                    436256810,
-		Nonce:                   778087099,
-	}
-
-	for testName, config := range configs {
+	for testName, testConfig := range testConfigs {
 		t.Run(testName, func(t *testing.T) {
-			electrum := newTestConnection(t, config)
+			electrum, cancelCtx := newTestConnection(t, testConfig.clientConfig)
+			defer cancelCtx()
 
-			result, err := electrum.GetBlockHeader(blockHeight)
+			blockData, ok := testData.Blocks[testConfig.network]
+			if !ok {
+				t.Fatalf("block test data not defined for network %s", testConfig.network)
+			}
+
+			result, err := electrum.GetBlockHeader(blockData.BlockHeight)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			if diff := deep.Equal(result, blockData.BlockHeader); diff != nil {
+				t.Errorf("compare failed: %v", diff)
+			}
+		})
+	}
+}
+
+func TestGetBlockHeader_Negative_Integration(t *testing.T) {
+	blockHeight := uint(math.MaxUint32)
+
+	for testName, testConfig := range testConfigs {
+		t.Run(testName, func(t *testing.T) {
+			electrum, cancelCtx := newTestConnection(t, testConfig.clientConfig)
+			defer cancelCtx()
+
+			_, err := electrum.GetBlockHeader(blockHeight)
+
+			assertMissingBlockHeaderError(
+				t,
+				testConfig.clientConfig,
+				"failed to get block header",
+				err,
+			)
+		})
+	}
+}
+
+func TestGetTransactionMerkleProof_Integration(t *testing.T) {
+	for testName, testConfig := range testConfigs {
+		t.Run(testName, func(t *testing.T) {
+			electrum, cancelCtx := newTestConnection(t, testConfig.clientConfig)
+			defer cancelCtx()
+
+			txMerkleProofData, ok := testData.TxMerkleProofs[testConfig.network]
+			if !ok {
+				t.Fatalf(
+					"transaction merkle proof data not defined for network %s",
+					testConfig.network,
+				)
+			}
+
+			transactionHash := txMerkleProofData.TxHash
+			blockHeight := txMerkleProofData.BlockHeight
+
+			expectedResult := txMerkleProofData.MerkleProof
+
+			result, err := electrum.GetTransactionMerkleProof(
+				transactionHash,
+				blockHeight,
+			)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -254,63 +375,213 @@ func TestGetBlockHeader_Integration(t *testing.T) {
 	}
 }
 
-func TestGetBlockHeader_Negative_Integration(t *testing.T) {
-	blockHeight := uint(math.MaxUint32)
+func TestGetTransactionMerkleProof_Negative_Integration(t *testing.T) {
+	blockHeight := uint(123456)
 
-	replaceErrorMsgForTests := []string{"electrumx ssl", "fulcrum ssl"}
-
-	for testName, config := range configs {
+	for testName, testConfig := range testConfigs {
 		t.Run(testName, func(t *testing.T) {
-			electrum := newTestConnection(t, config)
+			electrum, cancelCtx := newTestConnection(t, testConfig.clientConfig)
+			defer cancelCtx()
 
-			expectedErrorMsg := fmt.Sprintf(
-				"failed to get block header: [retry timeout [%s] exceeded; most recent error: [request failed: [missing header]]]",
-				config.RequestRetryTimeout,
+			_, err := electrum.GetTransactionMerkleProof(
+				invalidTxID,
+				blockHeight,
 			)
 
-			// As a workaround for the problem described in https://github.com/checksum0/go-electrum/issues/5
-			// we use an alternative expected error message for servers
-			// that are not correctly supported by the electrum client.
-			if slices.Contains(replaceErrorMsgForTests, testName) {
-				expectedErrorMsg = fmt.Sprintf(
-					"failed to get block header: [retry timeout [%s] exceeded; most recent error: [request failed: [Unmarshal received message failed: json: cannot unmarshal object into Go struct field response.error of type string]]]",
-					config.RequestRetryTimeout,
+			assertMissingTransactionInBlockError(
+				t,
+				testConfig.clientConfig,
+				"failed to get merkle proof",
+				err,
+			)
+		})
+	}
+}
+
+func TestGetTransactionsForPublicKeyHash_Integration(t *testing.T) {
+	for testName, testConfig := range testConfigs {
+		t.Run(testName, func(t *testing.T) {
+			electrum, cancelCtx := newTestConnection(t, testConfig.clientConfig)
+			defer cancelCtx()
+
+			txMerkleProofData, ok := testData.TransactionsForPublicKeyHash[testConfig.network]
+			if !ok {
+				t.Fatalf(
+					"transactions for public key hash data not defined for network %s",
+					testConfig.network,
 				)
 			}
 
-			_, err := electrum.GetBlockHeader(blockHeight)
-			if err.Error() != expectedErrorMsg {
-				t.Errorf(
-					"invalid error\nexpected: %v\nactual:   %v",
-					expectedErrorMsg,
-					err,
-				)
+			publicKeyHash := (*[20]byte)(txMerkleProofData.PublicKeyHash)
+			expectedHashes := txMerkleProofData.Transactions
+
+			transactions, err := electrum.GetTransactionsForPublicKeyHash(*publicKeyHash, 5)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			actualHashes := make([]bitcoin.Hash, len(transactions))
+			for i, transaction := range transactions {
+				actualHashes[i] = transaction.Hash()
+			}
+
+			if diff := deep.Equal(actualHashes, expectedHashes); diff != nil {
+				t.Errorf("compare failed: %v", diff)
 			}
 		})
 	}
 }
 
-func newTestConnection(t *testing.T, config Config) bitcoin.Chain {
-	electrum, err := Connect(context.Background(), config)
+func TestEstimateSatPerVByteFee_Integration(t *testing.T) {
+	for testName, testConfig := range testConfigs {
+		t.Run(testName, func(t *testing.T) {
+			electrum, cancelCtx := newTestConnection(t, testConfig.clientConfig)
+			defer cancelCtx()
+
+			satPerVByteFee, err := electrum.EstimateSatPerVByteFee(1)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			// We expect the fee is always at least 1.
+			if satPerVByteFee < 1 {
+				t.Errorf("returned fee is below 1")
+			}
+		})
+	}
+}
+
+func newTestConnection(t *testing.T, config electrum.Config) (bitcoin.Chain, context.CancelFunc) {
+	ctx, cancelCtx := context.WithCancel(context.Background())
+	electrum, err := electrum.Connect(ctx, config)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	return electrum
+	return electrum, cancelCtx
 }
 
-func assertConfirmationsCloseTo(t *testing.T, expected uint, actual uint) {
-	delta := uint(2)
-
+func assertNumberCloseTo(t *testing.T, expected uint, actual uint, delta uint) {
 	min := expected - delta
 	max := expected + delta
 
 	if min > actual || actual > max {
 		t.Errorf(
-			"confirmations number %d out of expected range: [%d,%d]",
+			"value %d is out of expected range: [%d,%d]",
 			actual,
 			min,
 			max,
 		)
 	}
+}
+
+type expectedErrorMessages struct {
+	missingTransaction        []string
+	missingBlockHeader        []string
+	missingTransactionInBlock []string
+}
+
+var expectedServerErrorMessages = expectedErrorMessages{
+	missingTransaction: []string{
+		"errNo: 0, errMsg: missing transaction",
+		"errNo: 2, errMsg: daemon error: DaemonError({'code': -5, 'message': 'No such mempool or blockchain transaction. Use gettransaction for wallet transactions.'})",
+		"errNo: 2, errMsg: daemon error: DaemonError({'message': 'Transaction not found.', 'code': -1})",
+	},
+	missingBlockHeader: []string{
+		"errNo: 0, errMsg: missing header",
+		"errNo: 1, errMsg: height 4,294,967,295 out of range",
+		"errNo: 1, errMsg: Invalid height",
+	},
+	missingTransactionInBlock: []string{
+		"errNo: 0, errMsg: tx not found or is unconfirmed",
+		"errNo: 1, errMsg: tx 9489457dc2c5a461a0b86394741ef57731605f2c628102de9f4d90afee9ac794 not in block at height 123,456",
+		"errNo: 1, errMsg: No transaction matching the requested hash found at height 123456"},
+}
+
+func assertMissingTransactionError(
+	t *testing.T,
+	clientConfig electrum.Config,
+	clientErrorPrefix string,
+
+	actualError error,
+) {
+	assertServerError(
+		t,
+		clientConfig,
+		clientErrorPrefix,
+		expectedServerErrorMessages.missingTransaction,
+		actualError,
+	)
+}
+
+func assertMissingBlockHeaderError(
+	t *testing.T,
+	clientConfig electrum.Config,
+	clientErrorPrefix string,
+	actualError error,
+) {
+	assertServerError(
+		t,
+		clientConfig,
+		clientErrorPrefix,
+		expectedServerErrorMessages.missingBlockHeader,
+		actualError,
+	)
+}
+
+func assertMissingTransactionInBlockError(
+	t *testing.T,
+	clientConfig electrum.Config,
+	clientErrorPrefix string,
+	actualError error,
+) {
+	assertServerError(
+		t,
+		clientConfig,
+		clientErrorPrefix,
+		expectedServerErrorMessages.missingTransactionInBlock,
+		actualError,
+	)
+}
+
+func assertServerError(
+	t *testing.T,
+	clientConfig electrum.Config,
+	clientErrorPrefix string,
+	expectedServerErrors []string,
+	actualError error,
+) {
+	expectedErrorMsgFormat := fmt.Sprintf(
+		"%s: [retry timeout [%s] exceeded; most recent error: [request failed: [%%s]]]",
+		clientErrorPrefix,
+		clientConfig.RequestRetryTimeout,
+	)
+
+	expectedErrorMsgStrings := make([]string, len(expectedServerErrors))
+	for i, serverError := range expectedServerErrors {
+		expectedErrorMsgStrings[i] = fmt.Sprintf(expectedErrorMsgFormat, serverError)
+	}
+
+	if actualError == nil {
+		t.Errorf("expected error, but actual error is nil")
+		return
+	}
+
+	if !slices.Contains(expectedErrorMsgStrings, actualError.Error()) {
+		t.Errorf(
+			"unexpected error message\nactual:\n\t%v\nexpected one of:\n\t%s",
+			actualError,
+			strings.Join(expectedErrorMsgStrings, "\n\t"),
+		)
+		return
+	}
+}
+
+func toJson(val interface{}) string {
+	b, err := json.Marshal(val)
+	if err != nil {
+		panic(err)
+	}
+
+	return string(b)
 }
