@@ -9,6 +9,13 @@ import (
 	"github.com/keep-network/keep-core/pkg/chain"
 )
 
+const (
+	// redemptionProposalConfirmationBlocks determines the block length of the
+	// confirmation period on the host chain that is preserved after a
+	// redemption proposal submission.
+	redemptionProposalConfirmationBlocks = 20
+)
+
 // RedemptionTransactionShape is an enum describing the shape of
 // a Bitcoin redemption transaction.
 type RedemptionTransactionShape uint8
@@ -29,8 +36,9 @@ type RedemptionRequest struct {
 	// Redeemer is the redeemer's address on the host chain.
 	Redeemer chain.Address
 	// RedeemerOutputScript is the output script the redeemed Bitcoin funds are
-	// locked to. This field is not prepended with the byte-length of the script.
-	RedeemerOutputScript []byte
+	// locked to. As stated in the bitcoin.Script docstring, this field is not
+	// prepended with the byte-length of the script.
+	RedeemerOutputScript bitcoin.Script
 	// RequestedAmount is the TBTC amount (in satoshi) requested for redemption.
 	RequestedAmount uint64
 	// TreasuryFee is the treasury TBTC fee (in satoshi) at the moment of

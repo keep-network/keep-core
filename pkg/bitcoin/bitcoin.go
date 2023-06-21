@@ -7,6 +7,11 @@
 // type should leak outside.
 package bitcoin
 
+import (
+	"bytes"
+	"github.com/btcsuite/btcd/wire"
+)
+
 // CompactSizeUint is a documentation type that is supposed to capture the
 // details of the Bitcoin's CompactSize Unsigned Integer. It represents a
 // number value encoded to bytes according to the following rules:
@@ -21,6 +26,19 @@ package bitcoin
 // For reference, see:
 // https://developer.bitcoin.org/reference/transactions.html#compactsize-unsigned-integers
 type CompactSizeUint uint64
+
+// readCompactSizeUint reads the leading CompactSizeUint from the provided
+// variable length data. Returns the value held by the CompactSizeUint as
+// the first argument and the byte length of the CompactSizeUint as the
+// second one.
+func readCompactSizeUint(varLenData []byte) (CompactSizeUint, int, error) {
+	csu, err := wire.ReadVarInt(bytes.NewReader(varLenData), 0)
+	if err != nil {
+		return 0, 0, err
+	}
+
+	return CompactSizeUint(csu), wire.VarIntSerializeSize(csu), nil
+}
 
 // ByteOrder represents the byte order used by the Bitcoin byte arrays. The
 // Bitcoin ecosystem is not totally consistent in this regard and different

@@ -1215,6 +1215,282 @@ func (wc *WalletCoordinator) SubmitDepositSweepProposalWithReimbursementGasEstim
 }
 
 // Transaction submission.
+func (wc *WalletCoordinator) SubmitRedemptionProposal(
+	arg_proposal abi.WalletCoordinatorRedemptionProposal,
+
+	transactionOptions ...chainutil.TransactionOptions,
+) (*types.Transaction, error) {
+	wcLogger.Debug(
+		"submitting transaction submitRedemptionProposal",
+		" params: ",
+		fmt.Sprint(
+			arg_proposal,
+		),
+	)
+
+	wc.transactionMutex.Lock()
+	defer wc.transactionMutex.Unlock()
+
+	// create a copy
+	transactorOptions := new(bind.TransactOpts)
+	*transactorOptions = *wc.transactorOptions
+
+	if len(transactionOptions) > 1 {
+		return nil, fmt.Errorf(
+			"could not process multiple transaction options sets",
+		)
+	} else if len(transactionOptions) > 0 {
+		transactionOptions[0].Apply(transactorOptions)
+	}
+
+	nonce, err := wc.nonceManager.CurrentNonce()
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve account nonce: %v", err)
+	}
+
+	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
+
+	transaction, err := wc.contract.SubmitRedemptionProposal(
+		transactorOptions,
+		arg_proposal,
+	)
+	if err != nil {
+		return transaction, wc.errorResolver.ResolveError(
+			err,
+			wc.transactorOptions.From,
+			nil,
+			"submitRedemptionProposal",
+			arg_proposal,
+		)
+	}
+
+	wcLogger.Infof(
+		"submitted transaction submitRedemptionProposal with id: [%s] and nonce [%v]",
+		transaction.Hash(),
+		transaction.Nonce(),
+	)
+
+	go wc.miningWaiter.ForceMining(
+		transaction,
+		transactorOptions,
+		func(newTransactorOptions *bind.TransactOpts) (*types.Transaction, error) {
+			// If original transactor options has a non-zero gas limit, that
+			// means the client code set it on their own. In that case, we
+			// should rewrite the gas limit from the original transaction
+			// for each resubmission. If the gas limit is not set by the client
+			// code, let the the submitter re-estimate the gas limit on each
+			// resubmission.
+			if transactorOptions.GasLimit != 0 {
+				newTransactorOptions.GasLimit = transactorOptions.GasLimit
+			}
+
+			transaction, err := wc.contract.SubmitRedemptionProposal(
+				newTransactorOptions,
+				arg_proposal,
+			)
+			if err != nil {
+				return nil, wc.errorResolver.ResolveError(
+					err,
+					wc.transactorOptions.From,
+					nil,
+					"submitRedemptionProposal",
+					arg_proposal,
+				)
+			}
+
+			wcLogger.Infof(
+				"submitted transaction submitRedemptionProposal with id: [%s] and nonce [%v]",
+				transaction.Hash(),
+				transaction.Nonce(),
+			)
+
+			return transaction, nil
+		},
+	)
+
+	wc.nonceManager.IncrementNonce()
+
+	return transaction, err
+}
+
+// Non-mutating call, not a transaction submission.
+func (wc *WalletCoordinator) CallSubmitRedemptionProposal(
+	arg_proposal abi.WalletCoordinatorRedemptionProposal,
+	blockNumber *big.Int,
+) error {
+	var result interface{} = nil
+
+	err := chainutil.CallAtBlock(
+		wc.transactorOptions.From,
+		blockNumber, nil,
+		wc.contractABI,
+		wc.caller,
+		wc.errorResolver,
+		wc.contractAddress,
+		"submitRedemptionProposal",
+		&result,
+		arg_proposal,
+	)
+
+	return err
+}
+
+func (wc *WalletCoordinator) SubmitRedemptionProposalGasEstimate(
+	arg_proposal abi.WalletCoordinatorRedemptionProposal,
+) (uint64, error) {
+	var result uint64
+
+	result, err := chainutil.EstimateGas(
+		wc.callerOptions.From,
+		wc.contractAddress,
+		"submitRedemptionProposal",
+		wc.contractABI,
+		wc.transactor,
+		arg_proposal,
+	)
+
+	return result, err
+}
+
+// Transaction submission.
+func (wc *WalletCoordinator) SubmitRedemptionProposalWithReimbursement(
+	arg_proposal abi.WalletCoordinatorRedemptionProposal,
+
+	transactionOptions ...chainutil.TransactionOptions,
+) (*types.Transaction, error) {
+	wcLogger.Debug(
+		"submitting transaction submitRedemptionProposalWithReimbursement",
+		" params: ",
+		fmt.Sprint(
+			arg_proposal,
+		),
+	)
+
+	wc.transactionMutex.Lock()
+	defer wc.transactionMutex.Unlock()
+
+	// create a copy
+	transactorOptions := new(bind.TransactOpts)
+	*transactorOptions = *wc.transactorOptions
+
+	if len(transactionOptions) > 1 {
+		return nil, fmt.Errorf(
+			"could not process multiple transaction options sets",
+		)
+	} else if len(transactionOptions) > 0 {
+		transactionOptions[0].Apply(transactorOptions)
+	}
+
+	nonce, err := wc.nonceManager.CurrentNonce()
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve account nonce: %v", err)
+	}
+
+	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
+
+	transaction, err := wc.contract.SubmitRedemptionProposalWithReimbursement(
+		transactorOptions,
+		arg_proposal,
+	)
+	if err != nil {
+		return transaction, wc.errorResolver.ResolveError(
+			err,
+			wc.transactorOptions.From,
+			nil,
+			"submitRedemptionProposalWithReimbursement",
+			arg_proposal,
+		)
+	}
+
+	wcLogger.Infof(
+		"submitted transaction submitRedemptionProposalWithReimbursement with id: [%s] and nonce [%v]",
+		transaction.Hash(),
+		transaction.Nonce(),
+	)
+
+	go wc.miningWaiter.ForceMining(
+		transaction,
+		transactorOptions,
+		func(newTransactorOptions *bind.TransactOpts) (*types.Transaction, error) {
+			// If original transactor options has a non-zero gas limit, that
+			// means the client code set it on their own. In that case, we
+			// should rewrite the gas limit from the original transaction
+			// for each resubmission. If the gas limit is not set by the client
+			// code, let the the submitter re-estimate the gas limit on each
+			// resubmission.
+			if transactorOptions.GasLimit != 0 {
+				newTransactorOptions.GasLimit = transactorOptions.GasLimit
+			}
+
+			transaction, err := wc.contract.SubmitRedemptionProposalWithReimbursement(
+				newTransactorOptions,
+				arg_proposal,
+			)
+			if err != nil {
+				return nil, wc.errorResolver.ResolveError(
+					err,
+					wc.transactorOptions.From,
+					nil,
+					"submitRedemptionProposalWithReimbursement",
+					arg_proposal,
+				)
+			}
+
+			wcLogger.Infof(
+				"submitted transaction submitRedemptionProposalWithReimbursement with id: [%s] and nonce [%v]",
+				transaction.Hash(),
+				transaction.Nonce(),
+			)
+
+			return transaction, nil
+		},
+	)
+
+	wc.nonceManager.IncrementNonce()
+
+	return transaction, err
+}
+
+// Non-mutating call, not a transaction submission.
+func (wc *WalletCoordinator) CallSubmitRedemptionProposalWithReimbursement(
+	arg_proposal abi.WalletCoordinatorRedemptionProposal,
+	blockNumber *big.Int,
+) error {
+	var result interface{} = nil
+
+	err := chainutil.CallAtBlock(
+		wc.transactorOptions.From,
+		blockNumber, nil,
+		wc.contractABI,
+		wc.caller,
+		wc.errorResolver,
+		wc.contractAddress,
+		"submitRedemptionProposalWithReimbursement",
+		&result,
+		arg_proposal,
+	)
+
+	return err
+}
+
+func (wc *WalletCoordinator) SubmitRedemptionProposalWithReimbursementGasEstimate(
+	arg_proposal abi.WalletCoordinatorRedemptionProposal,
+) (uint64, error) {
+	var result uint64
+
+	result, err := chainutil.EstimateGas(
+		wc.callerOptions.From,
+		wc.contractAddress,
+		"submitRedemptionProposalWithReimbursement",
+		wc.contractABI,
+		wc.transactor,
+		arg_proposal,
+	)
+
+	return result, err
+}
+
+// Transaction submission.
 func (wc *WalletCoordinator) TransferOwnership(
 	arg_newOwner common.Address,
 
@@ -1817,6 +2093,184 @@ func (wc *WalletCoordinator) UpdateHeartbeatRequestParametersGasEstimate(
 }
 
 // Transaction submission.
+func (wc *WalletCoordinator) UpdateRedemptionProposalParameters(
+	arg__redemptionProposalValidity uint32,
+	arg__redemptionRequestMinAge uint32,
+	arg__redemptionRequestTimeoutSafetyMargin uint32,
+	arg__redemptionMaxSize uint16,
+	arg__redemptionProposalSubmissionGasOffset uint32,
+
+	transactionOptions ...chainutil.TransactionOptions,
+) (*types.Transaction, error) {
+	wcLogger.Debug(
+		"submitting transaction updateRedemptionProposalParameters",
+		" params: ",
+		fmt.Sprint(
+			arg__redemptionProposalValidity,
+			arg__redemptionRequestMinAge,
+			arg__redemptionRequestTimeoutSafetyMargin,
+			arg__redemptionMaxSize,
+			arg__redemptionProposalSubmissionGasOffset,
+		),
+	)
+
+	wc.transactionMutex.Lock()
+	defer wc.transactionMutex.Unlock()
+
+	// create a copy
+	transactorOptions := new(bind.TransactOpts)
+	*transactorOptions = *wc.transactorOptions
+
+	if len(transactionOptions) > 1 {
+		return nil, fmt.Errorf(
+			"could not process multiple transaction options sets",
+		)
+	} else if len(transactionOptions) > 0 {
+		transactionOptions[0].Apply(transactorOptions)
+	}
+
+	nonce, err := wc.nonceManager.CurrentNonce()
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve account nonce: %v", err)
+	}
+
+	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
+
+	transaction, err := wc.contract.UpdateRedemptionProposalParameters(
+		transactorOptions,
+		arg__redemptionProposalValidity,
+		arg__redemptionRequestMinAge,
+		arg__redemptionRequestTimeoutSafetyMargin,
+		arg__redemptionMaxSize,
+		arg__redemptionProposalSubmissionGasOffset,
+	)
+	if err != nil {
+		return transaction, wc.errorResolver.ResolveError(
+			err,
+			wc.transactorOptions.From,
+			nil,
+			"updateRedemptionProposalParameters",
+			arg__redemptionProposalValidity,
+			arg__redemptionRequestMinAge,
+			arg__redemptionRequestTimeoutSafetyMargin,
+			arg__redemptionMaxSize,
+			arg__redemptionProposalSubmissionGasOffset,
+		)
+	}
+
+	wcLogger.Infof(
+		"submitted transaction updateRedemptionProposalParameters with id: [%s] and nonce [%v]",
+		transaction.Hash(),
+		transaction.Nonce(),
+	)
+
+	go wc.miningWaiter.ForceMining(
+		transaction,
+		transactorOptions,
+		func(newTransactorOptions *bind.TransactOpts) (*types.Transaction, error) {
+			// If original transactor options has a non-zero gas limit, that
+			// means the client code set it on their own. In that case, we
+			// should rewrite the gas limit from the original transaction
+			// for each resubmission. If the gas limit is not set by the client
+			// code, let the the submitter re-estimate the gas limit on each
+			// resubmission.
+			if transactorOptions.GasLimit != 0 {
+				newTransactorOptions.GasLimit = transactorOptions.GasLimit
+			}
+
+			transaction, err := wc.contract.UpdateRedemptionProposalParameters(
+				newTransactorOptions,
+				arg__redemptionProposalValidity,
+				arg__redemptionRequestMinAge,
+				arg__redemptionRequestTimeoutSafetyMargin,
+				arg__redemptionMaxSize,
+				arg__redemptionProposalSubmissionGasOffset,
+			)
+			if err != nil {
+				return nil, wc.errorResolver.ResolveError(
+					err,
+					wc.transactorOptions.From,
+					nil,
+					"updateRedemptionProposalParameters",
+					arg__redemptionProposalValidity,
+					arg__redemptionRequestMinAge,
+					arg__redemptionRequestTimeoutSafetyMargin,
+					arg__redemptionMaxSize,
+					arg__redemptionProposalSubmissionGasOffset,
+				)
+			}
+
+			wcLogger.Infof(
+				"submitted transaction updateRedemptionProposalParameters with id: [%s] and nonce [%v]",
+				transaction.Hash(),
+				transaction.Nonce(),
+			)
+
+			return transaction, nil
+		},
+	)
+
+	wc.nonceManager.IncrementNonce()
+
+	return transaction, err
+}
+
+// Non-mutating call, not a transaction submission.
+func (wc *WalletCoordinator) CallUpdateRedemptionProposalParameters(
+	arg__redemptionProposalValidity uint32,
+	arg__redemptionRequestMinAge uint32,
+	arg__redemptionRequestTimeoutSafetyMargin uint32,
+	arg__redemptionMaxSize uint16,
+	arg__redemptionProposalSubmissionGasOffset uint32,
+	blockNumber *big.Int,
+) error {
+	var result interface{} = nil
+
+	err := chainutil.CallAtBlock(
+		wc.transactorOptions.From,
+		blockNumber, nil,
+		wc.contractABI,
+		wc.caller,
+		wc.errorResolver,
+		wc.contractAddress,
+		"updateRedemptionProposalParameters",
+		&result,
+		arg__redemptionProposalValidity,
+		arg__redemptionRequestMinAge,
+		arg__redemptionRequestTimeoutSafetyMargin,
+		arg__redemptionMaxSize,
+		arg__redemptionProposalSubmissionGasOffset,
+	)
+
+	return err
+}
+
+func (wc *WalletCoordinator) UpdateRedemptionProposalParametersGasEstimate(
+	arg__redemptionProposalValidity uint32,
+	arg__redemptionRequestMinAge uint32,
+	arg__redemptionRequestTimeoutSafetyMargin uint32,
+	arg__redemptionMaxSize uint16,
+	arg__redemptionProposalSubmissionGasOffset uint32,
+) (uint64, error) {
+	var result uint64
+
+	result, err := chainutil.EstimateGas(
+		wc.callerOptions.From,
+		wc.contractAddress,
+		"updateRedemptionProposalParameters",
+		wc.contractABI,
+		wc.transactor,
+		arg__redemptionProposalValidity,
+		arg__redemptionRequestMinAge,
+		arg__redemptionRequestTimeoutSafetyMargin,
+		arg__redemptionMaxSize,
+		arg__redemptionProposalSubmissionGasOffset,
+	)
+
+	return result, err
+}
+
+// Transaction submission.
 func (wc *WalletCoordinator) UpdateReimbursementPool(
 	arg__reimbursementPool common.Address,
 
@@ -2332,6 +2786,191 @@ func (wc *WalletCoordinator) OwnerAtBlock(
 	return result, err
 }
 
+func (wc *WalletCoordinator) RedemptionMaxSize() (uint16, error) {
+	result, err := wc.contract.RedemptionMaxSize(
+		wc.callerOptions,
+	)
+
+	if err != nil {
+		return result, wc.errorResolver.ResolveError(
+			err,
+			wc.callerOptions.From,
+			nil,
+			"redemptionMaxSize",
+		)
+	}
+
+	return result, err
+}
+
+func (wc *WalletCoordinator) RedemptionMaxSizeAtBlock(
+	blockNumber *big.Int,
+) (uint16, error) {
+	var result uint16
+
+	err := chainutil.CallAtBlock(
+		wc.callerOptions.From,
+		blockNumber,
+		nil,
+		wc.contractABI,
+		wc.caller,
+		wc.errorResolver,
+		wc.contractAddress,
+		"redemptionMaxSize",
+		&result,
+	)
+
+	return result, err
+}
+
+func (wc *WalletCoordinator) RedemptionProposalSubmissionGasOffset() (uint32, error) {
+	result, err := wc.contract.RedemptionProposalSubmissionGasOffset(
+		wc.callerOptions,
+	)
+
+	if err != nil {
+		return result, wc.errorResolver.ResolveError(
+			err,
+			wc.callerOptions.From,
+			nil,
+			"redemptionProposalSubmissionGasOffset",
+		)
+	}
+
+	return result, err
+}
+
+func (wc *WalletCoordinator) RedemptionProposalSubmissionGasOffsetAtBlock(
+	blockNumber *big.Int,
+) (uint32, error) {
+	var result uint32
+
+	err := chainutil.CallAtBlock(
+		wc.callerOptions.From,
+		blockNumber,
+		nil,
+		wc.contractABI,
+		wc.caller,
+		wc.errorResolver,
+		wc.contractAddress,
+		"redemptionProposalSubmissionGasOffset",
+		&result,
+	)
+
+	return result, err
+}
+
+func (wc *WalletCoordinator) RedemptionProposalValidity() (uint32, error) {
+	result, err := wc.contract.RedemptionProposalValidity(
+		wc.callerOptions,
+	)
+
+	if err != nil {
+		return result, wc.errorResolver.ResolveError(
+			err,
+			wc.callerOptions.From,
+			nil,
+			"redemptionProposalValidity",
+		)
+	}
+
+	return result, err
+}
+
+func (wc *WalletCoordinator) RedemptionProposalValidityAtBlock(
+	blockNumber *big.Int,
+) (uint32, error) {
+	var result uint32
+
+	err := chainutil.CallAtBlock(
+		wc.callerOptions.From,
+		blockNumber,
+		nil,
+		wc.contractABI,
+		wc.caller,
+		wc.errorResolver,
+		wc.contractAddress,
+		"redemptionProposalValidity",
+		&result,
+	)
+
+	return result, err
+}
+
+func (wc *WalletCoordinator) RedemptionRequestMinAge() (uint32, error) {
+	result, err := wc.contract.RedemptionRequestMinAge(
+		wc.callerOptions,
+	)
+
+	if err != nil {
+		return result, wc.errorResolver.ResolveError(
+			err,
+			wc.callerOptions.From,
+			nil,
+			"redemptionRequestMinAge",
+		)
+	}
+
+	return result, err
+}
+
+func (wc *WalletCoordinator) RedemptionRequestMinAgeAtBlock(
+	blockNumber *big.Int,
+) (uint32, error) {
+	var result uint32
+
+	err := chainutil.CallAtBlock(
+		wc.callerOptions.From,
+		blockNumber,
+		nil,
+		wc.contractABI,
+		wc.caller,
+		wc.errorResolver,
+		wc.contractAddress,
+		"redemptionRequestMinAge",
+		&result,
+	)
+
+	return result, err
+}
+
+func (wc *WalletCoordinator) RedemptionRequestTimeoutSafetyMargin() (uint32, error) {
+	result, err := wc.contract.RedemptionRequestTimeoutSafetyMargin(
+		wc.callerOptions,
+	)
+
+	if err != nil {
+		return result, wc.errorResolver.ResolveError(
+			err,
+			wc.callerOptions.From,
+			nil,
+			"redemptionRequestTimeoutSafetyMargin",
+		)
+	}
+
+	return result, err
+}
+
+func (wc *WalletCoordinator) RedemptionRequestTimeoutSafetyMarginAtBlock(
+	blockNumber *big.Int,
+) (uint32, error) {
+	var result uint32
+
+	err := chainutil.CallAtBlock(
+		wc.callerOptions.From,
+		blockNumber,
+		nil,
+		wc.contractABI,
+		wc.caller,
+		wc.errorResolver,
+		wc.contractAddress,
+		"redemptionRequestTimeoutSafetyMargin",
+		&result,
+	)
+
+	return result, err
+}
+
 func (wc *WalletCoordinator) ReimbursementPool() (common.Address, error) {
 	result, err := wc.contract.ReimbursementPool(
 		wc.callerOptions,
@@ -2412,6 +3051,49 @@ func (wc *WalletCoordinator) ValidateDepositSweepProposalAtBlock(
 		&result,
 		arg_proposal,
 		arg_depositsExtraInfo,
+	)
+
+	return result, err
+}
+
+func (wc *WalletCoordinator) ValidateRedemptionProposal(
+	arg_proposal abi.WalletCoordinatorRedemptionProposal,
+) (bool, error) {
+	result, err := wc.contract.ValidateRedemptionProposal(
+		wc.callerOptions,
+		arg_proposal,
+	)
+
+	if err != nil {
+		return result, wc.errorResolver.ResolveError(
+			err,
+			wc.callerOptions.From,
+			nil,
+			"validateRedemptionProposal",
+			arg_proposal,
+		)
+	}
+
+	return result, err
+}
+
+func (wc *WalletCoordinator) ValidateRedemptionProposalAtBlock(
+	arg_proposal abi.WalletCoordinatorRedemptionProposal,
+	blockNumber *big.Int,
+) (bool, error) {
+	var result bool
+
+	err := chainutil.CallAtBlock(
+		wc.callerOptions.From,
+		blockNumber,
+		nil,
+		wc.contractABI,
+		wc.caller,
+		wc.errorResolver,
+		wc.contractAddress,
+		"validateRedemptionProposal",
+		&result,
+		arg_proposal,
 	)
 
 	return result, err
@@ -3962,6 +4644,383 @@ func (wc *WalletCoordinator) PastOwnershipTransferredEvents(
 	}
 
 	events := make([]*abi.WalletCoordinatorOwnershipTransferred, 0)
+
+	for iterator.Next() {
+		event := iterator.Event
+		events = append(events, event)
+	}
+
+	return events, nil
+}
+
+func (wc *WalletCoordinator) RedemptionProposalParametersUpdatedEvent(
+	opts *ethereum.SubscribeOpts,
+) *WcRedemptionProposalParametersUpdatedSubscription {
+	if opts == nil {
+		opts = new(ethereum.SubscribeOpts)
+	}
+	if opts.Tick == 0 {
+		opts.Tick = chainutil.DefaultSubscribeOptsTick
+	}
+	if opts.PastBlocks == 0 {
+		opts.PastBlocks = chainutil.DefaultSubscribeOptsPastBlocks
+	}
+
+	return &WcRedemptionProposalParametersUpdatedSubscription{
+		wc,
+		opts,
+	}
+}
+
+type WcRedemptionProposalParametersUpdatedSubscription struct {
+	contract *WalletCoordinator
+	opts     *ethereum.SubscribeOpts
+}
+
+type walletCoordinatorRedemptionProposalParametersUpdatedFunc func(
+	RedemptionProposalValidity uint32,
+	RedemptionRequestMinAge uint32,
+	RedemptionRequestTimeoutSafetyMargin uint32,
+	RedemptionMaxSize uint16,
+	RedemptionProposalSubmissionGasOffset uint32,
+	blockNumber uint64,
+)
+
+func (rppus *WcRedemptionProposalParametersUpdatedSubscription) OnEvent(
+	handler walletCoordinatorRedemptionProposalParametersUpdatedFunc,
+) subscription.EventSubscription {
+	eventChan := make(chan *abi.WalletCoordinatorRedemptionProposalParametersUpdated)
+	ctx, cancelCtx := context.WithCancel(context.Background())
+
+	go func() {
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case event := <-eventChan:
+				handler(
+					event.RedemptionProposalValidity,
+					event.RedemptionRequestMinAge,
+					event.RedemptionRequestTimeoutSafetyMargin,
+					event.RedemptionMaxSize,
+					event.RedemptionProposalSubmissionGasOffset,
+					event.Raw.BlockNumber,
+				)
+			}
+		}
+	}()
+
+	sub := rppus.Pipe(eventChan)
+	return subscription.NewEventSubscription(func() {
+		sub.Unsubscribe()
+		cancelCtx()
+	})
+}
+
+func (rppus *WcRedemptionProposalParametersUpdatedSubscription) Pipe(
+	sink chan *abi.WalletCoordinatorRedemptionProposalParametersUpdated,
+) subscription.EventSubscription {
+	ctx, cancelCtx := context.WithCancel(context.Background())
+	go func() {
+		ticker := time.NewTicker(rppus.opts.Tick)
+		defer ticker.Stop()
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-ticker.C:
+				lastBlock, err := rppus.contract.blockCounter.CurrentBlock()
+				if err != nil {
+					wcLogger.Errorf(
+						"subscription failed to pull events: [%v]",
+						err,
+					)
+				}
+				fromBlock := lastBlock - rppus.opts.PastBlocks
+
+				wcLogger.Infof(
+					"subscription monitoring fetching past RedemptionProposalParametersUpdated events "+
+						"starting from block [%v]",
+					fromBlock,
+				)
+				events, err := rppus.contract.PastRedemptionProposalParametersUpdatedEvents(
+					fromBlock,
+					nil,
+				)
+				if err != nil {
+					wcLogger.Errorf(
+						"subscription failed to pull events: [%v]",
+						err,
+					)
+					continue
+				}
+				wcLogger.Infof(
+					"subscription monitoring fetched [%v] past RedemptionProposalParametersUpdated events",
+					len(events),
+				)
+
+				for _, event := range events {
+					sink <- event
+				}
+			}
+		}
+	}()
+
+	sub := rppus.contract.watchRedemptionProposalParametersUpdated(
+		sink,
+	)
+
+	return subscription.NewEventSubscription(func() {
+		sub.Unsubscribe()
+		cancelCtx()
+	})
+}
+
+func (wc *WalletCoordinator) watchRedemptionProposalParametersUpdated(
+	sink chan *abi.WalletCoordinatorRedemptionProposalParametersUpdated,
+) event.Subscription {
+	subscribeFn := func(ctx context.Context) (event.Subscription, error) {
+		return wc.contract.WatchRedemptionProposalParametersUpdated(
+			&bind.WatchOpts{Context: ctx},
+			sink,
+		)
+	}
+
+	thresholdViolatedFn := func(elapsed time.Duration) {
+		wcLogger.Warnf(
+			"subscription to event RedemptionProposalParametersUpdated had to be "+
+				"retried [%s] since the last attempt; please inspect "+
+				"host chain connectivity",
+			elapsed,
+		)
+	}
+
+	subscriptionFailedFn := func(err error) {
+		wcLogger.Errorf(
+			"subscription to event RedemptionProposalParametersUpdated failed "+
+				"with error: [%v]; resubscription attempt will be "+
+				"performed",
+			err,
+		)
+	}
+
+	return chainutil.WithResubscription(
+		chainutil.SubscriptionBackoffMax,
+		subscribeFn,
+		chainutil.SubscriptionAlertThreshold,
+		thresholdViolatedFn,
+		subscriptionFailedFn,
+	)
+}
+
+func (wc *WalletCoordinator) PastRedemptionProposalParametersUpdatedEvents(
+	startBlock uint64,
+	endBlock *uint64,
+) ([]*abi.WalletCoordinatorRedemptionProposalParametersUpdated, error) {
+	iterator, err := wc.contract.FilterRedemptionProposalParametersUpdated(
+		&bind.FilterOpts{
+			Start: startBlock,
+			End:   endBlock,
+		},
+	)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"error retrieving past RedemptionProposalParametersUpdated events: [%v]",
+			err,
+		)
+	}
+
+	events := make([]*abi.WalletCoordinatorRedemptionProposalParametersUpdated, 0)
+
+	for iterator.Next() {
+		event := iterator.Event
+		events = append(events, event)
+	}
+
+	return events, nil
+}
+
+func (wc *WalletCoordinator) RedemptionProposalSubmittedEvent(
+	opts *ethereum.SubscribeOpts,
+	coordinatorFilter []common.Address,
+) *WcRedemptionProposalSubmittedSubscription {
+	if opts == nil {
+		opts = new(ethereum.SubscribeOpts)
+	}
+	if opts.Tick == 0 {
+		opts.Tick = chainutil.DefaultSubscribeOptsTick
+	}
+	if opts.PastBlocks == 0 {
+		opts.PastBlocks = chainutil.DefaultSubscribeOptsPastBlocks
+	}
+
+	return &WcRedemptionProposalSubmittedSubscription{
+		wc,
+		opts,
+		coordinatorFilter,
+	}
+}
+
+type WcRedemptionProposalSubmittedSubscription struct {
+	contract          *WalletCoordinator
+	opts              *ethereum.SubscribeOpts
+	coordinatorFilter []common.Address
+}
+
+type walletCoordinatorRedemptionProposalSubmittedFunc func(
+	Proposal abi.WalletCoordinatorRedemptionProposal,
+	Coordinator common.Address,
+	blockNumber uint64,
+)
+
+func (rpss *WcRedemptionProposalSubmittedSubscription) OnEvent(
+	handler walletCoordinatorRedemptionProposalSubmittedFunc,
+) subscription.EventSubscription {
+	eventChan := make(chan *abi.WalletCoordinatorRedemptionProposalSubmitted)
+	ctx, cancelCtx := context.WithCancel(context.Background())
+
+	go func() {
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case event := <-eventChan:
+				handler(
+					event.Proposal,
+					event.Coordinator,
+					event.Raw.BlockNumber,
+				)
+			}
+		}
+	}()
+
+	sub := rpss.Pipe(eventChan)
+	return subscription.NewEventSubscription(func() {
+		sub.Unsubscribe()
+		cancelCtx()
+	})
+}
+
+func (rpss *WcRedemptionProposalSubmittedSubscription) Pipe(
+	sink chan *abi.WalletCoordinatorRedemptionProposalSubmitted,
+) subscription.EventSubscription {
+	ctx, cancelCtx := context.WithCancel(context.Background())
+	go func() {
+		ticker := time.NewTicker(rpss.opts.Tick)
+		defer ticker.Stop()
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-ticker.C:
+				lastBlock, err := rpss.contract.blockCounter.CurrentBlock()
+				if err != nil {
+					wcLogger.Errorf(
+						"subscription failed to pull events: [%v]",
+						err,
+					)
+				}
+				fromBlock := lastBlock - rpss.opts.PastBlocks
+
+				wcLogger.Infof(
+					"subscription monitoring fetching past RedemptionProposalSubmitted events "+
+						"starting from block [%v]",
+					fromBlock,
+				)
+				events, err := rpss.contract.PastRedemptionProposalSubmittedEvents(
+					fromBlock,
+					nil,
+					rpss.coordinatorFilter,
+				)
+				if err != nil {
+					wcLogger.Errorf(
+						"subscription failed to pull events: [%v]",
+						err,
+					)
+					continue
+				}
+				wcLogger.Infof(
+					"subscription monitoring fetched [%v] past RedemptionProposalSubmitted events",
+					len(events),
+				)
+
+				for _, event := range events {
+					sink <- event
+				}
+			}
+		}
+	}()
+
+	sub := rpss.contract.watchRedemptionProposalSubmitted(
+		sink,
+		rpss.coordinatorFilter,
+	)
+
+	return subscription.NewEventSubscription(func() {
+		sub.Unsubscribe()
+		cancelCtx()
+	})
+}
+
+func (wc *WalletCoordinator) watchRedemptionProposalSubmitted(
+	sink chan *abi.WalletCoordinatorRedemptionProposalSubmitted,
+	coordinatorFilter []common.Address,
+) event.Subscription {
+	subscribeFn := func(ctx context.Context) (event.Subscription, error) {
+		return wc.contract.WatchRedemptionProposalSubmitted(
+			&bind.WatchOpts{Context: ctx},
+			sink,
+			coordinatorFilter,
+		)
+	}
+
+	thresholdViolatedFn := func(elapsed time.Duration) {
+		wcLogger.Warnf(
+			"subscription to event RedemptionProposalSubmitted had to be "+
+				"retried [%s] since the last attempt; please inspect "+
+				"host chain connectivity",
+			elapsed,
+		)
+	}
+
+	subscriptionFailedFn := func(err error) {
+		wcLogger.Errorf(
+			"subscription to event RedemptionProposalSubmitted failed "+
+				"with error: [%v]; resubscription attempt will be "+
+				"performed",
+			err,
+		)
+	}
+
+	return chainutil.WithResubscription(
+		chainutil.SubscriptionBackoffMax,
+		subscribeFn,
+		chainutil.SubscriptionAlertThreshold,
+		thresholdViolatedFn,
+		subscriptionFailedFn,
+	)
+}
+
+func (wc *WalletCoordinator) PastRedemptionProposalSubmittedEvents(
+	startBlock uint64,
+	endBlock *uint64,
+	coordinatorFilter []common.Address,
+) ([]*abi.WalletCoordinatorRedemptionProposalSubmitted, error) {
+	iterator, err := wc.contract.FilterRedemptionProposalSubmitted(
+		&bind.FilterOpts{
+			Start: startBlock,
+			End:   endBlock,
+		},
+		coordinatorFilter,
+	)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"error retrieving past RedemptionProposalSubmitted events: [%v]",
+			err,
+		)
+	}
+
+	events := make([]*abi.WalletCoordinatorRedemptionProposalSubmitted, 0)
 
 	for iterator.Next() {
 		event := iterator.Event

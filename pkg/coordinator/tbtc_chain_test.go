@@ -533,3 +533,9 @@ func (lc *localTbtcChain) SubmitDepositSweepProposalWithReimbursement(
 func (lc *localTbtcChain) GetDepositSweepMaxSize() (uint16, error) {
 	panic("unsupported")
 }
+
+func (lc *localTbtcChain) OnRedemptionProposalSubmitted(
+	func(event *tbtc.RedemptionProposalSubmittedEvent),
+) subscription.EventSubscription {
+	panic("unsupported")
+}
