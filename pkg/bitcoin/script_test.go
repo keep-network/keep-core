@@ -66,6 +66,91 @@ func TestNewScriptFromVarLenData(t *testing.T) {
 	}
 }
 
+func TestScript_ToVarLenData(t *testing.T) {
+	fromHex := func(hexString string) []byte {
+		bytes, err := hex.DecodeString(hexString)
+		if err != nil {
+			t.Fatal(err)
+		}
+		return bytes
+	}
+
+	bytes20HashBytes, err := hex.DecodeString(
+		"8db50eb52063ea9d98b3eac91489a90f738986f6",
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var bytes20Hash [20]byte
+	copy(bytes20Hash[:], bytes20HashBytes)
+
+	bytes32HashBytes, err := hex.DecodeString(
+		"86a303cdd2e2eab1d1679f1a813835dc5a1b65321077cdccaf08f98cbf04ca96",
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var bytes32Hash [32]byte
+	copy(bytes32Hash[:], bytes32HashBytes)
+
+	var tests = map[string]struct {
+		script        Script
+		expectedBytes []byte
+	}{
+		"p2pkh script": {
+			script: func() Script {
+				result, err := PayToPublicKeyHash(bytes20Hash)
+				if err != nil {
+					t.Fatal(err)
+				}
+				return result
+			}(),
+			expectedBytes: fromHex("1976a9148db50eb52063ea9d98b3eac91489a90f738986f688ac"),
+		},
+		"p2wpkh script": {
+			script: func() Script {
+				result, err := PayToWitnessPublicKeyHash(bytes20Hash)
+				if err != nil {
+					t.Fatal(err)
+				}
+				return result
+			}(),
+			expectedBytes: fromHex("1600148db50eb52063ea9d98b3eac91489a90f738986f6"),
+		},
+		"p2sh script": {
+			script: func() Script {
+				result, err := PayToScriptHash(bytes20Hash)
+				if err != nil {
+					t.Fatal(err)
+				}
+				return result
+			}(),
+			expectedBytes: fromHex("17a9148db50eb52063ea9d98b3eac91489a90f738986f687"),
+		},
+		"p2wsh script": {
+			script: func() Script {
+				result, err := PayToWitnessScriptHash(bytes32Hash)
+				if err != nil {
+					t.Fatal(err)
+				}
+				return result
+			}(),
+			expectedBytes: fromHex("22002086a303cdd2e2eab1d1679f1a813835dc5a1b65321077cdccaf08f98cbf04ca96"),
+		},
+	}
+
+	for testName, test := range tests {
+		t.Run(testName, func(t *testing.T) {
+			bytes, err := test.script.ToVarLenData()
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			testutils.AssertBytesEqual(t, test.expectedBytes, bytes)
+		})
+	}
+}
+
 func TestPublicKeyHash(t *testing.T) {
 	// An arbitrary uncompressed public key.
 	publicKeyBytes, err := hex.DecodeString(
