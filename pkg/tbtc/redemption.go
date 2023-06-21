@@ -1,8 +1,12 @@
 package tbtc
 
 import (
+	"context"
 	"crypto/ecdsa"
 	"fmt"
+	"github.com/keep-network/keep-core/pkg/tecdsa"
+	"go.uber.org/zap"
+	"math/big"
 	"time"
 
 	"github.com/keep-network/keep-core/pkg/bitcoin"
@@ -14,6 +18,30 @@ const (
 	// confirmation period on the host chain that is preserved after a
 	// redemption proposal submission.
 	redemptionProposalConfirmationBlocks = 20
+	// redemptionSigningTimeoutSafetyMargin determines the duration of the
+	// safety margin that must be preserved between the signing timeout
+	// and the timeout of the entire redemption action. This safety
+	// margin prevents against the case where signing completes late and there
+	// is not enough time to broadcast the redemption transaction properly.
+	// In such a case, wallet signatures may leak and make the wallet subject
+	// of fraud accusations. Usage of the safety margin ensures there is enough
+	// time to perform post-signing steps of the redemption action.
+	redemptionSigningTimeoutSafetyMargin = 1 * time.Hour
+	// redemptionBroadcastTimeout determines the time window for redemption
+	// transaction broadcast. It is guaranteed that at least
+	// redemptionSigningTimeoutSafetyMargin is preserved for the broadcast
+	// step. However, the happy path for the broadcast step is usually quick
+	// and few retries are needed to recover from temporary problems. That
+	// said, if the broadcast step does not succeed in a tight timeframe,
+	// there is no point to retry for the entire possible time window.
+	// Hence, the timeout for broadcast step is set as 25% of the entire
+	// time widow determined by redemptionSigningTimeoutSafetyMargin.
+	redemptionBroadcastTimeout = redemptionSigningTimeoutSafetyMargin / 4
+	// redemptionBroadcastCheckDelay determines the delay that must
+	// be preserved between transaction broadcast and the check that ensures
+	// the transaction is known on the Bitcoin chain. This delay is needed
+	// as spreading the transaction over the Bitcoin network takes time.
+	redemptionBroadcastCheckDelay = 1 * time.Minute
 )
 
 // RedemptionTransactionShape is an enum describing the shape of
@@ -50,6 +78,72 @@ type RedemptionRequest struct {
 	TxMaxFee uint64
 	// RequestedAt is the time the request was created at.
 	RequestedAt time.Time
+}
+
+// redemptionSigningExecutor is an interface meant to decouple the
+// specific implementation of the signing executor from the redemption
+// action
+type redemptionSigningExecutor interface {
+	signBatch(
+		ctx context.Context,
+		messages []*big.Int,
+		startBlock uint64,
+	) ([]*tecdsa.Signature, error)
+}
+
+// redemptionAction is a redemption walletAction.
+type redemptionAction struct {
+	logger   *zap.SugaredLogger
+	chain    Chain
+	btcChain bitcoin.Chain
+
+	redeemingWallet wallet
+	signingExecutor redemptionSigningExecutor
+
+	proposal                     *RedemptionProposal
+	proposalProcessingStartBlock uint64
+	proposalExpiresAt            time.Time
+
+	signingTimeoutSafetyMargin time.Duration
+	broadcastTimeout           time.Duration
+	broadcastCheckDelay        time.Duration
+}
+
+func newRedemptionAction(
+	logger *zap.SugaredLogger,
+	chain Chain,
+	btcChain bitcoin.Chain,
+	redeemingWallet wallet,
+	signingExecutor redemptionSigningExecutor,
+	proposal *RedemptionProposal,
+	proposalProcessingStartBlock uint64,
+	proposalExpiresAt time.Time,
+) *redemptionAction {
+	return &redemptionAction{
+		logger:                       logger,
+		chain:                        chain,
+		btcChain:                     btcChain,
+		redeemingWallet:              redeemingWallet,
+		signingExecutor:              signingExecutor,
+		proposal:                     proposal,
+		proposalProcessingStartBlock: proposalProcessingStartBlock,
+		proposalExpiresAt:            proposalExpiresAt,
+		signingTimeoutSafetyMargin:   redemptionSigningTimeoutSafetyMargin,
+		broadcastTimeout:             redemptionBroadcastTimeout,
+		broadcastCheckDelay:          redemptionBroadcastCheckDelay,
+	}
+}
+
+func (ra *redemptionAction) execute() error {
+	return nil
+}
+
+func (ra *redemptionAction) wallet() wallet {
+	return ra.redeemingWallet
+}
+
+func (ra *redemptionAction) actionType() WalletActionType {
+	return Redemption
 }
 
 // redemptionFeeDistributionFn calculates the redemption transaction fee
