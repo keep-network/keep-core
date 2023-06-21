@@ -95,6 +95,9 @@ type redemptionAction struct {
 	signingTimeoutSafetyMargin time.Duration
 	broadcastTimeout           time.Duration
 	broadcastCheckDelay        time.Duration
+
+	feeDistribution  redemptionFeeDistributionFn
+	transactionShape RedemptionTransactionShape
 }
 
 func newRedemptionAction(
@@ -113,6 +116,8 @@ func newRedemptionAction(
 		signingExecutor,
 	)
 
+	feeDistribution := withRedemptionTotalFee(proposal.RedemptionTxFee.Int64())
+
 	return &redemptionAction{
 		logger:                       logger,
 		chain:                        chain,
@@ -125,6 +130,8 @@ func newRedemptionAction(
 		signingTimeoutSafetyMargin:   redemptionSigningTimeoutSafetyMargin,
 		broadcastTimeout:             redemptionBroadcastTimeout,
 		broadcastCheckDelay:          redemptionBroadcastCheckDelay,
+		feeDistribution:              feeDistribution,
+		transactionShape:             RedemptionChangeFirst,
 	}
 }
 
@@ -180,7 +187,8 @@ func (ra *redemptionAction) execute() error {
 		ra.wallet().publicKey,
 		walletMainUtxo,
 		validatedRequests,
-		withRedemptionTotalFee(ra.proposal.RedemptionTxFee.Int64()),
+		ra.feeDistribution,
+		ra.transactionShape,
 	)
 	if err != nil {
 		return fmt.Errorf(
