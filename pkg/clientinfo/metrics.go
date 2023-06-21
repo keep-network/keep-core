@@ -88,7 +88,6 @@ func (r *Registry) ObserveEthConnectivity(
 ) {
 	input := func() float64 {
 		_, err := blockCounter.CurrentBlock()
-
 		if err != nil {
 			return 0
 		}
@@ -111,7 +110,6 @@ func (r *Registry) ObserveBtcConnectivity(
 ) {
 	input := func() float64 {
 		_, err := btcChain.GetLatestBlockHeight()
-
 		if err != nil {
 			return 0
 		}
