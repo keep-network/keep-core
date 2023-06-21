@@ -3,6 +3,7 @@ package clientinfo
 import (
 	"encoding/json"
 
+	"github.com/keep-network/keep-core/pkg/bitcoin"
 	"github.com/keep-network/keep-core/pkg/chain"
 
 	"github.com/keep-network/keep-core/pkg/net"
@@ -33,6 +34,7 @@ type Peer struct {
 // Chain describes data structure of chains information.
 type Chain struct {
 	EthBlockNumber uint64 `json:"latest_eth_block_number"`
+	BtcBlockNumber uint   `json:"latest_btc_block_number"`
 }
 
 // ApplicationInfo describes data structure of application information.
@@ -128,16 +130,22 @@ func (r *Registry) RegisterClientInfoSource(
 // information about chains.
 func (r *Registry) RegisterChainInfoSource(
 	blockCounter chain.BlockCounter,
+	btcChain bitcoin.Chain,
 ) {
 	r.RegisterDiagnosticSource("chain_info", func() string {
-		currentBlock, err := blockCounter.CurrentBlock()
+		ethCurrentBlock, err := blockCounter.CurrentBlock()
 		if err != nil {
 			logger.Errorf("error on getting Ethereum latest block number: [%v]", err)
-			return ""
+		}
+
+		btcCurrentBlock, err := btcChain.GetLatestBlockHeight()
+		if err != nil {
+			logger.Errorf("error on getting Bitcoin latest block number: [%v]", err)
 		}
 
 		chainInfo := Chain{
-			EthBlockNumber: currentBlock,
+			EthBlockNumber: ethCurrentBlock,
+			BtcBlockNumber: btcCurrentBlock,
 		}
 
 		bytes, err := json.Marshal(chainInfo)

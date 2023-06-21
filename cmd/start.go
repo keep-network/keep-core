@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/keep-network/keep-common/pkg/persistence"
+	"github.com/keep-network/keep-core/pkg/bitcoin"
 	"github.com/keep-network/keep-core/pkg/bitcoin/electrum"
 	"github.com/keep-network/keep-core/pkg/operator"
 	"github.com/keep-network/keep-core/pkg/storage"
@@ -78,23 +79,24 @@ func start(cmd *cobra.Command) error {
 		return fmt.Errorf("cannot initialize network: [%v]", err)
 	}
 
+	btcChain, err := electrum.Connect(ctx, clientConfig.Bitcoin.Electrum)
+	if err != nil {
+		return fmt.Errorf("could not connect to Electrum chain: [%v]", err)
+	}
+
 	clientInfoRegistry := initializeClientInfo(
 		ctx,
 		clientConfig,
 		netProvider,
 		signing,
 		blockCounter,
+		btcChain,
 	)
 
 	// Initialize beacon and tbtc only for non-bootstrap nodes.
 	// Skip initialization for bootstrap nodes as they are only used for network
 	// discovery.
 	if !isBootstrap() {
-		btcChain, err := electrum.Connect(ctx, clientConfig.Bitcoin.Electrum)
-		if err != nil {
-			return fmt.Errorf("could not connect to Electrum chain: [%v]", err)
-		}
-
 		beaconKeyStorePersistence,
 			tbtcKeyStorePersistence,
 			tbtcDataPersistence,
@@ -188,6 +190,7 @@ func initializeClientInfo(
 	netProvider net.Provider,
 	signing chain.Signing,
 	blockCounter chain.BlockCounter,
+	btcChain bitcoin.Chain,
 ) *clientinfo.Registry {
 	registry, isConfigured := clientinfo.Initialize(ctx, config.ClientInfo.Port)
 	if !isConfigured {
@@ -211,6 +214,11 @@ func initializeClientInfo(
 		config.ClientInfo.EthereumMetricsTick,
 	)
 
+	registry.ObserveBtcConnectivity(
+		btcChain,
+		clientConfig.ClientInfo.BitcoinMetricsTick,
+	)
+
 	registry.RegisterMetricClientInfo(build.Version)
 
 	registry.RegisterConnectedPeersSource(netProvider, signing)
@@ -222,7 +230,7 @@ func initializeClientInfo(
 		build.Revision,
 	)
 
-	registry.RegisterChainInfoSource(blockCounter)
+	registry.RegisterChainInfoSource(blockCounter, btcChain)
 
 	logger.Infof(
 		"enabled client info endpoint on port [%v]",

@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/keep-network/keep-common/pkg/clientinfo"
+	"github.com/keep-network/keep-core/pkg/bitcoin"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/net"
 )
@@ -16,6 +17,7 @@ const (
 	ConnectedPeersCountMetricName     = "connected_peers_count"
 	ConnectedBootstrapCountMetricName = "connected_bootstrap_count"
 	EthConnectivityMetricName         = "eth_connectivity"
+	BtcConnectivityMetricName         = "btc_connectivity"
 	ClientInfoMetricName              = "client_info"
 )
 
@@ -26,6 +28,9 @@ const (
 	// DefaultEthereumMetricsTick is the default duration of the
 	// observation tick for Ethereum metrics.
 	DefaultEthereumMetricsTick = 10 * time.Minute
+	// DefaultBitcoinMetricsTick is the default duration of the
+	// observation tick for Bitcoin metrics.
+	DefaultBitcoinMetricsTick = 10 * time.Minute
 	// The duration of the observation tick for all application-specific
 	// metrics.
 	ApplicationMetricsTick = 1 * time.Minute
@@ -95,6 +100,29 @@ func (r *Registry) ObserveEthConnectivity(
 		EthConnectivityMetricName,
 		input,
 		validateTick(tick, DefaultEthereumMetricsTick),
+	)
+}
+
+// ObserveBtcConnectivity triggers an observation process of the
+// btc_connectivity metric.
+func (r *Registry) ObserveBtcConnectivity(
+	btcChain bitcoin.Chain,
+	tick time.Duration,
+) {
+	input := func() float64 {
+		_, err := btcChain.GetLatestBlockHeight()
+
+		if err != nil {
+			return 0
+		}
+
+		return 1
+	}
+
+	r.observe(
+		BtcConnectivityMetricName,
+		input,
+		validateTick(tick, DefaultBitcoinMetricsTick),
 	)
 }
 
