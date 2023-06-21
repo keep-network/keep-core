@@ -770,6 +770,12 @@ func (lc *localChain) OnRedemptionProposalSubmitted(
 	panic("unsupported")
 }
 
+func (lc *localChain) ValidateRedemptionProposal(
+	proposal *RedemptionProposal,
+) error {
+	panic("unsupported")
+}
+
 // Connect sets up the local chain.
 func Connect() *localChain {
 	operatorPrivateKey, _, err := operator.GenerateKeyPair(local_v1.DefaultCurve)

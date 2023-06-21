@@ -1563,6 +1563,30 @@ func (tc *TbtcChain) OnRedemptionProposalSubmitted(
 		OnEvent(onEvent)
 }
 
+func (tc *TbtcChain) ValidateRedemptionProposal(
+	proposal *tbtc.RedemptionProposal,
+) error {
+	abiProposal, err := convertRedemptionProposalToAbiType(proposal)
+	if err != nil {
+		return fmt.Errorf("cannot convert proposal to abi type: [%v]", err)
+	}
+
+	valid, err := tc.walletCoordinator.ValidateRedemptionProposal(
+		abiProposal,
+	)
+	if err != nil {
+		return fmt.Errorf("validation failed: [%v]", err)
+	}
+
+	// Should never happen because `validateRedemptionProposal` returns true
+	// or reverts (returns an error) but do the check just in case.
+	if !valid {
+		return fmt.Errorf("unexpected validation result")
+	}
+
+	return nil
+}
+
 func convertRedemptionProposalFromAbiType(
 	proposal tbtcabi.WalletCoordinatorRedemptionProposal,
 ) (*tbtc.RedemptionProposal, error) {
@@ -1575,16 +1599,46 @@ func convertRedemptionProposalFromAbiType(
 		// The on-chain script representation is prepended with the script's
 		// byte-length while bitcoin.Script is not. We need to remove the
 		// length prefix.
-		parsedScript, err := bitcoin.NewScriptFromVarLenData(script)
+		unprefixedScript, err := bitcoin.NewScriptFromVarLenData(script)
 		if err != nil {
-			return nil, fmt.Errorf("cannot parse redeemer output script: [%v]", err)
+			return nil, fmt.Errorf("cannot convert redeemer output script: [%v]", err)
 		}
 
-		redeemersOutputScripts[i] = parsedScript
+		redeemersOutputScripts[i] = unprefixedScript
 	}
 
 	return &tbtc.RedemptionProposal{
 		WalletPublicKeyHash:    proposal.WalletPubKeyHash,
+		RedeemersOutputScripts: redeemersOutputScripts,
+		RedemptionTxFee:        proposal.RedemptionTxFee,
+	}, nil
+}
+
+func convertRedemptionProposalToAbiType(
+	proposal *tbtc.RedemptionProposal,
+) (tbtcabi.WalletCoordinatorRedemptionProposal, error) {
+	redeemersOutputScripts := make(
+		[][]byte,
+		len(proposal.RedeemersOutputScripts),
+	)
+
+	for i, script := range proposal.RedeemersOutputScripts {
+		// The on-chain script representation must be prepended with the script's
+		// byte-length while bitcoin.Script is not. We need to add the
+		// length prefix.
+		prefixedScript, err := script.ToVarLenData()
+		if err != nil {
+			return tbtcabi.WalletCoordinatorRedemptionProposal{}, fmt.Errorf(
+				"cannot convert redeemer output script: [%v]",
+				err,
+			)
+		}
+
+		redeemersOutputScripts[i] = prefixedScript
+	}
+
+	return tbtcabi.WalletCoordinatorRedemptionProposal{
+		WalletPubKeyHash:       proposal.WalletPublicKeyHash,
 		RedeemersOutputScripts: redeemersOutputScripts,
 		RedemptionTxFee:        proposal.RedemptionTxFee,
 	}, nil

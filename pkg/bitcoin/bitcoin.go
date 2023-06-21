@@ -45,6 +45,18 @@ func readCompactSizeUint(varLenData []byte) (CompactSizeUint, int, error) {
 	return CompactSizeUint(csu), wire.VarIntSerializeSize(csu), nil
 }
 
+// writeCompactSizeUint writes the provided CompactSizeUint into a
+// byte slice.
+func writeCompactSizeUint(csu CompactSizeUint) ([]byte, error) {
+	var buffer bytes.Buffer
+	err := wire.WriteVarInt(&buffer, 0, uint64(csu))
+	if err != nil {
+		return nil, err
+	}
+
+	return buffer.Bytes(), nil
+}
+
 // ByteOrder represents the byte order used by the Bitcoin byte arrays. The
 // Bitcoin ecosystem is not totally consistent in this regard and different
 // byte orders are used depending on the purpose.

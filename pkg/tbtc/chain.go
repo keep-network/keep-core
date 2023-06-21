@@ -380,6 +380,11 @@ type WalletCoordinatorChain interface {
 	OnRedemptionProposalSubmitted(
 		func(event *RedemptionProposalSubmittedEvent),
 	) subscription.EventSubscription
+
+	// ValidateRedemptionProposal validates the given redemption proposal
+	// against the chain. Returns an error if the proposal is not valid or
+	// nil otherwise.
+	ValidateRedemptionProposal(proposal *RedemptionProposal) error
 }
 
 // HeartbeatRequestSubmittedEvent represents a wallet heartbeat request

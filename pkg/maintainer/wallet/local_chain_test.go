@@ -302,3 +302,9 @@ func (lc *localChain) OnRedemptionProposalSubmitted(
 ) subscription.EventSubscription {
 	panic("unsupported")
 }
+
+func (lc *localChain) ValidateRedemptionProposal(
+	proposal *tbtc.RedemptionProposal,
+) error {
+	panic("unsupported")
+}
