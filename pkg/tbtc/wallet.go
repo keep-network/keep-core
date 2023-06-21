@@ -2,12 +2,16 @@ package tbtc
 
 import (
 	"bytes"
+	"context"
 	"crypto/ecdsa"
 	"crypto/elliptic"
 	"encoding/hex"
 	"fmt"
+	"math/big"
 	"sync"
+	"time"
 
+	"github.com/ipfs/go-log/v2"
 	"github.com/keep-network/keep-core/pkg/bitcoin"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/protocol/group"
@@ -124,6 +128,174 @@ func (wd *walletDispatcher) dispatch(action walletAction) error {
 	}()
 
 	return nil
+}
+
+// walletSigningExecutor is an interface meant to decouple the specific
+// implementation of the signing executor from the wallet transaction executor.
+type walletSigningExecutor interface {
+	signBatch(
+		ctx context.Context,
+		messages []*big.Int,
+		startBlock uint64,
+	) ([]*tecdsa.Signature, error)
+}
+
+// walletTransactionExecutor is a component allowing to sign and broadcast
+// wallet Bitcoin transactions.
+type walletTransactionExecutor struct {
+	btcChain bitcoin.Chain
+
+	executingWallet wallet
+	signingExecutor walletSigningExecutor
+}
+
+func newWalletTransactionExecutor(
+	btcChain bitcoin.Chain,
+	executingWallet wallet,
+	signingExecutor walletSigningExecutor,
+) *walletTransactionExecutor {
+	return &walletTransactionExecutor{
+		btcChain:        btcChain,
+		executingWallet: executingWallet,
+		signingExecutor: signingExecutor,
+	}
+}
+
+// signTransaction performs signing of an unsigned Bitcoin transaction
+// and returns a signed transaction ready to be broadcasted over the
+// Bitcoin network.
+func (wte *walletTransactionExecutor) signTransaction(
+	signTxLogger log.StandardLogger,
+	unsignedTx *bitcoin.TransactionBuilder,
+	signingStartBlock uint64,
+	signingTimesOutAt time.Time,
+) (*bitcoin.Transaction, error) {
+	signTxLogger.Infof("computing transaction's sig hashes")
+
+	sigHashes, err := unsignedTx.ComputeSignatureHashes()
+	if err != nil {
+		return nil, fmt.Errorf(
+			"error while computing transaction's sig hashes: [%v]",
+			err,
+		)
+	}
+
+	signTxLogger.Infof("signing transaction's sig hashes")
+
+	signingCtx, cancelSigningCtx := context.WithTimeout(
+		context.Background(),
+		time.Until(signingTimesOutAt),
+	)
+	defer cancelSigningCtx()
+
+	signatures, err := wte.signingExecutor.signBatch(
+		signingCtx,
+		sigHashes,
+		signingStartBlock,
+	)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"error while signing transaction's sig hashes: [%v]",
+			err,
+		)
+	}
+
+	signTxLogger.Infof("applying transaction's signatures")
+
+	containers := make([]*bitcoin.SignatureContainer, len(signatures))
+	for i, signature := range signatures {
+		containers[i] = &bitcoin.SignatureContainer{
+			R:         signature.R,
+			S:         signature.S,
+			PublicKey: wte.executingWallet.publicKey,
+		}
+	}
+
+	tx, err := unsignedTx.AddSignatures(containers)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"error while applying transaction's signatures: [%v]",
+			err,
+		)
+	}
+
+	signTxLogger.Infof("transaction created successfully")
+
+	return tx, nil
+}
+
+// broadcastTransaction broadcasts a signed Bitcoin transaction until
+// the transaction lands in the Bitcoin mempool or the provided timeout
+// is hit, whichever comes first.
+func (wte *walletTransactionExecutor) broadcastTransaction(
+	broadcastTxLogger log.StandardLogger,
+	tx *bitcoin.Transaction,
+	timeout time.Duration,
+	checkDelay time.Duration,
+) error {
+	txHash := tx.Hash()
+
+	broadcastCtx, cancelBroadcastCtx := context.WithTimeout(
+		context.Background(),
+		timeout,
+	)
+	defer cancelBroadcastCtx()
+
+	broadcastAttempt := 0
+
+	for {
+		select {
+		case <-broadcastCtx.Done():
+			return fmt.Errorf("broadcast timeout exceeded")
+		default:
+			broadcastAttempt++
+
+			broadcastTxLogger.Infof(
+				"broadcasting transaction on the Bitcoin chain - attempt [%v]",
+				broadcastAttempt,
+			)
+
+			err := wte.btcChain.BroadcastTransaction(tx)
+			if err != nil {
+				broadcastTxLogger.Warnf(
+					"broadcasting failed: [%v]; transaction could be "+
+						"broadcasted by another wallet operators though",
+					err,
+				)
+			} else {
+				broadcastTxLogger.Infof("broadcasting completed")
+			}
+
+			broadcastTxLogger.Infof(
+				"waiting [%v] before checking whether the "+
+					"transaction is known on Bitcoin chain",
+				checkDelay,
+			)
+
+			select {
+			case <-time.After(checkDelay):
+			case <-broadcastCtx.Done():
+				return fmt.Errorf("broadcast timeout exceeded")
+			}
+
+			broadcastTxLogger.Infof(
+				"checking whether the transaction is known on Bitcoin chain",
+			)
+
+			_, err = wte.btcChain.GetTransactionConfirmations(txHash)
+			if err != nil {
+				broadcastTxLogger.Warnf(
+					"cannot say whether the transaction is known "+
+						"on Bitcoin chain; check returned an error: [%v]",
+					err,
+				)
+				continue
+			}
+
+			broadcastTxLogger.Infof("transaction is known on Bitcoin chain")
+			return nil
+		}
+	}
 }
 
 // wallet represents a tBTC wallet. A wallet is one of the basic building

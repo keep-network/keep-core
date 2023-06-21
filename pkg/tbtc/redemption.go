@@ -1,12 +1,9 @@
 package tbtc
 
 import (
-	"context"
 	"crypto/ecdsa"
 	"fmt"
-	"github.com/keep-network/keep-core/pkg/tecdsa"
 	"go.uber.org/zap"
-	"math/big"
 	"time"
 
 	"github.com/keep-network/keep-core/pkg/bitcoin"
@@ -80,25 +77,14 @@ type RedemptionRequest struct {
 	RequestedAt time.Time
 }
 
-// redemptionSigningExecutor is an interface meant to decouple the
-// specific implementation of the signing executor from the redemption
-// action
-type redemptionSigningExecutor interface {
-	signBatch(
-		ctx context.Context,
-		messages []*big.Int,
-		startBlock uint64,
-	) ([]*tecdsa.Signature, error)
-}
-
 // redemptionAction is a redemption walletAction.
 type redemptionAction struct {
 	logger   *zap.SugaredLogger
 	chain    Chain
 	btcChain bitcoin.Chain
 
-	redeemingWallet wallet
-	signingExecutor redemptionSigningExecutor
+	redeemingWallet     wallet
+	transactionExecutor *walletTransactionExecutor
 
 	proposal                     *RedemptionProposal
 	proposalProcessingStartBlock uint64
@@ -114,17 +100,23 @@ func newRedemptionAction(
 	chain Chain,
 	btcChain bitcoin.Chain,
 	redeemingWallet wallet,
-	signingExecutor redemptionSigningExecutor,
+	signingExecutor walletSigningExecutor,
 	proposal *RedemptionProposal,
 	proposalProcessingStartBlock uint64,
 	proposalExpiresAt time.Time,
 ) *redemptionAction {
+	transactionExecutor := newWalletTransactionExecutor(
+		btcChain,
+		redeemingWallet,
+		signingExecutor,
+	)
+
 	return &redemptionAction{
 		logger:                       logger,
 		chain:                        chain,
 		btcChain:                     btcChain,
 		redeemingWallet:              redeemingWallet,
-		signingExecutor:              signingExecutor,
+		transactionExecutor:          transactionExecutor,
 		proposal:                     proposal,
 		proposalProcessingStartBlock: proposalProcessingStartBlock,
 		proposalExpiresAt:            proposalExpiresAt,
