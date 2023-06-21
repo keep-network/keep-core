@@ -71,5 +71,5 @@ jobs:
       userName: Valkyrie
     secrets:
       githubToken: ${{ secrets.THRESHOLD_DOCS_GITHUB_TOKEN }}
-      gpgPrivateKey: ${{ secrets.THRESHOLD_DOCS_GPG_PASSPHRASE }}
-      gpgPassphrase: ${{ secrets.THRESHOLD_DOCS_GPG_PRIVATE_KEY_BASE64 }}
+      gpgPrivateKey: ${{ secrets.THRESHOLD_DOCS_GPG_PRIVATE_KEY_BASE64 }}
+      gpgPassphrase: ${{ secrets.THRESHOLD_DOCS_GPG_PASSPHRASE }}
