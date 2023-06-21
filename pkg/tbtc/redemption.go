@@ -6,6 +6,8 @@ import (
 	"go.uber.org/zap"
 	"time"
 
+	"github.com/ipfs/go-log/v2"
+
 	"github.com/keep-network/keep-core/pkg/bitcoin"
 	"github.com/keep-network/keep-core/pkg/chain"
 )
@@ -127,7 +129,64 @@ func newRedemptionAction(
 }
 
 func (ra *redemptionAction) execute() error {
+	validateProposalLogger := ra.logger.With(
+		zap.String("step", "validateProposal"),
+	)
+
+	_, err := ValidateRedemptionProposal(
+		validateProposalLogger,
+		ra.proposal,
+		ra.chain,
+	)
+	if err != nil {
+		return fmt.Errorf("validate proposal step failed: [%v]", err)
+	}
+
 	return nil
+}
+
+// ValidateRedemptionProposal checks the redemption proposal with on-chain
+// validation rules.
+func ValidateRedemptionProposal(
+	validateProposalLogger log.StandardLogger,
+	proposal *RedemptionProposal,
+	tbtcChain Chain,
+) ([]*RedemptionRequest, error) {
+	validateProposalLogger.Infof("calling chain for proposal validation")
+
+	err := tbtcChain.ValidateRedemptionProposal(proposal)
+	if err != nil {
+		return nil, fmt.Errorf("redemption proposal is invalid: [%v]", err)
+	}
+
+	validateProposalLogger.Infof(
+		"redemption proposal is valid",
+	)
+
+	requests := make([]*RedemptionRequest, len(proposal.RedeemersOutputScripts))
+	for i, script := range proposal.RedeemersOutputScripts {
+		requestDisplayIndex := fmt.Sprintf(
+			"%v/%v",
+			i+1,
+			len(proposal.RedeemersOutputScripts),
+		)
+
+		request, err := tbtcChain.GetPendingRedemptionRequest(
+			proposal.WalletPublicKeyHash,
+			script,
+		)
+		if err != nil {
+			return nil, fmt.Errorf(
+				"cannot get pending redemption request data for request [%v]: [%v]",
+				requestDisplayIndex,
+				err,
+			)
+		}
+
+		requests[i] = request
+	}
+
+	return requests, nil
 }
 
 func (ra *redemptionAction) wallet() wallet {
