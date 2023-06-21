@@ -13,4 +13,8 @@ type Config struct {
 	// SPV maintainer is restarted. It helps to avoid being flooded with error
 	// logs in case of a permanent error in the SPV maintainer.
 	RestartBackOffTime time.Duration
+
+	// IdleBackOffTime is a wait time which should be applied when there are no
+	// more transaction proofs to submit.
+	IdleBackOffTime time.Duration
 }

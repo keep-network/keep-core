@@ -30,4 +30,10 @@ type Chain interface {
 	// TxProofDifficultyFactor returns the number of confirmations on the
 	// Bitcoin chain required to successfully evaluate an SPV proof.
 	TxProofDifficultyFactor() (*big.Int, error)
+
+	// PastDepositSweepProposalSubmittedEvents returns past
+	// `DepositSweepProposalSubmitted` events.
+	PastDepositSweepProposalSubmittedEvents(
+		filter *tbtc.DepositSweepProposalSubmittedEventFilter,
+	) ([]*tbtc.DepositSweepProposalSubmittedEvent, error)
 }
