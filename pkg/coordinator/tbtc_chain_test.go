@@ -410,6 +410,13 @@ func (lc *localTbtcChain) GetDepositParameters() (
 		nil
 }
 
+func (lc *localTbtcChain) GetPendingRedemptionRequest(
+	walletPublicKeyHash [20]byte,
+	redeemerOutputScript bitcoin.Script,
+) (*tbtc.RedemptionRequest, error) {
+	panic("unsupported")
+}
+
 func (lc *localTbtcChain) setDepositParameters(
 	dustThreshold uint64,
 	treasuryFeeDivisor uint64,

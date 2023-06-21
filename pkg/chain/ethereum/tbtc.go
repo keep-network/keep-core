@@ -1196,6 +1196,62 @@ func (tc *TbtcChain) GetDepositParameters() (
 	return
 }
 
+func (tc *TbtcChain) GetPendingRedemptionRequest(
+	walletPublicKeyHash [20]byte,
+	redeemerOutputScript bitcoin.Script,
+) (*tbtc.RedemptionRequest, error) {
+	redemptionKey, err := buildRedemptionKey(walletPublicKeyHash, redeemerOutputScript)
+	if err != nil {
+		return nil, fmt.Errorf("cannot build redemption key: [%v]", err)
+	}
+
+	redemptionRequest, err := tc.bridge.PendingRedemptions(redemptionKey)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"cannot get pending redemption request for key [0x%x]: [%v]",
+			redemptionKey.Text(16),
+			err,
+		)
+	}
+
+	// Redemption not found.
+	if redemptionRequest.RequestedAt == 0 {
+		return nil, fmt.Errorf(
+			"no pending redemption request for key [0x%x]",
+			redemptionKey.Text(16),
+		)
+	}
+
+	return &tbtc.RedemptionRequest{
+		Redeemer:             chain.Address(redemptionRequest.Redeemer.Hex()),
+		RedeemerOutputScript: redeemerOutputScript,
+		RequestedAmount:      redemptionRequest.RequestedAmount,
+		TreasuryFee:          redemptionRequest.TreasuryFee,
+		TxMaxFee:             redemptionRequest.TxMaxFee,
+		RequestedAt:          time.Unix(int64(redemptionRequest.RequestedAt), 0),
+	}, nil
+}
+
+func buildRedemptionKey(
+	walletPublicKeyHash [20]byte,
+	redeemerOutputScript bitcoin.Script,
+) (*big.Int, error) {
+	// The Bridge contract builds the redemption key using the length-prefixed
+	// redeemer output script.
+	prefixedRedeemerOutputScript, err := redeemerOutputScript.ToVarLenData()
+	if err != nil {
+		return nil, fmt.Errorf("cannot build prefixed redeemer output script: [%v]", err)
+	}
+
+	redeemerOutputScriptHash := crypto.Keccak256Hash(prefixedRedeemerOutputScript)
+
+	redemptionKey := crypto.Keccak256Hash(
+		append(redeemerOutputScriptHash[:], walletPublicKeyHash[:]...),
+	)
+
+	return redemptionKey.Big(), nil
+}
+
 func (tc *TbtcChain) TxProofDifficultyFactor() (*big.Int, error) {
 	return tc.bridge.TxProofDifficultyFactor()
 }

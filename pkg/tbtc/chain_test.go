@@ -579,6 +579,13 @@ func (lc *localChain) GetDepositParameters() (
 	panic("unsupported")
 }
 
+func (lc *localChain) GetPendingRedemptionRequest(
+	walletPublicKeyHash [20]byte,
+	redeemerOutputScript bitcoin.Script,
+) (*RedemptionRequest, error) {
+	panic("unsupported")
+}
+
 func buildDepositRequestKey(
 	fundingTxHash bitcoin.Hash,
 	fundingOutputIndex uint32,
