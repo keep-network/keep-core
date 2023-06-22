@@ -77,3 +77,46 @@ func TestReadCompactSizeUint(t *testing.T) {
 		})
 	}
 }
+
+func TestWriteCompactSizeUint(t *testing.T) {
+	fromHex := func(hexString string) []byte {
+		bytes, err := hex.DecodeString(hexString)
+		if err != nil {
+			t.Fatal(err)
+		}
+		return bytes
+	}
+
+	var tests = map[string]struct {
+		csu           CompactSizeUint
+		expectedBytes []byte
+	}{
+		"1-byte compact size uint": {
+			csu:           187,
+			expectedBytes: fromHex("bb"),
+		},
+		"3-byte compact size uint": {
+			csu:           515,
+			expectedBytes: fromHex("fd0302"),
+		},
+		"5-byte compact size uint": {
+			csu:           998000,
+			expectedBytes: fromHex("fe703a0f00"),
+		},
+		"9-byte compact size uint": {
+			csu:           198849843832919,
+			expectedBytes: fromHex("ff57284e56dab40000"),
+		},
+	}
+
+	for testName, test := range tests {
+		t.Run(testName, func(t *testing.T) {
+			bytes, err := writeCompactSizeUint(test.csu)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			testutils.AssertBytesEqual(t, test.expectedBytes, bytes)
+		})
+	}
+}

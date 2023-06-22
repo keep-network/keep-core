@@ -1,13 +1,8 @@
 package tbtc
 
 import (
-	"bytes"
-	"context"
-	"crypto/sha256"
-	"encoding/binary"
 	"fmt"
 	"math/big"
-	"sync"
 	"testing"
 	"time"
 
@@ -162,7 +157,7 @@ func TestDepositSweepAction_Execute(t *testing.T) {
 			})
 
 			// Create a signing executor mock instance.
-			signingExecutor := newMockDepositSweepSigningExecutor()
+			signingExecutor := newMockWalletSigningExecutor()
 
 			// The signatures within the scenario fixture are in the format
 			// suitable for applying them directly to a Bitcoin transaction.
@@ -306,62 +301,4 @@ func TestAssembleDepositSweepTransaction(t *testing.T) {
 			)
 		})
 	}
-}
-
-type mockDepositSweepSigningExecutor struct {
-	signaturesMutex sync.Mutex
-	signatures      map[[32]byte][]*tecdsa.Signature
-}
-
-func newMockDepositSweepSigningExecutor() *mockDepositSweepSigningExecutor {
-	return &mockDepositSweepSigningExecutor{
-		signatures: make(map[[32]byte][]*tecdsa.Signature),
-	}
-}
-
-func (mdsse *mockDepositSweepSigningExecutor) signBatch(
-	ctx context.Context,
-	messages []*big.Int,
-	startBlock uint64,
-) ([]*tecdsa.Signature, error) {
-	mdsse.signaturesMutex.Lock()
-	defer mdsse.signaturesMutex.Unlock()
-
-	key := mdsse.buildSignaturesKey(messages, startBlock)
-
-	signatures, ok := mdsse.signatures[key]
-	if !ok {
-		return nil, fmt.Errorf("signing error")
-	}
-
-	return signatures, nil
-}
-
-func (mdsse *mockDepositSweepSigningExecutor) setSignatures(
-	messages []*big.Int,
-	startBlock uint64,
-	signatures []*tecdsa.Signature,
-) {
-	mdsse.signaturesMutex.Lock()
-	defer mdsse.signaturesMutex.Unlock()
-
-	key := mdsse.buildSignaturesKey(messages, startBlock)
-
-	mdsse.signatures[key] = signatures
-}
-
-func (mdsse *mockDepositSweepSigningExecutor) buildSignaturesKey(
-	messages []*big.Int,
-	startBlock uint64,
-) [32]byte {
-	var buffer bytes.Buffer
-	for _, message := range messages {
-		buffer.Write(message.Bytes())
-	}
-
-	startBlockBytes := make([]byte, 8)
-	binary.BigEndian.PutUint64(startBlockBytes, startBlock)
-	buffer.Write(startBlockBytes)
-
-	return sha256.Sum256(buffer.Bytes())
 }

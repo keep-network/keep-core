@@ -229,6 +229,14 @@ type BridgeChain interface {
 		revealAheadPeriod uint32,
 		err error,
 	)
+
+	// GetPendingRedemptionRequest gets the on-chain pending redemption request
+	// for the given wallet public key hash and redeemer output script.
+	// Returns an error if the request was not found.
+	GetPendingRedemptionRequest(
+		walletPublicKeyHash [20]byte,
+		redeemerOutputScript bitcoin.Script,
+	) (*RedemptionRequest, error)
 }
 
 // HeartbeatRequestedEvent represents a Bridge heartbeat request event.
@@ -380,6 +388,11 @@ type WalletCoordinatorChain interface {
 	OnRedemptionProposalSubmitted(
 		func(event *RedemptionProposalSubmittedEvent),
 	) subscription.EventSubscription
+
+	// ValidateRedemptionProposal validates the given redemption proposal
+	// against the chain. Returns an error if the proposal is not valid or
+	// nil otherwise.
+	ValidateRedemptionProposal(proposal *RedemptionProposal) error
 }
 
 // HeartbeatRequestSubmittedEvent represents a wallet heartbeat request

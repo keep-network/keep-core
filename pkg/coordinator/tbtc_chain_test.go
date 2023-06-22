@@ -410,6 +410,13 @@ func (lc *localTbtcChain) GetDepositParameters() (
 		nil
 }
 
+func (lc *localTbtcChain) GetPendingRedemptionRequest(
+	walletPublicKeyHash [20]byte,
+	redeemerOutputScript bitcoin.Script,
+) (*tbtc.RedemptionRequest, error) {
+	panic("unsupported")
+}
+
 func (lc *localTbtcChain) setDepositParameters(
 	dustThreshold uint64,
 	treasuryFeeDivisor uint64,
@@ -537,5 +544,11 @@ func (lc *localTbtcChain) GetDepositSweepMaxSize() (uint16, error) {
 func (lc *localTbtcChain) OnRedemptionProposalSubmitted(
 	func(event *tbtc.RedemptionProposalSubmittedEvent),
 ) subscription.EventSubscription {
+	panic("unsupported")
+}
+
+func (lc *localTbtcChain) ValidateRedemptionProposal(
+	proposal *tbtc.RedemptionProposal,
+) error {
 	panic("unsupported")
 }
