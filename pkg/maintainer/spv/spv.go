@@ -61,7 +61,8 @@ func (sm *spvMaintainer) maintainSpv(ctx context.Context) error {
 	logger.Infof("spv chain: ", sm.chain)
 	logger.Infof("btc chain:", sm.btcChain)
 
-	// TODO: Implement
+	// TODO: Implement. For now, just wait.
+	<-ctx.Done()
 
 	return nil
 }
