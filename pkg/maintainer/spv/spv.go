@@ -3,12 +3,14 @@ package spv
 import (
 	"bytes"
 	"context"
+	"encoding/hex"
 	"fmt"
 	"time"
 
 	"github.com/ipfs/go-log/v2"
 
 	"github.com/keep-network/keep-core/pkg/bitcoin"
+	"github.com/keep-network/keep-core/pkg/tbtc"
 )
 
 var logger = log.Logger("keep-maintainer-spv")
@@ -110,14 +112,18 @@ func (sm *spvMaintainer) getUnprovenDepositSweepTransactions() (
 		)
 	}
 
+	// There will often be multiple events emitted for a single wallet. Prepare
+	// a list of unique wallet public key hashes.
+	walletPublicKeyHashes := uniqueWalletPublicKeyHashes(
+		depositSweepTransactionProposals,
+	)
+
 	unprovenDepositSweepTransactions := []*bitcoin.Transaction{}
 
-	for _, proposal := range depositSweepTransactionProposals {
-		walletPublicKeyHash := proposal.Proposal.WalletPublicKeyHash
-
+	for _, walletPublicKeyHash := range walletPublicKeyHashes {
 		// TODO: Should we check the wallet's state before attempting to submit
 		//       the deposit sweep proof?
-		// TODO: Think what the limit of transactions should be.
+		// TODO: Think what the limit of transactions retrieved should be.
 		walletTransactions, err := sm.btcChain.GetTransactionsForPublicKeyHash(
 			walletPublicKeyHash,
 			5,
@@ -174,7 +180,7 @@ func (sm *spvMaintainer) isUnprovenDepositSweepTransaction(
 		fundingTransactionHash := input.Outpoint.TransactionHash
 		fundingOutpointIndex := input.Outpoint.OutputIndex
 
-		// Check if the input is a deposit input
+		// Check if the input is a deposit input.
 		deposit, err := sm.chain.Deposits(
 			fundingTransactionHash,
 			fundingOutpointIndex,
@@ -259,4 +265,26 @@ func (sm *spvMaintainer) isInputWalletsMainUTXO(
 	}
 
 	return bytes.Equal(mainUtxoHash[:], wallet.MainUtxoHash[:]), nil
+}
+
+// uniqueWalletPublicKeyHashes parses the list of events and returns a list of
+// unique wallet public key hashes.
+func uniqueWalletPublicKeyHashes(
+	events []*tbtc.DepositSweepProposalSubmittedEvent,
+) [][20]byte {
+	cache := make(map[string]struct{})
+	var publicKeyHashes [][20]byte
+
+	for _, event := range events {
+		key := event.Proposal.WalletPublicKeyHash
+		strKey := hex.EncodeToString(key[:])
+
+		// Check for uniqueness
+		if _, exists := cache[strKey]; !exists {
+			cache[strKey] = struct{}{}
+			publicKeyHashes = append(publicKeyHashes, key)
+		}
+	}
+
+	return publicKeyHashes
 }
