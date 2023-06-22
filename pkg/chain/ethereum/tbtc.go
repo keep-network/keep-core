@@ -1064,6 +1064,37 @@ func (tc *TbtcChain) GetDepositRequest(
 	}, nil
 }
 
+func (tc *TbtcChain) Deposits(
+	fundingTxHash bitcoin.Hash,
+	fundingOutputIndex uint32,
+) (*tbtc.DepositChainRequest, error) {
+	depositKey := buildDepositKey(fundingTxHash, fundingOutputIndex)
+
+	depositRequest, err := tc.bridge.Deposits(depositKey)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"cannot get deposit request for key [0x%x]: [%v]",
+			depositKey.Text(16),
+			err,
+		)
+	}
+
+	var vault *chain.Address
+	if depositRequest.Vault != [20]byte{} {
+		v := chain.Address(depositRequest.Vault.Hex())
+		vault = &v
+	}
+
+	return &tbtc.DepositChainRequest{
+		Depositor:   chain.Address(depositRequest.Depositor.Hex()),
+		Amount:      depositRequest.Amount,
+		RevealedAt:  time.Unix(int64(depositRequest.RevealedAt), 0),
+		Vault:       vault,
+		TreasuryFee: depositRequest.TreasuryFee,
+		SweptAt:     time.Unix(int64(depositRequest.SweptAt), 0),
+	}, nil
+}
+
 func (tc *TbtcChain) PastNewWalletRegisteredEvents(
 	filter *tbtc.NewWalletRegisteredEventFilter,
 ) ([]*tbtc.NewWalletRegisteredEvent, error) {

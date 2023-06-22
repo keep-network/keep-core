@@ -27,6 +27,23 @@ type Chain interface {
 		fundingOutputIndex uint32,
 	) (*tbtc.DepositChainRequest, error)
 
+	// TODO: Most likely merge it with `GetDepositRequest` function.
+	// Deposits gets the on-chain deposit request for the given funding
+	// transaction hash and output index. If the deposit does not exist it
+	// returns a zero-filled structure without an error.
+	Deposits(
+		fundingTxHash bitcoin.Hash,
+		fundingOutputIndex uint32,
+	) (*tbtc.DepositChainRequest, error)
+
+	GetWallet(
+		walletPublicKeyHash [20]byte,
+	) (*tbtc.WalletChainData, error)
+
+	// ComputeMainUtxoHash computes the hash of the provided main UTXO
+	// according to the on-chain Bridge rules.
+	ComputeMainUtxoHash(mainUtxo *bitcoin.UnspentTransactionOutput) [32]byte
+
 	// TxProofDifficultyFactor returns the number of confirmations on the
 	// Bitcoin chain required to successfully evaluate an SPV proof.
 	TxProofDifficultyFactor() (*big.Int, error)

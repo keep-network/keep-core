@@ -1,6 +1,7 @@
 package spv
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"time"
@@ -112,9 +113,13 @@ func (sm *spvMaintainer) getUnprovenDepositSweepTransactions() (
 	unprovenDepositSweepTransactions := []*bitcoin.Transaction{}
 
 	for _, proposal := range depositSweepTransactionProposals {
+		walletPublicKeyHash := proposal.Proposal.WalletPublicKeyHash
+
+		// TODO: Should we check the wallet's state before attempting to submit
+		//       the deposit sweep proof?
 		// TODO: Think what the limit of transactions should be.
 		walletTransactions, err := sm.btcChain.GetTransactionsForPublicKeyHash(
-			proposal.Proposal.WalletPublicKeyHash,
+			walletPublicKeyHash,
 			5,
 		)
 		if err != nil {
@@ -126,7 +131,10 @@ func (sm *spvMaintainer) getUnprovenDepositSweepTransactions() (
 
 		for _, transaction := range walletTransactions {
 			isUnprovenDepositSweepTransaction, err :=
-				sm.isUnprovenDepositSweepTransaction(transaction)
+				sm.isUnprovenDepositSweepTransaction(
+					transaction,
+					walletPublicKeyHash,
+				)
 			if err != nil {
 				return nil, fmt.Errorf(
 					"failed to check if transaction is an unproven deposit sweep "+
@@ -149,14 +157,106 @@ func (sm *spvMaintainer) getUnprovenDepositSweepTransactions() (
 
 func (sm *spvMaintainer) isUnprovenDepositSweepTransaction(
 	transaction *bitcoin.Transaction,
+	walletPublicKeyHash [20]byte,
 ) (bool, error) {
-	// TODO: Look at transaction's inputs. One of the inputs may be the main UTXO,
-	//       all the other inputs must be deposits;
-	//       Use outpoint data of each input to build a deposit key and see if
-	//       such a deposit exists in the Bridge;
-	//       The one input that is not a deposit input should be the main UTXO;
-	//       Verify this by checking the current main UTXO of the wallet as seen
-	//       in the Bridge.
+	// If the transaction does not have exactly one output, it cannot be a
+	// deposit sweep transaction.
+	if len(transaction.Outputs) != 1 {
+		return false, nil
+	}
 
-	return false, nil
+	depositFound := false
+	mainUtxoFound := false
+
+	// Look at the transaction's inputs. All the inputs must be deposit inputs,
+	// except for one input which can be the main UTXO.
+	for _, input := range transaction.Inputs {
+		fundingTransactionHash := input.Outpoint.TransactionHash
+		fundingOutpointIndex := input.Outpoint.OutputIndex
+
+		// Check if the input is a deposit input
+		deposit, err := sm.chain.Deposits(
+			fundingTransactionHash,
+			fundingOutpointIndex,
+		)
+		if err != nil {
+			return false, fmt.Errorf("failed to get a deposit: [%v]", err)
+		}
+
+		if deposit.RevealedAt.Equal(time.Unix(0, 0)) {
+			// The input is not a deposit input. The transaction can still be
+			// a deposit sweep transaction, since the input may be the main UTXO.
+
+			// Since the transaction can have at most one main UTXO input,
+			// return immediately if the main UTXO has already been seen.
+			if mainUtxoFound {
+				return false, nil
+			}
+
+			// Check if the input is the main UTXO.
+			isMainUtxo, err := sm.isInputWalletsMainUTXO(
+				fundingTransactionHash,
+				fundingOutpointIndex,
+				walletPublicKeyHash,
+			)
+			if err != nil {
+				return false, fmt.Errorf("failed to check is input is the main UTXO")
+			}
+
+			// The input was not the main UTXO.
+			if !isMainUtxo {
+				return false, nil
+			}
+
+			// The input was the main UTXO.
+			mainUtxoFound = true
+		} else {
+			// The input is a deposit input. Check if it swept or not.
+			if deposit.SweptAt.Equal(time.Unix(0, 0)) {
+				// The input is a deposit and it's unswept.
+				depositFound = true
+			} else {
+				// The input is a deposit, but it's already swept.
+				// The transaction is probably a deposit sweep transaction, but
+				// it's already proven.
+				return false, nil
+			}
+		}
+	}
+
+	// All the inputs are either deposit or main UTXO inputs. As the final check
+	// verify if at least one of them was a deposit input.
+	return depositFound, nil
+}
+
+func (sm *spvMaintainer) isInputWalletsMainUTXO(
+	fundingTxHash bitcoin.Hash,
+	fundingOutputIndex uint32,
+	walletPublicKeyHash [20]byte,
+) (bool, error) {
+	// Get the transaction the input originated from to calculate the input value.
+	previousTransaction, err := sm.btcChain.GetTransaction(fundingTxHash)
+	if err != nil {
+		return false, fmt.Errorf("failed to get previous transaction: [%v]", err)
+	}
+	fundingOutputValue := previousTransaction.Outputs[fundingOutputIndex].Value
+
+	// Assume the input is the main UTXO and calculate hash.
+	mainUtxoHash := sm.chain.ComputeMainUtxoHash(&bitcoin.UnspentTransactionOutput{
+		Outpoint: &bitcoin.TransactionOutpoint{
+			TransactionHash: fundingTxHash,
+			OutputIndex:     fundingOutputIndex,
+		},
+		Value: fundingOutputValue,
+	})
+
+	// Get the wallet and check if its main UTXO matches the calculated hash.
+	// TODO: `GetWallet` may return an error if the wallet is not found.
+	//       Should we return an error in such case or continue?
+	wallet, err := sm.chain.GetWallet(walletPublicKeyHash)
+	if err != nil {
+		return false, fmt.Errorf("failed to get wallet: [%v]", err)
+	}
+
+	return bytes.Equal(mainUtxoHash[:], wallet.MainUtxoHash[:]), nil
 }
