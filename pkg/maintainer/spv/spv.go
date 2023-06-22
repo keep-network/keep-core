@@ -17,7 +17,11 @@ func Initialize(
 	chain Chain,
 	btcChain bitcoin.Chain,
 ) {
-	spvMaintainer := &spvMaintainer{}
+	spvMaintainer := &spvMaintainer{
+		config:   config,
+		chain:    chain,
+		btcChain: btcChain,
+	}
 
 	go spvMaintainer.startControlLoop(ctx)
 }
