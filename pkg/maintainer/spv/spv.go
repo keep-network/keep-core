@@ -91,9 +91,51 @@ func (sm *spvMaintainer) proveDepositSweepTransactions() error {
 		)
 	}
 
-	fmt.Println("depositSweepTransactions: ", depositSweepTransactions)
+	// TODO: Consider handling a situation in which the block headers in the
+	//       proof span multiple Bitcoin difficulty epochs.
+	requiredConfirmations, err := sm.chain.TxProofDifficultyFactor()
+	if err != nil {
+		return fmt.Errorf(
+			"failed to get transaction proof difficulty factor: [%v]",
+			err,
+		)
+	}
 
-	// TODO: Assemble the proof and submit to the Bridge
+	for _, transaction := range depositSweepTransactions {
+		_, proof, err := bitcoin.AssembleSpvProof(
+			transaction.Hash(),
+			uint(requiredConfirmations.Uint64()),
+			sm.btcChain,
+		)
+		if err != nil {
+			return fmt.Errorf("failed to assemble SPV proof: [%v]", err)
+		}
+
+		mainUTXO, vault, err := parseTransactionInputs(
+			sm.btcChain,
+			sm.chain,
+			transaction,
+		)
+		if err != nil {
+			return fmt.Errorf(
+				"error while parsing transaction inputs: [%v]",
+				err,
+			)
+		}
+
+		if err := sm.chain.SubmitDepositSweepProofWithReimbursement(
+			transaction,
+			proof,
+			mainUTXO,
+			vault,
+		); err != nil {
+			return fmt.Errorf(
+				"failed to submit deposit sweep proof with reimbursement: [%v]",
+				err,
+			)
+		}
+	}
+
 	return nil
 }
 
@@ -171,8 +213,7 @@ func (sm *spvMaintainer) isUnprovenDepositSweepTransaction(
 		return false, nil
 	}
 
-	depositFound := false
-	mainUtxoFound := false
+	hasDepositInputs := false
 
 	// Look at the transaction's inputs. All the inputs must be deposit inputs,
 	// except for one input which can be the main UTXO.
@@ -193,14 +234,12 @@ func (sm *spvMaintainer) isUnprovenDepositSweepTransaction(
 			// The input is not a deposit input. The transaction can still be
 			// a deposit sweep transaction, since the input may be the main UTXO.
 
-			// Since the transaction can have at most one main UTXO input,
-			// return immediately if the main UTXO has already been seen.
-			if mainUtxoFound {
-				return false, nil
-			}
-
-			// Check if the input is the main UTXO.
-			isMainUtxo, err := sm.isInputWalletsMainUTXO(
+			// Check if the input represents the current main UTXO of the wallet.
+			// Notice that we don't have to verify if there is only one main
+			// UTXO among the transaction's inputs since only one input may have
+			// such a structure that the calculated hash will match the wallet's
+			// main UTXO hash stored on-chain.
+			isMainUtxo, err := sm.isInputCurrentWalletsMainUTXO(
 				fundingTransactionHash,
 				fundingOutpointIndex,
 				walletPublicKeyHash,
@@ -209,33 +248,37 @@ func (sm *spvMaintainer) isUnprovenDepositSweepTransaction(
 				return false, fmt.Errorf("failed to check is input is the main UTXO")
 			}
 
-			// The input was not the main UTXO.
+			// The input is not the current main UTXO of the wallet. The
+			// transaction is either a deposit sweep transaction that is already
+			// proven or it's not a deposit sweep transaction at all.
 			if !isMainUtxo {
 				return false, nil
 			}
 
-			// The input was the main UTXO.
-			mainUtxoFound = true
+			// The input is the current main UTXO of the wallet. Proceed with
+			// checking other inputs.
 		} else {
 			// The input is a deposit input. Check if it swept or not.
 			if deposit.SweptAt.Equal(time.Unix(0, 0)) {
 				// The input is a deposit and it's unswept.
-				depositFound = true
+				hasDepositInputs = true
 			} else {
 				// The input is a deposit, but it's already swept.
-				// The transaction is probably a deposit sweep transaction, but
-				// it's already proven.
+				// The transaction must a deposit sweep transaction, but it's
+				// already proven.
 				return false, nil
 			}
 		}
 	}
 
-	// All the inputs are either deposit or main UTXO inputs. As the final check
-	// verify if at least one of them was a deposit input.
-	return depositFound, nil
+	// All the inputs represent either unswept deposits or the current main UTXO.
+	// As the final check verify if at least one of them was a deposit input.
+	// This will distinguish a deposit sweep transaction from a different
+	// transaction type that may have the main UTXO as input, e.g. redemption.
+	return hasDepositInputs, nil
 }
 
-func (sm *spvMaintainer) isInputWalletsMainUTXO(
+func (sm *spvMaintainer) isInputCurrentWalletsMainUTXO(
 	fundingTxHash bitcoin.Hash,
 	fundingOutputIndex uint32,
 	walletPublicKeyHash [20]byte,
