@@ -1,19 +1,9 @@
 package coordinator
 
 import (
-	"errors"
 	"github.com/keep-network/keep-core/pkg/bitcoin"
 	"github.com/keep-network/keep-core/pkg/tbtc"
 	"math/big"
-)
-
-var (
-	// ErrPendingRedemptionRequestNotFound is an error that is returned if
-	// a pending redemption request was not found on-chain for the given redemption
-	// key.
-	ErrPendingRedemptionRequestNotFound = errors.New(
-		"no pending redemption requests for the given key",
-	)
 )
 
 // Chain represents the interface that the coordinator module expects to interact

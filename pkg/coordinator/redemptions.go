@@ -3,6 +3,8 @@ package coordinator
 import (
 	"errors"
 	"fmt"
+	"github.com/keep-network/keep-core/pkg/bitcoin"
+	"github.com/keep-network/keep-core/pkg/tbtc"
 	"math/big"
 	"sort"
 	"time"
@@ -14,7 +16,7 @@ type redemptionEntry struct {
 	walletPublicKeyHash [20]byte
 
 	redemptionKey        string
-	redeemerOutputScript []byte
+	redeemerOutputScript bitcoin.Script
 	requestedAt          time.Time
 }
 
@@ -23,7 +25,7 @@ func FindPendingRedemptions(
 	chain Chain,
 	walletPublicKeyHash [20]byte,
 	maxNumberOfDeposits uint16,
-) ([20]byte, [][]byte, error) {
+) ([20]byte, []bitcoin.Script, error) {
 	logger.Infof("redemption max size: %d", maxNumberOfDeposits)
 
 	redemptionRequestMinAge, err := chain.GetRedemptionRequestMinAge()
@@ -126,7 +128,7 @@ func FindPendingRedemptions(
 		hexutils.Encode(walletPublicKeyHash[:]),
 	)
 
-	redeemersOutputScripts := make([][]byte, len(redemptionsToPropose))
+	redeemersOutputScripts := make([]bitcoin.Script, len(redemptionsToPropose))
 
 	for i, redemption := range redemptionsToPropose {
 		logger.Infof(
@@ -150,7 +152,7 @@ func ProposeRedemption(
 	chain Chain,
 	walletPublicKeyHash [20]byte,
 	fee int64,
-	redeemersOutputScripts [][]byte,
+	redeemersOutputScripts []bitcoin.Script,
 	dryRun bool,
 ) error {
 	if len(redeemersOutputScripts) == 0 {
@@ -166,7 +168,7 @@ func ProposeRedemption(
 
 	logger.Infof("preparing a redemption proposal...")
 
-	proposal := &RedemptionProposal{
+	proposal := &tbtc.RedemptionProposal{
 		WalletPublicKeyHash:    walletPublicKeyHash,
 		RedeemersOutputScripts: redeemersOutputScripts,
 		RedemptionTxFee:        big.NewInt(fee),
@@ -196,7 +198,7 @@ func getPendingRedemptions(
 ) ([]*redemptionEntry, error) {
 	logger.Infof("reading revealed deposits from chain...")
 
-	filter := &RedemptionRequestedEventFilter{}
+	filter := &tbtc.RedemptionRequestedEventFilter{}
 	if walletPublicKeyHash != [20]byte{} {
 		filter.WalletPublicKeyHash = [][20]byte{walletPublicKeyHash}
 	}
@@ -239,12 +241,12 @@ redemptionRequestedLoop:
 		// Check if there is still a pending redemption for the given redemption
 		// requested event.
 		pendingRedemption, err := chain.GetPendingRedemptionRequest(
-			event.RedeemerOutputScript,
 			event.WalletPublicKeyHash,
+			event.RedeemerOutputScript,
 		)
 		if err != nil {
 			switch {
-			case errors.Is(err, ErrPendingRedemptionRequestNotFound):
+			case errors.Is(err, tbtc.ErrPendingRedemptionRequestNotFound):
 				logger.Debugf(
 					"redemption for request %d/%d is no longer pending",
 					i+1,
@@ -260,10 +262,13 @@ redemptionRequestedLoop:
 			}
 		}
 
-		redemptionKey := chain.BuildRedemptionKey(
-			event.RedeemerOutputScript,
+		redemptionKey, err := chain.BuildRedemptionKey(
 			event.WalletPublicKeyHash,
+			event.RedeemerOutputScript,
 		)
+		if err != nil {
+			return nil, fmt.Errorf("failed to build redemption key: [%v]", err)
+		}
 
 		pendingRedemptions = append(pendingRedemptions, &redemptionEntry{
 			walletPublicKeyHash:  event.WalletPublicKeyHash,

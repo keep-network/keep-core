@@ -1283,10 +1283,7 @@ func (tc *TbtcChain) GetPendingRedemptionRequest(
 
 	// Redemption not found.
 	if redemptionRequest.RequestedAt == 0 {
-		return nil, fmt.Errorf(
-			"no pending redemption request for key [0x%x]",
-			redemptionKey.Text(16),
-		)
+		return nil, tbtc.ErrPendingRedemptionRequestNotFound
 	}
 
 	return &tbtc.RedemptionRequest{

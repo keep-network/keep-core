@@ -2,6 +2,7 @@ package tbtc
 
 import (
 	"crypto/ecdsa"
+	"errors"
 	"math/big"
 	"time"
 
@@ -180,6 +181,15 @@ type DKGParameters struct {
 	ChallengePeriodBlocks         uint64
 	ApprovePrecedencePeriodBlocks uint64
 }
+
+var (
+	// ErrPendingRedemptionRequestNotFound is an error that is returned if
+	// a pending redemption request was not found on-chain for the given
+	// redemption key.
+	ErrPendingRedemptionRequestNotFound = errors.New(
+		"no pending redemption request for the given key",
+	)
+)
 
 // BridgeChain defines the subset of the TBTC chain interface that pertains
 // specifically to the tBTC Bridge operations.
