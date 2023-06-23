@@ -447,6 +447,25 @@ type RedemptionProposal struct {
 	RedemptionTxFee        *big.Int
 }
 
+// RedemptionRequestedEvent represents a redemption requested event.
+type RedemptionRequestedEvent struct {
+	WalletPublicKeyHash  [20]byte
+	RedeemerOutputScript bitcoin.Script
+	Redeemer             chain.Address
+	RequestedAmount      uint64
+	TreasuryFee          uint64
+	TxMaxFee             uint64
+	BlockNumber          uint64
+}
+
+// RedemptionRequestedEventFilter is a component allowing to filter RedemptionRequestedEvent.
+type RedemptionRequestedEventFilter struct {
+	StartBlock          uint64
+	EndBlock            *uint64
+	WalletPublicKeyHash [][20]byte
+	Redeemer            []chain.Address
+}
+
 // Chain represents the interface that the TBTC module expects to interact
 // with the anchoring blockchain on.
 type Chain interface {

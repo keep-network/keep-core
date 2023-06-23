@@ -2,11 +2,9 @@ package coordinator
 
 import (
 	"errors"
-	"math/big"
-	"time"
-
-	"github.com/keep-network/keep-core/pkg/chain"
+	"github.com/keep-network/keep-core/pkg/bitcoin"
 	"github.com/keep-network/keep-core/pkg/tbtc"
+	"math/big"
 )
 
 var (
@@ -30,22 +28,16 @@ type Chain interface {
 	// events are sorted by the block number in the ascending order, i.e. the
 	// latest event is at the end of the slice.
 	PastRedemptionRequestedEvents(
-		filter *RedemptionRequestedEventFilter,
-	) ([]*RedemptionRequestedEvent, error)
-
-	// GetPendingRedemptionRequest gets the on-chain pending redemption request
-	// for the given redeemer output script and wallet public key hash.
-	// Returns an ErrPendingRedemptionRequestNotFound error if a redemption request
-	// was not found.
-	GetPendingRedemptionRequest(
-		redeemerOutputScript []byte,
-		walletPublicKeyHash [20]byte,
-	) (*RedemptionChainRequest, error)
+		filter *tbtc.RedemptionRequestedEventFilter,
+	) ([]*tbtc.RedemptionRequestedEvent, error)
 
 	// BuildRedemptionKey calculates a redemption key for the given redemption
 	// request which is an identifier for a redemption at the given time
 	// on-chain.
-	BuildRedemptionKey(redeemerOutputScript []byte, walletPublicKeyHash [20]byte) *big.Int
+	BuildRedemptionKey(
+		walletPublicKeyHash [20]byte,
+		redeemerOutputScript bitcoin.Script,
+	) (*big.Int, error)
 
 	// GetRedemptionParameters gets the current value of parameters relevant
 	// for the redemption process.
@@ -63,7 +55,7 @@ type Chain interface {
 	// SubmitRedemptionProposalWithReimbursement submits a redemption proposal
 	// to the chain. It reimburses the gas cost to the caller.
 	SubmitRedemptionProposalWithReimbursement(
-		proposal *RedemptionProposal,
+		proposal *tbtc.RedemptionProposal,
 	) error
 
 	// GetRedemptionMaxSize gets the maximum number of redemption requests that
@@ -74,39 +66,4 @@ type Chain interface {
 	// the redemption request creation before a request becomes eligible for
 	// a processing.
 	GetRedemptionRequestMinAge() (uint32, error)
-}
-
-// RedemptionRequestedEvent represents a redemption requested event.
-type RedemptionRequestedEvent struct {
-	WalletPublicKeyHash  [20]byte
-	RedeemerOutputScript []byte
-	Redeemer             chain.Address
-	RequestedAmount      uint64
-	TreasuryFee          uint64
-	TxMaxFee             uint64
-	BlockNumber          uint64
-}
-
-// RedemptionRequestedEventFilter is a component allowing to filter RedemptionRequestedEvent.
-type RedemptionRequestedEventFilter struct {
-	StartBlock          uint64
-	EndBlock            *uint64
-	WalletPublicKeyHash [][20]byte
-	Redeemer            []chain.Address
-}
-
-// RedemptionChainRequest represents a redemption request stored on-chain.
-type RedemptionChainRequest struct {
-	Redeemer        chain.Address
-	RequestedAmount uint64
-	TreasuryFee     uint64
-	TxMaxFee        uint64
-	RequestedAt     time.Time
-}
-
-// RedemptionProposal represents a redemption proposal submitted to the chain.
-type RedemptionProposal struct {
-	WalletPublicKeyHash    [20]byte
-	RedeemersOutputScripts [][]byte
-	RedemptionTxFee        *big.Int
 }

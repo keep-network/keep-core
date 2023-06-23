@@ -10,13 +10,11 @@ import (
 	"sort"
 	"time"
 
-	"github.com/keep-network/keep-common/pkg/chain/ethereum/ethutil"
-	"github.com/keep-network/keep-core/pkg/bitcoin"
-	"github.com/keep-network/keep-core/pkg/coordinator"
-
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/keep-network/keep-common/pkg/chain/ethereum/ethutil"
+	"github.com/keep-network/keep-core/pkg/bitcoin"
 
 	"github.com/keep-network/keep-common/pkg/chain/ethereum"
 	"github.com/keep-network/keep-core/pkg/chain"
@@ -1027,8 +1025,8 @@ func (tc *TbtcChain) PastDepositRevealedEvents(
 }
 
 func (tc *TbtcChain) PastRedemptionRequestedEvents(
-	filter *coordinator.RedemptionRequestedEventFilter,
-) ([]*coordinator.RedemptionRequestedEvent, error) {
+	filter *tbtc.RedemptionRequestedEventFilter,
+) ([]*tbtc.RedemptionRequestedEvent, error) {
 	var startBlock uint64
 	var endBlock *uint64
 	var redeemers []common.Address
@@ -1055,9 +1053,9 @@ func (tc *TbtcChain) PastRedemptionRequestedEvents(
 		return nil, err
 	}
 
-	convertedEvents := make([]*coordinator.RedemptionRequestedEvent, 0)
+	convertedEvents := make([]*tbtc.RedemptionRequestedEvent, 0)
 	for _, event := range events {
-		convertedEvent := &coordinator.RedemptionRequestedEvent{
+		convertedEvent := &tbtc.RedemptionRequestedEvent{
 			WalletPublicKeyHash:  event.WalletPubKeyHash,
 			RedeemerOutputScript: event.RedeemerOutputScript,
 			Redeemer:             chain.Address(event.Redeemer.Hex()),
@@ -1231,10 +1229,10 @@ func (tc *TbtcChain) BuildDepositKey(
 }
 
 func (tc *TbtcChain) BuildRedemptionKey(
-	redeemerOutputScript []byte,
 	walletPublicKeyHash [20]byte,
-) *big.Int {
-	return buildRedemptionKey(redeemerOutputScript, walletPublicKeyHash)
+	redeemerOutputScript bitcoin.Script,
+) (*big.Int, error) {
+	return buildRedemptionKey(walletPublicKeyHash, redeemerOutputScript)
 }
 
 func (tc *TbtcChain) GetDepositParameters() (
@@ -1648,23 +1646,6 @@ func (tc *TbtcChain) ValidateDepositSweepProposal(
 	return nil
 }
 
-func (tc *TbtcChain) ValidateRedemptionProposal(proposal *coordinator.RedemptionProposal) error {
-	valid, err := tc.walletCoordinator.ValidateRedemptionProposal(
-		convertRedemptionProposalToAbiType(proposal),
-	)
-	if err != nil {
-		return fmt.Errorf("validation failed: [%v]", err)
-	}
-
-	// Should never happen because `validateDepositSweepProposal` returns true
-	// or reverts (returns an error) but do the check just in case.
-	if !valid {
-		return fmt.Errorf("unexpected validation result")
-	}
-
-	return nil
-}
-
 func (tc *TbtcChain) SubmitDepositSweepProposalWithReimbursement(
 	proposal *tbtc.DepositSweepProposal,
 ) error {
@@ -1693,10 +1674,15 @@ func (tc *TbtcChain) SubmitDepositSweepProposalWithReimbursement(
 }
 
 func (tc *TbtcChain) SubmitRedemptionProposalWithReimbursement(
-	proposal *coordinator.RedemptionProposal,
+	proposal *tbtc.RedemptionProposal,
 ) error {
-	_, err := tc.walletCoordinator.SubmitRedemptionProposalWithReimbursement(
-		convertRedemptionProposalToAbiType(proposal),
+	abiProposal, err := convertRedemptionProposalToAbiType(proposal)
+	if err != nil {
+		return fmt.Errorf("cannot convert proposal to abi type: [%v]", err)
+	}
+
+	_, err = tc.walletCoordinator.SubmitRedemptionProposalWithReimbursement(
+		abiProposal,
 	)
 
 	return err

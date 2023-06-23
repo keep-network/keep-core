@@ -13,7 +13,6 @@ import (
 
 	"github.com/keep-network/keep-core/pkg/bitcoin"
 	"github.com/keep-network/keep-core/pkg/chain"
-	"github.com/keep-network/keep-core/pkg/coordinator"
 	"github.com/keep-network/keep-core/pkg/operator"
 	"github.com/keep-network/keep-core/pkg/protocol/group"
 	"github.com/keep-network/keep-core/pkg/subscription"
@@ -371,8 +370,8 @@ func buildPastNewWalletRegisteredEventsKey(
 }
 
 func (lc *localTbtcChain) PastRedemptionRequestedEvents(
-	filter *coordinator.RedemptionRequestedEventFilter,
-) ([]*coordinator.RedemptionRequestedEvent, error) {
+	filter *tbtc.RedemptionRequestedEventFilter,
+) ([]*tbtc.RedemptionRequestedEvent, error) {
 	panic("unsupported")
 }
 
@@ -400,7 +399,10 @@ func buildDepositRequestKey(
 	return sha256.Sum256(append(fundingTxHash[:], fundingOutputIndexBytes...))
 }
 
-func (lc *localTbtcChain) BuildRedemptionKey(redeemerOutputScript []byte, walletPublicKeyHash [20]byte) *big.Int {
+func (lc *localTbtcChain) BuildRedemptionKey(
+	walletPublicKeyHash [20]byte,
+	redeemerOutputScript bitcoin.Script,
+) (*big.Int, error) {
 	panic("unsupported")
 }
 
@@ -562,7 +564,7 @@ func (lc *localTbtcChain) SubmitDepositSweepProposalWithReimbursement(
 }
 
 func (lc *localTbtcChain) SubmitRedemptionProposalWithReimbursement(
-	proposal *coordinator.RedemptionProposal,
+	proposal *tbtc.RedemptionProposal,
 ) error {
 	panic("unsupported")
 }
