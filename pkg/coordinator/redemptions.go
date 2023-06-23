@@ -175,7 +175,14 @@ func ProposeRedemption(
 	}
 
 	logger.Infof("validating the redemption proposal...")
-	// TODO: Use the same function that nodes will use to validate a proposal.
+
+	if _, err := tbtc.ValidateRedemptionProposal(
+		logger,
+		proposal,
+		chain,
+	); err != nil {
+		return fmt.Errorf("failed to verify redemption proposal: %v", err)
+	}
 
 	if !dryRun {
 		logger.Infof("submitting the deposit sweep proposal...")
@@ -214,7 +221,7 @@ func getPendingRedemptions(
 	)
 
 	// TODO: We should consider narrowing the block range in filter the fetch
-	// only events that are newer than `now - redemptionRequestTimeout`.
+	//       only events that are newer than `now - redemptionRequestTimeout`.
 
 	redemptionsRequested, err := chain.PastRedemptionRequestedEvents(filter)
 	if err != nil {
