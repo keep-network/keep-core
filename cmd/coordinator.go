@@ -230,7 +230,7 @@ as arguments.
 var proposeRedemptionCommand = cobra.Command{
 	Use:              "propose-redemption",
 	Short:            "propose redemption",
-	Long:             "aaaaa",
+	Long:             proposeRedemptionCommandDescription,
 	TraverseChildren: true,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		// ctx := cmd.Context()
@@ -305,6 +305,8 @@ var proposeRedemptionCommand = cobra.Command{
 		)
 	},
 }
+
+var proposeRedemptionCommandDescription = `Submits a redemption proposal to the chain.`
 
 var estimateDepositsSweepFeeCommand = cobra.Command{
 	Use:              "estimate-deposits-sweep-fee",
