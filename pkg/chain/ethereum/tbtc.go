@@ -1055,9 +1055,16 @@ func (tc *TbtcChain) PastRedemptionRequestedEvents(
 
 	convertedEvents := make([]*tbtc.RedemptionRequestedEvent, 0)
 	for _, event := range events {
+		redeemerOutputScript, err := bitcoin.NewScriptFromVarLenData(
+			event.RedeemerOutputScript,
+		)
+		if err != nil {
+			return nil, err
+		}
+
 		convertedEvent := &tbtc.RedemptionRequestedEvent{
 			WalletPublicKeyHash:  event.WalletPubKeyHash,
-			RedeemerOutputScript: event.RedeemerOutputScript,
+			RedeemerOutputScript: redeemerOutputScript,
 			Redeemer:             chain.Address(event.Redeemer.Hex()),
 			RequestedAmount:      event.RequestedAmount,
 			TreasuryFee:          event.TreasuryFee,
