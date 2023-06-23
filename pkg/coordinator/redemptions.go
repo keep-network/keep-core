@@ -161,7 +161,7 @@ func ProposeRedemption(
 
 	// Estimate fee if it's missing.
 	if fee <= 0 {
-		// TODO: implement fee estimation
+		panic("fee estimation not implemented yet")
 	}
 
 	logger.Infof("redemption transaction fee: [%d]", fee)
