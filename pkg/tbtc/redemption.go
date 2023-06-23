@@ -3,10 +3,44 @@ package tbtc
 import (
 	"crypto/ecdsa"
 	"fmt"
+	"go.uber.org/zap"
 	"time"
+
+	"github.com/ipfs/go-log/v2"
 
 	"github.com/keep-network/keep-core/pkg/bitcoin"
 	"github.com/keep-network/keep-core/pkg/chain"
+)
+
+const (
+	// redemptionProposalConfirmationBlocks determines the block length of the
+	// confirmation period on the host chain that is preserved after a
+	// redemption proposal submission.
+	redemptionProposalConfirmationBlocks = 20
+	// redemptionSigningTimeoutSafetyMargin determines the duration of the
+	// safety margin that must be preserved between the signing timeout
+	// and the timeout of the entire redemption action. This safety
+	// margin prevents against the case where signing completes late and there
+	// is not enough time to broadcast the redemption transaction properly.
+	// In such a case, wallet signatures may leak and make the wallet subject
+	// of fraud accusations. Usage of the safety margin ensures there is enough
+	// time to perform post-signing steps of the redemption action.
+	redemptionSigningTimeoutSafetyMargin = 1 * time.Hour
+	// redemptionBroadcastTimeout determines the time window for redemption
+	// transaction broadcast. It is guaranteed that at least
+	// redemptionSigningTimeoutSafetyMargin is preserved for the broadcast
+	// step. However, the happy path for the broadcast step is usually quick
+	// and few retries are needed to recover from temporary problems. That
+	// said, if the broadcast step does not succeed in a tight timeframe,
+	// there is no point to retry for the entire possible time window.
+	// Hence, the timeout for broadcast step is set as 25% of the entire
+	// time widow determined by redemptionSigningTimeoutSafetyMargin.
+	redemptionBroadcastTimeout = redemptionSigningTimeoutSafetyMargin / 4
+	// redemptionBroadcastCheckDelay determines the delay that must
+	// be preserved between transaction broadcast and the check that ensures
+	// the transaction is known on the Bitcoin chain. This delay is needed
+	// as spreading the transaction over the Bitcoin network takes time.
+	redemptionBroadcastCheckDelay = 1 * time.Minute
 )
 
 // RedemptionTransactionShape is an enum describing the shape of
@@ -29,8 +63,9 @@ type RedemptionRequest struct {
 	// Redeemer is the redeemer's address on the host chain.
 	Redeemer chain.Address
 	// RedeemerOutputScript is the output script the redeemed Bitcoin funds are
-	// locked to. This field is not prepended with the byte-length of the script.
-	RedeemerOutputScript []byte
+	// locked to. As stated in the bitcoin.Script docstring, this field is not
+	// prepended with the byte-length of the script.
+	RedeemerOutputScript bitcoin.Script
 	// RequestedAmount is the TBTC amount (in satoshi) requested for redemption.
 	RequestedAmount uint64
 	// TreasuryFee is the treasury TBTC fee (in satoshi) at the moment of
@@ -42,6 +77,208 @@ type RedemptionRequest struct {
 	TxMaxFee uint64
 	// RequestedAt is the time the request was created at.
 	RequestedAt time.Time
+}
+
+// redemptionAction is a redemption walletAction.
+type redemptionAction struct {
+	logger   *zap.SugaredLogger
+	chain    Chain
+	btcChain bitcoin.Chain
+
+	redeemingWallet     wallet
+	transactionExecutor *walletTransactionExecutor
+
+	proposal                     *RedemptionProposal
+	proposalProcessingStartBlock uint64
+	proposalExpiresAt            time.Time
+
+	signingTimeoutSafetyMargin time.Duration
+	broadcastTimeout           time.Duration
+	broadcastCheckDelay        time.Duration
+
+	feeDistribution  redemptionFeeDistributionFn
+	transactionShape RedemptionTransactionShape
+}
+
+func newRedemptionAction(
+	logger *zap.SugaredLogger,
+	chain Chain,
+	btcChain bitcoin.Chain,
+	redeemingWallet wallet,
+	signingExecutor walletSigningExecutor,
+	proposal *RedemptionProposal,
+	proposalProcessingStartBlock uint64,
+	proposalExpiresAt time.Time,
+) *redemptionAction {
+	transactionExecutor := newWalletTransactionExecutor(
+		btcChain,
+		redeemingWallet,
+		signingExecutor,
+	)
+
+	feeDistribution := withRedemptionTotalFee(proposal.RedemptionTxFee.Int64())
+
+	return &redemptionAction{
+		logger:                       logger,
+		chain:                        chain,
+		btcChain:                     btcChain,
+		redeemingWallet:              redeemingWallet,
+		transactionExecutor:          transactionExecutor,
+		proposal:                     proposal,
+		proposalProcessingStartBlock: proposalProcessingStartBlock,
+		proposalExpiresAt:            proposalExpiresAt,
+		signingTimeoutSafetyMargin:   redemptionSigningTimeoutSafetyMargin,
+		broadcastTimeout:             redemptionBroadcastTimeout,
+		broadcastCheckDelay:          redemptionBroadcastCheckDelay,
+		feeDistribution:              feeDistribution,
+		transactionShape:             RedemptionChangeFirst,
+	}
+}
+
+func (ra *redemptionAction) execute() error {
+	validateProposalLogger := ra.logger.With(
+		zap.String("step", "validateProposal"),
+	)
+
+	validatedRequests, err := ValidateRedemptionProposal(
+		validateProposalLogger,
+		ra.proposal,
+		ra.chain,
+	)
+	if err != nil {
+		return fmt.Errorf("validate proposal step failed: [%v]", err)
+	}
+
+	walletPublicKeyHash := bitcoin.PublicKeyHash(ra.wallet().publicKey)
+
+	walletMainUtxo, err := DetermineWalletMainUtxo(
+		walletPublicKeyHash,
+		ra.chain,
+		ra.btcChain,
+	)
+	if err != nil {
+		return fmt.Errorf(
+			"error while determining wallet's main UTXO: [%v]",
+			err,
+		)
+	}
+
+	// Proposal validation should detect this but let's make a check just
+	// in case.
+	if walletMainUtxo == nil {
+		return fmt.Errorf("redeeming wallet has no main UTXO")
+	}
+
+	err = EnsureWalletSyncedBetweenChains(
+		walletPublicKeyHash,
+		walletMainUtxo,
+		ra.btcChain,
+	)
+	if err != nil {
+		return fmt.Errorf(
+			"error while ensuring wallet state is synced between "+
+				"BTC and host chain: [%v]",
+			err,
+		)
+	}
+
+	unsignedRedemptionTx, err := assembleRedemptionTransaction(
+		ra.btcChain,
+		ra.wallet().publicKey,
+		walletMainUtxo,
+		validatedRequests,
+		ra.feeDistribution,
+		ra.transactionShape,
+	)
+	if err != nil {
+		return fmt.Errorf(
+			"error while assembling redemption transaction: [%v]",
+			err,
+		)
+	}
+
+	signTxLogger := ra.logger.With(
+		zap.String("step", "signTransaction"),
+	)
+
+	redemptionTx, err := ra.transactionExecutor.signTransaction(
+		signTxLogger,
+		unsignedRedemptionTx,
+		ra.proposalProcessingStartBlock,
+		ra.proposalExpiresAt.Add(-ra.signingTimeoutSafetyMargin),
+	)
+	if err != nil {
+		return fmt.Errorf("sign transaction step failed: [%v]", err)
+	}
+
+	broadcastTxLogger := ra.logger.With(
+		zap.String("step", "broadcastTransaction"),
+		zap.String("redemptionTxHash", redemptionTx.Hash().Hex(bitcoin.ReversedByteOrder)),
+	)
+
+	err = ra.transactionExecutor.broadcastTransaction(
+		broadcastTxLogger,
+		redemptionTx,
+		ra.broadcastTimeout,
+		ra.broadcastCheckDelay,
+	)
+	if err != nil {
+		return fmt.Errorf("broadcast transaction step failed: [%v]", err)
+	}
+
+	return nil
+}
+
+// ValidateRedemptionProposal checks the redemption proposal with on-chain
+// validation rules.
+func ValidateRedemptionProposal(
+	validateProposalLogger log.StandardLogger,
+	proposal *RedemptionProposal,
+	tbtcChain Chain,
+) ([]*RedemptionRequest, error) {
+	validateProposalLogger.Infof("calling chain for proposal validation")
+
+	err := tbtcChain.ValidateRedemptionProposal(proposal)
+	if err != nil {
+		return nil, fmt.Errorf("redemption proposal is invalid: [%v]", err)
+	}
+
+	validateProposalLogger.Infof(
+		"redemption proposal is valid",
+	)
+
+	requests := make([]*RedemptionRequest, len(proposal.RedeemersOutputScripts))
+	for i, script := range proposal.RedeemersOutputScripts {
+		requestDisplayIndex := fmt.Sprintf(
+			"%v/%v",
+			i+1,
+			len(proposal.RedeemersOutputScripts),
+		)
+
+		request, err := tbtcChain.GetPendingRedemptionRequest(
+			proposal.WalletPublicKeyHash,
+			script,
+		)
+		if err != nil {
+			return nil, fmt.Errorf(
+				"cannot get pending redemption request data for request [%v]: [%v]",
+				requestDisplayIndex,
+				err,
+			)
+		}
+
+		requests[i] = request
+	}
+
+	return requests, nil
+}
+
+func (ra *redemptionAction) wallet() wallet {
+	return ra.redeemingWallet
+}
+
+func (ra *redemptionAction) actionType() WalletActionType {
+	return Redemption
 }
 
 // redemptionFeeDistributionFn calculates the redemption transaction fee

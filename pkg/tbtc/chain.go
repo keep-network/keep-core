@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/keep-network/keep-core/pkg/bitcoin"
-
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/operator"
 	"github.com/keep-network/keep-core/pkg/protocol/group"
@@ -230,6 +229,14 @@ type BridgeChain interface {
 		revealAheadPeriod uint32,
 		err error,
 	)
+
+	// GetPendingRedemptionRequest gets the on-chain pending redemption request
+	// for the given wallet public key hash and redeemer output script.
+	// Returns an error if the request was not found.
+	GetPendingRedemptionRequest(
+		walletPublicKeyHash [20]byte,
+		redeemerOutputScript bitcoin.Script,
+	) (*RedemptionRequest, error)
 }
 
 // HeartbeatRequestedEvent represents a Bridge heartbeat request event.
@@ -375,6 +382,17 @@ type WalletCoordinatorChain interface {
 	// GetDepositSweepMaxSize gets the maximum number of deposits that can
 	// be part of a deposit sweep proposal.
 	GetDepositSweepMaxSize() (uint16, error)
+
+	// OnRedemptionProposalSubmitted registers a callback that is invoked when
+	// an on-chain notification of the redemption proposal submission is seen.
+	OnRedemptionProposalSubmitted(
+		func(event *RedemptionProposalSubmittedEvent),
+	) subscription.EventSubscription
+
+	// ValidateRedemptionProposal validates the given redemption proposal
+	// against the chain. Returns an error if the proposal is not valid or
+	// nil otherwise.
+	ValidateRedemptionProposal(proposal *RedemptionProposal) error
 }
 
 // HeartbeatRequestSubmittedEvent represents a wallet heartbeat request
@@ -412,6 +430,21 @@ type DepositSweepProposalSubmittedEventFilter struct {
 	EndBlock            *uint64
 	Coordinator         []chain.Address
 	WalletPublicKeyHash [20]byte
+}
+
+// RedemptionProposalSubmittedEvent represents a redemption proposal
+// submission event.
+type RedemptionProposalSubmittedEvent struct {
+	Proposal    *RedemptionProposal
+	Coordinator chain.Address
+	BlockNumber uint64
+}
+
+// RedemptionProposal represents a redemption proposal submitted to the chain.
+type RedemptionProposal struct {
+	WalletPublicKeyHash    [20]byte
+	RedeemersOutputScripts []bitcoin.Script
+	RedemptionTxFee        *big.Int
 }
 
 // Chain represents the interface that the TBTC module expects to interact

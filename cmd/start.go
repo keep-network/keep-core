@@ -214,12 +214,15 @@ func initializeClientInfo(
 	registry.RegisterMetricClientInfo(build.Version)
 
 	registry.RegisterConnectedPeersSource(netProvider, signing)
+
 	registry.RegisterClientInfoSource(
 		netProvider,
 		signing,
 		build.Version,
 		build.Revision,
 	)
+
+	registry.RegisterChainInfoSource(blockCounter)
 
 	logger.Infof(
 		"enabled client info endpoint on port [%v]",

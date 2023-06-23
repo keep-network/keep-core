@@ -460,6 +460,93 @@ func (n *node) handleDepositSweepProposal(
 	walletActionLogger.Infof("wallet action dispatched successfully")
 }
 
+// handleRedemptionProposal handles an incoming redemption proposal.
+// First, it determines whether the node is supposed to do an action by checking
+// whether any of the proposal's target wallet signers are under node's control.
+// If so, this function orchestrates and dispatches an appropriate wallet action.
+func (n *node) handleRedemptionProposal(
+	proposal *RedemptionProposal,
+	proposalExpiresAt time.Time,
+	startBlock uint64,
+	delayBlocks uint64,
+) {
+	wallet, ok := n.walletRegistry.getWalletByPublicKeyHash(
+		proposal.WalletPublicKeyHash,
+	)
+	if !ok {
+		logger.Infof(
+			"node does not control signers of wallet PKH [0x%x]; "+
+				"ignoring the received redemption proposal",
+			proposal.WalletPublicKeyHash,
+		)
+		return
+	}
+
+	signingExecutor, ok, err := n.getSigningExecutor(wallet.publicKey)
+	if err != nil {
+		logger.Errorf("cannot get signing executor: [%v]", err)
+		return
+	}
+	// This check is actually redundant. We know the node controls some
+	// wallet signers as we just got the wallet from the registry using their
+	// public key hash. However, we are doing it just in case. The API
+	// contract of getWalletByPublicKeyHash and/or getSigningExecutor may
+	// change one day.
+	if !ok {
+		logger.Infof(
+			"node does not control signers of wallet PKH [0x%x]; "+
+				"ignoring the received redemption proposal",
+			proposal.WalletPublicKeyHash,
+		)
+		return
+	}
+
+	walletPublicKeyBytes, err := marshalPublicKey(wallet.publicKey)
+	if err != nil {
+		logger.Errorf("cannot marshal wallet public key: [%v]", err)
+		return
+	}
+
+	logger.Infof(
+		"node controls signers of wallet PKH [0x%x]; "+
+			"plain-text uncompressed public key of that wallet is [0x%x]; "+
+			"starting orchestration of the redemption action",
+		proposal.WalletPublicKeyHash,
+		walletPublicKeyBytes,
+	)
+
+	// The proposal's processing started after a confirmation period represented
+	// by the delayBlocks parameter. Hence, we must add it to the original
+	// startBlock.
+	proposalProcessingStartBlock := startBlock + delayBlocks
+
+	walletActionLogger := logger.With(
+		zap.String("wallet", fmt.Sprintf("0x%x", walletPublicKeyBytes)),
+		zap.String("action", Redemption.String()),
+		zap.Uint64("startBlock", proposalProcessingStartBlock),
+	)
+	walletActionLogger.Infof("dispatching wallet action")
+
+	action := newRedemptionAction(
+		walletActionLogger,
+		n.chain,
+		n.btcChain,
+		wallet,
+		signingExecutor,
+		proposal,
+		proposalProcessingStartBlock,
+		proposalExpiresAt,
+	)
+
+	err = n.walletDispatcher.dispatch(action)
+	if err != nil {
+		walletActionLogger.Errorf("cannot dispatch wallet action: [%v]", err)
+		return
+	}
+
+	walletActionLogger.Infof("wallet action dispatched successfully")
+}
+
 // waitForBlockFn represents a function blocking the execution until the given
 // block height.
 type waitForBlockFn func(context.Context, uint64) error

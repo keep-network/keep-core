@@ -226,9 +226,10 @@ type TransactionOutput struct {
 	// Value denotes the number of satoshis to spend. Zero is a valid value.
 	Value int64
 	// PublicKeyScript defines the conditions that must be satisfied to spend
-	// this output. This slice MUST NOT start with the byte-length of the script
-	// encoded as CompactSizeUint as this is done during transaction serialization.
-	PublicKeyScript []byte
+	// this output. As stated in the Script docstring, this field MUST NOT
+	// start with the byte-length of the script encoded as CompactSizeUint as
+	// this is done during transaction serialization.
+	PublicKeyScript Script
 }
 
 // UnspentTransactionOutput represents an unspent output (UTXO) of a Bitcoin
