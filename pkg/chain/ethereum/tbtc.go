@@ -1688,8 +1688,23 @@ func (tc *TbtcChain) SubmitRedemptionProposalWithReimbursement(
 		return fmt.Errorf("cannot convert proposal to abi type: [%v]", err)
 	}
 
+	gasEstimate, err := tc.walletCoordinator.SubmitRedemptionProposalWithReimbursementGasEstimate(
+		abiProposal,
+	)
+	if err != nil {
+		return err
+	}
+
+	// The original estimate for this contract call is too low and the call
+	// fails on reimbursing the submitter. Here we add a 20% margin to overcome
+	// the gas problems.
+	gasEstimateWithMargin := float64(gasEstimate) * float64(1.2)
+
 	_, err = tc.walletCoordinator.SubmitRedemptionProposalWithReimbursement(
 		abiProposal,
+		ethutil.TransactionOptions{
+			GasLimit: uint64(gasEstimateWithMargin),
+		},
 	)
 
 	return err
