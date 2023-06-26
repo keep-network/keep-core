@@ -230,7 +230,7 @@ as arguments.
 var proposeRedemptionCommand = cobra.Command{
 	Use:              "propose-redemption",
 	Short:            "propose redemption",
-	Long:             proposeRedemptionCommandDescription,
+	Long:             "Submits a redemption proposal to the chain.",
 	TraverseChildren: true,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		wallet, err := cmd.Flags().GetString(walletFlagName)
@@ -303,8 +303,6 @@ var proposeRedemptionCommand = cobra.Command{
 		)
 	},
 }
-
-var proposeRedemptionCommandDescription = `Submits a redemption proposal to the chain.`
 
 var estimateDepositsSweepFeeCommand = cobra.Command{
 	Use:              "estimate-deposits-sweep-fee",
