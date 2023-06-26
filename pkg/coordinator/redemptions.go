@@ -3,11 +3,12 @@ package coordinator
 import (
 	"errors"
 	"fmt"
-	"github.com/keep-network/keep-core/pkg/bitcoin"
-	"github.com/keep-network/keep-core/pkg/tbtc"
 	"math/big"
 	"sort"
 	"time"
+
+	"github.com/keep-network/keep-core/pkg/bitcoin"
+	"github.com/keep-network/keep-core/pkg/tbtc"
 
 	"github.com/keep-network/keep-core/internal/hexutils"
 )
