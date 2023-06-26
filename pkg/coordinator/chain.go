@@ -110,4 +110,5 @@ type Chain interface {
 	GetRedemptionRequestMinAge() (uint32, error)
 
 	tbtc.ValidateDepositSweepProposalChain
+	tbtc.ValidateRedemptionProposalChain
 }
