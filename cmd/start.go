@@ -5,13 +5,13 @@ import (
 	"fmt"
 
 	"github.com/keep-network/keep-common/pkg/persistence"
+	"github.com/keep-network/keep-core/build"
 	"github.com/keep-network/keep-core/pkg/bitcoin/electrum"
 	"github.com/keep-network/keep-core/pkg/operator"
 	"github.com/keep-network/keep-core/pkg/storage"
 
 	"github.com/spf13/cobra"
 
-	"github.com/keep-network/keep-core/build"
 	"github.com/keep-network/keep-core/config"
 	"github.com/keep-network/keep-core/pkg/beacon"
 	"github.com/keep-network/keep-core/pkg/chain"
@@ -104,6 +104,13 @@ func start(cmd *cobra.Command) error {
 		}
 
 		scheduler := generator.StartScheduler()
+
+		clientInfoRegistry.ObserveBtcConnectivity(
+			btcChain,
+			clientConfig.ClientInfo.BitcoinMetricsTick,
+		)
+
+		clientInfoRegistry.RegisterBtcChainInfoSource(btcChain)
 
 		err = beacon.Initialize(
 			ctx,
@@ -222,7 +229,7 @@ func initializeClientInfo(
 		build.Revision,
 	)
 
-	registry.RegisterChainInfoSource(blockCounter)
+	registry.RegisterEthChainInfoSource(blockCounter)
 
 	logger.Infof(
 		"enabled client info endpoint on port [%v]",
