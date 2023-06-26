@@ -2,22 +2,16 @@ package coordinator_test
 
 import (
 	"bytes"
-	"crypto/ecdsa"
 	"crypto/sha256"
 	"encoding/binary"
 	"encoding/hex"
 	"fmt"
 	"math/big"
 	"sync"
-	"time"
 
 	"github.com/keep-network/keep-core/pkg/bitcoin"
-	"github.com/keep-network/keep-core/pkg/chain"
-	"github.com/keep-network/keep-core/pkg/operator"
-	"github.com/keep-network/keep-core/pkg/protocol/group"
-	"github.com/keep-network/keep-core/pkg/subscription"
+	"github.com/keep-network/keep-core/pkg/coordinator"
 	"github.com/keep-network/keep-core/pkg/tbtc"
-	"github.com/keep-network/keep-core/pkg/tecdsa/dkg"
 )
 
 type localTbtcChain struct {
@@ -25,7 +19,7 @@ type localTbtcChain struct {
 
 	depositRequests                 map[[32]byte]*tbtc.DepositChainRequest
 	pastDepositRevealedEvents       map[[32]byte][]*tbtc.DepositRevealedEvent
-	pastNewWalletRegisteredEvents   map[[32]byte][]*tbtc.NewWalletRegisteredEvent
+	pastNewWalletRegisteredEvents   map[[32]byte][]*coordinator.NewWalletRegisteredEvent
 	depositParameters               depositParameters
 	depositSweepProposalValidations map[[32]byte]bool
 	depositSweepProposals           []*tbtc.DepositSweepProposal
@@ -42,154 +36,9 @@ func newLocalTbtcChain() *localTbtcChain {
 	return &localTbtcChain{
 		depositRequests:                 make(map[[32]byte]*tbtc.DepositChainRequest),
 		pastDepositRevealedEvents:       make(map[[32]byte][]*tbtc.DepositRevealedEvent),
-		pastNewWalletRegisteredEvents:   make(map[[32]byte][]*tbtc.NewWalletRegisteredEvent),
+		pastNewWalletRegisteredEvents:   make(map[[32]byte][]*coordinator.NewWalletRegisteredEvent),
 		depositSweepProposalValidations: make(map[[32]byte]bool),
 	}
-}
-
-func (lc *localTbtcChain) BlockCounter() (chain.BlockCounter, error) {
-	panic("unsupported")
-}
-
-func (lc *localTbtcChain) Signing() chain.Signing {
-	panic("unsupported")
-}
-
-func (lc *localTbtcChain) OperatorKeyPair() (*operator.PrivateKey, *operator.PublicKey, error) {
-	panic("unsupported")
-}
-
-func (lc *localTbtcChain) GetBlockNumberByTimestamp(timestamp uint64) (uint64, error) {
-	panic("unsupported")
-}
-
-func (lc *localTbtcChain) OperatorToStakingProvider() (chain.Address, bool, error) {
-	panic("unsupported")
-}
-
-func (lc *localTbtcChain) EligibleStake(stakingProvider chain.Address) (*big.Int, error) {
-	panic("unsupported")
-}
-
-func (lc *localTbtcChain) IsPoolLocked() (bool, error) {
-	panic("unsupported")
-}
-
-func (lc *localTbtcChain) IsOperatorInPool() (bool, error) {
-	panic("unsupported")
-}
-
-func (lc *localTbtcChain) IsOperatorUpToDate() (bool, error) {
-	panic("unsupported")
-}
-
-func (lc *localTbtcChain) JoinSortitionPool() error {
-	panic("unsupported")
-}
-
-func (lc *localTbtcChain) UpdateOperatorStatus() error {
-	panic("unsupported")
-}
-
-func (lc *localTbtcChain) IsEligibleForRewards() (bool, error) {
-	panic("unsupported")
-}
-
-func (lc *localTbtcChain) CanRestoreRewardEligibility() (bool, error) {
-	panic("unsupported")
-}
-
-func (lc *localTbtcChain) RestoreRewardEligibility() error {
-	panic("unsupported")
-}
-
-func (lc *localTbtcChain) IsChaosnetActive() (bool, error) {
-	panic("unsupported")
-}
-
-func (lc *localTbtcChain) IsBetaOperator() (bool, error) {
-	panic("unsupported")
-}
-
-func (lc *localTbtcChain) SelectGroup() (*tbtc.GroupSelectionResult, error) {
-	panic("unsupported")
-}
-
-func (lc *localTbtcChain) OnDKGStarted(
-	func(event *tbtc.DKGStartedEvent),
-) subscription.EventSubscription {
-	panic("unsupported")
-}
-
-func (lc *localTbtcChain) PastDKGStartedEvents(
-	filter *tbtc.DKGStartedEventFilter,
-) ([]*tbtc.DKGStartedEvent, error) {
-	panic("unsupported")
-}
-
-func (lc *localTbtcChain) OnDKGResultSubmitted(
-	func(event *tbtc.DKGResultSubmittedEvent),
-) subscription.EventSubscription {
-	panic("unsupported")
-}
-
-func (lc *localTbtcChain) OnDKGResultChallenged(
-	func(event *tbtc.DKGResultChallengedEvent),
-) subscription.EventSubscription {
-	panic("unsupported")
-}
-
-func (lc *localTbtcChain) OnDKGResultApproved(
-	func(event *tbtc.DKGResultApprovedEvent),
-) subscription.EventSubscription {
-	panic("unsupported")
-}
-
-func (lc *localTbtcChain) AssembleDKGResult(
-	submitterMemberIndex group.MemberIndex,
-	groupPublicKey *ecdsa.PublicKey,
-	operatingMembersIndexes []group.MemberIndex,
-	misbehavedMembersIndexes []group.MemberIndex,
-	signatures map[group.MemberIndex][]byte,
-	groupSelectionResult *tbtc.GroupSelectionResult,
-) (*tbtc.DKGChainResult, error) {
-	panic("unsupported")
-}
-
-func (lc *localTbtcChain) SubmitDKGResult(dkgResult *tbtc.DKGChainResult) error {
-	panic("unsupported")
-}
-
-func (lc *localTbtcChain) GetDKGState() (tbtc.DKGState, error) {
-	panic("unsupported")
-}
-
-func (lc *localTbtcChain) CalculateDKGResultSignatureHash(
-	groupPublicKey *ecdsa.PublicKey,
-	misbehavedMembersIndexes []group.MemberIndex,
-	startBlock uint64,
-) (dkg.ResultSignatureHash, error) {
-	panic("unsupported")
-}
-
-func (lc *localTbtcChain) IsDKGResultValid(dkgResult *tbtc.DKGChainResult) (bool, error) {
-	panic("unsupported")
-}
-
-func (lc *localTbtcChain) ChallengeDKGResult(dkgResult *tbtc.DKGChainResult) error {
-	panic("unsupported")
-}
-
-func (lc *localTbtcChain) ApproveDKGResult(dkgResult *tbtc.DKGChainResult) error {
-	panic("unsupported")
-}
-
-func (lc *localTbtcChain) DKGParameters() (*tbtc.DKGParameters, error) {
-	panic("unsupported")
-}
-
-func (lc *localTbtcChain) GetOperatorID(operatorAddress chain.Address) (chain.OperatorID, error) {
-	panic("unsupported")
 }
 
 func (lc *localTbtcChain) PastDepositRevealedEvents(
@@ -297,8 +146,8 @@ func (lc *localTbtcChain) setDepositRequest(
 }
 
 func (lc *localTbtcChain) PastNewWalletRegisteredEvents(
-	filter *tbtc.NewWalletRegisteredEventFilter,
-) ([]*tbtc.NewWalletRegisteredEvent, error) {
+	filter *coordinator.NewWalletRegisteredEventFilter,
+) ([]*coordinator.NewWalletRegisteredEvent, error) {
 	lc.mutex.Lock()
 	defer lc.mutex.Unlock()
 
@@ -316,8 +165,8 @@ func (lc *localTbtcChain) PastNewWalletRegisteredEvents(
 }
 
 func (lc *localTbtcChain) addPastNewWalletRegisteredEvent(
-	filter *tbtc.NewWalletRegisteredEventFilter,
-	event *tbtc.NewWalletRegisteredEvent,
+	filter *coordinator.NewWalletRegisteredEventFilter,
+	event *coordinator.NewWalletRegisteredEvent,
 ) error {
 	lc.mutex.Lock()
 	defer lc.mutex.Unlock()
@@ -328,7 +177,7 @@ func (lc *localTbtcChain) addPastNewWalletRegisteredEvent(
 	}
 
 	if _, ok := lc.pastNewWalletRegisteredEvents[eventsKey]; !ok {
-		lc.pastNewWalletRegisteredEvents[eventsKey] = []*tbtc.NewWalletRegisteredEvent{}
+		lc.pastNewWalletRegisteredEvents[eventsKey] = []*coordinator.NewWalletRegisteredEvent{}
 	}
 
 	lc.pastNewWalletRegisteredEvents[eventsKey] = append(
@@ -340,7 +189,7 @@ func (lc *localTbtcChain) addPastNewWalletRegisteredEvent(
 }
 
 func buildPastNewWalletRegisteredEventsKey(
-	filter *tbtc.NewWalletRegisteredEventFilter,
+	filter *coordinator.NewWalletRegisteredEventFilter,
 ) ([32]byte, error) {
 	if filter == nil {
 		return [32]byte{}, nil
@@ -372,14 +221,6 @@ func buildPastNewWalletRegisteredEventsKey(
 func (lc *localTbtcChain) PastRedemptionRequestedEvents(
 	filter *tbtc.RedemptionRequestedEventFilter,
 ) ([]*tbtc.RedemptionRequestedEvent, error) {
-	panic("unsupported")
-}
-
-func (lc *localTbtcChain) GetWallet(walletPublicKeyHash [20]byte) (*tbtc.WalletChainData, error) {
-	panic("unsupported")
-}
-
-func (lc *localTbtcChain) ComputeMainUtxoHash(mainUtxo *bitcoin.UnspentTransactionOutput) [32]byte {
 	panic("unsupported")
 }
 
@@ -423,13 +264,6 @@ func (lc *localTbtcChain) GetDepositParameters() (
 		nil
 }
 
-func (lc *localTbtcChain) GetPendingRedemptionRequest(
-	walletPublicKeyHash [20]byte,
-	redeemerOutputScript bitcoin.Script,
-) (*tbtc.RedemptionRequest, error) {
-	panic("unsupported")
-}
-
 func (lc *localTbtcChain) setDepositParameters(
 	dustThreshold uint64,
 	treasuryFeeDivisor uint64,
@@ -457,30 +291,6 @@ func (lc *localTbtcChain) GetRedemptionParameters() (
 	timeoutNotifierRewardMultiplier uint32,
 	err error,
 ) {
-	panic("unsupported")
-}
-
-func (lc *localTbtcChain) OnHeartbeatRequestSubmitted(
-	handler func(event *tbtc.HeartbeatRequestSubmittedEvent),
-) subscription.EventSubscription {
-	panic("unsupported")
-}
-
-func (lc *localTbtcChain) OnDepositSweepProposalSubmitted(
-	func(event *tbtc.DepositSweepProposalSubmittedEvent),
-) subscription.EventSubscription {
-	panic("unsupported")
-}
-
-func (lc *localTbtcChain) PastDepositSweepProposalSubmittedEvents(
-	filter *tbtc.DepositSweepProposalSubmittedEventFilter,
-) ([]*tbtc.DepositSweepProposalSubmittedEvent, error) {
-	panic("unsupported")
-}
-
-func (lc *localTbtcChain) GetWalletLock(
-	walletPublicKeyHash [20]byte,
-) (time.Time, tbtc.WalletActionType, error) {
 	panic("unsupported")
 }
 
@@ -570,12 +380,6 @@ func (lc *localTbtcChain) SubmitRedemptionProposalWithReimbursement(
 }
 
 func (lc *localTbtcChain) GetDepositSweepMaxSize() (uint16, error) {
-	panic("unsupported")
-}
-
-func (lc *localTbtcChain) OnRedemptionProposalSubmitted(
-	func(event *tbtc.RedemptionProposalSubmittedEvent),
-) subscription.EventSubscription {
 	panic("unsupported")
 }
 
