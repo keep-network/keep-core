@@ -14,7 +14,7 @@ import (
 	"github.com/keep-network/keep-core/pkg/tbtc"
 )
 
-type localTbtcChain struct {
+type localChain struct {
 	mutex sync.Mutex
 
 	depositRequests                 map[[32]byte]*tbtc.DepositChainRequest
@@ -32,8 +32,8 @@ type depositParameters = struct {
 	revealAheadPeriod  uint32
 }
 
-func newLocalTbtcChain() *localTbtcChain {
-	return &localTbtcChain{
+func newLocalTbtcChain() *localChain {
+	return &localChain{
 		depositRequests:                 make(map[[32]byte]*tbtc.DepositChainRequest),
 		pastDepositRevealedEvents:       make(map[[32]byte][]*tbtc.DepositRevealedEvent),
 		pastNewWalletRegisteredEvents:   make(map[[32]byte][]*coordinator.NewWalletRegisteredEvent),
@@ -41,7 +41,7 @@ func newLocalTbtcChain() *localTbtcChain {
 	}
 }
 
-func (lc *localTbtcChain) PastDepositRevealedEvents(
+func (lc *localChain) PastDepositRevealedEvents(
 	filter *tbtc.DepositRevealedEventFilter,
 ) ([]*tbtc.DepositRevealedEvent, error) {
 	lc.mutex.Lock()
@@ -60,7 +60,7 @@ func (lc *localTbtcChain) PastDepositRevealedEvents(
 	return events, nil
 }
 
-func (lc *localTbtcChain) addPastDepositRevealedEvent(
+func (lc *localChain) addPastDepositRevealedEvent(
 	filter *tbtc.DepositRevealedEventFilter,
 	event *tbtc.DepositRevealedEvent,
 ) error {
@@ -115,7 +115,7 @@ func buildPastDepositRevealedEventsKey(
 	return sha256.Sum256(buffer.Bytes()), nil
 }
 
-func (lc *localTbtcChain) GetDepositRequest(
+func (lc *localChain) GetDepositRequest(
 	fundingTxHash bitcoin.Hash,
 	fundingOutputIndex uint32,
 ) (*tbtc.DepositChainRequest, error) {
@@ -132,7 +132,7 @@ func (lc *localTbtcChain) GetDepositRequest(
 	return request, nil
 }
 
-func (lc *localTbtcChain) setDepositRequest(
+func (lc *localChain) setDepositRequest(
 	fundingTxHash bitcoin.Hash,
 	fundingOutputIndex uint32,
 	request *tbtc.DepositChainRequest,
@@ -145,7 +145,7 @@ func (lc *localTbtcChain) setDepositRequest(
 	lc.depositRequests[requestKey] = request
 }
 
-func (lc *localTbtcChain) PastNewWalletRegisteredEvents(
+func (lc *localChain) PastNewWalletRegisteredEvents(
 	filter *coordinator.NewWalletRegisteredEventFilter,
 ) ([]*coordinator.NewWalletRegisteredEvent, error) {
 	lc.mutex.Lock()
@@ -164,7 +164,7 @@ func (lc *localTbtcChain) PastNewWalletRegisteredEvents(
 	return events, nil
 }
 
-func (lc *localTbtcChain) addPastNewWalletRegisteredEvent(
+func (lc *localChain) addPastNewWalletRegisteredEvent(
 	filter *coordinator.NewWalletRegisteredEventFilter,
 	event *coordinator.NewWalletRegisteredEvent,
 ) error {
@@ -218,13 +218,13 @@ func buildPastNewWalletRegisteredEventsKey(
 	return sha256.Sum256(buffer.Bytes()), nil
 }
 
-func (lc *localTbtcChain) PastRedemptionRequestedEvents(
+func (lc *localChain) PastRedemptionRequestedEvents(
 	filter *tbtc.RedemptionRequestedEventFilter,
 ) ([]*tbtc.RedemptionRequestedEvent, error) {
 	panic("unsupported")
 }
 
-func (lc *localTbtcChain) BuildDepositKey(fundingTxHash bitcoin.Hash, fundingOutputIndex uint32) *big.Int {
+func (lc *localChain) BuildDepositKey(fundingTxHash bitcoin.Hash, fundingOutputIndex uint32) *big.Int {
 	depositKeyBytes := buildDepositRequestKey(fundingTxHash, fundingOutputIndex)
 
 	return new(big.Int).SetBytes(depositKeyBytes[:])
@@ -240,14 +240,14 @@ func buildDepositRequestKey(
 	return sha256.Sum256(append(fundingTxHash[:], fundingOutputIndexBytes...))
 }
 
-func (lc *localTbtcChain) BuildRedemptionKey(
+func (lc *localChain) BuildRedemptionKey(
 	walletPublicKeyHash [20]byte,
 	redeemerOutputScript bitcoin.Script,
 ) (*big.Int, error) {
 	panic("unsupported")
 }
 
-func (lc *localTbtcChain) GetDepositParameters() (
+func (lc *localChain) GetDepositParameters() (
 	dustThreshold uint64,
 	treasuryFeeDivisor uint64,
 	txMaxFee uint64,
@@ -264,7 +264,14 @@ func (lc *localTbtcChain) GetDepositParameters() (
 		nil
 }
 
-func (lc *localTbtcChain) setDepositParameters(
+func (lc *localChain) GetPendingRedemptionRequest(
+	walletPublicKeyHash [20]byte,
+	redeemerOutputScript bitcoin.Script,
+) (*tbtc.RedemptionRequest, error) {
+	panic("unsupported")
+}
+
+func (lc *localChain) setDepositParameters(
 	dustThreshold uint64,
 	treasuryFeeDivisor uint64,
 	txMaxFee uint64,
@@ -281,7 +288,7 @@ func (lc *localTbtcChain) setDepositParameters(
 	}
 }
 
-func (lc *localTbtcChain) GetRedemptionParameters() (
+func (lc *localChain) GetRedemptionParameters() (
 	dustThreshold uint64,
 	treasuryFeeDivisor uint64,
 	txMaxFee uint64,
@@ -294,7 +301,7 @@ func (lc *localTbtcChain) GetRedemptionParameters() (
 	panic("unsupported")
 }
 
-func (lc *localTbtcChain) ValidateDepositSweepProposal(
+func (lc *localChain) ValidateDepositSweepProposal(
 	proposal *tbtc.DepositSweepProposal,
 	depositsExtraInfo []struct {
 		*tbtc.Deposit
@@ -321,7 +328,7 @@ func (lc *localTbtcChain) ValidateDepositSweepProposal(
 	return nil
 }
 
-func (lc *localTbtcChain) setDepositSweepProposalValidationResult(
+func (lc *localChain) setDepositSweepProposalValidationResult(
 	proposal *tbtc.DepositSweepProposal,
 	depositsExtraInfo []struct {
 		*tbtc.Deposit
@@ -362,7 +369,7 @@ func buildDepositSweepProposalValidationKey(
 	return sha256.Sum256(buffer.Bytes()), nil
 }
 
-func (lc *localTbtcChain) SubmitDepositSweepProposalWithReimbursement(
+func (lc *localChain) SubmitDepositSweepProposalWithReimbursement(
 	proposal *tbtc.DepositSweepProposal,
 ) error {
 	lc.mutex.Lock()
@@ -373,26 +380,26 @@ func (lc *localTbtcChain) SubmitDepositSweepProposalWithReimbursement(
 	return nil
 }
 
-func (lc *localTbtcChain) SubmitRedemptionProposalWithReimbursement(
+func (lc *localChain) SubmitRedemptionProposalWithReimbursement(
 	proposal *tbtc.RedemptionProposal,
 ) error {
 	panic("unsupported")
 }
 
-func (lc *localTbtcChain) GetDepositSweepMaxSize() (uint16, error) {
+func (lc *localChain) GetDepositSweepMaxSize() (uint16, error) {
 	panic("unsupported")
 }
 
-func (lc *localTbtcChain) ValidateRedemptionProposal(
+func (lc *localChain) ValidateRedemptionProposal(
 	proposal *tbtc.RedemptionProposal,
 ) error {
 	panic("unsupported")
 }
 
-func (lc *localTbtcChain) GetRedemptionMaxSize() (uint16, error) {
+func (lc *localChain) GetRedemptionMaxSize() (uint16, error) {
 	panic("unsupported")
 }
 
-func (lc *localTbtcChain) GetRedemptionRequestMinAge() (uint32, error) {
+func (lc *localChain) GetRedemptionRequestMinAge() (uint32, error) {
 	panic("unsupported")
 }
