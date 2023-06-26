@@ -121,6 +121,12 @@ func (sm *spvMaintainer) proveDepositSweepTransactions() error {
 			)
 		}
 
+		// TODO: Remember that the relay may temporarily be in the out-of-date
+		//       state. It happens at the beginning of each Bitcoin difficulty
+		//       epoch. Detect the situation when the proof contains block
+		//       headers with a difficulty that is not yet proven. Skip proving
+		//       such a transaction. It will be proven in the future by another
+		//       round of processing deposit sweep proofs.
 		if err := sm.chain.SubmitDepositSweepProofWithReimbursement(
 			transaction,
 			proof,
