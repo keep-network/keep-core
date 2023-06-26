@@ -24,9 +24,9 @@ type redemptionEntry struct {
 func FindPendingRedemptions(
 	chain Chain,
 	walletPublicKeyHash [20]byte,
-	maxNumberOfDeposits uint16,
+	maxNumberOfRedemptions uint16,
 ) ([20]byte, []bitcoin.Script, error) {
-	logger.Infof("redemption max size: %d", maxNumberOfDeposits)
+	logger.Infof("redemption max size: %d", maxNumberOfRedemptions)
 
 	redemptionRequestMinAge, err := chain.GetRedemptionRequestMinAge()
 	if err != nil {
@@ -44,19 +44,19 @@ func FindPendingRedemptions(
 		)
 	}
 
-	getPendingRedemptionsFromWallet := func(walletToSweep [20]byte) ([]*redemptionEntry, error) {
+	getPendingRedemptionsFromWallet := func(wallet [20]byte) ([]*redemptionEntry, error) {
 		pendingRedemptions, err := getPendingRedemptions(
 			chain,
-			walletToSweep,
-			int(maxNumberOfDeposits),
+			wallet,
+			int(maxNumberOfRedemptions),
 			redemptionTimeout,
 			redemptionRequestMinAge,
 		)
 		if err != nil {
 			return nil,
 				fmt.Errorf(
-					"failed to get deposits for [%s] wallet: [%w]",
-					hexutils.Encode(walletToSweep[:]),
+					"failed to get pending redemptions for [%s] wallet: [%w]",
+					hexutils.Encode(wallet[:]),
 					err,
 				)
 		}
@@ -98,16 +98,16 @@ func FindPendingRedemptions(
 		}
 	} else {
 		logger.Infof(
-			"fetching deposits from wallet [%s]...",
+			"fetching pending redemptions from wallet [%s]...",
 			hexutils.Encode(walletPublicKeyHash[:]),
 		)
-		unsweptDeposits, err := getPendingRedemptionsFromWallet(
+		redemptions, err := getPendingRedemptionsFromWallet(
 			walletPublicKeyHash,
 		)
 		if err != nil {
 			return [20]byte{}, nil, err
 		}
-		redemptionsToPropose = unsweptDeposits
+		redemptionsToPropose = redemptions
 	}
 
 	if len(redemptionsToPropose) == 0 {
@@ -177,9 +177,9 @@ func ProposeRedemption(
 	}
 
 	if !dryRun {
-		logger.Infof("submitting the deposit sweep proposal...")
+		logger.Infof("submitting the redemption proposal...")
 		if err := chain.SubmitRedemptionProposalWithReimbursement(proposal); err != nil {
-			return fmt.Errorf("failed to submit deposit sweep proposal: %v", err)
+			return fmt.Errorf("failed to submit redemption proposal: %v", err)
 		}
 	} else {
 		logger.Infof("skipping transaction submission in dry-run mode")
@@ -195,7 +195,7 @@ func getPendingRedemptions(
 	redemptionRequestTimeout uint32,
 	redemptionRequestMinAge uint32,
 ) ([]*redemptionEntry, error) {
-	logger.Infof("reading revealed deposits from chain...")
+	logger.Infof("reading pending redemptions from chain...")
 
 	filter := &tbtc.RedemptionRequestedEventFilter{}
 	if walletPublicKeyHash != [20]byte{} {

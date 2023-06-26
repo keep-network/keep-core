@@ -273,7 +273,7 @@ var proposeRedemptionCommand = cobra.Command{
 		if redemptionMaxSize == 0 {
 			redemptionMaxSize, err = tbtcChain.GetRedemptionMaxSize()
 			if err != nil {
-				return fmt.Errorf("failed to get deposit sweep max size: [%v]", err)
+				return fmt.Errorf("failed to get redemption max size: [%v]", err)
 			}
 		}
 
@@ -283,7 +283,7 @@ var proposeRedemptionCommand = cobra.Command{
 			redemptionMaxSize,
 		)
 		if err != nil {
-			return fmt.Errorf("failed to prepare deposits sweep proposal: %v", err)
+			return fmt.Errorf("failed to prepare redemption proposal: %v", err)
 		}
 
 		if len(redemptions) > int(redemptionMaxSize) {
