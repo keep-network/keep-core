@@ -300,8 +300,6 @@ func (sm *spvMaintainer) isInputCurrentWalletsMainUTXO(
 	})
 
 	// Get the wallet and check if its main UTXO matches the calculated hash.
-	// TODO: `GetWallet` may return an error if the wallet is not found.
-	//       Should we return an error in such case or continue?
 	wallet, err := sm.chain.GetWallet(walletPublicKeyHash)
 	if err != nil {
 		return false, fmt.Errorf("failed to get wallet: [%v]", err)
