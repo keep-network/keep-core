@@ -348,6 +348,13 @@ func initMaintainerFlags(command *cobra.Command, cfg *config.Config) {
 		wallet.DefaultSweepInterval,
 		"The time interval in which unswept deposits are checked.",
 	)
+
+	command.Flags().BoolVar(
+		&cfg.Maintainer.Spv.Enabled,
+		"spv",
+		false,
+		"Start SPV maintainer.",
+	)
 }
 
 // Initialize flags for Developer configuration.

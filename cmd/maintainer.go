@@ -78,6 +78,7 @@ func maintainers(cmd *cobra.Command, args []string) error {
 		btcChain,
 		btcDiffChain,
 		tbtcChain,
+		tbtcChain,
 	)
 
 	<-ctx.Done()
