@@ -298,6 +298,7 @@ type WalletCoordinatorChain interface {
 	// proposal events according to the provided filter or unfiltered if the
 	// filter is nil. Returned events are sorted by the block number in the
 	// ascending order, i.e. the latest event is at the end of the slice.
+	// TODO: This function is not used, consider removing it.
 	PastDepositSweepProposalSubmittedEvents(
 		filter *DepositSweepProposalSubmittedEventFilter,
 	) ([]*DepositSweepProposalSubmittedEvent, error)
