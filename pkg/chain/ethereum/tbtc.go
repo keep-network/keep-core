@@ -10,11 +10,13 @@ import (
 	"sort"
 	"time"
 
+	"github.com/keep-network/keep-common/pkg/chain/ethereum/ethutil"
+	"github.com/keep-network/keep-core/pkg/bitcoin"
+	"github.com/keep-network/keep-core/pkg/coordinator"
+
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/keep-network/keep-common/pkg/chain/ethereum/ethutil"
-	"github.com/keep-network/keep-core/pkg/bitcoin"
 
 	"github.com/keep-network/keep-common/pkg/chain/ethereum"
 	"github.com/keep-network/keep-core/pkg/chain"
@@ -1125,8 +1127,8 @@ func (tc *TbtcChain) GetDepositRequest(
 }
 
 func (tc *TbtcChain) PastNewWalletRegisteredEvents(
-	filter *tbtc.NewWalletRegisteredEventFilter,
-) ([]*tbtc.NewWalletRegisteredEvent, error) {
+	filter *coordinator.NewWalletRegisteredEventFilter,
+) ([]*coordinator.NewWalletRegisteredEvent, error) {
 	var startBlock uint64
 	var endBlock *uint64
 	var ecdsaWalletID [][32]byte
@@ -1149,9 +1151,9 @@ func (tc *TbtcChain) PastNewWalletRegisteredEvents(
 		return nil, err
 	}
 
-	convertedEvents := make([]*tbtc.NewWalletRegisteredEvent, 0)
+	convertedEvents := make([]*coordinator.NewWalletRegisteredEvent, 0)
 	for _, event := range events {
-		convertedEvent := &tbtc.NewWalletRegisteredEvent{
+		convertedEvent := &coordinator.NewWalletRegisteredEvent{
 			EcdsaWalletID:       event.EcdsaWalletID,
 			WalletPublicKeyHash: event.WalletPubKeyHash,
 			BlockNumber:         event.Raw.BlockNumber,
