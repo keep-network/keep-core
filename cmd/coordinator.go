@@ -233,8 +233,6 @@ var proposeRedemptionCommand = cobra.Command{
 	Long:             proposeRedemptionCommandDescription,
 	TraverseChildren: true,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		// ctx := cmd.Context()
-
 		wallet, err := cmd.Flags().GetString(walletFlagName)
 		if err != nil {
 			return fmt.Errorf("failed to find wallet flag: %v", err)
