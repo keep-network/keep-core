@@ -194,14 +194,6 @@ var (
 // BridgeChain defines the subset of the TBTC chain interface that pertains
 // specifically to the tBTC Bridge operations.
 type BridgeChain interface {
-	// PastDepositRevealedEvents fetches past deposit reveal events according
-	// to the provided filter or unfiltered if the filter is nil. Returned
-	// events are sorted by the block number in the ascending order, i.e. the
-	// latest event is at the end of the slice.
-	PastDepositRevealedEvents(
-		filter *DepositRevealedEventFilter,
-	) ([]*DepositRevealedEvent, error)
-
 	// GetDepositRequest gets the on-chain deposit request for the given
 	// funding transaction hash and output index. Returns an error if the
 	// deposit was not found.
@@ -371,18 +363,6 @@ type WalletCoordinatorChain interface {
 		walletPublicKeyHash [20]byte,
 	) (time.Time, WalletActionType, error)
 
-	// ValidateDepositSweepProposal validates the given deposit sweep proposal
-	// against the chain. It requires some additional data about the deposits
-	// that must be fetched externally. Returns an error if the proposal is
-	// not valid or nil otherwise.
-	ValidateDepositSweepProposal(
-		proposal *DepositSweepProposal,
-		depositsExtraInfo []struct {
-			*Deposit
-			FundingTx *bitcoin.Transaction
-		},
-	) error
-
 	// SubmitDepositSweepProposalWithReimbursement submits a deposit sweep
 	// proposal to the chain. It reimburses the gas cost to the caller.
 	SubmitDepositSweepProposalWithReimbursement(
@@ -403,6 +383,30 @@ type WalletCoordinatorChain interface {
 	// against the chain. Returns an error if the proposal is not valid or
 	// nil otherwise.
 	ValidateRedemptionProposal(proposal *RedemptionProposal) error
+}
+
+// ValidateDepositSweepProposalChain defines the subset of the TBTC chain interface
+// that pertains specifically to the Deposit Sweep Proposal validation.
+type ValidateDepositSweepProposalChain interface {
+	// PastDepositRevealedEvents fetches past deposit reveal events according
+	// to the provided filter or unfiltered if the filter is nil. Returned
+	// events are sorted by the block number in the ascending order, i.e. the
+	// latest event is at the end of the slice.
+	PastDepositRevealedEvents(
+		filter *DepositRevealedEventFilter,
+	) ([]*DepositRevealedEvent, error)
+
+	// ValidateDepositSweepProposal validates the given deposit sweep proposal
+	// against the chain. It requires some additional data about the deposits
+	// that must be fetched externally. Returns an error if the proposal is
+	// not valid or nil otherwise.
+	ValidateDepositSweepProposal(
+		proposal *DepositSweepProposal,
+		depositsExtraInfo []struct {
+			*Deposit
+			FundingTx *bitcoin.Transaction
+		},
+	) error
 }
 
 // HeartbeatRequestSubmittedEvent represents a wallet heartbeat request
@@ -497,4 +501,5 @@ type Chain interface {
 	DistributedKeyGenerationChain
 	BridgeChain
 	WalletCoordinatorChain
+	ValidateDepositSweepProposalChain
 }
