@@ -24,9 +24,15 @@ var (
 	headFlagName      = "head"
 
 	// proposeDepositsSweepCommand:
-	feeFlagName                 = "fee"
+	// proposeRedemptionsCommand:
+	feeFlagName    = "fee"
+	dryRunFlagName = "dry-run"
+
+	// proposeDepositsSweepCommand:
 	depositSweepMaxSizeFlagName = "deposit-sweep-max-size"
-	dryRunFlagName              = "dry-run"
+
+	// proposeRedemptionsCommand:
+	redemptionMaxSizeFlagName = "redemption-max-size"
 
 	// estimateDepositsSweepFeeCommand:
 	depositsCountFlagName = "deposits-count"
@@ -140,7 +146,7 @@ var proposeDepositsSweepCommand = cobra.Command{
 
 		depositSweepMaxSize, err := cmd.Flags().GetUint16(depositSweepMaxSizeFlagName)
 		if err != nil {
-			return fmt.Errorf("failed to find fee flag: %v", err)
+			return fmt.Errorf("failed to find deposit sweep max size flag: %v", err)
 		}
 
 		dryRun, err := cmd.Flags().GetBool(dryRunFlagName)
@@ -220,6 +226,83 @@ Expects --wallet and --fee flags along with deposits to sweep provided
 as arguments.
 
 ` + coordinator.DepositsFormatDescription
+
+var proposeRedemptionCommand = cobra.Command{
+	Use:              "propose-redemption",
+	Short:            "propose redemption",
+	Long:             "Submits a redemption proposal to the chain.",
+	TraverseChildren: true,
+	RunE: func(cmd *cobra.Command, args []string) error {
+		wallet, err := cmd.Flags().GetString(walletFlagName)
+		if err != nil {
+			return fmt.Errorf("failed to find wallet flag: %v", err)
+		}
+
+		fee, err := cmd.Flags().GetInt64(feeFlagName)
+		if err != nil {
+			return fmt.Errorf("failed to find fee flag: %v", err)
+		}
+
+		redemptionMaxSize, err := cmd.Flags().GetUint16(redemptionMaxSizeFlagName)
+		if err != nil {
+			return fmt.Errorf("failed to find redemption max size flag: %v", err)
+		}
+
+		dryRun, err := cmd.Flags().GetBool(dryRunFlagName)
+		if err != nil {
+			return fmt.Errorf("failed to find dry run flag: %v", err)
+		}
+
+		_, tbtcChain, _, _, _, err := ethereum.Connect(cmd.Context(), clientConfig.Ethereum)
+		if err != nil {
+			return fmt.Errorf(
+				"could not connect to Ethereum chain: [%v]",
+				err,
+			)
+		}
+
+		var walletPublicKeyHash [20]byte
+		if len(wallet) > 0 {
+			var err error
+			walletPublicKeyHash, err = newWalletPublicKeyHash(wallet)
+			if err != nil {
+				return fmt.Errorf("failed extract wallet public key hash: %v", err)
+			}
+		}
+
+		if redemptionMaxSize == 0 {
+			redemptionMaxSize, err = tbtcChain.GetRedemptionMaxSize()
+			if err != nil {
+				return fmt.Errorf("failed to get redemption max size: [%v]", err)
+			}
+		}
+
+		walletPublicKeyHash, redemptions, err := coordinator.FindPendingRedemptions(
+			tbtcChain,
+			walletPublicKeyHash,
+			redemptionMaxSize,
+		)
+		if err != nil {
+			return fmt.Errorf("failed to prepare redemption proposal: %v", err)
+		}
+
+		if len(redemptions) > int(redemptionMaxSize) {
+			return fmt.Errorf(
+				"redemptions number [%d] is greater than redemptions max size [%d]",
+				len(redemptions),
+				redemptionMaxSize,
+			)
+		}
+
+		return coordinator.ProposeRedemption(
+			tbtcChain,
+			walletPublicKeyHash,
+			fee,
+			redemptions,
+			dryRun,
+		)
+	},
+}
 
 var estimateDepositsSweepFeeCommand = cobra.Command{
 	Use:              "estimate-deposits-sweep-fee",
@@ -402,8 +485,34 @@ func init() {
 
 	CoordinatorCommand.AddCommand(&proposeDepositsSweepCommand)
 
-	// Estimate Deposits Sweep Fee Subcommand.
+	// Propose Redemptions Subcommand
+	proposeRedemptionCommand.Flags().String(
+		walletFlagName,
+		"",
+		"wallet public key hash",
+	)
 
+	proposeRedemptionCommand.Flags().Int64(
+		feeFlagName,
+		0,
+		"fee for the entire bitcoin transaction (satoshi)",
+	)
+
+	proposeRedemptionCommand.Flags().Uint16(
+		redemptionMaxSizeFlagName,
+		0,
+		"maximum count of deposits that can be redeemed within a single redemption",
+	)
+
+	proposeRedemptionCommand.Flags().Bool(
+		dryRunFlagName,
+		false,
+		"don't submit a proposal to the chain",
+	)
+
+	CoordinatorCommand.AddCommand(&proposeRedemptionCommand)
+
+	// Estimate Deposits Sweep Fee Subcommand.
 	estimateDepositsSweepFeeCommand.Flags().Int(
 		depositsCountFlagName,
 		0,

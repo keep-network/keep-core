@@ -197,6 +197,12 @@ func (lc *localChain) PastNewWalletRegisteredEvents(
 	panic("unsupported")
 }
 
+func (lc *localChain) PastRedemptionRequestedEvents(
+	filter *tbtc.RedemptionRequestedEventFilter,
+) ([]*tbtc.RedemptionRequestedEvent, error) {
+	panic("unsupported")
+}
+
 func (lc *localChain) GetWallet(walletPublicKeyHash [20]byte) (*tbtc.WalletChainData, error) {
 	panic("unsupported")
 }
@@ -206,6 +212,13 @@ func (lc *localChain) ComputeMainUtxoHash(mainUtxo *bitcoin.UnspentTransactionOu
 }
 
 func (lc *localChain) BuildDepositKey(fundingTxHash bitcoin.Hash, fundingOutputIndex uint32) *big.Int {
+	panic("unsupported")
+}
+
+func (lc *localChain) BuildRedemptionKey(
+	walletPublicKeyHash [20]byte,
+	redeemerOutputScript bitcoin.Script,
+) (*big.Int, error) {
 	panic("unsupported")
 }
 
@@ -223,6 +236,19 @@ func (lc *localChain) GetPendingRedemptionRequest(
 	walletPublicKeyHash [20]byte,
 	redeemerOutputScript bitcoin.Script,
 ) (*tbtc.RedemptionRequest, error) {
+	panic("unsupported")
+}
+
+func (lc *localChain) GetRedemptionParameters() (
+	dustThreshold uint64,
+	treasuryFeeDivisor uint64,
+	txMaxFee uint64,
+	txMaxTotalFee uint64,
+	timeout uint32,
+	timeoutSlashingAmount *big.Int,
+	timeoutNotifierRewardMultiplier uint32,
+	err error,
+) {
 	panic("unsupported")
 }
 
@@ -300,6 +326,12 @@ func (lc *localChain) SubmitDepositSweepProposalWithReimbursement(
 	panic("unsupported")
 }
 
+func (lc *localChain) SubmitRedemptionProposalWithReimbursement(
+	proposal *tbtc.RedemptionProposal,
+) error {
+	panic("unsupported")
+}
+
 func (lc *localChain) GetDepositSweepMaxSize() (uint16, error) {
 	panic("unsupported")
 }
@@ -313,5 +345,13 @@ func (lc *localChain) OnRedemptionProposalSubmitted(
 func (lc *localChain) ValidateRedemptionProposal(
 	proposal *tbtc.RedemptionProposal,
 ) error {
+	panic("unsupported")
+}
+
+func (lc *localChain) GetRedemptionMaxSize() (uint16, error) {
+	panic("unsupported")
+}
+
+func (lc *localChain) GetRedemptionRequestMinAge() (uint32, error) {
 	panic("unsupported")
 }

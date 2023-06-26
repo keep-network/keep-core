@@ -2,6 +2,7 @@ package tbtc
 
 import (
 	"crypto/ecdsa"
+	"errors"
 	"math/big"
 	"time"
 
@@ -180,6 +181,15 @@ type DKGParameters struct {
 	ChallengePeriodBlocks         uint64
 	ApprovePrecedencePeriodBlocks uint64
 }
+
+var (
+	// ErrPendingRedemptionRequestNotFound is an error that is returned if
+	// a pending redemption request was not found on-chain for the given
+	// redemption key.
+	ErrPendingRedemptionRequestNotFound = errors.New(
+		"no pending redemption request for the given key",
+	)
+)
 
 // BridgeChain defines the subset of the TBTC chain interface that pertains
 // specifically to the tBTC Bridge operations.
@@ -445,6 +455,25 @@ type RedemptionProposal struct {
 	WalletPublicKeyHash    [20]byte
 	RedeemersOutputScripts []bitcoin.Script
 	RedemptionTxFee        *big.Int
+}
+
+// RedemptionRequestedEvent represents a redemption requested event.
+type RedemptionRequestedEvent struct {
+	WalletPublicKeyHash  [20]byte
+	RedeemerOutputScript bitcoin.Script
+	Redeemer             chain.Address
+	RequestedAmount      uint64
+	TreasuryFee          uint64
+	TxMaxFee             uint64
+	BlockNumber          uint64
+}
+
+// RedemptionRequestedEventFilter is a component allowing to filter RedemptionRequestedEvent.
+type RedemptionRequestedEventFilter struct {
+	StartBlock          uint64
+	EndBlock            *uint64
+	WalletPublicKeyHash [][20]byte
+	Redeemer            []chain.Address
 }
 
 // Chain represents the interface that the TBTC module expects to interact
