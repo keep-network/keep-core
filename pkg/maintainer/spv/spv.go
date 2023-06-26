@@ -58,8 +58,6 @@ func (sm *spvMaintainer) startControlLoop(ctx context.Context) {
 
 func (sm *spvMaintainer) maintainSpv(ctx context.Context) error {
 	logger.Infof("Maintaining SPV proof...")
-	logger.Infof("spv chain: ", sm.chain)
-	logger.Infof("btc chain:", sm.btcChain)
 
 	// TODO: Implement. For now, just wait.
 	<-ctx.Done()
