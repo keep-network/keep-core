@@ -59,9 +59,16 @@ type WalletCoordinatorDepositSweepProposal struct {
 	DepositsRevealBlocks []*big.Int
 }
 
+// WalletCoordinatorRedemptionProposal is an auto generated low-level Go binding around an user-defined struct.
+type WalletCoordinatorRedemptionProposal struct {
+	WalletPubKeyHash       [20]byte
+	RedeemersOutputScripts [][]byte
+	RedemptionTxFee        *big.Int
+}
+
 // WalletCoordinatorMetaData contains all meta data concerning the WalletCoordinator contract.
 var WalletCoordinatorMetaData = &bind.MetaData{
-	ABI: "[{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"coordinator\",\"type\":\"address\"}],\"name\":\"CoordinatorAdded\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"coordinator\",\"type\":\"address\"}],\"name\":\"CoordinatorRemoved\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint32\",\"name\":\"depositSweepProposalValidity\",\"type\":\"uint32\"},{\"indexed\":false,\"internalType\":\"uint32\",\"name\":\"depositMinAge\",\"type\":\"uint32\"},{\"indexed\":false,\"internalType\":\"uint32\",\"name\":\"depositRefundSafetyMargin\",\"type\":\"uint32\"},{\"indexed\":false,\"internalType\":\"uint16\",\"name\":\"depositSweepMaxSize\",\"type\":\"uint16\"},{\"indexed\":false,\"internalType\":\"uint32\",\"name\":\"depositSweepProposalSubmissionGasOffset\",\"type\":\"uint32\"}],\"name\":\"DepositSweepProposalParametersUpdated\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"components\":[{\"internalType\":\"bytes20\",\"name\":\"walletPubKeyHash\",\"type\":\"bytes20\"},{\"components\":[{\"internalType\":\"bytes32\",\"name\":\"fundingTxHash\",\"type\":\"bytes32\"},{\"internalType\":\"uint32\",\"name\":\"fundingOutputIndex\",\"type\":\"uint32\"}],\"internalType\":\"structWalletCoordinator.DepositKey[]\",\"name\":\"depositsKeys\",\"type\":\"tuple[]\"},{\"internalType\":\"uint256\",\"name\":\"sweepTxFee\",\"type\":\"uint256\"},{\"internalType\":\"uint256[]\",\"name\":\"depositsRevealBlocks\",\"type\":\"uint256[]\"}],\"indexed\":false,\"internalType\":\"structWalletCoordinator.DepositSweepProposal\",\"name\":\"proposal\",\"type\":\"tuple\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"coordinator\",\"type\":\"address\"}],\"name\":\"DepositSweepProposalSubmitted\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint32\",\"name\":\"heartbeatRequestValidity\",\"type\":\"uint32\"},{\"indexed\":false,\"internalType\":\"uint32\",\"name\":\"heartbeatRequestGasOffset\",\"type\":\"uint32\"}],\"name\":\"HeartbeatRequestParametersUpdated\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"bytes20\",\"name\":\"walletPubKeyHash\",\"type\":\"bytes20\"},{\"indexed\":false,\"internalType\":\"bytes\",\"name\":\"message\",\"type\":\"bytes\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"coordinator\",\"type\":\"address\"}],\"name\":\"HeartbeatRequestSubmitted\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint8\",\"name\":\"version\",\"type\":\"uint8\"}],\"name\":\"Initialized\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"previousOwner\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"OwnershipTransferred\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"address\",\"name\":\"newReimbursementPool\",\"type\":\"address\"}],\"name\":\"ReimbursementPoolUpdated\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"bytes20\",\"name\":\"walletPubKeyHash\",\"type\":\"bytes20\"}],\"name\":\"WalletManuallyUnlocked\",\"type\":\"event\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"coordinator\",\"type\":\"address\"}],\"name\":\"addCoordinator\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"bridge\",\"outputs\":[{\"internalType\":\"contractBridge\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"depositMinAge\",\"outputs\":[{\"internalType\":\"uint32\",\"name\":\"\",\"type\":\"uint32\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"depositRefundSafetyMargin\",\"outputs\":[{\"internalType\":\"uint32\",\"name\":\"\",\"type\":\"uint32\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"depositSweepMaxSize\",\"outputs\":[{\"internalType\":\"uint16\",\"name\":\"\",\"type\":\"uint16\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"depositSweepProposalSubmissionGasOffset\",\"outputs\":[{\"internalType\":\"uint32\",\"name\":\"\",\"type\":\"uint32\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"depositSweepProposalValidity\",\"outputs\":[{\"internalType\":\"uint32\",\"name\":\"\",\"type\":\"uint32\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"heartbeatRequestGasOffset\",\"outputs\":[{\"internalType\":\"uint32\",\"name\":\"\",\"type\":\"uint32\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"heartbeatRequestValidity\",\"outputs\":[{\"internalType\":\"uint32\",\"name\":\"\",\"type\":\"uint32\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"contractBridge\",\"name\":\"_bridge\",\"type\":\"address\"}],\"name\":\"initialize\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"name\":\"isCoordinator\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"owner\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"reimbursementPool\",\"outputs\":[{\"internalType\":\"contractReimbursementPool\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"coordinator\",\"type\":\"address\"}],\"name\":\"removeCoordinator\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"renounceOwnership\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes20\",\"name\":\"walletPubKeyHash\",\"type\":\"bytes20\"},{\"internalType\":\"bytes\",\"name\":\"message\",\"type\":\"bytes\"}],\"name\":\"requestHeartbeat\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes20\",\"name\":\"walletPubKeyHash\",\"type\":\"bytes20\"},{\"internalType\":\"bytes\",\"name\":\"message\",\"type\":\"bytes\"}],\"name\":\"requestHeartbeatWithReimbursement\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"components\":[{\"internalType\":\"bytes20\",\"name\":\"walletPubKeyHash\",\"type\":\"bytes20\"},{\"components\":[{\"internalType\":\"bytes32\",\"name\":\"fundingTxHash\",\"type\":\"bytes32\"},{\"internalType\":\"uint32\",\"name\":\"fundingOutputIndex\",\"type\":\"uint32\"}],\"internalType\":\"structWalletCoordinator.DepositKey[]\",\"name\":\"depositsKeys\",\"type\":\"tuple[]\"},{\"internalType\":\"uint256\",\"name\":\"sweepTxFee\",\"type\":\"uint256\"},{\"internalType\":\"uint256[]\",\"name\":\"depositsRevealBlocks\",\"type\":\"uint256[]\"}],\"internalType\":\"structWalletCoordinator.DepositSweepProposal\",\"name\":\"proposal\",\"type\":\"tuple\"}],\"name\":\"submitDepositSweepProposal\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"components\":[{\"internalType\":\"bytes20\",\"name\":\"walletPubKeyHash\",\"type\":\"bytes20\"},{\"components\":[{\"internalType\":\"bytes32\",\"name\":\"fundingTxHash\",\"type\":\"bytes32\"},{\"internalType\":\"uint32\",\"name\":\"fundingOutputIndex\",\"type\":\"uint32\"}],\"internalType\":\"structWalletCoordinator.DepositKey[]\",\"name\":\"depositsKeys\",\"type\":\"tuple[]\"},{\"internalType\":\"uint256\",\"name\":\"sweepTxFee\",\"type\":\"uint256\"},{\"internalType\":\"uint256[]\",\"name\":\"depositsRevealBlocks\",\"type\":\"uint256[]\"}],\"internalType\":\"structWalletCoordinator.DepositSweepProposal\",\"name\":\"proposal\",\"type\":\"tuple\"}],\"name\":\"submitDepositSweepProposalWithReimbursement\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"transferOwnership\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes20\",\"name\":\"walletPubKeyHash\",\"type\":\"bytes20\"}],\"name\":\"unlockWallet\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint32\",\"name\":\"_depositSweepProposalValidity\",\"type\":\"uint32\"},{\"internalType\":\"uint32\",\"name\":\"_depositMinAge\",\"type\":\"uint32\"},{\"internalType\":\"uint32\",\"name\":\"_depositRefundSafetyMargin\",\"type\":\"uint32\"},{\"internalType\":\"uint16\",\"name\":\"_depositSweepMaxSize\",\"type\":\"uint16\"},{\"internalType\":\"uint32\",\"name\":\"_depositSweepProposalSubmissionGasOffset\",\"type\":\"uint32\"}],\"name\":\"updateDepositSweepProposalParameters\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint32\",\"name\":\"_heartbeatRequestValidity\",\"type\":\"uint32\"},{\"internalType\":\"uint32\",\"name\":\"_heartbeatRequestGasOffset\",\"type\":\"uint32\"}],\"name\":\"updateHeartbeatRequestParameters\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"contractReimbursementPool\",\"name\":\"_reimbursementPool\",\"type\":\"address\"}],\"name\":\"updateReimbursementPool\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"components\":[{\"internalType\":\"bytes20\",\"name\":\"walletPubKeyHash\",\"type\":\"bytes20\"},{\"components\":[{\"internalType\":\"bytes32\",\"name\":\"fundingTxHash\",\"type\":\"bytes32\"},{\"internalType\":\"uint32\",\"name\":\"fundingOutputIndex\",\"type\":\"uint32\"}],\"internalType\":\"structWalletCoordinator.DepositKey[]\",\"name\":\"depositsKeys\",\"type\":\"tuple[]\"},{\"internalType\":\"uint256\",\"name\":\"sweepTxFee\",\"type\":\"uint256\"},{\"internalType\":\"uint256[]\",\"name\":\"depositsRevealBlocks\",\"type\":\"uint256[]\"}],\"internalType\":\"structWalletCoordinator.DepositSweepProposal\",\"name\":\"proposal\",\"type\":\"tuple\"},{\"components\":[{\"components\":[{\"internalType\":\"bytes4\",\"name\":\"version\",\"type\":\"bytes4\"},{\"internalType\":\"bytes\",\"name\":\"inputVector\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"outputVector\",\"type\":\"bytes\"},{\"internalType\":\"bytes4\",\"name\":\"locktime\",\"type\":\"bytes4\"}],\"internalType\":\"structBitcoinTx.Info\",\"name\":\"fundingTx\",\"type\":\"tuple\"},{\"internalType\":\"bytes8\",\"name\":\"blindingFactor\",\"type\":\"bytes8\"},{\"internalType\":\"bytes20\",\"name\":\"walletPubKeyHash\",\"type\":\"bytes20\"},{\"internalType\":\"bytes20\",\"name\":\"refundPubKeyHash\",\"type\":\"bytes20\"},{\"internalType\":\"bytes4\",\"name\":\"refundLocktime\",\"type\":\"bytes4\"}],\"internalType\":\"structWalletCoordinator.DepositExtraInfo[]\",\"name\":\"depositsExtraInfo\",\"type\":\"tuple[]\"}],\"name\":\"validateDepositSweepProposal\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes20\",\"name\":\"\",\"type\":\"bytes20\"}],\"name\":\"walletLock\",\"outputs\":[{\"internalType\":\"uint32\",\"name\":\"expiresAt\",\"type\":\"uint32\"},{\"internalType\":\"enumWalletCoordinator.WalletAction\",\"name\":\"cause\",\"type\":\"uint8\"}],\"stateMutability\":\"view\",\"type\":\"function\"}]",
+	ABI: "[{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"coordinator\",\"type\":\"address\"}],\"name\":\"CoordinatorAdded\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"coordinator\",\"type\":\"address\"}],\"name\":\"CoordinatorRemoved\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint32\",\"name\":\"depositSweepProposalValidity\",\"type\":\"uint32\"},{\"indexed\":false,\"internalType\":\"uint32\",\"name\":\"depositMinAge\",\"type\":\"uint32\"},{\"indexed\":false,\"internalType\":\"uint32\",\"name\":\"depositRefundSafetyMargin\",\"type\":\"uint32\"},{\"indexed\":false,\"internalType\":\"uint16\",\"name\":\"depositSweepMaxSize\",\"type\":\"uint16\"},{\"indexed\":false,\"internalType\":\"uint32\",\"name\":\"depositSweepProposalSubmissionGasOffset\",\"type\":\"uint32\"}],\"name\":\"DepositSweepProposalParametersUpdated\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"components\":[{\"internalType\":\"bytes20\",\"name\":\"walletPubKeyHash\",\"type\":\"bytes20\"},{\"components\":[{\"internalType\":\"bytes32\",\"name\":\"fundingTxHash\",\"type\":\"bytes32\"},{\"internalType\":\"uint32\",\"name\":\"fundingOutputIndex\",\"type\":\"uint32\"}],\"internalType\":\"structWalletCoordinator.DepositKey[]\",\"name\":\"depositsKeys\",\"type\":\"tuple[]\"},{\"internalType\":\"uint256\",\"name\":\"sweepTxFee\",\"type\":\"uint256\"},{\"internalType\":\"uint256[]\",\"name\":\"depositsRevealBlocks\",\"type\":\"uint256[]\"}],\"indexed\":false,\"internalType\":\"structWalletCoordinator.DepositSweepProposal\",\"name\":\"proposal\",\"type\":\"tuple\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"coordinator\",\"type\":\"address\"}],\"name\":\"DepositSweepProposalSubmitted\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint32\",\"name\":\"heartbeatRequestValidity\",\"type\":\"uint32\"},{\"indexed\":false,\"internalType\":\"uint32\",\"name\":\"heartbeatRequestGasOffset\",\"type\":\"uint32\"}],\"name\":\"HeartbeatRequestParametersUpdated\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"bytes20\",\"name\":\"walletPubKeyHash\",\"type\":\"bytes20\"},{\"indexed\":false,\"internalType\":\"bytes\",\"name\":\"message\",\"type\":\"bytes\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"coordinator\",\"type\":\"address\"}],\"name\":\"HeartbeatRequestSubmitted\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint8\",\"name\":\"version\",\"type\":\"uint8\"}],\"name\":\"Initialized\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"previousOwner\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"OwnershipTransferred\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint32\",\"name\":\"redemptionProposalValidity\",\"type\":\"uint32\"},{\"indexed\":false,\"internalType\":\"uint32\",\"name\":\"redemptionRequestMinAge\",\"type\":\"uint32\"},{\"indexed\":false,\"internalType\":\"uint32\",\"name\":\"redemptionRequestTimeoutSafetyMargin\",\"type\":\"uint32\"},{\"indexed\":false,\"internalType\":\"uint16\",\"name\":\"redemptionMaxSize\",\"type\":\"uint16\"},{\"indexed\":false,\"internalType\":\"uint32\",\"name\":\"redemptionProposalSubmissionGasOffset\",\"type\":\"uint32\"}],\"name\":\"RedemptionProposalParametersUpdated\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"components\":[{\"internalType\":\"bytes20\",\"name\":\"walletPubKeyHash\",\"type\":\"bytes20\"},{\"internalType\":\"bytes[]\",\"name\":\"redeemersOutputScripts\",\"type\":\"bytes[]\"},{\"internalType\":\"uint256\",\"name\":\"redemptionTxFee\",\"type\":\"uint256\"}],\"indexed\":false,\"internalType\":\"structWalletCoordinator.RedemptionProposal\",\"name\":\"proposal\",\"type\":\"tuple\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"coordinator\",\"type\":\"address\"}],\"name\":\"RedemptionProposalSubmitted\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"address\",\"name\":\"newReimbursementPool\",\"type\":\"address\"}],\"name\":\"ReimbursementPoolUpdated\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"bytes20\",\"name\":\"walletPubKeyHash\",\"type\":\"bytes20\"}],\"name\":\"WalletManuallyUnlocked\",\"type\":\"event\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"coordinator\",\"type\":\"address\"}],\"name\":\"addCoordinator\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"bridge\",\"outputs\":[{\"internalType\":\"contractBridge\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"depositMinAge\",\"outputs\":[{\"internalType\":\"uint32\",\"name\":\"\",\"type\":\"uint32\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"depositRefundSafetyMargin\",\"outputs\":[{\"internalType\":\"uint32\",\"name\":\"\",\"type\":\"uint32\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"depositSweepMaxSize\",\"outputs\":[{\"internalType\":\"uint16\",\"name\":\"\",\"type\":\"uint16\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"depositSweepProposalSubmissionGasOffset\",\"outputs\":[{\"internalType\":\"uint32\",\"name\":\"\",\"type\":\"uint32\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"depositSweepProposalValidity\",\"outputs\":[{\"internalType\":\"uint32\",\"name\":\"\",\"type\":\"uint32\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"heartbeatRequestGasOffset\",\"outputs\":[{\"internalType\":\"uint32\",\"name\":\"\",\"type\":\"uint32\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"heartbeatRequestValidity\",\"outputs\":[{\"internalType\":\"uint32\",\"name\":\"\",\"type\":\"uint32\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"contractBridge\",\"name\":\"_bridge\",\"type\":\"address\"}],\"name\":\"initialize\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"name\":\"isCoordinator\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"owner\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"redemptionMaxSize\",\"outputs\":[{\"internalType\":\"uint16\",\"name\":\"\",\"type\":\"uint16\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"redemptionProposalSubmissionGasOffset\",\"outputs\":[{\"internalType\":\"uint32\",\"name\":\"\",\"type\":\"uint32\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"redemptionProposalValidity\",\"outputs\":[{\"internalType\":\"uint32\",\"name\":\"\",\"type\":\"uint32\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"redemptionRequestMinAge\",\"outputs\":[{\"internalType\":\"uint32\",\"name\":\"\",\"type\":\"uint32\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"redemptionRequestTimeoutSafetyMargin\",\"outputs\":[{\"internalType\":\"uint32\",\"name\":\"\",\"type\":\"uint32\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"reimbursementPool\",\"outputs\":[{\"internalType\":\"contractReimbursementPool\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"coordinator\",\"type\":\"address\"}],\"name\":\"removeCoordinator\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"renounceOwnership\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes20\",\"name\":\"walletPubKeyHash\",\"type\":\"bytes20\"},{\"internalType\":\"bytes\",\"name\":\"message\",\"type\":\"bytes\"}],\"name\":\"requestHeartbeat\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes20\",\"name\":\"walletPubKeyHash\",\"type\":\"bytes20\"},{\"internalType\":\"bytes\",\"name\":\"message\",\"type\":\"bytes\"}],\"name\":\"requestHeartbeatWithReimbursement\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"components\":[{\"internalType\":\"bytes20\",\"name\":\"walletPubKeyHash\",\"type\":\"bytes20\"},{\"components\":[{\"internalType\":\"bytes32\",\"name\":\"fundingTxHash\",\"type\":\"bytes32\"},{\"internalType\":\"uint32\",\"name\":\"fundingOutputIndex\",\"type\":\"uint32\"}],\"internalType\":\"structWalletCoordinator.DepositKey[]\",\"name\":\"depositsKeys\",\"type\":\"tuple[]\"},{\"internalType\":\"uint256\",\"name\":\"sweepTxFee\",\"type\":\"uint256\"},{\"internalType\":\"uint256[]\",\"name\":\"depositsRevealBlocks\",\"type\":\"uint256[]\"}],\"internalType\":\"structWalletCoordinator.DepositSweepProposal\",\"name\":\"proposal\",\"type\":\"tuple\"}],\"name\":\"submitDepositSweepProposal\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"components\":[{\"internalType\":\"bytes20\",\"name\":\"walletPubKeyHash\",\"type\":\"bytes20\"},{\"components\":[{\"internalType\":\"bytes32\",\"name\":\"fundingTxHash\",\"type\":\"bytes32\"},{\"internalType\":\"uint32\",\"name\":\"fundingOutputIndex\",\"type\":\"uint32\"}],\"internalType\":\"structWalletCoordinator.DepositKey[]\",\"name\":\"depositsKeys\",\"type\":\"tuple[]\"},{\"internalType\":\"uint256\",\"name\":\"sweepTxFee\",\"type\":\"uint256\"},{\"internalType\":\"uint256[]\",\"name\":\"depositsRevealBlocks\",\"type\":\"uint256[]\"}],\"internalType\":\"structWalletCoordinator.DepositSweepProposal\",\"name\":\"proposal\",\"type\":\"tuple\"}],\"name\":\"submitDepositSweepProposalWithReimbursement\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"components\":[{\"internalType\":\"bytes20\",\"name\":\"walletPubKeyHash\",\"type\":\"bytes20\"},{\"internalType\":\"bytes[]\",\"name\":\"redeemersOutputScripts\",\"type\":\"bytes[]\"},{\"internalType\":\"uint256\",\"name\":\"redemptionTxFee\",\"type\":\"uint256\"}],\"internalType\":\"structWalletCoordinator.RedemptionProposal\",\"name\":\"proposal\",\"type\":\"tuple\"}],\"name\":\"submitRedemptionProposal\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"components\":[{\"internalType\":\"bytes20\",\"name\":\"walletPubKeyHash\",\"type\":\"bytes20\"},{\"internalType\":\"bytes[]\",\"name\":\"redeemersOutputScripts\",\"type\":\"bytes[]\"},{\"internalType\":\"uint256\",\"name\":\"redemptionTxFee\",\"type\":\"uint256\"}],\"internalType\":\"structWalletCoordinator.RedemptionProposal\",\"name\":\"proposal\",\"type\":\"tuple\"}],\"name\":\"submitRedemptionProposalWithReimbursement\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"transferOwnership\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes20\",\"name\":\"walletPubKeyHash\",\"type\":\"bytes20\"}],\"name\":\"unlockWallet\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint32\",\"name\":\"_depositSweepProposalValidity\",\"type\":\"uint32\"},{\"internalType\":\"uint32\",\"name\":\"_depositMinAge\",\"type\":\"uint32\"},{\"internalType\":\"uint32\",\"name\":\"_depositRefundSafetyMargin\",\"type\":\"uint32\"},{\"internalType\":\"uint16\",\"name\":\"_depositSweepMaxSize\",\"type\":\"uint16\"},{\"internalType\":\"uint32\",\"name\":\"_depositSweepProposalSubmissionGasOffset\",\"type\":\"uint32\"}],\"name\":\"updateDepositSweepProposalParameters\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint32\",\"name\":\"_heartbeatRequestValidity\",\"type\":\"uint32\"},{\"internalType\":\"uint32\",\"name\":\"_heartbeatRequestGasOffset\",\"type\":\"uint32\"}],\"name\":\"updateHeartbeatRequestParameters\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint32\",\"name\":\"_redemptionProposalValidity\",\"type\":\"uint32\"},{\"internalType\":\"uint32\",\"name\":\"_redemptionRequestMinAge\",\"type\":\"uint32\"},{\"internalType\":\"uint32\",\"name\":\"_redemptionRequestTimeoutSafetyMargin\",\"type\":\"uint32\"},{\"internalType\":\"uint16\",\"name\":\"_redemptionMaxSize\",\"type\":\"uint16\"},{\"internalType\":\"uint32\",\"name\":\"_redemptionProposalSubmissionGasOffset\",\"type\":\"uint32\"}],\"name\":\"updateRedemptionProposalParameters\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"contractReimbursementPool\",\"name\":\"_reimbursementPool\",\"type\":\"address\"}],\"name\":\"updateReimbursementPool\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"components\":[{\"internalType\":\"bytes20\",\"name\":\"walletPubKeyHash\",\"type\":\"bytes20\"},{\"components\":[{\"internalType\":\"bytes32\",\"name\":\"fundingTxHash\",\"type\":\"bytes32\"},{\"internalType\":\"uint32\",\"name\":\"fundingOutputIndex\",\"type\":\"uint32\"}],\"internalType\":\"structWalletCoordinator.DepositKey[]\",\"name\":\"depositsKeys\",\"type\":\"tuple[]\"},{\"internalType\":\"uint256\",\"name\":\"sweepTxFee\",\"type\":\"uint256\"},{\"internalType\":\"uint256[]\",\"name\":\"depositsRevealBlocks\",\"type\":\"uint256[]\"}],\"internalType\":\"structWalletCoordinator.DepositSweepProposal\",\"name\":\"proposal\",\"type\":\"tuple\"},{\"components\":[{\"components\":[{\"internalType\":\"bytes4\",\"name\":\"version\",\"type\":\"bytes4\"},{\"internalType\":\"bytes\",\"name\":\"inputVector\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"outputVector\",\"type\":\"bytes\"},{\"internalType\":\"bytes4\",\"name\":\"locktime\",\"type\":\"bytes4\"}],\"internalType\":\"structBitcoinTx.Info\",\"name\":\"fundingTx\",\"type\":\"tuple\"},{\"internalType\":\"bytes8\",\"name\":\"blindingFactor\",\"type\":\"bytes8\"},{\"internalType\":\"bytes20\",\"name\":\"walletPubKeyHash\",\"type\":\"bytes20\"},{\"internalType\":\"bytes20\",\"name\":\"refundPubKeyHash\",\"type\":\"bytes20\"},{\"internalType\":\"bytes4\",\"name\":\"refundLocktime\",\"type\":\"bytes4\"}],\"internalType\":\"structWalletCoordinator.DepositExtraInfo[]\",\"name\":\"depositsExtraInfo\",\"type\":\"tuple[]\"}],\"name\":\"validateDepositSweepProposal\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"components\":[{\"internalType\":\"bytes20\",\"name\":\"walletPubKeyHash\",\"type\":\"bytes20\"},{\"internalType\":\"bytes[]\",\"name\":\"redeemersOutputScripts\",\"type\":\"bytes[]\"},{\"internalType\":\"uint256\",\"name\":\"redemptionTxFee\",\"type\":\"uint256\"}],\"internalType\":\"structWalletCoordinator.RedemptionProposal\",\"name\":\"proposal\",\"type\":\"tuple\"}],\"name\":\"validateRedemptionProposal\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes20\",\"name\":\"\",\"type\":\"bytes20\"}],\"name\":\"walletLock\",\"outputs\":[{\"internalType\":\"uint32\",\"name\":\"expiresAt\",\"type\":\"uint32\"},{\"internalType\":\"enumWalletCoordinator.WalletAction\",\"name\":\"cause\",\"type\":\"uint8\"}],\"stateMutability\":\"view\",\"type\":\"function\"}]",
 }
 
 // WalletCoordinatorABI is the input ABI used to generate the binding from.
@@ -520,6 +527,161 @@ func (_WalletCoordinator *WalletCoordinatorCallerSession) Owner() (common.Addres
 	return _WalletCoordinator.Contract.Owner(&_WalletCoordinator.CallOpts)
 }
 
+// RedemptionMaxSize is a free data retrieval call binding the contract method 0x6980f9fe.
+//
+// Solidity: function redemptionMaxSize() view returns(uint16)
+func (_WalletCoordinator *WalletCoordinatorCaller) RedemptionMaxSize(opts *bind.CallOpts) (uint16, error) {
+	var out []interface{}
+	err := _WalletCoordinator.contract.Call(opts, &out, "redemptionMaxSize")
+
+	if err != nil {
+		return *new(uint16), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(uint16)).(*uint16)
+
+	return out0, err
+
+}
+
+// RedemptionMaxSize is a free data retrieval call binding the contract method 0x6980f9fe.
+//
+// Solidity: function redemptionMaxSize() view returns(uint16)
+func (_WalletCoordinator *WalletCoordinatorSession) RedemptionMaxSize() (uint16, error) {
+	return _WalletCoordinator.Contract.RedemptionMaxSize(&_WalletCoordinator.CallOpts)
+}
+
+// RedemptionMaxSize is a free data retrieval call binding the contract method 0x6980f9fe.
+//
+// Solidity: function redemptionMaxSize() view returns(uint16)
+func (_WalletCoordinator *WalletCoordinatorCallerSession) RedemptionMaxSize() (uint16, error) {
+	return _WalletCoordinator.Contract.RedemptionMaxSize(&_WalletCoordinator.CallOpts)
+}
+
+// RedemptionProposalSubmissionGasOffset is a free data retrieval call binding the contract method 0x930b4898.
+//
+// Solidity: function redemptionProposalSubmissionGasOffset() view returns(uint32)
+func (_WalletCoordinator *WalletCoordinatorCaller) RedemptionProposalSubmissionGasOffset(opts *bind.CallOpts) (uint32, error) {
+	var out []interface{}
+	err := _WalletCoordinator.contract.Call(opts, &out, "redemptionProposalSubmissionGasOffset")
+
+	if err != nil {
+		return *new(uint32), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(uint32)).(*uint32)
+
+	return out0, err
+
+}
+
+// RedemptionProposalSubmissionGasOffset is a free data retrieval call binding the contract method 0x930b4898.
+//
+// Solidity: function redemptionProposalSubmissionGasOffset() view returns(uint32)
+func (_WalletCoordinator *WalletCoordinatorSession) RedemptionProposalSubmissionGasOffset() (uint32, error) {
+	return _WalletCoordinator.Contract.RedemptionProposalSubmissionGasOffset(&_WalletCoordinator.CallOpts)
+}
+
+// RedemptionProposalSubmissionGasOffset is a free data retrieval call binding the contract method 0x930b4898.
+//
+// Solidity: function redemptionProposalSubmissionGasOffset() view returns(uint32)
+func (_WalletCoordinator *WalletCoordinatorCallerSession) RedemptionProposalSubmissionGasOffset() (uint32, error) {
+	return _WalletCoordinator.Contract.RedemptionProposalSubmissionGasOffset(&_WalletCoordinator.CallOpts)
+}
+
+// RedemptionProposalValidity is a free data retrieval call binding the contract method 0x300226ae.
+//
+// Solidity: function redemptionProposalValidity() view returns(uint32)
+func (_WalletCoordinator *WalletCoordinatorCaller) RedemptionProposalValidity(opts *bind.CallOpts) (uint32, error) {
+	var out []interface{}
+	err := _WalletCoordinator.contract.Call(opts, &out, "redemptionProposalValidity")
+
+	if err != nil {
+		return *new(uint32), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(uint32)).(*uint32)
+
+	return out0, err
+
+}
+
+// RedemptionProposalValidity is a free data retrieval call binding the contract method 0x300226ae.
+//
+// Solidity: function redemptionProposalValidity() view returns(uint32)
+func (_WalletCoordinator *WalletCoordinatorSession) RedemptionProposalValidity() (uint32, error) {
+	return _WalletCoordinator.Contract.RedemptionProposalValidity(&_WalletCoordinator.CallOpts)
+}
+
+// RedemptionProposalValidity is a free data retrieval call binding the contract method 0x300226ae.
+//
+// Solidity: function redemptionProposalValidity() view returns(uint32)
+func (_WalletCoordinator *WalletCoordinatorCallerSession) RedemptionProposalValidity() (uint32, error) {
+	return _WalletCoordinator.Contract.RedemptionProposalValidity(&_WalletCoordinator.CallOpts)
+}
+
+// RedemptionRequestMinAge is a free data retrieval call binding the contract method 0x6511064d.
+//
+// Solidity: function redemptionRequestMinAge() view returns(uint32)
+func (_WalletCoordinator *WalletCoordinatorCaller) RedemptionRequestMinAge(opts *bind.CallOpts) (uint32, error) {
+	var out []interface{}
+	err := _WalletCoordinator.contract.Call(opts, &out, "redemptionRequestMinAge")
+
+	if err != nil {
+		return *new(uint32), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(uint32)).(*uint32)
+
+	return out0, err
+
+}
+
+// RedemptionRequestMinAge is a free data retrieval call binding the contract method 0x6511064d.
+//
+// Solidity: function redemptionRequestMinAge() view returns(uint32)
+func (_WalletCoordinator *WalletCoordinatorSession) RedemptionRequestMinAge() (uint32, error) {
+	return _WalletCoordinator.Contract.RedemptionRequestMinAge(&_WalletCoordinator.CallOpts)
+}
+
+// RedemptionRequestMinAge is a free data retrieval call binding the contract method 0x6511064d.
+//
+// Solidity: function redemptionRequestMinAge() view returns(uint32)
+func (_WalletCoordinator *WalletCoordinatorCallerSession) RedemptionRequestMinAge() (uint32, error) {
+	return _WalletCoordinator.Contract.RedemptionRequestMinAge(&_WalletCoordinator.CallOpts)
+}
+
+// RedemptionRequestTimeoutSafetyMargin is a free data retrieval call binding the contract method 0x8aea2ac2.
+//
+// Solidity: function redemptionRequestTimeoutSafetyMargin() view returns(uint32)
+func (_WalletCoordinator *WalletCoordinatorCaller) RedemptionRequestTimeoutSafetyMargin(opts *bind.CallOpts) (uint32, error) {
+	var out []interface{}
+	err := _WalletCoordinator.contract.Call(opts, &out, "redemptionRequestTimeoutSafetyMargin")
+
+	if err != nil {
+		return *new(uint32), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(uint32)).(*uint32)
+
+	return out0, err
+
+}
+
+// RedemptionRequestTimeoutSafetyMargin is a free data retrieval call binding the contract method 0x8aea2ac2.
+//
+// Solidity: function redemptionRequestTimeoutSafetyMargin() view returns(uint32)
+func (_WalletCoordinator *WalletCoordinatorSession) RedemptionRequestTimeoutSafetyMargin() (uint32, error) {
+	return _WalletCoordinator.Contract.RedemptionRequestTimeoutSafetyMargin(&_WalletCoordinator.CallOpts)
+}
+
+// RedemptionRequestTimeoutSafetyMargin is a free data retrieval call binding the contract method 0x8aea2ac2.
+//
+// Solidity: function redemptionRequestTimeoutSafetyMargin() view returns(uint32)
+func (_WalletCoordinator *WalletCoordinatorCallerSession) RedemptionRequestTimeoutSafetyMargin() (uint32, error) {
+	return _WalletCoordinator.Contract.RedemptionRequestTimeoutSafetyMargin(&_WalletCoordinator.CallOpts)
+}
+
 // ReimbursementPool is a free data retrieval call binding the contract method 0xc09975cd.
 //
 // Solidity: function reimbursementPool() view returns(address)
@@ -580,6 +742,37 @@ func (_WalletCoordinator *WalletCoordinatorSession) ValidateDepositSweepProposal
 // Solidity: function validateDepositSweepProposal((bytes20,(bytes32,uint32)[],uint256,uint256[]) proposal, ((bytes4,bytes,bytes,bytes4),bytes8,bytes20,bytes20,bytes4)[] depositsExtraInfo) view returns(bool)
 func (_WalletCoordinator *WalletCoordinatorCallerSession) ValidateDepositSweepProposal(proposal WalletCoordinatorDepositSweepProposal, depositsExtraInfo []WalletCoordinatorDepositExtraInfo) (bool, error) {
 	return _WalletCoordinator.Contract.ValidateDepositSweepProposal(&_WalletCoordinator.CallOpts, proposal, depositsExtraInfo)
+}
+
+// ValidateRedemptionProposal is a free data retrieval call binding the contract method 0x0fde6c76.
+//
+// Solidity: function validateRedemptionProposal((bytes20,bytes[],uint256) proposal) view returns(bool)
+func (_WalletCoordinator *WalletCoordinatorCaller) ValidateRedemptionProposal(opts *bind.CallOpts, proposal WalletCoordinatorRedemptionProposal) (bool, error) {
+	var out []interface{}
+	err := _WalletCoordinator.contract.Call(opts, &out, "validateRedemptionProposal", proposal)
+
+	if err != nil {
+		return *new(bool), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(bool)).(*bool)
+
+	return out0, err
+
+}
+
+// ValidateRedemptionProposal is a free data retrieval call binding the contract method 0x0fde6c76.
+//
+// Solidity: function validateRedemptionProposal((bytes20,bytes[],uint256) proposal) view returns(bool)
+func (_WalletCoordinator *WalletCoordinatorSession) ValidateRedemptionProposal(proposal WalletCoordinatorRedemptionProposal) (bool, error) {
+	return _WalletCoordinator.Contract.ValidateRedemptionProposal(&_WalletCoordinator.CallOpts, proposal)
+}
+
+// ValidateRedemptionProposal is a free data retrieval call binding the contract method 0x0fde6c76.
+//
+// Solidity: function validateRedemptionProposal((bytes20,bytes[],uint256) proposal) view returns(bool)
+func (_WalletCoordinator *WalletCoordinatorCallerSession) ValidateRedemptionProposal(proposal WalletCoordinatorRedemptionProposal) (bool, error) {
+	return _WalletCoordinator.Contract.ValidateRedemptionProposal(&_WalletCoordinator.CallOpts, proposal)
 }
 
 // WalletLock is a free data retrieval call binding the contract method 0x2c259d2b.
@@ -795,6 +988,48 @@ func (_WalletCoordinator *WalletCoordinatorTransactorSession) SubmitDepositSweep
 	return _WalletCoordinator.Contract.SubmitDepositSweepProposalWithReimbursement(&_WalletCoordinator.TransactOpts, proposal)
 }
 
+// SubmitRedemptionProposal is a paid mutator transaction binding the contract method 0xe64007d0.
+//
+// Solidity: function submitRedemptionProposal((bytes20,bytes[],uint256) proposal) returns()
+func (_WalletCoordinator *WalletCoordinatorTransactor) SubmitRedemptionProposal(opts *bind.TransactOpts, proposal WalletCoordinatorRedemptionProposal) (*types.Transaction, error) {
+	return _WalletCoordinator.contract.Transact(opts, "submitRedemptionProposal", proposal)
+}
+
+// SubmitRedemptionProposal is a paid mutator transaction binding the contract method 0xe64007d0.
+//
+// Solidity: function submitRedemptionProposal((bytes20,bytes[],uint256) proposal) returns()
+func (_WalletCoordinator *WalletCoordinatorSession) SubmitRedemptionProposal(proposal WalletCoordinatorRedemptionProposal) (*types.Transaction, error) {
+	return _WalletCoordinator.Contract.SubmitRedemptionProposal(&_WalletCoordinator.TransactOpts, proposal)
+}
+
+// SubmitRedemptionProposal is a paid mutator transaction binding the contract method 0xe64007d0.
+//
+// Solidity: function submitRedemptionProposal((bytes20,bytes[],uint256) proposal) returns()
+func (_WalletCoordinator *WalletCoordinatorTransactorSession) SubmitRedemptionProposal(proposal WalletCoordinatorRedemptionProposal) (*types.Transaction, error) {
+	return _WalletCoordinator.Contract.SubmitRedemptionProposal(&_WalletCoordinator.TransactOpts, proposal)
+}
+
+// SubmitRedemptionProposalWithReimbursement is a paid mutator transaction binding the contract method 0x265a513e.
+//
+// Solidity: function submitRedemptionProposalWithReimbursement((bytes20,bytes[],uint256) proposal) returns()
+func (_WalletCoordinator *WalletCoordinatorTransactor) SubmitRedemptionProposalWithReimbursement(opts *bind.TransactOpts, proposal WalletCoordinatorRedemptionProposal) (*types.Transaction, error) {
+	return _WalletCoordinator.contract.Transact(opts, "submitRedemptionProposalWithReimbursement", proposal)
+}
+
+// SubmitRedemptionProposalWithReimbursement is a paid mutator transaction binding the contract method 0x265a513e.
+//
+// Solidity: function submitRedemptionProposalWithReimbursement((bytes20,bytes[],uint256) proposal) returns()
+func (_WalletCoordinator *WalletCoordinatorSession) SubmitRedemptionProposalWithReimbursement(proposal WalletCoordinatorRedemptionProposal) (*types.Transaction, error) {
+	return _WalletCoordinator.Contract.SubmitRedemptionProposalWithReimbursement(&_WalletCoordinator.TransactOpts, proposal)
+}
+
+// SubmitRedemptionProposalWithReimbursement is a paid mutator transaction binding the contract method 0x265a513e.
+//
+// Solidity: function submitRedemptionProposalWithReimbursement((bytes20,bytes[],uint256) proposal) returns()
+func (_WalletCoordinator *WalletCoordinatorTransactorSession) SubmitRedemptionProposalWithReimbursement(proposal WalletCoordinatorRedemptionProposal) (*types.Transaction, error) {
+	return _WalletCoordinator.Contract.SubmitRedemptionProposalWithReimbursement(&_WalletCoordinator.TransactOpts, proposal)
+}
+
 // TransferOwnership is a paid mutator transaction binding the contract method 0xf2fde38b.
 //
 // Solidity: function transferOwnership(address newOwner) returns()
@@ -877,6 +1112,27 @@ func (_WalletCoordinator *WalletCoordinatorSession) UpdateHeartbeatRequestParame
 // Solidity: function updateHeartbeatRequestParameters(uint32 _heartbeatRequestValidity, uint32 _heartbeatRequestGasOffset) returns()
 func (_WalletCoordinator *WalletCoordinatorTransactorSession) UpdateHeartbeatRequestParameters(_heartbeatRequestValidity uint32, _heartbeatRequestGasOffset uint32) (*types.Transaction, error) {
 	return _WalletCoordinator.Contract.UpdateHeartbeatRequestParameters(&_WalletCoordinator.TransactOpts, _heartbeatRequestValidity, _heartbeatRequestGasOffset)
+}
+
+// UpdateRedemptionProposalParameters is a paid mutator transaction binding the contract method 0x1b9783ff.
+//
+// Solidity: function updateRedemptionProposalParameters(uint32 _redemptionProposalValidity, uint32 _redemptionRequestMinAge, uint32 _redemptionRequestTimeoutSafetyMargin, uint16 _redemptionMaxSize, uint32 _redemptionProposalSubmissionGasOffset) returns()
+func (_WalletCoordinator *WalletCoordinatorTransactor) UpdateRedemptionProposalParameters(opts *bind.TransactOpts, _redemptionProposalValidity uint32, _redemptionRequestMinAge uint32, _redemptionRequestTimeoutSafetyMargin uint32, _redemptionMaxSize uint16, _redemptionProposalSubmissionGasOffset uint32) (*types.Transaction, error) {
+	return _WalletCoordinator.contract.Transact(opts, "updateRedemptionProposalParameters", _redemptionProposalValidity, _redemptionRequestMinAge, _redemptionRequestTimeoutSafetyMargin, _redemptionMaxSize, _redemptionProposalSubmissionGasOffset)
+}
+
+// UpdateRedemptionProposalParameters is a paid mutator transaction binding the contract method 0x1b9783ff.
+//
+// Solidity: function updateRedemptionProposalParameters(uint32 _redemptionProposalValidity, uint32 _redemptionRequestMinAge, uint32 _redemptionRequestTimeoutSafetyMargin, uint16 _redemptionMaxSize, uint32 _redemptionProposalSubmissionGasOffset) returns()
+func (_WalletCoordinator *WalletCoordinatorSession) UpdateRedemptionProposalParameters(_redemptionProposalValidity uint32, _redemptionRequestMinAge uint32, _redemptionRequestTimeoutSafetyMargin uint32, _redemptionMaxSize uint16, _redemptionProposalSubmissionGasOffset uint32) (*types.Transaction, error) {
+	return _WalletCoordinator.Contract.UpdateRedemptionProposalParameters(&_WalletCoordinator.TransactOpts, _redemptionProposalValidity, _redemptionRequestMinAge, _redemptionRequestTimeoutSafetyMargin, _redemptionMaxSize, _redemptionProposalSubmissionGasOffset)
+}
+
+// UpdateRedemptionProposalParameters is a paid mutator transaction binding the contract method 0x1b9783ff.
+//
+// Solidity: function updateRedemptionProposalParameters(uint32 _redemptionProposalValidity, uint32 _redemptionRequestMinAge, uint32 _redemptionRequestTimeoutSafetyMargin, uint16 _redemptionMaxSize, uint32 _redemptionProposalSubmissionGasOffset) returns()
+func (_WalletCoordinator *WalletCoordinatorTransactorSession) UpdateRedemptionProposalParameters(_redemptionProposalValidity uint32, _redemptionRequestMinAge uint32, _redemptionRequestTimeoutSafetyMargin uint32, _redemptionMaxSize uint16, _redemptionProposalSubmissionGasOffset uint32) (*types.Transaction, error) {
+	return _WalletCoordinator.Contract.UpdateRedemptionProposalParameters(&_WalletCoordinator.TransactOpts, _redemptionProposalValidity, _redemptionRequestMinAge, _redemptionRequestTimeoutSafetyMargin, _redemptionMaxSize, _redemptionProposalSubmissionGasOffset)
 }
 
 // UpdateReimbursementPool is a paid mutator transaction binding the contract method 0x7b35b4e6.
@@ -2033,6 +2289,289 @@ func (_WalletCoordinator *WalletCoordinatorFilterer) WatchOwnershipTransferred(o
 func (_WalletCoordinator *WalletCoordinatorFilterer) ParseOwnershipTransferred(log types.Log) (*WalletCoordinatorOwnershipTransferred, error) {
 	event := new(WalletCoordinatorOwnershipTransferred)
 	if err := _WalletCoordinator.contract.UnpackLog(event, "OwnershipTransferred", log); err != nil {
+		return nil, err
+	}
+	event.Raw = log
+	return event, nil
+}
+
+// WalletCoordinatorRedemptionProposalParametersUpdatedIterator is returned from FilterRedemptionProposalParametersUpdated and is used to iterate over the raw logs and unpacked data for RedemptionProposalParametersUpdated events raised by the WalletCoordinator contract.
+type WalletCoordinatorRedemptionProposalParametersUpdatedIterator struct {
+	Event *WalletCoordinatorRedemptionProposalParametersUpdated // Event containing the contract specifics and raw log
+
+	contract *bind.BoundContract // Generic contract to use for unpacking event data
+	event    string              // Event name to use for unpacking event data
+
+	logs chan types.Log        // Log channel receiving the found contract events
+	sub  ethereum.Subscription // Subscription for errors, completion and termination
+	done bool                  // Whether the subscription completed delivering logs
+	fail error                 // Occurred error to stop iteration
+}
+
+// Next advances the iterator to the subsequent event, returning whether there
+// are any more events found. In case of a retrieval or parsing error, false is
+// returned and Error() can be queried for the exact failure.
+func (it *WalletCoordinatorRedemptionProposalParametersUpdatedIterator) Next() bool {
+	// If the iterator failed, stop iterating
+	if it.fail != nil {
+		return false
+	}
+	// If the iterator completed, deliver directly whatever's available
+	if it.done {
+		select {
+		case log := <-it.logs:
+			it.Event = new(WalletCoordinatorRedemptionProposalParametersUpdated)
+			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+				it.fail = err
+				return false
+			}
+			it.Event.Raw = log
+			return true
+
+		default:
+			return false
+		}
+	}
+	// Iterator still in progress, wait for either a data or an error event
+	select {
+	case log := <-it.logs:
+		it.Event = new(WalletCoordinatorRedemptionProposalParametersUpdated)
+		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+			it.fail = err
+			return false
+		}
+		it.Event.Raw = log
+		return true
+
+	case err := <-it.sub.Err():
+		it.done = true
+		it.fail = err
+		return it.Next()
+	}
+}
+
+// Error returns any retrieval or parsing error occurred during filtering.
+func (it *WalletCoordinatorRedemptionProposalParametersUpdatedIterator) Error() error {
+	return it.fail
+}
+
+// Close terminates the iteration process, releasing any pending underlying
+// resources.
+func (it *WalletCoordinatorRedemptionProposalParametersUpdatedIterator) Close() error {
+	it.sub.Unsubscribe()
+	return nil
+}
+
+// WalletCoordinatorRedemptionProposalParametersUpdated represents a RedemptionProposalParametersUpdated event raised by the WalletCoordinator contract.
+type WalletCoordinatorRedemptionProposalParametersUpdated struct {
+	RedemptionProposalValidity            uint32
+	RedemptionRequestMinAge               uint32
+	RedemptionRequestTimeoutSafetyMargin  uint32
+	RedemptionMaxSize                     uint16
+	RedemptionProposalSubmissionGasOffset uint32
+	Raw                                   types.Log // Blockchain specific contextual infos
+}
+
+// FilterRedemptionProposalParametersUpdated is a free log retrieval operation binding the contract event 0xa16bb3cf10d251033dcfb3ff6f9601243766f6a3e397b30eb76d69f3fad339c2.
+//
+// Solidity: event RedemptionProposalParametersUpdated(uint32 redemptionProposalValidity, uint32 redemptionRequestMinAge, uint32 redemptionRequestTimeoutSafetyMargin, uint16 redemptionMaxSize, uint32 redemptionProposalSubmissionGasOffset)
+func (_WalletCoordinator *WalletCoordinatorFilterer) FilterRedemptionProposalParametersUpdated(opts *bind.FilterOpts) (*WalletCoordinatorRedemptionProposalParametersUpdatedIterator, error) {
+
+	logs, sub, err := _WalletCoordinator.contract.FilterLogs(opts, "RedemptionProposalParametersUpdated")
+	if err != nil {
+		return nil, err
+	}
+	return &WalletCoordinatorRedemptionProposalParametersUpdatedIterator{contract: _WalletCoordinator.contract, event: "RedemptionProposalParametersUpdated", logs: logs, sub: sub}, nil
+}
+
+// WatchRedemptionProposalParametersUpdated is a free log subscription operation binding the contract event 0xa16bb3cf10d251033dcfb3ff6f9601243766f6a3e397b30eb76d69f3fad339c2.
+//
+// Solidity: event RedemptionProposalParametersUpdated(uint32 redemptionProposalValidity, uint32 redemptionRequestMinAge, uint32 redemptionRequestTimeoutSafetyMargin, uint16 redemptionMaxSize, uint32 redemptionProposalSubmissionGasOffset)
+func (_WalletCoordinator *WalletCoordinatorFilterer) WatchRedemptionProposalParametersUpdated(opts *bind.WatchOpts, sink chan<- *WalletCoordinatorRedemptionProposalParametersUpdated) (event.Subscription, error) {
+
+	logs, sub, err := _WalletCoordinator.contract.WatchLogs(opts, "RedemptionProposalParametersUpdated")
+	if err != nil {
+		return nil, err
+	}
+	return event.NewSubscription(func(quit <-chan struct{}) error {
+		defer sub.Unsubscribe()
+		for {
+			select {
+			case log := <-logs:
+				// New log arrived, parse the event and forward to the user
+				event := new(WalletCoordinatorRedemptionProposalParametersUpdated)
+				if err := _WalletCoordinator.contract.UnpackLog(event, "RedemptionProposalParametersUpdated", log); err != nil {
+					return err
+				}
+				event.Raw = log
+
+				select {
+				case sink <- event:
+				case err := <-sub.Err():
+					return err
+				case <-quit:
+					return nil
+				}
+			case err := <-sub.Err():
+				return err
+			case <-quit:
+				return nil
+			}
+		}
+	}), nil
+}
+
+// ParseRedemptionProposalParametersUpdated is a log parse operation binding the contract event 0xa16bb3cf10d251033dcfb3ff6f9601243766f6a3e397b30eb76d69f3fad339c2.
+//
+// Solidity: event RedemptionProposalParametersUpdated(uint32 redemptionProposalValidity, uint32 redemptionRequestMinAge, uint32 redemptionRequestTimeoutSafetyMargin, uint16 redemptionMaxSize, uint32 redemptionProposalSubmissionGasOffset)
+func (_WalletCoordinator *WalletCoordinatorFilterer) ParseRedemptionProposalParametersUpdated(log types.Log) (*WalletCoordinatorRedemptionProposalParametersUpdated, error) {
+	event := new(WalletCoordinatorRedemptionProposalParametersUpdated)
+	if err := _WalletCoordinator.contract.UnpackLog(event, "RedemptionProposalParametersUpdated", log); err != nil {
+		return nil, err
+	}
+	event.Raw = log
+	return event, nil
+}
+
+// WalletCoordinatorRedemptionProposalSubmittedIterator is returned from FilterRedemptionProposalSubmitted and is used to iterate over the raw logs and unpacked data for RedemptionProposalSubmitted events raised by the WalletCoordinator contract.
+type WalletCoordinatorRedemptionProposalSubmittedIterator struct {
+	Event *WalletCoordinatorRedemptionProposalSubmitted // Event containing the contract specifics and raw log
+
+	contract *bind.BoundContract // Generic contract to use for unpacking event data
+	event    string              // Event name to use for unpacking event data
+
+	logs chan types.Log        // Log channel receiving the found contract events
+	sub  ethereum.Subscription // Subscription for errors, completion and termination
+	done bool                  // Whether the subscription completed delivering logs
+	fail error                 // Occurred error to stop iteration
+}
+
+// Next advances the iterator to the subsequent event, returning whether there
+// are any more events found. In case of a retrieval or parsing error, false is
+// returned and Error() can be queried for the exact failure.
+func (it *WalletCoordinatorRedemptionProposalSubmittedIterator) Next() bool {
+	// If the iterator failed, stop iterating
+	if it.fail != nil {
+		return false
+	}
+	// If the iterator completed, deliver directly whatever's available
+	if it.done {
+		select {
+		case log := <-it.logs:
+			it.Event = new(WalletCoordinatorRedemptionProposalSubmitted)
+			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+				it.fail = err
+				return false
+			}
+			it.Event.Raw = log
+			return true
+
+		default:
+			return false
+		}
+	}
+	// Iterator still in progress, wait for either a data or an error event
+	select {
+	case log := <-it.logs:
+		it.Event = new(WalletCoordinatorRedemptionProposalSubmitted)
+		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+			it.fail = err
+			return false
+		}
+		it.Event.Raw = log
+		return true
+
+	case err := <-it.sub.Err():
+		it.done = true
+		it.fail = err
+		return it.Next()
+	}
+}
+
+// Error returns any retrieval or parsing error occurred during filtering.
+func (it *WalletCoordinatorRedemptionProposalSubmittedIterator) Error() error {
+	return it.fail
+}
+
+// Close terminates the iteration process, releasing any pending underlying
+// resources.
+func (it *WalletCoordinatorRedemptionProposalSubmittedIterator) Close() error {
+	it.sub.Unsubscribe()
+	return nil
+}
+
+// WalletCoordinatorRedemptionProposalSubmitted represents a RedemptionProposalSubmitted event raised by the WalletCoordinator contract.
+type WalletCoordinatorRedemptionProposalSubmitted struct {
+	Proposal    WalletCoordinatorRedemptionProposal
+	Coordinator common.Address
+	Raw         types.Log // Blockchain specific contextual infos
+}
+
+// FilterRedemptionProposalSubmitted is a free log retrieval operation binding the contract event 0x315f9ad8d0b7518ff779e5acc7c069df04df94325d86b685227473ebd452bb70.
+//
+// Solidity: event RedemptionProposalSubmitted((bytes20,bytes[],uint256) proposal, address indexed coordinator)
+func (_WalletCoordinator *WalletCoordinatorFilterer) FilterRedemptionProposalSubmitted(opts *bind.FilterOpts, coordinator []common.Address) (*WalletCoordinatorRedemptionProposalSubmittedIterator, error) {
+
+	var coordinatorRule []interface{}
+	for _, coordinatorItem := range coordinator {
+		coordinatorRule = append(coordinatorRule, coordinatorItem)
+	}
+
+	logs, sub, err := _WalletCoordinator.contract.FilterLogs(opts, "RedemptionProposalSubmitted", coordinatorRule)
+	if err != nil {
+		return nil, err
+	}
+	return &WalletCoordinatorRedemptionProposalSubmittedIterator{contract: _WalletCoordinator.contract, event: "RedemptionProposalSubmitted", logs: logs, sub: sub}, nil
+}
+
+// WatchRedemptionProposalSubmitted is a free log subscription operation binding the contract event 0x315f9ad8d0b7518ff779e5acc7c069df04df94325d86b685227473ebd452bb70.
+//
+// Solidity: event RedemptionProposalSubmitted((bytes20,bytes[],uint256) proposal, address indexed coordinator)
+func (_WalletCoordinator *WalletCoordinatorFilterer) WatchRedemptionProposalSubmitted(opts *bind.WatchOpts, sink chan<- *WalletCoordinatorRedemptionProposalSubmitted, coordinator []common.Address) (event.Subscription, error) {
+
+	var coordinatorRule []interface{}
+	for _, coordinatorItem := range coordinator {
+		coordinatorRule = append(coordinatorRule, coordinatorItem)
+	}
+
+	logs, sub, err := _WalletCoordinator.contract.WatchLogs(opts, "RedemptionProposalSubmitted", coordinatorRule)
+	if err != nil {
+		return nil, err
+	}
+	return event.NewSubscription(func(quit <-chan struct{}) error {
+		defer sub.Unsubscribe()
+		for {
+			select {
+			case log := <-logs:
+				// New log arrived, parse the event and forward to the user
+				event := new(WalletCoordinatorRedemptionProposalSubmitted)
+				if err := _WalletCoordinator.contract.UnpackLog(event, "RedemptionProposalSubmitted", log); err != nil {
+					return err
+				}
+				event.Raw = log
+
+				select {
+				case sink <- event:
+				case err := <-sub.Err():
+					return err
+				case <-quit:
+					return nil
+				}
+			case err := <-sub.Err():
+				return err
+			case <-quit:
+				return nil
+			}
+		}
+	}), nil
+}
+
+// ParseRedemptionProposalSubmitted is a log parse operation binding the contract event 0x315f9ad8d0b7518ff779e5acc7c069df04df94325d86b685227473ebd452bb70.
+//
+// Solidity: event RedemptionProposalSubmitted((bytes20,bytes[],uint256) proposal, address indexed coordinator)
+func (_WalletCoordinator *WalletCoordinatorFilterer) ParseRedemptionProposalSubmitted(log types.Log) (*WalletCoordinatorRedemptionProposalSubmitted, error) {
+	event := new(WalletCoordinatorRedemptionProposalSubmitted)
+	if err := _WalletCoordinator.contract.UnpackLog(event, "RedemptionProposalSubmitted", log); err != nil {
 		return nil, err
 	}
 	event.Raw = log

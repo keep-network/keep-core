@@ -15,6 +15,7 @@ const testDKGSeedCachePeriod = 1 * time.Second
 const testDKGResultHashCachePeriod = 1 * time.Second
 const testHeartbeatRequestCachePeriod = 1 * time.Second
 const testDepositSweepProposalCachePeriod = 1 * time.Second
+const testRedemptionProposalCachePeriod = 1 * time.Second
 
 func TestNotifyDKGStarted(t *testing.T) {
 	deduplicator := deduplicator{
@@ -283,6 +284,118 @@ func TestNotifyDepositSweepProposalSubmitted(t *testing.T) {
 
 	// Add the original proposal again.
 	canProcess = deduplicator.notifyDepositSweepProposalSubmitted(proposal)
+	if !canProcess {
+		t.Fatal("should be allowed to process")
+	}
+}
+
+func TestNotifyRedemptionProposalSubmitted(t *testing.T) {
+	deduplicator := deduplicator{
+		redemptionProposalCache: cache.NewTimeCache(
+			testRedemptionProposalCachePeriod,
+		),
+	}
+
+	newScript := func(t *testing.T, value string) bitcoin.Script {
+		hash, err := hex.DecodeString(value)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		return hash
+	}
+
+	// Original proposal.
+	proposal := &RedemptionProposal{
+		WalletPublicKeyHash: [20]byte{1, 2, 3, 4, 5, 1, 2, 3, 4, 5, 1, 2, 3, 4, 5, 1, 2, 3, 4, 5},
+		RedeemersOutputScripts: []bitcoin.Script{
+			newScript(t, "74d0e353cdba99a6c17ce2cfeab62a26c09b5eb756eccdcfb83dbc12e67b18bc"),
+			newScript(t, "f8eaf242a55ea15e602f9f990e33f67f99dfbe25d1802bbde63cc1caabf99668"),
+		},
+		RedemptionTxFee: big.NewInt(1000),
+	}
+
+	// Proposal with different wallet.
+	proposalDiffWallet := &RedemptionProposal{
+		WalletPublicKeyHash: [20]byte{2, 2, 3, 4, 5, 1, 2, 3, 4, 5, 1, 2, 3, 4, 5, 1, 2, 3, 4, 5},
+		RedeemersOutputScripts: []bitcoin.Script{
+			newScript(t, "74d0e353cdba99a6c17ce2cfeab62a26c09b5eb756eccdcfb83dbc12e67b18bc"),
+			newScript(t, "f8eaf242a55ea15e602f9f990e33f67f99dfbe25d1802bbde63cc1caabf99668"),
+		},
+		RedemptionTxFee: big.NewInt(1000),
+	}
+
+	// Proposal with different redeemer scripts.
+	proposalDiffScripts := &RedemptionProposal{
+		WalletPublicKeyHash: [20]byte{1, 2, 3, 4, 5, 1, 2, 3, 4, 5, 1, 2, 3, 4, 5, 1, 2, 3, 4, 5},
+		RedeemersOutputScripts: []bitcoin.Script{
+			newScript(t, "84d0e353cdba99a6c17ce2cfeab62a26c09b5eb756eccdcfb83dbc12e67b18bc"),
+			newScript(t, "f8eaf242a55ea15e602f9f990e33f67f99dfbe25d1802bbde63cc1caabf99668"),
+		},
+		RedemptionTxFee: big.NewInt(1000),
+	}
+
+	// Proposal with same redeemer scripts but in different order.
+	proposalDiffScriptsOrder := &RedemptionProposal{
+		WalletPublicKeyHash: [20]byte{1, 2, 3, 4, 5, 1, 2, 3, 4, 5, 1, 2, 3, 4, 5, 1, 2, 3, 4, 5},
+		RedeemersOutputScripts: []bitcoin.Script{
+			newScript(t, "f8eaf242a55ea15e602f9f990e33f67f99dfbe25d1802bbde63cc1caabf99668"),
+			newScript(t, "74d0e353cdba99a6c17ce2cfeab62a26c09b5eb756eccdcfb83dbc12e67b18bc"),
+		},
+		RedemptionTxFee: big.NewInt(1000),
+	}
+
+	// Proposal with different redemption tx fee.
+	proposalDiffRedemptionTxFee := &RedemptionProposal{
+		WalletPublicKeyHash: [20]byte{1, 2, 3, 4, 5, 1, 2, 3, 4, 5, 1, 2, 3, 4, 5, 1, 2, 3, 4, 5},
+		RedeemersOutputScripts: []bitcoin.Script{
+			newScript(t, "74d0e353cdba99a6c17ce2cfeab62a26c09b5eb756eccdcfb83dbc12e67b18bc"),
+			newScript(t, "f8eaf242a55ea15e602f9f990e33f67f99dfbe25d1802bbde63cc1caabf99668"),
+		},
+		RedemptionTxFee: big.NewInt(1001),
+	}
+
+	// Add the original proposal.
+	canProcess := deduplicator.notifyRedemptionProposalSubmitted(proposal)
+	if !canProcess {
+		t.Fatal("should be allowed to process")
+	}
+
+	// Add the original proposal before caching period elapses.
+	canProcess = deduplicator.notifyRedemptionProposalSubmitted(proposal)
+	if canProcess {
+		t.Fatal("should not be allowed to process")
+	}
+
+	// Add the proposal with different wallet.
+	canProcess = deduplicator.notifyRedemptionProposalSubmitted(proposalDiffWallet)
+	if !canProcess {
+		t.Fatal("should be allowed to process")
+	}
+
+	// Add the proposal with different redeemer scripts.
+	canProcess = deduplicator.notifyRedemptionProposalSubmitted(proposalDiffScripts)
+	if !canProcess {
+		t.Fatal("should be allowed to process")
+	}
+
+	// Add the proposal with different redeemer scripts order.
+	canProcess = deduplicator.notifyRedemptionProposalSubmitted(proposalDiffScriptsOrder)
+	if !canProcess {
+		t.Fatal("should be allowed to process")
+	}
+
+	// Add the proposal with different redemption tx fee.
+	canProcess = deduplicator.notifyRedemptionProposalSubmitted(proposalDiffRedemptionTxFee)
+	if !canProcess {
+		t.Fatal("should be allowed to process")
+	}
+
+	// Wait until caching period elapses.
+	time.Sleep(testRedemptionProposalCachePeriod)
+
+	// Add the original proposal again.
+	canProcess = deduplicator.notifyRedemptionProposalSubmitted(proposal)
 	if !canProcess {
 		t.Fatal("should be allowed to process")
 	}

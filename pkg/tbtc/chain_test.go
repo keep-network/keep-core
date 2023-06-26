@@ -59,6 +59,12 @@ type localChain struct {
 	depositSweepProposalValidationsMutex sync.Mutex
 	depositSweepProposalValidations      map[[32]byte]bool
 
+	pendingRedemptionRequestsMutex sync.Mutex
+	pendingRedemptionRequests      map[[32]byte]*RedemptionRequest
+
+	redemptionProposalValidationsMutex sync.Mutex
+	redemptionProposalValidations      map[[32]byte]bool
+
 	blockCounter       chain.BlockCounter
 	operatorPrivateKey *operator.PrivateKey
 }
@@ -579,6 +585,45 @@ func (lc *localChain) GetDepositParameters() (
 	panic("unsupported")
 }
 
+func (lc *localChain) GetPendingRedemptionRequest(
+	walletPublicKeyHash [20]byte,
+	redeemerOutputScript bitcoin.Script,
+) (*RedemptionRequest, error) {
+	lc.pendingRedemptionRequestsMutex.Lock()
+	defer lc.pendingRedemptionRequestsMutex.Unlock()
+
+	requestKey := buildRedemptionRequestKey(walletPublicKeyHash, redeemerOutputScript)
+
+	request, ok := lc.pendingRedemptionRequests[requestKey]
+	if !ok {
+		return nil, fmt.Errorf("no request for given key")
+	}
+
+	return request, nil
+}
+
+func (lc *localChain) setPendingRedemptionRequest(
+	walletPublicKeyHash [20]byte,
+	request *RedemptionRequest,
+) {
+	lc.pendingRedemptionRequestsMutex.Lock()
+	defer lc.pendingRedemptionRequestsMutex.Unlock()
+
+	requestKey := buildRedemptionRequestKey(
+		walletPublicKeyHash,
+		request.RedeemerOutputScript,
+	)
+
+	lc.pendingRedemptionRequests[requestKey] = request
+}
+
+func buildRedemptionRequestKey(
+	walletPublicKeyHash [20]byte,
+	redeemerOutputScript bitcoin.Script,
+) [32]byte {
+	return sha256.Sum256(append(walletPublicKeyHash[:], redeemerOutputScript...))
+}
+
 func buildDepositRequestKey(
 	fundingTxHash bitcoin.Hash,
 	fundingOutputIndex uint32,
@@ -764,6 +809,68 @@ func (lc *localChain) GetDepositSweepMaxSize() (uint16, error) {
 	panic("unsupported")
 }
 
+func (lc *localChain) OnRedemptionProposalSubmitted(
+	func(event *RedemptionProposalSubmittedEvent),
+) subscription.EventSubscription {
+	panic("unsupported")
+}
+
+func (lc *localChain) ValidateRedemptionProposal(
+	proposal *RedemptionProposal,
+) error {
+	lc.redemptionProposalValidationsMutex.Lock()
+	defer lc.redemptionProposalValidationsMutex.Unlock()
+
+	key, err := buildRedemptionProposalValidationKey(proposal)
+	if err != nil {
+		return err
+	}
+
+	result, ok := lc.redemptionProposalValidations[key]
+	if !ok {
+		return fmt.Errorf("validation result unknown")
+	}
+
+	if !result {
+		return fmt.Errorf("validation failed")
+	}
+
+	return nil
+}
+
+func (lc *localChain) setRedemptionProposalValidationResult(
+	proposal *RedemptionProposal,
+	result bool,
+) error {
+	lc.redemptionProposalValidationsMutex.Lock()
+	defer lc.redemptionProposalValidationsMutex.Unlock()
+
+	key, err := buildRedemptionProposalValidationKey(proposal)
+	if err != nil {
+		return err
+	}
+
+	lc.redemptionProposalValidations[key] = result
+
+	return nil
+}
+
+func buildRedemptionProposalValidationKey(
+	proposal *RedemptionProposal,
+) ([32]byte, error) {
+	var buffer bytes.Buffer
+
+	buffer.Write(proposal.WalletPublicKeyHash[:])
+
+	for _, script := range proposal.RedeemersOutputScripts {
+		buffer.Write(script)
+	}
+
+	buffer.Write(proposal.RedemptionTxFee.Bytes())
+
+	return sha256.Sum256(buffer.Bytes()), nil
+}
+
 // Connect sets up the local chain.
 func Connect() *localChain {
 	operatorPrivateKey, _, err := operator.GenerateKeyPair(local_v1.DefaultCurve)
@@ -794,6 +901,8 @@ func ConnectWithKey(operatorPrivateKey *operator.PrivateKey) *localChain {
 		blocksByTimestamp:               make(map[uint64]uint64),
 		pastDepositRevealedEvents:       make(map[[32]byte][]*DepositRevealedEvent),
 		depositSweepProposalValidations: make(map[[32]byte]bool),
+		pendingRedemptionRequests:       make(map[[32]byte]*RedemptionRequest),
+		redemptionProposalValidations:   make(map[[32]byte]bool),
 		blockCounter:                    blockCounter,
 		operatorPrivateKey:              operatorPrivateKey,
 	}

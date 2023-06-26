@@ -1227,6 +1227,62 @@ func (tc *TbtcChain) GetDepositParameters() (
 	return
 }
 
+func (tc *TbtcChain) GetPendingRedemptionRequest(
+	walletPublicKeyHash [20]byte,
+	redeemerOutputScript bitcoin.Script,
+) (*tbtc.RedemptionRequest, error) {
+	redemptionKey, err := buildRedemptionKey(walletPublicKeyHash, redeemerOutputScript)
+	if err != nil {
+		return nil, fmt.Errorf("cannot build redemption key: [%v]", err)
+	}
+
+	redemptionRequest, err := tc.bridge.PendingRedemptions(redemptionKey)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"cannot get pending redemption request for key [0x%x]: [%v]",
+			redemptionKey.Text(16),
+			err,
+		)
+	}
+
+	// Redemption not found.
+	if redemptionRequest.RequestedAt == 0 {
+		return nil, fmt.Errorf(
+			"no pending redemption request for key [0x%x]",
+			redemptionKey.Text(16),
+		)
+	}
+
+	return &tbtc.RedemptionRequest{
+		Redeemer:             chain.Address(redemptionRequest.Redeemer.Hex()),
+		RedeemerOutputScript: redeemerOutputScript,
+		RequestedAmount:      redemptionRequest.RequestedAmount,
+		TreasuryFee:          redemptionRequest.TreasuryFee,
+		TxMaxFee:             redemptionRequest.TxMaxFee,
+		RequestedAt:          time.Unix(int64(redemptionRequest.RequestedAt), 0),
+	}, nil
+}
+
+func buildRedemptionKey(
+	walletPublicKeyHash [20]byte,
+	redeemerOutputScript bitcoin.Script,
+) (*big.Int, error) {
+	// The Bridge contract builds the redemption key using the length-prefixed
+	// redeemer output script.
+	prefixedRedeemerOutputScript, err := redeemerOutputScript.ToVarLenData()
+	if err != nil {
+		return nil, fmt.Errorf("cannot build prefixed redeemer output script: [%v]", err)
+	}
+
+	redeemerOutputScriptHash := crypto.Keccak256Hash(prefixedRedeemerOutputScript)
+
+	redemptionKey := crypto.Keccak256Hash(
+		append(redeemerOutputScriptHash[:], walletPublicKeyHash[:]...),
+	)
+
+	return redemptionKey.Big(), nil
+}
+
 func (tc *TbtcChain) TxProofDifficultyFactor() (*big.Int, error) {
 	return tc.bridge.TxProofDifficultyFactor()
 }
@@ -1563,4 +1619,114 @@ func (tc *TbtcChain) SubmitDepositSweepProposalWithReimbursement(
 
 func (tc *TbtcChain) GetDepositSweepMaxSize() (uint16, error) {
 	return tc.walletCoordinator.DepositSweepMaxSize()
+}
+
+func (tc *TbtcChain) OnRedemptionProposalSubmitted(
+	handler func(event *tbtc.RedemptionProposalSubmittedEvent),
+) subscription.EventSubscription {
+	onEvent := func(
+		proposal tbtcabi.WalletCoordinatorRedemptionProposal,
+		coordinator common.Address,
+		blockNumber uint64,
+	) {
+		tbtcProposal, err := convertRedemptionProposalFromAbiType(proposal)
+		if err != nil {
+			logger.Errorf(
+				"unexpected proposal in RedemptionProposalSubmitted event: [%v]",
+				err,
+			)
+			return
+		}
+
+		handler(&tbtc.RedemptionProposalSubmittedEvent{
+			Proposal:    tbtcProposal,
+			Coordinator: chain.Address(coordinator.Hex()),
+			BlockNumber: blockNumber,
+		})
+	}
+
+	return tc.walletCoordinator.
+		RedemptionProposalSubmittedEvent(nil, nil).
+		OnEvent(onEvent)
+}
+
+func (tc *TbtcChain) ValidateRedemptionProposal(
+	proposal *tbtc.RedemptionProposal,
+) error {
+	abiProposal, err := convertRedemptionProposalToAbiType(proposal)
+	if err != nil {
+		return fmt.Errorf("cannot convert proposal to abi type: [%v]", err)
+	}
+
+	valid, err := tc.walletCoordinator.ValidateRedemptionProposal(
+		abiProposal,
+	)
+	if err != nil {
+		return fmt.Errorf("validation failed: [%v]", err)
+	}
+
+	// Should never happen because `validateRedemptionProposal` returns true
+	// or reverts (returns an error) but do the check just in case.
+	if !valid {
+		return fmt.Errorf("unexpected validation result")
+	}
+
+	return nil
+}
+
+func convertRedemptionProposalFromAbiType(
+	proposal tbtcabi.WalletCoordinatorRedemptionProposal,
+) (*tbtc.RedemptionProposal, error) {
+	redeemersOutputScripts := make(
+		[]bitcoin.Script,
+		len(proposal.RedeemersOutputScripts),
+	)
+
+	for i, script := range proposal.RedeemersOutputScripts {
+		// The on-chain script representation is prepended with the script's
+		// byte-length while bitcoin.Script is not. We need to remove the
+		// length prefix.
+		unprefixedScript, err := bitcoin.NewScriptFromVarLenData(script)
+		if err != nil {
+			return nil, fmt.Errorf("cannot convert redeemer output script: [%v]", err)
+		}
+
+		redeemersOutputScripts[i] = unprefixedScript
+	}
+
+	return &tbtc.RedemptionProposal{
+		WalletPublicKeyHash:    proposal.WalletPubKeyHash,
+		RedeemersOutputScripts: redeemersOutputScripts,
+		RedemptionTxFee:        proposal.RedemptionTxFee,
+	}, nil
+}
+
+func convertRedemptionProposalToAbiType(
+	proposal *tbtc.RedemptionProposal,
+) (tbtcabi.WalletCoordinatorRedemptionProposal, error) {
+	redeemersOutputScripts := make(
+		[][]byte,
+		len(proposal.RedeemersOutputScripts),
+	)
+
+	for i, script := range proposal.RedeemersOutputScripts {
+		// The on-chain script representation must be prepended with the script's
+		// byte-length while bitcoin.Script is not. We need to add the
+		// length prefix.
+		prefixedScript, err := script.ToVarLenData()
+		if err != nil {
+			return tbtcabi.WalletCoordinatorRedemptionProposal{}, fmt.Errorf(
+				"cannot convert redeemer output script: [%v]",
+				err,
+			)
+		}
+
+		redeemersOutputScripts[i] = prefixedScript
+	}
+
+	return tbtcabi.WalletCoordinatorRedemptionProposal{
+		WalletPubKeyHash:       proposal.WalletPublicKeyHash,
+		RedeemersOutputScripts: redeemersOutputScripts,
+		RedemptionTxFee:        proposal.RedemptionTxFee,
+	}, nil
 }
