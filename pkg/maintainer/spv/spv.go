@@ -243,7 +243,9 @@ func (sm *spvMaintainer) isUnprovenDepositSweepTransaction(
 				walletPublicKeyHash,
 			)
 			if err != nil {
-				return false, fmt.Errorf("failed to check is input is the main UTXO")
+				return false, fmt.Errorf(
+					"failed to check if input is the main UTXO",
+				)
 			}
 
 			// The input is not the current main UTXO of the wallet. The
