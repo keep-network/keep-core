@@ -61,8 +61,6 @@ func (sm *spvMaintainer) startControlLoop(ctx context.Context) {
 }
 
 func (sm *spvMaintainer) maintainSpv(ctx context.Context) error {
-	logger.Infof("Maintaining SPV proof...")
-
 	for {
 		if err := sm.proveDepositSweepTransactions(); err != nil {
 			return fmt.Errorf(
