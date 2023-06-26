@@ -146,7 +146,7 @@ var proposeDepositsSweepCommand = cobra.Command{
 
 		depositSweepMaxSize, err := cmd.Flags().GetUint16(depositSweepMaxSizeFlagName)
 		if err != nil {
-			return fmt.Errorf("failed to find fee flag: %v", err)
+			return fmt.Errorf("failed to find deposit sweep max size flag: %v", err)
 		}
 
 		dryRun, err := cmd.Flags().GetBool(dryRunFlagName)
@@ -245,7 +245,7 @@ var proposeRedemptionCommand = cobra.Command{
 
 		redemptionMaxSize, err := cmd.Flags().GetUint16(redemptionMaxSizeFlagName)
 		if err != nil {
-			return fmt.Errorf("failed to find fee flag: %v", err)
+			return fmt.Errorf("failed to find redemption max size flag: %v", err)
 		}
 
 		dryRun, err := cmd.Flags().GetBool(dryRunFlagName)
