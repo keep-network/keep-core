@@ -67,39 +67,31 @@ func FindPendingRedemptions(
 	// If walletPublicKeyHash is not provided we need to find a wallet that has
 	// pending redemptions.
 	if walletPublicKeyHash == [20]byte{} {
-		walletRegisteredEvents, err := chain.PastNewWalletRegisteredEvents(nil)
+		events, err := chain.PastNewWalletRegisteredEvents(nil)
 		if err != nil {
 			return [20]byte{}, nil, fmt.Errorf("failed to get registered wallets: [%w]", err)
 		}
 
 		// Take the oldest first
-		sort.SliceStable(walletRegisteredEvents, func(i, j int) bool {
-			return walletRegisteredEvents[i].BlockNumber < walletRegisteredEvents[j].BlockNumber
+		sort.SliceStable(events, func(i, j int) bool {
+			return events[i].BlockNumber < events[j].BlockNumber
 		})
 
-		redeemingWallets := walletRegisteredEvents
-		// Only two the most recently created wallets are accepting redemptions.
-		if len(walletRegisteredEvents) >= 2 {
-			redeemingWallets = walletRegisteredEvents[len(walletRegisteredEvents)-2:]
-		}
-
-		for _, registeredWallet := range redeemingWallets {
+		for _, event := range events {
 			logger.Infof(
 				"fetching pending redemption requests from wallet [%s]...",
-				hexutils.Encode(registeredWallet.WalletPublicKeyHash[:]),
+				hexutils.Encode(event.WalletPublicKeyHash[:]),
 			)
 
 			pendingRedemptions, err := getPendingRedemptionsFromWallet(
-				registeredWallet.WalletPublicKeyHash,
+				event.WalletPublicKeyHash,
 			)
 			if err != nil {
 				return [20]byte{}, nil, err
 			}
 
-			// Check if there are any unswept deposits in this wallet. If so
-			// sweep this wallet and don't check the other wallet.
 			if len(pendingRedemptions) > 0 {
-				walletPublicKeyHash = registeredWallet.WalletPublicKeyHash
+				walletPublicKeyHash = event.WalletPublicKeyHash
 				redemptionsToPropose = pendingRedemptions
 				break
 			}
