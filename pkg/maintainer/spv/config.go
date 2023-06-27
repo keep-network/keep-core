@@ -15,6 +15,11 @@ type Config struct {
 	// events for processing.
 	HistoryDepth uint64
 
+	// TransactionLimit sets the maximum number of confirmed transactions
+	// returned when getting transactions for a public key hash. For example,
+	// if set to `20`, only the latest twenty transactions will be returned.
+	TransactionLimit int
+
 	// RestartBackOffTime is a restart backoff which should be applied when the
 	// SPV maintainer is restarted. It helps to avoid being flooded with error
 	// logs in case of a permanent error in the SPV maintainer.

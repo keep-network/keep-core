@@ -16,6 +16,19 @@ import (
 var logger = log.Logger("keep-maintainer-spv")
 
 const (
+	// Default value for history depth which is the number of blocks to look
+	// back from the current block when searching for past deposit sweep
+	// proposal submitted events. The value is the approximate number of
+	// Ethereum blocks in a week.
+	spvDefaultHistoryDepth = 40320
+
+	// Default value for the limit of transactions returned for a given wallet
+	// public key hash. The value is based on the frequency of how often deposit
+	// sweep and redemption transaction will happen. Deposit sweep transactions
+	// are assumed to happen every 48h. Redemption transactions are assumed to
+	// happen every 3h.
+	spvDefaultTransactionLimit = 20
+
 	// Default value for back-off time which should be applied when the SPV
 	// maintainer is restarted. It helps to avoid being flooded with error logs
 	// in case of a permanent error in the SPV maintainer.
@@ -24,12 +37,6 @@ const (
 	// Default value for back-off time which should be applied after each round
 	// of processing SPV proofs.
 	spvDefaultIdleBackOffTime = 10 * time.Minute
-
-	// Default value for history depth which is the number of blocks to look
-	// back from the current block when searching for past deposit sweep
-	// proposal submitted events. The value is the approximate number of
-	// Ethereum blocks in a week.
-	spvDefaultHistoryDepth = 40320
 )
 
 func Initialize(
@@ -38,14 +45,17 @@ func Initialize(
 	chain Chain,
 	btcChain bitcoin.Chain,
 ) {
+	if config.HistoryDepth == 0 {
+		config.HistoryDepth = spvDefaultHistoryDepth
+	}
+	if config.TransactionLimit == 0 {
+		config.TransactionLimit = spvDefaultTransactionLimit
+	}
 	if config.RestartBackOffTime == 0 {
 		config.RestartBackOffTime = spvDefaultRestartBackoffTime
 	}
 	if config.IdleBackOffTime == 0 {
 		config.IdleBackOffTime = spvDefaultIdleBackOffTime
-	}
-	if config.HistoryDepth == 0 {
-		config.HistoryDepth = spvDefaultHistoryDepth
 	}
 
 	spvMaintainer := &spvMaintainer{
@@ -188,8 +198,6 @@ func (sm *spvMaintainer) getUnprovenDepositSweepTransactions() (
 	// searched for.
 	startBlock := currentBlock - sm.config.HistoryDepth
 
-	// TODO: Limit how far in the past we are looking for the events.
-	//       Possibly store latest checked height in memory or file.
 	depositSweepTransactionProposals, err :=
 		sm.chain.PastDepositSweepProposalSubmittedEvents(
 			&tbtc.DepositSweepProposalSubmittedEventFilter{
@@ -214,10 +222,9 @@ func (sm *spvMaintainer) getUnprovenDepositSweepTransactions() (
 	for _, walletPublicKeyHash := range walletPublicKeyHashes {
 		// TODO: Should we check the wallet's state before attempting to submit
 		//       the deposit sweep proof?
-		// TODO: Think what the limit of transactions retrieved should be.
 		walletTransactions, err := sm.btcChain.GetTransactionsForPublicKeyHash(
 			walletPublicKeyHash,
-			5,
+			sm.config.TransactionLimit,
 		)
 		if err != nil {
 			return nil, fmt.Errorf(
