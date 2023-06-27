@@ -147,10 +147,28 @@ func (sm *spvMaintainer) getUnprovenDepositSweepTransactions() (
 	[]*bitcoin.Transaction,
 	error,
 ) {
+	blockCounter, err := sm.chain.BlockCounter()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get block counter: [%v]", err)
+	}
+
+	currentBlock, err := blockCounter.CurrentBlock()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get current block: [%v]", err)
+	}
+
+	// Calculate the starting block of the range in which the events will be
+	// searched for.
+	startBlock := currentBlock - 40320
+
 	// TODO: Limit how far in the past we are looking for the events.
 	//       Possibly store latest checked height in memory or file.
 	depositSweepTransactionProposals, err :=
-		sm.chain.PastDepositSweepProposalSubmittedEvents(nil)
+		sm.chain.PastDepositSweepProposalSubmittedEvents(
+			&tbtc.DepositSweepProposalSubmittedEventFilter{
+				StartBlock: startBlock,
+			},
+		)
 	if err != nil {
 		return nil, fmt.Errorf(
 			"failed to get past deposit sweep proposal submitted events: [%v]",

@@ -5,6 +5,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/keep-network/keep-core/pkg/bitcoin"
+	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/tbtc"
 )
 
@@ -47,6 +48,9 @@ type Chain interface {
 	// TxProofDifficultyFactor returns the number of confirmations on the
 	// Bitcoin chain required to successfully evaluate an SPV proof.
 	TxProofDifficultyFactor() (*big.Int, error)
+
+	// BlockCounter returns the chain's block counter.
+	BlockCounter() (chain.BlockCounter, error)
 
 	// PastDepositSweepProposalSubmittedEvents returns past
 	// `DepositSweepProposalSubmitted` events.
