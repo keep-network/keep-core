@@ -193,7 +193,27 @@ func ValidateDepositSweepProposal(
 	validateProposalLogger log.StandardLogger,
 	proposal *DepositSweepProposal,
 	requiredFundingTxConfirmations uint,
-	tbtcChain Chain,
+	chain interface {
+		// PastDepositRevealedEvents fetches past deposit reveal events according
+		// to the provided filter or unfiltered if the filter is nil. Returned
+		// events are sorted by the block number in the ascending order, i.e. the
+		// latest event is at the end of the slice.
+		PastDepositRevealedEvents(
+			filter *DepositRevealedEventFilter,
+		) ([]*DepositRevealedEvent, error)
+
+		// ValidateDepositSweepProposal validates the given deposit sweep proposal
+		// against the chain. It requires some additional data about the deposits
+		// that must be fetched externally. Returns an error if the proposal is
+		// not valid or nil otherwise.
+		ValidateDepositSweepProposal(
+			proposal *DepositSweepProposal,
+			depositsExtraInfo []struct {
+				*Deposit
+				FundingTx *bitcoin.Transaction
+			},
+		) error
+	},
 	btcChain bitcoin.Chain,
 ) ([]*Deposit, error) {
 	depositExtraInfo := make(
@@ -266,7 +286,7 @@ func ValidateDepositSweepProposal(
 		// We have the revealBlock passed by the coordinator within the proposal
 		// so, we can use it to make a narrow call. Moreover, we use the
 		// wallet PKH as additional filter to limit the size of returned data.
-		events, err := tbtcChain.PastDepositRevealedEvents(&DepositRevealedEventFilter{
+		events, err := chain.PastDepositRevealedEvents(&DepositRevealedEventFilter{
 			StartBlock:          revealBlock,
 			EndBlock:            &revealBlock,
 			WalletPublicKeyHash: [][20]byte{proposal.WalletPublicKeyHash},
@@ -309,7 +329,7 @@ func ValidateDepositSweepProposal(
 
 	validateProposalLogger.Infof("calling chain for proposal validation")
 
-	err := tbtcChain.ValidateDepositSweepProposal(proposal, depositExtraInfo)
+	err := chain.ValidateDepositSweepProposal(proposal, depositExtraInfo)
 	if err != nil {
 		return nil, fmt.Errorf("deposit sweep proposal is invalid: [%v]", err)
 	}

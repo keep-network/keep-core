@@ -3,8 +3,9 @@ package tbtc
 import (
 	"crypto/ecdsa"
 	"fmt"
-	"go.uber.org/zap"
 	"time"
+
+	"go.uber.org/zap"
 
 	"github.com/ipfs/go-log/v2"
 
@@ -234,11 +235,24 @@ func (ra *redemptionAction) execute() error {
 func ValidateRedemptionProposal(
 	validateProposalLogger log.StandardLogger,
 	proposal *RedemptionProposal,
-	tbtcChain Chain,
+	chain interface {
+		// GetPendingRedemptionRequest gets the on-chain pending redemption request
+		// for the given wallet public key hash and redeemer output script.
+		// Returns an error if the request was not found.
+		GetPendingRedemptionRequest(
+			walletPublicKeyHash [20]byte,
+			redeemerOutputScript bitcoin.Script,
+		) (*RedemptionRequest, error)
+
+		// ValidateRedemptionProposal validates the given redemption proposal
+		// against the chain. Returns an error if the proposal is not valid or
+		// nil otherwise.
+		ValidateRedemptionProposal(proposal *RedemptionProposal) error
+	},
 ) ([]*RedemptionRequest, error) {
 	validateProposalLogger.Infof("calling chain for proposal validation")
 
-	err := tbtcChain.ValidateRedemptionProposal(proposal)
+	err := chain.ValidateRedemptionProposal(proposal)
 	if err != nil {
 		return nil, fmt.Errorf("redemption proposal is invalid: [%v]", err)
 	}
@@ -255,7 +269,7 @@ func ValidateRedemptionProposal(
 			len(proposal.RedeemersOutputScripts),
 		)
 
-		request, err := tbtcChain.GetPendingRedemptionRequest(
+		request, err := chain.GetPendingRedemptionRequest(
 			proposal.WalletPublicKeyHash,
 			script,
 		)
