@@ -32,7 +32,7 @@ func TestFindDepositsToSweep(t *testing.T) {
 			for _, wallet := range scenario.Wallets {
 				tbtcChain.addPastNewWalletRegisteredEvent(
 					nil,
-					&tbtc.NewWalletRegisteredEvent{
+					&coordinator.NewWalletRegisteredEvent{
 						WalletPublicKeyHash: wallet.WalletPublicKeyHash,
 						BlockNumber:         wallet.RegistrationBlockNumber,
 					},

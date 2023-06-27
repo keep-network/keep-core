@@ -47,9 +47,6 @@ type localChain struct {
 	walletsMutex sync.Mutex
 	wallets      map[[20]byte]*WalletChainData
 
-	depositRequestsMutex sync.Mutex
-	depositRequests      map[[32]byte]*DepositChainRequest
-
 	blocksByTimestampMutex sync.Mutex
 	blocksByTimestamp      map[uint64]uint64
 
@@ -529,62 +526,6 @@ func buildPastDepositRevealedEventsKey(
 	return sha256.Sum256(buffer.Bytes()), nil
 }
 
-func (lc *localChain) GetDepositRequest(
-	fundingTxHash bitcoin.Hash,
-	fundingOutputIndex uint32,
-) (*DepositChainRequest, error) {
-	lc.depositRequestsMutex.Lock()
-	defer lc.depositRequestsMutex.Unlock()
-
-	requestKey := buildDepositRequestKey(fundingTxHash, fundingOutputIndex)
-
-	request, ok := lc.depositRequests[requestKey]
-	if !ok {
-		return nil, fmt.Errorf("no request for given key")
-	}
-
-	return request, nil
-}
-
-//lint:ignore U1000 This function can be useful for future.
-func (lc *localChain) setDepositRequest(
-	fundingTxHash bitcoin.Hash,
-	fundingOutputIndex uint32,
-	request *DepositChainRequest,
-) {
-	lc.depositRequestsMutex.Lock()
-	defer lc.depositRequestsMutex.Unlock()
-
-	requestKey := buildDepositRequestKey(fundingTxHash, fundingOutputIndex)
-
-	lc.depositRequests[requestKey] = request
-}
-
-func (lc *localChain) PastNewWalletRegisteredEvents(
-	filter *NewWalletRegisteredEventFilter,
-) ([]*NewWalletRegisteredEvent, error) {
-	panic("unsupported")
-}
-
-func (lc *localChain) BuildDepositKey(
-	fundingTxHash bitcoin.Hash,
-	fundingOutputIndex uint32,
-) *big.Int {
-	depositKeyBytes := buildDepositRequestKey(fundingTxHash, fundingOutputIndex)
-
-	return new(big.Int).SetBytes(depositKeyBytes[:])
-}
-
-func (lc *localChain) GetDepositParameters() (
-	dustThreshold uint64,
-	treasuryFeeDivisor uint64,
-	txMaxFee uint64,
-	revealAheadPeriod uint32,
-	err error,
-) {
-	panic("unsupported")
-}
-
 func (lc *localChain) GetPendingRedemptionRequest(
 	walletPublicKeyHash [20]byte,
 	redeemerOutputScript bitcoin.Script,
@@ -622,16 +563,6 @@ func buildRedemptionRequestKey(
 	redeemerOutputScript bitcoin.Script,
 ) [32]byte {
 	return sha256.Sum256(append(walletPublicKeyHash[:], redeemerOutputScript...))
-}
-
-func buildDepositRequestKey(
-	fundingTxHash bitcoin.Hash,
-	fundingOutputIndex uint32,
-) [32]byte {
-	fundingOutputIndexBytes := make([]byte, 4)
-	binary.BigEndian.PutUint32(fundingOutputIndexBytes, fundingOutputIndex)
-
-	return sha256.Sum256(append(fundingTxHash[:], fundingOutputIndexBytes...))
 }
 
 func (lc *localChain) GetWallet(walletPublicKeyHash [20]byte) (
@@ -698,12 +629,6 @@ func (lc *localChain) OnHeartbeatRequestSubmitted(
 func (lc *localChain) OnDepositSweepProposalSubmitted(
 	handler func(event *DepositSweepProposalSubmittedEvent),
 ) subscription.EventSubscription {
-	panic("unsupported")
-}
-
-func (lc *localChain) PastDepositSweepProposalSubmittedEvents(
-	filter *DepositSweepProposalSubmittedEventFilter,
-) ([]*DepositSweepProposalSubmittedEvent, error) {
 	panic("unsupported")
 }
 
@@ -799,16 +724,6 @@ func buildDepositSweepProposalValidationKey(
 	return sha256.Sum256(buffer.Bytes()), nil
 }
 
-func (lc *localChain) SubmitDepositSweepProposalWithReimbursement(
-	proposal *DepositSweepProposal,
-) error {
-	panic("unsupported")
-}
-
-func (lc *localChain) GetDepositSweepMaxSize() (uint16, error) {
-	panic("unsupported")
-}
-
 func (lc *localChain) OnRedemptionProposalSubmitted(
 	func(event *RedemptionProposalSubmittedEvent),
 ) subscription.EventSubscription {
@@ -897,7 +812,6 @@ func ConnectWithKey(operatorPrivateKey *operator.PrivateKey) *localChain {
 			map[int]func(submission *DKGResultChallengedEvent),
 		),
 		wallets:                         make(map[[20]byte]*WalletChainData),
-		depositRequests:                 make(map[[32]byte]*DepositChainRequest),
 		blocksByTimestamp:               make(map[uint64]uint64),
 		pastDepositRevealedEvents:       make(map[[32]byte][]*DepositRevealedEvent),
 		depositSweepProposalValidations: make(map[[32]byte]bool),

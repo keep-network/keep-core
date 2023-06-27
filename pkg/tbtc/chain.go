@@ -2,6 +2,7 @@ package tbtc
 
 import (
 	"crypto/ecdsa"
+	"errors"
 	"math/big"
 	"time"
 
@@ -181,33 +182,18 @@ type DKGParameters struct {
 	ApprovePrecedencePeriodBlocks uint64
 }
 
+var (
+	// ErrPendingRedemptionRequestNotFound is an error that is returned if
+	// a pending redemption request was not found on-chain for the given
+	// redemption key.
+	ErrPendingRedemptionRequestNotFound = errors.New(
+		"no pending redemption request for the given key",
+	)
+)
+
 // BridgeChain defines the subset of the TBTC chain interface that pertains
 // specifically to the tBTC Bridge operations.
 type BridgeChain interface {
-	// PastDepositRevealedEvents fetches past deposit reveal events according
-	// to the provided filter or unfiltered if the filter is nil. Returned
-	// events are sorted by the block number in the ascending order, i.e. the
-	// latest event is at the end of the slice.
-	PastDepositRevealedEvents(
-		filter *DepositRevealedEventFilter,
-	) ([]*DepositRevealedEvent, error)
-
-	// GetDepositRequest gets the on-chain deposit request for the given
-	// funding transaction hash and output index. Returns an error if the
-	// deposit was not found.
-	GetDepositRequest(
-		fundingTxHash bitcoin.Hash,
-		fundingOutputIndex uint32,
-	) (*DepositChainRequest, error)
-
-	// PastNewWalletRegisteredEvents fetches past new wallet registered events
-	// according to the provided filter or unfiltered if the filter is nil. Returned
-	// events are sorted by the block number in the ascending order, i.e. the
-	// latest event is at the end of the slice.
-	PastNewWalletRegisteredEvents(
-		filter *NewWalletRegisteredEventFilter,
-	) ([]*NewWalletRegisteredEvent, error)
-
 	// GetWallet gets the on-chain data for the given wallet. Returns an error
 	// if the wallet was not found.
 	GetWallet(walletPublicKeyHash [20]byte) (*WalletChainData, error)
@@ -216,19 +202,13 @@ type BridgeChain interface {
 	// according to the on-chain Bridge rules.
 	ComputeMainUtxoHash(mainUtxo *bitcoin.UnspentTransactionOutput) [32]byte
 
-	// BuildDepositKey calculates a deposit key for the given funding transaction
-	// which is a unique identifier for a deposit on-chain.
-	BuildDepositKey(fundingTxHash bitcoin.Hash, fundingOutputIndex uint32) *big.Int
-
-	// GetDepositParameters gets the current value of parameters relevant
-	// for the depositing process.
-	GetDepositParameters() (
-		dustThreshold uint64,
-		treasuryFeeDivisor uint64,
-		txMaxFee uint64,
-		revealAheadPeriod uint32,
-		err error,
-	)
+	// PastDepositRevealedEvents fetches past deposit reveal events according
+	// to the provided filter or unfiltered if the filter is nil. Returned
+	// events are sorted by the block number in the ascending order, i.e. the
+	// latest event is at the end of the slice.
+	PastDepositRevealedEvents(
+		filter *DepositRevealedEventFilter,
+	) ([]*DepositRevealedEvent, error)
 
 	// GetPendingRedemptionRequest gets the on-chain pending redemption request
 	// for the given wallet public key hash and redeemer output script.
@@ -302,21 +282,6 @@ type DepositChainRequest struct {
 	SweptAt     time.Time
 }
 
-// NewWalletRegisteredEvent represents a new wallet registered event.
-type NewWalletRegisteredEvent struct {
-	EcdsaWalletID       [32]byte
-	WalletPublicKeyHash [20]byte
-	BlockNumber         uint64
-}
-
-// NewWalletRegisteredEventFilter is a component allowing to filter NewWalletRegisteredEvent.
-type NewWalletRegisteredEventFilter struct {
-	StartBlock          uint64
-	EndBlock            *uint64
-	EcdsaWalletID       [][32]byte
-	WalletPublicKeyHash [][20]byte
-}
-
 // WalletChainData represents wallet data stored on-chain.
 type WalletChainData struct {
 	EcdsaWalletID                          [32]byte
@@ -345,14 +310,6 @@ type WalletCoordinatorChain interface {
 		func(event *DepositSweepProposalSubmittedEvent),
 	) subscription.EventSubscription
 
-	// PastDepositSweepProposalSubmittedEvents fetches past deposit sweep
-	// proposal events according to the provided filter or unfiltered if the
-	// filter is nil. Returned events are sorted by the block number in the
-	// ascending order, i.e. the latest event is at the end of the slice.
-	PastDepositSweepProposalSubmittedEvents(
-		filter *DepositSweepProposalSubmittedEventFilter,
-	) ([]*DepositSweepProposalSubmittedEvent, error)
-
 	// GetWalletLock gets the current wallet lock for the given wallet.
 	// Returned values represent the expiration time and the cause of the lock.
 	// The expiration time can be UNIX timestamp 0 which means there is no lock
@@ -360,6 +317,12 @@ type WalletCoordinatorChain interface {
 	GetWalletLock(
 		walletPublicKeyHash [20]byte,
 	) (time.Time, WalletActionType, error)
+
+	// OnRedemptionProposalSubmitted registers a callback that is invoked when
+	// an on-chain notification of the redemption proposal submission is seen.
+	OnRedemptionProposalSubmitted(
+		func(event *RedemptionProposalSubmittedEvent),
+	) subscription.EventSubscription
 
 	// ValidateDepositSweepProposal validates the given deposit sweep proposal
 	// against the chain. It requires some additional data about the deposits
@@ -372,22 +335,6 @@ type WalletCoordinatorChain interface {
 			FundingTx *bitcoin.Transaction
 		},
 	) error
-
-	// SubmitDepositSweepProposalWithReimbursement submits a deposit sweep
-	// proposal to the chain. It reimburses the gas cost to the caller.
-	SubmitDepositSweepProposalWithReimbursement(
-		proposal *DepositSweepProposal,
-	) error
-
-	// GetDepositSweepMaxSize gets the maximum number of deposits that can
-	// be part of a deposit sweep proposal.
-	GetDepositSweepMaxSize() (uint16, error)
-
-	// OnRedemptionProposalSubmitted registers a callback that is invoked when
-	// an on-chain notification of the redemption proposal submission is seen.
-	OnRedemptionProposalSubmitted(
-		func(event *RedemptionProposalSubmittedEvent),
-	) subscription.EventSubscription
 
 	// ValidateRedemptionProposal validates the given redemption proposal
 	// against the chain. Returns an error if the proposal is not valid or
@@ -445,6 +392,25 @@ type RedemptionProposal struct {
 	WalletPublicKeyHash    [20]byte
 	RedeemersOutputScripts []bitcoin.Script
 	RedemptionTxFee        *big.Int
+}
+
+// RedemptionRequestedEvent represents a redemption requested event.
+type RedemptionRequestedEvent struct {
+	WalletPublicKeyHash  [20]byte
+	RedeemerOutputScript bitcoin.Script
+	Redeemer             chain.Address
+	RequestedAmount      uint64
+	TreasuryFee          uint64
+	TxMaxFee             uint64
+	BlockNumber          uint64
+}
+
+// RedemptionRequestedEventFilter is a component allowing to filter RedemptionRequestedEvent.
+type RedemptionRequestedEventFilter struct {
+	StartBlock          uint64
+	EndBlock            *uint64
+	WalletPublicKeyHash [][20]byte
+	Redeemer            []chain.Address
 }
 
 // Chain represents the interface that the TBTC module expects to interact
