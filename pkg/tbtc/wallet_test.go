@@ -4,10 +4,13 @@ import (
 	"bytes"
 	"context"
 	"crypto/ecdsa"
+	"crypto/sha256"
+	"encoding/binary"
 	"encoding/hex"
 	"fmt"
 	"math/big"
 	"reflect"
+	"sync"
 	"testing"
 	"time"
 
@@ -284,4 +287,62 @@ func generateWallet(privateKey *big.Int) wallet {
 	return wallet{
 		publicKey: publicKey,
 	}
+}
+
+type mockWalletSigningExecutor struct {
+	signaturesMutex sync.Mutex
+	signatures      map[[32]byte][]*tecdsa.Signature
+}
+
+func newMockWalletSigningExecutor() *mockWalletSigningExecutor {
+	return &mockWalletSigningExecutor{
+		signatures: make(map[[32]byte][]*tecdsa.Signature),
+	}
+}
+
+func (mwse *mockWalletSigningExecutor) signBatch(
+	ctx context.Context,
+	messages []*big.Int,
+	startBlock uint64,
+) ([]*tecdsa.Signature, error) {
+	mwse.signaturesMutex.Lock()
+	defer mwse.signaturesMutex.Unlock()
+
+	key := mwse.buildSignaturesKey(messages, startBlock)
+
+	signatures, ok := mwse.signatures[key]
+	if !ok {
+		return nil, fmt.Errorf("signing error")
+	}
+
+	return signatures, nil
+}
+
+func (mwse *mockWalletSigningExecutor) setSignatures(
+	messages []*big.Int,
+	startBlock uint64,
+	signatures []*tecdsa.Signature,
+) {
+	mwse.signaturesMutex.Lock()
+	defer mwse.signaturesMutex.Unlock()
+
+	key := mwse.buildSignaturesKey(messages, startBlock)
+
+	mwse.signatures[key] = signatures
+}
+
+func (mwse *mockWalletSigningExecutor) buildSignaturesKey(
+	messages []*big.Int,
+	startBlock uint64,
+) [32]byte {
+	var buffer bytes.Buffer
+	for _, message := range messages {
+		buffer.Write(message.Bytes())
+	}
+
+	startBlockBytes := make([]byte, 8)
+	binary.BigEndian.PutUint64(startBlockBytes, startBlock)
+	buffer.Write(startBlockBytes)
+
+	return sha256.Sum256(buffer.Bytes())
 }

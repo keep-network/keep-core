@@ -2,12 +2,16 @@ package tbtc
 
 import (
 	"bytes"
+	"context"
 	"crypto/ecdsa"
 	"crypto/elliptic"
 	"encoding/hex"
 	"fmt"
+	"math/big"
 	"sync"
+	"time"
 
+	"github.com/ipfs/go-log/v2"
 	"github.com/keep-network/keep-core/pkg/bitcoin"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/protocol/group"
@@ -124,6 +128,174 @@ func (wd *walletDispatcher) dispatch(action walletAction) error {
 	}()
 
 	return nil
+}
+
+// walletSigningExecutor is an interface meant to decouple the specific
+// implementation of the signing executor from the wallet transaction executor.
+type walletSigningExecutor interface {
+	signBatch(
+		ctx context.Context,
+		messages []*big.Int,
+		startBlock uint64,
+	) ([]*tecdsa.Signature, error)
+}
+
+// walletTransactionExecutor is a component allowing to sign and broadcast
+// wallet Bitcoin transactions.
+type walletTransactionExecutor struct {
+	btcChain bitcoin.Chain
+
+	executingWallet wallet
+	signingExecutor walletSigningExecutor
+}
+
+func newWalletTransactionExecutor(
+	btcChain bitcoin.Chain,
+	executingWallet wallet,
+	signingExecutor walletSigningExecutor,
+) *walletTransactionExecutor {
+	return &walletTransactionExecutor{
+		btcChain:        btcChain,
+		executingWallet: executingWallet,
+		signingExecutor: signingExecutor,
+	}
+}
+
+// signTransaction performs signing of an unsigned Bitcoin transaction
+// and returns a signed transaction ready to be broadcasted over the
+// Bitcoin network.
+func (wte *walletTransactionExecutor) signTransaction(
+	signTxLogger log.StandardLogger,
+	unsignedTx *bitcoin.TransactionBuilder,
+	signingStartBlock uint64,
+	signingTimesOutAt time.Time,
+) (*bitcoin.Transaction, error) {
+	signTxLogger.Infof("computing transaction's sig hashes")
+
+	sigHashes, err := unsignedTx.ComputeSignatureHashes()
+	if err != nil {
+		return nil, fmt.Errorf(
+			"error while computing transaction's sig hashes: [%v]",
+			err,
+		)
+	}
+
+	signTxLogger.Infof("signing transaction's sig hashes")
+
+	signingCtx, cancelSigningCtx := context.WithTimeout(
+		context.Background(),
+		time.Until(signingTimesOutAt),
+	)
+	defer cancelSigningCtx()
+
+	signatures, err := wte.signingExecutor.signBatch(
+		signingCtx,
+		sigHashes,
+		signingStartBlock,
+	)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"error while signing transaction's sig hashes: [%v]",
+			err,
+		)
+	}
+
+	signTxLogger.Infof("applying transaction's signatures")
+
+	containers := make([]*bitcoin.SignatureContainer, len(signatures))
+	for i, signature := range signatures {
+		containers[i] = &bitcoin.SignatureContainer{
+			R:         signature.R,
+			S:         signature.S,
+			PublicKey: wte.executingWallet.publicKey,
+		}
+	}
+
+	tx, err := unsignedTx.AddSignatures(containers)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"error while applying transaction's signatures: [%v]",
+			err,
+		)
+	}
+
+	signTxLogger.Infof("transaction created successfully")
+
+	return tx, nil
+}
+
+// broadcastTransaction broadcasts a signed Bitcoin transaction until
+// the transaction lands in the Bitcoin mempool or the provided timeout
+// is hit, whichever comes first.
+func (wte *walletTransactionExecutor) broadcastTransaction(
+	broadcastTxLogger log.StandardLogger,
+	tx *bitcoin.Transaction,
+	timeout time.Duration,
+	checkDelay time.Duration,
+) error {
+	txHash := tx.Hash()
+
+	broadcastCtx, cancelBroadcastCtx := context.WithTimeout(
+		context.Background(),
+		timeout,
+	)
+	defer cancelBroadcastCtx()
+
+	broadcastAttempt := 0
+
+	for {
+		select {
+		case <-broadcastCtx.Done():
+			return fmt.Errorf("broadcast timeout exceeded")
+		default:
+			broadcastAttempt++
+
+			broadcastTxLogger.Infof(
+				"broadcasting transaction on the Bitcoin chain - attempt [%v]",
+				broadcastAttempt,
+			)
+
+			err := wte.btcChain.BroadcastTransaction(tx)
+			if err != nil {
+				broadcastTxLogger.Warnf(
+					"broadcasting failed: [%v]; transaction could be "+
+						"broadcasted by another wallet operators though",
+					err,
+				)
+			} else {
+				broadcastTxLogger.Infof("broadcasting completed")
+			}
+
+			broadcastTxLogger.Infof(
+				"waiting [%v] before checking whether the "+
+					"transaction is known on Bitcoin chain",
+				checkDelay,
+			)
+
+			select {
+			case <-time.After(checkDelay):
+			case <-broadcastCtx.Done():
+				return fmt.Errorf("broadcast timeout exceeded")
+			}
+
+			broadcastTxLogger.Infof(
+				"checking whether the transaction is known on Bitcoin chain",
+			)
+
+			_, err = wte.btcChain.GetTransactionConfirmations(txHash)
+			if err != nil {
+				broadcastTxLogger.Warnf(
+					"cannot say whether the transaction is known "+
+						"on Bitcoin chain; check returned an error: [%v]",
+					err,
+				)
+				continue
+			}
+
+			broadcastTxLogger.Infof("transaction is known on Bitcoin chain")
+			return nil
+		}
+	}
 }
 
 // wallet represents a tBTC wallet. A wallet is one of the basic building
@@ -258,6 +430,92 @@ func DetermineWalletMainUtxo(
 	}
 
 	return nil, fmt.Errorf("main UTXO not found")
+}
+
+// EnsureWalletSyncedBetweenChains makes sure all actions taken by the wallet
+// on the Bitcoin chain are reflected in the host chain Bridge. This translates
+// to two conditions that must be met:
+// - The wallet main UTXO registered in the host chain Bridge comes from the
+//   latest BTC transaction OR wallet main UTXO is unset and wallet's BTC
+//   transaction history is empty. This condition ensures that all expected SPV
+//   proofs of confirmed BTC transactions were submitted to the host chain Bridge
+//   thus the wallet state held known to the Bridge matches the actual state
+//   on the BTC chain.
+// - There are no pending BTC transactions in the mempool. This condition
+//   ensures the wallet doesn't currently perform any action on the BTC chain.
+//   Such a transactions indicate a possible state change in the future
+//   but their outcome cannot be determined at this stage so, the wallet
+//   should not perform new actions at the moment.
+func EnsureWalletSyncedBetweenChains(
+	walletPublicKeyHash [20]byte,
+	walletMainUtxo *bitcoin.UnspentTransactionOutput,
+	btcChain bitcoin.Chain,
+) error {
+	// Take the recent transactions history for the wallet.
+	history, err := btcChain.GetTransactionsForPublicKeyHash(walletPublicKeyHash, 5)
+	if err != nil {
+		return fmt.Errorf("cannot get transactions history: [%v]", err)
+	}
+
+	if walletMainUtxo != nil {
+		// If the wallet main UTXO exists, the transaction history must
+		// contain at least one item. If it is empty, something went
+		// really wrong. This should never happen but check this scenario
+		// just in case.
+		if len(history) == 0 {
+			return fmt.Errorf(
+				"wallet main UTXO exists but there are no BTC " +
+					"transactions produced by the wallet",
+			)
+		}
+
+		// The transaction history is not empty for sure. Take the latest BTC
+		// transaction from the history.
+		latestTransaction := history[len(history)-1]
+
+		// Make sure the wallet main UTXO comes from the latest transaction.
+		// That means all expected SPV proofs were submitted to the Bridge.
+		// If the wallet main UTXO transaction hash doesn't match the latest
+		// transaction, that means the SPV proof for the latest transaction was
+		// not submitted to the Bridge yet.
+		//
+		// Note that it is enough to check that the wallet main UTXO transaction
+		// hash matches the latest transaction hash. There is no way the main
+		// UTXO changes and the transaction hash stays the same. The Bridge
+		// enforces that all wallet transactions form a sequence and refer
+		// each other.
+		if walletMainUtxo.Outpoint.TransactionHash != latestTransaction.Hash() {
+			return fmt.Errorf(
+				"wallet main UTXO doesn't come from the latest BTC transaction",
+			)
+		}
+	} else {
+		// If the wallet main UTXO doesn't exist, the transaction history must
+		// be empty. If it is not, that could mean there is a Bitcoin transaction
+		// produced by the wallet whose SPV proof was not submitted to
+		// the Bridge yet.
+		if len(history) != 0 {
+			return fmt.Errorf(
+				"wallet main UTXO doesn't exist but there are BTC " +
+					"transactions produced by the wallet",
+			)
+		}
+	}
+
+	// Regardless of the main UTXO state, we need to make sure that
+	// no pending wallet transactions exist in the mempool. That way,
+	// we are handling a plenty of corner cases like transactions races
+	// that could potentially lead to fraudulent transactions and funds loss.
+	mempool, err := btcChain.GetMempoolForPublicKeyHash(walletPublicKeyHash)
+	if err != nil {
+		return fmt.Errorf("cannot get mempool: [%v]", err)
+	}
+
+	if len(mempool) != 0 {
+		return fmt.Errorf("unconfirmed transactions exist in the mempool")
+	}
+
+	return nil
 }
 
 // signer represents a threshold signer of a tBTC wallet. A signer holds

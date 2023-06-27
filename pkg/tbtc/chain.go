@@ -2,6 +2,7 @@ package tbtc
 
 import (
 	"crypto/ecdsa"
+	"errors"
 	"math/big"
 	"time"
 
@@ -181,6 +182,15 @@ type DKGParameters struct {
 	ApprovePrecedencePeriodBlocks uint64
 }
 
+var (
+	// ErrPendingRedemptionRequestNotFound is an error that is returned if
+	// a pending redemption request was not found on-chain for the given
+	// redemption key.
+	ErrPendingRedemptionRequestNotFound = errors.New(
+		"no pending redemption request for the given key",
+	)
+)
+
 // BridgeChain defines the subset of the TBTC chain interface that pertains
 // specifically to the tBTC Bridge operations.
 type BridgeChain interface {
@@ -229,6 +239,14 @@ type BridgeChain interface {
 		revealAheadPeriod uint32,
 		err error,
 	)
+
+	// GetPendingRedemptionRequest gets the on-chain pending redemption request
+	// for the given wallet public key hash and redeemer output script.
+	// Returns an error if the request was not found.
+	GetPendingRedemptionRequest(
+		walletPublicKeyHash [20]byte,
+		redeemerOutputScript bitcoin.Script,
+	) (*RedemptionRequest, error)
 }
 
 // HeartbeatRequestedEvent represents a Bridge heartbeat request event.
@@ -380,6 +398,11 @@ type WalletCoordinatorChain interface {
 	OnRedemptionProposalSubmitted(
 		func(event *RedemptionProposalSubmittedEvent),
 	) subscription.EventSubscription
+
+	// ValidateRedemptionProposal validates the given redemption proposal
+	// against the chain. Returns an error if the proposal is not valid or
+	// nil otherwise.
+	ValidateRedemptionProposal(proposal *RedemptionProposal) error
 }
 
 // HeartbeatRequestSubmittedEvent represents a wallet heartbeat request
@@ -432,6 +455,25 @@ type RedemptionProposal struct {
 	WalletPublicKeyHash    [20]byte
 	RedeemersOutputScripts []bitcoin.Script
 	RedemptionTxFee        *big.Int
+}
+
+// RedemptionRequestedEvent represents a redemption requested event.
+type RedemptionRequestedEvent struct {
+	WalletPublicKeyHash  [20]byte
+	RedeemerOutputScript bitcoin.Script
+	Redeemer             chain.Address
+	RequestedAmount      uint64
+	TreasuryFee          uint64
+	TxMaxFee             uint64
+	BlockNumber          uint64
+}
+
+// RedemptionRequestedEventFilter is a component allowing to filter RedemptionRequestedEvent.
+type RedemptionRequestedEventFilter struct {
+	StartBlock          uint64
+	EndBlock            *uint64
+	WalletPublicKeyHash [][20]byte
+	Redeemer            []chain.Address
 }
 
 // Chain represents the interface that the TBTC module expects to interact

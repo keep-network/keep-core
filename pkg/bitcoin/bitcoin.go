@@ -23,6 +23,11 @@ import (
 // >= 0x10000 && <= 0xffffffff             |   5   | 0xfe followed by the number as uint32
 // >= 0x100000000 && <= 0xffffffffffffffff |   9   | 0xff followed by the number as uint64
 //
+// Worth noting, the encoded number value is represented using the little-endian
+// byte order. For example, to convert the compact size uint 0xfd0302, the
+// 0xfd prefix must be skipped and the 0x0302 must be reversed to 0x0203 and
+// then converted to a decimal number 515.
+//
 // For reference, see:
 // https://developer.bitcoin.org/reference/transactions.html#compactsize-unsigned-integers
 type CompactSizeUint uint64
@@ -38,6 +43,18 @@ func readCompactSizeUint(varLenData []byte) (CompactSizeUint, int, error) {
 	}
 
 	return CompactSizeUint(csu), wire.VarIntSerializeSize(csu), nil
+}
+
+// writeCompactSizeUint writes the provided CompactSizeUint into a
+// byte slice.
+func writeCompactSizeUint(csu CompactSizeUint) ([]byte, error) {
+	var buffer bytes.Buffer
+	err := wire.WriteVarInt(&buffer, 0, uint64(csu))
+	if err != nil {
+		return nil, err
+	}
+
+	return buffer.Bytes(), nil
 }
 
 // ByteOrder represents the byte order used by the Bitcoin byte arrays. The

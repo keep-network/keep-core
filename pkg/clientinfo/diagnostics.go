@@ -3,6 +3,7 @@ package clientinfo
 import (
 	"encoding/json"
 
+	"github.com/keep-network/keep-core/pkg/bitcoin"
 	"github.com/keep-network/keep-core/pkg/chain"
 
 	"github.com/keep-network/keep-core/pkg/net"
@@ -12,7 +13,8 @@ import (
 type Diagnostics struct {
 	ClientInfo     Client `json:"client_info"`
 	ConnectedPeers []Peer `json:"connected_peers"`
-	ChainInfo      Chain  `json:"chain_info"`
+	EthChainInfo   Chain  `json:"eth_chain_info"`
+	BtcChainInfo   Chain  `json:"btc_chain_info"`
 }
 
 // Client describes data structure of client information.
@@ -30,9 +32,9 @@ type Peer struct {
 	NetworkMultiAddresses []string `json:"multiaddrs"`
 }
 
-// Chain describes data structure of chains information.
+// Chain describes data structure of a chain information.
 type Chain struct {
-	EthBlockNumber uint64 `json:"latest_eth_block_number"`
+	LatestBlockNumber uint `json:"latest_block_number"`
 }
 
 // ApplicationInfo describes data structure of application information.
@@ -124,25 +126,47 @@ func (r *Registry) RegisterClientInfoSource(
 	})
 }
 
-// RegisterChainInfoSource registers the diagnostics source providing
-// information about chains.
-func (r *Registry) RegisterChainInfoSource(
-	blockCounter chain.BlockCounter,
+// RegisterBtcChainInfoSource registers the diagnostics source providing
+// information about btc chain.
+func (r *Registry) RegisterBtcChainInfoSource(
+	btcChain bitcoin.Chain,
 ) {
-	r.RegisterDiagnosticSource("chain_info", func() string {
-		currentBlock, err := blockCounter.CurrentBlock()
+	r.RegisterDiagnosticSource("btc_chain_info", func() string {
+		btcLatestBlock, err := btcChain.GetLatestBlockHeight()
 		if err != nil {
-			logger.Errorf("error on getting Ethereum latest block number: [%v]", err)
-			return ""
+			logger.Errorf("error on getting Bitcoin latest block number: [%v]", err)
 		}
-
 		chainInfo := Chain{
-			EthBlockNumber: currentBlock,
+			LatestBlockNumber: btcLatestBlock,
 		}
 
 		bytes, err := json.Marshal(chainInfo)
 		if err != nil {
-			logger.Errorf("error on serializing chain info to JSON: [%v]", err)
+			logger.Errorf("error on serializing btc chain info to JSON: [%v]", err)
+			return ""
+		}
+
+		return string(bytes)
+	})
+}
+
+// RegisterEthChainInfoSource registers the diagnostics source providing
+// information about eth chain.
+func (r *Registry) RegisterEthChainInfoSource(
+	blockCounter chain.BlockCounter,
+) {
+	r.RegisterDiagnosticSource("eth_chain_info", func() string {
+		ethLatestBlock, err := blockCounter.CurrentBlock()
+		if err != nil {
+			logger.Errorf("error on getting Ethereum latest block number: [%v]", err)
+		}
+		chainInfo := Chain{
+			LatestBlockNumber: uint(ethLatestBlock),
+		}
+
+		bytes, err := json.Marshal(chainInfo)
+		if err != nil {
+			logger.Errorf("error on serializing eth chain info to JSON: [%v]", err)
 			return ""
 		}
 

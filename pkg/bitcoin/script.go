@@ -34,6 +34,17 @@ func NewScriptFromVarLenData(varLenData []byte) (Script, error) {
 	return varLenData[compactByteLength:], nil
 }
 
+// ToVarLenData converts the Script to a byte array prepended with a
+// CompactSizeUint holding the script's byte length.
+func (s Script) ToVarLenData() ([]byte, error) {
+	compactBytes, err := writeCompactSizeUint(CompactSizeUint(len(s)))
+	if err != nil {
+		return nil, fmt.Errorf("cannot write compact size uint: [%v]", err)
+	}
+
+	return append(compactBytes, s...), nil
+}
+
 // PublicKeyHash constructs the 20-byte public key hash by applying SHA-256
 // then RIPEMD-160 on the provided ECDSA public key.
 func PublicKeyHash(publicKey *ecdsa.PublicKey) [20]byte {

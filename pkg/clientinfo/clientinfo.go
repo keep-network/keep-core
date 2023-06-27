@@ -16,6 +16,7 @@ type Config struct {
 	Port                int
 	NetworkMetricsTick  time.Duration
 	EthereumMetricsTick time.Duration
+	BitcoinMetricsTick  time.Duration
 }
 
 // Registry wraps keep-common clientinfo registry and exposes additional

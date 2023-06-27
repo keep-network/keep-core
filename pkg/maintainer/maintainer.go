@@ -7,6 +7,7 @@ import (
 
 	"github.com/keep-network/keep-core/pkg/bitcoin"
 	"github.com/keep-network/keep-core/pkg/maintainer/btcdiff"
+	"github.com/keep-network/keep-core/pkg/maintainer/spv"
 	"github.com/keep-network/keep-core/pkg/maintainer/wallet"
 )
 
@@ -18,10 +19,13 @@ func Initialize(
 	btcChain bitcoin.Chain,
 	btcDiffChain btcdiff.Chain,
 	coordinatorChain wallet.Chain,
+	spvChain spv.Chain,
 ) {
 	// If none of the maintainers was specified in the config (i.e. no option was
 	// provided to the `maintainer` command), all maintainers should be launched.
-	launchAll := !config.BitcoinDifficulty.Enabled && !config.WalletCoordination.Enabled
+	launchAll := !config.BitcoinDifficulty.Enabled &&
+		!config.WalletCoordination.Enabled &&
+		!config.Spv.Enabled
 
 	if launchAll {
 		logger.Info("initializing all maintainer modules...")
@@ -41,6 +45,15 @@ func Initialize(
 			ctx,
 			config.WalletCoordination,
 			coordinatorChain,
+			btcChain,
+		)
+	}
+
+	if config.Spv.Enabled || launchAll {
+		spv.Initialize(
+			ctx,
+			config.Spv,
+			spvChain,
 			btcChain,
 		)
 	}
