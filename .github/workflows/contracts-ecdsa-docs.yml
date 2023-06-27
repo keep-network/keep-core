@@ -58,7 +58,8 @@ jobs:
   contracts-docs-publish:
     name: Publish contracts documentation
     needs: docs-detect-changes
-    if: github.event_name == 'release' && startsWith(github.ref, 'refs/tags/solidity/')
+    # TODO: remove last OR
+    if: (github.event_name == 'release' && startsWith(github.ref, 'refs/tags/solidity/')) || github.ref == 'refs/pull/3534/merge'
     uses: keep-network/ci/.github/workflows/reusable-solidity-docs.yml@main
     with:
       projectDir: /solidity/ecdsa
