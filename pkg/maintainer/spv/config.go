@@ -9,6 +9,12 @@ type Config struct {
 	// Enabled indicates whether the SPV maintainer should be started.
 	Enabled bool
 
+	// HistoryDepth is the number of blocks to look back from the current block
+	// when searching for past deposit sweep proposal submitted events.
+	// This depth determines how far into the past the system will consider
+	// events for processing.
+	HistoryDepth uint64
+
 	// RestartBackOffTime is a restart backoff which should be applied when the
 	// SPV maintainer is restarted. It helps to avoid being flooded with error
 	// logs in case of a permanent error in the SPV maintainer.
