@@ -158,7 +158,7 @@ func ProposeRedemption(
 	if fee <= 0 {
 		logger.Infof("estimating redemption transaction fee...")
 
-		estimatedFee, err := estimateRedemptionFee(
+		estimatedFee, err := EstimateRedemptionFee(
 			btcChain,
 			redeemersOutputScripts,
 		)
@@ -335,13 +335,15 @@ redemptionRequestedLoop:
 	return result, nil
 }
 
-func estimateRedemptionFee(
+func EstimateRedemptionFee(
 	btcChain bitcoin.Chain,
 	redeemersOutputScripts []bitcoin.Script,
 ) (int64, error) {
 	sizeEstimator := bitcoin.NewTransactionSizeEstimator().
 		// 1 P2WPKH main UTXO input.
-		AddPublicKeyHashInputs(1, true)
+		AddPublicKeyHashInputs(1, true).
+		// 1 P2WPKH change output.
+		AddPublicKeyHashOutputs(1, true)
 
 	for _, script := range redeemersOutputScripts {
 		switch bitcoin.GetScriptType(script) {
