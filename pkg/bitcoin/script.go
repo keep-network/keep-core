@@ -9,6 +9,17 @@ import (
 	"github.com/btcsuite/btcutil"
 )
 
+// ScriptType represents the possible types of Script.
+type ScriptType uint8
+
+const (
+	NonStandardScript ScriptType = iota
+	P2PKHScript
+	P2WPKHScript
+	P2SHScript
+	P2WSHScript
+)
+
 // Script represents an arbitrary Bitcoin script, NOT prepended with the
 // byte-length of the script
 type Script []byte
@@ -118,4 +129,20 @@ func PayToScriptHash(scriptHash [20]byte) (Script, error) {
 		AddData(scriptHash[:]).
 		AddOp(txscript.OP_EQUAL).
 		Script()
+}
+
+// GetScriptType gets the ScriptType of the given Script.
+func GetScriptType(script Script) ScriptType {
+	switch txscript.GetScriptClass(script) {
+	case txscript.PubKeyHashTy:
+		return P2PKHScript
+	case txscript.WitnessV0PubKeyHashTy:
+		return P2WPKHScript
+	case txscript.ScriptHashTy:
+		return P2SHScript
+	case txscript.WitnessV0ScriptHashTy:
+		return P2WSHScript
+	default:
+		return NonStandardScript
+	}
 }
