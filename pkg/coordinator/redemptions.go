@@ -13,8 +13,7 @@ import (
 )
 
 type redemptionEntry struct {
-	walletPublicKeyHash [20]byte
-
+	walletPublicKeyHash  [20]byte
 	redemptionKey        string
 	redeemerOutputScript bitcoin.Script
 	requestedAt          time.Time
@@ -142,6 +141,7 @@ func FindPendingRedemptions(
 // ProposeRedemption handles redemption proposal submission.
 func ProposeRedemption(
 	chain Chain,
+	btcChain bitcoin.Chain,
 	walletPublicKeyHash [20]byte,
 	fee int64,
 	redeemersOutputScripts []bitcoin.Script,
@@ -151,9 +151,25 @@ func ProposeRedemption(
 		return fmt.Errorf("redemptions list is empty")
 	}
 
-	// Estimate fee if it's missing.
+	// Estimate fee if it's missing. Do not check the estimated fee against
+	// the maximum total and per-request fees allowed by the Bridge. This
+	// is done during the on-chain validation of the proposal so there is no
+	// need to do it here.
 	if fee <= 0 {
-		panic("fee estimation not implemented yet")
+		logger.Infof("estimating redemption transaction fee...")
+
+		estimatedFee, err := estimateRedemptionFee(
+			btcChain,
+			redeemersOutputScripts,
+		)
+		if err != nil {
+			return fmt.Errorf(
+				"cannot estimate redemption transaction fee: [%w]",
+				err,
+			)
+		}
+
+		fee = estimatedFee
 	}
 
 	logger.Infof("redemption transaction fee: [%d]", fee)
@@ -317,4 +333,42 @@ redemptionRequestedLoop:
 	}
 
 	return result, nil
+}
+
+func estimateRedemptionFee(
+	btcChain bitcoin.Chain,
+	redeemersOutputScripts []bitcoin.Script,
+) (int64, error) {
+	sizeEstimator := bitcoin.NewTransactionSizeEstimator().
+		// 1 P2WPKH main UTXO input.
+		AddPublicKeyHashInputs(1, true)
+
+	for _, script := range redeemersOutputScripts {
+		switch bitcoin.GetScriptType(script) {
+		case bitcoin.P2PKHScript:
+			sizeEstimator.AddPublicKeyHashOutputs(1, false)
+		case bitcoin.P2WPKHScript:
+			sizeEstimator.AddPublicKeyHashOutputs(1, true)
+		case bitcoin.P2SHScript:
+			sizeEstimator.AddScriptHashOutputs(1, false)
+		case bitcoin.P2WSHScript:
+			sizeEstimator.AddScriptHashOutputs(1, true)
+		default:
+			panic("non-standard redeemer output script type")
+		}
+	}
+
+	transactionSize, err := sizeEstimator.VirtualSize()
+	if err != nil {
+		return 0, fmt.Errorf("cannot estimate transaction virtual size: [%v]", err)
+	}
+
+	feeEstimator := bitcoin.NewTransactionFeeEstimator(btcChain)
+
+	totalFee, err := feeEstimator.EstimateFee(transactionSize)
+	if err != nil {
+		return 0, fmt.Errorf("cannot estimate transaction fee: [%v]", err)
+	}
+
+	return totalFee, nil
 }
