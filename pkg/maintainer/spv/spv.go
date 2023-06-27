@@ -220,8 +220,16 @@ func (sm *spvMaintainer) getUnprovenDepositSweepTransactions() (
 	unprovenDepositSweepTransactions := []*bitcoin.Transaction{}
 
 	for _, walletPublicKeyHash := range walletPublicKeyHashes {
-		// TODO: Should we check the wallet's state before attempting to submit
-		//       the deposit sweep proof?
+		wallet, err := sm.chain.GetWallet(walletPublicKeyHash)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get wallet: [%v]", err)
+		}
+
+		// Skip if the wallet is not `Live` or `MovingFunds`.
+		if wallet.State != 1 && wallet.State != 2 {
+			continue
+		}
+
 		walletTransactions, err := sm.btcChain.GetTransactionsForPublicKeyHash(
 			walletPublicKeyHash,
 			sm.config.TransactionLimit,
