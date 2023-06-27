@@ -109,6 +109,36 @@ type Chain interface {
 	// a processing.
 	GetRedemptionRequestMinAge() (uint32, error)
 
-	tbtc.ValidateDepositSweepProposalChain
-	tbtc.ValidateRedemptionProposalChain
+	// PastDepositRevealedEvents fetches past deposit reveal events according
+	// to the provided filter or unfiltered if the filter is nil. Returned
+	// events are sorted by the block number in the ascending order, i.e. the
+	// latest event is at the end of the slice.
+	PastDepositRevealedEvents(
+		filter *tbtc.DepositRevealedEventFilter,
+	) ([]*tbtc.DepositRevealedEvent, error)
+
+	// GetPendingRedemptionRequest gets the on-chain pending redemption request
+	// for the given wallet public key hash and redeemer output script.
+	// Returns an error if the request was not found.
+	GetPendingRedemptionRequest(
+		walletPublicKeyHash [20]byte,
+		redeemerOutputScript bitcoin.Script,
+	) (*tbtc.RedemptionRequest, error)
+
+	// ValidateDepositSweepProposal validates the given deposit sweep proposal
+	// against the chain. It requires some additional data about the deposits
+	// that must be fetched externally. Returns an error if the proposal is
+	// not valid or nil otherwise.
+	ValidateDepositSweepProposal(
+		proposal *tbtc.DepositSweepProposal,
+		depositsExtraInfo []struct {
+			*tbtc.Deposit
+			FundingTx *bitcoin.Transaction
+		},
+	) error
+
+	// ValidateRedemptionProposal validates the given redemption proposal
+	// against the chain. Returns an error if the proposal is not valid or
+	// nil otherwise.
+	ValidateRedemptionProposal(proposal *tbtc.RedemptionProposal) error
 }

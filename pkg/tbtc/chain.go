@@ -201,6 +201,22 @@ type BridgeChain interface {
 	// ComputeMainUtxoHash computes the hash of the provided main UTXO
 	// according to the on-chain Bridge rules.
 	ComputeMainUtxoHash(mainUtxo *bitcoin.UnspentTransactionOutput) [32]byte
+
+	// PastDepositRevealedEvents fetches past deposit reveal events according
+	// to the provided filter or unfiltered if the filter is nil. Returned
+	// events are sorted by the block number in the ascending order, i.e. the
+	// latest event is at the end of the slice.
+	PastDepositRevealedEvents(
+		filter *DepositRevealedEventFilter,
+	) ([]*DepositRevealedEvent, error)
+
+	// GetPendingRedemptionRequest gets the on-chain pending redemption request
+	// for the given wallet public key hash and redeemer output script.
+	// Returns an error if the request was not found.
+	GetPendingRedemptionRequest(
+		walletPublicKeyHash [20]byte,
+		redeemerOutputScript bitcoin.Script,
+	) (*RedemptionRequest, error)
 }
 
 // HeartbeatRequestedEvent represents a Bridge heartbeat request event.
@@ -316,18 +332,6 @@ type WalletCoordinatorChain interface {
 	OnRedemptionProposalSubmitted(
 		func(event *RedemptionProposalSubmittedEvent),
 	) subscription.EventSubscription
-}
-
-// ValidateDepositSweepProposalChain defines the subset of the TBTC chain interface
-// that pertains specifically to the Deposit Sweep Proposal validation.
-type ValidateDepositSweepProposalChain interface {
-	// PastDepositRevealedEvents fetches past deposit reveal events according
-	// to the provided filter or unfiltered if the filter is nil. Returned
-	// events are sorted by the block number in the ascending order, i.e. the
-	// latest event is at the end of the slice.
-	PastDepositRevealedEvents(
-		filter *DepositRevealedEventFilter,
-	) ([]*DepositRevealedEvent, error)
 
 	// ValidateDepositSweepProposal validates the given deposit sweep proposal
 	// against the chain. It requires some additional data about the deposits
@@ -340,18 +344,6 @@ type ValidateDepositSweepProposalChain interface {
 			FundingTx *bitcoin.Transaction
 		},
 	) error
-}
-
-// ValidateRedemptionProposalChain defines the subset of the TBTC chain interface
-// that pertains specifically to the Redemption Proposal validation.
-type ValidateRedemptionProposalChain interface {
-	// GetPendingRedemptionRequest gets the on-chain pending redemption request
-	// for the given wallet public key hash and redeemer output script.
-	// Returns an error if the request was not found.
-	GetPendingRedemptionRequest(
-		walletPublicKeyHash [20]byte,
-		redeemerOutputScript bitcoin.Script,
-	) (*RedemptionRequest, error)
 
 	// ValidateRedemptionProposal validates the given redemption proposal
 	// against the chain. Returns an error if the proposal is not valid or
@@ -451,6 +443,4 @@ type Chain interface {
 	DistributedKeyGenerationChain
 	BridgeChain
 	WalletCoordinatorChain
-	ValidateDepositSweepProposalChain
-	ValidateRedemptionProposalChain
 }
