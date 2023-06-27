@@ -1102,14 +1102,6 @@ func (tc *TbtcChain) GetDepositRequest(
 		)
 	}
 
-	// Deposit not found.
-	if depositRequest.RevealedAt == 0 {
-		return nil, fmt.Errorf(
-			"no deposit request for key [0x%x]",
-			depositKey.Text(16),
-		)
-	}
-
 	var vault *chain.Address
 	if depositRequest.Vault != [20]byte{} {
 		v := chain.Address(depositRequest.Vault.Hex())

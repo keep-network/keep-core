@@ -20,8 +20,9 @@ type Chain interface {
 	) error
 
 	// GetDepositRequest gets the on-chain deposit request for the given
-	// funding transaction hash and output index. Returns an error if the
-	// deposit was not found.
+	// funding transaction hash and output index. If the deposit was not found
+	// a deposit object will still be returned, but the `RevealedAt` timestamp
+	// will be set to zero.
 	GetDepositRequest(
 		fundingTxHash bitcoin.Hash,
 		fundingOutputIndex uint32,

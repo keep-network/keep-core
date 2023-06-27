@@ -157,6 +157,14 @@ func parseTransactionInputs(
 				)
 			}
 
+			// Call successful, but deposit not found.
+			if deposit.RevealedAt.Unix() == 0 {
+				return bitcoin.UnspentTransactionOutput{}, common.Address{}, fmt.Errorf(
+					"deposit not found: [%v]",
+					err,
+				)
+			}
+
 			if depositAlreadyProcessed {
 				if vault != convertVaultAddress(deposit.Vault) {
 					return bitcoin.UnspentTransactionOutput{}, common.Address{}, fmt.Errorf(

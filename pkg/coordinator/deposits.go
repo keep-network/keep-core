@@ -247,6 +247,14 @@ func getDeposits(
 			)
 		}
 
+		// Call successful, but deposit not found.
+		if depositRequest.RevealedAt.Unix() == 0 {
+			return nil, fmt.Errorf(
+				"no deposit request for key [0x%x]",
+				depositKey.Text(16),
+			)
+		}
+
 		isSwept := depositRequest.SweptAt.Unix() != 0
 		if skipSwept && isSwept {
 			logger.Debugf("deposit %d/%d is already swept", i+1, len(depositRevealedEvents))
