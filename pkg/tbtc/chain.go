@@ -310,15 +310,6 @@ type WalletCoordinatorChain interface {
 		func(event *DepositSweepProposalSubmittedEvent),
 	) subscription.EventSubscription
 
-	// PastDepositSweepProposalSubmittedEvents fetches past deposit sweep
-	// proposal events according to the provided filter or unfiltered if the
-	// filter is nil. Returned events are sorted by the block number in the
-	// ascending order, i.e. the latest event is at the end of the slice.
-	// TODO: This function is not used, consider removing it.
-	PastDepositSweepProposalSubmittedEvents(
-		filter *DepositSweepProposalSubmittedEventFilter,
-	) ([]*DepositSweepProposalSubmittedEvent, error)
-
 	// GetWalletLock gets the current wallet lock for the given wallet.
 	// Returned values represent the expiration time and the cause of the lock.
 	// The expiration time can be UNIX timestamp 0 which means there is no lock
