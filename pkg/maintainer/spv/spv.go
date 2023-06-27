@@ -137,6 +137,8 @@ func (sm *spvMaintainer) proveDepositSweepTransactions() error {
 	}
 
 	for _, transaction := range depositSweepTransactions {
+		// TODO: Skip if the transaction has not accumulated enough confirmations yet.
+
 		_, proof, err := bitcoin.AssembleSpvProof(
 			transaction.Hash(),
 			uint(requiredConfirmations.Uint64()),
