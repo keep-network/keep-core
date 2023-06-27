@@ -49,6 +49,19 @@ jobs:
       commentPR: true
       exportAsGHArtifacts: true
 
+  # This job is needed to avoid a clash of `contracts-docs-publish` jobs for
+  # `random-beacon` and `ecdsa` projects (if both are run and pull the code at
+  # the same time and try to push to the same branch, one of them will fail). 
+  contracts-docs-prepublish-wait:
+    name: Wait for contracts docs to be published
+    needs: docs-detect-changes
+     # TODO: remove last OR
+    if: (github.event_name == 'release' && startsWith(github.ref, 'refs/tags/solidity/')) || github.ref == 'refs/pull/3534/merge'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Wait 4 minutes
+        run: sleep 240
+
   # This job will be triggered for releases which name starts with
   # `refs/tags/solidity/`. It will generate contracts documentation in
   # Markdown and sync it with a specific path of
@@ -57,9 +70,7 @@ jobs:
   # commit pushing the changes will be verified using GPG key.
   contracts-docs-publish:
     name: Publish contracts documentation
-    needs: docs-detect-changes
-    # TODO: remove last OR
-    if: (github.event_name == 'release' && startsWith(github.ref, 'refs/tags/solidity/')) || github.ref == 'refs/pull/3534/merge'
+    needs: contracts-docs-prepublish-wait
     uses: keep-network/ci/.github/workflows/reusable-solidity-docs.yml@main
     with:
       projectDir: /solidity/ecdsa
