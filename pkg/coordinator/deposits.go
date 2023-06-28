@@ -239,11 +239,21 @@ func getDeposits(
 
 		depositKey := chain.BuildDepositKey(event.FundingTxHash, event.FundingOutputIndex)
 
-		depositRequest, err := chain.GetDepositRequest(event.FundingTxHash, event.FundingOutputIndex)
+		depositRequest, found, err := chain.GetDepositRequest(
+			event.FundingTxHash,
+			event.FundingOutputIndex,
+		)
 		if err != nil {
 			return result, fmt.Errorf(
 				"failed to get deposit request: [%w]",
 				err,
+			)
+		}
+
+		if !found {
+			return nil, fmt.Errorf(
+				"no deposit request for key [0x%x]",
+				depositKey.Text(16),
 			)
 		}
 

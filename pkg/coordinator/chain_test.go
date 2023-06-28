@@ -118,7 +118,7 @@ func buildPastDepositRevealedEventsKey(
 func (lc *localChain) GetDepositRequest(
 	fundingTxHash bitcoin.Hash,
 	fundingOutputIndex uint32,
-) (*tbtc.DepositChainRequest, error) {
+) (*tbtc.DepositChainRequest, bool, error) {
 	lc.mutex.Lock()
 	defer lc.mutex.Unlock()
 
@@ -126,10 +126,10 @@ func (lc *localChain) GetDepositRequest(
 
 	request, ok := lc.depositRequests[requestKey]
 	if !ok {
-		return nil, fmt.Errorf("no request for given key")
+		return nil, false, nil
 	}
 
-	return request, nil
+	return request, true, nil
 }
 
 func (lc *localChain) setDepositRequest(

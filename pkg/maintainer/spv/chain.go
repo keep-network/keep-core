@@ -20,12 +20,18 @@ type Chain interface {
 	) error
 
 	// GetDepositRequest gets the on-chain deposit request for the given
-	// funding transaction hash and output index. Returns an error if the
-	// deposit was not found.
+	// funding transaction hash and output index.The returned values represent:
+	// - deposit request which is non-nil only when the deposit request was
+	//   found,
+	// - boolean value which is true if the deposit request was found, false
+	//   otherwise,
+	// - error which is non-nil only when the function execution failed. It will
+	//   be nil if the deposit request was not found, but the function execution
+	//   succeeded.
 	GetDepositRequest(
 		fundingTxHash bitcoin.Hash,
 		fundingOutputIndex uint32,
-	) (*tbtc.DepositChainRequest, error)
+	) (*tbtc.DepositChainRequest, bool, error)
 
 	// TxProofDifficultyFactor returns the number of confirmations on the
 	// Bitcoin chain required to successfully evaluate an SPV proof.
