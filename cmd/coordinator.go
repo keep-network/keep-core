@@ -261,6 +261,11 @@ var proposeRedemptionCommand = cobra.Command{
 			)
 		}
 
+		btcChain, err := electrum.Connect(cmd.Context(), clientConfig.Bitcoin.Electrum)
+		if err != nil {
+			return fmt.Errorf("could not connect to Electrum chain: [%v]", err)
+		}
+
 		var walletPublicKeyHash [20]byte
 		if len(wallet) > 0 {
 			var err error
@@ -296,6 +301,7 @@ var proposeRedemptionCommand = cobra.Command{
 
 		return coordinator.ProposeRedemption(
 			tbtcChain,
+			btcChain,
 			walletPublicKeyHash,
 			fee,
 			redemptions,

@@ -333,3 +333,56 @@ func TestPayToScriptHash(t *testing.T) {
 
 	testutils.AssertBytesEqual(t, expectedResult, result[:])
 }
+
+func TestGetScriptType(t *testing.T) {
+	fromHex := func(hexString string) []byte {
+		bytes, err := hex.DecodeString(hexString)
+		if err != nil {
+			t.Fatal(err)
+		}
+		return bytes
+	}
+
+	var tests = map[string]struct {
+		script       Script
+		expectedType ScriptType
+	}{
+		"p2pkh script": {
+			script:       fromHex("76a9148db50eb52063ea9d98b3eac91489a90f738986f688ac"),
+			expectedType: P2PKHScript,
+		},
+		"p2wpkh script": {
+			script:       fromHex("00148db50eb52063ea9d98b3eac91489a90f738986f6"),
+			expectedType: P2WPKHScript,
+		},
+		"p2sh script": {
+			script:       fromHex("a9143ec459d0f3c29286ae5df5fcc421e2786024277e87"),
+			expectedType: P2SHScript,
+		},
+		"p2wsh script": {
+			script:       fromHex("002086a303cdd2e2eab1d1679f1a813835dc5a1b65321077cdccaf08f98cbf04ca96"),
+			expectedType: P2WSHScript,
+		},
+		"non-standard script": {
+			script: fromHex(
+				"14934b98637ca318a4d6e7ca6ffd1690b8e77df6377508f9f0c90d0003" +
+					"95237576a9148db50eb52063ea9d98b3eac91489a90f738986f68763ac6776a" +
+					"91428e081f285138ccbe389c1eb8985716230129f89880460bcea61b175ac68",
+			),
+			expectedType: NonStandardScript,
+		},
+	}
+
+	for testName, test := range tests {
+		t.Run(testName, func(t *testing.T) {
+			actualType := GetScriptType(test.script)
+
+			testutils.AssertIntsEqual(
+				t,
+				"script type",
+				int(test.expectedType),
+				int(actualType),
+			)
+		})
+	}
+}
