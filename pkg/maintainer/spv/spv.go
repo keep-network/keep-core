@@ -10,6 +10,7 @@ import (
 	"github.com/ipfs/go-log/v2"
 
 	"github.com/keep-network/keep-core/pkg/bitcoin"
+	"github.com/keep-network/keep-core/pkg/maintainer/btcdiff"
 	"github.com/keep-network/keep-core/pkg/tbtc"
 )
 
@@ -42,7 +43,8 @@ const (
 func Initialize(
 	ctx context.Context,
 	config Config,
-	chain Chain,
+	spvChain Chain,
+	btcDiffChain btcdiff.Chain,
 	btcChain bitcoin.Chain,
 ) {
 	if config.HistoryDepth == 0 {
@@ -59,18 +61,20 @@ func Initialize(
 	}
 
 	spvMaintainer := &spvMaintainer{
-		config:   config,
-		chain:    chain,
-		btcChain: btcChain,
+		config:       config,
+		spvChain:     spvChain,
+		btcDiffChain: btcDiffChain,
+		btcChain:     btcChain,
 	}
 
 	go spvMaintainer.startControlLoop(ctx)
 }
 
 type spvMaintainer struct {
-	config   Config
-	chain    Chain
-	btcChain bitcoin.Chain
+	config       Config
+	spvChain     Chain
+	btcDiffChain btcdiff.Chain
+	btcChain     bitcoin.Chain
 }
 
 func (sm *spvMaintainer) startControlLoop(ctx context.Context) {
@@ -128,7 +132,7 @@ func (sm *spvMaintainer) proveDepositSweepTransactions() error {
 
 	// TODO: Consider handling a situation in which the block headers in the
 	//       proof span multiple Bitcoin difficulty epochs.
-	requiredConfirmations, err := sm.chain.TxProofDifficultyFactor()
+	requiredConfirmations, err := sm.spvChain.TxProofDifficultyFactor()
 	if err != nil {
 		return fmt.Errorf(
 			"failed to get transaction proof difficulty factor: [%v]",
@@ -150,7 +154,7 @@ func (sm *spvMaintainer) proveDepositSweepTransactions() error {
 
 		mainUTXO, vault, err := parseTransactionInputs(
 			sm.btcChain,
-			sm.chain,
+			sm.spvChain,
 			transaction,
 		)
 		if err != nil {
@@ -166,7 +170,7 @@ func (sm *spvMaintainer) proveDepositSweepTransactions() error {
 		//       headers with a difficulty that is not yet proven. Skip proving
 		//       such a transaction. It will be proven in the future by another
 		//       round of processing deposit sweep proofs.
-		if err := sm.chain.SubmitDepositSweepProofWithReimbursement(
+		if err := sm.spvChain.SubmitDepositSweepProofWithReimbursement(
 			transaction,
 			proof,
 			mainUTXO,
@@ -186,7 +190,7 @@ func (sm *spvMaintainer) getUnprovenDepositSweepTransactions() (
 	[]*bitcoin.Transaction,
 	error,
 ) {
-	blockCounter, err := sm.chain.BlockCounter()
+	blockCounter, err := sm.spvChain.BlockCounter()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get block counter: [%v]", err)
 	}
@@ -201,7 +205,7 @@ func (sm *spvMaintainer) getUnprovenDepositSweepTransactions() (
 	startBlock := currentBlock - sm.config.HistoryDepth
 
 	depositSweepTransactionProposals, err :=
-		sm.chain.PastDepositSweepProposalSubmittedEvents(
+		sm.spvChain.PastDepositSweepProposalSubmittedEvents(
 			&tbtc.DepositSweepProposalSubmittedEventFilter{
 				StartBlock: startBlock,
 			},
@@ -222,7 +226,7 @@ func (sm *spvMaintainer) getUnprovenDepositSweepTransactions() (
 	unprovenDepositSweepTransactions := []*bitcoin.Transaction{}
 
 	for _, walletPublicKeyHash := range walletPublicKeyHashes {
-		wallet, err := sm.chain.GetWallet(walletPublicKeyHash)
+		wallet, err := sm.spvChain.GetWallet(walletPublicKeyHash)
 		if err != nil {
 			return nil, fmt.Errorf("failed to get wallet: [%v]", err)
 		}
@@ -288,7 +292,7 @@ func (sm *spvMaintainer) isUnprovenDepositSweepTransaction(
 		fundingOutpointIndex := input.Outpoint.OutputIndex
 
 		// Check if the input is a deposit input.
-		deposit, found, err := sm.chain.GetDepositRequest(
+		deposit, found, err := sm.spvChain.GetDepositRequest(
 			fundingTransactionHash,
 			fundingOutpointIndex,
 		)
@@ -359,7 +363,7 @@ func (sm *spvMaintainer) isInputCurrentWalletsMainUTXO(
 	fundingOutputValue := previousTransaction.Outputs[fundingOutputIndex].Value
 
 	// Assume the input is the main UTXO and calculate hash.
-	mainUtxoHash := sm.chain.ComputeMainUtxoHash(&bitcoin.UnspentTransactionOutput{
+	mainUtxoHash := sm.spvChain.ComputeMainUtxoHash(&bitcoin.UnspentTransactionOutput{
 		Outpoint: &bitcoin.TransactionOutpoint{
 			TransactionHash: fundingTxHash,
 			OutputIndex:     fundingOutputIndex,
@@ -368,7 +372,7 @@ func (sm *spvMaintainer) isInputCurrentWalletsMainUTXO(
 	})
 
 	// Get the wallet and check if its main UTXO matches the calculated hash.
-	wallet, err := sm.chain.GetWallet(walletPublicKeyHash)
+	wallet, err := sm.spvChain.GetWallet(walletPublicKeyHash)
 	if err != nil {
 		return false, fmt.Errorf("failed to get wallet: [%v]", err)
 	}
