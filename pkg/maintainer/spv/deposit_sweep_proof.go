@@ -146,7 +146,7 @@ func parseTransactionInputs(
 			// the deposits should have the same vault set or no vault at all.
 			// If the vault if different than the vault from any previous
 			// deposit input, report an error.
-			deposit, err := spvChain.GetDepositRequest(
+			deposit, found, err := spvChain.GetDepositRequest(
 				outpointTransactionHash,
 				outpointIndex,
 			)
@@ -157,8 +157,7 @@ func parseTransactionInputs(
 				)
 			}
 
-			// Call successful, but deposit not found.
-			if deposit.RevealedAt.Unix() == 0 {
+			if !found {
 				return bitcoin.UnspentTransactionOutput{}, common.Address{}, fmt.Errorf(
 					"deposit not found: [%v]",
 					err,
