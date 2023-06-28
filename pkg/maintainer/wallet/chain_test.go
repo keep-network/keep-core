@@ -7,7 +7,6 @@ import (
 	"encoding/hex"
 	"fmt"
 	"github.com/keep-network/keep-core/pkg/bitcoin"
-	"github.com/keep-network/keep-core/pkg/coordinator"
 	"math/big"
 	"sync"
 	"time"
@@ -32,7 +31,7 @@ type LocalChain struct {
 
 	depositRequests                 map[[32]byte]*tbtc.DepositChainRequest
 	pastDepositRevealedEvents       map[[32]byte][]*tbtc.DepositRevealedEvent
-	pastNewWalletRegisteredEvents   map[[32]byte][]*coordinator.NewWalletRegisteredEvent
+	pastNewWalletRegisteredEvents   map[[32]byte][]*tbtc.NewWalletRegisteredEvent
 	depositParameters               depositParameters
 	depositSweepProposalValidations map[[32]byte]bool
 	depositSweepProposals           []*tbtc.DepositSweepProposal
@@ -43,7 +42,7 @@ func NewLocalChain() *LocalChain {
 	return &LocalChain{
 		depositRequests:                 make(map[[32]byte]*tbtc.DepositChainRequest),
 		pastDepositRevealedEvents:       make(map[[32]byte][]*tbtc.DepositRevealedEvent),
-		pastNewWalletRegisteredEvents:   make(map[[32]byte][]*coordinator.NewWalletRegisteredEvent),
+		pastNewWalletRegisteredEvents:   make(map[[32]byte][]*tbtc.NewWalletRegisteredEvent),
 		depositSweepProposalValidations: make(map[[32]byte]bool),
 		walletLocks:                     make(map[[20]byte]*walletLock),
 	}
@@ -161,8 +160,8 @@ func (lc *LocalChain) SetDepositRequest(
 }
 
 func (lc *LocalChain) PastNewWalletRegisteredEvents(
-	filter *coordinator.NewWalletRegisteredEventFilter,
-) ([]*coordinator.NewWalletRegisteredEvent, error) {
+	filter *tbtc.NewWalletRegisteredEventFilter,
+) ([]*tbtc.NewWalletRegisteredEvent, error) {
 	lc.mutex.Lock()
 	defer lc.mutex.Unlock()
 
@@ -180,8 +179,8 @@ func (lc *LocalChain) PastNewWalletRegisteredEvents(
 }
 
 func (lc *LocalChain) AddPastNewWalletRegisteredEvent(
-	filter *coordinator.NewWalletRegisteredEventFilter,
-	event *coordinator.NewWalletRegisteredEvent,
+	filter *tbtc.NewWalletRegisteredEventFilter,
+	event *tbtc.NewWalletRegisteredEvent,
 ) error {
 	lc.mutex.Lock()
 	defer lc.mutex.Unlock()
@@ -192,7 +191,7 @@ func (lc *LocalChain) AddPastNewWalletRegisteredEvent(
 	}
 
 	if _, ok := lc.pastNewWalletRegisteredEvents[eventsKey]; !ok {
-		lc.pastNewWalletRegisteredEvents[eventsKey] = []*coordinator.NewWalletRegisteredEvent{}
+		lc.pastNewWalletRegisteredEvents[eventsKey] = []*tbtc.NewWalletRegisteredEvent{}
 	}
 
 	lc.pastNewWalletRegisteredEvents[eventsKey] = append(
@@ -204,7 +203,7 @@ func (lc *LocalChain) AddPastNewWalletRegisteredEvent(
 }
 
 func buildPastNewWalletRegisteredEventsKey(
-	filter *coordinator.NewWalletRegisteredEventFilter,
+	filter *tbtc.NewWalletRegisteredEventFilter,
 ) ([32]byte, error) {
 	if filter == nil {
 		return [32]byte{}, nil
