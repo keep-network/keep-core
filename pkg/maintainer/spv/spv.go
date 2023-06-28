@@ -27,7 +27,10 @@ const (
 	// public key hash. The value is based on the frequency of how often deposit
 	// sweep and redemption transaction will happen. Deposit sweep transactions
 	// are assumed to happen every 48h. Redemption transactions are assumed to
-	// happen every 3h.
+	// happen every 3h. The wallet should refuse any proposals from the
+	// coordinator if the previously executed Bitcoin transaction was not proved
+	// to the Bridge yet so in theory, the value of 1 should be enough. We make
+	// it a bit higher - better to be safe than sorry.
 	spvDefaultTransactionLimit = 20
 
 	// Default value for back-off time which should be applied when the SPV
