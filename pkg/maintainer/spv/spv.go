@@ -133,9 +133,7 @@ func (sm *spvMaintainer) proveDepositSweepTransactions() error {
 		)
 	}
 
-	// TODO: Consider handling a situation in which the block headers in the
-	//       proof span multiple Bitcoin difficulty epochs.
-	requiredConfirmations, err := sm.spvChain.TxProofDifficultyFactor()
+	txProofDifficultyFactor, err := sm.spvChain.TxProofDifficultyFactor()
 	if err != nil {
 		return fmt.Errorf(
 			"failed to get transaction proof difficulty factor: [%v]",
@@ -143,12 +141,30 @@ func (sm *spvMaintainer) proveDepositSweepTransactions() error {
 		)
 	}
 
+	// TODO: Handle a situation in which the block headers in the proof span
+	//       multiple Bitcoin difficulty epochs.
+	requiredConfirmations := uint(txProofDifficultyFactor.Uint64())
+
 	for _, transaction := range depositSweepTransactions {
-		// TODO: Skip if the transaction has not accumulated enough confirmations yet.
+		accumulatedConfirmations, err := sm.btcChain.GetTransactionConfirmations(
+			transaction.Hash(),
+		)
+		if err != nil {
+			return fmt.Errorf(
+				"failed to get transaction confirmations: [%v]",
+				err,
+			)
+		}
+
+		if accumulatedConfirmations < requiredConfirmations {
+			// Skip the transaction as it has not accumulated enough
+			// confirmations. It will be proven later.
+			continue
+		}
 
 		_, proof, err := bitcoin.AssembleSpvProof(
 			transaction.Hash(),
-			uint(requiredConfirmations.Uint64()),
+			requiredConfirmations,
 			sm.btcChain,
 		)
 		if err != nil {
