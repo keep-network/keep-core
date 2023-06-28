@@ -62,6 +62,39 @@ func (bh *BlockHeader) Serialize() [BlockHeaderByteLength]byte {
 	return result
 }
 
+// Deserialize deserializes a byte array to a BlockHeader using the block header
+// serialization format:
+// [Version][PreviousBlockHeaderHash][MerkleRootHash][Time][Bits][Nonce].
+func (bh *BlockHeader) Deserialize(rawBlockHeader [BlockHeaderByteLength]byte) {
+	offset := 0
+
+	// Version
+	bh.Version = int32(binary.LittleEndian.Uint32(rawBlockHeader[offset:]))
+	offset += 4
+
+	// PreviousBlockHeaderHash
+	copy(
+		bh.PreviousBlockHeaderHash[:],
+		rawBlockHeader[offset:offset+HashByteLength],
+	)
+	offset += HashByteLength
+
+	// MerkleRootHash
+	copy(bh.MerkleRootHash[:], rawBlockHeader[offset:offset+HashByteLength])
+	offset += HashByteLength
+
+	// Time
+	bh.Time = binary.LittleEndian.Uint32(rawBlockHeader[offset:])
+	offset += 4
+
+	// Bits
+	bh.Bits = binary.LittleEndian.Uint32(rawBlockHeader[offset:])
+	offset += 4
+
+	// Nonce
+	bh.Nonce = binary.LittleEndian.Uint32(rawBlockHeader[offset:])
+}
+
 // Hash calculates the block header's hash as the double SHA-256 of the
 // block header serialization format:
 // [Version][PreviousBlockHeaderHash][MerkleRootHash][Time][Bits][Nonce].
