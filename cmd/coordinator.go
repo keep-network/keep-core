@@ -13,7 +13,6 @@ import (
 	"github.com/keep-network/keep-core/pkg/bitcoin"
 	"github.com/keep-network/keep-core/pkg/bitcoin/electrum"
 	"github.com/keep-network/keep-core/pkg/chain/ethereum"
-	"github.com/keep-network/keep-core/pkg/coordinator"
 	"github.com/keep-network/keep-core/pkg/maintainer/spv"
 	mtrwallet "github.com/keep-network/keep-core/pkg/maintainer/wallet"
 )
@@ -345,7 +344,7 @@ var proposeRedemptionCommand = cobra.Command{
 			}
 		}
 
-		walletPublicKeyHash, redemptions, err := coordinator.FindPendingRedemptions(
+		walletPublicKeyHash, redemptions, err := mtrwallet.FindPendingRedemptions(
 			tbtcChain,
 			walletPublicKeyHash,
 			redemptionMaxSize,
@@ -362,7 +361,7 @@ var proposeRedemptionCommand = cobra.Command{
 			)
 		}
 
-		return coordinator.ProposeRedemption(
+		return mtrwallet.ProposeRedemption(
 			tbtcChain,
 			btcChain,
 			walletPublicKeyHash,

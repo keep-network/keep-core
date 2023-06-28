@@ -1,23 +1,22 @@
-package coordinator
+package wallet
 
 import (
 	"errors"
 	"fmt"
+	"github.com/keep-network/keep-core/internal/hexutils"
+	"github.com/keep-network/keep-core/pkg/bitcoin"
+	"github.com/keep-network/keep-core/pkg/tbtc"
 	"math/big"
 	"sort"
 	"time"
-
-	"github.com/keep-network/keep-core/pkg/bitcoin"
-	"github.com/keep-network/keep-core/pkg/tbtc"
-
-	"github.com/keep-network/keep-core/internal/hexutils"
 )
 
-type redemptionEntry struct {
-	walletPublicKeyHash  [20]byte
-	redemptionKey        string
-	redeemerOutputScript bitcoin.Script
-	requestedAt          time.Time
+// RedemptionRequest represents a redemption request.
+type RedemptionRequest struct {
+	WalletPublicKeyHash  [20]byte
+	RedemptionKey        string
+	RedeemerOutputScript bitcoin.Script
+	RequestedAt          time.Time
 }
 
 // FindPendingRedemptions finds pending redemptions requests.
@@ -44,7 +43,7 @@ func FindPendingRedemptions(
 		)
 	}
 
-	getPendingRedemptionsFromWallet := func(wallet [20]byte) ([]*redemptionEntry, error) {
+	getPendingRedemptionsFromWallet := func(wallet [20]byte) ([]*RedemptionRequest, error) {
 		pendingRedemptions, err := getPendingRedemptions(
 			chain,
 			wallet,
@@ -63,7 +62,7 @@ func FindPendingRedemptions(
 		return pendingRedemptions, nil
 	}
 
-	var redemptionsToPropose []*redemptionEntry
+	var redemptionsToPropose []*RedemptionRequest
 	// If walletPublicKeyHash is not provided we need to find a wallet that has
 	// pending redemptions.
 	if walletPublicKeyHash == [20]byte{} {
@@ -129,11 +128,11 @@ func FindPendingRedemptions(
 			len(redemptionsToPropose),
 			fmt.Sprintf(
 				"redemptionKey: [%s], requested at: [%s]",
-				redemption.redemptionKey,
-				redemption.requestedAt,
+				redemption.RedemptionKey,
+				redemption.RequestedAt,
 			))
 
-		redeemersOutputScripts[i] = redemption.redeemerOutputScript
+		redeemersOutputScripts[i] = redemption.RedeemerOutputScript
 	}
 
 	return walletPublicKeyHash, redeemersOutputScripts, nil
@@ -211,7 +210,7 @@ func getPendingRedemptions(
 	maxNumberOfRedemptions int,
 	redemptionRequestTimeout uint32,
 	redemptionRequestMinAge uint32,
-) ([]*redemptionEntry, error) {
+) ([]*RedemptionRequest, error) {
 	logger.Infof("reading pending redemptions from chain...")
 
 	filter := &tbtc.RedemptionRequestedEventFilter{}
@@ -248,7 +247,7 @@ func getPendingRedemptions(
 
 	logger.Infof("checking pending redemptions details...")
 
-	pendingRedemptions := make([]*redemptionEntry, 0)
+	pendingRedemptions := make([]*RedemptionRequest, 0)
 
 redemptionRequestedLoop:
 	for i, event := range redemptionsRequested {
@@ -286,11 +285,11 @@ redemptionRequestedLoop:
 			return nil, fmt.Errorf("failed to build redemption key: [%v]", err)
 		}
 
-		pendingRedemptions = append(pendingRedemptions, &redemptionEntry{
-			walletPublicKeyHash:  event.WalletPublicKeyHash,
-			redemptionKey:        hexutils.Encode(redemptionKey.Bytes()),
-			redeemerOutputScript: event.RedeemerOutputScript,
-			requestedAt:          pendingRedemption.RequestedAt,
+		pendingRedemptions = append(pendingRedemptions, &RedemptionRequest{
+			WalletPublicKeyHash:  event.WalletPublicKeyHash,
+			RedemptionKey:        hexutils.Encode(redemptionKey.Bytes()),
+			RedeemerOutputScript: event.RedeemerOutputScript,
+			RequestedAt:          pendingRedemption.RequestedAt,
 		})
 	}
 
@@ -301,17 +300,17 @@ redemptionRequestedLoop:
 
 	// Sort the pending redemptions.
 	sort.SliceStable(pendingRedemptions, func(i, j int) bool {
-		return pendingRedemptions[i].requestedAt.Before(pendingRedemptions[j].requestedAt)
+		return pendingRedemptions[i].RequestedAt.Before(pendingRedemptions[j].RequestedAt)
 	})
 
-	result := make([]*redemptionEntry, 0, resultSliceCapacity)
+	result := make([]*RedemptionRequest, 0, resultSliceCapacity)
 	for i, pendingRedemption := range pendingRedemptions {
 		if len(result) == cap(result) {
 			break
 		}
 
 		// Check if timeout passed for the redemption request.
-		if pendingRedemption.requestedAt.Before(redemptionRequestsRangeStartTimestamp) {
+		if pendingRedemption.RequestedAt.Before(redemptionRequestsRangeStartTimestamp) {
 			logger.Infof(
 				"redemption request %d/%d has already timed out",
 				i+1,
@@ -321,7 +320,7 @@ redemptionRequestedLoop:
 		}
 
 		// Check if enough time elapsed since the redemption request.
-		if pendingRedemption.requestedAt.After(redemptionRequestsRangeEndTimestamp) {
+		if pendingRedemption.RequestedAt.After(redemptionRequestsRangeEndTimestamp) {
 			logger.Infof(
 				"redemption request %d/%d is not old enough",
 				i+1,
@@ -336,6 +335,8 @@ redemptionRequestedLoop:
 	return result, nil
 }
 
+// EstimateRedemptionFee estimates fee for the redemption transaction that pays
+// the provided redeemers output scripts.
 func EstimateRedemptionFee(
 	btcChain bitcoin.Chain,
 	redeemersOutputScripts []bitcoin.Script,

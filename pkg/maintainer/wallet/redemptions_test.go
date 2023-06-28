@@ -1,10 +1,10 @@
-package coordinator_test
+package wallet_test
 
 import (
 	"encoding/hex"
 	"github.com/keep-network/keep-core/internal/testutils"
 	"github.com/keep-network/keep-core/pkg/bitcoin"
-	"github.com/keep-network/keep-core/pkg/coordinator"
+	mtrwallet "github.com/keep-network/keep-core/pkg/maintainer/wallet"
 	"testing"
 )
 
@@ -19,8 +19,8 @@ func TestEstimateRedemptionFee(t *testing.T) {
 		return bytes
 	}
 
-	btcChain := newLocalBitcoinChain()
-	btcChain.setEstimateSatPerVByteFee(1, 16)
+	btcChain := mtrwallet.NewLocalBitcoinChain()
+	btcChain.SetEstimateSatPerVByteFee(1, 16)
 
 	redeemersOutputScripts := []bitcoin.Script{
 		fromHex("76a9142cd680318747b720d67bf4246eb7403b476adb3488ac"),                   // P2PKH
@@ -29,7 +29,7 @@ func TestEstimateRedemptionFee(t *testing.T) {
 		fromHex("0020ef0b4d985752aa5ef6243e4c6f6bebc2a007e7d671ef27d4b1d0db8dcc93bc1c"), // P2WSH
 	}
 
-	actualFee, err := coordinator.EstimateRedemptionFee(btcChain, redeemersOutputScripts)
+	actualFee, err := mtrwallet.EstimateRedemptionFee(btcChain, redeemersOutputScripts)
 	if err != nil {
 		t.Fatal(err)
 	}
