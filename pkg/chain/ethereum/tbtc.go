@@ -1150,12 +1150,12 @@ func (tc *TbtcChain) PastRedemptionRequestedEvents(
 func (tc *TbtcChain) GetDepositRequest(
 	fundingTxHash bitcoin.Hash,
 	fundingOutputIndex uint32,
-) (*tbtc.DepositChainRequest, error) {
+) (*tbtc.DepositChainRequest, bool, error) {
 	depositKey := buildDepositKey(fundingTxHash, fundingOutputIndex)
 
 	depositRequest, err := tc.bridge.Deposits(depositKey)
 	if err != nil {
-		return nil, fmt.Errorf(
+		return nil, false, fmt.Errorf(
 			"cannot get deposit request for key [0x%x]: [%v]",
 			depositKey.Text(16),
 			err,
@@ -1164,10 +1164,7 @@ func (tc *TbtcChain) GetDepositRequest(
 
 	// Deposit not found.
 	if depositRequest.RevealedAt == 0 {
-		return nil, fmt.Errorf(
-			"no deposit request for key [0x%x]",
-			depositKey.Text(16),
-		)
+		return nil, false, nil
 	}
 
 	var vault *chain.Address
@@ -1183,7 +1180,7 @@ func (tc *TbtcChain) GetDepositRequest(
 		Vault:       vault,
 		TreasuryFee: depositRequest.TreasuryFee,
 		SweptAt:     time.Unix(int64(depositRequest.SweptAt), 0),
-	}, nil
+	}, true, nil
 }
 
 func (tc *TbtcChain) Deposits(

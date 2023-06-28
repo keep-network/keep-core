@@ -9,6 +9,7 @@ import "@tenderly/hardhat-tenderly"
 import "hardhat-contract-sizer"
 import "hardhat-dependency-compiler"
 import "hardhat-gas-reporter"
+import "solidity-docgen"
 
 import "./tasks"
 import { task } from "hardhat/config"
@@ -220,6 +221,12 @@ const config: HardhatUserConfig = {
   },
   typechain: {
     outDir: "typechain",
+  },
+  docgen: {
+    outputDir: "generated-docs",
+    templates: "docgen-templates",
+    pages: "single", // `single`, `items` or `files`
+    exclude: ["./test"],
   },
 }
 

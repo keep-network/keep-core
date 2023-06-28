@@ -37,7 +37,7 @@ func (lc *localChain) PastDepositRevealedEvents(
 func (lc *localChain) GetDepositRequest(
 	fundingTxHash bitcoin.Hash,
 	fundingOutputIndex uint32,
-) (*tbtc.DepositChainRequest, error) {
+) (*tbtc.DepositChainRequest, bool, error) {
 	panic("unsupported")
 }
 
