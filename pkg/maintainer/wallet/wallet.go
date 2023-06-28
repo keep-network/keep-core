@@ -31,8 +31,8 @@ func Initialize(
 	if config.RedemptionInterval == 0 {
 		config.RedemptionInterval = DefaultRedemptionInterval
 	}
-	if config.SweepInterval == 0 {
-		config.SweepInterval = DefaultSweepInterval
+	if config.DepositSweepInterval == 0 {
+		config.DepositSweepInterval = DefaultDepositSweepInterval
 	}
 
 	wm := &walletMaintainer{
@@ -51,16 +51,16 @@ func (wm *walletMaintainer) startControlLoop(ctx context.Context) {
 	defer logger.Info("stopping wallet coordination maintainer")
 
 	initialRedemptionDelay := 5 * time.Second
-	initialSweepDelay := 60 * time.Second
+	initialDepositSweepDelay := 60 * time.Second
 
 	redemptionTicker := time.NewTicker(initialRedemptionDelay)
 	defer redemptionTicker.Stop()
 
-	sweepTicker := time.NewTicker(initialSweepDelay)
-	defer sweepTicker.Stop()
+	depositSweepTicker := time.NewTicker(initialDepositSweepDelay)
+	defer depositSweepTicker.Stop()
 
 	logger.Infof("waiting [%s] until redemption task execution", initialRedemptionDelay)
-	logger.Infof("waiting [%s] until sweep task execution", initialSweepDelay)
+	logger.Infof("waiting [%s] until deposit sweep task execution", initialDepositSweepDelay)
 
 	for {
 		select {
@@ -74,18 +74,24 @@ func (wm *walletMaintainer) startControlLoop(ctx context.Context) {
 
 			// TODO: Implement
 
-			logger.Infof("redemption task run completed; next run in [%s]", wm.config.RedemptionInterval)
-		case <-sweepTicker.C:
+			logger.Infof(
+				"redemption task run completed; next run in [%s]",
+				wm.config.RedemptionInterval,
+			)
+		case <-depositSweepTicker.C:
 			// Set the ticker to the expected interval.
-			sweepTicker.Reset(wm.config.SweepInterval)
+			depositSweepTicker.Reset(wm.config.DepositSweepInterval)
 
-			logger.Info("starting sweep task execution...")
+			logger.Info("starting deposit sweep task execution...")
 
-			if err := wm.runSweepTask(ctx); err != nil {
-				logger.Errorf("failed to run sweep task: [%v]", err)
+			if err := wm.runDepositSweepTask(ctx); err != nil {
+				logger.Errorf("failed to run deposit sweep task: [%v]", err)
 			}
 
-			logger.Infof("sweep task run completed; next run in [%s]", wm.config.SweepInterval)
+			logger.Infof(
+				"deposit sweep task run completed; next run in [%s]",
+				wm.config.DepositSweepInterval,
+			)
 		}
 	}
 }

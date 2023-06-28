@@ -8,7 +8,7 @@ import (
 	"github.com/keep-network/keep-core/pkg/tbtc"
 )
 
-func (wm *walletMaintainer) runSweepTask(ctx context.Context) error {
+func (wm *walletMaintainer) runDepositSweepTask(ctx context.Context) error {
 	depositSweepMaxSize, err := wm.chain.GetDepositSweepMaxSize()
 	if err != nil {
 		return fmt.Errorf("failed to get deposit sweep max size: [%w]", err)
