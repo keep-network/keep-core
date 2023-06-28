@@ -1,15 +1,15 @@
 package wallet_test
 
 import (
+	"testing"
+
 	"github.com/go-test/deep"
 	"github.com/ipfs/go-log"
 	"github.com/keep-network/keep-core/internal/hexutils"
 	"github.com/keep-network/keep-core/pkg/bitcoin"
-	"github.com/keep-network/keep-core/pkg/coordinator"
 	mtrwallet "github.com/keep-network/keep-core/pkg/maintainer/wallet"
 	"github.com/keep-network/keep-core/pkg/maintainer/wallet/internal/test"
 	"github.com/keep-network/keep-core/pkg/tbtc"
-	"testing"
 )
 
 func TestFindDepositsToSweep(t *testing.T) {
@@ -34,7 +34,7 @@ func TestFindDepositsToSweep(t *testing.T) {
 			for _, wallet := range scenario.Wallets {
 				err := tbtcChain.AddPastNewWalletRegisteredEvent(
 					nil,
-					&coordinator.NewWalletRegisteredEvent{
+					&tbtc.NewWalletRegisteredEvent{
 						WalletPublicKeyHash: wallet.WalletPublicKeyHash,
 						BlockNumber:         wallet.RegistrationBlockNumber,
 					},
