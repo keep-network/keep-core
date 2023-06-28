@@ -98,9 +98,9 @@ func TestBlockHeaderTarget(t *testing.T) {
 	)
 }
 
-func TestBlockHeaderTarget_DifficultyOfOne(t *testing.T) {
+func TestBlockHeaderTarget_LowestDifficulty(t *testing.T) {
 	// This is a special case, the difficulty bits represent a target of a
-	// difficulty of 1.
+	// difficulty of 1. Set just difficulty bits.
 	blockHeader := BlockHeader{
 		Bits: 486604799,
 	}
@@ -116,5 +116,63 @@ func TestBlockHeaderTarget_DifficultyOfOne(t *testing.T) {
 		"target",
 		expectedTarget,
 		actualTarget,
+	)
+}
+
+func TestBlockHeaderDifficulty(t *testing.T) {
+	// Test data comes from a Bitcoin testnet block:
+	// https://live.blockcypher.com/btc-testnet/block/000000000000002af10911b8db32ed34dc6ea6515f84af5f7b82973c9a839e6d/
+
+	previousBlockHeaderHash, err := NewHashFromString(
+		"000000000066450030efdf72f233ed2495547a32295deea1e2f3a16b1e50a3a5",
+		ReversedByteOrder,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	merkleRootHash, err := NewHashFromString(
+		"1251774996b446f85462d5433f7a3e384ac1569072e617ab31e86da31c247de2",
+		ReversedByteOrder,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	blockHeader := BlockHeader{
+		Version:                 536870916,
+		PreviousBlockHeaderHash: previousBlockHeaderHash,
+		MerkleRootHash:          merkleRootHash,
+		Time:                    1641914003,
+		Bits:                    436256810,
+		Nonce:                   778087099,
+	}
+
+	actualDifficulty := blockHeader.Difficulty()
+	expectedDifficulty, _ := new(big.Int).SetString("22350181", 10)
+
+	testutils.AssertBigIntsEqual(
+		t,
+		"difficulty",
+		expectedDifficulty,
+		actualDifficulty,
+	)
+}
+
+func TestBlockHeaderDifficulty_LowestDifficulty(t *testing.T) {
+	// This is a special case, the difficulty bits represent a target of a
+	// difficulty of 1. Set just difficulty bits.
+	blockHeader := BlockHeader{
+		Bits: 486604799,
+	}
+
+	actualDifficulty := blockHeader.Difficulty()
+	expectedDifficulty, _ := new(big.Int).SetString("1", 10)
+
+	testutils.AssertBigIntsEqual(
+		t,
+		"difficulty",
+		expectedDifficulty,
+		actualDifficulty,
 	)
 }
