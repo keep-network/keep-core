@@ -1,6 +1,7 @@
 package wallet
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"github.com/keep-network/keep-core/internal/hexutils"
@@ -10,6 +11,43 @@ import (
 	"sort"
 	"time"
 )
+
+func (wm *walletMaintainer) runRedemptionTask(ctx context.Context) error {
+	redemptionMaxSize, err := wm.chain.GetRedemptionMaxSize()
+	if err != nil {
+		return fmt.Errorf("failed to get deposit sweep max size: [%w]", err)
+	}
+
+	walletPublicKeyHash, redeemersOutputScripts, err := FindPendingRedemptions(
+		wm.chain,
+		[20]byte{},
+		redemptionMaxSize,
+	)
+	if err != nil {
+		return fmt.Errorf("failed to prepare redemption proposal: [%w]", err)
+	}
+
+	if len(redeemersOutputScripts) == 0 {
+		logger.Info("no pending redemption requests")
+		return nil
+	}
+
+	return wm.runIfWalletUnlocked(
+		ctx,
+		walletPublicKeyHash,
+		tbtc.Redemption,
+		func() error {
+			return ProposeRedemption(
+				wm.chain,
+				wm.btcChain,
+				walletPublicKeyHash,
+				0,
+				redeemersOutputScripts,
+				false,
+			)
+		},
+	)
+}
 
 // RedemptionRequest represents a redemption request.
 type RedemptionRequest struct {
