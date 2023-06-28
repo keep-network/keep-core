@@ -1,0 +1,86 @@
+name: Solidity ECDSA docs
+
+on:
+  pull_request:
+  push:
+    branches:
+      - releases/mainnet/solidity/**
+    paths:
+      - "solidity/ecdsa/**"
+  release:
+    types:
+      - "published"
+  workflow_dispatch:
+
+jobs:
+  docs-detect-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      path-filter: ${{ steps.filter.outputs.path-filter }}
+    steps:
+      - uses: actions/checkout@v3
+        if: github.event_name == 'pull_request'
+      - uses: dorny/paths-filter@v2
+        if: github.event_name == 'pull_request'
+        id: filter
+        with:
+          filters: |
+            path-filter:
+              - './solidity/ecdsa/contracts/**'
+              - './.github/workflows/contracts-ecdsa-docs.yml'
+
+  # This job will be triggered for PRs which modify contracts. It will generate
+  # the archive with contracts documentation in Markdown and attatch it to the
+  # workflow run results. Link to the archive will be posted in a PR comment.
+  # The job will also be run after manual triggering and after pushes to the
+  # `releases/mainnet/solidity/**` branches if there were changes to the
+  # `ecdsa` project.
+  contracts-docs-publish-preview:
+    name: Publish preview of contracts documentation
+    needs: docs-detect-changes
+    if: |
+      github.event_name == 'pull_request'
+        || github.event_name == 'push'
+        || github.event_name == 'workflow_dispatch'
+    uses: keep-network/ci/.github/workflows/reusable-solidity-docs.yml@main
+    with:
+      projectDir: /solidity/ecdsa
+      publish: false
+      commentPR: true
+      exportAsGHArtifacts: true
+
+  # This job is needed to avoid a clash of `contracts-docs-publish` jobs for
+  # `random-beacon` and `ecdsa` projects (if both are run and pull the code at
+  # the same time and try to push to the same branch, one of them will fail). 
+  contracts-docs-prepublish-wait:
+    name: Wait for contracts docs to be published
+    needs: docs-detect-changes
+    if: github.event_name == 'release' && startsWith(github.ref, 'refs/tags/solidity/')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Wait 4 minutes
+        run: sleep 240
+
+  # This job will be triggered for releases which name starts with
+  # `refs/tags/solidity/`. It will generate contracts documentation in
+  # Markdown and sync it with a specific path of
+  # `threshold-network/threshold` repository. If changes will be detected,
+  # a PR updating the docs will be created in the destination repository. The
+  # commit pushing the changes will be verified using GPG key.
+  contracts-docs-publish:
+    name: Publish contracts documentation
+    needs: contracts-docs-prepublish-wait
+    uses: keep-network/ci/.github/workflows/reusable-solidity-docs.yml@main
+    with:
+      projectDir: /solidity/ecdsa
+      publish: true
+      verifyCommits: true
+      destinationRepo: threshold-network/threshold
+      destinationFolder: ./docs/app-development/tbtc-v2/ecdsa-api
+      destinationBaseBranch: main
+      userEmail: 38324465+thesis-valkyrie@users.noreply.github.com
+      userName: Valkyrie
+    secrets:
+      githubToken: ${{ secrets.THRESHOLD_DOCS_GITHUB_TOKEN }}
+      gpgPrivateKey: ${{ secrets.THRESHOLD_DOCS_GPG_PRIVATE_KEY_BASE64 }}
+      gpgPassphrase: ${{ secrets.THRESHOLD_DOCS_GPG_PASSPHRASE }}
