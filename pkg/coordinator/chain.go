@@ -7,21 +7,6 @@ import (
 	"github.com/keep-network/keep-core/pkg/tbtc"
 )
 
-// NewWalletRegisteredEvent represents a new wallet registered event.
-type NewWalletRegisteredEvent struct {
-	EcdsaWalletID       [32]byte
-	WalletPublicKeyHash [20]byte
-	BlockNumber         uint64
-}
-
-// NewWalletRegisteredEventFilter is a component allowing to filter NewWalletRegisteredEvent.
-type NewWalletRegisteredEventFilter struct {
-	StartBlock          uint64
-	EndBlock            *uint64
-	EcdsaWalletID       [][32]byte
-	WalletPublicKeyHash [][20]byte
-}
-
 // Chain represents the interface that the coordinator module expects to interact
 // with the anchoring blockchain on.
 type Chain interface {
@@ -44,8 +29,8 @@ type Chain interface {
 	// events are sorted by the block number in the ascending order, i.e. the
 	// latest event is at the end of the slice.
 	PastNewWalletRegisteredEvents(
-		filter *NewWalletRegisteredEventFilter,
-	) ([]*NewWalletRegisteredEvent, error)
+		filter *tbtc.NewWalletRegisteredEventFilter,
+	) ([]*tbtc.NewWalletRegisteredEvent, error)
 
 	// BuildDepositKey calculates a deposit key for the given funding transaction
 	// which is a unique identifier for a deposit on-chain.

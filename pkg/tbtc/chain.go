@@ -219,6 +219,21 @@ type BridgeChain interface {
 	) (*RedemptionRequest, error)
 }
 
+// NewWalletRegisteredEvent represents a new wallet registered event.
+type NewWalletRegisteredEvent struct {
+	EcdsaWalletID       [32]byte
+	WalletPublicKeyHash [20]byte
+	BlockNumber         uint64
+}
+
+// NewWalletRegisteredEventFilter is a component allowing to filter NewWalletRegisteredEvent.
+type NewWalletRegisteredEventFilter struct {
+	StartBlock          uint64
+	EndBlock            *uint64
+	EcdsaWalletID       [][32]byte
+	WalletPublicKeyHash [][20]byte
+}
+
 // HeartbeatRequestedEvent represents a Bridge heartbeat request event.
 type HeartbeatRequestedEvent struct {
 	WalletPublicKey []byte
