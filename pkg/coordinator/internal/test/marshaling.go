@@ -3,12 +3,12 @@ package test
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/keep-network/keep-core/pkg/maintainer/wallet"
 	"math/big"
 	"time"
 
 	"github.com/keep-network/keep-core/internal/hexutils"
 	"github.com/keep-network/keep-core/pkg/bitcoin"
-	"github.com/keep-network/keep-core/pkg/coordinator"
 	"github.com/keep-network/keep-core/pkg/tbtc"
 )
 
@@ -97,7 +97,7 @@ func (dsts *FindDepositsToSweepTestScenario) UnmarshalJSON(data []byte) error {
 
 	// Unmarshal expected unswept deposits.
 	for i, deposit := range unmarshaled.ExpectedUnsweptDeposits {
-		ud := new(coordinator.DepositSweepDetails)
+		ud := new(wallet.DepositReference)
 
 		fundingTxHash, err := bitcoin.NewHashFromString(deposit.FundingTxHash, bitcoin.ReversedByteOrder)
 		if err != nil {

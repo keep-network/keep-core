@@ -1,6 +1,7 @@
 package coordinator_test
 
 import (
+	"github.com/keep-network/keep-core/pkg/maintainer/wallet"
 	"testing"
 
 	"github.com/go-test/deep"
@@ -63,8 +64,8 @@ func TestFindDepositsToSweep(t *testing.T) {
 			}
 
 			// Test execution.
-			actualWallet, actualDeposits, err := coordinator.FindDepositsToSweep(
-				tbtcChain,
+			actualWallet, actualDeposits, err := wallet.FindDepositsToSweep(
+				nil, // TODO: Set correct chain.
 				btcChain,
 				scenario.WalletPublicKeyHash,
 				scenario.MaxNumberOfDeposits,

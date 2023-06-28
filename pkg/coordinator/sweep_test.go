@@ -1,13 +1,13 @@
 package coordinator_test
 
 import (
+	"github.com/keep-network/keep-core/pkg/maintainer/wallet"
 	"testing"
 
 	"github.com/go-test/deep"
 	"github.com/ipfs/go-log"
 
 	"github.com/keep-network/keep-core/pkg/bitcoin"
-	"github.com/keep-network/keep-core/pkg/coordinator"
 	"github.com/keep-network/keep-core/pkg/coordinator/internal/test"
 	"github.com/keep-network/keep-core/pkg/tbtc"
 )
@@ -48,8 +48,8 @@ func TestProposeDepositsSweep(t *testing.T) {
 			btcChain.setEstimateSatPerVByteFee(1, scenario.EstimateSatPerVByteFee)
 
 			// Test execution.
-			err := coordinator.ProposeDepositsSweep(
-				tbtcChain,
+			err := wallet.ProposeDepositsSweep(
+				nil, // TODO: Set correct chain.
 				btcChain,
 				scenario.WalletPublicKeyHash,
 				scenario.SweepTxFee,
