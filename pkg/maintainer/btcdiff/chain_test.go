@@ -1,6 +1,8 @@
 package btcdiff
 
 import (
+	"math/big"
+
 	"github.com/keep-network/keep-core/pkg/bitcoin"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/chain/local_v1"
@@ -108,6 +110,14 @@ func (lbdc *localBitcoinDifficultyChain) CurrentEpoch() (uint64, error) {
 // retarget proof.
 func (lbdc *localBitcoinDifficultyChain) ProofLength() (uint64, error) {
 	return lbdc.proofLength, nil
+}
+
+// GetCurrentAndPrevEpochDifficulty returns the difficulties of the current
+// and previous Bitcoin epochs.
+func (lbdc *localBitcoinDifficultyChain) GetCurrentAndPrevEpochDifficulty() (
+	*big.Int, *big.Int, error,
+) {
+	panic("unimplemented")
 }
 
 // SetReady sets chain's status as either ready or not.

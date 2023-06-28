@@ -2,6 +2,7 @@ package ethereum
 
 import (
 	"fmt"
+	"math/big"
 
 	"github.com/ethereum/go-ethereum/common"
 
@@ -223,4 +224,20 @@ func (bdc *BitcoinDifficultyChain) CurrentEpoch() (uint64, error) {
 // proof.
 func (bdc *BitcoinDifficultyChain) ProofLength() (uint64, error) {
 	return bdc.lightRelay.ProofLength()
+}
+
+// GetCurrentAndPrevEpochDifficulty returns the difficulties of the current
+// and previous Bitcoin epochs.
+func (bdc *BitcoinDifficultyChain) GetCurrentAndPrevEpochDifficulty() (
+	*big.Int, *big.Int, error,
+) {
+	difficulties, err := bdc.lightRelay.GetCurrentAndPrevEpochDifficulty()
+	if err != nil {
+		return nil, nil, fmt.Errorf(
+			"failed to get epoch difficulties: [%v]",
+			err,
+		)
+	}
+
+	return difficulties.Current, difficulties.Previous, nil
 }
