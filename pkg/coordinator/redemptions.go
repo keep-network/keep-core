@@ -356,7 +356,7 @@ func EstimateRedemptionFee(
 		case bitcoin.P2WSHScript:
 			sizeEstimator.AddScriptHashOutputs(1, true)
 		default:
-			panic("non-standard redeemer output script type")
+			return 0, fmt.Errorf("non-standard redeemer output script type")
 		}
 	}
 
