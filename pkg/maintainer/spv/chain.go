@@ -34,15 +34,6 @@ type Chain interface {
 		fundingOutputIndex uint32,
 	) (*tbtc.DepositChainRequest, bool, error)
 
-	// TODO: Most likely merge it with `GetDepositRequest` function.
-	// Deposits gets the on-chain deposit request for the given funding
-	// transaction hash and output index. If the deposit does not exist it
-	// returns a zero-filled structure without an error.
-	Deposits(
-		fundingTxHash bitcoin.Hash,
-		fundingOutputIndex uint32,
-	) (*tbtc.DepositChainRequest, error)
-
 	GetWallet(
 		walletPublicKeyHash [20]byte,
 	) (*tbtc.WalletChainData, error)

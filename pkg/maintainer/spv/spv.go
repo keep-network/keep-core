@@ -288,15 +288,15 @@ func (sm *spvMaintainer) isUnprovenDepositSweepTransaction(
 		fundingOutpointIndex := input.Outpoint.OutputIndex
 
 		// Check if the input is a deposit input.
-		deposit, err := sm.chain.Deposits(
+		deposit, found, err := sm.chain.GetDepositRequest(
 			fundingTransactionHash,
 			fundingOutpointIndex,
 		)
 		if err != nil {
-			return false, fmt.Errorf("failed to get a deposit: [%v]", err)
+			return false, fmt.Errorf("failed to get deposit request: [%v]", err)
 		}
 
-		if deposit.RevealedAt.Equal(time.Unix(0, 0)) {
+		if !found {
 			// The input is not a deposit input. The transaction can still be
 			// a deposit sweep transaction, since the input may be the main UTXO.
 
