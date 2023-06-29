@@ -4,18 +4,19 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/keep-network/keep-core/internal/hexutils"
-	"github.com/keep-network/keep-core/pkg/bitcoin"
-	"github.com/keep-network/keep-core/pkg/tbtc"
 	"math/big"
 	"sort"
 	"time"
+
+	"github.com/keep-network/keep-core/internal/hexutils"
+	"github.com/keep-network/keep-core/pkg/bitcoin"
+	"github.com/keep-network/keep-core/pkg/tbtc"
 )
 
 func (wm *walletMaintainer) runRedemptionTask(ctx context.Context) error {
 	redemptionMaxSize, err := wm.chain.GetRedemptionMaxSize()
 	if err != nil {
-		return fmt.Errorf("failed to get deposit sweep max size: [%w]", err)
+		return fmt.Errorf("failed to get redemption max size: [%w]", err)
 	}
 
 	walletPublicKeyHash, redeemersOutputScripts, err := FindPendingRedemptions(
