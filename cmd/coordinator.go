@@ -16,7 +16,7 @@ import (
 	"github.com/keep-network/keep-core/pkg/bitcoin/electrum"
 	"github.com/keep-network/keep-core/pkg/chain/ethereum"
 	"github.com/keep-network/keep-core/pkg/maintainer/spv"
-	mtrwallet "github.com/keep-network/keep-core/pkg/maintainer/wallet"
+	walletmtr "github.com/keep-network/keep-core/pkg/maintainer/wallet"
 )
 
 var (
@@ -115,7 +115,7 @@ var listDepositsCommand = cobra.Command{
 			}
 		}
 
-		deposits, err := mtrwallet.FindDeposits(
+		deposits, err := walletmtr.FindDeposits(
 			tbtcChain,
 			btcChain,
 			walletPublicKeyHash,
@@ -142,7 +142,7 @@ var listDepositsCommand = cobra.Command{
 	},
 }
 
-func printDepositsTable(deposits []*mtrwallet.Deposit) error {
+func printDepositsTable(deposits []*walletmtr.Deposit) error {
 	w := tabwriter.NewWriter(os.Stdout, 2, 4, 1, ' ', tabwriter.AlignRight)
 	fmt.Fprintf(w, "index\twallet\tvalue (BTC)\tdeposit key\trevealed deposit data\tconfirmations\tswept\t\n")
 
@@ -239,14 +239,14 @@ var proposeDepositsSweepCommand = cobra.Command{
 			}
 		}
 
-		var deposits []*mtrwallet.DepositReference
+		var deposits []*walletmtr.DepositReference
 		if len(args) > 0 {
 			deposits, err = parseDepositsReferences(args)
 			if err != nil {
 				return fmt.Errorf("failed extract wallet public key hash: %v", err)
 			}
 		} else {
-			walletPublicKeyHash, deposits, err = mtrwallet.FindDepositsToSweep(
+			walletPublicKeyHash, deposits, err = walletmtr.FindDepositsToSweep(
 				tbtcChain,
 				btcChain,
 				walletPublicKeyHash,
@@ -265,7 +265,7 @@ var proposeDepositsSweepCommand = cobra.Command{
 			)
 		}
 
-		return mtrwallet.ProposeDepositsSweep(
+		return walletmtr.ProposeDepositsSweep(
 			tbtcChain,
 			btcChain,
 			walletPublicKeyHash,
@@ -300,8 +300,8 @@ var (
 // parseDepositsReferences decodes a list of deposits references.
 func parseDepositsReferences(
 	depositsRefsStings []string,
-) ([]*mtrwallet.DepositReference, error) {
-	depositsRefs := make([]*mtrwallet.DepositReference, len(depositsRefsStings))
+) ([]*walletmtr.DepositReference, error) {
+	depositsRefs := make([]*walletmtr.DepositReference, len(depositsRefsStings))
 
 	for i, depositRefString := range depositsRefsStings {
 		matched := depositReferenceFormatRegexp.FindStringSubmatch(depositRefString)
@@ -341,7 +341,7 @@ func parseDepositsReferences(
 			)
 		}
 
-		depositsRefs[i] = &mtrwallet.DepositReference{
+		depositsRefs[i] = &walletmtr.DepositReference{
 			FundingTxHash:      txHash,
 			FundingOutputIndex: uint32(outputIndex),
 			RevealBlock:        revealBlock,
@@ -419,7 +419,7 @@ var proposeRedemptionCommand = cobra.Command{
 			}
 		}
 
-		walletPublicKeyHash, redemptions, err := mtrwallet.FindPendingRedemptions(
+		walletPublicKeyHash, redemptions, err := walletmtr.FindPendingRedemptions(
 			tbtcChain,
 			walletPublicKeyHash,
 			redemptionMaxSize,
@@ -436,7 +436,7 @@ var proposeRedemptionCommand = cobra.Command{
 			)
 		}
 
-		return mtrwallet.ProposeRedemption(
+		return walletmtr.ProposeRedemption(
 			tbtcChain,
 			btcChain,
 			walletPublicKeyHash,
@@ -473,7 +473,7 @@ var estimateDepositsSweepFeeCommand = cobra.Command{
 			return fmt.Errorf("could not connect to Electrum chain: [%v]", err)
 		}
 
-		fees, err := mtrwallet.EstimateDepositsSweepFee(
+		fees, err := walletmtr.EstimateDepositsSweepFee(
 			tbtcChain,
 			btcChain,
 			depositsCount,
