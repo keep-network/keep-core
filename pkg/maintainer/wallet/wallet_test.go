@@ -11,13 +11,13 @@ import (
 )
 
 func TestRunIfWalletUnlocked_WhenLocked(t *testing.T) {
-	localChain := newLocalChain()
+	localChain := NewLocalChain()
 
 	walletPublicKeyHash := [20]byte{1}
 
 	lockExpiration := time.Now().Add(500 * time.Millisecond)
 
-	localChain.setWalletLock(
+	localChain.SetWalletLock(
 		walletPublicKeyHash,
 		lockExpiration,
 		tbtc.Heartbeat,
@@ -55,11 +55,11 @@ func TestRunIfWalletUnlocked_WhenUnlocked(t *testing.T) {
 
 	for testName, test := range tests {
 		t.Run(testName, func(t *testing.T) {
-			localChain := newLocalChain()
+			localChain := NewLocalChain()
 
 			walletPublicKeyHash := [20]byte{2}
 
-			localChain.resetWalletLock(walletPublicKeyHash)
+			localChain.ResetWalletLock(walletPublicKeyHash)
 
 			wasCalled := make(chan bool, 1)
 			runFunc := func() error {

@@ -253,9 +253,9 @@ var cmdFlagsTests = map[string]struct {
 		expectedValueFromFlag: 7 * time.Hour,
 		defaultValue:          3 * time.Hour,
 	},
-	"maintainer.walletCoordination.sweepInterval": {
-		readValueFunc:         func(c *config.Config) interface{} { return c.Maintainer.WalletCoordination.SweepInterval },
-		flagName:              "--walletCoordination.sweepInterval",
+	"maintainer.walletCoordination.depositSweepInterval": {
+		readValueFunc:         func(c *config.Config) interface{} { return c.Maintainer.WalletCoordination.DepositSweepInterval },
+		flagName:              "--walletCoordination.depositSweepInterval",
 		flagValue:             "35h",
 		expectedValueFromFlag: 35 * time.Hour,
 		defaultValue:          48 * time.Hour,

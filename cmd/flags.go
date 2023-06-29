@@ -343,9 +343,9 @@ func initMaintainerFlags(command *cobra.Command, cfg *config.Config) {
 	)
 
 	command.Flags().DurationVar(
-		&cfg.Maintainer.WalletCoordination.SweepInterval,
-		"walletCoordination.sweepInterval",
-		wallet.DefaultSweepInterval,
+		&cfg.Maintainer.WalletCoordination.DepositSweepInterval,
+		"walletCoordination.depositSweepInterval",
+		wallet.DefaultDepositSweepInterval,
 		"The time interval in which unswept deposits are checked.",
 	)
 

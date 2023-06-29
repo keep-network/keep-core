@@ -1,4 +1,4 @@
-package coordinator_test
+package wallet
 
 import (
 	"fmt"
@@ -7,7 +7,7 @@ import (
 	"github.com/keep-network/keep-core/pkg/bitcoin"
 )
 
-type localBitcoinChain struct {
+type LocalBitcoinChain struct {
 	mutex sync.Mutex
 
 	transactions              map[bitcoin.Hash]*bitcoin.Transaction
@@ -15,15 +15,15 @@ type localBitcoinChain struct {
 	satPerVByteFeeEstimation  map[uint32]int64
 }
 
-func newLocalBitcoinChain() *localBitcoinChain {
-	return &localBitcoinChain{
+func NewLocalBitcoinChain() *LocalBitcoinChain {
+	return &LocalBitcoinChain{
 		transactions:              make(map[bitcoin.Hash]*bitcoin.Transaction),
 		transactionsConfirmations: make(map[bitcoin.Hash]uint),
 		satPerVByteFeeEstimation:  make(map[uint32]int64),
 	}
 }
 
-func (lbc *localBitcoinChain) GetTransaction(
+func (lbc *LocalBitcoinChain) GetTransaction(
 	transactionHash bitcoin.Hash,
 ) (*bitcoin.Transaction, error) {
 	lbc.mutex.Lock()
@@ -36,7 +36,7 @@ func (lbc *localBitcoinChain) GetTransaction(
 	return transaction, nil
 }
 
-func (lbc *localBitcoinChain) setTransaction(
+func (lbc *LocalBitcoinChain) SetTransaction(
 	transactionHash bitcoin.Hash,
 	transaction *bitcoin.Transaction,
 ) {
@@ -46,7 +46,7 @@ func (lbc *localBitcoinChain) setTransaction(
 	lbc.transactions[transactionHash] = transaction
 }
 
-func (lbc *localBitcoinChain) GetTransactionConfirmations(
+func (lbc *LocalBitcoinChain) GetTransactionConfirmations(
 	transactionHash bitcoin.Hash,
 ) (uint, error) {
 	lbc.mutex.Lock()
@@ -59,7 +59,7 @@ func (lbc *localBitcoinChain) GetTransactionConfirmations(
 	return 0, fmt.Errorf("transaction not found")
 }
 
-func (lbc *localBitcoinChain) setTransactionConfirmations(
+func (lbc *LocalBitcoinChain) SetTransactionConfirmations(
 	transactionHash bitcoin.Hash,
 	confirmations uint,
 ) {
@@ -69,43 +69,43 @@ func (lbc *localBitcoinChain) setTransactionConfirmations(
 	lbc.transactionsConfirmations[transactionHash] = confirmations
 }
 
-func (lbc *localBitcoinChain) BroadcastTransaction(
+func (lbc *LocalBitcoinChain) BroadcastTransaction(
 	transaction *bitcoin.Transaction,
 ) error {
 	panic("unsupported")
 }
 
-func (lbc *localBitcoinChain) GetLatestBlockHeight() (uint, error) {
+func (lbc *LocalBitcoinChain) GetLatestBlockHeight() (uint, error) {
 	panic("unsupported")
 }
 
-func (lbc *localBitcoinChain) GetBlockHeader(
+func (lbc *LocalBitcoinChain) GetBlockHeader(
 	blockNumber uint,
 ) (*bitcoin.BlockHeader, error) {
 	panic("unsupported")
 }
 
-func (lbc *localBitcoinChain) GetTransactionMerkleProof(
+func (lbc *LocalBitcoinChain) GetTransactionMerkleProof(
 	transactionHash bitcoin.Hash,
 	blockHeight uint,
 ) (*bitcoin.TransactionMerkleProof, error) {
 	panic("unsupported")
 }
 
-func (lbc *localBitcoinChain) GetTransactionsForPublicKeyHash(
+func (lbc *LocalBitcoinChain) GetTransactionsForPublicKeyHash(
 	publicKeyHash [20]byte,
 	limit int,
 ) ([]*bitcoin.Transaction, error) {
 	panic("unsupported")
 }
 
-func (lbc *localBitcoinChain) GetMempoolForPublicKeyHash(
+func (lbc *LocalBitcoinChain) GetMempoolForPublicKeyHash(
 	publicKeyHash [20]byte,
 ) ([]*bitcoin.Transaction, error) {
 	panic("unsupported")
 }
 
-func (lbc *localBitcoinChain) EstimateSatPerVByteFee(
+func (lbc *LocalBitcoinChain) EstimateSatPerVByteFee(
 	blocks uint32,
 ) (int64, error) {
 	lbc.mutex.Lock()
@@ -114,7 +114,7 @@ func (lbc *localBitcoinChain) EstimateSatPerVByteFee(
 	return lbc.satPerVByteFeeEstimation[blocks], nil
 }
 
-func (lbc *localBitcoinChain) setEstimateSatPerVByteFee(
+func (lbc *LocalBitcoinChain) SetEstimateSatPerVByteFee(
 	blocks uint32,
 	fee int64,
 ) {
