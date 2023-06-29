@@ -3,7 +3,9 @@ package cmd
 import (
 	"fmt"
 	"os"
+	"regexp"
 	"sort"
+	"strconv"
 	"text/tabwriter"
 
 	"github.com/spf13/cobra"
@@ -14,7 +16,7 @@ import (
 	"github.com/keep-network/keep-core/pkg/bitcoin/electrum"
 	"github.com/keep-network/keep-core/pkg/chain/ethereum"
 	"github.com/keep-network/keep-core/pkg/maintainer/spv"
-	mtrwallet "github.com/keep-network/keep-core/pkg/maintainer/wallet"
+	walletmtr "github.com/keep-network/keep-core/pkg/maintainer/wallet"
 )
 
 var (
@@ -113,7 +115,7 @@ var listDepositsCommand = cobra.Command{
 			}
 		}
 
-		deposits, err := mtrwallet.FindDeposits(
+		deposits, err := walletmtr.FindDeposits(
 			tbtcChain,
 			btcChain,
 			walletPublicKeyHash,
@@ -140,7 +142,7 @@ var listDepositsCommand = cobra.Command{
 	},
 }
 
-func printDepositsTable(deposits []*mtrwallet.Deposit) error {
+func printDepositsTable(deposits []*walletmtr.Deposit) error {
 	w := tabwriter.NewWriter(os.Stdout, 2, 4, 1, ' ', tabwriter.AlignRight)
 	fmt.Fprintf(w, "index\twallet\tvalue (BTC)\tdeposit key\trevealed deposit data\tconfirmations\tswept\t\n")
 
@@ -175,7 +177,7 @@ var proposeDepositsSweepCommand = cobra.Command{
 	TraverseChildren: true,
 	Args: func(cmd *cobra.Command, args []string) error {
 		for i, arg := range args {
-			if err := mtrwallet.ValidateDepositReferenceString(arg); err != nil {
+			if err := validateDepositReferenceString(arg); err != nil {
 				return fmt.Errorf(
 					"argument [%d] failed validation: %v",
 					i,
@@ -237,14 +239,14 @@ var proposeDepositsSweepCommand = cobra.Command{
 			}
 		}
 
-		var deposits []*mtrwallet.DepositReference
+		var deposits []*walletmtr.DepositReference
 		if len(args) > 0 {
-			deposits, err = mtrwallet.ParseDepositsReferences(args)
+			deposits, err = parseDepositsReferences(args)
 			if err != nil {
 				return fmt.Errorf("failed extract wallet public key hash: %v", err)
 			}
 		} else {
-			walletPublicKeyHash, deposits, err = mtrwallet.FindDepositsToSweep(
+			walletPublicKeyHash, deposits, err = walletmtr.FindDepositsToSweep(
 				tbtcChain,
 				btcChain,
 				walletPublicKeyHash,
@@ -263,7 +265,7 @@ var proposeDepositsSweepCommand = cobra.Command{
 			)
 		}
 
-		return mtrwallet.ProposeDepositsSweep(
+		return walletmtr.ProposeDepositsSweep(
 			tbtcChain,
 			btcChain,
 			walletPublicKeyHash,
@@ -280,14 +282,87 @@ var (
 		" - bitcoin transaction output index, \n" +
 		" - ethereum block number when the deposit was revealed to the chain. \n" +
 		"The properties should be separated by semicolons, in the following format: \n" +
-		mtrwallet.DepositReferenceFormatPattern + "\n" +
+		depositReferenceFormatPattern + "\n" +
 		"e.g. bd99d1d0a61fd104925d9b7ac997958aa8af570418b3fde091f7bfc561608865:1:8392394"
+
+	depositReferenceFormatPattern = "<unprefixed bitcoin transaction hash>:" +
+		"<bitcoin transaction output index>:" +
+		"<ethereum reveal block number>"
+
+	depositReferenceFormatRegexp = regexp.MustCompile(`^([[:xdigit:]]+):(\d+):(\d+)$`)
 
 	proposeDepositsSweepCommandDescription = "Submits a deposits sweep proposal " +
 		"to the chain. Expects --wallet and --fee flags along with deposits to " +
 		"sweep provided as arguments.\n" +
 		depositsFormatDescription
 )
+
+// parseDepositsReferences decodes a list of deposits references.
+func parseDepositsReferences(
+	depositsRefsStings []string,
+) ([]*walletmtr.DepositReference, error) {
+	depositsRefs := make([]*walletmtr.DepositReference, len(depositsRefsStings))
+
+	for i, depositRefString := range depositsRefsStings {
+		matched := depositReferenceFormatRegexp.FindStringSubmatch(depositRefString)
+		// Check if number of resolved entries match expected number of groups
+		// for the given regexp.
+		if len(matched) != 4 {
+			return nil, fmt.Errorf(
+				"failed to parse deposit: [%s]",
+				depositRefString,
+			)
+		}
+
+		txHash, err := bitcoin.NewHashFromString(matched[1], bitcoin.ReversedByteOrder)
+		if err != nil {
+			return nil, fmt.Errorf(
+				"invalid bitcoin transaction hash [%s]: %v",
+				matched[1],
+				err,
+			)
+		}
+
+		outputIndex, err := strconv.ParseInt(matched[2], 10, 32)
+		if err != nil {
+			return nil, fmt.Errorf(
+				"invalid bitcoin transaction output index [%s]: %v",
+				matched[2],
+				err,
+			)
+		}
+
+		revealBlock, err := strconv.ParseUint(matched[3], 10, 32)
+		if err != nil {
+			return nil, fmt.Errorf(
+				"invalid reveal block number [%s]: %v",
+				matched[3],
+				err,
+			)
+		}
+
+		depositsRefs[i] = &walletmtr.DepositReference{
+			FundingTxHash:      txHash,
+			FundingOutputIndex: uint32(outputIndex),
+			RevealBlock:        revealBlock,
+		}
+	}
+
+	return depositsRefs, nil
+}
+
+// validateDepositReferenceString validates format of the string containing a
+// deposit reference.
+func validateDepositReferenceString(depositRefString string) error {
+	if !depositReferenceFormatRegexp.MatchString(depositRefString) {
+		return fmt.Errorf(
+			"[%s] doesn't match pattern: %s",
+			depositRefString,
+			depositReferenceFormatPattern,
+		)
+	}
+	return nil
+}
 
 var proposeRedemptionCommand = cobra.Command{
 	Use:              "propose-redemption",
@@ -344,7 +419,7 @@ var proposeRedemptionCommand = cobra.Command{
 			}
 		}
 
-		walletPublicKeyHash, redemptions, err := mtrwallet.FindPendingRedemptions(
+		walletPublicKeyHash, redemptions, err := walletmtr.FindPendingRedemptions(
 			tbtcChain,
 			walletPublicKeyHash,
 			redemptionMaxSize,
@@ -361,7 +436,7 @@ var proposeRedemptionCommand = cobra.Command{
 			)
 		}
 
-		return mtrwallet.ProposeRedemption(
+		return walletmtr.ProposeRedemption(
 			tbtcChain,
 			btcChain,
 			walletPublicKeyHash,
@@ -398,7 +473,7 @@ var estimateDepositsSweepFeeCommand = cobra.Command{
 			return fmt.Errorf("could not connect to Electrum chain: [%v]", err)
 		}
 
-		fees, err := mtrwallet.EstimateDepositsSweepFee(
+		fees, err := walletmtr.EstimateDepositsSweepFee(
 			tbtcChain,
 			btcChain,
 			depositsCount,

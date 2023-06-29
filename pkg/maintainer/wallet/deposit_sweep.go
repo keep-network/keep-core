@@ -3,30 +3,16 @@ package wallet
 import (
 	"context"
 	"fmt"
-	"github.com/keep-network/keep-core/internal/hexutils"
-	"github.com/keep-network/keep-core/pkg/bitcoin"
 	"math"
 	"math/big"
-	"regexp"
 	"sort"
-	"strconv"
 
+	"github.com/keep-network/keep-core/internal/hexutils"
+	"github.com/keep-network/keep-core/pkg/bitcoin"
 	"github.com/keep-network/keep-core/pkg/tbtc"
 )
 
 const depositScriptByteSize = 92
-
-var (
-	// DepositReferenceFormatPattern describes the pattern of a string
-	// carrying a DepositReference.
-	DepositReferenceFormatPattern = "<unprefixed bitcoin transaction hash>:" +
-		"<bitcoin transaction output index>:" +
-		"<ethereum reveal block number>"
-
-	// depositReferenceFormatRegexp is a regexp corresponding to a string
-	// carrying a DepositReference.
-	depositReferenceFormatRegexp = regexp.MustCompile(`^([[:xdigit:]]+):(\d+):(\d+)$`)
-)
 
 func (wm *walletMaintainer) runDepositSweepTask(ctx context.Context) error {
 	depositSweepMaxSize, err := wm.chain.GetDepositSweepMaxSize()
@@ -82,71 +68,6 @@ type Deposit struct {
 	IsSwept             bool
 	AmountBtc           float64
 	Confirmations       uint
-}
-
-// ParseDepositsReferences decodes a list of deposits references.
-func ParseDepositsReferences(depositsRefsStings []string) ([]*DepositReference, error) {
-	depositsRefs := make([]*DepositReference, len(depositsRefsStings))
-
-	for i, depositRefString := range depositsRefsStings {
-		matched := depositReferenceFormatRegexp.FindStringSubmatch(depositRefString)
-		// Check if number of resolved entries match expected number of groups
-		// for the given regexp.
-		if len(matched) != 4 {
-			return nil, fmt.Errorf(
-				"failed to parse deposit: [%s]",
-				depositRefString,
-			)
-		}
-
-		txHash, err := bitcoin.NewHashFromString(matched[1], bitcoin.ReversedByteOrder)
-		if err != nil {
-			return nil, fmt.Errorf(
-				"invalid bitcoin transaction hash [%s]: %v",
-				matched[1],
-				err,
-			)
-		}
-
-		outputIndex, err := strconv.ParseInt(matched[2], 10, 32)
-		if err != nil {
-			return nil, fmt.Errorf(
-				"invalid bitcoin transaction output index [%s]: %v",
-				matched[2],
-				err,
-			)
-		}
-
-		revealBlock, err := strconv.ParseUint(matched[3], 10, 32)
-		if err != nil {
-			return nil, fmt.Errorf(
-				"invalid reveal block number [%s]: %v",
-				matched[3],
-				err,
-			)
-		}
-
-		depositsRefs[i] = &DepositReference{
-			FundingTxHash:      txHash,
-			FundingOutputIndex: uint32(outputIndex),
-			RevealBlock:        revealBlock,
-		}
-	}
-
-	return depositsRefs, nil
-}
-
-// ValidateDepositReferenceString validates format of the string containing a
-// deposit reference.
-func ValidateDepositReferenceString(depositRefString string) error {
-	if !depositReferenceFormatRegexp.MatchString(depositRefString) {
-		return fmt.Errorf(
-			"[%s] doesn't match pattern: %s",
-			depositRefString,
-			DepositReferenceFormatPattern,
-		)
-	}
-	return nil
 }
 
 // FindDeposits finds deposits according to the given criteria.
