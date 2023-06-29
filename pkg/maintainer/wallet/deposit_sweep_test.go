@@ -7,7 +7,7 @@ import (
 	"github.com/ipfs/go-log"
 	"github.com/keep-network/keep-core/internal/hexutils"
 	"github.com/keep-network/keep-core/pkg/bitcoin"
-	mtrwallet "github.com/keep-network/keep-core/pkg/maintainer/wallet"
+	walletmtr "github.com/keep-network/keep-core/pkg/maintainer/wallet"
 	"github.com/keep-network/keep-core/pkg/maintainer/wallet/internal/test"
 	"github.com/keep-network/keep-core/pkg/tbtc"
 )
@@ -25,8 +25,8 @@ func TestFindDepositsToSweep(t *testing.T) {
 
 	for _, scenario := range scenarios {
 		t.Run(scenario.Title, func(t *testing.T) {
-			tbtcChain := mtrwallet.NewLocalChain()
-			btcChain := mtrwallet.NewLocalBitcoinChain()
+			tbtcChain := walletmtr.NewLocalChain()
+			btcChain := walletmtr.NewLocalBitcoinChain()
 
 			expectedWallet := scenario.ExpectedWalletPublicKeyHash
 
@@ -70,7 +70,7 @@ func TestFindDepositsToSweep(t *testing.T) {
 			}
 
 			// Test execution.
-			actualWallet, actualDeposits, err := mtrwallet.FindDepositsToSweep(
+			actualWallet, actualDeposits, err := walletmtr.FindDepositsToSweep(
 				tbtcChain,
 				btcChain,
 				scenario.WalletPublicKeyHash,
@@ -109,8 +109,8 @@ func TestProposeDepositsSweep(t *testing.T) {
 
 	for _, scenario := range scenarios {
 		t.Run(scenario.Title, func(t *testing.T) {
-			tbtcChain := mtrwallet.NewLocalChain()
-			btcChain := mtrwallet.NewLocalBitcoinChain()
+			tbtcChain := walletmtr.NewLocalChain()
+			btcChain := walletmtr.NewLocalBitcoinChain()
 
 			// Chain setup.
 			tbtcChain.SetDepositParameters(0, 0, scenario.DepositTxMaxFee, 0)
@@ -148,7 +148,7 @@ func TestProposeDepositsSweep(t *testing.T) {
 			btcChain.SetEstimateSatPerVByteFee(1, scenario.EstimateSatPerVByteFee)
 
 			// Test execution.
-			err = mtrwallet.ProposeDepositsSweep(
+			err = walletmtr.ProposeDepositsSweep(
 				tbtcChain,
 				btcChain,
 				scenario.WalletPublicKeyHash,

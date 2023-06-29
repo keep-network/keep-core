@@ -3,7 +3,7 @@ package test
 import (
 	"encoding/json"
 	"fmt"
-	mtrwallet "github.com/keep-network/keep-core/pkg/maintainer/wallet"
+	walletmtr "github.com/keep-network/keep-core/pkg/maintainer/wallet"
 	"math/big"
 	"time"
 
@@ -97,7 +97,7 @@ func (dsts *FindDepositsToSweepTestScenario) UnmarshalJSON(data []byte) error {
 
 	// Unmarshal expected unswept deposits.
 	for i, deposit := range unmarshaled.ExpectedUnsweptDeposits {
-		ud := new(mtrwallet.DepositReference)
+		ud := new(walletmtr.DepositReference)
 
 		fundingTxHash, err := bitcoin.NewHashFromString(deposit.FundingTxHash, bitcoin.ReversedByteOrder)
 		if err != nil {
