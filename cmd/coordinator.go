@@ -3,7 +3,9 @@ package cmd
 import (
 	"fmt"
 	"os"
+	"regexp"
 	"sort"
+	"strconv"
 	"text/tabwriter"
 
 	"github.com/spf13/cobra"
@@ -175,7 +177,7 @@ var proposeDepositsSweepCommand = cobra.Command{
 	TraverseChildren: true,
 	Args: func(cmd *cobra.Command, args []string) error {
 		for i, arg := range args {
-			if err := mtrwallet.ValidateDepositReferenceString(arg); err != nil {
+			if err := validateDepositReferenceString(arg); err != nil {
 				return fmt.Errorf(
 					"argument [%d] failed validation: %v",
 					i,
@@ -239,7 +241,7 @@ var proposeDepositsSweepCommand = cobra.Command{
 
 		var deposits []*mtrwallet.DepositReference
 		if len(args) > 0 {
-			deposits, err = mtrwallet.ParseDepositsReferences(args)
+			deposits, err = parseDepositsReferences(args)
 			if err != nil {
 				return fmt.Errorf("failed extract wallet public key hash: %v", err)
 			}
@@ -280,14 +282,87 @@ var (
 		" - bitcoin transaction output index, \n" +
 		" - ethereum block number when the deposit was revealed to the chain. \n" +
 		"The properties should be separated by semicolons, in the following format: \n" +
-		mtrwallet.DepositReferenceFormatPattern + "\n" +
+		depositReferenceFormatPattern + "\n" +
 		"e.g. bd99d1d0a61fd104925d9b7ac997958aa8af570418b3fde091f7bfc561608865:1:8392394"
+
+	depositReferenceFormatPattern = "<unprefixed bitcoin transaction hash>:" +
+		"<bitcoin transaction output index>:" +
+		"<ethereum reveal block number>"
+
+	depositReferenceFormatRegexp = regexp.MustCompile(`^([[:xdigit:]]+):(\d+):(\d+)$`)
 
 	proposeDepositsSweepCommandDescription = "Submits a deposits sweep proposal " +
 		"to the chain. Expects --wallet and --fee flags along with deposits to " +
 		"sweep provided as arguments.\n" +
 		depositsFormatDescription
 )
+
+// parseDepositsReferences decodes a list of deposits references.
+func parseDepositsReferences(
+	depositsRefsStings []string,
+) ([]*mtrwallet.DepositReference, error) {
+	depositsRefs := make([]*mtrwallet.DepositReference, len(depositsRefsStings))
+
+	for i, depositRefString := range depositsRefsStings {
+		matched := depositReferenceFormatRegexp.FindStringSubmatch(depositRefString)
+		// Check if number of resolved entries match expected number of groups
+		// for the given regexp.
+		if len(matched) != 4 {
+			return nil, fmt.Errorf(
+				"failed to parse deposit: [%s]",
+				depositRefString,
+			)
+		}
+
+		txHash, err := bitcoin.NewHashFromString(matched[1], bitcoin.ReversedByteOrder)
+		if err != nil {
+			return nil, fmt.Errorf(
+				"invalid bitcoin transaction hash [%s]: %v",
+				matched[1],
+				err,
+			)
+		}
+
+		outputIndex, err := strconv.ParseInt(matched[2], 10, 32)
+		if err != nil {
+			return nil, fmt.Errorf(
+				"invalid bitcoin transaction output index [%s]: %v",
+				matched[2],
+				err,
+			)
+		}
+
+		revealBlock, err := strconv.ParseUint(matched[3], 10, 32)
+		if err != nil {
+			return nil, fmt.Errorf(
+				"invalid reveal block number [%s]: %v",
+				matched[3],
+				err,
+			)
+		}
+
+		depositsRefs[i] = &mtrwallet.DepositReference{
+			FundingTxHash:      txHash,
+			FundingOutputIndex: uint32(outputIndex),
+			RevealBlock:        revealBlock,
+		}
+	}
+
+	return depositsRefs, nil
+}
+
+// validateDepositReferenceString validates format of the string containing a
+// deposit reference.
+func validateDepositReferenceString(depositRefString string) error {
+	if !depositReferenceFormatRegexp.MatchString(depositRefString) {
+		return fmt.Errorf(
+			"[%s] doesn't match pattern: %s",
+			depositRefString,
+			depositReferenceFormatPattern,
+		)
+	}
+	return nil
+}
 
 var proposeRedemptionCommand = cobra.Command{
 	Use:              "propose-redemption",
