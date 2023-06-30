@@ -261,10 +261,10 @@ func getPendingRedemptions(
 	// [now - redemptionRequestTimeout, now - redemptionRequestMinAge]
 	// should be taken into consideration.
 	redemptionRequestsRangeStartTimestamp := time.Now().Add(
-		time.Duration(-redemptionRequestTimeout) * time.Second,
+		-time.Duration(redemptionRequestTimeout) * time.Second,
 	)
 	redemptionRequestsRangeEndTimestamp := time.Now().Add(
-		time.Duration(-redemptionRequestMinAge) * time.Second,
+		-time.Duration(redemptionRequestMinAge) * time.Second,
 	)
 
 	// TODO: We should consider narrowing the block range in filter the fetch
