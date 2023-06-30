@@ -72,7 +72,9 @@ func (wm *walletMaintainer) startControlLoop(ctx context.Context) {
 
 			logger.Info("starting redemption task execution...")
 
-			// TODO: Implement
+			if err := wm.runRedemptionTask(ctx); err != nil {
+				logger.Errorf("failed to run redemption task: [%v]", err)
+			}
 
 			logger.Infof(
 				"redemption task run completed; next run in [%s]",
