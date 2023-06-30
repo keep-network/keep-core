@@ -1,6 +1,11 @@
 package bitcoin
 
-import "encoding/binary"
+import (
+	"encoding/binary"
+	"math/big"
+
+	"github.com/btcsuite/btcd/blockchain"
+)
 
 // BlockHeaderByteLength is the byte length of a serialized block header.
 const BlockHeaderByteLength = 80
@@ -39,11 +44,11 @@ func (bh *BlockHeader) Serialize() [BlockHeaderByteLength]byte {
 
 	// PreviousBlockHeaderHash
 	copy(result[offset:], bh.PreviousBlockHeaderHash[:])
-	offset += len(bh.PreviousBlockHeaderHash)
+	offset += HashByteLength
 
 	// MerkleRootHash
 	copy(result[offset:], bh.MerkleRootHash[:])
-	offset += len(bh.MerkleRootHash)
+	offset += HashByteLength
 
 	// Time
 	binary.LittleEndian.PutUint32(result[offset:], bh.Time)
@@ -59,6 +64,39 @@ func (bh *BlockHeader) Serialize() [BlockHeaderByteLength]byte {
 	return result
 }
 
+// Deserialize deserializes a byte array to a BlockHeader using the block header
+// serialization format:
+// [Version][PreviousBlockHeaderHash][MerkleRootHash][Time][Bits][Nonce].
+func (bh *BlockHeader) Deserialize(rawBlockHeader [BlockHeaderByteLength]byte) {
+	offset := 0
+
+	// Version
+	bh.Version = int32(binary.LittleEndian.Uint32(rawBlockHeader[offset:]))
+	offset += 4
+
+	// PreviousBlockHeaderHash
+	copy(
+		bh.PreviousBlockHeaderHash[:],
+		rawBlockHeader[offset:offset+HashByteLength],
+	)
+	offset += HashByteLength
+
+	// MerkleRootHash
+	copy(bh.MerkleRootHash[:], rawBlockHeader[offset:offset+HashByteLength])
+	offset += HashByteLength
+
+	// Time
+	bh.Time = binary.LittleEndian.Uint32(rawBlockHeader[offset:])
+	offset += 4
+
+	// Bits
+	bh.Bits = binary.LittleEndian.Uint32(rawBlockHeader[offset:])
+	offset += 4
+
+	// Nonce
+	bh.Nonce = binary.LittleEndian.Uint32(rawBlockHeader[offset:])
+}
+
 // Hash calculates the block header's hash as the double SHA-256 of the
 // block header serialization format:
 // [Version][PreviousBlockHeaderHash][MerkleRootHash][Time][Bits][Nonce].
@@ -68,4 +106,30 @@ func (bh *BlockHeader) Hash() Hash {
 	//       2. Compute the double SHA-256 over the serialized  block hash.
 	//       3. Construct the Hash instance appropriately.
 	return Hash{}
+}
+
+// Target calculates the difficulty target of a block header. A Bitcoin block
+// must have its hash lower than or equal to the target calculated from the
+// `Bits` field.
+func (bh *BlockHeader) Target() *big.Int {
+	return blockchain.CompactToBig(bh.Bits)
+}
+
+// Difficulty calculates the difficulty of a block header. The difficulty is the
+// measure of how hard it is to mine a valid Bitcoin block. It is calculated by
+// dividing the maximum possible target by the target calculated from the `Bits`
+// field.
+func (bh *BlockHeader) Difficulty() *big.Int {
+	maxTarget := new(big.Int)
+	maxTarget.SetString(
+		"ffff0000000000000000000000000000000000000000000000000000",
+		16,
+	)
+
+	target := bh.Target()
+
+	difficulty := new(big.Int)
+	difficulty.Div(maxTarget, target)
+
+	return difficulty
 }
