@@ -42,11 +42,11 @@ func (bh *BlockHeader) Serialize() [BlockHeaderByteLength]byte {
 
 	// PreviousBlockHeaderHash
 	copy(result[offset:], bh.PreviousBlockHeaderHash[:])
-	offset += len(bh.PreviousBlockHeaderHash)
+	offset += HashByteLength
 
 	// MerkleRootHash
 	copy(result[offset:], bh.MerkleRootHash[:])
-	offset += len(bh.MerkleRootHash)
+	offset += HashByteLength
 
 	// Time
 	binary.LittleEndian.PutUint32(result[offset:], bh.Time)
