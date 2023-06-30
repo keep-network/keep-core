@@ -108,12 +108,17 @@ func (bh *BlockHeader) Hash() Hash {
 	return Hash{}
 }
 
-// Target calculates the difficulty target of a block header.
+// Target calculates the difficulty target of a block header. A Bitcoin block
+// must have its hash lower than or equal to the target calculated from the
+// `Bits` field.
 func (bh *BlockHeader) Target() *big.Int {
 	return blockchain.CompactToBig(bh.Bits)
 }
 
-// Difficulty calculates the difficulty of a block header.
+// Difficulty calculates the difficulty of a block header. The difficulty is the
+// measure of how hard it is to mine a valid Bitcoin block. It is calculated by
+// dividing the maximum possible target by the target calculated from the `Bits`
+// field.
 func (bh *BlockHeader) Difficulty() *big.Int {
 	maxTarget := new(big.Int)
 	maxTarget.SetString(
