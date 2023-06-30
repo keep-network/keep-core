@@ -171,6 +171,40 @@ func (sm *spvMaintainer) proveDepositSweepTransactions() error {
 			return fmt.Errorf("failed to assemble SPV proof: [%v]", err)
 		}
 
+		// Deserialize the first block header and verify its difficulty.
+		rawBlockHeader := [bitcoin.BlockHeaderByteLength]byte{}
+		copy(
+			rawBlockHeader[:],
+			proof.BitcoinHeaders[:bitcoin.BlockHeaderByteLength],
+		)
+		firstBlockHeader := bitcoin.BlockHeader{}
+		firstBlockHeader.Deserialize(rawBlockHeader)
+		firstBlockHeaderDifficulty := firstBlockHeader.Difficulty()
+
+		currentDifficulty, previousDifficulty, err :=
+			sm.btcDiffChain.GetCurrentAndPrevEpochDifficulty()
+		if err != nil {
+			return fmt.Errorf(
+				"failed to get Bitcoin epoch difficulties: [%v]",
+				err,
+			)
+		}
+
+		if firstBlockHeaderDifficulty.Cmp(currentDifficulty) != 0 &&
+			firstBlockHeaderDifficulty.Cmp(previousDifficulty) != 0 {
+			// Skip the transaction as the difficulty of the first block
+			// header in the proof does not match the current or the
+			// previous difficulty seen on-chain. The reason for this is
+			// most likely that the proof consists of block headers from the
+			// beginning of a new Bitcoin difficulty epoch and the epoch is
+			// not proven on-chain yet. In that case the transaction will be
+			// proven in the future. The other reason could be that the
+			// transaction is older than the last two Bitcoin difficulty
+			// epoch. In that case the transaction will soon leave the
+			// sliding window of recent transactions.
+			continue
+		}
+
 		mainUTXO, vault, err := parseTransactionInputs(
 			sm.btcChain,
 			sm.spvChain,
@@ -183,12 +217,6 @@ func (sm *spvMaintainer) proveDepositSweepTransactions() error {
 			)
 		}
 
-		// TODO: Remember that the relay may temporarily be in the out-of-date
-		//       state. It happens at the beginning of each Bitcoin difficulty
-		//       epoch. Detect the situation when the proof contains block
-		//       headers with a difficulty that is not yet proven. Skip proving
-		//       such a transaction. It will be proven in the future by another
-		//       round of processing deposit sweep proofs.
 		if err := sm.spvChain.SubmitDepositSweepProofWithReimbursement(
 			transaction,
 			proof,
