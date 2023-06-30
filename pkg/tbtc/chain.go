@@ -291,7 +291,7 @@ type WalletChainData struct {
 	MovingFundsRequestedAt                 time.Time
 	ClosingStartedAt                       time.Time
 	PendingMovedFundsSweepRequestsCount    uint32
-	State                                  uint8
+	State                                  WalletState
 	MovingFundsTargetWalletsCommitmentHash [32]byte
 }
 

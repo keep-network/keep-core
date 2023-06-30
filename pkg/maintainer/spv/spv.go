@@ -250,8 +250,10 @@ func (sm *spvMaintainer) getUnprovenDepositSweepTransactions() (
 			return nil, fmt.Errorf("failed to get wallet: [%v]", err)
 		}
 
-		// Skip if the wallet is not `Live` or `MovingFunds`.
-		if wallet.State != 1 && wallet.State != 2 {
+		if wallet.State != tbtc.StateLive &&
+			wallet.State != tbtc.StateMovingFunds {
+			// The wallet can only submit deposit sweep proofs if it's `Live` or
+			// `MovingFunds`. If the state is different skip it.
 			continue
 		}
 

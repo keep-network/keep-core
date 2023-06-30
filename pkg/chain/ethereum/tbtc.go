@@ -1249,6 +1249,11 @@ func (tc *TbtcChain) GetWallet(
 		)
 	}
 
+	walletState, err := parseWalletState(wallet.State)
+	if err != nil {
+		return nil, fmt.Errorf("cannot parse wallet state: [%v]", err)
+	}
+
 	return &tbtc.WalletChainData{
 		EcdsaWalletID:                          wallet.EcdsaWalletID,
 		MainUtxoHash:                           wallet.MainUtxoHash,
@@ -1257,7 +1262,7 @@ func (tc *TbtcChain) GetWallet(
 		MovingFundsRequestedAt:                 time.Unix(int64(wallet.MovingFundsRequestedAt), 0),
 		ClosingStartedAt:                       time.Unix(int64(wallet.ClosingStartedAt), 0),
 		PendingMovedFundsSweepRequestsCount:    wallet.PendingMovedFundsSweepRequestsCount,
-		State:                                  wallet.State,
+		State:                                  walletState,
 		MovingFundsTargetWalletsCommitmentHash: wallet.MovingFundsTargetWalletsCommitmentHash,
 	}, nil
 }
@@ -1604,6 +1609,25 @@ func parseWalletActionType(value uint8) (tbtc.WalletActionType, error) {
 		return tbtc.MovedFundsSweep, nil
 	default:
 		return 0, fmt.Errorf("unexpected wallet action value: [%v]", value)
+	}
+}
+
+func parseWalletState(value uint8) (tbtc.WalletState, error) {
+	switch value {
+	case 0:
+		return tbtc.StateUnknown, nil
+	case 1:
+		return tbtc.StateLive, nil
+	case 2:
+		return tbtc.StateMovingFunds, nil
+	case 3:
+		return tbtc.StateClosing, nil
+	case 4:
+		return tbtc.StateClosed, nil
+	case 5:
+		return tbtc.StateTerminated, nil
+	default:
+		return 0, fmt.Errorf("unexpected wallet state value: [%v]", value)
 	}
 }
 
