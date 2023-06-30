@@ -3,7 +3,7 @@ package test
 import (
 	"encoding/json"
 	"fmt"
-	mtrwallet "github.com/keep-network/keep-core/pkg/maintainer/wallet"
+	walletmtr "github.com/keep-network/keep-core/pkg/maintainer/wallet"
 	"io/fs"
 	"io/ioutil"
 	"path/filepath"
@@ -50,7 +50,7 @@ type FindDepositsToSweepTestScenario struct {
 	Deposits []*Deposit
 
 	ExpectedWalletPublicKeyHash [20]byte
-	ExpectedUnsweptDeposits     []*mtrwallet.DepositReference
+	ExpectedUnsweptDeposits     []*walletmtr.DepositReference
 
 	SweepTxFee             int64
 	EstimateSatPerVByteFee int64
@@ -97,7 +97,7 @@ func LoadFindDepositsToSweepTestScenario() ([]*FindDepositsToSweepTestScenario, 
 }
 
 type ProposeSweepDepositsData struct {
-	mtrwallet.DepositReference
+	walletmtr.DepositReference
 
 	Transaction            *bitcoin.Transaction
 	FundingTxConfirmations uint
@@ -115,10 +115,10 @@ type ProposeSweepTestScenario struct {
 	ExpectedDepositSweepProposal *tbtc.DepositSweepProposal
 }
 
-func (psts *ProposeSweepTestScenario) DepositsReferences() []*mtrwallet.DepositReference {
-	result := make([]*mtrwallet.DepositReference, len(psts.Deposits))
+func (psts *ProposeSweepTestScenario) DepositsReferences() []*walletmtr.DepositReference {
+	result := make([]*walletmtr.DepositReference, len(psts.Deposits))
 	for i, d := range psts.Deposits {
-		result[i] = &mtrwallet.DepositReference{
+		result[i] = &walletmtr.DepositReference{
 			FundingTxHash:      d.FundingTxHash,
 			FundingOutputIndex: d.FundingOutputIndex,
 			RevealBlock:        d.RevealBlock,

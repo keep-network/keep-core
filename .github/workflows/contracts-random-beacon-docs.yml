@@ -46,6 +46,7 @@ jobs:
     with:
       projectDir: /solidity/random-beacon
       publish: false
+      addTOC: false
       commentPR: true
       exportAsGHArtifacts: true
 
@@ -63,12 +64,14 @@ jobs:
     with:
       projectDir: /solidity/random-beacon
       publish: true
+      addTOC: false
       verifyCommits: true
       destinationRepo: threshold-network/threshold
       destinationFolder: ./docs/app-development/random-beacon/random-beacon-api
       destinationBaseBranch: main
       userEmail: 38324465+thesis-valkyrie@users.noreply.github.com
       userName: Valkyrie
+      rsyncDelete: true
     secrets:
       githubToken: ${{ secrets.THRESHOLD_DOCS_GITHUB_TOKEN }}
       gpgPrivateKey: ${{ secrets.THRESHOLD_DOCS_GPG_PRIVATE_KEY_BASE64 }}
