@@ -122,7 +122,7 @@ func (bh *BlockHeader) Target() *big.Int {
 func (bh *BlockHeader) Difficulty() *big.Int {
 	maxTarget := new(big.Int)
 	maxTarget.SetString(
-		"00000000ffff0000000000000000000000000000000000000000000000000000",
+		"ffff0000000000000000000000000000000000000000000000000000",
 		16,
 	)
 
