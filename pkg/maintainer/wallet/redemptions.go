@@ -270,27 +270,55 @@ func getPendingRedemptions(
 	// TODO: We should consider narrowing the block range in filter the fetch
 	//       only events that are newer than `now - redemptionRequestTimeout`.
 
-	redemptionsRequested, err := chain.PastRedemptionRequestedEvents(filter)
+	events, err := chain.PastRedemptionRequestedEvents(filter)
 	if err != nil {
 		return nil, fmt.Errorf(
 			"failed to get past redemption requested events: [%w]",
 			err,
 		)
 	}
-	logger.Infof("found %d RedemptionRequested events", len(redemptionsRequested))
 
 	// Take the oldest first.
-	sort.SliceStable(redemptionsRequested, func(i, j int) bool {
-		return redemptionsRequested[i].BlockNumber < redemptionsRequested[j].BlockNumber
+	sort.SliceStable(events, func(i, j int) bool {
+		return events[i].BlockNumber < events[j].BlockNumber
 	})
+
+	// There may be multiple events targeting the same redemption key
+	// (i.e. the same wallet and output script pair). The Bridge contract
+	// allows only for one pending request with the given redemption key
+	// at the same time. That means we need to deduplicate the events list
+	// and take only the latest event for the given redemption key.
+	eventsSet := make(map[string]*tbtc.RedemptionRequestedEvent)
+	for _, event := range events {
+		redemptionKey, err := chain.BuildRedemptionKey(
+			event.WalletPublicKeyHash,
+			event.RedeemerOutputScript,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("failed to build redemption key: [%v]", err)
+		}
+
+		// Events are sorted from the oldest to the newest so there is no
+		// need to check for existence. We can just overwrite.
+		eventsSet[hexutils.Encode(redemptionKey.Bytes())] = event
+	}
+
+	logger.Infof("found %d redemption requests", len(eventsSet))
 
 	logger.Infof("checking pending redemptions details...")
 
 	pendingRedemptions := make([]*RedemptionRequest, 0)
 
+	eventIndex := 0
 redemptionRequestedLoop:
-	for i, event := range redemptionsRequested {
-		logger.Debugf("getting pending redemption details %d/%d", i+1, len(redemptionsRequested))
+	for redemptionKey, event := range eventsSet {
+		eventIndex++
+
+		logger.Debugf(
+			"getting pending redemption details %d/%d",
+			eventIndex,
+			len(eventsSet),
+		)
 
 		// Check if there is still a pending redemption for the given redemption
 		// requested event.
@@ -303,8 +331,8 @@ redemptionRequestedLoop:
 			case errors.Is(err, tbtc.ErrPendingRedemptionRequestNotFound):
 				logger.Debugf(
 					"redemption for request %d/%d is no longer pending",
-					i+1,
-					len(redemptionsRequested),
+					eventIndex,
+					len(eventsSet),
 				)
 
 				continue redemptionRequestedLoop
@@ -316,23 +344,17 @@ redemptionRequestedLoop:
 			}
 		}
 
-		redemptionKey, err := chain.BuildRedemptionKey(
-			event.WalletPublicKeyHash,
-			event.RedeemerOutputScript,
-		)
-		if err != nil {
-			return nil, fmt.Errorf("failed to build redemption key: [%v]", err)
-		}
-
 		pendingRedemptions = append(pendingRedemptions, &RedemptionRequest{
 			WalletPublicKeyHash:  event.WalletPublicKeyHash,
-			RedemptionKey:        hexutils.Encode(redemptionKey.Bytes()),
+			RedemptionKey:        redemptionKey,
 			RedeemerOutputScript: event.RedeemerOutputScript,
 			RequestedAt:          pendingRedemption.RequestedAt,
 		})
 	}
 
-	resultSliceCapacity := len(redemptionsRequested)
+	logger.Infof("found %d redemption requests", len(pendingRedemptions))
+
+	resultSliceCapacity := len(pendingRedemptions)
 	if maxNumberOfRedemptions > 0 {
 		resultSliceCapacity = maxNumberOfRedemptions
 	}
@@ -353,7 +375,7 @@ redemptionRequestedLoop:
 			logger.Infof(
 				"redemption request %d/%d has already timed out",
 				i+1,
-				len(redemptionsRequested),
+				len(pendingRedemptions),
 			)
 			continue
 		}
@@ -363,7 +385,7 @@ redemptionRequestedLoop:
 			logger.Infof(
 				"redemption request %d/%d is not old enough",
 				i+1,
-				len(redemptionsRequested),
+				len(pendingRedemptions),
 			)
 			continue
 		}
