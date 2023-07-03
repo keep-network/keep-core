@@ -171,15 +171,7 @@ func (sm *spvMaintainer) proveDepositSweepTransactions() error {
 			return fmt.Errorf("failed to assemble SPV proof: [%v]", err)
 		}
 
-		// Deserialize the first block header and verify its difficulty.
-		rawBlockHeader := [bitcoin.BlockHeaderByteLength]byte{}
-		copy(
-			rawBlockHeader[:],
-			proof.BitcoinHeaders[:bitcoin.BlockHeaderByteLength],
-		)
-		firstBlockHeader := bitcoin.BlockHeader{}
-		firstBlockHeader.Deserialize(rawBlockHeader)
-		firstBlockHeaderDifficulty := firstBlockHeader.Difficulty()
+		firstBlockHeaderDifficulty := proof.FirstBlockHeaderDifficulty()
 
 		currentDifficulty, previousDifficulty, err :=
 			sm.btcDiffChain.GetCurrentAndPrevEpochDifficulty()
