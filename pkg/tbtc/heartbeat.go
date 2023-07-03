@@ -96,5 +96,5 @@ func (ha *heartbeatAction) wallet() wallet {
 }
 
 func (ha *heartbeatAction) actionType() WalletActionType {
-	return Heartbeat
+	return ActionHeartbeat
 }

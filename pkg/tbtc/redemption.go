@@ -292,7 +292,7 @@ func (ra *redemptionAction) wallet() wallet {
 }
 
 func (ra *redemptionAction) actionType() WalletActionType {
-	return Redemption
+	return ActionRedemption
 }
 
 // redemptionFeeDistributionFn calculates the redemption transaction fee

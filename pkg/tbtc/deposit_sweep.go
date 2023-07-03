@@ -351,7 +351,7 @@ func (dsa *depositSweepAction) wallet() wallet {
 }
 
 func (dsa *depositSweepAction) actionType() WalletActionType {
-	return DepositSweep
+	return ActionDepositSweep
 }
 
 // assembleDepositSweepTransaction constructs an unsigned deposit sweep Bitcoin

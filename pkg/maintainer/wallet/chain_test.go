@@ -6,10 +6,11 @@ import (
 	"encoding/binary"
 	"encoding/hex"
 	"fmt"
-	"github.com/keep-network/keep-core/pkg/bitcoin"
 	"math/big"
 	"sync"
 	"time"
+
+	"github.com/keep-network/keep-core/pkg/bitcoin"
 
 	"github.com/keep-network/keep-core/pkg/tbtc"
 )
@@ -426,7 +427,7 @@ func (lc *LocalChain) GetWalletLock(
 
 	walletLock, ok := lc.walletLocks[walletPublicKeyHash]
 	if !ok {
-		return time.Time{}, tbtc.Noop, fmt.Errorf("no lock configured for given wallet")
+		return time.Time{}, tbtc.ActionNoop, fmt.Errorf("no lock configured for given wallet")
 	}
 
 	return walletLock.lockExpiration, walletLock.walletAction, nil
@@ -454,6 +455,6 @@ func (lc *LocalChain) ResetWalletLock(
 
 	lc.walletLocks[walletPublicKeyHash] = &walletLock{
 		lockExpiration: time.Unix(0, 0),
-		walletAction:   tbtc.Noop,
+		walletAction:   tbtc.ActionNoop,
 	}
 }
