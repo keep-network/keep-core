@@ -34,6 +34,9 @@ func Initialize(
 	if config.RedemptionWalletsLimit == 0 {
 		config.RedemptionWalletsLimit = DefaultRedemptionWalletsLimit
 	}
+	if config.RedemptionRequestAmountLimit == 0 {
+		config.RedemptionRequestAmountLimit = DefaultRedemptionRequestAmountLimit
+	}
 	if config.DepositSweepInterval == 0 {
 		config.DepositSweepInterval = DefaultDepositSweepInterval
 	}

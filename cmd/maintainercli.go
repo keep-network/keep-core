@@ -427,6 +427,7 @@ var proposeRedemptionCommand = cobra.Command{
 				WalletPublicKeyHashes: walletPublicKeyHashes,
 				WalletsLimit:          1,
 				RequestsLimit:         redemptionMaxSize,
+				RequestAmountLimit:    0,
 			},
 		)
 		if err != nil {

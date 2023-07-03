@@ -27,6 +27,7 @@ func (wm *walletMaintainer) runRedemptionTask(ctx context.Context) error {
 			WalletPublicKeyHashes: nil,
 			WalletsLimit:          wm.config.RedemptionWalletsLimit,
 			RequestsLimit:         redemptionMaxSize,
+			RequestAmountLimit:    wm.config.RedemptionRequestAmountLimit,
 		},
 	)
 	if err != nil {
@@ -68,6 +69,7 @@ type RedemptionRequest struct {
 	RedemptionKey        string
 	RedeemerOutputScript bitcoin.Script
 	RequestedAt          time.Time
+	RequestedAmount      uint64
 }
 
 // PendingRedemptionsFilter defines some criteria that are used to filter
@@ -85,6 +87,11 @@ type PendingRedemptionsFilter struct {
 	// RequestsLimit limits the number of redemptions requests per single wallet.
 	// The value of 0 means there is no requests limit per wallet.
 	RequestsLimit uint16
+
+	// RequestAmountLimit limits the search space to redemption requests
+	// whose requested amount does not exceed the given satoshi value. The
+	// value of 0 means there are no limit on the requested amount.
+	RequestAmountLimit uint64
 }
 
 func (prf PendingRedemptionsFilter) String() string {
@@ -94,10 +101,12 @@ func (prf PendingRedemptionsFilter) String() string {
 	}
 
 	return fmt.Sprintf(
-		"wallets: [%s], wallets limit: [%v], requests limit: [%v]",
+		"wallets: [%s], wallets limit: [%v], requests limit: [%v], "+
+			"request amount limit: [%v]",
 		strings.Join(wallets, ", "),
 		prf.WalletsLimit,
 		prf.RequestsLimit,
+		prf.RequestAmountLimit,
 	)
 }
 
@@ -157,6 +166,7 @@ func FindPendingRedemptions(
 			filter.RequestsLimit,
 			requestTimeout,
 			requestMinAge,
+			filter.RequestAmountLimit,
 		)
 		if err != nil {
 			return nil,
@@ -339,6 +349,7 @@ func getPendingRedemptions(
 	requestsLimit uint16,
 	requestTimeout uint32,
 	requestMinAge uint32,
+	requestAmountLimit uint64,
 ) ([]*RedemptionRequest, error) {
 	// We are interested with `RedemptionRequested` events that are not
 	// timed out yet. That means there is no sense to look for events that
@@ -446,6 +457,7 @@ redemptionRequestedLoop:
 				RedemptionKey:        redemptionKey,
 				RedeemerOutputScript: event.RedeemerOutputScript,
 				RequestedAt:          pendingRedemption.RequestedAt,
+				RequestedAmount:      pendingRedemption.RequestedAmount,
 			},
 		)
 	}
@@ -492,6 +504,15 @@ redemptionRequestedLoop:
 		if pendingRedemption.RequestedAt.After(redemptionRequestsRangeEndTimestamp) {
 			logger.Infof(
 				"redemption request [%d/%d] is not old enough",
+				i+1,
+				len(pendingRedemptions),
+			)
+			continue
+		}
+
+		if requestAmountLimit > 0 && pendingRedemption.RequestedAmount > requestAmountLimit {
+			logger.Infof(
+				"redemption request [%d/%d] exceeds the request amount limit",
 				i+1,
 				len(pendingRedemptions),
 			)
