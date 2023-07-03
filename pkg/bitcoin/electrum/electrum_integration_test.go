@@ -135,123 +135,101 @@ func init() {
 }
 
 func TestConnect_Integration(t *testing.T) {
-	for testName, testConfig := range testConfigs {
-		t.Run(testName, func(t *testing.T) {
-			_, cancelCtx := newTestConnection(t, testConfig.clientConfig)
-			defer cancelCtx()
-		})
-	}
+	runParallel(t, func(t *testing.T, testConfig testConfig) {
+		_, cancelCtx := newTestConnection(t, testConfig.clientConfig)
+		defer cancelCtx()
+	})
 }
 
 func TestGetTransaction_Integration(t *testing.T) {
-	for testName, testConfig := range testConfigs {
-		// Capture range variables.
-		testName := testName
-		testConfig := testConfig
+	runParallel(t, func(t *testing.T, testConfig testConfig) {
+		electrum, cancelCtx := newTestConnection(t, testConfig.clientConfig)
+		defer cancelCtx()
 
-		t.Run(testName, func(t *testing.T) {
-			t.Parallel()
+		for txName, tx := range testData.Transactions[testConfig.network] {
+			t.Run(txName, func(t *testing.T) {
+				result, err := electrum.GetTransaction(tx.TxHash)
+				if err != nil {
+					t.Fatal(err)
+				}
 
-			electrum, cancelCtx := newTestConnection(t, testConfig.clientConfig)
-			defer cancelCtx()
-
-			for txName, tx := range testData.Transactions[testConfig.network] {
-				t.Run(txName, func(t *testing.T) {
-					result, err := electrum.GetTransaction(tx.TxHash)
-					if err != nil {
-						t.Fatal(err)
-					}
-
-					expectedResult := &tx.BitcoinTx
-					if diff := deep.Equal(result, expectedResult); diff != nil {
-						t.Errorf(
-							"compare failed: %v\nactual: %s\nexpected: %s",
-							diff,
-							toJson(result),
-							toJson(expectedResult),
-						)
-					}
-				})
-			}
-		})
-	}
+				expectedResult := &tx.BitcoinTx
+				if diff := deep.Equal(result, expectedResult); diff != nil {
+					t.Errorf(
+						"compare failed: %v\nactual: %s\nexpected: %s",
+						diff,
+						toJson(result),
+						toJson(expectedResult),
+					)
+				}
+			})
+		}
+	})
 }
 
 func TestGetTransaction_Negative_Integration(t *testing.T) {
-	for testName, testConfig := range testConfigs {
-		// Capture range variables.
-		testName := testName
-		testConfig := testConfig
+	runParallel(t, func(t *testing.T, testConfig testConfig) {
+		electrum, cancelCtx := newTestConnection(t, testConfig.clientConfig)
+		defer cancelCtx()
 
-		t.Run(testName, func(t *testing.T) {
-			t.Parallel()
+		_, err := electrum.GetTransaction(invalidTxID)
 
-			electrum, cancelCtx := newTestConnection(t, testConfig.clientConfig)
-			defer cancelCtx()
-
-			_, err := electrum.GetTransaction(invalidTxID)
-
-			assertMissingTransactionError(
-				t,
-				testConfig.clientConfig,
-				fmt.Sprintf(
-					"failed to get raw transaction with ID [%s]",
-					invalidTxID.Hex(bitcoin.ReversedByteOrder),
-				),
-				err,
-			)
-		})
-	}
+		assertMissingTransactionError(
+			t,
+			testConfig.clientConfig,
+			fmt.Sprintf(
+				"failed to get raw transaction with ID [%s]",
+				invalidTxID.Hex(bitcoin.ReversedByteOrder),
+			),
+			err,
+		)
+	})
 }
 
 func TestGetTransactionConfirmations_Integration(t *testing.T) {
-	for testName, testConfig := range testConfigs {
-		t.Run(testName, func(t *testing.T) {
-			electrum, cancelCtx := newTestConnection(t, testConfig.clientConfig)
-			defer cancelCtx()
+	runParallel(t, func(t *testing.T, testConfig testConfig) {
+		electrum, cancelCtx := newTestConnection(t, testConfig.clientConfig)
+		defer cancelCtx()
 
-			for txName, tx := range testData.Transactions[testConfig.network] {
-				t.Run(txName, func(t *testing.T) {
-					latestBlockHeight, err := electrum.GetLatestBlockHeight()
-					if err != nil {
-						t.Fatalf("failed to get the latest block height: %s", err)
-					}
-					expectedConfirmations := latestBlockHeight - tx.BlockHeight
+		for txName, tx := range testData.Transactions[testConfig.network] {
+			t.Run(txName, func(t *testing.T) {
+				latestBlockHeight, err := electrum.GetLatestBlockHeight()
+				if err != nil {
+					t.Fatalf("failed to get the latest block height: %s", err)
+				}
+				expectedConfirmations := latestBlockHeight - tx.BlockHeight
 
-					result, err := electrum.GetTransactionConfirmations(tx.TxHash)
-					if err != nil {
-						t.Fatal(err)
-					}
+				result, err := electrum.GetTransactionConfirmations(tx.TxHash)
+				if err != nil {
+					t.Fatal(err)
+				}
 
-					assertNumberCloseTo(t, expectedConfirmations, result, blockDelta)
-				})
-			}
+				assertNumberCloseTo(t, expectedConfirmations, result, blockDelta)
+			})
+		}
 
-			// We add sleep as a workaround for https://github.com/checksum0/go-electrum/issues/10
-			time.Sleep(time.Second)
-		})
-	}
+		// We add sleep as a workaround for https://github.com/checksum0/go-electrum/issues/10
+		time.Sleep(time.Second)
+	})
 }
 
 func TestGetTransactionConfirmations_Negative_Integration(t *testing.T) {
-	for testName, testConfig := range testConfigs {
-		t.Run(testName, func(t *testing.T) {
-			electrum, cancelCtx := newTestConnection(t, testConfig.clientConfig)
-			defer cancelCtx()
+	runParallel(t, func(t *testing.T, testConfig testConfig) {
+		electrum, cancelCtx := newTestConnection(t, testConfig.clientConfig)
+		defer cancelCtx()
 
-			_, err := electrum.GetTransactionConfirmations(invalidTxID)
+		_, err := electrum.GetTransactionConfirmations(invalidTxID)
 
-			assertMissingTransactionError(
-				t,
-				testConfig.clientConfig,
-				fmt.Sprintf(
-					"failed to get raw transaction with ID [%s]",
-					invalidTxID.Hex(bitcoin.ReversedByteOrder),
-				),
-				err,
-			)
-		})
-	}
+		assertMissingTransactionError(
+			t,
+			testConfig.clientConfig,
+			fmt.Sprintf(
+				"failed to get raw transaction with ID [%s]",
+				invalidTxID.Hex(bitcoin.ReversedByteOrder),
+			),
+			err,
+		)
+	})
 }
 
 func TestGetLatestBlockHeight_Integration(t *testing.T) {
@@ -284,7 +262,6 @@ func TestGetLatestBlockHeight_Integration(t *testing.T) {
 			if result > ref {
 				expectedBlockHeightRef[testConfig.network.String()] = result
 			}
-
 		})
 	}
 
@@ -299,154 +276,156 @@ func TestGetLatestBlockHeight_Integration(t *testing.T) {
 }
 
 func TestGetBlockHeader_Integration(t *testing.T) {
-	for testName, testConfig := range testConfigs {
-		t.Run(testName, func(t *testing.T) {
-			electrum, cancelCtx := newTestConnection(t, testConfig.clientConfig)
-			defer cancelCtx()
+	runParallel(t, func(t *testing.T, testConfig testConfig) {
+		electrum, cancelCtx := newTestConnection(t, testConfig.clientConfig)
+		defer cancelCtx()
 
-			blockData, ok := testData.Blocks[testConfig.network]
-			if !ok {
-				t.Fatalf("block test data not defined for network %s", testConfig.network)
-			}
+		blockData, ok := testData.Blocks[testConfig.network]
+		if !ok {
+			t.Fatalf("block test data not defined for network %s", testConfig.network)
+		}
 
-			result, err := electrum.GetBlockHeader(blockData.BlockHeight)
-			if err != nil {
-				t.Fatal(err)
-			}
+		result, err := electrum.GetBlockHeader(blockData.BlockHeight)
+		if err != nil {
+			t.Fatal(err)
+		}
 
-			if diff := deep.Equal(result, blockData.BlockHeader); diff != nil {
-				t.Errorf("compare failed: %v", diff)
-			}
-		})
-	}
+		if diff := deep.Equal(result, blockData.BlockHeader); diff != nil {
+			t.Errorf("compare failed: %v", diff)
+		}
+	})
 }
 
 func TestGetBlockHeader_Negative_Integration(t *testing.T) {
 	blockHeight := uint(math.MaxUint32)
 
-	for testName, testConfig := range testConfigs {
-		t.Run(testName, func(t *testing.T) {
-			electrum, cancelCtx := newTestConnection(t, testConfig.clientConfig)
-			defer cancelCtx()
+	runParallel(t, func(t *testing.T, testConfig testConfig) {
+		electrum, cancelCtx := newTestConnection(t, testConfig.clientConfig)
+		defer cancelCtx()
 
-			_, err := electrum.GetBlockHeader(blockHeight)
+		_, err := electrum.GetBlockHeader(blockHeight)
 
-			assertMissingBlockHeaderError(
-				t,
-				testConfig.clientConfig,
-				"failed to get block header",
-				err,
-			)
-		})
-	}
+		assertMissingBlockHeaderError(
+			t,
+			testConfig.clientConfig,
+			"failed to get block header",
+			err,
+		)
+	})
 }
 
 func TestGetTransactionMerkleProof_Integration(t *testing.T) {
-	for testName, testConfig := range testConfigs {
-		t.Run(testName, func(t *testing.T) {
-			electrum, cancelCtx := newTestConnection(t, testConfig.clientConfig)
-			defer cancelCtx()
+	runParallel(t, func(t *testing.T, testConfig testConfig) {
+		electrum, cancelCtx := newTestConnection(t, testConfig.clientConfig)
+		defer cancelCtx()
 
-			txMerkleProofData, ok := testData.TxMerkleProofs[testConfig.network]
-			if !ok {
-				t.Fatalf(
-					"transaction merkle proof data not defined for network %s",
-					testConfig.network,
-				)
-			}
-
-			transactionHash := txMerkleProofData.TxHash
-			blockHeight := txMerkleProofData.BlockHeight
-
-			expectedResult := txMerkleProofData.MerkleProof
-
-			result, err := electrum.GetTransactionMerkleProof(
-				transactionHash,
-				blockHeight,
+		txMerkleProofData, ok := testData.TxMerkleProofs[testConfig.network]
+		if !ok {
+			t.Fatalf(
+				"transaction merkle proof data not defined for network %s",
+				testConfig.network,
 			)
-			if err != nil {
-				t.Fatal(err)
-			}
+		}
 
-			if diff := deep.Equal(result, expectedResult); diff != nil {
-				t.Errorf("compare failed: %v", diff)
-			}
-		})
-	}
+		transactionHash := txMerkleProofData.TxHash
+		blockHeight := txMerkleProofData.BlockHeight
+
+		expectedResult := txMerkleProofData.MerkleProof
+
+		result, err := electrum.GetTransactionMerkleProof(
+			transactionHash,
+			blockHeight,
+		)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		if diff := deep.Equal(result, expectedResult); diff != nil {
+			t.Errorf("compare failed: %v", diff)
+		}
+	})
 }
 
 func TestGetTransactionMerkleProof_Negative_Integration(t *testing.T) {
 	blockHeight := uint(123456)
 
-	for testName, testConfig := range testConfigs {
-		t.Run(testName, func(t *testing.T) {
-			electrum, cancelCtx := newTestConnection(t, testConfig.clientConfig)
-			defer cancelCtx()
+	runParallel(t, func(t *testing.T, testConfig testConfig) {
+		electrum, cancelCtx := newTestConnection(t, testConfig.clientConfig)
+		defer cancelCtx()
 
-			_, err := electrum.GetTransactionMerkleProof(
-				invalidTxID,
-				blockHeight,
-			)
+		_, err := electrum.GetTransactionMerkleProof(
+			invalidTxID,
+			blockHeight,
+		)
 
-			assertMissingTransactionInBlockError(
-				t,
-				testConfig.clientConfig,
-				"failed to get merkle proof",
-				err,
-			)
-		})
-	}
+		assertMissingTransactionInBlockError(
+			t,
+			testConfig.clientConfig,
+			"failed to get merkle proof",
+			err,
+		)
+	})
 }
 
 func TestGetTransactionsForPublicKeyHash_Integration(t *testing.T) {
-	for testName, testConfig := range testConfigs {
-		t.Run(testName, func(t *testing.T) {
-			electrum, cancelCtx := newTestConnection(t, testConfig.clientConfig)
-			defer cancelCtx()
+	runParallel(t, func(t *testing.T, testConfig testConfig) {
+		electrum, cancelCtx := newTestConnection(t, testConfig.clientConfig)
+		defer cancelCtx()
 
-			txMerkleProofData, ok := testData.TransactionsForPublicKeyHash[testConfig.network]
-			if !ok {
-				t.Fatalf(
-					"transactions for public key hash data not defined for network %s",
-					testConfig.network,
-				)
-			}
+		txMerkleProofData, ok := testData.TransactionsForPublicKeyHash[testConfig.network]
+		if !ok {
+			t.Fatalf(
+				"transactions for public key hash data not defined for network %s",
+				testConfig.network,
+			)
+		}
 
-			publicKeyHash := (*[20]byte)(txMerkleProofData.PublicKeyHash)
-			expectedHashes := txMerkleProofData.Transactions
+		publicKeyHash := (*[20]byte)(txMerkleProofData.PublicKeyHash)
+		expectedHashes := txMerkleProofData.Transactions
 
-			transactions, err := electrum.GetTransactionsForPublicKeyHash(*publicKeyHash, 5)
-			if err != nil {
-				t.Fatal(err)
-			}
+		transactions, err := electrum.GetTransactionsForPublicKeyHash(*publicKeyHash, 5)
+		if err != nil {
+			t.Fatal(err)
+		}
 
-			actualHashes := make([]bitcoin.Hash, len(transactions))
-			for i, transaction := range transactions {
-				actualHashes[i] = transaction.Hash()
-			}
+		actualHashes := make([]bitcoin.Hash, len(transactions))
+		for i, transaction := range transactions {
+			actualHashes[i] = transaction.Hash()
+		}
 
-			if diff := deep.Equal(actualHashes, expectedHashes); diff != nil {
-				t.Errorf("compare failed: %v", diff)
-			}
-		})
-	}
+		if diff := deep.Equal(actualHashes, expectedHashes); diff != nil {
+			t.Errorf("compare failed: %v", diff)
+		}
+	})
 }
 
 func TestEstimateSatPerVByteFee_Integration(t *testing.T) {
+	runParallel(t, func(t *testing.T, testConfig testConfig) {
+		electrum, cancelCtx := newTestConnection(t, testConfig.clientConfig)
+		defer cancelCtx()
+
+		satPerVByteFee, err := electrum.EstimateSatPerVByteFee(1)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		// We expect the fee is always at least 1.
+		if satPerVByteFee < 1 {
+			t.Errorf("returned fee is below 1")
+		}
+	})
+}
+
+func runParallel(t *testing.T, runFunc func(t *testing.T, testConfig testConfig)) {
 	for testName, testConfig := range testConfigs {
+		// Capture range variables.
+		testName := testName
+		testConfig := testConfig
+
 		t.Run(testName, func(t *testing.T) {
-			electrum, cancelCtx := newTestConnection(t, testConfig.clientConfig)
-			defer cancelCtx()
+			t.Parallel()
 
-			satPerVByteFee, err := electrum.EstimateSatPerVByteFee(1)
-			if err != nil {
-				t.Fatal(err)
-			}
-
-			// We expect the fee is always at least 1.
-			if satPerVByteFee < 1 {
-				t.Errorf("returned fee is below 1")
-			}
+			runFunc(t, testConfig)
 		})
 	}
 }

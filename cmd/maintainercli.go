@@ -47,11 +47,12 @@ var (
 	confirmationsFlagName   = "confirmations"
 )
 
-// CoordinatorCommand contains the definition of tBTC Wallet Coordinator tools.
-var CoordinatorCommand = &cobra.Command{
-	Use:              "coordinator",
-	Short:            "tBTC Wallet Coordinator Tools",
-	Long:             "The tool exposes commands for interactions with tBTC wallets.",
+// MaintainerCliCommand contains the definition of tools associated with maintainers
+// module.
+var MaintainerCliCommand = &cobra.Command{
+	Use:              "maintainer-cli",
+	Short:            "Maintainer CLI Tools",
+	Long:             "The tool exposes commands for tools associated with maintainers.",
 	TraverseChildren: true,
 	PersistentPreRun: func(cmd *cobra.Command, args []string) {
 		if err := clientConfig.ReadConfig(
@@ -642,7 +643,7 @@ var submitDepositSweepProofCommand = cobra.Command{
 
 func init() {
 	initFlags(
-		CoordinatorCommand,
+		MaintainerCliCommand,
 		&configFilePath,
 		clientConfig,
 		config.General, config.Ethereum, config.BitcoinElectrum,
@@ -667,7 +668,7 @@ func init() {
 		"get head of deposits",
 	)
 
-	CoordinatorCommand.AddCommand(&listDepositsCommand)
+	MaintainerCliCommand.AddCommand(&listDepositsCommand)
 
 	// Propose Deposits Sweep Subcommand
 	proposeDepositsSweepCommand.Flags().String(
@@ -694,7 +695,7 @@ func init() {
 		"don't submit a proposal to the chain",
 	)
 
-	CoordinatorCommand.AddCommand(&proposeDepositsSweepCommand)
+	MaintainerCliCommand.AddCommand(&proposeDepositsSweepCommand)
 
 	// Propose Redemptions Subcommand
 	proposeRedemptionCommand.Flags().String(
@@ -721,7 +722,7 @@ func init() {
 		"don't submit a proposal to the chain",
 	)
 
-	CoordinatorCommand.AddCommand(&proposeRedemptionCommand)
+	MaintainerCliCommand.AddCommand(&proposeRedemptionCommand)
 
 	// Estimate Deposits Sweep Fee Subcommand.
 	estimateDepositsSweepFeeCommand.Flags().Int(
@@ -730,7 +731,7 @@ func init() {
 		"get estimation for a specific count of input deposits",
 	)
 
-	CoordinatorCommand.AddCommand(&estimateDepositsSweepFeeCommand)
+	MaintainerCliCommand.AddCommand(&estimateDepositsSweepFeeCommand)
 
 	// Submit Deposit Sweep Proof Subcommand.
 
@@ -757,7 +758,7 @@ func init() {
 			"retrieved from the Bridge will be used.",
 	)
 
-	CoordinatorCommand.AddCommand(&submitDepositSweepProofCommand)
+	MaintainerCliCommand.AddCommand(&submitDepositSweepProofCommand)
 }
 
 func newWalletPublicKeyHash(str string) ([20]byte, error) {
