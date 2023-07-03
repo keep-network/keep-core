@@ -24,9 +24,9 @@ func (wm *walletMaintainer) runRedemptionTask(ctx context.Context) error {
 	walletsPendingRedemptions, err := FindPendingRedemptions(
 		wm.chain,
 		PendingRedemptionsFilter{
-			WalletPublicKeyHashes:   nil,
-			WalletsLimit:            wm.config.RedemptionWalletsLimit,
-			RedemptionRequestsLimit: redemptionMaxSize,
+			WalletPublicKeyHashes: nil,
+			WalletsLimit:          wm.config.RedemptionWalletsLimit,
+			RequestsLimit:         redemptionMaxSize,
 		},
 	)
 	if err != nil {
@@ -82,9 +82,9 @@ type PendingRedemptionsFilter struct {
 	// oldest one. The value of 0 means there is no wallets limit.
 	WalletsLimit uint16
 
-	// RedemptionRequestsLimit limits the number of redemptions requests per
-	// single wallet. The value of 0 means there is no requests limit per wallet.
-	RedemptionRequestsLimit uint16
+	// RequestsLimit limits the number of redemptions requests per single wallet.
+	// The value of 0 means there is no requests limit per wallet.
+	RequestsLimit uint16
 }
 
 func (prf PendingRedemptionsFilter) String() string {
@@ -94,10 +94,10 @@ func (prf PendingRedemptionsFilter) String() string {
 	}
 
 	return fmt.Sprintf(
-		"wallets: [%s], wallets limit: [%v], redemption requests limit: [%v]",
+		"wallets: [%s], wallets limit: [%v], requests limit: [%v]",
 		strings.Join(wallets, ", "),
 		prf.WalletsLimit,
-		prf.RedemptionRequestsLimit,
+		prf.RequestsLimit,
 	)
 }
 
@@ -131,7 +131,7 @@ func FindPendingRedemptions(
 		)
 	}
 
-	redemptionRequestMinAge, err := chain.GetRedemptionRequestMinAge()
+	requestMinAge, err := chain.GetRedemptionRequestMinAge()
 	if err != nil {
 		return nil, fmt.Errorf(
 			"failed to get redemption request minimum age: [%w]",
@@ -139,7 +139,7 @@ func FindPendingRedemptions(
 		)
 	}
 
-	_, _, _, _, redemptionTimeout, _, _, err := chain.GetRedemptionParameters()
+	_, _, _, _, requestTimeout, _, _, err := chain.GetRedemptionParameters()
 	if err != nil {
 		return nil, fmt.Errorf(
 			"failed to get redemption parameters: [%w]",
@@ -154,9 +154,9 @@ func FindPendingRedemptions(
 			chain,
 			wallet,
 			currentBlockNumber,
-			filter.RedemptionRequestsLimit,
-			redemptionTimeout,
-			redemptionRequestMinAge,
+			filter.RequestsLimit,
+			requestTimeout,
+			requestMinAge,
 		)
 		if err != nil {
 			return nil,
@@ -336,26 +336,26 @@ func getPendingRedemptions(
 	chain Chain,
 	walletPublicKeyHash [20]byte,
 	currentBlockNumber uint64,
-	redemptionRequestsLimit uint16,
-	redemptionRequestTimeout uint32,
-	redemptionRequestMinAge uint32,
+	requestsLimit uint16,
+	requestTimeout uint32,
+	requestMinAge uint32,
 ) ([]*RedemptionRequest, error) {
 	// We are interested with `RedemptionRequested` events that are not
 	// timed out yet. That means there is no sense to look for events that
-	// occurred earlier than `now - redemptionRequestTimeout`. However,
-	// the event filter expects a block range while `redemptionRequestTimeout`
+	// occurred earlier than `now - requestTimeout`. However,
+	// the event filter expects a block range while `requestTimeout`
 	// is in seconds. To overcome that problem, we estimate the redemption
 	// request timeout in blocks, using the average block time of the host chain.
 	// Note that this estimation is not 100% accurate as the actual block time
 	// may differ from the assumed one.
-	redemptionRequestTimeoutBlocks :=
-		uint64(redemptionRequestTimeout) / uint64(chain.AverageBlockTime().Seconds())
+	requestTimeoutBlocks :=
+		uint64(requestTimeout) / uint64(chain.AverageBlockTime().Seconds())
 	// Then, we set the start block of the filter using the estimated redemption
 	// request timeout in blocks. Note that if the actual average block time is
 	// lesser than the assumed one, some events being on the edge of the block
 	// range may be omitted. To avoid that, we make the block range a little
 	// wider by using a constant factor of 1000 blocks.
-	filterStartBlock := currentBlockNumber - redemptionRequestTimeoutBlocks - 1000
+	filterStartBlock := currentBlockNumber - requestTimeoutBlocks - 1000
 
 	filter := &tbtc.RedemptionRequestedEventFilter{
 		StartBlock: filterStartBlock,
@@ -451,8 +451,8 @@ redemptionRequestedLoop:
 	}
 
 	resultSliceCapacity := len(pendingRedemptions)
-	if redemptionRequestsLimit > 0 {
-		resultSliceCapacity = int(redemptionRequestsLimit)
+	if requestsLimit > 0 {
+		resultSliceCapacity = int(requestsLimit)
 	}
 
 	// Sort the pending redemptions from oldest to newest.
@@ -463,13 +463,13 @@ redemptionRequestedLoop:
 	)
 
 	// Only redemption requests in range:
-	// [now - redemptionRequestTimeout, now - redemptionRequestMinAge]
+	// [now - requestTimeout, now - requestMinAge]
 	// should be taken into consideration.
 	redemptionRequestsRangeStartTimestamp := time.Now().Add(
-		-time.Duration(redemptionRequestTimeout) * time.Second,
+		-time.Duration(requestTimeout) * time.Second,
 	)
 	redemptionRequestsRangeEndTimestamp := time.Now().Add(
-		-time.Duration(redemptionRequestMinAge) * time.Second,
+		-time.Duration(requestMinAge) * time.Second,
 	)
 
 	result := make([]*RedemptionRequest, 0, resultSliceCapacity)

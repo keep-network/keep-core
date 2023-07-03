@@ -424,9 +424,9 @@ var proposeRedemptionCommand = cobra.Command{
 		walletsPendingRedemptions, err := walletmtr.FindPendingRedemptions(
 			tbtcChain,
 			walletmtr.PendingRedemptionsFilter{
-				WalletPublicKeyHashes:   walletPublicKeyHashes,
-				WalletsLimit:            1,
-				RedemptionRequestsLimit: redemptionMaxSize,
+				WalletPublicKeyHashes: walletPublicKeyHashes,
+				WalletsLimit:          1,
+				RequestsLimit:         redemptionMaxSize,
 			},
 		)
 		if err != nil {
