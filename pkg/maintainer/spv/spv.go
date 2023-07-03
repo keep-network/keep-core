@@ -146,6 +146,13 @@ func (sm *spvMaintainer) proveDepositSweepTransactions() error {
 	requiredConfirmations := uint(txProofDifficultyFactor.Uint64())
 
 	for _, transaction := range depositSweepTransactions {
+		transactionHashStr := transaction.Hash().Hex(bitcoin.ReversedByteOrder)
+
+		logger.Infof(
+			"Proceeding with deposit sweep proof for transaction [%s]",
+			transactionHashStr,
+		)
+
 		accumulatedConfirmations, err := sm.btcChain.GetTransactionConfirmations(
 			transaction.Hash(),
 		)
@@ -159,6 +166,11 @@ func (sm *spvMaintainer) proveDepositSweepTransactions() error {
 		if accumulatedConfirmations < requiredConfirmations {
 			// Skip the transaction as it has not accumulated enough
 			// confirmations. It will be proven later.
+			logger.Infof(
+				"Skipped proving deposit sweep transaction [%s] due to "+
+					"transaction not having enough confirmations yet",
+				transactionHashStr,
+			)
 			continue
 		}
 
@@ -194,6 +206,11 @@ func (sm *spvMaintainer) proveDepositSweepTransactions() error {
 			// transaction is older than the last two Bitcoin difficulty
 			// epoch. In that case the transaction will soon leave the
 			// sliding window of recent transactions.
+			logger.Warnf(
+				"Skipped proving deposit sweep transaction [%s] due to "+
+					"difficulties mismatch between proof and relay",
+				transactionHashStr,
+			)
 			continue
 		}
 
@@ -220,6 +237,11 @@ func (sm *spvMaintainer) proveDepositSweepTransactions() error {
 				err,
 			)
 		}
+
+		logger.Infof(
+			"Successfully submitted deposit sweep proof for transaction [%s]",
+			transactionHashStr,
+		)
 	}
 
 	return nil
@@ -274,6 +296,12 @@ func (sm *spvMaintainer) getUnprovenDepositSweepTransactions() (
 			wallet.State != tbtc.StateMovingFunds {
 			// The wallet can only submit deposit sweep proofs if it's `Live` or
 			// `MovingFunds`. If the state is different skip it.
+			logger.Infof(
+				"Skipped proving deposit sweep transactions for wallet [%x] "+
+					"because of wallet state [%v]",
+				walletPublicKeyHash,
+				wallet.State,
+			)
 			continue
 		}
 
