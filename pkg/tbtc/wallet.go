@@ -23,27 +23,27 @@ import (
 type WalletActionType uint8
 
 const (
-	Noop WalletActionType = iota
-	Heartbeat
-	DepositSweep
-	Redemption
-	MovingFunds
-	MovedFundsSweep
+	ActionNoop WalletActionType = iota
+	ActionHeartbeat
+	ActionDepositSweep
+	ActionRedemption
+	ActionMovingFunds
+	ActionMovedFundsSweep
 )
 
 func (wat WalletActionType) String() string {
 	switch wat {
-	case Noop:
+	case ActionNoop:
 		return "Noop"
-	case Heartbeat:
+	case ActionHeartbeat:
 		return "Heartbeat"
-	case DepositSweep:
+	case ActionDepositSweep:
 		return "DepositSweep"
-	case Redemption:
+	case ActionRedemption:
 		return "Redemption"
-	case MovingFunds:
+	case ActionMovingFunds:
 		return "MovingFunds"
-	case MovedFundsSweep:
+	case ActionMovedFundsSweep:
 		return "MovedFundsSweep"
 	default:
 		panic("unknown wallet action type")

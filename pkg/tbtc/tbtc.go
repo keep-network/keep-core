@@ -331,7 +331,7 @@ func Initialize(
 
 			// The event is confirmed if the wallet is locked due to a heartbeat
 			// action.
-			if time.Now().Before(expiresAt) && cause == Heartbeat {
+			if time.Now().Before(expiresAt) && cause == ActionHeartbeat {
 				logger.Infof(
 					"heartbeat request submitted for "+
 						"wallet PKH [0x%x] at block [%v] by [%v]",
@@ -432,7 +432,7 @@ func Initialize(
 
 			// The event is confirmed if the wallet is locked due to a deposit
 			// sweep action.
-			if time.Now().Before(expiresAt) && cause == DepositSweep {
+			if time.Now().Before(expiresAt) && cause == ActionDepositSweep {
 				logger.Infof(
 					"deposit sweep proposal submitted for "+
 						"wallet PKH [0x%x] at block [%v] by [%v]",
@@ -532,7 +532,7 @@ func Initialize(
 
 			// The event is confirmed if the wallet is locked due to a
 			// redemption action.
-			if time.Now().Before(expiresAt) && cause == Redemption {
+			if time.Now().Before(expiresAt) && cause == ActionRedemption {
 				logger.Infof(
 					"redemption proposal submitted for "+
 						"wallet PKH [0x%x] at block [%v] by [%v]",
