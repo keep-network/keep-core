@@ -31,6 +31,9 @@ func Initialize(
 	if config.RedemptionInterval == 0 {
 		config.RedemptionInterval = DefaultRedemptionInterval
 	}
+	if config.RedemptionWalletsLimit == 0 {
+		config.RedemptionWalletsLimit = DefaultRedemptionWalletsLimit
+	}
 	if config.DepositSweepInterval == 0 {
 		config.DepositSweepInterval = DefaultDepositSweepInterval
 	}
@@ -115,7 +118,8 @@ func (wm *walletMaintainer) runIfWalletUnlocked(
 
 	if lockExpiration.After(time.Now()) {
 		logger.Infof(
-			"wallet is locked due to [%s] action until [%s]; skipping [%s] execution...",
+			"wallet [%s] is locked due to [%s] action until [%s]; skipping [%s] execution...",
+			hexutils.Encode(walletPublicKeyHash[:]),
 			lockWalletAction.String(),
 			lockExpiration.String(),
 			currentWalletAction.String(),
