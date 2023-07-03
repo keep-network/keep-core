@@ -346,7 +346,14 @@ func initMaintainerFlags(command *cobra.Command, cfg *config.Config) {
 		&cfg.Maintainer.WalletCoordination.RedemptionWalletsLimit,
 		"walletCoordination.redemptionWalletsLimit",
 		wallet.DefaultRedemptionWalletsLimit,
-		"Limits the number of wallets that can receive a redemption proposal in the same time",
+		"Limits the number of wallets that can receive a redemption proposal in the same time.",
+	)
+
+	command.Flags().Uint64Var(
+		&cfg.Maintainer.WalletCoordination.RedemptionRequestAmountLimit,
+		"walletCoordination.redemptionRequestAmountLimit",
+		wallet.DefaultRedemptionRequestAmountLimit,
+		"Limits the redemption requests to the ones below the given satoshi value.",
 	)
 
 	command.Flags().DurationVar(

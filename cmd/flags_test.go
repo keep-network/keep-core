@@ -260,6 +260,15 @@ var cmdFlagsTests = map[string]struct {
 		expectedValueFromFlag: uint16(10),
 		defaultValue:          uint16(3),
 	},
+	"maintainer.walletCoordination.redemptionRequestAmountLimit": {
+		readValueFunc: func(c *config.Config) interface{} {
+			return c.Maintainer.WalletCoordination.RedemptionRequestAmountLimit
+		},
+		flagName:              "--walletCoordination.redemptionRequestAmountLimit",
+		flagValue:             "500",
+		expectedValueFromFlag: uint64(500),
+		defaultValue:          uint64(10 * 1e8),
+	},
 	"maintainer.walletCoordination.depositSweepInterval": {
 		readValueFunc:         func(c *config.Config) interface{} { return c.Maintainer.WalletCoordination.DepositSweepInterval },
 		flagName:              "--walletCoordination.depositSweepInterval",
