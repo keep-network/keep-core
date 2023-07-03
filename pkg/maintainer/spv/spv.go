@@ -20,8 +20,8 @@ const (
 	// Default value for history depth which is the number of blocks to look
 	// back from the current block when searching for past deposit sweep
 	// proposal submitted events. The value is the approximate number of
-	// Ethereum blocks in a week.
-	spvDefaultHistoryDepth = 40320
+	// Ethereum blocks in a week, assuming one block is 12s.
+	spvDefaultHistoryDepth = 50400
 
 	// Default value for the limit of transactions returned for a given wallet
 	// public key hash. The value is based on the frequency of how often deposit
