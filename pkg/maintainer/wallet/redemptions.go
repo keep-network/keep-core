@@ -66,6 +66,22 @@ func FindPendingRedemptions(
 ) ([20]byte, []bitcoin.Script, error) {
 	logger.Infof("redemption max size: %d", maxNumberOfRedemptions)
 
+	blockCounter, err := chain.BlockCounter()
+	if err != nil {
+		return [20]byte{}, nil, fmt.Errorf(
+			"failed to get block counter: [%w]",
+			err,
+		)
+	}
+
+	currentBlockNumber, err := blockCounter.CurrentBlock()
+	if err != nil {
+		return [20]byte{}, nil, fmt.Errorf(
+			"failed to get current block number: [%w]",
+			err,
+		)
+	}
+
 	redemptionRequestMinAge, err := chain.GetRedemptionRequestMinAge()
 	if err != nil {
 		return [20]byte{}, nil, fmt.Errorf(
@@ -86,6 +102,7 @@ func FindPendingRedemptions(
 		pendingRedemptions, err := getPendingRedemptions(
 			chain,
 			wallet,
+			currentBlockNumber,
 			int(maxNumberOfRedemptions),
 			redemptionTimeout,
 			redemptionRequestMinAge,
@@ -246,29 +263,36 @@ func ProposeRedemption(
 func getPendingRedemptions(
 	chain Chain,
 	walletPublicKeyHash [20]byte,
+	currentBlockNumber uint64,
 	maxNumberOfRedemptions int,
 	redemptionRequestTimeout uint32,
 	redemptionRequestMinAge uint32,
 ) ([]*RedemptionRequest, error) {
 	logger.Infof("reading pending redemptions from chain...")
 
-	filter := &tbtc.RedemptionRequestedEventFilter{}
+	// We are interested with `RedemptionRequested` events that are not
+	// timed out yet. That means there is no sense to look for events that
+	// occurred earlier than `now - redemptionRequestTimeout`. However,
+	// the event filter expects a block range while `redemptionRequestTimeout`
+	// is in seconds. To overcome that problem, we estimate the redemption
+	// request timeout in blocks, using the average block time of the host chain.
+	// Note that this estimation is not 100% accurate as the actual block time
+	// may differ from the assumed one.
+	redemptionRequestTimeoutBlocks :=
+		uint64(redemptionRequestTimeout) / uint64(chain.AverageBlockTime().Seconds())
+	// Then, we set the start block of the filter using the estimated redemption
+	// request timeout in blocks. Note that if the actual average block time is
+	// lesser than the assumed one, some events being on the edge of the block
+	// range may be omitted. To avoid that, we make the block range a little
+	// wider by using a constant factor of 1000 blocks.
+	filterStartBlock := currentBlockNumber - redemptionRequestTimeoutBlocks - 1000
+
+	filter := &tbtc.RedemptionRequestedEventFilter{
+		StartBlock: filterStartBlock,
+	}
 	if walletPublicKeyHash != [20]byte{} {
 		filter.WalletPublicKeyHash = [][20]byte{walletPublicKeyHash}
 	}
-
-	// Only redemption requests in range:
-	// [now - redemptionRequestTimeout, now - redemptionRequestMinAge]
-	// should be taken into consideration.
-	redemptionRequestsRangeStartTimestamp := time.Now().Add(
-		-time.Duration(redemptionRequestTimeout) * time.Second,
-	)
-	redemptionRequestsRangeEndTimestamp := time.Now().Add(
-		-time.Duration(redemptionRequestMinAge) * time.Second,
-	)
-
-	// TODO: We should consider narrowing the block range in filter the fetch
-	//       only events that are newer than `now - redemptionRequestTimeout`.
 
 	events, err := chain.PastRedemptionRequestedEvents(filter)
 	if err != nil {
@@ -279,9 +303,11 @@ func getPendingRedemptions(
 	}
 
 	// Take the oldest first.
-	sort.SliceStable(events, func(i, j int) bool {
-		return events[i].BlockNumber < events[j].BlockNumber
-	})
+	sort.SliceStable(
+		events, func(i, j int) bool {
+			return events[i].BlockNumber < events[j].BlockNumber
+		},
+	)
 
 	// There may be multiple events targeting the same redemption key
 	// (i.e. the same wallet and output script pair). The Bridge contract
@@ -344,12 +370,14 @@ redemptionRequestedLoop:
 			}
 		}
 
-		pendingRedemptions = append(pendingRedemptions, &RedemptionRequest{
-			WalletPublicKeyHash:  event.WalletPublicKeyHash,
-			RedemptionKey:        redemptionKey,
-			RedeemerOutputScript: event.RedeemerOutputScript,
-			RequestedAt:          pendingRedemption.RequestedAt,
-		})
+		pendingRedemptions = append(
+			pendingRedemptions, &RedemptionRequest{
+				WalletPublicKeyHash:  event.WalletPublicKeyHash,
+				RedemptionKey:        redemptionKey,
+				RedeemerOutputScript: event.RedeemerOutputScript,
+				RequestedAt:          pendingRedemption.RequestedAt,
+			},
+		)
 	}
 
 	logger.Infof("found %d redemption requests", len(pendingRedemptions))
@@ -360,9 +388,21 @@ redemptionRequestedLoop:
 	}
 
 	// Sort the pending redemptions.
-	sort.SliceStable(pendingRedemptions, func(i, j int) bool {
-		return pendingRedemptions[i].RequestedAt.Before(pendingRedemptions[j].RequestedAt)
-	})
+	sort.SliceStable(
+		pendingRedemptions, func(i, j int) bool {
+			return pendingRedemptions[i].RequestedAt.Before(pendingRedemptions[j].RequestedAt)
+		},
+	)
+
+	// Only redemption requests in range:
+	// [now - redemptionRequestTimeout, now - redemptionRequestMinAge]
+	// should be taken into consideration.
+	redemptionRequestsRangeStartTimestamp := time.Now().Add(
+		-time.Duration(redemptionRequestTimeout) * time.Second,
+	)
+	redemptionRequestsRangeEndTimestamp := time.Now().Add(
+		-time.Duration(redemptionRequestMinAge) * time.Second,
+	)
 
 	result := make([]*RedemptionRequest, 0, resultSliceCapacity)
 	for i, pendingRedemption := range pendingRedemptions {

@@ -2,6 +2,7 @@ package wallet
 
 import (
 	"github.com/keep-network/keep-core/pkg/bitcoin"
+	"github.com/keep-network/keep-core/pkg/chain"
 	"math/big"
 	"time"
 
@@ -141,4 +142,8 @@ type Chain interface {
 	GetWalletLock(
 		walletPublicKeyHash [20]byte,
 	) (time.Time, tbtc.WalletActionType, error)
+
+	BlockCounter() (chain.BlockCounter, error)
+
+	AverageBlockTime() time.Duration
 }

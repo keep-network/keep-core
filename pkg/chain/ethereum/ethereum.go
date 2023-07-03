@@ -467,6 +467,10 @@ func closerBlock(timestamp uint64, b1, b2 *types.Block) *types.Block {
 	return b2
 }
 
+func (bc *baseChain) AverageBlockTime() time.Duration {
+	return 12 * time.Second
+}
+
 // wrapClientAddons wraps the client instance with add-ons like logging, rate
 // limiting and so on.
 func wrapClientAddons(

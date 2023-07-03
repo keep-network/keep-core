@@ -7,6 +7,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"github.com/keep-network/keep-core/pkg/bitcoin"
+	"github.com/keep-network/keep-core/pkg/chain"
 	"math/big"
 	"sync"
 	"time"
@@ -456,4 +457,12 @@ func (lc *LocalChain) ResetWalletLock(
 		lockExpiration: time.Unix(0, 0),
 		walletAction:   tbtc.Noop,
 	}
+}
+
+func (lc *LocalChain) BlockCounter() (chain.BlockCounter, error) {
+	panic("unsupported")
+}
+
+func (lc *LocalChain) AverageBlockTime() time.Duration {
+	panic("unsupported")
 }
