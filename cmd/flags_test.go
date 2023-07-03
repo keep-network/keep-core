@@ -267,6 +267,34 @@ var cmdFlagsTests = map[string]struct {
 		expectedValueFromFlag: true,
 		defaultValue:          false,
 	},
+	"maintainer.spv.historyDepth": {
+		readValueFunc:         func(c *config.Config) interface{} { return c.Maintainer.Spv.HistoryDepth },
+		flagName:              "--spv.historyDepth",
+		flagValue:             "200000",
+		expectedValueFromFlag: uint64(200000),
+		defaultValue:          uint64(50400),
+	},
+	"maintainer.spv.transactionLimit": {
+		readValueFunc:         func(c *config.Config) interface{} { return c.Maintainer.Spv.TransactionLimit },
+		flagName:              "--spv.transactionLimit",
+		flagValue:             "5",
+		expectedValueFromFlag: 5,
+		defaultValue:          20,
+	},
+	"maintainer.spv.restartBackoffTime": {
+		readValueFunc:         func(c *config.Config) interface{} { return c.Maintainer.Spv.RestartBackoffTime },
+		flagName:              "--spv.restartBackoffTime",
+		flagValue:             "1h",
+		expectedValueFromFlag: time.Hour,
+		defaultValue:          30 * time.Minute,
+	},
+	"maintainer.spv.idleBackoffTime": {
+		readValueFunc:         func(c *config.Config) interface{} { return c.Maintainer.Spv.IdleBackoffTime },
+		flagName:              "--spv.idleBackoffTime",
+		flagValue:             "20m",
+		expectedValueFromFlag: 20 * time.Minute,
+		defaultValue:          10 * time.Minute,
+	},
 	"developer.randomBeaconAddress": {
 		readValueFunc: func(c *config.Config) interface{} {
 			address, _ := c.Ethereum.ContractAddress(chainEthereum.RandomBeaconContractName)

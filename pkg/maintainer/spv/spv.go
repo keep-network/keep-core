@@ -16,33 +16,6 @@ import (
 
 var logger = log.Logger("keep-maintainer-spv")
 
-const (
-	// Default value for history depth which is the number of blocks to look
-	// back from the current block when searching for past deposit sweep
-	// proposal submitted events. The value is the approximate number of
-	// Ethereum blocks in a week, assuming one block is 12s.
-	spvDefaultHistoryDepth = 50400
-
-	// Default value for the limit of transactions returned for a given wallet
-	// public key hash. The value is based on the frequency of how often deposit
-	// sweep and redemption transaction will happen. Deposit sweep transactions
-	// are assumed to happen every 48h. Redemption transactions are assumed to
-	// happen every 3h. The wallet should refuse any proposals from the
-	// coordinator if the previously executed Bitcoin transaction was not proved
-	// to the Bridge yet so in theory, the value of 1 should be enough. We make
-	// it a bit higher - better to be safe than sorry.
-	spvDefaultTransactionLimit = 20
-
-	// Default value for back-off time which should be applied when the SPV
-	// maintainer is restarted. It helps to avoid being flooded with error logs
-	// in case of a permanent error in the SPV maintainer.
-	spvDefaultRestartBackoffTime = 30 * time.Minute
-
-	// Default value for back-off time which should be applied after each round
-	// of processing SPV proofs.
-	spvDefaultIdleBackOffTime = 10 * time.Minute
-)
-
 func Initialize(
 	ctx context.Context,
 	config Config,
@@ -50,19 +23,6 @@ func Initialize(
 	btcDiffChain btcdiff.Chain,
 	btcChain bitcoin.Chain,
 ) {
-	if config.HistoryDepth == 0 {
-		config.HistoryDepth = spvDefaultHistoryDepth
-	}
-	if config.TransactionLimit == 0 {
-		config.TransactionLimit = spvDefaultTransactionLimit
-	}
-	if config.RestartBackOffTime == 0 {
-		config.RestartBackOffTime = spvDefaultRestartBackoffTime
-	}
-	if config.IdleBackOffTime == 0 {
-		config.IdleBackOffTime = spvDefaultIdleBackOffTime
-	}
-
 	spvMaintainer := &spvMaintainer{
 		config:       config,
 		spvChain:     spvChain,
@@ -97,7 +57,7 @@ func (sm *spvMaintainer) startControlLoop(ctx context.Context) {
 		}
 
 		select {
-		case <-time.After(sm.config.RestartBackOffTime):
+		case <-time.After(sm.config.RestartBackoffTime):
 		case <-ctx.Done():
 			return
 		}
@@ -117,7 +77,7 @@ func (sm *spvMaintainer) maintainSpv(ctx context.Context) error {
 		// transactions, moving funds transaction, etc.
 
 		select {
-		case <-time.After(sm.config.IdleBackOffTime):
+		case <-time.After(sm.config.IdleBackoffTime):
 		case <-ctx.Done():
 			return ctx.Err()
 		}
@@ -160,6 +120,7 @@ func (sm *spvMaintainer) proveDepositSweepTransactions() error {
 	}
 
 	for _, transaction := range depositSweepTransactions {
+		// Print the transaction in the same endianness as block explorers do.
 		transactionHashStr := transaction.Hash().Hex(bitcoin.ReversedByteOrder)
 
 		logger.Infof(

@@ -4,6 +4,30 @@ import (
 	"time"
 )
 
+const (
+	// Default value for history depth which is the number of blocks to look
+	// back from the current block when searching for past deposit sweep
+	// proposal submitted events. The value is the approximate number of
+	// Ethereum blocks in a week, assuming one block is 12s.
+	DefaultHistoryDepth = 50400
+
+	// Default value for the limit of transactions returned for a given wallet
+	// public key hash. The value is based on the frequency of how often deposit
+	// sweep and redemption transaction will happen. Deposit sweep transactions
+	// are assumed to happen every 48h. Redemption transactions are assumed to
+	// happen every 3h. The wallet should refuse any proposals from the
+	// coordinator if the previously executed Bitcoin transaction was not proved
+	// to the Bridge yet so in theory, the value of 1 should be enough. We make
+	// it a bit higher - better to be safe than sorry.
+	DefaultTransactionLimit = 20
+
+	// Default value for restart back-off time.
+	DefaultRestartBackoffTime = 30 * time.Minute
+
+	// Default value for idle back-off time.
+	DefaultIdleBackOffTime = 10 * time.Minute
+)
+
 // Config holds configurable properties.
 type Config struct {
 	// Enabled indicates whether the SPV maintainer should be started.
@@ -33,12 +57,12 @@ type Config struct {
 	// the yet-not-proven sweep.
 	TransactionLimit int
 
-	// RestartBackOffTime is a restart backoff which should be applied when the
+	// RestartBackoffTime is a restart backoff which should be applied when the
 	// SPV maintainer is restarted. It helps to avoid being flooded with error
 	// logs in case of a permanent error in the SPV maintainer.
-	RestartBackOffTime time.Duration
+	RestartBackoffTime time.Duration
 
-	// IdleBackOffTime is a wait time which should be applied when there are no
+	// IdleBackoffTime is a wait time which should be applied when there are no
 	// more transaction proofs to submit.
-	IdleBackOffTime time.Duration
+	IdleBackoffTime time.Duration
 }
