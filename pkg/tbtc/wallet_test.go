@@ -273,7 +273,7 @@ func (mwa *mockWalletAction) wallet() wallet {
 }
 
 func (mwa *mockWalletAction) actionType() WalletActionType {
-	return Noop
+	return ActionNoop
 }
 
 func generateWallet(privateKey *big.Int) wallet {

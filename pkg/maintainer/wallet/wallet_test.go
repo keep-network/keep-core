@@ -20,7 +20,7 @@ func TestRunIfWalletUnlocked_WhenLocked(t *testing.T) {
 	localChain.SetWalletLock(
 		walletPublicKeyHash,
 		lockExpiration,
-		tbtc.Heartbeat,
+		tbtc.ActionHeartbeat,
 	)
 
 	runFunc := func() error {
@@ -35,7 +35,7 @@ func TestRunIfWalletUnlocked_WhenLocked(t *testing.T) {
 	err := wm.runIfWalletUnlocked(
 		context.Background(),
 		walletPublicKeyHash,
-		tbtc.DepositSweep,
+		tbtc.ActionDepositSweep,
 		runFunc,
 	)
 	if err != nil {
@@ -75,7 +75,7 @@ func TestRunIfWalletUnlocked_WhenUnlocked(t *testing.T) {
 			err := wm.runIfWalletUnlocked(
 				context.Background(),
 				walletPublicKeyHash,
-				tbtc.DepositSweep,
+				tbtc.ActionDepositSweep,
 				runFunc,
 			)
 

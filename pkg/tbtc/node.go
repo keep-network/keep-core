@@ -350,7 +350,7 @@ func (n *node) handleHeartbeatRequest(
 
 	walletActionLogger := logger.With(
 		zap.String("wallet", fmt.Sprintf("0x%x", walletPublicKeyBytes)),
-		zap.String("action", Heartbeat.String()),
+		zap.String("action", ActionHeartbeat.String()),
 		zap.Uint64("startBlock", heartbeatRequestProcessingStartBlock),
 	)
 	walletActionLogger.Infof("dispatching wallet action")
@@ -435,7 +435,7 @@ func (n *node) handleDepositSweepProposal(
 
 	walletActionLogger := logger.With(
 		zap.String("wallet", fmt.Sprintf("0x%x", walletPublicKeyBytes)),
-		zap.String("action", DepositSweep.String()),
+		zap.String("action", ActionDepositSweep.String()),
 		zap.Uint64("startBlock", proposalProcessingStartBlock),
 	)
 	walletActionLogger.Infof("dispatching wallet action")
@@ -522,7 +522,7 @@ func (n *node) handleRedemptionProposal(
 
 	walletActionLogger := logger.With(
 		zap.String("wallet", fmt.Sprintf("0x%x", walletPublicKeyBytes)),
-		zap.String("action", Redemption.String()),
+		zap.String("action", ActionRedemption.String()),
 		zap.Uint64("startBlock", proposalProcessingStartBlock),
 	)
 	walletActionLogger.Infof("dispatching wallet action")
