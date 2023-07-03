@@ -150,6 +150,15 @@ func (sm *spvMaintainer) proveDepositSweepTransactions() error {
 	//       multiple Bitcoin difficulty epochs.
 	requiredConfirmations := uint(txProofDifficultyFactor.Uint64())
 
+	currentEpochDifficulty, previousEpochDifficulty, err :=
+		sm.btcDiffChain.GetCurrentAndPrevEpochDifficulty()
+	if err != nil {
+		return fmt.Errorf(
+			"failed to get Bitcoin epoch difficulties: [%v]",
+			err,
+		)
+	}
+
 	for _, transaction := range depositSweepTransactions {
 		transactionHashStr := transaction.Hash().Hex(bitcoin.ReversedByteOrder)
 
@@ -190,17 +199,8 @@ func (sm *spvMaintainer) proveDepositSweepTransactions() error {
 
 		firstBlockHeaderDifficulty := proof.FirstBlockHeaderDifficulty()
 
-		currentDifficulty, previousDifficulty, err :=
-			sm.btcDiffChain.GetCurrentAndPrevEpochDifficulty()
-		if err != nil {
-			return fmt.Errorf(
-				"failed to get Bitcoin epoch difficulties: [%v]",
-				err,
-			)
-		}
-
-		if firstBlockHeaderDifficulty.Cmp(currentDifficulty) != 0 &&
-			firstBlockHeaderDifficulty.Cmp(previousDifficulty) != 0 {
+		if firstBlockHeaderDifficulty.Cmp(currentEpochDifficulty) != 0 &&
+			firstBlockHeaderDifficulty.Cmp(previousEpochDifficulty) != 0 {
 			// Skip the transaction as the difficulty of the first block
 			// header in the proof does not match the current or the
 			// previous difficulty seen on-chain. The reason for this is
