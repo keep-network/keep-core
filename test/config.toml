@@ -42,6 +42,7 @@ DisableProxy = true
 [maintainer.WalletCoordination]
 Enabled = true
 RedemptionInterval = "13h"
+RedemptionWalletsLimit = 10
 DepositSweepInterval = "64h"
 
 [maintainer.Spv]

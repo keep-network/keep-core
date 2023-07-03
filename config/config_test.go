@@ -215,6 +215,10 @@ func TestReadConfigFromFile(t *testing.T) {
 			readValueFunc: func(c *Config) interface{} { return c.Maintainer.WalletCoordination.RedemptionInterval },
 			expectedValue: 13 * time.Hour,
 		},
+		"Maintainer.WalletCoordination.RedemptionWalletsLimit": {
+			readValueFunc: func(c *Config) interface{} { return c.Maintainer.WalletCoordination.RedemptionWalletsLimit },
+			expectedValue: uint16(10),
+		},
 		"Maintainer.WalletCoordination.DepositSweepInterval": {
 			readValueFunc: func(c *Config) interface{} { return c.Maintainer.WalletCoordination.DepositSweepInterval },
 			expectedValue: 64 * time.Hour,
