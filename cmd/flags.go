@@ -355,6 +355,38 @@ func initMaintainerFlags(command *cobra.Command, cfg *config.Config) {
 		false,
 		"Start SPV maintainer.",
 	)
+
+	command.Flags().Uint64Var(
+		&cfg.Maintainer.Spv.HistoryDepth,
+		"spv.historyDepth",
+		0,
+		"Number of blocks to look back for past deposit sweep proposal "+
+			"submitted events.",
+	)
+
+	command.Flags().IntVar(
+		&cfg.Maintainer.Spv.TransactionLimit,
+		"spv.transactionLimit",
+		0,
+		"The maximum number of confirmed transactions returned when getting "+
+			"transactions for a public key hash.",
+	)
+
+	command.Flags().DurationVar(
+		&cfg.Maintainer.Spv.RestartBackOffTime,
+		"maintainer.restartBackoffTime",
+		0,
+		"The restart backoff which should be applied when the SPV maintainer "+
+			"is restarted.",
+	)
+
+	command.Flags().DurationVar(
+		&cfg.Maintainer.Spv.IdleBackOffTime,
+		"maintainer.IdleBackoffTime",
+		0,
+		"The wait time which should be applied when there are no more "+
+			"transaction proofs to submit.",
+	)
 }
 
 // Initialize flags for Developer configuration.
