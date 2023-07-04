@@ -1,6 +1,7 @@
 package wallet_test
 
 import (
+	"reflect"
 	"testing"
 
 	"github.com/go-test/deep"
@@ -136,13 +137,15 @@ func TestProposeDepositsSweep(t *testing.T) {
 				btcChain.SetTransactionConfirmations(deposit.FundingTxHash, tbtc.DepositSweepRequiredFundingTxConfirmations)
 			}
 
-			err := tbtcChain.SetDepositSweepProposalValidationResult(
-				scenario.ExpectedDepositSweepProposal,
-				nil,
-				true,
-			)
-			if err != nil {
-				t.Fatal(err)
+			if scenario.ExpectedDepositSweepProposal != nil {
+				err := tbtcChain.SetDepositSweepProposalValidationResult(
+					scenario.ExpectedDepositSweepProposal,
+					nil,
+					true,
+				)
+				if err != nil {
+					t.Fatal(err)
+				}
 			}
 
 			btcChain.SetEstimateSatPerVByteFee(1, scenario.EstimateSatPerVByteFee)
@@ -156,13 +159,25 @@ func TestProposeDepositsSweep(t *testing.T) {
 				scenario.DepositsReferences(),
 				false,
 			)
-			if err != nil {
-				t.Fatal(err)
+
+			if !reflect.DeepEqual(scenario.ExpectedErr, err) {
+				t.Errorf(
+					"unexpected error\n"+
+						"expected: [%+v]\n"+
+						"actual:   [%+v]",
+					scenario.ExpectedErr,
+					err,
+				)
+			}
+
+			var expectedDepositSweepProposals []*tbtc.DepositSweepProposal
+			if p := scenario.ExpectedDepositSweepProposal; p != nil {
+				expectedDepositSweepProposals = append(expectedDepositSweepProposals, p)
 			}
 
 			if diff := deep.Equal(
 				tbtcChain.DepositSweepProposals(),
-				[]*tbtc.DepositSweepProposal{scenario.ExpectedDepositSweepProposal},
+				expectedDepositSweepProposals,
 			); diff != nil {
 				t.Errorf("invalid deposits: %v", diff)
 			}
