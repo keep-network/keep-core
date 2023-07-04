@@ -38,7 +38,7 @@ func (wm *walletMaintainer) runDepositSweepTask(ctx context.Context) error {
 	return wm.runIfWalletUnlocked(
 		ctx,
 		walletPublicKeyHash,
-		tbtc.DepositSweep,
+		tbtc.ActionDepositSweep,
 		func() error {
 			return ProposeDepositsSweep(
 				wm.chain,

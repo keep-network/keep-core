@@ -1529,17 +1529,17 @@ func (tc *TbtcChain) GetWalletLock(
 func parseWalletActionType(value uint8) (tbtc.WalletActionType, error) {
 	switch value {
 	case 0:
-		return tbtc.Noop, nil
+		return tbtc.ActionNoop, nil
 	case 1:
-		return tbtc.Heartbeat, nil
+		return tbtc.ActionHeartbeat, nil
 	case 2:
-		return tbtc.DepositSweep, nil
+		return tbtc.ActionDepositSweep, nil
 	case 3:
-		return tbtc.Redemption, nil
+		return tbtc.ActionRedemption, nil
 	case 4:
-		return tbtc.MovingFunds, nil
+		return tbtc.ActionMovingFunds, nil
 	case 5:
-		return tbtc.MovedFundsSweep, nil
+		return tbtc.ActionMovedFundsSweep, nil
 	default:
 		return 0, fmt.Errorf("unexpected wallet action value: [%v]", value)
 	}

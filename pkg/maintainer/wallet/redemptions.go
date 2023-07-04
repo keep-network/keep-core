@@ -43,7 +43,7 @@ func (wm *walletMaintainer) runRedemptionTask(ctx context.Context) error {
 		err = wm.runIfWalletUnlocked(
 			ctx,
 			walletPublicKeyHash,
-			tbtc.Redemption,
+			tbtc.ActionRedemption,
 			func() error {
 				return ProposeRedemption(
 					wm.chain,
