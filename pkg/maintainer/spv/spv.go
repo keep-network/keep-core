@@ -66,12 +66,19 @@ func (sm *spvMaintainer) startControlLoop(ctx context.Context) {
 
 func (sm *spvMaintainer) maintainSpv(ctx context.Context) error {
 	for {
+		logger.Infof("starting deposit sweep proof task execution...")
+
 		if err := sm.proveDepositSweepTransactions(); err != nil {
 			return fmt.Errorf(
 				"error while proving deposit sweep transactions: [%v]",
 				err,
 			)
 		}
+
+		logger.Infof(
+			"deposit sweep proof task run completed; next run in [%s]",
+			sm.config.IdleBackoffTime,
+		)
 
 		// TODO: Add proving of other type of SPV transactions: redemption
 		// transactions, moving funds transaction, etc.
