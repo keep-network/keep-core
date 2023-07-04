@@ -17,6 +17,9 @@ import (
 
 var logger = log.Logger("keep-maintainer-spv")
 
+// The length of the Bitcoin difficulty epoch in blocks.
+const difficultyEpochLength = 2016
+
 func Initialize(
 	ctx context.Context,
 	config Config,
@@ -106,14 +109,6 @@ func (sm *spvMaintainer) proveDepositSweepTransactions() error {
 		len(depositSweepTransactions),
 	)
 
-	txProofDifficultyFactor, err := sm.spvChain.TxProofDifficultyFactor()
-	if err != nil {
-		return fmt.Errorf(
-			"failed to get transaction proof difficulty factor: [%v]",
-			err,
-		)
-	}
-
 	for _, transaction := range depositSweepTransactions {
 		// Print the transaction in the same endianness as block explorers do.
 		transactionHashStr := transaction.Hash().Hex(bitcoin.ReversedByteOrder)
@@ -123,99 +118,33 @@ func (sm *spvMaintainer) proveDepositSweepTransactions() error {
 			transactionHashStr,
 		)
 
-		latestBlockHeight, err := sm.btcChain.GetLatestBlockHeight()
-		if err != nil {
-			return err
-		}
-
 		accumulatedConfirmations, err := sm.btcChain.GetTransactionConfirmations(
 			transaction.Hash(),
 		)
 		if err != nil {
-			return err
+			return fmt.Errorf(
+				"failed to get transaction confirmations: [%v]",
+				err,
+			)
 		}
 
-		proofStartBlock := uint64(latestBlockHeight - accumulatedConfirmations + 1)
-		proofStartEpoch := proofStartBlock / 2016
-
-		proofEndBlock := proofStartBlock + txProofDifficultyFactor.Uint64() - 1
-		proofEndEpoch := proofEndBlock / 2016
-
-		currentEpoch, err := sm.btcDiffChain.CurrentEpoch()
+		isProofWithinRelayRange, requiredConfirmations, err := sm.getProofInfo(
+			transaction.Hash(),
+		)
 		if err != nil {
-			return err
+			return fmt.Errorf("failed to get proof info: [%v]", err)
 		}
-		previousEpoch := currentEpoch - 1
 
-		requiredConfirmations := uint64(0)
-		if proofStartEpoch == currentEpoch &&
-			proofEndEpoch == currentEpoch {
-			// The proof is entirely within the current epoch.
-
-			requiredConfirmations = txProofDifficultyFactor.Uint64()
-		} else if proofStartEpoch == previousEpoch &&
-			proofEndEpoch == previousEpoch {
-			// The proof is entirely within the previous epoch.
-
-			requiredConfirmations = txProofDifficultyFactor.Uint64()
-		} else if proofStartEpoch == previousEpoch &&
-			proofEndEpoch == currentEpoch {
-			// The proof spans the previous and current difficulty epochs.
-
-			currentEpochDifficulty, previousEpochDifficulty, err :=
-				sm.btcDiffChain.GetCurrentAndPrevEpochDifficulty()
-			if err != nil {
-				return fmt.Errorf(
-					"failed to get Bitcoin epoch difficulties: [%v]",
-					err,
-				)
-			}
-
-			// Calculate the total difficulty that is required for the proof.
-			totalDifficultyRequired := new(big.Int).Mul(
-				txProofDifficultyFactor,
-				previousEpochDifficulty,
+		if !isProofWithinRelayRange {
+			// The required proof goes outside the previous and current
+			// difficulty epochs as seen by the relay. Skip the transaction. It
+			// will most likely be proven later.
+			logger.Warnf(
+				"skipped proving deposit sweep transaction [%s]; the range "+
+					"of the required proof goes outside the previous and "+
+					"current difficulty epochs as seen by the relay",
+				transactionHashStr,
 			)
-
-			// Calculate how much difficulty the blocks from the previous
-			// epoch part of the proof have in total.
-			numberOfBlocksPreviousEpoch := uint64(2016 - proofStartBlock%2016)
-			totalDifficultyPreviousEpoch := new(big.Int).Mul(
-				big.NewInt(int64(numberOfBlocksPreviousEpoch)),
-				previousEpochDifficulty,
-			)
-
-			// Calculate how much difficulty must come from the current epoch.
-			totalDifficultyCurrentEpoch := new(big.Int).Sub(
-				totalDifficultyRequired,
-				totalDifficultyPreviousEpoch,
-			)
-
-			// Calculate how many blocks from the current epoch we need.
-			remainder := new(big.Int)
-			numberOfBlocksCurrentEpoch, remainder := new(big.Int).DivMod(
-				totalDifficultyCurrentEpoch,
-				currentEpochDifficulty,
-				remainder,
-			)
-			if remainder.Cmp(big.NewInt(0)) > 0 {
-				numberOfBlocksCurrentEpoch.Add(
-					numberOfBlocksCurrentEpoch,
-					big.NewInt(1),
-				)
-			}
-
-			requiredConfirmations = numberOfBlocksPreviousEpoch +
-				numberOfBlocksCurrentEpoch.Uint64()
-		} else {
-			// Skip the transaction as the proof goes outside the previous or
-			// current epochs as seen by the relay. The reason for this is most
-			// likely that transaction entered the Bitcoin blockchain within the
-			// very new difficulty epoch that is not yet proven in the relay.
-			// In that case the transaction will be proven in the future. The
-			// other case could be that the transaction is older than the last
-			// two Bitcoin difficulty epochs. In that case the transaction will
-			// soon leave the sliding window of recent transactions.
 			continue
 		}
 
@@ -223,7 +152,7 @@ func (sm *spvMaintainer) proveDepositSweepTransactions() error {
 			// Skip the transaction as it has not accumulated enough
 			// confirmations. It will be proven later.
 			logger.Infof(
-				"Skipped proving deposit sweep transaction [%s]; transaction "+
+				"skipped proving deposit sweep transaction [%s]; transaction "+
 					"has [%v/%v] confirmations",
 				transactionHashStr,
 				accumulatedConfirmations,
@@ -476,6 +405,152 @@ func (sm *spvMaintainer) isInputCurrentWalletsMainUTXO(
 	}
 
 	return bytes.Equal(mainUtxoHash[:], wallet.MainUtxoHash[:]), nil
+}
+
+// getProofInfo returns information about the SPV proof. It includes the
+// information whether the transaction proof range is within the previous and
+// current difficulty epochs as seen by the relay and the required number of
+// confirmations.
+func (sm *spvMaintainer) getProofInfo(transactionHash bitcoin.Hash) (
+	bool, uint, error,
+) {
+	latestBlockHeight, err := sm.btcChain.GetLatestBlockHeight()
+	if err != nil {
+		return false, 0, fmt.Errorf(
+			"failed to get latest block height: [%v]",
+			err,
+		)
+	}
+
+	accumulatedConfirmations, err := sm.btcChain.GetTransactionConfirmations(
+		transactionHash,
+	)
+	if err != nil {
+		return false, 0, fmt.Errorf(
+			"failed to get transaction confirmations: [%v]",
+			err,
+		)
+	}
+
+	txProofDifficultyFactor, err := sm.spvChain.TxProofDifficultyFactor()
+	if err != nil {
+		return false, 0, fmt.Errorf(
+			"failed to get transaction proof difficulty factor: [%v]",
+			err,
+		)
+	}
+
+	// Calculate the starting block of the proof and the difficulty epoch number
+	// it belongs to.
+	proofStartBlock := uint64(latestBlockHeight - accumulatedConfirmations + 1)
+	proofStartEpoch := proofStartBlock / difficultyEpochLength
+
+	// Calculate the ending block of the proof and the difficulty epoch it
+	// belongs to.
+	proofEndBlock := proofStartBlock + txProofDifficultyFactor.Uint64() - 1
+	proofEndEpoch := proofEndBlock / difficultyEpochLength
+
+	// Get the current difficulty epoch number as seen by the relay. Subtract
+	// one to get the previous epoch number.
+	currentEpoch, err := sm.btcDiffChain.CurrentEpoch()
+	if err != nil {
+		return false, 0, fmt.Errorf("failed to get current epoch: [%v]", err)
+	}
+	previousEpoch := currentEpoch - 1
+
+	// There are only three possible valid combinations of the proof's block
+	// headers range: the proof must either be entirely in the previous epoch,
+	// must be entirely in the current epoch or must span the previous and
+	// current epochs.
+
+	// If the proof is entirely within the current epoch, required confirmations
+	// does not need to be adjusted.
+	if proofStartEpoch == currentEpoch &&
+		proofEndEpoch == currentEpoch {
+		return true, uint(txProofDifficultyFactor.Uint64()), nil
+	}
+
+	// If the proof is entirely within the previous epoch, required confirmations
+	// does not need to be adjusted.
+	if proofStartEpoch == previousEpoch &&
+		proofEndEpoch == previousEpoch {
+		return true, uint(txProofDifficultyFactor.Uint64()), nil
+	}
+
+	// If the proof spans the previous and current difficulty epochs, the
+	// required confirmations may have to be adjusted.
+	if proofStartEpoch == previousEpoch &&
+		proofEndEpoch == currentEpoch {
+		currentEpochDifficulty, previousEpochDifficulty, err :=
+			sm.btcDiffChain.GetCurrentAndPrevEpochDifficulty()
+		if err != nil {
+			return false, 0, fmt.Errorf(
+				"failed to get Bitcoin epoch difficulties: [%v]",
+				err,
+			)
+		}
+
+		// Calculate the total difficulty that is required for the proof. The
+		// proof begins in the previous difficulty epoch, therefore the total
+		// required difficulty will be the previous epoch difficulty times
+		// transaction proof difficulty factor
+		totalDifficultyRequired := new(big.Int).Mul(
+			previousEpochDifficulty,
+			txProofDifficultyFactor,
+		)
+
+		// Calculate the number of block headers in the proof that will come
+		// from the previous difficulty epoch.
+		numberOfBlocksPreviousEpoch :=
+			uint64(difficultyEpochLength - proofStartBlock%difficultyEpochLength)
+
+		// Calculate how much difficulty the blocks from the previous epoch part
+		// of the proof have in total.
+		totalDifficultyPreviousEpoch := new(big.Int).Mul(
+			big.NewInt(int64(numberOfBlocksPreviousEpoch)),
+			previousEpochDifficulty,
+		)
+
+		// Calculate how much difficulty must come from the current epoch.
+		totalDifficultyCurrentEpoch := new(big.Int).Sub(
+			totalDifficultyRequired,
+			totalDifficultyPreviousEpoch,
+		)
+
+		// Calculate how many blocks from the current epoch we need.
+		remainder := new(big.Int)
+		numberOfBlocksCurrentEpoch, remainder := new(big.Int).DivMod(
+			totalDifficultyCurrentEpoch,
+			currentEpochDifficulty,
+			remainder,
+		)
+		// If there is a remainder, it means there is still some amount of
+		// difficulty missing that is less than one block difficulty. We need to
+		// account for that by adding one additional block.
+		if remainder.Cmp(big.NewInt(0)) > 0 {
+			numberOfBlocksCurrentEpoch.Add(
+				numberOfBlocksCurrentEpoch,
+				big.NewInt(1),
+			)
+		}
+
+		// The total required number of confirmations is the sum of blocks from
+		// the previous and current epochs.
+		requiredConfirmations := numberOfBlocksPreviousEpoch +
+			numberOfBlocksCurrentEpoch.Uint64()
+
+		return true, uint(requiredConfirmations), nil
+	}
+
+	// If we entered here, it means that the proof's block headers range goes
+	// outside the previous or current difficulty epochs as seen by the relay.
+	// The reason for this is most likely that transaction entered the Bitcoin
+	// blockchain within the very new difficulty epoch that is not yet proven in
+	//  the relay. In that case the transaction will be proven in the future.
+	// The other case could be that the transaction is older than the last two
+	// Bitcoin difficulty epochs. In that case the transaction will soon leave
+	// the sliding window of recent transactions.
+	return false, 0, nil
 }
 
 // uniqueWalletPublicKeyHashes parses the list of events and returns a list of
