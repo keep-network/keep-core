@@ -149,9 +149,11 @@ func (sm *spvMaintainer) proveDepositSweepTransactions() error {
 			// Skip the transaction as it has not accumulated enough
 			// confirmations. It will be proven later.
 			logger.Infof(
-				"skipped proving deposit sweep transaction [%s] due to "+
-					"transaction not having enough confirmations yet",
+				"Skipped proving deposit sweep transaction [%s]; transaction "+
+					"has [%v/%v] confirmations",
 				transactionHashStr,
+				accumulatedConfirmations,
+				requiredConfirmations,
 			)
 			continue
 		}
@@ -180,9 +182,15 @@ func (sm *spvMaintainer) proveDepositSweepTransactions() error {
 			// epoch. In that case the transaction will soon leave the
 			// sliding window of recent transactions.
 			logger.Warnf(
-				"skipped proving deposit sweep transaction [%s] due to "+
-					"difficulties mismatch between proof and relay",
+				"skipped proving deposit sweep transaction [%s]; found "+
+					"difficulties mismatch between proof and relay: "+
+					"proof first header difficulty: [%v], "+
+					"previous relay difficulty: [%v], "+
+					"current relay difficulty: [%v]",
 				transactionHashStr,
+				firstBlockHeaderDifficulty,
+				previousEpochDifficulty,
+				currentEpochDifficulty,
 			)
 			continue
 		}
