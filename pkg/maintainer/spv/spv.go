@@ -93,17 +93,17 @@ func (sm *spvMaintainer) maintainSpv(ctx context.Context) error {
 
 func (sm *spvMaintainer) proveDepositSweepTransactions() error {
 	depositSweepTransactions, err := sm.getUnprovenDepositSweepTransactions()
-	logger.Infof(
-		"found [%d] unproven deposit sweep transaction(s)",
-		len(depositSweepTransactions),
-	)
-
 	if err != nil {
 		return fmt.Errorf(
 			"failed to get unproven deposit sweep transactions: [%v]",
 			err,
 		)
 	}
+
+	logger.Infof(
+		"found [%d] unproven deposit sweep transaction(s)",
+		len(depositSweepTransactions),
+	)
 
 	txProofDifficultyFactor, err := sm.spvChain.TxProofDifficultyFactor()
 	if err != nil {
