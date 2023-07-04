@@ -8,6 +8,7 @@ import (
 	walletmtr "github.com/keep-network/keep-core/pkg/maintainer/wallet"
 	"github.com/keep-network/keep-core/pkg/maintainer/wallet/internal/test"
 	"github.com/keep-network/keep-core/pkg/tbtc"
+	"math/big"
 	"testing"
 )
 
@@ -133,6 +134,91 @@ func TestFindPendingRedemptions(t *testing.T) {
 				walletsPendingRedemptions,
 			); diff != nil {
 				t.Errorf("invalid wallets pending redemptions: %v", diff)
+			}
+		})
+	}
+}
+
+func TestProposeRedemption(t *testing.T) {
+	fromHex := func(hexString string) []byte {
+		bytes, err := hex.DecodeString(hexString)
+		if err != nil {
+			t.Fatal(err)
+		}
+		return bytes
+	}
+
+	var walletPublicKeyHash [20]byte
+	copy(walletPublicKeyHash[:], fromHex(""))
+
+	redeemersOutputScripts := []bitcoin.Script{
+		fromHex("00140000000000000000000000000000000000000001"),
+		fromHex("00140000000000000000000000000000000000000002"),
+	}
+
+	var tests = map[string]struct {
+		fee              int64
+		expectedProposal *tbtc.RedemptionProposal
+	}{
+		"fee provided": {
+			fee: 10000,
+			expectedProposal: &tbtc.RedemptionProposal{
+				WalletPublicKeyHash:    walletPublicKeyHash,
+				RedeemersOutputScripts: redeemersOutputScripts,
+				RedemptionTxFee:        big.NewInt(10000),
+			},
+		},
+		"fee estimated": {
+			fee: 0, // trigger fee estimation
+			expectedProposal: &tbtc.RedemptionProposal{
+				WalletPublicKeyHash:    walletPublicKeyHash,
+				RedeemersOutputScripts: redeemersOutputScripts,
+				RedemptionTxFee:        big.NewInt(4300),
+			},
+		},
+	}
+
+	for testName, test := range tests {
+		t.Run(testName, func(t *testing.T) {
+			tbtcChain := walletmtr.NewLocalChain()
+			btcChain := walletmtr.NewLocalBitcoinChain()
+
+			btcChain.SetEstimateSatPerVByteFee(1, 25)
+
+			for _, script := range redeemersOutputScripts {
+				tbtcChain.SetPendingRedemptionRequest(
+					walletPublicKeyHash,
+					&tbtc.RedemptionRequest{
+						RedeemerOutputScript: script,
+					},
+				)
+			}
+
+			err := tbtcChain.SetRedemptionProposalValidationResult(
+				test.expectedProposal,
+				true,
+			)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			err = walletmtr.ProposeRedemption(
+				tbtcChain,
+				btcChain,
+				walletPublicKeyHash,
+				test.fee,
+				redeemersOutputScripts,
+				false,
+			)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			if diff := deep.Equal(
+				tbtcChain.RedemptionProposals(),
+				[]*tbtc.RedemptionProposal{test.expectedProposal},
+			); diff != nil {
+				t.Errorf("invalid deposits: %v", diff)
 			}
 		})
 	}

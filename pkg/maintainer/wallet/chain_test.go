@@ -54,6 +54,8 @@ type LocalChain struct {
 	pastRedemptionRequestedEvents   map[[32]byte][]*tbtc.RedemptionRequestedEvent
 	averageBlockTime                time.Duration
 	pendingRedemptionRequests       map[[32]byte]*tbtc.RedemptionRequest
+	redemptionProposals             []*tbtc.RedemptionProposal
+	redemptionProposalValidations   map[[32]byte]bool
 }
 
 func NewLocalChain() *LocalChain {
@@ -65,6 +67,7 @@ func NewLocalChain() *LocalChain {
 		walletLocks:                     make(map[[20]byte]*walletLock),
 		pastRedemptionRequestedEvents:   make(map[[32]byte][]*tbtc.RedemptionRequestedEvent),
 		pendingRedemptionRequests:       make(map[[32]byte]*tbtc.RedemptionRequest),
+		redemptionProposalValidations:   make(map[[32]byte]bool),
 	}
 }
 
@@ -73,6 +76,13 @@ func (lc *LocalChain) DepositSweepProposals() []*tbtc.DepositSweepProposal {
 	defer lc.mutex.Unlock()
 
 	return lc.depositSweepProposals
+}
+
+func (lc *LocalChain) RedemptionProposals() []*tbtc.RedemptionProposal {
+	lc.mutex.Lock()
+	defer lc.mutex.Unlock()
+
+	return lc.redemptionProposals
 }
 
 func (lc *LocalChain) PastDepositRevealedEvents(
@@ -555,13 +565,68 @@ func (lc *LocalChain) SubmitDepositSweepProposalWithReimbursement(
 func (lc *LocalChain) SubmitRedemptionProposalWithReimbursement(
 	proposal *tbtc.RedemptionProposal,
 ) error {
-	panic("unsupported")
+	lc.mutex.Lock()
+	defer lc.mutex.Unlock()
+
+	lc.redemptionProposals = append(lc.redemptionProposals, proposal)
+
+	return nil
 }
 
 func (lc *LocalChain) ValidateRedemptionProposal(
 	proposal *tbtc.RedemptionProposal,
 ) error {
-	panic("unsupported")
+	lc.mutex.Lock()
+	defer lc.mutex.Unlock()
+
+	key, err := buildRedemptionProposalValidationKey(proposal)
+	if err != nil {
+		return err
+	}
+
+	result, ok := lc.redemptionProposalValidations[key]
+	if !ok {
+		return fmt.Errorf("validation result unknown")
+	}
+
+	if !result {
+		return fmt.Errorf("validation failed")
+	}
+
+	return nil
+}
+
+func (lc *LocalChain) SetRedemptionProposalValidationResult(
+	proposal *tbtc.RedemptionProposal,
+	result bool,
+) error {
+	lc.mutex.Lock()
+	defer lc.mutex.Unlock()
+
+	key, err := buildRedemptionProposalValidationKey(proposal)
+	if err != nil {
+		return err
+	}
+
+	lc.redemptionProposalValidations[key] = result
+
+	return nil
+}
+
+func buildRedemptionProposalValidationKey(
+	proposal *tbtc.RedemptionProposal,
+) ([32]byte, error) {
+	var buffer bytes.Buffer
+
+	buffer.Write(proposal.WalletPublicKeyHash[:])
+
+	for _, script := range proposal.RedeemersOutputScripts {
+		buffer.Write(script)
+	}
+
+	buffer.Write(proposal.RedemptionTxFee.Bytes())
+
+	return sha256.Sum256(buffer.Bytes()), nil
 }
 
 func (lc *LocalChain) GetRedemptionMaxSize() (uint16, error) {
