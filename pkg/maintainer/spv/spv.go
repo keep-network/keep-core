@@ -94,7 +94,7 @@ func (sm *spvMaintainer) maintainSpv(ctx context.Context) error {
 func (sm *spvMaintainer) proveDepositSweepTransactions() error {
 	depositSweepTransactions, err := sm.getUnprovenDepositSweepTransactions()
 	logger.Infof(
-		"Found [%d] unproven deposit sweep transaction(s)",
+		"found [%d] unproven deposit sweep transaction(s)",
 		len(depositSweepTransactions),
 	)
 
@@ -131,7 +131,7 @@ func (sm *spvMaintainer) proveDepositSweepTransactions() error {
 		transactionHashStr := transaction.Hash().Hex(bitcoin.ReversedByteOrder)
 
 		logger.Infof(
-			"Proceeding with deposit sweep proof for transaction [%s]",
+			"proceeding with deposit sweep proof for transaction [%s]",
 			transactionHashStr,
 		)
 
@@ -149,7 +149,7 @@ func (sm *spvMaintainer) proveDepositSweepTransactions() error {
 			// Skip the transaction as it has not accumulated enough
 			// confirmations. It will be proven later.
 			logger.Infof(
-				"Skipped proving deposit sweep transaction [%s] due to "+
+				"skipped proving deposit sweep transaction [%s] due to "+
 					"transaction not having enough confirmations yet",
 				transactionHashStr,
 			)
@@ -180,7 +180,7 @@ func (sm *spvMaintainer) proveDepositSweepTransactions() error {
 			// epoch. In that case the transaction will soon leave the
 			// sliding window of recent transactions.
 			logger.Warnf(
-				"Skipped proving deposit sweep transaction [%s] due to "+
+				"skipped proving deposit sweep transaction [%s] due to "+
 					"difficulties mismatch between proof and relay",
 				transactionHashStr,
 			)
@@ -212,12 +212,12 @@ func (sm *spvMaintainer) proveDepositSweepTransactions() error {
 		}
 
 		logger.Infof(
-			"Successfully submitted deposit sweep proof for transaction [%s]",
+			"successfully submitted deposit sweep proof for transaction [%s]",
 			transactionHashStr,
 		)
 	}
 
-	logger.Infof("Finished round of proving deposit sweep transactions")
+	logger.Infof("finished round of proving deposit sweep transactions")
 
 	return nil
 }
@@ -272,7 +272,7 @@ func (sm *spvMaintainer) getUnprovenDepositSweepTransactions() (
 			// The wallet can only submit deposit sweep proofs if it's `Live` or
 			// `MovingFunds`. If the state is different skip it.
 			logger.Infof(
-				"Skipped proving deposit sweep transactions for wallet [%x] "+
+				"skipped proving deposit sweep transactions for wallet [%x] "+
 					"because of wallet state [%v]",
 				walletPublicKeyHash,
 				wallet.State,
