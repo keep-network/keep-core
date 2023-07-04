@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/hex"
 	"fmt"
+	"math/big"
 	"time"
 
 	"github.com/ipfs/go-log/v2"
@@ -113,19 +114,6 @@ func (sm *spvMaintainer) proveDepositSweepTransactions() error {
 		)
 	}
 
-	// TODO: Handle a situation in which the block headers in the proof span
-	//       multiple Bitcoin difficulty epochs.
-	requiredConfirmations := uint(txProofDifficultyFactor.Uint64())
-
-	currentEpochDifficulty, previousEpochDifficulty, err :=
-		sm.btcDiffChain.GetCurrentAndPrevEpochDifficulty()
-	if err != nil {
-		return fmt.Errorf(
-			"failed to get Bitcoin epoch difficulties: [%v]",
-			err,
-		)
-	}
-
 	for _, transaction := range depositSweepTransactions {
 		// Print the transaction in the same endianness as block explorers do.
 		transactionHashStr := transaction.Hash().Hex(bitcoin.ReversedByteOrder)
@@ -135,17 +123,103 @@ func (sm *spvMaintainer) proveDepositSweepTransactions() error {
 			transactionHashStr,
 		)
 
+		latestBlockHeight, err := sm.btcChain.GetLatestBlockHeight()
+		if err != nil {
+			return err
+		}
+
 		accumulatedConfirmations, err := sm.btcChain.GetTransactionConfirmations(
 			transaction.Hash(),
 		)
 		if err != nil {
-			return fmt.Errorf(
-				"failed to get transaction confirmations: [%v]",
-				err,
-			)
+			return err
 		}
 
-		if accumulatedConfirmations < requiredConfirmations {
+		proofStartBlock := uint64(latestBlockHeight - accumulatedConfirmations + 1)
+		proofStartEpoch := proofStartBlock / 2016
+
+		proofEndBlock := proofStartBlock + txProofDifficultyFactor.Uint64() - 1
+		proofEndEpoch := proofEndBlock / 2016
+
+		currentEpoch, err := sm.btcDiffChain.CurrentEpoch()
+		if err != nil {
+			return err
+		}
+		previousEpoch := currentEpoch - 1
+
+		requiredConfirmations := uint64(0)
+		if proofStartEpoch == currentEpoch &&
+			proofEndEpoch == currentEpoch {
+			// The proof is entirely within the current epoch.
+
+			requiredConfirmations = txProofDifficultyFactor.Uint64()
+		} else if proofStartEpoch == previousEpoch &&
+			proofEndEpoch == previousEpoch {
+			// The proof is entirely within the previous epoch.
+
+			requiredConfirmations = txProofDifficultyFactor.Uint64()
+		} else if proofStartEpoch == previousEpoch &&
+			proofEndEpoch == currentEpoch {
+			// The proof spans the previous and current difficulty epochs.
+
+			currentEpochDifficulty, previousEpochDifficulty, err :=
+				sm.btcDiffChain.GetCurrentAndPrevEpochDifficulty()
+			if err != nil {
+				return fmt.Errorf(
+					"failed to get Bitcoin epoch difficulties: [%v]",
+					err,
+				)
+			}
+
+			// Calculate the total difficulty that is required for the proof.
+			totalDifficultyRequired := new(big.Int).Mul(
+				txProofDifficultyFactor,
+				previousEpochDifficulty,
+			)
+
+			// Calculate how much difficulty the blocks from the previous
+			// epoch part of the proof have in total.
+			numberOfBlocksPreviousEpoch := uint64(2016 - proofStartBlock%2016)
+			totalDifficultyPreviousEpoch := new(big.Int).Mul(
+				big.NewInt(int64(numberOfBlocksPreviousEpoch)),
+				previousEpochDifficulty,
+			)
+
+			// Calculate how much difficulty must come from the current epoch.
+			totalDifficultyCurrentEpoch := new(big.Int).Sub(
+				totalDifficultyRequired,
+				totalDifficultyPreviousEpoch,
+			)
+
+			// Calculate how many blocks from the current epoch we need.
+			remainder := new(big.Int)
+			numberOfBlocksCurrentEpoch, remainder := new(big.Int).DivMod(
+				totalDifficultyCurrentEpoch,
+				currentEpochDifficulty,
+				remainder,
+			)
+			if remainder.Cmp(big.NewInt(0)) > 0 {
+				numberOfBlocksCurrentEpoch.Add(
+					numberOfBlocksCurrentEpoch,
+					big.NewInt(1),
+				)
+			}
+
+			requiredConfirmations = numberOfBlocksPreviousEpoch +
+				numberOfBlocksCurrentEpoch.Uint64()
+		} else {
+			// Skip the transaction as the proof goes outside the previous or
+			// current epochs as seen by the relay. The reason for this is most
+			// likely that transaction entered the Bitcoin blockchain within the
+			// very new difficulty epoch that is not yet proven in the relay.
+			// In that case the transaction will be proven in the future. The
+			// other case could be that the transaction is older than the last
+			// two Bitcoin difficulty epochs. In that case the transaction will
+			// soon leave the sliding window of recent transactions.
+			continue
+		}
+
+		if accumulatedConfirmations < uint(requiredConfirmations) {
 			// Skip the transaction as it has not accumulated enough
 			// confirmations. It will be proven later.
 			logger.Infof(
@@ -160,39 +234,11 @@ func (sm *spvMaintainer) proveDepositSweepTransactions() error {
 
 		_, proof, err := bitcoin.AssembleSpvProof(
 			transaction.Hash(),
-			requiredConfirmations,
+			uint(requiredConfirmations),
 			sm.btcChain,
 		)
 		if err != nil {
 			return fmt.Errorf("failed to assemble SPV proof: [%v]", err)
-		}
-
-		firstBlockHeaderDifficulty := proof.FirstBlockHeaderDifficulty()
-
-		if firstBlockHeaderDifficulty.Cmp(currentEpochDifficulty) != 0 &&
-			firstBlockHeaderDifficulty.Cmp(previousEpochDifficulty) != 0 {
-			// Skip the transaction as the difficulty of the first block
-			// header in the proof does not match the current or the
-			// previous difficulty seen on-chain. The reason for this is
-			// most likely that the proof consists of block headers from the
-			// beginning of a new Bitcoin difficulty epoch and the epoch is
-			// not proven on-chain yet. In that case the transaction will be
-			// proven in the future. The other reason could be that the
-			// transaction is older than the last two Bitcoin difficulty
-			// epoch. In that case the transaction will soon leave the
-			// sliding window of recent transactions.
-			logger.Warnf(
-				"skipped proving deposit sweep transaction [%s]; found "+
-					"difficulties mismatch between proof and relay: "+
-					"proof first header difficulty: [%v], "+
-					"previous relay difficulty: [%v], "+
-					"current relay difficulty: [%v]",
-				transactionHashStr,
-				firstBlockHeaderDifficulty,
-				previousEpochDifficulty,
-				currentEpochDifficulty,
-			)
-			continue
 		}
 
 		mainUTXO, vault, err := parseTransactionInputs(

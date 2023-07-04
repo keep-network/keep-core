@@ -1,13 +1,10 @@
 package bitcoin
 
 import (
-	"math/big"
 	"reflect"
 	"testing"
 
 	"encoding/hex"
-
-	"github.com/keep-network/keep-core/internal/testutils"
 )
 
 // SpvProofData holds details of the transaction proof data used as a test
@@ -310,46 +307,6 @@ func decodeString(s string) []byte {
 	}
 
 	return bytes
-}
-
-func TestFirstBlockHeaderDifficulty(t *testing.T) {
-	spvProof := &SpvProof{
-		MerkleProof: decodeString(
-			"2ea95cfb5e8f0d4b4757368c95f5a1cfa1b98934e9086f7b59cf53caf3fd2c32d1d" +
-				"41ad3ebb735723098bf8a1fd243e1ccfe4057e2feef750367c9f6fedfae82a3b5ea" +
-				"f9ac6cfe8b05432e855818c6787a3b1e98f8fd5323b4f5a8b941a07f8377e397f5b" +
-				"ae83046e0c06cedc26d752ebedba66ad8a40358e957f8f3d31216a58686e7ba4b35" +
-				"ce0c41f0651ae65dc7e4755ebcd5d6a5071e8a4f0c0e650105a0",
-		),
-		TxIndexInBlock: 6,
-		BitcoinHeaders: decodeString(
-			"04000020642125b3910fdaead521b57955e28893d89f8ce7fd3ba1dd6d010000000" +
-				"00000f9e17a266a2267ee02d5ab82a75a76805db821a13abd2e80e0950d883311e5" +
-				"355dc21c62ed3e031adefc02c4040000205b6de55e069be71b21a62cd140dc70312" +
-				"25f7258dc758f19ea01000000000000139966d27d9ed0c0c1ed9162c2fea2ccf0ba" +
-				"212706f6bc421d0a2b6211de040d1ac41c62ed3e031a4726538f04e000208475e15" +
-				"e0314635d32abf04c761fee528d6a3f2db3b3d13798000000000000002a3fa06fec" +
-				"d9dd4bf2e25e22a95d4f65435d5c5b42bcf498b4e756f9f4ea67cea1c51c62ed3e0" +
-				"31a9d7bf3ac000000203f16d450c51853a4cd9569d225028aa08ab6139eee31f4f6" +
-				"7a010000000000004cda79bc48b970de2fb29c3f38626eb9d70d8bae7b92aad09f2" +
-				"a0ad2d2f334d35bca1c62ffff001d048fc21700000020687e487acbf5eb375c631a" +
-				"15127fbf7d80ca084461e7f26f92c509b6000000006fad33bd7c8d651bd6dc86c28" +
-				"6f0a99340b668f019b9e97a59fd392c36c4f46910cf1c62ffff001d407facaa0400" +
-				"002040f4c65610f26f06c4365305b956934501713e01c2fc08b919e0bc1b0000000" +
-				"0e401a6a884ba015e83c6fe2cd363e877ef03982e81eaff4e2c95af1e23a670f407" +
-				"d41c62ffff001d58c64d18",
-		),
-	}
-
-	actualDifficulty := spvProof.FirstBlockHeaderDifficulty()
-	expectedDifficulty := new(big.Int).SetUint64(5168815)
-
-	testutils.AssertBigIntsEqual(
-		t,
-		"difficulty",
-		expectedDifficulty,
-		actualDifficulty,
-	)
 }
 
 func TestAssembleTransactionProof(t *testing.T) {

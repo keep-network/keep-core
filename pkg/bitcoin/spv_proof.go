@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/hex"
 	"fmt"
-	"math/big"
 
 	"github.com/keep-network/keep-core/pkg/internal/byteutils"
 )
@@ -21,20 +20,6 @@ type SpvProof struct {
 	// BitcoinHeaders is a chain of block headers that form confirmations of
 	// blockchain inclusion.
 	BitcoinHeaders []byte
-}
-
-func (sp *SpvProof) FirstBlockHeaderDifficulty() *big.Int {
-	// Deserialize the first block header and return its difficulty.
-	rawBlockHeader := [BlockHeaderByteLength]byte{}
-	copy(
-		rawBlockHeader[:],
-		sp.BitcoinHeaders[:BlockHeaderByteLength],
-	)
-
-	firstBlockHeader := BlockHeader{}
-	firstBlockHeader.Deserialize(rawBlockHeader)
-
-	return firstBlockHeader.Difficulty()
 }
 
 // AssembleSpvProof assembles a proof that a given transaction was included in
