@@ -404,13 +404,14 @@ var proposeRedemptionCommand = cobra.Command{
 			return fmt.Errorf("could not connect to Electrum chain: [%v]", err)
 		}
 
-		var walletPublicKeyHash [20]byte
+		var walletPublicKeyHashes [][20]byte
 		if len(wallet) > 0 {
-			var err error
-			walletPublicKeyHash, err = newWalletPublicKeyHash(wallet)
+			walletPublicKeyHash, err := newWalletPublicKeyHash(wallet)
 			if err != nil {
 				return fmt.Errorf("failed extract wallet public key hash: %v", err)
 			}
+
+			walletPublicKeyHashes = append(walletPublicKeyHashes, walletPublicKeyHash)
 		}
 
 		if redemptionMaxSize == 0 {
@@ -420,31 +421,34 @@ var proposeRedemptionCommand = cobra.Command{
 			}
 		}
 
-		walletPublicKeyHash, redemptions, err := walletmtr.FindPendingRedemptions(
+		walletsPendingRedemptions, err := walletmtr.FindPendingRedemptions(
 			tbtcChain,
-			walletPublicKeyHash,
-			redemptionMaxSize,
+			walletmtr.PendingRedemptionsFilter{
+				WalletPublicKeyHashes: walletPublicKeyHashes,
+				WalletsLimit:          1,
+				RequestsLimit:         redemptionMaxSize,
+				RequestAmountLimit:    0,
+			},
 		)
 		if err != nil {
-			return fmt.Errorf("failed to prepare redemption proposal: %v", err)
+			return fmt.Errorf("failed to find pending redemption requests: [%w]", err)
 		}
 
-		if len(redemptions) > int(redemptionMaxSize) {
-			return fmt.Errorf(
-				"redemptions number [%d] is greater than redemptions max size [%d]",
-				len(redemptions),
-				redemptionMaxSize,
+		for walletPublicKeyHash, redeemersOutputScripts := range walletsPendingRedemptions {
+			err := walletmtr.ProposeRedemption(
+				tbtcChain,
+				btcChain,
+				walletPublicKeyHash,
+				fee,
+				redeemersOutputScripts,
+				dryRun,
 			)
+			if err != nil {
+				return err
+			}
 		}
 
-		return walletmtr.ProposeRedemption(
-			tbtcChain,
-			btcChain,
-			walletPublicKeyHash,
-			fee,
-			redemptions,
-			dryRun,
-		)
+		return nil
 	},
 }
 

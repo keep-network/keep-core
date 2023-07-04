@@ -11,7 +11,7 @@ import (
 	"time"
 
 	"github.com/keep-network/keep-core/pkg/bitcoin"
-
+	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/tbtc"
 )
 
@@ -457,4 +457,12 @@ func (lc *LocalChain) ResetWalletLock(
 		lockExpiration: time.Unix(0, 0),
 		walletAction:   tbtc.ActionNoop,
 	}
+}
+
+func (lc *LocalChain) BlockCounter() (chain.BlockCounter, error) {
+	panic("unsupported")
+}
+
+func (lc *LocalChain) AverageBlockTime() time.Duration {
+	panic("unsupported")
 }

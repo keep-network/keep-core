@@ -343,6 +343,20 @@ func initMaintainerFlags(command *cobra.Command, cfg *config.Config) {
 		"The time interval in which pending redemptions requests are checked.",
 	)
 
+	command.Flags().Uint16Var(
+		&cfg.Maintainer.WalletCoordination.RedemptionWalletsLimit,
+		"walletCoordination.redemptionWalletsLimit",
+		wallet.DefaultRedemptionWalletsLimit,
+		"Limits the number of wallets that can receive a redemption proposal in the same time.",
+	)
+
+	command.Flags().Uint64Var(
+		&cfg.Maintainer.WalletCoordination.RedemptionRequestAmountLimit,
+		"walletCoordination.redemptionRequestAmountLimit",
+		wallet.DefaultRedemptionRequestAmountLimit,
+		"Limits the redemption requests to the ones below the given satoshi value.",
+	)
+
 	command.Flags().DurationVar(
 		&cfg.Maintainer.WalletCoordination.DepositSweepInterval,
 		"walletCoordination.depositSweepInterval",

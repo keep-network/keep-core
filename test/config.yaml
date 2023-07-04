@@ -37,6 +37,8 @@ Maintainer:
   WalletCoordination:
     Enabled: true
     RedemptionInterval: "13h"
+    RedemptionWalletsLimit: 10
+    RedemptionRequestAmountLimit: 500
     DepositSweepInterval: "64h"
   Spv:
     Enabled: true
