@@ -340,7 +340,7 @@ func ProposeDepositsSweep(
 			perDepositMaxFee,
 		)
 		if err != nil {
-			return fmt.Errorf("cannot estimate sweep transaction fee: [%w]", err)
+			return fmt.Errorf("cannot estimate sweep transaction fee: [%v]", err)
 		}
 
 		fee = estimatedFee
@@ -414,7 +414,7 @@ func ProposeDepositsSweep(
 //   - 1 P2WPKH output
 //
 // If any of the estimated fees exceed the maximum fee allowed by the Bridge
-// contract, the maximum fee is returned as result.
+// contract, an error is returned as result.
 func EstimateDepositsSweepFee(
 	chain Chain,
 	btcChain bitcoin.Chain,
@@ -502,8 +502,11 @@ func estimateDepositsSweepFee(
 
 	// Compute the maximum possible total fee for the entire sweep transaction.
 	totalMaxFee := uint64(depositsCount) * perDepositMaxFee
-	// Make sure the proposed total fee does not exceed the maximum possible total fee.
-	totalFee = int64(math.Min(float64(totalFee), float64(totalMaxFee)))
+
+	if uint64(totalFee) > totalMaxFee {
+		return 0, 0, fmt.Errorf("estimated fee exceeds the maximum fee")
+	}
+
 	// Compute the actual sat/vbyte fee for informational purposes.
 	satPerVByteFee := math.Round(float64(totalFee) / float64(transactionSize))
 

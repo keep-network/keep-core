@@ -130,6 +130,10 @@ type depositSweepProposal struct {
 }
 
 func (dsp *depositSweepProposal) convert() (*tbtc.DepositSweepProposal, error) {
+	if dsp == nil {
+		return nil, nil
+	}
+
 	result := &tbtc.DepositSweepProposal{}
 
 	if len(dsp.WalletPublicKeyHash) > 0 {
@@ -179,7 +183,8 @@ func (psts *ProposeSweepTestScenario) UnmarshalJSON(data []byte) error {
 		}
 		SweepTxFee                   int64
 		EstimateSatPerVByteFee       int64
-		ExpectedDepositSweepProposal depositSweepProposal
+		ExpectedDepositSweepProposal *depositSweepProposal
+		ExpectedErr                  string
 	}
 
 	var unmarshaled proposeSweepTestScenario
@@ -235,6 +240,11 @@ func (psts *ProposeSweepTestScenario) UnmarshalJSON(data []byte) error {
 			"failed to unmarshal expected deposit sweep proposal: [%w]",
 			err,
 		)
+	}
+
+	// Unmarshal expected error
+	if len(unmarshaled.ExpectedErr) > 0 {
+		psts.ExpectedErr = fmt.Errorf(unmarshaled.ExpectedErr)
 	}
 
 	return nil

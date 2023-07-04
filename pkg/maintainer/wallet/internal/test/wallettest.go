@@ -113,6 +113,7 @@ type ProposeSweepTestScenario struct {
 	SweepTxFee                   int64
 	EstimateSatPerVByteFee       int64
 	ExpectedDepositSweepProposal *tbtc.DepositSweepProposal
+	ExpectedErr                  error
 }
 
 func (psts *ProposeSweepTestScenario) DepositsReferences() []*walletmtr.DepositReference {
