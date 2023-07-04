@@ -223,6 +223,22 @@ func TestReadConfigFromFile(t *testing.T) {
 			readValueFunc: func(c *Config) interface{} { return c.Maintainer.Spv.Enabled },
 			expectedValue: true,
 		},
+		"Maintainer.Spv.HistoryDepth": {
+			readValueFunc: func(c *Config) interface{} { return c.Maintainer.Spv.HistoryDepth },
+			expectedValue: uint64(25000),
+		},
+		"Maintainer.Spv.TransactionLimit": {
+			readValueFunc: func(c *Config) interface{} { return c.Maintainer.Spv.TransactionLimit },
+			expectedValue: 80,
+		},
+		"Maintainer.Spv.RestartBackoffTime": {
+			readValueFunc: func(c *Config) interface{} { return c.Maintainer.Spv.RestartBackoffTime },
+			expectedValue: 2 * time.Hour,
+		},
+		"Maintainer.Spv.IdleBackoffTime": {
+			readValueFunc: func(c *Config) interface{} { return c.Maintainer.Spv.IdleBackoffTime },
+			expectedValue: 15 * time.Minute,
+		},
 	}
 
 	for _, filePath := range filePaths {

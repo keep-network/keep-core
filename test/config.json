@@ -50,7 +50,11 @@
           "DepositSweepInterval": "64h"
         },
         "Spv": {
-            "Enabled": true
+            "Enabled": true,
+            "HistoryDepth": 25000,
+            "TransactionLimit": 80,
+            "RestartBackoffTime": "2h",
+            "IdleBackoffTime": "15m"
         }
     },
     "Developer": {

@@ -15,6 +15,7 @@ import (
 	"github.com/keep-network/keep-core/pkg/bitcoin/electrum"
 	chainEthereum "github.com/keep-network/keep-core/pkg/chain/ethereum"
 	"github.com/keep-network/keep-core/pkg/clientinfo"
+	"github.com/keep-network/keep-core/pkg/maintainer/spv"
 	"github.com/keep-network/keep-core/pkg/maintainer/wallet"
 	"github.com/keep-network/keep-core/pkg/net/libp2p"
 	"github.com/keep-network/keep-core/pkg/tbtc"
@@ -354,6 +355,38 @@ func initMaintainerFlags(command *cobra.Command, cfg *config.Config) {
 		"spv",
 		false,
 		"Start SPV maintainer.",
+	)
+
+	command.Flags().Uint64Var(
+		&cfg.Maintainer.Spv.HistoryDepth,
+		"spv.historyDepth",
+		spv.DefaultHistoryDepth,
+		"Number of blocks to look back for past deposit sweep proposal "+
+			"submitted events.",
+	)
+
+	command.Flags().IntVar(
+		&cfg.Maintainer.Spv.TransactionLimit,
+		"spv.transactionLimit",
+		spv.DefaultTransactionLimit,
+		"The maximum number of confirmed transactions returned when getting "+
+			"transactions for a public key hash.",
+	)
+
+	command.Flags().DurationVar(
+		&cfg.Maintainer.Spv.RestartBackoffTime,
+		"spv.restartBackoffTime",
+		spv.DefaultRestartBackoffTime,
+		"The restart backoff which should be applied when the SPV maintainer "+
+			"is restarted.",
+	)
+
+	command.Flags().DurationVar(
+		&cfg.Maintainer.Spv.IdleBackoffTime,
+		"spv.idleBackoffTime",
+		spv.DefaultIdleBackOffTime,
+		"The wait time which should be applied when there are no more "+
+			"transaction proofs to submit.",
 	)
 }
 

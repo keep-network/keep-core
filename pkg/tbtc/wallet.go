@@ -62,6 +62,37 @@ type walletAction interface {
 	actionType() WalletActionType
 }
 
+// WalletState represents the state of a wallet.
+type WalletState uint8
+
+const (
+	StateUnknown WalletState = iota
+	StateLive
+	StateMovingFunds
+	StateClosing
+	StateClosed
+	StateTerminated
+)
+
+func (ws WalletState) String() string {
+	switch ws {
+	case StateUnknown:
+		return "Unknown"
+	case StateLive:
+		return "Live"
+	case StateMovingFunds:
+		return "MovingFunds"
+	case StateClosing:
+		return "Closing"
+	case StateClosed:
+		return "Closed"
+	case StateTerminated:
+		return "Terminated"
+	default:
+		panic("unknown wallet state")
+	}
+}
+
 // errWalletBusy is an error returned when the waller cannot execute the
 // requested walletAction due to an ongoing work.
 var errWalletBusy = fmt.Errorf("wallet is busy")

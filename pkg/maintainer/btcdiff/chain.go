@@ -1,6 +1,8 @@
 package btcdiff
 
 import (
+	"math/big"
+
 	"github.com/keep-network/keep-core/pkg/bitcoin"
 	"github.com/keep-network/keep-core/pkg/chain"
 )
@@ -47,4 +49,8 @@ type Chain interface {
 	// ProofLength returns the number of blocks required for each side of a
 	// retarget proof.
 	ProofLength() (uint64, error)
+
+	// GetCurrentAndPrevEpochDifficulty returns the difficulties of the current
+	// and previous Bitcoin epochs.
+	GetCurrentAndPrevEpochDifficulty() (*big.Int, *big.Int, error)
 }

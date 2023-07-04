@@ -2,6 +2,7 @@ package ethereum
 
 import (
 	"fmt"
+	"math/big"
 
 	"github.com/ethereum/go-ethereum/common"
 
@@ -39,7 +40,7 @@ func NewBitcoinDifficultyChain(
 	)
 	if err != nil {
 		return nil, fmt.Errorf(
-			"failed to attach to LightRelay contract: [%v]",
+			"failed to attach to LightRelay contract: [%w]",
 			err,
 		)
 	}
@@ -57,7 +58,7 @@ func NewBitcoinDifficultyChain(
 		)
 	if err != nil {
 		return nil, fmt.Errorf(
-			"failed to attach to LightRelay contract: [%v]",
+			"failed to attach to LightRelay contract: [%w]",
 			err,
 		)
 	}
@@ -78,7 +79,7 @@ func NewBitcoinDifficultyChain(
 	)
 	if err != nil {
 		return nil, fmt.Errorf(
-			"failed to attach to LightRelayMaintainerProxy contract: [%v]",
+			"failed to attach to LightRelayMaintainerProxy contract: [%w]",
 			err,
 		)
 	}
@@ -96,7 +97,7 @@ func NewBitcoinDifficultyChain(
 		)
 	if err != nil {
 		return nil, fmt.Errorf(
-			"failed to attach to LightRelayMaintainerProxy contract: [%v]",
+			"failed to attach to LightRelayMaintainerProxy contract: [%w]",
 			err,
 		)
 	}
@@ -105,7 +106,7 @@ func NewBitcoinDifficultyChain(
 	if err != nil {
 		return nil, fmt.Errorf(
 			"failed to retrieve the relay address from LightRelayMaintainerProxy "+
-				"contract: [%v]",
+				"contract: [%w]",
 			err,
 		)
 	}
@@ -223,4 +224,20 @@ func (bdc *BitcoinDifficultyChain) CurrentEpoch() (uint64, error) {
 // proof.
 func (bdc *BitcoinDifficultyChain) ProofLength() (uint64, error) {
 	return bdc.lightRelay.ProofLength()
+}
+
+// GetCurrentAndPrevEpochDifficulty returns the difficulties of the current
+// and previous Bitcoin epochs.
+func (bdc *BitcoinDifficultyChain) GetCurrentAndPrevEpochDifficulty() (
+	*big.Int, *big.Int, error,
+) {
+	difficulties, err := bdc.lightRelay.GetCurrentAndPrevEpochDifficulty()
+	if err != nil {
+		return nil, nil, fmt.Errorf(
+			"failed to get epoch difficulties: [%w]",
+			err,
+		)
+	}
+
+	return difficulties.Current, difficulties.Previous, nil
 }

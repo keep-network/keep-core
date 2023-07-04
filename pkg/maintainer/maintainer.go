@@ -54,6 +54,7 @@ func Initialize(
 			ctx,
 			config.Spv,
 			spvChain,
+			btcDiffChain,
 			btcChain,
 		)
 	}

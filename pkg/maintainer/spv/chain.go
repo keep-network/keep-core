@@ -5,6 +5,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/keep-network/keep-core/pkg/bitcoin"
+	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/tbtc"
 )
 
@@ -33,7 +34,24 @@ type Chain interface {
 		fundingOutputIndex uint32,
 	) (*tbtc.DepositChainRequest, bool, error)
 
+	GetWallet(
+		walletPublicKeyHash [20]byte,
+	) (*tbtc.WalletChainData, error)
+
+	// ComputeMainUtxoHash computes the hash of the provided main UTXO
+	// according to the on-chain Bridge rules.
+	ComputeMainUtxoHash(mainUtxo *bitcoin.UnspentTransactionOutput) [32]byte
+
 	// TxProofDifficultyFactor returns the number of confirmations on the
 	// Bitcoin chain required to successfully evaluate an SPV proof.
 	TxProofDifficultyFactor() (*big.Int, error)
+
+	// BlockCounter returns the chain's block counter.
+	BlockCounter() (chain.BlockCounter, error)
+
+	// PastDepositSweepProposalSubmittedEvents returns past
+	// `DepositSweepProposalSubmitted` events.
+	PastDepositSweepProposalSubmittedEvents(
+		filter *tbtc.DepositSweepProposalSubmittedEventFilter,
+	) ([]*tbtc.DepositSweepProposalSubmittedEvent, error)
 }
