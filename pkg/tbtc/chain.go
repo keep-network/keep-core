@@ -385,6 +385,10 @@ type DepositSweepProposalSubmittedEvent struct {
 	BlockNumber uint64
 }
 
+func (dspse *DepositSweepProposalSubmittedEvent) WalletPublicKeyHash() [20]byte {
+	return dspse.Proposal.WalletPublicKeyHash
+}
+
 // DepositSweepProposalSubmittedEventFilter is a component allowing to
 // filter DepositSweepProposalSubmittedEvent.
 type DepositSweepProposalSubmittedEventFilter struct {
