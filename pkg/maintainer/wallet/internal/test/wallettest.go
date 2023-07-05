@@ -16,9 +16,10 @@ import (
 )
 
 const (
-	testDataDirFormat                      = "%s/testdata"
-	findDepositsToSweepTestDataFilePrefix  = "find_deposits"
-	proposeDepositsSweepTestDataFilePrefix = "propose_sweep"
+	testDataDirFormat                        = "%s/testdata"
+	findDepositsToSweepTestDataFilePrefix    = "find_deposits"
+	proposeDepositsSweepTestDataFilePrefix   = "propose_sweep"
+	findPendingRedemptionsTestDataFilePrefix = "find_pending_redemptions"
 )
 
 // Wallet holds the wallet data in the given test scenario.
@@ -58,42 +59,7 @@ type FindDepositsToSweepTestScenario struct {
 
 // LoadFindDepositsToSweepTestScenario loads all scenarios related with deposit sweep.
 func LoadFindDepositsToSweepTestScenario() ([]*FindDepositsToSweepTestScenario, error) {
-	filePaths, err := detectTestDataFiles(findDepositsToSweepTestDataFilePrefix)
-	if err != nil {
-		return nil, fmt.Errorf(
-			"cannot detect test data files: [%v]",
-			err,
-		)
-	}
-
-	scenarios := make([]*FindDepositsToSweepTestScenario, 0)
-
-	for _, filePath := range filePaths {
-		// #nosec G304 (file path provided as taint input)
-		// This line is used to read a test fixture file.
-		// There is no user input.
-		fileBytes, err := ioutil.ReadFile(filePath)
-		if err != nil {
-			return nil, fmt.Errorf(
-				"cannot read file [%v]: [%v]",
-				filePath,
-				err,
-			)
-		}
-
-		var scenario FindDepositsToSweepTestScenario
-		if err = json.Unmarshal(fileBytes, &scenario); err != nil {
-			return nil, fmt.Errorf(
-				"cannot unmarshal scenario for file [%v]: [%v]",
-				filePath,
-				err,
-			)
-		}
-
-		scenarios = append(scenarios, &scenario)
-	}
-
-	return scenarios, nil
+	return loadTestScenarios[*FindDepositsToSweepTestScenario](findDepositsToSweepTestDataFilePrefix)
 }
 
 type ProposeSweepDepositsData struct {
@@ -131,7 +97,47 @@ func (psts *ProposeSweepTestScenario) DepositsReferences() []*walletmtr.DepositR
 
 // LoadProposeSweepTestScenario loads all scenarios related with deposit sweep.
 func LoadProposeSweepTestScenario() ([]*ProposeSweepTestScenario, error) {
-	filePaths, err := detectTestDataFiles(proposeDepositsSweepTestDataFilePrefix)
+	return loadTestScenarios[*ProposeSweepTestScenario](proposeDepositsSweepTestDataFilePrefix)
+}
+
+// RedemptionRequest holds the redemption request data in the given test scenario.
+type RedemptionRequest struct {
+	WalletPublicKeyHash  [20]byte
+	RedeemerOutputScript bitcoin.Script
+	RequestedAmount      uint64
+	RequestedAt          time.Time
+	RequestBlock         uint64
+}
+
+// FindPendingRedemptionsTestScenario represents a test scenario of finding
+// pending redemptions.
+type FindPendingRedemptionsTestScenario struct {
+	Title           string
+	ChainParameters struct {
+		AverageBlockTime time.Duration
+		CurrentBlock     uint64
+		RequestTimeout   uint32
+		RequestMinAge    uint32
+	}
+	Filter                            walletmtr.PendingRedemptionsFilter
+	Wallets                           []*Wallet
+	PendingRedemptions                []*RedemptionRequest
+	ExpectedWalletsPendingRedemptions map[[20]byte][]bitcoin.Script
+}
+
+// LoadFindPendingRedemptionsTestScenario loads all scenarios related with
+// finding pending redemptions.
+func LoadFindPendingRedemptionsTestScenario() (
+	[]*FindPendingRedemptionsTestScenario,
+	error,
+) {
+	return loadTestScenarios[*FindPendingRedemptionsTestScenario](
+		findPendingRedemptionsTestDataFilePrefix,
+	)
+}
+
+func loadTestScenarios[T json.Unmarshaler](testDataFilePrefix string) ([]T, error) {
+	filePaths, err := detectTestDataFiles(testDataFilePrefix)
 	if err != nil {
 		return nil, fmt.Errorf(
 			"cannot detect test data files: [%v]",
@@ -139,7 +145,7 @@ func LoadProposeSweepTestScenario() ([]*ProposeSweepTestScenario, error) {
 		)
 	}
 
-	scenarios := make([]*ProposeSweepTestScenario, 0)
+	scenarios := make([]T, 0)
 
 	for _, filePath := range filePaths {
 		// #nosec G304 (file path provided as taint input)
@@ -154,7 +160,7 @@ func LoadProposeSweepTestScenario() ([]*ProposeSweepTestScenario, error) {
 			)
 		}
 
-		var scenario ProposeSweepTestScenario
+		var scenario T
 		if err = json.Unmarshal(fileBytes, &scenario); err != nil {
 			return nil, fmt.Errorf(
 				"cannot unmarshal scenario for file [%v]: [%v]",
@@ -163,7 +169,7 @@ func LoadProposeSweepTestScenario() ([]*ProposeSweepTestScenario, error) {
 			)
 		}
 
-		scenarios = append(scenarios, &scenario)
+		scenarios = append(scenarios, scenario)
 	}
 
 	return scenarios, nil
