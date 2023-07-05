@@ -36,7 +36,7 @@ func SubmitDepositSweepProof(
 		)
 	}
 
-	mainUTXO, vault, err := parseTransactionInputs(
+	mainUTXO, vault, err := parseDepositSweepTransactionInputs(
 		btcChain,
 		spvChain,
 		transaction,
@@ -63,9 +63,9 @@ func SubmitDepositSweepProof(
 	return nil
 }
 
-// parseTransactionInputs parses the transaction's inputs and returns the main
-// UTXO and the vault.
-func parseTransactionInputs(
+// parseDepositSweepTransactionInputs parses the transaction's inputs and
+// returns the main UTXO and the vault.
+func parseDepositSweepTransactionInputs(
 	btcChain bitcoin.Chain,
 	spvChain Chain,
 	transaction *bitcoin.Transaction,
