@@ -19,7 +19,97 @@ func SubmitRedemptionProof(
 	btcChain bitcoin.Chain,
 	spvChain Chain,
 ) error {
-	panic("not implemented yet")
+	if requiredConfirmations == 0 {
+		return fmt.Errorf(
+			"provided required confirmations count must be greater than 0",
+		)
+	}
+
+	transaction, proof, err := bitcoin.AssembleSpvProof(
+		transactionHash,
+		requiredConfirmations,
+		btcChain,
+	)
+	if err != nil {
+		return fmt.Errorf(
+			"failed to assemble transaction spv proof: [%v]",
+			err,
+		)
+	}
+
+	mainUTXO, walletPublicKeyHash, err := parseRedemptionTransactionInput(
+		btcChain,
+		spvChain,
+		transaction,
+	)
+	if err != nil {
+		return fmt.Errorf(
+			"error while parsing transaction inputs: [%v]",
+			err,
+		)
+	}
+
+	if err := spvChain.SubmitRedemptionProofWithReimbursement(
+		transaction,
+		proof,
+		mainUTXO,
+		walletPublicKeyHash,
+	); err != nil {
+		return fmt.Errorf(
+			"failed to submit redemption proof with reimbursement: [%v]",
+			err,
+		)
+	}
+
+	return nil
+}
+
+// parseRedemptionTransactionInput parses the transaction's input and
+// returns the main UTXO and the wallet public key hash.
+func parseRedemptionTransactionInput(
+	btcChain bitcoin.Chain,
+	spvChain Chain,
+	transaction *bitcoin.Transaction,
+) (bitcoin.UnspentTransactionOutput, [20]byte, error) {
+	// Perform a sanity check: a redemption transaction must have exactly one
+	// input.
+	if len(transaction.Inputs) != 1 {
+		return bitcoin.UnspentTransactionOutput{}, [20]byte{}, fmt.Errorf(
+			"redemption transaction has more than one input",
+		)
+	}
+
+	input := transaction.Inputs[0]
+
+	// Get data of the input transaction whose output is spent by the redemption
+	// transaction.
+	inputTx, err := btcChain.GetTransaction(input.Outpoint.TransactionHash)
+	if err != nil {
+		return bitcoin.UnspentTransactionOutput{}, [20]byte{}, fmt.Errorf(
+			"cannot get input transaction data: [%v]",
+			err,
+		)
+	}
+
+	// Get the specific output spent by the redemption transaction.
+	spentOutput := inputTx.Outputs[input.Outpoint.OutputIndex]
+
+	// Build the main UTXO object based on available data.
+	mainUtxo := bitcoin.UnspentTransactionOutput{
+		Outpoint: input.Outpoint,
+		Value:    spentOutput.Value,
+	}
+
+	// Extract the wallet public key hash from script
+	walletPublicKeyHash, err := bitcoin.ExtractPublicKeyHash(spentOutput.PublicKeyScript)
+	if err != nil {
+		return bitcoin.UnspentTransactionOutput{}, [20]byte{}, fmt.Errorf(
+			"cannot extract wallet public key hash: [%v]",
+			err,
+		)
+	}
+
+	return mainUtxo, walletPublicKeyHash, nil
 }
 
 func getUnprovenRedemptionTransactions(

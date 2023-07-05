@@ -68,4 +68,13 @@ type Chain interface {
 		walletPublicKeyHash [20]byte,
 		redeemerOutputScript bitcoin.Script,
 	) (*tbtc.RedemptionRequest, error)
+
+	// SubmitRedemptionProofWithReimbursement submits the redemption proof
+	// via MaintainerProxy. The caller is reimbursed.
+	SubmitRedemptionProofWithReimbursement(
+		transaction *bitcoin.Transaction,
+		proof *bitcoin.SpvProof,
+		mainUTXO bitcoin.UnspentTransactionOutput,
+		walletPublicKeyHash [20]byte,
+	) error
 }
