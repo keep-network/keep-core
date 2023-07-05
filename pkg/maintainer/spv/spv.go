@@ -5,7 +5,6 @@ import (
 	"context"
 	"encoding/hex"
 	"fmt"
-	"github.com/keep-network/keep-core/pkg/tbtc"
 	"math/big"
 	"time"
 
@@ -391,16 +390,19 @@ func getProofInfo(
 	return false, 0, nil
 }
 
-// uniqueWalletPublicKeyHashes parses the list of events and returns a list of
-// unique wallet public key hashes.
-func uniqueWalletPublicKeyHashes(
-	events []*tbtc.DepositSweepProposalSubmittedEvent,
-) [][20]byte {
+// walletEvent is a type constraint representing wallet-related chain events.
+type walletEvent interface {
+	WalletPublicKeyHash() [20]byte
+}
+
+// uniqueWalletPublicKeyHashes parses the list of wallet-related events and
+// returns a list of unique wallet public key hashes.
+func uniqueWalletPublicKeyHashes[T walletEvent](events []T) [][20]byte {
 	cache := make(map[string]struct{})
 	var publicKeyHashes [][20]byte
 
 	for _, event := range events {
-		key := event.Proposal.WalletPublicKeyHash
+		key := event.WalletPublicKeyHash()
 		strKey := hex.EncodeToString(key[:])
 
 		// Check for uniqueness
