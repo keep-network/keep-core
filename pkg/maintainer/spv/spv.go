@@ -47,6 +47,10 @@ var proofTypes = map[tbtc.WalletActionType]struct {
 		unprovenTransactionsGetter: getUnprovenDepositSweepTransactions,
 		transactionProofSubmitter:  SubmitDepositSweepProof,
 	},
+	tbtc.ActionRedemption: {
+		unprovenTransactionsGetter: getUnprovenRedemptionTransactions,
+		transactionProofSubmitter:  SubmitRedemptionProof,
+	},
 }
 
 type spvMaintainer struct {
