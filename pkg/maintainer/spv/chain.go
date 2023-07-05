@@ -60,4 +60,12 @@ type Chain interface {
 	PastRedemptionProposalSubmittedEvents(
 		filter *tbtc.RedemptionProposalSubmittedEventFilter,
 	) ([]*tbtc.RedemptionProposalSubmittedEvent, error)
+
+	// GetPendingRedemptionRequest gets the on-chain pending redemption request
+	// for the given wallet public key hash and redeemer output script.
+	// Returns an error if the request was not found.
+	GetPendingRedemptionRequest(
+		walletPublicKeyHash [20]byte,
+		redeemerOutputScript bitcoin.Script,
+	) (*tbtc.RedemptionRequest, error)
 }
