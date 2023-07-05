@@ -445,8 +445,8 @@ func (sm *spvMaintainer) getProofInfo(transactionHash bitcoin.Hash) (
 	proofStartBlock := uint64(latestBlockHeight - accumulatedConfirmations + 1)
 	proofStartEpoch := proofStartBlock / difficultyEpochLength
 
-	// Calculate the ending block of the proof and the difficulty epoch it
-	// belongs to.
+	// Calculate the ending block of the proof and the difficulty epoch number
+	// it belongs to.
 	proofEndBlock := proofStartBlock + txProofDifficultyFactor.Uint64() - 1
 	proofEndEpoch := proofEndBlock / difficultyEpochLength
 
@@ -478,7 +478,25 @@ func (sm *spvMaintainer) getProofInfo(transactionHash bitcoin.Hash) (
 	}
 
 	// If the proof spans the previous and current difficulty epochs, the
-	// required confirmations may have to be adjusted.
+	// required confirmations may have to be adjusted. The reason for this is
+	// that there may be a drop in the value of difficulty between the current
+	// and the previous epochs. Example:
+	// Let's assume the transaction was done near the end of an epoch, so that
+	// part of the proof (let's say two block headers) is in the previous epoch
+	// and part of it is in the current epoch.
+	// If the previous epoch difficulty is 50 and the current epoch difficulty
+	// is 30, the total required difficulty of the proof will be transaction
+	// difficulty factor times previous difficulty: 6 * 50 = 300.
+	// However, if we simply use transaction difficulty factor to get the number
+	// of blocks we will end up with the difficulty sum that is too low:
+	// 50 + 50 + 30 + 30 + 30 + 30 = 220. To calculate the correct number of
+	// block headers needed we need to find how much difficulty needs to come
+	// from from the current epoch block headers: 300 - 2*50 = 200 and divide
+	// it by the current difficulty: 200 / 30 = 6 and add 1, because there
+	// was a remainder. So the number of block headers from the current epoch
+	// would be 7. The total number of block headers would be 9 and the sum
+	// of their difficulties would be: 50 + 50 + 30 + 30 + 30 + 30 + 30 + 30 +
+	// 30 = 310 which is enough to prove the transaction.
 	if proofStartEpoch == previousEpoch &&
 		proofEndEpoch == currentEpoch {
 		currentEpochDifficulty, previousEpochDifficulty, err :=
@@ -493,7 +511,7 @@ func (sm *spvMaintainer) getProofInfo(transactionHash bitcoin.Hash) (
 		// Calculate the total difficulty that is required for the proof. The
 		// proof begins in the previous difficulty epoch, therefore the total
 		// required difficulty will be the previous epoch difficulty times
-		// transaction proof difficulty factor
+		// transaction proof difficulty factor.
 		totalDifficultyRequired := new(big.Int).Mul(
 			previousEpochDifficulty,
 			txProofDifficultyFactor,
@@ -546,7 +564,7 @@ func (sm *spvMaintainer) getProofInfo(transactionHash bitcoin.Hash) (
 	// outside the previous or current difficulty epochs as seen by the relay.
 	// The reason for this is most likely that transaction entered the Bitcoin
 	// blockchain within the very new difficulty epoch that is not yet proven in
-	//  the relay. In that case the transaction will be proven in the future.
+	// the relay. In that case the transaction will be proven in the future.
 	// The other case could be that the transaction is older than the last two
 	// Bitcoin difficulty epochs. In that case the transaction will soon leave
 	// the sliding window of recent transactions.
