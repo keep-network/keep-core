@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/hex"
 	"fmt"
+	"github.com/keep-network/keep-core/pkg/tbtc"
 	"math/big"
 	"time"
 
@@ -34,6 +35,18 @@ func Initialize(
 	}
 
 	go spvMaintainer.startControlLoop(ctx)
+}
+
+// proofTypes holds the information about proof types supported by the
+// SPV maintainer.
+var proofTypes = map[tbtc.WalletActionType]struct {
+	unprovenTransactionsGetter unprovenTransactionsGetter
+	transactionProofSubmitter  transactionProofSubmitter
+}{
+	tbtc.ActionDepositSweep: {
+		unprovenTransactionsGetter: getUnprovenDepositSweepTransactions,
+		transactionProofSubmitter:  SubmitDepositSweepProof,
+	},
 }
 
 type spvMaintainer struct {
@@ -69,22 +82,27 @@ func (sm *spvMaintainer) startControlLoop(ctx context.Context) {
 
 func (sm *spvMaintainer) maintainSpv(ctx context.Context) error {
 	for {
-		logger.Infof("starting deposit sweep proof task execution...")
+		for action, v := range proofTypes {
+			logger.Infof("starting [%s] proof task execution...", action)
 
-		if err := sm.proveDepositSweepTransactions(); err != nil {
-			return fmt.Errorf(
-				"error while proving deposit sweep transactions: [%v]",
-				err,
-			)
+			if err := sm.proveTransactions(
+				v.unprovenTransactionsGetter,
+				v.transactionProofSubmitter,
+			); err != nil {
+				return fmt.Errorf(
+					"error while proving [%s] transactions: [%v]",
+					action,
+					err,
+				)
+			}
+
+			logger.Infof("[%s] proof task completed", action)
 		}
 
 		logger.Infof(
-			"deposit sweep proof task run completed; next run in [%s]",
+			"proof tasks completed; next run in [%s]",
 			sm.config.IdleBackoffTime,
 		)
-
-		// TODO: Add proving of other type of SPV transactions: redemption
-		// transactions, moving funds transaction, etc.
 
 		select {
 		case <-time.After(sm.config.IdleBackoffTime):
@@ -94,8 +112,35 @@ func (sm *spvMaintainer) maintainSpv(ctx context.Context) error {
 	}
 }
 
-func (sm *spvMaintainer) proveDepositSweepTransactions() error {
-	depositSweepTransactions, err := getUnprovenDepositSweepTransactions(
+// unprovenTransactionsGetter is a type representing a function that is
+// used to get unproven Bitcoin transactions.
+type unprovenTransactionsGetter func(
+	historyDepth uint64,
+	transactionLimit int,
+	btcChain bitcoin.Chain,
+	spvChain Chain,
+) (
+	[]*bitcoin.Transaction,
+	error,
+)
+
+// transactionProofSubmitter is a type representing a function that is used
+// to submit the constructed SPV proof to the host chain.
+type transactionProofSubmitter func(
+	transactionHash bitcoin.Hash,
+	requiredConfirmations uint,
+	btcChain bitcoin.Chain,
+	spvChain Chain,
+) error
+
+// proveTransactions gets unproven Bitcoin transactions using the provided
+// unprovenTransactionsGetter, build the SPV proofs, and submits them using
+// the provided transactionProofSubmitter.
+func (sm *spvMaintainer) proveTransactions(
+	unprovenTransactionsGetter unprovenTransactionsGetter,
+	transactionProofSubmitter transactionProofSubmitter,
+) error {
+	transactions, err := unprovenTransactionsGetter(
 		sm.config.HistoryDepth,
 		sm.config.TransactionLimit,
 		sm.btcChain,
@@ -103,22 +148,22 @@ func (sm *spvMaintainer) proveDepositSweepTransactions() error {
 	)
 	if err != nil {
 		return fmt.Errorf(
-			"failed to get unproven deposit sweep transactions: [%v]",
+			"failed to get unproven transactions: [%v]",
 			err,
 		)
 	}
 
 	logger.Infof(
-		"found [%d] unproven deposit sweep transaction(s)",
-		len(depositSweepTransactions),
+		"found [%d] unproven transaction(s)",
+		len(transactions),
 	)
 
-	for _, transaction := range depositSweepTransactions {
+	for _, transaction := range transactions {
 		// Print the transaction in the same endianness as block explorers do.
 		transactionHashStr := transaction.Hash().Hex(bitcoin.ReversedByteOrder)
 
 		logger.Infof(
-			"proceeding with deposit sweep proof for transaction [%s]",
+			"proceeding with proof for transaction [%s]",
 			transactionHashStr,
 		)
 
@@ -147,7 +192,7 @@ func (sm *spvMaintainer) proveDepositSweepTransactions() error {
 			// difficulty epochs as seen by the relay. Skip the transaction. It
 			// will most likely be proven later.
 			logger.Warnf(
-				"skipped proving deposit sweep transaction [%s]; the range "+
+				"skipped proving transaction [%s]; the range "+
 					"of the required proof goes outside the previous and "+
 					"current difficulty epochs as seen by the relay",
 				transactionHashStr,
@@ -159,7 +204,7 @@ func (sm *spvMaintainer) proveDepositSweepTransactions() error {
 			// Skip the transaction as it has not accumulated enough
 			// confirmations. It will be proven later.
 			logger.Infof(
-				"skipped proving deposit sweep transaction [%s]; transaction "+
+				"skipped proving transaction [%s]; transaction "+
 					"has [%v/%v] confirmations",
 				transactionHashStr,
 				accumulatedConfirmations,
@@ -168,7 +213,7 @@ func (sm *spvMaintainer) proveDepositSweepTransactions() error {
 			continue
 		}
 
-		err = SubmitDepositSweepProof(
+		err = transactionProofSubmitter(
 			transaction.Hash(),
 			requiredConfirmations,
 			sm.btcChain,
@@ -179,12 +224,12 @@ func (sm *spvMaintainer) proveDepositSweepTransactions() error {
 		}
 
 		logger.Infof(
-			"successfully submitted deposit sweep proof for transaction [%s]",
+			"successfully submitted proof for transaction [%s]",
 			transactionHashStr,
 		)
 	}
 
-	logger.Infof("finished round of proving deposit sweep transactions")
+	logger.Infof("finished round of proving transactions")
 
 	return nil
 }
