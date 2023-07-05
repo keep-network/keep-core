@@ -54,4 +54,10 @@ type Chain interface {
 	PastDepositSweepProposalSubmittedEvents(
 		filter *tbtc.DepositSweepProposalSubmittedEventFilter,
 	) ([]*tbtc.DepositSweepProposalSubmittedEvent, error)
+
+	// PastRedemptionProposalSubmittedEvents returns past
+	// `RedemptionProposalSubmitted` events.
+	PastRedemptionProposalSubmittedEvents(
+		filter *tbtc.RedemptionProposalSubmittedEventFilter,
+	) ([]*tbtc.RedemptionProposalSubmittedEvent, error)
 }

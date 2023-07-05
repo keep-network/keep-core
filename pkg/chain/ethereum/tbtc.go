@@ -1084,6 +1084,74 @@ func (tc *TbtcChain) PastDepositSweepProposalSubmittedEvents(
 	return convertedEvents, err
 }
 
+func (tc *TbtcChain) PastRedemptionProposalSubmittedEvents(
+	filter *tbtc.RedemptionProposalSubmittedEventFilter,
+) ([]*tbtc.RedemptionProposalSubmittedEvent, error) {
+	var startBlock uint64
+	var endBlock *uint64
+	var coordinator []common.Address
+	var walletPublicKeyHash [20]byte
+
+	if filter != nil {
+		startBlock = filter.StartBlock
+		endBlock = filter.EndBlock
+
+		for _, ps := range filter.Coordinator {
+			coordinator = append(
+				coordinator,
+				common.HexToAddress(ps.String()),
+			)
+		}
+
+		walletPublicKeyHash = filter.WalletPublicKeyHash
+	}
+
+	events, err := tc.walletCoordinator.PastRedemptionProposalSubmittedEvents(
+		startBlock,
+		endBlock,
+		coordinator,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	convertedEvents := make([]*tbtc.RedemptionProposalSubmittedEvent, 0)
+	for _, event := range events {
+		// If the wallet PKH filter is set, omit all events that target
+		// different wallets.
+		if walletPublicKeyHash != [20]byte{} {
+			if event.Proposal.WalletPubKeyHash != walletPublicKeyHash {
+				continue
+			}
+		}
+
+		tbtcProposal, err := convertRedemptionProposalFromAbiType(event.Proposal)
+		if err != nil {
+			return nil, fmt.Errorf(
+				"unexpected proposal in RedemptionProposalSubmitted event: [%v]",
+				err,
+			)
+		}
+
+		convertedEvent := &tbtc.RedemptionProposalSubmittedEvent{
+			Proposal:    tbtcProposal,
+			Coordinator: chain.Address(event.Coordinator.Hex()),
+			BlockNumber: event.Raw.BlockNumber,
+		}
+
+		convertedEvents = append(convertedEvents, convertedEvent)
+	}
+
+	sort.SliceStable(
+		convertedEvents,
+		func(i, j int) bool {
+			return convertedEvents[i].BlockNumber < convertedEvents[j].BlockNumber
+		},
+	)
+
+	return convertedEvents, err
+}
+
 func (tc *TbtcChain) PastRedemptionRequestedEvents(
 	filter *tbtc.RedemptionRequestedEventFilter,
 ) ([]*tbtc.RedemptionRequestedEvent, error) {

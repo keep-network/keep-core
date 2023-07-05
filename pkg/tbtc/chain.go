@@ -406,6 +406,19 @@ type RedemptionProposalSubmittedEvent struct {
 	BlockNumber uint64
 }
 
+func (rpse *RedemptionProposalSubmittedEvent) WalletPublicKeyHash() [20]byte {
+	return rpse.Proposal.WalletPublicKeyHash
+}
+
+// RedemptionProposalSubmittedEventFilter is a component allowing to
+// filter RedemptionProposalSubmittedEvent.
+type RedemptionProposalSubmittedEventFilter struct {
+	StartBlock          uint64
+	EndBlock            *uint64
+	Coordinator         []chain.Address
+	WalletPublicKeyHash [20]byte
+}
+
 // RedemptionProposal represents a redemption proposal submitted to the chain.
 type RedemptionProposal struct {
 	WalletPublicKeyHash    [20]byte
