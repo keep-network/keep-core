@@ -148,7 +148,7 @@ func (sm *spvMaintainer) proveDepositSweepTransactions() error {
 			continue
 		}
 
-		if accumulatedConfirmations < uint(requiredConfirmations) {
+		if accumulatedConfirmations < requiredConfirmations {
 			// Skip the transaction as it has not accumulated enough
 			// confirmations. It will be proven later.
 			logger.Infof(
@@ -161,37 +161,14 @@ func (sm *spvMaintainer) proveDepositSweepTransactions() error {
 			continue
 		}
 
-		_, proof, err := bitcoin.AssembleSpvProof(
+		err = SubmitDepositSweepProof(
 			transaction.Hash(),
-			uint(requiredConfirmations),
-			sm.btcChain,
-		)
-		if err != nil {
-			return fmt.Errorf("failed to assemble SPV proof: [%v]", err)
-		}
-
-		mainUTXO, vault, err := parseTransactionInputs(
+			requiredConfirmations,
 			sm.btcChain,
 			sm.spvChain,
-			transaction,
 		)
 		if err != nil {
-			return fmt.Errorf(
-				"error while parsing transaction inputs: [%v]",
-				err,
-			)
-		}
-
-		if err := sm.spvChain.SubmitDepositSweepProofWithReimbursement(
-			transaction,
-			proof,
-			mainUTXO,
-			vault,
-		); err != nil {
-			return fmt.Errorf(
-				"failed to submit deposit sweep proof with reimbursement: [%v]",
-				err,
-			)
+			return err
 		}
 
 		logger.Infof(
