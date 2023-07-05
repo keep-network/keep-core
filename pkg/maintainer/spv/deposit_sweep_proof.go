@@ -2,6 +2,8 @@ package spv
 
 import (
 	"fmt"
+	"github.com/keep-network/keep-core/pkg/tbtc"
+	"time"
 
 	"github.com/btcsuite/btcd/txscript"
 	"github.com/ethereum/go-ethereum/common"
@@ -200,4 +202,187 @@ func convertVaultAddress(vault *chain.Address) common.Address {
 	}
 
 	return common.HexToAddress(string(*vault))
+}
+
+func getUnprovenDepositSweepTransactions(
+	historyDepth uint64,
+	transactionLimit int,
+	btcChain bitcoin.Chain,
+	spvChain Chain,
+) (
+	[]*bitcoin.Transaction,
+	error,
+) {
+	blockCounter, err := spvChain.BlockCounter()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get block counter: [%v]", err)
+	}
+
+	currentBlock, err := blockCounter.CurrentBlock()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get current block: [%v]", err)
+	}
+
+	// Calculate the starting block of the range in which the events will be
+	// searched for.
+	startBlock := currentBlock - historyDepth
+
+	depositSweepTransactionProposals, err :=
+		spvChain.PastDepositSweepProposalSubmittedEvents(
+			&tbtc.DepositSweepProposalSubmittedEventFilter{
+				StartBlock: startBlock,
+			},
+		)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"failed to get past deposit sweep proposal submitted events: [%v]",
+			err,
+		)
+	}
+
+	// There will often be multiple events emitted for a single wallet. Prepare
+	// a list of unique wallet public key hashes.
+	walletPublicKeyHashes := uniqueWalletPublicKeyHashes(
+		depositSweepTransactionProposals,
+	)
+
+	unprovenDepositSweepTransactions := []*bitcoin.Transaction{}
+
+	for _, walletPublicKeyHash := range walletPublicKeyHashes {
+		wallet, err := spvChain.GetWallet(walletPublicKeyHash)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get wallet: [%v]", err)
+		}
+
+		if wallet.State != tbtc.StateLive &&
+			wallet.State != tbtc.StateMovingFunds {
+			// The wallet can only submit deposit sweep proofs if it's `Live` or
+			// `MovingFunds`. If the state is different skip it.
+			logger.Infof(
+				"skipped proving deposit sweep transactions for wallet [%x] "+
+					"because of wallet state [%v]",
+				walletPublicKeyHash,
+				wallet.State,
+			)
+			continue
+		}
+
+		walletTransactions, err := btcChain.GetTransactionsForPublicKeyHash(
+			walletPublicKeyHash,
+			transactionLimit,
+		)
+		if err != nil {
+			return nil, fmt.Errorf(
+				"failed to get transactions for wallet: [%v]",
+				err,
+			)
+		}
+
+		for _, transaction := range walletTransactions {
+			isUnproven, err :=
+				isUnprovenDepositSweepTransaction(
+					transaction,
+					walletPublicKeyHash,
+					btcChain,
+					spvChain,
+				)
+			if err != nil {
+				return nil, fmt.Errorf(
+					"failed to check if transaction is an unproven deposit sweep "+
+						"transaction: [%v]",
+					err,
+				)
+			}
+
+			if isUnproven {
+				unprovenDepositSweepTransactions = append(
+					unprovenDepositSweepTransactions,
+					transaction,
+				)
+			}
+		}
+	}
+
+	return unprovenDepositSweepTransactions, nil
+}
+
+func isUnprovenDepositSweepTransaction(
+	transaction *bitcoin.Transaction,
+	walletPublicKeyHash [20]byte,
+	btcChain bitcoin.Chain,
+	spvChain Chain,
+) (bool, error) {
+	// If the transaction does not have exactly one output, it cannot be a
+	// deposit sweep transaction.
+	if len(transaction.Outputs) != 1 {
+		return false, nil
+	}
+
+	hasDepositInputs := false
+
+	// Look at the transaction's inputs. All the inputs must be deposit inputs,
+	// except for one input which can be the main UTXO.
+	for _, input := range transaction.Inputs {
+		fundingTransactionHash := input.Outpoint.TransactionHash
+		fundingOutpointIndex := input.Outpoint.OutputIndex
+
+		// Check if the input is a deposit input.
+		deposit, found, err := spvChain.GetDepositRequest(
+			fundingTransactionHash,
+			fundingOutpointIndex,
+		)
+		if err != nil {
+			return false, fmt.Errorf("failed to get deposit request: [%v]", err)
+		}
+
+		if !found {
+			// The input is not a deposit input. The transaction can still be
+			// a deposit sweep transaction, since the input may be the main UTXO.
+
+			// Check if the input represents the current main UTXO of the wallet.
+			// Notice that we don't have to verify if there is only one main
+			// UTXO among the transaction's inputs since only one input may have
+			// such a structure that the calculated hash will match the wallet's
+			// main UTXO hash stored on-chain.
+			isMainUtxo, err := isInputCurrentWalletsMainUTXO(
+				fundingTransactionHash,
+				fundingOutpointIndex,
+				walletPublicKeyHash,
+				btcChain,
+				spvChain,
+			)
+			if err != nil {
+				return false, fmt.Errorf(
+					"failed to check if input is the main UTXO",
+				)
+			}
+
+			// The input is not the current main UTXO of the wallet. The
+			// transaction is either a deposit sweep transaction that is already
+			// proven or it's not a deposit sweep transaction at all.
+			if !isMainUtxo {
+				return false, nil
+			}
+
+			// The input is the current main UTXO of the wallet. Proceed with
+			// checking other inputs.
+		} else {
+			// The input is a deposit input. Check if it swept or not.
+			if deposit.SweptAt.Equal(time.Unix(0, 0)) {
+				// The input is a deposit and it's unswept.
+				hasDepositInputs = true
+			} else {
+				// The input is a deposit, but it's already swept.
+				// The transaction must a deposit sweep transaction, but it's
+				// already proven.
+				return false, nil
+			}
+		}
+	}
+
+	// All the inputs represent either unswept deposits or the current main UTXO.
+	// As the final check verify if at least one of them was a deposit input.
+	// This will distinguish a deposit sweep transaction from a different
+	// transaction type that may have the main UTXO as input, e.g. redemption.
+	return hasDepositInputs, nil
 }

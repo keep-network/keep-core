@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/hex"
 	"fmt"
+	"github.com/keep-network/keep-core/pkg/tbtc"
 	"math/big"
 	"time"
 
@@ -12,7 +13,6 @@ import (
 
 	"github.com/keep-network/keep-core/pkg/bitcoin"
 	"github.com/keep-network/keep-core/pkg/maintainer/btcdiff"
-	"github.com/keep-network/keep-core/pkg/tbtc"
 )
 
 var logger = log.Logger("keep-maintainer-spv")
@@ -96,7 +96,12 @@ func (sm *spvMaintainer) maintainSpv(ctx context.Context) error {
 }
 
 func (sm *spvMaintainer) proveDepositSweepTransactions() error {
-	depositSweepTransactions, err := sm.getUnprovenDepositSweepTransactions()
+	depositSweepTransactions, err := getUnprovenDepositSweepTransactions(
+		sm.config.HistoryDepth,
+		sm.config.TransactionLimit,
+		sm.btcChain,
+		sm.spvChain,
+	)
 	if err != nil {
 		return fmt.Errorf(
 			"failed to get unproven deposit sweep transactions: [%v]",
@@ -128,8 +133,11 @@ func (sm *spvMaintainer) proveDepositSweepTransactions() error {
 			)
 		}
 
-		isProofWithinRelayRange, requiredConfirmations, err := sm.getProofInfo(
+		isProofWithinRelayRange, requiredConfirmations, err := getProofInfo(
 			transaction.Hash(),
+			sm.btcChain,
+			sm.spvChain,
+			sm.btcDiffChain,
 		)
 		if err != nil {
 			return fmt.Errorf("failed to get proof info: [%v]", err)
@@ -182,192 +190,22 @@ func (sm *spvMaintainer) proveDepositSweepTransactions() error {
 	return nil
 }
 
-func (sm *spvMaintainer) getUnprovenDepositSweepTransactions() (
-	[]*bitcoin.Transaction,
-	error,
-) {
-	blockCounter, err := sm.spvChain.BlockCounter()
-	if err != nil {
-		return nil, fmt.Errorf("failed to get block counter: [%v]", err)
-	}
-
-	currentBlock, err := blockCounter.CurrentBlock()
-	if err != nil {
-		return nil, fmt.Errorf("failed to get current block: [%v]", err)
-	}
-
-	// Calculate the starting block of the range in which the events will be
-	// searched for.
-	startBlock := currentBlock - sm.config.HistoryDepth
-
-	depositSweepTransactionProposals, err :=
-		sm.spvChain.PastDepositSweepProposalSubmittedEvents(
-			&tbtc.DepositSweepProposalSubmittedEventFilter{
-				StartBlock: startBlock,
-			},
-		)
-	if err != nil {
-		return nil, fmt.Errorf(
-			"failed to get past deposit sweep proposal submitted events: [%v]",
-			err,
-		)
-	}
-
-	// There will often be multiple events emitted for a single wallet. Prepare
-	// a list of unique wallet public key hashes.
-	walletPublicKeyHashes := uniqueWalletPublicKeyHashes(
-		depositSweepTransactionProposals,
-	)
-
-	unprovenDepositSweepTransactions := []*bitcoin.Transaction{}
-
-	for _, walletPublicKeyHash := range walletPublicKeyHashes {
-		wallet, err := sm.spvChain.GetWallet(walletPublicKeyHash)
-		if err != nil {
-			return nil, fmt.Errorf("failed to get wallet: [%v]", err)
-		}
-
-		if wallet.State != tbtc.StateLive &&
-			wallet.State != tbtc.StateMovingFunds {
-			// The wallet can only submit deposit sweep proofs if it's `Live` or
-			// `MovingFunds`. If the state is different skip it.
-			logger.Infof(
-				"skipped proving deposit sweep transactions for wallet [%x] "+
-					"because of wallet state [%v]",
-				walletPublicKeyHash,
-				wallet.State,
-			)
-			continue
-		}
-
-		walletTransactions, err := sm.btcChain.GetTransactionsForPublicKeyHash(
-			walletPublicKeyHash,
-			sm.config.TransactionLimit,
-		)
-		if err != nil {
-			return nil, fmt.Errorf(
-				"failed to get transactions for wallet: [%v]",
-				err,
-			)
-		}
-
-		for _, transaction := range walletTransactions {
-			isUnprovenDepositSweepTransaction, err :=
-				sm.isUnprovenDepositSweepTransaction(
-					transaction,
-					walletPublicKeyHash,
-				)
-			if err != nil {
-				return nil, fmt.Errorf(
-					"failed to check if transaction is an unproven deposit sweep "+
-						"transaction: [%v]",
-					err,
-				)
-			}
-
-			if isUnprovenDepositSweepTransaction {
-				unprovenDepositSweepTransactions = append(
-					unprovenDepositSweepTransactions,
-					transaction,
-				)
-			}
-		}
-	}
-
-	return unprovenDepositSweepTransactions, nil
-}
-
-func (sm *spvMaintainer) isUnprovenDepositSweepTransaction(
-	transaction *bitcoin.Transaction,
-	walletPublicKeyHash [20]byte,
-) (bool, error) {
-	// If the transaction does not have exactly one output, it cannot be a
-	// deposit sweep transaction.
-	if len(transaction.Outputs) != 1 {
-		return false, nil
-	}
-
-	hasDepositInputs := false
-
-	// Look at the transaction's inputs. All the inputs must be deposit inputs,
-	// except for one input which can be the main UTXO.
-	for _, input := range transaction.Inputs {
-		fundingTransactionHash := input.Outpoint.TransactionHash
-		fundingOutpointIndex := input.Outpoint.OutputIndex
-
-		// Check if the input is a deposit input.
-		deposit, found, err := sm.spvChain.GetDepositRequest(
-			fundingTransactionHash,
-			fundingOutpointIndex,
-		)
-		if err != nil {
-			return false, fmt.Errorf("failed to get deposit request: [%v]", err)
-		}
-
-		if !found {
-			// The input is not a deposit input. The transaction can still be
-			// a deposit sweep transaction, since the input may be the main UTXO.
-
-			// Check if the input represents the current main UTXO of the wallet.
-			// Notice that we don't have to verify if there is only one main
-			// UTXO among the transaction's inputs since only one input may have
-			// such a structure that the calculated hash will match the wallet's
-			// main UTXO hash stored on-chain.
-			isMainUtxo, err := sm.isInputCurrentWalletsMainUTXO(
-				fundingTransactionHash,
-				fundingOutpointIndex,
-				walletPublicKeyHash,
-			)
-			if err != nil {
-				return false, fmt.Errorf(
-					"failed to check if input is the main UTXO",
-				)
-			}
-
-			// The input is not the current main UTXO of the wallet. The
-			// transaction is either a deposit sweep transaction that is already
-			// proven or it's not a deposit sweep transaction at all.
-			if !isMainUtxo {
-				return false, nil
-			}
-
-			// The input is the current main UTXO of the wallet. Proceed with
-			// checking other inputs.
-		} else {
-			// The input is a deposit input. Check if it swept or not.
-			if deposit.SweptAt.Equal(time.Unix(0, 0)) {
-				// The input is a deposit and it's unswept.
-				hasDepositInputs = true
-			} else {
-				// The input is a deposit, but it's already swept.
-				// The transaction must a deposit sweep transaction, but it's
-				// already proven.
-				return false, nil
-			}
-		}
-	}
-
-	// All the inputs represent either unswept deposits or the current main UTXO.
-	// As the final check verify if at least one of them was a deposit input.
-	// This will distinguish a deposit sweep transaction from a different
-	// transaction type that may have the main UTXO as input, e.g. redemption.
-	return hasDepositInputs, nil
-}
-
-func (sm *spvMaintainer) isInputCurrentWalletsMainUTXO(
+func isInputCurrentWalletsMainUTXO(
 	fundingTxHash bitcoin.Hash,
 	fundingOutputIndex uint32,
 	walletPublicKeyHash [20]byte,
+	btcChain bitcoin.Chain,
+	spvChain Chain,
 ) (bool, error) {
 	// Get the transaction the input originated from to calculate the input value.
-	previousTransaction, err := sm.btcChain.GetTransaction(fundingTxHash)
+	previousTransaction, err := btcChain.GetTransaction(fundingTxHash)
 	if err != nil {
 		return false, fmt.Errorf("failed to get previous transaction: [%v]", err)
 	}
 	fundingOutputValue := previousTransaction.Outputs[fundingOutputIndex].Value
 
 	// Assume the input is the main UTXO and calculate hash.
-	mainUtxoHash := sm.spvChain.ComputeMainUtxoHash(&bitcoin.UnspentTransactionOutput{
+	mainUtxoHash := spvChain.ComputeMainUtxoHash(&bitcoin.UnspentTransactionOutput{
 		Outpoint: &bitcoin.TransactionOutpoint{
 			TransactionHash: fundingTxHash,
 			OutputIndex:     fundingOutputIndex,
@@ -376,7 +214,7 @@ func (sm *spvMaintainer) isInputCurrentWalletsMainUTXO(
 	})
 
 	// Get the wallet and check if its main UTXO matches the calculated hash.
-	wallet, err := sm.spvChain.GetWallet(walletPublicKeyHash)
+	wallet, err := spvChain.GetWallet(walletPublicKeyHash)
 	if err != nil {
 		return false, fmt.Errorf("failed to get wallet: [%v]", err)
 	}
@@ -388,10 +226,15 @@ func (sm *spvMaintainer) isInputCurrentWalletsMainUTXO(
 // information whether the transaction proof range is within the previous and
 // current difficulty epochs as seen by the relay and the required number of
 // confirmations.
-func (sm *spvMaintainer) getProofInfo(transactionHash bitcoin.Hash) (
+func getProofInfo(
+	transactionHash bitcoin.Hash,
+	btcChain bitcoin.Chain,
+	spvChain Chain,
+	btcDiffChain btcdiff.Chain,
+) (
 	bool, uint, error,
 ) {
-	latestBlockHeight, err := sm.btcChain.GetLatestBlockHeight()
+	latestBlockHeight, err := btcChain.GetLatestBlockHeight()
 	if err != nil {
 		return false, 0, fmt.Errorf(
 			"failed to get latest block height: [%v]",
@@ -399,7 +242,7 @@ func (sm *spvMaintainer) getProofInfo(transactionHash bitcoin.Hash) (
 		)
 	}
 
-	accumulatedConfirmations, err := sm.btcChain.GetTransactionConfirmations(
+	accumulatedConfirmations, err := btcChain.GetTransactionConfirmations(
 		transactionHash,
 	)
 	if err != nil {
@@ -409,7 +252,7 @@ func (sm *spvMaintainer) getProofInfo(transactionHash bitcoin.Hash) (
 		)
 	}
 
-	txProofDifficultyFactor, err := sm.spvChain.TxProofDifficultyFactor()
+	txProofDifficultyFactor, err := spvChain.TxProofDifficultyFactor()
 	if err != nil {
 		return false, 0, fmt.Errorf(
 			"failed to get transaction proof difficulty factor: [%v]",
@@ -429,7 +272,7 @@ func (sm *spvMaintainer) getProofInfo(transactionHash bitcoin.Hash) (
 
 	// Get the current difficulty epoch number as seen by the relay. Subtract
 	// one to get the previous epoch number.
-	currentEpoch, err := sm.btcDiffChain.CurrentEpoch()
+	currentEpoch, err := btcDiffChain.CurrentEpoch()
 	if err != nil {
 		return false, 0, fmt.Errorf("failed to get current epoch: [%v]", err)
 	}
@@ -477,7 +320,7 @@ func (sm *spvMaintainer) getProofInfo(transactionHash bitcoin.Hash) (
 	if proofStartEpoch == previousEpoch &&
 		proofEndEpoch == currentEpoch {
 		currentEpochDifficulty, previousEpochDifficulty, err :=
-			sm.btcDiffChain.GetCurrentAndPrevEpochDifficulty()
+			btcDiffChain.GetCurrentAndPrevEpochDifficulty()
 		if err != nil {
 			return false, 0, fmt.Errorf(
 				"failed to get Bitcoin epoch difficulties: [%v]",
