@@ -9,10 +9,12 @@ import (
 	"sync"
 )
 
+//lint:ignore U1000 Ignore unused type temporarily.
 type localChain struct {
 	mutex sync.Mutex
 }
 
+//lint:ignore U1000 Ignore unused function temporarily.
 func newLocalChain() *localChain {
 	return &localChain{}
 }

@@ -5,10 +5,12 @@ import (
 	"sync"
 )
 
+//lint:ignore U1000 Ignore unused type temporarily.
 type localBitcoinChain struct {
 	mutex sync.Mutex
 }
 
+//lint:ignore U1000 Ignore unused function temporarily.
 func newLocalBitcoinChain() *localBitcoinChain {
 	return &localBitcoinChain{}
 }
