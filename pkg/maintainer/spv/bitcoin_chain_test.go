@@ -69,6 +69,3 @@ func (lbc *localBitcoinChain) EstimateSatPerVByteFee(blocks uint32) (
 ) {
 	panic("unsupported")
 }
-
-
-
