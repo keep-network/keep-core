@@ -47,6 +47,10 @@ var proofTypes = map[tbtc.WalletActionType]struct {
 		unprovenTransactionsGetter: getUnprovenDepositSweepTransactions,
 		transactionProofSubmitter:  SubmitDepositSweepProof,
 	},
+	tbtc.ActionRedemption: {
+		unprovenTransactionsGetter: getUnprovenRedemptionTransactions,
+		transactionProofSubmitter:  SubmitRedemptionProof,
+	},
 }
 
 type spvMaintainer struct {
@@ -147,16 +151,10 @@ func (sm *spvMaintainer) proveTransactions(
 		sm.spvChain,
 	)
 	if err != nil {
-		return fmt.Errorf(
-			"failed to get unproven transactions: [%v]",
-			err,
-		)
+		return fmt.Errorf("failed to get unproven transactions: [%v]", err)
 	}
 
-	logger.Infof(
-		"found [%d] unproven transaction(s)",
-		len(transactions),
-	)
+	logger.Infof("found [%d] unproven transaction(s)", len(transactions))
 
 	for _, transaction := range transactions {
 		// Print the transaction in the same endianness as block explorers do.

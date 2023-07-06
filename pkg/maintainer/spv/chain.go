@@ -54,4 +54,27 @@ type Chain interface {
 	PastDepositSweepProposalSubmittedEvents(
 		filter *tbtc.DepositSweepProposalSubmittedEventFilter,
 	) ([]*tbtc.DepositSweepProposalSubmittedEvent, error)
+
+	// PastRedemptionProposalSubmittedEvents returns past
+	// `RedemptionProposalSubmitted` events.
+	PastRedemptionProposalSubmittedEvents(
+		filter *tbtc.RedemptionProposalSubmittedEventFilter,
+	) ([]*tbtc.RedemptionProposalSubmittedEvent, error)
+
+	// GetPendingRedemptionRequest gets the on-chain pending redemption request
+	// for the given wallet public key hash and redeemer output script.
+	// The returned bool value indicates whether the request was found or not.
+	GetPendingRedemptionRequest(
+		walletPublicKeyHash [20]byte,
+		redeemerOutputScript bitcoin.Script,
+	) (*tbtc.RedemptionRequest, bool, error)
+
+	// SubmitRedemptionProofWithReimbursement submits the redemption proof
+	// via MaintainerProxy. The caller is reimbursed.
+	SubmitRedemptionProofWithReimbursement(
+		transaction *bitcoin.Transaction,
+		proof *bitcoin.SpvProof,
+		mainUTXO bitcoin.UnspentTransactionOutput,
+		walletPublicKeyHash [20]byte,
+	) error
 }

@@ -391,7 +391,7 @@ func (lc *LocalChain) GetDepositParameters() (
 func (lc *LocalChain) GetPendingRedemptionRequest(
 	walletPublicKeyHash [20]byte,
 	redeemerOutputScript bitcoin.Script,
-) (*tbtc.RedemptionRequest, error) {
+) (*tbtc.RedemptionRequest, bool, error) {
 	lc.mutex.Lock()
 	defer lc.mutex.Unlock()
 
@@ -399,10 +399,10 @@ func (lc *LocalChain) GetPendingRedemptionRequest(
 
 	request, ok := lc.pendingRedemptionRequests[requestKey]
 	if !ok {
-		return nil, fmt.Errorf("not request for given key")
+		return nil, false, nil
 	}
 
-	return request, nil
+	return request, true, nil
 }
 
 func (lc *LocalChain) SetPendingRedemptionRequest(

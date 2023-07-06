@@ -1084,6 +1084,74 @@ func (tc *TbtcChain) PastDepositSweepProposalSubmittedEvents(
 	return convertedEvents, err
 }
 
+func (tc *TbtcChain) PastRedemptionProposalSubmittedEvents(
+	filter *tbtc.RedemptionProposalSubmittedEventFilter,
+) ([]*tbtc.RedemptionProposalSubmittedEvent, error) {
+	var startBlock uint64
+	var endBlock *uint64
+	var coordinator []common.Address
+	var walletPublicKeyHash [20]byte
+
+	if filter != nil {
+		startBlock = filter.StartBlock
+		endBlock = filter.EndBlock
+
+		for _, ps := range filter.Coordinator {
+			coordinator = append(
+				coordinator,
+				common.HexToAddress(ps.String()),
+			)
+		}
+
+		walletPublicKeyHash = filter.WalletPublicKeyHash
+	}
+
+	events, err := tc.walletCoordinator.PastRedemptionProposalSubmittedEvents(
+		startBlock,
+		endBlock,
+		coordinator,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	convertedEvents := make([]*tbtc.RedemptionProposalSubmittedEvent, 0)
+	for _, event := range events {
+		// If the wallet PKH filter is set, omit all events that target
+		// different wallets.
+		if walletPublicKeyHash != [20]byte{} {
+			if event.Proposal.WalletPubKeyHash != walletPublicKeyHash {
+				continue
+			}
+		}
+
+		tbtcProposal, err := convertRedemptionProposalFromAbiType(event.Proposal)
+		if err != nil {
+			return nil, fmt.Errorf(
+				"unexpected proposal in RedemptionProposalSubmitted event: [%v]",
+				err,
+			)
+		}
+
+		convertedEvent := &tbtc.RedemptionProposalSubmittedEvent{
+			Proposal:    tbtcProposal,
+			Coordinator: chain.Address(event.Coordinator.Hex()),
+			BlockNumber: event.Raw.BlockNumber,
+		}
+
+		convertedEvents = append(convertedEvents, convertedEvent)
+	}
+
+	sort.SliceStable(
+		convertedEvents,
+		func(i, j int) bool {
+			return convertedEvents[i].BlockNumber < convertedEvents[j].BlockNumber
+		},
+	)
+
+	return convertedEvents, err
+}
+
 func (tc *TbtcChain) PastRedemptionRequestedEvents(
 	filter *tbtc.RedemptionRequestedEventFilter,
 ) ([]*tbtc.RedemptionRequestedEvent, error) {
@@ -1328,15 +1396,15 @@ func (tc *TbtcChain) GetDepositParameters() (
 func (tc *TbtcChain) GetPendingRedemptionRequest(
 	walletPublicKeyHash [20]byte,
 	redeemerOutputScript bitcoin.Script,
-) (*tbtc.RedemptionRequest, error) {
+) (*tbtc.RedemptionRequest, bool, error) {
 	redemptionKey, err := buildRedemptionKey(walletPublicKeyHash, redeemerOutputScript)
 	if err != nil {
-		return nil, fmt.Errorf("cannot build redemption key: [%v]", err)
+		return nil, false, fmt.Errorf("cannot build redemption key: [%v]", err)
 	}
 
 	redemptionRequest, err := tc.bridge.PendingRedemptions(redemptionKey)
 	if err != nil {
-		return nil, fmt.Errorf(
+		return nil, false, fmt.Errorf(
 			"cannot get pending redemption request for key [0x%x]: [%v]",
 			redemptionKey.Text(16),
 			err,
@@ -1345,7 +1413,7 @@ func (tc *TbtcChain) GetPendingRedemptionRequest(
 
 	// Redemption not found.
 	if redemptionRequest.RequestedAt == 0 {
-		return nil, tbtc.ErrPendingRedemptionRequestNotFound
+		return nil, false, nil
 	}
 
 	return &tbtc.RedemptionRequest{
@@ -1355,7 +1423,59 @@ func (tc *TbtcChain) GetPendingRedemptionRequest(
 		TreasuryFee:          redemptionRequest.TreasuryFee,
 		TxMaxFee:             redemptionRequest.TxMaxFee,
 		RequestedAt:          time.Unix(int64(redemptionRequest.RequestedAt), 0),
-	}, nil
+	}, true, nil
+}
+
+func (tc *TbtcChain) SubmitRedemptionProofWithReimbursement(
+	transaction *bitcoin.Transaction,
+	proof *bitcoin.SpvProof,
+	mainUTXO bitcoin.UnspentTransactionOutput,
+	walletPublicKeyHash [20]byte,
+) error {
+	bitcoinTxInfo := tbtcabi.BitcoinTxInfo3{
+		Version:      transaction.SerializeVersion(),
+		InputVector:  transaction.SerializeInputs(),
+		OutputVector: transaction.SerializeOutputs(),
+		Locktime:     transaction.SerializeLocktime(),
+	}
+	sweepProof := tbtcabi.BitcoinTxProof2{
+		MerkleProof:    proof.MerkleProof,
+		TxIndexInBlock: big.NewInt(int64(proof.TxIndexInBlock)),
+		BitcoinHeaders: proof.BitcoinHeaders,
+	}
+	utxo := tbtcabi.BitcoinTxUTXO2{
+		TxHash:        mainUTXO.Outpoint.TransactionHash,
+		TxOutputIndex: mainUTXO.Outpoint.OutputIndex,
+		TxOutputValue: uint64(mainUTXO.Value),
+	}
+
+	gasEstimate, err := tc.maintainerProxy.SubmitRedemptionProofGasEstimate(
+		bitcoinTxInfo,
+		sweepProof,
+		utxo,
+		walletPublicKeyHash,
+	)
+	if err != nil {
+		return err
+	}
+
+	// The original estimate for this contract call is too low and the call
+	// fails on reimbursing the submitter. Example:
+	// 0xe27a92883e0e64da8a3a54a15a260ea2f4d3d48470129ac5c09bfe9637d7e114
+	// Here we add a 20% margin to overcome the gas problems.
+	gasEstimateWithMargin := float64(gasEstimate) * float64(1.2)
+
+	_, err = tc.maintainerProxy.SubmitRedemptionProof(
+		bitcoinTxInfo,
+		sweepProof,
+		utxo,
+		walletPublicKeyHash,
+		ethutil.TransactionOptions{
+			GasLimit: uint64(gasEstimateWithMargin),
+		},
+	)
+
+	return err
 }
 
 func buildRedemptionKey(

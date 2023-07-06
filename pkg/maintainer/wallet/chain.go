@@ -108,11 +108,11 @@ type Chain interface {
 
 	// GetPendingRedemptionRequest gets the on-chain pending redemption request
 	// for the given wallet public key hash and redeemer output script.
-	// Returns an error if the request was not found.
+	// The returned bool value indicates whether the request was found or not.
 	GetPendingRedemptionRequest(
 		walletPublicKeyHash [20]byte,
 		redeemerOutputScript bitcoin.Script,
-	) (*tbtc.RedemptionRequest, error)
+	) (*tbtc.RedemptionRequest, bool, error)
 
 	// ValidateDepositSweepProposal validates the given deposit sweep proposal
 	// against the chain. It requires some additional data about the deposits

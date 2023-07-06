@@ -146,3 +146,30 @@ func GetScriptType(script Script) ScriptType {
 		return NonStandardScript
 	}
 }
+
+// ExtractPublicKeyHash extracts the public key hash from a P2WPKH or P2PKH
+// script.
+func ExtractPublicKeyHash(script Script) ([20]byte, error) {
+	var publicKeyHashBytes []byte
+
+	switch GetScriptType(script) {
+	case P2WPKHScript:
+		// Omit the first two 0x0014 bytes.
+		publicKeyHashBytes = script[2:]
+	case P2PKHScript:
+		// Omit the first three 0x76a914 bytes and last two 0x88ac bytes
+		publicKeyHashBytes = script[3 : len(script)-2]
+	default:
+		return [20]byte{}, fmt.Errorf("not a P2WPKH or P2PKH script")
+	}
+
+	// Just in case.
+	if len(publicKeyHashBytes) != 20 {
+		return [20]byte{}, fmt.Errorf("unexpected script length")
+	}
+
+	var publicKeyHash [20]byte
+	copy(publicKeyHash[:], publicKeyHashBytes)
+
+	return publicKeyHash, nil
+}
