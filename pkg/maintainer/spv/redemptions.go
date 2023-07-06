@@ -250,6 +250,7 @@ func isUnprovenRedemptionTransaction(
 	}
 
 	changeFound := false
+	redemptionFound := false
 
 	// Look at the transaction's outputs. All the outputs must be pending
 	// redemption requests, except for one optional change output.
@@ -289,6 +290,14 @@ func isUnprovenRedemptionTransaction(
 				)
 			}
 		}
+
+		redemptionFound = true
+	}
+
+	if !redemptionFound {
+		// A transaction that doesn't handle at least one redemption request
+		// is not a redemption transaction.
+		return false, nil
 	}
 
 	return true, nil
