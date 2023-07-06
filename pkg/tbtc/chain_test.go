@@ -529,7 +529,7 @@ func buildPastDepositRevealedEventsKey(
 func (lc *localChain) GetPendingRedemptionRequest(
 	walletPublicKeyHash [20]byte,
 	redeemerOutputScript bitcoin.Script,
-) (*RedemptionRequest, error) {
+) (*RedemptionRequest, bool, error) {
 	lc.pendingRedemptionRequestsMutex.Lock()
 	defer lc.pendingRedemptionRequestsMutex.Unlock()
 
@@ -537,10 +537,10 @@ func (lc *localChain) GetPendingRedemptionRequest(
 
 	request, ok := lc.pendingRedemptionRequests[requestKey]
 	if !ok {
-		return nil, fmt.Errorf("no request for given key")
+		return nil, false, nil
 	}
 
-	return request, nil
+	return request, true, nil
 }
 
 func (lc *localChain) setPendingRedemptionRequest(

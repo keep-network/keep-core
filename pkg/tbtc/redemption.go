@@ -238,11 +238,11 @@ func ValidateRedemptionProposal(
 	chain interface {
 		// GetPendingRedemptionRequest gets the on-chain pending redemption request
 		// for the given wallet public key hash and redeemer output script.
-		// Returns an error if the request was not found.
+		// The returned bool value indicates whether the request was found or not.
 		GetPendingRedemptionRequest(
 			walletPublicKeyHash [20]byte,
 			redeemerOutputScript bitcoin.Script,
-		) (*RedemptionRequest, error)
+		) (*RedemptionRequest, bool, error)
 
 		// ValidateRedemptionProposal validates the given redemption proposal
 		// against the chain. Returns an error if the proposal is not valid or
@@ -269,7 +269,7 @@ func ValidateRedemptionProposal(
 			len(proposal.RedeemersOutputScripts),
 		)
 
-		request, err := chain.GetPendingRedemptionRequest(
+		request, found, err := chain.GetPendingRedemptionRequest(
 			proposal.WalletPublicKeyHash,
 			script,
 		)
@@ -278,6 +278,12 @@ func ValidateRedemptionProposal(
 				"cannot get pending redemption request data for request [%v]: [%v]",
 				requestDisplayIndex,
 				err,
+			)
+		}
+		if !found {
+			return nil, fmt.Errorf(
+				"request [%v] is not a pending redemption request",
+				requestDisplayIndex,
 			)
 		}
 

@@ -3,7 +3,6 @@ package wallet
 import (
 	"context"
 	"encoding/hex"
-	"errors"
 	"fmt"
 	"math/big"
 	"sort"
@@ -429,26 +428,24 @@ redemptionRequestedLoop:
 
 		// Check if there is still a pending redemption for the given redemption
 		// requested event.
-		pendingRedemption, err := chain.GetPendingRedemptionRequest(
+		pendingRedemption, found, err := chain.GetPendingRedemptionRequest(
 			event.WalletPublicKeyHash,
 			event.RedeemerOutputScript,
 		)
 		if err != nil {
-			switch {
-			case errors.Is(err, tbtc.ErrPendingRedemptionRequestNotFound):
-				logger.Infof(
-					"redemption for request [%d/%d] is no longer pending",
-					eventIndex,
-					len(eventsSet),
-				)
+			return nil, fmt.Errorf(
+				"failed to get pending redemption request: [%w]",
+				err,
+			)
+		}
+		if !found {
+			logger.Infof(
+				"redemption for request [%d/%d] is no longer pending",
+				eventIndex,
+				len(eventsSet),
+			)
 
-				continue redemptionRequestedLoop
-			default:
-				return nil, fmt.Errorf(
-					"failed to get pending redemption request: [%w]",
-					err,
-				)
-			}
+			continue redemptionRequestedLoop
 		}
 
 		pendingRedemptions = append(

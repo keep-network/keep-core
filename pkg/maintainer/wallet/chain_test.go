@@ -282,7 +282,7 @@ func (lc *LocalChain) GetDepositParameters() (
 func (lc *LocalChain) GetPendingRedemptionRequest(
 	walletPublicKeyHash [20]byte,
 	redeemerOutputScript bitcoin.Script,
-) (*tbtc.RedemptionRequest, error) {
+) (*tbtc.RedemptionRequest, bool, error) {
 	panic("unsupported")
 }
 

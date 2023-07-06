@@ -1396,15 +1396,15 @@ func (tc *TbtcChain) GetDepositParameters() (
 func (tc *TbtcChain) GetPendingRedemptionRequest(
 	walletPublicKeyHash [20]byte,
 	redeemerOutputScript bitcoin.Script,
-) (*tbtc.RedemptionRequest, error) {
+) (*tbtc.RedemptionRequest, bool, error) {
 	redemptionKey, err := buildRedemptionKey(walletPublicKeyHash, redeemerOutputScript)
 	if err != nil {
-		return nil, fmt.Errorf("cannot build redemption key: [%v]", err)
+		return nil, false, fmt.Errorf("cannot build redemption key: [%v]", err)
 	}
 
 	redemptionRequest, err := tc.bridge.PendingRedemptions(redemptionKey)
 	if err != nil {
-		return nil, fmt.Errorf(
+		return nil, false, fmt.Errorf(
 			"cannot get pending redemption request for key [0x%x]: [%v]",
 			redemptionKey.Text(16),
 			err,
@@ -1413,7 +1413,7 @@ func (tc *TbtcChain) GetPendingRedemptionRequest(
 
 	// Redemption not found.
 	if redemptionRequest.RequestedAt == 0 {
-		return nil, tbtc.ErrPendingRedemptionRequestNotFound
+		return nil, false, nil
 	}
 
 	return &tbtc.RedemptionRequest{
@@ -1423,7 +1423,7 @@ func (tc *TbtcChain) GetPendingRedemptionRequest(
 		TreasuryFee:          redemptionRequest.TreasuryFee,
 		TxMaxFee:             redemptionRequest.TxMaxFee,
 		RequestedAt:          time.Unix(int64(redemptionRequest.RequestedAt), 0),
-	}, nil
+	}, true, nil
 }
 
 func (tc *TbtcChain) SubmitRedemptionProofWithReimbursement(

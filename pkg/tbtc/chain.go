@@ -2,7 +2,6 @@ package tbtc
 
 import (
 	"crypto/ecdsa"
-	"errors"
 	"math/big"
 	"time"
 
@@ -182,15 +181,6 @@ type DKGParameters struct {
 	ApprovePrecedencePeriodBlocks uint64
 }
 
-var (
-	// ErrPendingRedemptionRequestNotFound is an error that is returned if
-	// a pending redemption request was not found on-chain for the given
-	// redemption key.
-	ErrPendingRedemptionRequestNotFound = errors.New(
-		"no pending redemption request for the given key",
-	)
-)
-
 // BridgeChain defines the subset of the TBTC chain interface that pertains
 // specifically to the tBTC Bridge operations.
 type BridgeChain interface {
@@ -212,11 +202,11 @@ type BridgeChain interface {
 
 	// GetPendingRedemptionRequest gets the on-chain pending redemption request
 	// for the given wallet public key hash and redeemer output script.
-	// Returns an error if the request was not found.
+	// The returned bool value indicates whether the request was found or not.
 	GetPendingRedemptionRequest(
 		walletPublicKeyHash [20]byte,
 		redeemerOutputScript bitcoin.Script,
-	) (*RedemptionRequest, error)
+	) (*RedemptionRequest, bool, error)
 }
 
 // NewWalletRegisteredEvent represents a new wallet registered event.

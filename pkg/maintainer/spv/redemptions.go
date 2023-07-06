@@ -2,7 +2,6 @@ package spv
 
 import (
 	"bytes"
-	"errors"
 	"fmt"
 	"github.com/keep-network/keep-core/pkg/bitcoin"
 	"github.com/keep-network/keep-core/pkg/tbtc"
@@ -274,21 +273,20 @@ func isUnprovenRedemptionTransaction(
 
 		// If the given output is not a change, it must be a pending redemption
 		// request.
-		_, err := spvChain.GetPendingRedemptionRequest(
+		_, found, err := spvChain.GetPendingRedemptionRequest(
 			walletPublicKeyHash,
 			output.PublicKeyScript,
 		)
 		if err != nil {
-			if errors.Is(err, tbtc.ErrPendingRedemptionRequestNotFound) {
-				// This output is neither a change nor a pending request.
-				// That means this is not a redemption transaction.
-				return false, nil
-			} else {
-				return false, fmt.Errorf(
-					"failed to get pending redemption request: [%w]",
-					err,
-				)
-			}
+			return false, fmt.Errorf(
+				"failed to get pending redemption request: [%w]",
+				err,
+			)
+		}
+		if !found {
+			// This output is neither a change nor a pending request.
+			// That means this is not a redemption transaction.
+			return false, nil
 		}
 
 		redemptionFound = true

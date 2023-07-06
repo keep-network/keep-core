@@ -63,11 +63,11 @@ type Chain interface {
 
 	// GetPendingRedemptionRequest gets the on-chain pending redemption request
 	// for the given wallet public key hash and redeemer output script.
-	// Returns an error if the request was not found.
+	// The returned bool value indicates whether the request was found or not.
 	GetPendingRedemptionRequest(
 		walletPublicKeyHash [20]byte,
 		redeemerOutputScript bitcoin.Script,
-	) (*tbtc.RedemptionRequest, error)
+	) (*tbtc.RedemptionRequest, bool, error)
 
 	// SubmitRedemptionProofWithReimbursement submits the redemption proof
 	// via MaintainerProxy. The caller is reimbursed.
