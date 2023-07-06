@@ -386,3 +386,57 @@ func TestGetScriptType(t *testing.T) {
 		})
 	}
 }
+
+func TestExtractPublicKeyHash(t *testing.T) {
+	fromHex := func(hexString string) []byte {
+		bytes, err := hex.DecodeString(hexString)
+		if err != nil {
+			t.Fatal(err)
+		}
+		return bytes
+	}
+
+	var publicKeyHash [20]byte
+	copy(publicKeyHash[:], fromHex("8db50eb52063ea9d98b3eac91489a90f738986f6"))
+
+	var tests = map[string]struct {
+		script                Script
+		expectedPublicKeyHash [20]byte
+		expectedErr           error
+	}{
+		"P2WPKH script": {
+			script:                fromHex("00148db50eb52063ea9d98b3eac91489a90f738986f6"),
+			expectedPublicKeyHash: publicKeyHash,
+		},
+		"P2PKH script": {
+			script:                fromHex("76a9148db50eb52063ea9d98b3eac91489a90f738986f688ac"),
+			expectedPublicKeyHash: publicKeyHash,
+		},
+		"other script": {
+			script:      fromHex("a9143ec459d0f3c29286ae5df5fcc421e2786024277e87"),
+			expectedErr: fmt.Errorf("not a P2WPKH or P2PKH script"),
+		},
+	}
+
+	for testName, test := range tests {
+		t.Run(testName, func(t *testing.T) {
+			actualPublicKeyHash, err := ExtractPublicKeyHash(test.script)
+
+			if !reflect.DeepEqual(test.expectedErr, err) {
+				t.Errorf(
+					"unexpected error\nexpected: %+v\nactual:   %+v\n",
+					test.expectedErr,
+					err,
+				)
+			}
+
+			if test.expectedPublicKeyHash != actualPublicKeyHash {
+				t.Errorf(
+					"unexpected public key hash\nexpected: 0x%x\nactual:   0x%x\n",
+					test.expectedPublicKeyHash,
+					actualPublicKeyHash,
+				)
+			}
+		})
+	}
+}

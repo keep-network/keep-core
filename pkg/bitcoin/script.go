@@ -158,7 +158,7 @@ func ExtractPublicKeyHash(script Script) ([20]byte, error) {
 		publicKeyHashBytes = script[2:]
 	case P2PKHScript:
 		// Omit the first three 0x76a914 bytes and last two 0x88ac bytes
-		publicKeyHashBytes = script[2 : len(script)-2]
+		publicKeyHashBytes = script[3 : len(script)-2]
 	default:
 		return [20]byte{}, fmt.Errorf("not a P2WPKH or P2PKH script")
 	}
