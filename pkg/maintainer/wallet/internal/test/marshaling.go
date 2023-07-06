@@ -130,6 +130,10 @@ type depositSweepProposal struct {
 }
 
 func (dsp *depositSweepProposal) convert() (*tbtc.DepositSweepProposal, error) {
+	if dsp == nil {
+		return nil, nil
+	}
+
 	result := &tbtc.DepositSweepProposal{}
 
 	if len(dsp.WalletPublicKeyHash) > 0 {
@@ -179,7 +183,8 @@ func (psts *ProposeSweepTestScenario) UnmarshalJSON(data []byte) error {
 		}
 		SweepTxFee                   int64
 		EstimateSatPerVByteFee       int64
-		ExpectedDepositSweepProposal depositSweepProposal
+		ExpectedDepositSweepProposal *depositSweepProposal
+		ExpectedErr                  string
 	}
 
 	var unmarshaled proposeSweepTestScenario
@@ -235,6 +240,122 @@ func (psts *ProposeSweepTestScenario) UnmarshalJSON(data []byte) error {
 			"failed to unmarshal expected deposit sweep proposal: [%w]",
 			err,
 		)
+	}
+
+	// Unmarshal expected error
+	if len(unmarshaled.ExpectedErr) > 0 {
+		psts.ExpectedErr = fmt.Errorf(unmarshaled.ExpectedErr)
+	}
+
+	return nil
+}
+
+// UnmarshalJSON implements a custom JSON unmarshaling logic to produce a
+// proper FindPendingRedemptionsTestScenario.
+func (fprts *FindPendingRedemptionsTestScenario) UnmarshalJSON(data []byte) error {
+	type findPendingRedemptionsTestScenario struct {
+		Title           string
+		ChainParameters struct {
+			AverageBlockTime int64
+			CurrentBlock     uint64
+			RequestTimeout   uint32
+			RequestMinAge    uint32
+		}
+		Filter struct {
+			WalletPublicKeyHashes []string
+			WalletsLimit          uint16
+			RequestsLimit         uint16
+			RequestAmountLimit    uint64
+		}
+		Wallets []struct {
+			WalletPublicKeyHash     string
+			RegistrationBlockNumber uint64
+		}
+		PendingRedemptions []struct {
+			WalletPublicKeyHash  string
+			RedeemerOutputScript string
+			RequestedAmount      uint64
+			Age                  int64
+		}
+		ExpectedWalletsPendingRedemptions map[string][]string
+	}
+
+	var unmarshaled findPendingRedemptionsTestScenario
+
+	err := json.Unmarshal(data, &unmarshaled)
+	if err != nil {
+		return err
+	}
+
+	fprts.Title = unmarshaled.Title
+
+	fprts.ChainParameters.AverageBlockTime =
+		time.Duration(unmarshaled.ChainParameters.AverageBlockTime) * time.Second
+	fprts.ChainParameters.CurrentBlock = unmarshaled.ChainParameters.CurrentBlock
+	fprts.ChainParameters.RequestTimeout = unmarshaled.ChainParameters.RequestTimeout
+	fprts.ChainParameters.RequestMinAge = unmarshaled.ChainParameters.RequestMinAge
+
+	for _, wpkhString := range unmarshaled.Filter.WalletPublicKeyHashes {
+		var wpkh [20]byte
+		copy(wpkh[:], hexToSlice(wpkhString))
+
+		fprts.Filter.WalletPublicKeyHashes = append(
+			fprts.Filter.WalletPublicKeyHashes,
+			wpkh,
+		)
+	}
+
+	fprts.Filter.WalletsLimit = unmarshaled.Filter.WalletsLimit
+	fprts.Filter.RequestsLimit = unmarshaled.Filter.RequestsLimit
+	fprts.Filter.RequestAmountLimit = unmarshaled.Filter.RequestAmountLimit
+
+	for _, w := range unmarshaled.Wallets {
+		var wpkh [20]byte
+		copy(wpkh[:], hexToSlice(w.WalletPublicKeyHash))
+
+		fprts.Wallets = append(fprts.Wallets, &Wallet{
+			WalletPublicKeyHash:     wpkh,
+			RegistrationBlockNumber: w.RegistrationBlockNumber,
+		})
+	}
+
+	now := time.Now()
+	currentBlock := fprts.ChainParameters.CurrentBlock
+	averageBlockTime := fprts.ChainParameters.AverageBlockTime
+
+	for _, pr := range unmarshaled.PendingRedemptions {
+		var wpkh [20]byte
+		copy(wpkh[:], hexToSlice(pr.WalletPublicKeyHash))
+
+		age := time.Duration(pr.Age) * time.Second
+		ageBlocks := uint64(age.Milliseconds() / averageBlockTime.Milliseconds())
+
+		requestedAt := now.Add(-age)
+		requestBlock := currentBlock - ageBlocks
+
+		fprts.PendingRedemptions = append(
+			fprts.PendingRedemptions,
+			&RedemptionRequest{
+				WalletPublicKeyHash:  wpkh,
+				RedeemerOutputScript: hexToSlice(pr.RedeemerOutputScript),
+				RequestedAmount:      pr.RequestedAmount,
+				RequestedAt:          requestedAt,
+				RequestBlock:         requestBlock,
+			},
+		)
+	}
+
+	fprts.ExpectedWalletsPendingRedemptions = make(map[[20]byte][]bitcoin.Script)
+	for wpkhString, scripts := range unmarshaled.ExpectedWalletsPendingRedemptions {
+		var wpkh [20]byte
+		copy(wpkh[:], hexToSlice(wpkhString))
+
+		convertedScripts := make([]bitcoin.Script, len(scripts))
+		for i, script := range scripts {
+			convertedScripts[i] = hexToSlice(script)
+		}
+
+		fprts.ExpectedWalletsPendingRedemptions[wpkh] = convertedScripts
 	}
 
 	return nil

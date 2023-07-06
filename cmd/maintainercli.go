@@ -567,7 +567,7 @@ var estimateDepositsSweepFeeCommandDescription = "Estimates the satoshi " +
 	"assume only P2WSH deposits are part of the transaction so the " +
 	"estimation may be underpriced if the actual transaction contains " +
 	"legacy P2SH deposits. If the estimated fee exceeds the maximum fee " +
-	"allowed by the Bridge contract, the maximum fee is returned as result"
+	"allowed by the Bridge contract, an error is returned as result"
 
 var submitDepositSweepProofCommand = cobra.Command{
 	Use:              "submit-deposit-sweep-proof",
