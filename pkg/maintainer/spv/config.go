@@ -55,7 +55,8 @@ type Config struct {
 	// value must not be too high so that the transaction lookup is efficient.
 	// At the same time, this value can not be too low to make sure the
 	// performed proposal's transaction can be found in case the wallet decided
-	//to execute some other Bitcoin transaction after the yet-not-proven transaction.
+	// to execute some other Bitcoin transaction after the yet-not-proven
+	// transaction.
 	TransactionLimit int
 
 	// RestartBackoffTime is a restart backoff which should be applied when the
