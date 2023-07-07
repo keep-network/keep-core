@@ -43,6 +43,7 @@ var (
 	depositsCountFlagName = "deposits-count"
 
 	// submitDepositSweepProofCommand:
+	// submitRedemptionProofCommand:
 	transactionHashFlagName = "transaction-hash"
 	confirmationsFlagName   = "confirmations"
 )
@@ -651,7 +652,97 @@ var submitDepositSweepProofCommand = cobra.Command{
 		}
 
 		logger.Infof(
-			"Successfully submitted deposit sweep proof for transaction: [%s]",
+			"successfully submitted deposit sweep proof for transaction: [%s]",
+			transactionHashFlag,
+		)
+
+		return nil
+	},
+}
+
+var submitRedemptionProofCommand = cobra.Command{
+	Use:              "submit-redemption-proof",
+	Short:            "submit redemption proof",
+	Long:             "Submits redemption proof to the Bridge contract",
+	TraverseChildren: true,
+	RunE: func(cmd *cobra.Command, args []string) error {
+		ctx := cmd.Context()
+
+		_, tbtcChain, _, _, _, err := ethereum.Connect(
+			ctx,
+			clientConfig.Ethereum,
+		)
+		if err != nil {
+			return fmt.Errorf(
+				"could not connect to Ethereum chain: [%v]",
+				err,
+			)
+		}
+
+		btcChain, err := electrum.Connect(ctx, clientConfig.Bitcoin.Electrum)
+		if err != nil {
+			return fmt.Errorf("could not connect to Electrum chain: [%v]", err)
+		}
+
+		transactionHashFlag, err := cmd.Flags().GetString(transactionHashFlagName)
+		if err != nil {
+			return fmt.Errorf("failed to find transaction hash flag: [%v]", err)
+		}
+
+		transactionHash, err := bitcoin.NewHashFromString(
+			transactionHashFlag,
+			bitcoin.ReversedByteOrder,
+		)
+		if err != nil {
+			return fmt.Errorf(
+				"failed to parse transaction hash flag: [%v]",
+				err,
+			)
+		}
+
+		// Allow the caller to request a specific number of confirmations.
+		// The Bridge calculates the required difficulty of a chain of block
+		// headers by multiplying the difficulty of the first block header by
+		// the difficulty factor. If the block headers happen to span the
+		// Bitcoin epoch difficulty change and there is a drop of difficulty
+		// between the epochs, the sum of difficulties from the headers chain
+		// may be too low. Allowing the caller to specify a greater number of
+		// confirmations will ensure the transaction can be proven.
+		requiredConfirmations, err := cmd.Flags().GetUint(confirmationsFlagName)
+		if err != nil {
+			return fmt.Errorf("failed to get confirmations flag: [%v]", err)
+		}
+
+		// If the caller did not provide the number of required confirmations,
+		// use the default value enforced by the chain.
+		if requiredConfirmations == 0 {
+			txProofDifficulty, err := tbtcChain.TxProofDifficultyFactor()
+			if err != nil {
+				return fmt.Errorf(
+					"failed to get transaction proof difficulty factor: [%v]",
+					err,
+				)
+			}
+
+			requiredConfirmations = uint(txProofDifficulty.Int64())
+		}
+
+		logger.Infof(
+			"Submitting redemption proof for transaction [%s]",
+			transactionHashFlag,
+		)
+
+		if err = spv.SubmitRedemptionProof(
+			transactionHash,
+			requiredConfirmations,
+			btcChain,
+			tbtcChain,
+		); err != nil {
+			return fmt.Errorf("failed to submit redemption proof [%v]", err)
+		}
+
+		logger.Infof(
+			"successfully submitted redemption proof for transaction: [%s]",
 			transactionHashFlag,
 		)
 
@@ -777,6 +868,33 @@ func init() {
 	)
 
 	MaintainerCliCommand.AddCommand(&submitDepositSweepProofCommand)
+
+	// Submit Redemption Proof Subcommand.
+
+	submitRedemptionProofCommand.Flags().String(
+		transactionHashFlagName,
+		"",
+		"transaction hash the proof will be prepared for (the format should "+
+			"be the same as in Bitcoin explorers).",
+	)
+
+	if err := submitRedemptionProofCommand.MarkFlagRequired(
+		transactionHashFlagName,
+	); err != nil {
+		logger.Fatalf("failed to mark flag required: [%v]", err)
+	}
+
+	submitRedemptionProofCommand.Flags().Uint(
+		confirmationsFlagName,
+		0,
+		"(optional) number of confirmations that will be provided in the proof. "+
+			"This is an optional parameter that can be used in a rare event when "+
+			"more confirmations are required to perform a successful proof "+
+			"validation. If this parameter is not provided, the default value, "+
+			"retrieved from the Bridge will be used.",
+	)
+
+	MaintainerCliCommand.AddCommand(&submitRedemptionProofCommand)
 }
 
 func newWalletPublicKeyHash(str string) ([20]byte, error) {
