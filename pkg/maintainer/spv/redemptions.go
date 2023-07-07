@@ -237,7 +237,8 @@ func isUnprovenRedemptionTransaction(
 	)
 	if err != nil {
 		return false, fmt.Errorf(
-			"failed to check if input is the main UTXO",
+			"failed to check if input is the main UTXO: [%v]",
+			err,
 		)
 	}
 
