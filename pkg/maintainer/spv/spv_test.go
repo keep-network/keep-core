@@ -1,11 +1,14 @@
 package spv
 
 import (
+	"encoding/hex"
 	"math/big"
+	"reflect"
 	"testing"
 
 	"github.com/keep-network/keep-core/internal/testutils"
 	"github.com/keep-network/keep-core/pkg/bitcoin"
+	"github.com/keep-network/keep-core/pkg/tbtc"
 )
 
 func TestGetProofInfo(t *testing.T) {
@@ -128,4 +131,79 @@ func TestGetProofInfo(t *testing.T) {
 			)
 		})
 	}
+}
+
+func TestUniqueWalletPublicKeyHashes(t *testing.T) {
+	events := []*tbtc.DepositSweepProposalSubmittedEvent{
+		&tbtc.DepositSweepProposalSubmittedEvent{
+			Proposal: &tbtc.DepositSweepProposal{
+				WalletPublicKeyHash: walletPublicKeyHash(
+					"4cc32253cc0bcd0cf9cfc79ed7b21d10df207f0d",
+				),
+			},
+		},
+		&tbtc.DepositSweepProposalSubmittedEvent{
+			Proposal: &tbtc.DepositSweepProposal{
+				WalletPublicKeyHash: walletPublicKeyHash(
+					"ddbd706d13dbd06038519c7621ac5de167bd3fd6",
+				),
+			},
+		},
+		&tbtc.DepositSweepProposalSubmittedEvent{
+			Proposal: &tbtc.DepositSweepProposal{
+				WalletPublicKeyHash: walletPublicKeyHash(
+					"4cc32253cc0bcd0cf9cfc79ed7b21d10df207f0d",
+				),
+			},
+		},
+		&tbtc.DepositSweepProposalSubmittedEvent{
+			Proposal: &tbtc.DepositSweepProposal{
+				WalletPublicKeyHash: walletPublicKeyHash(
+					"1016a8ff380e8907c82a88158019917e65c16ac4",
+				),
+			},
+		},
+		&tbtc.DepositSweepProposalSubmittedEvent{
+			Proposal: &tbtc.DepositSweepProposal{
+				WalletPublicKeyHash: walletPublicKeyHash(
+					"1016a8ff380e8907c82a88158019917e65c16ac4",
+				),
+			},
+		},
+		&tbtc.DepositSweepProposalSubmittedEvent{
+			Proposal: &tbtc.DepositSweepProposal{
+				WalletPublicKeyHash: walletPublicKeyHash(
+					"2c35ed9921fa35482c3cb3ae1190d87ede65dfd8",
+				),
+			},
+		},
+	}
+	walletKeyHashes := uniqueWalletPublicKeyHashes(events)
+
+	expectedWalletKeyHashes := [][20]byte{
+		walletPublicKeyHash("4cc32253cc0bcd0cf9cfc79ed7b21d10df207f0d"),
+		walletPublicKeyHash("ddbd706d13dbd06038519c7621ac5de167bd3fd6"),
+		walletPublicKeyHash("1016a8ff380e8907c82a88158019917e65c16ac4"),
+		walletPublicKeyHash("2c35ed9921fa35482c3cb3ae1190d87ede65dfd8"),
+	}
+
+	if !reflect.DeepEqual(expectedWalletKeyHashes, walletKeyHashes) {
+		t.Errorf(
+			"unexpected wallet public key hashes\nexpected: %v\nactual:   %v\n",
+			expectedWalletKeyHashes,
+			walletKeyHashes,
+		)
+	}
+}
+
+func walletPublicKeyHash(hexStr string) [20]byte {
+	keyAsBytes, err := hex.DecodeString(hexStr)
+	if err != nil {
+		panic(err)
+	}
+
+	var walletPublicKeyHash [20]byte
+	copy(walletPublicKeyHash[:], keyAsBytes)
+
+	return walletPublicKeyHash
 }
