@@ -15,6 +15,13 @@ import (
 	"sync"
 )
 
+type submittedRedemptionProof struct {
+	transaction         *bitcoin.Transaction
+	proof               *bitcoin.SpvProof
+	mainUTXO            bitcoin.UnspentTransactionOutput
+	walletPublicKeyHash [20]byte
+}
+
 type localChain struct {
 	mutex sync.Mutex
 
@@ -22,6 +29,7 @@ type localChain struct {
 	pastRedemptionProposalSubmittedEvents map[[32]byte][]*tbtc.RedemptionProposalSubmittedEvent
 	wallets                               map[[20]byte]*tbtc.WalletChainData
 	pendingRedemptionRequests             map[[32]byte]*tbtc.RedemptionRequest
+	submittedRedemptionProofs             []*submittedRedemptionProof
 }
 
 func newLocalChain() *localChain {
@@ -29,6 +37,7 @@ func newLocalChain() *localChain {
 		pastRedemptionProposalSubmittedEvents: make(map[[32]byte][]*tbtc.RedemptionProposalSubmittedEvent),
 		wallets:                               make(map[[20]byte]*tbtc.WalletChainData),
 		pendingRedemptionRequests:             make(map[[32]byte]*tbtc.RedemptionRequest),
+		submittedRedemptionProofs:             make([]*submittedRedemptionProof, 0),
 	}
 }
 
@@ -235,7 +244,27 @@ func (lc *localChain) SubmitRedemptionProofWithReimbursement(
 	mainUTXO bitcoin.UnspentTransactionOutput,
 	walletPublicKeyHash [20]byte,
 ) error {
-	panic("unsupported")
+	lc.mutex.Lock()
+	defer lc.mutex.Unlock()
+
+	lc.submittedRedemptionProofs = append(
+		lc.submittedRedemptionProofs,
+		&submittedRedemptionProof{
+			transaction:         transaction,
+			proof:               proof,
+			mainUTXO:            mainUTXO,
+			walletPublicKeyHash: walletPublicKeyHash,
+		},
+	)
+
+	return nil
+}
+
+func (lc *localChain) getSubmittedRedemptionProofs() []*submittedRedemptionProof {
+	lc.mutex.Lock()
+	defer lc.mutex.Unlock()
+
+	return lc.submittedRedemptionProofs
 }
 
 func (lc *localChain) Ready() (bool, error) {

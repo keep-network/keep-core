@@ -457,3 +457,12 @@ func uniqueWalletPublicKeyHashes[T walletEvent](events []T) [][20]byte {
 
 	return publicKeyHashes
 }
+
+// spvProofAssembler is a type representing a function that is used
+// to assemble an SPV proof for the given transaction hash and confirmations
+// count.
+type spvProofAssembler func(
+	transactionHash bitcoin.Hash,
+	requiredConfirmations uint,
+	btcChain bitcoin.Chain,
+) (*bitcoin.Transaction, *bitcoin.SpvProof, error)

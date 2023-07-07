@@ -2,11 +2,114 @@ package spv
 
 import (
 	"encoding/hex"
+	"fmt"
 	"github.com/go-test/deep"
+	"github.com/keep-network/keep-core/internal/testutils"
 	"github.com/keep-network/keep-core/pkg/bitcoin"
 	"github.com/keep-network/keep-core/pkg/tbtc"
 	"testing"
 )
+
+func TestSubmitRedemptionProof(t *testing.T) {
+	bytesFromHex := func(str string) []byte {
+		value, err := hex.DecodeString(str)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		return value
+	}
+
+	txFromHex := func(str string) *bitcoin.Transaction {
+		transaction := new(bitcoin.Transaction)
+		err := transaction.Deserialize(bytesFromHex(str))
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		return transaction
+	}
+
+	requiredConfirmations := uint(6)
+
+	btcChain := newLocalBitcoinChain()
+	spvChain := newLocalChain()
+
+	// Take an arbitrary redemption transaction:
+	// https://live.blockcypher.com/btc-testnet/tx/15c9b4dd136f1c102cd45a92f6d6f41accc610a68566029de9af3524d53f1d82/
+	redemptionTransaction := txFromHex("0100000000010189a128bbd1fd4626f752aa9036a118b2f4b2363ef409f5b527c69d048214d3130000000000ffffffff039ef9e92e0000000016001403b74d6893ad46dfdd01b9e0e3b3385f4fce2d1e6eed10000000000017a91486884e6be1525dab5ae0b451bd2c72cee67dcf4187791411000000000017a914538e4cc700d6510c8cae5e8b688d65276771e6088702483045022100b2e7fc655e0ddadbfef49201fb5f7046a40b36848c08f17ef2e4483bffb7a29e022024616909a96f8c901572d6a9e19d29d6aee6a835b409d4383a463fe1b338a2940121028ed84936be6a9f594a2dcc636d4bebf132713da3ce4dac5c61afbf8bbb47d6f700000000")
+	// Take the transaction that is the redemption transaction input. It is
+	// necessary as the tested function logic fetches its data to determine
+	// the wallet public key hash.
+	// https://live.blockcypher.com/btc-testnet/tx/13d31482049dc627b5f509f43e36b2f4b218a13690aa52f72646fdd1bb28a189
+	redemptionInputTransaction := txFromHex("01000000000101db7aad9f51cffa7cebf5a3b41dc3552e1151d2550d8919a8e13d6bb00e046d5b0000000000ffffffff0333fc0b2f0000000016001403b74d6893ad46dfdd01b9e0e3b3385f4fce2d1e182612000000000017a914538e4cc700d6510c8cae5e8b688d65276771e60887aa9f10000000000017a91486884e6be1525dab5ae0b451bd2c72cee67dcf418702483045022100dded6eeacf49830de6f6b590a56f9b8ba3c2fda0b24e7f51884226a5ee78b5c2022024b1fbf3406716c9f9c5bfe241cfc0766af8209ecf8eb5f3318b407fd41c59ec0121028ed84936be6a9f594a2dcc636d4bebf132713da3ce4dac5c61afbf8bbb47d6f700000000")
+	// Then, record both transactions on the local BTC chain.
+	err := btcChain.BroadcastTransaction(redemptionTransaction)
+	if err != nil {
+		t.Fatal(err)
+	}
+	err = btcChain.BroadcastTransaction(redemptionInputTransaction)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Just a mock proof.
+	proof := &bitcoin.SpvProof{
+		MerkleProof:    []byte{0x01},
+		TxIndexInBlock: 2,
+		BitcoinHeaders: []byte{0x03},
+	}
+
+	mockSpvProofAssembler := func(
+		hash bitcoin.Hash,
+		confirmations uint,
+		btcChain bitcoin.Chain,
+	) (*bitcoin.Transaction, *bitcoin.SpvProof, error) {
+		if hash == redemptionTransaction.Hash() && confirmations == requiredConfirmations {
+			return redemptionTransaction, proof, nil
+		}
+
+		return nil, nil, fmt.Errorf("error while assembling spv proof")
+	}
+
+	err = submitRedemptionProof(
+		redemptionTransaction.Hash(),
+		requiredConfirmations,
+		btcChain,
+		spvChain,
+		mockSpvProofAssembler,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	submittedProofs := spvChain.getSubmittedRedemptionProofs()
+
+	testutils.AssertIntsEqual(t, "proofs count", 1, len(submittedProofs))
+
+	submittedProof := submittedProofs[0]
+
+	expectedTransactionHash := redemptionTransaction.Hash()
+	actualTransactionHash := submittedProof.transaction.Hash()
+	testutils.AssertBytesEqual(t, expectedTransactionHash[:], actualTransactionHash[:])
+
+	if diff := deep.Equal(proof, submittedProof.proof); diff != nil {
+		t.Errorf("invalid proof: %v", diff)
+	}
+
+	expectedMainUtxo := bitcoin.UnspentTransactionOutput{
+		Outpoint: &bitcoin.TransactionOutpoint{
+			TransactionHash: redemptionInputTransaction.Hash(),
+			OutputIndex:     0,
+		},
+		Value: 789314611,
+	}
+	if diff := deep.Equal(expectedMainUtxo, submittedProof.mainUTXO); diff != nil {
+		t.Errorf("invalid main UTXO: %v", diff)
+	}
+
+	testutils.AssertBytesEqual(t, bytesFromHex("03b74d6893ad46dfdd01b9e0e3b3385f4fce2d1e"), submittedProof.walletPublicKeyHash[:])
+}
 
 func TestGetUnprovenRedemptionTransactions(t *testing.T) {
 	bytesFromHex := func(str string) []byte {
