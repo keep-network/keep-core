@@ -1,6 +1,9 @@
 package spv
 
 import (
+	"bytes"
+	"crypto/sha256"
+	"encoding/binary"
 	"fmt"
 	"math/big"
 	"sync"
@@ -15,6 +18,8 @@ import (
 type localChain struct {
 	mutex sync.Mutex
 
+	wallets map[[20]byte]*tbtc.WalletChainData
+
 	txProofDifficultyFactor *big.Int
 	currentEpoch            uint64
 	currentEpochDifficulty  *big.Int
@@ -23,7 +28,9 @@ type localChain struct {
 
 //lint:ignore U1000 Ignore unused function temporarily.
 func newLocalChain() *localChain {
-	return &localChain{}
+	return &localChain{
+		wallets: make(map[[20]byte]*tbtc.WalletChainData),
+	}
 }
 
 func (lc *localChain) SubmitDepositSweepProofWithReimbursement(
@@ -46,13 +53,43 @@ func (lc *localChain) GetWallet(walletPublicKeyHash [20]byte) (
 	*tbtc.WalletChainData,
 	error,
 ) {
-	panic("unsupported")
+	lc.mutex.Lock()
+	defer lc.mutex.Unlock()
+
+	walletChainData, ok := lc.wallets[walletPublicKeyHash]
+	if !ok {
+		return nil, fmt.Errorf("no wallet for given PKH")
+	}
+
+	return walletChainData, nil
+}
+
+func (lc *localChain) setWallet(
+	walletPublicKeyHash [20]byte,
+	walletChainData *tbtc.WalletChainData,
+) {
+	lc.mutex.Lock()
+	defer lc.mutex.Unlock()
+
+	lc.wallets[walletPublicKeyHash] = walletChainData
 }
 
 func (lc *localChain) ComputeMainUtxoHash(
 	mainUtxo *bitcoin.UnspentTransactionOutput,
 ) [32]byte {
-	panic("unsupported")
+	var buffer bytes.Buffer
+
+	buffer.Write(mainUtxo.Outpoint.TransactionHash[:])
+
+	outputIndex := make([]byte, 4)
+	binary.BigEndian.PutUint32(outputIndex, mainUtxo.Outpoint.OutputIndex)
+	buffer.Write(outputIndex)
+
+	value := make([]byte, 8)
+	binary.BigEndian.PutUint64(value, uint64(mainUtxo.Value))
+	buffer.Write(value)
+
+	return sha256.Sum256(buffer.Bytes())
 }
 
 func (lc *localChain) TxProofDifficultyFactor() (*big.Int, error) {

@@ -196,14 +196,117 @@ func TestUniqueWalletPublicKeyHashes(t *testing.T) {
 	}
 }
 
+func TestIsInputCurrentWalletsMainUTXO(t *testing.T) {
+	tests := map[string]struct {
+		walletsCurrentMainUtxoHash [32]byte
+		expectedIsCurrentMainUtxo  bool
+	}{
+		"input is the current main UTXO": {
+			walletsCurrentMainUtxoHash: utxoHash(
+				"9d84b2a9c1860c3f387d5944c9a8e0de55fea4435d19472df99f142b4f38da75",
+			),
+			expectedIsCurrentMainUtxo: true,
+		},
+		"input is not the current main UTXO": {
+			walletsCurrentMainUtxoHash: utxoHash(
+				"01234567890abcdef01234567890abcdef01234567890abcdef01234567890ab",
+			),
+			expectedIsCurrentMainUtxo: false,
+		},
+	}
+
+	for testName, test := range tests {
+		t.Run(testName, func(t *testing.T) {
+			fundingTxHash, err := bitcoin.NewHashFromString(
+				"ef25c9c8f4df673def035c0c1880278c90030b3c94a56668109001a591c2c521",
+				bitcoin.ReversedByteOrder,
+			)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			fundingTxIndex := uint32(1)
+			walletPublicKeyHash := walletPublicKeyHash(
+				"ddbd706d13dbd06038519c7621ac5de167bd3fd6",
+			)
+
+			localChain := newLocalChain()
+			btcChain := newLocalBitcoinChain()
+
+			fundingTransaction := transactionFrom(
+				t,
+				"0100000000010110a15e879b7e8b07df62772579a64bf2b409409bbcc8bc2c7f6e39"+
+					"31dc615e920100000000ffffffff02042900000000000017a9143ec459d0f3c29286"+
+					"ae5df5fcc421e2786024277e87b4121600000000001600148db50eb52063ea9d98b3"+
+					"eac91489a90f738986f6024830450221009740ad12d2e74c00ccb4741d533d2ecd69"+
+					"02289144c4626508afb61eed790c97022006e67179e8e2a63dc4f1ab758867d8bbfe"+
+					"0a2b67682be6dadfa8e07d3b7ba04d012103989d253b17a6a0f41838b84ff0d20e88"+
+					"98f9d7b1a98f2564da4cc29dcf8581d900000000",
+			)
+			btcChain.addTransaction(fundingTransaction)
+
+			localChain.setWallet(walletPublicKeyHash, &tbtc.WalletChainData{
+				MainUtxoHash: test.walletsCurrentMainUtxoHash,
+			})
+
+			isCurrentMainUtxo, err := isInputCurrentWalletsMainUTXO(
+				fundingTxHash,
+				fundingTxIndex,
+				walletPublicKeyHash,
+				btcChain,
+				localChain,
+			)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			testutils.AssertBoolsEqual(
+				t,
+				"is current main UTXO",
+				test.expectedIsCurrentMainUtxo,
+				isCurrentMainUtxo,
+			)
+		})
+	}
+}
+
 func walletPublicKeyHash(hexStr string) [20]byte {
-	keyAsBytes, err := hex.DecodeString(hexStr)
+	hashAsBytes, err := hex.DecodeString(hexStr)
 	if err != nil {
 		panic(err)
 	}
 
 	var walletPublicKeyHash [20]byte
-	copy(walletPublicKeyHash[:], keyAsBytes)
+	copy(walletPublicKeyHash[:], hashAsBytes)
 
 	return walletPublicKeyHash
+}
+
+func utxoHash(hexStr string) [32]byte {
+	hashAsBytes, err := hex.DecodeString(hexStr)
+	if err != nil {
+		panic(err)
+	}
+
+	var walletPublicKeyHash [32]byte
+	copy(walletPublicKeyHash[:], hashAsBytes)
+
+	return walletPublicKeyHash
+}
+
+func transactionFrom(t *testing.T, hex string) *bitcoin.Transaction {
+	tx := new(bitcoin.Transaction)
+	err := tx.Deserialize(hexToSlice(t, hex))
+	if err != nil {
+		t.Fatalf("error while converting [%v]: [%v]", hex, err)
+	}
+	return tx
+}
+
+func hexToSlice(t *testing.T, hexString string) []byte {
+	bytes, err := hex.DecodeString(hexString)
+	if err != nil {
+		t.Fatalf("error while converting [%v]: [%v]", hexString, err)
+	}
+	return bytes
 }

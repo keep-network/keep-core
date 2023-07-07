@@ -11,6 +11,7 @@ import (
 type localBitcoinChain struct {
 	mutex sync.Mutex
 
+	transactions             []*bitcoin.Transaction
 	transactionConfirmations map[bitcoin.Hash]uint
 	blockHeaders             map[uint]*bitcoin.BlockHeader
 }
@@ -18,6 +19,7 @@ type localBitcoinChain struct {
 //lint:ignore U1000 Ignore unused function temporarily.
 func newLocalBitcoinChain() *localBitcoinChain {
 	return &localBitcoinChain{
+		transactions:             make([]*bitcoin.Transaction, 0),
 		transactionConfirmations: make(map[bitcoin.Hash]uint),
 		blockHeaders:             make(map[uint]*bitcoin.BlockHeader),
 	}
@@ -27,7 +29,16 @@ func (lbc *localBitcoinChain) GetTransaction(transactionHash bitcoin.Hash) (
 	*bitcoin.Transaction,
 	error,
 ) {
-	panic("unsupported")
+	lbc.mutex.Lock()
+	defer lbc.mutex.Unlock()
+
+	for _, transaction := range lbc.transactions {
+		if transaction.Hash() == transactionHash {
+			return transaction, nil
+		}
+	}
+
+	return nil, fmt.Errorf("transaction not found")
 }
 
 func (lbc *localBitcoinChain) GetTransactionConfirmations(transactionHash bitcoin.Hash) (
@@ -122,6 +133,23 @@ func (lbc *localBitcoinChain) addBlockHeader(
 	}
 
 	lbc.blockHeaders[blockNumber] = blockHeader
+
+	return nil
+}
+
+func (lbc *localBitcoinChain) addTransaction(
+	transaction *bitcoin.Transaction,
+) error {
+	lbc.mutex.Lock()
+	defer lbc.mutex.Unlock()
+
+	for _, existingTransaction := range lbc.transactions {
+		if transaction.Hash() == existingTransaction.Hash() {
+			return fmt.Errorf("transaction already exists")
+		}
+	}
+
+	lbc.transactions = append(lbc.transactions, transaction)
 
 	return nil
 }
