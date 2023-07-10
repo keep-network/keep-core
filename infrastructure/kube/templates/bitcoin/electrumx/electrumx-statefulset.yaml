@@ -6,6 +6,7 @@ metadata:
 spec:
   replicas: 1
   serviceName: electrumx
+  podManagementPolicy: Parallel
   template:
     spec:
       securityContext:
