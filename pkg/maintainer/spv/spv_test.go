@@ -243,7 +243,11 @@ func TestIsInputCurrentWalletsMainUTXO(t *testing.T) {
 					"0a2b67682be6dadfa8e07d3b7ba04d012103989d253b17a6a0f41838b84ff0d20e88"+
 					"98f9d7b1a98f2564da4cc29dcf8581d900000000",
 			)
-			btcChain.addTransaction(fundingTransaction)
+
+			err = btcChain.BroadcastTransaction(fundingTransaction)
+			if err != nil {
+				t.Fatal(err)
+			}
 
 			localChain.setWallet(walletPublicKeyHash, &tbtc.WalletChainData{
 				MainUtxoHash: test.walletsCurrentMainUtxoHash,

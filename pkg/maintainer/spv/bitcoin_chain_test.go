@@ -178,23 +178,6 @@ func (lbc *localBitcoinChain) addBlockHeader(
 	return nil
 }
 
-func (lbc *localBitcoinChain) addTransaction(
-	transaction *bitcoin.Transaction,
-) error {
-	lbc.mutex.Lock()
-	defer lbc.mutex.Unlock()
-
-	for _, existingTransaction := range lbc.transactions {
-		if transaction.Hash() == existingTransaction.Hash() {
-			return fmt.Errorf("transaction already exists")
-		}
-	}
-
-	lbc.transactions = append(lbc.transactions, transaction)
-
-	return nil
-}
-
 func (lbc *localBitcoinChain) addTransactionConfirmations(
 	transactionHash bitcoin.Hash,
 	transactionConfirmations uint,
