@@ -6,6 +6,7 @@ metadata:
 spec:
   replicas: 1
   serviceName: electrumx
+  podManagementPolicy: Parallel
   template:
     spec:
       securityContext:
@@ -48,7 +49,7 @@ spec:
             - name: SSL_KEYFILE
               value: /mnt/electrum/cert/tls.key
             - name: SERVICES
-              value: tcp://:80,ssl://:443,ws://:8080,wss://:8443,rpc://0.0.0.0:8000
+              value: tcp://:50001,ssl://:50002,ws://:50003,wss://:50004,rpc://0.0.0.0:8000
             - name: COST_SOFT_LIMIT
               value: "0"
             - name: COST_HARD_LIMIT
@@ -57,13 +58,13 @@ spec:
               value: debug
           ports:
             - name: tcp
-              containerPort: 80
+              containerPort: 50001
             - name: ssl
-              containerPort: 443
+              containerPort: 50002
             - name: ws
-              containerPort: 8080
+              containerPort: 50003
             - name: wss
-              containerPort: 8443
+              containerPort: 50004
             - name: rpc
               containerPort: 8000
           livenessProbe:
