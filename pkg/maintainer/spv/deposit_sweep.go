@@ -2,8 +2,9 @@ package spv
 
 import (
 	"fmt"
-	"github.com/keep-network/keep-core/pkg/tbtc"
 	"time"
+
+	"github.com/keep-network/keep-core/pkg/tbtc"
 
 	"github.com/btcsuite/btcd/txscript"
 	"github.com/ethereum/go-ethereum/common"
@@ -227,7 +228,7 @@ func getUnprovenDepositSweepTransactions(
 	// searched for.
 	startBlock := currentBlock - historyDepth
 
-	depositSweepTransactionProposals, err :=
+	depositSweepProposals, err :=
 		spvChain.PastDepositSweepProposalSubmittedEvents(
 			&tbtc.DepositSweepProposalSubmittedEventFilter{
 				StartBlock: startBlock,
@@ -243,7 +244,7 @@ func getUnprovenDepositSweepTransactions(
 	// There will often be multiple events emitted for a single wallet. Prepare
 	// a list of unique wallet public key hashes.
 	walletPublicKeyHashes := uniqueWalletPublicKeyHashes(
-		depositSweepTransactionProposals,
+		depositSweepProposals,
 	)
 
 	unprovenDepositSweepTransactions := []*bitcoin.Transaction{}
@@ -353,7 +354,8 @@ func isUnprovenDepositSweepTransaction(
 			)
 			if err != nil {
 				return false, fmt.Errorf(
-					"failed to check if input is the main UTXO",
+					"failed to check if input is the main UTXO: [%v]",
+					err,
 				)
 			}
 
