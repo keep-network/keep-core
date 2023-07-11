@@ -176,9 +176,19 @@ func (lc *localChain) PastDepositSweepProposalSubmittedEvents(
 	lc.mutex.Lock()
 	defer lc.mutex.Unlock()
 
-	eventsKey, err := buildPastDepositSweepProposalSubmittedEventsKey(filter)
-	if err != nil {
-		return nil, err
+	var eventsKey [32]byte
+	var err error
+
+	if filter != nil {
+		eventsKey, err = buildPastProposalSubmittedEventsKey(
+			filter.StartBlock,
+			filter.EndBlock,
+			filter.Coordinator,
+			filter.WalletPublicKeyHash,
+		)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	events, ok := lc.pastDepositSweepProposalSubmittedEvents[eventsKey]
@@ -195,9 +205,19 @@ func (lc *localChain) PastRedemptionProposalSubmittedEvents(
 	lc.mutex.Lock()
 	defer lc.mutex.Unlock()
 
-	eventsKey, err := buildPastRedemptionProposalSubmittedEventsKey(filter)
-	if err != nil {
-		return nil, err
+	var eventsKey [32]byte
+	var err error
+
+	if filter != nil {
+		eventsKey, err = buildPastProposalSubmittedEventsKey(
+			filter.StartBlock,
+			filter.EndBlock,
+			filter.Coordinator,
+			filter.WalletPublicKeyHash,
+		)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	events, ok := lc.pastRedemptionProposalSubmittedEvents[eventsKey]
@@ -215,9 +235,19 @@ func (lc *localChain) AddPastDepositSweepProposalSubmittedEvent(
 	lc.mutex.Lock()
 	defer lc.mutex.Unlock()
 
-	eventsKey, err := buildPastDepositSweepProposalSubmittedEventsKey(filter)
-	if err != nil {
-		return err
+	var eventsKey [32]byte
+	var err error
+
+	if filter != nil {
+		eventsKey, err = buildPastProposalSubmittedEventsKey(
+			filter.StartBlock,
+			filter.EndBlock,
+			filter.Coordinator,
+			filter.WalletPublicKeyHash,
+		)
+		if err != nil {
+			return err
+		}
 	}
 
 	lc.pastDepositSweepProposalSubmittedEvents[eventsKey] = append(
@@ -235,9 +265,19 @@ func (lc *localChain) AddPastRedemptionProposalSubmittedEvent(
 	lc.mutex.Lock()
 	defer lc.mutex.Unlock()
 
-	eventsKey, err := buildPastRedemptionProposalSubmittedEventsKey(filter)
-	if err != nil {
-		return err
+	var eventsKey [32]byte
+	var err error
+
+	if filter != nil {
+		eventsKey, err = buildPastProposalSubmittedEventsKey(
+			filter.StartBlock,
+			filter.EndBlock,
+			filter.Coordinator,
+			filter.WalletPublicKeyHash,
+		)
+		if err != nil {
+			return err
+		}
 	}
 
 	lc.pastRedemptionProposalSubmittedEvents[eventsKey] = append(
@@ -248,27 +288,25 @@ func (lc *localChain) AddPastRedemptionProposalSubmittedEvent(
 	return nil
 }
 
-// TODO: Make a generic function
-func buildPastDepositSweepProposalSubmittedEventsKey(
-	filter *tbtc.DepositSweepProposalSubmittedEventFilter,
+func buildPastProposalSubmittedEventsKey(
+	startBlock uint64,
+	endBlock *uint64,
+	coordinators []chain.Address,
+	walletPublicKeyHash [20]byte,
 ) ([32]byte, error) {
-	if filter == nil {
-		return [32]byte{}, nil
-	}
-
 	var buffer bytes.Buffer
 
-	startBlock := make([]byte, 8)
-	binary.BigEndian.PutUint64(startBlock, filter.StartBlock)
-	buffer.Write(startBlock)
+	startBlockBytes := make([]byte, 8)
+	binary.BigEndian.PutUint64(startBlockBytes, startBlock)
+	buffer.Write(startBlockBytes)
 
-	if filter.EndBlock != nil {
-		endBlock := make([]byte, 8)
-		binary.BigEndian.PutUint64(startBlock, *filter.EndBlock)
-		buffer.Write(endBlock)
+	if endBlock != nil {
+		endBlockBytes := make([]byte, 8)
+		binary.BigEndian.PutUint64(endBlockBytes, *endBlock)
+		buffer.Write(endBlockBytes)
 	}
 
-	for _, coordinator := range filter.Coordinator {
+	for _, coordinator := range coordinators {
 		coordinatorBytes, err := hex.DecodeString(coordinator.String())
 		if err != nil {
 			return [32]byte{}, err
@@ -277,40 +315,7 @@ func buildPastDepositSweepProposalSubmittedEventsKey(
 		buffer.Write(coordinatorBytes)
 	}
 
-	buffer.Write(filter.WalletPublicKeyHash[:])
-
-	return sha256.Sum256(buffer.Bytes()), nil
-}
-
-func buildPastRedemptionProposalSubmittedEventsKey(
-	filter *tbtc.RedemptionProposalSubmittedEventFilter,
-) ([32]byte, error) {
-	if filter == nil {
-		return [32]byte{}, nil
-	}
-
-	var buffer bytes.Buffer
-
-	startBlock := make([]byte, 8)
-	binary.BigEndian.PutUint64(startBlock, filter.StartBlock)
-	buffer.Write(startBlock)
-
-	if filter.EndBlock != nil {
-		endBlock := make([]byte, 8)
-		binary.BigEndian.PutUint64(startBlock, *filter.EndBlock)
-		buffer.Write(endBlock)
-	}
-
-	for _, coordinator := range filter.Coordinator {
-		coordinatorBytes, err := hex.DecodeString(coordinator.String())
-		if err != nil {
-			return [32]byte{}, err
-		}
-
-		buffer.Write(coordinatorBytes)
-	}
-
-	buffer.Write(filter.WalletPublicKeyHash[:])
+	buffer.Write(walletPublicKeyHash[:])
 
 	return sha256.Sum256(buffer.Bytes()), nil
 }
