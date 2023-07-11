@@ -106,12 +106,16 @@ func TestGetProofInfo(t *testing.T) {
 				test.previousEpochDifficulty,
 			)
 
-			isProofWithinRelayRange, requiredConfirmations, err := getProofInfo(
-				transactionHash,
-				btcChain,
-				localChain,
-				localChain,
-			)
+			isProofWithinRelayRange,
+				accumulatedConfirmations,
+				requiredConfirmations,
+				err :=
+				getProofInfo(
+					transactionHash,
+					btcChain,
+					localChain,
+					localChain,
+				)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -121,6 +125,13 @@ func TestGetProofInfo(t *testing.T) {
 				"is proof within range",
 				test.expectedIsProofWithinRelayRange,
 				isProofWithinRelayRange,
+			)
+
+			testutils.AssertUintsEqual(
+				t,
+				"accumulated confirmations",
+				uint64(test.transactionConfirmations),
+				uint64(accumulatedConfirmations),
 			)
 
 			testutils.AssertUintsEqual(

@@ -5,9 +5,10 @@ import (
 	"context"
 	"encoding/hex"
 	"fmt"
-	"github.com/keep-network/keep-core/pkg/tbtc"
 	"math/big"
 	"time"
+
+	"github.com/keep-network/keep-core/pkg/tbtc"
 
 	"github.com/ipfs/go-log/v2"
 
@@ -165,17 +166,10 @@ func (sm *spvMaintainer) proveTransactions(
 			transactionHashStr,
 		)
 
-		accumulatedConfirmations, err := sm.btcChain.GetTransactionConfirmations(
-			transaction.Hash(),
-		)
-		if err != nil {
-			return fmt.Errorf(
-				"failed to get transaction confirmations: [%v]",
-				err,
-			)
-		}
-
-		isProofWithinRelayRange, requiredConfirmations, err := getProofInfo(
+		isProofWithinRelayRange,
+			accumulatedConfirmations,
+			requiredConfirmations,
+			err := getProofInfo(
 			transaction.Hash(),
 			sm.btcChain,
 			sm.spvChain,
@@ -266,19 +260,19 @@ func isInputCurrentWalletsMainUTXO(
 
 // getProofInfo returns information about the SPV proof. It includes the
 // information whether the transaction proof range is within the previous and
-// current difficulty epochs as seen by the relay and the required number of
-// confirmations.
+// current difficulty epochs as seen by the relay, the accumulated number of
+// confirmations and the required number of confirmations.
 func getProofInfo(
 	transactionHash bitcoin.Hash,
 	btcChain bitcoin.Chain,
 	spvChain Chain,
 	btcDiffChain btcdiff.Chain,
 ) (
-	bool, uint, error,
+	bool, uint, uint, error,
 ) {
 	latestBlockHeight, err := btcChain.GetLatestBlockHeight()
 	if err != nil {
-		return false, 0, fmt.Errorf(
+		return false, 0, 0, fmt.Errorf(
 			"failed to get latest block height: [%v]",
 			err,
 		)
@@ -288,7 +282,7 @@ func getProofInfo(
 		transactionHash,
 	)
 	if err != nil {
-		return false, 0, fmt.Errorf(
+		return false, 0, 0, fmt.Errorf(
 			"failed to get transaction confirmations: [%v]",
 			err,
 		)
@@ -296,7 +290,7 @@ func getProofInfo(
 
 	txProofDifficultyFactor, err := spvChain.TxProofDifficultyFactor()
 	if err != nil {
-		return false, 0, fmt.Errorf(
+		return false, 0, 0, fmt.Errorf(
 			"failed to get transaction proof difficulty factor: [%v]",
 			err,
 		)
@@ -316,7 +310,7 @@ func getProofInfo(
 	// one to get the previous epoch number.
 	currentEpoch, err := btcDiffChain.CurrentEpoch()
 	if err != nil {
-		return false, 0, fmt.Errorf("failed to get current epoch: [%v]", err)
+		return false, 0, 0, fmt.Errorf("failed to get current epoch: [%v]", err)
 	}
 	previousEpoch := currentEpoch - 1
 
@@ -329,14 +323,14 @@ func getProofInfo(
 	// does not need to be adjusted.
 	if proofStartEpoch == currentEpoch &&
 		proofEndEpoch == currentEpoch {
-		return true, uint(txProofDifficultyFactor.Uint64()), nil
+		return true, accumulatedConfirmations, uint(txProofDifficultyFactor.Uint64()), nil
 	}
 
 	// If the proof is entirely within the previous epoch, required confirmations
 	// does not need to be adjusted.
 	if proofStartEpoch == previousEpoch &&
 		proofEndEpoch == previousEpoch {
-		return true, uint(txProofDifficultyFactor.Uint64()), nil
+		return true, accumulatedConfirmations, uint(txProofDifficultyFactor.Uint64()), nil
 	}
 
 	// If the proof spans the previous and current difficulty epochs, the
@@ -364,7 +358,7 @@ func getProofInfo(
 		currentEpochDifficulty, previousEpochDifficulty, err :=
 			btcDiffChain.GetCurrentAndPrevEpochDifficulty()
 		if err != nil {
-			return false, 0, fmt.Errorf(
+			return false, 0, 0, fmt.Errorf(
 				"failed to get Bitcoin epoch difficulties: [%v]",
 				err,
 			)
@@ -419,7 +413,7 @@ func getProofInfo(
 		requiredConfirmations := numberOfBlocksPreviousEpoch +
 			numberOfBlocksCurrentEpoch.Uint64()
 
-		return true, uint(requiredConfirmations), nil
+		return true, accumulatedConfirmations, uint(requiredConfirmations), nil
 	}
 
 	// If we entered here, it means that the proof's block headers range goes
@@ -430,7 +424,7 @@ func getProofInfo(
 	// The other case could be that the transaction is older than the last two
 	// Bitcoin difficulty epochs. In that case the transaction will soon leave
 	// the sliding window of recent transactions.
-	return false, 0, nil
+	return false, accumulatedConfirmations, 0, nil
 }
 
 // walletEvent is a type constraint representing wallet-related chain events.
