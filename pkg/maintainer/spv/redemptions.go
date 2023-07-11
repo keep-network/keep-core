@@ -10,8 +10,6 @@ import (
 // SubmitRedemptionProof prepares redemption proof for the given transaction
 // and submits it to the on-chain contract. If the number of required
 // confirmations is `0`, an error is returned.
-//
-// TODO: Expose this function through the maintainer-cli tool.
 func SubmitRedemptionProof(
 	transactionHash bitcoin.Hash,
 	requiredConfirmations uint,
