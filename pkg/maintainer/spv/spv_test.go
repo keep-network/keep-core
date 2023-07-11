@@ -134,45 +134,60 @@ func TestGetProofInfo(t *testing.T) {
 }
 
 func TestUniqueWalletPublicKeyHashes(t *testing.T) {
+	bytesFromHex := func(str string) []byte {
+		value, err := hex.DecodeString(str)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		return value
+	}
+
+	bytes20FromHex := func(str string) [20]byte {
+		var value [20]byte
+		copy(value[:], bytesFromHex(str))
+		return value
+	}
+
 	events := []*tbtc.DepositSweepProposalSubmittedEvent{
 		&tbtc.DepositSweepProposalSubmittedEvent{
 			Proposal: &tbtc.DepositSweepProposal{
-				WalletPublicKeyHash: walletPublicKeyHash(
+				WalletPublicKeyHash: bytes20FromHex(
 					"4cc32253cc0bcd0cf9cfc79ed7b21d10df207f0d",
 				),
 			},
 		},
 		&tbtc.DepositSweepProposalSubmittedEvent{
 			Proposal: &tbtc.DepositSweepProposal{
-				WalletPublicKeyHash: walletPublicKeyHash(
+				WalletPublicKeyHash: bytes20FromHex(
 					"ddbd706d13dbd06038519c7621ac5de167bd3fd6",
 				),
 			},
 		},
 		&tbtc.DepositSweepProposalSubmittedEvent{
 			Proposal: &tbtc.DepositSweepProposal{
-				WalletPublicKeyHash: walletPublicKeyHash(
+				WalletPublicKeyHash: bytes20FromHex(
 					"4cc32253cc0bcd0cf9cfc79ed7b21d10df207f0d",
 				),
 			},
 		},
 		&tbtc.DepositSweepProposalSubmittedEvent{
 			Proposal: &tbtc.DepositSweepProposal{
-				WalletPublicKeyHash: walletPublicKeyHash(
+				WalletPublicKeyHash: bytes20FromHex(
 					"1016a8ff380e8907c82a88158019917e65c16ac4",
 				),
 			},
 		},
 		&tbtc.DepositSweepProposalSubmittedEvent{
 			Proposal: &tbtc.DepositSweepProposal{
-				WalletPublicKeyHash: walletPublicKeyHash(
+				WalletPublicKeyHash: bytes20FromHex(
 					"1016a8ff380e8907c82a88158019917e65c16ac4",
 				),
 			},
 		},
 		&tbtc.DepositSweepProposalSubmittedEvent{
 			Proposal: &tbtc.DepositSweepProposal{
-				WalletPublicKeyHash: walletPublicKeyHash(
+				WalletPublicKeyHash: bytes20FromHex(
 					"2c35ed9921fa35482c3cb3ae1190d87ede65dfd8",
 				),
 			},
@@ -181,10 +196,10 @@ func TestUniqueWalletPublicKeyHashes(t *testing.T) {
 	walletKeyHashes := uniqueWalletPublicKeyHashes(events)
 
 	expectedWalletKeyHashes := [][20]byte{
-		walletPublicKeyHash("4cc32253cc0bcd0cf9cfc79ed7b21d10df207f0d"),
-		walletPublicKeyHash("ddbd706d13dbd06038519c7621ac5de167bd3fd6"),
-		walletPublicKeyHash("1016a8ff380e8907c82a88158019917e65c16ac4"),
-		walletPublicKeyHash("2c35ed9921fa35482c3cb3ae1190d87ede65dfd8"),
+		bytes20FromHex("4cc32253cc0bcd0cf9cfc79ed7b21d10df207f0d"),
+		bytes20FromHex("ddbd706d13dbd06038519c7621ac5de167bd3fd6"),
+		bytes20FromHex("1016a8ff380e8907c82a88158019917e65c16ac4"),
+		bytes20FromHex("2c35ed9921fa35482c3cb3ae1190d87ede65dfd8"),
 	}
 
 	if !reflect.DeepEqual(expectedWalletKeyHashes, walletKeyHashes) {
@@ -197,18 +212,49 @@ func TestUniqueWalletPublicKeyHashes(t *testing.T) {
 }
 
 func TestIsInputCurrentWalletsMainUTXO(t *testing.T) {
+	bytesFromHex := func(str string) []byte {
+		value, err := hex.DecodeString(str)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		return value
+	}
+
+	bytes20FromHex := func(str string) [20]byte {
+		var value [20]byte
+		copy(value[:], bytesFromHex(str))
+		return value
+	}
+
+	bytes32FromHex := func(str string) [32]byte {
+		var value [32]byte
+		copy(value[:], bytesFromHex(str))
+		return value
+	}
+
+	txFromHex := func(str string) *bitcoin.Transaction {
+		transaction := new(bitcoin.Transaction)
+		err := transaction.Deserialize(bytesFromHex(str))
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		return transaction
+	}
+
 	tests := map[string]struct {
 		walletsCurrentMainUtxoHash [32]byte
 		expectedIsCurrentMainUtxo  bool
 	}{
 		"input is the current main UTXO": {
-			walletsCurrentMainUtxoHash: utxoHash(
+			walletsCurrentMainUtxoHash: bytes32FromHex(
 				"9d84b2a9c1860c3f387d5944c9a8e0de55fea4435d19472df99f142b4f38da75",
 			),
 			expectedIsCurrentMainUtxo: true,
 		},
 		"input is not the current main UTXO": {
-			walletsCurrentMainUtxoHash: utxoHash(
+			walletsCurrentMainUtxoHash: bytes32FromHex(
 				"01234567890abcdef01234567890abcdef01234567890abcdef01234567890ab",
 			),
 			expectedIsCurrentMainUtxo: false,
@@ -226,21 +272,20 @@ func TestIsInputCurrentWalletsMainUTXO(t *testing.T) {
 			}
 
 			fundingTxIndex := uint32(1)
-			walletPublicKeyHash := walletPublicKeyHash(
+			walletPublicKeyHash := bytes20FromHex(
 				"ddbd706d13dbd06038519c7621ac5de167bd3fd6",
 			)
 
 			localChain := newLocalChain()
 			btcChain := newLocalBitcoinChain()
 
-			fundingTransaction := transactionFrom(
-				t,
-				"0100000000010110a15e879b7e8b07df62772579a64bf2b409409bbcc8bc2c7f6e39"+
-					"31dc615e920100000000ffffffff02042900000000000017a9143ec459d0f3c29286"+
-					"ae5df5fcc421e2786024277e87b4121600000000001600148db50eb52063ea9d98b3"+
-					"eac91489a90f738986f6024830450221009740ad12d2e74c00ccb4741d533d2ecd69"+
-					"02289144c4626508afb61eed790c97022006e67179e8e2a63dc4f1ab758867d8bbfe"+
-					"0a2b67682be6dadfa8e07d3b7ba04d012103989d253b17a6a0f41838b84ff0d20e88"+
+			fundingTransaction := txFromHex(
+				"0100000000010110a15e879b7e8b07df62772579a64bf2b409409bbcc8bc2c7f6e39" +
+					"31dc615e920100000000ffffffff02042900000000000017a9143ec459d0f3c29286" +
+					"ae5df5fcc421e2786024277e87b4121600000000001600148db50eb52063ea9d98b3" +
+					"eac91489a90f738986f6024830450221009740ad12d2e74c00ccb4741d533d2ecd69" +
+					"02289144c4626508afb61eed790c97022006e67179e8e2a63dc4f1ab758867d8bbfe" +
+					"0a2b67682be6dadfa8e07d3b7ba04d012103989d253b17a6a0f41838b84ff0d20e88" +
 					"98f9d7b1a98f2564da4cc29dcf8581d900000000",
 			)
 
@@ -272,45 +317,4 @@ func TestIsInputCurrentWalletsMainUTXO(t *testing.T) {
 			)
 		})
 	}
-}
-
-func walletPublicKeyHash(hexStr string) [20]byte {
-	hashAsBytes, err := hex.DecodeString(hexStr)
-	if err != nil {
-		panic(err)
-	}
-
-	var walletPublicKeyHash [20]byte
-	copy(walletPublicKeyHash[:], hashAsBytes)
-
-	return walletPublicKeyHash
-}
-
-func utxoHash(hexStr string) [32]byte {
-	hashAsBytes, err := hex.DecodeString(hexStr)
-	if err != nil {
-		panic(err)
-	}
-
-	var walletPublicKeyHash [32]byte
-	copy(walletPublicKeyHash[:], hashAsBytes)
-
-	return walletPublicKeyHash
-}
-
-func transactionFrom(t *testing.T, hex string) *bitcoin.Transaction {
-	tx := new(bitcoin.Transaction)
-	err := tx.Deserialize(hexToSlice(t, hex))
-	if err != nil {
-		t.Fatalf("error while converting [%v]: [%v]", hex, err)
-	}
-	return tx
-}
-
-func hexToSlice(t *testing.T, hexString string) []byte {
-	bytes, err := hex.DecodeString(hexString)
-	if err != nil {
-		t.Fatalf("error while converting [%v]: [%v]", hexString, err)
-	}
-	return bytes
 }
