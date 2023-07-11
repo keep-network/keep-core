@@ -21,13 +21,29 @@ func SubmitDepositSweepProof(
 	btcChain bitcoin.Chain,
 	spvChain Chain,
 ) error {
+	return submitDepositSweepProof(
+		transactionHash,
+		requiredConfirmations,
+		btcChain,
+		spvChain,
+		bitcoin.AssembleSpvProof,
+	)
+}
+
+func submitDepositSweepProof(
+	transactionHash bitcoin.Hash,
+	requiredConfirmations uint,
+	btcChain bitcoin.Chain,
+	spvChain Chain,
+	spvProofAssembler spvProofAssembler,
+) error {
 	if requiredConfirmations == 0 {
 		return fmt.Errorf(
 			"provided required confirmations count must be greater than 0",
 		)
 	}
 
-	transaction, proof, err := bitcoin.AssembleSpvProof(
+	transaction, proof, err := spvProofAssembler(
 		transactionHash,
 		requiredConfirmations,
 		btcChain,
@@ -154,8 +170,9 @@ func parseDepositSweepTransactionInputs(
 
 			if !found {
 				return bitcoin.UnspentTransactionOutput{}, common.Address{}, fmt.Errorf(
-					"deposit not found: [%v]",
-					err,
+					"deposit: [%v/%v] not found",
+					outpointTransactionHash,
+					outpointIndex,
 				)
 			}
 

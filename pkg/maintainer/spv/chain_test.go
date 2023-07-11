@@ -23,6 +23,13 @@ type submittedRedemptionProof struct {
 	walletPublicKeyHash [20]byte
 }
 
+type submittedDepositSweepProof struct {
+	transaction *bitcoin.Transaction
+	proof       *bitcoin.SpvProof
+	mainUTXO    bitcoin.UnspentTransactionOutput
+	vault       common.Address
+}
+
 type localChain struct {
 	mutex sync.Mutex
 
@@ -33,6 +40,7 @@ type localChain struct {
 	depositRequests                         map[[32]byte]*tbtc.DepositChainRequest
 	pendingRedemptionRequests               map[[32]byte]*tbtc.RedemptionRequest
 	submittedRedemptionProofs               []*submittedRedemptionProof
+	submittedDepositSweepProofs             []*submittedDepositSweepProof
 
 	txProofDifficultyFactor *big.Int
 	currentEpoch            uint64
@@ -48,6 +56,7 @@ func newLocalChain() *localChain {
 		depositRequests:                         make(map[[32]byte]*tbtc.DepositChainRequest),
 		pendingRedemptionRequests:               make(map[[32]byte]*tbtc.RedemptionRequest),
 		submittedRedemptionProofs:               make([]*submittedRedemptionProof, 0),
+		submittedDepositSweepProofs:             make([]*submittedDepositSweepProof, 0),
 	}
 }
 
@@ -57,7 +66,27 @@ func (lc *localChain) SubmitDepositSweepProofWithReimbursement(
 	mainUTXO bitcoin.UnspentTransactionOutput,
 	vault common.Address,
 ) error {
-	panic("unsupported")
+	lc.mutex.Lock()
+	defer lc.mutex.Unlock()
+
+	lc.submittedDepositSweepProofs = append(
+		lc.submittedDepositSweepProofs,
+		&submittedDepositSweepProof{
+			transaction: transaction,
+			proof:       proof,
+			mainUTXO:    mainUTXO,
+			vault:       vault,
+		},
+	)
+
+	return nil
+}
+
+func (lc *localChain) getSubmittedDepositSweepProofs() []*submittedDepositSweepProof {
+	lc.mutex.Lock()
+	defer lc.mutex.Unlock()
+
+	return lc.submittedDepositSweepProofs
 }
 
 func (lc *localChain) GetDepositRequest(
