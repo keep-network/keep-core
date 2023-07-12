@@ -421,7 +421,7 @@ func getProofInfo(
 	// The other case could be that the transaction is older than the last two
 	// Bitcoin difficulty epochs. In that case the transaction will soon leave
 	// the sliding window of recent transactions.
-	return false, accumulatedConfirmations, 0, nil
+	return false, 0, 0, nil
 }
 
 // walletEvent is a type constraint representing wallet-related chain events.
