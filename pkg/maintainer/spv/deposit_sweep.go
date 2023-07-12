@@ -2,8 +2,9 @@ package spv
 
 import (
 	"fmt"
-	"github.com/keep-network/keep-core/pkg/tbtc"
 	"time"
+
+	"github.com/keep-network/keep-core/pkg/tbtc"
 
 	"github.com/btcsuite/btcd/txscript"
 	"github.com/ethereum/go-ethereum/common"
@@ -20,13 +21,29 @@ func SubmitDepositSweepProof(
 	btcChain bitcoin.Chain,
 	spvChain Chain,
 ) error {
+	return submitDepositSweepProof(
+		transactionHash,
+		requiredConfirmations,
+		btcChain,
+		spvChain,
+		bitcoin.AssembleSpvProof,
+	)
+}
+
+func submitDepositSweepProof(
+	transactionHash bitcoin.Hash,
+	requiredConfirmations uint,
+	btcChain bitcoin.Chain,
+	spvChain Chain,
+	spvProofAssembler spvProofAssembler,
+) error {
 	if requiredConfirmations == 0 {
 		return fmt.Errorf(
 			"provided required confirmations count must be greater than 0",
 		)
 	}
 
-	transaction, proof, err := bitcoin.AssembleSpvProof(
+	transaction, proof, err := spvProofAssembler(
 		transactionHash,
 		requiredConfirmations,
 		btcChain,
@@ -153,8 +170,9 @@ func parseDepositSweepTransactionInputs(
 
 			if !found {
 				return bitcoin.UnspentTransactionOutput{}, common.Address{}, fmt.Errorf(
-					"deposit not found: [%v]",
-					err,
+					"deposit: [%v/%v] not found",
+					outpointTransactionHash,
+					outpointIndex,
 				)
 			}
 
@@ -227,7 +245,7 @@ func getUnprovenDepositSweepTransactions(
 	// searched for.
 	startBlock := currentBlock - historyDepth
 
-	depositSweepTransactionProposals, err :=
+	depositSweepProposals, err :=
 		spvChain.PastDepositSweepProposalSubmittedEvents(
 			&tbtc.DepositSweepProposalSubmittedEventFilter{
 				StartBlock: startBlock,
@@ -243,7 +261,7 @@ func getUnprovenDepositSweepTransactions(
 	// There will often be multiple events emitted for a single wallet. Prepare
 	// a list of unique wallet public key hashes.
 	walletPublicKeyHashes := uniqueWalletPublicKeyHashes(
-		depositSweepTransactionProposals,
+		depositSweepProposals,
 	)
 
 	unprovenDepositSweepTransactions := []*bitcoin.Transaction{}
@@ -353,7 +371,8 @@ func isUnprovenDepositSweepTransaction(
 			)
 			if err != nil {
 				return false, fmt.Errorf(
-					"failed to check if input is the main UTXO",
+					"failed to check if input is the main UTXO: [%v]",
+					err,
 				)
 			}
 
