@@ -13,67 +13,74 @@ import (
 
 func TestGetProofInfo(t *testing.T) {
 	tests := map[string]struct {
-		latestBlockHeight               uint
-		transactionConfirmations        uint
-		currentEpoch                    uint64
-		currentEpochDifficulty          *big.Int
-		previousEpochDifficulty         *big.Int
-		expectedIsProofWithinRelayRange bool
-		expectedRequiredConfirmations   uint
+		latestBlockHeight                uint
+		transactionConfirmations         uint
+		currentEpoch                     uint64
+		currentEpochDifficulty           *big.Int
+		previousEpochDifficulty          *big.Int
+		expectedIsProofWithinRelayRange  bool
+		expectedAccumulatedConfirmations uint
+		expectedRequiredConfirmations    uint
 	}{
 		"proof entirely within current epoch": {
-			latestBlockHeight:               790277,
-			transactionConfirmations:        3,
-			currentEpoch:                    392,
-			currentEpochDifficulty:          nil, // not needed
-			previousEpochDifficulty:         nil, // not needed
-			expectedIsProofWithinRelayRange: true,
-			expectedRequiredConfirmations:   6,
+			latestBlockHeight:                790277,
+			transactionConfirmations:         3,
+			currentEpoch:                     392,
+			currentEpochDifficulty:           nil, // not needed
+			previousEpochDifficulty:          nil, // not needed
+			expectedIsProofWithinRelayRange:  true,
+			expectedAccumulatedConfirmations: 3,
+			expectedRequiredConfirmations:    6,
 		},
 		"proof entirely within previous epoch": {
-			latestBlockHeight:               790300,
-			transactionConfirmations:        2041,
-			currentEpoch:                    392,
-			currentEpochDifficulty:          nil, // not needed
-			previousEpochDifficulty:         nil, // not needed
-			expectedIsProofWithinRelayRange: true,
-			expectedRequiredConfirmations:   6,
+			latestBlockHeight:                790300,
+			transactionConfirmations:         2041,
+			currentEpoch:                     392,
+			currentEpochDifficulty:           nil, // not needed
+			previousEpochDifficulty:          nil, // not needed
+			expectedAccumulatedConfirmations: 2041,
+			expectedIsProofWithinRelayRange:  true,
+			expectedRequiredConfirmations:    6,
 		},
 		"proof spans previous and current epochs and difficulty drops": {
-			latestBlockHeight:               790300,
-			transactionConfirmations:        31,
-			currentEpoch:                    392,
-			currentEpochDifficulty:          big.NewInt(50000000000000),
-			previousEpochDifficulty:         big.NewInt(30000000000000),
-			expectedIsProofWithinRelayRange: true,
-			expectedRequiredConfirmations:   9,
+			latestBlockHeight:                790300,
+			transactionConfirmations:         31,
+			currentEpoch:                     392,
+			currentEpochDifficulty:           big.NewInt(50000000000000),
+			previousEpochDifficulty:          big.NewInt(30000000000000),
+			expectedIsProofWithinRelayRange:  true,
+			expectedAccumulatedConfirmations: 31,
+			expectedRequiredConfirmations:    9,
 		},
 		"proof spans previous and current epochs and difficulty raises": {
-			latestBlockHeight:               790300,
-			transactionConfirmations:        31,
-			currentEpoch:                    392,
-			currentEpochDifficulty:          big.NewInt(30000000000000),
-			previousEpochDifficulty:         big.NewInt(60000000000000),
-			expectedIsProofWithinRelayRange: true,
-			expectedRequiredConfirmations:   4,
+			latestBlockHeight:                790300,
+			transactionConfirmations:         31,
+			currentEpoch:                     392,
+			currentEpochDifficulty:           big.NewInt(30000000000000),
+			previousEpochDifficulty:          big.NewInt(60000000000000),
+			expectedIsProofWithinRelayRange:  true,
+			expectedAccumulatedConfirmations: 31,
+			expectedRequiredConfirmations:    4,
 		},
 		"proof begins outside previous epoch": {
-			latestBlockHeight:               790300,
-			transactionConfirmations:        2048,
-			currentEpoch:                    392,
-			currentEpochDifficulty:          nil, // not needed
-			previousEpochDifficulty:         nil, // not needed
-			expectedIsProofWithinRelayRange: false,
-			expectedRequiredConfirmations:   0,
+			latestBlockHeight:                790300,
+			transactionConfirmations:         2048,
+			currentEpoch:                     392,
+			currentEpochDifficulty:           nil, // not needed
+			previousEpochDifficulty:          nil, // not needed
+			expectedIsProofWithinRelayRange:  false,
+			expectedAccumulatedConfirmations: 0,
+			expectedRequiredConfirmations:    0,
 		},
 		"proof ends outside current epoch": {
-			latestBlockHeight:               792285,
-			transactionConfirmations:        3,
-			currentEpoch:                    392,
-			currentEpochDifficulty:          nil, // not needed
-			previousEpochDifficulty:         nil, // not needed
-			expectedIsProofWithinRelayRange: false,
-			expectedRequiredConfirmations:   0,
+			latestBlockHeight:                792285,
+			transactionConfirmations:         3,
+			currentEpoch:                     392,
+			currentEpochDifficulty:           nil, // not needed
+			previousEpochDifficulty:          nil, // not needed
+			expectedIsProofWithinRelayRange:  false,
+			expectedAccumulatedConfirmations: 0,
+			expectedRequiredConfirmations:    0,
 		},
 	}
 
@@ -106,12 +113,16 @@ func TestGetProofInfo(t *testing.T) {
 				test.previousEpochDifficulty,
 			)
 
-			isProofWithinRelayRange, requiredConfirmations, err := getProofInfo(
-				transactionHash,
-				btcChain,
-				localChain,
-				localChain,
-			)
+			isProofWithinRelayRange,
+				accumulatedConfirmations,
+				requiredConfirmations,
+				err :=
+				getProofInfo(
+					transactionHash,
+					btcChain,
+					localChain,
+					localChain,
+				)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -121,6 +132,13 @@ func TestGetProofInfo(t *testing.T) {
 				"is proof within range",
 				test.expectedIsProofWithinRelayRange,
 				isProofWithinRelayRange,
+			)
+
+			testutils.AssertUintsEqual(
+				t,
+				"accumulated confirmations",
+				uint64(test.expectedAccumulatedConfirmations),
+				uint64(accumulatedConfirmations),
 			)
 
 			testutils.AssertUintsEqual(
