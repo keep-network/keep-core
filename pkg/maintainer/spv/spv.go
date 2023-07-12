@@ -166,10 +166,7 @@ func (sm *spvMaintainer) proveTransactions(
 			transactionHashStr,
 		)
 
-		isProofWithinRelayRange,
-			accumulatedConfirmations,
-			requiredConfirmations,
-			err := getProofInfo(
+		isProofWithinRelayRange, accumulatedConfirmations, requiredConfirmations, err := getProofInfo(
 			transaction.Hash(),
 			sm.btcChain,
 			sm.spvChain,
