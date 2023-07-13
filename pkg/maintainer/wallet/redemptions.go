@@ -365,7 +365,10 @@ func getPendingRedemptions(
 	// lesser than the assumed one, some events being on the edge of the block
 	// range may be omitted. To avoid that, we make the block range a little
 	// wider by using a constant factor of 1000 blocks.
-	filterStartBlock := currentBlockNumber - requestTimeoutBlocks - 1000
+	filterStartBlock := uint64(0)
+	if filterLookbackBlocks := requestTimeoutBlocks + 1000; currentBlockNumber > filterLookbackBlocks {
+		filterStartBlock = currentBlockNumber - filterLookbackBlocks
+	}
 
 	filter := &tbtc.RedemptionRequestedEventFilter{
 		StartBlock: filterStartBlock,
