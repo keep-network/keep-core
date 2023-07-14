@@ -206,20 +206,10 @@ func FindPendingRedemptions(
 	}
 
 	logger.Infof(
-		"built an initial list of [%v] wallets that will be checked "+
+		"built a list of [%v] wallets that will be checked "+
 			"for pending redemption requests",
 		len(walletPublicKeyHashes),
 	)
-
-	// Apply the wallets number limit if needed.
-	if limit := int(filter.WalletsLimit); limit > 0 && len(walletPublicKeyHashes) > limit {
-		walletPublicKeyHashes = walletPublicKeyHashes[:limit]
-
-		logger.Infof(
-			"limited the initial wallets list to [%v] wallets",
-			len(walletPublicKeyHashes),
-		)
-	}
 
 	result := make(map[[20]byte][]bitcoin.Script)
 
@@ -264,6 +254,17 @@ func FindPendingRedemptions(
 				result[walletPublicKeyHash],
 				pendingRedemption.RedeemerOutputScript,
 			)
+		}
+
+		// Apply the wallets number limit if needed.
+		if limit := int(filter.WalletsLimit); limit > 0 && len(result) == limit {
+			logger.Infof(
+				"aborting pending redemptions checks due to the "+
+					"configured wallets limit; [%v] wallets with pending "+
+					"redemptions were found so far",
+				len(result),
+			)
+			break
 		}
 	}
 
