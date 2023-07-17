@@ -55,6 +55,7 @@ type TbtcChain struct {
 	sortitionPool           *ecdsacontract.EcdsaSortitionPool
 	walletProposalValidator *tbtccontract.WalletProposalValidator
 	redemptionWatchtower    *tbtccontract.RedemptionWatchtower
+	lightRelay              *tbtccontract.LightRelay
 
 	sweptDepositsCache *cache.GenericTimeCache[*tbtc.DepositChainRequest]
 }
@@ -236,6 +237,34 @@ func newTbtcChain(
 		}
 	}
 
+	lightRelayAddress, err := config.ContractAddress(
+		LightRelayContractName,
+	)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"failed to attach to LightRelay contract: [%w]",
+			err,
+		)
+	}
+
+	lightRelay, err :=
+		tbtccontract.NewLightRelay(
+			lightRelayAddress,
+			baseChain.chainID,
+			baseChain.key,
+			baseChain.client,
+			baseChain.nonceManager,
+			baseChain.miningWaiter,
+			baseChain.blockCounter,
+			baseChain.transactionMutex,
+		)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"failed to attach to LightRelay contract: [%w]",
+			err,
+		)
+	}
+
 	return &TbtcChain{
 		baseChain:               baseChain,
 		bridge:                  bridge,
@@ -244,6 +273,7 @@ func newTbtcChain(
 		sortitionPool:           sortitionPool,
 		walletProposalValidator: walletProposalValidator,
 		redemptionWatchtower:    redemptionWatchtower,
+		lightRelay:              lightRelay,
 		sweptDepositsCache:      cache.NewGenericTimeCache[*tbtc.DepositChainRequest](sweptDepositsCachePeriod),
 	}, nil
 }
@@ -1407,6 +1437,11 @@ func (tc *TbtcChain) SubmitRedemptionProofWithReimbursement(
 		TxOutputValue: uint64(mainUTXO.Value),
 	}
 
+	_, err := tc.lightRelay.SetDifficultyFromHeaders(redemptionProof.BitcoinHeaders)
+	if err != nil {
+		return err
+	}
+
 	gasEstimate, err := tc.maintainerProxy.SubmitRedemptionProofGasEstimate(
 		bitcoinTxInfo,
 		redemptionProof,
@@ -1483,6 +1518,11 @@ func (tc *TbtcChain) SubmitDepositSweepProofWithReimbursement(
 		TxHash:        mainUTXO.Outpoint.TransactionHash,
 		TxOutputIndex: mainUTXO.Outpoint.OutputIndex,
 		TxOutputValue: uint64(mainUTXO.Value),
+	}
+
+	_, err := tc.lightRelay.SetDifficultyFromHeaders(sweepProof.BitcoinHeaders)
+	if err != nil {
+		return err
 	}
 
 	gasEstimate, err := tc.maintainerProxy.SubmitDepositSweepProofGasEstimate(
@@ -1814,6 +1854,11 @@ func (tc *TbtcChain) SubmitMovingFundsProofWithReimbursement(
 		TxOutputValue: uint64(mainUTXO.Value),
 	}
 
+	_, err := tc.lightRelay.SetDifficultyFromHeaders(movingFundsProof.BitcoinHeaders)
+	if err != nil {
+		return err
+	}
+
 	gasEstimate, err := tc.maintainerProxy.SubmitMovingFundsProofGasEstimate(
 		bitcoinTxInfo,
 		movingFundsProof,
@@ -1865,6 +1910,11 @@ func (tc *TbtcChain) SubmitMovedFundsSweepProofWithReimbursement(
 		TxHash:        mainUTXO.Outpoint.TransactionHash,
 		TxOutputIndex: mainUTXO.Outpoint.OutputIndex,
 		TxOutputValue: uint64(mainUTXO.Value),
+	}
+
+	_, err := tc.lightRelay.SetDifficultyFromHeaders(movedFundsSweepProof.BitcoinHeaders)
+	if err != nil {
+		return err
 	}
 
 	gasEstimate, err := tc.maintainerProxy.SubmitMovedFundsSweepProofGasEstimate(
