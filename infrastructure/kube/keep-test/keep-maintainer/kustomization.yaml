@@ -5,6 +5,8 @@ namespace: default
 
 commonLabels:
   app: keep-maintainer
+  # The current setup runs spv and walletCoordination modules as a workaround
+  # for reasons mentioned in `patches` property below.
   type: all
   network: goerli
 
