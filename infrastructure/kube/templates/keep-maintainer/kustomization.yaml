@@ -10,7 +10,6 @@ configMapGenerator:
     literals:
       - log-level=info
       - log-format=json
-      - network=mainnet
 
 generatorOptions:
   disableNameSuffixHash: true
