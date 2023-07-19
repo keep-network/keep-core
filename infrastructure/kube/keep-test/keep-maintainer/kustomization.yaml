@@ -1,0 +1,52 @@
+resources:
+  - ../../templates/keep-maintainer
+
+namespace: default
+
+commonLabels:
+  app: keep-maintainer
+  type: all
+  network: goerli
+
+images:
+  - name: keep-maintainer
+    newName: gcr.io/keep-test-f3e0/keep-client
+    newTag: latest
+
+configMapGenerator:
+  - name: keep-maintainer-config
+    behavior: merge
+    literals:
+      - network=testnet
+      - electrum-api-url=ws://electrumx.bitcoin-testnet:8080
+    files:
+      - .secret/keep-maintainer-keyfile
+
+secretGenerator:
+  - name: keep-maintainer-eth-account-password
+    files:
+      - .secret/keep-maintainer-password
+
+patches:
+  # Testnet's maintainer shouldn't run `--bitcoinDifficulty` module, as the testnet
+  # uses modified version of LightRelay contract (GoerliLightRelay) that doesn't
+  # require the bitcoin difficulty to be submitted. This patch defines manually
+  # which modules should be started.
+  - target:
+      kind: StatefulSet
+      name: keep-maintainer
+    patch: |-
+      - op: add
+        path: /spec/template/spec/containers/0/args/-
+        value: --spv
+      - op: add
+        path: /spec/template/spec/containers/0/args/-
+        value: --walletCoordination
+      - op: replace
+        path: /spec/template/spec/containers/0/env/0/valueFrom/secretKeyRef/name
+        value: eth-network-goerli
+
+generatorOptions:
+  disableNameSuffixHash: true
+  annotations:
+    note: generated
