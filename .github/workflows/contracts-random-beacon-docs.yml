@@ -45,7 +45,7 @@ jobs:
     uses: keep-network/ci/.github/workflows/reusable-solidity-docs.yml@main
     with:
       projectDir: /solidity/random-beacon
-      postProcessingCommand: find ./generated-docs -name "*.md" -type f -exec sed -i '5i {% hint style="warning" %}\nThis file documents a code which is not yet deployed to Mainnet.\n{% endhint %}\n' {} +
+      postProcessingCommand: find ./generated-docs -name "*.md" -type f -exec sed -i '5i {% hint style="warning" %}\nThis file documents a contract which is not yet deployed to Mainnet.\n{% endhint %}\n' {} +
       publish: false
       addTOC: false
       commentPR: true
@@ -65,7 +65,7 @@ jobs:
     uses: keep-network/ci/.github/workflows/reusable-solidity-docs.yml@main
     with:
       projectDir: /solidity/random-beacon
-      postProcessingCommand: find ./generated-docs -name "*.md" -type f -exec sed -i '5i {% hint style="warning" %}\nThis file documents a code which is not yet deployed to Mainnet.\n{% endhint %}\n' {} +
+      postProcessingCommand: find ./generated-docs -name "*.md" -type f -exec sed -i '5i {% hint style="warning" %}\nThis file documents a contract which is not yet deployed to Mainnet.\n{% endhint %}\n' {} +
       publish: true
       addTOC: false
       verifyCommits: true
