@@ -77,12 +77,10 @@ func initGlobalConfigFlags(cmd *cobra.Command, configFilePath *string) {
 // start command to run the client against test networks. Only one flag
 // from this set is allowed.
 func initGlobalNetworkFlags(cmd *cobra.Command) {
-	// TODO: Remove the mainnet flag.
-	// DEPRECATED
 	cmd.PersistentFlags().Bool(
 		network.Mainnet.String(),
 		false,
-		"Mainnet network (DEPRECATED)",
+		"Mainnet network",
 	)
 
 	cmd.PersistentFlags().Bool(

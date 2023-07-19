@@ -44,7 +44,7 @@ Flags:
 Global Flags:
   -c, --config string   Path to the configuration file. Supported formats: TOML, YAML, JSON.
       --developer       Developer network
-      --mainnet         Mainnet network (DEPRECATED)
+      --mainnet         Mainnet network
       --testnet         Testnet network
 
 Environment variables:
