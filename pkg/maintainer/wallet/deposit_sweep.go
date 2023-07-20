@@ -64,6 +64,7 @@ type Deposit struct {
 	DepositReference
 
 	WalletPublicKeyHash [20]byte
+	ScriptType          bitcoin.ScriptType
 	DepositKey          string
 	IsSwept             bool
 	AmountBtc           float64
@@ -116,6 +117,19 @@ func FindDeposits(
 
 		logger.Debugf("getting details of deposit %d/%d", i+1, len(depositRevealedEvents))
 
+		depositTransaction, err := btcChain.GetTransaction(
+			event.FundingTxHash,
+		)
+		if err != nil {
+			return result, fmt.Errorf(
+				"failed to get deposit transaction: [%w]",
+				err,
+			)
+		}
+
+		publicKeyScript := depositTransaction.Outputs[event.FundingOutputIndex].PublicKeyScript
+		scriptType := bitcoin.GetScriptType(publicKeyScript)
+
 		depositKey := chain.BuildDepositKey(event.FundingTxHash, event.FundingOutputIndex)
 
 		depositRequest, found, err := chain.GetDepositRequest(
@@ -167,6 +181,7 @@ func FindDeposits(
 					RevealBlock:        event.BlockNumber,
 				},
 				WalletPublicKeyHash: event.WalletPublicKeyHash,
+				ScriptType:          scriptType,
 				DepositKey:          hexutils.Encode(depositKey.Bytes()),
 				IsSwept:             isSwept,
 				AmountBtc:           convertSatToBtc(float64(depositRequest.Amount)),

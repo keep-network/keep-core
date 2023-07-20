@@ -20,6 +20,21 @@ const (
 	P2WSHScript
 )
 
+func (st ScriptType) String() string {
+	switch st {
+	case P2PKHScript:
+		return "P2PKH"
+	case P2WPKHScript:
+		return "P2WPKH"
+	case P2SHScript:
+		return "P2SH"
+	case P2WSHScript:
+		return "P2WSH"
+	default:
+		return "NonStandard"
+	}
+}
+
 // Script represents an arbitrary Bitcoin script, NOT prepended with the
 // byte-length of the script
 type Script []byte
