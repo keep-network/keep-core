@@ -1,11 +1,13 @@
 package test
 
 import (
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	walletmtr "github.com/keep-network/keep-core/pkg/maintainer/wallet"
 	"math/big"
 	"time"
+
+	walletmtr "github.com/keep-network/keep-core/pkg/maintainer/wallet"
 
 	"github.com/keep-network/keep-core/internal/hexutils"
 	"github.com/keep-network/keep-core/pkg/bitcoin"
@@ -27,6 +29,7 @@ func (dsts *FindDepositsToSweepTestScenario) UnmarshalJSON(data []byte) error {
 			FundingTxHash          string
 			FundingOutputIndex     uint32
 			FundingTxConfirmations uint
+			FundingTxHex           string
 			WalletPublicKeyHash    string
 			RevealBlockNumber      uint64
 			SweptAt                int64
@@ -37,6 +40,25 @@ func (dsts *FindDepositsToSweepTestScenario) UnmarshalJSON(data []byte) error {
 			FundingOutputIndex uint32
 			RevealBlockNumber  uint64
 		}
+	}
+
+	bytesFromHex := func(str string) []byte {
+		value, err := hex.DecodeString(str)
+		if err != nil {
+			panic(err)
+		}
+
+		return value
+	}
+
+	txFromHex := func(str string) *bitcoin.Transaction {
+		transaction := new(bitcoin.Transaction)
+		err := transaction.Deserialize(bytesFromHex(str))
+		if err != nil {
+			panic(err)
+		}
+
+		return transaction
 	}
 
 	var unmarshaled findDepositsToSweepTestScenario
@@ -84,6 +106,7 @@ func (dsts *FindDepositsToSweepTestScenario) UnmarshalJSON(data []byte) error {
 		d.FundingTxHash = fundingTxHash
 		d.FundingOutputIndex = deposit.FundingOutputIndex
 		d.FundingTxConfirmations = deposit.FundingTxConfirmations
+		d.FundingTx = txFromHex(deposit.FundingTxHex)
 		d.RevealBlockNumber = deposit.RevealBlockNumber
 		d.SweptAt = time.Unix(deposit.SweptAt, 0)
 

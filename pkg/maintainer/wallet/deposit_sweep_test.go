@@ -51,6 +51,7 @@ func TestFindDepositsToSweep(t *testing.T) {
 					deposit.FundingOutputIndex,
 					&tbtc.DepositChainRequest{SweptAt: deposit.SweptAt},
 				)
+				btcChain.SetTransaction(deposit.FundingTxHash, deposit.FundingTx)
 				btcChain.SetTransactionConfirmations(
 					deposit.FundingTxHash,
 					deposit.FundingTxConfirmations,

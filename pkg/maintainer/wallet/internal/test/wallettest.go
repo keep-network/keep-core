@@ -3,13 +3,14 @@ package test
 import (
 	"encoding/json"
 	"fmt"
-	walletmtr "github.com/keep-network/keep-core/pkg/maintainer/wallet"
 	"io/fs"
 	"io/ioutil"
 	"path/filepath"
 	"runtime"
 	"strings"
 	"time"
+
+	walletmtr "github.com/keep-network/keep-core/pkg/maintainer/wallet"
 
 	"github.com/keep-network/keep-core/pkg/bitcoin"
 	"github.com/keep-network/keep-core/pkg/tbtc"
@@ -33,6 +34,7 @@ type Deposit struct {
 	FundingTxHash          bitcoin.Hash
 	FundingOutputIndex     uint32
 	FundingTxConfirmations uint
+	FundingTx              *bitcoin.Transaction
 
 	WalletPublicKeyHash [20]byte
 
