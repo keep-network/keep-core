@@ -71,6 +71,8 @@ type Announcer struct {
 	membershipValidator *group.MembershipValidator
 }
 
+// RegisterUnmarshaller initializes the given broadcast channel to be able to
+// handle announcement messages by registering the required unmarshaller.
 func RegisterUnmarshaller(channel net.BroadcastChannel) {
 	channel.SetUnmarshaler(func() net.TaggedUnmarshaler {
 		return &announcementMessage{}

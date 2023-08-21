@@ -241,8 +241,7 @@ func (n *node) getSigningExecutor(
 		return nil, false, fmt.Errorf("failed to get broadcast channel: [%v]", err)
 	}
 
-	signing.RegisterUnmarshallers(broadcastChannel)
-	announcer.RegisterUnmarshaller(broadcastChannel)
+	registerSigningUnmarshallers(broadcastChannel)
 
 	membershipValidator := group.NewMembershipValidator(
 		executorLogger,
@@ -600,4 +599,15 @@ func withCancelOnBlock(
 	}()
 
 	return blockCtx, cancelBlockCtx
+}
+
+// registerSigningUnmarshallers initializes the given broadcast channel to be
+// able to perform the signing protocol interactions by registering all the
+// required protocol unmarshallers.
+func registerSigningUnmarshallers(channel net.BroadcastChannel) {
+	signing.RegisterUnmarshallers(channel)
+	announcer.RegisterUnmarshaller(channel)
+	channel.SetUnmarshaler(func() net.TaggedUnmarshaler {
+		return &signingDoneMessage{}
+	})
 }
