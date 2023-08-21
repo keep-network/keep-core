@@ -71,6 +71,12 @@ type Announcer struct {
 	membershipValidator *group.MembershipValidator
 }
 
+func RegisterUnmarshaller(channel net.BroadcastChannel) {
+	channel.SetUnmarshaler(func() net.TaggedUnmarshaler {
+		return &announcementMessage{}
+	})
+}
+
 // New creates a new instance of the Announcer. It expects a unique protocol
 // identifier, a broadcast channel configured to mediate between group members,
 // and a membership validator configured to validate the group membership of
@@ -80,10 +86,6 @@ func New(
 	broadcastChannel net.BroadcastChannel,
 	membershipValidator *group.MembershipValidator,
 ) *Announcer {
-	broadcastChannel.SetUnmarshaler(func() net.TaggedUnmarshaler {
-		return &announcementMessage{}
-	})
-
 	return &Announcer{
 		protocolID:          protocolID,
 		broadcastChannel:    broadcastChannel,

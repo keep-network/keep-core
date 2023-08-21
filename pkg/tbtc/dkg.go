@@ -259,6 +259,8 @@ func (de *dkgExecutor) generateSigningGroup(
 		return
 	}
 
+	announcer.RegisterUnmarshaller(broadcastChannel)
+
 	dkgParameters, err := de.chain.DKGParameters()
 	if err != nil {
 		dkgLogger.Errorf("cannot get DKG parameters: [%v]", err)
