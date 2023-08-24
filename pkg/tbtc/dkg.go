@@ -111,7 +111,7 @@ func (de *dkgExecutor) preParamsCount() int {
 // the result to the chain. The execution can be delayed by an arbitrary number
 // of blocks using the delayBlocks argument. This allows confirming the state
 // on-chain - e.g. wait for the required number of confirming blocks - before
-//executing the off-chain action.
+// executing the off-chain action.
 func (de *dkgExecutor) executeDkgIfEligible(
 	seed *big.Int,
 	startBlock uint64,
@@ -162,12 +162,12 @@ func (de *dkgExecutor) executeDkgIfEligible(
 
 // checkEligibility performs on-chain group selection and returns two pieces
 // of information:
-// - Indexes of members selected to the signing group and controlled by this
-//   operator. The indexes are in range [1, `groupSize`]. The slice is nil if
-//   none of the selected signing group members is controlled by this operator.
-// - Group selection result holding chain.OperatorID and chain.Address for
-//   operators selected to the signing group. There are always `groupSize`
-//   selected operators.
+//   - Indexes of members selected to the signing group and controlled by this
+//     operator. The indexes are in range [1, `groupSize`]. The slice is nil if
+//     none of the selected signing group members is controlled by this operator.
+//   - Group selection result holding chain.OperatorID and chain.Address for
+//     operators selected to the signing group. There are always `groupSize`
+//     selected operators.
 func (de *dkgExecutor) checkEligibility(
 	dkgLogger log.StandardLogger,
 ) ([]uint8, *GroupSelectionResult, error) {
@@ -218,6 +218,7 @@ func (de *dkgExecutor) setupBroadcastChannel(
 	}
 
 	dkg.RegisterUnmarshallers(broadcastChannel)
+	announcer.RegisterUnmarshaller(broadcastChannel)
 
 	err = broadcastChannel.SetFilter(membershipValidator.IsInGroup)
 	if err != nil {
@@ -258,8 +259,6 @@ func (de *dkgExecutor) generateSigningGroup(
 		dkgLogger.Errorf("could not set up a broadcast channel: [%v]", err)
 		return
 	}
-
-	announcer.RegisterUnmarshaller(broadcastChannel)
 
 	dkgParameters, err := de.chain.DKGParameters()
 	if err != nil {
