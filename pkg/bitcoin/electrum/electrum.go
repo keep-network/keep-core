@@ -771,9 +771,9 @@ func requestWithRetry[K interface{}](
 			requestCtx, requestCancel := context.WithTimeout(ctx, c.config.RequestTimeout)
 			defer requestCancel()
 
-			c.clientMutex.RLock()
+			c.clientMutex.Lock()
 			r, err := requestFn(requestCtx, c.client)
-			c.clientMutex.RUnlock()
+			c.clientMutex.Unlock()
 
 			if err != nil {
 				return fmt.Errorf("request failed: [%w]", err)
