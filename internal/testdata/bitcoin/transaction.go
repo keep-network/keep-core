@@ -290,13 +290,13 @@ var TransactionsForPublicKeyHash = map[bitcoin.Network]struct {
 		},
 	},
 	bitcoin.Mainnet: {
-		PublicKeyHash: decodeString("b0ba76edfe18e81365bddd1d46511a57a4ff8dce"),
+		PublicKeyHash: decodeString("1ba8b9d7d9ebe90c932bf91df58db67e87f686de"),
 		Transactions: []bitcoin.Hash{
-			hashFromString("ea0b6862d4934e9910cb74984093267989bab7c61d508337bbb976165eb22553"),
-			hashFromString("78304889f2363d546dfe4af788e405464dd67fc1a057d7a6d45a8cf617f5f773"),
-			hashFromString("c11feea0f8b9e256e0a70ad58f88c7e3800d8ffbfb85edf7169629584a97a7ab"),
-			hashFromString("5cebf53de9cfde661e1193faf540727d4619399a289283e7b009f6953e49e769"),
-			hashFromString("4be52bc1873bcc9a3195d4075161cf686ba3856977cedd2fc43f13491755ff59"),
+			hashFromString("dbb67639fd5c2a6a1b2c7ea8e40bd392173e0a79563f4b2a6f5f514959f232eb"),
+			hashFromString("ae58884be48e1dc853ef31223b082e3edae1a49ccae1394406a318a7f8502f65"),
+			hashFromString("568e2bcad771b45f8a6851b8e9a4f65faaf56e9781cf07af73f4403697394909"),
+			hashFromString("7501fecc2584ac5aa7a67979098ecf8c46a6e9caf49b1ff0b228f89a45fe5d3a"),
+			hashFromString("58469686da18953e52d8f033b217890416a173a4da5df04b52d29e8feb55850d"),
 		},
 	},
 }
