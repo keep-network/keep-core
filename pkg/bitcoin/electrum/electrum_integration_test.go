@@ -64,7 +64,7 @@ var testConfigs = map[string]testConfig{
 	},
 	"fulcrum tcp": {
 		clientConfig: electrum.Config{
-			URL:                 "tcp://blackie.c3-soft.com:57005",
+			URL:                 "tcp://v22019051929289916.bestsrv.de:50001",
 			RequestTimeout:      requestTimeout * 2,
 			RequestRetryTimeout: requestRetryTimeout * 2,
 		},
