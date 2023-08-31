@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"math"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
@@ -230,6 +231,43 @@ func TestGetTransactionConfirmations_Negative_Integration(t *testing.T) {
 			err,
 		)
 	})
+}
+
+func TestGetLatestBlockHeightConcurrently_Integration(t *testing.T) {
+	goroutines := 20
+
+	for testName, testConfig := range testConfigs {
+		t.Run(testName+"_get", func(t *testing.T) {
+			electrum, cancelCtx := newTestConnection(t, testConfig.clientConfig)
+			defer cancelCtx()
+
+			var wg sync.WaitGroup
+
+			for i := 0; i < goroutines; i++ {
+				wg.Add(1)
+
+				go func() {
+					result, err := electrum.GetLatestBlockHeight()
+
+					if err != nil {
+						t.Fatal(err)
+					}
+
+					if result == 0 {
+						t.Errorf(
+							"returned block height is 0",
+						)
+					}
+
+					wg.Done()
+				}()
+			}
+
+			wg.Wait()
+		})
+
+		// Passed if no "panic: concurrent write to websocket connection"
+	}
 }
 
 func TestGetLatestBlockHeight_Integration(t *testing.T) {
