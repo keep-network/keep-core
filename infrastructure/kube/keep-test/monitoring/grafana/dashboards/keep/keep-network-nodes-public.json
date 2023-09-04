@@ -25,6 +25,7 @@
     "editable": true,
     "fiscalYearStartMonth": 0,
     "graphTooltip": 0,
+    "id": 5,
     "links": [],
     "liveNow": false,
     "panels": [
@@ -82,7 +83,7 @@
                 },
                 "textMode": "auto"
             },
-            "pluginVersion": "9.1.8",
+            "pluginVersion": "9.2.5",
             "targets": [
                 {
                     "datasource": {
@@ -385,7 +386,32 @@
                         ]
                     }
                 },
-                "overrides": []
+                "overrides": [
+                    {
+                        "__systemRef": "hideSeriesFrom",
+                        "matcher": {
+                            "id": "byNames",
+                            "options": {
+                                "mode": "exclude",
+                                "names": [
+                                    "0x1F91c3e91745aB09cc8e619ceD8Fa79B602e3649"
+                                ],
+                                "prefix": "All except:",
+                                "readOnly": true
+                            }
+                        },
+                        "properties": [
+                            {
+                                "id": "custom.hideFrom",
+                                "value": {
+                                    "legend": false,
+                                    "tooltip": false,
+                                    "viz": true
+                                }
+                            }
+                        ]
+                    }
+                ]
             },
             "gridPos": {
                 "h": 20,
@@ -486,7 +512,7 @@
                     }
                 ]
             },
-            "pluginVersion": "9.1.8",
+            "pluginVersion": "9.2.5",
             "targets": [
                 {
                     "datasource": {
@@ -593,6 +619,139 @@
                 "type": "prometheus",
                 "uid": "P09205B1DD12FB1C6"
             },
+            "description": "Provides information whether the node is connected to the Bitcoin network",
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "palette-classic"
+                    },
+                    "custom": {
+                        "axisCenteredZero": false,
+                        "axisColorMode": "text",
+                        "axisLabel": "",
+                        "axisPlacement": "auto",
+                        "barAlignment": 0,
+                        "drawStyle": "line",
+                        "fillOpacity": 0,
+                        "gradientMode": "none",
+                        "hideFrom": {
+                            "legend": false,
+                            "tooltip": false,
+                            "viz": false
+                        },
+                        "lineInterpolation": "linear",
+                        "lineStyle": {
+                            "fill": "solid"
+                        },
+                        "lineWidth": 1,
+                        "pointSize": 5,
+                        "scaleDistribution": {
+                            "type": "linear"
+                        },
+                        "showPoints": "auto",
+                        "spanNulls": false,
+                        "stacking": {
+                            "group": "A",
+                            "mode": "none"
+                        },
+                        "thresholdsStyle": {
+                            "mode": "off"
+                        }
+                    },
+                    "mappings": [],
+                    "thresholds": {
+                        "mode": "percentage",
+                        "steps": [
+                            {
+                                "color": "red",
+                                "value": null
+                            },
+                            {
+                                "color": "super-light-yellow",
+                                "value": 50
+                            },
+                            {
+                                "color": "super-light-green",
+                                "value": 80
+                            }
+                        ]
+                    }
+                },
+                "overrides": [
+                    {
+                        "__systemRef": "hideSeriesFrom",
+                        "matcher": {
+                            "id": "byNames",
+                            "options": {
+                                "mode": "exclude",
+                                "names": [
+                                    "0xcAB2a402bAc470686d14956FB310D51BbEF9fA31"
+                                ],
+                                "prefix": "All except:",
+                                "readOnly": true
+                            }
+                        },
+                        "properties": [
+                            {
+                                "id": "custom.hideFrom",
+                                "value": {
+                                    "legend": false,
+                                    "tooltip": false,
+                                    "viz": true
+                                }
+                            }
+                        ]
+                    }
+                ]
+            },
+            "gridPos": {
+                "h": 20,
+                "w": 13,
+                "x": 11,
+                "y": 36
+            },
+            "id": 11,
+            "interval": "1m",
+            "options": {
+                "legend": {
+                    "calcs": [
+                        "last"
+                    ],
+                    "displayMode": "table",
+                    "placement": "right",
+                    "showLegend": true,
+                    "sortBy": "Last",
+                    "sortDesc": true
+                },
+                "tooltip": {
+                    "mode": "multi",
+                    "sort": "none"
+                }
+            },
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "P09205B1DD12FB1C6"
+                    },
+                    "editorMode": "builder",
+                    "expr": "min by(chain_address) (btc_connectivity{job=\"keep-discovered-nodes\"})",
+                    "format": "heatmap",
+                    "hide": false,
+                    "interval": "",
+                    "legendFormat": "{{chain_address}}",
+                    "range": true,
+                    "refId": "Discovered Keep Nodes"
+                }
+            ],
+            "title": "BTC Connectivity",
+            "type": "timeseries"
+        },
+        {
+            "datasource": {
+                "type": "prometheus",
+                "uid": "P09205B1DD12FB1C6"
+            },
             "fieldConfig": {
                 "defaults": {
                     "color": {
@@ -608,8 +767,7 @@
                         "mode": "absolute",
                         "steps": [
                             {
-                                "color": "green",
-                                "value": null
+                                "color": "green"
                             }
                         ]
                     }
@@ -620,7 +778,7 @@
                 "h": 25,
                 "w": 13,
                 "x": 11,
-                "y": 36
+                "y": 56
             },
             "id": 6,
             "options": {
@@ -655,83 +813,6 @@
             ],
             "title": "Uptime (experimental)",
             "type": "state-timeline"
-        },
-        {
-            "datasource": {
-                "type": "prometheus",
-                "uid": "P09205B1DD12FB1C6"
-            },
-            "description": "A number of running instances for each operator address.",
-            "fieldConfig": {
-                "defaults": {
-                    "color": {
-                        "mode": "thresholds"
-                    },
-                    "custom": {
-                        "fillOpacity": 60,
-                        "lineWidth": 0,
-                        "spanNulls": false
-                    },
-                    "mappings": [],
-                    "min": 0,
-                    "thresholds": {
-                        "mode": "absolute",
-                        "steps": [
-                            {
-                                "color": "super-light-orange",
-                                "value": null
-                            },
-                            {
-                                "color": "super-light-green",
-                                "value": 1
-                            },
-                            {
-                                "color": "super-light-red",
-                                "value": 2
-                            }
-                        ]
-                    }
-                },
-                "overrides": []
-            },
-            "gridPos": {
-                "h": 20,
-                "w": 11,
-                "x": 0,
-                "y": 61
-            },
-            "id": 12,
-            "options": {
-                "alignValue": "center",
-                "legend": {
-                    "displayMode": "list",
-                    "placement": "bottom",
-                    "showLegend": true
-                },
-                "mergeValues": true,
-                "rowHeight": 0.9,
-                "showValue": "auto",
-                "tooltip": {
-                    "mode": "single",
-                    "sort": "none"
-                }
-            },
-            "pluginVersion": "9.1.2",
-            "targets": [
-                {
-                    "datasource": {
-                        "type": "prometheus",
-                        "uid": "P09205B1DD12FB1C6"
-                    },
-                    "editorMode": "builder",
-                    "expr": "count by(chain_address) (up{job=\"keep-discovered-nodes\"})",
-                    "legendFormat": "__auto",
-                    "range": true,
-                    "refId": "A"
-                }
-            ],
-            "title": "Node Instances",
-            "type": "state-timeline"
         }
     ],
     "refresh": false,
@@ -764,8 +845,8 @@
         ]
     },
     "timezone": "",
-    "title": "Keep Network Nodes Public",
+    "title": "Keep Nodes (Public)",
     "uid": "hhDyYDI4z",
-    "version": 11,
+    "version": 18,
     "weekStart": ""
 }
