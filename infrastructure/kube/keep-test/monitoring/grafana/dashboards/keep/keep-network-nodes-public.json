@@ -277,7 +277,32 @@
                         ]
                     }
                 },
-                "overrides": []
+                "overrides": [
+                    {
+                        "__systemRef": "hideSeriesFrom",
+                        "matcher": {
+                            "id": "byNames",
+                            "options": {
+                                "mode": "exclude",
+                                "names": [
+                                    "0xcAB2a402bAc470686d14956FB310D51BbEF9fA31"
+                                ],
+                                "prefix": "All except:",
+                                "readOnly": true
+                            }
+                        },
+                        "properties": [
+                            {
+                                "id": "custom.hideFrom",
+                                "value": {
+                                    "legend": false,
+                                    "tooltip": false,
+                                    "viz": true
+                                }
+                            }
+                        ]
+                    }
+                ]
             },
             "gridPos": {
                 "h": 28,
@@ -753,6 +778,140 @@
                 "type": "prometheus",
                 "uid": "P09205B1DD12FB1C6"
             },
+            "description": "Provides information whether the node is connected to the Ethereum network",
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "palette-classic"
+                    },
+                    "custom": {
+                        "axisCenteredZero": false,
+                        "axisColorMode": "text",
+                        "axisLabel": "",
+                        "axisPlacement": "auto",
+                        "barAlignment": 0,
+                        "drawStyle": "line",
+                        "fillOpacity": 0,
+                        "gradientMode": "none",
+                        "hideFrom": {
+                            "legend": false,
+                            "tooltip": false,
+                            "viz": false
+                        },
+                        "lineInterpolation": "linear",
+                        "lineStyle": {
+                            "fill": "solid"
+                        },
+                        "lineWidth": 1,
+                        "pointSize": 5,
+                        "scaleDistribution": {
+                            "type": "linear"
+                        },
+                        "showPoints": "auto",
+                        "spanNulls": false,
+                        "stacking": {
+                            "group": "A",
+                            "mode": "none"
+                        },
+                        "thresholdsStyle": {
+                            "mode": "off"
+                        }
+                    },
+                    "mappings": [],
+                    "thresholds": {
+                        "mode": "percentage",
+                        "steps": [
+                            {
+                                "color": "red",
+                                "value": null
+                            },
+                            {
+                                "color": "super-light-yellow",
+                                "value": 50
+                            },
+                            {
+                                "color": "super-light-green",
+                                "value": 80
+                            }
+                        ]
+                    },
+                    "unit": "bool"
+                },
+                "overrides": [
+                    {
+                        "__systemRef": "hideSeriesFrom",
+                        "matcher": {
+                            "id": "byNames",
+                            "options": {
+                                "mode": "exclude",
+                                "names": [
+                                    "0x794f8F4F12996632781c7526054c448797acF41b"
+                                ],
+                                "prefix": "All except:",
+                                "readOnly": true
+                            }
+                        },
+                        "properties": [
+                            {
+                                "id": "custom.hideFrom",
+                                "value": {
+                                    "legend": false,
+                                    "tooltip": false,
+                                    "viz": true
+                                }
+                            }
+                        ]
+                    }
+                ]
+            },
+            "gridPos": {
+                "h": 10,
+                "w": 13,
+                "x": 11,
+                "y": 46
+            },
+            "id": 12,
+            "interval": "1m",
+            "options": {
+                "legend": {
+                    "calcs": [
+                        "last"
+                    ],
+                    "displayMode": "table",
+                    "placement": "right",
+                    "showLegend": true,
+                    "sortBy": "Last",
+                    "sortDesc": true
+                },
+                "tooltip": {
+                    "mode": "multi",
+                    "sort": "none"
+                }
+            },
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "P09205B1DD12FB1C6"
+                    },
+                    "editorMode": "builder",
+                    "expr": "min by(chain_address) (eth_connectivity{job=\"keep-discovered-nodes\"})",
+                    "format": "heatmap",
+                    "hide": false,
+                    "interval": "",
+                    "legendFormat": "{{chain_address}}",
+                    "range": true,
+                    "refId": "Discovered Keep Nodes"
+                }
+            ],
+            "title": "ETH Connectivity",
+            "type": "timeseries"
+        },
+        {
+            "datasource": {
+                "type": "prometheus",
+                "uid": "P09205B1DD12FB1C6"
+            },
             "fieldConfig": {
                 "defaults": {
                     "color": {
@@ -780,7 +939,7 @@
                 "h": 25,
                 "w": 13,
                 "x": 11,
-                "y": 46
+                "y": 56
             },
             "id": 6,
             "options": {
@@ -849,6 +1008,6 @@
     "timezone": "",
     "title": "Keep Nodes (Public)",
     "uid": "hhDyYDI4z",
-    "version": 20,
+    "version": 23,
     "weekStart": ""
 }
