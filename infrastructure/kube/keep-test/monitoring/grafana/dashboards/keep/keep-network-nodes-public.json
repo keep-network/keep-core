@@ -394,7 +394,7 @@
                             "options": {
                                 "mode": "exclude",
                                 "names": [
-                                    "0x1F91c3e91745aB09cc8e619ceD8Fa79B602e3649"
+                                    "0xDc7C1b54eB3944454dD19Bd8Ed0299F92A758B0C"
                                 ],
                                 "prefix": "All except:",
                                 "readOnly": true
@@ -675,7 +675,8 @@
                                 "value": 80
                             }
                         ]
-                    }
+                    },
+                    "unit": "bool"
                 },
                 "overrides": [
                     {
@@ -705,7 +706,7 @@
                 ]
             },
             "gridPos": {
-                "h": 20,
+                "h": 10,
                 "w": 13,
                 "x": 11,
                 "y": 36
@@ -767,7 +768,8 @@
                         "mode": "absolute",
                         "steps": [
                             {
-                                "color": "green"
+                                "color": "green",
+                                "value": null
                             }
                         ]
                     }
@@ -778,7 +780,7 @@
                 "h": 25,
                 "w": 13,
                 "x": 11,
-                "y": 56
+                "y": 46
             },
             "id": 6,
             "options": {
@@ -847,6 +849,6 @@
     "timezone": "",
     "title": "Keep Nodes (Public)",
     "uid": "hhDyYDI4z",
-    "version": 18,
+    "version": 20,
     "weekStart": ""
 }
