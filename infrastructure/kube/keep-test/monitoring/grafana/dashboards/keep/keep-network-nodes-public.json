@@ -277,32 +277,7 @@
                         ]
                     }
                 },
-                "overrides": [
-                    {
-                        "__systemRef": "hideSeriesFrom",
-                        "matcher": {
-                            "id": "byNames",
-                            "options": {
-                                "mode": "exclude",
-                                "names": [
-                                    "0xcAB2a402bAc470686d14956FB310D51BbEF9fA31"
-                                ],
-                                "prefix": "All except:",
-                                "readOnly": true
-                            }
-                        },
-                        "properties": [
-                            {
-                                "id": "custom.hideFrom",
-                                "value": {
-                                    "legend": false,
-                                    "tooltip": false,
-                                    "viz": true
-                                }
-                            }
-                        ]
-                    }
-                ]
+                "overrides": []
             },
             "gridPos": {
                 "h": 28,
@@ -683,7 +658,29 @@
                             "mode": "off"
                         }
                     },
-                    "mappings": [],
+                    "mappings": [
+                        {
+                            "options": {
+                                "0": {
+                                    "index": 1,
+                                    "text": "False"
+                                },
+                                "1": {
+                                    "index": 0,
+                                    "text": "True"
+                                },
+                                "N/A": {
+                                    "index": 3,
+                                    "text": "False"
+                                },
+                                "Null": {
+                                    "index": 2,
+                                    "text": "False"
+                                }
+                            },
+                            "type": "value"
+                        }
+                    ],
                     "thresholds": {
                         "mode": "percentage",
                         "steps": [
@@ -817,7 +814,29 @@
                             "mode": "off"
                         }
                     },
-                    "mappings": [],
+                    "mappings": [
+                        {
+                            "options": {
+                                "0": {
+                                    "index": 1,
+                                    "text": "False"
+                                },
+                                "1": {
+                                    "index": 0,
+                                    "text": "True"
+                                },
+                                "N/A": {
+                                    "index": 3,
+                                    "text": "False"
+                                },
+                                "Null": {
+                                    "index": 2,
+                                    "text": "False"
+                                }
+                            },
+                            "type": "value"
+                        }
+                    ],
                     "thresholds": {
                         "mode": "percentage",
                         "steps": [
@@ -1008,6 +1027,6 @@
     "timezone": "",
     "title": "Keep Nodes (Public)",
     "uid": "hhDyYDI4z",
-    "version": 23,
+    "version": 24,
     "weekStart": ""
 }
