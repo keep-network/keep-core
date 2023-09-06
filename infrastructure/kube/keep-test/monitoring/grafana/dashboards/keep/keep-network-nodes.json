@@ -636,7 +636,29 @@
                             "mode": "off"
                         }
                     },
-                    "mappings": [],
+                    "mappings": [
+                        {
+                            "options": {
+                                "0": {
+                                    "index": 1,
+                                    "text": "False"
+                                },
+                                "1": {
+                                    "index": 0,
+                                    "text": "True"
+                                },
+                                "N/A": {
+                                    "index": 2,
+                                    "text": "False"
+                                },
+                                "Null": {
+                                    "index": 3,
+                                    "text": "False"
+                                }
+                            },
+                            "type": "value"
+                        }
+                    ],
                     "thresholds": {
                         "mode": "percentage",
                         "steps": [
@@ -656,32 +678,7 @@
                     },
                     "unit": "bool"
                 },
-                "overrides": [
-                    {
-                        "__systemRef": "hideSeriesFrom",
-                        "matcher": {
-                            "id": "byNames",
-                            "options": {
-                                "mode": "exclude",
-                                "names": [
-                                    "0xcAB2a402bAc470686d14956FB310D51BbEF9fA31"
-                                ],
-                                "prefix": "All except:",
-                                "readOnly": true
-                            }
-                        },
-                        "properties": [
-                            {
-                                "id": "custom.hideFrom",
-                                "value": {
-                                    "legend": false,
-                                    "tooltip": false,
-                                    "viz": true
-                                }
-                            }
-                        ]
-                    }
-                ]
+                "overrides": []
             },
             "gridPos": {
                 "h": 10,
@@ -769,7 +766,29 @@
                             "mode": "off"
                         }
                     },
-                    "mappings": [],
+                    "mappings": [
+                        {
+                            "options": {
+                                "0": {
+                                    "index": 1,
+                                    "text": "False"
+                                },
+                                "1": {
+                                    "index": 0,
+                                    "text": "True"
+                                },
+                                "N/A": {
+                                    "index": 3,
+                                    "text": "False"
+                                },
+                                "Null": {
+                                    "index": 2,
+                                    "text": "False"
+                                }
+                            },
+                            "type": "value"
+                        }
+                    ],
                     "thresholds": {
                         "mode": "percentage",
                         "steps": [
@@ -797,7 +816,7 @@
                             "options": {
                                 "mode": "exclude",
                                 "names": [
-                                    "0x785c5074db6AD52F20338AC472433E7e9306a6B3"
+                                    "0x8e78De834407E863A79a9820688CdA0AedFfAB6a"
                                 ],
                                 "prefix": "All except:",
                                 "readOnly": true
@@ -878,8 +897,7 @@
                         "mode": "absolute",
                         "steps": [
                             {
-                                "color": "green",
-                                "value": null
+                                "color": "green"
                             }
                         ]
                     }
@@ -948,8 +966,7 @@
                         "mode": "absolute",
                         "steps": [
                             {
-                                "color": "super-light-orange",
-                                "value": null
+                                "color": "super-light-orange"
                             },
                             {
                                 "color": "super-light-green",
@@ -1035,6 +1052,6 @@
     "timezone": "",
     "title": "Keep Nodes",
     "uid": "tMgEvbnVk",
-    "version": 23,
+    "version": 33,
     "weekStart": ""
 }
