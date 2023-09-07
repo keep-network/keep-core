@@ -18,6 +18,7 @@ import (
 	"github.com/keep-network/keep-common/pkg/persistence"
 	"github.com/keep-network/keep-core/pkg/generator"
 	"github.com/keep-network/keep-core/pkg/net"
+	"github.com/keep-network/keep-core/pkg/protocol/announcer"
 	"github.com/keep-network/keep-core/pkg/protocol/group"
 	"github.com/keep-network/keep-core/pkg/tecdsa/signing"
 )
@@ -241,6 +242,10 @@ func (n *node) getSigningExecutor(
 	}
 
 	signing.RegisterUnmarshallers(broadcastChannel)
+	announcer.RegisterUnmarshaller(broadcastChannel)
+	broadcastChannel.SetUnmarshaler(func() net.TaggedUnmarshaler {
+		return &signingDoneMessage{}
+	})
 
 	membershipValidator := group.NewMembershipValidator(
 		executorLogger,
