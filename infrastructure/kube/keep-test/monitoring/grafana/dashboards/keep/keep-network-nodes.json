@@ -83,7 +83,7 @@
                 },
                 "textMode": "auto"
             },
-            "pluginVersion": "9.1.8",
+            "pluginVersion": "9.2.5",
             "targets": [
                 {
                     "datasource": {
@@ -92,7 +92,7 @@
                     },
                     "editorMode": "builder",
                     "exemplar": false,
-                    "expr": "sum by(job) (sum by(chain_address) (up{job=\"$keepNodesGroup\"}))",
+                    "expr": "sum by(job) (sum by(chain_address) (up{job=\"keep-discovered-nodes\"}))",
                     "format": "time_series",
                     "instant": false,
                     "legendFormat": "__auto",
@@ -200,7 +200,7 @@
                     },
                     "editorMode": "builder",
                     "exemplar": false,
-                    "expr": "min by(chain_address) (connected_bootstrap_count{job=\"$keepNodesGroup\"})",
+                    "expr": "min by(chain_address) (connected_bootstrap_count{job=\"keep-discovered-nodes\"})",
                     "format": "time_series",
                     "hide": false,
                     "instant": false,
@@ -314,7 +314,7 @@
                     },
                     "editorMode": "builder",
                     "exemplar": false,
-                    "expr": "min by(chain_address) (tbtc_pre_params_count{job=\"$keepNodesGroup\"})",
+                    "expr": "min by(chain_address) (tbtc_pre_params_count{job=\"keep-discovered-nodes\"})",
                     "format": "time_series",
                     "hide": false,
                     "instant": false,
@@ -422,7 +422,7 @@
                         "uid": "P09205B1DD12FB1C6"
                     },
                     "editorMode": "builder",
-                    "expr": "min by(chain_address) (connected_peers_count{job=\"$keepNodesGroup\"})",
+                    "expr": "min by(chain_address) (connected_peers_count{job=\"keep-discovered-nodes\"})",
                     "hide": false,
                     "interval": "",
                     "legendFormat": "{{chain_address}}",
@@ -490,7 +490,7 @@
                     }
                 ]
             },
-            "pluginVersion": "9.1.8",
+            "pluginVersion": "9.2.5",
             "targets": [
                 {
                     "datasource": {
@@ -499,7 +499,7 @@
                     },
                     "editorMode": "builder",
                     "exemplar": false,
-                    "expr": "up{job=\"$keepNodesGroup\"}",
+                    "expr": "up{job=\"keep-discovered-nodes\"}",
                     "format": "table",
                     "hide": false,
                     "instant": true,
@@ -515,7 +515,7 @@
                     },
                     "editorMode": "builder",
                     "exemplar": false,
-                    "expr": "client_info{job=\"$keepNodesGroup\"}",
+                    "expr": "client_info{job=\"keep-discovered-nodes\"}",
                     "format": "table",
                     "hide": false,
                     "instant": true,
@@ -597,6 +597,291 @@
                 "type": "prometheus",
                 "uid": "P09205B1DD12FB1C6"
             },
+            "description": "Provides information whether the node is connected to the Bitcoin network",
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "palette-classic"
+                    },
+                    "custom": {
+                        "axisCenteredZero": false,
+                        "axisColorMode": "text",
+                        "axisLabel": "",
+                        "axisPlacement": "auto",
+                        "barAlignment": 0,
+                        "drawStyle": "line",
+                        "fillOpacity": 0,
+                        "gradientMode": "none",
+                        "hideFrom": {
+                            "legend": false,
+                            "tooltip": false,
+                            "viz": false
+                        },
+                        "lineInterpolation": "linear",
+                        "lineStyle": {
+                            "fill": "solid"
+                        },
+                        "lineWidth": 1,
+                        "pointSize": 5,
+                        "scaleDistribution": {
+                            "type": "linear"
+                        },
+                        "showPoints": "auto",
+                        "spanNulls": false,
+                        "stacking": {
+                            "group": "A",
+                            "mode": "none"
+                        },
+                        "thresholdsStyle": {
+                            "mode": "off"
+                        }
+                    },
+                    "mappings": [
+                        {
+                            "options": {
+                                "0": {
+                                    "index": 1,
+                                    "text": "False"
+                                },
+                                "1": {
+                                    "index": 0,
+                                    "text": "True"
+                                },
+                                "N/A": {
+                                    "index": 2,
+                                    "text": "False"
+                                },
+                                "Null": {
+                                    "index": 3,
+                                    "text": "False"
+                                }
+                            },
+                            "type": "value"
+                        }
+                    ],
+                    "thresholds": {
+                        "mode": "percentage",
+                        "steps": [
+                            {
+                                "color": "red",
+                                "value": null
+                            },
+                            {
+                                "color": "super-light-yellow",
+                                "value": 50
+                            },
+                            {
+                                "color": "super-light-green",
+                                "value": 80
+                            }
+                        ]
+                    },
+                    "unit": "bool"
+                },
+                "overrides": []
+            },
+            "gridPos": {
+                "h": 10,
+                "w": 13,
+                "x": 11,
+                "y": 36
+            },
+            "id": 13,
+            "interval": "1m",
+            "options": {
+                "legend": {
+                    "calcs": [
+                        "last"
+                    ],
+                    "displayMode": "table",
+                    "placement": "right",
+                    "showLegend": true,
+                    "sortBy": "Last",
+                    "sortDesc": true
+                },
+                "tooltip": {
+                    "mode": "multi",
+                    "sort": "none"
+                }
+            },
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "P09205B1DD12FB1C6"
+                    },
+                    "editorMode": "builder",
+                    "expr": "min by(chain_address) (btc_connectivity{job=\"keep-discovered-nodes\"})",
+                    "hide": false,
+                    "interval": "",
+                    "legendFormat": "{{chain_address}}",
+                    "range": true,
+                    "refId": "Discovered Keep Nodes"
+                }
+            ],
+            "title": "BTC Connectivity",
+            "type": "timeseries"
+        },
+        {
+            "datasource": {
+                "type": "prometheus",
+                "uid": "P09205B1DD12FB1C6"
+            },
+            "description": "Provides information whether the node is connected to the Ethereum network",
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "palette-classic"
+                    },
+                    "custom": {
+                        "axisCenteredZero": false,
+                        "axisColorMode": "text",
+                        "axisLabel": "",
+                        "axisPlacement": "auto",
+                        "barAlignment": 0,
+                        "drawStyle": "line",
+                        "fillOpacity": 0,
+                        "gradientMode": "none",
+                        "hideFrom": {
+                            "legend": false,
+                            "tooltip": false,
+                            "viz": false
+                        },
+                        "lineInterpolation": "linear",
+                        "lineStyle": {
+                            "fill": "solid"
+                        },
+                        "lineWidth": 1,
+                        "pointSize": 5,
+                        "scaleDistribution": {
+                            "type": "linear"
+                        },
+                        "showPoints": "auto",
+                        "spanNulls": false,
+                        "stacking": {
+                            "group": "A",
+                            "mode": "none"
+                        },
+                        "thresholdsStyle": {
+                            "mode": "off"
+                        }
+                    },
+                    "mappings": [
+                        {
+                            "options": {
+                                "0": {
+                                    "index": 1,
+                                    "text": "False"
+                                },
+                                "1": {
+                                    "index": 0,
+                                    "text": "True"
+                                },
+                                "N/A": {
+                                    "index": 3,
+                                    "text": "False"
+                                },
+                                "Null": {
+                                    "index": 2,
+                                    "text": "False"
+                                }
+                            },
+                            "type": "value"
+                        }
+                    ],
+                    "thresholds": {
+                        "mode": "percentage",
+                        "steps": [
+                            {
+                                "color": "red",
+                                "value": null
+                            },
+                            {
+                                "color": "super-light-yellow",
+                                "value": 50
+                            },
+                            {
+                                "color": "super-light-green",
+                                "value": 80
+                            }
+                        ]
+                    },
+                    "unit": "bool"
+                },
+                "overrides": [
+                    {
+                        "__systemRef": "hideSeriesFrom",
+                        "matcher": {
+                            "id": "byNames",
+                            "options": {
+                                "mode": "exclude",
+                                "names": [
+                                    "0x8e78De834407E863A79a9820688CdA0AedFfAB6a"
+                                ],
+                                "prefix": "All except:",
+                                "readOnly": true
+                            }
+                        },
+                        "properties": [
+                            {
+                                "id": "custom.hideFrom",
+                                "value": {
+                                    "legend": false,
+                                    "tooltip": false,
+                                    "viz": true
+                                }
+                            }
+                        ]
+                    }
+                ]
+            },
+            "gridPos": {
+                "h": 10,
+                "w": 13,
+                "x": 11,
+                "y": 46
+            },
+            "id": 14,
+            "interval": "1m",
+            "options": {
+                "legend": {
+                    "calcs": [
+                        "last"
+                    ],
+                    "displayMode": "table",
+                    "placement": "right",
+                    "showLegend": true,
+                    "sortBy": "Last",
+                    "sortDesc": true
+                },
+                "tooltip": {
+                    "mode": "multi",
+                    "sort": "none"
+                }
+            },
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "P09205B1DD12FB1C6"
+                    },
+                    "editorMode": "builder",
+                    "expr": "min by(chain_address) (eth_connectivity{job=\"keep-discovered-nodes\"})",
+                    "hide": false,
+                    "interval": "",
+                    "legendFormat": "{{chain_address}}",
+                    "range": true,
+                    "refId": "Discovered Keep Nodes"
+                }
+            ],
+            "title": "ETH Connectivity",
+            "type": "timeseries"
+        },
+        {
+            "datasource": {
+                "type": "prometheus",
+                "uid": "P09205B1DD12FB1C6"
+            },
             "fieldConfig": {
                 "defaults": {
                     "color": {
@@ -612,8 +897,7 @@
                         "mode": "absolute",
                         "steps": [
                             {
-                                "color": "green",
-                                "value": null
+                                "color": "green"
                             }
                         ]
                     }
@@ -624,7 +908,7 @@
                 "h": 25,
                 "w": 13,
                 "x": 11,
-                "y": 36
+                "y": 56
             },
             "id": 6,
             "options": {
@@ -650,7 +934,7 @@
                         "uid": "P09205B1DD12FB1C6"
                     },
                     "editorMode": "builder",
-                    "expr": "min by(chain_address) (up{job=\"$keepNodesGroup\"})",
+                    "expr": "min by(chain_address) (up{job=\"keep-discovered-nodes\"})",
                     "interval": "",
                     "legendFormat": "{{chain_address}}",
                     "range": true,
@@ -727,7 +1011,7 @@
                         "uid": "P09205B1DD12FB1C6"
                     },
                     "editorMode": "builder",
-                    "expr": "count by(chain_address) (up{job=\"$keepNodesGroup\"})",
+                    "expr": "count by(chain_address) (up{job=\"keep-discovered-nodes\"})",
                     "legendFormat": "__auto",
                     "range": true,
                     "refId": "A"
@@ -745,32 +1029,7 @@
         "keep"
     ],
     "templating": {
-        "list": [
-            {
-                "current": {
-                    "selected": false,
-                    "text": "keep-discovered-nodes",
-                    "value": "keep-discovered-nodes"
-                },
-                "definition": "label_values(job)",
-                "description": "",
-                "hide": 0,
-                "includeAll": false,
-                "label": "Keep Network Nodes Group",
-                "multi": false,
-                "name": "keepNodesGroup",
-                "options": [],
-                "query": {
-                    "query": "label_values(job)",
-                    "refId": "StandardVariableQuery"
-                },
-                "refresh": 1,
-                "regex": "^keep-.*",
-                "skipUrlSync": false,
-                "sort": 0,
-                "type": "query"
-            }
-        ]
+        "list": []
     },
     "time": {
         "from": "now-7d",
@@ -791,8 +1050,8 @@
         ]
     },
     "timezone": "",
-    "title": "Keep Network Nodes",
+    "title": "Keep Nodes",
     "uid": "tMgEvbnVk",
-    "version": 4,
+    "version": 33,
     "weekStart": ""
 }

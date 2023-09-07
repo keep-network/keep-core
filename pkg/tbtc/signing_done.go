@@ -62,10 +62,6 @@ func newSigningDoneCheck(
 	broadcastChannel net.BroadcastChannel,
 	membershipValidator *group.MembershipValidator,
 ) *signingDoneCheck {
-	broadcastChannel.SetUnmarshaler(func() net.TaggedUnmarshaler {
-		return &signingDoneMessage{}
-	})
-
 	return &signingDoneCheck{
 		groupSize:           groupSize,
 		broadcastChannel:    broadcastChannel,

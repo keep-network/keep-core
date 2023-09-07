@@ -150,6 +150,8 @@ func TestAnnouncer(t *testing.T) {
 				localChain.Signing(),
 			)
 
+			RegisterUnmarshaller(broadcastChannel)
+
 			announcer := New(
 				protocolID,
 				broadcastChannel,
