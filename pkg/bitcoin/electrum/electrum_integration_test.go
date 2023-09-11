@@ -187,6 +187,7 @@ func TestGetTransaction_Negative_Integration(t *testing.T) {
 }
 
 func TestGetTransactionConfirmations_Integration(t *testing.T) {
+
 	runParallel(t, func(t *testing.T, testConfig testConfig) {
 		electrum, cancelCtx := newTestConnection(t, testConfig.clientConfig)
 		defer cancelCtx()

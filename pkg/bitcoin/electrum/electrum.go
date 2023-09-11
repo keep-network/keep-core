@@ -423,8 +423,8 @@ type scriptHistoryItem struct {
 func (c *Connection) getConfirmedScriptHistory(
 	script []byte,
 ) ([]*scriptHistoryItem, error) {
-	scriptHash := sha256.Sum256(script)
-	reversedScriptHash := byteutils.Reverse(scriptHash[:])
+	scriptHashh := sha256.Sum256(script)
+	reversedScriptHash := byteutils.Reverse(scriptHashh[:])
 	reversedScriptHashString := hex.EncodeToString(reversedScriptHash)
 
 	items, err := requestWithRetry(
@@ -755,25 +755,26 @@ func connectWithRetry(
 }
 
 func requestWithRetry[K interface{}](
-	c *Connection,
+	conn *Connection,
 	requestFn func(ctx context.Context, client *electrum.Client) (K, error),
 ) (K, error) {
 	var result K
 
 	err := wrappers.DoWithDefaultRetry(
-		c.parentCtx,
-		c.config.RequestRetryTimeout,
+		conn.parentCtx,
+		conn.config.RequestRetryTimeout,
 		func(ctx context.Context) error {
-			if err := c.reconnectIfShutdown(); err != nil {
+			if err := conn.reconnectIfShutdown(); err != nil {
 				return err
 			}
 
-			requestCtx, requestCancel := context.WithTimeout(ctx, c.config.RequestTimeout)
+			requestCtx, requestCancel := context.WithTimeout(ctx, conn.config.RequestTimeout)
 			defer requestCancel()
 
-			c.clientMutex.RLock()
-			r, err := requestFn(requestCtx, c.client)
-			c.clientMutex.RUnlock()
+			conn.clientMutex.RLock()
+
+			r, err := requestFn(requestCtx, conn.client)
+			conn.clientMutex.RUnlock()
 
 			if err != nil {
 				return fmt.Errorf("request failed: [%w]", err)
