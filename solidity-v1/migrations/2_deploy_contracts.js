@@ -49,7 +49,14 @@ const KeepVault = artifacts.require("./geyser/KeepVault.sol")
 
 let initializationPeriod = 43200 // ~12 hours
 const dkgContributionMargin = 1 // 1%
-const testNetworks = ["local", "ropsten", "keep_dev", "alfajores", "goerli"]
+const testNetworks = [
+  "local",
+  "ropsten",
+  "keep_dev",
+  "alfajores",
+  "goerli",
+  "sepolia",
+]
 
 module.exports = async function (deployer, network) {
   // Set the stake initialization period to 1 block for local development and testnet.
