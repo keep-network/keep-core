@@ -19,6 +19,7 @@ configMapGenerator:
     literals:
       - network=mainnet
       - electrum-api-url=ws://electrumx.bitcoin:8080
+      - redemption-request-amount-limit=1500000000 # 15 BTC in satoshi
     files:
       - .secret/keep-maintainer-keyfile
 

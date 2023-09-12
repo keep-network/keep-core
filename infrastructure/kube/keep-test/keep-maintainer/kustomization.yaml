@@ -21,6 +21,7 @@ configMapGenerator:
     literals:
       - network=testnet
       - electrum-api-url=ws://electrumx.bitcoin-testnet:8080
+      - redemption-request-amount-limit=0 # Use the default value
     files:
       - .secret/keep-maintainer-keyfile
 

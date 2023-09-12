@@ -46,6 +46,11 @@ spec:
                 configMapKeyRef:
                   name: keep-maintainer-config
                   key: electrum-api-url
+            - name: REDEMPTION_REQUEST_AMOUNT_LIMIT
+              valueFrom:
+                configMapKeyRef:
+                  name: keep-maintainer-config
+                  key: redemption-request-amount-limit
           command:
             - keep-client
             - maintainer
@@ -57,6 +62,8 @@ spec:
             - /mnt/keep-maintainer/keyfile/keep-maintainer-keyfile
             - --bitcoin.electrum.url
             - $(ELECTRUM_API_URL)
+            - --walletCoordination.redemptionRequestAmountLimit
+            - $(REDEMPTION_REQUEST_AMOUNT_LIMIT)
           volumeMounts:
             - name: eth-account-keyfile
               mountPath: /mnt/keep-maintainer/keyfile
