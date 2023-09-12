@@ -119,15 +119,6 @@ func (c *Config) ReadConfig(configFilePath string, flagSet *pflag.FlagSet, categ
 		if err != nil {
 			return fmt.Errorf("unable to resolve networks: [%w]", err)
 		}
-
-		// TODO: Remove the mainnet flag.
-		// DEPRECATED
-		if isMainnet, err := flagSet.GetBool(network.Mainnet.String()); err == nil && isMainnet {
-			logger.Warnf(
-				"--%s flag is deprecated, to run the client against the mainnet don't provide any network flag",
-				network.Mainnet.String(),
-			)
-		}
 	}
 
 	// Read configuration from a file if the config file path is set.
