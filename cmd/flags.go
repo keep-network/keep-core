@@ -96,7 +96,7 @@ func initGlobalNetworkFlags(cmd *cobra.Command) {
 	)
 
 	cmd.MarkFlagsMutuallyExclusive(
-		network.Mainnet.String(), // TODO: Remove the mainnet flag.
+		network.Mainnet.String(),
 		network.Testnet.String(),
 		network.Developer.String(),
 	)
