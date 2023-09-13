@@ -32,20 +32,6 @@ module.exports = {
       network_id: 1101,
     },
 
-    ropsten: {
-      provider: function () {
-        return new HDWalletProvider({
-          privateKeys: [process.env.CONTRACT_OWNER_ACCOUNT_PRIVATE_KEY],
-          providerOrUrl: process.env.CHAIN_API_URL,
-        })
-      },
-      gas: 6000000,
-      network_id: 3,
-      skipDryRun: true,
-      networkCheckTimeout: 120000,
-      timeoutBlocks: 200, // # of blocks before a deployment times out  (minimum/default: 50)
-    },
-
     goerli: {
       provider: function () {
         return new HDWalletProvider({
@@ -55,6 +41,20 @@ module.exports = {
       },
       gas: 6000000,
       network_id: 5,
+      skipDryRun: true,
+      networkCheckTimeout: 120000,
+      timeoutBlocks: 200, // # of blocks before a deployment times out  (minimum/default: 50)
+    },
+
+    sepolia: {
+      provider: function () {
+        return new HDWalletProvider({
+          privateKeys: [process.env.CONTRACT_OWNER_ACCOUNT_PRIVATE_KEY],
+          providerOrUrl: process.env.CHAIN_API_URL,
+        })
+      },
+      gas: 6000000,
+      network_id: 11155111,
       skipDryRun: true,
       networkCheckTimeout: 120000,
       timeoutBlocks: 200, // # of blocks before a deployment times out  (minimum/default: 50)
