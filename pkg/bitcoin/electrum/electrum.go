@@ -34,7 +34,7 @@ var (
 type Connection struct {
 	parentCtx   context.Context
 	client      *electrum.Client
-	clientMutex *sync.RWMutex
+	clientMutex *sync.Mutex
 	config      Config
 }
 
@@ -59,7 +59,7 @@ func Connect(parentCtx context.Context, config Config) (bitcoin.Chain, error) {
 	c := &Connection{
 		parentCtx:   parentCtx,
 		config:      config,
-		clientMutex: &sync.RWMutex{},
+		clientMutex: &sync.Mutex{},
 	}
 
 	if err := c.electrumConnect(); err != nil {
