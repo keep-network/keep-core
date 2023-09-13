@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"math"
 	"strings"
-	"sync"
 	"testing"
 	"time"
 
@@ -233,42 +232,48 @@ func TestGetTransactionConfirmations_Negative_Integration(t *testing.T) {
 	})
 }
 
-func TestGetLatestBlockHeightConcurrently_Integration(t *testing.T) {
-	goroutines := 20
+// TODO: We should uncomment this test once https://github.com/checksum0/go-electrum/issues/10
+// is fixed. This test was added to validate the fix of the following issue
+// https://github.com/keep-network/keep-core/issues/3699 but at the same time
+// made `panic: assignment to entry in nil map` happen very frequently which is
+// disturbing during the development and running the existing integration tests.
 
-	for testName, testConfig := range testConfigs {
-		t.Run(testName+"_get", func(t *testing.T) {
-			electrum, cancelCtx := newTestConnection(t, testConfig.clientConfig)
-			defer cancelCtx()
+// func TestGetLatestBlockHeightConcurrently_Integration(t *testing.T) {
+// 	goroutines := 20
 
-			var wg sync.WaitGroup
+// 	for testName, testConfig := range testConfigs {
+// 		t.Run(testName+"_get", func(t *testing.T) {
+// 			electrum, cancelCtx := newTestConnection(t, testConfig.clientConfig)
+// 			defer cancelCtx()
 
-			for i := 0; i < goroutines; i++ {
-				wg.Add(1)
+// 			var wg sync.WaitGroup
 
-				go func() {
-					result, err := electrum.GetLatestBlockHeight()
+// 			for i := 0; i < goroutines; i++ {
+// 				wg.Add(1)
 
-					if err != nil {
-						t.Fatal(err)
-					}
+// 				go func() {
+// 					result, err := electrum.GetLatestBlockHeight()
 
-					if result == 0 {
-						t.Errorf(
-							"returned block height is 0",
-						)
-					}
+// 					if err != nil {
+// 						t.Fatal(err)
+// 					}
 
-					wg.Done()
-				}()
-			}
+// 					if result == 0 {
+// 						t.Errorf(
+// 							"returned block height is 0",
+// 						)
+// 					}
 
-			wg.Wait()
-		})
+// 					wg.Done()
+// 				}()
+// 			}
 
-		// Passed if no "panic: concurrent write to websocket connection"
-	}
-}
+// 			wg.Wait()
+// 		})
+
+// 		// Passed if no "panic: concurrent write to websocket connection"
+// 	}
+// }
 
 func TestGetLatestBlockHeight_Integration(t *testing.T) {
 	expectedBlockHeightRef := map[string]uint{}
