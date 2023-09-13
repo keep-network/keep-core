@@ -21,10 +21,6 @@ import (
 	"github.com/keep-network/keep-core/pkg/internal/byteutils"
 )
 
-// TODO: Some problems with Electrum re-connect were detected while developing
-//       integration tests: https://github.com/keep-network/keep-core/issues/3586.
-//       Make sure the problem is resolved soon.
-
 var (
 	supportedProtocolVersions = []string{"1.4"}
 	logger                    = log.Logger("keep-electrum")
