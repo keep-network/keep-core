@@ -232,6 +232,49 @@ func TestGetTransactionConfirmations_Negative_Integration(t *testing.T) {
 	})
 }
 
+// TODO: We should uncomment this test once https://github.com/checksum0/go-electrum/issues/10
+// is fixed. This test was added to validate the fix of the following issue
+// https://github.com/keep-network/keep-core/issues/3699 but at the same time
+// made `panic: assignment to entry in nil map` happen very frequently which is
+// disturbing during the development and running the existing integration tests.
+
+// func TestGetLatestBlockHeightConcurrently_Integration(t *testing.T) {
+// 	goroutines := 20
+
+// 	for testName, testConfig := range testConfigs {
+// 		t.Run(testName+"_get", func(t *testing.T) {
+// 			electrum, cancelCtx := newTestConnection(t, testConfig.clientConfig)
+// 			defer cancelCtx()
+
+// 			var wg sync.WaitGroup
+
+// 			for i := 0; i < goroutines; i++ {
+// 				wg.Add(1)
+
+// 				go func() {
+// 					result, err := electrum.GetLatestBlockHeight()
+
+// 					if err != nil {
+// 						t.Fatal(err)
+// 					}
+
+// 					if result == 0 {
+// 						t.Errorf(
+// 							"returned block height is 0",
+// 						)
+// 					}
+
+// 					wg.Done()
+// 				}()
+// 			}
+
+// 			wg.Wait()
+// 		})
+
+// 		// Passed if no "panic: concurrent write to websocket connection"
+// 	}
+// }
+
 func TestGetLatestBlockHeight_Integration(t *testing.T) {
 	expectedBlockHeightRef := map[string]uint{}
 	results := map[string]map[string]uint{}
