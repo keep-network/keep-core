@@ -82,9 +82,6 @@ func (c *Connection) GetTransaction(
 ) (*bitcoin.Transaction, error) {
 	txID := transactionHash.Hex(bitcoin.ReversedByteOrder)
 
-	logger.Infof("starting [%s] call to Electrum server", "GetRawTransaction")
-
-	startTime := time.Now()
 	rawTransaction, err := requestWithRetry(
 		c,
 		func(ctx context.Context, client *electrum.Client) (string, error) {
@@ -93,20 +90,13 @@ func (c *Connection) GetTransaction(
 			// See: https://github.com/Blockstream/electrs/pull/36
 			return client.GetRawTransaction(ctx, txID)
 		})
-	elapsed := time.Since(startTime)
 	if err != nil {
 		return nil, fmt.Errorf(
-			"failed to get raw transaction with ID [%s] after [%s]: [%w]",
+			"failed to get raw transaction with ID [%s]: [%w]",
 			txID,
-			elapsed,
 			err,
 		)
 	}
-
-	logger.Infof("successfully completed [%s] call to Electrum server after [%s]",
-		"GetRawTransaction",
-		elapsed,
-	)
 
 	result, err := convertRawTransaction(rawTransaction)
 	if err != nil {
@@ -128,9 +118,6 @@ func (c *Connection) GetTransactionConfirmations(
 		zap.String("txID", txID),
 	)
 
-	logger.Infof("starting [%s] call to Electrum server", "GetRawTransaction")
-
-	startTime := time.Now()
 	rawTransaction, err := requestWithRetry(
 		c,
 		func(ctx context.Context, client *electrum.Client) (string, error) {
@@ -139,21 +126,14 @@ func (c *Connection) GetTransactionConfirmations(
 			// See: https://github.com/Blockstream/electrs/pull/36
 			return client.GetRawTransaction(ctx, txID)
 		})
-	elapsed := time.Since(startTime)
 	if err != nil {
 		return 0,
 			fmt.Errorf(
-				"failed to get raw transaction with ID [%s] after [%s]: [%w]",
+				"failed to get raw transaction with ID [%s]: [%w]",
 				txID,
-				elapsed,
 				err,
 			)
 	}
-
-	logger.Infof("successfully completed [%s] call to Electrum server after [%s]",
-		"GetRawTransaction",
-		elapsed,
-	)
 
 	tx, err := decodeTransaction(rawTransaction)
 	if err != nil {
@@ -187,9 +167,6 @@ txOutLoop:
 		reversedScriptHash := byteutils.Reverse(scriptHash[:])
 		reversedScriptHashString := hex.EncodeToString(reversedScriptHash)
 
-		logger.Infof("starting [%s] call to Electrum server", "GetHistory")
-
-		startTime := time.Now()
 		scriptHashHistory, err := requestWithRetry(
 			c,
 			func(
@@ -198,20 +175,11 @@ txOutLoop:
 			) ([]*electrum.GetMempoolResult, error) {
 				return client.GetHistory(ctx, reversedScriptHashString)
 			})
-		elapsed := time.Since(startTime)
 		if err != nil {
 			// Don't return an error, but continue to the next TxOut entry.
-			txLogger.Errorf("failed to get history for script hash after [%s]: [%v]",
-				elapsed,
-				err,
-			)
+			txLogger.Errorf("failed to get history for script hash: [%v]", err)
 			continue txOutLoop
 		}
-
-		logger.Infof("successfully completed [%s] call to Electrum server after [%s]",
-			"GetHistory",
-			elapsed,
-		)
 
 		for _, transaction := range scriptHashHistory {
 			if transaction.Hash == txID {
@@ -265,27 +233,16 @@ func (c *Connection) BroadcastTransaction(
 	)
 	rawTxLogger.Debugf("broadcasting transaction")
 
-	logger.Infof("starting [%s] call to Electrum server", "BroadcastTransaction")
-
 	var response string
 
-	startTime := time.Now()
 	response, err := requestWithRetry(
 		c,
 		func(ctx context.Context, client *electrum.Client) (string, error) {
 			return client.BroadcastTransaction(ctx, rawTx)
 		})
-	elapsed := time.Since(startTime)
 	if err != nil {
-		return fmt.Errorf("failed to broadcast the transaction after [%s]: [%w]",
-			elapsed,
-			err,
-		)
+		return fmt.Errorf("failed to broadcast the transaction: [%w]", err)
 	}
-	logger.Infof("successfully completed [%s] call to Electrum server after [%s]",
-		"BroadcastTransaction",
-		elapsed,
-	)
 
 	rawTxLogger.Infof("transaction broadcast successful: [%s]", response)
 
@@ -295,9 +252,6 @@ func (c *Connection) BroadcastTransaction(
 // GetLatestBlockHeight gets the height of the latest block (tip). If the
 // latest block was not determined, this function returns an error.
 func (c *Connection) GetLatestBlockHeight() (uint, error) {
-	logger.Infof("starting [%s] call to Electrum server", "SubscribeHeaders")
-
-	startTime := time.Now()
 	blockHeight, err := requestWithRetry(
 		c,
 		func(ctx context.Context, client *electrum.Client) (int32, error) {
@@ -308,18 +262,9 @@ func (c *Connection) GetLatestBlockHeight() (uint, error) {
 			tip := <-headersChan
 			return tip.Height, nil
 		})
-	elapsed := time.Since(startTime)
 	if err != nil {
-		return 0, fmt.Errorf("failed to subscribe for headers after [%s]: [%w]",
-			elapsed,
-			err,
-		)
+		return 0, fmt.Errorf("failed to subscribe for headers: [%w]", err)
 	}
-
-	logger.Infof("successfully completed [%s] call to Electrum server after [%s]",
-		"SubscribeHeaders",
-		elapsed,
-	)
 
 	if blockHeight > 0 {
 		return uint(blockHeight), nil
@@ -334,10 +279,6 @@ func (c *Connection) GetLatestBlockHeight() (uint, error) {
 func (c *Connection) GetBlockHeader(
 	blockHeight uint,
 ) (*bitcoin.BlockHeader, error) {
-
-	logger.Infof("starting [%s] call to Electrum server", "GetBlockHeader")
-
-	startTime := time.Now()
 	getBlockHeaderResult, err := requestWithRetry(
 		c,
 		func(
@@ -347,18 +288,9 @@ func (c *Connection) GetBlockHeader(
 			return client.GetBlockHeader(ctx, uint32(blockHeight), 0)
 		},
 	)
-	elapsed := time.Since(startTime)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get block header after [%s]: [%w]",
-			elapsed,
-			err,
-		)
+		return nil, fmt.Errorf("failed to get block header: [%w]", err)
 	}
-
-	logger.Infof("successfully completed [%s] call to Electrum server after [%s]",
-		"GetBlockHeader",
-		elapsed,
-	)
 
 	blockHeader, err := convertBlockHeader(getBlockHeaderResult)
 	if err != nil {
@@ -377,9 +309,6 @@ func (c *Connection) GetTransactionMerkleProof(
 ) (*bitcoin.TransactionMerkleProof, error) {
 	txID := transactionHash.Hex(bitcoin.ReversedByteOrder)
 
-	logger.Infof("starting [%s] call to Electrum server", "GetMerkleProof")
-
-	startTime := time.Now()
 	getMerkleProofResult, err := requestWithRetry(
 		c,
 		func(
@@ -393,18 +322,9 @@ func (c *Connection) GetTransactionMerkleProof(
 			)
 		},
 	)
-	elapsed := time.Since(startTime)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get merkle proof after [%s]: [%w]",
-			"GetMerkleProof",
-			err,
-		)
+		return nil, fmt.Errorf("failed to get merkle proof: [%w]", err)
 	}
-
-	logger.Infof("successfully completed [%s] call to Electrum server after [%s]",
-		"GetMerkleProof",
-		elapsed,
-	)
 
 	return convertMerkleProof(getMerkleProofResult), nil
 }
@@ -503,9 +423,6 @@ func (c *Connection) getConfirmedScriptHistory(
 	reversedScriptHash := byteutils.Reverse(scriptHash[:])
 	reversedScriptHashString := hex.EncodeToString(reversedScriptHash)
 
-	logger.Infof("starting [%s] call to Electrum server", "GetHistory")
-
-	startTime := time.Now()
 	items, err := requestWithRetry(
 		c,
 		func(
@@ -514,20 +431,13 @@ func (c *Connection) getConfirmedScriptHistory(
 		) ([]*electrum.GetMempoolResult, error) {
 			return client.GetHistory(ctx, reversedScriptHashString)
 		})
-	elapsed := time.Since(startTime)
 	if err != nil {
 		return nil, fmt.Errorf(
-			"failed to get history for script [0x%x] after [%s]: [%v]",
+			"failed to get history for script [0x%x]: [%v]",
 			script,
-			elapsed,
 			err,
 		)
 	}
-
-	logger.Infof("successfully completed [%s] call to Electrum server after [%s]",
-		"GetHistory",
-		elapsed,
-	)
 
 	// According to https://electrumx.readthedocs.io/en/latest/protocol-methods.html#blockchain-scripthash-get-history
 	// unconfirmed items living in the mempool are appended at the end of the
@@ -644,9 +554,6 @@ func (c *Connection) getScriptMempool(
 	reversedScriptHash := byteutils.Reverse(scriptHash[:])
 	reversedScriptHashString := hex.EncodeToString(reversedScriptHash)
 
-	logger.Infof("starting [%s] call to Electrum server", "GetMempool")
-
-	startTime := time.Now()
 	items, err := requestWithRetry(
 		c,
 		func(
@@ -655,7 +562,6 @@ func (c *Connection) getScriptMempool(
 		) ([]*electrum.GetMempoolResult, error) {
 			return client.GetMempool(ctx, reversedScriptHashString)
 		})
-	elapsed := time.Since(startTime)
 	if err != nil {
 		return nil, fmt.Errorf(
 			"failed to get mempool for script [0x%x]: [%v]",
@@ -663,11 +569,6 @@ func (c *Connection) getScriptMempool(
 			err,
 		)
 	}
-
-	logger.Infof("successfully completed [%s] call to Electrum server after [%s]",
-		"GetMempool",
-		elapsed,
-	)
 
 	convertedItems := make([]*scriptMempoolItem, len(items))
 	for i, item := range items {
@@ -696,9 +597,6 @@ func (c *Connection) getScriptMempool(
 // EstimateSatPerVByteFee returns the estimated sat/vbyte fee for a
 // transaction to be confirmed within the given number of blocks.
 func (c *Connection) EstimateSatPerVByteFee(blocks uint32) (int64, error) {
-	logger.Infof("starting [%s] call to Electrum server", "GetFee")
-
-	startTime := time.Now()
 	// According to Electrum protocol docs, the returned fee is BTC/KB.
 	btcPerKbFee, err := requestWithRetry(
 		c,
@@ -713,18 +611,9 @@ func (c *Connection) EstimateSatPerVByteFee(blocks uint32) (int64, error) {
 			//       somehow once it disappears from Electrum implementations.
 			return client.GetFee(ctx, blocks)
 		})
-	elapsed := time.Since(startTime)
 	if err != nil {
-		return 0, fmt.Errorf("failed to get fee after [%s]: [%v]",
-			elapsed,
-			err,
-		)
+		return 0, fmt.Errorf("failed to get fee: [%v]", err)
 	}
-
-	logger.Infof("successfully completed [%s] call to Electrum server after [%s]",
-		"GetFee",
-		elapsed,
-	)
 
 	// According to Electrum protocol docs, if the daemon does not have
 	// enough information to make an estimate, the integer -1 is returned.
@@ -770,9 +659,7 @@ func (c *Connection) verifyServer() error {
 		version  string
 		protocol string
 	}
-	logger.Infof("starting [%s] call to Electrum server", "ServerVersion")
 
-	startTime := time.Now()
 	server, err := requestWithRetry(
 		c,
 		func(ctx context.Context, client *electrum.Client) (*Server, error) {
@@ -783,18 +670,9 @@ func (c *Connection) verifyServer() error {
 			return &Server{serverVersion, protocolVersion}, nil
 		},
 	)
-	elapsed := time.Since(startTime)
 	if err != nil {
-		return fmt.Errorf("failed to get server version after [%s]: [%w]",
-			elapsed,
-			err,
-		)
+		return fmt.Errorf("failed to get server version: [%w]", err)
 	}
-
-	logger.Infof("successfully completed [%s] call to Electrum server after [%s]",
-		"ServerVersion",
-		elapsed,
-	)
 
 	logger.Infof(
 		"connected to electrum server [version: [%s], protocol: [%s]]",
@@ -821,30 +699,21 @@ func (c *Connection) keepAlive() {
 	for {
 		select {
 		case <-ticker.C:
-			logger.Infof("starting [%s] call to Electrum server", "Ping")
-
-			startTime := time.Now()
 			_, err := requestWithRetry(
 				c,
 				func(ctx context.Context, client *electrum.Client) (interface{}, error) {
 					return nil, client.Ping(ctx)
 				},
 			)
-			elapsed := time.Since(startTime)
 			if err != nil {
 				logger.Errorf(
-					"failed to ping the electrum server after [%s]; "+
+					"failed to ping the electrum server; "+
 						"please verify health of the electrum server: [%v]",
-					elapsed,
 					err,
 				)
 			} else {
 				// Adjust ticker starting at the time of the latest successful ping.
 				ticker = time.NewTicker(c.config.KeepAliveInterval)
-				logger.Infof("successfully completed [%s] call to Electrum server after [%s]",
-					"Ping",
-					elapsed,
-				)
 			}
 		case <-c.parentCtx.Done():
 			ticker.Stop()
