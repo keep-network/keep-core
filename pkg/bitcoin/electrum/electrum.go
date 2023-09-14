@@ -21,10 +21,6 @@ import (
 	"github.com/keep-network/keep-core/pkg/internal/byteutils"
 )
 
-// TODO: Some problems with Electrum re-connect were detected while developing
-//       integration tests: https://github.com/keep-network/keep-core/issues/3586.
-//       Make sure the problem is resolved soon.
-
 var (
 	supportedProtocolVersions = []string{"1.4"}
 	logger                    = log.Logger("keep-electrum")
@@ -93,7 +89,9 @@ func (c *Connection) GetTransaction(
 			// as Esplora/Electrs doesn't support verbose transactions.
 			// See: https://github.com/Blockstream/electrs/pull/36
 			return client.GetRawTransaction(ctx, txID)
-		})
+		},
+		"GetRawTransaction",
+	)
 	if err != nil {
 		return nil, fmt.Errorf(
 			"failed to get raw transaction with ID [%s]: [%w]",
@@ -129,7 +127,9 @@ func (c *Connection) GetTransactionConfirmations(
 			// as Esplora/Electrs doesn't support verbose transactions.
 			// See: https://github.com/Blockstream/electrs/pull/36
 			return client.GetRawTransaction(ctx, txID)
-		})
+		},
+		"GetRawTransaction",
+	)
 	if err != nil {
 		return 0,
 			fmt.Errorf(
@@ -178,7 +178,9 @@ txOutLoop:
 				client *electrum.Client,
 			) ([]*electrum.GetMempoolResult, error) {
 				return client.GetHistory(ctx, reversedScriptHashString)
-			})
+			},
+			"GetHistory",
+		)
 		if err != nil {
 			// Don't return an error, but continue to the next TxOut entry.
 			txLogger.Errorf("failed to get history for script hash: [%v]", err)
@@ -243,7 +245,9 @@ func (c *Connection) BroadcastTransaction(
 		c,
 		func(ctx context.Context, client *electrum.Client) (string, error) {
 			return client.BroadcastTransaction(ctx, rawTx)
-		})
+		},
+		"BroadcastTransaction",
+	)
 	if err != nil {
 		return fmt.Errorf("failed to broadcast the transaction: [%w]", err)
 	}
@@ -265,7 +269,9 @@ func (c *Connection) GetLatestBlockHeight() (uint, error) {
 			}
 			tip := <-headersChan
 			return tip.Height, nil
-		})
+		},
+		"SubscribeHeaders",
+	)
 	if err != nil {
 		return 0, fmt.Errorf("failed to subscribe for headers: [%w]", err)
 	}
@@ -291,6 +297,7 @@ func (c *Connection) GetBlockHeader(
 		) (*electrum.GetBlockHeaderResult, error) {
 			return client.GetBlockHeader(ctx, uint32(blockHeight), 0)
 		},
+		"GetBlockHeader",
 	)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get block header: [%w]", err)
@@ -325,6 +332,7 @@ func (c *Connection) GetTransactionMerkleProof(
 				uint32(blockHeight),
 			)
 		},
+		"GetMerkleProof",
 	)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get merkle proof: [%w]", err)
@@ -434,7 +442,9 @@ func (c *Connection) getConfirmedScriptHistory(
 			client *electrum.Client,
 		) ([]*electrum.GetMempoolResult, error) {
 			return client.GetHistory(ctx, reversedScriptHashString)
-		})
+		},
+		"GetHistory",
+	)
 	if err != nil {
 		return nil, fmt.Errorf(
 			"failed to get history for script [0x%x]: [%v]",
@@ -565,7 +575,9 @@ func (c *Connection) getScriptMempool(
 			client *electrum.Client,
 		) ([]*electrum.GetMempoolResult, error) {
 			return client.GetMempool(ctx, reversedScriptHashString)
-		})
+		},
+		"GetMempool",
+	)
 	if err != nil {
 		return nil, fmt.Errorf(
 			"failed to get mempool for script [0x%x]: [%v]",
@@ -614,7 +626,9 @@ func (c *Connection) EstimateSatPerVByteFee(blocks uint32) (int64, error) {
 			//       since version 1.4.2 of the protocol. We need to replace it
 			//       somehow once it disappears from Electrum implementations.
 			return client.GetFee(ctx, blocks)
-		})
+		},
+		"GetFee",
+	)
 	if err != nil {
 		return 0, fmt.Errorf("failed to get fee: [%v]", err)
 	}
@@ -673,6 +687,7 @@ func (c *Connection) verifyServer() error {
 			}
 			return &Server{serverVersion, protocolVersion}, nil
 		},
+		"ServerVersion",
 	)
 	if err != nil {
 		return fmt.Errorf("failed to get server version: [%w]", err)
@@ -708,6 +723,7 @@ func (c *Connection) keepAlive() {
 				func(ctx context.Context, client *electrum.Client) (interface{}, error) {
 					return nil, client.Ping(ctx)
 				},
+				"Ping",
 			)
 			if err != nil {
 				logger.Errorf(
@@ -757,7 +773,11 @@ func connectWithRetry(
 func requestWithRetry[K interface{}](
 	c *Connection,
 	requestFn func(ctx context.Context, client *electrum.Client) (K, error),
+	requestName string,
 ) (K, error) {
+	startTime := time.Now()
+	logger.Infof("starting [%s] request to Electrum server", requestName)
+
 	var result K
 
 	err := wrappers.DoWithDefaultRetry(
@@ -782,6 +802,19 @@ func requestWithRetry[K interface{}](
 			result = r
 			return nil
 		})
+
+	solveRequestOutcome := func(err error) string {
+		if err != nil {
+			return fmt.Sprintf("error: [%v]", err)
+		}
+		return "success"
+	}
+
+	logger.Infof("[%s] request to Electrum server completed with [%s] after [%s]",
+		requestName,
+		solveRequestOutcome(err),
+		time.Since(startTime),
+	)
 
 	return result, err
 }
