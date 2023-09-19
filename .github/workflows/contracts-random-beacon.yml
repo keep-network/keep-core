@@ -248,24 +248,16 @@ jobs:
 
       - name: Deploy contracts
         env:
-          # Use fake ternary expressions to decide which credentials to use,
-          # depending on chosen environment. Note: if `GOERLI...` credentials
-          # are empty, the expressions will be evaluated to the `SEPOLIA...`
-          # ones.
+          # Using fake ternary expression to decide which credentials to use,
+          # depending on chosen environment. Note: if `GOERLI_ETH_HOSTNAME_HTTP`
+          # is empty, the expression will be evaluated to
+          # `SEPOLIA_ETH_HOSTNAME_HTTP`'s value.
           CHAIN_API_URL: |
             ${{ inputs.github.event.inputs.environment == 'goerli'
               && secrets.GOERLI_ETH_HOSTNAME_HTTP
               || secrets.SEPOLIA_ETH_HOSTNAME_HTTP }}
-          # TODO: Shouldn't we use `ACCOUNTS_PRIVATE_KEYS` here instead of the
-          # two below envs?
-          CONTRACT_OWNER_ACCOUNT_PRIVATE_KEY: |
-            ${{ inputs.github.event.inputs.environment == 'goerli'
-              && secrets.GOERLI_ETH_CONTRACT_OWNER_PRIVATE_KEY
-              || secrets.SEPOLIA_ETH_CONTRACT_OWNER_PRIVATE_KEY }}
-          KEEP_CONTRACT_OWNER_ACCOUNT_PRIVATE_KEY: |
-            ${{ inputs.github.event.inputs.environment == 'goerli'
-              && secrets.GOERLI_KEEP_ETH_CONTRACT_OWNER_PRIVATE_KEY
-              || secrets.SEPOLIA_KEEP_ETH_CONTRACT_OWNER_PRIVATE_KEY }}
+          CONTRACT_OWNER_ACCOUNT_PRIVATE_KEY: secrets.TESTNET_ETH_CONTRACT_OWNER_PRIVATE_KEY
+          KEEP_CONTRACT_OWNER_ACCOUNT_PRIVATE_KEY: secrets.TESTNET_KEEP_ETH_CONTRACT_OWNER_PRIVATE_KEY
         run: yarn deploy --network ${{ github.event.inputs.environment }}
 
       - name: Bump up package version
@@ -349,24 +341,16 @@ jobs:
       
       - name: Deploy contracts
         env:
-          # Use fake ternary expressions to decide which credentials to use,
-          # depending on chosen environment. Note: if `GOERLI...` credentials
-          # are empty, the expressions will be evaluated to the `SEPOLIA...`
-          # ones.
+          # Using fake ternary expression to decide which credentials to use,
+          # depending on chosen environment. Note: if `GOERLI_ETH_HOSTNAME_HTTP`
+          # is empty, the expression will be evaluated to
+          # `SEPOLIA_ETH_HOSTNAME_HTTP`'s value.
           CHAIN_API_URL: |
             ${{ inputs.github.event.inputs.environment == 'goerli'
               && secrets.GOERLI_ETH_HOSTNAME_HTTP
               || secrets.SEPOLIA_ETH_HOSTNAME_HTTP }}
-          # TODO: Shouldn't we use `ACCOUNTS_PRIVATE_KEYS` here instead of the
-          # two below envs?
-          CONTRACT_OWNER_ACCOUNT_PRIVATE_KEY: |
-            ${{ inputs.github.event.inputs.environment == 'goerli'
-              && secrets.DAPP_DEV_GOERLI_ETH_CONTRACT_OWNER_PRIVATE_KEY
-              || secrets.DAPP_DEV_SEPOLIA_ETH_CONTRACT_OWNER_PRIVATE_KEY }}
-          KEEP_CONTRACT_OWNER_ACCOUNT_PRIVATE_KEY: |
-            ${{ inputs.github.event.inputs.environment == 'goerli'
-              && secrets.GOERLI_KEEP_ETH_CONTRACT_OWNER_PRIVATE_KEY
-              || secrets.SEPOLIA_KEEP_ETH_CONTRACT_OWNER_PRIVATE_KEY }}
+          CONTRACT_OWNER_ACCOUNT_PRIVATE_KEY: secrets.DAPP_DEV_TESTNET_ETH_CONTRACT_OWNER_PRIVATE_KEY
+          KEEP_CONTRACT_OWNER_ACCOUNT_PRIVATE_KEY: secrets.TESTNET_KEEP_ETH_CONTRACT_OWNER_PRIVATE_KEY
         run: yarn deploy --network ${{ github.event.inputs.environment }}
 
       - name: Bump up package version
