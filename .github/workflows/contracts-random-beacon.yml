@@ -256,7 +256,7 @@ jobs:
             ${{ inputs.github.event.inputs.environment == 'goerli'
               && secrets.GOERLI_ETH_HOSTNAME_HTTP
               || secrets.SEPOLIA_ETH_HOSTNAME_HTTP }}
-          CONTRACT_OWNER_ACCOUNT_PRIVATE_KEY: ${{ secrets.TESTNET_ETH_CONTRACT_OWNER_PRIVATE_KEY }}
+          ACCOUNTS_PRIVATE_KEYS: ${{ secrets.TESTNET_ETH_CONTRACT_OWNER_PRIVATE_KEY }}
           KEEP_CONTRACT_OWNER_ACCOUNT_PRIVATE_KEY: ${{ secrets.TESTNET_ETH_CONTRACT_OWNER_PRIVATE_KEY }}
           ETHERSCAN_API_KEY: ${{ secrets.ETHERSCAN_API_KEY }}
         run: yarn deploy --network ${{ github.event.inputs.environment }}
@@ -350,7 +350,7 @@ jobs:
             ${{ inputs.github.event.inputs.environment == 'goerli'
               && secrets.GOERLI_ETH_HOSTNAME_HTTP
               || secrets.SEPOLIA_ETH_HOSTNAME_HTTP }}
-          CONTRACT_OWNER_ACCOUNT_PRIVATE_KEY: ${{ secrets.DAPP_DEV_TESTNET_ETH_CONTRACT_OWNER_PRIVATE_KEY }}
+          ACCOUNTS_PRIVATE_KEYS: ${{ secrets.DAPP_DEV_TESTNET_ETH_CONTRACT_OWNER_PRIVATE_KEY }}
           KEEP_CONTRACT_OWNER_ACCOUNT_PRIVATE_KEY: ${{ secrets.TESTNET_ETH_CONTRACT_OWNER_PRIVATE_KEY }}
           ETHERSCAN_API_KEY: ${{ secrets.ETHERSCAN_API_KEY }}
         run: yarn deploy --network ${{ github.event.inputs.environment }}
