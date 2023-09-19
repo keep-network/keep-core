@@ -28,7 +28,7 @@ on:
     inputs:
       environment:
         description: "Environment (network) for workflow execution, e.g. `sepolia`"
-        required: false
+        required: true
       upstream_builds:
         description: "Upstream builds"
         required: false
