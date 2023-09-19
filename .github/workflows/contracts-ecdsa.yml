@@ -261,7 +261,7 @@ jobs:
               && secrets.GOERLI_ETH_HOSTNAME_HTTP
               || secrets.SEPOLIA_ETH_HOSTNAME_HTTP }}
           CONTRACT_OWNER_ACCOUNT_PRIVATE_KEY: secrets.TESTNET_ETH_CONTRACT_OWNER_PRIVATE_KEY
-          KEEP_CONTRACT_OWNER_ACCOUNT_PRIVATE_KEY: secrets.TESTNET_KEEP_ETH_CONTRACT_OWNER_PRIVATE_KEY
+          KEEP_CONTRACT_OWNER_ACCOUNT_PRIVATE_KEY: secrets.TESTNET_ETH_CONTRACT_OWNER_PRIVATE_KEY
         run: yarn deploy --network ${{ github.event.inputs.environment }}
 
       - name: Bump up package version
@@ -356,7 +356,7 @@ jobs:
               && secrets.GOERLI_ETH_HOSTNAME_HTTP
               || secrets.SEPOLIA_ETH_HOSTNAME_HTTP }}
           CONTRACT_OWNER_ACCOUNT_PRIVATE_KEY: secrets.DAPP_DEV_TESTNET_ETH_CONTRACT_OWNER_PRIVATE_KEY
-          KEEP_CONTRACT_OWNER_ACCOUNT_PRIVATE_KEY: secrets.TESTNET_KEEP_ETH_CONTRACT_OWNER_PRIVATE_KEY
+          KEEP_CONTRACT_OWNER_ACCOUNT_PRIVATE_KEY: secrets.TESTNET_ETH_CONTRACT_OWNER_PRIVATE_KEY
         run: yarn deploy --network ${{ github.event.inputs.environment }}
 
       - name: Bump up package version
