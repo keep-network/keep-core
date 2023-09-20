@@ -117,19 +117,6 @@ func FindDeposits(
 
 		logger.Debugf("getting details of deposit %d/%d", i+1, len(depositRevealedEvents))
 
-		depositTransaction, err := btcChain.GetTransaction(
-			event.FundingTxHash,
-		)
-		if err != nil {
-			return result, fmt.Errorf(
-				"failed to get deposit transaction: [%w]",
-				err,
-			)
-		}
-
-		publicKeyScript := depositTransaction.Outputs[event.FundingOutputIndex].PublicKeyScript
-		scriptType := bitcoin.GetScriptType(publicKeyScript)
-
 		depositKey := chain.BuildDepositKey(event.FundingTxHash, event.FundingOutputIndex)
 
 		depositRequest, found, err := chain.GetDepositRequest(
@@ -170,6 +157,20 @@ func FindDeposits(
 				i+1, len(depositRevealedEvents),
 				confirmations, tbtc.DepositSweepRequiredFundingTxConfirmations)
 			continue
+		}
+
+		var scriptType bitcoin.ScriptType
+		depositTransaction, err := btcChain.GetTransaction(
+			event.FundingTxHash,
+		)
+		if err != nil {
+			logger.Errorf(
+				"failed to get deposit transaction data: [%v]",
+				err,
+			)
+		} else {
+			publicKeyScript := depositTransaction.Outputs[event.FundingOutputIndex].PublicKeyScript
+			scriptType = bitcoin.GetScriptType(publicKeyScript)
 		}
 
 		result = append(
@@ -229,7 +230,7 @@ func FindDepositsToSweep(
 			return nil,
 				fmt.Errorf(
 					"failed to get deposits for [%s] wallet: [%w]",
-					walletToSweep,
+					hexutils.Encode(walletToSweep[:]),
 					err,
 				)
 		}
