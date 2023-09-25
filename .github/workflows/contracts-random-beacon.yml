@@ -27,8 +27,8 @@ on:
   workflow_dispatch:
     inputs:
       environment:
-        description: "Environment (network) for workflow execution, e.g. `goerli`"
-        required: false
+        description: "Environment (network) for workflow execution, e.g. `sepolia`"
+        required: true
       upstream_builds:
         description: "Upstream builds"
         required: false
@@ -248,8 +248,15 @@ jobs:
 
       - name: Deploy contracts
         env:
-          CHAIN_API_URL: ${{ secrets.GOERLI_ETH_HOSTNAME_HTTP }}
-          ACCOUNTS_PRIVATE_KEYS: ${{ secrets.GOERLI_ETH_CONTRACT_OWNER_PRIVATE_KEY }}
+          # Using fake ternary expression to decide which credentials to use,
+          # depending on chosen environment. Note: if `GOERLI_ETH_HOSTNAME_HTTP`
+          # is empty, the expression will be evaluated to
+          # `SEPOLIA_ETH_HOSTNAME_HTTP`'s value.
+          CHAIN_API_URL: |
+            ${{ inputs.github.event.inputs.environment == 'goerli'
+              && secrets.GOERLI_ETH_HOSTNAME_HTTP
+              || secrets.SEPOLIA_ETH_HOSTNAME_HTTP }}
+          ACCOUNTS_PRIVATE_KEYS: ${{ secrets.TESTNET_ETH_CONTRACT_OWNER_PRIVATE_KEY }}
           ETHERSCAN_API_KEY: ${{ secrets.ETHERSCAN_API_KEY }}
         run: yarn deploy --network ${{ github.event.inputs.environment }}
 
@@ -334,8 +341,15 @@ jobs:
       
       - name: Deploy contracts
         env:
-          CHAIN_API_URL: ${{ secrets.GOERLI_ETH_HOSTNAME_HTTP }}
-          ACCOUNTS_PRIVATE_KEYS: ${{ secrets.DAPP_DEV_GOERLI_ETH_CONTRACT_OWNER_PRIVATE_KEY }}
+          # Using fake ternary expression to decide which credentials to use,
+          # depending on chosen environment. Note: if `GOERLI_ETH_HOSTNAME_HTTP`
+          # is empty, the expression will be evaluated to
+          # `SEPOLIA_ETH_HOSTNAME_HTTP`'s value.
+          CHAIN_API_URL: |
+            ${{ inputs.github.event.inputs.environment == 'goerli'
+              && secrets.GOERLI_ETH_HOSTNAME_HTTP
+              || secrets.SEPOLIA_ETH_HOSTNAME_HTTP }}
+          ACCOUNTS_PRIVATE_KEYS: ${{ secrets.DAPP_DEV_TESTNET_ETH_CONTRACT_OWNER_PRIVATE_KEY }}
           ETHERSCAN_API_KEY: ${{ secrets.ETHERSCAN_API_KEY }}
         run: yarn deploy --network ${{ github.event.inputs.environment }}
 

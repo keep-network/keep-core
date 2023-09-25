@@ -121,6 +121,14 @@ const config: HardhatUserConfig = {
         : undefined,
       tags: ["etherscan", "tenderly", "useRandomBeaconChaosnet"],
     },
+    sepolia: {
+      url: process.env.CHAIN_API_URL || "",
+      chainId: 11155111,
+      accounts: process.env.ACCOUNTS_PRIVATE_KEYS
+        ? process.env.ACCOUNTS_PRIVATE_KEYS.split(",")
+        : undefined,
+      tags: ["etherscan", "tenderly", "useRandomBeaconChaosnet"],
+    },
     mainnet: {
       url: process.env.CHAIN_API_URL || "",
       chainId: 1,
@@ -143,21 +151,25 @@ const config: HardhatUserConfig = {
     deployer: {
       default: 1, // take the second account
       goerli: 0,
+      sepolia: 0,
       mainnet: 0, // "0x123694886DBf5Ac94DDA07135349534536D14cAf"
     },
     governance: {
       default: 2,
       goerli: 0,
+      sepolia: 0,
       mainnet: "0x9f6e831c8f8939dc0c830c6e492e7cef4f9c2f5f", // Threshold Council
     },
     chaosnetOwner: {
       default: 3,
       goerli: 0,
+      sepolia: 0,
       mainnet: "0x9f6e831c8f8939dc0c830c6e492e7cef4f9c2f5f", // Threshold Council
     },
     esdm: {
       default: 4,
       goerli: 0,
+      sepolia: 0,
       mainnet: "0x9f6e831c8f8939dc0c830c6e492e7cef4f9c2f5f", // Threshold Council
     },
   },
@@ -189,6 +201,10 @@ const config: HardhatUserConfig = {
         "node_modules/@keep-network/random-beacon/deployments/development",
       ],
       goerli: [
+        "node_modules/@threshold-network/solidity-contracts/artifacts",
+        "node_modules/@keep-network/random-beacon/artifacts",
+      ],
+      sepolia: [
         "node_modules/@threshold-network/solidity-contracts/artifacts",
         "node_modules/@keep-network/random-beacon/artifacts",
       ],
