@@ -44,11 +44,23 @@ type Chain interface {
 	// not contain unconfirmed transactions living in the mempool at the moment
 	// of request. The returned transactions list can be limited using the
 	// `limit` parameter. For example, if `limit` is set to `5`, only the
-	// latest five transactions will be returned.
+	// latest five transactions will be returned. Note that taking an unlimited
+	// transaction history may be time-consuming as this function fetches
+	// complete transactions with all necessary data.
 	GetTransactionsForPublicKeyHash(
 		publicKeyHash [20]byte,
 		limit int,
 	) ([]*Transaction, error)
+
+	// GetTxHashesForPublicKeyHash gets hashes of confirmed transactions that pays
+	// the given public key hash using either a P2PKH or P2WPKH script. The returned
+	// transactions hashes are ordered by block height in the ascending order, i.e.
+	// the latest transaction hash is at the end of the list. The returned list does
+	// not contain unconfirmed transactions hashes living in the mempool at the
+	// moment of request.
+	GetTxHashesForPublicKeyHash(
+		publicKeyHash [20]byte,
+	) ([]Hash, error)
 
 	// GetMempoolForPublicKeyHash gets the unconfirmed mempool transactions
 	// that pays the given public key hash using either a P2PKH or P2WPKH script.

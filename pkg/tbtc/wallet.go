@@ -384,11 +384,6 @@ func (w *wallet) String() string {
 // currently registered in the Bridge on-chain contract. The returned
 // main UTXO can be nil if the wallet does not have a main UTXO registered
 // in the Bridge at the moment.
-//
-// WARNING: THIS FUNCTION CANNOT DETERMINE THE MAIN UTXO IF IT COMES FROM A
-// BITCOIN TRANSACTION THAT IS NOT ONE OF THE LATEST FIVE TRANSACTIONS
-// TARGETING THE GIVEN WALLET PUBLIC KEY HASH. HOWEVER, SUCH A CASE IS
-// VERY UNLIKELY.
 func DetermineWalletMainUtxo(
 	walletPublicKeyHash [20]byte,
 	bridgeChain BridgeChain,
@@ -412,9 +407,12 @@ func DetermineWalletMainUtxo(
 	// to the second last BTC transaction. In theory, such a gap between
 	// the actual latest BTC transaction and the registered main UTXO in
 	// the Bridge may be even wider. To cover the worst possible cases, we
-	// always take the five latest transactions made by the wallet for
-	// consideration.
-	transactions, err := btcChain.GetTransactionsForPublicKeyHash(walletPublicKeyHash, 5)
+	// must rely on the full transaction history. Due to performance reasons,
+	// we are first taking just the transactions hashes (fast call) and then
+	// fetch full transaction data (time-consuming calls) starting from
+	// the most recent transactions as there is a high chance the main UTXO
+	// comes from there.
+	txHashes, err := btcChain.GetTxHashesForPublicKeyHash(walletPublicKeyHash)
 	if err != nil {
 		return nil, fmt.Errorf("cannot get transactions history for wallet: [%v]", err)
 	}
@@ -430,8 +428,17 @@ func DetermineWalletMainUtxo(
 
 	// Start iterating from the latest transaction as the chance it matches
 	// the wallet main UTXO is the highest.
-	for i := len(transactions) - 1; i >= 0; i-- {
-		transaction := transactions[i]
+	for i := len(txHashes) - 1; i >= 0; i-- {
+		txHash := txHashes[i]
+
+		transaction, err := btcChain.GetTransaction(txHash)
+		if err != nil {
+			return nil, fmt.Errorf(
+				"cannot get transaction with hash [%s]: [%v]",
+				txHash.String(),
+				err,
+			)
+		}
 
 		// Iterate over transaction's outputs and find the one that targets
 		// the wallet public key hash.

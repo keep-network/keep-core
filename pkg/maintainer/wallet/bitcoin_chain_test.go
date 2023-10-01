@@ -99,6 +99,12 @@ func (lbc *LocalBitcoinChain) GetTransactionsForPublicKeyHash(
 	panic("unsupported")
 }
 
+func (lbc *LocalBitcoinChain) GetTxHashesForPublicKeyHash(
+	publicKeyHash [20]byte,
+) ([]bitcoin.Hash, error) {
+	panic("unsupported")
+}
+
 func (lbc *LocalBitcoinChain) GetMempoolForPublicKeyHash(
 	publicKeyHash [20]byte,
 ) ([]*bitcoin.Transaction, error) {

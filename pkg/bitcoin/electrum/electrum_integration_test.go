@@ -442,6 +442,39 @@ func TestGetTransactionsForPublicKeyHash_Integration(t *testing.T) {
 	})
 }
 
+func TestGetTxHashesForPublicKeyHash_Integration(t *testing.T) {
+	runParallel(t, func(t *testing.T, testConfig testConfig) {
+		electrum, cancelCtx := newTestConnection(t, testConfig.clientConfig)
+		defer cancelCtx()
+
+		data, ok := testData.TransactionsForPublicKeyHash[testConfig.network]
+		if !ok {
+			t.Fatalf(
+				"transactions for public key hash data not defined for network %s",
+				testConfig.network,
+			)
+		}
+
+		publicKeyHash := (*[20]byte)(data.PublicKeyHash)
+		expectedHashes := data.Transactions
+
+		actualHashes, err := electrum.GetTxHashesForPublicKeyHash(*publicKeyHash)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		// If the actual hashes set is greater than the expected set, we need
+		// to adjust them to the same length to make a comparison that makes sense.
+		if len(actualHashes) > len(expectedHashes) {
+			actualHashes = actualHashes[len(actualHashes)-len(expectedHashes):]
+		}
+
+		if diff := deep.Equal(actualHashes, expectedHashes); diff != nil {
+			t.Errorf("compare failed: %v", diff)
+		}
+	})
+}
+
 func TestEstimateSatPerVByteFee_Integration(t *testing.T) {
 	runParallel(t, func(t *testing.T, testConfig testConfig) {
 		electrum, cancelCtx := newTestConnection(t, testConfig.clientConfig)

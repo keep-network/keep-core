@@ -348,11 +348,47 @@ func (c *Connection) GetTransactionMerkleProof(
 // not contain unconfirmed transactions living in the mempool at the moment
 // of request. The returned transactions list can be limited using the
 // `limit` parameter. For example, if `limit` is set to `5`, only the
-// latest five transactions will be returned.
+// latest five transactions will be returned. Note that taking an unlimited
+// transaction history may be time-consuming as this function fetches
+// complete transactions with all necessary data.
 func (c *Connection) GetTransactionsForPublicKeyHash(
 	publicKeyHash [20]byte,
 	limit int,
 ) ([]*bitcoin.Transaction, error) {
+	txHashes, err := c.GetTxHashesForPublicKeyHash(publicKeyHash)
+	if err != nil {
+		return nil, err
+	}
+
+	var selectedTxHashes []bitcoin.Hash
+	if len(txHashes) > limit {
+		selectedTxHashes = txHashes[len(txHashes)-limit:]
+	} else {
+		selectedTxHashes = txHashes
+	}
+
+	transactions := make([]*bitcoin.Transaction, len(selectedTxHashes))
+	for i, txHash := range selectedTxHashes {
+		transaction, err := c.GetTransaction(txHash)
+		if err != nil {
+			return nil, fmt.Errorf("cannot get transaction: [%v]", err)
+		}
+
+		transactions[i] = transaction
+	}
+
+	return transactions, nil
+}
+
+// GetTxHashesForPublicKeyHash gets hashes of confirmed transactions that pays
+// the given public key hash using either a P2PKH or P2WPKH script. The returned
+// transactions hashes are ordered by block height in the ascending order, i.e.
+// the latest transaction hash is at the end of the list. The returned list does
+// not contain unconfirmed transactions hashes living in the mempool at the
+// moment of request.
+func (c *Connection) GetTxHashesForPublicKeyHash(
+	publicKeyHash [20]byte,
+) ([]bitcoin.Hash, error) {
 	p2pkh, err := bitcoin.PayToPublicKeyHash(publicKeyHash)
 	if err != nil {
 		return nil, fmt.Errorf(
@@ -398,24 +434,12 @@ func (c *Connection) GetTransactionsForPublicKeyHash(
 		},
 	)
 
-	var selectedItems []*scriptHistoryItem
-	if len(items) > limit {
-		selectedItems = items[len(items)-limit:]
-	} else {
-		selectedItems = items
+	txHashes := make([]bitcoin.Hash, len(items))
+	for i, item := range items {
+		txHashes[i] = item.txHash
 	}
 
-	transactions := make([]*bitcoin.Transaction, len(selectedItems))
-	for i, item := range selectedItems {
-		transaction, err := c.GetTransaction(item.txHash)
-		if err != nil {
-			return nil, fmt.Errorf("cannot get transaction: [%v]", err)
-		}
-
-		transactions[i] = transaction
-	}
-
-	return transactions, nil
+	return txHashes, nil
 }
 
 type scriptHistoryItem struct {

@@ -123,6 +123,37 @@ func (lbc *localBitcoinChain) GetTransactionsForPublicKeyHash(
 	return matchingTransactions, nil
 }
 
+func (lbc *localBitcoinChain) GetTxHashesForPublicKeyHash(
+	publicKeyHash [20]byte,
+) ([]bitcoin.Hash, error) {
+	lbc.transactionsMutex.Lock()
+	defer lbc.transactionsMutex.Unlock()
+
+	p2pkh, err := bitcoin.PayToPublicKeyHash(publicKeyHash)
+	if err != nil {
+		return nil, err
+	}
+
+	p2wpkh, err := bitcoin.PayToWitnessPublicKeyHash(publicKeyHash)
+	if err != nil {
+		return nil, err
+	}
+
+	matchingTxHashes := make([]bitcoin.Hash, 0)
+
+	for _, transaction := range lbc.transactions {
+		for _, output := range transaction.Outputs {
+			script := output.PublicKeyScript
+			if bytes.Equal(script, p2pkh) || bytes.Equal(script, p2wpkh) {
+				matchingTxHashes = append(matchingTxHashes, transaction.Hash())
+				break
+			}
+		}
+	}
+
+	return matchingTxHashes, nil
+}
+
 func (lbc *localBitcoinChain) GetMempoolForPublicKeyHash(
 	publicKeyHash [20]byte,
 ) ([]*bitcoin.Transaction, error) {
