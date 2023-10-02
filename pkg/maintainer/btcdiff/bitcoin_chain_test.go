@@ -102,6 +102,18 @@ func (lbc *localBitcoinChain) GetMempoolForPublicKeyHash(
 	panic("unsupported")
 }
 
+func (lbc *localBitcoinChain) GetUtxosForPublicKeyHash(
+	publicKeyHash [20]byte,
+) ([]*bitcoin.UnspentTransactionOutput, error) {
+	panic("unsupported")
+}
+
+func (lbc *localBitcoinChain) GetMempoolUtxosForPublicKeyHash(
+	publicKeyHash [20]byte,
+) ([]*bitcoin.UnspentTransactionOutput, error) {
+	panic("unsupported")
+}
+
 // SetBlockHeaders sets internal headers for testing purposes.
 func (lbc *localBitcoinChain) SetBlockHeaders(
 	blockHeaders map[uint]*bitcoin.BlockHeader,

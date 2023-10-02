@@ -67,6 +67,27 @@ type Chain interface {
 	// The returned transactions are in an indefinite order.
 	GetMempoolForPublicKeyHash(publicKeyHash [20]byte) ([]*Transaction, error)
 
+	// GetUtxosForPublicKeyHash gets unspent outputs of confirmed transactions that
+	// are controlled by the given public key hash (either a P2PKH or P2WPKH script).
+	// The returned UTXOs are ordered by block height in the ascending order, i.e.
+	// the latest UTXO is at the end of the list. The returned list does not contain
+	// unspent outputs of unconfirmed transactions living in the mempool at the
+	// moment of request. Outputs used as inputs of confirmed or mempool
+	// transactions are not returned as well because they are no longer UTXOs.
+	GetUtxosForPublicKeyHash(
+		publicKeyHash [20]byte,
+	) ([]*UnspentTransactionOutput, error)
+
+	// GetMempoolUtxosForPublicKeyHash gets unspent outputs of unconfirmed transactions
+	// that are controlled by the given public key hash (either a P2PKH or P2WPKH script).
+	// The returned UTXOs are in an indefinite order. The returned list does not
+	// contain unspent outputs of confirmed transactions. Outputs used as inputs of
+	// confirmed or mempool transactions are not returned as well because they are
+	// no longer UTXOs.
+	GetMempoolUtxosForPublicKeyHash(
+		publicKeyHash [20]byte,
+	) ([]*UnspentTransactionOutput, error)
+
 	// EstimateSatPerVByteFee returns the estimated sat/vbyte fee for a
 	// transaction to be confirmed within the given number of blocks.
 	EstimateSatPerVByteFee(blocks uint32) (int64, error)

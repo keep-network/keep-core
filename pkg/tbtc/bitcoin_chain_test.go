@@ -185,6 +185,48 @@ func (lbc *localBitcoinChain) GetMempoolForPublicKeyHash(
 	return matchingTransactions, nil
 }
 
+func (lbc *localBitcoinChain) GetUtxosForPublicKeyHash(
+	publicKeyHash [20]byte,
+) ([]*bitcoin.UnspentTransactionOutput, error) {
+	lbc.transactionsMutex.Lock()
+	defer lbc.transactionsMutex.Unlock()
+
+	p2pkh, err := bitcoin.PayToPublicKeyHash(publicKeyHash)
+	if err != nil {
+		return nil, err
+	}
+
+	p2wpkh, err := bitcoin.PayToWitnessPublicKeyHash(publicKeyHash)
+	if err != nil {
+		return nil, err
+	}
+
+	matchingUtxos := make([]*bitcoin.UnspentTransactionOutput, 0)
+
+	for _, transaction := range lbc.transactions {
+		for i, output := range transaction.Outputs {
+			script := output.PublicKeyScript
+			if bytes.Equal(script, p2pkh) || bytes.Equal(script, p2wpkh) {
+				matchingUtxos = append(matchingUtxos, &bitcoin.UnspentTransactionOutput{
+					Outpoint: &bitcoin.TransactionOutpoint{
+						TransactionHash: transaction.Hash(),
+						OutputIndex:     uint32(i),
+					},
+					Value: output.Value,
+				})
+			}
+		}
+	}
+
+	return matchingUtxos, nil
+}
+
+func (lbc *localBitcoinChain) GetMempoolUtxosForPublicKeyHash(
+	publicKeyHash [20]byte,
+) ([]*bitcoin.UnspentTransactionOutput, error) {
+	return nil, nil
+}
+
 func (lbc *localBitcoinChain) EstimateSatPerVByteFee(
 	blocks uint32,
 ) (int64, error) {

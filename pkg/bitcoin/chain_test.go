@@ -128,6 +128,18 @@ func (lc *localChain) GetMempoolForPublicKeyHash(
 	panic("not implemented")
 }
 
+func (lc *localChain) GetUtxosForPublicKeyHash(
+	publicKeyHash [20]byte,
+) ([]*UnspentTransactionOutput, error) {
+	panic("unsupported")
+}
+
+func (lc *localChain) GetMempoolUtxosForPublicKeyHash(
+	publicKeyHash [20]byte,
+) ([]*UnspentTransactionOutput, error) {
+	panic("unsupported")
+}
+
 func (lc *localChain) EstimateSatPerVByteFee(
 	blocks uint32,
 ) (int64, error) {

@@ -161,6 +161,18 @@ func (lbc *localBitcoinChain) GetMempoolForPublicKeyHash(publicKeyHash [20]byte)
 	panic("unsupported")
 }
 
+func (lbc *localBitcoinChain) GetUtxosForPublicKeyHash(
+	publicKeyHash [20]byte,
+) ([]*bitcoin.UnspentTransactionOutput, error) {
+	panic("unsupported")
+}
+
+func (lbc *localBitcoinChain) GetMempoolUtxosForPublicKeyHash(
+	publicKeyHash [20]byte,
+) ([]*bitcoin.UnspentTransactionOutput, error) {
+	panic("unsupported")
+}
+
 func (lbc *localBitcoinChain) EstimateSatPerVByteFee(blocks uint32) (
 	int64,
 	error,

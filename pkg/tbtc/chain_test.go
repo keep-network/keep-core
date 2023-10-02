@@ -543,6 +543,13 @@ func (lc *localChain) GetPendingRedemptionRequest(
 	return request, true, nil
 }
 
+func (lc *localChain) GetDepositRequest(
+	fundingTxHash bitcoin.Hash,
+	fundingOutputIndex uint32,
+) (*DepositChainRequest, bool, error) {
+	panic("not supported")
+}
+
 func (lc *localChain) setPendingRedemptionRequest(
 	walletPublicKeyHash [20]byte,
 	request *RedemptionRequest,

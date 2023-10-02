@@ -1,5 +1,3 @@
-//go:build integration
-
 package electrum_test
 
 import (
@@ -7,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"math"
+	"sort"
 	"strings"
 	"testing"
 	"time"
@@ -470,6 +469,53 @@ func TestGetTxHashesForPublicKeyHash_Integration(t *testing.T) {
 		}
 
 		if diff := deep.Equal(actualHashes, expectedHashes); diff != nil {
+			t.Errorf("compare failed: %v", diff)
+		}
+	})
+}
+
+func TestGetUtxosForPublicKeyHash_Integration(t *testing.T) {
+	runParallel(t, func(t *testing.T, testConfig testConfig) {
+		electrum, cancelCtx := newTestConnection(t, testConfig.clientConfig)
+		defer cancelCtx()
+
+		data, ok := testData.TransactionsForPublicKeyHash[testConfig.network]
+		if !ok {
+			t.Fatalf(
+				"transactions for public key hash data not defined for network %s",
+				testConfig.network,
+			)
+		}
+
+		publicKeyHash := (*[20]byte)(data.PublicKeyHash)
+		expectedUtxos := data.Utxos
+
+		utxos, err := electrum.GetUtxosForPublicKeyHash(*publicKeyHash)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		actualUtxos := make([]string, len(utxos))
+		for i, utxo := range utxos {
+			actualUtxos[i] = fmt.Sprintf("%v:%v:%v",
+				utxo.Outpoint.TransactionHash.Hex(bitcoin.ReversedByteOrder),
+				utxo.Outpoint.OutputIndex,
+				utxo.Value,
+			)
+		}
+
+		// Some UTXOs in the test data come from the same block and their
+		// position is sometimes switched. Let's use another sort criteria
+		// to achieve a predictable order, i.e. sort the whole UTXO string
+		// (txHash:outputIndex:value) in the ascending order.
+		sort.SliceStable(
+			actualUtxos,
+			func(i, j int) bool {
+				return actualUtxos[i] < actualUtxos[j]
+			},
+		)
+
+		if diff := deep.Equal(actualUtxos, expectedUtxos); diff != nil {
 			t.Errorf("compare failed: %v", diff)
 		}
 	})

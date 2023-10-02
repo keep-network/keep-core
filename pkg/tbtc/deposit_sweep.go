@@ -131,6 +131,7 @@ func (dsa *depositSweepAction) execute() error {
 	err = EnsureWalletSyncedBetweenChains(
 		walletPublicKeyHash,
 		walletMainUtxo,
+		dsa.chain,
 		dsa.btcChain,
 	)
 	if err != nil {

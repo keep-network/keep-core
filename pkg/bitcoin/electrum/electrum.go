@@ -634,6 +634,242 @@ func (c *Connection) getScriptMempool(
 	return convertedItems, nil
 }
 
+// GetUtxosForPublicKeyHash gets unspent outputs of confirmed transactions that
+// are controlled by the given public key hash (either a P2PKH or P2WPKH script).
+// The returned UTXOs are ordered by block height in the ascending order, i.e.
+// the latest UTXO is at the end of the list. The returned list does not contain
+// unspent outputs of unconfirmed transactions living in the mempool at the
+// moment of request. Outputs used as inputs of confirmed or mempool
+// transactions are not returned as well because they are no longer UTXOs.
+func (c *Connection) GetUtxosForPublicKeyHash(
+	publicKeyHash [20]byte,
+) ([]*bitcoin.UnspentTransactionOutput, error) {
+	p2pkh, err := bitcoin.PayToPublicKeyHash(publicKeyHash)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"cannot build P2PKH for public key hash [0x%x]: [%v]",
+			publicKeyHash,
+			err,
+		)
+	}
+
+	p2wpkh, err := bitcoin.PayToWitnessPublicKeyHash(publicKeyHash)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"cannot build P2WPKH for public key hash [0x%x]: [%v]",
+			publicKeyHash,
+			err,
+		)
+	}
+
+	p2pkhItems, err := c.getScriptUtxos(p2pkh, true)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"cannot get P2PKH UTXOs for public key hash [0x%x]: [%v]",
+			publicKeyHash,
+			err,
+		)
+	}
+
+	p2wpkhItems, err := c.getScriptUtxos(p2wpkh, true)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"cannot get P2WPKH UTXOs for public key hash [0x%x]: [%v]",
+			publicKeyHash,
+			err,
+		)
+	}
+
+	items := append(p2pkhItems, p2wpkhItems...)
+
+	sort.SliceStable(
+		items,
+		func(i, j int) bool {
+			return items[i].blockHeight < items[j].blockHeight
+		},
+	)
+
+	utxos := make([]*bitcoin.UnspentTransactionOutput, len(items))
+	for i, item := range items {
+		utxos[i] = &bitcoin.UnspentTransactionOutput{
+			Outpoint: &bitcoin.TransactionOutpoint{
+				TransactionHash: item.txHash,
+				OutputIndex:     item.outputIndex,
+			},
+			Value: int64(item.value),
+		}
+	}
+
+	return utxos, nil
+}
+
+// GetMempoolUtxosForPublicKeyHash gets unspent outputs of unconfirmed transactions
+// that are controlled by the given public key hash (either a P2PKH or P2WPKH script).
+// The returned UTXOs are in an indefinite order. The returned list does not
+// contain unspent outputs of confirmed transactions. Outputs used as inputs of
+// confirmed or mempool transactions are not returned as well because they are
+// no longer UTXOs.
+func (c *Connection) GetMempoolUtxosForPublicKeyHash(
+	publicKeyHash [20]byte,
+) ([]*bitcoin.UnspentTransactionOutput, error) {
+	p2pkh, err := bitcoin.PayToPublicKeyHash(publicKeyHash)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"cannot build P2PKH for public key hash [0x%x]: [%v]",
+			publicKeyHash,
+			err,
+		)
+	}
+
+	p2wpkh, err := bitcoin.PayToWitnessPublicKeyHash(publicKeyHash)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"cannot build P2WPKH for public key hash [0x%x]: [%v]",
+			publicKeyHash,
+			err,
+		)
+	}
+
+	p2pkhItems, err := c.getScriptUtxos(p2pkh, false)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"cannot get P2PKH UTXOs for public key hash [0x%x]: [%v]",
+			publicKeyHash,
+			err,
+		)
+	}
+
+	p2wpkhItems, err := c.getScriptUtxos(p2wpkh, false)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"cannot get P2WPKH UTXOs for public key hash [0x%x]: [%v]",
+			publicKeyHash,
+			err,
+		)
+	}
+
+	items := append(p2pkhItems, p2wpkhItems...)
+
+	utxos := make([]*bitcoin.UnspentTransactionOutput, len(items))
+	for i, item := range items {
+		utxos[i] = &bitcoin.UnspentTransactionOutput{
+			Outpoint: &bitcoin.TransactionOutpoint{
+				TransactionHash: item.txHash,
+				OutputIndex:     item.outputIndex,
+			},
+			Value: int64(item.value),
+		}
+	}
+
+	return utxos, nil
+}
+
+type scriptUtxoItem struct {
+	txHash      bitcoin.Hash
+	outputIndex uint32
+	value       uint64
+	blockHeight uint32
+}
+
+// getScriptUtxos returns unspent outputs of confirmed/unconfirmed transactions
+// that are locked using the given script (P2PKH, P2WPKH, P2SH, P2WSH, etc.).
+//
+// If the `confirmed` flag is true, the returned list contains unspent outputs
+// of confirmed transactions, sorted by the block height in the ascending order,
+// i.e. the latest UTXO is at the end of the list. The resulting list does not
+// contain unspent outputs of unconfirmed transactions living in the mempool
+// at the moment of request.
+//
+// If the `confirmed` flag is false, the returned list contains unspent outputs
+// of unconfirmed transactions, in an indefinite order. The resulting list
+// does not contain unspent outputs of confirmed transactions.
+//
+// In both cases, the resulted list DOES NOT CONTAIN outputs already used as
+// inputs of confirmed or mempool transactions because they are no longer UTXOs.
+func (c *Connection) getScriptUtxos(
+	script []byte,
+	confirmed bool,
+) ([]*scriptUtxoItem, error) {
+	scriptHash := sha256.Sum256(script)
+	reversedScriptHash := byteutils.Reverse(scriptHash[:])
+	reversedScriptHashString := hex.EncodeToString(reversedScriptHash)
+
+	items, err := requestWithRetry(
+		c,
+		func(
+			ctx context.Context,
+			client *electrum.Client,
+		) ([]*electrum.ListUnspentResult, error) {
+			return client.ListUnspent(ctx, reversedScriptHashString)
+		},
+		"ListUnspent",
+	)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"failed to get UTXOs for script [0x%x]: [%v]",
+			script,
+			err,
+		)
+	}
+
+	// According to https://electrumx.readthedocs.io/en/stable/protocol-methods.html#blockchain-scripthash-listunspent
+	// unconfirmed items living in the mempool are appended at the end of the
+	// returned list and their height value is either -1 or 0. That means
+	// we need to take all items with height >0 to obtain confirmed UTXO
+	// items and <=0 if we want to take the unconfirmed ones.
+	var filterFn func(item *electrum.ListUnspentResult) bool
+	if confirmed {
+		filterFn = func(item *electrum.ListUnspentResult) bool {
+			return item.Height > 0
+		}
+	} else {
+		filterFn = func(item *electrum.ListUnspentResult) bool {
+			return item.Height <= 0
+		}
+	}
+
+	filteredItems := make([]*scriptUtxoItem, 0)
+	for _, item := range items {
+		if filterFn(item) {
+			txHash, err := bitcoin.NewHashFromString(
+				item.Hash,
+				bitcoin.ReversedByteOrder,
+			)
+			if err != nil {
+				return nil, fmt.Errorf(
+					"cannot parse hash [%s]: [%v]",
+					item.Hash,
+					err,
+				)
+			}
+
+			filteredItems = append(
+				filteredItems, &scriptUtxoItem{
+					txHash:      txHash,
+					outputIndex: item.Position,
+					value:       item.Value,
+					blockHeight: item.Height,
+				},
+			)
+		}
+	}
+
+	if confirmed {
+		// The list returned from client.ListUnspent is sorted by the block height
+		// in the ascending order though we are sorting it again just in case
+		// (e.g. API contract changes). Sorting makes sense only for confirmed
+		// items as unconfirmed ones have a block height of -1 or 0.
+		sort.SliceStable(
+			filteredItems,
+			func(i, j int) bool {
+				return filteredItems[i].blockHeight < filteredItems[j].blockHeight
+			},
+		)
+	}
+
+	return filteredItems, nil
+}
+
 // EstimateSatPerVByteFee returns the estimated sat/vbyte fee for a
 // transaction to be confirmed within the given number of blocks.
 func (c *Connection) EstimateSatPerVByteFee(blocks uint32) (int64, error) {
