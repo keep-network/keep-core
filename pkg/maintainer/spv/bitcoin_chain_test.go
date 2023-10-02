@@ -148,10 +148,28 @@ func (lbc *localBitcoinChain) GetTransactionsForPublicKeyHash(
 	return matchingTransactions, nil
 }
 
+func (lbc *localBitcoinChain) GetTxHashesForPublicKeyHash(
+	publicKeyHash [20]byte,
+) ([]bitcoin.Hash, error) {
+	panic("unsupported")
+}
+
 func (lbc *localBitcoinChain) GetMempoolForPublicKeyHash(publicKeyHash [20]byte) (
 	[]*bitcoin.Transaction,
 	error,
 ) {
+	panic("unsupported")
+}
+
+func (lbc *localBitcoinChain) GetUtxosForPublicKeyHash(
+	publicKeyHash [20]byte,
+) ([]*bitcoin.UnspentTransactionOutput, error) {
+	panic("unsupported")
+}
+
+func (lbc *localBitcoinChain) GetMempoolUtxosForPublicKeyHash(
+	publicKeyHash [20]byte,
+) ([]*bitcoin.UnspentTransactionOutput, error) {
 	panic("unsupported")
 }
 

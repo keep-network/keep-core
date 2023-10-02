@@ -384,11 +384,6 @@ func (w *wallet) String() string {
 // currently registered in the Bridge on-chain contract. The returned
 // main UTXO can be nil if the wallet does not have a main UTXO registered
 // in the Bridge at the moment.
-//
-// WARNING: THIS FUNCTION CANNOT DETERMINE THE MAIN UTXO IF IT COMES FROM A
-// BITCOIN TRANSACTION THAT IS NOT ONE OF THE LATEST FIVE TRANSACTIONS
-// TARGETING THE GIVEN WALLET PUBLIC KEY HASH. HOWEVER, SUCH A CASE IS
-// VERY UNLIKELY.
 func DetermineWalletMainUtxo(
 	walletPublicKeyHash [20]byte,
 	bridgeChain BridgeChain,
@@ -412,9 +407,12 @@ func DetermineWalletMainUtxo(
 	// to the second last BTC transaction. In theory, such a gap between
 	// the actual latest BTC transaction and the registered main UTXO in
 	// the Bridge may be even wider. To cover the worst possible cases, we
-	// always take the five latest transactions made by the wallet for
-	// consideration.
-	transactions, err := btcChain.GetTransactionsForPublicKeyHash(walletPublicKeyHash, 5)
+	// must rely on the full transaction history. Due to performance reasons,
+	// we are first taking just the transactions hashes (fast call) and then
+	// fetch full transaction data (time-consuming calls) starting from
+	// the most recent transactions as there is a high chance the main UTXO
+	// comes from there.
+	txHashes, err := btcChain.GetTxHashesForPublicKeyHash(walletPublicKeyHash)
 	if err != nil {
 		return nil, fmt.Errorf("cannot get transactions history for wallet: [%v]", err)
 	}
@@ -430,8 +428,17 @@ func DetermineWalletMainUtxo(
 
 	// Start iterating from the latest transaction as the chance it matches
 	// the wallet main UTXO is the highest.
-	for i := len(transactions) - 1; i >= 0; i-- {
-		transaction := transactions[i]
+	for i := len(txHashes) - 1; i >= 0; i-- {
+		txHash := txHashes[i]
+
+		transaction, err := btcChain.GetTransaction(txHash)
+		if err != nil {
+			return nil, fmt.Errorf(
+				"cannot get transaction with hash [%s]: [%v]",
+				txHash.String(),
+				err,
+			)
+		}
 
 		// Iterate over transaction's outputs and find the one that targets
 		// the wallet public key hash.
@@ -464,89 +471,127 @@ func DetermineWalletMainUtxo(
 }
 
 // EnsureWalletSyncedBetweenChains makes sure all actions taken by the wallet
-// on the Bitcoin chain are reflected in the host chain Bridge. This translates
-// to two conditions that must be met:
-// - The wallet main UTXO registered in the host chain Bridge comes from the
-//   latest BTC transaction OR wallet main UTXO is unset and wallet's BTC
-//   transaction history is empty. This condition ensures that all expected SPV
-//   proofs of confirmed BTC transactions were submitted to the host chain Bridge
-//   thus the wallet state held known to the Bridge matches the actual state
-//   on the BTC chain.
-// - There are no pending BTC transactions in the mempool. This condition
-//   ensures the wallet doesn't currently perform any action on the BTC chain.
-//   Such a transactions indicate a possible state change in the future
-//   but their outcome cannot be determined at this stage so, the wallet
-//   should not perform new actions at the moment.
+// on the Bitcoin chain are reflected in the host chain Bridge.
 func EnsureWalletSyncedBetweenChains(
 	walletPublicKeyHash [20]byte,
 	walletMainUtxo *bitcoin.UnspentTransactionOutput,
+	bridgeChain BridgeChain,
 	btcChain bitcoin.Chain,
 ) error {
-	// Take the recent transactions history for the wallet.
-	history, err := btcChain.GetTransactionsForPublicKeyHash(walletPublicKeyHash, 5)
+	// Take UTXOs controlled by the wallet on Bitcoin chain. Those are outputs
+	// coming from confirmed transactions, ready to be spent right now, and
+	// not used as inputs of other (either confirmed or mempool) transactions.
+	confirmedUtxos, err := btcChain.GetUtxosForPublicKeyHash(walletPublicKeyHash)
 	if err != nil {
-		return fmt.Errorf("cannot get transactions history: [%v]", err)
+		return fmt.Errorf("cannot get confirmed UTXOs: [%v]", err)
 	}
 
 	if walletMainUtxo != nil {
-		// If the wallet main UTXO exists, the transaction history must
+		// If the wallet main UTXO exists, the UTXOs set must
 		// contain at least one item. If it is empty, something went
 		// really wrong. This should never happen but check this scenario
 		// just in case.
-		if len(history) == 0 {
+		if len(confirmedUtxos) == 0 {
 			return fmt.Errorf(
-				"wallet main UTXO exists but there are no BTC " +
-					"transactions produced by the wallet",
+				"wallet main UTXO exists but there are no " +
+					"UTXOs controlled by the wallet on Bitcoin chain",
 			)
 		}
 
-		// The transaction history is not empty for sure. Take the latest BTC
-		// transaction from the history.
-		latestTransaction := history[len(history)-1]
+		// Start iterating from the latest UTXO as the chance it matches
+		// the wallet main UTXO is the highest.
+		for i := len(confirmedUtxos) - 1; i >= 0; i-- {
+			utxo := confirmedUtxos[i]
 
-		// Make sure the wallet main UTXO comes from the latest transaction.
-		// That means all expected SPV proofs were submitted to the Bridge.
-		// If the wallet main UTXO transaction hash doesn't match the latest
-		// transaction, that means the SPV proof for the latest transaction was
-		// not submitted to the Bridge yet.
-		//
-		// Note that it is enough to check that the wallet main UTXO transaction
-		// hash matches the latest transaction hash. There is no way the main
-		// UTXO changes and the transaction hash stays the same. The Bridge
-		// enforces that all wallet transactions form a sequence and refer
-		// each other.
-		if walletMainUtxo.Outpoint.TransactionHash != latestTransaction.Hash() {
-			return fmt.Errorf(
-				"wallet main UTXO doesn't come from the latest BTC transaction",
-			)
+			// If the wallet main UTXO is among the UTXOs returned by Bitcoin
+			// client, that means the wallet has not spent it by creating
+			// a Bitcoin transaction. That implies the wallet is not doing
+			// any action on Bitcoin right now and their state here is synced
+			// with the host chain Bridge.
+			if walletMainUtxo.Outpoint.TransactionHash == utxo.Outpoint.TransactionHash &&
+				walletMainUtxo.Outpoint.OutputIndex == utxo.Outpoint.OutputIndex &&
+				walletMainUtxo.Value == utxo.Value {
+				return nil
+			}
 		}
+
+		return fmt.Errorf("wallet main UTXO registered in the " +
+			"host chain Bridge is actually spent on Bitcoin; " +
+			"Bridge is probably awaiting some SPV proofs",
+		)
 	} else {
-		// If the wallet main UTXO doesn't exist, the transaction history must
-		// be empty. If it is not, that could mean there is a Bitcoin transaction
-		// produced by the wallet whose SPV proof was not submitted to
-		// the Bridge yet.
-		if len(history) != 0 {
-			return fmt.Errorf(
-				"wallet main UTXO doesn't exist but there are BTC " +
-					"transactions produced by the wallet",
-			)
+		// Otherwise, the wallet is a fresh one and requires special
+		// treatment. We need to minimize the chance the wallet is
+		// currently doing their first Bitcoin transaction but, in the same
+		// time, we cannot just assume their transaction history must be
+		// empty as there can be spam transactions which arbitrarily send BTC
+		// to the wallet address. We need to look at the confirmed and mempool
+		// UTXOs and make sure there are no transactions produced by the wallet
+		// there.
+		mempoolUtxos, err := btcChain.GetMempoolUtxosForPublicKeyHash(walletPublicKeyHash)
+		if err != nil {
+			return fmt.Errorf("cannot get mempool UTXOs: [%v]", err)
 		}
-	}
 
-	// Regardless of the main UTXO state, we need to make sure that
-	// no pending wallet transactions exist in the mempool. That way,
-	// we are handling a plenty of corner cases like transactions races
-	// that could potentially lead to fraudulent transactions and funds loss.
-	mempool, err := btcChain.GetMempoolForPublicKeyHash(walletPublicKeyHash)
-	if err != nil {
-		return fmt.Errorf("cannot get mempool: [%v]", err)
-	}
+		allUtxos := append(confirmedUtxos, mempoolUtxos...)
+		if len(allUtxos) == 0 {
+			// Wallet have not produced any transactions - we are good.
+			return nil
+		}
 
-	if len(mempool) != 0 {
-		return fmt.Errorf("unconfirmed transactions exist in the mempool")
-	}
+		for _, utxo := range allUtxos {
+			// We know that valid first transaction of the wallet always
+			// have just one output. Any utxos with output index other
+			// than 0 are certainly not produced by the wallet and, we should
+			// not take them into account.
+			if utxo.Outpoint.OutputIndex != 0 {
+				continue
+			}
 
-	return nil
+			transaction, err := btcChain.GetTransaction(utxo.Outpoint.TransactionHash)
+			if err != nil {
+				return fmt.Errorf(
+					"cannot get transaction with hash [%s]: [%v]",
+					utxo.Outpoint.TransactionHash.String(),
+					err,
+				)
+			}
+
+			// We know that valid first transaction of the wallet have all their
+			// inputs referring to revealed deposits. We need to check just
+			// one input. If it points to a revealed deposit, that means
+			// the given transaction is produced by our wallet. Otherwise,
+			// such a transaction is a spam.
+			input := transaction.Inputs[0]
+			_, isDeposit, err := bridgeChain.GetDepositRequest(
+				input.Outpoint.TransactionHash,
+				input.Outpoint.OutputIndex,
+			)
+			if err != nil {
+				return fmt.Errorf(
+					"cannot get deposit request for hash [%s] "+
+						"and output index [%v]: [%v]",
+					input.Outpoint.TransactionHash.String(),
+					input.Outpoint.OutputIndex,
+					err,
+				)
+			}
+
+			if isDeposit {
+				// If that's the case, the wallet was already done their
+				// first Bitcoin transaction and the Bridge is awaiting the
+				// SPV proof.
+				return fmt.Errorf("wallet already produced their first " +
+					"Bitcoin transaction; Bridge is probably awaiting the SPV proof",
+				)
+			}
+
+			// If the transaction does not refer revealed deposits, it is
+			// a spam, and we go to the next one.
+		}
+
+		return nil
+	}
 }
 
 // signer represents a threshold signer of a tBTC wallet. A signer holds

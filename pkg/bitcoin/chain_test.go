@@ -116,10 +116,28 @@ func (lc *localChain) GetTransactionsForPublicKeyHash(
 	panic("not implemented")
 }
 
+func (lc *localChain) GetTxHashesForPublicKeyHash(
+	publicKeyHash [20]byte,
+) ([]Hash, error) {
+	panic("unsupported")
+}
+
 func (lc *localChain) GetMempoolForPublicKeyHash(
 	publicKeyHash [20]byte,
 ) ([]*Transaction, error) {
 	panic("not implemented")
+}
+
+func (lc *localChain) GetUtxosForPublicKeyHash(
+	publicKeyHash [20]byte,
+) ([]*UnspentTransactionOutput, error) {
+	panic("unsupported")
+}
+
+func (lc *localChain) GetMempoolUtxosForPublicKeyHash(
+	publicKeyHash [20]byte,
+) ([]*UnspentTransactionOutput, error) {
+	panic("unsupported")
 }
 
 func (lc *localChain) EstimateSatPerVByteFee(

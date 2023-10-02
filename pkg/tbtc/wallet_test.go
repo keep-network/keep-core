@@ -213,11 +213,11 @@ func TestDetermineWalletMainUtxo(t *testing.T) {
 			expectedMainUtxo: nil,
 			expectedErr:      nil,
 		},
-		"wallet main UTXO comes from a too old transaction": {
-			mainUtxoHash: chain.ComputeMainUtxoHash(walletUtxoFrom(transactions[0])),
-			expectedErr:  fmt.Errorf("main UTXO not found"),
+		"wallet main UTXO comes from the oldest transaction": {
+			mainUtxoHash:     chain.ComputeMainUtxoHash(walletUtxoFrom(transactions[0])),
+			expectedMainUtxo: walletUtxoFrom(transactions[0]),
 		},
-		"wallet main UTXO comes from the oldest acceptable transaction": {
+		"wallet main UTXO comes from the middle transaction": {
 			mainUtxoHash:     chain.ComputeMainUtxoHash(walletUtxoFrom(transactions[1])),
 			expectedMainUtxo: walletUtxoFrom(transactions[1]),
 		},

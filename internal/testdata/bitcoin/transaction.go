@@ -270,6 +270,7 @@ var Transactions = map[bitcoin.Network]map[string]struct {
 var TransactionsForPublicKeyHash = map[bitcoin.Network]struct {
 	PublicKeyHash []byte
 	Transactions  []bitcoin.Hash
+	Utxos         []string // txHash:outputIndex:value sorted asc
 }{
 	bitcoin.Testnet: {
 		PublicKeyHash: decodeString("e6f9d74726b19b75f16fe1e9feaec048aa4fa1d0"),
@@ -288,15 +289,31 @@ var TransactionsForPublicKeyHash = map[bitcoin.Network]struct {
 			hashFromString("605edd75ae0b4fa7cfc7aae8f1399119e9d7ecc212e6253156b60d60f4925d44"),
 			hashFromString("4f9affc5b418385d5aa61e23caa0b55156bf0682d5fedf2d905446f3f88aec6c"),
 		},
+		Utxos: []string{
+			"00cc0cd13fc4de7a15cb41ab6d58f8b31c75b6b9b4194958c381441a67d09b08:1:1099200",
+			"05dabb0291c0a6aa522de5ded5cb6d14ee2159e7ff109d3ef0f21de128b56b94:1:1099200",
+			"2724545276df61f43f1e92c4b9f1dd3c9109595c022dbd9dc003efbad8ded38b:1:191169",
+			"3ca4ae3f8ee3b48949192bc7a146c8d9862267816258c85e02a44678364551e1:1:299200",
+			"44863a79ce2b8fec9792403d5048506e50ffa7338191db0e6c30d3d3358ea2f6:1:299200",
+			"4c6b33b7c0550e0e536a5d119ac7189d71e1296fcb0c258e0c115356895bc0e6:1:299200",
+			"4f9affc5b418385d5aa61e23caa0b55156bf0682d5fedf2d905446f3f88aec6c:0:100000",
+			"605edd75ae0b4fa7cfc7aae8f1399119e9d7ecc212e6253156b60d60f4925d44:1:299200",
+			"e648838e528ca0666e2612e18634fe86cb7a40fb3c594a444a58c810dd08977b:1:299200",
+			"ea374ab6842723c647c3fc0ab281ca0641eaa768576cf9df695ca5b827140214:0:10000",
+			"f65bc5029251f0042aedb37f90dbb2bfb63a2e81694beef9cae5ec62e954c22e:1:299200",
+		},
 	},
 	bitcoin.Mainnet: {
-		PublicKeyHash: decodeString("c3ac203924063c91e70a43c7b97c70745a7635c6"),
+		PublicKeyHash: decodeString("b0ba76edfe18e81365bddd1d46511a57a4ff8dce"),
 		Transactions: []bitcoin.Hash{
-			hashFromString("546c6d90285334a2b84c412c2d541db1f96bb22df6dc9f674c6df8a15506df02"),
-			hashFromString("948d9b3a1f35c2bcf39f1c08c7df8c3e0b4a9331985a8890c9ba1e1d66b05f8b"),
-			hashFromString("fbe0689ea2ff2e89c978406819b16e119a9842d9b11bb7d19b31c38693d2db11"),
-			hashFromString("d71c0f1ce9c0aa6fe8fed1e0ebb52227b2c8c042e1d27818298a255f94562972"),
-			hashFromString("c7248847ddbcbe4a8b0404ef7e372afff49dc04f26d3f4a27a40cd4a07565ac1"),
+			hashFromString("4099f8d3e7dcbf3e4df50daae839cace2630b653175289448bcd2cc3b796149c"),
+			hashFromString("58fe99a67333f88db25d991eefd27589c3866f45308c2f325ee0ef80d6a164bc"),
+			hashFromString("d48507610c55a33c9c72d8e055a880c7ee4e9b1e1d22c6c7cd7595efef90ad44"),
+			hashFromString("f649c502e875b7b51bb68206ae8e655c86cccc4b13979aaf241b63ba617c40e4"),
+			hashFromString("42eae14e7234004c48f335baf7d38e799d7a44bf7a6203aaadb1f558e4e74f7f"),
+		},
+		Utxos: []string{
+			"42eae14e7234004c48f335baf7d38e799d7a44bf7a6203aaadb1f558e4e74f7f:0:302376",
 		},
 	},
 }

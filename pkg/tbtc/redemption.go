@@ -173,6 +173,7 @@ func (ra *redemptionAction) execute() error {
 	err = EnsureWalletSyncedBetweenChains(
 		walletPublicKeyHash,
 		walletMainUtxo,
+		ra.chain,
 		ra.btcChain,
 	)
 	if err != nil {
