@@ -11,7 +11,7 @@ nameSuffix: -staging
 commonLabels:
   app: keep-maintainer-staging
   type: bitcoinDifficulty
-  network: goerli
+  network: sepolia
 
 images:
   - name: keep-maintainer
@@ -42,7 +42,7 @@ patches:
         value: --bitcoinDifficulty
       - op: replace
         path: /spec/template/spec/containers/0/env/0/valueFrom/secretKeyRef/name
-        value: eth-network-goerli
+        value: eth-network-sepolia
 
 generatorOptions:
   disableNameSuffixHash: true

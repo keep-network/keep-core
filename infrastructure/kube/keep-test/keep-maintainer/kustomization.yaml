@@ -8,7 +8,7 @@ commonLabels:
   # The current setup runs spv and walletCoordination modules as a workaround
   # for reasons mentioned in `patches` property below.
   type: all
-  network: goerli
+  network: sepolia
 
 images:
   - name: keep-maintainer
@@ -47,7 +47,7 @@ patches:
         value: --walletCoordination
       - op: replace
         path: /spec/template/spec/containers/0/env/0/valueFrom/secretKeyRef/name
-        value: eth-network-goerli
+        value: eth-network-sepolia
 
 generatorOptions:
   disableNameSuffixHash: true
