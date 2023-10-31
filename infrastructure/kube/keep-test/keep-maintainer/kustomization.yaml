@@ -32,7 +32,7 @@ secretGenerator:
 
 patches:
   # Testnet's maintainer shouldn't run `--bitcoinDifficulty` module, as the testnet
-  # uses modified version of LightRelay contract (GoerliLightRelay) that doesn't
+  # uses modified version of LightRelay contract (SepoliaLightRelay) that doesn't
   # require the bitcoin difficulty to be submitted. This patch defines manually
   # which modules should be started.
   - target:

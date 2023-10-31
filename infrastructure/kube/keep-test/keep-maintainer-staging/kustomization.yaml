@@ -4,7 +4,7 @@ resources:
 namespace: default
 
 # Regular testnet maintainer doesn't run bitcoinDifficulty module due to specifics
-# of LightRelay running on testnet (GoerliLightRelay). This setup is running
+# of LightRelay running on testnet (SepoliaLightRelay). This setup is running
 # the `bitcoinDifficulty` module of maintainer connected to Bitcoin mainnet.
 nameSuffix: -staging
 
