@@ -78,7 +78,7 @@ jobs:
       addTOC: false
       verifyCommits: true
       destinationRepo: threshold-network/threshold
-      destinationFolder: ./docs/app-development/tbtc-v2/ecdsa-api
+      destinationFolder: ./docs/app-development/tbtc-v2/tbtc-contracts-api/ecdsa-api
       destinationBaseBranch: main
       userEmail: 38324465+thesis-valkyrie@users.noreply.github.com
       userName: Valkyrie
