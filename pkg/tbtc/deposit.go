@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/keep-network/keep-core/pkg/bitcoin"
 	"github.com/keep-network/keep-core/pkg/chain"
+	"strings"
 )
 
 // depositScriptFormat is the format of the deposit P2(W)SH Bitcoin script
@@ -13,37 +14,47 @@ import (
 // https://github.com/keep-network/tbtc-v2/blob/83310bdc9ed934e286bc9ea5091cc16979950134/solidity/contracts/bridge/Deposit.sol#L172
 const depositScriptFormat = "14%v7508%v7576a914%v8763ac6776a914%v8804%vb175ac68"
 
-// deposit represents a tBTC deposit.
-type deposit struct {
-	// utxo is the unspent output of the deposit funding transaction that
+// Deposit represents a tBTC deposit.
+type Deposit struct {
+	// Utxo is the unspent output of the deposit funding transaction that
 	// represents the deposit on the Bitcoin chain.
-	utxo *bitcoin.UnspentTransactionOutput
-	// depositor is the depositor's address on the host chain.
-	depositor [20]byte
-	// blindingFactor is an 8-byte arbitrary value that allows to distinguish
+	Utxo *bitcoin.UnspentTransactionOutput
+	// Depositor is the depositor's address on the host chain.
+	Depositor chain.Address
+	// BlindingFactor is an 8-byte arbitrary value that allows to distinguish
 	// deposits from the same depositor.
-	blindingFactor [8]byte
-	// walletPublicKeyHash is a 20-byte hash of the target wallet public key.
-	walletPublicKeyHash [20]byte
-	// refundPublicKeyHash is a 20-byte hash of the refund public key.
-	refundPublicKeyHash [20]byte
-	// refundLocktime is a 4-byte value representing the refund locktime.
-	refundLocktime [4]byte
-	// vault is an optional field that holds the host chain address of the
+	BlindingFactor [8]byte
+	// WalletPublicKeyHash is a 20-byte hash of the target wallet public key.
+	WalletPublicKeyHash [20]byte
+	// RefundPublicKeyHash is a 20-byte hash of the refund public key.
+	RefundPublicKeyHash [20]byte
+	// RefundLocktime is a 4-byte value representing the refund locktime.
+	RefundLocktime [4]byte
+	// Vault is an optional field that holds the host chain address of the
 	// target vault.
-	vault chain.Address
+	Vault *chain.Address
 }
 
-// script constructs the deposit P2(W)SH Bitcoin script. This function
+// Script constructs the deposit P2(W)SH Bitcoin script. This function
 // assumes the deposit's fields are correctly set.
-func (d *deposit) script() ([]byte, error) {
+func (d *Deposit) Script() ([]byte, error) {
+	depositorBytes, err := hex.DecodeString(
+		strings.TrimPrefix(d.Depositor.String(), "0x"),
+	)
+	if err != nil {
+		return nil, fmt.Errorf("cannot decode depositor field: [%v]", err)
+	}
+	if len(depositorBytes) != 20 {
+		return nil, fmt.Errorf("wrong byte length of depositor field")
+	}
+
 	script := fmt.Sprintf(
 		depositScriptFormat,
-		hex.EncodeToString(d.depositor[:]),
-		hex.EncodeToString(d.blindingFactor[:]),
-		hex.EncodeToString(d.walletPublicKeyHash[:]),
-		hex.EncodeToString(d.refundPublicKeyHash[:]),
-		hex.EncodeToString(d.refundLocktime[:]),
+		hex.EncodeToString(depositorBytes),
+		hex.EncodeToString(d.BlindingFactor[:]),
+		hex.EncodeToString(d.WalletPublicKeyHash[:]),
+		hex.EncodeToString(d.RefundPublicKeyHash[:]),
+		hex.EncodeToString(d.RefundLocktime[:]),
 	)
 
 	return hex.DecodeString(script)

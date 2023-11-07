@@ -374,7 +374,7 @@ $ curl localhost:9601/diagnostics
 == icon:flask[] Testnet
 
 The Keep Network Testnet environment is running against Ethereum Görli Testnet.
-To run the client connected to the Testnet add `--goerli` flag to the start command.
+To run the client connected to the Testnet add `--testnet` flag to the start command.
 
 A Docker image for Testnet is published under:
 `us-docker.pkg.dev/keep-test-f3e0/public/keep-client:latest` +
@@ -390,7 +390,7 @@ A client running on testnet establishes connection to the following bootstrap no
 
 [source]
 ----
-include::../config/_peers/goerli[]
+include::../config/_peers/testnet[]
 ----
 
 [#testnet-contracts,Testnet Contracts]

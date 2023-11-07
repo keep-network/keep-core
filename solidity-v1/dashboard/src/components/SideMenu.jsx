@@ -11,11 +11,9 @@ import ResourcesPage from "../pages/ResourcesPage"
 import * as Icons from "./Icons"
 import Divider from "./Divider"
 import { isEmptyArray } from "../utils/array.utils"
-import LiquidityPage from "../pages/liquidity"
 import Chip from "./Chip"
 import NavLink from "./NavLink"
 import CoveragePoolPage from "../pages/coverage-pools"
-import TBTCMigrationPage from "../pages/tbtc-migration"
 import ThresholdPage from "../pages/threshold"
 
 const styles = {
@@ -44,13 +42,7 @@ export const SideMenu = (props) => {
         <NavLinkSection
           label="upgrade"
           icon={<Icons.Star />}
-          subroutes={[
-            {
-              ...TBTCMigrationPage.route,
-              title: "TBTC v2.0",
-            },
-            ThresholdPage.route,
-          ]}
+          subroutes={[ThresholdPage.route]}
         />
         <NavLinkSection
           label="work"
@@ -62,7 +54,6 @@ export const SideMenu = (props) => {
           icon={<Icons.FeesVector />}
           subroutes={[
             CoveragePoolPage.route,
-            LiquidityPage.route,
             EarningsPage.route,
             RewardsPage.route,
           ]}

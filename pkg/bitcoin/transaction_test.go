@@ -8,7 +8,8 @@ import (
 	"testing"
 
 	"github.com/btcsuite/btcd/btcec"
-	"github.com/keep-network/keep-core/pkg/internal/testutils"
+
+	"github.com/keep-network/keep-core/internal/testutils"
 )
 
 func TestTransaction_SerializeRoundtrip(t *testing.T) {
@@ -72,6 +73,72 @@ func TestTransaction_SerializeRoundtrip(t *testing.T) {
 	}
 }
 
+func TestTransaction_SerializeVersion(t *testing.T) {
+	transaction := transactionFixture(t)
+
+	serializedVersion := transaction.SerializeVersion()
+
+	testutils.AssertBytesEqual(
+		t,
+		hexToSlice(t, "01000000"),
+		serializedVersion[:],
+	)
+}
+
+func TestTransaction_SerializeInputs(t *testing.T) {
+	transaction := transactionFixture(t)
+
+	serializedInputs := transaction.SerializeInputs()
+	expectedSerializedInputs := hexToSlice(
+		t,
+		"036896f9abcac13ce6bd2b80d125bedf997ff6330e999f2f60"+
+			"5ea15ea542f2eaf80000000000ffffffffed0ae94da996c6f3b89dfe967675d"+
+			"4808251db93e81022ae9e038d06f92efed400000000c948304502210092327d"+
+			"dff69a2b8c7ae787c5d590a2f14586089e6339e942d56e82aa42052cd902204"+
+			"c0d1700ba1ac617da27fee032a57937c9607f0187199ed3c46954df845643d7"+
+			"012103989d253b17a6a0f41838b84ff0d20e8898f9d7b1a98f2564da4cc29dc"+
+			"f8581d94c5c14934b98637ca318a4d6e7ca6ffd1690b8e77df6377508f9f0c9"+
+			"0d000395237576a9148db50eb52063ea9d98b3eac91489a90f738986f68763a"+
+			"c6776a914e257eccafbc07c381642ce6e7e55120fb077fbed8804e0250162b1"+
+			"75ac68ffffffffe37f552fc23fa0032bfd00c8eef5f5c22bf85fe4c6e735857"+
+			"719ff8a4ff66eb80000000000ffffffff",
+	)
+
+	testutils.AssertBytesEqual(
+		t,
+		expectedSerializedInputs,
+		serializedInputs,
+	)
+}
+
+func TestTransaction_SerializeOutputs(t *testing.T) {
+	transaction := transactionFixture(t)
+
+	serializedOutputs := transaction.SerializeOutputs()
+	expectedSerializedOutputs := hexToSlice(
+		t,
+		"0180ed0000000000001600148db50eb52063ea9d98b3eac91489a90f738986f6",
+	)
+
+	testutils.AssertBytesEqual(
+		t,
+		expectedSerializedOutputs,
+		serializedOutputs,
+	)
+}
+
+func TestTransaction_SerializeLocktime(t *testing.T) {
+	transaction := transactionFixture(t)
+
+	serializedLocktime := transaction.SerializeLocktime()
+
+	testutils.AssertBytesEqual(
+		t,
+		hexToSlice(t, "00000000"),
+		serializedLocktime[:],
+	)
+}
+
 func TestTransaction_Hash(t *testing.T) {
 	hash := transactionFixture(t).Hash()
 
@@ -99,7 +166,12 @@ func TestTransaction_WitnessHash(t *testing.T) {
 }
 
 // transactionFixture returns a real testnet transaction:
-// https://live.blockcypher.com/btc-testnet/tx/435d4aff6d4bc34134877bd3213c17970142fdd04d4113d534120033b9eecb2e
+// https://live.blockcypher.com/btc-testnet/tx/435d4aff6d4bc34134877bd3213c17970142fdd04d4113d534120033b9eecb2e.
+//
+// All hashes passed to hexToHash function uses human-friendly bitcoin.ReversedByteOrder
+// so, those hashes can be checked in block explorers as is. Based on them, hexToHash
+// constructs proper instances of bitcoin.Hash and converts them to
+// bitcoin.InternalByteOrder for serialization.
 func transactionFixture(t *testing.T) *Transaction {
 	tx := new(Transaction)
 

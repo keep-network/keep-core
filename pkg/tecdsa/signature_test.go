@@ -1,10 +1,56 @@
 package tecdsa
 
 import (
-	"github.com/keep-network/keep-core/pkg/internal/testutils"
 	"math/big"
 	"testing"
+
+	"github.com/keep-network/keep-core/internal/testutils"
 )
+
+func TestSignatureString(t *testing.T) {
+	var tests = map[string]struct {
+		signature      *Signature
+		expectedResult string
+	}{
+		"R and S values with leading zeros": {
+			signature: &Signature{
+				R:          big.NewInt(495),
+				S:          big.NewInt(253885074),
+				RecoveryID: 2,
+			},
+			expectedResult: "R: 0x01ef, S: 0x0f21fa92, RecoveryID: 2",
+		},
+		"R and S values with trailing zeros": {
+			signature: &Signature{
+				R:          big.NewInt(1308688384),
+				S:          big.NewInt(4096),
+				RecoveryID: 1,
+			},
+			expectedResult: "R: 0x4e010000, S: 0x1000, RecoveryID: 1",
+		},
+		"R and S values with no leading nor trailing zero": {
+			signature: &Signature{
+				R:          big.NewInt(12300),
+				S:          big.NewInt(231),
+				RecoveryID: 0,
+			},
+			expectedResult: "R: 0x300c, S: 0xe7, RecoveryID: 0",
+		},
+	}
+
+	for testName, test := range tests {
+		t.Run(testName, func(t *testing.T) {
+			result := test.signature.String()
+
+			testutils.AssertStringsEqual(
+				t,
+				"equals result",
+				test.expectedResult,
+				result,
+			)
+		})
+	}
+}
 
 func TestSignatureEquals(t *testing.T) {
 	var tests = map[string]struct {

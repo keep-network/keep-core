@@ -1,0 +1,43 @@
+{
+  "Title": "Sweep transaction fee provided",
+  "WalletPublicKeyHash": "0x03b74d6893ad46dfdd01b9e0e3b3385f4fce2d1e",
+  "DepositTxMaxFee": 10000,
+  "Deposits": [
+    {
+      "RevealBlockNumber": 11,
+      "FundingTxHash": "d91868ca43db4deb96047d727a5e782f282864fde2d9364f8c562c8998ba64bf",
+      "FundingOutputIndex": 1
+    },
+    {
+      "RevealBlockNumber": 31,
+      "FundingTxHash": "a3d1781b59d5e8680772a8bb7f897c4ff0459d3465d7fa678f80a4f0ec900574",
+      "FundingOutputIndex": 0
+    },
+    {
+      "RevealBlockNumber": 32,
+      "FundingTxHash": "b822b302dab7c1fcc3292782635be133538a0f803468a2d847023c24f867f479",
+      "FundingOutputIndex": 3
+    }
+  ],
+  "SweepTxFee": 7453,
+  "EstimateSatPerVByteFee": 26,
+  "ExpectedDepositSweepProposal": {
+    "WalletPublicKeyHash": "0x03b74d6893ad46dfdd01b9e0e3b3385f4fce2d1e",
+    "DepositsKeys": [
+      {
+        "FundingTxHash": "d91868ca43db4deb96047d727a5e782f282864fde2d9364f8c562c8998ba64bf",
+        "FundingOutputIndex": 1
+      },
+      {
+        "FundingTxHash": "a3d1781b59d5e8680772a8bb7f897c4ff0459d3465d7fa678f80a4f0ec900574",
+        "FundingOutputIndex": 0
+      },
+      {
+        "FundingTxHash": "b822b302dab7c1fcc3292782635be133538a0f803468a2d847023c24f867f479",
+        "FundingOutputIndex": 3
+      }
+    ],
+    "SweepTxFee": 7453,
+    "DepositsRevealBlocks": [11, 31, 32]
+  }
+}

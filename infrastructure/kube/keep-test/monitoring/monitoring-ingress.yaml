@@ -25,20 +25,6 @@ spec:
                 name: grafana
                 port:
                   number: 3000
-          - path: "/prometheus"
-            pathType: Prefix
-            backend:
-              service:
-                name: trickster
-                port:
-                  number: 8480
-          - path: "/trickster"
-            pathType: Prefix
-            backend:
-              service:
-                name: trickster
-                port:
-                  number: 8480
 ---
 apiVersion: networking.gke.io/v1
 kind: ManagedCertificate

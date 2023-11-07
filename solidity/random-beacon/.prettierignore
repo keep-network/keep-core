@@ -5,4 +5,5 @@ deployments/
 external/
 hardhat-dependency-compiler/
 typechain/
+docgen-templates/
 export.json

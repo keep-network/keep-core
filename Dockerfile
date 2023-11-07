@@ -1,4 +1,4 @@
-FROM golang:1.18.3-alpine3.16 AS build-sources
+FROM golang:1.18.10-alpine3.16 AS build-sources
 
 ENV GOPATH=/go \
 	GOBIN=/go/bin \
@@ -8,6 +8,8 @@ ENV GOPATH=/go \
 	BIN_PATH=/usr/local/bin \
 	LD_LIBRARY_PATH=/usr/local/lib/
 
+# TODO: Remove perl once go-ethereum is upgraded to 1.11.
+#       See pkg/chain/ethereum/tbtc/gen/Makefile and after_abi_hook for details.
 RUN apk add --update --no-cache \
 	g++ \
 	linux-headers \
@@ -17,6 +19,7 @@ RUN apk add --update --no-cache \
 	nodejs \
 	npm \
 	bash \
+	perl \
 	python3 \
 	tar \
 	jq && \

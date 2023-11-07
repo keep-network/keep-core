@@ -1,0 +1,40 @@
+{
+  "Title": "multiple redemptions without change",
+  "WalletPublicKey": "04989d253b17a6a0f41838b84ff0d20e8898f9d7b1a98f2564da4cc29dcf8581d9d218b65e7d91c752f7b22eaceb771a9af3a6f3d3f010a5d471a1aeef7d7713af",
+  "WalletPrivateKey": "7c246a5d2fcf476fd6f805cb8174b1cf441b13ea414e5560ca2bdc963aeb7d0c",
+  "WalletMainUtxo": {
+    "Outpoint": {
+      "TransactionHash": "7dd38b48cb626580d317871c5b716eaf4a952ceb67ba3aa4ca76e3dc7cdcc65b",
+      "OutputIndex": 1
+    },
+    "Value": 10000
+  },
+  "RedemptionRequests": [
+    {
+      "Redeemer": "82883a4c7a8dd73ef165deb402d432613615ced4",
+      "RedeemerOutputScript": "76a9144130879211c54df460e484ddf9aac009cb38ee7488ac",
+      "RequestedAmount": 6000,
+      "TreasuryFee": 0,
+      "TxMaxFee": 800,
+      "RequestedAt": 1650623240
+    },
+    {
+      "Redeemer": "82883a4c7a8dd73ef165deb402d432613615ced4",
+      "RedeemerOutputScript": "00144bf9ffb7ae0f8b0f5a622b154aca829126f6e769",
+      "RequestedAmount": 4000,
+      "TreasuryFee": 0,
+      "TxMaxFee": 900,
+      "RequestedAt": 1650623240
+    }
+  ],
+  "InputTransaction": "02000000000101c17208c443a3d3d2223884ef11ac83dadb1a3abe4d3474694414c8dcd3c697510100000000feffffff0224d38a5b0000000016001414c829f9d1770ebab98bd1acb39e428cffe7580310270000000000001600148db50eb52063ea9d98b3eac91489a90f738986f60247304402205d71cd954aa20b9c04266999baa8b2e1f04b7ecf419d48775ec78b81c3dbf6d5022076eb8cfc0f2fbd6178fdec4039570a1404c76fca4b72f6a34706b9c9c801ff7b0121033483097979eaff12af144dde368235592893fc2cb7477c3c4e34a0770f01f4e071832100",
+  "FeeShares": [800, 900],
+  "Signature": {
+    "R": "77174ae4d0a8e9d802f45b1a67cb4079abbbc4f110919b2e6b67fc991326e0ca",
+    "S": "6efb3d36a58f48d123e845fd868593af27e905adecb261d0120ba5b05ccc96fd"
+  },
+  "ExpectedSigHash": "8b27c0666adc5e64fa0113acafa0929fb005ed8d6634c55ba6794011121b2f00",
+  "ExpectedRedemptionTransaction": "010000000001015bc6dc7cdce376caa43aba67eb2c954aaf6e715b1c8717d3806562cb488bd37d0100000000ffffffff0250140000000000001976a9144130879211c54df460e484ddf9aac009cb38ee7488ac1c0c0000000000001600144bf9ffb7ae0f8b0f5a622b154aca829126f6e76902473044022077174ae4d0a8e9d802f45b1a67cb4079abbbc4f110919b2e6b67fc991326e0ca02206efb3d36a58f48d123e845fd868593af27e905adecb261d0120ba5b05ccc96fd012103989d253b17a6a0f41838b84ff0d20e8898f9d7b1a98f2564da4cc29dcf8581d900000000",
+  "ExpectedRedemptionTransactionHash": "afcdf8f91273b73abc40018873978c22bbb7c3d8d669ef2faffa0c4b0898c8eb",
+  "ExpectedRedemptionTransactionWitnessHash": "3f295fdacebe5d979d4416779be66bff51237f1160f54f8237f8ab29a206846d"
+}

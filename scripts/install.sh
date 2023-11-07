@@ -17,7 +17,7 @@ OPENZEPPELIN_MANIFEST=".openzeppelin/unknown-*.json"
 # This number should be no less than the highest index assigned to a named account
 # specified in `hardhat.config.ts` configs across all the used projects. Note that
 # account indices start from 0.
-REQUIRED_ACCOUNTS_NUMBER=8
+REQUIRED_ACCOUNTS_NUMBER=11
 
 # Defaults, can be overwritten by env variables/input parameters
 NETWORK_DEFAULT="development"

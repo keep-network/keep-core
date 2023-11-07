@@ -8,10 +8,11 @@ import (
 	"testing"
 
 	fuzz "github.com/google/gofuzz"
+
+	"github.com/keep-network/keep-core/internal/testutils"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/chain/local_v1"
 	"github.com/keep-network/keep-core/pkg/internal/pbutils"
-	"github.com/keep-network/keep-core/pkg/internal/testutils"
 	"github.com/keep-network/keep-core/pkg/net/local"
 	"github.com/keep-network/keep-core/pkg/operator"
 	"github.com/keep-network/keep-core/pkg/protocol/group"
@@ -148,6 +149,8 @@ func TestAnnouncer(t *testing.T) {
 				operators,
 				localChain.Signing(),
 			)
+
+			RegisterUnmarshaller(broadcastChannel)
 
 			announcer := New(
 				protocolID,

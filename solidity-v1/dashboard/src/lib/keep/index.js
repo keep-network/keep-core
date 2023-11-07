@@ -22,8 +22,6 @@ import contracts, {
   KEEP_TOKEN_GEYSER_CONTRACT_NAME,
   COV_TOKEN_CONTRACT_NAME,
   ASSET_POOL_CONTRACT_NAME,
-  TBTCV2_VENDING_MACHINE_CONTRACT_NAME,
-  TBTCV2_TOKEN_CONTRACT_NAME,
   REWARDS_POOL_CONTRACT_NAME,
   THRESHOLD_STAKING_CONTRACT_NAME,
   THRESHOLD_KEEP_STAKE_CONTRACT_NAME,
@@ -31,7 +29,6 @@ import contracts, {
 } from "./contracts"
 import CoveragePoolV1 from "./coverage-pool"
 import { UniswapV2Exchange } from "./exchange-api"
-import TBTCV2Migration from "./tbtc-migration"
 import KeepToTStaking from "./keep-to-t-staking"
 import { PRE } from "./constants"
 import SimplePreApplicationAbi from "./contracts-artifacts/SimplePreApplication.json"
@@ -125,12 +122,6 @@ class Keep {
   [ASSET_POOL_CONTRACT_NAME];
 
   /** @type {BaseContract} */
-  [TBTCV2_TOKEN_CONTRACT_NAME];
-
-  /** @type {BaseContract} */
-  [TBTCV2_VENDING_MACHINE_CONTRACT_NAME];
-
-  /** @type {BaseContract} */
   [RISK_MANAGER_V1_CONTRACT_NAME];
 
   /** @type {BaseContract} */
@@ -198,12 +189,6 @@ class Keep {
       this.rewardsPoolContract,
       this.riskManagerV1Contract,
       this.exchangeService,
-      this.web3
-    )
-    this.tBTCV2Migration = new TBTCV2Migration(
-      this.tbtcTokenContract,
-      this.tbtcV2Contract,
-      this.vendingMachineContract,
       this.web3
     )
     this.keepToTStaking = new KeepToTStaking(

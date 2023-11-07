@@ -9,13 +9,14 @@ import (
 
 	"golang.org/x/exp/slices"
 
+	"golang.org/x/crypto/sha3"
+
+	"github.com/keep-network/keep-core/internal/testutils"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/internal/tecdsatest"
-	"github.com/keep-network/keep-core/pkg/internal/testutils"
 	"github.com/keep-network/keep-core/pkg/protocol/group"
 	"github.com/keep-network/keep-core/pkg/tecdsa"
 	"github.com/keep-network/keep-core/pkg/tecdsa/dkg"
-	"golang.org/x/crypto/sha3"
 )
 
 func TestDkgExecutor_RegisterSigner(t *testing.T) {
@@ -310,11 +311,9 @@ func TestDkgExecutor_ExecuteDkgValidation(t *testing.T) {
 
 			dkgResultSubmittedEvent := <-dkgResultSubmittedEventChan
 
-			if !test.resultValid {
-				err = localChain.invalidateDKGResult(dkgResultSubmittedEvent.Result)
-				if err != nil {
-					t.Fatal(err)
-				}
+			err = localChain.setDKGResultValidity(test.resultValid)
+			if err != nil {
+				t.Fatal(err)
 			}
 
 			// Setting only the fields really needed for this test.

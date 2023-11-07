@@ -1,10 +1,14 @@
 package maintainer
 
+import (
+	"github.com/keep-network/keep-core/pkg/maintainer/btcdiff"
+	"github.com/keep-network/keep-core/pkg/maintainer/spv"
+	"github.com/keep-network/keep-core/pkg/maintainer/wallet"
+)
+
 // Config contains maintainer configuration.
 type Config struct {
-	// BitcoinDifficulty indicates whether the Bitcoin difficulty maintainer
-	// should be started.
-	BitcoinDifficulty bool
-
-	// TODO: Add options for other maintainer tasks, e.g. spv
+	BitcoinDifficulty  btcdiff.Config
+	WalletCoordination wallet.Config
+	Spv                spv.Config
 }

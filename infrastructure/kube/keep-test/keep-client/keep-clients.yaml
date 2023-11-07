@@ -81,11 +81,13 @@ spec:
         - keep-client
         - start
         args:
-        - --goerli
+        - --testnet
         - --ethereum.url
         - $(ETH_WS_URL)
         - --ethereum.keyFile
         - /mnt/keep-client/keyfile/account-0-keyfile
+        - --bitcoin.electrum.url
+        - $(ELECTRUM_TCP_URL)
         - --storage.dir
         - /mnt/keep-client/data
         - --network.port
@@ -286,11 +288,13 @@ spec:
         - keep-client
         - start
         args:
-        - --goerli
+        - --testnet
         - --ethereum.url
         - $(ETH_WS_URL)
         - --ethereum.keyFile
         - /mnt/keep-client/keyfile/account-1-keyfile
+        - --bitcoin.electrum.url
+        - $(ELECTRUM_TCP_URL)
         - --storage.dir
         - /mnt/keep-client/data
         - --network.port
@@ -491,11 +495,13 @@ spec:
         - keep-client
         - start
         args:
-        - --goerli
+        - --testnet
         - --ethereum.url
         - $(ETH_WS_URL)
         - --ethereum.keyFile
         - /mnt/keep-client/keyfile/account-2-keyfile
+        - --bitcoin.electrum.url
+        - $(ELECTRUM_TCP_URL)
         - --storage.dir
         - /mnt/keep-client/data
         - --network.port
@@ -694,11 +700,13 @@ spec:
         - keep-client
         - start
         args:
-        - --goerli
+        - --testnet
         - --ethereum.url
         - $(ETH_WS_URL)
         - --ethereum.keyFile
         - /mnt/keep-client/keyfile/account-3-keyfile
+        - --bitcoin.electrum.url
+        - $(ELECTRUM_TCP_URL)
         - --storage.dir
         - /mnt/keep-client/data
         - --network.port
@@ -897,11 +905,13 @@ spec:
         - keep-client
         - start
         args:
-        - --goerli
+        - --testnet
         - --ethereum.url
         - $(ETH_WS_URL)
         - --ethereum.keyFile
         - /mnt/keep-client/keyfile/account-4-keyfile
+        - --bitcoin.electrum.url
+        - $(ELECTRUM_TCP_URL)
         - --storage.dir
         - /mnt/keep-client/data
         - --network.port
@@ -1100,11 +1110,13 @@ spec:
         - keep-client
         - start
         args:
-        - --goerli
+        - --testnet
         - --ethereum.url
         - $(ETH_WS_URL)
         - --ethereum.keyFile
         - /mnt/keep-client/keyfile/account-5-keyfile
+        - --bitcoin.electrum.url
+        - $(ELECTRUM_TCP_URL)
         - --storage.dir
         - /mnt/keep-client/data
         - --network.port
@@ -1303,11 +1315,13 @@ spec:
         - keep-client
         - start
         args:
-        - --goerli
+        - --testnet
         - --ethereum.url
         - $(ETH_WS_URL)
         - --ethereum.keyFile
         - /mnt/keep-client/keyfile/account-6-keyfile
+        - --bitcoin.electrum.url
+        - $(ELECTRUM_TCP_URL)
         - --storage.dir
         - /mnt/keep-client/data
         - --network.port
@@ -1506,11 +1520,13 @@ spec:
         - keep-client
         - start
         args:
-        - --goerli
+        - --testnet
         - --ethereum.url
         - $(ETH_WS_URL)
         - --ethereum.keyFile
         - /mnt/keep-client/keyfile/account-7-keyfile
+        - --bitcoin.electrum.url
+        - $(ELECTRUM_TCP_URL)
         - --storage.dir
         - /mnt/keep-client/data
         - --network.port
@@ -1709,11 +1725,13 @@ spec:
         - keep-client
         - start
         args:
-        - --goerli
+        - --testnet
         - --ethereum.url
         - $(ETH_WS_URL)
         - --ethereum.keyFile
         - /mnt/keep-client/keyfile/account-8-keyfile
+        - --bitcoin.electrum.url
+        - $(ELECTRUM_TCP_URL)
         - --storage.dir
         - /mnt/keep-client/data
         - --network.port
@@ -1912,11 +1930,13 @@ spec:
         - keep-client
         - start
         args:
-        - --goerli
+        - --testnet
         - --ethereum.url
         - $(ETH_WS_URL)
         - --ethereum.keyFile
         - /mnt/keep-client/keyfile/account-9-keyfile
+        - --bitcoin.electrum.url
+        - $(ELECTRUM_TCP_URL)
         - --storage.dir
         - /mnt/keep-client/data
         - --network.port

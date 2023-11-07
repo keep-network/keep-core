@@ -56,13 +56,17 @@ func init() {
 		wrDkgParametersCommand(),
 		wrEligibleStakeCommand(),
 		wrGasParametersCommand(),
+		wrGetWalletCommand(),
 		wrGetWalletCreationStateCommand(),
+		wrGetWalletPublicKeyCommand(),
 		wrGovernanceCommand(),
 		wrHasDkgTimedOutCommand(),
 		wrHasSeedTimedOutCommand(),
+		wrInactivityClaimNonceCommand(),
 		wrIsDkgResultValidCommand(),
 		wrIsOperatorInPoolCommand(),
 		wrIsOperatorUpToDateCommand(),
+		wrIsWalletRegisteredCommand(),
 		wrMinimumAuthorizationCommand(),
 		wrOperatorToStakingProviderCommand(),
 		wrPendingAuthorizationDecreaseCommand(),
@@ -82,6 +86,7 @@ func init() {
 		wrAuthorizationIncreasedCommand(),
 		wrBeaconCallbackCommand(),
 		wrChallengeDkgResultCommand(),
+		wrCloseWalletCommand(),
 		wrInitializeCommand(),
 		wrInvoluntaryAuthorizationDecreaseCommand(),
 		wrJoinSortitionPoolCommand(),
@@ -297,6 +302,49 @@ func wrGasParameters(c *cobra.Command, args []string) error {
 	return nil
 }
 
+func wrGetWalletCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "get-wallet [arg_walletID]",
+		Short:                 "Calls the view method getWallet on the WalletRegistry contract.",
+		Args:                  cmd.ArgCountChecker(1),
+		RunE:                  wrGetWallet,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	cmd.InitConstFlags(c)
+
+	return c
+}
+
+func wrGetWallet(c *cobra.Command, args []string) error {
+	contract, err := initializeWalletRegistry(c)
+	if err != nil {
+		return err
+	}
+
+	arg_walletID, err := decode.ParseBytes32(args[0])
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter arg_walletID, a bytes32, from passed value %v",
+			args[0],
+		)
+	}
+
+	result, err := contract.GetWalletAtBlock(
+		arg_walletID,
+		cmd.BlockFlagValue.Int,
+	)
+
+	if err != nil {
+		return err
+	}
+
+	cmd.PrintOutput(result)
+
+	return nil
+}
+
 func wrGetWalletCreationStateCommand() *cobra.Command {
 	c := &cobra.Command{
 		Use:                   "get-wallet-creation-state",
@@ -319,6 +367,49 @@ func wrGetWalletCreationState(c *cobra.Command, args []string) error {
 	}
 
 	result, err := contract.GetWalletCreationStateAtBlock(
+		cmd.BlockFlagValue.Int,
+	)
+
+	if err != nil {
+		return err
+	}
+
+	cmd.PrintOutput(result)
+
+	return nil
+}
+
+func wrGetWalletPublicKeyCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "get-wallet-public-key [arg_walletID]",
+		Short:                 "Calls the view method getWalletPublicKey on the WalletRegistry contract.",
+		Args:                  cmd.ArgCountChecker(1),
+		RunE:                  wrGetWalletPublicKey,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	cmd.InitConstFlags(c)
+
+	return c
+}
+
+func wrGetWalletPublicKey(c *cobra.Command, args []string) error {
+	contract, err := initializeWalletRegistry(c)
+	if err != nil {
+		return err
+	}
+
+	arg_walletID, err := decode.ParseBytes32(args[0])
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter arg_walletID, a bytes32, from passed value %v",
+			args[0],
+		)
+	}
+
+	result, err := contract.GetWalletPublicKeyAtBlock(
+		arg_walletID,
 		cmd.BlockFlagValue.Int,
 	)
 
@@ -421,6 +512,49 @@ func wrHasSeedTimedOut(c *cobra.Command, args []string) error {
 	}
 
 	result, err := contract.HasSeedTimedOutAtBlock(
+		cmd.BlockFlagValue.Int,
+	)
+
+	if err != nil {
+		return err
+	}
+
+	cmd.PrintOutput(result)
+
+	return nil
+}
+
+func wrInactivityClaimNonceCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "inactivity-claim-nonce [arg0]",
+		Short:                 "Calls the view method inactivityClaimNonce on the WalletRegistry contract.",
+		Args:                  cmd.ArgCountChecker(1),
+		RunE:                  wrInactivityClaimNonce,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	cmd.InitConstFlags(c)
+
+	return c
+}
+
+func wrInactivityClaimNonce(c *cobra.Command, args []string) error {
+	contract, err := initializeWalletRegistry(c)
+	if err != nil {
+		return err
+	}
+
+	arg0, err := decode.ParseBytes32(args[0])
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter arg0, a bytes32, from passed value %v",
+			args[0],
+		)
+	}
+
+	result, err := contract.InactivityClaimNonceAtBlock(
+		arg0,
 		cmd.BlockFlagValue.Int,
 	)
 
@@ -547,6 +681,49 @@ func wrIsOperatorUpToDate(c *cobra.Command, args []string) error {
 
 	result, err := contract.IsOperatorUpToDateAtBlock(
 		arg_operator,
+		cmd.BlockFlagValue.Int,
+	)
+
+	if err != nil {
+		return err
+	}
+
+	cmd.PrintOutput(result)
+
+	return nil
+}
+
+func wrIsWalletRegisteredCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "is-wallet-registered [arg_walletID]",
+		Short:                 "Calls the view method isWalletRegistered on the WalletRegistry contract.",
+		Args:                  cmd.ArgCountChecker(1),
+		RunE:                  wrIsWalletRegistered,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	cmd.InitConstFlags(c)
+
+	return c
+}
+
+func wrIsWalletRegistered(c *cobra.Command, args []string) error {
+	contract, err := initializeWalletRegistry(c)
+	if err != nil {
+		return err
+	}
+
+	arg_walletID, err := decode.ParseBytes32(args[0])
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter arg_walletID, a bytes32, from passed value %v",
+			args[0],
+		)
+	}
+
+	result, err := contract.IsWalletRegisteredAtBlock(
+		arg_walletID,
 		cmd.BlockFlagValue.Int,
 	)
 
@@ -1094,6 +1271,11 @@ func wrApproveAuthorizationDecrease(c *cobra.Command, args []string) error {
 		}
 
 		cmd.PrintOutput("success")
+
+		cmd.PrintOutput(
+			"the transaction was not submitted to the chain; " +
+				"please add the `--submit` flag",
+		)
 	}
 
 	return nil
@@ -1151,6 +1333,11 @@ func wrApproveDkgResult(c *cobra.Command, args []string) error {
 		}
 
 		cmd.PrintOutput("success")
+
+		cmd.PrintOutput(
+			"the transaction was not submitted to the chain; " +
+				"please add the `--submit` flag",
+		)
 	}
 
 	return nil
@@ -1229,6 +1416,11 @@ func wrAuthorizationDecreaseRequested(c *cobra.Command, args []string) error {
 		}
 
 		cmd.PrintOutput("success")
+
+		cmd.PrintOutput(
+			"the transaction was not submitted to the chain; " +
+				"please add the `--submit` flag",
+		)
 	}
 
 	return nil
@@ -1307,6 +1499,11 @@ func wrAuthorizationIncreased(c *cobra.Command, args []string) error {
 		}
 
 		cmd.PrintOutput("success")
+
+		cmd.PrintOutput(
+			"the transaction was not submitted to the chain; " +
+				"please add the `--submit` flag",
+		)
 	}
 
 	return nil
@@ -1376,6 +1573,11 @@ func wrBeaconCallback(c *cobra.Command, args []string) error {
 		}
 
 		cmd.PrintOutput("success")
+
+		cmd.PrintOutput(
+			"the transaction was not submitted to the chain; " +
+				"please add the `--submit` flag",
+		)
 	}
 
 	return nil
@@ -1433,6 +1635,76 @@ func wrChallengeDkgResult(c *cobra.Command, args []string) error {
 		}
 
 		cmd.PrintOutput("success")
+
+		cmd.PrintOutput(
+			"the transaction was not submitted to the chain; " +
+				"please add the `--submit` flag",
+		)
+	}
+
+	return nil
+}
+
+func wrCloseWalletCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "close-wallet [arg_walletID]",
+		Short:                 "Calls the nonpayable method closeWallet on the WalletRegistry contract.",
+		Args:                  cmd.ArgCountChecker(1),
+		RunE:                  wrCloseWallet,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	c.PreRunE = cmd.NonConstArgsChecker
+	cmd.InitNonConstFlags(c)
+
+	return c
+}
+
+func wrCloseWallet(c *cobra.Command, args []string) error {
+	contract, err := initializeWalletRegistry(c)
+	if err != nil {
+		return err
+	}
+
+	arg_walletID, err := decode.ParseBytes32(args[0])
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter arg_walletID, a bytes32, from passed value %v",
+			args[0],
+		)
+	}
+
+	var (
+		transaction *types.Transaction
+	)
+
+	if shouldSubmit, _ := c.Flags().GetBool(cmd.SubmitFlag); shouldSubmit {
+		// Do a regular submission. Take payable into account.
+		transaction, err = contract.CloseWallet(
+			arg_walletID,
+		)
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput(transaction.Hash())
+	} else {
+		// Do a call.
+		err = contract.CallCloseWallet(
+			arg_walletID,
+			cmd.BlockFlagValue.Int,
+		)
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput("success")
+
+		cmd.PrintOutput(
+			"the transaction was not submitted to the chain; " +
+				"please add the `--submit` flag",
+		)
 	}
 
 	return nil
@@ -1511,6 +1783,11 @@ func wrInitialize(c *cobra.Command, args []string) error {
 		}
 
 		cmd.PrintOutput("success")
+
+		cmd.PrintOutput(
+			"the transaction was not submitted to the chain; " +
+				"please add the `--submit` flag",
+		)
 	}
 
 	return nil
@@ -1589,6 +1866,11 @@ func wrInvoluntaryAuthorizationDecrease(c *cobra.Command, args []string) error {
 		}
 
 		cmd.PrintOutput("success")
+
+		cmd.PrintOutput(
+			"the transaction was not submitted to the chain; " +
+				"please add the `--submit` flag",
+		)
 	}
 
 	return nil
@@ -1638,6 +1920,11 @@ func wrJoinSortitionPool(c *cobra.Command, args []string) error {
 		}
 
 		cmd.PrintOutput("success")
+
+		cmd.PrintOutput(
+			"the transaction was not submitted to the chain; " +
+				"please add the `--submit` flag",
+		)
 	}
 
 	return nil
@@ -1687,6 +1974,11 @@ func wrNotifyDkgTimeout(c *cobra.Command, args []string) error {
 		}
 
 		cmd.PrintOutput("success")
+
+		cmd.PrintOutput(
+			"the transaction was not submitted to the chain; " +
+				"please add the `--submit` flag",
+		)
 	}
 
 	return nil
@@ -1736,6 +2028,11 @@ func wrNotifySeedTimeout(c *cobra.Command, args []string) error {
 		}
 
 		cmd.PrintOutput("success")
+
+		cmd.PrintOutput(
+			"the transaction was not submitted to the chain; " +
+				"please add the `--submit` flag",
+		)
 	}
 
 	return nil
@@ -1796,6 +2093,11 @@ func wrRegisterOperator(c *cobra.Command, args []string) error {
 		}
 
 		cmd.PrintOutput("success")
+
+		cmd.PrintOutput(
+			"the transaction was not submitted to the chain; " +
+				"please add the `--submit` flag",
+		)
 	}
 
 	return nil
@@ -1845,6 +2147,11 @@ func wrRequestNewWallet(c *cobra.Command, args []string) error {
 		}
 
 		cmd.PrintOutput("success")
+
+		cmd.PrintOutput(
+			"the transaction was not submitted to the chain; " +
+				"please add the `--submit` flag",
+		)
 	}
 
 	return nil
@@ -1902,6 +2209,11 @@ func wrSubmitDkgResult(c *cobra.Command, args []string) error {
 		}
 
 		cmd.PrintOutput("success")
+
+		cmd.PrintOutput(
+			"the transaction was not submitted to the chain; " +
+				"please add the `--submit` flag",
+		)
 	}
 
 	return nil
@@ -1962,6 +2274,11 @@ func wrTransferGovernance(c *cobra.Command, args []string) error {
 		}
 
 		cmd.PrintOutput("success")
+
+		cmd.PrintOutput(
+			"the transaction was not submitted to the chain; " +
+				"please add the `--submit` flag",
+		)
 	}
 
 	return nil
@@ -2040,6 +2357,11 @@ func wrUpdateAuthorizationParameters(c *cobra.Command, args []string) error {
 		}
 
 		cmd.PrintOutput("success")
+
+		cmd.PrintOutput(
+			"the transaction was not submitted to the chain; " +
+				"please add the `--submit` flag",
+		)
 	}
 
 	return nil
@@ -2136,6 +2458,11 @@ func wrUpdateDkgParameters(c *cobra.Command, args []string) error {
 		}
 
 		cmd.PrintOutput("success")
+
+		cmd.PrintOutput(
+			"the transaction was not submitted to the chain; " +
+				"please add the `--submit` flag",
+		)
 	}
 
 	return nil
@@ -2232,6 +2559,11 @@ func wrUpdateGasParameters(c *cobra.Command, args []string) error {
 		}
 
 		cmd.PrintOutput("success")
+
+		cmd.PrintOutput(
+			"the transaction was not submitted to the chain; " +
+				"please add the `--submit` flag",
+		)
 	}
 
 	return nil
@@ -2292,6 +2624,11 @@ func wrUpdateOperatorStatus(c *cobra.Command, args []string) error {
 		}
 
 		cmd.PrintOutput("success")
+
+		cmd.PrintOutput(
+			"the transaction was not submitted to the chain; " +
+				"please add the `--submit` flag",
+		)
 	}
 
 	return nil
@@ -2352,6 +2689,11 @@ func wrUpdateReimbursementPool(c *cobra.Command, args []string) error {
 		}
 
 		cmd.PrintOutput("success")
+
+		cmd.PrintOutput(
+			"the transaction was not submitted to the chain; " +
+				"please add the `--submit` flag",
+		)
 	}
 
 	return nil
@@ -2421,6 +2763,11 @@ func wrUpdateRewardParameters(c *cobra.Command, args []string) error {
 		}
 
 		cmd.PrintOutput("success")
+
+		cmd.PrintOutput(
+			"the transaction was not submitted to the chain; " +
+				"please add the `--submit` flag",
+		)
 	}
 
 	return nil
@@ -2481,6 +2828,11 @@ func wrUpdateSlashingParameters(c *cobra.Command, args []string) error {
 		}
 
 		cmd.PrintOutput("success")
+
+		cmd.PrintOutput(
+			"the transaction was not submitted to the chain; " +
+				"please add the `--submit` flag",
+		)
 	}
 
 	return nil
@@ -2541,6 +2893,11 @@ func wrUpdateWalletOwner(c *cobra.Command, args []string) error {
 		}
 
 		cmd.PrintOutput("success")
+
+		cmd.PrintOutput(
+			"the transaction was not submitted to the chain; " +
+				"please add the `--submit` flag",
+		)
 	}
 
 	return nil
@@ -2601,6 +2958,11 @@ func wrUpgradeRandomBeacon(c *cobra.Command, args []string) error {
 		}
 
 		cmd.PrintOutput("success")
+
+		cmd.PrintOutput(
+			"the transaction was not submitted to the chain; " +
+				"please add the `--submit` flag",
+		)
 	}
 
 	return nil
@@ -2661,6 +3023,11 @@ func wrWithdrawIneligibleRewards(c *cobra.Command, args []string) error {
 		}
 
 		cmd.PrintOutput("success")
+
+		cmd.PrintOutput(
+			"the transaction was not submitted to the chain; " +
+				"please add the `--submit` flag",
+		)
 	}
 
 	return nil
@@ -2721,6 +3088,11 @@ func wrWithdrawRewards(c *cobra.Command, args []string) error {
 		}
 
 		cmd.PrintOutput("success")
+
+		cmd.PrintOutput(
+			"the transaction was not submitted to the chain; " +
+				"please add the `--submit` flag",
+		)
 	}
 
 	return nil

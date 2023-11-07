@@ -34,7 +34,7 @@
   },
   "dependencies": {
     "@keep-network/sortition-pools": "^2.0.0-pre.16",
-    "@openzeppelin/contracts": "^4.6.0",
+    "@openzeppelin/contracts": "4.7.3",
     "@thesis/solidity-contracts": "github:thesis/solidity-contracts#4985bcf",
     "@threshold-network/solidity-contracts": "dapp-development-goerli"
   },
@@ -66,6 +66,7 @@
     "prettier-plugin-solidity": "^1.0.0-beta.18",
     "solhint": "^3.3.6",
     "solhint-config-keep": "github:keep-network/solhint-config-keep",
+    "solidity-docgen": "^0.6.0-beta.35",
     "ts-node": "^10.2.1",
     "typechain": "^7.0.0",
     "typescript": "^4.4.3"

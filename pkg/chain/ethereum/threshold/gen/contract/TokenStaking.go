@@ -6243,7 +6243,7 @@ func (ts *TokenStaking) watchApplicationStatusChanged(
 	}
 
 	thresholdViolatedFn := func(elapsed time.Duration) {
-		tsLogger.Errorf(
+		tsLogger.Warnf(
 			"subscription to event ApplicationStatusChanged had to be "+
 				"retried [%s] since the last attempt; please inspect "+
 				"host chain connectivity",
@@ -6426,7 +6426,7 @@ func (ts *TokenStaking) watchAuthorizationCeilingSet(
 	}
 
 	thresholdViolatedFn := func(elapsed time.Duration) {
-		tsLogger.Errorf(
+		tsLogger.Warnf(
 			"subscription to event AuthorizationCeilingSet had to be "+
 				"retried [%s] since the last attempt; please inspect "+
 				"host chain connectivity",
@@ -6625,7 +6625,7 @@ func (ts *TokenStaking) watchAuthorizationDecreaseApproved(
 	}
 
 	thresholdViolatedFn := func(elapsed time.Duration) {
-		tsLogger.Errorf(
+		tsLogger.Warnf(
 			"subscription to event AuthorizationDecreaseApproved had to be "+
 				"retried [%s] since the last attempt; please inspect "+
 				"host chain connectivity",
@@ -6828,7 +6828,7 @@ func (ts *TokenStaking) watchAuthorizationDecreaseRequested(
 	}
 
 	thresholdViolatedFn := func(elapsed time.Duration) {
-		tsLogger.Errorf(
+		tsLogger.Warnf(
 			"subscription to event AuthorizationDecreaseRequested had to be "+
 				"retried [%s] since the last attempt; please inspect "+
 				"host chain connectivity",
@@ -7031,7 +7031,7 @@ func (ts *TokenStaking) watchAuthorizationIncreased(
 	}
 
 	thresholdViolatedFn := func(elapsed time.Duration) {
-		tsLogger.Errorf(
+		tsLogger.Warnf(
 			"subscription to event AuthorizationIncreased had to be "+
 				"retried [%s] since the last attempt; please inspect "+
 				"host chain connectivity",
@@ -7243,7 +7243,7 @@ func (ts *TokenStaking) watchAuthorizationInvoluntaryDecreased(
 	}
 
 	thresholdViolatedFn := func(elapsed time.Duration) {
-		tsLogger.Errorf(
+		tsLogger.Warnf(
 			"subscription to event AuthorizationInvoluntaryDecreased had to be "+
 				"retried [%s] since the last attempt; please inspect "+
 				"host chain connectivity",
@@ -7453,7 +7453,7 @@ func (ts *TokenStaking) watchDelegateChanged(
 	}
 
 	thresholdViolatedFn := func(elapsed time.Duration) {
-		tsLogger.Errorf(
+		tsLogger.Warnf(
 			"subscription to event DelegateChanged had to be "+
 				"retried [%s] since the last attempt; please inspect "+
 				"host chain connectivity",
@@ -7649,7 +7649,7 @@ func (ts *TokenStaking) watchDelegateVotesChanged(
 	}
 
 	thresholdViolatedFn := func(elapsed time.Duration) {
-		tsLogger.Errorf(
+		tsLogger.Warnf(
 			"subscription to event DelegateVotesChanged had to be "+
 				"retried [%s] since the last attempt; please inspect "+
 				"host chain connectivity",
@@ -7832,7 +7832,7 @@ func (ts *TokenStaking) watchGovernanceTransferred(
 	}
 
 	thresholdViolatedFn := func(elapsed time.Duration) {
-		tsLogger.Errorf(
+		tsLogger.Warnf(
 			"subscription to event GovernanceTransferred had to be "+
 				"retried [%s] since the last attempt; please inspect "+
 				"host chain connectivity",
@@ -8011,7 +8011,7 @@ func (ts *TokenStaking) watchMinimumStakeAmountSet(
 	}
 
 	thresholdViolatedFn := func(elapsed time.Duration) {
-		tsLogger.Errorf(
+		tsLogger.Warnf(
 			"subscription to event MinimumStakeAmountSet had to be "+
 				"retried [%s] since the last attempt; please inspect "+
 				"host chain connectivity",
@@ -8190,7 +8190,7 @@ func (ts *TokenStaking) watchNotificationRewardPushed(
 	}
 
 	thresholdViolatedFn := func(elapsed time.Duration) {
-		tsLogger.Errorf(
+		tsLogger.Warnf(
 			"subscription to event NotificationRewardPushed had to be "+
 				"retried [%s] since the last attempt; please inspect "+
 				"host chain connectivity",
@@ -8369,7 +8369,7 @@ func (ts *TokenStaking) watchNotificationRewardSet(
 	}
 
 	thresholdViolatedFn := func(elapsed time.Duration) {
-		tsLogger.Errorf(
+		tsLogger.Warnf(
 			"subscription to event NotificationRewardSet had to be "+
 				"retried [%s] since the last attempt; please inspect "+
 				"host chain connectivity",
@@ -8550,7 +8550,7 @@ func (ts *TokenStaking) watchNotificationRewardWithdrawn(
 	}
 
 	thresholdViolatedFn := func(elapsed time.Duration) {
-		tsLogger.Errorf(
+		tsLogger.Warnf(
 			"subscription to event NotificationRewardWithdrawn had to be "+
 				"retried [%s] since the last attempt; please inspect "+
 				"host chain connectivity",
@@ -8738,7 +8738,7 @@ func (ts *TokenStaking) watchNotifierRewarded(
 	}
 
 	thresholdViolatedFn := func(elapsed time.Duration) {
-		tsLogger.Errorf(
+		tsLogger.Warnf(
 			"subscription to event NotifierRewarded had to be "+
 				"retried [%s] since the last attempt; please inspect "+
 				"host chain connectivity",
@@ -8944,7 +8944,7 @@ func (ts *TokenStaking) watchOwnerRefreshed(
 	}
 
 	thresholdViolatedFn := func(elapsed time.Duration) {
-		tsLogger.Errorf(
+		tsLogger.Warnf(
 			"subscription to event OwnerRefreshed had to be "+
 				"retried [%s] since the last attempt; please inspect "+
 				"host chain connectivity",
@@ -9145,7 +9145,7 @@ func (ts *TokenStaking) watchPanicButtonSet(
 	}
 
 	thresholdViolatedFn := func(elapsed time.Duration) {
-		tsLogger.Errorf(
+		tsLogger.Warnf(
 			"subscription to event PanicButtonSet had to be "+
 				"retried [%s] since the last attempt; please inspect "+
 				"host chain connectivity",
@@ -9339,7 +9339,7 @@ func (ts *TokenStaking) watchSlashingProcessed(
 	}
 
 	thresholdViolatedFn := func(elapsed time.Duration) {
-		tsLogger.Errorf(
+		tsLogger.Warnf(
 			"subscription to event SlashingProcessed had to be "+
 				"retried [%s] since the last attempt; please inspect "+
 				"host chain connectivity",
@@ -9522,7 +9522,7 @@ func (ts *TokenStaking) watchStakeDiscrepancyPenaltySet(
 	}
 
 	thresholdViolatedFn := func(elapsed time.Duration) {
-		tsLogger.Errorf(
+		tsLogger.Warnf(
 			"subscription to event StakeDiscrepancyPenaltySet had to be "+
 				"retried [%s] since the last attempt; please inspect "+
 				"host chain connectivity",
@@ -9732,7 +9732,7 @@ func (ts *TokenStaking) watchStaked(
 	}
 
 	thresholdViolatedFn := func(elapsed time.Duration) {
-		tsLogger.Errorf(
+		tsLogger.Warnf(
 			"subscription to event Staked had to be "+
 				"retried [%s] since the last attempt; please inspect "+
 				"host chain connectivity",
@@ -9935,7 +9935,7 @@ func (ts *TokenStaking) watchTokensSeized(
 	}
 
 	thresholdViolatedFn := func(elapsed time.Duration) {
-		tsLogger.Errorf(
+		tsLogger.Warnf(
 			"subscription to event TokensSeized had to be "+
 				"retried [%s] since the last attempt; please inspect "+
 				"host chain connectivity",
@@ -10127,7 +10127,7 @@ func (ts *TokenStaking) watchToppedUp(
 	}
 
 	thresholdViolatedFn := func(elapsed time.Duration) {
-		tsLogger.Errorf(
+		tsLogger.Warnf(
 			"subscription to event ToppedUp had to be "+
 				"retried [%s] since the last attempt; please inspect "+
 				"host chain connectivity",
@@ -10317,7 +10317,7 @@ func (ts *TokenStaking) watchUnstaked(
 	}
 
 	thresholdViolatedFn := func(elapsed time.Duration) {
-		tsLogger.Errorf(
+		tsLogger.Warnf(
 			"subscription to event Unstaked had to be "+
 				"retried [%s] since the last attempt; please inspect "+
 				"host chain connectivity",

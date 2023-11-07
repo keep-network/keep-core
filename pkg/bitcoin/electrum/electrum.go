@@ -3,10 +3,10 @@ package electrum
 import (
 	"context"
 	"crypto/sha256"
-	"crypto/tls"
 	"encoding/hex"
 	"fmt"
 	"math"
+	"sort"
 	"strings"
 	"sync"
 	"time"
@@ -30,7 +30,7 @@ var (
 type Connection struct {
 	parentCtx   context.Context
 	client      *electrum.Client
-	clientMutex *sync.RWMutex
+	clientMutex *sync.Mutex
 	config      Config
 }
 
@@ -55,7 +55,7 @@ func Connect(parentCtx context.Context, config Config) (bitcoin.Chain, error) {
 	c := &Connection{
 		parentCtx:   parentCtx,
 		config:      config,
-		clientMutex: &sync.RWMutex{},
+		clientMutex: &sync.Mutex{},
 	}
 
 	if err := c.electrumConnect(); err != nil {
@@ -89,7 +89,9 @@ func (c *Connection) GetTransaction(
 			// as Esplora/Electrs doesn't support verbose transactions.
 			// See: https://github.com/Blockstream/electrs/pull/36
 			return client.GetRawTransaction(ctx, txID)
-		})
+		},
+		"GetRawTransaction",
+	)
 	if err != nil {
 		return nil, fmt.Errorf(
 			"failed to get raw transaction with ID [%s]: [%w]",
@@ -125,7 +127,9 @@ func (c *Connection) GetTransactionConfirmations(
 			// as Esplora/Electrs doesn't support verbose transactions.
 			// See: https://github.com/Blockstream/electrs/pull/36
 			return client.GetRawTransaction(ctx, txID)
-		})
+		},
+		"GetRawTransaction",
+	)
 	if err != nil {
 		return 0,
 			fmt.Errorf(
@@ -174,7 +178,9 @@ txOutLoop:
 				client *electrum.Client,
 			) ([]*electrum.GetMempoolResult, error) {
 				return client.GetHistory(ctx, reversedScriptHashString)
-			})
+			},
+			"GetHistory",
+		)
 		if err != nil {
 			// Don't return an error, but continue to the next TxOut entry.
 			txLogger.Errorf("failed to get history for script hash: [%v]", err)
@@ -226,10 +232,10 @@ txOutLoop:
 func (c *Connection) BroadcastTransaction(
 	transaction *bitcoin.Transaction,
 ) error {
-	rawTx := transaction.Serialize()
+	rawTx := hex.EncodeToString(transaction.Serialize())
 
 	rawTxLogger := logger.With(
-		zap.String("rawTx", hex.EncodeToString(rawTx)),
+		zap.String("rawTx", rawTx),
 	)
 	rawTxLogger.Debugf("broadcasting transaction")
 
@@ -238,8 +244,10 @@ func (c *Connection) BroadcastTransaction(
 	response, err := requestWithRetry(
 		c,
 		func(ctx context.Context, client *electrum.Client) (string, error) {
-			return client.BroadcastTransaction(ctx, string(rawTx))
-		})
+			return client.BroadcastTransaction(ctx, rawTx)
+		},
+		"BroadcastTransaction",
+	)
 	if err != nil {
 		return fmt.Errorf("failed to broadcast the transaction: [%w]", err)
 	}
@@ -261,7 +269,9 @@ func (c *Connection) GetLatestBlockHeight() (uint, error) {
 			}
 			tip := <-headersChan
 			return tip.Height, nil
-		})
+		},
+		"SubscribeHeaders",
+	)
 	if err != nil {
 		return 0, fmt.Errorf("failed to subscribe for headers: [%w]", err)
 	}
@@ -287,6 +297,7 @@ func (c *Connection) GetBlockHeader(
 		) (*electrum.GetBlockHeaderResult, error) {
 			return client.GetBlockHeader(ctx, uint32(blockHeight), 0)
 		},
+		"GetBlockHeader",
 	)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get block header: [%w]", err)
@@ -300,33 +311,619 @@ func (c *Connection) GetBlockHeader(
 	return blockHeader, nil
 }
 
+// GetTransactionMerkleProof gets the Merkle proof for a given transaction.
+// The transaction's hash and the block the transaction was included in the
+// blockchain need to be provided.
+func (c *Connection) GetTransactionMerkleProof(
+	transactionHash bitcoin.Hash,
+	blockHeight uint,
+) (*bitcoin.TransactionMerkleProof, error) {
+	txID := transactionHash.Hex(bitcoin.ReversedByteOrder)
+
+	getMerkleProofResult, err := requestWithRetry(
+		c,
+		func(
+			ctx context.Context,
+			client *electrum.Client,
+		) (*electrum.GetMerkleProofResult, error) {
+			return client.GetMerkleProof(
+				ctx,
+				txID,
+				uint32(blockHeight),
+			)
+		},
+		"GetMerkleProof",
+	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get merkle proof: [%w]", err)
+	}
+
+	return convertMerkleProof(getMerkleProofResult), nil
+}
+
+// GetTransactionsForPublicKeyHash gets confirmed transactions that pays the
+// given public key hash using either a P2PKH or P2WPKH script. The returned
+// transactions are ordered by block height in the ascending order, i.e.
+// the latest transaction is at the end of the list. The returned list does
+// not contain unconfirmed transactions living in the mempool at the moment
+// of request. The returned transactions list can be limited using the
+// `limit` parameter. For example, if `limit` is set to `5`, only the
+// latest five transactions will be returned. Note that taking an unlimited
+// transaction history may be time-consuming as this function fetches
+// complete transactions with all necessary data.
+func (c *Connection) GetTransactionsForPublicKeyHash(
+	publicKeyHash [20]byte,
+	limit int,
+) ([]*bitcoin.Transaction, error) {
+	txHashes, err := c.GetTxHashesForPublicKeyHash(publicKeyHash)
+	if err != nil {
+		return nil, err
+	}
+
+	var selectedTxHashes []bitcoin.Hash
+	if len(txHashes) > limit {
+		selectedTxHashes = txHashes[len(txHashes)-limit:]
+	} else {
+		selectedTxHashes = txHashes
+	}
+
+	transactions := make([]*bitcoin.Transaction, len(selectedTxHashes))
+	for i, txHash := range selectedTxHashes {
+		transaction, err := c.GetTransaction(txHash)
+		if err != nil {
+			return nil, fmt.Errorf("cannot get transaction: [%v]", err)
+		}
+
+		transactions[i] = transaction
+	}
+
+	return transactions, nil
+}
+
+// GetTxHashesForPublicKeyHash gets hashes of confirmed transactions that pays
+// the given public key hash using either a P2PKH or P2WPKH script. The returned
+// transactions hashes are ordered by block height in the ascending order, i.e.
+// the latest transaction hash is at the end of the list. The returned list does
+// not contain unconfirmed transactions hashes living in the mempool at the
+// moment of request.
+func (c *Connection) GetTxHashesForPublicKeyHash(
+	publicKeyHash [20]byte,
+) ([]bitcoin.Hash, error) {
+	p2pkh, err := bitcoin.PayToPublicKeyHash(publicKeyHash)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"cannot build P2PKH for public key hash [0x%x]: [%v]",
+			publicKeyHash,
+			err,
+		)
+	}
+
+	p2wpkh, err := bitcoin.PayToWitnessPublicKeyHash(publicKeyHash)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"cannot build P2WPKH for public key hash [0x%x]: [%v]",
+			publicKeyHash,
+			err,
+		)
+	}
+
+	p2pkhItems, err := c.getConfirmedScriptHistory(p2pkh)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"cannot get P2PKH history for public key hash [0x%x]: [%v]",
+			publicKeyHash,
+			err,
+		)
+	}
+
+	p2wpkhItems, err := c.getConfirmedScriptHistory(p2wpkh)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"cannot get P2WPKH history for public key hash [0x%x]: [%v]",
+			publicKeyHash,
+			err,
+		)
+	}
+
+	items := append(p2pkhItems, p2wpkhItems...)
+
+	sort.SliceStable(
+		items,
+		func(i, j int) bool {
+			return items[i].blockHeight < items[j].blockHeight
+		},
+	)
+
+	txHashes := make([]bitcoin.Hash, len(items))
+	for i, item := range items {
+		txHashes[i] = item.txHash
+	}
+
+	return txHashes, nil
+}
+
+type scriptHistoryItem struct {
+	txHash      bitcoin.Hash
+	blockHeight int32
+}
+
+// getConfirmedScriptHistory returns a history of confirmed transactions for
+// the given script (P2PKH, P2WPKH, P2SH, P2WSH, etc.). The returned list
+// is sorted by the block height in the ascending order, i.e. the latest
+// transaction is at the end of the list. The resulting list does not contain
+// unconfirmed transactions living in the mempool at the moment of request.
+func (c *Connection) getConfirmedScriptHistory(
+	script []byte,
+) ([]*scriptHistoryItem, error) {
+	scriptHash := sha256.Sum256(script)
+	reversedScriptHash := byteutils.Reverse(scriptHash[:])
+	reversedScriptHashString := hex.EncodeToString(reversedScriptHash)
+
+	items, err := requestWithRetry(
+		c,
+		func(
+			ctx context.Context,
+			client *electrum.Client,
+		) ([]*electrum.GetMempoolResult, error) {
+			return client.GetHistory(ctx, reversedScriptHashString)
+		},
+		"GetHistory",
+	)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"failed to get history for script [0x%x]: [%v]",
+			script,
+			err,
+		)
+	}
+
+	// According to https://electrumx.readthedocs.io/en/latest/protocol-methods.html#blockchain-scripthash-get-history
+	// unconfirmed items living in the mempool are appended at the end of the
+	// returned list and their height value is either -1 or 0. That means
+	// we need to take all items with height >0 to obtain a confirmed txs
+	// history.
+	confirmedItems := make([]*scriptHistoryItem, 0)
+	for _, item := range items {
+		if item.Height > 0 {
+			txHash, err := bitcoin.NewHashFromString(
+				item.Hash,
+				bitcoin.ReversedByteOrder,
+			)
+			if err != nil {
+				return nil, fmt.Errorf(
+					"cannot parse hash [%s]: [%v]",
+					item.Hash,
+					err,
+				)
+			}
+
+			confirmedItems = append(
+				confirmedItems, &scriptHistoryItem{
+					txHash:      txHash,
+					blockHeight: item.Height,
+				},
+			)
+		}
+	}
+
+	// The list returned from client.GetHistory is sorted by the block height
+	// in the ascending order though we are sorting it again just in case
+	// (e.g. API contract changes).
+	sort.SliceStable(
+		confirmedItems,
+		func(i, j int) bool {
+			return confirmedItems[i].blockHeight < confirmedItems[j].blockHeight
+		},
+	)
+
+	return confirmedItems, nil
+}
+
+// GetMempoolForPublicKeyHash gets the unconfirmed mempool transactions
+// that pays the given public key hash using either a P2PKH or P2WPKH script.
+// The returned transactions are in an indefinite order.
+func (c *Connection) GetMempoolForPublicKeyHash(
+	publicKeyHash [20]byte,
+) ([]*bitcoin.Transaction, error) {
+	p2pkh, err := bitcoin.PayToPublicKeyHash(publicKeyHash)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"cannot build P2PKH for public key hash [0x%x]: [%v]",
+			publicKeyHash,
+			err,
+		)
+	}
+
+	p2wpkh, err := bitcoin.PayToWitnessPublicKeyHash(publicKeyHash)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"cannot build P2WPKH for public key hash [0x%x]: [%v]",
+			publicKeyHash,
+			err,
+		)
+	}
+
+	p2pkhItems, err := c.getScriptMempool(p2pkh)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"cannot get P2PKH mempool items for public key hash [0x%x]: [%v]",
+			publicKeyHash,
+			err,
+		)
+	}
+
+	p2wpkhItems, err := c.getScriptMempool(p2wpkh)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"cannot get P2WPKH mempool items for public key hash [0x%x]: [%v]",
+			publicKeyHash,
+			err,
+		)
+	}
+
+	items := append(p2pkhItems, p2wpkhItems...)
+
+	transactions := make([]*bitcoin.Transaction, len(items))
+	for i, item := range items {
+		transaction, err := c.GetTransaction(item.txHash)
+		if err != nil {
+			return nil, fmt.Errorf("cannot get transaction: [%v]", err)
+		}
+
+		transactions[i] = transaction
+	}
+
+	return transactions, nil
+}
+
+type scriptMempoolItem struct {
+	txHash      bitcoin.Hash
+	blockHeight int32
+	fee         uint32
+}
+
+// getScriptMempool returns unconfirmed mempool transactions for
+// the given script (P2PKH, P2WPKH, P2SH, P2WSH, etc.). The returned list
+// is in an indefinite order.
+func (c *Connection) getScriptMempool(
+	script []byte,
+) ([]*scriptMempoolItem, error) {
+	scriptHash := sha256.Sum256(script)
+	reversedScriptHash := byteutils.Reverse(scriptHash[:])
+	reversedScriptHashString := hex.EncodeToString(reversedScriptHash)
+
+	items, err := requestWithRetry(
+		c,
+		func(
+			ctx context.Context,
+			client *electrum.Client,
+		) ([]*electrum.GetMempoolResult, error) {
+			return client.GetMempool(ctx, reversedScriptHashString)
+		},
+		"GetMempool",
+	)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"failed to get mempool for script [0x%x]: [%v]",
+			script,
+			err,
+		)
+	}
+
+	convertedItems := make([]*scriptMempoolItem, len(items))
+	for i, item := range items {
+		txHash, err := bitcoin.NewHashFromString(
+			item.Hash,
+			bitcoin.ReversedByteOrder,
+		)
+		if err != nil {
+			return nil, fmt.Errorf(
+				"cannot parse hash [%s]: [%v]",
+				item.Hash,
+				err,
+			)
+		}
+
+		convertedItems[i] = &scriptMempoolItem{
+			txHash:      txHash,
+			blockHeight: item.Height,
+			fee:         item.Fee,
+		}
+	}
+
+	return convertedItems, nil
+}
+
+// GetUtxosForPublicKeyHash gets unspent outputs of confirmed transactions that
+// are controlled by the given public key hash (either a P2PKH or P2WPKH script).
+// The returned UTXOs are ordered by block height in the ascending order, i.e.
+// the latest UTXO is at the end of the list. The returned list does not contain
+// unspent outputs of unconfirmed transactions living in the mempool at the
+// moment of request. Outputs used as inputs of confirmed or mempool
+// transactions are not returned as well because they are no longer UTXOs.
+func (c *Connection) GetUtxosForPublicKeyHash(
+	publicKeyHash [20]byte,
+) ([]*bitcoin.UnspentTransactionOutput, error) {
+	p2pkh, err := bitcoin.PayToPublicKeyHash(publicKeyHash)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"cannot build P2PKH for public key hash [0x%x]: [%v]",
+			publicKeyHash,
+			err,
+		)
+	}
+
+	p2wpkh, err := bitcoin.PayToWitnessPublicKeyHash(publicKeyHash)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"cannot build P2WPKH for public key hash [0x%x]: [%v]",
+			publicKeyHash,
+			err,
+		)
+	}
+
+	p2pkhItems, err := c.getScriptUtxos(p2pkh, true)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"cannot get P2PKH UTXOs for public key hash [0x%x]: [%v]",
+			publicKeyHash,
+			err,
+		)
+	}
+
+	p2wpkhItems, err := c.getScriptUtxos(p2wpkh, true)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"cannot get P2WPKH UTXOs for public key hash [0x%x]: [%v]",
+			publicKeyHash,
+			err,
+		)
+	}
+
+	items := append(p2pkhItems, p2wpkhItems...)
+
+	sort.SliceStable(
+		items,
+		func(i, j int) bool {
+			return items[i].blockHeight < items[j].blockHeight
+		},
+	)
+
+	utxos := make([]*bitcoin.UnspentTransactionOutput, len(items))
+	for i, item := range items {
+		utxos[i] = &bitcoin.UnspentTransactionOutput{
+			Outpoint: &bitcoin.TransactionOutpoint{
+				TransactionHash: item.txHash,
+				OutputIndex:     item.outputIndex,
+			},
+			Value: int64(item.value),
+		}
+	}
+
+	return utxos, nil
+}
+
+// GetMempoolUtxosForPublicKeyHash gets unspent outputs of unconfirmed transactions
+// that are controlled by the given public key hash (either a P2PKH or P2WPKH script).
+// The returned UTXOs are in an indefinite order. The returned list does not
+// contain unspent outputs of confirmed transactions. Outputs used as inputs of
+// confirmed or mempool transactions are not returned as well because they are
+// no longer UTXOs.
+func (c *Connection) GetMempoolUtxosForPublicKeyHash(
+	publicKeyHash [20]byte,
+) ([]*bitcoin.UnspentTransactionOutput, error) {
+	p2pkh, err := bitcoin.PayToPublicKeyHash(publicKeyHash)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"cannot build P2PKH for public key hash [0x%x]: [%v]",
+			publicKeyHash,
+			err,
+		)
+	}
+
+	p2wpkh, err := bitcoin.PayToWitnessPublicKeyHash(publicKeyHash)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"cannot build P2WPKH for public key hash [0x%x]: [%v]",
+			publicKeyHash,
+			err,
+		)
+	}
+
+	p2pkhItems, err := c.getScriptUtxos(p2pkh, false)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"cannot get P2PKH UTXOs for public key hash [0x%x]: [%v]",
+			publicKeyHash,
+			err,
+		)
+	}
+
+	p2wpkhItems, err := c.getScriptUtxos(p2wpkh, false)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"cannot get P2WPKH UTXOs for public key hash [0x%x]: [%v]",
+			publicKeyHash,
+			err,
+		)
+	}
+
+	items := append(p2pkhItems, p2wpkhItems...)
+
+	utxos := make([]*bitcoin.UnspentTransactionOutput, len(items))
+	for i, item := range items {
+		utxos[i] = &bitcoin.UnspentTransactionOutput{
+			Outpoint: &bitcoin.TransactionOutpoint{
+				TransactionHash: item.txHash,
+				OutputIndex:     item.outputIndex,
+			},
+			Value: int64(item.value),
+		}
+	}
+
+	return utxos, nil
+}
+
+type scriptUtxoItem struct {
+	txHash      bitcoin.Hash
+	outputIndex uint32
+	value       uint64
+	blockHeight uint32
+}
+
+// getScriptUtxos returns unspent outputs of confirmed/unconfirmed transactions
+// that are locked using the given script (P2PKH, P2WPKH, P2SH, P2WSH, etc.).
+//
+// If the `confirmed` flag is true, the returned list contains unspent outputs
+// of confirmed transactions, sorted by the block height in the ascending order,
+// i.e. the latest UTXO is at the end of the list. The resulting list does not
+// contain unspent outputs of unconfirmed transactions living in the mempool
+// at the moment of request.
+//
+// If the `confirmed` flag is false, the returned list contains unspent outputs
+// of unconfirmed transactions, in an indefinite order. The resulting list
+// does not contain unspent outputs of confirmed transactions.
+//
+// In both cases, the resulted list DOES NOT CONTAIN outputs already used as
+// inputs of confirmed or mempool transactions because they are no longer UTXOs.
+func (c *Connection) getScriptUtxos(
+	script []byte,
+	confirmed bool,
+) ([]*scriptUtxoItem, error) {
+	scriptHash := sha256.Sum256(script)
+	reversedScriptHash := byteutils.Reverse(scriptHash[:])
+	reversedScriptHashString := hex.EncodeToString(reversedScriptHash)
+
+	items, err := requestWithRetry(
+		c,
+		func(
+			ctx context.Context,
+			client *electrum.Client,
+		) ([]*electrum.ListUnspentResult, error) {
+			return client.ListUnspent(ctx, reversedScriptHashString)
+		},
+		"ListUnspent",
+	)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"failed to get UTXOs for script [0x%x]: [%v]",
+			script,
+			err,
+		)
+	}
+
+	// According to https://electrumx.readthedocs.io/en/stable/protocol-methods.html#blockchain-scripthash-listunspent
+	// unconfirmed items living in the mempool are appended at the end of the
+	// returned list and their height value is either -1 or 0. That means
+	// we need to take all items with height >0 to obtain confirmed UTXO
+	// items and <=0 if we want to take the unconfirmed ones.
+	var filterFn func(item *electrum.ListUnspentResult) bool
+	if confirmed {
+		filterFn = func(item *electrum.ListUnspentResult) bool {
+			return item.Height > 0
+		}
+	} else {
+		filterFn = func(item *electrum.ListUnspentResult) bool {
+			return item.Height <= 0
+		}
+	}
+
+	filteredItems := make([]*scriptUtxoItem, 0)
+	for _, item := range items {
+		if filterFn(item) {
+			txHash, err := bitcoin.NewHashFromString(
+				item.Hash,
+				bitcoin.ReversedByteOrder,
+			)
+			if err != nil {
+				return nil, fmt.Errorf(
+					"cannot parse hash [%s]: [%v]",
+					item.Hash,
+					err,
+				)
+			}
+
+			filteredItems = append(
+				filteredItems, &scriptUtxoItem{
+					txHash:      txHash,
+					outputIndex: item.Position,
+					value:       item.Value,
+					blockHeight: item.Height,
+				},
+			)
+		}
+	}
+
+	if confirmed {
+		// The list returned from client.ListUnspent is sorted by the block height
+		// in the ascending order though we are sorting it again just in case
+		// (e.g. API contract changes). Sorting makes sense only for confirmed
+		// items as unconfirmed ones have a block height of -1 or 0.
+		sort.SliceStable(
+			filteredItems,
+			func(i, j int) bool {
+				return filteredItems[i].blockHeight < filteredItems[j].blockHeight
+			},
+		)
+	}
+
+	return filteredItems, nil
+}
+
+// EstimateSatPerVByteFee returns the estimated sat/vbyte fee for a
+// transaction to be confirmed within the given number of blocks.
+func (c *Connection) EstimateSatPerVByteFee(blocks uint32) (int64, error) {
+	// According to Electrum protocol docs, the returned fee is BTC/KB.
+	btcPerKbFee, err := requestWithRetry(
+		c,
+		func(
+			ctx context.Context,
+			client *electrum.Client,
+		) (float32, error) {
+			// TODO: client.GetFee calls Electrum's blockchain.estimatefee underneath.
+			//       According to https://electrumx.readthedocs.io/en/latest/protocol-methods.html#blockchain-estimatefee,
+			//       the blockchain.estimatefee function will be deprecated
+			//       since version 1.4.2 of the protocol. We need to replace it
+			//       somehow once it disappears from Electrum implementations.
+			return client.GetFee(ctx, blocks)
+		},
+		"GetFee",
+	)
+	if err != nil {
+		return 0, fmt.Errorf("failed to get fee: [%v]", err)
+	}
+
+	// According to Electrum protocol docs, if the daemon does not have
+	// enough information to make an estimate, the integer -1 is returned.
+	if btcPerKbFee < 0 {
+		return 0, fmt.Errorf(
+			"daemon does not have enough information to make an estimate",
+		)
+	}
+
+	return convertBtcKbToSatVByte(btcPerKbFee), nil
+}
+
+func convertBtcKbToSatVByte(btcPerKbFee float32) int64 {
+	// To convert from BTC/KB to sat/vbyte, we need to multiply by 1e8/1e3.
+	satPerVByte := (1e8 / 1e3) * float64(btcPerKbFee)
+	// Make sure the minimum returned sat/vbyte fee is always 1.
+	satPerVByte = math.Max(satPerVByte, 1)
+	// Round the returned fee to be an integer.
+	return int64(math.Round(satPerVByte))
+}
+
 func (c *Connection) electrumConnect() error {
 	var client *electrum.Client
 	var err error
-	switch c.config.Protocol {
-	case TCP:
-		logger.Debug("establishing TCP connection to electrum server...")
-		client, err = connectWithRetry(
-			c,
-			func(ctx context.Context) (*electrum.Client, error) {
-				return electrum.NewClientTCP(ctx, c.config.URL)
-			},
-		)
-	case SSL:
-		// TODO: Implement certificate verification to be able to disable the `InsecureSkipVerify: true` workaround.
-		// #nosec G402 (TLS InsecureSkipVerify set true)
-		tlsConfig := &tls.Config{InsecureSkipVerify: true}
 
-		logger.Debug("establishing SSL connection to electrum server...")
-		client, err = connectWithRetry(
-			c,
-			func(ctx context.Context) (*electrum.Client, error) {
-				return electrum.NewClientSSL(ctx, c.config.URL, tlsConfig)
-			},
-		)
-	default:
-		err = fmt.Errorf("unsupported protocol: [%s]", c.config.Protocol)
-	}
+	logger.Debug("establishing connection to electrum server...")
+	client, err = connectWithRetry(
+		c,
+		func(ctx context.Context) (*electrum.Client, error) {
+			return electrum.NewClient(ctx, c.config.URL, nil)
+		},
+	)
 
 	if err == nil {
 		c.client = client
@@ -350,6 +947,7 @@ func (c *Connection) verifyServer() error {
 			}
 			return &Server{serverVersion, protocolVersion}, nil
 		},
+		"ServerVersion",
 	)
 	if err != nil {
 		return fmt.Errorf("failed to get server version: [%w]", err)
@@ -385,6 +983,7 @@ func (c *Connection) keepAlive() {
 				func(ctx context.Context, client *electrum.Client) (interface{}, error) {
 					return nil, client.Ping(ctx)
 				},
+				"Ping",
 			)
 			if err != nil {
 				logger.Errorf(
@@ -434,7 +1033,11 @@ func connectWithRetry(
 func requestWithRetry[K interface{}](
 	c *Connection,
 	requestFn func(ctx context.Context, client *electrum.Client) (K, error),
+	requestName string,
 ) (K, error) {
+	startTime := time.Now()
+	logger.Infof("starting [%s] request to Electrum server", requestName)
+
 	var result K
 
 	err := wrappers.DoWithDefaultRetry(
@@ -448,9 +1051,9 @@ func requestWithRetry[K interface{}](
 			requestCtx, requestCancel := context.WithTimeout(ctx, c.config.RequestTimeout)
 			defer requestCancel()
 
-			c.clientMutex.RLock()
+			c.clientMutex.Lock()
 			r, err := requestFn(requestCtx, c.client)
-			c.clientMutex.RUnlock()
+			c.clientMutex.Unlock()
 
 			if err != nil {
 				return fmt.Errorf("request failed: [%w]", err)
@@ -459,6 +1062,19 @@ func requestWithRetry[K interface{}](
 			result = r
 			return nil
 		})
+
+	solveRequestOutcome := func(err error) string {
+		if err != nil {
+			return fmt.Sprintf("error: [%v]", err)
+		}
+		return "success"
+	}
+
+	logger.Infof("[%s] request to Electrum server completed with [%s] after [%s]",
+		requestName,
+		solveRequestOutcome(err),
+		time.Since(startTime),
+	)
 
 	return result, err
 }

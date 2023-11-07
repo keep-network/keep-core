@@ -9,6 +9,7 @@ import "@tenderly/hardhat-tenderly"
 import "hardhat-contract-sizer"
 import "hardhat-dependency-compiler"
 import "hardhat-gas-reporter"
+import "solidity-docgen"
 
 import "./tasks"
 import { task } from "hardhat/config"
@@ -110,7 +111,7 @@ const config: HardhatUserConfig = {
     development: {
       url: "http://localhost:8545",
       chainId: 1101,
-      tags: ["allowStubs"],
+      tags: ["allowStubs", "useRandomBeaconChaosnet"],
     },
     goerli: {
       url: process.env.CHAIN_API_URL || "",
@@ -118,7 +119,15 @@ const config: HardhatUserConfig = {
       accounts: process.env.ACCOUNTS_PRIVATE_KEYS
         ? process.env.ACCOUNTS_PRIVATE_KEYS.split(",")
         : undefined,
-      tags: ["etherscan"],
+      tags: ["etherscan", "useRandomBeaconChaosnet"],
+    },
+    sepolia: {
+      url: process.env.CHAIN_API_URL || "",
+      chainId: 11155111,
+      accounts: process.env.ACCOUNTS_PRIVATE_KEYS
+        ? process.env.ACCOUNTS_PRIVATE_KEYS.split(",")
+        : undefined,
+      tags: ["etherscan", "useRandomBeaconChaosnet"],
     },
     mainnet: {
       url: process.env.CHAIN_API_URL || "",
@@ -126,7 +135,7 @@ const config: HardhatUserConfig = {
       accounts: process.env.CONTRACT_OWNER_ACCOUNT_PRIVATE_KEY
         ? [process.env.CONTRACT_OWNER_ACCOUNT_PRIVATE_KEY]
         : undefined,
-      tags: ["etherscan", "tenderly"],
+      tags: ["etherscan", "tenderly", "useRandomBeaconChaosnet"],
     },
   },
   // // Define local networks configuration file path to load networks from the file.
@@ -142,21 +151,25 @@ const config: HardhatUserConfig = {
     deployer: {
       default: 1, // take the second account
       goerli: 0,
+      sepolia: 0,
       mainnet: 0, // "0x123694886DBf5Ac94DDA07135349534536D14cAf"
     },
     governance: {
       default: 2,
       goerli: 0,
+      sepolia: 0,
       mainnet: "0x9f6e831c8f8939dc0c830c6e492e7cef4f9c2f5f", // Threshold Council
     },
     chaosnetOwner: {
       default: 3,
       goerli: 0,
+      sepolia: 0,
       mainnet: "0x9f6e831c8f8939dc0c830c6e492e7cef4f9c2f5f", // Threshold Council
     },
     esdm: {
       default: 4,
       goerli: 0,
+      sepolia: 0,
       mainnet: "0x9f6e831c8f8939dc0c830c6e492e7cef4f9c2f5f", // Threshold Council
     },
   },
@@ -191,6 +204,10 @@ const config: HardhatUserConfig = {
         "node_modules/@threshold-network/solidity-contracts/artifacts",
         "node_modules/@keep-network/random-beacon/artifacts",
       ],
+      sepolia: [
+        "node_modules/@threshold-network/solidity-contracts/artifacts",
+        "node_modules/@keep-network/random-beacon/artifacts",
+      ],
       mainnet: ["./external/mainnet"],
     },
   },
@@ -220,6 +237,12 @@ const config: HardhatUserConfig = {
   },
   typechain: {
     outDir: "typechain",
+  },
+  docgen: {
+    outputDir: "generated-docs",
+    templates: "docgen-templates",
+    pages: "files", // `single`, `items` or `files`
+    exclude: ["./test"],
   },
 }
 

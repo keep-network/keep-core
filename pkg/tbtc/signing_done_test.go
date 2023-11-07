@@ -9,15 +9,17 @@ import (
 	"testing"
 	"time"
 
+	"golang.org/x/exp/slices"
+
+	"github.com/keep-network/keep-core/internal/testutils"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/chain/local_v1"
-	"github.com/keep-network/keep-core/pkg/internal/testutils"
+	"github.com/keep-network/keep-core/pkg/net"
 	"github.com/keep-network/keep-core/pkg/net/local"
 	"github.com/keep-network/keep-core/pkg/operator"
 	"github.com/keep-network/keep-core/pkg/protocol/group"
 	"github.com/keep-network/keep-core/pkg/tecdsa"
 	"github.com/keep-network/keep-core/pkg/tecdsa/signing"
-	"golang.org/x/exp/slices"
 )
 
 // TestSigningDoneCheck is a happy path test.
@@ -324,6 +326,10 @@ func setupSigningDoneCheck(
 	if err != nil {
 		t.Fatal(err)
 	}
+
+	broadcastChannel.SetUnmarshaler(func() net.TaggedUnmarshaler {
+		return &signingDoneMessage{}
+	})
 
 	membershipValidator := group.NewMembershipValidator(
 		&testutils.MockLogger{},

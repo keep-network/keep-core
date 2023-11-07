@@ -3,10 +3,11 @@ package watchtower
 import (
 	"context"
 	"fmt"
-	"github.com/keep-network/keep-core/pkg/internal/testutils"
-	"github.com/keep-network/keep-core/pkg/operator"
 	"testing"
 	"time"
+
+	"github.com/keep-network/keep-core/internal/testutils"
+	"github.com/keep-network/keep-core/pkg/operator"
 
 	localNetwork "github.com/keep-network/keep-core/pkg/net/local"
 )

@@ -27,8 +27,8 @@ on:
   workflow_dispatch:
     inputs:
       environment:
-        description: "Environment (network) for workflow execution, e.g. `goerli`"
-        required: false
+        description: "Environment (network) for workflow execution, e.g. `sepolia`"
+        required: true
       upstream_builds:
         description: "Upstream builds"
         required: false
@@ -69,7 +69,10 @@ jobs:
 
       - uses: actions/setup-node@v3
         with:
-          node-version: "18.x"
+          # Using fixed version, because 18.16 was sometimes causing issues with
+          # artifacts generation during `hardhat compile` - see
+          # https://github.com/NomicFoundation/hardhat/issues/3877
+          node-version: "18.15.0"
           cache: "yarn"
           cache-dependency-path: solidity/random-beacon/yarn.lock
 
@@ -96,7 +99,10 @@ jobs:
 
       - uses: actions/setup-node@v3
         with:
-          node-version: "18.x"
+          # Using fixed version, because 18.16 was sometimes causing issues with
+          # artifacts generation during `hardhat compile` - see
+          # https://github.com/NomicFoundation/hardhat/issues/3877
+          node-version: "18.15.0"
           cache: "yarn"
           cache-dependency-path: solidity/random-beacon/yarn.lock
 
@@ -137,7 +143,10 @@ jobs:
 
       - uses: actions/setup-node@v3
         with:
-          node-version: "18.x"
+          # Using fixed version, because 18.16 was sometimes causing issues with
+          # artifacts generation during `hardhat compile` - see
+          # https://github.com/NomicFoundation/hardhat/issues/3877
+          node-version: "18.15.0"
           cache: "yarn"
           cache-dependency-path: solidity/random-beacon/yarn.lock
 
@@ -165,7 +174,10 @@ jobs:
 
       - uses: actions/setup-node@v3
         with:
-          node-version: "18.x"
+          # Using fixed version, because 18.16 was sometimes causing issues with
+          # artifacts generation during `hardhat compile` - see
+          # https://github.com/NomicFoundation/hardhat/issues/3877
+          node-version: "18.15.0"
           cache: "yarn"
           cache-dependency-path: solidity/random-beacon/yarn.lock
 
@@ -196,7 +208,10 @@ jobs:
 
       - uses: actions/setup-node@v3
         with:
-          node-version: "18.x"
+          # Using fixed version, because 18.16 was sometimes causing issues with
+          # artifacts generation during `hardhat compile` - see
+          # https://github.com/NomicFoundation/hardhat/issues/3877
+          node-version: "18.15.0"
           cache: "yarn"
           cache-dependency-path: solidity/random-beacon/yarn.lock
           registry-url: "https://registry.npmjs.org"
@@ -233,8 +248,15 @@ jobs:
 
       - name: Deploy contracts
         env:
-          CHAIN_API_URL: ${{ secrets.GOERLI_ETH_HOSTNAME_HTTP }}
-          ACCOUNTS_PRIVATE_KEYS: ${{ secrets.GOERLI_ETH_CONTRACT_OWNER_PRIVATE_KEY }}
+          # Using fake ternary expression to decide which credentials to use,
+          # depending on chosen environment. Note: if `GOERLI_ETH_HOSTNAME_HTTP`
+          # is empty, the expression will be evaluated to
+          # `SEPOLIA_ETH_HOSTNAME_HTTP`'s value.
+          CHAIN_API_URL: |
+            ${{ inputs.github.event.inputs.environment == 'goerli'
+              && secrets.GOERLI_ETH_HOSTNAME_HTTP
+              || secrets.SEPOLIA_ETH_HOSTNAME_HTTP }}
+          ACCOUNTS_PRIVATE_KEYS: ${{ secrets.TESTNET_ETH_CONTRACT_OWNER_PRIVATE_KEY }}
           ETHERSCAN_API_KEY: ${{ secrets.ETHERSCAN_API_KEY }}
         run: yarn deploy --network ${{ github.event.inputs.environment }}
 
@@ -292,7 +314,10 @@ jobs:
 
       - uses: actions/setup-node@v3
         with:
-          node-version: "18.x"
+          # Using fixed version, because 18.16 was sometimes causing issues with
+          # artifacts generation during `hardhat compile` - see
+          # https://github.com/NomicFoundation/hardhat/issues/3877
+          node-version: "18.15.0"
           cache: "yarn"
           cache-dependency-path: solidity/random-beacon/yarn.lock
           registry-url: "https://registry.npmjs.org"
@@ -316,8 +341,15 @@ jobs:
       
       - name: Deploy contracts
         env:
-          CHAIN_API_URL: ${{ secrets.GOERLI_ETH_HOSTNAME_HTTP }}
-          ACCOUNTS_PRIVATE_KEYS: ${{ secrets.DAPP_DEV_GOERLI_ETH_CONTRACT_OWNER_PRIVATE_KEY }}
+          # Using fake ternary expression to decide which credentials to use,
+          # depending on chosen environment. Note: if `GOERLI_ETH_HOSTNAME_HTTP`
+          # is empty, the expression will be evaluated to
+          # `SEPOLIA_ETH_HOSTNAME_HTTP`'s value.
+          CHAIN_API_URL: |
+            ${{ inputs.github.event.inputs.environment == 'goerli'
+              && secrets.GOERLI_ETH_HOSTNAME_HTTP
+              || secrets.SEPOLIA_ETH_HOSTNAME_HTTP }}
+          ACCOUNTS_PRIVATE_KEYS: ${{ secrets.DAPP_DEV_TESTNET_ETH_CONTRACT_OWNER_PRIVATE_KEY }}
           ETHERSCAN_API_KEY: ${{ secrets.ETHERSCAN_API_KEY }}
         run: yarn deploy --network ${{ github.event.inputs.environment }}
 

@@ -4925,6 +4925,144 @@ func (b *Bridge) UpdateRedemptionParametersGasEstimate(
 }
 
 // Transaction submission.
+func (b *Bridge) UpdateTreasury(
+	arg_treasury common.Address,
+
+	transactionOptions ...chainutil.TransactionOptions,
+) (*types.Transaction, error) {
+	bLogger.Debug(
+		"submitting transaction updateTreasury",
+		" params: ",
+		fmt.Sprint(
+			arg_treasury,
+		),
+	)
+
+	b.transactionMutex.Lock()
+	defer b.transactionMutex.Unlock()
+
+	// create a copy
+	transactorOptions := new(bind.TransactOpts)
+	*transactorOptions = *b.transactorOptions
+
+	if len(transactionOptions) > 1 {
+		return nil, fmt.Errorf(
+			"could not process multiple transaction options sets",
+		)
+	} else if len(transactionOptions) > 0 {
+		transactionOptions[0].Apply(transactorOptions)
+	}
+
+	nonce, err := b.nonceManager.CurrentNonce()
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve account nonce: %v", err)
+	}
+
+	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
+
+	transaction, err := b.contract.UpdateTreasury(
+		transactorOptions,
+		arg_treasury,
+	)
+	if err != nil {
+		return transaction, b.errorResolver.ResolveError(
+			err,
+			b.transactorOptions.From,
+			nil,
+			"updateTreasury",
+			arg_treasury,
+		)
+	}
+
+	bLogger.Infof(
+		"submitted transaction updateTreasury with id: [%s] and nonce [%v]",
+		transaction.Hash(),
+		transaction.Nonce(),
+	)
+
+	go b.miningWaiter.ForceMining(
+		transaction,
+		transactorOptions,
+		func(newTransactorOptions *bind.TransactOpts) (*types.Transaction, error) {
+			// If original transactor options has a non-zero gas limit, that
+			// means the client code set it on their own. In that case, we
+			// should rewrite the gas limit from the original transaction
+			// for each resubmission. If the gas limit is not set by the client
+			// code, let the the submitter re-estimate the gas limit on each
+			// resubmission.
+			if transactorOptions.GasLimit != 0 {
+				newTransactorOptions.GasLimit = transactorOptions.GasLimit
+			}
+
+			transaction, err := b.contract.UpdateTreasury(
+				newTransactorOptions,
+				arg_treasury,
+			)
+			if err != nil {
+				return nil, b.errorResolver.ResolveError(
+					err,
+					b.transactorOptions.From,
+					nil,
+					"updateTreasury",
+					arg_treasury,
+				)
+			}
+
+			bLogger.Infof(
+				"submitted transaction updateTreasury with id: [%s] and nonce [%v]",
+				transaction.Hash(),
+				transaction.Nonce(),
+			)
+
+			return transaction, nil
+		},
+	)
+
+	b.nonceManager.IncrementNonce()
+
+	return transaction, err
+}
+
+// Non-mutating call, not a transaction submission.
+func (b *Bridge) CallUpdateTreasury(
+	arg_treasury common.Address,
+	blockNumber *big.Int,
+) error {
+	var result interface{} = nil
+
+	err := chainutil.CallAtBlock(
+		b.transactorOptions.From,
+		blockNumber, nil,
+		b.contractABI,
+		b.caller,
+		b.errorResolver,
+		b.contractAddress,
+		"updateTreasury",
+		&result,
+		arg_treasury,
+	)
+
+	return err
+}
+
+func (b *Bridge) UpdateTreasuryGasEstimate(
+	arg_treasury common.Address,
+) (uint64, error) {
+	var result uint64
+
+	result, err := chainutil.EstimateGas(
+		b.callerOptions.From,
+		b.contractAddress,
+		"updateTreasury",
+		b.contractABI,
+		b.transactor,
+		arg_treasury,
+	)
+
+	return result, err
+}
+
+// Transaction submission.
 func (b *Bridge) UpdateWalletParameters(
 	arg_walletCreationPeriod uint32,
 	arg_walletCreationMinBtcBalance uint64,
@@ -6064,7 +6202,7 @@ func (b *Bridge) watchDepositParametersUpdated(
 	}
 
 	thresholdViolatedFn := func(elapsed time.Duration) {
-		bLogger.Errorf(
+		bLogger.Warnf(
 			"subscription to event DepositParametersUpdated had to be "+
 				"retried [%s] since the last attempt; please inspect "+
 				"host chain connectivity",
@@ -6273,7 +6411,7 @@ func (b *Bridge) watchDepositRevealed(
 	}
 
 	thresholdViolatedFn := func(elapsed time.Duration) {
-		bLogger.Errorf(
+		bLogger.Warnf(
 			"subscription to event DepositRevealed had to be "+
 				"retried [%s] since the last attempt; please inspect "+
 				"host chain connectivity",
@@ -6458,7 +6596,7 @@ func (b *Bridge) watchDepositsSwept(
 	}
 
 	thresholdViolatedFn := func(elapsed time.Duration) {
-		bLogger.Errorf(
+		bLogger.Warnf(
 			"subscription to event DepositsSwept had to be "+
 				"retried [%s] since the last attempt; please inspect "+
 				"host chain connectivity",
@@ -6646,7 +6784,7 @@ func (b *Bridge) watchFraudChallengeDefeatTimedOut(
 	}
 
 	thresholdViolatedFn := func(elapsed time.Duration) {
-		bLogger.Errorf(
+		bLogger.Warnf(
 			"subscription to event FraudChallengeDefeatTimedOut had to be "+
 				"retried [%s] since the last attempt; please inspect "+
 				"host chain connectivity",
@@ -6836,7 +6974,7 @@ func (b *Bridge) watchFraudChallengeDefeated(
 	}
 
 	thresholdViolatedFn := func(elapsed time.Duration) {
-		bLogger.Errorf(
+		bLogger.Warnf(
 			"subscription to event FraudChallengeDefeated had to be "+
 				"retried [%s] since the last attempt; please inspect "+
 				"host chain connectivity",
@@ -7032,7 +7170,7 @@ func (b *Bridge) watchFraudChallengeSubmitted(
 	}
 
 	thresholdViolatedFn := func(elapsed time.Duration) {
-		bLogger.Errorf(
+		bLogger.Warnf(
 			"subscription to event FraudChallengeSubmitted had to be "+
 				"retried [%s] since the last attempt; please inspect "+
 				"host chain connectivity",
@@ -7219,7 +7357,7 @@ func (b *Bridge) watchFraudParametersUpdated(
 	}
 
 	thresholdViolatedFn := func(elapsed time.Duration) {
-		bLogger.Errorf(
+		bLogger.Warnf(
 			"subscription to event FraudParametersUpdated had to be "+
 				"retried [%s] since the last attempt; please inspect "+
 				"host chain connectivity",
@@ -7400,7 +7538,7 @@ func (b *Bridge) watchGovernanceTransferred(
 	}
 
 	thresholdViolatedFn := func(elapsed time.Duration) {
-		bLogger.Errorf(
+		bLogger.Warnf(
 			"subscription to event GovernanceTransferred had to be "+
 				"retried [%s] since the last attempt; please inspect "+
 				"host chain connectivity",
@@ -7579,7 +7717,7 @@ func (b *Bridge) watchInitialized(
 	}
 
 	thresholdViolatedFn := func(elapsed time.Duration) {
-		bLogger.Errorf(
+		bLogger.Warnf(
 			"subscription to event Initialized had to be "+
 				"retried [%s] since the last attempt; please inspect "+
 				"host chain connectivity",
@@ -7769,7 +7907,7 @@ func (b *Bridge) watchMovedFundsSweepTimedOut(
 	}
 
 	thresholdViolatedFn := func(elapsed time.Duration) {
-		bLogger.Errorf(
+		bLogger.Warnf(
 			"subscription to event MovedFundsSweepTimedOut had to be "+
 				"retried [%s] since the last attempt; please inspect "+
 				"host chain connectivity",
@@ -7959,7 +8097,7 @@ func (b *Bridge) watchMovedFundsSwept(
 	}
 
 	thresholdViolatedFn := func(elapsed time.Duration) {
-		bLogger.Errorf(
+		bLogger.Warnf(
 			"subscription to event MovedFundsSwept had to be "+
 				"retried [%s] since the last attempt; please inspect "+
 				"host chain connectivity",
@@ -8147,7 +8285,7 @@ func (b *Bridge) watchMovingFundsBelowDustReported(
 	}
 
 	thresholdViolatedFn := func(elapsed time.Duration) {
-		bLogger.Errorf(
+		bLogger.Warnf(
 			"subscription to event MovingFundsBelowDustReported had to be "+
 				"retried [%s] since the last attempt; please inspect "+
 				"host chain connectivity",
@@ -8339,7 +8477,7 @@ func (b *Bridge) watchMovingFundsCommitmentSubmitted(
 	}
 
 	thresholdViolatedFn := func(elapsed time.Duration) {
-		bLogger.Errorf(
+		bLogger.Warnf(
 			"subscription to event MovingFundsCommitmentSubmitted had to be "+
 				"retried [%s] since the last attempt; please inspect "+
 				"host chain connectivity",
@@ -8529,7 +8667,7 @@ func (b *Bridge) watchMovingFundsCompleted(
 	}
 
 	thresholdViolatedFn := func(elapsed time.Duration) {
-		bLogger.Errorf(
+		bLogger.Warnf(
 			"subscription to event MovingFundsCompleted had to be "+
 				"retried [%s] since the last attempt; please inspect "+
 				"host chain connectivity",
@@ -8730,7 +8868,7 @@ func (b *Bridge) watchMovingFundsParametersUpdated(
 	}
 
 	thresholdViolatedFn := func(elapsed time.Duration) {
-		bLogger.Errorf(
+		bLogger.Warnf(
 			"subscription to event MovingFundsParametersUpdated had to be "+
 				"retried [%s] since the last attempt; please inspect "+
 				"host chain connectivity",
@@ -8916,7 +9054,7 @@ func (b *Bridge) watchMovingFundsTimedOut(
 	}
 
 	thresholdViolatedFn := func(elapsed time.Duration) {
-		bLogger.Errorf(
+		bLogger.Warnf(
 			"subscription to event MovingFundsTimedOut had to be "+
 				"retried [%s] since the last attempt; please inspect "+
 				"host chain connectivity",
@@ -9104,7 +9242,7 @@ func (b *Bridge) watchMovingFundsTimeoutReset(
 	}
 
 	thresholdViolatedFn := func(elapsed time.Duration) {
-		bLogger.Errorf(
+		bLogger.Warnf(
 			"subscription to event MovingFundsTimeoutReset had to be "+
 				"retried [%s] since the last attempt; please inspect "+
 				"host chain connectivity",
@@ -9301,7 +9439,7 @@ func (b *Bridge) watchNewWalletRegistered(
 	}
 
 	thresholdViolatedFn := func(elapsed time.Duration) {
-		bLogger.Errorf(
+		bLogger.Warnf(
 			"subscription to event NewWalletRegistered had to be "+
 				"retried [%s] since the last attempt; please inspect "+
 				"host chain connectivity",
@@ -9482,7 +9620,7 @@ func (b *Bridge) watchNewWalletRequested(
 	}
 
 	thresholdViolatedFn := func(elapsed time.Duration) {
-		bLogger.Errorf(
+		bLogger.Warnf(
 			"subscription to event NewWalletRequested had to be "+
 				"retried [%s] since the last attempt; please inspect "+
 				"host chain connectivity",
@@ -9673,7 +9811,7 @@ func (b *Bridge) watchRedemptionParametersUpdated(
 	}
 
 	thresholdViolatedFn := func(elapsed time.Duration) {
-		bLogger.Errorf(
+		bLogger.Warnf(
 			"subscription to event RedemptionParametersUpdated had to be "+
 				"retried [%s] since the last attempt; please inspect "+
 				"host chain connectivity",
@@ -9876,7 +10014,7 @@ func (b *Bridge) watchRedemptionRequested(
 	}
 
 	thresholdViolatedFn := func(elapsed time.Duration) {
-		bLogger.Errorf(
+		bLogger.Warnf(
 			"subscription to event RedemptionRequested had to be "+
 				"retried [%s] since the last attempt; please inspect "+
 				"host chain connectivity",
@@ -10068,7 +10206,7 @@ func (b *Bridge) watchRedemptionTimedOut(
 	}
 
 	thresholdViolatedFn := func(elapsed time.Duration) {
-		bLogger.Errorf(
+		bLogger.Warnf(
 			"subscription to event RedemptionTimedOut had to be "+
 				"retried [%s] since the last attempt; please inspect "+
 				"host chain connectivity",
@@ -10258,7 +10396,7 @@ func (b *Bridge) watchRedemptionsCompleted(
 	}
 
 	thresholdViolatedFn := func(elapsed time.Duration) {
-		bLogger.Errorf(
+		bLogger.Warnf(
 			"subscription to event RedemptionsCompleted had to be "+
 				"retried [%s] since the last attempt; please inspect "+
 				"host chain connectivity",
@@ -10448,7 +10586,7 @@ func (b *Bridge) watchSpvMaintainerStatusUpdated(
 	}
 
 	thresholdViolatedFn := func(elapsed time.Duration) {
-		bLogger.Errorf(
+		bLogger.Warnf(
 			"subscription to event SpvMaintainerStatusUpdated had to be "+
 				"retried [%s] since the last attempt; please inspect "+
 				"host chain connectivity",
@@ -10494,6 +10632,185 @@ func (b *Bridge) PastSpvMaintainerStatusUpdatedEvents(
 	}
 
 	events := make([]*abi.BridgeSpvMaintainerStatusUpdated, 0)
+
+	for iterator.Next() {
+		event := iterator.Event
+		events = append(events, event)
+	}
+
+	return events, nil
+}
+
+func (b *Bridge) TreasuryUpdatedEvent(
+	opts *ethereum.SubscribeOpts,
+) *BTreasuryUpdatedSubscription {
+	if opts == nil {
+		opts = new(ethereum.SubscribeOpts)
+	}
+	if opts.Tick == 0 {
+		opts.Tick = chainutil.DefaultSubscribeOptsTick
+	}
+	if opts.PastBlocks == 0 {
+		opts.PastBlocks = chainutil.DefaultSubscribeOptsPastBlocks
+	}
+
+	return &BTreasuryUpdatedSubscription{
+		b,
+		opts,
+	}
+}
+
+type BTreasuryUpdatedSubscription struct {
+	contract *Bridge
+	opts     *ethereum.SubscribeOpts
+}
+
+type bridgeTreasuryUpdatedFunc func(
+	Treasury common.Address,
+	blockNumber uint64,
+)
+
+func (tus *BTreasuryUpdatedSubscription) OnEvent(
+	handler bridgeTreasuryUpdatedFunc,
+) subscription.EventSubscription {
+	eventChan := make(chan *abi.BridgeTreasuryUpdated)
+	ctx, cancelCtx := context.WithCancel(context.Background())
+
+	go func() {
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case event := <-eventChan:
+				handler(
+					event.Treasury,
+					event.Raw.BlockNumber,
+				)
+			}
+		}
+	}()
+
+	sub := tus.Pipe(eventChan)
+	return subscription.NewEventSubscription(func() {
+		sub.Unsubscribe()
+		cancelCtx()
+	})
+}
+
+func (tus *BTreasuryUpdatedSubscription) Pipe(
+	sink chan *abi.BridgeTreasuryUpdated,
+) subscription.EventSubscription {
+	ctx, cancelCtx := context.WithCancel(context.Background())
+	go func() {
+		ticker := time.NewTicker(tus.opts.Tick)
+		defer ticker.Stop()
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-ticker.C:
+				lastBlock, err := tus.contract.blockCounter.CurrentBlock()
+				if err != nil {
+					bLogger.Errorf(
+						"subscription failed to pull events: [%v]",
+						err,
+					)
+				}
+				fromBlock := lastBlock - tus.opts.PastBlocks
+
+				bLogger.Infof(
+					"subscription monitoring fetching past TreasuryUpdated events "+
+						"starting from block [%v]",
+					fromBlock,
+				)
+				events, err := tus.contract.PastTreasuryUpdatedEvents(
+					fromBlock,
+					nil,
+				)
+				if err != nil {
+					bLogger.Errorf(
+						"subscription failed to pull events: [%v]",
+						err,
+					)
+					continue
+				}
+				bLogger.Infof(
+					"subscription monitoring fetched [%v] past TreasuryUpdated events",
+					len(events),
+				)
+
+				for _, event := range events {
+					sink <- event
+				}
+			}
+		}
+	}()
+
+	sub := tus.contract.watchTreasuryUpdated(
+		sink,
+	)
+
+	return subscription.NewEventSubscription(func() {
+		sub.Unsubscribe()
+		cancelCtx()
+	})
+}
+
+func (b *Bridge) watchTreasuryUpdated(
+	sink chan *abi.BridgeTreasuryUpdated,
+) event.Subscription {
+	subscribeFn := func(ctx context.Context) (event.Subscription, error) {
+		return b.contract.WatchTreasuryUpdated(
+			&bind.WatchOpts{Context: ctx},
+			sink,
+		)
+	}
+
+	thresholdViolatedFn := func(elapsed time.Duration) {
+		bLogger.Warnf(
+			"subscription to event TreasuryUpdated had to be "+
+				"retried [%s] since the last attempt; please inspect "+
+				"host chain connectivity",
+			elapsed,
+		)
+	}
+
+	subscriptionFailedFn := func(err error) {
+		bLogger.Errorf(
+			"subscription to event TreasuryUpdated failed "+
+				"with error: [%v]; resubscription attempt will be "+
+				"performed",
+			err,
+		)
+	}
+
+	return chainutil.WithResubscription(
+		chainutil.SubscriptionBackoffMax,
+		subscribeFn,
+		chainutil.SubscriptionAlertThreshold,
+		thresholdViolatedFn,
+		subscriptionFailedFn,
+	)
+}
+
+func (b *Bridge) PastTreasuryUpdatedEvents(
+	startBlock uint64,
+	endBlock *uint64,
+) ([]*abi.BridgeTreasuryUpdated, error) {
+	iterator, err := b.contract.FilterTreasuryUpdated(
+		&bind.FilterOpts{
+			Start: startBlock,
+			End:   endBlock,
+		},
+	)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"error retrieving past TreasuryUpdated events: [%v]",
+			err,
+		)
+	}
+
+	events := make([]*abi.BridgeTreasuryUpdated, 0)
 
 	for iterator.Next() {
 		event := iterator.Event
@@ -10638,7 +10955,7 @@ func (b *Bridge) watchVaultStatusUpdated(
 	}
 
 	thresholdViolatedFn := func(elapsed time.Duration) {
-		bLogger.Errorf(
+		bLogger.Warnf(
 			"subscription to event VaultStatusUpdated had to be "+
 				"retried [%s] since the last attempt; please inspect "+
 				"host chain connectivity",
@@ -10835,7 +11152,7 @@ func (b *Bridge) watchWalletClosed(
 	}
 
 	thresholdViolatedFn := func(elapsed time.Duration) {
-		bLogger.Errorf(
+		bLogger.Warnf(
 			"subscription to event WalletClosed had to be "+
 				"retried [%s] since the last attempt; please inspect "+
 				"host chain connectivity",
@@ -11034,7 +11351,7 @@ func (b *Bridge) watchWalletClosing(
 	}
 
 	thresholdViolatedFn := func(elapsed time.Duration) {
-		bLogger.Errorf(
+		bLogger.Warnf(
 			"subscription to event WalletClosing had to be "+
 				"retried [%s] since the last attempt; please inspect "+
 				"host chain connectivity",
@@ -11233,7 +11550,7 @@ func (b *Bridge) watchWalletMovingFunds(
 	}
 
 	thresholdViolatedFn := func(elapsed time.Duration) {
-		bLogger.Errorf(
+		bLogger.Warnf(
 			"subscription to event WalletMovingFunds had to be "+
 				"retried [%s] since the last attempt; please inspect "+
 				"host chain connectivity",
@@ -11428,7 +11745,7 @@ func (b *Bridge) watchWalletParametersUpdated(
 	}
 
 	thresholdViolatedFn := func(elapsed time.Duration) {
-		bLogger.Errorf(
+		bLogger.Warnf(
 			"subscription to event WalletParametersUpdated had to be "+
 				"retried [%s] since the last attempt; please inspect "+
 				"host chain connectivity",
@@ -11623,7 +11940,7 @@ func (b *Bridge) watchWalletTerminated(
 	}
 
 	thresholdViolatedFn := func(elapsed time.Duration) {
-		bLogger.Errorf(
+		bLogger.Warnf(
 			"subscription to event WalletTerminated had to be "+
 				"retried [%s] since the last attempt; please inspect "+
 				"host chain connectivity",

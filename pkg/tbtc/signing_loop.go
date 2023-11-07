@@ -159,10 +159,16 @@ type signingRetryLoopResult struct {
 func (srl *signingRetryLoop) start(
 	ctx context.Context,
 	waitForBlockFn waitForBlockFn,
+	getCurrentBlockFn getCurrentBlockFn,
 	signingAttemptFn signingAttemptFn,
 ) (*signingRetryLoopResult, error) {
 	for {
 		srl.attemptCounter++
+
+		// Check the loop stop signal.
+		if ctx.Err() != nil {
+			return nil, ctx.Err()
+		}
 
 		// In order to start attempts >1 in the right place, we need to
 		// determine how many blocks were taken by previous attempts. We assume
@@ -191,7 +197,33 @@ func (srl *signingRetryLoop) start(
 		)
 
 		announcementStartBlock := srl.attemptStartBlock + signingAttemptAnnouncementDelayBlocks
-		err := waitForBlockFn(ctx, announcementStartBlock)
+		announcementEndBlock := announcementStartBlock + signingAttemptAnnouncementActiveBlocks
+
+		currentBlock, err := getCurrentBlockFn()
+		if err != nil {
+			srl.logger.Errorf(
+				"[member:%v] failed to get the current block for attempt [%v]: "+
+					"[%v]; starting next attempt",
+				srl.signingGroupMemberIndex,
+				srl.attemptCounter,
+				err,
+			)
+			continue
+		}
+
+		if announcementEndBlock <= currentBlock {
+			srl.logger.Infof(
+				"[member:%v] skipping attempt [%v]; the current block is [%v] "+
+					"and the end block [%v] for the announcement phase is in the past",
+				srl.signingGroupMemberIndex,
+				srl.attemptCounter,
+				currentBlock,
+				announcementEndBlock,
+			)
+			continue
+		}
+
+		err = waitForBlockFn(ctx, announcementStartBlock)
 		if err != nil {
 			srl.logger.Errorf(
 				"[member:%v] failed waiting for announcement start "+
@@ -205,7 +237,6 @@ func (srl *signingRetryLoop) start(
 		}
 
 		// Set up the announcement phase stop signal.
-		announcementEndBlock := announcementStartBlock + signingAttemptAnnouncementActiveBlocks
 		announceCtx, _ := withCancelOnBlock(ctx, announcementEndBlock, waitForBlockFn)
 
 		srl.logger.Infof(
@@ -230,7 +261,8 @@ func (srl *signingRetryLoop) start(
 			continue
 		}
 
-		// Check the loop stop signal.
+		// Check the loop stop signal again. The announcement took some time
+		// and the context may be done now.
 		if ctx.Err() != nil {
 			return nil, ctx.Err()
 		}

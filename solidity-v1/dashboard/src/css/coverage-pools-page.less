@@ -70,43 +70,12 @@
 .coverage-pool__deposit-wrapper {
   display: grid;
   grid-template-areas:
-    "deposit-form   balance   balance"
-    "deposit-form   available-to-withdraw          available-to-withdraw";
+    "balance   balance"
+    "available-to-withdraw          available-to-withdraw";
 
-  grid-template-columns: 2fr 1fr 1fr;
+  grid-template-columns: 1fr 1fr;
   grid-template-rows: auto;
   gap: 1rem;
-
-  .coverage-pool__deposit-form {
-    grid-area: deposit-form;
-    align-self: flex-start;
-    //margin-bottom: 0;
-
-    .deposit-form {
-      .deposit-form__token-amount-wrapper {
-        background-color: @color-green-bg-light;
-        margin: 2rem -2rem;
-        padding: 2rem 2rem;
-
-        .deposit-form__keep-balance-amount {
-          display: inline;
-        }
-
-        .input__label__info-container {
-          margin-bottom: 0.5rem;
-
-          &__additional-info-text {
-            color: @color-green;
-            font-weight: 500;
-            font-size: 0.875rem;
-            margin-bottom: 0;
-            padding: 0;
-            background-color: inherit;
-          }
-        }
-      }
-    }
-  }
 
   .coverage-pool__share-of-pool {
     grid-area: share-of-pool;

@@ -4,7 +4,6 @@ import chaiAsPromised from "chai-as-promised"
 import { keccak256 } from "ethers/lib/utils"
 
 import { params, walletRegistryFixture } from "./fixtures"
-import { fakeRandomBeacon } from "./utils/randomBeacon"
 import { noMisbehaved, signAndSubmitCorrectDkgResult } from "./utils/dkg"
 import ecdsaData from "./data/ecdsa"
 import { createNewWallet } from "./utils/wallets"

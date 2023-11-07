@@ -40,6 +40,7 @@ abi/%.abi: ${artifacts_dir}/%.json
 abi/%.go: abi/%.abi
 	$(info $* - generating Ethereum bindings)
 	@go run github.com/ethereum/go-ethereum/cmd/abigen --abi $< --pkg abi --type $* --out $@
+	$(call after_abi_hook,$*)
 
 # Extract address of a contract from an artifact. Artfifacts that are published
 # with `development` tag are not accessible on developers' environments, so we
@@ -56,6 +57,7 @@ endif
 contract/%.go cmd/%.go: abi/%.abi abi/%.go _address/% ${artifacts_dir}/%.json
 	$(info $* - generating Keep bindings)
 	@go run github.com/keep-network/keep-common/tools/generators/ethereum $< contract/$*.go cmd/$*.go
+	$(call after_contract_hook,$*)
 
 # Don't remove intermediate files that got generated.
 .PRECIOUS: abi/%.abi abi/%.go _address/%

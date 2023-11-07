@@ -1,0 +1,78 @@
+name: Solidity Random Beacon docs
+
+on:
+  pull_request:
+  push:
+    branches:
+      - releases/mainnet/solidity/**
+    paths:
+      - "solidity/random-beacon/**"
+  release:
+    types:
+      - "published"
+  workflow_dispatch:
+
+jobs:
+  docs-detect-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      path-filter: ${{ steps.filter.outputs.path-filter }}
+    steps:
+      - uses: actions/checkout@v3
+        if: github.event_name == 'pull_request'
+      - uses: dorny/paths-filter@v2
+        if: github.event_name == 'pull_request'
+        id: filter
+        with:
+          filters: |
+            path-filter:
+              - './solidity/random-beacon/contracts/**'
+              - './.github/workflows/contracts-random-beacon-docs.yml'
+
+  # This job will be triggered for PRs which modify contracts. It will generate
+  # the archive with contracts documentation in Markdown and attatch it to the
+  # workflow run results. Link to the archive will be posted in a PR comment.
+  # The job will also be run after manual triggering and after pushes to the
+  # `releases/mainnet/solidity/**` branches if there were changes to the
+  # `random-beacon` project.
+  contracts-docs-publish-preview:
+    name: Publish preview of contracts documentation
+    needs: docs-detect-changes
+    if: |
+      needs.docs-detect-changes.outputs.path-filter == 'true'
+        || github.event_name == 'push'
+        || github.event_name == 'workflow_dispatch'
+    uses: keep-network/ci/.github/workflows/reusable-solidity-docs.yml@main
+    with:
+      projectDir: /solidity/random-beacon
+      publish: false
+      addTOC: false
+      commentPR: true
+      exportAsGHArtifacts: true
+
+  # This job will be triggered for releases which name starts with
+  # `refs/tags/solidity/`. It will generate contracts documentation in
+  # Markdown and sync it with a specific path of
+  # `threshold-network/threshold` repository. If changes will be detected,
+  # a PR updating the docs will be created in the destination repository. The
+  # commit pushing the changes will be verified using GPG key.
+  contracts-docs-publish:
+    name: Publish contracts documentation
+    needs: docs-detect-changes
+    if: github.event_name == 'release' && startsWith(github.ref, 'refs/tags/solidity/')
+    uses: keep-network/ci/.github/workflows/reusable-solidity-docs.yml@main
+    with:
+      projectDir: /solidity/random-beacon
+      publish: true
+      addTOC: false
+      verifyCommits: true
+      destinationRepo: threshold-network/threshold
+      destinationFolder: ./docs/app-development/random-beacon/random-beacon-api
+      destinationBaseBranch: main
+      userEmail: 38324465+thesis-valkyrie@users.noreply.github.com
+      userName: Valkyrie
+      rsyncDelete: true
+    secrets:
+      githubToken: ${{ secrets.THRESHOLD_DOCS_GITHUB_TOKEN }}
+      gpgPrivateKey: ${{ secrets.THRESHOLD_DOCS_GPG_PRIVATE_KEY_BASE64 }}
+      gpgPassphrase: ${{ secrets.THRESHOLD_DOCS_GPG_PASSPHRASE }}

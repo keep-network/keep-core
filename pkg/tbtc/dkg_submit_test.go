@@ -9,12 +9,13 @@ import (
 
 	"github.com/keep-network/keep-core/pkg/chain"
 
+	"golang.org/x/crypto/sha3"
+
+	"github.com/keep-network/keep-core/internal/testutils"
 	"github.com/keep-network/keep-core/pkg/internal/tecdsatest"
-	"github.com/keep-network/keep-core/pkg/internal/testutils"
 	"github.com/keep-network/keep-core/pkg/protocol/group"
 	"github.com/keep-network/keep-core/pkg/tecdsa"
 	"github.com/keep-network/keep-core/pkg/tecdsa/dkg"
-	"golang.org/x/crypto/sha3"
 )
 
 func TestSignResult_SigningSuccessful(t *testing.T) {
@@ -294,6 +295,10 @@ func TestSubmitResult_MemberSubmitsResult(t *testing.T) {
 	ctx, cancelCtx := context.WithCancel(context.Background())
 	defer cancelCtx()
 
+	if err = localChain.setDKGResultValidity(true); err != nil {
+		t.Fatal(err)
+	}
+
 	err = dkgResultSubmitter.SubmitResult(
 		ctx,
 		memberIndex,
@@ -388,6 +393,10 @@ func TestSubmitResult_AnotherMemberSubmitsResult(t *testing.T) {
 			cancelCtx()
 		})
 
+	if err = localChain.setDKGResultValidity(true); err != nil {
+		t.Fatal(err)
+	}
+
 	secondMemberSubmissionChannel := make(chan error)
 
 	// Attempt to submit result for the second member on a separate goroutine.
@@ -444,6 +453,92 @@ func TestSubmitResult_AnotherMemberSubmitsResult(t *testing.T) {
 			"unexpected group public key \nexpected: [0x%x]\nactual:   [0x%x]\n",
 			expectedGroupPublicKey,
 			localChain.dkgResult.GroupPublicKey,
+		)
+	}
+}
+
+func TestSubmitResult_InvalidResult(t *testing.T) {
+	groupParameters := &GroupParameters{
+		GroupSize:       5,
+		GroupQuorum:     4,
+		HonestThreshold: 3,
+	}
+
+	localChain := Connect()
+
+	err := localChain.startDKG()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	operatorAddress, err := localChain.operatorAddress()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	operatorID, err := localChain.GetOperatorID(operatorAddress)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var operatorsIDs chain.OperatorIDs
+	var operatorsAddresses chain.Addresses
+
+	for memberIndex := uint8(1); int(memberIndex) <= groupParameters.GroupSize; memberIndex++ {
+		operatorsIDs = append(operatorsIDs, operatorID)
+		operatorsAddresses = append(operatorsAddresses, operatorAddress)
+	}
+
+	groupSelectionResult := &GroupSelectionResult{
+		OperatorsIDs:       operatorsIDs,
+		OperatorsAddresses: operatorsAddresses,
+	}
+
+	dkgResultSubmitter := newDkgResultSubmitter(
+		&testutils.MockLogger{},
+		localChain,
+		groupParameters,
+		groupSelectionResult,
+		testWaitForBlockFn(localChain),
+	)
+
+	testData, err := tecdsatest.LoadPrivateKeyShareTestFixtures(1)
+	if err != nil {
+		t.Fatalf("failed to load test data: [%v]", err)
+	}
+	result := &dkg.Result{
+		Group:           group.NewGroup(groupParameters.DishonestThreshold(), groupParameters.GroupSize),
+		PrivateKeyShare: tecdsa.NewPrivateKeyShare(testData[0]),
+	}
+
+	memberIndex := group.MemberIndex(1)
+	signatures := map[group.MemberIndex][]byte{
+		1: []byte("signature 1"),
+		2: []byte("signature 2"),
+		3: []byte("signature 3"),
+		4: []byte("signature 4"),
+	}
+
+	ctx, cancelCtx := context.WithCancel(context.Background())
+	defer cancelCtx()
+
+	if err = localChain.setDKGResultValidity(false); err != nil {
+		t.Fatal(err)
+	}
+
+	err = dkgResultSubmitter.SubmitResult(
+		ctx,
+		memberIndex,
+		result,
+		signatures,
+	)
+
+	expectedErr := fmt.Errorf("invalid DKG result")
+	if !reflect.DeepEqual(expectedErr, err) {
+		t.Errorf(
+			"unexpected error \nexpected: [%v]\nactual:   [%v]\n",
+			expectedErr,
+			err,
 		)
 	}
 }
@@ -514,6 +609,10 @@ func TestSubmitResult_ContextCancelled(t *testing.T) {
 
 	// Simulate the case when timeout occurs and the context gets cancelled.
 	cancelCtx()
+
+	if err = localChain.setDKGResultValidity(true); err != nil {
+		t.Fatal(err)
+	}
 
 	err = dkgResultSubmitter.SubmitResult(
 		ctx,

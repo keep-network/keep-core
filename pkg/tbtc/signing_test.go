@@ -3,18 +3,19 @@ package tbtc
 import (
 	"context"
 	"crypto/ecdsa"
+	"math/big"
+	"testing"
+	"time"
+
+	"github.com/keep-network/keep-core/internal/testutils"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/chain/local_v1"
 	"github.com/keep-network/keep-core/pkg/generator"
 	"github.com/keep-network/keep-core/pkg/internal/tecdsatest"
-	"github.com/keep-network/keep-core/pkg/internal/testutils"
 	"github.com/keep-network/keep-core/pkg/net/local"
 	"github.com/keep-network/keep-core/pkg/operator"
 	"github.com/keep-network/keep-core/pkg/protocol/group"
 	"github.com/keep-network/keep-core/pkg/tecdsa"
-	"math/big"
-	"testing"
-	"time"
 )
 
 func TestSigningExecutor_Sign(t *testing.T) {
@@ -163,6 +164,7 @@ func setupSigningExecutor(t *testing.T) *signingExecutor {
 	node, err := newNode(
 		groupParameters,
 		localChain,
+		newLocalBitcoinChain(),
 		localProvider,
 		keyStorePersistence,
 		&mockPersistenceHandle{},
@@ -183,7 +185,7 @@ func setupSigningExecutor(t *testing.T) *signingExecutor {
 
 	// Test block counter is much quicker than the real world one.
 	// Set more attempts to give more time for computations.
-	executor.signingAttemptsLimit *= 3
+	executor.signingAttemptsLimit *= 8
 
 	return executor
 }

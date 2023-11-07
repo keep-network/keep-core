@@ -13,7 +13,6 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"golang.org/x/exp/slices"
 
-	"github.com/keep-network/keep-core/pkg/bitcoin/electrum"
 	"github.com/keep-network/keep-core/pkg/chain/ethereum"
 	ethereumBeacon "github.com/keep-network/keep-core/pkg/chain/ethereum/beacon/gen"
 	ethereumEcdsa "github.com/keep-network/keep-core/pkg/chain/ethereum/ecdsa/gen"
@@ -67,11 +66,14 @@ func TestReadConfigFromFile(t *testing.T) {
 		"Ethereum.Developer - map": {
 			readValueFunc: func(c *Config) interface{} { return c.Ethereum.ContractAddresses },
 			expectedValue: map[string]string{
-				"randombeacon":   "0xcf64c2a367341170cb4e09cf8c0ed137d8473ceb",
-				"walletregistry": "0x143ba24e66fce8bca22f7d739f9a932c519b1c76",
-				"tokenstaking":   "0xa363a197f1bbb8877f50350234e3f15fb4175457",
-				"bridge":         "0x138D2a0c87BA9f6BE1DCc13D6224A6aCE9B6b6F0",
-				"lightrelay":     "0x68e20afD773fDF1231B5cbFeA7040e73e79cAc36",
+				"randombeacon":              "0xcf64c2a367341170cb4e09cf8c0ed137d8473ceb",
+				"walletregistry":            "0x143ba24e66fce8bca22f7d739f9a932c519b1c76",
+				"tokenstaking":              "0xa363a197f1bbb8877f50350234e3f15fb4175457",
+				"bridge":                    "0x138D2a0c87BA9f6BE1DCc13D6224A6aCE9B6b6F0",
+				"maintainerproxy":           "0xC6D21c2871586A2B098c0ad043fF0D47a3c7e7ae",
+				"lightrelay":                "0x68e20afD773fDF1231B5cbFeA7040e73e79cAc36",
+				"lightrelaymaintainerproxy": "0x30cd93828613D5945A2916a22E0f0e9bC561EAB5",
+				"walletcoordinator":         "0xfdc315b0e608b7cDE9166D9D69a1506779e3E0CA",
 			},
 		},
 		"Developer - RandomBeacon": {
@@ -102,6 +104,13 @@ func TestReadConfigFromFile(t *testing.T) {
 			},
 			expectedValue: "0x138D2a0c87BA9f6BE1DCc13D6224A6aCE9B6b6F0",
 		},
+		"Ethereum.Developer - MaintainerProxy": {
+			readValueFunc: func(c *Config) interface{} {
+				address, _ := c.Ethereum.ContractAddress(ethereum.MaintainerProxyContractName)
+				return address.String()
+			},
+			expectedValue: "0xC6D21c2871586A2B098c0ad043fF0D47a3c7e7ae",
+		},
 		"Ethereum.Developer - LightRelay": {
 			readValueFunc: func(c *Config) interface{} {
 				address, _ := c.Ethereum.ContractAddress(
@@ -111,14 +120,27 @@ func TestReadConfigFromFile(t *testing.T) {
 			},
 			expectedValue: "0x68e20afD773fDF1231B5cbFeA7040e73e79cAc36",
 		},
+		"Ethereum.Developer - LightRelayMaintainerProxy": {
+			readValueFunc: func(c *Config) interface{} {
+				address, _ := c.Ethereum.ContractAddress(
+					ethereum.LightRelayMaintainerProxyContractName,
+				)
+				return address.String()
+			},
+			expectedValue: "0x30cd93828613D5945A2916a22E0f0e9bC561EAB5",
+		},
+		"Ethereum.Developer - WalletCoordinator": {
+			readValueFunc: func(c *Config) interface{} {
+				address, _ := c.Ethereum.ContractAddress(ethereum.WalletCoordinatorContractName)
+				return address.String()
+			},
+			expectedValue: "0xfdc315b0e608b7cDE9166D9D69a1506779e3E0CA",
+		},
 		"Bitcoin.Electrum.URL": {
 			readValueFunc: func(c *Config) interface{} { return c.Bitcoin.Electrum.URL },
-			expectedValue: "url.to.electrum:18332",
+			expectedValue: "ssl://url.to.electrum:18332",
 		},
-		"Bitcoin.Electrum.Protocol": {
-			readValueFunc: func(c *Config) interface{} { return c.Bitcoin.Electrum.Protocol },
-			expectedValue: electrum.SSL,
-		},
+
 		"Bitcoin.Electrum.ConnectTimeout": {
 			readValueFunc: func(c *Config) interface{} { return c.Bitcoin.Electrum.ConnectTimeout },
 			expectedValue: 54 * time.Second,
@@ -177,9 +199,53 @@ func TestReadConfigFromFile(t *testing.T) {
 			readValueFunc: func(c *Config) interface{} { return c.ClientInfo.EthereumMetricsTick },
 			expectedValue: 87 * time.Second,
 		},
-		"Maintainer.BitcoinDifficulty": {
-			readValueFunc: func(c *Config) interface{} { return c.Maintainer.BitcoinDifficulty },
+		"Maintainer.BitcoinDifficulty.Enabled": {
+			readValueFunc: func(c *Config) interface{} { return c.Maintainer.BitcoinDifficulty.Enabled },
 			expectedValue: true,
+		},
+		"Maintainer.BitcoinDifficulty.DisableProxy": {
+			readValueFunc: func(c *Config) interface{} { return c.Maintainer.BitcoinDifficulty.DisableProxy },
+			expectedValue: true,
+		},
+		"Maintainer.WalletCoordination.Enabled": {
+			readValueFunc: func(c *Config) interface{} { return c.Maintainer.WalletCoordination.Enabled },
+			expectedValue: true,
+		},
+		"Maintainer.WalletCoordination.RedemptionInterval": {
+			readValueFunc: func(c *Config) interface{} { return c.Maintainer.WalletCoordination.RedemptionInterval },
+			expectedValue: 13 * time.Hour,
+		},
+		"Maintainer.WalletCoordination.RedemptionWalletsLimit": {
+			readValueFunc: func(c *Config) interface{} { return c.Maintainer.WalletCoordination.RedemptionWalletsLimit },
+			expectedValue: uint16(10),
+		},
+		"Maintainer.WalletCoordination.RedemptionRequestAmountLimit": {
+			readValueFunc: func(c *Config) interface{} { return c.Maintainer.WalletCoordination.RedemptionRequestAmountLimit },
+			expectedValue: uint64(500),
+		},
+		"Maintainer.WalletCoordination.DepositSweepInterval": {
+			readValueFunc: func(c *Config) interface{} { return c.Maintainer.WalletCoordination.DepositSweepInterval },
+			expectedValue: 64 * time.Hour,
+		},
+		"Maintainer.Spv.Enabled": {
+			readValueFunc: func(c *Config) interface{} { return c.Maintainer.Spv.Enabled },
+			expectedValue: true,
+		},
+		"Maintainer.Spv.HistoryDepth": {
+			readValueFunc: func(c *Config) interface{} { return c.Maintainer.Spv.HistoryDepth },
+			expectedValue: uint64(25000),
+		},
+		"Maintainer.Spv.TransactionLimit": {
+			readValueFunc: func(c *Config) interface{} { return c.Maintainer.Spv.TransactionLimit },
+			expectedValue: 80,
+		},
+		"Maintainer.Spv.RestartBackoffTime": {
+			readValueFunc: func(c *Config) interface{} { return c.Maintainer.Spv.RestartBackoffTime },
+			expectedValue: 2 * time.Hour,
+		},
+		"Maintainer.Spv.IdleBackoffTime": {
+			readValueFunc: func(c *Config) interface{} { return c.Maintainer.Spv.IdleBackoffTime },
+			expectedValue: 15 * time.Minute,
 		},
 	}
 
@@ -287,35 +353,40 @@ func TestReadConfig_ReadContracts(t *testing.T) {
 	ethereumEcdsa.WalletRegistryAddress = "0xdb3dd6d4f43d39c996d0afeb6fbabc284f9ffb1a"
 	ethereumThreshold.TokenStakingAddress = "0xaa7b41039ea8f9ec2d89bbe96e19f97b6c267a27"
 	ethereumTbtc.BridgeAddress = "0x9490165195503fcf6a0fd20ac113223fefb66ed5"
+	ethereumTbtc.WalletCoordinatorAddress = "0xE7d33d8AA55B73a93059a24b900366894684a497"
 
 	var configReadTests = map[string]struct {
 		configFilePath string
 
-		expectedRandomBeaconAddress   string
-		expectedWalletRegistryAddress string
-		expectedTokenStakingAddress   string
-		expectedBridgeAddress         string
+		expectedRandomBeaconAddress      string
+		expectedWalletRegistryAddress    string
+		expectedTokenStakingAddress      string
+		expectedBridgeAddress            string
+		expectedWalletCoordinatorAddress string
 	}{
 		"no developer contracts addresses configured": {
-			configFilePath:                "../test/config_no_contracts.toml",
-			expectedRandomBeaconAddress:   "0xd1640b381327c2d5425d6d3d605539a3db72f857",
-			expectedWalletRegistryAddress: "0xdb3dd6d4f43d39c996d0afeb6fbabc284f9ffb1a",
-			expectedTokenStakingAddress:   "0xaa7b41039ea8f9ec2d89bbe96e19f97b6c267a27",
-			expectedBridgeAddress:         "0x9490165195503fcf6a0fd20ac113223fefb66ed5",
+			configFilePath:                   "../test/config_no_contracts.toml",
+			expectedRandomBeaconAddress:      "0xd1640b381327c2d5425d6d3d605539a3db72f857",
+			expectedWalletRegistryAddress:    "0xdb3dd6d4f43d39c996d0afeb6fbabc284f9ffb1a",
+			expectedTokenStakingAddress:      "0xaa7b41039ea8f9ec2d89bbe96e19f97b6c267a27",
+			expectedBridgeAddress:            "0x9490165195503fcf6a0fd20ac113223fefb66ed5",
+			expectedWalletCoordinatorAddress: "0xE7d33d8AA55B73a93059a24b900366894684a497",
 		},
 		"developer contracts addresses configured": {
-			configFilePath:                "../test/config.toml",
-			expectedRandomBeaconAddress:   "0xcf64c2a367341170cb4e09cf8c0ed137d8473ceb",
-			expectedWalletRegistryAddress: "0x143ba24e66fce8bca22f7d739f9a932c519b1c76",
-			expectedTokenStakingAddress:   "0xa363a197f1bbb8877f50350234e3f15fb4175457",
-			expectedBridgeAddress:         "0x138D2a0c87BA9f6BE1DCc13D6224A6aCE9B6b6F0",
+			configFilePath:                   "../test/config.toml",
+			expectedRandomBeaconAddress:      "0xcf64c2a367341170cb4e09cf8c0ed137d8473ceb",
+			expectedWalletRegistryAddress:    "0x143ba24e66fce8bca22f7d739f9a932c519b1c76",
+			expectedTokenStakingAddress:      "0xa363a197f1bbb8877f50350234e3f15fb4175457",
+			expectedBridgeAddress:            "0x138D2a0c87BA9f6BE1DCc13D6224A6aCE9B6b6F0",
+			expectedWalletCoordinatorAddress: "0xfdc315b0e608b7cDE9166D9D69a1506779e3E0CA",
 		},
 		"mxied contracts addresses configured": {
-			configFilePath:                "../test/config_mixed_contracts.toml",
-			expectedRandomBeaconAddress:   "0xd1640b381327c2d5425d6d3d605539a3db72f857",
-			expectedWalletRegistryAddress: "0x143ba24e66fce8bca22f7d739f9a932c519b1c76",
-			expectedTokenStakingAddress:   "0xaa7b41039ea8f9ec2d89bbe96e19f97b6c267a27",
-			expectedBridgeAddress:         "0x9490165195503fcf6a0fd20ac113223fefb66ed5",
+			configFilePath:                   "../test/config_mixed_contracts.toml",
+			expectedRandomBeaconAddress:      "0xd1640b381327c2d5425d6d3d605539a3db72f857",
+			expectedWalletRegistryAddress:    "0x143ba24e66fce8bca22f7d739f9a932c519b1c76",
+			expectedTokenStakingAddress:      "0xaa7b41039ea8f9ec2d89bbe96e19f97b6c267a27",
+			expectedBridgeAddress:            "0x9490165195503fcf6a0fd20ac113223fefb66ed5",
+			expectedWalletCoordinatorAddress: "0xE7d33d8AA55B73a93059a24b900366894684a497",
 		},
 	}
 
@@ -349,6 +420,7 @@ func TestReadConfig_ReadContracts(t *testing.T) {
 			validate(ethereum.WalletRegistryContractName, test.expectedWalletRegistryAddress)
 			validate(ethereum.TokenStakingContractName, test.expectedTokenStakingAddress)
 			validate(ethereum.BridgeContractName, test.expectedBridgeAddress)
+			validate(ethereum.WalletCoordinatorContractName, test.expectedWalletCoordinatorAddress)
 		})
 	}
 }

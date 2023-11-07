@@ -64,6 +64,7 @@
     "prettier-plugin-solidity": "^1.0.0-beta.19",
     "solhint": "^3.3.6",
     "solhint-config-keep": "github:keep-network/solhint-config-keep",
+    "solidity-docgen": "^0.6.0-beta.35",
     "ts-node": "^10.4.0",
     "typechain": "^6.1.0",
     "typescript": "^4.5.4"
