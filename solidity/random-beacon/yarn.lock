@@ -982,10 +982,10 @@
     deepmerge "^4.2.2"
     untildify "^4.0.0"
 
-"@keep-network/keep-core@^1.8.1-goerli.0":
-  version "1.8.1-goerli.0"
-  resolved "https://registry.npmjs.org/@keep-network/keep-core/-/keep-core-1.8.1-goerli.0.tgz#238485aab51902021d42357bf59695225002f0ab"
-  integrity sha512-h3La/RqbyEZjBBPg8V+pcRFo3UpWZUF4CxWfXHZnUR4PnkZKnIDrTNFQPhpV2uYFZwrbJxTR9mzOq/DOAiXPwA==
+"@keep-network/keep-core@^1.8.1-sepolia.0":
+  version "1.8.1-sepolia.0"
+  resolved "https://registry.yarnpkg.com/@keep-network/keep-core/-/keep-core-1.8.1-sepolia.0.tgz#62fc477ea0f5c0a44f67eefbdc1219fbe261b4c3"
+  integrity sha512-dHdZQR/PWO7Cw8M/GawmsJ5mhaiBOTdd4cUb1DF9fEjUY/4AVrd2F7c39CkrqGCF598ve46hhQWoRLLgtiAv2A==
   dependencies:
     "@openzeppelin/upgrades" "^2.7.2"
     openzeppelin-solidity "2.4.0"
@@ -1406,12 +1406,12 @@
   dependencies:
     "@openzeppelin/contracts" "^4.1.0"
 
-"@threshold-network/solidity-contracts@dapp-development-goerli":
-  version "1.2.2-dapp-dev-goerli.0"
-  resolved "https://registry.npmjs.org/@threshold-network/solidity-contracts/-/solidity-contracts-1.2.2-dapp-dev-goerli.0.tgz#0a975e59a951af6d98964d48a639af8c5bccccf6"
-  integrity sha512-70/oGQX9z185Jw2zZnZMs9HoIUxSksXnx7HFgaWjBg4VkvOyP8QcH+dZWDBNZ+l9Qp+1VO5EROa+p+40g9TZrw==
+"@threshold-network/solidity-contracts@dapp-development-sepolia":
+  version "1.3.0-dapp-dev-sepolia.0"
+  resolved "https://registry.yarnpkg.com/@threshold-network/solidity-contracts/-/solidity-contracts-1.3.0-dapp-dev-sepolia.0.tgz#da8173a1ba55683ad99386f93da571c62c5d9dac"
+  integrity sha512-eWVKaTPH8GlqIGS/BzAJBsvL6mFjJeDAP5YTFRpTDZ6YQKNOPqTU6q+R0CbemcIhTjrLDQdFVmvB/qHMTvU6iw==
   dependencies:
-    "@keep-network/keep-core" "^1.8.1-goerli.0"
+    "@keep-network/keep-core" "^1.8.1-sepolia.0"
     "@openzeppelin/contracts" "~4.5.0"
     "@openzeppelin/contracts-upgradeable" "~4.5.2"
     "@thesis/solidity-contracts" "github:thesis/solidity-contracts#4985bcf"
