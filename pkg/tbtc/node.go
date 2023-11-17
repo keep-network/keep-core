@@ -76,6 +76,10 @@ type node struct {
 	// wallet actions and walletDispatcher to execute an action on an existing
 	// wallet.
 	signingExecutors map[string]*signingExecutor
+
+	// TODO: Documentation.
+	coordinationExecutorsMutex sync.Mutex
+	coordinationExecutors map[string]*coordinationExecutor
 }
 
 func newNode(
@@ -102,6 +106,7 @@ func newNode(
 		walletDispatcher: newWalletDispatcher(),
 		protocolLatch:    latch,
 		signingExecutors: make(map[string]*signingExecutor),
+		coordinationExecutors: make(map[string]*coordinationExecutor),
 	}
 
 	// Only the operator address is known at this point and can be pre-fetched.
@@ -287,6 +292,84 @@ func (n *node) getSigningExecutor(
 	)
 
 	n.signingExecutors[executorKey] = executor
+
+	return executor, true, nil
+}
+
+// TODO: Documentation.
+func (n *node) getCoordinationExecutor(
+	walletPublicKey *ecdsa.PublicKey,
+) (*coordinationExecutor, bool, error) {
+	n.coordinationExecutorsMutex.Lock()
+	defer n.coordinationExecutorsMutex.Unlock()
+
+	walletPublicKeyBytes, err := marshalPublicKey(walletPublicKey)
+	if err != nil {
+		return nil, false, fmt.Errorf("cannot marshal wallet public key: [%v]", err)
+	}
+
+	executorKey := hex.EncodeToString(walletPublicKeyBytes)
+
+	if executor, exists := n.coordinationExecutors[executorKey]; exists {
+		return executor, true, nil
+	}
+
+	executorLogger := logger.With(
+		zap.String("wallet", fmt.Sprintf("0x%x", walletPublicKeyBytes)),
+	)
+
+	signers := n.walletRegistry.getSigners(walletPublicKey)
+	if len(signers) == 0 {
+		// This is not an error because the node simply does not control
+		// the given wallet.
+		return nil, false, nil
+	}
+
+	// All signers belong to one wallet. Take that wallet from the
+	// first signer.
+	wallet := signers[0].wallet
+
+	channelName := fmt.Sprintf(
+		"%s-%s-coordination",
+		ProtocolName,
+		hex.EncodeToString(walletPublicKeyBytes),
+	)
+
+	broadcastChannel, err := n.netProvider.BroadcastChannelFor(channelName)
+	if err != nil {
+		return nil, false, fmt.Errorf("failed to get broadcast channel: [%v]", err)
+	}
+
+	// TODO: Register unmarshalers
+
+	membershipValidator := group.NewMembershipValidator(
+		executorLogger,
+		wallet.signingGroupOperators,
+		n.chain.Signing(),
+	)
+
+	err = broadcastChannel.SetFilter(membershipValidator.IsInGroup)
+	if err != nil {
+		return nil, false, fmt.Errorf(
+			"could not set filter for channel [%v]: [%v]",
+			broadcastChannel.Name(),
+			err,
+		)
+	}
+
+	executorLogger.Infof(
+		"coordination executor created; controlling [%v] signers",
+		len(signers),
+	)
+
+	executor := newCoordinationExecutor(
+		signers,
+		broadcastChannel,
+		membershipValidator,
+		n.protocolLatch,
+	)
+
+	n.coordinationExecutors[executorKey] = executor
 
 	return executor, true, nil
 }
@@ -550,6 +633,102 @@ func (n *node) handleRedemptionProposal(
 	}
 
 	walletActionLogger.Infof("wallet action dispatched successfully")
+}
+
+// runCoordinationLayer starts the coordination layer of the node. It is
+// responsible for detecting new coordination windows and running coordination
+// procedures for all wallets controlled by the node.
+func (n *node) runCoordinationLayer(ctx context.Context) error {
+	blockCounter, err := n.chain.BlockCounter()
+	if err != nil {
+		return fmt.Errorf("cannot get block counter: [%w]", err)
+	}
+
+	// Prepare a callback function that will be called every time a new
+	// coordination window is detected.
+	onWindowFn := func(window *coordinationWindow) {
+		// Fetch all wallets controlled by the node. It is important to
+		// get the wallets every time the window is triggered as the
+		// node may have started controlling a new wallet in the meantime.
+		walletsPublicKeys := n.walletRegistry.getWalletsPublicKeys()
+
+		for _, walletPublicKey := range walletsPublicKeys {
+			// Run an independent coordination procedure for the given wallet.
+			go n.runCoordinationProcedure(window, walletPublicKey)
+		}
+	}
+
+	// Start the coordination windows watcher.
+	go watchCoordinationWindows(
+		ctx,
+		blockCounter.WatchBlocks,
+		onWindowFn,
+	)
+
+	return nil
+}
+
+// runCoordinationProcedure runs a coordination procedure for the given wallet
+// and coordination window.
+func (n *node) runCoordinationProcedure(
+	window *coordinationWindow,
+	walletPublicKey *ecdsa.PublicKey,
+) {
+	walletPublicKeyBytes, err := marshalPublicKey(walletPublicKey)
+	if err != nil {
+		logger.Errorf("cannot marshal wallet public key: [%v]", err)
+		return
+	}
+
+	procedureLogger := logger.With(
+		zap.Uint64("coordinationBlock", window.coordinationBlock),
+		zap.String("wallet", fmt.Sprintf("0x%x", walletPublicKeyBytes)),
+	)
+
+	executor, ok, err := n.getCoordinationExecutor(walletPublicKey)
+	if err != nil {
+		procedureLogger.Errorf("cannot get coordination executor: [%v]", err)
+		return
+	}
+
+	// This check is actually redundant. We know the node controls some
+	// wallet signers as we just got the wallet from the registry.
+	// However, we are doing it just in case. The API contract of
+	// getWalletsPublicKeys and/or getCoordinationExecutor may change one day.
+	if !ok {
+		procedureLogger.Infof("node does not control signers of this wallet")
+		return
+	}
+
+	result, err := executor.coordinate(window)
+	if err != nil {
+		procedureLogger.Errorf("failed to execute coordination: [%v]", err)
+		return
+	}
+
+	if result.actionType == ActionNoop {
+		procedureLogger.Infof("coordination completed with no action proposal")
+		return
+	}
+
+	// TODO: Do we need separate goroutine here?
+	go n.handleProposal(result)
+}
+
+// handleProposal handles the proposal held by the given coordination result.
+func (n *node) handleProposal(result *coordinationResult) {
+	// TODO: Implementation.
+
+	switch result.actionType {
+	case ActionHeartbeat:
+		// n.handleHeartbeatRequest()
+	case ActionDepositSweep:
+		// n.handleDepositSweepProposal()
+	case ActionRedemption:
+		// n.handleRedemptionProposal()
+	default:
+		logger.Errorf("coordination result holds unsupported action type")
+	}
 }
 
 // waitForBlockFn represents a function blocking the execution until the given

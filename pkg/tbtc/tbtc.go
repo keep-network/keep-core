@@ -101,6 +101,11 @@ func Initialize(
 		return fmt.Errorf("cannot set up TBTC node: [%v]", err)
 	}
 
+	err = node.runCoordinationLayer(ctx)
+	if err != nil {
+		return fmt.Errorf("cannot run coordination layer: [%w]", err)
+	}
+
 	deduplicator := newDeduplicator()
 
 	if clientInfo != nil {

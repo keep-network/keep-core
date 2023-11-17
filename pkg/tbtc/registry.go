@@ -77,6 +77,21 @@ func newWalletRegistry(persistence persistence.ProtectedHandle) *walletRegistry 
 	}
 }
 
+// getWalletsPublicKeys returns public keys of all registered wallets.
+func (wr *walletRegistry) getWalletsPublicKeys() []*ecdsa.PublicKey {
+	wr.mutex.Lock()
+	defer wr.mutex.Unlock()
+
+	keys := make([]*ecdsa.PublicKey, 0)
+	for _, value := range wr.walletCache {
+		// We can take the wallet from the first signer. All signers for the
+		// given cache value belong to the same wallet.
+		keys = append(keys, value.signers[0].wallet.publicKey)
+	}
+
+	return keys
+}
+
 // registerSigner registers the given signer using in the walletRegistry.
 func (wr *walletRegistry) registerSigner(signer *signer) error {
 	wr.mutex.Lock()
