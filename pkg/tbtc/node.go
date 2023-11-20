@@ -77,8 +77,13 @@ type node struct {
 	// wallet.
 	signingExecutors map[string]*signingExecutor
 
-	// TODO: Documentation.
 	coordinationExecutorsMutex sync.Mutex
+	// coordinationExecutors is the cache holding coordination executors for
+	// specific wallets. The cache key is the uncompressed public key
+	// (with 04 prefix) of the wallet. The coordinationExecutor encapsulates the
+	// logic of the wallet coordination procedure.
+	//
+	// coordinationExecutors MUST NOT be used outside this struct.
 	coordinationExecutors map[string]*coordinationExecutor
 }
 
@@ -296,7 +301,10 @@ func (n *node) getSigningExecutor(
 	return executor, true, nil
 }
 
-// TODO: Documentation.
+// getCoordinationExecutor gets the coordination executor responsible for
+// executing coordination related to a specific wallet whose part is controlled
+// by this node. The second boolean return value indicates whether the node
+// controls at least one signer for the given wallet.
 func (n *node) getCoordinationExecutor(
 	walletPublicKey *ecdsa.PublicKey,
 ) (*coordinationExecutor, bool, error) {
@@ -636,13 +644,16 @@ func (n *node) handleRedemptionProposal(
 }
 
 // runCoordinationLayer starts the coordination layer of the node. It is
-// responsible for detecting new coordination windows and running coordination
-// procedures for all wallets controlled by the node.
+// responsible for detecting new coordination windows, running coordination
+// procedures for all wallets controlled by the node, and processing
+// coordination results.
 func (n *node) runCoordinationLayer(ctx context.Context) error {
 	blockCounter, err := n.chain.BlockCounter()
 	if err != nil {
 		return fmt.Errorf("cannot get block counter: [%w]", err)
 	}
+
+	coordinationResultChan := make(chan *coordinationResult)
 
 	// Prepare a callback function that will be called every time a new
 	// coordination window is detected.
@@ -652,9 +663,19 @@ func (n *node) runCoordinationLayer(ctx context.Context) error {
 		// node may have started controlling a new wallet in the meantime.
 		walletsPublicKeys := n.walletRegistry.getWalletsPublicKeys()
 
-		for _, walletPublicKey := range walletsPublicKeys {
-			// Run an independent coordination procedure for the given wallet.
-			go n.runCoordinationProcedure(window, walletPublicKey)
+		for _, currentWalletPublicKey := range walletsPublicKeys {
+			// Run an independent coordination procedure for the given wallet
+			// in a separate goroutine. The coordination result will be sent
+			// to the coordination result channel.
+			go func(walletPublicKey *ecdsa.PublicKey) {
+				result, ok := n.executeCoordinationProcedure(
+					window,
+					walletPublicKey,
+				)
+				if ok {
+					coordinationResultChan <- result
+				}
+			}(currentWalletPublicKey)
 		}
 	}
 
@@ -665,19 +686,31 @@ func (n *node) runCoordinationLayer(ctx context.Context) error {
 		onWindowFn,
 	)
 
+	// Start the coordination result processor.
+	go func() {
+		for {
+			select {
+			case result := <-coordinationResultChan:
+				go n.processCoordinationResult(result)
+			case <-ctx.Done():
+				return
+			}
+		}
+	}()
+
 	return nil
 }
 
-// runCoordinationProcedure runs a coordination procedure for the given wallet
-// and coordination window.
-func (n *node) runCoordinationProcedure(
+// executeCoordinationProcedure executes the coordination procedure for the
+// given wallet and coordination window.
+func (n *node) executeCoordinationProcedure(
 	window *coordinationWindow,
 	walletPublicKey *ecdsa.PublicKey,
-) {
+) (*coordinationResult, bool) {
 	walletPublicKeyBytes, err := marshalPublicKey(walletPublicKey)
 	if err != nil {
 		logger.Errorf("cannot marshal wallet public key: [%v]", err)
-		return
+		return nil, false
 	}
 
 	procedureLogger := logger.With(
@@ -685,40 +718,41 @@ func (n *node) runCoordinationProcedure(
 		zap.String("wallet", fmt.Sprintf("0x%x", walletPublicKeyBytes)),
 	)
 
+	procedureLogger.Infof("starting coordination procedure")
+
 	executor, ok, err := n.getCoordinationExecutor(walletPublicKey)
 	if err != nil {
 		procedureLogger.Errorf("cannot get coordination executor: [%v]", err)
-		return
+		return nil, false
 	}
-
 	// This check is actually redundant. We know the node controls some
 	// wallet signers as we just got the wallet from the registry.
 	// However, we are doing it just in case. The API contract of
 	// getWalletsPublicKeys and/or getCoordinationExecutor may change one day.
 	if !ok {
 		procedureLogger.Infof("node does not control signers of this wallet")
-		return
+		return nil, false
 	}
 
 	result, err := executor.coordinate(window)
 	if err != nil {
-		procedureLogger.Errorf("failed to execute coordination: [%v]", err)
-		return
+		procedureLogger.Errorf("coordination procedure failed: [%v]", err)
+		return nil, false
 	}
 
-	if result.actionType == ActionNoop {
-		procedureLogger.Infof("coordination completed with no action proposal")
-		return
-	}
+	procedureLogger.Infof(
+		"coordination procedure finished successfully with result [%s]",
+		result,
+	)
 
-	// TODO: Do we need separate goroutine here?
-	go n.handleProposal(result)
+	return result, true
 }
 
-// handleProposal handles the proposal held by the given coordination result.
-func (n *node) handleProposal(result *coordinationResult) {
-	// TODO: Implementation.
+// processCoordinationResult processes the given coordination result.
+func (n *node) processCoordinationResult(result *coordinationResult) {
+	logger.Infof("processing coordination result [%s]", result)
 
+	// TODO: Implementation.
 	switch result.actionType {
 	case ActionHeartbeat:
 		// n.handleHeartbeatRequest()
@@ -727,7 +761,7 @@ func (n *node) handleProposal(result *coordinationResult) {
 	case ActionRedemption:
 		// n.handleRedemptionProposal()
 	default:
-		logger.Errorf("coordination result holds unsupported action type")
+		logger.Errorf("no handler for coordination result [%s]", result)
 	}
 }
 

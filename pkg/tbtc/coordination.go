@@ -88,12 +88,16 @@ type coordinationResult struct {
 	proposal   interface{}
 }
 
+func (cr *coordinationResult) String() string {
+	return "" // TODO: Implementation.
+}
+
 // coordinationExecutor is responsible for executing the coordination
 // procedure for the given wallet.
 type coordinationExecutor struct {
 	lock *semaphore.Weighted
 
-	signers             []*signer
+	signers             []*signer // TODO: Do we need whole signers?
 	broadcastChannel    net.BroadcastChannel
 	membershipValidator *group.MembershipValidator
 	protocolLatch       *generator.ProtocolLatch
