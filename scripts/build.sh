@@ -3,7 +3,7 @@ set -eou pipefail
 
 ROOT_DIR="$(realpath "$(dirname $0)/../")"
 
-ENVIRONMENT_DEFAULT=goerli
+ENVIRONMENT_DEFAULT=sepolia
 read -p "Ethereum Network [$ENVIRONMENT_DEFAULT]: " ENVIRONMENT
 ENVIRONMENT=${ENVIRONMENT:-$ENVIRONMENT_DEFAULT}
 

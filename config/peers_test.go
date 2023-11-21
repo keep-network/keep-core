@@ -21,7 +21,7 @@ func TestResolvePeers(t *testing.T) {
 				"/dns4/bst-a01.tbtc.boar.network/tcp/5001/ipfs/16Uiu2HAmAmCrLuUmnBgpavU8y8JBUN6jWAQ93JwydZy3ABRyY6wU",
 				"/dns4/bst-b01.tbtc.boar.network/tcp/5001/ipfs/16Uiu2HAm4w5HdJQxBnadGRepaiGfWVvtMzhdAGZVcrf9i71mv69V",
 			}},
-		"goerli network": {
+		"sepolia network": {
 			network: network.Testnet,
 			expectedPeers: []string{
 				"/dns4/bootstrap-0.test.keep.network/tcp/3919/ipfs/16Uiu2HAmCcfVpHwfBKNFbQuhvGuFXHVLQ65gB4sJm7HyrcZuLttH",

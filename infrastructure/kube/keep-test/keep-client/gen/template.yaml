@@ -6,7 +6,7 @@
 app: keep
 type: client
 id: #@ str(client.id)
-network: goerli
+network: sepolia
 #@ end
 
 #@ def name():
@@ -73,7 +73,7 @@ spec:
             - name: ETH_WS_URL
               valueFrom:
                 secretKeyRef:
-                  name: eth-network-goerli
+                  name: eth-network-sepolia
                   key: ws-url
           envFrom:
             - configMapRef:
@@ -117,12 +117,12 @@ spec:
             - name: CHAIN_API_URL
               valueFrom:
                 secretKeyRef:
-                  name: eth-network-goerli
+                  name: eth-network-sepolia
                   key: http-url
             - name: CONTRACT_OWNER_ETH_PRIVATE_KEY
               valueFrom:
                 secretKeyRef:
-                  name: eth-network-goerli
+                  name: eth-network-sepolia
                   key: contract-owner-eth-account-private-key
             - name: KEEP_CLIENT_ETH_PRIVATE_KEY
               valueFrom:
@@ -139,7 +139,7 @@ spec:
           args:
             - "initialize"
             - "--network"
-            - "goerli"
+            - "sepolia"
             - "--owner"
             - "$(KEEP_CLIENT_ETH_ADDRESS)"
             - "--provider"

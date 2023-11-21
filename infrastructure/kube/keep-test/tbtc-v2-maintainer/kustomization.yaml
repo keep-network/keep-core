@@ -7,7 +7,7 @@ namespace: default
 
 commonLabels:
   app: tbtc-v2-maintainer
-  network: goerli
+  network: sepolia
 
 configMapGenerator:
   - name: tbtc-v2-maintainer-eth-accounts-info

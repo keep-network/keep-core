@@ -30,7 +30,7 @@ func (n Type) Ethereum() ethereum.Network {
 	return []ethereum.Network{
 		ethereum.Unknown,
 		ethereum.Mainnet,
-		ethereum.Goerli,
+		ethereum.Sepolia,
 		ethereum.Developer,
 	}[n]
 }
