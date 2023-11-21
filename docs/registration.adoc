@@ -126,4 +126,4 @@ link:https://docs.threshold.network/extras/contract-addresses/ethereum-mainnet[E
 page for the recent Mainnet addresses of the contracts.
 
 NOTE: icon:flask[] For addresses of Testnet contracts please visit the
-link:https://docs.threshold.network/extras/contract-addresses/goerli-testnet#tbtc-application-contracts[link].
+link:https://docs.threshold.network/resources/contract-addresses/sepolia-testnet[link].

@@ -397,7 +397,7 @@ include::../config/_peers/testnet[]
 === Contracts
 
 To get adresses of contracts on Testnet please see the
-link:https://docs.threshold.network/extras/contract-addresses/goerli-testnet#tbtc-application-contracts[link].
+link:https://docs.threshold.network/resources/contract-addresses/sepolia-testnet[link].
 
 === Installation
 
