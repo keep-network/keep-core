@@ -8,9 +8,9 @@ endif
 development:
 	make all environment=development
 
-# Build with contract packages published to the NPM registry and tagged `goerli`.
-goerli:
-	make all environment=goerli
+# Build with contract packages published to the NPM registry and tagged `sepolia`.
+sepolia:
+	make all environment=sepolia
 
 # Build with contract packages published to the NPM registry and tagged `mainnet`.
 mainnet:
@@ -146,4 +146,4 @@ cmd-help: build
 	@echo '$$ $(app_name) start --help' > docs/resources/client-start-help
 	./$(app_name) start --help >> docs/resources/client-start-help
 
-.PHONY: all development goerli download_artifacts generate gen_proto build cmd-help release build_multi
+.PHONY: all development sepolia download_artifacts generate gen_proto build cmd-help release build_multi
