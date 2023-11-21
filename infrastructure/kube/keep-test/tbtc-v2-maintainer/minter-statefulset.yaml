@@ -57,7 +57,7 @@ spec:
             - name: ETHEREUM_API_URL
               valueFrom:
                 secretKeyRef:
-                  name: eth-network-goerli
+                  name: eth-network-sepolia
                   key: http-url
             - name: ELECTRUM_API_URL
               valueFrom:
