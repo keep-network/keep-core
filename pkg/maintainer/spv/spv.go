@@ -279,7 +279,11 @@ func getProofInfo(
 		)
 	}
 
-	return false, accumulatedConfirmations, uint(txProofDifficultyFactor.Uint64()), nil
+	// Testnet proofs often require longer header chains due to the frequent
+	// difficulty changes on Bitcoin testnet.
+	requiredConfirmations := uint(txProofDifficultyFactor.Uint64()) + 10
+
+	return false, accumulatedConfirmations, requiredConfirmations, nil
 }
 
 // walletEvent is a type constraint representing wallet-related chain events.
