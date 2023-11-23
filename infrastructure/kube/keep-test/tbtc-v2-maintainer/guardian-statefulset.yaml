@@ -40,7 +40,7 @@ spec:
                 path: tbtc-v2-guardian-0-keyfile
       containers:
         - name: maintainer
-          image: us-docker.pkg.dev/keep-test-f3e0/public/tbtc-v2-maintainer:latest
+          image: us-docker.pkg.dev/keep-test-f3e0/public/tbtc-mg:latest
           imagePullPolicy: Always
           resources:
             requests:
