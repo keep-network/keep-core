@@ -643,11 +643,44 @@ func (n *node) handleRedemptionProposal(
 	walletActionLogger.Infof("wallet action dispatched successfully")
 }
 
+// coordinationLayerSettings represents settings for the coordination layer.
+type coordinationLayerSettings struct {
+	// executeCoordinationProcedureFn is a function executing the coordination
+	// procedure for the given wallet and coordination window.
+	executeCoordinationProcedureFn func(
+		node *node,
+		window *coordinationWindow,
+		walletPublicKey *ecdsa.PublicKey,
+	) (*coordinationResult, bool)
+
+    // processCoordinationResultFn is a function processing the given
+	// coordination result.
+	processCoordinationResultFn func(
+		node *node,
+		result *coordinationResult,
+	)
+}
+
 // runCoordinationLayer starts the coordination layer of the node. It is
 // responsible for detecting new coordination windows, running coordination
 // procedures for all wallets controlled by the node, and processing
 // coordination results.
-func (n *node) runCoordinationLayer(ctx context.Context) error {
+func (n *node) runCoordinationLayer(
+	ctx context.Context,
+	settings ...*coordinationLayerSettings,
+) error {
+	// Resolve settings for the coordination layer.
+	var cls *coordinationLayerSettings
+	switch len(settings) {
+	case 1:
+		cls = settings[0]
+	default:
+		cls = &coordinationLayerSettings{
+			executeCoordinationProcedureFn: executeCoordinationProcedure,
+			processCoordinationResultFn:    processCoordinationResult,
+		}
+	}
+
 	blockCounter, err := n.chain.BlockCounter()
 	if err != nil {
 		return fmt.Errorf("cannot get block counter: [%w]", err)
@@ -668,7 +701,8 @@ func (n *node) runCoordinationLayer(ctx context.Context) error {
 			// in a separate goroutine. The coordination result will be sent
 			// to the coordination result channel.
 			go func(walletPublicKey *ecdsa.PublicKey) {
-				result, ok := n.executeCoordinationProcedure(
+				result, ok := cls.executeCoordinationProcedureFn(
+					n,
 					window,
 					walletPublicKey,
 				)
@@ -691,7 +725,7 @@ func (n *node) runCoordinationLayer(ctx context.Context) error {
 		for {
 			select {
 			case result := <-coordinationResultChan:
-				go n.processCoordinationResult(result)
+				go cls.processCoordinationResultFn(n, result)
 			case <-ctx.Done():
 				return
 			}
@@ -703,7 +737,8 @@ func (n *node) runCoordinationLayer(ctx context.Context) error {
 
 // executeCoordinationProcedure executes the coordination procedure for the
 // given wallet and coordination window.
-func (n *node) executeCoordinationProcedure(
+func executeCoordinationProcedure(
+	node *node,
 	window *coordinationWindow,
 	walletPublicKey *ecdsa.PublicKey,
 ) (*coordinationResult, bool) {
@@ -720,7 +755,7 @@ func (n *node) executeCoordinationProcedure(
 
 	procedureLogger.Infof("starting coordination procedure")
 
-	executor, ok, err := n.getCoordinationExecutor(walletPublicKey)
+	executor, ok, err := node.getCoordinationExecutor(walletPublicKey)
 	if err != nil {
 		procedureLogger.Errorf("cannot get coordination executor: [%v]", err)
 		return nil, false
@@ -749,17 +784,17 @@ func (n *node) executeCoordinationProcedure(
 }
 
 // processCoordinationResult processes the given coordination result.
-func (n *node) processCoordinationResult(result *coordinationResult) {
+func processCoordinationResult(node *node, result *coordinationResult) {
 	logger.Infof("processing coordination result [%s]", result)
 
 	// TODO: Implementation.
 	switch result.actionType {
 	case ActionHeartbeat:
-		// n.handleHeartbeatRequest()
+		// node.handleHeartbeatRequest()
 	case ActionDepositSweep:
-		// n.handleDepositSweepProposal()
+		// node.handleDepositSweepProposal()
 	case ActionRedemption:
-		// n.handleRedemptionProposal()
+		// node.handleRedemptionProposal()
 	default:
 		logger.Errorf("no handler for coordination result [%s]", result)
 	}

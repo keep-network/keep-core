@@ -1,11 +1,13 @@
 package tbtc
 
 import (
+	"context"
 	"crypto/ecdsa"
 	"encoding/hex"
 	"fmt"
 	"reflect"
 	"testing"
+	"time"
 
 	"github.com/keep-network/keep-common/pkg/persistence"
 	"github.com/keep-network/keep-core/internal/testutils"
@@ -132,6 +134,140 @@ func TestNode_GetSigningExecutor(t *testing.T) {
 	if ok {
 		t.Fatal("node is not supposed to control wallet signers")
 	}
+}
+
+func TestNode_RunCoordinationLayer(t *testing.T) {
+	groupParameters := &GroupParameters{
+		GroupSize:       5,
+		GroupQuorum:     4,
+		HonestThreshold: 3,
+	}
+
+	blockTime := 1 * time.Millisecond
+
+	localChain := Connect(blockTime)
+	localProvider := local.Connect()
+
+	signer := createMockSigner(t)
+
+	// Populate the mock keystore with the mock signer's data. This is
+	// required to make the node controlling the signer's wallet.
+	keyStorePersistence := createMockKeyStorePersistence(t, signer)
+
+	n, err := newNode(
+		groupParameters,
+		localChain,
+		newLocalBitcoinChain(),
+		localProvider,
+		keyStorePersistence,
+		&mockPersistenceHandle{},
+		generator.StartScheduler(),
+		Config{},
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Mock the coordination procedure execution. Return predefined results
+	// on specific coordination windows.
+	executeCoordinationProcedureFn := func(
+		_ *node,
+		window *coordinationWindow,
+		walletPublicKey *ecdsa.PublicKey,
+	) (*coordinationResult, bool) {
+		if signer.wallet.publicKey.Equal(walletPublicKey) {
+			result, ok := map[uint64]*coordinationResult{
+				900: {
+					actionType: ActionDepositSweep,
+				},
+				// Omit window at block 1800 to make sure the layer doesn't
+				// crash if no result is produced.
+				2700: {
+					actionType: ActionRedemption,
+				},
+				// Put some trash value to make sure coordination windows
+				// are distributed correctly.
+				2705: {
+					actionType: ActionMovingFunds,
+				},
+				3600: {
+					actionType: ActionNoop,
+				},
+				4500: {
+					actionType: ActionMovedFundsSweep,
+				},
+			}[window.coordinationBlock]
+
+			return result, ok
+		}
+
+		return nil, false
+	}
+
+	// Simply add processed results to the list.
+	var processedResults []*coordinationResult
+	processCoordinationResultFn := func(
+		_ *node,
+		result *coordinationResult,
+	) {
+		processedResults = append(processedResults, result)
+	}
+
+	ctx, cancelCtx := context.WithCancel(context.Background())
+	defer cancelCtx()
+
+	err = n.runCoordinationLayer(
+		ctx,
+		&coordinationLayerSettings{
+			executeCoordinationProcedureFn: executeCoordinationProcedureFn,
+			processCoordinationResultFn:    processCoordinationResultFn,
+		},
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Wait until the second-last coordination window passes.
+	err = localChain.blockCounter.WaitForBlockHeight(4000)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Stop coordination layer. As we are between the second-last and the last
+	// coordination window, the last window should not be processed. This
+	// allows us to test that the coordination layer's shutdown works as expected.
+	cancelCtx()
+
+	// Wait until the last coordination window passes.
+	err = localChain.blockCounter.WaitForBlockHeight(5000)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	testutils.AssertIntsEqual(
+		t,
+		"processed results count",
+		3,
+		len(processedResults),
+	)
+	testutils.AssertStringsEqual(
+		t,
+		"first result",
+		ActionDepositSweep.String(),
+		processedResults[0].actionType.String(),
+	)
+	testutils.AssertStringsEqual(
+		t,
+		"second result",
+		ActionRedemption.String(),
+		processedResults[1].actionType.String(),
+	)
+	testutils.AssertStringsEqual(
+		t,
+		"third result",
+		ActionNoop.String(),
+		processedResults[2].actionType.String(),
+	)
 }
 
 // createMockSigner creates a mock signer instance that can be used for
