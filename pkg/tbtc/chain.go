@@ -452,6 +452,8 @@ type Chain interface {
 	// If the aforementioned is not possible, it tries to return the closest
 	// possible block.
 	GetBlockNumberByTimestamp(timestamp uint64) (uint64, error)
+	// GetBlockHashByNumber gets the block hash for the given block number.
+	GetBlockHashByNumber(blockNumber uint64) ([32]byte, error)
 
 	sortition.Chain
 	GroupSelectionChain

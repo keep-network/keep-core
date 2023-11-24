@@ -2,7 +2,9 @@ package tbtc
 
 import (
 	"context"
+	"crypto/sha256"
 	"fmt"
+	"github.com/keep-network/keep-core/pkg/bitcoin"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/generator"
 	"github.com/keep-network/keep-core/pkg/net"
@@ -29,6 +31,11 @@ const (
 	// coordination window.
 	coordinationDurationBlocks = coordinationActivePhaseDurationBlocks +
 		coordinationPassivePhaseDurationBlocks
+	// coordinationSafeBlockShift is the number of blocks by which the
+	// coordination block is shifted to obtain a safe block whose 32-byte
+	// hash can be used as an ingredient for the coordination seed, computed
+	// for the given coordination window.
+	coordinationSafeBlockShift = 32
 )
 
 // errCoordinationExecutorBusy is an error returned when the coordination
@@ -138,9 +145,7 @@ func (cft CoordinationFaultType) String() string {
 
 // coordinationFault represents a single coordination fault.
 type coordinationFault struct {
-	// culprit is the address of the operator that is responsible for the fault.
-	culprit chain.Address
-	// faultType is the type of the fault.
+	culprit   chain.Address // address of the operator responsible for the fault
 	faultType CoordinationFaultType
 }
 
@@ -200,7 +205,11 @@ func (cr *coordinationResult) String() string {
 type coordinationExecutor struct {
 	lock *semaphore.Weighted
 
-	signers             []*signer // TODO: Do we need whole signers?
+	chain Chain
+
+	coordinatedWallet wallet
+	membersIndexes    []group.MemberIndex
+
 	broadcastChannel    net.BroadcastChannel
 	membershipValidator *group.MembershipValidator
 	protocolLatch       *generator.ProtocolLatch
@@ -209,29 +218,34 @@ type coordinationExecutor struct {
 // newCoordinationExecutor creates a new coordination executor for the
 // given wallet.
 func newCoordinationExecutor(
-	signers []*signer,
+	chain Chain,
+	coordinatedWallet wallet,
+	membersIndexes []group.MemberIndex,
 	broadcastChannel net.BroadcastChannel,
 	membershipValidator *group.MembershipValidator,
 	protocolLatch *generator.ProtocolLatch,
 ) *coordinationExecutor {
 	return &coordinationExecutor{
 		lock:                semaphore.NewWeighted(1),
-		signers:             signers,
+		chain:               chain,
+		coordinatedWallet:   coordinatedWallet,
+		membersIndexes:      membersIndexes,
 		broadcastChannel:    broadcastChannel,
 		membershipValidator: membershipValidator,
 		protocolLatch:       protocolLatch,
 	}
 }
 
-// wallet returns the wallet this executor is responsible for.
-func (ce *coordinationExecutor) wallet() wallet {
-	// All signers belong to one wallet. Take that wallet from the
-	// first signer.
-	return ce.signers[0].wallet
+// walletPublicKeyHash returns the 20-byte public key hash of the
+// coordinated wallet.
+func (ce *coordinationExecutor) walletPublicKeyHash() [20]byte {
+	return bitcoin.PublicKeyHash(ce.coordinatedWallet.publicKey)
 }
 
 // coordinate executes the coordination procedure for the given coordination
 // window.
+//
+// TODO: Add logging.
 func (ce *coordinationExecutor) coordinate(
 	window *coordinationWindow,
 ) (*coordinationResult, error) {
@@ -240,18 +254,48 @@ func (ce *coordinationExecutor) coordinate(
 	}
 	defer ce.lock.Release(1)
 
-	// TODO: Implement coordination logic. Remember about:
-	//       - Setting up the right context
-	//       - Using the protocol latch
-	//       - Using the membership validator
-	//       Example result:
+	ce.protocolLatch.Lock()
+	defer ce.protocolLatch.Unlock()
+
+	coordinationSeed, err := ce.coordinationSeed(window)
+	if err != nil {
+		return nil, fmt.Errorf("failed to compute coordination seed: [%v]", err)
+	}
+
+	fmt.Printf("coordinationSeed: %v\n", coordinationSeed)
+
+	// TODO: Implement the rest of the coordination procedure.
 	result := &coordinationResult{
-		wallet:   ce.wallet(),
+		wallet:   ce.coordinatedWallet,
 		window:   window,
-		leader:   ce.wallet().signingGroupOperators[0],
+		leader:   ce.coordinatedWallet.signingGroupOperators[0],
 		proposal: &noopProposal{},
 		faults:   nil,
 	}
 
 	return result, nil
+}
+
+// coordinationSeed computes the coordination seed for the given coordination
+// window.
+func (ce *coordinationExecutor) coordinationSeed(
+	window *coordinationWindow,
+) ([32]byte, error) {
+	walletPublicKeyHash := ce.walletPublicKeyHash()
+
+	safeBlockNumber := window.coordinationBlock - coordinationSafeBlockShift
+	safeBlockHash, err := ce.chain.GetBlockHashByNumber(safeBlockNumber)
+	if err != nil {
+		return [32]byte{}, fmt.Errorf(
+			"failed to get safe block hash: [%v]",
+			err,
+		)
+	}
+
+	return sha256.Sum256(
+		append(
+			walletPublicKeyHash[:],
+			safeBlockHash[:]...,
+		),
+	), nil
 }

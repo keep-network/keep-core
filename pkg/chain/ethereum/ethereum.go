@@ -414,6 +414,19 @@ func (bc *baseChain) GetBlockNumberByTimestamp(
 	return block.NumberU64(), nil
 }
 
+// GetBlockHashByNumber gets the block hash for the given block number.
+func (bc *baseChain) GetBlockHashByNumber(blockNumber uint64) (
+	[32]byte,
+	error,
+) {
+	block, err := bc.blockByNumber(blockNumber)
+	if err != nil {
+		return [32]byte{}, fmt.Errorf("cannot get block: [%v]", err)
+	}
+
+	return block.Hash(), nil
+}
+
 // currentBlock fetches the current block.
 func (bc *baseChain) currentBlock() (*types.Block, error) {
 	currentBlockNumber, err := bc.blockCounter.CurrentBlock()

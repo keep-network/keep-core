@@ -198,10 +198,13 @@ func TestNode_GetCoordinationExecutor(t *testing.T) {
 		t,
 		"signers count",
 		1,
-		len(executor.signers),
+		len(executor.membersIndexes),
 	)
 
-	if !reflect.DeepEqual(signer, executor.signers[0]) {
+	if !reflect.DeepEqual(
+		signer.signingGroupMemberIndex,
+		executor.membersIndexes[0],
+	) {
 		t.Errorf("executor holds an unexpected signer")
 	}
 

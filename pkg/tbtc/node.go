@@ -370,8 +370,17 @@ func (n *node) getCoordinationExecutor(
 		len(signers),
 	)
 
+	// The coordination executor does not need access to signers' key material.
+	// It is enough to pass only their member indexes.
+	membersIndexes := make([]group.MemberIndex, len(signers))
+	for i, s := range signers {
+		membersIndexes[i] = s.signingGroupMemberIndex
+	}
+
 	executor := newCoordinationExecutor(
-		signers,
+		n.chain,
+		wallet,
+		membersIndexes,
 		broadcastChannel,
 		membershipValidator,
 		n.protocolLatch,
