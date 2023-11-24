@@ -13,9 +13,21 @@ const (
 	// coordinationFrequencyBlocks is the number of blocks between two
 	// consecutive coordination windows.
 	coordinationFrequencyBlocks = 900
+	// coordinationActivePhaseDurationBlocks is the number of blocks in the
+	// active phase of the coordination window. The active phase is the
+	// phase during which the communication between the coordination leader and
+	// their followers is allowed.
+	coordinationActivePhaseDurationBlocks = 80
+	// coordinationPassivePhaseDurationBlocks is the number of blocks in the
+	// passive phase of the coordination window. The passive phase is the
+	// phase during which communication is not allowed. Participants are
+	// expected to validate the result of the coordination and prepare for
+	// execution of the proposed wallet action.
+	coordinationPassivePhaseDurationBlocks = 20
 	// coordinationDurationBlocks is the number of blocks in a single
 	// coordination window.
-	coordinationDurationBlocks = 100
+	coordinationDurationBlocks = coordinationActivePhaseDurationBlocks +
+		coordinationPassivePhaseDurationBlocks
 )
 
 // errCoordinationExecutorBusy is an error returned when the coordination
@@ -25,9 +37,8 @@ var errCoordinationExecutorBusy = fmt.Errorf("coordination executor is busy")
 // coordinationWindow represents a single coordination window. The coordination
 // block is the first block of the window.
 type coordinationWindow struct {
+	// coordinationBlock is the first block of the coordination window.
 	coordinationBlock uint64
-
-	// TODO: Add another coordination window fields.
 }
 
 // newCoordinationWindow creates a new coordination window for the given
@@ -36,6 +47,17 @@ func newCoordinationWindow(coordinationBlock uint64) *coordinationWindow {
 	return &coordinationWindow{
 		coordinationBlock: coordinationBlock,
 	}
+}
+
+// ActivePhaseEndBlock returns the block number at which the active phase
+// of the coordination window ends.
+func (cw *coordinationWindow) activePhaseEndBlock() uint64 {
+	return cw.coordinationBlock + coordinationActivePhaseDurationBlocks
+}
+
+// EndBlock returns the block number at which the coordination window ends.
+func (cw *coordinationWindow) endBlock() uint64 {
+	return cw.coordinationBlock + coordinationDurationBlocks
 }
 
 // isAfter returns true if this coordination window is after the other
