@@ -107,6 +107,7 @@ func watchCoordinationWindows(
 // executed for the given wallet in the given coordination window.
 type coordinationResult struct {
 	actionType WalletActionType
+	//lint:ignore U1000 This function will be used in the future.
 	proposal   interface{}
 }
 
@@ -142,6 +143,7 @@ func newCoordinationExecutor(
 	}
 }
 
+//lint:ignore U1000 This function will be used in the future.
 // wallet returns the wallet this executor is responsible for.
 func (ce *coordinationExecutor) wallet() wallet {
 	// All signers belong to one wallet. Take that wallet from the
