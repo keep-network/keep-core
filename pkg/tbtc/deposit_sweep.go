@@ -3,6 +3,7 @@ package tbtc
 import (
 	"crypto/ecdsa"
 	"fmt"
+	"math/big"
 	"time"
 
 	"github.com/ipfs/go-log/v2"
@@ -12,6 +13,12 @@ import (
 )
 
 const (
+	// depositSweepProposalValidityBlocks determines the deposit sweep proposal
+	// validity time expressed in blocks. In other words, this is the worst-case
+	// time for a deposit sweep during which the wallet is busy and cannot take
+	// another actions. The value of 1200 blocks is roughly 4 hours, assuming
+	// 12 seconds per block.
+	depositSweepProposalValidityBlocks = 1200
 	// depositSweepProposalConfirmationBlocks determines the block length of the
 	// confirmation period on the host chain that is preserved after a deposit
 	// sweep proposal submission.
@@ -46,6 +53,26 @@ const (
 	// as spreading the transaction over the Bitcoin network takes time.
 	depositSweepBroadcastCheckDelay = 1 * time.Minute
 )
+
+// DepositSweepProposal represents a deposit sweep proposal issued by a
+// wallet's coordination leader.
+type DepositSweepProposal struct {
+	WalletPublicKeyHash [20]byte
+	DepositsKeys        []struct {
+		FundingTxHash      bitcoin.Hash
+		FundingOutputIndex uint32
+	}
+	SweepTxFee           *big.Int
+	DepositsRevealBlocks []*big.Int
+}
+
+func (dsp *DepositSweepProposal) actionType() WalletActionType {
+	return ActionDepositSweep
+}
+
+func (dsp *DepositSweepProposal) validityBlocks() uint64 {
+	return depositSweepProposalValidityBlocks
+}
 
 // depositSweepAction is a deposit sweep walletAction.
 type depositSweepAction struct {

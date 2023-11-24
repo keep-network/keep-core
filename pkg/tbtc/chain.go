@@ -363,6 +363,8 @@ type WalletCoordinatorChain interface {
 
 // HeartbeatRequestSubmittedEvent represents a wallet heartbeat request
 // submitted to the chain.
+//
+// TODO: Remove this type and all related code.
 type HeartbeatRequestSubmittedEvent struct {
 	WalletPublicKeyHash [20]byte
 	Message             []byte
@@ -370,19 +372,10 @@ type HeartbeatRequestSubmittedEvent struct {
 	BlockNumber         uint64
 }
 
-// DepositSweepProposal represents a deposit sweep proposal submitted to the chain.
-type DepositSweepProposal struct {
-	WalletPublicKeyHash [20]byte
-	DepositsKeys        []struct {
-		FundingTxHash      bitcoin.Hash
-		FundingOutputIndex uint32
-	}
-	SweepTxFee           *big.Int
-	DepositsRevealBlocks []*big.Int
-}
-
 // DepositSweepProposalSubmittedEvent represents a deposit sweep proposal
 // submission event.
+//
+// TODO: Remove this type and all related code.
 type DepositSweepProposalSubmittedEvent struct {
 	Proposal    *DepositSweepProposal
 	Coordinator chain.Address
@@ -404,6 +397,8 @@ type DepositSweepProposalSubmittedEventFilter struct {
 
 // RedemptionProposalSubmittedEvent represents a redemption proposal
 // submission event.
+//
+// TODO: Remove this type and all related code.
 type RedemptionProposalSubmittedEvent struct {
 	Proposal    *RedemptionProposal
 	Coordinator chain.Address
@@ -421,13 +416,6 @@ type RedemptionProposalSubmittedEventFilter struct {
 	EndBlock            *uint64
 	Coordinator         []chain.Address
 	WalletPublicKeyHash [20]byte
-}
-
-// RedemptionProposal represents a redemption proposal submitted to the chain.
-type RedemptionProposal struct {
-	WalletPublicKeyHash    [20]byte
-	RedeemersOutputScripts []bitcoin.Script
-	RedemptionTxFee        *big.Int
 }
 
 // RedemptionRequestedEvent represents a redemption requested event.

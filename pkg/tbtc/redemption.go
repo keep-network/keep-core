@@ -3,6 +3,7 @@ package tbtc
 import (
 	"crypto/ecdsa"
 	"fmt"
+	"math/big"
 	"time"
 
 	"go.uber.org/zap"
@@ -14,6 +15,12 @@ import (
 )
 
 const (
+	// redemptionProposalValidityBlocks determines the redemption proposal
+	// validity time expressed in blocks. In other words, this is the worst-case
+	// time for a redemption during which the wallet is busy and cannot take
+	// another actions. The value of 600 blocks is roughly 2 hours, assuming
+	// 12 seconds per block.
+	redemptionProposalValidityBlocks = 600
 	// redemptionProposalConfirmationBlocks determines the block length of the
 	// confirmation period on the host chain that is preserved after a
 	// redemption proposal submission.
@@ -43,6 +50,22 @@ const (
 	// as spreading the transaction over the Bitcoin network takes time.
 	redemptionBroadcastCheckDelay = 1 * time.Minute
 )
+
+// RedemptionProposal represents a redemption proposal issued by a wallet's
+// coordination leader.
+type RedemptionProposal struct {
+	WalletPublicKeyHash    [20]byte
+	RedeemersOutputScripts []bitcoin.Script
+	RedemptionTxFee        *big.Int
+}
+
+func (rp *RedemptionProposal) actionType() WalletActionType {
+	return ActionRedemption
+}
+
+func (rp *RedemptionProposal) validityBlocks() uint64 {
+	return redemptionProposalValidityBlocks
+}
 
 // RedemptionTransactionShape is an enum describing the shape of
 // a Bitcoin redemption transaction.
