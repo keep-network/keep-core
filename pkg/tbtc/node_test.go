@@ -295,23 +295,23 @@ func TestNode_RunCoordinationLayer(t *testing.T) {
 		if signer.wallet.publicKey.Equal(walletPublicKey) {
 			result, ok := map[uint64]*coordinationResult{
 				900: {
-					actionType: ActionDepositSweep,
+					proposal: &mockCoordinationProposal{ActionDepositSweep},
 				},
 				// Omit window at block 1800 to make sure the layer doesn't
 				// crash if no result is produced.
 				2700: {
-					actionType: ActionRedemption,
+					proposal: &mockCoordinationProposal{ActionRedemption},
 				},
 				// Put some trash value to make sure coordination windows
 				// are distributed correctly.
 				2705: {
-					actionType: ActionMovingFunds,
+					proposal: &mockCoordinationProposal{ActionMovingFunds},
 				},
 				3600: {
-					actionType: ActionNoop,
+					proposal: &mockCoordinationProposal{ActionNoop},
 				},
 				4500: {
-					actionType: ActionMovedFundsSweep,
+					proposal: &mockCoordinationProposal{ActionMovedFundsSweep},
 				},
 			}[window.coordinationBlock]
 
@@ -371,20 +371,32 @@ func TestNode_RunCoordinationLayer(t *testing.T) {
 		t,
 		"first result",
 		ActionDepositSweep.String(),
-		processedResults[0].actionType.String(),
+		processedResults[0].proposal.actionType().String(),
 	)
 	testutils.AssertStringsEqual(
 		t,
 		"second result",
 		ActionRedemption.String(),
-		processedResults[1].actionType.String(),
+		processedResults[1].proposal.actionType().String(),
 	)
 	testutils.AssertStringsEqual(
 		t,
 		"third result",
 		ActionNoop.String(),
-		processedResults[2].actionType.String(),
+		processedResults[2].proposal.actionType().String(),
 	)
+}
+
+type mockCoordinationProposal struct {
+	action WalletActionType
+}
+
+func (mcp *mockCoordinationProposal) actionType() WalletActionType {
+	return mcp.action
+}
+
+func (mcp *mockCoordinationProposal) validityBlocks() uint64 {
+	panic("unsupported")
 }
 
 // createMockSigner creates a mock signer instance that can be used for

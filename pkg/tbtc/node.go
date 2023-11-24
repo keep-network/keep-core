@@ -787,8 +787,10 @@ func executeCoordinationProcedure(
 func processCoordinationResult(node *node, result *coordinationResult) {
 	logger.Infof("processing coordination result [%s]", result)
 
-	// TODO: Implementation.
-	switch result.actionType {
+	// TODO: Record coordination faults.
+
+	// TODO: Detect proposal type and run the appropriate handler.
+	switch result.proposal.actionType() {
 	case ActionHeartbeat:
 		// node.handleHeartbeatRequest()
 	case ActionDepositSweep:
