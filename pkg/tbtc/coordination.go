@@ -86,7 +86,7 @@ func watchCoordinationWindows(
 	for {
 		select {
 		case block := <-blocksChan:
-			if block % coordinationFrequencyBlocks == 0 {
+			if block%coordinationFrequencyBlocks == 0 {
 				// Make sure the current window is not the same as the last one.
 				// There is no guarantee that the block channel will not emit
 				// the same block again.
@@ -108,7 +108,7 @@ func watchCoordinationWindows(
 type coordinationResult struct {
 	actionType WalletActionType
 	//lint:ignore U1000 This function will be used in the future.
-	proposal   interface{}
+	proposal interface{}
 }
 
 func (cr *coordinationResult) String() string {
@@ -135,11 +135,11 @@ func newCoordinationExecutor(
 	protocolLatch *generator.ProtocolLatch,
 ) *coordinationExecutor {
 	return &coordinationExecutor{
-		lock: semaphore.NewWeighted(1),
-		signers: signers,
-		broadcastChannel: broadcastChannel,
+		lock:                semaphore.NewWeighted(1),
+		signers:             signers,
+		broadcastChannel:    broadcastChannel,
 		membershipValidator: membershipValidator,
-		protocolLatch: protocolLatch,
+		protocolLatch:       protocolLatch,
 	}
 }
 

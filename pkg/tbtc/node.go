@@ -103,14 +103,14 @@ func newNode(
 	scheduler.RegisterProtocol(latch)
 
 	node := &node{
-		groupParameters:  groupParameters,
-		chain:            chain,
-		btcChain:         btcChain,
-		netProvider:      netProvider,
-		walletRegistry:   walletRegistry,
-		walletDispatcher: newWalletDispatcher(),
-		protocolLatch:    latch,
-		signingExecutors: make(map[string]*signingExecutor),
+		groupParameters:       groupParameters,
+		chain:                 chain,
+		btcChain:              btcChain,
+		netProvider:           netProvider,
+		walletRegistry:        walletRegistry,
+		walletDispatcher:      newWalletDispatcher(),
+		protocolLatch:         latch,
+		signingExecutors:      make(map[string]*signingExecutor),
 		coordinationExecutors: make(map[string]*coordinationExecutor),
 	}
 
@@ -653,7 +653,7 @@ type coordinationLayerSettings struct {
 		walletPublicKey *ecdsa.PublicKey,
 	) (*coordinationResult, bool)
 
-    // processCoordinationResultFn is a function processing the given
+	// processCoordinationResultFn is a function processing the given
 	// coordination result.
 	processCoordinationResultFn func(
 		node *node,
