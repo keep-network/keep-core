@@ -136,6 +136,123 @@ func TestNode_GetSigningExecutor(t *testing.T) {
 	}
 }
 
+func TestNode_GetCoordinationExecutor(t *testing.T) {
+	groupParameters := &GroupParameters{
+		GroupSize:       5,
+		GroupQuorum:     4,
+		HonestThreshold: 3,
+	}
+
+	localChain := Connect()
+	localProvider := local.Connect()
+
+	signer := createMockSigner(t)
+
+	// Populate the mock keystore with the mock signer's data. This is
+	// required to make the node controlling the signer's wallet.
+	keyStorePersistence := createMockKeyStorePersistence(t, signer)
+
+	node, err := newNode(
+		groupParameters,
+		localChain,
+		newLocalBitcoinChain(),
+		localProvider,
+		keyStorePersistence,
+		&mockPersistenceHandle{},
+		generator.StartScheduler(),
+		Config{},
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	walletPublicKey := signer.wallet.publicKey
+	walletPublicKeyBytes, err := marshalPublicKey(walletPublicKey)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	testutils.AssertIntsEqual(
+		t,
+		"cache size",
+		0,
+		len(node.coordinationExecutors),
+	)
+
+	executor, ok, err := node.getCoordinationExecutor(walletPublicKey)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !ok {
+		t.Fatal("node is supposed to control wallet signers")
+	}
+
+	testutils.AssertIntsEqual(
+		t,
+		"cache size",
+		1,
+		len(node.coordinationExecutors),
+	)
+
+	testutils.AssertIntsEqual(
+		t,
+		"signers count",
+		1,
+		len(executor.signers),
+	)
+
+	if !reflect.DeepEqual(signer, executor.signers[0]) {
+		t.Errorf("executor holds an unexpected signer")
+	}
+
+	expectedChannel := fmt.Sprintf(
+		"%s-%s-coordination",
+		ProtocolName,
+		hex.EncodeToString(walletPublicKeyBytes),
+	)
+	testutils.AssertStringsEqual(
+		t,
+		"broadcast channel",
+		expectedChannel,
+		executor.broadcastChannel.Name(),
+	)
+
+	_, ok, err = node.getCoordinationExecutor(walletPublicKey)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !ok {
+		t.Fatal("node is supposed to control wallet signers")
+	}
+
+	// The executor was already created in the previous call so cached instance
+	// should be returned and no new executors should be created.
+	testutils.AssertIntsEqual(
+		t,
+		"cache size",
+		1,
+		len(node.coordinationExecutors),
+	)
+
+	// Construct an arbitrary public key representing a wallet that is not
+	// controlled by the node. We need to make sure the public key's points
+	// are on the curve to avoid troubles during processing.
+	x, y := walletPublicKey.Curve.Double(walletPublicKey.X, walletPublicKey.Y)
+	nonControlledWalletPublicKey := &ecdsa.PublicKey{
+		Curve: walletPublicKey.Curve,
+		X:     x,
+		Y:     y,
+	}
+
+	_, ok, err = node.getCoordinationExecutor(nonControlledWalletPublicKey)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if ok {
+		t.Fatal("node is not supposed to control wallet signers")
+	}
+}
+
 func TestNode_RunCoordinationLayer(t *testing.T) {
 	groupParameters := &GroupParameters{
 		GroupSize:       5,
