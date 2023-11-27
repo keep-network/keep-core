@@ -348,7 +348,9 @@ func (n *node) getCoordinationExecutor(
 		return nil, false, fmt.Errorf("failed to get broadcast channel: [%v]", err)
 	}
 
-	// TODO: Register unmarshalers
+	broadcastChannel.SetUnmarshaler(func() net.TaggedUnmarshaler {
+		return &coordinationMessage{}
+	})
 
 	membershipValidator := group.NewMembershipValidator(
 		executorLogger,
@@ -382,9 +384,11 @@ func (n *node) getCoordinationExecutor(
 		wallet,
 		membersIndexes,
 		operatorAddress,
+		nil, // TODO: Set a proper proposal generator.
 		broadcastChannel,
 		membershipValidator,
 		n.protocolLatch,
+		n.waitForBlockHeight,
 	)
 
 	n.coordinationExecutors[executorKey] = executor

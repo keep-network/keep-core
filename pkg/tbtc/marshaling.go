@@ -125,6 +125,18 @@ func (sdm *signingDoneMessage) Unmarshal(bytes []byte) error {
 	return nil
 }
 
+// Marshal converts the coordinationMessage to a byte array.
+func (cm *coordinationMessage) Marshal() ([]byte, error) {
+	// TODO: Implement.
+	return nil, nil
+}
+
+// Unmarshal converts a byte array back to the coordinationMessage.
+func (cm *coordinationMessage) Unmarshal(bytes []byte) error {
+	// TODO: Implement.
+	return nil
+}
+
 // marshalPublicKey converts an ECDSA public key to a byte
 // array (uncompressed).
 func marshalPublicKey(publicKey *ecdsa.PublicKey) ([]byte, error) {
