@@ -180,6 +180,29 @@ func TestWalletRegistry_PrePopulateWalletCache(t *testing.T) {
 	}
 }
 
+func TestWalletRegistry_GetWalletsPublicKeys(t *testing.T) {
+	persistenceHandle := &mockPersistenceHandle{}
+
+	walletRegistry := newWalletRegistry(persistenceHandle)
+
+	signer := createMockSigner(t)
+
+	err := walletRegistry.registerSigner(signer)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	keys := walletRegistry.getWalletsPublicKeys()
+
+	testutils.AssertIntsEqual(t, "keys count", 1, len(keys))
+	testutils.AssertBoolsEqual(
+		t,
+		"keys equal",
+		true,
+		keys[0].Equal(signer.wallet.publicKey),
+	)
+}
+
 func TestWalletStorage_SaveSigner(t *testing.T) {
 	persistenceHandle := &mockPersistenceHandle{}
 

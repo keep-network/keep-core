@@ -373,11 +373,7 @@ func (w *wallet) String() string {
 		w.publicKey.Y,
 	)
 
-	return fmt.Sprintf(
-		"wallet [0x%x] with a signing group of [%v]",
-		publicKey,
-		len(w.signingGroupOperators),
-	)
+	return fmt.Sprintf("public key [0x%x]", publicKey)
 }
 
 // DetermineWalletMainUtxo determines the plain-text wallet main UTXO
@@ -636,7 +632,7 @@ func newSigner(
 
 func (s *signer) String() string {
 	return fmt.Sprintf(
-		"signer with index [%v] of %s",
+		"signer with index [%v] of wallet [%s]",
 		s.signingGroupMemberIndex,
 		&s.wallet,
 	)

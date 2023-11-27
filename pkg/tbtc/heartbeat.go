@@ -12,11 +12,16 @@ import (
 )
 
 const (
+	// heartbeatProposalValidityBlocks determines the wallet heartbeat proposal
+	// validity time expressed in blocks. In other words, this is the worst-case
+	// time for a wallet heartbeat during which the wallet is busy and cannot
+	// take another actions. The value of 300 blocks is roughly 1 hour, assuming
+	// 12 seconds per block.
+	heartbeatProposalValidityBlocks = 300
 	// heartbeatRequestConfirmationBlocks determines the block length of the
 	// confirmation period on the host chain that is preserved after a heartbeat
 	// request submission.
 	heartbeatRequestConfirmationBlocks = 3
-
 	// heartbeatRequestTimeoutSafetyMargin determines the duration of the
 	// safety margin that must be preserved between the signing timeout
 	// and the timeout of the entire heartbeat action. This safety
@@ -24,6 +29,18 @@ const (
 	// another action has been already requested by the coordinator.
 	heartbeatRequestTimeoutSafetyMargin = 5 * time.Minute
 )
+
+type HeartbeatProposal struct {
+	// TODO: Proposal fields.
+}
+
+func (hp *HeartbeatProposal) actionType() WalletActionType {
+	return ActionHeartbeat
+}
+
+func (hp *HeartbeatProposal) validityBlocks() uint64 {
+	return heartbeatProposalValidityBlocks
+}
 
 // heartbeatSigningExecutor is an interface meant to decouple the specific
 // implementation of the signing executor from the heartbeat action.

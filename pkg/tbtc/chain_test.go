@@ -794,19 +794,22 @@ func buildRedemptionProposalValidationKey(
 }
 
 // Connect sets up the local chain.
-func Connect() *localChain {
+func Connect(blockTime ...time.Duration) *localChain {
 	operatorPrivateKey, _, err := operator.GenerateKeyPair(local_v1.DefaultCurve)
 	if err != nil {
 		panic(err)
 	}
 
-	return ConnectWithKey(operatorPrivateKey)
+	return ConnectWithKey(operatorPrivateKey, blockTime...)
 }
 
 // ConnectWithKey sets up the local chain using the provided operator private
 // key.
-func ConnectWithKey(operatorPrivateKey *operator.PrivateKey) *localChain {
-	blockCounter, _ := local_v1.BlockCounter()
+func ConnectWithKey(
+	operatorPrivateKey *operator.PrivateKey,
+	blockTime ...time.Duration,
+) *localChain {
+	blockCounter, _ := local_v1.BlockCounter(blockTime...)
 
 	localChain := &localChain{
 		dkgResultSubmissionHandlers: make(

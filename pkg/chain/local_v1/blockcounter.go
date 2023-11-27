@@ -20,7 +20,7 @@ type watcher struct {
 	channel chan uint64
 }
 
-var blockTime = time.Duration(500 * time.Millisecond)
+var defaultBlockTime = 500 * time.Millisecond
 
 func (lbc *localBlockCounter) WaitForBlockHeight(blockNumber uint64) error {
 	waiter, err := lbc.BlockHeightWaiter(blockNumber)
@@ -88,8 +88,16 @@ func (lbc *localBlockCounter) WatchBlocks(ctx context.Context) <-chan uint64 {
 
 // count is an internal function that counts up time to simulate the generation
 // of blocks.
-func (lbc *localBlockCounter) count() {
-	ticker := time.NewTicker(blockTime)
+func (lbc *localBlockCounter) count(blockTime ...time.Duration) {
+	var resolvedBlockTime time.Duration
+	switch len(blockTime) {
+	case 1:
+		resolvedBlockTime = blockTime[0]
+	default:
+		resolvedBlockTime = defaultBlockTime
+	}
+
+	ticker := time.NewTicker(resolvedBlockTime)
 
 	for range ticker.C {
 		lbc.structMutex.Lock()
@@ -127,10 +135,10 @@ func (lbc *localBlockCounter) count() {
 // BlockCounter creates a BlockCounter that runs completely locally. It is
 // designed to simply increase block height at a set time interval in the
 // background.
-func BlockCounter() (chain.BlockCounter, error) {
+func BlockCounter(blockTime ...time.Duration) (chain.BlockCounter, error) {
 	counter := localBlockCounter{blockHeight: 0, waiters: make(map[uint64][]chan uint64)}
 
-	go counter.count()
+	go counter.count(blockTime...)
 
 	return &counter, nil
 }

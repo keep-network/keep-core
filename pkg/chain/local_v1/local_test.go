@@ -339,13 +339,13 @@ func TestLocalBlockHeightWaiter(t *testing.T) {
 		},
 		"returns immediately for block height already reached": {
 			blockHeight:      2,
-			initialDelay:     3 * blockTime,
+			initialDelay:     3 * defaultBlockTime,
 			expectedWaitTime: 0,
 		},
 		"waits for block height not yet reached": {
 			blockHeight:      5,
-			initialDelay:     2 * blockTime,
-			expectedWaitTime: 3 * blockTime,
+			initialDelay:     2 * defaultBlockTime,
+			expectedWaitTime: 3 * defaultBlockTime,
 		},
 	}
 
