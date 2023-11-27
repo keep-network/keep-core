@@ -3,6 +3,7 @@ package tbtc
 import (
 	"context"
 	"encoding/hex"
+	"github.com/keep-network/keep-core/pkg/chain"
 	"testing"
 	"time"
 
@@ -144,6 +145,7 @@ func TestCoordinationExecutor_CoordinationSeed(t *testing.T) {
 	}
 
 	executor := &coordinationExecutor{
+		// Set only relevant fields.
 		chain:             localChain,
 		coordinatedWallet: coordinatedWallet,
 	}
@@ -161,5 +163,47 @@ func TestCoordinationExecutor_CoordinationSeed(t *testing.T) {
 		"coordination seed",
 		expectedSeed,
 		hex.EncodeToString(seed[:]),
+	)
+}
+
+func TestCoordinationExecutor_CoordinationLeader(t *testing.T) {
+	seedBytes, err := hex.DecodeString(
+		"9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08",
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var seed [32]byte
+	copy(seed[:], seedBytes)
+
+	coordinatedWallet := wallet{
+		// Set only relevant fields.
+		signingGroupOperators: []chain.Address{
+			"957ECF59507a6A74b8d98747f07a74De270D3CC3", // member 1
+			"5E14c0f27612fbfB7A6FE40b5A6Ec997fA62fc04", // member 2
+			"D2662604f8b4540336fBd3c1F48d7e9cdFbD079c", // member 3
+			"7CBD87ABC182216A7Aa0E8d19aA21abFA2511383", // member 4
+			"FAc73b03884d94a08a5c6c7BB12Ac0b20571F162", // member 5
+			"705C76445651530fe0D25eeE287b6164cE2c7216", // member 6
+			"7CBD87ABC182216A7Aa0E8d19aA21abFA2511383", // member 7  (same operator as member 4)
+			"405ad1f632b49A0617fbdc1fD427aF54BA9Bb3dd", // member 8
+			"7CBD87ABC182216A7Aa0E8d19aA21abFA2511383", // member 9  (same operator as member 4)
+			"5E14c0f27612fbfB7A6FE40b5A6Ec997fA62fc04", // member 10 (same operator as member 2)
+		},
+	}
+
+	executor := &coordinationExecutor{
+		// Set only relevant fields.
+		coordinatedWallet: coordinatedWallet,
+	}
+
+	leader := executor.coordinationLeader(seed)
+
+	testutils.AssertStringsEqual(
+		t,
+		"coordination leader",
+		"D2662604f8b4540336fBd3c1F48d7e9cdFbD079c",
+		leader.String(),
 	)
 }

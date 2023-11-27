@@ -3,6 +3,7 @@ package tbtc
 import (
 	"context"
 	"crypto/sha256"
+	"encoding/binary"
 	"fmt"
 	"github.com/keep-network/keep-core/pkg/bitcoin"
 	"github.com/keep-network/keep-core/pkg/chain"
@@ -10,6 +11,8 @@ import (
 	"github.com/keep-network/keep-core/pkg/net"
 	"github.com/keep-network/keep-core/pkg/protocol/group"
 	"golang.org/x/sync/semaphore"
+	"math/rand"
+	"sort"
 )
 
 const (
@@ -209,6 +212,7 @@ type coordinationExecutor struct {
 
 	coordinatedWallet wallet
 	membersIndexes    []group.MemberIndex
+	operatorAddress   chain.Address
 
 	broadcastChannel    net.BroadcastChannel
 	membershipValidator *group.MembershipValidator
@@ -221,6 +225,7 @@ func newCoordinationExecutor(
 	chain Chain,
 	coordinatedWallet wallet,
 	membersIndexes []group.MemberIndex,
+	operatorAddress chain.Address,
 	broadcastChannel net.BroadcastChannel,
 	membershipValidator *group.MembershipValidator,
 	protocolLatch *generator.ProtocolLatch,
@@ -230,6 +235,7 @@ func newCoordinationExecutor(
 		chain:               chain,
 		coordinatedWallet:   coordinatedWallet,
 		membersIndexes:      membersIndexes,
+		operatorAddress:     operatorAddress,
 		broadcastChannel:    broadcastChannel,
 		membershipValidator: membershipValidator,
 		protocolLatch:       protocolLatch,
@@ -257,12 +263,18 @@ func (ce *coordinationExecutor) coordinate(
 	ce.protocolLatch.Lock()
 	defer ce.protocolLatch.Unlock()
 
-	coordinationSeed, err := ce.coordinationSeed(window)
+	seed, err := ce.coordinationSeed(window)
 	if err != nil {
 		return nil, fmt.Errorf("failed to compute coordination seed: [%v]", err)
 	}
 
-	fmt.Printf("coordinationSeed: %v\n", coordinationSeed)
+	leader := ce.coordinationLeader(seed)
+
+	if leader == ce.operatorAddress {
+		ce.leaderRoutine()
+	} else {
+		ce.followerRoutine()
+	}
 
 	// TODO: Implement the rest of the coordination procedure.
 	result := &coordinationResult{
@@ -298,4 +310,50 @@ func (ce *coordinationExecutor) coordinationSeed(
 			safeBlockHash[:]...,
 		),
 	), nil
+}
+
+// coordinationLeader returns the address of the coordination leader for the
+// given coordination seed.
+func (ce *coordinationExecutor) coordinationLeader(seed [32]byte) chain.Address {
+	// First, take all operators backing the wallet.
+	allOperators := chain.Addresses(ce.coordinatedWallet.signingGroupOperators)
+
+	// Determine a list of unique operators.
+	uniqueOperators := make([]chain.Address, 0)
+	for operator := range allOperators.Set() {
+		uniqueOperators = append(uniqueOperators, operator)
+	}
+
+	// Sort the list of unique operators in ascending order.
+	sort.Slice(
+		uniqueOperators,
+		func(i, j int) bool {
+			return uniqueOperators[i] < uniqueOperators[j]
+		},
+	)
+
+	// #nosec G404 (insecure random number source (rand))
+	// Shuffling operators does not require secure randomness.
+	// Use first 8 bytes of the seed to initialize the RNG.
+	rng := rand.New(rand.NewSource(int64(binary.BigEndian.Uint64(seed[:8]))))
+
+	// Shuffle the list of unique operators.
+	rng.Shuffle(
+		len(uniqueOperators),
+		func(i, j int) {
+			uniqueOperators[i], uniqueOperators[j] =
+				uniqueOperators[j], uniqueOperators[i]
+		},
+	)
+
+	// The first operator in the shuffled list is the leader.
+	return uniqueOperators[0]
+}
+
+func (ce *coordinationExecutor) leaderRoutine() {
+	// TODO: Implement the leader routine.
+}
+
+func (ce *coordinationExecutor) followerRoutine() {
+	// TODO: Implement the follower routine.
 }

@@ -365,11 +365,6 @@ func (n *node) getCoordinationExecutor(
 		)
 	}
 
-	executorLogger.Infof(
-		"coordination executor created; controlling [%v] signers",
-		len(signers),
-	)
-
 	// The coordination executor does not need access to signers' key material.
 	// It is enough to pass only their member indexes.
 	membersIndexes := make([]group.MemberIndex, len(signers))
@@ -377,16 +372,27 @@ func (n *node) getCoordinationExecutor(
 		membersIndexes[i] = s.signingGroupMemberIndex
 	}
 
+	operatorAddress, err := n.operatorAddress()
+	if err != nil {
+		return nil, false, fmt.Errorf("failed to get operator address: [%v]", err)
+	}
+
 	executor := newCoordinationExecutor(
 		n.chain,
 		wallet,
 		membersIndexes,
+		operatorAddress,
 		broadcastChannel,
 		membershipValidator,
 		n.protocolLatch,
 	)
 
 	n.coordinationExecutors[executorKey] = executor
+
+	executorLogger.Infof(
+		"coordination executor created; controlling [%v] signers",
+		len(signers),
+	)
 
 	return executor, true, nil
 }
