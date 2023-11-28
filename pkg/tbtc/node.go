@@ -379,12 +379,20 @@ func (n *node) getCoordinationExecutor(
 		return nil, false, fmt.Errorf("failed to get operator address: [%v]", err)
 	}
 
+	proposalGenerator := func(
+		walletPublicKeyHash [20]byte,
+		actionsChecklist []WalletActionType,
+	) (coordinationProposal, error) {
+		// TODO: Implement proposal generation.
+		return &noopProposal{}, nil
+	}
+
 	executor := newCoordinationExecutor(
 		n.chain,
 		wallet,
 		membersIndexes,
 		operatorAddress,
-		nil, // TODO: Set a proper proposal generator.
+		proposalGenerator,
 		broadcastChannel,
 		membershipValidator,
 		n.protocolLatch,

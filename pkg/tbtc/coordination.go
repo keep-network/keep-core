@@ -194,6 +194,7 @@ func (cf *coordinationFault) String() string {
 // wallet's state. If none of the actions are valid, the generator
 // should return a noopProposal.
 type coordinationProposalGenerator func(
+	walletPublicKeyHash [20]byte,
 	actionsChecklist []WalletActionType,
 ) (coordinationProposal, error)
 
@@ -506,7 +507,9 @@ func (ce *coordinationExecutor) leaderRoutine(
 	coordinationBlock uint64,
 	actionsChecklist []WalletActionType,
 ) (coordinationProposal, error) {
-	proposal, err := ce.proposalGenerator(actionsChecklist)
+	walletPublicKeyHash := ce.walletPublicKeyHash()
+
+	proposal, err := ce.proposalGenerator(walletPublicKeyHash, actionsChecklist)
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate proposal: [%v]", err)
 	}
@@ -520,7 +523,7 @@ func (ce *coordinationExecutor) leaderRoutine(
 	message := &coordinationMessage{
 		senderID:            senderID,
 		coordinationBlock:   coordinationBlock,
-		walletPublicKeyHash: ce.walletPublicKeyHash(),
+		walletPublicKeyHash: walletPublicKeyHash,
 		proposal:            proposal,
 	}
 

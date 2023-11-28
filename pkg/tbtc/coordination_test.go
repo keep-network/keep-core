@@ -392,6 +392,14 @@ func TestCoordinationExecutor_LeaderRoutine(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	// 20-byte public key hash corresponding to the public key above.
+	buffer, err := hex.DecodeString("aa768412ceed10bd423c025542ca90071f9fb62d")
+	if err != nil {
+		t.Fatal(err)
+	}
+	var publicKeyHash [20]byte
+	copy(publicKeyHash[:], buffer)
+
 	coordinatedWallet := wallet{
 		// Set only relevant fields.
 		publicKey: unmarshalPublicKey(publicKeyHex),
@@ -402,12 +410,15 @@ func TestCoordinationExecutor_LeaderRoutine(t *testing.T) {
 	// sender.
 	membersIndexes := []group.MemberIndex{77, 5, 10}
 
-	proposalGenerator := func(actionsChecklist []WalletActionType) (
+	proposalGenerator := func(
+		walletPublicKeyHash [20]byte,
+		actionsChecklist []WalletActionType,
+	) (
 		coordinationProposal,
 		error,
 	) {
 		for _, action := range actionsChecklist {
-			if action == ActionHeartbeat {
+			if walletPublicKeyHash == publicKeyHash && action == ActionHeartbeat {
 				return &HeartbeatProposal{
 					Message: []byte("heartbeat message"),
 				}, nil
@@ -482,17 +493,10 @@ func TestCoordinationExecutor_LeaderRoutine(t *testing.T) {
 		)
 	}
 
-	buffer, err := hex.DecodeString("aa768412ceed10bd423c025542ca90071f9fb62d")
-	if err != nil {
-		t.Fatal(err)
-	}
-	var expectedWalletPublicKeyHash [20]byte
-	copy(expectedWalletPublicKeyHash[:], buffer)
-
 	expectedMessage := &coordinationMessage{
 		senderID:            5,
 		coordinationBlock:   900,
-		walletPublicKeyHash: expectedWalletPublicKeyHash,
+		walletPublicKeyHash: publicKeyHash,
 		proposal:            expectedProposal,
 	}
 
