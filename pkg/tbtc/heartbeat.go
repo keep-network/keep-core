@@ -31,7 +31,7 @@ const (
 )
 
 type HeartbeatProposal struct {
-	// TODO: Proposal fields.
+	Message []byte
 }
 
 func (hp *HeartbeatProposal) actionType() WalletActionType {

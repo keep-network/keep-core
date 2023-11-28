@@ -8,6 +8,7 @@ import (
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/net"
 	netlocal "github.com/keep-network/keep-core/pkg/net/local"
+	"github.com/keep-network/keep-core/pkg/protocol/group"
 	"math/big"
 	"reflect"
 	"testing"
@@ -167,12 +168,12 @@ func TestWatchCoordinationWindows(t *testing.T) {
 }
 
 func TestCoordinationExecutor_CoordinationSeed(t *testing.T) {
-	window := newCoordinationWindow(900)
+	coordinationBlock := uint64(900)
 
 	localChain := Connect()
 
 	localChain.setBlockHashByNumber(
-		window.coordinationBlock-32,
+		coordinationBlock-32,
 		"1322996cbcbc38fc924a46f4df5f9064279d3ab43396e58386dac9b87440d64f",
 	)
 
@@ -197,7 +198,7 @@ func TestCoordinationExecutor_CoordinationSeed(t *testing.T) {
 		coordinatedWallet: coordinatedWallet,
 	}
 
-	seed, err := executor.coordinationSeed(window)
+	seed, err := executor.coordinationSeed(coordinationBlock)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -381,6 +382,41 @@ func TestCoordinationExecutor_ActionsChecklist(t *testing.T) {
 }
 
 func TestCoordinationExecutor_LeaderRoutine(t *testing.T) {
+	// Uncompressed public key corresponding to the 20-byte public key hash:
+	// aa768412ceed10bd423c025542ca90071f9fb62d.
+	publicKeyHex, err := hex.DecodeString(
+		"0471e30bca60f6548d7b42582a478ea37ada63b402af7b3ddd57f0c95bb6843175" +
+			"aa0d2053a91a050a6797d85c38f2909cb7027f2344a01986aa2f9f8ca7a0c289",
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	coordinatedWallet := wallet{
+		// Set only relevant fields.
+		publicKey: unmarshalPublicKey(publicKeyHex),
+	}
+
+	// Deliberately use an unsorted list of members indexes to make sure the
+	// leader routine sorts them before determining the coordination message
+	// sender.
+	membersIndexes := []group.MemberIndex{77, 5, 10}
+
+	proposalGenerator := func(actionsChecklist []WalletActionType) (
+		coordinationProposal,
+		error,
+	) {
+		for _, action := range actionsChecklist {
+			if action == ActionHeartbeat {
+				return &HeartbeatProposal{
+					Message: []byte("heartbeat message"),
+				}, nil
+			}
+		}
+
+		return &noopProposal{}, nil
+	}
+
 	provider := netlocal.Connect()
 
 	broadcastChannel, err := provider.BroadcastChannelFor("test")
@@ -392,24 +428,10 @@ func TestCoordinationExecutor_LeaderRoutine(t *testing.T) {
 		return &coordinationMessage{}
 	})
 
-	proposalGenerator := func(actionsChecklist []WalletActionType) (
-		coordinationProposal,
-		error,
-	) {
-		for _, action := range actionsChecklist {
-			if action == ActionDepositSweep {
-				return &DepositSweepProposal{
-					// Set just one field to make the proposal non-empty.
-					SweepTxFee: big.NewInt(1000),
-				}, nil
-			}
-		}
-
-		return &noopProposal{}, nil
-	}
-
 	executor := &coordinationExecutor{
 		// Set only relevant fields.
+		coordinatedWallet: coordinatedWallet,
+		membersIndexes:    membersIndexes,
 		proposalGenerator: proposalGenerator,
 		broadcastChannel:  broadcastChannel,
 	}
@@ -419,28 +441,40 @@ func TestCoordinationExecutor_LeaderRoutine(t *testing.T) {
 		ActionDepositSweep,
 		ActionMovedFundsSweep,
 		ActionMovingFunds,
+		ActionHeartbeat,
 	}
 
-	ctx, cancelCtx := context.WithTimeout(context.Background(), 1*time.Second)
+	ctx, cancelCtx := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancelCtx()
 
-	var broadcastedProposal coordinationProposal
-	broadcastChannel.Recv(ctx, func(message net.Message) {
-		// Set broadcastedProposal from message.
+	var message *coordinationMessage
+	broadcastChannel.Recv(ctx, func(m net.Message) {
+		cm, ok := m.Payload().(*coordinationMessage)
+		if !ok {
+			t.Fatal("unexpected message type")
+		}
+
+		// Capture the message for later assertions.
+		message = cm
+
+		// Cancel the context to proceed with the test quicker.
+		cancelCtx()
 	})
 
-	proposal, err := executor.leaderRoutine(ctx, actionsChecklist)
+	proposal, err := executor.leaderRoutine(ctx, 900, actionsChecklist)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	expectedProposal := &DepositSweepProposal{
-		SweepTxFee: big.NewInt(1000),
+	<-ctx.Done()
+
+	expectedProposal := &HeartbeatProposal{
+		Message: []byte("heartbeat message"),
 	}
 
 	if !reflect.DeepEqual(expectedProposal, proposal) {
 		t.Errorf(
-			"unexpected proposal returned by leader's routine: \n"+
+			"unexpected proposal: \n"+
 				"expected: %v\n"+
 				"actual:   %v",
 			expectedProposal,
@@ -448,14 +482,27 @@ func TestCoordinationExecutor_LeaderRoutine(t *testing.T) {
 		)
 	}
 
-	// TODO: Modify this condition when the time comes.
-	if !reflect.DeepEqual(nil, broadcastedProposal) {
+	buffer, err := hex.DecodeString("aa768412ceed10bd423c025542ca90071f9fb62d")
+	if err != nil {
+		t.Fatal(err)
+	}
+	var expectedWalletPublicKeyHash [20]byte
+	copy(expectedWalletPublicKeyHash[:], buffer)
+
+	expectedMessage := &coordinationMessage{
+		senderID:            5,
+		coordinationBlock:   900,
+		walletPublicKeyHash: expectedWalletPublicKeyHash,
+		proposal:            expectedProposal,
+	}
+
+	if !reflect.DeepEqual(expectedMessage, message) {
 		t.Errorf(
-			"unexpected proposal broadcasted to the followers: \n"+
+			"unexpected message: \n"+
 				"expected: %v\n"+
 				"actual:   %v",
-			nil,
-			broadcastedProposal,
+			expectedMessage,
+			message,
 		)
 	}
 }

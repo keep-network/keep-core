@@ -5,6 +5,8 @@ import (
 	"crypto/sha256"
 	"encoding/binary"
 	"fmt"
+	"github.com/keep-network/keep-core/pkg/internal/pb"
+	"golang.org/x/exp/slices"
 	"math/rand"
 	"sort"
 
@@ -197,11 +199,14 @@ type coordinationProposalGenerator func(
 
 // coordinationProposal represents a single action proposal for the given wallet.
 type coordinationProposal interface {
+	pb.Marshaler
+	pb.Unmarshaler
+
 	// actionType returns the specific type of the walletAction being subject
 	// of this proposal.
 	actionType() WalletActionType
 	// validityBlocks returns the number of blocks for which the proposal is
-	// valid.
+	// valid. This value SHOULD NOT be marshaled/unmarshaled.
 	validityBlocks() uint64
 }
 
@@ -241,7 +246,10 @@ func (cr *coordinationResult) String() string {
 // coordinationMessage represents a coordination message sent by the leader
 // to their followers during the active phase of the coordination window.
 type coordinationMessage struct {
-	// TODO: Add fields.
+	senderID            group.MemberIndex
+	coordinationBlock   uint64
+	walletPublicKeyHash [20]byte
+	proposal            coordinationProposal
 }
 
 func (cm *coordinationMessage) Type() string {
@@ -318,10 +326,13 @@ func (ce *coordinationExecutor) coordinate(
 
 	// Just in case, check if the window is valid.
 	if window.index() == 0 {
-		return nil, fmt.Errorf("invalid coordination window [%v]", window)
+		return nil, fmt.Errorf(
+			"invalid coordination block [%v]",
+			window.coordinationBlock,
+		)
 	}
 
-	seed, err := ce.coordinationSeed(window)
+	seed, err := ce.coordinationSeed(window.coordinationBlock)
 	if err != nil {
 		return nil, fmt.Errorf("failed to compute coordination seed: [%v]", err)
 	}
@@ -341,7 +352,11 @@ func (ce *coordinationExecutor) coordinate(
 
 	var proposal coordinationProposal
 	if leader == ce.operatorAddress {
-		proposal, err = ce.leaderRoutine(ctx, actionsChecklist)
+		proposal, err = ce.leaderRoutine(
+			ctx,
+			window.coordinationBlock,
+			actionsChecklist,
+		)
 		if err != nil {
 			return nil, fmt.Errorf(
 				"failed to execute leader's routine: [%v]",
@@ -377,11 +392,11 @@ func (ce *coordinationExecutor) coordinate(
 // coordinationSeed computes the coordination seed for the given coordination
 // window.
 func (ce *coordinationExecutor) coordinationSeed(
-	window *coordinationWindow,
+	coordinationBlock uint64,
 ) ([32]byte, error) {
 	walletPublicKeyHash := ce.walletPublicKeyHash()
 
-	safeBlockNumber := window.coordinationBlock - coordinationSafeBlockShift
+	safeBlockNumber := coordinationBlock - coordinationSafeBlockShift
 	safeBlockHash, err := ce.chain.GetBlockHashByNumber(safeBlockNumber)
 	if err != nil {
 		return [32]byte{}, fmt.Errorf(
@@ -488,6 +503,7 @@ func (ce *coordinationExecutor) actionsChecklist(
 // It returns the generated proposal or an error if the routine failed.
 func (ce *coordinationExecutor) leaderRoutine(
 	ctx context.Context,
+	coordinationBlock uint64,
 	actionsChecklist []WalletActionType,
 ) (coordinationProposal, error) {
 	proposal, err := ce.proposalGenerator(actionsChecklist)
@@ -495,8 +511,17 @@ func (ce *coordinationExecutor) leaderRoutine(
 		return nil, fmt.Errorf("failed to generate proposal: [%v]", err)
 	}
 
+	// Sort members indexes in ascending order, just in case. Choose the first
+	// member as the sender of the coordination message.
+	membersIndexes := append([]group.MemberIndex{}, ce.membersIndexes...)
+	slices.Sort(membersIndexes)
+	senderID := membersIndexes[0]
+
 	message := &coordinationMessage{
-		// TODO: Initialize fields.
+		senderID:            senderID,
+		coordinationBlock:   coordinationBlock,
+		walletPublicKeyHash: ce.walletPublicKeyHash(),
+		proposal:            proposal,
 	}
 
 	err = ce.broadcastChannel.Send(

@@ -31,6 +31,26 @@ const (
 	ActionMovedFundsSweep
 )
 
+// ParseWalletActionType parses the given value into a WalletActionType.
+func ParseWalletActionType(value uint8) (WalletActionType, error) {
+	switch value {
+	case 0:
+		return ActionNoop, nil
+	case 1:
+		return ActionHeartbeat, nil
+	case 2:
+		return ActionDepositSweep, nil
+	case 3:
+		return ActionRedemption, nil
+	case 4:
+		return ActionMovingFunds, nil
+	case 5:
+		return ActionMovedFundsSweep, nil
+	default:
+		return 0, fmt.Errorf("unknown wallet action type [%v]", value)
+	}
+}
+
 func (wat WalletActionType) String() string {
 	switch wat {
 	case ActionNoop:

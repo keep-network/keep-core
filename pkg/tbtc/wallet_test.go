@@ -19,6 +19,65 @@ import (
 	"github.com/keep-network/keep-core/pkg/tecdsa"
 )
 
+func TestParseWalletActionType(t *testing.T) {
+	tests := map[string]struct {
+		value          uint8
+		expectedAction WalletActionType
+		expectedErr    error
+	}{
+		"noop": {
+			value:          0,
+			expectedAction: ActionNoop,
+		},
+		"heartbeat": {
+			value:          1,
+			expectedAction: ActionHeartbeat,
+		},
+		"deposit sweep": {
+			value:          2,
+			expectedAction: ActionDepositSweep,
+		},
+		"redemption": {
+			value:          3,
+			expectedAction: ActionRedemption,
+		},
+		"moving funds": {
+			value:          4,
+			expectedAction: ActionMovingFunds,
+		},
+		"moved funds sweep": {
+			value:          5,
+			expectedAction: ActionMovedFundsSweep,
+		},
+		"unknown": {
+			value:       6,
+			expectedErr: fmt.Errorf("unknown wallet action type [6]"),
+		},
+	}
+
+	for testName, test := range tests {
+		t.Run(testName, func(t *testing.T) {
+			action, err := ParseWalletActionType(test.value)
+
+			if !reflect.DeepEqual(test.expectedErr, err) {
+				t.Errorf(
+					"unexpected error\nexpected: [%v]\nactual:   [%v]",
+					test.expectedErr,
+					err,
+				)
+			}
+
+			if test.expectedAction != action {
+				t.Errorf(
+					"unexpected action type\nexpected: [%v]\nactual:   [%v]",
+					test.expectedAction,
+					action,
+				)
+			}
+		})
+	}
+}
+
 func TestWalletDispatcher_Dispatch(t *testing.T) {
 	walletDispatcher := newWalletDispatcher()
 

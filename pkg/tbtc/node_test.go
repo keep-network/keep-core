@@ -402,6 +402,14 @@ func (mcp *mockCoordinationProposal) validityBlocks() uint64 {
 	panic("unsupported")
 }
 
+func (mcp *mockCoordinationProposal) Marshal() ([]byte, error) {
+	panic("unsupported")
+}
+
+func (mcp *mockCoordinationProposal) Unmarshal(bytes []byte) error {
+	panic("unsupported")
+}
+
 // createMockSigner creates a mock signer instance that can be used for
 // test cases that needs a placeholder signer. The produced signer cannot
 // be used to test actual signing scenarios.
