@@ -304,7 +304,7 @@ func (ce *coordinationExecutor) walletPublicKeyHash() [20]byte {
 // coordinate executes the coordination procedure for the given coordination
 // window.
 //
-// TODO: Add logging.
+// TODO: Add logging and cover with unit tests.
 func (ce *coordinationExecutor) coordinate(
 	window *coordinationWindow,
 ) (*coordinationResult, error) {
@@ -437,11 +437,17 @@ func (ce *coordinationExecutor) coordinationLeader(seed [32]byte) chain.Address 
 }
 
 // actionsChecklist returns a list of wallet actions that should be checked
-// for the given coordination window.
+// for the given coordination window. Returns nil for incorrect coordination
+// windows whose index is 0.
 func (ce *coordinationExecutor) actionsChecklist(
 	windowIndex uint64,
 	seed [32]byte,
 ) []WalletActionType {
+	// Return nil checklist for incorrect coordination windows.
+	if windowIndex == 0 {
+		return nil
+	}
+
 	var actions []WalletActionType
 
 	// Redemption action is a priority action and should be checked on every

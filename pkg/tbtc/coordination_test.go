@@ -2,8 +2,14 @@ package tbtc
 
 import (
 	"context"
+	"crypto/sha256"
 	"encoding/hex"
+	"github.com/go-test/deep"
 	"github.com/keep-network/keep-core/pkg/chain"
+	"github.com/keep-network/keep-core/pkg/net"
+	netlocal "github.com/keep-network/keep-core/pkg/net/local"
+	"math/big"
+	"reflect"
 	"testing"
 	"time"
 
@@ -63,6 +69,47 @@ func TestCoordinationWindow_IsAfterActivePhase(t *testing.T) {
 		false,
 		window.isAfter(nextWindow),
 	)
+}
+
+func TestCoordinationWindow_Index(t *testing.T) {
+	tests := map[string]struct {
+		coordinationBlock uint64
+		expectedIndex     uint64
+	}{
+		"block 0": {
+			coordinationBlock: 0,
+			expectedIndex:     0,
+		},
+		"block 900": {
+			coordinationBlock: 900,
+			expectedIndex:     1,
+		},
+		"block 1800": {
+			coordinationBlock: 1800,
+			expectedIndex:     2,
+		},
+		"block 9000": {
+			coordinationBlock: 9000,
+			expectedIndex:     10,
+		},
+		"block 9001": {
+			coordinationBlock: 9001,
+			expectedIndex:     0,
+		},
+	}
+
+	for testName, test := range tests {
+		t.Run(testName, func(t *testing.T) {
+			window := newCoordinationWindow(test.coordinationBlock)
+
+			testutils.AssertIntsEqual(
+				t,
+				"index",
+				int(test.expectedIndex),
+				int(window.index()),
+			)
+		})
+	}
 }
 
 func TestWatchCoordinationWindows(t *testing.T) {
@@ -206,4 +253,209 @@ func TestCoordinationExecutor_CoordinationLeader(t *testing.T) {
 		"D2662604f8b4540336fBd3c1F48d7e9cdFbD079c",
 		leader.String(),
 	)
+}
+
+func TestCoordinationExecutor_ActionsChecklist(t *testing.T) {
+	tests := map[string]struct {
+		coordinationBlock uint64
+		expectedChecklist []WalletActionType
+	}{
+		// Incorrect coordination window.
+		"block 0": {
+			coordinationBlock: 0,
+			expectedChecklist: nil,
+		},
+		"block 900": {
+			coordinationBlock: 900,
+			expectedChecklist: []WalletActionType{ActionRedemption},
+		},
+		// Incorrect coordination window.
+		"block 901": {
+			coordinationBlock: 901,
+			expectedChecklist: nil,
+		},
+		"block 1800": {
+			coordinationBlock: 1800,
+			expectedChecklist: []WalletActionType{ActionRedemption},
+		},
+		"block 2700": {
+			coordinationBlock: 2700,
+			expectedChecklist: []WalletActionType{ActionRedemption},
+		},
+		"block 3600": {
+			coordinationBlock: 3600,
+			expectedChecklist: []WalletActionType{ActionRedemption},
+		},
+		"block 4500": {
+			coordinationBlock: 4500,
+			expectedChecklist: []WalletActionType{ActionRedemption},
+		},
+		// Heartbeat randomly selected for the 6th coordination window.
+		"block 5400": {
+			coordinationBlock: 5400,
+			expectedChecklist: []WalletActionType{
+				ActionRedemption,
+				ActionHeartbeat,
+			},
+		},
+		"block 6300": {
+			coordinationBlock: 6300,
+			expectedChecklist: []WalletActionType{ActionRedemption},
+		},
+		"block 7200": {
+			coordinationBlock: 7200,
+			expectedChecklist: []WalletActionType{ActionRedemption},
+		},
+		"block 8100": {
+			coordinationBlock: 8100,
+			expectedChecklist: []WalletActionType{ActionRedemption},
+		},
+		"block 9000": {
+			coordinationBlock: 9000,
+			expectedChecklist: []WalletActionType{ActionRedemption},
+		},
+		"block 9900": {
+			coordinationBlock: 9900,
+			expectedChecklist: []WalletActionType{ActionRedemption},
+		},
+		"block 10800": {
+			coordinationBlock: 10800,
+			expectedChecklist: []WalletActionType{ActionRedemption},
+		},
+		"block 11700": {
+			coordinationBlock: 11700,
+			expectedChecklist: []WalletActionType{ActionRedemption},
+		},
+		// Heartbeat randomly selected for the 14th coordination window.
+		"block 12600": {
+			coordinationBlock: 12600,
+			expectedChecklist: []WalletActionType{
+				ActionRedemption,
+				ActionHeartbeat,
+			},
+		},
+		"block 13500": {
+			coordinationBlock: 13500,
+			expectedChecklist: []WalletActionType{ActionRedemption},
+		},
+		// 16th coordination window so, all actions should be on the checklist.
+		"block 14400": {
+			coordinationBlock: 14400,
+			expectedChecklist: []WalletActionType{
+				ActionRedemption,
+				ActionDepositSweep,
+				ActionMovedFundsSweep,
+				ActionMovingFunds,
+			},
+		},
+	}
+
+	executor := &coordinationExecutor{}
+
+	for testName, test := range tests {
+		t.Run(
+			testName, func(t *testing.T) {
+				window := newCoordinationWindow(test.coordinationBlock)
+
+				// Build an arbitrary seed based on the coordination block number.
+				seed := sha256.Sum256(
+					big.NewInt(int64(window.coordinationBlock) + 1).Bytes(),
+				)
+
+				checklist := executor.actionsChecklist(window.index(), seed)
+
+				if diff := deep.Equal(
+					checklist,
+					test.expectedChecklist,
+				); diff != nil {
+					t.Errorf(
+						"compare failed: %v\nactual: %s\nexpected: %s",
+						diff,
+						checklist,
+						test.expectedChecklist,
+					)
+				}
+			},
+		)
+	}
+}
+
+func TestCoordinationExecutor_LeaderRoutine(t *testing.T) {
+	provider := netlocal.Connect()
+
+	broadcastChannel, err := provider.BroadcastChannelFor("test")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	broadcastChannel.SetUnmarshaler(func() net.TaggedUnmarshaler {
+		return &coordinationMessage{}
+	})
+
+	proposalGenerator := func(actionsChecklist []WalletActionType) (
+		coordinationProposal,
+		error,
+	) {
+		for _, action := range actionsChecklist {
+			if action == ActionDepositSweep {
+				return &DepositSweepProposal{
+					// Set just one field to make the proposal non-empty.
+					SweepTxFee: big.NewInt(1000),
+				}, nil
+			}
+		}
+
+		return &noopProposal{}, nil
+	}
+
+	executor := &coordinationExecutor{
+		// Set only relevant fields.
+		proposalGenerator: proposalGenerator,
+		broadcastChannel:  broadcastChannel,
+	}
+
+	actionsChecklist := []WalletActionType{
+		ActionRedemption,
+		ActionDepositSweep,
+		ActionMovedFundsSweep,
+		ActionMovingFunds,
+	}
+
+	ctx, cancelCtx := context.WithTimeout(context.Background(), 1*time.Second)
+	defer cancelCtx()
+
+	var broadcastedProposal coordinationProposal
+	broadcastChannel.Recv(ctx, func(message net.Message) {
+		// Set broadcastedProposal from message.
+	})
+
+	proposal, err := executor.leaderRoutine(ctx, actionsChecklist)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	expectedProposal := &DepositSweepProposal{
+		SweepTxFee: big.NewInt(1000),
+	}
+
+	if !reflect.DeepEqual(expectedProposal, proposal) {
+		t.Errorf(
+			"unexpected proposal returned by leader's routine: \n"+
+				"expected: %v\n"+
+				"actual:   %v",
+			expectedProposal,
+			proposal,
+		)
+	}
+
+	// TODO: Modify this condition when the time comes.
+	if !reflect.DeepEqual(nil, broadcastedProposal) {
+		t.Errorf(
+			"unexpected proposal broadcasted to the followers: \n"+
+				"expected: %v\n"+
+				"actual:   %v",
+			nil,
+			broadcastedProposal,
+		)
+	}
 }
