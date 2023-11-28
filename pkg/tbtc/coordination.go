@@ -46,6 +46,14 @@ const (
 	// heartbeat action during the coordination procedure, assuming no other
 	// higher-priority action is proposed.
 	coordinationHeartbeatProbability = float64(0.125)
+	// coordinationMessageReceiveBuffer is a buffer for messages received from
+	// the broadcast channel needed when the coordination follower is
+	// temporarily too slow to handle them. Keep in mind that although we
+	// expect only 1 coordination message, it may happen that the follower
+	// receives retransmissions of messages from the coordination protocol,
+	// and before they are filtered out as not interesting for the follower,
+	// they are buffered in the channel.
+	coordinationMessageReceiveBuffer = 512
 )
 
 // errCoordinationExecutorBusy is an error returned when the coordination
@@ -365,7 +373,12 @@ func (ce *coordinationExecutor) coordinate(
 			)
 		}
 	} else {
-		proposal, err = ce.followerRoutine()
+		proposal, err = ce.followerRoutine(
+			ctx,
+			leader,
+			window.coordinationBlock,
+			append(actionsChecklist, ActionNoop),
+		)
 		if err != nil {
 			return nil, fmt.Errorf(
 				"failed to execute follower's routine: [%v]",
@@ -543,7 +556,81 @@ func (ce *coordinationExecutor) leaderRoutine(
 // window. The routine listens for the coordination message from the leader and
 // validates it. If the leader's proposal is valid, it returns the received
 // proposal. Returns an error if the routine failed.
-func (ce *coordinationExecutor) followerRoutine() (coordinationProposal, error) {
-	// TODO: Implement the follower routine.
-	return nil, nil
+func (ce *coordinationExecutor) followerRoutine(
+	ctx context.Context,
+	leader chain.Address,
+	coordinationBlock uint64,
+	actionsAllowed []WalletActionType,
+) (coordinationProposal, error) {
+	// Cache wallet public key hash to not compute it on every message.
+	walletPublicKeyHash := ce.walletPublicKeyHash()
+	// Leader ID is the index of the first (index-wise) member controlled by
+	// the leader operator. The membersByOperator function returns a list of
+	// members controlled by the leader operator in the ascending order.
+	// It is enough to take the first member from the list. No need
+	// to check for list length as it is guaranteed that the leader operator
+	// is one of the operators backing the wallet.
+	leaderID := ce.coordinatedWallet.membersByOperator(leader)[0]
+
+	messagesChan := make(chan net.Message, coordinationMessageReceiveBuffer)
+
+	ce.broadcastChannel.Recv(ctx, func(message net.Message) {
+		messagesChan <- message
+	})
+
+loop:
+	for {
+		select {
+		case netMessage := <-messagesChan:
+			// Filter out messages of wrong type.
+			message, ok := netMessage.Payload().(*coordinationMessage)
+			if !ok {
+				continue
+			}
+
+			// Filter out messages from self.
+			if slices.Contains(ce.membersIndexes, message.senderID) {
+				continue
+			}
+
+			// Filter out messages with invalid membership.
+			if !ce.membershipValidator.IsValidMembership(
+				message.senderID,
+				netMessage.SenderPublicKey(),
+			) {
+				continue
+			}
+
+			// Filter out messages with wrong coordination block.
+			if coordinationBlock != message.coordinationBlock {
+				continue
+			}
+
+			// Filter out messages with wrong wallet.
+			if walletPublicKeyHash != message.walletPublicKeyHash {
+				continue
+			}
+
+			// Filter out messages from leader's impersonators.
+			if leaderID != message.senderID {
+				// TODO: Record coordination fault of type FaultLeaderImpersonation.
+				continue
+			}
+
+			// Filter out messages that propose an action that is not allowed
+			// for the given coordination window.
+			if !slices.Contains(actionsAllowed, message.proposal.actionType()) {
+				// TODO: Record coordination fault of type FaultLeaderMistake.
+				continue
+			}
+
+			return message.proposal, nil
+		case <-ctx.Done():
+			break loop
+		}
+	}
+
+	// TODO: Record coordination fault of type FaultLeaderIdleness.
+
+	return nil, fmt.Errorf("coordination message not received on time")
 }

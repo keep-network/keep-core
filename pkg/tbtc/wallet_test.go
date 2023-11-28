@@ -8,6 +8,8 @@ import (
 	"encoding/binary"
 	"encoding/hex"
 	"fmt"
+	"github.com/keep-network/keep-core/pkg/chain"
+	"github.com/keep-network/keep-core/pkg/protocol/group"
 	"math/big"
 	"reflect"
 	"sync"
@@ -312,6 +314,72 @@ func TestDetermineWalletMainUtxo(t *testing.T) {
 					"unexpected error\nexpected: %+v\nactual:   %+v\n",
 					test.expectedErr,
 					err,
+				)
+			}
+		})
+	}
+}
+
+func TestWallet_MembersByOperator(t *testing.T) {
+	wallet := &wallet{
+		// Set only relevant fields.
+		signingGroupOperators: []chain.Address{
+			"0x2",
+			"0x1",
+			"0x3",
+			"0x2",
+			"0x1",
+			"0x6",
+			"0x5",
+			"0x3",
+			"0x4",
+			"0x3",
+		},
+	}
+
+	tests := map[string]struct {
+		operator        chain.Address
+		expectedMembers []group.MemberIndex
+	}{
+		"operator 1": {
+			operator:        "0x1",
+			expectedMembers: []group.MemberIndex{2, 5},
+		},
+		"operator 2": {
+			operator:        "0x2",
+			expectedMembers: []group.MemberIndex{1, 4},
+		},
+		"operator 3": {
+			operator:        "0x3",
+			expectedMembers: []group.MemberIndex{3, 8, 10},
+		},
+		"operator 4": {
+			operator:        "0x4",
+			expectedMembers: []group.MemberIndex{9},
+		},
+		"operator 5": {
+			operator:        "0x5",
+			expectedMembers: []group.MemberIndex{7},
+		},
+		"operator 6": {
+			operator:        "0x6",
+			expectedMembers: []group.MemberIndex{6},
+		},
+		"operator 7": {
+			operator:        "0x7",
+			expectedMembers: []group.MemberIndex{},
+		},
+	}
+
+	for testName, test := range tests {
+		t.Run(testName, func(t *testing.T) {
+			members := wallet.membersByOperator(test.operator)
+
+			if !reflect.DeepEqual(test.expectedMembers, members) {
+				t.Errorf(
+					"unexpected members\nexpected: %+v\nactual:   %+v\n",
+					test.expectedMembers,
+					members,
 				)
 			}
 		})
