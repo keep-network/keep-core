@@ -487,7 +487,7 @@ func (ce *coordinationExecutor) actionsChecklist(
 	// frequency is every 16 coordination windows.
 	frequencyWindows := uint64(16)
 
-	// TODO: Increase frequency for the active wallet.
+	// TODO: Consider increasing frequency for the active wallet in the future.
 	if windowIndex%frequencyWindows == 0 {
 		actions = append(actions, ActionDepositSweep)
 	}
@@ -496,7 +496,7 @@ func (ce *coordinationExecutor) actionsChecklist(
 		actions = append(actions, ActionMovedFundsSweep)
 	}
 
-	// TODO: Increase frequency for old wallets.
+	// TODO: Consider increasing frequency for old wallets in the future.
 	if windowIndex%frequencyWindows == 0 {
 		actions = append(actions, ActionMovingFunds)
 	}

@@ -535,7 +535,7 @@ func TestCoordinationExecutor_FollowerRoutine(t *testing.T) {
 		return parsed
 	}
 
-	generateOperator := func() struct{
+	generateOperator := func() struct {
 		address chain.Address
 		channel net.BroadcastChannel
 	} {
@@ -568,7 +568,7 @@ func TestCoordinationExecutor_FollowerRoutine(t *testing.T) {
 			return &signingDoneMessage{}
 		})
 
-		return struct{
+		return struct {
 			address chain.Address
 			channel net.BroadcastChannel
 		}{
@@ -577,7 +577,7 @@ func TestCoordinationExecutor_FollowerRoutine(t *testing.T) {
 		}
 	}
 
-	leader:= generateOperator()
+	leader := generateOperator()
 	follower1 := generateOperator()
 	follower2 := generateOperator()
 
@@ -616,7 +616,7 @@ func TestCoordinationExecutor_FollowerRoutine(t *testing.T) {
 		membershipValidator: membershipValidator,
 	}
 
-	ctx, cancelCtx := context.WithTimeout(context.Background(), 10 * time.Second)
+	ctx, cancelCtx := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancelCtx()
 
 	go func() {
@@ -626,8 +626,8 @@ func TestCoordinationExecutor_FollowerRoutine(t *testing.T) {
 
 		// Send message of wrong type.
 		err := leader.channel.Send(ctx, &signingDoneMessage{
-			senderID: leaderID,
-			message: big.NewInt(100),
+			senderID:      leaderID,
+			message:       big.NewInt(100),
 			attemptNumber: 2,
 			signature: &tecdsa.Signature{
 				R:          big.NewInt(200),
@@ -643,10 +643,10 @@ func TestCoordinationExecutor_FollowerRoutine(t *testing.T) {
 
 		// Send message from self.
 		err = follower1.channel.Send(ctx, &coordinationMessage{
-			senderID: coordinatedWallet.membersByOperator(follower1.address)[0],
-			coordinationBlock: 900,
+			senderID:            coordinatedWallet.membersByOperator(follower1.address)[0],
+			coordinationBlock:   900,
 			walletPublicKeyHash: executor.walletPublicKeyHash(),
-			proposal: &noopProposal{},
+			proposal:            &noopProposal{},
 		})
 		if err != nil {
 			t.Error(err)
@@ -656,10 +656,10 @@ func TestCoordinationExecutor_FollowerRoutine(t *testing.T) {
 		// Send message with invalid membership.
 		err = leader.channel.Send(ctx, &coordinationMessage{
 			// Leader operator uses senderID controlled by follower 2.
-			senderID: coordinatedWallet.membersByOperator(follower2.address)[0],
-			coordinationBlock: 900,
+			senderID:            coordinatedWallet.membersByOperator(follower2.address)[0],
+			coordinationBlock:   900,
 			walletPublicKeyHash: executor.walletPublicKeyHash(),
-			proposal: &noopProposal{},
+			proposal:            &noopProposal{},
 		})
 		if err != nil {
 			t.Error(err)
@@ -669,10 +669,10 @@ func TestCoordinationExecutor_FollowerRoutine(t *testing.T) {
 		// Send message with wrong coordination block.
 		err = leader.channel.Send(ctx, &coordinationMessage{
 			// Proper block is 900.
-			senderID: leaderID,
-			coordinationBlock: 901,
+			senderID:            leaderID,
+			coordinationBlock:   901,
 			walletPublicKeyHash: executor.walletPublicKeyHash(),
-			proposal: &noopProposal{},
+			proposal:            &noopProposal{},
 		})
 		if err != nil {
 			t.Error(err)
@@ -681,10 +681,10 @@ func TestCoordinationExecutor_FollowerRoutine(t *testing.T) {
 
 		// Send message with wrong wallet.
 		err = leader.channel.Send(ctx, &coordinationMessage{
-			senderID: leaderID,
-			coordinationBlock: 900,
+			senderID:            leaderID,
+			coordinationBlock:   900,
 			walletPublicKeyHash: [20]byte{0x01},
-			proposal: &noopProposal{},
+			proposal:            &noopProposal{},
 		})
 		if err != nil {
 			t.Error(err)
@@ -693,10 +693,10 @@ func TestCoordinationExecutor_FollowerRoutine(t *testing.T) {
 
 		// Send message that impersonates the leader.
 		err = follower2.channel.Send(ctx, &coordinationMessage{
-			senderID: coordinatedWallet.membersByOperator(follower2.address)[0],
-			coordinationBlock: 900,
+			senderID:            coordinatedWallet.membersByOperator(follower2.address)[0],
+			coordinationBlock:   900,
 			walletPublicKeyHash: executor.walletPublicKeyHash(),
-			proposal: &noopProposal{},
+			proposal:            &noopProposal{},
 		})
 		if err != nil {
 			t.Error(err)
@@ -706,8 +706,8 @@ func TestCoordinationExecutor_FollowerRoutine(t *testing.T) {
 		// Send message with not allowed action proposal.
 		err = leader.channel.Send(ctx, &coordinationMessage{
 			// Heartbeat proposal is not allowed for this window.
-			senderID: leaderID,
-			coordinationBlock: 900,
+			senderID:            leaderID,
+			coordinationBlock:   900,
 			walletPublicKeyHash: executor.walletPublicKeyHash(),
 			proposal: &HeartbeatProposal{
 				Message: []byte("heartbeat message"),
@@ -720,8 +720,8 @@ func TestCoordinationExecutor_FollowerRoutine(t *testing.T) {
 
 		// Send a proper message.
 		err = leader.channel.Send(ctx, &coordinationMessage{
-			senderID: leaderID,
-			coordinationBlock: 900,
+			senderID:            leaderID,
+			coordinationBlock:   900,
 			walletPublicKeyHash: executor.walletPublicKeyHash(),
 			proposal: &RedemptionProposal{
 				RedeemersOutputScripts: []bitcoin.Script{
