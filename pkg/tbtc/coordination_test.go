@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
+	"fmt"
 	"github.com/go-test/deep"
 	"github.com/keep-network/keep-core/pkg/bitcoin"
 	"github.com/keep-network/keep-core/pkg/chain"
@@ -600,15 +601,18 @@ func TestCoordinationExecutor_FollowerRoutine(t *testing.T) {
 
 	leaderID := coordinatedWallet.membersByOperator(leader.address)[0]
 
+	localChain := Connect()
+
 	membershipValidator := group.NewMembershipValidator(
 		&testutils.MockLogger{},
 		coordinatedWallet.signingGroupOperators,
-		Connect().Signing(),
+		localChain.Signing(),
 	)
 
 	// Set up the executor for follower 1.
 	executor := &coordinationExecutor{
 		// Set only relevant fields.
+		chain:               localChain,
 		coordinatedWallet:   coordinatedWallet,
 		membersIndexes:      coordinatedWallet.membersByOperator(follower1.address),
 		operatorAddress:     follower1.address,
@@ -737,7 +741,7 @@ func TestCoordinationExecutor_FollowerRoutine(t *testing.T) {
 		}
 	}()
 
-	proposal, err := executor.followerRoutine(
+	proposal, faults, err := executor.followerRoutine(
 		ctx,
 		leader.address,
 		900,
@@ -762,6 +766,127 @@ func TestCoordinationExecutor_FollowerRoutine(t *testing.T) {
 				"actual:   %v",
 			expectedProposal,
 			proposal,
+		)
+	}
+
+	expectedFaults := []*coordinationFault{
+		{
+			culprit:   follower2.address,
+			faultType: FaultLeaderImpersonation,
+		},
+		{
+			culprit:   leader.address,
+			faultType: FaultLeaderMistake,
+		},
+	}
+	if !reflect.DeepEqual(expectedFaults, faults) {
+		t.Errorf(
+			"unexpected faults: \n"+
+				"expected: %v\n"+
+				"actual:   %v",
+			expectedProposal,
+			proposal,
+		)
+	}
+}
+
+func TestCoordinationExecutor_FollowerRoutine_WithIdleLeader(t *testing.T) {
+	// Uncompressed public key corresponding to the 20-byte public key hash:
+	// aa768412ceed10bd423c025542ca90071f9fb62d.
+	publicKeyHex, err := hex.DecodeString(
+		"0471e30bca60f6548d7b42582a478ea37ada63b402af7b3ddd57f0c95bb6843175" +
+			"aa0d2053a91a050a6797d85c38f2909cb7027f2344a01986aa2f9f8ca7a0c289",
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	generateOperator := func() chain.Address {
+		operatorPrivateKey, operatorPublicKey, err := operator.GenerateKeyPair(
+			local_v1.DefaultCurve,
+		)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		operatorAddress, err := ConnectWithKey(operatorPrivateKey).
+			Signing().
+			PublicKeyToAddress(operatorPublicKey)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		return operatorAddress
+	}
+
+	leader := generateOperator()
+	follower1 := generateOperator()
+	follower2 := generateOperator()
+
+	coordinatedWallet := wallet{
+		// Set only relevant fields.
+		publicKey: unmarshalPublicKey(publicKeyHex),
+		signingGroupOperators: []chain.Address{
+			follower1,
+			follower2,
+			leader,
+			leader,
+			follower2,
+			follower1,
+			follower1,
+			follower2,
+			leader,
+			leader,
+		},
+	}
+
+	provider := netlocal.Connect()
+
+	broadcastChannel, err := provider.BroadcastChannelFor("test")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	executor := &coordinationExecutor{
+		// Set only relevant fields.
+		coordinatedWallet: coordinatedWallet,
+		broadcastChannel:  broadcastChannel,
+	}
+
+	ctx, cancelCtx := context.WithTimeout(context.Background(), 1*time.Second)
+	defer cancelCtx()
+
+	_, faults, err := executor.followerRoutine(
+		ctx,
+		leader,
+		900,
+		[]WalletActionType{ActionRedemption, ActionNoop},
+	)
+
+	expectedErr := fmt.Errorf("coordination message not received on time")
+	if !reflect.DeepEqual(expectedErr, err) {
+		t.Errorf(
+			"unexpected error: \n"+
+				"expected: %v\n"+
+				"actual:   %v",
+			expectedErr,
+			err,
+		)
+	}
+
+	expectedFaults := []*coordinationFault{
+		{
+			culprit:   leader,
+			faultType: FaultLeaderIdleness,
+		},
+	}
+	if !reflect.DeepEqual(expectedFaults, faults) {
+		t.Errorf(
+			"unexpected faults: \n"+
+				"expected: %v\n"+
+				"actual:   %v",
+			expectedFaults,
+			faults,
 		)
 	}
 }

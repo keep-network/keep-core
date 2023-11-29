@@ -360,6 +360,8 @@ func (ce *coordinationExecutor) coordinate(
 	defer cancelCtx()
 
 	var proposal coordinationProposal
+	var faults []*coordinationFault
+
 	if leader == ce.operatorAddress {
 		proposal, err = ce.leaderRoutine(
 			ctx,
@@ -373,7 +375,7 @@ func (ce *coordinationExecutor) coordinate(
 			)
 		}
 	} else {
-		proposal, err = ce.followerRoutine(
+		proposal, faults, err = ce.followerRoutine(
 			ctx,
 			leader,
 			window.coordinationBlock,
@@ -397,7 +399,7 @@ func (ce *coordinationExecutor) coordinate(
 		window:   window,
 		leader:   leader,
 		proposal: proposal,
-		faults:   nil, // TODO: Fill coordination faults.
+		faults:   faults,
 	}
 
 	return result, nil
@@ -561,7 +563,7 @@ func (ce *coordinationExecutor) followerRoutine(
 	leader chain.Address,
 	coordinationBlock uint64,
 	actionsAllowed []WalletActionType,
-) (coordinationProposal, error) {
+) (coordinationProposal, []*coordinationFault, error) {
 	// Cache wallet public key hash to not compute it on every message.
 	walletPublicKeyHash := ce.walletPublicKeyHash()
 	// Leader ID is the index of the first (index-wise) member controlled by
@@ -571,6 +573,8 @@ func (ce *coordinationExecutor) followerRoutine(
 	// to check for list length as it is guaranteed that the leader operator
 	// is one of the operators backing the wallet.
 	leaderID := ce.coordinatedWallet.membersByOperator(leader)[0]
+
+	faults := make([]*coordinationFault, 0)
 
 	messagesChan := make(chan net.Message, coordinationMessageReceiveBuffer)
 
@@ -613,24 +617,42 @@ loop:
 
 			// Filter out messages from leader's impersonators.
 			if leaderID != message.senderID {
-				// TODO: Record coordination fault of type FaultLeaderImpersonation.
+				sender := ce.chain.Signing().PublicKeyBytesToAddress(
+					netMessage.SenderPublicKey(),
+				)
+				faults = append(
+					faults, &coordinationFault{
+						culprit:   sender,
+						faultType: FaultLeaderImpersonation,
+					},
+				)
 				continue
 			}
 
 			// Filter out messages that propose an action that is not allowed
 			// for the given coordination window.
 			if !slices.Contains(actionsAllowed, message.proposal.actionType()) {
-				// TODO: Record coordination fault of type FaultLeaderMistake.
+				faults = append(
+					faults, &coordinationFault{
+						culprit:   leader,
+						faultType: FaultLeaderMistake,
+					},
+				)
 				continue
 			}
 
-			return message.proposal, nil
+			return message.proposal, faults, nil
 		case <-ctx.Done():
 			break loop
 		}
 	}
 
-	// TODO: Record coordination fault of type FaultLeaderIdleness.
+	faults = append(
+		faults, &coordinationFault{
+			culprit:   leader,
+			faultType: FaultLeaderIdleness,
+		},
+	)
 
-	return nil, fmt.Errorf("coordination message not received on time")
+	return nil, faults, fmt.Errorf("coordination message not received on time")
 }
