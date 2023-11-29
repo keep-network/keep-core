@@ -321,7 +321,7 @@ func (ce *coordinationExecutor) walletPublicKeyHash() [20]byte {
 // coordinate executes the coordination procedure for the given coordination
 // window.
 //
-// TODO: Add logging and cover with unit tests.
+// TODO: Add logging.
 func (ce *coordinationExecutor) coordinate(
 	window *coordinationWindow,
 ) (*coordinationResult, error) {
@@ -574,7 +574,7 @@ func (ce *coordinationExecutor) followerRoutine(
 	// is one of the operators backing the wallet.
 	leaderID := ce.coordinatedWallet.membersByOperator(leader)[0]
 
-	faults := make([]*coordinationFault, 0)
+	var faults []*coordinationFault
 
 	messagesChan := make(chan net.Message, coordinationMessageReceiveBuffer)
 

@@ -2,6 +2,7 @@ package tbtc
 
 import (
 	"context"
+	"crypto/ecdsa"
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
@@ -9,12 +10,15 @@ import (
 	"github.com/keep-network/keep-core/pkg/bitcoin"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/chain/local_v1"
+	"github.com/keep-network/keep-core/pkg/generator"
 	"github.com/keep-network/keep-core/pkg/net"
 	netlocal "github.com/keep-network/keep-core/pkg/net/local"
 	"github.com/keep-network/keep-core/pkg/operator"
 	"github.com/keep-network/keep-core/pkg/protocol/group"
 	"github.com/keep-network/keep-core/pkg/tecdsa"
+	"golang.org/x/exp/slices"
 	"math/big"
+	"math/rand"
 	"reflect"
 	"testing"
 	"time"
@@ -169,6 +173,277 @@ func TestWatchCoordinationWindows(t *testing.T) {
 		"second window",
 		1800,
 		int(receivedWindows[1].coordinationBlock),
+	)
+}
+
+func TestCoordinationExecutor_Coordinate(t *testing.T) {
+	// Uncompressed public key corresponding to the 20-byte public key hash:
+	// aa768412ceed10bd423c025542ca90071f9fb62d.
+	publicKeyHex, err := hex.DecodeString(
+		"0471e30bca60f6548d7b42582a478ea37ada63b402af7b3ddd57f0c95bb6843175" +
+			"aa0d2053a91a050a6797d85c38f2909cb7027f2344a01986aa2f9f8ca7a0c289",
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// 20-byte public key hash corresponding to the public key above.
+	buffer, err := hex.DecodeString("aa768412ceed10bd423c025542ca90071f9fb62d")
+	if err != nil {
+		t.Fatal(err)
+	}
+	var publicKeyHash [20]byte
+	copy(publicKeyHash[:], buffer)
+
+	parseScript := func(script string) bitcoin.Script {
+		parsed, err := hex.DecodeString(script)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		return parsed
+	}
+
+	coordinationBlock := uint64(900)
+
+	type operatorFixture struct {
+		chain              Chain
+		address            chain.Address
+		channel            net.BroadcastChannel
+		waitForBlockHeight func(ctx context.Context, blockHeight uint64) error
+	}
+
+	generateOperator := func(seed int64) *operatorFixture {
+		// #nosec G404 (insecure random number source (rand))
+		rng := rand.New(rand.NewSource(seed))
+		// Generate operators with deterministic addresses that don't change
+		// between test runs. This is required to assert the leader selection.
+		generated, err := ecdsa.GenerateKey(
+			local_v1.DefaultCurve,
+			rng,
+		)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		localChain := ConnectWithKey(
+			&operator.PrivateKey{
+				PublicKey: operator.PublicKey{
+					Curve: operator.Secp256k1,
+					X:     generated.X,
+					Y:     generated.Y,
+				},
+				D: generated.D,
+			},
+			100*time.Millisecond,
+		)
+
+		localChain.setBlockHashByNumber(
+			coordinationBlock-32,
+			"1422996cbcbc38fc924a46f4df5f9064279d3ab43396e58386dac9b87440d64f",
+		)
+
+		operatorAddress, err := localChain.operatorAddress()
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		_, operatorPublicKey, err := localChain.OperatorKeyPair()
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		broadcastChannel, err := netlocal.ConnectWithKey(operatorPublicKey).
+			BroadcastChannelFor("test")
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		broadcastChannel.SetUnmarshaler(func() net.TaggedUnmarshaler {
+			return &coordinationMessage{}
+		})
+
+		waitForBlockHeight := func(ctx context.Context, blockHeight uint64) error {
+			blockCounter, err := localChain.BlockCounter()
+			if err != nil {
+				return err
+			}
+
+			wait, err := blockCounter.BlockHeightWaiter(blockHeight)
+			if err != nil {
+				return err
+			}
+
+			select {
+			case <-wait:
+			case <-ctx.Done():
+			}
+
+			return nil
+		}
+
+		return &operatorFixture{
+			chain:              localChain,
+			address:            operatorAddress,
+			channel:            broadcastChannel,
+			waitForBlockHeight: waitForBlockHeight,
+		}
+	}
+
+	operator1 := generateOperator(1)
+	operator2 := generateOperator(2)
+	operator3 := generateOperator(3)
+
+	coordinatedWallet := wallet{
+		publicKey: unmarshalPublicKey(publicKeyHex),
+		signingGroupOperators: []chain.Address{
+			operator2.address,
+			operator3.address,
+			operator1.address,
+			operator1.address,
+			operator3.address,
+			operator2.address,
+			operator2.address,
+			operator3.address,
+			operator1.address,
+			operator1.address,
+		},
+	}
+
+	proposalGenerator := func(
+		walletPublicKeyHash [20]byte,
+		actionsChecklist []WalletActionType,
+	) (coordinationProposal, error) {
+		for _, action := range actionsChecklist {
+			if walletPublicKeyHash == publicKeyHash && action == ActionRedemption {
+				return &RedemptionProposal{
+					RedeemersOutputScripts: []bitcoin.Script{
+						parseScript("00148db50eb52063ea9d98b3eac91489a90f738986f6"),
+						parseScript("76a9148db50eb52063ea9d98b3eac91489a90f738986f688ac"),
+					},
+					RedemptionTxFee: big.NewInt(10000),
+				}, nil
+			}
+		}
+
+		return &noopProposal{}, nil
+	}
+
+	membershipValidator := group.NewMembershipValidator(
+		&testutils.MockLogger{},
+		coordinatedWallet.signingGroupOperators,
+		Connect().Signing(),
+	)
+
+	protocolLatch := generator.NewProtocolLatch()
+
+	generateExecutor := func(operator *operatorFixture) *coordinationExecutor {
+		return newCoordinationExecutor(
+			operator.chain,
+			coordinatedWallet,
+			coordinatedWallet.membersByOperator(operator.address),
+			operator.address,
+			proposalGenerator,
+			operator.channel,
+			membershipValidator,
+			protocolLatch,
+			operator.waitForBlockHeight,
+		)
+	}
+
+	window := newCoordinationWindow(coordinationBlock)
+
+	type report struct {
+		operatorIndex int
+		result        *coordinationResult
+		err           error
+	}
+
+	reportChan := make(chan *report, 3)
+
+	for i, currentOperator := range []*operatorFixture{
+		operator1,
+		operator2,
+		operator3,
+	} {
+		go func(operatorIndex int, operator *operatorFixture) {
+			result, err := generateExecutor(operator).coordinate(window)
+
+			reportChan <- &report{
+				operatorIndex: operatorIndex,
+				result:        result,
+				err:           err,
+			}
+		}(i+1, currentOperator)
+	}
+
+	reports := make([]*report, 0)
+loop:
+	//lint:ignore S1000 for-select is used as the channel is not closed by senders.
+	for {
+		select {
+		case r := <-reportChan:
+			reports = append(reports, r)
+
+			if len(reports) == 3 {
+				break loop
+			}
+		}
+	}
+
+	slices.SortFunc(reports, func(i, j *report) bool {
+		return i.operatorIndex < j.operatorIndex
+	})
+
+	testutils.AssertIntsEqual(t, "reports count", 3, len(reports))
+
+	expectedResult := &coordinationResult{
+		wallet: coordinatedWallet,
+		window: window,
+		leader: operator3.address,
+		proposal: &RedemptionProposal{
+			RedeemersOutputScripts: []bitcoin.Script{
+				parseScript("00148db50eb52063ea9d98b3eac91489a90f738986f6"),
+				parseScript("76a9148db50eb52063ea9d98b3eac91489a90f738986f688ac"),
+			},
+			RedemptionTxFee: big.NewInt(10000),
+		},
+		faults: nil,
+	}
+
+	expectedReports := []*report{
+		{
+			operatorIndex: 1,
+			result:        expectedResult,
+			err:           nil,
+		},
+		{
+			operatorIndex: 2,
+			result:        expectedResult,
+			err:           nil,
+		},
+		{
+			operatorIndex: 3,
+			result:        expectedResult,
+			err:           nil,
+		},
+	}
+	if !reflect.DeepEqual(expectedReports, reports) {
+		t.Errorf(
+			"unexpected reports:\n"+
+				"expected: %v\n"+
+				"actual:   %v",
+			expectedReports,
+			reports,
+		)
+
+	}
+
+	testutils.AssertBoolsEqual(
+		t,
+		"protocol latch state",
+		false,
+		protocolLatch.IsExecuting(),
 	)
 }
 
@@ -540,22 +815,20 @@ func TestCoordinationExecutor_FollowerRoutine(t *testing.T) {
 		address chain.Address
 		channel net.BroadcastChannel
 	} {
-		operatorPrivateKey, operatorPublicKey, err := operator.GenerateKeyPair(
-			local_v1.DefaultCurve,
-		)
+		localChain := Connect()
+
+		operatorAddress, err := localChain.operatorAddress()
 		if err != nil {
 			t.Fatal(err)
 		}
 
-		operatorAddress, err := ConnectWithKey(operatorPrivateKey).
-			Signing().
-			PublicKeyToAddress(operatorPublicKey)
+		_, operatorPublicKey, err := localChain.OperatorKeyPair()
 		if err != nil {
 			t.Fatal(err)
 		}
 
-		provider := netlocal.ConnectWithKey(operatorPublicKey)
-		broadcastChannel, err := provider.BroadcastChannelFor("test")
+		broadcastChannel, err := netlocal.ConnectWithKey(operatorPublicKey).
+			BroadcastChannelFor("test")
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -583,7 +856,6 @@ func TestCoordinationExecutor_FollowerRoutine(t *testing.T) {
 	follower2 := generateOperator()
 
 	coordinatedWallet := wallet{
-		// Set only relevant fields.
 		publicKey: unmarshalPublicKey(publicKeyHex),
 		signingGroupOperators: []chain.Address{
 			follower1.address,
@@ -824,7 +1096,6 @@ func TestCoordinationExecutor_FollowerRoutine_WithIdleLeader(t *testing.T) {
 	follower2 := generateOperator()
 
 	coordinatedWallet := wallet{
-		// Set only relevant fields.
 		publicKey: unmarshalPublicKey(publicKeyHex),
 		signingGroupOperators: []chain.Address{
 			follower1,
