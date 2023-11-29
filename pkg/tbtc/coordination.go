@@ -6,6 +6,7 @@ import (
 	"encoding/binary"
 	"fmt"
 	"github.com/keep-network/keep-core/pkg/internal/pb"
+	"go.uber.org/zap"
 	"golang.org/x/exp/slices"
 	"math/rand"
 	"sort"
@@ -320,8 +321,6 @@ func (ce *coordinationExecutor) walletPublicKeyHash() [20]byte {
 
 // coordinate executes the coordination procedure for the given coordination
 // window.
-//
-// TODO: Add logging.
 func (ce *coordinationExecutor) coordinate(
 	window *coordinationWindow,
 ) (*coordinationResult, error) {
@@ -341,14 +340,32 @@ func (ce *coordinationExecutor) coordinate(
 		)
 	}
 
+	walletPublicKeyBytes, err := marshalPublicKey(ce.coordinatedWallet.publicKey)
+	if err != nil {
+		return nil, fmt.Errorf("cannot marshal wallet public key: [%v]", err)
+	}
+
+	execLogger := logger.With(
+		zap.Uint64("coordinationBlock", window.coordinationBlock),
+		zap.String("wallet", fmt.Sprintf("0x%x", walletPublicKeyBytes)),
+	)
+
+	execLogger.Info("starting coordination")
+
 	seed, err := ce.coordinationSeed(window.coordinationBlock)
 	if err != nil {
 		return nil, fmt.Errorf("failed to compute coordination seed: [%v]", err)
 	}
 
+	execLogger.Info("coordination seed is: [0x%x]", seed)
+
 	leader := ce.coordinationLeader(seed)
 
+	execLogger.Info("coordination leader is: [%s]", leader)
+
 	actionsChecklist := ce.actionsChecklist(window.index(), seed)
+
+	execLogger.Info("actions checklist is: [%v]", actionsChecklist)
 
 	// Set up a context that is cancelled when the active phase of the
 	// coordination window ends.
@@ -363,6 +380,8 @@ func (ce *coordinationExecutor) coordinate(
 	var faults []*coordinationFault
 
 	if leader == ce.operatorAddress {
+		execLogger.Info("executing leader's routine")
+
 		proposal, err = ce.leaderRoutine(
 			ctx,
 			window.coordinationBlock,
@@ -374,7 +393,11 @@ func (ce *coordinationExecutor) coordinate(
 				err,
 			)
 		}
+
+		execLogger.Info("broadcasted proposal: [%s]", proposal.actionType())
 	} else {
+		execLogger.Info("executing follower's routine")
+
 		proposal, faults, err = ce.followerRoutine(
 			ctx,
 			leader,
@@ -387,6 +410,12 @@ func (ce *coordinationExecutor) coordinate(
 				err,
 			)
 		}
+
+		execLogger.Info(
+			"received proposal: [%s]; observed faults: [%v]",
+			proposal.actionType(),
+			faults,
+		)
 	}
 
 	// Just in case, if the proposal is nil, set it to noop.
@@ -401,6 +430,8 @@ func (ce *coordinationExecutor) coordinate(
 		proposal: proposal,
 		faults:   faults,
 	}
+
+	execLogger.Info("coordination completed with result: [%s]", result)
 
 	return result, nil
 }
