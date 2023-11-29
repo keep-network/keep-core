@@ -5,10 +5,14 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"github.com/go-test/deep"
+	"github.com/keep-network/keep-core/pkg/bitcoin"
 	"github.com/keep-network/keep-core/pkg/chain"
+	"github.com/keep-network/keep-core/pkg/chain/local_v1"
 	"github.com/keep-network/keep-core/pkg/net"
 	netlocal "github.com/keep-network/keep-core/pkg/net/local"
+	"github.com/keep-network/keep-core/pkg/operator"
 	"github.com/keep-network/keep-core/pkg/protocol/group"
+	"github.com/keep-network/keep-core/pkg/tecdsa"
 	"math/big"
 	"reflect"
 	"testing"
@@ -507,6 +511,257 @@ func TestCoordinationExecutor_LeaderRoutine(t *testing.T) {
 				"actual:   %v",
 			expectedMessage,
 			message,
+		)
+	}
+}
+
+func TestCoordinationExecutor_FollowerRoutine(t *testing.T) {
+	// Uncompressed public key corresponding to the 20-byte public key hash:
+	// aa768412ceed10bd423c025542ca90071f9fb62d.
+	publicKeyHex, err := hex.DecodeString(
+		"0471e30bca60f6548d7b42582a478ea37ada63b402af7b3ddd57f0c95bb6843175" +
+			"aa0d2053a91a050a6797d85c38f2909cb7027f2344a01986aa2f9f8ca7a0c289",
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	parseScript := func(script string) bitcoin.Script {
+		parsed, err := hex.DecodeString(script)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		return parsed
+	}
+
+	generateOperator := func() struct{
+		address chain.Address
+		channel net.BroadcastChannel
+	} {
+		operatorPrivateKey, operatorPublicKey, err := operator.GenerateKeyPair(
+			local_v1.DefaultCurve,
+		)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		operatorAddress, err := ConnectWithKey(operatorPrivateKey).
+			Signing().
+			PublicKeyToAddress(operatorPublicKey)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		provider := netlocal.ConnectWithKey(operatorPublicKey)
+		broadcastChannel, err := provider.BroadcastChannelFor("test")
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		broadcastChannel.SetUnmarshaler(func() net.TaggedUnmarshaler {
+			return &coordinationMessage{}
+		})
+		// Register an unmarshaler for the signingDoneMessage that will
+		// be uses to test the case with the wrong message type.
+		broadcastChannel.SetUnmarshaler(func() net.TaggedUnmarshaler {
+			return &signingDoneMessage{}
+		})
+
+		return struct{
+			address chain.Address
+			channel net.BroadcastChannel
+		}{
+			address: operatorAddress,
+			channel: broadcastChannel,
+		}
+	}
+
+	leader:= generateOperator()
+	follower1 := generateOperator()
+	follower2 := generateOperator()
+
+	coordinatedWallet := wallet{
+		// Set only relevant fields.
+		publicKey: unmarshalPublicKey(publicKeyHex),
+		signingGroupOperators: []chain.Address{
+			follower1.address,
+			follower2.address,
+			leader.address,
+			leader.address,
+			follower2.address,
+			follower1.address,
+			follower1.address,
+			follower2.address,
+			leader.address,
+			leader.address,
+		},
+	}
+
+	leaderID := coordinatedWallet.membersByOperator(leader.address)[0]
+
+	membershipValidator := group.NewMembershipValidator(
+		&testutils.MockLogger{},
+		coordinatedWallet.signingGroupOperators,
+		Connect().Signing(),
+	)
+
+	// Set up the executor for follower 1.
+	executor := &coordinationExecutor{
+		// Set only relevant fields.
+		coordinatedWallet:   coordinatedWallet,
+		membersIndexes:      coordinatedWallet.membersByOperator(follower1.address),
+		operatorAddress:     follower1.address,
+		broadcastChannel:    follower1.channel,
+		membershipValidator: membershipValidator,
+	}
+
+	ctx, cancelCtx := context.WithTimeout(context.Background(), 10 * time.Second)
+	defer cancelCtx()
+
+	go func() {
+		// Give the follower routine some time to start and set up the
+		// broadcast channel handler.
+		time.Sleep(1 * time.Second)
+
+		// Send message of wrong type.
+		err := leader.channel.Send(ctx, &signingDoneMessage{
+			senderID: leaderID,
+			message: big.NewInt(100),
+			attemptNumber: 2,
+			signature: &tecdsa.Signature{
+				R:          big.NewInt(200),
+				S:          big.NewInt(300),
+				RecoveryID: 3,
+			},
+			endBlock: 4500,
+		})
+		if err != nil {
+			t.Error(err)
+			return
+		}
+
+		// Send message from self.
+		err = follower1.channel.Send(ctx, &coordinationMessage{
+			senderID: coordinatedWallet.membersByOperator(follower1.address)[0],
+			coordinationBlock: 900,
+			walletPublicKeyHash: executor.walletPublicKeyHash(),
+			proposal: &noopProposal{},
+		})
+		if err != nil {
+			t.Error(err)
+			return
+		}
+
+		// Send message with invalid membership.
+		err = leader.channel.Send(ctx, &coordinationMessage{
+			// Leader operator uses senderID controlled by follower 2.
+			senderID: coordinatedWallet.membersByOperator(follower2.address)[0],
+			coordinationBlock: 900,
+			walletPublicKeyHash: executor.walletPublicKeyHash(),
+			proposal: &noopProposal{},
+		})
+		if err != nil {
+			t.Error(err)
+			return
+		}
+
+		// Send message with wrong coordination block.
+		err = leader.channel.Send(ctx, &coordinationMessage{
+			// Proper block is 900.
+			senderID: leaderID,
+			coordinationBlock: 901,
+			walletPublicKeyHash: executor.walletPublicKeyHash(),
+			proposal: &noopProposal{},
+		})
+		if err != nil {
+			t.Error(err)
+			return
+		}
+
+		// Send message with wrong wallet.
+		err = leader.channel.Send(ctx, &coordinationMessage{
+			senderID: leaderID,
+			coordinationBlock: 900,
+			walletPublicKeyHash: [20]byte{0x01},
+			proposal: &noopProposal{},
+		})
+		if err != nil {
+			t.Error(err)
+			return
+		}
+
+		// Send message that impersonates the leader.
+		err = follower2.channel.Send(ctx, &coordinationMessage{
+			senderID: coordinatedWallet.membersByOperator(follower2.address)[0],
+			coordinationBlock: 900,
+			walletPublicKeyHash: executor.walletPublicKeyHash(),
+			proposal: &noopProposal{},
+		})
+		if err != nil {
+			t.Error(err)
+			return
+		}
+
+		// Send message with not allowed action proposal.
+		err = leader.channel.Send(ctx, &coordinationMessage{
+			// Heartbeat proposal is not allowed for this window.
+			senderID: leaderID,
+			coordinationBlock: 900,
+			walletPublicKeyHash: executor.walletPublicKeyHash(),
+			proposal: &HeartbeatProposal{
+				Message: []byte("heartbeat message"),
+			},
+		})
+		if err != nil {
+			t.Error(err)
+			return
+		}
+
+		// Send a proper message.
+		err = leader.channel.Send(ctx, &coordinationMessage{
+			senderID: leaderID,
+			coordinationBlock: 900,
+			walletPublicKeyHash: executor.walletPublicKeyHash(),
+			proposal: &RedemptionProposal{
+				RedeemersOutputScripts: []bitcoin.Script{
+					parseScript("00148db50eb52063ea9d98b3eac91489a90f738986f6"),
+					parseScript("76a9148db50eb52063ea9d98b3eac91489a90f738986f688ac"),
+				},
+				RedemptionTxFee: big.NewInt(10000),
+			},
+		})
+		if err != nil {
+			t.Error(err)
+			return
+		}
+	}()
+
+	proposal, err := executor.followerRoutine(
+		ctx,
+		leader.address,
+		900,
+		[]WalletActionType{ActionRedemption, ActionNoop},
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	expectedProposal := &RedemptionProposal{
+		RedeemersOutputScripts: []bitcoin.Script{
+			parseScript("00148db50eb52063ea9d98b3eac91489a90f738986f6"),
+			parseScript("76a9148db50eb52063ea9d98b3eac91489a90f738986f688ac"),
+		},
+		RedemptionTxFee: big.NewInt(10000),
+	}
+
+	if !reflect.DeepEqual(expectedProposal, proposal) {
+		t.Errorf(
+			"unexpected proposal: \n"+
+				"expected: %v\n"+
+				"actual:   %v",
+			expectedProposal,
+			proposal,
 		)
 	}
 }
