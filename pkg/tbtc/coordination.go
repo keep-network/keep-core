@@ -352,18 +352,18 @@ func (ce *coordinationExecutor) coordinate(
 
 	execLogger.Info("starting coordination")
 
-	seed, err := ce.coordinationSeed(window.coordinationBlock)
+	seed, err := ce.getSeed(window.coordinationBlock)
 	if err != nil {
 		return nil, fmt.Errorf("failed to compute coordination seed: [%v]", err)
 	}
 
 	execLogger.Info("coordination seed is: [0x%x]", seed)
 
-	leader := ce.coordinationLeader(seed)
+	leader := ce.getLeader(seed)
 
 	execLogger.Info("coordination leader is: [%s]", leader)
 
-	actionsChecklist := ce.actionsChecklist(window.index(), seed)
+	actionsChecklist := ce.getActionsChecklist(window.index(), seed)
 
 	execLogger.Info("actions checklist is: [%v]", actionsChecklist)
 
@@ -382,7 +382,7 @@ func (ce *coordinationExecutor) coordinate(
 	if leader == ce.operatorAddress {
 		execLogger.Info("executing leader's routine")
 
-		proposal, err = ce.leaderRoutine(
+		proposal, err = ce.executeLeaderRoutine(
 			ctx,
 			window.coordinationBlock,
 			actionsChecklist,
@@ -398,7 +398,7 @@ func (ce *coordinationExecutor) coordinate(
 	} else {
 		execLogger.Info("executing follower's routine")
 
-		proposal, faults, err = ce.followerRoutine(
+		proposal, faults, err = ce.executeFollowerRoutine(
 			ctx,
 			leader,
 			window.coordinationBlock,
@@ -436,9 +436,8 @@ func (ce *coordinationExecutor) coordinate(
 	return result, nil
 }
 
-// coordinationSeed computes the coordination seed for the given coordination
-// window.
-func (ce *coordinationExecutor) coordinationSeed(
+// getSeed computes the coordination seed for the given coordination window.
+func (ce *coordinationExecutor) getSeed(
 	coordinationBlock uint64,
 ) ([32]byte, error) {
 	walletPublicKeyHash := ce.walletPublicKeyHash()
@@ -460,9 +459,9 @@ func (ce *coordinationExecutor) coordinationSeed(
 	), nil
 }
 
-// coordinationLeader returns the address of the coordination leader for the
-// given coordination seed.
-func (ce *coordinationExecutor) coordinationLeader(seed [32]byte) chain.Address {
+// getLeader returns the address of the coordination leader for the given
+// coordination seed.
+func (ce *coordinationExecutor) getLeader(seed [32]byte) chain.Address {
 	// First, take all operators backing the wallet.
 	allOperators := chain.Addresses(ce.coordinatedWallet.signingGroupOperators)
 
@@ -498,10 +497,10 @@ func (ce *coordinationExecutor) coordinationLeader(seed [32]byte) chain.Address 
 	return uniqueOperators[0]
 }
 
-// actionsChecklist returns a list of wallet actions that should be checked
+// getActionsChecklist returns a list of wallet actions that should be checked
 // for the given coordination window. Returns nil for incorrect coordination
 // windows whose index is 0.
-func (ce *coordinationExecutor) actionsChecklist(
+func (ce *coordinationExecutor) getActionsChecklist(
 	windowIndex uint64,
 	seed [32]byte,
 ) []WalletActionType {
@@ -545,10 +544,10 @@ func (ce *coordinationExecutor) actionsChecklist(
 	return actions
 }
 
-// leaderRoutine executes the leader's routine for the given coordination
+// executeLeaderRoutine executes the leader's routine for the given coordination
 // window. The routine generates a proposal and broadcasts it to the followers.
 // It returns the generated proposal or an error if the routine failed.
-func (ce *coordinationExecutor) leaderRoutine(
+func (ce *coordinationExecutor) executeLeaderRoutine(
 	ctx context.Context,
 	coordinationBlock uint64,
 	actionsChecklist []WalletActionType,
@@ -585,11 +584,11 @@ func (ce *coordinationExecutor) leaderRoutine(
 	return proposal, nil
 }
 
-// followerRoutine executes the follower's routine for the given coordination
+// executeFollowerRoutine executes the follower's routine for the given coordination
 // window. The routine listens for the coordination message from the leader and
 // validates it. If the leader's proposal is valid, it returns the received
 // proposal. Returns an error if the routine failed.
-func (ce *coordinationExecutor) followerRoutine(
+func (ce *coordinationExecutor) executeFollowerRoutine(
 	ctx context.Context,
 	leader chain.Address,
 	coordinationBlock uint64,

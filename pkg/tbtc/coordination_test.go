@@ -447,7 +447,7 @@ loop:
 	)
 }
 
-func TestCoordinationExecutor_CoordinationSeed(t *testing.T) {
+func TestCoordinationExecutor_GetSeed(t *testing.T) {
 	coordinationBlock := uint64(900)
 
 	localChain := Connect()
@@ -478,7 +478,7 @@ func TestCoordinationExecutor_CoordinationSeed(t *testing.T) {
 		coordinatedWallet: coordinatedWallet,
 	}
 
-	seed, err := executor.coordinationSeed(coordinationBlock)
+	seed, err := executor.getSeed(coordinationBlock)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -494,7 +494,7 @@ func TestCoordinationExecutor_CoordinationSeed(t *testing.T) {
 	)
 }
 
-func TestCoordinationExecutor_CoordinationLeader(t *testing.T) {
+func TestCoordinationExecutor_GetLeader(t *testing.T) {
 	seedBytes, err := hex.DecodeString(
 		"9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08",
 	)
@@ -526,7 +526,7 @@ func TestCoordinationExecutor_CoordinationLeader(t *testing.T) {
 		coordinatedWallet: coordinatedWallet,
 	}
 
-	leader := executor.coordinationLeader(seed)
+	leader := executor.getLeader(seed)
 
 	testutils.AssertStringsEqual(
 		t,
@@ -536,7 +536,7 @@ func TestCoordinationExecutor_CoordinationLeader(t *testing.T) {
 	)
 }
 
-func TestCoordinationExecutor_ActionsChecklist(t *testing.T) {
+func TestCoordinationExecutor_GetActionsChecklist(t *testing.T) {
 	tests := map[string]struct {
 		coordinationBlock uint64
 		expectedChecklist []WalletActionType
@@ -643,7 +643,7 @@ func TestCoordinationExecutor_ActionsChecklist(t *testing.T) {
 					big.NewInt(int64(window.coordinationBlock) + 1).Bytes(),
 				)
 
-				checklist := executor.actionsChecklist(window.index(), seed)
+				checklist := executor.getActionsChecklist(window.index(), seed)
 
 				if diff := deep.Equal(
 					checklist,
@@ -661,7 +661,7 @@ func TestCoordinationExecutor_ActionsChecklist(t *testing.T) {
 	}
 }
 
-func TestCoordinationExecutor_LeaderRoutine(t *testing.T) {
+func TestCoordinationExecutor_ExecuteLeaderRoutine(t *testing.T) {
 	// Uncompressed public key corresponding to the 20-byte public key hash:
 	// aa768412ceed10bd423c025542ca90071f9fb62d.
 	publicKeyHex, err := hex.DecodeString(
@@ -752,7 +752,7 @@ func TestCoordinationExecutor_LeaderRoutine(t *testing.T) {
 		cancelCtx()
 	})
 
-	proposal, err := executor.leaderRoutine(ctx, 900, actionsChecklist)
+	proposal, err := executor.executeLeaderRoutine(ctx, 900, actionsChecklist)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -791,7 +791,7 @@ func TestCoordinationExecutor_LeaderRoutine(t *testing.T) {
 	}
 }
 
-func TestCoordinationExecutor_FollowerRoutine(t *testing.T) {
+func TestCoordinationExecutor_ExecuteFollowerRoutine(t *testing.T) {
 	// Uncompressed public key corresponding to the 20-byte public key hash:
 	// aa768412ceed10bd423c025542ca90071f9fb62d.
 	publicKeyHex, err := hex.DecodeString(
@@ -1013,7 +1013,7 @@ func TestCoordinationExecutor_FollowerRoutine(t *testing.T) {
 		}
 	}()
 
-	proposal, faults, err := executor.followerRoutine(
+	proposal, faults, err := executor.executeFollowerRoutine(
 		ctx,
 		leader.address,
 		900,
@@ -1062,7 +1062,7 @@ func TestCoordinationExecutor_FollowerRoutine(t *testing.T) {
 	}
 }
 
-func TestCoordinationExecutor_FollowerRoutine_WithIdleLeader(t *testing.T) {
+func TestCoordinationExecutor_ExecuteFollowerRoutine_WithIdleLeader(t *testing.T) {
 	// Uncompressed public key corresponding to the 20-byte public key hash:
 	// aa768412ceed10bd423c025542ca90071f9fb62d.
 	publicKeyHex, err := hex.DecodeString(
@@ -1127,7 +1127,7 @@ func TestCoordinationExecutor_FollowerRoutine_WithIdleLeader(t *testing.T) {
 	ctx, cancelCtx := context.WithTimeout(context.Background(), 1*time.Second)
 	defer cancelCtx()
 
-	_, faults, err := executor.followerRoutine(
+	_, faults, err := executor.executeFollowerRoutine(
 		ctx,
 		leader,
 		900,
