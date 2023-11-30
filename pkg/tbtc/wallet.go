@@ -7,6 +7,7 @@ import (
 	"crypto/elliptic"
 	"encoding/hex"
 	"fmt"
+	"golang.org/x/exp/slices"
 	"math/big"
 	"sync"
 	"time"
@@ -30,6 +31,26 @@ const (
 	ActionMovingFunds
 	ActionMovedFundsSweep
 )
+
+// ParseWalletActionType parses the given value into a WalletActionType.
+func ParseWalletActionType(value uint8) (WalletActionType, error) {
+	switch value {
+	case 0:
+		return ActionNoop, nil
+	case 1:
+		return ActionHeartbeat, nil
+	case 2:
+		return ActionDepositSweep, nil
+	case 3:
+		return ActionRedemption, nil
+	case 4:
+		return ActionMovingFunds, nil
+	case 5:
+		return ActionMovedFundsSweep, nil
+	default:
+		return 0, fmt.Errorf("unknown wallet action type [%v]", value)
+	}
+}
 
 func (wat WalletActionType) String() string {
 	switch wat {
@@ -364,6 +385,23 @@ func (w *wallet) groupSize() int {
 // signing group size for the given honest threshold provided as argument.
 func (w *wallet) groupDishonestThreshold(honestThreshold int) int {
 	return w.groupSize() - honestThreshold
+}
+
+// membersByOperator returns the list of group members' indexes that are
+// associated with the given operator address. The returned list is sorted
+// in ascending order.
+func (w *wallet) membersByOperator(operator chain.Address) []group.MemberIndex {
+	members := make([]group.MemberIndex, 0)
+
+	for i, signingGroupOperator := range w.signingGroupOperators {
+		if signingGroupOperator == operator {
+			members = append(members, group.MemberIndex(i+1))
+		}
+	}
+
+	slices.Sort(members)
+
+	return members
 }
 
 func (w *wallet) String() string {

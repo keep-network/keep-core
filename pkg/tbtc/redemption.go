@@ -54,6 +54,7 @@ const (
 // RedemptionProposal represents a redemption proposal issued by a wallet's
 // coordination leader.
 type RedemptionProposal struct {
+	// TODO: Remove WalletPublicKeyHash field.
 	WalletPublicKeyHash    [20]byte
 	RedeemersOutputScripts []bitcoin.Script
 	RedemptionTxFee        *big.Int

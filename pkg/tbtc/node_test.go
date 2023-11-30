@@ -198,10 +198,13 @@ func TestNode_GetCoordinationExecutor(t *testing.T) {
 		t,
 		"signers count",
 		1,
-		len(executor.signers),
+		len(executor.membersIndexes),
 	)
 
-	if !reflect.DeepEqual(signer, executor.signers[0]) {
+	if !reflect.DeepEqual(
+		signer.signingGroupMemberIndex,
+		executor.membersIndexes[0],
+	) {
 		t.Errorf("executor holds an unexpected signer")
 	}
 
@@ -321,13 +324,13 @@ func TestNode_RunCoordinationLayer(t *testing.T) {
 		return nil, false
 	}
 
-	// Simply add processed results to the list.
-	var processedResults []*coordinationResult
+	// Simply pass processed results to the channel.
+	processedResultsChan := make(chan *coordinationResult, 5)
 	processCoordinationResultFn := func(
 		_ *node,
 		result *coordinationResult,
 	) {
-		processedResults = append(processedResults, result)
+		processedResultsChan <- result
 	}
 
 	ctx, cancelCtx := context.WithCancel(context.Background())
@@ -344,21 +347,30 @@ func TestNode_RunCoordinationLayer(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	// Wait until the second-last coordination window passes.
-	err = localChain.blockCounter.WaitForBlockHeight(4000)
+	// Set up a stop signal that will be triggered after the last coordination
+	// window passes.
+	waiter, err := localChain.blockCounter.BlockHeightWaiter(5000)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	// Stop coordination layer. As we are between the second-last and the last
-	// coordination window, the last window should not be processed. This
-	// allows us to test that the coordination layer's shutdown works as expected.
-	cancelCtx()
+	var processedResults []*coordinationResult
+loop:
+	for {
+		select {
+		case result := <-processedResultsChan:
+			processedResults = append(processedResults, result)
 
-	// Wait until the last coordination window passes.
-	err = localChain.blockCounter.WaitForBlockHeight(5000)
-	if err != nil {
-		t.Fatal(err)
+			// Once the second-last coordination window is processed, stop the
+			// coordination layer. In that case, the last window should not be
+			// processed. This allows us to test that the coordination layer's
+			// shutdown works as expected.
+			if len(processedResults) == 3 {
+				cancelCtx()
+			}
+		case <-waiter:
+			break loop
+		}
 	}
 
 	testutils.AssertIntsEqual(
@@ -396,6 +408,14 @@ func (mcp *mockCoordinationProposal) actionType() WalletActionType {
 }
 
 func (mcp *mockCoordinationProposal) validityBlocks() uint64 {
+	panic("unsupported")
+}
+
+func (mcp *mockCoordinationProposal) Marshal() ([]byte, error) {
+	panic("unsupported")
+}
+
+func (mcp *mockCoordinationProposal) Unmarshal(bytes []byte) error {
 	panic("unsupported")
 }
 

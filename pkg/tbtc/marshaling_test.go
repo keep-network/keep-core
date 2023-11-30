@@ -3,6 +3,8 @@ package tbtc
 import (
 	"crypto/ecdsa"
 	"crypto/elliptic"
+	"encoding/hex"
+	"github.com/keep-network/keep-core/pkg/bitcoin"
 	"math/big"
 	"reflect"
 	"testing"
@@ -103,4 +105,229 @@ func TestFuzzSigningDoneMessage_MarshalingRoundtrip(t *testing.T) {
 
 func TestFuzzSigningDoneMessage_Unmarshaler(t *testing.T) {
 	pbutils.FuzzUnmarshaler(&signingDoneMessage{})
+}
+
+func TestCoordinationMessage_MarshalingRoundtrip(t *testing.T) {
+	parseHash := func(hash string) bitcoin.Hash {
+		parsed, err := bitcoin.NewHashFromString(hash, bitcoin.InternalByteOrder)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		return parsed
+	}
+
+	parseScript := func(script string) bitcoin.Script {
+		parsed, err := hex.DecodeString(script)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		return parsed
+	}
+
+	tests := map[string]struct {
+		proposal coordinationProposal
+	}{
+		"with noop proposal": {
+			proposal: &noopProposal{},
+		},
+		"with heartbeat proposal": {
+			proposal: &HeartbeatProposal{
+				Message: []byte("heartbeat message"),
+			},
+		},
+		"with deposit sweep proposal": {
+			proposal: &DepositSweepProposal{
+				DepositsKeys: []struct {
+					FundingTxHash      bitcoin.Hash
+					FundingOutputIndex uint32
+				}{
+					{
+						FundingTxHash:      parseHash("709b55bd3da0f5a838125bd0ee20c5bfdd7caba173912d4281cae816b79a201b"),
+						FundingOutputIndex: 0,
+					},
+					{
+						FundingTxHash:      parseHash("27ca64c092a959c7edc525ed45e845b1de6a7590d173fd2fad9133c8a779a1e3"),
+						FundingOutputIndex: 1,
+					},
+				},
+				SweepTxFee: big.NewInt(10000),
+				DepositsRevealBlocks: []*big.Int{
+					big.NewInt(100),
+					big.NewInt(300),
+				},
+			},
+		},
+		"with redemption proposal": {
+			proposal: &RedemptionProposal{
+				RedeemersOutputScripts: []bitcoin.Script{
+					parseScript("00148db50eb52063ea9d98b3eac91489a90f738986f6"),
+					parseScript("76a9148db50eb52063ea9d98b3eac91489a90f738986f688ac"),
+				},
+				RedemptionTxFee: big.NewInt(10000),
+			},
+		},
+		// TODO: Uncomment when moving funds support is implemented.
+		// "with moving funds proposal": {
+		//     proposal: &MovingFundsProposal{},
+		// },
+		// "with moved funds sweep proposal": {
+		//     proposal: &MovedFundsSweepProposal{},
+		// },
+	}
+
+	walletPublicKeyHashBytes, err := hex.DecodeString(
+		"aa768412ceed10bd423c025542ca90071f9fb62d",
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var walletPublicKeyHash [20]byte
+	copy(walletPublicKeyHash[:], walletPublicKeyHashBytes)
+
+	for testName, test := range tests {
+		t.Run(testName, func(t *testing.T) {
+			msg := &coordinationMessage{
+				senderID:            group.MemberIndex(10),
+				coordinationBlock:   900,
+				walletPublicKeyHash: walletPublicKeyHash,
+				proposal:            test.proposal,
+			}
+			unmarshaled := &coordinationMessage{}
+
+			err := pbutils.RoundTrip(msg, unmarshaled)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			if !reflect.DeepEqual(msg, unmarshaled) {
+				t.Fatalf("unexpected content of unmarshaled message")
+			}
+		})
+	}
+}
+
+func TestFuzzCoordinationMessage_MarshalingRoundtrip_WithHeartbeatProposal(t *testing.T) {
+	for i := 0; i < 10; i++ {
+		var (
+			senderID            group.MemberIndex
+			coordinationBlock   uint64
+			walletPublicKeyHash [20]byte
+			proposal            HeartbeatProposal
+		)
+
+		f := fuzz.New().NilChance(0.1).
+			NumElements(0, 512).
+			Funcs(pbutils.FuzzFuncs()...)
+
+		f.Fuzz(&senderID)
+		f.Fuzz(&coordinationBlock)
+		f.Fuzz(&walletPublicKeyHash)
+		f.Fuzz(&proposal)
+
+		doneMessage := &coordinationMessage{
+			senderID:            senderID,
+			coordinationBlock:   coordinationBlock,
+			walletPublicKeyHash: walletPublicKeyHash,
+			proposal:            &proposal,
+		}
+
+		_ = pbutils.RoundTrip(doneMessage, &coordinationMessage{})
+	}
+}
+
+func TestFuzzCoordinationMessage_MarshalingRoundtrip_WithDepositSweepProposal(t *testing.T) {
+	for i := 0; i < 10; i++ {
+		var (
+			senderID            group.MemberIndex
+			coordinationBlock   uint64
+			walletPublicKeyHash [20]byte
+			proposal            DepositSweepProposal
+		)
+
+		f := fuzz.New().NilChance(0.1).
+			NumElements(0, 512).
+			Funcs(pbutils.FuzzFuncs()...)
+
+		f.Fuzz(&senderID)
+		f.Fuzz(&coordinationBlock)
+		f.Fuzz(&walletPublicKeyHash)
+		f.Fuzz(&proposal)
+
+		doneMessage := &coordinationMessage{
+			senderID:            senderID,
+			coordinationBlock:   coordinationBlock,
+			walletPublicKeyHash: walletPublicKeyHash,
+			proposal:            &proposal,
+		}
+
+		_ = pbutils.RoundTrip(doneMessage, &coordinationMessage{})
+	}
+}
+
+func TestFuzzCoordinationMessage_MarshalingRoundtrip_WithRedemptionProposal(t *testing.T) {
+	for i := 0; i < 10; i++ {
+		var (
+			senderID            group.MemberIndex
+			coordinationBlock   uint64
+			walletPublicKeyHash [20]byte
+			proposal            RedemptionProposal
+		)
+
+		f := fuzz.New().NilChance(0.1).
+			NumElements(0, 512).
+			Funcs(pbutils.FuzzFuncs()...)
+
+		f.Fuzz(&senderID)
+		f.Fuzz(&coordinationBlock)
+		f.Fuzz(&walletPublicKeyHash)
+		f.Fuzz(&proposal)
+
+		doneMessage := &coordinationMessage{
+			senderID:            senderID,
+			coordinationBlock:   coordinationBlock,
+			walletPublicKeyHash: walletPublicKeyHash,
+			proposal:            &proposal,
+		}
+
+		_ = pbutils.RoundTrip(doneMessage, &coordinationMessage{})
+	}
+}
+
+func TestFuzzCoordinationMessage_MarshalingRoundtrip_WithNoopProposal(t *testing.T) {
+	for i := 0; i < 10; i++ {
+		var (
+			senderID            group.MemberIndex
+			coordinationBlock   uint64
+			walletPublicKeyHash [20]byte
+			proposal            noopProposal
+		)
+
+		f := fuzz.New().NilChance(0.1).
+			NumElements(0, 512).
+			Funcs(pbutils.FuzzFuncs()...)
+
+		f.Fuzz(&senderID)
+		f.Fuzz(&coordinationBlock)
+		f.Fuzz(&walletPublicKeyHash)
+		f.Fuzz(&proposal)
+
+		doneMessage := &coordinationMessage{
+			senderID:            senderID,
+			coordinationBlock:   coordinationBlock,
+			walletPublicKeyHash: walletPublicKeyHash,
+			proposal:            &proposal,
+		}
+
+		_ = pbutils.RoundTrip(doneMessage, &coordinationMessage{})
+	}
+}
+
+// TODO: Create two unit tests once moving funds is implemented:
+//       - TestFuzzCoordinationMessage_MarshalingRoundtrip_WithMovingFundsProposal
+//       - TestFuzzCoordinationMessage_MarshalingRoundtrip_WithMovedFundsSweepProposal
+
+func TestFuzzCoordinationMessage_Unmarshaler(t *testing.T) {
+	pbutils.FuzzUnmarshaler(&coordinationMessage{})
 }

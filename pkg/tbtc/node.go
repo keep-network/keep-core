@@ -348,7 +348,9 @@ func (n *node) getCoordinationExecutor(
 		return nil, false, fmt.Errorf("failed to get broadcast channel: [%v]", err)
 	}
 
-	// TODO: Register unmarshalers
+	broadcastChannel.SetUnmarshaler(func() net.TaggedUnmarshaler {
+		return &coordinationMessage{}
+	})
 
 	membershipValidator := group.NewMembershipValidator(
 		executorLogger,
@@ -365,19 +367,44 @@ func (n *node) getCoordinationExecutor(
 		)
 	}
 
+	// The coordination executor does not need access to signers' key material.
+	// It is enough to pass only their member indexes.
+	membersIndexes := make([]group.MemberIndex, len(signers))
+	for i, s := range signers {
+		membersIndexes[i] = s.signingGroupMemberIndex
+	}
+
+	operatorAddress, err := n.operatorAddress()
+	if err != nil {
+		return nil, false, fmt.Errorf("failed to get operator address: [%v]", err)
+	}
+
+	proposalGenerator := func(
+		walletPublicKeyHash [20]byte,
+		actionsChecklist []WalletActionType,
+	) (coordinationProposal, error) {
+		// TODO: Implement proposal generation.
+		return &noopProposal{}, nil
+	}
+
+	executor := newCoordinationExecutor(
+		n.chain,
+		wallet,
+		membersIndexes,
+		operatorAddress,
+		proposalGenerator,
+		broadcastChannel,
+		membershipValidator,
+		n.protocolLatch,
+		n.waitForBlockHeight,
+	)
+
+	n.coordinationExecutors[executorKey] = executor
+
 	executorLogger.Infof(
 		"coordination executor created; controlling [%v] signers",
 		len(signers),
 	)
-
-	executor := newCoordinationExecutor(
-		signers,
-		broadcastChannel,
-		membershipValidator,
-		n.protocolLatch,
-	)
-
-	n.coordinationExecutors[executorKey] = executor
 
 	return executor, true, nil
 }

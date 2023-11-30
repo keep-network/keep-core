@@ -4,6 +4,8 @@ import (
 	"crypto/ecdsa"
 	"crypto/elliptic"
 	"fmt"
+	"github.com/keep-network/keep-core/pkg/bitcoin"
+	"math"
 	"math/big"
 
 	"google.golang.org/protobuf/proto"
@@ -121,6 +123,264 @@ func (sdm *signingDoneMessage) Unmarshal(bytes []byte) error {
 	sdm.attemptNumber = pbMsg.AttemptNumber
 	sdm.signature = signature
 	sdm.endBlock = pbMsg.EndBlock
+
+	return nil
+}
+
+// Marshal converts the coordinationMessage to a byte array.
+func (cm *coordinationMessage) Marshal() ([]byte, error) {
+	proposalBytes, err := cm.proposal.Marshal()
+	if err != nil {
+		return nil, err
+	}
+
+	pbProposal := &pb.CoordinationProposal{
+		ActionType: uint32(cm.proposal.actionType()),
+		Payload:    proposalBytes,
+	}
+
+	return proto.Marshal(
+		&pb.CoordinationMessage{
+			SenderID:            uint32(cm.senderID),
+			CoordinationBlock:   cm.coordinationBlock,
+			WalletPublicKeyHash: append([]byte{}, cm.walletPublicKeyHash[:]...),
+			Proposal:            pbProposal,
+		},
+	)
+}
+
+// Unmarshal converts a byte array back to the coordinationMessage.
+func (cm *coordinationMessage) Unmarshal(bytes []byte) error {
+	pbMsg := pb.CoordinationMessage{}
+	if err := proto.Unmarshal(bytes, &pbMsg); err != nil {
+		return fmt.Errorf("failed to unmarshal CoordinationMessage: [%v]", err)
+	}
+
+	if err := validateMemberIndex(pbMsg.SenderID); err != nil {
+		return err
+	}
+
+	walletPublicKeyHash, err := unmarshalWalletPublicKeyHash(pbMsg.WalletPublicKeyHash)
+	if err != nil {
+		return fmt.Errorf(
+			"failed to unmarshal wallet public key hash: [%v]",
+			err,
+		)
+	}
+
+	if pbMsg.Proposal == nil {
+		return fmt.Errorf("missing proposal")
+	}
+	proposal, err := unmarshalCoordinationProposal(
+		pbMsg.Proposal.ActionType,
+		pbMsg.Proposal.Payload,
+	)
+	if err != nil {
+		return fmt.Errorf("failed to unmarshal proposal: [%v]", err)
+	}
+
+	cm.senderID = group.MemberIndex(pbMsg.SenderID)
+	cm.coordinationBlock = pbMsg.CoordinationBlock
+	cm.walletPublicKeyHash = walletPublicKeyHash
+	cm.proposal = proposal
+
+	return nil
+}
+
+// unmarshalWalletPublicKeyHash converts a byte array to a wallet public key
+// hash.
+func unmarshalWalletPublicKeyHash(bytes []byte) ([20]byte, error) {
+	if len(bytes) != 20 {
+		return [20]byte{}, fmt.Errorf(
+			"invalid wallet public key hash length: [%v]",
+			len(bytes),
+		)
+	}
+
+	var walletPublicKeyHash [20]byte
+	copy(walletPublicKeyHash[:], bytes)
+
+	return walletPublicKeyHash, nil
+}
+
+// unmarshalCoordinationProposal converts a byte array back to the coordination
+// proposal.
+func unmarshalCoordinationProposal(actionType uint32, payload []byte) (
+	coordinationProposal,
+	error,
+) {
+	if actionType > math.MaxUint8 {
+		return nil, fmt.Errorf(
+			"invalid proposal action type value: [%v]",
+			actionType,
+		)
+	}
+
+	parsedActionType, err := ParseWalletActionType(uint8(actionType))
+	if err != nil {
+		return nil, fmt.Errorf(
+			"failed to parse proposal action type: [%v]",
+			err,
+		)
+	}
+
+	proposal, ok := map[WalletActionType]coordinationProposal{
+		ActionNoop:         &noopProposal{},
+		ActionHeartbeat:    &HeartbeatProposal{},
+		ActionDepositSweep: &DepositSweepProposal{},
+		ActionRedemption:   &RedemptionProposal{},
+		// TODO: Uncomment when moving funds support is implemented.
+		// ActionMovingFunds:     &MovingFundsProposal{},
+		// ActionMovedFundsSweep: &MovedFundsSweepProposal{},
+	}[parsedActionType]
+	if !ok {
+		return nil, fmt.Errorf(
+			"no unmarshaler for proposal action type: [%v]",
+			parsedActionType,
+		)
+	}
+
+	if err := proposal.Unmarshal(payload); err != nil {
+		return nil, fmt.Errorf("cannot unmarshal proposal payload: [%v]", err)
+	}
+
+	return proposal, nil
+}
+
+// Marshal converts the noopProposal to a byte array.
+func (np *noopProposal) Marshal() ([]byte, error) {
+	return []byte{}, nil
+}
+
+// Unmarshal converts a byte array back to the noopProposal.
+func (np *noopProposal) Unmarshal([]byte) error {
+	return nil
+}
+
+// Marshal converts the heartbeatProposal to a byte array.
+func (hp *HeartbeatProposal) Marshal() ([]byte, error) {
+	return proto.Marshal(
+		&pb.HeartbeatProposal{
+			Message: hp.Message,
+		},
+	)
+}
+
+// Unmarshal converts a byte array back to the heartbeatProposal.
+func (hp *HeartbeatProposal) Unmarshal(bytes []byte) error {
+	pbMsg := pb.HeartbeatProposal{}
+	if err := proto.Unmarshal(bytes, &pbMsg); err != nil {
+		return fmt.Errorf("failed to unmarshal HeartbeatProposal: [%v]", err)
+	}
+
+	hp.Message = pbMsg.Message
+
+	return nil
+}
+
+// Marshal converts the depositSweepProposal to a byte array.
+func (dsp *DepositSweepProposal) Marshal() ([]byte, error) {
+	depositsKeys := make(
+		[]*pb.DepositSweepProposal_DepositKey,
+		len(dsp.DepositsKeys),
+	)
+	for i, depositKey := range dsp.DepositsKeys {
+		depositsKeys[i] = &pb.DepositSweepProposal_DepositKey{
+			FundingTxHash:      append([]byte{}, depositKey.FundingTxHash[:]...),
+			FundingOutputIndex: depositKey.FundingOutputIndex,
+		}
+	}
+
+	depositsRevealBlocks := make([]uint64, len(dsp.DepositsRevealBlocks))
+	for i, block := range dsp.DepositsRevealBlocks {
+		depositsRevealBlocks[i] = block.Uint64()
+	}
+
+	return proto.Marshal(
+		&pb.DepositSweepProposal{
+			DepositsKeys:         depositsKeys,
+			SweepTxFee:           dsp.SweepTxFee.Bytes(),
+			DepositsRevealBlocks: depositsRevealBlocks,
+		},
+	)
+}
+
+// Unmarshal converts a byte array back to the depositSweepProposal.
+func (dsp *DepositSweepProposal) Unmarshal(bytes []byte) error {
+	pbMsg := pb.DepositSweepProposal{}
+	if err := proto.Unmarshal(bytes, &pbMsg); err != nil {
+		return fmt.Errorf("failed to unmarshal DepositSweepProposal: [%v]", err)
+	}
+
+	depositsKeys := make(
+		[]struct {
+			FundingTxHash      bitcoin.Hash
+			FundingOutputIndex uint32
+		},
+		len(pbMsg.DepositsKeys),
+	)
+	for i, depositKey := range pbMsg.DepositsKeys {
+		hash, err := bitcoin.NewHash(
+			depositKey.FundingTxHash,
+			bitcoin.InternalByteOrder,
+		)
+		if err != nil {
+			return fmt.Errorf(
+				"failed to unmarshal funding tx hash: [%v]",
+				err,
+			)
+		}
+
+		depositsKeys[i] = struct {
+			FundingTxHash      bitcoin.Hash
+			FundingOutputIndex uint32
+		}{
+			FundingTxHash:      hash,
+			FundingOutputIndex: depositKey.FundingOutputIndex,
+		}
+	}
+
+	depositsRevealBlocks := make([]*big.Int, len(pbMsg.DepositsRevealBlocks))
+	for i, block := range pbMsg.DepositsRevealBlocks {
+		depositsRevealBlocks[i] = big.NewInt(int64(block))
+	}
+
+	dsp.DepositsKeys = depositsKeys
+	dsp.SweepTxFee = new(big.Int).SetBytes(pbMsg.SweepTxFee)
+	dsp.DepositsRevealBlocks = depositsRevealBlocks
+
+	return nil
+}
+
+// Marshal converts the redemptionProposal to a byte array.
+func (rp *RedemptionProposal) Marshal() ([]byte, error) {
+	redeemersOutputScripts := make([][]byte, len(rp.RedeemersOutputScripts))
+	for i, script := range rp.RedeemersOutputScripts {
+		redeemersOutputScripts[i] = script
+	}
+
+	return proto.Marshal(
+		&pb.RedemptionProposal{
+			RedeemersOutputScripts: redeemersOutputScripts,
+			RedemptionTxFee:        rp.RedemptionTxFee.Bytes(),
+		},
+	)
+}
+
+// Unmarshal converts a byte array back to the redemptionProposal.
+func (rp *RedemptionProposal) Unmarshal(bytes []byte) error {
+	pbMsg := pb.RedemptionProposal{}
+	if err := proto.Unmarshal(bytes, &pbMsg); err != nil {
+		return fmt.Errorf("failed to unmarshal RedemptionProposal: [%v]", err)
+	}
+
+	redeemersOutputScripts := make([]bitcoin.Script, len(pbMsg.RedeemersOutputScripts))
+	for i, script := range pbMsg.RedeemersOutputScripts {
+		redeemersOutputScripts[i] = script
+	}
+
+	rp.RedeemersOutputScripts = redeemersOutputScripts
+	rp.RedemptionTxFee = new(big.Int).SetBytes(pbMsg.RedemptionTxFee)
 
 	return nil
 }

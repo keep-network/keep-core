@@ -2,7 +2,16 @@ package tbtc
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/binary"
 	"fmt"
+	"github.com/keep-network/keep-core/pkg/internal/pb"
+	"go.uber.org/zap"
+	"golang.org/x/exp/slices"
+	"math/rand"
+	"sort"
+
+	"github.com/keep-network/keep-core/pkg/bitcoin"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/generator"
 	"github.com/keep-network/keep-core/pkg/net"
@@ -29,6 +38,23 @@ const (
 	// coordination window.
 	coordinationDurationBlocks = coordinationActivePhaseDurationBlocks +
 		coordinationPassivePhaseDurationBlocks
+	// coordinationSafeBlockShift is the number of blocks by which the
+	// coordination block is shifted to obtain a safe block whose 32-byte
+	// hash can be used as an ingredient for the coordination seed, computed
+	// for the given coordination window.
+	coordinationSafeBlockShift = 32
+	// coordinationHeartbeatProbability is the probability of proposing a
+	// heartbeat action during the coordination procedure, assuming no other
+	// higher-priority action is proposed.
+	coordinationHeartbeatProbability = float64(0.125)
+	// coordinationMessageReceiveBuffer is a buffer for messages received from
+	// the broadcast channel needed when the coordination follower is
+	// temporarily too slow to handle them. Keep in mind that although we
+	// expect only 1 coordination message, it may happen that the follower
+	// receives retransmissions of messages from the coordination protocol,
+	// and before they are filtered out as not interesting for the follower,
+	// they are buffered in the channel.
+	coordinationMessageReceiveBuffer = 512
 )
 
 // errCoordinationExecutorBusy is an error returned when the coordination
@@ -71,6 +97,25 @@ func (cw *coordinationWindow) isAfter(other *coordinationWindow) bool {
 	return cw.coordinationBlock > other.coordinationBlock
 }
 
+// index returns the index of the coordination window. The index is computed
+// by dividing the coordination block number by the coordination frequency.
+// A valid index is a positive integer.
+//
+// For example:
+// - window starting at block 900 has index 1
+// - window starting at block 1800 has index 2
+// - window starting at block 2700 has index 3
+//
+// If the coordination block number is not a multiple of the coordination
+// frequency, the index is 0.
+func (cw *coordinationWindow) index() uint64 {
+	if cw.coordinationBlock%coordinationFrequencyBlocks == 0 {
+		return cw.coordinationBlock / coordinationFrequencyBlocks
+	}
+
+	return 0
+}
+
 // watchCoordinationWindows watches for new coordination windows and runs
 // the given callback when a new window is detected. The callback is run
 // in a separate goroutine. It is guaranteed that the callback is not run
@@ -87,11 +132,11 @@ func watchCoordinationWindows(
 	for {
 		select {
 		case block := <-blocksChan:
-			if block%coordinationFrequencyBlocks == 0 {
+			if window := newCoordinationWindow(block); window.index() > 0 {
 				// Make sure the current window is not the same as the last one.
 				// There is no guarantee that the block channel will not emit
 				// the same block again.
-				if window := newCoordinationWindow(block); window.isAfter(lastWindow) {
+				if window.isAfter(lastWindow) {
 					lastWindow = window
 					// Run the callback in a separate goroutine to avoid blocking
 					// this loop and potentially missing the next block.
@@ -138,9 +183,7 @@ func (cft CoordinationFaultType) String() string {
 
 // coordinationFault represents a single coordination fault.
 type coordinationFault struct {
-	// culprit is the address of the operator that is responsible for the fault.
-	culprit chain.Address
-	// faultType is the type of the fault.
+	culprit   chain.Address // address of the operator responsible for the fault
 	faultType CoordinationFaultType
 }
 
@@ -152,13 +195,28 @@ func (cf *coordinationFault) String() string {
 	)
 }
 
+// coordinationProposalGenerator is a function that generates a coordination
+// proposal based on the given checklist of possible wallet actions.
+// The checklist is a list of actions that should be checked for the given
+// coordination window. The generator is expected to return a proposal
+// for the first action from the checklist that is valid for the given
+// wallet's state. If none of the actions are valid, the generator
+// should return a noopProposal.
+type coordinationProposalGenerator func(
+	walletPublicKeyHash [20]byte,
+	actionsChecklist []WalletActionType,
+) (coordinationProposal, error)
+
 // coordinationProposal represents a single action proposal for the given wallet.
 type coordinationProposal interface {
+	pb.Marshaler
+	pb.Unmarshaler
+
 	// actionType returns the specific type of the walletAction being subject
 	// of this proposal.
 	actionType() WalletActionType
 	// validityBlocks returns the number of blocks for which the proposal is
-	// valid.
+	// valid. This value SHOULD NOT be marshaled/unmarshaled.
 	validityBlocks() uint64
 }
 
@@ -195,39 +253,70 @@ func (cr *coordinationResult) String() string {
 	)
 }
 
+// coordinationMessage represents a coordination message sent by the leader
+// to their followers during the active phase of the coordination window.
+type coordinationMessage struct {
+	senderID            group.MemberIndex
+	coordinationBlock   uint64
+	walletPublicKeyHash [20]byte
+	proposal            coordinationProposal
+}
+
+func (cm *coordinationMessage) Type() string {
+	return "tbtc/coordination_message"
+}
+
 // coordinationExecutor is responsible for executing the coordination
 // procedure for the given wallet.
 type coordinationExecutor struct {
 	lock *semaphore.Weighted
 
-	signers             []*signer // TODO: Do we need whole signers?
+	chain Chain
+
+	coordinatedWallet wallet
+	membersIndexes    []group.MemberIndex
+	operatorAddress   chain.Address
+
+	proposalGenerator coordinationProposalGenerator
+
 	broadcastChannel    net.BroadcastChannel
 	membershipValidator *group.MembershipValidator
 	protocolLatch       *generator.ProtocolLatch
+
+	waitForBlockFn waitForBlockFn
 }
 
 // newCoordinationExecutor creates a new coordination executor for the
 // given wallet.
 func newCoordinationExecutor(
-	signers []*signer,
+	chain Chain,
+	coordinatedWallet wallet,
+	membersIndexes []group.MemberIndex,
+	operatorAddress chain.Address,
+	proposalGenerator coordinationProposalGenerator,
 	broadcastChannel net.BroadcastChannel,
 	membershipValidator *group.MembershipValidator,
 	protocolLatch *generator.ProtocolLatch,
+	waitForBlockFn waitForBlockFn,
 ) *coordinationExecutor {
 	return &coordinationExecutor{
 		lock:                semaphore.NewWeighted(1),
-		signers:             signers,
+		chain:               chain,
+		coordinatedWallet:   coordinatedWallet,
+		membersIndexes:      membersIndexes,
+		operatorAddress:     operatorAddress,
+		proposalGenerator:   proposalGenerator,
 		broadcastChannel:    broadcastChannel,
 		membershipValidator: membershipValidator,
 		protocolLatch:       protocolLatch,
+		waitForBlockFn:      waitForBlockFn,
 	}
 }
 
-// wallet returns the wallet this executor is responsible for.
-func (ce *coordinationExecutor) wallet() wallet {
-	// All signers belong to one wallet. Take that wallet from the
-	// first signer.
-	return ce.signers[0].wallet
+// walletPublicKeyHash returns the 20-byte public key hash of the
+// coordinated wallet.
+func (ce *coordinationExecutor) walletPublicKeyHash() [20]byte {
+	return bitcoin.PublicKeyHash(ce.coordinatedWallet.publicKey)
 }
 
 // coordinate executes the coordination procedure for the given coordination
@@ -240,18 +329,360 @@ func (ce *coordinationExecutor) coordinate(
 	}
 	defer ce.lock.Release(1)
 
-	// TODO: Implement coordination logic. Remember about:
-	//       - Setting up the right context
-	//       - Using the protocol latch
-	//       - Using the membership validator
-	//       Example result:
-	result := &coordinationResult{
-		wallet:   ce.wallet(),
-		window:   window,
-		leader:   ce.wallet().signingGroupOperators[0],
-		proposal: &noopProposal{},
-		faults:   nil,
+	ce.protocolLatch.Lock()
+	defer ce.protocolLatch.Unlock()
+
+	// Just in case, check if the window is valid.
+	if window.index() == 0 {
+		return nil, fmt.Errorf(
+			"invalid coordination block [%v]",
+			window.coordinationBlock,
+		)
 	}
 
+	walletPublicKeyBytes, err := marshalPublicKey(ce.coordinatedWallet.publicKey)
+	if err != nil {
+		return nil, fmt.Errorf("cannot marshal wallet public key: [%v]", err)
+	}
+
+	execLogger := logger.With(
+		zap.Uint64("coordinationBlock", window.coordinationBlock),
+		zap.String("wallet", fmt.Sprintf("0x%x", walletPublicKeyBytes)),
+	)
+
+	execLogger.Info("starting coordination")
+
+	seed, err := ce.getSeed(window.coordinationBlock)
+	if err != nil {
+		return nil, fmt.Errorf("failed to compute coordination seed: [%v]", err)
+	}
+
+	execLogger.Info("coordination seed is: [0x%x]", seed)
+
+	leader := ce.getLeader(seed)
+
+	execLogger.Info("coordination leader is: [%s]", leader)
+
+	actionsChecklist := ce.getActionsChecklist(window.index(), seed)
+
+	execLogger.Info("actions checklist is: [%v]", actionsChecklist)
+
+	// Set up a context that is cancelled when the active phase of the
+	// coordination window ends.
+	ctx, cancelCtx := withCancelOnBlock(
+		context.Background(),
+		window.activePhaseEndBlock(),
+		ce.waitForBlockFn,
+	)
+	defer cancelCtx()
+
+	var proposal coordinationProposal
+	var faults []*coordinationFault
+
+	if leader == ce.operatorAddress {
+		execLogger.Info("executing leader's routine")
+
+		proposal, err = ce.executeLeaderRoutine(
+			ctx,
+			window.coordinationBlock,
+			actionsChecklist,
+		)
+		if err != nil {
+			return nil, fmt.Errorf(
+				"failed to execute leader's routine: [%v]",
+				err,
+			)
+		}
+
+		execLogger.Info("broadcasted proposal: [%s]", proposal.actionType())
+	} else {
+		execLogger.Info("executing follower's routine")
+
+		proposal, faults, err = ce.executeFollowerRoutine(
+			ctx,
+			leader,
+			window.coordinationBlock,
+			append(actionsChecklist, ActionNoop),
+		)
+		if err != nil {
+			return nil, fmt.Errorf(
+				"failed to execute follower's routine: [%v]",
+				err,
+			)
+		}
+
+		execLogger.Info(
+			"received proposal: [%s]; observed faults: [%v]",
+			proposal.actionType(),
+			faults,
+		)
+	}
+
+	// Just in case, if the proposal is nil, set it to noop.
+	if proposal == nil {
+		proposal = &noopProposal{}
+	}
+
+	result := &coordinationResult{
+		wallet:   ce.coordinatedWallet,
+		window:   window,
+		leader:   leader,
+		proposal: proposal,
+		faults:   faults,
+	}
+
+	execLogger.Info("coordination completed with result: [%s]", result)
+
 	return result, nil
+}
+
+// getSeed computes the coordination seed for the given coordination window.
+func (ce *coordinationExecutor) getSeed(
+	coordinationBlock uint64,
+) ([32]byte, error) {
+	walletPublicKeyHash := ce.walletPublicKeyHash()
+
+	safeBlockNumber := coordinationBlock - coordinationSafeBlockShift
+	safeBlockHash, err := ce.chain.GetBlockHashByNumber(safeBlockNumber)
+	if err != nil {
+		return [32]byte{}, fmt.Errorf(
+			"failed to get safe block hash: [%v]",
+			err,
+		)
+	}
+
+	return sha256.Sum256(
+		append(
+			walletPublicKeyHash[:],
+			safeBlockHash[:]...,
+		),
+	), nil
+}
+
+// getLeader returns the address of the coordination leader for the given
+// coordination seed.
+func (ce *coordinationExecutor) getLeader(seed [32]byte) chain.Address {
+	// First, take all operators backing the wallet.
+	allOperators := chain.Addresses(ce.coordinatedWallet.signingGroupOperators)
+
+	// Determine a list of unique operators.
+	uniqueOperators := make([]chain.Address, 0)
+	for operator := range allOperators.Set() {
+		uniqueOperators = append(uniqueOperators, operator)
+	}
+
+	// Sort the list of unique operators in ascending order.
+	sort.Slice(
+		uniqueOperators,
+		func(i, j int) bool {
+			return uniqueOperators[i] < uniqueOperators[j]
+		},
+	)
+
+	// #nosec G404 (insecure random number source (rand))
+	// Shuffling operators does not require secure randomness.
+	// Use first 8 bytes of the seed to initialize the RNG.
+	rng := rand.New(rand.NewSource(int64(binary.BigEndian.Uint64(seed[:8]))))
+
+	// Shuffle the list of unique operators.
+	rng.Shuffle(
+		len(uniqueOperators),
+		func(i, j int) {
+			uniqueOperators[i], uniqueOperators[j] =
+				uniqueOperators[j], uniqueOperators[i]
+		},
+	)
+
+	// The first operator in the shuffled list is the leader.
+	return uniqueOperators[0]
+}
+
+// getActionsChecklist returns a list of wallet actions that should be checked
+// for the given coordination window. Returns nil for incorrect coordination
+// windows whose index is 0.
+func (ce *coordinationExecutor) getActionsChecklist(
+	windowIndex uint64,
+	seed [32]byte,
+) []WalletActionType {
+	// Return nil checklist for incorrect coordination windows.
+	if windowIndex == 0 {
+		return nil
+	}
+
+	var actions []WalletActionType
+
+	// Redemption action is a priority action and should be checked on every
+	// coordination window.
+	actions = append(actions, ActionRedemption)
+
+	// Other actions should be checked with a lower frequency. The default
+	// frequency is every 16 coordination windows.
+	frequencyWindows := uint64(16)
+
+	// TODO: Consider increasing frequency for the active wallet in the future.
+	if windowIndex%frequencyWindows == 0 {
+		actions = append(actions, ActionDepositSweep)
+	}
+
+	if windowIndex%frequencyWindows == 0 {
+		actions = append(actions, ActionMovedFundsSweep)
+	}
+
+	// TODO: Consider increasing frequency for old wallets in the future.
+	if windowIndex%frequencyWindows == 0 {
+		actions = append(actions, ActionMovingFunds)
+	}
+
+	// #nosec G404 (insecure random number source (rand))
+	// Drawing a decision about heartbeat does not require secure randomness.
+	// Use first 8 bytes of the seed to initialize the RNG.
+	rng := rand.New(rand.NewSource(int64(binary.BigEndian.Uint64(seed[:8]))))
+	if rng.Float64() < coordinationHeartbeatProbability {
+		actions = append(actions, ActionHeartbeat)
+	}
+
+	return actions
+}
+
+// executeLeaderRoutine executes the leader's routine for the given coordination
+// window. The routine generates a proposal and broadcasts it to the followers.
+// It returns the generated proposal or an error if the routine failed.
+func (ce *coordinationExecutor) executeLeaderRoutine(
+	ctx context.Context,
+	coordinationBlock uint64,
+	actionsChecklist []WalletActionType,
+) (coordinationProposal, error) {
+	walletPublicKeyHash := ce.walletPublicKeyHash()
+
+	proposal, err := ce.proposalGenerator(walletPublicKeyHash, actionsChecklist)
+	if err != nil {
+		return nil, fmt.Errorf("failed to generate proposal: [%v]", err)
+	}
+
+	// Sort members indexes in ascending order, just in case. Choose the first
+	// member as the sender of the coordination message.
+	membersIndexes := append([]group.MemberIndex{}, ce.membersIndexes...)
+	slices.Sort(membersIndexes)
+	senderID := membersIndexes[0]
+
+	message := &coordinationMessage{
+		senderID:            senderID,
+		coordinationBlock:   coordinationBlock,
+		walletPublicKeyHash: walletPublicKeyHash,
+		proposal:            proposal,
+	}
+
+	err = ce.broadcastChannel.Send(
+		ctx,
+		message,
+		net.BackoffRetransmissionStrategy,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to send coordination message: [%v]", err)
+	}
+
+	return proposal, nil
+}
+
+// executeFollowerRoutine executes the follower's routine for the given coordination
+// window. The routine listens for the coordination message from the leader and
+// validates it. If the leader's proposal is valid, it returns the received
+// proposal. Returns an error if the routine failed.
+func (ce *coordinationExecutor) executeFollowerRoutine(
+	ctx context.Context,
+	leader chain.Address,
+	coordinationBlock uint64,
+	actionsAllowed []WalletActionType,
+) (coordinationProposal, []*coordinationFault, error) {
+	// Cache wallet public key hash to not compute it on every message.
+	walletPublicKeyHash := ce.walletPublicKeyHash()
+	// Leader ID is the index of the first (index-wise) member controlled by
+	// the leader operator. The membersByOperator function returns a list of
+	// members controlled by the leader operator in the ascending order.
+	// It is enough to take the first member from the list. No need
+	// to check for list length as it is guaranteed that the leader operator
+	// is one of the operators backing the wallet.
+	leaderID := ce.coordinatedWallet.membersByOperator(leader)[0]
+
+	var faults []*coordinationFault
+
+	messagesChan := make(chan net.Message, coordinationMessageReceiveBuffer)
+
+	ce.broadcastChannel.Recv(ctx, func(message net.Message) {
+		messagesChan <- message
+	})
+
+loop:
+	for {
+		select {
+		case netMessage := <-messagesChan:
+			// Filter out messages of wrong type.
+			message, ok := netMessage.Payload().(*coordinationMessage)
+			if !ok {
+				continue
+			}
+
+			// Filter out messages from self.
+			if slices.Contains(ce.membersIndexes, message.senderID) {
+				continue
+			}
+
+			// Filter out messages with invalid membership.
+			if !ce.membershipValidator.IsValidMembership(
+				message.senderID,
+				netMessage.SenderPublicKey(),
+			) {
+				continue
+			}
+
+			// Filter out messages with wrong coordination block.
+			if coordinationBlock != message.coordinationBlock {
+				continue
+			}
+
+			// Filter out messages with wrong wallet.
+			if walletPublicKeyHash != message.walletPublicKeyHash {
+				continue
+			}
+
+			// Filter out messages from leader's impersonators.
+			if leaderID != message.senderID {
+				sender := ce.chain.Signing().PublicKeyBytesToAddress(
+					netMessage.SenderPublicKey(),
+				)
+				faults = append(
+					faults, &coordinationFault{
+						culprit:   sender,
+						faultType: FaultLeaderImpersonation,
+					},
+				)
+				continue
+			}
+
+			// Filter out messages that propose an action that is not allowed
+			// for the given coordination window.
+			if !slices.Contains(actionsAllowed, message.proposal.actionType()) {
+				faults = append(
+					faults, &coordinationFault{
+						culprit:   leader,
+						faultType: FaultLeaderMistake,
+					},
+				)
+				continue
+			}
+
+			return message.proposal, faults, nil
+		case <-ctx.Done():
+			break loop
+		}
+	}
+
+	faults = append(
+		faults, &coordinationFault{
+			culprit:   leader,
+			faultType: FaultLeaderIdleness,
+		},
+	)
+
+	return nil, faults, fmt.Errorf("coordination message not received on time")
 }

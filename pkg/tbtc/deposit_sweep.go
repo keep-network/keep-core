@@ -57,6 +57,7 @@ const (
 // DepositSweepProposal represents a deposit sweep proposal issued by a
 // wallet's coordination leader.
 type DepositSweepProposal struct {
+	// TODO: Remove WalletPublicKeyHash field.
 	WalletPublicKeyHash [20]byte
 	DepositsKeys        []struct {
 		FundingTxHash      bitcoin.Hash

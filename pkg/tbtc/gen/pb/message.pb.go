@@ -99,6 +99,352 @@ func (x *SigningDoneMessage) GetEndBlock() uint64 {
 	return 0
 }
 
+type CoordinationProposal struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	ActionType uint32 `protobuf:"varint,1,opt,name=actionType,proto3" json:"actionType,omitempty"`
+	Payload    []byte `protobuf:"bytes,2,opt,name=payload,proto3" json:"payload,omitempty"`
+}
+
+func (x *CoordinationProposal) Reset() {
+	*x = CoordinationProposal{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_pkg_tbtc_gen_pb_message_proto_msgTypes[1]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *CoordinationProposal) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CoordinationProposal) ProtoMessage() {}
+
+func (x *CoordinationProposal) ProtoReflect() protoreflect.Message {
+	mi := &file_pkg_tbtc_gen_pb_message_proto_msgTypes[1]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CoordinationProposal.ProtoReflect.Descriptor instead.
+func (*CoordinationProposal) Descriptor() ([]byte, []int) {
+	return file_pkg_tbtc_gen_pb_message_proto_rawDescGZIP(), []int{1}
+}
+
+func (x *CoordinationProposal) GetActionType() uint32 {
+	if x != nil {
+		return x.ActionType
+	}
+	return 0
+}
+
+func (x *CoordinationProposal) GetPayload() []byte {
+	if x != nil {
+		return x.Payload
+	}
+	return nil
+}
+
+type CoordinationMessage struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	SenderID            uint32                `protobuf:"varint,1,opt,name=senderID,proto3" json:"senderID,omitempty"`
+	CoordinationBlock   uint64                `protobuf:"varint,2,opt,name=coordinationBlock,proto3" json:"coordinationBlock,omitempty"`
+	WalletPublicKeyHash []byte                `protobuf:"bytes,3,opt,name=walletPublicKeyHash,proto3" json:"walletPublicKeyHash,omitempty"`
+	Proposal            *CoordinationProposal `protobuf:"bytes,4,opt,name=proposal,proto3" json:"proposal,omitempty"`
+}
+
+func (x *CoordinationMessage) Reset() {
+	*x = CoordinationMessage{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_pkg_tbtc_gen_pb_message_proto_msgTypes[2]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *CoordinationMessage) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CoordinationMessage) ProtoMessage() {}
+
+func (x *CoordinationMessage) ProtoReflect() protoreflect.Message {
+	mi := &file_pkg_tbtc_gen_pb_message_proto_msgTypes[2]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CoordinationMessage.ProtoReflect.Descriptor instead.
+func (*CoordinationMessage) Descriptor() ([]byte, []int) {
+	return file_pkg_tbtc_gen_pb_message_proto_rawDescGZIP(), []int{2}
+}
+
+func (x *CoordinationMessage) GetSenderID() uint32 {
+	if x != nil {
+		return x.SenderID
+	}
+	return 0
+}
+
+func (x *CoordinationMessage) GetCoordinationBlock() uint64 {
+	if x != nil {
+		return x.CoordinationBlock
+	}
+	return 0
+}
+
+func (x *CoordinationMessage) GetWalletPublicKeyHash() []byte {
+	if x != nil {
+		return x.WalletPublicKeyHash
+	}
+	return nil
+}
+
+func (x *CoordinationMessage) GetProposal() *CoordinationProposal {
+	if x != nil {
+		return x.Proposal
+	}
+	return nil
+}
+
+type HeartbeatProposal struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Message []byte `protobuf:"bytes,1,opt,name=message,proto3" json:"message,omitempty"`
+}
+
+func (x *HeartbeatProposal) Reset() {
+	*x = HeartbeatProposal{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_pkg_tbtc_gen_pb_message_proto_msgTypes[3]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *HeartbeatProposal) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*HeartbeatProposal) ProtoMessage() {}
+
+func (x *HeartbeatProposal) ProtoReflect() protoreflect.Message {
+	mi := &file_pkg_tbtc_gen_pb_message_proto_msgTypes[3]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use HeartbeatProposal.ProtoReflect.Descriptor instead.
+func (*HeartbeatProposal) Descriptor() ([]byte, []int) {
+	return file_pkg_tbtc_gen_pb_message_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *HeartbeatProposal) GetMessage() []byte {
+	if x != nil {
+		return x.Message
+	}
+	return nil
+}
+
+type DepositSweepProposal struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	DepositsKeys         []*DepositSweepProposal_DepositKey `protobuf:"bytes,1,rep,name=depositsKeys,proto3" json:"depositsKeys,omitempty"`
+	SweepTxFee           []byte                             `protobuf:"bytes,2,opt,name=sweepTxFee,proto3" json:"sweepTxFee,omitempty"`
+	DepositsRevealBlocks []uint64                           `protobuf:"varint,3,rep,packed,name=depositsRevealBlocks,proto3" json:"depositsRevealBlocks,omitempty"`
+}
+
+func (x *DepositSweepProposal) Reset() {
+	*x = DepositSweepProposal{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_pkg_tbtc_gen_pb_message_proto_msgTypes[4]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *DepositSweepProposal) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DepositSweepProposal) ProtoMessage() {}
+
+func (x *DepositSweepProposal) ProtoReflect() protoreflect.Message {
+	mi := &file_pkg_tbtc_gen_pb_message_proto_msgTypes[4]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DepositSweepProposal.ProtoReflect.Descriptor instead.
+func (*DepositSweepProposal) Descriptor() ([]byte, []int) {
+	return file_pkg_tbtc_gen_pb_message_proto_rawDescGZIP(), []int{4}
+}
+
+func (x *DepositSweepProposal) GetDepositsKeys() []*DepositSweepProposal_DepositKey {
+	if x != nil {
+		return x.DepositsKeys
+	}
+	return nil
+}
+
+func (x *DepositSweepProposal) GetSweepTxFee() []byte {
+	if x != nil {
+		return x.SweepTxFee
+	}
+	return nil
+}
+
+func (x *DepositSweepProposal) GetDepositsRevealBlocks() []uint64 {
+	if x != nil {
+		return x.DepositsRevealBlocks
+	}
+	return nil
+}
+
+type RedemptionProposal struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	RedeemersOutputScripts [][]byte `protobuf:"bytes,1,rep,name=redeemersOutputScripts,proto3" json:"redeemersOutputScripts,omitempty"`
+	RedemptionTxFee        []byte   `protobuf:"bytes,2,opt,name=redemptionTxFee,proto3" json:"redemptionTxFee,omitempty"`
+}
+
+func (x *RedemptionProposal) Reset() {
+	*x = RedemptionProposal{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_pkg_tbtc_gen_pb_message_proto_msgTypes[5]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *RedemptionProposal) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RedemptionProposal) ProtoMessage() {}
+
+func (x *RedemptionProposal) ProtoReflect() protoreflect.Message {
+	mi := &file_pkg_tbtc_gen_pb_message_proto_msgTypes[5]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RedemptionProposal.ProtoReflect.Descriptor instead.
+func (*RedemptionProposal) Descriptor() ([]byte, []int) {
+	return file_pkg_tbtc_gen_pb_message_proto_rawDescGZIP(), []int{5}
+}
+
+func (x *RedemptionProposal) GetRedeemersOutputScripts() [][]byte {
+	if x != nil {
+		return x.RedeemersOutputScripts
+	}
+	return nil
+}
+
+func (x *RedemptionProposal) GetRedemptionTxFee() []byte {
+	if x != nil {
+		return x.RedemptionTxFee
+	}
+	return nil
+}
+
+type DepositSweepProposal_DepositKey struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	FundingTxHash      []byte `protobuf:"bytes,1,opt,name=fundingTxHash,proto3" json:"fundingTxHash,omitempty"`
+	FundingOutputIndex uint32 `protobuf:"varint,2,opt,name=fundingOutputIndex,proto3" json:"fundingOutputIndex,omitempty"`
+}
+
+func (x *DepositSweepProposal_DepositKey) Reset() {
+	*x = DepositSweepProposal_DepositKey{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_pkg_tbtc_gen_pb_message_proto_msgTypes[6]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *DepositSweepProposal_DepositKey) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DepositSweepProposal_DepositKey) ProtoMessage() {}
+
+func (x *DepositSweepProposal_DepositKey) ProtoReflect() protoreflect.Message {
+	mi := &file_pkg_tbtc_gen_pb_message_proto_msgTypes[6]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DepositSweepProposal_DepositKey.ProtoReflect.Descriptor instead.
+func (*DepositSweepProposal_DepositKey) Descriptor() ([]byte, []int) {
+	return file_pkg_tbtc_gen_pb_message_proto_rawDescGZIP(), []int{4, 0}
+}
+
+func (x *DepositSweepProposal_DepositKey) GetFundingTxHash() []byte {
+	if x != nil {
+		return x.FundingTxHash
+	}
+	return nil
+}
+
+func (x *DepositSweepProposal_DepositKey) GetFundingOutputIndex() uint32 {
+	if x != nil {
+		return x.FundingOutputIndex
+	}
+	return 0
+}
+
 var File_pkg_tbtc_gen_pb_message_proto protoreflect.FileDescriptor
 
 var file_pkg_tbtc_gen_pb_message_proto_rawDesc = []byte{
@@ -115,8 +461,54 @@ var file_pkg_tbtc_gen_pb_message_proto_rawDesc = []byte{
 	0x61, 0x74, 0x75, 0x72, 0x65, 0x18, 0x04, 0x20, 0x01, 0x28, 0x0c, 0x52, 0x09, 0x73, 0x69, 0x67,
 	0x6e, 0x61, 0x74, 0x75, 0x72, 0x65, 0x12, 0x1a, 0x0a, 0x08, 0x65, 0x6e, 0x64, 0x42, 0x6c, 0x6f,
 	0x63, 0x6b, 0x18, 0x05, 0x20, 0x01, 0x28, 0x04, 0x52, 0x08, 0x65, 0x6e, 0x64, 0x42, 0x6c, 0x6f,
-	0x63, 0x6b, 0x42, 0x06, 0x5a, 0x04, 0x2e, 0x2f, 0x70, 0x62, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74,
-	0x6f, 0x33,
+	0x63, 0x6b, 0x22, 0x50, 0x0a, 0x14, 0x43, 0x6f, 0x6f, 0x72, 0x64, 0x69, 0x6e, 0x61, 0x74, 0x69,
+	0x6f, 0x6e, 0x50, 0x72, 0x6f, 0x70, 0x6f, 0x73, 0x61, 0x6c, 0x12, 0x1e, 0x0a, 0x0a, 0x61, 0x63,
+	0x74, 0x69, 0x6f, 0x6e, 0x54, 0x79, 0x70, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0d, 0x52, 0x0a,
+	0x61, 0x63, 0x74, 0x69, 0x6f, 0x6e, 0x54, 0x79, 0x70, 0x65, 0x12, 0x18, 0x0a, 0x07, 0x70, 0x61,
+	0x79, 0x6c, 0x6f, 0x61, 0x64, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0c, 0x52, 0x07, 0x70, 0x61, 0x79,
+	0x6c, 0x6f, 0x61, 0x64, 0x22, 0xc9, 0x01, 0x0a, 0x13, 0x43, 0x6f, 0x6f, 0x72, 0x64, 0x69, 0x6e,
+	0x61, 0x74, 0x69, 0x6f, 0x6e, 0x4d, 0x65, 0x73, 0x73, 0x61, 0x67, 0x65, 0x12, 0x1a, 0x0a, 0x08,
+	0x73, 0x65, 0x6e, 0x64, 0x65, 0x72, 0x49, 0x44, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0d, 0x52, 0x08,
+	0x73, 0x65, 0x6e, 0x64, 0x65, 0x72, 0x49, 0x44, 0x12, 0x2c, 0x0a, 0x11, 0x63, 0x6f, 0x6f, 0x72,
+	0x64, 0x69, 0x6e, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x42, 0x6c, 0x6f, 0x63, 0x6b, 0x18, 0x02, 0x20,
+	0x01, 0x28, 0x04, 0x52, 0x11, 0x63, 0x6f, 0x6f, 0x72, 0x64, 0x69, 0x6e, 0x61, 0x74, 0x69, 0x6f,
+	0x6e, 0x42, 0x6c, 0x6f, 0x63, 0x6b, 0x12, 0x30, 0x0a, 0x13, 0x77, 0x61, 0x6c, 0x6c, 0x65, 0x74,
+	0x50, 0x75, 0x62, 0x6c, 0x69, 0x63, 0x4b, 0x65, 0x79, 0x48, 0x61, 0x73, 0x68, 0x18, 0x03, 0x20,
+	0x01, 0x28, 0x0c, 0x52, 0x13, 0x77, 0x61, 0x6c, 0x6c, 0x65, 0x74, 0x50, 0x75, 0x62, 0x6c, 0x69,
+	0x63, 0x4b, 0x65, 0x79, 0x48, 0x61, 0x73, 0x68, 0x12, 0x36, 0x0a, 0x08, 0x70, 0x72, 0x6f, 0x70,
+	0x6f, 0x73, 0x61, 0x6c, 0x18, 0x04, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x1a, 0x2e, 0x74, 0x62, 0x74,
+	0x63, 0x2e, 0x43, 0x6f, 0x6f, 0x72, 0x64, 0x69, 0x6e, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x50, 0x72,
+	0x6f, 0x70, 0x6f, 0x73, 0x61, 0x6c, 0x52, 0x08, 0x70, 0x72, 0x6f, 0x70, 0x6f, 0x73, 0x61, 0x6c,
+	0x22, 0x2d, 0x0a, 0x11, 0x48, 0x65, 0x61, 0x72, 0x74, 0x62, 0x65, 0x61, 0x74, 0x50, 0x72, 0x6f,
+	0x70, 0x6f, 0x73, 0x61, 0x6c, 0x12, 0x18, 0x0a, 0x07, 0x6d, 0x65, 0x73, 0x73, 0x61, 0x67, 0x65,
+	0x18, 0x01, 0x20, 0x01, 0x28, 0x0c, 0x52, 0x07, 0x6d, 0x65, 0x73, 0x73, 0x61, 0x67, 0x65, 0x22,
+	0x99, 0x02, 0x0a, 0x14, 0x44, 0x65, 0x70, 0x6f, 0x73, 0x69, 0x74, 0x53, 0x77, 0x65, 0x65, 0x70,
+	0x50, 0x72, 0x6f, 0x70, 0x6f, 0x73, 0x61, 0x6c, 0x12, 0x49, 0x0a, 0x0c, 0x64, 0x65, 0x70, 0x6f,
+	0x73, 0x69, 0x74, 0x73, 0x4b, 0x65, 0x79, 0x73, 0x18, 0x01, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x25,
+	0x2e, 0x74, 0x62, 0x74, 0x63, 0x2e, 0x44, 0x65, 0x70, 0x6f, 0x73, 0x69, 0x74, 0x53, 0x77, 0x65,
+	0x65, 0x70, 0x50, 0x72, 0x6f, 0x70, 0x6f, 0x73, 0x61, 0x6c, 0x2e, 0x44, 0x65, 0x70, 0x6f, 0x73,
+	0x69, 0x74, 0x4b, 0x65, 0x79, 0x52, 0x0c, 0x64, 0x65, 0x70, 0x6f, 0x73, 0x69, 0x74, 0x73, 0x4b,
+	0x65, 0x79, 0x73, 0x12, 0x1e, 0x0a, 0x0a, 0x73, 0x77, 0x65, 0x65, 0x70, 0x54, 0x78, 0x46, 0x65,
+	0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0c, 0x52, 0x0a, 0x73, 0x77, 0x65, 0x65, 0x70, 0x54, 0x78,
+	0x46, 0x65, 0x65, 0x12, 0x32, 0x0a, 0x14, 0x64, 0x65, 0x70, 0x6f, 0x73, 0x69, 0x74, 0x73, 0x52,
+	0x65, 0x76, 0x65, 0x61, 0x6c, 0x42, 0x6c, 0x6f, 0x63, 0x6b, 0x73, 0x18, 0x03, 0x20, 0x03, 0x28,
+	0x04, 0x52, 0x14, 0x64, 0x65, 0x70, 0x6f, 0x73, 0x69, 0x74, 0x73, 0x52, 0x65, 0x76, 0x65, 0x61,
+	0x6c, 0x42, 0x6c, 0x6f, 0x63, 0x6b, 0x73, 0x1a, 0x62, 0x0a, 0x0a, 0x44, 0x65, 0x70, 0x6f, 0x73,
+	0x69, 0x74, 0x4b, 0x65, 0x79, 0x12, 0x24, 0x0a, 0x0d, 0x66, 0x75, 0x6e, 0x64, 0x69, 0x6e, 0x67,
+	0x54, 0x78, 0x48, 0x61, 0x73, 0x68, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0c, 0x52, 0x0d, 0x66, 0x75,
+	0x6e, 0x64, 0x69, 0x6e, 0x67, 0x54, 0x78, 0x48, 0x61, 0x73, 0x68, 0x12, 0x2e, 0x0a, 0x12, 0x66,
+	0x75, 0x6e, 0x64, 0x69, 0x6e, 0x67, 0x4f, 0x75, 0x74, 0x70, 0x75, 0x74, 0x49, 0x6e, 0x64, 0x65,
+	0x78, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0d, 0x52, 0x12, 0x66, 0x75, 0x6e, 0x64, 0x69, 0x6e, 0x67,
+	0x4f, 0x75, 0x74, 0x70, 0x75, 0x74, 0x49, 0x6e, 0x64, 0x65, 0x78, 0x22, 0x76, 0x0a, 0x12, 0x52,
+	0x65, 0x64, 0x65, 0x6d, 0x70, 0x74, 0x69, 0x6f, 0x6e, 0x50, 0x72, 0x6f, 0x70, 0x6f, 0x73, 0x61,
+	0x6c, 0x12, 0x36, 0x0a, 0x16, 0x72, 0x65, 0x64, 0x65, 0x65, 0x6d, 0x65, 0x72, 0x73, 0x4f, 0x75,
+	0x74, 0x70, 0x75, 0x74, 0x53, 0x63, 0x72, 0x69, 0x70, 0x74, 0x73, 0x18, 0x01, 0x20, 0x03, 0x28,
+	0x0c, 0x52, 0x16, 0x72, 0x65, 0x64, 0x65, 0x65, 0x6d, 0x65, 0x72, 0x73, 0x4f, 0x75, 0x74, 0x70,
+	0x75, 0x74, 0x53, 0x63, 0x72, 0x69, 0x70, 0x74, 0x73, 0x12, 0x28, 0x0a, 0x0f, 0x72, 0x65, 0x64,
+	0x65, 0x6d, 0x70, 0x74, 0x69, 0x6f, 0x6e, 0x54, 0x78, 0x46, 0x65, 0x65, 0x18, 0x02, 0x20, 0x01,
+	0x28, 0x0c, 0x52, 0x0f, 0x72, 0x65, 0x64, 0x65, 0x6d, 0x70, 0x74, 0x69, 0x6f, 0x6e, 0x54, 0x78,
+	0x46, 0x65, 0x65, 0x42, 0x06, 0x5a, 0x04, 0x2e, 0x2f, 0x70, 0x62, 0x62, 0x06, 0x70, 0x72, 0x6f,
+	0x74, 0x6f, 0x33,
 }
 
 var (
@@ -131,16 +523,24 @@ func file_pkg_tbtc_gen_pb_message_proto_rawDescGZIP() []byte {
 	return file_pkg_tbtc_gen_pb_message_proto_rawDescData
 }
 
-var file_pkg_tbtc_gen_pb_message_proto_msgTypes = make([]protoimpl.MessageInfo, 1)
+var file_pkg_tbtc_gen_pb_message_proto_msgTypes = make([]protoimpl.MessageInfo, 7)
 var file_pkg_tbtc_gen_pb_message_proto_goTypes = []interface{}{
-	(*SigningDoneMessage)(nil), // 0: tbtc.SigningDoneMessage
+	(*SigningDoneMessage)(nil),              // 0: tbtc.SigningDoneMessage
+	(*CoordinationProposal)(nil),            // 1: tbtc.CoordinationProposal
+	(*CoordinationMessage)(nil),             // 2: tbtc.CoordinationMessage
+	(*HeartbeatProposal)(nil),               // 3: tbtc.HeartbeatProposal
+	(*DepositSweepProposal)(nil),            // 4: tbtc.DepositSweepProposal
+	(*RedemptionProposal)(nil),              // 5: tbtc.RedemptionProposal
+	(*DepositSweepProposal_DepositKey)(nil), // 6: tbtc.DepositSweepProposal.DepositKey
 }
 var file_pkg_tbtc_gen_pb_message_proto_depIdxs = []int32{
-	0, // [0:0] is the sub-list for method output_type
-	0, // [0:0] is the sub-list for method input_type
-	0, // [0:0] is the sub-list for extension type_name
-	0, // [0:0] is the sub-list for extension extendee
-	0, // [0:0] is the sub-list for field type_name
+	1, // 0: tbtc.CoordinationMessage.proposal:type_name -> tbtc.CoordinationProposal
+	6, // 1: tbtc.DepositSweepProposal.depositsKeys:type_name -> tbtc.DepositSweepProposal.DepositKey
+	2, // [2:2] is the sub-list for method output_type
+	2, // [2:2] is the sub-list for method input_type
+	2, // [2:2] is the sub-list for extension type_name
+	2, // [2:2] is the sub-list for extension extendee
+	0, // [0:2] is the sub-list for field type_name
 }
 
 func init() { file_pkg_tbtc_gen_pb_message_proto_init() }
@@ -161,6 +561,78 @@ func file_pkg_tbtc_gen_pb_message_proto_init() {
 				return nil
 			}
 		}
+		file_pkg_tbtc_gen_pb_message_proto_msgTypes[1].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*CoordinationProposal); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_pkg_tbtc_gen_pb_message_proto_msgTypes[2].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*CoordinationMessage); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_pkg_tbtc_gen_pb_message_proto_msgTypes[3].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*HeartbeatProposal); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_pkg_tbtc_gen_pb_message_proto_msgTypes[4].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*DepositSweepProposal); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_pkg_tbtc_gen_pb_message_proto_msgTypes[5].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*RedemptionProposal); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_pkg_tbtc_gen_pb_message_proto_msgTypes[6].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*DepositSweepProposal_DepositKey); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
@@ -168,7 +640,7 @@ func file_pkg_tbtc_gen_pb_message_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_pkg_tbtc_gen_pb_message_proto_rawDesc,
 			NumEnums:      0,
-			NumMessages:   1,
+			NumMessages:   7,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

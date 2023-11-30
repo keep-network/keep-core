@@ -10,3 +10,35 @@ message SigningDoneMessage {
     bytes signature = 4;
     uint64 endBlock = 5;
 }
+
+message CoordinationProposal {
+    uint32 actionType = 1;
+    bytes payload = 2;
+}
+
+message CoordinationMessage {
+    uint32 senderID = 1;
+    uint64 coordinationBlock = 2;
+    bytes walletPublicKeyHash = 3;
+    CoordinationProposal proposal = 4;
+}
+
+message HeartbeatProposal {
+    bytes message = 1;
+}
+
+message DepositSweepProposal {
+    message DepositKey {
+        bytes fundingTxHash = 1;
+        uint32 fundingOutputIndex = 2;
+    }
+
+    repeated DepositKey depositsKeys = 1;
+    bytes sweepTxFee = 2;
+    repeated uint64 depositsRevealBlocks = 3;
+}
+
+message RedemptionProposal {
+    repeated bytes redeemersOutputScripts = 1;
+    bytes redemptionTxFee = 2;
+}

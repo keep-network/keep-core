@@ -50,6 +50,9 @@ type localChain struct {
 	blocksByTimestampMutex sync.Mutex
 	blocksByTimestamp      map[uint64]uint64
 
+	blocksHashesByNumberMutex sync.Mutex
+	blocksHashesByNumber      map[uint64][32]byte
+
 	pastDepositRevealedEventsMutex sync.Mutex
 	pastDepositRevealedEvents      map[[32]byte][]*DepositRevealedEvent
 
@@ -103,6 +106,39 @@ func (lc *localChain) setBlockNumberByTimestamp(timestamp uint64, block uint64) 
 	defer lc.blocksByTimestampMutex.Unlock()
 
 	lc.blocksByTimestamp[timestamp] = block
+}
+
+func (lc *localChain) GetBlockHashByNumber(blockNumber uint64) (
+	[32]byte,
+	error,
+) {
+	lc.blocksHashesByNumberMutex.Lock()
+	defer lc.blocksHashesByNumberMutex.Unlock()
+
+	blockHash, ok := lc.blocksHashesByNumber[blockNumber]
+	if !ok {
+		return [32]byte{}, fmt.Errorf("block not found")
+	}
+
+	return blockHash, nil
+}
+
+func (lc *localChain) setBlockHashByNumber(
+	blockNumber uint64,
+	blockHashString string,
+) {
+	lc.blocksHashesByNumberMutex.Lock()
+	defer lc.blocksHashesByNumberMutex.Unlock()
+
+	blockHashBytes, err := hex.DecodeString(blockHashString)
+	if err != nil {
+		panic(err)
+	}
+
+	var blockHash [32]byte
+	copy(blockHash[:], blockHashBytes)
+
+	lc.blocksHashesByNumber[blockNumber] = blockHash
 }
 
 func (lc *localChain) OperatorToStakingProvider() (chain.Address, bool, error) {
@@ -823,6 +859,7 @@ func ConnectWithKey(
 		),
 		wallets:                         make(map[[20]byte]*WalletChainData),
 		blocksByTimestamp:               make(map[uint64]uint64),
+		blocksHashesByNumber:            make(map[uint64][32]byte),
 		pastDepositRevealedEvents:       make(map[[32]byte][]*DepositRevealedEvent),
 		depositSweepProposalValidations: make(map[[32]byte]bool),
 		pendingRedemptionRequests:       make(map[[32]byte]*RedemptionRequest),
