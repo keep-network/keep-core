@@ -85,6 +85,10 @@ type node struct {
 	//
 	// coordinationExecutors MUST NOT be used outside this struct.
 	coordinationExecutors map[string]*coordinationExecutor
+
+	// proposalGenerator is the implementation of the coordination proposal
+	// generator used by the node.
+	proposalGenerator CoordinationProposalGenerator
 }
 
 func newNode(
@@ -95,6 +99,7 @@ func newNode(
 	keyStorePersistance persistence.ProtectedHandle,
 	workPersistence persistence.BasicHandle,
 	scheduler *generator.Scheduler,
+	proposalGenerator CoordinationProposalGenerator,
 	config Config,
 ) (*node, error) {
 	walletRegistry := newWalletRegistry(keyStorePersistance)
@@ -112,6 +117,7 @@ func newNode(
 		protocolLatch:         latch,
 		signingExecutors:      make(map[string]*signingExecutor),
 		coordinationExecutors: make(map[string]*coordinationExecutor),
+		proposalGenerator:     proposalGenerator,
 	}
 
 	// Only the operator address is known at this point and can be pre-fetched.
@@ -384,7 +390,7 @@ func (n *node) getCoordinationExecutor(
 		wallet,
 		membersIndexes,
 		operatorAddress,
-		nil, // TODO: Implement proposal generation.
+		n.proposalGenerator,
 		broadcastChannel,
 		membershipValidator,
 		n.protocolLatch,

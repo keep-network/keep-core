@@ -43,6 +43,7 @@ func TestNode_GetSigningExecutor(t *testing.T) {
 		keyStorePersistence,
 		&mockPersistenceHandle{},
 		generator.StartScheduler(),
+		&mockCoordinationProposalGenerator{},
 		Config{},
 	)
 	if err != nil {
@@ -160,6 +161,7 @@ func TestNode_GetCoordinationExecutor(t *testing.T) {
 		keyStorePersistence,
 		&mockPersistenceHandle{},
 		generator.StartScheduler(),
+		&mockCoordinationProposalGenerator{},
 		Config{},
 	)
 	if err != nil {
@@ -282,6 +284,7 @@ func TestNode_RunCoordinationLayer(t *testing.T) {
 		keyStorePersistence,
 		&mockPersistenceHandle{},
 		generator.StartScheduler(),
+		&mockCoordinationProposalGenerator{},
 		Config{},
 	)
 	if err != nil {
