@@ -1711,6 +1711,37 @@ func (tc *TbtcChain) GetWalletLock(
 	return time.Unix(int64(lock.ExpiresAt), 0), cause, nil
 }
 
+func (tc *TbtcChain) GetWalletParameters() (
+	creationPeriod uint32,
+	creationMinBtcBalance uint64,
+	creationMaxBtcBalance uint64,
+	closureMinBtcBalance uint64,
+	maxAge uint32,
+	maxBtcTransfer uint64,
+	closingPeriod uint32,
+	err error,
+) {
+	parameters, callErr := tc.bridge.WalletParameters()
+	if callErr != nil {
+		err = callErr
+		return
+	}
+
+	creationPeriod = parameters.WalletCreationPeriod
+	creationMinBtcBalance = parameters.WalletCreationMinBtcBalance
+	creationMaxBtcBalance = parameters.WalletCreationMaxBtcBalance
+	closureMinBtcBalance = parameters.WalletClosureMinBtcBalance
+	maxAge = parameters.WalletMaxAge
+	maxBtcTransfer = parameters.WalletMaxBtcTransfer
+	closingPeriod = parameters.WalletClosingPeriod
+
+	return
+}
+
+func (tc *TbtcChain) GetLiveWalletsCount() (uint32, error) {
+	return tc.bridge.LiveWalletsCount()
+}
+
 func parseWalletActionType(value uint8) (tbtc.WalletActionType, error) {
 	switch value {
 	case 0:
@@ -1822,6 +1853,28 @@ func (tc *TbtcChain) OnRedemptionProposalSubmitted(
 	return tc.walletCoordinator.
 		RedemptionProposalSubmittedEvent(nil, nil).
 		OnEvent(onEvent)
+}
+
+func (tc *TbtcChain) SubmitMovingFundsCommitment(
+	walletPublicKeyHash [20]byte,
+	walletMainUTXO bitcoin.UnspentTransactionOutput,
+	walletMembersIDs []uint32,
+	walletMemberIndex uint32,
+	targetWallets [][20]byte,
+) error {
+	mainUtxo := tbtcabi.BitcoinTxUTXO{
+		TxHash:        walletMainUTXO.Outpoint.TransactionHash,
+		TxOutputIndex: walletMainUTXO.Outpoint.OutputIndex,
+		TxOutputValue: uint64(walletMainUTXO.Value),
+	}
+	_, err := tc.bridge.SubmitMovingFundsCommitment(
+		walletPublicKeyHash,
+		mainUtxo,
+		walletMembersIDs,
+		big.NewInt(int64(walletMemberIndex)),
+		targetWallets,
+	)
+	return err
 }
 
 func (tc *TbtcChain) ValidateRedemptionProposal(

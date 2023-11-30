@@ -6,11 +6,11 @@ import (
 	"encoding/hex"
 	"fmt"
 	"math/big"
+	"sort"
 	"sync"
 	"time"
 
 	"github.com/keep-network/keep-core/pkg/bitcoin"
-
 	"github.com/keep-network/keep-core/pkg/chain"
 
 	"go.uber.org/zap"
@@ -666,6 +666,223 @@ func (n *node) handleRedemptionProposal(
 	}
 
 	walletActionLogger.Infof("wallet action dispatched successfully")
+}
+
+func (n *node) handleMovingFundsProposal(proposal *MovingFundsProposal) {
+	go func() {
+		sourceWalletPublicKeyHash := proposal.WalletPublicKeyHash
+		logger.Info(
+			"moving funds proposal initiated for wallet with PKH [0x%x]",
+			sourceWalletPublicKeyHash,
+		)
+
+		// Make sure the wallet meets the criteria for moving funds proposal.
+		walletRegistryData, found := n.walletRegistry.getWalletByPublicKeyHash(
+			sourceWalletPublicKeyHash,
+		)
+		if !found {
+			logger.Errorf(
+				"skipping moving funds proposal for wallet with PKH "+
+					"[0x%x] as the node does not control it",
+				sourceWalletPublicKeyHash,
+			)
+			return
+		}
+
+		sourceWalletChainData, err := n.chain.GetWallet(sourceWalletPublicKeyHash)
+		if err != nil {
+			logger.Errorf(
+				"failed to get wallet data for source wallet with PKH "+
+					"[0x%x]: [%v]",
+				sourceWalletPublicKeyHash,
+				err,
+			)
+			return
+		}
+
+		walletMainUtxo, err := DetermineWalletMainUtxo(
+			sourceWalletPublicKeyHash,
+			n.chain,
+			n.btcChain,
+		)
+		if err != nil {
+			logger.Errorf(
+				"skipping moving funds proposal for wallet with PKH "+
+					"[0x%x] due to error determining wallet main UTXO: [%v]",
+				sourceWalletPublicKeyHash,
+				err,
+			)
+			return
+		}
+
+		walletBalance := walletMainUtxo.Value
+
+		// Check if the wallet meets the conditions for moving funds
+		// commitment.
+		if sourceWalletChainData.State != StateMovingFunds ||
+			sourceWalletChainData.PendingRedemptionsValue > 0 ||
+			sourceWalletChainData.PendingMovedFundsSweepRequestsCount > 0 ||
+			sourceWalletChainData.MovingFundsTargetWalletsCommitmentHash != [32]byte{} ||
+			walletBalance <= 0 {
+			logger.Errorf(
+				"skipping moving funds proposal for wallet with PKH "+
+					"[0x%x] due to unmet conditions",
+				sourceWalletPublicKeyHash,
+			)
+			return
+		}
+
+		logger.Infof(
+			"proceeding with moving funds commitment for wallet with "+
+				"PKH [0x%x]",
+			sourceWalletPublicKeyHash,
+		)
+
+		// Retrieve all the live wallets.
+		liveWalletsCount, err := n.chain.GetLiveWalletsCount()
+		if err != nil {
+			logger.Errorf("failed to get live wallets count: [%v]", err)
+			return
+		}
+
+		if liveWalletsCount == 0 {
+			logger.Infof(
+				"skipping moving funds proposal for wallet with PKH [0x%x] due"+
+					"to lack of live wallets",
+				sourceWalletPublicKeyHash,
+			)
+			return
+		}
+
+		events, err := n.chain.PastNewWalletRegisteredEvents(nil)
+		if err != nil {
+			logger.Errorf(
+				"failed to get past new wallet registered events: [%v]",
+				err,
+			)
+			return
+		}
+
+		liveWallets := make([][20]byte, 0)
+
+		for _, event := range events {
+			walletPubKeyHash := event.WalletPublicKeyHash
+			wallet, err := n.chain.GetWallet(walletPubKeyHash)
+			if err != nil {
+				logger.Errorf(
+					"failed to get wallet data for wallet with PKH [0x%x]: [%v]",
+					walletPubKeyHash,
+					err,
+				)
+				continue
+			}
+			if wallet.State == StateLive {
+				liveWallets = append(liveWallets, walletPubKeyHash)
+			}
+		}
+
+		// Make sure all the live wallets data has been retrieved by
+		// comparing the number of live wallets to the on-chain counter.
+		if len(liveWallets) != int(liveWalletsCount) {
+			logger.Errorf(
+				"mismatch between the number of retrieved live wallets "+
+					"and the on-chain live wallet count [%v:%v]",
+				len(liveWallets),
+				int(liveWalletsCount),
+			)
+			return
+		}
+
+		// Sort the live wallets according to their numerical representation
+		// as the on-chain contract expects.
+		sort.Slice(liveWallets, func(i, j int) bool {
+			bigIntI := new(big.Int).SetBytes(liveWallets[i][:])
+			bigIntJ := new(big.Int).SetBytes(liveWallets[j][:])
+			return bigIntI.Cmp(bigIntJ) < 0
+		})
+
+		logger.Infof("found [%v] live wallets", len(liveWallets))
+
+		_, _, _, _, _, walletMaxBtcTransfer, _, err := n.chain.GetWalletParameters()
+		if err != nil {
+			logger.Errorf("failed to get wallet parameters: [%v]", err)
+			return
+		}
+
+		ceilingDivide := func(x, y uint64) uint64 {
+			return (x + y - 1) / y
+		}
+		min := func(x, y uint64) uint64 {
+			if x < y {
+				return x
+			}
+			return y
+		}
+
+		targetWalletsCount := min(
+			uint64(liveWalletsCount),
+			ceilingDivide(uint64(walletBalance), walletMaxBtcTransfer),
+		)
+
+		targetWallets := liveWallets[0:targetWalletsCount]
+		logger.Infof("Target wallets length [%v]", len(targetWallets))
+
+		walletMemberIDs := make([]uint32, 0)
+		for _, operatorAddress := range walletRegistryData.signingGroupOperators {
+			operatorId, err := n.chain.GetOperatorID(operatorAddress)
+			if err != nil {
+				logger.Errorf(
+					"failed to get operator ID for operator [%v] belonging to "+
+						"wallet with PKH [0x%x]: [%v]",
+					operatorAddress,
+					sourceWalletPublicKeyHash,
+					err,
+				)
+				return
+			}
+			walletMemberIDs = append(walletMemberIDs, operatorId)
+		}
+
+		latestBlockHeight, err := n.btcChain.GetLatestBlockHeight()
+		if err != nil {
+			logger.Errorf(
+				"failed to get latest Bitcoin block height: [%v]",
+				err,
+			)
+			return
+		}
+
+		// Use the latest Bitcoin block height to determine the wallet member
+		// index. Increase the result of the modulo operation by one since the
+		// wallet member index must be within range [1, len(walletMemberIDs)].
+		walletMemberIndex := (int(latestBlockHeight) % len(walletMemberIDs)) + 1
+
+		err = n.chain.SubmitMovingFundsCommitment(
+			sourceWalletPublicKeyHash,
+			*walletMainUtxo,
+			walletMemberIDs,
+			uint32(walletMemberIndex),
+			targetWallets,
+		)
+		if err != nil {
+			logger.Errorf(
+				"failed to submit moving funds commitment for wallet wit PKH "+
+					"[0x%x]: [%v]",
+				sourceWalletPublicKeyHash,
+				err,
+			)
+			return
+		}
+
+		logger.Infof(
+			"Finished moving funds commitment for wallet with PKH [0x%x]",
+			sourceWalletPublicKeyHash,
+		)
+
+		// TODO: Add construction of the move funds Bitcoin transaction.
+		//       Before proceeding with the Bitcoin transaction, check if the
+		//       commitment was successfully submitted.
+	}()
 }
 
 // coordinationLayerSettings represents settings for the coordination layer.

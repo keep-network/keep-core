@@ -188,6 +188,22 @@ type BridgeChain interface {
 	// if the wallet was not found.
 	GetWallet(walletPublicKeyHash [20]byte) (*WalletChainData, error)
 
+	// GetWalletParameters gets the current value of parameters relevant to
+	// wallet.
+	GetWalletParameters() (
+		creationPeriod uint32,
+		creationMinBtcBalance uint64,
+		creationMaxBtcBalance uint64,
+		closureMinBtcBalance uint64,
+		maxAge uint32,
+		maxBtcTransfer uint64,
+		closingPeriod uint32,
+		err error,
+	)
+
+	// GetLiveWalletsCount gets the current count of live wallets.
+	GetLiveWalletsCount() (uint32, error)
+
 	// ComputeMainUtxoHash computes the hash of the provided main UTXO
 	// according to the on-chain Bridge rules.
 	ComputeMainUtxoHash(mainUtxo *bitcoin.UnspentTransactionOutput) [32]byte
@@ -221,6 +237,14 @@ type BridgeChain interface {
 		fundingTxHash bitcoin.Hash,
 		fundingOutputIndex uint32,
 	) (*DepositChainRequest, bool, error)
+
+	// PastNewWalletRegisteredEvents fetches past new wallet registered events
+	// according to the provided filter or unfiltered if the filter is nil. Returned
+	// events are sorted by the block number in the ascending order, i.e. the
+	// latest event is at the end of the slice.
+	PastNewWalletRegisteredEvents(
+		filter *NewWalletRegisteredEventFilter,
+	) ([]*NewWalletRegisteredEvent, error)
 }
 
 // NewWalletRegisteredEvent represents a new wallet registered event.
@@ -342,6 +366,15 @@ type WalletCoordinatorChain interface {
 	OnRedemptionProposalSubmitted(
 		func(event *RedemptionProposalSubmittedEvent),
 	) subscription.EventSubscription
+
+	// Submits the moving funds target wallets commitment.
+	SubmitMovingFundsCommitment(
+		walletPublicKeyHash [20]byte,
+		walletMainUTXO bitcoin.UnspentTransactionOutput,
+		walletMembersIDs []uint32,
+		walletMemberIndex uint32,
+		targetWallets [][20]byte,
+	) error
 
 	// ValidateDepositSweepProposal validates the given deposit sweep proposal
 	// against the chain. It requires some additional data about the deposits

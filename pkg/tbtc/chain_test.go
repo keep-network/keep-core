@@ -586,6 +586,12 @@ func (lc *localChain) GetDepositRequest(
 	panic("not supported")
 }
 
+func (lc *localChain) PastNewWalletRegisteredEvents(
+	filter *NewWalletRegisteredEventFilter,
+) ([]*NewWalletRegisteredEvent, error) {
+	panic("not supported")
+}
+
 func (lc *localChain) setPendingRedemptionRequest(
 	walletPublicKeyHash [20]byte,
 	request *RedemptionRequest,
@@ -683,6 +689,23 @@ func (lc *localChain) GetWalletLock(walletPublicKeyHash [20]byte) (
 	panic("unsupported")
 }
 
+func (lc *localChain) GetWalletParameters() (
+	creationPeriod uint32,
+	creationMinBtcBalance uint64,
+	creationMaxBtcBalance uint64,
+	closureMinBtcBalance uint64,
+	maxAge uint32,
+	maxBtcTransfer uint64,
+	closingPeriod uint32,
+	err error,
+) {
+	panic("unsupported")
+}
+
+func (lc *localChain) GetLiveWalletsCount() (uint32, error) {
+	panic("unsupported")
+}
+
 func (lc *localChain) ValidateDepositSweepProposal(
 	proposal *DepositSweepProposal,
 	depositsExtraInfo []struct {
@@ -770,6 +793,16 @@ func buildDepositSweepProposalValidationKey(
 func (lc *localChain) OnRedemptionProposalSubmitted(
 	func(event *RedemptionProposalSubmittedEvent),
 ) subscription.EventSubscription {
+	panic("unsupported")
+}
+
+func (lc *localChain) SubmitMovingFundsCommitment(
+	walletPublicKeyHash [20]byte,
+	walletMainUTXO bitcoin.UnspentTransactionOutput,
+	walletMembersIDs []uint32,
+	walletMemberIndex uint32,
+	targetWallets [][20]byte,
+) error {
 	panic("unsupported")
 }
 
