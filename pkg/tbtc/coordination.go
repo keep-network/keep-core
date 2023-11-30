@@ -203,7 +203,7 @@ type CoordinationProposalGenerator interface {
 	// should be checked for the given coordination window. The generator is
 	// expected to return a proposal for the first action from the checklist
 	// that is valid for the given wallet's state. If none of the actions are
-	// valid, the generator should return a noopProposal.
+	// valid, the generator should return a no-op proposal.
 	Generate(
 		walletPublicKeyHash [20]byte,
 		actionsChecklist []WalletActionType,
