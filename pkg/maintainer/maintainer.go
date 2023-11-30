@@ -2,13 +2,11 @@ package maintainer
 
 import (
 	"context"
-
 	"github.com/ipfs/go-log/v2"
 
 	"github.com/keep-network/keep-core/pkg/bitcoin"
 	"github.com/keep-network/keep-core/pkg/maintainer/btcdiff"
 	"github.com/keep-network/keep-core/pkg/maintainer/spv"
-	"github.com/keep-network/keep-core/pkg/maintainer/wallet"
 )
 
 var logger = log.Logger("keep-maintainer")
@@ -18,13 +16,11 @@ func Initialize(
 	config Config,
 	btcChain bitcoin.Chain,
 	btcDiffChain btcdiff.Chain,
-	coordinatorChain wallet.Chain,
 	spvChain spv.Chain,
 ) {
 	// If none of the maintainers was specified in the config (i.e. no option was
 	// provided to the `maintainer` command), all maintainers should be launched.
 	launchAll := !config.BitcoinDifficulty.Enabled &&
-		!config.WalletCoordination.Enabled &&
 		!config.Spv.Enabled
 
 	if launchAll {
@@ -37,15 +33,6 @@ func Initialize(
 			config.BitcoinDifficulty,
 			btcChain,
 			btcDiffChain,
-		)
-	}
-
-	if config.WalletCoordination.Enabled || launchAll {
-		wallet.Initialize(
-			ctx,
-			config.WalletCoordination,
-			coordinatorChain,
-			btcChain,
 		)
 	}
 

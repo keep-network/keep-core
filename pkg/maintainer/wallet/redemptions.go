@@ -1,7 +1,6 @@
 package wallet
 
 import (
-	"context"
 	"encoding/hex"
 	"fmt"
 	"math/big"
@@ -13,54 +12,6 @@ import (
 	"github.com/keep-network/keep-core/pkg/bitcoin"
 	"github.com/keep-network/keep-core/pkg/tbtc"
 )
-
-func (wm *walletMaintainer) runRedemptionTask(ctx context.Context) error {
-	redemptionMaxSize, err := wm.chain.GetRedemptionMaxSize()
-	if err != nil {
-		return fmt.Errorf("failed to get redemption max size: [%w]", err)
-	}
-
-	walletsPendingRedemptions, err := FindPendingRedemptions(
-		wm.chain,
-		PendingRedemptionsFilter{
-			WalletPublicKeyHashes: nil,
-			WalletsLimit:          wm.config.RedemptionWalletsLimit,
-			RequestsLimit:         redemptionMaxSize,
-			RequestAmountLimit:    wm.config.RedemptionRequestAmountLimit,
-		},
-	)
-	if err != nil {
-		return fmt.Errorf("failed to find pending redemption requests: [%w]", err)
-	}
-
-	if len(walletsPendingRedemptions) == 0 {
-		logger.Info("no pending redemption requests")
-		return nil
-	}
-
-	for walletPublicKeyHash, redeemersOutputScripts := range walletsPendingRedemptions {
-		err = wm.runIfWalletUnlocked(
-			ctx,
-			walletPublicKeyHash,
-			tbtc.ActionRedemption,
-			func() error {
-				return ProposeRedemption(
-					wm.chain,
-					wm.btcChain,
-					walletPublicKeyHash,
-					0,
-					redeemersOutputScripts,
-					false,
-				)
-			},
-		)
-		if err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
 
 // RedemptionRequest represents a redemption request.
 type RedemptionRequest struct {

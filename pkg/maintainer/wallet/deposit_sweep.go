@@ -1,7 +1,6 @@
 package wallet
 
 import (
-	"context"
 	"fmt"
 	"math"
 	"math/big"
@@ -13,44 +12,6 @@ import (
 )
 
 const depositScriptByteSize = 92
-
-func (wm *walletMaintainer) runDepositSweepTask(ctx context.Context) error {
-	depositSweepMaxSize, err := wm.chain.GetDepositSweepMaxSize()
-	if err != nil {
-		return fmt.Errorf("failed to get deposit sweep max size: [%w]", err)
-	}
-
-	walletPublicKeyHash, deposits, err := FindDepositsToSweep(
-		wm.chain,
-		wm.btcChain,
-		[20]byte{},
-		depositSweepMaxSize,
-	)
-	if err != nil {
-		return fmt.Errorf("failed to prepare deposits sweep proposal: [%w]", err)
-	}
-
-	if len(deposits) == 0 {
-		logger.Info("no deposits to sweep")
-		return nil
-	}
-
-	return wm.runIfWalletUnlocked(
-		ctx,
-		walletPublicKeyHash,
-		tbtc.ActionDepositSweep,
-		func() error {
-			return ProposeDepositsSweep(
-				wm.chain,
-				wm.btcChain,
-				walletPublicKeyHash,
-				0,
-				deposits,
-				false,
-			)
-		},
-	)
-}
 
 // DepositReference holds some data allowing to identify and refer to a deposit.
 type DepositReference struct {
