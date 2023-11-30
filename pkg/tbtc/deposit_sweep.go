@@ -67,11 +67,11 @@ type DepositSweepProposal struct {
 	DepositsRevealBlocks []*big.Int
 }
 
-func (dsp *DepositSweepProposal) actionType() WalletActionType {
+func (dsp *DepositSweepProposal) ActionType() WalletActionType {
 	return ActionDepositSweep
 }
 
-func (dsp *DepositSweepProposal) validityBlocks() uint64 {
+func (dsp *DepositSweepProposal) ValidityBlocks() uint64 {
 	return depositSweepProposalValidityBlocks
 }
 

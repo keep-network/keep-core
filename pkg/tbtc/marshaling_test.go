@@ -127,10 +127,10 @@ func TestCoordinationMessage_MarshalingRoundtrip(t *testing.T) {
 	}
 
 	tests := map[string]struct {
-		proposal coordinationProposal
+		proposal CoordinationProposal
 	}{
 		"with noop proposal": {
-			proposal: &noopProposal{},
+			proposal: &NoopProposal{},
 		},
 		"with heartbeat proposal": {
 			proposal: &HeartbeatProposal{
@@ -301,7 +301,7 @@ func TestFuzzCoordinationMessage_MarshalingRoundtrip_WithNoopProposal(t *testing
 			senderID            group.MemberIndex
 			coordinationBlock   uint64
 			walletPublicKeyHash [20]byte
-			proposal            noopProposal
+			proposal            NoopProposal
 		)
 
 		f := fuzz.New().NilChance(0.1).

@@ -34,11 +34,11 @@ type HeartbeatProposal struct {
 	Message []byte
 }
 
-func (hp *HeartbeatProposal) actionType() WalletActionType {
+func (hp *HeartbeatProposal) ActionType() WalletActionType {
 	return ActionHeartbeat
 }
 
-func (hp *HeartbeatProposal) validityBlocks() uint64 {
+func (hp *HeartbeatProposal) ValidityBlocks() uint64 {
 	return heartbeatProposalValidityBlocks
 }
 
