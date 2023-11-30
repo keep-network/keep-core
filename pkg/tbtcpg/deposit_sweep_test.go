@@ -152,13 +152,12 @@ func TestProposeDepositsSweep(t *testing.T) {
 			btcChain.SetEstimateSatPerVByteFee(1, scenario.EstimateSatPerVByteFee)
 
 			// Test execution.
-			err = tbtcpg.ProposeDepositsSweep(
+			proposal, err := tbtcpg.ProposeDepositsSweep(
 				tbtcChain,
 				btcChain,
 				scenario.WalletPublicKeyHash,
 				scenario.SweepTxFee,
 				scenario.DepositsReferences(),
-				false,
 			)
 
 			if !reflect.DeepEqual(scenario.ExpectedErr, err) {
@@ -171,13 +170,18 @@ func TestProposeDepositsSweep(t *testing.T) {
 				)
 			}
 
+			var actualDepositSweepProposals []*tbtc.DepositSweepProposal
+			if proposal != nil {
+				actualDepositSweepProposals = append(actualDepositSweepProposals, proposal)
+			}
+
 			var expectedDepositSweepProposals []*tbtc.DepositSweepProposal
 			if p := scenario.ExpectedDepositSweepProposal; p != nil {
 				expectedDepositSweepProposals = append(expectedDepositSweepProposals, p)
 			}
 
 			if diff := deep.Equal(
-				tbtcChain.DepositSweepProposals(),
+				actualDepositSweepProposals,
 				expectedDepositSweepProposals,
 			); diff != nil {
 				t.Errorf("invalid deposits: %v", diff)

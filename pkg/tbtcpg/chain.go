@@ -50,6 +50,8 @@ type Chain interface {
 
 	// SubmitDepositSweepProposalWithReimbursement submits a deposit sweep
 	// proposal to the chain. It reimburses the gas cost to the caller.
+	//
+	// TODO: Remove this method.
 	SubmitDepositSweepProposalWithReimbursement(
 		proposal *tbtc.DepositSweepProposal,
 	) error

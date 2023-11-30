@@ -13,6 +13,74 @@ import (
 
 const depositScriptByteSize = 92
 
+// depositSweepTask is a task that may produce a deposit sweep proposal.
+type depositSweepTask struct {
+	chain    Chain
+	btcChain bitcoin.Chain
+}
+
+func newDepositSweepTask(
+	chain Chain,
+	btcChain bitcoin.Chain,
+) *depositSweepTask {
+	return &depositSweepTask{
+		chain:    chain,
+		btcChain: btcChain,
+	}
+}
+
+func (dst *depositSweepTask) run(walletPublicKeyHash [20]byte) (
+	tbtc.CoordinationProposal,
+	bool,
+	error,
+) {
+	depositSweepMaxSize, err := dst.chain.GetDepositSweepMaxSize()
+	if err != nil {
+		return nil, false, fmt.Errorf(
+			"failed to get deposit sweep max size: [%w]",
+			err,
+		)
+	}
+
+	_, deposits, err := FindDepositsToSweep(
+		dst.chain,
+		dst.btcChain,
+		walletPublicKeyHash,
+		depositSweepMaxSize,
+	)
+	if err != nil {
+		return nil, false, fmt.Errorf(
+			"cannot find deposits to sweep: [%w]",
+			err,
+		)
+	}
+
+	if len(deposits) == 0 {
+		logger.Info("no deposits to sweep")
+		return nil, false, nil
+	}
+
+	proposal, err := ProposeDepositsSweep(
+		dst.chain,
+		dst.btcChain,
+		walletPublicKeyHash,
+		0,
+		deposits,
+	)
+	if err != nil {
+		return nil, false, fmt.Errorf(
+			"cannot prepare deposit sweep proposal: [%w]",
+			err,
+		)
+	}
+
+	return proposal, true, nil
+}
+
+func (dst *depositSweepTask) actionType() tbtc.WalletActionType {
+	return tbtc.ActionDepositSweep
+}
+
 // DepositReference holds some data allowing to identify and refer to a deposit.
 type DepositReference struct {
 	FundingTxHash      bitcoin.Hash
@@ -289,17 +357,16 @@ func FindDepositsToSweep(
 	return walletPublicKeyHash, depositsRefs, nil
 }
 
-// ProposeDepositsSweep handles deposit sweep proposal request submission.
+// ProposeDepositsSweep returns a deposit sweep proposal.
 func ProposeDepositsSweep(
 	chain Chain,
 	btcChain bitcoin.Chain,
 	walletPublicKeyHash [20]byte,
 	fee int64,
 	deposits []*DepositReference,
-	dryRun bool,
-) error {
+) (*tbtc.DepositSweepProposal, error) {
 	if len(deposits) == 0 {
-		return fmt.Errorf("deposits list is empty")
+		return nil, fmt.Errorf("deposits list is empty")
 	}
 
 	// Estimate fee if it's missing.
@@ -308,7 +375,7 @@ func ProposeDepositsSweep(
 		var err error
 		_, _, perDepositMaxFee, _, err := chain.GetDepositParameters()
 		if err != nil {
-			return fmt.Errorf("cannot get deposit tx max fee: [%w]", err)
+			return nil, fmt.Errorf("cannot get deposit tx max fee: [%w]", err)
 		}
 
 		estimatedFee, _, err := estimateDepositsSweepFee(
@@ -317,7 +384,7 @@ func ProposeDepositsSweep(
 			perDepositMaxFee,
 		)
 		if err != nil {
-			return fmt.Errorf("cannot estimate sweep transaction fee: [%v]", err)
+			return nil, fmt.Errorf("cannot estimate sweep transaction fee: [%v]", err)
 		}
 
 		fee = estimatedFee
@@ -353,6 +420,7 @@ func ProposeDepositsSweep(
 	}
 
 	logger.Infof("validating the deposit sweep proposal...")
+
 	if _, err := tbtc.ValidateDepositSweepProposal(
 		logger,
 		proposal,
@@ -360,17 +428,10 @@ func ProposeDepositsSweep(
 		chain,
 		btcChain,
 	); err != nil {
-		return fmt.Errorf("failed to verify deposit sweep proposal: %v", err)
+		return nil, fmt.Errorf("failed to verify deposit sweep proposal: %v", err)
 	}
 
-	if !dryRun {
-		logger.Infof("submitting the deposit sweep proposal...")
-		if err := chain.SubmitDepositSweepProposalWithReimbursement(proposal); err != nil {
-			return fmt.Errorf("failed to submit deposit sweep proposal: %v", err)
-		}
-	}
-
-	return nil
+	return proposal, nil
 }
 
 // EstimateDepositsSweepFee computes the total fee for the Bitcoin deposits
