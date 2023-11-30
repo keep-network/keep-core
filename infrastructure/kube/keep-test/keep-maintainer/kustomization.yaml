@@ -8,11 +8,14 @@ commonLabels:
   # The current setup runs spv and walletCoordination modules as a workaround
   # for reasons mentioned in `patches` property below.
   type: all
-  network: goerli
+  network: sepolia
 
 images:
+  # Special maintainer version working with the modified version of LightRelay
+  # contract (SepoliaLightRelay). Source code lives in the `keep-maintainer-testnet`
+  # branch of the `keep-network/keep-core` repository.
   - name: keep-maintainer
-    newName: gcr.io/keep-test-f3e0/keep-client
+    newName: gcr.io/keep-test-f3e0/keep-maintainer
     newTag: latest
 
 configMapGenerator:
@@ -32,7 +35,7 @@ secretGenerator:
 
 patches:
   # Testnet's maintainer shouldn't run `--bitcoinDifficulty` module, as the testnet
-  # uses modified version of LightRelay contract (GoerliLightRelay) that doesn't
+  # uses modified version of LightRelay contract (SepoliaLightRelay) that doesn't
   # require the bitcoin difficulty to be submitted. This patch defines manually
   # which modules should be started.
   - target:
@@ -47,7 +50,7 @@ patches:
         value: --walletCoordination
       - op: replace
         path: /spec/template/spec/containers/0/env/0/valueFrom/secretKeyRef/name
-        value: eth-network-goerli
+        value: eth-network-sepolia
 
 generatorOptions:
   disableNameSuffixHash: true

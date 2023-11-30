@@ -601,8 +601,8 @@ github.com/julienschmidt/httprouter v1.3.0/go.mod h1:JR6WtHb+2LUe8TCKY3cZOxFyyO8
 github.com/kami-zh/go-capturer v0.0.0-20171211120116-e492ea43421d/go.mod h1:P2viExyCEfeWGU259JnaQ34Inuec4R38JCyBx2edgD0=
 github.com/keep-network/go-electrum v0.0.0-20230524074410-befe891c2f8c h1:wBBb0rIOnYpOqH+QkwEQ/2LT6n7v+ELJlDePvoR7pQY=
 github.com/keep-network/go-electrum v0.0.0-20230524074410-befe891c2f8c/go.mod h1:eiMFzdvS+x8Voi0bmiZtVfJ3zMNRUnPNDnhCQR0tudo=
-github.com/keep-network/keep-common v1.7.1-0.20230501122407-5cc3757ccf0d h1:6AiGKgOEmwO1Cri87bMfmxgF8ZgE5HIJOQUO7nZszh0=
-github.com/keep-network/keep-common v1.7.1-0.20230501122407-5cc3757ccf0d/go.mod h1:OmaZrnZODf6RJ95yUn2kBjy8Z4u2npPJQkSiyimluto=
+github.com/keep-network/keep-common v1.7.1-0.20231107101149-559db3d3849e h1:6kXLtv3TfObPoBNSAMqpMefOyK01y6X4zghau6F5NDg=
+github.com/keep-network/keep-common v1.7.1-0.20231107101149-559db3d3849e/go.mod h1:OmaZrnZODf6RJ95yUn2kBjy8Z4u2npPJQkSiyimluto=
 github.com/kisielk/errcheck v1.1.0/go.mod h1:EZBBE59ingxPouuu3KfxchcWSUPOHkagtvWXihfKN4Q=
 github.com/kisielk/errcheck v1.2.0/go.mod h1:/BMXB+zMLi60iA8Vv6Ksmxu/1UDYcXs4uQLJ+jE2L00=
 github.com/kisielk/errcheck v1.5.0/go.mod h1:pFxgyoBC7bSaBwPgfKdkLd5X25qrDl4LWUI2bnpBCr8=

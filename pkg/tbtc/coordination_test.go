@@ -48,7 +48,7 @@ func TestCoordinationWindow_EndBlock(t *testing.T) {
 	)
 }
 
-func TestCoordinationWindow_IsAfterActivePhase(t *testing.T) {
+func TestCoordinationWindow_IsAfter(t *testing.T) {
 	window := newCoordinationWindow(1800)
 
 	previousWindow := newCoordinationWindow(900)

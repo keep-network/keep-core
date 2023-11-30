@@ -27,6 +27,6 @@ Config Maps:
 
 Secrets:
 
-- `eth-network-goerli`
+- `eth-network-sepolia`
 - `eth-account-passphrases`
 - `eth-account-privatekeys`

@@ -246,7 +246,7 @@ make mainnet
 ```
 
 ```
-make goerli
+make sepolia
 ```
 
 Development
