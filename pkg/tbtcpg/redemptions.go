@@ -13,6 +13,76 @@ import (
 	"github.com/keep-network/keep-core/pkg/tbtc"
 )
 
+// redemptionTask is a task that may produce a redemption proposal.
+type redemptionTask struct {
+	chain    Chain
+	btcChain bitcoin.Chain
+}
+
+func newRedemptionTask(
+	chain Chain,
+	btcChain bitcoin.Chain,
+) *redemptionTask {
+	return &redemptionTask{
+		chain:    chain,
+		btcChain: btcChain,
+	}
+}
+
+func (rt *redemptionTask) run(walletPublicKeyHash [20]byte) (
+	tbtc.CoordinationProposal,
+	bool,
+	error,
+) {
+	redemptionMaxSize, err := rt.chain.GetRedemptionMaxSize()
+	if err != nil {
+		return nil, false, fmt.Errorf(
+			"failed to get redemption max size: [%w]",
+			err,
+		)
+	}
+
+	walletsPendingRedemptions, err := FindPendingRedemptions(
+		rt.chain,
+		PendingRedemptionsFilter{
+			WalletPublicKeyHashes: [][20]byte{walletPublicKeyHash},
+			RequestsLimit:         redemptionMaxSize,
+		},
+	)
+	if err != nil {
+		return nil, false, fmt.Errorf(
+			"cannot find pending redemption requests: [%w]",
+			err,
+		)
+	}
+
+	redeemersOutputScripts, ok := walletsPendingRedemptions[walletPublicKeyHash]
+	if !ok {
+		logger.Info("no pending redemption requests")
+		return nil, false, nil
+	}
+
+	proposal, err := ProposeRedemption(
+		rt.chain,
+		rt.btcChain,
+		walletPublicKeyHash,
+		0,
+		redeemersOutputScripts,
+	)
+	if err != nil {
+		return nil, false, fmt.Errorf(
+			"cannot prepare redemption proposal: [%w]",
+			err,
+		)
+	}
+
+	return proposal, true, nil
+}
+
+func (rt *redemptionTask) actionType() tbtc.WalletActionType {
+	return tbtc.ActionRedemption
+}
+
 // RedemptionRequest represents a redemption request.
 type RedemptionRequest struct {
 	WalletPublicKeyHash  [20]byte
@@ -222,17 +292,16 @@ func FindPendingRedemptions(
 	return result, nil
 }
 
-// ProposeRedemption handles redemption proposal submission.
+// ProposeRedemption returns a redemption proposal.
 func ProposeRedemption(
 	chain Chain,
 	btcChain bitcoin.Chain,
 	walletPublicKeyHash [20]byte,
 	fee int64,
 	redeemersOutputScripts []bitcoin.Script,
-	dryRun bool,
-) error {
+) (*tbtc.RedemptionProposal, error) {
 	if len(redeemersOutputScripts) == 0 {
-		return fmt.Errorf("redemptions list is empty")
+		return nil, fmt.Errorf("redemptions list is empty")
 	}
 
 	logger.Infof(
@@ -252,7 +321,7 @@ func ProposeRedemption(
 			redeemersOutputScripts,
 		)
 		if err != nil {
-			return fmt.Errorf(
+			return nil, fmt.Errorf(
 				"cannot estimate redemption transaction fee: [%w]",
 				err,
 			)
@@ -278,19 +347,10 @@ func ProposeRedemption(
 		proposal,
 		chain,
 	); err != nil {
-		return fmt.Errorf("failed to verify redemption proposal: %v", err)
+		return nil, fmt.Errorf("failed to verify redemption proposal: %v", err)
 	}
 
-	if !dryRun {
-		logger.Infof("submitting the redemption proposal...")
-		if err := chain.SubmitRedemptionProposalWithReimbursement(proposal); err != nil {
-			return fmt.Errorf("failed to submit redemption proposal: %v", err)
-		}
-	} else {
-		logger.Infof("skipping transaction submission in dry-run mode")
-	}
-
-	return nil
+	return proposal, nil
 }
 
 func getPendingRedemptions(

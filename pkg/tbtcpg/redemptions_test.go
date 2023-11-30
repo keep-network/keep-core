@@ -202,20 +202,19 @@ func TestProposeRedemption(t *testing.T) {
 				t.Fatal(err)
 			}
 
-			err = tbtcpg.ProposeRedemption(
+			proposal, err := tbtcpg.ProposeRedemption(
 				tbtcChain,
 				btcChain,
 				walletPublicKeyHash,
 				test.fee,
 				redeemersOutputScripts,
-				false,
 			)
 			if err != nil {
 				t.Fatal(err)
 			}
 
 			if diff := deep.Equal(
-				tbtcChain.RedemptionProposals(),
+				[]*tbtc.RedemptionProposal{proposal},
 				[]*tbtc.RedemptionProposal{test.expectedProposal},
 			); diff != nil {
 				t.Errorf("invalid deposits: %v", diff)

@@ -34,7 +34,7 @@ func NewProposalGenerator(
 ) *ProposalGenerator {
 	tasks := []proposalTask{
 		newDepositSweepTask(chain, btcChain),
-		// newRedemptionTask(chain, btcChain),
+		newRedemptionTask(chain, btcChain),
 		// newHeartbeatTask(chain, btcChain),
 		// TODO: Uncomment when moving funds support is implemented.
 		// newMovedFundsSweepTask(),
