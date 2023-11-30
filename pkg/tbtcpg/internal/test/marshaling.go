@@ -7,7 +7,7 @@ import (
 	"math/big"
 	"time"
 
-	walletmtr "github.com/keep-network/keep-core/pkg/maintainer/wallet"
+	"github.com/keep-network/keep-core/pkg/tbtcpg"
 
 	"github.com/keep-network/keep-core/internal/hexutils"
 	"github.com/keep-network/keep-core/pkg/bitcoin"
@@ -120,7 +120,7 @@ func (dsts *FindDepositsToSweepTestScenario) UnmarshalJSON(data []byte) error {
 
 	// Unmarshal expected unswept deposits.
 	for i, deposit := range unmarshaled.ExpectedUnsweptDeposits {
-		ud := new(walletmtr.DepositReference)
+		ud := new(tbtcpg.DepositReference)
 
 		fundingTxHash, err := bitcoin.NewHashFromString(deposit.FundingTxHash, bitcoin.ReversedByteOrder)
 		if err != nil {

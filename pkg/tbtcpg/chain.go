@@ -1,4 +1,4 @@
-package wallet
+package tbtcpg
 
 import (
 	"github.com/keep-network/keep-core/pkg/bitcoin"

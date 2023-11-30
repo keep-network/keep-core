@@ -10,7 +10,7 @@ import (
 	"strings"
 	"time"
 
-	walletmtr "github.com/keep-network/keep-core/pkg/maintainer/wallet"
+	"github.com/keep-network/keep-core/pkg/tbtcpg"
 
 	"github.com/keep-network/keep-core/pkg/bitcoin"
 	"github.com/keep-network/keep-core/pkg/tbtc"
@@ -53,7 +53,7 @@ type FindDepositsToSweepTestScenario struct {
 	Deposits []*Deposit
 
 	ExpectedWalletPublicKeyHash [20]byte
-	ExpectedUnsweptDeposits     []*walletmtr.DepositReference
+	ExpectedUnsweptDeposits     []*tbtcpg.DepositReference
 
 	SweepTxFee             int64
 	EstimateSatPerVByteFee int64
@@ -65,7 +65,7 @@ func LoadFindDepositsToSweepTestScenario() ([]*FindDepositsToSweepTestScenario, 
 }
 
 type ProposeSweepDepositsData struct {
-	walletmtr.DepositReference
+	tbtcpg.DepositReference
 
 	Transaction            *bitcoin.Transaction
 	FundingTxConfirmations uint
@@ -84,10 +84,10 @@ type ProposeSweepTestScenario struct {
 	ExpectedErr                  error
 }
 
-func (psts *ProposeSweepTestScenario) DepositsReferences() []*walletmtr.DepositReference {
-	result := make([]*walletmtr.DepositReference, len(psts.Deposits))
+func (psts *ProposeSweepTestScenario) DepositsReferences() []*tbtcpg.DepositReference {
+	result := make([]*tbtcpg.DepositReference, len(psts.Deposits))
 	for i, d := range psts.Deposits {
-		result[i] = &walletmtr.DepositReference{
+		result[i] = &tbtcpg.DepositReference{
 			FundingTxHash:      d.FundingTxHash,
 			FundingOutputIndex: d.FundingOutputIndex,
 			RevealBlock:        d.RevealBlock,
@@ -121,7 +121,7 @@ type FindPendingRedemptionsTestScenario struct {
 		RequestTimeout   uint32
 		RequestMinAge    uint32
 	}
-	Filter                            walletmtr.PendingRedemptionsFilter
+	Filter                            tbtcpg.PendingRedemptionsFilter
 	Wallets                           []*Wallet
 	PendingRedemptions                []*RedemptionRequest
 	ExpectedWalletsPendingRedemptions map[[20]byte][]bitcoin.Script
