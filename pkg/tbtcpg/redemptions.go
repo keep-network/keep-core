@@ -93,11 +93,12 @@ type RedemptionRequest struct {
 	RequestedAmount      uint64
 }
 
-// FindPendingRedemptions finds pending redemptions requests according to
-// the provided filter. The returned value is a map, where the key is
-// a 20-byte public key hash of a specific wallet and the value is a list
-// of pending requests targeting this wallet. It is guaranteed that an existing
-// key has always a non-empty slice as value.
+// FindPendingRedemptions finds pending redemptions requests for the
+// provided wallet. The returned value is a list of redeemers output
+// scripts that come from detected pending requests targeting this wallet.
+// The maxNumberOfRequests parameter is used as a ceiling for the number of
+// requests in the result. If number of discovered requests meets the
+// maxNumberOfRequests the function will stop fetching more requests.
 func (rt *RedemptionTask) FindPendingRedemptions(
 	taskLogger log.StandardLogger,
 	walletPublicKeyHash [20]byte,
