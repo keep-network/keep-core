@@ -668,9 +668,8 @@ func (n *node) handleRedemptionProposal(
 	walletActionLogger.Infof("wallet action dispatched successfully")
 }
 
-func (n *node) handleMovingFundsProposal(proposal *MovingFundsProposal) {
+func (n *node) HandleMovingFundsProposal(sourceWalletPublicKeyHash [20]byte) {
 	go func() {
-		sourceWalletPublicKeyHash := proposal.WalletPublicKeyHash
 		logger.Info(
 			"moving funds proposal initiated for wallet with PKH [0x%x]",
 			sourceWalletPublicKeyHash,
