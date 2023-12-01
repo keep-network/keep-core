@@ -715,7 +715,10 @@ func (n *node) handleMovingFundsProposal(proposal *MovingFundsProposal) {
 			return
 		}
 
-		walletBalance := walletMainUtxo.Value
+		walletBalance := int64(0)
+		if walletMainUtxo != nil {
+			walletBalance = walletMainUtxo.Value
+		}
 
 		// Check if the wallet meets the conditions for moving funds
 		// commitment.
