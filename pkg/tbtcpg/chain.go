@@ -48,14 +48,6 @@ type Chain interface {
 		err error,
 	)
 
-	// SubmitDepositSweepProposalWithReimbursement submits a deposit sweep
-	// proposal to the chain. It reimburses the gas cost to the caller.
-	//
-	// TODO: Remove this method.
-	SubmitDepositSweepProposalWithReimbursement(
-		proposal *tbtc.DepositSweepProposal,
-	) error
-
 	// PastRedemptionRequestedEvents fetches past redemption requested events according
 	// to the provided filter or unfiltered if the filter is nil. Returned
 	// events are sorted by the block number in the ascending order, i.e. the
@@ -84,12 +76,6 @@ type Chain interface {
 		timeoutNotifierRewardMultiplier uint32,
 		err error,
 	)
-
-	// SubmitRedemptionProposalWithReimbursement submits a redemption proposal
-	// to the chain. It reimburses the gas cost to the caller.
-	SubmitRedemptionProposalWithReimbursement(
-		proposal *tbtc.RedemptionProposal,
-	) error
 
 	// GetRedemptionMaxSize gets the maximum number of redemption requests that
 	// can be a part of a redemption sweep proposal.
@@ -136,14 +122,6 @@ type Chain interface {
 	// GetDepositSweepMaxSize gets the maximum number of deposits that can
 	// be part of a deposit sweep proposal.
 	GetDepositSweepMaxSize() (uint16, error)
-
-	// GetWalletLock gets the current wallet lock for the given wallet.
-	// Returned values represent the expiration time and the cause of the lock.
-	// The expiration time can be UNIX timestamp 0 which means there is no lock
-	// on the wallet at the given moment.
-	GetWalletLock(
-		walletPublicKeyHash [20]byte,
-	) (time.Time, tbtc.WalletActionType, error)
 
 	BlockCounter() (chain.BlockCounter, error)
 
