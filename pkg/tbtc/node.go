@@ -677,7 +677,7 @@ func (n *node) handleMovingFundsProposal(proposal *MovingFundsProposal) {
 		)
 
 		// Make sure the wallet meets the criteria for moving funds proposal.
-		walletRegistryData, found := n.walletRegistry.getWalletByPublicKeyHash(
+		sourceWallet, found := n.walletRegistry.getWalletByPublicKeyHash(
 			sourceWalletPublicKeyHash,
 		)
 		if !found {
@@ -828,7 +828,7 @@ func (n *node) handleMovingFundsProposal(proposal *MovingFundsProposal) {
 		logger.Infof("Target wallets length [%v]", len(targetWallets))
 
 		walletMemberIDs := make([]uint32, 0)
-		for _, operatorAddress := range walletRegistryData.signingGroupOperators {
+		for _, operatorAddress := range sourceWallet.signingGroupOperators {
 			operatorId, err := n.chain.GetOperatorID(operatorAddress)
 			if err != nil {
 				logger.Errorf(
