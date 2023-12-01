@@ -48,6 +48,7 @@ type LocalChain struct {
 	averageBlockTime                time.Duration
 	pendingRedemptionRequests       map[[32]byte]*tbtc.RedemptionRequest
 	redemptionProposalValidations   map[[32]byte]bool
+	heartbeatProposalValidations    map[[16]byte]bool
 }
 
 func NewLocalChain() *LocalChain {
@@ -59,6 +60,7 @@ func NewLocalChain() *LocalChain {
 		pastRedemptionRequestedEvents:   make(map[[32]byte][]*tbtc.RedemptionRequestedEvent),
 		pendingRedemptionRequests:       make(map[[32]byte]*tbtc.RedemptionRequest),
 		redemptionProposalValidations:   make(map[[32]byte]bool),
+		heartbeatProposalValidations:    make(map[[16]byte]bool),
 	}
 }
 
@@ -566,6 +568,34 @@ func (lc *LocalChain) SetRedemptionProposalValidationResult(
 	lc.redemptionProposalValidations[key] = result
 
 	return nil
+}
+
+func (lc *LocalChain) ValidateHeartbeatProposal(
+	proposal *tbtc.HeartbeatProposal,
+) error {
+	lc.mutex.Lock()
+	defer lc.mutex.Unlock()
+
+	result, ok := lc.heartbeatProposalValidations[proposal.Message]
+	if !ok {
+		return fmt.Errorf("validation result unknown")
+	}
+
+	if !result {
+		return fmt.Errorf("validation failed")
+	}
+
+	return nil
+}
+
+func (lc *LocalChain) SetHeartbeatProposalValidationResult(
+	proposal *tbtc.HeartbeatProposal,
+	result bool,
+) {
+	lc.mutex.Lock()
+	defer lc.mutex.Unlock()
+
+	lc.heartbeatProposalValidations[proposal.Message] = result
 }
 
 func buildRedemptionProposalValidationKey(

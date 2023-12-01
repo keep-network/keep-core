@@ -126,4 +126,9 @@ type Chain interface {
 	BlockCounter() (chain.BlockCounter, error)
 
 	AverageBlockTime() time.Duration
+
+	// ValidateHeartbeatProposal validates the given heartbeat proposal
+	// against the chain. Returns an error if the proposal is not valid or
+	// nil otherwise.
+	ValidateHeartbeatProposal(proposal *tbtc.HeartbeatProposal) error
 }

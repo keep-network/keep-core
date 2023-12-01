@@ -31,7 +31,7 @@ const (
 )
 
 type HeartbeatProposal struct {
-	Message []byte
+	Message [16]byte
 }
 
 func (hp *HeartbeatProposal) ActionType() WalletActionType {

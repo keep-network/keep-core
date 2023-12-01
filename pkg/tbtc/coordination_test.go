@@ -703,7 +703,7 @@ func TestCoordinationExecutor_ExecuteLeaderRoutine(t *testing.T) {
 			for _, action := range actionsChecklist {
 				if walletPublicKeyHash == publicKeyHash && action == ActionHeartbeat {
 					return &HeartbeatProposal{
-						Message: []byte("heartbeat message"),
+						Message: [16]byte{0x01, 0x02},
 					}, nil
 				}
 			}
@@ -764,7 +764,7 @@ func TestCoordinationExecutor_ExecuteLeaderRoutine(t *testing.T) {
 	<-ctx.Done()
 
 	expectedProposal := &HeartbeatProposal{
-		Message: []byte("heartbeat message"),
+		Message: [16]byte{0x01, 0x02},
 	}
 
 	if !reflect.DeepEqual(expectedProposal, proposal) {
@@ -990,7 +990,7 @@ func TestCoordinationExecutor_ExecuteFollowerRoutine(t *testing.T) {
 			coordinationBlock:   900,
 			walletPublicKeyHash: executor.walletPublicKeyHash(),
 			proposal: &HeartbeatProposal{
-				Message: []byte("heartbeat message"),
+				Message: [16]byte{0x01, 0x02},
 			},
 		})
 		if err != nil {
