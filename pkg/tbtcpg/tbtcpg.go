@@ -11,20 +11,20 @@ import (
 
 var logger = log.Logger("keep-tbtcpg")
 
-// proposalTask encapsulates logic used to generate an action proposal
+// ProposalTask encapsulates logic used to generate an action proposal
 // of the given type.
-type proposalTask interface {
-	// run executes the task and returns a proposal, a boolean flag indicating
+type ProposalTask interface {
+	// Run executes the task and returns a proposal, a boolean flag indicating
 	// whether the proposal was generated and an error if any.
-	run(walletPublicKeyHash [20]byte) (tbtc.CoordinationProposal, bool, error)
-	// actionType returns the type of the action proposal.
-	actionType() tbtc.WalletActionType
+	Run(walletPublicKeyHash [20]byte) (tbtc.CoordinationProposal, bool, error)
+	// ActionType returns the type of the action proposal.
+	ActionType() tbtc.WalletActionType
 }
 
 // ProposalGenerator is a component responsible for generating coordination
 // proposals for tbtc wallets.
 type ProposalGenerator struct {
-	tasks []proposalTask
+	tasks []ProposalTask
 }
 
 // NewProposalGenerator returns a new proposal generator.
@@ -32,9 +32,9 @@ func NewProposalGenerator(
 	chain Chain,
 	btcChain bitcoin.Chain,
 ) *ProposalGenerator {
-	tasks := []proposalTask{
-		newDepositSweepTask(chain, btcChain),
-		newRedemptionTask(chain, btcChain),
+	tasks := []ProposalTask{
+		NewDepositSweepTask(chain, btcChain),
+		NewRedemptionTask(chain, btcChain),
 		// newHeartbeatTask(chain, btcChain),
 		// TODO: Uncomment when moving funds support is implemented.
 		// newMovedFundsSweepTask(),
@@ -68,8 +68,8 @@ func (pg *ProposalGenerator) Generate(
 	for _, action := range actionsChecklist {
 		walletLogger.Infof("starting proposal task [%s]", action)
 
-		taskIndex := slices.IndexFunc(pg.tasks, func(task proposalTask) bool {
-			return task.actionType() == action
+		taskIndex := slices.IndexFunc(pg.tasks, func(task ProposalTask) bool {
+			return task.ActionType() == action
 		})
 
 		if taskIndex < 0 {
@@ -77,7 +77,7 @@ func (pg *ProposalGenerator) Generate(
 			continue
 		}
 
-		proposal, ok, err := pg.tasks[taskIndex].run(walletPublicKeyHash)
+		proposal, ok, err := pg.tasks[taskIndex].Run(walletPublicKeyHash)
 		if err != nil {
 			return nil, fmt.Errorf(
 				"error while running proposal task [%s]: [%v]",

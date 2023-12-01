@@ -42,7 +42,7 @@ func TestEstimateRedemptionFee(t *testing.T) {
 	testutils.AssertIntsEqual(t, "fee", expectedFee, int(actualFee))
 }
 
-func TestFindPendingRedemptions(t *testing.T) {
+func TestRedemptionAction_FindPendingRedemptions(t *testing.T) {
 	scenarios, err := test.LoadFindPendingRedemptionsTestScenario()
 	if err != nil {
 		t.Fatal(err)
@@ -78,20 +78,6 @@ func TestFindPendingRedemptions(t *testing.T) {
 			requestTimeoutBlocks := uint64(scenario.ChainParameters.RequestTimeout) /
 				uint64(scenario.ChainParameters.AverageBlockTime.Seconds())
 
-			// Record scenario wallets to the local chain.
-			for _, wallet := range scenario.Wallets {
-				err := tbtcChain.AddPastNewWalletRegisteredEvent(
-					nil,
-					&tbtc.NewWalletRegisteredEvent{
-						WalletPublicKeyHash: wallet.WalletPublicKeyHash,
-						BlockNumber:         wallet.RegistrationBlockNumber,
-					},
-				)
-				if err != nil {
-					t.Fatal(err)
-				}
-			}
-
 			// Record scenario pending redemptions to the local chain.
 			for _, pendingRedemption := range scenario.PendingRedemptions {
 				// Record the corresponding event. Set only relevant fields.
@@ -121,17 +107,20 @@ func TestFindPendingRedemptions(t *testing.T) {
 				)
 			}
 
-			walletsPendingRedemptions, err := tbtcpg.FindPendingRedemptions(
-				tbtcChain,
-				scenario.Filter,
+			task := tbtcpg.NewRedemptionTask(tbtcChain, nil)
+
+			redeemersOutputScripts, err := task.FindPendingRedemptions(
+				&testutils.MockLogger{},
+				scenario.WalletPublicKeyHash,
+				scenario.MaxNumberOfRequests,
 			)
 			if err != nil {
 				t.Fatal(err)
 			}
 
 			if diff := deep.Equal(
-				scenario.ExpectedWalletsPendingRedemptions,
-				walletsPendingRedemptions,
+				scenario.ExpectedRedeemersOutputScripts,
+				redeemersOutputScripts,
 			); diff != nil {
 				t.Errorf("invalid wallets pending redemptions: %v", diff)
 			}
@@ -139,7 +128,7 @@ func TestFindPendingRedemptions(t *testing.T) {
 	}
 }
 
-func TestProposeRedemption(t *testing.T) {
+func TestRedemptionAction_ProposeRedemption(t *testing.T) {
 	fromHex := func(hexString string) []byte {
 		bytes, err := hex.DecodeString(hexString)
 		if err != nil {
@@ -202,21 +191,19 @@ func TestProposeRedemption(t *testing.T) {
 				t.Fatal(err)
 			}
 
-			proposal, err := tbtcpg.ProposeRedemption(
-				tbtcChain,
-				btcChain,
+			task := tbtcpg.NewRedemptionTask(tbtcChain, btcChain)
+
+			proposal, err := task.ProposeRedemption(
+				&testutils.MockLogger{},
 				walletPublicKeyHash,
-				test.fee,
 				redeemersOutputScripts,
+				test.fee,
 			)
 			if err != nil {
 				t.Fatal(err)
 			}
 
-			if diff := deep.Equal(
-				[]*tbtc.RedemptionProposal{proposal},
-				[]*tbtc.RedemptionProposal{test.expectedProposal},
-			); diff != nil {
+			if diff := deep.Equal(proposal, test.expectedProposal); diff != nil {
 				t.Errorf("invalid deposits: %v", diff)
 			}
 		})

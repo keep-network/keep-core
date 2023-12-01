@@ -11,13 +11,13 @@ func TestProposalGenerator_Generate(t *testing.T) {
 	walletPublicKeyHash := [20]byte{1, 2, 3}
 
 	tests := map[string]struct {
-		tasks            []proposalTask
+		tasks            []ProposalTask
 		actionsChecklist []tbtc.WalletActionType
 		expectedProposal tbtc.CoordinationProposal
 		expectedErr      error
 	}{
 		"first task generates a proposal": {
-			tasks: []proposalTask{
+			tasks: []ProposalTask{
 				&mockProposalTask{
 					action: tbtc.ActionRedemption,
 					results: map[[20]byte]mockProposalTaskResult{
@@ -38,7 +38,7 @@ func TestProposalGenerator_Generate(t *testing.T) {
 			expectedProposal: &mockCoordinationProposal{tbtc.ActionRedemption},
 		},
 		"subsequent task generates a proposal": {
-			tasks: []proposalTask{
+			tasks: []ProposalTask{
 				&mockProposalTask{
 					action: tbtc.ActionRedemption,
 					results: map[[20]byte]mockProposalTaskResult{
@@ -59,7 +59,7 @@ func TestProposalGenerator_Generate(t *testing.T) {
 			expectedProposal: &mockCoordinationProposal{tbtc.ActionDepositSweep},
 		},
 		"first task returns error": {
-			tasks: []proposalTask{
+			tasks: []ProposalTask{
 				&mockProposalTask{
 					action: tbtc.ActionRedemption,
 					results: map[[20]byte]mockProposalTaskResult{
@@ -81,7 +81,7 @@ func TestProposalGenerator_Generate(t *testing.T) {
 			expectedErr:      fmt.Errorf("error while running proposal task [Redemption]: [proposal task error]"),
 		},
 		"first task is unsupported": {
-			tasks: []proposalTask{
+			tasks: []ProposalTask{
 				&mockProposalTask{
 					action: tbtc.ActionDepositSweep,
 					results: map[[20]byte]mockProposalTaskResult{
@@ -96,7 +96,7 @@ func TestProposalGenerator_Generate(t *testing.T) {
 			expectedProposal: &mockCoordinationProposal{tbtc.ActionDepositSweep},
 		},
 		"all tasks complete without result": {
-			tasks: []proposalTask{
+			tasks: []ProposalTask{
 				&mockProposalTask{
 					action: tbtc.ActionRedemption,
 					results: map[[20]byte]mockProposalTaskResult{
@@ -167,7 +167,7 @@ type mockProposalTask struct {
 	results map[[20]byte]mockProposalTaskResult
 }
 
-func (mpt *mockProposalTask) run(walletPublicKeyHash [20]byte) (
+func (mpt *mockProposalTask) Run(walletPublicKeyHash [20]byte) (
 	tbtc.CoordinationProposal,
 	bool,
 	error,
@@ -189,7 +189,7 @@ func (mpt *mockProposalTask) run(walletPublicKeyHash [20]byte) (
 	}
 }
 
-func (mpt *mockProposalTask) actionType() tbtc.WalletActionType {
+func (mpt *mockProposalTask) ActionType() tbtc.WalletActionType {
 	return mpt.action
 }
 

@@ -1,5 +1,5 @@
 {
-  "Title": "Sweep transaction fee provided",
+  "Title": "sweep transaction fee provided",
   "WalletPublicKeyHash": "0x03b74d6893ad46dfdd01b9e0e3b3385f4fce2d1e",
   "DepositTxMaxFee": 10000,
   "Deposits": [

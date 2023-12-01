@@ -1,11 +1,11 @@
 package tbtcpg
 
 import (
-	"encoding/hex"
 	"fmt"
+	"github.com/ipfs/go-log/v2"
+	"go.uber.org/zap"
 	"math/big"
 	"sort"
-	"strings"
 	"time"
 
 	"github.com/keep-network/keep-core/internal/hexutils"
@@ -13,27 +13,32 @@ import (
 	"github.com/keep-network/keep-core/pkg/tbtc"
 )
 
-// redemptionTask is a task that may produce a redemption proposal.
-type redemptionTask struct {
+// RedemptionTask is a task that may produce a redemption proposal.
+type RedemptionTask struct {
 	chain    Chain
 	btcChain bitcoin.Chain
 }
 
-func newRedemptionTask(
+func NewRedemptionTask(
 	chain Chain,
 	btcChain bitcoin.Chain,
-) *redemptionTask {
-	return &redemptionTask{
+) *RedemptionTask {
+	return &RedemptionTask{
 		chain:    chain,
 		btcChain: btcChain,
 	}
 }
 
-func (rt *redemptionTask) run(walletPublicKeyHash [20]byte) (
+func (rt *RedemptionTask) Run(walletPublicKeyHash [20]byte) (
 	tbtc.CoordinationProposal,
 	bool,
 	error,
 ) {
+	taskLogger := logger.With(
+		zap.String("task", rt.ActionType().String()),
+		zap.String("walletPKH", fmt.Sprintf("0x%x", walletPublicKeyHash)),
+	)
+
 	redemptionMaxSize, err := rt.chain.GetRedemptionMaxSize()
 	if err != nil {
 		return nil, false, fmt.Errorf(
@@ -42,12 +47,10 @@ func (rt *redemptionTask) run(walletPublicKeyHash [20]byte) (
 		)
 	}
 
-	walletsPendingRedemptions, err := FindPendingRedemptions(
-		rt.chain,
-		PendingRedemptionsFilter{
-			WalletPublicKeyHashes: [][20]byte{walletPublicKeyHash},
-			RequestsLimit:         redemptionMaxSize,
-		},
+	redeemersOutputScripts, err := rt.FindPendingRedemptions(
+		taskLogger,
+		walletPublicKeyHash,
+		redemptionMaxSize,
 	)
 	if err != nil {
 		return nil, false, fmt.Errorf(
@@ -56,18 +59,16 @@ func (rt *redemptionTask) run(walletPublicKeyHash [20]byte) (
 		)
 	}
 
-	redeemersOutputScripts, ok := walletsPendingRedemptions[walletPublicKeyHash]
-	if !ok {
-		logger.Info("no pending redemption requests")
+	if len(redeemersOutputScripts) == 0 {
+		taskLogger.Info("no pending redemption requests")
 		return nil, false, nil
 	}
 
-	proposal, err := ProposeRedemption(
-		rt.chain,
-		rt.btcChain,
+	proposal, err := rt.ProposeRedemption(
+		taskLogger,
 		walletPublicKeyHash,
-		0,
 		redeemersOutputScripts,
+		0,
 	)
 	if err != nil {
 		return nil, false, fmt.Errorf(
@@ -79,7 +80,7 @@ func (rt *redemptionTask) run(walletPublicKeyHash [20]byte) (
 	return proposal, true, nil
 }
 
-func (rt *redemptionTask) actionType() tbtc.WalletActionType {
+func (rt *RedemptionTask) ActionType() tbtc.WalletActionType {
 	return tbtc.ActionRedemption
 }
 
@@ -92,59 +93,26 @@ type RedemptionRequest struct {
 	RequestedAmount      uint64
 }
 
-// PendingRedemptionsFilter defines some criteria that are used to filter
-// pending redemption requests returned by the FindPendingRedemptions function.
-type PendingRedemptionsFilter struct {
-	// WalletPublicKeyHashes limits the search space to specific wallets.
-	// The nil/empty value of this field means all wallets will be taken into
-	// account, starting from the oldest one.
-	WalletPublicKeyHashes [][20]byte
-
-	// WalletsLimit limits the total number of wallets, starting from the
-	// oldest one. The value of 0 means there is no wallets limit.
-	WalletsLimit uint16
-
-	// RequestsLimit limits the number of redemptions requests per single wallet.
-	// The value of 0 means there is no requests limit per wallet.
-	RequestsLimit uint16
-
-	// RequestAmountLimit limits the search space to redemption requests
-	// whose requested amount does not exceed the given satoshi value. The
-	// value of 0 means there are no limit on the requested amount.
-	RequestAmountLimit uint64
-}
-
-func (prf PendingRedemptionsFilter) String() string {
-	wallets := make([]string, len(prf.WalletPublicKeyHashes))
-	for i, wallet := range prf.WalletPublicKeyHashes {
-		wallets[i] = hex.EncodeToString(wallet[:])
-	}
-
-	return fmt.Sprintf(
-		"wallets: [%s], wallets limit: [%v], requests limit: [%v], "+
-			"request amount limit: [%v]",
-		strings.Join(wallets, ", "),
-		prf.WalletsLimit,
-		prf.RequestsLimit,
-		prf.RequestAmountLimit,
-	)
-}
-
 // FindPendingRedemptions finds pending redemptions requests according to
 // the provided filter. The returned value is a map, where the key is
 // a 20-byte public key hash of a specific wallet and the value is a list
 // of pending requests targeting this wallet. It is guaranteed that an existing
 // key has always a non-empty slice as value.
-func FindPendingRedemptions(
-	chain Chain,
-	filter PendingRedemptionsFilter,
-) (map[[20]byte][]bitcoin.Script, error) {
-	logger.Infof(
-		"looking for pending redemptions using filter [%s]",
-		filter,
+func (rt *RedemptionTask) FindPendingRedemptions(
+	taskLogger log.StandardLogger,
+	walletPublicKeyHash [20]byte,
+	maxNumberOfRequests uint16,
+) ([]bitcoin.Script, error) {
+	if walletPublicKeyHash == [20]byte{} {
+		return nil, fmt.Errorf("wallet public key hash is required")
+	}
+
+	taskLogger.Infof(
+		"fetching max [%d] redemption requests",
+		maxNumberOfRequests,
 	)
 
-	blockCounter, err := chain.BlockCounter()
+	blockCounter, err := rt.chain.BlockCounter()
 	if err != nil {
 		return nil, fmt.Errorf(
 			"failed to get block counter: [%w]",
@@ -160,7 +128,7 @@ func FindPendingRedemptions(
 		)
 	}
 
-	requestMinAge, err := chain.GetRedemptionRequestMinAge()
+	requestMinAge, err := rt.chain.GetRedemptionRequestMinAge()
 	if err != nil {
 		return nil, fmt.Errorf(
 			"failed to get redemption request minimum age: [%w]",
@@ -168,7 +136,7 @@ func FindPendingRedemptions(
 		)
 	}
 
-	_, _, _, _, requestTimeout, _, _, err := chain.GetRedemptionParameters()
+	_, _, _, _, requestTimeout, _, _, err := rt.chain.GetRedemptionParameters()
 	if err != nil {
 		return nil, fmt.Errorf(
 			"failed to get redemption parameters: [%w]",
@@ -176,148 +144,60 @@ func FindPendingRedemptions(
 		)
 	}
 
-	getPendingRedemptionsFromWallet := func(
-		wallet [20]byte,
-	) ([]*RedemptionRequest, error) {
-		pendingRedemptions, err := getPendingRedemptions(
-			chain,
-			wallet,
-			currentBlockNumber,
-			filter.RequestsLimit,
-			requestTimeout,
-			requestMinAge,
-			filter.RequestAmountLimit,
-		)
-		if err != nil {
-			return nil,
-				fmt.Errorf(
-					"failed to get pending redemptions for [%s] wallet: [%w]",
-					hexutils.Encode(wallet[:]),
-					err,
-				)
-		}
-		return pendingRedemptions, nil
-	}
+	taskLogger.Infof("fetching pending redemption requests")
 
-	var walletPublicKeyHashes [][20]byte
-	if len(filter.WalletPublicKeyHashes) > 0 {
-		// Take wallets from the filter.
-		walletPublicKeyHashes = filter.WalletPublicKeyHashes
-	} else {
-		// Take all wallets.
-		events, err := chain.PastNewWalletRegisteredEvents(nil)
-		if err != nil {
-			return nil, fmt.Errorf(
-				"failed to get new wallet registered wallets: [%w]",
-				err,
-			)
-		}
-
-		// Sort the wallets list from the oldest to the newest.
-		sort.SliceStable(events, func(i, j int) bool {
-			return events[i].BlockNumber < events[j].BlockNumber
-		})
-
-		for _, event := range events {
-			walletPublicKeyHashes = append(
-				walletPublicKeyHashes,
-				event.WalletPublicKeyHash,
-			)
-		}
-	}
-
-	logger.Infof(
-		"built a list of [%v] wallets that will be checked "+
-			"for pending redemption requests",
-		len(walletPublicKeyHashes),
+	pendingRedemptions, err := findPendingRedemptions(
+		taskLogger,
+		rt.chain,
+		walletPublicKeyHash,
+		currentBlockNumber,
+		maxNumberOfRequests,
+		requestTimeout,
+		requestMinAge,
 	)
+	if err != nil {
+		return nil, fmt.Errorf("cannot get pending redemptions: [%w]", err)
+	}
 
-	result := make(map[[20]byte][]bitcoin.Script)
+	taskLogger.Infof("found [%d] redemption requests", len(pendingRedemptions))
 
-	for _, walletPublicKeyHash := range walletPublicKeyHashes {
-		walletPublicKeyHashHex := hexutils.Encode(walletPublicKeyHash[:])
+	result := make([]bitcoin.Script, 0)
 
-		logger.Infof(
-			"fetching pending redemption requests from wallet [%s]...",
-			walletPublicKeyHashHex,
+	for _, pendingRedemption := range pendingRedemptions {
+		taskLogger.Infof(
+			"redemption request [%s] - requested at: [%s]",
+			pendingRedemption.RedemptionKey,
+			pendingRedemption.RequestedAt,
 		)
 
-		pendingRedemptions, err := getPendingRedemptionsFromWallet(
-			walletPublicKeyHash,
-		)
-		if err != nil {
-			return nil, fmt.Errorf(
-				"cannot get pending redemptions for wallet [%s]: [%w]",
-				walletPublicKeyHashHex,
-				err,
-			)
-		}
-
-		logger.Infof(
-			"found [%d] redemptions for wallet [%s]",
-			len(pendingRedemptions),
-			walletPublicKeyHashHex,
-		)
-
-		for i, pendingRedemption := range pendingRedemptions {
-			logger.Infof(
-				"redemption [%d/%d] - [%s]",
-				i+1,
-				len(pendingRedemptions),
-				fmt.Sprintf(
-					"redemptionKey: [%s], requested at: [%s]",
-					pendingRedemption.RedemptionKey,
-					pendingRedemption.RequestedAt,
-				),
-			)
-
-			result[walletPublicKeyHash] = append(
-				result[walletPublicKeyHash],
-				pendingRedemption.RedeemerOutputScript,
-			)
-		}
-
-		// Apply the wallets number limit if needed.
-		if limit := int(filter.WalletsLimit); limit > 0 && len(result) == limit {
-			logger.Infof(
-				"aborting pending redemptions checks due to the "+
-					"configured wallets limit; [%v] wallets with pending "+
-					"redemptions were found so far",
-				len(result),
-			)
-			break
-		}
+		result = append(result, pendingRedemption.RedeemerOutputScript)
 	}
 
 	return result, nil
 }
 
 // ProposeRedemption returns a redemption proposal.
-func ProposeRedemption(
-	chain Chain,
-	btcChain bitcoin.Chain,
+func (rt *RedemptionTask) ProposeRedemption(
+	taskLogger log.StandardLogger,
 	walletPublicKeyHash [20]byte,
-	fee int64,
 	redeemersOutputScripts []bitcoin.Script,
+	fee int64,
 ) (*tbtc.RedemptionProposal, error) {
 	if len(redeemersOutputScripts) == 0 {
 		return nil, fmt.Errorf("redemptions list is empty")
 	}
 
-	logger.Infof(
-		"starting proposing redemption for wallet [%s]...",
-		hex.EncodeToString(walletPublicKeyHash[:]),
-	)
+	taskLogger.Infof("preparing a redemption proposal")
 
 	// Estimate fee if it's missing. Do not check the estimated fee against
 	// the maximum total and per-request fees allowed by the Bridge. This
 	// is done during the on-chain validation of the proposal so there is no
 	// need to do it here.
 	if fee <= 0 {
-		logger.Infof("estimating redemption transaction fee...")
+		taskLogger.Infof("estimating redemption transaction fee")
 
 		estimatedFee, err := EstimateRedemptionFee(
-			btcChain,
+			rt.btcChain,
 			redeemersOutputScripts,
 		)
 		if err != nil {
@@ -330,9 +210,7 @@ func ProposeRedemption(
 		fee = estimatedFee
 	}
 
-	logger.Infof("redemption transaction fee: [%d]", fee)
-
-	logger.Infof("preparing a redemption proposal...")
+	taskLogger.Infof("redemption transaction fee: [%d]", fee)
 
 	proposal := &tbtc.RedemptionProposal{
 		WalletPublicKeyHash:    walletPublicKeyHash,
@@ -340,12 +218,12 @@ func ProposeRedemption(
 		RedemptionTxFee:        big.NewInt(fee),
 	}
 
-	logger.Infof("validating the redemption proposal...")
+	taskLogger.Infof("validating the redemption proposal")
 
 	if _, err := tbtc.ValidateRedemptionProposal(
-		logger,
+		taskLogger,
 		proposal,
-		chain,
+		rt.chain,
 	); err != nil {
 		return nil, fmt.Errorf("failed to verify redemption proposal: %v", err)
 	}
@@ -353,14 +231,14 @@ func ProposeRedemption(
 	return proposal, nil
 }
 
-func getPendingRedemptions(
+func findPendingRedemptions(
+	fnLogger log.StandardLogger,
 	chain Chain,
 	walletPublicKeyHash [20]byte,
 	currentBlockNumber uint64,
 	requestsLimit uint16,
 	requestTimeout uint32,
 	requestMinAge uint32,
-	requestAmountLimit uint64,
 ) ([]*RedemptionRequest, error) {
 	// We are interested with `RedemptionRequested` events that are not
 	// timed out yet. That means there is no sense to look for events that
@@ -424,9 +302,9 @@ func getPendingRedemptions(
 		eventsSet[hexutils.Encode(redemptionKey.Bytes())] = event
 	}
 
-	logger.Infof("found [%d] RedemptionRequested events", len(eventsSet))
+	fnLogger.Infof("found [%d] RedemptionRequested events", len(eventsSet))
 
-	logger.Infof("checking pending redemptions details...")
+	fnLogger.Infof("checking pending redemptions details")
 
 	pendingRedemptions := make([]*RedemptionRequest, 0)
 
@@ -435,10 +313,9 @@ redemptionRequestedLoop:
 	for redemptionKey, event := range eventsSet {
 		eventIndex++
 
-		logger.Debugf(
-			"getting pending redemption details [%d/%d]",
-			eventIndex,
-			len(eventsSet),
+		fnLogger.Debugf(
+			"getting pending redemption details [%s]",
+			redemptionKey,
 		)
 
 		// Check if there is still a pending redemption for the given redemption
@@ -454,10 +331,9 @@ redemptionRequestedLoop:
 			)
 		}
 		if !found {
-			logger.Infof(
-				"redemption for request [%d/%d] is no longer pending",
-				eventIndex,
-				len(eventsSet),
+			fnLogger.Infof(
+				"redemption request [%s] is no longer pending",
+				redemptionKey,
 			)
 
 			continue redemptionRequestedLoop
@@ -497,36 +373,25 @@ redemptionRequestedLoop:
 	)
 
 	result := make([]*RedemptionRequest, 0, resultSliceCapacity)
-	for i, pendingRedemption := range pendingRedemptions {
+	for _, pendingRedemption := range pendingRedemptions {
 		if len(result) == cap(result) {
 			break
 		}
 
 		// Check if timeout passed for the redemption request.
 		if pendingRedemption.RequestedAt.Before(redemptionRequestsRangeStartTimestamp) {
-			logger.Infof(
-				"redemption request [%d/%d] has already timed out",
-				i+1,
-				len(pendingRedemptions),
+			fnLogger.Infof(
+				"redemption request [%s] has already timed out",
+				pendingRedemption.RedemptionKey,
 			)
 			continue
 		}
 
 		// Check if enough time elapsed since the redemption request.
 		if pendingRedemption.RequestedAt.After(redemptionRequestsRangeEndTimestamp) {
-			logger.Infof(
-				"redemption request [%d/%d] is not old enough",
-				i+1,
-				len(pendingRedemptions),
-			)
-			continue
-		}
-
-		if requestAmountLimit > 0 && pendingRedemption.RequestedAmount > requestAmountLimit {
-			logger.Infof(
-				"redemption request [%d/%d] exceeds the request amount limit",
-				i+1,
-				len(pendingRedemptions),
+			fnLogger.Infof(
+				"redemption request [%s] is not old enough",
+				pendingRedemption.RedemptionKey,
 			)
 			continue
 		}
