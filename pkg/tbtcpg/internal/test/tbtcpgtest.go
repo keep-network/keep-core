@@ -3,14 +3,13 @@ package test
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/keep-network/keep-core/pkg/tbtcpg"
 	"io/fs"
 	"io/ioutil"
 	"path/filepath"
 	"runtime"
 	"strings"
 	"time"
-
-	walletmtr "github.com/keep-network/keep-core/pkg/maintainer/wallet"
 
 	"github.com/keep-network/keep-core/pkg/bitcoin"
 	"github.com/keep-network/keep-core/pkg/tbtc"
@@ -22,12 +21,6 @@ const (
 	proposeDepositsSweepTestDataFilePrefix   = "propose_sweep"
 	findPendingRedemptionsTestDataFilePrefix = "find_pending_redemptions"
 )
-
-// Wallet holds the wallet data in the given test scenario.
-type Wallet struct {
-	WalletPublicKeyHash     [20]byte
-	RegistrationBlockNumber uint64
-}
 
 // Deposit holds the deposit data in the given test scenario.
 type Deposit struct {
@@ -49,11 +42,9 @@ type FindDepositsToSweepTestScenario struct {
 	MaxNumberOfDeposits uint16
 	WalletPublicKeyHash [20]byte
 
-	Wallets  []*Wallet
 	Deposits []*Deposit
 
-	ExpectedWalletPublicKeyHash [20]byte
-	ExpectedUnsweptDeposits     []*walletmtr.DepositReference
+	ExpectedUnsweptDeposits []*tbtcpg.DepositReference
 
 	SweepTxFee             int64
 	EstimateSatPerVByteFee int64
@@ -65,7 +56,7 @@ func LoadFindDepositsToSweepTestScenario() ([]*FindDepositsToSweepTestScenario, 
 }
 
 type ProposeSweepDepositsData struct {
-	walletmtr.DepositReference
+	tbtcpg.DepositReference
 
 	Transaction            *bitcoin.Transaction
 	FundingTxConfirmations uint
@@ -84,10 +75,10 @@ type ProposeSweepTestScenario struct {
 	ExpectedErr                  error
 }
 
-func (psts *ProposeSweepTestScenario) DepositsReferences() []*walletmtr.DepositReference {
-	result := make([]*walletmtr.DepositReference, len(psts.Deposits))
+func (psts *ProposeSweepTestScenario) DepositsReferences() []*tbtcpg.DepositReference {
+	result := make([]*tbtcpg.DepositReference, len(psts.Deposits))
 	for i, d := range psts.Deposits {
-		result[i] = &walletmtr.DepositReference{
+		result[i] = &tbtcpg.DepositReference{
 			FundingTxHash:      d.FundingTxHash,
 			FundingOutputIndex: d.FundingOutputIndex,
 			RevealBlock:        d.RevealBlock,
@@ -114,17 +105,21 @@ type RedemptionRequest struct {
 // FindPendingRedemptionsTestScenario represents a test scenario of finding
 // pending redemptions.
 type FindPendingRedemptionsTestScenario struct {
-	Title           string
+	Title string
+
 	ChainParameters struct {
 		AverageBlockTime time.Duration
 		CurrentBlock     uint64
 		RequestTimeout   uint32
 		RequestMinAge    uint32
 	}
-	Filter                            walletmtr.PendingRedemptionsFilter
-	Wallets                           []*Wallet
-	PendingRedemptions                []*RedemptionRequest
-	ExpectedWalletsPendingRedemptions map[[20]byte][]bitcoin.Script
+
+	MaxNumberOfRequests uint16
+	WalletPublicKeyHash [20]byte
+
+	PendingRedemptions []*RedemptionRequest
+
+	ExpectedRedeemersOutputScripts []bitcoin.Script
 }
 
 // LoadFindPendingRedemptionsTestScenario loads all scenarios related with

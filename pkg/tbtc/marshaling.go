@@ -135,7 +135,7 @@ func (cm *coordinationMessage) Marshal() ([]byte, error) {
 	}
 
 	pbProposal := &pb.CoordinationProposal{
-		ActionType: uint32(cm.proposal.actionType()),
+		ActionType: uint32(cm.proposal.ActionType()),
 		Payload:    proposalBytes,
 	}
 
@@ -206,7 +206,7 @@ func unmarshalWalletPublicKeyHash(bytes []byte) ([20]byte, error) {
 // unmarshalCoordinationProposal converts a byte array back to the coordination
 // proposal.
 func unmarshalCoordinationProposal(actionType uint32, payload []byte) (
-	coordinationProposal,
+	CoordinationProposal,
 	error,
 ) {
 	if actionType > math.MaxUint8 {
@@ -224,8 +224,8 @@ func unmarshalCoordinationProposal(actionType uint32, payload []byte) (
 		)
 	}
 
-	proposal, ok := map[WalletActionType]coordinationProposal{
-		ActionNoop:         &noopProposal{},
+	proposal, ok := map[WalletActionType]CoordinationProposal{
+		ActionNoop:         &NoopProposal{},
 		ActionHeartbeat:    &HeartbeatProposal{},
 		ActionDepositSweep: &DepositSweepProposal{},
 		ActionRedemption:   &RedemptionProposal{},
@@ -248,12 +248,12 @@ func unmarshalCoordinationProposal(actionType uint32, payload []byte) (
 }
 
 // Marshal converts the noopProposal to a byte array.
-func (np *noopProposal) Marshal() ([]byte, error) {
+func (np *NoopProposal) Marshal() ([]byte, error) {
 	return []byte{}, nil
 }
 
 // Unmarshal converts a byte array back to the noopProposal.
-func (np *noopProposal) Unmarshal([]byte) error {
+func (np *NoopProposal) Unmarshal([]byte) error {
 	return nil
 }
 
@@ -261,7 +261,7 @@ func (np *noopProposal) Unmarshal([]byte) error {
 func (hp *HeartbeatProposal) Marshal() ([]byte, error) {
 	return proto.Marshal(
 		&pb.HeartbeatProposal{
-			Message: hp.Message,
+			Message: hp.Message[:],
 		},
 	)
 }
@@ -273,7 +273,17 @@ func (hp *HeartbeatProposal) Unmarshal(bytes []byte) error {
 		return fmt.Errorf("failed to unmarshal HeartbeatProposal: [%v]", err)
 	}
 
-	hp.Message = pbMsg.Message
+	if len(pbMsg.Message) != 16 {
+		return fmt.Errorf(
+			"invalid heartbeat message length: [%v]",
+			len(pbMsg.Message),
+		)
+	}
+
+	var message [16]byte
+	copy(message[:], pbMsg.Message)
+
+	hp.Message = message
 
 	return nil
 }

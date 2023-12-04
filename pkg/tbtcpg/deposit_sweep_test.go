@@ -1,19 +1,19 @@
-package wallet_test
+package tbtcpg_test
 
 import (
+	"github.com/keep-network/keep-core/internal/testutils"
+	"github.com/keep-network/keep-core/pkg/tbtcpg"
 	"reflect"
 	"testing"
 
 	"github.com/go-test/deep"
 	"github.com/ipfs/go-log"
-	"github.com/keep-network/keep-core/internal/hexutils"
 	"github.com/keep-network/keep-core/pkg/bitcoin"
-	walletmtr "github.com/keep-network/keep-core/pkg/maintainer/wallet"
-	"github.com/keep-network/keep-core/pkg/maintainer/wallet/internal/test"
 	"github.com/keep-network/keep-core/pkg/tbtc"
+	"github.com/keep-network/keep-core/pkg/tbtcpg/internal/test"
 )
 
-func TestFindDepositsToSweep(t *testing.T) {
+func TestDepositSweepTask_FindDepositsToSweep(t *testing.T) {
 	err := log.SetLogLevel("*", "DEBUG")
 	if err != nil {
 		t.Fatal(err)
@@ -26,25 +26,10 @@ func TestFindDepositsToSweep(t *testing.T) {
 
 	for _, scenario := range scenarios {
 		t.Run(scenario.Title, func(t *testing.T) {
-			tbtcChain := walletmtr.NewLocalChain()
-			btcChain := walletmtr.NewLocalBitcoinChain()
-
-			expectedWallet := scenario.ExpectedWalletPublicKeyHash
+			tbtcChain := tbtcpg.NewLocalChain()
+			btcChain := tbtcpg.NewLocalBitcoinChain()
 
 			// Chain setup.
-			for _, wallet := range scenario.Wallets {
-				err := tbtcChain.AddPastNewWalletRegisteredEvent(
-					nil,
-					&tbtc.NewWalletRegisteredEvent{
-						WalletPublicKeyHash: wallet.WalletPublicKeyHash,
-						BlockNumber:         wallet.RegistrationBlockNumber,
-					},
-				)
-				if err != nil {
-					t.Fatal(err)
-				}
-			}
-
 			for _, deposit := range scenario.Deposits {
 				tbtcChain.SetDepositRequest(
 					deposit.FundingTxHash,
@@ -71,10 +56,11 @@ func TestFindDepositsToSweep(t *testing.T) {
 				}
 			}
 
+			task := tbtcpg.NewDepositSweepTask(tbtcChain, btcChain)
+
 			// Test execution.
-			actualWallet, actualDeposits, err := walletmtr.FindDepositsToSweep(
-				tbtcChain,
-				btcChain,
+			actualDeposits, err := task.FindDepositsToSweep(
+				&testutils.MockLogger{},
 				scenario.WalletPublicKeyHash,
 				scenario.MaxNumberOfDeposits,
 			)
@@ -83,22 +69,17 @@ func TestFindDepositsToSweep(t *testing.T) {
 				t.Fatal(err)
 			}
 
-			if actualWallet != expectedWallet {
-				t.Errorf(
-					"invalid wallet public key hash\nexpected: %s\nactual:   %s",
-					hexutils.Encode(expectedWallet[:]),
-					hexutils.Encode(actualWallet[:]),
-				)
-			}
-
-			if diff := deep.Equal(actualDeposits, scenario.ExpectedUnsweptDeposits); diff != nil {
+			if diff := deep.Equal(
+				scenario.ExpectedUnsweptDeposits,
+				actualDeposits,
+			); diff != nil {
 				t.Errorf("invalid deposits: %v", diff)
 			}
 		})
 	}
 }
 
-func TestProposeDepositsSweep(t *testing.T) {
+func TestDepositSweepTask_ProposeDepositsSweep(t *testing.T) {
 	err := log.SetLogLevel("*", "DEBUG")
 	if err != nil {
 		t.Fatal(err)
@@ -111,8 +92,8 @@ func TestProposeDepositsSweep(t *testing.T) {
 
 	for _, scenario := range scenarios {
 		t.Run(scenario.Title, func(t *testing.T) {
-			tbtcChain := walletmtr.NewLocalChain()
-			btcChain := walletmtr.NewLocalBitcoinChain()
+			tbtcChain := tbtcpg.NewLocalChain()
+			btcChain := tbtcpg.NewLocalBitcoinChain()
 
 			// Chain setup.
 			tbtcChain.SetDepositParameters(0, 0, scenario.DepositTxMaxFee, 0)
@@ -151,14 +132,14 @@ func TestProposeDepositsSweep(t *testing.T) {
 
 			btcChain.SetEstimateSatPerVByteFee(1, scenario.EstimateSatPerVByteFee)
 
+			task := tbtcpg.NewDepositSweepTask(tbtcChain, btcChain)
+
 			// Test execution.
-			err = walletmtr.ProposeDepositsSweep(
-				tbtcChain,
-				btcChain,
+			proposal, err := task.ProposeDepositsSweep(
+				&testutils.MockLogger{},
 				scenario.WalletPublicKeyHash,
-				scenario.SweepTxFee,
 				scenario.DepositsReferences(),
-				false,
+				scenario.SweepTxFee,
 			)
 
 			if !reflect.DeepEqual(scenario.ExpectedErr, err) {
@@ -171,13 +152,18 @@ func TestProposeDepositsSweep(t *testing.T) {
 				)
 			}
 
+			var actualDepositSweepProposals []*tbtc.DepositSweepProposal
+			if proposal != nil {
+				actualDepositSweepProposals = append(actualDepositSweepProposals, proposal)
+			}
+
 			var expectedDepositSweepProposals []*tbtc.DepositSweepProposal
 			if p := scenario.ExpectedDepositSweepProposal; p != nil {
 				expectedDepositSweepProposals = append(expectedDepositSweepProposals, p)
 			}
 
 			if diff := deep.Equal(
-				tbtcChain.DepositSweepProposals(),
+				actualDepositSweepProposals,
 				expectedDepositSweepProposals,
 			); diff != nil {
 				t.Errorf("invalid deposits: %v", diff)

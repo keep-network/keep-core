@@ -1,4 +1,4 @@
-package wallet
+package tbtcpg
 
 import (
 	"bytes"
@@ -15,11 +15,6 @@ import (
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/tbtc"
 )
-
-type walletLock struct {
-	lockExpiration time.Time
-	walletAction   tbtc.WalletActionType
-}
 
 type depositParameters = struct {
 	dustThreshold      uint64
@@ -46,16 +41,14 @@ type LocalChain struct {
 	pastNewWalletRegisteredEvents   map[[32]byte][]*tbtc.NewWalletRegisteredEvent
 	depositParameters               depositParameters
 	depositSweepProposalValidations map[[32]byte]bool
-	depositSweepProposals           []*tbtc.DepositSweepProposal
-	walletLocks                     map[[20]byte]*walletLock
 	redemptionParameters            redemptionParameters
 	redemptionRequestMinAge         uint32
 	blockCounter                    chain.BlockCounter
 	pastRedemptionRequestedEvents   map[[32]byte][]*tbtc.RedemptionRequestedEvent
 	averageBlockTime                time.Duration
 	pendingRedemptionRequests       map[[32]byte]*tbtc.RedemptionRequest
-	redemptionProposals             []*tbtc.RedemptionProposal
 	redemptionProposalValidations   map[[32]byte]bool
+	heartbeatProposalValidations    map[[16]byte]bool
 }
 
 func NewLocalChain() *LocalChain {
@@ -64,25 +57,11 @@ func NewLocalChain() *LocalChain {
 		pastDepositRevealedEvents:       make(map[[32]byte][]*tbtc.DepositRevealedEvent),
 		pastNewWalletRegisteredEvents:   make(map[[32]byte][]*tbtc.NewWalletRegisteredEvent),
 		depositSweepProposalValidations: make(map[[32]byte]bool),
-		walletLocks:                     make(map[[20]byte]*walletLock),
 		pastRedemptionRequestedEvents:   make(map[[32]byte][]*tbtc.RedemptionRequestedEvent),
 		pendingRedemptionRequests:       make(map[[32]byte]*tbtc.RedemptionRequest),
 		redemptionProposalValidations:   make(map[[32]byte]bool),
+		heartbeatProposalValidations:    make(map[[16]byte]bool),
 	}
-}
-
-func (lc *LocalChain) DepositSweepProposals() []*tbtc.DepositSweepProposal {
-	lc.mutex.Lock()
-	defer lc.mutex.Unlock()
-
-	return lc.depositSweepProposals
-}
-
-func (lc *LocalChain) RedemptionProposals() []*tbtc.RedemptionProposal {
-	lc.mutex.Lock()
-	defer lc.mutex.Unlock()
-
-	return lc.redemptionProposals
 }
 
 func (lc *LocalChain) PastDepositRevealedEvents(
@@ -551,28 +530,6 @@ func buildDepositSweepProposalValidationKey(
 	return sha256.Sum256(buffer.Bytes()), nil
 }
 
-func (lc *LocalChain) SubmitDepositSweepProposalWithReimbursement(
-	proposal *tbtc.DepositSweepProposal,
-) error {
-	lc.mutex.Lock()
-	defer lc.mutex.Unlock()
-
-	lc.depositSweepProposals = append(lc.depositSweepProposals, proposal)
-
-	return nil
-}
-
-func (lc *LocalChain) SubmitRedemptionProposalWithReimbursement(
-	proposal *tbtc.RedemptionProposal,
-) error {
-	lc.mutex.Lock()
-	defer lc.mutex.Unlock()
-
-	lc.redemptionProposals = append(lc.redemptionProposals, proposal)
-
-	return nil
-}
-
 func (lc *LocalChain) ValidateRedemptionProposal(
 	proposal *tbtc.RedemptionProposal,
 ) error {
@@ -613,6 +570,34 @@ func (lc *LocalChain) SetRedemptionProposalValidationResult(
 	return nil
 }
 
+func (lc *LocalChain) ValidateHeartbeatProposal(
+	proposal *tbtc.HeartbeatProposal,
+) error {
+	lc.mutex.Lock()
+	defer lc.mutex.Unlock()
+
+	result, ok := lc.heartbeatProposalValidations[proposal.Message]
+	if !ok {
+		return fmt.Errorf("validation result unknown")
+	}
+
+	if !result {
+		return fmt.Errorf("validation failed")
+	}
+
+	return nil
+}
+
+func (lc *LocalChain) SetHeartbeatProposalValidationResult(
+	proposal *tbtc.HeartbeatProposal,
+	result bool,
+) {
+	lc.mutex.Lock()
+	defer lc.mutex.Unlock()
+
+	lc.heartbeatProposalValidations[proposal.Message] = result
+}
+
 func buildRedemptionProposalValidationKey(
 	proposal *tbtc.RedemptionProposal,
 ) ([32]byte, error) {
@@ -651,46 +636,6 @@ func (lc *LocalChain) GetDepositSweepMaxSize() (uint16, error) {
 	panic("unsupported")
 }
 
-func (lc *LocalChain) GetWalletLock(
-	walletPublicKeyHash [20]byte,
-) (time.Time, tbtc.WalletActionType, error) {
-	lc.mutex.Lock()
-	defer lc.mutex.Unlock()
-
-	walletLock, ok := lc.walletLocks[walletPublicKeyHash]
-	if !ok {
-		return time.Time{}, tbtc.ActionNoop, fmt.Errorf("no lock configured for given wallet")
-	}
-
-	return walletLock.lockExpiration, walletLock.walletAction, nil
-}
-
-func (lc *LocalChain) SetWalletLock(
-	walletPublicKeyHash [20]byte,
-	lockExpiration time.Time,
-	walletAction tbtc.WalletActionType,
-) {
-	lc.mutex.Lock()
-	defer lc.mutex.Unlock()
-
-	lc.walletLocks[walletPublicKeyHash] = &walletLock{
-		lockExpiration: lockExpiration,
-		walletAction:   walletAction,
-	}
-}
-
-func (lc *LocalChain) ResetWalletLock(
-	walletPublicKeyHash [20]byte,
-) {
-	lc.mutex.Lock()
-	defer lc.mutex.Unlock()
-
-	lc.walletLocks[walletPublicKeyHash] = &walletLock{
-		lockExpiration: time.Unix(0, 0),
-		walletAction:   tbtc.ActionNoop,
-	}
-}
-
 func (lc *LocalChain) BlockCounter() (chain.BlockCounter, error) {
 	lc.mutex.Lock()
 	defer lc.mutex.Unlock()
@@ -717,6 +662,17 @@ func (lc *LocalChain) SetAverageBlockTime(averageBlockTime time.Duration) {
 	defer lc.mutex.Unlock()
 
 	lc.averageBlockTime = averageBlockTime
+}
+
+func (lc *LocalChain) GetWallet(walletPublicKeyHash [20]byte) (
+	*tbtc.WalletChainData,
+	error,
+) {
+	panic("unsupported")
+}
+
+func (lc *LocalChain) ComputeMainUtxoHash(mainUtxo *bitcoin.UnspentTransactionOutput) [32]byte {
+	panic("unsupported")
 }
 
 type MockBlockCounter struct {

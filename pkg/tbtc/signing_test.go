@@ -169,6 +169,7 @@ func setupSigningExecutor(t *testing.T) *signingExecutor {
 		keyStorePersistence,
 		&mockPersistenceHandle{},
 		generator.StartScheduler(),
+		&mockCoordinationProposalGenerator{},
 		Config{},
 	)
 	if err != nil {

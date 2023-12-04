@@ -1,21 +1,7 @@
 {
-  "Title": "Get deposits from a selected wallet",
+  "Title": "unswept and confirmed deposits do not exist",
   "MaxNumberOfDeposits": 5,
-  "WalletPublicKeyHash": "0x7670343fc00ccc2d0cd65360e6ad400697ea0fed",
-  "Wallets": [
-    {
-      "WalletPublicKeyHash": "0x928d992e5f5b71de51a1b40fcc4056b99a88a647",
-      "RegistrationBlockNumber": 5
-    },
-    {
-      "WalletPublicKeyHash": "0x03b74d6893ad46dfdd01b9e0e3b3385f4fce2d1e",
-      "RegistrationBlockNumber": 10
-    },
-    {
-      "WalletPublicKeyHash": "0x7670343fc00ccc2d0cd65360e6ad400697ea0fed",
-      "RegistrationBlockNumber": 20
-    }
-  ],
+  "WalletPublicKeyHash": "0x928d992e5f5b71de51a1b40fcc4056b99a88a647",
   "Deposits": [
     {
       "RevealBlockNumber": 6,
@@ -57,7 +43,7 @@
       "RevealBlockNumber": 22,
       "WalletPublicKeyHash": "0x7670343fc00ccc2d0cd65360e6ad400697ea0fed",
       "FundingTxHash": "178628f0fd77ca04a31e771805277405288404da38eb86a0e369f2b26d45fe97",
-      "FundingOutputIndex": 1,
+      "FundingOutputIndex": 4,
       "FundingTxConfirmations": 34,
       "FundingTxHex": "02000000000101927dcff5fa228252124c24e4746141fe0db9fc41f4712d449fad9f33fe3fa3780000000023220020481719bc4e385205ed350423b31ecd15519897a40abd9996ffd4abe31dd57cb9fdffffff02e5a939080000000017a914239b741cd84ba7eadc838839288f1cfbbb218a248740420f00000000002200200c273a194459d101f66ed8fd231b4188726e1b86b7bd80cde376231779522d540347304402201f8befe88ee75d96a05b27635f5a6f178f79e33efd8323e948c43c7f8d84bf7802205e7c642b1dfbb0e584c823e375294520b800d8cd76f6ee717cb8044f9156b19801473044022005373bbe8fc4fa09fc918cb75c20fa69ece69ba5377c80c89fd08781d2d2ecf20220071e1cdd5a8b6cfcba9118755bcaac923d94a967887c9ffbc5653559fab73877014e21039974c5b0c669201c6e3e4715089c710291d208c584e1fe77ae44a9d81f065371ad21021df7f70250ff11cda7363b91f6c4615b4063c43331ab1b0d61d7e2763833efebac73640380ca00b268b6e62400",
       "SweptAt": 109
@@ -73,20 +59,13 @@
     },
     {
       "RevealBlockNumber": 32,
-      "WalletPublicKeyHash": "0x03b74d6893ad46dfdd01b9e0e3b3385f4fce2d1e",
+      "WalletPublicKeyHash": "0x928d992e5f5b71de51a1b40fcc4056b99a88a647",
       "FundingTxHash": "b822b302dab7c1fcc3292782635be133538a0f803468a2d847023c24f867f479",
       "FundingOutputIndex": 3,
-      "FundingTxConfirmations": 25,
+      "FundingTxConfirmations": 5,
       "FundingTxHex": "02000000000101d9eae6dedef56edcc4c884a84f4127c92a18f1674562960ed7770656165d32b101000000232200209fd1e4519124fe6655ba29f9690fc00a03a3d3b491db3b7f710614b8d8024d8dfdffffff0240420f0000000000220020e99a81c3fa4e98410937231296f33538b03c614c1eb8de6a51f03e1b404d0b19ccb566050000000017a9146323da8694056713624b4818d4ccc2433dd7971d8703473044022063ff0a0bbee811b393f7badc091bffc913c7dbc921a3bbcd4c5c873a946f353b022074c128f86c7a4b826ece9b15c612cacbd2ab064c9b4bf27671f545069b803f750147304402200d1d56c74355d68d6a3f59b3366ed3e3254da16e045b44bd1ac6e64059c7439c0220741c03eeffb437d6849730e9eef9c063b0e74dd3fdac54c06853992c0718bea5014e2103897c250217abd55d3a332788f08b7682a44137b5c9d4f882f985059d9c1c3821ad21034ced46df0f98b8cbf2aa8803cffd60a5b475f0745d0f7d9369aa88e122f9a313ac73640380ca00b268df132500",
       "SweptAt": 0
     }
   ],
-  "ExpectedWalletPublicKeyHash": "0x7670343fc00ccc2d0cd65360e6ad400697ea0fed",
-  "ExpectedUnsweptDeposits": [
-    {
-      "RevealBlockNumber": 21,
-      "FundingTxHash": "a8c3b3c1975094550d481bdffdee1b7b7613dd74dbce37a5f6dce7fd9ac0ace1",
-      "FundingOutputIndex": 1
-    }
-  ]
+  "ExpectedUnsweptDeposits": []
 }

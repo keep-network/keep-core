@@ -1,5 +1,5 @@
 {
-  "Title": "Sweep transaction fee provided",
+  "Title": "estimate sweep transaction fee",
   "WalletPublicKeyHash": "0x03b74d6893ad46dfdd01b9e0e3b3385f4fce2d1e",
   "DepositTxMaxFee": 10000,
   "Deposits": [
@@ -19,7 +19,7 @@
       "FundingOutputIndex": 3
     }
   ],
-  "SweepTxFee": 7453,
+  "SweepTxFee": 0,
   "EstimateSatPerVByteFee": 26,
   "ExpectedDepositSweepProposal": {
     "WalletPublicKeyHash": "0x03b74d6893ad46dfdd01b9e0e3b3385f4fce2d1e",
@@ -37,7 +37,7 @@
         "FundingOutputIndex": 3
       }
     ],
-    "SweepTxFee": 7453,
+    "SweepTxFee": 9984,
     "DepositsRevealBlocks": [11, 31, 32]
   }
 }

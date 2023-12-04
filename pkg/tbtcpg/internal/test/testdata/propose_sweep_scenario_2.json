@@ -1,5 +1,5 @@
 {
-  "Title": "Estimated sweep transaction fee greater than max fee",
+  "Title": "estimated sweep transaction fee greater than max fee",
   "WalletPublicKeyHash": "0x03b74d6893ad46dfdd01b9e0e3b3385f4fce2d1e",
   "DepositTxMaxFee": 301,
   "Deposits": [

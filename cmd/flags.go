@@ -16,7 +16,6 @@ import (
 	chainEthereum "github.com/keep-network/keep-core/pkg/chain/ethereum"
 	"github.com/keep-network/keep-core/pkg/clientinfo"
 	"github.com/keep-network/keep-core/pkg/maintainer/spv"
-	"github.com/keep-network/keep-core/pkg/maintainer/wallet"
 	"github.com/keep-network/keep-core/pkg/net/libp2p"
 	"github.com/keep-network/keep-core/pkg/tbtc"
 )
@@ -325,41 +324,6 @@ func initMaintainerFlags(command *cobra.Command, cfg *config.Config) {
 		"bitcoinDifficulty.disableProxy",
 		false,
 		"Disable Bitcoin difficulty proxy.",
-	)
-
-	command.Flags().BoolVar(
-		&cfg.Maintainer.WalletCoordination.Enabled,
-		"walletCoordination",
-		false,
-		"Start wallet coordination maintainer.",
-	)
-
-	command.Flags().DurationVar(
-		&cfg.Maintainer.WalletCoordination.RedemptionInterval,
-		"walletCoordination.redemptionInterval",
-		wallet.DefaultRedemptionInterval,
-		"The time interval in which pending redemptions requests are checked.",
-	)
-
-	command.Flags().Uint16Var(
-		&cfg.Maintainer.WalletCoordination.RedemptionWalletsLimit,
-		"walletCoordination.redemptionWalletsLimit",
-		wallet.DefaultRedemptionWalletsLimit,
-		"Limits the number of wallets that can receive a redemption proposal in the same time.",
-	)
-
-	command.Flags().Uint64Var(
-		&cfg.Maintainer.WalletCoordination.RedemptionRequestAmountLimit,
-		"walletCoordination.redemptionRequestAmountLimit",
-		wallet.DefaultRedemptionRequestAmountLimit,
-		"Limits the redemption requests to the ones below the given satoshi value.",
-	)
-
-	command.Flags().DurationVar(
-		&cfg.Maintainer.WalletCoordination.DepositSweepInterval,
-		"walletCoordination.depositSweepInterval",
-		wallet.DefaultDepositSweepInterval,
-		"The time interval in which unswept deposits are checked.",
 	)
 
 	command.Flags().BoolVar(

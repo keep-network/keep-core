@@ -3,9 +3,7 @@ package cmd
 import (
 	"fmt"
 	"os"
-	"regexp"
 	"sort"
-	"strconv"
 	"text/tabwriter"
 
 	"github.com/spf13/cobra"
@@ -16,28 +14,16 @@ import (
 	"github.com/keep-network/keep-core/pkg/bitcoin/electrum"
 	"github.com/keep-network/keep-core/pkg/chain/ethereum"
 	"github.com/keep-network/keep-core/pkg/maintainer/spv"
-	walletmtr "github.com/keep-network/keep-core/pkg/maintainer/wallet"
+	"github.com/keep-network/keep-core/pkg/tbtcpg"
 )
 
 var (
 	// listDepositsCommand:
-	// proposeDepositsSweepCommand:
 	walletFlagName = "wallet"
 
 	// listDepositsCommand:
 	hideSweptFlagName = "hide-swept"
 	headFlagName      = "head"
-
-	// proposeDepositsSweepCommand:
-	// proposeRedemptionsCommand:
-	feeFlagName    = "fee"
-	dryRunFlagName = "dry-run"
-
-	// proposeDepositsSweepCommand:
-	depositSweepMaxSizeFlagName = "deposit-sweep-max-size"
-
-	// proposeRedemptionsCommand:
-	redemptionMaxSizeFlagName = "redemption-max-size"
 
 	// estimateDepositsSweepFeeCommand:
 	depositsCountFlagName = "deposits-count"
@@ -117,7 +103,7 @@ var listDepositsCommand = cobra.Command{
 			}
 		}
 
-		deposits, err := walletmtr.FindDeposits(
+		deposits, err := tbtcpg.FindDeposits(
 			tbtcChain,
 			btcChain,
 			walletPublicKeyHash,
@@ -144,7 +130,7 @@ var listDepositsCommand = cobra.Command{
 	},
 }
 
-func printDepositsTable(deposits []*walletmtr.Deposit) error {
+func printDepositsTable(deposits []*tbtcpg.Deposit) error {
 	w := tabwriter.NewWriter(os.Stdout, 2, 4, 1, ' ', tabwriter.AlignRight)
 	fmt.Fprintf(w, "index\twallet\ttype\tvalue (BTC)\tdeposit key\trevealed deposit data\tconfirmations\tswept\t\n")
 
@@ -173,287 +159,6 @@ func printDepositsTable(deposits []*walletmtr.Deposit) error {
 	return nil
 }
 
-var proposeDepositsSweepCommand = cobra.Command{
-	Use:              "propose-deposits-sweep",
-	Short:            "propose deposits sweep",
-	Long:             proposeDepositsSweepCommandDescription,
-	TraverseChildren: true,
-	Args: func(cmd *cobra.Command, args []string) error {
-		for i, arg := range args {
-			if err := validateDepositReferenceString(arg); err != nil {
-				return fmt.Errorf(
-					"argument [%d] failed validation: %v",
-					i,
-					err,
-				)
-			}
-		}
-		return nil
-	},
-	RunE: func(cmd *cobra.Command, args []string) error {
-		ctx := cmd.Context()
-
-		wallet, err := cmd.Flags().GetString(walletFlagName)
-		if err != nil {
-			return fmt.Errorf("failed to find wallet flag: %v", err)
-		}
-
-		fee, err := cmd.Flags().GetInt64(feeFlagName)
-		if err != nil {
-			return fmt.Errorf("failed to find fee flag: %v", err)
-		}
-
-		depositSweepMaxSize, err := cmd.Flags().GetUint16(depositSweepMaxSizeFlagName)
-		if err != nil {
-			return fmt.Errorf("failed to find deposit sweep max size flag: %v", err)
-		}
-
-		dryRun, err := cmd.Flags().GetBool(dryRunFlagName)
-		if err != nil {
-			return fmt.Errorf("failed to find dry run flag: %v", err)
-		}
-
-		_, tbtcChain, _, _, _, err := ethereum.Connect(cmd.Context(), clientConfig.Ethereum)
-		if err != nil {
-			return fmt.Errorf(
-				"could not connect to Ethereum chain: [%v]",
-				err,
-			)
-		}
-
-		btcChain, err := electrum.Connect(ctx, clientConfig.Bitcoin.Electrum)
-		if err != nil {
-			return fmt.Errorf("could not connect to Electrum chain: [%v]", err)
-		}
-
-		var walletPublicKeyHash [20]byte
-		if len(wallet) > 0 {
-			var err error
-			walletPublicKeyHash, err = newWalletPublicKeyHash(wallet)
-			if err != nil {
-				return fmt.Errorf("failed extract wallet public key hash: %v", err)
-			}
-		}
-
-		if depositSweepMaxSize == 0 {
-			depositSweepMaxSize, err = tbtcChain.GetDepositSweepMaxSize()
-			if err != nil {
-				return fmt.Errorf("failed to get deposit sweep max size: [%v]", err)
-			}
-		}
-
-		var deposits []*walletmtr.DepositReference
-		if len(args) > 0 {
-			deposits, err = parseDepositsReferences(args)
-			if err != nil {
-				return fmt.Errorf("failed extract wallet public key hash: %v", err)
-			}
-		} else {
-			walletPublicKeyHash, deposits, err = walletmtr.FindDepositsToSweep(
-				tbtcChain,
-				btcChain,
-				walletPublicKeyHash,
-				depositSweepMaxSize,
-			)
-			if err != nil {
-				return fmt.Errorf("failed to prepare deposits sweep proposal: %v", err)
-			}
-		}
-
-		if len(deposits) > int(depositSweepMaxSize) {
-			return fmt.Errorf(
-				"deposits number [%d] is greater than deposit sweep max size [%d]",
-				len(deposits),
-				depositSweepMaxSize,
-			)
-		}
-
-		return walletmtr.ProposeDepositsSweep(
-			tbtcChain,
-			btcChain,
-			walletPublicKeyHash,
-			fee,
-			deposits,
-			dryRun,
-		)
-	},
-}
-
-var (
-	depositsFormatDescription = "Deposits details should be provided as strings containing: \n" +
-		" - bitcoin transaction hash (unprefixed bitcoin transaction hash in reverse (RPC) order), \n" +
-		" - bitcoin transaction output index, \n" +
-		" - ethereum block number when the deposit was revealed to the chain. \n" +
-		"The properties should be separated by semicolons, in the following format: \n" +
-		depositReferenceFormatPattern + "\n" +
-		"e.g. bd99d1d0a61fd104925d9b7ac997958aa8af570418b3fde091f7bfc561608865:1:8392394"
-
-	depositReferenceFormatPattern = "<unprefixed bitcoin transaction hash>:" +
-		"<bitcoin transaction output index>:" +
-		"<ethereum reveal block number>"
-
-	depositReferenceFormatRegexp = regexp.MustCompile(`^([[:xdigit:]]+):(\d+):(\d+)$`)
-
-	proposeDepositsSweepCommandDescription = "Submits a deposits sweep proposal " +
-		"to the chain. Expects --wallet and --fee flags along with deposits to " +
-		"sweep provided as arguments.\n" +
-		depositsFormatDescription
-)
-
-// parseDepositsReferences decodes a list of deposits references.
-func parseDepositsReferences(
-	depositsRefsStings []string,
-) ([]*walletmtr.DepositReference, error) {
-	depositsRefs := make([]*walletmtr.DepositReference, len(depositsRefsStings))
-
-	for i, depositRefString := range depositsRefsStings {
-		matched := depositReferenceFormatRegexp.FindStringSubmatch(depositRefString)
-		// Check if number of resolved entries match expected number of groups
-		// for the given regexp.
-		if len(matched) != 4 {
-			return nil, fmt.Errorf(
-				"failed to parse deposit: [%s]",
-				depositRefString,
-			)
-		}
-
-		txHash, err := bitcoin.NewHashFromString(matched[1], bitcoin.ReversedByteOrder)
-		if err != nil {
-			return nil, fmt.Errorf(
-				"invalid bitcoin transaction hash [%s]: %v",
-				matched[1],
-				err,
-			)
-		}
-
-		outputIndex, err := strconv.ParseInt(matched[2], 10, 32)
-		if err != nil {
-			return nil, fmt.Errorf(
-				"invalid bitcoin transaction output index [%s]: %v",
-				matched[2],
-				err,
-			)
-		}
-
-		revealBlock, err := strconv.ParseUint(matched[3], 10, 32)
-		if err != nil {
-			return nil, fmt.Errorf(
-				"invalid reveal block number [%s]: %v",
-				matched[3],
-				err,
-			)
-		}
-
-		depositsRefs[i] = &walletmtr.DepositReference{
-			FundingTxHash:      txHash,
-			FundingOutputIndex: uint32(outputIndex),
-			RevealBlock:        revealBlock,
-		}
-	}
-
-	return depositsRefs, nil
-}
-
-// validateDepositReferenceString validates format of the string containing a
-// deposit reference.
-func validateDepositReferenceString(depositRefString string) error {
-	if !depositReferenceFormatRegexp.MatchString(depositRefString) {
-		return fmt.Errorf(
-			"[%s] doesn't match pattern: %s",
-			depositRefString,
-			depositReferenceFormatPattern,
-		)
-	}
-	return nil
-}
-
-var proposeRedemptionCommand = cobra.Command{
-	Use:              "propose-redemption",
-	Short:            "propose redemption",
-	Long:             "Submits a redemption proposal to the chain.",
-	TraverseChildren: true,
-	RunE: func(cmd *cobra.Command, args []string) error {
-		wallet, err := cmd.Flags().GetString(walletFlagName)
-		if err != nil {
-			return fmt.Errorf("failed to find wallet flag: %v", err)
-		}
-
-		fee, err := cmd.Flags().GetInt64(feeFlagName)
-		if err != nil {
-			return fmt.Errorf("failed to find fee flag: %v", err)
-		}
-
-		redemptionMaxSize, err := cmd.Flags().GetUint16(redemptionMaxSizeFlagName)
-		if err != nil {
-			return fmt.Errorf("failed to find redemption max size flag: %v", err)
-		}
-
-		dryRun, err := cmd.Flags().GetBool(dryRunFlagName)
-		if err != nil {
-			return fmt.Errorf("failed to find dry run flag: %v", err)
-		}
-
-		_, tbtcChain, _, _, _, err := ethereum.Connect(cmd.Context(), clientConfig.Ethereum)
-		if err != nil {
-			return fmt.Errorf(
-				"could not connect to Ethereum chain: [%v]",
-				err,
-			)
-		}
-
-		btcChain, err := electrum.Connect(cmd.Context(), clientConfig.Bitcoin.Electrum)
-		if err != nil {
-			return fmt.Errorf("could not connect to Electrum chain: [%v]", err)
-		}
-
-		var walletPublicKeyHashes [][20]byte
-		if len(wallet) > 0 {
-			walletPublicKeyHash, err := newWalletPublicKeyHash(wallet)
-			if err != nil {
-				return fmt.Errorf("failed extract wallet public key hash: %v", err)
-			}
-
-			walletPublicKeyHashes = append(walletPublicKeyHashes, walletPublicKeyHash)
-		}
-
-		if redemptionMaxSize == 0 {
-			redemptionMaxSize, err = tbtcChain.GetRedemptionMaxSize()
-			if err != nil {
-				return fmt.Errorf("failed to get redemption max size: [%v]", err)
-			}
-		}
-
-		walletsPendingRedemptions, err := walletmtr.FindPendingRedemptions(
-			tbtcChain,
-			walletmtr.PendingRedemptionsFilter{
-				WalletPublicKeyHashes: walletPublicKeyHashes,
-				WalletsLimit:          1,
-				RequestsLimit:         redemptionMaxSize,
-				RequestAmountLimit:    0,
-			},
-		)
-		if err != nil {
-			return fmt.Errorf("failed to find pending redemption requests: [%w]", err)
-		}
-
-		for walletPublicKeyHash, redeemersOutputScripts := range walletsPendingRedemptions {
-			err := walletmtr.ProposeRedemption(
-				tbtcChain,
-				btcChain,
-				walletPublicKeyHash,
-				fee,
-				redeemersOutputScripts,
-				dryRun,
-			)
-			if err != nil {
-				return err
-			}
-		}
-
-		return nil
-	},
-}
-
 var estimateDepositsSweepFeeCommand = cobra.Command{
 	Use:              "estimate-deposits-sweep-fee",
 	Short:            "estimates deposits sweep fee",
@@ -480,7 +185,7 @@ var estimateDepositsSweepFeeCommand = cobra.Command{
 			return fmt.Errorf("could not connect to Electrum chain: [%v]", err)
 		}
 
-		fees, err := walletmtr.EstimateDepositsSweepFee(
+		fees, err := tbtcpg.EstimateDepositsSweepFee(
 			tbtcChain,
 			btcChain,
 			depositsCount,
@@ -779,60 +484,6 @@ func init() {
 	)
 
 	MaintainerCliCommand.AddCommand(&listDepositsCommand)
-
-	// Propose Deposits Sweep Subcommand
-	proposeDepositsSweepCommand.Flags().String(
-		walletFlagName,
-		"",
-		"wallet public key hash",
-	)
-
-	proposeDepositsSweepCommand.Flags().Int64(
-		feeFlagName,
-		0,
-		"fee for the entire bitcoin transaction (satoshi)",
-	)
-
-	proposeDepositsSweepCommand.Flags().Uint16(
-		depositSweepMaxSizeFlagName,
-		0,
-		"maximum count of deposits that can be swept within a single sweep",
-	)
-
-	proposeDepositsSweepCommand.Flags().Bool(
-		dryRunFlagName,
-		false,
-		"don't submit a proposal to the chain",
-	)
-
-	MaintainerCliCommand.AddCommand(&proposeDepositsSweepCommand)
-
-	// Propose Redemptions Subcommand
-	proposeRedemptionCommand.Flags().String(
-		walletFlagName,
-		"",
-		"wallet public key hash",
-	)
-
-	proposeRedemptionCommand.Flags().Int64(
-		feeFlagName,
-		0,
-		"fee for the entire bitcoin transaction (satoshi)",
-	)
-
-	proposeRedemptionCommand.Flags().Uint16(
-		redemptionMaxSizeFlagName,
-		0,
-		"maximum count of deposits that can be redeemed within a single redemption",
-	)
-
-	proposeRedemptionCommand.Flags().Bool(
-		dryRunFlagName,
-		false,
-		"don't submit a proposal to the chain",
-	)
-
-	MaintainerCliCommand.AddCommand(&proposeRedemptionCommand)
 
 	// Estimate Deposits Sweep Fee Subcommand.
 	estimateDepositsSweepFeeCommand.Flags().Int(

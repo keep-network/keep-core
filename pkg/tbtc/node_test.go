@@ -43,6 +43,7 @@ func TestNode_GetSigningExecutor(t *testing.T) {
 		keyStorePersistence,
 		&mockPersistenceHandle{},
 		generator.StartScheduler(),
+		&mockCoordinationProposalGenerator{},
 		Config{},
 	)
 	if err != nil {
@@ -160,6 +161,7 @@ func TestNode_GetCoordinationExecutor(t *testing.T) {
 		keyStorePersistence,
 		&mockPersistenceHandle{},
 		generator.StartScheduler(),
+		&mockCoordinationProposalGenerator{},
 		Config{},
 	)
 	if err != nil {
@@ -282,6 +284,7 @@ func TestNode_RunCoordinationLayer(t *testing.T) {
 		keyStorePersistence,
 		&mockPersistenceHandle{},
 		generator.StartScheduler(),
+		&mockCoordinationProposalGenerator{},
 		Config{},
 	)
 	if err != nil {
@@ -383,19 +386,19 @@ loop:
 		t,
 		"first result",
 		ActionDepositSweep.String(),
-		processedResults[0].proposal.actionType().String(),
+		processedResults[0].proposal.ActionType().String(),
 	)
 	testutils.AssertStringsEqual(
 		t,
 		"second result",
 		ActionRedemption.String(),
-		processedResults[1].proposal.actionType().String(),
+		processedResults[1].proposal.ActionType().String(),
 	)
 	testutils.AssertStringsEqual(
 		t,
 		"third result",
 		ActionNoop.String(),
-		processedResults[2].proposal.actionType().String(),
+		processedResults[2].proposal.ActionType().String(),
 	)
 }
 
@@ -403,11 +406,11 @@ type mockCoordinationProposal struct {
 	action WalletActionType
 }
 
-func (mcp *mockCoordinationProposal) actionType() WalletActionType {
+func (mcp *mockCoordinationProposal) ActionType() WalletActionType {
 	return mcp.action
 }
 
-func (mcp *mockCoordinationProposal) validityBlocks() uint64 {
+func (mcp *mockCoordinationProposal) ValidityBlocks() uint64 {
 	panic("unsupported")
 }
 

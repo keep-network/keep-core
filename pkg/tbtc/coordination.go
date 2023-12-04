@@ -5,11 +5,12 @@ import (
 	"crypto/sha256"
 	"encoding/binary"
 	"fmt"
+	"math/rand"
+	"sort"
+
 	"github.com/keep-network/keep-core/pkg/internal/pb"
 	"go.uber.org/zap"
 	"golang.org/x/exp/slices"
-	"math/rand"
-	"sort"
 
 	"github.com/keep-network/keep-core/pkg/bitcoin"
 	"github.com/keep-network/keep-core/pkg/chain"
@@ -195,39 +196,46 @@ func (cf *coordinationFault) String() string {
 	)
 }
 
-// coordinationProposalGenerator is a function that generates a coordination
-// proposal based on the given checklist of possible wallet actions.
-// The checklist is a list of actions that should be checked for the given
-// coordination window. The generator is expected to return a proposal
-// for the first action from the checklist that is valid for the given
-// wallet's state. If none of the actions are valid, the generator
-// should return a noopProposal.
-type coordinationProposalGenerator func(
-	walletPublicKeyHash [20]byte,
-	actionsChecklist []WalletActionType,
-) (coordinationProposal, error)
+// CoordinationProposalRequest represents a request for a coordination proposal.
+type CoordinationProposalRequest struct {
+	WalletPublicKeyHash [20]byte
+	WalletOperators     []chain.Address
+	ActionsChecklist    []WalletActionType
+}
 
-// coordinationProposal represents a single action proposal for the given wallet.
-type coordinationProposal interface {
+// CoordinationProposalGenerator is a component responsible for generating
+// coordination proposals.
+type CoordinationProposalGenerator interface {
+	// Generate generates a coordination proposal based on the given checklist
+	// of possible wallet actions. The checklist is a list of actions that
+	// should be checked for the given coordination window. The generator is
+	// expected to return a proposal for the first action from the checklist
+	// that is valid for the given wallet's state. If none of the actions are
+	// valid, the generator should return a no-op proposal.
+	Generate(request *CoordinationProposalRequest) (CoordinationProposal, error)
+}
+
+// CoordinationProposal represents a single action proposal for the given wallet.
+type CoordinationProposal interface {
 	pb.Marshaler
 	pb.Unmarshaler
 
-	// actionType returns the specific type of the walletAction being subject
+	// ActionType returns the specific type of the walletAction being subject
 	// of this proposal.
-	actionType() WalletActionType
-	// validityBlocks returns the number of blocks for which the proposal is
+	ActionType() WalletActionType
+	// ValidityBlocks returns the number of blocks for which the proposal is
 	// valid. This value SHOULD NOT be marshaled/unmarshaled.
-	validityBlocks() uint64
+	ValidityBlocks() uint64
 }
 
-// noopProposal is a proposal that does not propose any action.
-type noopProposal struct{}
+// NoopProposal is a proposal that does not propose any action.
+type NoopProposal struct{}
 
-func (np *noopProposal) actionType() WalletActionType {
+func (np *NoopProposal) ActionType() WalletActionType {
 	return ActionNoop
 }
 
-func (np *noopProposal) validityBlocks() uint64 {
+func (np *NoopProposal) ValidityBlocks() uint64 {
 	// Panic to make sure that the proposal is not processed by the node.
 	panic("noop proposal does not have validity blocks")
 }
@@ -238,7 +246,7 @@ type coordinationResult struct {
 	wallet   wallet
 	window   *coordinationWindow
 	leader   chain.Address
-	proposal coordinationProposal
+	proposal CoordinationProposal
 	faults   []*coordinationFault
 }
 
@@ -248,7 +256,7 @@ func (cr *coordinationResult) String() string {
 		&cr.wallet,
 		cr.window.coordinationBlock,
 		cr.leader,
-		cr.proposal.actionType(),
+		cr.proposal.ActionType(),
 		cr.faults,
 	)
 }
@@ -259,7 +267,7 @@ type coordinationMessage struct {
 	senderID            group.MemberIndex
 	coordinationBlock   uint64
 	walletPublicKeyHash [20]byte
-	proposal            coordinationProposal
+	proposal            CoordinationProposal
 }
 
 func (cm *coordinationMessage) Type() string {
@@ -277,7 +285,7 @@ type coordinationExecutor struct {
 	membersIndexes    []group.MemberIndex
 	operatorAddress   chain.Address
 
-	proposalGenerator coordinationProposalGenerator
+	proposalGenerator CoordinationProposalGenerator
 
 	broadcastChannel    net.BroadcastChannel
 	membershipValidator *group.MembershipValidator
@@ -293,7 +301,7 @@ func newCoordinationExecutor(
 	coordinatedWallet wallet,
 	membersIndexes []group.MemberIndex,
 	operatorAddress chain.Address,
-	proposalGenerator coordinationProposalGenerator,
+	proposalGenerator CoordinationProposalGenerator,
 	broadcastChannel net.BroadcastChannel,
 	membershipValidator *group.MembershipValidator,
 	protocolLatch *generator.ProtocolLatch,
@@ -367,16 +375,24 @@ func (ce *coordinationExecutor) coordinate(
 
 	execLogger.Info("actions checklist is: [%v]", actionsChecklist)
 
-	// Set up a context that is cancelled when the active phase of the
-	// coordination window ends.
+	// Set up a context that is automatically cancelled when the active phase
+	// of the coordination window ends.
+	//
+	// The coordination leader keeps that context active for the lifetime of the
+	// active phase to provide retransmissions of the coordination message thus
+	// maximize the chance that all followers receive it on time. The only case
+	// when the leader cancels the context prematurely is when the leader's
+	// routine fails.
+	//
+	// The coordination follower cancels the context as soon as it receives
+	// the coordination message.
 	ctx, cancelCtx := withCancelOnBlock(
 		context.Background(),
 		window.activePhaseEndBlock(),
 		ce.waitForBlockFn,
 	)
-	defer cancelCtx()
 
-	var proposal coordinationProposal
+	var proposal CoordinationProposal
 	var faults []*coordinationFault
 
 	if leader == ce.operatorAddress {
@@ -388,15 +404,22 @@ func (ce *coordinationExecutor) coordinate(
 			actionsChecklist,
 		)
 		if err != nil {
+			// Cancel the context upon leader's routine failure. There is
+			// no point to keep the context active as retransmissions do not
+			// occur anyway.
+			cancelCtx()
 			return nil, fmt.Errorf(
 				"failed to execute leader's routine: [%v]",
 				err,
 			)
 		}
 
-		execLogger.Info("broadcasted proposal: [%s]", proposal.actionType())
+		execLogger.Info("broadcasted proposal: [%s]", proposal.ActionType())
 	} else {
 		execLogger.Info("executing follower's routine")
+
+		// Cancel the context upon follower's routine completion.
+		defer cancelCtx()
 
 		proposal, faults, err = ce.executeFollowerRoutine(
 			ctx,
@@ -413,14 +436,14 @@ func (ce *coordinationExecutor) coordinate(
 
 		execLogger.Info(
 			"received proposal: [%s]; observed faults: [%v]",
-			proposal.actionType(),
+			proposal.ActionType(),
 			faults,
 		)
 	}
 
 	// Just in case, if the proposal is nil, set it to noop.
 	if proposal == nil {
-		proposal = &noopProposal{}
+		proposal = &NoopProposal{}
 	}
 
 	result := &coordinationResult{
@@ -551,10 +574,16 @@ func (ce *coordinationExecutor) executeLeaderRoutine(
 	ctx context.Context,
 	coordinationBlock uint64,
 	actionsChecklist []WalletActionType,
-) (coordinationProposal, error) {
+) (CoordinationProposal, error) {
 	walletPublicKeyHash := ce.walletPublicKeyHash()
 
-	proposal, err := ce.proposalGenerator(walletPublicKeyHash, actionsChecklist)
+	proposal, err := ce.proposalGenerator.Generate(
+		&CoordinationProposalRequest{
+			WalletPublicKeyHash: walletPublicKeyHash,
+			WalletOperators:     ce.coordinatedWallet.signingGroupOperators,
+			ActionsChecklist:    actionsChecklist,
+		},
+	)
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate proposal: [%v]", err)
 	}
@@ -593,7 +622,7 @@ func (ce *coordinationExecutor) executeFollowerRoutine(
 	leader chain.Address,
 	coordinationBlock uint64,
 	actionsAllowed []WalletActionType,
-) (coordinationProposal, []*coordinationFault, error) {
+) (CoordinationProposal, []*coordinationFault, error) {
 	// Cache wallet public key hash to not compute it on every message.
 	walletPublicKeyHash := ce.walletPublicKeyHash()
 	// Leader ID is the index of the first (index-wise) member controlled by
@@ -661,7 +690,7 @@ loop:
 
 			// Filter out messages that propose an action that is not allowed
 			// for the given coordination window.
-			if !slices.Contains(actionsAllowed, message.proposal.actionType()) {
+			if !slices.Contains(actionsAllowed, message.proposal.ActionType()) {
 				faults = append(
 					faults, &coordinationFault{
 						culprit:   leader,

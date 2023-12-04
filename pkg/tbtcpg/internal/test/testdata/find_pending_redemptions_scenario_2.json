@@ -1,43 +1,25 @@
 {
-  "Title": "Get all pending redemptions without filtering",
+  "Title": "pending redemptions do not exist",
   "ChainParameters":{
     "AverageBlockTime": 10,
     "CurrentBlock": 100000,
     "RequestTimeout": 86400,
     "RequestMinAge": 3600
   },
-  "Filter": {
-    "WalletPublicKeyHashes": [],
-    "WalletsLimit": 0,
-    "RequestsLimit": 0,
-    "RequestAmountLimit": 0
-  },
-  "Wallets": [
-    {
-      "WalletPublicKeyHash": "0x928d992e5f5b71de51a1b40fcc4056b99a88a647",
-      "RegistrationBlockNumber": 5
-    },
-    {
-      "WalletPublicKeyHash": "0x03b74d6893ad46dfdd01b9e0e3b3385f4fce2d1e",
-      "RegistrationBlockNumber": 10
-    },
-    {
-      "WalletPublicKeyHash": "0x7670343fc00ccc2d0cd65360e6ad400697ea0fed",
-      "RegistrationBlockNumber": 20
-    }
-  ],
+  "MaxNumberOfRequests": 5,
+  "WalletPublicKeyHash": "0x928d992e5f5b71de51a1b40fcc4056b99a88a647",
   "PendingRedemptions": [
     {
       "WalletPublicKeyHash": "0x928d992e5f5b71de51a1b40fcc4056b99a88a647",
       "RedeemerOutputScript": "0x00140000000000000000000000000000000000000001",
       "RequestedAmount": 1000000000,
-      "Age": 79200
+      "Age": 90000
     },
     {
       "WalletPublicKeyHash": "0x928d992e5f5b71de51a1b40fcc4056b99a88a647",
       "RedeemerOutputScript": "0x00140000000000000000000000000000000000000002",
       "RequestedAmount": 2000000000,
-      "Age": 75600
+      "Age": 100000
     },
     {
       "WalletPublicKeyHash": "0x03b74d6893ad46dfdd01b9e0e3b3385f4fce2d1e",
@@ -61,21 +43,8 @@
       "WalletPublicKeyHash": "0x7670343fc00ccc2d0cd65360e6ad400697ea0fed",
       "RedeemerOutputScript": "0x00140000000000000000000000000000000000000006",
       "RequestedAmount": 6000000000,
-      "Age": 10800
+      "Age": 600
     }
   ],
-  "ExpectedWalletsPendingRedemptions": {
-    "0x928d992e5f5b71de51a1b40fcc4056b99a88a647": [
-      "0x00140000000000000000000000000000000000000001",
-      "0x00140000000000000000000000000000000000000002"
-    ],
-    "0x03b74d6893ad46dfdd01b9e0e3b3385f4fce2d1e": [
-      "0x00140000000000000000000000000000000000000003",
-      "0x00140000000000000000000000000000000000000004"
-    ],
-    "0x7670343fc00ccc2d0cd65360e6ad400697ea0fed": [
-      "0x00140000000000000000000000000000000000000005",
-      "0x00140000000000000000000000000000000000000006"
-    ]
-  }
+  "ExpectedRedeemersOutputScripts": []
 }

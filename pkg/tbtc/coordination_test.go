@@ -6,6 +6,12 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
+	"math/big"
+	"math/rand"
+	"reflect"
+	"testing"
+	"time"
+
 	"github.com/go-test/deep"
 	"github.com/keep-network/keep-core/pkg/bitcoin"
 	"github.com/keep-network/keep-core/pkg/chain"
@@ -17,11 +23,6 @@ import (
 	"github.com/keep-network/keep-core/pkg/protocol/group"
 	"github.com/keep-network/keep-core/pkg/tecdsa"
 	"golang.org/x/exp/slices"
-	"math/big"
-	"math/rand"
-	"reflect"
-	"testing"
-	"time"
 
 	"github.com/keep-network/keep-core/internal/testutils"
 )
@@ -310,24 +311,26 @@ func TestCoordinationExecutor_Coordinate(t *testing.T) {
 		},
 	}
 
-	proposalGenerator := func(
-		walletPublicKeyHash [20]byte,
-		actionsChecklist []WalletActionType,
-	) (coordinationProposal, error) {
-		for _, action := range actionsChecklist {
-			if walletPublicKeyHash == publicKeyHash && action == ActionRedemption {
-				return &RedemptionProposal{
-					RedeemersOutputScripts: []bitcoin.Script{
-						parseScript("00148db50eb52063ea9d98b3eac91489a90f738986f6"),
-						parseScript("76a9148db50eb52063ea9d98b3eac91489a90f738986f688ac"),
-					},
-					RedemptionTxFee: big.NewInt(10000),
-				}, nil
+	proposalGenerator := newMockCoordinationProposalGenerator(
+		func(
+			walletPublicKeyHash [20]byte,
+			actionsChecklist []WalletActionType,
+		) (CoordinationProposal, error) {
+			for _, action := range actionsChecklist {
+				if walletPublicKeyHash == publicKeyHash && action == ActionRedemption {
+					return &RedemptionProposal{
+						RedeemersOutputScripts: []bitcoin.Script{
+							parseScript("00148db50eb52063ea9d98b3eac91489a90f738986f6"),
+							parseScript("76a9148db50eb52063ea9d98b3eac91489a90f738986f688ac"),
+						},
+						RedemptionTxFee: big.NewInt(10000),
+					}, nil
+				}
 			}
-		}
 
-		return &noopProposal{}, nil
-	}
+			return &NoopProposal{}, nil
+		},
+	)
 
 	membershipValidator := group.NewMembershipValidator(
 		&testutils.MockLogger{},
@@ -690,23 +693,25 @@ func TestCoordinationExecutor_ExecuteLeaderRoutine(t *testing.T) {
 	// sender.
 	membersIndexes := []group.MemberIndex{77, 5, 10}
 
-	proposalGenerator := func(
-		walletPublicKeyHash [20]byte,
-		actionsChecklist []WalletActionType,
-	) (
-		coordinationProposal,
-		error,
-	) {
-		for _, action := range actionsChecklist {
-			if walletPublicKeyHash == publicKeyHash && action == ActionHeartbeat {
-				return &HeartbeatProposal{
-					Message: []byte("heartbeat message"),
-				}, nil
+	proposalGenerator := newMockCoordinationProposalGenerator(
+		func(
+			walletPublicKeyHash [20]byte,
+			actionsChecklist []WalletActionType,
+		) (
+			CoordinationProposal,
+			error,
+		) {
+			for _, action := range actionsChecklist {
+				if walletPublicKeyHash == publicKeyHash && action == ActionHeartbeat {
+					return &HeartbeatProposal{
+						Message: [16]byte{0x01, 0x02},
+					}, nil
+				}
 			}
-		}
 
-		return &noopProposal{}, nil
-	}
+			return &NoopProposal{}, nil
+		},
+	)
 
 	provider := netlocal.Connect()
 
@@ -760,7 +765,7 @@ func TestCoordinationExecutor_ExecuteLeaderRoutine(t *testing.T) {
 	<-ctx.Done()
 
 	expectedProposal := &HeartbeatProposal{
-		Message: []byte("heartbeat message"),
+		Message: [16]byte{0x01, 0x02},
 	}
 
 	if !reflect.DeepEqual(expectedProposal, proposal) {
@@ -922,7 +927,7 @@ func TestCoordinationExecutor_ExecuteFollowerRoutine(t *testing.T) {
 			senderID:            coordinatedWallet.membersByOperator(follower1.address)[0],
 			coordinationBlock:   900,
 			walletPublicKeyHash: executor.walletPublicKeyHash(),
-			proposal:            &noopProposal{},
+			proposal:            &NoopProposal{},
 		})
 		if err != nil {
 			t.Error(err)
@@ -935,7 +940,7 @@ func TestCoordinationExecutor_ExecuteFollowerRoutine(t *testing.T) {
 			senderID:            coordinatedWallet.membersByOperator(follower2.address)[0],
 			coordinationBlock:   900,
 			walletPublicKeyHash: executor.walletPublicKeyHash(),
-			proposal:            &noopProposal{},
+			proposal:            &NoopProposal{},
 		})
 		if err != nil {
 			t.Error(err)
@@ -948,7 +953,7 @@ func TestCoordinationExecutor_ExecuteFollowerRoutine(t *testing.T) {
 			senderID:            leaderID,
 			coordinationBlock:   901,
 			walletPublicKeyHash: executor.walletPublicKeyHash(),
-			proposal:            &noopProposal{},
+			proposal:            &NoopProposal{},
 		})
 		if err != nil {
 			t.Error(err)
@@ -960,7 +965,7 @@ func TestCoordinationExecutor_ExecuteFollowerRoutine(t *testing.T) {
 			senderID:            leaderID,
 			coordinationBlock:   900,
 			walletPublicKeyHash: [20]byte{0x01},
-			proposal:            &noopProposal{},
+			proposal:            &NoopProposal{},
 		})
 		if err != nil {
 			t.Error(err)
@@ -972,7 +977,7 @@ func TestCoordinationExecutor_ExecuteFollowerRoutine(t *testing.T) {
 			senderID:            coordinatedWallet.membersByOperator(follower2.address)[0],
 			coordinationBlock:   900,
 			walletPublicKeyHash: executor.walletPublicKeyHash(),
-			proposal:            &noopProposal{},
+			proposal:            &NoopProposal{},
 		})
 		if err != nil {
 			t.Error(err)
@@ -986,7 +991,7 @@ func TestCoordinationExecutor_ExecuteFollowerRoutine(t *testing.T) {
 			coordinationBlock:   900,
 			walletPublicKeyHash: executor.walletPublicKeyHash(),
 			proposal: &HeartbeatProposal{
-				Message: []byte("heartbeat message"),
+				Message: [16]byte{0x01, 0x02},
 			},
 		})
 		if err != nil {
@@ -1113,7 +1118,7 @@ func TestCoordinationExecutor_ExecuteFollowerRoutine_WithIdleLeader(t *testing.T
 
 	provider := netlocal.Connect()
 
-	broadcastChannel, err := provider.BroadcastChannelFor("test")
+	broadcastChannel, err := provider.BroadcastChannelFor("test-idle")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -1160,4 +1165,28 @@ func TestCoordinationExecutor_ExecuteFollowerRoutine_WithIdleLeader(t *testing.T
 			faults,
 		)
 	}
+}
+
+type mockCoordinationProposalGenerator struct {
+	delegate func(
+		walletPublicKeyHash [20]byte,
+		actionsChecklist []WalletActionType,
+	) (CoordinationProposal, error)
+}
+
+func newMockCoordinationProposalGenerator(
+	delegate func(
+		walletPublicKeyHash [20]byte,
+		actionsChecklist []WalletActionType,
+	) (CoordinationProposal, error),
+) *mockCoordinationProposalGenerator {
+	return &mockCoordinationProposalGenerator{
+		delegate: delegate,
+	}
+}
+
+func (mcpg *mockCoordinationProposalGenerator) Generate(
+	request *CoordinationProposalRequest,
+) (CoordinationProposal, error) {
+	return mcpg.delegate(request.WalletPublicKeyHash, request.ActionsChecklist)
 }

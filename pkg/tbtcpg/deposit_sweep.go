@@ -1,11 +1,13 @@
-package wallet
+package tbtcpg
 
 import (
-	"context"
 	"fmt"
 	"math"
 	"math/big"
 	"sort"
+
+	"github.com/ipfs/go-log/v2"
+	"go.uber.org/zap"
 
 	"github.com/keep-network/keep-core/internal/hexutils"
 	"github.com/keep-network/keep-core/pkg/bitcoin"
@@ -14,42 +16,77 @@ import (
 
 const depositScriptByteSize = 92
 
-func (wm *walletMaintainer) runDepositSweepTask(ctx context.Context) error {
-	depositSweepMaxSize, err := wm.chain.GetDepositSweepMaxSize()
+// DepositSweepTask is a task that may produce a deposit sweep proposal.
+type DepositSweepTask struct {
+	chain    Chain
+	btcChain bitcoin.Chain
+}
+
+func NewDepositSweepTask(
+	chain Chain,
+	btcChain bitcoin.Chain,
+) *DepositSweepTask {
+	return &DepositSweepTask{
+		chain:    chain,
+		btcChain: btcChain,
+	}
+}
+
+func (dst *DepositSweepTask) Run(request *tbtc.CoordinationProposalRequest) (
+	tbtc.CoordinationProposal,
+	bool,
+	error,
+) {
+	walletPublicKeyHash := request.WalletPublicKeyHash
+
+	taskLogger := logger.With(
+		zap.String("task", dst.ActionType().String()),
+		zap.String("walletPKH", fmt.Sprintf("0x%x", walletPublicKeyHash)),
+	)
+
+	depositSweepMaxSize, err := dst.chain.GetDepositSweepMaxSize()
 	if err != nil {
-		return fmt.Errorf("failed to get deposit sweep max size: [%w]", err)
+		return nil, false, fmt.Errorf(
+			"failed to get deposit sweep max size: [%w]",
+			err,
+		)
 	}
 
-	walletPublicKeyHash, deposits, err := FindDepositsToSweep(
-		wm.chain,
-		wm.btcChain,
-		[20]byte{},
+	deposits, err := dst.FindDepositsToSweep(
+		taskLogger,
+		walletPublicKeyHash,
 		depositSweepMaxSize,
 	)
 	if err != nil {
-		return fmt.Errorf("failed to prepare deposits sweep proposal: [%w]", err)
+		return nil, false, fmt.Errorf(
+			"cannot find deposits to sweep: [%w]",
+			err,
+		)
 	}
 
 	if len(deposits) == 0 {
-		logger.Info("no deposits to sweep")
-		return nil
+		taskLogger.Info("no deposits to sweep")
+		return nil, false, nil
 	}
 
-	return wm.runIfWalletUnlocked(
-		ctx,
+	proposal, err := dst.ProposeDepositsSweep(
+		taskLogger,
 		walletPublicKeyHash,
-		tbtc.ActionDepositSweep,
-		func() error {
-			return ProposeDepositsSweep(
-				wm.chain,
-				wm.btcChain,
-				walletPublicKeyHash,
-				0,
-				deposits,
-				false,
-			)
-		},
+		deposits,
+		0,
 	)
+	if err != nil {
+		return nil, false, fmt.Errorf(
+			"cannot prepare deposit sweep proposal: [%w]",
+			err,
+		)
+	}
+
+	return proposal, true, nil
+}
+
+func (dst *DepositSweepTask) ActionType() tbtc.WalletActionType {
+	return tbtc.ActionDepositSweep
 }
 
 // DepositReference holds some data allowing to identify and refer to a deposit.
@@ -80,7 +117,28 @@ func FindDeposits(
 	skipSwept bool,
 	skipUnconfirmed bool,
 ) ([]*Deposit, error) {
-	logger.Infof("reading revealed deposits from chain...")
+	return findDeposits(
+		logger,
+		chain,
+		btcChain,
+		walletPublicKeyHash,
+		maxNumberOfDeposits,
+		skipSwept,
+		skipUnconfirmed,
+	)
+}
+
+// findDeposits finds deposits according to the given criteria.
+func findDeposits(
+	fnLogger log.StandardLogger,
+	chain Chain,
+	btcChain bitcoin.Chain,
+	walletPublicKeyHash [20]byte,
+	maxNumberOfDeposits int,
+	skipSwept bool,
+	skipUnconfirmed bool,
+) ([]*Deposit, error) {
+	fnLogger.Infof("reading revealed deposits from chain")
 
 	filter := &tbtc.DepositRevealedEventFilter{}
 	if walletPublicKeyHash != [20]byte{} {
@@ -95,14 +153,14 @@ func FindDeposits(
 		)
 	}
 
-	logger.Infof("found %d DepositRevealed events", len(depositRevealedEvents))
+	fnLogger.Infof("found [%d] DepositRevealed events", len(depositRevealedEvents))
 
 	// Take the oldest first
 	sort.SliceStable(depositRevealedEvents, func(i, j int) bool {
 		return depositRevealedEvents[i].BlockNumber < depositRevealedEvents[j].BlockNumber
 	})
 
-	logger.Infof("getting deposits details...")
+	fnLogger.Infof("getting deposits details")
 
 	resultSliceCapacity := len(depositRevealedEvents)
 	if maxNumberOfDeposits > 0 {
@@ -110,14 +168,15 @@ func FindDeposits(
 	}
 
 	result := make([]*Deposit, 0, resultSliceCapacity)
-	for i, event := range depositRevealedEvents {
+	for _, event := range depositRevealedEvents {
 		if len(result) == cap(result) {
 			break
 		}
 
-		logger.Debugf("getting details of deposit %d/%d", i+1, len(depositRevealedEvents))
-
 		depositKey := chain.BuildDepositKey(event.FundingTxHash, event.FundingOutputIndex)
+		depositKeyStr := depositKey.Text(16)
+
+		fnLogger.Debugf("getting details of deposit [%s]", depositKeyStr)
 
 		depositRequest, found, err := chain.GetDepositRequest(
 			event.FundingTxHash,
@@ -132,30 +191,32 @@ func FindDeposits(
 
 		if !found {
 			return nil, fmt.Errorf(
-				"no deposit request for key [0x%x]",
-				depositKey.Text(16),
+				"no deposit request for key [%s]",
+				depositKeyStr,
 			)
 		}
 
 		isSwept := depositRequest.SweptAt.Unix() != 0
 		if skipSwept && isSwept {
-			logger.Debugf("deposit %d/%d is already swept", i+1, len(depositRevealedEvents))
+			fnLogger.Debugf("deposit [%s] is already swept", depositKeyStr)
 			continue
 		}
 
 		confirmations, err := btcChain.GetTransactionConfirmations(event.FundingTxHash)
 		if err != nil {
-			logger.Errorf(
+			fnLogger.Errorf(
 				"failed to get bitcoin transaction confirmations: [%v]",
 				err,
 			)
 		}
 
 		if skipUnconfirmed && confirmations < tbtc.DepositSweepRequiredFundingTxConfirmations {
-			logger.Debugf(
-				"deposit %d/%d funding transaction doesn't have enough confirmations: %d/%d",
-				i+1, len(depositRevealedEvents),
-				confirmations, tbtc.DepositSweepRequiredFundingTxConfirmations)
+			fnLogger.Debugf(
+				"deposit [%s] funding transaction doesn't have enough confirmations: [%d/%d]",
+				depositKeyStr,
+				confirmations,
+				tbtc.DepositSweepRequiredFundingTxConfirmations,
+			)
 			continue
 		}
 
@@ -164,7 +225,7 @@ func FindDeposits(
 			event.FundingTxHash,
 		)
 		if err != nil {
-			logger.Errorf(
+			fnLogger.Errorf(
 				"failed to get deposit transaction data: [%v]",
 				err,
 			)
@@ -195,121 +256,55 @@ func FindDeposits(
 }
 
 // FindDepositsToSweep finds deposits that can be swept.
-// If a wallet public key hash is provided, it will find unswept deposits for the
-// given wallet. If a wallet public key hash is nil, it will check all wallets
-// starting from the oldest one to find a first wallet containing unswept deposits
-// and return those deposits.
 // maxNumberOfDeposits is used as a ceiling for the number of deposits in the
 // result. If number of discovered deposits meets the maxNumberOfDeposits the
 // function will stop fetching more deposits.
-// This function will return a wallet public key hash and a list of deposits from
-// the wallet that can be swept.
+// This function will return a list of deposits from the wallet that can be swept.
 // Deposits with insufficient number of funding transaction confirmations will
 // not be taken into consideration for sweeping.
-// The result will not mix deposits for different wallets.
 //
 // TODO: Cache immutable data
-func FindDepositsToSweep(
-	chain Chain,
-	btcChain bitcoin.Chain,
+func (dst *DepositSweepTask) FindDepositsToSweep(
+	taskLogger log.StandardLogger,
 	walletPublicKeyHash [20]byte,
 	maxNumberOfDeposits uint16,
-) ([20]byte, []*DepositReference, error) {
-	logger.Infof("deposit sweep max size: %d", maxNumberOfDeposits)
-
-	getDepositsToSweepFromWallet := func(walletToSweep [20]byte) ([]*Deposit, error) {
-		unsweptDeposits, err := FindDeposits(
-			chain,
-			btcChain,
-			walletToSweep,
-			int(maxNumberOfDeposits),
-			true,
-			true,
-		)
-		if err != nil {
-			return nil,
-				fmt.Errorf(
-					"failed to get deposits for [%s] wallet: [%w]",
-					hexutils.Encode(walletToSweep[:]),
-					err,
-				)
-		}
-		return unsweptDeposits, nil
-	}
-
-	var depositsToSweep []*Deposit
-	// If walletPublicKeyHash is not provided we need to find a wallet that has
-	// unswept deposits.
+) ([]*DepositReference, error) {
 	if walletPublicKeyHash == [20]byte{} {
-		walletRegisteredEvents, err := chain.PastNewWalletRegisteredEvents(nil)
-		if err != nil {
-			return [20]byte{}, nil, fmt.Errorf("failed to get registered wallets: [%w]", err)
-		}
-
-		// Take the oldest first
-		sort.SliceStable(walletRegisteredEvents, func(i, j int) bool {
-			return walletRegisteredEvents[i].BlockNumber < walletRegisteredEvents[j].BlockNumber
-		})
-
-		sweepingWallets := walletRegisteredEvents
-		// Only two the most recently created wallets are sweeping.
-		if len(walletRegisteredEvents) >= 2 {
-			sweepingWallets = walletRegisteredEvents[len(walletRegisteredEvents)-2:]
-		}
-
-		for _, registeredWallet := range sweepingWallets {
-			logger.Infof(
-				"fetching deposits from wallet [%s]...",
-				hexutils.Encode(registeredWallet.WalletPublicKeyHash[:]),
-			)
-
-			unsweptDeposits, err := getDepositsToSweepFromWallet(
-				registeredWallet.WalletPublicKeyHash,
-			)
-			if err != nil {
-				return [20]byte{}, nil, err
-			}
-
-			// Check if there are any unswept deposits in this wallet. If so
-			// sweep this wallet and don't check the other wallet.
-			if len(unsweptDeposits) > 0 {
-				walletPublicKeyHash = registeredWallet.WalletPublicKeyHash
-				depositsToSweep = unsweptDeposits
-				break
-			}
-		}
-	} else {
-		logger.Infof(
-			"fetching deposits from wallet [%s]...",
-			hexutils.Encode(walletPublicKeyHash[:]),
-		)
-		unsweptDeposits, err := getDepositsToSweepFromWallet(
-			walletPublicKeyHash,
-		)
-		if err != nil {
-			return [20]byte{}, nil, err
-		}
-		depositsToSweep = unsweptDeposits
+		return nil, fmt.Errorf("wallet public key hash is required")
 	}
+
+	taskLogger.Infof("fetching max [%d] deposits", maxNumberOfDeposits)
+
+	unsweptDeposits, err := findDeposits(
+		taskLogger,
+		dst.chain,
+		dst.btcChain,
+		walletPublicKeyHash,
+		int(maxNumberOfDeposits),
+		true,
+		true,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	depositsToSweep := unsweptDeposits
 
 	if len(depositsToSweep) == 0 {
-		return [20]byte{}, nil, nil
+		return nil, nil
 	}
 
-	logger.Infof(
-		"found [%d] deposits to sweep for wallet [%s]",
+	taskLogger.Infof(
+		"found [%d] deposits to sweep",
 		len(depositsToSweep),
-		hexutils.Encode(walletPublicKeyHash[:]),
 	)
 
-	for i, deposit := range depositsToSweep {
-		logger.Infof(
-			"deposit [%d/%d] - %s",
-			i+1,
-			len(depositsToSweep),
+	for _, deposit := range depositsToSweep {
+		taskLogger.Infof(
+			"deposit [%s] - [%s]",
+			deposit.DepositKey,
 			fmt.Sprintf(
-				"depositKey: [%s], reveal block: [%d], funding transaction: [%s], output index: [%d]",
-				deposit.DepositKey,
+				"reveal block: [%d], funding transaction: [%s], output index: [%d]",
 				deposit.RevealBlock,
 				deposit.FundingTxHash.Hex(bitcoin.ReversedByteOrder),
 				deposit.FundingOutputIndex,
@@ -325,46 +320,44 @@ func FindDepositsToSweep(
 		}
 	}
 
-	return walletPublicKeyHash, depositsRefs, nil
+	return depositsRefs, nil
 }
 
-// ProposeDepositsSweep handles deposit sweep proposal request submission.
-func ProposeDepositsSweep(
-	chain Chain,
-	btcChain bitcoin.Chain,
+// ProposeDepositsSweep returns a deposit sweep proposal.
+func (dst *DepositSweepTask) ProposeDepositsSweep(
+	taskLogger log.StandardLogger,
 	walletPublicKeyHash [20]byte,
-	fee int64,
 	deposits []*DepositReference,
-	dryRun bool,
-) error {
+	fee int64,
+) (*tbtc.DepositSweepProposal, error) {
 	if len(deposits) == 0 {
-		return fmt.Errorf("deposits list is empty")
+		return nil, fmt.Errorf("deposits list is empty")
 	}
+
+	taskLogger.Infof("preparing a deposit sweep proposal")
 
 	// Estimate fee if it's missing.
 	if fee <= 0 {
-		logger.Infof("estimating sweep transaction fee...")
+		taskLogger.Infof("estimating sweep transaction fee")
 		var err error
-		_, _, perDepositMaxFee, _, err := chain.GetDepositParameters()
+		_, _, perDepositMaxFee, _, err := dst.chain.GetDepositParameters()
 		if err != nil {
-			return fmt.Errorf("cannot get deposit tx max fee: [%w]", err)
+			return nil, fmt.Errorf("cannot get deposit tx max fee: [%w]", err)
 		}
 
 		estimatedFee, _, err := estimateDepositsSweepFee(
-			btcChain,
+			dst.btcChain,
 			len(deposits),
 			perDepositMaxFee,
 		)
 		if err != nil {
-			return fmt.Errorf("cannot estimate sweep transaction fee: [%v]", err)
+			return nil, fmt.Errorf("cannot estimate sweep transaction fee: [%v]", err)
 		}
 
 		fee = estimatedFee
 	}
 
-	logger.Infof("sweep transaction fee: [%d]", fee)
-
-	logger.Infof("preparing a deposit sweep proposal...")
+	taskLogger.Infof("sweep transaction fee: [%d]", fee)
 
 	depositsKeys := make([]struct {
 		FundingTxHash      bitcoin.Hash
@@ -391,25 +384,19 @@ func ProposeDepositsSweep(
 		DepositsRevealBlocks: depositsRevealBlocks,
 	}
 
-	logger.Infof("validating the deposit sweep proposal...")
+	taskLogger.Infof("validating the deposit sweep proposal")
+
 	if _, err := tbtc.ValidateDepositSweepProposal(
-		logger,
+		taskLogger,
 		proposal,
 		tbtc.DepositSweepRequiredFundingTxConfirmations,
-		chain,
-		btcChain,
+		dst.chain,
+		dst.btcChain,
 	); err != nil {
-		return fmt.Errorf("failed to verify deposit sweep proposal: %v", err)
+		return nil, fmt.Errorf("failed to verify deposit sweep proposal: %v", err)
 	}
 
-	if !dryRun {
-		logger.Infof("submitting the deposit sweep proposal...")
-		if err := chain.SubmitDepositSweepProposalWithReimbursement(proposal); err != nil {
-			return fmt.Errorf("failed to submit deposit sweep proposal: %v", err)
-		}
-	}
-
-	return nil
+	return proposal, nil
 }
 
 // EstimateDepositsSweepFee computes the total fee for the Bitcoin deposits

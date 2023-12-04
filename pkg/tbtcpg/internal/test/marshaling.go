@@ -4,10 +4,9 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"github.com/keep-network/keep-core/pkg/tbtcpg"
 	"math/big"
 	"time"
-
-	walletmtr "github.com/keep-network/keep-core/pkg/maintainer/wallet"
 
 	"github.com/keep-network/keep-core/internal/hexutils"
 	"github.com/keep-network/keep-core/pkg/bitcoin"
@@ -21,11 +20,7 @@ func (dsts *FindDepositsToSweepTestScenario) UnmarshalJSON(data []byte) error {
 		Title               string
 		WalletPublicKeyHash string
 		MaxNumberOfDeposits uint16
-		Wallets             []struct {
-			WalletPublicKeyHash     string
-			RegistrationBlockNumber uint64
-		}
-		Deposits []struct {
+		Deposits            []struct {
 			FundingTxHash          string
 			FundingOutputIndex     uint32
 			FundingTxConfirmations uint
@@ -34,8 +29,7 @@ func (dsts *FindDepositsToSweepTestScenario) UnmarshalJSON(data []byte) error {
 			RevealBlockNumber      uint64
 			SweptAt                int64
 		}
-		ExpectedWalletPublicKeyHash string
-		ExpectedUnsweptDeposits     []struct {
+		ExpectedUnsweptDeposits []struct {
 			FundingTxHash      string
 			FundingOutputIndex uint32
 			RevealBlockNumber  uint64
@@ -71,22 +65,13 @@ func (dsts *FindDepositsToSweepTestScenario) UnmarshalJSON(data []byte) error {
 	// Unmarshal title.
 	dsts.Title = unmarshaled.Title
 
-	// Unmarshal max number of deposits.
+	// Unmarshal wallet PKH.
 	if len(unmarshaled.WalletPublicKeyHash) > 0 {
 		copy(dsts.WalletPublicKeyHash[:], hexToSlice(unmarshaled.WalletPublicKeyHash))
 	}
 
 	dsts.MaxNumberOfDeposits = unmarshaled.MaxNumberOfDeposits
 
-	// Unmarshal wallets.
-	for _, uw := range unmarshaled.Wallets {
-		w := new(Wallet)
-
-		copy(w.WalletPublicKeyHash[:], hexToSlice(uw.WalletPublicKeyHash))
-		w.RegistrationBlockNumber = uw.RegistrationBlockNumber
-
-		dsts.Wallets = append(dsts.Wallets, w)
-	}
 	// Unmarshal deposits.
 	for i, deposit := range unmarshaled.Deposits {
 		d := new(Deposit)
@@ -113,14 +98,9 @@ func (dsts *FindDepositsToSweepTestScenario) UnmarshalJSON(data []byte) error {
 		dsts.Deposits = append(dsts.Deposits, d)
 	}
 
-	// Unmarshal expected wallet public key hash.
-	if len(unmarshaled.ExpectedWalletPublicKeyHash) > 0 {
-		copy(dsts.ExpectedWalletPublicKeyHash[:], hexToSlice(unmarshaled.ExpectedWalletPublicKeyHash))
-	}
-
 	// Unmarshal expected unswept deposits.
 	for i, deposit := range unmarshaled.ExpectedUnsweptDeposits {
-		ud := new(walletmtr.DepositReference)
+		ud := new(tbtcpg.DepositReference)
 
 		fundingTxHash, err := bitcoin.NewHashFromString(deposit.FundingTxHash, bitcoin.ReversedByteOrder)
 		if err != nil {
@@ -284,23 +264,15 @@ func (fprts *FindPendingRedemptionsTestScenario) UnmarshalJSON(data []byte) erro
 			RequestTimeout   uint32
 			RequestMinAge    uint32
 		}
-		Filter struct {
-			WalletPublicKeyHashes []string
-			WalletsLimit          uint16
-			RequestsLimit         uint16
-			RequestAmountLimit    uint64
-		}
-		Wallets []struct {
-			WalletPublicKeyHash     string
-			RegistrationBlockNumber uint64
-		}
-		PendingRedemptions []struct {
+		WalletPublicKeyHash string
+		MaxNumberOfRequests uint16
+		PendingRedemptions  []struct {
 			WalletPublicKeyHash  string
 			RedeemerOutputScript string
 			RequestedAmount      uint64
 			Age                  int64
 		}
-		ExpectedWalletsPendingRedemptions map[string][]string
+		ExpectedRedeemersOutputScripts []string
 	}
 
 	var unmarshaled findPendingRedemptionsTestScenario
@@ -318,29 +290,12 @@ func (fprts *FindPendingRedemptionsTestScenario) UnmarshalJSON(data []byte) erro
 	fprts.ChainParameters.RequestTimeout = unmarshaled.ChainParameters.RequestTimeout
 	fprts.ChainParameters.RequestMinAge = unmarshaled.ChainParameters.RequestMinAge
 
-	for _, wpkhString := range unmarshaled.Filter.WalletPublicKeyHashes {
-		var wpkh [20]byte
-		copy(wpkh[:], hexToSlice(wpkhString))
-
-		fprts.Filter.WalletPublicKeyHashes = append(
-			fprts.Filter.WalletPublicKeyHashes,
-			wpkh,
-		)
+	// Unmarshal wallet PKH.
+	if len(unmarshaled.WalletPublicKeyHash) > 0 {
+		copy(fprts.WalletPublicKeyHash[:], hexToSlice(unmarshaled.WalletPublicKeyHash))
 	}
 
-	fprts.Filter.WalletsLimit = unmarshaled.Filter.WalletsLimit
-	fprts.Filter.RequestsLimit = unmarshaled.Filter.RequestsLimit
-	fprts.Filter.RequestAmountLimit = unmarshaled.Filter.RequestAmountLimit
-
-	for _, w := range unmarshaled.Wallets {
-		var wpkh [20]byte
-		copy(wpkh[:], hexToSlice(w.WalletPublicKeyHash))
-
-		fprts.Wallets = append(fprts.Wallets, &Wallet{
-			WalletPublicKeyHash:     wpkh,
-			RegistrationBlockNumber: w.RegistrationBlockNumber,
-		})
-	}
+	fprts.MaxNumberOfRequests = unmarshaled.MaxNumberOfRequests
 
 	now := time.Now()
 	currentBlock := fprts.ChainParameters.CurrentBlock
@@ -368,17 +323,12 @@ func (fprts *FindPendingRedemptionsTestScenario) UnmarshalJSON(data []byte) erro
 		)
 	}
 
-	fprts.ExpectedWalletsPendingRedemptions = make(map[[20]byte][]bitcoin.Script)
-	for wpkhString, scripts := range unmarshaled.ExpectedWalletsPendingRedemptions {
-		var wpkh [20]byte
-		copy(wpkh[:], hexToSlice(wpkhString))
-
-		convertedScripts := make([]bitcoin.Script, len(scripts))
-		for i, script := range scripts {
-			convertedScripts[i] = hexToSlice(script)
-		}
-
-		fprts.ExpectedWalletsPendingRedemptions[wpkh] = convertedScripts
+	fprts.ExpectedRedeemersOutputScripts = make([]bitcoin.Script, 0)
+	for _, s := range unmarshaled.ExpectedRedeemersOutputScripts {
+		fprts.ExpectedRedeemersOutputScripts = append(
+			fprts.ExpectedRedeemersOutputScripts,
+			hexToSlice(s),
+		)
 	}
 
 	return nil

@@ -239,43 +239,6 @@ var cmdFlagsTests = map[string]struct {
 		expectedValueFromFlag: true,
 		defaultValue:          false,
 	},
-	"maintainer.walletCoordination": {
-		readValueFunc:         func(c *config.Config) interface{} { return c.Maintainer.WalletCoordination.Enabled },
-		flagName:              "--walletCoordination",
-		flagValue:             "", // don't provide any value
-		expectedValueFromFlag: true,
-		defaultValue:          false,
-	},
-	"maintainer.walletCoordination.redemptionInterval": {
-		readValueFunc:         func(c *config.Config) interface{} { return c.Maintainer.WalletCoordination.RedemptionInterval },
-		flagName:              "--walletCoordination.redemptionInterval",
-		flagValue:             "7h",
-		expectedValueFromFlag: 7 * time.Hour,
-		defaultValue:          3 * time.Hour,
-	},
-	"maintainer.walletCoordination.redemptionWalletsLimit": {
-		readValueFunc:         func(c *config.Config) interface{} { return c.Maintainer.WalletCoordination.RedemptionWalletsLimit },
-		flagName:              "--walletCoordination.redemptionWalletsLimit",
-		flagValue:             "10",
-		expectedValueFromFlag: uint16(10),
-		defaultValue:          uint16(3),
-	},
-	"maintainer.walletCoordination.redemptionRequestAmountLimit": {
-		readValueFunc: func(c *config.Config) interface{} {
-			return c.Maintainer.WalletCoordination.RedemptionRequestAmountLimit
-		},
-		flagName:              "--walletCoordination.redemptionRequestAmountLimit",
-		flagValue:             "500",
-		expectedValueFromFlag: uint64(500),
-		defaultValue:          uint64(10 * 1e8),
-	},
-	"maintainer.walletCoordination.depositSweepInterval": {
-		readValueFunc:         func(c *config.Config) interface{} { return c.Maintainer.WalletCoordination.DepositSweepInterval },
-		flagName:              "--walletCoordination.depositSweepInterval",
-		flagValue:             "35h",
-		expectedValueFromFlag: 35 * time.Hour,
-		defaultValue:          48 * time.Hour,
-	},
 	"maintainer.spv": {
 		readValueFunc:         func(c *config.Config) interface{} { return c.Maintainer.Spv.Enabled },
 		flagName:              "--spv",

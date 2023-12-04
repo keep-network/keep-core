@@ -85,6 +85,10 @@ type node struct {
 	//
 	// coordinationExecutors MUST NOT be used outside this struct.
 	coordinationExecutors map[string]*coordinationExecutor
+
+	// proposalGenerator is the implementation of the coordination proposal
+	// generator used by the node.
+	proposalGenerator CoordinationProposalGenerator
 }
 
 func newNode(
@@ -95,6 +99,7 @@ func newNode(
 	keyStorePersistance persistence.ProtectedHandle,
 	workPersistence persistence.BasicHandle,
 	scheduler *generator.Scheduler,
+	proposalGenerator CoordinationProposalGenerator,
 	config Config,
 ) (*node, error) {
 	walletRegistry := newWalletRegistry(keyStorePersistance)
@@ -112,6 +117,7 @@ func newNode(
 		protocolLatch:         latch,
 		signingExecutors:      make(map[string]*signingExecutor),
 		coordinationExecutors: make(map[string]*coordinationExecutor),
+		proposalGenerator:     proposalGenerator,
 	}
 
 	// Only the operator address is known at this point and can be pre-fetched.
@@ -379,20 +385,12 @@ func (n *node) getCoordinationExecutor(
 		return nil, false, fmt.Errorf("failed to get operator address: [%v]", err)
 	}
 
-	proposalGenerator := func(
-		walletPublicKeyHash [20]byte,
-		actionsChecklist []WalletActionType,
-	) (coordinationProposal, error) {
-		// TODO: Implement proposal generation.
-		return &noopProposal{}, nil
-	}
-
 	executor := newCoordinationExecutor(
 		n.chain,
 		wallet,
 		membersIndexes,
 		operatorAddress,
-		proposalGenerator,
+		n.proposalGenerator,
 		broadcastChannel,
 		membershipValidator,
 		n.protocolLatch,
@@ -817,7 +815,7 @@ func processCoordinationResult(node *node, result *coordinationResult) {
 	// TODO: Record coordination faults.
 
 	// TODO: Detect proposal type and run the appropriate handler.
-	switch result.proposal.actionType() {
+	switch result.proposal.ActionType() {
 	case ActionHeartbeat:
 		// node.handleHeartbeatRequest()
 	case ActionDepositSweep:

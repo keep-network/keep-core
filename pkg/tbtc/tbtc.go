@@ -78,6 +78,7 @@ func Initialize(
 	keyStorePersistence persistence.ProtectedHandle,
 	workPersistence persistence.BasicHandle,
 	scheduler *generator.Scheduler,
+	proposalGenerator CoordinationProposalGenerator,
 	config Config,
 	clientInfo *clientinfo.Registry,
 ) error {
@@ -95,6 +96,7 @@ func Initialize(
 		keyStorePersistence,
 		workPersistence,
 		scheduler,
+		proposalGenerator,
 		config,
 	)
 	if err != nil {

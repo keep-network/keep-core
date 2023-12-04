@@ -60,11 +60,11 @@ type RedemptionProposal struct {
 	RedemptionTxFee        *big.Int
 }
 
-func (rp *RedemptionProposal) actionType() WalletActionType {
+func (rp *RedemptionProposal) ActionType() WalletActionType {
 	return ActionRedemption
 }
 
-func (rp *RedemptionProposal) validityBlocks() uint64 {
+func (rp *RedemptionProposal) ValidityBlocks() uint64 {
 	return redemptionProposalValidityBlocks
 }
 

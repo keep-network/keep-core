@@ -3,6 +3,7 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"github.com/keep-network/keep-core/pkg/tbtcpg"
 
 	"github.com/keep-network/keep-common/pkg/persistence"
 	"github.com/keep-network/keep-core/build"
@@ -123,6 +124,11 @@ func start(cmd *cobra.Command) error {
 			return fmt.Errorf("error initializing beacon: [%v]", err)
 		}
 
+		proposalGenerator := tbtcpg.NewProposalGenerator(
+			tbtcChain,
+			btcChain,
+		)
+
 		err = tbtc.Initialize(
 			ctx,
 			tbtcChain,
@@ -131,6 +137,7 @@ func start(cmd *cobra.Command) error {
 			tbtcKeyStorePersistence,
 			tbtcDataPersistence,
 			scheduler,
+			proposalGenerator,
 			clientConfig.Tbtc,
 			clientInfoRegistry,
 		)
