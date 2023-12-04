@@ -375,14 +375,22 @@ func (ce *coordinationExecutor) coordinate(
 
 	execLogger.Info("actions checklist is: [%v]", actionsChecklist)
 
-	// Set up a context that is cancelled when the active phase of the
-	// coordination window ends.
+	// Set up a context that is automatically cancelled when the active phase
+	// of the coordination window ends.
+	//
+	// The coordination leader keeps that context active for the lifetime of the
+	// active phase to provide retransmissions of the coordination message thus
+	// maximize the chance that all followers receive it on time. The only case
+	// when the leader cancels the context prematurely is when the leader's
+	// routine fails.
+	//
+	// The coordination follower cancels the context as soon as it receives
+	// the coordination message.
 	ctx, cancelCtx := withCancelOnBlock(
 		context.Background(),
 		window.activePhaseEndBlock(),
 		ce.waitForBlockFn,
 	)
-	defer cancelCtx()
 
 	var proposal CoordinationProposal
 	var faults []*coordinationFault
@@ -396,6 +404,10 @@ func (ce *coordinationExecutor) coordinate(
 			actionsChecklist,
 		)
 		if err != nil {
+			// Cancel the context upon leader's routine failure. There is
+			// no point to keep the context active as retransmissions do not
+			// occur anyway.
+			cancelCtx()
 			return nil, fmt.Errorf(
 				"failed to execute leader's routine: [%v]",
 				err,
@@ -405,6 +417,9 @@ func (ce *coordinationExecutor) coordinate(
 		execLogger.Info("broadcasted proposal: [%s]", proposal.ActionType())
 	} else {
 		execLogger.Info("executing follower's routine")
+
+		// Cancel the context upon follower's routine completion.
+		defer cancelCtx()
 
 		proposal, faults, err = ce.executeFollowerRoutine(
 			ctx,
