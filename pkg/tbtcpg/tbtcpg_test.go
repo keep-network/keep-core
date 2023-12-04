@@ -2,9 +2,10 @@ package tbtcpg
 
 import (
 	"fmt"
-	"github.com/keep-network/keep-core/pkg/tbtc"
 	"reflect"
 	"testing"
+
+	"github.com/keep-network/keep-core/pkg/tbtc"
 )
 
 func TestProposalGenerator_Generate(t *testing.T) {
@@ -131,8 +132,11 @@ func TestProposalGenerator_Generate(t *testing.T) {
 			}
 
 			proposal, err := generator.Generate(
-				walletPublicKeyHash,
-				test.actionsChecklist,
+				&tbtc.CoordinationProposalRequest{
+					WalletPublicKeyHash: walletPublicKeyHash,
+					WalletOperators:     nil,
+					ActionsChecklist:    test.actionsChecklist,
+				},
 			)
 
 			if !reflect.DeepEqual(test.expectedErr, err) {
@@ -167,12 +171,14 @@ type mockProposalTask struct {
 	results map[[20]byte]mockProposalTaskResult
 }
 
-func (mpt *mockProposalTask) Run(walletPublicKeyHash [20]byte) (
+func (mpt *mockProposalTask) Run(
+	request *tbtc.CoordinationProposalRequest,
+) (
 	tbtc.CoordinationProposal,
 	bool,
 	error,
 ) {
-	result, ok := mpt.results[walletPublicKeyHash]
+	result, ok := mpt.results[request.WalletPublicKeyHash]
 	if !ok {
 		panic("unexpected wallet public key hash")
 	}

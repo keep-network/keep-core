@@ -1,10 +1,11 @@
 package tbtcpg
 
 import (
-	"github.com/keep-network/keep-core/pkg/bitcoin"
-	"github.com/keep-network/keep-core/pkg/chain"
 	"math/big"
 	"time"
+
+	"github.com/keep-network/keep-core/pkg/bitcoin"
+	"github.com/keep-network/keep-core/pkg/chain"
 
 	"github.com/keep-network/keep-core/pkg/tbtc"
 )
@@ -12,19 +13,7 @@ import (
 // Chain represents the interface that the wallet maintainer module expects
 // to interact with the anchoring blockchain on.
 type Chain interface {
-	// GetDepositRequest gets the on-chain deposit request for the given
-	// funding transaction hash and output index.The returned values represent:
-	// - deposit request which is non-nil only when the deposit request was
-	//   found,
-	// - boolean value which is true if the deposit request was found, false
-	//   otherwise,
-	// - error which is non-nil only when the function execution failed. It will
-	//   be nil if the deposit request was not found, but the function execution
-	//   succeeded.
-	GetDepositRequest(
-		fundingTxHash bitcoin.Hash,
-		fundingOutputIndex uint32,
-	) (*tbtc.DepositChainRequest, bool, error)
+	tbtc.BridgeChain
 
 	// PastNewWalletRegisteredEvents fetches past new wallet registered events
 	// according to the provided filter or unfiltered if the filter is nil. Returned
@@ -85,22 +74,6 @@ type Chain interface {
 	// the redemption request creation before a request becomes eligible for
 	// a processing.
 	GetRedemptionRequestMinAge() (uint32, error)
-
-	// PastDepositRevealedEvents fetches past deposit reveal events according
-	// to the provided filter or unfiltered if the filter is nil. Returned
-	// events are sorted by the block number in the ascending order, i.e. the
-	// latest event is at the end of the slice.
-	PastDepositRevealedEvents(
-		filter *tbtc.DepositRevealedEventFilter,
-	) ([]*tbtc.DepositRevealedEvent, error)
-
-	// GetPendingRedemptionRequest gets the on-chain pending redemption request
-	// for the given wallet public key hash and redeemer output script.
-	// The returned bool value indicates whether the request was found or not.
-	GetPendingRedemptionRequest(
-		walletPublicKeyHash [20]byte,
-		redeemerOutputScript bitcoin.Script,
-	) (*tbtc.RedemptionRequest, bool, error)
 
 	// ValidateDepositSweepProposal validates the given deposit sweep proposal
 	// against the chain. It requires some additional data about the deposits

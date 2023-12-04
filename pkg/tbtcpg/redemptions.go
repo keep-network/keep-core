@@ -2,11 +2,12 @@ package tbtcpg
 
 import (
 	"fmt"
-	"github.com/ipfs/go-log/v2"
-	"go.uber.org/zap"
 	"math/big"
 	"sort"
 	"time"
+
+	"github.com/ipfs/go-log/v2"
+	"go.uber.org/zap"
 
 	"github.com/keep-network/keep-core/internal/hexutils"
 	"github.com/keep-network/keep-core/pkg/bitcoin"
@@ -29,11 +30,13 @@ func NewRedemptionTask(
 	}
 }
 
-func (rt *RedemptionTask) Run(walletPublicKeyHash [20]byte) (
+func (rt *RedemptionTask) Run(request *tbtc.CoordinationProposalRequest) (
 	tbtc.CoordinationProposal,
 	bool,
 	error,
 ) {
+	walletPublicKeyHash := request.WalletPublicKeyHash
+
 	taskLogger := logger.With(
 		zap.String("task", rt.ActionType().String()),
 		zap.String("walletPKH", fmt.Sprintf("0x%x", walletPublicKeyHash)),

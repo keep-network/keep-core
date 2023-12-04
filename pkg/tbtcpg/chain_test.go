@@ -664,6 +664,17 @@ func (lc *LocalChain) SetAverageBlockTime(averageBlockTime time.Duration) {
 	lc.averageBlockTime = averageBlockTime
 }
 
+func (lc *LocalChain) GetWallet(walletPublicKeyHash [20]byte) (
+	*tbtc.WalletChainData,
+	error,
+) {
+	panic("unsupported")
+}
+
+func (lc *LocalChain) ComputeMainUtxoHash(mainUtxo *bitcoin.UnspentTransactionOutput) [32]byte {
+	panic("unsupported")
+}
+
 type MockBlockCounter struct {
 	mutex        sync.Mutex
 	currentBlock uint64

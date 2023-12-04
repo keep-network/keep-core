@@ -2,11 +2,12 @@ package tbtcpg
 
 import (
 	"fmt"
-	"github.com/ipfs/go-log/v2"
-	"go.uber.org/zap"
 	"math"
 	"math/big"
 	"sort"
+
+	"github.com/ipfs/go-log/v2"
+	"go.uber.org/zap"
 
 	"github.com/keep-network/keep-core/internal/hexutils"
 	"github.com/keep-network/keep-core/pkg/bitcoin"
@@ -31,11 +32,13 @@ func NewDepositSweepTask(
 	}
 }
 
-func (dst *DepositSweepTask) Run(walletPublicKeyHash [20]byte) (
+func (dst *DepositSweepTask) Run(request *tbtc.CoordinationProposalRequest) (
 	tbtc.CoordinationProposal,
 	bool,
 	error,
 ) {
+	walletPublicKeyHash := request.WalletPublicKeyHash
+
 	taskLogger := logger.With(
 		zap.String("task", dst.ActionType().String()),
 		zap.String("walletPKH", fmt.Sprintf("0x%x", walletPublicKeyHash)),

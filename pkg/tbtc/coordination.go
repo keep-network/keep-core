@@ -5,11 +5,12 @@ import (
 	"crypto/sha256"
 	"encoding/binary"
 	"fmt"
+	"math/rand"
+	"sort"
+
 	"github.com/keep-network/keep-core/pkg/internal/pb"
 	"go.uber.org/zap"
 	"golang.org/x/exp/slices"
-	"math/rand"
-	"sort"
 
 	"github.com/keep-network/keep-core/pkg/bitcoin"
 	"github.com/keep-network/keep-core/pkg/chain"
@@ -195,6 +196,13 @@ func (cf *coordinationFault) String() string {
 	)
 }
 
+// CoordinationProposalRequest represents a request for a coordination proposal.
+type CoordinationProposalRequest struct {
+	WalletPublicKeyHash [20]byte
+	WalletOperators     []chain.Address
+	ActionsChecklist    []WalletActionType
+}
+
 // CoordinationProposalGenerator is a component responsible for generating
 // coordination proposals.
 type CoordinationProposalGenerator interface {
@@ -204,10 +212,7 @@ type CoordinationProposalGenerator interface {
 	// expected to return a proposal for the first action from the checklist
 	// that is valid for the given wallet's state. If none of the actions are
 	// valid, the generator should return a no-op proposal.
-	Generate(
-		walletPublicKeyHash [20]byte,
-		actionsChecklist []WalletActionType,
-	) (CoordinationProposal, error)
+	Generate(request *CoordinationProposalRequest) (CoordinationProposal, error)
 }
 
 // CoordinationProposal represents a single action proposal for the given wallet.
@@ -558,8 +563,11 @@ func (ce *coordinationExecutor) executeLeaderRoutine(
 	walletPublicKeyHash := ce.walletPublicKeyHash()
 
 	proposal, err := ce.proposalGenerator.Generate(
-		walletPublicKeyHash,
-		actionsChecklist,
+		&CoordinationProposalRequest{
+			WalletPublicKeyHash: walletPublicKeyHash,
+			WalletOperators:     ce.coordinatedWallet.signingGroupOperators,
+			ActionsChecklist:    actionsChecklist,
+		},
 	)
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate proposal: [%v]", err)

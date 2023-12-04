@@ -4,6 +4,7 @@ import (
 	"crypto/sha256"
 	"encoding/binary"
 	"fmt"
+
 	"github.com/keep-network/keep-core/pkg/tbtc"
 )
 
@@ -18,11 +19,13 @@ func NewHeartbeatTask(chain Chain) *HeartbeatTask {
 	}
 }
 
-func (ht *HeartbeatTask) Run(walletPublicKeyHash [20]byte) (
+func (ht *HeartbeatTask) Run(request *tbtc.CoordinationProposalRequest) (
 	tbtc.CoordinationProposal,
 	bool,
 	error,
 ) {
+	walletPublicKeyHash := request.WalletPublicKeyHash
+
 	blockCounter, err := ht.chain.BlockCounter()
 	if err != nil {
 		return nil, false, fmt.Errorf("failed to get block counter: [%v]", err)

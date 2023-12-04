@@ -2,10 +2,11 @@ package tbtcpg
 
 import (
 	"fmt"
-	"github.com/keep-network/keep-core/internal/testutils"
-	"github.com/keep-network/keep-core/pkg/tbtc"
 	"reflect"
 	"testing"
+
+	"github.com/keep-network/keep-core/internal/testutils"
+	"github.com/keep-network/keep-core/pkg/tbtc"
 )
 
 func TestHeartbeatTask_Run(t *testing.T) {
@@ -58,7 +59,12 @@ func TestHeartbeatTask_Run(t *testing.T) {
 
 			task := NewHeartbeatTask(tbtcChain)
 
-			proposal, ok, err := task.Run(walletPublicKeyHash)
+			proposal, ok, err := task.Run(
+				&tbtc.CoordinationProposalRequest{
+					// Set only relevant fields.
+					WalletPublicKeyHash: walletPublicKeyHash,
+				},
+			)
 
 			if !reflect.DeepEqual(test.expectedErr, err) {
 				t.Errorf(

@@ -6,6 +6,12 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
+	"math/big"
+	"math/rand"
+	"reflect"
+	"testing"
+	"time"
+
 	"github.com/go-test/deep"
 	"github.com/keep-network/keep-core/pkg/bitcoin"
 	"github.com/keep-network/keep-core/pkg/chain"
@@ -17,11 +23,6 @@ import (
 	"github.com/keep-network/keep-core/pkg/protocol/group"
 	"github.com/keep-network/keep-core/pkg/tecdsa"
 	"golang.org/x/exp/slices"
-	"math/big"
-	"math/rand"
-	"reflect"
-	"testing"
-	"time"
 
 	"github.com/keep-network/keep-core/internal/testutils"
 )
@@ -1185,8 +1186,7 @@ func newMockCoordinationProposalGenerator(
 }
 
 func (mcpg *mockCoordinationProposalGenerator) Generate(
-	walletPublicKeyHash [20]byte,
-	actionsChecklist []WalletActionType,
+	request *CoordinationProposalRequest,
 ) (CoordinationProposal, error) {
-	return mcpg.delegate(walletPublicKeyHash, actionsChecklist)
+	return mcpg.delegate(request.WalletPublicKeyHash, request.ActionsChecklist)
 }
