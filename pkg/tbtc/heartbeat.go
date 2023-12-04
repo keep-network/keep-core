@@ -16,10 +16,6 @@ const (
 	// take another actions. The value of 300 blocks is roughly 1 hour, assuming
 	// 12 seconds per block.
 	heartbeatProposalValidityBlocks = 300
-	// heartbeatRequestConfirmationBlocks determines the block length of the
-	// confirmation period on the host chain that is preserved after a heartbeat
-	// request submission.
-	heartbeatRequestConfirmationBlocks = 3
 	// heartbeatRequestTimeoutSafetyMarginBlocks determines the duration of the
 	// safety margin that must be preserved between the signing timeout
 	// and the timeout of the entire heartbeat action. This safety

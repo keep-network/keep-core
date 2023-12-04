@@ -21,10 +21,6 @@ const (
 	// another actions. The value of 600 blocks is roughly 2 hours, assuming
 	// 12 seconds per block.
 	redemptionProposalValidityBlocks = 600
-	// redemptionProposalConfirmationBlocks determines the block length of the
-	// confirmation period on the host chain that is preserved after a
-	// redemption proposal submission.
-	redemptionProposalConfirmationBlocks = 20
 	// redemptionSigningTimeoutSafetyMarginBlocks determines the duration of the
 	// safety margin that must be preserved between the signing timeout
 	// and the timeout of the entire redemption action. This safety

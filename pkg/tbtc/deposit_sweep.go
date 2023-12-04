@@ -19,10 +19,6 @@ const (
 	// another actions. The value of 1200 blocks is roughly 4 hours, assuming
 	// 12 seconds per block.
 	depositSweepProposalValidityBlocks = 1200
-	// depositSweepProposalConfirmationBlocks determines the block length of the
-	// confirmation period on the host chain that is preserved after a deposit
-	// sweep proposal submission.
-	depositSweepProposalConfirmationBlocks = 20
 	// DepositSweepRequiredFundingTxConfirmations determines the minimum
 	// number of confirmations that are needed for a deposit funding Bitcoin
 	// transaction in order to consider it a valid part of the deposit sweep
