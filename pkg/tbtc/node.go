@@ -756,6 +756,8 @@ func (n *node) HandleMovingFundsProposal(sourceWalletPublicKeyHash [20]byte) {
 		}
 
 		if walletBalance <= 0 {
+			// The wallet's balance cannot be `0`. Since we are dealing with
+			// a signed integer we also check it's not negative just in case.
 			logger.Infof(
 				"ignoring moving funds proposal for wallet with PKH [0x%x]; "+
 					"wallet does not have a positive balance",
