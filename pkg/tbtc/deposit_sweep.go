@@ -28,25 +28,26 @@ const (
 	// transaction in order to consider it a valid part of the deposit sweep
 	// proposal.
 	DepositSweepRequiredFundingTxConfirmations = 6
-	// depositSweepSigningTimeoutSafetyMargin determines the duration of the
-	// safety margin that must be preserved between the signing timeout
+	// depositSweepSigningTimeoutSafetyMarginBlocks determines the duration of
+	// the safety margin that must be preserved between the signing timeout
 	// and the timeout of the entire deposit sweep action. This safety
 	// margin prevents against the case where signing completes late and there
 	// is not enough time to broadcast the sweep transaction properly.
 	// In such a case, wallet signatures may leak and make the wallet subject
 	// of fraud accusations. Usage of the safety margin ensures there is enough
 	// time to perform post-signing steps of the deposit sweep action.
-	depositSweepSigningTimeoutSafetyMargin = 1 * time.Hour
+	// The value of 300 blocks is roughly 1 hour, assuming 12 seconds per block.
+	depositSweepSigningTimeoutSafetyMarginBlocks = 300
 	// depositSweepBroadcastTimeout determines the time window for deposit
 	// sweep transaction broadcast. It is guaranteed that at least
-	// depositSweepSigningTimeoutSafetyMargin is preserved for the broadcast
+	// depositSweepSigningTimeoutSafetyMarginBlocks is preserved for the broadcast
 	// step. However, the happy path for the broadcast step is usually quick
 	// and few retries are needed to recover from temporary problems. That
 	// said, if the broadcast step does not succeed in a tight timeframe,
 	// there is no point to retry for the entire possible time window.
 	// Hence, the timeout for broadcast step is set as 25% of the entire
-	// time widow determined by depositSweepSigningTimeoutSafetyMargin.
-	depositSweepBroadcastTimeout = depositSweepSigningTimeoutSafetyMargin / 4
+	// time widow determined by depositSweepSigningTimeoutSafetyMarginBlocks.
+	depositSweepBroadcastTimeout = 15 * time.Minute
 	// depositSweepBroadcastCheckDelay determines the delay that must
 	// be preserved between transaction broadcast and the check that ensures
 	// the transaction is known on the Bitcoin chain. This delay is needed
@@ -86,12 +87,12 @@ type depositSweepAction struct {
 
 	proposal                     *DepositSweepProposal
 	proposalProcessingStartBlock uint64
-	proposalExpiresAt            time.Time
+	proposalExpiryBlock          uint64
 
-	requiredFundingTxConfirmations uint
-	signingTimeoutSafetyMargin     time.Duration
-	broadcastTimeout               time.Duration
-	broadcastCheckDelay            time.Duration
+	requiredFundingTxConfirmations   uint
+	signingTimeoutSafetyMarginBlocks uint64
+	broadcastTimeout                 time.Duration
+	broadcastCheckDelay              time.Duration
 }
 
 func newDepositSweepAction(
@@ -102,27 +103,29 @@ func newDepositSweepAction(
 	signingExecutor walletSigningExecutor,
 	proposal *DepositSweepProposal,
 	proposalProcessingStartBlock uint64,
-	proposalExpiresAt time.Time,
+	proposalExpiryBlock uint64,
+	waitForBlockFn waitForBlockFn,
 ) *depositSweepAction {
 	transactionExecutor := newWalletTransactionExecutor(
 		btcChain,
 		sweepingWallet,
 		signingExecutor,
+		waitForBlockFn,
 	)
 
 	return &depositSweepAction{
-		logger:                         logger,
-		chain:                          chain,
-		btcChain:                       btcChain,
-		sweepingWallet:                 sweepingWallet,
-		transactionExecutor:            transactionExecutor,
-		proposal:                       proposal,
-		proposalProcessingStartBlock:   proposalProcessingStartBlock,
-		proposalExpiresAt:              proposalExpiresAt,
-		requiredFundingTxConfirmations: DepositSweepRequiredFundingTxConfirmations,
-		signingTimeoutSafetyMargin:     depositSweepSigningTimeoutSafetyMargin,
-		broadcastTimeout:               depositSweepBroadcastTimeout,
-		broadcastCheckDelay:            depositSweepBroadcastCheckDelay,
+		logger:                           logger,
+		chain:                            chain,
+		btcChain:                         btcChain,
+		sweepingWallet:                   sweepingWallet,
+		transactionExecutor:              transactionExecutor,
+		proposal:                         proposal,
+		proposalProcessingStartBlock:     proposalProcessingStartBlock,
+		proposalExpiryBlock:              proposalExpiryBlock,
+		requiredFundingTxConfirmations:   DepositSweepRequiredFundingTxConfirmations,
+		signingTimeoutSafetyMarginBlocks: depositSweepSigningTimeoutSafetyMarginBlocks,
+		broadcastTimeout:                 depositSweepBroadcastTimeout,
+		broadcastCheckDelay:              depositSweepBroadcastCheckDelay,
 	}
 }
 
@@ -188,11 +191,16 @@ func (dsa *depositSweepAction) execute() error {
 		zap.String("step", "signTransaction"),
 	)
 
+	// Just in case. This should never happen.
+	if dsa.proposalExpiryBlock < dsa.signingTimeoutSafetyMarginBlocks {
+		return fmt.Errorf("invalid proposal expiry block")
+	}
+
 	sweepTx, err := dsa.transactionExecutor.signTransaction(
 		signTxLogger,
 		unsignedSweepTx,
 		dsa.proposalProcessingStartBlock,
-		dsa.proposalExpiresAt.Add(-dsa.signingTimeoutSafetyMargin),
+		dsa.proposalExpiryBlock-dsa.signingTimeoutSafetyMarginBlocks,
 	)
 	if err != nil {
 		return fmt.Errorf("sign transaction step failed: [%v]", err)

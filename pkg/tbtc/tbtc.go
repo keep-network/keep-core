@@ -346,14 +346,6 @@ func Initialize(
 					event.BlockNumber,
 					event.Coordinator,
 				)
-
-				node.handleHeartbeatRequest(
-					walletPublicKeyHash,
-					message,
-					expiresAt,
-					event.BlockNumber,
-					heartbeatRequestConfirmationBlocks,
-				)
 			} else {
 				logger.Infof(
 					"heartbeat request for wallet PKH [0x%x] "+
@@ -447,13 +439,6 @@ func Initialize(
 					event.BlockNumber,
 					event.Coordinator,
 				)
-
-				node.handleDepositSweepProposal(
-					event.Proposal,
-					expiresAt,
-					event.BlockNumber,
-					depositSweepProposalConfirmationBlocks,
-				)
 			} else {
 				logger.Infof(
 					"deposit sweep proposal for wallet PKH [0x%x] "+
@@ -546,13 +531,6 @@ func Initialize(
 					walletPublicKeyHash,
 					event.BlockNumber,
 					event.Coordinator,
-				)
-
-				node.handleRedemptionProposal(
-					event.Proposal,
-					expiresAt,
-					event.BlockNumber,
-					redemptionProposalConfirmationBlocks,
 				)
 			} else {
 				logger.Infof(

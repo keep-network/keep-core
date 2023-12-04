@@ -1,6 +1,7 @@
 package tbtc
 
 import (
+	"context"
 	"fmt"
 	"math/big"
 	"testing"
@@ -22,8 +23,6 @@ func TestDepositSweepAction_Execute(t *testing.T) {
 
 	for _, scenario := range scenarios {
 		t.Run(scenario.Title, func(t *testing.T) {
-			now := time.Now()
-
 			hostChain := Connect()
 			bitcoinChain := newLocalBitcoinChain()
 
@@ -132,7 +131,8 @@ func TestDepositSweepAction_Execute(t *testing.T) {
 
 			// Choose an arbitrary start block and expiration time.
 			proposalProcessingStartBlock := uint64(100)
-			proposalExpiresAt := now.Add(4 * time.Hour)
+			proposalExpiryBlock := proposalProcessingStartBlock +
+				depositSweepProposalValidityBlocks
 
 			// Simulate the on-chain proposal validation passes with success.
 			err = hostChain.setDepositSweepProposalValidationResult(
@@ -189,7 +189,10 @@ func TestDepositSweepAction_Execute(t *testing.T) {
 				signingExecutor,
 				proposal,
 				proposalProcessingStartBlock,
-				proposalExpiresAt,
+				proposalExpiryBlock,
+				func(ctx context.Context, blockHeight uint64) error {
+					return nil
+				},
 			)
 
 			// Modify the default parameters of the action to make

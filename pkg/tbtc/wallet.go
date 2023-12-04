@@ -199,17 +199,21 @@ type walletTransactionExecutor struct {
 
 	executingWallet wallet
 	signingExecutor walletSigningExecutor
+
+	waitForBlockFn waitForBlockFn
 }
 
 func newWalletTransactionExecutor(
 	btcChain bitcoin.Chain,
 	executingWallet wallet,
 	signingExecutor walletSigningExecutor,
+	waitForBlockFn waitForBlockFn,
 ) *walletTransactionExecutor {
 	return &walletTransactionExecutor{
 		btcChain:        btcChain,
 		executingWallet: executingWallet,
 		signingExecutor: signingExecutor,
+		waitForBlockFn:  waitForBlockFn,
 	}
 }
 
@@ -220,7 +224,7 @@ func (wte *walletTransactionExecutor) signTransaction(
 	signTxLogger log.StandardLogger,
 	unsignedTx *bitcoin.TransactionBuilder,
 	signingStartBlock uint64,
-	signingTimesOutAt time.Time,
+	signingTimeoutBlock uint64,
 ) (*bitcoin.Transaction, error) {
 	signTxLogger.Infof("computing transaction's sig hashes")
 
@@ -234,9 +238,10 @@ func (wte *walletTransactionExecutor) signTransaction(
 
 	signTxLogger.Infof("signing transaction's sig hashes")
 
-	signingCtx, cancelSigningCtx := context.WithTimeout(
+	signingCtx, cancelSigningCtx := withCancelOnBlock(
 		context.Background(),
-		time.Until(signingTimesOutAt),
+		signingTimeoutBlock,
+		wte.waitForBlockFn,
 	)
 	defer cancelSigningCtx()
 
