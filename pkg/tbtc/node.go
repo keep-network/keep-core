@@ -799,6 +799,9 @@ func (n *node) HandleMovingFundsProposal(sourceWalletPublicKeyHash [20]byte) {
 
 		for _, event := range events {
 			walletPubKeyHash := event.WalletPublicKeyHash
+			if walletPubKeyHash == sourceWalletPublicKeyHash {
+				continue
+			}
 			wallet, err := n.chain.GetWallet(walletPubKeyHash)
 			if err != nil {
 				logger.Errorf(
