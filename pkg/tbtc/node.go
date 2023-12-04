@@ -860,7 +860,7 @@ func (n *node) HandleMovingFundsProposal(sourceWalletPublicKeyHash [20]byte) {
 		)
 
 		targetWallets := liveWallets[0:targetWalletsCount]
-		logger.Infof("Target wallets length [%v]", len(targetWallets))
+		logger.Infof("target wallets length [%v]", len(targetWallets))
 
 		walletMemberIDs := make([]uint32, 0)
 		for _, operatorAddress := range sourceWallet.signingGroupOperators {
@@ -910,7 +910,7 @@ func (n *node) HandleMovingFundsProposal(sourceWalletPublicKeyHash [20]byte) {
 		}
 
 		logger.Infof(
-			"Finished moving funds commitment for wallet with PKH [0x%x]",
+			"finished moving funds commitment for wallet with PKH [0x%x]",
 			sourceWalletPublicKeyHash,
 		)
 
