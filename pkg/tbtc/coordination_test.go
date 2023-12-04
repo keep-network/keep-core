@@ -1118,7 +1118,7 @@ func TestCoordinationExecutor_ExecuteFollowerRoutine_WithIdleLeader(t *testing.T
 
 	provider := netlocal.Connect()
 
-	broadcastChannel, err := provider.BroadcastChannelFor("test")
+	broadcastChannel, err := provider.BroadcastChannelFor("test-idle")
 	if err != nil {
 		t.Fatal(err)
 	}
