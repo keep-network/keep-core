@@ -719,16 +719,46 @@ func (n *node) HandleMovingFundsProposal(sourceWalletPublicKeyHash [20]byte) {
 			walletBalance = walletMainUtxo.Value
 		}
 
-		// Check if the wallet meets the conditions for moving funds
-		// commitment.
-		if sourceWalletChainData.State != StateMovingFunds ||
-			sourceWalletChainData.PendingRedemptionsValue > 0 ||
-			sourceWalletChainData.PendingMovedFundsSweepRequestsCount > 0 ||
-			sourceWalletChainData.MovingFundsTargetWalletsCommitmentHash != [32]byte{} ||
-			walletBalance <= 0 {
-			logger.Errorf(
-				"skipping moving funds proposal for wallet with PKH "+
-					"[0x%x] due to unmet conditions",
+		if sourceWalletChainData.State != StateMovingFunds {
+			logger.Infof(
+				"ignoring moving funds proposal for wallet with PKH [0x%x]; "+
+					"wallet not in MovingFunds state",
+				sourceWalletPublicKeyHash,
+			)
+			return
+		}
+
+		if sourceWalletChainData.PendingRedemptionsValue > 0 {
+			logger.Infof(
+				"ignoring moving funds proposal for wallet with PKH [0x%x]; "+
+					"wallet has pending redemptions",
+				sourceWalletPublicKeyHash,
+			)
+			return
+		}
+
+		if sourceWalletChainData.PendingMovedFundsSweepRequestsCount > 0 {
+			logger.Infof(
+				"ignoring moving funds proposal for wallet with PKH [0x%x]; "+
+					"wallet has pending moved funds sweep requests",
+				sourceWalletPublicKeyHash,
+			)
+			return
+		}
+
+		if sourceWalletChainData.MovingFundsTargetWalletsCommitmentHash != [32]byte{} {
+			logger.Infof(
+				"ignoring moving funds proposal for wallet with PKH [0x%x]; "+
+					"wallet has already submitted commitment",
+				sourceWalletPublicKeyHash,
+			)
+			return
+		}
+
+		if walletBalance <= 0 {
+			logger.Infof(
+				"ignoring moving funds proposal for wallet with PKH [0x%x]; "+
+					"wallet does not have a positive balance",
 				sourceWalletPublicKeyHash,
 			)
 			return
