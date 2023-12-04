@@ -31,7 +31,9 @@ func TestHeartbeatAction_HappyPath(t *testing.T) {
 		messageToSign,
 		startBlock,
 		expiryBlock,
-		nil,
+		func(ctx context.Context, blockHeight uint64) error {
+			return nil
+		},
 	)
 
 	err = action.execute()
