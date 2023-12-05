@@ -4,16 +4,15 @@ import (
 	"context"
 	"encoding/hex"
 	"fmt"
-	"math/big"
-	"testing"
-	"time"
-
 	"github.com/keep-network/keep-core/internal/testutils"
 	"github.com/keep-network/keep-core/pkg/tecdsa"
+	"math/big"
+	"testing"
 )
 
 func TestHeartbeatAction_HappyPath(t *testing.T) {
 	startBlock := uint64(10)
+	expiryBlock := startBlock + heartbeatProposalValidityBlocks
 	messageToSign, err := hex.DecodeString("FFFFFFFFFFFFFFFF0000000000000001")
 	if err != nil {
 		t.Fatal(err)
@@ -31,7 +30,10 @@ func TestHeartbeatAction_HappyPath(t *testing.T) {
 		mockExecutor,
 		messageToSign,
 		startBlock,
-		time.Now(),
+		expiryBlock,
+		func(ctx context.Context, blockHeight uint64) error {
+			return nil
+		},
 	)
 
 	err = action.execute()
@@ -55,6 +57,7 @@ func TestHeartbeatAction_HappyPath(t *testing.T) {
 
 func TestHeartbeatAction_SigningError(t *testing.T) {
 	startBlock := uint64(10)
+	expiryBlock := startBlock + heartbeatProposalValidityBlocks
 	messageToSign, err := hex.DecodeString("FFFFFFFFFFFFFFFF0000000000000001")
 	if err != nil {
 		t.Fatal(err)
@@ -69,7 +72,10 @@ func TestHeartbeatAction_SigningError(t *testing.T) {
 		mockExecutor,
 		messageToSign,
 		startBlock,
-		time.Now(),
+		expiryBlock,
+		func(ctx context.Context, blockHeight uint64) error {
+			return nil
+		},
 	)
 
 	err = action.execute()
