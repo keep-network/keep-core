@@ -671,6 +671,23 @@ func (lc *LocalChain) GetWallet(walletPublicKeyHash [20]byte) (
 	panic("unsupported")
 }
 
+func (lc *LocalChain) GetWalletParameters() (
+	creationPeriod uint32,
+	creationMinBtcBalance uint64,
+	creationMaxBtcBalance uint64,
+	closureMinBtcBalance uint64,
+	maxAge uint32,
+	maxBtcTransfer uint64,
+	closingPeriod uint32,
+	err error,
+) {
+	panic("unsupported")
+}
+
+func (lc *LocalChain) GetLiveWalletsCount() (uint32, error) {
+	panic("unsupported")
+}
+
 func (lc *LocalChain) ComputeMainUtxoHash(mainUtxo *bitcoin.UnspentTransactionOutput) [32]byte {
 	panic("unsupported")
 }
