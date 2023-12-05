@@ -6,6 +6,12 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
+	"math/big"
+	"math/rand"
+	"reflect"
+	"testing"
+	"time"
+
 	"github.com/go-test/deep"
 	"github.com/keep-network/keep-core/pkg/bitcoin"
 	"github.com/keep-network/keep-core/pkg/chain"
@@ -17,11 +23,6 @@ import (
 	"github.com/keep-network/keep-core/pkg/protocol/group"
 	"github.com/keep-network/keep-core/pkg/tecdsa"
 	"golang.org/x/exp/slices"
-	"math/big"
-	"math/rand"
-	"reflect"
-	"testing"
-	"time"
 
 	"github.com/keep-network/keep-core/internal/testutils"
 )
@@ -703,7 +704,7 @@ func TestCoordinationExecutor_ExecuteLeaderRoutine(t *testing.T) {
 			for _, action := range actionsChecklist {
 				if walletPublicKeyHash == publicKeyHash && action == ActionHeartbeat {
 					return &HeartbeatProposal{
-						Message: []byte("heartbeat message"),
+						Message: [16]byte{0x01, 0x02},
 					}, nil
 				}
 			}
@@ -764,7 +765,7 @@ func TestCoordinationExecutor_ExecuteLeaderRoutine(t *testing.T) {
 	<-ctx.Done()
 
 	expectedProposal := &HeartbeatProposal{
-		Message: []byte("heartbeat message"),
+		Message: [16]byte{0x01, 0x02},
 	}
 
 	if !reflect.DeepEqual(expectedProposal, proposal) {
@@ -990,7 +991,7 @@ func TestCoordinationExecutor_ExecuteFollowerRoutine(t *testing.T) {
 			coordinationBlock:   900,
 			walletPublicKeyHash: executor.walletPublicKeyHash(),
 			proposal: &HeartbeatProposal{
-				Message: []byte("heartbeat message"),
+				Message: [16]byte{0x01, 0x02},
 			},
 		})
 		if err != nil {
@@ -1117,7 +1118,7 @@ func TestCoordinationExecutor_ExecuteFollowerRoutine_WithIdleLeader(t *testing.T
 
 	provider := netlocal.Connect()
 
-	broadcastChannel, err := provider.BroadcastChannelFor("test")
+	broadcastChannel, err := provider.BroadcastChannelFor("test-idle")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -1185,8 +1186,7 @@ func newMockCoordinationProposalGenerator(
 }
 
 func (mcpg *mockCoordinationProposalGenerator) Generate(
-	walletPublicKeyHash [20]byte,
-	actionsChecklist []WalletActionType,
+	request *CoordinationProposalRequest,
 ) (CoordinationProposal, error) {
-	return mcpg.delegate(walletPublicKeyHash, actionsChecklist)
+	return mcpg.delegate(request.WalletPublicKeyHash, request.ActionsChecklist)
 }

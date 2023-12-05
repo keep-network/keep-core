@@ -134,7 +134,7 @@ func TestCoordinationMessage_MarshalingRoundtrip(t *testing.T) {
 		},
 		"with heartbeat proposal": {
 			proposal: &HeartbeatProposal{
-				Message: []byte("heartbeat message"),
+				Message: [16]byte{0x01, 0x02},
 			},
 		},
 		"with deposit sweep proposal": {

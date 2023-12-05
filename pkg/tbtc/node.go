@@ -8,7 +8,6 @@ import (
 	"math/big"
 	"sort"
 	"sync"
-	"time"
 
 	"github.com/keep-network/keep-core/pkg/bitcoin"
 	"github.com/keep-network/keep-core/pkg/chain"
@@ -407,40 +406,25 @@ func (n *node) getCoordinationExecutor(
 	return executor, true, nil
 }
 
-// handleHeartbeatRequest handles an incoming wallet heartbeat request.
-// First, it determines whether the node is supposed to do an action by checking
-// whether any of the request's target wallet signers are under the node's control.
-// If so, this function orchestrates and dispatches an appropriate wallet action.
-func (n *node) handleHeartbeatRequest(
-	walletPublicKeyHash [20]byte,
-	message []byte,
-	requestExpiresAt time.Time,
+// handleHeartbeatProposal handles an incoming heartbeat proposal by
+// orchestrating and dispatching an appropriate wallet action.
+func (n *node) handleHeartbeatProposal(
+	wallet wallet,
+	proposal *HeartbeatProposal,
 	startBlock uint64,
-	delayBlocks uint64,
+	expiryBlock uint64,
 ) {
-	wallet, ok := n.walletRegistry.getWalletByPublicKeyHash(
-		walletPublicKeyHash,
-	)
-	if !ok {
-		logger.Infof(
-			"node does not control signers of wallet PKH [0x%x]; "+
-				"ignoring the received heartbeat request",
-			walletPublicKeyHash,
-		)
-		return
-	}
+	walletPublicKeyHash := bitcoin.PublicKeyHash(wallet.publicKey)
 
 	signingExecutor, ok, err := n.getSigningExecutor(wallet.publicKey)
 	if err != nil {
 		logger.Errorf("cannot get signing executor: [%v]", err)
 		return
 	}
-
 	// This check is actually redundant. We know the node controls some
 	// wallet signers as we just got the wallet from the registry using their
 	// public key hash. However, we are doing it just in case. The API
-	// contract of getWalletByPublicKeyHash and/or getSigningExecutor may
-	// change one day.
+	// contract of getSigningExecutor may change one day.
 	if !ok {
 		logger.Infof(
 			"node does not control signers of wallet PKH [0x%x]; "+
@@ -464,15 +448,11 @@ func (n *node) handleHeartbeatRequest(
 		walletPublicKeyBytes,
 	)
 
-	// The request processing started after a confirmation period represented
-	// by the delayBlocks parameter. Hence, we must add it to the original
-	// startBlock.
-	heartbeatRequestProcessingStartBlock := startBlock + delayBlocks
-
 	walletActionLogger := logger.With(
 		zap.String("wallet", fmt.Sprintf("0x%x", walletPublicKeyBytes)),
 		zap.String("action", ActionHeartbeat.String()),
-		zap.Uint64("startBlock", heartbeatRequestProcessingStartBlock),
+		zap.Uint64("startBlock", startBlock),
+		zap.Uint64("expiryBlock", expiryBlock),
 	)
 	walletActionLogger.Infof("dispatching wallet action")
 
@@ -480,9 +460,10 @@ func (n *node) handleHeartbeatRequest(
 		walletActionLogger,
 		wallet,
 		signingExecutor,
-		message,
-		heartbeatRequestProcessingStartBlock,
-		requestExpiresAt,
+		proposal.Message[:],
+		startBlock,
+		expiryBlock,
+		n.waitForBlockHeight,
 	)
 
 	err = n.walletDispatcher.dispatch(action)
@@ -494,28 +475,14 @@ func (n *node) handleHeartbeatRequest(
 	walletActionLogger.Infof("wallet action dispatched successfully")
 }
 
-// handleDepositSweepProposal handles an incoming deposit sweep proposal.
-// First, it determines whether the node is supposed to do an action by checking
-// whether any of the proposal's target wallet signers are under node's control.
-// If so, this function orchestrates and dispatches an appropriate wallet action.
+// handleDepositSweepProposal handles an incoming deposit sweep proposal by
+// orchestrating and dispatching an appropriate wallet action.
 func (n *node) handleDepositSweepProposal(
+	wallet wallet,
 	proposal *DepositSweepProposal,
-	proposalExpiresAt time.Time,
 	startBlock uint64,
-	delayBlocks uint64,
+	expiryBlock uint64,
 ) {
-	wallet, ok := n.walletRegistry.getWalletByPublicKeyHash(
-		proposal.WalletPublicKeyHash,
-	)
-	if !ok {
-		logger.Infof(
-			"node does not control signers of wallet PKH [0x%x]; "+
-				"ignoring the received deposit sweep proposal",
-			proposal.WalletPublicKeyHash,
-		)
-		return
-	}
-
 	signingExecutor, ok, err := n.getSigningExecutor(wallet.publicKey)
 	if err != nil {
 		logger.Errorf("cannot get signing executor: [%v]", err)
@@ -524,8 +491,7 @@ func (n *node) handleDepositSweepProposal(
 	// This check is actually redundant. We know the node controls some
 	// wallet signers as we just got the wallet from the registry using their
 	// public key hash. However, we are doing it just in case. The API
-	// contract of getWalletByPublicKeyHash and/or getSigningExecutor may
-	// change one day.
+	// contract of getSigningExecutor may change one day.
 	if !ok {
 		logger.Infof(
 			"node does not control signers of wallet PKH [0x%x]; "+
@@ -549,15 +515,11 @@ func (n *node) handleDepositSweepProposal(
 		walletPublicKeyBytes,
 	)
 
-	// The proposal's processing started after a confirmation period represented
-	// by the delayBlocks parameter. Hence, we must add it to the original
-	// startBlock.
-	proposalProcessingStartBlock := startBlock + delayBlocks
-
 	walletActionLogger := logger.With(
 		zap.String("wallet", fmt.Sprintf("0x%x", walletPublicKeyBytes)),
 		zap.String("action", ActionDepositSweep.String()),
-		zap.Uint64("startBlock", proposalProcessingStartBlock),
+		zap.Uint64("startBlock", startBlock),
+		zap.Uint64("expiryBlock", expiryBlock),
 	)
 	walletActionLogger.Infof("dispatching wallet action")
 
@@ -568,8 +530,9 @@ func (n *node) handleDepositSweepProposal(
 		wallet,
 		signingExecutor,
 		proposal,
-		proposalProcessingStartBlock,
-		proposalExpiresAt,
+		startBlock,
+		expiryBlock,
+		n.waitForBlockHeight,
 	)
 
 	err = n.walletDispatcher.dispatch(action)
@@ -581,28 +544,14 @@ func (n *node) handleDepositSweepProposal(
 	walletActionLogger.Infof("wallet action dispatched successfully")
 }
 
-// handleRedemptionProposal handles an incoming redemption proposal.
-// First, it determines whether the node is supposed to do an action by checking
-// whether any of the proposal's target wallet signers are under node's control.
-// If so, this function orchestrates and dispatches an appropriate wallet action.
+// handleRedemptionProposal handles an incoming redemption proposal by
+// orchestrating and dispatching an appropriate wallet action.
 func (n *node) handleRedemptionProposal(
+	wallet wallet,
 	proposal *RedemptionProposal,
-	proposalExpiresAt time.Time,
 	startBlock uint64,
-	delayBlocks uint64,
+	expiryBlock uint64,
 ) {
-	wallet, ok := n.walletRegistry.getWalletByPublicKeyHash(
-		proposal.WalletPublicKeyHash,
-	)
-	if !ok {
-		logger.Infof(
-			"node does not control signers of wallet PKH [0x%x]; "+
-				"ignoring the received redemption proposal",
-			proposal.WalletPublicKeyHash,
-		)
-		return
-	}
-
 	signingExecutor, ok, err := n.getSigningExecutor(wallet.publicKey)
 	if err != nil {
 		logger.Errorf("cannot get signing executor: [%v]", err)
@@ -611,8 +560,7 @@ func (n *node) handleRedemptionProposal(
 	// This check is actually redundant. We know the node controls some
 	// wallet signers as we just got the wallet from the registry using their
 	// public key hash. However, we are doing it just in case. The API
-	// contract of getWalletByPublicKeyHash and/or getSigningExecutor may
-	// change one day.
+	// contract of getSigningExecutor may change one day.
 	if !ok {
 		logger.Infof(
 			"node does not control signers of wallet PKH [0x%x]; "+
@@ -636,15 +584,11 @@ func (n *node) handleRedemptionProposal(
 		walletPublicKeyBytes,
 	)
 
-	// The proposal's processing started after a confirmation period represented
-	// by the delayBlocks parameter. Hence, we must add it to the original
-	// startBlock.
-	proposalProcessingStartBlock := startBlock + delayBlocks
-
 	walletActionLogger := logger.With(
 		zap.String("wallet", fmt.Sprintf("0x%x", walletPublicKeyBytes)),
 		zap.String("action", ActionRedemption.String()),
-		zap.Uint64("startBlock", proposalProcessingStartBlock),
+		zap.Uint64("startBlock", startBlock),
+		zap.Uint64("expiryBlock", expiryBlock),
 	)
 	walletActionLogger.Infof("dispatching wallet action")
 
@@ -655,8 +599,9 @@ func (n *node) handleRedemptionProposal(
 		wallet,
 		signingExecutor,
 		proposal,
-		proposalProcessingStartBlock,
-		proposalExpiresAt,
+		startBlock,
+		expiryBlock,
+		n.waitForBlockHeight,
 	)
 
 	err = n.walletDispatcher.dispatch(action)
@@ -1066,16 +1011,59 @@ func executeCoordinationProcedure(
 func processCoordinationResult(node *node, result *coordinationResult) {
 	logger.Infof("processing coordination result [%s]", result)
 
-	// TODO: Record coordination faults.
+	// TODO: In the future, create coordination faults cache and
+	//       record faults from the processed results there.
 
-	// TODO: Detect proposal type and run the appropriate handler.
+	startBlock := result.window.endBlock()
+	expiryBlock := startBlock + result.proposal.ValidityBlocks()
+
 	switch result.proposal.ActionType() {
 	case ActionHeartbeat:
-		// node.handleHeartbeatRequest()
+		if proposal, ok := result.proposal.(*HeartbeatProposal); ok {
+			node.handleHeartbeatProposal(
+				result.wallet,
+				proposal,
+				startBlock,
+				expiryBlock,
+			)
+		}
 	case ActionDepositSweep:
-		// node.handleDepositSweepProposal()
+		if proposal, ok := result.proposal.(*DepositSweepProposal); ok {
+			node.handleDepositSweepProposal(
+				result.wallet,
+				proposal,
+				startBlock,
+				expiryBlock,
+			)
+		}
 	case ActionRedemption:
-		// node.handleRedemptionProposal()
+		if proposal, ok := result.proposal.(*RedemptionProposal); ok {
+			node.handleRedemptionProposal(
+				result.wallet,
+				proposal,
+				startBlock,
+				expiryBlock,
+			)
+		}
+	// TODO: Uncomment when moving funds support is implemented.
+	// case ActionMovingFunds:
+	//	 if proposal, ok := result.proposal.(*MovingFundsProposal); ok {
+	//	 	 node.handleMovingFundsProposal(
+	//	 	 	 result.wallet,
+	//	 	 	 proposal,
+	//	 	 	 startBlock,
+	//	 	 	 expiryBlock,
+	//	 	 )
+	//	 }
+	// case ActionMovedFundsSweep:
+	//	 if proposal, ok := result.proposal.(*MovedFundsSweepProposal); ok {
+	//	 	 node.handleMovedFundsSweepProposal(
+	//	 	 	 result.wallet,
+	//	 	 	 proposal,
+	//	 	 	 startBlock,
+	//	 	 	 expiryBlock,
+	//	 	 )
+	//	 }
 	default:
 		logger.Errorf("no handler for coordination result [%s]", result)
 	}

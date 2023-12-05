@@ -1965,3 +1965,10 @@ func (tc *TbtcChain) GetRedemptionMaxSize() (uint16, error) {
 func (tc *TbtcChain) GetRedemptionRequestMinAge() (uint32, error) {
 	return tc.walletCoordinator.RedemptionRequestMinAge()
 }
+
+func (tc *TbtcChain) ValidateHeartbeatProposal(
+	proposal *tbtc.HeartbeatProposal,
+) error {
+	// TODO: Implementation.
+	panic("not implemented yet")
+}

@@ -5,11 +5,12 @@ import (
 	"crypto/sha256"
 	"encoding/binary"
 	"fmt"
+	"math/rand"
+	"sort"
+
 	"github.com/keep-network/keep-core/pkg/internal/pb"
 	"go.uber.org/zap"
 	"golang.org/x/exp/slices"
-	"math/rand"
-	"sort"
 
 	"github.com/keep-network/keep-core/pkg/bitcoin"
 	"github.com/keep-network/keep-core/pkg/chain"
@@ -195,6 +196,13 @@ func (cf *coordinationFault) String() string {
 	)
 }
 
+// CoordinationProposalRequest represents a request for a coordination proposal.
+type CoordinationProposalRequest struct {
+	WalletPublicKeyHash [20]byte
+	WalletOperators     []chain.Address
+	ActionsChecklist    []WalletActionType
+}
+
 // CoordinationProposalGenerator is a component responsible for generating
 // coordination proposals.
 type CoordinationProposalGenerator interface {
@@ -204,10 +212,7 @@ type CoordinationProposalGenerator interface {
 	// expected to return a proposal for the first action from the checklist
 	// that is valid for the given wallet's state. If none of the actions are
 	// valid, the generator should return a no-op proposal.
-	Generate(
-		walletPublicKeyHash [20]byte,
-		actionsChecklist []WalletActionType,
-	) (CoordinationProposal, error)
+	Generate(request *CoordinationProposalRequest) (CoordinationProposal, error)
 }
 
 // CoordinationProposal represents a single action proposal for the given wallet.
@@ -370,14 +375,22 @@ func (ce *coordinationExecutor) coordinate(
 
 	execLogger.Info("actions checklist is: [%v]", actionsChecklist)
 
-	// Set up a context that is cancelled when the active phase of the
-	// coordination window ends.
+	// Set up a context that is automatically cancelled when the active phase
+	// of the coordination window ends.
+	//
+	// The coordination leader keeps that context active for the lifetime of the
+	// active phase to provide retransmissions of the coordination message thus
+	// maximize the chance that all followers receive it on time. The only case
+	// when the leader cancels the context prematurely is when the leader's
+	// routine fails.
+	//
+	// The coordination follower cancels the context as soon as it receives
+	// the coordination message.
 	ctx, cancelCtx := withCancelOnBlock(
 		context.Background(),
 		window.activePhaseEndBlock(),
 		ce.waitForBlockFn,
 	)
-	defer cancelCtx()
 
 	var proposal CoordinationProposal
 	var faults []*coordinationFault
@@ -391,6 +404,10 @@ func (ce *coordinationExecutor) coordinate(
 			actionsChecklist,
 		)
 		if err != nil {
+			// Cancel the context upon leader's routine failure. There is
+			// no point to keep the context active as retransmissions do not
+			// occur anyway.
+			cancelCtx()
 			return nil, fmt.Errorf(
 				"failed to execute leader's routine: [%v]",
 				err,
@@ -400,6 +417,9 @@ func (ce *coordinationExecutor) coordinate(
 		execLogger.Info("broadcasted proposal: [%s]", proposal.ActionType())
 	} else {
 		execLogger.Info("executing follower's routine")
+
+		// Cancel the context upon follower's routine completion.
+		defer cancelCtx()
 
 		proposal, faults, err = ce.executeFollowerRoutine(
 			ctx,
@@ -558,8 +578,11 @@ func (ce *coordinationExecutor) executeLeaderRoutine(
 	walletPublicKeyHash := ce.walletPublicKeyHash()
 
 	proposal, err := ce.proposalGenerator.Generate(
-		walletPublicKeyHash,
-		actionsChecklist,
+		&CoordinationProposalRequest{
+			WalletPublicKeyHash: walletPublicKeyHash,
+			WalletOperators:     ce.coordinatedWallet.signingGroupOperators,
+			ActionsChecklist:    actionsChecklist,
+		},
 	)
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate proposal: [%v]", err)

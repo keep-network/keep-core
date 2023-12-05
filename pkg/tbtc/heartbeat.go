@@ -3,12 +3,10 @@ package tbtc
 import (
 	"context"
 	"fmt"
-	"math/big"
-	"time"
-
 	"github.com/ipfs/go-log/v2"
 	"github.com/keep-network/keep-core/pkg/bitcoin"
 	"github.com/keep-network/keep-core/pkg/tecdsa"
+	"math/big"
 )
 
 const (
@@ -18,20 +16,17 @@ const (
 	// take another actions. The value of 300 blocks is roughly 1 hour, assuming
 	// 12 seconds per block.
 	heartbeatProposalValidityBlocks = 300
-	// heartbeatRequestConfirmationBlocks determines the block length of the
-	// confirmation period on the host chain that is preserved after a heartbeat
-	// request submission.
-	heartbeatRequestConfirmationBlocks = 3
-	// heartbeatRequestTimeoutSafetyMargin determines the duration of the
+	// heartbeatRequestTimeoutSafetyMarginBlocks determines the duration of the
 	// safety margin that must be preserved between the signing timeout
 	// and the timeout of the entire heartbeat action. This safety
 	// margin prevents against the case where signing completes too late and
 	// another action has been already requested by the coordinator.
-	heartbeatRequestTimeoutSafetyMargin = 5 * time.Minute
+	// The value of 25 blocks is roughly 5 minutes, assuming 12 seconds per block.
+	heartbeatRequestTimeoutSafetyMarginBlocks = 25
 )
 
 type HeartbeatProposal struct {
-	Message []byte
+	Message [16]byte
 }
 
 func (hp *HeartbeatProposal) ActionType() WalletActionType {
@@ -55,12 +50,13 @@ type heartbeatSigningExecutor interface {
 // heartbeatAction is a walletAction implementation handling heartbeat requests
 // from the wallet coordinator.
 type heartbeatAction struct {
-	logger           log.StandardLogger
-	executingWallet  wallet
-	signingExecutor  heartbeatSigningExecutor
-	message          []byte
-	startBlock       uint64
-	requestExpiresAt time.Time
+	logger          log.StandardLogger
+	executingWallet wallet
+	signingExecutor heartbeatSigningExecutor
+	message         []byte
+	startBlock      uint64
+	expiryBlock     uint64
+	waitForBlockFn  waitForBlockFn
 }
 
 func newHeartbeatAction(
@@ -69,15 +65,17 @@ func newHeartbeatAction(
 	signingExecutor heartbeatSigningExecutor,
 	message []byte,
 	startBlock uint64,
-	requestExpiresAt time.Time,
+	expiryBlock uint64,
+	waitForBlockFn waitForBlockFn,
 ) *heartbeatAction {
 	return &heartbeatAction{
-		logger:           logger,
-		executingWallet:  executingWallet,
-		signingExecutor:  signingExecutor,
-		message:          message,
-		startBlock:       startBlock,
-		requestExpiresAt: requestExpiresAt,
+		logger:          logger,
+		executingWallet: executingWallet,
+		signingExecutor: signingExecutor,
+		message:         message,
+		startBlock:      startBlock,
+		expiryBlock:     expiryBlock,
+		waitForBlockFn:  waitForBlockFn,
 	}
 }
 
@@ -88,9 +86,15 @@ func (ha *heartbeatAction) execute() error {
 	messageBytes := bitcoin.ComputeHash(ha.message)
 	messageToSign := new(big.Int).SetBytes(messageBytes[:])
 
-	heartbeatCtx, cancelHeartbeatCtx := context.WithTimeout(
+	// Just in case. This should never happen.
+	if ha.expiryBlock < heartbeatRequestTimeoutSafetyMarginBlocks {
+		return fmt.Errorf("invalid proposal expiry block")
+	}
+
+	heartbeatCtx, cancelHeartbeatCtx := withCancelOnBlock(
 		context.Background(),
-		time.Until(ha.requestExpiresAt.Add(-heartbeatRequestTimeoutSafetyMargin)),
+		ha.expiryBlock-heartbeatRequestTimeoutSafetyMarginBlocks,
+		ha.waitForBlockFn,
 	)
 	defer cancelHeartbeatCtx()
 

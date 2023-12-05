@@ -2,6 +2,7 @@ package tbtcpg
 
 import (
 	"fmt"
+
 	"github.com/ipfs/go-log/v2"
 	"github.com/keep-network/keep-core/pkg/bitcoin"
 	"github.com/keep-network/keep-core/pkg/tbtc"
@@ -16,7 +17,10 @@ var logger = log.Logger("keep-tbtcpg")
 type ProposalTask interface {
 	// Run executes the task and returns a proposal, a boolean flag indicating
 	// whether the proposal was generated and an error if any.
-	Run(walletPublicKeyHash [20]byte) (tbtc.CoordinationProposal, bool, error)
+	Run(
+		request *tbtc.CoordinationProposalRequest,
+	) (tbtc.CoordinationProposal, bool, error)
+
 	// ActionType returns the type of the action proposal.
 	ActionType() tbtc.WalletActionType
 }
@@ -35,7 +39,7 @@ func NewProposalGenerator(
 	tasks := []ProposalTask{
 		NewDepositSweepTask(chain, btcChain),
 		NewRedemptionTask(chain, btcChain),
-		// newHeartbeatTask(chain, btcChain),
+		NewHeartbeatTask(chain),
 		// TODO: Uncomment when moving funds support is implemented.
 		// newMovedFundsSweepTask(),
 		// newMovingFundsTask(),
@@ -53,19 +57,21 @@ func NewProposalGenerator(
 // given wallet's state. If none of the actions are valid, the generator
 // returns a no-op proposal.
 func (pg *ProposalGenerator) Generate(
-	walletPublicKeyHash [20]byte,
-	actionsChecklist []tbtc.WalletActionType,
+	request *tbtc.CoordinationProposalRequest,
 ) (tbtc.CoordinationProposal, error) {
 	walletLogger := logger.With(
-		zap.String("walletPKH", fmt.Sprintf("0x%x", walletPublicKeyHash)),
+		zap.String(
+			"walletPKH",
+			fmt.Sprintf("0x%x", request.WalletPublicKeyHash),
+		),
 	)
 
 	walletLogger.Info(
 		"starting proposal generation with tasks checklist [%v]",
-		actionsChecklist,
+		request.ActionsChecklist,
 	)
 
-	for _, action := range actionsChecklist {
+	for _, action := range request.ActionsChecklist {
 		walletLogger.Infof("starting proposal task [%s]", action)
 
 		taskIndex := slices.IndexFunc(pg.tasks, func(task ProposalTask) bool {
@@ -77,7 +83,7 @@ func (pg *ProposalGenerator) Generate(
 			continue
 		}
 
-		proposal, ok, err := pg.tasks[taskIndex].Run(walletPublicKeyHash)
+		proposal, ok, err := pg.tasks[taskIndex].Run(request)
 		if err != nil {
 			return nil, fmt.Errorf(
 				"error while running proposal task [%s]: [%v]",

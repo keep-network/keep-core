@@ -21,11 +21,7 @@ const (
 	// another actions. The value of 600 blocks is roughly 2 hours, assuming
 	// 12 seconds per block.
 	redemptionProposalValidityBlocks = 600
-	// redemptionProposalConfirmationBlocks determines the block length of the
-	// confirmation period on the host chain that is preserved after a
-	// redemption proposal submission.
-	redemptionProposalConfirmationBlocks = 20
-	// redemptionSigningTimeoutSafetyMargin determines the duration of the
+	// redemptionSigningTimeoutSafetyMarginBlocks determines the duration of the
 	// safety margin that must be preserved between the signing timeout
 	// and the timeout of the entire redemption action. This safety
 	// margin prevents against the case where signing completes late and there
@@ -33,17 +29,18 @@ const (
 	// In such a case, wallet signatures may leak and make the wallet subject
 	// of fraud accusations. Usage of the safety margin ensures there is enough
 	// time to perform post-signing steps of the redemption action.
-	redemptionSigningTimeoutSafetyMargin = 1 * time.Hour
+	// The value of 300 blocks is roughly 1 hour, assuming 12 seconds per block.
+	redemptionSigningTimeoutSafetyMarginBlocks = 300
 	// redemptionBroadcastTimeout determines the time window for redemption
 	// transaction broadcast. It is guaranteed that at least
-	// redemptionSigningTimeoutSafetyMargin is preserved for the broadcast
+	// redemptionSigningTimeoutSafetyMarginBlocks is preserved for the broadcast
 	// step. However, the happy path for the broadcast step is usually quick
 	// and few retries are needed to recover from temporary problems. That
 	// said, if the broadcast step does not succeed in a tight timeframe,
 	// there is no point to retry for the entire possible time window.
 	// Hence, the timeout for broadcast step is set as 25% of the entire
-	// time widow determined by redemptionSigningTimeoutSafetyMargin.
-	redemptionBroadcastTimeout = redemptionSigningTimeoutSafetyMargin / 4
+	// time widow determined by redemptionSigningTimeoutSafetyMarginBlocks.
+	redemptionBroadcastTimeout = 15 * time.Minute
 	// redemptionBroadcastCheckDelay determines the delay that must
 	// be preserved between transaction broadcast and the check that ensures
 	// the transaction is known on the Bitcoin chain. This delay is needed
@@ -115,11 +112,11 @@ type redemptionAction struct {
 
 	proposal                     *RedemptionProposal
 	proposalProcessingStartBlock uint64
-	proposalExpiresAt            time.Time
+	proposalExpiryBlock          uint64
 
-	signingTimeoutSafetyMargin time.Duration
-	broadcastTimeout           time.Duration
-	broadcastCheckDelay        time.Duration
+	signingTimeoutSafetyMarginBlocks uint64
+	broadcastTimeout                 time.Duration
+	broadcastCheckDelay              time.Duration
 
 	feeDistribution  redemptionFeeDistributionFn
 	transactionShape RedemptionTransactionShape
@@ -133,30 +130,32 @@ func newRedemptionAction(
 	signingExecutor walletSigningExecutor,
 	proposal *RedemptionProposal,
 	proposalProcessingStartBlock uint64,
-	proposalExpiresAt time.Time,
+	proposalExpiryBlock uint64,
+	waitForBlockFn waitForBlockFn,
 ) *redemptionAction {
 	transactionExecutor := newWalletTransactionExecutor(
 		btcChain,
 		redeemingWallet,
 		signingExecutor,
+		waitForBlockFn,
 	)
 
 	feeDistribution := withRedemptionTotalFee(proposal.RedemptionTxFee.Int64())
 
 	return &redemptionAction{
-		logger:                       logger,
-		chain:                        chain,
-		btcChain:                     btcChain,
-		redeemingWallet:              redeemingWallet,
-		transactionExecutor:          transactionExecutor,
-		proposal:                     proposal,
-		proposalProcessingStartBlock: proposalProcessingStartBlock,
-		proposalExpiresAt:            proposalExpiresAt,
-		signingTimeoutSafetyMargin:   redemptionSigningTimeoutSafetyMargin,
-		broadcastTimeout:             redemptionBroadcastTimeout,
-		broadcastCheckDelay:          redemptionBroadcastCheckDelay,
-		feeDistribution:              feeDistribution,
-		transactionShape:             RedemptionChangeFirst,
+		logger:                           logger,
+		chain:                            chain,
+		btcChain:                         btcChain,
+		redeemingWallet:                  redeemingWallet,
+		transactionExecutor:              transactionExecutor,
+		proposal:                         proposal,
+		proposalProcessingStartBlock:     proposalProcessingStartBlock,
+		proposalExpiryBlock:              proposalExpiryBlock,
+		signingTimeoutSafetyMarginBlocks: redemptionSigningTimeoutSafetyMarginBlocks,
+		broadcastTimeout:                 redemptionBroadcastTimeout,
+		broadcastCheckDelay:              redemptionBroadcastCheckDelay,
+		feeDistribution:                  feeDistribution,
+		transactionShape:                 RedemptionChangeFirst,
 	}
 }
 
@@ -227,11 +226,16 @@ func (ra *redemptionAction) execute() error {
 		zap.String("step", "signTransaction"),
 	)
 
+	// Just in case. This should never happen.
+	if ra.proposalExpiryBlock < ra.signingTimeoutSafetyMarginBlocks {
+		return fmt.Errorf("invalid proposal expiry block")
+	}
+
 	redemptionTx, err := ra.transactionExecutor.signTransaction(
 		signTxLogger,
 		unsignedRedemptionTx,
 		ra.proposalProcessingStartBlock,
-		ra.proposalExpiresAt.Add(-ra.signingTimeoutSafetyMargin),
+		ra.proposalExpiryBlock-ra.signingTimeoutSafetyMarginBlocks,
 	)
 	if err != nil {
 		return fmt.Errorf("sign transaction step failed: [%v]", err)

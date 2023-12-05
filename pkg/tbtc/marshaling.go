@@ -261,7 +261,7 @@ func (np *NoopProposal) Unmarshal([]byte) error {
 func (hp *HeartbeatProposal) Marshal() ([]byte, error) {
 	return proto.Marshal(
 		&pb.HeartbeatProposal{
-			Message: hp.Message,
+			Message: hp.Message[:],
 		},
 	)
 }
@@ -273,7 +273,17 @@ func (hp *HeartbeatProposal) Unmarshal(bytes []byte) error {
 		return fmt.Errorf("failed to unmarshal HeartbeatProposal: [%v]", err)
 	}
 
-	hp.Message = pbMsg.Message
+	if len(pbMsg.Message) != 16 {
+		return fmt.Errorf(
+			"invalid heartbeat message length: [%v]",
+			len(pbMsg.Message),
+		)
+	}
+
+	var message [16]byte
+	copy(message[:], pbMsg.Message)
+
+	hp.Message = message
 
 	return nil
 }
