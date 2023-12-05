@@ -717,7 +717,7 @@ func (n *node) HandleMovingFundsProposal(sourceWalletPublicKeyHash [20]byte) {
 			sourceWalletPublicKeyHash,
 		)
 
-		// Retrieve all the live wallets.
+		// Prepare the list of target wallets.
 		liveWalletsCount, err := n.chain.GetLiveWalletsCount()
 		if err != nil {
 			logger.Errorf("failed to get live wallets count: [%v]", err)
@@ -732,58 +732,6 @@ func (n *node) HandleMovingFundsProposal(sourceWalletPublicKeyHash [20]byte) {
 			)
 			return
 		}
-
-		events, err := n.chain.PastNewWalletRegisteredEvents(nil)
-		if err != nil {
-			logger.Errorf(
-				"failed to get past new wallet registered events: [%v]",
-				err,
-			)
-			return
-		}
-
-		liveWallets := make([][20]byte, 0)
-
-		for _, event := range events {
-			walletPubKeyHash := event.WalletPublicKeyHash
-			if walletPubKeyHash == sourceWalletPublicKeyHash {
-				continue
-			}
-			wallet, err := n.chain.GetWallet(walletPubKeyHash)
-			if err != nil {
-				logger.Errorf(
-					"failed to get wallet data for wallet with PKH [0x%x]: [%v]",
-					walletPubKeyHash,
-					err,
-				)
-				continue
-			}
-			if wallet.State == StateLive {
-				liveWallets = append(liveWallets, walletPubKeyHash)
-			}
-		}
-
-		// Make sure all the live wallets data has been retrieved by
-		// comparing the number of live wallets to the on-chain counter.
-		if len(liveWallets) != int(liveWalletsCount) {
-			logger.Errorf(
-				"mismatch between the number of retrieved live wallets "+
-					"and the on-chain live wallet count [%v:%v]",
-				len(liveWallets),
-				int(liveWalletsCount),
-			)
-			return
-		}
-
-		// Sort the live wallets according to their numerical representation
-		// as the on-chain contract expects.
-		sort.Slice(liveWallets, func(i, j int) bool {
-			bigIntI := new(big.Int).SetBytes(liveWallets[i][:])
-			bigIntJ := new(big.Int).SetBytes(liveWallets[j][:])
-			return bigIntI.Cmp(bigIntJ) < 0
-		})
-
-		logger.Infof("found [%v] live wallets", len(liveWallets))
 
 		_, _, _, _, _, walletMaxBtcTransfer, _, err := n.chain.GetWalletParameters()
 		if err != nil {
@@ -814,8 +762,64 @@ func (n *node) HandleMovingFundsProposal(sourceWalletPublicKeyHash [20]byte) {
 			ceilingDivide(uint64(walletBalance), walletMaxBtcTransfer),
 		)
 
-		targetWallets := liveWallets[0:targetWalletsCount]
-		logger.Infof("target wallets length [%v]", len(targetWallets))
+		// Prepare a list of target wallets using the new wallets registration
+		// events. Retrieve only the necessary number of live wallets.
+		// The iteration is started from the end of the
+		events, err := n.chain.PastNewWalletRegisteredEvents(nil)
+		if err != nil {
+			logger.Errorf(
+				"failed to get past new wallet registered events: [%v]",
+				err,
+			)
+			return
+		}
+
+		targetWallets := make([][20]byte, 0)
+
+		for i := len(events) - 1; i >= 0; i-- {
+			walletPubKeyHash := events[i].WalletPublicKeyHash
+			if walletPubKeyHash == sourceWalletPublicKeyHash {
+				// Just in case make sure not to include the source wallet
+				// itself.
+				continue
+			}
+			wallet, err := n.chain.GetWallet(walletPubKeyHash)
+			if err != nil {
+				logger.Errorf(
+					"failed to get wallet data for wallet with PKH [0x%x]: [%v]",
+					walletPubKeyHash,
+					err,
+				)
+				continue
+			}
+			if wallet.State == StateLive {
+				targetWallets = append(targetWallets, walletPubKeyHash)
+			}
+			if len(targetWallets) == int(targetWalletsCount) {
+				// Stop the iteration if enough live wallets have been gathered.
+				break
+			}
+		}
+
+		if len(targetWallets) != int(targetWalletsCount) {
+			logger.Errorf(
+				"failed to get enough target wallets: required [%v]; "+
+					"gathered [%v]",
+				targetWalletsCount,
+				len(targetWallets),
+			)
+			return
+		}
+
+		// Sort the target wallets according to their numerical representation
+		// as the on-chain contract expects.
+		sort.Slice(targetWallets, func(i, j int) bool {
+			bigIntI := new(big.Int).SetBytes(targetWallets[i][:])
+			bigIntJ := new(big.Int).SetBytes(targetWallets[j][:])
+			return bigIntI.Cmp(bigIntJ) < 0
+		})
+
+		logger.Infof("gathered [%v] target wallets", len(targetWallets))
 
 		walletMemberIDs := make([]uint32, 0)
 		for _, operatorAddress := range sourceWallet.signingGroupOperators {
