@@ -663,26 +663,6 @@ func (lc *localChain) operatorAddress() (chain.Address, error) {
 	return lc.Signing().PublicKeyToAddress(operatorPublicKey)
 }
 
-func (lc *localChain) OnHeartbeatRequestSubmitted(
-	handler func(event *HeartbeatRequestSubmittedEvent),
-) subscription.EventSubscription {
-	panic("unsupported")
-}
-
-func (lc *localChain) OnDepositSweepProposalSubmitted(
-	handler func(event *DepositSweepProposalSubmittedEvent),
-) subscription.EventSubscription {
-	panic("unsupported")
-}
-
-func (lc *localChain) GetWalletLock(walletPublicKeyHash [20]byte) (
-	time.Time,
-	WalletActionType,
-	error,
-) {
-	panic("unsupported")
-}
-
 func (lc *localChain) ValidateDepositSweepProposal(
 	proposal *DepositSweepProposal,
 	depositsExtraInfo []struct {
@@ -767,12 +747,6 @@ func buildDepositSweepProposalValidationKey(
 	return sha256.Sum256(buffer.Bytes()), nil
 }
 
-func (lc *localChain) OnRedemptionProposalSubmitted(
-	func(event *RedemptionProposalSubmittedEvent),
-) subscription.EventSubscription {
-	panic("unsupported")
-}
-
 func (lc *localChain) ValidateRedemptionProposal(
 	proposal *RedemptionProposal,
 ) error {
@@ -827,6 +801,13 @@ func buildRedemptionProposalValidationKey(
 	buffer.Write(proposal.RedemptionTxFee.Bytes())
 
 	return sha256.Sum256(buffer.Bytes()), nil
+}
+
+func (lc *localChain) ValidateHeartbeatProposal(
+	walletPublicKeyHash [20]byte,
+	proposal *HeartbeatProposal,
+) error {
+	panic("unsupported")
 }
 
 // Connect sets up the local chain.

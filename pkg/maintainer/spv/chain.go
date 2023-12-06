@@ -49,18 +49,6 @@ type Chain interface {
 	// BlockCounter returns the chain's block counter.
 	BlockCounter() (chain.BlockCounter, error)
 
-	// PastDepositSweepProposalSubmittedEvents returns past
-	// `DepositSweepProposalSubmitted` events.
-	PastDepositSweepProposalSubmittedEvents(
-		filter *tbtc.DepositSweepProposalSubmittedEventFilter,
-	) ([]*tbtc.DepositSweepProposalSubmittedEvent, error)
-
-	// PastRedemptionProposalSubmittedEvents returns past
-	// `RedemptionProposalSubmitted` events.
-	PastRedemptionProposalSubmittedEvents(
-		filter *tbtc.RedemptionProposalSubmittedEventFilter,
-	) ([]*tbtc.RedemptionProposalSubmittedEvent, error)
-
 	// GetPendingRedemptionRequest gets the on-chain pending redemption request
 	// for the given wallet public key hash and redeemer output script.
 	// The returned bool value indicates whether the request was found or not.

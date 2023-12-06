@@ -403,7 +403,7 @@ func (dst *DepositSweepTask) ProposeDepositsSweep(
 // sweep transaction for the given depositsCount. If the provided depositsCount
 // is 0, this function computes the total fee for Bitcoin deposits sweep
 // transactions containing a various number of input deposits, from 1 up to the
-// maximum count allowed by the WalletCoordinator contract. Computed fees for
+// maximum count allowed by the WalletProposalValidator contract. Computed fees for
 // specific deposits counts are returned as a map.
 //
 // While making estimations, this function assumes a sweep transaction

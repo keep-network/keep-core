@@ -103,5 +103,8 @@ type Chain interface {
 	// ValidateHeartbeatProposal validates the given heartbeat proposal
 	// against the chain. Returns an error if the proposal is not valid or
 	// nil otherwise.
-	ValidateHeartbeatProposal(proposal *tbtc.HeartbeatProposal) error
+	ValidateHeartbeatProposal(
+		walletPublicKeyHash [20]byte,
+		proposal *tbtc.HeartbeatProposal,
+	) error
 }

@@ -44,6 +44,4 @@ var (
 
 	// WalletProposalValidatorAddress is a WalletProposalValidator contract's address read from the NPM package.
 	WalletProposalValidatorAddress string = strings.TrimSpace(walletProposalValidatorAddressFileContent)
-
-	WalletCoordinatorAddress string = ""
 )

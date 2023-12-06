@@ -49,7 +49,10 @@ func (ht *HeartbeatTask) Run(request *tbtc.CoordinationProposalRequest) (
 		Message: message,
 	}
 
-	if err := ht.chain.ValidateHeartbeatProposal(proposal); err != nil {
+	if err := ht.chain.ValidateHeartbeatProposal(
+		walletPublicKeyHash,
+		proposal,
+	); err != nil {
 		return nil, false, fmt.Errorf(
 			"failed to verify heartbeat proposal: [%v]",
 			err,

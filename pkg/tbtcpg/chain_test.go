@@ -571,6 +571,7 @@ func (lc *LocalChain) SetRedemptionProposalValidationResult(
 }
 
 func (lc *LocalChain) ValidateHeartbeatProposal(
+	walletPublicKeyHash [20]byte,
 	proposal *tbtc.HeartbeatProposal,
 ) error {
 	lc.mutex.Lock()

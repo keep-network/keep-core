@@ -5,7 +5,6 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/binary"
-	"encoding/hex"
 	"fmt"
 	"math/big"
 	"sync"
@@ -33,14 +32,12 @@ type submittedDepositSweepProof struct {
 type localChain struct {
 	mutex sync.Mutex
 
-	blockCounter                            chain.BlockCounter
-	pastDepositSweepProposalSubmittedEvents map[[32]byte][]*tbtc.DepositSweepProposalSubmittedEvent
-	pastRedemptionProposalSubmittedEvents   map[[32]byte][]*tbtc.RedemptionProposalSubmittedEvent
-	wallets                                 map[[20]byte]*tbtc.WalletChainData
-	depositRequests                         map[[32]byte]*tbtc.DepositChainRequest
-	pendingRedemptionRequests               map[[32]byte]*tbtc.RedemptionRequest
-	submittedRedemptionProofs               []*submittedRedemptionProof
-	submittedDepositSweepProofs             []*submittedDepositSweepProof
+	blockCounter                chain.BlockCounter
+	wallets                     map[[20]byte]*tbtc.WalletChainData
+	depositRequests             map[[32]byte]*tbtc.DepositChainRequest
+	pendingRedemptionRequests   map[[32]byte]*tbtc.RedemptionRequest
+	submittedRedemptionProofs   []*submittedRedemptionProof
+	submittedDepositSweepProofs []*submittedDepositSweepProof
 
 	txProofDifficultyFactor *big.Int
 	currentEpoch            uint64
@@ -50,13 +47,11 @@ type localChain struct {
 
 func newLocalChain() *localChain {
 	return &localChain{
-		pastDepositSweepProposalSubmittedEvents: make(map[[32]byte][]*tbtc.DepositSweepProposalSubmittedEvent),
-		pastRedemptionProposalSubmittedEvents:   make(map[[32]byte][]*tbtc.RedemptionProposalSubmittedEvent),
-		wallets:                                 make(map[[20]byte]*tbtc.WalletChainData),
-		depositRequests:                         make(map[[32]byte]*tbtc.DepositChainRequest),
-		pendingRedemptionRequests:               make(map[[32]byte]*tbtc.RedemptionRequest),
-		submittedRedemptionProofs:               make([]*submittedRedemptionProof, 0),
-		submittedDepositSweepProofs:             make([]*submittedDepositSweepProof, 0),
+		wallets:                     make(map[[20]byte]*tbtc.WalletChainData),
+		depositRequests:             make(map[[32]byte]*tbtc.DepositChainRequest),
+		pendingRedemptionRequests:   make(map[[32]byte]*tbtc.RedemptionRequest),
+		submittedRedemptionProofs:   make([]*submittedRedemptionProof, 0),
+		submittedDepositSweepProofs: make([]*submittedDepositSweepProof, 0),
 	}
 }
 
@@ -194,159 +189,6 @@ func (lc *localChain) setBlockCounter(blockCounter chain.BlockCounter) {
 	defer lc.mutex.Unlock()
 
 	lc.blockCounter = blockCounter
-}
-
-func (lc *localChain) PastDepositSweepProposalSubmittedEvents(
-	filter *tbtc.DepositSweepProposalSubmittedEventFilter,
-) (
-	[]*tbtc.DepositSweepProposalSubmittedEvent,
-	error,
-) {
-	lc.mutex.Lock()
-	defer lc.mutex.Unlock()
-
-	var eventsKey [32]byte
-	var err error
-
-	if filter != nil {
-		eventsKey, err = buildPastProposalSubmittedEventsKey(
-			filter.StartBlock,
-			filter.EndBlock,
-			filter.Coordinator,
-			filter.WalletPublicKeyHash,
-		)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	events, ok := lc.pastDepositSweepProposalSubmittedEvents[eventsKey]
-	if !ok {
-		return nil, fmt.Errorf("no events for given filter")
-	}
-
-	return events, nil
-}
-
-func (lc *localChain) PastRedemptionProposalSubmittedEvents(
-	filter *tbtc.RedemptionProposalSubmittedEventFilter,
-) ([]*tbtc.RedemptionProposalSubmittedEvent, error) {
-	lc.mutex.Lock()
-	defer lc.mutex.Unlock()
-
-	var eventsKey [32]byte
-	var err error
-
-	if filter != nil {
-		eventsKey, err = buildPastProposalSubmittedEventsKey(
-			filter.StartBlock,
-			filter.EndBlock,
-			filter.Coordinator,
-			filter.WalletPublicKeyHash,
-		)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	events, ok := lc.pastRedemptionProposalSubmittedEvents[eventsKey]
-	if !ok {
-		return nil, fmt.Errorf("no events for given filter")
-	}
-
-	return events, nil
-}
-
-func (lc *localChain) AddPastDepositSweepProposalSubmittedEvent(
-	filter *tbtc.DepositSweepProposalSubmittedEventFilter,
-	event *tbtc.DepositSweepProposalSubmittedEvent,
-) error {
-	lc.mutex.Lock()
-	defer lc.mutex.Unlock()
-
-	var eventsKey [32]byte
-	var err error
-
-	if filter != nil {
-		eventsKey, err = buildPastProposalSubmittedEventsKey(
-			filter.StartBlock,
-			filter.EndBlock,
-			filter.Coordinator,
-			filter.WalletPublicKeyHash,
-		)
-		if err != nil {
-			return err
-		}
-	}
-
-	lc.pastDepositSweepProposalSubmittedEvents[eventsKey] = append(
-		lc.pastDepositSweepProposalSubmittedEvents[eventsKey],
-		event,
-	)
-
-	return nil
-}
-
-func (lc *localChain) AddPastRedemptionProposalSubmittedEvent(
-	filter *tbtc.RedemptionProposalSubmittedEventFilter,
-	event *tbtc.RedemptionProposalSubmittedEvent,
-) error {
-	lc.mutex.Lock()
-	defer lc.mutex.Unlock()
-
-	var eventsKey [32]byte
-	var err error
-
-	if filter != nil {
-		eventsKey, err = buildPastProposalSubmittedEventsKey(
-			filter.StartBlock,
-			filter.EndBlock,
-			filter.Coordinator,
-			filter.WalletPublicKeyHash,
-		)
-		if err != nil {
-			return err
-		}
-	}
-
-	lc.pastRedemptionProposalSubmittedEvents[eventsKey] = append(
-		lc.pastRedemptionProposalSubmittedEvents[eventsKey],
-		event,
-	)
-
-	return nil
-}
-
-func buildPastProposalSubmittedEventsKey(
-	startBlock uint64,
-	endBlock *uint64,
-	coordinators []chain.Address,
-	walletPublicKeyHash [20]byte,
-) ([32]byte, error) {
-	var buffer bytes.Buffer
-
-	startBlockBytes := make([]byte, 8)
-	binary.BigEndian.PutUint64(startBlockBytes, startBlock)
-	buffer.Write(startBlockBytes)
-
-	if endBlock != nil {
-		endBlockBytes := make([]byte, 8)
-		binary.BigEndian.PutUint64(endBlockBytes, *endBlock)
-		buffer.Write(endBlockBytes)
-	}
-
-	for _, coordinator := range coordinators {
-		coordinatorBytes, err := hex.DecodeString(coordinator.String())
-		if err != nil {
-			return [32]byte{}, err
-		}
-
-		buffer.Write(coordinatorBytes)
-	}
-
-	buffer.Write(walletPublicKeyHash[:])
-
-	return sha256.Sum256(buffer.Bytes()), nil
 }
 
 func (lc *localChain) GetPendingRedemptionRequest(
