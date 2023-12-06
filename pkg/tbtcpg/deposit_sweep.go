@@ -378,7 +378,6 @@ func (dst *DepositSweepTask) ProposeDepositsSweep(
 	}
 
 	proposal := &tbtc.DepositSweepProposal{
-		WalletPublicKeyHash:  walletPublicKeyHash,
 		DepositsKeys:         depositsKeys,
 		SweepTxFee:           big.NewInt(fee),
 		DepositsRevealBlocks: depositsRevealBlocks,
@@ -388,6 +387,7 @@ func (dst *DepositSweepTask) ProposeDepositsSweep(
 
 	if _, err := tbtc.ValidateDepositSweepProposal(
 		taskLogger,
+		walletPublicKeyHash,
 		proposal,
 		tbtc.DepositSweepRequiredFundingTxConfirmations,
 		dst.chain,

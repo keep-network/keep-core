@@ -54,9 +54,7 @@ const (
 // DepositSweepProposal represents a deposit sweep proposal issued by a
 // wallet's coordination leader.
 type DepositSweepProposal struct {
-	// TODO: Remove WalletPublicKeyHash field.
-	WalletPublicKeyHash [20]byte
-	DepositsKeys        []struct {
+	DepositsKeys []struct {
 		FundingTxHash      bitcoin.Hash
 		FundingOutputIndex uint32
 	}
@@ -130,8 +128,11 @@ func (dsa *depositSweepAction) execute() error {
 		zap.String("step", "validateProposal"),
 	)
 
+	walletPublicKeyHash := bitcoin.PublicKeyHash(dsa.wallet().publicKey)
+
 	validatedDeposits, err := ValidateDepositSweepProposal(
 		validateProposalLogger,
+		walletPublicKeyHash,
 		dsa.proposal,
 		dsa.requiredFundingTxConfirmations,
 		dsa.chain,
@@ -140,8 +141,6 @@ func (dsa *depositSweepAction) execute() error {
 	if err != nil {
 		return fmt.Errorf("validate proposal step failed: [%v]", err)
 	}
-
-	walletPublicKeyHash := bitcoin.PublicKeyHash(dsa.wallet().publicKey)
 
 	walletMainUtxo, err := DetermineWalletMainUtxo(
 		walletPublicKeyHash,
@@ -224,6 +223,7 @@ func (dsa *depositSweepAction) execute() error {
 // validation rules and verifies transactions on the Bitcoin chain.
 func ValidateDepositSweepProposal(
 	validateProposalLogger log.StandardLogger,
+	walletPublicKeyHash [20]byte,
 	proposal *DepositSweepProposal,
 	requiredFundingTxConfirmations uint,
 	chain interface {
@@ -240,6 +240,7 @@ func ValidateDepositSweepProposal(
 		// that must be fetched externally. Returns an error if the proposal is
 		// not valid or nil otherwise.
 		ValidateDepositSweepProposal(
+			walletPublicKeyHash [20]byte,
 			proposal *DepositSweepProposal,
 			depositsExtraInfo []struct {
 				*Deposit
@@ -322,7 +323,7 @@ func ValidateDepositSweepProposal(
 		events, err := chain.PastDepositRevealedEvents(&DepositRevealedEventFilter{
 			StartBlock:          revealBlock,
 			EndBlock:            &revealBlock,
-			WalletPublicKeyHash: [][20]byte{proposal.WalletPublicKeyHash},
+			WalletPublicKeyHash: [][20]byte{walletPublicKeyHash},
 		})
 		if err != nil {
 			return nil, fmt.Errorf(
@@ -362,7 +363,11 @@ func ValidateDepositSweepProposal(
 
 	validateProposalLogger.Infof("calling chain for proposal validation")
 
-	err := chain.ValidateDepositSweepProposal(proposal, depositExtraInfo)
+	err := chain.ValidateDepositSweepProposal(
+		walletPublicKeyHash,
+		proposal,
+		depositExtraInfo,
+	)
 	if err != nil {
 		return nil, fmt.Errorf("deposit sweep proposal is invalid: [%v]", err)
 	}

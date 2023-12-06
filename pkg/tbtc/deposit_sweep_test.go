@@ -123,7 +123,6 @@ func TestDepositSweepAction_Execute(t *testing.T) {
 
 			// Build the sweep proposal based on the scenario data.
 			proposal := &DepositSweepProposal{
-				WalletPublicKeyHash:  walletPublicKeyHash,
 				DepositsKeys:         depositsKeys,
 				SweepTxFee:           big.NewInt(scenario.Fee),
 				DepositsRevealBlocks: depositsRevealBlocks,
@@ -136,6 +135,7 @@ func TestDepositSweepAction_Execute(t *testing.T) {
 
 			// Simulate the on-chain proposal validation passes with success.
 			err = hostChain.setDepositSweepProposalValidationResult(
+				walletPublicKeyHash,
 				proposal,
 				depositsExtraInfo,
 				true,

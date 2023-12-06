@@ -1468,6 +1468,7 @@ func buildDepositKey(
 }
 
 func convertDepositSweepProposalToAbiType(
+	walletPublicKeyHash [20]byte,
 	proposal *tbtc.DepositSweepProposal,
 ) tbtcabi.WalletProposalValidatorDepositSweepProposal {
 	depositsKeys := make(
@@ -1487,7 +1488,7 @@ func convertDepositSweepProposalToAbiType(
 	}
 
 	return tbtcabi.WalletProposalValidatorDepositSweepProposal{
-		WalletPubKeyHash:     proposal.WalletPublicKeyHash,
+		WalletPubKeyHash:     walletPublicKeyHash,
 		DepositsKeys:         depositsKeys,
 		SweepTxFee:           proposal.SweepTxFee,
 		DepositsRevealBlocks: proposal.DepositsRevealBlocks,
@@ -1514,6 +1515,7 @@ func parseWalletState(value uint8) (tbtc.WalletState, error) {
 }
 
 func (tc *TbtcChain) ValidateDepositSweepProposal(
+	walletPublicKeyHash [20]byte,
 	proposal *tbtc.DepositSweepProposal,
 	depositsExtraInfo []struct {
 		*tbtc.Deposit
@@ -1539,7 +1541,7 @@ func (tc *TbtcChain) ValidateDepositSweepProposal(
 	}
 
 	valid, err := tc.walletProposalValidator.ValidateDepositSweepProposal(
-		convertDepositSweepProposalToAbiType(proposal),
+		convertDepositSweepProposalToAbiType(walletPublicKeyHash, proposal),
 		dei,
 	)
 	if err != nil {
@@ -1560,9 +1562,13 @@ func (tc *TbtcChain) GetDepositSweepMaxSize() (uint16, error) {
 }
 
 func (tc *TbtcChain) ValidateRedemptionProposal(
+	walletPublicKeyHash [20]byte,
 	proposal *tbtc.RedemptionProposal,
 ) error {
-	abiProposal, err := convertRedemptionProposalToAbiType(proposal)
+	abiProposal, err := convertRedemptionProposalToAbiType(
+		walletPublicKeyHash,
+		proposal,
+	)
 	if err != nil {
 		return fmt.Errorf("cannot convert proposal to abi type: [%v]", err)
 	}
@@ -1584,6 +1590,7 @@ func (tc *TbtcChain) ValidateRedemptionProposal(
 }
 
 func convertRedemptionProposalToAbiType(
+	walletPublicKeyHash [20]byte,
 	proposal *tbtc.RedemptionProposal,
 ) (tbtcabi.WalletProposalValidatorRedemptionProposal, error) {
 	redeemersOutputScripts := make(
@@ -1607,7 +1614,7 @@ func convertRedemptionProposalToAbiType(
 	}
 
 	return tbtcabi.WalletProposalValidatorRedemptionProposal{
-		WalletPubKeyHash:       proposal.WalletPublicKeyHash,
+		WalletPubKeyHash:       walletPublicKeyHash,
 		RedeemersOutputScripts: redeemersOutputScripts,
 		RedemptionTxFee:        proposal.RedemptionTxFee,
 	}, nil

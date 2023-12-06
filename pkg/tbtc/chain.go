@@ -322,6 +322,7 @@ type WalletProposalValidatorChain interface {
 	// that must be fetched externally. Returns an error if the proposal is
 	// not valid or nil otherwise.
 	ValidateDepositSweepProposal(
+		walletPublicKeyHash [20]byte,
 		proposal *DepositSweepProposal,
 		depositsExtraInfo []struct {
 			*Deposit
@@ -332,7 +333,10 @@ type WalletProposalValidatorChain interface {
 	// ValidateRedemptionProposal validates the given redemption proposal
 	// against the chain. Returns an error if the proposal is not valid or
 	// nil otherwise.
-	ValidateRedemptionProposal(proposal *RedemptionProposal) error
+	ValidateRedemptionProposal(
+		walletPublicKeyHash [20]byte,
+		proposal *RedemptionProposal,
+	) error
 
 	// ValidateHeartbeatProposal validates the given heartbeat proposal
 	// against the chain. Returns an error if the proposal is not valid or

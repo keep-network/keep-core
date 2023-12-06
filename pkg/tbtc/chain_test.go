@@ -664,6 +664,7 @@ func (lc *localChain) operatorAddress() (chain.Address, error) {
 }
 
 func (lc *localChain) ValidateDepositSweepProposal(
+	walletPublicKeyHash [20]byte,
 	proposal *DepositSweepProposal,
 	depositsExtraInfo []struct {
 		*Deposit
@@ -673,7 +674,11 @@ func (lc *localChain) ValidateDepositSweepProposal(
 	lc.depositSweepProposalValidationsMutex.Lock()
 	defer lc.depositSweepProposalValidationsMutex.Unlock()
 
-	key, err := buildDepositSweepProposalValidationKey(proposal, depositsExtraInfo)
+	key, err := buildDepositSweepProposalValidationKey(
+		walletPublicKeyHash,
+		proposal,
+		depositsExtraInfo,
+	)
 	if err != nil {
 		return err
 	}
@@ -691,6 +696,7 @@ func (lc *localChain) ValidateDepositSweepProposal(
 }
 
 func (lc *localChain) setDepositSweepProposalValidationResult(
+	walletPublicKeyHash [20]byte,
 	proposal *DepositSweepProposal,
 	depositsExtraInfo []struct {
 		*Deposit
@@ -701,7 +707,11 @@ func (lc *localChain) setDepositSweepProposalValidationResult(
 	lc.depositSweepProposalValidationsMutex.Lock()
 	defer lc.depositSweepProposalValidationsMutex.Unlock()
 
-	key, err := buildDepositSweepProposalValidationKey(proposal, depositsExtraInfo)
+	key, err := buildDepositSweepProposalValidationKey(
+		walletPublicKeyHash,
+		proposal,
+		depositsExtraInfo,
+	)
 	if err != nil {
 		return err
 	}
@@ -712,6 +722,7 @@ func (lc *localChain) setDepositSweepProposalValidationResult(
 }
 
 func buildDepositSweepProposalValidationKey(
+	walletPublicKeyHash [20]byte,
 	proposal *DepositSweepProposal,
 	depositsExtraInfo []struct {
 		*Deposit
@@ -720,7 +731,7 @@ func buildDepositSweepProposalValidationKey(
 ) ([32]byte, error) {
 	var buffer bytes.Buffer
 
-	buffer.Write(proposal.WalletPublicKeyHash[:])
+	buffer.Write(walletPublicKeyHash[:])
 
 	for _, deposit := range proposal.DepositsKeys {
 		buffer.Write(deposit.FundingTxHash[:])
@@ -748,12 +759,16 @@ func buildDepositSweepProposalValidationKey(
 }
 
 func (lc *localChain) ValidateRedemptionProposal(
+	walletPublicKeyHash [20]byte,
 	proposal *RedemptionProposal,
 ) error {
 	lc.redemptionProposalValidationsMutex.Lock()
 	defer lc.redemptionProposalValidationsMutex.Unlock()
 
-	key, err := buildRedemptionProposalValidationKey(proposal)
+	key, err := buildRedemptionProposalValidationKey(
+		walletPublicKeyHash,
+		proposal,
+	)
 	if err != nil {
 		return err
 	}
@@ -771,13 +786,17 @@ func (lc *localChain) ValidateRedemptionProposal(
 }
 
 func (lc *localChain) setRedemptionProposalValidationResult(
+	walletPublicKeyHash [20]byte,
 	proposal *RedemptionProposal,
 	result bool,
 ) error {
 	lc.redemptionProposalValidationsMutex.Lock()
 	defer lc.redemptionProposalValidationsMutex.Unlock()
 
-	key, err := buildRedemptionProposalValidationKey(proposal)
+	key, err := buildRedemptionProposalValidationKey(
+		walletPublicKeyHash,
+		proposal,
+	)
 	if err != nil {
 		return err
 	}
@@ -788,11 +807,12 @@ func (lc *localChain) setRedemptionProposalValidationResult(
 }
 
 func buildRedemptionProposalValidationKey(
+	walletPublicKeyHash [20]byte,
 	proposal *RedemptionProposal,
 ) ([32]byte, error) {
 	var buffer bytes.Buffer
 
-	buffer.Write(proposal.WalletPublicKeyHash[:])
+	buffer.Write(walletPublicKeyHash[:])
 
 	for _, script := range proposal.RedeemersOutputScripts {
 		buffer.Write(script)
