@@ -454,9 +454,10 @@ func (n *node) handleHeartbeatProposal(
 
 	action := newHeartbeatAction(
 		walletActionLogger,
+		n.chain,
 		wallet,
 		signingExecutor,
-		proposal.Message[:],
+		proposal,
 		startBlock,
 		expiryBlock,
 		n.waitForBlockHeight,

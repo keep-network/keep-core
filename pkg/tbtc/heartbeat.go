@@ -50,29 +50,35 @@ type heartbeatSigningExecutor interface {
 // heartbeatAction is a walletAction implementation handling heartbeat requests
 // from the wallet coordinator.
 type heartbeatAction struct {
-	logger          log.StandardLogger
+	logger log.StandardLogger
+	chain  Chain
+
 	executingWallet wallet
 	signingExecutor heartbeatSigningExecutor
-	message         []byte
-	startBlock      uint64
-	expiryBlock     uint64
-	waitForBlockFn  waitForBlockFn
+
+	proposal    *HeartbeatProposal
+	startBlock  uint64
+	expiryBlock uint64
+
+	waitForBlockFn waitForBlockFn
 }
 
 func newHeartbeatAction(
 	logger log.StandardLogger,
+	chain Chain,
 	executingWallet wallet,
 	signingExecutor heartbeatSigningExecutor,
-	message []byte,
+	proposal *HeartbeatProposal,
 	startBlock uint64,
 	expiryBlock uint64,
 	waitForBlockFn waitForBlockFn,
 ) *heartbeatAction {
 	return &heartbeatAction{
 		logger:          logger,
+		chain:           chain,
 		executingWallet: executingWallet,
 		signingExecutor: signingExecutor,
-		message:         message,
+		proposal:        proposal,
 		startBlock:      startBlock,
 		expiryBlock:     expiryBlock,
 		waitForBlockFn:  waitForBlockFn,
@@ -83,7 +89,14 @@ func (ha *heartbeatAction) execute() error {
 	// TODO: When implementing the moving funds action we should make sure
 	// heartbeats are not executed by unstaking clients.
 
-	messageBytes := bitcoin.ComputeHash(ha.message)
+	walletPublicKeyHash := bitcoin.PublicKeyHash(ha.wallet().publicKey)
+
+	err := ha.chain.ValidateHeartbeatProposal(walletPublicKeyHash, ha.proposal)
+	if err != nil {
+		return fmt.Errorf("heartbeat proposal is invalid: [%v]", err)
+	}
+
+	messageBytes := bitcoin.ComputeHash(ha.proposal.Message[:])
 	messageToSign := new(big.Int).SetBytes(messageBytes[:])
 
 	// Just in case. This should never happen.
@@ -106,7 +119,7 @@ func (ha *heartbeatAction) execute() error {
 	logger.Infof(
 		"generated signature [%s] for heartbeat message [0x%x]",
 		signature,
-		ha.message,
+		ha.proposal.Message[:],
 	)
 
 	return nil

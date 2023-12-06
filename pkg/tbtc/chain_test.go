@@ -65,6 +65,9 @@ type localChain struct {
 	redemptionProposalValidationsMutex sync.Mutex
 	redemptionProposalValidations      map[[32]byte]bool
 
+	heartbeatProposalValidationsMutex sync.Mutex
+	heartbeatProposalValidations      map[[16]byte]bool
+
 	blockCounter       chain.BlockCounter
 	operatorPrivateKey *operator.PrivateKey
 }
@@ -827,7 +830,29 @@ func (lc *localChain) ValidateHeartbeatProposal(
 	walletPublicKeyHash [20]byte,
 	proposal *HeartbeatProposal,
 ) error {
-	panic("unsupported")
+	lc.heartbeatProposalValidationsMutex.Lock()
+	defer lc.heartbeatProposalValidationsMutex.Unlock()
+
+	result, ok := lc.heartbeatProposalValidations[proposal.Message]
+	if !ok {
+		return fmt.Errorf("validation result unknown")
+	}
+
+	if !result {
+		return fmt.Errorf("validation failed")
+	}
+
+	return nil
+}
+
+func (lc *localChain) setHeartbeatProposalValidationResult(
+	proposal *HeartbeatProposal,
+	result bool,
+) {
+	lc.heartbeatProposalValidationsMutex.Lock()
+	defer lc.heartbeatProposalValidationsMutex.Unlock()
+
+	lc.heartbeatProposalValidations[proposal.Message] = result
 }
 
 // Connect sets up the local chain.
@@ -865,6 +890,7 @@ func ConnectWithKey(
 		depositSweepProposalValidations: make(map[[32]byte]bool),
 		pendingRedemptionRequests:       make(map[[32]byte]*RedemptionRequest),
 		redemptionProposalValidations:   make(map[[32]byte]bool),
+		heartbeatProposalValidations:    make(map[[16]byte]bool),
 		blockCounter:                    blockCounter,
 		operatorPrivateKey:              operatorPrivateKey,
 	}
