@@ -279,6 +279,10 @@ func (dre *DepositRevealedEvent) unpack() *Deposit {
 	}
 }
 
+func (dre *DepositRevealedEvent) GetWalletPublicKeyHash() [20]byte {
+	return dre.WalletPublicKeyHash
+}
+
 // DepositRevealedEventFilter is a component allowing to filter DepositRevealedEvent.
 type DepositRevealedEventFilter struct {
 	StartBlock          uint64
@@ -356,6 +360,10 @@ type RedemptionRequestedEvent struct {
 	TreasuryFee          uint64
 	TxMaxFee             uint64
 	BlockNumber          uint64
+}
+
+func (rre *RedemptionRequestedEvent) GetWalletPublicKeyHash() [20]byte {
+	return rre.WalletPublicKeyHash
 }
 
 // RedemptionRequestedEventFilter is a component allowing to filter RedemptionRequestedEvent.

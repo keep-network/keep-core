@@ -146,15 +146,15 @@ func getUnprovenRedemptionTransactions(
 	// searched for.
 	startBlock := currentBlock - historyDepth
 
-	redemptionProposals, err :=
-		spvChain.PastRedemptionProposalSubmittedEvents(
-			&tbtc.RedemptionProposalSubmittedEventFilter{
+	events, err :=
+		spvChain.PastRedemptionRequestedEvents(
+			&tbtc.RedemptionRequestedEventFilter{
 				StartBlock: startBlock,
 			},
 		)
 	if err != nil {
 		return nil, fmt.Errorf(
-			"failed to get past redemption proposal submitted events: [%v]",
+			"failed to get past redemption requested events: [%v]",
 			err,
 		)
 	}
@@ -162,7 +162,7 @@ func getUnprovenRedemptionTransactions(
 	// There will often be multiple events emitted for a single wallet. Prepare
 	// a list of unique wallet public key hashes.
 	walletPublicKeyHashes := uniqueWalletPublicKeyHashes(
-		redemptionProposals,
+		events,
 	)
 
 	var unprovenRedemptionTransactions []*bitcoin.Transaction

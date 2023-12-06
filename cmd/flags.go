@@ -337,8 +337,7 @@ func initMaintainerFlags(command *cobra.Command, cfg *config.Config) {
 		&cfg.Maintainer.Spv.HistoryDepth,
 		"spv.historyDepth",
 		spv.DefaultHistoryDepth,
-		"Number of blocks to look back for past deposit sweep proposal "+
-			"submitted events.",
+		"Number of blocks to look back for past wallet-related events.",
 	)
 
 	command.Flags().IntVar(

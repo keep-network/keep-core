@@ -65,4 +65,20 @@ type Chain interface {
 		mainUTXO bitcoin.UnspentTransactionOutput,
 		walletPublicKeyHash [20]byte,
 	) error
+
+	// PastDepositRevealedEvents fetches past deposit reveal events according
+	// to the provided filter or unfiltered if the filter is nil. Returned
+	// events are sorted by the block number in the ascending order, i.e. the
+	// latest event is at the end of the slice.
+	PastDepositRevealedEvents(
+		filter *tbtc.DepositRevealedEventFilter,
+	) ([]*tbtc.DepositRevealedEvent, error)
+
+	// PastRedemptionRequestedEvents fetches past redemption requested events according
+	// to the provided filter or unfiltered if the filter is nil. Returned
+	// events are sorted by the block number in the ascending order, i.e. the
+	// latest event is at the end of the slice.
+	PastRedemptionRequestedEvents(
+		filter *tbtc.RedemptionRequestedEventFilter,
+	) ([]*tbtc.RedemptionRequestedEvent, error)
 }
