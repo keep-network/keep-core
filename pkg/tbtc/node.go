@@ -413,7 +413,11 @@ func (n *node) handleHeartbeatProposal(
 	startBlock uint64,
 	expiryBlock uint64,
 ) {
-	walletPublicKeyHash := bitcoin.PublicKeyHash(wallet.publicKey)
+	walletPublicKeyBytes, err := marshalPublicKey(wallet.publicKey)
+	if err != nil {
+		logger.Errorf("cannot marshal wallet public key: [%v]", err)
+		return
+	}
 
 	signingExecutor, ok, err := n.getSigningExecutor(wallet.publicKey)
 	if err != nil {
@@ -426,25 +430,18 @@ func (n *node) handleHeartbeatProposal(
 	// contract of getSigningExecutor may change one day.
 	if !ok {
 		logger.Infof(
-			"node does not control signers of wallet PKH [0x%x]; "+
+			"node does not control signers of wallet [0x%x]; "+
 				"ignoring the received heartbeat request",
-			walletPublicKeyHash,
+			walletPublicKeyBytes,
 		)
 		return
 	}
 
-	walletPublicKeyBytes, err := marshalPublicKey(wallet.publicKey)
-	if err != nil {
-		logger.Errorf("cannot marshal wallet public key: [%v]", err)
-		return
-	}
-
 	logger.Infof(
-		"node controls signers of wallet PKH [0x%x]; "+
-			"plain-text uncompressed public key of that wallet is [0x%x]; "+
-			"starting orchestration of the heartbeat action",
-		walletPublicKeyHash,
+		"starting orchestration of the heartbeat action for wallet [0x%x]; "+
+			"20-byte public key hash of that wallet is [0x%x]",
 		walletPublicKeyBytes,
+		bitcoin.PublicKeyHash(wallet.publicKey),
 	)
 
 	walletActionLogger := logger.With(
@@ -457,9 +454,10 @@ func (n *node) handleHeartbeatProposal(
 
 	action := newHeartbeatAction(
 		walletActionLogger,
+		n.chain,
 		wallet,
 		signingExecutor,
-		proposal.Message[:],
+		proposal,
 		startBlock,
 		expiryBlock,
 		n.waitForBlockHeight,
@@ -482,6 +480,12 @@ func (n *node) handleDepositSweepProposal(
 	startBlock uint64,
 	expiryBlock uint64,
 ) {
+	walletPublicKeyBytes, err := marshalPublicKey(wallet.publicKey)
+	if err != nil {
+		logger.Errorf("cannot marshal wallet public key: [%v]", err)
+		return
+	}
+
 	signingExecutor, ok, err := n.getSigningExecutor(wallet.publicKey)
 	if err != nil {
 		logger.Errorf("cannot get signing executor: [%v]", err)
@@ -493,25 +497,18 @@ func (n *node) handleDepositSweepProposal(
 	// contract of getSigningExecutor may change one day.
 	if !ok {
 		logger.Infof(
-			"node does not control signers of wallet PKH [0x%x]; "+
+			"node does not control signers of wallet [0x%x]; "+
 				"ignoring the received deposit sweep proposal",
-			proposal.WalletPublicKeyHash,
+			walletPublicKeyBytes,
 		)
 		return
 	}
 
-	walletPublicKeyBytes, err := marshalPublicKey(wallet.publicKey)
-	if err != nil {
-		logger.Errorf("cannot marshal wallet public key: [%v]", err)
-		return
-	}
-
 	logger.Infof(
-		"node controls signers of wallet PKH [0x%x]; "+
-			"plain-text uncompressed public key of that wallet is [0x%x]; "+
-			"starting orchestration of the deposit sweep action",
-		proposal.WalletPublicKeyHash,
+		"starting orchestration of the deposit sweep action for wallet [0x%x]; "+
+			"20-byte public key hash of that wallet is [0x%x]",
 		walletPublicKeyBytes,
+		bitcoin.PublicKeyHash(wallet.publicKey),
 	)
 
 	walletActionLogger := logger.With(
@@ -551,6 +548,12 @@ func (n *node) handleRedemptionProposal(
 	startBlock uint64,
 	expiryBlock uint64,
 ) {
+	walletPublicKeyBytes, err := marshalPublicKey(wallet.publicKey)
+	if err != nil {
+		logger.Errorf("cannot marshal wallet public key: [%v]", err)
+		return
+	}
+
 	signingExecutor, ok, err := n.getSigningExecutor(wallet.publicKey)
 	if err != nil {
 		logger.Errorf("cannot get signing executor: [%v]", err)
@@ -562,25 +565,18 @@ func (n *node) handleRedemptionProposal(
 	// contract of getSigningExecutor may change one day.
 	if !ok {
 		logger.Infof(
-			"node does not control signers of wallet PKH [0x%x]; "+
+			"node does not control signers of wallet [0x%x]; "+
 				"ignoring the received redemption proposal",
-			proposal.WalletPublicKeyHash,
+			walletPublicKeyBytes,
 		)
 		return
 	}
 
-	walletPublicKeyBytes, err := marshalPublicKey(wallet.publicKey)
-	if err != nil {
-		logger.Errorf("cannot marshal wallet public key: [%v]", err)
-		return
-	}
-
 	logger.Infof(
-		"node controls signers of wallet PKH [0x%x]; "+
-			"plain-text uncompressed public key of that wallet is [0x%x]; "+
-			"starting orchestration of the redemption action",
-		proposal.WalletPublicKeyHash,
+		"starting orchestration of the redemption action for wallet [0x%x]; "+
+			"20-byte public key hash of that wallet is [0x%x]",
 		walletPublicKeyBytes,
+		bitcoin.PublicKeyHash(wallet.publicKey),
 	)
 
 	walletActionLogger := logger.With(

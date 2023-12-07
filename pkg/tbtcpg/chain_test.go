@@ -463,6 +463,7 @@ func (lc *LocalChain) SetRedemptionParameters(
 }
 
 func (lc *LocalChain) ValidateDepositSweepProposal(
+	walletPublicKeyHash [20]byte,
 	proposal *tbtc.DepositSweepProposal,
 	depositsExtraInfo []struct {
 		*tbtc.Deposit
@@ -472,7 +473,10 @@ func (lc *LocalChain) ValidateDepositSweepProposal(
 	lc.mutex.Lock()
 	defer lc.mutex.Unlock()
 
-	key, err := buildDepositSweepProposalValidationKey(proposal)
+	key, err := buildDepositSweepProposalValidationKey(
+		walletPublicKeyHash,
+		proposal,
+	)
 	if err != nil {
 		return err
 	}
@@ -490,6 +494,7 @@ func (lc *LocalChain) ValidateDepositSweepProposal(
 }
 
 func (lc *LocalChain) SetDepositSweepProposalValidationResult(
+	walletPublicKeyHash [20]byte,
 	proposal *tbtc.DepositSweepProposal,
 	depositsExtraInfo []struct {
 		*tbtc.Deposit
@@ -500,7 +505,10 @@ func (lc *LocalChain) SetDepositSweepProposalValidationResult(
 	lc.mutex.Lock()
 	defer lc.mutex.Unlock()
 
-	key, err := buildDepositSweepProposalValidationKey(proposal)
+	key, err := buildDepositSweepProposalValidationKey(
+		walletPublicKeyHash,
+		proposal,
+	)
 	if err != nil {
 		return err
 	}
@@ -511,11 +519,12 @@ func (lc *LocalChain) SetDepositSweepProposalValidationResult(
 }
 
 func buildDepositSweepProposalValidationKey(
+	walletPublicKeyHash [20]byte,
 	proposal *tbtc.DepositSweepProposal,
 ) ([32]byte, error) {
 	var buffer bytes.Buffer
 
-	buffer.Write(proposal.WalletPublicKeyHash[:])
+	buffer.Write(walletPublicKeyHash[:])
 
 	for _, deposit := range proposal.DepositsKeys {
 		buffer.Write(deposit.FundingTxHash[:])
@@ -531,12 +540,16 @@ func buildDepositSweepProposalValidationKey(
 }
 
 func (lc *LocalChain) ValidateRedemptionProposal(
+	walletPublicKeyHash [20]byte,
 	proposal *tbtc.RedemptionProposal,
 ) error {
 	lc.mutex.Lock()
 	defer lc.mutex.Unlock()
 
-	key, err := buildRedemptionProposalValidationKey(proposal)
+	key, err := buildRedemptionProposalValidationKey(
+		walletPublicKeyHash,
+		proposal,
+	)
 	if err != nil {
 		return err
 	}
@@ -554,13 +567,17 @@ func (lc *LocalChain) ValidateRedemptionProposal(
 }
 
 func (lc *LocalChain) SetRedemptionProposalValidationResult(
+	walletPublicKeyHash [20]byte,
 	proposal *tbtc.RedemptionProposal,
 	result bool,
 ) error {
 	lc.mutex.Lock()
 	defer lc.mutex.Unlock()
 
-	key, err := buildRedemptionProposalValidationKey(proposal)
+	key, err := buildRedemptionProposalValidationKey(
+		walletPublicKeyHash,
+		proposal,
+	)
 	if err != nil {
 		return err
 	}
@@ -571,6 +588,7 @@ func (lc *LocalChain) SetRedemptionProposalValidationResult(
 }
 
 func (lc *LocalChain) ValidateHeartbeatProposal(
+	walletPublicKeyHash [20]byte,
 	proposal *tbtc.HeartbeatProposal,
 ) error {
 	lc.mutex.Lock()
@@ -599,11 +617,12 @@ func (lc *LocalChain) SetHeartbeatProposalValidationResult(
 }
 
 func buildRedemptionProposalValidationKey(
+	walletPublicKeyHash [20]byte,
 	proposal *tbtc.RedemptionProposal,
 ) ([32]byte, error) {
 	var buffer bytes.Buffer
 
-	buffer.Write(proposal.WalletPublicKeyHash[:])
+	buffer.Write(walletPublicKeyHash[:])
 
 	for _, script := range proposal.RedeemersOutputScripts {
 		buffer.Write(script)

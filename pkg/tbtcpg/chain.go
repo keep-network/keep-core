@@ -80,6 +80,7 @@ type Chain interface {
 	// that must be fetched externally. Returns an error if the proposal is
 	// not valid or nil otherwise.
 	ValidateDepositSweepProposal(
+		walletPublicKeyHash [20]byte,
 		proposal *tbtc.DepositSweepProposal,
 		depositsExtraInfo []struct {
 			*tbtc.Deposit
@@ -90,7 +91,10 @@ type Chain interface {
 	// ValidateRedemptionProposal validates the given redemption proposal
 	// against the chain. Returns an error if the proposal is not valid or
 	// nil otherwise.
-	ValidateRedemptionProposal(proposal *tbtc.RedemptionProposal) error
+	ValidateRedemptionProposal(
+		walletPublicKeyHash [20]byte,
+		proposal *tbtc.RedemptionProposal,
+	) error
 
 	// GetDepositSweepMaxSize gets the maximum number of deposits that can
 	// be part of a deposit sweep proposal.
@@ -103,5 +107,8 @@ type Chain interface {
 	// ValidateHeartbeatProposal validates the given heartbeat proposal
 	// against the chain. Returns an error if the proposal is not valid or
 	// nil otherwise.
-	ValidateHeartbeatProposal(proposal *tbtc.HeartbeatProposal) error
+	ValidateHeartbeatProposal(
+		walletPublicKeyHash [20]byte,
+		proposal *tbtc.HeartbeatProposal,
+	) error
 }

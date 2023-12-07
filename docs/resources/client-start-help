@@ -39,7 +39,7 @@ Flags:
       --developer.randomBeaconAddress string                Address of the RandomBeacon smart contract
       --developer.tokenStakingAddress string                Address of the TokenStaking smart contract
       --developer.walletRegistryAddress string              Address of the WalletRegistry smart contract
-      --developer.walletCoordinatorAddress string           Address of the WalletCoordinator smart contract
+      --developer.walletProposalValidatorAddress string     Address of the WalletProposalValidator smart contract
 
 Global Flags:
   -c, --config string   Path to the configuration file. Supported formats: TOML, YAML, JSON.

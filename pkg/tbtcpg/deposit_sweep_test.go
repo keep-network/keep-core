@@ -121,6 +121,7 @@ func TestDepositSweepTask_ProposeDepositsSweep(t *testing.T) {
 
 			if scenario.ExpectedDepositSweepProposal != nil {
 				err := tbtcChain.SetDepositSweepProposalValidationResult(
+					scenario.WalletPublicKeyHash,
 					scenario.ExpectedDepositSweepProposal,
 					nil,
 					true,

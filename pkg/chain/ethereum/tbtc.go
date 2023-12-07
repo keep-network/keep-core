@@ -34,21 +34,21 @@ import (
 const (
 	// TODO: The WalletRegistry address is taken from the Bridge contract.
 	//       Remove the possibility of passing it through the config.
-	WalletRegistryContractName    = "WalletRegistry"
-	BridgeContractName            = "Bridge"
-	MaintainerProxyContractName   = "MaintainerProxy"
-	WalletCoordinatorContractName = "WalletCoordinator"
+	WalletRegistryContractName          = "WalletRegistry"
+	BridgeContractName                  = "Bridge"
+	MaintainerProxyContractName         = "MaintainerProxy"
+	WalletProposalValidatorContractName = "WalletProposalValidator"
 )
 
 // TbtcChain represents a TBTC-specific chain handle.
 type TbtcChain struct {
 	*baseChain
 
-	bridge            *tbtccontract.Bridge
-	maintainerProxy   *tbtccontract.MaintainerProxy
-	walletRegistry    *ecdsacontract.WalletRegistry
-	sortitionPool     *ecdsacontract.EcdsaSortitionPool
-	walletCoordinator *tbtccontract.WalletCoordinator
+	bridge                  *tbtccontract.Bridge
+	maintainerProxy         *tbtccontract.MaintainerProxy
+	walletRegistry          *ecdsacontract.WalletRegistry
+	sortitionPool           *ecdsacontract.EcdsaSortitionPool
+	walletProposalValidator *tbtccontract.WalletProposalValidator
 }
 
 // NewTbtcChain construct a new instance of the TBTC-specific Ethereum
@@ -165,20 +165,20 @@ func newTbtcChain(
 		)
 	}
 
-	walletCoordinatorAddress, err := config.ContractAddress(
-		WalletCoordinatorContractName,
+	walletProposalValidatorAddress, err := config.ContractAddress(
+		WalletProposalValidatorContractName,
 	)
 	if err != nil {
 		return nil, fmt.Errorf(
 			"failed to resolve %s contract address: [%v]",
-			WalletCoordinatorContractName,
+			WalletProposalValidatorContractName,
 			err,
 		)
 	}
 
-	walletCoordinator, err :=
-		tbtccontract.NewWalletCoordinator(
-			walletCoordinatorAddress,
+	walletProposalValidator, err :=
+		tbtccontract.NewWalletProposalValidator(
+			walletProposalValidatorAddress,
 			baseChain.chainID,
 			baseChain.key,
 			baseChain.client,
@@ -189,18 +189,18 @@ func newTbtcChain(
 		)
 	if err != nil {
 		return nil, fmt.Errorf(
-			"failed to attach to WalletCoordinator contract: [%v]",
+			"failed to attach to WalletProposalValidator contract: [%v]",
 			err,
 		)
 	}
 
 	return &TbtcChain{
-		baseChain:         baseChain,
-		bridge:            bridge,
-		maintainerProxy:   maintainerProxy,
-		walletRegistry:    walletRegistry,
-		sortitionPool:     sortitionPool,
-		walletCoordinator: walletCoordinator,
+		baseChain:               baseChain,
+		bridge:                  bridge,
+		maintainerProxy:         maintainerProxy,
+		walletRegistry:          walletRegistry,
+		sortitionPool:           sortitionPool,
+		walletProposalValidator: walletProposalValidator,
 	}, nil
 }
 
@@ -1024,134 +1024,6 @@ func (tc *TbtcChain) PastDepositRevealedEvents(
 	return convertedEvents, err
 }
 
-func (tc *TbtcChain) PastDepositSweepProposalSubmittedEvents(
-	filter *tbtc.DepositSweepProposalSubmittedEventFilter,
-) ([]*tbtc.DepositSweepProposalSubmittedEvent, error) {
-	var startBlock uint64
-	var endBlock *uint64
-	var coordinator []common.Address
-	var walletPublicKeyHash [20]byte
-
-	if filter != nil {
-		startBlock = filter.StartBlock
-		endBlock = filter.EndBlock
-
-		for _, ps := range filter.Coordinator {
-			coordinator = append(
-				coordinator,
-				common.HexToAddress(ps.String()),
-			)
-		}
-
-		walletPublicKeyHash = filter.WalletPublicKeyHash
-	}
-
-	events, err := tc.walletCoordinator.PastDepositSweepProposalSubmittedEvents(
-		startBlock,
-		endBlock,
-		coordinator,
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	convertedEvents := make([]*tbtc.DepositSweepProposalSubmittedEvent, 0)
-	for _, event := range events {
-		// If the wallet PKH filter is set, omit all events that target
-		// different wallets.
-		if walletPublicKeyHash != [20]byte{} {
-			if event.Proposal.WalletPubKeyHash != walletPublicKeyHash {
-				continue
-			}
-		}
-
-		convertedEvent := &tbtc.DepositSweepProposalSubmittedEvent{
-			Proposal:    convertDepositSweepProposalFromAbiType(event.Proposal),
-			Coordinator: chain.Address(event.Coordinator.Hex()),
-			BlockNumber: event.Raw.BlockNumber,
-		}
-
-		convertedEvents = append(convertedEvents, convertedEvent)
-	}
-
-	sort.SliceStable(
-		convertedEvents,
-		func(i, j int) bool {
-			return convertedEvents[i].BlockNumber < convertedEvents[j].BlockNumber
-		},
-	)
-
-	return convertedEvents, err
-}
-
-func (tc *TbtcChain) PastRedemptionProposalSubmittedEvents(
-	filter *tbtc.RedemptionProposalSubmittedEventFilter,
-) ([]*tbtc.RedemptionProposalSubmittedEvent, error) {
-	var startBlock uint64
-	var endBlock *uint64
-	var coordinator []common.Address
-	var walletPublicKeyHash [20]byte
-
-	if filter != nil {
-		startBlock = filter.StartBlock
-		endBlock = filter.EndBlock
-
-		for _, ps := range filter.Coordinator {
-			coordinator = append(
-				coordinator,
-				common.HexToAddress(ps.String()),
-			)
-		}
-
-		walletPublicKeyHash = filter.WalletPublicKeyHash
-	}
-
-	events, err := tc.walletCoordinator.PastRedemptionProposalSubmittedEvents(
-		startBlock,
-		endBlock,
-		coordinator,
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	convertedEvents := make([]*tbtc.RedemptionProposalSubmittedEvent, 0)
-	for _, event := range events {
-		// If the wallet PKH filter is set, omit all events that target
-		// different wallets.
-		if walletPublicKeyHash != [20]byte{} {
-			if event.Proposal.WalletPubKeyHash != walletPublicKeyHash {
-				continue
-			}
-		}
-
-		tbtcProposal, err := convertRedemptionProposalFromAbiType(event.Proposal)
-		if err != nil {
-			return nil, fmt.Errorf(
-				"unexpected proposal in RedemptionProposalSubmitted event: [%v]",
-				err,
-			)
-		}
-
-		convertedEvent := &tbtc.RedemptionProposalSubmittedEvent{
-			Proposal:    tbtcProposal,
-			Coordinator: chain.Address(event.Coordinator.Hex()),
-			BlockNumber: event.Raw.BlockNumber,
-		}
-
-		convertedEvents = append(convertedEvents, convertedEvent)
-	}
-
-	sort.SliceStable(
-		convertedEvents,
-		func(i, j int) bool {
-			return convertedEvents[i].BlockNumber < convertedEvents[j].BlockNumber
-		},
-	)
-
-	return convertedEvents, err
-}
-
 func (tc *TbtcChain) PastRedemptionRequestedEvents(
 	filter *tbtc.RedemptionRequestedEventFilter,
 ) ([]*tbtc.RedemptionRequestedEvent, error) {
@@ -1595,84 +1467,12 @@ func buildDepositKey(
 	return depositKey.Big()
 }
 
-func (tc *TbtcChain) OnHeartbeatRequestSubmitted(
-	handler func(event *tbtc.HeartbeatRequestSubmittedEvent),
-) subscription.EventSubscription {
-	onEvent := func(
-		walletPubKeyHash [20]byte,
-		message []byte,
-		coordinator common.Address,
-		blockNumber uint64,
-	) {
-		handler(&tbtc.HeartbeatRequestSubmittedEvent{
-			WalletPublicKeyHash: walletPubKeyHash,
-			Message:             message,
-			Coordinator:         chain.Address(coordinator.Hex()),
-			BlockNumber:         blockNumber,
-		})
-	}
-
-	return tc.walletCoordinator.HeartbeatRequestSubmittedEvent(nil, nil).OnEvent(onEvent)
-}
-
-func (tc *TbtcChain) OnDepositSweepProposalSubmitted(
-	handler func(event *tbtc.DepositSweepProposalSubmittedEvent),
-) subscription.EventSubscription {
-	onEvent := func(
-		proposal tbtcabi.WalletCoordinatorDepositSweepProposal,
-		coordinator common.Address,
-		blockNumber uint64,
-	) {
-		handler(&tbtc.DepositSweepProposalSubmittedEvent{
-			Proposal:    convertDepositSweepProposalFromAbiType(proposal),
-			Coordinator: chain.Address(coordinator.Hex()),
-			BlockNumber: blockNumber,
-		})
-	}
-
-	return tc.walletCoordinator.
-		DepositSweepProposalSubmittedEvent(nil, nil).
-		OnEvent(onEvent)
-}
-
-func convertDepositSweepProposalFromAbiType(
-	proposal tbtcabi.WalletCoordinatorDepositSweepProposal,
-) *tbtc.DepositSweepProposal {
-	depositsKeys := make(
-		[]struct {
-			FundingTxHash      bitcoin.Hash
-			FundingOutputIndex uint32
-		},
-		len(proposal.DepositsKeys),
-	)
-
-	for i, depositKey := range proposal.DepositsKeys {
-		// We can map the depositKey.FundingTxHash field directly to the
-		// bitcoin.Hash type. This is because depositKey.FundingTxHash is
-		// a [32]byte type representing a hash in the bitcoin.InternalByteOrder,
-		// just as bitcoin.Hash assumes.
-		depositsKeys[i] = struct {
-			FundingTxHash      bitcoin.Hash
-			FundingOutputIndex uint32
-		}{
-			FundingTxHash:      depositKey.FundingTxHash,
-			FundingOutputIndex: depositKey.FundingOutputIndex,
-		}
-	}
-
-	return &tbtc.DepositSweepProposal{
-		WalletPublicKeyHash:  proposal.WalletPubKeyHash,
-		DepositsKeys:         depositsKeys,
-		SweepTxFee:           proposal.SweepTxFee,
-		DepositsRevealBlocks: proposal.DepositsRevealBlocks,
-	}
-}
-
 func convertDepositSweepProposalToAbiType(
+	walletPublicKeyHash [20]byte,
 	proposal *tbtc.DepositSweepProposal,
-) tbtcabi.WalletCoordinatorDepositSweepProposal {
+) tbtcabi.WalletProposalValidatorDepositSweepProposal {
 	depositsKeys := make(
-		[]tbtcabi.WalletCoordinatorDepositKey,
+		[]tbtcabi.WalletProposalValidatorDepositKey,
 		len(proposal.DepositsKeys),
 	)
 
@@ -1681,52 +1481,17 @@ func convertDepositSweepProposalToAbiType(
 		// [32]byte type. This is because depositKey.FundingTxHash is
 		// a bitcoin.Hash type representing a hash in the
 		// bitcoin.InternalByteOrder, just as the on-chain contract assumes.
-		depositsKeys[i] = tbtcabi.WalletCoordinatorDepositKey{
+		depositsKeys[i] = tbtcabi.WalletProposalValidatorDepositKey{
 			FundingTxHash:      depositKey.FundingTxHash,
 			FundingOutputIndex: depositKey.FundingOutputIndex,
 		}
 	}
 
-	return tbtcabi.WalletCoordinatorDepositSweepProposal{
-		WalletPubKeyHash:     proposal.WalletPublicKeyHash,
+	return tbtcabi.WalletProposalValidatorDepositSweepProposal{
+		WalletPubKeyHash:     walletPublicKeyHash,
 		DepositsKeys:         depositsKeys,
 		SweepTxFee:           proposal.SweepTxFee,
 		DepositsRevealBlocks: proposal.DepositsRevealBlocks,
-	}
-}
-
-func (tc *TbtcChain) GetWalletLock(
-	walletPublicKeyHash [20]byte,
-) (time.Time, tbtc.WalletActionType, error) {
-	lock, err := tc.walletCoordinator.WalletLock(walletPublicKeyHash)
-	if err != nil {
-		return time.Time{}, 0, fmt.Errorf("cannot get wallet lock from chain: [%v]", err)
-	}
-
-	cause, err := parseWalletActionType(lock.Cause)
-	if err != nil {
-		return time.Time{}, 0, fmt.Errorf("cannot parse wallet lock cause: [%v]", err)
-	}
-
-	return time.Unix(int64(lock.ExpiresAt), 0), cause, nil
-}
-
-func parseWalletActionType(value uint8) (tbtc.WalletActionType, error) {
-	switch value {
-	case 0:
-		return tbtc.ActionNoop, nil
-	case 1:
-		return tbtc.ActionHeartbeat, nil
-	case 2:
-		return tbtc.ActionDepositSweep, nil
-	case 3:
-		return tbtc.ActionRedemption, nil
-	case 4:
-		return tbtc.ActionMovingFunds, nil
-	case 5:
-		return tbtc.ActionMovedFundsSweep, nil
-	default:
-		return 0, fmt.Errorf("unexpected wallet action value: [%v]", value)
 	}
 }
 
@@ -1750,13 +1515,14 @@ func parseWalletState(value uint8) (tbtc.WalletState, error) {
 }
 
 func (tc *TbtcChain) ValidateDepositSweepProposal(
+	walletPublicKeyHash [20]byte,
 	proposal *tbtc.DepositSweepProposal,
 	depositsExtraInfo []struct {
 		*tbtc.Deposit
 		FundingTx *bitcoin.Transaction
 	},
 ) error {
-	dei := make([]tbtcabi.WalletCoordinatorDepositExtraInfo, len(depositsExtraInfo))
+	dei := make([]tbtcabi.WalletProposalValidatorDepositExtraInfo, len(depositsExtraInfo))
 	for i, depositExtraInfo := range depositsExtraInfo {
 		fundingTx := tbtcabi.BitcoinTxInfo2{
 			Version:      depositExtraInfo.FundingTx.SerializeVersion(),
@@ -1765,7 +1531,7 @@ func (tc *TbtcChain) ValidateDepositSweepProposal(
 			Locktime:     depositExtraInfo.FundingTx.SerializeLocktime(),
 		}
 
-		dei[i] = tbtcabi.WalletCoordinatorDepositExtraInfo{
+		dei[i] = tbtcabi.WalletProposalValidatorDepositExtraInfo{
 			FundingTx:        fundingTx,
 			BlindingFactor:   depositExtraInfo.Deposit.BlindingFactor,
 			WalletPubKeyHash: depositExtraInfo.Deposit.WalletPublicKeyHash,
@@ -1774,8 +1540,8 @@ func (tc *TbtcChain) ValidateDepositSweepProposal(
 		}
 	}
 
-	valid, err := tc.walletCoordinator.ValidateDepositSweepProposal(
-		convertDepositSweepProposalToAbiType(proposal),
+	valid, err := tc.walletProposalValidator.ValidateDepositSweepProposal(
+		convertDepositSweepProposalToAbiType(walletPublicKeyHash, proposal),
 		dei,
 	)
 	if err != nil {
@@ -1792,47 +1558,22 @@ func (tc *TbtcChain) ValidateDepositSweepProposal(
 }
 
 func (tc *TbtcChain) GetDepositSweepMaxSize() (uint16, error) {
-	return tc.walletCoordinator.DepositSweepMaxSize()
-}
-
-func (tc *TbtcChain) OnRedemptionProposalSubmitted(
-	handler func(event *tbtc.RedemptionProposalSubmittedEvent),
-) subscription.EventSubscription {
-	onEvent := func(
-		proposal tbtcabi.WalletCoordinatorRedemptionProposal,
-		coordinator common.Address,
-		blockNumber uint64,
-	) {
-		tbtcProposal, err := convertRedemptionProposalFromAbiType(proposal)
-		if err != nil {
-			logger.Errorf(
-				"unexpected proposal in RedemptionProposalSubmitted event: [%v]",
-				err,
-			)
-			return
-		}
-
-		handler(&tbtc.RedemptionProposalSubmittedEvent{
-			Proposal:    tbtcProposal,
-			Coordinator: chain.Address(coordinator.Hex()),
-			BlockNumber: blockNumber,
-		})
-	}
-
-	return tc.walletCoordinator.
-		RedemptionProposalSubmittedEvent(nil, nil).
-		OnEvent(onEvent)
+	return tc.walletProposalValidator.DEPOSITSWEEPMAXSIZE()
 }
 
 func (tc *TbtcChain) ValidateRedemptionProposal(
+	walletPublicKeyHash [20]byte,
 	proposal *tbtc.RedemptionProposal,
 ) error {
-	abiProposal, err := convertRedemptionProposalToAbiType(proposal)
+	abiProposal, err := convertRedemptionProposalToAbiType(
+		walletPublicKeyHash,
+		proposal,
+	)
 	if err != nil {
 		return fmt.Errorf("cannot convert proposal to abi type: [%v]", err)
 	}
 
-	valid, err := tc.walletCoordinator.ValidateRedemptionProposal(
+	valid, err := tc.walletProposalValidator.ValidateRedemptionProposal(
 		abiProposal,
 	)
 	if err != nil {
@@ -1848,36 +1589,10 @@ func (tc *TbtcChain) ValidateRedemptionProposal(
 	return nil
 }
 
-func convertRedemptionProposalFromAbiType(
-	proposal tbtcabi.WalletCoordinatorRedemptionProposal,
-) (*tbtc.RedemptionProposal, error) {
-	redeemersOutputScripts := make(
-		[]bitcoin.Script,
-		len(proposal.RedeemersOutputScripts),
-	)
-
-	for i, script := range proposal.RedeemersOutputScripts {
-		// The on-chain script representation is prepended with the script's
-		// byte-length while bitcoin.Script is not. We need to remove the
-		// length prefix.
-		unprefixedScript, err := bitcoin.NewScriptFromVarLenData(script)
-		if err != nil {
-			return nil, fmt.Errorf("cannot convert redeemer output script: [%v]", err)
-		}
-
-		redeemersOutputScripts[i] = unprefixedScript
-	}
-
-	return &tbtc.RedemptionProposal{
-		WalletPublicKeyHash:    proposal.WalletPubKeyHash,
-		RedeemersOutputScripts: redeemersOutputScripts,
-		RedemptionTxFee:        proposal.RedemptionTxFee,
-	}, nil
-}
-
 func convertRedemptionProposalToAbiType(
+	walletPublicKeyHash [20]byte,
 	proposal *tbtc.RedemptionProposal,
-) (tbtcabi.WalletCoordinatorRedemptionProposal, error) {
+) (tbtcabi.WalletProposalValidatorRedemptionProposal, error) {
 	redeemersOutputScripts := make(
 		[][]byte,
 		len(proposal.RedeemersOutputScripts),
@@ -1889,7 +1604,7 @@ func convertRedemptionProposalToAbiType(
 		// length prefix.
 		prefixedScript, err := script.ToVarLenData()
 		if err != nil {
-			return tbtcabi.WalletCoordinatorRedemptionProposal{}, fmt.Errorf(
+			return tbtcabi.WalletProposalValidatorRedemptionProposal{}, fmt.Errorf(
 				"cannot convert redeemer output script: [%v]",
 				err,
 			)
@@ -1898,24 +1613,40 @@ func convertRedemptionProposalToAbiType(
 		redeemersOutputScripts[i] = prefixedScript
 	}
 
-	return tbtcabi.WalletCoordinatorRedemptionProposal{
-		WalletPubKeyHash:       proposal.WalletPublicKeyHash,
+	return tbtcabi.WalletProposalValidatorRedemptionProposal{
+		WalletPubKeyHash:       walletPublicKeyHash,
 		RedeemersOutputScripts: redeemersOutputScripts,
 		RedemptionTxFee:        proposal.RedemptionTxFee,
 	}, nil
 }
 
 func (tc *TbtcChain) GetRedemptionMaxSize() (uint16, error) {
-	return tc.walletCoordinator.RedemptionMaxSize()
+	return tc.walletProposalValidator.REDEMPTIONMAXSIZE()
 }
 
 func (tc *TbtcChain) GetRedemptionRequestMinAge() (uint32, error) {
-	return tc.walletCoordinator.RedemptionRequestMinAge()
+	return tc.walletProposalValidator.REDEMPTIONREQUESTMINAGE()
 }
 
 func (tc *TbtcChain) ValidateHeartbeatProposal(
+	walletPublicKeyHash [20]byte,
 	proposal *tbtc.HeartbeatProposal,
 ) error {
-	// TODO: Implementation.
-	panic("not implemented yet")
+	valid, err := tc.walletProposalValidator.ValidateHeartbeatProposal(
+		tbtcabi.WalletProposalValidatorHeartbeatProposal{
+			WalletPubKeyHash: walletPublicKeyHash,
+			Message:          proposal.Message[:],
+		},
+	)
+	if err != nil {
+		return fmt.Errorf("validation failed: [%v]", err)
+	}
+
+	// Should never happen because `validateHeartbeatProposal` returns true
+	// or reverts (returns an error) but do the check just in case.
+	if !valid {
+		return fmt.Errorf("unexpected validation result")
+	}
+
+	return nil
 }

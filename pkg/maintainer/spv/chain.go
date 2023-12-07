@@ -49,18 +49,6 @@ type Chain interface {
 	// BlockCounter returns the chain's block counter.
 	BlockCounter() (chain.BlockCounter, error)
 
-	// PastDepositSweepProposalSubmittedEvents returns past
-	// `DepositSweepProposalSubmitted` events.
-	PastDepositSweepProposalSubmittedEvents(
-		filter *tbtc.DepositSweepProposalSubmittedEventFilter,
-	) ([]*tbtc.DepositSweepProposalSubmittedEvent, error)
-
-	// PastRedemptionProposalSubmittedEvents returns past
-	// `RedemptionProposalSubmitted` events.
-	PastRedemptionProposalSubmittedEvents(
-		filter *tbtc.RedemptionProposalSubmittedEventFilter,
-	) ([]*tbtc.RedemptionProposalSubmittedEvent, error)
-
 	// GetPendingRedemptionRequest gets the on-chain pending redemption request
 	// for the given wallet public key hash and redeemer output script.
 	// The returned bool value indicates whether the request was found or not.
@@ -77,4 +65,20 @@ type Chain interface {
 		mainUTXO bitcoin.UnspentTransactionOutput,
 		walletPublicKeyHash [20]byte,
 	) error
+
+	// PastDepositRevealedEvents fetches past deposit reveal events according
+	// to the provided filter or unfiltered if the filter is nil. Returned
+	// events are sorted by the block number in the ascending order, i.e. the
+	// latest event is at the end of the slice.
+	PastDepositRevealedEvents(
+		filter *tbtc.DepositRevealedEventFilter,
+	) ([]*tbtc.DepositRevealedEvent, error)
+
+	// PastRedemptionRequestedEvents fetches past redemption requested events according
+	// to the provided filter or unfiltered if the filter is nil. Returned
+	// events are sorted by the block number in the ascending order, i.e. the
+	// latest event is at the end of the slice.
+	PastRedemptionRequestedEvents(
+		filter *tbtc.RedemptionRequestedEventFilter,
+	) ([]*tbtc.RedemptionRequestedEvent, error)
 }

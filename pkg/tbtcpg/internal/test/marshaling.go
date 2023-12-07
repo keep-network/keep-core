@@ -132,15 +132,20 @@ type depositSweepProposal struct {
 	DepositsRevealBlocks []int64
 }
 
-func (dsp *depositSweepProposal) convert() (*tbtc.DepositSweepProposal, error) {
+func (dsp *depositSweepProposal) convert() (
+	[20]byte,
+	*tbtc.DepositSweepProposal,
+	error,
+) {
 	if dsp == nil {
-		return nil, nil
+		return [20]byte{}, nil, nil
 	}
 
 	result := &tbtc.DepositSweepProposal{}
 
+	var walletPublicKeyHash [20]byte
 	if len(dsp.WalletPublicKeyHash) > 0 {
-		copy(result.WalletPublicKeyHash[:], hexToSlice(dsp.WalletPublicKeyHash))
+		copy(walletPublicKeyHash[:], hexToSlice(dsp.WalletPublicKeyHash))
 	}
 
 	result.DepositsKeys = make([]struct {
@@ -150,7 +155,7 @@ func (dsp *depositSweepProposal) convert() (*tbtc.DepositSweepProposal, error) {
 	for i, depositKey := range dsp.DepositsKeys {
 		fundingTxHash, err := bitcoin.NewHashFromString(depositKey.FundingTxHash, bitcoin.ReversedByteOrder)
 		if err != nil {
-			return nil, fmt.Errorf(
+			return [20]byte{}, nil, fmt.Errorf(
 				"failed to unmarshal funding transaction hash for deposit [%d/%d]: [%w]",
 				i,
 				len(dsp.DepositsKeys),
@@ -168,7 +173,7 @@ func (dsp *depositSweepProposal) convert() (*tbtc.DepositSweepProposal, error) {
 
 	result.SweepTxFee = big.NewInt(dsp.SweepTxFee)
 
-	return result, nil
+	return walletPublicKeyHash, result, nil
 }
 
 // UnmarshalJSON implements a custom JSON unmarshaling logic to produce a
@@ -237,7 +242,7 @@ func (psts *ProposeSweepTestScenario) UnmarshalJSON(data []byte) error {
 	psts.EstimateSatPerVByteFee = unmarshaled.EstimateSatPerVByteFee
 
 	// Unmarshal deposit sweep proposal
-	psts.ExpectedDepositSweepProposal, err = unmarshaled.ExpectedDepositSweepProposal.convert()
+	_, psts.ExpectedDepositSweepProposal, err = unmarshaled.ExpectedDepositSweepProposal.convert()
 	if err != nil {
 		return fmt.Errorf(
 			"failed to unmarshal expected deposit sweep proposal: [%w]",

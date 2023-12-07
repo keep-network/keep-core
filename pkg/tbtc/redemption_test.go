@@ -69,7 +69,6 @@ func TestRedemptionAction_Execute(t *testing.T) {
 
 			// Build the redemption proposal based on the scenario data.
 			proposal := &RedemptionProposal{
-				WalletPublicKeyHash:    walletPublicKeyHash,
 				RedeemersOutputScripts: redeemersOutputScripts,
 				RedemptionTxFee:        big.NewInt(totalFee),
 			}
@@ -81,6 +80,7 @@ func TestRedemptionAction_Execute(t *testing.T) {
 
 			// Simulate the on-chain proposal validation passes with success.
 			err = hostChain.setRedemptionProposalValidationResult(
+				walletPublicKeyHash,
 				proposal,
 				true,
 			)

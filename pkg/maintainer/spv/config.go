@@ -7,7 +7,7 @@ import (
 const (
 	// DefaultHistoryDepth is the default value for history depth which is the
 	// number of blocks to look back from the current block when searching for
-	// past proposal submission events. The value is the approximate number of
+	// past wallet-related events. The value is the approximate number of
 	// Ethereum blocks in a week, assuming one block is 12s.
 	DefaultHistoryDepth = 50400
 
@@ -35,22 +35,20 @@ type Config struct {
 	Enabled bool
 
 	// HistoryDepth is the number of blocks to look back from the current block
-	// when searching for past proposal submission events.
-	// To find Bitcoin transactions for which the SPV proof should be submitted,
-	// the maintainer first inspects the proposal events from the wallet
-	// coordinator contract. This depth determines how far into the past the
-	// system will consider events for processing. This value must not be too
-	// high so that the event lookup is efficient. At the same time, this value
-	// can not be too low to make sure all performed and not yet proven
-	// transactions can be found.
+	// when searching for past wallet-related events. To find Bitcoin transactions
+	// for which the SPV proof should be submitted, the maintainer first inspects
+	// the appropriate type of wallet-related events. This depth determines how
+	// far into the past the system will consider events for processing. This
+	// value must not be too high so that the event lookup is efficient. At the
+	// same time, this value can not be too low to make sure all performed and
+	// not yet proven transactions can be found.
 	HistoryDepth uint64
 
 	// TransactionLimit sets the maximum number of confirmed transactions
 	// returned when getting transactions for a public key hash. Once the
-	// maintainer establishes the list of proposals of given type, based on the
-	// proposal submission events from the wallet coordinator contract, it needs
-	// to check Bitcoin transactions executed by the wallet. Then, it tries to
-	// find the transactions matching the given proposal type. For example, if set
+	// maintainer establishes the list of wallets, it needs to check Bitcoin
+	// transactions executed by each wallet. Then, it tries to find the
+	// transactions matching the given proposal type. For example, if set
 	// to `20`, only the latest twenty transactions will be returned. This
 	// value must not be too high so that the transaction lookup is efficient.
 	// At the same time, this value can not be too low to make sure the

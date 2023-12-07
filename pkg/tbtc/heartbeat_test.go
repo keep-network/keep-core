@@ -11,24 +11,42 @@ import (
 )
 
 func TestHeartbeatAction_HappyPath(t *testing.T) {
-	startBlock := uint64(10)
-	expiryBlock := startBlock + heartbeatProposalValidityBlocks
-	messageToSign, err := hex.DecodeString("FFFFFFFFFFFFFFFF0000000000000001")
+	walletPublicKeyHex, err := hex.DecodeString(
+		"0471e30bca60f6548d7b42582a478ea37ada63b402af7b3ddd57f0c95bb6843175" +
+			"aa0d2053a91a050a6797d85c38f2909cb7027f2344a01986aa2f9f8ca7a0c289",
+	)
 	if err != nil {
 		t.Fatal(err)
 	}
+
+	startBlock := uint64(10)
+	expiryBlock := startBlock + heartbeatProposalValidityBlocks
+
+	proposal := &HeartbeatProposal{
+		Message: [16]byte{
+			0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+			0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01,
+		},
+	}
+
 	// sha256(sha256(messageToSign))
 	sha256d, err := hex.DecodeString("38d30dacec5083c902952ce99fc0287659ad0b1ca2086827a8e78b0bef2c8bc1")
 	if err != nil {
 		t.Fatal(err)
 	}
 
+	hostChain := Connect()
+	hostChain.setHeartbeatProposalValidationResult(proposal, true)
+
 	mockExecutor := &mockHeartbeatSigningExecutor{}
 	action := newHeartbeatAction(
 		logger,
-		wallet{},
+		hostChain,
+		wallet{
+			publicKey: unmarshalPublicKey(walletPublicKeyHex),
+		},
 		mockExecutor,
-		messageToSign,
+		proposal,
 		startBlock,
 		expiryBlock,
 		func(ctx context.Context, blockHeight uint64) error {
@@ -56,21 +74,38 @@ func TestHeartbeatAction_HappyPath(t *testing.T) {
 }
 
 func TestHeartbeatAction_SigningError(t *testing.T) {
-	startBlock := uint64(10)
-	expiryBlock := startBlock + heartbeatProposalValidityBlocks
-	messageToSign, err := hex.DecodeString("FFFFFFFFFFFFFFFF0000000000000001")
+	walletPublicKeyHex, err := hex.DecodeString(
+		"0471e30bca60f6548d7b42582a478ea37ada63b402af7b3ddd57f0c95bb6843175" +
+			"aa0d2053a91a050a6797d85c38f2909cb7027f2344a01986aa2f9f8ca7a0c289",
+	)
 	if err != nil {
 		t.Fatal(err)
 	}
+
+	startBlock := uint64(10)
+	expiryBlock := startBlock + heartbeatProposalValidityBlocks
+
+	proposal := &HeartbeatProposal{
+		Message: [16]byte{
+			0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+			0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01,
+		},
+	}
+
+	hostChain := Connect()
+	hostChain.setHeartbeatProposalValidationResult(proposal, true)
 
 	mockExecutor := &mockHeartbeatSigningExecutor{}
 	mockExecutor.shouldFail = true
 
 	action := newHeartbeatAction(
 		logger,
-		wallet{},
+		hostChain,
+		wallet{
+			publicKey: unmarshalPublicKey(walletPublicKeyHex),
+		},
 		mockExecutor,
-		messageToSign,
+		proposal,
 		startBlock,
 		expiryBlock,
 		func(ctx context.Context, blockHeight uint64) error {

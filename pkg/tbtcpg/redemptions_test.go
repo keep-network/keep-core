@@ -152,7 +152,6 @@ func TestRedemptionAction_ProposeRedemption(t *testing.T) {
 		"fee provided": {
 			fee: 10000,
 			expectedProposal: &tbtc.RedemptionProposal{
-				WalletPublicKeyHash:    walletPublicKeyHash,
 				RedeemersOutputScripts: redeemersOutputScripts,
 				RedemptionTxFee:        big.NewInt(10000),
 			},
@@ -160,7 +159,6 @@ func TestRedemptionAction_ProposeRedemption(t *testing.T) {
 		"fee estimated": {
 			fee: 0, // trigger fee estimation
 			expectedProposal: &tbtc.RedemptionProposal{
-				WalletPublicKeyHash:    walletPublicKeyHash,
 				RedeemersOutputScripts: redeemersOutputScripts,
 				RedemptionTxFee:        big.NewInt(4300),
 			},
@@ -184,6 +182,7 @@ func TestRedemptionAction_ProposeRedemption(t *testing.T) {
 			}
 
 			err := tbtcChain.SetRedemptionProposalValidationResult(
+				walletPublicKeyHash,
 				test.expectedProposal,
 				true,
 			)

@@ -99,7 +99,7 @@ func buildContractAddresses(lineLength int, prefix, suffix string, ethereumConfi
 		chainEthereum.BridgeContractName,
 		chainEthereum.WalletRegistryContractName,
 		chainEthereum.TokenStakingContractName,
-		chainEthereum.WalletCoordinatorContractName,
+		chainEthereum.WalletProposalValidatorContractName,
 	}
 
 	entries := []string{}

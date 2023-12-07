@@ -51,8 +51,6 @@ const (
 // RedemptionProposal represents a redemption proposal issued by a wallet's
 // coordination leader.
 type RedemptionProposal struct {
-	// TODO: Remove WalletPublicKeyHash field.
-	WalletPublicKeyHash    [20]byte
 	RedeemersOutputScripts []bitcoin.Script
 	RedemptionTxFee        *big.Int
 }
@@ -164,16 +162,17 @@ func (ra *redemptionAction) execute() error {
 		zap.String("step", "validateProposal"),
 	)
 
+	walletPublicKeyHash := bitcoin.PublicKeyHash(ra.wallet().publicKey)
+
 	validatedRequests, err := ValidateRedemptionProposal(
 		validateProposalLogger,
+		walletPublicKeyHash,
 		ra.proposal,
 		ra.chain,
 	)
 	if err != nil {
 		return fmt.Errorf("validate proposal step failed: [%v]", err)
 	}
-
-	walletPublicKeyHash := bitcoin.PublicKeyHash(ra.wallet().publicKey)
 
 	walletMainUtxo, err := DetermineWalletMainUtxo(
 		walletPublicKeyHash,
@@ -263,6 +262,7 @@ func (ra *redemptionAction) execute() error {
 // validation rules.
 func ValidateRedemptionProposal(
 	validateProposalLogger log.StandardLogger,
+	walletPublicKeyHash [20]byte,
 	proposal *RedemptionProposal,
 	chain interface {
 		// GetPendingRedemptionRequest gets the on-chain pending redemption request
@@ -276,12 +276,15 @@ func ValidateRedemptionProposal(
 		// ValidateRedemptionProposal validates the given redemption proposal
 		// against the chain. Returns an error if the proposal is not valid or
 		// nil otherwise.
-		ValidateRedemptionProposal(proposal *RedemptionProposal) error
+		ValidateRedemptionProposal(
+			walletPublicKeyHash [20]byte,
+			proposal *RedemptionProposal,
+		) error
 	},
 ) ([]*RedemptionRequest, error) {
 	validateProposalLogger.Infof("calling chain for proposal validation")
 
-	err := chain.ValidateRedemptionProposal(proposal)
+	err := chain.ValidateRedemptionProposal(walletPublicKeyHash, proposal)
 	if err != nil {
 		return nil, fmt.Errorf("redemption proposal is invalid: [%v]", err)
 	}
@@ -299,7 +302,7 @@ func ValidateRedemptionProposal(
 		)
 
 		request, found, err := chain.GetPendingRedemptionRequest(
-			proposal.WalletPublicKeyHash,
+			walletPublicKeyHash,
 			script,
 		)
 		if err != nil {

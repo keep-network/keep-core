@@ -5,7 +5,7 @@ namespace: default
 
 commonLabels:
   app: keep-maintainer
-  # The current setup runs spv and walletCoordination modules as a workaround
+  # The current setup runs only the spv module as a workaround
   # for reasons mentioned in `patches` property below.
   type: all
   network: sepolia
@@ -45,9 +45,6 @@ patches:
       - op: add
         path: /spec/template/spec/containers/0/args/-
         value: --spv
-      - op: add
-        path: /spec/template/spec/containers/0/args/-
-        value: --walletCoordination
       - op: replace
         path: /spec/template/spec/containers/0/env/0/valueFrom/secretKeyRef/name
         value: eth-network-sepolia
