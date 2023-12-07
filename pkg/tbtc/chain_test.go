@@ -829,6 +829,13 @@ func (lc *localChain) ValidateRedemptionProposal(
 	return nil
 }
 
+func (lc *localChain) ValidateMovingFundsProposal(
+	proposal *MovingFundsProposal,
+) error {
+	// TODO: Implement
+	return nil
+}
+
 func (lc *localChain) setRedemptionProposalValidationResult(
 	proposal *RedemptionProposal,
 	result bool,

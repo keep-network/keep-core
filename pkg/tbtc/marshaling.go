@@ -4,9 +4,10 @@ import (
 	"crypto/ecdsa"
 	"crypto/elliptic"
 	"fmt"
-	"github.com/keep-network/keep-core/pkg/bitcoin"
 	"math"
 	"math/big"
+
+	"github.com/keep-network/keep-core/pkg/bitcoin"
 
 	"google.golang.org/protobuf/proto"
 
@@ -229,8 +230,8 @@ func unmarshalCoordinationProposal(actionType uint32, payload []byte) (
 		ActionHeartbeat:    &HeartbeatProposal{},
 		ActionDepositSweep: &DepositSweepProposal{},
 		ActionRedemption:   &RedemptionProposal{},
+		ActionMovingFunds:  &MovingFundsProposal{},
 		// TODO: Uncomment when moving funds support is implemented.
-		// ActionMovingFunds:     &MovingFundsProposal{},
 		// ActionMovedFundsSweep: &MovedFundsSweepProposal{},
 	}[parsedActionType]
 	if !ok {
@@ -392,6 +393,18 @@ func (rp *RedemptionProposal) Unmarshal(bytes []byte) error {
 	rp.RedeemersOutputScripts = redeemersOutputScripts
 	rp.RedemptionTxFee = new(big.Int).SetBytes(pbMsg.RedemptionTxFee)
 
+	return nil
+}
+
+// Marshal converts the movingFundsProposal to a byte array.
+func (mfp *MovingFundsProposal) Marshal() ([]byte, error) {
+	// TODO: Implement
+	return nil, nil
+}
+
+// Unmarshal converts a byte array back to the movingFundsProposal.
+func (mfp *MovingFundsProposal) Unmarshal(bytes []byte) error {
+	// TODO: Implement
 	return nil
 }
 

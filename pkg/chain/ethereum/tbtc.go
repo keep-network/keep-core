@@ -1972,3 +1972,10 @@ func (tc *TbtcChain) ValidateHeartbeatProposal(
 	// TODO: Implementation.
 	panic("not implemented yet")
 }
+
+func (tc *TbtcChain) ValidateMovingFundsProposal(
+	proposal *tbtc.MovingFundsProposal,
+) error {
+	// TODO: Implement
+	return nil
+}

@@ -40,9 +40,9 @@ func NewProposalGenerator(
 		NewDepositSweepTask(chain, btcChain),
 		NewRedemptionTask(chain, btcChain),
 		NewHeartbeatTask(chain),
+		NewMovingFundsTask(chain, btcChain),
 		// TODO: Uncomment when moving funds support is implemented.
 		// newMovedFundsSweepTask(),
-		// newMovingFundsTask(),
 	}
 
 	return &ProposalGenerator{

@@ -392,6 +392,11 @@ type WalletCoordinatorChain interface {
 	// against the chain. Returns an error if the proposal is not valid or
 	// nil otherwise.
 	ValidateRedemptionProposal(proposal *RedemptionProposal) error
+
+	// ValidateMovingFundsProposal validates the given moving funds proposal
+	// against the chain. Returns an error if the proposal is not valid or
+	// nil otherwise.
+	ValidateMovingFundsProposal(proposal *MovingFundsProposal) error
 }
 
 // HeartbeatRequestSubmittedEvent represents a wallet heartbeat request
