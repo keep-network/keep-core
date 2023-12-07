@@ -755,10 +755,18 @@ func processCoordinationResult(node *node, result *coordinationResult) {
 	// TODO: In the future, create coordination faults cache and
 	//       record faults from the processed results there.
 
+	proposedAction := result.proposal.ActionType()
+
+	if proposedAction == ActionNoop {
+		// No-op proposal cannot be processed so return early to avoid
+		// panicking on the ValidityBlocks call.
+		return
+	}
+
 	startBlock := result.window.endBlock()
 	expiryBlock := startBlock + result.proposal.ValidityBlocks()
 
-	switch result.proposal.ActionType() {
+	switch proposedAction {
 	case ActionHeartbeat:
 		if proposal, ok := result.proposal.(*HeartbeatProposal); ok {
 			node.handleHeartbeatProposal(
