@@ -365,15 +365,15 @@ func (ce *coordinationExecutor) coordinate(
 		return nil, fmt.Errorf("failed to compute coordination seed: [%v]", err)
 	}
 
-	execLogger.Info("coordination seed is: [0x%x]", seed)
+	execLogger.Infof("coordination seed is: [0x%x]", seed)
 
 	leader := ce.getLeader(seed)
 
-	execLogger.Info("coordination leader is: [%s]", leader)
+	execLogger.Infof("coordination leader is: [%s]", leader)
 
 	actionsChecklist := ce.getActionsChecklist(window.index(), seed)
 
-	execLogger.Info("actions checklist is: [%v]", actionsChecklist)
+	execLogger.Infof("actions checklist is: [%v]", actionsChecklist)
 
 	// Set up a context that is automatically cancelled when the active phase
 	// of the coordination window ends.
@@ -414,7 +414,7 @@ func (ce *coordinationExecutor) coordinate(
 			)
 		}
 
-		execLogger.Info("broadcasted proposal: [%s]", proposal.ActionType())
+		execLogger.Infof("broadcasted proposal: [%s]", proposal.ActionType())
 	} else {
 		execLogger.Info("executing follower's routine")
 
@@ -434,7 +434,7 @@ func (ce *coordinationExecutor) coordinate(
 			)
 		}
 
-		execLogger.Info(
+		execLogger.Infof(
 			"received proposal: [%s]; observed faults: [%v]",
 			proposal.ActionType(),
 			faults,
@@ -454,7 +454,7 @@ func (ce *coordinationExecutor) coordinate(
 		faults:   faults,
 	}
 
-	execLogger.Info("coordination completed with result: [%s]", result)
+	execLogger.Infof("coordination completed with result: [%s]", result)
 
 	return result, nil
 }
