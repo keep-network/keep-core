@@ -44,13 +44,6 @@
             "Enabled": true,
             "DisableProxy": true
         },
-        "WalletCoordination": {
-          "Enabled": true,
-          "RedemptionInterval": "13h",
-          "RedemptionWalletsLimit": 10,
-          "RedemptionRequestAmountLimit": 500,
-          "DepositSweepInterval": "64h"
-        },
         "Spv": {
             "Enabled": true,
             "HistoryDepth": 25000,
@@ -67,6 +60,6 @@
         "MaintainerProxyAddress": "0xC6D21c2871586A2B098c0ad043fF0D47a3c7e7ae",
         "LightRelayAddress": "0x68e20afD773fDF1231B5cbFeA7040e73e79cAc36",
         "LightRelayMaintainerProxyAddress": "0x30cd93828613D5945A2916a22E0f0e9bC561EAB5",
-        "WalletCoordinatorAddress": "0xfdc315b0e608b7cDE9166D9D69a1506779e3E0CA"
+        "WalletProposalValidatorAddress": "0xfdc315b0e608b7cDE9166D9D69a1506779e3E0CA"
     }
 }

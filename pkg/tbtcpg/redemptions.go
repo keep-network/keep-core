@@ -217,7 +217,6 @@ func (rt *RedemptionTask) ProposeRedemption(
 	taskLogger.Infof("redemption transaction fee: [%d]", fee)
 
 	proposal := &tbtc.RedemptionProposal{
-		WalletPublicKeyHash:    walletPublicKeyHash,
 		RedeemersOutputScripts: redeemersOutputScripts,
 		RedemptionTxFee:        big.NewInt(fee),
 	}
@@ -226,6 +225,7 @@ func (rt *RedemptionTask) ProposeRedemption(
 
 	if _, err := tbtc.ValidateRedemptionProposal(
 		taskLogger,
+		walletPublicKeyHash,
 		proposal,
 		rt.chain,
 	); err != nil {

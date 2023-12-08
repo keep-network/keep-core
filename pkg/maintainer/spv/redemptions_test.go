@@ -252,43 +252,35 @@ func TestGetUnprovenRedemptionTransactions(t *testing.T) {
 		)
 	}
 
-	// Add proposal events for the wallets. Only wallet public key hash field
+	// Add redemption events for the wallets. Only wallet public key hash field
 	// is relevant as those events are just used to get a list of distinct
-	// wallets who performed redemptions recently. The block number field
+	// wallets who likely performed redemptions recently. The block number field
 	// is just to make them distinguishable while reading.
-	proposalEvents := []*tbtc.RedemptionProposalSubmittedEvent{
+	events := []*tbtc.RedemptionRequestedEvent{
 		{
-			Proposal: &tbtc.RedemptionProposal{
-				WalletPublicKeyHash: wallets[0].walletPublicKeyHash,
-			},
-			BlockNumber: 100,
+			WalletPublicKeyHash: wallets[0].walletPublicKeyHash,
+			BlockNumber:         100,
 		},
 		{
-			Proposal: &tbtc.RedemptionProposal{
-				WalletPublicKeyHash: wallets[0].walletPublicKeyHash,
-			},
-			BlockNumber: 200,
+			WalletPublicKeyHash: wallets[0].walletPublicKeyHash,
+			BlockNumber:         200,
 		},
 		{
-			Proposal: &tbtc.RedemptionProposal{
-				WalletPublicKeyHash: wallets[1].walletPublicKeyHash,
-			},
-			BlockNumber: 300,
+			WalletPublicKeyHash: wallets[1].walletPublicKeyHash,
+			BlockNumber:         300,
 		},
 		{
-			Proposal: &tbtc.RedemptionProposal{
-				WalletPublicKeyHash: wallets[1].walletPublicKeyHash,
-			},
-			BlockNumber: 400,
+			WalletPublicKeyHash: wallets[1].walletPublicKeyHash,
+			BlockNumber:         400,
 		},
 	}
 
-	for _, proposalEvent := range proposalEvents {
-		err := spvChain.AddPastRedemptionProposalSubmittedEvent(
-			&tbtc.RedemptionProposalSubmittedEventFilter{
+	for _, event := range events {
+		err := spvChain.addPastRedemptionRequestedEvent(
+			&tbtc.RedemptionRequestedEventFilter{
 				StartBlock: currentBlock - historyDepth,
 			},
-			proposalEvent,
+			event,
 		)
 		if err != nil {
 			t.Fatal(err)

@@ -1,8 +1,6 @@
 package tbtc
 
 import (
-	"time"
-
 	"github.com/ipfs/go-log/v2"
 
 	"github.com/keep-network/keep-core/pkg/bitcoin"
@@ -47,9 +45,6 @@ type movingFundsAction struct {
 	proposal                     *MovingFundsProposal
 	proposalProcessingStartBlock uint64
 	proposalExpiryBlock          uint64
-
-	broadcastTimeout    time.Duration
-	broadcastCheckDelay time.Duration
 }
 
 func newMovingFundsAction(

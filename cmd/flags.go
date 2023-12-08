@@ -337,8 +337,7 @@ func initMaintainerFlags(command *cobra.Command, cfg *config.Config) {
 		&cfg.Maintainer.Spv.HistoryDepth,
 		"spv.historyDepth",
 		spv.DefaultHistoryDepth,
-		"Number of blocks to look back for past deposit sweep proposal "+
-			"submitted events.",
+		"Number of blocks to look back for past wallet-related events.",
 	)
 
 	command.Flags().IntVar(
@@ -386,5 +385,5 @@ func initDeveloperFlags(command *cobra.Command) {
 	initContractAddressFlag(chainEthereum.RandomBeaconContractName)
 	initContractAddressFlag(chainEthereum.TokenStakingContractName)
 	initContractAddressFlag(chainEthereum.WalletRegistryContractName)
-	initContractAddressFlag(chainEthereum.WalletCoordinatorContractName)
+	initContractAddressFlag(chainEthereum.WalletProposalValidatorContractName)
 }

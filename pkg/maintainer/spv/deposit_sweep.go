@@ -245,15 +245,15 @@ func getUnprovenDepositSweepTransactions(
 	// searched for.
 	startBlock := currentBlock - historyDepth
 
-	depositSweepProposals, err :=
-		spvChain.PastDepositSweepProposalSubmittedEvents(
-			&tbtc.DepositSweepProposalSubmittedEventFilter{
+	events, err :=
+		spvChain.PastDepositRevealedEvents(
+			&tbtc.DepositRevealedEventFilter{
 				StartBlock: startBlock,
 			},
 		)
 	if err != nil {
 		return nil, fmt.Errorf(
-			"failed to get past deposit sweep proposal submitted events: [%v]",
+			"failed to get past deposit revealed events: [%v]",
 			err,
 		)
 	}
@@ -261,7 +261,7 @@ func getUnprovenDepositSweepTransactions(
 	// There will often be multiple events emitted for a single wallet. Prepare
 	// a list of unique wallet public key hashes.
 	walletPublicKeyHashes := uniqueWalletPublicKeyHashes(
-		depositSweepProposals,
+		events,
 	)
 
 	unprovenDepositSweepTransactions := []*bitcoin.Transaction{}

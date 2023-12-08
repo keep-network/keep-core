@@ -426,7 +426,7 @@ func getProofInfo(
 
 // walletEvent is a type constraint representing wallet-related chain events.
 type walletEvent interface {
-	WalletPublicKeyHash() [20]byte
+	GetWalletPublicKeyHash() [20]byte
 }
 
 // uniqueWalletPublicKeyHashes parses the list of wallet-related events and
@@ -436,7 +436,7 @@ func uniqueWalletPublicKeyHashes[T walletEvent](events []T) [][20]byte {
 	var publicKeyHashes [][20]byte
 
 	for _, event := range events {
-		key := event.WalletPublicKeyHash()
+		key := event.GetWalletPublicKeyHash()
 		strKey := hex.EncodeToString(key[:])
 
 		// Check for uniqueness

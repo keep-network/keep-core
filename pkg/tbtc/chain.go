@@ -245,6 +245,15 @@ type BridgeChain interface {
 	PastNewWalletRegisteredEvents(
 		filter *NewWalletRegisteredEventFilter,
 	) ([]*NewWalletRegisteredEvent, error)
+
+	// Submits the moving funds target wallets commitment.
+	SubmitMovingFundsCommitment(
+		walletPublicKeyHash [20]byte,
+		walletMainUTXO bitcoin.UnspentTransactionOutput,
+		walletMembersIDs []uint32,
+		walletMemberIndex uint32,
+		targetWallets [][20]byte,
+	) error
 }
 
 // NewWalletRegisteredEvent represents a new wallet registered event.
@@ -303,6 +312,10 @@ func (dre *DepositRevealedEvent) unpack() *Deposit {
 	}
 }
 
+func (dre *DepositRevealedEvent) GetWalletPublicKeyHash() [20]byte {
+	return dre.WalletPublicKeyHash
+}
+
 // DepositRevealedEventFilter is a component allowing to filter DepositRevealedEvent.
 type DepositRevealedEventFilter struct {
 	StartBlock          uint64
@@ -338,49 +351,15 @@ type WalletChainData struct {
 	MovingFundsTargetWalletsCommitmentHash [32]byte
 }
 
-// WalletCoordinatorChain defines the subset of the TBTC chain interface that
-// pertains specifically to the tBTC wallet coordination.
-type WalletCoordinatorChain interface {
-	// OnHeartbeatRequestSubmitted registers a callback that is invoked when
-	// an on-chain notification of the wallet heartbeat request is seen.
-	OnHeartbeatRequestSubmitted(
-		handler func(event *HeartbeatRequestSubmittedEvent),
-	) subscription.EventSubscription
-
-	// OnDepositSweepProposalSubmitted registers a callback that is invoked when
-	// an on-chain notification of the deposit sweep proposal submission is seen.
-	OnDepositSweepProposalSubmitted(
-		func(event *DepositSweepProposalSubmittedEvent),
-	) subscription.EventSubscription
-
-	// GetWalletLock gets the current wallet lock for the given wallet.
-	// Returned values represent the expiration time and the cause of the lock.
-	// The expiration time can be UNIX timestamp 0 which means there is no lock
-	// on the wallet at the given moment.
-	GetWalletLock(
-		walletPublicKeyHash [20]byte,
-	) (time.Time, WalletActionType, error)
-
-	// OnRedemptionProposalSubmitted registers a callback that is invoked when
-	// an on-chain notification of the redemption proposal submission is seen.
-	OnRedemptionProposalSubmitted(
-		func(event *RedemptionProposalSubmittedEvent),
-	) subscription.EventSubscription
-
-	// Submits the moving funds target wallets commitment.
-	SubmitMovingFundsCommitment(
-		walletPublicKeyHash [20]byte,
-		walletMainUTXO bitcoin.UnspentTransactionOutput,
-		walletMembersIDs []uint32,
-		walletMemberIndex uint32,
-		targetWallets [][20]byte,
-	) error
-
+// WalletProposalValidatorChain defines the subset of the TBTC chain interface
+// that pertains specifically to the tBTC wallet proposal validator.
+type WalletProposalValidatorChain interface {
 	// ValidateDepositSweepProposal validates the given deposit sweep proposal
 	// against the chain. It requires some additional data about the deposits
 	// that must be fetched externally. Returns an error if the proposal is
 	// not valid or nil otherwise.
 	ValidateDepositSweepProposal(
+		walletPublicKeyHash [20]byte,
 		proposal *DepositSweepProposal,
 		depositsExtraInfo []struct {
 			*Deposit
@@ -391,69 +370,23 @@ type WalletCoordinatorChain interface {
 	// ValidateRedemptionProposal validates the given redemption proposal
 	// against the chain. Returns an error if the proposal is not valid or
 	// nil otherwise.
-	ValidateRedemptionProposal(proposal *RedemptionProposal) error
+	ValidateRedemptionProposal(
+		walletPublicKeyHash [20]byte,
+		proposal *RedemptionProposal,
+	) error
+
+	// ValidateHeartbeatProposal validates the given heartbeat proposal
+	// against the chain. Returns an error if the proposal is not valid or
+	// nil otherwise.
+	ValidateHeartbeatProposal(
+		walletPublicKeyHash [20]byte,
+		proposal *HeartbeatProposal,
+	) error
 
 	// ValidateMovingFundsProposal validates the given moving funds proposal
 	// against the chain. Returns an error if the proposal is not valid or
 	// nil otherwise.
 	ValidateMovingFundsProposal(proposal *MovingFundsProposal) error
-}
-
-// HeartbeatRequestSubmittedEvent represents a wallet heartbeat request
-// submitted to the chain.
-//
-// TODO: Remove this type and all related code.
-type HeartbeatRequestSubmittedEvent struct {
-	WalletPublicKeyHash [20]byte
-	Message             []byte
-	Coordinator         chain.Address
-	BlockNumber         uint64
-}
-
-// DepositSweepProposalSubmittedEvent represents a deposit sweep proposal
-// submission event.
-//
-// TODO: Remove this type and all related code.
-type DepositSweepProposalSubmittedEvent struct {
-	Proposal    *DepositSweepProposal
-	Coordinator chain.Address
-	BlockNumber uint64
-}
-
-func (dspse *DepositSweepProposalSubmittedEvent) WalletPublicKeyHash() [20]byte {
-	return dspse.Proposal.WalletPublicKeyHash
-}
-
-// DepositSweepProposalSubmittedEventFilter is a component allowing to
-// filter DepositSweepProposalSubmittedEvent.
-type DepositSweepProposalSubmittedEventFilter struct {
-	StartBlock          uint64
-	EndBlock            *uint64
-	Coordinator         []chain.Address
-	WalletPublicKeyHash [20]byte
-}
-
-// RedemptionProposalSubmittedEvent represents a redemption proposal
-// submission event.
-//
-// TODO: Remove this type and all related code.
-type RedemptionProposalSubmittedEvent struct {
-	Proposal    *RedemptionProposal
-	Coordinator chain.Address
-	BlockNumber uint64
-}
-
-func (rpse *RedemptionProposalSubmittedEvent) WalletPublicKeyHash() [20]byte {
-	return rpse.Proposal.WalletPublicKeyHash
-}
-
-// RedemptionProposalSubmittedEventFilter is a component allowing to
-// filter RedemptionProposalSubmittedEvent.
-type RedemptionProposalSubmittedEventFilter struct {
-	StartBlock          uint64
-	EndBlock            *uint64
-	Coordinator         []chain.Address
-	WalletPublicKeyHash [20]byte
 }
 
 // RedemptionRequestedEvent represents a redemption requested event.
@@ -465,6 +398,10 @@ type RedemptionRequestedEvent struct {
 	TreasuryFee          uint64
 	TxMaxFee             uint64
 	BlockNumber          uint64
+}
+
+func (rre *RedemptionRequestedEvent) GetWalletPublicKeyHash() [20]byte {
+	return rre.WalletPublicKeyHash
 }
 
 // RedemptionRequestedEventFilter is a component allowing to filter RedemptionRequestedEvent.
@@ -497,5 +434,5 @@ type Chain interface {
 	GroupSelectionChain
 	DistributedKeyGenerationChain
 	BridgeChain
-	WalletCoordinatorChain
+	WalletProposalValidatorChain
 }

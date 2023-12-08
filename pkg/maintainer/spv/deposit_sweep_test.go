@@ -313,43 +313,35 @@ func TestGetUnprovenDepositSweepTransactions(t *testing.T) {
 		},
 	)
 
-	// Add proposal events for the wallets. Only wallet public key hash field
+	// Add deposit events for the wallets. Only wallet public key hash field
 	// is relevant as those events are just used to get a list of distinct
-	// wallets who performed deposit sweeps recently. The block number field
-	// is just to make them distinguishable while reading.
-	proposalEvents := []*tbtc.DepositSweepProposalSubmittedEvent{
+	// wallets who likely performed deposit sweeps recently. The block number
+	// field is just to make them distinguishable while reading.
+	events := []*tbtc.DepositRevealedEvent{
 		{
-			Proposal: &tbtc.DepositSweepProposal{
-				WalletPublicKeyHash: wallets[0].walletPublicKeyHash,
-			},
-			BlockNumber: 100,
+			WalletPublicKeyHash: wallets[0].walletPublicKeyHash,
+			BlockNumber:         100,
 		},
 		{
-			Proposal: &tbtc.DepositSweepProposal{
-				WalletPublicKeyHash: wallets[0].walletPublicKeyHash,
-			},
-			BlockNumber: 200,
+			WalletPublicKeyHash: wallets[0].walletPublicKeyHash,
+			BlockNumber:         200,
 		},
 		{
-			Proposal: &tbtc.DepositSweepProposal{
-				WalletPublicKeyHash: wallets[1].walletPublicKeyHash,
-			},
-			BlockNumber: 300,
+			WalletPublicKeyHash: wallets[1].walletPublicKeyHash,
+			BlockNumber:         300,
 		},
 		{
-			Proposal: &tbtc.DepositSweepProposal{
-				WalletPublicKeyHash: wallets[1].walletPublicKeyHash,
-			},
-			BlockNumber: 400,
+			WalletPublicKeyHash: wallets[1].walletPublicKeyHash,
+			BlockNumber:         400,
 		},
 	}
 
-	for _, proposalEvent := range proposalEvents {
-		err := spvChain.AddPastDepositSweepProposalSubmittedEvent(
-			&tbtc.DepositSweepProposalSubmittedEventFilter{
+	for _, event := range events {
+		err := spvChain.addPastDepositRevealedEvent(
+			&tbtc.DepositRevealedEventFilter{
 				StartBlock: currentBlock - historyDepth,
 			},
-			proposalEvent,
+			event,
 		)
 		if err != nil {
 			t.Fatal(err)
