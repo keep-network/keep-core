@@ -1036,7 +1036,7 @@ func requestWithRetry[K interface{}](
 	requestName string,
 ) (K, error) {
 	startTime := time.Now()
-	logger.Infof("starting [%s] request to Electrum server", requestName)
+	logger.Debugf("starting [%s] request to Electrum server", requestName)
 
 	var result K
 
@@ -1070,7 +1070,7 @@ func requestWithRetry[K interface{}](
 		return "success"
 	}
 
-	logger.Infof("[%s] request to Electrum server completed with [%s] after [%s]",
+	logger.Debugf("[%s] request to Electrum server completed with [%s] after [%s]",
 		requestName,
 		solveRequestOutcome(err),
 		time.Since(startTime),
