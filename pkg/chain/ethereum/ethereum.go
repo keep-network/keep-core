@@ -443,9 +443,9 @@ func (bc *baseChain) currentBlock() (*types.Block, error) {
 }
 
 // blockByNumber returns the block for the given block number. Times out
-// if the underlying client call takes more than 10 seconds.
+// if the underlying client call takes more than 30 seconds.
 func (bc *baseChain) blockByNumber(number uint64) (*types.Block, error) {
-	ctx, cancelCtx := context.WithTimeout(context.Background(), 10*time.Second)
+	ctx, cancelCtx := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancelCtx()
 
 	return bc.client.BlockByNumber(ctx, big.NewInt(int64(number)))
