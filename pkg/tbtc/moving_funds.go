@@ -78,7 +78,10 @@ func newMovingFundsAction(
 }
 
 func (mfa *movingFundsAction) execute() error {
-	// TODO: Implement
+	// TODO: Before proceeding with creation of the Bitcoin transaction, wait
+	//       32 blocks to ensure the commitment transaction has accumulated
+	//       enough confirmations in the Ethereum chain and will not be reverted
+	//       even if a reorg occurs.
 	return nil
 }
 
