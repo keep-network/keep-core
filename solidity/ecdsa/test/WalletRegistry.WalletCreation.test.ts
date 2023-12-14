@@ -26,6 +26,7 @@ import type {
   WalletRegistryStub,
   TokenStaking,
   IRandomBeacon,
+  DkgChallenger,
 } from "../typechain"
 import type { DkgResult, DkgResultSubmittedEventArgs } from "./utils/dkg"
 import type { Operator } from "./utils/operators"
@@ -2244,6 +2245,27 @@ describe("WalletRegistry - Wallet Creation", async () => {
   })
 
   describe("challengeDkgResult", async () => {
+    context("with caller being a contract", async () => {
+      let dkgChallenger: DkgChallenger
+
+      before("request new wallet", async () => {
+        await createSnapshot()
+
+        const DkgChallenger = await ethers.getContractFactory("DkgChallenger")
+        dkgChallenger = await DkgChallenger.deploy(walletRegistry.address)
+      })
+
+      after(async () => {
+        await restoreSnapshot()
+      })
+
+      it("should revert", async () => {
+        await expect(
+          dkgChallenger.challengeDkgResult(stubDkgResult)
+        ).to.be.revertedWith("Not EOA")
+      })
+    })
+
     context("with no wallets registered", async () => {
       it("should revert with 'Current state is not CHALLENGE'", async () => {
         await expect(
