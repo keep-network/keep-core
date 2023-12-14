@@ -800,6 +800,9 @@ contract WalletRegistry is
     ///      requires an extra amount of gas to be left at the end of the
     ///      execution.
     function challengeDkgResult(DKG.Result calldata dkgResult) external {
+        // solhint-disable-next-line avoid-tx-origin
+        require(msg.sender == tx.origin, "Not EOA");
+
         (
             bytes32 maliciousDkgResultHash,
             uint32 maliciousDkgResultSubmitterId
