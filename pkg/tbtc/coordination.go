@@ -47,7 +47,7 @@ const (
 	// coordinationHeartbeatProbability is the probability of proposing a
 	// heartbeat action during the coordination procedure, assuming no other
 	// higher-priority action is proposed.
-	coordinationHeartbeatProbability = float64(0.125)
+	coordinationHeartbeatProbability = float64(0.0625)
 	// coordinationMessageReceiveBuffer is a buffer for messages received from
 	// the broadcast channel needed when the coordination follower is
 	// temporarily too slow to handle them. Keep in mind that although we
