@@ -568,7 +568,10 @@ func TestCoordinationExecutor_GetActionsChecklist(t *testing.T) {
 		},
 		"block 3600": {
 			coordinationBlock: 3600,
-			expectedChecklist: []WalletActionType{ActionRedemption},
+			expectedChecklist: []WalletActionType{
+				ActionRedemption,
+				ActionHeartbeat,
+			},
 		},
 		"block 4500": {
 			coordinationBlock: 4500,
@@ -579,7 +582,6 @@ func TestCoordinationExecutor_GetActionsChecklist(t *testing.T) {
 			coordinationBlock: 5400,
 			expectedChecklist: []WalletActionType{
 				ActionRedemption,
-				ActionHeartbeat,
 			},
 		},
 		"block 6300": {
@@ -615,7 +617,6 @@ func TestCoordinationExecutor_GetActionsChecklist(t *testing.T) {
 			coordinationBlock: 12600,
 			expectedChecklist: []WalletActionType{
 				ActionRedemption,
-				ActionHeartbeat,
 			},
 		},
 		"block 13500": {
@@ -643,7 +644,7 @@ func TestCoordinationExecutor_GetActionsChecklist(t *testing.T) {
 
 				// Build an arbitrary seed based on the coordination block number.
 				seed := sha256.Sum256(
-					big.NewInt(int64(window.coordinationBlock) + 1).Bytes(),
+					big.NewInt(int64(window.coordinationBlock) + 2).Bytes(),
 				)
 
 				checklist := executor.getActionsChecklist(window.index(), seed)
