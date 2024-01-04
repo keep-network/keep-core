@@ -17,10 +17,8 @@ const (
 // MovingFundsProposal represents a moving funds proposal issued by a wallet's
 // coordination leader.
 type MovingFundsProposal struct {
-	// TODO: Remove WalletPublicKeyHash field.
-	WalletPublicKeyHash [20]byte
-	TargetWallets       [][20]byte
-	MovingFundsTxFee    *big.Int
+	TargetWallets    [][20]byte
+	MovingFundsTxFee *big.Int
 }
 
 func (mfp *MovingFundsProposal) ActionType() WalletActionType {

@@ -409,9 +409,8 @@ func (mfp *MovingFundsProposal) Marshal() ([]byte, error) {
 
 	return proto.Marshal(
 		&pb.MovingFundsProposal{
-			WalletPublicKeyHash: mfp.WalletPublicKeyHash[:],
-			TargetWallets:       targetWallets,
-			MovingFundsTxFee:    mfp.MovingFundsTxFee.Bytes(),
+			TargetWallets:    targetWallets,
+			MovingFundsTxFee: mfp.MovingFundsTxFee.Bytes(),
 		})
 }
 
@@ -421,8 +420,6 @@ func (mfp *MovingFundsProposal) Unmarshal(data []byte) error {
 	if err := proto.Unmarshal(data, &pbMsg); err != nil {
 		return fmt.Errorf("failed to unmarshal MovingFundsProposal: [%v]", err)
 	}
-
-	copy(mfp.WalletPublicKeyHash[:], pbMsg.WalletPublicKeyHash)
 
 	mfp.TargetWallets = make([][20]byte, len(pbMsg.TargetWallets))
 	for i, wallet := range pbMsg.TargetWallets {

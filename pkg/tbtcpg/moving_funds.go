@@ -99,7 +99,6 @@ func (mft *MovingFundsTask) Run(request *tbtc.CoordinationProposalRequest) (
 
 	proposal, err := mft.ProposeMovingFunds(
 		taskLogger,
-		walletPublicKeyHash,
 		targetWallets,
 	)
 	if err != nil {
@@ -174,14 +173,13 @@ func (mft *MovingFundsTask) SubmitMovingFundsCommitment() ([][20]byte, error) {
 
 func (mft *MovingFundsTask) ProposeMovingFunds(
 	taskLogger log.StandardLogger,
-	walletPublicKeyHash [20]byte,
 	targetWallets [][20]byte,
 ) (*tbtc.MovingFundsProposal, error) {
 	taskLogger.Infof("preparing a moving funds proposal")
 
 	proposal := &tbtc.MovingFundsProposal{
-		WalletPublicKeyHash: walletPublicKeyHash,
-		TargetWallets:       targetWallets,
+		TargetWallets: targetWallets,
+		// TODO: Add fee
 	}
 
 	taskLogger.Infof("validating the moving funds proposal")

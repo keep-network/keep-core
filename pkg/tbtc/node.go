@@ -646,6 +646,12 @@ func (n *node) handleMovingFundsProposal(
 	startBlock uint64,
 	expiryBlock uint64,
 ) {
+	walletPublicKeyBytes, err := marshalPublicKey(wallet.publicKey)
+	if err != nil {
+		logger.Errorf("cannot marshal wallet public key: [%v]", err)
+		return
+	}
+
 	signingExecutor, ok, err := n.getSigningExecutor(wallet.publicKey)
 	if err != nil {
 		logger.Errorf("cannot get signing executor: [%v]", err)
@@ -659,23 +665,16 @@ func (n *node) handleMovingFundsProposal(
 		logger.Infof(
 			"node does not control signers of wallet PKH [0x%x]; "+
 				"ignoring the received moving funds proposal",
-			proposal.WalletPublicKeyHash,
+			walletPublicKeyBytes,
 		)
 		return
 	}
 
-	walletPublicKeyBytes, err := marshalPublicKey(wallet.publicKey)
-	if err != nil {
-		logger.Errorf("cannot marshal wallet public key: [%v]", err)
-		return
-	}
-
 	logger.Infof(
-		"node controls signers of wallet PKH [0x%x]; "+
-			"plain-text uncompressed public key of that wallet is [0x%x]; "+
-			"starting orchestration of the moving funds action",
-		proposal.WalletPublicKeyHash,
+		"starting orchestration of the moving funds action for wallet [0x%x]; "+
+			"20-byte public key hash of that wallet is [0x%x]",
 		walletPublicKeyBytes,
+		bitcoin.PublicKeyHash(wallet.publicKey),
 	)
 
 	walletActionLogger := logger.With(

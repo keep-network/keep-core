@@ -44,7 +44,6 @@ message RedemptionProposal {
 }
 
 message MovingFundsProposal {
-    bytes walletPublicKeyHash = 1;
-    repeated bytes targetWallets = 2;
-    bytes movingFundsTxFee = 3;
+    repeated bytes targetWallets = 1;
+    bytes movingFundsTxFee = 2;
 }

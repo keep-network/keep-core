@@ -186,9 +186,6 @@ func TestCoordinationMessage_MarshalingRoundtrip(t *testing.T) {
 		},
 		"with moving funds proposal": {
 			proposal: &MovingFundsProposal{
-				WalletPublicKeyHash: toByte20(
-					"da7c1fb602db1931a3b815563b6f6fae6a58f224",
-				),
 				TargetWallets: [][20]byte{
 					toByte20("cb7d88a87c37aff0c1535fa4efe6f0a2406ea5e9"),
 					toByte20("f87eb7ec3b15a3fdd7b57754d765694b3e0b4bf4"),
