@@ -1,6 +1,8 @@
 package tbtc
 
 import (
+	"math/big"
+
 	"github.com/ipfs/go-log/v2"
 
 	"github.com/keep-network/keep-core/pkg/bitcoin"
@@ -18,6 +20,7 @@ type MovingFundsProposal struct {
 	// TODO: Remove WalletPublicKeyHash field.
 	WalletPublicKeyHash [20]byte
 	TargetWallets       [][20]byte
+	MovingFundsTxFee    *big.Int
 }
 
 func (mfp *MovingFundsProposal) ActionType() WalletActionType {

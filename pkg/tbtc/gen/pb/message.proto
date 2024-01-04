@@ -42,3 +42,9 @@ message RedemptionProposal {
     repeated bytes redeemersOutputScripts = 1;
     bytes redemptionTxFee = 2;
 }
+
+message MovingFundsProposal {
+    bytes walletPublicKeyHash = 1;
+    repeated bytes targetWallets = 2;
+    bytes movingFundsTxFee = 3;
+}

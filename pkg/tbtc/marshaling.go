@@ -398,13 +398,38 @@ func (rp *RedemptionProposal) Unmarshal(bytes []byte) error {
 
 // Marshal converts the movingFundsProposal to a byte array.
 func (mfp *MovingFundsProposal) Marshal() ([]byte, error) {
-	// TODO: Implement
-	return nil, nil
+	targetWallets := make([][]byte, len(mfp.TargetWallets))
+
+	for i, wallet := range mfp.TargetWallets {
+		targetWallet := make([]byte, len(wallet))
+		copy(targetWallet, wallet[:])
+
+		targetWallets[i] = targetWallet
+	}
+
+	return proto.Marshal(
+		&pb.MovingFundsProposal{
+			WalletPublicKeyHash: mfp.WalletPublicKeyHash[:],
+			TargetWallets:       targetWallets,
+			MovingFundsTxFee:    mfp.MovingFundsTxFee.Bytes(),
+		})
 }
 
 // Unmarshal converts a byte array back to the movingFundsProposal.
-func (mfp *MovingFundsProposal) Unmarshal(bytes []byte) error {
-	// TODO: Implement
+func (mfp *MovingFundsProposal) Unmarshal(data []byte) error {
+	pbMsg := pb.MovingFundsProposal{}
+	if err := proto.Unmarshal(data, &pbMsg); err != nil {
+		return fmt.Errorf("failed to unmarshal MovingFundsProposal: [%v]", err)
+	}
+
+	copy(mfp.WalletPublicKeyHash[:], pbMsg.WalletPublicKeyHash)
+
+	mfp.TargetWallets = make([][20]byte, len(pbMsg.TargetWallets))
+	for i, wallet := range pbMsg.TargetWallets {
+		copy(mfp.TargetWallets[i][:], wallet)
+	}
+
+	mfp.MovingFundsTxFee = new(big.Int).SetBytes(pbMsg.MovingFundsTxFee)
 	return nil
 }
 
