@@ -23,6 +23,22 @@ type Chain interface {
 		filter *tbtc.NewWalletRegisteredEventFilter,
 	) ([]*tbtc.NewWalletRegisteredEvent, error)
 
+	// GetWalletParameters gets the current value of parameters relevant to
+	// wallet.
+	GetWalletParameters() (
+		creationPeriod uint32,
+		creationMinBtcBalance uint64,
+		creationMaxBtcBalance uint64,
+		closureMinBtcBalance uint64,
+		maxAge uint32,
+		maxBtcTransfer uint64,
+		closingPeriod uint32,
+		err error,
+	)
+
+	// GetLiveWalletsCount gets the current count of live wallets.
+	GetLiveWalletsCount() (uint32, error)
+
 	// BuildDepositKey calculates a deposit key for the given funding transaction
 	// which is a unique identifier for a deposit on-chain.
 	BuildDepositKey(fundingTxHash bitcoin.Hash, fundingOutputIndex uint32) *big.Int
@@ -110,5 +126,22 @@ type Chain interface {
 	ValidateHeartbeatProposal(
 		walletPublicKeyHash [20]byte,
 		proposal *tbtc.HeartbeatProposal,
+	) error
+
+	// PastMovingFundsCommitmentSubmittedEvents fetches past moving funds
+	// commitment submitted events according to the provided filter or
+	// unfiltered if the filter is nil. Returned events are sorted by the block
+	// number in the ascending order, i.e. the latest event is at the end of the
+	// slice.
+	PastMovingFundsCommitmentSubmittedEvents(
+		filter *tbtc.MovingFundsCommitmentSubmittedEventFilter,
+	) ([]*tbtc.MovingFundsCommitmentSubmittedEvent, error)
+
+	// ValidateMovingFundsProposal validates the given moving funds proposal
+	// against the chain. Returns an error if the proposal is not valid or
+	// nil otherwise.
+	ValidateMovingFundsProposal(
+		walletPublicKeyHash [20]byte,
+		proposal *tbtc.MovingFundsProposal,
 	) error
 }

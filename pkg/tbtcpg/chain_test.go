@@ -616,6 +616,22 @@ func (lc *LocalChain) SetHeartbeatProposalValidationResult(
 	lc.heartbeatProposalValidations[proposal.Message] = result
 }
 
+func (lc *LocalChain) ValidateMovingFundsProposal(
+	walletPublicKeyHash [20]byte,
+	proposal *tbtc.MovingFundsProposal,
+) error {
+	// TODO: Implement
+	panic("unsupported")
+}
+
+func (lc *LocalChain) SetMovingFundsProposalValidationResult(
+	proposal *tbtc.MovingFundsProposal,
+	result bool,
+) {
+	// TODO: Implement
+	panic("unsupported")
+}
+
 func buildRedemptionProposalValidationKey(
 	walletPublicKeyHash [20]byte,
 	proposal *tbtc.RedemptionProposal,
@@ -708,6 +724,12 @@ func (lc *LocalChain) GetLiveWalletsCount() (uint32, error) {
 }
 
 func (lc *LocalChain) ComputeMainUtxoHash(mainUtxo *bitcoin.UnspentTransactionOutput) [32]byte {
+	panic("unsupported")
+}
+
+func (lc *LocalChain) PastMovingFundsCommitmentSubmittedEvents(
+	filter *tbtc.MovingFundsCommitmentSubmittedEventFilter,
+) ([]*tbtc.MovingFundsCommitmentSubmittedEvent, error) {
 	panic("unsupported")
 }
 

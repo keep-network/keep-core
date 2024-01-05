@@ -821,13 +821,6 @@ func (lc *localChain) ValidateRedemptionProposal(
 	return nil
 }
 
-func (lc *localChain) ValidateMovingFundsProposal(
-	proposal *MovingFundsProposal,
-) error {
-	// TODO: Implement
-	return nil
-}
-
 func (lc *localChain) setRedemptionProposalValidationResult(
 	walletPublicKeyHash [20]byte,
 	proposal *RedemptionProposal,
@@ -893,6 +886,14 @@ func (lc *localChain) setHeartbeatProposalValidationResult(
 	defer lc.heartbeatProposalValidationsMutex.Unlock()
 
 	lc.heartbeatProposalValidations[proposal.Message] = result
+}
+
+func (lc *localChain) ValidateMovingFundsProposal(
+	walletPublicKeyHash [20]byte,
+	proposal *MovingFundsProposal,
+) error {
+	// TODO: Implement
+	panic("unsupported")
 }
 
 // Connect sets up the local chain.

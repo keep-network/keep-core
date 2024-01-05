@@ -188,22 +188,6 @@ type BridgeChain interface {
 	// if the wallet was not found.
 	GetWallet(walletPublicKeyHash [20]byte) (*WalletChainData, error)
 
-	// GetWalletParameters gets the current value of parameters relevant to
-	// wallet.
-	GetWalletParameters() (
-		creationPeriod uint32,
-		creationMinBtcBalance uint64,
-		creationMaxBtcBalance uint64,
-		closureMinBtcBalance uint64,
-		maxAge uint32,
-		maxBtcTransfer uint64,
-		closingPeriod uint32,
-		err error,
-	)
-
-	// GetLiveWalletsCount gets the current count of live wallets.
-	GetLiveWalletsCount() (uint32, error)
-
 	// ComputeMainUtxoHash computes the hash of the provided main UTXO
 	// according to the on-chain Bridge rules.
 	ComputeMainUtxoHash(mainUtxo *bitcoin.UnspentTransactionOutput) [32]byte
@@ -237,14 +221,6 @@ type BridgeChain interface {
 		fundingTxHash bitcoin.Hash,
 		fundingOutputIndex uint32,
 	) (*DepositChainRequest, bool, error)
-
-	// PastNewWalletRegisteredEvents fetches past new wallet registered events
-	// according to the provided filter or unfiltered if the filter is nil. Returned
-	// events are sorted by the block number in the ascending order, i.e. the
-	// latest event is at the end of the slice.
-	PastNewWalletRegisteredEvents(
-		filter *NewWalletRegisteredEventFilter,
-	) ([]*NewWalletRegisteredEvent, error)
 
 	// Submits the moving funds target wallets commitment.
 	SubmitMovingFundsCommitment(
@@ -386,7 +362,10 @@ type WalletProposalValidatorChain interface {
 	// ValidateMovingFundsProposal validates the given moving funds proposal
 	// against the chain. Returns an error if the proposal is not valid or
 	// nil otherwise.
-	ValidateMovingFundsProposal(proposal *MovingFundsProposal) error
+	ValidateMovingFundsProposal(
+		walletPublicKeyHash [20]byte,
+		proposal *MovingFundsProposal,
+	) error
 }
 
 // RedemptionRequestedEvent represents a redemption requested event.
@@ -410,6 +389,21 @@ type RedemptionRequestedEventFilter struct {
 	EndBlock            *uint64
 	WalletPublicKeyHash [][20]byte
 	Redeemer            []chain.Address
+}
+
+// MovingFundsCommitmentSubmittedEvent represents a moving funds commitment submitted event.
+type MovingFundsCommitmentSubmittedEvent struct {
+	WalletPublicKeyHash [20]byte
+	TargetWallets       [][20]byte
+	Submitter           chain.Address
+	BlockNumber         uint64
+}
+
+// MovingFundsCommitmentSubmittedEventFilter is a component allowing to filter MovingFundsCommitmentSubmittedEvent.
+type MovingFundsCommitmentSubmittedEventFilter struct {
+	StartBlock          uint64
+	EndBlock            *uint64
+	WalletPublicKeyHash [][20]byte
 }
 
 // Chain represents the interface that the TBTC module expects to interact

@@ -1484,6 +1484,50 @@ func (tc *TbtcChain) GetLiveWalletsCount() (uint32, error) {
 	return tc.bridge.LiveWalletsCount()
 }
 
+func (tc *TbtcChain) PastMovingFundsCommitmentSubmittedEvents(
+	filter *tbtc.MovingFundsCommitmentSubmittedEventFilter,
+) ([]*tbtc.MovingFundsCommitmentSubmittedEvent, error) {
+	var startBlock uint64
+	var endBlock *uint64
+	var walletPublicKeyHash [][20]byte
+
+	if filter != nil {
+		startBlock = filter.StartBlock
+		endBlock = filter.EndBlock
+		walletPublicKeyHash = filter.WalletPublicKeyHash
+	}
+
+	events, err := tc.bridge.PastMovingFundsCommitmentSubmittedEvents(
+		startBlock,
+		endBlock,
+		walletPublicKeyHash,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	convertedEvents := make([]*tbtc.MovingFundsCommitmentSubmittedEvent, 0)
+	for _, event := range events {
+		convertedEvent := &tbtc.MovingFundsCommitmentSubmittedEvent{
+			WalletPublicKeyHash: event.WalletPubKeyHash,
+			TargetWallets:       event.TargetWallets,
+			Submitter:           chain.Address(event.Submitter.Hex()),
+			BlockNumber:         event.Raw.BlockNumber,
+		}
+
+		convertedEvents = append(convertedEvents, convertedEvent)
+	}
+
+	sort.SliceStable(
+		convertedEvents,
+		func(i, j int) bool {
+			return convertedEvents[i].BlockNumber < convertedEvents[j].BlockNumber
+		},
+	)
+
+	return convertedEvents, err
+}
+
 func buildDepositKey(
 	fundingTxHash bitcoin.Hash,
 	fundingOutputIndex uint32,
@@ -1705,6 +1749,7 @@ func (tc *TbtcChain) ValidateHeartbeatProposal(
 }
 
 func (tc *TbtcChain) ValidateMovingFundsProposal(
+	walletPublicKeyHash [20]byte,
 	proposal *tbtc.MovingFundsProposal,
 ) error {
 	// TODO: Implement
