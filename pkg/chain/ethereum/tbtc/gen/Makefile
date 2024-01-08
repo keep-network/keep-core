@@ -25,6 +25,7 @@ define after_abi_hook
 endef
 define fix_wallet_proposal_validator_collision
 	@perl -pi -e s,BitcoinTxInfo,BitcoinTxInfo2,g ./abi/WalletProposalValidator.go
+	@perl -pi -e s,BitcoinTxUTXO,BitcoinTxUTXO3,g ./abi/WalletProposalValidator.go
 endef
 define fix_maintainer_proxy_collision
 	@perl -pi -e s,BitcoinTxUTXO,BitcoinTxUTXO2,g ./abi/MaintainerProxy.go
@@ -35,7 +36,12 @@ endef
 # See explanation in https://github.com/keep-network/keep-common/issues/117.
 define after_contract_hook
 	$(eval type := $(1))
+	$(if $(filter $(type),WalletProposalValidator),$(call fix_wallet_proposal_validator_contract_collision))
 	$(if $(filter $(type),MaintainerProxy),$(call fix_maintainer_proxy_contract_collision))
+endef
+define fix_wallet_proposal_validator_contract_collision
+	@perl -pi -e s,BitcoinTxUTXO,BitcoinTxUTXO3,g ./contract/WalletProposalValidator.go
+	@perl -pi -e s,BitcoinTxUTXO,BitcoinTxUTXO3,g ./cmd/WalletProposalValidator.go
 endef
 define fix_maintainer_proxy_contract_collision
 	@perl -pi -e s,BitcoinTxUTXO,BitcoinTxUTXO2,g ./contract/MaintainerProxy.go
