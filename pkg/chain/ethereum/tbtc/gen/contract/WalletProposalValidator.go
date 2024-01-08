@@ -451,6 +451,54 @@ func (wpv *WalletProposalValidator) ValidateHeartbeatProposalAtBlock(
 	return result, err
 }
 
+func (wpv *WalletProposalValidator) ValidateMovingFundsProposal(
+	arg_proposal abi.WalletProposalValidatorMovingFundsProposal,
+	arg_walletMainUtxo abi.BitcoinTxUTXO3,
+) (bool, error) {
+	result, err := wpv.contract.ValidateMovingFundsProposal(
+		wpv.callerOptions,
+		arg_proposal,
+		arg_walletMainUtxo,
+	)
+
+	if err != nil {
+		return result, wpv.errorResolver.ResolveError(
+			err,
+			wpv.callerOptions.From,
+			nil,
+			"validateMovingFundsProposal",
+			arg_proposal,
+			arg_walletMainUtxo,
+		)
+	}
+
+	return result, err
+}
+
+func (wpv *WalletProposalValidator) ValidateMovingFundsProposalAtBlock(
+	arg_proposal abi.WalletProposalValidatorMovingFundsProposal,
+	arg_walletMainUtxo abi.BitcoinTxUTXO3,
+	blockNumber *big.Int,
+) (bool, error) {
+	var result bool
+
+	err := chainutil.CallAtBlock(
+		wpv.callerOptions.From,
+		blockNumber,
+		nil,
+		wpv.contractABI,
+		wpv.caller,
+		wpv.errorResolver,
+		wpv.contractAddress,
+		"validateMovingFundsProposal",
+		&result,
+		arg_proposal,
+		arg_walletMainUtxo,
+	)
+
+	return result, err
+}
+
 func (wpv *WalletProposalValidator) ValidateRedemptionProposal(
 	arg_proposal abi.WalletProposalValidatorRedemptionProposal,
 ) (bool, error) {
