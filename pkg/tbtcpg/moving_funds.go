@@ -124,7 +124,13 @@ func (mft *MovingFundsTask) Run(request *tbtc.CoordinationProposalRequest) (
 	}
 
 	if !commitmentSubmitted {
-		mft.SubmitMovingFundsCommitment()
+		_, err := mft.SubmitMovingFundsCommitment()
+		if err != nil {
+			return nil, false, fmt.Errorf(
+				"error while submitting moving funds commitment: [%w]",
+				err,
+			)
+		}
 	}
 
 	return proposal, false, nil

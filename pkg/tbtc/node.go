@@ -75,11 +75,6 @@ type node struct {
 	// wallet.
 	signingExecutors map[string]*signingExecutor
 
-	operatorIDsMutex sync.Mutex
-	// operatorIDsCache is the cache mapping operator addresses to operator IDs.
-	// The cache holds IDs of singing group operators of this node.
-	operatorIDsCache map[chainpkg.Address]chainpkg.OperatorID
-
 	coordinationExecutorsMutex sync.Mutex
 	// coordinationExecutors is the cache holding coordination executors for
 	// specific wallets. The cache key is the uncompressed public key
@@ -119,7 +114,6 @@ func newNode(
 		walletDispatcher:      newWalletDispatcher(),
 		protocolLatch:         latch,
 		signingExecutors:      make(map[string]*signingExecutor),
-		operatorIDsCache:      make(map[chainpkg.Address]chainpkg.OperatorID),
 		coordinationExecutors: make(map[string]*coordinationExecutor),
 		proposalGenerator:     proposalGenerator,
 	}
@@ -309,32 +303,6 @@ func (n *node) getSigningExecutor(
 	n.signingExecutors[executorKey] = executor
 
 	return executor, true, nil
-}
-
-// getSigningGroupOperatorID gets the operator ID of the signing group operator
-// based on the provided operator address. The operator ID is cached for future
-// efficient retrievals.
-func (n *node) getSigningGroupOperatorID(
-	operatorAddress chainpkg.Address,
-) (chainpkg.OperatorID, error) {
-	n.operatorIDsMutex.Lock()
-	defer n.operatorIDsMutex.Unlock()
-
-	if operatorID, exists := n.operatorIDsCache[operatorAddress]; exists {
-		return operatorID, nil
-	}
-
-	operatorID, err := n.chain.GetOperatorID(operatorAddress)
-	if err != nil {
-		return 0, fmt.Errorf(
-			"failed to get operator ID for operator with address [%s]: [%v]",
-			operatorAddress,
-			err,
-		)
-	}
-
-	n.operatorIDsCache[operatorAddress] = operatorID
-	return operatorID, nil
 }
 
 // getCoordinationExecutor gets the coordination executor responsible for
