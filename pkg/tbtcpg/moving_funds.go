@@ -9,6 +9,7 @@ import (
 
 	"github.com/ipfs/go-log/v2"
 	"github.com/keep-network/keep-core/pkg/bitcoin"
+	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/tbtc"
 )
 
@@ -124,7 +125,24 @@ func (mft *MovingFundsTask) Run(request *tbtc.CoordinationProposalRequest) (
 	}
 
 	if !commitmentSubmitted {
-		_, err := mft.SubmitMovingFundsCommitment()
+		walletMemberIDs, walletMemberIndex, err := mft.GetWalletMembersInfo(
+			request.WalletOperators,
+			request.ExecutingOperator,
+		)
+		if err != nil {
+			return nil, false, fmt.Errorf(
+				"cannot get wallet members IDs: [%w]",
+				err,
+			)
+		}
+
+		err = mft.SubmitMovingFundsCommitment(
+			walletPublicKeyHash,
+			walletMainUtxo,
+			walletMemberIDs,
+			walletMemberIndex,
+			targetWallets,
+		)
 		if err != nil {
 			return nil, false, fmt.Errorf(
 				"error while submitting moving funds commitment: [%w]",
@@ -336,10 +354,63 @@ func (mft *MovingFundsTask) retrieveCommittedTargetWallets(
 	return targetWallets, nil
 }
 
-func (mft *MovingFundsTask) SubmitMovingFundsCommitment() ([][20]byte, error) {
+func (mft *MovingFundsTask) GetWalletMembersInfo(
+	walletOperators []chain.Address,
+	executingOperator chain.Address,
+) ([]uint32, uint32, error) {
+	walletMemberIDs := make([]uint32, 0)
+	walletMemberIndex := 0
+
+	for index, operatorAddress := range walletOperators {
+		operatorID, err := mft.chain.GetOperatorID(operatorAddress)
+		if err != nil {
+			return nil, 0, fmt.Errorf("failed to get operator ID: [%w]", err)
+		}
+
+		// Increment the index by 1 as operator indexing starts at 1, not 0.
+		// This ensures the operator's position is correctly identified in the
+		// range [1, walletOperators.length].
+		if operatorAddress == executingOperator {
+			walletMemberIndex = index + 1
+		}
+
+		walletMemberIDs = append(walletMemberIDs, operatorID)
+	}
+
+	// The task executing operator must always be on the wallet operators list.
+	if walletMemberIndex == 0 {
+		return nil, 0, fmt.Errorf(
+			"task executing operator not found among wallet operators",
+		)
+	}
+
+	return walletMemberIDs, uint32(walletMemberIndex), nil
+}
+
+func (mft *MovingFundsTask) SubmitMovingFundsCommitment(
+	walletPublicKeyHash [20]byte,
+	walletMainUTXO *bitcoin.UnspentTransactionOutput,
+	walletMembersIDs []uint32,
+	walletMemberIndex uint32,
+	targetWallets [][20]byte,
+) error {
+	err := mft.chain.SubmitMovingFundsCommitment(
+		walletPublicKeyHash,
+		*walletMainUTXO,
+		walletMembersIDs,
+		walletMemberIndex,
+		targetWallets,
+	)
+	if err != nil {
+		return fmt.Errorf(
+			"error while submitting moving funds commitment to chain: [%w]",
+			err,
+		)
+	}
+
 	// TODO: After submitting the transaction wait until it has at least one
 	//       confirmation.
-	return nil, nil
+	return nil
 }
 
 func (mft *MovingFundsTask) ProposeMovingFunds(

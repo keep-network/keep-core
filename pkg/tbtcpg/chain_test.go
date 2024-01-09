@@ -692,6 +692,12 @@ func (lc *LocalChain) AverageBlockTime() time.Duration {
 	return lc.averageBlockTime
 }
 
+func (lc *LocalChain) GetOperatorID(
+	operatorAddress chain.Address,
+) (chain.OperatorID, error) {
+	panic("unsupported")
+}
+
 func (lc *LocalChain) SetAverageBlockTime(averageBlockTime time.Duration) {
 	lc.mutex.Lock()
 	defer lc.mutex.Unlock()

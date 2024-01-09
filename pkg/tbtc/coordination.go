@@ -200,6 +200,7 @@ func (cf *coordinationFault) String() string {
 type CoordinationProposalRequest struct {
 	WalletPublicKeyHash [20]byte
 	WalletOperators     []chain.Address
+	ExecutingOperator   chain.Address
 	ActionsChecklist    []WalletActionType
 }
 
@@ -581,6 +582,7 @@ func (ce *coordinationExecutor) executeLeaderRoutine(
 		&CoordinationProposalRequest{
 			WalletPublicKeyHash: walletPublicKeyHash,
 			WalletOperators:     ce.coordinatedWallet.signingGroupOperators,
+			ExecutingOperator:   ce.operatorAddress,
 			ActionsChecklist:    actionsChecklist,
 		},
 	)

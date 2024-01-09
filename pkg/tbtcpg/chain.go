@@ -120,6 +120,9 @@ type Chain interface {
 
 	AverageBlockTime() time.Duration
 
+	// GetOperatorID returns the operator ID for the given operator address.
+	GetOperatorID(operatorAddress chain.Address) (chain.OperatorID, error)
+
 	// ValidateHeartbeatProposal validates the given heartbeat proposal
 	// against the chain. Returns an error if the proposal is not valid or
 	// nil otherwise.
