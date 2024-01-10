@@ -364,6 +364,7 @@ type WalletProposalValidatorChain interface {
 	// nil otherwise.
 	ValidateMovingFundsProposal(
 		walletPublicKeyHash [20]byte,
+		mainUTXO *bitcoin.UnspentTransactionOutput,
 		proposal *MovingFundsProposal,
 	) error
 }

@@ -145,6 +145,7 @@ type Chain interface {
 	// nil otherwise.
 	ValidateMovingFundsProposal(
 		walletPublicKeyHash [20]byte,
+		mainUTXO *bitcoin.UnspentTransactionOutput,
 		proposal *tbtc.MovingFundsProposal,
 	) error
 }

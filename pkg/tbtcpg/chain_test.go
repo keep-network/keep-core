@@ -618,6 +618,7 @@ func (lc *LocalChain) SetHeartbeatProposalValidationResult(
 
 func (lc *LocalChain) ValidateMovingFundsProposal(
 	walletPublicKeyHash [20]byte,
+	mainUTXO *bitcoin.UnspentTransactionOutput,
 	proposal *tbtc.MovingFundsProposal,
 ) error {
 	// TODO: Implement

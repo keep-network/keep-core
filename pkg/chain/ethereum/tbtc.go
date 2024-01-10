@@ -1750,8 +1750,33 @@ func (tc *TbtcChain) ValidateHeartbeatProposal(
 
 func (tc *TbtcChain) ValidateMovingFundsProposal(
 	walletPublicKeyHash [20]byte,
+	mainUTXO *bitcoin.UnspentTransactionOutput,
 	proposal *tbtc.MovingFundsProposal,
 ) error {
-	// TODO: Implement
+	abiProposal := tbtcabi.WalletProposalValidatorMovingFundsProposal{
+		WalletPubKeyHash: walletPublicKeyHash,
+		TargetWallets:    proposal.TargetWallets,
+		MovingFundsTxFee: proposal.MovingFundsTxFee,
+	}
+	abiMainUTXO := tbtcabi.BitcoinTxUTXO3{
+		TxHash:        mainUTXO.Outpoint.TransactionHash,
+		TxOutputIndex: mainUTXO.Outpoint.OutputIndex,
+		TxOutputValue: uint64(mainUTXO.Value),
+	}
+
+	valid, err := tc.walletProposalValidator.ValidateMovingFundsProposal(
+		abiProposal,
+		abiMainUTXO,
+	)
+	if err != nil {
+		return fmt.Errorf("validation failed: [%v]", err)
+	}
+
+	// Should never happen because `validateMovingFundsProposal` returns true
+	// or reverts (returns an error) but do the check just in case.
+	if !valid {
+		return fmt.Errorf("unexpected validation result")
+	}
+
 	return nil
 }

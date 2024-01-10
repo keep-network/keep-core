@@ -1,6 +1,7 @@
 package tbtc
 
 import (
+	"fmt"
 	"math/big"
 
 	"github.com/ipfs/go-log/v2"
@@ -90,8 +91,34 @@ func (mfa *movingFundsAction) execute() error {
 // validation rules.
 func ValidateMovingFundsProposal(
 	validateProposalLogger log.StandardLogger,
+	walletPublicKeyHash [20]byte,
+	mainUTXO *bitcoin.UnspentTransactionOutput,
 	proposal *MovingFundsProposal,
+	chain interface {
+		// ValidateMovingFundsProposal validates the given moving funds proposal
+		// against the chain. Returns an error if the proposal is not valid or
+		// nil otherwise.
+		ValidateMovingFundsProposal(
+			walletPublicKeyHash [20]byte,
+			mainUTXO *bitcoin.UnspentTransactionOutput,
+			proposal *MovingFundsProposal,
+		) error
+	},
 ) ([]*MovingFundsRequest, error) {
+	validateProposalLogger.Infof("calling chain for proposal validation")
+
+	err := chain.ValidateMovingFundsProposal(
+		walletPublicKeyHash,
+		mainUTXO,
+		proposal,
+	)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"moving funds proposal is invalid: [%v]",
+			err,
+		)
+	}
+
 	// TODO: Implement
 	return nil, nil
 }

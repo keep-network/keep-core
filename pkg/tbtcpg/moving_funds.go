@@ -115,7 +115,10 @@ func (mft *MovingFundsTask) Run(request *tbtc.CoordinationProposalRequest) (
 
 	proposal, err := mft.ProposeMovingFunds(
 		taskLogger,
+		walletPublicKeyHash,
+		walletMainUtxo,
 		targetWallets,
+		0,
 	)
 	if err != nil {
 		return nil, false, fmt.Errorf(
@@ -415,7 +418,10 @@ func (mft *MovingFundsTask) SubmitMovingFundsCommitment(
 
 func (mft *MovingFundsTask) ProposeMovingFunds(
 	taskLogger log.StandardLogger,
+	walletPublicKeyHash [20]byte,
+	mainUTXO *bitcoin.UnspentTransactionOutput,
 	targetWallets [][20]byte,
+	fee int64,
 ) (*tbtc.MovingFundsProposal, error) {
 	taskLogger.Infof("preparing a moving funds proposal")
 
@@ -427,10 +433,13 @@ func (mft *MovingFundsTask) ProposeMovingFunds(
 	taskLogger.Infof("validating the moving funds proposal")
 	if _, err := tbtc.ValidateMovingFundsProposal(
 		taskLogger,
+		walletPublicKeyHash,
+		mainUTXO,
 		proposal,
+		mft.chain,
 	); err != nil {
 		return nil, fmt.Errorf(
-			"failed to verify moving funds proposal: %v",
+			"failed to verify moving funds proposal: %w",
 			err,
 		)
 	}
