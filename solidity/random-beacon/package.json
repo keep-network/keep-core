@@ -1,6 +1,6 @@
 {
   "name": "@keep-network/random-beacon",
-  "version": "2.1.0-dev",
+  "version": "2.1.0-dapp-dev-sepolia",
   "description": "Keep Random Beacon",
   "files": [
     "artifacts/",
@@ -36,7 +36,7 @@
     "@keep-network/sortition-pools": "^2.0.0-pre.16",
     "@openzeppelin/contracts": "4.7.3",
     "@thesis/solidity-contracts": "github:thesis/solidity-contracts#4985bcf",
-    "@threshold-network/solidity-contracts": "development"
+    "@threshold-network/solidity-contracts": "dapp-development-sepolia"
   },
   "devDependencies": {
     "@defi-wonderland/smock": "^2.0.7",
