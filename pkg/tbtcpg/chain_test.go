@@ -616,6 +616,24 @@ func (lc *LocalChain) SetHeartbeatProposalValidationResult(
 	lc.heartbeatProposalValidations[proposal.Message] = result
 }
 
+func (lc *LocalChain) GetMovingFundsParameters() (
+	txMaxTotalFee uint64,
+	dustThreshold uint64,
+	timeoutResetDelay uint32,
+	timeout uint32,
+	timeoutSlashingAmount *big.Int,
+	timeoutNotifierRewardMultiplier uint32,
+	commitmentGasOffset uint16,
+	sweepTxMaxTotalFee uint64,
+	sweepTimeout uint32,
+	sweepTimeoutSlashingAmount *big.Int,
+	sweepTimeoutNotifierRewardMultiplier uint32,
+	err error,
+) {
+	// TODO: Implement
+	panic("unsupported")
+}
+
 func (lc *LocalChain) ValidateMovingFundsProposal(
 	walletPublicKeyHash [20]byte,
 	mainUTXO *bitcoin.UnspentTransactionOutput,

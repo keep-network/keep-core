@@ -1748,6 +1748,41 @@ func (tc *TbtcChain) ValidateHeartbeatProposal(
 	return nil
 }
 
+func (tc *TbtcChain) GetMovingFundsParameters() (
+	txMaxTotalFee uint64,
+	dustThreshold uint64,
+	timeoutResetDelay uint32,
+	timeout uint32,
+	timeoutSlashingAmount *big.Int,
+	timeoutNotifierRewardMultiplier uint32,
+	commitmentGasOffset uint16,
+	sweepTxMaxTotalFee uint64,
+	sweepTimeout uint32,
+	sweepTimeoutSlashingAmount *big.Int,
+	sweepTimeoutNotifierRewardMultiplier uint32,
+	err error,
+) {
+	parameters, callErr := tc.bridge.MovingFundsParameters()
+	if callErr != nil {
+		err = callErr
+		return
+	}
+
+	txMaxTotalFee = parameters.MovingFundsTxMaxTotalFee
+	dustThreshold = parameters.MovingFundsDustThreshold
+	timeoutResetDelay = parameters.MovingFundsTimeoutResetDelay
+	timeout = parameters.MovingFundsTimeout
+	timeoutSlashingAmount = parameters.MovingFundsTimeoutSlashingAmount
+	timeoutNotifierRewardMultiplier = parameters.MovingFundsTimeoutNotifierRewardMultiplier
+	commitmentGasOffset = parameters.MovingFundsCommitmentGasOffset
+	sweepTxMaxTotalFee = parameters.MovedFundsSweepTxMaxTotalFee
+	sweepTimeout = parameters.MovedFundsSweepTimeout
+	sweepTimeoutSlashingAmount = parameters.MovedFundsSweepTimeoutSlashingAmount
+	sweepTimeoutNotifierRewardMultiplier = parameters.MovedFundsSweepTimeoutNotifierRewardMultiplier
+
+	return
+}
+
 func (tc *TbtcChain) ValidateMovingFundsProposal(
 	walletPublicKeyHash [20]byte,
 	mainUTXO *bitcoin.UnspentTransactionOutput,

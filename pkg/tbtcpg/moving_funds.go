@@ -423,11 +423,41 @@ func (mft *MovingFundsTask) ProposeMovingFunds(
 	targetWallets [][20]byte,
 	fee int64,
 ) (*tbtc.MovingFundsProposal, error) {
+	if len(targetWallets) == 0 {
+		return nil, fmt.Errorf("target wallets list is empty")
+	}
+
 	taskLogger.Infof("preparing a moving funds proposal")
 
+	if fee <= 0 {
+		taskLogger.Infof("estimating moving funds transaction fee")
+		var err error
+		txMaxTotalFee, _, _, _, _, _, _, _, _, _, _, err := mft.chain.GetMovingFundsParameters()
+		if err != nil {
+			return nil, fmt.Errorf(
+				"cannot get moving funds tx max total fee: [%w]",
+				err,
+			)
+		}
+
+		estimatedFee, err := EstimateMovingFundsFee(
+			mft.btcChain,
+			len(targetWallets),
+			txMaxTotalFee,
+		)
+		if err != nil {
+			return nil, fmt.Errorf(
+				"cannot estimate moving funds transaction fee: [%w]",
+				err,
+			)
+		}
+
+		fee = estimatedFee
+	}
+
 	proposal := &tbtc.MovingFundsProposal{
-		TargetWallets: targetWallets,
-		// TODO: Add fee
+		TargetWallets:    targetWallets,
+		MovingFundsTxFee: big.NewInt(fee),
 	}
 
 	taskLogger.Infof("validating the moving funds proposal")
@@ -449,4 +479,35 @@ func (mft *MovingFundsTask) ProposeMovingFunds(
 
 func (mft *MovingFundsTask) ActionType() tbtc.WalletActionType {
 	return tbtc.ActionMovingFunds
+}
+
+func EstimateMovingFundsFee(
+	btcChain bitcoin.Chain,
+	targetWalletsCount int,
+	txMaxTotalFee uint64,
+) (int64, error) {
+	sizeEstimator := bitcoin.NewTransactionSizeEstimator().
+		AddPublicKeyHashInputs(1, true).
+		AddPublicKeyHashOutputs(targetWalletsCount, true)
+
+	transactionSize, err := sizeEstimator.VirtualSize()
+	if err != nil {
+		return 0, fmt.Errorf(
+			"cannot estimate transaction virtual size: [%v]",
+			err,
+		)
+	}
+
+	feeEstimator := bitcoin.NewTransactionFeeEstimator(btcChain)
+
+	totalFee, err := feeEstimator.EstimateFee(transactionSize)
+	if err != nil {
+		return 0, fmt.Errorf("cannot estimate transaction fee: [%v]", err)
+	}
+
+	if uint64(totalFee) > txMaxTotalFee {
+		return 0, fmt.Errorf("estimated fee exceeds the maximum fee")
+	}
+
+	return totalFee, nil
 }
