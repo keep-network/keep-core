@@ -20,6 +20,9 @@ type localChain struct {
 
 	satPerVByteFeeMutex sync.Mutex
 	satPerVByteFee      int64
+
+	coinbaseTxHashesMutex sync.Mutex
+	coinbaseTxHashes      map[uint]Hash
 }
 
 func newLocalChain() *localChain {
@@ -28,6 +31,7 @@ func newLocalChain() *localChain {
 		transactionConfirmations: make(map[Hash]uint),
 		merkleProofs:             make(map[Hash]*TransactionMerkleProof),
 		blockHeaders:             make(map[uint]*BlockHeader),
+		coinbaseTxHashes:         make(map[uint]Hash),
 	}
 }
 
@@ -153,7 +157,22 @@ func (lc *localChain) GetCoinbaseTxHash(blockHeight uint) (
 	Hash,
 	error,
 ) {
-	panic("unsupported")
+	lc.coinbaseTxHashesMutex.Lock()
+	defer lc.coinbaseTxHashesMutex.Unlock()
+
+	coinbaseTxHash, ok := lc.coinbaseTxHashes[blockHeight]
+	if !ok {
+		return Hash{}, fmt.Errorf("coinbase tx hash not found")
+	}
+
+	return coinbaseTxHash, nil
+}
+
+func (lc *localChain) setCoinbaseTxHash(blockHeight uint, hash Hash) {
+	lc.coinbaseTxHashesMutex.Lock()
+	defer lc.coinbaseTxHashesMutex.Unlock()
+
+	lc.coinbaseTxHashes[blockHeight] = hash
 }
 
 func (lc *localChain) setSatPerVByteFee(

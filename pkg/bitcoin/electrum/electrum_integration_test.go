@@ -558,8 +558,8 @@ func TestGetCoinbaseTxHash_Integration(t *testing.T) {
 		expectedTxHash := blockData.CoinbaseTxHash
 		if expectedTxHash != txHash {
 			t.Errorf(
-				"unexpected coinbase transaction hash\n" +
-					"expected: %s\n" +
+				"unexpected coinbase transaction hash\n"+
+					"expected: %s\n"+
 					"actual:   %s",
 				expectedTxHash,
 				txHash,

@@ -1,6 +1,7 @@
 package bitcoin
 
 import (
+	"golang.org/x/exp/slices"
 	"reflect"
 	"testing"
 
@@ -12,10 +13,12 @@ import (
 var SpvProofData = map[string]struct {
 	RequiredConfirmations uint
 	BitcoinChainData      struct {
-		TransactionHex             string
-		AccumulatedTxConfirmations uint
-		HeadersChain               map[uint]*BlockHeader
-		TransactionMerkleProof     *TransactionMerkleProof
+		TransactionHex                 string
+		AccumulatedTxConfirmations     uint
+		HeadersChain                   map[uint]*BlockHeader
+		TransactionMerkleProof         *TransactionMerkleProof
+		CoinbaseTransactionHex         string
+		CoinbaseTransactionMerkleProof *TransactionMerkleProof
 	}
 	ExpectedProof       *SpvProof
 	ExpectedTransaction Transaction
@@ -24,10 +27,12 @@ var SpvProofData = map[string]struct {
 	"single input": {
 		RequiredConfirmations: 6,
 		BitcoinChainData: struct {
-			TransactionHex             string
-			AccumulatedTxConfirmations uint
-			HeadersChain               map[uint]*BlockHeader
-			TransactionMerkleProof     *TransactionMerkleProof
+			TransactionHex                 string
+			AccumulatedTxConfirmations     uint
+			HeadersChain                   map[uint]*BlockHeader
+			TransactionMerkleProof         *TransactionMerkleProof
+			CoinbaseTransactionHex         string
+			CoinbaseTransactionMerkleProof *TransactionMerkleProof
 		}{
 			TransactionHex:             "01000000000101672ae7c34d6a225797f0e005f6ed53ee40252811a37e90f62b68eb5e587be68e0000000000ffffffff01d0200000000000001600148db50eb52063ea9d98b3eac91489a90f738986f603483045022100b12afadf68ad9781600f065e0b09e22058ca2293aa86ac38add3ca7cfb01b3b7022009ecce0c1c3ebd26569c6b0d60e15b4675860737487d1b7c782439acf4709bdf012103989d253b17a6a0f41838b84ff0d20e8898f9d7b1a98f2564da4cc29dcf8581d95c14934b98637ca318a4d6e7ca6ffd1690b8e77df6377508f9f0c90d000395237576a9148db50eb52063ea9d98b3eac91489a90f738986f68763ac6776a914e257eccafbc07c381642ce6e7e55120fb077fbed8804e0250162b175ac6800000000",
 			AccumulatedTxConfirmations: 7,
@@ -130,6 +135,20 @@ var SpvProofData = map[string]struct {
 				},
 				Position: 11,
 			},
+			CoinbaseTransactionHex: "020000000001010000000000000000000000000000000000000000000000000000000000000000ffffffff4803b8052104e0c01c62425443506f6f6cfabe6d6d5606828fa0322cc81efd5fdbf7f100c7a8497e88dbc102097b30e08f13465bd9040000000d6531d503040db19f2e020000000000ffffffff0297814e000000000017a9147bef0b4a4dafa77b2ec52b81659cbcf0d9a91487870000000000000000266a24aa21a9ed4a673a4a13930bcc67727968c29960bf8ba07b218ff3811edf3ef3cc196707880120000000000000000000000000000000000000000000000000000000000000000000000000",
+			CoinbaseTransactionMerkleProof: &TransactionMerkleProof{
+				BlockHeight: 2164152,
+				MerkleNodes: []string{
+					"095b539f725018c6afd940281d22f523ae74f9b07fe685b4f3decf130a6e3d7a",
+					"ad6a634865b1e61051b6ecf819d98110db0cf5747eaf2205fe9e82db47318b95",
+					"0c99d031690fa507e27c4068516c752297ea7df9a5b7482bfc0c44705c059024",
+					"352a81a4e75ea8c39060a6a383a4bd19245d86cf38918d9d49cafd4e54dfba7e",
+					"43ad3aadad675e398c59eb846a8e037cf7de8ba3b38f3388175f25d84b777c80",
+					"6969c227128793b3c9e99c05f20fb9b91fdb73458fd53151b5fe29d30c10cf9a",
+					"0a76bc4d8c3d532357be4d188ba89e9ae364a7d3c365e690e3cb07359b86129c",
+				},
+				Position: 0,
+			},
 		},
 		ExpectedProof: &SpvProof{
 			MerkleProof: decodeString(
@@ -159,16 +178,30 @@ var SpvProofData = map[string]struct {
 					"000000000000002a3fa06fecd9dd4bf2e25e22a95d4f65435d5c5b42bcf498b4e7" +
 					"56f9f4ea67cea1c51c62ed3e031a9d7bf3ac",
 			),
+			CoinbasePreimage: decode32ByteString(
+				"8e690235847a80c4d300542a2d27b90bfd13d77b3421c1b5590f4220718cd3fd",
+			),
+			CoinbaseProof: decodeString(
+				"7a3d6e0a13cfdef3b485e67fb0f974ae23f5221d2840d9afc61850729f535b09958" +
+					"b3147db829efe0522af7e74f50cdb1081d919f8ecb65110e6b16548636aad24900" +
+					"55c70440cfc2b48b7a5f97dea9722756c5168407ce207a50f6931d0990c7ebadf5" +
+					"44efdca499d8d9138cf865d2419bda483a3a66090c3a85ee7a4812a35807c774bd" +
+					"8255f1788338fb3a38bdef77c038e6a84eb598c395e67adad3aad439acf100cd32" +
+					"9feb55131d58f4573db1fb9b90ff2059ce9c9b393871227c269699c12869b3507c" +
+					"be390e665c3d3a764e39a9ea88b184dbe5723533d8c4dbc760a",
+			),
 		},
 	},
 	// https://blockstream.info/testnet/api/tx/5083822ed0b8d0bc661362b778e666cb572ff6d5152193992dd69d3207995753
 	"multiple inputs": {
 		RequiredConfirmations: 6,
 		BitcoinChainData: struct {
-			TransactionHex             string
-			AccumulatedTxConfirmations uint
-			HeadersChain               map[uint]*BlockHeader
-			TransactionMerkleProof     *TransactionMerkleProof
+			TransactionHex                 string
+			AccumulatedTxConfirmations     uint
+			HeadersChain                   map[uint]*BlockHeader
+			TransactionMerkleProof         *TransactionMerkleProof
+			CoinbaseTransactionHex         string
+			CoinbaseTransactionMerkleProof *TransactionMerkleProof
 		}{
 			TransactionHex:             "010000000001048f99b22593afdc4e3c08c7821151e801b2e9a16bf307c087a1b8c1f8459e4dea00000000c9483045022100bb54f2717647b2f2c5370b5f12b55e27f97a6e2009dcd21fca08527df949e1fd022058bc3cd1dd739b89b9e4cda43b13bc59cfb15663b80cbfa3edb4539107bba35d012103989d253b17a6a0f41838b84ff0d20e8898f9d7b1a98f2564da4cc29dcf8581d94c5c14934b98637ca318a4d6e7ca6ffd1690b8e77df6377508f9f0c90d000395237576a9148db50eb52063ea9d98b3eac91489a90f738986f68763ac6776a914e257eccafbc07c381642ce6e7e55120fb077fbed8804e0250162b175ac68fffffffffd337f1abd32f17566e17a3606714d981bb8982339805ebb84c881174cff44c80000000000ffffffff73a486cf5ca706f513b6bf170ed0e7465d5bbe2968b4c2a9a207ac0ebc68c5440000000000ffffffff78439e510ac6b659b529a608611a77ca05f00ca050648212e16447460ec048f50000000000ffffffff01789b0000000000001600148db50eb52063ea9d98b3eac91489a90f738986f6000347304402205199b28a3b4a81579fe4ea99925380b298e28ca38a3b14e50f12daec87945449022065c5034f96ed785aa10b3817c501ecc59f1abf329fad07229170c3dd5f53bc91012103989d253b17a6a0f41838b84ff0d20e8898f9d7b1a98f2564da4cc29dcf8581d95c14934b98637ca318a4d6e7ca6ffd1690b8e77df6377508f9f0c90d000395237576a9148db50eb52063ea9d98b3eac91489a90f738986f68763ac6776a914e257eccafbc07c381642ce6e7e55120fb077fbed8804e0250162b175ac680247304402201b2a3b03a1088c6bbc406e96a6017e52ce86c0897541c9bb59d94179daa84f8702204b1e665bd43bbe968e1d89b15c5f0b5551011fa4caf2fbb7eb22d89a38fad04d012103989d253b17a6a0f41838b84ff0d20e8898f9d7b1a98f2564da4cc29dcf8581d903473044022007ce54f21a2f5233bd046c4600bcb1c874aaf9053b1d7ee7d47eb134b695fbed022002e8684548b7a3cdaecb8c6393244c396c15e1ebaedb53e2fcc6c5cea7310490012103989d253b17a6a0f41838b84ff0d20e8898f9d7b1a98f2564da4cc29dcf8581d95c14934b98637ca318a4d6e7ca6ffd1690b8e77df6377508f9f0c90d000395237576a9148db50eb52063ea9d98b3eac91489a90f738986f68763ac6776a914e257eccafbc07c381642ce6e7e55120fb077fbed8804e0250162b175ac6800000000",
 			AccumulatedTxConfirmations: 6,
@@ -257,6 +290,18 @@ var SpvProofData = map[string]struct {
 				},
 				Position: 6,
 			},
+			CoinbaseTransactionHex: "020000000001010000000000000000000000000000000000000000000000000000000000000000ffffffff4803bb05210445c21c62425443506f6f6cfabe6d6d9792ca7580b0dccdb4465ab26f697e165c536838032a466ef25b25bb7bebb3ae040000000d6531d503040db15755000000000000ffffffff0212304d000000000017a9147bef0b4a4dafa77b2ec52b81659cbcf0d9a91487870000000000000000266a24aa21a9ed8a716e1e3e8691cfc14df968505d88fae2e240b7f4ca4d59871992a63c9900640120000000000000000000000000000000000000000000000000000000000000000000000000",
+			CoinbaseTransactionMerkleProof: &TransactionMerkleProof{
+				BlockHeight: 2164155,
+				MerkleNodes: []string{
+					"d654db76daa53b61becba19a542c6156a725d0bce3d0f3a57d713c9a9498ab95",
+					"df2a8c9cded17679ecacc119d92bfa5dc795bb80284e320e80e4f9f93d0e5ba4",
+					"b7d63f60c09609472aa68fbb6380cffc87b4d921a26edc8b2626154145d603be",
+					"a51612d3f3f857e95803a4d86aa6dbbe2e756dc2ed6cc0e04630e8baf597e377",
+					"a00501650e0c4f8a1e07a5d6d5bc5e75e4c75de61a65f0410cce354bbae78686",
+				},
+				Position: 0,
+			},
 		},
 		ExpectedProof: &SpvProof{
 			MerkleProof: decodeString(
@@ -284,6 +329,16 @@ var SpvProofData = map[string]struct {
 					"0e401a6a884ba015e83c6fe2cd363e877ef03982e81eaff4e2c95af1e23a670f407" +
 					"d41c62ffff001d58c64d18",
 			),
+			CoinbasePreimage: decode32ByteString(
+				"0248a67dec36c38a485ad920afd89dcf082e7e570390380890e3a9465662f449",
+			),
+			CoinbaseProof: decodeString(
+				"95ab98949a3c717da5f3d0e3bcd025a756612c549aa1cbbe613ba5da76db54d6a45b" +
+					"0e3df9f9e4800e324e2880bb95c75dfa2bd919c1acec7976d1de9c8c2adfbe03d64" +
+					"5411526268bdc6ea221d9b487fccf8063bb8fa62a470996c0603fd6b777e397f5ba" +
+					"e83046e0c06cedc26d752ebedba66ad8a40358e957f8f3d31216a58686e7ba4b35c" +
+					"e0c41f0651ae65dc7e4755ebcd5d6a5071e8a4f0c0e650105a0",
+			),
 		},
 	},
 }
@@ -309,6 +364,18 @@ func decodeString(s string) []byte {
 	return bytes
 }
 
+func decode32ByteString(s string) [32]byte {
+	bytes, err := hex.DecodeString(s)
+	if err != nil {
+		panic(err)
+	}
+
+	var constBytes [32]byte
+	copy(constBytes[:], bytes)
+
+	return constBytes
+}
+
 func TestAssembleTransactionProof(t *testing.T) {
 	for testName, test := range SpvProofData {
 		t.Run(testName, func(t *testing.T) {
@@ -327,12 +394,34 @@ func TestAssembleTransactionProof(t *testing.T) {
 				transactionHash,
 				accumulatedConfirmations,
 			)
+
+			var blockNumbers []uint
 			for blockNumber, blockHeader := range blockHeaders {
+				blockNumbers = append(blockNumbers, blockNumber)
 				bitcoinChain.addBlockHeader(blockNumber, blockHeader)
 			}
+			slices.Sort(blockNumbers)
+
 			bitcoinChain.addTransactionMerkleProof(
 				transactionHash,
 				transactionMerkleProof,
+			)
+
+			coinbaseTransaction := transactionFrom(
+				t,
+				test.BitcoinChainData.CoinbaseTransactionHex,
+			)
+			coinbaseTransactionHash := coinbaseTransaction.Hash()
+			bitcoinChain.setCoinbaseTxHash(
+				blockNumbers[0],
+				coinbaseTransactionHash,
+			)
+
+			bitcoinChain.addTransaction(coinbaseTransaction)
+
+			bitcoinChain.addTransactionMerkleProof(
+				coinbaseTransactionHash,
+				test.BitcoinChainData.CoinbaseTransactionMerkleProof,
 			)
 
 			tx, proof, err := AssembleSpvProof(
