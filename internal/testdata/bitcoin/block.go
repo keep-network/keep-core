@@ -4,8 +4,9 @@ import "github.com/keep-network/keep-core/pkg/bitcoin"
 
 // Blocks holds details of block header data used as test vectors.
 var Blocks = map[bitcoin.Network]struct {
-	BlockHeight uint
-	BlockHeader *bitcoin.BlockHeader
+	BlockHeight    uint
+	BlockHeader    *bitcoin.BlockHeader
+	CoinbaseTxHash bitcoin.Hash
 }{
 	bitcoin.Testnet: {
 		BlockHeight: 2135502,
@@ -17,6 +18,7 @@ var Blocks = map[bitcoin.Network]struct {
 			Bits:                    436256810,
 			Nonce:                   778087099,
 		},
+		CoinbaseTxHash: hashFromString("1f523d1ce7553ec609bae104812dede95aa38eb13d2c2c6b64ffe868bbc1a54c"),
 	},
 	bitcoin.Mainnet: {
 		BlockHeight: 792379,
@@ -28,5 +30,6 @@ var Blocks = map[bitcoin.Network]struct {
 			Bits:                    386236009,
 			Nonce:                   2812580720,
 		},
+		CoinbaseTxHash: hashFromString("5a21bae1a78a06519166b3a26d6b20e6985a91fc66a48384982451211b520234"),
 	},
 }

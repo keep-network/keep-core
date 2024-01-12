@@ -149,6 +149,13 @@ func (lc *localChain) EstimateSatPerVByteFee(
 	return lc.satPerVByteFee, nil
 }
 
+func (lc *localChain) GetCoinbaseTxHash(blockHeight uint) (
+	Hash,
+	error,
+) {
+	panic("unsupported")
+}
+
 func (lc *localChain) setSatPerVByteFee(
 	satPerVByteFee int64,
 ) {

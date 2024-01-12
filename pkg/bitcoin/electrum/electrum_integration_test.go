@@ -540,6 +540,34 @@ func TestEstimateSatPerVByteFee_Integration(t *testing.T) {
 	})
 }
 
+func TestGetCoinbaseTxHash_Integration(t *testing.T) {
+	runParallel(t, func(t *testing.T, testConfig testConfig) {
+		electrum, cancelCtx := newTestConnection(t, testConfig.clientConfig)
+		defer cancelCtx()
+
+		blockData, ok := testData.Blocks[testConfig.network]
+		if !ok {
+			t.Fatalf("block test data not defined for network %s", testConfig.network)
+		}
+
+		txHash, err := electrum.GetCoinbaseTxHash(blockData.BlockHeight)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		expectedTxHash := blockData.CoinbaseTxHash
+		if expectedTxHash != txHash {
+			t.Errorf(
+				"unexpected coinbase transaction hash\n" +
+					"expected: %s\n" +
+					"actual:   %s",
+				expectedTxHash,
+				txHash,
+			)
+		}
+	})
+}
+
 func runParallel(t *testing.T, runFunc func(t *testing.T, testConfig testConfig)) {
 	for testName, testConfig := range testConfigs {
 		// Capture range variables.

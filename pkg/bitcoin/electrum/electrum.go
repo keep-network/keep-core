@@ -519,6 +519,40 @@ func (c *Connection) getConfirmedScriptHistory(
 	return confirmedItems, nil
 }
 
+func (c *Connection) GetCoinbaseTxHash(blockHeight uint) (bitcoin.Hash, error) {
+	txHashString, err := requestWithRetry(
+		c,
+		func(
+			ctx context.Context,
+			client *electrum.Client,
+		) (string, error) {
+			return client.GetHashFromPosition(ctx, uint32(blockHeight), 0)
+		},
+		"GetHashFromPosition",
+	)
+	if err != nil {
+		return bitcoin.Hash{}, fmt.Errorf(
+			"failed to get coinbase tx hash for block height [%v]: [%v]",
+			blockHeight,
+			err,
+		)
+	}
+
+	txHash, err := bitcoin.NewHashFromString(
+		txHashString,
+		bitcoin.ReversedByteOrder,
+	)
+	if err != nil {
+		return bitcoin.Hash{}, fmt.Errorf(
+			"cannot parse hash [%s]: [%v]",
+			txHashString,
+			err,
+		)
+	}
+
+	return txHash, nil
+}
+
 // GetMempoolForPublicKeyHash gets the unconfirmed mempool transactions
 // that pays the given public key hash using either a P2PKH or P2WPKH script.
 // The returned transactions are in an indefinite order.

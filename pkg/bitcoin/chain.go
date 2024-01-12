@@ -91,4 +91,8 @@ type Chain interface {
 	// EstimateSatPerVByteFee returns the estimated sat/vbyte fee for a
 	// transaction to be confirmed within the given number of blocks.
 	EstimateSatPerVByteFee(blocks uint32) (int64, error)
+
+	// GetCoinbaseTxHash gets the hash of the coinbase transaction for the given
+	// block height.
+	GetCoinbaseTxHash(blockHeight uint) (Hash, error)
 }
