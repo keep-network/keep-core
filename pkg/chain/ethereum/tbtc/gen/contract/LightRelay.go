@@ -939,6 +939,144 @@ func (lr *LightRelay) SetAuthorizationStatusGasEstimate(
 }
 
 // Transaction submission.
+func (lr *LightRelay) SetDifficultyFromHeaders(
+	arg_bitcoinHeaders []byte,
+
+	transactionOptions ...chainutil.TransactionOptions,
+) (*types.Transaction, error) {
+	lrLogger.Debug(
+		"submitting transaction setDifficultyFromHeaders",
+		" params: ",
+		fmt.Sprint(
+			arg_bitcoinHeaders,
+		),
+	)
+
+	lr.transactionMutex.Lock()
+	defer lr.transactionMutex.Unlock()
+
+	// create a copy
+	transactorOptions := new(bind.TransactOpts)
+	*transactorOptions = *lr.transactorOptions
+
+	if len(transactionOptions) > 1 {
+		return nil, fmt.Errorf(
+			"could not process multiple transaction options sets",
+		)
+	} else if len(transactionOptions) > 0 {
+		transactionOptions[0].Apply(transactorOptions)
+	}
+
+	nonce, err := lr.nonceManager.CurrentNonce()
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve account nonce: %v", err)
+	}
+
+	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
+
+	transaction, err := lr.contract.SetDifficultyFromHeaders(
+		transactorOptions,
+		arg_bitcoinHeaders,
+	)
+	if err != nil {
+		return transaction, lr.errorResolver.ResolveError(
+			err,
+			lr.transactorOptions.From,
+			nil,
+			"setDifficultyFromHeaders",
+			arg_bitcoinHeaders,
+		)
+	}
+
+	lrLogger.Infof(
+		"submitted transaction setDifficultyFromHeaders with id: [%s] and nonce [%v]",
+		transaction.Hash(),
+		transaction.Nonce(),
+	)
+
+	go lr.miningWaiter.ForceMining(
+		transaction,
+		transactorOptions,
+		func(newTransactorOptions *bind.TransactOpts) (*types.Transaction, error) {
+			// If original transactor options has a non-zero gas limit, that
+			// means the client code set it on their own. In that case, we
+			// should rewrite the gas limit from the original transaction
+			// for each resubmission. If the gas limit is not set by the client
+			// code, let the the submitter re-estimate the gas limit on each
+			// resubmission.
+			if transactorOptions.GasLimit != 0 {
+				newTransactorOptions.GasLimit = transactorOptions.GasLimit
+			}
+
+			transaction, err := lr.contract.SetDifficultyFromHeaders(
+				newTransactorOptions,
+				arg_bitcoinHeaders,
+			)
+			if err != nil {
+				return nil, lr.errorResolver.ResolveError(
+					err,
+					lr.transactorOptions.From,
+					nil,
+					"setDifficultyFromHeaders",
+					arg_bitcoinHeaders,
+				)
+			}
+
+			lrLogger.Infof(
+				"submitted transaction setDifficultyFromHeaders with id: [%s] and nonce [%v]",
+				transaction.Hash(),
+				transaction.Nonce(),
+			)
+
+			return transaction, nil
+		},
+	)
+
+	lr.nonceManager.IncrementNonce()
+
+	return transaction, err
+}
+
+// Non-mutating call, not a transaction submission.
+func (lr *LightRelay) CallSetDifficultyFromHeaders(
+	arg_bitcoinHeaders []byte,
+	blockNumber *big.Int,
+) error {
+	var result interface{} = nil
+
+	err := chainutil.CallAtBlock(
+		lr.transactorOptions.From,
+		blockNumber, nil,
+		lr.contractABI,
+		lr.caller,
+		lr.errorResolver,
+		lr.contractAddress,
+		"setDifficultyFromHeaders",
+		&result,
+		arg_bitcoinHeaders,
+	)
+
+	return err
+}
+
+func (lr *LightRelay) SetDifficultyFromHeadersGasEstimate(
+	arg_bitcoinHeaders []byte,
+) (uint64, error) {
+	var result uint64
+
+	result, err := chainutil.EstimateGas(
+		lr.callerOptions.From,
+		lr.contractAddress,
+		"setDifficultyFromHeaders",
+		lr.contractABI,
+		lr.transactor,
+		arg_bitcoinHeaders,
+	)
+
+	return result, err
+}
+
+// Transaction submission.
 func (lr *LightRelay) SetProofLength(
 	arg_newLength uint64,
 
