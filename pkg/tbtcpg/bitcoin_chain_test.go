@@ -132,6 +132,13 @@ func (lbc *LocalBitcoinChain) EstimateSatPerVByteFee(
 	return lbc.satPerVByteFeeEstimation[blocks], nil
 }
 
+func (lbc *LocalBitcoinChain) GetCoinbaseTxHash(blockHeight uint) (
+	bitcoin.Hash,
+	error,
+) {
+	panic("unsupported")
+}
+
 func (lbc *LocalBitcoinChain) SetEstimateSatPerVByteFee(
 	blocks uint32,
 	fee int64,

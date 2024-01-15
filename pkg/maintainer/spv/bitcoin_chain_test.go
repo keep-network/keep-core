@@ -180,6 +180,13 @@ func (lbc *localBitcoinChain) EstimateSatPerVByteFee(blocks uint32) (
 	panic("unsupported")
 }
 
+func (lbc *localBitcoinChain) GetCoinbaseTxHash(blockHeight uint) (
+	bitcoin.Hash,
+	error,
+) {
+	panic("unsupported")
+}
+
 func (lbc *localBitcoinChain) addBlockHeader(
 	blockNumber uint,
 	blockHeader *bitcoin.BlockHeader,

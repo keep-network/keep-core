@@ -127,6 +127,13 @@ func (lbc *localBitcoinChain) EstimateSatPerVByteFee(
 	panic("unsupported")
 }
 
+func (lbc *localBitcoinChain) GetCoinbaseTxHash(blockHeight uint) (
+	bitcoin.Hash,
+	error,
+) {
+	panic("unsupported")
+}
+
 // connectLocalBitcoinChain connects to the local Bitcoin chain and returns
 // a chain handle.
 func connectLocalBitcoinChain() *localBitcoinChain {
