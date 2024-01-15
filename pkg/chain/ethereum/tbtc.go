@@ -1310,10 +1310,12 @@ func (tc *TbtcChain) SubmitRedemptionProofWithReimbursement(
 		OutputVector: transaction.SerializeOutputs(),
 		Locktime:     transaction.SerializeLocktime(),
 	}
-	sweepProof := tbtcabi.BitcoinTxProof2{
-		MerkleProof:    proof.MerkleProof,
-		TxIndexInBlock: big.NewInt(int64(proof.TxIndexInBlock)),
-		BitcoinHeaders: proof.BitcoinHeaders,
+	redemptionProof := tbtcabi.BitcoinTxProof2{
+		MerkleProof:      proof.MerkleProof,
+		TxIndexInBlock:   big.NewInt(int64(proof.TxIndexInBlock)),
+		BitcoinHeaders:   proof.BitcoinHeaders,
+		CoinbasePreimage: proof.CoinbasePreimage,
+		CoinbaseProof:    proof.CoinbaseProof,
 	}
 	utxo := tbtcabi.BitcoinTxUTXO2{
 		TxHash:        mainUTXO.Outpoint.TransactionHash,
@@ -1323,7 +1325,7 @@ func (tc *TbtcChain) SubmitRedemptionProofWithReimbursement(
 
 	gasEstimate, err := tc.maintainerProxy.SubmitRedemptionProofGasEstimate(
 		bitcoinTxInfo,
-		sweepProof,
+		redemptionProof,
 		utxo,
 		walletPublicKeyHash,
 	)
@@ -1339,7 +1341,7 @@ func (tc *TbtcChain) SubmitRedemptionProofWithReimbursement(
 
 	_, err = tc.maintainerProxy.SubmitRedemptionProof(
 		bitcoinTxInfo,
-		sweepProof,
+		redemptionProof,
 		utxo,
 		walletPublicKeyHash,
 		ethutil.TransactionOptions{
@@ -1387,9 +1389,11 @@ func (tc *TbtcChain) SubmitDepositSweepProofWithReimbursement(
 		Locktime:     transaction.SerializeLocktime(),
 	}
 	sweepProof := tbtcabi.BitcoinTxProof2{
-		MerkleProof:    proof.MerkleProof,
-		TxIndexInBlock: big.NewInt(int64(proof.TxIndexInBlock)),
-		BitcoinHeaders: proof.BitcoinHeaders,
+		MerkleProof:      proof.MerkleProof,
+		TxIndexInBlock:   big.NewInt(int64(proof.TxIndexInBlock)),
+		BitcoinHeaders:   proof.BitcoinHeaders,
+		CoinbasePreimage: proof.CoinbasePreimage,
+		CoinbaseProof:    proof.CoinbaseProof,
 	}
 	utxo := tbtcabi.BitcoinTxUTXO2{
 		TxHash:        mainUTXO.Outpoint.TransactionHash,
