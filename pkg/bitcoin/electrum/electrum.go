@@ -519,6 +519,8 @@ func (c *Connection) getConfirmedScriptHistory(
 	return confirmedItems, nil
 }
 
+// GetCoinbaseTxHash gets the hash of the coinbase transaction for the given
+// block height.
 func (c *Connection) GetCoinbaseTxHash(blockHeight uint) (bitcoin.Hash, error) {
 	txHashString, err := requestWithRetry(
 		c,
