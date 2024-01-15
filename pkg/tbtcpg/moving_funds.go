@@ -102,7 +102,7 @@ func (mft *MovingFundsTask) Run(request *tbtc.CoordinationProposalRequest) (
 		return nil, false, nil
 	}
 
-	targetWallets, commitmentSubmitted, err := mft.FindTargetWallets(
+	targetWallets, commitmentSubmitted, err := mft.GetTargetWallets(
 		taskLogger,
 		walletPublicKeyHash,
 		walletChainData,
@@ -157,7 +157,12 @@ func (mft *MovingFundsTask) Run(request *tbtc.CoordinationProposalRequest) (
 	return proposal, false, nil
 }
 
-func (mft *MovingFundsTask) FindTargetWallets(
+// GetTargetWallets returns a list of target wallets for the moving funds
+// procedure. If the source wallet has not submitted moving funds commitment yet
+// a new list of target wallets is prepared. If the source wallet has already
+// submitted the commitment, the returned target wallet list is prepared based
+// on the submitted commitment event.
+func (mft *MovingFundsTask) GetTargetWallets(
 	taskLogger log.StandardLogger,
 	sourceWalletPublicKeyHash [20]byte,
 	walletChainData *tbtc.WalletChainData,
@@ -357,6 +362,9 @@ func (mft *MovingFundsTask) retrieveCommittedTargetWallets(
 	return targetWallets, nil
 }
 
+// GetWalletMembersInfo returns the wallet member IDs based on the provided
+// wallet operator addresses. Additionally, it returns the position of the
+// moving funds task execution operator on the list.
 func (mft *MovingFundsTask) GetWalletMembersInfo(
 	walletOperators []chain.Address,
 	executingOperator chain.Address,
@@ -390,6 +398,8 @@ func (mft *MovingFundsTask) GetWalletMembersInfo(
 	return walletMemberIDs, uint32(walletMemberIndex), nil
 }
 
+// SubmitMovingFundsCommitment submits the moving funds commitment and waits
+// until the transaction has at least one confirmation.
 func (mft *MovingFundsTask) SubmitMovingFundsCommitment(
 	walletPublicKeyHash [20]byte,
 	walletMainUTXO *bitcoin.UnspentTransactionOutput,
@@ -416,6 +426,7 @@ func (mft *MovingFundsTask) SubmitMovingFundsCommitment(
 	return nil
 }
 
+// ProposeMovingFunds returns a moving funds proposal.
 func (mft *MovingFundsTask) ProposeMovingFunds(
 	taskLogger log.StandardLogger,
 	walletPublicKeyHash [20]byte,
@@ -481,6 +492,8 @@ func (mft *MovingFundsTask) ActionType() tbtc.WalletActionType {
 	return tbtc.ActionMovingFunds
 }
 
+// EstimateMovingFundsFee estimates fee for the moving funds transaction that
+// moves funds from the source wallet to target wallets.
 func EstimateMovingFundsFee(
 	btcChain bitcoin.Chain,
 	targetWalletsCount int,
