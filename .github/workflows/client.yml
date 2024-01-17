@@ -150,6 +150,7 @@ jobs:
         uses: docker/setup-qemu-action@v3
 
       - name: Build multi-platform Runtime Inage
+        if: github.event_name != 'workflow_dispatch'
         uses: docker/build-push-action@v3
         with:
           target: runtime-docker
