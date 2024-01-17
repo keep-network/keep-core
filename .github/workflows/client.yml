@@ -150,7 +150,7 @@ jobs:
         uses: docker/setup-qemu-action@v3
 
       - name: Build multi-platform Runtime Inage
-        uses: docker/build-push-action/v3
+        uses: docker/build-push-action@v3
         with:
           target: runtime-docker
           platforms: linux/amd64,linux/arm64
