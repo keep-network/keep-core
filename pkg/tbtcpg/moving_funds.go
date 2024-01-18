@@ -1,17 +1,49 @@
 package tbtcpg
 
 import (
+	"bytes"
 	"fmt"
 	"math/big"
 	"sort"
+	"time"
 
-	"go.uber.org/zap"
-
+	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ipfs/go-log/v2"
 	"github.com/keep-network/keep-core/pkg/bitcoin"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/tbtc"
+	"go.uber.org/zap"
 )
+
+var (
+	// ErrMaxBtcTransferZero is the error returned when wallet max BTC transfer
+	// parameter is zero.
+	ErrMaxBtcTransferZero = fmt.Errorf(
+		"wallet max BTC transfer must be positive",
+	)
+
+	// ErrNotEnoughTargetWallets is the error returned when the number of
+	// gathered target wallets does not match the required target wallets count.
+	ErrNotEnoughTargetWallets = fmt.Errorf(
+		"not enough target wallets",
+	)
+
+	// ErrWrongCommitmentHash is the error returned when the hash calculated
+	// from retrieved target wallets does not match the committed hash.
+	ErrWrongCommitmentHash = fmt.Errorf(
+		"target wallets hash must match commitment hash",
+	)
+
+	// ErrTargetWalletNotLive is the error returned when a target wallet is not
+	// in the Live state.
+	ErrTargetWalletNotLive = fmt.Errorf(
+		"target wallet is not live",
+	)
+)
+
+// MovingFundsCommitmentLookBackPeriod is the look-back period used when
+// searching for submitted moving funds commitment events.
+const MovingFundsCommitmentLookBackPeriod = 30 * 24 * time.Hour // 1 month
 
 // MovingFundsTask is a task that may produce a moving funds proposal.
 type MovingFundsTask struct {
@@ -102,10 +134,13 @@ func (mft *MovingFundsTask) Run(request *tbtc.CoordinationProposalRequest) (
 		return nil, false, nil
 	}
 
-	targetWallets, commitmentSubmitted, err := mft.GetTargetWallets(
+	targetWalletsCommitmentHash :=
+		walletChainData.MovingFundsTargetWalletsCommitmentHash
+
+	targetWallets, commitmentSubmitted, err := mft.FindTargetWallets(
 		taskLogger,
 		walletPublicKeyHash,
-		walletChainData,
+		targetWalletsCommitmentHash,
 		uint64(walletBalance),
 		liveWalletsCount,
 	)
@@ -157,33 +192,36 @@ func (mft *MovingFundsTask) Run(request *tbtc.CoordinationProposalRequest) (
 	return proposal, false, nil
 }
 
-// GetTargetWallets returns a list of target wallets for the moving funds
+// FindTargetWallets returns a list of target wallets for the moving funds
 // procedure. If the source wallet has not submitted moving funds commitment yet
 // a new list of target wallets is prepared. If the source wallet has already
 // submitted the commitment, the returned target wallet list is prepared based
 // on the submitted commitment event.
-func (mft *MovingFundsTask) GetTargetWallets(
+func (mft *MovingFundsTask) FindTargetWallets(
 	taskLogger log.StandardLogger,
 	sourceWalletPublicKeyHash [20]byte,
-	walletChainData *tbtc.WalletChainData,
+	targetWalletsCommitmentHash [32]byte,
 	walletBalance uint64,
 	liveWalletsCount uint32,
 ) ([][20]byte, bool, error) {
-	if walletChainData.MovingFundsTargetWalletsCommitmentHash == [32]byte{} {
+	if targetWalletsCommitmentHash == [32]byte{} {
 		targetWallets, err := mft.findNewTargetWallets(
 			taskLogger,
 			sourceWalletPublicKeyHash,
 			walletBalance,
 			liveWalletsCount,
 		)
-		return targetWallets, false, err
-	}
 
-	targetWallets, err := mft.retrieveCommittedTargetWallets(
-		taskLogger,
-		sourceWalletPublicKeyHash,
-	)
-	return targetWallets, true, err
+		return targetWallets, false, err
+	} else {
+		targetWallets, err := mft.retrieveCommittedTargetWallets(
+			taskLogger,
+			sourceWalletPublicKeyHash,
+			targetWalletsCommitmentHash,
+		)
+
+		return targetWallets, true, err
+	}
 }
 
 func (mft *MovingFundsTask) findNewTargetWallets(
@@ -202,9 +240,7 @@ func (mft *MovingFundsTask) findNewTargetWallets(
 	}
 
 	if walletMaxBtcTransfer == 0 {
-		return nil, fmt.Errorf(
-			"wallet max BTC transfer must be positive: [%w]", err,
-		)
+		return nil, ErrMaxBtcTransferZero
 	}
 
 	ceilingDivide := func(x, y uint64) uint64 {
@@ -268,7 +304,8 @@ func (mft *MovingFundsTask) findNewTargetWallets(
 
 	if len(targetWallets) != int(targetWalletsCount) {
 		return nil, fmt.Errorf(
-			"failed to get enough target wallets: required [%v]; gathered [%v]",
+			"%w: required [%v] target wallets; gathered [%v]",
+			ErrNotEnoughTargetWallets,
 			targetWalletsCount,
 			len(targetWallets),
 		)
@@ -290,6 +327,7 @@ func (mft *MovingFundsTask) findNewTargetWallets(
 func (mft *MovingFundsTask) retrieveCommittedTargetWallets(
 	taskLogger log.StandardLogger,
 	sourceWalletPublicKeyHash [20]byte,
+	targetWalletsCommitmentHash [32]byte,
 ) ([][20]byte, error) {
 	taskLogger.Infof(
 		"commitment already submitted; retrieving committed target wallets",
@@ -311,8 +349,7 @@ func (mft *MovingFundsTask) retrieveCommittedTargetWallets(
 		)
 	}
 
-	// Look back one month when searching for the commitment event.
-	filterLookBackSeconds := uint64(30 * 24 * 60 * 60)
+	filterLookBackSeconds := uint64(MovingFundsCommitmentLookBackPeriod.Seconds())
 	filterLookBackBlocks := filterLookBackSeconds / uint64(mft.chain.AverageBlockTime().Seconds())
 	filterStartBlock := currentBlockNumber - filterLookBackBlocks
 
@@ -353,10 +390,24 @@ func (mft *MovingFundsTask) retrieveCommittedTargetWallets(
 
 		if targetWalletChainData.State != tbtc.StateLive {
 			return nil, fmt.Errorf(
-				"target wallet [0x%x] is not Live",
+				"%w: [0x%x]",
+				ErrTargetWalletNotLive,
 				targetWallet,
 			)
 		}
+	}
+
+	// Just in case check if the hash of the target wallets matches the moving
+	// funds target wallets commitment hash.
+	packedWallets := []byte{}
+	for _, wallet := range targetWallets {
+		packedWallets = append(packedWallets, wallet[:]...)
+	}
+
+	calculatedHash := crypto.Keccak256(packedWallets)
+
+	if !bytes.Equal(calculatedHash, targetWalletsCommitmentHash[:]) {
+		return nil, ErrWrongCommitmentHash
 	}
 
 	return targetWallets, nil

@@ -33,34 +33,49 @@ type redemptionParameters = struct {
 	timeoutNotifierRewardMultiplier uint32
 }
 
+type walletParameters = struct {
+	creationPeriod        uint32
+	creationMinBtcBalance uint64
+	creationMaxBtcBalance uint64
+	closureMinBtcBalance  uint64
+	maxAge                uint32
+	maxBtcTransfer        uint64
+	closingPeriod         uint32
+}
+
 type LocalChain struct {
 	mutex sync.Mutex
 
-	depositRequests                 map[[32]byte]*tbtc.DepositChainRequest
-	pastDepositRevealedEvents       map[[32]byte][]*tbtc.DepositRevealedEvent
-	pastNewWalletRegisteredEvents   map[[32]byte][]*tbtc.NewWalletRegisteredEvent
-	depositParameters               depositParameters
-	depositSweepProposalValidations map[[32]byte]bool
-	redemptionParameters            redemptionParameters
-	redemptionRequestMinAge         uint32
-	blockCounter                    chain.BlockCounter
-	pastRedemptionRequestedEvents   map[[32]byte][]*tbtc.RedemptionRequestedEvent
-	averageBlockTime                time.Duration
-	pendingRedemptionRequests       map[[32]byte]*tbtc.RedemptionRequest
-	redemptionProposalValidations   map[[32]byte]bool
-	heartbeatProposalValidations    map[[16]byte]bool
+	depositRequests                          map[[32]byte]*tbtc.DepositChainRequest
+	pastDepositRevealedEvents                map[[32]byte][]*tbtc.DepositRevealedEvent
+	pastNewWalletRegisteredEvents            map[[32]byte][]*tbtc.NewWalletRegisteredEvent
+	depositParameters                        depositParameters
+	depositSweepProposalValidations          map[[32]byte]bool
+	redemptionParameters                     redemptionParameters
+	redemptionRequestMinAge                  uint32
+	walletParameters                         walletParameters
+	walletChainData                          map[[20]byte]*tbtc.WalletChainData
+	blockCounter                             chain.BlockCounter
+	pastRedemptionRequestedEvents            map[[32]byte][]*tbtc.RedemptionRequestedEvent
+	averageBlockTime                         time.Duration
+	pendingRedemptionRequests                map[[32]byte]*tbtc.RedemptionRequest
+	redemptionProposalValidations            map[[32]byte]bool
+	pastMovingFundsCommitmentSubmittedEvents map[[32]byte][]*tbtc.MovingFundsCommitmentSubmittedEvent
+	heartbeatProposalValidations             map[[16]byte]bool
 }
 
 func NewLocalChain() *LocalChain {
 	return &LocalChain{
-		depositRequests:                 make(map[[32]byte]*tbtc.DepositChainRequest),
-		pastDepositRevealedEvents:       make(map[[32]byte][]*tbtc.DepositRevealedEvent),
-		pastNewWalletRegisteredEvents:   make(map[[32]byte][]*tbtc.NewWalletRegisteredEvent),
-		depositSweepProposalValidations: make(map[[32]byte]bool),
-		pastRedemptionRequestedEvents:   make(map[[32]byte][]*tbtc.RedemptionRequestedEvent),
-		pendingRedemptionRequests:       make(map[[32]byte]*tbtc.RedemptionRequest),
-		redemptionProposalValidations:   make(map[[32]byte]bool),
-		heartbeatProposalValidations:    make(map[[16]byte]bool),
+		depositRequests:                          make(map[[32]byte]*tbtc.DepositChainRequest),
+		pastDepositRevealedEvents:                make(map[[32]byte][]*tbtc.DepositRevealedEvent),
+		pastNewWalletRegisteredEvents:            make(map[[32]byte][]*tbtc.NewWalletRegisteredEvent),
+		depositSweepProposalValidations:          make(map[[32]byte]bool),
+		pastRedemptionRequestedEvents:            make(map[[32]byte][]*tbtc.RedemptionRequestedEvent),
+		walletChainData:                          make(map[[20]byte]*tbtc.WalletChainData),
+		pendingRedemptionRequests:                make(map[[32]byte]*tbtc.RedemptionRequest),
+		redemptionProposalValidations:            make(map[[32]byte]bool),
+		pastMovingFundsCommitmentSubmittedEvents: make(map[[32]byte][]*tbtc.MovingFundsCommitmentSubmittedEvent),
+		heartbeatProposalValidations:             make(map[[16]byte]bool),
 	}
 }
 
@@ -310,6 +325,32 @@ func buildPastRedemptionRequestedEventsKey(
 		}
 
 		buffer.Write(redeemerHex)
+	}
+
+	return sha256.Sum256(buffer.Bytes()), nil
+}
+
+func buildPastMovingFundsCommitmentSubmittedEventsKey(
+	filter *tbtc.MovingFundsCommitmentSubmittedEventFilter,
+) ([32]byte, error) {
+	if filter == nil {
+		return [32]byte{}, nil
+	}
+
+	var buffer bytes.Buffer
+
+	startBlock := make([]byte, 8)
+	binary.BigEndian.PutUint64(startBlock, filter.StartBlock)
+	buffer.Write(startBlock)
+
+	if filter.EndBlock != nil {
+		endBlock := make([]byte, 8)
+		binary.BigEndian.PutUint64(startBlock, *filter.EndBlock)
+		buffer.Write(endBlock)
+	}
+
+	for _, walletPublicKeyHash := range filter.WalletPublicKeyHash {
+		buffer.Write(walletPublicKeyHash[:])
 	}
 
 	return sha256.Sum256(buffer.Bytes()), nil
@@ -728,7 +769,26 @@ func (lc *LocalChain) GetWallet(walletPublicKeyHash [20]byte) (
 	*tbtc.WalletChainData,
 	error,
 ) {
-	panic("unsupported")
+	lc.mutex.Lock()
+	defer lc.mutex.Unlock()
+
+	data, ok := lc.walletChainData[walletPublicKeyHash]
+	if !ok {
+		fmt.Println("Not found")
+		return nil, fmt.Errorf("wallet chain data not found")
+	}
+
+	return data, nil
+}
+
+func (lc *LocalChain) SetWallet(
+	walletPublicKeyHash [20]byte,
+	data *tbtc.WalletChainData,
+) {
+	lc.mutex.Lock()
+	defer lc.mutex.Unlock()
+
+	lc.walletChainData[walletPublicKeyHash] = data
 }
 
 func (lc *LocalChain) GetWalletParameters() (
@@ -741,7 +801,40 @@ func (lc *LocalChain) GetWalletParameters() (
 	closingPeriod uint32,
 	err error,
 ) {
-	panic("unsupported")
+	lc.mutex.Lock()
+	defer lc.mutex.Unlock()
+
+	return lc.walletParameters.creationPeriod,
+		lc.walletParameters.creationMinBtcBalance,
+		lc.walletParameters.creationMaxBtcBalance,
+		lc.walletParameters.closureMinBtcBalance,
+		lc.walletParameters.maxAge,
+		lc.walletParameters.maxBtcTransfer,
+		lc.walletParameters.closingPeriod,
+		nil
+}
+
+func (lc *LocalChain) SetWalletParameters(
+	creationPeriod uint32,
+	creationMinBtcBalance uint64,
+	creationMaxBtcBalance uint64,
+	closureMinBtcBalance uint64,
+	maxAge uint32,
+	maxBtcTransfer uint64,
+	closingPeriod uint32,
+) {
+	lc.mutex.Lock()
+	defer lc.mutex.Unlock()
+
+	lc.walletParameters = walletParameters{
+		creationPeriod:        creationPeriod,
+		creationMinBtcBalance: creationMinBtcBalance,
+		creationMaxBtcBalance: creationMaxBtcBalance,
+		closureMinBtcBalance:  closureMinBtcBalance,
+		maxAge:                maxAge,
+		maxBtcTransfer:        maxBtcTransfer,
+		closingPeriod:         closingPeriod,
+	}
 }
 
 func (lc *LocalChain) GetLiveWalletsCount() (uint32, error) {
@@ -752,10 +845,47 @@ func (lc *LocalChain) ComputeMainUtxoHash(mainUtxo *bitcoin.UnspentTransactionOu
 	panic("unsupported")
 }
 
+func (lc *LocalChain) AddPastMovingFundsCommitmentSubmittedEvent(
+	filter *tbtc.MovingFundsCommitmentSubmittedEventFilter,
+	event *tbtc.MovingFundsCommitmentSubmittedEvent,
+) error {
+	lc.mutex.Lock()
+	defer lc.mutex.Unlock()
+
+	eventsKey, err := buildPastMovingFundsCommitmentSubmittedEventsKey(filter)
+	if err != nil {
+		return err
+	}
+
+	if _, ok := lc.pastMovingFundsCommitmentSubmittedEvents[eventsKey]; !ok {
+		lc.pastMovingFundsCommitmentSubmittedEvents[eventsKey] = []*tbtc.MovingFundsCommitmentSubmittedEvent{}
+	}
+
+	lc.pastMovingFundsCommitmentSubmittedEvents[eventsKey] = append(
+		lc.pastMovingFundsCommitmentSubmittedEvents[eventsKey],
+		event,
+	)
+
+	return nil
+}
+
 func (lc *LocalChain) PastMovingFundsCommitmentSubmittedEvents(
 	filter *tbtc.MovingFundsCommitmentSubmittedEventFilter,
 ) ([]*tbtc.MovingFundsCommitmentSubmittedEvent, error) {
-	panic("unsupported")
+	lc.mutex.Lock()
+	defer lc.mutex.Unlock()
+
+	eventsKey, err := buildPastMovingFundsCommitmentSubmittedEventsKey(filter)
+	if err != nil {
+		return nil, err
+	}
+
+	events, ok := lc.pastMovingFundsCommitmentSubmittedEvents[eventsKey]
+	if !ok {
+		return nil, fmt.Errorf("no events for given filter")
+	}
+
+	return events, nil
 }
 
 func (lc *LocalChain) SubmitMovingFundsCommitment(
