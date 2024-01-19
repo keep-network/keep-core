@@ -39,6 +39,12 @@ var (
 	ErrTargetWalletNotLive = fmt.Errorf(
 		"target wallet is not live",
 	)
+
+	// ErrNoExecutingOperator is the error returned when the task executing
+	// operator is not found among the wallet operator IDs.
+	ErrNoExecutingOperator = fmt.Errorf(
+		"task executing operator not found among wallet operators",
+	)
 )
 
 // MovingFundsCommitmentLookBackPeriod is the look-back period used when
@@ -441,9 +447,7 @@ func (mft *MovingFundsTask) GetWalletMembersInfo(
 
 	// The task executing operator must always be on the wallet operators list.
 	if walletMemberIndex == 0 {
-		return nil, 0, fmt.Errorf(
-			"task executing operator not found among wallet operators",
-		)
+		return nil, 0, ErrNoExecutingOperator
 	}
 
 	return walletMemberIDs, uint32(walletMemberIndex), nil

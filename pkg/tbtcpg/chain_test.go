@@ -62,6 +62,7 @@ type LocalChain struct {
 	redemptionProposalValidations            map[[32]byte]bool
 	pastMovingFundsCommitmentSubmittedEvents map[[32]byte][]*tbtc.MovingFundsCommitmentSubmittedEvent
 	heartbeatProposalValidations             map[[16]byte]bool
+	operatorIDs                              map[chain.Address]uint32
 }
 
 func NewLocalChain() *LocalChain {
@@ -76,6 +77,7 @@ func NewLocalChain() *LocalChain {
 		redemptionProposalValidations:            make(map[[32]byte]bool),
 		pastMovingFundsCommitmentSubmittedEvents: make(map[[32]byte][]*tbtc.MovingFundsCommitmentSubmittedEvent),
 		heartbeatProposalValidations:             make(map[[16]byte]bool),
+		operatorIDs:                              make(map[chain.Address]uint32),
 	}
 }
 
@@ -752,10 +754,35 @@ func (lc *LocalChain) AverageBlockTime() time.Duration {
 	return lc.averageBlockTime
 }
 
+func (lc *LocalChain) SetOperatorID(
+	operatorAddress chain.Address,
+	operatorID chain.OperatorID,
+) error {
+	lc.mutex.Lock()
+	defer lc.mutex.Unlock()
+
+	_, ok := lc.operatorIDs[operatorAddress]
+	if ok {
+		return fmt.Errorf("operator already inserted")
+	}
+
+	lc.operatorIDs[operatorAddress] = operatorID
+
+	return nil
+}
+
 func (lc *LocalChain) GetOperatorID(
 	operatorAddress chain.Address,
 ) (chain.OperatorID, error) {
-	panic("unsupported")
+	lc.mutex.Lock()
+	defer lc.mutex.Unlock()
+
+	operatorID, ok := lc.operatorIDs[operatorAddress]
+	if !ok {
+		return 0, fmt.Errorf("operator not found")
+	}
+
+	return operatorID, nil
 }
 
 func (lc *LocalChain) SetAverageBlockTime(averageBlockTime time.Duration) {

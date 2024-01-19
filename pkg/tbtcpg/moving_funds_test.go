@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/keep-network/keep-core/internal/testutils"
+	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/tbtc"
 	"github.com/keep-network/keep-core/pkg/tbtcpg"
 )
@@ -373,9 +374,93 @@ func TestMovingFundsAction_FindTargetWallets_CommitmentAlreadySubmitted(t *testi
 	}
 }
 
+func TestMovingFundsAction_GetWalletMembersInfo(t *testing.T) {
+	var tests = map[string]struct {
+		walletOperators          []operatorInfo
+		executingOperator        chain.Address
+		expectedMemberIDs        []uint32
+		expectedOperatorPosition uint32
+		expectedError            error
+	}{
+		"success case": {
+			walletOperators: []operatorInfo{
+				{"5df232b0348928793658dd05dfc6b05a59d11ae8", 3},
+				{"dcc895d32b74b34cef2baa6546884fcda65da1e9", 1},
+				{"28759deda2ea33bd72f68ea2e8f60cd670c2549f", 2},
+				{"f7891d42f3c61a49e0aed1e31b151877c0905cf7", 4},
+			},
+			executingOperator:        "28759deda2ea33bd72f68ea2e8f60cd670c2549f",
+			expectedMemberIDs:        []uint32{3, 1, 2, 4},
+			expectedOperatorPosition: 3,
+			expectedError:            nil,
+		},
+		"executing operator not among operators": {
+			walletOperators: []operatorInfo{
+				{"5df232b0348928793658dd05dfc6b05a59d11ae8", 2},
+				{"dcc895d32b74b34cef2baa6546884fcda65da1e9", 1},
+			},
+			executingOperator:        "28759deda2ea33bd72f68ea2e8f60cd670c2549f",
+			expectedMemberIDs:        nil,
+			expectedOperatorPosition: 0,
+			expectedError:            tbtcpg.ErrNoExecutingOperator,
+		},
+	}
+
+	for testName, test := range tests {
+		t.Run(testName, func(t *testing.T) {
+			tbtcChain := tbtcpg.NewLocalChain()
+
+			task := tbtcpg.NewMovingFundsTask(tbtcChain, nil)
+
+			walletOperators := []chain.Address{}
+			for _, operatorInfo := range test.walletOperators {
+				err := tbtcChain.SetOperatorID(
+					operatorInfo.Address,
+					operatorInfo.OperatorID,
+				)
+				if err != nil {
+					t.Fatal(err)
+				}
+				walletOperators = append(walletOperators, operatorInfo.Address)
+			}
+
+			memberIDs, operatorPosition, err := task.GetWalletMembersInfo(
+				walletOperators,
+				test.executingOperator,
+			)
+
+			if !reflect.DeepEqual(test.expectedMemberIDs, memberIDs) {
+				t.Errorf(
+					"unexpected memberIDs\nexpected: %v\nactual:   %v",
+					test.expectedMemberIDs,
+					memberIDs,
+				)
+			}
+
+			testutils.AssertUintsEqual(
+				t,
+				"operator position",
+				uint64(test.expectedOperatorPosition),
+				uint64(operatorPosition),
+			)
+
+			testutils.AssertAnyErrorInChainMatchesTarget(
+				t,
+				test.expectedError,
+				err,
+			)
+		})
+	}
+}
+
 type walletInfo struct {
 	publicKeyHash [20]byte
 	state         tbtc.WalletState
+}
+
+type operatorInfo struct {
+	chain.Address
+	chain.OperatorID
 }
 
 func hexToByte20(hexStr string) [20]byte {
