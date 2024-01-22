@@ -1,15 +1,15 @@
 package tbtcpg_test
 
 import (
-	"github.com/keep-network/keep-core/internal/testutils"
-	"github.com/keep-network/keep-core/pkg/tbtcpg"
 	"reflect"
 	"testing"
 
 	"github.com/go-test/deep"
 	"github.com/ipfs/go-log"
+	"github.com/keep-network/keep-core/internal/testutils"
 	"github.com/keep-network/keep-core/pkg/bitcoin"
 	"github.com/keep-network/keep-core/pkg/tbtc"
+	"github.com/keep-network/keep-core/pkg/tbtcpg"
 	"github.com/keep-network/keep-core/pkg/tbtcpg/internal/test"
 )
 
@@ -114,6 +114,15 @@ func TestDepositSweepTask_ProposeDepositsSweep(t *testing.T) {
 				if err != nil {
 					t.Fatal(err)
 				}
+
+				tbtcChain.SetDepositRequest(
+					deposit.FundingTxHash,
+					deposit.FundingOutputIndex,
+					&tbtc.DepositChainRequest{
+						// Set only relevant fields.
+						ExtraData: nil,
+					},
+				)
 
 				btcChain.SetTransaction(deposit.FundingTxHash, &bitcoin.Transaction{})
 				btcChain.SetTransactionConfirmations(deposit.FundingTxHash, tbtc.DepositSweepRequiredFundingTxConfirmations)

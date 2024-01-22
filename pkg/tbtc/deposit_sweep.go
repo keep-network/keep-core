@@ -247,6 +247,20 @@ func ValidateDepositSweepProposal(
 				FundingTx *bitcoin.Transaction
 			},
 		) error
+
+		// GetDepositRequest gets the on-chain deposit request for the given
+		// funding transaction hash and output index.The returned values represent:
+		// - deposit request which is non-nil only when the deposit request was
+		//   found,
+		// - boolean value which is true if the deposit request was found, false
+		//   otherwise,
+		// - error which is non-nil only when the function execution failed. It will
+		//   be nil if the deposit request was not found, but the function execution
+		//   succeeded.
+		GetDepositRequest(
+			fundingTxHash bitcoin.Hash,
+			fundingOutputIndex uint32,
+		) (*DepositChainRequest, bool, error)
 	},
 	btcChain bitcoin.Chain,
 ) ([]*Deposit, error) {
@@ -352,11 +366,29 @@ func ValidateDepositSweepProposal(
 			)
 		}
 
+		depositRequest, found, err := chain.GetDepositRequest(
+			depositKey.FundingTxHash,
+			depositKey.FundingOutputIndex,
+		)
+		if err != nil {
+			return nil, fmt.Errorf(
+				"cannot get request data for deposit [%v]: [%v]",
+				depositDisplayIndex,
+				err,
+			)
+		}
+		if !found {
+			return nil, fmt.Errorf(
+				"request data not found for deposit [%v]",
+				depositDisplayIndex,
+			)
+		}
+
 		depositExtraInfo[i] = struct {
 			*Deposit
 			FundingTx *bitcoin.Transaction
 		}{
-			Deposit:   matchingEvent.unpack(),
+			Deposit:   matchingEvent.unpack(depositRequest.ExtraData),
 			FundingTx: fundingTx,
 		}
 	}

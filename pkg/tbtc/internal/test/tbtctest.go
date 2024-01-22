@@ -84,6 +84,7 @@ type Deposit struct {
 	RefundPublicKeyHash [20]byte
 	RefundLocktime      [4]byte
 	Vault               *chain.Address
+	ExtraData           *[32]byte
 }
 
 // DepositSweepTestScenario represents a deposit sweep test scenario.

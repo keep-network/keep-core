@@ -1111,6 +1111,11 @@ func (tc *TbtcChain) GetDepositRequest(
 		vault = &v
 	}
 
+	var extraData *[32]byte
+	if depositRequest.ExtraData != [32]byte{} {
+		extraData = &depositRequest.ExtraData
+	}
+
 	return &tbtc.DepositChainRequest{
 		Depositor:   chain.Address(depositRequest.Depositor.Hex()),
 		Amount:      depositRequest.Amount,
@@ -1118,6 +1123,7 @@ func (tc *TbtcChain) GetDepositRequest(
 		Vault:       vault,
 		TreasuryFee: depositRequest.TreasuryFee,
 		SweptAt:     time.Unix(int64(depositRequest.SweptAt), 0),
+		ExtraData:   extraData,
 	}, true, nil
 }
 
