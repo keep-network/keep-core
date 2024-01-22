@@ -119,6 +119,18 @@ func TestDepositSweepAction_Execute(t *testing.T) {
 				if err != nil {
 					t.Fatal(err)
 				}
+
+				hostChain.setDepositRequest(
+					fundingTxHash,
+					fundingOutputIndex,
+					&DepositChainRequest{
+						// Set only relevant fields.
+						Depositor: deposit.Depositor,
+						Amount:    uint64(deposit.Utxo.Value),
+						Vault:     deposit.Vault,
+						ExtraData: deposit.ExtraData,
+					},
+				)
 			}
 
 			// Build the sweep proposal based on the scenario data.
@@ -252,6 +264,7 @@ func TestAssembleDepositSweepTransaction(t *testing.T) {
 					RefundPublicKeyHash: d.RefundPublicKeyHash,
 					RefundLocktime:      d.RefundLocktime,
 					Vault:               d.Vault,
+					ExtraData:           d.ExtraData,
 				}
 			}
 

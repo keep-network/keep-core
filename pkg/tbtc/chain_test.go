@@ -68,6 +68,9 @@ type localChain struct {
 	heartbeatProposalValidationsMutex sync.Mutex
 	heartbeatProposalValidations      map[[16]byte]bool
 
+	depositRequestsMutex sync.Mutex
+	depositRequests      map[[32]byte]*DepositChainRequest
+
 	blockCounter       chain.BlockCounter
 	operatorPrivateKey *operator.PrivateKey
 }
@@ -582,13 +585,6 @@ func (lc *localChain) GetPendingRedemptionRequest(
 	return request, true, nil
 }
 
-func (lc *localChain) GetDepositRequest(
-	fundingTxHash bitcoin.Hash,
-	fundingOutputIndex uint32,
-) (*DepositChainRequest, bool, error) {
-	panic("not supported")
-}
-
 func (lc *localChain) PastNewWalletRegisteredEvents(
 	filter *NewWalletRegisteredEventFilter,
 ) ([]*NewWalletRegisteredEvent, error) {
@@ -615,6 +611,46 @@ func buildRedemptionRequestKey(
 	redeemerOutputScript bitcoin.Script,
 ) [32]byte {
 	return sha256.Sum256(append(walletPublicKeyHash[:], redeemerOutputScript...))
+}
+
+func (lc *localChain) GetDepositRequest(
+	fundingTxHash bitcoin.Hash,
+	fundingOutputIndex uint32,
+) (*DepositChainRequest, bool, error) {
+	lc.depositRequestsMutex.Lock()
+	defer lc.depositRequestsMutex.Unlock()
+
+	requestKey := buildDepositRequestKey(fundingTxHash, fundingOutputIndex)
+
+	request, ok := lc.depositRequests[requestKey]
+	if !ok {
+		return nil, false, nil
+	}
+
+	return request, true, nil
+}
+
+func (lc *localChain) setDepositRequest(
+	fundingTxHash bitcoin.Hash,
+	fundingOutputIndex uint32,
+	request *DepositChainRequest,
+) {
+	lc.depositRequestsMutex.Lock()
+	defer lc.depositRequestsMutex.Unlock()
+
+	requestKey := buildDepositRequestKey(fundingTxHash, fundingOutputIndex)
+
+	lc.depositRequests[requestKey] = request
+}
+
+func buildDepositRequestKey(
+	fundingTxHash bitcoin.Hash,
+	fundingOutputIndex uint32,
+) [32]byte {
+	buffer := make([]byte, 4)
+	binary.BigEndian.PutUint32(buffer[:], fundingOutputIndex)
+
+	return sha256.Sum256(append(fundingTxHash[:], buffer...))
 }
 
 func (lc *localChain) GetWallet(walletPublicKeyHash [20]byte) (
@@ -933,6 +969,7 @@ func ConnectWithKey(
 		pendingRedemptionRequests:       make(map[[32]byte]*RedemptionRequest),
 		redemptionProposalValidations:   make(map[[32]byte]bool),
 		heartbeatProposalValidations:    make(map[[16]byte]bool),
+		depositRequests:                 make(map[[32]byte]*DepositChainRequest),
 		blockCounter:                    blockCounter,
 		operatorPrivateKey:              operatorPrivateKey,
 	}

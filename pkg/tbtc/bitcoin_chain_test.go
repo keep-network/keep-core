@@ -232,3 +232,10 @@ func (lbc *localBitcoinChain) EstimateSatPerVByteFee(
 ) (int64, error) {
 	panic("unsupported")
 }
+
+func (lbc *localBitcoinChain) GetCoinbaseTxHash(blockHeight uint) (
+	bitcoin.Hash,
+	error,
+) {
+	panic("unsupported")
+}

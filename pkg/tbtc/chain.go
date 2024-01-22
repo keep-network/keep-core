@@ -270,7 +270,7 @@ type DepositRevealedEvent struct {
 	BlockNumber         uint64
 }
 
-func (dre *DepositRevealedEvent) unpack() *Deposit {
+func (dre *DepositRevealedEvent) unpack(extraData *[32]byte) *Deposit {
 	return &Deposit{
 		Utxo: &bitcoin.UnspentTransactionOutput{
 			Outpoint: &bitcoin.TransactionOutpoint{
@@ -285,6 +285,7 @@ func (dre *DepositRevealedEvent) unpack() *Deposit {
 		RefundPublicKeyHash: dre.RefundPublicKeyHash,
 		RefundLocktime:      dre.RefundLocktime,
 		Vault:               dre.Vault,
+		ExtraData:           extraData,
 	}
 }
 
@@ -312,6 +313,7 @@ type DepositChainRequest struct {
 	Vault       *chain.Address
 	TreasuryFee uint64
 	SweptAt     time.Time
+	ExtraData   *[32]byte
 }
 
 // WalletChainData represents wallet data stored on-chain.

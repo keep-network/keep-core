@@ -2721,6 +2721,164 @@ func (b *Bridge) RevealDepositGasEstimate(
 }
 
 // Transaction submission.
+func (b *Bridge) RevealDepositWithExtraData(
+	arg_fundingTx abi.BitcoinTxInfo,
+	arg_reveal abi.DepositDepositRevealInfo,
+	arg_extraData [32]byte,
+
+	transactionOptions ...chainutil.TransactionOptions,
+) (*types.Transaction, error) {
+	bLogger.Debug(
+		"submitting transaction revealDepositWithExtraData",
+		" params: ",
+		fmt.Sprint(
+			arg_fundingTx,
+			arg_reveal,
+			arg_extraData,
+		),
+	)
+
+	b.transactionMutex.Lock()
+	defer b.transactionMutex.Unlock()
+
+	// create a copy
+	transactorOptions := new(bind.TransactOpts)
+	*transactorOptions = *b.transactorOptions
+
+	if len(transactionOptions) > 1 {
+		return nil, fmt.Errorf(
+			"could not process multiple transaction options sets",
+		)
+	} else if len(transactionOptions) > 0 {
+		transactionOptions[0].Apply(transactorOptions)
+	}
+
+	nonce, err := b.nonceManager.CurrentNonce()
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve account nonce: %v", err)
+	}
+
+	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
+
+	transaction, err := b.contract.RevealDepositWithExtraData(
+		transactorOptions,
+		arg_fundingTx,
+		arg_reveal,
+		arg_extraData,
+	)
+	if err != nil {
+		return transaction, b.errorResolver.ResolveError(
+			err,
+			b.transactorOptions.From,
+			nil,
+			"revealDepositWithExtraData",
+			arg_fundingTx,
+			arg_reveal,
+			arg_extraData,
+		)
+	}
+
+	bLogger.Infof(
+		"submitted transaction revealDepositWithExtraData with id: [%s] and nonce [%v]",
+		transaction.Hash(),
+		transaction.Nonce(),
+	)
+
+	go b.miningWaiter.ForceMining(
+		transaction,
+		transactorOptions,
+		func(newTransactorOptions *bind.TransactOpts) (*types.Transaction, error) {
+			// If original transactor options has a non-zero gas limit, that
+			// means the client code set it on their own. In that case, we
+			// should rewrite the gas limit from the original transaction
+			// for each resubmission. If the gas limit is not set by the client
+			// code, let the the submitter re-estimate the gas limit on each
+			// resubmission.
+			if transactorOptions.GasLimit != 0 {
+				newTransactorOptions.GasLimit = transactorOptions.GasLimit
+			}
+
+			transaction, err := b.contract.RevealDepositWithExtraData(
+				newTransactorOptions,
+				arg_fundingTx,
+				arg_reveal,
+				arg_extraData,
+			)
+			if err != nil {
+				return nil, b.errorResolver.ResolveError(
+					err,
+					b.transactorOptions.From,
+					nil,
+					"revealDepositWithExtraData",
+					arg_fundingTx,
+					arg_reveal,
+					arg_extraData,
+				)
+			}
+
+			bLogger.Infof(
+				"submitted transaction revealDepositWithExtraData with id: [%s] and nonce [%v]",
+				transaction.Hash(),
+				transaction.Nonce(),
+			)
+
+			return transaction, nil
+		},
+	)
+
+	b.nonceManager.IncrementNonce()
+
+	return transaction, err
+}
+
+// Non-mutating call, not a transaction submission.
+func (b *Bridge) CallRevealDepositWithExtraData(
+	arg_fundingTx abi.BitcoinTxInfo,
+	arg_reveal abi.DepositDepositRevealInfo,
+	arg_extraData [32]byte,
+	blockNumber *big.Int,
+) error {
+	var result interface{} = nil
+
+	err := chainutil.CallAtBlock(
+		b.transactorOptions.From,
+		blockNumber, nil,
+		b.contractABI,
+		b.caller,
+		b.errorResolver,
+		b.contractAddress,
+		"revealDepositWithExtraData",
+		&result,
+		arg_fundingTx,
+		arg_reveal,
+		arg_extraData,
+	)
+
+	return err
+}
+
+func (b *Bridge) RevealDepositWithExtraDataGasEstimate(
+	arg_fundingTx abi.BitcoinTxInfo,
+	arg_reveal abi.DepositDepositRevealInfo,
+	arg_extraData [32]byte,
+) (uint64, error) {
+	var result uint64
+
+	result, err := chainutil.EstimateGas(
+		b.callerOptions.From,
+		b.contractAddress,
+		"revealDepositWithExtraData",
+		b.contractABI,
+		b.transactor,
+		arg_fundingTx,
+		arg_reveal,
+		arg_extraData,
+	)
+
+	return result, err
+}
+
+// Transaction submission.
 func (b *Bridge) SetSpvMaintainerStatus(
 	arg_spvMaintainer common.Address,
 	arg_isTrusted bool,

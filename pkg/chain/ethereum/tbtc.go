@@ -1111,6 +1111,11 @@ func (tc *TbtcChain) GetDepositRequest(
 		vault = &v
 	}
 
+	var extraData *[32]byte
+	if depositRequest.ExtraData != [32]byte{} {
+		extraData = &depositRequest.ExtraData
+	}
+
 	return &tbtc.DepositChainRequest{
 		Depositor:   chain.Address(depositRequest.Depositor.Hex()),
 		Amount:      depositRequest.Amount,
@@ -1118,6 +1123,7 @@ func (tc *TbtcChain) GetDepositRequest(
 		Vault:       vault,
 		TreasuryFee: depositRequest.TreasuryFee,
 		SweptAt:     time.Unix(int64(depositRequest.SweptAt), 0),
+		ExtraData:   extraData,
 	}, true, nil
 }
 
@@ -1310,10 +1316,12 @@ func (tc *TbtcChain) SubmitRedemptionProofWithReimbursement(
 		OutputVector: transaction.SerializeOutputs(),
 		Locktime:     transaction.SerializeLocktime(),
 	}
-	sweepProof := tbtcabi.BitcoinTxProof2{
-		MerkleProof:    proof.MerkleProof,
-		TxIndexInBlock: big.NewInt(int64(proof.TxIndexInBlock)),
-		BitcoinHeaders: proof.BitcoinHeaders,
+	redemptionProof := tbtcabi.BitcoinTxProof2{
+		MerkleProof:      proof.MerkleProof,
+		TxIndexInBlock:   big.NewInt(int64(proof.TxIndexInBlock)),
+		BitcoinHeaders:   proof.BitcoinHeaders,
+		CoinbasePreimage: proof.CoinbasePreimage,
+		CoinbaseProof:    proof.CoinbaseProof,
 	}
 	utxo := tbtcabi.BitcoinTxUTXO2{
 		TxHash:        mainUTXO.Outpoint.TransactionHash,
@@ -1323,7 +1331,7 @@ func (tc *TbtcChain) SubmitRedemptionProofWithReimbursement(
 
 	gasEstimate, err := tc.maintainerProxy.SubmitRedemptionProofGasEstimate(
 		bitcoinTxInfo,
-		sweepProof,
+		redemptionProof,
 		utxo,
 		walletPublicKeyHash,
 	)
@@ -1339,7 +1347,7 @@ func (tc *TbtcChain) SubmitRedemptionProofWithReimbursement(
 
 	_, err = tc.maintainerProxy.SubmitRedemptionProof(
 		bitcoinTxInfo,
-		sweepProof,
+		redemptionProof,
 		utxo,
 		walletPublicKeyHash,
 		ethutil.TransactionOptions{
@@ -1387,9 +1395,11 @@ func (tc *TbtcChain) SubmitDepositSweepProofWithReimbursement(
 		Locktime:     transaction.SerializeLocktime(),
 	}
 	sweepProof := tbtcabi.BitcoinTxProof2{
-		MerkleProof:    proof.MerkleProof,
-		TxIndexInBlock: big.NewInt(int64(proof.TxIndexInBlock)),
-		BitcoinHeaders: proof.BitcoinHeaders,
+		MerkleProof:      proof.MerkleProof,
+		TxIndexInBlock:   big.NewInt(int64(proof.TxIndexInBlock)),
+		BitcoinHeaders:   proof.BitcoinHeaders,
+		CoinbasePreimage: proof.CoinbasePreimage,
+		CoinbaseProof:    proof.CoinbaseProof,
 	}
 	utxo := tbtcabi.BitcoinTxUTXO2{
 		TxHash:        mainUTXO.Outpoint.TransactionHash,

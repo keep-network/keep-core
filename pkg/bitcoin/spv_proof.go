@@ -2,6 +2,7 @@ package bitcoin
 
 import (
 	"bytes"
+	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
 
@@ -20,6 +21,14 @@ type SpvProof struct {
 	// BitcoinHeaders is a chain of block headers that form confirmations of
 	// blockchain inclusion.
 	BitcoinHeaders []byte
+
+	// CoinbasePreimage is the sha256 preimage of the coinbase transaction hash
+	// i.e., the sha256 hash of the coinbase transaction.
+	CoinbasePreimage [32]byte
+
+	// CoinbaseProof is the Merkle proof of coinbase transaction inclusion in
+	// a block.
+	CoinbaseProof []byte
 }
 
 // AssembleSpvProof assembles a proof that a given transaction was included in
@@ -78,10 +87,40 @@ func AssembleSpvProof(
 		return nil, nil, fmt.Errorf("failed to create Merkle proof [%w]", err)
 	}
 
+	coinbaseTxHash, err := btcChain.GetCoinbaseTxHash(txBlockHeight)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to get coinbase tx hash [%w]", err)
+	}
+
+	coinbaseTx, err := btcChain.GetTransaction(coinbaseTxHash)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to get coinbase tx [%w]", err)
+	}
+
+	coinbasePreimage := sha256.Sum256(coinbaseTx.Serialize(Standard))
+
+	coinbaseMerkleBranch, err := btcChain.GetTransactionMerkleProof(
+		coinbaseTxHash,
+		txBlockHeight,
+	)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	coinbaseMerkleProof, err := createMerkleProof(coinbaseMerkleBranch)
+	if err != nil {
+		return nil, nil, fmt.Errorf(
+			"failed to create coinbase Merkle proof [%w]",
+			err,
+		)
+	}
+
 	proof := &SpvProof{
-		MerkleProof:    merkleProof,
-		TxIndexInBlock: merkleBranch.Position,
-		BitcoinHeaders: headersChain,
+		MerkleProof:      merkleProof,
+		TxIndexInBlock:   merkleBranch.Position,
+		BitcoinHeaders:   headersChain,
+		CoinbasePreimage: coinbasePreimage,
+		CoinbaseProof:    coinbaseMerkleProof,
 	}
 
 	return transaction, proof, nil

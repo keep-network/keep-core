@@ -84,6 +84,7 @@ func init() {
 		bRequestRedemptionCommand(),
 		bResetMovingFundsTimeoutCommand(),
 		bRevealDepositCommand(),
+		bRevealDepositWithExtraDataCommand(),
 		bSetSpvMaintainerStatusCommand(),
 		bSetVaultStatusCommand(),
 		bSubmitDepositSweepProofCommand(),
@@ -1819,6 +1820,84 @@ func bRevealDeposit(c *cobra.Command, args []string) error {
 		err = contract.CallRevealDeposit(
 			arg_fundingTx_json,
 			arg_reveal_json,
+			cmd.BlockFlagValue.Int,
+		)
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput("success")
+
+		cmd.PrintOutput(
+			"the transaction was not submitted to the chain; " +
+				"please add the `--submit` flag",
+		)
+	}
+
+	return nil
+}
+
+func bRevealDepositWithExtraDataCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "reveal-deposit-with-extra-data [arg_fundingTx_json] [arg_reveal_json] [arg_extraData]",
+		Short:                 "Calls the nonpayable method revealDepositWithExtraData on the Bridge contract.",
+		Args:                  cmd.ArgCountChecker(3),
+		RunE:                  bRevealDepositWithExtraData,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	c.PreRunE = cmd.NonConstArgsChecker
+	cmd.InitNonConstFlags(c)
+
+	return c
+}
+
+func bRevealDepositWithExtraData(c *cobra.Command, args []string) error {
+	contract, err := initializeBridge(c)
+	if err != nil {
+		return err
+	}
+
+	arg_fundingTx_json := abi.BitcoinTxInfo{}
+	if err := json.Unmarshal([]byte(args[0]), &arg_fundingTx_json); err != nil {
+		return fmt.Errorf("failed to unmarshal arg_fundingTx_json to abi.BitcoinTxInfo: %w", err)
+	}
+
+	arg_reveal_json := abi.DepositDepositRevealInfo{}
+	if err := json.Unmarshal([]byte(args[1]), &arg_reveal_json); err != nil {
+		return fmt.Errorf("failed to unmarshal arg_reveal_json to abi.DepositDepositRevealInfo: %w", err)
+	}
+	arg_extraData, err := decode.ParseBytes32(args[2])
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter arg_extraData, a bytes32, from passed value %v",
+			args[2],
+		)
+	}
+
+	var (
+		transaction *types.Transaction
+	)
+
+	if shouldSubmit, _ := c.Flags().GetBool(cmd.SubmitFlag); shouldSubmit {
+		// Do a regular submission. Take payable into account.
+		transaction, err = contract.RevealDepositWithExtraData(
+			arg_fundingTx_json,
+			arg_reveal_json,
+			arg_extraData,
+		)
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput(transaction.Hash())
+	} else {
+		// Do a call.
+		err = contract.CallRevealDepositWithExtraData(
+			arg_fundingTx_json,
+			arg_reveal_json,
+			arg_extraData,
 			cmd.BlockFlagValue.Int,
 		)
 		if err != nil {
