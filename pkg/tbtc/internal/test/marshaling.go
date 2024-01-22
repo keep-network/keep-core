@@ -29,6 +29,7 @@ func (dsts *DepositSweepTestScenario) UnmarshalJSON(data []byte) error {
 			RefundPublicKeyHash string
 			RefundLocktime      string
 			Vault               string
+			ExtraData           string
 		}
 		InputTransactions                   []string
 		Fee                                 int64
@@ -86,6 +87,12 @@ func (dsts *DepositSweepTestScenario) UnmarshalJSON(data []byte) error {
 			vault = &v
 		}
 		d.Vault = vault
+
+		if len(deposit.ExtraData) > 0 {
+			var extraData [32]byte
+			copy(extraData[:], hexToSlice(deposit.ExtraData))
+			d.ExtraData = &extraData
+		}
 
 		dsts.Deposits = append(dsts.Deposits, d)
 	}
