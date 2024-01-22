@@ -9,6 +9,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ipfs/go-log/v2"
+	"github.com/keep-network/keep-common/pkg/chain/ethereum"
 	"github.com/keep-network/keep-core/pkg/bitcoin"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/tbtc"
@@ -454,7 +455,7 @@ func (mft *MovingFundsTask) GetWalletMembersInfo(
 }
 
 // SubmitMovingFundsCommitment submits the moving funds commitment and waits
-// until the transaction has at least one confirmation.
+// until the transaction has entered the Ethereum blockchain.
 func (mft *MovingFundsTask) SubmitMovingFundsCommitment(
 	walletPublicKeyHash [20]byte,
 	walletMainUTXO *bitcoin.UnspentTransactionOutput,
@@ -476,8 +477,47 @@ func (mft *MovingFundsTask) SubmitMovingFundsCommitment(
 		)
 	}
 
-	// TODO: After submitting the transaction wait until it has at least one
-	//       confirmation.
+	blockCounter, err := mft.chain.BlockCounter()
+	if err != nil {
+		return fmt.Errorf("error getting block counter [%w]", err)
+	}
+
+	currentBlock, err := blockCounter.CurrentBlock()
+	if err != nil {
+		return fmt.Errorf("error getting current block [%w]", err)
+	}
+
+	// To verify the commitment transaction has entered the Ethereum blockchain
+	// check that the commitment hash is not zero.
+	stateCheck := func() (bool, error) {
+		walletData, err := mft.chain.GetWallet(walletPublicKeyHash)
+		if err != nil {
+			return false, err
+		}
+
+		return walletData.MovingFundsTargetWalletsCommitmentHash != [32]byte{}, nil
+	}
+
+	// Wait `5` blocks since the current block and perform the transaction state
+	// check. If the transaction has not entered the blockchain, consider it an
+	// error.
+	result, err := ethereum.WaitForBlockConfirmations(
+		blockCounter,
+		currentBlock,
+		5,
+		stateCheck,
+	)
+	if err != nil {
+		return fmt.Errorf(
+			"error while waiting for transaction confirmation [%w]",
+			err,
+		)
+	}
+
+	if !result {
+		return fmt.Errorf("transaction has not been confirmed")
+	}
+
 	return nil
 }
 
