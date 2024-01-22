@@ -585,12 +585,6 @@ func (lc *localChain) GetPendingRedemptionRequest(
 	return request, true, nil
 }
 
-func (lc *localChain) PastNewWalletRegisteredEvents(
-	filter *NewWalletRegisteredEventFilter,
-) ([]*NewWalletRegisteredEvent, error) {
-	panic("not supported")
-}
-
 func (lc *localChain) setPendingRedemptionRequest(
 	walletPublicKeyHash [20]byte,
 	request *RedemptionRequest,
@@ -718,10 +712,6 @@ func (lc *localChain) GetWalletParameters() (
 	closingPeriod uint32,
 	err error,
 ) {
-	panic("unsupported")
-}
-
-func (lc *localChain) GetLiveWalletsCount() (uint32, error) {
 	panic("unsupported")
 }
 
@@ -929,7 +919,6 @@ func (lc *localChain) ValidateMovingFundsProposal(
 	mainUTXO *bitcoin.UnspentTransactionOutput,
 	proposal *MovingFundsProposal,
 ) error {
-	// TODO: Implement
 	panic("unsupported")
 }
 
