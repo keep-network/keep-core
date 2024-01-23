@@ -46,6 +46,12 @@ var (
 	ErrNoExecutingOperator = fmt.Errorf(
 		"task executing operator not found among wallet operators",
 	)
+
+	// ErrTransactionNotIncluded is the error returned when the commitment
+	// submission transaction was not included in the Ethereum blockchain.
+	ErrTransactionNotIncluded = fmt.Errorf(
+		"transaction not included in blockchain",
+	)
 )
 
 // MovingFundsCommitmentLookBackPeriod is the look-back period used when
@@ -515,7 +521,7 @@ func (mft *MovingFundsTask) SubmitMovingFundsCommitment(
 	}
 
 	if !result {
-		return fmt.Errorf("transaction has not been confirmed")
+		return ErrTransactionNotIncluded
 	}
 
 	return nil

@@ -43,6 +43,14 @@ type walletParameters = struct {
 	closingPeriod         uint32
 }
 
+type movingFundsCommitmentSubmission struct {
+	WalletPublicKeyHash [20]byte
+	WalletMainUtxo      *bitcoin.UnspentTransactionOutput
+	WalletMembersIDs    []uint32
+	WalletMemberIndex   uint32
+	TargetWallets       [][20]byte
+}
+
 type LocalChain struct {
 	mutex sync.Mutex
 
@@ -63,6 +71,7 @@ type LocalChain struct {
 	pastMovingFundsCommitmentSubmittedEvents map[[32]byte][]*tbtc.MovingFundsCommitmentSubmittedEvent
 	heartbeatProposalValidations             map[[16]byte]bool
 	operatorIDs                              map[chain.Address]uint32
+	movingFundsCommitmentSubmissions         []*movingFundsCommitmentSubmission
 }
 
 func NewLocalChain() *LocalChain {
@@ -78,6 +87,7 @@ func NewLocalChain() *LocalChain {
 		pastMovingFundsCommitmentSubmittedEvents: make(map[[32]byte][]*tbtc.MovingFundsCommitmentSubmittedEvent),
 		heartbeatProposalValidations:             make(map[[16]byte]bool),
 		operatorIDs:                              make(map[chain.Address]uint32),
+		movingFundsCommitmentSubmissions:         make([]*movingFundsCommitmentSubmission, 0),
 	}
 }
 
@@ -673,7 +683,6 @@ func (lc *LocalChain) GetMovingFundsParameters() (
 	sweepTimeoutNotifierRewardMultiplier uint32,
 	err error,
 ) {
-	// TODO: Implement
 	panic("unsupported")
 }
 
@@ -682,15 +691,6 @@ func (lc *LocalChain) ValidateMovingFundsProposal(
 	mainUTXO *bitcoin.UnspentTransactionOutput,
 	proposal *tbtc.MovingFundsProposal,
 ) error {
-	// TODO: Implement
-	panic("unsupported")
-}
-
-func (lc *LocalChain) SetMovingFundsProposalValidationResult(
-	proposal *tbtc.MovingFundsProposal,
-	result bool,
-) {
-	// TODO: Implement
 	panic("unsupported")
 }
 
@@ -917,12 +917,33 @@ func (lc *LocalChain) PastMovingFundsCommitmentSubmittedEvents(
 
 func (lc *LocalChain) SubmitMovingFundsCommitment(
 	walletPublicKeyHash [20]byte,
-	walletMainUTXO bitcoin.UnspentTransactionOutput,
+	walletMainUtxo bitcoin.UnspentTransactionOutput,
 	walletMembersIDs []uint32,
 	walletMemberIndex uint32,
 	targetWallets [][20]byte,
 ) error {
-	panic("unsupported")
+	lc.mutex.Lock()
+	defer lc.mutex.Unlock()
+
+	lc.movingFundsCommitmentSubmissions = append(
+		lc.movingFundsCommitmentSubmissions,
+		&movingFundsCommitmentSubmission{
+			WalletPublicKeyHash: walletPublicKeyHash,
+			WalletMainUtxo:      &walletMainUtxo,
+			WalletMembersIDs:    walletMembersIDs,
+			WalletMemberIndex:   walletMemberIndex,
+			TargetWallets:       targetWallets,
+		},
+	)
+
+	return nil
+}
+
+func (lc *LocalChain) GetMovingFundsSubmissions() []*movingFundsCommitmentSubmission {
+	lc.mutex.Lock()
+	defer lc.mutex.Unlock()
+
+	return lc.movingFundsCommitmentSubmissions
 }
 
 type MockBlockCounter struct {
@@ -935,7 +956,7 @@ func NewMockBlockCounter() *MockBlockCounter {
 }
 
 func (mbc *MockBlockCounter) WaitForBlockHeight(blockNumber uint64) error {
-	panic("unsupported")
+	return nil
 }
 
 func (mbc *MockBlockCounter) BlockHeightWaiter(blockNumber uint64) (

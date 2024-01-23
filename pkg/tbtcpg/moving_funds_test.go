@@ -6,7 +6,10 @@ import (
 	"testing"
 	"time"
 
+	"github.com/go-test/deep"
+
 	"github.com/keep-network/keep-core/internal/testutils"
+	"github.com/keep-network/keep-core/pkg/bitcoin"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/tbtc"
 	"github.com/keep-network/keep-core/pkg/tbtcpg"
@@ -449,6 +452,136 @@ func TestMovingFundsAction_GetWalletMembersInfo(t *testing.T) {
 				test.expectedError,
 				err,
 			)
+		})
+	}
+}
+
+func TestMovingFundsAction_SubmitMovingFundsCommitment(t *testing.T) {
+	var tests = map[string]struct {
+		sourceWalletPublicKeyHash   [20]byte
+		targetWalletsCommitmentHash [32]byte
+		mainUtxo                    bitcoin.UnspentTransactionOutput
+		currentBlock                uint64
+		walletMemberIDs             []uint32
+		walletMemberIndex           uint32
+		targetWallets               [][20]byte
+		expectedError               error
+	}{
+		"submission successful": {
+			sourceWalletPublicKeyHash: hexToByte20(
+				"ffb3f7538bfa98a511495dd96027cfbd57baf2fa",
+			),
+			// Simulate the commitment has updated.
+			targetWalletsCommitmentHash: hexToByte32(
+				"9d9368117956680760fa27bb9542ceba2d4fcc398d640a5a0769f5a9593afb0e",
+			),
+			mainUtxo: bitcoin.UnspentTransactionOutput{
+				Outpoint: &bitcoin.TransactionOutpoint{
+					TransactionHash: hexToByte32(
+						"102414558e061ea6e73d5a7bdbf1159b1518c071c22005475d0215ec78a0b911",
+					),
+					OutputIndex: 11,
+				},
+				Value: 111,
+			},
+			walletMemberIDs:   []uint32{11, 22, 33, 44},
+			walletMemberIndex: 1,
+			targetWallets: [][20]byte{
+				hexToByte20("92a6ec889a8fa34f731e639edede4c75e184307c"),
+				hexToByte20("fdfa28e238734271f5e0d4f53d3843ae6cc09b24"),
+			},
+			currentBlock:  200000,
+			expectedError: nil,
+		},
+		"submission unsuccessful": {
+			sourceWalletPublicKeyHash: hexToByte20(
+				"ffb3f7538bfa98a511495dd96027cfbd57baf2fa",
+			),
+			// Simulate the commitment has not been updated by setting target
+			// wallets commitment has to zero. The rest of the parameters is
+			// not important.
+			targetWalletsCommitmentHash: [32]byte{},
+			mainUtxo:                    bitcoin.UnspentTransactionOutput{},
+			walletMemberIDs:             []uint32{},
+			walletMemberIndex:           0,
+			targetWallets:               [][20]byte{},
+			currentBlock:                200000,
+			expectedError:               tbtcpg.ErrTransactionNotIncluded,
+		},
+	}
+
+	for testName, test := range tests {
+		t.Run(testName, func(t *testing.T) {
+			tbtcChain := tbtcpg.NewLocalChain()
+
+			tbtcChain.SetWallet(
+				test.sourceWalletPublicKeyHash,
+				&tbtc.WalletChainData{
+					MovingFundsTargetWalletsCommitmentHash: test.targetWalletsCommitmentHash,
+				},
+			)
+
+			blockCounter := tbtcpg.NewMockBlockCounter()
+			blockCounter.SetCurrentBlock(test.currentBlock)
+			tbtcChain.SetBlockCounter(blockCounter)
+
+			task := tbtcpg.NewMovingFundsTask(tbtcChain, nil)
+
+			err := task.SubmitMovingFundsCommitment(
+				test.sourceWalletPublicKeyHash,
+				&test.mainUtxo,
+				test.walletMemberIDs,
+				test.walletMemberIndex,
+				test.targetWallets,
+			)
+
+			testutils.AssertAnyErrorInChainMatchesTarget(
+				t,
+				test.expectedError,
+				err,
+			)
+
+			submittedMovingFundsCommitments := tbtcChain.GetMovingFundsSubmissions()
+			testutils.AssertIntsEqual(
+				t,
+				"commitment submission count",
+				1,
+				len(submittedMovingFundsCommitments),
+			)
+
+			submittedMovingFundsCommitment := submittedMovingFundsCommitments[0]
+
+			expectedWalletPublicKeyHash := test.sourceWalletPublicKeyHash
+			actualWalletPublicKeyHash := submittedMovingFundsCommitment.WalletPublicKeyHash
+			testutils.AssertBytesEqual(
+				t,
+				expectedWalletPublicKeyHash[:],
+				actualWalletPublicKeyHash[:],
+			)
+
+			expectedWalletMainUtxo := &test.mainUtxo
+			actualWalletMainUtxo := submittedMovingFundsCommitment.WalletMainUtxo
+			if diff := deep.Equal(expectedWalletMainUtxo, actualWalletMainUtxo); diff != nil {
+				t.Errorf("invalid wallet main utxo: %v", diff)
+			}
+
+			expectedWalletMemberIDs := test.walletMemberIDs
+			actualWalletMemberIDs := submittedMovingFundsCommitment.WalletMembersIDs
+			if diff := deep.Equal(expectedWalletMemberIDs, actualWalletMemberIDs); diff != nil {
+				t.Errorf("invalid wallet member IDs: %v", diff)
+			}
+
+			expectedWalletMemberIndex := test.walletMemberIndex
+			actualWalletMemberIndex := submittedMovingFundsCommitment.WalletMemberIndex
+			if diff := deep.Equal(expectedWalletMemberIndex, actualWalletMemberIndex); diff != nil {
+				t.Errorf("invalid wallet member index: %v", diff)
+			}
+
+			expectedTargetWallets := test.targetWallets
+			actualTargetWallets := submittedMovingFundsCommitment.TargetWallets
+			if diff := deep.Equal(expectedTargetWallets, actualTargetWallets); diff != nil {
+				t.Errorf("invalid target wallets: %v", diff)
+			}
 		})
 	}
 }
