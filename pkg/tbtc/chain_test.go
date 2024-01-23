@@ -810,16 +810,6 @@ func buildDepositSweepProposalValidationKey(
 	return sha256.Sum256(buffer.Bytes()), nil
 }
 
-func (lc *localChain) SubmitMovingFundsCommitment(
-	walletPublicKeyHash [20]byte,
-	walletMainUTXO bitcoin.UnspentTransactionOutput,
-	walletMembersIDs []uint32,
-	walletMemberIndex uint32,
-	targetWallets [][20]byte,
-) error {
-	panic("unsupported")
-}
-
 func (lc *localChain) ValidateRedemptionProposal(
 	walletPublicKeyHash [20]byte,
 	proposal *RedemptionProposal,

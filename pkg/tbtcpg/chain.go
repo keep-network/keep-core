@@ -165,4 +165,13 @@ type Chain interface {
 		mainUTXO *bitcoin.UnspentTransactionOutput,
 		proposal *tbtc.MovingFundsProposal,
 	) error
+
+	// Submits the moving funds target wallets commitment.
+	SubmitMovingFundsCommitment(
+		walletPublicKeyHash [20]byte,
+		walletMainUTXO bitcoin.UnspentTransactionOutput,
+		walletMembersIDs []uint32,
+		walletMemberIndex uint32,
+		targetWallets [][20]byte,
+	) error
 }

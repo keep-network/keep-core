@@ -221,15 +221,6 @@ type BridgeChain interface {
 		fundingTxHash bitcoin.Hash,
 		fundingOutputIndex uint32,
 	) (*DepositChainRequest, bool, error)
-
-	// Submits the moving funds target wallets commitment.
-	SubmitMovingFundsCommitment(
-		walletPublicKeyHash [20]byte,
-		walletMainUTXO bitcoin.UnspentTransactionOutput,
-		walletMembersIDs []uint32,
-		walletMemberIndex uint32,
-		targetWallets [][20]byte,
-	) error
 }
 
 // NewWalletRegisteredEvent represents a new wallet registered event.
