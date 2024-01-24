@@ -30,10 +30,6 @@ func (mfp *MovingFundsProposal) ValidityBlocks() uint64 {
 	return movingFundsProposalValidityBlocks
 }
 
-type MovingFundsRequest struct {
-	TargetWalletPublicKeyHash [20]byte
-}
-
 // movingFundsAction is a walletAction implementation handling moving funds
 // requests from the wallet coordinator.
 type movingFundsAction struct {
@@ -104,7 +100,7 @@ func ValidateMovingFundsProposal(
 			proposal *MovingFundsProposal,
 		) error
 	},
-) ([]*MovingFundsRequest, error) {
+) ([][20]byte, error) {
 	validateProposalLogger.Infof("calling chain for proposal validation")
 
 	err := chain.ValidateMovingFundsProposal(
@@ -119,8 +115,7 @@ func ValidateMovingFundsProposal(
 		)
 	}
 
-	// TODO: Implement
-	return nil, nil
+	return proposal.TargetWallets, nil
 }
 
 func (mfa *movingFundsAction) wallet() wallet {

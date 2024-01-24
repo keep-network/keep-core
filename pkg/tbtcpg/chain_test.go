@@ -43,6 +43,20 @@ type walletParameters = struct {
 	closingPeriod         uint32
 }
 
+type movingFundsParameters = struct {
+	txMaxTotalFee                        uint64
+	dustThreshold                        uint64
+	timeoutResetDelay                    uint32
+	timeout                              uint32
+	timeoutSlashingAmount                *big.Int
+	timeoutNotifierRewardMultiplier      uint32
+	commitmentGasOffset                  uint16
+	sweepTxMaxTotalFee                   uint64
+	sweepTimeout                         uint32
+	sweepTimeoutSlashingAmount           *big.Int
+	sweepTimeoutNotifierRewardMultiplier uint32
+}
+
 type movingFundsCommitmentSubmission struct {
 	WalletPublicKeyHash [20]byte
 	WalletMainUtxo      *bitcoin.UnspentTransactionOutput
@@ -68,10 +82,12 @@ type LocalChain struct {
 	averageBlockTime                         time.Duration
 	pendingRedemptionRequests                map[[32]byte]*tbtc.RedemptionRequest
 	redemptionProposalValidations            map[[32]byte]bool
-	pastMovingFundsCommitmentSubmittedEvents map[[32]byte][]*tbtc.MovingFundsCommitmentSubmittedEvent
 	heartbeatProposalValidations             map[[16]byte]bool
-	operatorIDs                              map[chain.Address]uint32
+	movingFundsParameters                    movingFundsParameters
+	pastMovingFundsCommitmentSubmittedEvents map[[32]byte][]*tbtc.MovingFundsCommitmentSubmittedEvent
+	movingFundsProposalValidations           map[[32]byte]bool
 	movingFundsCommitmentSubmissions         []*movingFundsCommitmentSubmission
+	operatorIDs                              map[chain.Address]uint32
 }
 
 func NewLocalChain() *LocalChain {
@@ -84,10 +100,11 @@ func NewLocalChain() *LocalChain {
 		walletChainData:                          make(map[[20]byte]*tbtc.WalletChainData),
 		pendingRedemptionRequests:                make(map[[32]byte]*tbtc.RedemptionRequest),
 		redemptionProposalValidations:            make(map[[32]byte]bool),
-		pastMovingFundsCommitmentSubmittedEvents: make(map[[32]byte][]*tbtc.MovingFundsCommitmentSubmittedEvent),
 		heartbeatProposalValidations:             make(map[[16]byte]bool),
-		operatorIDs:                              make(map[chain.Address]uint32),
+		pastMovingFundsCommitmentSubmittedEvents: make(map[[32]byte][]*tbtc.MovingFundsCommitmentSubmittedEvent),
+		movingFundsProposalValidations:           make(map[[32]byte]bool),
 		movingFundsCommitmentSubmissions:         make([]*movingFundsCommitmentSubmission, 0),
+		operatorIDs:                              make(map[chain.Address]uint32),
 	}
 }
 
@@ -683,7 +700,74 @@ func (lc *LocalChain) GetMovingFundsParameters() (
 	sweepTimeoutNotifierRewardMultiplier uint32,
 	err error,
 ) {
-	panic("unsupported")
+	lc.mutex.Lock()
+	defer lc.mutex.Unlock()
+
+	return lc.movingFundsParameters.txMaxTotalFee,
+		lc.movingFundsParameters.dustThreshold,
+		lc.movingFundsParameters.timeoutResetDelay,
+		lc.movingFundsParameters.timeout,
+		lc.movingFundsParameters.timeoutSlashingAmount,
+		lc.movingFundsParameters.timeoutNotifierRewardMultiplier,
+		lc.movingFundsParameters.commitmentGasOffset,
+		lc.movingFundsParameters.sweepTxMaxTotalFee,
+		lc.movingFundsParameters.sweepTimeout,
+		lc.movingFundsParameters.sweepTimeoutSlashingAmount,
+		lc.movingFundsParameters.sweepTimeoutNotifierRewardMultiplier,
+		nil
+}
+
+func (lc *LocalChain) SetMovingFundsParameters(
+	txMaxTotalFee uint64,
+	dustThreshold uint64,
+	timeoutResetDelay uint32,
+	timeout uint32,
+	timeoutSlashingAmount *big.Int,
+	timeoutNotifierRewardMultiplier uint32,
+	commitmentGasOffset uint16,
+	sweepTxMaxTotalFee uint64,
+	sweepTimeout uint32,
+	sweepTimeoutSlashingAmount *big.Int,
+	sweepTimeoutNotifierRewardMultiplier uint32,
+) {
+	lc.mutex.Lock()
+	defer lc.mutex.Unlock()
+
+	lc.movingFundsParameters = movingFundsParameters{
+		txMaxTotalFee:                        txMaxTotalFee,
+		dustThreshold:                        dustThreshold,
+		timeoutResetDelay:                    timeoutResetDelay,
+		timeout:                              timeout,
+		timeoutSlashingAmount:                timeoutSlashingAmount,
+		timeoutNotifierRewardMultiplier:      timeoutNotifierRewardMultiplier,
+		commitmentGasOffset:                  commitmentGasOffset,
+		sweepTxMaxTotalFee:                   sweepTxMaxTotalFee,
+		sweepTimeout:                         sweepTimeout,
+		sweepTimeoutSlashingAmount:           sweepTimeoutSlashingAmount,
+		sweepTimeoutNotifierRewardMultiplier: sweepTimeoutNotifierRewardMultiplier,
+	}
+}
+
+func buildMovingFundsProposalValidationKey(
+	walletPublicKeyHash [20]byte,
+	mainUTXO *bitcoin.UnspentTransactionOutput,
+	proposal *tbtc.MovingFundsProposal,
+) ([32]byte, error) {
+	var buffer bytes.Buffer
+
+	buffer.Write(walletPublicKeyHash[:])
+
+	buffer.Write(mainUTXO.Outpoint.TransactionHash[:])
+	binary.Write(&buffer, binary.BigEndian, mainUTXO.Outpoint.OutputIndex)
+	binary.Write(&buffer, binary.BigEndian, mainUTXO.Value)
+
+	for _, wallet := range proposal.TargetWallets {
+		buffer.Write(wallet[:])
+	}
+
+	buffer.Write(proposal.MovingFundsTxFee.Bytes())
+
+	return sha256.Sum256(buffer.Bytes()), nil
 }
 
 func (lc *LocalChain) ValidateMovingFundsProposal(
@@ -691,7 +775,51 @@ func (lc *LocalChain) ValidateMovingFundsProposal(
 	mainUTXO *bitcoin.UnspentTransactionOutput,
 	proposal *tbtc.MovingFundsProposal,
 ) error {
-	panic("unsupported")
+	lc.mutex.Lock()
+	defer lc.mutex.Unlock()
+
+	key, err := buildMovingFundsProposalValidationKey(
+		walletPublicKeyHash,
+		mainUTXO,
+		proposal,
+	)
+	if err != nil {
+		return err
+	}
+
+	result, ok := lc.movingFundsProposalValidations[key]
+	if !ok {
+		return fmt.Errorf("validation result unknown")
+	}
+
+	if !result {
+		return fmt.Errorf("validation failed")
+	}
+
+	return nil
+}
+
+func (lc *LocalChain) SetMovingFundsProposalValidationResult(
+	walletPublicKeyHash [20]byte,
+	mainUTXO *bitcoin.UnspentTransactionOutput,
+	proposal *tbtc.MovingFundsProposal,
+	result bool,
+) error {
+	lc.mutex.Lock()
+	defer lc.mutex.Unlock()
+
+	key, err := buildMovingFundsProposalValidationKey(
+		walletPublicKeyHash,
+		mainUTXO,
+		proposal,
+	)
+	if err != nil {
+		return err
+	}
+
+	lc.movingFundsProposalValidations[key] = result
+
+	return nil
 }
 
 func buildRedemptionProposalValidationKey(

@@ -545,9 +545,10 @@ func (mft *MovingFundsTask) ProposeMovingFunds(
 
 	taskLogger.Infof("preparing a moving funds proposal")
 
+	// Estimate fee if it's missing.
 	if fee <= 0 {
 		taskLogger.Infof("estimating moving funds transaction fee")
-		var err error
+
 		txMaxTotalFee, _, _, _, _, _, _, _, _, _, _, err := mft.chain.GetMovingFundsParameters()
 		if err != nil {
 			return nil, fmt.Errorf(
@@ -585,7 +586,7 @@ func (mft *MovingFundsTask) ProposeMovingFunds(
 		mft.chain,
 	); err != nil {
 		return nil, fmt.Errorf(
-			"failed to verify moving funds proposal: %w",
+			"failed to verify moving funds proposal: [%w]",
 			err,
 		)
 	}

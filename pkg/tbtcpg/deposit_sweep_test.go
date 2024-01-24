@@ -176,7 +176,7 @@ func TestDepositSweepTask_ProposeDepositsSweep(t *testing.T) {
 				actualDepositSweepProposals,
 				expectedDepositSweepProposals,
 			); diff != nil {
-				t.Errorf("invalid deposits: %v", diff)
+				t.Errorf("invalid deposit sweep proposal: %v", diff)
 			}
 		})
 	}

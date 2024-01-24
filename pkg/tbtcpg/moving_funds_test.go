@@ -2,6 +2,7 @@ package tbtcpg_test
 
 import (
 	"encoding/hex"
+	"math/big"
 	"reflect"
 	"testing"
 	"time"
@@ -581,6 +582,100 @@ func TestMovingFundsAction_SubmitMovingFundsCommitment(t *testing.T) {
 			actualTargetWallets := submittedMovingFundsCommitment.TargetWallets
 			if diff := deep.Equal(expectedTargetWallets, actualTargetWallets); diff != nil {
 				t.Errorf("invalid target wallets: %v", diff)
+			}
+		})
+	}
+}
+
+func TestMovingFundsAction_ProposeMovingFunds(t *testing.T) {
+	walletPublicKeyHash := hexToByte20(
+		"ffb3f7538bfa98a511495dd96027cfbd57baf2fa",
+	)
+
+	targetWallets := [][20]byte{
+		hexToByte20("92a6ec889a8fa34f731e639edede4c75e184307c"),
+		hexToByte20("fdfa28e238734271f5e0d4f53d3843ae6cc09b24"),
+		hexToByte20("c7302d75072d78be94eb8d36c4b77583c7abb06e"),
+	}
+
+	mainUtxo := &bitcoin.UnspentTransactionOutput{
+		Outpoint: &bitcoin.TransactionOutpoint{
+			TransactionHash: hexToByte32(
+				"102414558e061ea6e73d5a7bdbf1159b1518c071c22005475d0215ec78a0b911",
+			),
+			OutputIndex: 11,
+		},
+		Value: 111,
+	}
+
+	txMaxTotalFee := uint64(6000)
+
+	var tests = map[string]struct {
+		fee              int64
+		expectedProposal *tbtc.MovingFundsProposal
+	}{
+		"fee provided": {
+			fee: 10000,
+			expectedProposal: &tbtc.MovingFundsProposal{
+				TargetWallets:    targetWallets,
+				MovingFundsTxFee: big.NewInt(10000),
+			},
+		},
+		"fee estimated": {
+			fee: 0, // trigger fee estimation
+			expectedProposal: &tbtc.MovingFundsProposal{
+				TargetWallets:    targetWallets,
+				MovingFundsTxFee: big.NewInt(4300),
+			},
+		},
+	}
+
+	for testName, test := range tests {
+		t.Run(testName, func(t *testing.T) {
+			tbtcChain := tbtcpg.NewLocalChain()
+			btcChain := tbtcpg.NewLocalBitcoinChain()
+
+			btcChain.SetEstimateSatPerVByteFee(1, 25)
+
+			tbtcChain.SetMovingFundsParameters(
+				txMaxTotalFee,
+				0,
+				0,
+				0,
+				nil,
+				0,
+				0,
+				0,
+				0,
+				nil,
+				0,
+			)
+
+			err := tbtcChain.SetMovingFundsProposalValidationResult(
+				walletPublicKeyHash,
+				mainUtxo,
+				test.expectedProposal,
+				true,
+			)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			task := tbtcpg.NewMovingFundsTask(tbtcChain, btcChain)
+
+			proposal, err := task.ProposeMovingFunds(
+				&testutils.MockLogger{},
+				walletPublicKeyHash,
+				mainUtxo,
+				targetWallets,
+				test.fee,
+			)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			if diff := deep.Equal(proposal, test.expectedProposal); diff != nil {
+				t.Errorf("invalid moving funds proposal: %v", diff)
 			}
 		})
 	}
