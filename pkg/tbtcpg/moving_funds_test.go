@@ -586,6 +586,53 @@ func TestMovingFundsAction_SubmitMovingFundsCommitment(t *testing.T) {
 	}
 }
 
+func TestEstimateMovingFundsFee(t *testing.T) {
+	var tests = map[string]struct {
+		txMaxTotalFee uint64
+		expectedFee   uint64
+		expectedError error
+	}{
+		"estimated fee correct": {
+			txMaxTotalFee: 6000,
+			expectedFee:   3248,
+			expectedError: nil,
+		},
+		"estimated fee too high": {
+			txMaxTotalFee: 3000,
+			expectedFee:   0,
+			expectedError: tbtcpg.ErrFeeTooHigh,
+		},
+	}
+
+	for testName, test := range tests {
+		t.Run(testName, func(t *testing.T) {
+			btcChain := tbtcpg.NewLocalBitcoinChain()
+			btcChain.SetEstimateSatPerVByteFee(1, 16)
+
+			targetWalletsCount := 4
+
+			actualFee, err := tbtcpg.EstimateMovingFundsFee(
+				btcChain,
+				targetWalletsCount,
+				test.txMaxTotalFee,
+			)
+
+			testutils.AssertUintsEqual(
+				t,
+				"fee",
+				test.expectedFee,
+				uint64(actualFee),
+			)
+
+			testutils.AssertAnyErrorInChainMatchesTarget(
+				t,
+				test.expectedError,
+				err,
+			)
+		})
+	}
+}
+
 type walletInfo struct {
 	publicKeyHash [20]byte
 	state         tbtc.WalletState

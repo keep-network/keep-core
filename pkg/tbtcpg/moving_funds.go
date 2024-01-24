@@ -52,6 +52,10 @@ var (
 	ErrTransactionNotIncluded = fmt.Errorf(
 		"transaction not included in blockchain",
 	)
+
+	// ErrFeeTooHigh is the error returned when the estimated fee exceeds the
+	// maximum fee allowed for the moving funds transaction.
+	ErrFeeTooHigh = fmt.Errorf("estimated fee exceeds the maximum fee")
 )
 
 // MovingFundsCommitmentLookBackPeriod is the look-back period used when
@@ -620,7 +624,7 @@ func EstimateMovingFundsFee(
 	}
 
 	if uint64(totalFee) > txMaxTotalFee {
-		return 0, fmt.Errorf("estimated fee exceeds the maximum fee")
+		return 0, ErrFeeTooHigh
 	}
 
 	return totalFee, nil
