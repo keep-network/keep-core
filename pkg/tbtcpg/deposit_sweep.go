@@ -14,7 +14,9 @@ import (
 	"github.com/keep-network/keep-core/pkg/tbtc"
 )
 
-const depositScriptByteSize = 92
+// Use the worst-case 126-byte deposit script with embedded extra data for estimation.
+// This will ensure that deposit sweep transaction fees are not underestimated.
+const depositScriptByteSize = 126
 
 // DepositSweepTask is a task that may produce a deposit sweep proposal.
 type DepositSweepTask struct {
