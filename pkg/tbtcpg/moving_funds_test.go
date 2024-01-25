@@ -3,7 +3,6 @@ package tbtcpg_test
 import (
 	"encoding/hex"
 	"math/big"
-	"reflect"
 	"testing"
 	"time"
 
@@ -17,19 +16,19 @@ import (
 )
 
 func TestMovingFundsAction_FindTargetWallets_CommitmentNotSubmittedYet(t *testing.T) {
+	walletPublicKeyHash := hexToByte20(
+		"ffb3f7538bfa98a511495dd96027cfbd57baf2fa",
+	)
+
 	var tests = map[string]struct {
-		sourceWalletPublicKeyHash [20]byte
-		walletBalance             uint64
-		walletMaxBtcTransfer      uint64
-		registeredWallets         []walletInfo
-		liveWalletsCount          uint32
-		expectedTargetWallets     [][20]byte
-		expectedError             error
+		walletBalance         uint64
+		walletMaxBtcTransfer  uint64
+		registeredWallets     []walletInfo
+		liveWalletsCount      uint32
+		expectedTargetWallets [][20]byte
+		expectedError         error
 	}{
 		"success scenario": {
-			sourceWalletPublicKeyHash: hexToByte20(
-				"ffb3f7538bfa98a511495dd96027cfbd57baf2fa",
-			),
 			walletBalance:        2000000,
 			walletMaxBtcTransfer: 300000,
 			registeredWallets: []walletInfo{
@@ -85,9 +84,6 @@ func TestMovingFundsAction_FindTargetWallets_CommitmentNotSubmittedYet(t *testin
 			expectedError: nil,
 		},
 		"wallet max BTC transfer is zero": {
-			sourceWalletPublicKeyHash: hexToByte20(
-				"ffb3f7538bfa98a511495dd96027cfbd57baf2fa",
-			),
 			walletBalance:         10000,
 			walletMaxBtcTransfer:  0, // Set to zero.
 			registeredWallets:     []walletInfo{},
@@ -96,9 +92,6 @@ func TestMovingFundsAction_FindTargetWallets_CommitmentNotSubmittedYet(t *testin
 			expectedError:         tbtcpg.ErrMaxBtcTransferZero,
 		},
 		"not enough live wallets": {
-			sourceWalletPublicKeyHash: hexToByte20(
-				"ffb3f7538bfa98a511495dd96027cfbd57baf2fa",
-			),
 			walletBalance:        2000000,
 			walletMaxBtcTransfer: 300000,
 			// Simulate there should be two Live wallets, but set only one Live
@@ -165,18 +158,17 @@ func TestMovingFundsAction_FindTargetWallets_CommitmentNotSubmittedYet(t *testin
 
 			targetWallets, alreadySubmitted, err := task.FindTargetWallets(
 				&testutils.MockLogger{},
-				test.sourceWalletPublicKeyHash,
+				walletPublicKeyHash,
 				targetWalletsCommitmentHash,
 				test.walletBalance,
 				test.liveWalletsCount,
 			)
 
-			if !reflect.DeepEqual(test.expectedTargetWallets, targetWallets) {
-				t.Errorf(
-					"unexpected target wallets\nexpected: %v\nactual:   %v",
-					test.expectedTargetWallets,
-					targetWallets,
-				)
+			if diff := deep.Equal(
+				test.expectedTargetWallets,
+				targetWallets,
+			); diff != nil {
+				t.Errorf("unexpected target wallets: %v", diff)
 			}
 
 			// Returned value for the already submitted commitment should
@@ -199,19 +191,21 @@ func TestMovingFundsAction_FindTargetWallets_CommitmentNotSubmittedYet(t *testin
 }
 
 func TestMovingFundsAction_FindTargetWallets_CommitmentAlreadySubmitted(t *testing.T) {
+	walletPublicKeyHash := hexToByte20(
+		"ffb3f7538bfa98a511495dd96027cfbd57baf2fa",
+	)
+
+	currentBlock := uint64(1000000)
+
+	averageBlockTime := 10 * time.Second
+
 	var tests = map[string]struct {
-		sourceWalletPublicKeyHash   [20]byte
 		targetWalletsCommitmentHash [32]byte
 		targetWallets               []walletInfo
-		currentBlock                uint64
-		averageBlockTime            time.Duration
 		expectedTargetWallets       [][20]byte
 		expectedError               error
 	}{
 		"success scenario": {
-			sourceWalletPublicKeyHash: hexToByte20(
-				"ffb3f7538bfa98a511495dd96027cfbd57baf2fa",
-			),
 			targetWalletsCommitmentHash: hexToByte32(
 				"9d9368117956680760fa27bb9542ceba2d4fcc398d640a5a0769f5a9593afb0e",
 			),
@@ -235,8 +229,6 @@ func TestMovingFundsAction_FindTargetWallets_CommitmentAlreadySubmitted(t *testi
 					state: tbtc.StateLive,
 				},
 			},
-			currentBlock:     1000000,
-			averageBlockTime: 10 * time.Second,
 			expectedTargetWallets: [][20]byte{
 				hexToByte20("92a6ec889a8fa34f731e639edede4c75e184307c"),
 				hexToByte20("c7302d75072d78be94eb8d36c4b77583c7abb06e"),
@@ -245,9 +237,6 @@ func TestMovingFundsAction_FindTargetWallets_CommitmentAlreadySubmitted(t *testi
 			expectedError: nil,
 		},
 		"target wallet is not live": {
-			sourceWalletPublicKeyHash: hexToByte20(
-				"ffb3f7538bfa98a511495dd96027cfbd57baf2fa",
-			),
 			targetWalletsCommitmentHash: hexToByte32(
 				"9d9368117956680760fa27bb9542ceba2d4fcc398d640a5a0769f5a9593afb0e",
 			),
@@ -271,15 +260,10 @@ func TestMovingFundsAction_FindTargetWallets_CommitmentAlreadySubmitted(t *testi
 					state: tbtc.StateLive,
 				},
 			},
-			currentBlock:          1000000,
-			averageBlockTime:      10 * time.Second,
 			expectedTargetWallets: nil,
 			expectedError:         tbtcpg.ErrTargetWalletNotLive,
 		},
 		"target wallet commitment hash mismatch": {
-			sourceWalletPublicKeyHash: hexToByte20(
-				"ffb3f7538bfa98a511495dd96027cfbd57baf2fa",
-			),
 			targetWalletsCommitmentHash: hexToByte32(
 				"9d9368117956680760fa27bb9542ceba2d4fcc398d640a5a0769f5a9593afb0e",
 			),
@@ -291,8 +275,6 @@ func TestMovingFundsAction_FindTargetWallets_CommitmentAlreadySubmitted(t *testi
 					state: tbtc.StateLive,
 				},
 			},
-			currentBlock:          1000000,
-			averageBlockTime:      10 * time.Second,
 			expectedTargetWallets: nil,
 			expectedError:         tbtcpg.ErrWrongCommitmentHash,
 		},
@@ -302,15 +284,15 @@ func TestMovingFundsAction_FindTargetWallets_CommitmentAlreadySubmitted(t *testi
 		t.Run(testName, func(t *testing.T) {
 			tbtcChain := tbtcpg.NewLocalChain()
 
-			tbtcChain.SetAverageBlockTime(test.averageBlockTime)
+			tbtcChain.SetAverageBlockTime(averageBlockTime)
 
 			blockCounter := tbtcpg.NewMockBlockCounter()
-			blockCounter.SetCurrentBlock(test.currentBlock)
+			blockCounter.SetCurrentBlock(currentBlock)
 			tbtcChain.SetBlockCounter(blockCounter)
 
-			startBlock := test.currentBlock - uint64(
+			startBlock := currentBlock - uint64(
 				tbtcpg.MovingFundsCommitmentLookBackPeriod.Seconds(),
-			)/uint64(test.averageBlockTime.Seconds())
+			)/uint64(averageBlockTime.Seconds())
 
 			targetWallets := [][20]byte{}
 			for _, walletInfo := range test.targetWallets {
@@ -323,10 +305,8 @@ func TestMovingFundsAction_FindTargetWallets_CommitmentAlreadySubmitted(t *testi
 
 			err := tbtcChain.AddPastMovingFundsCommitmentSubmittedEvent(
 				&tbtc.MovingFundsCommitmentSubmittedEventFilter{
-					StartBlock: startBlock,
-					WalletPublicKeyHash: [][20]byte{
-						test.sourceWalletPublicKeyHash,
-					},
+					StartBlock:          startBlock,
+					WalletPublicKeyHash: [][20]byte{walletPublicKeyHash},
 				},
 				&tbtc.MovingFundsCommitmentSubmittedEvent{
 					TargetWallets: targetWallets,
@@ -345,18 +325,17 @@ func TestMovingFundsAction_FindTargetWallets_CommitmentAlreadySubmitted(t *testi
 
 			targetWallets, alreadySubmitted, err := task.FindTargetWallets(
 				&testutils.MockLogger{},
-				test.sourceWalletPublicKeyHash,
+				walletPublicKeyHash,
 				test.targetWalletsCommitmentHash,
 				walletBalance,
 				liveWalletsCount,
 			)
 
-			if !reflect.DeepEqual(test.expectedTargetWallets, targetWallets) {
-				t.Errorf(
-					"unexpected target wallets\nexpected: %v\nactual:   %v",
-					test.expectedTargetWallets,
-					targetWallets,
-				)
+			if diff := deep.Equal(
+				test.expectedTargetWallets,
+				targetWallets,
+			); diff != nil {
+				t.Errorf("unexpected target wallets: %v", diff)
 			}
 
 			// Returned value for the already submitted commitment should
@@ -433,12 +412,8 @@ func TestMovingFundsAction_GetWalletMembersInfo(t *testing.T) {
 				test.executingOperator,
 			)
 
-			if !reflect.DeepEqual(test.expectedMemberIDs, memberIDs) {
-				t.Errorf(
-					"unexpected memberIDs\nexpected: %v\nactual:   %v",
-					test.expectedMemberIDs,
-					memberIDs,
-				)
+			if diff := deep.Equal(test.expectedMemberIDs, memberIDs); diff != nil {
+				t.Errorf("unexpected memberIDs: %v", diff)
 			}
 
 			testutils.AssertUintsEqual(
@@ -458,55 +433,50 @@ func TestMovingFundsAction_GetWalletMembersInfo(t *testing.T) {
 }
 
 func TestMovingFundsAction_SubmitMovingFundsCommitment(t *testing.T) {
+	walletPublicKeyHash := hexToByte20(
+		"ffb3f7538bfa98a511495dd96027cfbd57baf2fa",
+	)
+
+	walletMainUtxo := bitcoin.UnspentTransactionOutput{
+		Outpoint: &bitcoin.TransactionOutpoint{
+			TransactionHash: hexToByte32(
+				"102414558e061ea6e73d5a7bdbf1159b1518c071c22005475d0215ec78a0b911",
+			),
+			OutputIndex: 11,
+		},
+		Value: 111,
+	}
+
+	currentBlock := uint64(200000)
+
 	var tests = map[string]struct {
-		sourceWalletPublicKeyHash   [20]byte
 		targetWalletsCommitmentHash [32]byte
-		mainUtxo                    bitcoin.UnspentTransactionOutput
-		currentBlock                uint64
 		walletMemberIDs             []uint32
 		walletMemberIndex           uint32
 		targetWallets               [][20]byte
 		expectedError               error
 	}{
 		"submission successful": {
-			sourceWalletPublicKeyHash: hexToByte20(
-				"ffb3f7538bfa98a511495dd96027cfbd57baf2fa",
-			),
 			// Simulate the commitment has updated.
 			targetWalletsCommitmentHash: hexToByte32(
 				"9d9368117956680760fa27bb9542ceba2d4fcc398d640a5a0769f5a9593afb0e",
 			),
-			mainUtxo: bitcoin.UnspentTransactionOutput{
-				Outpoint: &bitcoin.TransactionOutpoint{
-					TransactionHash: hexToByte32(
-						"102414558e061ea6e73d5a7bdbf1159b1518c071c22005475d0215ec78a0b911",
-					),
-					OutputIndex: 11,
-				},
-				Value: 111,
-			},
 			walletMemberIDs:   []uint32{11, 22, 33, 44},
 			walletMemberIndex: 1,
 			targetWallets: [][20]byte{
 				hexToByte20("92a6ec889a8fa34f731e639edede4c75e184307c"),
 				hexToByte20("fdfa28e238734271f5e0d4f53d3843ae6cc09b24"),
 			},
-			currentBlock:  200000,
 			expectedError: nil,
 		},
 		"submission unsuccessful": {
-			sourceWalletPublicKeyHash: hexToByte20(
-				"ffb3f7538bfa98a511495dd96027cfbd57baf2fa",
-			),
 			// Simulate the commitment has not been updated by setting target
 			// wallets commitment has to zero. The rest of the parameters is
 			// not important.
 			targetWalletsCommitmentHash: [32]byte{},
-			mainUtxo:                    bitcoin.UnspentTransactionOutput{},
 			walletMemberIDs:             []uint32{},
 			walletMemberIndex:           0,
 			targetWallets:               [][20]byte{},
-			currentBlock:                200000,
 			expectedError:               tbtcpg.ErrTransactionNotIncluded,
 		},
 	}
@@ -516,21 +486,21 @@ func TestMovingFundsAction_SubmitMovingFundsCommitment(t *testing.T) {
 			tbtcChain := tbtcpg.NewLocalChain()
 
 			tbtcChain.SetWallet(
-				test.sourceWalletPublicKeyHash,
+				walletPublicKeyHash,
 				&tbtc.WalletChainData{
 					MovingFundsTargetWalletsCommitmentHash: test.targetWalletsCommitmentHash,
 				},
 			)
 
 			blockCounter := tbtcpg.NewMockBlockCounter()
-			blockCounter.SetCurrentBlock(test.currentBlock)
+			blockCounter.SetCurrentBlock(currentBlock)
 			tbtcChain.SetBlockCounter(blockCounter)
 
 			task := tbtcpg.NewMovingFundsTask(tbtcChain, nil)
 
 			err := task.SubmitMovingFundsCommitment(
-				test.sourceWalletPublicKeyHash,
-				&test.mainUtxo,
+				walletPublicKeyHash,
+				&walletMainUtxo,
 				test.walletMemberIDs,
 				test.walletMemberIndex,
 				test.targetWallets,
@@ -552,7 +522,7 @@ func TestMovingFundsAction_SubmitMovingFundsCommitment(t *testing.T) {
 
 			submittedMovingFundsCommitment := submittedMovingFundsCommitments[0]
 
-			expectedWalletPublicKeyHash := test.sourceWalletPublicKeyHash
+			expectedWalletPublicKeyHash := walletPublicKeyHash
 			actualWalletPublicKeyHash := submittedMovingFundsCommitment.WalletPublicKeyHash
 			testutils.AssertBytesEqual(
 				t,
@@ -560,7 +530,7 @@ func TestMovingFundsAction_SubmitMovingFundsCommitment(t *testing.T) {
 				actualWalletPublicKeyHash[:],
 			)
 
-			expectedWalletMainUtxo := &test.mainUtxo
+			expectedWalletMainUtxo := &walletMainUtxo
 			actualWalletMainUtxo := submittedMovingFundsCommitment.WalletMainUtxo
 			if diff := deep.Equal(expectedWalletMainUtxo, actualWalletMainUtxo); diff != nil {
 				t.Errorf("invalid wallet main utxo: %v", diff)
@@ -598,7 +568,7 @@ func TestMovingFundsAction_ProposeMovingFunds(t *testing.T) {
 		hexToByte20("c7302d75072d78be94eb8d36c4b77583c7abb06e"),
 	}
 
-	mainUtxo := &bitcoin.UnspentTransactionOutput{
+	walletMainUtxo := &bitcoin.UnspentTransactionOutput{
 		Outpoint: &bitcoin.TransactionOutpoint{
 			TransactionHash: hexToByte32(
 				"102414558e061ea6e73d5a7bdbf1159b1518c071c22005475d0215ec78a0b911",
@@ -653,7 +623,7 @@ func TestMovingFundsAction_ProposeMovingFunds(t *testing.T) {
 
 			err := tbtcChain.SetMovingFundsProposalValidationResult(
 				walletPublicKeyHash,
-				mainUtxo,
+				walletMainUtxo,
 				test.expectedProposal,
 				true,
 			)
@@ -666,7 +636,7 @@ func TestMovingFundsAction_ProposeMovingFunds(t *testing.T) {
 			proposal, err := task.ProposeMovingFunds(
 				&testutils.MockLogger{},
 				walletPublicKeyHash,
-				mainUtxo,
+				walletMainUtxo,
 				targetWallets,
 				test.fee,
 			)
