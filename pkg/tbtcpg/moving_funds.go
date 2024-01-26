@@ -25,9 +25,7 @@ var (
 
 	// ErrNotEnoughTargetWallets is the error returned when the number of
 	// gathered target wallets does not match the required target wallets count.
-	ErrNotEnoughTargetWallets = fmt.Errorf(
-		"not enough target wallets",
-	)
+	ErrNotEnoughTargetWallets = fmt.Errorf("not enough target wallets")
 
 	// ErrWrongCommitmentHash is the error returned when the hash calculated
 	// from retrieved target wallets does not match the committed hash.
@@ -37,9 +35,7 @@ var (
 
 	// ErrTargetWalletNotLive is the error returned when a target wallet is not
 	// in the Live state.
-	ErrTargetWalletNotLive = fmt.Errorf(
-		"target wallet is not live",
-	)
+	ErrTargetWalletNotLive = fmt.Errorf("target wallet is not live")
 
 	// ErrNoExecutingOperator is the error returned when the task executing
 	// operator is not found among the wallet operator IDs.
@@ -121,7 +117,7 @@ func (mft *MovingFundsTask) Run(request *tbtc.CoordinationProposalRequest) (
 	)
 	if err != nil {
 		return nil, false, fmt.Errorf(
-			"cannot get wallet's maun UTXO: [%w]",
+			"cannot get wallet's main UTXO: [%w]",
 			err,
 		)
 	}
