@@ -6,6 +6,7 @@ import (
 
 	"github.com/ipfs/go-log/v2"
 
+	"github.com/keep-network/keep-common/pkg/chain/ethereum"
 	"github.com/keep-network/keep-core/pkg/bitcoin"
 	"go.uber.org/zap"
 )
@@ -76,10 +77,65 @@ func newMovingFundsAction(
 }
 
 func (mfa *movingFundsAction) execute() error {
-	// TODO: Before proceeding with creation of the Bitcoin transaction, wait
-	//       32 blocks to ensure the commitment transaction has accumulated
-	//       enough confirmations in the Ethereum chain and will not be reverted
-	//       even if a reorg occurs.
+	walletPublicKeyHash := bitcoin.PublicKeyHash(mfa.wallet().publicKey)
+
+	// Make sure the moving funds commitment transaction has entered the
+	// Ethereum blockchain and has accumulated enough confirmations.
+	err := mfa.ensureCommitmentTxConfirmed(walletPublicKeyHash)
+	if err != nil {
+		return fmt.Errorf(
+			"failed to ensure moving funds transaction confirmed: [%v]",
+			err,
+		)
+	}
+
+	// TODO: Continue with the implementation.
+	return nil
+}
+
+func (mfa *movingFundsAction) ensureCommitmentTxConfirmed(
+	walletPublicKeyHash [20]byte,
+) error {
+	blockCounter, err := mfa.chain.BlockCounter()
+	if err != nil {
+		return fmt.Errorf("error getting block counter [%w]", err)
+	}
+
+	currentBlock, err := blockCounter.CurrentBlock()
+	if err != nil {
+		return fmt.Errorf("error getting current block [%w]", err)
+	}
+
+	// To verify the commitment transaction is in the Ethereum blockchain check
+	// that the commitment hash is not zero.
+	stateCheck := func() (bool, error) {
+		walletData, err := mfa.chain.GetWallet(walletPublicKeyHash)
+		if err != nil {
+			return false, err
+		}
+
+		return walletData.MovingFundsTargetWalletsCommitmentHash != [32]byte{}, nil
+	}
+
+	// Wait `32` blocks to make sure the transaction has not been reverted for
+	// some reason, e.g. due to a chain reorganization.
+	result, err := ethereum.WaitForBlockConfirmations(
+		blockCounter,
+		currentBlock,
+		32,
+		stateCheck,
+	)
+	if err != nil {
+		return fmt.Errorf(
+			"error while waiting for transaction confirmation [%w]",
+			err,
+		)
+	}
+
+	if !result {
+		return fmt.Errorf("transaction not included in blockchain")
+	}
+
 	return nil
 }
 
