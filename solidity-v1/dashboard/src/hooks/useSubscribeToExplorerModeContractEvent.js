@@ -53,16 +53,29 @@ export const useSubscribeToExplorerModeContractEvent = (
         { fromBlock: "latest", ...options },
         subscribeToEvent
       )
+      console.log(
+        `Subscribed to ${eventName} event (from ${contractName} contract)!`
+      )
     } catch (error) {
       console.error(`Failed subscribing to ${eventName}`, error)
     }
 
     return () => {
       if (event.current) {
+        console.log(
+          `Unsubscribed from ${eventName} event (from ${contractName} contract)!`
+        )
         event.current.unsubscribe()
       }
     }
-  }, [eventName, contract, isConnected, subscribeOnMainnetOnly, chainId])
+  }, [
+    eventName,
+    contract,
+    isConnected,
+    subscribeOnMainnetOnly,
+    chainId,
+    contractName,
+  ])
 
   useEffect(() => {
     if (previousEvent.transactionHash === latestEvent.transactionHash) {
