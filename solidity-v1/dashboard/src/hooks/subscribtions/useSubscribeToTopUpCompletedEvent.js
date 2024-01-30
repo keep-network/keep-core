@@ -1,4 +1,4 @@
-import { useDispatch, useSelector } from "react-redux"
+import { useDispatch } from "react-redux"
 import { useSubscribeToExplorerModeContractEvent } from "../useSubscribeToExplorerModeContractEvent"
 import { getEventsFromTransaction } from "../../utils/ethereum.utils"
 import {
@@ -9,7 +9,6 @@ import {
 import { KeepExplorerMode } from "../../contracts"
 
 export const useSubscribeToTopUpCompletedEvent = () => {
-  const grants = useSelector((state) => state.tokenGrants.grants)
   const dispatch = useDispatch()
   const {
     [TOKEN_GRANT_CONTRACT_NAME]: { instance: grantContract },
