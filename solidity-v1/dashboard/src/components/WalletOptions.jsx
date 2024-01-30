@@ -57,13 +57,6 @@ const WALLETS_OPTIONS = [
     label: "WalletConnect",
     icon: Icons.WalletConnect,
     isHardwareWallet: false,
-    connector: new WalletConnectConnector(),
-    modalType: MODAL_TYPES.WalletConnect,
-  },
-  {
-    label: "WalletConnectV2",
-    icon: Icons.WalletConnect,
-    isHardwareWallet: false,
     connector: new WalletConnectV2Connector(),
     modalType: MODAL_TYPES.WalletConnect,
   },
