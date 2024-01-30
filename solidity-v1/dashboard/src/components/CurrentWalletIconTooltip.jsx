@@ -38,10 +38,10 @@ const CurrentWalletIconTooltip = () => {
           <Icons.Trezor className="trezor-logo trezor-logo--black flex" />
         )
         break
-      case WALLETS.WALLET_CONNECT:
+      case WALLETS.WALLET_CONNECT.name:
         tooltipText = getTooltipText(WALLETS.WALLET_CONNECT.label)
         iconComponent = (
-          <Icons.WalletConnect className="wallet-connect-logo wallet-connect-logo--black flex" />
+          <Icons.WalletConnect className="wallet-connect-logo wallet-connect-logo--black wallet-connect-logo--small-size flex" />
         )
         break
       case WALLETS.EXPLORER_MODE.name:
