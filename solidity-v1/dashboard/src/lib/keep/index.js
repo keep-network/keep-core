@@ -248,11 +248,6 @@ class Keep {
       txHash,
       deploymentBlock
     )
-
-    console.log(
-      "this.oldTokenStakingContract!!: ",
-      this.oldTokenStakingContract
-    )
   }
 
   setProvider = (provider) => {

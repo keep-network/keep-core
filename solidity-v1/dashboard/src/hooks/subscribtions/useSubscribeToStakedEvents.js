@@ -159,7 +159,6 @@ export const useSubscribeToStakedEvents = () => {
           })
         }
       } catch (error) {
-        console.log("error broo")
         console.error(
           `Failed subscribing to StakeDelegated event in Explorer Mode contract`,
           error

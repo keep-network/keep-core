@@ -26,7 +26,6 @@ export const useSubscribeToERC20TransferEvent = () => {
     KEEP_TOKEN_CONTRACT_NAME,
     "Transfer",
     (event) => {
-      console.log("event: ", event)
       dispatch(keepBalanceActions.keepTokenTransferFromEventEmitted(event))
     },
     fromOptions
@@ -36,7 +35,6 @@ export const useSubscribeToERC20TransferEvent = () => {
     KEEP_TOKEN_CONTRACT_NAME,
     "Transfer",
     (event) => {
-      console.log("event: ", event)
       dispatch(keepBalanceActions.keepTokenTransferToEventEmitted(event))
     },
     toOptions
