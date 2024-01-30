@@ -52,13 +52,11 @@ import {
   KEEP_TOKEN_GEYSER_CONTRACT_NAME,
   LP_REWARDS_TBTCV2_SADDLE_CONTRACT_NAME,
   LP_REWARDS_TBTCV2_SADDLEV2_CONTRACT_NAME,
-  ASSET_POOL_CONTRACT_NAME,
 } from "./constants/constants"
 
 import KeepLib from "./lib/keep"
 import { Web3jsWrapper } from "./lib/web3"
 import { getChainId, getWsUrl } from "./connectors/utils.js"
-import { ExplorerModeConnector } from "./connectors/explorer-mode-connector"
 
 const CONTRACT_DEPLOYMENT_BLOCK_CACHE = {}
 
@@ -248,6 +246,9 @@ export async function getContracts(web3, netId) {
     throw new Error("Please connect to the appropriate Ethereum network.")
   }
 
+  // TODO: This was commented out because it didn't work with the wallet connect
+  // v2 connector. This should be investigated before the merge.
+
   // if (ContractsLoaded.isFulfilled()) {
   //   console.log("if fulfilled")
   //   const existingContracts = await ContractsLoaded
@@ -294,8 +295,6 @@ export async function getContracts(web3, netId) {
     oldTokenStakingArtifact,
     { contractName: OLD_TOKEN_STAKING_CONTRACT_NAME }
   )
-
-  console.log("heheszek: ", web3Contracts[OLD_TOKEN_STAKING_CONTRACT_NAME])
 
   resovleContractsDeferred(web3Contracts)
   return web3Contracts
