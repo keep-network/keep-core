@@ -52,11 +52,13 @@ import {
   KEEP_TOKEN_GEYSER_CONTRACT_NAME,
   LP_REWARDS_TBTCV2_SADDLE_CONTRACT_NAME,
   LP_REWARDS_TBTCV2_SADDLEV2_CONTRACT_NAME,
+  ASSET_POOL_CONTRACT_NAME,
 } from "./constants/constants"
 
 import KeepLib from "./lib/keep"
 import { Web3jsWrapper } from "./lib/web3"
 import { getChainId, getWsUrl } from "./connectors/utils.js"
+import { ExplorerModeConnector } from "./connectors/explorer-mode-connector"
 
 const CONTRACT_DEPLOYMENT_BLOCK_CACHE = {}
 
@@ -216,6 +218,11 @@ export const Keep = KeepLib.initialize(
   getChainId()
 )
 
+export const KeepExplorerMode = KeepLib.initialize(
+  new Web3jsWrapper(new Web3(getWsUrl())),
+  getChainId()
+)
+
 export const Web3Loaded = Web3Deferred.promise
 export const ContractsLoaded = ContractsDeferred.promise
 
@@ -241,14 +248,35 @@ export async function getContracts(web3, netId) {
     throw new Error("Please connect to the appropriate Ethereum network.")
   }
 
-  if (ContractsLoaded.isFulfilled()) {
-    const existingContracts = await ContractsLoaded
-    for (const contractInstance of Object.values(existingContracts)) {
-      contractInstance.options.from = web3.eth.defaultAccount
-    }
+  // if (ContractsLoaded.isFulfilled()) {
+  //   console.log("if fulfilled")
+  //   const existingContracts = await ContractsLoaded
+  //   for (const contractInstance of Object.values(existingContracts)) {
+  //     contractInstance.options.from = web3.eth.defaultAccount
+  //   }
 
-    return contracts
-  }
+  //   return contracts
+  // }
+  // console.log("else not fulfilled")
+
+  // const web3Contracts = {}
+  // for (const [contractName, options] of Object.entries(contracts)) {
+  //   options.contractName = contractName
+  //   web3Contracts[contractName] = await getContract(
+  //     web3,
+  //     options.artifact,
+  //     options
+  //   )
+  // }
+
+  // const oldTokenStakingArtifact = await getOldTokenStakingArtifact()
+  // web3Contracts[OLD_TOKEN_STAKING_CONTRACT_NAME] = await getContract(
+  //   web3,
+  //   oldTokenStakingArtifact,
+  //   { contractName: OLD_TOKEN_STAKING_CONTRACT_NAME }
+  // )
+
+  // resovleContractsDeferred(web3Contracts)
 
   const web3Contracts = {}
   for (const [contractName, options] of Object.entries(contracts)) {
@@ -266,6 +294,8 @@ export async function getContracts(web3, netId) {
     oldTokenStakingArtifact,
     { contractName: OLD_TOKEN_STAKING_CONTRACT_NAME }
   )
+
+  console.log("heheszek: ", web3Contracts[OLD_TOKEN_STAKING_CONTRACT_NAME])
 
   resovleContractsDeferred(web3Contracts)
   return web3Contracts

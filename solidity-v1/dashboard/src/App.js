@@ -15,6 +15,24 @@ import useModalWindowForMobileUsers from "./hooks/useModalWindowForMobileUsers"
 import { ModalRoot } from "./components/modal"
 import NavLink from "./components/NavLink"
 import { useShowLegacyDappModal } from "./hooks/useShowLegacyDappModal"
+import {
+  useSubscribeToCovPoolsAuctionClosedEvent,
+  useSubscribeToCovPoolsAuctionCreatedEvent,
+  useSubscribeToCovPoolsWithdrawalCompletedEvent,
+  useSubscribeToCovPoolsWithdrawalInitiatedEvent,
+  useSubscribeToDepositWithdrawEvent,
+  useSubscribeToDepositedEvent,
+  useSubscribeToECDSARewardsClaimedEvent,
+  useSubscribeToERC20TransferEvent,
+  useSubscribeToOperatorUndelegatedEvent,
+  useSubscribeToRecoveredStakeEvent,
+  useSubscribeToStakedEvents,
+  useSubscribeToTokenGrantWithdrawnEvent,
+  useSubscribeToTopUpCompletedEvent,
+  useSubscribeToTopUpInitiatedEvent,
+  useSubscribeToUndelegatedEvents,
+} from "./hooks/subscribtions"
+import { useSubscribeToThresholdStakeKeepEvent } from "./hooks/subscribtions/useSubscribeToThresholdStakeKeepEvent"
 
 const App = () => (
   <Provider store={store}>
@@ -35,6 +53,23 @@ const AppLayout = () => {
   useSubscribeToConnectorEvents()
   useModalWindowForMobileUsers()
   useShowLegacyDappModal()
+
+  useSubscribeToERC20TransferEvent()
+  useSubscribeToStakedEvents()
+  useSubscribeToUndelegatedEvents()
+  useSubscribeToRecoveredStakeEvent()
+  useSubscribeToTokenGrantWithdrawnEvent()
+  useSubscribeToDepositWithdrawEvent()
+  useSubscribeToDepositedEvent()
+  useSubscribeToTopUpInitiatedEvent()
+  useSubscribeToTopUpCompletedEvent()
+  useSubscribeToECDSARewardsClaimedEvent()
+  useSubscribeToOperatorUndelegatedEvent()
+  useSubscribeToCovPoolsWithdrawalInitiatedEvent()
+  useSubscribeToCovPoolsWithdrawalCompletedEvent()
+  useSubscribeToCovPoolsAuctionCreatedEvent()
+  useSubscribeToCovPoolsAuctionClosedEvent()
+  useSubscribeToThresholdStakeKeepEvent()
 
   return (
     <>
