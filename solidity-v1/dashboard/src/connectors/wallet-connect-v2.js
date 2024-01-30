@@ -88,7 +88,7 @@ export class WalletConnectV2Connector extends AbstractConnector {
       this.provider.removeListener("connect", this.handleOnConnect)
       this.provider = undefined
     }
-    this.emitDeactivate()
+    this.emit("disconnect")
   }
 
   enable = async () => {
@@ -101,7 +101,6 @@ export class WalletConnectV2Connector extends AbstractConnector {
     if (!this.provider) {
       const chains = getSupportedChains(this.config)
       if (chains.length === 0) throw new Error("Chains not specified!")
-      console.log("initiating provider brooo")
       this.provider = await EthereumProvider.init({
         projectId: this.config.projectId,
         chains: chains,
@@ -191,6 +190,6 @@ export class WalletConnectV2Connector extends AbstractConnector {
   }
 
   close = () => {
-    this.emitDeactivate()
+    this.emit("disconnect")
   }
 }
