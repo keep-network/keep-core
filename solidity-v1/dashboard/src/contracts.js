@@ -246,38 +246,14 @@ export async function getContracts(web3, netId) {
     throw new Error("Please connect to the appropriate Ethereum network.")
   }
 
-  // TODO: This was commented out because it didn't work with the wallet connect
-  // v2 connector. This should be investigated before the merge.
+  if (ContractsLoaded.isFulfilled()) {
+    const existingContracts = await ContractsLoaded
+    for (const contractInstance of Object.values(existingContracts)) {
+      contractInstance.options.from = web3.eth.defaultAccount
+    }
 
-  // if (ContractsLoaded.isFulfilled()) {
-  //   console.log("if fulfilled")
-  //   const existingContracts = await ContractsLoaded
-  //   for (const contractInstance of Object.values(existingContracts)) {
-  //     contractInstance.options.from = web3.eth.defaultAccount
-  //   }
-
-  //   return contracts
-  // }
-  // console.log("else not fulfilled")
-
-  // const web3Contracts = {}
-  // for (const [contractName, options] of Object.entries(contracts)) {
-  //   options.contractName = contractName
-  //   web3Contracts[contractName] = await getContract(
-  //     web3,
-  //     options.artifact,
-  //     options
-  //   )
-  // }
-
-  // const oldTokenStakingArtifact = await getOldTokenStakingArtifact()
-  // web3Contracts[OLD_TOKEN_STAKING_CONTRACT_NAME] = await getContract(
-  //   web3,
-  //   oldTokenStakingArtifact,
-  //   { contractName: OLD_TOKEN_STAKING_CONTRACT_NAME }
-  // )
-
-  // resovleContractsDeferred(web3Contracts)
+    return contracts
+  }
 
   const web3Contracts = {}
   for (const [contractName, options] of Object.entries(contracts)) {
