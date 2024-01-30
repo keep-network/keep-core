@@ -1,4 +1,4 @@
-import { takeLatest, take, call, put, delay, fork } from "redux-saga/effects"
+import { takeLatest, call, put, delay } from "redux-saga/effects"
 import {
   FETCH_DELEGATIONS_FROM_OLD_STAKING_CONTRACT_REQUEST,
   FETCH_DELEGATIONS_FROM_OLD_STAKING_CONTRACT_SUCCESS,
@@ -7,7 +7,7 @@ import {
 } from "../actions"
 import { fetchOldDelegations } from "../services/staking-port-backer.service"
 import { getContractsContext } from "./utils"
-import { sendTransaction, createSubcribeToContractEventChannel } from "./web3"
+import { sendTransaction } from "./web3"
 import { getContractDeploymentBlockNumber } from "../contracts"
 import { showMessage, showCreatedMessage } from "../actions/messages"
 import { isEmptyArray } from "../utils/array.utils"
@@ -31,7 +31,7 @@ function* fetchOldStakingDelegations() {
     })
   }
 
-  yield fork(observeEvents)
+  // yield fork(observeEvents)
 }
 
 export function* watchFetchOldStakingContract() {
@@ -195,38 +195,38 @@ export function* watchRecovereOldStakeRequest() {
   yield takeLatest("copy-stake/recover_request", recoverFromOldStakingContract)
 }
 
-function* observeEvents() {
-  const { oldTokenStakingContract, stakingPortBackerContract } = yield call(
-    getContractsContext
-  )
+// function* observeEvents() {
+//   const { oldTokenStakingContract, stakingPortBackerContract } = yield call(
+//     getContractsContext
+//   )
 
-  yield fork(removeOldDelegationWatcher, oldTokenStakingContract, "Undelegated")
-  yield fork(
-    removeOldDelegationWatcher,
-    stakingPortBackerContract,
-    "StakeCopied"
-  )
-  yield fork(removeOldDelegationWatcher, oldTokenStakingContract, "Recovered")
-}
+//   yield fork(removeOldDelegationWatcher, oldTokenStakingContract, "Undelegated")
+//   yield fork(
+//     removeOldDelegationWatcher,
+//     stakingPortBackerContract,
+//     "StakeCopied"
+//   )
+//   yield fork(removeOldDelegationWatcher, oldTokenStakingContract, "Recovered")
+// }
 
-function* removeOldDelegationWatcher(contract, eventName) {
-  // Create subscription channel.
-  const contractEventCahnnel = yield call(
-    createSubcribeToContractEventChannel,
-    contract,
-    eventName
-  )
+// function* removeOldDelegationWatcher(contract, eventName) {
+//   // Create subscription channel.
+//   const contractEventCahnnel = yield call(
+//     createSubcribeToContractEventChannel,
+//     contract,
+//     eventName
+//   )
 
-  // Observe and dispatch an action that updates copy-stake reducer.
-  while (true) {
-    try {
-      const {
-        returnValues: { operator },
-      } = yield take(contractEventCahnnel)
-      yield put({ type: "copy-stake/remove_old_delegation", payload: operator })
-    } catch (error) {
-      console.error(`Failed subscribing to ${eventName} event`, error)
-      contractEventCahnnel.close()
-    }
-  }
-}
+//   // Observe and dispatch an action that updates copy-stake reducer.
+//   while (true) {
+//     try {
+//       const {
+//         returnValues: { operator },
+//       } = yield take(contractEventCahnnel)
+//       yield put({ type: "copy-stake/remove_old_delegation", payload: operator })
+//     } catch (error) {
+//       console.error(`Failed subscribing to ${eventName} event`, error)
+//       contractEventCahnnel.close()
+//     }
+//   }
+// }

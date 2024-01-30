@@ -16,6 +16,7 @@ import { ModalRoot } from "./components/modal"
 import NavLink from "./components/NavLink"
 import { useShowLegacyDappModal } from "./hooks/useShowLegacyDappModal"
 import {
+  useSubscribeToCopyStakeEvents,
   useSubscribeToCovPoolsAuctionClosedEvent,
   useSubscribeToCovPoolsAuctionCreatedEvent,
   useSubscribeToCovPoolsWithdrawalCompletedEvent,
@@ -70,6 +71,7 @@ const AppLayout = () => {
   useSubscribeToCovPoolsAuctionCreatedEvent()
   useSubscribeToCovPoolsAuctionClosedEvent()
   useSubscribeToThresholdStakeKeepEvent()
+  useSubscribeToCopyStakeEvents()
 
   return (
     <>

@@ -1,3 +1,4 @@
+export { useSubscribeToCopyStakeEvents } from "./useSubscribeToCopyStakeEvents"
 export { useSubscribeToCovPoolsAuctionClosedEvent } from "./useSubscribeToCovPoolsAuctionClosedEvent"
 export { useSubscribeToCovPoolsAuctionCreatedEvent } from "./useSubscribeToCovPoolsAuctionCreatedEvent"
 export { useSubscribeToCovPoolsWithdrawalCompletedEvent } from "./useSubscribeToCovPoolsWithdrawalCompletedEvent"
