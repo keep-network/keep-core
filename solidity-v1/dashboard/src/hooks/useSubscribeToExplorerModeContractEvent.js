@@ -76,7 +76,7 @@ export const useSubscribeToExplorerModeContractEvent = (
       return
     }
     subscribeToEventCallback({ ...latestEvent })
-  }, [previousEvent, latestEvent])
+  }, [previousEvent, latestEvent, subscribeToEventCallback])
 
   return { latestEvent }
 }
