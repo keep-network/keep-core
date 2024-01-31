@@ -7,7 +7,6 @@ import {
   LedgerConnector,
   LEDGER_DERIVATION_PATHS,
   metaMaskInjectedConnector,
-  WalletConnectConnector,
   WalletConnectV2Connector,
   tallyInjectedConnector,
 } from "../connectors"
