@@ -6,8 +6,7 @@ import { WALLETS } from "../constants/constants"
 
 const chainId = getChainId()
 const rpcUrl = config.networks[chainId.toString()].rpcURL
-// TODO: PASTE PROPER WALLET CONNECT ID
-const walletConnectProjectId = ""
+const walletConnectProjectId = process.env.REACT_APP_WALLET_CONNECT_PROJECT_ID
 
 export class UserRejectedRequestError extends Error {
   constructor() {
