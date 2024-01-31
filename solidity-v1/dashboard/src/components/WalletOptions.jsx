@@ -7,7 +7,7 @@ import {
   LedgerConnector,
   LEDGER_DERIVATION_PATHS,
   metaMaskInjectedConnector,
-  WalletConnectConnector,
+  WalletConnectV2Connector,
   tallyInjectedConnector,
 } from "../connectors"
 import { MODAL_TYPES, WALLETS } from "../constants/constants"
@@ -56,7 +56,7 @@ const WALLETS_OPTIONS = [
     label: "WalletConnect",
     icon: Icons.WalletConnect,
     isHardwareWallet: false,
-    connector: new WalletConnectConnector(),
+    connector: new WalletConnectV2Connector(),
     modalType: MODAL_TYPES.WalletConnect,
   },
   {

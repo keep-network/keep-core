@@ -30,7 +30,7 @@ import contracts, {
 import CoveragePoolV1 from "./coverage-pool"
 import { UniswapV2Exchange } from "./exchange-api"
 import KeepToTStaking from "./keep-to-t-staking"
-import { PRE } from "./constants"
+import { PRE, OLD_TOKEN_STAKING } from "./constants"
 import SimplePreApplicationAbi from "./contracts-artifacts/SimplePreApplication.json"
 
 /** @typedef { import("../web3").Web3LibWrapper} Web3LibWrapper */
@@ -179,6 +179,7 @@ class Keep {
     )
 
     this._initializePREContract()
+    this._initializeOldTokenStakingContract()
   }
 
   initializeServices = () => {
@@ -209,6 +210,41 @@ class Keep {
     this.simplePREApplicationContract = this.web3.createContractInstance(
       SimplePreApplicationAbi,
       preContractAddress,
+      txHash,
+      deploymentBlock
+    )
+  }
+
+  _initializeOldTokenStakingContract = async () => {
+    let oldTokenStakingArtifact
+    if (this.chainId === 1) {
+      // Mainnet network ID.
+      // Against mainnet, we want to use TokenStaking artifact
+      // from 1.1.2 version at `0x6D1140a8c8e6Fac242652F0a5A8171b898c67600` address.
+      oldTokenStakingArtifact = (
+        await import("../../old-contracts-artifacts/TokenStaking.json")
+      ).default
+    } else {
+      // For local, Ropsten and keep-dev network we want to use
+      // the mocked old `TokenStaking` contract from `@keep-network/keep-core` package.
+      oldTokenStakingArtifact = (
+        await import("@keep-network/keep-core/artifacts/OldTokenStaking.json")
+      ).default
+    }
+
+    const address = oldTokenStakingArtifact.networks[this.chainId].address
+    const txHash =
+      this.chainId === 1
+        ? OLD_TOKEN_STAKING.MAINNET_OLD_TOKEN_STAKING_DEPLOYMENT_TX_HASH
+        : null
+    const deploymentBlock =
+      this.chainId === 1
+        ? OLD_TOKEN_STAKING.MAINNET_OLD_TOKEN_STAKING_DEPLOYMENT_BLOCK
+        : 1
+
+    this.oldTokenStakingContract = this.web3.createContractInstance(
+      oldTokenStakingArtifact.abi,
+      address,
       txHash,
       deploymentBlock
     )
