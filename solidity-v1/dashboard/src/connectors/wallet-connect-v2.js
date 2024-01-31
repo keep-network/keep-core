@@ -66,11 +66,21 @@ export class WalletConnectV2Connector extends AbstractConnector {
 
   handleOnDisplayUri = () => {}
 
+  /**
+   * Handles chain change
+   *
+   * @param {string} newChainId
+   */
   handleChainChanged = (newChainId) => {
     this.emitUpdate({ chainId: newChainId })
     if (newChainId !== `0x${chainId}`) this.deactivate()
   }
 
+  /**
+   * Handles account change
+   *
+   * @param {string[]} accounts
+   */
   handleAccountsChanged = (accounts) => {
     this.emitUpdate({ account: accounts[0] })
   }
@@ -152,22 +162,37 @@ export class WalletConnectV2Connector extends AbstractConnector {
     return [account]
   }
 
+  /**
+   * @return {any} provider
+   */
   getProvider = () => {
     return this.provider
   }
 
+  /**
+   * @param {any} provider
+   */
   setProvider = (provider) => {
     this.provider = provider
   }
 
+  /**
+   * @return {Promise<number>} chainId
+   */
   getChainId = () => {
     return Promise.resolve(this.provider.chainId)
   }
 
+  /**
+   * @return {Promise<number>} networkId
+   */
   getNetworkId = () => {
     return Promise.resolve(this.provider.chainId)
   }
 
+  /**
+   * @return {string[]} accounts
+   */
   getAccounts = () => {
     return Promise.resolve(this.provider.accounts)
   }
