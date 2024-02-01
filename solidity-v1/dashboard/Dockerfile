@@ -23,7 +23,7 @@ RUN npm ci --ignore-scripts
 COPY src /app/src
 COPY public /app/public
 
-RUN npm run build
+RUN NODE_OPTIONS=--max_old_space_size=4096 npm run build
 
 # Production environment
 FROM nginx:1.17-alpine
