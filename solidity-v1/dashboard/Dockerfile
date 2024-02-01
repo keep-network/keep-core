@@ -13,6 +13,7 @@ RUN apk add --update --no-cache \
 COPY package.json /app/package.json
 COPY package-lock.json /app/package-lock.json
 COPY .env* /app/
+COPY craco.config.js /app/
 
 # Use `https://` instead of unauthenticated `git://` protocol
 RUN git config --global url."https://".insteadOf git://
