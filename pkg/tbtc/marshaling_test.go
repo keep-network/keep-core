@@ -241,14 +241,14 @@ func TestFuzzCoordinationMessage_MarshalingRoundtrip_WithHeartbeatProposal(t *te
 		f.Fuzz(&walletPublicKeyHash)
 		f.Fuzz(&proposal)
 
-		doneMessage := &coordinationMessage{
+		coordinationMsg := &coordinationMessage{
 			senderID:            senderID,
 			coordinationBlock:   coordinationBlock,
 			walletPublicKeyHash: walletPublicKeyHash,
 			proposal:            &proposal,
 		}
 
-		_ = pbutils.RoundTrip(doneMessage, &coordinationMessage{})
+		_ = pbutils.RoundTrip(coordinationMsg, &coordinationMessage{})
 	}
 }
 
@@ -270,14 +270,14 @@ func TestFuzzCoordinationMessage_MarshalingRoundtrip_WithDepositSweepProposal(t 
 		f.Fuzz(&walletPublicKeyHash)
 		f.Fuzz(&proposal)
 
-		doneMessage := &coordinationMessage{
+		coordinationMsg := &coordinationMessage{
 			senderID:            senderID,
 			coordinationBlock:   coordinationBlock,
 			walletPublicKeyHash: walletPublicKeyHash,
 			proposal:            &proposal,
 		}
 
-		_ = pbutils.RoundTrip(doneMessage, &coordinationMessage{})
+		_ = pbutils.RoundTrip(coordinationMsg, &coordinationMessage{})
 	}
 }
 
@@ -299,14 +299,14 @@ func TestFuzzCoordinationMessage_MarshalingRoundtrip_WithRedemptionProposal(t *t
 		f.Fuzz(&walletPublicKeyHash)
 		f.Fuzz(&proposal)
 
-		doneMessage := &coordinationMessage{
+		coordinationMsg := &coordinationMessage{
 			senderID:            senderID,
 			coordinationBlock:   coordinationBlock,
 			walletPublicKeyHash: walletPublicKeyHash,
 			proposal:            &proposal,
 		}
 
-		_ = pbutils.RoundTrip(doneMessage, &coordinationMessage{})
+		_ = pbutils.RoundTrip(coordinationMsg, &coordinationMessage{})
 	}
 }
 
@@ -328,14 +328,14 @@ func TestFuzzCoordinationMessage_MarshalingRoundtrip_WithMovingFundsProposal(t *
 		f.Fuzz(&walletPublicKeyHash)
 		f.Fuzz(&proposal)
 
-		doneMessage := &coordinationMessage{
+		coordinationMsg := &coordinationMessage{
 			senderID:            senderID,
 			coordinationBlock:   coordinationBlock,
 			walletPublicKeyHash: walletPublicKeyHash,
 			proposal:            &proposal,
 		}
 
-		_ = pbutils.RoundTrip(doneMessage, &coordinationMessage{})
+		_ = pbutils.RoundTrip(coordinationMsg, &coordinationMessage{})
 	}
 }
 
@@ -357,14 +357,14 @@ func TestFuzzCoordinationMessage_MarshalingRoundtrip_WithNoopProposal(t *testing
 		f.Fuzz(&walletPublicKeyHash)
 		f.Fuzz(&proposal)
 
-		doneMessage := &coordinationMessage{
+		coordinationMsg := &coordinationMessage{
 			senderID:            senderID,
 			coordinationBlock:   coordinationBlock,
 			walletPublicKeyHash: walletPublicKeyHash,
 			proposal:            &proposal,
 		}
 
-		_ = pbutils.RoundTrip(doneMessage, &coordinationMessage{})
+		_ = pbutils.RoundTrip(coordinationMsg, &coordinationMessage{})
 	}
 }
 
