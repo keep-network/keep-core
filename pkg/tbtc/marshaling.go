@@ -423,6 +423,9 @@ func (mfp *MovingFundsProposal) Unmarshal(data []byte) error {
 
 	mfp.TargetWallets = make([][20]byte, len(pbMsg.TargetWallets))
 	for i, wallet := range pbMsg.TargetWallets {
+		if len(wallet) != 20 {
+			return fmt.Errorf("invalid target wallet length: [%v]", len(wallet))
+		}
 		copy(mfp.TargetWallets[i][:], wallet)
 	}
 
