@@ -608,6 +608,8 @@ func (n *node) handleRedemptionProposal(
 	walletActionLogger.Infof("wallet action dispatched successfully")
 }
 
+// handleMovingFundsProposal handles an incoming moving funds proposal by
+// orchestrating and dispatching an appropriate wallet action.
 func (n *node) handleMovingFundsProposal(
 	wallet wallet,
 	proposal *MovingFundsProposal,
