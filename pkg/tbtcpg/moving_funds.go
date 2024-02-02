@@ -277,7 +277,7 @@ func (mft *MovingFundsTask) findNewTargetWallets(
 	// Prepare a list of target wallets using the new wallets registration
 	// events. Retrieve only the necessary number of live wallets.
 	// The iteration is started from the end of the list as the newest wallets
-	// are located there and have highest the chance of being Live.
+	// are located there and have the highest chance of being Live.
 	events, err := mft.chain.PastNewWalletRegisteredEvents(nil)
 	if err != nil {
 		return nil, fmt.Errorf(
@@ -568,12 +568,15 @@ func (mft *MovingFundsTask) ProposeMovingFunds(
 		fee = estimatedFee
 	}
 
+	taskLogger.Infof("moving funds transaction fee: [%d]", fee)
+
 	proposal := &tbtc.MovingFundsProposal{
 		TargetWallets:    targetWallets,
 		MovingFundsTxFee: big.NewInt(fee),
 	}
 
 	taskLogger.Infof("validating the moving funds proposal")
+
 	if _, err := tbtc.ValidateMovingFundsProposal(
 		taskLogger,
 		walletPublicKeyHash,

@@ -115,6 +115,8 @@ func ValidateMovingFundsProposal(
 		)
 	}
 
+	validateProposalLogger.Infof("moving funds proposal is valid")
+
 	return proposal.TargetWallets, nil
 }
 
