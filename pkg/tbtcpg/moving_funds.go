@@ -202,7 +202,7 @@ func (mft *MovingFundsTask) Run(request *tbtc.CoordinationProposalRequest) (
 		}
 	}
 
-	return proposal, false, nil
+	return proposal, true, nil
 }
 
 // FindTargetWallets returns a list of target wallets for the moving funds
