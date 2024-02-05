@@ -290,9 +290,7 @@ func TestMovingFundsAction_FindTargetWallets_CommitmentAlreadySubmitted(t *testi
 			blockCounter.SetCurrentBlock(currentBlock)
 			tbtcChain.SetBlockCounter(blockCounter)
 
-			startBlock := currentBlock - uint64(
-				tbtcpg.MovingFundsCommitmentLookBackPeriod.Seconds(),
-			)/uint64(averageBlockTime.Seconds())
+			startBlock := currentBlock - tbtcpg.MovingFundsCommitmentLookBackBlocks
 
 			targetWallets := [][20]byte{}
 			for _, walletInfo := range test.targetWallets {

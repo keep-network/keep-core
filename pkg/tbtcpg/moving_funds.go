@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"math/big"
 	"sort"
-	"time"
 
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ipfs/go-log/v2"
@@ -54,9 +53,10 @@ var (
 	ErrFeeTooHigh = fmt.Errorf("estimated fee exceeds the maximum fee")
 )
 
-// MovingFundsCommitmentLookBackPeriod is the look-back period used when
-// searching for submitted moving funds commitment events.
-const MovingFundsCommitmentLookBackPeriod = 30 * 24 * time.Hour // 1 month
+// MovingFundsCommitmentLookBackBlocks is the look-back period in blocks used
+// when searching for submitted moving funds commitment events. It's equal to
+// 30 days assuming 12 seconds per block.
+const MovingFundsCommitmentLookBackBlocks = uint64(216000)
 
 // MovingFundsTask is a task that may produce a moving funds proposal.
 type MovingFundsTask struct {
@@ -362,9 +362,14 @@ func (mft *MovingFundsTask) retrieveCommittedTargetWallets(
 		)
 	}
 
-	filterLookBackSeconds := uint64(MovingFundsCommitmentLookBackPeriod.Seconds())
-	filterLookBackBlocks := filterLookBackSeconds / uint64(mft.chain.AverageBlockTime().Seconds())
-	filterStartBlock := currentBlockNumber - filterLookBackBlocks
+	// When calculating the filter start block make sure the current block is
+	// greater than the commitment look back blocks. This condition could be
+	// unmet for example when running local tests. In that case keep the filter
+	// start block at `0`.
+	filterStartBlock := uint64(0)
+	if currentBlockNumber > MovingFundsCommitmentLookBackBlocks {
+		filterStartBlock = currentBlockNumber - MovingFundsCommitmentLookBackBlocks
+	}
 
 	filter := &tbtc.MovingFundsCommitmentSubmittedEventFilter{
 		StartBlock:          filterStartBlock,
