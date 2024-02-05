@@ -2,14 +2,15 @@ package libp2p
 
 import (
 	"context"
+	"github.com/libp2p/go-libp2p/core/protocol"
 	"net"
 
 	libp2ptls "github.com/libp2p/go-libp2p/p2p/security/tls"
 
 	keepNet "github.com/keep-network/keep-core/pkg/net"
-	libp2pcrypto "github.com/libp2p/go-libp2p-core/crypto"
-	"github.com/libp2p/go-libp2p-core/peer"
-	"github.com/libp2p/go-libp2p-core/sec"
+	libp2pcrypto "github.com/libp2p/go-libp2p/core/crypto"
+	"github.com/libp2p/go-libp2p/core/peer"
+	"github.com/libp2p/go-libp2p/core/sec"
 )
 
 // ID is the multistream-select protocol ID that should be used when identifying
@@ -39,7 +40,7 @@ func newEncryptedAuthenticatedTransport(
 		return nil, err
 	}
 
-	encryptionLayer, err := libp2ptls.New(pk)
+	encryptionLayer, err := libp2ptls.New(libp2ptls.ID, pk, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -66,6 +67,7 @@ func (t *transport) SecureInbound(
 
 	return newAuthenticatedInboundConnection(
 		encryptedConnection,
+		encryptedConnection.ConnState(),
 		t.localPeerID,
 		t.privateKey,
 		t.firewall,
@@ -90,10 +92,16 @@ func (t *transport) SecureOutbound(
 
 	return newAuthenticatedOutboundConnection(
 		encryptedConnection,
+		encryptedConnection.ConnState(),
 		t.localPeerID,
 		t.privateKey,
 		remotePeerID,
 		t.firewall,
 		t.protocol,
 	)
+}
+
+// ID is the protocol ID of the security protocol.
+func (t *transport) ID() protocol.ID {
+	return t.encryptionLayer.ID()
 }
