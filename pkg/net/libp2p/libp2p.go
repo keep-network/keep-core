@@ -19,10 +19,10 @@ import (
 	//lint:ignore SA1019 package deprecated, but we rely on its interface
 	addrutil "github.com/libp2p/go-addr-util"
 	"github.com/libp2p/go-libp2p"
-	"github.com/libp2p/go-libp2p-core/host"
-	libp2pnet "github.com/libp2p/go-libp2p-core/network"
-	"github.com/libp2p/go-libp2p-core/peer"
 	dht "github.com/libp2p/go-libp2p-kad-dht"
+	"github.com/libp2p/go-libp2p/core/host"
+	libp2pnet "github.com/libp2p/go-libp2p/core/network"
+	"github.com/libp2p/go-libp2p/core/peer"
 	rhost "github.com/libp2p/go-libp2p/p2p/host/routed"
 	connmgr "github.com/libp2p/go-libp2p/p2p/net/connmgr"
 
@@ -570,7 +570,7 @@ func ExtractPeersPublicKeys(peerAddresses []string) ([]*operator.PublicKey, erro
 		if err != nil {
 			return nil, fmt.Errorf(
 				"failed to extract network public key for peer [%s]: [%v]",
-				peerInfo.ID.Pretty(),
+				peerInfo.ID.String(),
 				err,
 			)
 		}
@@ -581,7 +581,7 @@ func ExtractPeersPublicKeys(peerAddresses []string) ([]*operator.PublicKey, erro
 		if err != nil {
 			return nil, fmt.Errorf(
 				"failed to convert to operator public key for peer [%s]: [%v]",
-				peerInfo.ID.Pretty(),
+				peerInfo.ID.String(),
 				err,
 			)
 		}

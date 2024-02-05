@@ -8,7 +8,7 @@ import (
 	"github.com/keep-network/keep-core/pkg/firewall"
 	"github.com/keep-network/keep-core/pkg/net/retransmission"
 	"github.com/keep-network/keep-core/pkg/operator"
-	"github.com/libp2p/go-libp2p-core/peer"
+	"github.com/libp2p/go-libp2p/core/peer"
 
 	fuzz "github.com/google/gofuzz"
 	"github.com/keep-network/keep-core/pkg/net"
