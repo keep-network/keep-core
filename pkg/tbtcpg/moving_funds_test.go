@@ -207,7 +207,7 @@ func TestMovingFundsAction_FindTargetWallets_CommitmentAlreadySubmitted(t *testi
 	}{
 		"success scenario": {
 			targetWalletsCommitmentHash: hexToByte32(
-				"9d9368117956680760fa27bb9542ceba2d4fcc398d640a5a0769f5a9593afb0e",
+				"7820cd666bf13bda0850e52cfacf64140716e578f7f6a0567cae9b002fc83775",
 			),
 			targetWallets: []walletInfo{
 				{
@@ -238,7 +238,7 @@ func TestMovingFundsAction_FindTargetWallets_CommitmentAlreadySubmitted(t *testi
 		},
 		"target wallet is not live": {
 			targetWalletsCommitmentHash: hexToByte32(
-				"9d9368117956680760fa27bb9542ceba2d4fcc398d640a5a0769f5a9593afb0e",
+				"7820cd666bf13bda0850e52cfacf64140716e578f7f6a0567cae9b002fc83775",
 			),
 			targetWallets: []walletInfo{
 				{
@@ -265,7 +265,7 @@ func TestMovingFundsAction_FindTargetWallets_CommitmentAlreadySubmitted(t *testi
 		},
 		"target wallet commitment hash mismatch": {
 			targetWalletsCommitmentHash: hexToByte32(
-				"9d9368117956680760fa27bb9542ceba2d4fcc398d640a5a0769f5a9593afb0e",
+				"7820cd666bf13bda0850e52cfacf64140716e578f7f6a0567cae9b002fc83775",
 			),
 			targetWallets: []walletInfo{
 				{ // Use only one target wallet.

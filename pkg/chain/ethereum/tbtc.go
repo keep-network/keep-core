@@ -4,6 +4,7 @@ import (
 	"crypto/ecdsa"
 	"crypto/elliptic"
 	"encoding/binary"
+
 	"fmt"
 	"math/big"
 	"reflect"
@@ -1234,6 +1235,25 @@ func computeMainUtxoHash(mainUtxo *bitcoin.UnspentTransactionOutput) [32]byte {
 	)
 
 	return mainUtxoHash
+}
+
+func (tc *TbtcChain) ComputeMovingFundsCommitmentHash(
+	targetWallets [][20]byte,
+) [32]byte {
+	return computeMovingFundsCommitmentHash(targetWallets)
+}
+
+func computeMovingFundsCommitmentHash(targetWallets [][20]byte) [32]byte {
+	packedWallets := []byte{}
+
+	for _, wallet := range targetWallets {
+		packedWallets = append(packedWallets, wallet[:]...)
+		// Each wallet hash must be padded with 12 zero bytes following the
+		// actual hash.
+		packedWallets = append(packedWallets, make([]byte, 12)...)
+	}
+
+	return crypto.Keccak256Hash(packedWallets)
 }
 
 func (tc *TbtcChain) BuildDepositKey(

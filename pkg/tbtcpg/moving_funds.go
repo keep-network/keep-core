@@ -1,12 +1,10 @@
 package tbtcpg
 
 import (
-	"bytes"
 	"fmt"
 	"math/big"
 	"sort"
 
-	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ipfs/go-log/v2"
 	"github.com/keep-network/keep-common/pkg/chain/ethereum"
 	"github.com/keep-network/keep-core/pkg/bitcoin"
@@ -417,14 +415,8 @@ func (mft *MovingFundsTask) retrieveCommittedTargetWallets(
 
 	// Just in case check if the hash of the target wallets matches the moving
 	// funds target wallets commitment hash.
-	packedWallets := []byte{}
-	for _, wallet := range targetWallets {
-		packedWallets = append(packedWallets, wallet[:]...)
-	}
-
-	calculatedHash := crypto.Keccak256(packedWallets)
-
-	if !bytes.Equal(calculatedHash, targetWalletsCommitmentHash[:]) {
+	calculatedHash := mft.chain.ComputeMovingFundsCommitmentHash(targetWallets)
+	if calculatedHash != targetWalletsCommitmentHash {
 		return nil, ErrWrongCommitmentHash
 	}
 

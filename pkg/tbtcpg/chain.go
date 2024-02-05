@@ -174,4 +174,8 @@ type Chain interface {
 		walletMemberIndex uint32,
 		targetWallets [][20]byte,
 	) error
+
+	// Computes the moving funds commitment hash from the provided public key
+	// hashes of target wallets.
+	ComputeMovingFundsCommitmentHash(targetWallets [][20]byte) [32]byte
 }
