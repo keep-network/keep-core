@@ -148,7 +148,7 @@ func (mft *MovingFundsTask) Run(request *tbtc.CoordinationProposalRequest) (
 	targetWalletsCommitmentHash :=
 		walletChainData.MovingFundsTargetWalletsCommitmentHash
 
-	targetWallets, commitmentSubmitted, err := mft.FindTargetWallets(
+	targetWallets, commitmentExists, err := mft.FindTargetWallets(
 		taskLogger,
 		walletPublicKeyHash,
 		targetWalletsCommitmentHash,
@@ -173,7 +173,7 @@ func (mft *MovingFundsTask) Run(request *tbtc.CoordinationProposalRequest) (
 		)
 	}
 
-	if !commitmentSubmitted {
+	if !commitmentExists {
 		walletMemberIDs, walletMemberIndex, err := mft.GetWalletMembersInfo(
 			request.WalletOperators,
 			request.ExecutingOperator,

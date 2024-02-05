@@ -4,7 +4,6 @@ import (
 	"crypto/ecdsa"
 	"crypto/elliptic"
 	"encoding/binary"
-
 	"fmt"
 	"math/big"
 	"reflect"
