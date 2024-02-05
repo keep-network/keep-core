@@ -236,33 +236,6 @@ func TestMovingFundsAction_FindTargetWallets_CommitmentAlreadySubmitted(t *testi
 			},
 			expectedError: nil,
 		},
-		"target wallet is not live": {
-			targetWalletsCommitmentHash: hexToByte32(
-				"7820cd666bf13bda0850e52cfacf64140716e578f7f6a0567cae9b002fc83775",
-			),
-			targetWallets: []walletInfo{
-				{
-					publicKeyHash: hexToByte20(
-						"92a6ec889a8fa34f731e639edede4c75e184307c",
-					),
-					state: tbtc.StateLive,
-				},
-				{
-					publicKeyHash: hexToByte20(
-						"c7302d75072d78be94eb8d36c4b77583c7abb06e",
-					),
-					state: tbtc.StateTerminated, // wrong state
-				},
-				{
-					publicKeyHash: hexToByte20(
-						"fdfa28e238734271f5e0d4f53d3843ae6cc09b24",
-					),
-					state: tbtc.StateLive,
-				},
-			},
-			expectedTargetWallets: nil,
-			expectedError:         tbtcpg.ErrTargetWalletNotLive,
-		},
 		"target wallet commitment hash mismatch": {
 			targetWalletsCommitmentHash: hexToByte32(
 				"7820cd666bf13bda0850e52cfacf64140716e578f7f6a0567cae9b002fc83775",

@@ -30,10 +30,6 @@ var (
 		"target wallets hash must match commitment hash",
 	)
 
-	// ErrTargetWalletNotLive is the error returned when a target wallet is not
-	// in the Live state.
-	ErrTargetWalletNotLive = fmt.Errorf("target wallet is not live")
-
 	// ErrNoExecutingOperator is the error returned when the task executing
 	// operator is not found among the wallet operator IDs.
 	ErrNoExecutingOperator = fmt.Errorf(
@@ -392,26 +388,6 @@ func (mft *MovingFundsTask) retrieveCommittedTargetWallets(
 	}
 
 	targetWallets := events[0].TargetWallets
-
-	// Make sure all the target wallets are Live.
-	for _, targetWallet := range targetWallets {
-		targetWalletChainData, err := mft.chain.GetWallet(targetWallet)
-		if err != nil {
-			return nil, fmt.Errorf(
-				"failed to get wallet data for target wallet [0x%x]: [%w]",
-				targetWallet,
-				err,
-			)
-		}
-
-		if targetWalletChainData.State != tbtc.StateLive {
-			return nil, fmt.Errorf(
-				"%w: [0x%x]",
-				ErrTargetWalletNotLive,
-				targetWallet,
-			)
-		}
-	}
 
 	// Just in case check if the hash of the target wallets matches the moving
 	// funds target wallets commitment hash.
