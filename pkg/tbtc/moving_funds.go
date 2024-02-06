@@ -86,6 +86,9 @@ func (mfa *movingFundsAction) execute() error {
 	//       32 blocks to ensure the commitment transaction has accumulated
 	//       enough confirmations in the Ethereum chain and will not be reverted
 	//       even if a reorg occurs.
+	//       Remember to call `validateMovingFundsProposal` twice: before and
+	//       after waiting for confirmations. The second validation is needed
+	//       to ensure the commitment has not been changed during the waiting.
 	return nil
 }
 
