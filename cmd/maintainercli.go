@@ -501,12 +501,14 @@ var estimateDepositsSweepFeeCommand = cobra.Command{
 // printDepositsSweepFeeTable prints estimated fees for specific deposits counts
 // to the standard output. For example:
 //
-// ---------------------------------------------
-// deposits count total fee (satoshis) sat/vbyte
-//	            1                  201         1
-//	            2                  292         1
-//	            3                  384         1
-// ---------------------------------------------
+// --------------------------------------------------
+// deposits count      total fee (satoshis) sat/vbyte
+//
+// 1                   201                  1
+// 2                   292                  1
+// 3                   384                  1
+//
+// --------------------------------------------------
 func printDepositsSweepFeeTable(
 	fees map[int]struct {
 		TotalFee       int64

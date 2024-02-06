@@ -16,7 +16,8 @@ import (
 // details of the Bitcoin's CompactSize Unsigned Integer. It represents a
 // number value encoded to bytes according to the following rules:
 //
-//                     Value               | Bytes |                  Format
+// ---------------- Value ---------------- | Bytes | --------------- Format --------------
+//
 // ---------------------------------------------------------------------------------------
 // >= 0 && <= 252                          |   1   | uint8
 // >= 253 && <= 0xffff                     |   3   | 0xfd followed by the number as uint16
