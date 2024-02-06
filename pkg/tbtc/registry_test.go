@@ -120,10 +120,12 @@ func TestWalletRegistry_getWalletByPublicKeyHash_NotFound(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	x, y := tecdsa.Curve.ScalarBaseMult(big.NewInt(100).Bytes())
+
 	walletPublicKeyHash := bitcoin.PublicKeyHash(&ecdsa.PublicKey{
 		Curve: tecdsa.Curve,
-		X:     big.NewInt(100),
-		Y:     big.NewInt(200),
+		X:     x,
+		Y:     y,
 	})
 
 	_, ok := walletRegistry.getWalletByPublicKeyHash(walletPublicKeyHash)
