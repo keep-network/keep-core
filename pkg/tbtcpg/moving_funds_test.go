@@ -470,6 +470,7 @@ func TestMovingFundsAction_SubmitMovingFundsCommitment(t *testing.T) {
 			task := tbtcpg.NewMovingFundsTask(tbtcChain, nil)
 
 			err := task.SubmitMovingFundsCommitment(
+				&testutils.MockLogger{},
 				walletPublicKeyHash,
 				&walletMainUtxo,
 				test.walletMemberIDs,

@@ -6,7 +6,6 @@ import (
 	"sort"
 
 	"github.com/ipfs/go-log/v2"
-	"github.com/keep-network/keep-common/pkg/chain/ethereum"
 	"github.com/keep-network/keep-core/pkg/bitcoin"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/tbtc"
@@ -182,6 +181,7 @@ func (mft *MovingFundsTask) Run(request *tbtc.CoordinationProposalRequest) (
 		}
 
 		err = mft.SubmitMovingFundsCommitment(
+			taskLogger,
 			walletPublicKeyHash,
 			walletMainUtxo,
 			walletMemberIDs,
@@ -436,6 +436,7 @@ func (mft *MovingFundsTask) GetWalletMembersInfo(
 // SubmitMovingFundsCommitment submits the moving funds commitment and waits
 // until the transaction has entered the Ethereum blockchain.
 func (mft *MovingFundsTask) SubmitMovingFundsCommitment(
+	taskLogger log.StandardLogger,
 	walletPublicKeyHash [20]byte,
 	walletMainUTXO *bitcoin.UnspentTransactionOutput,
 	walletMembersIDs []uint32,
@@ -466,38 +467,42 @@ func (mft *MovingFundsTask) SubmitMovingFundsCommitment(
 		return fmt.Errorf("error getting current block [%w]", err)
 	}
 
-	// To verify the commitment transaction has entered the Ethereum blockchain
-	// check that the commitment hash is not zero.
-	stateCheck := func() (bool, error) {
-		walletData, err := mft.chain.GetWallet(walletPublicKeyHash)
+	// Make sure the moving funds commitment transaction has been confirmed.
+	// Give the transaction at most `6` blocks to enter the blockchain.
+	for blockHeight := currentBlock + 1; blockHeight <= currentBlock+6; blockHeight++ {
+		err := blockCounter.WaitForBlockHeight(blockHeight)
 		if err != nil {
-			return false, err
+			return fmt.Errorf("error while waiting for block height [%w]", err)
 		}
 
-		return walletData.MovingFundsTargetWalletsCommitmentHash != [32]byte{}, nil
-	}
+		walletData, err := mft.chain.GetWallet(walletPublicKeyHash)
+		if err != nil {
+			return fmt.Errorf("error wile getting wallet chain data [%w]", err)
+		}
 
-	// Wait `5` blocks since the current block and perform the transaction state
-	// check. If the transaction has not entered the blockchain, consider it an
-	// error.
-	result, err := ethereum.WaitForBlockConfirmations(
-		blockCounter,
-		currentBlock,
-		5,
-		stateCheck,
-	)
-	if err != nil {
-		return fmt.Errorf(
-			"error while waiting for transaction confirmation [%w]",
-			err,
+		// To verify the commitment transaction has entered the Ethereum
+		// blockchain check that the commitment hash is not zero.
+		if walletData.MovingFundsTargetWalletsCommitmentHash != [32]byte{} {
+			taskLogger.Infof(
+				"the moving funds commitment transaction successfully "+
+					"confirmed at block: [%d]",
+				blockHeight,
+			)
+			return nil
+		}
+
+		taskLogger.Infof(
+			"the moving funds commitment transaction still not confirmed at "+
+				"block: [%d]",
+			blockHeight,
 		)
 	}
 
-	if !result {
-		return ErrTransactionNotIncluded
-	}
+	taskLogger.Info(
+		"failed to verify the moving funds commitment transaction submission",
+	)
 
-	return nil
+	return ErrTransactionNotIncluded
 }
 
 // ProposeMovingFunds returns a moving funds proposal.
