@@ -11,8 +11,14 @@ import (
 )
 
 const (
-	// TODO: Determine what the value should be.
-	movingFundsProposalValidityBlocks = 600
+	// movingFundsProposalValidityBlocks determines the moving funds proposal
+	// validity time expressed in blocks. In other words, this is the worst-case
+	// time for moving funds during which the wallet is busy and cannot take
+	// another actions. The value of 650 blocks is roughly 2 hours and 10
+	// minutes, assuming 12 seconds per block. It is a slightly longer validity
+	// time than in case of redemptions as moving funds involves waiting for
+	// target wallets commitment transaction to be confirmed.
+	movingFundsProposalValidityBlocks = 650
 )
 
 // MovingFundsProposal represents a moving funds proposal issued by a wallet's
