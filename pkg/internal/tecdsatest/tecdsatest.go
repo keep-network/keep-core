@@ -3,7 +3,7 @@ package tecdsatest
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"os"
 	"path/filepath"
 	"runtime"
 
@@ -45,7 +45,7 @@ func LoadPrivateKeyShareTestFixtures(count int) (
 		// #nosec G304 (file path provided as taint input)
 		// This line is used to read a test fixture file.
 		// There is no user input.
-		bz, err := ioutil.ReadFile(fixtureFilePath)
+		bz, err := os.ReadFile(fixtureFilePath)
 		if err != nil {
 			return nil, fmt.Errorf(
 				"could not open the test fixture for party [%d] "+

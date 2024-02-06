@@ -11,9 +11,6 @@ import (
 	"github.com/keep-network/keep-core/pkg/protocol/state"
 )
 
-// represents a given state in the state machine for signing dkg results
-type signingState = state.SyncState
-
 const resultSigningStateDelayBlocks = 1
 const resultSigningStateActiveBlocks = 5
 

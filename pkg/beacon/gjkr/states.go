@@ -8,8 +8,6 @@ import (
 	"github.com/keep-network/keep-core/pkg/protocol/state"
 )
 
-type keyGenerationState = state.SyncState
-
 const (
 	silentStateDelayBlocks  = 0
 	silentStateActiveBlocks = 0
