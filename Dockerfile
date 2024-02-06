@@ -1,4 +1,4 @@
-FROM golang:1.18.10-alpine3.16 AS build-sources
+FROM golang:1.20.13-alpine3.19 AS build-sources
 
 ENV GOPATH=/go \
 	GOBIN=/go/bin \
@@ -37,7 +37,7 @@ COPY go.mod go.sum $APP_DIR/
 RUN go mod download
 
 # Install code generators.
-RUN go install google.golang.org/protobuf/cmd/protoc-gen-go@v1.28.1
+RUN go install google.golang.org/protobuf/cmd/protoc-gen-go@v1.32.0
 
 # Copy source code for generation.
 COPY ./pkg/beacon/dkg/result/gen $APP_DIR/pkg/beacon/dkg/result/gen
@@ -83,7 +83,7 @@ RUN GOOS=linux make build \
 	version=$VERSION \
 	revision=$REVISION
 
-FROM alpine:3.16 as runtime-docker
+FROM alpine:3.19 as runtime-docker
 
 ENV APP_NAME=keep-client \
 	APP_DIR=/go/src/github.com/keep-network/keep-core \
@@ -100,7 +100,7 @@ CMD []
 #
 # Build Binaries
 #
-FROM golang:1.18.3-bullseye AS build-bins
+FROM golang:1.20.13-bullseye AS build-bins
 
 ENV APP_DIR=/go/src/github.com/keep-network/keep-core
 
