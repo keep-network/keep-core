@@ -9,6 +9,7 @@ import (
 	"github.com/keep-network/keep-core/pkg/net"
 	"github.com/keep-network/keep-core/pkg/net/retransmission"
 	pubsub "github.com/libp2p/go-libp2p-pubsub"
+	pubsubtc "github.com/libp2p/go-libp2p-pubsub/timecache"
 	"github.com/libp2p/go-libp2p/core/host"
 	"github.com/libp2p/go-libp2p/core/peerstore"
 )
@@ -51,6 +52,7 @@ func newChannelManager(
 		pubsub.WithMessageSignaturePolicy(pubsub.StrictSign),
 		pubsub.WithPeerOutboundQueueSize(libp2pPeerOutboundQueueSize),
 		pubsub.WithValidateQueueSize(libp2pValidationQueueSize),
+		pubsub.WithSeenMessagesStrategy(pubsubtc.Strategy_LastSeen),
 	)
 	if err != nil {
 		return nil, err
