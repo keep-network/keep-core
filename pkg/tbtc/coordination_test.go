@@ -394,8 +394,8 @@ loop:
 		}
 	}
 
-	slices.SortFunc(reports, func(i, j *report) bool {
-		return i.operatorIndex < j.operatorIndex
+	slices.SortFunc(reports, func(i, j *report) int {
+		return i.operatorIndex - j.operatorIndex
 	})
 
 	testutils.AssertIntsEqual(t, "reports count", 3, len(reports))
