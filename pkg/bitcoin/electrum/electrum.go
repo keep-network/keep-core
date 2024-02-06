@@ -263,11 +263,11 @@ func (c *Connection) GetLatestBlockHeight() (uint, error) {
 	blockHeight, err := requestWithRetry(
 		c,
 		func(ctx context.Context, client *electrum.Client) (int32, error) {
-			headersChan, err := client.SubscribeHeaders(ctx)
+			tip, err := client.SubscribeHeadersSingle(ctx)
 			if err != nil {
 				return 0, fmt.Errorf("failed to get the blocks tip height: [%w]", err)
 			}
-			tip := <-headersChan
+
 			return tip.Height, nil
 		},
 		"SubscribeHeaders",
