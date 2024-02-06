@@ -23,6 +23,7 @@ import (
 	"github.com/libp2p/go-libp2p/core/host"
 	libp2pnet "github.com/libp2p/go-libp2p/core/network"
 	"github.com/libp2p/go-libp2p/core/peer"
+	"github.com/libp2p/go-libp2p/core/sec"
 	rhost "github.com/libp2p/go-libp2p/p2p/host/routed"
 	connmgr "github.com/libp2p/go-libp2p/p2p/net/connmgr"
 
@@ -415,7 +416,12 @@ func discoverAndListen(
 	options := []libp2p.Option{
 		libp2p.ListenAddrs(addrs...),
 		libp2p.Identity(identity.privKey),
-		libp2p.Security(handshakeID, transport),
+		libp2p.Security(
+			handshakeID,
+			func() sec.SecureTransport {
+				return transport
+			},
+		),
 		libp2p.ConnectionManager(connectionManager),
 	}
 
