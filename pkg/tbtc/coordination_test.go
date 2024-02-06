@@ -2,12 +2,10 @@ package tbtc
 
 import (
 	"context"
-	"crypto/ecdsa"
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
 	"math/big"
-	"math/rand"
 	"reflect"
 	"testing"
 	"time"
@@ -214,27 +212,20 @@ func TestCoordinationExecutor_Coordinate(t *testing.T) {
 		waitForBlockHeight func(ctx context.Context, blockHeight uint64) error
 	}
 
-	generateOperator := func(seed int64) *operatorFixture {
-		// #nosec G404 (insecure random number source (rand))
-		rng := rand.New(rand.NewSource(seed))
+	generateOperator := func(privateKey int64) *operatorFixture {
 		// Generate operators with deterministic addresses that don't change
 		// between test runs. This is required to assert the leader selection.
-		generated, err := ecdsa.GenerateKey(
-			local_v1.DefaultCurve,
-			rng,
-		)
-		if err != nil {
-			t.Fatal(err)
-		}
+		privateKeyBigInt := big.NewInt(privateKey)
+		x, y := local_v1.DefaultCurve.ScalarBaseMult(privateKeyBigInt.Bytes())
 
 		localChain := ConnectWithKey(
 			&operator.PrivateKey{
 				PublicKey: operator.PublicKey{
 					Curve: operator.Secp256k1,
-					X:     generated.X,
-					Y:     generated.Y,
+					X:     x,
+					Y:     y,
 				},
-				D: generated.D,
+				D: privateKeyBigInt,
 			},
 			100*time.Millisecond,
 		)
@@ -403,7 +394,7 @@ loop:
 	expectedResult := &coordinationResult{
 		wallet: coordinatedWallet,
 		window: window,
-		leader: operator3.address,
+		leader: operator2.address,
 		proposal: &RedemptionProposal{
 			RedeemersOutputScripts: []bitcoin.Script{
 				parseScript("00148db50eb52063ea9d98b3eac91489a90f738986f6"),
