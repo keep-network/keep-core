@@ -409,20 +409,25 @@ func (mft *MovingFundsTask) GetWalletMembersInfo(
 	walletOperators []chain.Address,
 	executingOperator chain.Address,
 ) ([]uint32, uint32, error) {
-	walletMemberIDs := make([]uint32, 0)
 	walletMemberIndex := 0
+	walletMemberIDs := make([]uint32, 0)
 
 	for index, operatorAddress := range walletOperators {
+		// If the operator address is the address of the executing operator save
+		// its position. Note that since the executing operator can control
+		// multiple wallet members its address can occur on the list multiple
+		// times. For clarity, we should save the first occurrence on the list,
+		// i.e. when `walletMemberIndex` still holds the value of `0`.
+		if operatorAddress == executingOperator && walletMemberIndex == 0 {
+			// Increment the index by 1 as operator indexing starts at 1, not 0.
+			// This ensures the operator's position is correctly identified in
+			// the range [1, walletOperators.length].
+			walletMemberIndex = index + 1
+		}
+
 		operatorID, err := mft.chain.GetOperatorID(operatorAddress)
 		if err != nil {
 			return nil, 0, fmt.Errorf("failed to get operator ID: [%w]", err)
-		}
-
-		// Increment the index by 1 as operator indexing starts at 1, not 0.
-		// This ensures the operator's position is correctly identified in the
-		// range [1, walletOperators.length].
-		if operatorAddress == executingOperator {
-			walletMemberIndex = index + 1
 		}
 
 		walletMemberIDs = append(walletMemberIDs, operatorID)

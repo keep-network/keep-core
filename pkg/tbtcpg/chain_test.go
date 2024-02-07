@@ -892,11 +892,9 @@ func (lc *LocalChain) SetOperatorID(
 	defer lc.mutex.Unlock()
 
 	_, ok := lc.operatorIDs[operatorAddress]
-	if ok {
-		return fmt.Errorf("operator already inserted")
+	if !ok {
+		lc.operatorIDs[operatorAddress] = operatorID
 	}
-
-	lc.operatorIDs[operatorAddress] = operatorID
 
 	return nil
 }

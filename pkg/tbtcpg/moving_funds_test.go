@@ -338,13 +338,15 @@ func TestMovingFundsAction_GetWalletMembersInfo(t *testing.T) {
 	}{
 		"success case": {
 			walletOperators: []operatorInfo{
+				// The executing operator controls two wallet members.
 				{"5df232b0348928793658dd05dfc6b05a59d11ae8", 3},
 				{"dcc895d32b74b34cef2baa6546884fcda65da1e9", 1},
 				{"28759deda2ea33bd72f68ea2e8f60cd670c2549f", 2},
 				{"f7891d42f3c61a49e0aed1e31b151877c0905cf7", 4},
+				{"28759deda2ea33bd72f68ea2e8f60cd670c2549f", 2},
 			},
 			executingOperator:        "28759deda2ea33bd72f68ea2e8f60cd670c2549f",
-			expectedMemberIDs:        []uint32{3, 1, 2, 4},
+			expectedMemberIDs:        []uint32{3, 1, 2, 4, 2},
 			expectedOperatorPosition: 3,
 			expectedError:            nil,
 		},
