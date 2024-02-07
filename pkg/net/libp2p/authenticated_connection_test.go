@@ -63,7 +63,7 @@ func TestPinnedAndMessageKeyMismatch(t *testing.T) {
 		responder.peerID,
 		responder.networkPrivateKey,
 		firewall,
-		protocolKeep,
+		authProtocolID,
 	)
 	if err == nil {
 		t.Fatal("should not have successfully completed handshake")
@@ -75,7 +75,7 @@ func TestPinnedAndMessageKeyMismatch(t *testing.T) {
 // peer-pinning should ensure that a malicious peer can't hijack a connection
 // after the first act and sign subsequent messages.
 func maliciousInitiatorHijacksHonestRun(t *testing.T, ac *authenticatedConnection) {
-	initiatorAct1, err := handshake.InitiateHandshake(protocolKeep)
+	initiatorAct1, err := handshake.InitiateHandshake(authProtocolID)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -258,7 +258,7 @@ func connectInitiatorAndResponder(
 			initiatorPrivKey,
 			responderPeerID,
 			firewall,
-			protocolKeep,
+			authProtocolID,
 		)
 		done <- struct{}{}
 	}(initiatorConn, initiator.peerID, initiator.networkPrivateKey, responder.peerID)
@@ -269,7 +269,7 @@ func connectInitiatorAndResponder(
 		responder.peerID,
 		responder.networkPrivateKey,
 		firewall,
-		protocolKeep,
+		authProtocolID,
 	)
 
 	<-done // handshake is done

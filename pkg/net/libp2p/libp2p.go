@@ -20,12 +20,14 @@ import (
 	addrutil "github.com/libp2p/go-addr-util"
 	"github.com/libp2p/go-libp2p"
 	dht "github.com/libp2p/go-libp2p-kad-dht"
+	libp2pcrypto "github.com/libp2p/go-libp2p/core/crypto"
 	"github.com/libp2p/go-libp2p/core/host"
 	libp2pnet "github.com/libp2p/go-libp2p/core/network"
 	"github.com/libp2p/go-libp2p/core/peer"
-	"github.com/libp2p/go-libp2p/core/sec"
+	"github.com/libp2p/go-libp2p/core/protocol"
 	rhost "github.com/libp2p/go-libp2p/p2p/host/routed"
-	connmgr "github.com/libp2p/go-libp2p/p2p/net/connmgr"
+	"github.com/libp2p/go-libp2p/p2p/net/connmgr"
+	"github.com/libp2p/go-libp2p/p2p/net/upgrader"
 
 	ma "github.com/multiformats/go-multiaddr"
 )
@@ -57,11 +59,6 @@ const (
 	// ConnectedPeersCheckTick is the amount of time between periodic checks of
 	// the number of connected peers.
 	ConnectedPeersCheckTick = time.Minute * 1
-)
-
-// Keep Network protocol identifiers
-const (
-	protocolKeep = "keep"
 )
 
 // MaximumDisseminationTime is the maximum dissemination time of messages in
@@ -389,18 +386,6 @@ func discoverAndListen(
 		return nil, err
 	}
 
-	transport, err := newEncryptedAuthenticatedTransport(
-		identity.privKey,
-		protocolKeep,
-		firewall,
-	)
-	if err != nil {
-		return nil, fmt.Errorf(
-			"could not create authenticated transport: [%v]",
-			err,
-		)
-	}
-
 	connectionManager, err := connmgr.NewConnManager(
 		DefaultConnMgrLowWater,
 		DefaultConnMgrHighWater,
@@ -417,9 +402,27 @@ func discoverAndListen(
 		libp2p.ListenAddrs(addrs...),
 		libp2p.Identity(identity.privKey),
 		libp2p.Security(
-			handshakeID,
-			func() sec.SecureTransport {
-				return transport
+			securityProtocolID,
+			func(
+				protocolID protocol.ID,
+				privateKey libp2pcrypto.PrivKey,
+				muxers []upgrader.StreamMuxer,
+			) (*transport, error) {
+				encAuthTransport, err := newEncryptedAuthenticatedTransport(
+					protocolID,
+					authProtocolID,
+					privateKey,
+					muxers,
+					firewall,
+				)
+				if err != nil {
+					return nil, fmt.Errorf(
+						"could not create encrypted authenticated transport: [%v]",
+						err,
+					)
+				}
+
+				return encAuthTransport, nil
 			},
 		),
 		libp2p.ConnectionManager(connectionManager),
