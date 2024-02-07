@@ -409,6 +409,12 @@ func (mft *MovingFundsTask) GetWalletMembersInfo(
 	walletOperators []chain.Address,
 	executingOperator chain.Address,
 ) ([]uint32, uint32, error) {
+	// Cache mapping operator addresses to their wallet member IDs. It helps to
+	// limit the number of calls to the ETH client if some operator addresses
+	// occur on the list multiple times.
+	operatorIDCache := make(map[chain.Address]uint32)
+	// TODO: Consider adding a global cache at the `ProposalGenerator` level.
+
 	walletMemberIndex := 0
 	walletMemberIDs := make([]uint32, 0)
 
@@ -425,11 +431,18 @@ func (mft *MovingFundsTask) GetWalletMembersInfo(
 			walletMemberIndex = index + 1
 		}
 
-		operatorID, err := mft.chain.GetOperatorID(operatorAddress)
-		if err != nil {
-			return nil, 0, fmt.Errorf("failed to get operator ID: [%w]", err)
+		// Search for the operator address in the cache. Store the operator
+		// address in the cache if it's not there.
+		if _, found := operatorIDCache[operatorAddress]; !found {
+			operatorID, err := mft.chain.GetOperatorID(operatorAddress)
+			if err != nil {
+				return nil, 0, fmt.Errorf("failed to get operator ID: [%w]", err)
+			}
+
+			operatorIDCache[operatorAddress] = operatorID
 		}
 
+		operatorID := operatorIDCache[operatorAddress]
 		walletMemberIDs = append(walletMemberIDs, operatorID)
 	}
 
