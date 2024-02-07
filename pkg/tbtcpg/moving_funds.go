@@ -154,20 +154,6 @@ func (mft *MovingFundsTask) Run(request *tbtc.CoordinationProposalRequest) (
 		return nil, false, fmt.Errorf("cannot find target wallets: [%w]", err)
 	}
 
-	proposal, err := mft.ProposeMovingFunds(
-		taskLogger,
-		walletPublicKeyHash,
-		walletMainUtxo,
-		targetWallets,
-		0,
-	)
-	if err != nil {
-		return nil, false, fmt.Errorf(
-			"cannot prepare moving funds proposal: [%w]",
-			err,
-		)
-	}
-
 	if !commitmentExists {
 		walletMemberIDs, walletMemberIndex, err := mft.GetWalletMembersInfo(
 			request.WalletOperators,
@@ -194,6 +180,20 @@ func (mft *MovingFundsTask) Run(request *tbtc.CoordinationProposalRequest) (
 				err,
 			)
 		}
+	}
+
+	proposal, err := mft.ProposeMovingFunds(
+		taskLogger,
+		walletPublicKeyHash,
+		walletMainUtxo,
+		targetWallets,
+		0,
+	)
+	if err != nil {
+		return nil, false, fmt.Errorf(
+			"cannot prepare moving funds proposal: [%w]",
+			err,
+		)
 	}
 
 	return proposal, true, nil
