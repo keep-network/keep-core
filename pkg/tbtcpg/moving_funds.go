@@ -254,7 +254,10 @@ func (mft *MovingFundsTask) findNewTargetWallets(
 		// The divisor must be positive, but we do not need to check it as
 		// this function will be executed with wallet max BTC transfer as
 		// the divisor and we already ensured it is positive.
-		return (x + y - 1) / y
+		if x == 0 {
+			return 0
+		}
+		return 1 + (x-1)/y
 	}
 	min := func(x, y uint64) uint64 {
 		if x < y {
