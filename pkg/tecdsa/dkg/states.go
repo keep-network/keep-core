@@ -389,7 +389,11 @@ func (rss *resultSigningState) Initiate(ctx context.Context) error {
 		return err
 	}
 
-	if err := rss.channel.Send(ctx, message); err != nil {
+	if err := rss.channel.Send(
+		ctx,
+		message,
+		net.BackoffRetransmissionStrategy,
+	); err != nil {
 		return err
 	}
 
