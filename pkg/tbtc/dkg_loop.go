@@ -23,7 +23,7 @@ const (
 	// dkgAttemptAnnouncementActiveBlocks determines the duration of the
 	// announcement phase that is performed at the beginning of each DKG
 	// attempt.
-	dkgAttemptAnnouncementActiveBlocks = 5
+	dkgAttemptAnnouncementActiveBlocks = 10
 	// dkgAttemptProtocolBlocks determines the maximum block duration of the
 	// actual protocol computations.
 	dkgAttemptMaximumProtocolBlocks = 200
@@ -72,6 +72,8 @@ type dkgRetryLoop struct {
 	// Used for the random operator selection. It never changes.
 	attemptSeed        int64
 	attemptDelayBlocks uint64
+
+	attemptsLimit uint
 }
 
 func newDkgRetryLoop(
@@ -82,6 +84,7 @@ func newDkgRetryLoop(
 	selectedOperators chain.Addresses,
 	groupParameters *GroupParameters,
 	announcer dkgAnnouncer,
+	attemptsLimit uint,
 ) *dkgRetryLoop {
 	// Compute the 8-byte seed needed for the random retry algorithm. We take
 	// the first 8 bytes of the hash of the DKG seed. This allows us to not
@@ -101,6 +104,7 @@ func newDkgRetryLoop(
 		attemptStartBlock:  initialStartBlock,
 		attemptSeed:        attemptSeed,
 		attemptDelayBlocks: 5,
+		attemptsLimit:      attemptsLimit,
 	}
 }
 
@@ -125,6 +129,13 @@ func (drl *dkgRetryLoop) start(
 ) (*dkg.Result, error) {
 	for {
 		drl.attemptCounter++
+
+		if drl.attemptsLimit != 0 && drl.attemptCounter > drl.attemptsLimit {
+			return nil, fmt.Errorf(
+				"reached the limit of attempts [%v]",
+				drl.attemptsLimit,
+			)
+		}
 
 		// In order to start attempts >1 in the right place, we need to
 		// determine how many blocks were taken by previous attempts. We assume
