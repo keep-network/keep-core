@@ -11,9 +11,9 @@ import (
 
 	"github.com/keep-network/keep-core/pkg/operator"
 
-	"github.com/libp2p/go-libp2p-core/peer"
-	"github.com/libp2p/go-libp2p-core/peerstore"
 	pubsub "github.com/libp2p/go-libp2p-pubsub"
+	"github.com/libp2p/go-libp2p/core/peer"
+	"github.com/libp2p/go-libp2p/core/peerstore"
 
 	"github.com/keep-network/keep-core/pkg/net"
 	"github.com/keep-network/keep-core/pkg/net/gen/pb"

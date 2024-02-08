@@ -8,9 +8,9 @@ import (
 
 	"github.com/keep-network/keep-core/pkg/net"
 	"github.com/keep-network/keep-core/pkg/net/retransmission"
-	"github.com/libp2p/go-libp2p-core/host"
-	"github.com/libp2p/go-libp2p-core/peerstore"
 	pubsub "github.com/libp2p/go-libp2p-pubsub"
+	"github.com/libp2p/go-libp2p/core/host"
+	"github.com/libp2p/go-libp2p/core/peerstore"
 )
 
 const (

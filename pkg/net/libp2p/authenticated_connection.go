@@ -7,8 +7,9 @@ import (
 	"io"
 	"net"
 
-	libp2pcrypto "github.com/libp2p/go-libp2p-core/crypto"
-	peer "github.com/libp2p/go-libp2p-core/peer"
+	libp2pcrypto "github.com/libp2p/go-libp2p/core/crypto"
+	libp2pnetwork "github.com/libp2p/go-libp2p/core/network"
+	"github.com/libp2p/go-libp2p/core/peer"
 
 	keepNet "github.com/keep-network/keep-core/pkg/net"
 	"github.com/keep-network/keep-core/pkg/net/gen/pb"
@@ -28,6 +29,8 @@ const maxFrameSize = 1024
 // it does not guarantee confidentiality as it does not encrypt connections.
 type authenticatedConnection struct {
 	net.Conn
+
+	connState libp2pnetwork.ConnectionState
 
 	localPeerID         peer.ID
 	localPeerPrivateKey libp2pcrypto.PrivKey
@@ -81,6 +84,7 @@ func (mc *pipe) receive(msg proto.Message) (err error) {
 // connection, which grants access to the network.
 func newAuthenticatedInboundConnection(
 	unauthenticatedConn net.Conn,
+	connState libp2pnetwork.ConnectionState,
 	localPeerID peer.ID,
 	privateKey libp2pcrypto.PrivKey,
 	firewall keepNet.Firewall,
@@ -88,6 +92,7 @@ func newAuthenticatedInboundConnection(
 ) (*authenticatedConnection, error) {
 	ac := &authenticatedConnection{
 		Conn:                unauthenticatedConn,
+		connState:           connState,
 		localPeerID:         localPeerID,
 		localPeerPrivateKey: privateKey,
 		firewall:            firewall,
@@ -124,6 +129,7 @@ func newAuthenticatedInboundConnection(
 // fully-authenticated connection, which grants access to the network.
 func newAuthenticatedOutboundConnection(
 	unauthenticatedConn net.Conn,
+	connState libp2pnetwork.ConnectionState,
 	localPeerID peer.ID,
 	privateKey libp2pcrypto.PrivKey,
 	remotePeerID peer.ID,
@@ -140,6 +146,7 @@ func newAuthenticatedOutboundConnection(
 
 	ac := &authenticatedConnection{
 		Conn:                unauthenticatedConn,
+		connState:           connState,
 		localPeerID:         localPeerID,
 		localPeerPrivateKey: privateKey,
 		remotePeerID:        remotePeerID,
@@ -459,7 +466,7 @@ func (ac *authenticatedConnection) verify(
 		return fmt.Errorf(
 			"failed to verify signature [0x%v] for sender [%v]: [%v]",
 			hex.EncodeToString(signatureBytes),
-			actualSender.Pretty(),
+			actualSender.String(),
 			err,
 		)
 	}
@@ -468,7 +475,7 @@ func (ac *authenticatedConnection) verify(
 		return fmt.Errorf(
 			"invalid signature [0x%v] on message from sender [%v]",
 			hex.EncodeToString(signatureBytes),
-			actualSender.Pretty(),
+			actualSender.String(),
 		)
 	}
 
@@ -494,4 +501,9 @@ func (ac *authenticatedConnection) RemotePeer() peer.ID {
 // RemotePublicKey retrieves the remote public key.
 func (ac *authenticatedConnection) RemotePublicKey() libp2pcrypto.PubKey {
 	return ac.remotePeerPublicKey
+}
+
+// ConnState returns information about the connection state.
+func (ac *authenticatedConnection) ConnState() libp2pnetwork.ConnectionState {
+	return ac.connState
 }
