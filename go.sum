@@ -491,8 +491,8 @@ github.com/jtolds/gls v4.20.0+incompatible h1:xdiiI2gbIgH/gLH7ADydsJ1uDOEzR8yvV7
 github.com/jtolds/gls v4.20.0+incompatible/go.mod h1:QJZ7F/aHp+rZTRtaJ1ow/lLfFfVYBRgL+9YlvaHOwJU=
 github.com/julienschmidt/httprouter v1.3.0/go.mod h1:JR6WtHb+2LUe8TCKY3cZOxFyyO8IZAc4RVcycCCAKdM=
 github.com/karalabe/usb v0.0.2/go.mod h1:Od972xHfMJowv7NGVDiWVxk2zxnWgjLlJzE+F4F7AGU=
-github.com/keep-network/go-electrum v0.0.0-20230524074410-befe891c2f8c h1:wBBb0rIOnYpOqH+QkwEQ/2LT6n7v+ELJlDePvoR7pQY=
-github.com/keep-network/go-electrum v0.0.0-20230524074410-befe891c2f8c/go.mod h1:eiMFzdvS+x8Voi0bmiZtVfJ3zMNRUnPNDnhCQR0tudo=
+github.com/keep-network/go-electrum v0.0.0-20240206170935-6038cb594daa h1:AKTJr+STc4rP9NcN2ppP9Zft3GbYechFW8q/S8UNQrQ=
+github.com/keep-network/go-electrum v0.0.0-20240206170935-6038cb594daa/go.mod h1:eiMFzdvS+x8Voi0bmiZtVfJ3zMNRUnPNDnhCQR0tudo=
 github.com/keep-network/keep-common v1.7.1-0.20231107101149-559db3d3849e h1:6kXLtv3TfObPoBNSAMqpMefOyK01y6X4zghau6F5NDg=
 github.com/keep-network/keep-common v1.7.1-0.20231107101149-559db3d3849e/go.mod h1:OmaZrnZODf6RJ95yUn2kBjy8Z4u2npPJQkSiyimluto=
 github.com/kilic/bls12-381 v0.1.0/go.mod h1:vDTTHJONJ6G+P2R74EhnyotQDTliQDnFEwhdmfzw1ig=
