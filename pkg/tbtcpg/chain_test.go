@@ -11,6 +11,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/ethereum/go-ethereum/crypto"
+
 	"github.com/keep-network/keep-core/pkg/bitcoin"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/tbtc"
@@ -33,34 +35,78 @@ type redemptionParameters = struct {
 	timeoutNotifierRewardMultiplier uint32
 }
 
+type walletParameters = struct {
+	creationPeriod        uint32
+	creationMinBtcBalance uint64
+	creationMaxBtcBalance uint64
+	closureMinBtcBalance  uint64
+	maxAge                uint32
+	maxBtcTransfer        uint64
+	closingPeriod         uint32
+}
+
+type movingFundsParameters = struct {
+	txMaxTotalFee                        uint64
+	dustThreshold                        uint64
+	timeoutResetDelay                    uint32
+	timeout                              uint32
+	timeoutSlashingAmount                *big.Int
+	timeoutNotifierRewardMultiplier      uint32
+	commitmentGasOffset                  uint16
+	sweepTxMaxTotalFee                   uint64
+	sweepTimeout                         uint32
+	sweepTimeoutSlashingAmount           *big.Int
+	sweepTimeoutNotifierRewardMultiplier uint32
+}
+
+type movingFundsCommitmentSubmission struct {
+	WalletPublicKeyHash [20]byte
+	WalletMainUtxo      *bitcoin.UnspentTransactionOutput
+	WalletMembersIDs    []uint32
+	WalletMemberIndex   uint32
+	TargetWallets       [][20]byte
+}
+
 type LocalChain struct {
 	mutex sync.Mutex
 
-	depositRequests                 map[[32]byte]*tbtc.DepositChainRequest
-	pastDepositRevealedEvents       map[[32]byte][]*tbtc.DepositRevealedEvent
-	pastNewWalletRegisteredEvents   map[[32]byte][]*tbtc.NewWalletRegisteredEvent
-	depositParameters               depositParameters
-	depositSweepProposalValidations map[[32]byte]bool
-	redemptionParameters            redemptionParameters
-	redemptionRequestMinAge         uint32
-	blockCounter                    chain.BlockCounter
-	pastRedemptionRequestedEvents   map[[32]byte][]*tbtc.RedemptionRequestedEvent
-	averageBlockTime                time.Duration
-	pendingRedemptionRequests       map[[32]byte]*tbtc.RedemptionRequest
-	redemptionProposalValidations   map[[32]byte]bool
-	heartbeatProposalValidations    map[[16]byte]bool
+	depositRequests                          map[[32]byte]*tbtc.DepositChainRequest
+	pastDepositRevealedEvents                map[[32]byte][]*tbtc.DepositRevealedEvent
+	pastNewWalletRegisteredEvents            map[[32]byte][]*tbtc.NewWalletRegisteredEvent
+	depositParameters                        depositParameters
+	depositSweepProposalValidations          map[[32]byte]bool
+	redemptionParameters                     redemptionParameters
+	redemptionRequestMinAge                  uint32
+	walletParameters                         walletParameters
+	walletChainData                          map[[20]byte]*tbtc.WalletChainData
+	blockCounter                             chain.BlockCounter
+	pastRedemptionRequestedEvents            map[[32]byte][]*tbtc.RedemptionRequestedEvent
+	averageBlockTime                         time.Duration
+	pendingRedemptionRequests                map[[32]byte]*tbtc.RedemptionRequest
+	redemptionProposalValidations            map[[32]byte]bool
+	heartbeatProposalValidations             map[[16]byte]bool
+	movingFundsParameters                    movingFundsParameters
+	pastMovingFundsCommitmentSubmittedEvents map[[32]byte][]*tbtc.MovingFundsCommitmentSubmittedEvent
+	movingFundsProposalValidations           map[[32]byte]bool
+	movingFundsCommitmentSubmissions         []*movingFundsCommitmentSubmission
+	operatorIDs                              map[chain.Address]uint32
 }
 
 func NewLocalChain() *LocalChain {
 	return &LocalChain{
-		depositRequests:                 make(map[[32]byte]*tbtc.DepositChainRequest),
-		pastDepositRevealedEvents:       make(map[[32]byte][]*tbtc.DepositRevealedEvent),
-		pastNewWalletRegisteredEvents:   make(map[[32]byte][]*tbtc.NewWalletRegisteredEvent),
-		depositSweepProposalValidations: make(map[[32]byte]bool),
-		pastRedemptionRequestedEvents:   make(map[[32]byte][]*tbtc.RedemptionRequestedEvent),
-		pendingRedemptionRequests:       make(map[[32]byte]*tbtc.RedemptionRequest),
-		redemptionProposalValidations:   make(map[[32]byte]bool),
-		heartbeatProposalValidations:    make(map[[16]byte]bool),
+		depositRequests:                          make(map[[32]byte]*tbtc.DepositChainRequest),
+		pastDepositRevealedEvents:                make(map[[32]byte][]*tbtc.DepositRevealedEvent),
+		pastNewWalletRegisteredEvents:            make(map[[32]byte][]*tbtc.NewWalletRegisteredEvent),
+		depositSweepProposalValidations:          make(map[[32]byte]bool),
+		pastRedemptionRequestedEvents:            make(map[[32]byte][]*tbtc.RedemptionRequestedEvent),
+		walletChainData:                          make(map[[20]byte]*tbtc.WalletChainData),
+		pendingRedemptionRequests:                make(map[[32]byte]*tbtc.RedemptionRequest),
+		redemptionProposalValidations:            make(map[[32]byte]bool),
+		heartbeatProposalValidations:             make(map[[16]byte]bool),
+		pastMovingFundsCommitmentSubmittedEvents: make(map[[32]byte][]*tbtc.MovingFundsCommitmentSubmittedEvent),
+		movingFundsProposalValidations:           make(map[[32]byte]bool),
+		movingFundsCommitmentSubmissions:         make([]*movingFundsCommitmentSubmission, 0),
+		operatorIDs:                              make(map[chain.Address]uint32),
 	}
 }
 
@@ -310,6 +356,32 @@ func buildPastRedemptionRequestedEventsKey(
 		}
 
 		buffer.Write(redeemerHex)
+	}
+
+	return sha256.Sum256(buffer.Bytes()), nil
+}
+
+func buildPastMovingFundsCommitmentSubmittedEventsKey(
+	filter *tbtc.MovingFundsCommitmentSubmittedEventFilter,
+) ([32]byte, error) {
+	if filter == nil {
+		return [32]byte{}, nil
+	}
+
+	var buffer bytes.Buffer
+
+	startBlock := make([]byte, 8)
+	binary.BigEndian.PutUint64(startBlock, filter.StartBlock)
+	buffer.Write(startBlock)
+
+	if filter.EndBlock != nil {
+		endBlock := make([]byte, 8)
+		binary.BigEndian.PutUint64(startBlock, *filter.EndBlock)
+		buffer.Write(endBlock)
+	}
+
+	for _, walletPublicKeyHash := range filter.WalletPublicKeyHash {
+		buffer.Write(walletPublicKeyHash[:])
 	}
 
 	return sha256.Sum256(buffer.Bytes()), nil
@@ -616,6 +688,142 @@ func (lc *LocalChain) SetHeartbeatProposalValidationResult(
 	lc.heartbeatProposalValidations[proposal.Message] = result
 }
 
+func (lc *LocalChain) GetMovingFundsParameters() (
+	txMaxTotalFee uint64,
+	dustThreshold uint64,
+	timeoutResetDelay uint32,
+	timeout uint32,
+	timeoutSlashingAmount *big.Int,
+	timeoutNotifierRewardMultiplier uint32,
+	commitmentGasOffset uint16,
+	sweepTxMaxTotalFee uint64,
+	sweepTimeout uint32,
+	sweepTimeoutSlashingAmount *big.Int,
+	sweepTimeoutNotifierRewardMultiplier uint32,
+	err error,
+) {
+	lc.mutex.Lock()
+	defer lc.mutex.Unlock()
+
+	return lc.movingFundsParameters.txMaxTotalFee,
+		lc.movingFundsParameters.dustThreshold,
+		lc.movingFundsParameters.timeoutResetDelay,
+		lc.movingFundsParameters.timeout,
+		lc.movingFundsParameters.timeoutSlashingAmount,
+		lc.movingFundsParameters.timeoutNotifierRewardMultiplier,
+		lc.movingFundsParameters.commitmentGasOffset,
+		lc.movingFundsParameters.sweepTxMaxTotalFee,
+		lc.movingFundsParameters.sweepTimeout,
+		lc.movingFundsParameters.sweepTimeoutSlashingAmount,
+		lc.movingFundsParameters.sweepTimeoutNotifierRewardMultiplier,
+		nil
+}
+
+func (lc *LocalChain) SetMovingFundsParameters(
+	txMaxTotalFee uint64,
+	dustThreshold uint64,
+	timeoutResetDelay uint32,
+	timeout uint32,
+	timeoutSlashingAmount *big.Int,
+	timeoutNotifierRewardMultiplier uint32,
+	commitmentGasOffset uint16,
+	sweepTxMaxTotalFee uint64,
+	sweepTimeout uint32,
+	sweepTimeoutSlashingAmount *big.Int,
+	sweepTimeoutNotifierRewardMultiplier uint32,
+) {
+	lc.mutex.Lock()
+	defer lc.mutex.Unlock()
+
+	lc.movingFundsParameters = movingFundsParameters{
+		txMaxTotalFee:                        txMaxTotalFee,
+		dustThreshold:                        dustThreshold,
+		timeoutResetDelay:                    timeoutResetDelay,
+		timeout:                              timeout,
+		timeoutSlashingAmount:                timeoutSlashingAmount,
+		timeoutNotifierRewardMultiplier:      timeoutNotifierRewardMultiplier,
+		commitmentGasOffset:                  commitmentGasOffset,
+		sweepTxMaxTotalFee:                   sweepTxMaxTotalFee,
+		sweepTimeout:                         sweepTimeout,
+		sweepTimeoutSlashingAmount:           sweepTimeoutSlashingAmount,
+		sweepTimeoutNotifierRewardMultiplier: sweepTimeoutNotifierRewardMultiplier,
+	}
+}
+
+func buildMovingFundsProposalValidationKey(
+	walletPublicKeyHash [20]byte,
+	mainUTXO *bitcoin.UnspentTransactionOutput,
+	proposal *tbtc.MovingFundsProposal,
+) ([32]byte, error) {
+	var buffer bytes.Buffer
+
+	buffer.Write(walletPublicKeyHash[:])
+
+	buffer.Write(mainUTXO.Outpoint.TransactionHash[:])
+	binary.Write(&buffer, binary.BigEndian, mainUTXO.Outpoint.OutputIndex)
+	binary.Write(&buffer, binary.BigEndian, mainUTXO.Value)
+
+	for _, wallet := range proposal.TargetWallets {
+		buffer.Write(wallet[:])
+	}
+
+	buffer.Write(proposal.MovingFundsTxFee.Bytes())
+
+	return sha256.Sum256(buffer.Bytes()), nil
+}
+
+func (lc *LocalChain) ValidateMovingFundsProposal(
+	walletPublicKeyHash [20]byte,
+	mainUTXO *bitcoin.UnspentTransactionOutput,
+	proposal *tbtc.MovingFundsProposal,
+) error {
+	lc.mutex.Lock()
+	defer lc.mutex.Unlock()
+
+	key, err := buildMovingFundsProposalValidationKey(
+		walletPublicKeyHash,
+		mainUTXO,
+		proposal,
+	)
+	if err != nil {
+		return err
+	}
+
+	result, ok := lc.movingFundsProposalValidations[key]
+	if !ok {
+		return fmt.Errorf("validation result unknown")
+	}
+
+	if !result {
+		return fmt.Errorf("validation failed")
+	}
+
+	return nil
+}
+
+func (lc *LocalChain) SetMovingFundsProposalValidationResult(
+	walletPublicKeyHash [20]byte,
+	mainUTXO *bitcoin.UnspentTransactionOutput,
+	proposal *tbtc.MovingFundsProposal,
+	result bool,
+) error {
+	lc.mutex.Lock()
+	defer lc.mutex.Unlock()
+
+	key, err := buildMovingFundsProposalValidationKey(
+		walletPublicKeyHash,
+		mainUTXO,
+		proposal,
+	)
+	if err != nil {
+		return err
+	}
+
+	lc.movingFundsProposalValidations[key] = result
+
+	return nil
+}
+
 func buildRedemptionProposalValidationKey(
 	walletPublicKeyHash [20]byte,
 	proposal *tbtc.RedemptionProposal,
@@ -676,6 +884,35 @@ func (lc *LocalChain) AverageBlockTime() time.Duration {
 	return lc.averageBlockTime
 }
 
+func (lc *LocalChain) SetOperatorID(
+	operatorAddress chain.Address,
+	operatorID chain.OperatorID,
+) error {
+	lc.mutex.Lock()
+	defer lc.mutex.Unlock()
+
+	_, ok := lc.operatorIDs[operatorAddress]
+	if !ok {
+		lc.operatorIDs[operatorAddress] = operatorID
+	}
+
+	return nil
+}
+
+func (lc *LocalChain) GetOperatorID(
+	operatorAddress chain.Address,
+) (chain.OperatorID, error) {
+	lc.mutex.Lock()
+	defer lc.mutex.Unlock()
+
+	operatorID, ok := lc.operatorIDs[operatorAddress]
+	if !ok {
+		return 0, fmt.Errorf("operator not found")
+	}
+
+	return operatorID, nil
+}
+
 func (lc *LocalChain) SetAverageBlockTime(averageBlockTime time.Duration) {
 	lc.mutex.Lock()
 	defer lc.mutex.Unlock()
@@ -687,11 +924,167 @@ func (lc *LocalChain) GetWallet(walletPublicKeyHash [20]byte) (
 	*tbtc.WalletChainData,
 	error,
 ) {
+	lc.mutex.Lock()
+	defer lc.mutex.Unlock()
+
+	data, ok := lc.walletChainData[walletPublicKeyHash]
+	if !ok {
+		fmt.Println("Not found")
+		return nil, fmt.Errorf("wallet chain data not found")
+	}
+
+	return data, nil
+}
+
+func (lc *LocalChain) SetWallet(
+	walletPublicKeyHash [20]byte,
+	data *tbtc.WalletChainData,
+) {
+	lc.mutex.Lock()
+	defer lc.mutex.Unlock()
+
+	lc.walletChainData[walletPublicKeyHash] = data
+}
+
+func (lc *LocalChain) GetWalletParameters() (
+	creationPeriod uint32,
+	creationMinBtcBalance uint64,
+	creationMaxBtcBalance uint64,
+	closureMinBtcBalance uint64,
+	maxAge uint32,
+	maxBtcTransfer uint64,
+	closingPeriod uint32,
+	err error,
+) {
+	lc.mutex.Lock()
+	defer lc.mutex.Unlock()
+
+	return lc.walletParameters.creationPeriod,
+		lc.walletParameters.creationMinBtcBalance,
+		lc.walletParameters.creationMaxBtcBalance,
+		lc.walletParameters.closureMinBtcBalance,
+		lc.walletParameters.maxAge,
+		lc.walletParameters.maxBtcTransfer,
+		lc.walletParameters.closingPeriod,
+		nil
+}
+
+func (lc *LocalChain) SetWalletParameters(
+	creationPeriod uint32,
+	creationMinBtcBalance uint64,
+	creationMaxBtcBalance uint64,
+	closureMinBtcBalance uint64,
+	maxAge uint32,
+	maxBtcTransfer uint64,
+	closingPeriod uint32,
+) {
+	lc.mutex.Lock()
+	defer lc.mutex.Unlock()
+
+	lc.walletParameters = walletParameters{
+		creationPeriod:        creationPeriod,
+		creationMinBtcBalance: creationMinBtcBalance,
+		creationMaxBtcBalance: creationMaxBtcBalance,
+		closureMinBtcBalance:  closureMinBtcBalance,
+		maxAge:                maxAge,
+		maxBtcTransfer:        maxBtcTransfer,
+		closingPeriod:         closingPeriod,
+	}
+}
+
+func (lc *LocalChain) GetLiveWalletsCount() (uint32, error) {
 	panic("unsupported")
 }
 
 func (lc *LocalChain) ComputeMainUtxoHash(mainUtxo *bitcoin.UnspentTransactionOutput) [32]byte {
 	panic("unsupported")
+}
+
+func (lc *LocalChain) ComputeMovingFundsCommitmentHash(targetWallets [][20]byte) [32]byte {
+	packedWallets := []byte{}
+
+	for _, wallet := range targetWallets {
+		packedWallets = append(packedWallets, wallet[:]...)
+		// Each wallet hash must be padded with 12 zero bytes following the
+		// actual hash.
+		packedWallets = append(packedWallets, make([]byte, 12)...)
+	}
+
+	return crypto.Keccak256Hash(packedWallets)
+}
+
+func (lc *LocalChain) AddPastMovingFundsCommitmentSubmittedEvent(
+	filter *tbtc.MovingFundsCommitmentSubmittedEventFilter,
+	event *tbtc.MovingFundsCommitmentSubmittedEvent,
+) error {
+	lc.mutex.Lock()
+	defer lc.mutex.Unlock()
+
+	eventsKey, err := buildPastMovingFundsCommitmentSubmittedEventsKey(filter)
+	if err != nil {
+		return err
+	}
+
+	if _, ok := lc.pastMovingFundsCommitmentSubmittedEvents[eventsKey]; !ok {
+		lc.pastMovingFundsCommitmentSubmittedEvents[eventsKey] = []*tbtc.MovingFundsCommitmentSubmittedEvent{}
+	}
+
+	lc.pastMovingFundsCommitmentSubmittedEvents[eventsKey] = append(
+		lc.pastMovingFundsCommitmentSubmittedEvents[eventsKey],
+		event,
+	)
+
+	return nil
+}
+
+func (lc *LocalChain) PastMovingFundsCommitmentSubmittedEvents(
+	filter *tbtc.MovingFundsCommitmentSubmittedEventFilter,
+) ([]*tbtc.MovingFundsCommitmentSubmittedEvent, error) {
+	lc.mutex.Lock()
+	defer lc.mutex.Unlock()
+
+	eventsKey, err := buildPastMovingFundsCommitmentSubmittedEventsKey(filter)
+	if err != nil {
+		return nil, err
+	}
+
+	events, ok := lc.pastMovingFundsCommitmentSubmittedEvents[eventsKey]
+	if !ok {
+		return nil, fmt.Errorf("no events for given filter")
+	}
+
+	return events, nil
+}
+
+func (lc *LocalChain) SubmitMovingFundsCommitment(
+	walletPublicKeyHash [20]byte,
+	walletMainUtxo bitcoin.UnspentTransactionOutput,
+	walletMembersIDs []uint32,
+	walletMemberIndex uint32,
+	targetWallets [][20]byte,
+) error {
+	lc.mutex.Lock()
+	defer lc.mutex.Unlock()
+
+	lc.movingFundsCommitmentSubmissions = append(
+		lc.movingFundsCommitmentSubmissions,
+		&movingFundsCommitmentSubmission{
+			WalletPublicKeyHash: walletPublicKeyHash,
+			WalletMainUtxo:      &walletMainUtxo,
+			WalletMembersIDs:    walletMembersIDs,
+			WalletMemberIndex:   walletMemberIndex,
+			TargetWallets:       targetWallets,
+		},
+	)
+
+	return nil
+}
+
+func (lc *LocalChain) GetMovingFundsSubmissions() []*movingFundsCommitmentSubmission {
+	lc.mutex.Lock()
+	defer lc.mutex.Unlock()
+
+	return lc.movingFundsCommitmentSubmissions
 }
 
 type MockBlockCounter struct {
@@ -704,7 +1097,7 @@ func NewMockBlockCounter() *MockBlockCounter {
 }
 
 func (mbc *MockBlockCounter) WaitForBlockHeight(blockNumber uint64) error {
-	panic("unsupported")
+	return nil
 }
 
 func (mbc *MockBlockCounter) BlockHeightWaiter(blockNumber uint64) (

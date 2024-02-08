@@ -2,14 +2,15 @@ package tbtcpg_test
 
 import (
 	"encoding/hex"
+	"math/big"
+	"testing"
+
 	"github.com/go-test/deep"
 	"github.com/keep-network/keep-core/internal/testutils"
 	"github.com/keep-network/keep-core/pkg/bitcoin"
 	"github.com/keep-network/keep-core/pkg/tbtc"
 	"github.com/keep-network/keep-core/pkg/tbtcpg"
 	"github.com/keep-network/keep-core/pkg/tbtcpg/internal/test"
-	"math/big"
-	"testing"
 )
 
 // Test based on example testnet redemption transaction:
@@ -203,7 +204,7 @@ func TestRedemptionAction_ProposeRedemption(t *testing.T) {
 			}
 
 			if diff := deep.Equal(proposal, test.expectedProposal); diff != nil {
-				t.Errorf("invalid deposits: %v", diff)
+				t.Errorf("invalid redemption proposal: %v", diff)
 			}
 		})
 	}

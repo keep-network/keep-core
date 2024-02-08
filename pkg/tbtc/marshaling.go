@@ -4,9 +4,10 @@ import (
 	"crypto/ecdsa"
 	"crypto/elliptic"
 	"fmt"
-	"github.com/keep-network/keep-core/pkg/bitcoin"
 	"math"
 	"math/big"
+
+	"github.com/keep-network/keep-core/pkg/bitcoin"
 
 	"google.golang.org/protobuf/proto"
 
@@ -229,8 +230,8 @@ func unmarshalCoordinationProposal(actionType uint32, payload []byte) (
 		ActionHeartbeat:    &HeartbeatProposal{},
 		ActionDepositSweep: &DepositSweepProposal{},
 		ActionRedemption:   &RedemptionProposal{},
+		ActionMovingFunds:  &MovingFundsProposal{},
 		// TODO: Uncomment when moving funds support is implemented.
-		// ActionMovingFunds:     &MovingFundsProposal{},
 		// ActionMovedFundsSweep: &MovedFundsSweepProposal{},
 	}[parsedActionType]
 	if !ok {
@@ -392,6 +393,43 @@ func (rp *RedemptionProposal) Unmarshal(bytes []byte) error {
 	rp.RedeemersOutputScripts = redeemersOutputScripts
 	rp.RedemptionTxFee = new(big.Int).SetBytes(pbMsg.RedemptionTxFee)
 
+	return nil
+}
+
+// Marshal converts the movingFundsProposal to a byte array.
+func (mfp *MovingFundsProposal) Marshal() ([]byte, error) {
+	targetWallets := make([][]byte, len(mfp.TargetWallets))
+
+	for i, wallet := range mfp.TargetWallets {
+		targetWallet := make([]byte, len(wallet))
+		copy(targetWallet, wallet[:])
+
+		targetWallets[i] = targetWallet
+	}
+
+	return proto.Marshal(
+		&pb.MovingFundsProposal{
+			TargetWallets:    targetWallets,
+			MovingFundsTxFee: mfp.MovingFundsTxFee.Bytes(),
+		})
+}
+
+// Unmarshal converts a byte array back to the movingFundsProposal.
+func (mfp *MovingFundsProposal) Unmarshal(data []byte) error {
+	pbMsg := pb.MovingFundsProposal{}
+	if err := proto.Unmarshal(data, &pbMsg); err != nil {
+		return fmt.Errorf("failed to unmarshal MovingFundsProposal: [%v]", err)
+	}
+
+	mfp.TargetWallets = make([][20]byte, len(pbMsg.TargetWallets))
+	for i, wallet := range pbMsg.TargetWallets {
+		if len(wallet) != 20 {
+			return fmt.Errorf("invalid target wallet length: [%v]", len(wallet))
+		}
+		copy(mfp.TargetWallets[i][:], wallet)
+	}
+
+	mfp.MovingFundsTxFee = new(big.Int).SetBytes(pbMsg.MovingFundsTxFee)
 	return nil
 }
 

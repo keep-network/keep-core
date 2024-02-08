@@ -351,6 +351,15 @@ type WalletProposalValidatorChain interface {
 		walletPublicKeyHash [20]byte,
 		proposal *HeartbeatProposal,
 	) error
+
+	// ValidateMovingFundsProposal validates the given moving funds proposal
+	// against the chain. Returns an error if the proposal is not valid or
+	// nil otherwise.
+	ValidateMovingFundsProposal(
+		walletPublicKeyHash [20]byte,
+		mainUTXO *bitcoin.UnspentTransactionOutput,
+		proposal *MovingFundsProposal,
+	) error
 }
 
 // RedemptionRequestedEvent represents a redemption requested event.
@@ -374,6 +383,21 @@ type RedemptionRequestedEventFilter struct {
 	EndBlock            *uint64
 	WalletPublicKeyHash [][20]byte
 	Redeemer            []chain.Address
+}
+
+// MovingFundsCommitmentSubmittedEvent represents a moving funds commitment submitted event.
+type MovingFundsCommitmentSubmittedEvent struct {
+	WalletPublicKeyHash [20]byte
+	TargetWallets       [][20]byte
+	Submitter           chain.Address
+	BlockNumber         uint64
+}
+
+// MovingFundsCommitmentSubmittedEventFilter is a component allowing to filter MovingFundsCommitmentSubmittedEvent.
+type MovingFundsCommitmentSubmittedEventFilter struct {
+	StartBlock          uint64
+	EndBlock            *uint64
+	WalletPublicKeyHash [][20]byte
 }
 
 // Chain represents the interface that the TBTC module expects to interact

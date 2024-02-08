@@ -1236,6 +1236,25 @@ func computeMainUtxoHash(mainUtxo *bitcoin.UnspentTransactionOutput) [32]byte {
 	return mainUtxoHash
 }
 
+func (tc *TbtcChain) ComputeMovingFundsCommitmentHash(
+	targetWallets [][20]byte,
+) [32]byte {
+	return computeMovingFundsCommitmentHash(targetWallets)
+}
+
+func computeMovingFundsCommitmentHash(targetWallets [][20]byte) [32]byte {
+	packedWallets := []byte{}
+
+	for _, wallet := range targetWallets {
+		packedWallets = append(packedWallets, wallet[:]...)
+		// Each wallet hash must be padded with 12 zero bytes following the
+		// actual hash.
+		packedWallets = append(packedWallets, make([]byte, 12)...)
+	}
+
+	return crypto.Keccak256Hash(packedWallets)
+}
+
 func (tc *TbtcChain) BuildDepositKey(
 	fundingTxHash bitcoin.Hash,
 	fundingOutputIndex uint32,
@@ -1463,6 +1482,81 @@ func (tc *TbtcChain) GetRedemptionParameters() (
 	return
 }
 
+func (tc *TbtcChain) GetWalletParameters() (
+	creationPeriod uint32,
+	creationMinBtcBalance uint64,
+	creationMaxBtcBalance uint64,
+	closureMinBtcBalance uint64,
+	maxAge uint32,
+	maxBtcTransfer uint64,
+	closingPeriod uint32,
+	err error,
+) {
+	parameters, callErr := tc.bridge.WalletParameters()
+	if callErr != nil {
+		err = callErr
+		return
+	}
+
+	creationPeriod = parameters.WalletCreationPeriod
+	creationMinBtcBalance = parameters.WalletCreationMinBtcBalance
+	creationMaxBtcBalance = parameters.WalletCreationMaxBtcBalance
+	closureMinBtcBalance = parameters.WalletClosureMinBtcBalance
+	maxAge = parameters.WalletMaxAge
+	maxBtcTransfer = parameters.WalletMaxBtcTransfer
+	closingPeriod = parameters.WalletClosingPeriod
+
+	return
+}
+
+func (tc *TbtcChain) GetLiveWalletsCount() (uint32, error) {
+	return tc.bridge.LiveWalletsCount()
+}
+
+func (tc *TbtcChain) PastMovingFundsCommitmentSubmittedEvents(
+	filter *tbtc.MovingFundsCommitmentSubmittedEventFilter,
+) ([]*tbtc.MovingFundsCommitmentSubmittedEvent, error) {
+	var startBlock uint64
+	var endBlock *uint64
+	var walletPublicKeyHash [][20]byte
+
+	if filter != nil {
+		startBlock = filter.StartBlock
+		endBlock = filter.EndBlock
+		walletPublicKeyHash = filter.WalletPublicKeyHash
+	}
+
+	events, err := tc.bridge.PastMovingFundsCommitmentSubmittedEvents(
+		startBlock,
+		endBlock,
+		walletPublicKeyHash,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	convertedEvents := make([]*tbtc.MovingFundsCommitmentSubmittedEvent, 0)
+	for _, event := range events {
+		convertedEvent := &tbtc.MovingFundsCommitmentSubmittedEvent{
+			WalletPublicKeyHash: event.WalletPubKeyHash,
+			TargetWallets:       event.TargetWallets,
+			Submitter:           chain.Address(event.Submitter.Hex()),
+			BlockNumber:         event.Raw.BlockNumber,
+		}
+
+		convertedEvents = append(convertedEvents, convertedEvent)
+	}
+
+	sort.SliceStable(
+		convertedEvents,
+		func(i, j int) bool {
+			return convertedEvents[i].BlockNumber < convertedEvents[j].BlockNumber
+		},
+	)
+
+	return convertedEvents, err
+}
+
 func buildDepositKey(
 	fundingTxHash bitcoin.Hash,
 	fundingOutputIndex uint32,
@@ -1571,6 +1665,28 @@ func (tc *TbtcChain) GetDepositSweepMaxSize() (uint16, error) {
 	return tc.walletProposalValidator.DEPOSITSWEEPMAXSIZE()
 }
 
+func (tc *TbtcChain) SubmitMovingFundsCommitment(
+	walletPublicKeyHash [20]byte,
+	walletMainUTXO bitcoin.UnspentTransactionOutput,
+	walletMembersIDs []uint32,
+	walletMemberIndex uint32,
+	targetWallets [][20]byte,
+) error {
+	mainUtxo := tbtcabi.BitcoinTxUTXO{
+		TxHash:        walletMainUTXO.Outpoint.TransactionHash,
+		TxOutputIndex: walletMainUTXO.Outpoint.OutputIndex,
+		TxOutputValue: uint64(walletMainUTXO.Value),
+	}
+	_, err := tc.bridge.SubmitMovingFundsCommitment(
+		walletPublicKeyHash,
+		mainUtxo,
+		walletMembersIDs,
+		big.NewInt(int64(walletMemberIndex)),
+		targetWallets,
+	)
+	return err
+}
+
 func (tc *TbtcChain) ValidateRedemptionProposal(
 	walletPublicKeyHash [20]byte,
 	proposal *tbtc.RedemptionProposal,
@@ -1653,6 +1769,74 @@ func (tc *TbtcChain) ValidateHeartbeatProposal(
 	}
 
 	// Should never happen because `validateHeartbeatProposal` returns true
+	// or reverts (returns an error) but do the check just in case.
+	if !valid {
+		return fmt.Errorf("unexpected validation result")
+	}
+
+	return nil
+}
+
+func (tc *TbtcChain) GetMovingFundsParameters() (
+	txMaxTotalFee uint64,
+	dustThreshold uint64,
+	timeoutResetDelay uint32,
+	timeout uint32,
+	timeoutSlashingAmount *big.Int,
+	timeoutNotifierRewardMultiplier uint32,
+	commitmentGasOffset uint16,
+	sweepTxMaxTotalFee uint64,
+	sweepTimeout uint32,
+	sweepTimeoutSlashingAmount *big.Int,
+	sweepTimeoutNotifierRewardMultiplier uint32,
+	err error,
+) {
+	parameters, callErr := tc.bridge.MovingFundsParameters()
+	if callErr != nil {
+		err = callErr
+		return
+	}
+
+	txMaxTotalFee = parameters.MovingFundsTxMaxTotalFee
+	dustThreshold = parameters.MovingFundsDustThreshold
+	timeoutResetDelay = parameters.MovingFundsTimeoutResetDelay
+	timeout = parameters.MovingFundsTimeout
+	timeoutSlashingAmount = parameters.MovingFundsTimeoutSlashingAmount
+	timeoutNotifierRewardMultiplier = parameters.MovingFundsTimeoutNotifierRewardMultiplier
+	commitmentGasOffset = parameters.MovingFundsCommitmentGasOffset
+	sweepTxMaxTotalFee = parameters.MovedFundsSweepTxMaxTotalFee
+	sweepTimeout = parameters.MovedFundsSweepTimeout
+	sweepTimeoutSlashingAmount = parameters.MovedFundsSweepTimeoutSlashingAmount
+	sweepTimeoutNotifierRewardMultiplier = parameters.MovedFundsSweepTimeoutNotifierRewardMultiplier
+
+	return
+}
+
+func (tc *TbtcChain) ValidateMovingFundsProposal(
+	walletPublicKeyHash [20]byte,
+	mainUTXO *bitcoin.UnspentTransactionOutput,
+	proposal *tbtc.MovingFundsProposal,
+) error {
+	abiProposal := tbtcabi.WalletProposalValidatorMovingFundsProposal{
+		WalletPubKeyHash: walletPublicKeyHash,
+		TargetWallets:    proposal.TargetWallets,
+		MovingFundsTxFee: proposal.MovingFundsTxFee,
+	}
+	abiMainUTXO := tbtcabi.BitcoinTxUTXO3{
+		TxHash:        mainUTXO.Outpoint.TransactionHash,
+		TxOutputIndex: mainUTXO.Outpoint.OutputIndex,
+		TxOutputValue: uint64(mainUTXO.Value),
+	}
+
+	valid, err := tc.walletProposalValidator.ValidateMovingFundsProposal(
+		abiProposal,
+		abiMainUTXO,
+	)
+	if err != nil {
+		return fmt.Errorf("validation failed: [%v]", err)
+	}
+
+	// Should never happen because `validateMovingFundsProposal` returns true
 	// or reverts (returns an error) but do the check just in case.
 	if !valid {
 		return fmt.Errorf("unexpected validation result")

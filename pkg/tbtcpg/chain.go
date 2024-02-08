@@ -23,6 +23,22 @@ type Chain interface {
 		filter *tbtc.NewWalletRegisteredEventFilter,
 	) ([]*tbtc.NewWalletRegisteredEvent, error)
 
+	// GetWalletParameters gets the current value of parameters relevant to
+	// wallet.
+	GetWalletParameters() (
+		creationPeriod uint32,
+		creationMinBtcBalance uint64,
+		creationMaxBtcBalance uint64,
+		closureMinBtcBalance uint64,
+		maxAge uint32,
+		maxBtcTransfer uint64,
+		closingPeriod uint32,
+		err error,
+	)
+
+	// GetLiveWalletsCount gets the current count of live wallets.
+	GetLiveWalletsCount() (uint32, error)
+
 	// BuildDepositKey calculates a deposit key for the given funding transaction
 	// which is a unique identifier for a deposit on-chain.
 	BuildDepositKey(fundingTxHash bitcoin.Hash, fundingOutputIndex uint32) *big.Int
@@ -104,6 +120,9 @@ type Chain interface {
 
 	AverageBlockTime() time.Duration
 
+	// GetOperatorID returns the operator ID for the given operator address.
+	GetOperatorID(operatorAddress chain.Address) (chain.OperatorID, error)
+
 	// ValidateHeartbeatProposal validates the given heartbeat proposal
 	// against the chain. Returns an error if the proposal is not valid or
 	// nil otherwise.
@@ -111,4 +130,52 @@ type Chain interface {
 		walletPublicKeyHash [20]byte,
 		proposal *tbtc.HeartbeatProposal,
 	) error
+
+	// GetMovingFundsParameters gets the current value of parameters relevant
+	// for the moving funds process.
+	GetMovingFundsParameters() (
+		txMaxTotalFee uint64,
+		dustThreshold uint64,
+		timeoutResetDelay uint32,
+		timeout uint32,
+		timeoutSlashingAmount *big.Int,
+		timeoutNotifierRewardMultiplier uint32,
+		commitmentGasOffset uint16,
+		sweepTxMaxTotalFee uint64,
+		sweepTimeout uint32,
+		sweepTimeoutSlashingAmount *big.Int,
+		sweepTimeoutNotifierRewardMultiplier uint32,
+		err error,
+	)
+
+	// PastMovingFundsCommitmentSubmittedEvents fetches past moving funds
+	// commitment submitted events according to the provided filter or
+	// unfiltered if the filter is nil. Returned events are sorted by the block
+	// number in the ascending order, i.e. the latest event is at the end of the
+	// slice.
+	PastMovingFundsCommitmentSubmittedEvents(
+		filter *tbtc.MovingFundsCommitmentSubmittedEventFilter,
+	) ([]*tbtc.MovingFundsCommitmentSubmittedEvent, error)
+
+	// ValidateMovingFundsProposal validates the given moving funds proposal
+	// against the chain. Returns an error if the proposal is not valid or
+	// nil otherwise.
+	ValidateMovingFundsProposal(
+		walletPublicKeyHash [20]byte,
+		mainUTXO *bitcoin.UnspentTransactionOutput,
+		proposal *tbtc.MovingFundsProposal,
+	) error
+
+	// Submits the moving funds target wallets commitment.
+	SubmitMovingFundsCommitment(
+		walletPublicKeyHash [20]byte,
+		walletMainUTXO bitcoin.UnspentTransactionOutput,
+		walletMembersIDs []uint32,
+		walletMemberIndex uint32,
+		targetWallets [][20]byte,
+	) error
+
+	// Computes the moving funds commitment hash from the provided public key
+	// hashes of target wallets.
+	ComputeMovingFundsCommitmentHash(targetWallets [][20]byte) [32]byte
 }

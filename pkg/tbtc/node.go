@@ -5,10 +5,10 @@ import (
 	"crypto/ecdsa"
 	"encoding/hex"
 	"fmt"
-	"github.com/keep-network/keep-core/pkg/bitcoin"
 	"math/big"
 	"sync"
 
+	"github.com/keep-network/keep-core/pkg/bitcoin"
 	"github.com/keep-network/keep-core/pkg/chain"
 
 	"go.uber.org/zap"
@@ -608,6 +608,74 @@ func (n *node) handleRedemptionProposal(
 	walletActionLogger.Infof("wallet action dispatched successfully")
 }
 
+// handleMovingFundsProposal handles an incoming moving funds proposal by
+// orchestrating and dispatching an appropriate wallet action.
+func (n *node) handleMovingFundsProposal(
+	wallet wallet,
+	proposal *MovingFundsProposal,
+	startBlock uint64,
+	expiryBlock uint64,
+) {
+	walletPublicKeyBytes, err := marshalPublicKey(wallet.publicKey)
+	if err != nil {
+		logger.Errorf("cannot marshal wallet public key: [%v]", err)
+		return
+	}
+
+	signingExecutor, ok, err := n.getSigningExecutor(wallet.publicKey)
+	if err != nil {
+		logger.Errorf("cannot get signing executor: [%v]", err)
+		return
+	}
+	// This check is actually redundant. We know the node controls some
+	// wallet signers as we just got the wallet from the registry using their
+	// public key hash. However, we are doing it just in case. The API
+	// contract of getSigningExecutor may change one day.
+	if !ok {
+		logger.Infof(
+			"node does not control signers of wallet PKH [0x%x]; "+
+				"ignoring the received moving funds proposal",
+			walletPublicKeyBytes,
+		)
+		return
+	}
+
+	logger.Infof(
+		"starting orchestration of the moving funds action for wallet [0x%x]; "+
+			"20-byte public key hash of that wallet is [0x%x]",
+		walletPublicKeyBytes,
+		bitcoin.PublicKeyHash(wallet.publicKey),
+	)
+
+	walletActionLogger := logger.With(
+		zap.String("wallet", fmt.Sprintf("0x%x", walletPublicKeyBytes)),
+		zap.String("action", ActionMovingFunds.String()),
+		zap.Uint64("startBlock", startBlock),
+		zap.Uint64("expiryBlock", expiryBlock),
+	)
+	walletActionLogger.Infof("dispatching wallet action")
+
+	action := newMovingFundsAction(
+		walletActionLogger,
+		n.chain,
+		n.btcChain,
+		wallet,
+		signingExecutor,
+		proposal,
+		startBlock,
+		expiryBlock,
+		n.waitForBlockHeight,
+	)
+
+	err = n.walletDispatcher.dispatch(action)
+	if err != nil {
+		walletActionLogger.Errorf("cannot dispatch wallet action: [%v]", err)
+		return
+	}
+
+	walletActionLogger.Infof("wallet action dispatched successfully")
+}
+
 // coordinationLayerSettings represents settings for the coordination layer.
 type coordinationLayerSettings struct {
 	// executeCoordinationProcedureFn is a function executing the coordination
@@ -794,16 +862,16 @@ func processCoordinationResult(node *node, result *coordinationResult) {
 				expiryBlock,
 			)
 		}
+	case ActionMovingFunds:
+		if proposal, ok := result.proposal.(*MovingFundsProposal); ok {
+			node.handleMovingFundsProposal(
+				result.wallet,
+				proposal,
+				startBlock,
+				expiryBlock,
+			)
+		}
 	// TODO: Uncomment when moving funds support is implemented.
-	// case ActionMovingFunds:
-	//	 if proposal, ok := result.proposal.(*MovingFundsProposal); ok {
-	//	 	 node.handleMovingFundsProposal(
-	//	 	 	 result.wallet,
-	//	 	 	 proposal,
-	//	 	 	 startBlock,
-	//	 	 	 expiryBlock,
-	//	 	 )
-	//	 }
 	// case ActionMovedFundsSweep:
 	//	 if proposal, ok := result.proposal.(*MovedFundsSweepProposal); ok {
 	//	 	 node.handleMovedFundsSweepProposal(

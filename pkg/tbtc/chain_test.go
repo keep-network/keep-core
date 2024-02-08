@@ -702,6 +702,19 @@ func (lc *localChain) operatorAddress() (chain.Address, error) {
 	return lc.Signing().PublicKeyToAddress(operatorPublicKey)
 }
 
+func (lc *localChain) GetWalletParameters() (
+	creationPeriod uint32,
+	creationMinBtcBalance uint64,
+	creationMaxBtcBalance uint64,
+	closureMinBtcBalance uint64,
+	maxAge uint32,
+	maxBtcTransfer uint64,
+	closingPeriod uint32,
+	err error,
+) {
+	panic("unsupported")
+}
+
 func (lc *localChain) ValidateDepositSweepProposal(
 	walletPublicKeyHash [20]byte,
 	proposal *DepositSweepProposal,
@@ -889,6 +902,14 @@ func (lc *localChain) setHeartbeatProposalValidationResult(
 	defer lc.heartbeatProposalValidationsMutex.Unlock()
 
 	lc.heartbeatProposalValidations[proposal.Message] = result
+}
+
+func (lc *localChain) ValidateMovingFundsProposal(
+	walletPublicKeyHash [20]byte,
+	mainUTXO *bitcoin.UnspentTransactionOutput,
+	proposal *MovingFundsProposal,
+) error {
+	panic("unsupported")
 }
 
 // Connect sets up the local chain.

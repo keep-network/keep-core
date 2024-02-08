@@ -42,3 +42,8 @@ message RedemptionProposal {
     repeated bytes redeemersOutputScripts = 1;
     bytes redemptionTxFee = 2;
 }
+
+message MovingFundsProposal {
+    repeated bytes targetWallets = 1;
+    bytes movingFundsTxFee = 2;
+}

@@ -4,10 +4,11 @@ import (
 	"crypto/ecdsa"
 	"crypto/elliptic"
 	"encoding/hex"
-	"github.com/keep-network/keep-core/pkg/bitcoin"
 	"math/big"
 	"reflect"
 	"testing"
+
+	"github.com/keep-network/keep-core/pkg/bitcoin"
 
 	fuzz "github.com/google/gofuzz"
 
@@ -126,6 +127,21 @@ func TestCoordinationMessage_MarshalingRoundtrip(t *testing.T) {
 		return parsed
 	}
 
+	toByte20 := func(s string) [20]byte {
+		bytes, err := hex.DecodeString(s)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		if len(bytes) != 20 {
+			t.Fatal("incorrect hexstring length")
+		}
+
+		var result [20]byte
+		copy(result[:], bytes[:])
+		return result
+	}
+
 	tests := map[string]struct {
 		proposal CoordinationProposal
 	}{
@@ -168,23 +184,22 @@ func TestCoordinationMessage_MarshalingRoundtrip(t *testing.T) {
 				RedemptionTxFee: big.NewInt(10000),
 			},
 		},
-		// TODO: Uncomment when moving funds support is implemented.
-		// "with moving funds proposal": {
-		//     proposal: &MovingFundsProposal{},
-		// },
+		"with moving funds proposal": {
+			proposal: &MovingFundsProposal{
+				TargetWallets: [][20]byte{
+					toByte20("cb7d88a87c37aff0c1535fa4efe6f0a2406ea5e9"),
+					toByte20("f87eb7ec3b15a3fdd7b57754d765694b3e0b4bf4"),
+				},
+				MovingFundsTxFee: big.NewInt(10000),
+			},
+		},
+		// TODO: Uncomment when moved funds sweep support is implemented.
 		// "with moved funds sweep proposal": {
 		//     proposal: &MovedFundsSweepProposal{},
 		// },
 	}
 
-	walletPublicKeyHashBytes, err := hex.DecodeString(
-		"aa768412ceed10bd423c025542ca90071f9fb62d",
-	)
-	if err != nil {
-		t.Fatal(err)
-	}
-	var walletPublicKeyHash [20]byte
-	copy(walletPublicKeyHash[:], walletPublicKeyHashBytes)
+	walletPublicKeyHash := toByte20("aa768412ceed10bd423c025542ca90071f9fb62d")
 
 	for testName, test := range tests {
 		t.Run(testName, func(t *testing.T) {
@@ -226,14 +241,14 @@ func TestFuzzCoordinationMessage_MarshalingRoundtrip_WithHeartbeatProposal(t *te
 		f.Fuzz(&walletPublicKeyHash)
 		f.Fuzz(&proposal)
 
-		doneMessage := &coordinationMessage{
+		coordinationMsg := &coordinationMessage{
 			senderID:            senderID,
 			coordinationBlock:   coordinationBlock,
 			walletPublicKeyHash: walletPublicKeyHash,
 			proposal:            &proposal,
 		}
 
-		_ = pbutils.RoundTrip(doneMessage, &coordinationMessage{})
+		_ = pbutils.RoundTrip(coordinationMsg, &coordinationMessage{})
 	}
 }
 
@@ -255,14 +270,14 @@ func TestFuzzCoordinationMessage_MarshalingRoundtrip_WithDepositSweepProposal(t 
 		f.Fuzz(&walletPublicKeyHash)
 		f.Fuzz(&proposal)
 
-		doneMessage := &coordinationMessage{
+		coordinationMsg := &coordinationMessage{
 			senderID:            senderID,
 			coordinationBlock:   coordinationBlock,
 			walletPublicKeyHash: walletPublicKeyHash,
 			proposal:            &proposal,
 		}
 
-		_ = pbutils.RoundTrip(doneMessage, &coordinationMessage{})
+		_ = pbutils.RoundTrip(coordinationMsg, &coordinationMessage{})
 	}
 }
 
@@ -284,14 +299,43 @@ func TestFuzzCoordinationMessage_MarshalingRoundtrip_WithRedemptionProposal(t *t
 		f.Fuzz(&walletPublicKeyHash)
 		f.Fuzz(&proposal)
 
-		doneMessage := &coordinationMessage{
+		coordinationMsg := &coordinationMessage{
 			senderID:            senderID,
 			coordinationBlock:   coordinationBlock,
 			walletPublicKeyHash: walletPublicKeyHash,
 			proposal:            &proposal,
 		}
 
-		_ = pbutils.RoundTrip(doneMessage, &coordinationMessage{})
+		_ = pbutils.RoundTrip(coordinationMsg, &coordinationMessage{})
+	}
+}
+
+func TestFuzzCoordinationMessage_MarshalingRoundtrip_WithMovingFundsProposal(t *testing.T) {
+	for i := 0; i < 10; i++ {
+		var (
+			senderID            group.MemberIndex
+			coordinationBlock   uint64
+			walletPublicKeyHash [20]byte
+			proposal            MovingFundsProposal
+		)
+
+		f := fuzz.New().NilChance(0.1).
+			NumElements(0, 512).
+			Funcs(pbutils.FuzzFuncs()...)
+
+		f.Fuzz(&senderID)
+		f.Fuzz(&coordinationBlock)
+		f.Fuzz(&walletPublicKeyHash)
+		f.Fuzz(&proposal)
+
+		coordinationMsg := &coordinationMessage{
+			senderID:            senderID,
+			coordinationBlock:   coordinationBlock,
+			walletPublicKeyHash: walletPublicKeyHash,
+			proposal:            &proposal,
+		}
+
+		_ = pbutils.RoundTrip(coordinationMsg, &coordinationMessage{})
 	}
 }
 
@@ -313,14 +357,14 @@ func TestFuzzCoordinationMessage_MarshalingRoundtrip_WithNoopProposal(t *testing
 		f.Fuzz(&walletPublicKeyHash)
 		f.Fuzz(&proposal)
 
-		doneMessage := &coordinationMessage{
+		coordinationMsg := &coordinationMessage{
 			senderID:            senderID,
 			coordinationBlock:   coordinationBlock,
 			walletPublicKeyHash: walletPublicKeyHash,
 			proposal:            &proposal,
 		}
 
-		_ = pbutils.RoundTrip(doneMessage, &coordinationMessage{})
+		_ = pbutils.RoundTrip(coordinationMsg, &coordinationMessage{})
 	}
 }
 
