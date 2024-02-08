@@ -9,6 +9,7 @@ import (
 	"github.com/keep-network/keep-core/pkg/net"
 	"github.com/keep-network/keep-core/pkg/net/retransmission"
 	pubsub "github.com/libp2p/go-libp2p-pubsub"
+	pubsubtc "github.com/libp2p/go-libp2p-pubsub/timecache"
 	"github.com/libp2p/go-libp2p/core/host"
 	"github.com/libp2p/go-libp2p/core/peerstore"
 )
@@ -16,6 +17,17 @@ import (
 const (
 	libp2pPeerOutboundQueueSize = 256
 	libp2pValidationQueueSize   = 4096
+	// libp2pSeenMessagesTTL is the time-to-live used for pubsub seen messages
+	// cache. Once a message is received and validated, pubsub re-broadcasts it
+	// to other peers and puts it into the seen messages cache. This way,
+	// subsequent arrivals of the same message are not re-broadcasted
+	// unnecessarily. This mechanism is important for the network to avoid
+	// excessive message flooding. The default value used by libp2p is 2 minutes.
+	// However, Keep client messaging sessions are quite time-consuming so,
+	// we use a longer TTL to reduce flooding risk even further. Worth noting
+	// that this time cannot be too long as the cache may grow excessively and
+	// impact memory consumption.
+	libp2pSeenMessagesTTL = 5 * time.Minute
 )
 
 type channelManager struct {
@@ -51,6 +63,8 @@ func newChannelManager(
 		pubsub.WithMessageSignaturePolicy(pubsub.StrictSign),
 		pubsub.WithPeerOutboundQueueSize(libp2pPeerOutboundQueueSize),
 		pubsub.WithValidateQueueSize(libp2pValidationQueueSize),
+		pubsub.WithSeenMessagesStrategy(pubsubtc.Strategy_LastSeen),
+		pubsub.WithSeenMessagesTTL(libp2pSeenMessagesTTL),
 	)
 	if err != nil {
 		return nil, err
