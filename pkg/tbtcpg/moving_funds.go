@@ -433,17 +433,16 @@ func (mft *MovingFundsTask) GetWalletMembersInfo(
 
 		// Search for the operator address in the cache. Store the operator
 		// address in the cache if it's not there.
-		if _, found := operatorIDCache[operatorAddress]; !found {
+		if operatorID, found := operatorIDCache[operatorAddress]; !found {
 			operatorID, err := mft.chain.GetOperatorID(operatorAddress)
 			if err != nil {
 				return nil, 0, fmt.Errorf("failed to get operator ID: [%w]", err)
 			}
-
 			operatorIDCache[operatorAddress] = operatorID
+			walletMemberIDs = append(walletMemberIDs, operatorID)
+		} else {
+			walletMemberIDs = append(walletMemberIDs, operatorID)
 		}
-
-		operatorID := operatorIDCache[operatorAddress]
-		walletMemberIDs = append(walletMemberIDs, operatorID)
 	}
 
 	// The task executing operator must always be on the wallet operators list.
