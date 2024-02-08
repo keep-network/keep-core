@@ -60,6 +60,7 @@ func TestDkgRetryLoop(t *testing.T) {
 		ctxFn                   func() (context.Context, context.CancelFunc)
 		incomingAnnouncementsFn func(sessionID string) ([]group.MemberIndex, error)
 		dkgAttemptFn            dkgAttemptFn
+		attemptsLimit           uint
 		expectedErr             error
 		expectedResult          *dkg.Result
 		expectedLastAttempt     *dkgAttemptParams
@@ -75,12 +76,13 @@ func TestDkgRetryLoop(t *testing.T) {
 			dkgAttemptFn: func(attempt *dkgAttemptParams) (*dkg.Result, error) {
 				return testResult, nil
 			},
+			attemptsLimit:  0, // no limit
 			expectedErr:    nil,
 			expectedResult: testResult,
 			expectedLastAttempt: &dkgAttemptParams{
 				number:                 1,
-				startBlock:             206,
-				timeoutBlock:           406, // start block + 200
+				startBlock:             211,
+				timeoutBlock:           411, // start block + 200
 				excludedMembersIndexes: []group.MemberIndex{},
 			},
 		},
@@ -96,6 +98,7 @@ func TestDkgRetryLoop(t *testing.T) {
 			dkgAttemptFn: func(attempt *dkgAttemptParams) (*dkg.Result, error) {
 				return testResult, nil
 			},
+			attemptsLimit:  0, // no limit
 			expectedErr:    nil,
 			expectedResult: testResult,
 			// As only 8 members (group quorum) announced their readiness,
@@ -103,8 +106,8 @@ func TestDkgRetryLoop(t *testing.T) {
 			// Not ready members are excluded.
 			expectedLastAttempt: &dkgAttemptParams{
 				number:                 1,
-				startBlock:             206,
-				timeoutBlock:           406, // start block + 200
+				startBlock:             211,
+				timeoutBlock:           411, // start block + 200
 				excludedMembersIndexes: []group.MemberIndex{9, 10},
 			},
 		},
@@ -124,14 +127,15 @@ func TestDkgRetryLoop(t *testing.T) {
 			dkgAttemptFn: func(attempt *dkgAttemptParams) (*dkg.Result, error) {
 				return testResult, nil
 			},
+			attemptsLimit:  0, // no limit
 			expectedErr:    nil,
 			expectedResult: testResult,
 			// First attempt fails because the group quorum did not announce
 			// readiness.
 			expectedLastAttempt: &dkgAttemptParams{
 				number:                 2,
-				startBlock:             417, // 206 + 1 * (6 + 200 + 5)
-				timeoutBlock:           617, // start block + 200
+				startBlock:             427, // 211 + 1 * (11 + 200 + 5)
+				timeoutBlock:           627, // start block + 200
 				excludedMembersIndexes: []group.MemberIndex{2, 5},
 			},
 		},
@@ -150,13 +154,14 @@ func TestDkgRetryLoop(t *testing.T) {
 			dkgAttemptFn: func(attempt *dkgAttemptParams) (*dkg.Result, error) {
 				return testResult, nil
 			},
+			attemptsLimit:  0, // no limit
 			expectedErr:    nil,
 			expectedResult: testResult,
 			// First attempt fails due to the announcer error.
 			expectedLastAttempt: &dkgAttemptParams{
 				number:                 2,
-				startBlock:             417, // 206 + 1 * (6 + 200 + 5)
-				timeoutBlock:           617, // start block + 200
+				startBlock:             427, // 211 + 1 * (11 + 200 + 5)
+				timeoutBlock:           627, // start block + 200
 				excludedMembersIndexes: []group.MemberIndex{2, 5},
 			},
 		},
@@ -175,6 +180,7 @@ func TestDkgRetryLoop(t *testing.T) {
 
 				return testResult, nil
 			},
+			attemptsLimit:  0, // no limit
 			expectedErr:    nil,
 			expectedResult: testResult,
 			// The DKG error occurs on attempt 1. For attempt 2, all members are
@@ -183,8 +189,8 @@ func TestDkgRetryLoop(t *testing.T) {
 			// given seed.
 			expectedLastAttempt: &dkgAttemptParams{
 				number:                 2,
-				startBlock:             417, // 206 + 1 * (6 + 200 + 5)
-				timeoutBlock:           617, // start block + 150
+				startBlock:             427, // 211 + 1 * (11 + 200 + 5)
+				timeoutBlock:           627, // start block + 200
 				excludedMembersIndexes: []group.MemberIndex{2, 5},
 			},
 		},
@@ -203,6 +209,7 @@ func TestDkgRetryLoop(t *testing.T) {
 
 				return testResult, nil
 			},
+			attemptsLimit:  0, // no limit
 			expectedErr:    nil,
 			expectedResult: testResult,
 			// Member 5 is the executing one. First attempt fails and is
@@ -211,8 +218,8 @@ func TestDkgRetryLoop(t *testing.T) {
 			// member 5 skips attempt 2 and succeeds on attempt 3.
 			expectedLastAttempt: &dkgAttemptParams{
 				number:                 3,
-				startBlock:             628, // 206 + 2 * (6 + 200 + 5)
-				timeoutBlock:           828, // start block + 200
+				startBlock:             643, // 211 + 2 * (11 + 200 + 5)
+				timeoutBlock:           843, // start block + 200
 				excludedMembersIndexes: []group.MemberIndex{9},
 			},
 		},
@@ -230,7 +237,29 @@ func TestDkgRetryLoop(t *testing.T) {
 			dkgAttemptFn: func(attempt *dkgAttemptParams) (*dkg.Result, error) {
 				return nil, fmt.Errorf("invalid data")
 			},
+			attemptsLimit:       0, // no limit
 			expectedErr:         context.Canceled,
+			expectedResult:      nil,
+			expectedLastAttempt: nil,
+		},
+		"attempts limit reached": {
+			memberIndex: 1,
+			ctxFn: func() (context.Context, context.CancelFunc) {
+				return context.WithTimeout(context.Background(), 10*time.Second)
+			},
+			incomingAnnouncementsFn: func(sessionID string) ([]group.MemberIndex, error) {
+				// Force the first attempt's announcement failure.
+				if sessionID == fmt.Sprintf("%v-%v", seed, 1) {
+					return nil, fmt.Errorf("unexpected error")
+				}
+
+				return membersIndexes, nil
+			},
+			dkgAttemptFn: func(attempt *dkgAttemptParams) (*dkg.Result, error) {
+				return testResult, nil
+			},
+			attemptsLimit:       1,
+			expectedErr:         fmt.Errorf("reached the limit of attempts [1]"),
 			expectedResult:      nil,
 			expectedLastAttempt: nil,
 		},
@@ -251,6 +280,7 @@ func TestDkgRetryLoop(t *testing.T) {
 				selectedOperators,
 				groupParameters,
 				announcer,
+				test.attemptsLimit,
 			)
 
 			ctx, cancelCtx := test.ctxFn()
