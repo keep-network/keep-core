@@ -28,7 +28,7 @@ const (
 	// is used to calculate the submission delay period that should be respected
 	// by the given member to avoid all members submitting the same DKG result
 	// at the same time.
-	dkgResultSubmissionDelayStepBlocks = 15
+	dkgResultSubmissionDelayStepBlocks = 3
 	// dkgResultApprovalDelayStepBlocks determines the delay step in blocks
 	// that is used to calculate the approval delay period that should be
 	// respected by the given member to avoid all members approving the same
@@ -39,6 +39,10 @@ const (
 	// submission. Once the period elapses, the DKG state is checked to confirm
 	// the challenge was accepted successfully.
 	dkgResultChallengeConfirmationBlocks = 20
+	// dkgAttemptsLimit determines the maximum number of attempts to execute
+	// the DKG protocol. If the limit is reached, the protocol execution is
+	// aborted.
+	dkgAttemptsLimit = 1
 )
 
 // dkgExecutor is a component responsible for the full execution of ECDSA
@@ -317,6 +321,7 @@ func (de *dkgExecutor) generateSigningGroup(
 				groupSelectionResult.OperatorsAddresses,
 				de.groupParameters,
 				announcer,
+				dkgAttemptsLimit,
 			)
 
 			result, err := retryLoop.start(

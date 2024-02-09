@@ -7,14 +7,20 @@ import (
 	libp2ptls "github.com/libp2p/go-libp2p/p2p/security/tls"
 
 	keepNet "github.com/keep-network/keep-core/pkg/net"
-	libp2pcrypto "github.com/libp2p/go-libp2p-core/crypto"
-	"github.com/libp2p/go-libp2p-core/peer"
-	"github.com/libp2p/go-libp2p-core/sec"
+	libp2pcrypto "github.com/libp2p/go-libp2p/core/crypto"
+	"github.com/libp2p/go-libp2p/core/peer"
+	"github.com/libp2p/go-libp2p/core/protocol"
+	"github.com/libp2p/go-libp2p/core/sec"
+	"github.com/libp2p/go-libp2p/p2p/net/upgrader"
 )
 
-// ID is the multistream-select protocol ID that should be used when identifying
-// this security transport.
-const handshakeID = "/keep/handshake/1.0.0"
+// Keep Network protocol identifiers
+const (
+	// securityProtocolID is the ID of the secured transport protocol.
+	securityProtocolID = "/keep/handshake/1.0.0"
+	// authProtocolID is the ID of the authentication protocol.
+	authProtocolID = "keep"
+)
 
 // Compile time assertions of custom types
 var _ sec.SecureTransport = (*transport)(nil)
@@ -22,34 +28,41 @@ var _ sec.SecureConn = (*authenticatedConnection)(nil)
 
 // transport constructs an encrypted and authenticated connection for a peer.
 type transport struct {
-	localPeerID     peer.ID
-	privateKey      libp2pcrypto.PrivKey
-	protocol        string
-	firewall        keepNet.Firewall
+	protocolID     protocol.ID
+	authProtocolID string
+
+	localPeerID peer.ID
+	privateKey  libp2pcrypto.PrivKey
+
 	encryptionLayer sec.SecureTransport
+
+	firewall keepNet.Firewall
 }
 
 func newEncryptedAuthenticatedTransport(
-	pk libp2pcrypto.PrivKey,
-	protocol string,
+	protocolID protocol.ID,
+	authProtocolID string,
+	privateKey libp2pcrypto.PrivKey,
+	muxers []upgrader.StreamMuxer,
 	firewall keepNet.Firewall,
 ) (*transport, error) {
-	id, err := peer.IDFromPrivateKey(pk)
+	id, err := peer.IDFromPrivateKey(privateKey)
 	if err != nil {
 		return nil, err
 	}
 
-	encryptionLayer, err := libp2ptls.New(pk)
+	encryptionLayer, err := libp2ptls.New(protocolID, privateKey, muxers)
 	if err != nil {
 		return nil, err
 	}
 
 	return &transport{
+		protocolID:      protocolID,
+		authProtocolID:  authProtocolID,
 		localPeerID:     id,
-		privateKey:      pk,
-		firewall:        firewall,
+		privateKey:      privateKey,
 		encryptionLayer: encryptionLayer,
-		protocol:        protocol,
+		firewall:        firewall,
 	}, nil
 }
 
@@ -66,10 +79,11 @@ func (t *transport) SecureInbound(
 
 	return newAuthenticatedInboundConnection(
 		encryptedConnection,
+		encryptedConnection.ConnState(),
 		t.localPeerID,
 		t.privateKey,
 		t.firewall,
-		t.protocol,
+		t.authProtocolID,
 	)
 }
 
@@ -90,10 +104,16 @@ func (t *transport) SecureOutbound(
 
 	return newAuthenticatedOutboundConnection(
 		encryptedConnection,
+		encryptedConnection.ConnState(),
 		t.localPeerID,
 		t.privateKey,
 		remotePeerID,
 		t.firewall,
-		t.protocol,
+		t.authProtocolID,
 	)
+}
+
+// ID is the protocol ID of the security protocol.
+func (t *transport) ID() protocol.ID {
+	return t.protocolID
 }

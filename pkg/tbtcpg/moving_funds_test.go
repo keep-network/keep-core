@@ -207,7 +207,7 @@ func TestMovingFundsAction_FindTargetWallets_CommitmentAlreadySubmitted(t *testi
 	}{
 		"success scenario": {
 			targetWalletsCommitmentHash: hexToByte32(
-				"9d9368117956680760fa27bb9542ceba2d4fcc398d640a5a0769f5a9593afb0e",
+				"7820cd666bf13bda0850e52cfacf64140716e578f7f6a0567cae9b002fc83775",
 			),
 			targetWallets: []walletInfo{
 				{
@@ -236,36 +236,9 @@ func TestMovingFundsAction_FindTargetWallets_CommitmentAlreadySubmitted(t *testi
 			},
 			expectedError: nil,
 		},
-		"target wallet is not live": {
-			targetWalletsCommitmentHash: hexToByte32(
-				"9d9368117956680760fa27bb9542ceba2d4fcc398d640a5a0769f5a9593afb0e",
-			),
-			targetWallets: []walletInfo{
-				{
-					publicKeyHash: hexToByte20(
-						"92a6ec889a8fa34f731e639edede4c75e184307c",
-					),
-					state: tbtc.StateLive,
-				},
-				{
-					publicKeyHash: hexToByte20(
-						"c7302d75072d78be94eb8d36c4b77583c7abb06e",
-					),
-					state: tbtc.StateTerminated, // wrong state
-				},
-				{
-					publicKeyHash: hexToByte20(
-						"fdfa28e238734271f5e0d4f53d3843ae6cc09b24",
-					),
-					state: tbtc.StateLive,
-				},
-			},
-			expectedTargetWallets: nil,
-			expectedError:         tbtcpg.ErrTargetWalletNotLive,
-		},
 		"target wallet commitment hash mismatch": {
 			targetWalletsCommitmentHash: hexToByte32(
-				"9d9368117956680760fa27bb9542ceba2d4fcc398d640a5a0769f5a9593afb0e",
+				"7820cd666bf13bda0850e52cfacf64140716e578f7f6a0567cae9b002fc83775",
 			),
 			targetWallets: []walletInfo{
 				{ // Use only one target wallet.
@@ -290,9 +263,7 @@ func TestMovingFundsAction_FindTargetWallets_CommitmentAlreadySubmitted(t *testi
 			blockCounter.SetCurrentBlock(currentBlock)
 			tbtcChain.SetBlockCounter(blockCounter)
 
-			startBlock := currentBlock - uint64(
-				tbtcpg.MovingFundsCommitmentLookBackPeriod.Seconds(),
-			)/uint64(averageBlockTime.Seconds())
+			startBlock := currentBlock - tbtcpg.MovingFundsCommitmentLookBackBlocks
 
 			targetWallets := [][20]byte{}
 			for _, walletInfo := range test.targetWallets {
@@ -367,13 +338,15 @@ func TestMovingFundsAction_GetWalletMembersInfo(t *testing.T) {
 	}{
 		"success case": {
 			walletOperators: []operatorInfo{
+				// The executing operator controls two wallet members.
 				{"5df232b0348928793658dd05dfc6b05a59d11ae8", 3},
 				{"dcc895d32b74b34cef2baa6546884fcda65da1e9", 1},
 				{"28759deda2ea33bd72f68ea2e8f60cd670c2549f", 2},
 				{"f7891d42f3c61a49e0aed1e31b151877c0905cf7", 4},
+				{"28759deda2ea33bd72f68ea2e8f60cd670c2549f", 2},
 			},
 			executingOperator:        "28759deda2ea33bd72f68ea2e8f60cd670c2549f",
-			expectedMemberIDs:        []uint32{3, 1, 2, 4},
+			expectedMemberIDs:        []uint32{3, 1, 2, 4, 2},
 			expectedOperatorPosition: 3,
 			expectedError:            nil,
 		},
@@ -499,6 +472,7 @@ func TestMovingFundsAction_SubmitMovingFundsCommitment(t *testing.T) {
 			task := tbtcpg.NewMovingFundsTask(tbtcChain, nil)
 
 			err := task.SubmitMovingFundsCommitment(
+				&testutils.MockLogger{},
 				walletPublicKeyHash,
 				&walletMainUtxo,
 				test.walletMemberIDs,

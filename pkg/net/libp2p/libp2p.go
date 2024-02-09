@@ -19,12 +19,15 @@ import (
 	//lint:ignore SA1019 package deprecated, but we rely on its interface
 	addrutil "github.com/libp2p/go-addr-util"
 	"github.com/libp2p/go-libp2p"
-	"github.com/libp2p/go-libp2p-core/host"
-	libp2pnet "github.com/libp2p/go-libp2p-core/network"
-	"github.com/libp2p/go-libp2p-core/peer"
 	dht "github.com/libp2p/go-libp2p-kad-dht"
+	libp2pcrypto "github.com/libp2p/go-libp2p/core/crypto"
+	"github.com/libp2p/go-libp2p/core/host"
+	libp2pnet "github.com/libp2p/go-libp2p/core/network"
+	"github.com/libp2p/go-libp2p/core/peer"
+	"github.com/libp2p/go-libp2p/core/protocol"
 	rhost "github.com/libp2p/go-libp2p/p2p/host/routed"
-	connmgr "github.com/libp2p/go-libp2p/p2p/net/connmgr"
+	"github.com/libp2p/go-libp2p/p2p/net/connmgr"
+	"github.com/libp2p/go-libp2p/p2p/net/upgrader"
 
 	ma "github.com/multiformats/go-multiaddr"
 )
@@ -56,11 +59,6 @@ const (
 	// ConnectedPeersCheckTick is the amount of time between periodic checks of
 	// the number of connected peers.
 	ConnectedPeersCheckTick = time.Minute * 1
-)
-
-// Keep Network protocol identifiers
-const (
-	protocolKeep = "keep"
 )
 
 // MaximumDisseminationTime is the maximum dissemination time of messages in
@@ -388,18 +386,6 @@ func discoverAndListen(
 		return nil, err
 	}
 
-	transport, err := newEncryptedAuthenticatedTransport(
-		identity.privKey,
-		protocolKeep,
-		firewall,
-	)
-	if err != nil {
-		return nil, fmt.Errorf(
-			"could not create authenticated transport: [%v]",
-			err,
-		)
-	}
-
 	connectionManager, err := connmgr.NewConnManager(
 		DefaultConnMgrLowWater,
 		DefaultConnMgrHighWater,
@@ -415,7 +401,30 @@ func discoverAndListen(
 	options := []libp2p.Option{
 		libp2p.ListenAddrs(addrs...),
 		libp2p.Identity(identity.privKey),
-		libp2p.Security(handshakeID, transport),
+		libp2p.Security(
+			securityProtocolID,
+			func(
+				protocolID protocol.ID,
+				privateKey libp2pcrypto.PrivKey,
+				muxers []upgrader.StreamMuxer,
+			) (*transport, error) {
+				encAuthTransport, err := newEncryptedAuthenticatedTransport(
+					protocolID,
+					authProtocolID,
+					privateKey,
+					muxers,
+					firewall,
+				)
+				if err != nil {
+					return nil, fmt.Errorf(
+						"could not create encrypted authenticated transport: [%v]",
+						err,
+					)
+				}
+
+				return encAuthTransport, nil
+			},
+		),
 		libp2p.ConnectionManager(connectionManager),
 	}
 
@@ -570,7 +579,7 @@ func ExtractPeersPublicKeys(peerAddresses []string) ([]*operator.PublicKey, erro
 		if err != nil {
 			return nil, fmt.Errorf(
 				"failed to extract network public key for peer [%s]: [%v]",
-				peerInfo.ID.Pretty(),
+				peerInfo.ID.String(),
 				err,
 			)
 		}
@@ -581,7 +590,7 @@ func ExtractPeersPublicKeys(peerAddresses []string) ([]*operator.PublicKey, erro
 		if err != nil {
 			return nil, fmt.Errorf(
 				"failed to convert to operator public key for peer [%s]: [%v]",
-				peerInfo.ID.Pretty(),
+				peerInfo.ID.String(),
 				err,
 			)
 		}

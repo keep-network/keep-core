@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"github.com/keep-network/keep-core/pkg/tbtcpg"
 	"io/fs"
-	"io/ioutil"
+	"os"
 	"path/filepath"
 	"runtime"
 	"strings"
@@ -148,7 +148,7 @@ func loadTestScenarios[T json.Unmarshaler](testDataFilePrefix string) ([]T, erro
 		// #nosec G304 (file path provided as taint input)
 		// This line is used to read a test fixture file.
 		// There is no user input.
-		fileBytes, err := ioutil.ReadFile(filePath)
+		fileBytes, err := os.ReadFile(filePath)
 		if err != nil {
 			return nil, fmt.Errorf(
 				"cannot read file [%v]: [%v]",

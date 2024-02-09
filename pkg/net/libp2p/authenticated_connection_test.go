@@ -9,8 +9,9 @@ import (
 	"testing"
 	"time"
 
-	libp2pcrypto "github.com/libp2p/go-libp2p-core/crypto"
-	peer "github.com/libp2p/go-libp2p-core/peer"
+	libp2pcrypto "github.com/libp2p/go-libp2p/core/crypto"
+	libp2pnetwork "github.com/libp2p/go-libp2p/core/network"
+	"github.com/libp2p/go-libp2p/core/peer"
 
 	keepNet "github.com/keep-network/keep-core/pkg/net"
 	"github.com/keep-network/keep-core/pkg/net/gen/pb"
@@ -58,10 +59,11 @@ func TestPinnedAndMessageKeyMismatch(t *testing.T) {
 
 	_, err = newAuthenticatedInboundConnection(
 		responderConn,
+		libp2pnetwork.ConnectionState{},
 		responder.peerID,
 		responder.networkPrivateKey,
 		firewall,
-		protocolKeep,
+		authProtocolID,
 	)
 	if err == nil {
 		t.Fatal("should not have successfully completed handshake")
@@ -73,7 +75,7 @@ func TestPinnedAndMessageKeyMismatch(t *testing.T) {
 // peer-pinning should ensure that a malicious peer can't hijack a connection
 // after the first act and sign subsequent messages.
 func maliciousInitiatorHijacksHonestRun(t *testing.T, ac *authenticatedConnection) {
-	initiatorAct1, err := handshake.InitiateHandshake(protocolKeep)
+	initiatorAct1, err := handshake.InitiateHandshake(authProtocolID)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -251,21 +253,23 @@ func connectInitiatorAndResponder(
 	) {
 		authnOutboundConn, outboundError = newAuthenticatedOutboundConnection(
 			initiatorConn,
+			libp2pnetwork.ConnectionState{},
 			initiatorPeerID,
 			initiatorPrivKey,
 			responderPeerID,
 			firewall,
-			protocolKeep,
+			authProtocolID,
 		)
 		done <- struct{}{}
 	}(initiatorConn, initiator.peerID, initiator.networkPrivateKey, responder.peerID)
 
 	authnInboundConn, inboundError = newAuthenticatedInboundConnection(
 		responderConn,
+		libp2pnetwork.ConnectionState{},
 		responder.peerID,
 		responder.networkPrivateKey,
 		firewall,
-		protocolKeep,
+		authProtocolID,
 	)
 
 	<-done // handshake is done

@@ -419,12 +419,12 @@ func (bc *baseChain) GetBlockHashByNumber(blockNumber uint64) (
 	[32]byte,
 	error,
 ) {
-	block, err := bc.blockByNumber(blockNumber)
+	header, err := bc.headerByNumber(blockNumber)
 	if err != nil {
-		return [32]byte{}, fmt.Errorf("cannot get block: [%v]", err)
+		return [32]byte{}, fmt.Errorf("cannot get block header: [%v]", err)
 	}
 
-	return block.Hash(), nil
+	return header.Hash(), nil
 }
 
 // currentBlock fetches the current block.
@@ -449,6 +449,15 @@ func (bc *baseChain) blockByNumber(number uint64) (*types.Block, error) {
 	defer cancelCtx()
 
 	return bc.client.BlockByNumber(ctx, big.NewInt(int64(number)))
+}
+
+// headerByNumber returns the header for the given block number. Times out
+// if the underlying client call takes more than 30 seconds.
+func (bc *baseChain) headerByNumber(number uint64) (*types.Header, error) {
+	ctx, cancelCtx := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancelCtx()
+
+	return bc.client.HeaderByNumber(ctx, big.NewInt(int64(number)))
 }
 
 // closerBlock check timestamps of blocks b1 and b2 and returns the block

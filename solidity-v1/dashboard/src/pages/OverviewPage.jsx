@@ -31,7 +31,7 @@ const OverviewPage = (props) => {
     useSelector((state) => state.coveragePool)
 
   useEffect(() => {
-    if (isConnected) {
+    if (isConnected && address) {
       dispatch({
         type: "staking/fetch_delegations_request",
         payload: { address },

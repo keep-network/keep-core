@@ -216,6 +216,11 @@ export const Keep = KeepLib.initialize(
   getChainId()
 )
 
+export const KeepExplorerMode = KeepLib.initialize(
+  new Web3jsWrapper(new Web3(getWsUrl())),
+  getChainId()
+)
+
 export const Web3Loaded = Web3Deferred.promise
 export const ContractsLoaded = ContractsDeferred.promise
 

@@ -9,7 +9,7 @@ import (
 	"sync"
 
 	"github.com/keep-network/keep-core/pkg/bitcoin"
-	chainpkg "github.com/keep-network/keep-core/pkg/chain"
+	"github.com/keep-network/keep-core/pkg/chain"
 
 	"go.uber.org/zap"
 
@@ -146,7 +146,7 @@ func newNode(
 }
 
 // operatorAddress returns the node's operator address.
-func (n *node) operatorAddress() (chainpkg.Address, error) {
+func (n *node) operatorAddress() (chain.Address, error) {
 	_, operatorPublicKey, err := n.chain.OperatorKeyPair()
 	if err != nil {
 		return "", fmt.Errorf("failed to get operator public key: [%v]", err)
@@ -164,7 +164,7 @@ func (n *node) operatorAddress() (chainpkg.Address, error) {
 }
 
 // operatorAddress returns the node's operator ID.
-func (n *node) operatorID() (chainpkg.OperatorID, error) {
+func (n *node) operatorID() (chain.OperatorID, error) {
 	operatorAddress, err := n.operatorAddress()
 	if err != nil {
 		return 0, fmt.Errorf("failed to get operator address: [%v]", err)
@@ -608,6 +608,8 @@ func (n *node) handleRedemptionProposal(
 	walletActionLogger.Infof("wallet action dispatched successfully")
 }
 
+// handleMovingFundsProposal handles an incoming moving funds proposal by
+// orchestrating and dispatching an appropriate wallet action.
 func (n *node) handleMovingFundsProposal(
 	wallet wallet,
 	proposal *MovingFundsProposal,

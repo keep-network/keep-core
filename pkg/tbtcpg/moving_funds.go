@@ -1,15 +1,11 @@
 package tbtcpg
 
 import (
-	"bytes"
 	"fmt"
 	"math/big"
 	"sort"
-	"time"
 
-	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ipfs/go-log/v2"
-	"github.com/keep-network/keep-common/pkg/chain/ethereum"
 	"github.com/keep-network/keep-core/pkg/bitcoin"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/tbtc"
@@ -33,10 +29,6 @@ var (
 		"target wallets hash must match commitment hash",
 	)
 
-	// ErrTargetWalletNotLive is the error returned when a target wallet is not
-	// in the Live state.
-	ErrTargetWalletNotLive = fmt.Errorf("target wallet is not live")
-
 	// ErrNoExecutingOperator is the error returned when the task executing
 	// operator is not found among the wallet operator IDs.
 	ErrNoExecutingOperator = fmt.Errorf(
@@ -54,9 +46,10 @@ var (
 	ErrFeeTooHigh = fmt.Errorf("estimated fee exceeds the maximum fee")
 )
 
-// MovingFundsCommitmentLookBackPeriod is the look-back period used when
-// searching for submitted moving funds commitment events.
-const MovingFundsCommitmentLookBackPeriod = 30 * 24 * time.Hour // 1 month
+// MovingFundsCommitmentLookBackBlocks is the look-back period in blocks used
+// when searching for submitted moving funds commitment events. It's equal to
+// 30 days assuming 12 seconds per block.
+const MovingFundsCommitmentLookBackBlocks = uint64(216000)
 
 // MovingFundsTask is a task that may produce a moving funds proposal.
 type MovingFundsTask struct {
@@ -150,7 +143,7 @@ func (mft *MovingFundsTask) Run(request *tbtc.CoordinationProposalRequest) (
 	targetWalletsCommitmentHash :=
 		walletChainData.MovingFundsTargetWalletsCommitmentHash
 
-	targetWallets, commitmentSubmitted, err := mft.FindTargetWallets(
+	targetWallets, commitmentExists, err := mft.FindTargetWallets(
 		taskLogger,
 		walletPublicKeyHash,
 		targetWalletsCommitmentHash,
@@ -159,6 +152,34 @@ func (mft *MovingFundsTask) Run(request *tbtc.CoordinationProposalRequest) (
 	)
 	if err != nil {
 		return nil, false, fmt.Errorf("cannot find target wallets: [%w]", err)
+	}
+
+	if !commitmentExists {
+		walletMemberIDs, walletMemberIndex, err := mft.GetWalletMembersInfo(
+			request.WalletOperators,
+			request.ExecutingOperator,
+		)
+		if err != nil {
+			return nil, false, fmt.Errorf(
+				"cannot get wallet members IDs: [%w]",
+				err,
+			)
+		}
+
+		err = mft.SubmitMovingFundsCommitment(
+			taskLogger,
+			walletPublicKeyHash,
+			walletMainUtxo,
+			walletMemberIDs,
+			walletMemberIndex,
+			targetWallets,
+		)
+		if err != nil {
+			return nil, false, fmt.Errorf(
+				"error while submitting moving funds commitment: [%w]",
+				err,
+			)
+		}
 	}
 
 	proposal, err := mft.ProposeMovingFunds(
@@ -175,34 +196,7 @@ func (mft *MovingFundsTask) Run(request *tbtc.CoordinationProposalRequest) (
 		)
 	}
 
-	if !commitmentSubmitted {
-		walletMemberIDs, walletMemberIndex, err := mft.GetWalletMembersInfo(
-			request.WalletOperators,
-			request.ExecutingOperator,
-		)
-		if err != nil {
-			return nil, false, fmt.Errorf(
-				"cannot get wallet members IDs: [%w]",
-				err,
-			)
-		}
-
-		err = mft.SubmitMovingFundsCommitment(
-			walletPublicKeyHash,
-			walletMainUtxo,
-			walletMemberIDs,
-			walletMemberIndex,
-			targetWallets,
-		)
-		if err != nil {
-			return nil, false, fmt.Errorf(
-				"error while submitting moving funds commitment: [%w]",
-				err,
-			)
-		}
-	}
-
-	return proposal, false, nil
+	return proposal, true, nil
 }
 
 // FindTargetWallets returns a list of target wallets for the moving funds
@@ -260,7 +254,10 @@ func (mft *MovingFundsTask) findNewTargetWallets(
 		// The divisor must be positive, but we do not need to check it as
 		// this function will be executed with wallet max BTC transfer as
 		// the divisor and we already ensured it is positive.
-		return (x + y - 1) / y
+		if x == 0 {
+			return 0
+		}
+		return 1 + (x-1)/y
 	}
 	min := func(x, y uint64) uint64 {
 		if x < y {
@@ -277,7 +274,7 @@ func (mft *MovingFundsTask) findNewTargetWallets(
 	// Prepare a list of target wallets using the new wallets registration
 	// events. Retrieve only the necessary number of live wallets.
 	// The iteration is started from the end of the list as the newest wallets
-	// are located there and have highest the chance of being Live.
+	// are located there and have the highest chance of being Live.
 	events, err := mft.chain.PastNewWalletRegisteredEvents(nil)
 	if err != nil {
 		return nil, fmt.Errorf(
@@ -362,9 +359,14 @@ func (mft *MovingFundsTask) retrieveCommittedTargetWallets(
 		)
 	}
 
-	filterLookBackSeconds := uint64(MovingFundsCommitmentLookBackPeriod.Seconds())
-	filterLookBackBlocks := filterLookBackSeconds / uint64(mft.chain.AverageBlockTime().Seconds())
-	filterStartBlock := currentBlockNumber - filterLookBackBlocks
+	// When calculating the filter start block make sure the current block is
+	// greater than the commitment look back blocks. This condition could be
+	// unmet for example when running local tests. In that case keep the filter
+	// start block at `0`.
+	filterStartBlock := uint64(0)
+	if currentBlockNumber > MovingFundsCommitmentLookBackBlocks {
+		filterStartBlock = currentBlockNumber - MovingFundsCommitmentLookBackBlocks
+	}
 
 	filter := &tbtc.MovingFundsCommitmentSubmittedEventFilter{
 		StartBlock:          filterStartBlock,
@@ -390,36 +392,10 @@ func (mft *MovingFundsTask) retrieveCommittedTargetWallets(
 
 	targetWallets := events[0].TargetWallets
 
-	// Make sure all the target wallets are Live.
-	for _, targetWallet := range targetWallets {
-		targetWalletChainData, err := mft.chain.GetWallet(targetWallet)
-		if err != nil {
-			return nil, fmt.Errorf(
-				"failed to get wallet data for target wallet [0x%x]: [%w]",
-				targetWallet,
-				err,
-			)
-		}
-
-		if targetWalletChainData.State != tbtc.StateLive {
-			return nil, fmt.Errorf(
-				"%w: [0x%x]",
-				ErrTargetWalletNotLive,
-				targetWallet,
-			)
-		}
-	}
-
 	// Just in case check if the hash of the target wallets matches the moving
 	// funds target wallets commitment hash.
-	packedWallets := []byte{}
-	for _, wallet := range targetWallets {
-		packedWallets = append(packedWallets, wallet[:]...)
-	}
-
-	calculatedHash := crypto.Keccak256(packedWallets)
-
-	if !bytes.Equal(calculatedHash, targetWalletsCommitmentHash[:]) {
+	calculatedHash := mft.chain.ComputeMovingFundsCommitmentHash(targetWallets)
+	if calculatedHash != targetWalletsCommitmentHash {
 		return nil, ErrWrongCommitmentHash
 	}
 
@@ -433,23 +409,40 @@ func (mft *MovingFundsTask) GetWalletMembersInfo(
 	walletOperators []chain.Address,
 	executingOperator chain.Address,
 ) ([]uint32, uint32, error) {
-	walletMemberIDs := make([]uint32, 0)
+	// Cache mapping operator addresses to their wallet member IDs. It helps to
+	// limit the number of calls to the ETH client if some operator addresses
+	// occur on the list multiple times.
+	operatorIDCache := make(map[chain.Address]uint32)
+	// TODO: Consider adding a global cache at the `ProposalGenerator` level.
+
 	walletMemberIndex := 0
+	walletMemberIDs := make([]uint32, 0)
 
 	for index, operatorAddress := range walletOperators {
-		operatorID, err := mft.chain.GetOperatorID(operatorAddress)
-		if err != nil {
-			return nil, 0, fmt.Errorf("failed to get operator ID: [%w]", err)
-		}
-
-		// Increment the index by 1 as operator indexing starts at 1, not 0.
-		// This ensures the operator's position is correctly identified in the
-		// range [1, walletOperators.length].
-		if operatorAddress == executingOperator {
+		// If the operator address is the address of the executing operator save
+		// its position. Note that since the executing operator can control
+		// multiple wallet members its address can occur on the list multiple
+		// times. For clarity, we should save the first occurrence on the list,
+		// i.e. when `walletMemberIndex` still holds the value of `0`.
+		if operatorAddress == executingOperator && walletMemberIndex == 0 {
+			// Increment the index by 1 as operator indexing starts at 1, not 0.
+			// This ensures the operator's position is correctly identified in
+			// the range [1, walletOperators.length].
 			walletMemberIndex = index + 1
 		}
 
-		walletMemberIDs = append(walletMemberIDs, operatorID)
+		// Search for the operator address in the cache. Store the operator
+		// address in the cache if it's not there.
+		if operatorID, found := operatorIDCache[operatorAddress]; !found {
+			operatorID, err := mft.chain.GetOperatorID(operatorAddress)
+			if err != nil {
+				return nil, 0, fmt.Errorf("failed to get operator ID: [%w]", err)
+			}
+			operatorIDCache[operatorAddress] = operatorID
+			walletMemberIDs = append(walletMemberIDs, operatorID)
+		} else {
+			walletMemberIDs = append(walletMemberIDs, operatorID)
+		}
 	}
 
 	// The task executing operator must always be on the wallet operators list.
@@ -463,6 +456,7 @@ func (mft *MovingFundsTask) GetWalletMembersInfo(
 // SubmitMovingFundsCommitment submits the moving funds commitment and waits
 // until the transaction has entered the Ethereum blockchain.
 func (mft *MovingFundsTask) SubmitMovingFundsCommitment(
+	taskLogger log.StandardLogger,
 	walletPublicKeyHash [20]byte,
 	walletMainUTXO *bitcoin.UnspentTransactionOutput,
 	walletMembersIDs []uint32,
@@ -493,38 +487,42 @@ func (mft *MovingFundsTask) SubmitMovingFundsCommitment(
 		return fmt.Errorf("error getting current block [%w]", err)
 	}
 
-	// To verify the commitment transaction has entered the Ethereum blockchain
-	// check that the commitment hash is not zero.
-	stateCheck := func() (bool, error) {
-		walletData, err := mft.chain.GetWallet(walletPublicKeyHash)
+	// Make sure the moving funds commitment transaction has been confirmed.
+	// Give the transaction at most `6` blocks to enter the blockchain.
+	for blockHeight := currentBlock + 1; blockHeight <= currentBlock+6; blockHeight++ {
+		err := blockCounter.WaitForBlockHeight(blockHeight)
 		if err != nil {
-			return false, err
+			return fmt.Errorf("error while waiting for block height [%w]", err)
 		}
 
-		return walletData.MovingFundsTargetWalletsCommitmentHash != [32]byte{}, nil
-	}
+		walletData, err := mft.chain.GetWallet(walletPublicKeyHash)
+		if err != nil {
+			return fmt.Errorf("error wile getting wallet chain data [%w]", err)
+		}
 
-	// Wait `5` blocks since the current block and perform the transaction state
-	// check. If the transaction has not entered the blockchain, consider it an
-	// error.
-	result, err := ethereum.WaitForBlockConfirmations(
-		blockCounter,
-		currentBlock,
-		5,
-		stateCheck,
-	)
-	if err != nil {
-		return fmt.Errorf(
-			"error while waiting for transaction confirmation [%w]",
-			err,
+		// To verify the commitment transaction has entered the Ethereum
+		// blockchain check that the commitment hash is not zero.
+		if walletData.MovingFundsTargetWalletsCommitmentHash != [32]byte{} {
+			taskLogger.Infof(
+				"the moving funds commitment transaction successfully "+
+					"confirmed at block: [%d]",
+				blockHeight,
+			)
+			return nil
+		}
+
+		taskLogger.Infof(
+			"the moving funds commitment transaction still not confirmed at "+
+				"block: [%d]",
+			blockHeight,
 		)
 	}
 
-	if !result {
-		return ErrTransactionNotIncluded
-	}
+	taskLogger.Info(
+		"failed to verify the moving funds commitment transaction submission",
+	)
 
-	return nil
+	return ErrTransactionNotIncluded
 }
 
 // ProposeMovingFunds returns a moving funds proposal.
@@ -568,12 +566,15 @@ func (mft *MovingFundsTask) ProposeMovingFunds(
 		fee = estimatedFee
 	}
 
+	taskLogger.Infof("moving funds transaction fee: [%d]", fee)
+
 	proposal := &tbtc.MovingFundsProposal{
 		TargetWallets:    targetWallets,
 		MovingFundsTxFee: big.NewInt(fee),
 	}
 
 	taskLogger.Infof("validating the moving funds proposal")
+
 	if _, err := tbtc.ValidateMovingFundsProposal(
 		taskLogger,
 		walletPublicKeyHash,

@@ -14,8 +14,15 @@ import (
 )
 
 const (
-	// TODO: Determine what the values should be.
-	movingFundsProposalValidityBlocks           = 600
+	// movingFundsProposalValidityBlocks determines the moving funds proposal
+	// validity time expressed in blocks. In other words, this is the worst-case
+	// time for moving funds during which the wallet is busy and cannot take
+	// another actions. The value of 650 blocks is roughly 2 hours and 10
+	// minutes, assuming 12 seconds per block. It is a slightly longer validity
+	// time than in case of redemptions as moving funds involves waiting for
+	// target wallets commitment transaction to be confirmed.
+	movingFundsProposalValidityBlocks = 650
+	// TODO: Determine what the values should be
 	movingFundsSigningTimeoutSafetyMarginBlocks = 300
 	movingFundsBroadcastTimeout                 = 15 * time.Minute
 	movingFundsBroadcastCheckDelay              = 1 * time.Minute
@@ -89,6 +96,14 @@ func newMovingFundsAction(
 }
 
 func (mfa *movingFundsAction) execute() error {
+	// TODO: Before proceeding with creation of the Bitcoin transaction, wait
+	//       32 blocks to ensure the commitment transaction has accumulated
+	//       enough confirmations in the Ethereum chain and will not be reverted
+	//       even if a reorg occurs.
+	//       Remember to call `validateMovingFundsProposal` twice: before and
+	//       after waiting for confirmations. The second validation is needed
+	//       to ensure the commitment has not been changed during the waiting.
+
 	validateProposalLogger := mfa.logger.With(
 		zap.String("step", "validateProposal"),
 	)
@@ -273,6 +288,8 @@ func ValidateMovingFundsProposal(
 			err,
 		)
 	}
+
+	validateProposalLogger.Infof("moving funds proposal is valid")
 
 	return proposal.TargetWallets, nil
 }

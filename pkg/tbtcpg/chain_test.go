@@ -11,6 +11,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/ethereum/go-ethereum/crypto"
+
 	"github.com/keep-network/keep-core/pkg/bitcoin"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/tbtc"
@@ -890,11 +892,9 @@ func (lc *LocalChain) SetOperatorID(
 	defer lc.mutex.Unlock()
 
 	_, ok := lc.operatorIDs[operatorAddress]
-	if ok {
-		return fmt.Errorf("operator already inserted")
+	if !ok {
+		lc.operatorIDs[operatorAddress] = operatorID
 	}
-
-	lc.operatorIDs[operatorAddress] = operatorID
 
 	return nil
 }
@@ -998,6 +998,19 @@ func (lc *LocalChain) GetLiveWalletsCount() (uint32, error) {
 
 func (lc *LocalChain) ComputeMainUtxoHash(mainUtxo *bitcoin.UnspentTransactionOutput) [32]byte {
 	panic("unsupported")
+}
+
+func (lc *LocalChain) ComputeMovingFundsCommitmentHash(targetWallets [][20]byte) [32]byte {
+	packedWallets := []byte{}
+
+	for _, wallet := range targetWallets {
+		packedWallets = append(packedWallets, wallet[:]...)
+		// Each wallet hash must be padded with 12 zero bytes following the
+		// actual hash.
+		packedWallets = append(packedWallets, make([]byte, 12)...)
+	}
+
+	return crypto.Keccak256Hash(packedWallets)
 }
 
 func (lc *LocalChain) AddPastMovingFundsCommitmentSubmittedEvent(
