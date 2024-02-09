@@ -37,6 +37,10 @@ const (
 
 	// LogLevelEnvVariable can be used to define logging configuration.
 	LogLevelEnvVariable = "LOG_LEVEL"
+
+	// PubsubLogLevelEnvVariable can be used to define logging configuration
+	// for the pubsub implementation.
+	PubsubLogLevelEnvVariable = "PUBSUB_LOG_LEVEL"
 )
 
 // Config is the top level config structure.
