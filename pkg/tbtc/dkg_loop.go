@@ -5,6 +5,7 @@ import (
 	"crypto/sha256"
 	"encoding/binary"
 	"fmt"
+	"github.com/keep-network/keep-core/pkg/protocol/announcer"
 	"math/big"
 
 	"github.com/ipfs/go-log/v2"
@@ -209,6 +210,11 @@ func (drl *dkgRetryLoop) start(
 			continue
 		}
 
+		unreadyMembersIndexes := announcer.UnreadyMembers(
+			readyMembersIndexes,
+			drl.groupParameters.GroupSize,
+		)
+
 		// Check the loop stop signal.
 		if ctx.Err() != nil {
 			return nil, ctx.Err()
@@ -217,19 +223,23 @@ func (drl *dkgRetryLoop) start(
 		if len(readyMembersIndexes) >= drl.groupParameters.GroupQuorum {
 			drl.logger.Infof(
 				"[member:%v] completed announcement phase for attempt [%v] "+
-					"with quorum of [%v] members ready to perform DKG",
+					"with quorum of [%v] members ready to perform DKG; "+
+					"following members are not ready: [%v]",
 				drl.memberIndex,
 				drl.attemptCounter,
 				len(readyMembersIndexes),
+				unreadyMembersIndexes,
 			)
 		} else {
 			drl.logger.Warnf(
 				"[member:%v] completed announcement phase for attempt [%v] "+
 					"with non-quorum of [%v] members ready to perform DKG; "+
-					"starting next attempt",
+					"following members are not ready: [%v]; "+
+					"moving to the next attempt",
 				drl.memberIndex,
 				drl.attemptCounter,
 				len(readyMembersIndexes),
+				unreadyMembersIndexes,
 			)
 			continue
 		}

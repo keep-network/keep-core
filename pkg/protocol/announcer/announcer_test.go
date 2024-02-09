@@ -227,3 +227,46 @@ func TestAnnouncer(t *testing.T) {
 		})
 	}
 }
+
+func TestUnreadyMembers(t *testing.T) {
+	tests := map[string]struct {
+		readyMembers []group.MemberIndex
+		groupSize    int
+		expected     []group.MemberIndex
+	}{
+		"all members are ready": {
+			readyMembers: []group.MemberIndex{1, 2, 3, 4, 5},
+			groupSize:    5,
+			expected:     []group.MemberIndex{},
+		},
+		"some members are not ready": {
+			readyMembers: []group.MemberIndex{1, 3, 5},
+			groupSize:    5,
+			expected:     []group.MemberIndex{2, 4},
+		},
+		"no members are ready": {
+			readyMembers: []group.MemberIndex{},
+			groupSize:    5,
+			expected:     []group.MemberIndex{1, 2, 3, 4, 5},
+		},
+		"group size is zero": {
+			readyMembers: []group.MemberIndex{},
+			groupSize:    0,
+			expected:     []group.MemberIndex{},
+		},
+	}
+
+	for testName, test := range tests {
+		t.Run(testName, func(t *testing.T) {
+			result := UnreadyMembers(test.readyMembers, test.groupSize)
+
+			if !reflect.DeepEqual(test.expected, result) {
+				t.Errorf(
+					"unexpected result\nexpected: %v\nactual:   %v",
+					test.expected,
+					result,
+				)
+			}
+		})
+	}
+}

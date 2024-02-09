@@ -5,6 +5,7 @@ import (
 	"crypto/sha256"
 	"encoding/binary"
 	"fmt"
+	"github.com/keep-network/keep-core/pkg/protocol/announcer"
 	"math/big"
 	"math/rand"
 	"sort"
@@ -261,6 +262,11 @@ func (srl *signingRetryLoop) start(
 			continue
 		}
 
+		unreadyMembersIndexes := announcer.UnreadyMembers(
+			readyMembersIndexes,
+			len(srl.signingGroupOperators),
+		)
+
 		// Check the loop stop signal again. The announcement took some time
 		// and the context may be done now.
 		if ctx.Err() != nil {
@@ -270,19 +276,23 @@ func (srl *signingRetryLoop) start(
 		if len(readyMembersIndexes) >= srl.groupParameters.HonestThreshold {
 			srl.logger.Infof(
 				"[member:%v] completed announcement phase for attempt [%v] "+
-					"with honest majority of [%v] members ready to sign",
+					"with honest majority of [%v] members ready to sign; "+
+					"following members are not ready: [%v]",
 				srl.signingGroupMemberIndex,
 				srl.attemptCounter,
 				len(readyMembersIndexes),
+				unreadyMembersIndexes,
 			)
 		} else {
 			srl.logger.Warnf(
 				"[member:%v] completed announcement phase for attempt [%v] "+
 					"with minority of [%v] members ready to sign; "+
-					"starting next attempt",
+					"following members are not ready: [%v]; "+
+					"moving to the next attempt",
 				srl.signingGroupMemberIndex,
 				srl.attemptCounter,
 				len(readyMembersIndexes),
+				unreadyMembersIndexes,
 			)
 			continue
 		}

@@ -172,3 +172,35 @@ loop:
 
 	return readyMembersIndexes, nil
 }
+
+// UnreadyMembers returns a list of member indexes that turned out to be unready
+// during the announcement. The list is sorted in ascending order.
+func UnreadyMembers(
+	readyMembers []group.MemberIndex,
+	groupSize int,
+) []group.MemberIndex {
+	if len(readyMembers) == groupSize {
+		return []group.MemberIndex{}
+	}
+
+	readyMembersSet := make(map[group.MemberIndex]bool)
+	for _, memberIndex := range readyMembers {
+		readyMembersSet[memberIndex] = true
+	}
+
+	unreadyMembers := make([]group.MemberIndex, 0)
+
+	for i := 0; i < groupSize; i++ {
+		memberIndex := group.MemberIndex(i + 1)
+
+		if _, isReady := readyMembersSet[memberIndex]; !isReady {
+			unreadyMembers = append(unreadyMembers, memberIndex)
+		}
+	}
+
+	sort.Slice(unreadyMembers, func(i, j int) bool {
+		return unreadyMembers[i] < unreadyMembers[j]
+	})
+
+	return unreadyMembers
+}
