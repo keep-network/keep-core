@@ -28,6 +28,7 @@ import (
 	rhost "github.com/libp2p/go-libp2p/p2p/host/routed"
 	"github.com/libp2p/go-libp2p/p2p/net/connmgr"
 	"github.com/libp2p/go-libp2p/p2p/net/upgrader"
+	"github.com/libp2p/go-libp2p/p2p/protocol/ping"
 
 	ma "github.com/multiformats/go-multiaddr"
 )
@@ -67,6 +68,10 @@ const (
 // This value should never be higher than the lifetime of libp2p cache (120 sec)
 // to prevent uncontrolled message propagation.
 const MaximumDisseminationTime = 90
+
+// pingTimeout is the maximum duration of the ping test performed for
+// freshly connected peers.
+const pingTestTimeout = 60 * time.Second
 
 // Config defines the configuration for the libp2p network provider.
 type Config struct {
@@ -320,7 +325,7 @@ func Connect(
 		return nil, err
 	}
 
-	host.Network().Notify(buildNotifiee())
+	host.Network().Notify(buildNotifiee(host))
 
 	broadcastChannelManager, err := newChannelManager(ctx, identity, host, ticker)
 	if err != nil {
@@ -528,17 +533,20 @@ func extractMultiAddrFromPeers(peers []string) ([]peer.AddrInfo, error) {
 	return peerInfos, nil
 }
 
-func buildNotifiee() libp2pnet.Notifiee {
+func buildNotifiee(libp2pHost host.Host) libp2pnet.Notifiee {
 	notifyBundle := &libp2pnet.NotifyBundle{}
 
 	notifyBundle.ConnectedF = func(_ libp2pnet.Network, connection libp2pnet.Conn) {
-		logger.Infof(
-			"established connection to [%v]",
-			multiaddressWithIdentity(
-				connection.RemoteMultiaddr(),
-				connection.RemotePeer(),
-			),
+		peerID := connection.RemotePeer()
+
+		peerMultiaddress := multiaddressWithIdentity(
+			connection.RemoteMultiaddr(),
+			peerID,
 		)
+
+		logger.Infof("established connection to [%v]", peerMultiaddress)
+
+		go executePingTest(libp2pHost, peerID, peerMultiaddress)
 	}
 	notifyBundle.DisconnectedF = func(_ libp2pnet.Network, connection libp2pnet.Conn) {
 		logger.Infof(
@@ -551,6 +559,46 @@ func buildNotifiee() libp2pnet.Notifiee {
 	}
 
 	return notifyBundle
+}
+
+func executePingTest(
+	libp2pHost host.Host,
+	peerID peer.ID,
+	peerMultiaddress string,
+) {
+	logger.Infof("starting ping test for [%v]", peerMultiaddress)
+
+	ctx, cancelCtx := context.WithTimeout(
+		context.Background(),
+		pingTestTimeout,
+	)
+	defer cancelCtx()
+
+	resultChan := ping.Ping(ctx, libp2pHost, peerID)
+
+	select {
+	case result := <-resultChan:
+		if result.Error != nil {
+			logger.Warnf(
+				"ping test for [%v] failed: [%v]",
+				peerMultiaddress,
+				result.Error,
+			)
+		} else if result.Error == nil && result.RTT == 0 {
+			logger.Warnf(
+				"peer test for [%v] failed without clear reason",
+				peerMultiaddress,
+			)
+		} else {
+			logger.Infof(
+				"ping test for [%v] completed with success (RTT [%v])",
+				peerMultiaddress,
+				result.RTT,
+			)
+		}
+	case <-ctx.Done():
+		logger.Warnf("ping test for [%v] timed out", peerMultiaddress)
+	}
 }
 
 func multiaddressWithIdentity(

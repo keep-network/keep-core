@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"golang.org/x/exp/maps"
 	"math/big"
 	"sort"
 
@@ -181,8 +182,13 @@ func (de *dkgExecutor) checkEligibility(
 	}
 
 	dkgLogger.Infof(
-		"selected group members for DKG = %s",
+		"selected group members (seats) for DKG: [%s]",
 		groupSelectionResult.OperatorsAddresses,
+	)
+
+	dkgLogger.Infof(
+		"distinct operators participating in DKG: [%s]",
+		maps.Keys(groupSelectionResult.OperatorsAddresses.Set()),
 	)
 
 	if len(groupSelectionResult.OperatorsAddresses) > de.groupParameters.GroupSize {
