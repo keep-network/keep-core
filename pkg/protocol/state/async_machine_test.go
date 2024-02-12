@@ -311,8 +311,8 @@ func (tas *testAsyncState3) CanTransition() bool {
 }
 func (tas *testAsyncState3) Initiate(ctx context.Context) error {
 	tas.addToTestLog("3-initiate")
-	rand.Seed(time.Now().UnixNano())
-	time.Sleep(time.Duration(rand.Intn(1000)) * time.Millisecond)
+	rng := rand.New(rand.NewSource(time.Now().UnixNano()))
+	time.Sleep(time.Duration(rng.Intn(1000)) * time.Millisecond)
 	tas.channel.Send(ctx, newRound3Message(strconv.Itoa(int(tas.memberIndex))))
 	return nil
 }
