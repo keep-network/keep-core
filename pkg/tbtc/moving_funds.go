@@ -96,29 +96,11 @@ func newMovingFundsAction(
 }
 
 func (mfa *movingFundsAction) execute() error {
-	// TODO: Before proceeding with creation of the Bitcoin transaction, wait
-	//       32 blocks to ensure the commitment transaction has accumulated
-	//       enough confirmations in the Ethereum chain and will not be reverted
-	//       even if a reorg occurs.
-	//       Remember to call `validateMovingFundsProposal` twice: before and
-	//       after waiting for confirmations. The second validation is needed
-	//       to ensure the commitment has not been changed during the waiting.
-
 	validateProposalLogger := mfa.logger.With(
 		zap.String("step", "validateProposal"),
 	)
 
 	walletPublicKeyHash := bitcoin.PublicKeyHash(mfa.wallet().publicKey)
-
-	// Make sure the moving funds commitment transaction has entered the
-	// Ethereum blockchain and has accumulated enough confirmations.
-	err := mfa.ensureCommitmentTxConfirmed(walletPublicKeyHash)
-	if err != nil {
-		return fmt.Errorf(
-			"failed to ensure moving funds transaction confirmed: [%v]",
-			err,
-		)
-	}
 
 	walletMainUtxo, err := DetermineWalletMainUtxo(
 		walletPublicKeyHash,
@@ -132,7 +114,39 @@ func (mfa *movingFundsAction) execute() error {
 		)
 	}
 
-	targetWallets, err := ValidateMovingFundsProposal(
+	// Proposal validation should detect this but let's make a check just
+	// in case.
+	if walletMainUtxo == nil {
+		return fmt.Errorf("moving funds wallet has no main UTXO")
+	}
+
+	// Perform initial validation of the moving funds proposal.
+	err = ValidateMovingFundsProposal(
+		validateProposalLogger,
+		walletPublicKeyHash,
+		walletMainUtxo,
+		mfa.proposal,
+		mfa.chain,
+	)
+	if err != nil {
+		return fmt.Errorf("validate proposal step failed: [%v]", err)
+	}
+
+	// Wait until the moving funds commitment transaction has gathered a
+	// significant number of confirmations. This ensures that even a deep reorg
+	// will not remove the commitment from the chain.
+	err = mfa.waitForCommitmentConfirmation(walletPublicKeyHash)
+	if err != nil {
+		return fmt.Errorf(
+			"failed to ensure moving funds transaction confirmed: [%v]",
+			err,
+		)
+	}
+
+	// Validate the moving funds proposal again after waiting for the
+	// transaction confirmations. This repeated validation ensures the moving
+	// funds commitment was not changed during waiting for the confirmations.
+	err = ValidateMovingFundsProposal(
 		validateProposalLogger,
 		walletPublicKeyHash,
 		walletMainUtxo,
@@ -161,7 +175,7 @@ func (mfa *movingFundsAction) execute() error {
 		mfa.btcChain,
 		mfa.wallet().publicKey,
 		walletMainUtxo,
-		targetWallets,
+		mfa.proposal.TargetWallets,
 		mfa.proposal.MovingFundsTxFee.Int64(),
 	)
 	if err != nil {
@@ -211,7 +225,7 @@ func (mfa *movingFundsAction) execute() error {
 	return nil
 }
 
-func (mfa *movingFundsAction) ensureCommitmentTxConfirmed(
+func (mfa *movingFundsAction) waitForCommitmentConfirmation(
 	walletPublicKeyHash [20]byte,
 ) error {
 	blockCounter, err := mfa.chain.BlockCounter()
@@ -274,7 +288,7 @@ func ValidateMovingFundsProposal(
 			proposal *MovingFundsProposal,
 		) error
 	},
-) ([][20]byte, error) {
+) error {
 	validateProposalLogger.Infof("calling chain for proposal validation")
 
 	err := chain.ValidateMovingFundsProposal(
@@ -283,15 +297,12 @@ func ValidateMovingFundsProposal(
 		proposal,
 	)
 	if err != nil {
-		return nil, fmt.Errorf(
-			"moving funds proposal is invalid: [%v]",
-			err,
-		)
+		return fmt.Errorf("moving funds proposal is invalid: [%v]", err)
 	}
 
 	validateProposalLogger.Infof("moving funds proposal is valid")
 
-	return proposal.TargetWallets, nil
+	return nil
 }
 
 func (mfa *movingFundsAction) wallet() wallet {

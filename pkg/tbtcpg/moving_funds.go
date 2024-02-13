@@ -575,7 +575,7 @@ func (mft *MovingFundsTask) ProposeMovingFunds(
 
 	taskLogger.Infof("validating the moving funds proposal")
 
-	if _, err := tbtc.ValidateMovingFundsProposal(
+	if err := tbtc.ValidateMovingFundsProposal(
 		taskLogger,
 		walletPublicKeyHash,
 		mainUTXO,
