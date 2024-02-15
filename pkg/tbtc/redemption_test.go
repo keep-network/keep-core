@@ -2,10 +2,11 @@ package tbtc
 
 import (
 	"context"
-	"github.com/keep-network/keep-core/pkg/tecdsa"
 	"math/big"
 	"testing"
 	"time"
+
+	"github.com/keep-network/keep-core/pkg/tecdsa"
 
 	"github.com/go-test/deep"
 
@@ -89,7 +90,7 @@ func TestRedemptionAction_Execute(t *testing.T) {
 			}
 
 			// Record the wallet main UTXO hash in the local host chain so
-			// the deposit action can detect it.
+			// the redemption action can detect it.
 			var walletMainUtxoHash [32]byte
 			if scenario.WalletMainUtxo != nil {
 				walletMainUtxoHash = hostChain.ComputeMainUtxoHash(
