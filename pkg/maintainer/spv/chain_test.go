@@ -491,6 +491,12 @@ func buildPastRedemptionRequestedEventsKey(
 	return sha256.Sum256(buffer.Bytes()), nil
 }
 
+func (lc *localChain) PastMovingFundsCommitmentSubmittedEvents(
+	filter *tbtc.MovingFundsCommitmentSubmittedEventFilter,
+) ([]*tbtc.MovingFundsCommitmentSubmittedEvent, error) {
+	panic("unsupported")
+}
+
 type mockBlockCounter struct {
 	mutex        sync.Mutex
 	currentBlock uint64
