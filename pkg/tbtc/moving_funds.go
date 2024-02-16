@@ -22,10 +22,31 @@ const (
 	// time than in case of redemptions as moving funds involves waiting for
 	// target wallets commitment transaction to be confirmed.
 	movingFundsProposalValidityBlocks = 650
-	// TODO: Determine what the values should be
+	// movingFundsSigningTimeoutSafetyMarginBlocks determines the duration of
+	// the safety margin that must be preserved between the signing timeout and
+	// the timeout of the entire moving funds action. This safety margin
+	// prevents against the case where signing completes late and there is not
+	// enough time to broadcast the moving funds transaction properly.
+	// In such a case, wallet signatures may leak and make the wallet subject
+	// of fraud accusations. Usage of the safety margin ensures there is enough
+	// time to perform post-signing steps of the moving funds action.
+	// The value of 300 blocks is roughly 1 hour, assuming 12 seconds per block.
 	movingFundsSigningTimeoutSafetyMarginBlocks = 300
-	movingFundsBroadcastTimeout                 = 15 * time.Minute
-	movingFundsBroadcastCheckDelay              = 1 * time.Minute
+	// movingFundsBroadcastTimeout determines the time window for moving funds
+	// transaction broadcast. It is guaranteed that at least
+	// movingFundsSigningTimeoutSafetyMarginBlocks is preserved for the broadcast
+	// step. However, the happy path for the broadcast step is usually quick
+	// and few retries are needed to recover from temporary problems. That
+	// said, if the broadcast step does not succeed in a tight timeframe,
+	// there is no point to retry for the entire possible time window.
+	// Hence, the timeout for broadcast step is set as 25% of the entire
+	// time widow determined by movingFundsSigningTimeoutSafetyMarginBlocks.
+	movingFundsBroadcastTimeout = 15 * time.Minute
+	// movingFundsBroadcastCheckDelay determines the delay that must
+	// be preserved between transaction broadcast and the check that ensures
+	// the transaction is known on the Bitcoin chain. This delay is needed
+	// as spreading the transaction over the Bitcoin network takes time.
+	movingFundsBroadcastCheckDelay = 1 * time.Minute
 )
 
 // MovingFundsProposal represents a moving funds proposal issued by a wallet's
@@ -90,8 +111,8 @@ func newMovingFundsAction(
 		proposalProcessingStartBlock:     proposalProcessingStartBlock,
 		proposalExpiryBlock:              proposalExpiryBlock,
 		signingTimeoutSafetyMarginBlocks: movingFundsSigningTimeoutSafetyMarginBlocks,
-		broadcastTimeout:                 depositSweepBroadcastTimeout,
-		broadcastCheckDelay:              depositSweepBroadcastCheckDelay,
+		broadcastTimeout:                 movingFundsBroadcastTimeout,
+		broadcastCheckDelay:              movingFundsBroadcastCheckDelay,
 	}
 }
 
@@ -368,7 +389,6 @@ func assembleMovingFundsTransaction(
 			Value:           outputValue,
 			PublicKeyScript: outputScript,
 		})
-
 	}
 
 	return builder, nil

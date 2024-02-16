@@ -12,6 +12,7 @@ import (
 	"github.com/keep-network/keep-core/pkg/tecdsa"
 )
 
+// TODO: Think about covering unhappy paths for specific steps of the moving funds action.
 func TestMovingFundsAction_Execute(t *testing.T) {
 	scenarios, err := test.LoadMovingFundsTestScenarios()
 	if err != nil {
