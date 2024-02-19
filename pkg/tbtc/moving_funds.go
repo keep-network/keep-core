@@ -363,16 +363,21 @@ func assembleMovingFundsTransaction(
 		)
 	}
 
+	// The number of target wallets. It determines the number of outputs.
+	targetWalletsCount := int64(len(targetWallets))
+
 	// The sum of all the outputs equal to the input value minus fee.
 	totalOutputValue := walletMainUtxo.Value - fee
 
-	// The amount of Bitcoin allocated to each output. Notice that the last
-	// output may have a slightly higher amount. It happens if the total output
-	// amount is not divisible by the number of target wallets. The amount for
-	// the last output will be increased by the remainder left from distributing
-	// the total output amount across all the outputs. The value of this
-	// remainder is at most `len(targetWallets) - 1` satoshis.
-	singleOutputValue := totalOutputValue / int64(len(targetWallets))
+	// The remainder left from distributing the total output value evenly
+	// among the outputs. It should be added to the value of the last output.
+	// The value of this remainder is at most `len(targetWallets) - 1` satoshis.
+	remainder := totalOutputValue % targetWalletsCount
+
+	// The amount of Bitcoin allocated to each output. Additionally, the amount
+	// for the last output should be increased by the remainder left from
+	// distributing the total output amount across all the outputs.
+	singleOutputValue := (totalOutputValue - remainder) / targetWalletsCount
 
 	for i, targetWalletPublicKeyHash := range targetWallets {
 		outputScript, err := bitcoin.PayToWitnessPublicKeyHash(
@@ -387,7 +392,7 @@ func assembleMovingFundsTransaction(
 			// If we are at the last output, increase its value by the remaining
 			// satoshis. If the total output amount is divisible by the number
 			// of target wallets, the increase will be `0`.
-			outputValue += (totalOutputValue % int64(len(targetWallets)))
+			outputValue += remainder
 		}
 
 		builder.AddOutput(&bitcoin.TransactionOutput{
