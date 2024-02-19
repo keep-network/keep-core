@@ -9,8 +9,8 @@ import (
 )
 
 // SubmitMovingFundsProof prepares moving funds proof for the given
-// transaction and submits it to the on-chain contract. If the number of required
-// confirmations is `0`, an error is returned.
+// transaction and submits it to the on-chain contract. If the number of
+// required confirmations is `0`, an error is returned.
 func SubmitMovingFundsProof(
 	transactionHash bitcoin.Hash,
 	requiredConfirmations uint,
@@ -60,6 +60,9 @@ func getUnprovenMovingFundsTransactions(
 	// searched for.
 	startBlock := currentBlock - historyDepth
 
+	// The `MovingFundsCommitmentSubmitted` event can only be emitted once for
+	// a given wallet. Therefore there will always be only one event for a wallet.
+	// We do not have to worry about duplicate events for the same wallet.
 	events, err :=
 		spvChain.PastMovingFundsCommitmentSubmittedEvents(
 			&tbtc.MovingFundsCommitmentSubmittedEventFilter{
@@ -96,14 +99,15 @@ func getUnprovenMovingFundsTransactions(
 			continue
 		}
 
-		// The moving funds transaction should be among the recent transactions that
-		// pay to any of the target wallets. When retrieving the recent transactions
-		// paying for the public key hash, we can use just one target wallet. Since
-		// the smart contract guarantees there is at least one target wallet, we can
-		// choose the one at index `0`. Notice that unlike in case of deposit sweeps
-		// or redemptions, we cannot use the source wallet public key hash when
-		// retrieving transactions. This is beacuse none of the transaction's outputs
-		// transafers funds to the source wallet.
+		// The moving funds transaction should be among the recent transactions
+		// that pay to any of the target wallets. When retrieving the recent
+		// transactions paying for the public key hash, we can use just one
+		// target wallet. Since the smart contract guarantees there is at least
+		// one target wallet, we can choose the one at index `0`. Notice that
+		// unlike in case of deposit sweep or redemptions, we cannot use the
+		// source wallet public key hash when retrieving transactions. This is
+		// because none of the transaction's outputs transfers funds to the
+		// source wallet.
 		targetWalletPublicKeyHash := targetWallets[0]
 
 		walletTransactions, err := btcChain.GetTransactionsForPublicKeyHash(
@@ -184,7 +188,7 @@ func isUnprovenMovingFundsTransaction(
 	}
 
 	// If the number of transaction's outputs does not match the number of
-	// target walets from the commitment, the transaction cannot be a
+	// target wallets from the commitment, the transaction cannot be a
 	// moving funds transaction.
 	if len(transaction.Outputs) != len(targetWalletsPublicKeyHashes) {
 		return false, nil
@@ -194,7 +198,7 @@ func isUnprovenMovingFundsTransaction(
 	// transaction, each output must be transferring funds to the corresponding
 	// target wallets from the commitment.
 	for outputIndex, output := range transaction.Outputs {
-		// Assume that the outputs of moving funds trasnaction were added
+		// Assume that the outputs of moving funds transaction were added
 		// in the same order as target wallets on the list.
 		targetWalletPublicKeyHash := targetWalletsPublicKeyHashes[outputIndex]
 
