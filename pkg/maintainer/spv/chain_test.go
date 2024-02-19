@@ -266,6 +266,15 @@ func (lc *localChain) getSubmittedRedemptionProofs() []*submittedRedemptionProof
 	return lc.submittedRedemptionProofs
 }
 
+func (lc *localChain) SubmitMovingFundsProofWithReimbursement(
+	transaction *bitcoin.Transaction,
+	proof *bitcoin.SpvProof,
+	mainUTXO bitcoin.UnspentTransactionOutput,
+	walletPublicKeyHash [20]byte,
+) error {
+	panic("unsupported")
+}
+
 func (lc *localChain) Ready() (bool, error) {
 	panic("unsupported")
 }

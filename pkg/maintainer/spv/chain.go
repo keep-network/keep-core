@@ -66,6 +66,15 @@ type Chain interface {
 		walletPublicKeyHash [20]byte,
 	) error
 
+	// SubmitMovingFundsProofWithReimbursement submits the moving funds proof
+	// via MaintainerProxy. The caller is reimbursed.
+	SubmitMovingFundsProofWithReimbursement(
+		transaction *bitcoin.Transaction,
+		proof *bitcoin.SpvProof,
+		mainUTXO bitcoin.UnspentTransactionOutput,
+		walletPublicKeyHash [20]byte,
+	) error
+
 	// PastDepositRevealedEvents fetches past deposit reveal events according
 	// to the provided filter or unfiltered if the filter is nil. Returned
 	// events are sorted by the block number in the ascending order, i.e. the

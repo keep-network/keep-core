@@ -33,8 +33,95 @@ func submitMovingFundsProof(
 	spvChain Chain,
 	spvProofAssembler spvProofAssembler,
 ) error {
-	// TODO: Implement
+	if requiredConfirmations == 0 {
+		return fmt.Errorf(
+			"provided required confirmations count must be greater than 0",
+		)
+	}
+
+	transaction, proof, err := spvProofAssembler(
+		transactionHash,
+		requiredConfirmations,
+		btcChain,
+	)
+	if err != nil {
+		return fmt.Errorf(
+			"failed to assemble transaction spv proof: [%v]",
+			err,
+		)
+	}
+
+	mainUTXO, walletPublicKeyHash, err := parseMovingFundsTransactionInput(
+		btcChain,
+		transaction,
+	)
+	if err != nil {
+		return fmt.Errorf(
+			"error while parsing transaction inputs: [%v]",
+			err,
+		)
+	}
+
+	if err := spvChain.SubmitMovingFundsProofWithReimbursement(
+		transaction,
+		proof,
+		mainUTXO,
+		walletPublicKeyHash,
+	); err != nil {
+		return fmt.Errorf(
+			"failed to submit moving funds proof with reimbursement: [%v]",
+			err,
+		)
+	}
+
 	return nil
+}
+
+// parseMovingFundsTransactionInput parses the transaction's input and
+// returns the main UTXO and the wallet public key hash.
+func parseMovingFundsTransactionInput(
+	btcChain bitcoin.Chain,
+	transaction *bitcoin.Transaction,
+) (bitcoin.UnspentTransactionOutput, [20]byte, error) {
+	// Perform a sanity check: a moving funds transaction must have exactly one
+	// input.
+	if len(transaction.Inputs) != 1 {
+		return bitcoin.UnspentTransactionOutput{}, [20]byte{}, fmt.Errorf(
+			"moving funds transaction has more than one input",
+		)
+	}
+
+	input := transaction.Inputs[0]
+
+	// Get data of the input transaction whose output is spent by the moving
+	// funds transaction.
+	inputTx, err := btcChain.GetTransaction(input.Outpoint.TransactionHash)
+	if err != nil {
+		return bitcoin.UnspentTransactionOutput{}, [20]byte{}, fmt.Errorf(
+			"cannot get input transaction data: [%v]",
+			err,
+		)
+	}
+
+	// Get the specific output spent by the moving funds transaction.
+	spentOutput := inputTx.Outputs[input.Outpoint.OutputIndex]
+
+	// Build the main UTXO object based on available data.
+	mainUtxo := bitcoin.UnspentTransactionOutput{
+		Outpoint: input.Outpoint,
+		Value:    spentOutput.Value,
+	}
+
+	// Extract the wallet public key hash from script
+	walletPublicKeyHash, err := bitcoin.ExtractPublicKeyHash(spentOutput.PublicKeyScript)
+	if err != nil {
+		return bitcoin.UnspentTransactionOutput{}, [20]byte{}, fmt.Errorf(
+			"cannot extract wallet public key hash: [%v]",
+			err,
+		)
+	}
+
+	return mainUtxo, walletPublicKeyHash, nil
 }
 
 func getUnprovenMovingFundsTransactions(
