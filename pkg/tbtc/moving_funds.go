@@ -223,7 +223,7 @@ func (mfa *movingFundsAction) execute() error {
 	movingFundsTx, err := mfa.transactionExecutor.signTransaction(
 		signTxLogger,
 		unsignedMovingFundsTx,
-		mfa.proposalProcessingStartBlock,
+		mfa.proposalProcessingStartBlock+movingFundsCommitmentConfirmationBlocks,
 		mfa.proposalExpiryBlock-mfa.signingTimeoutSafetyMarginBlocks,
 	)
 	if err != nil {

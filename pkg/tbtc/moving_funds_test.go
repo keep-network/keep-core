@@ -90,7 +90,7 @@ func TestMovingFundsAction_Execute(t *testing.T) {
 			// processing start block as done within the action.
 			signingExecutor.setSignatures(
 				[]*big.Int{scenario.ExpectedSigHash},
-				proposalProcessingStartBlock,
+				proposalProcessingStartBlock+movingFundsCommitmentConfirmationBlocks,
 				[]*tecdsa.Signature{rawSignature},
 			)
 
