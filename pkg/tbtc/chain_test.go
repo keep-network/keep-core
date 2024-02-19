@@ -16,6 +16,7 @@ import (
 
 	"golang.org/x/crypto/sha3"
 
+	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/keep-network/keep-core/pkg/bitcoin"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/chain/local_v1"
@@ -64,6 +65,9 @@ type localChain struct {
 
 	redemptionProposalValidationsMutex sync.Mutex
 	redemptionProposalValidations      map[[32]byte]bool
+
+	movingFundsProposalValidationsMutex sync.Mutex
+	movingFundsProposalValidations      map[[32]byte]bool
 
 	heartbeatProposalValidationsMutex sync.Mutex
 	heartbeatProposalValidations      map[[16]byte]bool
@@ -693,6 +697,19 @@ func (lc *localChain) ComputeMainUtxoHash(
 	return mainUtxoHash
 }
 
+func (lc *localChain) ComputeMovingFundsCommitmentHash(targetWallets [][20]byte) [32]byte {
+	packedWallets := []byte{}
+
+	for _, wallet := range targetWallets {
+		packedWallets = append(packedWallets, wallet[:]...)
+		// Each wallet hash must be padded with 12 zero bytes following the
+		// actual hash.
+		packedWallets = append(packedWallets, make([]byte, 12)...)
+	}
+
+	return crypto.Keccak256Hash(packedWallets)
+}
+
 func (lc *localChain) operatorAddress() (chain.Address, error) {
 	_, operatorPublicKey, err := lc.OperatorKeyPair()
 	if err != nil {
@@ -909,7 +926,73 @@ func (lc *localChain) ValidateMovingFundsProposal(
 	mainUTXO *bitcoin.UnspentTransactionOutput,
 	proposal *MovingFundsProposal,
 ) error {
-	panic("unsupported")
+	lc.movingFundsProposalValidationsMutex.Lock()
+	defer lc.movingFundsProposalValidationsMutex.Unlock()
+
+	key, err := buildMovingFundsProposalValidationKey(
+		walletPublicKeyHash,
+		mainUTXO,
+		proposal,
+	)
+	if err != nil {
+		return err
+	}
+
+	result, ok := lc.movingFundsProposalValidations[key]
+	if !ok {
+		return fmt.Errorf("validation result unknown")
+	}
+
+	if !result {
+		return fmt.Errorf("validation failed")
+	}
+
+	return nil
+}
+
+func (lc *localChain) setMovingFundsProposalValidationResult(
+	walletPublicKeyHash [20]byte,
+	mainUTXO *bitcoin.UnspentTransactionOutput,
+	proposal *MovingFundsProposal,
+	result bool,
+) error {
+	lc.movingFundsProposalValidationsMutex.Lock()
+	defer lc.movingFundsProposalValidationsMutex.Unlock()
+
+	key, err := buildMovingFundsProposalValidationKey(
+		walletPublicKeyHash,
+		mainUTXO,
+		proposal,
+	)
+	if err != nil {
+		return err
+	}
+
+	lc.movingFundsProposalValidations[key] = result
+
+	return nil
+}
+
+func buildMovingFundsProposalValidationKey(
+	walletPublicKeyHash [20]byte,
+	mainUTXO *bitcoin.UnspentTransactionOutput,
+	proposal *MovingFundsProposal,
+) ([32]byte, error) {
+	var buffer bytes.Buffer
+
+	buffer.Write(walletPublicKeyHash[:])
+
+	buffer.Write(mainUTXO.Outpoint.TransactionHash[:])
+	binary.Write(&buffer, binary.BigEndian, mainUTXO.Outpoint.OutputIndex)
+	binary.Write(&buffer, binary.BigEndian, mainUTXO.Value)
+
+	for _, wallet := range proposal.TargetWallets {
+		buffer.Write(wallet[:])
+	}
+
+	buffer.Write(proposal.MovingFundsTxFee.Bytes())
+
+	return sha256.Sum256(buffer.Bytes()), nil
 }
 
 // Connect sets up the local chain.
@@ -947,6 +1030,7 @@ func ConnectWithKey(
 		depositSweepProposalValidations: make(map[[32]byte]bool),
 		pendingRedemptionRequests:       make(map[[32]byte]*RedemptionRequest),
 		redemptionProposalValidations:   make(map[[32]byte]bool),
+		movingFundsProposalValidations:  make(map[[32]byte]bool),
 		heartbeatProposalValidations:    make(map[[16]byte]bool),
 		depositRequests:                 make(map[[32]byte]*DepositChainRequest),
 		blockCounter:                    blockCounter,

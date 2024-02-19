@@ -73,6 +73,7 @@ const (
 	testDataDirFormat              = "%s/testdata"
 	depositSweepTestDataFilePrefix = "deposit_sweep_scenario"
 	redemptionTestDataFilePrefix   = "redemption_scenario"
+	movingFundsTestDataFilePrefix  = "moving_funds_scenario"
 )
 
 // Deposit holds the deposit data in the given test scenario.
@@ -139,6 +140,27 @@ type RedemptionTestScenario struct {
 // LoadRedemptionTestScenarios loads all scenarios related with redemption.
 func LoadRedemptionTestScenarios() ([]*RedemptionTestScenario, error) {
 	return loadTestScenarios[*RedemptionTestScenario](redemptionTestDataFilePrefix)
+}
+
+// MovingFundsTestScenario represents a moving funds test scenario.
+type MovingFundsTestScenario struct {
+	Title            string
+	WalletPublicKey  *ecdsa.PublicKey
+	WalletMainUtxo   *bitcoin.UnspentTransactionOutput
+	TargetWallets    [][20]byte
+	InputTransaction *bitcoin.Transaction
+	Fee              int64
+	Signature        *bitcoin.SignatureContainer
+
+	ExpectedSigHash                           *big.Int
+	ExpectedMovingFundsTransaction            *bitcoin.Transaction
+	ExpectedMovingFundsTransactionHash        bitcoin.Hash
+	ExpectedMovingFundsTransactionWitnessHash bitcoin.Hash
+}
+
+// LoadMovingFundsTestScenarios loads all scenarios related with moving funds.
+func LoadMovingFundsTestScenarios() ([]*MovingFundsTestScenario, error) {
+	return loadTestScenarios[*MovingFundsTestScenario](movingFundsTestDataFilePrefix)
 }
 
 func loadTestScenarios[T json.Unmarshaler](testDataFilePrefix string) ([]T, error) {

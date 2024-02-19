@@ -434,12 +434,12 @@ func (mft *MovingFundsTask) GetWalletMembersInfo(
 		// Search for the operator address in the cache. Store the operator
 		// address in the cache if it's not there.
 		if operatorID, found := operatorIDCache[operatorAddress]; !found {
-			operatorID, err := mft.chain.GetOperatorID(operatorAddress)
+			fetchedOperatorID, err := mft.chain.GetOperatorID(operatorAddress)
 			if err != nil {
 				return nil, 0, fmt.Errorf("failed to get operator ID: [%w]", err)
 			}
-			operatorIDCache[operatorAddress] = operatorID
-			walletMemberIDs = append(walletMemberIDs, operatorID)
+			operatorIDCache[operatorAddress] = fetchedOperatorID
+			walletMemberIDs = append(walletMemberIDs, fetchedOperatorID)
 		} else {
 			walletMemberIDs = append(walletMemberIDs, operatorID)
 		}
@@ -575,7 +575,7 @@ func (mft *MovingFundsTask) ProposeMovingFunds(
 
 	taskLogger.Infof("validating the moving funds proposal")
 
-	if _, err := tbtc.ValidateMovingFundsProposal(
+	if err := tbtc.ValidateMovingFundsProposal(
 		taskLogger,
 		walletPublicKeyHash,
 		mainUTXO,
