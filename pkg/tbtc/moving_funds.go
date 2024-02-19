@@ -379,6 +379,10 @@ func assembleMovingFundsTransaction(
 	// distributing the total output amount across all the outputs.
 	singleOutputValue := (totalOutputValue - remainder) / targetWalletsCount
 
+	// Add one output for each target wallets. The order of target wallets
+	// should be the same as during the commitment. We don't to check it,
+	// as the order of target wallets has already been validated by the on-chain
+	// contract.
 	for i, targetWalletPublicKeyHash := range targetWallets {
 		outputScript, err := bitcoin.PayToWitnessPublicKeyHash(
 			targetWalletPublicKeyHash,
