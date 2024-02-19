@@ -47,6 +47,11 @@ const (
 	// the transaction is known on the Bitcoin chain. This delay is needed
 	// as spreading the transaction over the Bitcoin network takes time.
 	movingFundsBroadcastCheckDelay = 1 * time.Minute
+	// movingFundsCommitmentConfirmationBlocks determines the period used when
+	// waiting for the moving funds commitment confirmations. This period
+	// ensures the moving funds commitment has definitely entered the blockchain
+	// and will not be removed by a chain reorganization.
+	movingFundsCommitmentConfirmationBlocks = 32
 )
 
 // MovingFundsProposal represents a moving funds proposal issued by a wallet's
@@ -270,12 +275,12 @@ func (mfa *movingFundsAction) waitForCommitmentConfirmation(
 		return walletData.MovingFundsTargetWalletsCommitmentHash != [32]byte{}, nil
 	}
 
-	// Wait `32` blocks to make sure the transaction has not been reverted for
-	// some reason, e.g. due to a chain reorganization.
+	// Wait a significant number of blocks to make sure the transaction has not
+	// been reverted for some reason, e.g. due to a chain reorganization.
 	result, err := ethereum.WaitForBlockConfirmations(
 		blockCounter,
 		currentBlock,
-		32,
+		movingFundsCommitmentConfirmationBlocks,
 		stateCheck,
 	)
 	if err != nil {
