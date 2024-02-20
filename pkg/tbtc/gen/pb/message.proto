@@ -47,3 +47,9 @@ message MovingFundsProposal {
     repeated bytes targetWallets = 1;
     bytes movingFundsTxFee = 2;
 }
+
+message MovedFundsSweepProposal {
+    bytes movingFundsTxHash = 1;
+    uint32 movingFundsTxOutputIndex = 2;
+    bytes sweepTxFee = 3;
+}

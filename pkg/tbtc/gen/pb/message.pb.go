@@ -445,6 +445,69 @@ func (x *MovingFundsProposal) GetMovingFundsTxFee() []byte {
 	return nil
 }
 
+type MovedFundsSweepProposal struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	MovingFundsTxHash        []byte `protobuf:"bytes,1,opt,name=movingFundsTxHash,proto3" json:"movingFundsTxHash,omitempty"`
+	MovingFundsTxOutputIndex uint32 `protobuf:"varint,2,opt,name=movingFundsTxOutputIndex,proto3" json:"movingFundsTxOutputIndex,omitempty"`
+	SweepTxFee               []byte `protobuf:"bytes,3,opt,name=sweepTxFee,proto3" json:"sweepTxFee,omitempty"`
+}
+
+func (x *MovedFundsSweepProposal) Reset() {
+	*x = MovedFundsSweepProposal{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_pkg_tbtc_gen_pb_message_proto_msgTypes[7]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *MovedFundsSweepProposal) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*MovedFundsSweepProposal) ProtoMessage() {}
+
+func (x *MovedFundsSweepProposal) ProtoReflect() protoreflect.Message {
+	mi := &file_pkg_tbtc_gen_pb_message_proto_msgTypes[7]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use MovedFundsSweepProposal.ProtoReflect.Descriptor instead.
+func (*MovedFundsSweepProposal) Descriptor() ([]byte, []int) {
+	return file_pkg_tbtc_gen_pb_message_proto_rawDescGZIP(), []int{7}
+}
+
+func (x *MovedFundsSweepProposal) GetMovingFundsTxHash() []byte {
+	if x != nil {
+		return x.MovingFundsTxHash
+	}
+	return nil
+}
+
+func (x *MovedFundsSweepProposal) GetMovingFundsTxOutputIndex() uint32 {
+	if x != nil {
+		return x.MovingFundsTxOutputIndex
+	}
+	return 0
+}
+
+func (x *MovedFundsSweepProposal) GetSweepTxFee() []byte {
+	if x != nil {
+		return x.SweepTxFee
+	}
+	return nil
+}
+
 type DepositSweepProposal_DepositKey struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -457,7 +520,7 @@ type DepositSweepProposal_DepositKey struct {
 func (x *DepositSweepProposal_DepositKey) Reset() {
 	*x = DepositSweepProposal_DepositKey{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_pkg_tbtc_gen_pb_message_proto_msgTypes[7]
+		mi := &file_pkg_tbtc_gen_pb_message_proto_msgTypes[8]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -470,7 +533,7 @@ func (x *DepositSweepProposal_DepositKey) String() string {
 func (*DepositSweepProposal_DepositKey) ProtoMessage() {}
 
 func (x *DepositSweepProposal_DepositKey) ProtoReflect() protoreflect.Message {
-	mi := &file_pkg_tbtc_gen_pb_message_proto_msgTypes[7]
+	mi := &file_pkg_tbtc_gen_pb_message_proto_msgTypes[8]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -568,8 +631,19 @@ var file_pkg_tbtc_gen_pb_message_proto_rawDesc = []byte{
 	0x0c, 0x52, 0x0d, 0x74, 0x61, 0x72, 0x67, 0x65, 0x74, 0x57, 0x61, 0x6c, 0x6c, 0x65, 0x74, 0x73,
 	0x12, 0x2a, 0x0a, 0x10, 0x6d, 0x6f, 0x76, 0x69, 0x6e, 0x67, 0x46, 0x75, 0x6e, 0x64, 0x73, 0x54,
 	0x78, 0x46, 0x65, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0c, 0x52, 0x10, 0x6d, 0x6f, 0x76, 0x69,
-	0x6e, 0x67, 0x46, 0x75, 0x6e, 0x64, 0x73, 0x54, 0x78, 0x46, 0x65, 0x65, 0x42, 0x06, 0x5a, 0x04,
-	0x2e, 0x2f, 0x70, 0x62, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
+	0x6e, 0x67, 0x46, 0x75, 0x6e, 0x64, 0x73, 0x54, 0x78, 0x46, 0x65, 0x65, 0x22, 0xa3, 0x01, 0x0a,
+	0x17, 0x4d, 0x6f, 0x76, 0x65, 0x64, 0x46, 0x75, 0x6e, 0x64, 0x73, 0x53, 0x77, 0x65, 0x65, 0x70,
+	0x50, 0x72, 0x6f, 0x70, 0x6f, 0x73, 0x61, 0x6c, 0x12, 0x2c, 0x0a, 0x11, 0x6d, 0x6f, 0x76, 0x69,
+	0x6e, 0x67, 0x46, 0x75, 0x6e, 0x64, 0x73, 0x54, 0x78, 0x48, 0x61, 0x73, 0x68, 0x18, 0x01, 0x20,
+	0x01, 0x28, 0x0c, 0x52, 0x11, 0x6d, 0x6f, 0x76, 0x69, 0x6e, 0x67, 0x46, 0x75, 0x6e, 0x64, 0x73,
+	0x54, 0x78, 0x48, 0x61, 0x73, 0x68, 0x12, 0x3a, 0x0a, 0x18, 0x6d, 0x6f, 0x76, 0x69, 0x6e, 0x67,
+	0x46, 0x75, 0x6e, 0x64, 0x73, 0x54, 0x78, 0x4f, 0x75, 0x74, 0x70, 0x75, 0x74, 0x49, 0x6e, 0x64,
+	0x65, 0x78, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0d, 0x52, 0x18, 0x6d, 0x6f, 0x76, 0x69, 0x6e, 0x67,
+	0x46, 0x75, 0x6e, 0x64, 0x73, 0x54, 0x78, 0x4f, 0x75, 0x74, 0x70, 0x75, 0x74, 0x49, 0x6e, 0x64,
+	0x65, 0x78, 0x12, 0x1e, 0x0a, 0x0a, 0x73, 0x77, 0x65, 0x65, 0x70, 0x54, 0x78, 0x46, 0x65, 0x65,
+	0x18, 0x03, 0x20, 0x01, 0x28, 0x0c, 0x52, 0x0a, 0x73, 0x77, 0x65, 0x65, 0x70, 0x54, 0x78, 0x46,
+	0x65, 0x65, 0x42, 0x06, 0x5a, 0x04, 0x2e, 0x2f, 0x70, 0x62, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74,
+	0x6f, 0x33,
 }
 
 var (
@@ -584,7 +658,7 @@ func file_pkg_tbtc_gen_pb_message_proto_rawDescGZIP() []byte {
 	return file_pkg_tbtc_gen_pb_message_proto_rawDescData
 }
 
-var file_pkg_tbtc_gen_pb_message_proto_msgTypes = make([]protoimpl.MessageInfo, 8)
+var file_pkg_tbtc_gen_pb_message_proto_msgTypes = make([]protoimpl.MessageInfo, 9)
 var file_pkg_tbtc_gen_pb_message_proto_goTypes = []interface{}{
 	(*SigningDoneMessage)(nil),              // 0: tbtc.SigningDoneMessage
 	(*CoordinationProposal)(nil),            // 1: tbtc.CoordinationProposal
@@ -593,11 +667,12 @@ var file_pkg_tbtc_gen_pb_message_proto_goTypes = []interface{}{
 	(*DepositSweepProposal)(nil),            // 4: tbtc.DepositSweepProposal
 	(*RedemptionProposal)(nil),              // 5: tbtc.RedemptionProposal
 	(*MovingFundsProposal)(nil),             // 6: tbtc.MovingFundsProposal
-	(*DepositSweepProposal_DepositKey)(nil), // 7: tbtc.DepositSweepProposal.DepositKey
+	(*MovedFundsSweepProposal)(nil),         // 7: tbtc.MovedFundsSweepProposal
+	(*DepositSweepProposal_DepositKey)(nil), // 8: tbtc.DepositSweepProposal.DepositKey
 }
 var file_pkg_tbtc_gen_pb_message_proto_depIdxs = []int32{
 	1, // 0: tbtc.CoordinationMessage.proposal:type_name -> tbtc.CoordinationProposal
-	7, // 1: tbtc.DepositSweepProposal.depositsKeys:type_name -> tbtc.DepositSweepProposal.DepositKey
+	8, // 1: tbtc.DepositSweepProposal.depositsKeys:type_name -> tbtc.DepositSweepProposal.DepositKey
 	2, // [2:2] is the sub-list for method output_type
 	2, // [2:2] is the sub-list for method input_type
 	2, // [2:2] is the sub-list for extension type_name
@@ -696,6 +771,18 @@ func file_pkg_tbtc_gen_pb_message_proto_init() {
 			}
 		}
 		file_pkg_tbtc_gen_pb_message_proto_msgTypes[7].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*MovedFundsSweepProposal); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_pkg_tbtc_gen_pb_message_proto_msgTypes[8].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*DepositSweepProposal_DepositKey); i {
 			case 0:
 				return &v.state
@@ -714,7 +801,7 @@ func file_pkg_tbtc_gen_pb_message_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_pkg_tbtc_gen_pb_message_proto_rawDesc,
 			NumEnums:      0,
-			NumMessages:   8,
+			NumMessages:   9,
 			NumExtensions: 0,
 			NumServices:   0,
 		},
