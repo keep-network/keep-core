@@ -30,6 +30,13 @@ type submittedDepositSweepProof struct {
 	vault       common.Address
 }
 
+type submittedMovingFundsProof struct {
+	transaction         *bitcoin.Transaction
+	proof               *bitcoin.SpvProof
+	mainUTXO            bitcoin.UnspentTransactionOutput
+	walletPublicKeyHash [20]byte
+}
+
 type localChain struct {
 	mutex sync.Mutex
 
@@ -39,6 +46,7 @@ type localChain struct {
 	pendingRedemptionRequests                map[[32]byte]*tbtc.RedemptionRequest
 	submittedRedemptionProofs                []*submittedRedemptionProof
 	submittedDepositSweepProofs              []*submittedDepositSweepProof
+	submittedMovingFundsProofs               []*submittedMovingFundsProof
 	pastRedemptionRequestedEvents            map[[32]byte][]*tbtc.RedemptionRequestedEvent
 	pastDepositRevealedEvents                map[[32]byte][]*tbtc.DepositRevealedEvent
 	pastMovingFundsCommitmentSubmittedEvents map[[32]byte][]*tbtc.MovingFundsCommitmentSubmittedEvent
@@ -56,6 +64,7 @@ func newLocalChain() *localChain {
 		pendingRedemptionRequests:                make(map[[32]byte]*tbtc.RedemptionRequest),
 		submittedRedemptionProofs:                make([]*submittedRedemptionProof, 0),
 		submittedDepositSweepProofs:              make([]*submittedDepositSweepProof, 0),
+		submittedMovingFundsProofs:               make([]*submittedMovingFundsProof, 0),
 		pastRedemptionRequestedEvents:            make(map[[32]byte][]*tbtc.RedemptionRequestedEvent),
 		pastDepositRevealedEvents:                make(map[[32]byte][]*tbtc.DepositRevealedEvent),
 		pastMovingFundsCommitmentSubmittedEvents: make(map[[32]byte][]*tbtc.MovingFundsCommitmentSubmittedEvent),
@@ -272,7 +281,27 @@ func (lc *localChain) SubmitMovingFundsProofWithReimbursement(
 	mainUTXO bitcoin.UnspentTransactionOutput,
 	walletPublicKeyHash [20]byte,
 ) error {
-	panic("unsupported")
+	lc.mutex.Lock()
+	defer lc.mutex.Unlock()
+
+	lc.submittedMovingFundsProofs = append(
+		lc.submittedMovingFundsProofs,
+		&submittedMovingFundsProof{
+			transaction:         transaction,
+			proof:               proof,
+			mainUTXO:            mainUTXO,
+			walletPublicKeyHash: walletPublicKeyHash,
+		},
+	)
+
+	return nil
+}
+
+func (lc *localChain) getSubmittedMovingFundsProofs() []*submittedMovingFundsProof {
+	lc.mutex.Lock()
+	defer lc.mutex.Unlock()
+
+	return lc.submittedMovingFundsProofs
 }
 
 func (lc *localChain) Ready() (bool, error) {

@@ -2,13 +2,112 @@ package spv
 
 import (
 	"encoding/hex"
+	"fmt"
 	"testing"
 
 	"github.com/go-test/deep"
 
+	"github.com/keep-network/keep-core/internal/testutils"
 	"github.com/keep-network/keep-core/pkg/bitcoin"
 	"github.com/keep-network/keep-core/pkg/tbtc"
 )
+
+func TestSubmitMovingFundsProof(t *testing.T) {
+	bytesFromHex := func(str string) []byte {
+		value, err := hex.DecodeString(str)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		return value
+	}
+
+	txFromHex := func(str string) *bitcoin.Transaction {
+		transaction := new(bitcoin.Transaction)
+		err := transaction.Deserialize(bytesFromHex(str))
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		return transaction
+	}
+
+	requiredConfirmations := uint(6)
+
+	btcChain := newLocalBitcoinChain()
+	spvChain := newLocalChain()
+
+	// Take an arbitrary moving funds transaction:
+	// https://live.blockcypher.com/btc-testnet/tx/e6218018ed1874e73b78e16a8cf4f5016cbc666a3f9179557a84083e3e66ff7c
+	movingFundsTransaction := txFromHex("0100000000010180653f6e07dabddae14cf08d45475388343763100e4548914d811f373465a42e0100000000ffffffff031c160900000000001976a9142cd680318747b720d67bf4246eb7403b476adb3488ac1d160900000000001600148900de8fc6e4cd1db4c7ab0759d28503b4cb0ab11c160900000000001976a914af7a841e055fc19bf31acf4cbed5ef548a2cc45388ac0247304402202d615c196548b6cb4f1cd1f44b559cd348ce2cb8bd90356be9883a7460d7c8aa0220675e7b67e4d96a6180f7adb5ecb9ab962275d39742009911980e19e734523ff4012102ee067a0273f2e3ba88d23140a24fdb290f27bbcd0f94117a9c65be3911c5c04e00000000")
+	// Take the transaction that is the moving funds transaction input. It is
+	// necessary as the tested function logic fetches its data to determine
+	// the wallet public key hash.
+	// https://live.blockcypher.com/btc-testnet/tx/2ea46534371f814d9148450e10633734885347458df04ce1dabdda076e3f6580/
+	movingFundsInputTransaction := txFromHex("02000000000101f064a0d2775bda695f1b5e476c1860aa541ef065c5d9a4eb5d49fc8595c6c1dd0100000000feffffff0252ba92190200000016001420e46ff6ba650c7898839617ce40ef54ca0e33377d651b00000000001600147ac2d9378a1c47e589dfb8095ca95ed2140d2726024730440220755156b6d9759f213a5fe189e222e9b781b6386ed83fbf070113b082ff2ddcd60220355820a2a87990271dcdedb57a80402b18e1aa6fcbaf7fa15eb06ba06790cfc101210399d30f01b702d4b8607c429af6bb7d0611cf6333a23154b31ba2aaefdd88d5b6b2782100")
+
+	err := btcChain.BroadcastTransaction(movingFundsInputTransaction)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Just a mock proof.
+	proof := &bitcoin.SpvProof{
+		MerkleProof:    []byte{0x01},
+		TxIndexInBlock: 2,
+		BitcoinHeaders: []byte{0x03},
+	}
+
+	mockSpvProofAssembler := func(
+		hash bitcoin.Hash,
+		confirmations uint,
+		btcChain bitcoin.Chain,
+	) (*bitcoin.Transaction, *bitcoin.SpvProof, error) {
+		if hash == movingFundsTransaction.Hash() && confirmations == requiredConfirmations {
+			return movingFundsTransaction, proof, nil
+		}
+
+		return nil, nil, fmt.Errorf("error while assembling spv proof")
+	}
+
+	err = submitMovingFundsProof(
+		movingFundsTransaction.Hash(),
+		requiredConfirmations,
+		btcChain,
+		spvChain,
+		mockSpvProofAssembler,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	submittedProofs := spvChain.getSubmittedMovingFundsProofs()
+
+	testutils.AssertIntsEqual(t, "proofs count", 1, len(submittedProofs))
+
+	submittedProof := submittedProofs[0]
+
+	expectedTransactionHash := movingFundsTransaction.Hash()
+	actualTransactionHash := submittedProof.transaction.Hash()
+	testutils.AssertBytesEqual(t, expectedTransactionHash[:], actualTransactionHash[:])
+
+	if diff := deep.Equal(proof, submittedProof.proof); diff != nil {
+		t.Errorf("invalid proof: %v", diff)
+	}
+
+	expectedMainUtxo := bitcoin.UnspentTransactionOutput{
+		Outpoint: &bitcoin.TransactionOutpoint{
+			TransactionHash: movingFundsInputTransaction.Hash(),
+			OutputIndex:     1,
+		},
+		Value: 1795453,
+	}
+	if diff := deep.Equal(expectedMainUtxo, submittedProof.mainUTXO); diff != nil {
+		t.Errorf("invalid main UTXO: %v", diff)
+	}
+
+	testutils.AssertBytesEqual(t, bytesFromHex("7ac2d9378a1c47e589dfb8095ca95ed2140d2726"), submittedProof.walletPublicKeyHash[:])
+}
 
 func TestGetUnprovenMovingFundsTransactions(t *testing.T) {
 	bytesFromHex := func(str string) []byte {
