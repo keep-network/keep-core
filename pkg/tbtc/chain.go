@@ -393,6 +393,14 @@ type MovingFundsCommitmentSubmittedEvent struct {
 	BlockNumber         uint64
 }
 
+func (mfcse *MovingFundsCommitmentSubmittedEvent) GetWalletPublicKeyHash() [20]byte {
+	return mfcse.WalletPublicKeyHash
+}
+
+func (mfcse *MovingFundsCommitmentSubmittedEvent) GetTargetWallets() [][20]byte {
+	return mfcse.TargetWallets
+}
+
 // MovingFundsCommitmentSubmittedEventFilter is a component allowing to filter MovingFundsCommitmentSubmittedEvent.
 type MovingFundsCommitmentSubmittedEventFilter struct {
 	StartBlock          uint64
