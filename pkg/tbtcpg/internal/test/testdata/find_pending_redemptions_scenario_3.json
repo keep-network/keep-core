@@ -1,0 +1,60 @@
+{
+  "Title": "pending redemptions with different processing delays exist",
+  "ChainParameters":{
+    "AverageBlockTime": 10,
+    "CurrentBlock": 100000,
+    "RequestTimeout": 86400,
+    "RequestMinAge": 3600
+  },
+  "MaxNumberOfRequests": 10,
+  "WalletPublicKeyHash": "0x928d992e5f5b71de51a1b40fcc4056b99a88a647",
+  "PendingRedemptions": [
+    {
+      "WalletPublicKeyHash": "0x928d992e5f5b71de51a1b40fcc4056b99a88a647",
+      "RedeemerOutputScript": "0x00140000000000000000000000000000000000000001",
+      "RequestedAmount": 1000000000,
+      "Age": 3000,
+      "Delay": 0
+    },
+    {
+      "WalletPublicKeyHash": "0x928d992e5f5b71de51a1b40fcc4056b99a88a647",
+      "RedeemerOutputScript": "0x00140000000000000000000000000000000000000002",
+      "RequestedAmount": 2000000000,
+      "Age": 4000,
+      "Delay": 0
+    },
+    {
+      "WalletPublicKeyHash": "0x928d992e5f5b71de51a1b40fcc4056b99a88a647",
+      "RedeemerOutputScript": "0x00140000000000000000000000000000000000000003",
+      "RequestedAmount": 3000000000,
+      "Age": 4000,
+      "Delay": 7200
+    },
+    {
+      "WalletPublicKeyHash": "0x928d992e5f5b71de51a1b40fcc4056b99a88a647",
+      "RedeemerOutputScript": "0x00140000000000000000000000000000000000000004",
+      "RequestedAmount": 4000000000,
+      "Age": 8000,
+      "Delay": 7200
+    },
+    {
+      "WalletPublicKeyHash": "0x928d992e5f5b71de51a1b40fcc4056b99a88a647",
+      "RedeemerOutputScript": "0x00140000000000000000000000000000000000000005",
+      "RequestedAmount": 5000000000,
+      "Age": 8000,
+      "Delay": 14400
+    },
+    {
+      "WalletPublicKeyHash": "0x928d992e5f5b71de51a1b40fcc4056b99a88a647",
+      "RedeemerOutputScript": "0x00140000000000000000000000000000000000000006",
+      "RequestedAmount": 6000000000,
+      "Age": 15000,
+      "Delay": 14400
+    }
+  ],
+  "ExpectedRedeemersOutputScripts": [
+    "0x00140000000000000000000000000000000000000006",
+    "0x00140000000000000000000000000000000000000004",
+    "0x00140000000000000000000000000000000000000002"
+  ]
+}

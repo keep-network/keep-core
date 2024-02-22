@@ -276,6 +276,7 @@ func (fprts *FindPendingRedemptionsTestScenario) UnmarshalJSON(data []byte) erro
 			RedeemerOutputScript string
 			RequestedAmount      uint64
 			Age                  int64
+			Delay				 int64
 		}
 		ExpectedRedeemersOutputScripts []string
 	}
@@ -324,6 +325,7 @@ func (fprts *FindPendingRedemptionsTestScenario) UnmarshalJSON(data []byte) erro
 				RequestedAmount:      pr.RequestedAmount,
 				RequestedAt:          requestedAt,
 				RequestBlock:         requestBlock,
+				Delay:				  time.Duration(pr.Delay) * time.Second,
 			},
 		)
 	}

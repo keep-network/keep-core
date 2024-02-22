@@ -49,6 +49,7 @@ type TbtcChain struct {
 	walletRegistry          *ecdsacontract.WalletRegistry
 	sortitionPool           *ecdsacontract.EcdsaSortitionPool
 	walletProposalValidator *tbtccontract.WalletProposalValidator
+	redemptionWatchtower    *tbtccontract.RedemptionWatchtower
 }
 
 // NewTbtcChain construct a new instance of the TBTC-specific Ethereum
@@ -194,6 +195,35 @@ func newTbtcChain(
 		)
 	}
 
+	redemptionWatchtowerAddress, err := bridge.GetRedemptionWatchtower()
+	if err != nil {
+		return nil, fmt.Errorf(
+			"failed to get RedemptionWatchtower address from Bridge: [%v]",
+			err,
+		)
+	}
+
+	var redemptionWatchtower *tbtccontract.RedemptionWatchtower
+	if redemptionWatchtowerAddress != [20]byte{} {
+		redemptionWatchtower, err =
+			tbtccontract.NewRedemptionWatchtower(
+				redemptionWatchtowerAddress,
+				baseChain.chainID,
+				baseChain.key,
+				baseChain.client,
+				baseChain.nonceManager,
+				baseChain.miningWaiter,
+				baseChain.blockCounter,
+				baseChain.transactionMutex,
+			)
+		if err != nil {
+			return nil, fmt.Errorf(
+				"failed to attach to RedemptionWatchtower contract: [%v]",
+				err,
+			)
+		}
+	}
+
 	return &TbtcChain{
 		baseChain:               baseChain,
 		bridge:                  bridge,
@@ -201,6 +231,7 @@ func newTbtcChain(
 		walletRegistry:          walletRegistry,
 		sortitionPool:           sortitionPool,
 		walletProposalValidator: walletProposalValidator,
+		redemptionWatchtower:    redemptionWatchtower,
 	}, nil
 }
 
@@ -1897,4 +1928,25 @@ func (tc *TbtcChain) ValidateMovingFundsProposal(
 	}
 
 	return nil
+}
+
+func (tc *TbtcChain) GetRedemptionDelay(
+	walletPublicKeyHash [20]byte,
+	redeemerOutputScript bitcoin.Script,
+) (time.Duration, error) {
+	if tc.redemptionWatchtower == nil {
+		return 0, nil
+	}
+
+	redemptionKey, err := tc.BuildRedemptionKey(walletPublicKeyHash, redeemerOutputScript)
+	if err != nil {
+		return 0, fmt.Errorf("cannot build redemption key: [%v]", err)
+	}
+
+	delay, err := tc.redemptionWatchtower.GetRedemptionDelay(redemptionKey)
+	if err != nil {
+		return 0, fmt.Errorf("cannot get redemption delay: [%v]", err)
+	}
+
+	return time.Duration(delay) * time.Second, nil
 }

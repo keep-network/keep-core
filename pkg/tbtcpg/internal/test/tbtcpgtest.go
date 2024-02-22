@@ -100,6 +100,7 @@ type RedemptionRequest struct {
 	RequestedAmount      uint64
 	RequestedAt          time.Time
 	RequestBlock         uint64
+	Delay                time.Duration
 }
 
 // FindPendingRedemptionsTestScenario represents a test scenario of finding

@@ -366,15 +366,42 @@ redemptionRequestedLoop:
 		},
 	)
 
+	// Capture time now for computations.
+	timeNow := time.Now()
+
 	// Only redemption requests in range:
-	// [now - requestTimeout, now - requestMinAge]
+	// [now - requestTimeout, now - minAge]
 	// should be taken into consideration.
-	redemptionRequestsRangeStartTimestamp := time.Now().Add(
+	redemptionRequestsRangeStartTimestamp := timeNow.Add(
 		-time.Duration(requestTimeout) * time.Second,
 	)
-	redemptionRequestsRangeEndTimestamp := time.Now().Add(
-		-time.Duration(requestMinAge) * time.Second,
-	)
+	redemptionRequestsRangeEndTimestampFn := func(
+		redemption *RedemptionRequest,
+	) (time.Time, error) {
+		delay, err := chain.GetRedemptionDelay(
+			redemption.WalletPublicKeyHash,
+			redemption.RedeemerOutputScript,
+		)
+		if err != nil {
+			return time.Time{}, fmt.Errorf(
+				"failed to get redemption delay: [%w]",
+				err,
+			)
+		}
+
+		minAge := time.Duration(requestMinAge) * time.Second
+		if delay > minAge {
+			minAge = delay
+		}
+
+		fnLogger.Infof(
+			"minimum age for redemption request [%s] is [%v]",
+			redemption.RedemptionKey,
+			minAge,
+		)
+
+		return timeNow.Add(-minAge), nil
+	}
 
 	result := make([]*RedemptionRequest, 0, resultSliceCapacity)
 	for _, pendingRedemption := range pendingRedemptions {
@@ -391,8 +418,19 @@ redemptionRequestedLoop:
 			continue
 		}
 
+		rangeEndTimestamp, err := redemptionRequestsRangeEndTimestampFn(
+			pendingRedemption,
+		)
+		if err != nil {
+			return nil, fmt.Errorf(
+				"cannot get minimum age for redemption request [%s]: [%w]",
+				pendingRedemption.RedemptionKey,
+				err,
+			)
+		}
+
 		// Check if enough time elapsed since the redemption request.
-		if pendingRedemption.RequestedAt.After(redemptionRequestsRangeEndTimestamp) {
+		if pendingRedemption.RequestedAt.After(rangeEndTimestamp) {
 			fnLogger.Infof(
 				"redemption request [%s] is not old enough",
 				pendingRedemption.RedemptionKey,

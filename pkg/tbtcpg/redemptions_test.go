@@ -106,6 +106,13 @@ func TestRedemptionAction_FindPendingRedemptions(t *testing.T) {
 						RequestedAt:          pendingRedemption.RequestedAt,
 					},
 				)
+
+				// Record the redemption processing delay.
+				tbtcChain.SetRedemptionDelay(
+					pendingRedemption.WalletPublicKeyHash,
+					pendingRedemption.RedeemerOutputScript,
+					pendingRedemption.Delay,
+				)
 			}
 
 			task := tbtcpg.NewRedemptionTask(tbtcChain, nil)
