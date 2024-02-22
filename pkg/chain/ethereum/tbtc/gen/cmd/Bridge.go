@@ -58,6 +58,7 @@ func init() {
 		bDepositsCommand(),
 		bFraudChallengesCommand(),
 		bFraudParametersCommand(),
+		bGetRedemptionWatchtowerCommand(),
 		bGovernanceCommand(),
 		bIsVaultTrustedCommand(),
 		bLiveWalletsCountCommand(),
@@ -77,6 +78,7 @@ func init() {
 		bEcdsaWalletHeartbeatFailedCallbackCommand(),
 		bInitializeCommand(),
 		bNotifyMovingFundsBelowDustCommand(),
+		bNotifyRedemptionVetoCommand(),
 		bNotifyWalletCloseableCommand(),
 		bNotifyWalletClosingPeriodElapsedCommand(),
 		bReceiveBalanceApprovalCommand(),
@@ -85,6 +87,7 @@ func init() {
 		bResetMovingFundsTimeoutCommand(),
 		bRevealDepositCommand(),
 		bRevealDepositWithExtraDataCommand(),
+		bSetRedemptionWatchtowerCommand(),
 		bSetSpvMaintainerStatusCommand(),
 		bSetVaultStatusCommand(),
 		bSubmitDepositSweepProofCommand(),
@@ -316,6 +319,40 @@ func bFraudParameters(c *cobra.Command, args []string) error {
 	}
 
 	result, err := contract.FraudParametersAtBlock(
+		cmd.BlockFlagValue.Int,
+	)
+
+	if err != nil {
+		return err
+	}
+
+	cmd.PrintOutput(result)
+
+	return nil
+}
+
+func bGetRedemptionWatchtowerCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "get-redemption-watchtower",
+		Short:                 "Calls the view method getRedemptionWatchtower on the Bridge contract.",
+		Args:                  cmd.ArgCountChecker(0),
+		RunE:                  bGetRedemptionWatchtower,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	cmd.InitConstFlags(c)
+
+	return c
+}
+
+func bGetRedemptionWatchtower(c *cobra.Command, args []string) error {
+	contract, err := initializeBridge(c)
+	if err != nil {
+		return err
+	}
+
+	result, err := contract.GetRedemptionWatchtowerAtBlock(
 		cmd.BlockFlagValue.Int,
 	)
 
@@ -1331,6 +1368,80 @@ func bNotifyMovingFundsBelowDust(c *cobra.Command, args []string) error {
 	return nil
 }
 
+func bNotifyRedemptionVetoCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "notify-redemption-veto [arg_walletPubKeyHash] [arg_redeemerOutputScript]",
+		Short:                 "Calls the nonpayable method notifyRedemptionVeto on the Bridge contract.",
+		Args:                  cmd.ArgCountChecker(2),
+		RunE:                  bNotifyRedemptionVeto,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	c.PreRunE = cmd.NonConstArgsChecker
+	cmd.InitNonConstFlags(c)
+
+	return c
+}
+
+func bNotifyRedemptionVeto(c *cobra.Command, args []string) error {
+	contract, err := initializeBridge(c)
+	if err != nil {
+		return err
+	}
+
+	arg_walletPubKeyHash, err := decode.ParseBytes20(args[0])
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter arg_walletPubKeyHash, a bytes20, from passed value %v",
+			args[0],
+		)
+	}
+	arg_redeemerOutputScript, err := hexutil.Decode(args[1])
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter arg_redeemerOutputScript, a bytes, from passed value %v",
+			args[1],
+		)
+	}
+
+	var (
+		transaction *types.Transaction
+	)
+
+	if shouldSubmit, _ := c.Flags().GetBool(cmd.SubmitFlag); shouldSubmit {
+		// Do a regular submission. Take payable into account.
+		transaction, err = contract.NotifyRedemptionVeto(
+			arg_walletPubKeyHash,
+			arg_redeemerOutputScript,
+		)
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput(transaction.Hash())
+	} else {
+		// Do a call.
+		err = contract.CallNotifyRedemptionVeto(
+			arg_walletPubKeyHash,
+			arg_redeemerOutputScript,
+			cmd.BlockFlagValue.Int,
+		)
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput("success")
+
+		cmd.PrintOutput(
+			"the transaction was not submitted to the chain; " +
+				"please add the `--submit` flag",
+		)
+	}
+
+	return nil
+}
+
 func bNotifyWalletCloseableCommand() *cobra.Command {
 	c := &cobra.Command{
 		Use:                   "notify-wallet-closeable [arg_walletPubKeyHash] [arg_walletMainUtxo_json]",
@@ -1898,6 +2009,71 @@ func bRevealDepositWithExtraData(c *cobra.Command, args []string) error {
 			arg_fundingTx_json,
 			arg_reveal_json,
 			arg_extraData,
+			cmd.BlockFlagValue.Int,
+		)
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput("success")
+
+		cmd.PrintOutput(
+			"the transaction was not submitted to the chain; " +
+				"please add the `--submit` flag",
+		)
+	}
+
+	return nil
+}
+
+func bSetRedemptionWatchtowerCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "set-redemption-watchtower [arg_redemptionWatchtower]",
+		Short:                 "Calls the nonpayable method setRedemptionWatchtower on the Bridge contract.",
+		Args:                  cmd.ArgCountChecker(1),
+		RunE:                  bSetRedemptionWatchtower,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	c.PreRunE = cmd.NonConstArgsChecker
+	cmd.InitNonConstFlags(c)
+
+	return c
+}
+
+func bSetRedemptionWatchtower(c *cobra.Command, args []string) error {
+	contract, err := initializeBridge(c)
+	if err != nil {
+		return err
+	}
+
+	arg_redemptionWatchtower, err := chainutil.AddressFromHex(args[0])
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter arg_redemptionWatchtower, a address, from passed value %v",
+			args[0],
+		)
+	}
+
+	var (
+		transaction *types.Transaction
+	)
+
+	if shouldSubmit, _ := c.Flags().GetBool(cmd.SubmitFlag); shouldSubmit {
+		// Do a regular submission. Take payable into account.
+		transaction, err = contract.SetRedemptionWatchtower(
+			arg_redemptionWatchtower,
+		)
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput(transaction.Hash())
+	} else {
+		// Do a call.
+		err = contract.CallSetRedemptionWatchtower(
+			arg_redemptionWatchtower,
 			cmd.BlockFlagValue.Int,
 		)
 		if err != nil {
