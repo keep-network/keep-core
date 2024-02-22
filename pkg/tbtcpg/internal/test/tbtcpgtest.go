@@ -32,12 +32,19 @@ type Deposit struct {
 	WalletPublicKeyHash [20]byte
 
 	RevealBlockNumber uint64
+	RevealedAt        time.Time
 	SweptAt           time.Time
 }
 
 // FindDepositsToSweepTestScenario represents a test scenario of finding deposits to sweep.
 type FindDepositsToSweepTestScenario struct {
 	Title string
+
+	ChainParameters struct {
+		AverageBlockTime time.Duration
+		CurrentBlock     uint64
+		DepositMinAge    uint32
+	}
 
 	MaxNumberOfDeposits uint16
 	WalletPublicKeyHash [20]byte

@@ -90,7 +90,8 @@ type LocalChain struct {
 	movingFundsProposalValidations           map[[32]byte]bool
 	movingFundsCommitmentSubmissions         []*movingFundsCommitmentSubmission
 	operatorIDs                              map[chain.Address]uint32
-	redemptionDelays						 map[[32]byte]time.Duration
+	redemptionDelays                         map[[32]byte]time.Duration
+	depositMinAge                            uint32
 }
 
 func NewLocalChain() *LocalChain {
@@ -108,7 +109,7 @@ func NewLocalChain() *LocalChain {
 		movingFundsProposalValidations:           make(map[[32]byte]bool),
 		movingFundsCommitmentSubmissions:         make([]*movingFundsCommitmentSubmission, 0),
 		operatorIDs:                              make(map[chain.Address]uint32),
-		redemptionDelays:						 make(map[[32]byte]time.Duration),
+		redemptionDelays:                         make(map[[32]byte]time.Duration),
 	}
 }
 
@@ -1117,6 +1118,20 @@ func (lc *LocalChain) SetRedemptionDelay(
 	key := buildRedemptionRequestKey(walletPublicKeyHash, redeemerOutputScript)
 
 	lc.redemptionDelays[key] = delay
+}
+
+func (lc *LocalChain) GetDepositMinAge() (uint32, error) {
+	lc.mutex.Lock()
+	defer lc.mutex.Unlock()
+
+	return lc.depositMinAge, nil
+}
+
+func (lc *LocalChain) SetDepositMinAge(depositMinAge uint32) {
+	lc.mutex.Lock()
+	defer lc.mutex.Unlock()
+
+	lc.depositMinAge = depositMinAge
 }
 
 type MockBlockCounter struct {

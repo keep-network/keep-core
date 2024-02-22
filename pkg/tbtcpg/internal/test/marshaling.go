@@ -17,16 +17,21 @@ import (
 // proper FindDepositsToSweepTestScenario.
 func (dsts *FindDepositsToSweepTestScenario) UnmarshalJSON(data []byte) error {
 	type findDepositsToSweepTestScenario struct {
-		Title               string
-		WalletPublicKeyHash string
+		Title           string
+		ChainParameters struct {
+			AverageBlockTime int64
+			CurrentBlock     uint64
+			DepositMinAge    uint32
+		}
 		MaxNumberOfDeposits uint16
+		WalletPublicKeyHash string
 		Deposits            []struct {
 			FundingTxHash          string
 			FundingOutputIndex     uint32
 			FundingTxConfirmations uint
 			FundingTxHex           string
 			WalletPublicKeyHash    string
-			RevealBlockNumber      uint64
+			Age                    int64
 			SweptAt                int64
 		}
 		ExpectedUnsweptDeposits []struct {
@@ -65,16 +70,31 @@ func (dsts *FindDepositsToSweepTestScenario) UnmarshalJSON(data []byte) error {
 	// Unmarshal title.
 	dsts.Title = unmarshaled.Title
 
+	dsts.ChainParameters.AverageBlockTime =
+		time.Duration(unmarshaled.ChainParameters.AverageBlockTime) * time.Second
+	dsts.ChainParameters.CurrentBlock = unmarshaled.ChainParameters.CurrentBlock
+	dsts.ChainParameters.DepositMinAge = unmarshaled.ChainParameters.DepositMinAge
+
+	dsts.MaxNumberOfDeposits = unmarshaled.MaxNumberOfDeposits
+
 	// Unmarshal wallet PKH.
 	if len(unmarshaled.WalletPublicKeyHash) > 0 {
 		copy(dsts.WalletPublicKeyHash[:], hexToSlice(unmarshaled.WalletPublicKeyHash))
 	}
 
-	dsts.MaxNumberOfDeposits = unmarshaled.MaxNumberOfDeposits
+	now := time.Now()
+	currentBlock := dsts.ChainParameters.CurrentBlock
+	averageBlockTime := dsts.ChainParameters.AverageBlockTime
 
 	// Unmarshal deposits.
 	for i, deposit := range unmarshaled.Deposits {
 		d := new(Deposit)
+
+		age := time.Duration(deposit.Age) * time.Second
+		ageBlocks := uint64(age.Milliseconds() / averageBlockTime.Milliseconds())
+
+		revealedAt := now.Add(-age)
+		revealBlockNumber := currentBlock - ageBlocks
 
 		fundingTxHash, err := bitcoin.NewHashFromString(deposit.FundingTxHash, bitcoin.ReversedByteOrder)
 		if err != nil {
@@ -92,7 +112,8 @@ func (dsts *FindDepositsToSweepTestScenario) UnmarshalJSON(data []byte) error {
 		d.FundingOutputIndex = deposit.FundingOutputIndex
 		d.FundingTxConfirmations = deposit.FundingTxConfirmations
 		d.FundingTx = txFromHex(deposit.FundingTxHex)
-		d.RevealBlockNumber = deposit.RevealBlockNumber
+		d.RevealBlockNumber = revealBlockNumber
+		d.RevealedAt = revealedAt
 		d.SweptAt = time.Unix(deposit.SweptAt, 0)
 
 		dsts.Deposits = append(dsts.Deposits, d)
@@ -276,7 +297,7 @@ func (fprts *FindPendingRedemptionsTestScenario) UnmarshalJSON(data []byte) erro
 			RedeemerOutputScript string
 			RequestedAmount      uint64
 			Age                  int64
-			Delay				 int64
+			Delay                int64
 		}
 		ExpectedRedeemersOutputScripts []string
 	}
@@ -325,7 +346,7 @@ func (fprts *FindPendingRedemptionsTestScenario) UnmarshalJSON(data []byte) erro
 				RequestedAmount:      pr.RequestedAmount,
 				RequestedAt:          requestedAt,
 				RequestBlock:         requestBlock,
-				Delay:				  time.Duration(pr.Delay) * time.Second,
+				Delay:                time.Duration(pr.Delay) * time.Second,
 			},
 		)
 	}

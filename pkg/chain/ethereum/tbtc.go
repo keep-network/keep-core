@@ -1950,3 +1950,7 @@ func (tc *TbtcChain) GetRedemptionDelay(
 
 	return time.Duration(delay) * time.Second, nil
 }
+
+func (tc *TbtcChain) GetDepositMinAge() (uint32, error) {
+	return tc.walletProposalValidator.DEPOSITMINAGE()
+}

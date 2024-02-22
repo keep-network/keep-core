@@ -184,4 +184,9 @@ type Chain interface {
 		walletPublicKeyHash [20]byte,
 		redeemerOutputScript bitcoin.Script,
 	) (time.Duration, error)
+
+	// GetDepositMinAge get the minimum time that must elapse since
+	// the deposit reveal before a deposit becomes eligible for
+	// a processing.
+	GetDepositMinAge() (uint32, error)
 }
