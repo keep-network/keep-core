@@ -111,25 +111,54 @@ func (mfst *MovedFundsSweepTask) FindMovingFundsTxData(
 		filterStartBlock = currentBlockNumber - MovingFundsCommitmentLookBackBlocks
 	}
 
-	_, err = mfst.findCommittingWallets(
+	movingFundsCommitmentData, err := mfst.findMovingFundsCommitmentData(
 		walletPublicKeyHash,
 		filterStartBlock,
 	)
 	if err != nil {
 		return bitcoin.Hash{}, 0, fmt.Errorf(
-			"failed to find committing source wallets : [%w]",
+			"failed to find committing source wallets: [%w]",
 			err,
 		)
 	}
 
-	// TODO: Continue with implementation
-	return bitcoin.Hash{}, 0, nil
+	movingFundsTxData, err := mfst.findMovingFundsTransactions(
+		movingFundsCommitmentData,
+		filterStartBlock,
+	)
+	if err != nil {
+		return bitcoin.Hash{}, 0, fmt.Errorf(
+			"failed to find moving funds transactions: [%w]",
+			err,
+		)
+	}
+
+	for _, data := range movingFundsTxData {
+		movedFundsSweepRequest, err := mfst.chain.GetMovedFundsSweepRequest(
+			data.TransactionHash,
+			data.OutputIndex,
+		)
+		if err != nil {
+			return bitcoin.Hash{}, 0, fmt.Errorf(
+				"failed to get moved funds sweep request: [%w]",
+				err,
+			)
+		}
+
+		if movedFundsSweepRequest.State == tbtc.MovedFundsStatePending {
+			return data.TransactionHash, data.OutputIndex, nil
+		}
+	}
+
+	return bitcoin.Hash{}, 0, fmt.Errorf(
+		"could not find any pending moving funds request",
+	)
 }
 
-func (mfst *MovedFundsSweepTask) findCommittingWallets(
+func (mfst *MovedFundsSweepTask) findMovingFundsCommitmentData(
 	walletPublicKeyHash [20]byte,
 	filterStartBlock uint64,
-) ([][20]byte, error) {
+) ([]movingFundsCommitmentData, error) {
 	filter := &tbtc.MovingFundsCommitmentSubmittedEventFilter{
 		StartBlock: filterStartBlock,
 	}
@@ -142,19 +171,76 @@ func (mfst *MovedFundsSweepTask) findCommittingWallets(
 		)
 	}
 
-	committingWallets := [][20]byte{}
+	commitmentData := []movingFundsCommitmentData{}
 	for _, event := range events {
-		for _, targetWallet := range event.TargetWallets {
+		for targetWalletIndex, targetWallet := range event.TargetWallets {
 			if targetWallet == walletPublicKeyHash {
-				committingWallets = append(
-					committingWallets,
-					event.WalletPublicKeyHash,
+				commitmentData = append(
+					commitmentData,
+					movingFundsCommitmentData{
+						committingWallet:  event.WalletPublicKeyHash,
+						targetWalletIndex: uint32(targetWalletIndex),
+					},
 				)
+				break
 			}
 		}
 	}
 
-	return committingWallets, nil
+	return commitmentData, nil
+}
+
+func (mfst *MovedFundsSweepTask) findMovingFundsTransactions(
+	commitmentData []movingFundsCommitmentData,
+	filterStartBlock uint64,
+) ([]bitcoin.TransactionOutpoint, error) {
+	movingFundsWallets := [][20]byte{}
+	for _, data := range commitmentData {
+		movingFundsWallets = append(movingFundsWallets, data.committingWallet)
+	}
+
+	filter := &tbtc.MovingFundsCompletedEventFilter{
+		StartBlock:          filterStartBlock,
+		WalletPublicKeyHash: movingFundsWallets,
+	}
+
+	events, err := mfst.chain.PastMovingFundsCompletedEvents(
+		filter,
+	)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"failed to get past moving funds completed events: [%w]",
+			err,
+		)
+	}
+
+	movingFundsTxData := []bitcoin.TransactionOutpoint{}
+
+	for _, event := range events {
+		movingFundsTxHash := event.MovingFundsTxHash
+
+		movingFundsTxOutpointIdx := uint32(0)
+		for _, commitment := range commitmentData {
+			if commitment.committingWallet == event.WalletPublicKeyHash {
+				movingFundsTxOutpointIdx = commitment.targetWalletIndex
+			}
+		}
+
+		movingFundsTxData = append(
+			movingFundsTxData,
+			bitcoin.TransactionOutpoint{
+				TransactionHash: movingFundsTxHash,
+				OutputIndex:     movingFundsTxOutpointIdx,
+			},
+		)
+	}
+
+	return movingFundsTxData, nil
+}
+
+type movingFundsCommitmentData struct {
+	committingWallet  [20]byte
+	targetWalletIndex uint32
 }
 
 func (mfst *MovedFundsSweepTask) ActionType() tbtc.WalletActionType {

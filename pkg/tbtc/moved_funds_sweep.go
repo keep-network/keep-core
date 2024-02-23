@@ -2,7 +2,25 @@ package tbtc
 
 import (
 	"math/big"
+	"time"
 )
+
+// MovedFundsSweepRequestState represents the state of a moved funds request.
+type MovedFundsSweepRequestState uint8
+
+const (
+	MovedFundsStateUnknown MovedFundsSweepRequestState = iota
+	MovedFundsStatePending
+	MovedFundsStateProcessed
+	MovedFundsStateTimedOut
+)
+
+type MovedFundsSweepRequest struct {
+	WalletPublicKeyHash [20]byte
+	Value               uint64
+	CreatedAt           time.Time
+	State               MovedFundsSweepRequestState
+}
 
 const (
 	// movedFundsSweepProposalValidityBlocks determines the moving funds

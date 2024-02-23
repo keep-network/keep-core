@@ -148,6 +148,11 @@ type Chain interface {
 		err error,
 	)
 
+	GetMovedFundsSweepRequest(
+		movingFundsTxHash bitcoin.Hash,
+		movingFundsTxOutpointIndex uint32,
+	) (*tbtc.MovedFundsSweepRequest, error)
+
 	// PastMovingFundsCommitmentSubmittedEvents fetches past moving funds
 	// commitment submitted events according to the provided filter or
 	// unfiltered if the filter is nil. Returned events are sorted by the block
@@ -156,6 +161,14 @@ type Chain interface {
 	PastMovingFundsCommitmentSubmittedEvents(
 		filter *tbtc.MovingFundsCommitmentSubmittedEventFilter,
 	) ([]*tbtc.MovingFundsCommitmentSubmittedEvent, error)
+
+	// PastMovingFundsCompletedEvents fetches past moving funds completed events
+	// according to the provided filter or unfiltered if the filter is nil.
+	// Returned events are sorted by the block number in the ascending order,
+	// i.e. the latest event is at the end of the slice.
+	PastMovingFundsCompletedEvents(
+		filter *tbtc.MovingFundsCompletedEventFilter,
+	) ([]*tbtc.MovingFundsCompletedEvent, error)
 
 	// ValidateMovingFundsProposal validates the given moving funds proposal
 	// against the chain. Returns an error if the proposal is not valid or

@@ -400,6 +400,20 @@ type MovingFundsCommitmentSubmittedEventFilter struct {
 	WalletPublicKeyHash [][20]byte
 }
 
+// MovingFundsCompletedEvent represents a moving funds completed event.
+type MovingFundsCompletedEvent struct {
+	WalletPublicKeyHash [20]byte
+	MovingFundsTxHash   bitcoin.Hash
+	BlockNumber         uint64
+}
+
+// MovingFundsCompletedEventFilter is a component allowing to filter MovingFundsCompletedEvent.
+type MovingFundsCompletedEventFilter struct {
+	StartBlock          uint64
+	EndBlock            *uint64
+	WalletPublicKeyHash [][20]byte
+}
+
 // Chain represents the interface that the TBTC module expects to interact
 // with the anchoring blockchain on.
 type Chain interface {

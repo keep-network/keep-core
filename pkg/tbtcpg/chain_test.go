@@ -719,6 +719,13 @@ func (lc *LocalChain) GetMovingFundsParameters() (
 		nil
 }
 
+func (lc *LocalChain) GetMovedFundsSweepRequest(
+	movingFundsTxHash bitcoin.Hash,
+	movingFundsTxOutpointIndex uint32,
+) (*tbtc.MovedFundsSweepRequest, error) {
+	panic("unsupported")
+}
+
 func (lc *LocalChain) SetMovingFundsParameters(
 	txMaxTotalFee uint64,
 	dustThreshold uint64,
@@ -1054,6 +1061,12 @@ func (lc *LocalChain) PastMovingFundsCommitmentSubmittedEvents(
 	}
 
 	return events, nil
+}
+
+func (lc *LocalChain) PastMovingFundsCompletedEvents(
+	filter *tbtc.MovingFundsCompletedEventFilter,
+) ([]*tbtc.MovingFundsCompletedEvent, error) {
+	panic("unsupported")
 }
 
 func (lc *LocalChain) SubmitMovingFundsCommitment(

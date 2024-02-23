@@ -1557,6 +1557,49 @@ func (tc *TbtcChain) PastMovingFundsCommitmentSubmittedEvents(
 	return convertedEvents, err
 }
 
+func (tc *TbtcChain) PastMovingFundsCompletedEvents(
+	filter *tbtc.MovingFundsCompletedEventFilter,
+) ([]*tbtc.MovingFundsCompletedEvent, error) {
+	var startBlock uint64
+	var endBlock *uint64
+	var walletPublicKeyHash [][20]byte
+
+	if filter != nil {
+		startBlock = filter.StartBlock
+		endBlock = filter.EndBlock
+		walletPublicKeyHash = filter.WalletPublicKeyHash
+	}
+
+	events, err := tc.bridge.PastMovingFundsCompletedEvents(
+		startBlock,
+		endBlock,
+		walletPublicKeyHash,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	convertedEvents := make([]*tbtc.MovingFundsCompletedEvent, 0)
+	for _, event := range events {
+		convertedEvent := &tbtc.MovingFundsCompletedEvent{
+			WalletPublicKeyHash: event.WalletPubKeyHash,
+			MovingFundsTxHash:   event.MovingFundsTxHash,
+			BlockNumber:         event.Raw.BlockNumber,
+		}
+
+		convertedEvents = append(convertedEvents, convertedEvent)
+	}
+
+	sort.SliceStable(
+		convertedEvents,
+		func(i, j int) bool {
+			return convertedEvents[i].BlockNumber < convertedEvents[j].BlockNumber
+		},
+	)
+
+	return convertedEvents, err
+}
+
 func buildDepositKey(
 	fundingTxHash bitcoin.Hash,
 	fundingOutputIndex uint32,
@@ -1810,6 +1853,78 @@ func (tc *TbtcChain) GetMovingFundsParameters() (
 	sweepTimeoutNotifierRewardMultiplier = parameters.MovedFundsSweepTimeoutNotifierRewardMultiplier
 
 	return
+}
+
+func (tc *TbtcChain) GetMovedFundsSweepRequest(
+	movingFundsTxHash bitcoin.Hash,
+	movingFundsTxOutpointIndex uint32,
+) (*tbtc.MovedFundsSweepRequest, error) {
+	movedFundsKey := buildMovedFundsKey(
+		movingFundsTxHash,
+		movingFundsTxOutpointIndex,
+	)
+
+	movedFundsSweepRequest, err := tc.bridge.MovedFundsSweepRequests(
+		movedFundsKey,
+	)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"cannot get moved funds sweep request for key [0x%x]: [%v]",
+			movedFundsKey.Text(16),
+			err,
+		)
+	}
+
+	state, err := parseMovedFundsSweepRequestState(movedFundsSweepRequest.State)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"cannot parse state for moved funds sweep request [0x%x]: [%v]",
+			movedFundsKey.Text(16),
+			err,
+		)
+	}
+
+	return &tbtc.MovedFundsSweepRequest{
+		WalletPublicKeyHash: movedFundsSweepRequest.WalletPubKeyHash,
+		Value:               movedFundsSweepRequest.Value,
+		CreatedAt:           time.Unix(int64(movedFundsSweepRequest.CreatedAt), 0),
+		State:               state,
+	}, nil
+}
+
+func parseMovedFundsSweepRequestState(value uint8) (
+	tbtc.MovedFundsSweepRequestState,
+	error,
+) {
+	switch value {
+	case 0:
+		return tbtc.MovedFundsStateUnknown, nil
+	case 1:
+		return tbtc.MovedFundsStatePending, nil
+	case 2:
+		return tbtc.MovedFundsStateProcessed, nil
+	case 3:
+		return tbtc.MovedFundsStateTimedOut, nil
+	default:
+		return 0, fmt.Errorf(
+			"unexpected moved funds sweep request state value: [%v]",
+			value,
+		)
+	}
+}
+
+func buildMovedFundsKey(
+	movingFundsTxHash bitcoin.Hash,
+	movingFundsTxOutpointIndex uint32,
+) *big.Int {
+	indexBytes := make([]byte, 4)
+	binary.BigEndian.PutUint32(indexBytes, movingFundsTxOutpointIndex)
+
+	movedFundsKey := crypto.Keccak256Hash(
+		append(movingFundsTxHash[:], indexBytes...),
+	)
+
+	return movedFundsKey.Big()
 }
 
 func (tc *TbtcChain) ValidateMovingFundsProposal(
