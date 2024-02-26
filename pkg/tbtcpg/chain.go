@@ -188,6 +188,14 @@ type Chain interface {
 		targetWallets [][20]byte,
 	) error
 
+	// ValidateMovedFundsSweepProposal validates the given moved funds sweep
+	// proposal against the chain. Returns an error if the proposal is not valid
+	// or nil otherwise.
+	ValidateMovedFundsSweepProposal(
+		walletPublicKeyHash [20]byte,
+		proposal *tbtc.MovedFundsSweepProposal,
+	) error
+
 	// Computes the moving funds commitment hash from the provided public key
 	// hashes of target wallets.
 	ComputeMovingFundsCommitmentHash(targetWallets [][20]byte) [32]byte

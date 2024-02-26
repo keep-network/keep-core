@@ -2,6 +2,7 @@ package tbtcpg
 
 import (
 	"fmt"
+	"math/big"
 
 	"github.com/ipfs/go-log/v2"
 	"go.uber.org/zap"
@@ -66,11 +67,15 @@ func (mfst *MovedFundsSweepTask) Run(request *tbtc.CoordinationProposalRequest) 
 		)
 	}
 
+	// Check if the wallet already has a main UTXO.
+	hasMainUtxo := walletChainData.MainUtxoHash != [32]byte{}
+
 	proposal, err := mfst.ProposeMovedFundsSweep(
 		taskLogger,
 		walletPublicKeyHash,
 		movingFundsTxHash,
 		movingFundsOutputIdx,
+		hasMainUtxo,
 		0,
 	)
 	if err != nil {
@@ -251,9 +256,72 @@ func (mfst *MovedFundsSweepTask) ProposeMovedFundsSweep(
 	taskLogger log.StandardLogger,
 	walletPublicKeyHash [20]byte,
 	movingFundsTxHash bitcoin.Hash,
-	movingFundsTxIndex uint32,
+	movingFundsTxOutputIndex uint32,
+	hasMainUtxo bool,
 	fee int64,
 ) (*tbtc.MovedFundsSweepProposal, error) {
+	taskLogger.Infof("preparing a moved funds sweep proposal")
+
+	// Estimate fee if it's missing.
+	if fee <= 0 {
+		taskLogger.Infof("estimating moved funds sweep transaction fee")
+
+		_, _, _, _, _, _, _, sweepTxMaxTotalFee, _, _, _, err := mfst.chain.GetMovingFundsParameters()
+		if err != nil {
+			return nil, fmt.Errorf(
+				"cannot get moved funds sweep tx max total fee: [%w]",
+				err,
+			)
+		}
+
+		estimatedFee, err := EstimateMovedFundsSweepFee(
+			mfst.btcChain,
+			hasMainUtxo,
+			sweepTxMaxTotalFee,
+		)
+		if err != nil {
+			return nil, fmt.Errorf(
+				"cannot estimate moving funds transaction fee: [%w]",
+				err,
+			)
+		}
+
+		fee = estimatedFee
+	}
+
+	taskLogger.Infof("moved funds sweep transaction fee: [%d]", fee)
+
+	proposal := &tbtc.MovedFundsSweepProposal{
+		MovingFundsTxHash:        movingFundsTxHash,
+		MovingFundsTxOutputIndex: movingFundsTxOutputIndex,
+		SweepTxFee:               big.NewInt(fee),
+	}
+
+	taskLogger.Infof("validating the moved funds sweep proposal")
+
+	if err := tbtc.ValidateMovedFundsSweepProposal(
+		taskLogger,
+		walletPublicKeyHash,
+		proposal,
+		mfst.chain,
+	); err != nil {
+		return nil, fmt.Errorf(
+			"failed to verify moved funds sweep proposal: [%w]",
+			err,
+		)
+	}
+
+	return proposal, nil
+}
+
+// EstimateMovedFundsSweepFee estimates fee for the moved funds sweep transaction
+// that merges the received main UTXO from the source wallets with the current
+// wallet's main UTXO.
+func EstimateMovedFundsSweepFee(
+	btcChain bitcoin.Chain,
+	hasMainUtxo bool,
+	sweepTxMaxTotalFee uint64,
+) (int64, error) {
 	// TODO: Implement
-	return nil, nil
+	return 0, nil
 }

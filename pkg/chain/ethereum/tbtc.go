@@ -1730,6 +1730,14 @@ func (tc *TbtcChain) SubmitMovingFundsCommitment(
 	return err
 }
 
+func (tc *TbtcChain) ValidateMovedFundsSweepProposal(
+	walletPublicKeyHash [20]byte,
+	proposal *tbtc.MovedFundsSweepProposal,
+) error {
+	// TODO: Implement
+	return nil
+}
+
 func (tc *TbtcChain) ValidateRedemptionProposal(
 	walletPublicKeyHash [20]byte,
 	proposal *tbtc.RedemptionProposal,

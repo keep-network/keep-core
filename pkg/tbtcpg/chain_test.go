@@ -1100,6 +1100,13 @@ func (lc *LocalChain) GetMovingFundsSubmissions() []*movingFundsCommitmentSubmis
 	return lc.movingFundsCommitmentSubmissions
 }
 
+func (lc *LocalChain) ValidateMovedFundsSweepProposal(
+	walletPublicKeyHash [20]byte,
+	proposal *tbtc.MovedFundsSweepProposal,
+) error {
+	panic("unsupported")
+}
+
 type MockBlockCounter struct {
 	mutex        sync.Mutex
 	currentBlock uint64

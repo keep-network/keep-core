@@ -3,6 +3,8 @@ package tbtc
 import (
 	"math/big"
 	"time"
+
+	"github.com/ipfs/go-log/v2"
 )
 
 // MovedFundsSweepRequestState represents the state of a moved funds request.
@@ -43,4 +45,24 @@ func (mfsp *MovedFundsSweepProposal) ActionType() WalletActionType {
 
 func (mfsp *MovedFundsSweepProposal) ValidityBlocks() uint64 {
 	return movedFundsSweepProposalValidityBlocks
+}
+
+// ValidateMovedFundsSweepProposal checks the moved funds sweep proposal with
+// on-chain validation rules.
+func ValidateMovedFundsSweepProposal(
+	validateProposalLogger log.StandardLogger,
+	walletPublicKeyHash [20]byte,
+	proposal *MovedFundsSweepProposal,
+	chain interface {
+		// ValidateMovedFundsSweepProposal validates the given moved funds sweep
+		// proposal against the chain. Returns an error if the proposal is not
+		// valid or nil otherwise.
+		ValidateMovedFundsSweepProposal(
+			walletPublicKeyHash [20]byte,
+			proposal *MovedFundsSweepProposal,
+		) error
+	},
+) error {
+	// TODO: Implement
+	return nil
 }
