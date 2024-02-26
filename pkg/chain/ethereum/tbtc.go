@@ -1730,6 +1730,60 @@ func (tc *TbtcChain) SubmitMovingFundsCommitment(
 	return err
 }
 
+func (tc *TbtcChain) SubmitMovingFundsProofWithReimbursement(
+	transaction *bitcoin.Transaction,
+	proof *bitcoin.SpvProof,
+	mainUTXO bitcoin.UnspentTransactionOutput,
+	walletPublicKeyHash [20]byte,
+) error {
+	bitcoinTxInfo := tbtcabi.BitcoinTxInfo3{
+		Version:      transaction.SerializeVersion(),
+		InputVector:  transaction.SerializeInputs(),
+		OutputVector: transaction.SerializeOutputs(),
+		Locktime:     transaction.SerializeLocktime(),
+	}
+	movingFundsProof := tbtcabi.BitcoinTxProof2{
+		MerkleProof:      proof.MerkleProof,
+		TxIndexInBlock:   big.NewInt(int64(proof.TxIndexInBlock)),
+		BitcoinHeaders:   proof.BitcoinHeaders,
+		CoinbasePreimage: proof.CoinbasePreimage,
+		CoinbaseProof:    proof.CoinbaseProof,
+	}
+	utxo := tbtcabi.BitcoinTxUTXO2{
+		TxHash:        mainUTXO.Outpoint.TransactionHash,
+		TxOutputIndex: mainUTXO.Outpoint.OutputIndex,
+		TxOutputValue: uint64(mainUTXO.Value),
+	}
+
+	gasEstimate, err := tc.maintainerProxy.SubmitMovingFundsProofGasEstimate(
+		bitcoinTxInfo,
+		movingFundsProof,
+		utxo,
+		walletPublicKeyHash,
+	)
+	if err != nil {
+		return err
+	}
+
+	// The original estimate for this contract call is too low and the call
+	// fails on reimbursing the submitter. Example:
+	// 0xe27a92883e0e64da8a3a54a15a260ea2f4d3d48470129ac5c09bfe9637d7e114
+	// Here we add a 20% margin to overcome the gas problems.
+	gasEstimateWithMargin := float64(gasEstimate) * float64(1.2)
+
+	_, err = tc.maintainerProxy.SubmitMovingFundsProof(
+		bitcoinTxInfo,
+		movingFundsProof,
+		utxo,
+		walletPublicKeyHash,
+		ethutil.TransactionOptions{
+			GasLimit: uint64(gasEstimateWithMargin),
+		},
+	)
+
+	return err
+}
+
 func (tc *TbtcChain) ValidateMovedFundsSweepProposal(
 	walletPublicKeyHash [20]byte,
 	proposal *tbtc.MovedFundsSweepProposal,
