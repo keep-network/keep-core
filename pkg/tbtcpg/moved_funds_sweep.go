@@ -11,6 +11,12 @@ import (
 	"github.com/keep-network/keep-core/pkg/tbtc"
 )
 
+// ErrSweepTxFeeTooHigh is the error returned when the estimated fee exceeds the
+// maximum fee allowed for the moved funds sweep transaction.
+var ErrSweepTxFeeTooHigh = fmt.Errorf(
+	"estimated fee exceeds the maximum fee",
+)
+
 type MovedFundsSweepTask struct {
 	chain    Chain
 	btcChain bitcoin.Chain
@@ -322,6 +328,36 @@ func EstimateMovedFundsSweepFee(
 	hasMainUtxo bool,
 	sweepTxMaxTotalFee uint64,
 ) (int64, error) {
-	// TODO: Implement
-	return 0, nil
+	// The transaction always has an input coming from the moved funds
+	// transferred by the source wallet. Additionally, it may have the second
+	// input which is the wallet main UTXO.
+	inputCount := 1
+	if hasMainUtxo {
+		inputCount++
+	}
+
+	sizeEstimator := bitcoin.NewTransactionSizeEstimator().
+		AddPublicKeyHashInputs(inputCount, true).
+		AddPublicKeyHashOutputs(1, true)
+
+	transactionSize, err := sizeEstimator.VirtualSize()
+	if err != nil {
+		return 0, fmt.Errorf(
+			"cannot estimate transaction virtual size: [%v]",
+			err,
+		)
+	}
+
+	feeEstimator := bitcoin.NewTransactionFeeEstimator(btcChain)
+
+	totalFee, err := feeEstimator.EstimateFee(transactionSize)
+	if err != nil {
+		return 0, fmt.Errorf("cannot estimate transaction fee: [%v]", err)
+	}
+
+	if uint64(totalFee) > sweepTxMaxTotalFee {
+		return 0, ErrSweepTxFeeTooHigh
+	}
+
+	return totalFee, nil
 }
