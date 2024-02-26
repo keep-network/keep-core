@@ -17,6 +17,11 @@ var ErrSweepTxFeeTooHigh = fmt.Errorf(
 	"estimated fee exceeds the maximum fee",
 )
 
+// MovedFundsSweepLookBackBlocks is the look-back period in blocks used
+// when searching for submitted moving funds-related events. It's equal to
+// 30 days assuming 12 seconds per block.
+const MovedFundsSweepLookBackBlocks = uint64(216000)
+
 type MovedFundsSweepTask struct {
 	chain    Chain
 	btcChain bitcoin.Chain
@@ -118,8 +123,8 @@ func (mfst *MovedFundsSweepTask) FindMovingFundsTxData(
 	}
 
 	filterStartBlock := uint64(0)
-	if currentBlockNumber > MovingFundsCommitmentLookBackBlocks {
-		filterStartBlock = currentBlockNumber - MovingFundsCommitmentLookBackBlocks
+	if currentBlockNumber > MovedFundsSweepLookBackBlocks {
+		filterStartBlock = currentBlockNumber - MovedFundsSweepLookBackBlocks
 	}
 
 	movingFundsCommitmentData, err := mfst.findMovingFundsCommitmentData(
