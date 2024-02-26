@@ -49,6 +49,7 @@ func (mfst *MovedFundsSweepTask) Run(request *tbtc.CoordinationProposalRequest) 
 		zap.String("walletPKH", fmt.Sprintf("0x%x", walletPublicKeyHash)),
 	)
 
+	// Check if the wallet is eligible for moved funds sweep.
 	walletChainData, err := mfst.chain.GetWallet(walletPublicKeyHash)
 	if err != nil {
 		return nil, false, fmt.Errorf(
@@ -68,6 +69,10 @@ func (mfst *MovedFundsSweepTask) Run(request *tbtc.CoordinationProposalRequest) 
 		return nil, false, nil
 	}
 
+	// Find the transaction hash and output index of the UTXO that the source
+	// wallet transferred to this wallet. If the wallet has more than one moved
+	// funds sweep requests, only the data for the first encountered request
+	// will be returned.
 	movingFundsTxHash, movingFundsOutputIdx, err := mfst.FindMovingFundsTxData(
 		walletPublicKeyHash,
 	)
@@ -99,6 +104,10 @@ func (mfst *MovedFundsSweepTask) Run(request *tbtc.CoordinationProposalRequest) 
 	return proposal, true, nil
 }
 
+// FindMovingFundsTxData finds the transaction hash and output index for the
+// unswept funds transferred from a source wallet to this wallet. It returns
+// data for only one funds transfer. If there were more than one funds transfers
+// the data for the first encountered unswept transfer is returned.
 func (mfst *MovedFundsSweepTask) FindMovingFundsTxData(
 	walletPublicKeyHash [20]byte,
 ) (
@@ -127,6 +136,9 @@ func (mfst *MovedFundsSweepTask) FindMovingFundsTxData(
 		filterStartBlock = currentBlockNumber - MovedFundsSweepLookBackBlocks
 	}
 
+	// Find all the wallets that recently committed to move funds to this wallet.
+	// The returned data also contains information on the position on the target
+	// wallets list.
 	movingFundsCommitmentData, err := mfst.findMovingFundsCommitmentData(
 		walletPublicKeyHash,
 		filterStartBlock,
@@ -138,6 +150,8 @@ func (mfst *MovedFundsSweepTask) FindMovingFundsTxData(
 		)
 	}
 
+	// Find the transaction outpoints that transfer funds to this wallet coming
+	// from the recent moving funds transactions.
 	movingFundsTxData, err := mfst.findMovingFundsTransactions(
 		movingFundsCommitmentData,
 		filterStartBlock,
@@ -149,6 +163,8 @@ func (mfst *MovedFundsSweepTask) FindMovingFundsTxData(
 		)
 	}
 
+	// Find the first outpoint that represents an unproven moved funds sweep
+	// request and return it.
 	for _, data := range movingFundsTxData {
 		movedFundsSweepRequest, err := mfst.chain.GetMovedFundsSweepRequest(
 			data.TransactionHash,
@@ -166,8 +182,9 @@ func (mfst *MovedFundsSweepTask) FindMovingFundsTxData(
 		}
 	}
 
+	// No pending moved funds sweep request could be found.
 	return bitcoin.Hash{}, 0, fmt.Errorf(
-		"could not find any pending moving funds request",
+		"could not find any pending moved funds sweep request",
 	)
 }
 
