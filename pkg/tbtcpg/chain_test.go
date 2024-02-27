@@ -89,6 +89,8 @@ type LocalChain struct {
 	pastMovingFundsCommitmentSubmittedEvents map[[32]byte][]*tbtc.MovingFundsCommitmentSubmittedEvent
 	movingFundsProposalValidations           map[[32]byte]bool
 	movingFundsCommitmentSubmissions         []*movingFundsCommitmentSubmission
+	pastMovingFundsCompletedEvents           map[[32]byte][]*tbtc.MovingFundsCompletedEvent
+	movedFundsSweepRequests                  map[[32]byte]*tbtc.MovedFundsSweepRequest
 	operatorIDs                              map[chain.Address]uint32
 }
 
@@ -106,6 +108,8 @@ func NewLocalChain() *LocalChain {
 		pastMovingFundsCommitmentSubmittedEvents: make(map[[32]byte][]*tbtc.MovingFundsCommitmentSubmittedEvent),
 		movingFundsProposalValidations:           make(map[[32]byte]bool),
 		movingFundsCommitmentSubmissions:         make([]*movingFundsCommitmentSubmission, 0),
+		pastMovingFundsCompletedEvents:           make(map[[32]byte][]*tbtc.MovingFundsCompletedEvent),
+		movedFundsSweepRequests:                  make(map[[32]byte]*tbtc.MovedFundsSweepRequest),
 		operatorIDs:                              make(map[chain.Address]uint32),
 	}
 }
@@ -363,6 +367,32 @@ func buildPastRedemptionRequestedEventsKey(
 
 func buildPastMovingFundsCommitmentSubmittedEventsKey(
 	filter *tbtc.MovingFundsCommitmentSubmittedEventFilter,
+) ([32]byte, error) {
+	if filter == nil {
+		return [32]byte{}, nil
+	}
+
+	var buffer bytes.Buffer
+
+	startBlock := make([]byte, 8)
+	binary.BigEndian.PutUint64(startBlock, filter.StartBlock)
+	buffer.Write(startBlock)
+
+	if filter.EndBlock != nil {
+		endBlock := make([]byte, 8)
+		binary.BigEndian.PutUint64(startBlock, *filter.EndBlock)
+		buffer.Write(endBlock)
+	}
+
+	for _, walletPublicKeyHash := range filter.WalletPublicKeyHash {
+		buffer.Write(walletPublicKeyHash[:])
+	}
+
+	return sha256.Sum256(buffer.Bytes()), nil
+}
+
+func buildPastMovingFundsCompletedEventsKey(
+	filter *tbtc.MovingFundsCompletedEventFilter,
 ) ([32]byte, error) {
 	if filter == nil {
 		return [32]byte{}, nil
@@ -723,7 +753,51 @@ func (lc *LocalChain) GetMovedFundsSweepRequest(
 	movingFundsTxHash bitcoin.Hash,
 	movingFundsTxOutpointIndex uint32,
 ) (*tbtc.MovedFundsSweepRequest, error) {
-	panic("unsupported")
+	lc.mutex.Lock()
+	defer lc.mutex.Unlock()
+
+	requestKey := buildMovedFundsSweepRequestKey(
+		movingFundsTxHash,
+		movingFundsTxOutpointIndex,
+	)
+
+	request, ok := lc.movedFundsSweepRequests[requestKey]
+	if !ok {
+		return nil, fmt.Errorf("request not found")
+	}
+
+	return request, nil
+}
+
+func (lc *LocalChain) SetMovedFundsSweepRequest(
+	movingFundsTxHash bitcoin.Hash,
+	movingFundsTxOutpointIndex uint32,
+	request *tbtc.MovedFundsSweepRequest,
+) {
+	lc.mutex.Lock()
+	defer lc.mutex.Unlock()
+
+	requestKey := buildMovedFundsSweepRequestKey(
+		movingFundsTxHash,
+		movingFundsTxOutpointIndex,
+	)
+
+	lc.movedFundsSweepRequests[requestKey] = request
+}
+
+func buildMovedFundsSweepRequestKey(
+	movingFundsTxHash bitcoin.Hash,
+	movingFundsTxOutpointIndex uint32,
+) [32]byte {
+	var buffer bytes.Buffer
+
+	buffer.Write(movingFundsTxHash[:])
+
+	outputIndex := make([]byte, 4)
+	binary.BigEndian.PutUint32(outputIndex, movingFundsTxOutpointIndex)
+	buffer.Write(outputIndex)
+
+	return sha256.Sum256(buffer.Bytes())
 }
 
 func (lc *LocalChain) SetMovingFundsParameters(
@@ -1063,10 +1137,47 @@ func (lc *LocalChain) PastMovingFundsCommitmentSubmittedEvents(
 	return events, nil
 }
 
+func (lc *LocalChain) AddPastMovingFundsCompletedEvent(
+	filter *tbtc.MovingFundsCompletedEventFilter,
+	event *tbtc.MovingFundsCompletedEvent,
+) error {
+	lc.mutex.Lock()
+	defer lc.mutex.Unlock()
+
+	eventsKey, err := buildPastMovingFundsCompletedEventsKey(filter)
+	if err != nil {
+		return err
+	}
+
+	if _, ok := lc.pastMovingFundsCompletedEvents[eventsKey]; !ok {
+		lc.pastMovingFundsCompletedEvents[eventsKey] = []*tbtc.MovingFundsCompletedEvent{}
+	}
+
+	lc.pastMovingFundsCompletedEvents[eventsKey] = append(
+		lc.pastMovingFundsCompletedEvents[eventsKey],
+		event,
+	)
+
+	return nil
+}
+
 func (lc *LocalChain) PastMovingFundsCompletedEvents(
 	filter *tbtc.MovingFundsCompletedEventFilter,
 ) ([]*tbtc.MovingFundsCompletedEvent, error) {
-	panic("unsupported")
+	lc.mutex.Lock()
+	defer lc.mutex.Unlock()
+
+	eventsKey, err := buildPastMovingFundsCompletedEventsKey(filter)
+	if err != nil {
+		return nil, err
+	}
+
+	events, ok := lc.pastMovingFundsCompletedEvents[eventsKey]
+	if !ok {
+		return nil, fmt.Errorf("no events for given filter")
+	}
+
+	return events, nil
 }
 
 func (lc *LocalChain) SubmitMovingFundsCommitment(
