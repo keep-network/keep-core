@@ -91,6 +91,7 @@ type LocalChain struct {
 	movingFundsCommitmentSubmissions         []*movingFundsCommitmentSubmission
 	pastMovingFundsCompletedEvents           map[[32]byte][]*tbtc.MovingFundsCompletedEvent
 	movedFundsSweepRequests                  map[[32]byte]*tbtc.MovedFundsSweepRequest
+	movedFundsSweepProposalValidations       map[[32]byte]bool
 	operatorIDs                              map[chain.Address]uint32
 }
 
@@ -110,6 +111,7 @@ func NewLocalChain() *LocalChain {
 		movingFundsCommitmentSubmissions:         make([]*movingFundsCommitmentSubmission, 0),
 		pastMovingFundsCompletedEvents:           make(map[[32]byte][]*tbtc.MovingFundsCompletedEvent),
 		movedFundsSweepRequests:                  make(map[[32]byte]*tbtc.MovedFundsSweepRequest),
+		movedFundsSweepProposalValidations:       make(map[[32]byte]bool),
 		operatorIDs:                              make(map[chain.Address]uint32),
 	}
 }
@@ -1211,11 +1213,67 @@ func (lc *LocalChain) GetMovingFundsSubmissions() []*movingFundsCommitmentSubmis
 	return lc.movingFundsCommitmentSubmissions
 }
 
+func buildMovedFundsSweepProposalValidationKey(
+	walletPublicKeyHash [20]byte,
+	proposal *tbtc.MovedFundsSweepProposal,
+) ([32]byte, error) {
+	var buffer bytes.Buffer
+
+	buffer.Write(walletPublicKeyHash[:])
+
+	buffer.Write(proposal.MovingFundsTxHash[:])
+	binary.Write(&buffer, binary.BigEndian, proposal.MovingFundsTxOutputIndex)
+	buffer.Write(proposal.SweepTxFee.Bytes())
+
+	return sha256.Sum256(buffer.Bytes()), nil
+}
+
 func (lc *LocalChain) ValidateMovedFundsSweepProposal(
 	walletPublicKeyHash [20]byte,
 	proposal *tbtc.MovedFundsSweepProposal,
 ) error {
-	panic("unsupported")
+	lc.mutex.Lock()
+	defer lc.mutex.Unlock()
+
+	key, err := buildMovedFundsSweepProposalValidationKey(
+		walletPublicKeyHash,
+		proposal,
+	)
+	if err != nil {
+		return err
+	}
+
+	result, ok := lc.movedFundsSweepProposalValidations[key]
+	if !ok {
+		return fmt.Errorf("validation result unknown")
+	}
+
+	if !result {
+		return fmt.Errorf("validation failed")
+	}
+
+	return nil
+}
+
+func (lc *LocalChain) SetMovedFundsSweepProposalValidationResult(
+	walletPublicKeyHash [20]byte,
+	proposal *tbtc.MovedFundsSweepProposal,
+	result bool,
+) error {
+	lc.mutex.Lock()
+	defer lc.mutex.Unlock()
+
+	key, err := buildMovedFundsSweepProposalValidationKey(
+		walletPublicKeyHash,
+		proposal,
+	)
+	if err != nil {
+		return err
+	}
+
+	lc.movedFundsSweepProposalValidations[key] = result
+
+	return nil
 }
 
 type MockBlockCounter struct {

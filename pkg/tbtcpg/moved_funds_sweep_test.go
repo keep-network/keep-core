@@ -1,8 +1,10 @@
 package tbtcpg_test
 
 import (
+	"math/big"
 	"testing"
 
+	"github.com/go-test/deep"
 	"github.com/keep-network/keep-core/internal/testutils"
 	"github.com/keep-network/keep-core/pkg/bitcoin"
 	"github.com/keep-network/keep-core/pkg/tbtc"
@@ -217,6 +219,94 @@ func TestMovedFundsSweepAction_FindMovingFundsTxData(t *testing.T) {
 		uint64(expectedOutputIdx),
 		uint64(movingFundsOutputIdx),
 	)
+}
+
+func TestMovedFundsSweepAction_ProposeMovedFundsSweep(t *testing.T) {
+	walletPublicKeyHash := hexToByte20(
+		"92a6ec889a8fa34f731e639edede4c75e184307c",
+	)
+
+	sweepTxMaxTotalFee := uint64(6000)
+
+	movingFundsTxHash := hashFromString(
+		"9a745afae8ad4e3a50f64da9ad23e6d14f9bd5e13ae6266d2099e6d16388161c",
+	)
+
+	movingFundsTxOutputIndex := uint32(1)
+
+	hasMainUtxo := true
+
+	var tests = map[string]struct {
+		fee              int64
+		expectedProposal *tbtc.MovedFundsSweepProposal
+	}{
+		"fee provided": {
+			fee: 10000,
+			expectedProposal: &tbtc.MovedFundsSweepProposal{
+				MovingFundsTxHash:        movingFundsTxHash,
+				MovingFundsTxOutputIndex: movingFundsTxOutputIndex,
+				SweepTxFee:               big.NewInt(10000),
+			},
+		},
+		"fee estimated": {
+			fee: 0, // trigger fee estimation
+			expectedProposal: &tbtc.MovedFundsSweepProposal{
+				MovingFundsTxHash:        movingFundsTxHash,
+				MovingFundsTxOutputIndex: movingFundsTxOutputIndex,
+				SweepTxFee:               big.NewInt(4450),
+			},
+		},
+	}
+
+	for testName, test := range tests {
+		t.Run(testName, func(t *testing.T) {
+			tbtcChain := tbtcpg.NewLocalChain()
+			btcChain := tbtcpg.NewLocalBitcoinChain()
+
+			btcChain.SetEstimateSatPerVByteFee(1, 25)
+
+			tbtcChain.SetMovingFundsParameters(
+				0,
+				0,
+				0,
+				0,
+				nil,
+				0,
+				0,
+				sweepTxMaxTotalFee,
+				0,
+				nil,
+				0,
+			)
+
+			err := tbtcChain.SetMovedFundsSweepProposalValidationResult(
+				walletPublicKeyHash,
+				test.expectedProposal,
+				true,
+			)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			task := tbtcpg.NewMovedFundsSweepTask(tbtcChain, btcChain)
+
+			proposal, err := task.ProposeMovedFundsSweep(
+				&testutils.MockLogger{},
+				walletPublicKeyHash,
+				movingFundsTxHash,
+				movingFundsTxOutputIndex,
+				hasMainUtxo,
+				test.fee,
+			)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			if diff := deep.Equal(proposal, test.expectedProposal); diff != nil {
+				t.Errorf("invalid moved funds sweep proposal: %v", diff)
+			}
+		})
+	}
 }
 
 func TestEstimateMovedFundsSweepFee(t *testing.T) {
