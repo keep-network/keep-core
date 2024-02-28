@@ -9,7 +9,7 @@ import (
 	"github.com/keep-network/keep-core/pkg/tbtcpg"
 )
 
-func TestFindMovingFundsTxData(t *testing.T) {
+func TestMovedFundsSweepAction_FindMovingFundsTxData(t *testing.T) {
 	walletPublicKeyHash := hexToByte20(
 		"92a6ec889a8fa34f731e639edede4c75e184307c",
 	)

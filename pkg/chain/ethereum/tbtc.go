@@ -1788,7 +1788,26 @@ func (tc *TbtcChain) ValidateMovedFundsSweepProposal(
 	walletPublicKeyHash [20]byte,
 	proposal *tbtc.MovedFundsSweepProposal,
 ) error {
-	// TODO: Implement
+	abiProposal := tbtcabi.WalletProposalValidatorMovedFundsSweepProposal{
+		WalletPubKeyHash:         walletPublicKeyHash,
+		MovingFundsTxHash:        proposal.MovingFundsTxHash,
+		MovingFundsTxOutputIndex: proposal.MovingFundsTxOutputIndex,
+		MovedFundsSweepTxFee:     proposal.SweepTxFee,
+	}
+
+	valid, err := tc.walletProposalValidator.ValidateMovedFundsSweepProposal(
+		abiProposal,
+	)
+	if err != nil {
+		return fmt.Errorf("validation failed: [%v]", err)
+	}
+
+	// Should never happen because `validateMovedFundsSweepProposal` returns
+	// true or reverts (returns an error) but do the check just in case.
+	if !valid {
+		return fmt.Errorf("unexpected validation result")
+	}
+
 	return nil
 }
 

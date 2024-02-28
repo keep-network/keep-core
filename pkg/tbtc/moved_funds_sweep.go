@@ -1,6 +1,7 @@
 package tbtc
 
 import (
+	"fmt"
 	"math/big"
 	"time"
 
@@ -63,6 +64,18 @@ func ValidateMovedFundsSweepProposal(
 		) error
 	},
 ) error {
-	// TODO: Implement
+	validateProposalLogger.Infof("calling chain for proposal validation")
+
+	err := chain.ValidateMovedFundsSweepProposal(
+		walletPublicKeyHash,
+		proposal,
+	)
+
+	if err != nil {
+		return fmt.Errorf("moved funds sweep proposal is invalid: [%v]", err)
+	}
+
+	validateProposalLogger.Infof("moved funds sweep proposal is valid")
+
 	return nil
 }
