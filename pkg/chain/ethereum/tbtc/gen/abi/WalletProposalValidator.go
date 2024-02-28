@@ -26,6 +26,7 @@ var (
 	_ = common.Big1
 	_ = types.BloomLookup
 	_ = event.NewSubscription
+	_ = abi.ConvertType
 )
 
 // BitcoinTxInfo2 is an auto generated low-level Go binding around an user-defined struct.
@@ -72,6 +73,14 @@ type WalletProposalValidatorHeartbeatProposal struct {
 	Message          []byte
 }
 
+// WalletProposalValidatorMovedFundsSweepProposal is an auto generated low-level Go binding around an user-defined struct.
+type WalletProposalValidatorMovedFundsSweepProposal struct {
+	WalletPubKeyHash         [20]byte
+	MovingFundsTxHash        [32]byte
+	MovingFundsTxOutputIndex uint32
+	MovedFundsSweepTxFee     *big.Int
+}
+
 // WalletProposalValidatorMovingFundsProposal is an auto generated low-level Go binding around an user-defined struct.
 type WalletProposalValidatorMovingFundsProposal struct {
 	WalletPubKeyHash [20]byte
@@ -88,7 +97,7 @@ type WalletProposalValidatorRedemptionProposal struct {
 
 // WalletProposalValidatorMetaData contains all meta data concerning the WalletProposalValidator contract.
 var WalletProposalValidatorMetaData = &bind.MetaData{
-	ABI: "[{\"inputs\":[{\"internalType\":\"contractBridge\",\"name\":\"_bridge\",\"type\":\"address\"}],\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"inputs\":[],\"name\":\"DEPOSIT_MIN_AGE\",\"outputs\":[{\"internalType\":\"uint32\",\"name\":\"\",\"type\":\"uint32\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"DEPOSIT_REFUND_SAFETY_MARGIN\",\"outputs\":[{\"internalType\":\"uint32\",\"name\":\"\",\"type\":\"uint32\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"DEPOSIT_SWEEP_MAX_SIZE\",\"outputs\":[{\"internalType\":\"uint16\",\"name\":\"\",\"type\":\"uint16\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"REDEMPTION_MAX_SIZE\",\"outputs\":[{\"internalType\":\"uint16\",\"name\":\"\",\"type\":\"uint16\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"REDEMPTION_REQUEST_MIN_AGE\",\"outputs\":[{\"internalType\":\"uint32\",\"name\":\"\",\"type\":\"uint32\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"REDEMPTION_REQUEST_TIMEOUT_SAFETY_MARGIN\",\"outputs\":[{\"internalType\":\"uint32\",\"name\":\"\",\"type\":\"uint32\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"bridge\",\"outputs\":[{\"internalType\":\"contractBridge\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"components\":[{\"internalType\":\"bytes20\",\"name\":\"walletPubKeyHash\",\"type\":\"bytes20\"},{\"components\":[{\"internalType\":\"bytes32\",\"name\":\"fundingTxHash\",\"type\":\"bytes32\"},{\"internalType\":\"uint32\",\"name\":\"fundingOutputIndex\",\"type\":\"uint32\"}],\"internalType\":\"structWalletProposalValidator.DepositKey[]\",\"name\":\"depositsKeys\",\"type\":\"tuple[]\"},{\"internalType\":\"uint256\",\"name\":\"sweepTxFee\",\"type\":\"uint256\"},{\"internalType\":\"uint256[]\",\"name\":\"depositsRevealBlocks\",\"type\":\"uint256[]\"}],\"internalType\":\"structWalletProposalValidator.DepositSweepProposal\",\"name\":\"proposal\",\"type\":\"tuple\"},{\"components\":[{\"components\":[{\"internalType\":\"bytes4\",\"name\":\"version\",\"type\":\"bytes4\"},{\"internalType\":\"bytes\",\"name\":\"inputVector\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"outputVector\",\"type\":\"bytes\"},{\"internalType\":\"bytes4\",\"name\":\"locktime\",\"type\":\"bytes4\"}],\"internalType\":\"structBitcoinTx.Info\",\"name\":\"fundingTx\",\"type\":\"tuple\"},{\"internalType\":\"bytes8\",\"name\":\"blindingFactor\",\"type\":\"bytes8\"},{\"internalType\":\"bytes20\",\"name\":\"walletPubKeyHash\",\"type\":\"bytes20\"},{\"internalType\":\"bytes20\",\"name\":\"refundPubKeyHash\",\"type\":\"bytes20\"},{\"internalType\":\"bytes4\",\"name\":\"refundLocktime\",\"type\":\"bytes4\"}],\"internalType\":\"structWalletProposalValidator.DepositExtraInfo[]\",\"name\":\"depositsExtraInfo\",\"type\":\"tuple[]\"}],\"name\":\"validateDepositSweepProposal\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"components\":[{\"internalType\":\"bytes20\",\"name\":\"walletPubKeyHash\",\"type\":\"bytes20\"},{\"internalType\":\"bytes\",\"name\":\"message\",\"type\":\"bytes\"}],\"internalType\":\"structWalletProposalValidator.HeartbeatProposal\",\"name\":\"proposal\",\"type\":\"tuple\"}],\"name\":\"validateHeartbeatProposal\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"components\":[{\"internalType\":\"bytes20\",\"name\":\"walletPubKeyHash\",\"type\":\"bytes20\"},{\"internalType\":\"bytes20[]\",\"name\":\"targetWallets\",\"type\":\"bytes20[]\"},{\"internalType\":\"uint256\",\"name\":\"movingFundsTxFee\",\"type\":\"uint256\"}],\"internalType\":\"structWalletProposalValidator.MovingFundsProposal\",\"name\":\"proposal\",\"type\":\"tuple\"},{\"components\":[{\"internalType\":\"bytes32\",\"name\":\"txHash\",\"type\":\"bytes32\"},{\"internalType\":\"uint32\",\"name\":\"txOutputIndex\",\"type\":\"uint32\"},{\"internalType\":\"uint64\",\"name\":\"txOutputValue\",\"type\":\"uint64\"}],\"internalType\":\"structBitcoinTx.UTXO\",\"name\":\"walletMainUtxo\",\"type\":\"tuple\"}],\"name\":\"validateMovingFundsProposal\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"components\":[{\"internalType\":\"bytes20\",\"name\":\"walletPubKeyHash\",\"type\":\"bytes20\"},{\"internalType\":\"bytes[]\",\"name\":\"redeemersOutputScripts\",\"type\":\"bytes[]\"},{\"internalType\":\"uint256\",\"name\":\"redemptionTxFee\",\"type\":\"uint256\"}],\"internalType\":\"structWalletProposalValidator.RedemptionProposal\",\"name\":\"proposal\",\"type\":\"tuple\"}],\"name\":\"validateRedemptionProposal\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"}]",
+	ABI: "[{\"inputs\":[{\"internalType\":\"contractBridge\",\"name\":\"_bridge\",\"type\":\"address\"}],\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"inputs\":[],\"name\":\"DEPOSIT_MIN_AGE\",\"outputs\":[{\"internalType\":\"uint32\",\"name\":\"\",\"type\":\"uint32\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"DEPOSIT_REFUND_SAFETY_MARGIN\",\"outputs\":[{\"internalType\":\"uint32\",\"name\":\"\",\"type\":\"uint32\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"DEPOSIT_SWEEP_MAX_SIZE\",\"outputs\":[{\"internalType\":\"uint16\",\"name\":\"\",\"type\":\"uint16\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"REDEMPTION_MAX_SIZE\",\"outputs\":[{\"internalType\":\"uint16\",\"name\":\"\",\"type\":\"uint16\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"REDEMPTION_REQUEST_MIN_AGE\",\"outputs\":[{\"internalType\":\"uint32\",\"name\":\"\",\"type\":\"uint32\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"REDEMPTION_REQUEST_TIMEOUT_SAFETY_MARGIN\",\"outputs\":[{\"internalType\":\"uint32\",\"name\":\"\",\"type\":\"uint32\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"bridge\",\"outputs\":[{\"internalType\":\"contractBridge\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"components\":[{\"internalType\":\"bytes20\",\"name\":\"walletPubKeyHash\",\"type\":\"bytes20\"},{\"components\":[{\"internalType\":\"bytes32\",\"name\":\"fundingTxHash\",\"type\":\"bytes32\"},{\"internalType\":\"uint32\",\"name\":\"fundingOutputIndex\",\"type\":\"uint32\"}],\"internalType\":\"structWalletProposalValidator.DepositKey[]\",\"name\":\"depositsKeys\",\"type\":\"tuple[]\"},{\"internalType\":\"uint256\",\"name\":\"sweepTxFee\",\"type\":\"uint256\"},{\"internalType\":\"uint256[]\",\"name\":\"depositsRevealBlocks\",\"type\":\"uint256[]\"}],\"internalType\":\"structWalletProposalValidator.DepositSweepProposal\",\"name\":\"proposal\",\"type\":\"tuple\"},{\"components\":[{\"components\":[{\"internalType\":\"bytes4\",\"name\":\"version\",\"type\":\"bytes4\"},{\"internalType\":\"bytes\",\"name\":\"inputVector\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"outputVector\",\"type\":\"bytes\"},{\"internalType\":\"bytes4\",\"name\":\"locktime\",\"type\":\"bytes4\"}],\"internalType\":\"structBitcoinTx.Info\",\"name\":\"fundingTx\",\"type\":\"tuple\"},{\"internalType\":\"bytes8\",\"name\":\"blindingFactor\",\"type\":\"bytes8\"},{\"internalType\":\"bytes20\",\"name\":\"walletPubKeyHash\",\"type\":\"bytes20\"},{\"internalType\":\"bytes20\",\"name\":\"refundPubKeyHash\",\"type\":\"bytes20\"},{\"internalType\":\"bytes4\",\"name\":\"refundLocktime\",\"type\":\"bytes4\"}],\"internalType\":\"structWalletProposalValidator.DepositExtraInfo[]\",\"name\":\"depositsExtraInfo\",\"type\":\"tuple[]\"}],\"name\":\"validateDepositSweepProposal\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"components\":[{\"internalType\":\"bytes20\",\"name\":\"walletPubKeyHash\",\"type\":\"bytes20\"},{\"internalType\":\"bytes\",\"name\":\"message\",\"type\":\"bytes\"}],\"internalType\":\"structWalletProposalValidator.HeartbeatProposal\",\"name\":\"proposal\",\"type\":\"tuple\"}],\"name\":\"validateHeartbeatProposal\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"components\":[{\"internalType\":\"bytes20\",\"name\":\"walletPubKeyHash\",\"type\":\"bytes20\"},{\"internalType\":\"bytes32\",\"name\":\"movingFundsTxHash\",\"type\":\"bytes32\"},{\"internalType\":\"uint32\",\"name\":\"movingFundsTxOutputIndex\",\"type\":\"uint32\"},{\"internalType\":\"uint256\",\"name\":\"movedFundsSweepTxFee\",\"type\":\"uint256\"}],\"internalType\":\"structWalletProposalValidator.MovedFundsSweepProposal\",\"name\":\"proposal\",\"type\":\"tuple\"}],\"name\":\"validateMovedFundsSweepProposal\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"components\":[{\"internalType\":\"bytes20\",\"name\":\"walletPubKeyHash\",\"type\":\"bytes20\"},{\"internalType\":\"bytes20[]\",\"name\":\"targetWallets\",\"type\":\"bytes20[]\"},{\"internalType\":\"uint256\",\"name\":\"movingFundsTxFee\",\"type\":\"uint256\"}],\"internalType\":\"structWalletProposalValidator.MovingFundsProposal\",\"name\":\"proposal\",\"type\":\"tuple\"},{\"components\":[{\"internalType\":\"bytes32\",\"name\":\"txHash\",\"type\":\"bytes32\"},{\"internalType\":\"uint32\",\"name\":\"txOutputIndex\",\"type\":\"uint32\"},{\"internalType\":\"uint64\",\"name\":\"txOutputValue\",\"type\":\"uint64\"}],\"internalType\":\"structBitcoinTx.UTXO\",\"name\":\"walletMainUtxo\",\"type\":\"tuple\"}],\"name\":\"validateMovingFundsProposal\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"components\":[{\"internalType\":\"bytes20\",\"name\":\"walletPubKeyHash\",\"type\":\"bytes20\"},{\"internalType\":\"bytes[]\",\"name\":\"redeemersOutputScripts\",\"type\":\"bytes[]\"},{\"internalType\":\"uint256\",\"name\":\"redemptionTxFee\",\"type\":\"uint256\"}],\"internalType\":\"structWalletProposalValidator.RedemptionProposal\",\"name\":\"proposal\",\"type\":\"tuple\"}],\"name\":\"validateRedemptionProposal\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"}]",
 }
 
 // WalletProposalValidatorABI is the input ABI used to generate the binding from.
@@ -192,11 +201,11 @@ func NewWalletProposalValidatorFilterer(address common.Address, filterer bind.Co
 
 // bindWalletProposalValidator binds a generic wrapper to an already deployed contract.
 func bindWalletProposalValidator(address common.Address, caller bind.ContractCaller, transactor bind.ContractTransactor, filterer bind.ContractFilterer) (*bind.BoundContract, error) {
-	parsed, err := abi.JSON(strings.NewReader(WalletProposalValidatorABI))
+	parsed, err := WalletProposalValidatorMetaData.GetAbi()
 	if err != nil {
 		return nil, err
 	}
-	return bind.NewBoundContract(address, parsed, caller, transactor, filterer), nil
+	return bind.NewBoundContract(address, *parsed, caller, transactor, filterer), nil
 }
 
 // Call invokes the (constant) contract method with params as input values and
@@ -514,6 +523,37 @@ func (_WalletProposalValidator *WalletProposalValidatorSession) ValidateHeartbea
 // Solidity: function validateHeartbeatProposal((bytes20,bytes) proposal) view returns(bool)
 func (_WalletProposalValidator *WalletProposalValidatorCallerSession) ValidateHeartbeatProposal(proposal WalletProposalValidatorHeartbeatProposal) (bool, error) {
 	return _WalletProposalValidator.Contract.ValidateHeartbeatProposal(&_WalletProposalValidator.CallOpts, proposal)
+}
+
+// ValidateMovedFundsSweepProposal is a free data retrieval call binding the contract method 0xd6c7fa78.
+//
+// Solidity: function validateMovedFundsSweepProposal((bytes20,bytes32,uint32,uint256) proposal) view returns(bool)
+func (_WalletProposalValidator *WalletProposalValidatorCaller) ValidateMovedFundsSweepProposal(opts *bind.CallOpts, proposal WalletProposalValidatorMovedFundsSweepProposal) (bool, error) {
+	var out []interface{}
+	err := _WalletProposalValidator.contract.Call(opts, &out, "validateMovedFundsSweepProposal", proposal)
+
+	if err != nil {
+		return *new(bool), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(bool)).(*bool)
+
+	return out0, err
+
+}
+
+// ValidateMovedFundsSweepProposal is a free data retrieval call binding the contract method 0xd6c7fa78.
+//
+// Solidity: function validateMovedFundsSweepProposal((bytes20,bytes32,uint32,uint256) proposal) view returns(bool)
+func (_WalletProposalValidator *WalletProposalValidatorSession) ValidateMovedFundsSweepProposal(proposal WalletProposalValidatorMovedFundsSweepProposal) (bool, error) {
+	return _WalletProposalValidator.Contract.ValidateMovedFundsSweepProposal(&_WalletProposalValidator.CallOpts, proposal)
+}
+
+// ValidateMovedFundsSweepProposal is a free data retrieval call binding the contract method 0xd6c7fa78.
+//
+// Solidity: function validateMovedFundsSweepProposal((bytes20,bytes32,uint32,uint256) proposal) view returns(bool)
+func (_WalletProposalValidator *WalletProposalValidatorCallerSession) ValidateMovedFundsSweepProposal(proposal WalletProposalValidatorMovedFundsSweepProposal) (bool, error) {
+	return _WalletProposalValidator.Contract.ValidateMovedFundsSweepProposal(&_WalletProposalValidator.CallOpts, proposal)
 }
 
 // ValidateMovingFundsProposal is a free data retrieval call binding the contract method 0x9b337db2.
