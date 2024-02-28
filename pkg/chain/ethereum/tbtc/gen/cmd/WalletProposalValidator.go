@@ -56,6 +56,7 @@ func init() {
 		wpvREDEMPTIONREQUESTMINAGECommand(),
 		wpvREDEMPTIONREQUESTTIMEOUTSAFETYMARGINCommand(),
 		wpvValidateHeartbeatProposalCommand(),
+		wpvValidateMovedFundsSweepProposalCommand(),
 		wpvValidateMovingFundsProposalCommand(),
 		wpvValidateRedemptionProposalCommand(),
 	)
@@ -330,6 +331,46 @@ func wpvValidateHeartbeatProposal(c *cobra.Command, args []string) error {
 	}
 
 	result, err := contract.ValidateHeartbeatProposalAtBlock(
+		arg_proposal_json,
+		cmd.BlockFlagValue.Int,
+	)
+
+	if err != nil {
+		return err
+	}
+
+	cmd.PrintOutput(result)
+
+	return nil
+}
+
+func wpvValidateMovedFundsSweepProposalCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "validate-moved-funds-sweep-proposal [arg_proposal_json]",
+		Short:                 "Calls the view method validateMovedFundsSweepProposal on the WalletProposalValidator contract.",
+		Args:                  cmd.ArgCountChecker(1),
+		RunE:                  wpvValidateMovedFundsSweepProposal,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	cmd.InitConstFlags(c)
+
+	return c
+}
+
+func wpvValidateMovedFundsSweepProposal(c *cobra.Command, args []string) error {
+	contract, err := initializeWalletProposalValidator(c)
+	if err != nil {
+		return err
+	}
+
+	arg_proposal_json := abi.WalletProposalValidatorMovedFundsSweepProposal{}
+	if err := json.Unmarshal([]byte(args[0]), &arg_proposal_json); err != nil {
+		return fmt.Errorf("failed to unmarshal arg_proposal_json to abi.WalletProposalValidatorMovedFundsSweepProposal: %w", err)
+	}
+
+	result, err := contract.ValidateMovedFundsSweepProposalAtBlock(
 		arg_proposal_json,
 		cmd.BlockFlagValue.Int,
 	)
