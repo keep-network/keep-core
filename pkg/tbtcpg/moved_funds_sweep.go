@@ -17,6 +17,12 @@ var ErrSweepTxFeeTooHigh = fmt.Errorf(
 	"estimated fee exceeds the maximum fee",
 )
 
+// ErrNoPendingMovedFundsSweepRequests is the error returned when no pending
+// moved funds sweep requests.
+var ErrNoPendingMovedFundsSweepRequests = fmt.Errorf(
+	"could not find any pending moved funds sweep request",
+)
+
 // MovedFundsSweepLookBackBlocks is the look-back period in blocks used
 // when searching for submitted moving funds-related events. It's equal to
 // 30 days assuming 12 seconds per block.
@@ -183,9 +189,7 @@ func (mfst *MovedFundsSweepTask) FindMovingFundsTxData(
 	}
 
 	// No pending moved funds sweep request could be found.
-	return bitcoin.Hash{}, 0, fmt.Errorf(
-		"could not find any pending moved funds sweep request",
-	)
+	return bitcoin.Hash{}, 0, ErrNoPendingMovedFundsSweepRequests
 }
 
 func (mfst *MovedFundsSweepTask) findMovingFundsCommitmentData(

@@ -11,7 +11,7 @@ import (
 	"github.com/keep-network/keep-core/pkg/tbtcpg"
 )
 
-func TestMovedFundsSweepAction_FindMovingFundsTxData(t *testing.T) {
+func TestMovedFundsSweepAction_FindMovingFundsTxData_Successful(t *testing.T) {
 	walletPublicKeyHash := hexToByte20(
 		"92a6ec889a8fa34f731e639edede4c75e184307c",
 	)
@@ -219,6 +219,118 @@ func TestMovedFundsSweepAction_FindMovingFundsTxData(t *testing.T) {
 		uint64(expectedOutputIdx),
 		uint64(movingFundsOutputIdx),
 	)
+}
+
+func TestMovedFundsSweepAction_FindMovingFundsTxData_Failure(t *testing.T) {
+	walletPublicKeyHash := hexToByte20(
+		"92a6ec889a8fa34f731e639edede4c75e184307c",
+	)
+
+	currentBlock := uint64(1000000)
+
+	tbtcChain := tbtcpg.NewLocalChain()
+
+	blockCounter := tbtcpg.NewMockBlockCounter()
+	blockCounter.SetCurrentBlock(currentBlock)
+	tbtcChain.SetBlockCounter(blockCounter)
+
+	startBlock := currentBlock - tbtcpg.MovedFundsSweepLookBackBlocks
+
+	// Test data containing moving funds commitment to this wallet that has
+	// already been sweep.
+	movingFundsCommitment := struct {
+		sourceWallet  [20]byte
+		targetWallets [][20]byte
+	}{
+		sourceWallet: hexToByte20(
+			"d4162e0c6522eafac43650c78928910ceda4aef7",
+		),
+		targetWallets: [][20]byte{
+			// test wallet at index 0
+			hexToByte20("92a6ec889a8fa34f731e639edede4c75e184307c"),
+		},
+	}
+
+	err := tbtcChain.AddPastMovingFundsCommitmentSubmittedEvent(
+		&tbtc.MovingFundsCommitmentSubmittedEventFilter{
+			StartBlock: startBlock,
+		},
+		&tbtc.MovingFundsCommitmentSubmittedEvent{
+			WalletPublicKeyHash: movingFundsCommitment.sourceWallet,
+			TargetWallets:       movingFundsCommitment.targetWallets,
+		},
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// The filter for moving funds completed events contains the starting block
+	// and the public key hashes of the source wallet that committed to move
+	// funds to the test wallet.
+	movingFundsCompletedFilter := &tbtc.MovingFundsCompletedEventFilter{
+		StartBlock: startBlock,
+		WalletPublicKeyHash: [][20]byte{
+			hexToByte20("d4162e0c6522eafac43650c78928910ceda4aef7"),
+		},
+	}
+
+	// Tests data on all the completed moving funds transactions.
+	movingFundsTransactions := struct {
+		sourceWallet [20]byte
+		txHash       bitcoin.Hash
+	}{
+		sourceWallet: hexToByte20(
+			"d4162e0c6522eafac43650c78928910ceda4aef7",
+		),
+		txHash: hashFromString(
+			"722b27db8c84795a0eff3103394d0d34469dc79b822981eeb2ae0c023d7ce1e0",
+		),
+	}
+
+	err = tbtcChain.AddPastMovingFundsCompletedEvent(
+		movingFundsCompletedFilter,
+		&tbtc.MovingFundsCompletedEvent{
+			WalletPublicKeyHash: movingFundsTransactions.sourceWallet,
+			MovingFundsTxHash:   movingFundsTransactions.txHash,
+		},
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Data to build moved funds sweep request.
+	movedFundsSweepRequest := struct {
+		txHash      bitcoin.Hash
+		outputIndex uint32
+		state       tbtc.MovedFundsSweepRequestState
+	}{
+		txHash: hashFromString(
+			"722b27db8c84795a0eff3103394d0d34469dc79b822981eeb2ae0c023d7ce1e0",
+		),
+		outputIndex: 0,
+		state:       tbtc.MovedFundsStateProcessed,
+	}
+
+	tbtcChain.SetMovedFundsSweepRequest(
+		movedFundsSweepRequest.txHash,
+		movedFundsSweepRequest.outputIndex,
+		&tbtc.MovedFundsSweepRequest{
+			State: movedFundsSweepRequest.state,
+		},
+	)
+
+	task := tbtcpg.NewMovedFundsSweepTask(
+		tbtcChain,
+		nil,
+	)
+
+	_, _, err = task.FindMovingFundsTxData(
+		walletPublicKeyHash,
+	)
+
+	expectedError := tbtcpg.ErrNoPendingMovedFundsSweepRequests
+
+	testutils.AssertAnyErrorInChainMatchesTarget(t, expectedError, err)
 }
 
 func TestMovedFundsSweepAction_ProposeMovedFundsSweep(t *testing.T) {
