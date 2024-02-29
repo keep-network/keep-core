@@ -76,9 +76,9 @@ func (mfst *MovedFundsSweepTask) Run(request *tbtc.CoordinationProposalRequest) 
 	}
 
 	// Find the transaction hash and output index of the UTXO that the source
-	// wallet transferred to this wallet. If the wallet has more than one moved
-	// funds sweep requests, only the data for the first encountered request
-	// will be returned.
+	// wallet transferred to this wallet. If the wallet has more than one
+	// pending moved funds sweep requests, only the data for the first
+	// encountered request will be returned.
 	movingFundsTxHash, movingFundsOutputIdx, err := mfst.FindMovingFundsTxData(
 		walletPublicKeyHash,
 	)
@@ -145,7 +145,7 @@ func (mfst *MovedFundsSweepTask) FindMovingFundsTxData(
 	// Find all the wallets that recently committed to move funds to this wallet.
 	// The returned data also contains information on the position on the target
 	// wallets list.
-	movingFundsCommitmentData, err := mfst.findMovingFundsCommitmentData(
+	movingFundsCommitments, err := mfst.findMovingFundsCommitments(
 		walletPublicKeyHash,
 		filterStartBlock,
 	)
@@ -158,8 +158,8 @@ func (mfst *MovedFundsSweepTask) FindMovingFundsTxData(
 
 	// Find the transaction outpoints that transfer funds to this wallet coming
 	// from the recent moving funds transactions.
-	movingFundsTxData, err := mfst.findMovingFundsTransactions(
-		movingFundsCommitmentData,
+	movingFundsTxOutpoints, err := mfst.findMovingFundsTxOutpoints(
+		movingFundsCommitments,
 		filterStartBlock,
 	)
 	if err != nil {
@@ -171,10 +171,10 @@ func (mfst *MovedFundsSweepTask) FindMovingFundsTxData(
 
 	// Find the first outpoint that represents an unproven moved funds sweep
 	// request and return it.
-	for _, data := range movingFundsTxData {
+	for _, outpoint := range movingFundsTxOutpoints {
 		movedFundsSweepRequest, err := mfst.chain.GetMovedFundsSweepRequest(
-			data.TransactionHash,
-			data.OutputIndex,
+			outpoint.TransactionHash,
+			outpoint.OutputIndex,
 		)
 		if err != nil {
 			return bitcoin.Hash{}, 0, fmt.Errorf(
@@ -184,7 +184,7 @@ func (mfst *MovedFundsSweepTask) FindMovingFundsTxData(
 		}
 
 		if movedFundsSweepRequest.State == tbtc.MovedFundsStatePending {
-			return data.TransactionHash, data.OutputIndex, nil
+			return outpoint.TransactionHash, outpoint.OutputIndex, nil
 		}
 	}
 
@@ -192,10 +192,11 @@ func (mfst *MovedFundsSweepTask) FindMovingFundsTxData(
 	return bitcoin.Hash{}, 0, ErrNoPendingMovedFundsSweepRequests
 }
 
-func (mfst *MovedFundsSweepTask) findMovingFundsCommitmentData(
+func (mfst *MovedFundsSweepTask) findMovingFundsCommitments(
 	walletPublicKeyHash [20]byte,
 	filterStartBlock uint64,
 ) ([]movingFundsCommitmentData, error) {
+	// Get all the recent moving funds commitment submitted events.
 	filter := &tbtc.MovingFundsCommitmentSubmittedEventFilter{
 		StartBlock: filterStartBlock,
 	}
@@ -208,10 +209,15 @@ func (mfst *MovedFundsSweepTask) findMovingFundsCommitmentData(
 		)
 	}
 
+	// Iterate over the events and take data on the wallets that committed to
+	// this wallet.
 	commitmentData := []movingFundsCommitmentData{}
 	for _, event := range events {
 		for targetWalletIndex, targetWallet := range event.TargetWallets {
 			if targetWallet == walletPublicKeyHash {
+				// If our wallet has been found on the target wallet list save
+				// the committing wallet public key hash and the position of
+				// our wallet on the target wallet list.
 				commitmentData = append(
 					commitmentData,
 					movingFundsCommitmentData{
@@ -227,7 +233,7 @@ func (mfst *MovedFundsSweepTask) findMovingFundsCommitmentData(
 	return commitmentData, nil
 }
 
-func (mfst *MovedFundsSweepTask) findMovingFundsTransactions(
+func (mfst *MovedFundsSweepTask) findMovingFundsTxOutpoints(
 	commitmentData []movingFundsCommitmentData,
 	filterStartBlock uint64,
 ) ([]bitcoin.TransactionOutpoint, error) {
@@ -236,11 +242,15 @@ func (mfst *MovedFundsSweepTask) findMovingFundsTransactions(
 		movingFundsWallets = append(movingFundsWallets, data.committingWallet)
 	}
 
+	// Use all the wallets that committed to move funds to our wallet as a filter.
 	filter := &tbtc.MovingFundsCompletedEventFilter{
 		StartBlock:          filterStartBlock,
 		WalletPublicKeyHash: movingFundsWallets,
 	}
 
+	// Retrieve all the moving funds completed events. The list will contain
+	// information on all the moving funds transactions to our wallet that have
+	// been proven in the Bridge.
 	events, err := mfst.chain.PastMovingFundsCompletedEvents(
 		filter,
 	)
@@ -251,8 +261,12 @@ func (mfst *MovedFundsSweepTask) findMovingFundsTransactions(
 		)
 	}
 
-	movingFundsTxData := []bitcoin.TransactionOutpoint{}
+	movingFundsTxOutpoints := []bitcoin.TransactionOutpoint{}
 
+	// Iterate over all the events and prepare outpoints of Bitcoin transactions
+	// that transferred funds to our wallets. These outpoints represent moved
+	// funds sweep requests. Some of them are already processed, some are still
+	// pending.
 	for _, event := range events {
 		movingFundsTxHash := event.MovingFundsTxHash
 
@@ -263,8 +277,8 @@ func (mfst *MovedFundsSweepTask) findMovingFundsTransactions(
 			}
 		}
 
-		movingFundsTxData = append(
-			movingFundsTxData,
+		movingFundsTxOutpoints = append(
+			movingFundsTxOutpoints,
 			bitcoin.TransactionOutpoint{
 				TransactionHash: movingFundsTxHash,
 				OutputIndex:     movingFundsTxOutpointIdx,
@@ -272,7 +286,7 @@ func (mfst *MovedFundsSweepTask) findMovingFundsTransactions(
 		)
 	}
 
-	return movingFundsTxData, nil
+	return movingFundsTxOutpoints, nil
 }
 
 type movingFundsCommitmentData struct {
