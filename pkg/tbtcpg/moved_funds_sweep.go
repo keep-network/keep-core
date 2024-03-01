@@ -114,7 +114,8 @@ func (mfst *MovedFundsSweepTask) Run(request *tbtc.CoordinationProposalRequest) 
 // FindMovingFundsTxData finds the transaction hash and output index for the
 // unswept funds transferred from a source wallet to this wallet. It returns
 // data for only one funds transfer. If there were more than one funds transfers
-// the data for the first encountered unswept transfer is returned.
+// the data for the first encountered unswept transfer is returned. If no pending
+// moved funds sweep request could be found, the function returns error.
 func (mfst *MovedFundsSweepTask) FindMovingFundsTxData(
 	walletPublicKeyHash [20]byte,
 ) (
@@ -260,12 +261,18 @@ func (mfst *MovedFundsSweepTask) findMovingFundsTxOutpoints(
 	movingFundsTxOutpoints := []bitcoin.TransactionOutpoint{}
 
 	// Iterate over all the events and prepare outpoints of Bitcoin transactions
-	// that transferred funds to our wallets. These outpoints represent moved
+	// that transferred funds to our wallet. These outpoints represent moved
 	// funds sweep requests. Some of them are already processed, some are still
 	// pending.
 	for _, event := range events {
 		movingFundsTxHash := event.MovingFundsTxHash
 
+		// There is always a single moving funds commitment for any source wallet.
+		// Similarly, there is always a single moving funds completed event for
+		// any source wallet. It is also necessary for a source wallet to submit
+		// commitment before completing moving funds. Therefor a source wallet
+		// from a moving funds completed event must be present in the commitment
+		// data.
 		movingFundsTxOutpointIdx, found := commitmentInfos[event.WalletPublicKeyHash]
 		if !found {
 			// Just in case, it should never happen. If the moving funds source
