@@ -226,13 +226,12 @@ func unmarshalCoordinationProposal(actionType uint32, payload []byte) (
 	}
 
 	proposal, ok := map[WalletActionType]CoordinationProposal{
-		ActionNoop:         &NoopProposal{},
-		ActionHeartbeat:    &HeartbeatProposal{},
-		ActionDepositSweep: &DepositSweepProposal{},
-		ActionRedemption:   &RedemptionProposal{},
-		ActionMovingFunds:  &MovingFundsProposal{},
-		// TODO: Uncomment when moving funds support is implemented.
-		// ActionMovedFundsSweep: &MovedFundsSweepProposal{},
+		ActionNoop:            &NoopProposal{},
+		ActionHeartbeat:       &HeartbeatProposal{},
+		ActionDepositSweep:    &DepositSweepProposal{},
+		ActionRedemption:      &RedemptionProposal{},
+		ActionMovingFunds:     &MovingFundsProposal{},
+		ActionMovedFundsSweep: &MovedFundsSweepProposal{},
 	}[parsedActionType]
 	if !ok {
 		return nil, fmt.Errorf(
@@ -430,6 +429,37 @@ func (mfp *MovingFundsProposal) Unmarshal(data []byte) error {
 	}
 
 	mfp.MovingFundsTxFee = new(big.Int).SetBytes(pbMsg.MovingFundsTxFee)
+	return nil
+}
+
+// Marshal converts the movingFundsProposal to a byte array.
+func (mfsp *MovedFundsSweepProposal) Marshal() ([]byte, error) {
+	return proto.Marshal(
+		&pb.MovedFundsSweepProposal{
+			MovingFundsTxHash:        mfsp.MovingFundsTxHash[:],
+			MovingFundsTxOutputIndex: mfsp.MovingFundsTxOutputIndex,
+			SweepTxFee:               mfsp.SweepTxFee.Bytes(),
+		})
+}
+
+// Unmarshal converts a byte array back to the movingFundsProposal.
+func (mfsp *MovedFundsSweepProposal) Unmarshal(data []byte) error {
+	pbMsg := pb.MovedFundsSweepProposal{}
+	if err := proto.Unmarshal(data, &pbMsg); err != nil {
+		return fmt.Errorf("failed to unmarshal MovedFundsSweepProposal: [%v]", err)
+	}
+
+	if len(pbMsg.MovingFundsTxHash) != 32 {
+		return fmt.Errorf(
+			"invalid moving funds tx hash length: [%v]",
+			len(pbMsg.MovingFundsTxHash),
+		)
+	}
+
+	copy(mfsp.MovingFundsTxHash[:], pbMsg.MovingFundsTxHash)
+	mfsp.MovingFundsTxOutputIndex = pbMsg.MovingFundsTxOutputIndex
+	mfsp.SweepTxFee = new(big.Int).SetBytes(pbMsg.SweepTxFee)
+
 	return nil
 }
 

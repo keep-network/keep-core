@@ -676,6 +676,17 @@ func (n *node) handleMovingFundsProposal(
 	walletActionLogger.Infof("wallet action dispatched successfully")
 }
 
+// handleMovedFundsSweepProposal handles an incoming moved funds sweep proposal
+// by orchestrating and dispatching an appropriate wallet action.
+func (n *node) handleMovedFundsSweepProposal(
+	wallet wallet,
+	proposal *MovedFundsSweepProposal,
+	startBlock uint64,
+	expiryBlock uint64,
+) {
+	// TODO: Implement
+}
+
 // coordinationLayerSettings represents settings for the coordination layer.
 type coordinationLayerSettings struct {
 	// executeCoordinationProcedureFn is a function executing the coordination
@@ -872,15 +883,15 @@ func processCoordinationResult(node *node, result *coordinationResult) {
 			)
 		}
 	// TODO: Uncomment when moving funds support is implemented.
-	// case ActionMovedFundsSweep:
-	//	 if proposal, ok := result.proposal.(*MovedFundsSweepProposal); ok {
-	//	 	 node.handleMovedFundsSweepProposal(
-	//	 	 	 result.wallet,
-	//	 	 	 proposal,
-	//	 	 	 startBlock,
-	//	 	 	 expiryBlock,
-	//	 	 )
-	//	 }
+	case ActionMovedFundsSweep:
+		if proposal, ok := result.proposal.(*MovedFundsSweepProposal); ok {
+			node.handleMovedFundsSweepProposal(
+				result.wallet,
+				proposal,
+				startBlock,
+				expiryBlock,
+			)
+		}
 	default:
 		logger.Errorf("no handler for coordination result [%s]", result)
 	}
