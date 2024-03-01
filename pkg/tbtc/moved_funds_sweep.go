@@ -1,9 +1,13 @@
 package tbtc
 
 import (
+	"crypto/ecdsa"
 	"fmt"
 	"math/big"
 	"time"
+
+	"github.com/keep-network/keep-core/pkg/bitcoin"
+	"go.uber.org/zap"
 
 	"github.com/ipfs/go-log/v2"
 )
@@ -27,12 +31,37 @@ type MovedFundsSweepRequest struct {
 }
 
 const (
-	// movedFundsSweepProposalValidityBlocks determines the moving funds
+	// movedFundsSweepProposalValidityBlocks determines the moved funds sweep
 	// proposal validity time expressed in blocks. In other words, this is the
-	// worst-case time for a moving funds during which the wallet is busy and
-	// cannot take another actions. The value of 600 blocks is roughly 2 hours,
-	// assuming 12 seconds per block.
+	// worst-case time for a moved funds sweep during which the wallet is busy
+	// and cannot take another actions. The value of 600 blocks is roughly
+	// 2 hours, assuming 12 seconds per block.
 	movedFundsSweepProposalValidityBlocks = 600
+	// movedFundsSweepSigningTimeoutSafetyMarginBlocks determines the duration of
+	// the safety margin that must be preserved between the signing timeout and
+	// the timeout of the entire moved funds sweep action. This safety margin
+	// prevents against the case where signing completes late and there is not
+	// enough time to broadcast the moved funds sweep transaction properly.
+	// In such a case, wallet signatures may leak and make the wallet subject
+	// of fraud accusations. Usage of the safety margin ensures there is enough
+	// time to perform post-signing steps of the moved funds sweep action.
+	// The value of 300 blocks is roughly 1 hour, assuming 12 seconds per block.
+	movedFundsSweepSigningTimeoutSafetyMarginBlocks = 300
+	// movedFundsSweepBroadcastTimeout determines the time window for moved
+	// funds sweep transaction broadcast. It is guaranteed that at least
+	// movedFundsSweepSigningTimeoutSafetyMarginBlocks is preserved for the
+	// broadcast step. However, the happy path for the broadcast step is usually
+	// quick and few retries are needed to recover from temporary problems. That
+	// said, if the broadcast step does not succeed in a tight timeframe, there
+	// is no point to retry for the entire possible time window. Hence, the
+	// timeout for broadcast step is set as 25% of the entire time widow
+	// determined by movedFundsSweepSigningTimeoutSafetyMarginBlocks.
+	movedFundsSweepBroadcastTimeout = 15 * time.Minute
+	// movedFundsSweepBroadcastCheckDelay determines the delay that must
+	// be preserved between transaction broadcast and the check that ensures
+	// the transaction is known on the Bitcoin chain. This delay is needed
+	// as spreading the transaction over the Bitcoin network takes time.
+	movedFundsSweepBroadcastCheckDelay = 1 * time.Minute
 )
 
 // MovedFundsSweepProposal represents a moved funds sweep proposal issued by a
@@ -49,6 +78,162 @@ func (mfsp *MovedFundsSweepProposal) ActionType() WalletActionType {
 
 func (mfsp *MovedFundsSweepProposal) ValidityBlocks() uint64 {
 	return movedFundsSweepProposalValidityBlocks
+}
+
+type movedFundsSweepAction struct {
+	logger   *zap.SugaredLogger
+	chain    Chain
+	btcChain bitcoin.Chain
+
+	movedFundsSweepWallet wallet
+	transactionExecutor   *walletTransactionExecutor
+
+	proposal                     *MovedFundsSweepProposal
+	proposalProcessingStartBlock uint64
+	proposalExpiryBlock          uint64
+
+	signingTimeoutSafetyMarginBlocks uint64
+	broadcastTimeout                 time.Duration
+	broadcastCheckDelay              time.Duration
+}
+
+func newMovedFundsSweepAction(
+	logger *zap.SugaredLogger,
+	chain Chain,
+	btcChain bitcoin.Chain,
+	movedFundsSweepWallet wallet,
+	signingExecutor walletSigningExecutor,
+	proposal *MovedFundsSweepProposal,
+	proposalProcessingStartBlock uint64,
+	proposalExpiryBlock uint64,
+	waitForBlockFn waitForBlockFn,
+) *movedFundsSweepAction {
+	transactionExecutor := newWalletTransactionExecutor(
+		btcChain,
+		movedFundsSweepWallet,
+		signingExecutor,
+		waitForBlockFn,
+	)
+
+	return &movedFundsSweepAction{
+		logger:                           logger,
+		chain:                            chain,
+		btcChain:                         btcChain,
+		movedFundsSweepWallet:            movedFundsSweepWallet,
+		transactionExecutor:              transactionExecutor,
+		proposal:                         proposal,
+		proposalProcessingStartBlock:     proposalProcessingStartBlock,
+		proposalExpiryBlock:              proposalExpiryBlock,
+		signingTimeoutSafetyMarginBlocks: movedFundsSweepSigningTimeoutSafetyMarginBlocks,
+		broadcastTimeout:                 movedFundsSweepBroadcastTimeout,
+		broadcastCheckDelay:              movedFundsSweepBroadcastCheckDelay,
+	}
+}
+
+func (mfsa *movedFundsSweepAction) execute() error {
+	validateProposalLogger := mfsa.logger.With(
+		zap.String("step", "validateProposal"),
+	)
+
+	walletPublicKeyHash := bitcoin.PublicKeyHash(mfsa.wallet().publicKey)
+
+	err := ValidateMovedFundsSweepProposal(
+		validateProposalLogger,
+		walletPublicKeyHash,
+		mfsa.proposal,
+		mfsa.chain,
+	)
+	if err != nil {
+		return fmt.Errorf("validate proposal step failed: [%v]", err)
+	}
+
+	walletMainUtxo, err := DetermineWalletMainUtxo(
+		walletPublicKeyHash,
+		mfsa.chain,
+		mfsa.btcChain,
+	)
+	if err != nil {
+		return fmt.Errorf(
+			"error while determining wallet's main UTXO: [%v]",
+			err,
+		)
+	}
+
+	err = EnsureWalletSyncedBetweenChains(
+		walletPublicKeyHash,
+		walletMainUtxo,
+		mfsa.chain,
+		mfsa.btcChain,
+	)
+	if err != nil {
+		return fmt.Errorf(
+			"error while ensuring wallet state is synced between "+
+				"BTC and host chain: [%v]",
+			err,
+		)
+	}
+
+	unsignedMovedFundsSweepTx, err := assembleMovedFundsSweepTransaction(
+		mfsa.btcChain,
+		mfsa.wallet().publicKey,
+		walletMainUtxo,
+		mfsa.proposal.MovingFundsTxHash,
+		mfsa.proposal.MovingFundsTxOutputIndex,
+		mfsa.proposal.SweepTxFee.Int64(),
+	)
+	if err != nil {
+		return fmt.Errorf(
+			"error while assembling moved funds sweep transaction: [%v]",
+			err,
+		)
+	}
+
+	signTxLogger := mfsa.logger.With(
+		zap.String("step", "signTransaction"),
+	)
+
+	// Just in case. This should never happen.
+	if mfsa.proposalExpiryBlock < mfsa.signingTimeoutSafetyMarginBlocks {
+		return fmt.Errorf("invalid proposal expiry block")
+	}
+
+	movedFundsSweepTx, err := mfsa.transactionExecutor.signTransaction(
+		signTxLogger,
+		unsignedMovedFundsSweepTx,
+		mfsa.proposalProcessingStartBlock,
+		mfsa.proposalExpiryBlock-mfsa.signingTimeoutSafetyMarginBlocks,
+	)
+	if err != nil {
+		return fmt.Errorf("sign transaction step failed: [%v]", err)
+	}
+
+	broadcastTxLogger := mfsa.logger.With(
+		zap.String("step", "broadcastTransaction"),
+		zap.String(
+			"movedFundsSweepTxHash",
+			movedFundsSweepTx.Hash().Hex(bitcoin.ReversedByteOrder),
+		),
+	)
+
+	err = mfsa.transactionExecutor.broadcastTransaction(
+		broadcastTxLogger,
+		movedFundsSweepTx,
+		mfsa.broadcastTimeout,
+		mfsa.broadcastCheckDelay,
+	)
+	if err != nil {
+		return fmt.Errorf("broadcast transaction step failed: [%v]", err)
+	}
+
+	return nil
+}
+
+func (mfsa *movedFundsSweepAction) wallet() wallet {
+	return mfsa.movedFundsSweepWallet
+}
+
+func (mfsa *movedFundsSweepAction) actionType() WalletActionType {
+	return ActionMovedFundsSweep
 }
 
 // ValidateMovedFundsSweepProposal checks the moved funds sweep proposal with
@@ -81,4 +266,16 @@ func ValidateMovedFundsSweepProposal(
 	validateProposalLogger.Infof("moved funds sweep proposal is valid")
 
 	return nil
+}
+
+func assembleMovedFundsSweepTransaction(
+	bitcoinChain bitcoin.Chain,
+	walletPublicKey *ecdsa.PublicKey,
+	walletMainUtxo *bitcoin.UnspentTransactionOutput,
+	MovingFundsTxHash [32]byte,
+	MovingFundsTxOutputIndex uint32,
+	fee int64,
+) (*bitcoin.TransactionBuilder, error) {
+	// TODO: Implement
+	return nil, nil
 }

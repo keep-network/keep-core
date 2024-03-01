@@ -684,7 +684,64 @@ func (n *node) handleMovedFundsSweepProposal(
 	startBlock uint64,
 	expiryBlock uint64,
 ) {
-	// TODO: Implement
+	walletPublicKeyBytes, err := marshalPublicKey(wallet.publicKey)
+	if err != nil {
+		logger.Errorf("cannot marshal wallet public key: [%v]", err)
+		return
+	}
+
+	signingExecutor, ok, err := n.getSigningExecutor(wallet.publicKey)
+	if err != nil {
+		logger.Errorf("cannot get signing executor: [%v]", err)
+		return
+	}
+	// This check is actually redundant. We know the node controls some
+	// wallet signers as we just got the wallet from the registry using their
+	// public key hash. However, we are doing it just in case. The API
+	// contract of getSigningExecutor may change one day.
+	if !ok {
+		logger.Infof(
+			"node does not control signers of wallet PKH [0x%x]; "+
+				"ignoring the received moved funds sweep proposal",
+			walletPublicKeyBytes,
+		)
+		return
+	}
+
+	logger.Infof(
+		"starting orchestration of the moved funds sweep action for wallet "+
+			"[0x%x]; 20-byte public key hash of that wallet is [0x%x]",
+		walletPublicKeyBytes,
+		bitcoin.PublicKeyHash(wallet.publicKey),
+	)
+
+	walletActionLogger := logger.With(
+		zap.String("wallet", fmt.Sprintf("0x%x", walletPublicKeyBytes)),
+		zap.String("action", ActionMovedFundsSweep.String()),
+		zap.Uint64("startBlock", startBlock),
+		zap.Uint64("expiryBlock", expiryBlock),
+	)
+	walletActionLogger.Infof("dispatching wallet action")
+
+	action := newMovedFundsSweepAction(
+		walletActionLogger,
+		n.chain,
+		n.btcChain,
+		wallet,
+		signingExecutor,
+		proposal,
+		startBlock,
+		expiryBlock,
+		n.waitForBlockHeight,
+	)
+
+	err = n.walletDispatcher.dispatch(action)
+	if err != nil {
+		walletActionLogger.Errorf("cannot dispatch wallet action: [%v]", err)
+		return
+	}
+
+	walletActionLogger.Infof("wallet action dispatched successfully")
 }
 
 // coordinationLayerSettings represents settings for the coordination layer.

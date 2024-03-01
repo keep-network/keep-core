@@ -995,6 +995,13 @@ func buildMovingFundsProposalValidationKey(
 	return sha256.Sum256(buffer.Bytes()), nil
 }
 
+func (lc *localChain) ValidateMovedFundsSweepProposal(
+	walletPublicKeyHash [20]byte,
+	proposal *MovedFundsSweepProposal,
+) error {
+	panic("unsupported")
+}
+
 // Connect sets up the local chain.
 func Connect(blockTime ...time.Duration) *localChain {
 	operatorPrivateKey, _, err := operator.GenerateKeyPair(local_v1.DefaultCurve)
