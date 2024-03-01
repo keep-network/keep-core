@@ -18,6 +18,7 @@ const (
 	MovedFundsStateTimedOut
 )
 
+// MovedFundsSweepRequest represents a moved funds sweep request.
 type MovedFundsSweepRequest struct {
 	WalletPublicKeyHash [20]byte
 	Value               uint64
@@ -34,6 +35,8 @@ const (
 	movedFundsSweepProposalValidityBlocks = 600
 )
 
+// MovedFundsSweepProposal represents a moved funds sweep proposal issued by a
+// wallet's coordination leader.
 type MovedFundsSweepProposal struct {
 	MovingFundsTxHash        [32]byte
 	MovingFundsTxOutputIndex uint32

@@ -28,6 +28,7 @@ var ErrNoPendingMovedFundsSweepRequests = fmt.Errorf(
 // 30 days assuming 12 seconds per block.
 const MovedFundsSweepLookBackBlocks = uint64(216000)
 
+// MovedFundsSweepTask is a task that may produce a moved funds sweep proposal.
 type MovedFundsSweepTask struct {
 	chain    Chain
 	btcChain bitcoin.Chain
