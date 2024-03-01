@@ -8,6 +8,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"math/big"
+	"sort"
 	"sync"
 	"time"
 
@@ -412,8 +413,20 @@ func buildPastMovingFundsCompletedEventsKey(
 		buffer.Write(endBlock)
 	}
 
-	for _, walletPublicKeyHash := range filter.WalletPublicKeyHash {
-		buffer.Write(walletPublicKeyHash[:])
+	// The wallet public key hashes are sometimes in the undefined order as
+	// they are read from a map. Convert them to strings and sort them so that
+	// their order is defined.
+	walletPublicKeyHashesStr := make([]string, len(filter.WalletPublicKeyHash))
+	for i, hash := range filter.WalletPublicKeyHash {
+		walletPublicKeyHashesStr[i] = hex.EncodeToString(hash[:])
+	}
+	sort.Strings(walletPublicKeyHashesStr)
+	for _, hashStr := range walletPublicKeyHashesStr {
+		hashBytes, err := hex.DecodeString(hashStr)
+		if err != nil {
+			return [32]byte{}, err
+		}
+		buffer.Write(hashBytes)
 	}
 
 	return sha256.Sum256(buffer.Bytes()), nil
