@@ -194,7 +194,7 @@ func (mfst *MovedFundsSweepTask) FindMovingFundsTxData(
 }
 
 func (mfst *MovedFundsSweepTask) findMovingFundsCommitments(
-	walletPublicKeyHash [20]byte,
+	targetWalletPublicKeyHash [20]byte,
 	filterStartBlock uint64,
 ) ([]movingFundsCommitmentData, error) {
 	// Get all the recent moving funds commitment submitted events.
@@ -215,7 +215,7 @@ func (mfst *MovedFundsSweepTask) findMovingFundsCommitments(
 	commitmentData := []movingFundsCommitmentData{}
 	for _, event := range events {
 		for targetWalletIndex, targetWallet := range event.TargetWallets {
-			if targetWallet == walletPublicKeyHash {
+			if targetWallet == targetWalletPublicKeyHash {
 				// If our wallet has been found on the target wallet list save
 				// the committing wallet public key hash and the position of
 				// our wallet on the target wallet list.
