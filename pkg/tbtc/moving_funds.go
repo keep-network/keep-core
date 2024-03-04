@@ -1,7 +1,6 @@
 package tbtc
 
 import (
-	"crypto/ecdsa"
 	"fmt"
 	"math/big"
 	"time"
@@ -199,7 +198,6 @@ func (mfa *movingFundsAction) execute() error {
 
 	unsignedMovingFundsTx, err := assembleMovingFundsTransaction(
 		mfa.btcChain,
-		mfa.wallet().publicKey,
 		walletMainUtxo,
 		mfa.proposal.TargetWallets,
 		mfa.proposal.MovingFundsTxFee.Int64(),
@@ -341,7 +339,6 @@ func (mfa *movingFundsAction) actionType() WalletActionType {
 
 func assembleMovingFundsTransaction(
 	bitcoinChain bitcoin.Chain,
-	walletPublicKey *ecdsa.PublicKey,
 	walletMainUtxo *bitcoin.UnspentTransactionOutput,
 	targetWallets [][20]byte,
 	fee int64,

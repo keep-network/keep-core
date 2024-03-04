@@ -1,7 +1,6 @@
 package tbtc
 
 import (
-	"crypto/ecdsa"
 	"fmt"
 	"math/big"
 	"time"
@@ -147,6 +146,28 @@ func (mfsa *movedFundsSweepAction) execute() error {
 		return fmt.Errorf("validate proposal step failed: [%v]", err)
 	}
 
+	// Prepare the moved funds UTXO.
+	movingFundsTxHash := mfsa.proposal.MovingFundsTxHash
+	movingFundsTxOutputIndex := mfsa.proposal.MovingFundsTxOutputIndex
+
+	movingFundsTx, err := mfsa.btcChain.GetTransaction(
+		movingFundsTxHash,
+	)
+	if err != nil {
+		return fmt.Errorf("could not get moving funds transaction: [%v]", err)
+	}
+
+	movingFundsTxValue := movingFundsTx.Outputs[movingFundsTxOutputIndex].Value
+
+	movedFundsUtxo := &bitcoin.UnspentTransactionOutput{
+		Outpoint: &bitcoin.TransactionOutpoint{
+			TransactionHash: movingFundsTxHash,
+			OutputIndex:     movingFundsTxOutputIndex,
+		},
+		Value: movingFundsTxValue,
+	}
+
+	// Prepare the wallet's main UTXO.
 	walletMainUtxo, err := DetermineWalletMainUtxo(
 		walletPublicKeyHash,
 		mfsa.chain,
@@ -175,10 +196,9 @@ func (mfsa *movedFundsSweepAction) execute() error {
 
 	unsignedMovedFundsSweepTx, err := assembleMovedFundsSweepTransaction(
 		mfsa.btcChain,
-		mfsa.wallet().publicKey,
+		walletPublicKeyHash,
+		movedFundsUtxo,
 		walletMainUtxo,
-		mfsa.proposal.MovingFundsTxHash,
-		mfsa.proposal.MovingFundsTxOutputIndex,
 		mfsa.proposal.SweepTxFee.Int64(),
 	)
 	if err != nil {
@@ -270,12 +290,55 @@ func ValidateMovedFundsSweepProposal(
 
 func assembleMovedFundsSweepTransaction(
 	bitcoinChain bitcoin.Chain,
-	walletPublicKey *ecdsa.PublicKey,
+	walletPublicKeyHash [20]byte,
+	movedFundsUtxo *bitcoin.UnspentTransactionOutput,
 	walletMainUtxo *bitcoin.UnspentTransactionOutput,
-	MovingFundsTxHash [32]byte,
-	MovingFundsTxOutputIndex uint32,
 	fee int64,
 ) (*bitcoin.TransactionBuilder, error) {
-	// TODO: Implement
-	return nil, nil
+	if movedFundsUtxo == nil {
+		return nil, fmt.Errorf("moved funds UTXO is required")
+	}
+
+	builder := bitcoin.NewTransactionBuilder(bitcoinChain)
+
+	totalInputValue := int64(0)
+
+	// The moved funds UTXO is always the first input.
+	err := builder.AddPublicKeyHashInput(movedFundsUtxo)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"cannot add input pointing to moved funds UTXO: [%v]",
+			err,
+		)
+	}
+	totalInputValue += movedFundsUtxo.Value
+
+	// If the wallet has the main UTXO it becomes the second input.
+	if walletMainUtxo != nil {
+		err := builder.AddPublicKeyHashInput(walletMainUtxo)
+		if err != nil {
+			return nil, fmt.Errorf(
+				"cannot add input pointing to main wallet UTXO: [%v]",
+				err,
+			)
+		}
+		totalInputValue += walletMainUtxo.Value
+	}
+
+	// Add a single output transferring funds to the wallet itself.
+	outputValue := totalInputValue - fee
+
+	outputScript, err := bitcoin.PayToWitnessPublicKeyHash(
+		walletPublicKeyHash,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("cannot compute output script: [%v]", err)
+	}
+
+	builder.AddOutput(&bitcoin.TransactionOutput{
+		Value:           outputValue,
+		PublicKeyScript: outputScript,
+	})
+
+	return builder, nil
 }
