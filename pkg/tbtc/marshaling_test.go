@@ -193,10 +193,13 @@ func TestCoordinationMessage_MarshalingRoundtrip(t *testing.T) {
 				MovingFundsTxFee: big.NewInt(10000),
 			},
 		},
-		// TODO: Uncomment when moved funds sweep support is implemented.
-		// "with moved funds sweep proposal": {
-		//     proposal: &MovedFundsSweepProposal{},
-		// },
+		"with moved funds sweep proposal": {
+			proposal: &MovedFundsSweepProposal{
+				MovingFundsTxHash:        parseHash("27ca64c092a959c7edc525ed45e845b1de6a7590d173fd2fad9133c8a779a1e3"),
+				MovingFundsTxOutputIndex: 3,
+				SweepTxFee:               big.NewInt(8000),
+			},
+		},
 	}
 
 	walletPublicKeyHash := toByte20("aa768412ceed10bd423c025542ca90071f9fb62d")
@@ -339,6 +342,35 @@ func TestFuzzCoordinationMessage_MarshalingRoundtrip_WithMovingFundsProposal(t *
 	}
 }
 
+func TestFuzzCoordinationMessage_MarshalingRoundtrip_WithMovedFundsSweepProposal(t *testing.T) {
+	for i := 0; i < 10; i++ {
+		var (
+			senderID            group.MemberIndex
+			coordinationBlock   uint64
+			walletPublicKeyHash [20]byte
+			proposal            MovedFundsSweepProposal
+		)
+
+		f := fuzz.New().NilChance(0.1).
+			NumElements(0, 512).
+			Funcs(pbutils.FuzzFuncs()...)
+
+		f.Fuzz(&senderID)
+		f.Fuzz(&coordinationBlock)
+		f.Fuzz(&walletPublicKeyHash)
+		f.Fuzz(&proposal)
+
+		coordinationMsg := &coordinationMessage{
+			senderID:            senderID,
+			coordinationBlock:   coordinationBlock,
+			walletPublicKeyHash: walletPublicKeyHash,
+			proposal:            &proposal,
+		}
+
+		_ = pbutils.RoundTrip(coordinationMsg, &coordinationMessage{})
+	}
+}
+
 func TestFuzzCoordinationMessage_MarshalingRoundtrip_WithNoopProposal(t *testing.T) {
 	for i := 0; i < 10; i++ {
 		var (
@@ -367,10 +399,6 @@ func TestFuzzCoordinationMessage_MarshalingRoundtrip_WithNoopProposal(t *testing
 		_ = pbutils.RoundTrip(coordinationMsg, &coordinationMessage{})
 	}
 }
-
-// TODO: Create two unit tests once moving funds is implemented:
-//       - TestFuzzCoordinationMessage_MarshalingRoundtrip_WithMovingFundsProposal
-//       - TestFuzzCoordinationMessage_MarshalingRoundtrip_WithMovedFundsSweepProposal
 
 func TestFuzzCoordinationMessage_Unmarshaler(t *testing.T) {
 	pbutils.FuzzUnmarshaler(&coordinationMessage{})

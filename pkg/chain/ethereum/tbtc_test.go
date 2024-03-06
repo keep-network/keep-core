@@ -428,3 +428,25 @@ func TestBuildRedemptionKey(t *testing.T) {
 		redemptionKey.Text(16),
 	)
 }
+
+func TestBuildMovedFundsKey(t *testing.T) {
+	fundingTxHash, err := bitcoin.NewHashFromString(
+		"7cff663e3e08847a5579913f6a66bc6c01f5f48c6ae1783be77418ed188021e6",
+		bitcoin.InternalByteOrder,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	fundingOutputIndex := uint32(2)
+
+	movedFundsKey := buildMovedFundsKey(fundingTxHash, fundingOutputIndex)
+
+	expectedMovedFundsKey := "24509b8a853476ebe77af3707bd7ce017d527680e941b6eeaac2d5b712df4f8d"
+	testutils.AssertStringsEqual(
+		t,
+		"moved funds key",
+		expectedMovedFundsKey,
+		movedFundsKey.Text(16),
+	)
+}
