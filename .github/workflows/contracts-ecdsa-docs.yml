@@ -47,7 +47,7 @@ jobs:
       projectDir: /solidity/ecdsa
       publish: false
       addTOC: false
-      commentPR: true
+      commentPR: false
       exportAsGHArtifacts: true
 
   # This job is needed to avoid a clash of `contracts-docs-publish` jobs for
