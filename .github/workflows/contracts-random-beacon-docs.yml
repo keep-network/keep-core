@@ -47,7 +47,7 @@ jobs:
       projectDir: /solidity/random-beacon
       publish: false
       addTOC: false
-      commentPR: true
+      commentPR: false
       exportAsGHArtifacts: true
 
   # This job will be triggered for releases which name starts with
