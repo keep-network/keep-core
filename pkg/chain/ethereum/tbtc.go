@@ -203,6 +203,11 @@ func newTbtcChain(
 		)
 	}
 
+	// The RedemptionWatchtower contract is an additional component
+	// that implements the redemption veto mechanism. It is optional
+	// and may not be present in the system. This code must be able
+	// to handle the case when the RedemptionWatchtower contract is
+	// not set.
 	var redemptionWatchtower *tbtccontract.RedemptionWatchtower
 	if redemptionWatchtowerAddress != [20]byte{} {
 		redemptionWatchtower, err =
