@@ -29,12 +29,17 @@ func TestDepositSweepTask_FindDepositsToSweep(t *testing.T) {
 			tbtcChain := tbtcpg.NewLocalChain()
 			btcChain := tbtcpg.NewLocalBitcoinChain()
 
+			tbtcChain.SetDepositMinAge(scenario.ChainParameters.DepositMinAge)
+
 			// Chain setup.
 			for _, deposit := range scenario.Deposits {
 				tbtcChain.SetDepositRequest(
 					deposit.FundingTxHash,
 					deposit.FundingOutputIndex,
-					&tbtc.DepositChainRequest{SweptAt: deposit.SweptAt},
+					&tbtc.DepositChainRequest{
+						RevealedAt: deposit.RevealedAt,
+						SweptAt:    deposit.SweptAt,
+					},
 				)
 				btcChain.SetTransaction(deposit.FundingTxHash, deposit.FundingTx)
 				btcChain.SetTransactionConfirmations(

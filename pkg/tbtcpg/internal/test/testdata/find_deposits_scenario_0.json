@@ -1,10 +1,15 @@
 {
-  "Title": "unswept and confirmed deposits exist",
+  "Title": "eligible deposits exist",
+  "ChainParameters":{
+    "AverageBlockTime": 10,
+    "CurrentBlock": 100000,
+    "DepositMinAge": 3600
+  },
   "MaxNumberOfDeposits": 5,
   "WalletPublicKeyHash": "0x7670343fc00ccc2d0cd65360e6ad400697ea0fed",
   "Deposits": [
     {
-      "RevealBlockNumber": 6,
+      "Age": 10000,
       "WalletPublicKeyHash": "0x928d992e5f5b71de51a1b40fcc4056b99a88a647",
       "FundingTxHash": "dbc6166e149995ef4ed6428d23703756971256ab19954e099fdf2a96fa332251",
       "FundingOutputIndex": 1,
@@ -13,7 +18,7 @@
       "SweptAt": 102
     },
     {
-      "RevealBlockNumber": 11,
+      "Age": 9000,
       "WalletPublicKeyHash": "0x03b74d6893ad46dfdd01b9e0e3b3385f4fce2d1e",
       "FundingTxHash": "d91868ca43db4deb96047d727a5e782f282864fde2d9364f8c562c8998ba64bf",
       "FundingOutputIndex": 1,
@@ -22,7 +27,7 @@
       "SweptAt": 0
     },
     {
-      "RevealBlockNumber": 12,
+      "Age": 8000,
       "WalletPublicKeyHash": "0x03b74d6893ad46dfdd01b9e0e3b3385f4fce2d1e",
       "FundingTxHash": "c693aaa540d22bd7cf70c17cb71c1d789ea68138d87fdb6ea70e450effeb2137",
       "FundingOutputIndex": 0,
@@ -31,7 +36,7 @@
       "SweptAt": 108
     },
     {
-      "RevealBlockNumber": 21,
+      "Age": 7000,
       "WalletPublicKeyHash": "0x7670343fc00ccc2d0cd65360e6ad400697ea0fed",
       "FundingTxHash": "a8c3b3c1975094550d481bdffdee1b7b7613dd74dbce37a5f6dce7fd9ac0ace1",
       "FundingOutputIndex": 1,
@@ -40,7 +45,7 @@
       "SweptAt": 0
     },
     {
-      "RevealBlockNumber": 22,
+      "Age": 6000,
       "WalletPublicKeyHash": "0x7670343fc00ccc2d0cd65360e6ad400697ea0fed",
       "FundingTxHash": "178628f0fd77ca04a31e771805277405288404da38eb86a0e369f2b26d45fe97",
       "FundingOutputIndex": 1,
@@ -49,7 +54,7 @@
       "SweptAt": 109
     },
     {
-      "RevealBlockNumber": 31,
+      "Age": 5000,
       "WalletPublicKeyHash": "0x03b74d6893ad46dfdd01b9e0e3b3385f4fce2d1e",
       "FundingTxHash": "a3d1781b59d5e8680772a8bb7f897c4ff0459d3465d7fa678f80a4f0ec900574",
       "FundingOutputIndex": 0,
@@ -58,20 +63,43 @@
       "SweptAt": 0
     },
     {
-      "RevealBlockNumber": 32,
+      "Age": 4000,
       "WalletPublicKeyHash": "0x7670343fc00ccc2d0cd65360e6ad400697ea0fed",
       "FundingTxHash": "b822b302dab7c1fcc3292782635be133538a0f803468a2d847023c24f867f479",
       "FundingOutputIndex": 3,
       "FundingTxConfirmations": 5,
       "FundingTxHex": "02000000000101d9eae6dedef56edcc4c884a84f4127c92a18f1674562960ed7770656165d32b101000000232200209fd1e4519124fe6655ba29f9690fc00a03a3d3b491db3b7f710614b8d8024d8dfdffffff0240420f0000000000220020e99a81c3fa4e98410937231296f33538b03c614c1eb8de6a51f03e1b404d0b19ccb566050000000017a9146323da8694056713624b4818d4ccc2433dd7971d8703473044022063ff0a0bbee811b393f7badc091bffc913c7dbc921a3bbcd4c5c873a946f353b022074c128f86c7a4b826ece9b15c612cacbd2ab064c9b4bf27671f545069b803f750147304402200d1d56c74355d68d6a3f59b3366ed3e3254da16e045b44bd1ac6e64059c7439c0220741c03eeffb437d6849730e9eef9c063b0e74dd3fdac54c06853992c0718bea5014e2103897c250217abd55d3a332788f08b7682a44137b5c9d4f882f985059d9c1c3821ad21034ced46df0f98b8cbf2aa8803cffd60a5b475f0745d0f7d9369aa88e122f9a313ac73640380ca00b268df132500",
       "SweptAt": 0
+    },
+    {
+      "Age": 3600,
+      "WalletPublicKeyHash": "0x7670343fc00ccc2d0cd65360e6ad400697ea0fed",
+      "FundingTxHash": "7d4c6e7f6a12ff67c809fe35bad48edad02b112ad396d676f999dfb4f4ba15aa",
+      "FundingOutputIndex": 0,
+      "FundingTxConfirmations": 8,
+      "FundingTxHex": "01000000013dcbeb461b6ed9b7ee51a7919b2730e117c2dc1fe0fbf4b145d48c07f3cffd1a000000006a47304402202715c3a89c3e68e6ffa2a940e736e3d192f9e33414bf12870a8b06090570870002204cb77ebbe55110d5cfae378702388028858e35d47578f01ec2c88b2cbf85ea62012102fee381c90149e22ae182156c16316c24fe680a0e617646c3d58531112ac82e29ffffffff010a97fb03000000001976a914b96b816f378babb1fe585b7be7a2cd16eb99b3e488ac00000000",
+      "SweptAt": 0
+    },
+    {
+      "Age": 3599,
+      "WalletPublicKeyHash": "0x7670343fc00ccc2d0cd65360e6ad400697ea0fed",
+      "FundingTxHash": "eefa97028156b965ecc46746021b809f25de8b90ea958811441a2ca3792a078f",
+      "FundingOutputIndex": 1,
+      "FundingTxConfirmations": 7,
+      "FundingTxHex": "010000000278a34a23877f9c6e247b9cab9fe6431ff486b51262738ff8d96f32052da3863f010000006a473044022036785cfce0cd6228d042a72eab8576e6bc0030225aad7a7dd8077d3ca7981708022026b658594b3955205ebe3eebf9cfc5af06cd727010e58d3a97a32bff7d3907700121031e8d54018164e774619592533326cc8ea70b4636e09d3b0b37aabeab2e971372ffffffff72d48101235edde99c2aaf6ab273ff4ac0515357ade24bfeca27eaec8e2970a9010000006b483045022100cd1a12a86a8bb0b6f202a0c177142b1b06d58d925dc870fab92e8356bd9c24f002207b5c8d90e76e88fcca4349b218105b797986ada9afbb72baefd1afc960ad18bf012103be87db89d618578cd1d352b1ab27e90f65d4b1648eecacb92160f5c4b12bb542ffffffff021c6b0500000000001976a9147e98d2d0d7cd9c0d47b92266fdcd9e4cf96b48bc88ac84aa1200000000001976a9140c94b5ed3cf67a85a567d70825e063813aeddaeb88ac00000000",
+      "SweptAt": 0
     }
   ],
   "ExpectedUnsweptDeposits": [
     {
-      "RevealBlockNumber": 21,
+      "RevealBlockNumber": 99300,
       "FundingTxHash": "a8c3b3c1975094550d481bdffdee1b7b7613dd74dbce37a5f6dce7fd9ac0ace1",
       "FundingOutputIndex": 1
+    },
+    {
+      "RevealBlockNumber": 99640,
+      "FundingTxHash": "7d4c6e7f6a12ff67c809fe35bad48edad02b112ad396d676f999dfb4f4ba15aa",
+      "FundingOutputIndex": 0
     }
   ]
 }

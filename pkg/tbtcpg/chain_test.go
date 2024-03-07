@@ -94,6 +94,8 @@ type LocalChain struct {
 	movedFundsSweepRequests                  map[[32]byte]*tbtc.MovedFundsSweepRequest
 	movedFundsSweepProposalValidations       map[[32]byte]bool
 	operatorIDs                              map[chain.Address]uint32
+	redemptionDelays                         map[[32]byte]time.Duration
+	depositMinAge                            uint32
 }
 
 func NewLocalChain() *LocalChain {
@@ -114,6 +116,7 @@ func NewLocalChain() *LocalChain {
 		movedFundsSweepRequests:                  make(map[[32]byte]*tbtc.MovedFundsSweepRequest),
 		movedFundsSweepProposalValidations:       make(map[[32]byte]bool),
 		operatorIDs:                              make(map[chain.Address]uint32),
+		redemptionDelays:                         make(map[[32]byte]time.Duration),
 	}
 }
 
@@ -1287,6 +1290,50 @@ func (lc *LocalChain) SetMovedFundsSweepProposalValidationResult(
 	lc.movedFundsSweepProposalValidations[key] = result
 
 	return nil
+}
+
+func (lc *LocalChain) GetRedemptionDelay(
+	walletPublicKeyHash [20]byte,
+	redeemerOutputScript bitcoin.Script,
+) (time.Duration, error) {
+	lc.mutex.Lock()
+	defer lc.mutex.Unlock()
+
+	key := buildRedemptionRequestKey(walletPublicKeyHash, redeemerOutputScript)
+
+	delay, ok := lc.redemptionDelays[key]
+	if !ok {
+		return 0, fmt.Errorf("redemption delay not found")
+	}
+
+	return delay, nil
+}
+
+func (lc *LocalChain) SetRedemptionDelay(
+	walletPublicKeyHash [20]byte,
+	redeemerOutputScript bitcoin.Script,
+	delay time.Duration,
+) {
+	lc.mutex.Lock()
+	defer lc.mutex.Unlock()
+
+	key := buildRedemptionRequestKey(walletPublicKeyHash, redeemerOutputScript)
+
+	lc.redemptionDelays[key] = delay
+}
+
+func (lc *LocalChain) GetDepositMinAge() (uint32, error) {
+	lc.mutex.Lock()
+	defer lc.mutex.Unlock()
+
+	return lc.depositMinAge, nil
+}
+
+func (lc *LocalChain) SetDepositMinAge(depositMinAge uint32) {
+	lc.mutex.Lock()
+	defer lc.mutex.Unlock()
+
+	lc.depositMinAge = depositMinAge
 }
 
 type MockBlockCounter struct {

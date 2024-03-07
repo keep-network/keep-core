@@ -199,4 +199,15 @@ type Chain interface {
 	// Computes the moving funds commitment hash from the provided public key
 	// hashes of target wallets.
 	ComputeMovingFundsCommitmentHash(targetWallets [][20]byte) [32]byte
+
+	// GetRedemptionDelay returns the processing delay for the given redemption.
+	GetRedemptionDelay(
+		walletPublicKeyHash [20]byte,
+		redeemerOutputScript bitcoin.Script,
+	) (time.Duration, error)
+
+	// GetDepositMinAge get the minimum time that must elapse since
+	// the deposit reveal before a deposit becomes eligible for
+	// a processing.
+	GetDepositMinAge() (uint32, error)
 }

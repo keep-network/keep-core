@@ -1685,6 +1685,154 @@ func (b *Bridge) NotifyRedemptionTimeoutGasEstimate(
 }
 
 // Transaction submission.
+func (b *Bridge) NotifyRedemptionVeto(
+	arg_walletPubKeyHash [20]byte,
+	arg_redeemerOutputScript []byte,
+
+	transactionOptions ...chainutil.TransactionOptions,
+) (*types.Transaction, error) {
+	bLogger.Debug(
+		"submitting transaction notifyRedemptionVeto",
+		" params: ",
+		fmt.Sprint(
+			arg_walletPubKeyHash,
+			arg_redeemerOutputScript,
+		),
+	)
+
+	b.transactionMutex.Lock()
+	defer b.transactionMutex.Unlock()
+
+	// create a copy
+	transactorOptions := new(bind.TransactOpts)
+	*transactorOptions = *b.transactorOptions
+
+	if len(transactionOptions) > 1 {
+		return nil, fmt.Errorf(
+			"could not process multiple transaction options sets",
+		)
+	} else if len(transactionOptions) > 0 {
+		transactionOptions[0].Apply(transactorOptions)
+	}
+
+	nonce, err := b.nonceManager.CurrentNonce()
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve account nonce: %v", err)
+	}
+
+	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
+
+	transaction, err := b.contract.NotifyRedemptionVeto(
+		transactorOptions,
+		arg_walletPubKeyHash,
+		arg_redeemerOutputScript,
+	)
+	if err != nil {
+		return transaction, b.errorResolver.ResolveError(
+			err,
+			b.transactorOptions.From,
+			nil,
+			"notifyRedemptionVeto",
+			arg_walletPubKeyHash,
+			arg_redeemerOutputScript,
+		)
+	}
+
+	bLogger.Infof(
+		"submitted transaction notifyRedemptionVeto with id: [%s] and nonce [%v]",
+		transaction.Hash(),
+		transaction.Nonce(),
+	)
+
+	go b.miningWaiter.ForceMining(
+		transaction,
+		transactorOptions,
+		func(newTransactorOptions *bind.TransactOpts) (*types.Transaction, error) {
+			// If original transactor options has a non-zero gas limit, that
+			// means the client code set it on their own. In that case, we
+			// should rewrite the gas limit from the original transaction
+			// for each resubmission. If the gas limit is not set by the client
+			// code, let the the submitter re-estimate the gas limit on each
+			// resubmission.
+			if transactorOptions.GasLimit != 0 {
+				newTransactorOptions.GasLimit = transactorOptions.GasLimit
+			}
+
+			transaction, err := b.contract.NotifyRedemptionVeto(
+				newTransactorOptions,
+				arg_walletPubKeyHash,
+				arg_redeemerOutputScript,
+			)
+			if err != nil {
+				return nil, b.errorResolver.ResolveError(
+					err,
+					b.transactorOptions.From,
+					nil,
+					"notifyRedemptionVeto",
+					arg_walletPubKeyHash,
+					arg_redeemerOutputScript,
+				)
+			}
+
+			bLogger.Infof(
+				"submitted transaction notifyRedemptionVeto with id: [%s] and nonce [%v]",
+				transaction.Hash(),
+				transaction.Nonce(),
+			)
+
+			return transaction, nil
+		},
+	)
+
+	b.nonceManager.IncrementNonce()
+
+	return transaction, err
+}
+
+// Non-mutating call, not a transaction submission.
+func (b *Bridge) CallNotifyRedemptionVeto(
+	arg_walletPubKeyHash [20]byte,
+	arg_redeemerOutputScript []byte,
+	blockNumber *big.Int,
+) error {
+	var result interface{} = nil
+
+	err := chainutil.CallAtBlock(
+		b.transactorOptions.From,
+		blockNumber, nil,
+		b.contractABI,
+		b.caller,
+		b.errorResolver,
+		b.contractAddress,
+		"notifyRedemptionVeto",
+		&result,
+		arg_walletPubKeyHash,
+		arg_redeemerOutputScript,
+	)
+
+	return err
+}
+
+func (b *Bridge) NotifyRedemptionVetoGasEstimate(
+	arg_walletPubKeyHash [20]byte,
+	arg_redeemerOutputScript []byte,
+) (uint64, error) {
+	var result uint64
+
+	result, err := chainutil.EstimateGas(
+		b.callerOptions.From,
+		b.contractAddress,
+		"notifyRedemptionVeto",
+		b.contractABI,
+		b.transactor,
+		arg_walletPubKeyHash,
+		arg_redeemerOutputScript,
+	)
+
+	return result, err
+}
+
+// Transaction submission.
 func (b *Bridge) NotifyWalletCloseable(
 	arg_walletPubKeyHash [20]byte,
 	arg_walletMainUtxo abi.BitcoinTxUTXO,
@@ -2873,6 +3021,144 @@ func (b *Bridge) RevealDepositWithExtraDataGasEstimate(
 		arg_fundingTx,
 		arg_reveal,
 		arg_extraData,
+	)
+
+	return result, err
+}
+
+// Transaction submission.
+func (b *Bridge) SetRedemptionWatchtower(
+	arg_redemptionWatchtower common.Address,
+
+	transactionOptions ...chainutil.TransactionOptions,
+) (*types.Transaction, error) {
+	bLogger.Debug(
+		"submitting transaction setRedemptionWatchtower",
+		" params: ",
+		fmt.Sprint(
+			arg_redemptionWatchtower,
+		),
+	)
+
+	b.transactionMutex.Lock()
+	defer b.transactionMutex.Unlock()
+
+	// create a copy
+	transactorOptions := new(bind.TransactOpts)
+	*transactorOptions = *b.transactorOptions
+
+	if len(transactionOptions) > 1 {
+		return nil, fmt.Errorf(
+			"could not process multiple transaction options sets",
+		)
+	} else if len(transactionOptions) > 0 {
+		transactionOptions[0].Apply(transactorOptions)
+	}
+
+	nonce, err := b.nonceManager.CurrentNonce()
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve account nonce: %v", err)
+	}
+
+	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
+
+	transaction, err := b.contract.SetRedemptionWatchtower(
+		transactorOptions,
+		arg_redemptionWatchtower,
+	)
+	if err != nil {
+		return transaction, b.errorResolver.ResolveError(
+			err,
+			b.transactorOptions.From,
+			nil,
+			"setRedemptionWatchtower",
+			arg_redemptionWatchtower,
+		)
+	}
+
+	bLogger.Infof(
+		"submitted transaction setRedemptionWatchtower with id: [%s] and nonce [%v]",
+		transaction.Hash(),
+		transaction.Nonce(),
+	)
+
+	go b.miningWaiter.ForceMining(
+		transaction,
+		transactorOptions,
+		func(newTransactorOptions *bind.TransactOpts) (*types.Transaction, error) {
+			// If original transactor options has a non-zero gas limit, that
+			// means the client code set it on their own. In that case, we
+			// should rewrite the gas limit from the original transaction
+			// for each resubmission. If the gas limit is not set by the client
+			// code, let the the submitter re-estimate the gas limit on each
+			// resubmission.
+			if transactorOptions.GasLimit != 0 {
+				newTransactorOptions.GasLimit = transactorOptions.GasLimit
+			}
+
+			transaction, err := b.contract.SetRedemptionWatchtower(
+				newTransactorOptions,
+				arg_redemptionWatchtower,
+			)
+			if err != nil {
+				return nil, b.errorResolver.ResolveError(
+					err,
+					b.transactorOptions.From,
+					nil,
+					"setRedemptionWatchtower",
+					arg_redemptionWatchtower,
+				)
+			}
+
+			bLogger.Infof(
+				"submitted transaction setRedemptionWatchtower with id: [%s] and nonce [%v]",
+				transaction.Hash(),
+				transaction.Nonce(),
+			)
+
+			return transaction, nil
+		},
+	)
+
+	b.nonceManager.IncrementNonce()
+
+	return transaction, err
+}
+
+// Non-mutating call, not a transaction submission.
+func (b *Bridge) CallSetRedemptionWatchtower(
+	arg_redemptionWatchtower common.Address,
+	blockNumber *big.Int,
+) error {
+	var result interface{} = nil
+
+	err := chainutil.CallAtBlock(
+		b.transactorOptions.From,
+		blockNumber, nil,
+		b.contractABI,
+		b.caller,
+		b.errorResolver,
+		b.contractAddress,
+		"setRedemptionWatchtower",
+		&result,
+		arg_redemptionWatchtower,
+	)
+
+	return err
+}
+
+func (b *Bridge) SetRedemptionWatchtowerGasEstimate(
+	arg_redemptionWatchtower common.Address,
+) (uint64, error) {
+	var result uint64
+
+	result, err := chainutil.EstimateGas(
+		b.callerOptions.From,
+		b.contractAddress,
+		"setRedemptionWatchtower",
+		b.contractABI,
+		b.transactor,
+		arg_redemptionWatchtower,
 	)
 
 	return result, err
@@ -5669,6 +5955,43 @@ func (b *Bridge) FraudParametersAtBlock(
 		b.errorResolver,
 		b.contractAddress,
 		"fraudParameters",
+		&result,
+	)
+
+	return result, err
+}
+
+func (b *Bridge) GetRedemptionWatchtower() (common.Address, error) {
+	result, err := b.contract.GetRedemptionWatchtower(
+		b.callerOptions,
+	)
+
+	if err != nil {
+		return result, b.errorResolver.ResolveError(
+			err,
+			b.callerOptions.From,
+			nil,
+			"getRedemptionWatchtower",
+		)
+	}
+
+	return result, err
+}
+
+func (b *Bridge) GetRedemptionWatchtowerAtBlock(
+	blockNumber *big.Int,
+) (common.Address, error) {
+	var result common.Address
+
+	err := chainutil.CallAtBlock(
+		b.callerOptions.From,
+		blockNumber,
+		nil,
+		b.contractABI,
+		b.caller,
+		b.errorResolver,
+		b.contractAddress,
+		"getRedemptionWatchtower",
 		&result,
 	)
 
@@ -10410,6 +10733,185 @@ func (b *Bridge) PastRedemptionTimedOutEvents(
 	}
 
 	events := make([]*abi.BridgeRedemptionTimedOut, 0)
+
+	for iterator.Next() {
+		event := iterator.Event
+		events = append(events, event)
+	}
+
+	return events, nil
+}
+
+func (b *Bridge) RedemptionWatchtowerSetEvent(
+	opts *ethereum.SubscribeOpts,
+) *BRedemptionWatchtowerSetSubscription {
+	if opts == nil {
+		opts = new(ethereum.SubscribeOpts)
+	}
+	if opts.Tick == 0 {
+		opts.Tick = chainutil.DefaultSubscribeOptsTick
+	}
+	if opts.PastBlocks == 0 {
+		opts.PastBlocks = chainutil.DefaultSubscribeOptsPastBlocks
+	}
+
+	return &BRedemptionWatchtowerSetSubscription{
+		b,
+		opts,
+	}
+}
+
+type BRedemptionWatchtowerSetSubscription struct {
+	contract *Bridge
+	opts     *ethereum.SubscribeOpts
+}
+
+type bridgeRedemptionWatchtowerSetFunc func(
+	RedemptionWatchtower common.Address,
+	blockNumber uint64,
+)
+
+func (rwss *BRedemptionWatchtowerSetSubscription) OnEvent(
+	handler bridgeRedemptionWatchtowerSetFunc,
+) subscription.EventSubscription {
+	eventChan := make(chan *abi.BridgeRedemptionWatchtowerSet)
+	ctx, cancelCtx := context.WithCancel(context.Background())
+
+	go func() {
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case event := <-eventChan:
+				handler(
+					event.RedemptionWatchtower,
+					event.Raw.BlockNumber,
+				)
+			}
+		}
+	}()
+
+	sub := rwss.Pipe(eventChan)
+	return subscription.NewEventSubscription(func() {
+		sub.Unsubscribe()
+		cancelCtx()
+	})
+}
+
+func (rwss *BRedemptionWatchtowerSetSubscription) Pipe(
+	sink chan *abi.BridgeRedemptionWatchtowerSet,
+) subscription.EventSubscription {
+	ctx, cancelCtx := context.WithCancel(context.Background())
+	go func() {
+		ticker := time.NewTicker(rwss.opts.Tick)
+		defer ticker.Stop()
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-ticker.C:
+				lastBlock, err := rwss.contract.blockCounter.CurrentBlock()
+				if err != nil {
+					bLogger.Errorf(
+						"subscription failed to pull events: [%v]",
+						err,
+					)
+				}
+				fromBlock := lastBlock - rwss.opts.PastBlocks
+
+				bLogger.Infof(
+					"subscription monitoring fetching past RedemptionWatchtowerSet events "+
+						"starting from block [%v]",
+					fromBlock,
+				)
+				events, err := rwss.contract.PastRedemptionWatchtowerSetEvents(
+					fromBlock,
+					nil,
+				)
+				if err != nil {
+					bLogger.Errorf(
+						"subscription failed to pull events: [%v]",
+						err,
+					)
+					continue
+				}
+				bLogger.Infof(
+					"subscription monitoring fetched [%v] past RedemptionWatchtowerSet events",
+					len(events),
+				)
+
+				for _, event := range events {
+					sink <- event
+				}
+			}
+		}
+	}()
+
+	sub := rwss.contract.watchRedemptionWatchtowerSet(
+		sink,
+	)
+
+	return subscription.NewEventSubscription(func() {
+		sub.Unsubscribe()
+		cancelCtx()
+	})
+}
+
+func (b *Bridge) watchRedemptionWatchtowerSet(
+	sink chan *abi.BridgeRedemptionWatchtowerSet,
+) event.Subscription {
+	subscribeFn := func(ctx context.Context) (event.Subscription, error) {
+		return b.contract.WatchRedemptionWatchtowerSet(
+			&bind.WatchOpts{Context: ctx},
+			sink,
+		)
+	}
+
+	thresholdViolatedFn := func(elapsed time.Duration) {
+		bLogger.Warnf(
+			"subscription to event RedemptionWatchtowerSet had to be "+
+				"retried [%s] since the last attempt; please inspect "+
+				"host chain connectivity",
+			elapsed,
+		)
+	}
+
+	subscriptionFailedFn := func(err error) {
+		bLogger.Errorf(
+			"subscription to event RedemptionWatchtowerSet failed "+
+				"with error: [%v]; resubscription attempt will be "+
+				"performed",
+			err,
+		)
+	}
+
+	return chainutil.WithResubscription(
+		chainutil.SubscriptionBackoffMax,
+		subscribeFn,
+		chainutil.SubscriptionAlertThreshold,
+		thresholdViolatedFn,
+		subscriptionFailedFn,
+	)
+}
+
+func (b *Bridge) PastRedemptionWatchtowerSetEvents(
+	startBlock uint64,
+	endBlock *uint64,
+) ([]*abi.BridgeRedemptionWatchtowerSet, error) {
+	iterator, err := b.contract.FilterRedemptionWatchtowerSet(
+		&bind.FilterOpts{
+			Start: startBlock,
+			End:   endBlock,
+		},
+	)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"error retrieving past RedemptionWatchtowerSet events: [%v]",
+			err,
+		)
+	}
+
+	events := make([]*abi.BridgeRedemptionWatchtowerSet, 0)
 
 	for iterator.Next() {
 		event := iterator.Event

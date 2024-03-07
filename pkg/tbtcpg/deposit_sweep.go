@@ -5,6 +5,7 @@ import (
 	"math"
 	"math/big"
 	"sort"
+	"time"
 
 	"github.com/ipfs/go-log/v2"
 	"go.uber.org/zap"
@@ -142,6 +143,15 @@ func findDeposits(
 ) ([]*Deposit, error) {
 	fnLogger.Infof("reading revealed deposits from chain")
 
+	depositMinAgeSeconds, err := chain.GetDepositMinAge()
+	if err != nil {
+		return nil, fmt.Errorf(
+			"failed to get deposit minimum age: [%w]",
+			err,
+		)
+	}
+	depositMinAge := time.Duration(depositMinAgeSeconds) * time.Second
+
 	filter := &tbtc.DepositRevealedEventFilter{}
 	if walletPublicKeyHash != [20]byte{} {
 		filter.WalletPublicKeyHash = [][20]byte{walletPublicKeyHash}
@@ -168,6 +178,9 @@ func findDeposits(
 	if maxNumberOfDeposits > 0 {
 		resultSliceCapacity = maxNumberOfDeposits
 	}
+
+	// Capture time now for computations.
+	timeNow := time.Now()
 
 	result := make([]*Deposit, 0, resultSliceCapacity)
 	for _, event := range depositRevealedEvents {
@@ -196,6 +209,12 @@ func findDeposits(
 				"no deposit request for key [%s]",
 				depositKeyStr,
 			)
+		}
+
+		matureAt := depositRequest.RevealedAt.Add(depositMinAge)
+		if !timeNow.After(matureAt) {
+			fnLogger.Infof("deposit [%s] is not old enough", depositKeyStr)
+			continue
 		}
 
 		isSwept := depositRequest.SweptAt.Unix() != 0
