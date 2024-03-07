@@ -103,6 +103,27 @@ func (mft *MovingFundsTask) Run(request *tbtc.CoordinationProposalRequest) (
 		return nil, false, nil
 	}
 
+	// The wallet should not have any unswept deposits.
+	unsweptDeposits, err := FindDeposits(
+		mft.chain,
+		mft.btcChain,
+		walletPublicKeyHash,
+		0,
+		true,
+		true,
+	)
+	if err != nil {
+		return nil, false, fmt.Errorf(
+			"cannot check wallet's unswept deposits: [%w]",
+			err,
+		)
+	}
+
+	if len(unsweptDeposits) > 0 {
+		taskLogger.Infof("source wallet has unswept deposits")
+		return nil, false, nil
+	}
+
 	walletMainUtxo, err := tbtc.DetermineWalletMainUtxo(
 		walletPublicKeyHash,
 		mft.chain,
