@@ -596,6 +596,13 @@ func buildPastMovingFundsCommitmentSubmittedEventsKey(
 	return sha256.Sum256(buffer.Bytes()), nil
 }
 
+func (lc *localChain) GetMovedFundsSweepRequest(
+	movingFundsTxHash bitcoin.Hash,
+	movingFundsTxOutpointIndex uint32,
+) (*tbtc.MovedFundsSweepRequest, error) {
+	panic("unsupported")
+}
+
 type mockBlockCounter struct {
 	mutex        sync.Mutex
 	currentBlock uint64
