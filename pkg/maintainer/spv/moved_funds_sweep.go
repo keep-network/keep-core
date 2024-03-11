@@ -178,10 +178,25 @@ func getUnprovenMovedFundsSweepTransactions(
 
 	unprovenMovedFundsSweepTransactions := []*bitcoin.Transaction{}
 
-	// Should we check state of the wallet?
-	// Should we check if the wallet has pending moved funds sweep request?
-
 	for _, walletPublicKeyHash := range walletPublicKeyHashes {
+		wallet, err := spvChain.GetWallet(walletPublicKeyHash)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get wallet: [%v]", err)
+		}
+
+		if wallet.State != tbtc.StateLive &&
+			wallet.State != tbtc.StateMovingFunds {
+			// The wallet can only submit moved funds sweep proof if it's `Live`
+			//  or `MovingFunds`. If the state is different skip it.
+			continue
+		}
+
+		if wallet.PendingMovedFundsSweepRequestsCount == 0 {
+			// If the wallet does not have any pending moved funds sweep
+			// requests skip it.
+			continue
+		}
+
 		// When wallet makes a moved funds sweep transaction, it transfers
 		// funds to itself. Therefore we can search all the transactions that
 		// pay to the wallet's public key hash.
