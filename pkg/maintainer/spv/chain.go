@@ -82,6 +82,14 @@ type Chain interface {
 		walletPublicKeyHash [20]byte,
 	) error
 
+	// SubmitMovedFundsSweepProofWithReimbursement submits the moved funds sweep
+	//  proof via MaintainerProxy. The caller is reimbursed.
+	SubmitMovedFundsSweepProofWithReimbursement(
+		transaction *bitcoin.Transaction,
+		proof *bitcoin.SpvProof,
+		mainUTXO bitcoin.UnspentTransactionOutput,
+	) error
+
 	// PastDepositRevealedEvents fetches past deposit reveal events according
 	// to the provided filter or unfiltered if the filter is nil. Returned
 	// events are sorted by the block number in the ascending order, i.e. the

@@ -304,6 +304,14 @@ func (lc *localChain) getSubmittedMovingFundsProofs() []*submittedMovingFundsPro
 	return lc.submittedMovingFundsProofs
 }
 
+func (lc *localChain) SubmitMovedFundsSweepProofWithReimbursement(
+	transaction *bitcoin.Transaction,
+	proof *bitcoin.SpvProof,
+	mainUTXO bitcoin.UnspentTransactionOutput,
+) error {
+	panic("unsupported")
+}
+
 func (lc *localChain) Ready() (bool, error) {
 	panic("unsupported")
 }

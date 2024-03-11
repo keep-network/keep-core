@@ -33,8 +33,99 @@ func submitMovedFundsSweepProof(
 	spvChain Chain,
 	spvProofAssembler spvProofAssembler,
 ) error {
-	// TODO: Implement
+	if requiredConfirmations == 0 {
+		return fmt.Errorf(
+			"provided required confirmations count must be greater than 0",
+		)
+	}
+
+	transaction, proof, err := spvProofAssembler(
+		transactionHash,
+		requiredConfirmations,
+		btcChain,
+	)
+	if err != nil {
+		return fmt.Errorf(
+			"failed to assemble transaction spv proof: [%v]",
+			err,
+		)
+	}
+
+	mainUTXO, err := parseMovedFundsSweepTransactionInputs(
+		btcChain,
+		transaction,
+	)
+	if err != nil {
+		return fmt.Errorf(
+			"error while parsing transaction inputs: [%v]",
+			err,
+		)
+	}
+
+	if err := spvChain.SubmitMovedFundsSweepProofWithReimbursement(
+		transaction,
+		proof,
+		mainUTXO,
+	); err != nil {
+		return fmt.Errorf(
+			"failed to submit moved funds sweep proof with reimbursement: [%v]",
+			err,
+		)
+	}
+
 	return nil
+}
+
+// parseMovedFundsSweepTransactionInputs parses the transaction's inputs and returns
+// the wallet's main UTXO.
+func parseMovedFundsSweepTransactionInputs(
+	btcChain bitcoin.Chain,
+	transaction *bitcoin.Transaction,
+) (bitcoin.UnspentTransactionOutput, error) {
+	// Perform a sanity check: a moved funds sweep transaction must have one or
+	// two inputs.
+	if len(transaction.Inputs) != 1 && len(transaction.Inputs) != 2 {
+		return bitcoin.UnspentTransactionOutput{}, fmt.Errorf(
+			"moved funds sweep transaction has incorrect number of inputs",
+		)
+	}
+
+	// If the transaction has only one input, it means the wallet does not have
+	// the main UTXO yet. Return zero-filled value.
+	if len(transaction.Inputs) == 1 {
+		return bitcoin.UnspentTransactionOutput{
+			Outpoint: &bitcoin.TransactionOutpoint{
+				TransactionHash: bitcoin.Hash{},
+				OutputIndex:     0,
+			},
+			Value: 0,
+		}, nil
+	}
+
+	// If the transaction has two inputs, the second input is the wallet's main
+	// UTXO.
+	input := transaction.Inputs[1]
+
+	// Get data of the input transaction whose output is spent by the moved
+	// funds sweep transaction.
+	inputTx, err := btcChain.GetTransaction(input.Outpoint.TransactionHash)
+	if err != nil {
+		return bitcoin.UnspentTransactionOutput{}, fmt.Errorf(
+			"cannot get input transaction data: [%v]",
+			err,
+		)
+	}
+
+	// Get the specific output spent by the moved funds sweep transaction.
+	spentOutput := inputTx.Outputs[input.Outpoint.OutputIndex]
+
+	// Build the main UTXO object based on available data.
+	mainUtxo := bitcoin.UnspentTransactionOutput{
+		Outpoint: input.Outpoint,
+		Value:    spentOutput.Value,
+	}
+
+	return mainUtxo, nil
 }
 
 func getUnprovenMovedFundsSweepTransactions(
