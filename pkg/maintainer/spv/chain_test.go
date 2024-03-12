@@ -44,6 +44,7 @@ type localChain struct {
 	wallets                                  map[[20]byte]*tbtc.WalletChainData
 	depositRequests                          map[[32]byte]*tbtc.DepositChainRequest
 	pendingRedemptionRequests                map[[32]byte]*tbtc.RedemptionRequest
+	movedFundsSweepRequests                  map[[32]byte]*tbtc.MovedFundsSweepRequest
 	submittedRedemptionProofs                []*submittedRedemptionProof
 	submittedDepositSweepProofs              []*submittedDepositSweepProof
 	submittedMovingFundsProofs               []*submittedMovingFundsProof
@@ -62,6 +63,7 @@ func newLocalChain() *localChain {
 		wallets:                                  make(map[[20]byte]*tbtc.WalletChainData),
 		depositRequests:                          make(map[[32]byte]*tbtc.DepositChainRequest),
 		pendingRedemptionRequests:                make(map[[32]byte]*tbtc.RedemptionRequest),
+		movedFundsSweepRequests:                  make(map[[32]byte]*tbtc.MovedFundsSweepRequest),
 		submittedRedemptionProofs:                make([]*submittedRedemptionProof, 0),
 		submittedDepositSweepProofs:              make([]*submittedDepositSweepProof, 0),
 		submittedMovingFundsProofs:               make([]*submittedMovingFundsProof, 0),
@@ -604,11 +606,55 @@ func buildPastMovingFundsCommitmentSubmittedEventsKey(
 	return sha256.Sum256(buffer.Bytes()), nil
 }
 
+func buildMovedFundsSweepRequestKey(
+	movingFundsTxHash bitcoin.Hash,
+	movingFundsTxOutpointIndex uint32,
+) [32]byte {
+	var buffer bytes.Buffer
+
+	buffer.Write(movingFundsTxHash[:])
+
+	outputIndex := make([]byte, 4)
+	binary.BigEndian.PutUint32(outputIndex, movingFundsTxOutpointIndex)
+	buffer.Write(outputIndex)
+
+	return sha256.Sum256(buffer.Bytes())
+}
+
+func (lc *localChain) setMovedFundsSweepRequest(
+	movingFundsTxHash bitcoin.Hash,
+	movingFundsTxOutpointIndex uint32,
+	request *tbtc.MovedFundsSweepRequest,
+) {
+	lc.mutex.Lock()
+	defer lc.mutex.Unlock()
+
+	requestKey := buildMovedFundsSweepRequestKey(
+		movingFundsTxHash,
+		movingFundsTxOutpointIndex,
+	)
+
+	lc.movedFundsSweepRequests[requestKey] = request
+}
+
 func (lc *localChain) GetMovedFundsSweepRequest(
 	movingFundsTxHash bitcoin.Hash,
 	movingFundsTxOutpointIndex uint32,
 ) (*tbtc.MovedFundsSweepRequest, error) {
-	panic("unsupported")
+	lc.mutex.Lock()
+	defer lc.mutex.Unlock()
+
+	requestKey := buildMovedFundsSweepRequestKey(
+		movingFundsTxHash,
+		movingFundsTxOutpointIndex,
+	)
+
+	request, ok := lc.movedFundsSweepRequests[requestKey]
+	if !ok {
+		return nil, fmt.Errorf("request not found")
+	}
+
+	return request, nil
 }
 
 type mockBlockCounter struct {
