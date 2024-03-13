@@ -7,10 +7,11 @@ import (
 	"crypto/elliptic"
 	"encoding/hex"
 	"fmt"
-	"golang.org/x/exp/slices"
 	"math/big"
 	"sync"
 	"time"
+
+	"golang.org/x/exp/slices"
 
 	"github.com/ipfs/go-log/v2"
 	"github.com/keep-network/keep-core/pkg/bitcoin"
@@ -579,8 +580,15 @@ func EnsureWalletSyncedBetweenChains(
 		}
 
 		for _, utxo := range allUtxos {
-			// We know that valid first transaction of the wallet always
-			// have just one output. Any utxos with output index other
+			// The first valid transaction of a wallet is most likely a deposit
+			// sweep, but there is a small chance it could be a moved funds sweep.
+			// It could happen if the wallet was selected as a target wallet and
+			// some funds were moved to it by the source wallet. In that case the
+			// wallet could create a moved fund sweep transaction even before
+			// sweeping any deposits.
+
+			// In any case, we know that valid first transaction of the wallet
+			// always have just one output. Any utxos with output index other
 			// than 0 are certainly not produced by the wallet and, we should
 			// not take them into account.
 			if utxo.Outpoint.OutputIndex != 0 {
@@ -596,11 +604,10 @@ func EnsureWalletSyncedBetweenChains(
 				)
 			}
 
-			// We know that valid first transaction of the wallet have all their
-			// inputs referring to revealed deposits. We need to check just
-			// one input. If it points to a revealed deposit, that means
-			// the given transaction is produced by our wallet. Otherwise,
-			// such a transaction is a spam.
+			// The transaction could be a deposit sweep. In that case all the
+			// transaction's inputs must refer to revealed deposits. We can
+			// check one input. If it points to a revealed deposit, that means
+			// the given transaction is produced by our wallet.
 			input := transaction.Inputs[0]
 			_, isDeposit, err := bridgeChain.GetDepositRequest(
 				input.Outpoint.TransactionHash,
@@ -617,11 +624,40 @@ func EnsureWalletSyncedBetweenChains(
 			}
 
 			if isDeposit {
-				// If that's the case, the wallet was already done their
-				// first Bitcoin transaction and the Bridge is awaiting the
-				// SPV proof.
+				// If that's the case, the wallet has already created a deposit
+				// sweep as their first Bitcoin transaction and the Bridge is
+				// awaiting the SPV proof.
 				return fmt.Errorf("wallet already produced their first " +
-					"Bitcoin transaction; Bridge is probably awaiting the SPV proof",
+					"Bitcoin transaction (deposit sweep); Bridge is probably " +
+					"awaiting the SPV proof",
+				)
+			}
+
+			// The transaction could be a moved funds sweep request. In that
+			// case the transaction's input must refer to a moved funds sweep
+			// request. If the input points to a moved funds sweep request, that
+			// means the given transaction is produced by our wallet.
+			_, isRequest, err := bridgeChain.GetMovedFundsSweepRequest(
+				input.Outpoint.TransactionHash,
+				input.Outpoint.OutputIndex,
+			)
+			if err != nil {
+				return fmt.Errorf(
+					"cannot get moved funds sweep request for hash [%s] "+
+						"and output index [%v]: [%v]",
+					input.Outpoint.TransactionHash.String(),
+					input.Outpoint.OutputIndex,
+					err,
+				)
+			}
+
+			if isRequest {
+				// If that's the case, the wallet has already created a moved
+				// funds sweep their first Bitcoin transaction and the Bridge
+				// is awaiting the SPV proof.
+				return fmt.Errorf("wallet already produced their first " +
+					"Bitcoin transaction (moved funds sweep); Bridge is " +
+					"probably awaiting the SPV proof",
 				)
 			}
 

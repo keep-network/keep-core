@@ -199,6 +199,13 @@ func (lc *localChain) IsBetaOperator() (bool, error) {
 	panic("unsupported")
 }
 
+func (lc *localChain) GetMovedFundsSweepRequest(
+	movingFundsTxHash bitcoin.Hash,
+	movingFundsTxOutpointIndex uint32,
+) (*MovedFundsSweepRequest, bool, error) {
+	panic("unsupported")
+}
+
 func (lc *localChain) GetOperatorID(
 	operatorAddress chain.Address,
 ) (chain.OperatorID, error) {

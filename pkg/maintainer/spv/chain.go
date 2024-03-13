@@ -21,14 +21,8 @@ type Chain interface {
 	) error
 
 	// GetDepositRequest gets the on-chain deposit request for the given
-	// funding transaction hash and output index.The returned values represent:
-	// - deposit request which is non-nil only when the deposit request was
-	//   found,
-	// - boolean value which is true if the deposit request was found, false
-	//   otherwise,
-	// - error which is non-nil only when the function execution failed. It will
-	//   be nil if the deposit request was not found, but the function execution
-	//   succeeded.
+	// funding transaction hash and output index. The returned bool value
+	// indicates whether the request was found or not.
 	GetDepositRequest(
 		fundingTxHash bitcoin.Hash,
 		fundingOutputIndex uint32,
@@ -59,10 +53,11 @@ type Chain interface {
 
 	// GetMovedFundsSweepRequest gets the on-chain moved funds sweep request for
 	// the given moving funds transaction hash and output index.
+	// The returned bool value indicates whether the request was found or not.
 	GetMovedFundsSweepRequest(
 		movingFundsTxHash bitcoin.Hash,
 		movingFundsTxOutpointIndex uint32,
-	) (*tbtc.MovedFundsSweepRequest, error)
+	) (*tbtc.MovedFundsSweepRequest, bool, error)
 
 	// SubmitRedemptionProofWithReimbursement submits the redemption proof
 	// via MaintainerProxy. The caller is reimbursed.

@@ -174,7 +174,7 @@ func (mfst *MovedFundsSweepTask) FindMovingFundsTxData(
 	// Find the first outpoint that represents an unproven moved funds sweep
 	// request and return it.
 	for _, outpoint := range movingFundsTxOutpoints {
-		movedFundsSweepRequest, err := mfst.chain.GetMovedFundsSweepRequest(
+		movedFundsSweepRequest, isRequest, err := mfst.chain.GetMovedFundsSweepRequest(
 			outpoint.TransactionHash,
 			outpoint.OutputIndex,
 		)
@@ -183,6 +183,12 @@ func (mfst *MovedFundsSweepTask) FindMovingFundsTxData(
 				"failed to get moved funds sweep request: [%w]",
 				err,
 			)
+		}
+
+		// Check just in case. It should not happen, as all the outpoint should
+		// represent a valid request.
+		if !isRequest {
+			continue
 		}
 
 		if movedFundsSweepRequest.State == tbtc.MovedFundsStatePending {
