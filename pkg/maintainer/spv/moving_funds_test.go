@@ -38,7 +38,7 @@ func TestSubmitMovingFundsProof(t *testing.T) {
 	spvChain := newLocalChain()
 
 	// Take an arbitrary moving funds transaction:
-	// https://live.blockcypher.com/btc-testnet/tx/e6218018ed1874e73b78e16a8cf4f5016cbc666a3f9179557a84083e3e66ff7c
+	// https://live.blockcypher.com/btc-testnet/tx/e6218018ed1874e73b78e16a8cf4f5016cbc666a3f9179557a84083e3e66ff7c/
 	movingFundsTransaction := txFromHex("0100000000010180653f6e07dabddae14cf08d45475388343763100e4548914d811f373465a42e0100000000ffffffff031c160900000000001976a9142cd680318747b720d67bf4246eb7403b476adb3488ac1d160900000000001600148900de8fc6e4cd1db4c7ab0759d28503b4cb0ab11c160900000000001976a914af7a841e055fc19bf31acf4cbed5ef548a2cc45388ac0247304402202d615c196548b6cb4f1cd1f44b559cd348ce2cb8bd90356be9883a7460d7c8aa0220675e7b67e4d96a6180f7adb5ecb9ab962275d39742009911980e19e734523ff4012102ee067a0273f2e3ba88d23140a24fdb290f27bbcd0f94117a9c65be3911c5c04e00000000")
 	// Take the transaction that is the moving funds transaction input. It is
 	// necessary as the tested function logic fetches its data to determine

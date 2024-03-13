@@ -2,13 +2,146 @@ package spv
 
 import (
 	"encoding/hex"
+	"fmt"
 	"testing"
 
 	"github.com/go-test/deep"
 
+	"github.com/keep-network/keep-core/internal/testutils"
 	"github.com/keep-network/keep-core/pkg/bitcoin"
 	"github.com/keep-network/keep-core/pkg/tbtc"
 )
+
+func TestSubmitMovedFundsSweepProof(t *testing.T) {
+	bytesFromHex := func(str string) []byte {
+		value, err := hex.DecodeString(str)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		return value
+	}
+
+	txFromHex := func(str string) *bitcoin.Transaction {
+		transaction := new(bitcoin.Transaction)
+		err := transaction.Deserialize(bytesFromHex(str))
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		return transaction
+	}
+
+	txHashFromHex := func(str string) bitcoin.Hash {
+		hash, err := bitcoin.NewHashFromString(str, bitcoin.ReversedByteOrder)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		return hash
+	}
+
+	requiredConfirmations := uint(6)
+
+	var tests = map[string]struct {
+		movedFundsSweepTx *bitcoin.Transaction
+		inputTxs          []*bitcoin.Transaction
+		expectedMainUtxo  *bitcoin.UnspentTransactionOutput
+	}{
+		"wallet has no main UTXO": {
+			// Transaction for a wallet no main UTXO: https://live.blockcypher.com/btc-testnet/tx/a586427d66f8ccca1ed8f7e40a2c82aae99a1f85dfce62ffe2f3657350b6fd84/
+			movedFundsSweepTx: txFromHex("010000000001019b1b33bdd3c44404544991889d63afe6caa875983b705106f1d988251d1459200000000000ffffffff011c700000000000001600148db50eb52063ea9d98b3eac91489a90f738986f6024730440220242dbac95ab8e632cd2791e99d3048b96e6e042bcd902f30fbae7e942a24ea3e02201b7416e6d7d36ea142521eb80e0bc29d118f62ab6b8a64a062cc5812cfdb8c89012103989d253b17a6a0f41838b84ff0d20e8898f9d7b1a98f2564da4cc29dcf8581d900000000"),
+			// No need for additional transaction data.
+			inputTxs: []*bitcoin.Transaction{},
+			// Zero-filled main UTXO.
+			expectedMainUtxo: &bitcoin.UnspentTransactionOutput{
+				Outpoint: &bitcoin.TransactionOutpoint{
+					TransactionHash: bitcoin.Hash{},
+					OutputIndex:     0,
+				},
+				Value: 0,
+			},
+		},
+		"wallet has main UTXO": {
+			// Transaction for a wallet with main UTXO: https://live.blockcypher.com/btc-testnet/tx/fc78f52ab4094b5c0bf8a782750c24f31b5db2667425fbddccc29d64f89baf9b/
+			movedFundsSweepTx: txFromHex("0100000000010218201d563e43a926f5f9fd4498af5c513a3ea284373308aeda39b0a0d57585780000000000ffffffff84fdb6507365f3e2ff62cedf851f9ae9aa822c0ae4f7d81ecaccf8667d4286a50000000000ffffffff0104a60000000000001600148db50eb52063ea9d98b3eac91489a90f738986f60248304502210089dfa958867b2265d0fc08d996af82a9a731bd972f20e0530d37937f38d9ec1002200cbc820a696b99747aed39aeed5d848367773cf6d4e24aaa12fe2ad714a1ff99012103989d253b17a6a0f41838b84ff0d20e8898f9d7b1a98f2564da4cc29dcf8581d902473044022063dc201589b1f7810247eaa569baf5e3dda8717a10e77a2ad95661fef643bdc602203bee4dd0c4a24291523bb7542394df4e6008c0c7ddfdd30c41d55036b32a8999012103989d253b17a6a0f41838b84ff0d20e8898f9d7b1a98f2564da4cc29dcf8581d900000000"),
+			// Transaction that created the main UTXO: https://live.blockcypher.com/btc-testnet/tx/a586427d66f8ccca1ed8f7e40a2c82aae99a1f85dfce62ffe2f3657350b6fd84/
+			inputTxs: []*bitcoin.Transaction{
+				txFromHex("010000000001019b1b33bdd3c44404544991889d63afe6caa875983b705106f1d988251d1459200000000000ffffffff011c700000000000001600148db50eb52063ea9d98b3eac91489a90f738986f6024730440220242dbac95ab8e632cd2791e99d3048b96e6e042bcd902f30fbae7e942a24ea3e02201b7416e6d7d36ea142521eb80e0bc29d118f62ab6b8a64a062cc5812cfdb8c89012103989d253b17a6a0f41838b84ff0d20e8898f9d7b1a98f2564da4cc29dcf8581d900000000"),
+			},
+			// Wallet's main UTXO.
+			expectedMainUtxo: &bitcoin.UnspentTransactionOutput{
+				Outpoint: &bitcoin.TransactionOutpoint{
+					TransactionHash: txHashFromHex("a586427d66f8ccca1ed8f7e40a2c82aae99a1f85dfce62ffe2f3657350b6fd84"),
+					OutputIndex:     0,
+				},
+				Value: 28700,
+			},
+		},
+	}
+
+	for testName, test := range tests {
+		t.Run(testName, func(t *testing.T) {
+			btcChain := newLocalBitcoinChain()
+			spvChain := newLocalChain()
+
+			for _, inputTransaction := range test.inputTxs {
+				err := btcChain.BroadcastTransaction(inputTransaction)
+				if err != nil {
+					t.Fatal(err)
+				}
+			}
+
+			// Just a mock proof.
+			proof := &bitcoin.SpvProof{
+				MerkleProof:    []byte{0x01},
+				TxIndexInBlock: 2,
+				BitcoinHeaders: []byte{0x03},
+			}
+
+			mockSpvProofAssembler := func(
+				hash bitcoin.Hash,
+				confirmations uint,
+				btcChain bitcoin.Chain,
+			) (*bitcoin.Transaction, *bitcoin.SpvProof, error) {
+				if hash == test.movedFundsSweepTx.Hash() && confirmations == requiredConfirmations {
+					return test.movedFundsSweepTx, proof, nil
+				}
+
+				return nil, nil, fmt.Errorf("error while assembling spv proof")
+			}
+
+			err := submitMovedFundsSweepProof(
+				test.movedFundsSweepTx.Hash(),
+				requiredConfirmations,
+				btcChain,
+				spvChain,
+				mockSpvProofAssembler,
+			)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			submittedProofs := spvChain.getSubmittedMovedFundsSweepProofs()
+
+			testutils.AssertIntsEqual(t, "proofs count", 1, len(submittedProofs))
+
+			submittedProof := submittedProofs[0]
+
+			expectedTransactionHash := test.movedFundsSweepTx.Hash()
+			actualTransactionHash := submittedProof.transaction.Hash()
+			testutils.AssertBytesEqual(t, expectedTransactionHash[:], actualTransactionHash[:])
+
+			if diff := deep.Equal(proof, submittedProof.proof); diff != nil {
+				t.Errorf("invalid proof: %v", diff)
+			}
+
+			if diff := deep.Equal(*test.expectedMainUtxo, submittedProof.mainUTXO); diff != nil {
+				t.Errorf("invalid main UTXO: %v", diff)
+			}
+		})
+	}
+}
 
 func TestGetUnprovenMovedFundsSweepTransactions(t *testing.T) {
 	bytesFromHex := func(str string) []byte {

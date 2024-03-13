@@ -37,6 +37,12 @@ type submittedMovingFundsProof struct {
 	walletPublicKeyHash [20]byte
 }
 
+type submittedMovedFundsSweepProof struct {
+	transaction *bitcoin.Transaction
+	proof       *bitcoin.SpvProof
+	mainUTXO    bitcoin.UnspentTransactionOutput
+}
+
 type localChain struct {
 	mutex sync.Mutex
 
@@ -48,6 +54,7 @@ type localChain struct {
 	submittedRedemptionProofs                []*submittedRedemptionProof
 	submittedDepositSweepProofs              []*submittedDepositSweepProof
 	submittedMovingFundsProofs               []*submittedMovingFundsProof
+	submittedMovedFundsSweepProofs           []*submittedMovedFundsSweepProof
 	pastRedemptionRequestedEvents            map[[32]byte][]*tbtc.RedemptionRequestedEvent
 	pastDepositRevealedEvents                map[[32]byte][]*tbtc.DepositRevealedEvent
 	pastMovingFundsCommitmentSubmittedEvents map[[32]byte][]*tbtc.MovingFundsCommitmentSubmittedEvent
@@ -311,7 +318,26 @@ func (lc *localChain) SubmitMovedFundsSweepProofWithReimbursement(
 	proof *bitcoin.SpvProof,
 	mainUTXO bitcoin.UnspentTransactionOutput,
 ) error {
-	panic("unsupported")
+	lc.mutex.Lock()
+	defer lc.mutex.Unlock()
+
+	lc.submittedMovedFundsSweepProofs = append(
+		lc.submittedMovedFundsSweepProofs,
+		&submittedMovedFundsSweepProof{
+			transaction: transaction,
+			proof:       proof,
+			mainUTXO:    mainUTXO,
+		},
+	)
+
+	return nil
+}
+
+func (lc *localChain) getSubmittedMovedFundsSweepProofs() []*submittedMovedFundsSweepProof {
+	lc.mutex.Lock()
+	defer lc.mutex.Unlock()
+
+	return lc.submittedMovedFundsSweepProofs
 }
 
 func (lc *localChain) Ready() (bool, error) {
