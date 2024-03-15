@@ -653,7 +653,7 @@ func EnsureWalletSyncedBetweenChains(
 
 			if isRequest {
 				// If that's the case, the wallet has already created a moved
-				// funds sweep their first Bitcoin transaction and the Bridge
+				// funds sweep as their first Bitcoin transaction and the Bridge
 				// is awaiting the SPV proof.
 				return fmt.Errorf("wallet already produced their first " +
 					"Bitcoin transaction (moved funds sweep); Bridge is " +

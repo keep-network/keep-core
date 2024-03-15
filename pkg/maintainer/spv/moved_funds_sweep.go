@@ -275,7 +275,7 @@ func isUnprovenMovedFundsSweepTransaction(
 		)
 	}
 
-	// Check is it's a moved funds sweep request at all.
+	// Check if it's a moved funds sweep request at all.
 	if !isRequest {
 		return false, nil
 	}
