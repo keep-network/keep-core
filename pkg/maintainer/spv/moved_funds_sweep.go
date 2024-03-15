@@ -165,20 +165,20 @@ func getUnprovenMovedFundsSweepTransactions(
 	}
 
 	// Any wallet that was among target wallets recently could have created
-	// a moved funds sweep transaction.
-	targetWallets := [][20]byte{}
-	for _, event := range events {
-		targetWallets = append(targetWallets, event.TargetWallets...)
-	}
+	// a moved funds sweep transaction. One target wallet can appear in multiple
+	// events as multiple source wallets can use the same target wallets. Store
+	// wallet public key hashes in a map to get rid of duplicates.
+	walletPublicKeyHashes := make(map[[20]byte]bool)
 
-	// Some target wallets may appear on the list multiple times. It can happen
-	// if multiple source wallets used the same target wallet. Make a list
-	// of unique wallets.
-	walletPublicKeyHashes := uniqueKeyHashes(targetWallets)
+	for _, event := range events {
+		for _, targetWallet := range event.TargetWallets {
+			walletPublicKeyHashes[targetWallet] = true
+		}
+	}
 
 	unprovenMovedFundsSweepTransactions := []*bitcoin.Transaction{}
 
-	for _, walletPublicKeyHash := range walletPublicKeyHashes {
+	for walletPublicKeyHash := range walletPublicKeyHashes {
 		wallet, err := spvChain.GetWallet(walletPublicKeyHash)
 		if err != nil {
 			return nil, fmt.Errorf("failed to get wallet: [%v]", err)
