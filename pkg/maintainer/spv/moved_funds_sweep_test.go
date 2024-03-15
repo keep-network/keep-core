@@ -374,7 +374,7 @@ func TestGetUnprovenMovedFundsSweepTransactions(t *testing.T) {
 	}
 
 	// The order of returned transaction hashes is random. Sort them before
-	// comapring.
+	// comparing.
 	sort.Slice(transactionsHashes, func(i, j int) bool {
 		return transactionsHashes[i].String() < transactionsHashes[j].String()
 	})

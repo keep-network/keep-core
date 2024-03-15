@@ -188,12 +188,23 @@ func getUnprovenMovedFundsSweepTransactions(
 			wallet.State != tbtc.StateMovingFunds {
 			// The wallet can only submit moved funds sweep proof if it's `Live`
 			//  or `MovingFunds`. If the state is different skip it.
+			logger.Infof(
+				"skipped proving moved funds sweep transactions for wallet [%x] "+
+					"because of wallet state [%v]",
+				walletPublicKeyHash,
+				wallet.State,
+			)
 			continue
 		}
 
 		if wallet.PendingMovedFundsSweepRequestsCount == 0 {
 			// If the wallet does not have any pending moved funds sweep
 			// requests skip it.
+			logger.Infof(
+				"skipped proving moved funds sweep transactions for wallet [%x] "+
+					"because it has no pending moved funds sweep requests",
+				walletPublicKeyHash,
+			)
 			continue
 		}
 
