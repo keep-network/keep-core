@@ -275,7 +275,7 @@ func isUnprovenMovedFundsSweepTransaction(
 	requestTransactionHash := transaction.Inputs[0].Outpoint.TransactionHash
 	requestOutputIndex := transaction.Inputs[0].Outpoint.OutputIndex
 
-	movedFundsSweepRequest, err := spvChain.GetMovedFundsSweepRequest(
+	movedFundsSweepRequest, isRequest, err := spvChain.GetMovedFundsSweepRequest(
 		requestTransactionHash,
 		requestOutputIndex,
 	)
@@ -286,6 +286,12 @@ func isUnprovenMovedFundsSweepTransaction(
 		)
 	}
 
+	// Check if it's a moved funds sweep request at all.
+	if !isRequest {
+		return false, nil
+	}
+
+	// Check if it's a pending moved funds sweep request.
 	if movedFundsSweepRequest.State != tbtc.MovedFundsStatePending {
 		return false, nil
 	}

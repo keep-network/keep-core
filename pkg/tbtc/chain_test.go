@@ -69,6 +69,9 @@ type localChain struct {
 	movingFundsProposalValidationsMutex sync.Mutex
 	movingFundsProposalValidations      map[[32]byte]bool
 
+	movedFundsSweepRequestsMutex sync.Mutex
+	movedFundsSweepRequests      map[[32]byte]*MovedFundsSweepRequest
+
 	movedFundsSweepProposalValidationsMutex sync.Mutex
 	movedFundsSweepProposalValidations      map[[32]byte]bool
 
@@ -200,6 +203,41 @@ func (lc *localChain) IsChaosnetActive() (bool, error) {
 
 func (lc *localChain) IsBetaOperator() (bool, error) {
 	panic("unsupported")
+}
+
+func buildMovedFundsSweepRequestKey(
+	movingFundsTxHash bitcoin.Hash,
+	movingFundsTxOutpointIndex uint32,
+) [32]byte {
+	var buffer bytes.Buffer
+
+	buffer.Write(movingFundsTxHash[:])
+
+	outputIndex := make([]byte, 4)
+	binary.BigEndian.PutUint32(outputIndex, movingFundsTxOutpointIndex)
+	buffer.Write(outputIndex)
+
+	return sha256.Sum256(buffer.Bytes())
+}
+
+func (lc *localChain) GetMovedFundsSweepRequest(
+	movingFundsTxHash bitcoin.Hash,
+	movingFundsTxOutpointIndex uint32,
+) (*MovedFundsSweepRequest, bool, error) {
+	lc.movedFundsSweepRequestsMutex.Lock()
+	defer lc.movedFundsSweepRequestsMutex.Unlock()
+
+	requestKey := buildMovedFundsSweepRequestKey(
+		movingFundsTxHash,
+		movingFundsTxOutpointIndex,
+	)
+
+	request, ok := lc.movedFundsSweepRequests[requestKey]
+	if !ok {
+		return nil, false, nil
+	}
+
+	return request, true, nil
 }
 
 func (lc *localChain) GetOperatorID(

@@ -2026,7 +2026,7 @@ func (tc *TbtcChain) GetMovingFundsParameters() (
 func (tc *TbtcChain) GetMovedFundsSweepRequest(
 	movingFundsTxHash bitcoin.Hash,
 	movingFundsTxOutpointIndex uint32,
-) (*tbtc.MovedFundsSweepRequest, error) {
+) (*tbtc.MovedFundsSweepRequest, bool, error) {
 	movedFundsKey := buildMovedFundsKey(
 		movingFundsTxHash,
 		movingFundsTxOutpointIndex,
@@ -2036,16 +2036,21 @@ func (tc *TbtcChain) GetMovedFundsSweepRequest(
 		movedFundsKey,
 	)
 	if err != nil {
-		return nil, fmt.Errorf(
+		return nil, false, fmt.Errorf(
 			"cannot get moved funds sweep request for key [0x%x]: [%v]",
 			movedFundsKey.Text(16),
 			err,
 		)
 	}
 
+	// Moved funds sweep request not found.
+	if movedFundsSweepRequest.CreatedAt == 0 {
+		return nil, false, nil
+	}
+
 	state, err := parseMovedFundsSweepRequestState(movedFundsSweepRequest.State)
 	if err != nil {
-		return nil, fmt.Errorf(
+		return nil, false, fmt.Errorf(
 			"cannot parse state for moved funds sweep request [0x%x]: [%v]",
 			movedFundsKey.Text(16),
 			err,
@@ -2057,7 +2062,7 @@ func (tc *TbtcChain) GetMovedFundsSweepRequest(
 		Value:               movedFundsSweepRequest.Value,
 		CreatedAt:           time.Unix(int64(movedFundsSweepRequest.CreatedAt), 0),
 		State:               state,
-	}, nil
+	}, true, nil
 }
 
 func parseMovedFundsSweepRequestState(value uint8) (

@@ -770,7 +770,7 @@ func (lc *LocalChain) GetMovingFundsParameters() (
 func (lc *LocalChain) GetMovedFundsSweepRequest(
 	movingFundsTxHash bitcoin.Hash,
 	movingFundsTxOutpointIndex uint32,
-) (*tbtc.MovedFundsSweepRequest, error) {
+) (*tbtc.MovedFundsSweepRequest, bool, error) {
 	lc.mutex.Lock()
 	defer lc.mutex.Unlock()
 
@@ -781,10 +781,10 @@ func (lc *LocalChain) GetMovedFundsSweepRequest(
 
 	request, ok := lc.movedFundsSweepRequests[requestKey]
 	if !ok {
-		return nil, fmt.Errorf("request not found")
+		return nil, false, nil
 	}
 
-	return request, nil
+	return request, true, nil
 }
 
 func (lc *LocalChain) SetMovedFundsSweepRequest(

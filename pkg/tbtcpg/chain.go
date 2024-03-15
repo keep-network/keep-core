@@ -148,13 +148,6 @@ type Chain interface {
 		err error,
 	)
 
-	// GetMovedFundsSweepRequest gets the on-chain moved funds sweep request for
-	// the given moving funds transaction hash and output index.
-	GetMovedFundsSweepRequest(
-		movingFundsTxHash bitcoin.Hash,
-		movingFundsTxOutpointIndex uint32,
-	) (*tbtc.MovedFundsSweepRequest, error)
-
 	// PastMovingFundsCommitmentSubmittedEvents fetches past moving funds
 	// commitment submitted events according to the provided filter or
 	// unfiltered if the filter is nil. Returned events are sorted by the block
