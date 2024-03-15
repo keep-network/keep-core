@@ -69,6 +69,9 @@ type localChain struct {
 	movingFundsProposalValidationsMutex sync.Mutex
 	movingFundsProposalValidations      map[[32]byte]bool
 
+	movedFundsSweepProposalValidationsMutex sync.Mutex
+	movedFundsSweepProposalValidations      map[[32]byte]bool
+
 	heartbeatProposalValidationsMutex sync.Mutex
 	heartbeatProposalValidations      map[[16]byte]bool
 
@@ -999,7 +1002,63 @@ func (lc *localChain) ValidateMovedFundsSweepProposal(
 	walletPublicKeyHash [20]byte,
 	proposal *MovedFundsSweepProposal,
 ) error {
-	panic("unsupported")
+	lc.movedFundsSweepProposalValidationsMutex.Lock()
+	defer lc.movedFundsSweepProposalValidationsMutex.Unlock()
+
+	key, err := buildMovedFundsSweepProposalValidationKey(
+		walletPublicKeyHash,
+		proposal,
+	)
+	if err != nil {
+		return err
+	}
+
+	result, ok := lc.movedFundsSweepProposalValidations[key]
+	if !ok {
+		return fmt.Errorf("validation result unknown")
+	}
+
+	if !result {
+		return fmt.Errorf("validation failed")
+	}
+
+	return nil
+}
+
+func (lc *localChain) setMovedFundsSweepProposalValidationResult(
+	walletPublicKeyHash [20]byte,
+	proposal *MovedFundsSweepProposal,
+	result bool,
+) error {
+	lc.movedFundsSweepProposalValidationsMutex.Lock()
+	defer lc.movedFundsSweepProposalValidationsMutex.Unlock()
+
+	key, err := buildMovedFundsSweepProposalValidationKey(
+		walletPublicKeyHash,
+		proposal,
+	)
+	if err != nil {
+		return err
+	}
+
+	lc.movedFundsSweepProposalValidations[key] = result
+
+	return nil
+}
+
+func buildMovedFundsSweepProposalValidationKey(
+	walletPublicKeyHash [20]byte,
+	proposal *MovedFundsSweepProposal,
+) ([32]byte, error) {
+	var buffer bytes.Buffer
+
+	buffer.Write(walletPublicKeyHash[:])
+
+	buffer.Write(proposal.MovingFundsTxHash[:])
+	binary.Write(&buffer, binary.BigEndian, proposal.MovingFundsTxOutputIndex)
+	buffer.Write(proposal.SweepTxFee.Bytes())
+
+	return sha256.Sum256(buffer.Bytes()), nil
 }
 
 // Connect sets up the local chain.
@@ -1030,18 +1089,19 @@ func ConnectWithKey(
 		dkgResultChallengeHandlers: make(
 			map[int]func(submission *DKGResultChallengedEvent),
 		),
-		wallets:                         make(map[[20]byte]*WalletChainData),
-		blocksByTimestamp:               make(map[uint64]uint64),
-		blocksHashesByNumber:            make(map[uint64][32]byte),
-		pastDepositRevealedEvents:       make(map[[32]byte][]*DepositRevealedEvent),
-		depositSweepProposalValidations: make(map[[32]byte]bool),
-		pendingRedemptionRequests:       make(map[[32]byte]*RedemptionRequest),
-		redemptionProposalValidations:   make(map[[32]byte]bool),
-		movingFundsProposalValidations:  make(map[[32]byte]bool),
-		heartbeatProposalValidations:    make(map[[16]byte]bool),
-		depositRequests:                 make(map[[32]byte]*DepositChainRequest),
-		blockCounter:                    blockCounter,
-		operatorPrivateKey:              operatorPrivateKey,
+		wallets:                            make(map[[20]byte]*WalletChainData),
+		blocksByTimestamp:                  make(map[uint64]uint64),
+		blocksHashesByNumber:               make(map[uint64][32]byte),
+		pastDepositRevealedEvents:          make(map[[32]byte][]*DepositRevealedEvent),
+		depositSweepProposalValidations:    make(map[[32]byte]bool),
+		pendingRedemptionRequests:          make(map[[32]byte]*RedemptionRequest),
+		redemptionProposalValidations:      make(map[[32]byte]bool),
+		movingFundsProposalValidations:     make(map[[32]byte]bool),
+		movedFundsSweepProposalValidations: make(map[[32]byte]bool),
+		heartbeatProposalValidations:       make(map[[16]byte]bool),
+		depositRequests:                    make(map[[32]byte]*DepositChainRequest),
+		blockCounter:                       blockCounter,
+		operatorPrivateKey:                 operatorPrivateKey,
 	}
 
 	return localChain

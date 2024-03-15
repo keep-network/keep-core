@@ -939,7 +939,6 @@ func processCoordinationResult(node *node, result *coordinationResult) {
 				expiryBlock,
 			)
 		}
-	// TODO: Uncomment when moving funds support is implemented.
 	case ActionMovedFundsSweep:
 		if proposal, ok := result.proposal.(*MovedFundsSweepProposal); ok {
 			node.handleMovedFundsSweepProposal(

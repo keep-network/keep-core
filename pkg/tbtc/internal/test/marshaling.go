@@ -363,6 +363,112 @@ func (mfts *MovingFundsTestScenario) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// UnmarshalJSON implements a custom JSON unmarshaling logic to produce a
+// proper MovedFundsSweepTestScenario.
+func (mfts *MovedFundsSweepTestScenario) UnmarshalJSON(data []byte) error {
+	type movedFundsSweepTestScenario struct {
+		Title                                         string
+		WalletPublicKey                               string
+		MovedFundsUtxo                                *utxo
+		WalletMainUtxo                                *utxo
+		InputTransactions                             []string
+		Fee                                           int64
+		Signatures                                    []signature
+		ExpectedSigHashes                             []string
+		ExpectedMovedFundsSweepTransaction            string
+		ExpectedMovedFundsSweepTransactionHash        string
+		ExpectedMovedFundsSweepTransactionWitnessHash string
+	}
+
+	var unmarshaled movedFundsSweepTestScenario
+
+	err := json.Unmarshal(data, &unmarshaled)
+	if err != nil {
+		return err
+	}
+
+	// Unmarshal title.
+	mfts.Title = unmarshaled.Title
+
+	// Unmarshal wallet public key.
+	x, y := elliptic.Unmarshal(
+		tecdsa.Curve,
+		hexToSlice(unmarshaled.WalletPublicKey),
+	)
+	mfts.WalletPublicKey = &ecdsa.PublicKey{
+		Curve: tecdsa.Curve,
+		X:     x,
+		Y:     y,
+	}
+
+	// Unmarshal wallet main UTXO.
+	mfts.MovedFundsUtxo = unmarshaled.MovedFundsUtxo.convert()
+
+	// Unmarshal optional wallet main UTXO.
+	if walletMainUtxo := unmarshaled.WalletMainUtxo; walletMainUtxo != nil {
+		mfts.WalletMainUtxo = walletMainUtxo.convert()
+	}
+
+	// Unmarshal input transactions.
+	for _, inputTransaction := range unmarshaled.InputTransactions {
+		transaction := new(bitcoin.Transaction)
+		err = transaction.Deserialize(hexToSlice(inputTransaction))
+		if err != nil {
+			return err
+		}
+
+		mfts.InputTransactions = append(mfts.InputTransactions, transaction)
+	}
+
+	// Unmarshal fee.
+	mfts.Fee = unmarshaled.Fee
+
+	// Unmarshal signatures.
+	for _, s := range unmarshaled.Signatures {
+		mfts.Signatures = append(
+			mfts.Signatures,
+			s.convert(mfts.WalletPublicKey),
+		)
+	}
+
+	// Unmarshal expected signature hashes.
+	for _, expectedSigHash := range unmarshaled.ExpectedSigHashes {
+		mfts.ExpectedSigHashes = append(
+			mfts.ExpectedSigHashes,
+			new(big.Int).SetBytes(hexToSlice(expectedSigHash)),
+		)
+	}
+
+	// Unmarshal expected moved funds sweep transaction.
+	mfts.ExpectedMovedFundsSweepTransaction = new(bitcoin.Transaction)
+	err = mfts.ExpectedMovedFundsSweepTransaction.Deserialize(
+		hexToSlice(unmarshaled.ExpectedMovedFundsSweepTransaction),
+	)
+	if err != nil {
+		return err
+	}
+
+	// Unmarshal expected moved funds sweep transaction hash.
+	mfts.ExpectedMovedFundsSweepTransactionHash, err = bitcoin.NewHashFromString(
+		unmarshaled.ExpectedMovedFundsSweepTransactionHash,
+		bitcoin.ReversedByteOrder,
+	)
+	if err != nil {
+		return err
+	}
+
+	// Unmarshal expected moved funds sweep transaction witness hash.
+	mfts.ExpectedMovedFundsSweepTransactionWitnessHash, err = bitcoin.NewHashFromString(
+		unmarshaled.ExpectedMovedFundsSweepTransactionWitnessHash,
+		bitcoin.ReversedByteOrder,
+	)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // utxo is a helper type used for unmarshal UTXO encoded as JSON.
 type utxo struct {
 	Outpoint struct {
