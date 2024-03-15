@@ -70,10 +70,11 @@ import (
 )
 
 const (
-	testDataDirFormat              = "%s/testdata"
-	depositSweepTestDataFilePrefix = "deposit_sweep_scenario"
-	redemptionTestDataFilePrefix   = "redemption_scenario"
-	movingFundsTestDataFilePrefix  = "moving_funds_scenario"
+	testDataDirFormat                 = "%s/testdata"
+	depositSweepTestDataFilePrefix    = "deposit_sweep_scenario"
+	redemptionTestDataFilePrefix      = "redemption_scenario"
+	movingFundsTestDataFilePrefix     = "moving_funds_scenario"
+	movedFundsSweepTestDataFilePrefix = "moved_funds_sweep_scenario"
 )
 
 // Deposit holds the deposit data in the given test scenario.
@@ -161,6 +162,30 @@ type MovingFundsTestScenario struct {
 // LoadMovingFundsTestScenarios loads all scenarios related with moving funds.
 func LoadMovingFundsTestScenarios() ([]*MovingFundsTestScenario, error) {
 	return loadTestScenarios[*MovingFundsTestScenario](movingFundsTestDataFilePrefix)
+}
+
+// MovedFundsSweepTestScenario represents a moved funds sweep test scenario.
+type MovedFundsSweepTestScenario struct {
+	Title             string
+	WalletPublicKey   *ecdsa.PublicKey
+	MovedFundsUtxo    *bitcoin.UnspentTransactionOutput
+	WalletMainUtxo    *bitcoin.UnspentTransactionOutput
+	InputTransactions []*bitcoin.Transaction
+	Fee               int64
+	Signatures        []*bitcoin.SignatureContainer
+
+	ExpectedSigHashes                             []*big.Int
+	ExpectedMovedFundsSweepTransaction            *bitcoin.Transaction
+	ExpectedMovedFundsSweepTransactionHash        bitcoin.Hash
+	ExpectedMovedFundsSweepTransactionWitnessHash bitcoin.Hash
+}
+
+// LoadMovedFundsSweepTestScenarios loads all scenarios related with moved funds
+// sweep.
+func LoadMovedFundsSweepTestScenarios() ([]*MovedFundsSweepTestScenario, error) {
+	return loadTestScenarios[*MovedFundsSweepTestScenario](
+		movedFundsSweepTestDataFilePrefix,
+	)
 }
 
 func loadTestScenarios[T json.Unmarshaler](testDataFilePrefix string) ([]T, error) {
