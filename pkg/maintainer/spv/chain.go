@@ -57,6 +57,13 @@ type Chain interface {
 		redeemerOutputScript bitcoin.Script,
 	) (*tbtc.RedemptionRequest, bool, error)
 
+	// GetMovedFundsSweepRequest gets the on-chain moved funds sweep request for
+	// the given moving funds transaction hash and output index.
+	GetMovedFundsSweepRequest(
+		movingFundsTxHash bitcoin.Hash,
+		movingFundsTxOutpointIndex uint32,
+	) (*tbtc.MovedFundsSweepRequest, error)
+
 	// SubmitRedemptionProofWithReimbursement submits the redemption proof
 	// via MaintainerProxy. The caller is reimbursed.
 	SubmitRedemptionProofWithReimbursement(
@@ -73,6 +80,14 @@ type Chain interface {
 		proof *bitcoin.SpvProof,
 		mainUTXO bitcoin.UnspentTransactionOutput,
 		walletPublicKeyHash [20]byte,
+	) error
+
+	// SubmitMovedFundsSweepProofWithReimbursement submits the moved funds sweep
+	//  proof via MaintainerProxy. The caller is reimbursed.
+	SubmitMovedFundsSweepProofWithReimbursement(
+		transaction *bitcoin.Transaction,
+		proof *bitcoin.SpvProof,
+		mainUTXO bitcoin.UnspentTransactionOutput,
 	) error
 
 	// PastDepositRevealedEvents fetches past deposit reveal events according

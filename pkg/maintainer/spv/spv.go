@@ -56,6 +56,10 @@ var proofTypes = map[tbtc.WalletActionType]struct {
 		unprovenTransactionsGetter: getUnprovenMovingFundsTransactions,
 		transactionProofSubmitter:  SubmitMovingFundsProof,
 	},
+	tbtc.ActionMovedFundsSweep: {
+		unprovenTransactionsGetter: getUnprovenMovedFundsSweepTransactions,
+		transactionProofSubmitter:  SubmitMovedFundsSweepProof,
+	},
 }
 
 type spvMaintainer struct {
