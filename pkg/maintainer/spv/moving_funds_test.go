@@ -172,7 +172,7 @@ func TestGetUnprovenMovingFundsTransactions(t *testing.T) {
 		transactions        []*bitcoin.Transaction
 	}{
 		{
-			// Wallet 1: https://live.blockcypher.com/btc-testnet/address/tb1q3k6sadfqv04fmx9naty3fzdfpaecnphkfm3cf3
+			// Wallet 1: https://live.blockcypher.com/btc-testnet/address/tb1q3k6sadfqv04fmx9naty3fzdfpaecnphkfm3cf3/
 			walletPublicKeyHash: bytes20FromHex("8db50eb52063ea9d98b3eac91489a90f738986f6"),
 			data: &tbtc.WalletChainData{
 				// Make the main UTXO point to Transaction 1.
@@ -214,7 +214,7 @@ func TestGetUnprovenMovingFundsTransactions(t *testing.T) {
 				// Transaction 1: Creation of wallet's main UTXO https://live.blockcypher.com/btc-testnet/tx/89c1e51322878df5417652643a2cbc4bcc3b2ecaff371c3e03b7b9b285d5e3f8/
 				txFromHex("02000000014ff17f9f98c5f9c516a94b1c08eabd0ad04fd04e1e3b9485493592e7fc76a7ab000000006a47304402202d3356f81c1d488ec7a9c2917bdb9c6060b9307eca2dcf5e876792e2ba6db85c022016dbb59e1104ef311c20235c1c1894be94ef0c317c4f3b0d13d31c67c592001301210291936829fd41e5217272a8141313ceb754d65787dc07ccb9a9e9a384ef243645feffffff025108ee16020000001600141ea512aa81a96d5ffa2f0d3e37803d9912c89e7e5a7a1600000000001600147ac2d9378a1c47e589dfb8095ca95ed2140d2726e2792100"),
 
-				// Transaction 2: MovingFunds: https://live.blockcypher.com/btc-testnet/tx/d078c00d7e78509062fccdecaf85580efe6e2826d8db77341fbc1097ca2955e5
+				// Transaction 2: MovingFunds: https://live.blockcypher.com/btc-testnet/tx/d078c00d7e78509062fccdecaf85580efe6e2826d8db77341fbc1097ca2955e5/
 				txFromHex("01000000000101f8e3d585b2b9b7033e1c37ffca2e3bcc4bbc2c3a64527641f58d872213e5c1890100000000ffffffff0132571600000000001976a9142cd680318747b720d67bf4246eb7403b476adb3488ac024830450221008b6b3fa3eaf4b46268c3bfb718cf8391afc7879ec1949e465c04fa206235a3f202205f9d00ebba7cdb29414b0dad752cf489710ab60dc06c7b20a99c0d9d3fce8c3c012102ee067a0273f2e3ba88d23140a24fdb290f27bbcd0f94117a9c65be3911c5c04e00000000"),
 			},
 		},

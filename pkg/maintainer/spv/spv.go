@@ -457,25 +457,6 @@ func uniqueWalletPublicKeyHashes[T walletEvent](events []T) [][20]byte {
 	return publicKeyHashes
 }
 
-// uniqueKeyHashes parses the list of 20-byte-long key hashes and returns a list
-// of unique key hashes.
-func uniqueKeyHashes(keyHashes [][20]byte) [][20]byte {
-	cache := make(map[string]struct{})
-	var unique [][20]byte
-
-	for _, keyHash := range keyHashes {
-		strKey := hex.EncodeToString(keyHash[:])
-
-		// Check for uniqueness
-		if _, exists := cache[strKey]; !exists {
-			cache[strKey] = struct{}{}
-			unique = append(unique, keyHash)
-		}
-	}
-
-	return unique
-}
-
 // spvProofAssembler is a type representing a function that is used
 // to assemble an SPV proof for the given transaction hash and confirmations
 // count.

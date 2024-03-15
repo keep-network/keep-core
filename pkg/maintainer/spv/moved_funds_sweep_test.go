@@ -3,6 +3,7 @@ package spv
 import (
 	"encoding/hex"
 	"fmt"
+	"sort"
 	"testing"
 
 	"github.com/go-test/deep"
@@ -371,6 +372,12 @@ func TestGetUnprovenMovedFundsSweepTransactions(t *testing.T) {
 		wallets[1].transactions[0].Hash(), // Wallet 2 - Transaction 1
 		wallets[2].transactions[0].Hash(), // Wallet 3 - Transaction 1
 	}
+
+	// The order of returned transaction hashes is random. Sort them before
+	// comparing.
+	sort.Slice(transactionsHashes, func(i, j int) bool {
+		return transactionsHashes[i].String() < transactionsHashes[j].String()
+	})
 
 	if diff := deep.Equal(expectedTransactionsHashes, transactionsHashes); diff != nil {
 		t.Errorf("invalid unproven transaction hashes: %v", diff)

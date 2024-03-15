@@ -154,7 +154,6 @@ func TestAssembleMovingFundsTransaction(t *testing.T) {
 
 			builder, err := assembleMovingFundsTransaction(
 				bitcoinChain,
-				scenario.WalletPublicKey,
 				scenario.WalletMainUtxo,
 				scenario.TargetWallets,
 				scenario.Fee,
