@@ -40,8 +40,10 @@ func NewProposalGenerator(
 		NewDepositSweepTask(chain, btcChain),
 		NewRedemptionTask(chain, btcChain),
 		NewHeartbeatTask(chain),
-		NewMovingFundsTask(chain, btcChain),
-		NewMovedFundsSweepTask(chain, btcChain),
+		// TODO: Disabled for v2.0.0. Uncomment when the feature is ready.
+		// NewMovingFundsTask(chain, btcChain),
+		// TODO: Disabled for v2.0.0. Uncomment when the feature is ready.
+		// NewMovedFundsSweepTask(chain, btcChain),
 	}
 
 	return &ProposalGenerator{

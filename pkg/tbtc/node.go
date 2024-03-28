@@ -873,25 +873,26 @@ func processCoordinationResult(node *node, result *coordinationResult) {
 				expiryBlock,
 			)
 		}
-	case ActionMovingFunds:
-		if proposal, ok := result.proposal.(*MovingFundsProposal); ok {
-			node.handleMovingFundsProposal(
-				result.wallet,
-				proposal,
-				startBlock,
-				expiryBlock,
-			)
-		}
-	// TODO: Uncomment when moving funds support is implemented.
-	case ActionMovedFundsSweep:
-		if proposal, ok := result.proposal.(*MovedFundsSweepProposal); ok {
-			node.handleMovedFundsSweepProposal(
-				result.wallet,
-				proposal,
-				startBlock,
-				expiryBlock,
-			)
-		}
+	// TODO: Disabled for v2.0.0. Uncomment when the feature is ready.
+	// case ActionMovingFunds:
+	//	 if proposal, ok := result.proposal.(*MovingFundsProposal); ok {
+	//		 node.handleMovingFundsProposal(
+	//			 result.wallet,
+	//			 proposal,
+	//			 startBlock,
+	//			 expiryBlock,
+	//		 )
+	//	 }
+	// TODO: Disabled for v2.0.0. Uncomment when the feature is ready.
+	// case ActionMovedFundsSweep:
+	//	 if proposal, ok := result.proposal.(*MovedFundsSweepProposal); ok {
+	//		 node.handleMovedFundsSweepProposal(
+	//			 result.wallet,
+	//			 proposal,
+	//			 startBlock,
+	//			 expiryBlock,
+	//		 )
+	//	 }
 	default:
 		logger.Errorf("no handler for coordination result [%s]", result)
 	}

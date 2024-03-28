@@ -548,14 +548,15 @@ func (ce *coordinationExecutor) getActionsChecklist(
 		actions = append(actions, ActionDepositSweep)
 	}
 
-	if windowIndex%frequencyWindows == 0 {
-		actions = append(actions, ActionMovedFundsSweep)
-	}
+	// TODO: Disabled for v2.0.0. Uncomment when the feature is ready.
+	// if windowIndex%frequencyWindows == 0 {
+	//	 actions = append(actions, ActionMovedFundsSweep)
+	// }
 
-	// TODO: Consider increasing frequency for old wallets in the future.
-	if windowIndex%frequencyWindows == 0 {
-		actions = append(actions, ActionMovingFunds)
-	}
+	// TODO: Disabled for v2.0.0. Uncomment when the feature is ready.
+	// if windowIndex%frequencyWindows == 0 {
+	//	 actions = append(actions, ActionMovingFunds)
+	// }
 
 	// #nosec G404 (insecure random number source (rand))
 	// Drawing a decision about heartbeat does not require secure randomness.
