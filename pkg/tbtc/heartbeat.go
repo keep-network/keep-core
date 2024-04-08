@@ -24,6 +24,12 @@ const (
 	// another action has been already requested by the coordinator.
 	// The value of 25 blocks is roughly 5 minutes, assuming 12 seconds per block.
 	heartbeatRequestTimeoutSafetyMarginBlocks = 25
+	// heartbeatSigningMinimumActiveOperators determines the minimum number of
+	// active operators during signing for a heartbeat to be considered valid.
+	heartbeatSigningMinimumActiveOperators = 70
+	// heartbeatConsecutiveFailuresThreshold determines the number of consecutive
+	// heartbeat failures required to trigger inactivity operator notification.
+	heartbeatConsecutiveFailureThreshold = 3
 )
 
 type HeartbeatProposal struct {
@@ -57,7 +63,9 @@ type heartbeatAction struct {
 	executingWallet wallet
 	signingExecutor heartbeatSigningExecutor
 
-	proposal    *HeartbeatProposal
+	proposal       *HeartbeatProposal
+	failureCounter *uint
+
 	startBlock  uint64
 	expiryBlock uint64
 
@@ -70,6 +78,7 @@ func newHeartbeatAction(
 	executingWallet wallet,
 	signingExecutor heartbeatSigningExecutor,
 	proposal *HeartbeatProposal,
+	failureCounter *uint,
 	startBlock uint64,
 	expiryBlock uint64,
 	waitForBlockFn waitForBlockFn,
@@ -80,6 +89,7 @@ func newHeartbeatAction(
 		executingWallet: executingWallet,
 		signingExecutor: signingExecutor,
 		proposal:        proposal,
+		failureCounter:  failureCounter,
 		startBlock:      startBlock,
 		expiryBlock:     expiryBlock,
 		waitForBlockFn:  waitForBlockFn,
@@ -123,21 +133,69 @@ func (ha *heartbeatAction) execute() error {
 	)
 	defer cancelHeartbeatCtx()
 
-	signature, _, _, err := ha.signingExecutor.sign(
+	signature, activeOperatorsCount, _, err := ha.signingExecutor.sign(
 		heartbeatCtx,
 		messageToSign,
 		ha.startBlock,
 	)
-	if err != nil {
-		return fmt.Errorf("cannot sign heartbeat message: [%v]", err)
+
+	// If there was no error and the number of active operators during signing
+	// was enough, we can consider the heartbeat procedure as successful.
+	if err == nil && activeOperatorsCount >= heartbeatSigningMinimumActiveOperators {
+		logger.Infof(
+			"successfully generated signature [%s] for heartbeat message [0x%x]",
+			signature,
+			ha.proposal.Message[:],
+		)
+
+		// Reset the counter for consecutive heartbeat failure.
+		*ha.failureCounter = 0
+
+		return nil
 	}
 
-	logger.Infof(
-		"generated signature [%s] for heartbeat message [0x%x]",
-		signature,
-		ha.proposal.Message[:],
-	)
+	// If there was an error or the number of active operators during signing
+	// was not enough, we must consider the heartbeat procedure as a failure.
+	if err != nil {
+		logger.Infof("error while generating heartbeat signature: [%v]", err)
+	} else {
+		logger.Infof(
+			"not enough active operators during signing; required [%d]: "+
+				"actual [%d]",
+			activeOperatorsCount,
+			heartbeatSigningMinimumActiveOperators,
+		)
+	}
 
+	// Increment the heartbeat failure counter.
+	*ha.failureCounter++
+
+	// If the number of consecutive heartbeat failures does not exceed the
+	// threshold do not notify about operator inactivity.
+	if *ha.failureCounter < heartbeatConsecutiveFailureThreshold {
+		logger.Infof(
+			"leaving without notifying about operator inactivity; current "+
+				"heartbeat failure count is [%d]",
+			*ha.failureCounter,
+		)
+		return nil
+	}
+
+	// The value of consecutive heartbeat failures exceeds the threshold.
+	// Proceed with operator inactivity notification.
+	err = ha.notifyOperatorInactivity()
+	if err != nil {
+		return fmt.Errorf(
+			"error while notifying about operator inactivity [%v]]",
+			err,
+		)
+	}
+
+	return nil
+}
+
+func (ha *heartbeatAction) notifyOperatorInactivity() error {
+	// TODO: Implement
 	return nil
 }
 

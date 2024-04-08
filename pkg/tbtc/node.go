@@ -65,6 +65,11 @@ type node struct {
 	// dkgExecutor MUST NOT be used outside this struct.
 	dkgExecutor *dkgExecutor
 
+	// heartbeatFailureCounter is the counter keeping track of consecutive
+	// heartbeat failure. It reset to zero after each successful heartbeat
+	// procedure.
+	heartbeatFailureCounter uint
+
 	signingExecutorsMutex sync.Mutex
 	// signingExecutors is the cache holding signing executors for specific wallets.
 	// The cache key is the uncompressed public key (with 04 prefix) of the wallet.
@@ -458,6 +463,7 @@ func (n *node) handleHeartbeatProposal(
 		wallet,
 		signingExecutor,
 		proposal,
+		&n.heartbeatFailureCounter,
 		startBlock,
 		expiryBlock,
 		n.waitForBlockHeight,
