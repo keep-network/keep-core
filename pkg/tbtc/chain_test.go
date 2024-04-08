@@ -189,6 +189,11 @@ func (lc *localChain) IsEligibleForRewards() (bool, error) {
 	panic("unsupported")
 }
 
+func (lc *localChain) IsOperatorUnstaking() (bool, error) {
+	// TODO: Implement and use in unit tests.
+	return false, nil
+}
+
 func (lc *localChain) CanRestoreRewardEligibility() (bool, error) {
 	panic("unsupported")
 }

@@ -418,6 +418,10 @@ func (c *localChain) IsEligibleForRewards() (bool, error) {
 	panic("unsupported")
 }
 
+func (c *localChain) IsOperatorUnstaking() (bool, error) {
+	panic("unsupported")
+}
+
 func (c *localChain) CanRestoreRewardEligibility() (bool, error) {
 	panic("unsupported")
 }

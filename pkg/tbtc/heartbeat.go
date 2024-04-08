@@ -3,10 +3,11 @@ package tbtc
 import (
 	"context"
 	"fmt"
+	"math/big"
+
 	"github.com/ipfs/go-log/v2"
 	"github.com/keep-network/keep-core/pkg/bitcoin"
 	"github.com/keep-network/keep-core/pkg/tecdsa"
-	"math/big"
 )
 
 const (
@@ -86,12 +87,23 @@ func newHeartbeatAction(
 }
 
 func (ha *heartbeatAction) execute() error {
-	// TODO: When implementing the moving funds action we should make sure
-	// heartbeats are not executed by unstaking clients.
+	// Do not execute the heartbeat action if the operator is unstaking.
+	isUnstaking, err := ha.chain.IsOperatorUnstaking()
+	if err != nil {
+		return fmt.Errorf("failed to check if the operator is unstaking")
+	}
+
+	if isUnstaking {
+		logger.Info(
+			"quitting the heartbeat action without signing because the " +
+				"operator is unstaking",
+		)
+		return nil
+	}
 
 	walletPublicKeyHash := bitcoin.PublicKeyHash(ha.wallet().publicKey)
 
-	err := ha.chain.ValidateHeartbeatProposal(walletPublicKeyHash, ha.proposal)
+	err = ha.chain.ValidateHeartbeatProposal(walletPublicKeyHash, ha.proposal)
 	if err != nil {
 		return fmt.Errorf("heartbeat proposal is invalid: [%v]", err)
 	}
