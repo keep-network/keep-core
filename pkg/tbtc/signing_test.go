@@ -27,7 +27,7 @@ func TestSigningExecutor_Sign(t *testing.T) {
 	message := big.NewInt(100)
 	startBlock := uint64(0)
 
-	signature, endBlock, err := executor.sign(ctx, message, startBlock)
+	signature, _, endBlock, err := executor.sign(ctx, message, startBlock)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -59,13 +59,13 @@ func TestSigningExecutor_Sign_Busy(t *testing.T) {
 
 	errChan := make(chan error, 1)
 	go func() {
-		_, _, err := executor.sign(ctx, message, startBlock)
+		_, _, _, err := executor.sign(ctx, message, startBlock)
 		errChan <- err
 	}()
 
 	time.Sleep(100 * time.Millisecond)
 
-	_, _, err := executor.sign(ctx, message, startBlock)
+	_, _, _, err := executor.sign(ctx, message, startBlock)
 	testutils.AssertErrorsSame(t, errSigningExecutorBusy, err)
 
 	err = <-errChan

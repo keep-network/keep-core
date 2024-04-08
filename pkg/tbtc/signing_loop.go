@@ -5,10 +5,11 @@ import (
 	"crypto/sha256"
 	"encoding/binary"
 	"fmt"
-	"github.com/keep-network/keep-core/pkg/protocol/announcer"
 	"math/big"
 	"math/rand"
 	"sort"
+
+	"github.com/keep-network/keep-core/pkg/protocol/announcer"
 
 	"github.com/ipfs/go-log/v2"
 	"github.com/keep-network/keep-core/pkg/chain"
@@ -143,6 +144,9 @@ type signingAttemptFn func(*signingAttemptParams) (*signing.Result, uint64, erro
 type signingRetryLoopResult struct {
 	// result is the outcome of the signing process.
 	result *signing.Result
+	// activeMembersCount is the number of members that participated in the
+	// signing process.
+	activeMembersCount uint32
 	// latestEndBlock is the block at which the slowest signer of the successful
 	// signing attempt completed signature computation. This block is also
 	// the common end block accepted by all other members of the signing group.
@@ -407,6 +411,7 @@ func (srl *signingRetryLoop) start(
 
 		return &signingRetryLoopResult{
 			result:              result,
+			activeMembersCount:  uint32(len(readyMembersIndexes)),
 			latestEndBlock:      latestEndBlock,
 			attemptTimeoutBlock: timeoutBlock,
 		}, nil

@@ -145,7 +145,7 @@ func (se *signingExecutor) signBatch(
 			signingStartBlock = endBlocks[i-1] + signingBatchInterludeBlocks
 		}
 
-		signature, endBlock, err := se.sign(ctx, message, signingStartBlock)
+		signature, _, endBlock, err := se.sign(ctx, message, signingStartBlock)
 		if err != nil {
 			return nil, err
 		}
@@ -167,15 +167,16 @@ func (se *signingExecutor) signBatch(
 // triggered according to the given start block. If the message cannot be signed
 // within a limited time window, an error is returned. If the message was
 // signed successfully, this function returns the signature along with the
-// block at which the signature was calculated. This end block is common for
-// all wallet signers so can be used as a synchronization point.
+// number of active members that participated in signing, the block at which the
+// signature was calculated. The end block is common for all wallet signers so
+// can be used as a synchronization point.
 func (se *signingExecutor) sign(
 	ctx context.Context,
 	message *big.Int,
 	startBlock uint64,
-) (*tecdsa.Signature, uint64, error) {
+) (*tecdsa.Signature, uint32, uint64, error) {
 	if lockAcquired := se.lock.TryAcquire(1); !lockAcquired {
-		return nil, 0, errSigningExecutorBusy
+		return nil, 0, 0, errSigningExecutorBusy
 	}
 	defer se.lock.Release(1)
 
@@ -183,7 +184,7 @@ func (se *signingExecutor) sign(
 
 	walletPublicKeyBytes, err := marshalPublicKey(wallet.publicKey)
 	if err != nil {
-		return nil, 0, fmt.Errorf("cannot marshal wallet public key: [%v]", err)
+		return nil, 0, 0, fmt.Errorf("cannot marshal wallet public key: [%v]", err)
 	}
 
 	loopTimeoutBlock := startBlock +
@@ -197,8 +198,9 @@ func (se *signingExecutor) sign(
 	)
 
 	type signingOutcome struct {
-		signature *tecdsa.Signature
-		endBlock  uint64
+		signature          *tecdsa.Signature
+		activeMembersCount uint32
+		endBlock           uint64
 	}
 
 	wg := sync.WaitGroup{}
@@ -365,8 +367,9 @@ func (se *signingExecutor) sign(
 			)
 
 			signingOutcomeChan <- &signingOutcome{
-				signature: loopResult.result.Signature,
-				endBlock:  loopResult.latestEndBlock,
+				signature:          loopResult.result.Signature,
+				activeMembersCount: loopResult.activeMembersCount,
+				endBlock:           loopResult.latestEndBlock,
 			}
 		}(currentSigner)
 	}
@@ -383,9 +386,9 @@ func (se *signingExecutor) sign(
 	// signer, that means all signers failed and have not produced a signature.
 	select {
 	case outcome := <-signingOutcomeChan:
-		return outcome.signature, outcome.endBlock, nil
+		return outcome.signature, outcome.activeMembersCount, outcome.endBlock, nil
 	default:
-		return nil, 0, fmt.Errorf("all signers failed")
+		return nil, 0, 0, fmt.Errorf("all signers failed")
 	}
 }
 

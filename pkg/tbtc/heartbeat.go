@@ -45,7 +45,7 @@ type heartbeatSigningExecutor interface {
 		ctx context.Context,
 		message *big.Int,
 		startBlock uint64,
-	) (*tecdsa.Signature, uint64, error)
+	) (*tecdsa.Signature, uint32, uint64, error)
 }
 
 // heartbeatAction is a walletAction implementation handling heartbeat requests
@@ -123,7 +123,11 @@ func (ha *heartbeatAction) execute() error {
 	)
 	defer cancelHeartbeatCtx()
 
-	signature, _, err := ha.signingExecutor.sign(heartbeatCtx, messageToSign, ha.startBlock)
+	signature, _, _, err := ha.signingExecutor.sign(
+		heartbeatCtx,
+		messageToSign,
+		ha.startBlock,
+	)
 	if err != nil {
 		return fmt.Errorf("cannot sign heartbeat message: [%v]", err)
 	}

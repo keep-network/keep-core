@@ -4,10 +4,11 @@ import (
 	"context"
 	"encoding/hex"
 	"fmt"
-	"github.com/keep-network/keep-core/internal/testutils"
-	"github.com/keep-network/keep-core/pkg/tecdsa"
 	"math/big"
 	"testing"
+
+	"github.com/keep-network/keep-core/internal/testutils"
+	"github.com/keep-network/keep-core/pkg/tecdsa"
 )
 
 func TestHeartbeatAction_HappyPath(t *testing.T) {
@@ -136,13 +137,14 @@ func (mhse *mockHeartbeatSigningExecutor) sign(
 	ctx context.Context,
 	message *big.Int,
 	startBlock uint64,
-) (*tecdsa.Signature, uint64, error) {
+) (*tecdsa.Signature, uint32, uint64, error) {
 	mhse.requestedMessage = message
 	mhse.requestedStartBlock = startBlock
 
 	if mhse.shouldFail {
-		return nil, 0, fmt.Errorf("oofta")
+		return nil, 0, 0, fmt.Errorf("oofta")
 	}
 
-	return &tecdsa.Signature{}, startBlock + 1, nil
+	// TODO: Return the active members count and use it in unit tests.
+	return &tecdsa.Signature{}, 0, startBlock + 1, nil
 }
