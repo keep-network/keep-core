@@ -10,7 +10,8 @@ configMapGenerator:
   - name: tbtc-v2-monitoring-config
     literals:
       - environment=testnet
-      - large-deposit-threshold-sat=10000000 # 0.1 BTC for testing purposes
+      - large-deposit-threshold-sat=1000000000 # 10 BTC
+      - large-redemption-threshold-sat=1000000000 # 10 BTC
 
 secretGenerator:
   - name: tbtc-v2-monitoring-config
