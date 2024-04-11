@@ -540,10 +540,9 @@ func (ce *coordinationExecutor) getActionsChecklist(
 	actions = append(actions, ActionRedemption)
 
 	// Other actions should be checked with a lower frequency. The default
-	// frequency is every 16 coordination windows.
-	frequencyWindows := uint64(16)
+	// frequency is every 4 coordination windows.
+	frequencyWindows := uint64(4)
 
-	// TODO: Consider increasing frequency for the active wallet in the future.
 	if windowIndex%frequencyWindows == 0 {
 		actions = append(actions, ActionDepositSweep)
 	}
