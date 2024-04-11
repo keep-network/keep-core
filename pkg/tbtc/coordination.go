@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"math/rand"
 	"sort"
+	"strings"
+	"time"
 
 	"github.com/keep-network/keep-core/pkg/internal/pb"
 	"go.uber.org/zap"
@@ -576,13 +578,15 @@ func (ce *coordinationExecutor) executeLeaderRoutine(
 ) (CoordinationProposal, error) {
 	walletPublicKeyHash := ce.walletPublicKeyHash()
 
-	proposal, err := ce.proposalGenerator.Generate(
+	proposal, err := ce.generateProposal(
 		&CoordinationProposalRequest{
 			WalletPublicKeyHash: walletPublicKeyHash,
 			WalletOperators:     ce.coordinatedWallet.signingGroupOperators,
 			ExecutingOperator:   ce.operatorAddress,
 			ActionsChecklist:    actionsChecklist,
 		},
+		2,             // 2 attempts at most
+		1*time.Minute, // 1 minute between attempts
 	)
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate proposal: [%v]", err)
@@ -611,6 +615,40 @@ func (ce *coordinationExecutor) executeLeaderRoutine(
 	}
 
 	return proposal, nil
+}
+
+// generateProposal generates a proposal for the given coordination request.
+// The generator retries the proposal generation if it fails. The number of
+// attempts is limited to attemptLimit. The generator waits for retryDelay
+// between attempts.
+func (ce *coordinationExecutor) generateProposal(
+	request *CoordinationProposalRequest,
+	attemptLimit uint,
+	retryDelay time.Duration,
+) (CoordinationProposal, error) {
+	var attemptErrs []string
+
+	for attempt := uint(1); attempt <= attemptLimit; attempt++ {
+		if attempt > 1 {
+			time.Sleep(retryDelay)
+		}
+
+		proposal, err := ce.proposalGenerator.Generate(request)
+		if err != nil {
+			attemptErrs = append(
+				attemptErrs,
+				fmt.Sprintf("attempt [%v] error: [%v]", attempt, err),
+			)
+			continue
+		}
+
+		return proposal, nil
+	}
+
+	return nil, fmt.Errorf(
+		"all attempts failed: [%v]",
+		strings.Join(attemptErrs, "; "),
+	)
 }
 
 // executeFollowerRoutine executes the follower's routine for the given coordination
