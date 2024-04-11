@@ -610,6 +610,8 @@ func (n *node) handleRedemptionProposal(
 
 // handleMovingFundsProposal handles an incoming moving funds proposal by
 // orchestrating and dispatching an appropriate wallet action.
+//
+//lint:ignore U1000 This function will be used in the future.
 func (n *node) handleMovingFundsProposal(
 	wallet wallet,
 	proposal *MovingFundsProposal,
@@ -678,6 +680,8 @@ func (n *node) handleMovingFundsProposal(
 
 // handleMovedFundsSweepProposal handles an incoming moved funds sweep proposal
 // by orchestrating and dispatching an appropriate wallet action.
+//
+//lint:ignore U1000 This function will be used in the future.
 func (n *node) handleMovedFundsSweepProposal(
 	wallet wallet,
 	proposal *MovedFundsSweepProposal,

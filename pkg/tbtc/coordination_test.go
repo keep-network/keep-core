@@ -557,10 +557,12 @@ func TestCoordinationExecutor_GetActionsChecklist(t *testing.T) {
 			coordinationBlock: 2700,
 			expectedChecklist: []WalletActionType{ActionRedemption},
 		},
+		// Heartbeat randomly selected for the 4th coordination window.
 		"block 3600": {
 			coordinationBlock: 3600,
 			expectedChecklist: []WalletActionType{
 				ActionRedemption,
+				ActionDepositSweep,
 				ActionHeartbeat,
 			},
 		},
@@ -568,7 +570,6 @@ func TestCoordinationExecutor_GetActionsChecklist(t *testing.T) {
 			coordinationBlock: 4500,
 			expectedChecklist: []WalletActionType{ActionRedemption},
 		},
-		// Heartbeat randomly selected for the 6th coordination window.
 		"block 5400": {
 			coordinationBlock: 5400,
 			expectedChecklist: []WalletActionType{
@@ -581,7 +582,10 @@ func TestCoordinationExecutor_GetActionsChecklist(t *testing.T) {
 		},
 		"block 7200": {
 			coordinationBlock: 7200,
-			expectedChecklist: []WalletActionType{ActionRedemption},
+			expectedChecklist: []WalletActionType{
+				ActionRedemption,
+				ActionDepositSweep,
+			},
 		},
 		"block 8100": {
 			coordinationBlock: 8100,
@@ -597,13 +601,15 @@ func TestCoordinationExecutor_GetActionsChecklist(t *testing.T) {
 		},
 		"block 10800": {
 			coordinationBlock: 10800,
-			expectedChecklist: []WalletActionType{ActionRedemption},
+			expectedChecklist: []WalletActionType{
+				ActionRedemption,
+				ActionDepositSweep,
+			},
 		},
 		"block 11700": {
 			coordinationBlock: 11700,
 			expectedChecklist: []WalletActionType{ActionRedemption},
 		},
-		// Heartbeat randomly selected for the 14th coordination window.
 		"block 12600": {
 			coordinationBlock: 12600,
 			expectedChecklist: []WalletActionType{
@@ -614,14 +620,11 @@ func TestCoordinationExecutor_GetActionsChecklist(t *testing.T) {
 			coordinationBlock: 13500,
 			expectedChecklist: []WalletActionType{ActionRedemption},
 		},
-		// 16th coordination window so, all actions should be on the checklist.
 		"block 14400": {
 			coordinationBlock: 14400,
 			expectedChecklist: []WalletActionType{
 				ActionRedemption,
 				ActionDepositSweep,
-				ActionMovedFundsSweep,
-				ActionMovingFunds,
 			},
 		},
 	}
