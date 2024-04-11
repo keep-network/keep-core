@@ -132,13 +132,12 @@ var listDepositsCommand = cobra.Command{
 
 func printDepositsTable(deposits []*tbtcpg.Deposit) error {
 	w := tabwriter.NewWriter(os.Stdout, 2, 4, 1, ' ', tabwriter.AlignRight)
-	fmt.Fprintf(w, "index\twallet\ttype\tvalue (BTC)\tdeposit key\trevealed deposit data\tconfirmations\tswept\t\n")
+	fmt.Fprintf(w, "index\twallet\tvalue (BTC)\tdeposit key\trevealed deposit data\tconfirmations\tswept\t\n")
 
 	for i, deposit := range deposits {
-		fmt.Fprintf(w, "%d\t%s\t%s\t%.5f\t%s\t%s\t%d\t%t\t\n",
+		fmt.Fprintf(w, "%d\t%s\t%.5f\t%s\t%s\t%d\t%t\t\n",
 			i,
 			hexutils.Encode(deposit.WalletPublicKeyHash[:]),
-			deposit.ScriptType,
 			deposit.AmountBtc,
 			deposit.DepositKey,
 			fmt.Sprintf(
