@@ -7,6 +7,7 @@ import (
 
 	"github.com/ipfs/go-log/v2"
 	"github.com/keep-network/keep-core/pkg/bitcoin"
+	"github.com/keep-network/keep-core/pkg/protocol/group"
 	"github.com/keep-network/keep-core/pkg/tecdsa"
 )
 
@@ -66,6 +67,8 @@ type heartbeatAction struct {
 	proposal       *HeartbeatProposal
 	failureCounter *uint
 
+	inactivityClaimExecutor *inactivityClaimExecutor
+
 	startBlock  uint64
 	expiryBlock uint64
 
@@ -79,20 +82,22 @@ func newHeartbeatAction(
 	signingExecutor heartbeatSigningExecutor,
 	proposal *HeartbeatProposal,
 	failureCounter *uint,
+	inactivityClaimExecutor *inactivityClaimExecutor,
 	startBlock uint64,
 	expiryBlock uint64,
 	waitForBlockFn waitForBlockFn,
 ) *heartbeatAction {
 	return &heartbeatAction{
-		logger:          logger,
-		chain:           chain,
-		executingWallet: executingWallet,
-		signingExecutor: signingExecutor,
-		proposal:        proposal,
-		failureCounter:  failureCounter,
-		startBlock:      startBlock,
-		expiryBlock:     expiryBlock,
-		waitForBlockFn:  waitForBlockFn,
+		logger:                  logger,
+		chain:                   chain,
+		executingWallet:         executingWallet,
+		signingExecutor:         signingExecutor,
+		proposal:                proposal,
+		failureCounter:          failureCounter,
+		inactivityClaimExecutor: inactivityClaimExecutor,
+		startBlock:              startBlock,
+		expiryBlock:             expiryBlock,
+		waitForBlockFn:          waitForBlockFn,
 	}
 }
 
@@ -104,7 +109,7 @@ func (ha *heartbeatAction) execute() error {
 	}
 
 	if isUnstaking {
-		logger.Info(
+		logger.Warn(
 			"quitting the heartbeat action without signing because the " +
 				"operator is unstaking",
 		)
@@ -183,7 +188,10 @@ func (ha *heartbeatAction) execute() error {
 
 	// The value of consecutive heartbeat failures exceeds the threshold.
 	// Proceed with operator inactivity notification.
-	err = ha.notifyOperatorInactivity()
+	err = ha.inactivityClaimExecutor.publishClaim(
+		[]group.MemberIndex{},
+		true,
+	)
 	if err != nil {
 		return fmt.Errorf(
 			"error while notifying about operator inactivity [%v]]",
@@ -191,11 +199,6 @@ func (ha *heartbeatAction) execute() error {
 		)
 	}
 
-	return nil
-}
-
-func (ha *heartbeatAction) notifyOperatorInactivity() error {
-	// TODO: Implement
 	return nil
 }
 

@@ -28,6 +28,7 @@ import (
 	"github.com/keep-network/keep-core/pkg/subscription"
 	"github.com/keep-network/keep-core/pkg/tbtc"
 	"github.com/keep-network/keep-core/pkg/tecdsa/dkg"
+	"github.com/keep-network/keep-core/pkg/tecdsa/inactivity"
 )
 
 // Definitions of contract names.
@@ -991,6 +992,16 @@ func (tc *TbtcChain) DKGParameters() (*tbtc.DKGParameters, error) {
 		ChallengePeriodBlocks:         parameters.ResultChallengePeriodLength.Uint64(),
 		ApprovePrecedencePeriodBlocks: parameters.SubmitterPrecedencePeriodLength.Uint64(),
 	}, nil
+}
+
+func (tc *TbtcChain) CalculateInactivityClaimSignatureHash(
+	nonce *big.Int,
+	walletPublicKey *ecdsa.PublicKey,
+	inactiveMembersIndexes []group.MemberIndex,
+	heartbeatFailed bool,
+) (inactivity.ClaimSignatureHash, error) {
+	// TODO: Implement
+	return inactivity.ClaimSignatureHash{}, nil
 }
 
 func (tc *TbtcChain) PastDepositRevealedEvents(

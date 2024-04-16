@@ -42,6 +42,10 @@ func TestHeartbeatAction_HappyPath(t *testing.T) {
 	hostChain.setHeartbeatProposalValidationResult(proposal, true)
 
 	mockExecutor := &mockHeartbeatSigningExecutor{}
+	inactivityNotifier := newInactivityClaimExecutor(
+		hostChain,
+		[]*signer{},
+	)
 	action := newHeartbeatAction(
 		logger,
 		hostChain,
@@ -51,6 +55,7 @@ func TestHeartbeatAction_HappyPath(t *testing.T) {
 		mockExecutor,
 		proposal,
 		&heartbeatFailureCounter,
+		inactivityNotifier,
 		startBlock,
 		expiryBlock,
 		func(ctx context.Context, blockHeight uint64) error {
@@ -104,6 +109,11 @@ func TestHeartbeatAction_SigningError(t *testing.T) {
 	mockExecutor := &mockHeartbeatSigningExecutor{}
 	mockExecutor.shouldFail = true
 
+	inactivityNotifier := newInactivityClaimExecutor(
+		hostChain,
+		[]*signer{},
+	)
+
 	action := newHeartbeatAction(
 		logger,
 		hostChain,
@@ -113,6 +123,7 @@ func TestHeartbeatAction_SigningError(t *testing.T) {
 		mockExecutor,
 		proposal,
 		&heartbeatFailureCounter,
+		inactivityNotifier,
 		startBlock,
 		expiryBlock,
 		func(ctx context.Context, blockHeight uint64) error {

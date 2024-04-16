@@ -12,6 +12,7 @@ import (
 	"github.com/keep-network/keep-core/pkg/sortition"
 	"github.com/keep-network/keep-core/pkg/subscription"
 	"github.com/keep-network/keep-core/pkg/tecdsa/dkg"
+	"github.com/keep-network/keep-core/pkg/tecdsa/inactivity"
 )
 
 type DKGState int
@@ -105,6 +106,13 @@ type DistributedKeyGenerationChain interface {
 		misbehavedMembersIndexes []group.MemberIndex,
 		startBlock uint64,
 	) (dkg.ResultSignatureHash, error)
+
+	CalculateInactivityClaimSignatureHash(
+		nonce *big.Int,
+		walletPublicKey *ecdsa.PublicKey,
+		inactiveMembersIndexes []group.MemberIndex,
+		heartbeatFailed bool,
+	) (inactivity.ClaimSignatureHash, error)
 
 	// IsDKGResultValid checks whether the submitted DKG result is valid from
 	// the on-chain contract standpoint.

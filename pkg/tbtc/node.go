@@ -410,6 +410,25 @@ func (n *node) getCoordinationExecutor(
 	return executor, true, nil
 }
 
+func (n *node) getInactivityNotifier(
+	walletPublicKey *ecdsa.PublicKey,
+) (*inactivityClaimExecutor, error) {
+	signers := n.walletRegistry.getSigners(walletPublicKey)
+	if len(signers) == 0 {
+		// This is not an error because the node simply does not control
+		// the given wallet.
+		return nil, nil
+	}
+
+	inactivityNotifier := newInactivityClaimExecutor(
+		n.chain,
+		signers,
+	)
+
+	// TODO: Continue with the implementation.
+	return inactivityNotifier, nil
+}
+
 // handleHeartbeatProposal handles an incoming heartbeat proposal by
 // orchestrating and dispatching an appropriate wallet action.
 func (n *node) handleHeartbeatProposal(
@@ -442,6 +461,12 @@ func (n *node) handleHeartbeatProposal(
 		return
 	}
 
+	inactivityNotifier, err := n.getInactivityNotifier(wallet.publicKey)
+	if err != nil {
+		logger.Errorf("cannot get inactivity operator: [%v]", err)
+		return
+	}
+
 	logger.Infof(
 		"starting orchestration of the heartbeat action for wallet [0x%x]; "+
 			"20-byte public key hash of that wallet is [0x%x]",
@@ -464,6 +489,7 @@ func (n *node) handleHeartbeatProposal(
 		signingExecutor,
 		proposal,
 		&n.heartbeatFailureCounter,
+		inactivityNotifier,
 		startBlock,
 		expiryBlock,
 		n.waitForBlockHeight,

@@ -24,6 +24,7 @@ import (
 	"github.com/keep-network/keep-core/pkg/protocol/group"
 	"github.com/keep-network/keep-core/pkg/subscription"
 	"github.com/keep-network/keep-core/pkg/tecdsa/dkg"
+	"github.com/keep-network/keep-core/pkg/tecdsa/inactivity"
 )
 
 const localChainOperatorID = chain.OperatorID(1)
@@ -549,6 +550,15 @@ func (lc *localChain) DKGParameters() (*DKGParameters, error) {
 		ChallengePeriodBlocks:         15,
 		ApprovePrecedencePeriodBlocks: 5,
 	}, nil
+}
+
+func (lc *localChain) CalculateInactivityClaimSignatureHash(
+	nonce *big.Int,
+	walletPublicKey *ecdsa.PublicKey,
+	inactiveMembersIndexes []group.MemberIndex,
+	heartbeatFailed bool,
+) (inactivity.ClaimSignatureHash, error) {
+	panic("unsupported")
 }
 
 func (lc *localChain) PastDepositRevealedEvents(
