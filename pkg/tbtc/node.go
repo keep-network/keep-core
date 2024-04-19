@@ -65,10 +65,11 @@ type node struct {
 	// dkgExecutor MUST NOT be used outside this struct.
 	dkgExecutor *dkgExecutor
 
-	// heartbeatFailureCounter is the counter keeping track of consecutive
-	// heartbeat failure. It reset to zero after each successful heartbeat
-	// procedure.
-	heartbeatFailureCounter uint
+	heartbeatFailureCountersMutex sync.Mutex
+	// heartbeatFailureCounters holds counters keeping track of consecutive
+	// heartbeat failures. Each wallet has a separate counter. The key used in
+	// the map is the uncompressed public key (with 04 prefix) of the wallet.
+	heartbeatFailureCounters map[string]*uint
 
 	signingExecutorsMutex sync.Mutex
 	// signingExecutors is the cache holding signing executors for specific wallets.
@@ -111,16 +112,17 @@ func newNode(
 	scheduler.RegisterProtocol(latch)
 
 	node := &node{
-		groupParameters:       groupParameters,
-		chain:                 chain,
-		btcChain:              btcChain,
-		netProvider:           netProvider,
-		walletRegistry:        walletRegistry,
-		walletDispatcher:      newWalletDispatcher(),
-		protocolLatch:         latch,
-		signingExecutors:      make(map[string]*signingExecutor),
-		coordinationExecutors: make(map[string]*coordinationExecutor),
-		proposalGenerator:     proposalGenerator,
+		groupParameters:          groupParameters,
+		chain:                    chain,
+		btcChain:                 btcChain,
+		netProvider:              netProvider,
+		walletRegistry:           walletRegistry,
+		walletDispatcher:         newWalletDispatcher(),
+		protocolLatch:            latch,
+		heartbeatFailureCounters: make(map[string]*uint),
+		signingExecutors:         make(map[string]*signingExecutor),
+		coordinationExecutors:    make(map[string]*coordinationExecutor),
+		proposalGenerator:        proposalGenerator,
 	}
 
 	// Only the operator address is known at this point and can be pre-fetched.
@@ -211,6 +213,29 @@ func (n *node) validateDKG(
 	resultHash [32]byte,
 ) {
 	n.dkgExecutor.executeDkgValidation(seed, submissionBlock, result, resultHash)
+}
+
+func (n *node) getHeartbeatCounter(
+	walletPublicKey *ecdsa.PublicKey,
+) (*uint, error) {
+	n.heartbeatFailureCountersMutex.Lock()
+	defer n.heartbeatFailureCountersMutex.Unlock()
+
+	walletPublicKeyBytes, err := marshalPublicKey(walletPublicKey)
+	if err != nil {
+		return nil, fmt.Errorf("cannot marshal wallet public key: [%v]", err)
+	}
+
+	counterKey := hex.EncodeToString(walletPublicKeyBytes)
+
+	if counter, exists := n.heartbeatFailureCounters[counterKey]; exists {
+		return counter, nil
+	}
+
+	counterInitialValue := new(uint) // The value is zero-initialized.
+	n.heartbeatFailureCounters[counterKey] = counterInitialValue
+
+	return counterInitialValue, nil
 }
 
 // getSigningExecutor gets the signing executor responsible for executing
@@ -461,6 +486,12 @@ func (n *node) handleHeartbeatProposal(
 		return
 	}
 
+	heartbeatFailureCounter, err := n.getHeartbeatCounter(wallet.publicKey)
+	if err != nil {
+		logger.Errorf("cannot get heartbeat failure counter: [%v]", err)
+		return
+	}
+
 	inactivityNotifier, err := n.getInactivityNotifier(wallet.publicKey)
 	if err != nil {
 		logger.Errorf("cannot get inactivity operator: [%v]", err)
@@ -488,7 +519,7 @@ func (n *node) handleHeartbeatProposal(
 		wallet,
 		signingExecutor,
 		proposal,
-		&n.heartbeatFailureCounter,
+		heartbeatFailureCounter,
 		inactivityNotifier,
 		startBlock,
 		expiryBlock,

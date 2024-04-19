@@ -19,6 +19,94 @@ import (
 	"github.com/keep-network/keep-core/pkg/tecdsa"
 )
 
+func TestNode_GetHeartbeatCounter(t *testing.T) {
+	groupParameters := &GroupParameters{
+		GroupSize:       5,
+		GroupQuorum:     4,
+		HonestThreshold: 3,
+	}
+
+	localChain := Connect()
+	localProvider := local.Connect()
+
+	signer := createMockSigner(t)
+
+	// Populate the mock keystore with the mock signer's data. This is
+	// required to make the node controlling the signer's wallet.
+	keyStorePersistence := createMockKeyStorePersistence(t, signer)
+
+	node, err := newNode(
+		groupParameters,
+		localChain,
+		newLocalBitcoinChain(),
+		localProvider,
+		keyStorePersistence,
+		&mockPersistenceHandle{},
+		generator.StartScheduler(),
+		&mockCoordinationProposalGenerator{},
+		Config{},
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	walletPublicKey := signer.wallet.publicKey
+
+	testutils.AssertIntsEqual(
+		t,
+		"cache size",
+		0,
+		len(node.heartbeatFailureCounters),
+	)
+
+	counter, err := node.getHeartbeatCounter(walletPublicKey)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	testutils.AssertIntsEqual(
+		t,
+		"cache size",
+		1,
+		len(node.heartbeatFailureCounters),
+	)
+
+	testutils.AssertUintsEqual(t, "counter value", 0, uint64(*counter))
+
+	// Increment the counter and check the value again
+	*counter++
+	testutils.AssertUintsEqual(t, "counter value", 1, uint64(*counter))
+
+	// Construct an arbitrary public key representing a different wallet.
+	x, y := walletPublicKey.Curve.Double(walletPublicKey.X, walletPublicKey.Y)
+	anotherWalletPublicKey := &ecdsa.PublicKey{
+		Curve: walletPublicKey.Curve,
+		X:     x,
+		Y:     y,
+	}
+
+	anotherCounter, err := node.getHeartbeatCounter(anotherWalletPublicKey)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	testutils.AssertIntsEqual(
+		t,
+		"cache size",
+		2,
+		len(node.heartbeatFailureCounters),
+	)
+
+	testutils.AssertUintsEqual(t, "counter value", 0, uint64(*anotherCounter))
+
+	// Increment one counter and reset another.
+	*anotherCounter++
+	*counter = 0
+
+	testutils.AssertUintsEqual(t, "counter value", 0, uint64(*counter))
+	testutils.AssertUintsEqual(t, "counter value", 1, uint64(*anotherCounter))
+}
+
 func TestNode_GetSigningExecutor(t *testing.T) {
 	groupParameters := &GroupParameters{
 		GroupSize:       5,
