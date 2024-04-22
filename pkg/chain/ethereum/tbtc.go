@@ -995,13 +995,17 @@ func (tc *TbtcChain) DKGParameters() (*tbtc.DKGParameters, error) {
 }
 
 func (tc *TbtcChain) CalculateInactivityClaimSignatureHash(
-	nonce *big.Int,
-	walletPublicKey *ecdsa.PublicKey,
-	inactiveMembersIndexes []group.MemberIndex,
-	heartbeatFailed bool,
+	claim *inactivity.Claim,
 ) (inactivity.ClaimSignatureHash, error) {
 	// TODO: Implement
 	return inactivity.ClaimSignatureHash{}, nil
+}
+
+func (tc *TbtcChain) GetInactivityClaimNonce(
+	walletID [32]byte,
+) (*big.Int, error) {
+	// TODO: Implement
+	return nil, nil
 }
 
 func (tc *TbtcChain) PastDepositRevealedEvents(

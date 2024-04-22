@@ -553,11 +553,12 @@ func (lc *localChain) DKGParameters() (*DKGParameters, error) {
 }
 
 func (lc *localChain) CalculateInactivityClaimSignatureHash(
-	nonce *big.Int,
-	walletPublicKey *ecdsa.PublicKey,
-	inactiveMembersIndexes []group.MemberIndex,
-	heartbeatFailed bool,
+	claim *inactivity.Claim,
 ) (inactivity.ClaimSignatureHash, error) {
+	panic("unsupported")
+}
+
+func (lc *localChain) GetInactivityClaimNonce(walletID [32]byte) (*big.Int, error) {
 	panic("unsupported")
 }
 

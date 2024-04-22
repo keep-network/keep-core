@@ -30,12 +30,7 @@ func (ics *inactivityClaimSigner) SignClaim(claim *inactivity.Claim) (
 		return nil, fmt.Errorf("result is nil")
 	}
 
-	claimHash, err := ics.chain.CalculateInactivityClaimSignatureHash(
-		claim.Nonce,
-		claim.WalletPublicKey,
-		claim.InactiveMembersIndexes,
-		claim.HeartbeatFailed,
-	)
+	claimHash, err := ics.chain.CalculateInactivityClaimSignatureHash(claim)
 	if err != nil {
 		return nil, fmt.Errorf(
 			"inactivity claim hash calculation failed [%w]",

@@ -524,6 +524,11 @@ func (n *node) getInactivityClaimExecutor(
 	executor := newInactivityClaimExecutor(
 		n.chain,
 		signers,
+		broadcastChannel,
+		membershipValidator,
+		n.groupParameters,
+		n.protocolLatch,
+		n.waitForBlockHeight,
 	)
 
 	n.inactivityClaimExecutors[executorKey] = executor

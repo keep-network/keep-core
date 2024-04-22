@@ -107,13 +107,6 @@ type DistributedKeyGenerationChain interface {
 		startBlock uint64,
 	) (dkg.ResultSignatureHash, error)
 
-	CalculateInactivityClaimSignatureHash(
-		nonce *big.Int,
-		walletPublicKey *ecdsa.PublicKey,
-		inactiveMembersIndexes []group.MemberIndex,
-		heartbeatFailed bool,
-	) (inactivity.ClaimSignatureHash, error)
-
 	// IsDKGResultValid checks whether the submitted DKG result is valid from
 	// the on-chain contract standpoint.
 	IsDKGResultValid(dkgResult *DKGChainResult) (bool, error)
@@ -126,6 +119,18 @@ type DistributedKeyGenerationChain interface {
 
 	// DKGParameters gets the current value of DKG-specific control parameters.
 	DKGParameters() (*DKGParameters, error)
+}
+
+type InactivityClaimChain interface {
+	// CalculateInactivityClaimSignatureHash calculates hash for the given
+	// inactivity claim.
+	CalculateInactivityClaimSignatureHash(
+		claim *inactivity.Claim,
+	) (inactivity.ClaimSignatureHash, error)
+
+	// GetInactivityClaimNonce returns inactivity claim nonce for the given
+	// wallet.
+	GetInactivityClaimNonce(walletID [32]byte) (*big.Int, error)
 }
 
 // DKGChainResultHash represents a hash of the DKGChainResult. The algorithm
@@ -461,6 +466,7 @@ type Chain interface {
 	sortition.Chain
 	GroupSelectionChain
 	DistributedKeyGenerationChain
+	InactivityClaimChain
 	BridgeChain
 	WalletProposalValidatorChain
 }

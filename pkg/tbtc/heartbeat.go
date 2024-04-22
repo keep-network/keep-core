@@ -189,8 +189,12 @@ func (ha *heartbeatAction) execute() error {
 	// The value of consecutive heartbeat failures exceeds the threshold.
 	// Proceed with operator inactivity notification.
 	err = ha.inactivityClaimExecutor.publishClaim(
+		// Leave the list empty. Some operators were inactive during the
+		// heartbeat because they were simply unstaking and therefore should not
+		// be punished.
 		[]group.MemberIndex{},
 		true,
+		messageToSign,
 	)
 	if err != nil {
 		return fmt.Errorf(
