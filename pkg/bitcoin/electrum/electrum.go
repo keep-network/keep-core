@@ -88,7 +88,18 @@ func (c *Connection) GetTransaction(
 			// We cannot use `GetTransaction` to get the the transaction details
 			// as Esplora/Electrs doesn't support verbose transactions.
 			// See: https://github.com/Blockstream/electrs/pull/36
-			return client.GetRawTransaction(ctx, txID)
+			tx, err := client.GetRawTransaction(ctx, txID)
+			if err != nil {
+				if isTxNotFoundErr(err) {
+					// The transaction was not found on the chain. There is
+					// no point in retrying the request and losing time.
+					return "", nil
+				}
+
+				return "", err
+			}
+
+			return tx, nil
 		},
 		"GetRawTransaction",
 	)
@@ -97,6 +108,13 @@ func (c *Connection) GetTransaction(
 			"failed to get raw transaction with ID [%s]: [%w]",
 			txID,
 			err,
+		)
+	}
+	if len(rawTransaction) == 0 {
+		return nil, fmt.Errorf(
+			"failed to get raw transaction with ID [%s]: [%v]",
+			txID,
+			fmt.Errorf("not found"),
 		)
 	}
 
@@ -123,10 +141,21 @@ func (c *Connection) GetTransactionConfirmations(
 	rawTransaction, err := requestWithRetry(
 		c,
 		func(ctx context.Context, client *electrum.Client) (string, error) {
-			// We cannot use `GetTransaction` to get the the transaction details
+			// We cannot use `GetTransaction` to get the transaction details
 			// as Esplora/Electrs doesn't support verbose transactions.
 			// See: https://github.com/Blockstream/electrs/pull/36
-			return client.GetRawTransaction(ctx, txID)
+			tx, err := client.GetRawTransaction(ctx, txID)
+			if err != nil {
+				if isTxNotFoundErr(err) {
+					// The transaction was not found on the chain. There is
+					// no point in retrying the request and losing time.
+					return "", nil
+				}
+
+				return "", err
+			}
+
+			return tx, nil
 		},
 		"GetRawTransaction",
 	)
@@ -137,6 +166,13 @@ func (c *Connection) GetTransactionConfirmations(
 				txID,
 				err,
 			)
+	}
+	if len(rawTransaction) == 0 {
+		return 0, fmt.Errorf(
+			"failed to get raw transaction with ID [%s]: [%v]",
+			txID,
+			fmt.Errorf("not found"),
+		)
 	}
 
 	tx, err := decodeTransaction(rawTransaction)
@@ -222,6 +258,24 @@ txOutLoop:
 	}
 
 	return 0, nil
+}
+
+func isTxNotFoundErr(err error) bool {
+	txNotFoundErrs := []string{
+		"no such mempool or blockchain transaction",
+		"missing transaction",
+		"transaction not found",
+	}
+
+	errStr := strings.ToLower(err.Error())
+
+	for _, txNotFoundErr := range txNotFoundErrs {
+		if strings.Contains(errStr, txNotFoundErr) {
+			return true
+		}
+	}
+
+	return false
 }
 
 // BroadcastTransaction broadcasts the given transaction over the
