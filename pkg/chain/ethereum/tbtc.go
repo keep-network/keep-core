@@ -5,6 +5,7 @@ import (
 	"crypto/elliptic"
 	"encoding/binary"
 	"fmt"
+	"github.com/keep-network/keep-common/pkg/cache"
 	"math/big"
 	"reflect"
 	"sort"
@@ -40,6 +41,10 @@ const (
 	WalletProposalValidatorContractName = "WalletProposalValidator"
 )
 
+const (
+	sweptDepositsCachePeriod = 7 * 24 * time.Hour
+)
+
 // TbtcChain represents a TBTC-specific chain handle.
 type TbtcChain struct {
 	*baseChain
@@ -50,6 +55,8 @@ type TbtcChain struct {
 	sortitionPool           *ecdsacontract.EcdsaSortitionPool
 	walletProposalValidator *tbtccontract.WalletProposalValidator
 	redemptionWatchtower    *tbtccontract.RedemptionWatchtower
+
+	sweptDepositsCache *cache.GenericTimeCache[*tbtc.DepositChainRequest]
 }
 
 // NewTbtcChain construct a new instance of the TBTC-specific Ethereum
@@ -237,6 +244,7 @@ func newTbtcChain(
 		sortitionPool:           sortitionPool,
 		walletProposalValidator: walletProposalValidator,
 		redemptionWatchtower:    redemptionWatchtower,
+		sweptDepositsCache:      cache.NewGenericTimeCache[*tbtc.DepositChainRequest](sweptDepositsCachePeriod),
 	}, nil
 }
 
@@ -1126,8 +1134,14 @@ func (tc *TbtcChain) GetDepositRequest(
 	fundingOutputIndex uint32,
 ) (*tbtc.DepositChainRequest, bool, error) {
 	depositKey := buildDepositKey(fundingTxHash, fundingOutputIndex)
+	depositCacheKey := depositKey.Text(16)
 
-	depositRequest, err := tc.bridge.Deposits(depositKey)
+	tc.sweptDepositsCache.Sweep()
+	if cachedRequest, ok := tc.sweptDepositsCache.Get(depositCacheKey); ok {
+		return cachedRequest, true, nil
+	}
+
+	chainRequest, err := tc.bridge.Deposits(depositKey)
 	if err != nil {
 		return nil, false, fmt.Errorf(
 			"cannot get deposit request for key [0x%x]: [%v]",
@@ -1137,30 +1151,39 @@ func (tc *TbtcChain) GetDepositRequest(
 	}
 
 	// Deposit not found.
-	if depositRequest.RevealedAt == 0 {
+	if chainRequest.RevealedAt == 0 {
 		return nil, false, nil
 	}
 
 	var vault *chain.Address
-	if depositRequest.Vault != [20]byte{} {
-		v := chain.Address(depositRequest.Vault.Hex())
+	if chainRequest.Vault != [20]byte{} {
+		v := chain.Address(chainRequest.Vault.Hex())
 		vault = &v
 	}
 
 	var extraData *[32]byte
-	if depositRequest.ExtraData != [32]byte{} {
-		extraData = &depositRequest.ExtraData
+	if chainRequest.ExtraData != [32]byte{} {
+		extraData = &chainRequest.ExtraData
 	}
 
-	return &tbtc.DepositChainRequest{
-		Depositor:   chain.Address(depositRequest.Depositor.Hex()),
-		Amount:      depositRequest.Amount,
-		RevealedAt:  time.Unix(int64(depositRequest.RevealedAt), 0),
+	request := &tbtc.DepositChainRequest{
+		Depositor:   chain.Address(chainRequest.Depositor.Hex()),
+		Amount:      chainRequest.Amount,
+		RevealedAt:  time.Unix(int64(chainRequest.RevealedAt), 0),
 		Vault:       vault,
-		TreasuryFee: depositRequest.TreasuryFee,
-		SweptAt:     time.Unix(int64(depositRequest.SweptAt), 0),
+		TreasuryFee: chainRequest.TreasuryFee,
+		SweptAt:     time.Unix(int64(chainRequest.SweptAt), 0),
 		ExtraData:   extraData,
-	}, true, nil
+	}
+
+	// If the request was swept on-chain, there is a guarantee that no
+	// further changes will occur regarding its parameters.
+	// Such a request can be cached.
+	if isSwept := request.SweptAt.Unix() != 0; isSwept {
+		tc.sweptDepositsCache.Add(depositCacheKey, request)
+	}
+
+	return request, true, nil
 }
 
 func (tc *TbtcChain) PastNewWalletRegisteredEvents(
