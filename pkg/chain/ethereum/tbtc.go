@@ -997,15 +997,103 @@ func (tc *TbtcChain) DKGParameters() (*tbtc.DKGParameters, error) {
 func (tc *TbtcChain) CalculateInactivityClaimSignatureHash(
 	claim *inactivity.Claim,
 ) (inactivity.ClaimSignatureHash, error) {
-	// TODO: Implement
-	return inactivity.ClaimSignatureHash{}, nil
+	walletPublicKeyBytes := elliptic.Marshal(
+		claim.WalletPublicKey.Curve,
+		claim.WalletPublicKey.X,
+		claim.WalletPublicKey.Y,
+	)
+	// Crop the 04 prefix as the calculateInactivityClaimSignatureHash function
+	// expects an unprefixed 64-byte public key,
+	unprefixedGroupPublicKeyBytes := walletPublicKeyBytes[1:]
+
+	// Inactive members indexes should be sorted in the ascending order. As the
+	// claim object may possibly be shared between concurrent code, it is
+	// safer to copy the indexes into a new slice. Additionally, the type
+	// representing inactive member index should be `big.Int` as the smart
+	// contract reading the calculated hash uses `uint256` for inactive member
+	// indexes.
+	inactiveMembersIndexes := make([]*big.Int, len(claim.InactiveMembersIndexes))
+	for i, index := range claim.InactiveMembersIndexes {
+		inactiveMembersIndexes[i] = big.NewInt(int64(index))
+	}
+
+	sort.Slice(inactiveMembersIndexes, func(i, j int) bool {
+		return inactiveMembersIndexes[i].Cmp(inactiveMembersIndexes[j]) < 0
+	})
+
+	return calculateInactivityClaimSignatureHash(
+		tc.chainID,
+		claim.Nonce,
+		unprefixedGroupPublicKeyBytes,
+		inactiveMembersIndexes,
+		claim.HeartbeatFailed,
+	)
+}
+
+func calculateInactivityClaimSignatureHash(
+	chainID *big.Int,
+	nonce *big.Int,
+	walletPublicKey []byte,
+	inactiveMembersIndexes []*big.Int,
+	heartbeatFailed bool,
+) (inactivity.ClaimSignatureHash, error) {
+	publicKeySize := 64
+
+	if len(walletPublicKey) != publicKeySize {
+		return inactivity.ClaimSignatureHash{}, fmt.Errorf(
+			"wrong wallet public key length",
+		)
+	}
+
+	uint256Type, err := abi.NewType("uint256", "uint256", nil)
+	if err != nil {
+		return inactivity.ClaimSignatureHash{}, err
+	}
+	bytesType, err := abi.NewType("bytes", "bytes", nil)
+	if err != nil {
+		return inactivity.ClaimSignatureHash{}, err
+	}
+	uint256SliceType, err := abi.NewType("uint256[]", "uint256[]", nil)
+	if err != nil {
+		return inactivity.ClaimSignatureHash{}, err
+	}
+	boolType, err := abi.NewType("bool", "bool", nil)
+	if err != nil {
+		return inactivity.ClaimSignatureHash{}, err
+	}
+
+	bytes, err := abi.Arguments{
+		{Type: uint256Type},
+		{Type: uint256Type},
+		{Type: bytesType},
+		{Type: uint256SliceType},
+		{Type: boolType},
+	}.Pack(
+		chainID,
+		nonce,
+		walletPublicKey,
+		inactiveMembersIndexes,
+		heartbeatFailed,
+	)
+	if err != nil {
+		return inactivity.ClaimSignatureHash{}, err
+	}
+
+	return inactivity.ClaimSignatureHash(crypto.Keccak256Hash(bytes)), nil
 }
 
 func (tc *TbtcChain) GetInactivityClaimNonce(
 	walletID [32]byte,
 ) (*big.Int, error) {
-	// TODO: Implement
-	return nil, nil
+	nonce, err := tc.walletRegistry.InactivityClaimNonce(walletID)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"failed to get inactivity claim nonce: [%w]",
+			err,
+		)
+	}
+
+	return nonce, nil
 }
 
 func (tc *TbtcChain) PastDepositRevealedEvents(
