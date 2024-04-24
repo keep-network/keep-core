@@ -311,11 +311,26 @@ func ValidateMovingFundsProposal(
 			mainUTXO *bitcoin.UnspentTransactionOutput,
 			proposal *MovingFundsProposal,
 		) error
+
+		GetWallet(walletPublicKeyHash [20]byte) (*WalletChainData, error)
 	},
 ) error {
 	validateProposalLogger.Infof("calling chain for proposal validation")
 
-	err := chain.ValidateMovingFundsProposal(
+	walletChainData, err := chain.GetWallet(walletPublicKeyHash)
+	if err != nil {
+		return fmt.Errorf(
+			"cannot get wallet's chain data: [%w]",
+			err,
+		)
+	}
+
+	err = ValidateMovingFundsSafetyMargin(walletChainData)
+	if err != nil {
+		return fmt.Errorf("moving funds proposal is invalid: [%v]", err)
+	}
+
+	err = chain.ValidateMovingFundsProposal(
 		walletPublicKeyHash,
 		mainUTXO,
 		proposal,
@@ -325,6 +340,29 @@ func ValidateMovingFundsProposal(
 	}
 
 	validateProposalLogger.Infof("moving funds proposal is valid")
+
+	return nil
+}
+
+// ValidateMovingFundsSafetyMargin checks if the moving funds safety margin
+// is in force.
+//
+// Wallets that just entered the MovingFunds state may have received some last
+// minute deposits just before. Even though deposit sweep typically occurs
+// before moving funds, such deposits may not be mature enough or have enough
+// confirmations to be swept yet. MovingFunds wallets cannot receive new
+// deposits so, it makes sense to preserve a safety margin before moving
+// funds to give the last minute deposits a chance to become eligible for
+// deposit sweep.
+func ValidateMovingFundsSafetyMargin(
+	walletChainData *WalletChainData,
+) error {
+	safetyMargin := time.Duration(24) * time.Hour
+	safetyMarginExpiresAt := walletChainData.MovingFundsRequestedAt.Add(safetyMargin)
+
+	if time.Now().Before(safetyMarginExpiresAt) {
+		return fmt.Errorf("safety margin in force")
+	}
 
 	return nil
 }
