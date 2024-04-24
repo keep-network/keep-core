@@ -581,6 +581,13 @@ func TestMovingFundsAction_ProposeMovingFunds(t *testing.T) {
 
 			btcChain.SetEstimateSatPerVByteFee(1, 25)
 
+			tbtcChain.SetWallet(
+				walletPublicKeyHash,
+				&tbtc.WalletChainData{
+					MovingFundsRequestedAt: time.Now().Add(-25 * time.Hour),
+				},
+			)
+
 			tbtcChain.SetMovingFundsParameters(
 				txMaxTotalFee,
 				0,
