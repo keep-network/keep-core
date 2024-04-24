@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/ipfs/go-log/v2"
+	"github.com/keep-network/keep-core/pkg/bitcoin"
 	"github.com/keep-network/keep-core/pkg/protocol/group"
 	"github.com/keep-network/keep-core/pkg/tecdsa/inactivity"
 )
@@ -71,12 +73,29 @@ func (ics *inactivityClaimSigner) VerifySignature(
 }
 
 type inactivityClaimSubmitter struct {
-	// TODO: Implement
+	inactivityLogger log.StandardLogger
+
+	chain           Chain
+	groupParameters *GroupParameters
+	groupMembers    []uint32
+
+	waitForBlockFn waitForBlockFn
 }
 
-func newInactivityClaimSubmitter() *inactivityClaimSubmitter {
-	// TODO: Implement
-	return &inactivityClaimSubmitter{}
+func newInactivityClaimSubmitter(
+	inactivityLogger log.StandardLogger,
+	chain Chain,
+	groupParameters *GroupParameters,
+	groupMembers []uint32,
+	waitForBlockFn waitForBlockFn,
+) *inactivityClaimSubmitter {
+	return &inactivityClaimSubmitter{
+		inactivityLogger: inactivityLogger,
+		chain:            chain,
+		groupParameters:  groupParameters,
+		groupMembers:     groupMembers,
+		waitForBlockFn:   waitForBlockFn,
+	}
 }
 
 func (ics *inactivityClaimSubmitter) SubmitClaim(
@@ -85,6 +104,106 @@ func (ics *inactivityClaimSubmitter) SubmitClaim(
 	claim *inactivity.Claim,
 	signatures map[group.MemberIndex][]byte,
 ) error {
-	// TODO: Implement
-	return nil
+	if len(signatures) < ics.groupParameters.HonestThreshold {
+		return fmt.Errorf(
+			"could not submit inactivity claim with [%v] signatures for "+
+				"group honest threshold [%v]",
+			len(signatures),
+			ics.groupParameters.HonestThreshold,
+		)
+	}
+
+	// The inactivity nonce at the beginning of the execution process.
+	inactivityNonce := claim.Nonce
+
+	walletPublicKeyHash := bitcoin.PublicKeyHash(claim.WalletPublicKey)
+
+	walletRegistryData, err := ics.chain.GetWallet(walletPublicKeyHash)
+	if err != nil {
+		return fmt.Errorf("could not get registry data on wallet: [%v]", err)
+	}
+
+	ecdsaWalletID := walletRegistryData.EcdsaWalletID
+
+	currentNonce, err := ics.chain.GetInactivityClaimNonce(
+		ecdsaWalletID,
+	)
+	if err != nil {
+		return fmt.Errorf("could not get nonce for wallet: [%v]", err)
+	}
+
+	if currentNonce.Cmp(inactivityNonce) > 0 {
+		// Someone who was ahead of us in the queue submitted the claim. Giving up.
+		ics.inactivityLogger.Infof(
+			"[member:%v] inactivity claim already submitted; "+
+				"aborting inactivity claim on-chain submission",
+			memberIndex,
+		)
+		return nil
+	}
+
+	inactivityClaim, err := ics.chain.AssembleInactivityClaim(
+		ecdsaWalletID,
+		claim.GetInactiveMembersIndexes(),
+		signatures,
+		claim.HeartbeatFailed,
+	)
+	if err != nil {
+		return fmt.Errorf("could not assemble inactivity chain claim [%w]", err)
+	}
+
+	blockCounter, err := ics.chain.BlockCounter()
+	if err != nil {
+		return err
+	}
+
+	// We can't determine a common block at which the publication starts.
+	// However, all we want here is to ensure the members does not submit
+	// in the same time. This can be achieved by simply using the index-based
+	// delay starting from the current block.
+	currentBlock, err := blockCounter.CurrentBlock()
+	if err != nil {
+		return fmt.Errorf("cannot get current block: [%v]", err)
+	}
+	delayBlocks := uint64(memberIndex-1) * inactivityClaimSubmissionDelayStepBlocks
+	submissionBlock := currentBlock + delayBlocks
+
+	ics.inactivityLogger.Infof(
+		"[member:%v] waiting for block [%v] to submit inactivity claim",
+		memberIndex,
+		submissionBlock,
+	)
+
+	err = ics.waitForBlockFn(ctx, submissionBlock)
+	if err != nil {
+		return fmt.Errorf(
+			"error while waiting for DKG result submission block: [%v]",
+			err,
+		)
+	}
+
+	if ctx.Err() != nil {
+		// The context was cancelled by the upstream. Regardless of the cause,
+		// that means the inactivity execution is no longer awaiting the result,
+		//  and we can safely return.
+		ics.inactivityLogger.Infof(
+			"[member:%v] inactivity execution is no longer awaiting the "+
+				"result; aborting inactivity claim on-chain submission",
+			memberIndex,
+		)
+		return nil
+	}
+
+	ics.inactivityLogger.Infof(
+		"[member:%v] submitting inactivity claim with [%v] supporting "+
+			"member signatures",
+		memberIndex,
+		len(signatures),
+	)
+
+	return ics.chain.SubmitInactivityClaim(
+		inactivityClaim,
+		inactivityNonce,
+		ics.groupMembers,
+	)
 }

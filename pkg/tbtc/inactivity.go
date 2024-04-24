@@ -11,10 +11,19 @@ import (
 	"golang.org/x/sync/semaphore"
 
 	"github.com/keep-network/keep-core/pkg/bitcoin"
+	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/generator"
 	"github.com/keep-network/keep-core/pkg/net"
 	"github.com/keep-network/keep-core/pkg/protocol/group"
 	"github.com/keep-network/keep-core/pkg/tecdsa/inactivity"
+)
+
+const (
+	// inactivityClaimSubmissionDelayStepBlocks determines the delay step in blocks
+	// that is used to calculate the submission delay period that should be respected
+	// by the given member to avoid all members submitting the same inactivity claim
+	// at the same time.
+	inactivityClaimSubmissionDelayStepBlocks = 3
 )
 
 // errInactivityClaimExecutorBusy is an error returned when the inactivity claim
@@ -30,7 +39,7 @@ type inactivityClaimExecutor struct {
 	broadcastChannel    net.BroadcastChannel
 	membershipValidator *group.MembershipValidator
 	groupParameters     *GroupParameters
-	protocolLatch 		*generator.ProtocolLatch
+	protocolLatch       *generator.ProtocolLatch
 
 	waitForBlockFn waitForBlockFn
 }
@@ -98,6 +107,11 @@ func (ice *inactivityClaimExecutor) publishClaim(
 		HeartbeatFailed:        heartbeatFailed,
 	}
 
+	groupMembers, err := ice.getWalletMembersInfo()
+	if err != nil {
+		return fmt.Errorf("could not get wallet members info: [%v]", err)
+	}
+
 	wg := sync.WaitGroup{}
 	wg.Add(len(ice.signers))
 
@@ -126,6 +140,7 @@ func (ice *inactivityClaimExecutor) publishClaim(
 				wallet.groupDishonestThreshold(
 					ice.groupParameters.HonestThreshold,
 				),
+				groupMembers,
 				ice.membershipValidator,
 				claim,
 			)
@@ -139,6 +154,32 @@ func (ice *inactivityClaimExecutor) publishClaim(
 	return nil
 }
 
+func (ice *inactivityClaimExecutor) getWalletMembersInfo() ([]uint32, error) {
+	// Cache mapping operator addresses to their wallet member IDs. It helps to
+	// limit the number of calls to the ETH client if some operator addresses
+	// occur on the list multiple times.
+	operatorIDCache := make(map[chain.Address]uint32)
+
+	walletMemberIDs := make([]uint32, 0)
+
+	for _, operatorAddress := range ice.wallet().signingGroupOperators {
+		// Search for the operator address in the cache. Store the operator
+		// address in the cache if it's not there.
+		if operatorID, found := operatorIDCache[operatorAddress]; !found {
+			fetchedOperatorID, err := ice.chain.GetOperatorID(operatorAddress)
+			if err != nil {
+				return nil, fmt.Errorf("could not get operator ID: [%w]", err)
+			}
+			operatorIDCache[operatorAddress] = fetchedOperatorID
+			walletMemberIDs = append(walletMemberIDs, fetchedOperatorID)
+		} else {
+			walletMemberIDs = append(walletMemberIDs, operatorID)
+		}
+	}
+
+	return walletMemberIDs, nil
+}
+
 func (ice *inactivityClaimExecutor) publish(
 	ctx context.Context,
 	inactivityLogger log.StandardLogger,
@@ -146,6 +187,7 @@ func (ice *inactivityClaimExecutor) publish(
 	memberIndex group.MemberIndex,
 	groupSize int,
 	dishonestThreshold int,
+	groupMembers []uint32,
 	membershipValidator *group.MembershipValidator,
 	inactivityClaim *inactivity.Claim,
 ) error {
@@ -159,7 +201,13 @@ func (ice *inactivityClaimExecutor) publish(
 		dishonestThreshold,
 		membershipValidator,
 		newInactivityClaimSigner(ice.chain),
-		newInactivityClaimSubmitter(),
+		newInactivityClaimSubmitter(
+			inactivityLogger,
+			ice.chain,
+			ice.groupParameters,
+			groupMembers,
+			ice.waitForBlockFn,
+		),
 		inactivityClaim,
 	)
 }

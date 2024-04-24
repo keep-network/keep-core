@@ -552,6 +552,26 @@ func (lc *localChain) DKGParameters() (*DKGParameters, error) {
 	}, nil
 }
 
+func (lc *localChain) AssembleInactivityClaim(
+	walletID [32]byte,
+	inactiveMembersIndices []group.MemberIndex,
+	signatures map[group.MemberIndex][]byte,
+	heartbeatFailed bool,
+) (
+	*InactivityChainClaim,
+	error,
+) {
+	panic("unsupported")
+}
+
+func (lc *localChain) SubmitInactivityClaim(
+	claim *InactivityChainClaim,
+	nonce *big.Int,
+	groupMembers []uint32,
+) error {
+	panic("unsupported")
+}
+
 func (lc *localChain) CalculateInactivityClaimSignatureHash(
 	claim *inactivity.Claim,
 ) (inactivity.ClaimSignatureHash, error) {

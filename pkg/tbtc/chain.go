@@ -121,7 +121,32 @@ type DistributedKeyGenerationChain interface {
 	DKGParameters() (*DKGParameters, error)
 }
 
+// InactivityChainClaim represents an inactivity claim submitted to the chain.
+type InactivityChainClaim struct {
+	WalletID               [32]byte
+	InactiveMembersIndices []group.MemberIndex
+	HeartbeatFailed        bool
+	Signatures             []byte
+	SigningMembersIndices  []group.MemberIndex
+}
+
 type InactivityClaimChain interface {
+	// AssembleDKGResult assembles the inactivity chain claim according to the
+	// rules expected by the given chain.
+	AssembleInactivityClaim(
+		walletID [32]byte,
+		inactiveMembersIndices []group.MemberIndex,
+		signatures map[group.MemberIndex][]byte,
+		heartbeatFailed bool,
+	) (*InactivityChainClaim, error)
+
+	// SubmitInactivityClaim submits the inactivity claim to the chain.
+	SubmitInactivityClaim(
+		claim *InactivityChainClaim,
+		nonce *big.Int,
+		groupMembers []uint32,
+	) error
+
 	// CalculateInactivityClaimSignatureHash calculates hash for the given
 	// inactivity claim.
 	CalculateInactivityClaimSignatureHash(

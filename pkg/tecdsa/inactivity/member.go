@@ -104,8 +104,55 @@ func (sm *signingMember) verifyInactivityClaimSignatures(
 	messages []*claimSignatureMessage,
 	resultSigner ClaimSigner,
 ) map[group.MemberIndex][]byte {
-	// TODO: Implement
-	return nil
+	receivedValidClaimSignatures := make(map[group.MemberIndex][]byte)
+
+	for _, message := range messages {
+		// Sender's preferred inactivity claim hash doesn't match current
+		// member's preferred inactivity claim hash.
+		if message.claimHash != sm.preferredInactivityClaimHash {
+			sm.logger.Infof(
+				"[member:%v] signature from sender [%d] supports "+
+					"result different than preferred",
+				sm.memberIndex,
+				message.senderID,
+			)
+			continue
+		}
+
+		// Check if the signature is valid.
+		isValid, err := resultSigner.VerifySignature(
+			&SignedClaim{
+				ClaimHash: message.claimHash,
+				Signature: message.signature,
+				PublicKey: message.publicKey,
+			},
+		)
+		if err != nil {
+			sm.logger.Infof(
+				"[member:%v] verification of signature "+
+					"from sender [%d] failed: [%v]",
+				sm.memberIndex,
+				message.senderID,
+				err,
+			)
+			continue
+		}
+		if !isValid {
+			sm.logger.Infof(
+				"[member:%v] sender [%d] provided invalid signature",
+				sm.memberIndex,
+				message.senderID,
+			)
+			continue
+		}
+
+		receivedValidClaimSignatures[message.senderID] = message.signature
+	}
+
+	// Register member's self signature.
+	receivedValidClaimSignatures[sm.memberIndex] = sm.selfInactivityClaimSignature
+
+	return receivedValidClaimSignatures
 }
 
 // submittingMember represents a member submitting an inactivity claim to the

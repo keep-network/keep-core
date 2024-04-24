@@ -994,6 +994,78 @@ func (tc *TbtcChain) DKGParameters() (*tbtc.DKGParameters, error) {
 	}, nil
 }
 
+func (tc *TbtcChain) AssembleInactivityClaim(
+	walletID [32]byte,
+	inactiveMembersIndices []group.MemberIndex,
+	signatures map[group.MemberIndex][]byte,
+	heartbeatFailed bool,
+) (
+	*tbtc.InactivityChainClaim,
+	error,
+) {
+	signingMemberIndices, signatureBytes, err := convertSignaturesToChainFormat(
+		signatures,
+	)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"could not convert signatures to chain format: [%v]",
+			err,
+		)
+	}
+
+	// Sort inactiveMembersIndices slice in ascending order as expected by the
+	// on-chain contract.
+	sort.Slice(inactiveMembersIndices[:], func(i, j int) bool {
+		return inactiveMembersIndices[i] < inactiveMembersIndices[j]
+	})
+
+	return &tbtc.InactivityChainClaim{
+		WalletID:               walletID,
+		InactiveMembersIndices: inactiveMembersIndices,
+		HeartbeatFailed:        heartbeatFailed,
+		Signatures:             signatureBytes,
+		SigningMembersIndices:  signingMemberIndices,
+	}, nil
+}
+
+// convertInactivityClaimToAbiType converts the TBTC-specific inactivity claim
+// to the format applicable for the WalletRegistry ABI.
+func convertInactivityClaimToAbiType(
+	claim *tbtc.InactivityChainClaim,
+) ecdsaabi.EcdsaInactivityClaim {
+	inactiveMembersIndices := make([]*big.Int, len(claim.InactiveMembersIndices))
+	for i, memberIndex := range claim.InactiveMembersIndices {
+		inactiveMembersIndices[i] = big.NewInt(int64(memberIndex))
+	}
+
+	signingMembersIndices := make([]*big.Int, len(claim.SigningMembersIndices))
+	for i, memberIndex := range claim.SigningMembersIndices {
+		signingMembersIndices[i] = big.NewInt(int64(memberIndex))
+	}
+
+	return ecdsaabi.EcdsaInactivityClaim{
+		WalletID:               claim.WalletID,
+		InactiveMembersIndices: inactiveMembersIndices,
+		HeartbeatFailed:        claim.HeartbeatFailed,
+		Signatures:             claim.Signatures,
+		SigningMembersIndices:  signingMembersIndices,
+	}
+}
+
+func (tc *TbtcChain) SubmitInactivityClaim(
+	claim *tbtc.InactivityChainClaim,
+	nonce *big.Int,
+	groupMembers []uint32,
+) error {
+	_, err := tc.walletRegistry.NotifyOperatorInactivity(
+		convertInactivityClaimToAbiType(claim),
+		nonce,
+		groupMembers,
+	)
+
+	return err
+}
+
 func (tc *TbtcChain) CalculateInactivityClaimSignatureHash(
 	claim *inactivity.Claim,
 ) (inactivity.ClaimSignatureHash, error) {
@@ -1006,20 +1078,16 @@ func (tc *TbtcChain) CalculateInactivityClaimSignatureHash(
 	// expects an unprefixed 64-byte public key,
 	unprefixedGroupPublicKeyBytes := walletPublicKeyBytes[1:]
 
-	// Inactive members indexes should be sorted in the ascending order. As the
-	// claim object may possibly be shared between concurrent code, it is
-	// safer to copy the indexes into a new slice. Additionally, the type
-	// representing inactive member index should be `big.Int` as the smart
-	// contract reading the calculated hash uses `uint256` for inactive member
-	// indexes.
-	inactiveMembersIndexes := make([]*big.Int, len(claim.InactiveMembersIndexes))
-	for i, index := range claim.InactiveMembersIndexes {
+	// The indexes are already sorted.
+	sortedIndexes := claim.GetInactiveMembersIndexes()
+
+	// The type representing inactive member index should be `big.Int` as the
+	// smart contract reading the calculated hash uses `uint256` for inactive
+	// member indexes.
+	inactiveMembersIndexes := make([]*big.Int, len(sortedIndexes))
+	for i, index := range sortedIndexes {
 		inactiveMembersIndexes[i] = big.NewInt(int64(index))
 	}
-
-	sort.Slice(inactiveMembersIndexes, func(i, j int) bool {
-		return inactiveMembersIndexes[i].Cmp(inactiveMembersIndexes[j]) < 0
-	})
 
 	return calculateInactivityClaimSignatureHash(
 		tc.chainID,

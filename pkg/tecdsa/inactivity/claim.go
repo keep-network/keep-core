@@ -4,6 +4,7 @@ import (
 	"crypto/ecdsa"
 	"fmt"
 	"math/big"
+	"sort"
 
 	"github.com/keep-network/keep-core/pkg/protocol/group"
 )
@@ -14,6 +15,21 @@ type Claim struct {
 	WalletPublicKey        *ecdsa.PublicKey
 	InactiveMembersIndexes []group.MemberIndex
 	HeartbeatFailed        bool
+}
+
+// GetInactiveMembersIndexes returns the indexes of inactive members.
+// The original slice is copied to avoid concurrency issues if the claim object
+// is shared between many goroutines. The returned indexes are sorted.
+func (c *Claim) GetInactiveMembersIndexes() []group.MemberIndex {
+	sortedIndexes := make([]group.MemberIndex, len(c.InactiveMembersIndexes))
+
+	copy(sortedIndexes, c.InactiveMembersIndexes)
+
+	sort.Slice(sortedIndexes, func(i, j int) bool {
+		return sortedIndexes[i] < sortedIndexes[j]
+	})
+
+	return sortedIndexes
 }
 
 const ClaimSignatureHashByteSize = 32
