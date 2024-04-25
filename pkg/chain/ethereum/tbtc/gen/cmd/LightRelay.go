@@ -70,6 +70,7 @@ func init() {
 		lrRenounceOwnershipCommand(),
 		lrRetargetCommand(),
 		lrSetAuthorizationStatusCommand(),
+		lrSetDifficultyFromHeadersCommand(),
 		lrSetProofLengthCommand(),
 		lrTransferOwnershipCommand(),
 	)
@@ -973,6 +974,71 @@ func lrSetAuthorizationStatus(c *cobra.Command, args []string) error {
 		// Do a call.
 		err = contract.CallSetAuthorizationStatus(
 			arg_status,
+			cmd.BlockFlagValue.Int,
+		)
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput("success")
+
+		cmd.PrintOutput(
+			"the transaction was not submitted to the chain; " +
+				"please add the `--submit` flag",
+		)
+	}
+
+	return nil
+}
+
+func lrSetDifficultyFromHeadersCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:                   "set-difficulty-from-headers [arg_bitcoinHeaders]",
+		Short:                 "Calls the nonpayable method setDifficultyFromHeaders on the LightRelay contract.",
+		Args:                  cmd.ArgCountChecker(1),
+		RunE:                  lrSetDifficultyFromHeaders,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+	}
+
+	c.PreRunE = cmd.NonConstArgsChecker
+	cmd.InitNonConstFlags(c)
+
+	return c
+}
+
+func lrSetDifficultyFromHeaders(c *cobra.Command, args []string) error {
+	contract, err := initializeLightRelay(c)
+	if err != nil {
+		return err
+	}
+
+	arg_bitcoinHeaders, err := hexutil.Decode(args[0])
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter arg_bitcoinHeaders, a bytes, from passed value %v",
+			args[0],
+		)
+	}
+
+	var (
+		transaction *types.Transaction
+	)
+
+	if shouldSubmit, _ := c.Flags().GetBool(cmd.SubmitFlag); shouldSubmit {
+		// Do a regular submission. Take payable into account.
+		transaction, err = contract.SetDifficultyFromHeaders(
+			arg_bitcoinHeaders,
+		)
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput(transaction.Hash())
+	} else {
+		// Do a call.
+		err = contract.CallSetDifficultyFromHeaders(
+			arg_bitcoinHeaders,
 			cmd.BlockFlagValue.Int,
 		)
 		if err != nil {
