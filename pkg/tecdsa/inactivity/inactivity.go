@@ -77,3 +77,12 @@ func Publish(
 
 	return nil
 }
+
+// RegisterUnmarshallers initializes the given broadcast channel to be able to
+// perform inactivity claim interactions by registering all the required
+// protocol message unmarshallers.
+func RegisterUnmarshallers(channel net.BroadcastChannel) {
+	channel.SetUnmarshaler(func() net.TaggedUnmarshaler {
+		return &claimSignatureMessage{}
+	})
+}

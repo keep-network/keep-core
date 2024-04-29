@@ -18,6 +18,7 @@ import (
 	"github.com/keep-network/keep-core/pkg/net"
 	"github.com/keep-network/keep-core/pkg/protocol/announcer"
 	"github.com/keep-network/keep-core/pkg/protocol/group"
+	"github.com/keep-network/keep-core/pkg/tecdsa/inactivity"
 	"github.com/keep-network/keep-core/pkg/tecdsa/signing"
 )
 
@@ -493,13 +494,7 @@ func (n *node) getInactivityClaimExecutor(
 		return nil, false, fmt.Errorf("failed to get broadcast channel: [%v]", err)
 	}
 
-	// TODO: Handle unmarshallers
-
-	// signing.RegisterUnmarshallers(broadcastChannel)
-	// announcer.RegisterUnmarshaller(broadcastChannel)
-	// broadcastChannel.SetUnmarshaler(func() net.TaggedUnmarshaler {
-	// 	return &signingDoneMessage{}
-	// })
+	inactivity.RegisterUnmarshallers(broadcastChannel)
 
 	membershipValidator := group.NewMembershipValidator(
 		executorLogger,

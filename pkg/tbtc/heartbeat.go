@@ -138,7 +138,7 @@ func (ha *heartbeatAction) execute() error {
 	)
 	defer cancelHeartbeatCtx()
 
-	signature, activeOperatorsCount, _, err := ha.signingExecutor.sign(
+	signature, activeOperatorsCount, signingEndBlock, err := ha.signingExecutor.sign(
 		heartbeatCtx,
 		messageToSign,
 		ha.startBlock,
@@ -189,12 +189,14 @@ func (ha *heartbeatAction) execute() error {
 	// The value of consecutive heartbeat failures exceeds the threshold.
 	// Proceed with operator inactivity notification.
 	err = ha.inactivityClaimExecutor.publishClaim(
-		// Leave the list empty. Some operators were inactive during the
-		// heartbeat because they were simply unstaking and therefore should not
-		// be punished.
+		// Leave the list of inactive operators empty even if some operators
+		// were inactive during signing heartbeat. The inactive operators could
+		// simply be in the process of unstaking and therefore should not be
+		// punished.
 		[]group.MemberIndex{},
 		true,
 		messageToSign,
+		signingEndBlock,
 	)
 	if err != nil {
 		return fmt.Errorf(

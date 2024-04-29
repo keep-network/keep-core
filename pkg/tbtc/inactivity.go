@@ -24,6 +24,9 @@ const (
 	// by the given member to avoid all members submitting the same inactivity claim
 	// at the same time.
 	inactivityClaimSubmissionDelayStepBlocks = 3
+	// inactivityClaimMaximumSubmissionBlocks determines the maximum block
+	// duration of inactivity claim submission procedure.
+	inactivityClaimMaximumSubmissionBlocks = 60
 )
 
 // errInactivityClaimExecutorBusy is an error returned when the inactivity claim
@@ -70,6 +73,7 @@ func (ice *inactivityClaimExecutor) publishClaim(
 	inactiveMembersIndexes []group.MemberIndex,
 	heartbeatFailed bool,
 	message *big.Int,
+	startBlock uint64,
 ) error {
 	if lockAcquired := ice.lock.TryAcquire(1); !lockAcquired {
 		return errInactivityClaimExecutorBusy
@@ -121,7 +125,7 @@ func (ice *inactivityClaimExecutor) publishClaim(
 
 		defer wg.Done()
 
-		inactivityClaimTimeoutBlock := uint64(0) // TODO: Set the value of timeout block
+		inactivityClaimTimeoutBlock := startBlock + inactivityClaimMaximumSubmissionBlocks
 
 		go func(signer *signer) {
 			ctx, cancelCtx := withCancelOnBlock(
