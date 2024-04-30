@@ -9,6 +9,7 @@ import (
 
 	"github.com/keep-network/keep-common/pkg/chain/ethereum"
 	"github.com/keep-network/keep-core/pkg/bitcoin"
+	"github.com/keep-network/keep-core/pkg/chain"
 	"go.uber.org/zap"
 )
 
@@ -52,6 +53,11 @@ const (
 	// and will not be removed by a chain reorganization.
 	movingFundsCommitmentConfirmationBlocks = 32
 )
+
+// MovingFundsCommitmentLookBackBlocks is the look-back period in blocks used
+// when searching for submitted moving funds commitment events. It's equal to
+// 30 days assuming 12 seconds per block.
+const MovingFundsCommitmentLookBackBlocks = uint64(216000)
 
 // MovingFundsProposal represents a moving funds proposal issued by a wallet's
 // coordination leader.
@@ -312,20 +318,33 @@ func ValidateMovingFundsProposal(
 			proposal *MovingFundsProposal,
 		) error
 
+		BlockCounter() (chain.BlockCounter, error)
+
 		GetWallet(walletPublicKeyHash [20]byte) (*WalletChainData, error)
+
+		GetMovingFundsParameters() (
+			txMaxTotalFee uint64,
+			dustThreshold uint64,
+			timeoutResetDelay uint32,
+			timeout uint32,
+			timeoutSlashingAmount *big.Int,
+			timeoutNotifierRewardMultiplier uint32,
+			commitmentGasOffset uint16,
+			sweepTxMaxTotalFee uint64,
+			sweepTimeout uint32,
+			sweepTimeoutSlashingAmount *big.Int,
+			sweepTimeoutNotifierRewardMultiplier uint32,
+			err error,
+		)
+
+		PastMovingFundsCommitmentSubmittedEvents(
+			filter *MovingFundsCommitmentSubmittedEventFilter,
+		) ([]*MovingFundsCommitmentSubmittedEvent, error)
 	},
 ) error {
 	validateProposalLogger.Infof("calling chain for proposal validation")
 
-	walletChainData, err := chain.GetWallet(walletPublicKeyHash)
-	if err != nil {
-		return fmt.Errorf(
-			"cannot get wallet's chain data: [%w]",
-			err,
-		)
-	}
-
-	err = ValidateMovingFundsSafetyMargin(walletChainData)
+	err := ValidateMovingFundsSafetyMargin(walletPublicKeyHash, chain)
 	if err != nil {
 		return fmt.Errorf("moving funds proposal is invalid: [%v]", err)
 	}
@@ -354,10 +373,87 @@ func ValidateMovingFundsProposal(
 // deposits so, it makes sense to preserve a safety margin before moving
 // funds to give the last minute deposits a chance to become eligible for
 // deposit sweep.
+//
+// Similarly, wallets that just entered the MovingFunds state may have become
+// target wallets for another moving funds wallets. It makes sense to preserve
+// a safety margin to allow the wallet to merge the moved funds from another
+// wallets. In this case a longer safety margin should be used.
 func ValidateMovingFundsSafetyMargin(
-	walletChainData *WalletChainData,
+	walletPublicKeyHash [20]byte,
+	chain interface {
+		BlockCounter() (chain.BlockCounter, error)
+
+		GetWallet(walletPublicKeyHash [20]byte) (*WalletChainData, error)
+
+		GetMovingFundsParameters() (
+			txMaxTotalFee uint64,
+			dustThreshold uint64,
+			timeoutResetDelay uint32,
+			timeout uint32,
+			timeoutSlashingAmount *big.Int,
+			timeoutNotifierRewardMultiplier uint32,
+			commitmentGasOffset uint16,
+			sweepTxMaxTotalFee uint64,
+			sweepTimeout uint32,
+			sweepTimeoutSlashingAmount *big.Int,
+			sweepTimeoutNotifierRewardMultiplier uint32,
+			err error,
+		)
+
+		PastMovingFundsCommitmentSubmittedEvents(
+			filter *MovingFundsCommitmentSubmittedEventFilter,
+		) ([]*MovingFundsCommitmentSubmittedEvent, error)
+	},
 ) error {
+	// In most cases the safety margin of 24 hours should be enough. It will
+	// allow the wallet to sweep the last deposits that were made before the
+	// wallet entered the moving funds state.
 	safetyMargin := time.Duration(24) * time.Hour
+
+	// It is possible that our wallet is the target wallet in another pending
+	// moving funds procedure. If this is the case we must apply a longer
+	// 14-day safety margin. This will ensure the funds moved from another
+	// wallet can be merged with our wallet's main UTXO before moving funds.
+	isMovingFundsTarget, err := isWalletPendingMovingFundsTarget(
+		walletPublicKeyHash,
+		chain,
+	)
+	if err != nil {
+		return fmt.Errorf(
+			"cannot check if wallet is pending moving funds target: [%w]",
+			err,
+		)
+	}
+
+	if isMovingFundsTarget {
+		safetyMargin = time.Duration(24) * 14 * time.Hour
+	}
+
+	// As the moving funds procedure is time constrained, we must ensure the
+	// safety margin does not exceed half of the moving funds timeout parameter.
+	// This should give the wallet enough time to complete moving funds.
+	_, _, _, movingFundsTimeout, _, _, _, _, _, _, _, err :=
+		chain.GetMovingFundsParameters()
+	if err != nil {
+		return fmt.Errorf("cannot get moving funds parameters: [%w]", err)
+	}
+
+	maxAllowedSafetyMargin := time.Duration(
+		float64(movingFundsTimeout) * 0.5 * float64(time.Second),
+	)
+
+	if safetyMargin > maxAllowedSafetyMargin {
+		safetyMargin = maxAllowedSafetyMargin
+	}
+
+	walletChainData, err := chain.GetWallet(walletPublicKeyHash)
+	if err != nil {
+		return fmt.Errorf(
+			"cannot get wallet's chain data: [%w]",
+			err,
+		)
+	}
+
 	safetyMarginExpiresAt := walletChainData.MovingFundsRequestedAt.Add(safetyMargin)
 
 	if time.Now().Before(safetyMarginExpiresAt) {
@@ -373,6 +469,97 @@ func (mfa *movingFundsAction) wallet() wallet {
 
 func (mfa *movingFundsAction) actionType() WalletActionType {
 	return ActionMovingFunds
+}
+
+func isWalletPendingMovingFundsTarget(
+	walletPublicKeyHash [20]byte,
+
+	chain interface {
+		BlockCounter() (chain.BlockCounter, error)
+
+		GetWallet(walletPublicKeyHash [20]byte) (*WalletChainData, error)
+
+		GetMovingFundsParameters() (
+			txMaxTotalFee uint64,
+			dustThreshold uint64,
+			timeoutResetDelay uint32,
+			timeout uint32,
+			timeoutSlashingAmount *big.Int,
+			timeoutNotifierRewardMultiplier uint32,
+			commitmentGasOffset uint16,
+			sweepTxMaxTotalFee uint64,
+			sweepTimeout uint32,
+			sweepTimeoutSlashingAmount *big.Int,
+			sweepTimeoutNotifierRewardMultiplier uint32,
+			err error,
+		)
+
+		PastMovingFundsCommitmentSubmittedEvents(
+			filter *MovingFundsCommitmentSubmittedEventFilter,
+		) ([]*MovingFundsCommitmentSubmittedEvent, error)
+	},
+) (bool, error) {
+	blockCounter, err := chain.BlockCounter()
+	if err != nil {
+		return false, fmt.Errorf("failed to get block counter: [%w]", err)
+	}
+
+	currentBlockNumber, err := blockCounter.CurrentBlock()
+	if err != nil {
+		return false, fmt.Errorf(
+			"failed to get current block number: [%w]",
+			err,
+		)
+	}
+
+	filterStartBlock := uint64(0)
+	if currentBlockNumber > MovingFundsCommitmentLookBackBlocks {
+		filterStartBlock = currentBlockNumber - MovingFundsCommitmentLookBackBlocks
+	}
+
+	// Get all the recent moving funds commitment submitted events.
+	filter := &MovingFundsCommitmentSubmittedEventFilter{
+		StartBlock: filterStartBlock,
+	}
+
+	events, err := chain.PastMovingFundsCommitmentSubmittedEvents(filter)
+	if err != nil {
+		return false, fmt.Errorf(
+			"failed to get past moving funds commitment submitted events: [%w]",
+			err,
+		)
+	}
+
+	isWalletTarget := func(event *MovingFundsCommitmentSubmittedEvent) bool {
+		for _, targetWallet := range event.TargetWallets {
+			if walletPublicKeyHash == targetWallet {
+				return true
+			}
+		}
+		return false
+	}
+
+	for _, event := range events {
+		if !isWalletTarget(event) {
+			continue
+		}
+
+		// Our wallet is on the list of target wallets. If the state is moving
+		// funds, there is probably moving funds to our wallet in the process.
+		walletChainData, err := chain.GetWallet(walletPublicKeyHash)
+		if err != nil {
+			return false, fmt.Errorf(
+				"cannot get wallet's chain data: [%w]",
+				err,
+			)
+		}
+
+		if walletChainData.State == StateMovingFunds {
+			return true, nil
+		}
+	}
+
+	return false, nil
 }
 
 func assembleMovingFundsTransaction(

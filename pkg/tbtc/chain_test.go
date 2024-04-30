@@ -1099,6 +1099,29 @@ func buildMovedFundsSweepProposalValidationKey(
 	return sha256.Sum256(buffer.Bytes()), nil
 }
 
+func (lc *localChain) GetMovingFundsParameters() (
+	txMaxTotalFee uint64,
+	dustThreshold uint64,
+	timeoutResetDelay uint32,
+	timeout uint32,
+	timeoutSlashingAmount *big.Int,
+	timeoutNotifierRewardMultiplier uint32,
+	commitmentGasOffset uint16,
+	sweepTxMaxTotalFee uint64,
+	sweepTimeout uint32,
+	sweepTimeoutSlashingAmount *big.Int,
+	sweepTimeoutNotifierRewardMultiplier uint32,
+	err error,
+) {
+	panic("unsupported")
+}
+
+func (lc *localChain) PastMovingFundsCommitmentSubmittedEvents(
+	filter *MovingFundsCommitmentSubmittedEventFilter,
+) ([]*MovingFundsCommitmentSubmittedEvent, error) {
+	panic("unsupported")
+}
+
 // Connect sets up the local chain.
 func Connect(blockTime ...time.Duration) *localChain {
 	operatorPrivateKey, _, err := operator.GenerateKeyPair(local_v1.DefaultCurve)
