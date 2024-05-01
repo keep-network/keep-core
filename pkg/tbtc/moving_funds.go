@@ -546,7 +546,7 @@ func isWalletPendingMovingFundsTarget(
 
 		// Our wallet is on the list of target wallets. If the state is moving
 		// funds, there is probably moving funds to our wallet in the process.
-		walletChainData, err := chain.GetWallet(walletPublicKeyHash)
+		walletChainData, err := chain.GetWallet(event.WalletPublicKeyHash)
 		if err != nil {
 			return false, fmt.Errorf(
 				"cannot get wallet's chain data: [%w]",
