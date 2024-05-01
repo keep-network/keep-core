@@ -28,6 +28,20 @@ import (
 
 const localChainOperatorID = chain.OperatorID(1)
 
+type movingFundsParameters = struct {
+	txMaxTotalFee                        uint64
+	dustThreshold                        uint64
+	timeoutResetDelay                    uint32
+	timeout                              uint32
+	timeoutSlashingAmount                *big.Int
+	timeoutNotifierRewardMultiplier      uint32
+	commitmentGasOffset                  uint16
+	sweepTxMaxTotalFee                   uint64
+	sweepTimeout                         uint32
+	sweepTimeoutSlashingAmount           *big.Int
+	sweepTimeoutNotifierRewardMultiplier uint32
+}
+
 type localChain struct {
 	dkgResultSubmissionHandlersMutex sync.Mutex
 	dkgResultSubmissionHandlers      map[int]func(submission *DKGResultSubmittedEvent)
@@ -57,6 +71,9 @@ type localChain struct {
 	pastDepositRevealedEventsMutex sync.Mutex
 	pastDepositRevealedEvents      map[[32]byte][]*DepositRevealedEvent
 
+	pastMovingFundsCommitmentSubmittedEventsMutex sync.Mutex
+	pastMovingFundsCommitmentSubmittedEvents      map[[32]byte][]*MovingFundsCommitmentSubmittedEvent
+
 	depositSweepProposalValidationsMutex sync.Mutex
 	depositSweepProposalValidations      map[[32]byte]bool
 
@@ -80,6 +97,9 @@ type localChain struct {
 
 	depositRequestsMutex sync.Mutex
 	depositRequests      map[[32]byte]*DepositChainRequest
+
+	movingFundsParametersMutex sync.Mutex
+	movingFundsParameters      movingFundsParameters
 
 	blockCounter       chain.BlockCounter
 	operatorPrivateKey *operator.PrivateKey
@@ -1113,13 +1133,114 @@ func (lc *localChain) GetMovingFundsParameters() (
 	sweepTimeoutNotifierRewardMultiplier uint32,
 	err error,
 ) {
-	panic("unsupported")
+	lc.movingFundsParametersMutex.Lock()
+	defer lc.movingFundsParametersMutex.Unlock()
+
+	return lc.movingFundsParameters.txMaxTotalFee,
+		lc.movingFundsParameters.dustThreshold,
+		lc.movingFundsParameters.timeoutResetDelay,
+		lc.movingFundsParameters.timeout,
+		lc.movingFundsParameters.timeoutSlashingAmount,
+		lc.movingFundsParameters.timeoutNotifierRewardMultiplier,
+		lc.movingFundsParameters.commitmentGasOffset,
+		lc.movingFundsParameters.sweepTxMaxTotalFee,
+		lc.movingFundsParameters.sweepTimeout,
+		lc.movingFundsParameters.sweepTimeoutSlashingAmount,
+		lc.movingFundsParameters.sweepTimeoutNotifierRewardMultiplier,
+		nil
+}
+
+func (lc *localChain) SetMovingFundsParameters(
+	txMaxTotalFee uint64,
+	dustThreshold uint64,
+	timeoutResetDelay uint32,
+	timeout uint32,
+	timeoutSlashingAmount *big.Int,
+	timeoutNotifierRewardMultiplier uint32,
+	commitmentGasOffset uint16,
+	sweepTxMaxTotalFee uint64,
+	sweepTimeout uint32,
+	sweepTimeoutSlashingAmount *big.Int,
+	sweepTimeoutNotifierRewardMultiplier uint32,
+) {
+	lc.movingFundsParametersMutex.Lock()
+	defer lc.movingFundsParametersMutex.Unlock()
+
+	lc.movingFundsParameters = movingFundsParameters{
+		txMaxTotalFee:                        txMaxTotalFee,
+		dustThreshold:                        dustThreshold,
+		timeoutResetDelay:                    timeoutResetDelay,
+		timeout:                              timeout,
+		timeoutSlashingAmount:                timeoutSlashingAmount,
+		timeoutNotifierRewardMultiplier:      timeoutNotifierRewardMultiplier,
+		commitmentGasOffset:                  commitmentGasOffset,
+		sweepTxMaxTotalFee:                   sweepTxMaxTotalFee,
+		sweepTimeout:                         sweepTimeout,
+		sweepTimeoutSlashingAmount:           sweepTimeoutSlashingAmount,
+		sweepTimeoutNotifierRewardMultiplier: sweepTimeoutNotifierRewardMultiplier,
+	}
 }
 
 func (lc *localChain) PastMovingFundsCommitmentSubmittedEvents(
 	filter *MovingFundsCommitmentSubmittedEventFilter,
 ) ([]*MovingFundsCommitmentSubmittedEvent, error) {
-	panic("unsupported")
+	lc.pastMovingFundsCommitmentSubmittedEventsMutex.Lock()
+	defer lc.pastMovingFundsCommitmentSubmittedEventsMutex.Unlock()
+
+	eventsKey, err := buildPastMovingFundsCommitmentSubmittedEventsKey(filter)
+	if err != nil {
+		return nil, err
+	}
+
+	events, ok := lc.pastMovingFundsCommitmentSubmittedEvents[eventsKey]
+	if !ok {
+		return nil, fmt.Errorf("no events for given filter")
+	}
+
+	return events, nil
+}
+
+func (lc *localChain) setPastMovingFundsCommitmentSubmittedEvents(
+	filter *MovingFundsCommitmentSubmittedEventFilter,
+	events []*MovingFundsCommitmentSubmittedEvent,
+) error {
+	lc.pastMovingFundsCommitmentSubmittedEventsMutex.Lock()
+	defer lc.pastMovingFundsCommitmentSubmittedEventsMutex.Unlock()
+
+	eventsKey, err := buildPastMovingFundsCommitmentSubmittedEventsKey(filter)
+	if err != nil {
+		return err
+	}
+
+	lc.pastMovingFundsCommitmentSubmittedEvents[eventsKey] = events
+
+	return nil
+}
+
+func buildPastMovingFundsCommitmentSubmittedEventsKey(
+	filter *MovingFundsCommitmentSubmittedEventFilter,
+) ([32]byte, error) {
+	if filter == nil {
+		return [32]byte{}, nil
+	}
+
+	var buffer bytes.Buffer
+
+	startBlock := make([]byte, 8)
+	binary.BigEndian.PutUint64(startBlock, filter.StartBlock)
+	buffer.Write(startBlock)
+
+	if filter.EndBlock != nil {
+		endBlock := make([]byte, 8)
+		binary.BigEndian.PutUint64(startBlock, *filter.EndBlock)
+		buffer.Write(endBlock)
+	}
+
+	for _, walletPublicKeyHash := range filter.WalletPublicKeyHash {
+		buffer.Write(walletPublicKeyHash[:])
+	}
+
+	return sha256.Sum256(buffer.Bytes()), nil
 }
 
 // Connect sets up the local chain.
@@ -1150,19 +1271,20 @@ func ConnectWithKey(
 		dkgResultChallengeHandlers: make(
 			map[int]func(submission *DKGResultChallengedEvent),
 		),
-		wallets:                            make(map[[20]byte]*WalletChainData),
-		blocksByTimestamp:                  make(map[uint64]uint64),
-		blocksHashesByNumber:               make(map[uint64][32]byte),
-		pastDepositRevealedEvents:          make(map[[32]byte][]*DepositRevealedEvent),
-		depositSweepProposalValidations:    make(map[[32]byte]bool),
-		pendingRedemptionRequests:          make(map[[32]byte]*RedemptionRequest),
-		redemptionProposalValidations:      make(map[[32]byte]bool),
-		movingFundsProposalValidations:     make(map[[32]byte]bool),
-		movedFundsSweepProposalValidations: make(map[[32]byte]bool),
-		heartbeatProposalValidations:       make(map[[16]byte]bool),
-		depositRequests:                    make(map[[32]byte]*DepositChainRequest),
-		blockCounter:                       blockCounter,
-		operatorPrivateKey:                 operatorPrivateKey,
+		wallets:                                  make(map[[20]byte]*WalletChainData),
+		blocksByTimestamp:                        make(map[uint64]uint64),
+		blocksHashesByNumber:                     make(map[uint64][32]byte),
+		pastDepositRevealedEvents:                make(map[[32]byte][]*DepositRevealedEvent),
+		pastMovingFundsCommitmentSubmittedEvents: make(map[[32]byte][]*MovingFundsCommitmentSubmittedEvent),
+		depositSweepProposalValidations:          make(map[[32]byte]bool),
+		pendingRedemptionRequests:                make(map[[32]byte]*RedemptionRequest),
+		redemptionProposalValidations:            make(map[[32]byte]bool),
+		movingFundsProposalValidations:           make(map[[32]byte]bool),
+		movedFundsSweepProposalValidations:       make(map[[32]byte]bool),
+		heartbeatProposalValidations:             make(map[[16]byte]bool),
+		depositRequests:                          make(map[[32]byte]*DepositChainRequest),
+		blockCounter:                             blockCounter,
+		operatorPrivateKey:                       operatorPrivateKey,
 	}
 
 	return localChain

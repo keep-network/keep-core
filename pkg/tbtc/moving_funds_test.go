@@ -48,6 +48,11 @@ func TestMovingFundsAction_Execute(t *testing.T) {
 			proposalExpiryBlock := proposalProcessingStartBlock +
 				movingFundsProposalValidityBlocks
 
+			// Set arbitrary moving funds timeout.
+			hostChain.SetMovingFundsParameters(
+				0, 0, 0, 604800, big.NewInt(0), 0, 0, 0, 0, big.NewInt(0), 0,
+			)
+
 			// Simulate the on-chain proposal validation passes with success.
 			err = hostChain.setMovingFundsProposalValidationResult(
 				walletPublicKeyHash,
@@ -58,6 +63,15 @@ func TestMovingFundsAction_Execute(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
+
+			// Simulate the wallet was not chosen as a target wallet for another
+			// moving funds wallet.
+			hostChain.setPastMovingFundsCommitmentSubmittedEvents(
+				&MovingFundsCommitmentSubmittedEventFilter{
+					StartBlock: 0,
+				},
+				[]*MovingFundsCommitmentSubmittedEvent{},
+			)
 
 			// Record the wallet main UTXO hash and moving funds commitment
 			// hash in the local host chain so the moving funds action can detect it.
