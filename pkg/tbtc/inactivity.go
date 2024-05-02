@@ -15,7 +15,7 @@ import (
 	"github.com/keep-network/keep-core/pkg/generator"
 	"github.com/keep-network/keep-core/pkg/net"
 	"github.com/keep-network/keep-core/pkg/protocol/group"
-	"github.com/keep-network/keep-core/pkg/tecdsa/inactivity"
+	"github.com/keep-network/keep-core/pkg/protocol/inactivity"
 )
 
 const (
@@ -47,7 +47,6 @@ type inactivityClaimExecutor struct {
 	waitForBlockFn waitForBlockFn
 }
 
-// TODO Consider moving all inactivity-related code to pkg/protocol/inactivity.
 func newInactivityClaimExecutor(
 	chain Chain,
 	signers []*signer,

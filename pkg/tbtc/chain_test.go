@@ -22,9 +22,9 @@ import (
 	"github.com/keep-network/keep-core/pkg/chain/local_v1"
 	"github.com/keep-network/keep-core/pkg/operator"
 	"github.com/keep-network/keep-core/pkg/protocol/group"
+	"github.com/keep-network/keep-core/pkg/protocol/inactivity"
 	"github.com/keep-network/keep-core/pkg/subscription"
 	"github.com/keep-network/keep-core/pkg/tecdsa/dkg"
-	"github.com/keep-network/keep-core/pkg/tecdsa/inactivity"
 )
 
 const localChainOperatorID = chain.OperatorID(1)

@@ -18,7 +18,7 @@ import (
 	"github.com/keep-network/keep-core/pkg/net"
 	"github.com/keep-network/keep-core/pkg/protocol/announcer"
 	"github.com/keep-network/keep-core/pkg/protocol/group"
-	"github.com/keep-network/keep-core/pkg/tecdsa/inactivity"
+	"github.com/keep-network/keep-core/pkg/protocol/inactivity"
 	"github.com/keep-network/keep-core/pkg/tecdsa/signing"
 )
 

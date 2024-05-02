@@ -7,7 +7,7 @@ import (
 	"github.com/ipfs/go-log/v2"
 	"github.com/keep-network/keep-core/pkg/bitcoin"
 	"github.com/keep-network/keep-core/pkg/protocol/group"
-	"github.com/keep-network/keep-core/pkg/tecdsa/inactivity"
+	"github.com/keep-network/keep-core/pkg/protocol/inactivity"
 )
 
 // inactivityClaimSigner is responsible for signing the inactivity claim and

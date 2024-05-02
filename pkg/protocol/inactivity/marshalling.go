@@ -6,7 +6,7 @@ import (
 	"google.golang.org/protobuf/proto"
 
 	"github.com/keep-network/keep-core/pkg/protocol/group"
-	"github.com/keep-network/keep-core/pkg/tecdsa/inactivity/gen/pb"
+	"github.com/keep-network/keep-core/pkg/protocol/inactivity/gen/pb"
 )
 
 func validateMemberIndex(protoIndex uint32) error {
