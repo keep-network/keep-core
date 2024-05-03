@@ -134,6 +134,7 @@ func newNode(
 		protocolLatch:            latch,
 		heartbeatFailureCounters: make(map[string]*uint),
 		signingExecutors:         make(map[string]*signingExecutor),
+		inactivityClaimExecutors: make(map[string]*inactivityClaimExecutor),
 		coordinationExecutors:    make(map[string]*coordinationExecutor),
 		proposalGenerator:        proposalGenerator,
 	}
@@ -512,7 +513,7 @@ func (n *node) getInactivityClaimExecutor(
 	}
 
 	executorLogger.Infof(
-		"signing executor created; controlling [%v] signers",
+		"inactivity executor created; controlling [%v] signers",
 		len(signers),
 	)
 

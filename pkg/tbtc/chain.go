@@ -121,6 +121,15 @@ type DistributedKeyGenerationChain interface {
 	DKGParameters() (*DKGParameters, error)
 }
 
+// InactivityClaimedEvent represents an inactivity claimed event. It is emitted
+// after a submitted inactivity claim lands on the chain.
+type InactivityClaimedEvent struct {
+	WalletID    [32]byte
+	Nonce       *big.Int
+	Notifier    chain.Address
+	BlockNumber uint64
+}
+
 // InactivityChainClaim represents an inactivity claim submitted to the chain.
 type InactivityChainClaim struct {
 	WalletID               [32]byte
@@ -131,8 +140,14 @@ type InactivityChainClaim struct {
 }
 
 type InactivityClaimChain interface {
-	// AssembleDKGResult assembles the inactivity chain claim according to the
-	// rules expected by the given chain.
+	// OnInactivityClaimed registers a callback that is invoked when an on-chain
+	// notification of the inactivity claim submission is seen.
+	OnInactivityClaimed(
+		func(event *InactivityClaimedEvent),
+	) subscription.EventSubscription
+
+	// AssembleInactivityClaim assembles the inactivity chain claim according to
+	// the rules expected by the given chain.
 	AssembleInactivityClaim(
 		walletID [32]byte,
 		inactiveMembersIndices []group.MemberIndex,

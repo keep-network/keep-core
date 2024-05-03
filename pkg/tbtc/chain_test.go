@@ -552,6 +552,12 @@ func (lc *localChain) DKGParameters() (*DKGParameters, error) {
 	}, nil
 }
 
+func (lc *localChain) OnInactivityClaimed(
+	func(event *InactivityClaimedEvent),
+) subscription.EventSubscription {
+	panic("unsupported")
+}
+
 func (lc *localChain) AssembleInactivityClaim(
 	walletID [32]byte,
 	inactiveMembersIndices []group.MemberIndex,

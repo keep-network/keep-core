@@ -994,6 +994,26 @@ func (tc *TbtcChain) DKGParameters() (*tbtc.DKGParameters, error) {
 	}, nil
 }
 
+func (tc *TbtcChain) OnInactivityClaimed(
+	handler func(event *tbtc.InactivityClaimedEvent),
+) subscription.EventSubscription {
+	onEvent := func(
+		walletID [32]byte,
+		nonce *big.Int,
+		notifier common.Address,
+		blockNumber uint64,
+	) {
+		handler(&tbtc.InactivityClaimedEvent{
+			WalletID:    walletID,
+			Nonce:       nonce,
+			Notifier:    chain.Address(notifier.Hex()),
+			BlockNumber: blockNumber,
+		})
+	}
+
+	return tc.walletRegistry.InactivityClaimedEvent(nil, nil).OnEvent(onEvent)
+}
+
 func (tc *TbtcChain) AssembleInactivityClaim(
 	walletID [32]byte,
 	inactiveMembersIndices []group.MemberIndex,

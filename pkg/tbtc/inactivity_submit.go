@@ -177,7 +177,7 @@ func (ics *inactivityClaimSubmitter) SubmitClaim(
 	err = ics.waitForBlockFn(ctx, submissionBlock)
 	if err != nil {
 		return fmt.Errorf(
-			"error while waiting for DKG result submission block: [%v]",
+			"error while waiting for inactivity claim submission block: [%v]",
 			err,
 		)
 	}

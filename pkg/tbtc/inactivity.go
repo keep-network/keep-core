@@ -88,8 +88,12 @@ func (ice *inactivityClaimExecutor) publishClaim(
 		return fmt.Errorf("cannot marshal wallet public key: [%v]", err)
 	}
 
+	timeoutBlock := startBlock + inactivityClaimMaximumSubmissionBlocks
+
 	execLogger := logger.With(
 		zap.String("wallet", fmt.Sprintf("0x%x", walletPublicKeyBytes)),
+		zap.Uint64("inactivityClaimStartBlock", startBlock),
+		zap.Uint64("inactivityClaimTimeoutBlock", timeoutBlock),
 	)
 
 	walletRegistryData, err := ice.chain.GetWallet(walletPublicKeyHash)
@@ -125,15 +129,35 @@ func (ice *inactivityClaimExecutor) publishClaim(
 
 		defer wg.Done()
 
-		inactivityClaimTimeoutBlock := startBlock + inactivityClaimMaximumSubmissionBlocks
-
 		go func(signer *signer) {
+			execLogger.Info(
+				"[member:%v] starting inactivity claim publishing",
+				signer.signingGroupMemberIndex,
+			)
+
 			ctx, cancelCtx := withCancelOnBlock(
 				context.Background(),
-				inactivityClaimTimeoutBlock,
+				timeoutBlock,
 				ice.waitForBlockFn,
 			)
 			defer cancelCtx()
+
+			subscription := ice.chain.OnInactivityClaimed(
+				func(event *InactivityClaimedEvent) {
+					defer cancelCtx()
+
+					execLogger.Infof(
+						"[member:%v] Inactivity claim submitted for wallet "+
+							"with ID [0x%x] and nonce [%v] by notifier [%v] "+
+							"at block [%v]",
+						signer.signingGroupMemberIndex,
+						event.WalletID,
+						event.Nonce,
+						event.Notifier,
+						event.BlockNumber,
+					)
+				})
+			defer subscription.Unsubscribe()
 
 			err := ice.publish(
 				ctx,
@@ -148,7 +172,6 @@ func (ice *inactivityClaimExecutor) publishClaim(
 				ice.membershipValidator,
 				claim,
 			)
-
 			if err != nil {
 				if errors.Is(err, context.Canceled) {
 					execLogger.Infof(
