@@ -37,9 +37,8 @@ func newSigningMember(
 	sessionID string,
 ) *signingMember {
 	return &signingMember{
-		logger:      logger,
-		memberIndex: memberIndex,
-		// TODO: Check is this is a correct way to create the group.
+		logger:              logger,
+		memberIndex:         memberIndex,
 		group:               group.NewGroup(dishonestThreshold, groupSize),
 		membershipValidator: membershipValidator,
 		sessionID:           sessionID,

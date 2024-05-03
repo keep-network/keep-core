@@ -80,19 +80,14 @@ func (css *claimSigningState) Receive(netMessage net.Message) error {
 }
 
 func (css *claimSigningState) CanTransition() bool {
-	// Although there is no hard requirement to expect signature messages
-	// from all participants, it makes sense to do so because this is an
-	// additional participant availability check that allows to maximize
-	// the final count of active participants. Moreover, this check does not
-	// bound the signing state to a fixed duration and one can move to the
-	// next state as soon as possible.
-	messagingDone := len(receivedMessages[*claimSignatureMessage](css.BaseAsyncState)) ==
-		len(css.member.group.OperatingMemberIndexes())-1
-
-	// TODO: Modify the above code so that only 51 members are needed. Since it
-	//       is executed after a failed heartbeat, we cannot expect all the
-	//       members to sign the claim. In the future consider taking the number
-	//       of active signers from the heartbeat procedure.
+	// Require the number of received signatures to be at least the honest
+	// threshold. Unlike in the case of DKG, we cannot expect all the members to
+	// participate in signing as we know we are dealing with some problem
+	// arising from operator inactivity.
+	// TODO: Consider passing the number of required signatures from the code
+	//       that launched the inactivity operator execution.
+	messagingDone := len(receivedMessages[*claimSignatureMessage](css.BaseAsyncState)) >=
+		css.member.group.HonestThreshold()
 
 	return messagingDone
 }

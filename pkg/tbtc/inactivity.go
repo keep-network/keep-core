@@ -2,6 +2,7 @@ package tbtc
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"math/big"
 	"sync"
@@ -134,7 +135,7 @@ func (ice *inactivityClaimExecutor) publishClaim(
 			)
 			defer cancelCtx()
 
-			ice.publish(
+			err := ice.publish(
 				ctx,
 				execLogger,
 				message,
@@ -148,6 +149,23 @@ func (ice *inactivityClaimExecutor) publishClaim(
 				claim,
 			)
 
+			if err != nil {
+				if errors.Is(err, context.Canceled) {
+					execLogger.Infof(
+						"[member:%v] inactivity claim is no longer awaiting "+
+							"publishing; aborting inactivity claim publishing",
+						signer.signingGroupMemberIndex,
+					)
+					return
+				}
+
+				execLogger.Errorf(
+					"[member:%v] inactivity claim publishing failed [%v]",
+					signer.signingGroupMemberIndex,
+					err,
+				)
+				return
+			}
 		}(currentSigner)
 	}
 
