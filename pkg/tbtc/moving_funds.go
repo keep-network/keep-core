@@ -471,7 +471,6 @@ func (mfa *movingFundsAction) actionType() WalletActionType {
 
 func isWalletPendingMovingFundsTarget(
 	walletPublicKeyHash [20]byte,
-
 	chain interface {
 		BlockCounter() (chain.BlockCounter, error)
 
@@ -542,8 +541,9 @@ func isWalletPendingMovingFundsTarget(
 			continue
 		}
 
-		// Our wallet is on the list of target wallets. If the state is moving
-		// funds, there is probably moving funds to our wallet in the process.
+		// Our wallet is on the list of target wallets. If the state of the
+		// source wallet is still MovingFunds, the moving funds process
+		// targeting our wallet is likely in progress.
 		walletChainData, err := chain.GetWallet(event.WalletPublicKeyHash)
 		if err != nil {
 			return false, fmt.Errorf(
