@@ -438,9 +438,7 @@ func ValidateMovingFundsSafetyMargin(
 		return fmt.Errorf("cannot get moving funds parameters: [%w]", err)
 	}
 
-	maxAllowedSafetyMargin := time.Duration(
-		float64(movingFundsTimeout) * 0.5 * float64(time.Second),
-	)
+	maxAllowedSafetyMargin := time.Duration(movingFundsTimeout/2) * time.Second
 
 	if safetyMargin > maxAllowedSafetyMargin {
 		safetyMargin = maxAllowedSafetyMargin
