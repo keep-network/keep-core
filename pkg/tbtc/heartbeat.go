@@ -161,16 +161,13 @@ func (ha *heartbeatAction) execute() error {
 
 	// If there was an error or the number of active operators during signing
 	// was not enough, we must consider the heartbeat procedure as a failure.
-	if err != nil {
-		logger.Infof("error while generating heartbeat signature: [%v]", err)
-	} else {
-		logger.Infof(
-			"not enough active operators during signing; required [%d]: "+
-				"actual [%d]",
-			activeOperatorsCount,
-			heartbeatSigningMinimumActiveOperators,
-		)
-	}
+	ha.logger.Warnf(
+		"heartbeat failed; [%d/%d] operators participated; the process "+
+			"returned [%v] as error",
+		activeOperatorsCount,
+		heartbeatSigningMinimumActiveOperators,
+		err,
+	)
 
 	// Increment the heartbeat failure counter.
 	*ha.failureCounter++
