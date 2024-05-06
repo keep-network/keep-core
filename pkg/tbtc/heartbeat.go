@@ -109,7 +109,7 @@ func (ha *heartbeatAction) execute() error {
 	}
 
 	if isUnstaking {
-		logger.Warn(
+		ha.logger.Warn(
 			"quitting the heartbeat action without signing because the " +
 				"operator is unstaking",
 		)
@@ -147,7 +147,7 @@ func (ha *heartbeatAction) execute() error {
 	// If there was no error and the number of active operators during signing
 	// was enough, we can consider the heartbeat procedure as successful.
 	if err == nil && activeOperatorsCount >= heartbeatSigningMinimumActiveOperators {
-		logger.Infof(
+		ha.logger.Infof(
 			"successfully generated signature [%s] for heartbeat message [0x%x]",
 			signature,
 			ha.proposal.Message[:],
@@ -175,7 +175,7 @@ func (ha *heartbeatAction) execute() error {
 	// If the number of consecutive heartbeat failures does not exceed the
 	// threshold do not notify about operator inactivity.
 	if *ha.failureCounter < heartbeatConsecutiveFailureThreshold {
-		logger.Infof(
+		ha.logger.Warnf(
 			"leaving without notifying about operator inactivity; current "+
 				"heartbeat failure count is [%d]",
 			*ha.failureCounter,
