@@ -95,7 +95,7 @@ func (mft *MovingFundsTask) Run(request *tbtc.CoordinationProposalRequest) (
 
 	// Check the safety margin for moving funds early. This will prevent
 	// commitment submission if the wallet is not safe to move funds.
-	err = tbtc.ValidateMovingFundsSafetyMargin(walletChainData)
+	err = tbtc.ValidateMovingFundsSafetyMargin(walletPublicKeyHash, mft.chain)
 	if err != nil {
 		taskLogger.Infof("source wallet moving funds safety margin validation failed: [%v]", err)
 		return nil, false, nil
