@@ -426,7 +426,7 @@ func ValidateMovingFundsSafetyMargin(
 	}
 
 	if isMovingFundsTarget {
-		safetyMargin = time.Duration(24) * 14 * time.Hour
+		safetyMargin = time.Duration(14*24) * time.Hour
 	}
 
 	// As the moving funds procedure is time constrained, we must ensure the
