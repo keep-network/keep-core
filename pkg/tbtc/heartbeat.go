@@ -2,6 +2,7 @@ package tbtc
 
 import (
 	"context"
+	"encoding/hex"
 	"fmt"
 	"math/big"
 
@@ -65,7 +66,7 @@ type heartbeatAction struct {
 	signingExecutor heartbeatSigningExecutor
 
 	proposal       *HeartbeatProposal
-	failureCounter *uint
+	failureCounter *heartbeatFailureCounter
 
 	inactivityClaimExecutor *inactivityClaimExecutor
 
@@ -81,7 +82,7 @@ func newHeartbeatAction(
 	executingWallet wallet,
 	signingExecutor heartbeatSigningExecutor,
 	proposal *HeartbeatProposal,
-	failureCounter *uint,
+	failureCounter *heartbeatFailureCounter,
 	inactivityClaimExecutor *inactivityClaimExecutor,
 	startBlock uint64,
 	expiryBlock uint64,
@@ -116,7 +117,14 @@ func (ha *heartbeatAction) execute() error {
 		return nil
 	}
 
-	walletPublicKeyHash := bitcoin.PublicKeyHash(ha.wallet().publicKey)
+	walletPublicKey := ha.wallet().publicKey
+	walletPublicKeyHash := bitcoin.PublicKeyHash(walletPublicKey)
+	walletPublicKeyBytes, err := marshalPublicKey(walletPublicKey)
+	if err != nil {
+		return fmt.Errorf("failed to unmarshal wallet public key: [%v]", err)
+	}
+
+	walletKey := hex.EncodeToString(walletPublicKeyBytes)
 
 	err = ha.chain.ValidateHeartbeatProposal(walletPublicKeyHash, ha.proposal)
 	if err != nil {
@@ -154,7 +162,7 @@ func (ha *heartbeatAction) execute() error {
 		)
 
 		// Reset the counter for consecutive heartbeat failure.
-		*ha.failureCounter = 0
+		ha.failureCounter.reset(walletKey)
 
 		return nil
 	}
@@ -170,15 +178,15 @@ func (ha *heartbeatAction) execute() error {
 	)
 
 	// Increment the heartbeat failure counter.
-	*ha.failureCounter++
+	ha.failureCounter.increment(walletKey)
 
 	// If the number of consecutive heartbeat failures does not exceed the
 	// threshold do not notify about operator inactivity.
-	if *ha.failureCounter < heartbeatConsecutiveFailureThreshold {
+	if ha.failureCounter.get(walletKey) < heartbeatConsecutiveFailureThreshold {
 		ha.logger.Warnf(
 			"leaving without notifying about operator inactivity; current "+
 				"heartbeat failure count is [%d]",
-			*ha.failureCounter,
+			ha.failureCounter.get(walletKey),
 		)
 		return nil
 	}

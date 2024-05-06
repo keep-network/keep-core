@@ -66,11 +66,9 @@ type node struct {
 	// dkgExecutor MUST NOT be used outside this struct.
 	dkgExecutor *dkgExecutor
 
-	heartbeatFailureCountersMutex sync.Mutex
-	// heartbeatFailureCounters holds counters keeping track of consecutive
-	// heartbeat failures. Each wallet has a separate counter. The key used in
-	// the map is the uncompressed public key (with 04 prefix) of the wallet.
-	heartbeatFailureCounters map[string]*uint
+	// heartbeatFailureCounter stores the counters of consecutive heartbeat
+	// failures for each wallet.
+	heartbeatFailureCounter *heartbeatFailureCounter
 
 	inactivityClaimExecutorMutex sync.Mutex
 	// inactivityClaimExecutors is the cache holding inactivity claim executors
@@ -132,7 +130,7 @@ func newNode(
 		walletRegistry:           walletRegistry,
 		walletDispatcher:         newWalletDispatcher(),
 		protocolLatch:            latch,
-		heartbeatFailureCounters: make(map[string]*uint),
+		heartbeatFailureCounter:  newHeartbeatFailureCounter(),
 		signingExecutors:         make(map[string]*signingExecutor),
 		inactivityClaimExecutors: make(map[string]*inactivityClaimExecutor),
 		coordinationExecutors:    make(map[string]*coordinationExecutor),
@@ -227,29 +225,6 @@ func (n *node) validateDKG(
 	resultHash [32]byte,
 ) {
 	n.dkgExecutor.executeDkgValidation(seed, submissionBlock, result, resultHash)
-}
-
-func (n *node) getHeartbeatCounter(
-	walletPublicKey *ecdsa.PublicKey,
-) (*uint, error) {
-	n.heartbeatFailureCountersMutex.Lock()
-	defer n.heartbeatFailureCountersMutex.Unlock()
-
-	walletPublicKeyBytes, err := marshalPublicKey(walletPublicKey)
-	if err != nil {
-		return nil, fmt.Errorf("cannot marshal wallet public key: [%v]", err)
-	}
-
-	counterKey := hex.EncodeToString(walletPublicKeyBytes)
-
-	if counter, exists := n.heartbeatFailureCounters[counterKey]; exists {
-		return counter, nil
-	}
-
-	counterInitialValue := new(uint) // The value is zero-initialized.
-	n.heartbeatFailureCounters[counterKey] = counterInitialValue
-
-	return counterInitialValue, nil
 }
 
 // getSigningExecutor gets the signing executor responsible for executing
@@ -564,12 +539,6 @@ func (n *node) handleHeartbeatProposal(
 		return
 	}
 
-	heartbeatFailureCounter, err := n.getHeartbeatCounter(wallet.publicKey)
-	if err != nil {
-		logger.Errorf("cannot get heartbeat failure counter: [%v]", err)
-		return
-	}
-
 	inactivityClaimExecutor, ok, err := n.getInactivityClaimExecutor(wallet.publicKey)
 	if err != nil {
 		logger.Errorf("cannot get inactivity claim executor: [%v]", err)
@@ -609,7 +578,7 @@ func (n *node) handleHeartbeatProposal(
 		wallet,
 		signingExecutor,
 		proposal,
-		heartbeatFailureCounter,
+		n.heartbeatFailureCounter,
 		inactivityClaimExecutor,
 		startBlock,
 		expiryBlock,
