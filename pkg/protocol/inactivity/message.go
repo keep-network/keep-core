@@ -4,9 +4,9 @@ import (
 	"github.com/keep-network/keep-core/pkg/protocol/group"
 )
 
-const messageTypePrefix = "tecdsa_inactivity/"
+const messageTypePrefix = "protocol_inactivity/"
 
-// message holds common traits of all signing protocol messages.
+// message holds common traits of all inactivity protocol messages.
 type message interface {
 	// SenderID returns protocol-level identifier of the message sender.
 	SenderID() group.MemberIndex

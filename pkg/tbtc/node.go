@@ -460,7 +460,7 @@ func (n *node) getInactivityClaimExecutor(
 	wallet := signers[0].wallet
 
 	channelName := fmt.Sprintf(
-		"%s-%s",
+		"%s-%s-inactivity",
 		ProtocolName,
 		hex.EncodeToString(walletPublicKeyBytes),
 	)
