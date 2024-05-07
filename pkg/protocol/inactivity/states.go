@@ -84,10 +84,8 @@ func (css *claimSigningState) CanTransition() bool {
 	// threshold. Unlike in the case of DKG, we cannot expect all the members to
 	// participate in signing as we know we are dealing with some problem
 	// arising from operator inactivity.
-	// TODO: Consider passing the number of required signatures from the code
-	//       that launched the inactivity operator execution.
 	messagingDone := len(receivedMessages[*claimSignatureMessage](css.BaseAsyncState)) >=
-		css.member.group.HonestThreshold()
+		css.member.group.HonestThreshold()-1
 
 	return messagingDone
 }
