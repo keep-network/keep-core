@@ -29,7 +29,7 @@ func (ics *inactivityClaimSigner) SignClaim(claim *inactivity.Claim) (
 	error,
 ) {
 	if claim == nil {
-		return nil, fmt.Errorf("result is nil")
+		return nil, fmt.Errorf("claim is nil")
 	}
 
 	claimHash, err := ics.chain.CalculateInactivityClaimSignatureHash(claim)
