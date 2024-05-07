@@ -581,7 +581,20 @@ func (lc *localChain) SubmitInactivityClaim(
 func (lc *localChain) CalculateInactivityClaimSignatureHash(
 	claim *inactivity.Claim,
 ) (inactivity.ClaimSignatureHash, error) {
-	panic("unsupported")
+	if claim.WalletPublicKey == nil {
+		return inactivity.ClaimSignatureHash{}, fmt.Errorf(
+			"wallet public key is nil",
+		)
+	}
+
+	encoded := fmt.Sprint(
+		claim.Nonce,
+		claim.WalletPublicKey,
+		claim.InactiveMembersIndexes,
+		claim.HeartbeatFailed,
+	)
+
+	return sha3.Sum256([]byte(encoded)), nil
 }
 
 func (lc *localChain) GetInactivityClaimNonce(walletID [32]byte) (*big.Int, error) {
