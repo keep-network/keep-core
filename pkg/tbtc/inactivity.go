@@ -72,7 +72,7 @@ func newInactivityClaimExecutor(
 func (ice *inactivityClaimExecutor) publishClaim(
 	inactiveMembersIndexes []group.MemberIndex,
 	heartbeatFailed bool,
-	message *big.Int,
+	sessionId *big.Int,
 	startBlock uint64,
 ) error {
 	if lockAcquired := ice.lock.TryAcquire(1); !lockAcquired {
@@ -115,7 +115,7 @@ func (ice *inactivityClaimExecutor) publishClaim(
 		HeartbeatFailed:        heartbeatFailed,
 	}
 
-	groupMembers, err := ice.getWalletMembersInfo()
+	groupMembers, err := ice.getWalletOperatorsIDs()
 	if err != nil {
 		return fmt.Errorf("could not get wallet members info: [%v]", err)
 	}
@@ -162,7 +162,7 @@ func (ice *inactivityClaimExecutor) publishClaim(
 			err := ice.publish(
 				ctx,
 				execLogger,
-				message,
+				sessionId,
 				signer.signingGroupMemberIndex,
 				wallet.groupSize(),
 				wallet.groupDishonestThreshold(
@@ -198,7 +198,7 @@ func (ice *inactivityClaimExecutor) publishClaim(
 	return nil
 }
 
-func (ice *inactivityClaimExecutor) getWalletMembersInfo() ([]uint32, error) {
+func (ice *inactivityClaimExecutor) getWalletOperatorsIDs() ([]uint32, error) {
 	// Cache mapping operator addresses to their wallet member IDs. It helps to
 	// limit the number of calls to the ETH client if some operator addresses
 	// occur on the list multiple times.
