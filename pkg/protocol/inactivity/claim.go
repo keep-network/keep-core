@@ -49,7 +49,7 @@ func ClaimSignatureHashFromBytes(bytes []byte) (ClaimSignatureHash, error) {
 			"bytes length is not equal %v", ClaimSignatureHashByteSize,
 		)
 	}
-	copy(hash[:], bytes[:])
+	copy(hash[:], bytes)
 
 	return hash, nil
 }
