@@ -11,30 +11,30 @@ import (
 	"github.com/keep-network/keep-core/pkg/protocol/state"
 )
 
-// SignedClaim represents information pertaining to the process of signing
+// SignedClaimHash represents information pertaining to the process of signing
 // an inactivity claim: the public key used during signing, the resulting
 // signature and the hash of the inactivity claim that was used during signing.
-type SignedClaim struct {
+type SignedClaimHash struct {
 	PublicKey []byte
 	Signature []byte
-	ClaimHash ClaimSignatureHash
+	ClaimHash ClaimHash
 }
 
 type ClaimSigner interface {
-	SignClaim(claim *Claim) (*SignedClaim, error)
-	VerifySignature(signedClaim *SignedClaim) (bool, error)
+	SignClaim(claim *ClaimPreimage) (*SignedClaimHash, error)
+	VerifySignature(signedClaim *SignedClaimHash) (bool, error)
 }
 
 type ClaimSubmitter interface {
 	SubmitClaim(
 		ctx context.Context,
 		memberIndex group.MemberIndex,
-		claim *Claim,
+		claim *ClaimPreimage,
 		signatures map[group.MemberIndex][]byte,
 	) error
 }
 
-func Publish(
+func PublishClaim(
 	ctx context.Context,
 	logger log.StandardLogger,
 	sessionID string,
@@ -45,7 +45,7 @@ func Publish(
 	membershipValidator *group.MembershipValidator,
 	claimSigner ClaimSigner,
 	claimSubmitter ClaimSubmitter,
-	claim *Claim,
+	claim *ClaimPreimage,
 ) error {
 	initialState := &claimSigningState{
 		BaseAsyncState: state.NewBaseAsyncState(),

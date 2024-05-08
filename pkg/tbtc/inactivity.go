@@ -108,7 +108,7 @@ func (ice *inactivityClaimExecutor) publishClaim(
 		return fmt.Errorf("could not get nonce for wallet: [%v]", err)
 	}
 
-	claim := &inactivity.Claim{
+	claim := &inactivity.ClaimPreimage{
 		Nonce:                  nonce,
 		WalletPublicKey:        wallet.publicKey,
 		InactiveMembersIndexes: inactiveMembersIndexes,
@@ -233,9 +233,9 @@ func (ice *inactivityClaimExecutor) publish(
 	dishonestThreshold int,
 	groupMembers []uint32,
 	membershipValidator *group.MembershipValidator,
-	inactivityClaim *inactivity.Claim,
+	inactivityClaim *inactivity.ClaimPreimage,
 ) error {
-	return inactivity.Publish(
+	return inactivity.PublishClaim(
 		ctx,
 		inactivityLogger,
 		seed.Text(16),

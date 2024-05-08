@@ -564,25 +564,25 @@ func (lc *localChain) AssembleInactivityClaim(
 	signatures map[group.MemberIndex][]byte,
 	heartbeatFailed bool,
 ) (
-	*InactivityChainClaim,
+	*InactivityClaim,
 	error,
 ) {
 	panic("unsupported")
 }
 
 func (lc *localChain) SubmitInactivityClaim(
-	claim *InactivityChainClaim,
+	claim *InactivityClaim,
 	nonce *big.Int,
 	groupMembers []uint32,
 ) error {
 	panic("unsupported")
 }
 
-func (lc *localChain) CalculateInactivityClaimSignatureHash(
-	claim *inactivity.Claim,
-) (inactivity.ClaimSignatureHash, error) {
+func (lc *localChain) CalculateInactivityClaimHash(
+	claim *inactivity.ClaimPreimage,
+) (inactivity.ClaimHash, error) {
 	if claim.WalletPublicKey == nil {
-		return inactivity.ClaimSignatureHash{}, fmt.Errorf(
+		return inactivity.ClaimHash{}, fmt.Errorf(
 			"wallet public key is nil",
 		)
 	}

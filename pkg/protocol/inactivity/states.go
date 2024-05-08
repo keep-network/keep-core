@@ -22,7 +22,7 @@ type claimSigningState struct {
 
 	member *signingMember
 
-	claim *Claim
+	claim *ClaimPreimage
 }
 
 func (css *claimSigningState) Initiate(ctx context.Context) error {
@@ -115,7 +115,7 @@ type signaturesVerificationState struct {
 
 	member *signingMember
 
-	claim *Claim
+	claim *ClaimPreimage
 
 	validSignatures map[group.MemberIndex][]byte
 }
@@ -159,7 +159,7 @@ type claimSubmissionState struct {
 
 	member *submittingMember
 
-	claim      *Claim
+	claim      *ClaimPreimage
 	signatures map[group.MemberIndex][]byte
 }
 

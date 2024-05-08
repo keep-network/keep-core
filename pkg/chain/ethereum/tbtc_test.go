@@ -240,7 +240,7 @@ func TestCalculateDKGResultSignatureHash(t *testing.T) {
 	)
 }
 
-func TestCalculateInactivityClaimSignatureHash(t *testing.T) {
+func TestCalculateInactivityClaimHash(t *testing.T) {
 	chainID := big.NewInt(31337)
 	nonce := big.NewInt(3)
 
@@ -258,7 +258,7 @@ func TestCalculateInactivityClaimSignatureHash(t *testing.T) {
 
 	heartbeatFailed := true
 
-	hash, err := calculateInactivityClaimSignatureHash(
+	hash, err := calculateInactivityClaimHash(
 		chainID,
 		nonce,
 		walletPublicKey,

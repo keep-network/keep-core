@@ -24,15 +24,15 @@ func newInactivityClaimSigner(
 	}
 }
 
-func (ics *inactivityClaimSigner) SignClaim(claim *inactivity.Claim) (
-	*inactivity.SignedClaim,
+func (ics *inactivityClaimSigner) SignClaim(claim *inactivity.ClaimPreimage) (
+	*inactivity.SignedClaimHash,
 	error,
 ) {
 	if claim == nil {
 		return nil, fmt.Errorf("claim is nil")
 	}
 
-	claimHash, err := ics.chain.CalculateInactivityClaimSignatureHash(claim)
+	claimHash, err := ics.chain.CalculateInactivityClaimHash(claim)
 	if err != nil {
 		return nil, fmt.Errorf(
 			"inactivity claim hash calculation failed [%w]",
@@ -50,7 +50,7 @@ func (ics *inactivityClaimSigner) SignClaim(claim *inactivity.Claim) (
 		)
 	}
 
-	return &inactivity.SignedClaim{
+	return &inactivity.SignedClaimHash{
 		PublicKey: signing.PublicKey(),
 		Signature: signature,
 		ClaimHash: claimHash,
@@ -60,7 +60,7 @@ func (ics *inactivityClaimSigner) SignClaim(claim *inactivity.Claim) (
 // VerifySignature verifies if the signature was generated from the provided
 // inactivity claim using the provided public key.
 func (ics *inactivityClaimSigner) VerifySignature(
-	signedClaim *inactivity.SignedClaim,
+	signedClaim *inactivity.SignedClaimHash,
 ) (
 	bool,
 	error,
@@ -101,7 +101,7 @@ func newInactivityClaimSubmitter(
 func (ics *inactivityClaimSubmitter) SubmitClaim(
 	ctx context.Context,
 	memberIndex group.MemberIndex,
-	claim *inactivity.Claim,
+	claim *inactivity.ClaimPreimage,
 	signatures map[group.MemberIndex][]byte,
 ) error {
 	if len(signatures) < ics.groupParameters.HonestThreshold {
@@ -142,7 +142,7 @@ func (ics *inactivityClaimSubmitter) SubmitClaim(
 		return nil
 	}
 
-	inactivityClaim, err := ics.chain.AssembleInactivityClaim(
+	chainClaim, err := ics.chain.AssembleInactivityClaim(
 		ecdsaWalletID,
 		claim.GetInactiveMembersIndexes(),
 		signatures,
@@ -202,7 +202,7 @@ func (ics *inactivityClaimSubmitter) SubmitClaim(
 	)
 
 	return ics.chain.SubmitInactivityClaim(
-		inactivityClaim,
+		chainClaim,
 		inactivityNonce,
 		ics.groupMembers,
 	)

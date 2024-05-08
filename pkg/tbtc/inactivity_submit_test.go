@@ -24,7 +24,7 @@ func TestSignClaim_SigningSuccessful(t *testing.T) {
 	}
 	privateKeyShare := tecdsa.NewPrivateKeyShare(testData[0])
 
-	claim := &inactivity.Claim{
+	claim := &inactivity.ClaimPreimage{
 		Nonce:                  big.NewInt(5),
 		WalletPublicKey:        privateKeyShare.PublicKey(),
 		InactiveMembersIndexes: []group.MemberIndex{11, 22, 33},
@@ -50,7 +50,7 @@ func TestSignClaim_SigningSuccessful(t *testing.T) {
 		)
 	}
 
-	expectedInactivityClaimHash := inactivity.ClaimSignatureHash(
+	expectedInactivityClaimHash := inactivity.ClaimHash(
 		sha3.Sum256(
 			[]byte(fmt.Sprint(
 				claim.Nonce,
@@ -117,7 +117,7 @@ func TestVerifySignature_VerifySuccessful(t *testing.T) {
 	}
 	privateKeyShare := tecdsa.NewPrivateKeyShare(testData[0])
 
-	claim := &inactivity.Claim{
+	claim := &inactivity.ClaimPreimage{
 		Nonce:                  big.NewInt(5),
 		WalletPublicKey:        privateKeyShare.PublicKey(),
 		InactiveMembersIndexes: []group.MemberIndex{11, 22, 33},
@@ -154,7 +154,7 @@ func TestVerifySignature_VerifyFailure(t *testing.T) {
 	}
 	privateKeyShare := tecdsa.NewPrivateKeyShare(testData[0])
 
-	claim := &inactivity.Claim{
+	claim := &inactivity.ClaimPreimage{
 		Nonce:                  big.NewInt(5),
 		WalletPublicKey:        privateKeyShare.PublicKey(),
 		InactiveMembersIndexes: []group.MemberIndex{11, 22, 33},
@@ -166,7 +166,7 @@ func TestVerifySignature_VerifyFailure(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	anotherClaim := &inactivity.Claim{
+	anotherClaim := &inactivity.ClaimPreimage{
 		Nonce:                  big.NewInt(6),
 		WalletPublicKey:        privateKeyShare.PublicKey(),
 		InactiveMembersIndexes: []group.MemberIndex{11, 22, 33},
@@ -207,7 +207,7 @@ func TestVerifySignature_VerifyError(t *testing.T) {
 	}
 	privateKeyShare := tecdsa.NewPrivateKeyShare(testData[0])
 
-	claim := &inactivity.Claim{
+	claim := &inactivity.ClaimPreimage{
 		Nonce:                  big.NewInt(5),
 		WalletPublicKey:        privateKeyShare.PublicKey(),
 		InactiveMembersIndexes: []group.MemberIndex{11, 22, 33},

@@ -22,7 +22,7 @@ type signingMember struct {
 	// this member is part of.
 	sessionID string
 	// Hash of inactivity claim preferred by the current participant.
-	preferredInactivityClaimHash ClaimSignatureHash
+	preferredInactivityClaimHash ClaimHash
 	// Signature over preferredInactivityClaimHash calculated by the member.
 	selfInactivityClaimSignature []byte
 }
@@ -70,7 +70,7 @@ func (sm *signingMember) initializeSubmittingMember() *submittingMember {
 }
 
 func (sm *signingMember) signClaim(
-	claim *Claim,
+	claim *ClaimPreimage,
 	claimSigner ClaimSigner,
 ) (*claimSignatureMessage, error) {
 	signedClaim, err := claimSigner.SignClaim(claim)
@@ -120,7 +120,7 @@ func (sm *signingMember) verifyInactivityClaimSignatures(
 
 		// Check if the signature is valid.
 		isValid, err := resultSigner.VerifySignature(
-			&SignedClaim{
+			&SignedClaimHash{
 				ClaimHash: message.claimHash,
 				Signature: message.signature,
 				PublicKey: message.publicKey,
@@ -165,7 +165,7 @@ type submittingMember struct {
 // to the provided claim submitter.
 func (sm *submittingMember) submitClaim(
 	ctx context.Context,
-	claim *Claim,
+	claim *ClaimPreimage,
 	signatures map[group.MemberIndex][]byte,
 	claimSubmitter ClaimSubmitter,
 ) error {

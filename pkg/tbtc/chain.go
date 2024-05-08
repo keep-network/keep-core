@@ -130,8 +130,8 @@ type InactivityClaimedEvent struct {
 	BlockNumber uint64
 }
 
-// InactivityChainClaim represents an inactivity claim submitted to the chain.
-type InactivityChainClaim struct {
+// InactivityClaim represents an inactivity claim submitted to the chain.
+type InactivityClaim struct {
 	WalletID               [32]byte
 	InactiveMembersIndices []group.MemberIndex
 	HeartbeatFailed        bool
@@ -153,20 +153,21 @@ type InactivityClaimChain interface {
 		inactiveMembersIndices []group.MemberIndex,
 		signatures map[group.MemberIndex][]byte,
 		heartbeatFailed bool,
-	) (*InactivityChainClaim, error)
+	) (*InactivityClaim, error)
 
 	// SubmitInactivityClaim submits the inactivity claim to the chain.
 	SubmitInactivityClaim(
-		claim *InactivityChainClaim,
+		claim *InactivityClaim,
 		nonce *big.Int,
 		groupMembers []uint32,
 	) error
 
-	// CalculateInactivityClaimSignatureHash calculates hash for the given
-	// inactivity claim.
-	CalculateInactivityClaimSignatureHash(
-		claim *inactivity.Claim,
-	) (inactivity.ClaimSignatureHash, error)
+	// CalculateInactivityClaimHash calculates hash for the given inactivity
+	// claim.
+	CalculateInactivityClaimHash(claim *inactivity.ClaimPreimage) (
+		inactivity.ClaimHash,
+		error,
+	)
 
 	// GetInactivityClaimNonce returns inactivity claim nonce for the given
 	// wallet.

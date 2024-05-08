@@ -43,7 +43,7 @@ func (csm *claimSignatureMessage) Unmarshal(bytes []byte) error {
 	}
 	csm.senderID = group.MemberIndex(pbMsg.SenderID)
 
-	claimHash, err := ClaimSignatureHashFromBytes(pbMsg.ClaimHash)
+	claimHash, err := ClaimHashFromBytes(pbMsg.ClaimHash)
 	if err != nil {
 		return err
 	}

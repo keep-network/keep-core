@@ -1020,7 +1020,7 @@ func (tc *TbtcChain) AssembleInactivityClaim(
 	signatures map[group.MemberIndex][]byte,
 	heartbeatFailed bool,
 ) (
-	*tbtc.InactivityChainClaim,
+	*tbtc.InactivityClaim,
 	error,
 ) {
 	signingMemberIndices, signatureBytes, err := convertSignaturesToChainFormat(
@@ -1039,7 +1039,7 @@ func (tc *TbtcChain) AssembleInactivityClaim(
 		return inactiveMembersIndices[i] < inactiveMembersIndices[j]
 	})
 
-	return &tbtc.InactivityChainClaim{
+	return &tbtc.InactivityClaim{
 		WalletID:               walletID,
 		InactiveMembersIndices: inactiveMembersIndices,
 		HeartbeatFailed:        heartbeatFailed,
@@ -1051,7 +1051,7 @@ func (tc *TbtcChain) AssembleInactivityClaim(
 // convertInactivityClaimToAbiType converts the TBTC-specific inactivity claim
 // to the format applicable for the WalletRegistry ABI.
 func convertInactivityClaimToAbiType(
-	claim *tbtc.InactivityChainClaim,
+	claim *tbtc.InactivityClaim,
 ) ecdsaabi.EcdsaInactivityClaim {
 	inactiveMembersIndices := make([]*big.Int, len(claim.InactiveMembersIndices))
 	for i, memberIndex := range claim.InactiveMembersIndices {
@@ -1073,7 +1073,7 @@ func convertInactivityClaimToAbiType(
 }
 
 func (tc *TbtcChain) SubmitInactivityClaim(
-	claim *tbtc.InactivityChainClaim,
+	claim *tbtc.InactivityClaim,
 	nonce *big.Int,
 	groupMembers []uint32,
 ) error {
@@ -1086,16 +1086,16 @@ func (tc *TbtcChain) SubmitInactivityClaim(
 	return err
 }
 
-func (tc *TbtcChain) CalculateInactivityClaimSignatureHash(
-	claim *inactivity.Claim,
-) (inactivity.ClaimSignatureHash, error) {
+func (tc *TbtcChain) CalculateInactivityClaimHash(
+	claim *inactivity.ClaimPreimage,
+) (inactivity.ClaimHash, error) {
 	walletPublicKeyBytes := elliptic.Marshal(
 		claim.WalletPublicKey.Curve,
 		claim.WalletPublicKey.X,
 		claim.WalletPublicKey.Y,
 	)
-	// Crop the 04 prefix as the calculateInactivityClaimSignatureHash function
-	// expects an unprefixed 64-byte public key,
+	// Crop the 04 prefix as the calculateInactivityClaimHash function expects
+	// an unprefixed 64-byte public key,
 	unprefixedGroupPublicKeyBytes := walletPublicKeyBytes[1:]
 
 	// The indexes are already sorted.
@@ -1109,7 +1109,7 @@ func (tc *TbtcChain) CalculateInactivityClaimSignatureHash(
 		inactiveMembersIndexes[i] = big.NewInt(int64(index))
 	}
 
-	return calculateInactivityClaimSignatureHash(
+	return calculateInactivityClaimHash(
 		tc.chainID,
 		claim.Nonce,
 		unprefixedGroupPublicKeyBytes,
@@ -1118,36 +1118,36 @@ func (tc *TbtcChain) CalculateInactivityClaimSignatureHash(
 	)
 }
 
-func calculateInactivityClaimSignatureHash(
+func calculateInactivityClaimHash(
 	chainID *big.Int,
 	nonce *big.Int,
 	walletPublicKey []byte,
 	inactiveMembersIndexes []*big.Int,
 	heartbeatFailed bool,
-) (inactivity.ClaimSignatureHash, error) {
+) (inactivity.ClaimHash, error) {
 	publicKeySize := 64
 
 	if len(walletPublicKey) != publicKeySize {
-		return inactivity.ClaimSignatureHash{}, fmt.Errorf(
+		return inactivity.ClaimHash{}, fmt.Errorf(
 			"wrong wallet public key length",
 		)
 	}
 
 	uint256Type, err := abi.NewType("uint256", "uint256", nil)
 	if err != nil {
-		return inactivity.ClaimSignatureHash{}, err
+		return inactivity.ClaimHash{}, err
 	}
 	bytesType, err := abi.NewType("bytes", "bytes", nil)
 	if err != nil {
-		return inactivity.ClaimSignatureHash{}, err
+		return inactivity.ClaimHash{}, err
 	}
 	uint256SliceType, err := abi.NewType("uint256[]", "uint256[]", nil)
 	if err != nil {
-		return inactivity.ClaimSignatureHash{}, err
+		return inactivity.ClaimHash{}, err
 	}
 	boolType, err := abi.NewType("bool", "bool", nil)
 	if err != nil {
-		return inactivity.ClaimSignatureHash{}, err
+		return inactivity.ClaimHash{}, err
 	}
 
 	bytes, err := abi.Arguments{
@@ -1164,10 +1164,10 @@ func calculateInactivityClaimSignatureHash(
 		heartbeatFailed,
 	)
 	if err != nil {
-		return inactivity.ClaimSignatureHash{}, err
+		return inactivity.ClaimHash{}, err
 	}
 
-	return inactivity.ClaimSignatureHash(crypto.Keccak256Hash(bytes)), nil
+	return inactivity.ClaimHash(crypto.Keccak256Hash(bytes)), nil
 }
 
 func (tc *TbtcChain) GetInactivityClaimNonce(

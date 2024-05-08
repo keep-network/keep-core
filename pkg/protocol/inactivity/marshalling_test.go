@@ -34,7 +34,7 @@ func TestFuzzClaimSignatureMessage_MarshalingRoundtrip(t *testing.T) {
 	for i := 0; i < 10; i++ {
 		var (
 			senderID  group.MemberIndex
-			claimHash ClaimSignatureHash
+			claimHash ClaimHash
 			signature []byte
 			publicKey []byte
 			sessionID string

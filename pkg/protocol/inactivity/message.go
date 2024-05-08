@@ -19,7 +19,7 @@ type message interface {
 type claimSignatureMessage struct {
 	senderID group.MemberIndex
 
-	claimHash ClaimSignatureHash
+	claimHash ClaimHash
 	signature []byte
 	publicKey []byte
 	sessionID string
