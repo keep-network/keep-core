@@ -69,10 +69,10 @@ func newInactivityClaimExecutor(
 	}
 }
 
-func (ice *inactivityClaimExecutor) publishClaim(
+func (ice *inactivityClaimExecutor) claimInactivity(
 	inactiveMembersIndexes []group.MemberIndex,
 	heartbeatFailed bool,
-	sessionId *big.Int,
+	sessionID *big.Int,
 	startBlock uint64,
 ) error {
 	if lockAcquired := ice.lock.TryAcquire(1); !lockAcquired {
@@ -159,10 +159,10 @@ func (ice *inactivityClaimExecutor) publishClaim(
 				})
 			defer subscription.Unsubscribe()
 
-			err := ice.publish(
+			err := ice.publishInactivityClaim(
 				ctx,
 				execLogger,
-				sessionId,
+				sessionID,
 				signer.signingGroupMemberIndex,
 				wallet.groupSize(),
 				wallet.groupDishonestThreshold(
@@ -224,10 +224,10 @@ func (ice *inactivityClaimExecutor) getWalletOperatorsIDs() ([]uint32, error) {
 	return walletMemberIDs, nil
 }
 
-func (ice *inactivityClaimExecutor) publish(
+func (ice *inactivityClaimExecutor) publishInactivityClaim(
 	ctx context.Context,
 	inactivityLogger log.StandardLogger,
-	seed *big.Int,
+	sessionID *big.Int,
 	memberIndex group.MemberIndex,
 	groupSize int,
 	dishonestThreshold int,
@@ -238,7 +238,7 @@ func (ice *inactivityClaimExecutor) publish(
 	return inactivity.PublishClaim(
 		ctx,
 		inactivityLogger,
-		seed.Text(16),
+		sessionID.Text(16),
 		memberIndex,
 		ice.broadcastChannel,
 		groupSize,
