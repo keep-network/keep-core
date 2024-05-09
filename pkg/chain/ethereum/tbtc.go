@@ -1033,12 +1033,6 @@ func (tc *TbtcChain) AssembleInactivityClaim(
 		)
 	}
 
-	// Sort inactiveMembersIndices slice in ascending order as expected by the
-	// on-chain contract.
-	sort.Slice(inactiveMembersIndices[:], func(i, j int) bool {
-		return inactiveMembersIndices[i] < inactiveMembersIndices[j]
-	})
-
 	return &tbtc.InactivityClaim{
 		WalletID:               walletID,
 		InactiveMembersIndices: inactiveMembersIndices,
@@ -1098,14 +1092,11 @@ func (tc *TbtcChain) CalculateInactivityClaimHash(
 	// an unprefixed 64-byte public key,
 	unprefixedGroupPublicKeyBytes := walletPublicKeyBytes[1:]
 
-	// The indexes are already sorted.
-	sortedIndexes := claim.GetInactiveMembersIndexes()
-
 	// The type representing inactive member index should be `big.Int` as the
 	// smart contract reading the calculated hash uses `uint256` for inactive
 	// member indexes.
-	inactiveMembersIndexes := make([]*big.Int, len(sortedIndexes))
-	for i, index := range sortedIndexes {
+	inactiveMembersIndexes := make([]*big.Int, len(claim.InactiveMembersIndexes))
+	for i, index := range claim.InactiveMembersIndexes {
 		inactiveMembersIndexes[i] = big.NewInt(int64(index))
 	}
 

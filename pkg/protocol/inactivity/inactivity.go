@@ -22,19 +22,35 @@ type ClaimPreimage struct {
 	HeartbeatFailed        bool
 }
 
-// GetInactiveMembersIndexes returns the indexes of inactive members.
-// The original slice is copied to avoid concurrency issues if the claim object
-// is shared between many goroutines. The returned indexes are sorted.
-func (c *ClaimPreimage) GetInactiveMembersIndexes() []group.MemberIndex {
-	sortedIndexes := make([]group.MemberIndex, len(c.InactiveMembersIndexes))
+func NewClaimPreimage(
+	nonce *big.Int,
+	walletPublicKey *ecdsa.PublicKey,
+	inactiveMembersIndexes []group.MemberIndex,
+	heartbeatFailed bool,
+) *ClaimPreimage {
+	// Made the inactive member indexes unique as expected by the on-chain
+	// contract.
+	indexesCache := make(map[group.MemberIndex]bool)
+	uniqueIndexes := []group.MemberIndex{}
 
-	copy(sortedIndexes, c.InactiveMembersIndexes)
+	for _, index := range inactiveMembersIndexes {
+		if _, exists := indexesCache[index]; !exists {
+			indexesCache[index] = true
+			uniqueIndexes = append(uniqueIndexes, index)
+		}
+	}
 
-	sort.Slice(sortedIndexes, func(i, j int) bool {
-		return sortedIndexes[i] < sortedIndexes[j]
+	// Sort the inactive member indexes as expected by the on-chain contract.
+	sort.Slice(uniqueIndexes, func(i, j int) bool {
+		return uniqueIndexes[i] < uniqueIndexes[j]
 	})
 
-	return sortedIndexes
+	return &ClaimPreimage{
+		Nonce:                  nonce,
+		WalletPublicKey:        walletPublicKey,
+		InactiveMembersIndexes: uniqueIndexes,
+		HeartbeatFailed:        heartbeatFailed,
+	}
 }
 
 const ClaimHashByteSize = 32

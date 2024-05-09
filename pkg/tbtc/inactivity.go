@@ -108,12 +108,12 @@ func (ice *inactivityClaimExecutor) claimInactivity(
 		return fmt.Errorf("could not get nonce for wallet: [%v]", err)
 	}
 
-	claim := &inactivity.ClaimPreimage{
-		Nonce:                  nonce,
-		WalletPublicKey:        wallet.publicKey,
-		InactiveMembersIndexes: inactiveMembersIndexes,
-		HeartbeatFailed:        heartbeatFailed,
-	}
+	claim := inactivity.NewClaimPreimage(
+		nonce,
+		wallet.publicKey,
+		inactiveMembersIndexes,
+		heartbeatFailed,
+	)
 
 	groupMembers, err := ice.getWalletOperatorsIDs()
 	if err != nil {
@@ -396,7 +396,7 @@ func (ics *inactivityClaimSubmitter) SubmitClaim(
 
 	chainClaim, err := ics.chain.AssembleInactivityClaim(
 		ecdsaWalletID,
-		claim.GetInactiveMembersIndexes(),
+		claim.InactiveMembersIndexes,
 		signatures,
 		claim.HeartbeatFailed,
 	)
