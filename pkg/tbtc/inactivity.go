@@ -124,12 +124,12 @@ func (ice *inactivityClaimExecutor) claimInactivity(
 	wg.Add(len(ice.signers))
 
 	for _, currentSigner := range ice.signers {
-		ice.protocolLatch.Lock()
-		defer ice.protocolLatch.Unlock()
-
-		defer wg.Done()
-
 		go func(signer *signer) {
+			ice.protocolLatch.Lock()
+			defer ice.protocolLatch.Unlock()
+
+			defer wg.Done()
+
 			execLogger.Info(
 				"[member:%v] starting inactivity claim publishing",
 				signer.signingGroupMemberIndex,
