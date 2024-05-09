@@ -384,11 +384,6 @@ func (bc *BeaconChain) IsRecognized(operatorPublicKey *operator.PublicKey) (bool
 	return true, nil
 }
 
-// TODO: Implement a real IsOperatorUnstaking function.
-func (bc *BeaconChain) IsOperatorUnstaking() (bool, error) {
-	return false, errNotImplemented
-}
-
 // TODO: Implement a real SubmitRelayEntry function.
 func (bc *BeaconChain) SubmitRelayEntry(
 	entry []byte,

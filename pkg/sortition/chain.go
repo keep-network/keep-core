@@ -51,10 +51,6 @@ type Chain interface {
 	// or not.
 	IsEligibleForRewards() (bool, error)
 
-	// IsOperatorUnstaking checks if the operator is unstaking. It returns true
-	// if the operator has deauthorized their entire stake, false otherwise.
-	IsOperatorUnstaking() (bool, error)
-
 	// Checks whether the operator is able to restore their eligibility for
 	// rewards right away.
 	CanRestoreRewardEligibility() (bool, error)

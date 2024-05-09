@@ -24,6 +24,14 @@ const (
 	Challenge
 )
 
+// StakingChain defines the subset of the TBTC chain interface that pertains to
+// the staking activities.
+type StakingChain interface {
+	// IsOperatorUnstaking checks if the operator is unstaking. It returns true
+	// if the operator has deauthorized their entire stake, false otherwise.
+	IsOperatorUnstaking() (bool, error)
+}
+
 // GroupSelectionChain defines the subset of the TBTC chain interface that
 // pertains to the group selection activities.
 type GroupSelectionChain interface {
@@ -505,6 +513,7 @@ type Chain interface {
 	GetBlockHashByNumber(blockNumber uint64) ([32]byte, error)
 
 	sortition.Chain
+	StakingChain
 	GroupSelectionChain
 	DistributedKeyGenerationChain
 	InactivityClaimChain

@@ -173,11 +173,6 @@ func (c *Chain) IsEligibleForRewards() (bool, error) {
 	return !isIneligible, nil
 }
 
-func (c *Chain) IsOperatorUnstaking() (bool, error) {
-	// TODO: Implement and use in unit tests.
-	return false, nil
-}
-
 func (c *Chain) CanRestoreRewardEligibility() (bool, error) {
 	c.ineligibleForRewardsUntilMutex.RLock()
 	defer c.ineligibleForRewardsUntilMutex.RUnlock()
