@@ -14,17 +14,23 @@ import (
 )
 
 const (
-	// heartbeatProposalValidityBlocks determines the wallet heartbeat proposal
-	// validity time expressed in blocks. In other words, this is the worst-case
-	// time for a wallet heartbeat during which the wallet is busy and cannot
-	// take another actions. The value of 300 blocks is roughly 1 hour, assuming
-	// 12 seconds per block.
-	heartbeatProposalValidityBlocks = 300
+	// heartbeatTotalProposalValidityBlocks determines the total wallet
+	// heartbeat proposal validity time expressed in blocks. In other words,
+	// this is the worst-case time for a wallet heartbeat during which the
+	// wallet is busy and cannot take another actions. It includes the total
+	// duration need to perform both both signing the heartbeat message and
+	// optionally notifying about operator inactivity if the heartbeat failed.
+	// The value of 600 blocks is roughly 2 hours, assuming 12 seconds per block.
+	heartbeatTotalProposalValidityBlocks = 600
+	// heartbeatInactivityNotificationValidityBlocks determines the duration
+	// that needs to be preserved for the optional notification about operator
+	// inactivity that follows a failed heartbeat signing.
+	heartbeatInactivityNotificationValidityBlocks = 300
 	// heartbeatRequestTimeoutSafetyMarginBlocks determines the duration of the
-	// safety margin that must be preserved between the signing timeout
-	// and the timeout of the entire heartbeat action. This safety
-	// margin prevents against the case where signing completes too late and
-	// another action has been already requested by the coordinator.
+	// safety margin that must be preserved between the timeout of operator
+	// inactivity notification and the timeout of the entire heartbeat action.
+	// This safety margin prevents against the case where signing completes too
+	// late and another action has been already requested by the coordinator.
 	// The value of 25 blocks is roughly 5 minutes, assuming 12 seconds per block.
 	heartbeatRequestTimeoutSafetyMarginBlocks = 25
 	// heartbeatSigningMinimumActiveOperators determines the minimum number of
@@ -44,7 +50,7 @@ func (hp *HeartbeatProposal) ActionType() WalletActionType {
 }
 
 func (hp *HeartbeatProposal) ValidityBlocks() uint64 {
-	return heartbeatProposalValidityBlocks
+	return heartbeatTotalProposalValidityBlocks
 }
 
 // heartbeatSigningExecutor is an interface meant to decouple the specific
@@ -136,19 +142,19 @@ func (ha *heartbeatAction) execute() error {
 	messageToSign := new(big.Int).SetBytes(messageBytes[:])
 
 	// Just in case. This should never happen.
-	if ha.expiryBlock < heartbeatRequestTimeoutSafetyMarginBlocks {
+	if ha.expiryBlock < heartbeatInactivityNotificationValidityBlocks {
 		return fmt.Errorf("invalid proposal expiry block")
 	}
 
-	heartbeatCtx, cancelHeartbeatCtx := withCancelOnBlock(
+	heartbeatSigningCtx, cancelHeartbeatSigningCtx := withCancelOnBlock(
 		context.Background(),
-		ha.expiryBlock-heartbeatRequestTimeoutSafetyMarginBlocks,
+		ha.expiryBlock-heartbeatInactivityNotificationValidityBlocks,
 		ha.waitForBlockFn,
 	)
-	defer cancelHeartbeatCtx()
+	defer cancelHeartbeatSigningCtx()
 
-	signature, activeOperatorsCount, signingEndBlock, err := ha.signingExecutor.sign(
-		heartbeatCtx,
+	signature, activeOperatorsCount, _, err := ha.signingExecutor.sign(
+		heartbeatSigningCtx,
 		messageToSign,
 		ha.startBlock,
 	)
@@ -192,9 +198,17 @@ func (ha *heartbeatAction) execute() error {
 		return nil
 	}
 
+	heartbeatInactivityCtx, cancelHeartbeatInactivityCtx := withCancelOnBlock(
+		context.Background(),
+		ha.expiryBlock-heartbeatRequestTimeoutSafetyMarginBlocks,
+		ha.waitForBlockFn,
+	)
+	defer cancelHeartbeatInactivityCtx()
+
 	// The value of consecutive heartbeat failures exceeds the threshold.
 	// Proceed with operator inactivity notification.
 	err = ha.inactivityClaimExecutor.claimInactivity(
+		heartbeatInactivityCtx,
 		// Leave the list of inactive operators empty even if some operators
 		// were inactive during signing heartbeat. The inactive operators could
 		// simply be in the process of unstaking and therefore should not be
@@ -202,7 +216,6 @@ func (ha *heartbeatAction) execute() error {
 		[]group.MemberIndex{},
 		true,
 		messageToSign,
-		signingEndBlock,
 	)
 	if err != nil {
 		return fmt.Errorf(

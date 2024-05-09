@@ -24,10 +24,7 @@ const (
 	// that is used to calculate the submission delay period that should be respected
 	// by the given member to avoid all members submitting the same inactivity claim
 	// at the same time.
-	inactivityClaimSubmissionDelayStepBlocks = 3
-	// inactivityClaimMaximumSubmissionBlocks determines the maximum block
-	// duration of inactivity claim submission procedure.
-	inactivityClaimMaximumSubmissionBlocks = 60
+	inactivityClaimSubmissionDelayStepBlocks = 2
 )
 
 // errInactivityClaimExecutorBusy is an error returned when the inactivity claim
@@ -70,10 +67,10 @@ func newInactivityClaimExecutor(
 }
 
 func (ice *inactivityClaimExecutor) claimInactivity(
+	parentCtx context.Context,
 	inactiveMembersIndexes []group.MemberIndex,
 	heartbeatFailed bool,
 	sessionID *big.Int,
-	startBlock uint64,
 ) error {
 	if lockAcquired := ice.lock.TryAcquire(1); !lockAcquired {
 		return errInactivityClaimExecutorBusy
@@ -88,12 +85,9 @@ func (ice *inactivityClaimExecutor) claimInactivity(
 		return fmt.Errorf("cannot marshal wallet public key: [%v]", err)
 	}
 
-	timeoutBlock := startBlock + inactivityClaimMaximumSubmissionBlocks
-
 	execLogger := logger.With(
 		zap.String("wallet", fmt.Sprintf("0x%x", walletPublicKeyBytes)),
-		zap.Uint64("inactivityClaimStartBlock", startBlock),
-		zap.Uint64("inactivityClaimTimeoutBlock", timeoutBlock),
+		zap.String("sessionID", fmt.Sprintf("0x%x", sessionID)),
 	)
 
 	walletRegistryData, err := ice.chain.GetWallet(walletPublicKeyHash)
@@ -135,11 +129,7 @@ func (ice *inactivityClaimExecutor) claimInactivity(
 				signer.signingGroupMemberIndex,
 			)
 
-			ctx, cancelCtx := withCancelOnBlock(
-				context.Background(),
-				timeoutBlock,
-				ice.waitForBlockFn,
-			)
+			ctx, cancelCtx := context.WithCancel(parentCtx)
 			defer cancelCtx()
 
 			subscription := ice.chain.OnInactivityClaimed(

@@ -22,7 +22,7 @@ func TestHeartbeatAction_HappyPath(t *testing.T) {
 	}
 
 	startBlock := uint64(10)
-	expiryBlock := startBlock + heartbeatProposalValidityBlocks
+	expiryBlock := startBlock + heartbeatTotalProposalValidityBlocks
 
 	proposal := &HeartbeatProposal{
 		Message: [16]byte{
@@ -90,7 +90,7 @@ func TestHeartbeatAction_SigningError(t *testing.T) {
 	}
 
 	startBlock := uint64(10)
-	expiryBlock := startBlock + heartbeatProposalValidityBlocks
+	expiryBlock := startBlock + heartbeatTotalProposalValidityBlocks
 
 	proposal := &HeartbeatProposal{
 		Message: [16]byte{
