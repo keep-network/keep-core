@@ -579,13 +579,35 @@ func TestMovingFundsAction_ProposeMovingFunds(t *testing.T) {
 			tbtcChain := tbtcpg.NewLocalChain()
 			btcChain := tbtcpg.NewLocalBitcoinChain()
 
+			currentBlock := uint64(200000)
+
+			blockCounter := tbtcpg.NewMockBlockCounter()
+			blockCounter.SetCurrentBlock(currentBlock)
+			tbtcChain.SetBlockCounter(blockCounter)
+
 			btcChain.SetEstimateSatPerVByteFee(1, 25)
+
+			tbtcChain.SetWallet(
+				walletPublicKeyHash,
+				&tbtc.WalletChainData{
+					MovingFundsRequestedAt: time.Now().Add(-25 * time.Hour),
+				},
+			)
+
+			// Simulate the wallet was not chosen as a target wallet for another
+			// moving funds wallet.
+			tbtcChain.AddPastMovingFundsCommitmentSubmittedEvent(
+				&tbtc.MovingFundsCommitmentSubmittedEventFilter{
+					StartBlock: 0,
+				},
+				&tbtc.MovingFundsCommitmentSubmittedEvent{},
+			)
 
 			tbtcChain.SetMovingFundsParameters(
 				txMaxTotalFee,
 				0,
 				0,
-				0,
+				604800,
 				nil,
 				0,
 				0,

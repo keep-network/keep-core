@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"math"
+	"reflect"
 	"sort"
 	"strings"
 	"testing"
@@ -175,15 +176,19 @@ func TestGetTransaction_Negative_Integration(t *testing.T) {
 
 		_, err := electrum.GetTransaction(invalidTxID)
 
-		assertMissingTransactionError(
-			t,
-			testConfig.clientConfig,
-			fmt.Sprintf(
-				"failed to get raw transaction with ID [%s]",
-				invalidTxID.Hex(bitcoin.ReversedByteOrder),
-			),
-			err,
+		expectedErr := fmt.Errorf(
+			"failed to get raw transaction with ID [%s]: [not found]",
+			invalidTxID.Hex(bitcoin.ReversedByteOrder),
 		)
+		if !reflect.DeepEqual(expectedErr, err) {
+			t.Errorf(
+				"unexpected error\n"+
+					"expected: %v\n"+
+					"actual:   %v\n",
+				expectedErr,
+				err,
+			)
+		}
 	})
 }
 
@@ -221,15 +226,19 @@ func TestGetTransactionConfirmations_Negative_Integration(t *testing.T) {
 
 		_, err := electrum.GetTransactionConfirmations(invalidTxID)
 
-		assertMissingTransactionError(
-			t,
-			testConfig.clientConfig,
-			fmt.Sprintf(
-				"failed to get raw transaction with ID [%s]",
-				invalidTxID.Hex(bitcoin.ReversedByteOrder),
-			),
-			err,
+		expectedErr := fmt.Errorf(
+			"failed to get raw transaction with ID [%s]: [not found]",
+			invalidTxID.Hex(bitcoin.ReversedByteOrder),
 		)
+		if !reflect.DeepEqual(expectedErr, err) {
+			t.Errorf(
+				"unexpected error\n"+
+					"expected: %v\n"+
+					"actual:   %v\n",
+				expectedErr,
+				err,
+			)
+		}
 	})
 }
 
@@ -607,17 +616,11 @@ func assertNumberCloseTo(t *testing.T, expected uint, actual uint, delta uint) {
 }
 
 type expectedErrorMessages struct {
-	missingTransaction        []string
 	missingBlockHeader        []string
 	missingTransactionInBlock []string
 }
 
 var expectedServerErrorMessages = expectedErrorMessages{
-	missingTransaction: []string{
-		"errNo: 0, errMsg: missing transaction",
-		"errNo: 2, errMsg: daemon error: DaemonError({'code': -5, 'message': 'No such mempool or blockchain transaction. Use gettransaction for wallet transactions.'})",
-		"errNo: 2, errMsg: daemon error: DaemonError({'message': 'Transaction not found.', 'code': -1})",
-	},
 	missingBlockHeader: []string{
 		"errNo: 0, errMsg: missing header",
 		"errNo: 1, errMsg: height 4,294,967,295 out of range",
@@ -627,22 +630,6 @@ var expectedServerErrorMessages = expectedErrorMessages{
 		"errNo: 0, errMsg: tx not found or is unconfirmed",
 		"errNo: 1, errMsg: tx 9489457dc2c5a461a0b86394741ef57731605f2c628102de9f4d90afee9ac794 not in block at height 123,456",
 		"errNo: 1, errMsg: No transaction matching the requested hash found at height 123456"},
-}
-
-func assertMissingTransactionError(
-	t *testing.T,
-	clientConfig electrum.Config,
-	clientErrorPrefix string,
-
-	actualError error,
-) {
-	assertServerError(
-		t,
-		clientConfig,
-		clientErrorPrefix,
-		expectedServerErrorMessages.missingTransaction,
-		actualError,
-	)
 }
 
 func assertMissingBlockHeaderError(

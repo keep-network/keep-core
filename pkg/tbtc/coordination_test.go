@@ -306,6 +306,7 @@ func TestCoordinationExecutor_Coordinate(t *testing.T) {
 		func(
 			walletPublicKeyHash [20]byte,
 			actionsChecklist []WalletActionType,
+			_ uint,
 		) (CoordinationProposal, error) {
 			for _, action := range actionsChecklist {
 				if walletPublicKeyHash == publicKeyHash && action == ActionRedemption {
@@ -557,10 +558,14 @@ func TestCoordinationExecutor_GetActionsChecklist(t *testing.T) {
 			coordinationBlock: 2700,
 			expectedChecklist: []WalletActionType{ActionRedemption},
 		},
+		// Heartbeat randomly selected for the 4th coordination window.
 		"block 3600": {
 			coordinationBlock: 3600,
 			expectedChecklist: []WalletActionType{
 				ActionRedemption,
+				ActionDepositSweep,
+				ActionMovedFundsSweep,
+				ActionMovingFunds,
 				ActionHeartbeat,
 			},
 		},
@@ -568,7 +573,6 @@ func TestCoordinationExecutor_GetActionsChecklist(t *testing.T) {
 			coordinationBlock: 4500,
 			expectedChecklist: []WalletActionType{ActionRedemption},
 		},
-		// Heartbeat randomly selected for the 6th coordination window.
 		"block 5400": {
 			coordinationBlock: 5400,
 			expectedChecklist: []WalletActionType{
@@ -581,7 +585,12 @@ func TestCoordinationExecutor_GetActionsChecklist(t *testing.T) {
 		},
 		"block 7200": {
 			coordinationBlock: 7200,
-			expectedChecklist: []WalletActionType{ActionRedemption},
+			expectedChecklist: []WalletActionType{
+				ActionRedemption,
+				ActionDepositSweep,
+				ActionMovedFundsSweep,
+				ActionMovingFunds,
+			},
 		},
 		"block 8100": {
 			coordinationBlock: 8100,
@@ -597,13 +606,17 @@ func TestCoordinationExecutor_GetActionsChecklist(t *testing.T) {
 		},
 		"block 10800": {
 			coordinationBlock: 10800,
-			expectedChecklist: []WalletActionType{ActionRedemption},
+			expectedChecklist: []WalletActionType{
+				ActionRedemption,
+				ActionDepositSweep,
+				ActionMovedFundsSweep,
+				ActionMovingFunds,
+			},
 		},
 		"block 11700": {
 			coordinationBlock: 11700,
 			expectedChecklist: []WalletActionType{ActionRedemption},
 		},
-		// Heartbeat randomly selected for the 14th coordination window.
 		"block 12600": {
 			coordinationBlock: 12600,
 			expectedChecklist: []WalletActionType{
@@ -614,7 +627,6 @@ func TestCoordinationExecutor_GetActionsChecklist(t *testing.T) {
 			coordinationBlock: 13500,
 			expectedChecklist: []WalletActionType{ActionRedemption},
 		},
-		// 16th coordination window so, all actions should be on the checklist.
 		"block 14400": {
 			coordinationBlock: 14400,
 			expectedChecklist: []WalletActionType{
@@ -689,6 +701,7 @@ func TestCoordinationExecutor_ExecuteLeaderRoutine(t *testing.T) {
 		func(
 			walletPublicKeyHash [20]byte,
 			actionsChecklist []WalletActionType,
+			_ uint,
 		) (
 			CoordinationProposal,
 			error,
@@ -785,6 +798,97 @@ func TestCoordinationExecutor_ExecuteLeaderRoutine(t *testing.T) {
 			expectedMessage,
 			message,
 		)
+	}
+}
+
+func TestCoordinationExecutor_GenerateProposal(t *testing.T) {
+	var tests = map[string]struct {
+		proposalGenerator CoordinationProposalGenerator
+		expectedProposal  CoordinationProposal
+		expectedError     error
+	}{
+		"first attempt success": {
+			proposalGenerator: newMockCoordinationProposalGenerator(
+				func(
+					_ [20]byte,
+					_ []WalletActionType,
+					_ uint,
+				) (CoordinationProposal, error) {
+					return &NoopProposal{}, nil
+				},
+			),
+			expectedProposal: &NoopProposal{},
+			expectedError:    nil,
+		},
+		"last attempt success": {
+			proposalGenerator: newMockCoordinationProposalGenerator(
+				func(
+					_ [20]byte,
+					_ []WalletActionType,
+					call uint,
+				) (CoordinationProposal, error) {
+					if call == 1 {
+						return nil, fmt.Errorf("unexpected error")
+					} else if call == 2 {
+						return &NoopProposal{}, nil
+					} else {
+						panic("unexpected call")
+					}
+				},
+			),
+			expectedProposal: &NoopProposal{},
+			expectedError:    nil,
+		},
+		"all attempts failed": {
+			proposalGenerator: newMockCoordinationProposalGenerator(
+				func(
+					_ [20]byte,
+					_ []WalletActionType,
+					call uint,
+				) (CoordinationProposal, error) {
+					return nil, fmt.Errorf("unexpected error %v", call)
+				},
+			),
+			expectedProposal: nil,
+			expectedError: fmt.Errorf(
+				"all attempts failed: [attempt [1] error: [unexpected error 1]; attempt [2] error: [unexpected error 2]]",
+			),
+		},
+	}
+
+	for testName, test := range tests {
+		t.Run(testName, func(t *testing.T) {
+			executor := &coordinationExecutor{
+				// Set only relevant fields.
+				proposalGenerator: test.proposalGenerator,
+			}
+
+			proposal, err := executor.generateProposal(
+				&CoordinationProposalRequest{}, // request fields not relevant
+				2,
+				1*time.Second,
+			)
+
+			if !reflect.DeepEqual(test.expectedError, err) {
+				t.Errorf(
+					"unexpected error\n"+
+						"expected: %v\n"+
+						"actual:   %v\n",
+					test.expectedError,
+					err,
+				)
+			}
+
+			if !reflect.DeepEqual(test.expectedProposal, proposal) {
+				t.Errorf(
+					"unexpected proposal\n"+
+						"expected: %v\n"+
+						"actual:   %v\n",
+					test.expectedProposal,
+					proposal,
+				)
+			}
+		})
 	}
 }
 
@@ -1160,9 +1264,11 @@ func TestCoordinationExecutor_ExecuteFollowerRoutine_WithIdleLeader(t *testing.T
 }
 
 type mockCoordinationProposalGenerator struct {
+	calls    uint
 	delegate func(
 		walletPublicKeyHash [20]byte,
 		actionsChecklist []WalletActionType,
+		call uint,
 	) (CoordinationProposal, error)
 }
 
@@ -1170,6 +1276,7 @@ func newMockCoordinationProposalGenerator(
 	delegate func(
 		walletPublicKeyHash [20]byte,
 		actionsChecklist []WalletActionType,
+		call uint,
 	) (CoordinationProposal, error),
 ) *mockCoordinationProposalGenerator {
 	return &mockCoordinationProposalGenerator{
@@ -1180,5 +1287,10 @@ func newMockCoordinationProposalGenerator(
 func (mcpg *mockCoordinationProposalGenerator) Generate(
 	request *CoordinationProposalRequest,
 ) (CoordinationProposal, error) {
-	return mcpg.delegate(request.WalletPublicKeyHash, request.ActionsChecklist)
+	mcpg.calls++
+	return mcpg.delegate(
+		request.WalletPublicKeyHash,
+		request.ActionsChecklist,
+		mcpg.calls,
+	)
 }

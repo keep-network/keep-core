@@ -285,6 +285,32 @@ type BridgeChain interface {
 		movingFundsTxHash bitcoin.Hash,
 		movingFundsTxOutpointIndex uint32,
 	) (*MovedFundsSweepRequest, bool, error)
+
+	// GetMovingFundsParameters gets the current value of parameters relevant
+	// for the moving funds process.
+	GetMovingFundsParameters() (
+		txMaxTotalFee uint64,
+		dustThreshold uint64,
+		timeoutResetDelay uint32,
+		timeout uint32,
+		timeoutSlashingAmount *big.Int,
+		timeoutNotifierRewardMultiplier uint32,
+		commitmentGasOffset uint16,
+		sweepTxMaxTotalFee uint64,
+		sweepTimeout uint32,
+		sweepTimeoutSlashingAmount *big.Int,
+		sweepTimeoutNotifierRewardMultiplier uint32,
+		err error,
+	)
+
+	// PastMovingFundsCommitmentSubmittedEvents fetches past moving funds
+	// commitment submitted events according to the provided filter or
+	// unfiltered if the filter is nil. Returned events are sorted by the block
+	// number in the ascending order, i.e. the latest event is at the end of the
+	// slice.
+	PastMovingFundsCommitmentSubmittedEvents(
+		filter *MovingFundsCommitmentSubmittedEventFilter,
+	) ([]*MovingFundsCommitmentSubmittedEvent, error)
 }
 
 // NewWalletRegisteredEvent represents a new wallet registered event.

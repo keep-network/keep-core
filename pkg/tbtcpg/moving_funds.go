@@ -93,6 +93,14 @@ func (mft *MovingFundsTask) Run(request *tbtc.CoordinationProposalRequest) (
 		return nil, false, nil
 	}
 
+	// Check the safety margin for moving funds early. This will prevent
+	// commitment submission if the wallet is not safe to move funds.
+	err = tbtc.ValidateMovingFundsSafetyMargin(walletPublicKeyHash, mft.chain)
+	if err != nil {
+		taskLogger.Infof("source wallet moving funds safety margin validation failed: [%v]", err)
+		return nil, false, nil
+	}
+
 	if walletChainData.PendingRedemptionsValue > 0 {
 		taskLogger.Infof("source wallet has pending redemptions")
 		return nil, false, nil
@@ -103,12 +111,14 @@ func (mft *MovingFundsTask) Run(request *tbtc.CoordinationProposalRequest) (
 		return nil, false, nil
 	}
 
-	// The wallet should not have any unswept deposits.
+	// The wallet should not have any unswept deposits. It's enough to find at
+	// least one unswept deposit. A single unswept deposit means that the wallet
+	// should not move funds yet.
 	unsweptDeposits, err := FindDeposits(
 		mft.chain,
 		mft.btcChain,
 		walletPublicKeyHash,
-		0,
+		1,
 		true,
 		true,
 	)

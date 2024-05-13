@@ -2,7 +2,10 @@ package tbtc
 
 import (
 	"context"
+	"encoding/hex"
+	"fmt"
 	"math/big"
+	"reflect"
 	"testing"
 	"time"
 
@@ -48,6 +51,11 @@ func TestMovingFundsAction_Execute(t *testing.T) {
 			proposalExpiryBlock := proposalProcessingStartBlock +
 				movingFundsProposalValidityBlocks
 
+			// Set arbitrary moving funds timeout.
+			hostChain.SetMovingFundsParameters(
+				0, 0, 0, 604800, big.NewInt(0), 0, 0, 0, 0, big.NewInt(0), 0,
+			)
+
 			// Simulate the on-chain proposal validation passes with success.
 			err = hostChain.setMovingFundsProposalValidationResult(
 				walletPublicKeyHash,
@@ -58,6 +66,15 @@ func TestMovingFundsAction_Execute(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
+
+			// Simulate the wallet was not chosen as a target wallet for another
+			// moving funds wallet.
+			hostChain.setPastMovingFundsCommitmentSubmittedEvents(
+				&MovingFundsCommitmentSubmittedEventFilter{
+					StartBlock: 0,
+				},
+				[]*MovingFundsCommitmentSubmittedEvent{},
+			)
 
 			// Record the wallet main UTXO hash and moving funds commitment
 			// hash in the local host chain so the moving funds action can detect it.
@@ -208,4 +225,211 @@ func TestAssembleMovingFundsTransaction(t *testing.T) {
 			)
 		})
 	}
+}
+
+func TestValidateMovingFundsSafetyMargin(t *testing.T) {
+	walletPublicKeyHash := hexToByte20(
+		"ffb3f7538bfa98a511495dd96027cfbd57baf2fa",
+	)
+
+	var tests = map[string]struct {
+		events           []*MovingFundsCommitmentSubmittedEvent
+		requestedAtDelta time.Duration
+		otherWallets     []struct {
+			publicKeyHash [20]byte
+			state         WalletState
+		}
+		movingFundsTimeout uint32
+		expectedError      error
+	}{
+		"wallet is not target and safety margin passed": {
+			events:             []*MovingFundsCommitmentSubmittedEvent{},
+			requestedAtDelta:   -25 * time.Hour,
+			movingFundsTimeout: 3628800, // 6 weeks
+			expectedError:      nil,
+		},
+		"wallet is not target and safety margin not passed": {
+			events:             []*MovingFundsCommitmentSubmittedEvent{},
+			requestedAtDelta:   -23 * time.Hour,
+			movingFundsTimeout: 3628800, // 6 weeks
+			expectedError:      fmt.Errorf("safety margin in force"),
+		},
+		"wallet is target and safety margin passed": {
+			events: []*MovingFundsCommitmentSubmittedEvent{
+				{
+					WalletPublicKeyHash: hexToByte20(
+						"3091d288521caec06ea912eacfd733edc5a36d6e",
+					),
+					TargetWallets: [][20]byte{
+						hexToByte20(
+							"c7302d75072d78be94eb8d36c4b77583c7abb06e",
+						),
+						// wallet on the target wallets list
+						walletPublicKeyHash,
+					},
+				},
+			},
+			requestedAtDelta: -15 * 24 * time.Hour,
+			otherWallets: []struct {
+				publicKeyHash [20]byte
+				state         WalletState
+			}{
+				{
+					publicKeyHash: hexToByte20("3091d288521caec06ea912eacfd733edc5a36d6e"),
+					state:         StateMovingFunds,
+				},
+			},
+			movingFundsTimeout: 3628800, // 6 weeks
+			expectedError:      nil,
+		},
+		"wallet is target and safety margin not passed": {
+			events: []*MovingFundsCommitmentSubmittedEvent{
+				{
+					WalletPublicKeyHash: hexToByte20(
+						"3091d288521caec06ea912eacfd733edc5a36d6e",
+					),
+					TargetWallets: [][20]byte{
+						hexToByte20(
+							"c7302d75072d78be94eb8d36c4b77583c7abb06e",
+						),
+						// wallet on the target wallets list
+						walletPublicKeyHash,
+					},
+				},
+			},
+			requestedAtDelta: -13 * 24 * time.Hour,
+			otherWallets: []struct {
+				publicKeyHash [20]byte
+				state         WalletState
+			}{
+				{
+					publicKeyHash: hexToByte20("3091d288521caec06ea912eacfd733edc5a36d6e"),
+					state:         StateMovingFunds,
+				},
+			},
+			movingFundsTimeout: 3628800, // 6 weeks
+			expectedError:      fmt.Errorf("safety margin in force"),
+		},
+		"wallet is target and safety margin limited and passed": {
+			events: []*MovingFundsCommitmentSubmittedEvent{
+				{
+					WalletPublicKeyHash: hexToByte20(
+						"3091d288521caec06ea912eacfd733edc5a36d6e",
+					),
+					TargetWallets: [][20]byte{
+						hexToByte20(
+							"c7302d75072d78be94eb8d36c4b77583c7abb06e",
+						),
+						// wallet on the target wallets list
+						walletPublicKeyHash,
+					},
+				},
+			},
+			requestedAtDelta: -8 * 24 * time.Hour,
+			otherWallets: []struct {
+				publicKeyHash [20]byte
+				state         WalletState
+			}{
+				{
+					publicKeyHash: hexToByte20("3091d288521caec06ea912eacfd733edc5a36d6e"),
+					state:         StateMovingFunds,
+				},
+			},
+			// 2 weeks - it limits safety margin to 1 week (2 * 0.5)
+			movingFundsTimeout: 1209600,
+			expectedError:      nil,
+		},
+		"wallet is target and safety margin limited and not passed": {
+			events: []*MovingFundsCommitmentSubmittedEvent{
+				{
+					WalletPublicKeyHash: hexToByte20(
+						"3091d288521caec06ea912eacfd733edc5a36d6e",
+					),
+					TargetWallets: [][20]byte{
+						hexToByte20(
+							"c7302d75072d78be94eb8d36c4b77583c7abb06e",
+						),
+						// wallet on the target wallets list
+						walletPublicKeyHash,
+					},
+				},
+			},
+			requestedAtDelta: -6 * 24 * time.Hour,
+			otherWallets: []struct {
+				publicKeyHash [20]byte
+				state         WalletState
+			}{
+				{
+					publicKeyHash: hexToByte20("3091d288521caec06ea912eacfd733edc5a36d6e"),
+					state:         StateMovingFunds,
+				},
+			},
+			// 2 weeks - it limits safety margin to 1 week (2 * 0.5)
+			movingFundsTimeout: 1209600,
+			expectedError:      fmt.Errorf("safety margin in force"),
+		},
+	}
+
+	for testName, test := range tests {
+		t.Run(testName, func(t *testing.T) {
+			hostChain := Connect()
+
+			hostChain.SetMovingFundsParameters(
+				0,
+				0,
+				0,
+				test.movingFundsTimeout,
+				big.NewInt(0),
+				0,
+				0,
+				0,
+				0,
+				big.NewInt(0),
+				0,
+			)
+
+			hostChain.setPastMovingFundsCommitmentSubmittedEvents(
+				&MovingFundsCommitmentSubmittedEventFilter{
+					StartBlock: 0,
+				},
+				test.events,
+			)
+
+			hostChain.setWallet(walletPublicKeyHash, &WalletChainData{
+				MovingFundsRequestedAt: time.Now().Add(test.requestedAtDelta),
+			})
+
+			for _, wallet := range test.otherWallets {
+				hostChain.setWallet(wallet.publicKeyHash, &WalletChainData{
+					State: wallet.state,
+				})
+			}
+
+			err := ValidateMovingFundsSafetyMargin(
+				walletPublicKeyHash,
+				hostChain,
+			)
+
+			if !reflect.DeepEqual(test.expectedError, err) {
+				t.Errorf(
+					"unexpected error\nexpected: %v\nactual:   %v\n",
+					test.expectedError,
+					err,
+				)
+			}
+		})
+	}
+}
+
+func hexToByte20(hexStr string) [20]byte {
+	if len(hexStr) != 40 {
+		panic("hex string length incorrect")
+	}
+	decoded, err := hex.DecodeString(hexStr)
+	if err != nil {
+		panic(err)
+	}
+	var result [20]byte
+	copy(result[:], decoded)
+	return result
 }

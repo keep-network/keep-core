@@ -43,6 +43,11 @@ spec:
                     configMapKeyRef:
                       name: tbtc-v2-monitoring-config
                       key: large-deposit-threshold-sat
+                - name: LARGE_REDEMPTION_THRESHOLD_SAT
+                  valueFrom:
+                    configMapKeyRef:
+                      name: tbtc-v2-monitoring-config
+                      key: large-redemption-threshold-sat
                 - name: DATA_DIR_PATH
                   value: /mnt/tbtc-v2-monitoring/data
                 - name: SENTRY_DSN
