@@ -204,12 +204,12 @@ func TestSignClaim_SigningSuccessful(t *testing.T) {
 	}
 	privateKeyShare := tecdsa.NewPrivateKeyShare(testData[0])
 
-	claim := &inactivity.ClaimPreimage{
-		Nonce:                  big.NewInt(5),
-		WalletPublicKey:        privateKeyShare.PublicKey(),
-		InactiveMembersIndexes: []group.MemberIndex{11, 22, 33},
-		HeartbeatFailed:        true,
-	}
+	claim := inactivity.NewClaimPreimage(
+		big.NewInt(5),
+		privateKeyShare.PublicKey(),
+		[]group.MemberIndex{11, 22, 33},
+		true,
+	)
 
 	signedClaim, err := inactivityClaimSigner.SignClaim(claim)
 	if err != nil {
@@ -297,12 +297,12 @@ func TestVerifySignature_VerifySuccessful(t *testing.T) {
 	}
 	privateKeyShare := tecdsa.NewPrivateKeyShare(testData[0])
 
-	claim := &inactivity.ClaimPreimage{
-		Nonce:                  big.NewInt(5),
-		WalletPublicKey:        privateKeyShare.PublicKey(),
-		InactiveMembersIndexes: []group.MemberIndex{11, 22, 33},
-		HeartbeatFailed:        true,
-	}
+	claim := inactivity.NewClaimPreimage(
+		big.NewInt(5),
+		privateKeyShare.PublicKey(),
+		[]group.MemberIndex{11, 22, 33},
+		true,
+	)
 
 	signedClaim, err := inactivityClaimSigner.SignClaim(claim)
 	if err != nil {
@@ -334,24 +334,24 @@ func TestVerifySignature_VerifyFailure(t *testing.T) {
 	}
 	privateKeyShare := tecdsa.NewPrivateKeyShare(testData[0])
 
-	claim := &inactivity.ClaimPreimage{
-		Nonce:                  big.NewInt(5),
-		WalletPublicKey:        privateKeyShare.PublicKey(),
-		InactiveMembersIndexes: []group.MemberIndex{11, 22, 33},
-		HeartbeatFailed:        true,
-	}
+	claim := inactivity.NewClaimPreimage(
+		big.NewInt(5),
+		privateKeyShare.PublicKey(),
+		[]group.MemberIndex{11, 22, 33},
+		true,
+	)
 
 	signedClaim, err := inactivityClaimSigner.SignClaim(claim)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	anotherClaim := &inactivity.ClaimPreimage{
-		Nonce:                  big.NewInt(6),
-		WalletPublicKey:        privateKeyShare.PublicKey(),
-		InactiveMembersIndexes: []group.MemberIndex{11, 22, 33},
-		HeartbeatFailed:        true,
-	}
+	anotherClaim := inactivity.NewClaimPreimage(
+		big.NewInt(6),
+		privateKeyShare.PublicKey(),
+		[]group.MemberIndex{11, 22, 33},
+		true,
+	)
 
 	anotherSignedClaim, err := inactivityClaimSigner.SignClaim(anotherClaim)
 	if err != nil {
@@ -387,12 +387,12 @@ func TestVerifySignature_VerifyError(t *testing.T) {
 	}
 	privateKeyShare := tecdsa.NewPrivateKeyShare(testData[0])
 
-	claim := &inactivity.ClaimPreimage{
-		Nonce:                  big.NewInt(5),
-		WalletPublicKey:        privateKeyShare.PublicKey(),
-		InactiveMembersIndexes: []group.MemberIndex{11, 22, 33},
-		HeartbeatFailed:        true,
-	}
+	claim := inactivity.NewClaimPreimage(
+		big.NewInt(5),
+		privateKeyShare.PublicKey(),
+		[]group.MemberIndex{11, 22, 33},
+		true,
+	)
 
 	signedClaim, err := inactivityClaimSigner.SignClaim(claim)
 	if err != nil {
@@ -419,4 +419,424 @@ func TestVerifySignature_VerifyError(t *testing.T) {
 	}
 }
 
-// TODO: Continue with unit tests.
+func TestSubmitClaim_MemberSubmitsClaim(t *testing.T) {
+	testData, err := tecdsatest.LoadPrivateKeyShareTestFixtures(1)
+	if err != nil {
+		t.Fatalf("failed to load test data: [%v]", err)
+	}
+	privateKeyShare := tecdsa.NewPrivateKeyShare(testData[0])
+
+	publicKey := privateKeyShare.PublicKey()
+	walletPublicKeyHash := bitcoin.PublicKeyHash(publicKey)
+	ecdsaWalletID := [32]byte{1, 2, 3}
+
+	chain := Connect()
+
+	chain.setWallet(
+		walletPublicKeyHash,
+		&WalletChainData{
+			EcdsaWalletID: ecdsaWalletID,
+		},
+	)
+
+	groupParameters := &GroupParameters{
+		GroupSize:       5,
+		GroupQuorum:     4,
+		HonestThreshold: 3,
+	}
+
+	groupMembers := []uint32{1, 2, 2, 3, 5}
+
+	inactivityClaimSubmitter := newInactivityClaimSubmitter(
+		&testutils.MockLogger{},
+		chain,
+		groupParameters,
+		groupMembers,
+		testWaitForBlockFn(chain),
+	)
+
+	ctx, cancelCtx := context.WithCancel(context.Background())
+	defer cancelCtx()
+
+	memberIndex := group.MemberIndex(1)
+
+	claim := inactivity.NewClaimPreimage(
+		big.NewInt(0),
+		publicKey,
+		[]group.MemberIndex{11, 22, 33},
+		true,
+	)
+
+	signatures := map[group.MemberIndex][]byte{
+		1: []byte("signature 1"),
+		2: []byte("signature 2"),
+		3: []byte("signature 3"),
+		4: []byte("signature 4"),
+	}
+
+	err = inactivityClaimSubmitter.SubmitClaim(
+		ctx,
+		memberIndex,
+		claim,
+		signatures,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	expectedNonce := big.NewInt(1)
+
+	nonce, err := chain.GetInactivityClaimNonce(ecdsaWalletID)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	testutils.AssertBigIntsEqual(
+		t,
+		"inactivity nonce",
+		expectedNonce,
+		nonce,
+	)
+}
+
+func TestSubmitClaim_AnotherMemberSubmitsClaim(t *testing.T) {
+	testData, err := tecdsatest.LoadPrivateKeyShareTestFixtures(1)
+	if err != nil {
+		t.Fatalf("failed to load test data: [%v]", err)
+	}
+	privateKeyShare := tecdsa.NewPrivateKeyShare(testData[0])
+
+	publicKey := privateKeyShare.PublicKey()
+	walletPublicKeyHash := bitcoin.PublicKeyHash(publicKey)
+	ecdsaWalletID := [32]byte{1, 2, 3}
+
+	chain := Connect()
+
+	chain.setWallet(
+		walletPublicKeyHash,
+		&WalletChainData{
+			EcdsaWalletID: ecdsaWalletID,
+		},
+	)
+
+	groupParameters := &GroupParameters{
+		GroupSize:       5,
+		GroupQuorum:     4,
+		HonestThreshold: 3,
+	}
+
+	groupMembers := []uint32{1, 2, 2, 3, 5}
+
+	inactivityClaimSubmitter := newInactivityClaimSubmitter(
+		&testutils.MockLogger{},
+		chain,
+		groupParameters,
+		groupMembers,
+		testWaitForBlockFn(chain),
+	)
+
+	ctx, cancelCtx := context.WithCancel(context.Background())
+	defer cancelCtx()
+
+	claim := inactivity.NewClaimPreimage(
+		big.NewInt(0),
+		publicKey,
+		[]group.MemberIndex{11, 22, 33},
+		true,
+	)
+
+	signatures := map[group.MemberIndex][]byte{
+		1: []byte("signature 1"),
+		2: []byte("signature 2"),
+		3: []byte("signature 3"),
+		4: []byte("signature 4"),
+	}
+
+	// Set up a global listener that will cancel the common context upon claim
+	// submission. That mimics the real-world scenario.
+	chain.OnInactivityClaimed(
+		func(event *InactivityClaimedEvent) {
+			cancelCtx()
+		},
+	)
+
+	secondMemberSubmissionChannel := make(chan error)
+	// Attempt to submit claim for the second member on a separate goroutine.
+	go func() {
+		secondMemberIndex := group.MemberIndex(2)
+		secondMemberErr := inactivityClaimSubmitter.SubmitClaim(
+			ctx,
+			secondMemberIndex,
+			claim,
+			signatures,
+		)
+		secondMemberSubmissionChannel <- secondMemberErr
+	}()
+
+	// This sleep is needed to give enough time for the second member to
+	// register their claim submission event handler and act properly on the
+	// claim submitted by the first member.
+	time.Sleep(1 * time.Second)
+
+	// While the second member is waiting for submission eligibility, submit the
+	// claim with the first member.
+	firstMemberIndex := group.MemberIndex(1)
+	firstMemberErr := inactivityClaimSubmitter.SubmitClaim(
+		ctx,
+		firstMemberIndex,
+		claim,
+		signatures,
+	)
+	if err != nil {
+		t.Fatal(firstMemberErr)
+	}
+
+	// Check that the second member returned without errors
+	secondMemberErr := <-secondMemberSubmissionChannel
+	if secondMemberErr != nil {
+		t.Fatal(secondMemberErr)
+	}
+
+	expectedNonce := big.NewInt(1)
+
+	nonce, err := chain.GetInactivityClaimNonce(ecdsaWalletID)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	testutils.AssertBigIntsEqual(
+		t,
+		"inactivity nonce",
+		expectedNonce,
+		nonce,
+	)
+}
+
+func TestSubmitClaim_InvalidResult(t *testing.T) {
+	testData, err := tecdsatest.LoadPrivateKeyShareTestFixtures(1)
+	if err != nil {
+		t.Fatalf("failed to load test data: [%v]", err)
+	}
+	privateKeyShare := tecdsa.NewPrivateKeyShare(testData[0])
+
+	publicKey := privateKeyShare.PublicKey()
+	walletPublicKeyHash := bitcoin.PublicKeyHash(publicKey)
+	ecdsaWalletID := [32]byte{1, 2, 3}
+
+	chain := Connect()
+
+	chain.setWallet(
+		walletPublicKeyHash,
+		&WalletChainData{
+			EcdsaWalletID: ecdsaWalletID,
+		},
+	)
+
+	groupParameters := &GroupParameters{
+		GroupSize:       5,
+		GroupQuorum:     4,
+		HonestThreshold: 3,
+	}
+
+	groupMembers := []uint32{1, 2, 2, 3, 5}
+
+	inactivityClaimSubmitter := newInactivityClaimSubmitter(
+		&testutils.MockLogger{},
+		chain,
+		groupParameters,
+		groupMembers,
+		testWaitForBlockFn(chain),
+	)
+
+	ctx, cancelCtx := context.WithCancel(context.Background())
+	defer cancelCtx()
+
+	memberIndex := group.MemberIndex(1)
+
+	claim := inactivity.NewClaimPreimage(
+		big.NewInt(12345), // Use wrong nonce.
+		publicKey,
+		[]group.MemberIndex{11, 22, 33},
+		true,
+	)
+
+	signatures := map[group.MemberIndex][]byte{
+		1: []byte("signature 1"),
+		2: []byte("signature 2"),
+		3: []byte("signature 3"),
+		4: []byte("signature 4"),
+	}
+
+	err = inactivityClaimSubmitter.SubmitClaim(
+		ctx,
+		memberIndex,
+		claim,
+		signatures,
+	)
+
+	expectedErr := fmt.Errorf("wrong inactivity claim nonce")
+	if !reflect.DeepEqual(expectedErr, err) {
+		t.Errorf(
+			"unexpected error \nexpected: [%v]\nactual:   [%v]\n",
+			expectedErr,
+			err,
+		)
+	}
+}
+
+func TestSubmitClaim_ContextCancelled(t *testing.T) {
+	testData, err := tecdsatest.LoadPrivateKeyShareTestFixtures(1)
+	if err != nil {
+		t.Fatalf("failed to load test data: [%v]", err)
+	}
+	privateKeyShare := tecdsa.NewPrivateKeyShare(testData[0])
+
+	publicKey := privateKeyShare.PublicKey()
+	walletPublicKeyHash := bitcoin.PublicKeyHash(publicKey)
+	ecdsaWalletID := [32]byte{1, 2, 3}
+
+	chain := Connect()
+
+	chain.setWallet(
+		walletPublicKeyHash,
+		&WalletChainData{
+			EcdsaWalletID: ecdsaWalletID,
+		},
+	)
+
+	groupParameters := &GroupParameters{
+		GroupSize:       5,
+		GroupQuorum:     4,
+		HonestThreshold: 3,
+	}
+
+	groupMembers := []uint32{1, 2, 2, 3, 5}
+
+	inactivityClaimSubmitter := newInactivityClaimSubmitter(
+		&testutils.MockLogger{},
+		chain,
+		groupParameters,
+		groupMembers,
+		testWaitForBlockFn(chain),
+	)
+
+	ctx, cancelCtx := context.WithCancel(context.Background())
+
+	// Simulate the case when timeout occurs and the context gets cancelled.
+	cancelCtx()
+
+	memberIndex := group.MemberIndex(1)
+
+	claim := inactivity.NewClaimPreimage(
+		big.NewInt(0),
+		publicKey,
+		[]group.MemberIndex{11, 22, 33},
+		true,
+	)
+
+	signatures := map[group.MemberIndex][]byte{
+		1: []byte("signature 1"),
+		2: []byte("signature 2"),
+		3: []byte("signature 3"),
+		4: []byte("signature 4"),
+	}
+
+	err = inactivityClaimSubmitter.SubmitClaim(
+		ctx,
+		memberIndex,
+		claim,
+		signatures,
+	)
+	if err != nil {
+		t.Errorf("unexpected error [%v]", err)
+	}
+
+	// Check the inactivity nonce is still 0.
+	expectedNonce := big.NewInt(0)
+
+	nonce, err := chain.GetInactivityClaimNonce(ecdsaWalletID)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	testutils.AssertBigIntsEqual(
+		t,
+		"inactivity nonce",
+		expectedNonce,
+		nonce,
+	)
+}
+
+func TestSubmitClaim_TooFewSignatures(t *testing.T) {
+	testData, err := tecdsatest.LoadPrivateKeyShareTestFixtures(1)
+	if err != nil {
+		t.Fatalf("failed to load test data: [%v]", err)
+	}
+	privateKeyShare := tecdsa.NewPrivateKeyShare(testData[0])
+
+	publicKey := privateKeyShare.PublicKey()
+	walletPublicKeyHash := bitcoin.PublicKeyHash(publicKey)
+	ecdsaWalletID := [32]byte{1, 2, 3}
+
+	chain := Connect()
+
+	chain.setWallet(
+		walletPublicKeyHash,
+		&WalletChainData{
+			EcdsaWalletID: ecdsaWalletID,
+		},
+	)
+
+	groupParameters := &GroupParameters{
+		GroupSize:       5,
+		GroupQuorum:     4,
+		HonestThreshold: 3,
+	}
+
+	groupMembers := []uint32{1, 2, 2, 3, 5}
+
+	inactivityClaimSubmitter := newInactivityClaimSubmitter(
+		&testutils.MockLogger{},
+		chain,
+		groupParameters,
+		groupMembers,
+		testWaitForBlockFn(chain),
+	)
+
+	ctx, cancelCtx := context.WithCancel(context.Background())
+	defer cancelCtx()
+
+	memberIndex := group.MemberIndex(1)
+
+	claim := inactivity.NewClaimPreimage(
+		big.NewInt(0),
+		publicKey,
+		[]group.MemberIndex{11, 22, 33},
+		true,
+	)
+
+	signatures := map[group.MemberIndex][]byte{
+		1: []byte("signature 1"),
+		2: []byte("signature 2"),
+	}
+
+	err = inactivityClaimSubmitter.SubmitClaim(
+		ctx,
+		memberIndex,
+		claim,
+		signatures,
+	)
+
+	expectedError := fmt.Errorf(
+		"could not submit inactivity claim with [2] signatures for group honest threshold [3]",
+	)
+	if !reflect.DeepEqual(expectedError, err) {
+		t.Errorf(
+			"unexpected error\n"+
+				"expected: [%+v]\n"+
+				"actual:   [%+v]",
+			expectedError,
+			err,
+		)
+	}
+}
