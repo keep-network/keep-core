@@ -18,21 +18,21 @@ const (
 	// heartbeat proposal validity time expressed in blocks. In other words,
 	// this is the worst-case time for a wallet heartbeat during which the
 	// wallet is busy and cannot take another actions. It includes the total
-	// duration need to perform both both signing the heartbeat message and
+	// duration needed to perform both signing the heartbeat message and
 	// optionally notifying about operator inactivity if the heartbeat failed.
 	// The value of 600 blocks is roughly 2 hours, assuming 12 seconds per block.
 	heartbeatTotalProposalValidityBlocks = 600
-	// heartbeatInactivityNotificationValidityBlocks determines the duration
-	// that needs to be preserved for the optional notification about operator
-	// inactivity that follows a failed heartbeat signing.
-	heartbeatInactivityNotificationValidityBlocks = 300
-	// heartbeatRequestTimeoutSafetyMarginBlocks determines the duration of the
-	// safety margin that must be preserved between the timeout of operator
-	// inactivity notification and the timeout of the entire heartbeat action.
-	// This safety margin prevents against the case where signing completes too
-	// late and another action has been already requested by the coordinator.
-	// The value of 25 blocks is roughly 5 minutes, assuming 12 seconds per block.
-	heartbeatRequestTimeoutSafetyMarginBlocks = 25
+	// heartbeatInactivityClaimValidityBlocks determines the duration that needs
+	// to be preserved for the optional notification about operator inactivity
+	// that follows a failed heartbeat signing.
+	heartbeatInactivityClaimValidityBlocks = 300
+	// heartbeatTimeoutSafetyMarginBlocks determines the duration of the safety
+	// margin that must be preserved between the timeout of operator inactivity
+	// notification and the timeout of the entire heartbeat action. This safety
+	// margin prevents against the case where signing completes too late and
+	// another action has been already requested by the coordinator. The value
+	// of 25 blocks is roughly 5 minutes, assuming 12 seconds per block.
+	heartbeatTimeoutSafetyMarginBlocks = 25
 	// heartbeatSigningMinimumActiveOperators determines the minimum number of
 	// active operators during signing for a heartbeat to be considered valid.
 	heartbeatSigningMinimumActiveOperators = 70
@@ -142,13 +142,13 @@ func (ha *heartbeatAction) execute() error {
 	messageToSign := new(big.Int).SetBytes(messageBytes[:])
 
 	// Just in case. This should never happen.
-	if ha.expiryBlock < heartbeatInactivityNotificationValidityBlocks {
+	if ha.expiryBlock < heartbeatInactivityClaimValidityBlocks {
 		return fmt.Errorf("invalid proposal expiry block")
 	}
 
 	heartbeatSigningCtx, cancelHeartbeatSigningCtx := withCancelOnBlock(
 		context.Background(),
-		ha.expiryBlock-heartbeatInactivityNotificationValidityBlocks,
+		ha.expiryBlock-heartbeatInactivityClaimValidityBlocks,
 		ha.waitForBlockFn,
 	)
 	defer cancelHeartbeatSigningCtx()
@@ -200,7 +200,7 @@ func (ha *heartbeatAction) execute() error {
 
 	heartbeatInactivityCtx, cancelHeartbeatInactivityCtx := withCancelOnBlock(
 		context.Background(),
-		ha.expiryBlock-heartbeatRequestTimeoutSafetyMarginBlocks,
+		ha.expiryBlock-heartbeatTimeoutSafetyMarginBlocks,
 		ha.waitForBlockFn,
 	)
 	defer cancelHeartbeatInactivityCtx()
