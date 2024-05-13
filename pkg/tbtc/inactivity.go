@@ -67,7 +67,7 @@ func newInactivityClaimExecutor(
 }
 
 func (ice *inactivityClaimExecutor) claimInactivity(
-	parentCtx context.Context,
+	ctx context.Context,
 	inactiveMembersIndexes []group.MemberIndex,
 	heartbeatFailed bool,
 	sessionID *big.Int,
@@ -129,12 +129,12 @@ func (ice *inactivityClaimExecutor) claimInactivity(
 				signer.signingGroupMemberIndex,
 			)
 
-			ctx, cancelCtx := context.WithCancel(parentCtx)
-			defer cancelCtx()
+			signerCtx, cancelSignerCtx := context.WithCancel(ctx)
+			defer cancelSignerCtx()
 
 			subscription := ice.chain.OnInactivityClaimed(
 				func(event *InactivityClaimedEvent) {
-					defer cancelCtx()
+					defer cancelSignerCtx()
 
 					execLogger.Infof(
 						"[member:%v] Inactivity claim submitted for wallet "+
@@ -150,7 +150,7 @@ func (ice *inactivityClaimExecutor) claimInactivity(
 			defer subscription.Unsubscribe()
 
 			err := ice.publishInactivityClaim(
-				ctx,
+				signerCtx,
 				execLogger,
 				sessionID,
 				signer.signingGroupMemberIndex,
