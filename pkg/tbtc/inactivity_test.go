@@ -1,18 +1,198 @@
 package tbtc
 
 import (
+	"context"
 	"fmt"
 	"math/big"
 	"reflect"
 	"testing"
+	"time"
 
 	"golang.org/x/crypto/sha3"
 
+	"github.com/keep-network/keep-core/internal/testutils"
+	"github.com/keep-network/keep-core/pkg/bitcoin"
+	"github.com/keep-network/keep-core/pkg/chain"
+	"github.com/keep-network/keep-core/pkg/chain/local_v1"
+	"github.com/keep-network/keep-core/pkg/generator"
 	"github.com/keep-network/keep-core/pkg/internal/tecdsatest"
+	"github.com/keep-network/keep-core/pkg/net/local"
+	"github.com/keep-network/keep-core/pkg/operator"
 	"github.com/keep-network/keep-core/pkg/protocol/group"
 	"github.com/keep-network/keep-core/pkg/protocol/inactivity"
 	"github.com/keep-network/keep-core/pkg/tecdsa"
 )
+
+func TestInactivityClaimExecutor_ClaimInactivity(t *testing.T) {
+	executor, walletEcdsaID, chain := setupInactivityClaimExecutorScenario(t)
+
+	initialNonce, err := chain.GetInactivityClaimNonce(walletEcdsaID)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	ctx, cancelCtx := context.WithCancel(context.Background())
+	defer cancelCtx()
+
+	message := big.NewInt(100)
+	inactiveMembersIndexes := []group.MemberIndex{1, 4}
+
+	err = executor.claimInactivity(
+		ctx,
+		inactiveMembersIndexes,
+		true,
+		message,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	currentNonce, err := chain.GetInactivityClaimNonce(walletEcdsaID)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	expectedNonceDiff := uint64(1)
+	nonceDiff := currentNonce.Uint64() - initialNonce.Uint64()
+
+	testutils.AssertUintsEqual(
+		t,
+		"inactivity nonce difference",
+		expectedNonceDiff,
+		nonceDiff,
+	)
+}
+
+func TestInactivityClaimExecutor_ClaimInactivity_Busy(t *testing.T) {
+	executor, _, _ := setupInactivityClaimExecutorScenario(t)
+
+	ctx, cancelCtx := context.WithCancel(context.Background())
+	defer cancelCtx()
+
+	message := big.NewInt(100)
+	inactiveMembersIndexes := []group.MemberIndex{1, 4}
+
+	errChan := make(chan error, 1)
+	go func() {
+		err := executor.claimInactivity(
+			ctx,
+			inactiveMembersIndexes,
+			true,
+			message,
+		)
+		errChan <- err
+	}()
+
+	time.Sleep(100 * time.Millisecond)
+
+	err := executor.claimInactivity(
+		ctx,
+		inactiveMembersIndexes,
+		true,
+		message,
+	)
+	testutils.AssertErrorsSame(t, errInactivityClaimExecutorBusy, err)
+
+	err = <-errChan
+	if err != nil {
+		t.Errorf("unexpected error: [%v]", err)
+	}
+}
+
+func setupInactivityClaimExecutorScenario(t *testing.T) (
+	*inactivityClaimExecutor,
+	[32]byte,
+	*localChain,
+) {
+	groupParameters := &GroupParameters{
+		GroupSize:       5,
+		GroupQuorum:     4,
+		HonestThreshold: 3,
+	}
+
+	operatorPrivateKey, operatorPublicKey, err := operator.GenerateKeyPair(
+		local_v1.DefaultCurve,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	localChain := ConnectWithKey(operatorPrivateKey)
+
+	localProvider := local.ConnectWithKey(operatorPublicKey)
+
+	operatorAddress, err := localChain.Signing().PublicKeyToAddress(
+		operatorPublicKey,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var operators []chain.Address
+	for i := 0; i < groupParameters.GroupSize; i++ {
+		operators = append(operators, operatorAddress)
+	}
+
+	testData, err := tecdsatest.LoadPrivateKeyShareTestFixtures(
+		groupParameters.GroupSize,
+	)
+	if err != nil {
+		t.Fatalf("failed to load test data: [%v]", err)
+	}
+
+	signers := make([]*signer, len(testData))
+	for i := range testData {
+		privateKeyShare := tecdsa.NewPrivateKeyShare(testData[i])
+
+		signers[i] = &signer{
+			wallet: wallet{
+				publicKey:             privateKeyShare.PublicKey(),
+				signingGroupOperators: operators,
+			},
+			signingGroupMemberIndex: group.MemberIndex(i + 1),
+			privateKeyShare:         privateKeyShare,
+		}
+	}
+
+	keyStorePersistence := createMockKeyStorePersistence(t, signers...)
+
+	walletPublicKeyHash := bitcoin.PublicKeyHash(signers[0].wallet.publicKey)
+	ecdsaWalletID := [32]byte{1, 2, 3}
+
+	localChain.setWallet(
+		walletPublicKeyHash,
+		&WalletChainData{
+			EcdsaWalletID: ecdsaWalletID,
+		},
+	)
+
+	node, err := newNode(
+		groupParameters,
+		localChain,
+		newLocalBitcoinChain(),
+		localProvider,
+		keyStorePersistence,
+		&mockPersistenceHandle{},
+		generator.StartScheduler(),
+		&mockCoordinationProposalGenerator{},
+		Config{},
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	executor, ok, err := node.getInactivityClaimExecutor(
+		signers[0].wallet.publicKey,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !ok {
+		t.Fatal("node is supposed to control wallet signers")
+	}
+
+	return executor, ecdsaWalletID, localChain
+}
 
 func TestSignClaim_SigningSuccessful(t *testing.T) {
 	chain := Connect()

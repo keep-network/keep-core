@@ -41,6 +41,9 @@ type localChain struct {
 	dkgResultChallengeHandlersMutex sync.Mutex
 	dkgResultChallengeHandlers      map[int]func(submission *DKGResultChallengedEvent)
 
+	inactivityClaimedHandlersMutex sync.Mutex
+	inactivityClaimedHandlers      map[int]func(submission *InactivityClaimedEvent)
+
 	dkgMutex       sync.Mutex
 	dkgState       DKGState
 	dkgResult      *DKGChainResult
@@ -48,6 +51,9 @@ type localChain struct {
 
 	walletsMutex sync.Mutex
 	wallets      map[[20]byte]*WalletChainData
+
+	inactivityNonceMutex sync.Mutex
+	inactivityNonces     map[[32]byte]uint64
 
 	blocksByTimestampMutex sync.Mutex
 	blocksByTimestamp      map[uint64]uint64
@@ -553,9 +559,20 @@ func (lc *localChain) DKGParameters() (*DKGParameters, error) {
 }
 
 func (lc *localChain) OnInactivityClaimed(
-	func(event *InactivityClaimedEvent),
+	handler func(event *InactivityClaimedEvent),
 ) subscription.EventSubscription {
-	panic("unsupported")
+	lc.inactivityClaimedHandlersMutex.Lock()
+	defer lc.inactivityClaimedHandlersMutex.Unlock()
+
+	handlerID := generateHandlerID()
+	lc.inactivityClaimedHandlers[handlerID] = handler
+
+	return subscription.NewEventSubscription(func() {
+		lc.inactivityClaimedHandlersMutex.Lock()
+		defer lc.inactivityClaimedHandlersMutex.Unlock()
+
+		delete(lc.inactivityClaimedHandlers, handlerID)
+	})
 }
 
 func (lc *localChain) AssembleInactivityClaim(
@@ -567,7 +584,20 @@ func (lc *localChain) AssembleInactivityClaim(
 	*InactivityClaim,
 	error,
 ) {
-	panic("unsupported")
+	signingMembersIndexes := make([]group.MemberIndex, 0)
+	signaturesConcatenation := make([]byte, 0)
+	for memberIndex, signature := range signatures {
+		signingMembersIndexes = append(signingMembersIndexes, memberIndex)
+		signaturesConcatenation = append(signaturesConcatenation, signature...)
+	}
+
+	return &InactivityClaim{
+		WalletID:               walletID,
+		InactiveMembersIndices: inactiveMembersIndices,
+		HeartbeatFailed:        heartbeatFailed,
+		Signatures:             signaturesConcatenation,
+		SigningMembersIndices:  signingMembersIndexes,
+	}, nil
 }
 
 func (lc *localChain) SubmitInactivityClaim(
@@ -575,7 +605,33 @@ func (lc *localChain) SubmitInactivityClaim(
 	nonce *big.Int,
 	groupMembers []uint32,
 ) error {
-	panic("unsupported")
+	lc.inactivityClaimedHandlersMutex.Lock()
+	defer lc.inactivityClaimedHandlersMutex.Unlock()
+
+	lc.inactivityNonceMutex.Lock()
+	defer lc.inactivityNonceMutex.Unlock()
+
+	if nonce.Uint64() != lc.inactivityNonces[claim.WalletID] {
+		return fmt.Errorf("wrong inactivity claim nonce")
+	}
+
+	blockNumber, err := lc.blockCounter.CurrentBlock()
+	if err != nil {
+		return fmt.Errorf("failed to get the current block")
+	}
+
+	for _, handler := range lc.inactivityClaimedHandlers {
+		handler(&InactivityClaimedEvent{
+			WalletID:    claim.WalletID,
+			Nonce:       nonce,
+			Notifier:    "",
+			BlockNumber: blockNumber,
+		})
+	}
+
+	lc.inactivityNonces[claim.WalletID]++
+
+	return nil
 }
 
 func (lc *localChain) CalculateInactivityClaimHash(
@@ -598,7 +654,11 @@ func (lc *localChain) CalculateInactivityClaimHash(
 }
 
 func (lc *localChain) GetInactivityClaimNonce(walletID [32]byte) (*big.Int, error) {
-	panic("unsupported")
+	lc.inactivityNonceMutex.Lock()
+	defer lc.inactivityNonceMutex.Unlock()
+
+	nonce := lc.inactivityNonces[walletID]
+	return big.NewInt(int64(nonce)), nil
 }
 
 func (lc *localChain) PastDepositRevealedEvents(
@@ -1182,7 +1242,11 @@ func ConnectWithKey(
 		dkgResultChallengeHandlers: make(
 			map[int]func(submission *DKGResultChallengedEvent),
 		),
+		inactivityClaimedHandlers: make(
+			map[int]func(submission *InactivityClaimedEvent),
+		),
 		wallets:                            make(map[[20]byte]*WalletChainData),
+		inactivityNonces:                   make(map[[32]byte]uint64),
 		blocksByTimestamp:                  make(map[uint64]uint64),
 		blocksHashesByNumber:               make(map[uint64][32]byte),
 		pastDepositRevealedEvents:          make(map[[32]byte][]*DepositRevealedEvent),
