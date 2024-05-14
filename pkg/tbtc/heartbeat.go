@@ -63,6 +63,18 @@ type heartbeatSigningExecutor interface {
 	) (*tecdsa.Signature, uint32, uint64, error)
 }
 
+// heartbeatInactivityClaimExecutor is an interface meant to decouple the
+// specific implementation of the inactivity claim executor from the heartbeat
+// action.
+type heartbeatInactivityClaimExecutor interface {
+	claimInactivity(
+		ctx context.Context,
+		inactiveMembersIndexes []group.MemberIndex,
+		heartbeatFailed bool,
+		sessionID *big.Int,
+	) error
+}
+
 // heartbeatAction is a walletAction implementation handling heartbeat requests
 // from the wallet coordinator.
 type heartbeatAction struct {
@@ -75,7 +87,7 @@ type heartbeatAction struct {
 	proposal       *HeartbeatProposal
 	failureCounter *heartbeatFailureCounter
 
-	inactivityClaimExecutor *inactivityClaimExecutor
+	inactivityClaimExecutor heartbeatInactivityClaimExecutor
 
 	startBlock  uint64
 	expiryBlock uint64
@@ -90,7 +102,7 @@ func newHeartbeatAction(
 	signingExecutor heartbeatSigningExecutor,
 	proposal *HeartbeatProposal,
 	failureCounter *heartbeatFailureCounter,
-	inactivityClaimExecutor *inactivityClaimExecutor,
+	inactivityClaimExecutor heartbeatInactivityClaimExecutor,
 	startBlock uint64,
 	expiryBlock uint64,
 	waitForBlockFn waitForBlockFn,
