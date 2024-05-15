@@ -27,7 +27,10 @@ import (
 	"github.com/keep-network/keep-core/pkg/tecdsa/dkg"
 )
 
-const localChainOperatorID = chain.OperatorID(1)
+const (
+	localChainOperatorID = chain.OperatorID(1)
+	stakingProvider      = chain.Address("0x1111111111111111111111111111111111111111")
+)
 
 type movingFundsParameters = struct {
 	txMaxTotalFee                        uint64
@@ -108,6 +111,9 @@ type localChain struct {
 	movingFundsParametersMutex sync.Mutex
 	movingFundsParameters      movingFundsParameters
 
+	eligibleStakesMutex sync.Mutex
+	eligibleStakes      map[chain.Address]*big.Int
+
 	blockCounter       chain.BlockCounter
 	operatorPrivateKey *operator.PrivateKey
 }
@@ -185,11 +191,26 @@ func (lc *localChain) setBlockHashByNumber(
 }
 
 func (lc *localChain) OperatorToStakingProvider() (chain.Address, bool, error) {
-	panic("unsupported")
+	return stakingProvider, true, nil
 }
 
 func (lc *localChain) EligibleStake(stakingProvider chain.Address) (*big.Int, error) {
-	panic("unsupported")
+	lc.eligibleStakesMutex.Lock()
+	defer lc.eligibleStakesMutex.Unlock()
+
+	eligibleStake, ok := lc.eligibleStakes[stakingProvider]
+	if !ok {
+		return nil, fmt.Errorf("eligible stake not found")
+	}
+
+	return eligibleStake, nil
+}
+
+func (lc *localChain) setOperatorsEligibleStake(stake *big.Int) {
+	lc.eligibleStakesMutex.Lock()
+	defer lc.eligibleStakesMutex.Unlock()
+
+	lc.eligibleStakes[stakingProvider] = stake
 }
 
 func (lc *localChain) IsPoolLocked() (bool, error) {
@@ -214,11 +235,6 @@ func (lc *localChain) UpdateOperatorStatus() error {
 
 func (lc *localChain) IsEligibleForRewards() (bool, error) {
 	panic("unsupported")
-}
-
-func (lc *localChain) IsOperatorUnstaking() (bool, error) {
-	// TODO: Implement and use in unit tests.
-	return false, nil
 }
 
 func (lc *localChain) CanRestoreRewardEligibility() (bool, error) {
@@ -1402,6 +1418,7 @@ func ConnectWithKey(
 		movedFundsSweepProposalValidations:       make(map[[32]byte]bool),
 		heartbeatProposalValidations:             make(map[[16]byte]bool),
 		depositRequests:                          make(map[[32]byte]*DepositChainRequest),
+		eligibleStakes:                           make(map[chain.Address]*big.Int),
 		blockCounter:                             blockCounter,
 		operatorPrivateKey:                       operatorPrivateKey,
 	}

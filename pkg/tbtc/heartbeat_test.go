@@ -46,6 +46,7 @@ func TestHeartbeatAction_HappyPath(t *testing.T) {
 	}
 
 	hostChain := Connect()
+	hostChain.setOperatorsEligibleStake(big.NewInt(100000))
 	hostChain.setHeartbeatProposalValidationResult(proposal, true)
 
 	// Set the active operators count to the minimum required value.
@@ -102,6 +103,67 @@ func TestHeartbeatAction_HappyPath(t *testing.T) {
 	)
 }
 
+func TestHeartbeatAction_OperatorUnstaking(t *testing.T) {
+	walletPublicKeyHex, err := hex.DecodeString(
+		"0471e30bca60f6548d7b42582a478ea37ada63b402af7b3ddd57f0c95bb6843175" +
+			"aa0d2053a91a050a6797d85c38f2909cb7027f2344a01986aa2f9f8ca7a0c289",
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	startBlock := uint64(10)
+	expiryBlock := startBlock + heartbeatTotalProposalValidityBlocks
+
+	proposal := &HeartbeatProposal{
+		Message: [16]byte{
+			0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+			0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01,
+		},
+	}
+
+	heartbeatFailureCounter := newHeartbeatFailureCounter()
+
+	hostChain := Connect()
+	hostChain.setOperatorsEligibleStake(big.NewInt(0))
+	hostChain.setHeartbeatProposalValidationResult(proposal, true)
+
+	// Set the active operators count to the minimum required value.
+	mockExecutor := &mockHeartbeatSigningExecutor{}
+	mockExecutor.activeOperatorsCount = heartbeatSigningMinimumActiveOperators
+
+	inactivityClaimExecutor := &mockInactivityClaimExecutor{}
+
+	action := newHeartbeatAction(
+		logger,
+		hostChain,
+		wallet{
+			publicKey: unmarshalPublicKey(walletPublicKeyHex),
+		},
+		mockExecutor,
+		proposal,
+		heartbeatFailureCounter,
+		inactivityClaimExecutor,
+		startBlock,
+		expiryBlock,
+		func(ctx context.Context, blockHeight uint64) error {
+			return nil
+		},
+	)
+
+	err = action.execute()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	testutils.AssertBigIntsEqual(
+		t,
+		"message to sign",
+		nil, // sign not called
+		mockExecutor.requestedMessage,
+	)
+}
+
 func TestHeartbeatAction_Failure_SigningError(t *testing.T) {
 	walletPublicKeyHex, err := hex.DecodeString(
 		"0471e30bca60f6548d7b42582a478ea37ada63b402af7b3ddd57f0c95bb6843175" +
@@ -126,6 +188,7 @@ func TestHeartbeatAction_Failure_SigningError(t *testing.T) {
 	heartbeatFailureCounter := newHeartbeatFailureCounter()
 
 	hostChain := Connect()
+	hostChain.setOperatorsEligibleStake(big.NewInt(100000))
 	hostChain.setHeartbeatProposalValidationResult(proposal, true)
 
 	mockExecutor := &mockHeartbeatSigningExecutor{}
@@ -196,6 +259,7 @@ func TestHeartbeatAction_Failure_TooFewActiveOperators(t *testing.T) {
 	heartbeatFailureCounter := newHeartbeatFailureCounter()
 
 	hostChain := Connect()
+	hostChain.setOperatorsEligibleStake(big.NewInt(100000))
 	hostChain.setHeartbeatProposalValidationResult(proposal, true)
 
 	// Set the active operators count just below the required number.
@@ -276,6 +340,7 @@ func TestHeartbeatAction_Failure_CounterExceeded(t *testing.T) {
 	heartbeatFailureCounter.increment(walletPublicKeyStr)
 
 	hostChain := Connect()
+	hostChain.setOperatorsEligibleStake(big.NewInt(100000))
 	hostChain.setHeartbeatProposalValidationResult(proposal, true)
 
 	mockExecutor := &mockHeartbeatSigningExecutor{}
@@ -355,6 +420,7 @@ func TestHeartbeatAction_Failure_InactivityExecutionFailure(t *testing.T) {
 	heartbeatFailureCounter.increment(walletPublicKeyStr)
 
 	hostChain := Connect()
+	hostChain.setOperatorsEligibleStake(big.NewInt(100000))
 	hostChain.setHeartbeatProposalValidationResult(proposal, true)
 
 	mockExecutor := &mockHeartbeatSigningExecutor{}

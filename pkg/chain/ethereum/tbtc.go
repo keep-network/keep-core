@@ -2363,9 +2363,3 @@ func (tc *TbtcChain) GetRedemptionDelay(
 func (tc *TbtcChain) GetDepositMinAge() (uint32, error) {
 	return tc.walletProposalValidator.DEPOSITMINAGE()
 }
-
-func (tc *TbtcChain) IsOperatorUnstaking() (bool, error) {
-	// TODO: Implement by checking if the operator has deauthorized their entire
-	//       stake.
-	return false, nil
-}

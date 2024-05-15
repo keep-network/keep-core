@@ -123,9 +123,12 @@ func newHeartbeatAction(
 
 func (ha *heartbeatAction) execute() error {
 	// Do not execute the heartbeat action if the operator is unstaking.
-	isUnstaking, err := ha.chain.IsOperatorUnstaking()
+	isUnstaking, err := ha.isOperatorUnstaking()
 	if err != nil {
-		return fmt.Errorf("failed to check if the operator is unstaking")
+		return fmt.Errorf(
+			"failed to check if the operator is unstaking [%v]",
+			err,
+		)
 	}
 
 	if isUnstaking {
@@ -245,6 +248,33 @@ func (ha *heartbeatAction) wallet() wallet {
 
 func (ha *heartbeatAction) actionType() WalletActionType {
 	return ActionHeartbeat
+}
+
+func (ha *heartbeatAction) isOperatorUnstaking() (bool, error) {
+	stakingProvider, isRegistered, err := ha.chain.OperatorToStakingProvider()
+	if err != nil {
+		return false, fmt.Errorf(
+			"failed to get staking provider for operator [%v]",
+			err,
+		)
+	}
+
+	if !isRegistered {
+		return false, fmt.Errorf("staking provider not registered for operator")
+	}
+
+	// Eligible stake is defined as the currently authorized stake minus the
+	// pending authorization decrease.
+	eligibleStake, err := ha.chain.EligibleStake(stakingProvider)
+	if err != nil {
+		return false, fmt.Errorf(
+			"failed to check eligible stake for operator [%v]",
+			err,
+		)
+	}
+
+	// The operator is considered unstaking if their eligible stake is `0`.
+	return eligibleStake.Cmp(big.NewInt(0)) == 0, nil
 }
 
 // heartbeatFailureCounter holds counters keeping track of consecutive
