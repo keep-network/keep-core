@@ -22,11 +22,15 @@ import (
 	"github.com/keep-network/keep-core/pkg/chain/local_v1"
 	"github.com/keep-network/keep-core/pkg/operator"
 	"github.com/keep-network/keep-core/pkg/protocol/group"
+	"github.com/keep-network/keep-core/pkg/protocol/inactivity"
 	"github.com/keep-network/keep-core/pkg/subscription"
 	"github.com/keep-network/keep-core/pkg/tecdsa/dkg"
 )
 
-const localChainOperatorID = chain.OperatorID(1)
+const (
+	localChainOperatorID = chain.OperatorID(1)
+	stakingProvider      = chain.Address("0x1111111111111111111111111111111111111111")
+)
 
 type movingFundsParameters = struct {
 	txMaxTotalFee                        uint64
@@ -54,6 +58,9 @@ type localChain struct {
 	dkgResultChallengeHandlersMutex sync.Mutex
 	dkgResultChallengeHandlers      map[int]func(submission *DKGResultChallengedEvent)
 
+	inactivityClaimedHandlersMutex sync.Mutex
+	inactivityClaimedHandlers      map[int]func(submission *InactivityClaimedEvent)
+
 	dkgMutex       sync.Mutex
 	dkgState       DKGState
 	dkgResult      *DKGChainResult
@@ -61,6 +68,9 @@ type localChain struct {
 
 	walletsMutex sync.Mutex
 	wallets      map[[20]byte]*WalletChainData
+
+	inactivityNonceMutex sync.Mutex
+	inactivityNonces     map[[32]byte]uint64
 
 	blocksByTimestampMutex sync.Mutex
 	blocksByTimestamp      map[uint64]uint64
@@ -100,6 +110,9 @@ type localChain struct {
 
 	movingFundsParametersMutex sync.Mutex
 	movingFundsParameters      movingFundsParameters
+
+	eligibleStakesMutex sync.Mutex
+	eligibleStakes      map[chain.Address]*big.Int
 
 	blockCounter       chain.BlockCounter
 	operatorPrivateKey *operator.PrivateKey
@@ -178,11 +191,26 @@ func (lc *localChain) setBlockHashByNumber(
 }
 
 func (lc *localChain) OperatorToStakingProvider() (chain.Address, bool, error) {
-	panic("unsupported")
+	return stakingProvider, true, nil
 }
 
 func (lc *localChain) EligibleStake(stakingProvider chain.Address) (*big.Int, error) {
-	panic("unsupported")
+	lc.eligibleStakesMutex.Lock()
+	defer lc.eligibleStakesMutex.Unlock()
+
+	eligibleStake, ok := lc.eligibleStakes[stakingProvider]
+	if !ok {
+		return nil, fmt.Errorf("eligible stake not found")
+	}
+
+	return eligibleStake, nil
+}
+
+func (lc *localChain) setOperatorsEligibleStake(stake *big.Int) {
+	lc.eligibleStakesMutex.Lock()
+	defer lc.eligibleStakesMutex.Unlock()
+
+	lc.eligibleStakes[stakingProvider] = stake
 }
 
 func (lc *localChain) IsPoolLocked() (bool, error) {
@@ -564,6 +592,109 @@ func (lc *localChain) DKGParameters() (*DKGParameters, error) {
 		ChallengePeriodBlocks:         15,
 		ApprovePrecedencePeriodBlocks: 5,
 	}, nil
+}
+
+func (lc *localChain) OnInactivityClaimed(
+	handler func(event *InactivityClaimedEvent),
+) subscription.EventSubscription {
+	lc.inactivityClaimedHandlersMutex.Lock()
+	defer lc.inactivityClaimedHandlersMutex.Unlock()
+
+	handlerID := generateHandlerID()
+	lc.inactivityClaimedHandlers[handlerID] = handler
+
+	return subscription.NewEventSubscription(func() {
+		lc.inactivityClaimedHandlersMutex.Lock()
+		defer lc.inactivityClaimedHandlersMutex.Unlock()
+
+		delete(lc.inactivityClaimedHandlers, handlerID)
+	})
+}
+
+func (lc *localChain) AssembleInactivityClaim(
+	walletID [32]byte,
+	inactiveMembersIndices []group.MemberIndex,
+	signatures map[group.MemberIndex][]byte,
+	heartbeatFailed bool,
+) (
+	*InactivityClaim,
+	error,
+) {
+	signingMembersIndexes := make([]group.MemberIndex, 0)
+	signaturesConcatenation := make([]byte, 0)
+	for memberIndex, signature := range signatures {
+		signingMembersIndexes = append(signingMembersIndexes, memberIndex)
+		signaturesConcatenation = append(signaturesConcatenation, signature...)
+	}
+
+	return &InactivityClaim{
+		WalletID:               walletID,
+		InactiveMembersIndices: inactiveMembersIndices,
+		HeartbeatFailed:        heartbeatFailed,
+		Signatures:             signaturesConcatenation,
+		SigningMembersIndices:  signingMembersIndexes,
+	}, nil
+}
+
+func (lc *localChain) SubmitInactivityClaim(
+	claim *InactivityClaim,
+	nonce *big.Int,
+	groupMembers []uint32,
+) error {
+	lc.inactivityClaimedHandlersMutex.Lock()
+	defer lc.inactivityClaimedHandlersMutex.Unlock()
+
+	lc.inactivityNonceMutex.Lock()
+	defer lc.inactivityNonceMutex.Unlock()
+
+	if nonce.Uint64() != lc.inactivityNonces[claim.WalletID] {
+		return fmt.Errorf("wrong inactivity claim nonce")
+	}
+
+	blockNumber, err := lc.blockCounter.CurrentBlock()
+	if err != nil {
+		return fmt.Errorf("failed to get the current block")
+	}
+
+	for _, handler := range lc.inactivityClaimedHandlers {
+		handler(&InactivityClaimedEvent{
+			WalletID:    claim.WalletID,
+			Nonce:       nonce,
+			Notifier:    "",
+			BlockNumber: blockNumber,
+		})
+	}
+
+	lc.inactivityNonces[claim.WalletID]++
+
+	return nil
+}
+
+func (lc *localChain) CalculateInactivityClaimHash(
+	claim *inactivity.ClaimPreimage,
+) (inactivity.ClaimHash, error) {
+	if claim.WalletPublicKey == nil {
+		return inactivity.ClaimHash{}, fmt.Errorf(
+			"wallet public key is nil",
+		)
+	}
+
+	encoded := fmt.Sprint(
+		claim.Nonce,
+		claim.WalletPublicKey,
+		claim.InactiveMembersIndexes,
+		claim.HeartbeatFailed,
+	)
+
+	return sha3.Sum256([]byte(encoded)), nil
+}
+
+func (lc *localChain) GetInactivityClaimNonce(walletID [32]byte) (*big.Int, error) {
+	lc.inactivityNonceMutex.Lock()
+	defer lc.inactivityNonceMutex.Unlock()
+
+	nonce := lc.inactivityNonces[walletID]
+	return big.NewInt(int64(nonce)), nil
 }
 
 func (lc *localChain) PastDepositRevealedEvents(
@@ -1271,7 +1402,11 @@ func ConnectWithKey(
 		dkgResultChallengeHandlers: make(
 			map[int]func(submission *DKGResultChallengedEvent),
 		),
+		inactivityClaimedHandlers: make(
+			map[int]func(submission *InactivityClaimedEvent),
+		),
 		wallets:                                  make(map[[20]byte]*WalletChainData),
+		inactivityNonces:                         make(map[[32]byte]uint64),
 		blocksByTimestamp:                        make(map[uint64]uint64),
 		blocksHashesByNumber:                     make(map[uint64][32]byte),
 		pastDepositRevealedEvents:                make(map[[32]byte][]*DepositRevealedEvent),
@@ -1283,6 +1418,7 @@ func ConnectWithKey(
 		movedFundsSweepProposalValidations:       make(map[[32]byte]bool),
 		heartbeatProposalValidations:             make(map[[16]byte]bool),
 		depositRequests:                          make(map[[32]byte]*DepositChainRequest),
+		eligibleStakes:                           make(map[chain.Address]*big.Int),
 		blockCounter:                             blockCounter,
 		operatorPrivateKey:                       operatorPrivateKey,
 	}

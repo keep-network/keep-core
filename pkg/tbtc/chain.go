@@ -9,6 +9,7 @@ import (
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/operator"
 	"github.com/keep-network/keep-core/pkg/protocol/group"
+	"github.com/keep-network/keep-core/pkg/protocol/inactivity"
 	"github.com/keep-network/keep-core/pkg/sortition"
 	"github.com/keep-network/keep-core/pkg/subscription"
 	"github.com/keep-network/keep-core/pkg/tecdsa/dkg"
@@ -118,6 +119,59 @@ type DistributedKeyGenerationChain interface {
 
 	// DKGParameters gets the current value of DKG-specific control parameters.
 	DKGParameters() (*DKGParameters, error)
+}
+
+// InactivityClaimedEvent represents an inactivity claimed event. It is emitted
+// after a submitted inactivity claim lands on the chain.
+type InactivityClaimedEvent struct {
+	WalletID    [32]byte
+	Nonce       *big.Int
+	Notifier    chain.Address
+	BlockNumber uint64
+}
+
+// InactivityClaim represents an inactivity claim submitted to the chain.
+type InactivityClaim struct {
+	WalletID               [32]byte
+	InactiveMembersIndices []group.MemberIndex
+	HeartbeatFailed        bool
+	Signatures             []byte
+	SigningMembersIndices  []group.MemberIndex
+}
+
+type InactivityClaimChain interface {
+	// OnInactivityClaimed registers a callback that is invoked when an on-chain
+	// notification of the inactivity claim submission is seen.
+	OnInactivityClaimed(
+		func(event *InactivityClaimedEvent),
+	) subscription.EventSubscription
+
+	// AssembleInactivityClaim assembles the inactivity chain claim according to
+	// the rules expected by the given chain.
+	AssembleInactivityClaim(
+		walletID [32]byte,
+		inactiveMembersIndices []group.MemberIndex,
+		signatures map[group.MemberIndex][]byte,
+		heartbeatFailed bool,
+	) (*InactivityClaim, error)
+
+	// SubmitInactivityClaim submits the inactivity claim to the chain.
+	SubmitInactivityClaim(
+		claim *InactivityClaim,
+		nonce *big.Int,
+		groupMembers []uint32,
+	) error
+
+	// CalculateInactivityClaimHash calculates hash for the given inactivity
+	// claim.
+	CalculateInactivityClaimHash(claim *inactivity.ClaimPreimage) (
+		inactivity.ClaimHash,
+		error,
+	)
+
+	// GetInactivityClaimNonce returns inactivity claim nonce for the given
+	// wallet.
+	GetInactivityClaimNonce(walletID [32]byte) (*big.Int, error)
 }
 
 // DKGChainResultHash represents a hash of the DKGChainResult. The algorithm
@@ -479,6 +533,7 @@ type Chain interface {
 	sortition.Chain
 	GroupSelectionChain
 	DistributedKeyGenerationChain
+	InactivityClaimChain
 	BridgeChain
 	WalletProposalValidatorChain
 }

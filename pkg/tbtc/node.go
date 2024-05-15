@@ -18,6 +18,7 @@ import (
 	"github.com/keep-network/keep-core/pkg/net"
 	"github.com/keep-network/keep-core/pkg/protocol/announcer"
 	"github.com/keep-network/keep-core/pkg/protocol/group"
+	"github.com/keep-network/keep-core/pkg/protocol/inactivity"
 	"github.com/keep-network/keep-core/pkg/tecdsa/signing"
 )
 
@@ -65,6 +66,22 @@ type node struct {
 	// dkgExecutor MUST NOT be used outside this struct.
 	dkgExecutor *dkgExecutor
 
+	// heartbeatFailureCounter stores the counters of consecutive heartbeat
+	// failures for each wallet.
+	heartbeatFailureCounter *heartbeatFailureCounter
+
+	inactivityClaimExecutorMutex sync.Mutex
+	// inactivityClaimExecutors is the cache holding inactivity claim executors
+	// for specific wallets. The cache key is the uncompressed public key
+	// (with 04 prefix) of the wallet.
+	// inactivityClaimExecutor encapsulates the logic of handling inactivity
+	// claim signing and submitting.
+	//
+	// inactivityClaimExecutors MUST NOT be used outside this struct. Please use
+	// wallet actions and walletDispatcher to execute an action on an existing
+	// wallet.
+	inactivityClaimExecutors map[string]*inactivityClaimExecutor
+
 	signingExecutorsMutex sync.Mutex
 	// signingExecutors is the cache holding signing executors for specific wallets.
 	// The cache key is the uncompressed public key (with 04 prefix) of the wallet.
@@ -106,16 +123,18 @@ func newNode(
 	scheduler.RegisterProtocol(latch)
 
 	node := &node{
-		groupParameters:       groupParameters,
-		chain:                 chain,
-		btcChain:              btcChain,
-		netProvider:           netProvider,
-		walletRegistry:        walletRegistry,
-		walletDispatcher:      newWalletDispatcher(),
-		protocolLatch:         latch,
-		signingExecutors:      make(map[string]*signingExecutor),
-		coordinationExecutors: make(map[string]*coordinationExecutor),
-		proposalGenerator:     proposalGenerator,
+		groupParameters:          groupParameters,
+		chain:                    chain,
+		btcChain:                 btcChain,
+		netProvider:              netProvider,
+		walletRegistry:           walletRegistry,
+		walletDispatcher:         newWalletDispatcher(),
+		protocolLatch:            latch,
+		heartbeatFailureCounter:  newHeartbeatFailureCounter(),
+		signingExecutors:         make(map[string]*signingExecutor),
+		inactivityClaimExecutors: make(map[string]*inactivityClaimExecutor),
+		coordinationExecutors:    make(map[string]*coordinationExecutor),
+		proposalGenerator:        proposalGenerator,
 	}
 
 	// Only the operator address is known at this point and can be pre-fetched.
@@ -405,6 +424,89 @@ func (n *node) getCoordinationExecutor(
 	return executor, true, nil
 }
 
+// getInactivityClaimExecutor gets the inactivity claim executor responsible for
+// executing inactivity claim signing and submission related to a specific
+// wallet whose part is controlled by this node. The second boolean return value
+// indicates whether the node controls at least one signer for the given wallet.
+func (n *node) getInactivityClaimExecutor(
+	walletPublicKey *ecdsa.PublicKey,
+) (*inactivityClaimExecutor, bool, error) {
+	n.inactivityClaimExecutorMutex.Lock()
+	defer n.inactivityClaimExecutorMutex.Unlock()
+
+	walletPublicKeyBytes, err := marshalPublicKey(walletPublicKey)
+	if err != nil {
+		return nil, false, fmt.Errorf("cannot marshal wallet public key: [%v]", err)
+	}
+
+	executorKey := hex.EncodeToString(walletPublicKeyBytes)
+
+	if executor, exists := n.inactivityClaimExecutors[executorKey]; exists {
+		return executor, true, nil
+	}
+
+	executorLogger := logger.With(
+		zap.String("wallet", fmt.Sprintf("0x%x", walletPublicKeyBytes)),
+	)
+
+	signers := n.walletRegistry.getSigners(walletPublicKey)
+	if len(signers) == 0 {
+		// This is not an error because the node simply does not control
+		// the given wallet.
+		return nil, false, nil
+	}
+
+	// All signers belong to one wallet. Take that wallet from the first signer.
+	wallet := signers[0].wallet
+
+	channelName := fmt.Sprintf(
+		"%s-%s-inactivity",
+		ProtocolName,
+		hex.EncodeToString(walletPublicKeyBytes),
+	)
+
+	broadcastChannel, err := n.netProvider.BroadcastChannelFor(channelName)
+	if err != nil {
+		return nil, false, fmt.Errorf("failed to get broadcast channel: [%v]", err)
+	}
+
+	inactivity.RegisterUnmarshallers(broadcastChannel)
+
+	membershipValidator := group.NewMembershipValidator(
+		executorLogger,
+		wallet.signingGroupOperators,
+		n.chain.Signing(),
+	)
+
+	err = broadcastChannel.SetFilter(membershipValidator.IsInGroup)
+	if err != nil {
+		return nil, false, fmt.Errorf(
+			"could not set filter for channel [%v]: [%v]",
+			broadcastChannel.Name(),
+			err,
+		)
+	}
+
+	executorLogger.Infof(
+		"inactivity executor created; controlling [%v] signers",
+		len(signers),
+	)
+
+	executor := newInactivityClaimExecutor(
+		n.chain,
+		signers,
+		broadcastChannel,
+		membershipValidator,
+		n.groupParameters,
+		n.protocolLatch,
+		n.waitForBlockHeight,
+	)
+
+	n.inactivityClaimExecutors[executorKey] = executor
+
+	return executor, true, nil
+}
+
 // handleHeartbeatProposal handles an incoming heartbeat proposal by
 // orchestrating and dispatching an appropriate wallet action.
 func (n *node) handleHeartbeatProposal(
@@ -437,6 +539,24 @@ func (n *node) handleHeartbeatProposal(
 		return
 	}
 
+	inactivityClaimExecutor, ok, err := n.getInactivityClaimExecutor(wallet.publicKey)
+	if err != nil {
+		logger.Errorf("cannot get inactivity claim executor: [%v]", err)
+		return
+	}
+	// This check is actually redundant. We know the node controls some
+	// wallet signers as we just got the wallet from the registry using their
+	// public key hash. However, we are doing it just in case. The API
+	// contract of getInactivityClaimExecutor may change one day.
+	if !ok {
+		logger.Infof(
+			"node does not control signers of wallet [0x%x]; "+
+				"ignoring the received heartbeat request",
+			walletPublicKeyBytes,
+		)
+		return
+	}
+
 	logger.Infof(
 		"starting orchestration of the heartbeat action for wallet [0x%x]; "+
 			"20-byte public key hash of that wallet is [0x%x]",
@@ -458,6 +578,8 @@ func (n *node) handleHeartbeatProposal(
 		wallet,
 		signingExecutor,
 		proposal,
+		n.heartbeatFailureCounter,
+		inactivityClaimExecutor,
 		startBlock,
 		expiryBlock,
 		n.waitForBlockHeight,

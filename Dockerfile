@@ -55,6 +55,7 @@ COPY ./pkg/tecdsa/dkg/gen $APP_DIR/pkg/tecdsa/dkg/gen
 COPY ./pkg/tecdsa/signing/gen $APP_DIR/pkg/tecdsa/signing/gen
 COPY ./pkg/tecdsa/gen $APP_DIR/pkg/tecdsa/gen
 COPY ./pkg/protocol/announcer/gen $APP_DIR/pkg/protocol/announcer/gen
+COPY ./pkg/protocol/inactivity/gen $APP_DIR/pkg/protocol/inactivity/gen
 
 # Environment is to download published and tagged NPM packages versions.
 ARG ENVIRONMENT

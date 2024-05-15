@@ -101,6 +101,7 @@ func TestSigningRetryLoop(t *testing.T) {
 			expectedErr: nil,
 			expectedResult: &signingRetryLoopResult{
 				result:              testResult,
+				activeMembersCount:  10,
 				latestEndBlock:      215, // the end block resolved by the done check phase
 				attemptTimeoutBlock: 236, // start block of the first attempt + 30
 			},
@@ -151,6 +152,7 @@ func TestSigningRetryLoop(t *testing.T) {
 			expectedErr: nil,
 			expectedResult: &signingRetryLoopResult{
 				result:              testResult,
+				activeMembersCount:  6,
 				latestEndBlock:      215, // the end block resolved by the done check phase
 				attemptTimeoutBlock: 236, // start block of the first attempt + 30
 			},
@@ -205,6 +207,7 @@ func TestSigningRetryLoop(t *testing.T) {
 			expectedErr: nil,
 			expectedResult: &signingRetryLoopResult{
 				result:              testResult,
+				activeMembersCount:  10,
 				latestEndBlock:      260, // the end block resolved by the done check phase
 				attemptTimeoutBlock: 277, // start block of the second attempt + 30
 			},
@@ -261,6 +264,7 @@ func TestSigningRetryLoop(t *testing.T) {
 			expectedErr: nil,
 			expectedResult: &signingRetryLoopResult{
 				result:              testResult,
+				activeMembersCount:  10,
 				latestEndBlock:      260, // the end block resolved by the done check phase
 				attemptTimeoutBlock: 277, // start block of the second attempt + 30
 			},
@@ -317,6 +321,7 @@ func TestSigningRetryLoop(t *testing.T) {
 			expectedErr: nil,
 			expectedResult: &signingRetryLoopResult{
 				result:              testResult,
+				activeMembersCount:  10,
 				latestEndBlock:      260, // the end block resolved by the done check phase
 				attemptTimeoutBlock: 277, // start block of the second attempt + 30
 			},
@@ -365,6 +370,7 @@ func TestSigningRetryLoop(t *testing.T) {
 			expectedErr:                nil,
 			expectedResult: &signingRetryLoopResult{
 				result:              testResult,
+				activeMembersCount:  10,
 				latestEndBlock:      260, // the end block resolved by the done check phase
 				attemptTimeoutBlock: 277, // start block of the second attempt + 30
 			},
@@ -436,6 +442,7 @@ func TestSigningRetryLoop(t *testing.T) {
 			expectedErr: nil,
 			expectedResult: &signingRetryLoopResult{
 				result:              testResult,
+				activeMembersCount:  10,
 				latestEndBlock:      260, // the end block resolved by the done check phase
 				attemptTimeoutBlock: 277, // start block of the second attempt + 30
 			},
@@ -541,6 +548,7 @@ func TestSigningRetryLoop(t *testing.T) {
 			expectedErr: nil,
 			expectedResult: &signingRetryLoopResult{
 				result:              testResult,
+				activeMembersCount:  10,
 				latestEndBlock:      260, // the end block resolved by the done check phase
 				attemptTimeoutBlock: 277, // start block of the second attempt + 30
 			},
