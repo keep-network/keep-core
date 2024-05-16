@@ -1453,6 +1453,21 @@ func (tc *TbtcChain) GetWallet(
 	}, nil
 }
 
+func (tc *TbtcChain) OnWalletClosed(
+	handler func(event *tbtc.WalletClosedEvent),
+) subscription.EventSubscription {
+	onEvent := func(
+		walletID [32]byte,
+		blockNumber uint64,
+	) {
+		handler(&tbtc.WalletClosedEvent{
+			WalletID:    walletID,
+			BlockNumber: blockNumber,
+		})
+	}
+	return tc.walletRegistry.WalletClosedEvent(nil, nil).OnEvent(onEvent)
+}
+
 func (tc *TbtcChain) ComputeMainUtxoHash(
 	mainUtxo *bitcoin.UnspentTransactionOutput,
 ) [32]byte {

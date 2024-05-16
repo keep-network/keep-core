@@ -868,6 +868,12 @@ func (lc *localChain) setWallet(
 	lc.wallets[walletPublicKeyHash] = walletChainData
 }
 
+func (lc *localChain) OnWalletClosed(
+	handler func(event *WalletClosedEvent),
+) subscription.EventSubscription {
+	panic("unsupported")
+}
+
 func (lc *localChain) ComputeMainUtxoHash(
 	mainUtxo *bitcoin.UnspentTransactionOutput,
 ) [32]byte {

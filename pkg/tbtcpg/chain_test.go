@@ -16,6 +16,7 @@ import (
 
 	"github.com/keep-network/keep-core/pkg/bitcoin"
 	"github.com/keep-network/keep-core/pkg/chain"
+	"github.com/keep-network/keep-core/pkg/subscription"
 	"github.com/keep-network/keep-core/pkg/tbtc"
 )
 
@@ -1043,6 +1044,12 @@ func (lc *LocalChain) SetWallet(
 	defer lc.mutex.Unlock()
 
 	lc.walletChainData[walletPublicKeyHash] = data
+}
+
+func (lc *LocalChain) OnWalletClosed(
+	handler func(event *tbtc.WalletClosedEvent),
+) subscription.EventSubscription {
+	panic("unsupported")
 }
 
 func (lc *LocalChain) GetWalletParameters() (

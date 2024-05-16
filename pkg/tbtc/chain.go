@@ -235,12 +235,26 @@ type DKGParameters struct {
 	ApprovePrecedencePeriodBlocks uint64
 }
 
+// WalletClosedEvent represents a wallet closed. It is emitted when the wallet
+// is closed in the wallet registry.
+type WalletClosedEvent struct {
+	WalletID    [32]byte
+	BlockNumber uint64
+}
+
 // BridgeChain defines the subset of the TBTC chain interface that pertains
 // specifically to the tBTC Bridge operations.
 type BridgeChain interface {
 	// GetWallet gets the on-chain data for the given wallet. Returns an error
 	// if the wallet was not found.
 	GetWallet(walletPublicKeyHash [20]byte) (*WalletChainData, error)
+
+	// OnWalletClosed registers a callback that is invoked when an on-chain
+	// notification of the wallet closed is seen. The notification occurs when
+	// the wallet is closed or terminated.
+	OnWalletClosed(
+		func(event *WalletClosedEvent),
+	) subscription.EventSubscription
 
 	// ComputeMainUtxoHash computes the hash of the provided main UTXO
 	// according to the on-chain Bridge rules.
