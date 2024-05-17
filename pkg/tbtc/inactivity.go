@@ -124,7 +124,7 @@ func (ice *inactivityClaimExecutor) claimInactivity(
 
 			defer wg.Done()
 
-			execLogger.Info(
+			execLogger.Infof(
 				"[member:%v] starting inactivity claim publishing",
 				signer.signingGroupMemberIndex,
 			)
