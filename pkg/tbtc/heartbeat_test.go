@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"math/big"
+	"reflect"
 	"testing"
 
 	"github.com/keep-network/keep-core/internal/testutils"
@@ -51,7 +52,7 @@ func TestHeartbeatAction_HappyPath(t *testing.T) {
 
 	// Set the active operators count to the minimum required value.
 	mockExecutor := &mockHeartbeatSigningExecutor{}
-	mockExecutor.activeOperatorsCount = heartbeatSigningMinimumActiveOperators
+	mockExecutor.activeOperatorsCount = heartbeatSigningMinimumActiveMembers
 
 	inactivityClaimExecutor := &mockInactivityClaimExecutor{}
 
@@ -130,7 +131,7 @@ func TestHeartbeatAction_OperatorUnstaking(t *testing.T) {
 
 	// Set the active operators count to the minimum required value.
 	mockExecutor := &mockHeartbeatSigningExecutor{}
-	mockExecutor.activeOperatorsCount = heartbeatSigningMinimumActiveOperators
+	mockExecutor.activeOperatorsCount = heartbeatSigningMinimumActiveMembers
 
 	inactivityClaimExecutor := &mockInactivityClaimExecutor{}
 
@@ -193,7 +194,7 @@ func TestHeartbeatAction_Failure_SigningError(t *testing.T) {
 
 	mockExecutor := &mockHeartbeatSigningExecutor{}
 	mockExecutor.shouldFail = true
-	mockExecutor.activeOperatorsCount = heartbeatSigningMinimumActiveOperators
+	mockExecutor.activeOperatorsCount = heartbeatSigningMinimumActiveMembers
 
 	inactivityClaimExecutor := &mockInactivityClaimExecutor{}
 
@@ -217,14 +218,22 @@ func TestHeartbeatAction_Failure_SigningError(t *testing.T) {
 	// Do not expect the execution to result in an error. Signing error does not
 	// mean the procedure failure.
 	err = action.execute()
-	if err != nil {
-		t.Fatal(err)
+
+	expectedError := fmt.Errorf("heartbeat signing process errored out: [oofta]")
+	if !reflect.DeepEqual(expectedError, err) {
+		t.Errorf(
+			"unexpected error\n"+
+				"expected: %v\n"+
+				"actual:   %v\n",
+			expectedError,
+			err,
+		)
 	}
 
 	testutils.AssertUintsEqual(
 		t,
 		"heartbeat failure count",
-		1,
+		0,
 		uint64(heartbeatFailureCounter.get(walletPublicKeyStr)),
 	)
 	testutils.AssertBigIntsEqual(
@@ -264,7 +273,7 @@ func TestHeartbeatAction_Failure_TooFewActiveOperators(t *testing.T) {
 
 	// Set the active operators count just below the required number.
 	mockExecutor := &mockHeartbeatSigningExecutor{}
-	mockExecutor.activeOperatorsCount = heartbeatSigningMinimumActiveOperators - 1
+	mockExecutor.activeOperatorsCount = heartbeatSigningMinimumActiveMembers - 1
 
 	inactivityClaimExecutor := &mockInactivityClaimExecutor{}
 
@@ -344,7 +353,7 @@ func TestHeartbeatAction_Failure_CounterExceeded(t *testing.T) {
 	hostChain.setHeartbeatProposalValidationResult(proposal, true)
 
 	mockExecutor := &mockHeartbeatSigningExecutor{}
-	mockExecutor.shouldFail = true
+	mockExecutor.activeOperatorsCount = heartbeatSigningMinimumActiveMembers - 1
 
 	inactivityClaimExecutor := &mockInactivityClaimExecutor{}
 
@@ -424,7 +433,7 @@ func TestHeartbeatAction_Failure_InactivityExecutionFailure(t *testing.T) {
 	hostChain.setHeartbeatProposalValidationResult(proposal, true)
 
 	mockExecutor := &mockHeartbeatSigningExecutor{}
-	mockExecutor.shouldFail = true
+	mockExecutor.activeOperatorsCount = heartbeatSigningMinimumActiveMembers - 1
 
 	inactivityClaimExecutor := &mockInactivityClaimExecutor{}
 	inactivityClaimExecutor.shouldFail = true
@@ -603,15 +612,31 @@ func (mhse *mockHeartbeatSigningExecutor) sign(
 	ctx context.Context,
 	message *big.Int,
 	startBlock uint64,
-) (*tecdsa.Signature, uint32, uint64, error) {
+) (*tecdsa.Signature, *signingActivityReport, uint64, error) {
 	mhse.requestedMessage = message
 	mhse.requestedStartBlock = startBlock
 
 	if mhse.shouldFail {
-		return nil, 0, 0, fmt.Errorf("oofta")
+		return nil, nil, 0, fmt.Errorf("oofta")
 	}
 
-	return &tecdsa.Signature{}, mhse.activeOperatorsCount, startBlock + 1, nil
+	activeMembers := make([]group.MemberIndex, 0)
+	inactiveMembers := make([]group.MemberIndex, 0)
+
+	for memberIndex := uint32(1); memberIndex <= 100; memberIndex++ {
+		if memberIndex <= mhse.activeOperatorsCount {
+			activeMembers = append(activeMembers, group.MemberIndex(memberIndex))
+		} else {
+			inactiveMembers = append(inactiveMembers, group.MemberIndex(memberIndex))
+		}
+	}
+
+	activityReport := &signingActivityReport{
+		activeMembers:   activeMembers,
+		inactiveMembers: inactiveMembers,
+	}
+
+	return &tecdsa.Signature{}, activityReport, startBlock + 1, nil
 }
 
 type mockInactivityClaimExecutor struct {

@@ -100,8 +100,11 @@ func TestSigningRetryLoop(t *testing.T) {
 			},
 			expectedErr: nil,
 			expectedResult: &signingRetryLoopResult{
-				result:              testResult,
-				activeMembersCount:  10,
+				result: testResult,
+				activityReport: &signingActivityReport{
+					activeMembers:   signingGroupMembersIndexes,
+					inactiveMembers: []group.MemberIndex{},
+				},
 				latestEndBlock:      215, // the end block resolved by the done check phase
 				attemptTimeoutBlock: 236, // start block of the first attempt + 30
 			},
@@ -151,8 +154,11 @@ func TestSigningRetryLoop(t *testing.T) {
 			},
 			expectedErr: nil,
 			expectedResult: &signingRetryLoopResult{
-				result:              testResult,
-				activeMembersCount:  6,
+				result: testResult,
+				activityReport: &signingActivityReport{
+					activeMembers:   []group.MemberIndex{1, 2, 3, 6, 7, 9},
+					inactiveMembers: []group.MemberIndex{4, 5, 8, 10},
+				},
 				latestEndBlock:      215, // the end block resolved by the done check phase
 				attemptTimeoutBlock: 236, // start block of the first attempt + 30
 			},
@@ -206,8 +212,11 @@ func TestSigningRetryLoop(t *testing.T) {
 			},
 			expectedErr: nil,
 			expectedResult: &signingRetryLoopResult{
-				result:              testResult,
-				activeMembersCount:  10,
+				result: testResult,
+				activityReport: &signingActivityReport{
+					activeMembers:   signingGroupMembersIndexes,
+					inactiveMembers: []group.MemberIndex{},
+				},
 				latestEndBlock:      260, // the end block resolved by the done check phase
 				attemptTimeoutBlock: 277, // start block of the second attempt + 30
 			},
@@ -263,8 +272,11 @@ func TestSigningRetryLoop(t *testing.T) {
 			},
 			expectedErr: nil,
 			expectedResult: &signingRetryLoopResult{
-				result:              testResult,
-				activeMembersCount:  10,
+				result: testResult,
+				activityReport: &signingActivityReport{
+					activeMembers:   signingGroupMembersIndexes,
+					inactiveMembers: []group.MemberIndex{},
+				},
 				latestEndBlock:      260, // the end block resolved by the done check phase
 				attemptTimeoutBlock: 277, // start block of the second attempt + 30
 			},
@@ -320,8 +332,11 @@ func TestSigningRetryLoop(t *testing.T) {
 			},
 			expectedErr: nil,
 			expectedResult: &signingRetryLoopResult{
-				result:              testResult,
-				activeMembersCount:  10,
+				result: testResult,
+				activityReport: &signingActivityReport{
+					activeMembers:   signingGroupMembersIndexes,
+					inactiveMembers: []group.MemberIndex{},
+				},
 				latestEndBlock:      260, // the end block resolved by the done check phase
 				attemptTimeoutBlock: 277, // start block of the second attempt + 30
 			},
@@ -369,8 +384,11 @@ func TestSigningRetryLoop(t *testing.T) {
 			expectedOutgoingDoneChecks: nil,
 			expectedErr:                nil,
 			expectedResult: &signingRetryLoopResult{
-				result:              testResult,
-				activeMembersCount:  10,
+				result: testResult,
+				activityReport: &signingActivityReport{
+					activeMembers:   signingGroupMembersIndexes,
+					inactiveMembers: []group.MemberIndex{},
+				},
 				latestEndBlock:      260, // the end block resolved by the done check phase
 				attemptTimeoutBlock: 277, // start block of the second attempt + 30
 			},
@@ -441,8 +459,11 @@ func TestSigningRetryLoop(t *testing.T) {
 			},
 			expectedErr: nil,
 			expectedResult: &signingRetryLoopResult{
-				result:              testResult,
-				activeMembersCount:  10,
+				result: testResult,
+				activityReport: &signingActivityReport{
+					activeMembers:   signingGroupMembersIndexes,
+					inactiveMembers: []group.MemberIndex{},
+				},
 				latestEndBlock:      260, // the end block resolved by the done check phase
 				attemptTimeoutBlock: 277, // start block of the second attempt + 30
 			},
@@ -547,8 +568,11 @@ func TestSigningRetryLoop(t *testing.T) {
 			},
 			expectedErr: nil,
 			expectedResult: &signingRetryLoopResult{
-				result:              testResult,
-				activeMembersCount:  10,
+				result: testResult,
+				activityReport: &signingActivityReport{
+					activeMembers:   signingGroupMembersIndexes,
+					inactiveMembers: []group.MemberIndex{},
+				},
 				latestEndBlock:      260, // the end block resolved by the done check phase
 				attemptTimeoutBlock: 277, // start block of the second attempt + 30
 			},
