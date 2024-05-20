@@ -140,13 +140,20 @@ type signingAttemptParams struct {
 // signingAttemptFn represents a function performing a signing attempt.
 type signingAttemptFn func(*signingAttemptParams) (*signing.Result, uint64, error)
 
+// signingActivityReport holds information about the activity of the signing
+// group members during the signing process.
+type signingActivityReport struct {
+	activeMembers   []group.MemberIndex
+	inactiveMembers []group.MemberIndex
+}
+
 // signingRetryLoopResult represents the result of the signing retry loop.
 type signingRetryLoopResult struct {
 	// result is the outcome of the signing process.
 	result *signing.Result
-	// activeMembersCount is the number of members that participated in the
-	// signing process.
-	activeMembersCount uint32
+	// activityReport holds information about the activity of the signing
+	// group members during the signing process.
+	activityReport *signingActivityReport
 	// latestEndBlock is the block at which the slowest signer of the successful
 	// signing attempt completed signature computation. This block is also
 	// the common end block accepted by all other members of the signing group.
@@ -409,9 +416,14 @@ func (srl *signingRetryLoop) start(
 			continue
 		}
 
+		activityReport := &signingActivityReport{
+			activeMembers:   readyMembersIndexes,
+			inactiveMembers: unreadyMembersIndexes,
+		}
+
 		return &signingRetryLoopResult{
 			result:              result,
-			activeMembersCount:  uint32(len(readyMembersIndexes)),
+			activityReport:      activityReport,
 			latestEndBlock:      latestEndBlock,
 			attemptTimeoutBlock: timeoutBlock,
 		}, nil

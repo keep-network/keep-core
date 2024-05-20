@@ -34,8 +34,8 @@ const (
 	// of 25 blocks is roughly 5 minutes, assuming 12 seconds per block.
 	heartbeatTimeoutSafetyMarginBlocks = 25
 	// heartbeatSigningMinimumActiveOperators determines the minimum number of
-	// active operators during signing for a heartbeat to be considered valid.
-	heartbeatSigningMinimumActiveOperators = 70
+	// active members during signing for a heartbeat to be considered valid.
+	heartbeatSigningMinimumActiveMembers = 70
 	// heartbeatConsecutiveFailuresThreshold determines the number of consecutive
 	// heartbeat failures required to trigger inactivity operator notification.
 	heartbeatConsecutiveFailureThreshold = 3
@@ -60,7 +60,7 @@ type heartbeatSigningExecutor interface {
 		ctx context.Context,
 		message *big.Int,
 		startBlock uint64,
-	) (*tecdsa.Signature, uint32, uint64, error)
+	) (*tecdsa.Signature, *signingActivityReport, uint64, error)
 }
 
 // heartbeatInactivityClaimExecutor is an interface meant to decouple the
@@ -168,49 +168,67 @@ func (ha *heartbeatAction) execute() error {
 	)
 	defer cancelHeartbeatSigningCtx()
 
-	signature, activeOperatorsCount, _, err := ha.signingExecutor.sign(
+	signature, activityReport, _, err := ha.signingExecutor.sign(
 		heartbeatSigningCtx,
 		messageToSign,
 		ha.startBlock,
 	)
+	if err != nil {
+		// Do not count this error as heartbeat inactivity failure. If the
+		// process returned an error here, that likely means the group signing
+		// threshold was not met. In such a case, the inactivity claim does not
+		// have a chance for success anyway (it needs the group threshold to
+		// be met as well).
+		return fmt.Errorf("heartbeat signing process errored out: [%v]", err)
+	}
 
-	// If there was no error and the number of active operators during signing
-	// was enough, we can consider the heartbeat procedure as successful.
-	if err == nil && activeOperatorsCount >= heartbeatSigningMinimumActiveOperators {
+	// If the number of active members during signing was enough, we can
+	// consider the heartbeat procedure as successful.
+	activeMembersCount := len(activityReport.activeMembers)
+	if activeMembersCount >= heartbeatSigningMinimumActiveMembers {
 		ha.logger.Infof(
-			"successfully generated signature [%s] for heartbeat message [0x%x]",
+			"heartbeat generated signature [%s] for message [0x%x]",
 			signature,
 			ha.proposal.Message[:],
 		)
 
-		// Reset the counter for consecutive heartbeat failure.
+		// Reset the counter of consecutive heartbeat inactivity failures.
 		ha.failureCounter.reset(walletKey)
 
 		return nil
 	}
 
-	// If there was an error or the number of active operators during signing
-	// was not enough, we must consider the heartbeat procedure as a failure.
+	// If the number of active members during signing was not enough, we
+	// must consider the heartbeat procedure as an inactivity failure.
 	ha.logger.Warnf(
-		"heartbeat failed; [%d/%d] operators participated; the process "+
-			"returned [%v] as error",
-		activeOperatorsCount,
-		heartbeatSigningMinimumActiveOperators,
-		err,
+		"heartbeat generated signature but minimum activity "+
+			"threshold was not met ([%d/%d] members participated); "+
+			"counting it as inactivity failure",
+		activeMembersCount,
+		heartbeatSigningMinimumActiveMembers,
 	)
 
-	// Increment the heartbeat failure counter.
+	// Increment the heartbeat inactivity failure counter.
 	ha.failureCounter.increment(walletKey)
 
-	// If the number of consecutive heartbeat failures does not exceed the
-	// threshold do not notify about operator inactivity.
+	// If the number of consecutive heartbeat inactivity failures does not
+	// exceed the threshold, do not issue an inactivity claim yet.
 	if ha.failureCounter.get(walletKey) < heartbeatConsecutiveFailureThreshold {
 		ha.logger.Warnf(
-			"leaving without notifying about operator inactivity; current "+
-				"heartbeat failure count is [%d]",
+			"not issuing an inactivity claim yet; current consecutive"+
+				"heartbeat inactivity failure count is [%d/%d]",
 			ha.failureCounter.get(walletKey),
+			heartbeatConsecutiveFailureThreshold,
 		)
 		return nil
+	}
+
+	// This should not happen but check it just in case as inactivity claim
+	// requires a non-empty inactive members set.
+	if len(activityReport.inactiveMembers) == 0 {
+		return fmt.Errorf(
+			"inactivity claim aborted due to an undetermined set of inactive members",
+		)
 	}
 
 	heartbeatInactivityCtx, cancelHeartbeatInactivityCtx := withCancelOnBlock(
@@ -220,15 +238,14 @@ func (ha *heartbeatAction) execute() error {
 	)
 	defer cancelHeartbeatInactivityCtx()
 
-	// The value of consecutive heartbeat failures exceeds the threshold.
-	// Proceed with operator inactivity notification.
+	// The value of consecutive heartbeat inactivity failures exceeds the threshold.
+	// Proceed with operator inactivity claim.
 	err = ha.inactivityClaimExecutor.claimInactivity(
 		heartbeatInactivityCtx,
-		// Leave the list of inactive operators empty even if some operators
-		// were inactive during signing heartbeat. The inactive operators could
-		// simply be in the process of unstaking and therefore should not be
-		// punished.
-		[]group.MemberIndex{},
+		// It's safe to consider unstaking members as inactive members in the claim.
+		// Inactive members are set ineligible for on-chain rewards for a certain
+		// period of time. This is a desired outcome for unstaking members as well.
+		activityReport.inactiveMembers,
 		true,
 		messageToSign,
 	)
