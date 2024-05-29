@@ -281,7 +281,7 @@ func getProofInfo(
 
 	// Testnet proofs often require longer header chains due to the frequent
 	// difficulty changes on Bitcoin testnet.
-	requiredConfirmations := uint(txProofDifficultyFactor.Uint64()) + 10
+	requiredConfirmations := uint(txProofDifficultyFactor.Uint64()) + 30
 
 	return false, accumulatedConfirmations, requiredConfirmations, nil
 }
