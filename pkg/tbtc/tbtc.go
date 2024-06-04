@@ -264,6 +264,22 @@ func Initialize(
 		}()
 	})
 
+	_ = chain.OnWalletClosed(func(event *WalletClosedEvent) {
+		go func() {
+			// TODO: Most likely event deduplication is needed.
+
+			logger.Infof(
+				"Wallet with ID [0x%x] has been closed at block [%v]",
+				event.WalletID,
+				event.BlockNumber,
+			)
+
+			node.handleWalletClosure(
+				event.WalletID,
+			)
+		}()
+	})
+
 	return nil
 }
 

@@ -1020,6 +1020,10 @@ func (lc *LocalChain) SetAverageBlockTime(averageBlockTime time.Duration) {
 	lc.averageBlockTime = averageBlockTime
 }
 
+func (lc *LocalChain) IsWalletRegistered(EcdsaWalletID [32]byte) (bool, error) {
+	panic("unsupported")
+}
+
 func (lc *LocalChain) GetWallet(walletPublicKeyHash [20]byte) (
 	*tbtc.WalletChainData,
 	error,

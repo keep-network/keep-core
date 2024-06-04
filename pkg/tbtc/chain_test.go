@@ -843,6 +843,10 @@ func buildDepositRequestKey(
 	return sha256.Sum256(append(fundingTxHash[:], buffer...))
 }
 
+func (lc *localChain) IsWalletRegistered(EcdsaWalletID [32]byte) (bool, error) {
+	panic("unsupported")
+}
+
 func (lc *localChain) GetWallet(walletPublicKeyHash [20]byte) (
 	*WalletChainData,
 	error,

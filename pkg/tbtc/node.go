@@ -8,6 +8,7 @@ import (
 	"math/big"
 	"sync"
 
+	"github.com/keep-network/keep-common/pkg/chain/ethereum"
 	"github.com/keep-network/keep-core/pkg/bitcoin"
 	"github.com/keep-network/keep-core/pkg/chain"
 
@@ -38,6 +39,12 @@ const (
 	// Moreover, the signature must be produced in the reasonable time.
 	// That being said, the value `5` seems to be reasonable trade-off.
 	signingAttemptsLimit = 5
+
+	// walletClosureConfirmationBlocks determines the period used when waiting
+	// for the wallet closure confirmation. This period ensures the wallet has
+	// been definitely closed and the closing transaction will not be removed by
+	// a chain reorganization.
+	walletClosureConfirmationBlocks = 32
 )
 
 // TODO: Unit tests for `node.go`.
@@ -1073,6 +1080,55 @@ func processCoordinationResult(node *node, result *coordinationResult) {
 	default:
 		logger.Errorf("no handler for coordination result [%s]", result)
 	}
+}
+
+// handleWalletClosure handles the wallet termination or closing process.
+func (n *node) handleWalletClosure(walletID [32]byte) error {
+	blockCounter, err := n.chain.BlockCounter()
+	if err != nil {
+		return fmt.Errorf("error getting block counter [%w]", err)
+	}
+
+	currentBlock, err := blockCounter.CurrentBlock()
+	if err != nil {
+		return fmt.Errorf("error getting current block [%w]", err)
+	}
+
+	// To verify there was no chain reorg and the wallet is really closed check
+	// if it is registered. Both terminated and closed wallets are removed
+	// from the ECDSA registry.
+	stateCheck := func() (bool, error) {
+		isRegistered, err := n.chain.IsWalletRegistered(walletID)
+		if err != nil {
+			return false, err
+		}
+
+		return !isRegistered, nil
+	}
+
+	// Wait a significant number of blocks to make sure the transaction has not
+	// been reverted for some reason, e.g. due to a chain reorganization.
+	result, err := ethereum.WaitForBlockConfirmations(
+		blockCounter,
+		currentBlock,
+		walletClosureConfirmationBlocks,
+		stateCheck,
+	)
+	if err != nil {
+		return fmt.Errorf(
+			"error while waiting for wallet closure confirmation [%w]",
+			err,
+		)
+	}
+
+	if !result {
+		return fmt.Errorf("wallet closure not confirmed")
+	}
+
+	// TODO: Continue with wallet closure handling: save key material and remove
+	//       the wallet from coordination mechanism.
+
+	return nil
 }
 
 // waitForBlockFn represents a function blocking the execution until the given

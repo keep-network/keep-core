@@ -1415,6 +1415,21 @@ func (tc *TbtcChain) PastNewWalletRegisteredEvents(
 	return convertedEvents, err
 }
 
+func (tc *TbtcChain) IsWalletRegistered(EcdsaWalletID [32]byte) (bool, error) {
+	isWalletRegistered, err := tc.walletRegistry.IsWalletRegistered(
+		EcdsaWalletID,
+	)
+	if err != nil {
+		return false, fmt.Errorf(
+			"cannot check if wallet with ECDSA ID [0x%x] is registered: [%v]",
+			EcdsaWalletID,
+			err,
+		)
+	}
+
+	return isWalletRegistered, nil
+}
+
 func (tc *TbtcChain) GetWallet(
 	walletPublicKeyHash [20]byte,
 ) (*tbtc.WalletChainData, error) {
