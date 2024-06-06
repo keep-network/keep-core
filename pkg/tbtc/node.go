@@ -1125,8 +1125,32 @@ func (n *node) handleWalletClosure(walletID [32]byte) error {
 		return fmt.Errorf("wallet closure not confirmed")
 	}
 
-	// TODO: Continue with wallet closure handling: save key material and remove
-	//       the wallet from coordination mechanism.
+	events, err := n.chain.PastNewWalletRegisteredEvents(
+		&NewWalletRegisteredEventFilter{
+			EcdsaWalletID: [][32]byte{walletID},
+		},
+	)
+	if err != nil {
+		return fmt.Errorf("could not get past new wallet registered events")
+	}
+
+	// There should be only one event returned and the ECDSA wallet ID should
+	// match the requested wallet ID. These errors should never happen, but
+	// check just in case.
+	if len(events) != 1 {
+		return fmt.Errorf("wrong number of past new wallet registered events")
+	}
+
+	if events[0].EcdsaWalletID != walletID {
+		return fmt.Errorf("wrong past new wallet registered event returned")
+	}
+
+	walletPublicKeyHash := events[0].WalletPublicKeyHash
+
+	err = n.walletRegistry.archiveWallet(walletPublicKeyHash)
+	if err != nil {
+		return fmt.Errorf("failed to archive the wallet: [%v]", err)
+	}
 
 	return nil
 }

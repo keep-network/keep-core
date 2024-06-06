@@ -262,6 +262,14 @@ type BridgeChain interface {
 	// according to the on-chain Bridge rules.
 	ComputeMainUtxoHash(mainUtxo *bitcoin.UnspentTransactionOutput) [32]byte
 
+	// PastNewWalletRegisteredEvents fetches past new wallet registered events
+	// according to the provided filter or unfiltered if the filter is nil.
+	// Returned events are sorted by the block number in the ascending order,
+	// i.e. the latest event is at the end of the slice.
+	PastNewWalletRegisteredEvents(
+		filter *NewWalletRegisteredEventFilter,
+	) ([]*NewWalletRegisteredEvent, error)
+
 	// PastDepositRevealedEvents fetches past deposit reveal events according
 	// to the provided filter or unfiltered if the filter is nil. Returned
 	// events are sorted by the block number in the ascending order, i.e. the

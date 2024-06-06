@@ -274,9 +274,16 @@ func Initialize(
 				event.BlockNumber,
 			)
 
-			node.handleWalletClosure(
+			err := node.handleWalletClosure(
 				event.WalletID,
 			)
+			if err != nil {
+				logger.Errorf(
+					"Failure while handling wallet with ID [0x%x]: [%v]",
+					event.WalletID,
+					err,
+				)
+			}
 		}()
 	})
 

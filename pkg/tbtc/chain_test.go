@@ -697,6 +697,12 @@ func (lc *localChain) GetInactivityClaimNonce(walletID [32]byte) (*big.Int, erro
 	return big.NewInt(int64(nonce)), nil
 }
 
+func (lc *localChain) PastNewWalletRegisteredEvents(
+	filter *NewWalletRegisteredEventFilter,
+) ([]*NewWalletRegisteredEvent, error) {
+	panic("unsupported")
+}
+
 func (lc *localChain) PastDepositRevealedEvents(
 	filter *DepositRevealedEventFilter,
 ) ([]*DepositRevealedEvent, error) {

@@ -156,6 +156,45 @@ func (wr *walletRegistry) getWalletByPublicKeyHash(
 	return wallet{}, false
 }
 
+func (wr *walletRegistry) archiveWallet(
+	walletPublicKeyHash [20]byte,
+) error {
+	wr.mutex.Lock()
+	defer wr.mutex.Unlock()
+
+	var walletPublicKey *ecdsa.PublicKey
+
+	for _, value := range wr.walletCache {
+		if value.walletPublicKeyHash == walletPublicKeyHash {
+			// All signers belong to one wallet. Take the wallet public key from
+			//  the first signer.
+			walletPublicKey = value.signers[0].wallet.publicKey
+		}
+	}
+
+	if walletPublicKey == nil {
+		logger.Infof(
+			"node does not control wallet with public key hash [0x%x]; "+
+				"quitting wallet archiving",
+			walletPublicKeyHash,
+		)
+		return nil
+	}
+
+	walletStorageKey := getWalletStorageKey(walletPublicKey)
+
+	// Archive the entire wallet storage.
+	err := wr.walletStorage.archiveWallet(walletStorageKey)
+	if err != nil {
+		return fmt.Errorf("could not archive wallet: [%v]", err)
+	}
+
+	// Remove the wallet from the wallet cache.
+	delete(wr.walletCache, walletStorageKey)
+
+	return nil
+}
+
 // walletStorage is the component that persists data of the wallets managed
 // by the given node using the underlying persistence layer. It should be
 // used directly only by the walletRegistry.
@@ -186,6 +225,19 @@ func (ws *walletStorage) saveSigner(signer *signer) error {
 	if err != nil {
 		return fmt.Errorf(
 			"could not save membership using the "+
+				"underlying persistence layer: [%w]",
+			err,
+		)
+	}
+
+	return nil
+}
+
+func (ws *walletStorage) archiveWallet(walletStoragePath string) error {
+	err := ws.persistence.Archive(walletStoragePath)
+	if err != nil {
+		return fmt.Errorf(
+			"could not archive wallet storage using the "+
 				"underlying persistence layer: [%w]",
 			err,
 		)
