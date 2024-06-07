@@ -1089,6 +1089,7 @@ func processCoordinationResult(node *node, result *coordinationResult) {
 	}
 }
 
+// archiveClosedWallets archives closed or terminated wallets.
 func (n *node) archiveClosedWallets() error {
 	getClosedWallets := func(walletPublicKeyHashes [][20]byte) (
 		closedWallets [][20]byte,

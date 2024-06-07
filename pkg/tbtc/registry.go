@@ -156,6 +156,9 @@ func (wr *walletRegistry) getWalletByPublicKeyHash(
 	return wallet{}, false
 }
 
+// archiveWallet archives the wallet with the given public key hash. The wallet
+// data is removed from the wallet cache and the entire wallet storage directory
+// is moved to the archive directory.
 func (wr *walletRegistry) archiveWallet(
 	walletPublicKeyHash [20]byte,
 ) error {
@@ -233,6 +236,8 @@ func (ws *walletStorage) saveSigner(signer *signer) error {
 	return nil
 }
 
+// archiveWallet archives the given wallet data in the underlying persistence
+// layer of the walletStorage.
 func (ws *walletStorage) archiveWallet(walletStoragePath string) error {
 	err := ws.persistence.Archive(walletStoragePath)
 	if err != nil {

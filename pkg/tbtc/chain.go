@@ -245,6 +245,8 @@ type WalletClosedEvent struct {
 // BridgeChain defines the subset of the TBTC chain interface that pertains
 // specifically to the tBTC Bridge operations.
 type BridgeChain interface {
+	// IsWalletRegistered checks whether the given wallet is registered in the
+	// ECDSA wallet registry.
 	IsWalletRegistered(EcdsaWalletID [32]byte) (bool, error)
 
 	// GetWallet gets the on-chain data for the given wallet. Returns an error
