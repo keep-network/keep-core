@@ -144,12 +144,19 @@ func newNode(
 		proposalGenerator:        proposalGenerator,
 	}
 
+	// Archive any wallets that might have been closed or terminated while the
+	// client was turned off.
+	err := node.archiveClosedWallets()
+	if err != nil {
+		return nil, fmt.Errorf("cannot archive closed wallets: [%v]", err)
+	}
+
 	// Only the operator address is known at this point and can be pre-fetched.
 	// The operator ID must be determined later as the operator may not be in
 	// the sortition pool yet.
 	operatorAddress, err := node.operatorAddress()
 	if err != nil {
-		return nil, fmt.Errorf("cannot get node's operator adress: [%v]", err)
+		return nil, fmt.Errorf("cannot get node's operator address: [%v]", err)
 	}
 
 	// TODO: This chicken and egg problem should be solved when
@@ -1080,6 +1087,98 @@ func processCoordinationResult(node *node, result *coordinationResult) {
 	default:
 		logger.Errorf("no handler for coordination result [%s]", result)
 	}
+}
+
+func (n *node) archiveClosedWallets() error {
+	getClosedWallets := func(walletPublicKeyHashes [][20]byte) (
+		closedWallets [][20]byte,
+	) {
+		for _, walletPublicKeyHash := range walletPublicKeyHashes {
+			walletChainData, err := n.chain.GetWallet(walletPublicKeyHash)
+			if err != nil {
+				// Continue if there was an error getting wallet data. Try to
+				// get as many closed wallets as possible.
+				logger.Errorf(
+					"could not get wallet data for wallet [0x%x]: [%v]",
+					walletPublicKeyHash,
+					err,
+				)
+				continue
+			}
+
+			if walletChainData.State == StateClosed ||
+				walletChainData.State == StateTerminated {
+				closedWallets = append(closedWallets, walletPublicKeyHash)
+			}
+		}
+
+		return
+	}
+
+	// Get all the wallets controlled by the node.
+	walletPublicKeys := n.walletRegistry.getWalletsPublicKeys()
+
+	walletPublicKeyHashes := [][20]byte{}
+	for _, walletPublicKey := range walletPublicKeys {
+		walletPublicKeyHashes = append(
+			walletPublicKeyHashes,
+			bitcoin.PublicKeyHash(walletPublicKey),
+		)
+	}
+
+	// Find the wallets that are closed.
+	initialClosedWallets := getClosedWallets(walletPublicKeyHashes)
+	if len(initialClosedWallets) == 0 {
+		logger.Infof("there are no wallets to be archived")
+		return nil
+	}
+
+	// Wait a significant number of blocks to make sure the transactions that
+	// caused the wallets to be closed have not been reverted for some reason,
+	// e.g. due to a chain reorganization.
+	ctx := context.Background()
+
+	blockCounter, err := n.chain.BlockCounter()
+	if err != nil {
+		return fmt.Errorf("error getting block counter [%v]", err)
+	}
+
+	currentBlock, err := blockCounter.CurrentBlock()
+	if err != nil {
+		return fmt.Errorf("error getting current block [%v]", err)
+	}
+
+	confirmationBlock := currentBlock + walletClosureConfirmationBlocks
+
+	err = n.waitForBlockHeight(ctx, confirmationBlock)
+	if err != nil {
+		return fmt.Errorf(
+			"error while waiting for confirmation block [%v]",
+			err,
+		)
+	}
+
+	// Filter the closed wallets again.
+	finalClosedWallets := getClosedWallets(initialClosedWallets)
+
+	// Archive the closed wallets.
+	for _, walletPublicKeyHash := range finalClosedWallets {
+		err := n.walletRegistry.archiveWallet(walletPublicKeyHash)
+		if err != nil {
+			logger.Errorf(
+				"could not archive wallet with public key hash [0x%x]: [%v]",
+				walletPublicKeyHash,
+				err,
+			)
+		} else {
+			logger.Infof(
+				"successfully archived wallet with public key hash [0x%x]",
+				walletPublicKeyHash,
+			)
+		}
+	}
+
+	return nil
 }
 
 // handleWalletClosure handles the wallet termination or closing process.
