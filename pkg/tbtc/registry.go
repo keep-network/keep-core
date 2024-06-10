@@ -238,8 +238,8 @@ func (ws *walletStorage) saveSigner(signer *signer) error {
 
 // archiveWallet archives the given wallet data in the underlying persistence
 // layer of the walletStorage.
-func (ws *walletStorage) archiveWallet(walletStoragePath string) error {
-	err := ws.persistence.Archive(walletStoragePath)
+func (ws *walletStorage) archiveWallet(walletStorageKey string) error {
+	err := ws.persistence.Archive(walletStorageKey)
 	if err != nil {
 		return fmt.Errorf(
 			"could not archive wallet storage using the "+
