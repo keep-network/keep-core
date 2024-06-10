@@ -245,6 +245,10 @@ type WalletClosedEvent struct {
 // BridgeChain defines the subset of the TBTC chain interface that pertains
 // specifically to the tBTC Bridge operations.
 type BridgeChain interface {
+	// CalculateWalletID calculates the wallet's ECDSA ID based on the provided
+	// wallet public key.
+	CalculateWalletID(walletPublicKey *ecdsa.PublicKey) ([32]byte, error)
+
 	// IsWalletRegistered checks whether the given wallet is registered in the
 	// ECDSA wallet registry.
 	IsWalletRegistered(EcdsaWalletID [32]byte) (bool, error)

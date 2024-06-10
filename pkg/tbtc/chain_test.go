@@ -853,6 +853,12 @@ func (lc *localChain) IsWalletRegistered(EcdsaWalletID [32]byte) (bool, error) {
 	panic("unsupported")
 }
 
+func (lc *localChain) CalculateWalletID(
+	walletPublicKey *ecdsa.PublicKey,
+) ([32]byte, error) {
+	panic("unsupported")
+}
+
 func (lc *localChain) GetWallet(walletPublicKeyHash [20]byte) (
 	*WalletChainData,
 	error,

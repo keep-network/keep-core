@@ -1415,6 +1415,24 @@ func (tc *TbtcChain) PastNewWalletRegisteredEvents(
 	return convertedEvents, err
 }
 
+func (tc *TbtcChain) CalculateWalletID(
+	walletPublicKey *ecdsa.PublicKey,
+) ([32]byte, error) {
+	return calculateWalletID(walletPublicKey)
+}
+
+func calculateWalletID(walletPublicKey *ecdsa.PublicKey) ([32]byte, error) {
+	walletPublicKeyBytes, err := convertPubKeyToChainFormat(walletPublicKey)
+	if err != nil {
+		return [32]byte{}, fmt.Errorf(
+			"error while converting wallet public key to chain format: [%v]",
+			err,
+		)
+	}
+
+	return crypto.Keccak256Hash(walletPublicKeyBytes[:]), nil
+}
+
 func (tc *TbtcChain) IsWalletRegistered(EcdsaWalletID [32]byte) (bool, error) {
 	isWalletRegistered, err := tc.walletRegistry.IsWalletRegistered(
 		EcdsaWalletID,

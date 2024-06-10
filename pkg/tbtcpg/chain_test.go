@@ -3,6 +3,7 @@ package tbtcpg
 import (
 	"bytes"
 	"context"
+	"crypto/ecdsa"
 	"crypto/sha256"
 	"encoding/binary"
 	"encoding/hex"
@@ -1021,6 +1022,12 @@ func (lc *LocalChain) SetAverageBlockTime(averageBlockTime time.Duration) {
 }
 
 func (lc *LocalChain) IsWalletRegistered(EcdsaWalletID [32]byte) (bool, error) {
+	panic("unsupported")
+}
+
+func (lc *LocalChain) CalculateWalletID(
+	walletPublicKey *ecdsa.PublicKey,
+) ([32]byte, error) {
 	panic("unsupported")
 }
 

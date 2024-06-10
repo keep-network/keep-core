@@ -16,6 +16,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 
 	"github.com/keep-network/keep-core/internal/testutils"
+	"github.com/keep-network/keep-core/pkg/chain/local_v1"
 	"github.com/keep-network/keep-core/pkg/protocol/group"
 )
 
@@ -277,6 +278,49 @@ func TestCalculateInactivityClaimHash(t *testing.T) {
 		expectedHash,
 		hex.EncodeToString(hash[:]),
 	)
+}
+
+func TestCalculateWalletID(t *testing.T) {
+	hexToByte32 := func(hexStr string) [32]byte {
+		if len(hexStr) != 64 {
+			t.Fatal("hex string length incorrect")
+		}
+
+		decoded, err := hex.DecodeString(hexStr)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		var result [32]byte
+		copy(result[:], decoded)
+
+		return result
+	}
+
+	xBytes := hexToByte32(
+		"9a0544440cc47779235ccb76d669590c2cd20c7e431f97e17a1093faf03291c4",
+	)
+
+	yBytes := hexToByte32(
+		"73e661a208a8a565ca1e384059bd2ff7ff6886df081ff1229250099d388c83df",
+	)
+
+	walletPublicKey := &ecdsa.PublicKey{
+		Curve: local_v1.DefaultCurve,
+		X:     new(big.Int).SetBytes(xBytes[:]),
+		Y:     new(big.Int).SetBytes(yBytes[:]),
+	}
+
+	actualWalletID, err := calculateWalletID(walletPublicKey)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	expectedWalletID := hexToByte32(
+		"a6602e554b8cf7c23538fd040e4ff3520ec680e5e5ce9a075259e613a3e5aa79",
+	)
+
+	testutils.AssertBytesEqual(t, expectedWalletID[:], actualWalletID[:])
 }
 
 func TestParseDkgResultValidationOutcome(t *testing.T) {
