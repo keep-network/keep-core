@@ -16,6 +16,9 @@ const (
 	// DKGResultHashCachePeriod is the time period the cache maintains
 	// the given DKG result hash.
 	DKGResultHashCachePeriod = 7 * 24 * time.Hour
+	// WalletClosedCachePeriod is the time period the cache maintains
+	// the given wallet closed hash.
+	WalletClosedCachePeriod = 7 * 24 * time.Hour
 )
 
 // deduplicator decides whether the given event should be handled by the
@@ -31,15 +34,18 @@ const (
 // Those events are supported:
 // - DKG started
 // - DKG result submitted
+// - Wallet closed
 type deduplicator struct {
 	dkgSeedCache       *cache.TimeCache
 	dkgResultHashCache *cache.TimeCache
+	walletClosedCache  *cache.TimeCache
 }
 
 func newDeduplicator() *deduplicator {
 	return &deduplicator{
 		dkgSeedCache:       cache.NewTimeCache(DKGSeedCachePeriod),
 		dkgResultHashCache: cache.NewTimeCache(DKGResultHashCachePeriod),
+		walletClosedCache:  cache.NewTimeCache(WalletClosedCachePeriod),
 	}
 }
 
@@ -87,6 +93,26 @@ func (d *deduplicator) notifyDKGResultSubmitted(
 	}
 
 	// Otherwise, the DKG result is a duplicate and the client should not
+	// proceed with the execution.
+	return false
+}
+
+func (d *deduplicator) notifyWalletClosed(
+	WalletID [32]byte,
+) bool {
+	d.walletClosedCache.Sweep()
+
+	// Use wallet ID converted to string as the cache key.
+	cacheKey := hex.EncodeToString(WalletID[:])
+
+	// If the key is not in the cache, that means the wallet closure was not
+	// handled yet and the client should proceed with the execution.
+	if !d.walletClosedCache.Has(cacheKey) {
+		d.walletClosedCache.Add(cacheKey)
+		return true
+	}
+
+	// Otherwise, the wallet closure is a duplicate and the client should not
 	// proceed with the execution.
 	return false
 }
