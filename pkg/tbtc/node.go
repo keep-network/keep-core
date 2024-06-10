@@ -1128,45 +1128,17 @@ func (n *node) archiveClosedWallets() error {
 	}
 
 	// Find the wallets that are closed.
-	initialClosedWallets := getClosedWallets(walletPublicKeyHashes)
-	if len(initialClosedWallets) == 0 {
-		logger.Infof("there are no wallets to be archived")
+	closedWallets := getClosedWallets(walletPublicKeyHashes)
+	if len(closedWallets) == 0 {
+		logger.Infof("there are no closed wallets to archive")
 		return nil
 	}
 
-	// Wait a significant number of blocks to make sure the transactions that
-	// caused the wallets to be closed have not been reverted for some reason,
-	// e.g. due to a chain reorganization.
-	ctx := context.Background()
-
-	blockCounter, err := n.chain.BlockCounter()
-	if err != nil {
-		return fmt.Errorf("error getting block counter [%v]", err)
-	}
-
-	currentBlock, err := blockCounter.CurrentBlock()
-	if err != nil {
-		return fmt.Errorf("error getting current block [%v]", err)
-	}
-
-	confirmationBlock := currentBlock + walletClosureConfirmationBlocks
-
-	err = n.waitForBlockHeight(ctx, confirmationBlock)
-	if err != nil {
-		return fmt.Errorf(
-			"error while waiting for confirmation block [%v]",
-			err,
-		)
-	}
-
-	// Filter the closed wallets again.
-	finalClosedWallets := getClosedWallets(initialClosedWallets)
-
 	// Archive the closed wallets.
-	for _, walletPublicKeyHash := range finalClosedWallets {
+	for _, walletPublicKeyHash := range closedWallets {
 		err := n.walletRegistry.archiveWallet(walletPublicKeyHash)
 		if err != nil {
-			logger.Errorf(
+			return fmt.Errorf(
 				"could not archive wallet with public key hash [0x%x]: [%v]",
 				walletPublicKeyHash,
 				err,
