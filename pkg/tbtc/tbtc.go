@@ -270,8 +270,8 @@ func Initialize(
 				event.WalletID,
 			); !ok {
 				logger.Warnf(
-					"Wallet closure for wallet with ID [0x%x] at block [%v] has"+
-						"been already processed",
+					"Wallet closure for wallet with ID [0x%x] at block [%v] "+
+						"has been already processed",
 					event.WalletID,
 					event.BlockNumber,
 				)
@@ -279,7 +279,8 @@ func Initialize(
 			}
 
 			logger.Infof(
-				"Wallet with ID [0x%x] has been closed at block [%v]",
+				"Wallet with ID [0x%x] has been closed at block [%v]; "+
+					"proceeding with handling wallet closure",
 				event.WalletID,
 				event.BlockNumber,
 			)
@@ -289,7 +290,7 @@ func Initialize(
 			)
 			if err != nil {
 				logger.Errorf(
-					"Failure while handling wallet with ID [0x%x]: [%v]",
+					"Failure while handling wallet closure with ID [0x%x]: [%v]",
 					event.WalletID,
 					err,
 				)

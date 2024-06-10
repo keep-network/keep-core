@@ -235,8 +235,8 @@ type DKGParameters struct {
 	ApprovePrecedencePeriodBlocks uint64
 }
 
-// WalletClosedEvent represents a wallet closed. It is emitted when the wallet
-// is closed in the wallet registry.
+// WalletClosedEvent represents a wallet closed event. It is emitted when the
+// wallet is closed in the wallet registry.
 type WalletClosedEvent struct {
 	WalletID    [32]byte
 	BlockNumber uint64

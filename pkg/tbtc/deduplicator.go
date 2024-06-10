@@ -16,8 +16,8 @@ const (
 	// DKGResultHashCachePeriod is the time period the cache maintains
 	// the given DKG result hash.
 	DKGResultHashCachePeriod = 7 * 24 * time.Hour
-	// WalletClosedCachePeriod is the time period the cache maintains
-	// the given wallet closed hash.
+	// WalletClosedCachePeriod is the time period the cache maintains the ID of
+	// a closed wallet.
 	WalletClosedCachePeriod = 7 * 24 * time.Hour
 )
 
