@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/keep-network/keep-core/internal/testutils"
+	"github.com/keep-network/keep-core/pkg/bitcoin"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/chain/local_v1"
 	"github.com/keep-network/keep-core/pkg/generator"
@@ -158,6 +159,20 @@ func setupSigningExecutor(t *testing.T) *signingExecutor {
 			privateKeyShare:         privateKeyShare,
 		}
 	}
+
+	walletPublicKeyHash := bitcoin.PublicKeyHash(signers[0].wallet.publicKey)
+	walletID, err := localChain.CalculateWalletID(signers[0].wallet.publicKey)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	localChain.setWallet(
+		walletPublicKeyHash,
+		&WalletChainData{
+			EcdsaWalletID: walletID,
+			State:         StateLive,
+		},
+	)
 
 	keyStorePersistence := createMockKeyStorePersistence(t, signers...)
 

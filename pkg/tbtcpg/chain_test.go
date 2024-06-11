@@ -3,6 +3,7 @@ package tbtcpg
 import (
 	"bytes"
 	"context"
+	"crypto/ecdsa"
 	"crypto/sha256"
 	"encoding/binary"
 	"encoding/hex"
@@ -16,6 +17,7 @@ import (
 
 	"github.com/keep-network/keep-core/pkg/bitcoin"
 	"github.com/keep-network/keep-core/pkg/chain"
+	"github.com/keep-network/keep-core/pkg/subscription"
 	"github.com/keep-network/keep-core/pkg/tbtc"
 )
 
@@ -1019,6 +1021,16 @@ func (lc *LocalChain) SetAverageBlockTime(averageBlockTime time.Duration) {
 	lc.averageBlockTime = averageBlockTime
 }
 
+func (lc *LocalChain) IsWalletRegistered(EcdsaWalletID [32]byte) (bool, error) {
+	panic("unsupported")
+}
+
+func (lc *LocalChain) CalculateWalletID(
+	walletPublicKey *ecdsa.PublicKey,
+) ([32]byte, error) {
+	panic("unsupported")
+}
+
 func (lc *LocalChain) GetWallet(walletPublicKeyHash [20]byte) (
 	*tbtc.WalletChainData,
 	error,
@@ -1043,6 +1055,12 @@ func (lc *LocalChain) SetWallet(
 	defer lc.mutex.Unlock()
 
 	lc.walletChainData[walletPublicKeyHash] = data
+}
+
+func (lc *LocalChain) OnWalletClosed(
+	handler func(event *tbtc.WalletClosedEvent),
+) subscription.EventSubscription {
+	panic("unsupported")
 }
 
 func (lc *LocalChain) GetWalletParameters() (

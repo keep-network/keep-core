@@ -1415,6 +1415,39 @@ func (tc *TbtcChain) PastNewWalletRegisteredEvents(
 	return convertedEvents, err
 }
 
+func (tc *TbtcChain) CalculateWalletID(
+	walletPublicKey *ecdsa.PublicKey,
+) ([32]byte, error) {
+	return calculateWalletID(walletPublicKey)
+}
+
+func calculateWalletID(walletPublicKey *ecdsa.PublicKey) ([32]byte, error) {
+	walletPublicKeyBytes, err := convertPubKeyToChainFormat(walletPublicKey)
+	if err != nil {
+		return [32]byte{}, fmt.Errorf(
+			"error while converting wallet public key to chain format: [%v]",
+			err,
+		)
+	}
+
+	return crypto.Keccak256Hash(walletPublicKeyBytes[:]), nil
+}
+
+func (tc *TbtcChain) IsWalletRegistered(EcdsaWalletID [32]byte) (bool, error) {
+	isWalletRegistered, err := tc.walletRegistry.IsWalletRegistered(
+		EcdsaWalletID,
+	)
+	if err != nil {
+		return false, fmt.Errorf(
+			"cannot check if wallet with ECDSA ID [0x%x] is registered: [%v]",
+			EcdsaWalletID,
+			err,
+		)
+	}
+
+	return isWalletRegistered, nil
+}
+
 func (tc *TbtcChain) GetWallet(
 	walletPublicKeyHash [20]byte,
 ) (*tbtc.WalletChainData, error) {
@@ -1451,6 +1484,21 @@ func (tc *TbtcChain) GetWallet(
 		State:                                  walletState,
 		MovingFundsTargetWalletsCommitmentHash: wallet.MovingFundsTargetWalletsCommitmentHash,
 	}, nil
+}
+
+func (tc *TbtcChain) OnWalletClosed(
+	handler func(event *tbtc.WalletClosedEvent),
+) subscription.EventSubscription {
+	onEvent := func(
+		walletID [32]byte,
+		blockNumber uint64,
+	) {
+		handler(&tbtc.WalletClosedEvent{
+			WalletID:    walletID,
+			BlockNumber: blockNumber,
+		})
+	}
+	return tc.walletRegistry.WalletClosedEvent(nil, nil).OnEvent(onEvent)
 }
 
 func (tc *TbtcChain) ComputeMainUtxoHash(

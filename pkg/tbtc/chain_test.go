@@ -14,17 +14,17 @@ import (
 	"sync"
 	"time"
 
-	"golang.org/x/crypto/sha3"
-
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/keep-network/keep-core/pkg/bitcoin"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/chain/local_v1"
+	"github.com/keep-network/keep-core/pkg/internal/byteutils"
 	"github.com/keep-network/keep-core/pkg/operator"
 	"github.com/keep-network/keep-core/pkg/protocol/group"
 	"github.com/keep-network/keep-core/pkg/protocol/inactivity"
 	"github.com/keep-network/keep-core/pkg/subscription"
 	"github.com/keep-network/keep-core/pkg/tecdsa/dkg"
+	"golang.org/x/crypto/sha3"
 )
 
 const (
@@ -843,6 +843,40 @@ func buildDepositRequestKey(
 	return sha256.Sum256(append(fundingTxHash[:], buffer...))
 }
 
+func (lc *localChain) CalculateWalletID(
+	walletPublicKey *ecdsa.PublicKey,
+) ([32]byte, error) {
+	walletPublicKeyBytes, err := convertPubKeyToChainFormat(walletPublicKey)
+	if err != nil {
+		return [32]byte{}, fmt.Errorf(
+			"error while converting wallet public key to chain format: [%v]",
+			err,
+		)
+	}
+
+	return crypto.Keccak256Hash(walletPublicKeyBytes[:]), nil
+}
+
+func convertPubKeyToChainFormat(publicKey *ecdsa.PublicKey) ([64]byte, error) {
+	var serialized [64]byte
+
+	x, err := byteutils.LeftPadTo32Bytes(publicKey.X.Bytes())
+	if err != nil {
+		return serialized, err
+	}
+
+	y, err := byteutils.LeftPadTo32Bytes(publicKey.Y.Bytes())
+	if err != nil {
+		return serialized, err
+	}
+
+	serializedBytes := append(x, y...)
+
+	copy(serialized[:], serializedBytes)
+
+	return serialized, nil
+}
+
 func (lc *localChain) GetWallet(walletPublicKeyHash [20]byte) (
 	*WalletChainData,
 	error,
@@ -858,6 +892,23 @@ func (lc *localChain) GetWallet(walletPublicKeyHash [20]byte) (
 	return walletChainData, nil
 }
 
+func (lc *localChain) IsWalletRegistered(EcdsaWalletID [32]byte) (bool, error) {
+	lc.walletsMutex.Lock()
+	defer lc.walletsMutex.Unlock()
+
+	for _, walletData := range lc.wallets {
+		if EcdsaWalletID == walletData.EcdsaWalletID {
+			if walletData.State == StateClosed ||
+				walletData.State == StateTerminated {
+				return false, nil
+			}
+			return true, nil
+		}
+	}
+
+	return false, fmt.Errorf("wallet not found")
+}
+
 func (lc *localChain) setWallet(
 	walletPublicKeyHash [20]byte,
 	walletChainData *WalletChainData,
@@ -866,6 +917,12 @@ func (lc *localChain) setWallet(
 	defer lc.walletsMutex.Unlock()
 
 	lc.wallets[walletPublicKeyHash] = walletChainData
+}
+
+func (lc *localChain) OnWalletClosed(
+	handler func(event *WalletClosedEvent),
+) subscription.EventSubscription {
+	panic("unsupported")
 }
 
 func (lc *localChain) ComputeMainUtxoHash(

@@ -2,6 +2,7 @@ package tbtc
 
 import (
 	"crypto/ecdsa"
+	"fmt"
 	"math/big"
 	"reflect"
 	"testing"
@@ -15,14 +16,21 @@ import (
 
 func TestWalletRegistry_RegisterSigner(t *testing.T) {
 	persistenceHandle := &mockPersistenceHandle{}
+	chain := Connect()
 
-	walletRegistry := newWalletRegistry(persistenceHandle)
+	walletRegistry, err := newWalletRegistry(
+		persistenceHandle,
+		chain.CalculateWalletID,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	signer := createMockSigner(t)
 
 	walletStorageKey := getWalletStorageKey(signer.wallet.publicKey)
 
-	err := walletRegistry.registerSigner(signer)
+	err = walletRegistry.registerSigner(signer)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -62,12 +70,19 @@ func TestWalletRegistry_RegisterSigner(t *testing.T) {
 
 func TestWalletRegistry_GetSigners(t *testing.T) {
 	persistenceHandle := &mockPersistenceHandle{}
+	chain := Connect()
 
-	walletRegistry := newWalletRegistry(persistenceHandle)
+	walletRegistry, err := newWalletRegistry(
+		persistenceHandle,
+		chain.CalculateWalletID,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	signer := createMockSigner(t)
 
-	err := walletRegistry.registerSigner(signer)
+	err = walletRegistry.registerSigner(signer)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -88,12 +103,19 @@ func TestWalletRegistry_GetSigners(t *testing.T) {
 
 func TestWalletRegistry_getWalletByPublicKeyHash(t *testing.T) {
 	persistenceHandle := &mockPersistenceHandle{}
+	chain := Connect()
 
-	walletRegistry := newWalletRegistry(persistenceHandle)
+	walletRegistry, err := newWalletRegistry(
+		persistenceHandle,
+		chain.CalculateWalletID,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	signer := createMockSigner(t)
 
-	err := walletRegistry.registerSigner(signer)
+	err = walletRegistry.registerSigner(signer)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -110,12 +132,19 @@ func TestWalletRegistry_getWalletByPublicKeyHash(t *testing.T) {
 
 func TestWalletRegistry_getWalletByPublicKeyHash_NotFound(t *testing.T) {
 	persistenceHandle := &mockPersistenceHandle{}
+	chain := Connect()
 
-	walletRegistry := newWalletRegistry(persistenceHandle)
+	walletRegistry, err := newWalletRegistry(
+		persistenceHandle,
+		chain.CalculateWalletID,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	signer := createMockSigner(t)
 
-	err := walletRegistry.registerSigner(signer)
+	err = walletRegistry.registerSigner(signer)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -129,6 +158,75 @@ func TestWalletRegistry_getWalletByPublicKeyHash_NotFound(t *testing.T) {
 	})
 
 	_, ok := walletRegistry.getWalletByPublicKeyHash(walletPublicKeyHash)
+	if ok {
+		t.Error("should not return a wallet")
+	}
+}
+
+func TestWalletRegistry_getWalletByID(t *testing.T) {
+	persistenceHandle := &mockPersistenceHandle{}
+	chain := Connect()
+
+	walletRegistry, err := newWalletRegistry(
+		persistenceHandle,
+		chain.CalculateWalletID,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	signer := createMockSigner(t)
+
+	err = walletRegistry.registerSigner(signer)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// walletPublicKeyHash := bitcoin.PublicKeyHash(signer.wallet.publicKey)
+	walletID, err := chain.CalculateWalletID(signer.wallet.publicKey)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	wallet, ok := walletRegistry.getWalletByID(walletID)
+	if !ok {
+		t.Error("should return a wallet")
+	}
+
+	testutils.AssertStringsEqual(t, "wallet", signer.wallet.String(), wallet.String())
+}
+
+func TestWalletRegistry_getWalletByID_NotFound(t *testing.T) {
+	persistenceHandle := &mockPersistenceHandle{}
+	chain := Connect()
+
+	walletRegistry, err := newWalletRegistry(
+		persistenceHandle,
+		chain.CalculateWalletID,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	signer := createMockSigner(t)
+
+	err = walletRegistry.registerSigner(signer)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	x, y := tecdsa.Curve.ScalarBaseMult(big.NewInt(100).Bytes())
+
+	walletID, err := chain.CalculateWalletID(&ecdsa.PublicKey{
+		Curve: tecdsa.Curve,
+		X:     x,
+		Y:     y,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	_, ok := walletRegistry.getWalletByID(walletID)
 	if ok {
 		t.Error("should not return a wallet")
 	}
@@ -153,8 +251,16 @@ func TestWalletRegistry_PrePopulateWalletCache(t *testing.T) {
 		},
 	}
 
+	chain := Connect()
+
 	// Cache pre-population happens within newWalletRegistry.
-	walletRegistry := newWalletRegistry(persistenceHandle)
+	walletRegistry, err := newWalletRegistry(
+		persistenceHandle,
+		chain.CalculateWalletID,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	testutils.AssertIntsEqual(
 		t,
@@ -184,12 +290,19 @@ func TestWalletRegistry_PrePopulateWalletCache(t *testing.T) {
 
 func TestWalletRegistry_GetWalletsPublicKeys(t *testing.T) {
 	persistenceHandle := &mockPersistenceHandle{}
+	chain := Connect()
 
-	walletRegistry := newWalletRegistry(persistenceHandle)
+	walletRegistry, err := newWalletRegistry(
+		persistenceHandle,
+		chain.CalculateWalletID,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	signer := createMockSigner(t)
 
-	err := walletRegistry.registerSigner(signer)
+	err = walletRegistry.registerSigner(signer)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -203,6 +316,90 @@ func TestWalletRegistry_GetWalletsPublicKeys(t *testing.T) {
 		true,
 		keys[0].Equal(signer.wallet.publicKey),
 	)
+}
+
+func TestWalletRegistry_ArchiveWallet(t *testing.T) {
+	persistenceHandle := &mockPersistenceHandle{}
+	chain := Connect()
+
+	walletRegistry, err := newWalletRegistry(
+		persistenceHandle,
+		chain.CalculateWalletID,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	signer := createMockSigner(t)
+
+	walletStorageKey := getWalletStorageKey(signer.wallet.publicKey)
+	walletPublicKeyHash := bitcoin.PublicKeyHash(signer.wallet.publicKey)
+
+	err = walletRegistry.registerSigner(signer)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	err = walletRegistry.archiveWallet(walletPublicKeyHash)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	testutils.AssertIntsEqual(
+		t,
+		"registered wallets count",
+		0,
+		len(walletRegistry.walletCache),
+	)
+
+	testutils.AssertIntsEqual(
+		t,
+		"archived wallets count",
+		1,
+		len(persistenceHandle.archived),
+	)
+
+	testutils.AssertStringsEqual(
+		t,
+		"archived wallet",
+		walletStorageKey,
+		persistenceHandle.archived[0],
+	)
+}
+
+func TestWalletRegistry_ArchiveWallet_NotFound(t *testing.T) {
+	persistenceHandle := &mockPersistenceHandle{}
+	chain := Connect()
+
+	walletRegistry, err := newWalletRegistry(
+		persistenceHandle,
+		chain.CalculateWalletID,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	signer := createMockSigner(t)
+
+	err = walletRegistry.registerSigner(signer)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Public key hash of a wallet that does not exist in the registry.
+	anotherWalletPublicKeyHash := [20]byte{1, 1, 2, 2, 3, 3}
+
+	err = walletRegistry.archiveWallet(anotherWalletPublicKeyHash)
+
+	expectedErr := fmt.Errorf("wallet not found in the wallet cache")
+
+	if !reflect.DeepEqual(err, expectedErr) {
+		t.Fatalf(
+			"unexpected error\nexpected: %v\nactual:   %v",
+			expectedErr,
+			err,
+		)
+	}
 }
 
 func TestWalletStorage_SaveSigner(t *testing.T) {
@@ -267,8 +464,43 @@ func TestWalletStorage_LoadSigners(t *testing.T) {
 	}
 }
 
+func TestWalletStorage_ArchiveWallet(t *testing.T) {
+	persistenceHandle := &mockPersistenceHandle{}
+
+	walletStorage := newWalletStorage(persistenceHandle)
+
+	signer := createMockSigner(t)
+
+	err := walletStorage.saveSigner(signer)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	walletStorageKey := getWalletStorageKey(signer.wallet.publicKey)
+
+	err = walletStorage.archiveWallet(walletStorageKey)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	testutils.AssertIntsEqual(
+		t,
+		"archived wallets count",
+		1,
+		len(persistenceHandle.archived),
+	)
+
+	testutils.AssertStringsEqual(
+		t,
+		"archived wallet",
+		walletStorageKey,
+		persistenceHandle.archived[0],
+	)
+}
+
 type mockPersistenceHandle struct {
-	saved []persistence.DataDescriptor
+	saved    []persistence.DataDescriptor
+	archived []string
 }
 
 func (mph *mockPersistenceHandle) Save(
@@ -311,7 +543,8 @@ func (mph *mockPersistenceHandle) ReadAll() (
 }
 
 func (mph *mockPersistenceHandle) Archive(directory string) error {
-	panic("not implemented")
+	mph.archived = append(mph.archived, directory)
+	return nil
 }
 
 func (mph *mockPersistenceHandle) Delete(directory string, name string) error {

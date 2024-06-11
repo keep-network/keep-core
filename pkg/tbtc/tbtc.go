@@ -264,6 +264,40 @@ func Initialize(
 		}()
 	})
 
+	_ = chain.OnWalletClosed(func(event *WalletClosedEvent) {
+		go func() {
+			if ok := deduplicator.notifyWalletClosed(
+				event.WalletID,
+			); !ok {
+				logger.Warnf(
+					"Wallet closure for wallet with ID [0x%x] at block [%v] "+
+						"has been already processed",
+					event.WalletID,
+					event.BlockNumber,
+				)
+				return
+			}
+
+			logger.Infof(
+				"Wallet with ID [0x%x] has been closed at block [%v]; "+
+					"proceeding with handling wallet closure",
+				event.WalletID,
+				event.BlockNumber,
+			)
+
+			err := node.handleWalletClosure(
+				event.WalletID,
+			)
+			if err != nil {
+				logger.Errorf(
+					"Failure while handling wallet closure with ID [0x%x]: [%v]",
+					event.WalletID,
+					err,
+				)
+			}
+		}()
+	})
+
 	return nil
 }
 

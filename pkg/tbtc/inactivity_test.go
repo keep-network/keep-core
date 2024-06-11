@@ -157,12 +157,16 @@ func setupInactivityClaimExecutorScenario(t *testing.T) (
 	keyStorePersistence := createMockKeyStorePersistence(t, signers...)
 
 	walletPublicKeyHash := bitcoin.PublicKeyHash(signers[0].wallet.publicKey)
-	ecdsaWalletID := [32]byte{1, 2, 3}
+	walletID, err := localChain.CalculateWalletID(signers[0].wallet.publicKey)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	localChain.setWallet(
 		walletPublicKeyHash,
 		&WalletChainData{
-			EcdsaWalletID: ecdsaWalletID,
+			EcdsaWalletID: walletID,
+			State:         StateLive,
 		},
 	)
 
@@ -191,7 +195,7 @@ func setupInactivityClaimExecutorScenario(t *testing.T) (
 		t.Fatal("node is supposed to control wallet signers")
 	}
 
-	return executor, ecdsaWalletID, localChain
+	return executor, walletID, localChain
 }
 
 func TestSignClaim_SigningSuccessful(t *testing.T) {
