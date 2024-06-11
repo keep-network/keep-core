@@ -1097,59 +1097,32 @@ func processCoordinationResult(node *node, result *coordinationResult) {
 
 // archiveClosedWallets archives closed or terminated wallets.
 func (n *node) archiveClosedWallets() error {
-	getClosedWallets := func(walletPublicKeyHashes [][20]byte) (
-		closedWallets [][20]byte,
-	) {
-		for _, walletPublicKeyHash := range walletPublicKeyHashes {
-			walletChainData, err := n.chain.GetWallet(walletPublicKeyHash)
-			if err != nil {
-				// Continue if there was an error getting wallet data. Try to
-				// get as many closed wallets as possible.
-				logger.Errorf(
-					"could not get wallet data for wallet [0x%x]: [%v]",
-					walletPublicKeyHash,
-					err,
-				)
-				continue
-			}
-
-			if walletChainData.State == StateClosed ||
-				walletChainData.State == StateTerminated {
-				closedWallets = append(closedWallets, walletPublicKeyHash)
-			}
-		}
-
-		return
-	}
-
 	// Get all the wallets controlled by the node.
 	walletPublicKeys := n.walletRegistry.getWalletsPublicKeys()
 
-	walletPublicKeyHashes := [][20]byte{}
 	for _, walletPublicKey := range walletPublicKeys {
-		walletPublicKeyHashes = append(
-			walletPublicKeyHashes,
-			bitcoin.PublicKeyHash(walletPublicKey),
-		)
-	}
+		walletPublicKeyHash := bitcoin.PublicKeyHash(walletPublicKey)
 
-	// Find the wallets that are closed.
-	closedWallets := getClosedWallets(walletPublicKeyHashes)
-	if len(closedWallets) == 0 {
-		logger.Infof("there are no closed wallets to archive")
-		return nil
-	}
-
-	// Archive the closed wallets.
-	for _, walletPublicKeyHash := range closedWallets {
-		err := n.walletRegistry.archiveWallet(walletPublicKeyHash)
+		walletChainData, err := n.chain.GetWallet(walletPublicKeyHash)
 		if err != nil {
 			return fmt.Errorf(
-				"could not archive wallet with public key hash [0x%x]: [%v]",
+				"could not get wallet data for wallet [0x%x]: [%v]",
 				walletPublicKeyHash,
 				err,
 			)
-		} else {
+		}
+
+		if walletChainData.State == StateClosed ||
+			walletChainData.State == StateTerminated {
+			err := n.walletRegistry.archiveWallet(walletPublicKeyHash)
+			if err != nil {
+				return fmt.Errorf(
+					"could not archive wallet with public key hash [0x%x]: [%v]",
+					walletPublicKeyHash,
+					err,
+				)
+			}
+
 			logger.Infof(
 				"successfully archived wallet with public key hash [0x%x]",
 				walletPublicKeyHash,
