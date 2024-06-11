@@ -1210,7 +1210,7 @@ func (n *node) handleWalletClosure(walletID [32]byte) error {
 	}
 
 	logger.Infof(
-		"Successfully archived wallet with wallet ID [0x%x] and public key "+
+		"successfully archived wallet with wallet ID [0x%x] and public key "+
 			"hash [0x%x]",
 		walletID,
 		walletPublicKeyHash,
