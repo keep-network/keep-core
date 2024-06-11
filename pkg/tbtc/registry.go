@@ -12,6 +12,10 @@ import (
 	"github.com/keep-network/keep-common/pkg/persistence"
 )
 
+// CalculateWalletIDFunc calculates the ECDSA wallet ID based on the provided
+// wallet public key.
+type CalculateWalletIdFunc func(walletPublicKey *ecdsa.PublicKey) ([32]byte, error)
+
 // walletRegistry is the component that holds the data of the wallets managed
 // by the given node. All functions of the registry are safe for concurrent use.
 type walletRegistry struct {
@@ -26,18 +30,28 @@ type walletRegistry struct {
 	// walletStorage is the handle to the wallet storage responsible for
 	// wallet persistence.
 	walletStorage *walletStorage
+
+	// calculateWalletIdFunc calculates the ECDSA wallet ID based on the
+	// provided wallet public key.
+	calculateWalletIdFunc CalculateWalletIdFunc
 }
 
 type walletCacheValue struct {
 	// SHA-256+RIPEMD-160 hash computed over the compressed ECDSA public key of
 	// the wallet.
 	walletPublicKeyHash [20]byte
+	// ECDSA wallet ID calculated as the keccak256 of the 64-byte-long
+	// concatenation of the X and Y coordinates of the wallet's public key.
+	walletID [32]byte
 	// Array of wallet signers controlled by this node.
 	signers []*signer
 }
 
 // newWalletRegistry creates a new instance of the walletRegistry.
-func newWalletRegistry(persistence persistence.ProtectedHandle) *walletRegistry {
+func newWalletRegistry(
+	persistence persistence.ProtectedHandle,
+	calculateWalletIdFunc CalculateWalletIdFunc,
+) (*walletRegistry, error) {
 	walletStorage := newWalletStorage(persistence)
 
 	// Pre-populate the wallet cache using the wallet storage.
@@ -53,9 +67,19 @@ func newWalletRegistry(persistence persistence.ProtectedHandle) *walletRegistry 
 			// them.
 			wallet := signers[0].wallet
 			walletPublicKeyHash := bitcoin.PublicKeyHash(wallet.publicKey)
+			walletID, err := calculateWalletIdFunc(wallet.publicKey)
+			if err != nil {
+				return nil, fmt.Errorf(
+					"error while calculating wallet ID for wallet with public "+
+						"key hash [0x%x]: [%v]",
+					walletPublicKeyHash,
+					err,
+				)
+			}
 
 			walletCache[walletStorageKey] = &walletCacheValue{
 				walletPublicKeyHash: walletPublicKeyHash,
+				walletID:            walletID,
 				signers:             signers,
 			}
 
@@ -72,9 +96,10 @@ func newWalletRegistry(persistence persistence.ProtectedHandle) *walletRegistry 
 	}
 
 	return &walletRegistry{
-		walletCache:   walletCache,
-		walletStorage: walletStorage,
-	}
+		walletCache:           walletCache,
+		walletStorage:         walletStorage,
+		calculateWalletIdFunc: calculateWalletIdFunc,
+	}, nil
 }
 
 // getWalletsPublicKeys returns public keys of all registered wallets.
@@ -105,12 +130,18 @@ func (wr *walletRegistry) registerSigner(signer *signer) error {
 	walletStorageKey := getWalletStorageKey(signer.wallet.publicKey)
 
 	// If the wallet cache does not have the given entry yet, initialize
-	// the value and compute the wallet public key hash. This way, the hash
-	// is computed only once. No need to initialize signers slice as
+	// the value and compute the wallet ID and wallet public key hash. This way,
+	// the hashes are computed only once. No need to initialize signers slice as
 	// appending works with nil values.
 	if _, ok := wr.walletCache[walletStorageKey]; !ok {
+		walletID, err := wr.calculateWalletIdFunc(signer.wallet.publicKey)
+		if err != nil {
+			return fmt.Errorf("cannot calculate wallet ID: [%v]", err)
+		}
+
 		wr.walletCache[walletStorageKey] = &walletCacheValue{
 			walletPublicKeyHash: bitcoin.PublicKeyHash(signer.wallet.publicKey),
+			walletID:            walletID,
 		}
 	}
 
@@ -156,6 +187,23 @@ func (wr *walletRegistry) getWalletByPublicKeyHash(
 	return wallet{}, false
 }
 
+// getWalletByID gets the given wallet by its 32-byte wallet ID. Second boolean
+// return value denotes whether the wallet was found in the registry or not.
+func (wr *walletRegistry) getWalletByID(walletID [32]byte) (wallet, bool) {
+	wr.mutex.Lock()
+	defer wr.mutex.Unlock()
+
+	for _, value := range wr.walletCache {
+		if value.walletID == walletID {
+			// All signers belong to one wallet. Take that wallet from the
+			// first signer.
+			return value.signers[0].wallet, true
+		}
+	}
+
+	return wallet{}, false
+}
+
 // archiveWallet archives the wallet with the given public key hash. The wallet
 // data is removed from the wallet cache and the entire wallet storage directory
 // is moved to the archive directory.
@@ -176,12 +224,7 @@ func (wr *walletRegistry) archiveWallet(
 	}
 
 	if walletPublicKey == nil {
-		logger.Infof(
-			"node does not control wallet with public key hash [0x%x]; "+
-				"quitting wallet archiving",
-			walletPublicKeyHash,
-		)
-		return nil
+		return fmt.Errorf("wallet not found in the wallet cache")
 	}
 
 	walletStorageKey := getWalletStorageKey(walletPublicKey)

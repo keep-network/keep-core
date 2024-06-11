@@ -124,7 +124,13 @@ func newNode(
 	proposalGenerator CoordinationProposalGenerator,
 	config Config,
 ) (*node, error) {
-	walletRegistry := newWalletRegistry(keyStorePersistance)
+	walletRegistry, err := newWalletRegistry(
+		keyStorePersistance,
+		chain.CalculateWalletID,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("cannot create wallet registry: [%v]", err)
+	}
 
 	latch := generator.NewProtocolLatch()
 	scheduler.RegisterProtocol(latch)
@@ -146,7 +152,7 @@ func newNode(
 
 	// Archive any wallets that might have been closed or terminated while the
 	// client was turned off.
-	err := node.archiveClosedWallets()
+	err = node.archiveClosedWallets()
 	if err != nil {
 		return nil, fmt.Errorf("cannot archive closed wallets: [%v]", err)
 	}
@@ -1197,32 +1203,31 @@ func (n *node) handleWalletClosure(walletID [32]byte) error {
 		return fmt.Errorf("wallet closure not confirmed")
 	}
 
-	events, err := n.chain.PastNewWalletRegisteredEvents(
-		&NewWalletRegisteredEventFilter{
-			EcdsaWalletID: [][32]byte{walletID},
-		},
-	)
-	if err != nil {
-		return fmt.Errorf("could not get past new wallet registered events")
+	wallet, ok := n.walletRegistry.getWalletByID(walletID)
+	if !ok {
+		// Wallet was not found in the registry. The wallet is not controlled by
+		// this node.
+		logger.Infof(
+			"node does not control wallet with ID [0x%x]; quitting wallet "+
+				"archiving",
+			walletID,
+		)
+		return nil
 	}
 
-	// There should be only one event returned and the ECDSA wallet ID should
-	// match the requested wallet ID. These errors should never happen, but
-	// check just in case.
-	if len(events) != 1 {
-		return fmt.Errorf("wrong number of past new wallet registered events")
-	}
-
-	if events[0].EcdsaWalletID != walletID {
-		return fmt.Errorf("wrong past new wallet registered event returned")
-	}
-
-	walletPublicKeyHash := events[0].WalletPublicKeyHash
+	walletPublicKeyHash := bitcoin.PublicKeyHash(wallet.publicKey)
 
 	err = n.walletRegistry.archiveWallet(walletPublicKeyHash)
 	if err != nil {
 		return fmt.Errorf("failed to archive the wallet: [%v]", err)
 	}
+
+	logger.Infof(
+		"Successfully archived wallet with wallet ID [0x%x] and public key "+
+			"hash [0x%x]",
+		walletID,
+		walletPublicKeyHash,
+	)
 
 	return nil
 }

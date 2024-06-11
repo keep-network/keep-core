@@ -14,17 +14,17 @@ import (
 	"sync"
 	"time"
 
-	"golang.org/x/crypto/sha3"
-
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/keep-network/keep-core/pkg/bitcoin"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/chain/local_v1"
+	"github.com/keep-network/keep-core/pkg/internal/byteutils"
 	"github.com/keep-network/keep-core/pkg/operator"
 	"github.com/keep-network/keep-core/pkg/protocol/group"
 	"github.com/keep-network/keep-core/pkg/protocol/inactivity"
 	"github.com/keep-network/keep-core/pkg/subscription"
 	"github.com/keep-network/keep-core/pkg/tecdsa/dkg"
+	"golang.org/x/crypto/sha3"
 )
 
 const (
@@ -697,12 +697,6 @@ func (lc *localChain) GetInactivityClaimNonce(walletID [32]byte) (*big.Int, erro
 	return big.NewInt(int64(nonce)), nil
 }
 
-func (lc *localChain) PastNewWalletRegisteredEvents(
-	filter *NewWalletRegisteredEventFilter,
-) ([]*NewWalletRegisteredEvent, error) {
-	panic("unsupported")
-}
-
 func (lc *localChain) PastDepositRevealedEvents(
 	filter *DepositRevealedEventFilter,
 ) ([]*DepositRevealedEvent, error) {
@@ -856,7 +850,35 @@ func (lc *localChain) IsWalletRegistered(EcdsaWalletID [32]byte) (bool, error) {
 func (lc *localChain) CalculateWalletID(
 	walletPublicKey *ecdsa.PublicKey,
 ) ([32]byte, error) {
-	panic("unsupported")
+	walletPublicKeyBytes, err := convertPubKeyToChainFormat(walletPublicKey)
+	if err != nil {
+		return [32]byte{}, fmt.Errorf(
+			"error while converting wallet public key to chain format: [%v]",
+			err,
+		)
+	}
+
+	return crypto.Keccak256Hash(walletPublicKeyBytes[:]), nil
+}
+
+func convertPubKeyToChainFormat(publicKey *ecdsa.PublicKey) ([64]byte, error) {
+	var serialized [64]byte
+
+	x, err := byteutils.LeftPadTo32Bytes(publicKey.X.Bytes())
+	if err != nil {
+		return serialized, err
+	}
+
+	y, err := byteutils.LeftPadTo32Bytes(publicKey.Y.Bytes())
+	if err != nil {
+		return serialized, err
+	}
+
+	serializedBytes := append(x, y...)
+
+	copy(serialized[:], serializedBytes)
+
+	return serialized, nil
 }
 
 func (lc *localChain) GetWallet(walletPublicKeyHash [20]byte) (

@@ -89,7 +89,14 @@ func TestDkgExecutor_RegisterSigner(t *testing.T) {
 	for testName, test := range tests {
 		t.Run(testName, func(t *testing.T) {
 			persistenceHandle := &mockPersistenceHandle{}
-			walletRegistry := newWalletRegistry(persistenceHandle)
+			chain := Connect()
+			walletRegistry, err := newWalletRegistry(
+				persistenceHandle,
+				chain.CalculateWalletID,
+			)
+			if err != nil {
+				t.Fatal(err)
+			}
 
 			dkgExecutor := &dkgExecutor{
 				// setting only the fields really needed for this test
