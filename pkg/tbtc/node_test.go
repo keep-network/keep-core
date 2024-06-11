@@ -11,6 +11,7 @@ import (
 
 	"github.com/keep-network/keep-common/pkg/persistence"
 	"github.com/keep-network/keep-core/internal/testutils"
+	"github.com/keep-network/keep-core/pkg/bitcoin"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/generator"
 	"github.com/keep-network/keep-core/pkg/internal/tecdsatest"
@@ -30,6 +31,20 @@ func TestNode_GetSigningExecutor(t *testing.T) {
 	localProvider := local.Connect()
 
 	signer := createMockSigner(t)
+
+	walletPublicKeyHash := bitcoin.PublicKeyHash(signer.wallet.publicKey)
+	walletID, err := localChain.CalculateWalletID(signer.wallet.publicKey)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	localChain.setWallet(
+		walletPublicKeyHash,
+		&WalletChainData{
+			EcdsaWalletID: walletID,
+			State:         StateLive,
+		},
+	)
 
 	// Populate the mock keystore with the mock signer's data. This is
 	// required to make the node controlling the signer's wallet.
@@ -148,6 +163,20 @@ func TestNode_GetCoordinationExecutor(t *testing.T) {
 	localProvider := local.Connect()
 
 	signer := createMockSigner(t)
+
+	walletPublicKeyHash := bitcoin.PublicKeyHash(signer.wallet.publicKey)
+	walletID, err := localChain.CalculateWalletID(signer.wallet.publicKey)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	localChain.setWallet(
+		walletPublicKeyHash,
+		&WalletChainData{
+			EcdsaWalletID: walletID,
+			State:         StateLive,
+		},
+	)
 
 	// Populate the mock keystore with the mock signer's data. This is
 	// required to make the node controlling the signer's wallet.
@@ -271,6 +300,20 @@ func TestNode_RunCoordinationLayer(t *testing.T) {
 	localProvider := local.Connect()
 
 	signer := createMockSigner(t)
+
+	walletPublicKeyHash := bitcoin.PublicKeyHash(signer.wallet.publicKey)
+	walletID, err := localChain.CalculateWalletID(signer.wallet.publicKey)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	localChain.setWallet(
+		walletPublicKeyHash,
+		&WalletChainData{
+			EcdsaWalletID: walletID,
+			State:         StateLive,
+		},
+	)
 
 	// Populate the mock keystore with the mock signer's data. This is
 	// required to make the node controlling the signer's wallet.
