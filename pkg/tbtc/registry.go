@@ -220,6 +220,7 @@ func (wr *walletRegistry) archiveWallet(
 			// All signers belong to one wallet. Take the wallet public key from
 			//  the first signer.
 			walletPublicKey = value.signers[0].wallet.publicKey
+			break
 		}
 	}
 
