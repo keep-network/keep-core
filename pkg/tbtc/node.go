@@ -1103,17 +1103,29 @@ func (n *node) archiveClosedWallets() error {
 	for _, walletPublicKey := range walletPublicKeys {
 		walletPublicKeyHash := bitcoin.PublicKeyHash(walletPublicKey)
 
-		walletChainData, err := n.chain.GetWallet(walletPublicKeyHash)
+		walletID, err := n.chain.CalculateWalletID(walletPublicKey)
 		if err != nil {
 			return fmt.Errorf(
-				"could not get wallet data for wallet [0x%x]: [%v]",
+				"could not calculate wallet ID for wallet with public key "+
+					"hash [0x%x]: [%v]",
 				walletPublicKeyHash,
 				err,
 			)
 		}
 
-		if walletChainData.State == StateClosed ||
-			walletChainData.State == StateTerminated {
+		isRegistered, err := n.chain.IsWalletRegistered(walletID)
+		if err != nil {
+			return fmt.Errorf(
+				"could not check if wallet is registered for wallet with ID "+
+					"[0x%x]: [%v]",
+				walletPublicKeyHash,
+				err,
+			)
+		}
+
+		if !isRegistered {
+			// If the wallet is no longer registered it means the wallet has
+			// been closed or terminated.
 			err := n.walletRegistry.archiveWallet(walletPublicKeyHash)
 			if err != nil {
 				return fmt.Errorf(
@@ -1124,7 +1136,9 @@ func (n *node) archiveClosedWallets() error {
 			}
 
 			logger.Infof(
-				"successfully archived wallet with public key hash [0x%x]",
+				"successfully archived wallet with ID [0x%x] and public key "+
+					"hash [0x%x]",
+				walletID,
 				walletPublicKeyHash,
 			)
 		}
