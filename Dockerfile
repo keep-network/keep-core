@@ -92,6 +92,9 @@ ENV APP_NAME=keep-client \
 
 COPY --from=build-docker $APP_DIR/$APP_NAME $BIN_PATH
 
+# Run as a user without privileges.
+USER nobody
+
 # ENTRYPOINT cant handle ENV variables.
 ENTRYPOINT ["keep-client"]
 
