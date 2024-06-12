@@ -11,7 +11,7 @@ commonLabels:
 images:
   - name: keep-maintainer
     newName: keepnetwork/keep-client
-    newTag: v2.0.0
+    newTag: v2.1.0
 
 configMapGenerator:
   - name: keep-maintainer-config
