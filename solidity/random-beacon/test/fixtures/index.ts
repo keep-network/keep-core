@@ -73,6 +73,16 @@ export async function blsDeployment(): Promise<DeployedContracts> {
   return contracts
 }
 
+export async function secretDeployment(): Promise<DeployedContracts> {
+  const Secret = await ethers.getContractFactory("Secret")
+  const secret = await Secret.deploy()
+  await secret.deployed()
+
+  const contracts: DeployedContracts = { secret }
+
+  return contracts
+}
+
 export async function randomBeaconDeployment(): Promise<DeployedContracts> {
   await deployments.fixture()
   const t: T = await helpers.contracts.getContract<T>("T")
