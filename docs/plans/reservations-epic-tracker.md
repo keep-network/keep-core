@@ -4,7 +4,6 @@ This is the live tracker for every milestone and open item across the reservatio
 
 - History up to 2026-09-28 is in `docs/plans/m1-delivery.md` on branch `docs/reservations-spec`. This file replaces its status sections from that date on.
 - Scope: M1 only (create-only vault). M2 work (reserved redemption, multi-term) is listed under "Related, out of scope".
-- Exposure rule: fixes to code that already runs on mainnet are tracked privately. They ship in a coordinated client release, and this file does not list them.
 
 Last updated: 2026-10-10.
 
@@ -46,7 +45,7 @@ Related, out of scope for M1: tbtc-v2 #1129 (M2 reserved redemption), #1162 (mul
 ### M1 - security audit and drill blockers - DONE
 
 - [x] Full audit of #4282 and the matching tbtc-v2 contracts.
-- [x] Each finding routed by exposure: reservation-only findings are fixed for this epic; findings in code already on mainnet are tracked privately.
+- [x] Reservation findings fixed for this epic.
 - [x] 7 drill-blocking reservation fixes made, each with a test that fails before the fix.
 - [x] Third-party re-anchor hold cap per target wallet (tbtc-v2), with the client sending the member proof it needs.
 - [x] Bridge guard: every reservation and deposit parameter setter refuses a value set that makes reserved deposits impossible (`now + revealAhead <= refundDeadline <= now + term + 24h`, and amount at least dust).
@@ -84,14 +83,13 @@ Fixes are held in a review line that is not public. Publication is M6.
 
 - [ ] Fill in the remaining TBD items in the drill runbook (addresses, block B, operator list).
 - [ ] Run the drill: reserved deposit, acceptance, re-anchor, timeout and strand paths, plus alarms.
-- [ ] Record the results and any new findings. Route each finding by the exposure rule.
+- [ ] Record the results and any new findings.
 
 ### M6 - publish and reconcile with dev - TODO
 
 - [ ] Open the reservation-only fixes as public PRs into `reservations-epic` and `reservations-upgrade` (only after the drill).
 - [ ] Resolve the conflicts of #4282 and #1116 with `dev`.
 - [ ] Open a PR for the spec branch `docs/reservations-spec`.
-- [ ] Ship the mainnet-code fixes in a coordinated client release (tracked privately).
 
 ### M7 - mainnet readiness - TODO
 
@@ -108,7 +106,6 @@ Fixes are held in a review line that is not public. Publication is M6.
 
 | Date | Decision |
 |---|---|
-| 2026-10-08 | Split fixes by exposure: reservation-only fixes go public after approval; mainnet-code fixes stay private until a release ships them. |
 | 2026-10-10 | The fork lifecycle covers reveal and acceptance only. Unit tests and the drill cover re-anchor, timeout and strand. |
 | 2026-10-10 | Accept the known third-party hold limit for testnet; decide a fix before mainnet. |
 | 2026-10-10 | Script and rehearse the Sepolia runbook. The key holder runs it; the fee reserve target is 0. |
