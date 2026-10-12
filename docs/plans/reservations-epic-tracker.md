@@ -5,7 +5,7 @@ This is the live tracker for every milestone and open item across the reservatio
 - History up to 2026-09-28 is in `docs/plans/m1-delivery.md` on branch `docs/reservations-spec`. This file replaces its status sections from that date on.
 - Scope: M1 only (create-only vault). M2 work (reserved redemption, multi-term) is listed under "Related, out of scope".
 
-Last updated: 2026-10-10.
+Last updated: 2026-10-12.
 
 ## Where we are
 
@@ -83,6 +83,7 @@ Fixes are held in a review line that is not public. Publication is M6.
 
 - [ ] Fill in the remaining TBD items in the drill runbook (addresses, block B, operator list).
 - [ ] Run the drill: reserved deposit, acceptance, re-anchor, timeout and strand paths, plus alarms.
+- [ ] Alert on acceptance generations that are still unproven as they near the end of their late-settlement window (`timeoutAt + termSeconds`), plus a governance escalation runbook. Build it before the drill and exercise it during the drill.
 - [ ] Record the results and any new findings.
 
 ### M6 - publish and reconcile with dev - TODO
@@ -96,6 +97,7 @@ Fixes are held in a review line that is not public. Publication is M6.
 - [ ] Decide the fix for the known limit on third-party re-anchor holds (accepted for testnet only).
 - [ ] Choose launch values that pass the feasibility guard. Amount caps must be at least dust (0.01 BTC); a 12-month term is fine.
 - [ ] Keep a Bridge bytecode budget: 1,009 bytes are left under EIP-170.
+- [ ] SDK pre-funding check: before the user sends BTC, return go or no-go on the refund-locktime window, the amount bounds, the designated wallet being `Live` with free capacity, and the time left to request acceptance.
 - [ ] Mainnet runbook through Timelock and Council Safe, rehearsed on a mainnet fork.
 
 ## Open items not tied to a milestone
