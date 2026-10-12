@@ -69,6 +69,14 @@ Fixes are held in a review line that is not public. Publication is M6.
 - [x] Live mode refuses a signer other than the deployer EOA, and refuses to activate before block B.
 - [x] Rehearsed on a Sepolia fork (23 pass, 3 off-chain skips). Rehearsed live against a local Sepolia-fork node, with a killed and resumed prepare and real-time governance waits.
 
+### M3b - depositor safety before the Sepolia deploy - DONE
+
+- [x] Release to pool: the depositor can turn a reserved deposit that never got an acceptance request back into an ordinary deposit, which the next sweep picks up. This removes the long lockup for the loser of a capacity race (reveal does not hold capacity). Refused once any acceptance was requested, and never to the reservation vault.
+- [x] keep-core bindings for the release, plus regression tests that a released deposit is swept with its stored vault.
+- [x] SDK reservation module: pre-funding go/no-go check, wallet with free capacity, refund locktime inside the on-chain window with a reveal deadline, reveal, acceptance preflight and request, release, status reads.
+- [x] Reservation proof and validator test suites repaired; they had not run since the ethers v6 migration.
+- [x] Fork dry-runs and the Sepolia rehearsal re-run on the new contracts: 22/22, 25/25, 23 pass / 3 off-chain skips.
+
 ### M4 - Sepolia deploy - NEXT (waits on the key holder)
 
 - [ ] Recommended, waiting for approval: before resuming, validate the saved prepare file. Tie it to the chain ID and the Bridge address, and require chain ID 11155111 on `--network sepolia`.
@@ -97,7 +105,7 @@ Fixes are held in a review line that is not public. Publication is M6.
 - [ ] Decide the fix for the known limit on third-party re-anchor holds (accepted for testnet only).
 - [ ] Choose launch values that pass the feasibility guard. Amount caps must be at least dust (0.01 BTC); a 12-month term is fine.
 - [ ] Keep a Bridge bytecode budget: 1,009 bytes are left under EIP-170.
-- [ ] SDK pre-funding check: before the user sends BTC, return go or no-go on the refund-locktime window, the amount bounds, the designated wallet being `Live` with free capacity, and the time left to request acceptance.
+- [x] SDK pre-funding check (done in M3b): go or no-go on the refund-locktime window, the amount bounds including dust, the designated wallet being `Live` with free capacity, and the global caps.
 - [ ] Mainnet runbook through Timelock and Council Safe, rehearsed on a mainnet fork.
 
 ## Open items not tied to a milestone
@@ -114,3 +122,4 @@ Fixes are held in a review line that is not public. Publication is M6.
 | 2026-10-10 | The drill uses the existing Sepolia operators. |
 | 2026-10-10 | Publish the fixes after the drill. |
 | 2026-10-10 | Approved: Bridge feasibility guard, lint ban, client feasibility gauge. Declined: a nightly fork dry-run in CI. |
+| 2026-10-12 | Add release to pool and the SDK reservation module before the Sepolia deploy. |
