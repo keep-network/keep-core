@@ -77,6 +77,13 @@ Fixes are held in a review line that is not public. Publication is M6.
 - [x] Reservation proof and validator test suites repaired; they had not run since the ethers v6 migration.
 - [x] Fork dry-runs and the Sepolia rehearsal re-run on the new contracts: 22/22, 25/25, 23 pass / 3 off-chain skips.
 
+### M3c - hand-off capacity before the Sepolia deploy - DONE
+
+- [x] A privileged hand-off off a retiring wallet (governance, the owner, an SPV maintainer, or a proven source-wallet member) may exceed the target wallet's per-wallet count and amount caps. Third parties keep both caps and the hold limit. This removes the case where full target wallets stop a retiring wallet from moving its reservations.
+- [x] New governance value `handoffReserveWallets` (at least 1): an acceptance is admitted only while `count + 1 <= (Live wallets - reserve) * per-wallet count`. It limits admission; it does not reserve a specific wallet.
+- [x] The proposal validator no longer re-checks target caps that the request already booked. The client falls back to the least-loaded Live wallet for a member hand-off when every target is full. The SDK checks the reserve before funding and before acceptance.
+- [x] Caps setter now takes five arguments; new view `reservationHandoffReserveWallets()`. Fork dry-run 34/34 and Sepolia rehearsal re-run on the new contracts.
+
 ### M4 - Sepolia deploy - NEXT (waits on the key holder)
 
 - [ ] Recommended, waiting for approval: before resuming, validate the saved prepare file. Tie it to the chain ID and the Bridge address, and require chain ID 11155111 on `--network sepolia`.
@@ -102,7 +109,7 @@ Fixes are held in a review line that is not public. Publication is M6.
 
 ### M7 - mainnet readiness - TODO
 
-- [ ] Decide the fix for the known limit on third-party re-anchor holds (accepted for testnet only).
+- [x] Third-party re-anchor hold limit: closed by the privileged hand-off in M3c.
 - [ ] Choose launch values that pass the feasibility guard. Amount caps must be at least dust (0.01 BTC); a 12-month term is fine.
 - [ ] Keep a Bridge bytecode budget: 1,009 bytes are left under EIP-170.
 - [x] SDK pre-funding check (done in M3b): go or no-go on the refund-locktime window, the amount bounds including dust, the designated wallet being `Live` with free capacity, and the global caps.
@@ -123,3 +130,4 @@ Fixes are held in a review line that is not public. Publication is M6.
 | 2026-10-10 | Publish the fixes after the drill. |
 | 2026-10-10 | Approved: Bridge feasibility guard, lint ban, client feasibility gauge. Declined: a nightly fork dry-run in CI. |
 | 2026-10-12 | Add release to pool and the SDK reservation module before the Sepolia deploy. |
+| 2026-10-12 | Privileged hand-offs off retiring wallets skip per-wallet caps, and a hand-off reserve gates new acceptances. Built before the Sepolia deploy. |
